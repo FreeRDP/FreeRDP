@@ -192,12 +192,15 @@ BOOL sdl_handle_mouse_motion(SdlContext* sdl, const SDL_MouseMotionEvent* ev)
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(ev);
 
-	sdl->getInputChannelContext().mouse_focus(ev->windowID);
+	if (!sdl->getInputChannelContext().mouse_focus(ev->windowID))
+		return FALSE;
+
 	const BOOL relative =
 	    freerdp_client_use_relative_mouse_events(sdl->common()) && !sdl->hasCursor();
 	auto x = static_cast<INT32>(relative ? ev->xrel : ev->x);
 	auto y = static_cast<INT32>(relative ? ev->yrel : ev->y);
-	sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE);
+	if (!sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE))
+		return FALSE;
 	return freerdp_client_send_button_event(sdl->common(), relative, PTR_FLAGS_MOVE, x, y);
 }
 
@@ -264,7 +267,9 @@ BOOL sdl_handle_mouse_button(SdlContext* sdl, const SDL_MouseButtonEvent* ev)
 	    freerdp_client_use_relative_mouse_events(sdl->common()) && !sdl->hasCursor();
 	auto x = static_cast<INT32>(relative ? 0 : ev->x);
 	auto y = static_cast<INT32>(relative ? 0 : ev->y);
-	sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE);
+	if (!sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE))
+		return FALSE;
+
 	if ((flags & (~PTR_FLAGS_DOWN)) != 0)
 		return freerdp_client_send_button_event(sdl->common(), relative, flags, x, y);
 	else if ((xflags & (~PTR_XFLAGS_DOWN)) != 0)

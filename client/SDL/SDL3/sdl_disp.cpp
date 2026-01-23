@@ -131,7 +131,7 @@ void sdlDispContext::OnActivated(void* context, const ActivatedEventArgs* e)
 		if (e->firstActivation)
 			return;
 
-		sdlDisp->addTimer();
+		(void)sdlDisp->addTimer();
 	}
 }
 
@@ -149,8 +149,8 @@ void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs
 
 	if (sdlDisp->_activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
-		sdlDisp->setWindowResizeable();
-		sdlDisp->addTimer();
+		if (sdlDisp->setWindowResizeable())
+			(void)sdlDisp->addTimer();
 	}
 }
 
@@ -478,7 +478,7 @@ sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 
 	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
-	addTimer();
+	(void)addTimer();
 }
 
 sdlDispContext::~sdlDispContext()

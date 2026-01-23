@@ -332,7 +332,8 @@ BOOL sdlInput::keyboard_focus_in()
 	if (w)
 	{
 		auto id = SDL_GetWindowID(w);
-		sdl_scale_coordinates(_sdl, id, &x, &y, TRUE, TRUE);
+		if (!sdl_scale_coordinates(_sdl, id, &x, &y, TRUE, TRUE))
+			return FALSE;
 	}
 	return freerdp_client_send_button_event(_sdl->common(), FALSE, PTR_FLAGS_MOVE, x, y);
 }
@@ -582,14 +583,16 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling fullscreen state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyFullscreen));
-				keyboard_sync_state();
+				if (!keyboard_sync_state())
+					return FALSE;
 				return _sdl->toggleFullscreen();
 			}
 			if (ev->scancode == _hotkeyResizable)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling resizeable state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyResizable));
-				keyboard_sync_state();
+				if (!keyboard_sync_state())
+					return FALSE;
 				return _sdl->toggleResizeable();
 			}
 
@@ -597,15 +600,16 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling grab state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyGrab));
-				keyboard_sync_state();
-				keyboard_grab(ev->windowID, !_sdl->grabKeyboard());
-				return TRUE;
+				if (!keyboard_sync_state())
+					return FALSE;
+				return keyboard_grab(ev->windowID, !_sdl->grabKeyboard());
 			}
 			if (ev->scancode == _hotkeyDisconnect)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, disconnecting RDP session",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyDisconnect));
-				keyboard_sync_state();
+				if (!keyboard_sync_state())
+					return FALSE;
 				freerdp_abort_connect_context(_sdl->context());
 				return TRUE;
 			}
@@ -613,7 +617,8 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, minimizing client",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyMinimize));
-				keyboard_sync_state();
+				if (!keyboard_sync_state())
+					return FALSE;
 				return _sdl->setMinimized();
 			}
 		}

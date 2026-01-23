@@ -525,7 +525,7 @@ void SdlContext::sdl_client_cleanup(int exit_code, const std::string& error_msg)
 		getDialog().show(false);
 
 	_exitCode = exit_code;
-	sdl_push_user_event(SDL_EVENT_USER_QUIT);
+	(void)sdl_push_user_event(SDL_EVENT_USER_QUIT);
 	SDL_CleanupTLS();
 }
 

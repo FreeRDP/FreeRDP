@@ -49,7 +49,7 @@ SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY,
 	const int iscale = static_cast<int>(sc * 100.0f);
 	auto w = 100 * width / iscale;
 	auto h = 100 * height / iscale;
-	resize({ w, h });
+	(void)resize({ w, h });
 	SDL_SetHint(SDL_HINT_APP_NAME, "");
 	(void)SDL_SyncWindow(_window);
 }

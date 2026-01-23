@@ -76,7 +76,7 @@
 static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const char* signame,
                              [[maybe_unused]] void* context)
 {
-	sdl_push_quit();
+	(void)sdl_push_quit();
 }
 
 static int sdl_run(SdlContext* sdl)
@@ -138,7 +138,8 @@ static int sdl_run(SdlContext* sdl)
 				case SDL_EVENT_KEY_UP:
 				{
 					const SDL_KeyboardEvent* ev = &windowEvent.key;
-					sdl->getInputChannelContext().keyboard_handle_event(ev);
+					if (!sdl->getInputChannelContext().keyboard_handle_event(ev))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_KEYMAP_CHANGED:
@@ -150,7 +151,8 @@ static int sdl_run(SdlContext* sdl)
 					SDL_MouseMotionEvent& ev = windowEvent.motion;
 					point2pix(ev.windowID, ev.x, ev.y);
 					point2pix(ev.windowID, ev.xrel, ev.yrel);
-					sdl_handle_mouse_motion(sdl, &ev);
+					if (!sdl_handle_mouse_motion(sdl, &ev))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_MOUSE_BUTTON_DOWN:
@@ -158,31 +160,36 @@ static int sdl_run(SdlContext* sdl)
 				{
 					SDL_MouseButtonEvent& ev = windowEvent.button;
 					point2pix(ev.windowID, ev.x, ev.y);
-					sdl_handle_mouse_button(sdl, &ev);
+					if (!sdl_handle_mouse_button(sdl, &ev))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_MOUSE_WHEEL:
 				{
 					const SDL_MouseWheelEvent* ev = &windowEvent.wheel;
-					sdl_handle_mouse_wheel(sdl, ev);
+					if (!sdl_handle_mouse_wheel(sdl, ev))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_FINGER_DOWN:
 				{
 					const SDL_TouchFingerEvent* ev = &windowEvent.tfinger;
-					sdl_handle_touch_down(sdl, ev);
+					if (!sdl_handle_touch_down(sdl, ev))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_FINGER_UP:
 				{
 					const SDL_TouchFingerEvent* ev = &windowEvent.tfinger;
-					sdl_handle_touch_up(sdl, ev);
+					if (!sdl_handle_touch_up(sdl, ev))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_FINGER_MOTION:
 				{
 					const SDL_TouchFingerEvent* ev = &windowEvent.tfinger;
-					sdl_handle_touch_motion(sdl, ev);
+					if (!sdl_handle_touch_motion(sdl, ev))
+						return -1;
 				}
 				break;
 
@@ -232,14 +239,16 @@ static int sdl_run(SdlContext* sdl)
 					do
 					{
 						rectangles = sdl->pop();
-						sdl->drawToWindows(rectangles);
+						if (!sdl->drawToWindows(rectangles))
+							return -1;
 					} while (!rectangles.empty());
 				}
 				break;
 				case SDL_EVENT_USER_CREATE_WINDOWS:
 				{
 					auto ctx = static_cast<SdlContext*>(windowEvent.user.data1);
-					ctx->createWindows();
+					if (!ctx->createWindows())
+						return -1;
 				}
 				break;
 				case SDL_EVENT_USER_WINDOW_RESIZEABLE:
@@ -259,7 +268,8 @@ static int sdl_run(SdlContext* sdl)
 				}
 				break;
 				case SDL_EVENT_USER_WINDOW_MINIMIZE:
-					sdl->minimizeAllWindows();
+					if (!sdl->minimizeAllWindows())
+						return -1;
 					break;
 				case SDL_EVENT_USER_POINTER_NULL:
 					SDL_HideCursor();
@@ -297,10 +307,12 @@ static int sdl_run(SdlContext* sdl)
 				break;
 				case SDL_EVENT_USER_POINTER_SET:
 					sdl->setCursor(static_cast<rdpPointer*>(windowEvent.user.data1));
-					sdl_Pointer_Set_Process(sdl);
+					if (!sdl_Pointer_Set_Process(sdl))
+						return -1;
 					break;
 				case SDL_EVENT_CLIPBOARD_UPDATE:
-					sdl->getClipboardChannelContext().handle_update(windowEvent.clipboard);
+					if (!sdl->getClipboardChannelContext().handle_update(windowEvent.clipboard))
+						return -1;
 					break;
 				case SDL_EVENT_USER_QUIT:
 				default:
@@ -324,7 +336,8 @@ static int sdl_run(SdlContext* sdl)
 								case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 									if (sdl->isConnected())
 									{
-										sdl_Pointer_Set_Process(sdl);
+										if (!sdl_Pointer_Set_Process(sdl))
+											return -1;
 										if (freerdp_settings_get_bool(
 										        sdl->context()->settings,
 										        FreeRDP_DynamicResolutionUpdate))
@@ -373,9 +386,12 @@ static int sdl_run(SdlContext* sdl)
 									}
 									break;
 								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-									window->fill();
-									sdl->drawToWindow(*window);
-									sdl_Pointer_Set_Process(sdl);
+									if (!window->fill())
+										return -1;
+									if (!sdl->drawToWindow(*window))
+										return -1;
+									if (!sdl_Pointer_Set_Process(sdl))
+										return -1;
 									break;
 								case SDL_EVENT_WINDOW_MOVED:
 								{
@@ -723,7 +739,10 @@ int main(int argc, char* argv[])
 	{
 		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
 		if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors))
-			sdl_list_monitors(sdl);
+		{
+			if (!sdl_list_monitors(sdl))
+				return -1;
+		}
 		else
 		{
 			switch (status)
