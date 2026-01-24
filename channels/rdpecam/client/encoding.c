@@ -267,8 +267,23 @@ static BOOL ecam_init_sws_context(CameraDeviceStream* stream, enum AVPixelFormat
 	    h264_context_get_option(stream->h264, H264_CONTEXT_OPTION_HW_ACCEL) ? AV_PIX_FMT_NV12
 	                                                                        : AV_PIX_FMT_YUV420P;
 
+#if defined(WITH_SWSCALE_LOADING)
+	if (!freerdp_swscale_available())
+	{
+		WLog_ERR(TAG, "swscale not available");
+		return FALSE;
+	}
+	if (!freerdp_avutil_available())
+	{
+		WLog_ERR(TAG, "avutil not available");
+		return FALSE;
+	}
+	stream->sws = freerdp_sws_getContext(width, height, pixFormat, width, height, outPixFormat, 0,
+	                                     NULL, NULL, NULL);
+#else
 	stream->sws =
 	    sws_getContext(width, height, pixFormat, width, height, outPixFormat, 0, NULL, NULL, NULL);
+#endif
 	if (!stream->sws)
 	{
 		WLog_ERR(TAG, "sws_getContext failed");
@@ -341,14 +356,29 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 	{
 		pixFormat = ecamToAVPixFormat(inputFormat);
 
+#if defined(WITH_SWSCALE_LOADING)
+		if (!freerdp_avutil_available())
+		{
+			WLog_ERR(TAG, "avutil not available");
+			return FALSE;
+		}
+		if (freerdp_av_image_fill_linesizes(srcLineSizes, pixFormat, (int)size.width) < 0)
+#else
 		if (av_image_fill_linesizes(srcLineSizes, pixFormat, (int)size.width) < 0)
+#endif
 		{
 			WLog_ERR(TAG, "av_image_fill_linesizes failed");
 			return FALSE;
 		}
 
+#if defined(WITH_SWSCALE_LOADING)
+		if (freerdp_av_image_fill_pointers(srcSlice, pixFormat, (int)size.height,
+		                                   WINPR_CAST_CONST_PTR_AWAY(srcData, BYTE*),
+		                                   srcLineSizes) < 0)
+#else
 		if (av_image_fill_pointers(srcSlice, pixFormat, (int)size.height,
 		                           WINPR_CAST_CONST_PTR_AWAY(srcData, BYTE*), srcLineSizes) < 0)
+#endif
 		{
 			WLog_ERR(TAG, "av_image_fill_pointers failed");
 			return FALSE;
@@ -364,9 +394,15 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 		return FALSE;
 
 	const BYTE* cSrcSlice[4] = { srcSlice[0], srcSlice[1], srcSlice[2], srcSlice[3] };
+#if defined(WITH_SWSCALE_LOADING)
+	if (freerdp_sws_scale(stream->sws, cSrcSlice, srcLineSizes, 0, (int)size.height, yuvData,
+	                      (int*)yuvLineSizes) <= 0)
+		return FALSE;
+#else
 	if (sws_scale(stream->sws, cSrcSlice, srcLineSizes, 0, (int)size.height, yuvData,
 	              (int*)yuvLineSizes) <= 0)
 		return FALSE;
+#endif
 
 	/* encode from YUV420P or NV12 to H264 */
 	if (h264_compress(stream->h264, ppDstData, &dstSize) < 0)
@@ -387,7 +423,11 @@ static void ecam_encoder_context_free_h264(CameraDeviceStream* stream)
 
 	if (stream->sws)
 	{
+#if defined(WITH_SWSCALE_LOADING)
+		freerdp_sws_freeContext(stream->sws);
+#else
 		sws_freeContext(stream->sws);
+#endif
 		stream->sws = NULL;
 	}
 

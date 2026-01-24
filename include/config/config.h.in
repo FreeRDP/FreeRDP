@@ -29,6 +29,7 @@
 #cmakedefine WITH_AAD
 #cmakedefine WITH_CAIRO
 #cmakedefine WITH_SWSCALE
+#cmakedefine WITH_SWSCALE_LOADING
 #cmakedefine WITH_RDPSND_DSOUND
 
 #cmakedefine WITH_WINMM

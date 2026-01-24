@@ -17,13 +17,15 @@
 
 define_channel_client("rdpecam")
 
-if(NOT WITH_SWSCALE OR NOT WITH_FFMPEG)
-  message(FATAL_ERROR "WITH_FFMPEG and WITH_SWSCALE required for CHANNEL_RDPECAM_CLIENT")
+if(NOT WITH_SWSCALE)
+  message(FATAL_ERROR "WITH_SWSCALE required for CHANNEL_RDPECAM_CLIENT")
 endif()
-freerdp_client_pc_add_requires_private("libswscale")
+
+if(NOT WITH_SWSCALE_LOADING AND NOT WITH_FFMPEG)
+  message(FATAL_ERROR "WITH_FFMPEG required for CHANNEL_RDPECAM_CLIENT when WITH_SWSCALE_LOADING=OFF")
+endif()
 
 # currently camera redirect client supported for platforms with Video4Linux only
-find_package(FFmpeg REQUIRED COMPONENTS SWSCALE)
 find_package(V4L)
 if(V4L_FOUND)
   set(WITH_V4L ON)
@@ -37,16 +39,27 @@ if(RDPECAM_INPUT_FORMAT_H264)
   add_compile_definitions("WITH_INPUT_FORMAT_H264")
 endif()
 
-option(RDPECAM_INPUT_FORMAT_MJPG "[MS-RDPECAM] Enable MJPG camera format" ON)
-if(RDPECAM_INPUT_FORMAT_MJPG)
-  add_compile_definitions("WITH_INPUT_FORMAT_MJPG")
+if(WITH_SWSCALE_LOADING)
+  if(DEFINED RDPECAM_INPUT_FORMAT_MJPG AND RDPECAM_INPUT_FORMAT_MJPG)
+    message(WARNING "rdpecam: MJPG format cannot be enabled with runtime loading (requires libavcodec) - forcing OFF")
+    set(RDPECAM_INPUT_FORMAT_MJPG OFF CACHE BOOL "MJPG not supported with runtime loading" FORCE)
+  endif()
+
+  include_directories(${CMAKE_SOURCE_DIR})
+  set(${MODULE_PREFIX}_LIBS freerdp winpr)
+else()
+  option(RDPECAM_INPUT_FORMAT_MJPG "[MS-RDPECAM] Enable MJPG camera format" ON)
+  if(RDPECAM_INPUT_FORMAT_MJPG)
+    add_compile_definitions("WITH_INPUT_FORMAT_MJPG")
+  endif()
+
+  find_package(FFmpeg REQUIRED COMPONENTS SWSCALE AVUTIL AVCODEC)
+  include_directories(SYSTEM ${SWSCALE_INCLUDE_DIRS} ${AVUTIL_INCLUDE_DIRS} ${AVCODEC_INCLUDE_DIRS})
+  freerdp_client_pc_add_requires_private("libswscale")
+  set(${MODULE_PREFIX}_LIBS freerdp winpr ${SWSCALE_LIBRARIES} ${AVUTIL_LIBRARIES} ${AVCODEC_LIBRARIES})
 endif()
 
-include_directories(SYSTEM ${SWSCALE_INCLUDE_DIRS})
-
 set(${MODULE_PREFIX}_SRCS camera_device_enum_main.c camera_device_main.c encoding.c)
-
-set(${MODULE_PREFIX}_LIBS freerdp winpr ${SWSCALE_LIBRARIES} ${FFMPEG_LIBRARIES})
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 

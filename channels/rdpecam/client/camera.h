@@ -25,12 +25,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(WITH_INPUT_FORMAT_MJPG)
+#if defined(WITH_INPUT_FORMAT_MJPG) && !defined(WITH_SWSCALE_LOADING)
 #include <libavcodec/avcodec.h>
 #endif
 
+#if defined(WITH_SWSCALE_LOADING)
+#include "libfreerdp/codec/swscale.h"
+#else
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
+#endif
 
 #include <winpr/wlog.h>
 #include <winpr/wtypes.h>
@@ -109,7 +113,7 @@ typedef struct
 
 	H264_CONTEXT* h264;
 
-#if defined(WITH_INPUT_FORMAT_MJPG)
+#if defined(WITH_INPUT_FORMAT_MJPG) && !defined(WITH_SWSCALE_LOADING)
 	AVCodecContext* avContext;
 	AVPacket* avInputPkt;
 	AVFrame* avOutFrame;
