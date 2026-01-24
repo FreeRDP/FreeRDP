@@ -376,8 +376,6 @@ bool SdlContext::createWindows()
 
 		auto did = WINPR_ASSERTING_INT_CAST(SDL_DisplayID, id);
 		auto window = SdlWindow::create(did, title, flags, w, h);
-		if (!window.window())
-			return false;
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
@@ -837,6 +835,93 @@ SdlConnectionDialogWrapper& SdlContext::getDialog()
 wLog* SdlContext::getWLog()
 {
 	return _log;
+}
+
+bool SdlContext::handleEvent(const SDL_WindowEvent* ev)
+{
+
+	if (!getDisplayChannelContext().handleEvent(ev))
+		return false;
+
+	auto window = getWindowForId(ev->windowID);
+	if (!window)
+		return true;
+
+	{
+		const auto& r = window->rect();
+		const auto& b = window->bounds();
+		const auto& scale = window->scale();
+		const auto& orientiaion = window->orientation();
+		SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
+		             "%s: [%u] %dx%d-%dx%d {%dx%d-%dx%d}{scale=%f,orientation=%s}",
+		             sdl_event_type_str(ev->type), ev->windowID, r.x, r.y, r.w, r.h, b.x, b.y, b.w,
+		             b.h, scale, sdl::utils::toString(orientation).c_str());
+	}
+
+	switch (ev->type)
+	{
+		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
+			if (isConnected())
+			{
+				if (!window->fill())
+					return -1;
+				if (!drawToWindow(*window))
+					return -1;
+				if (!sdl_Pointer_Set_Process(this))
+					return -1;
+			}
+			break;
+		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+			if (!window->fill())
+				return -1;
+			if (!drawToWindow(*window))
+				return -1;
+			if (!sdl_Pointer_Set_Process(this))
+				return -1;
+			break;
+		case SDL_EVENT_WINDOW_MOVED:
+		{
+			auto r = window->rect();
+			auto id = window->id();
+			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%u: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
+		}
+		break;
+		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+		{
+			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Window closed, terminating RDP session...");
+			freerdp_abort_connect_context(context());
+		}
+		break;
+		default:
+			break;
+	}
+	return true;
+}
+
+bool SdlContext::handleEvent(const SDL_DisplayEvent* ev)
+{
+
+	if (!getDisplayChannelContext().handleEvent(ev))
+		return false;
+	{
+		SDL_Rect r = {};
+		if (!SDL_GetDisplayBounds(ev->displayID, &r))
+			return false;
+		const auto name = SDL_GetDisplayName(ev->displayID);
+		if (!name)
+			return false;
+		const auto orientation = SDL_GetCurrentDisplayOrientation(ev->displayID);
+		const auto scale = SDL_GetDisplayContentScale(ev->displayID);
+		const auto mode = SDL_GetCurrentDisplayMode(ev->displayID);
+		if (!mode)
+			return false;
+
+		SDL_LogDebug(
+		    SDL_LOG_CATEGORY_APPLICATION, "%s: [%u, %s] %dx%d-%dx%d {orientation=%s, scale=%f}%s",
+		    sdl_event_type_str(ev->type), ev->displayID, name, r.x, r.y, r.w, r.h,
+		    sdl::utils::toString(orientation).c_str(), scale, sdl::utils::toString(mode).c_str());
+	}
+	return true;
 }
 
 bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)

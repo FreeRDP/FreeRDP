@@ -327,7 +327,7 @@ bool sdlDispContext::updateMonitors(SDL_EventType type, SDL_DisplayID displayID)
 	return addTimer();
 }
 
-bool sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
+bool sdlDispContext::handleEvent(const SDL_DisplayEvent* ev)
 {
 	WINPR_ASSERT(ev);
 
@@ -359,15 +359,16 @@ bool sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 	}
 }
 
-bool sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
+bool sdlDispContext::handleEvent(const SDL_WindowEvent* ev)
 {
 	WINPR_ASSERT(ev);
 
-	auto bordered = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_Decorations);
-
 	auto window = _sdl->getWindowForId(ev->windowID);
-	if (window)
-		window->setBordered(bordered);
+	if (!window)
+		return true;
+
+	auto bordered = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_Decorations);
+	window->setBordered(bordered);
 
 	switch (ev->type)
 	{

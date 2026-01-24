@@ -43,8 +43,8 @@ class sdlDispContext
 	[[nodiscard]] bool init(DispClientContext* disp);
 	[[nodiscard]] bool uninit(DispClientContext* disp);
 
-	[[nodiscard]] bool handle_display_event(const SDL_DisplayEvent* ev);
-	[[nodiscard]] bool handle_window_event(const SDL_WindowEvent* ev);
+	[[nodiscard]] bool handleEvent(const SDL_DisplayEvent* ev);
+	[[nodiscard]] bool handleEvent(const SDL_WindowEvent* ev);
 
   private:
 	[[nodiscard]] UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,

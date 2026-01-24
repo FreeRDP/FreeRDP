@@ -120,6 +120,9 @@ class SdlContext
 
 	[[nodiscard]] wLog* getWLog();
 
+	[[nodiscard]] bool handleEvent(const SDL_WindowEvent* ev);
+	[[nodiscard]] bool handleEvent(const SDL_DisplayEvent* ev);
+
   private:
 	[[nodiscard]] static BOOL preConnect(freerdp* instance);
 	[[nodiscard]] static BOOL postConnect(freerdp* instance);

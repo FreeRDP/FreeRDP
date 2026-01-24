@@ -108,14 +108,7 @@ static int sdl_run(SdlContext* sdl)
 				continue;
 
 			if (sdl->getDialog().handleEvent(windowEvent))
-			{
 				continue;
-			}
-
-			if (sdl->getDialog().handleEvent(windowEvent))
-			{
-				continue;
-			}
 
 			auto point2pix = [](Uint32 win_id, float& x, float& y)
 			{
@@ -324,98 +317,15 @@ static int sdl_run(SdlContext* sdl)
 					    (windowEvent.type <= SDL_EVENT_DISPLAY_LAST))
 					{
 						const SDL_DisplayEvent* ev = &windowEvent.display;
-						(void)sdl->getDisplayChannelContext().handle_display_event(ev);
+						if (!sdl->handleEvent(ev))
+							return -1;
 					}
 					else if ((windowEvent.type >= SDL_EVENT_WINDOW_FIRST) &&
 					         (windowEvent.type <= SDL_EVENT_WINDOW_LAST))
 					{
 						const SDL_WindowEvent* ev = &windowEvent.window;
-						auto window = sdl->getWindowForId(ev->windowID);
-						if (window)
-						{
-							(void)sdl->getDisplayChannelContext().handle_window_event(ev);
-
-							switch (ev->type)
-							{
-								case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
-									if (sdl->isConnected())
-									{
-										if (!sdl_Pointer_Set_Process(sdl))
-											return -1;
-										if (freerdp_settings_get_bool(
-										        sdl->context()->settings,
-										        FreeRDP_DynamicResolutionUpdate))
-										{
-											break;
-										}
-										auto win = window->window();
-										int w_pix{};
-										int h_pix{};
-										[[maybe_unused]] auto rcpix =
-										    SDL_GetWindowSizeInPixels(win, &w_pix, &h_pix);
-										assert(rcpix);
-										auto scale = SDL_GetWindowDisplayScale(win);
-										if (scale <= SDL_FLT_EPSILON)
-										{
-											auto err = SDL_GetError();
-											SDL_LogWarn(
-											    SDL_LOG_CATEGORY_APPLICATION,
-											    "SDL_GetWindowDisplayScale() failed with %s", err);
-										}
-										else
-										{
-											assert(SDL_isnanf(scale) == 0);
-											assert(SDL_isinff(scale) == 0);
-											assert(scale > SDL_FLT_EPSILON);
-											auto w_gdi = sdl->context()->gdi->width;
-											auto h_gdi = sdl->context()->gdi->height;
-											auto pix2point = [=](int pix)
-											{
-												return static_cast<int>(static_cast<float>(pix) /
-												                        scale);
-											};
-											if (w_pix != w_gdi || h_pix != h_gdi)
-											{
-												const auto ssws = SDL_SetWindowSize(
-												    win, pix2point(w_gdi), pix2point(h_gdi));
-												if (!ssws)
-												{
-													auto err = SDL_GetError();
-													SDL_LogWarn(
-													    SDL_LOG_CATEGORY_APPLICATION,
-													    "SDL_SetWindowSize() failed with %s", err);
-												}
-											}
-										}
-									}
-									break;
-								case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-									if (!window->fill())
-										return -1;
-									if (!sdl->drawToWindow(*window))
-										return -1;
-									if (!sdl_Pointer_Set_Process(sdl))
-										return -1;
-									break;
-								case SDL_EVENT_WINDOW_MOVED:
-								{
-									auto r = window->rect();
-									auto id = window->id();
-									SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%u: %dx%d-%dx%d",
-									             id, r.x, r.y, r.w, r.h);
-								}
-								break;
-								case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-								{
-									SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
-									             "Window closed, terminating RDP session...");
-									freerdp_abort_connect_context(sdl->context());
-								}
-								break;
-								default:
-									break;
-							}
-						}
+						if (!sdl->handleEvent(ev))
+							return -1;
 					}
 					break;
 			}
