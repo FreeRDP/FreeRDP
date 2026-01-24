@@ -83,8 +83,10 @@ typedef struct
 
 namespace sdl::utils
 {
-	[[nodiscard]] std::string rdp_orientation_to_str(uint32_t orientation);
-	[[nodiscard]] std::string sdl_orientation_to_str(SDL_DisplayOrientation orientation);
+	[[nodiscard]] std::string toString(uint32_t orientation);
+	[[nodiscard]] std::string toString(SDL_DisplayOrientation orientation);
+	[[nodiscard]] std::string toString(const SDL_DisplayMode* mode);
+
 	[[nodiscard]] UINT32 orientaion_to_rdp(SDL_DisplayOrientation orientation);
 
 	[[nodiscard]] std::string generate_uuid_v4();

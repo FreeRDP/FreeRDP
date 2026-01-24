@@ -71,6 +71,7 @@ const char* sdl_event_type_str(Uint32 type)
 		EV_CASE_STR(SDL_EVENT_WINDOW_HIT_TEST);
 		EV_CASE_STR(SDL_EVENT_WINDOW_ICCPROF_CHANGED);
 		EV_CASE_STR(SDL_EVENT_WINDOW_DISPLAY_CHANGED);
+		EV_CASE_STR(SDL_EVENT_WINDOW_SAFE_AREA_CHANGED);
 		EV_CASE_STR(SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED);
 		EV_CASE_STR(SDL_EVENT_WINDOW_OCCLUDED);
 		EV_CASE_STR(SDL_EVENT_WINDOW_ENTER_FULLSCREEN);
@@ -318,7 +319,7 @@ UINT32 sdl::utils::orientaion_to_rdp(SDL_DisplayOrientation orientation)
 	}
 }
 
-std::string sdl::utils::sdl_orientation_to_str(SDL_DisplayOrientation orientation)
+std::string sdl::utils::toString(SDL_DisplayOrientation orientation)
 {
 	switch (orientation)
 	{
@@ -335,7 +336,7 @@ std::string sdl::utils::sdl_orientation_to_str(SDL_DisplayOrientation orientatio
 	}
 }
 
-std::string sdl::utils::rdp_orientation_to_str(uint32_t orientation)
+std::string sdl::utils::toString(uint32_t orientation)
 {
 	switch (orientation)
 	{
@@ -355,6 +356,26 @@ std::string sdl::utils::rdp_orientation_to_str(uint32_t orientation)
 			return ss.str();
 		}
 	}
+}
+
+std::string sdl::utils::toString(const SDL_DisplayMode* mode)
+{
+	if (!mode)
+		return "SDL_DisplayMode=null";
+
+	std::stringstream ss;
+
+	ss << "["
+	   << "id=" << mode->displayID << ","
+	   << "fmt=" << mode->format << ","
+	   << "w=" << mode->w << ","
+	   << "h=" << mode->h << ","
+	   << "dpi=" << mode->pixel_density << ","
+	   << "refresh=" << mode->refresh_rate << ","
+	   << "num=" << mode->refresh_rate_numerator << ","
+	   << "denom=" << mode->refresh_rate_denominator << "]";
+
+	return ss.str();
 }
 
 std::string sdl::utils::generate_uuid_v4()
@@ -555,5 +576,4 @@ namespace sdl::error
 			return entry->code_tag;
 		return nullptr;
 	}
-
 } // namespace sdl::error
