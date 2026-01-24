@@ -49,9 +49,9 @@ SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY,
 	const int iscale = static_cast<int>(sc * 100.0f);
 	auto w = 100 * width / iscale;
 	auto h = 100 * height / iscale;
-	(void)resize({ w, h });
+	std::ignore = resize({ w, h });
 	SDL_SetHint(SDL_HINT_APP_NAME, "");
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
@@ -65,7 +65,7 @@ SdlWindow::~SdlWindow()
 	SDL_DestroyWindow(_window);
 }
 
-Uint32 SdlWindow::id() const
+SDL_WindowID SdlWindow::id() const
 {
 	if (!_window)
 		return 0;
@@ -86,6 +86,17 @@ SDL_Rect SdlWindow::rect() const
 	{
 		SDL_GetWindowPosition(_window, &rect.x, &rect.y);
 		SDL_GetWindowSizeInPixels(_window, &rect.w, &rect.h);
+	}
+	return rect;
+}
+
+SDL_Rect SdlWindow::bounds() const
+{
+	SDL_Rect rect = {};
+	if (_window)
+	{
+		SDL_GetWindowPosition(_window, &rect.x, &rect.y);
+		SDL_GetWindowSize(_window, &rect.w, &rect.h);
 	}
 	return rect;
 }
@@ -141,8 +152,8 @@ rdpMonitor SdlWindow::monitor(bool isPrimary) const
 		mon.y = rect.y;
 	}
 
-	auto orientation = SDL_GetCurrentDisplayOrientation(did);
-	mon.attributes.orientation = sdl::utils::orientaion_to_rdp(orientation);
+	const auto orient = orientation();
+	mon.attributes.orientation = sdl::utils::orientaion_to_rdp(orient);
 
 	auto primary = SDL_GetPrimaryDisplay();
 	mon.is_primary = isPrimary || (SDL_GetWindowID(_window) == primary);
@@ -158,6 +169,12 @@ rdpMonitor SdlWindow::monitor(bool isPrimary) const
 float SdlWindow::scale() const
 {
 	return SDL_GetWindowDisplayScale(_window);
+}
+
+SDL_DisplayOrientation SdlWindow::orientation() const
+{
+	const auto did = displayIndex();
+	return SDL_GetCurrentDisplayOrientation(did);
 }
 
 bool SdlWindow::grabKeyboard(bool enable)
@@ -180,31 +197,31 @@ void SdlWindow::setBordered(bool bordered)
 {
 	if (_window)
 		SDL_SetWindowBordered(_window, bordered);
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 void SdlWindow::raise()
 {
 	SDL_RaiseWindow(_window);
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 void SdlWindow::resizeable(bool use)
 {
 	SDL_SetWindowResizable(_window, use);
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 void SdlWindow::fullscreen(bool enter)
 {
-	(void)SDL_SetWindowFullscreen(_window, enter);
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SetWindowFullscreen(_window, enter);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 void SdlWindow::minimize()
 {
 	SDL_MinimizeWindow(_window);
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 bool SdlWindow::resize(const SDL_Point& size)
@@ -313,7 +330,6 @@ SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 f
 	SdlWindow window{
 		ss.str(), startupX, startupY, static_cast<int>(width), static_cast<int>(height), flags
 	};
-	(void)window.window();
 
 	if ((flags & (SDL_WINDOW_FULLSCREEN)) != 0)
 	{

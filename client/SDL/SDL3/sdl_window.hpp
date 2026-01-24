@@ -39,9 +39,10 @@ class SdlWindow
 	SdlWindow& operator=(const SdlWindow& other) = delete;
 	SdlWindow& operator=(SdlWindow&& other) = delete;
 
-	[[nodiscard]] Uint32 id() const;
+	[[nodiscard]] SDL_WindowID id() const;
 	[[nodiscard]] SDL_DisplayID displayIndex() const;
 	[[nodiscard]] SDL_Rect rect() const;
+	[[nodiscard]] SDL_Rect bounds() const;
 	[[nodiscard]] SDL_Window* window() const;
 
 	[[nodiscard]] Sint32 offsetX() const;
@@ -53,6 +54,7 @@ class SdlWindow
 	[[nodiscard]] rdpMonitor monitor(bool isPrimary) const;
 
 	[[nodiscard]] float scale() const;
+	[[nodiscard]] SDL_DisplayOrientation orientation() const;
 
 	[[nodiscard]] bool grabKeyboard(bool enable);
 	[[nodiscard]] bool grabMouse(bool enable);
