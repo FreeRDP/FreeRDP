@@ -75,17 +75,17 @@ static WINPR_JSON* revcast_(json_t* json, const char* fkt)
 	return jansson;
 }
 #else
-static inline const json_t* ccast(const WINPR_JSON* json)
+static inline WINPR_ATTR_NODISCARD const json_t* ccast(const WINPR_JSON* json)
 {
 	return WINPR_CXX_COMPAT_CAST(const json_t*, json);
 }
 
-static inline json_t* cast(WINPR_JSON* json)
+static inline WINPR_ATTR_NODISCARD json_t* cast(WINPR_JSON* json)
 {
 	return WINPR_CXX_COMPAT_CAST(json_t*, json);
 }
 
-static inline WINPR_JSON* revcast(json_t* json)
+static inline WINPR_ATTR_NODISCARD WINPR_JSON* revcast(json_t* json)
 {
 	return WINPR_CXX_COMPAT_CAST(WINPR_JSON*, json);
 }

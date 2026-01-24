@@ -26,9 +26,12 @@
 
 #include "ios_freerdp.h"
 
-FREERDP_LOCAL UINT ios_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT
+ios_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
 
-FREERDP_LOCAL BOOL ios_cliprdr_init(mfContext* context, CliprdrClientContext* cliprdr);
-FREERDP_LOCAL BOOL ios_cliprdr_uninit(mfContext* context, CliprdrClientContext* cliprdr);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL ios_cliprdr_init(mfContext* context,
+                                                         CliprdrClientContext* cliprdr);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL ios_cliprdr_uninit(mfContext* context,
+                                                           CliprdrClientContext* cliprdr);
 
 #endif /* FREERDP_CLIENT_IOS_CLIPRDR_H */

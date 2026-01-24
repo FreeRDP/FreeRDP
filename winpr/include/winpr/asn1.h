@@ -110,100 +110,136 @@ extern "C"
 	WINPR_API void WinPrAsn1Decoder_InitMem(WinPrAsn1Decoder* dec, WinPrAsn1EncodingRule encoding,
 	                                        const BYTE* source, size_t len);
 
-	WINPR_API BOOL WinPrAsn1DecPeekTag(WinPrAsn1Decoder* dec, WinPrAsn1_tag* tag);
-	WINPR_API size_t WinPrAsn1DecReadTagAndLen(WinPrAsn1Decoder* dec, WinPrAsn1_tag* tag,
-	                                           size_t* len);
-	WINPR_API size_t WinPrAsn1DecPeekTagAndLen(WinPrAsn1Decoder* dec, WinPrAsn1_tag* tag,
-	                                           size_t* len);
-	WINPR_API size_t WinPrAsn1DecReadTagLenValue(WinPrAsn1Decoder* dec, WinPrAsn1_tag* tag,
-	                                             size_t* len, WinPrAsn1Decoder* value);
-	WINPR_API size_t WinPrAsn1DecReadBoolean(WinPrAsn1Decoder* dec, WinPrAsn1_BOOL* target);
-	WINPR_API size_t WinPrAsn1DecReadInteger(WinPrAsn1Decoder* dec, WinPrAsn1_INTEGER* target);
-	WINPR_API size_t WinPrAsn1DecReadEnumerated(WinPrAsn1Decoder* dec,
-	                                            WinPrAsn1_ENUMERATED* target);
-	WINPR_API size_t WinPrAsn1DecReadOID(WinPrAsn1Decoder* dec, WinPrAsn1_OID* target,
-	                                     BOOL allocate);
-	WINPR_API size_t WinPrAsn1DecReadOctetString(WinPrAsn1Decoder* dec,
-	                                             WinPrAsn1_OctetString* target, BOOL allocate);
-	WINPR_API size_t WinPrAsn1DecReadIA5String(WinPrAsn1Decoder* dec, WinPrAsn1_IA5STRING* target);
-	WINPR_API size_t WinPrAsn1DecReadGeneralString(WinPrAsn1Decoder* dec, WinPrAsn1_STRING* target);
-	WINPR_API size_t WinPrAsn1DecReadUtcTime(WinPrAsn1Decoder* dec, WinPrAsn1_UTCTIME* target);
-	WINPR_API size_t WinPrAsn1DecReadNull(WinPrAsn1Decoder* dec);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinPrAsn1DecPeekTag(WinPrAsn1Decoder* dec,
+	                                                        WinPrAsn1_tag* tag);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadTagAndLen(WinPrAsn1Decoder* dec,
+	                                                                WinPrAsn1_tag* tag,
+	                                                                size_t* len);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecPeekTagAndLen(WinPrAsn1Decoder* dec,
+	                                                                WinPrAsn1_tag* tag,
+	                                                                size_t* len);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadTagLenValue(WinPrAsn1Decoder* dec,
+	                                                                  WinPrAsn1_tag* tag,
+	                                                                  size_t* len,
+	                                                                  WinPrAsn1Decoder* value);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadBoolean(WinPrAsn1Decoder* dec,
+	                                                              WinPrAsn1_BOOL* target);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadInteger(WinPrAsn1Decoder* dec,
+	                                                              WinPrAsn1_INTEGER* target);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadEnumerated(WinPrAsn1Decoder* dec,
+	                                                                 WinPrAsn1_ENUMERATED* target);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadOID(WinPrAsn1Decoder* dec,
+	                                                          WinPrAsn1_OID* target, BOOL allocate);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadOctetString(WinPrAsn1Decoder* dec,
+	                                                                  WinPrAsn1_OctetString* target,
+	                                                                  BOOL allocate);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadIA5String(WinPrAsn1Decoder* dec,
+	                                                                WinPrAsn1_IA5STRING* target);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadGeneralString(WinPrAsn1Decoder* dec,
+	                                                                    WinPrAsn1_STRING* target);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadUtcTime(WinPrAsn1Decoder* dec,
+	                                                              WinPrAsn1_UTCTIME* target);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadNull(WinPrAsn1Decoder* dec);
 
-	WINPR_API size_t WinPrAsn1DecReadApp(WinPrAsn1Decoder* dec, WinPrAsn1_tagId* tagId,
-	                                     WinPrAsn1Decoder* setDec);
-	WINPR_API size_t WinPrAsn1DecReadSequence(WinPrAsn1Decoder* dec, WinPrAsn1Decoder* seqDec);
-	WINPR_API size_t WinPrAsn1DecReadSet(WinPrAsn1Decoder* dec, WinPrAsn1Decoder* setDec);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadApp(WinPrAsn1Decoder* dec,
+	                                                          WinPrAsn1_tagId* tagId,
+	                                                          WinPrAsn1Decoder* setDec);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadSequence(WinPrAsn1Decoder* dec,
+	                                                               WinPrAsn1Decoder* seqDec);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadSet(WinPrAsn1Decoder* dec,
+	                                                          WinPrAsn1Decoder* setDec);
 
-	WINPR_API size_t WinPrAsn1DecReadContextualTag(WinPrAsn1Decoder* dec, WinPrAsn1_tagId* tagId,
-	                                               WinPrAsn1Decoder* ctxtDec);
-	WINPR_API size_t WinPrAsn1DecPeekContextualTag(WinPrAsn1Decoder* dec, WinPrAsn1_tagId* tagId,
-	                                               WinPrAsn1Decoder* ctxtDec);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadContextualTag(WinPrAsn1Decoder* dec,
+	                                                                    WinPrAsn1_tagId* tagId,
+	                                                                    WinPrAsn1Decoder* ctxtDec);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecPeekContextualTag(WinPrAsn1Decoder* dec,
+	                                                                    WinPrAsn1_tagId* tagId,
+	                                                                    WinPrAsn1Decoder* ctxtDec);
 
-	WINPR_API size_t WinPrAsn1DecReadContextualBool(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId,
-	                                                BOOL* error, WinPrAsn1_BOOL* target);
-	WINPR_API size_t WinPrAsn1DecReadContextualInteger(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId,
-	                                                   BOOL* error, WinPrAsn1_INTEGER* target);
-	WINPR_API size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId,
-	                                               BOOL* error, WinPrAsn1_OID* target,
-	                                               BOOL allocate);
-	WINPR_API size_t WinPrAsn1DecReadContextualOctetString(WinPrAsn1Decoder* dec,
-	                                                       WinPrAsn1_tagId tagId, BOOL* error,
-	                                                       WinPrAsn1_OctetString* target,
-	                                                       BOOL allocate);
-	WINPR_API size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec,
-	                                                    WinPrAsn1_tagId tagId, BOOL* error,
-	                                                    WinPrAsn1Decoder* target);
-	WINPR_API wStream WinPrAsn1DecGetStream(WinPrAsn1Decoder* dec);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadContextualBool(WinPrAsn1Decoder* dec,
+	                                                                     WinPrAsn1_tagId tagId,
+	                                                                     BOOL* error,
+	                                                                     WinPrAsn1_BOOL* target);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadContextualInteger(
+	    WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error, WinPrAsn1_INTEGER* target);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec,
+	                                                                    WinPrAsn1_tagId tagId,
+	                                                                    BOOL* error,
+	                                                                    WinPrAsn1_OID* target,
+	                                                                    BOOL allocate);
+	WINPR_API WINPR_ATTR_NODISCARD size_t
+	WinPrAsn1DecReadContextualOctetString(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
+	                                      WinPrAsn1_OctetString* target, BOOL allocate);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1DecReadContextualSequence(
+	    WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error, WinPrAsn1Decoder* target);
+	WINPR_API WINPR_ATTR_NODISCARD wStream WinPrAsn1DecGetStream(WinPrAsn1Decoder* dec);
 
 	/* encoder functions */
 
 	WINPR_API void WinPrAsn1Encoder_Free(WinPrAsn1Encoder** penc);
-	WINPR_API WinPrAsn1Encoder* WinPrAsn1Encoder_New(WinPrAsn1EncodingRule encoding);
+	WINPR_API WINPR_ATTR_NODISCARD WinPrAsn1Encoder*
+	WinPrAsn1Encoder_New(WinPrAsn1EncodingRule encoding);
 
 	WINPR_API void WinPrAsn1Encoder_Reset(WinPrAsn1Encoder* enc);
 
-	WINPR_API BOOL WinPrAsn1EncAppContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId);
-	WINPR_API BOOL WinPrAsn1EncSeqContainer(WinPrAsn1Encoder* enc);
-	WINPR_API BOOL WinPrAsn1EncContextualSeqContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId);
-	WINPR_API BOOL WinPrAsn1EncSetContainer(WinPrAsn1Encoder* enc);
-	WINPR_API BOOL WinPrAsn1EncContextualSetContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId);
-	WINPR_API BOOL WinPrAsn1EncContextualContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId);
-	WINPR_API BOOL WinPrAsn1EncOctetStringContainer(WinPrAsn1Encoder* enc);
-	WINPR_API BOOL WinPrAsn1EncContextualOctetStringContainer(WinPrAsn1Encoder* enc,
-	                                                          WinPrAsn1_tagId tagId);
-	WINPR_API size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinPrAsn1EncAppContainer(WinPrAsn1Encoder* enc,
+	                                                             WinPrAsn1_tagId tagId);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinPrAsn1EncSeqContainer(WinPrAsn1Encoder* enc);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinPrAsn1EncContextualSeqContainer(WinPrAsn1Encoder* enc,
+	                                                                       WinPrAsn1_tagId tagId);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinPrAsn1EncSetContainer(WinPrAsn1Encoder* enc);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinPrAsn1EncContextualSetContainer(WinPrAsn1Encoder* enc,
+	                                                                       WinPrAsn1_tagId tagId);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinPrAsn1EncContextualContainer(WinPrAsn1Encoder* enc,
+	                                                                    WinPrAsn1_tagId tagId);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinPrAsn1EncOctetStringContainer(WinPrAsn1Encoder* enc);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	WinPrAsn1EncContextualOctetStringContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc);
 
-	WINPR_API size_t WinPrAsn1EncRawContent(WinPrAsn1Encoder* enc, const WinPrAsn1_MemoryChunk* c);
-	WINPR_API size_t WinPrAsn1EncContextualRawContent(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
-	                                                  const WinPrAsn1_MemoryChunk* c);
-	WINPR_API size_t WinPrAsn1EncInteger(WinPrAsn1Encoder* enc, WinPrAsn1_INTEGER integer);
-	WINPR_API size_t WinPrAsn1EncContextualInteger(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
-	                                               WinPrAsn1_INTEGER integer);
-	WINPR_API size_t WinPrAsn1EncBoolean(WinPrAsn1Encoder* enc, WinPrAsn1_BOOL b);
-	WINPR_API size_t WinPrAsn1EncContextualBoolean(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
-	                                               WinPrAsn1_BOOL b);
-	WINPR_API size_t WinPrAsn1EncEnumerated(WinPrAsn1Encoder* enc, WinPrAsn1_ENUMERATED e);
-	WINPR_API size_t WinPrAsn1EncContextualEnumerated(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
-	                                                  WinPrAsn1_ENUMERATED e);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncRawContent(WinPrAsn1Encoder* enc,
+	                                                             const WinPrAsn1_MemoryChunk* c);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncContextualRawContent(
+	    WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId, const WinPrAsn1_MemoryChunk* c);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncInteger(WinPrAsn1Encoder* enc,
+	                                                          WinPrAsn1_INTEGER integer);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncContextualInteger(WinPrAsn1Encoder* enc,
+	                                                                    WinPrAsn1_tagId tagId,
+	                                                                    WinPrAsn1_INTEGER integer);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncBoolean(WinPrAsn1Encoder* enc,
+	                                                          WinPrAsn1_BOOL b);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncContextualBoolean(WinPrAsn1Encoder* enc,
+	                                                                    WinPrAsn1_tagId tagId,
+	                                                                    WinPrAsn1_BOOL b);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncEnumerated(WinPrAsn1Encoder* enc,
+	                                                             WinPrAsn1_ENUMERATED e);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncContextualEnumerated(WinPrAsn1Encoder* enc,
+	                                                                       WinPrAsn1_tagId tagId,
+	                                                                       WinPrAsn1_ENUMERATED e);
 
-	WINPR_API size_t WinPrAsn1EncOID(WinPrAsn1Encoder* enc, const WinPrAsn1_OID* oid);
-	WINPR_API size_t WinPrAsn1EncContextualOID(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
-	                                           const WinPrAsn1_OID* oid);
-	WINPR_API size_t WinPrAsn1EncOctetString(WinPrAsn1Encoder* enc,
-	                                         const WinPrAsn1_OctetString* octetstring);
-	WINPR_API size_t WinPrAsn1EncContextualOctetString(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
-	                                                   const WinPrAsn1_OctetString* octetstring);
-	WINPR_API size_t WinPrAsn1EncIA5String(WinPrAsn1Encoder* enc, WinPrAsn1_IA5STRING ia5);
-	WINPR_API size_t WinPrAsn1EncGeneralString(WinPrAsn1Encoder* enc, WinPrAsn1_STRING str);
-	WINPR_API size_t WinPrAsn1EncContextualIA5String(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
-	                                                 WinPrAsn1_IA5STRING ia5);
-	WINPR_API size_t WinPrAsn1EncUtcTime(WinPrAsn1Encoder* enc, const WinPrAsn1_UTCTIME* utc);
-	WINPR_API size_t WinPrAsn1EncContextualUtcTime(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId,
-	                                               const WinPrAsn1_UTCTIME* utc);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncOID(WinPrAsn1Encoder* enc,
+	                                                      const WinPrAsn1_OID* oid);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncContextualOID(WinPrAsn1Encoder* enc,
+	                                                                WinPrAsn1_tagId tagId,
+	                                                                const WinPrAsn1_OID* oid);
+	WINPR_API WINPR_ATTR_NODISCARD size_t
+	WinPrAsn1EncOctetString(WinPrAsn1Encoder* enc, const WinPrAsn1_OctetString* octetstring);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncContextualOctetString(
+	    WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId, const WinPrAsn1_OctetString* octetstring);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncIA5String(WinPrAsn1Encoder* enc,
+	                                                            WinPrAsn1_IA5STRING ia5);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncGeneralString(WinPrAsn1Encoder* enc,
+	                                                                WinPrAsn1_STRING str);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncContextualIA5String(WinPrAsn1Encoder* enc,
+	                                                                      WinPrAsn1_tagId tagId,
+	                                                                      WinPrAsn1_IA5STRING ia5);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncUtcTime(WinPrAsn1Encoder* enc,
+	                                                          const WinPrAsn1_UTCTIME* utc);
+	WINPR_API WINPR_ATTR_NODISCARD size_t WinPrAsn1EncContextualUtcTime(
+	    WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId, const WinPrAsn1_UTCTIME* utc);
 
-	WINPR_API BOOL WinPrAsn1EncStreamSize(WinPrAsn1Encoder* enc, size_t* s);
-	WINPR_API BOOL WinPrAsn1EncToStream(WinPrAsn1Encoder* enc, wStream* s);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinPrAsn1EncStreamSize(WinPrAsn1Encoder* enc, size_t* s);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WinPrAsn1EncToStream(WinPrAsn1Encoder* enc, wStream* s);
 
 #ifdef __cplusplus
 }

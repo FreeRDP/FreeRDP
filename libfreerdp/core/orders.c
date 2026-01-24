@@ -47,27 +47,30 @@
 /* Exposed type definitions in public headers have the wrong type.
  * assert to the correct types internally to trigger the ci checkers on wrong data passed */
 #define get_checked_uint16(value) get_checked_uint16_int((value), __FILE__, __func__, __LINE__)
-static inline UINT16 get_checked_uint16_int(UINT32 value, WINPR_ATTR_UNUSED const char* file,
-                                            WINPR_ATTR_UNUSED const char* fkt,
-                                            WINPR_ATTR_UNUSED size_t line)
+static inline WINPR_ATTR_NODISCARD UINT16 get_checked_uint16_int(UINT32 value,
+                                                                 WINPR_ATTR_UNUSED const char* file,
+                                                                 WINPR_ATTR_UNUSED const char* fkt,
+                                                                 WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT_AT(value <= UINT16_MAX, file, fkt, line);
 	return (UINT16)value;
 }
 
 #define get_checked_uint8(value) get_checked_uint8_int((value), __FILE__, __func__, __LINE__)
-static inline UINT8 get_checked_uint8_int(UINT32 value, WINPR_ATTR_UNUSED const char* file,
-                                          WINPR_ATTR_UNUSED const char* fkt,
-                                          WINPR_ATTR_UNUSED size_t line)
+static inline WINPR_ATTR_NODISCARD UINT8 get_checked_uint8_int(UINT32 value,
+                                                               WINPR_ATTR_UNUSED const char* file,
+                                                               WINPR_ATTR_UNUSED const char* fkt,
+                                                               WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT_AT(value <= UINT8_MAX, file, fkt, line);
 	return (UINT8)value;
 }
 
 #define get_checked_int16(value) get_checked_int16_int((value), __FILE__, __func__, __LINE__)
-static inline INT16 get_checked_int16_int(INT32 value, WINPR_ATTR_UNUSED const char* file,
-                                          WINPR_ATTR_UNUSED const char* fkt,
-                                          WINPR_ATTR_UNUSED size_t line)
+static inline WINPR_ATTR_NODISCARD INT16 get_checked_int16_int(INT32 value,
+                                                               WINPR_ATTR_UNUSED const char* file,
+                                                               WINPR_ATTR_UNUSED const char* fkt,
+                                                               WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT_AT(value <= INT16_MAX, file, fkt, line);
 	WINPR_ASSERT_AT(value >= INT16_MIN, file, fkt, line);
@@ -75,9 +78,10 @@ static inline INT16 get_checked_int16_int(INT32 value, WINPR_ATTR_UNUSED const c
 }
 
 #define check_val_fits_int16(value) check_val_fits_int16_int((value), __FILE__, __func__, __LINE__)
-static inline BOOL check_val_fits_int16_int(INT32 value, WINPR_ATTR_UNUSED const char* file,
-                                            WINPR_ATTR_UNUSED const char* fkt,
-                                            WINPR_ATTR_UNUSED size_t line)
+static inline WINPR_ATTR_NODISCARD BOOL check_val_fits_int16_int(INT32 value,
+                                                                 WINPR_ATTR_UNUSED const char* file,
+                                                                 WINPR_ATTR_UNUSED const char* fkt,
+                                                                 WINPR_ATTR_UNUSED size_t line)
 {
 	const DWORD level = WLOG_WARN;
 	static wLog* log = NULL;
@@ -105,10 +109,9 @@ static inline BOOL check_val_fits_int16_int(INT32 value, WINPR_ATTR_UNUSED const
 
 #define gdi_rob3_code_string_checked(value) \
 	gdi_rob3_code_string_checked_int((value), __FILE__, __func__, __LINE__)
-static inline const char* gdi_rob3_code_string_checked_int(UINT32 rob,
-                                                           WINPR_ATTR_UNUSED const char* file,
-                                                           WINPR_ATTR_UNUSED const char* fkt,
-                                                           WINPR_ATTR_UNUSED size_t line)
+static inline WINPR_ATTR_NODISCARD const char*
+gdi_rob3_code_string_checked_int(UINT32 rob, WINPR_ATTR_UNUSED const char* file,
+                                 WINPR_ATTR_UNUSED const char* fkt, WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT_AT((rob) <= UINT8_MAX, file, fkt, line);
 	return gdi_rop3_code_string((BYTE)rob);
@@ -116,9 +119,10 @@ static inline const char* gdi_rob3_code_string_checked_int(UINT32 rob,
 
 #define gdi_rop3_code_checked(value) \
 	gdi_rop3_code_checked_int((value), __FILE__, __func__, __LINE__)
-static inline DWORD gdi_rop3_code_checked_int(UINT32 code, WINPR_ATTR_UNUSED const char* file,
-                                              WINPR_ATTR_UNUSED const char* fkt,
-                                              WINPR_ATTR_UNUSED size_t line)
+static inline WINPR_ATTR_NODISCARD
+    DWORD gdi_rop3_code_checked_int(UINT32 code, WINPR_ATTR_UNUSED const char* file,
+                                    WINPR_ATTR_UNUSED const char* fkt,
+                                    WINPR_ATTR_UNUSED size_t line)
 {
 	WINPR_ASSERT_AT(code <= UINT8_MAX, file, fkt, line);
 	return gdi_rop3_code((UINT8)code);
@@ -594,7 +598,7 @@ static const char* altsec_order_string(BYTE orderType)
 }
 WINPR_PRAGMA_DIAG_POP
 
-static inline BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
 {
 	INT8 lsi8 = 0;
 	INT16 lsi16 = 0;
@@ -622,8 +626,9 @@ static inline BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
 #define update_write_coord(s, coord) \
 	update_write_coord_int((s), (coord), #coord, __FILE__, __func__, __LINE__)
 
-static inline BOOL update_write_coord_int(wStream* s, INT32 coord, const char* name,
-                                          const char* file, const char* fkt, size_t line)
+static inline WINPR_ATTR_NODISCARD BOOL update_write_coord_int(wStream* s, INT32 coord,
+                                                               const char* name, const char* file,
+                                                               const char* fkt, size_t line)
 {
 	if ((coord < 0) || (coord > UINT16_MAX))
 	{
@@ -640,7 +645,7 @@ static inline BOOL update_write_coord_int(wStream* s, INT32 coord, const char* n
 	Stream_Write_UINT16(s, (UINT16)coord);
 	return TRUE;
 }
-static inline BOOL update_read_color(wStream* s, UINT32* color)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_color(wStream* s, UINT32* color)
 {
 	BYTE byte = 0;
 
@@ -656,7 +661,7 @@ static inline BOOL update_read_color(wStream* s, UINT32* color)
 	*color |= ((UINT32)byte << 16) & 0xFF0000;
 	return TRUE;
 }
-static inline BOOL update_write_color(wStream* s, UINT32 color)
+static inline WINPR_ATTR_NODISCARD BOOL update_write_color(wStream* s, UINT32 color)
 {
 	BYTE byte = 0;
 	byte = (color & 0xFF);
@@ -667,7 +672,7 @@ static inline BOOL update_write_color(wStream* s, UINT32 color)
 	Stream_Write_UINT8(s, byte);
 	return TRUE;
 }
-static inline BOOL update_read_colorref(wStream* s, UINT32* color)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_colorref(wStream* s, UINT32* color)
 {
 	BYTE byte = 0;
 
@@ -684,7 +689,7 @@ static inline BOOL update_read_colorref(wStream* s, UINT32* color)
 	Stream_Seek_UINT8(s);
 	return TRUE;
 }
-static inline BOOL update_read_color_quad(wStream* s, UINT32* color)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_color_quad(wStream* s, UINT32* color)
 {
 	return update_read_colorref(s, color);
 }
@@ -698,7 +703,7 @@ static inline void update_write_color_quad(wStream* s, UINT32 color)
 	byte = color & 0xFF;
 	Stream_Write_UINT8(s, byte);
 }
-static inline BOOL update_read_2byte_unsigned(wStream* s, UINT32* value)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_2byte_unsigned(wStream* s, UINT32* value)
 {
 	BYTE byte = 0;
 
@@ -723,7 +728,7 @@ static inline BOOL update_read_2byte_unsigned(wStream* s, UINT32* value)
 
 	return TRUE;
 }
-static inline BOOL update_write_2byte_unsigned(wStream* s, UINT32 value)
+static inline WINPR_ATTR_NODISCARD BOOL update_write_2byte_unsigned(wStream* s, UINT32 value)
 {
 	BYTE byte = 0;
 
@@ -745,7 +750,7 @@ static inline BOOL update_write_2byte_unsigned(wStream* s, UINT32 value)
 
 	return TRUE;
 }
-static inline BOOL update_read_2byte_signed(wStream* s, INT32* value)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_2byte_signed(wStream* s, INT32* value)
 {
 	BYTE byte = 0;
 	BOOL negative = 0;
@@ -771,7 +776,7 @@ static inline BOOL update_read_2byte_signed(wStream* s, INT32* value)
 
 	return TRUE;
 }
-static inline BOOL update_write_2byte_signed(wStream* s, INT32 value)
+static inline WINPR_ATTR_NODISCARD BOOL update_write_2byte_signed(wStream* s, INT32 value)
 {
 	BYTE byte = 0;
 	BOOL negative = FALSE;
@@ -808,7 +813,7 @@ static inline BOOL update_write_2byte_signed(wStream* s, INT32 value)
 
 	return TRUE;
 }
-static inline BOOL update_read_4byte_unsigned(wStream* s, UINT32* value)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_4byte_unsigned(wStream* s, UINT32* value)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
@@ -849,7 +854,7 @@ static inline BOOL update_read_4byte_unsigned(wStream* s, UINT32* value)
 
 	return TRUE;
 }
-static inline BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
+static inline WINPR_ATTR_NODISCARD BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
 {
 	BYTE byte = 0;
 
@@ -890,7 +895,7 @@ static inline BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
 	return TRUE;
 }
 
-static inline BOOL update_read_delta(wStream* s, INT32* value)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_delta(wStream* s, INT32* value)
 {
 	BYTE byte = 0;
 	UINT32 uvalue = 0;
@@ -918,7 +923,8 @@ static inline BOOL update_read_delta(wStream* s, INT32* value)
 	return TRUE;
 }
 
-static inline BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlags)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_brush(wStream* s, rdpBrush* brush,
+                                                          BYTE fieldFlags)
 {
 	if (fieldFlags & ORDER_FIELD_01)
 	{
@@ -981,7 +987,8 @@ static inline BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlag
 
 	return TRUE;
 }
-static inline BOOL update_write_brush(wStream* s, rdpBrush* brush, BYTE fieldFlags)
+static inline WINPR_ATTR_NODISCARD BOOL update_write_brush(wStream* s, rdpBrush* brush,
+                                                           BYTE fieldFlags)
 {
 	if (fieldFlags & ORDER_FIELD_01)
 	{
@@ -1039,7 +1046,8 @@ static inline BOOL update_write_brush(wStream* s, rdpBrush* brush, BYTE fieldFla
 
 	return TRUE;
 }
-static inline BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, const UINT32* nr)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles,
+                                                                const UINT32* nr)
 {
 	UINT32 number = *nr;
 	BYTE flags = 0;
@@ -1104,8 +1112,10 @@ static inline BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, c
 	return TRUE;
 }
 
-static inline BOOL update_read_delta_points(wStream* s, DELTA_POINT** points, UINT32 number,
-                                            WINPR_ATTR_UNUSED INT16 x, WINPR_ATTR_UNUSED INT16 y)
+static inline WINPR_ATTR_NODISCARD BOOL update_read_delta_points(wStream* s, DELTA_POINT** points,
+                                                                 UINT32 number,
+                                                                 WINPR_ATTR_UNUSED INT16 x,
+                                                                 WINPR_ATTR_UNUSED INT16 y)
 {
 	BYTE flags = 0;
 	BYTE* zeroBits = NULL;
@@ -1148,15 +1158,18 @@ static inline BOOL update_read_delta_points(wStream* s, DELTA_POINT** points, UI
 	return TRUE;
 }
 
-static BOOL order_field_flag_is_set(const ORDER_INFO* orderInfo, BYTE number)
+static inline WINPR_ATTR_NODISCARD BOOL order_field_flag_is_set(const ORDER_INFO* orderInfo,
+                                                                BYTE number)
 {
 	const UINT32 mask = (UINT32)(1UL << ((UINT32)number - 1UL));
 	const BOOL set = (orderInfo->fieldFlags & mask) != 0;
 	return set;
 }
 
-static inline BOOL read_order_field_byte(const char* orderName, const ORDER_INFO* orderInfo,
-                                         wStream* s, BYTE number, UINT32* target, BOOL optional)
+static inline WINPR_ATTR_NODISCARD BOOL read_order_field_byte(const char* orderName,
+                                                              const ORDER_INFO* orderInfo,
+                                                              wStream* s, BYTE number,
+                                                              UINT32* target, BOOL optional)
 {
 	WINPR_ASSERT(orderName);
 	WINPR_ASSERT(orderInfo);
@@ -1174,9 +1187,11 @@ static inline BOOL read_order_field_byte(const char* orderName, const ORDER_INFO
 	return TRUE;
 }
 
-static inline BOOL read_order_field_2bytes(const char* orderName, const ORDER_INFO* orderInfo,
-                                           wStream* s, BYTE number, UINT32* target1,
-                                           UINT32* target2, BOOL optional)
+static inline WINPR_ATTR_NODISCARD BOOL read_order_field_2bytes(const char* orderName,
+                                                                const ORDER_INFO* orderInfo,
+                                                                wStream* s, BYTE number,
+                                                                UINT32* target1, UINT32* target2,
+                                                                BOOL optional)
 {
 	WINPR_ASSERT(orderName);
 	WINPR_ASSERT(orderInfo);
@@ -1196,8 +1211,10 @@ static inline BOOL read_order_field_2bytes(const char* orderName, const ORDER_IN
 	return TRUE;
 }
 
-static inline BOOL read_order_field_uint16(const char* orderName, const ORDER_INFO* orderInfo,
-                                           wStream* s, BYTE number, UINT32* target, BOOL optional)
+static inline WINPR_ATTR_NODISCARD BOOL read_order_field_uint16(const char* orderName,
+                                                                const ORDER_INFO* orderInfo,
+                                                                wStream* s, BYTE number,
+                                                                UINT32* target, BOOL optional)
 {
 	WINPR_ASSERT(orderName);
 	WINPR_ASSERT(orderInfo);
@@ -1217,8 +1234,10 @@ static inline BOOL read_order_field_uint16(const char* orderName, const ORDER_IN
 	return TRUE;
 }
 
-static inline BOOL read_order_field_int16(const char* orderName, const ORDER_INFO* orderInfo,
-                                          wStream* s, BYTE number, INT32* target, BOOL optional)
+static inline WINPR_ATTR_NODISCARD BOOL read_order_field_int16(const char* orderName,
+                                                               const ORDER_INFO* orderInfo,
+                                                               wStream* s, BYTE number,
+                                                               INT32* target, BOOL optional)
 {
 	WINPR_ASSERT(orderName);
 	WINPR_ASSERT(orderInfo);
@@ -1238,8 +1257,10 @@ static inline BOOL read_order_field_int16(const char* orderName, const ORDER_INF
 	return TRUE;
 }
 
-static inline BOOL read_order_field_uint32(const char* orderName, const ORDER_INFO* orderInfo,
-                                           wStream* s, BYTE number, UINT32* target, BOOL optional)
+static inline WINPR_ATTR_NODISCARD BOOL read_order_field_uint32(const char* orderName,
+                                                                const ORDER_INFO* orderInfo,
+                                                                wStream* s, BYTE number,
+                                                                UINT32* target, BOOL optional)
 {
 	WINPR_ASSERT(orderName);
 	WINPR_ASSERT(orderInfo);
@@ -1259,8 +1280,10 @@ static inline BOOL read_order_field_uint32(const char* orderName, const ORDER_IN
 	return TRUE;
 }
 
-static inline BOOL read_order_field_coord(const char* orderName, const ORDER_INFO* orderInfo,
-                                          wStream* s, UINT32 NO, INT32* TARGET, BOOL optional)
+static inline WINPR_ATTR_NODISCARD BOOL read_order_field_coord(const char* orderName,
+                                                               const ORDER_INFO* orderInfo,
+                                                               wStream* s, UINT32 NO, INT32* TARGET,
+                                                               BOOL optional)
 {
 	WINPR_ASSERT(orderName);
 	WINPR_ASSERT(orderInfo);
@@ -1276,8 +1299,10 @@ static inline BOOL read_order_field_coord(const char* orderName, const ORDER_INF
 	return update_read_coord(s, TARGET, orderInfo->deltaCoordinates);
 }
 
-static inline BOOL read_order_field_color(const char* orderName, const ORDER_INFO* orderInfo,
-                                          wStream* s, UINT32 NO, UINT32* TARGET, BOOL optional)
+static inline WINPR_ATTR_NODISCARD BOOL read_order_field_color(const char* orderName,
+                                                               const ORDER_INFO* orderInfo,
+                                                               wStream* s, UINT32 NO,
+                                                               UINT32* TARGET, BOOL optional)
 {
 	WINPR_ASSERT(orderName);
 	WINPR_ASSERT(orderInfo);
@@ -1295,7 +1320,7 @@ static inline BOOL read_order_field_color(const char* orderName, const ORDER_INF
 
 	return TRUE;
 }
-static inline BOOL FIELD_SKIP_BUFFER16(wStream* s, UINT32 TARGET_LEN)
+static inline WINPR_ATTR_NODISCARD BOOL FIELD_SKIP_BUFFER16(wStream* s, UINT32 TARGET_LEN)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;

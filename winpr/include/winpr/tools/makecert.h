@@ -29,19 +29,20 @@ extern "C"
 
 	typedef struct S_MAKECERT_CONTEXT MAKECERT_CONTEXT;
 
-	WINPR_API int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv);
+	WINPR_API WINPR_ATTR_NODISCARD int makecert_context_process(MAKECERT_CONTEXT* context, int argc,
+	                                                            char** argv);
 
-	WINPR_API int makecert_context_set_output_file_name(MAKECERT_CONTEXT* context,
-	                                                    const char* name);
-	WINPR_API int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context,
-	                                                       const char* path);
-	WINPR_API int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context,
-	                                                       const char* path);
+	WINPR_API WINPR_ATTR_NODISCARD int
+	makecert_context_set_output_file_name(MAKECERT_CONTEXT* context, const char* name);
+	WINPR_API WINPR_ATTR_NODISCARD int
+	makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, const char* path);
+	WINPR_API WINPR_ATTR_NODISCARD int
+	makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, const char* path);
 
 	WINPR_API void makecert_context_free(MAKECERT_CONTEXT* context);
 
 	WINPR_ATTR_MALLOC(makecert_context_free, 1)
-	WINPR_API MAKECERT_CONTEXT* makecert_context_new(void);
+	WINPR_API WINPR_ATTR_NODISCARD MAKECERT_CONTEXT* makecert_context_new(void);
 
 #ifdef __cplusplus
 }

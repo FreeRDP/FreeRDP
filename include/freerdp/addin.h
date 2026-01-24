@@ -56,23 +56,20 @@ extern "C"
 	                                                                    LPCSTR pszType,
 	                                                                    DWORD dwFlags);
 
-	FREERDP_API LPSTR freerdp_get_library_install_path(void);
-	FREERDP_API LPSTR freerdp_get_dynamic_addin_install_path(void);
+	FREERDP_API WINPR_ATTR_NODISCARD LPSTR freerdp_get_library_install_path(void);
+	FREERDP_API WINPR_ATTR_NODISCARD LPSTR freerdp_get_dynamic_addin_install_path(void);
 
-	FREERDP_API int freerdp_register_addin_provider(FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN provider,
-	                                                DWORD dwFlags);
-	FREERDP_API FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN freerdp_get_current_addin_provider(void);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	freerdp_register_addin_provider(FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN provider, DWORD dwFlags);
+	FREERDP_API WINPR_ATTR_NODISCARD FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN
+	freerdp_get_current_addin_provider(void);
 
-	FREERDP_API PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath,
-	                                                            LPCSTR pszEntryName);
-	FREERDP_API PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
-	                                                                          LPCSTR pszSubsystem,
-	                                                                          LPCSTR pszType,
-	                                                                          DWORD dwFlags);
-	FREERDP_API PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(LPCSTR pszName,
-	                                                                  LPCSTR pszSubsystem,
-	                                                                  LPCSTR pszType,
-	                                                                  DWORD dwFlags);
+	FREERDP_API WINPR_ATTR_NODISCARD PVIRTUALCHANNELENTRY
+	freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszEntryName);
+	FREERDP_API WINPR_ATTR_NODISCARD PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(
+	    LPCSTR pszName, LPCSTR pszSubsystem, LPCSTR pszType, DWORD dwFlags);
+	FREERDP_API WINPR_ATTR_NODISCARD PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(
+	    LPCSTR pszName, LPCSTR pszSubsystem, LPCSTR pszType, DWORD dwFlags);
 
 #ifdef __cplusplus
 }

@@ -56,7 +56,7 @@
 /* Ubuntu 14.04 ships without the functions provided by avutil,
  * so define error to string methods here. */
 #if !defined(av_err2str)
-static inline char* error_string(char* errbuf, size_t errbuf_size, int errnum)
+static inline WINPR_ATTR_NODISCARD char* error_string(char* errbuf, size_t errbuf_size, int errnum)
 {
 	av_strerror(errnum, errbuf, errbuf_size);
 	return errbuf;

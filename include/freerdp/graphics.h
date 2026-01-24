@@ -72,10 +72,12 @@ extern "C"
 		UINT32 paddingC[64 - 34]; /* 34 */
 	};
 
-	FREERDP_API rdpBitmap* Bitmap_Alloc(rdpContext* context);
-	FREERDP_API BOOL Bitmap_SetRectangle(rdpBitmap* bitmap, UINT16 left, UINT16 top, UINT16 right,
-	                                     UINT16 bottom);
-	FREERDP_API BOOL Bitmap_SetDimensions(rdpBitmap* bitmap, UINT16 width, UINT16 height);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpBitmap* Bitmap_Alloc(rdpContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL Bitmap_SetRectangle(rdpBitmap* bitmap, UINT16 left,
+	                                                          UINT16 top, UINT16 right,
+	                                                          UINT16 bottom);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL Bitmap_SetDimensions(rdpBitmap* bitmap, UINT16 width,
+	                                                           UINT16 height);
 
 	/* Pointer Class */
 
@@ -109,7 +111,7 @@ extern "C"
 		UINT32 paddingB[32 - 25]; /* 25 */
 	};
 
-	FREERDP_API rdpPointer* Pointer_Alloc(rdpContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpPointer* Pointer_Alloc(rdpContext* context);
 
 	/* Glyph Class */
 	typedef BOOL (*pGlyph_New)(rdpContext* context, rdpGlyph* glyph);
@@ -144,8 +146,9 @@ extern "C"
 		UINT32 paddingB[32 - 22]; /* 22 */
 	};
 
-	FREERDP_API rdpGlyph* Glyph_Alloc(rdpContext* context, INT32 x, INT32 y, UINT32 cx, UINT32 cy,
-	                                  UINT32 cb, const BYTE* aj);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpGlyph* Glyph_Alloc(rdpContext* context, INT32 x, INT32 y,
+	                                                       UINT32 cx, UINT32 cy, UINT32 cb,
+	                                                       const BYTE* aj);
 
 	/* Graphics Module */
 
@@ -166,7 +169,7 @@ extern "C"
 	FREERDP_API void graphics_free(rdpGraphics* graphics);
 
 	WINPR_ATTR_MALLOC(graphics_free, 1)
-	FREERDP_API rdpGraphics* graphics_new(rdpContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpGraphics* graphics_new(rdpContext* context);
 
 #ifdef __cplusplus
 }

@@ -523,21 +523,24 @@ extern "C"
 	};
 	typedef struct rdp_gdi rdpGdi;
 
-	FREERDP_API DWORD gdi_rop3_code(BYTE code);
-	FREERDP_API const char* gdi_rop3_code_string(BYTE code);
-	FREERDP_API const char* gdi_rop3_string(DWORD rop);
+	FREERDP_API WINPR_ATTR_NODISCARD DWORD gdi_rop3_code(BYTE code);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* gdi_rop3_code_string(BYTE code);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* gdi_rop3_string(DWORD rop);
 
-	FREERDP_API UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel);
-	FREERDP_API BOOL gdi_decode_color(rdpGdi* gdi, UINT32 srcColor, UINT32* color, UINT32* format);
-	FREERDP_API BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height);
-	FREERDP_API BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride,
-	                               UINT32 format, BYTE* buffer, void (*pfree)(void*));
-	FREERDP_API BOOL gdi_init(freerdp* instance, UINT32 format);
-	FREERDP_API BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
-	                             void (*pfree)(void*));
+	FREERDP_API WINPR_ATTR_NODISCARD UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL gdi_decode_color(rdpGdi* gdi, UINT32 srcColor,
+	                                                       UINT32* color, UINT32* format);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
+	                                                    UINT32 stride, UINT32 format, BYTE* buffer,
+	                                                    void (*pfree)(void*));
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL gdi_init(freerdp* instance, UINT32 format);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL gdi_init_ex(freerdp* instance, UINT32 format,
+	                                                  UINT32 stride, BYTE* buffer,
+	                                                  void (*pfree)(void*));
 	FREERDP_API void gdi_free(freerdp* instance);
 
-	FREERDP_API BOOL gdi_send_suppress_output(rdpGdi* gdi, BOOL suppress);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL gdi_send_suppress_output(rdpGdi* gdi, BOOL suppress);
 
 #ifdef __cplusplus
 }

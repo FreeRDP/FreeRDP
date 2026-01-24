@@ -40,21 +40,23 @@ extern "C"
 		FREERDP_KEY_PARAM_RSA_N
 	};
 
-	FREERDP_LOCAL rdpPrivateKey* freerdp_key_clone(const rdpPrivateKey* key);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD rdpPrivateKey* freerdp_key_clone(const rdpPrivateKey* key);
 
-	FREERDP_LOCAL const rdpCertInfo* freerdp_key_get_info(const rdpPrivateKey* key);
-	FREERDP_LOCAL const BYTE* freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD const rdpCertInfo*
+	freerdp_key_get_info(const rdpPrivateKey* key);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD const BYTE*
+	freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength);
 
 	/** \brief returns a pointer to a EVP_PKEY structure.
 	 *  Call EVP_PKEY_free when done.
 	 */
-	FREERDP_LOCAL EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key);
 
-	FREERDP_LOCAL BYTE* freerdp_key_get_param(const rdpPrivateKey* key,
-	                                          enum FREERDP_KEY_PARAM param, size_t* plength);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD BYTE*
+	freerdp_key_get_param(const rdpPrivateKey* key, enum FREERDP_KEY_PARAM param, size_t* plength);
 
-	FREERDP_LOCAL WINPR_DIGEST_CTX* freerdp_key_digest_sign(rdpPrivateKey* key,
-	                                                        WINPR_MD_TYPE digest);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD WINPR_DIGEST_CTX*
+	freerdp_key_digest_sign(rdpPrivateKey* key, WINPR_MD_TYPE digest);
 
 	FREERDP_LOCAL extern const rdpPrivateKey* priv_key_tssk;
 

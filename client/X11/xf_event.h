@@ -27,10 +27,10 @@
 
 const char* x11_event_string(int event);
 
-BOOL xf_event_action_script_init(xfContext* xfc);
+WINPR_ATTR_NODISCARD BOOL xf_event_action_script_init(xfContext* xfc);
 void xf_event_action_script_free(xfContext* xfc);
 
-BOOL xf_event_process(freerdp* instance, const XEvent* event);
+WINPR_ATTR_NODISCARD BOOL xf_event_process(freerdp* instance, const XEvent* event);
 void xf_event_SendClientEvent(xfContext* xfc, xfWindow* window, Atom atom, unsigned int numArgs,
                               ...);
 
@@ -39,23 +39,27 @@ void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y);
 
 #define xf_generic_MotionNotify(xfc, x, y, window, app) \
 	xf_generic_MotionNotify_((xfc), (x), (y), (window), (app), __FILE__, __func__, __LINE__)
-BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL app,
-                              const char* file, const char* fkt, size_t line);
+WINPR_ATTR_NODISCARD BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window,
+                                                   BOOL app, const char* file, const char* fkt,
+                                                   size_t line);
 
 #define xf_generic_RawMotionNotify(xfc, x, y, window, app) \
 	xf_generic_RawMotionNotify_((xfc), (x), (y), (window), (app), __FILE__, __func__, __LINE__)
-BOOL xf_generic_RawMotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL app,
-                                 const char* file, const char* fkt, size_t line);
+WINPR_ATTR_NODISCARD BOOL xf_generic_RawMotionNotify_(xfContext* xfc, int x, int y, Window window,
+                                                      BOOL app, const char* file, const char* fkt,
+                                                      size_t line);
 
 #define xf_generic_ButtonEvent(xfc, x, y, button, window, app, down)                      \
 	xf_generic_ButtonEvent_((xfc), (x), (y), (button), (window), (app), (down), __FILE__, \
 	                        __func__, __LINE__)
-BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window window, BOOL app,
-                             BOOL down, const char* file, const char* fkt, size_t line);
+WINPR_ATTR_NODISCARD BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button,
+                                                  Window window, BOOL app, BOOL down,
+                                                  const char* file, const char* fkt, size_t line);
 
 #define xf_generic_RawButtonEvent(xfc, button, app, down) \
 	xf_generic_RawButtonEvent_((xfc), (button), (app), (down), __FILE__, __func__, __LINE__)
-BOOL xf_generic_RawButtonEvent_(xfContext* xfc, int button, BOOL app, BOOL down, const char* file,
-                                const char* fkt, size_t line);
+WINPR_ATTR_NODISCARD BOOL xf_generic_RawButtonEvent_(xfContext* xfc, int button, BOOL app,
+                                                     BOOL down, const char* file, const char* fkt,
+                                                     size_t line);
 
 #endif /* FREERDP_CLIENT_X11_EVENT_H */

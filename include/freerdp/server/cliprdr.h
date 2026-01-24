@@ -137,7 +137,7 @@ extern "C"
 	FREERDP_API void cliprdr_server_context_free(CliprdrServerContext* context);
 
 	WINPR_ATTR_MALLOC(cliprdr_server_context_free, 1)
-	FREERDP_API CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm);
+	FREERDP_API WINPR_ATTR_NODISCARD CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus
 }

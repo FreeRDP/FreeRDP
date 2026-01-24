@@ -1215,98 +1215,99 @@ extern "C"
 
 	/* Package Management */
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages,
-	                                                               PSecPkgInfoA* ppPackageInfo);
-	WINPR_API SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(ULONG* pcPackages,
-	                                                               PSecPkgInfoW* ppPackageInfo);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgInfoA* ppPackageInfo);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	EnumerateSecurityPackagesW(ULONG* pcPackages, PSecPkgInfoW* ppPackageInfo);
 
-	WINPR_API PSecurityFunctionTableA SEC_ENTRY InitSecurityInterfaceA(void);
-	WINPR_API PSecurityFunctionTableW SEC_ENTRY InitSecurityInterfaceW(void);
+	WINPR_API WINPR_ATTR_NODISCARD PSecurityFunctionTableA SEC_ENTRY InitSecurityInterfaceA(void);
+	WINPR_API WINPR_ATTR_NODISCARD PSecurityFunctionTableW SEC_ENTRY InitSecurityInterfaceW(void);
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName,
-	                                                              PSecPkgInfoA* ppPackageInfo);
-	WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName,
-	                                                              PSecPkgInfoW* ppPackageInfo);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PSecPkgInfoA* ppPackageInfo);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, PSecPkgInfoW* ppPackageInfo);
 
 	/* Credential Management */
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(
 	    SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
 	    void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
 	    PTimeStamp ptsExpiry);
-	WINPR_API SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(
 	    SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
 	    void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
 	    PTimeStamp ptsExpiry);
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, ULONG fFlags,
-	                                                          PSecBuffer pPackedContext,
-	                                                          HANDLE* pToken);
-	WINPR_API SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY ExportSecurityContext(
+	    PCtxtHandle phContext, ULONG fFlags, PSecBuffer pPackedContext, HANDLE* pToken);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	FreeCredentialsHandle(PCredHandle phCredential);
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage,
-	                                                           PSecBuffer pPackedContext,
-	                                                           HANDLE pToken,
-	                                                           PCtxtHandle phContext);
-	WINPR_API SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage,
-	                                                           PSecBuffer pPackedContext,
-	                                                           HANDLE pToken,
-	                                                           PCtxtHandle phContext);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(
+	    SEC_CHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(
+	    SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext);
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(PCredHandle phCredential,
-	                                                                ULONG ulAttribute,
-	                                                                void* pBuffer);
-	WINPR_API SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(PCredHandle phCredential,
-	                                                                ULONG ulAttribute,
-	                                                                void* pBuffer);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer);
 
 	/* Context Management */
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
 	AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput,
 	                      ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
 	                      PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsTimeStamp);
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY ApplyControlToken(PCtxtHandle phContext,
-	                                                      PSecBufferDesc pInput);
-	WINPR_API SECURITY_STATUS SEC_ENTRY CompleteAuthToken(PCtxtHandle phContext,
-	                                                      PSecBufferDesc pToken);
-	WINPR_API SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext);
-	WINPR_API SECURITY_STATUS SEC_ENTRY FreeContextBuffer(void* pvContextBuffer);
-	WINPR_API SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	ApplyControlToken(PCtxtHandle phContext, PSecBufferDesc pInput);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	DeleteSecurityContext(PCtxtHandle phContext);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	FreeContextBuffer(void* pvContextBuffer);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	ImpersonateSecurityContext(PCtxtHandle phContext);
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(
 	    PCredHandle phCredential, PCtxtHandle phContext, SEC_CHAR* pszTargetName, ULONG fContextReq,
 	    ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
 	    PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr,
 	    PTimeStamp ptsExpiry);
-	WINPR_API SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(
 	    PCredHandle phCredential, PCtxtHandle phContext, SEC_WCHAR* pszTargetName,
 	    ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput,
 	    ULONG Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr,
 	    PTimeStamp ptsExpiry);
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY QueryContextAttributes(PCtxtHandle phContext,
-	                                                           ULONG ulAttribute, void* pBuffer);
-	WINPR_API SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext,
-	                                                              HANDLE* phToken);
-	WINPR_API SECURITY_STATUS SEC_ENTRY SetContextAttributes(PCtxtHandle phContext,
-	                                                         ULONG ulAttribute, void* pBuffer,
-	                                                         ULONG cbBuffer);
-	WINPR_API SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	QueryContextAttributes(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	SetContextAttributes(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY
+	RevertSecurityContext(PCtxtHandle phContext);
 
 	/* Message Support */
 
-	WINPR_API SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext,
-	                                                   PSecBufferDesc pMessage, ULONG MessageSeqNo,
-	                                                   PULONG pfQOP);
-	WINPR_API SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
-	                                                   PSecBufferDesc pMessage, ULONG MessageSeqNo);
-	WINPR_API SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, ULONG fQOP,
-	                                                  PSecBufferDesc pMessage, ULONG MessageSeqNo);
-	WINPR_API SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext,
-	                                                    PSecBufferDesc pMessage, ULONG MessageSeqNo,
-	                                                    PULONG pfQOP);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext,
+	                                                                        PSecBufferDesc pMessage,
+	                                                                        ULONG MessageSeqNo,
+	                                                                        PULONG pfQOP);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext,
+	                                                                        ULONG fQOP,
+	                                                                        PSecBufferDesc pMessage,
+	                                                                        ULONG MessageSeqNo);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext,
+	                                                                       ULONG fQOP,
+	                                                                       PSecBufferDesc pMessage,
+	                                                                       ULONG MessageSeqNo);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS SEC_ENTRY VerifySignature(
+	    PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP);
 
 #endif /* SSPI_DLL */
 
@@ -1387,45 +1388,58 @@ extern "C"
 	WINPR_API void sspi_GlobalInit(void);
 	WINPR_API void sspi_GlobalFinish(void);
 
-	WINPR_API void* sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size);
+	WINPR_API WINPR_ATTR_NODISCARD void* sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size);
 	WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
 
 #define sspi_SetAuthIdentity sspi_SetAuthIdentityA
-	WINPR_API int sspi_SetAuthIdentityA(SEC_WINNT_AUTH_IDENTITY* identity, const char* user,
-	                                    const char* domain, const char* password);
-	WINPR_API int sspi_SetAuthIdentityW(SEC_WINNT_AUTH_IDENTITY* identity, const WCHAR* user,
-	                                    const WCHAR* domain, const WCHAR* password);
-	WINPR_API int sspi_SetAuthIdentityWithLengthW(SEC_WINNT_AUTH_IDENTITY* identity,
-	                                              const WCHAR* user, size_t userLen,
-	                                              const WCHAR* domain, size_t domainLen,
-	                                              const WCHAR* password, size_t passwordLen);
-	WINPR_API UINT32 sspi_GetAuthIdentityVersion(const void* identity);
-	WINPR_API UINT32 sspi_GetAuthIdentityFlags(const void* identity);
-	WINPR_API BOOL sspi_GetAuthIdentityUserDomainW(const void* identity, const WCHAR** pUser,
-	                                               UINT32* pUserLength, const WCHAR** pDomain,
-	                                               UINT32* pDomainLength);
-	WINPR_API BOOL sspi_GetAuthIdentityUserDomainA(const void* identity, const char** pUser,
-	                                               UINT32* pUserLength, const char** pDomain,
-	                                               UINT32* pDomainLength);
-	WINPR_API BOOL sspi_GetAuthIdentityPasswordW(const void* identity, const WCHAR** pPassword,
-	                                             UINT32* pPasswordLength);
-	WINPR_API BOOL sspi_GetAuthIdentityPasswordA(const void* identity, const char** pPassword,
-	                                             UINT32* pPasswordLength);
-	WINPR_API BOOL sspi_CopyAuthIdentityFieldsA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity,
-	                                            char** pUser, char** pDomain, char** pPassword);
-	WINPR_API BOOL sspi_CopyAuthIdentityFieldsW(const SEC_WINNT_AUTH_IDENTITY_INFO* identity,
-	                                            WCHAR** pUser, WCHAR** pDomain, WCHAR** pPassword);
-	WINPR_API BOOL sspi_CopyAuthPackageListA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity,
-	                                         char** pPackageList);
-	WINPR_API int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
-	                                    const SEC_WINNT_AUTH_IDENTITY_INFO* srcIdentity);
+	WINPR_API WINPR_ATTR_NODISCARD int sspi_SetAuthIdentityA(SEC_WINNT_AUTH_IDENTITY* identity,
+	                                                         const char* user, const char* domain,
+	                                                         const char* password);
+	WINPR_API WINPR_ATTR_NODISCARD int sspi_SetAuthIdentityW(SEC_WINNT_AUTH_IDENTITY* identity,
+	                                                         const WCHAR* user, const WCHAR* domain,
+	                                                         const WCHAR* password);
+	WINPR_API WINPR_ATTR_NODISCARD int
+	sspi_SetAuthIdentityWithLengthW(SEC_WINNT_AUTH_IDENTITY* identity, const WCHAR* user,
+	                                size_t userLen, const WCHAR* domain, size_t domainLen,
+	                                const WCHAR* password, size_t passwordLen);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 sspi_GetAuthIdentityVersion(const void* identity);
+	WINPR_API WINPR_ATTR_NODISCARD UINT32 sspi_GetAuthIdentityFlags(const void* identity);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL sspi_GetAuthIdentityUserDomainW(const void* identity,
+	                                                                    const WCHAR** pUser,
+	                                                                    UINT32* pUserLength,
+	                                                                    const WCHAR** pDomain,
+	                                                                    UINT32* pDomainLength);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL sspi_GetAuthIdentityUserDomainA(const void* identity,
+	                                                                    const char** pUser,
+	                                                                    UINT32* pUserLength,
+	                                                                    const char** pDomain,
+	                                                                    UINT32* pDomainLength);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL sspi_GetAuthIdentityPasswordW(const void* identity,
+	                                                                  const WCHAR** pPassword,
+	                                                                  UINT32* pPasswordLength);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL sspi_GetAuthIdentityPasswordA(const void* identity,
+	                                                                  const char** pPassword,
+	                                                                  UINT32* pPasswordLength);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	sspi_CopyAuthIdentityFieldsA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, char** pUser,
+	                             char** pDomain, char** pPassword);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	sspi_CopyAuthIdentityFieldsW(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, WCHAR** pUser,
+	                             WCHAR** pDomain, WCHAR** pPassword);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	sspi_CopyAuthPackageListA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, char** pPackageList);
+	WINPR_API WINPR_ATTR_NODISCARD int
+	sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
+	                      const SEC_WINNT_AUTH_IDENTITY_INFO* srcIdentity);
 
 	WINPR_API void sspi_FreeAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity);
 
-	WINPR_API const char* GetSecurityStatusString(SECURITY_STATUS status);
+	WINPR_API WINPR_ATTR_NODISCARD const char* GetSecurityStatusString(SECURITY_STATUS status);
 
-	WINPR_API SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceExW(DWORD flags);
-	WINPR_API SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceExA(DWORD flags);
+	WINPR_API WINPR_ATTR_NODISCARD SecurityFunctionTableW* SEC_ENTRY
+	InitSecurityInterfaceExW(DWORD flags);
+	WINPR_API WINPR_ATTR_NODISCARD SecurityFunctionTableA* SEC_ENTRY
+	InitSecurityInterfaceExA(DWORD flags);
 
 #ifdef UNICODE
 #define InitSecurityInterfaceEx InitSecurityInterfaceExW

@@ -28,10 +28,12 @@
 #define SURFCMD_SURFACE_BITS_HEADER_LENGTH 22
 #define SURFCMD_FRAME_MARKER_LENGTH 8
 
-FREERDP_LOCAL int update_recv_surfcmds(rdpUpdate* update, wStream* s);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int update_recv_surfcmds(rdpUpdate* update, wStream* s);
 
-FREERDP_LOCAL BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* cmd);
-FREERDP_LOCAL BOOL update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction,
-                                                     UINT32 frameId);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL
+update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* cmd);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL update_write_surfcmd_frame_marker(wStream* s,
+                                                                          UINT16 frameAction,
+                                                                          UINT32 frameId);
 
 #endif /* FREERDP_LIB_CORE_SURFACE_H */

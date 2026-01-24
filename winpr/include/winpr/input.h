@@ -883,14 +883,14 @@ extern "C"
 	 * Functions
 	 */
 
-	WINPR_API const char* GetVirtualKeyName(DWORD vkcode);
-	WINPR_API DWORD GetVirtualKeyCodeFromName(const char* vkname);
-	WINPR_API DWORD GetVirtualKeyCodeFromXkbKeyName(const char* xkbname);
+	WINPR_API WINPR_ATTR_NODISCARD const char* GetVirtualKeyName(DWORD vkcode);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD GetVirtualKeyCodeFromName(const char* vkname);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD GetVirtualKeyCodeFromXkbKeyName(const char* xkbname);
 
-	WINPR_API DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode,
-	                                                     DWORD /* WINPR_KBD_TYPE */ dwKeyboardType);
-	WINPR_API DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode,
-	                                                     DWORD /* WINPR_KBD_TYPE */ dwKeyboardType);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD
+	GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD /* WINPR_KBD_TYPE */ dwKeyboardType);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD
+	GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD /* WINPR_KBD_TYPE */ dwKeyboardType);
 
 	typedef enum
 	{
@@ -900,8 +900,10 @@ extern "C"
 		WINPR_KEYCODE_TYPE_XKB = 0x00000003
 	} WINPR_KEYCODE_TYPE;
 
-	WINPR_API DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, WINPR_KEYCODE_TYPE type);
-	WINPR_API DWORD GetKeycodeFromVirtualKeyCode(DWORD keycode, WINPR_KEYCODE_TYPE type);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode,
+	                                                                  WINPR_KEYCODE_TYPE type);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD GetKeycodeFromVirtualKeyCode(DWORD keycode,
+	                                                                  WINPR_KEYCODE_TYPE type);
 
 #ifdef __cplusplus
 }

@@ -37,38 +37,37 @@ extern "C"
 
 	typedef struct S_PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 
-	FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
-	                                     const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
-	                                     UINT32 SrcFormat, UINT32 Width, UINT32 Height,
-	                                     UINT32 ScanLine,
-	                                     const REGION16* WINPR_RESTRICT invalidRegion,
-	                                     BYTE** WINPR_RESTRICT ppDstData,
-	                                     UINT32* WINPR_RESTRICT pDstSize);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
+	                     const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize, UINT32 SrcFormat,
+	                     UINT32 Width, UINT32 Height, UINT32 ScanLine,
+	                     const REGION16* WINPR_RESTRICT invalidRegion,
+	                     BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize);
 
-	FREERDP_API INT32 progressive_decompress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
-	                                         const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
-	                                         BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
-	                                         UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-	                                         REGION16* WINPR_RESTRICT invalidRegion,
-	                                         UINT16 surfaceId, UINT32 frameId);
+	FREERDP_API WINPR_ATTR_NODISCARD INT32 progressive_decompress(
+	    PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive, const BYTE* WINPR_RESTRICT pSrcData,
+	    UINT32 SrcSize, BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStep,
+	    UINT32 nXDst, UINT32 nYDst, REGION16* WINPR_RESTRICT invalidRegion, UINT16 surfaceId,
+	    UINT32 frameId);
 
-	FREERDP_API INT32
+	FREERDP_API WINPR_ATTR_NODISCARD INT32
 	progressive_create_surface_context(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	                                   UINT16 surfaceId, UINT32 width, UINT32 height);
-	FREERDP_API int
+	FREERDP_API WINPR_ATTR_NODISCARD int
 	progressive_delete_surface_context(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	                                   UINT16 surfaceId);
 
-	FREERDP_API BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	progressive_context_reset(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive);
 
 	FREERDP_API void progressive_context_free(PROGRESSIVE_CONTEXT* progressive);
 
 	WINPR_ATTR_MALLOC(progressive_context_free, 1)
-	FREERDP_API PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor);
+	FREERDP_API WINPR_ATTR_NODISCARD PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor);
 
 	WINPR_ATTR_MALLOC(progressive_context_free, 1)
-	FREERDP_API PROGRESSIVE_CONTEXT* progressive_context_new_ex(BOOL Compressor,
-	                                                            UINT32 ThreadingFlags);
+	FREERDP_API WINPR_ATTR_NODISCARD PROGRESSIVE_CONTEXT*
+	progressive_context_new_ex(BOOL Compressor, UINT32 ThreadingFlags);
 
 	/** Write a RFX message as simple progressive message to a stream.
 	 *  Forward wrapper for \link rfx_write_message_progressive_simple
@@ -79,7 +78,7 @@ extern "C"
 	 *  @since version 3.0.0
 	 *  @return \b TRUE in case of success, \b FALSE for any error
 	 */
-	FREERDP_API BOOL progressive_rfx_write_message_progressive_simple(
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL progressive_rfx_write_message_progressive_simple(
 	    PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive, wStream* WINPR_RESTRICT s,
 	    const RFX_MESSAGE* WINPR_RESTRICT msg);
 

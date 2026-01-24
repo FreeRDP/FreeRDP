@@ -30,17 +30,20 @@
 #include <freerdp/api.h>
 #include <freerdp/utils/gfx.h>
 
-FREERDP_LOCAL UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header);
-FREERDP_LOCAL UINT rdpgfx_write_header(wStream* s, const RDPGFX_HEADER* header);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT rdpgfx_write_header(wStream* s,
+                                                            const RDPGFX_HEADER* header);
 
-FREERDP_LOCAL UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16);
-FREERDP_LOCAL UINT rdpgfx_write_point16(wStream* s, const RDPGFX_POINT16* point16);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT rdpgfx_write_point16(wStream* s,
+                                                             const RDPGFX_POINT16* point16);
 
-FREERDP_LOCAL UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16);
-FREERDP_LOCAL UINT rdpgfx_write_rect16(wStream* s, const RECTANGLE_16* rect16);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT rdpgfx_write_rect16(wStream* s, const RECTANGLE_16* rect16);
 
-FREERDP_LOCAL UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32);
-FREERDP_LOCAL UINT rdpgfx_write_color32(wStream* s, const RDPGFX_COLOR32* color32);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT rdpgfx_write_color32(wStream* s,
+                                                             const RDPGFX_COLOR32* color32);
 
 #ifdef WITH_DEBUG_RDPGFX
 #define DEBUG_RDPGFX(_LOGGER, ...) WLog_Print(_LOGGER, WLOG_DEBUG, __VA_ARGS__)

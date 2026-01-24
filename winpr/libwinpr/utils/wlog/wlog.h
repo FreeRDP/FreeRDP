@@ -80,9 +80,9 @@ struct s_wLog
 };
 
 WINPR_LOCAL extern const char* WLOG_LEVELS[7];
-WINPR_LOCAL BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout,
-                                              const wLogMessage* message, char* prefix,
-                                              size_t prefixlen);
+WINPR_LOCAL WINPR_ATTR_NODISCARD BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout,
+                                                                   const wLogMessage* message,
+                                                                   char* prefix, size_t prefixlen);
 
 #include "Layout.h"
 #include "Appender.h"

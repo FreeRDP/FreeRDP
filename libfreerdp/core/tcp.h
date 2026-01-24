@@ -54,64 +54,68 @@
 #define BIO_C_WAIT_WRITE 1108
 #define BIO_C_SET_HANDLE 1109
 
-static inline long BIO_set_socket(BIO* b, SOCKET s, long c)
+static inline WINPR_ATTR_NODISCARD long BIO_set_socket(BIO* b, SOCKET s, long c)
 {
 	return BIO_ctrl(b, BIO_C_SET_SOCKET, c, (void*)(intptr_t)s);
 }
-static inline long BIO_get_socket(BIO* b, SOCKET* c)
+static inline WINPR_ATTR_NODISCARD long BIO_get_socket(BIO* b, SOCKET* c)
 {
 	return BIO_ctrl(b, BIO_C_GET_SOCKET, 0, c);
 }
-static inline long BIO_get_event(BIO* b, HANDLE* c)
+static inline WINPR_ATTR_NODISCARD long BIO_get_event(BIO* b, HANDLE* c)
 {
 	return BIO_ctrl(b, BIO_C_GET_EVENT, 0, (void*)c);
 }
-static inline long BIO_set_handle(BIO* b, HANDLE h)
+static inline WINPR_ATTR_NODISCARD long BIO_set_handle(BIO* b, HANDLE h)
 {
 	return BIO_ctrl(b, BIO_C_SET_HANDLE, 0, h);
 }
-static inline long BIO_set_nonblock(BIO* b, long c)
+static inline WINPR_ATTR_NODISCARD long BIO_set_nonblock(BIO* b, long c)
 {
 	return BIO_ctrl(b, BIO_C_SET_NONBLOCK, c, NULL);
 }
-static inline long BIO_read_blocked(BIO* b)
+static inline WINPR_ATTR_NODISCARD long BIO_read_blocked(BIO* b)
 {
 	return BIO_ctrl(b, BIO_C_READ_BLOCKED, 0, NULL);
 }
-static inline long BIO_write_blocked(BIO* b)
+static inline WINPR_ATTR_NODISCARD long BIO_write_blocked(BIO* b)
 {
 	return BIO_ctrl(b, BIO_C_WRITE_BLOCKED, 0, NULL);
 }
-static inline long BIO_wait_read(BIO* b, long c)
+static inline WINPR_ATTR_NODISCARD long BIO_wait_read(BIO* b, long c)
 {
 	return BIO_ctrl(b, BIO_C_WAIT_READ, c, NULL);
 }
 
-static inline long BIO_wait_write(BIO* b, long c)
+static inline WINPR_ATTR_NODISCARD long BIO_wait_write(BIO* b, long c)
 {
 	return BIO_ctrl(b, BIO_C_WAIT_WRITE, c, NULL);
 }
 
-FREERDP_LOCAL BIO_METHOD* BIO_s_simple_socket(void);
-FREERDP_LOCAL BIO_METHOD* BIO_s_buffered_socket(void);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BIO_METHOD* BIO_s_simple_socket(void);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BIO_METHOD* BIO_s_buffered_socket(void);
 
-FREERDP_LOCAL BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings,
+                                                                        int sockfd);
 
-FREERDP_LOCAL int freerdp_tcp_connect(rdpContext* context, const char* hostname, int port,
-                                      DWORD timeout);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int
+freerdp_tcp_connect(rdpContext* context, const char* hostname, int port, DWORD timeout);
 
-FREERDP_LOCAL int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings,
-                                              const char* hostname, int port, DWORD timeout);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int freerdp_tcp_default_connect(rdpContext* context,
+                                                                   rdpSettings* settings,
+                                                                   const char* hostname, int port,
+                                                                   DWORD timeout);
 
-FREERDP_LOCAL rdpTransportLayer*
+FREERDP_LOCAL WINPR_ATTR_NODISCARD rdpTransportLayer*
 freerdp_tcp_connect_layer(rdpContext* context, const char* hostname, int port, DWORD timeout);
 
-FREERDP_LOCAL char* freerdp_tcp_get_peer_address(SOCKET sockfd);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD char* freerdp_tcp_get_peer_address(SOCKET sockfd);
 
-FREERDP_LOCAL struct addrinfo* freerdp_tcp_resolve_host(const char* hostname, int port,
-                                                        int ai_flags);
-FREERDP_LOCAL char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD struct addrinfo*
+freerdp_tcp_resolve_host(const char* hostname, int port, int ai_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD char*
+freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6);
 
-FREERDP_LOCAL BOOL freerdp_tcp_set_nodelay(wLog* log, DWORD level, int sockfd);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL freerdp_tcp_set_nodelay(wLog* log, DWORD level, int sockfd);
 
 #endif /* FREERDP_LIB_CORE_TCP_H */

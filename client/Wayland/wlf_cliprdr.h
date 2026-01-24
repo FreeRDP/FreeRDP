@@ -25,12 +25,13 @@
 
 #include <freerdp/client/cliprdr.h>
 
-wfClipboard* wlf_clipboard_new(wlfContext* wfc);
+WINPR_ATTR_NODISCARD wfClipboard* wlf_clipboard_new(wlfContext* wfc);
 void wlf_clipboard_free(wfClipboard* clipboard);
 
-BOOL wlf_cliprdr_init(wfClipboard* clipboard, CliprdrClientContext* cliprdr);
-BOOL wlf_cliprdr_uninit(wfClipboard* clipboard, CliprdrClientContext* cliprdr);
+WINPR_ATTR_NODISCARD BOOL wlf_cliprdr_init(wfClipboard* clipboard, CliprdrClientContext* cliprdr);
+WINPR_ATTR_NODISCARD BOOL wlf_cliprdr_uninit(wfClipboard* clipboard, CliprdrClientContext* cliprdr);
 
-BOOL wlf_cliprdr_handle_event(wfClipboard* clipboard, const UwacClipboardEvent* event);
+WINPR_ATTR_NODISCARD BOOL wlf_cliprdr_handle_event(wfClipboard* clipboard,
+                                                   const UwacClipboardEvent* event);
 
 #endif /* FREERDP_CLIENT_WAYLAND_CLIPRDR_H */

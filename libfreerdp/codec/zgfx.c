@@ -116,7 +116,8 @@ static const ZGFX_TOKEN ZGFX_TOKEN_TABLE[] = {
 	{ 0 }
 };
 
-static inline BOOL zgfx_GetBits(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, UINT32 nbits)
+static inline WINPR_ATTR_NODISCARD BOOL zgfx_GetBits(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
+                                                     UINT32 nbits)
 {
 	if (!zgfx)
 		return FALSE;
@@ -220,8 +221,9 @@ static inline void zgfx_history_buffer_ring_read(ZGFX_CONTEXT* WINPR_RESTRICT zg
 	} while ((bytesLeft -= bytes) > 0);
 }
 
-static inline BOOL zgfx_decompress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
-                                           wStream* WINPR_RESTRICT stream, size_t segmentSize)
+static inline WINPR_ATTR_NODISCARD BOOL zgfx_decompress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
+                                                                wStream* WINPR_RESTRICT stream,
+                                                                size_t segmentSize)
 {
 	BYTE c = 0;
 	BYTE flags = 0;
@@ -380,9 +382,10 @@ static inline BOOL zgfx_decompress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
 	return TRUE;
 }
 
-static inline BOOL zgfx_append(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
-                               BYTE** WINPR_RESTRICT ppConcatenated, size_t uncompressedSize,
-                               size_t* WINPR_RESTRICT pUsed)
+static inline WINPR_ATTR_NODISCARD BOOL zgfx_append(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
+                                                    BYTE** WINPR_RESTRICT ppConcatenated,
+                                                    size_t uncompressedSize,
+                                                    size_t* WINPR_RESTRICT pUsed)
 {
 	WINPR_ASSERT(zgfx);
 	WINPR_ASSERT(ppConcatenated);

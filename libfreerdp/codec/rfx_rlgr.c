@@ -65,7 +65,7 @@
  * Update the passed parameter and clamp it to the range [0, KPMAX]
  * Return the value of parameter right-shifted by LSGR
  */
-static inline uint32_t UpdateParam(uint32_t* param, int32_t deltaP)
+static inline WINPR_ATTR_NODISCARD uint32_t UpdateParam(uint32_t* param, int32_t deltaP)
 {
 	WINPR_ASSERT(param);
 	if (deltaP < 0)
@@ -98,7 +98,7 @@ static BOOL CALLBACK rfx_rlgr_init(PINIT_ONCE once, PVOID param, PVOID* context)
 	return TRUE;
 }
 
-static inline UINT32 lzcnt_s(UINT32 x)
+static inline WINPR_ATTR_NODISCARD UINT32 lzcnt_s(UINT32 x)
 {
 	if (!x)
 		return 32;
@@ -615,7 +615,7 @@ static inline void OutputBit(RFX_BITSTREAM* bs, uint32_t count, UINT8 bit)
 
 /* Converts the input value to (2 * abs(input) - sign(input)), where sign(input) = (input < 0 ? 1 :
  * 0) and returns it */
-static inline UINT32 Get2MagSign(INT32 input)
+static inline WINPR_ATTR_NODISCARD UINT32 Get2MagSign(INT32 input)
 {
 	if (input >= 0)
 		return WINPR_ASSERTING_INT_CAST(UINT32, 2 * input);

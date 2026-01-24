@@ -41,20 +41,20 @@ extern "C"
 
 	typedef struct S_BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
 
-	FREERDP_API BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT context,
-	                                                 const BYTE* WINPR_RESTRICT data, UINT32 format,
-	                                                 UINT32 width, UINT32 height, UINT32 scanline,
-	                                                 BYTE* WINPR_RESTRICT dstData,
-	                                                 UINT32* WINPR_RESTRICT pDstSize);
+	FREERDP_API WINPR_ATTR_NODISCARD BYTE*
+	freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT context,
+	                               const BYTE* WINPR_RESTRICT data, UINT32 format, UINT32 width,
+	                               UINT32 height, UINT32 scanline, BYTE* WINPR_RESTRICT dstData,
+	                               UINT32* WINPR_RESTRICT pDstSize);
 
-	FREERDP_API BOOL freerdp_bitmap_planar_context_reset(
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_bitmap_planar_context_reset(
 	    BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32 height);
 
 	FREERDP_API void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT* context);
 
 	WINPR_ATTR_MALLOC(freerdp_bitmap_planar_context_free, 1)
-	FREERDP_API BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(DWORD flags, UINT32 width,
-	                                                                     UINT32 height);
+	FREERDP_API WINPR_ATTR_NODISCARD BITMAP_PLANAR_CONTEXT*
+	freerdp_bitmap_planar_context_new(DWORD flags, UINT32 width, UINT32 height);
 
 	FREERDP_API void freerdp_planar_switch_bgr(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar,
 	                                           BOOL bgr);
@@ -63,7 +63,7 @@ extern "C"
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("use freerdp_bitmap_decompress_planar instead",
-	                     FREERDP_API BOOL planar_decompress(
+	                     FREERDP_API WINPR_ATTR_NODISCARD BOOL planar_decompress(
 	                         BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar,
 	                         const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize, UINT32 nSrcWidth,
 	                         UINT32 nSrcHeight, BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
@@ -71,7 +71,7 @@ extern "C"
 	                         UINT32 nDstHeight, BOOL vFlip));
 #endif
 
-	FREERDP_API BOOL freerdp_bitmap_decompress_planar(
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_bitmap_decompress_planar(
 	    BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT planar, const BYTE* WINPR_RESTRICT pSrcData,
 	    UINT32 SrcSize, UINT32 nSrcWidth, UINT32 nSrcHeight, BYTE* WINPR_RESTRICT pDstData,
 	    UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,

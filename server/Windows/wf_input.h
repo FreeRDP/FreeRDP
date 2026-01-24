@@ -22,15 +22,20 @@
 
 #include "wf_interface.h"
 
-BOOL wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code);
-BOOL wf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
-BOOL wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
-BOOL wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+WINPR_ATTR_NODISCARD BOOL wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code);
+WINPR_ATTR_NODISCARD BOOL wf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags,
+                                                         UINT16 code);
+WINPR_ATTR_NODISCARD BOOL wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+WINPR_ATTR_NODISCARD BOOL wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
+                                                       UINT16 y);
 
 // dummy versions
-BOOL wf_peer_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT8 code);
-BOOL wf_peer_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT16 code);
-BOOL wf_peer_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
-BOOL wf_peer_extended_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+WINPR_ATTR_NODISCARD BOOL wf_peer_keyboard_event_dummy(rdpInput* input, UINT16 flags, UINT8 code);
+WINPR_ATTR_NODISCARD BOOL wf_peer_unicode_keyboard_event_dummy(rdpInput* input, UINT16 flags,
+                                                               UINT16 code);
+WINPR_ATTR_NODISCARD BOOL wf_peer_mouse_event_dummy(rdpInput* input, UINT16 flags, UINT16 x,
+                                                    UINT16 y);
+WINPR_ATTR_NODISCARD BOOL wf_peer_extended_mouse_event_dummy(rdpInput* input, UINT16 flags,
+                                                             UINT16 x, UINT16 y);
 
 #endif /* FREERDP_SERVER_WIN_INPUT_H */

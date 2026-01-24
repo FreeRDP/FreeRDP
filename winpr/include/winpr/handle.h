@@ -46,14 +46,15 @@ extern "C"
 #define HANDLE_FLAG_INHERIT 0x00000001
 #define HANDLE_FLAG_PROTECT_FROM_CLOSE 0x00000002
 
-	WINPR_API BOOL CloseHandle(HANDLE hObject);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CloseHandle(HANDLE hObject);
 
-	WINPR_API BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle,
-	                               HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle,
-	                               DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL DuplicateHandle(
+	    HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle,
+	    LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions);
 
-	WINPR_API BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags);
-	WINPR_API BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask,
+	                                                         DWORD dwFlags);
 
 #endif
 

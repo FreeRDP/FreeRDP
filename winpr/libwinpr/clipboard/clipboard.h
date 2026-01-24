@@ -68,9 +68,9 @@ struct s_wClipboard
 	CRITICAL_SECTION lock;
 };
 
-WINPR_LOCAL BOOL ClipboardInitSynthesizers(wClipboard* clipboard);
+WINPR_LOCAL WINPR_ATTR_NODISCARD BOOL ClipboardInitSynthesizers(wClipboard* clipboard);
 
-WINPR_LOCAL char* parse_uri_to_local_file(const char* uri, size_t uri_len);
+WINPR_LOCAL WINPR_ATTR_NODISCARD char* parse_uri_to_local_file(const char* uri, size_t uri_len);
 
 extern const char* const mime_text_plain;
 

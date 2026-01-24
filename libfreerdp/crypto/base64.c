@@ -302,10 +302,11 @@ static const signed char dec_base64[] = {
 	-1, /* 127        177	7F	01111111	DEL	&#127;	 	Delete */
 };
 
-static inline char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
-                                     WINPR_ATTR_UNUSED size_t alphabetCount,
-                                     const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad,
-                                     BOOL crLf, size_t lineSize)
+static inline WINPR_ATTR_NODISCARD char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
+                                                          WINPR_ATTR_UNUSED size_t alphabetCount,
+                                                          const BYTE* WINPR_RESTRICT data,
+                                                          size_t length, BOOL pad, BOOL crLf,
+                                                          size_t lineSize)
 {
 	size_t blocks = 0;
 	size_t outLen = (length + 3) * 4 / 3;
@@ -419,14 +420,16 @@ static inline char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
 	return ret;
 }
 
-static inline char* base64_encode(const BYTE* WINPR_RESTRICT alphabet, size_t alphabetCount,
-                                  const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad)
+static inline WINPR_ATTR_NODISCARD char* base64_encode(const BYTE* WINPR_RESTRICT alphabet,
+                                                       size_t alphabetCount,
+                                                       const BYTE* WINPR_RESTRICT data,
+                                                       size_t length, BOOL pad)
 {
 	return base64_encode_ex(alphabet, alphabetCount, data, length, pad, FALSE, 64);
 }
 
-static inline int base64_decode_char(const signed char* WINPR_RESTRICT alphabet,
-                                     size_t alphabetCount, char c)
+static inline WINPR_ATTR_NODISCARD int
+base64_decode_char(const signed char* WINPR_RESTRICT alphabet, size_t alphabetCount, char c)
 {
 	/* ensure char is signed for this check */
 	const int ic = (int)c;
@@ -436,9 +439,10 @@ static inline int base64_decode_char(const signed char* WINPR_RESTRICT alphabet,
 	return alphabet[(size_t)c];
 }
 
-static inline void* base64_decode(const signed char* WINPR_RESTRICT alphabet, size_t alphabetCount,
-                                  const char* WINPR_RESTRICT s, size_t length,
-                                  size_t* WINPR_RESTRICT data_len, BOOL pad)
+static inline WINPR_ATTR_NODISCARD void* base64_decode(const signed char* WINPR_RESTRICT alphabet,
+                                                       size_t alphabetCount,
+                                                       const char* WINPR_RESTRICT s, size_t length,
+                                                       size_t* WINPR_RESTRICT data_len, BOOL pad)
 {
 	int n[4] = { 0 };
 	BYTE* data = NULL;

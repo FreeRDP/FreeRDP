@@ -77,7 +77,7 @@ extern "C"
 	FREERDP_API void freerdp_listener_free(freerdp_listener* instance);
 
 	WINPR_ATTR_MALLOC(freerdp_listener_free, 1)
-	FREERDP_API freerdp_listener* freerdp_listener_new(void);
+	FREERDP_API WINPR_ATTR_NODISCARD freerdp_listener* freerdp_listener_new(void);
 
 #ifdef __cplusplus
 }

@@ -29,7 +29,7 @@
 #if !defined(BUILD_TESTING_INTERNAL)
 static
 #else
-FREERDP_LOCAL
+FREERDP_LOCAL WINPR_ATTR_NODISCARD
 #endif
     BOOL
     stream_dump_read_line(FILE* fp, wStream* s, UINT64* pts, size_t* pOffset, UINT32* flags);
@@ -37,7 +37,7 @@ FREERDP_LOCAL
 #if !defined(BUILD_TESTING_INTERNAL)
 static
 #else
-    FREERDP_LOCAL
+FREERDP_LOCAL WINPR_ATTR_NODISCARD
 #endif
     BOOL
     stream_dump_write_line(FILE* fp, UINT32 flags, wStream* s);

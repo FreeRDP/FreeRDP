@@ -34,17 +34,20 @@ extern "C"
 {
 #endif
 
-	FREERDP_LOCAL int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
-	                                BYTE* pDstBuffer, const BYTE** ppDstData, UINT32* pDstSize,
-	                                UINT32* pFlags);
-	FREERDP_LOCAL int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
-	                                  const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData,
+	                                                     UINT32 SrcSize, BYTE* pDstBuffer,
+	                                                     const BYTE** ppDstData, UINT32* pDstSize,
+	                                                     UINT32* pFlags);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData,
+	                                                       UINT32 SrcSize, const BYTE** ppDstData,
+	                                                       UINT32* pDstSize, UINT32 flags);
 
 	FREERDP_LOCAL void mppc_set_compression_level(MPPC_CONTEXT* mppc, DWORD CompressionLevel);
 
 	FREERDP_LOCAL void mppc_context_reset(MPPC_CONTEXT* mppc, BOOL flush);
 
-	FREERDP_LOCAL MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel,
+	                                                                  BOOL Compressor);
 	FREERDP_LOCAL void mppc_context_free(MPPC_CONTEXT* mppc);
 
 #ifdef __cplusplus

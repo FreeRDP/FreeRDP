@@ -36,10 +36,10 @@ typedef enum
 	STATE_RUN_CONTINUE = -24
 } state_run_t;
 
-FREERDP_LOCAL BOOL state_run_failed(state_run_t status);
-FREERDP_LOCAL BOOL state_run_success(state_run_t status);
-FREERDP_LOCAL BOOL state_run_continue(state_run_t status);
-FREERDP_LOCAL const char* state_run_result_string(state_run_t status, char* buffer,
-                                                  size_t buffersize);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL state_run_failed(state_run_t status);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL state_run_success(state_run_t status);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL state_run_continue(state_run_t status);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD const char*
+state_run_result_string(state_run_t status, char* buffer, size_t buffersize);
 
 #endif /* FREERDP_LIB_CORE_STATE_H */

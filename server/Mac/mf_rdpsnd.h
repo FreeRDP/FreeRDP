@@ -52,7 +52,7 @@ typedef struct
 	RdpsndServerContext* snd_context;
 } AQRecorderState;
 
-BOOL mf_peer_rdpsnd_init(mfPeerContext* context);
-BOOL mf_peer_rdpsnd_stop(void);
+WINPR_ATTR_NODISCARD BOOL mf_peer_rdpsnd_init(mfPeerContext* context);
+WINPR_ATTR_NODISCARD BOOL mf_peer_rdpsnd_stop(void);
 
 #endif /* FREERDP_SERVER_MAC_RDPSND_H */

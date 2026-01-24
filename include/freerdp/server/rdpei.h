@@ -78,18 +78,20 @@ extern "C"
 	FREERDP_API void rdpei_server_context_free(RdpeiServerContext* context);
 
 	WINPR_ATTR_MALLOC(rdpei_server_context_free, 1)
-	FREERDP_API RdpeiServerContext* rdpei_server_context_new(HANDLE vcm);
+	FREERDP_API WINPR_ATTR_NODISCARD RdpeiServerContext* rdpei_server_context_new(HANDLE vcm);
 
 	FREERDP_API void rdpei_server_context_reset(RdpeiServerContext* context);
 
-	FREERDP_API HANDLE rdpei_server_get_event_handle(RdpeiServerContext* context);
-	FREERDP_API UINT rdpei_server_init(RdpeiServerContext* context);
-	FREERDP_API UINT rdpei_server_handle_messages(RdpeiServerContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD HANDLE
+	rdpei_server_get_event_handle(RdpeiServerContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT rdpei_server_init(RdpeiServerContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT rdpei_server_handle_messages(RdpeiServerContext* context);
 
-	FREERDP_API UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version,
-	                                            UINT32 features);
-	FREERDP_API UINT rdpei_server_suspend(RdpeiServerContext* context);
-	FREERDP_API UINT rdpei_server_resume(RdpeiServerContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT rdpei_server_send_sc_ready(RdpeiServerContext* context,
+	                                                                 UINT32 version,
+	                                                                 UINT32 features);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT rdpei_server_suspend(RdpeiServerContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT rdpei_server_resume(RdpeiServerContext* context);
 
 #ifdef __cplusplus
 }

@@ -25,23 +25,25 @@
 
 #include <freerdp/client/rail.h>
 
-BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);
-BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect);
+WINPR_ATTR_NODISCARD BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);
+WINPR_ATTR_NODISCARD BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId,
+                                                const RECTANGLE_16* rect);
 
-BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 command);
+WINPR_ATTR_NODISCARD BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId,
+                                                             UINT16 command);
 void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
 void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
 void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow);
 void xf_rail_enable_remoteapp_mode(xfContext* xfc);
 void xf_rail_disable_remoteapp_mode(xfContext* xfc);
 
-xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UINT32 width,
-                                UINT32 height, UINT32 surfaceId);
-xfAppWindow* xf_rail_get_window(xfContext* xfc, UINT64 id);
+WINPR_ATTR_NODISCARD xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y,
+                                                     UINT32 width, UINT32 height, UINT32 surfaceId);
+WINPR_ATTR_NODISCARD xfAppWindow* xf_rail_get_window(xfContext* xfc, UINT64 id);
 
-BOOL xf_rail_del_window(xfContext* xfc, UINT64 id);
+WINPR_ATTR_NODISCARD BOOL xf_rail_del_window(xfContext* xfc, UINT64 id);
 
-int xf_rail_init(xfContext* xfc, RailClientContext* rail);
-int xf_rail_uninit(xfContext* xfc, RailClientContext* rail);
+WINPR_ATTR_NODISCARD int xf_rail_init(xfContext* xfc, RailClientContext* rail);
+WINPR_ATTR_NODISCARD int xf_rail_uninit(xfContext* xfc, RailClientContext* rail);
 
 #endif /* FREERDP_CLIENT_X11_RAIL_H */

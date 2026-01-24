@@ -63,11 +63,11 @@ extern "C"
 	};
 	typedef struct gdi_gfx_cache_entry gdiGfxCacheEntry;
 
-	FREERDP_API BOOL gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx);
-	FREERDP_API BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
-	                                               pcRdpgfxMapWindowForSurface map,
-	                                               pcRdpgfxUnmapWindowForSurface unmap,
-	                                               pcRdpgfxUpdateSurfaceArea update);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL gdi_graphics_pipeline_init(rdpGdi* gdi,
+	                                                                 RdpgfxClientContext* gfx);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL gdi_graphics_pipeline_init_ex(
+	    rdpGdi* gdi, RdpgfxClientContext* gfx, pcRdpgfxMapWindowForSurface map,
+	    pcRdpgfxUnmapWindowForSurface unmap, pcRdpgfxUpdateSurfaceArea update);
 	FREERDP_API void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx);
 
 #ifdef __cplusplus

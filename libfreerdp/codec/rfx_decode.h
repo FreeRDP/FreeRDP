@@ -26,8 +26,9 @@
 #include <freerdp/api.h>
 
 /* stride is bytes between rows in the output buffer. */
-FREERDP_LOCAL BOOL rfx_decode_rgb(RFX_CONTEXT* WINPR_RESTRICT context,
-                                  const RFX_TILE* WINPR_RESTRICT tile,
-                                  BYTE* WINPR_RESTRICT rgb_buffer, UINT32 stride);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rfx_decode_rgb(RFX_CONTEXT* WINPR_RESTRICT context,
+                                                       const RFX_TILE* WINPR_RESTRICT tile,
+                                                       BYTE* WINPR_RESTRICT rgb_buffer,
+                                                       UINT32 stride);
 
 #endif /* FREERDP_LIB_CODEC_RFX_DECODE_H */

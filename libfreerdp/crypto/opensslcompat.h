@@ -59,8 +59,9 @@
 #define BIO_meth_set_destroy(b, f) (b)->destroy = (f)
 #define BIO_meth_set_callback_ctrl(b, f) (b)->callback_ctrl = (f)
 
-BIO_METHOD* BIO_meth_new(int type, const char* name);
-void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM** d);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BIO_METHOD* BIO_meth_new(int type, const char* name);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD void RSA_get0_key(const RSA* r, const BIGNUM** n,
+                                                     const BIGNUM** e, const BIGNUM** d);
 
 #endif /* OPENSSL < 1.1.0 || LIBRESSL */
 #endif /* WITH_OPENSSL */

@@ -25,14 +25,16 @@
 
 #include "wlfreerdp.h"
 
-FREERDP_API BOOL wlf_disp_init(wlfDispContext* xfDisp, DispClientContext* disp);
-FREERDP_API BOOL wlf_disp_uninit(wlfDispContext* xfDisp, DispClientContext* disp);
+WINPR_ATTR_NODISCARD BOOL wlf_disp_init(wlfDispContext* xfDisp, DispClientContext* disp);
 
-wlfDispContext* wlf_disp_new(wlfContext* wlc);
+WINPR_ATTR_NODISCARD BOOL wlf_disp_uninit(wlfDispContext* xfDisp, DispClientContext* disp);
+
+WINPR_ATTR_NODISCARD wlfDispContext* wlf_disp_new(wlfContext* wlc);
 void wlf_disp_free(wlfDispContext* disp);
-BOOL wlf_disp_handle_configure(wlfDispContext* disp, int32_t width, int32_t height);
+WINPR_ATTR_NODISCARD BOOL wlf_disp_handle_configure(wlfDispContext* disp, int32_t width,
+                                                    int32_t height);
 void wlf_disp_resized(wlfDispContext* disp);
 
-int wlf_list_monitors(wlfContext* wlc);
+WINPR_ATTR_NODISCARD int wlf_list_monitors(wlfContext* wlc);
 
 #endif /* FREERDP_CLIENT_WAYLAND_DISP_H */

@@ -65,14 +65,14 @@ extern "C"
 {
 #endif
 
-	int shadow_encoder_reset(rdpShadowEncoder* encoder);
-	int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs);
-	UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
+	WINPR_ATTR_NODISCARD int shadow_encoder_reset(rdpShadowEncoder* encoder);
+	WINPR_ATTR_NODISCARD int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs);
+	WINPR_ATTR_NODISCARD UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
 
 	void shadow_encoder_free(rdpShadowEncoder* encoder);
 
-	WINPR_ATTR_MALLOC(shadow_encoder_free, 1)
-	rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client);
+	WINPR_ATTR_NODISCARD WINPR_ATTR_MALLOC(shadow_encoder_free, 1)
+	    rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client);
 
 #ifdef __cplusplus
 }

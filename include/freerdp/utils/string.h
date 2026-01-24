@@ -30,10 +30,10 @@ extern "C"
 {
 #endif
 
-	FREERDP_API const char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer,
-	                                                        size_t size);
-	FREERDP_API const char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer,
-	                                                         size_t size);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t size);
 
 	/** @brief extracts <key>=<value> pairs from a string
 	 *
@@ -45,7 +45,8 @@ extern "C"
 	 *
 	 * @since version 3.9.0
 	 */
-	FREERDP_API BOOL freerdp_extract_key_value(const char* str, UINT32* pkey, UINT32* pvalue);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_extract_key_value(const char* str, UINT32* pkey,
+	                                                                UINT32* pvalue);
 
 #ifdef __cplusplus
 }

@@ -23,7 +23,7 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-int xf_tsmf_init(xfContext* xfc, TsmfClientContext* tsmf);
-int xf_tsmf_uninit(xfContext* xfc, TsmfClientContext* tsmf);
+WINPR_ATTR_NODISCARD int xf_tsmf_init(xfContext* xfc, TsmfClientContext* tsmf);
+WINPR_ATTR_NODISCARD int xf_tsmf_uninit(xfContext* xfc, TsmfClientContext* tsmf);
 
 #endif /* FREERDP_CLIENT_X11_TSMF_H */

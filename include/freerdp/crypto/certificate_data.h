@@ -33,38 +33,44 @@ extern "C"
 
 	typedef struct rdp_certificate_data rdpCertificateData;
 
-	FREERDP_API char* freerdp_certificate_data_hash(const char* hostname, UINT16 port);
+	FREERDP_API WINPR_ATTR_NODISCARD char* freerdp_certificate_data_hash(const char* hostname,
+	                                                                     UINT16 port);
 
 	FREERDP_API void freerdp_certificate_data_free(rdpCertificateData* data);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_data_free, 1)
-	FREERDP_API rdpCertificateData* freerdp_certificate_data_new(const char* hostname, UINT16 port,
-	                                                             const rdpCertificate* xcert);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpCertificateData*
+	freerdp_certificate_data_new(const char* hostname, UINT16 port, const rdpCertificate* xcert);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_data_free, 1)
-	FREERDP_API rdpCertificateData* freerdp_certificate_data_new_from_pem(const char* hostname,
-	                                                                      UINT16 port,
-	                                                                      const char* pem,
-	                                                                      size_t length);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpCertificateData*
+	freerdp_certificate_data_new_from_pem(const char* hostname, UINT16 port, const char* pem,
+	                                      size_t length);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_data_free, 1)
-	FREERDP_API rdpCertificateData*
+	FREERDP_API WINPR_ATTR_NODISCARD rdpCertificateData*
 	freerdp_certificate_data_new_from_file(const char* hostname, UINT16 port, const char* file);
 
-	FREERDP_API BOOL freerdp_certificate_data_equal(const rdpCertificateData* a,
-	                                                const rdpCertificateData* b);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	freerdp_certificate_data_equal(const rdpCertificateData* a, const rdpCertificateData* b);
 
-	FREERDP_API const char* freerdp_certificate_data_get_hash(const rdpCertificateData* cert);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_certificate_data_get_hash(const rdpCertificateData* cert);
 
-	FREERDP_API const char* freerdp_certificate_data_get_host(const rdpCertificateData* cert);
-	FREERDP_API UINT16 freerdp_certificate_data_get_port(const rdpCertificateData* cert);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_certificate_data_get_host(const rdpCertificateData* cert);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT16
+	freerdp_certificate_data_get_port(const rdpCertificateData* cert);
 
-	FREERDP_API const char* freerdp_certificate_data_get_pem(const rdpCertificateData* cert);
-	FREERDP_API const char* freerdp_certificate_data_get_pem_ex(const rdpCertificateData* cert,
-	                                                            BOOL withFullChain);
-	FREERDP_API const char* freerdp_certificate_data_get_subject(const rdpCertificateData* cert);
-	FREERDP_API const char* freerdp_certificate_data_get_issuer(const rdpCertificateData* cert);
-	FREERDP_API const char*
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_certificate_data_get_pem(const rdpCertificateData* cert);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_certificate_data_get_pem_ex(const rdpCertificateData* cert, BOOL withFullChain);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_certificate_data_get_subject(const rdpCertificateData* cert);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_certificate_data_get_issuer(const rdpCertificateData* cert);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
 	freerdp_certificate_data_get_fingerprint(const rdpCertificateData* cert);
 
 #ifdef __cplusplus

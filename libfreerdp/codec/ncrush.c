@@ -1918,7 +1918,7 @@ static const UINT32 LOMBaseLUT[30] = {
 	0x2    /* 29 */
 };
 
-static inline UINT16 get_word(const BYTE* data)
+static inline WINPR_ATTR_NODISCARD UINT16 get_word(const BYTE* data)
 {
 	UINT16 tmp = 0;
 
@@ -1928,7 +1928,7 @@ static inline UINT16 get_word(const BYTE* data)
 	return tmp;
 }
 
-static inline UINT32 get_dword(const BYTE* data)
+static inline WINPR_ATTR_NODISCARD UINT32 get_dword(const BYTE* data)
 {
 	UINT32 tmp = 0;
 	WINPR_ASSERT(data);
@@ -1939,8 +1939,8 @@ static inline UINT32 get_dword(const BYTE* data)
 	return tmp;
 }
 
-static inline BOOL NCrushFetchBits(const BYTE** SrcPtr, const BYTE** SrcEnd, INT32* nbits,
-                                   UINT32* bits)
+static inline WINPR_ATTR_NODISCARD BOOL NCrushFetchBits(const BYTE** SrcPtr, const BYTE** SrcEnd,
+                                                        INT32* nbits, UINT32* bits)
 {
 	WINPR_ASSERT(SrcPtr);
 	WINPR_ASSERT(SrcEnd);

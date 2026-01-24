@@ -30,7 +30,7 @@ extern "C"
 
 	typedef void (*freerdp_signal_handler_t)(int signum, const char* signame, void* context);
 
-	FREERDP_API int freerdp_handle_signals(void);
+	FREERDP_API WINPR_ATTR_NODISCARD int freerdp_handle_signals(void);
 
 	/** \brief registers a cleanup handler for non fatal signals.
 	 *
@@ -41,8 +41,8 @@ extern "C"
 	 *
 	 *  \return \b TRUE if registered successfully, \b FALSE otherwise.
 	 */
-	FREERDP_API BOOL freerdp_add_signal_cleanup_handler(void* context,
-	                                                    freerdp_signal_handler_t handler);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	freerdp_add_signal_cleanup_handler(void* context, freerdp_signal_handler_t handler);
 
 	/** \brief unregisters a cleanup handler for non fatal signals.
 	 *
@@ -53,8 +53,8 @@ extern "C"
 	 *
 	 *  \return \b TRUE if unregistered successfully, \b FALSE otherwise.
 	 */
-	FREERDP_API BOOL freerdp_del_signal_cleanup_handler(void* context,
-	                                                    freerdp_signal_handler_t handler);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	freerdp_del_signal_cleanup_handler(void* context, freerdp_signal_handler_t handler);
 
 #ifdef __cplusplus
 }

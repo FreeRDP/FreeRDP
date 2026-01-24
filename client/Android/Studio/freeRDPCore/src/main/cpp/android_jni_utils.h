@@ -20,12 +20,14 @@ extern "C"
 {
 #endif
 
-	FREERDP_LOCAL JNIEnv* getJNIEnv();
-	FREERDP_LOCAL JavaVM* getJavaVM();
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD JNIEnv* getJNIEnv();
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD JavaVM* getJavaVM();
 
-	FREERDP_LOCAL char* get_string_from_string_builder(JNIEnv* env, jobject strBuilder);
-	FREERDP_LOCAL jobject create_string_builder(JNIEnv* env, char* initialStr);
-	FREERDP_LOCAL jstring jniNewStringUTF(JNIEnv* env, const char* in, int len);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD char* get_string_from_string_builder(JNIEnv* env,
+	                                                                        jobject strBuilder);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD jobject create_string_builder(JNIEnv* env, char* initialStr);
+	FREERDP_LOCAL WINPR_ATTR_NODISCARD jstring jniNewStringUTF(JNIEnv* env, const char* in,
+	                                                           int len);
 
 	FREERDP_LOCAL extern JavaVM* g_JavaVm;
 

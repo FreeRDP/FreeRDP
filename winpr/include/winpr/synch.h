@@ -45,28 +45,32 @@ extern "C"
 #define CREATE_MUTEX_INITIAL_OWNER 0x00000001
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
-	                              LPCSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes,
+	                                                   BOOL bInitialOwner, LPCSTR lpName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
-	                              LPCWSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes,
+	                                                   BOOL bInitialOwner, LPCWSTR lpName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateMutexExA(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCSTR lpName,
-	                                DWORD dwFlags, DWORD dwDesiredAccess);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateMutexExA(LPSECURITY_ATTRIBUTES lpMutexAttributes,
+	                                                     LPCSTR lpName, DWORD dwFlags,
+	                                                     DWORD dwDesiredAccess);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateMutexExW(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCWSTR lpName,
-	                                DWORD dwFlags, DWORD dwDesiredAccess);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateMutexExW(LPSECURITY_ATTRIBUTES lpMutexAttributes,
+	                                                     LPCWSTR lpName, DWORD dwFlags,
+	                                                     DWORD dwDesiredAccess);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE OpenMutexA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE OpenMutexA(DWORD dwDesiredAccess, BOOL bInheritHandle,
+	                                                 LPCSTR lpName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle,
+	                                                 LPCWSTR lpName);
 
-	WINPR_API BOOL ReleaseMutex(HANDLE hMutex);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ReleaseMutex(HANDLE hMutex);
 
 #ifdef UNICODE
 #define CreateMutex CreateMutexW
@@ -81,18 +85,22 @@ extern "C"
 	/* Semaphore */
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateSemaphoreA(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
-	                                  LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE
+	CreateSemaphoreA(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount,
+	                 LONG lMaximumCount, LPCSTR lpName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
-	                                  LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE
+	CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount,
+	                 LONG lMaximumCount, LPCWSTR lpName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE OpenSemaphoreA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE OpenSemaphoreA(DWORD dwDesiredAccess, BOOL bInheritHandle,
+	                                                     LPCSTR lpName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE OpenSemaphoreW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE OpenSemaphoreW(DWORD dwDesiredAccess, BOOL bInheritHandle,
+	                                                     LPCWSTR lpName);
 
 #ifdef UNICODE
 #define CreateSemaphore CreateSemaphoreW
@@ -102,36 +110,43 @@ extern "C"
 #define OpenSemaphore OpenSemaphoreA
 #endif
 
-	WINPR_API BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCount);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount,
+	                                                     LPLONG lpPreviousCount);
 
 /* Event */
 #define CREATE_EVENT_MANUAL_RESET 0x00000001
 #define CREATE_EVENT_INITIAL_SET 0x00000002
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset,
-	                              BOOL bInitialState, LPCSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes,
+	                                                   BOOL bManualReset, BOOL bInitialState,
+	                                                   LPCSTR lpName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset,
-	                              BOOL bInitialState, LPCWSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes,
+	                                                   BOOL bManualReset, BOOL bInitialState,
+	                                                   LPCWSTR lpName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateEventExA(LPSECURITY_ATTRIBUTES lpEventAttributes, LPCSTR lpName,
-	                                DWORD dwFlags, DWORD dwDesiredAccess);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateEventExA(LPSECURITY_ATTRIBUTES lpEventAttributes,
+	                                                     LPCSTR lpName, DWORD dwFlags,
+	                                                     DWORD dwDesiredAccess);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateEventExW(LPSECURITY_ATTRIBUTES lpEventAttributes, LPCWSTR lpName,
-	                                DWORD dwFlags, DWORD dwDesiredAccess);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateEventExW(LPSECURITY_ATTRIBUTES lpEventAttributes,
+	                                                     LPCWSTR lpName, DWORD dwFlags,
+	                                                     DWORD dwDesiredAccess);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE OpenEventA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE OpenEventA(DWORD dwDesiredAccess, BOOL bInheritHandle,
+	                                                 LPCSTR lpName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE OpenEventW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE OpenEventW(DWORD dwDesiredAccess, BOOL bInheritHandle,
+	                                                 LPCWSTR lpName);
 
-	WINPR_API BOOL SetEvent(HANDLE hEvent);
-	WINPR_API BOOL ResetEvent(HANDLE hEvent);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetEvent(HANDLE hEvent);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ResetEvent(HANDLE hEvent);
 
 #if defined(WITH_DEBUG_EVENTS)
 #define DumpEventHandles() DumpEventHandles_(__func__, __FILE__, __LINE__)
@@ -169,16 +184,17 @@ extern "C"
 	typedef PRTL_CRITICAL_SECTION LPCRITICAL_SECTION;
 
 	WINPR_API VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
-	WINPR_API BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection,
-	                                           DWORD dwSpinCount, DWORD Flags);
-	WINPR_API BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION lpCriticalSection,
-	                                                     DWORD dwSpinCount);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL InitializeCriticalSectionEx(
+	    LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount);
 
-	WINPR_API DWORD SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection,
-	                                            DWORD dwSpinCount);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD
+	SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount);
 
 	WINPR_API VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
-	WINPR_API BOOL TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 
 	WINPR_API VOID LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 
@@ -187,15 +203,15 @@ extern "C"
 	/* Sleep */
 
 	WINPR_API VOID Sleep(DWORD dwMilliseconds);
-	WINPR_API DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
 
 	/* Address */
 
 	WINPR_API VOID WakeByAddressAll(PVOID Address);
 	WINPR_API VOID WakeByAddressSingle(PVOID Address);
 
-	WINPR_API BOOL WaitOnAddress(VOID volatile* Address, PVOID CompareAddress, size_t AddressSize,
-	                             DWORD dwMilliseconds);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WaitOnAddress(VOID volatile* Address, PVOID CompareAddress,
+	                                                  size_t AddressSize, DWORD dwMilliseconds);
 
 	/* Wait */
 
@@ -213,15 +229,22 @@ extern "C"
 
 #define MAXIMUM_WAIT_OBJECTS 64
 
-	WINPR_API DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
-	WINPR_API DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable);
-	WINPR_API DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
-	                                       DWORD dwMilliseconds);
-	WINPR_API DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
-	                                         DWORD dwMilliseconds, BOOL bAlertable);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds,
+	                                                           BOOL bAlertable);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD WaitForMultipleObjects(DWORD nCount,
+	                                                            const HANDLE* lpHandles,
+	                                                            BOOL bWaitAll,
+	                                                            DWORD dwMilliseconds);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD WaitForMultipleObjectsEx(DWORD nCount,
+	                                                              const HANDLE* lpHandles,
+	                                                              BOOL bWaitAll,
+	                                                              DWORD dwMilliseconds,
+	                                                              BOOL bAlertable);
 
-	WINPR_API DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn,
-	                                    DWORD dwMilliseconds, BOOL bAlertable);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD SignalObjectAndWait(HANDLE hObjectToSignal,
+	                                                         HANDLE hObjectToWaitOn,
+	                                                         DWORD dwMilliseconds, BOOL bAlertable);
 
 	/* Waitable Timer */
 
@@ -250,41 +273,43 @@ extern "C"
 	                                 DWORD dwTimerHighValue);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes,
-	                                      BOOL bManualReset, LPCSTR lpTimerName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateWaitableTimerA(
+	    LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManualReset, LPCSTR lpTimerName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateWaitableTimerW(LPSECURITY_ATTRIBUTES lpTimerAttributes,
-	                                      BOOL bManualReset, LPCWSTR lpTimerName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateWaitableTimerW(
+	    LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManualReset, LPCWSTR lpTimerName);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateWaitableTimerExA(LPSECURITY_ATTRIBUTES lpTimerAttributes,
-	                                        LPCSTR lpTimerName, DWORD dwFlags,
-	                                        DWORD dwDesiredAccess);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE
+	CreateWaitableTimerExA(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCSTR lpTimerName,
+	                       DWORD dwFlags, DWORD dwDesiredAccess);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateWaitableTimerExW(LPSECURITY_ATTRIBUTES lpTimerAttributes,
-	                                        LPCWSTR lpTimerName, DWORD dwFlags,
-	                                        DWORD dwDesiredAccess);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE
+	CreateWaitableTimerExW(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCWSTR lpTimerName,
+	                       DWORD dwFlags, DWORD dwDesiredAccess);
 
-	WINPR_API BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPeriod,
-	                                PTIMERAPCROUTINE pfnCompletionRoutine,
-	                                LPVOID lpArgToCompletionRoutine, BOOL fResume);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetWaitableTimer(
+	    HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPeriod,
+	    PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, BOOL fResume);
 
-	WINPR_API BOOL SetWaitableTimerEx(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPeriod,
-	                                  PTIMERAPCROUTINE pfnCompletionRoutine,
-	                                  LPVOID lpArgToCompletionRoutine, PREASON_CONTEXT WakeContext,
-	                                  ULONG TolerableDelay);
-
-	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE OpenWaitableTimerA(DWORD dwDesiredAccess, BOOL bInheritHandle,
-	                                    LPCSTR lpTimerName);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	SetWaitableTimerEx(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPeriod,
+	                   PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine,
+	                   PREASON_CONTEXT WakeContext, ULONG TolerableDelay);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE OpenWaitableTimerW(DWORD dwDesiredAccess, BOOL bInheritHandle,
-	                                    LPCWSTR lpTimerName);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE OpenWaitableTimerA(DWORD dwDesiredAccess,
+	                                                         BOOL bInheritHandle,
+	                                                         LPCSTR lpTimerName);
 
-	WINPR_API BOOL CancelWaitableTimer(HANDLE hTimer);
+	WINPR_ATTR_MALLOC(CloseHandle, 1)
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE OpenWaitableTimerW(DWORD dwDesiredAccess,
+	                                                         BOOL bInheritHandle,
+	                                                         LPCWSTR lpTimerName);
+
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CancelWaitableTimer(HANDLE hTimer);
 
 #ifdef UNICODE
 #define CreateWaitableTimer CreateWaitableTimerW
@@ -296,7 +321,7 @@ extern "C"
 #define OpenWaitableTimer OpenWaitableTimerA
 #endif
 
-	WINPR_API int GetTimerFileDescriptor(HANDLE hTimer);
+	WINPR_API WINPR_ATTR_NODISCARD int GetTimerFileDescriptor(HANDLE hTimer);
 
 	/**
 	 * Timer-Queue Timer
@@ -316,17 +341,20 @@ extern "C"
 	typedef VOID (*WAITORTIMERCALLBACK)(PVOID lpParameter, BOOLEAN TimerOrWaitFired);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateTimerQueue(void);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE CreateTimerQueue(void);
 
-	WINPR_API BOOL DeleteTimerQueue(HANDLE TimerQueue);
-	WINPR_API BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL DeleteTimerQueue(HANDLE TimerQueue);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL DeleteTimerQueueEx(HANDLE TimerQueue,
+	                                                       HANDLE CompletionEvent);
 
-	WINPR_API BOOL CreateTimerQueueTimer(HANDLE* phNewTimer, HANDLE TimerQueue,
-	                                     WAITORTIMERCALLBACK Callback, void* Parameter,
-	                                     DWORD DueTime, DWORD Period, ULONG Flags);
-	WINPR_API BOOL ChangeTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, ULONG DueTime,
-	                                     ULONG Period);
-	WINPR_API BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE CompletionEvent);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CreateTimerQueueTimer(HANDLE* phNewTimer, HANDLE TimerQueue,
+	                                                          WAITORTIMERCALLBACK Callback,
+	                                                          void* Parameter, DWORD DueTime,
+	                                                          DWORD Period, ULONG Flags);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ChangeTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer,
+	                                                          ULONG DueTime, ULONG Period);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer,
+	                                                          HANDLE CompletionEvent);
 
 #endif
 
@@ -377,11 +405,14 @@ extern "C"
 	typedef PRTL_RUN_ONCE LPINIT_ONCE;
 	typedef BOOL(CALLBACK* PINIT_ONCE_FN)(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context);
 
-	WINPR_API BOOL winpr_InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags,
-	                                             PBOOL fPending, LPVOID* lpContext);
-	WINPR_API BOOL winpr_InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext);
-	WINPR_API BOOL winpr_InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn,
-	                                         PVOID Parameter, LPVOID* Context);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL winpr_InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce,
+	                                                                  DWORD dwFlags, PBOOL fPending,
+	                                                                  LPVOID* lpContext);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL winpr_InitOnceComplete(LPINIT_ONCE lpInitOnce,
+	                                                           DWORD dwFlags, LPVOID lpContext);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL winpr_InitOnceExecuteOnce(PINIT_ONCE InitOnce,
+	                                                              PINIT_ONCE_FN InitFn,
+	                                                              PVOID Parameter, LPVOID* Context);
 	WINPR_API VOID winpr_InitOnceInitialize(PINIT_ONCE InitOnce);
 
 #define InitOnceBeginInitialize winpr_InitOnceBeginInitialize
@@ -415,11 +446,12 @@ extern "C"
 #define SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY 0x02
 #define SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE 0x04
 
-	WINPR_API BOOL WINAPI winpr_InitializeSynchronizationBarrier(
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINAPI winpr_InitializeSynchronizationBarrier(
 	    LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
-	WINPR_API BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier,
-	                                                        DWORD dwFlags);
-	WINPR_API BOOL WINAPI winpr_DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINAPI
+	winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WINAPI
+	winpr_DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
 
 #define InitializeSynchronizationBarrier winpr_InitializeSynchronizationBarrier
 #define EnterSynchronizationBarrier winpr_EnterSynchronizationBarrier
@@ -432,18 +464,19 @@ extern "C"
 	WINPR_API VOID USleep(DWORD dwMicroseconds);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes,
-	                                            BOOL bManualReset, BOOL bInitialState,
-	                                            int FileDescriptor, ULONG mode);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE
+	CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset,
+	                           BOOL bInitialState, int FileDescriptor, ULONG mode);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes,
-	                                            BOOL bManualReset, BOOL bInitialState,
-	                                            int FileDescriptor, ULONG mode);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE
+	CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset,
+	                           BOOL bInitialState, int FileDescriptor, ULONG mode);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
-	                                       BOOL bManualReset, BOOL bInitialState, void* pObject);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE
+	CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset,
+	                      BOOL bInitialState, void* pObject);
 
 #ifdef UNICODE
 #define CreateFileDescriptorEvent CreateFileDescriptorEventW
@@ -451,10 +484,11 @@ extern "C"
 #define CreateFileDescriptorEvent CreateFileDescriptorEventA
 #endif
 
-	WINPR_API int GetEventFileDescriptor(HANDLE hEvent);
-	WINPR_API int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor, ULONG mode);
+	WINPR_API WINPR_ATTR_NODISCARD int GetEventFileDescriptor(HANDLE hEvent);
+	WINPR_API WINPR_ATTR_NODISCARD int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor,
+	                                                          ULONG mode);
 
-	WINPR_API void* GetEventWaitObject(HANDLE hEvent);
+	WINPR_API WINPR_ATTR_NODISCARD void* GetEventWaitObject(HANDLE hEvent);
 
 #ifdef __cplusplus
 }

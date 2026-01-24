@@ -25,9 +25,12 @@
 
 #include "android_freerdp.h"
 
-FREERDP_LOCAL UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT
+android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
 
-FREERDP_LOCAL BOOL android_cliprdr_init(androidContext* afc, CliprdrClientContext* cliprdr);
-FREERDP_LOCAL BOOL android_cliprdr_uninit(androidContext* afc, CliprdrClientContext* cliprdr);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL android_cliprdr_init(androidContext* afc,
+                                                             CliprdrClientContext* cliprdr);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL android_cliprdr_uninit(androidContext* afc,
+                                                               CliprdrClientContext* cliprdr);
 
 #endif /* FREERDP_CLIENT_ANDROID_CLIPRDR_H */

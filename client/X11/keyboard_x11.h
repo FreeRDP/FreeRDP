@@ -22,4 +22,4 @@
 #include <winpr/wlog.h>
 #include <freerdp/api.h>
 
-int xf_detect_keyboard_layout_from_xkb(wLog* log, DWORD* keyboardLayoutId);
+WINPR_ATTR_NODISCARD int xf_detect_keyboard_layout_from_xkb(wLog* log, DWORD* keyboardLayoutId);

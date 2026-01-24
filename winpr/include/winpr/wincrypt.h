@@ -583,13 +583,17 @@ typedef const CERT_CONTEXT* PCCERT_CONTEXT;
 #define CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE \
 	(CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE_ID << CERT_SYSTEM_STORE_LOCATION_SHIFT)
 
-WINPR_API HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingType,
-                                   HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags, const void* pvPara);
+WINPR_API WINPR_ATTR_NODISCARD HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider,
+                                                        DWORD dwMsgAndCertEncodingType,
+                                                        HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags,
+                                                        const void* pvPara);
 
-WINPR_API HCERTSTORE CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv, LPCWSTR szSubsystemProtocol);
-WINPR_API HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv, LPCSTR szSubsystemProtocol);
+WINPR_API WINPR_ATTR_NODISCARD HCERTSTORE CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv,
+                                                               LPCWSTR szSubsystemProtocol);
+WINPR_API WINPR_ATTR_NODISCARD HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv,
+                                                               LPCSTR szSubsystemProtocol);
 
-WINPR_API BOOL CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags);
+WINPR_API WINPR_ATTR_NODISCARD BOOL CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags);
 
 #ifdef UNICODE
 #define CertOpenSystemStore CertOpenSystemStoreW
@@ -602,18 +606,21 @@ extern "C"
 {
 #endif
 
-	WINPR_API PCCERT_CONTEXT CertFindCertificateInStore(HCERTSTORE hCertStore,
-	                                                    DWORD dwCertEncodingType, DWORD dwFindFlags,
-	                                                    DWORD dwFindType, const void* pvFindPara,
-	                                                    PCCERT_CONTEXT pPrevCertContext);
+	WINPR_API WINPR_ATTR_NODISCARD PCCERT_CONTEXT CertFindCertificateInStore(
+	    HCERTSTORE hCertStore, DWORD dwCertEncodingType, DWORD dwFindFlags, DWORD dwFindType,
+	    const void* pvFindPara, PCCERT_CONTEXT pPrevCertContext);
 
-	WINPR_API PCCERT_CONTEXT CertEnumCertificatesInStore(HCERTSTORE hCertStore,
-	                                                     PCCERT_CONTEXT pPrevCertContext);
+	WINPR_API WINPR_ATTR_NODISCARD PCCERT_CONTEXT
+	CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrevCertContext);
 
-	WINPR_API DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType, DWORD dwFlags,
-	                                   void* pvTypePara, LPWSTR pszNameString, DWORD cchNameString);
-	WINPR_API DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType, DWORD dwFlags,
-	                                   void* pvTypePara, LPSTR pszNameString, DWORD cchNameString);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext,
+	                                                        DWORD dwType, DWORD dwFlags,
+	                                                        void* pvTypePara, LPWSTR pszNameString,
+	                                                        DWORD cchNameString);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext,
+	                                                        DWORD dwType, DWORD dwFlags,
+	                                                        void* pvTypePara, LPSTR pszNameString,
+	                                                        DWORD cchNameString);
 
 #ifdef __cplusplus
 }
@@ -673,17 +680,19 @@ extern "C"
 {
 #endif
 
-	WINPR_API BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags);
-	WINPR_API BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CryptProtectMemory(LPVOID pData, DWORD cbData,
+	                                                       DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData,
+	                                                         DWORD dwFlags);
 
-	WINPR_API BOOL CryptProtectData(DATA_BLOB* pDataIn, LPCWSTR szDataDescr,
-	                                DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
-	                                CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags,
-	                                DATA_BLOB* pDataOut);
-	WINPR_API BOOL CryptUnprotectData(DATA_BLOB* pDataIn, LPWSTR* ppszDataDescr,
-	                                  DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
-	                                  CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags,
-	                                  DATA_BLOB* pDataOut);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CryptProtectData(DATA_BLOB* pDataIn, LPCWSTR szDataDescr,
+	                                                     DATA_BLOB* pOptionalEntropy,
+	                                                     PVOID pvReserved,
+	                                                     CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct,
+	                                                     DWORD dwFlags, DATA_BLOB* pDataOut);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CryptUnprotectData(
+	    DATA_BLOB* pDataIn, LPWSTR* ppszDataDescr, DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
+	    CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut);
 
 #ifdef __cplusplus
 }
@@ -708,17 +717,21 @@ extern "C"
 #define CRYPT_STRING_NOCRLF 0x40000000
 #define CRYPT_STRING_NOCR 0x80000000
 
-WINPR_API BOOL CryptStringToBinaryW(LPCWSTR pszString, DWORD cchString, DWORD dwFlags,
-                                    BYTE* pbBinary, DWORD* pcbBinary, DWORD* pdwSkip,
-                                    DWORD* pdwFlags);
-WINPR_API BOOL CryptStringToBinaryA(LPCSTR pszString, DWORD cchString, DWORD dwFlags,
-                                    BYTE* pbBinary, DWORD* pcbBinary, DWORD* pdwSkip,
-                                    DWORD* pdwFlags);
+WINPR_API WINPR_ATTR_NODISCARD BOOL CryptStringToBinaryW(LPCWSTR pszString, DWORD cchString,
+                                                         DWORD dwFlags, BYTE* pbBinary,
+                                                         DWORD* pcbBinary, DWORD* pdwSkip,
+                                                         DWORD* pdwFlags);
+WINPR_API WINPR_ATTR_NODISCARD BOOL CryptStringToBinaryA(LPCSTR pszString, DWORD cchString,
+                                                         DWORD dwFlags, BYTE* pbBinary,
+                                                         DWORD* pcbBinary, DWORD* pdwSkip,
+                                                         DWORD* pdwFlags);
 
-WINPR_API BOOL CryptBinaryToStringW(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags,
-                                    LPWSTR pszString, DWORD* pcchString);
-WINPR_API BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags,
-                                    LPSTR pszString, DWORD* pcchString);
+WINPR_API WINPR_ATTR_NODISCARD BOOL CryptBinaryToStringW(CONST BYTE* pbBinary, DWORD cbBinary,
+                                                         DWORD dwFlags, LPWSTR pszString,
+                                                         DWORD* pcchString);
+WINPR_API WINPR_ATTR_NODISCARD BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary,
+                                                         DWORD dwFlags, LPSTR pszString,
+                                                         DWORD* pcchString);
 
 #ifdef UNICODE
 #define CryptStringToBinary CryptStringToBinaryW

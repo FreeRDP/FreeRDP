@@ -24,7 +24,8 @@
 #include <freerdp/api.h>
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
-FREERDP_LOCAL UINT32 find_keyboard_layout_in_xorg_rules(const char* layout, const char* variant);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD UINT32 find_keyboard_layout_in_xorg_rules(const char* layout,
+                                                                             const char* variant);
 #endif
 
 #endif /* FREERDP_LIB_LOCALE_XKB_LAYOUT_IDS_H */

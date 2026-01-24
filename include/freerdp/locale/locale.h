@@ -258,9 +258,11 @@ extern "C"
 		DWORD code;                       /* 32-bit unsigned integer corresponding to the locale */
 	} SYSTEM_LOCALE;
 
-	FREERDP_API DWORD freerdp_get_system_locale_id(void);
-	FREERDP_API const char* freerdp_get_system_locale_name_from_id(DWORD localeId);
-	FREERDP_API int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId);
+	FREERDP_API WINPR_ATTR_NODISCARD DWORD freerdp_get_system_locale_id(void);
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_get_system_locale_name_from_id(DWORD localeId);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId);
 
 	/** @brief Try to guess the keyboard layout ID from a given locale string (e.g. de_AT)
 	 *
@@ -269,7 +271,8 @@ extern "C"
 	 *  @return \b negative in case of an error, or a keyboard layout id otherwise
 	 *  @since version 3.14.0
 	 */
-	FREERDP_API int64_t freerdp_detect_keyboard_layout_from_locale(const char* localestr);
+	FREERDP_API WINPR_ATTR_NODISCARD int64_t
+	freerdp_detect_keyboard_layout_from_locale(const char* localestr);
 
 	/**
 	 * @brief Query the list of supported system locales
@@ -277,7 +280,8 @@ extern "C"
 	 * @return A pointer to @ref SYSTEM_LOCALE or \b NULL in case none found
 	 * @since version 3.6.0
 	 */
-	FREERDP_API const SYSTEM_LOCALE* freerdp_get_system_locale_list(size_t* count);
+	FREERDP_API WINPR_ATTR_NODISCARD const SYSTEM_LOCALE*
+	freerdp_get_system_locale_list(size_t* count);
 
 	/**
 	 * @brief Query the list of system locales and return a matching one
@@ -286,7 +290,7 @@ extern "C"
 	 * @return A locale index >= 0 in case of success, <0 for failure
 	 * @since version 3.6.0
 	 */
-	FREERDP_API INT64 freerdp_get_locale_id_from_string(const char* locale);
+	FREERDP_API WINPR_ATTR_NODISCARD INT64 freerdp_get_locale_id_from_string(const char* locale);
 
 	/**
 	 * @brief Return the default @ref keyboard-identifiers for a provided locale
@@ -294,7 +298,8 @@ extern "C"
 	 * @return The @ref keyboard-identifiers to use
 	 * @since version 3.6.0
 	 */
-	FREERDP_API DWORD freerdp_get_keyboard_default_layout_for_locale(DWORD locale);
+	FREERDP_API WINPR_ATTR_NODISCARD DWORD
+	freerdp_get_keyboard_default_layout_for_locale(DWORD locale);
 
 #ifdef __cplusplus
 }

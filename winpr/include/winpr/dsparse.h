@@ -104,13 +104,15 @@ extern "C"
 #define DsMakeSpn DsMakeSpnA
 #endif
 
-	WINPR_API DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName,
-	                           USHORT InstancePort, LPCWSTR Referrer, DWORD* pcSpnLength,
-	                           LPWSTR pszSpn);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName,
+	                                                LPCWSTR InstanceName, USHORT InstancePort,
+	                                                LPCWSTR Referrer, DWORD* pcSpnLength,
+	                                                LPWSTR pszSpn);
 
-	WINPR_API DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName,
-	                           USHORT InstancePort, LPCSTR Referrer, DWORD* pcSpnLength,
-	                           LPSTR pszSpn);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName,
+	                                                LPCSTR InstanceName, USHORT InstancePort,
+	                                                LPCSTR Referrer, DWORD* pcSpnLength,
+	                                                LPSTR pszSpn);
 
 #ifdef __cplusplus
 }

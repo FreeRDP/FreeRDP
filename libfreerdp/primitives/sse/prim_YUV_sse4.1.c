@@ -42,8 +42,8 @@ static primitives_t* generic = NULL;
 /****************************************************************************/
 /* sse41 YUV420 -> RGB conversion                                           */
 /****************************************************************************/
-static inline __m128i* sse41_YUV444Pixel(__m128i* WINPR_RESTRICT dst, __m128i Yraw, __m128i Uraw,
-                                         __m128i Vraw, UINT8 pos)
+static inline WINPR_ATTR_NODISCARD __m128i*
+sse41_YUV444Pixel(__m128i* WINPR_RESTRICT dst, __m128i Yraw, __m128i Uraw, __m128i Vraw, UINT8 pos)
 {
 	const __m128i mapY[] = { mm_set_epu32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
 		                     mm_set_epu32(0x80800780, 0x80800680, 0x80800580, 0x80800480),
@@ -122,10 +122,9 @@ static inline __m128i* sse41_YUV444Pixel(__m128i* WINPR_RESTRICT dst, __m128i Yr
 	return dst;
 }
 
-static inline pstatus_t sse41_YUV420ToRGB_BGRX(const BYTE* WINPR_RESTRICT pSrc[],
-                                               const UINT32* WINPR_RESTRICT srcStep,
-                                               BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
-                                               const prim_size_t* WINPR_RESTRICT roi)
+static inline WINPR_ATTR_NODISCARD pstatus_t sse41_YUV420ToRGB_BGRX(
+    const BYTE* WINPR_RESTRICT pSrc[], const UINT32* WINPR_RESTRICT srcStep,
+    BYTE* WINPR_RESTRICT pDst, UINT32 dstStep, const prim_size_t* WINPR_RESTRICT roi)
 {
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
@@ -224,8 +223,8 @@ static inline void BGRX_fillRGB(size_t offset, BYTE* WINPR_RESTRICT pRGB[2],
 }
 
 /* input are uint16_t vectors */
-static inline __m128i sse41_yuv2x_single(const __m128i Y, __m128i U, __m128i V, const short iMulU,
-                                         const short iMulV)
+static inline WINPR_ATTR_NODISCARD __m128i sse41_yuv2x_single(const __m128i Y, __m128i U, __m128i V,
+                                                              const short iMulU, const short iMulV)
 {
 	const __m128i zero = _mm_set1_epi8(0);
 
@@ -267,8 +266,8 @@ static inline __m128i sse41_yuv2x_single(const __m128i Y, __m128i U, __m128i V, 
 }
 
 /* Input are uint8_t vectors */
-static inline __m128i sse41_yuv2x(const __m128i Y, __m128i U, __m128i V, const short iMulU,
-                                  const short iMulV)
+static inline WINPR_ATTR_NODISCARD __m128i sse41_yuv2x(const __m128i Y, __m128i U, __m128i V,
+                                                       const short iMulU, const short iMulV)
 {
 	const __m128i zero = _mm_set1_epi8(0);
 
@@ -291,19 +290,19 @@ static inline __m128i sse41_yuv2x(const __m128i Y, __m128i U, __m128i V, const s
 }
 
 /* const INT32 r = ((256L * C(Y) + 0L * D(U) + 403L * E(V))) >> 8; */
-static inline __m128i sse41_yuv2r(const __m128i Y, __m128i U, __m128i V)
+static inline WINPR_ATTR_NODISCARD __m128i sse41_yuv2r(const __m128i Y, __m128i U, __m128i V)
 {
 	return sse41_yuv2x(Y, U, V, 0, 403);
 }
 
 /*  const INT32 g = ((256L * C(Y) - 48L * D(U) - 120L * E(V))) >> 8; */
-static inline __m128i sse41_yuv2g(const __m128i Y, __m128i U, __m128i V)
+static inline WINPR_ATTR_NODISCARD __m128i sse41_yuv2g(const __m128i Y, __m128i U, __m128i V)
 {
 	return sse41_yuv2x(Y, U, V, -48, -120);
 }
 
 /* const INT32 b = ((256L * C(Y) + 475L * D(U) + 0L * E(V))) >> 8; */
-static inline __m128i sse41_yuv2b(const __m128i Y, __m128i U, __m128i V)
+static inline WINPR_ATTR_NODISCARD __m128i sse41_yuv2b(const __m128i Y, __m128i U, __m128i V)
 {
 	return sse41_yuv2x(Y, U, V, 475, 0);
 }
@@ -335,7 +334,7 @@ static inline void sse41_BGRX_fillRGB_pixel(BYTE* WINPR_RESTRICT pRGB, __m128i Y
 	_mm_maskmoveu_si128(bgrx3, mask, (char*)&rgb[3]);
 }
 
-static inline __m128i odd1sum(__m128i u1)
+static inline WINPR_ATTR_NODISCARD __m128i odd1sum(__m128i u1)
 {
 	const __m128i zero = _mm_set1_epi8(0);
 	const __m128i u1hi = _mm_unpackhi_epi8(u1, zero);
@@ -343,7 +342,7 @@ static inline __m128i odd1sum(__m128i u1)
 	return _mm_hadds_epi16(u1lo, u1hi);
 }
 
-static inline __m128i odd0sum(__m128i u0, __m128i u1sum)
+static inline WINPR_ATTR_NODISCARD __m128i odd0sum(__m128i u0, __m128i u1sum)
 {
 	/* Mask out even bytes, extend uint8_t to uint16_t by filling in zero bytes,
 	 * horizontally add the values */
@@ -353,7 +352,7 @@ static inline __m128i odd0sum(__m128i u0, __m128i u1sum)
 	return _mm_adds_epi16(u1sum, u0odd);
 }
 
-static inline __m128i calcavg(__m128i u0even, __m128i sum)
+static inline WINPR_ATTR_NODISCARD __m128i calcavg(__m128i u0even, __m128i sum)
 {
 	const __m128i u4zero = _mm_slli_epi16(u0even, 2);
 	const __m128i uavg = _mm_sub_epi16(u4zero, sum);
@@ -364,7 +363,7 @@ static inline __m128i calcavg(__m128i u0even, __m128i sum)
 	return _mm_shuffle_epi8(savg, smask);
 }
 
-static inline __m128i diffmask(__m128i avg, __m128i u0even)
+static inline WINPR_ATTR_NODISCARD __m128i diffmask(__m128i avg, __m128i u0even)
 {
 	/* Check for values >= 30 to apply the avg value to
 	 * use int16 for calculations to avoid issues with signed 8bit integers
@@ -414,7 +413,7 @@ static inline void sse41_BGRX_fillRGB(BYTE* WINPR_RESTRICT pRGB[2], const __m128
 	}
 }
 
-static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_DOUBLE_ROW(
+static inline WINPR_ATTR_NODISCARD pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_DOUBLE_ROW(
     BYTE* WINPR_RESTRICT pDst[2], const BYTE* WINPR_RESTRICT YData[2],
     const BYTE* WINPR_RESTRICT UData[2], const BYTE* WINPR_RESTRICT VData[2], UINT32 nWidth)
 {
@@ -461,7 +460,7 @@ static inline void BGRX_fillRGB_single(size_t offset, BYTE* WINPR_RESTRICT pRGB,
 	}
 }
 
-static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_SINGLE_ROW(
+static inline WINPR_ATTR_NODISCARD pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_SINGLE_ROW(
     BYTE* WINPR_RESTRICT pDst, const BYTE* WINPR_RESTRICT YData, const BYTE* WINPR_RESTRICT UData,
     const BYTE* WINPR_RESTRICT VData, UINT32 nWidth)
 {
@@ -475,10 +474,9 @@ static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_SINGLE_ROW(
 	return PRIMITIVES_SUCCESS;
 }
 
-static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* WINPR_RESTRICT pSrc[],
-                                                         const UINT32 srcStep[],
-                                                         BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
-                                                         const prim_size_t* WINPR_RESTRICT roi)
+static inline WINPR_ATTR_NODISCARD pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX(
+    const BYTE* WINPR_RESTRICT pSrc[], const UINT32 srcStep[], BYTE* WINPR_RESTRICT pDst,
+    UINT32 dstStep, const prim_size_t* WINPR_RESTRICT roi)
 {
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;

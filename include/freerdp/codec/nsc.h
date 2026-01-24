@@ -46,34 +46,37 @@ extern "C"
 
 #if defined(WITH_FREERDP_DEPRECATED)
 	WINPR_DEPRECATED_VAR("Use nsc_context_set_parameters(NSC_COLOR_FORMAT)",
-	                     FREERDP_API BOOL nsc_context_set_pixel_format(NSC_CONTEXT* context,
-	                                                                   UINT32 pixel_format));
+	                     FREERDP_API WINPR_ATTR_NODISCARD BOOL nsc_context_set_pixel_format(
+	                         NSC_CONTEXT* context, UINT32 pixel_format));
 #endif
 
-	FREERDP_API BOOL nsc_context_set_parameters(NSC_CONTEXT* WINPR_RESTRICT context,
-	                                            NSC_PARAMETER what, UINT32 value);
+	FREERDP_API
+	WINPR_ATTR_NODISCARD BOOL nsc_context_set_parameters(NSC_CONTEXT* WINPR_RESTRICT context,
+	                                                     NSC_PARAMETER what, UINT32 value);
 
-	FREERDP_API BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp,
-	                                     UINT32 width, UINT32 height, const BYTE* data,
-	                                     UINT32 length, BYTE* WINPR_RESTRICT pDstData,
-	                                     UINT32 DstFormat, UINT32 nDstStride, UINT32 nXDst,
-	                                     UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 flip);
-	FREERDP_API BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context,
-	                                     wStream* WINPR_RESTRICT s,
-	                                     const BYTE* WINPR_RESTRICT bmpdata, UINT32 width,
-	                                     UINT32 height, UINT32 rowstride);
-	FREERDP_API BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context,
-	                                       wStream* WINPR_RESTRICT s, BYTE* WINPR_RESTRICT bmpdata,
-	                                       UINT32 x, UINT32 y, UINT32 width, UINT32 height,
-	                                       UINT32 rowstride, UINT32 format, UINT32 flip);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL nsc_process_message(
+	    NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp, UINT32 width, UINT32 height,
+	    const BYTE* data, UINT32 length, BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
+	    UINT32 nDstStride, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 flip);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context,
+	                                                          wStream* WINPR_RESTRICT s,
+	                                                          const BYTE* WINPR_RESTRICT bmpdata,
+	                                                          UINT32 width, UINT32 height,
+	                                                          UINT32 rowstride);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context,
+	                                                            wStream* WINPR_RESTRICT s,
+	                                                            BYTE* WINPR_RESTRICT bmpdata,
+	                                                            UINT32 x, UINT32 y, UINT32 width,
+	                                                            UINT32 height, UINT32 rowstride,
+	                                                            UINT32 format, UINT32 flip);
 
-	FREERDP_API BOOL nsc_context_reset(NSC_CONTEXT* WINPR_RESTRICT context, UINT32 width,
-	                                   UINT32 height);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL nsc_context_reset(NSC_CONTEXT* WINPR_RESTRICT context,
+	                                                        UINT32 width, UINT32 height);
 
 	FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
 
 	WINPR_ATTR_MALLOC(nsc_context_free, 1)
-	FREERDP_API NSC_CONTEXT* nsc_context_new(void);
+	FREERDP_API WINPR_ATTR_NODISCARD NSC_CONTEXT* nsc_context_new(void);
 
 #ifdef __cplusplus
 }

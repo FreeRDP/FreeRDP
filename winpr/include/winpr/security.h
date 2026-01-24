@@ -401,44 +401,48 @@ extern "C"
 {
 #endif
 
-	WINPR_API BOOL InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	                                            DWORD dwRevision);
-	WINPR_API DWORD GetSecurityDescriptorLength(PSECURITY_DESCRIPTOR pSecurityDescriptor);
-	WINPR_API BOOL IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD dwRevision);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD
+	GetSecurityDescriptorLength(PSECURITY_DESCRIPTOR pSecurityDescriptor);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor);
 
-	WINPR_API BOOL GetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	                                            PSECURITY_DESCRIPTOR_CONTROL pControl,
-	                                            LPDWORD lpdwRevision);
-	WINPR_API BOOL SetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	                                            SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
-	                                            SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	GetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
+	                             PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetSecurityDescriptorControl(
+	    PSECURITY_DESCRIPTOR pSecurityDescriptor, SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
+	    SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet);
 
-	WINPR_API BOOL GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	                                         LPBOOL lpbDaclPresent, PACL* pDacl,
-	                                         LPBOOL lpbDaclDefaulted);
-	WINPR_API BOOL SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	                                         BOOL bDaclPresent, PACL pDacl, BOOL bDaclDefaulted);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbDaclPresent,
+	                          PACL* pDacl, LPBOOL lpbDaclDefaulted);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bDaclPresent,
+	                          PACL pDacl, BOOL bDaclDefaulted);
 
-	WINPR_API BOOL GetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	                                          PSID* pGroup, LPBOOL lpbGroupDefaulted);
-	WINPR_API BOOL SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pGroup,
-	                                          BOOL bGroupDefaulted);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetSecurityDescriptorGroup(
+	    PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pGroup, LPBOOL lpbGroupDefaulted);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetSecurityDescriptorGroup(
+	    PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pGroup, BOOL bGroupDefaulted);
 
-	WINPR_API BOOL GetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	                                          PSID* pOwner, LPBOOL lpbOwnerDefaulted);
-	WINPR_API BOOL SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pOwner,
-	                                          BOOL bOwnerDefaulted);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetSecurityDescriptorOwner(
+	    PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pOwner, LPBOOL lpbOwnerDefaulted);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetSecurityDescriptorOwner(
+	    PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pOwner, BOOL bOwnerDefaulted);
 
-	WINPR_API DWORD GetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor,
-	                                               PUCHAR RMControl);
-	WINPR_API DWORD SetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor,
-	                                               PUCHAR RMControl);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD
+	GetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor, PUCHAR RMControl);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD
+	SetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor, PUCHAR RMControl);
 
-	WINPR_API BOOL GetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	                                         LPBOOL lpbSaclPresent, PACL* pSacl,
-	                                         LPBOOL lpbSaclDefaulted);
-	WINPR_API BOOL SetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-	                                         BOOL bSaclPresent, PACL pSacl, BOOL bSaclDefaulted);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	GetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbSaclPresent,
+	                          PACL* pSacl, LPBOOL lpbSaclDefaulted);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL
+	SetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bSaclPresent,
+	                          PACL pSacl, BOOL bSaclDefaulted);
 
 #ifdef __cplusplus
 }

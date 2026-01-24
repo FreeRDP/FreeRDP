@@ -148,7 +148,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #define ERROR_CAST(t, val) WINPR_CXX_COMPAT_CAST(t, val)
 
-static inline HRESULT HRESULT_FROM_WIN32(unsigned long x)
+static inline WINPR_ATTR_NODISCARD HRESULT HRESULT_FROM_WIN32(unsigned long x)
 {
 	HRESULT hx = ERROR_CAST(HRESULT, x);
 	if (hx <= 0)
@@ -3072,11 +3072,11 @@ extern "C"
 {
 #endif
 
-	WINPR_API UINT GetErrorMode(void);
+	WINPR_API WINPR_ATTR_NODISCARD UINT GetErrorMode(void);
 
-	WINPR_API UINT SetErrorMode(UINT uMode);
+	WINPR_API WINPR_ATTR_NODISCARD UINT SetErrorMode(UINT uMode);
 
-	WINPR_API DWORD GetLastError(void);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD GetLastError(void);
 
 	WINPR_API VOID SetLastError(DWORD dwErrCode);
 
@@ -3085,18 +3085,20 @@ extern "C"
 	WINPR_API VOID RaiseException(DWORD dwExceptionCode, DWORD dwExceptionFlags,
 	                              DWORD nNumberOfArguments, CONST ULONG_PTR* lpArguments);
 
-	WINPR_API LONG UnhandledExceptionFilter(PEXCEPTION_POINTERS ExceptionInfo);
+	WINPR_API WINPR_ATTR_NODISCARD LONG UnhandledExceptionFilter(PEXCEPTION_POINTERS ExceptionInfo);
 
-	WINPR_API LPTOP_LEVEL_EXCEPTION_FILTER
+	WINPR_API WINPR_ATTR_NODISCARD LPTOP_LEVEL_EXCEPTION_FILTER
 	SetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
 
-	WINPR_API PVOID AddVectoredExceptionHandler(ULONG First, PVECTORED_EXCEPTION_HANDLER Handler);
+	WINPR_API WINPR_ATTR_NODISCARD PVOID
+	AddVectoredExceptionHandler(ULONG First, PVECTORED_EXCEPTION_HANDLER Handler);
 
-	WINPR_API ULONG RemoveVectoredExceptionHandler(PVOID Handle);
+	WINPR_API WINPR_ATTR_NODISCARD ULONG RemoveVectoredExceptionHandler(PVOID Handle);
 
-	WINPR_API PVOID AddVectoredContinueHandler(ULONG First, PVECTORED_EXCEPTION_HANDLER Handler);
+	WINPR_API WINPR_ATTR_NODISCARD PVOID
+	AddVectoredContinueHandler(ULONG First, PVECTORED_EXCEPTION_HANDLER Handler);
 
-	WINPR_API ULONG RemoveVectoredContinueHandler(PVOID Handle);
+	WINPR_API WINPR_ATTR_NODISCARD ULONG RemoveVectoredContinueHandler(PVOID Handle);
 
 #ifdef __cplusplus
 }

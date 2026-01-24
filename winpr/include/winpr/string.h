@@ -37,14 +37,16 @@ extern "C"
 {
 #endif
 
-	WINPR_API char* winpr_str_url_encode(const char* str, size_t len);
-	WINPR_API char* winpr_str_url_decode(const char* str, size_t len);
+	WINPR_API WINPR_ATTR_NODISCARD char* winpr_str_url_encode(const char* str, size_t len);
+	WINPR_API WINPR_ATTR_NODISCARD char* winpr_str_url_decode(const char* str, size_t len);
 
-	WINPR_API BOOL winpr_str_append(const char* what, char* buffer, size_t size,
-	                                const char* separator);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL winpr_str_append(const char* what, char* buffer,
+	                                                     size_t size, const char* separator);
 
-	WINPR_API int winpr_asprintf(char** s, size_t* slen, const char* templ, ...);
-	WINPR_API int winpr_vasprintf(char** s, size_t* slen, const char* templ, va_list ap);
+	WINPR_API WINPR_ATTR_NODISCARD int winpr_asprintf(char** s, size_t* slen, const char* templ,
+	                                                  ...);
+	WINPR_API WINPR_ATTR_NODISCARD int winpr_vasprintf(char** s, size_t* slen, const char* templ,
+	                                                   va_list ap);
 
 #ifndef _WIN32
 
@@ -65,27 +67,31 @@ extern "C"
 #define MB_USEGLYPHCHARS 0x00000004
 #define MB_ERR_INVALID_CHARS 0x00000008
 
-	WINPR_API char* _strdup(const char* strSource);
-	WINPR_API WCHAR* _wcsdup(const WCHAR* strSource);
+	WINPR_API WINPR_ATTR_NODISCARD char* _strdup(const char* strSource);
+	WINPR_API WINPR_ATTR_NODISCARD WCHAR* _wcsdup(const WCHAR* strSource);
 
-	WINPR_API int _stricmp(const char* string1, const char* string2);
-	WINPR_API int _strnicmp(const char* string1, const char* string2, size_t count);
+	WINPR_API WINPR_ATTR_NODISCARD int _stricmp(const char* string1, const char* string2);
+	WINPR_API WINPR_ATTR_NODISCARD int _strnicmp(const char* string1, const char* string2,
+	                                             size_t count);
 
-	WINPR_API int _wcscmp(const WCHAR* string1, const WCHAR* string2);
-	WINPR_API int _wcsncmp(const WCHAR* string1, const WCHAR* string2, size_t count);
+	WINPR_API WINPR_ATTR_NODISCARD int _wcscmp(const WCHAR* string1, const WCHAR* string2);
+	WINPR_API WINPR_ATTR_NODISCARD int _wcsncmp(const WCHAR* string1, const WCHAR* string2,
+	                                            size_t count);
 
-	WINPR_API size_t _wcslen(const WCHAR* str);
-	WINPR_API size_t _wcsnlen(const WCHAR* str, size_t maxNumberOfElements);
+	WINPR_API WINPR_ATTR_NODISCARD size_t _wcslen(const WCHAR* str);
+	WINPR_API WINPR_ATTR_NODISCARD size_t _wcsnlen(const WCHAR* str, size_t maxNumberOfElements);
 
-	WINPR_API WCHAR* _wcsstr(const WCHAR* str, const WCHAR* strSearch);
+	WINPR_API WINPR_ATTR_NODISCARD WCHAR* _wcsstr(const WCHAR* str, const WCHAR* strSearch);
 
-	WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
-	WINPR_API WCHAR* _wcsrchr(const WCHAR* str, WCHAR c);
+	WINPR_API WINPR_ATTR_NODISCARD WCHAR* _wcschr(const WCHAR* str, WCHAR c);
+	WINPR_API WINPR_ATTR_NODISCARD WCHAR* _wcsrchr(const WCHAR* str, WCHAR c);
 
-	WINPR_API char* strtok_s(char* strToken, const char* strDelimit, char** context);
-	WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context);
+	WINPR_API WINPR_ATTR_NODISCARD char* strtok_s(char* strToken, const char* strDelimit,
+	                                              char** context);
+	WINPR_API WINPR_ATTR_NODISCARD WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit,
+	                                               WCHAR** context);
 
-	WINPR_API WCHAR* _wcsncat(WCHAR* dst, const WCHAR* src, size_t sz);
+	WINPR_API WINPR_ATTR_NODISCARD WCHAR* _wcsncat(WCHAR* dst, const WCHAR* src, size_t sz);
 
 #else
 
@@ -102,8 +108,8 @@ extern "C"
 
 #if !defined(_WIN32) || defined(_UWP)
 
-	WINPR_API LPSTR CharUpperA(LPSTR lpsz);
-	WINPR_API LPWSTR CharUpperW(LPWSTR lpsz);
+	WINPR_API WINPR_ATTR_NODISCARD LPSTR CharUpperA(LPSTR lpsz);
+	WINPR_API WINPR_ATTR_NODISCARD LPWSTR CharUpperW(LPWSTR lpsz);
 
 #ifdef UNICODE
 #define CharUpper CharUpperW
@@ -111,8 +117,8 @@ extern "C"
 #define CharUpper CharUpperA
 #endif
 
-	WINPR_API DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength);
-	WINPR_API DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength);
 
 #ifdef UNICODE
 #define CharUpperBuff CharUpperBuffW
@@ -120,8 +126,8 @@ extern "C"
 #define CharUpperBuff CharUpperBuffA
 #endif
 
-	WINPR_API LPSTR CharLowerA(LPSTR lpsz);
-	WINPR_API LPWSTR CharLowerW(LPWSTR lpsz);
+	WINPR_API WINPR_ATTR_NODISCARD LPSTR CharLowerA(LPSTR lpsz);
+	WINPR_API WINPR_ATTR_NODISCARD LPWSTR CharLowerW(LPWSTR lpsz);
 
 #ifdef UNICODE
 #define CharLower CharLowerW
@@ -129,8 +135,8 @@ extern "C"
 #define CharLower CharLowerA
 #endif
 
-	WINPR_API DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength);
-	WINPR_API DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength);
 
 #ifdef UNICODE
 #define CharLowerBuff CharLowerBuffW
@@ -138,8 +144,8 @@ extern "C"
 #define CharLowerBuff CharLowerBuffA
 #endif
 
-	WINPR_API BOOL IsCharAlphaA(CHAR ch);
-	WINPR_API BOOL IsCharAlphaW(WCHAR ch);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL IsCharAlphaA(CHAR ch);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL IsCharAlphaW(WCHAR ch);
 
 #ifdef UNICODE
 #define IsCharAlpha IsCharAlphaW
@@ -147,8 +153,8 @@ extern "C"
 #define IsCharAlpha IsCharAlphaA
 #endif
 
-	WINPR_API BOOL IsCharAlphaNumericA(CHAR ch);
-	WINPR_API BOOL IsCharAlphaNumericW(WCHAR ch);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL IsCharAlphaNumericA(CHAR ch);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL IsCharAlphaNumericW(WCHAR ch);
 
 #ifdef UNICODE
 #define IsCharAlphaNumeric IsCharAlphaNumericW
@@ -156,8 +162,8 @@ extern "C"
 #define IsCharAlphaNumeric IsCharAlphaNumericA
 #endif
 
-	WINPR_API BOOL IsCharUpperA(CHAR ch);
-	WINPR_API BOOL IsCharUpperW(WCHAR ch);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL IsCharUpperA(CHAR ch);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL IsCharUpperW(WCHAR ch);
 
 #ifdef UNICODE
 #define IsCharUpper IsCharUpperW
@@ -165,8 +171,8 @@ extern "C"
 #define IsCharUpper IsCharUpperA
 #endif
 
-	WINPR_API BOOL IsCharLowerA(CHAR ch);
-	WINPR_API BOOL IsCharLowerW(WCHAR ch);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL IsCharLowerA(CHAR ch);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL IsCharLowerW(WCHAR ch);
 
 #ifdef UNICODE
 #define IsCharLower IsCharLowerW
@@ -188,16 +194,15 @@ extern "C"
 
 #if defined(WITH_WINPR_DEPRECATED)
 	WINPR_DEPRECATED_VAR("Use ConvertUtf8ToWChar instead",
-	                     WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags,
-	                                                       LPCSTR lpMultiByteStr, int cbMultiByte,
-	                                                       LPWSTR lpWideCharStr, int cchWideChar));
+	                     WINPR_API WINPR_ATTR_NODISCARD int MultiByteToWideChar(
+	                         UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte,
+	                         LPWSTR lpWideCharStr, int cchWideChar));
 
 	WINPR_DEPRECATED_VAR("Use ConvertWCharToUtf8 instead",
-	                     WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags,
-	                                                       LPCWSTR lpWideCharStr, int cchWideChar,
-	                                                       LPSTR lpMultiByteStr, int cbMultiByte,
-	                                                       LPCSTR lpDefaultChar,
-	                                                       LPBOOL lpUsedDefaultChar));
+	                     WINPR_API WINPR_ATTR_NODISCARD int WideCharToMultiByte(
+	                         UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
+	                         LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
+	                         LPBOOL lpUsedDefaultChar));
 #endif
 
 #endif
@@ -218,7 +223,8 @@ extern "C"
 	 *
 	 *  \return the size of the converted string in char (strlen), or -1 for failure
 	 */
-	WINPR_API SSIZE_T ConvertWCharToUtf8(const WCHAR* wstr, char* str, size_t len);
+	WINPR_API WINPR_ATTR_NODISCARD SSIZE_T ConvertWCharToUtf8(const WCHAR* wstr, char* str,
+	                                                          size_t len);
 
 	/** \brief Converts form UTF-16 to UTF-8
 	 *
@@ -237,7 +243,8 @@ extern "C"
 	 *
 	 *  \return the size of the converted string in char (strlen), or -1 for failure
 	 */
-	WINPR_API SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t len);
+	WINPR_API WINPR_ATTR_NODISCARD SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen,
+	                                                           char* str, size_t len);
 
 	/** \brief Converts multistrings form UTF-16 to UTF-8
 	 *
@@ -257,7 +264,8 @@ extern "C"
 	 *  \return the size of the converted string in CHAR characters (including any '\0'), or -1 for
 	 * failure
 	 */
-	WINPR_API SSIZE_T ConvertMszWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t len);
+	WINPR_API WINPR_ATTR_NODISCARD SSIZE_T ConvertMszWCharNToUtf8(const WCHAR* wstr, size_t wlen,
+	                                                              char* str, size_t len);
 
 	/** \brief Converts form UTF-8 to UTF-16
 	 *
@@ -274,7 +282,8 @@ extern "C"
 	 *
 	 *  \return the size of the converted string in WCHAR characters (wcslen), or -1 for failure
 	 */
-	WINPR_API SSIZE_T ConvertUtf8ToWChar(const char* str, WCHAR* wstr, size_t wlen);
+	WINPR_API WINPR_ATTR_NODISCARD SSIZE_T ConvertUtf8ToWChar(const char* str, WCHAR* wstr,
+	                                                          size_t wlen);
 
 	/** \brief Converts form UTF-8 to UTF-16
 	 *
@@ -293,7 +302,8 @@ extern "C"
 	 *
 	 *  \return the size of the converted string in WCHAR characters (wcslen), or -1 for failure
 	 */
-	WINPR_API SSIZE_T ConvertUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t wlen);
+	WINPR_API WINPR_ATTR_NODISCARD SSIZE_T ConvertUtf8NToWChar(const char* str, size_t len,
+	                                                           WCHAR* wstr, size_t wlen);
 
 	/** \brief Converts multistrings form UTF-8 to UTF-16
 	 *
@@ -313,7 +323,8 @@ extern "C"
 	 *  \return the size of the converted string in WCHAR characters (including any '\0'), or -1 for
 	 * failure
 	 */
-	WINPR_API SSIZE_T ConvertMszUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t wlen);
+	WINPR_API WINPR_ATTR_NODISCARD SSIZE_T ConvertMszUtf8NToWChar(const char* str, size_t len,
+	                                                              WCHAR* wstr, size_t wlen);
 
 	/** \brief Converts form UTF-16 to UTF-8, returns an allocated string
 	 *
@@ -325,7 +336,8 @@ extern "C"
 	 *
 	 *  \return An allocated zero terminated UTF-8 string or NULL in case of failure.
 	 */
-	WINPR_API char* ConvertWCharToUtf8Alloc(const WCHAR* wstr, size_t* pUtfCharLength);
+	WINPR_API WINPR_ATTR_NODISCARD char* ConvertWCharToUtf8Alloc(const WCHAR* wstr,
+	                                                             size_t* pUtfCharLength);
 
 	/** \brief Converts form UTF-16 to UTF-8, returns an allocated string
 	 *
@@ -339,8 +351,8 @@ extern "C"
 	 *
 	 *  \return An allocated zero terminated UTF-8 string or NULL in case of failure.
 	 */
-	WINPR_API char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen,
-	                                         size_t* pUtfCharLength);
+	WINPR_API WINPR_ATTR_NODISCARD char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen,
+	                                                              size_t* pUtfCharLength);
 
 	/** \brief Converts multistring form UTF-16 to UTF-8, returns an allocated string
 	 *
@@ -354,8 +366,8 @@ extern "C"
 	 *
 	 *  \return An allocated double zero terminated UTF-8 string or NULL in case of failure.
 	 */
-	WINPR_API char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen,
-	                                            size_t* pUtfCharLength);
+	WINPR_API WINPR_ATTR_NODISCARD char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen,
+	                                                                 size_t* pUtfCharLength);
 
 	/** \brief Converts form UTF-8 to UTF-16, returns an allocated string
 	 *
@@ -367,7 +379,7 @@ extern "C"
 	 *
 	 *  \return An allocated zero terminated UTF-16 string or NULL in case of failure.
 	 */
-	WINPR_API WCHAR* ConvertUtf8ToWCharAlloc(const char* str, size_t* pSize);
+	WINPR_API WINPR_ATTR_NODISCARD WCHAR* ConvertUtf8ToWCharAlloc(const char* str, size_t* pSize);
 
 	/** \brief Converts form UTF-8 to UTF-16, returns an allocated string
 	 *
@@ -381,7 +393,8 @@ extern "C"
 	 *
 	 *  \return An allocated zero terminated UTF-16 string or NULL in case of failure.
 	 */
-	WINPR_API WCHAR* ConvertUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize);
+	WINPR_API WINPR_ATTR_NODISCARD WCHAR* ConvertUtf8NToWCharAlloc(const char* str, size_t len,
+	                                                               size_t* pSize);
 
 	/** \brief Converts multistring form UTF-8 to UTF-16, returns an allocated string
 	 *
@@ -395,7 +408,8 @@ extern "C"
 	 *
 	 *  \return An allocated double zero terminated UTF-16 string or NULL in case of failure.
 	 */
-	WINPR_API WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize);
+	WINPR_API WINPR_ATTR_NODISCARD WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len,
+	                                                                  size_t* pSize);
 
 	/** \brief Helper function to initialize const WCHAR pointer from a Utf8 string
 	 *
@@ -405,34 +419,34 @@ extern "C"
 	 *
 	 *  \return The WCHAR string (a pointer to buffer)
 	 */
-	WINPR_API const WCHAR* InitializeConstWCharFromUtf8(const char* str, WCHAR* buffer, size_t len);
+	WINPR_API WINPR_ATTR_NODISCARD const WCHAR*
+	InitializeConstWCharFromUtf8(const char* str, WCHAR* buffer, size_t len);
 
 #if defined(WITH_WINPR_DEPRECATED)
 	WINPR_DEPRECATED_VAR("Use ConvertUtf8ToWChar functions instead",
-	                     WINPR_API int ConvertToUnicode(UINT CodePage, DWORD dwFlags,
-	                                                    LPCSTR lpMultiByteStr, int cbMultiByte,
-	                                                    LPWSTR* lpWideCharStr, int cchWideChar));
+	                     WINPR_API WINPR_ATTR_NODISCARD int ConvertToUnicode(
+	                         UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte,
+	                         LPWSTR* lpWideCharStr, int cchWideChar));
 
 	WINPR_DEPRECATED_VAR("Use ConvertWCharToUtf8 functions instead",
-	                     WINPR_API int ConvertFromUnicode(UINT CodePage, DWORD dwFlags,
-	                                                      LPCWSTR lpWideCharStr, int cchWideChar,
-	                                                      LPSTR* lpMultiByteStr, int cbMultiByte,
-	                                                      LPCSTR lpDefaultChar,
-	                                                      LPBOOL lpUsedDefaultChar));
+	                     WINPR_API WINPR_ATTR_NODISCARD int ConvertFromUnicode(
+	                         UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
+	                         LPSTR* lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
+	                         LPBOOL lpUsedDefaultChar));
 #endif
 
-	WINPR_API const WCHAR* ByteSwapUnicode(WCHAR* wstr, size_t length);
+	WINPR_API WINPR_ATTR_NODISCARD const WCHAR* ByteSwapUnicode(WCHAR* wstr, size_t length);
 
-	WINPR_API size_t ConvertLineEndingToLF(char* str, size_t size);
-	WINPR_API char* ConvertLineEndingToCRLF(const char* str, size_t* size);
+	WINPR_API WINPR_ATTR_NODISCARD size_t ConvertLineEndingToLF(char* str, size_t size);
+	WINPR_API WINPR_ATTR_NODISCARD char* ConvertLineEndingToCRLF(const char* str, size_t* size);
 
-	WINPR_API char* StrSep(char** stringp, const char* delim);
+	WINPR_API WINPR_ATTR_NODISCARD char* StrSep(char** stringp, const char* delim);
 
-	WINPR_API INT64 GetLine(char** lineptr, size_t* size, FILE* stream);
+	WINPR_API WINPR_ATTR_NODISCARD INT64 GetLine(char** lineptr, size_t* size, FILE* stream);
 
 #if !defined(WINPR_HAVE_STRNDUP)
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_API char* strndup(const char* s, size_t n);
+	WINPR_API WINPR_ATTR_NODISCARD char* strndup(const char* s, size_t n);
 #endif
 
 	/** @brief WCHAR version of \b strndup
@@ -446,7 +460,7 @@ extern "C"
 	 *  @since version 3.10.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_API WCHAR* wcsndup(const WCHAR* s, size_t n);
+	WINPR_API WINPR_ATTR_NODISCARD WCHAR* wcsndup(const WCHAR* s, size_t n);
 
 #ifdef __cplusplus
 }

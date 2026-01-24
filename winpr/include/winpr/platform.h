@@ -554,15 +554,15 @@ WINPR_PRAGMA_DIAG_POP
 #if defined _WIN32 || defined __CYGWIN__
 #ifdef WINPR_EXPORTS
 #ifdef __GNUC__
-#define WINPR_API __attribute__((dllexport))
+#define WINPR_API WINPR_ATTR_NODISCARD __attribute__((dllexport))
 #else
-#define WINPR_API __declspec(dllexport)
+#define WINPR_API WINPR_ATTR_NODISCARD __declspec(dllexport)
 #endif
 #else
 #ifdef __GNUC__
-#define WINPR_API __attribute__((dllimport))
+#define WINPR_API WINPR_ATTR_NODISCARD __attribute__((dllimport))
 #else
-#define WINPR_API __declspec(dllimport)
+#define WINPR_API WINPR_ATTR_NODISCARD __declspec(dllimport)
 #endif
 #endif
 #else

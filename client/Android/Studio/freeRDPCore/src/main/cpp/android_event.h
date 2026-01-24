@@ -55,21 +55,24 @@ typedef struct
 	ANDROID_EVENT** events;
 } ANDROID_EVENT_QUEUE;
 
-FREERDP_LOCAL BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event);
 
-FREERDP_LOCAL HANDLE android_get_handle(freerdp* inst);
-FREERDP_LOCAL BOOL android_check_handle(freerdp* inst);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD HANDLE android_get_handle(freerdp* inst);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL android_check_handle(freerdp* inst);
 
-FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode);
-FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 flags, UINT16 key);
-FREERDP_LOCAL ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y);
-FREERDP_LOCAL ANDROID_EVENT* android_event_disconnect_new(void);
-FREERDP_LOCAL ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(const void* data,
-                                                                   size_t data_length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD ANDROID_EVENT_KEY* android_event_key_new(int flags,
+                                                                            UINT16 scancode);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 flags,
+                                                                                   UINT16 key);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD ANDROID_EVENT_CURSOR*
+android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD ANDROID_EVENT* android_event_disconnect_new(void);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD ANDROID_EVENT_CLIPBOARD*
+android_event_clipboard_new(const void* data, size_t data_length);
 
 FREERDP_LOCAL void android_event_free(ANDROID_EVENT* event);
 
-FREERDP_LOCAL BOOL android_event_queue_init(freerdp* inst);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL android_event_queue_init(freerdp* inst);
 FREERDP_LOCAL void android_event_queue_uninit(freerdp* inst);
 
 #endif /* FREERDP_CLIENT_ANDROID_EVENT_H */

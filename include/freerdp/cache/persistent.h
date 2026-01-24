@@ -76,22 +76,25 @@ extern "C"
 		BYTE* data;
 	} PERSISTENT_CACHE_ENTRY;
 
-	FREERDP_API int persistent_cache_get_version(rdpPersistentCache* persistent);
-	FREERDP_API int persistent_cache_get_count(rdpPersistentCache* persistent);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	persistent_cache_get_version(rdpPersistentCache* persistent);
+	FREERDP_API WINPR_ATTR_NODISCARD int persistent_cache_get_count(rdpPersistentCache* persistent);
 
-	FREERDP_API int persistent_cache_read_entry(rdpPersistentCache* persistent,
-	                                            PERSISTENT_CACHE_ENTRY* entry);
-	FREERDP_API int persistent_cache_write_entry(rdpPersistentCache* persistent,
-	                                             const PERSISTENT_CACHE_ENTRY* entry);
+	FREERDP_API WINPR_ATTR_NODISCARD int persistent_cache_read_entry(rdpPersistentCache* persistent,
+	                                                                 PERSISTENT_CACHE_ENTRY* entry);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	persistent_cache_write_entry(rdpPersistentCache* persistent,
+	                             const PERSISTENT_CACHE_ENTRY* entry);
 
-	FREERDP_API int persistent_cache_open(rdpPersistentCache* persistent, const char* filename,
-	                                      BOOL write, UINT32 version);
-	FREERDP_API int persistent_cache_close(rdpPersistentCache* persistent);
+	FREERDP_API WINPR_ATTR_NODISCARD int persistent_cache_open(rdpPersistentCache* persistent,
+	                                                           const char* filename, BOOL write,
+	                                                           UINT32 version);
+	FREERDP_API WINPR_ATTR_NODISCARD int persistent_cache_close(rdpPersistentCache* persistent);
 
 	FREERDP_API void persistent_cache_free(rdpPersistentCache* persistent);
 
 	WINPR_ATTR_MALLOC(persistent_cache_free, 1)
-	FREERDP_API rdpPersistentCache* persistent_cache_new(void);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpPersistentCache* persistent_cache_new(void);
 
 #ifdef __cplusplus
 }

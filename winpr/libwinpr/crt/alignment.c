@@ -163,7 +163,7 @@ void* winpr_aligned_offset_realloc(void* memblock, size_t size, size_t alignment
 	return newMemblock;
 }
 
-static inline size_t cMIN(size_t a, size_t b)
+static inline WINPR_ATTR_NODISCARD size_t cMIN(size_t a, size_t b)
 {
 	if (a > b)
 		return b;

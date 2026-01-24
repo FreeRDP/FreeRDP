@@ -25,9 +25,9 @@
 typedef struct s_FloatBar wfFloatBar;
 typedef struct wf_context wfContext;
 
-wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags);
+WINPR_ATTR_NODISCARD wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags);
 void wf_floatbar_free(wfFloatBar* floatbar);
 
-BOOL wf_floatbar_toggle_fullscreen(wfFloatBar* floatbar, BOOL fullscreen);
+WINPR_ATTR_NODISCARD BOOL wf_floatbar_toggle_fullscreen(wfFloatBar* floatbar, BOOL fullscreen);
 
 #endif /* FREERDP_CLIENT_WIN_FLOATBAR_H */

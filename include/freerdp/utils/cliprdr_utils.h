@@ -22,7 +22,9 @@
 #define FREERDP_UTILS_CLIPRDR_H
 
 #include <winpr/wtypes.h>
+#include <winpr/stream.h>
 #include <winpr/shell.h>
+
 #include <freerdp/api.h>
 
 #ifdef __cplusplus
@@ -30,19 +32,20 @@ extern "C"
 {
 #endif
 
-	FREERDP_API BOOL cliprdr_read_filedescriptor(wStream* s, FILEDESCRIPTORW* descriptor);
-	FREERDP_API BOOL cliprdr_write_filedescriptor(wStream* s, const FILEDESCRIPTORW* descriptor);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL cliprdr_read_filedescriptor(wStream* s,
+	                                                                  FILEDESCRIPTORW* descriptor);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL
+	cliprdr_write_filedescriptor(wStream* s, const FILEDESCRIPTORW* descriptor);
 
-	FREERDP_API UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
-	                                         FILEDESCRIPTORW** file_descriptor_array,
-	                                         UINT32* file_descriptor_count);
-	FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
-	                                             UINT32 file_descriptor_count, BYTE** format_data,
-	                                             UINT32* format_data_length);
-	FREERDP_API UINT cliprdr_serialize_file_list_ex(UINT32 flags,
-	                                                const FILEDESCRIPTORW* file_descriptor_array,
-	                                                UINT32 file_descriptor_count,
-	                                                BYTE** format_data, UINT32* format_data_length);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT
+	cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
+	                        FILEDESCRIPTORW** file_descriptor_array, UINT32* file_descriptor_count);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT cliprdr_serialize_file_list(
+	    const FILEDESCRIPTORW* file_descriptor_array, UINT32 file_descriptor_count,
+	    BYTE** format_data, UINT32* format_data_length);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT cliprdr_serialize_file_list_ex(
+	    UINT32 flags, const FILEDESCRIPTORW* file_descriptor_array, UINT32 file_descriptor_count,
+	    BYTE** format_data, UINT32* format_data_length);
 
 #ifdef __cplusplus
 }

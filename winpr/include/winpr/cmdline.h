@@ -137,24 +137,24 @@ extern "C"
 {
 #endif
 
-	WINPR_API int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options);
-	WINPR_API int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options);
+	WINPR_API WINPR_ATTR_NODISCARD int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options);
+	WINPR_API WINPR_ATTR_NODISCARD int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options);
 
-	WINPR_API int CommandLineParseArgumentsA(int argc, LPSTR* argv,
-	                                         COMMAND_LINE_ARGUMENT_A* options, DWORD flags,
-	                                         void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter,
-	                                         COMMAND_LINE_POST_FILTER_FN_A postFilter);
-	WINPR_API int CommandLineParseArgumentsW(int argc, LPWSTR* argv,
-	                                         COMMAND_LINE_ARGUMENT_W* options, DWORD flags,
-	                                         void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter,
-	                                         COMMAND_LINE_POST_FILTER_FN_W postFilter);
+	WINPR_API WINPR_ATTR_NODISCARD int
+	CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* options, DWORD flags,
+	                           void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter,
+	                           COMMAND_LINE_POST_FILTER_FN_A postFilter);
+	WINPR_API WINPR_ATTR_NODISCARD int
+	CommandLineParseArgumentsW(int argc, LPWSTR* argv, COMMAND_LINE_ARGUMENT_W* options,
+	                           DWORD flags, void* context, COMMAND_LINE_PRE_FILTER_FN_W preFilter,
+	                           COMMAND_LINE_POST_FILTER_FN_W postFilter);
 
-	WINPR_API const COMMAND_LINE_ARGUMENT_A*
+	WINPR_API WINPR_ATTR_NODISCARD const COMMAND_LINE_ARGUMENT_A*
 	CommandLineFindArgumentA(const COMMAND_LINE_ARGUMENT_A* options, LPCSTR Name);
-	WINPR_API const COMMAND_LINE_ARGUMENT_W*
+	WINPR_API WINPR_ATTR_NODISCARD const COMMAND_LINE_ARGUMENT_W*
 	CommandLineFindArgumentW(const COMMAND_LINE_ARGUMENT_W* options, LPCWSTR Name);
 
-	WINPR_API const COMMAND_LINE_ARGUMENT_A*
+	WINPR_API WINPR_ATTR_NODISCARD const COMMAND_LINE_ARGUMENT_A*
 	CommandLineFindNextArgumentA(const COMMAND_LINE_ARGUMENT_A* argument);
 
 	/** @brief free arrays allocated by CommandLineParseCommaSeparatedValues(Ex)
@@ -166,18 +166,20 @@ extern "C"
 	WINPR_API void CommandLineParserFree(char** ptr);
 
 	WINPR_ATTR_MALLOC(CommandLineParserFree, 1)
-	WINPR_API char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count);
+	WINPR_API WINPR_ATTR_NODISCARD char** CommandLineParseCommaSeparatedValues(const char* list,
+	                                                                           size_t* count);
 
 	WINPR_ATTR_MALLOC(CommandLineParserFree, 1)
-	WINPR_API char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list,
-	                                                        size_t* count);
+	WINPR_API WINPR_ATTR_NODISCARD char**
+	CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list, size_t* count);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_API char* CommandLineToCommaSeparatedValues(int argc, char* argv[]);
+	WINPR_API WINPR_ATTR_NODISCARD char* CommandLineToCommaSeparatedValues(int argc, char* argv[]);
 
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_API char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[],
-	                                                    const char* filters[], size_t number);
+	WINPR_API WINPR_ATTR_NODISCARD char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[],
+	                                                                         const char* filters[],
+	                                                                         size_t number);
 
 #ifdef __cplusplus
 }

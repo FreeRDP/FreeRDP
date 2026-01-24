@@ -72,7 +72,8 @@ static const int32_t ycbcr_table[][4] = { { 1, 0, -1, 2 },
 	                                      { 753229890, -184683594, -383325831, 950261514 },
 	                                      { 1506459779, -369367187, -766651662, 1900523028 } };
 
-static inline __m128i mm_between_epi16_int(__m128i val, __m128i min, __m128i max)
+static inline WINPR_ATTR_NODISCARD __m128i mm_between_epi16_int(__m128i val, __m128i min,
+                                                                __m128i max)
 {
 	return _mm_min_epi16(max, _mm_max_epi16(val, min));
 }

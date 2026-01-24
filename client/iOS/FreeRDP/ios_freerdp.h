@@ -81,7 +81,7 @@ enum MF_EXIT_CODE
 
 void ios_init_freerdp(void);
 void ios_uninit_freerdp(void);
-freerdp *ios_freerdp_new(void);
-int ios_run_freerdp(freerdp *instance);
+WINPR_ATTR_NODISCARD freerdp *ios_freerdp_new(void);
+WINPR_ATTR_NODISCARD int ios_run_freerdp(freerdp *instance);
 void ios_freerdp_free(freerdp *instance);
 void ios_send_clipboard_data(void *context, const void *data, UINT32 size);

@@ -73,7 +73,8 @@ BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
  * @return the color written
  */
 
-static inline UINT32 gdi_SetPixelBmp(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y, UINT32 crColor)
+static inline WINPR_ATTR_NODISCARD UINT32 gdi_SetPixelBmp(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y,
+                                                          UINT32 crColor)
 {
 	BYTE* p = &hBmp->data[(Y * hBmp->scanline) + X * FreeRDPGetBytesPerPixel(hBmp->format)];
 	FreeRDPWriteColor(p, hBmp->format, crColor);
@@ -283,10 +284,11 @@ static UINT32 process_rop(UINT32 src, UINT32 dst, UINT32 pat, const char* rop, U
 	return stack[0];
 }
 
-static inline BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, INT32 nYDest,
-                                INT32 nXSrc, INT32 nYSrc, INT32 x, INT32 y, BOOL useSrc,
-                                BOOL usePat, UINT32 style, const char* rop,
-                                const gdiPalette* palette)
+static inline WINPR_ATTR_NODISCARD BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest,
+                                                     INT32 nYDest, INT32 nXSrc, INT32 nYSrc,
+                                                     INT32 x, INT32 y, BOOL useSrc, BOOL usePat,
+                                                     UINT32 style, const char* rop,
+                                                     const gdiPalette* palette)
 {
 	UINT32 dstColor = 0;
 	UINT32 colorA = 0;

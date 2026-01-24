@@ -456,7 +456,7 @@ static inline void writeScanlineXRGB(BYTE* dst, DWORD formatSize, UINT32 DstForm
 typedef void (*fkt_writeScanline)(BYTE*, DWORD, UINT32, const INT16*, const INT16*, const INT16*,
                                   DWORD);
 
-static inline fkt_writeScanline getScanlineWriteFunction(DWORD format)
+static inline WINPR_ATTR_NODISCARD fkt_writeScanline getScanlineWriteFunction(DWORD format)
 {
 	switch (format)
 	{

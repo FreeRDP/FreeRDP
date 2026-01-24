@@ -40,7 +40,8 @@ typedef struct
 #endif
 } FREERDP_DSP_COMMON_CONTEXT;
 
-BOOL freerdp_dsp_common_context_init(FREERDP_DSP_COMMON_CONTEXT* context, BOOL encode);
-void freerdp_dsp_common_context_uninit(FREERDP_DSP_COMMON_CONTEXT* context);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL
+freerdp_dsp_common_context_init(FREERDP_DSP_COMMON_CONTEXT* context, BOOL encode);
+FREERDP_LOCAL void freerdp_dsp_common_context_uninit(FREERDP_DSP_COMMON_CONTEXT* context);
 
 #endif /* FREERDP_LIB_CODEC_DSP_H */

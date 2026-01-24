@@ -51,9 +51,9 @@ extern "C"
 
 	typedef struct rdp_license rdpLicense;
 
-	FREERDP_API rdpLicense* license_get(rdpContext* context);
-	FREERDP_API LICENSE_STATE license_get_state(const rdpLicense* license);
-	FREERDP_API LICENSE_TYPE license_get_type(const rdpLicense* license);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpLicense* license_get(rdpContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD LICENSE_STATE license_get_state(const rdpLicense* license);
+	FREERDP_API WINPR_ATTR_NODISCARD LICENSE_TYPE license_get_type(const rdpLicense* license);
 
 #ifdef __cplusplus
 }

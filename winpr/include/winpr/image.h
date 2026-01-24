@@ -101,8 +101,8 @@ extern "C"
 {
 #endif
 
-	WINPR_API int winpr_bitmap_write(const char* filename, const BYTE* data, size_t width,
-	                                 size_t height, size_t bpp);
+	WINPR_API WINPR_ATTR_NODISCARD int winpr_bitmap_write(const char* filename, const BYTE* data,
+	                                                      size_t width, size_t height, size_t bpp);
 
 	/** @brief write a bitmap to a file
 	 *
@@ -117,13 +117,16 @@ extern "C"
 	 *
 	 *  @return \b >=0 for success, /b <0 for an error
 	 */
-	WINPR_API int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride,
-	                                    size_t width, size_t height, size_t bpp);
-	WINPR_API BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp);
+	WINPR_API WINPR_ATTR_NODISCARD int winpr_bitmap_write_ex(const char* filename, const BYTE* data,
+	                                                         size_t stride, size_t width,
+	                                                         size_t height, size_t bpp);
+	WINPR_API WINPR_ATTR_NODISCARD BYTE* winpr_bitmap_construct_header(size_t width, size_t height,
+	                                                                   size_t bpp);
 
-	WINPR_API int winpr_image_write(wImage* image, const char* filename);
-	WINPR_API int winpr_image_write_ex(wImage* image, UINT32 format, const char* filename);
-	WINPR_API int winpr_image_read(wImage* image, const char* filename);
+	WINPR_API WINPR_ATTR_NODISCARD int winpr_image_write(wImage* image, const char* filename);
+	WINPR_API WINPR_ATTR_NODISCARD int winpr_image_write_ex(wImage* image, UINT32 format,
+	                                                        const char* filename);
+	WINPR_API WINPR_ATTR_NODISCARD int winpr_image_read(wImage* image, const char* filename);
 
 	/** @brief write a bitmap to a buffer and return it
 	 *
@@ -137,13 +140,15 @@ extern "C"
 	 * as deallocator
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_API void* winpr_image_write_buffer(wImage* image, UINT32 format, size_t* size);
-	WINPR_API int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size);
+	WINPR_API WINPR_ATTR_NODISCARD void* winpr_image_write_buffer(wImage* image, UINT32 format,
+	                                                              size_t* size);
+	WINPR_API WINPR_ATTR_NODISCARD int winpr_image_read_buffer(wImage* image, const BYTE* buffer,
+	                                                           size_t size);
 
 	WINPR_API void winpr_image_free(wImage* image, BOOL bFreeBuffer);
 
 	WINPR_ATTR_MALLOC(winpr_image_free, 1)
-	WINPR_API wImage* winpr_image_new(void);
+	WINPR_API WINPR_ATTR_NODISCARD wImage* winpr_image_new(void);
 
 	/** @brief Check if a image format is supported
 	 *
@@ -153,7 +158,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE if the format is supported, \b FALSE otherwise
 	 */
-	WINPR_API BOOL winpr_image_format_is_supported(UINT32 format);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL winpr_image_format_is_supported(UINT32 format);
 
 	/** @brief Return the file extension of a format
 	 *
@@ -163,7 +168,7 @@ extern "C"
 	 *
 	 *  @return a extension string if format has one or \b NULL
 	 */
-	WINPR_API const char* winpr_image_format_extension(UINT32 format);
+	WINPR_API WINPR_ATTR_NODISCARD const char* winpr_image_format_extension(UINT32 format);
 
 	/** @brief Return the mime type of a format
 	 *
@@ -173,7 +178,7 @@ extern "C"
 	 *
 	 *  @return a mime type string if format has one or \b NULL
 	 */
-	WINPR_API const char* winpr_image_format_mime(UINT32 format);
+	WINPR_API WINPR_ATTR_NODISCARD const char* winpr_image_format_mime(UINT32 format);
 
 	/** @brief Check if two images are content equal
 	 *
@@ -185,7 +190,8 @@ extern "C"
 	 *
 	 *  @return \b TRUE if they are equal, \b FALSE otherwise
 	 */
-	WINPR_API BOOL winpr_image_equal(const wImage* imageA, const wImage* imageB, UINT32 flags);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL winpr_image_equal(const wImage* imageA,
+	                                                      const wImage* imageB, UINT32 flags);
 
 #ifdef __cplusplus
 }

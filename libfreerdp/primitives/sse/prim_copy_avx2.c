@@ -32,20 +32,19 @@
 #include <emmintrin.h>
 #include <immintrin.h>
 
-static inline __m256i mm256_set_epu32(uint32_t i0, uint32_t i1, uint32_t i2, uint32_t i3,
-                                      uint32_t i4, uint32_t i5, uint32_t i6, uint32_t i7)
+static inline WINPR_ATTR_NODISCARD __m256i mm256_set_epu32(uint32_t i0, uint32_t i1, uint32_t i2,
+                                                           uint32_t i3, uint32_t i4, uint32_t i5,
+                                                           uint32_t i6, uint32_t i7)
 {
 	return _mm256_set_epi32((int32_t)i0, (int32_t)i1, (int32_t)i2, (int32_t)i3, (int32_t)i4,
 	                        (int32_t)i5, (int32_t)i6, (int32_t)i7);
 }
 
-static inline pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
-                                                     UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
-                                                     UINT32 nHeight,
-                                                     const BYTE* WINPR_RESTRICT pSrcData,
-                                                     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-                                                     int64_t srcVMultiplier, int64_t srcVOffset,
-                                                     int64_t dstVMultiplier, int64_t dstVOffset)
+static inline WINPR_ATTR_NODISCARD pstatus_t avx2_image_copy_bgr24_bgrx32(
+    BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
+    UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep, UINT32 nXSrc,
+    UINT32 nYSrc, int64_t srcVMultiplier, int64_t srcVOffset, int64_t dstVMultiplier,
+    int64_t dstVOffset)
 {
 
 	const int64_t srcByte = 3;
@@ -103,13 +102,11 @@ static inline pstatus_t avx2_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 	return PRIMITIVES_SUCCESS;
 }
 
-static inline pstatus_t avx2_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstData,
-                                                      UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-                                                      UINT32 nWidth, UINT32 nHeight,
-                                                      const BYTE* WINPR_RESTRICT pSrcData,
-                                                      UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-                                                      int64_t srcVMultiplier, int64_t srcVOffset,
-                                                      int64_t dstVMultiplier, int64_t dstVOffset)
+static inline WINPR_ATTR_NODISCARD pstatus_t avx2_image_copy_bgrx32_bgrx32(
+    BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
+    UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep, UINT32 nXSrc,
+    UINT32 nYSrc, int64_t srcVMultiplier, int64_t srcVOffset, int64_t dstVMultiplier,
+    int64_t dstVOffset)
 {
 
 	const int64_t srcByte = 4;

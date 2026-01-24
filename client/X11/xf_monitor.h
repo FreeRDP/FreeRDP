@@ -41,8 +41,8 @@ typedef struct
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-FREERDP_API int xf_list_monitors(xfContext* xfc);
-FREERDP_API BOOL xf_detect_monitors(xfContext* xfc, UINT32* pWidth, UINT32* pHeight);
-FREERDP_API void xf_monitors_free(xfContext* xfc);
+WINPR_ATTR_NODISCARD int xf_list_monitors(xfContext* xfc);
+WINPR_ATTR_NODISCARD BOOL xf_detect_monitors(xfContext* xfc, UINT32* pWidth, UINT32* pHeight);
+void xf_monitors_free(xfContext* xfc);
 
 #endif /* FREERDP_CLIENT_X11_MONITOR_H */

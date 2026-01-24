@@ -203,28 +203,31 @@ extern "C"
 	 * Audio Format Functions
 	 */
 
-	FREERDP_API UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size);
+	FREERDP_API WINPR_ATTR_NODISCARD UINT32
+	audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size);
 
-	FREERDP_API const char* audio_format_get_tag_string(UINT16 wFormatTag);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* audio_format_get_tag_string(UINT16 wFormatTag);
 
 	FREERDP_API void audio_format_print(wLog* log, DWORD level, const AUDIO_FORMAT* format);
 	FREERDP_API void audio_formats_print(wLog* log, DWORD level, const AUDIO_FORMAT* formats,
 	                                     UINT16 count);
 
-	FREERDP_API BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format);
-	FREERDP_API BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format);
-	FREERDP_API BOOL audio_format_copy(const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
-	                                   AUDIO_FORMAT* WINPR_RESTRICT dstFormat);
-	FREERDP_API BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL audio_format_write(wStream* s,
+	                                                         const AUDIO_FORMAT* format);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL audio_format_copy(
+	    const AUDIO_FORMAT* WINPR_RESTRICT srcFormat, AUDIO_FORMAT* WINPR_RESTRICT dstFormat);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL audio_format_compatible(const AUDIO_FORMAT* with,
+	                                                              const AUDIO_FORMAT* what);
 
 	FREERDP_API void audio_format_free(AUDIO_FORMAT* format);
 	FREERDP_API void audio_formats_free(AUDIO_FORMAT* formats, size_t count);
 
 	WINPR_ATTR_MALLOC(audio_formats_free, 1)
-	FREERDP_API AUDIO_FORMAT* audio_format_new(void);
+	FREERDP_API WINPR_ATTR_NODISCARD AUDIO_FORMAT* audio_format_new(void);
 
 	WINPR_ATTR_MALLOC(audio_formats_free, 1)
-	FREERDP_API AUDIO_FORMAT* audio_formats_new(size_t count);
+	FREERDP_API WINPR_ATTR_NODISCARD AUDIO_FORMAT* audio_formats_new(size_t count);
 
 #ifdef __cplusplus
 }

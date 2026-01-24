@@ -36,11 +36,11 @@ extern "C"
 	 * @return The string representation of the capabilities
 	 * @since version 3.9.0
 	 */
-	FREERDP_API const char* rdpgfx_caps_version_str(UINT32 capsVersion);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* rdpgfx_caps_version_str(UINT32 capsVersion);
 
-	FREERDP_API const char* rdpgfx_get_cmd_id_string(UINT16 cmdId);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* rdpgfx_get_cmd_id_string(UINT16 cmdId);
 
-	FREERDP_API const char* rdpgfx_get_codec_id_string(UINT16 codecId);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* rdpgfx_get_codec_id_string(UINT16 codecId);
 
 #ifdef __cplusplus
 }

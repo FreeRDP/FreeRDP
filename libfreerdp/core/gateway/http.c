@@ -1699,8 +1699,9 @@ BOOL http_response_extract_cookies(const HttpResponse* response, HttpContext* co
 	return HashTable_Foreach(response->SetCookie, extract_cookie, context);
 }
 
-FREERDP_LOCAL BOOL http_context_set_header(HttpContext* context, const char* key, const char* value,
-                                           ...)
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL http_context_set_header(HttpContext* context,
+                                                                const char* key, const char* value,
+                                                                ...)
 {
 	WINPR_ASSERT(context);
 	va_list ap;

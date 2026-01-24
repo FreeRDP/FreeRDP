@@ -25,7 +25,7 @@ typedef struct wf_rail_window wfRailWindow;
 
 #include <freerdp/client/rail.h>
 
-BOOL wf_rail_init(wfContext* wfc, RailClientContext* rail);
+WINPR_ATTR_NODISCARD BOOL wf_rail_init(wfContext* wfc, RailClientContext* rail);
 void wf_rail_uninit(wfContext* wfc, RailClientContext* rail);
 
 void wf_rail_invalidate_region(wfContext* wfc, REGION16* invalidRegion);

@@ -50,7 +50,8 @@ extern "C"
 		bs->bits_left = 8;
 	}
 
-	static inline uint32_t rfx_bitstream_get_bits(RFX_BITSTREAM* bs, uint32_t nbits)
+	static inline WINPR_ATTR_NODISCARD uint32_t rfx_bitstream_get_bits(RFX_BITSTREAM* bs,
+	                                                                   uint32_t nbits)
 	{
 		UINT16 n = 0;
 		while (bs->byte_pos < bs->nbytes && nbits > 0)
@@ -104,13 +105,13 @@ extern "C"
 		}
 	}
 
-	static inline BOOL rfx_bitstream_eos(RFX_BITSTREAM* bs)
+	static inline WINPR_ATTR_NODISCARD BOOL rfx_bitstream_eos(RFX_BITSTREAM* bs)
 	{
 		WINPR_ASSERT(bs);
 		return ((bs)->byte_pos >= (bs)->nbytes);
 	}
 
-	static inline uint32_t rfx_bitstream_left(RFX_BITSTREAM* bs)
+	static inline WINPR_ATTR_NODISCARD uint32_t rfx_bitstream_left(RFX_BITSTREAM* bs)
 	{
 		WINPR_ASSERT(bs);
 
@@ -120,7 +121,7 @@ extern "C"
 		return ((bs)->nbytes - (bs)->byte_pos - 1) * 8 + (bs)->bits_left;
 	}
 
-	static inline uint32_t rfx_bitstream_get_processed_bytes(RFX_BITSTREAM* bs)
+	static inline WINPR_ATTR_NODISCARD uint32_t rfx_bitstream_get_processed_bytes(RFX_BITSTREAM* bs)
 	{
 		WINPR_ASSERT(bs);
 		if ((bs)->bits_left < 8)

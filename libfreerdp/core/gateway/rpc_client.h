@@ -26,26 +26,30 @@
 
 #include "rpc.h"
 
-FREERDP_LOCAL RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD RpcClientCall* rpc_client_call_find_by_id(RpcClient* client,
+                                                                             UINT32 CallId);
 
 FREERDP_LOCAL void rpc_client_call_free(RpcClientCall* client_call);
 
 WINPR_ATTR_MALLOC(rpc_client_call_free, 1)
-FREERDP_LOCAL RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);
 
-FREERDP_LOCAL int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer,
-                                          size_t length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int rpc_in_channel_send_pdu(RpcInChannel* inChannel,
+                                                               const BYTE* buffer, size_t length);
 
-FREERDP_LOCAL int rpc_client_in_channel_recv(rdpRpc* rpc);
-FREERDP_LOCAL int rpc_client_out_channel_recv(rdpRpc* rpc);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int rpc_client_in_channel_recv(rdpRpc* rpc);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int rpc_client_out_channel_recv(rdpRpc* rpc);
 
-FREERDP_LOCAL int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer, size_t length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer,
+                                                                    size_t length);
 
-FREERDP_LOCAL BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s,
+                                                              UINT16 opnum);
 
 FREERDP_LOCAL void rpc_client_free(RpcClient* client);
 
 WINPR_ATTR_MALLOC(rpc_client_free, 1)
-FREERDP_LOCAL RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD RpcClient* rpc_client_new(rdpContext* context,
+                                                             UINT32 max_recv_frag);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_CLIENT_H */

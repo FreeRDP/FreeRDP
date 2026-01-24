@@ -29,7 +29,7 @@ typedef struct
 	SdlContext* sdl;
 } sdl_rdp_context;
 
-static inline SdlContext* get_context(void* ctx)
+static inline WINPR_ATTR_NODISCARD SdlContext* get_context(void* ctx)
 {
 	if (!ctx)
 		return nullptr;
@@ -37,7 +37,7 @@ static inline SdlContext* get_context(void* ctx)
 	return sdl->sdl;
 }
 
-static inline SdlContext* get_context(rdpContext* ctx)
+static inline WINPR_ATTR_NODISCARD SdlContext* get_context(rdpContext* ctx)
 {
 	if (!ctx)
 		return nullptr;

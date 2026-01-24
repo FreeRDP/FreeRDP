@@ -26,20 +26,29 @@
 #include <freerdp/gdi/gfx.h>
 #include <uwac/uwac.h>
 
-BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEvent* ev);
-BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* ev);
-BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent* ev);
-BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev);
-BOOL wlf_handle_pointer_axis_discrete(freerdp* instance, const UwacPointerAxisEvent* ev);
-BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev);
-BOOL wlf_handle_pointer_source(freerdp* instance, const UwacPointerSourceEvent* ev);
-BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev);
-BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev);
-BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_pointer_enter(freerdp* instance,
+                                                   const UwacPointerEnterLeaveEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_pointer_motion(freerdp* instance,
+                                                    const UwacPointerMotionEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_pointer_buttons(freerdp* instance,
+                                                     const UwacPointerButtonEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_pointer_axis(freerdp* instance,
+                                                  const UwacPointerAxisEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_pointer_axis_discrete(freerdp* instance,
+                                                           const UwacPointerAxisEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_pointer_frame(freerdp* instance,
+                                                   const UwacPointerFrameEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_pointer_source(freerdp* instance,
+                                                    const UwacPointerSourceEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev);
 
-BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev);
-BOOL wlf_handle_ungrab_key(freerdp* instance, const UwacKeyEvent* ev);
-BOOL wlf_keyboard_enter(freerdp* instance, const UwacKeyboardEnterLeaveEvent* ev);
-BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_handle_ungrab_key(freerdp* instance, const UwacKeyEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_keyboard_enter(freerdp* instance,
+                                             const UwacKeyboardEnterLeaveEvent* ev);
+WINPR_ATTR_NODISCARD BOOL wlf_keyboard_modifiers(freerdp* instance,
+                                                 const UwacKeyboardModifiersEvent* ev);
 
 #endif /* FREERDP_CLIENT_WAYLAND_INPUT_H */

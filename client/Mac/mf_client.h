@@ -37,7 +37,7 @@ extern "C"
 	 * Client Interface
 	 */
 
-	FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+	FREERDP_API WINPR_ATTR_NODISCARD int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 #ifdef __cplusplus
 }

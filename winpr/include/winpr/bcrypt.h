@@ -145,52 +145,62 @@ extern "C"
 {
 #endif
 
-	WINPR_API NTSTATUS BCryptOpenAlgorithmProvider(BCRYPT_ALG_HANDLE* phAlgorithm, LPCWSTR pszAlgId,
-	                                               LPCWSTR pszImplementation, ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptOpenAlgorithmProvider(
+	    BCRYPT_ALG_HANDLE* phAlgorithm, LPCWSTR pszAlgId, LPCWSTR pszImplementation, ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptCloseAlgorithmProvider(BCRYPT_ALG_HANDLE hAlgorithm, ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS
+	BCryptCloseAlgorithmProvider(BCRYPT_ALG_HANDLE hAlgorithm, ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptGetProperty(BCRYPT_HANDLE hObject, LPCWSTR pszProperty,
-	                                     PUCHAR pbOutput, ULONG cbOutput, ULONG* pcbResult,
-	                                     ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptGetProperty(BCRYPT_HANDLE hObject,
+	                                                          LPCWSTR pszProperty, PUCHAR pbOutput,
+	                                                          ULONG cbOutput, ULONG* pcbResult,
+	                                                          ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptCreateHash(BCRYPT_ALG_HANDLE hAlgorithm, BCRYPT_HASH_HANDLE* phHash,
-	                                    PUCHAR pbHashObject, ULONG cbHashObject, PUCHAR pbSecret,
-	                                    ULONG cbSecret, ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptCreateHash(BCRYPT_ALG_HANDLE hAlgorithm,
+	                                                         BCRYPT_HASH_HANDLE* phHash,
+	                                                         PUCHAR pbHashObject,
+	                                                         ULONG cbHashObject, PUCHAR pbSecret,
+	                                                         ULONG cbSecret, ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptDestroyHash(BCRYPT_HASH_HANDLE hHash);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptDestroyHash(BCRYPT_HASH_HANDLE hHash);
 
-	WINPR_API NTSTATUS BCryptHashData(BCRYPT_HASH_HANDLE hHash, PUCHAR pbInput, ULONG cbInput,
-	                                  ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptHashData(BCRYPT_HASH_HANDLE hHash, PUCHAR pbInput,
+	                                                       ULONG cbInput, ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptFinishHash(BCRYPT_HASH_HANDLE hHash, PUCHAR pbOutput, ULONG cbOutput,
-	                                    ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptFinishHash(BCRYPT_HASH_HANDLE hHash,
+	                                                         PUCHAR pbOutput, ULONG cbOutput,
+	                                                         ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptGenRandom(BCRYPT_ALG_HANDLE hAlgorithm, PUCHAR pbBuffer,
-	                                   ULONG cbBuffer, ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptGenRandom(BCRYPT_ALG_HANDLE hAlgorithm,
+	                                                        PUCHAR pbBuffer, ULONG cbBuffer,
+	                                                        ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptGenerateSymmetricKey(BCRYPT_ALG_HANDLE hAlgorithm,
-	                                              BCRYPT_KEY_HANDLE* phKey, PUCHAR pbKeyObject,
-	                                              ULONG cbKeyObject, PUCHAR pbSecret,
-	                                              ULONG cbSecret, ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptGenerateSymmetricKey(
+	    BCRYPT_ALG_HANDLE hAlgorithm, BCRYPT_KEY_HANDLE* phKey, PUCHAR pbKeyObject,
+	    ULONG cbKeyObject, PUCHAR pbSecret, ULONG cbSecret, ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptGenerateKeyPair(BCRYPT_ALG_HANDLE hAlgorithm, BCRYPT_KEY_HANDLE* phKey,
-	                                         ULONG dwLength, ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptGenerateKeyPair(BCRYPT_ALG_HANDLE hAlgorithm,
+	                                                              BCRYPT_KEY_HANDLE* phKey,
+	                                                              ULONG dwLength, ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptImportKey(BCRYPT_ALG_HANDLE hAlgorithm, BCRYPT_KEY_HANDLE hImportKey,
-	                                   LPCWSTR pszBlobType, BCRYPT_KEY_HANDLE* phKey,
-	                                   PUCHAR pbKeyObject, ULONG cbKeyObject, PUCHAR pbInput,
-	                                   ULONG cbInput, ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS
+	BCryptImportKey(BCRYPT_ALG_HANDLE hAlgorithm, BCRYPT_KEY_HANDLE hImportKey, LPCWSTR pszBlobType,
+	                BCRYPT_KEY_HANDLE* phKey, PUCHAR pbKeyObject, ULONG cbKeyObject, PUCHAR pbInput,
+	                ULONG cbInput, ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptDestroyKey(BCRYPT_KEY_HANDLE hKey);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptDestroyKey(BCRYPT_KEY_HANDLE hKey);
 
-	WINPR_API NTSTATUS BCryptEncrypt(BCRYPT_KEY_HANDLE hKey, PUCHAR pbInput, ULONG cbInput,
-	                                 VOID* pPaddingInfo, PUCHAR pbIV, ULONG cbIV, PUCHAR pbOutput,
-	                                 ULONG cbOutput, ULONG* pcbResult, ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptEncrypt(BCRYPT_KEY_HANDLE hKey, PUCHAR pbInput,
+	                                                      ULONG cbInput, VOID* pPaddingInfo,
+	                                                      PUCHAR pbIV, ULONG cbIV, PUCHAR pbOutput,
+	                                                      ULONG cbOutput, ULONG* pcbResult,
+	                                                      ULONG dwFlags);
 
-	WINPR_API NTSTATUS BCryptDecrypt(BCRYPT_KEY_HANDLE hKey, PUCHAR pbInput, ULONG cbInput,
-	                                 VOID* pPaddingInfo, PUCHAR pbIV, ULONG cbIV, PUCHAR pbOutput,
-	                                 ULONG cbOutput, ULONG* pcbResult, ULONG dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD NTSTATUS BCryptDecrypt(BCRYPT_KEY_HANDLE hKey, PUCHAR pbInput,
+	                                                      ULONG cbInput, VOID* pPaddingInfo,
+	                                                      PUCHAR pbIV, ULONG cbIV, PUCHAR pbOutput,
+	                                                      ULONG cbOutput, ULONG* pcbResult,
+	                                                      ULONG dwFlags);
 
 #ifdef __cplusplus
 }

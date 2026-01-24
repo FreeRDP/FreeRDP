@@ -165,27 +165,32 @@ extern "C"
 {
 #endif
 
-	WINPR_API SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
-	                                                     NCryptProviderName** ppProviderList,
-	                                                     DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS NCryptEnumStorageProviders(
+	    DWORD* wProviderCount, NCryptProviderName** ppProviderList, DWORD dwFlags);
 
-	WINPR_API SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider,
-	                                                    LPCWSTR pszProviderName, DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS NCryptOpenStorageProvider(
+	    NCRYPT_PROV_HANDLE* phProvider, LPCWSTR pszProviderName, DWORD dwFlags);
 
-	WINPR_API SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,
-	                                         NCryptKeyName** ppKeyName, PVOID* ppEnumState,
-	                                         DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider,
+	                                                              LPCWSTR pszScope,
+	                                                              NCryptKeyName** ppKeyName,
+	                                                              PVOID* ppEnumState,
+	                                                              DWORD dwFlags);
 
-	WINPR_API SECURITY_STATUS NCryptOpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY_HANDLE* phKey,
-	                                        LPCWSTR pszKeyName, DWORD dwLegacyKeySpec,
-	                                        DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS NCryptOpenKey(NCRYPT_PROV_HANDLE hProvider,
+	                                                             NCRYPT_KEY_HANDLE* phKey,
+	                                                             LPCWSTR pszKeyName,
+	                                                             DWORD dwLegacyKeySpec,
+	                                                             DWORD dwFlags);
 
-	WINPR_API SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty,
-	                                            PBYTE pbOutput, DWORD cbOutput, DWORD* pcbResult,
-	                                            DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject,
+	                                                                 LPCWSTR pszProperty,
+	                                                                 PBYTE pbOutput, DWORD cbOutput,
+	                                                                 DWORD* pcbResult,
+	                                                                 DWORD dwFlags);
 
-	WINPR_API SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject);
-	WINPR_API SECURITY_STATUS NCryptFreeBuffer(PVOID pvInput);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS NCryptFreeBuffer(PVOID pvInput);
 
 #ifdef __cplusplus
 }
@@ -206,9 +211,9 @@ extern "C"
 	 * @param modulePaths [in] an array of library path to try to load ended with a NULL string
 	 * @return ERROR_SUCCESS or an NTE error code something failed
 	 */
-	WINPR_API SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
-	                                                            LPCWSTR pszProviderName,
-	                                                            DWORD dwFlags, LPCSTR* modulePaths);
+	WINPR_API WINPR_ATTR_NODISCARD SECURITY_STATUS
+	winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider, LPCWSTR pszProviderName,
+	                                  DWORD dwFlags, LPCSTR* modulePaths);
 
 	/**
 	 * Gives a string representation of a SECURITY_STATUS
@@ -216,7 +221,8 @@ extern "C"
 	 * @param status [in] SECURITY_STATUS that we want as string
 	 * @return the string representation of status
 	 */
-	WINPR_API const char* winpr_NCryptSecurityStatusError(SECURITY_STATUS status);
+	WINPR_API WINPR_ATTR_NODISCARD const char*
+	winpr_NCryptSecurityStatusError(SECURITY_STATUS status);
 
 	/**
 	 * Gives a module path of provider handle
@@ -225,7 +231,8 @@ extern "C"
 	 * @return module path
 	 * @since version 3.6.0
 	 */
-	WINPR_API const char* winpr_NCryptGetModulePath(NCRYPT_PROV_HANDLE phProvider);
+	WINPR_API WINPR_ATTR_NODISCARD const char*
+	winpr_NCryptGetModulePath(NCRYPT_PROV_HANDLE phProvider);
 
 #ifdef __cplusplus
 }

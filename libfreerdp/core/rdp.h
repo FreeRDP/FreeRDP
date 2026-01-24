@@ -212,64 +212,79 @@ struct rdp_rdp
 	pGetCommonAccessToken GetCommonAccessToken;
 };
 
-FREERDP_LOCAL BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* length);
-FREERDP_LOCAL BOOL rdp_write_security_header(rdpRdp* rdp, wStream* s, UINT16 flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s,
+                                                                 UINT16* flags, UINT16* length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_write_security_header(rdpRdp* rdp, wStream* s,
+                                                                  UINT16 flags);
 
-FREERDP_LOCAL BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s, UINT16* tpktLength,
-                                                 UINT16* remainingLength, UINT16* type,
-                                                 UINT16* channel_id);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s,
+                                                                      UINT16* tpktLength,
+                                                                      UINT16* remainingLength,
+                                                                      UINT16* type,
+                                                                      UINT16* channel_id);
 
-FREERDP_LOCAL BOOL rdp_read_share_data_header(rdpRdp* rdp, wStream* s, UINT16* length, BYTE* type,
-                                              UINT32* share_id, BYTE* compressed_type,
-                                              UINT16* compressed_len);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_read_share_data_header(rdpRdp* rdp, wStream* s,
+                                                                   UINT16* length, BYTE* type,
+                                                                   UINT32* share_id,
+                                                                   BYTE* compressed_type,
+                                                                   UINT16* compressed_len);
 
-FREERDP_LOCAL wStream* rdp_send_stream_init(rdpRdp* rdp, UINT16* sec_flags);
-FREERDP_LOCAL wStream* rdp_send_stream_pdu_init(rdpRdp* rdp, UINT16* sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD wStream* rdp_send_stream_init(rdpRdp* rdp, UINT16* sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD wStream* rdp_send_stream_pdu_init(rdpRdp* rdp,
+                                                                     UINT16* sec_flags);
 
-FREERDP_LOCAL BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id);
-FREERDP_LOCAL BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channel_id,
-                                    UINT16 sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length,
+                                                        UINT16* channel_id);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length,
+                                                         UINT16 channel_id, UINT16 sec_flags);
 
-FREERDP_LOCAL BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id,
-                                UINT16 sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type,
+                                                     UINT16 channel_id, UINT16 sec_flags);
 
-FREERDP_LOCAL wStream* rdp_data_pdu_init(rdpRdp* rdp, UINT16* sec_flags);
-FREERDP_LOCAL BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id,
-                                     UINT16 sec_flags);
-FREERDP_LOCAL state_run_t rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD wStream* rdp_data_pdu_init(rdpRdp* rdp, UINT16* sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type,
+                                                          UINT16 channel_id, UINT16 sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD state_run_t rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);
 
-FREERDP_LOCAL BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channelId, UINT16 sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channelId,
+                                                 UINT16 sec_flags);
 
-FREERDP_LOCAL BOOL rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, const BYTE* data,
-                                         size_t size);
-FREERDP_LOCAL BOOL rdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize,
-                                           UINT32 flags, const BYTE* data, size_t chunkSize);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId,
+                                                              const BYTE* data, size_t size);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId,
+                                                                size_t totalSize, UINT32 flags,
+                                                                const BYTE* data, size_t chunkSize);
 
-FREERDP_LOCAL wStream* rdp_message_channel_pdu_init(rdpRdp* rdp, UINT16* sec_flags);
-FREERDP_LOCAL BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags);
-FREERDP_LOCAL state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s,
-                                                       UINT16 securityFlags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD wStream* rdp_message_channel_pdu_init(rdpRdp* rdp,
+                                                                         UINT16* sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s,
+                                                                     UINT16 sec_flags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s,
+                                                                            UINT16 securityFlags);
 
-FREERDP_LOCAL state_run_t rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s, UINT16 pduType,
-                                                       UINT16 length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD state_run_t rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s,
+                                                                            UINT16 pduType,
+                                                                            UINT16 length);
 
-FREERDP_LOCAL state_run_t rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD state_run_t rdp_recv_callback(rdpTransport* transport,
+                                                                 wStream* s, void* extra);
 
-FREERDP_LOCAL int rdp_check_fds(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int rdp_check_fds(rdpRdp* rdp);
 
 FREERDP_LOCAL void rdp_free(rdpRdp* rdp);
 
 WINPR_ATTR_MALLOC(rdp_free, 1)
-FREERDP_LOCAL rdpRdp* rdp_new(rdpContext* context);
-FREERDP_LOCAL BOOL rdp_reset(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD rdpRdp* rdp_new(rdpContext* context);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_reset(rdpRdp* rdp);
 
-FREERDP_LOCAL BOOL rdp_io_callback_set_event(rdpRdp* rdp, BOOL reset);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_io_callback_set_event(rdpRdp* rdp, BOOL reset);
 
-FREERDP_LOCAL const rdpTransportIo* rdp_get_io_callbacks(rdpRdp* rdp);
-FREERDP_LOCAL BOOL rdp_set_io_callbacks(rdpRdp* rdp, const rdpTransportIo* io_callbacks);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD const rdpTransportIo* rdp_get_io_callbacks(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_set_io_callbacks(rdpRdp* rdp,
+                                                             const rdpTransportIo* io_callbacks);
 
-FREERDP_LOCAL BOOL rdp_set_io_callback_context(rdpRdp* rdp, void* usercontext);
-FREERDP_LOCAL void* rdp_get_io_callback_context(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_set_io_callback_context(rdpRdp* rdp, void* usercontext);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD void* rdp_get_io_callback_context(rdpRdp* rdp);
 
 #define RDP_TAG FREERDP_TAG("core.rdp")
 #ifdef WITH_DEBUG_RDP
@@ -281,32 +296,37 @@ FREERDP_LOCAL void* rdp_get_io_callback_context(rdpRdp* rdp);
 	} while (0)
 #endif
 
-const char* data_pdu_type_to_string(UINT8 type);
-const char* pdu_type_to_str(UINT16 pduType, char* buffer, size_t length);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD const char* data_pdu_type_to_string(UINT8 type);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD const char* pdu_type_to_str(UINT16 pduType, char* buffer,
+                                                               size_t length);
 
-BOOL rdp_finalize_reset_flags(rdpRdp* rdp, BOOL clearAll);
-BOOL rdp_finalize_set_flag(rdpRdp* rdp, UINT32 flag);
-BOOL rdp_finalize_is_flag_set(rdpRdp* rdp, UINT32 flag);
-const char* rdp_finalize_flags_to_str(UINT32 flags, char* buffer, size_t size);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_finalize_reset_flags(rdpRdp* rdp, BOOL clearAll);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_finalize_set_flag(rdpRdp* rdp, UINT32 flag);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_finalize_is_flag_set(rdpRdp* rdp, UINT32 flag);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD const char* rdp_finalize_flags_to_str(UINT32 flags, char* buffer,
+                                                                         size_t size);
 
-BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength,
+                                                    UINT16 securityFlags);
 
-BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo);
-BOOL rdp_send_error_info(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_send_error_info(rdpRdp* rdp);
 
-void rdp_free_rc4_encrypt_keys(rdpRdp* rdp);
-BOOL rdp_reset_rc4_encrypt_keys(rdpRdp* rdp);
+FREERDP_LOCAL void rdp_free_rc4_encrypt_keys(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_reset_rc4_encrypt_keys(rdpRdp* rdp);
 
-void rdp_free_rc4_decrypt_keys(rdpRdp* rdp);
-BOOL rdp_reset_rc4_decrypt_keys(rdpRdp* rdp);
+FREERDP_LOCAL void rdp_free_rc4_decrypt_keys(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_reset_rc4_decrypt_keys(rdpRdp* rdp);
 
-const char* rdp_security_flag_string(UINT32 securityFlags, char* buffer, size_t size);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD const char* rdp_security_flag_string(UINT32 securityFlags,
+                                                                        char* buffer, size_t size);
 
-BOOL rdp_set_backup_settings(rdpRdp* rdp);
-BOOL rdp_reset_runtime_settings(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_set_backup_settings(rdpRdp* rdp);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL rdp_reset_runtime_settings(rdpRdp* rdp);
 
-void rdp_log_build_warnings(rdpRdp* rdp);
+FREERDP_LOCAL void rdp_log_build_warnings(rdpRdp* rdp);
 
-FREERDP_LOCAL size_t rdp_get_event_handles(rdpRdp* rdp, HANDLE* handles, uint32_t count);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD size_t rdp_get_event_handles(rdpRdp* rdp, HANDLE* handles,
+                                                                uint32_t count);
 
 #endif /* FREERDP_LIB_CORE_RDP_H */

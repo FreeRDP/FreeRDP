@@ -135,7 +135,7 @@ extern "C"
 		ALIGN64 pOnConnectTimeAutoDetect OnConnectTimeAutoDetectProgress;   /* 28 */
 		UINT64 paddingB[32 - 29];                                           /* 29 */
 	};
-	FREERDP_API rdpAutoDetect* autodetect_get(rdpContext* context);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpAutoDetect* autodetect_get(rdpContext* context);
 
 #ifdef __cplusplus
 }

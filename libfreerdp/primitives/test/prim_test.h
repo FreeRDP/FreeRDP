@@ -48,7 +48,7 @@ void prim_test_setup(BOOL performance);
 
 typedef pstatus_t (*speed_test_fkt)();
 
-BOOL speed_test(const char* name, const char* dsc, UINT32 iterations, speed_test_fkt generic,
-                speed_test_fkt optimized, ...);
+WINPR_ATTR_NODISCARD BOOL speed_test(const char* name, const char* dsc, UINT32 iterations,
+                                     speed_test_fkt generic, speed_test_fkt optimized, ...);
 
 #endif /* FREERDP_LIB_PRIMTEST_H */

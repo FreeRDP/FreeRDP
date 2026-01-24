@@ -31,14 +31,15 @@ extern "C"
 
 	void shadow_subsystem_free(rdpShadowSubsystem* subsystem);
 
-	WINPR_ATTR_MALLOC(shadow_subsystem_free, 1)
-	rdpShadowSubsystem* shadow_subsystem_new(void);
+	WINPR_ATTR_NODISCARD WINPR_ATTR_MALLOC(shadow_subsystem_free,
+	                                       1) rdpShadowSubsystem* shadow_subsystem_new(void);
 
-	int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server);
+	WINPR_ATTR_NODISCARD int shadow_subsystem_init(rdpShadowSubsystem* subsystem,
+	                                               rdpShadowServer* server);
 	void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem);
 
-	int shadow_subsystem_start(rdpShadowSubsystem* subsystem);
-	int shadow_subsystem_stop(rdpShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD int shadow_subsystem_start(rdpShadowSubsystem* subsystem);
+	WINPR_ATTR_NODISCARD int shadow_subsystem_stop(rdpShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
 }

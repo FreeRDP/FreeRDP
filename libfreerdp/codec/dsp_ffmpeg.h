@@ -32,17 +32,23 @@
     "DSP module requires libavcodec version >= 57.48.101. Upgrade or set WITH_DSP_FFMPEG=OFF to continue"
 #endif
 
-void freerdp_dsp_ffmpeg_context_free(FREERDP_DSP_CONTEXT* context);
+FREERDP_LOCAL void freerdp_dsp_ffmpeg_context_free(FREERDP_DSP_CONTEXT* context);
 
-WINPR_ATTR_MALLOC(freerdp_dsp_ffmpeg_context_free, 1)
-FREERDP_DSP_CONTEXT* freerdp_dsp_ffmpeg_context_new(BOOL encode);
-BOOL freerdp_dsp_ffmpeg_supports_format(const AUDIO_FORMAT* format, BOOL encode);
-BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
-                               const BYTE* data, size_t length, wStream* out);
-BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
-                               const BYTE* data, size_t length, wStream* out);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD WINPR_ATTR_MALLOC(freerdp_dsp_ffmpeg_context_free,
+                                                     1) FREERDP_LOCAL WINPR_ATTR_NODISCARD
+    FREERDP_DSP_CONTEXT* freerdp_dsp_ffmpeg_context_new(BOOL encode);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL
+freerdp_dsp_ffmpeg_supports_format(const AUDIO_FORMAT* format, BOOL encode);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context,
+                                                                  const AUDIO_FORMAT* srcFormat,
+                                                                  const BYTE* data, size_t length,
+                                                                  wStream* out);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context,
+                                                                  const AUDIO_FORMAT* srcFormat,
+                                                                  const BYTE* data, size_t length,
+                                                                  wStream* out);
 
-BOOL freerdp_dsp_ffmpeg_context_reset(FREERDP_DSP_CONTEXT* context,
-                                      const AUDIO_FORMAT* targetFormat);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD BOOL
+freerdp_dsp_ffmpeg_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* targetFormat);
 
 #endif /* FREERDP_LIB_CODEC_DSP_FFMPEG_H */

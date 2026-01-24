@@ -66,10 +66,12 @@ extern "C"
 	};
 	typedef struct rdp_codecs rdpCodecs;
 
-	FREERDP_API BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width,
-	                                               UINT32 height);
-	FREERDP_API BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width,
-	                                             UINT32 height);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs,
+	                                                                    UINT32 flags, UINT32 width,
+	                                                                    UINT32 height);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_client_codecs_reset(rdpCodecs* codecs,
+	                                                                  UINT32 flags, UINT32 width,
+	                                                                  UINT32 height);
 
 	/**
 	 * @brief Free a rdpCodecs instance
@@ -84,15 +86,16 @@ extern "C"
 	 *  @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(freerdp_client_codecs_free, 1)
-	FREERDP_API rdpCodecs* freerdp_client_codecs_new(UINT32 TheadingFlags);
+	FREERDP_API WINPR_ATTR_NODISCARD rdpCodecs* freerdp_client_codecs_new(UINT32 TheadingFlags);
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("[since 3.6.0] Use freerdp_client_codecs_free",
 	                     FREERDP_API void codecs_free(rdpCodecs* codecs));
 
-	WINPR_DEPRECATED_VAR("[since 3.6.0] Use freerdp_client_codecs_new",
-	                     WINPR_ATTR_MALLOC(codecs_free, 1)
-	                         FREERDP_API rdpCodecs* codecs_new(rdpContext* context));
+	WINPR_DEPRECATED_VAR(
+	    "[since 3.6.0] Use freerdp_client_codecs_new",
+	    WINPR_ATTR_MALLOC(codecs_free, 1)
+	        FREERDP_API WINPR_ATTR_NODISCARD rdpCodecs* codecs_new(rdpContext* context));
 #endif
 
 	/** @brief return a string representation of the given codecid
@@ -100,7 +103,7 @@ extern "C"
 	 *  @return The name of the codecid
 	 *  @since version 3.18.0
 	 */
-	FREERDP_API const char* freerdp_codec_id_to_str(UINT32 id);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_codec_id_to_str(UINT32 id);
 
 #ifdef __cplusplus
 }

@@ -294,50 +294,62 @@ extern "C"
 {
 #endif
 
-	WINPR_API BOOL BuildCommDCBA(LPCSTR lpDef, LPDCB lpDCB);
-	WINPR_API BOOL BuildCommDCBW(LPCWSTR lpDef, LPDCB lpDCB);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL BuildCommDCBA(LPCSTR lpDef, LPDCB lpDCB);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL BuildCommDCBW(LPCWSTR lpDef, LPDCB lpDCB);
 
-	WINPR_API BOOL BuildCommDCBAndTimeoutsA(LPCSTR lpDef, LPDCB lpDCB,
-	                                        LPCOMMTIMEOUTS lpCommTimeouts);
-	WINPR_API BOOL BuildCommDCBAndTimeoutsW(LPCWSTR lpDef, LPDCB lpDCB,
-	                                        LPCOMMTIMEOUTS lpCommTimeouts);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL BuildCommDCBAndTimeoutsA(LPCSTR lpDef, LPDCB lpDCB,
+	                                                             LPCOMMTIMEOUTS lpCommTimeouts);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL BuildCommDCBAndTimeoutsW(LPCWSTR lpDef, LPDCB lpDCB,
+	                                                             LPCOMMTIMEOUTS lpCommTimeouts);
 
-	WINPR_API BOOL CommConfigDialogA(LPCSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC);
-	WINPR_API BOOL CommConfigDialogW(LPCWSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CommConfigDialogA(LPCSTR lpszName, HWND hWnd,
+	                                                      LPCOMMCONFIG lpCC);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CommConfigDialogW(LPCWSTR lpszName, HWND hWnd,
+	                                                      LPCOMMCONFIG lpCC);
 
-	WINPR_API BOOL GetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, LPDWORD lpdwSize);
-	WINPR_API BOOL SetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, DWORD dwSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC,
+	                                                  LPDWORD lpdwSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC,
+	                                                  DWORD dwSize);
 
-	WINPR_API BOOL GetCommMask(HANDLE hFile, PDWORD lpEvtMask);
-	WINPR_API BOOL SetCommMask(HANDLE hFile, DWORD dwEvtMask);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetCommMask(HANDLE hFile, PDWORD lpEvtMask);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetCommMask(HANDLE hFile, DWORD dwEvtMask);
 
-	WINPR_API BOOL GetCommModemStatus(HANDLE hFile, PDWORD lpModemStat);
-	WINPR_API BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetCommModemStatus(HANDLE hFile, PDWORD lpModemStat);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp);
 
-	WINPR_API BOOL GetCommState(HANDLE hFile, LPDCB lpDCB);
-	WINPR_API BOOL SetCommState(HANDLE hFile, LPDCB lpDCB);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetCommState(HANDLE hFile, LPDCB lpDCB);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetCommState(HANDLE hFile, LPDCB lpDCB);
 
-	WINPR_API BOOL GetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts);
-	WINPR_API BOOL SetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetCommTimeouts(HANDLE hFile,
+	                                                    LPCOMMTIMEOUTS lpCommTimeouts);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetCommTimeouts(HANDLE hFile,
+	                                                    LPCOMMTIMEOUTS lpCommTimeouts);
 
-	WINPR_API BOOL GetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize);
-	WINPR_API BOOL GetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC,
+	                                                          LPDWORD lpdwSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL GetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC,
+	                                                          LPDWORD lpdwSize);
 
-	WINPR_API BOOL SetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize);
-	WINPR_API BOOL SetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC,
+	                                                          DWORD dwSize);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC,
+	                                                          DWORD dwSize);
 
-	WINPR_API BOOL SetCommBreak(HANDLE hFile);
-	WINPR_API BOOL ClearCommBreak(HANDLE hFile);
-	WINPR_API BOOL ClearCommError(HANDLE hFile, PDWORD lpErrors, LPCOMSTAT lpStat);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetCommBreak(HANDLE hFile);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ClearCommBreak(HANDLE hFile);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL ClearCommError(HANDLE hFile, PDWORD lpErrors,
+	                                                   LPCOMSTAT lpStat);
 
-	WINPR_API BOOL PurgeComm(HANDLE hFile, DWORD dwFlags);
-	WINPR_API BOOL SetupComm(HANDLE hFile, DWORD dwInQueue, DWORD dwOutQueue);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL PurgeComm(HANDLE hFile, DWORD dwFlags);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL SetupComm(HANDLE hFile, DWORD dwInQueue, DWORD dwOutQueue);
 
-	WINPR_API BOOL EscapeCommFunction(HANDLE hFile, DWORD dwFunc);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL EscapeCommFunction(HANDLE hFile, DWORD dwFunc);
 
-	WINPR_API BOOL TransmitCommChar(HANDLE hFile, char cChar);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL TransmitCommChar(HANDLE hFile, char cChar);
 
-	WINPR_API BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOverlapped);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask,
+	                                                  LPOVERLAPPED lpOverlapped);
 
 #ifdef UNICODE
 #define BuildCommDCB BuildCommDCBW
@@ -381,9 +393,11 @@ extern "C"
 	 *   - QueryCommDevice returns only the mappings that have been defined through
 	 * DefineCommDevice()
 	 */
-	WINPR_API BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTargetPath);
-	WINPR_API DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
-	WINPR_API BOOL IsCommDevice(LPCTSTR lpDeviceName);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName,
+	                                                     LPCTSTR lpTargetPath);
+	WINPR_API WINPR_ATTR_NODISCARD DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath,
+	                                                     DWORD ucchMax);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL IsCommDevice(LPCTSTR lpDeviceName);
 
 	/**
 	 * A handle can only be created on defined devices with DefineCommDevice(). This
@@ -391,10 +405,10 @@ extern "C"
 	 * RegisterHandleCreator().
 	 */
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_API HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-	                                 LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-	                                 DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
-	                                 HANDLE hTemplateFile);
+	WINPR_API WINPR_ATTR_NODISCARD HANDLE
+	CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+	                LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
+	                DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 
 #define IOCTL_SERIAL_SET_BAUD_RATE 0x001B0004
 #define IOCTL_SERIAL_GET_BAUD_RATE 0x001B0050
@@ -466,7 +480,7 @@ extern "C"
 	 * FIXME: got a proper function name and place
 	 */
 	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
-	WINPR_API const char* _comm_serial_ioctl_name(ULONG number);
+	WINPR_API WINPR_ATTR_NODISCARD const char* _comm_serial_ioctl_name(ULONG number);
 
 	/**
 	 * FIXME: got a proper function name and place
@@ -480,27 +494,33 @@ extern "C"
 	 * permissive mode is disabled by default.
 	 */
 	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
-	WINPR_API BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive);
 
 	/**
 	 * FIXME: to be moved in comm_ioctl.h
 	 */
-	WINPR_API BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
-	                                   DWORD nInBufferSize, LPVOID lpOutBuffer,
-	                                   DWORD nOutBufferSize, LPDWORD lpBytesReturned,
-	                                   LPOVERLAPPED lpOverlapped);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
+	                                                        LPVOID lpInBuffer, DWORD nInBufferSize,
+	                                                        LPVOID lpOutBuffer,
+	                                                        DWORD nOutBufferSize,
+	                                                        LPDWORD lpBytesReturned,
+	                                                        LPOVERLAPPED lpOverlapped);
 
 	/**
 	 * FIXME: to be moved in comm_io.h
 	 */
-	WINPR_API BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-	                            LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer,
+	                                                 DWORD nNumberOfBytesToRead,
+	                                                 LPDWORD lpNumberOfBytesRead,
+	                                                 LPOVERLAPPED lpOverlapped);
 
 	/**
 	 * FIXME: to be moved in comm_io.h
 	 */
-	WINPR_API BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
-	                             LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+	WINPR_API WINPR_ATTR_NODISCARD BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer,
+	                                                  DWORD nNumberOfBytesToWrite,
+	                                                  LPDWORD lpNumberOfBytesWritten,
+	                                                  LPOVERLAPPED lpOverlapped);
 
 #ifdef __cplusplus
 }

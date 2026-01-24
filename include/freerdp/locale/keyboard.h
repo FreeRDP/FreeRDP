@@ -243,7 +243,8 @@ FREERDP_API void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts, siz
  * @return An allocated array of keyboard layouts, free with \b freerdp_keyboard_layouts_free
  */
 WINPR_ATTR_MALLOC(freerdp_keyboard_layouts_free, 1)
-FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count);
+FREERDP_API WINPR_ATTR_NODISCARD RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types,
+	                                                                               size_t* count);
 
 /** @brief Get a string representation of a keyboard layout.
  *
@@ -252,7 +253,8 @@ FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_
  *  @return The string representation of the layout or the string \b "unknown" in case there is
  * none.
  */
-FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutId);
+FREERDP_API WINPR_ATTR_NODISCARD const char*
+freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutId);
 
 /** @brief Get a keyboard layout id from a string
  *
@@ -260,23 +262,25 @@ FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardL
  *
  *  @return The keyboard layout id or \b 0 in case of no mapping
  */
-FREERDP_API DWORD freerdp_keyboard_get_layout_id_from_name(const char* name);
+FREERDP_API WINPR_ATTR_NODISCARD DWORD freerdp_keyboard_get_layout_id_from_name(const char* name);
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 WINPR_DEPRECATED_VAR("since 3.11.0, implement yourself in client",
-	                 FREERDP_API DWORD freerdp_keyboard_init(DWORD keyboardLayoutId));
+	                 FREERDP_API WINPR_ATTR_NODISCARD DWORD
+	                     freerdp_keyboard_init(DWORD keyboardLayoutId));
 
 WINPR_DEPRECATED_VAR("since 3.11.0, implement yourself in client",
-	                 FREERDP_API DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId,
-	                                                            const char* keyboardRemappingList));
+	                 FREERDP_API WINPR_ATTR_NODISCARD DWORD freerdp_keyboard_init_ex(
+	                     DWORD keyboardLayoutId, const char* keyboardRemappingList));
 
 WINPR_DEPRECATED_VAR("since 3.11.0, implement yourself in client",
-	                 FREERDP_API DWORD
+	                 FREERDP_API WINPR_ATTR_NODISCARD DWORD
 	                     freerdp_keyboard_get_rdp_scancode_from_x11_keycode(DWORD keycode));
 
 WINPR_DEPRECATED_VAR("since 3.11.0, implement yourself in client",
-	                 FREERDP_API DWORD freerdp_keyboard_get_x11_keycode_from_rdp_scancode(
-	                     DWORD scancode, BOOL extended));
+	                 FREERDP_API WINPR_ATTR_NODISCARD DWORD
+	                     freerdp_keyboard_get_x11_keycode_from_rdp_scancode(DWORD scancode,
+	                                                                        BOOL extended));
 #endif
 
 /** @brief deallocate a \b FREERDP_REMAP_TABLE
@@ -298,7 +302,8 @@ FREERDP_API void freerdp_keyboard_remap_free(FREERDP_REMAP_TABLE* table);
  *  @since version 3.11.0
  */
 WINPR_ATTR_MALLOC(freerdp_keyboard_remap_free, 1)
-FREERDP_API FREERDP_REMAP_TABLE* freerdp_keyboard_remap_string_to_list(const char* list);
+FREERDP_API WINPR_ATTR_NODISCARD FREERDP_REMAP_TABLE*
+freerdp_keyboard_remap_string_to_list(const char* list);
 
 /** @brief does remap a RDP scancode according to the remap table provided.
  *
@@ -310,8 +315,8 @@ FREERDP_API FREERDP_REMAP_TABLE* freerdp_keyboard_remap_string_to_list(const cha
  *
  *  @since version 3.11.0
  */
-FREERDP_API DWORD freerdp_keyboard_remap_key(const FREERDP_REMAP_TABLE* remap_table,
-	                                         DWORD rdpScanCode);
+FREERDP_API WINPR_ATTR_NODISCARD DWORD
+freerdp_keyboard_remap_key(const FREERDP_REMAP_TABLE* remap_table, DWORD rdpScanCode);
 
 /** @brief deallocator for a \b RDP_CODEPAGE array allocated by \ref
  * freerdp_keyboard_get_matching_codepages
@@ -336,8 +341,8 @@ FREERDP_API void freerdp_codepages_free(RDP_CODEPAGE* codepages);
  * freed by \ref freerdp_codepages_free
  */
 WINPR_ATTR_MALLOC(freerdp_codepages_free, 1)
-FREERDP_API RDP_CODEPAGE* freerdp_keyboard_get_matching_codepages(DWORD column, const char* filter,
-	                                                              size_t* count);
+FREERDP_API WINPR_ATTR_NODISCARD RDP_CODEPAGE*
+freerdp_keyboard_get_matching_codepages(DWORD column, const char* filter, size_t* count);
 
 /** @brief get a string representation of a RDP scancode
  *
@@ -345,7 +350,7 @@ FREERDP_API RDP_CODEPAGE* freerdp_keyboard_get_matching_codepages(DWORD column, 
  *
  *  @return A string describing the RDP scancode or \b NULL if it does not exist
  */
-FREERDP_API const char* freerdp_keyboard_scancode_name(DWORD scancode);
+FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_keyboard_scancode_name(DWORD scancode);
 
 #ifdef __cplusplus
 }

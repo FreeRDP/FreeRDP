@@ -1263,7 +1263,7 @@
 
 /* defined in ntstatus.h */
 #if !defined(NTSTATUS_FROM_WIN32) && !defined(inline_NTSTATUS_FROM_WIN32)
-static inline NTSTATUS NTSTATUS_FROM_WIN32(long x)
+static inline WINPR_ATTR_NODISCARD NTSTATUS NTSTATUS_FROM_WIN32(long x)
 {
 	return x <= 0 ? STATUS_CAST(NTSTATUS, x)
 	              : STATUS_CAST(NTSTATUS, ((x)&0x0000FFFF) | (0x7 << 16) | 0xC0000000);
@@ -1549,7 +1549,7 @@ extern "C"
 {
 #endif
 
-	WINPR_API PTEB NtCurrentTeb(void);
+	WINPR_API WINPR_ATTR_NODISCARD PTEB NtCurrentTeb(void);
 
 #ifdef __cplusplus
 }
@@ -1562,8 +1562,8 @@ extern "C"
 {
 #endif
 
-	WINPR_API const char* NtStatus2Tag(NTSTATUS ntstatus);
-	WINPR_API const char* Win32ErrorCode2Tag(UINT16 code);
+	WINPR_API WINPR_ATTR_NODISCARD const char* NtStatus2Tag(NTSTATUS ntstatus);
+	WINPR_API WINPR_ATTR_NODISCARD const char* Win32ErrorCode2Tag(UINT16 code);
 
 	/** @brief convert a \ref FILE_INFORMATION_CLASS to a string
 	 *
@@ -1572,7 +1572,7 @@ extern "C"
 	 *  @return A string representation of the value or "UNKNOWN" for invalid values
 	 *  @since version 3.13.0
 	 */
-	WINPR_API const char* FSInformationClass2Tag(UINT32 value);
+	WINPR_API WINPR_ATTR_NODISCARD const char* FSInformationClass2Tag(UINT32 value);
 
 #ifdef __cplusplus
 }

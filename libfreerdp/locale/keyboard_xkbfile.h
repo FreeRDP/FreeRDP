@@ -24,7 +24,8 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId,
-                                                DWORD* x11_keycode_to_rdp_scancode, size_t count);
+FREERDP_LOCAL WINPR_ATTR_NODISCARD int
+freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD* x11_keycode_to_rdp_scancode,
+                              size_t count);
 
 #endif /* FREERDP_LIB_LOCALE_KEYBOARD_XKB_H */

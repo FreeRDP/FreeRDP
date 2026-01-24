@@ -163,20 +163,22 @@ extern "C"
 		psPeerReceiveChannelData server_receive_channel_data_original;
 	};
 
-	FREERDP_API BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src);
-	FREERDP_API BOOL pf_context_init_server_context(freerdp_peer* client);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL pf_context_copy_settings(rdpSettings* dst,
+	                                                               const rdpSettings* src);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL pf_context_init_server_context(freerdp_peer* client);
 
 	WINPR_ATTR_MALLOC(freerdp_client_context_free, 1)
-	FREERDP_API pClientContext* pf_context_create_client_context(const rdpSettings* clientSettings);
+	FREERDP_API WINPR_ATTR_NODISCARD pClientContext*
+	pf_context_create_client_context(const rdpSettings* clientSettings);
 
 	FREERDP_API void proxy_data_free(proxyData* pdata);
 
 	WINPR_ATTR_MALLOC(proxy_data_free, 1)
-	FREERDP_API proxyData* proxy_data_new(void);
+	FREERDP_API WINPR_ATTR_NODISCARD proxyData* proxy_data_new(void);
 	FREERDP_API void proxy_data_set_client_context(proxyData* pdata, pClientContext* context);
 	FREERDP_API void proxy_data_set_server_context(proxyData* pdata, pServerContext* context);
 
-	FREERDP_API BOOL proxy_data_shall_disconnect(proxyData* pdata);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL proxy_data_shall_disconnect(proxyData* pdata);
 	FREERDP_API void proxy_data_abort_connect(proxyData* pdata);
 
 #ifdef __cplusplus

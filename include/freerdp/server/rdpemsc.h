@@ -123,7 +123,8 @@ extern "C"
 	FREERDP_API void mouse_cursor_server_context_free(MouseCursorServerContext* context);
 
 	WINPR_ATTR_MALLOC(mouse_cursor_server_context_free, 1)
-	FREERDP_API MouseCursorServerContext* mouse_cursor_server_context_new(HANDLE vcm);
+	FREERDP_API WINPR_ATTR_NODISCARD MouseCursorServerContext*
+	mouse_cursor_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus
 }
