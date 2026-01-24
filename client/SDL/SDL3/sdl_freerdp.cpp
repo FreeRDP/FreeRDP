@@ -102,7 +102,7 @@ static int sdl_run(SdlContext* sdl)
 
 #if defined(WITH_DEBUG_SDL_EVENTS)
 			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "got event %s [0x%08" PRIx32 "]",
-			             sdl_event_type_str(windowEvent.type), windowEvent.type);
+			             sdl::utils::toString(windowEvent.type).c_str(), windowEvent.type);
 #endif
 			if (sdl->shallAbort(true))
 				continue;

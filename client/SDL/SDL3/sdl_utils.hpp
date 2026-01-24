@@ -73,8 +73,6 @@ typedef struct
 
 [[nodiscard]] bool sdl_push_quit();
 
-[[nodiscard]] std::string sdl_window_event_str(Uint32 ev);
-[[nodiscard]] const char* sdl_event_type_str(Uint32 type);
 [[nodiscard]] const char* sdl_error_string(Sint32 res);
 
 #define sdl_log_error(res, log, what) sdl_log_error_ex(res, log, what, __FILE__, __LINE__, __func__)
@@ -83,9 +81,10 @@ typedef struct
 
 namespace sdl::utils
 {
-	[[nodiscard]] std::string toString(uint32_t orientation);
+	[[nodiscard]] std::string toString(enum FreeRDP_DesktopRotationFlags orientation);
 	[[nodiscard]] std::string toString(SDL_DisplayOrientation orientation);
 	[[nodiscard]] std::string toString(const SDL_DisplayMode* mode);
+	[[nodiscard]] std::string toString(Uint32 type);
 
 	[[nodiscard]] UINT32 orientaion_to_rdp(SDL_DisplayOrientation orientation);
 

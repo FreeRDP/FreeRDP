@@ -35,147 +35,6 @@
 	case x:            \
 		return STR(x)
 
-const char* sdl_event_type_str(Uint32 type)
-{
-	switch (type)
-	{
-		EV_CASE_STR(SDL_EVENT_FIRST);
-		EV_CASE_STR(SDL_EVENT_QUIT);
-		EV_CASE_STR(SDL_EVENT_TERMINATING);
-		EV_CASE_STR(SDL_EVENT_LOW_MEMORY);
-		EV_CASE_STR(SDL_EVENT_WILL_ENTER_BACKGROUND);
-		EV_CASE_STR(SDL_EVENT_DID_ENTER_BACKGROUND);
-		EV_CASE_STR(SDL_EVENT_WILL_ENTER_FOREGROUND);
-		EV_CASE_STR(SDL_EVENT_DID_ENTER_FOREGROUND);
-		EV_CASE_STR(SDL_EVENT_LOCALE_CHANGED);
-		EV_CASE_STR(SDL_EVENT_SYSTEM_THEME_CHANGED);
-		EV_CASE_STR(SDL_EVENT_DISPLAY_ORIENTATION);
-		EV_CASE_STR(SDL_EVENT_DISPLAY_ADDED);
-		EV_CASE_STR(SDL_EVENT_DISPLAY_REMOVED);
-		EV_CASE_STR(SDL_EVENT_DISPLAY_MOVED);
-		EV_CASE_STR(SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_SHOWN);
-		EV_CASE_STR(SDL_EVENT_WINDOW_HIDDEN);
-		EV_CASE_STR(SDL_EVENT_WINDOW_EXPOSED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_MOVED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_RESIZED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_MINIMIZED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_MAXIMIZED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_RESTORED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_MOUSE_ENTER);
-		EV_CASE_STR(SDL_EVENT_WINDOW_MOUSE_LEAVE);
-		EV_CASE_STR(SDL_EVENT_WINDOW_FOCUS_GAINED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_FOCUS_LOST);
-		EV_CASE_STR(SDL_EVENT_WINDOW_CLOSE_REQUESTED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_HIT_TEST);
-		EV_CASE_STR(SDL_EVENT_WINDOW_ICCPROF_CHANGED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_DISPLAY_CHANGED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_SAFE_AREA_CHANGED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_OCCLUDED);
-		EV_CASE_STR(SDL_EVENT_WINDOW_ENTER_FULLSCREEN);
-		EV_CASE_STR(SDL_EVENT_WINDOW_LEAVE_FULLSCREEN);
-		EV_CASE_STR(SDL_EVENT_WINDOW_DESTROYED);
-
-		EV_CASE_STR(SDL_EVENT_KEY_DOWN);
-		EV_CASE_STR(SDL_EVENT_KEY_UP);
-		EV_CASE_STR(SDL_EVENT_TEXT_EDITING);
-		EV_CASE_STR(SDL_EVENT_TEXT_INPUT);
-		EV_CASE_STR(SDL_EVENT_KEYMAP_CHANGED);
-		EV_CASE_STR(SDL_EVENT_KEYBOARD_ADDED);
-		EV_CASE_STR(SDL_EVENT_KEYBOARD_REMOVED);
-
-		EV_CASE_STR(SDL_EVENT_MOUSE_MOTION);
-		EV_CASE_STR(SDL_EVENT_MOUSE_BUTTON_DOWN);
-		EV_CASE_STR(SDL_EVENT_MOUSE_BUTTON_UP);
-		EV_CASE_STR(SDL_EVENT_MOUSE_WHEEL);
-		EV_CASE_STR(SDL_EVENT_MOUSE_ADDED);
-		EV_CASE_STR(SDL_EVENT_MOUSE_REMOVED);
-
-		EV_CASE_STR(SDL_EVENT_JOYSTICK_AXIS_MOTION);
-		EV_CASE_STR(SDL_EVENT_JOYSTICK_BALL_MOTION);
-		EV_CASE_STR(SDL_EVENT_JOYSTICK_HAT_MOTION);
-		EV_CASE_STR(SDL_EVENT_JOYSTICK_BUTTON_DOWN);
-		EV_CASE_STR(SDL_EVENT_JOYSTICK_BUTTON_UP);
-		EV_CASE_STR(SDL_EVENT_JOYSTICK_ADDED);
-		EV_CASE_STR(SDL_EVENT_JOYSTICK_REMOVED);
-		EV_CASE_STR(SDL_EVENT_JOYSTICK_BATTERY_UPDATED);
-		EV_CASE_STR(SDL_EVENT_JOYSTICK_UPDATE_COMPLETE);
-
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_AXIS_MOTION);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_BUTTON_DOWN);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_BUTTON_UP);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_ADDED);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_REMOVED);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_REMAPPED);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_TOUCHPAD_DOWN);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_TOUCHPAD_MOTION);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_TOUCHPAD_UP);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_SENSOR_UPDATE);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_UPDATE_COMPLETE);
-		EV_CASE_STR(SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED);
-
-		EV_CASE_STR(SDL_EVENT_FINGER_DOWN);
-		EV_CASE_STR(SDL_EVENT_FINGER_UP);
-		EV_CASE_STR(SDL_EVENT_FINGER_MOTION);
-
-		EV_CASE_STR(SDL_EVENT_CLIPBOARD_UPDATE);
-
-		EV_CASE_STR(SDL_EVENT_DROP_FILE);
-		EV_CASE_STR(SDL_EVENT_DROP_TEXT);
-		EV_CASE_STR(SDL_EVENT_DROP_BEGIN);
-		EV_CASE_STR(SDL_EVENT_DROP_COMPLETE);
-		EV_CASE_STR(SDL_EVENT_DROP_POSITION);
-
-		EV_CASE_STR(SDL_EVENT_AUDIO_DEVICE_ADDED);
-		EV_CASE_STR(SDL_EVENT_AUDIO_DEVICE_REMOVED);
-		EV_CASE_STR(SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED);
-
-		EV_CASE_STR(SDL_EVENT_SENSOR_UPDATE);
-
-		EV_CASE_STR(SDL_EVENT_PEN_DOWN);
-		EV_CASE_STR(SDL_EVENT_PEN_UP);
-		EV_CASE_STR(SDL_EVENT_PEN_MOTION);
-		EV_CASE_STR(SDL_EVENT_PEN_BUTTON_DOWN);
-		EV_CASE_STR(SDL_EVENT_PEN_BUTTON_UP);
-		EV_CASE_STR(SDL_EVENT_CAMERA_DEVICE_ADDED);
-		EV_CASE_STR(SDL_EVENT_CAMERA_DEVICE_REMOVED);
-		EV_CASE_STR(SDL_EVENT_CAMERA_DEVICE_APPROVED);
-		EV_CASE_STR(SDL_EVENT_CAMERA_DEVICE_DENIED);
-
-		EV_CASE_STR(SDL_EVENT_RENDER_TARGETS_RESET);
-		EV_CASE_STR(SDL_EVENT_RENDER_DEVICE_RESET);
-		EV_CASE_STR(SDL_EVENT_POLL_SENTINEL);
-
-		EV_CASE_STR(SDL_EVENT_USER);
-
-		EV_CASE_STR(SDL_EVENT_USER_CERT_DIALOG);
-		EV_CASE_STR(SDL_EVENT_USER_CERT_RESULT);
-		EV_CASE_STR(SDL_EVENT_USER_SHOW_DIALOG);
-		EV_CASE_STR(SDL_EVENT_USER_SHOW_RESULT);
-		EV_CASE_STR(SDL_EVENT_USER_AUTH_DIALOG);
-		EV_CASE_STR(SDL_EVENT_USER_AUTH_RESULT);
-		EV_CASE_STR(SDL_EVENT_USER_SCARD_DIALOG);
-		EV_CASE_STR(SDL_EVENT_USER_RETRY_DIALOG);
-		EV_CASE_STR(SDL_EVENT_USER_SCARD_RESULT);
-		EV_CASE_STR(SDL_EVENT_USER_UPDATE);
-		EV_CASE_STR(SDL_EVENT_USER_CREATE_WINDOWS);
-		EV_CASE_STR(SDL_EVENT_USER_WINDOW_RESIZEABLE);
-		EV_CASE_STR(SDL_EVENT_USER_WINDOW_FULLSCREEN);
-		EV_CASE_STR(SDL_EVENT_USER_WINDOW_MINIMIZE);
-		EV_CASE_STR(SDL_EVENT_USER_POINTER_NULL);
-		EV_CASE_STR(SDL_EVENT_USER_POINTER_DEFAULT);
-		EV_CASE_STR(SDL_EVENT_USER_POINTER_POSITION);
-		EV_CASE_STR(SDL_EVENT_USER_POINTER_SET);
-		EV_CASE_STR(SDL_EVENT_USER_QUIT);
-
-		EV_CASE_STR(SDL_EVENT_LAST);
-		default:
-			return "SDL_UNKNOWNEVENT";
-	}
-}
-
 const char* sdl_error_string(Sint32 res)
 {
 	if (res == 0)
@@ -295,170 +154,306 @@ bool sdl_push_quit()
 	return true;
 }
 
-std::string sdl_window_event_str(Uint32 ev)
+namespace sdl::utils
 {
-	if ((ev >= SDL_EVENT_WINDOW_FIRST) && (ev <= SDL_EVENT_WINDOW_LAST))
-		return sdl_event_type_str(ev);
-
-	return "SDL_EVENT_WINDOW_UNKNOWN";
-}
-
-UINT32 sdl::utils::orientaion_to_rdp(SDL_DisplayOrientation orientation)
-{
-	switch (orientation)
+	UINT32 orientaion_to_rdp(SDL_DisplayOrientation orientation)
 	{
-		case SDL_ORIENTATION_LANDSCAPE:
-			return ORIENTATION_LANDSCAPE;
-		case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
-			return ORIENTATION_LANDSCAPE_FLIPPED;
-		case SDL_ORIENTATION_PORTRAIT_FLIPPED:
-			return ORIENTATION_PORTRAIT_FLIPPED;
-		case SDL_ORIENTATION_PORTRAIT:
-		default:
-			return ORIENTATION_PORTRAIT;
-	}
-}
-
-std::string sdl::utils::toString(SDL_DisplayOrientation orientation)
-{
-	switch (orientation)
-	{
-		case SDL_ORIENTATION_LANDSCAPE:
-			return "SDL_ORIENTATION_LANDSCAPE";
-		case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
-			return "SDL_ORIENTATION_LANDSCAPE_FLIPPED";
-		case SDL_ORIENTATION_PORTRAIT_FLIPPED:
-			return "SDL_ORIENTATION_PORTRAIT_FLIPPED";
-		case SDL_ORIENTATION_PORTRAIT:
-			return "SDL_ORIENTATION_PORTRAIT";
-		default:
-			return "SDL_ORIENTATION_UNKNOWN";
-	}
-}
-
-std::string sdl::utils::toString(uint32_t orientation)
-{
-	switch (orientation)
-	{
-		case ORIENTATION_LANDSCAPE:
-			return "ORIENTATION_LANDSCAPE";
-		case ORIENTATION_LANDSCAPE_FLIPPED:
-			return "ORIENTATION_LANDSCAPE_FLIPPED";
-		case ORIENTATION_PORTRAIT_FLIPPED:
-			return "ORIENTATION_PORTRAIT_FLIPPED";
-		case ORIENTATION_PORTRAIT:
-			return "ORIENTATION_PORTRAIT";
-		default:
+		switch (orientation)
 		{
-			std::stringstream ss;
-			ss << "ORIENTATION_UNKNOWN_" << std::hex << std::setfill('0') << std::setw(8)
-			   << orientation;
-			return ss.str();
+			case SDL_ORIENTATION_LANDSCAPE:
+				return ORIENTATION_LANDSCAPE;
+			case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
+				return ORIENTATION_LANDSCAPE_FLIPPED;
+			case SDL_ORIENTATION_PORTRAIT_FLIPPED:
+				return ORIENTATION_PORTRAIT_FLIPPED;
+			case SDL_ORIENTATION_PORTRAIT:
+			default:
+				return ORIENTATION_PORTRAIT;
 		}
 	}
-}
 
-std::string sdl::utils::toString(const SDL_DisplayMode* mode)
-{
-	if (!mode)
-		return "SDL_DisplayMode=null";
-
-	std::stringstream ss;
-
-	ss << "["
-	   << "id=" << mode->displayID << ","
-	   << "fmt=" << mode->format << ","
-	   << "w=" << mode->w << ","
-	   << "h=" << mode->h << ","
-	   << "dpi=" << mode->pixel_density << ","
-	   << "refresh=" << mode->refresh_rate << ","
-	   << "num=" << mode->refresh_rate_numerator << ","
-	   << "denom=" << mode->refresh_rate_denominator << "]";
-
-	return ss.str();
-}
-
-std::string sdl::utils::generate_uuid_v4()
-{
-	static std::random_device rd;
-	static std::mt19937 gen(rd());
-	static std::uniform_int_distribution<> dis(0, 255);
-	std::stringstream ss;
-	ss << std::hex << std::setfill('0') << std::setw(2);
-	for (int i = 0; i < 4; i++)
+	std::string toString(SDL_DisplayOrientation orientation)
 	{
-		ss << dis(gen);
+		switch (orientation)
+		{
+			case SDL_ORIENTATION_LANDSCAPE:
+				return "SDL_ORIENTATION_LANDSCAPE";
+			case SDL_ORIENTATION_LANDSCAPE_FLIPPED:
+				return "SDL_ORIENTATION_LANDSCAPE_FLIPPED";
+			case SDL_ORIENTATION_PORTRAIT_FLIPPED:
+				return "SDL_ORIENTATION_PORTRAIT_FLIPPED";
+			case SDL_ORIENTATION_PORTRAIT:
+				return "SDL_ORIENTATION_PORTRAIT";
+			default:
+				return "SDL_ORIENTATION_UNKNOWN";
+		}
 	}
-	ss << "-";
-	for (int i = 0; i < 2; i++)
-	{
-		ss << dis(gen);
-	}
-	ss << "-";
-	for (int i = 0; i < 2; i++)
-	{
-		ss << dis(gen);
-	}
-	ss << "-";
-	for (int i = 0; i < 2; i++)
-	{
-		ss << dis(gen);
-	}
-	ss << "-";
-	for (int i = 0; i < 6; i++)
-	{
-		ss << dis(gen);
-	}
-	return ss.str();
-}
 
-sdl::utils::HighDpiScaleMode sdl::utils::platformScaleMode()
-{
-	const auto platform = SDL_GetPlatform();
-	if (!platform)
-		return SCALE_MODE_INVALID;
-	if (strcmp("Windows", platform) == 0)
-		return SCALE_MODE_X11;
-	if (strcmp("macOS", platform) == 0)
-		return SCALE_MODE_WAYLAND;
-	if (strcmp("Linux", platform) == 0)
+	std::string toString(FreeRDP_DesktopRotationFlags orientation)
 	{
-		const auto driver = SDL_GetCurrentVideoDriver();
-		if (!driver)
-			return SCALE_MODE_WAYLAND;
-		if (strcmp("x11", driver) == 0)
+		switch (orientation)
+		{
+			case ORIENTATION_LANDSCAPE:
+				return "ORIENTATION_LANDSCAPE";
+			case ORIENTATION_LANDSCAPE_FLIPPED:
+				return "ORIENTATION_LANDSCAPE_FLIPPED";
+			case ORIENTATION_PORTRAIT_FLIPPED:
+				return "ORIENTATION_PORTRAIT_FLIPPED";
+			case ORIENTATION_PORTRAIT:
+				return "ORIENTATION_PORTRAIT";
+			default:
+			{
+				std::stringstream ss;
+				ss << "ORIENTATION_UNKNOWN_" << std::hex << std::setfill('0') << std::setw(8)
+				   << orientation;
+				return ss.str();
+			}
+		}
+	}
+
+	std::string toString(const SDL_DisplayMode* mode)
+	{
+		if (!mode)
+			return "SDL_DisplayMode=null";
+
+		std::stringstream ss;
+
+		ss << "["
+		   << "id=" << mode->displayID << ","
+		   << "fmt=" << mode->format << ","
+		   << "w=" << mode->w << ","
+		   << "h=" << mode->h << ","
+		   << "dpi=" << mode->pixel_density << ","
+		   << "refresh=" << mode->refresh_rate << ","
+		   << "num=" << mode->refresh_rate_numerator << ","
+		   << "denom=" << mode->refresh_rate_denominator << "]";
+
+		return ss.str();
+	}
+
+	std::string toString(Uint32 type)
+	{
+		switch (type)
+		{
+			EV_CASE_STR(SDL_EVENT_FIRST);
+			EV_CASE_STR(SDL_EVENT_QUIT);
+			EV_CASE_STR(SDL_EVENT_TERMINATING);
+			EV_CASE_STR(SDL_EVENT_LOW_MEMORY);
+			EV_CASE_STR(SDL_EVENT_WILL_ENTER_BACKGROUND);
+			EV_CASE_STR(SDL_EVENT_DID_ENTER_BACKGROUND);
+			EV_CASE_STR(SDL_EVENT_WILL_ENTER_FOREGROUND);
+			EV_CASE_STR(SDL_EVENT_DID_ENTER_FOREGROUND);
+			EV_CASE_STR(SDL_EVENT_LOCALE_CHANGED);
+			EV_CASE_STR(SDL_EVENT_SYSTEM_THEME_CHANGED);
+			EV_CASE_STR(SDL_EVENT_DISPLAY_ORIENTATION);
+			EV_CASE_STR(SDL_EVENT_DISPLAY_ADDED);
+			EV_CASE_STR(SDL_EVENT_DISPLAY_REMOVED);
+			EV_CASE_STR(SDL_EVENT_DISPLAY_MOVED);
+			EV_CASE_STR(SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_SHOWN);
+			EV_CASE_STR(SDL_EVENT_WINDOW_HIDDEN);
+			EV_CASE_STR(SDL_EVENT_WINDOW_EXPOSED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_MOVED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_RESIZED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_MINIMIZED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_MAXIMIZED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_RESTORED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_MOUSE_ENTER);
+			EV_CASE_STR(SDL_EVENT_WINDOW_MOUSE_LEAVE);
+			EV_CASE_STR(SDL_EVENT_WINDOW_FOCUS_GAINED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_FOCUS_LOST);
+			EV_CASE_STR(SDL_EVENT_WINDOW_CLOSE_REQUESTED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_HIT_TEST);
+			EV_CASE_STR(SDL_EVENT_WINDOW_ICCPROF_CHANGED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_DISPLAY_CHANGED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_SAFE_AREA_CHANGED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_OCCLUDED);
+			EV_CASE_STR(SDL_EVENT_WINDOW_ENTER_FULLSCREEN);
+			EV_CASE_STR(SDL_EVENT_WINDOW_LEAVE_FULLSCREEN);
+			EV_CASE_STR(SDL_EVENT_WINDOW_DESTROYED);
+
+			EV_CASE_STR(SDL_EVENT_KEY_DOWN);
+			EV_CASE_STR(SDL_EVENT_KEY_UP);
+			EV_CASE_STR(SDL_EVENT_TEXT_EDITING);
+			EV_CASE_STR(SDL_EVENT_TEXT_INPUT);
+			EV_CASE_STR(SDL_EVENT_KEYMAP_CHANGED);
+			EV_CASE_STR(SDL_EVENT_KEYBOARD_ADDED);
+			EV_CASE_STR(SDL_EVENT_KEYBOARD_REMOVED);
+
+			EV_CASE_STR(SDL_EVENT_MOUSE_MOTION);
+			EV_CASE_STR(SDL_EVENT_MOUSE_BUTTON_DOWN);
+			EV_CASE_STR(SDL_EVENT_MOUSE_BUTTON_UP);
+			EV_CASE_STR(SDL_EVENT_MOUSE_WHEEL);
+			EV_CASE_STR(SDL_EVENT_MOUSE_ADDED);
+			EV_CASE_STR(SDL_EVENT_MOUSE_REMOVED);
+
+			EV_CASE_STR(SDL_EVENT_JOYSTICK_AXIS_MOTION);
+			EV_CASE_STR(SDL_EVENT_JOYSTICK_BALL_MOTION);
+			EV_CASE_STR(SDL_EVENT_JOYSTICK_HAT_MOTION);
+			EV_CASE_STR(SDL_EVENT_JOYSTICK_BUTTON_DOWN);
+			EV_CASE_STR(SDL_EVENT_JOYSTICK_BUTTON_UP);
+			EV_CASE_STR(SDL_EVENT_JOYSTICK_ADDED);
+			EV_CASE_STR(SDL_EVENT_JOYSTICK_REMOVED);
+			EV_CASE_STR(SDL_EVENT_JOYSTICK_BATTERY_UPDATED);
+			EV_CASE_STR(SDL_EVENT_JOYSTICK_UPDATE_COMPLETE);
+
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_AXIS_MOTION);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_BUTTON_DOWN);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_BUTTON_UP);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_ADDED);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_REMOVED);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_REMAPPED);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_TOUCHPAD_DOWN);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_TOUCHPAD_MOTION);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_TOUCHPAD_UP);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_SENSOR_UPDATE);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_UPDATE_COMPLETE);
+			EV_CASE_STR(SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED);
+
+			EV_CASE_STR(SDL_EVENT_FINGER_DOWN);
+			EV_CASE_STR(SDL_EVENT_FINGER_UP);
+			EV_CASE_STR(SDL_EVENT_FINGER_MOTION);
+
+			EV_CASE_STR(SDL_EVENT_CLIPBOARD_UPDATE);
+
+			EV_CASE_STR(SDL_EVENT_DROP_FILE);
+			EV_CASE_STR(SDL_EVENT_DROP_TEXT);
+			EV_CASE_STR(SDL_EVENT_DROP_BEGIN);
+			EV_CASE_STR(SDL_EVENT_DROP_COMPLETE);
+			EV_CASE_STR(SDL_EVENT_DROP_POSITION);
+
+			EV_CASE_STR(SDL_EVENT_AUDIO_DEVICE_ADDED);
+			EV_CASE_STR(SDL_EVENT_AUDIO_DEVICE_REMOVED);
+			EV_CASE_STR(SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED);
+
+			EV_CASE_STR(SDL_EVENT_SENSOR_UPDATE);
+
+			EV_CASE_STR(SDL_EVENT_PEN_DOWN);
+			EV_CASE_STR(SDL_EVENT_PEN_UP);
+			EV_CASE_STR(SDL_EVENT_PEN_MOTION);
+			EV_CASE_STR(SDL_EVENT_PEN_BUTTON_DOWN);
+			EV_CASE_STR(SDL_EVENT_PEN_BUTTON_UP);
+			EV_CASE_STR(SDL_EVENT_CAMERA_DEVICE_ADDED);
+			EV_CASE_STR(SDL_EVENT_CAMERA_DEVICE_REMOVED);
+			EV_CASE_STR(SDL_EVENT_CAMERA_DEVICE_APPROVED);
+			EV_CASE_STR(SDL_EVENT_CAMERA_DEVICE_DENIED);
+
+			EV_CASE_STR(SDL_EVENT_RENDER_TARGETS_RESET);
+			EV_CASE_STR(SDL_EVENT_RENDER_DEVICE_RESET);
+			EV_CASE_STR(SDL_EVENT_POLL_SENTINEL);
+
+			EV_CASE_STR(SDL_EVENT_USER);
+
+			EV_CASE_STR(SDL_EVENT_USER_CERT_DIALOG);
+			EV_CASE_STR(SDL_EVENT_USER_CERT_RESULT);
+			EV_CASE_STR(SDL_EVENT_USER_SHOW_DIALOG);
+			EV_CASE_STR(SDL_EVENT_USER_SHOW_RESULT);
+			EV_CASE_STR(SDL_EVENT_USER_AUTH_DIALOG);
+			EV_CASE_STR(SDL_EVENT_USER_AUTH_RESULT);
+			EV_CASE_STR(SDL_EVENT_USER_SCARD_DIALOG);
+			EV_CASE_STR(SDL_EVENT_USER_RETRY_DIALOG);
+			EV_CASE_STR(SDL_EVENT_USER_SCARD_RESULT);
+			EV_CASE_STR(SDL_EVENT_USER_UPDATE);
+			EV_CASE_STR(SDL_EVENT_USER_CREATE_WINDOWS);
+			EV_CASE_STR(SDL_EVENT_USER_WINDOW_RESIZEABLE);
+			EV_CASE_STR(SDL_EVENT_USER_WINDOW_FULLSCREEN);
+			EV_CASE_STR(SDL_EVENT_USER_WINDOW_MINIMIZE);
+			EV_CASE_STR(SDL_EVENT_USER_POINTER_NULL);
+			EV_CASE_STR(SDL_EVENT_USER_POINTER_DEFAULT);
+			EV_CASE_STR(SDL_EVENT_USER_POINTER_POSITION);
+			EV_CASE_STR(SDL_EVENT_USER_POINTER_SET);
+			EV_CASE_STR(SDL_EVENT_USER_QUIT);
+
+			EV_CASE_STR(SDL_EVENT_LAST);
+			default:
+				return "SDL_UNKNOWNEVENT";
+		}
+	}
+
+	std::string generate_uuid_v4()
+	{
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+		static std::uniform_int_distribution<> dis(0, 255);
+		std::stringstream ss;
+		ss << std::hex << std::setfill('0') << std::setw(2);
+		for (int i = 0; i < 4; i++)
+		{
+			ss << dis(gen);
+		}
+		ss << "-";
+		for (int i = 0; i < 2; i++)
+		{
+			ss << dis(gen);
+		}
+		ss << "-";
+		for (int i = 0; i < 2; i++)
+		{
+			ss << dis(gen);
+		}
+		ss << "-";
+		for (int i = 0; i < 2; i++)
+		{
+			ss << dis(gen);
+		}
+		ss << "-";
+		for (int i = 0; i < 6; i++)
+		{
+			ss << dis(gen);
+		}
+		return ss.str();
+	}
+
+	HighDpiScaleMode platformScaleMode()
+	{
+		const auto platform = SDL_GetPlatform();
+		if (!platform)
+			return SCALE_MODE_INVALID;
+		if (strcmp("Windows", platform) == 0)
 			return SCALE_MODE_X11;
-		if (strcmp("wayland", driver) == 0)
+		if (strcmp("macOS", platform) == 0)
 			return SCALE_MODE_WAYLAND;
+		if (strcmp("Linux", platform) == 0)
+		{
+			const auto driver = SDL_GetCurrentVideoDriver();
+			if (!driver)
+				return SCALE_MODE_WAYLAND;
+			if (strcmp("x11", driver) == 0)
+				return SCALE_MODE_X11;
+			if (strcmp("wayland", driver) == 0)
+				return SCALE_MODE_WAYLAND;
+		}
+		return SCALE_MODE_INVALID;
 	}
-	return SCALE_MODE_INVALID;
-}
 
-std::string sdl::utils::windowTitle(const rdpSettings* settings)
-{
-	const char* prefix = "FreeRDP:";
+	std::string windowTitle(const rdpSettings* settings)
+	{
+		const char* prefix = "FreeRDP:";
 
-	if (!settings)
-		return {};
+		if (!settings)
+			return {};
 
-	const auto windowTitle = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
-	if (windowTitle)
-		return {};
+		const auto windowTitle = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
+		if (windowTitle)
+			return {};
 
-	const auto name = freerdp_settings_get_server_name(settings);
-	const auto port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
+		const auto name = freerdp_settings_get_server_name(settings);
+		const auto port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
 
-	const auto addPort = (port != 3389);
+		const auto addPort = (port != 3389);
 
-	std::stringstream ss;
-	ss << prefix << " ";
-	if (!addPort)
-		ss << name;
-	else
-		ss << name << ":" << port;
+		std::stringstream ss;
+		ss << prefix << " ";
+		if (!addPort)
+			ss << name;
+		else
+			ss << name << ":" << port;
 
-	return ss.str();
-}
+		return ss.str();
+	}
+} // namespace sdl::utils
 
 namespace sdl::error
 {

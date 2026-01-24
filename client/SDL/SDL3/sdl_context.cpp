@@ -851,11 +851,11 @@ bool SdlContext::handleEvent(const SDL_WindowEvent* ev)
 		const auto& r = window->rect();
 		const auto& b = window->bounds();
 		const auto& scale = window->scale();
-		const auto& orientiaion = window->orientation();
+		const auto& orientation = window->orientation();
 		SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
 		             "%s: [%u] %dx%d-%dx%d {%dx%d-%dx%d}{scale=%f,orientation=%s}",
-		             sdl_event_type_str(ev->type), ev->windowID, r.x, r.y, r.w, r.h, b.x, b.y, b.w,
-		             b.h, scale, sdl::utils::toString(orientation).c_str());
+		             sdl::utils::toString(ev->type).c_str(), ev->windowID, r.x, r.y, r.w, r.h, b.x,
+		             b.y, b.w, b.h, scale, sdl::utils::toString(orientation).c_str());
 	}
 
 	switch (ev->type)
@@ -918,7 +918,7 @@ bool SdlContext::handleEvent(const SDL_DisplayEvent* ev)
 
 		SDL_LogDebug(
 		    SDL_LOG_CATEGORY_APPLICATION, "%s: [%u, %s] %dx%d-%dx%d {orientation=%s, scale=%f}%s",
-		    sdl_event_type_str(ev->type), ev->displayID, name, r.x, r.y, r.w, r.h,
+		    sdl::utils::toString(ev->type).c_str(), ev->displayID, name, r.x, r.y, r.w, r.h,
 		    sdl::utils::toString(orientation).c_str(), scale, sdl::utils::toString(mode).c_str());
 	}
 	return true;
