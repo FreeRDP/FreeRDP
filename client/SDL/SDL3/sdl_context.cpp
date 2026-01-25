@@ -927,6 +927,17 @@ bool SdlContext::handleEvent(const SDL_DisplayEvent* ev)
 	return true;
 }
 
+bool SdlContext::eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev)
+{
+	auto w = getWindowForId(id);
+	if (!w)
+		return false;
+	auto renderer = SDL_GetRenderer(w->window());
+	if (!renderer)
+		return false;
+	return SDL_ConvertEventToRenderCoordinates(renderer, &ev);
+}
+
 SDL_FPoint SdlContext::applyLocalScaling(const SDL_FPoint& val) const
 {
 	if (!freerdp_settings_get_bool(context()->settings, FreeRDP_SmartSizing))
@@ -944,6 +955,44 @@ void SdlContext::removeLocalScaling(float& x, float& y)
 		return;
 	x /= _localScale.x;
 	y /= _localScale.y;
+}
+
+SDL_FPoint SdlContext::screenToPixel(SDL_WindowID id, const SDL_FPoint& pos)
+{
+	auto w = getWindowForId(id);
+	if (!w)
+		return {};
+	auto renderer = SDL_GetRenderer(w->window());
+	if (!renderer)
+		return {};
+
+	SDL_FPoint rpos{};
+	if (!SDL_RenderCoordinatesFromWindow(renderer, pos.x, pos.y, &rpos.x, &rpos.y))
+		return {};
+	removeLocalScaling(rpos.x, rpos.y);
+	return rpos;
+}
+
+SDL_FPoint SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos)
+{
+	auto w = getWindowForId(id);
+	if (!w)
+		return {};
+	auto renderer = SDL_GetRenderer(w->window());
+	if (!renderer)
+		return {};
+
+	SDL_FPoint rpos{};
+	if (!SDL_RenderCoordinatesToWindow(renderer, pos.x, pos.y, &rpos.x, &rpos.y))
+		return {};
+	return applyLocalScaling(rpos);
+}
+
+SDL_FRect SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FRect& pos)
+{
+	const auto fpos = pixelToScreen(id, SDL_FPoint{ pos.x, pos.y });
+	const auto size = pixelToScreen(id, SDL_FPoint{ pos.w, pos.h });
+	return { fpos.x, fpos.y, size.x, size.y };
 }
 
 bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)

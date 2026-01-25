@@ -120,6 +120,11 @@ class SdlContext
 
 	[[nodiscard]] wLog* getWLog();
 
+	[[nodiscard]] SDL_FPoint screenToPixel(SDL_WindowID id, const SDL_FPoint& pos);
+
+	[[nodiscard]] SDL_FPoint pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos);
+	[[nodiscard]] SDL_FRect pixelToScreen(SDL_WindowID id, const SDL_FRect& pos);
+
 	[[nodiscard]] bool handleEvent(const SDL_WindowEvent* ev);
 	[[nodiscard]] bool handleEvent(const SDL_DisplayEvent* ev);
 
@@ -133,6 +138,8 @@ class SdlContext
 	[[nodiscard]] static BOOL beginPaint(rdpContext* context);
 	[[nodiscard]] static BOOL endPaint(rdpContext* context);
 	[[nodiscard]] static DWORD WINAPI rdpThreadRun(SdlContext* sdl);
+
+	[[nodiscard]] bool eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev);
 
 	[[nodiscard]] SDL_FPoint applyLocalScaling(const SDL_FPoint& val) const;
 	void removeLocalScaling(float& x, float& y);
