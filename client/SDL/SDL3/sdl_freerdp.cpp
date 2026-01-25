@@ -288,18 +288,9 @@ static int sdl_run(SdlContext* sdl)
 					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data1));
 					const auto y =
 					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data2));
-
-					SDL_Window* window = SDL_GetMouseFocus();
-					if (window)
-					{
-						const Uint32 id = SDL_GetWindowID(window);
-
-						INT32 sx = x;
-						INT32 sy = y;
-						if (sdl_scale_coordinates(sdl, id, &sx, &sy, FALSE, FALSE))
-							SDL_WarpMouseInWindow(window, static_cast<float>(sx),
-							                      static_cast<float>(sy));
-					}
+					if (!sdl->moveMouseTo(
+					        { static_cast<float>(x) * 1.0f, static_cast<float>(y) * 1.0f }))
+						return -1;
 				}
 				break;
 				case SDL_EVENT_USER_POINTER_SET:

@@ -840,6 +840,18 @@ wLog* SdlContext::getWLog()
 	return _log;
 }
 
+bool SdlContext::moveMouseTo(const SDL_FPoint& pos)
+{
+	auto window = SDL_GetMouseFocus();
+	if (!window)
+		return true;
+
+	const auto id = SDL_GetWindowID(window);
+	const auto spos = pixelToScreen(id, pos);
+	SDL_WarpMouseInWindow(window, spos.x, spos.y);
+	return true;
+}
+
 bool SdlContext::handleEvent(const SDL_WindowEvent* ev)
 {
 

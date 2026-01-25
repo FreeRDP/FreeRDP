@@ -120,6 +120,8 @@ class SdlContext
 
 	[[nodiscard]] wLog* getWLog();
 
+	[[nodiscard]] bool moveMouseTo(const SDL_FPoint& pos);
+
 	[[nodiscard]] SDL_FPoint screenToPixel(SDL_WindowID id, const SDL_FPoint& pos);
 
 	[[nodiscard]] SDL_FPoint pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos);
