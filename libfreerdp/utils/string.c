@@ -126,3 +126,22 @@ BOOL freerdp_extract_key_value(const char* str, UINT32* pkey, UINT32* pvalue)
 	*pvalue = (UINT32)val;
 	return TRUE;
 }
+
+const char* freerdp_desktop_rotation_flags_to_string(UINT32 flags)
+{
+#define ENTRY(x) \
+	case x:      \
+		return #x
+
+	switch (flags)
+	{
+		ENTRY(ORIENTATION_LANDSCAPE);
+		ENTRY(ORIENTATION_PORTRAIT);
+		ENTRY(ORIENTATION_LANDSCAPE_FLIPPED);
+		ENTRY(ORIENTATION_PORTRAIT_FLIPPED);
+		default:
+			return "ORIENTATION_UNKNOWN";
+	}
+#undef ENTRY
+}
+
