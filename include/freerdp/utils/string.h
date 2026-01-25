@@ -66,6 +66,15 @@ extern "C"
 	 */
 	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_input_touch_state_string(DWORD flags);
 
+	/** @brief Convert a single \ref FreeRDP_OrderSupportFlags to string
+	 *
+	 *  @param type The value to convert
+	 *  @return A constant string representation of \ref type or the string \b
+	 * UNKNOWN for an invalid value
+	 *  @since verstion 3.22.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_order_support_flags_string(UINT8 type);
+
 #ifdef __cplusplus
 }
 #endif
