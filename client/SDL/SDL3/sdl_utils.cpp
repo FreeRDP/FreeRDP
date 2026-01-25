@@ -21,6 +21,7 @@
 #include <sstream>
 #include <iomanip>
 #include <random>
+#include <sstream>
 
 #include "sdl_utils.hpp"
 
@@ -29,6 +30,7 @@
 #include <SDL3/SDL.h>
 
 #include <freerdp/version.h>
+#include <freerdp/utils/string.h>
 
 #define STR(x) #x
 #define EV_CASE_STR(x) \
@@ -172,6 +174,26 @@ namespace sdl::utils
 		}
 	}
 
+	std::string touchFlagsToString(Uint32 flags)
+	{
+		std::stringstream ss;
+		ss << "{";
+		bool first = true;
+		for (size_t x = 0; x < 32; x++)
+		{
+			const Uint32 mask = 1u << x;
+			if (flags & mask)
+			{
+				if (!first)
+					ss << "|";
+				first = false;
+				ss << freerdp_input_touch_state_string(mask);
+			}
+		}
+		ss << "}";
+		return ss.str();
+	}
+
 	std::string toString(SDL_DisplayOrientation orientation)
 	{
 		switch (orientation)
@@ -185,30 +207,18 @@ namespace sdl::utils
 			case SDL_ORIENTATION_PORTRAIT:
 				return "SDL_ORIENTATION_PORTRAIT";
 			default:
-				return "SDL_ORIENTATION_UNKNOWN";
+			{
+				std::stringstream ss;
+				ss << "SDL_ORIENTATION_UNKNOWN[0x" << std::hex << std::setw(8) << std::setfill('0')
+				   << orientation << "]";
+				return ss.str();
+			}
 		}
 	}
 
 	std::string toString(FreeRDP_DesktopRotationFlags orientation)
 	{
-		switch (orientation)
-		{
-			case ORIENTATION_LANDSCAPE:
-				return "ORIENTATION_LANDSCAPE";
-			case ORIENTATION_LANDSCAPE_FLIPPED:
-				return "ORIENTATION_LANDSCAPE_FLIPPED";
-			case ORIENTATION_PORTRAIT_FLIPPED:
-				return "ORIENTATION_PORTRAIT_FLIPPED";
-			case ORIENTATION_PORTRAIT:
-				return "ORIENTATION_PORTRAIT";
-			default:
-			{
-				std::stringstream ss;
-				ss << "ORIENTATION_UNKNOWN_" << std::hex << std::setfill('0') << std::setw(8)
-				   << orientation;
-				return ss.str();
-			}
-		}
+		return freerdp_desktop_rotation_flags_to_string(orientation);
 	}
 
 	std::string toString(const SDL_DisplayMode* mode)
@@ -368,7 +378,12 @@ namespace sdl::utils
 
 			EV_CASE_STR(SDL_EVENT_LAST);
 			default:
-				return "SDL_UNKNOWNEVENT";
+			{
+				std::stringstream ss;
+				ss << "SDL_UNKNOWNEVENT[0x" << std::hex << std::setw(8) << std::setfill('0') << type
+				   << "]";
+				return ss.str();
+			}
 		}
 	}
 

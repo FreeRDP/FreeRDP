@@ -81,6 +81,7 @@ typedef struct
 
 namespace sdl::utils
 {
+	[[nodiscard]] std::string touchFlagsToString(Uint32 flags);
 	[[nodiscard]] std::string toString(enum FreeRDP_DesktopRotationFlags orientation);
 	[[nodiscard]] std::string toString(SDL_DisplayOrientation orientation);
 	[[nodiscard]] std::string toString(const SDL_DisplayMode* mode);
