@@ -747,7 +747,10 @@ bool SdlContext::drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& re
 		{
 			window.setOffsetY((size.h - gdi->height) / 2);
 		}
-		if (!window.drawScaledRects(surface, rects))
+
+		_localScale = { static_cast<float>(size.w) / static_cast<float>(gdi->width),
+			            static_cast<float>(size.h) / static_cast<float>(gdi->height) };
+		if (!window.drawScaledRects(surface, _localScale, rects))
 			return false;
 	}
 	else
@@ -922,6 +925,25 @@ bool SdlContext::handleEvent(const SDL_DisplayEvent* ev)
 		    sdl::utils::toString(orientation).c_str(), scale, sdl::utils::toString(mode).c_str());
 	}
 	return true;
+}
+
+SDL_FPoint SdlContext::applyLocalScaling(const SDL_FPoint& val) const
+{
+	if (!freerdp_settings_get_bool(context()->settings, FreeRDP_SmartSizing))
+		return val;
+
+	auto rval = val;
+	rval.x *= _localScale.x;
+	rval.y *= _localScale.y;
+	return rval;
+}
+
+void SdlContext::removeLocalScaling(float& x, float& y)
+{
+	if (!freerdp_settings_get_bool(context()->settings, FreeRDP_SmartSizing))
+		return;
+	x /= _localScale.x;
+	y /= _localScale.y;
 }
 
 bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)

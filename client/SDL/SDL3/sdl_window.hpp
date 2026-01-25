@@ -69,9 +69,10 @@ class SdlWindow
 	[[nodiscard]] bool drawRect(SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect);
 	[[nodiscard]] bool drawRects(SDL_Surface* surface, SDL_Point offset,
 	                             const std::vector<SDL_Rect>& rects = {});
-	[[nodiscard]] bool drawScaledRect(SDL_Surface* surface, const SDL_Rect& srcRect);
+	[[nodiscard]] bool drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
+	                                  const SDL_Rect& srcRect);
 
-	[[nodiscard]] bool drawScaledRects(SDL_Surface* surface,
+	[[nodiscard]] bool drawScaledRects(SDL_Surface* surface, const SDL_FPoint& scale,
 	                                   const std::vector<SDL_Rect>& rects = {});
 
 	[[nodiscard]] bool fill(Uint8 r = 0x00, Uint8 g = 0x00, Uint8 b = 0x00, Uint8 a = 0xff);

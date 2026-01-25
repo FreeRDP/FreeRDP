@@ -251,24 +251,27 @@ bool SdlWindow::drawRects(SDL_Surface* surface, SDL_Point offset,
 	return true;
 }
 
-bool SdlWindow::drawScaledRect(SDL_Surface* surface, const SDL_Rect& srcRect)
+bool SdlWindow::drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
+                               const SDL_Rect& srcRect)
 {
 	SDL_Rect dstRect = srcRect;
-	// TODO: Scale
-	// sdl_scale_coordinates(sdl, id(), &dstRect.x, &dstRect.y, FALSE, TRUE);
-	// sdl_scale_coordinates(sdl, id(), &dstRect.w, &dstRect.h, FALSE, TRUE);
+	dstRect.x = static_cast<Sint32>(static_cast<float>(dstRect.x) * scale.x);
+	dstRect.w = static_cast<Sint32>(static_cast<float>(dstRect.w) * scale.x);
+	dstRect.y = static_cast<Sint32>(static_cast<float>(dstRect.y) * scale.y);
+	dstRect.h = static_cast<Sint32>(static_cast<float>(dstRect.h) * scale.y);
 	return blit(surface, srcRect, dstRect);
 }
 
-bool SdlWindow::drawScaledRects(SDL_Surface* surface, const std::vector<SDL_Rect>& rects)
+bool SdlWindow::drawScaledRects(SDL_Surface* surface, const SDL_FPoint& scale,
+                                const std::vector<SDL_Rect>& rects)
 {
 	if (rects.empty())
 	{
-		return drawScaledRect(surface, { 0, 0, surface->w, surface->h });
+		return drawScaledRect(surface, scale, { 0, 0, surface->w, surface->h });
 	}
 	for (const auto& srcRect : rects)
 	{
-		if (!drawScaledRect(surface, srcRect))
+		if (!drawScaledRect(surface, scale, srcRect))
 			return false;
 	}
 	return true;

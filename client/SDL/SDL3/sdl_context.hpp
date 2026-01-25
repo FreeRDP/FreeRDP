@@ -134,6 +134,9 @@ class SdlContext
 	[[nodiscard]] static BOOL endPaint(rdpContext* context);
 	[[nodiscard]] static DWORD WINAPI rdpThreadRun(SdlContext* sdl);
 
+	[[nodiscard]] SDL_FPoint applyLocalScaling(const SDL_FPoint& val) const;
+	void removeLocalScaling(float& x, float& y);
+
 	[[nodiscard]] bool createPrimary();
 	[[nodiscard]] std::string windowTitle() const;
 	[[nodiscard]] bool waitForWindowsCreated();
@@ -167,6 +170,7 @@ class SdlContext
 	using SDLSurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)>;
 
 	SDLSurfacePtr _primary;
+	SDL_FPoint _localScale{ 1.0f, 1.0f };
 
 	sdlDispContext _disp;
 	sdlInput _input;
