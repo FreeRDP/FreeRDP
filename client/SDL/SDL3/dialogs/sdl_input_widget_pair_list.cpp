@@ -236,18 +236,15 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 						auto TextInputIndex = get_index(event.button);
 						for (auto& cur : m_list)
 						{
-							if (!cur->set_mouseover(false))
-								throw;
+							cur->set_mouseover(false);
 						}
 						if (TextInputIndex >= 0)
 						{
 							auto& cur = m_list[static_cast<size_t>(TextInputIndex)];
-							if (!cur->set_mouseover(true))
-								throw;
+							cur->set_mouseover(true);
 						}
 
-						if (!_buttons.set_mouseover(event.button.x, event.button.y))
-							throw;
+						_buttons.set_mouseover(event.button.x, event.button.y);
 					}
 					break;
 					case SDL_EVENT_MOUSE_BUTTON_DOWN:

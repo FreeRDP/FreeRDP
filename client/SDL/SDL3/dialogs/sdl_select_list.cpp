@@ -111,8 +111,7 @@ int SdlSelectList::run()
 								throw;
 						}
 
-						if (!_buttons.set_mouseover(event.button.x, event.button.y))
-							throw;
+						_buttons.set_mouseover(event.button.x, event.button.y);
 					}
 					break;
 					case SDL_EVENT_MOUSE_BUTTON_DOWN:

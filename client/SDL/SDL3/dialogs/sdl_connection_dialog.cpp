@@ -226,8 +226,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 			{
 				auto& ev = reinterpret_cast<const SDL_MouseMotionEvent&>(event);
 
-				if (!_buttons.set_mouseover(event.button.x, event.button.y))
-					return false;
+				_buttons.set_mouseover(event.button.x, event.button.y);
 				if (!update())
 					return false;
 				return windowID == ev.windowID;
