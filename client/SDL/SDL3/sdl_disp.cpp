@@ -27,7 +27,6 @@
 
 #include "sdl_disp.hpp"
 #include "sdl_input.hpp"
-#include "sdl_utils.hpp"
 #include "sdl_context.hpp"
 
 #include <freerdp/log.h>
@@ -85,7 +84,7 @@ bool sdlDispContext::sendResize()
 	const UINT32 mcount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 	auto monitors = static_cast<const rdpMonitor*>(
 	    freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray));
-	return sendLayout(monitors, mcount) != CHANNEL_RC_OK;
+	return sendLayout(monitors, mcount);
 }
 
 bool sdlDispContext::setWindowResizeable()
@@ -131,7 +130,7 @@ void sdlDispContext::OnActivated(void* context, const ActivatedEventArgs* e)
 		if (e->firstActivation)
 			return;
 
-		(void)sdlDisp->addTimer();
+		std::ignore = sdlDisp->addTimer();
 	}
 }
 
@@ -150,7 +149,7 @@ void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs
 	if (sdlDisp->_activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
 		if (sdlDisp->setWindowResizeable())
-			(void)sdlDisp->addTimer();
+			std::ignore = sdlDisp->addTimer();
 	}
 }
 
@@ -186,10 +185,8 @@ Uint32 sdlDispContext::OnTimer(void* param, [[maybe_unused]] SDL_TimerID timerID
 	return interval;
 }
 
-UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
+bool sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 {
-	UINT ret = CHANNEL_RC_OK;
-
 	WINPR_ASSERT(monitors);
 	WINPR_ASSERT(nmonitors > 0);
 
@@ -261,12 +258,12 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 	WINPR_ASSERT(_disp);
 	const size_t len = layouts.size();
 	WINPR_ASSERT(len <= UINT32_MAX);
-	ret = IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp, static_cast<UINT32>(len),
-	                   layouts.data());
+	const auto ret = IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp,
+	                              static_cast<UINT32>(len), layouts.data());
 	if (ret != CHANNEL_RC_OK)
-		return ret;
+		return false;
 	_last_sent_layout = layouts;
-	return ret;
+	return true;
 }
 
 bool sdlDispContext::addTimer()
@@ -284,12 +281,8 @@ bool sdlDispContext::addTimer()
 	return true;
 }
 
-bool sdlDispContext::updateMonitor(SDL_WindowID id)
+bool sdlDispContext::updateMonitor([[maybe_unused]] SDL_WindowID id)
 {
-	auto settings = _sdl->context()->settings;
-	if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
-		return updateMonitors(SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED, id);
-
 	if (!freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_DynamicResolutionUpdate))
 		return true;
 
@@ -327,58 +320,54 @@ bool sdlDispContext::updateMonitors(SDL_EventType type, SDL_DisplayID displayID)
 	return addTimer();
 }
 
-bool sdlDispContext::handleEvent(const SDL_DisplayEvent* ev)
+bool sdlDispContext::handleEvent(const SDL_DisplayEvent& ev)
 {
-	WINPR_ASSERT(ev);
-
-	switch (ev->type)
+	switch (ev.type)
 	{
 		case SDL_EVENT_DISPLAY_ADDED:
-			SDL_Log("A new display with id %u was connected", ev->displayID);
-			return updateMonitors(ev->type, ev->displayID);
+			SDL_Log("A new display with id %u was connected", ev.displayID);
+			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_REMOVED:
-			SDL_Log("The display with id %u was disconnected", ev->displayID);
-			return updateMonitors(ev->type, ev->displayID);
+			SDL_Log("The display with id %u was disconnected", ev.displayID);
+			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_ORIENTATION:
-			SDL_Log("The orientation of display with id %u was changed", ev->displayID);
-			return updateMonitors(ev->type, ev->displayID);
+			SDL_Log("The orientation of display with id %u was changed", ev.displayID);
+			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_MOVED:
-			SDL_Log("The display with id %u was moved", ev->displayID);
-			return updateMonitors(ev->type, ev->displayID);
+			SDL_Log("The display with id %u was moved", ev.displayID);
+			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED:
-			SDL_Log("The display with id %u changed scale", ev->displayID);
-			return updateMonitors(ev->type, ev->displayID);
+			SDL_Log("The display with id %u changed scale", ev.displayID);
+			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED:
-			SDL_Log("The display with id %u changed mode", ev->displayID);
-			return updateMonitors(ev->type, ev->displayID);
+			SDL_Log("The display with id %u changed mode", ev.displayID);
+			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_DESKTOP_MODE_CHANGED:
-			SDL_Log("The display with id %u changed desktop mode", ev->displayID);
-			return updateMonitors(ev->type, ev->displayID);
+			SDL_Log("The display with id %u changed desktop mode", ev.displayID);
+			return updateMonitors(ev.type, ev.displayID);
 		default:
 			return true;
 	}
 }
 
-bool sdlDispContext::handleEvent(const SDL_WindowEvent* ev)
+bool sdlDispContext::handleEvent(const SDL_WindowEvent& ev)
 {
-	WINPR_ASSERT(ev);
-
-	auto window = _sdl->getWindowForId(ev->windowID);
+	auto window = _sdl->getWindowForId(ev.windowID);
 	if (!window)
 		return true;
 
 	auto bordered = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_Decorations);
 	window->setBordered(bordered);
 
-	switch (ev->type)
+	switch (ev.type)
 	{
 		case SDL_EVENT_WINDOW_HIDDEN:
 		case SDL_EVENT_WINDOW_MINIMIZED:
 			return _sdl->redraw(true);
 		case SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
-			return updateMonitor(ev->windowID);
+			return updateMonitor(ev.windowID);
 		case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
-			return updateMonitor(ev->windowID);
+			return updateMonitor(ev.windowID);
 
 		case SDL_EVENT_WINDOW_EXPOSED:
 		case SDL_EVENT_WINDOW_SHOWN:
@@ -392,13 +381,13 @@ bool sdlDispContext::handleEvent(const SDL_WindowEvent* ev)
 		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 		case SDL_EVENT_WINDOW_RESIZED:
-			return updateMonitor(ev->windowID);
+			return updateMonitor(ev.windowID);
 		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
 			WINPR_ASSERT(_sdl);
-			return _sdl->getInputChannelContext().keyboard_grab(ev->windowID, false);
+			return _sdl->getInputChannelContext().keyboard_grab(ev.windowID, false);
 		case SDL_EVENT_WINDOW_MOUSE_ENTER:
 			WINPR_ASSERT(_sdl);
-			if (!_sdl->getInputChannelContext().keyboard_grab(ev->windowID, true))
+			if (!_sdl->getInputChannelContext().keyboard_grab(ev.windowID, true))
 				return false;
 			return _sdl->getInputChannelContext().keyboard_focus_in();
 		case SDL_EVENT_WINDOW_FOCUS_GAINED:
@@ -479,7 +468,7 @@ sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 
 	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
-	(void)addTimer();
+	std::ignore = addTimer();
 }
 
 sdlDispContext::~sdlDispContext()

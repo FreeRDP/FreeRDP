@@ -59,14 +59,11 @@
 #include "dialogs/sdl_dialogs.hpp"
 #include "scoped_guard.hpp"
 #include "sdl_channels.hpp"
-#include "sdl_disp.hpp"
 #include "sdl_freerdp.hpp"
 #include "sdl_context.hpp"
-#include "sdl_input.hpp"
 #include "sdl_monitor.hpp"
 #include "sdl_pointer.hpp"
 #include "sdl_prefs.hpp"
-#include "sdl_touch.hpp"
 #include "sdl_utils.hpp"
 
 #if defined(_WIN32)
@@ -76,10 +73,10 @@
 static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const char* signame,
                              [[maybe_unused]] void* context)
 {
-	(void)sdl_push_quit();
+	std::ignore = sdl_push_quit();
 }
 
-static int sdl_run(SdlContext* sdl)
+[[nodiscard]] static int sdl_run(SdlContext* sdl)
 {
 	int rc = -1;
 	WINPR_ASSERT(sdl);
@@ -110,17 +107,8 @@ static int sdl_run(SdlContext* sdl)
 			if (sdl->getDialog().handleEvent(windowEvent))
 				continue;
 
-			auto point2pix = [](Uint32 win_id, float& x, float& y)
-			{
-				auto win = SDL_GetWindowFromID(win_id);
-				if (win)
-				{
-					auto scale = SDL_GetWindowDisplayScale(win);
-					assert(scale);
-					x *= scale;
-					y *= scale;
-				}
-			};
+			if (!sdl->handleEvent(windowEvent))
+				return -1;
 
 			switch (windowEvent.type)
 			{
@@ -135,65 +123,14 @@ static int sdl_run(SdlContext* sdl)
 						return -1;
 				}
 				break;
-				case SDL_EVENT_KEYMAP_CHANGED:
-				{
-				}
-				break; // TODO: Switch keyboard layout
-				case SDL_EVENT_MOUSE_MOTION:
-				{
-					SDL_MouseMotionEvent& ev = windowEvent.motion;
-					point2pix(ev.windowID, ev.x, ev.y);
-					point2pix(ev.windowID, ev.xrel, ev.yrel);
-					if (!sdl_handle_mouse_motion(sdl, &ev))
-						return -1;
-				}
-				break;
-				case SDL_EVENT_MOUSE_BUTTON_DOWN:
-				case SDL_EVENT_MOUSE_BUTTON_UP:
-				{
-					SDL_MouseButtonEvent& ev = windowEvent.button;
-					point2pix(ev.windowID, ev.x, ev.y);
-					if (!sdl_handle_mouse_button(sdl, &ev))
-						return -1;
-				}
-				break;
-				case SDL_EVENT_MOUSE_WHEEL:
-				{
-					const SDL_MouseWheelEvent* ev = &windowEvent.wheel;
-					if (!sdl_handle_mouse_wheel(sdl, ev))
-						return -1;
-				}
-				break;
-				case SDL_EVENT_FINGER_DOWN:
-				{
-					const SDL_TouchFingerEvent* ev = &windowEvent.tfinger;
-					if (!sdl_handle_touch_down(sdl, ev))
-						return -1;
-				}
-				break;
-				case SDL_EVENT_FINGER_UP:
-				{
-					const SDL_TouchFingerEvent* ev = &windowEvent.tfinger;
-					if (!sdl_handle_touch_up(sdl, ev))
-						return -1;
-				}
-				break;
-				case SDL_EVENT_FINGER_MOTION:
-				{
-					const SDL_TouchFingerEvent* ev = &windowEvent.tfinger;
-					if (!sdl_handle_touch_motion(sdl, ev))
-						return -1;
-				}
-				break;
-
 				case SDL_EVENT_RENDER_TARGETS_RESET:
-					(void)sdl->redraw();
+					std::ignore = sdl->redraw();
 					break;
 				case SDL_EVENT_RENDER_DEVICE_RESET:
-					(void)sdl->redraw();
+					std::ignore = sdl->redraw();
 					break;
 				case SDL_EVENT_WILL_ENTER_FOREGROUND:
-					(void)sdl->redraw();
+					std::ignore = sdl->redraw();
 					break;
 				case SDL_EVENT_USER_CERT_DIALOG:
 				{
@@ -304,20 +241,6 @@ static int sdl_run(SdlContext* sdl)
 					break;
 				case SDL_EVENT_USER_QUIT:
 				default:
-					if ((windowEvent.type >= SDL_EVENT_DISPLAY_FIRST) &&
-					    (windowEvent.type <= SDL_EVENT_DISPLAY_LAST))
-					{
-						const SDL_DisplayEvent* ev = &windowEvent.display;
-						if (!sdl->handleEvent(ev))
-							return -1;
-					}
-					else if ((windowEvent.type >= SDL_EVENT_WINDOW_FIRST) &&
-					         (windowEvent.type <= SDL_EVENT_WINDOW_LAST))
-					{
-						const SDL_WindowEvent* ev = &windowEvent.window;
-						if (!sdl->handleEvent(ev))
-							return -1;
-					}
 					break;
 			}
 		}
@@ -331,7 +254,7 @@ static int sdl_run(SdlContext* sdl)
 /* Optional global initializer.
  * Here we just register a signal handler to print out stack traces
  * if available. */
-static BOOL sdl_client_global_init()
+[[nodiscard]] static BOOL sdl_client_global_init()
 {
 #if defined(_WIN32)
 	WSADATA wsaData = {};
@@ -355,7 +278,7 @@ static void sdl_client_global_uninit()
 #endif
 }
 
-static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
+[[nodiscard]] static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 {
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(context);
 
@@ -376,21 +299,21 @@ static void sdl_client_free([[maybe_unused]] freerdp* instance, rdpContext* cont
 	delete sdl->sdl;
 }
 
-static int sdl_client_start(rdpContext* context)
+[[nodiscard]] static int sdl_client_start(rdpContext* context)
 {
 	auto sdl = get_context(context);
 	WINPR_ASSERT(sdl);
 	return sdl->start();
 }
 
-static int sdl_client_stop(rdpContext* context)
+[[nodiscard]] static int sdl_client_stop(rdpContext* context)
 {
 	auto sdl = get_context(context);
 	WINPR_ASSERT(sdl);
 	return sdl->join();
 }
 
-static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
+static void RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	WINPR_ASSERT(pEntryPoints);
 
@@ -404,7 +327,6 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	pEntryPoints->ClientFree = sdl_client_free;
 	pEntryPoints->ClientStart = sdl_client_start;
 	pEntryPoints->ClientStop = sdl_client_stop;
-	return 0;
 }
 
 static void context_free(sdl_rdp_context* sdl)
@@ -413,7 +335,7 @@ static void context_free(sdl_rdp_context* sdl)
 		freerdp_client_context_free(&sdl->common.context);
 }
 
-static const char* category2str(int category)
+[[nodiscard]] static const char* category2str(int category)
 {
 	switch (category)
 	{
@@ -461,7 +383,7 @@ static const char* category2str(int category)
 	}
 }
 
-static SDL_LogPriority wloglevel2dl(DWORD level)
+[[nodiscard]] static SDL_LogPriority wloglevel2dl(DWORD level)
 {
 	switch (level)
 	{
@@ -483,7 +405,7 @@ static SDL_LogPriority wloglevel2dl(DWORD level)
 	}
 }
 
-static DWORD sdlpriority2wlog(SDL_LogPriority priority)
+[[nodiscard]] static DWORD sdlpriority2wlog(SDL_LogPriority priority)
 {
 	DWORD level = WLOG_OFF;
 	switch (priority)
@@ -567,7 +489,7 @@ static void SDLCALL rdp_file_cb(void* userdata, const char* const* filelist,
 	sdl_quit();
 }
 
-static std::string getRdpFile()
+[[nodiscard]] static std::string getRdpFile()
 {
 	const auto flags = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
 	SDL_DialogFileFilter filters[] = { { "RDP files", "rdp;rdpw" } };
@@ -589,7 +511,7 @@ static std::string getRdpFile()
 	do
 	{
 		SDL_Event event = {};
-		(void)SDL_PollEvent(&event);
+		std::ignore = SDL_PollEvent(&event);
 
 		switch (event.type)
 		{

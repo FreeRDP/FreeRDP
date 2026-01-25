@@ -43,8 +43,8 @@ class sdlDispContext
 	[[nodiscard]] bool init(DispClientContext* disp);
 	[[nodiscard]] bool uninit(DispClientContext* disp);
 
-	[[nodiscard]] bool handleEvent(const SDL_DisplayEvent* ev);
-	[[nodiscard]] bool handleEvent(const SDL_WindowEvent* ev);
+	[[nodiscard]] bool handleEvent(const SDL_DisplayEvent& ev);
+	[[nodiscard]] bool handleEvent(const SDL_WindowEvent& ev);
 
   private:
 	[[nodiscard]] UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
@@ -53,7 +53,7 @@ class sdlDispContext
 
 	[[nodiscard]] bool sendResize();
 	[[nodiscard]] bool settings_changed(const std::vector<DISPLAY_CONTROL_MONITOR_LAYOUT>& layout);
-	[[nodiscard]] UINT sendLayout(const rdpMonitor* monitors, size_t nmonitors);
+	[[nodiscard]] bool sendLayout(const rdpMonitor* monitors, size_t nmonitors);
 
 	[[nodiscard]] bool addTimer();
 

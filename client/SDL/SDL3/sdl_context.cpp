@@ -21,6 +21,7 @@
 #include "sdl_channels.hpp"
 #include "sdl_monitor.hpp"
 #include "sdl_pointer.hpp"
+#include "sdl_touch.hpp"
 
 #include <sdl_common_utils.hpp>
 #include <scoped_guard.hpp>
@@ -519,7 +520,7 @@ void SdlContext::sdl_client_cleanup(int exit_code, const std::string& error_msg)
 		getDialog().show(false);
 
 	_exitCode = exit_code;
-	(void)sdl_push_user_event(SDL_EVENT_USER_QUIT);
+	std::ignore = sdl_push_user_event(SDL_EVENT_USER_QUIT);
 	SDL_CleanupTLS();
 }
 
@@ -852,13 +853,34 @@ bool SdlContext::moveMouseTo(const SDL_FPoint& pos)
 	return true;
 }
 
-bool SdlContext::handleEvent(const SDL_WindowEvent* ev)
+bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 {
+	SDL_Event copy{};
+	copy.motion = ev;
+	if (!eventToPixelCoordinates(ev.windowID, copy))
+		return false;
+	removeLocalScaling(copy.motion.x, copy.motion.y);
+	removeLocalScaling(copy.motion.xrel, copy.motion.yrel);
 
+	return SdlTouch::handleEvent(this, copy.motion);
+}
+
+bool SdlContext::handleEvent(const SDL_MouseWheelEvent& ev)
+{
+	SDL_Event copy{};
+	copy.wheel = ev;
+	if (!eventToPixelCoordinates(ev.windowID, copy))
+		return false;
+	removeLocalScaling(copy.wheel.mouse_x, copy.wheel.mouse_y);
+	return SdlTouch::handleEvent(this, copy.wheel);
+}
+
+bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
+{
 	if (!getDisplayChannelContext().handleEvent(ev))
 		return false;
 
-	auto window = getWindowForId(ev->windowID);
+	auto window = getWindowForId(ev.windowID);
 	if (!window)
 		return true;
 
@@ -869,30 +891,31 @@ bool SdlContext::handleEvent(const SDL_WindowEvent* ev)
 		const auto& orientation = window->orientation();
 		SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
 		             "%s: [%u] %dx%d-%dx%d {%dx%d-%dx%d}{scale=%f,orientation=%s}",
-		             sdl::utils::toString(ev->type).c_str(), ev->windowID, r.x, r.y, r.w, r.h, b.x,
-		             b.y, b.w, b.h, scale, sdl::utils::toString(orientation).c_str());
+		             sdl::utils::toString(ev.type).c_str(), ev.windowID, r.x, r.y, r.w, r.h, b.x,
+		             b.y, b.w, b.h, static_cast<double>(scale),
+		             sdl::utils::toString(orientation).c_str());
 	}
 
-	switch (ev->type)
+	switch (ev.type)
 	{
 		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 			if (isConnected())
 			{
 				if (!window->fill())
-					return -1;
+					return false;
 				if (!drawToWindow(*window))
-					return -1;
+					return false;
 				if (!sdl_Pointer_Set_Process(this))
-					return -1;
+					return false;
 			}
 			break;
 		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 			if (!window->fill())
-				return -1;
+				return false;
 			if (!drawToWindow(*window))
-				return -1;
+				return false;
 			if (!sdl_Pointer_Set_Process(this))
-				return -1;
+				return false;
 			break;
 		case SDL_EVENT_WINDOW_MOVED:
 		{
@@ -913,30 +936,59 @@ bool SdlContext::handleEvent(const SDL_WindowEvent* ev)
 	return true;
 }
 
-bool SdlContext::handleEvent(const SDL_DisplayEvent* ev)
+bool SdlContext::handleEvent(const SDL_DisplayEvent& ev)
 {
-
 	if (!getDisplayChannelContext().handleEvent(ev))
 		return false;
-	{
-		SDL_Rect r = {};
-		if (!SDL_GetDisplayBounds(ev->displayID, &r))
-			return false;
-		const auto name = SDL_GetDisplayName(ev->displayID);
-		if (!name)
-			return false;
-		const auto orientation = SDL_GetCurrentDisplayOrientation(ev->displayID);
-		const auto scale = SDL_GetDisplayContentScale(ev->displayID);
-		const auto mode = SDL_GetCurrentDisplayMode(ev->displayID);
-		if (!mode)
-			return false;
 
-		SDL_LogDebug(
-		    SDL_LOG_CATEGORY_APPLICATION, "%s: [%u, %s] %dx%d-%dx%d {orientation=%s, scale=%f}%s",
-		    sdl::utils::toString(ev->type).c_str(), ev->displayID, name, r.x, r.y, r.w, r.h,
-		    sdl::utils::toString(orientation).c_str(), scale, sdl::utils::toString(mode).c_str());
+	switch (ev.type)
+	{
+		case SDL_EVENT_DISPLAY_REMOVED: // Can't show details for this one...
+			break;
+		default:
+		{
+			SDL_Rect r = {};
+			if (!SDL_GetDisplayBounds(ev.displayID, &r))
+				return false;
+			const auto name = SDL_GetDisplayName(ev.displayID);
+			if (!name)
+				return false;
+			const auto orientation = SDL_GetCurrentDisplayOrientation(ev.displayID);
+			const auto scale = SDL_GetDisplayContentScale(ev.displayID);
+			const auto mode = SDL_GetCurrentDisplayMode(ev.displayID);
+			if (!mode)
+				return false;
+
+			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION,
+			             "%s: [%u, %s] %dx%d-%dx%d {orientation=%s, scale=%f}%s",
+			             sdl::utils::toString(ev.type).c_str(), ev.displayID, name, r.x, r.y, r.w,
+			             r.h, sdl::utils::toString(orientation).c_str(), static_cast<double>(scale),
+			             sdl::utils::toString(mode).c_str());
+		}
+		break;
 	}
 	return true;
+}
+
+bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
+{
+	SDL_Event copy = {};
+	copy.button = ev;
+	if (!eventToPixelCoordinates(ev.windowID, copy))
+		return false;
+	removeLocalScaling(copy.button.x, copy.button.y);
+	return SdlTouch::handleEvent(this, copy.button);
+}
+
+bool SdlContext::handleEvent(const SDL_TouchFingerEvent& ev)
+{
+	SDL_Event copy{};
+	copy.tfinger = ev;
+	if (!eventToPixelCoordinates(ev.windowID, copy))
+		return false;
+	removeLocalScaling(copy.tfinger.dx, copy.tfinger.dy);
+	removeLocalScaling(copy.tfinger.x, copy.tfinger.y);
+	return SdlTouch::handleEvent(this, copy.tfinger);
 }
 
 bool SdlContext::eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev)
@@ -1005,6 +1057,49 @@ SDL_FRect SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FRect& pos)
 	const auto fpos = pixelToScreen(id, SDL_FPoint{ pos.x, pos.y });
 	const auto size = pixelToScreen(id, SDL_FPoint{ pos.w, pos.h });
 	return { fpos.x, fpos.y, size.x, size.y };
+}
+
+bool SdlContext::handleEvent(const SDL_Event& windowEvent)
+{
+	if ((windowEvent.type >= SDL_EVENT_DISPLAY_FIRST) &&
+	    (windowEvent.type <= SDL_EVENT_DISPLAY_LAST))
+	{
+		const auto& ev = windowEvent.display;
+		return handleEvent(ev);
+	}
+	if ((windowEvent.type >= SDL_EVENT_WINDOW_FIRST) && (windowEvent.type <= SDL_EVENT_WINDOW_LAST))
+	{
+		const auto& ev = windowEvent.window;
+		return handleEvent(ev);
+	}
+	switch (windowEvent.type)
+	{
+		case SDL_EVENT_FINGER_DOWN:
+		case SDL_EVENT_FINGER_UP:
+		case SDL_EVENT_FINGER_MOTION:
+		{
+			const auto& ev = windowEvent.tfinger;
+			return handleEvent(ev);
+		}
+		case SDL_EVENT_MOUSE_MOTION:
+		{
+			const auto& ev = windowEvent.motion;
+			return handleEvent(ev);
+		}
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
+		{
+			const auto& ev = windowEvent.button;
+			return handleEvent(ev);
+		}
+		case SDL_EVENT_MOUSE_WHEEL:
+		{
+			const auto& ev = windowEvent.wheel;
+			return handleEvent(ev);
+		}
+		default:
+			return true;
+	}
 }
 
 bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)

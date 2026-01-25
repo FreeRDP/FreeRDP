@@ -127,8 +127,7 @@ class SdlContext
 	[[nodiscard]] SDL_FPoint pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos);
 	[[nodiscard]] SDL_FRect pixelToScreen(SDL_WindowID id, const SDL_FRect& pos);
 
-	[[nodiscard]] bool handleEvent(const SDL_WindowEvent* ev);
-	[[nodiscard]] bool handleEvent(const SDL_DisplayEvent* ev);
+	[[nodiscard]] bool handleEvent(const SDL_Event& ev);
 
   private:
 	[[nodiscard]] static BOOL preConnect(freerdp* instance);
@@ -145,6 +144,13 @@ class SdlContext
 
 	[[nodiscard]] SDL_FPoint applyLocalScaling(const SDL_FPoint& val) const;
 	void removeLocalScaling(float& x, float& y);
+
+	[[nodiscard]] bool handleEvent(const SDL_WindowEvent& ev);
+	[[nodiscard]] bool handleEvent(const SDL_DisplayEvent& ev);
+	[[nodiscard]] bool handleEvent(const SDL_MouseButtonEvent& ev);
+	[[nodiscard]] bool handleEvent(const SDL_MouseMotionEvent& ev);
+	[[nodiscard]] bool handleEvent(const SDL_MouseWheelEvent& ev);
+	[[nodiscard]] bool handleEvent(const SDL_TouchFingerEvent& ev);
 
 	[[nodiscard]] bool createPrimary();
 	[[nodiscard]] std::string windowTitle() const;
