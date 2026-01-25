@@ -56,6 +56,16 @@ extern "C"
 	 */
 	FREERDP_API WINPR_ATTR_NODISCARD const char*
 	freerdp_desktop_rotation_flags_to_string(UINT32 flags);
+
+	/** @brief Convert a single \ref RDPINPUT_CONTACT_FLAGS to string
+	 *
+	 *  @param flags The value to convert
+	 *  @return A constant string representation of \ref flag or the string \b
+	 * RDPINPUT_CONTACT_FLAG_UNKNOWN for an invalid value
+	 *  @since verstion 3.22.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_input_touch_state_string(DWORD flags);
+
 #ifdef __cplusplus
 }
 #endif

@@ -24,6 +24,10 @@
 #include <freerdp/utils/string.h>
 #include <freerdp/settings.h>
 
+#if defined(CHANNEL_RDPEI)
+#include <freerdp/channels/rdpei.h>
+#endif
+
 const char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 {
 	struct map_t
@@ -143,5 +147,27 @@ const char* freerdp_desktop_rotation_flags_to_string(UINT32 flags)
 			return "ORIENTATION_UNKNOWN";
 	}
 #undef ENTRY
+}
+
+const char* freerdp_input_touch_state_string(DWORD flags)
+{
+#if defined(CHANNEL_RDPEI)
+	if (flags & RDPINPUT_CONTACT_FLAG_DOWN)
+		return "RDPINPUT_CONTACT_FLAG_DOWN";
+	else if (flags & RDPINPUT_CONTACT_FLAG_UPDATE)
+		return "RDPINPUT_CONTACT_FLAG_UPDATE";
+	else if (flags & RDPINPUT_CONTACT_FLAG_UP)
+		return "RDPINPUT_CONTACT_FLAG_UP";
+	else if (flags & RDPINPUT_CONTACT_FLAG_INRANGE)
+		return "RDPINPUT_CONTACT_FLAG_INRANGE";
+	else if (flags & RDPINPUT_CONTACT_FLAG_INCONTACT)
+		return "RDPINPUT_CONTACT_FLAG_INCONTACT";
+	else if (flags & RDPINPUT_CONTACT_FLAG_CANCELED)
+		return "RDPINPUT_CONTACT_FLAG_CANCELED";
+	else
+		return "RDPINPUT_CONTACT_FLAG_UNKNOWN";
+#else
+	return "CHANNEL_RDPEI not supported";
+#endif
 }
 
