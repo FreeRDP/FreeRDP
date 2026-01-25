@@ -135,9 +135,12 @@ bool SDLConnectionDialog::setModal()
 		if (!parent)
 			return true;
 
-		SDL_SetWindowParent(_window.get(), parent->window());
-		SDL_SetWindowModal(_window.get(), true);
-		SDL_RaiseWindow(_window.get());
+		if (!SDL_SetWindowParent(_window.get(), parent->window()))
+			return false;
+		if (!SDL_SetWindowModal(_window.get(), true))
+			return false;
+		if (!SDL_RaiseWindow(_window.get()))
+			return false;
 	}
 	return true;
 }
