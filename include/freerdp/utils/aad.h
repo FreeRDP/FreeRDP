@@ -36,7 +36,8 @@ extern "C"
 {
 #endif
 
-	/** @enum Expected wellknown fields to be supported
+	/** @enum AAD_WELLKNOWN_VALUES
+	 * @brief Expected wellknown fields to be supported
 	 *  @since version 3.10.0
 	 */
 	typedef enum

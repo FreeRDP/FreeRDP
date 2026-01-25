@@ -28,7 +28,8 @@ extern "C"
 {
 #endif
 
-	/** @enum Hotplug event types.
+	/** @enum RdpdrHotplugEventType
+	 * @brief Hotplug event types.
 	 *
 	 *  @since version 3.16.0
 	 */
@@ -75,7 +76,8 @@ extern "C"
 	 */
 	typedef UINT (*pcRdpdrHotplugDevice)(RdpdrClientContext* context, RdpdrHotplugEventType type);
 
-	/** @struct rdpdr channel client context
+	/** @struct s_rdpdr_client_context
+	 *  @brief rdpdr channel client context
 	 *
 	 *  @since version 3.16.0
 	 */

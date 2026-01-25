@@ -120,7 +120,8 @@ extern "C"
 	 * @brief Return a pointer to an JSON object item
 	 * @param object the JSON object
 	 * @param string the name of the object (case is ignored)
-	 * @return A pointer to the object identified by @ref string or \b NULL
+	 *
+	 * @return A pointer to the object identified by \b string or \b NULL
 	 * @since version 3.6.0
 	 */
 	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object, const char* string);
@@ -130,7 +131,7 @@ extern "C"
 	 *
 	 * @param object the JSON instance to query
 	 * @param string the name of the object
-	 * @return A pointer to the object identified by @ref string or \b NULL
+	 * @return A pointer to the object identified by \b string or \b NULL
 	 * @since version 3.6.0
 	 */
 	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object,
