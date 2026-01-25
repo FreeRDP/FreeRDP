@@ -47,6 +47,34 @@ extern "C"
 	 */
 	FREERDP_API BOOL freerdp_extract_key_value(const char* str, UINT32* pkey, UINT32* pvalue);
 
+	/** @brief Convert \ref FreeRDP_DesktopRotationFlags to string
+	 *
+	 *  @param flags The value to convert
+	 *  @return A constant string representation of \ref flags or the string \b ORIENTATION_UNKNOWN
+	 * for an invalid value
+	 *  @since verstion 3.22.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD const char*
+	freerdp_desktop_rotation_flags_to_string(UINT32 flags);
+
+	/** @brief Convert a single \ref RDPINPUT_CONTACT_FLAGS to string
+	 *
+	 *  @param flags The value to convert
+	 *  @return A constant string representation of \ref flag or the string \b
+	 * RDPINPUT_CONTACT_FLAG_UNKNOWN for an invalid value
+	 *  @since verstion 3.22.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_input_touch_state_string(DWORD flags);
+
+	/** @brief Convert a single \ref FreeRDP_OrderSupportFlags to string
+	 *
+	 *  @param type The value to convert
+	 *  @return A constant string representation of \ref type or the string \b
+	 * UNKNOWN for an invalid value
+	 *  @since verstion 3.22.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_order_support_flags_string(UINT8 type);
+
 #ifdef __cplusplus
 }
 #endif

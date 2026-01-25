@@ -106,25 +106,6 @@ static const char* rdpdr_state_str(enum RDPDR_CHANNEL_STATE state)
 	}
 }
 
-static const char* rdpdr_device_type_string(UINT32 type)
-{
-	switch (type)
-	{
-		case RDPDR_DTYP_SERIAL:
-			return "serial";
-		case RDPDR_DTYP_PRINT:
-			return "printer";
-		case RDPDR_DTYP_FILESYSTEM:
-			return "drive";
-		case RDPDR_DTYP_SMARTCARD:
-			return "smartcard";
-		case RDPDR_DTYP_PARALLEL:
-			return "parallel";
-		default:
-			return "UNKNOWN";
-	}
-}
-
 static const char* support_str(BOOL val)
 {
 	if (val)

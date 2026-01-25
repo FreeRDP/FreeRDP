@@ -233,39 +233,42 @@ extern "C"
 	/* General capability set */
 #define TS_CAPS_PROTOCOLVERSION 0x200 /** @since version 3.6.0 */
 
-/* Order Support */
-#define NEG_DSTBLT_INDEX 0x00
-#define NEG_PATBLT_INDEX 0x01
-#define NEG_SCRBLT_INDEX 0x02
-#define NEG_MEMBLT_INDEX 0x03
-#define NEG_MEM3BLT_INDEX 0x04
-#define NEG_ATEXTOUT_INDEX 0x05
-#define NEG_AEXTTEXTOUT_INDEX 0x06  /* Must be ignored */
-#define NEG_DRAWNINEGRID_INDEX 0x07 /* Must be ignored */
-#define NEG_LINETO_INDEX 0x08
-#define NEG_MULTI_DRAWNINEGRID_INDEX 0x09
-#define NEG_OPAQUE_RECT_INDEX 0x0A /* Must be ignored */
-#define NEG_SAVEBITMAP_INDEX 0x0B
-#define NEG_WTEXTOUT_INDEX 0x0C   /* Must be ignored */
-#define NEG_MEMBLT_V2_INDEX 0x0D  /* Must be ignored */
-#define NEG_MEM3BLT_V2_INDEX 0x0E /* Must be ignored */
-#define NEG_MULTIDSTBLT_INDEX 0x0F
-#define NEG_MULTIPATBLT_INDEX 0x10
-#define NEG_MULTISCRBLT_INDEX 0x11
-#define NEG_MULTIOPAQUERECT_INDEX 0x12
-#define NEG_FAST_INDEX_INDEX 0x13
-#define NEG_POLYGON_SC_INDEX 0x14
-#define NEG_POLYGON_CB_INDEX 0x15
-#define NEG_POLYLINE_INDEX 0x16
-#define NEG_UNUSED23_INDEX 0x17 /* Must be ignored */
-#define NEG_FAST_GLYPH_INDEX 0x18
-#define NEG_ELLIPSE_SC_INDEX 0x19
-#define NEG_ELLIPSE_CB_INDEX 0x1A
-#define NEG_GLYPH_INDEX_INDEX 0x1B
-#define NEG_GLYPH_WEXTTEXTOUT_INDEX 0x1C     /* Must be ignored */
-#define NEG_GLYPH_WLONGTEXTOUT_INDEX 0x1D    /* Must be ignored */
-#define NEG_GLYPH_WLONGEXTTEXTOUT_INDEX 0x1E /* Must be ignored */
-#define NEG_UNUSED31_INDEX 0x1F              /* Must be ignored */
+	/* Order Support */
+	typedef enum
+	{
+		NEG_DSTBLT_INDEX = 0x00,
+		NEG_PATBLT_INDEX = 0x01,
+		NEG_SCRBLT_INDEX = 0x02,
+		NEG_MEMBLT_INDEX = 0x03,
+		NEG_MEM3BLT_INDEX = 0x04,
+		NEG_ATEXTOUT_INDEX = 0x05,
+		NEG_AEXTTEXTOUT_INDEX = 0x06,  /* Must be ignored */
+		NEG_DRAWNINEGRID_INDEX = 0x07, /* Must be ignored */
+		NEG_LINETO_INDEX = 0x08,
+		NEG_MULTI_DRAWNINEGRID_INDEX = 0x09,
+		NEG_OPAQUE_RECT_INDEX = 0x0A, /* Must be ignored */
+		NEG_SAVEBITMAP_INDEX = 0x0B,
+		NEG_WTEXTOUT_INDEX = 0x0C,   /* Must be ignored */
+		NEG_MEMBLT_V2_INDEX = 0x0D,  /* Must be ignored */
+		NEG_MEM3BLT_V2_INDEX = 0x0E, /* Must be ignored */
+		NEG_MULTIDSTBLT_INDEX = 0x0F,
+		NEG_MULTIPATBLT_INDEX = 0x10,
+		NEG_MULTISCRBLT_INDEX = 0x11,
+		NEG_MULTIOPAQUERECT_INDEX = 0x12,
+		NEG_FAST_INDEX_INDEX = 0x13,
+		NEG_POLYGON_SC_INDEX = 0x14,
+		NEG_POLYGON_CB_INDEX = 0x15,
+		NEG_POLYLINE_INDEX = 0x16,
+		NEG_UNUSED23_INDEX = 0x17, /* Must be ignored */
+		NEG_FAST_GLYPH_INDEX = 0x18,
+		NEG_ELLIPSE_SC_INDEX = 0x19,
+		NEG_ELLIPSE_CB_INDEX = 0x1A,
+		NEG_GLYPH_INDEX_INDEX = 0x1B,
+		NEG_GLYPH_WEXTTEXTOUT_INDEX = 0x1C,     /* Must be ignored */
+		NEG_GLYPH_WLONGTEXTOUT_INDEX = 0x1D,    /* Must be ignored */
+		NEG_GLYPH_WLONGEXTTEXTOUT_INDEX = 0x1E, /* Must be ignored */
+		NEG_UNUSED31_INDEX = 0x1F               /* Must be ignored */
+	} FreeRDP_OrderSupportFlagConstants;
 
 /* Glyph Support Level */
 #define GLYPH_SUPPORT_NONE 0x0000
@@ -326,10 +329,13 @@ extern "C"
 #define PACKET_COMPR_TYPE_RDP8 0x04
 
 /* Desktop Rotation Flags */
-#define ORIENTATION_LANDSCAPE 0
-#define ORIENTATION_PORTRAIT 90
-#define ORIENTATION_LANDSCAPE_FLIPPED 180
-#define ORIENTATION_PORTRAIT_FLIPPED 270
+enum FreeRDP_DesktopRotationFlags
+{
+	ORIENTATION_LANDSCAPE = 0,
+	ORIENTATION_PORTRAIT = 90,
+	ORIENTATION_LANDSCAPE_FLIPPED = 180,
+	ORIENTATION_PORTRAIT_FLIPPED = 270
+};
 
 /* Clipboard feature mask */
 #define CLIPRDR_FLAG_LOCAL_TO_REMOTE 0x01
@@ -433,12 +439,15 @@ extern "C"
 		MONITOR_ATTRIBUTES attributes;
 	} rdpMonitor;
 
-/* Device Redirection */
-#define RDPDR_DTYP_SERIAL 0x00000001
-#define RDPDR_DTYP_PARALLEL 0x00000002
-#define RDPDR_DTYP_PRINT 0x00000004
-#define RDPDR_DTYP_FILESYSTEM 0x00000008
-#define RDPDR_DTYP_SMARTCARD 0x00000020
+	/* Device Redirection */
+	typedef enum
+	{
+		RDPDR_DTYP_SERIAL = 0x00000001,
+		RDPDR_DTYP_PARALLEL = 0x00000002,
+		RDPDR_DTYP_PRINT = 0x00000004,
+		RDPDR_DTYP_FILESYSTEM = 0x00000008,
+		RDPDR_DTYP_SMARTCARD = 0x00000020
+	} FreeRDP_RDPDR_DTYP;
 
 	typedef struct
 	{

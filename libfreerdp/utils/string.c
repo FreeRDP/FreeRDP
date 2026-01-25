@@ -24,6 +24,10 @@
 #include <freerdp/utils/string.h>
 #include <freerdp/settings.h>
 
+#if defined(CHANNEL_RDPEI)
+#include <freerdp/channels/rdpei.h>
+#endif
+
 const char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 {
 	struct map_t
@@ -125,4 +129,90 @@ BOOL freerdp_extract_key_value(const char* str, UINT32* pkey, UINT32* pvalue)
 	*pkey = (UINT32)key;
 	*pvalue = (UINT32)val;
 	return TRUE;
+}
+
+const char* freerdp_desktop_rotation_flags_to_string(UINT32 flags)
+{
+#define ENTRY(x) \
+	case x:      \
+		return #x
+
+	switch (flags)
+	{
+		ENTRY(ORIENTATION_LANDSCAPE);
+		ENTRY(ORIENTATION_PORTRAIT);
+		ENTRY(ORIENTATION_LANDSCAPE_FLIPPED);
+		ENTRY(ORIENTATION_PORTRAIT_FLIPPED);
+		default:
+			return "ORIENTATION_UNKNOWN";
+	}
+#undef ENTRY
+}
+
+const char* freerdp_input_touch_state_string(DWORD flags)
+{
+#if defined(CHANNEL_RDPEI)
+	if (flags & RDPINPUT_CONTACT_FLAG_DOWN)
+		return "RDPINPUT_CONTACT_FLAG_DOWN";
+	else if (flags & RDPINPUT_CONTACT_FLAG_UPDATE)
+		return "RDPINPUT_CONTACT_FLAG_UPDATE";
+	else if (flags & RDPINPUT_CONTACT_FLAG_UP)
+		return "RDPINPUT_CONTACT_FLAG_UP";
+	else if (flags & RDPINPUT_CONTACT_FLAG_INRANGE)
+		return "RDPINPUT_CONTACT_FLAG_INRANGE";
+	else if (flags & RDPINPUT_CONTACT_FLAG_INCONTACT)
+		return "RDPINPUT_CONTACT_FLAG_INCONTACT";
+	else if (flags & RDPINPUT_CONTACT_FLAG_CANCELED)
+		return "RDPINPUT_CONTACT_FLAG_CANCELED";
+	else
+		return "RDPINPUT_CONTACT_FLAG_UNKNOWN";
+#else
+	return "CHANNEL_RDPEI not supported";
+#endif
+}
+
+const char* freerdp_order_support_flags_string(UINT8 type)
+{
+#define ENTRY(x) \
+	case x:      \
+		return #x
+
+	switch (type)
+	{
+		ENTRY(NEG_DSTBLT_INDEX);
+		ENTRY(NEG_PATBLT_INDEX);
+		ENTRY(NEG_SCRBLT_INDEX);
+		ENTRY(NEG_MEMBLT_INDEX);
+		ENTRY(NEG_MEM3BLT_INDEX);
+		ENTRY(NEG_ATEXTOUT_INDEX);
+		ENTRY(NEG_AEXTTEXTOUT_INDEX);
+		ENTRY(NEG_DRAWNINEGRID_INDEX);
+		ENTRY(NEG_LINETO_INDEX);
+		ENTRY(NEG_MULTI_DRAWNINEGRID_INDEX);
+		ENTRY(NEG_OPAQUE_RECT_INDEX);
+		ENTRY(NEG_SAVEBITMAP_INDEX);
+		ENTRY(NEG_WTEXTOUT_INDEX);
+		ENTRY(NEG_MEMBLT_V2_INDEX);
+		ENTRY(NEG_MEM3BLT_V2_INDEX);
+		ENTRY(NEG_MULTIDSTBLT_INDEX);
+		ENTRY(NEG_MULTIPATBLT_INDEX);
+		ENTRY(NEG_MULTISCRBLT_INDEX);
+		ENTRY(NEG_MULTIOPAQUERECT_INDEX);
+		ENTRY(NEG_FAST_INDEX_INDEX);
+		ENTRY(NEG_POLYGON_SC_INDEX);
+		ENTRY(NEG_POLYGON_CB_INDEX);
+		ENTRY(NEG_POLYLINE_INDEX);
+		ENTRY(NEG_UNUSED23_INDEX);
+		ENTRY(NEG_FAST_GLYPH_INDEX);
+		ENTRY(NEG_ELLIPSE_SC_INDEX);
+		ENTRY(NEG_ELLIPSE_CB_INDEX);
+		ENTRY(NEG_GLYPH_INDEX_INDEX);
+		ENTRY(NEG_GLYPH_WEXTTEXTOUT_INDEX);
+		ENTRY(NEG_GLYPH_WLONGTEXTOUT_INDEX);
+		ENTRY(NEG_GLYPH_WLONGEXTTEXTOUT_INDEX);
+		ENTRY(NEG_UNUSED31_INDEX);
+		default:
+			return "UNKNOWN";
+	}
+#undef ENTRY
 }

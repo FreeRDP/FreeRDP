@@ -738,9 +738,12 @@ extern "C"
 	FREERDP_API const char* freerdp_encryption_methods_string(UINT32 EncryptionLevel, char* buffer,
 	                                                          size_t size);
 
-	/** \brief returns a string representation of \b RNS_UD_XXBPP_SUPPORT values
+	/** @brief returns a string representation of \b RNS_UD_XXBPP_SUPPORT values
+	 * @param mask A bitmask of supported color dephts \b RNS_UD_*
+	 * @param buffer A pointer to a buffer of \b size bytes
+	 * @param size The size of the buffer in bytes
 	 *
-	 *  return A string reprenentation of the bitmask.
+	 *  @return A string reprenentation of the bitmask.
 	 */
 	FREERDP_API const char* freerdp_supported_color_depths_string(UINT16 mask, char* buffer,
 	                                                              size_t size);
@@ -748,7 +751,7 @@ extern "C"
 	/** \brief return the configuration directory for the library
 	 *  @return The current configuration path or \b NULL
 	 *  @since version 3.6.0
-	 *  @note Since 3.17.1 this is a wrapper for \ref freerdp_GetConfigFilePath(FALSE, "")
+	 *  @note Since 3.17.1 this is a wrapper for \b freerdp_GetConfigFilePath(FALSE, "")
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* freerdp_settings_get_config_path(void);

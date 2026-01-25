@@ -47,19 +47,16 @@ extern "C"
 	/** @struct wObject
 	 *  @brief This struct contains function pointer to initialize/free objects
 	 *
-	 *  @var fnObjectNew  A new function that creates a clone of the input
-	 *  @var fnObjectInit A function initializing an object, but not allocating it
-	 *  @var fnObjectUninit A function to deinitialize an object, but not free it
-	 *  @var fnObjectFree A function freeing an object
-	 *  @var fnObjectEquals A function to compare two objects
 	 */
 	typedef struct
 	{
-		OBJECT_NEW_FN fnObjectNew;
-		OBJECT_INIT_FN fnObjectInit;
-		OBJECT_UNINIT_FN fnObjectUninit;
-		OBJECT_FREE_FN fnObjectFree;
-		OBJECT_EQUALS_FN fnObjectEquals;
+		OBJECT_NEW_FN fnObjectNew; /**< A new function that creates a clone of the input */
+		OBJECT_INIT_FN
+		fnObjectInit; /**< A function initializing an object, but not allocating it */
+		OBJECT_UNINIT_FN
+		fnObjectUninit;              /**< A function to deinitialize an object, but not free it */
+		OBJECT_FREE_FN fnObjectFree; /**< A function freeing an object */
+		OBJECT_EQUALS_FN fnObjectEquals; /**< A function to compare two objects */
 	} wObject;
 
 	/* utility function with compatible arguments for string data */
