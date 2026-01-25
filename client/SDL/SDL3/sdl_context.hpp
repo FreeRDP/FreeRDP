@@ -143,7 +143,7 @@ class SdlContext
 	[[nodiscard]] bool eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev);
 
 	[[nodiscard]] SDL_FPoint applyLocalScaling(const SDL_FPoint& val) const;
-	void removeLocalScaling(float& x, float& y);
+	void removeLocalScaling(float& x, float& y) const;
 
 	[[nodiscard]] bool handleEvent(const SDL_WindowEvent& ev);
 	[[nodiscard]] bool handleEvent(const SDL_DisplayEvent& ev);

@@ -105,9 +105,6 @@ static void sdl_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 
 BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 {
-	INT32 w = 0;
-	INT32 h = 0;
-
 	WINPR_ASSERT(sdl);
 
 	auto context = sdl->context();
@@ -119,10 +116,10 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	rdpGdi* gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 
-	auto ix = static_cast<INT32>(pointer->xPos);
-	auto iy = static_cast<INT32>(pointer->yPos);
-	auto isw = w = static_cast<INT32>(pointer->width);
-	auto ish = h = static_cast<INT32>(pointer->height);
+	auto ix = static_cast<float>(pointer->xPos);
+	auto iy = static_cast<float>(pointer->yPos);
+	auto isw = static_cast<float>(pointer->width);
+	auto ish = static_cast<float>(pointer->height);
 
 	SDL_Window* window = SDL_GetMouseFocus();
 	if (!window)
@@ -130,7 +127,7 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 
 	const Uint32 id = SDL_GetWindowID(window);
 
-	auto pos = sdl->pixelToScreen(id, SDL_FRect{ ix * 1.0f, iy * 1.0f, isw * 1.0f, ish * 1.0f });
+	auto pos = sdl->pixelToScreen(id, SDL_FRect{ ix, iy, isw, ish });
 
 	sdl_Pointer_Clear(ptr);
 
@@ -145,7 +142,7 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	const BOOL rc = freerdp_image_scale(
 	    pixels, gdi->dstFormat, static_cast<UINT32>(ptr->image->pitch), 0, 0,
 	    static_cast<UINT32>(ptr->image->w), static_cast<UINT32>(ptr->image->h), data,
-	    gdi->dstFormat, 0, 0, 0, static_cast<UINT32>(w), static_cast<UINT32>(h));
+	    gdi->dstFormat, 0, 0, 0, static_cast<UINT32>(isw), static_cast<UINT32>(ish));
 	SDL_UnlockSurface(ptr->image);
 	if (!rc)
 		return FALSE;

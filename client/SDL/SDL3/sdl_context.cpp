@@ -1013,7 +1013,7 @@ SDL_FPoint SdlContext::applyLocalScaling(const SDL_FPoint& val) const
 	return rval;
 }
 
-void SdlContext::removeLocalScaling(float& x, float& y)
+void SdlContext::removeLocalScaling(float& x, float& y) const
 {
 	if (!freerdp_settings_get_bool(context()->settings, FreeRDP_SmartSizing))
 		return;
@@ -1059,43 +1059,42 @@ SDL_FRect SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FRect& pos)
 	return { fpos.x, fpos.y, size.x, size.y };
 }
 
-bool SdlContext::handleEvent(const SDL_Event& windowEvent)
+bool SdlContext::handleEvent(const SDL_Event& ev)
 {
-	if ((windowEvent.type >= SDL_EVENT_DISPLAY_FIRST) &&
-	    (windowEvent.type <= SDL_EVENT_DISPLAY_LAST))
+	if ((ev.type >= SDL_EVENT_DISPLAY_FIRST) && (ev.type <= SDL_EVENT_DISPLAY_LAST))
 	{
-		const auto& ev = windowEvent.display;
-		return handleEvent(ev);
+		const auto& dev = ev.display;
+		return handleEvent(dev);
 	}
-	if ((windowEvent.type >= SDL_EVENT_WINDOW_FIRST) && (windowEvent.type <= SDL_EVENT_WINDOW_LAST))
+	if ((ev.type >= SDL_EVENT_WINDOW_FIRST) && (ev.type <= SDL_EVENT_WINDOW_LAST))
 	{
-		const auto& ev = windowEvent.window;
-		return handleEvent(ev);
+		const auto& wev = ev.window;
+		return handleEvent(wev);
 	}
-	switch (windowEvent.type)
+	switch (ev.type)
 	{
 		case SDL_EVENT_FINGER_DOWN:
 		case SDL_EVENT_FINGER_UP:
 		case SDL_EVENT_FINGER_MOTION:
 		{
-			const auto& ev = windowEvent.tfinger;
-			return handleEvent(ev);
+			const auto& cev = ev.tfinger;
+			return handleEvent(cev);
 		}
 		case SDL_EVENT_MOUSE_MOTION:
 		{
-			const auto& ev = windowEvent.motion;
-			return handleEvent(ev);
+			const auto& cev = ev.motion;
+			return handleEvent(cev);
 		}
 		case SDL_EVENT_MOUSE_BUTTON_DOWN:
 		case SDL_EVENT_MOUSE_BUTTON_UP:
 		{
-			const auto& ev = windowEvent.button;
-			return handleEvent(ev);
+			const auto& cev = ev.button;
+			return handleEvent(cev);
 		}
 		case SDL_EVENT_MOUSE_WHEEL:
 		{
-			const auto& ev = windowEvent.wheel;
-			return handleEvent(ev);
+			const auto& cev = ev.wheel;
+			return handleEvent(cev);
 		}
 		default:
 			return true;
