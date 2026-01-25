@@ -845,8 +845,7 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 	{
 		VideoSurface* surface = presentation->surface;
 		H264_CONTEXT* h264 = presentation->h264;
-		UINT64 startTime = GetTickCount64();
-		UINT64 timeAfterH264 = 0;
+		const UINT64 startTime = winpr_GetTickCount64NS();
 		MAPPED_GEOMETRY* geom = presentation->geometry;
 
 		const RECTANGLE_16 rect = { 0, 0, WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedWidth),
@@ -854,14 +853,14 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		Stream_SealLength(presentation->currentSample);
 		Stream_SetPosition(presentation->currentSample, 0);
 
-		timeAfterH264 = GetTickCount64();
+		const UINT64 timeAfterH264 = winpr_GetTickCount64NS();
 		if (data->SampleNumber == 1)
 		{
 			presentation->lastPublishTime = startTime;
 		}
 
-		presentation->lastPublishTime += (data->hnsDuration / 10000);
-		if (presentation->lastPublishTime <= timeAfterH264 + 10)
+		presentation->lastPublishTime += 100ull * data->hnsDuration;
+		if (presentation->lastPublishTime <= (10000000ull + timeAfterH264))
 		{
 			int dropped = 0;
 
