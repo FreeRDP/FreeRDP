@@ -31,18 +31,18 @@ extern "C"
 #endif
 
 	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
-	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int _der_skip_length(int length));
-	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int der_write_length(wStream* s, int length));
-	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int der_get_content_length(int length));
-	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int der_skip_octet_string(int length));
-	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int der_skip_sequence_tag(int length));
-	WINPR_DEPRECATED_VAR("since 3.21.1",
+	WINPR_DEPRECATED_VAR("since 3.22.0", FREERDP_API int _der_skip_length(int length));
+	WINPR_DEPRECATED_VAR("since 3.22.0", FREERDP_API int der_write_length(wStream* s, int length));
+	WINPR_DEPRECATED_VAR("since 3.22.0", FREERDP_API int der_get_content_length(int length));
+	WINPR_DEPRECATED_VAR("since 3.22.0", FREERDP_API int der_skip_octet_string(int length));
+	WINPR_DEPRECATED_VAR("since 3.22.0", FREERDP_API int der_skip_sequence_tag(int length));
+	WINPR_DEPRECATED_VAR("since 3.22.0",
 	                     FREERDP_API int der_write_sequence_tag(wStream* s, int length));
-	WINPR_DEPRECATED_VAR("since 3.21.1", FREERDP_API int der_skip_contextual_tag(int length));
-	WINPR_DEPRECATED_VAR("since 3.21.1",
+	WINPR_DEPRECATED_VAR("since 3.22.0", FREERDP_API int der_skip_contextual_tag(int length));
+	WINPR_DEPRECATED_VAR("since 3.22.0",
 	                     FREERDP_API int der_write_contextual_tag(wStream* s, BYTE tag, int length,
 	                                                              BOOL pc));
-	WINPR_DEPRECATED_VAR("since 3.21.1",
+	WINPR_DEPRECATED_VAR("since 3.22.0",
 	                     FREERDP_API void der_write_octet_string(wStream* s, BYTE* oct_str,
 	                                                             int length));
 
