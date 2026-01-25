@@ -62,7 +62,7 @@
 #include "sdl_disp.hpp"
 #include "sdl_freerdp.hpp"
 #include "sdl_context.hpp"
-#include "sdl_kbd.hpp"
+#include "sdl_input.hpp"
 #include "sdl_monitor.hpp"
 #include "sdl_pointer.hpp"
 #include "sdl_prefs.hpp"

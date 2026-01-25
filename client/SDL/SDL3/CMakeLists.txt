@@ -27,8 +27,8 @@ set(SRCS
     sdl_types.hpp
     sdl_utils.cpp
     sdl_utils.hpp
-    sdl_kbd.cpp
-    sdl_kbd.hpp
+    sdl_input.cpp
+    sdl_input.hpp
     sdl_touch.cpp
     sdl_touch.hpp
     sdl_pointer.cpp

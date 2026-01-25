@@ -42,16 +42,16 @@ class sdlInput
 	sdlInput& operator=(const sdlInput& other) = delete;
 	sdlInput& operator=(sdlInput&& other) = delete;
 
-	[[nodiscard]] BOOL initialize();
+	[[nodiscard]] bool initialize();
 
-	[[nodiscard]] BOOL keyboard_sync_state();
-	[[nodiscard]] BOOL keyboard_focus_in();
+	[[nodiscard]] bool keyboard_sync_state();
+	[[nodiscard]] bool keyboard_focus_in();
 
-	[[nodiscard]] BOOL keyboard_handle_event(const SDL_KeyboardEvent* ev);
+	[[nodiscard]] bool keyboard_handle_event(const SDL_KeyboardEvent* ev);
 
-	[[nodiscard]] BOOL keyboard_grab(Uint32 windowID, bool enable);
-	[[nodiscard]] BOOL mouse_focus(Uint32 windowID);
-	[[nodiscard]] BOOL mouse_grab(Uint32 windowID, bool enable);
+	[[nodiscard]] bool keyboard_grab(Uint32 windowID, bool enable);
+	[[nodiscard]] bool mouse_focus(Uint32 windowID);
+	[[nodiscard]] bool mouse_grab(Uint32 windowID, bool enable);
 
 	[[nodiscard]] static BOOL keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
 	[[nodiscard]] static BOOL keyboard_set_ime_status(rdpContext* context, UINT16 imeId,

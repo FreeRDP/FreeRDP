@@ -26,7 +26,7 @@
 #include <SDL3/SDL.h>
 
 #include "sdl_disp.hpp"
-#include "sdl_kbd.hpp"
+#include "sdl_input.hpp"
 #include "sdl_utils.hpp"
 #include "sdl_context.hpp"
 
