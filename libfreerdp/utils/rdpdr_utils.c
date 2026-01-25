@@ -667,3 +667,22 @@ const char* rdpdr_irp_mask2str(UINT32 ioCode1Mask, char* buffer, size_t len)
 		return NULL;
 	return buffer;
 }
+
+const char* rdpdr_device_type_string(UINT32 type)
+{
+	switch (type)
+	{
+		case RDPDR_DTYP_SERIAL:
+			return "serial";
+		case RDPDR_DTYP_PRINT:
+			return "printer";
+		case RDPDR_DTYP_FILESYSTEM:
+			return "drive";
+		case RDPDR_DTYP_SMARTCARD:
+			return "smartcard";
+		case RDPDR_DTYP_PARALLEL:
+			return "parallel";
+		default:
+			return "UNKNOWN";
+	}
+}
