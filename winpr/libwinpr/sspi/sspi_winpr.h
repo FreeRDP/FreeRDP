@@ -25,4 +25,7 @@
 SecurityFunctionTableW* SEC_ENTRY winpr_InitSecurityInterfaceW(void);
 SecurityFunctionTableA* SEC_ENTRY winpr_InitSecurityInterfaceA(void);
 
+void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size);
+void sspi_ContextBufferFree(void* contextBuffer);
+
 #endif /* WINPR_SSPI_WINPR_H */

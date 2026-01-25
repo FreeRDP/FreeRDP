@@ -1349,6 +1349,20 @@ SECURITY_STATUS freerdp_nla_QueryContextAttributes(rdpContext* context, DWORD ul
 	return nla_QueryContextAttributes(nla, ulAttr, pBuffer);
 }
 
+SECURITY_STATUS freerdp_nla_FreeContextBuffer(rdpContext* context, PVOID pBuffer)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->rdp);
+
+	rdpNla* nla = context->rdp->nla;
+	if (!nla)
+		nla = transport_get_nla(context->rdp->transport);
+
+	WINPR_ASSERT(nla);
+
+	return nla_FreeContextBuffer(nla, pBuffer);
+}
+
 HANDLE getChannelErrorEventHandle(rdpContext* context)
 {
 	WINPR_ASSERT(context);

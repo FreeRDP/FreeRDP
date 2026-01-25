@@ -1781,6 +1781,33 @@ fail:
 	return krb5_error_to_SECURITY_STATUS(rv);
 }
 
+static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO(KRB_CONTEXT* context,
+                                                  KRB_CREDENTIALS* credentials,
+                                                  SecPkgContext_PackageInfo* PackageInfo)
+{
+	size_t size = sizeof(SecPkgInfoA);
+	SecPkgInfoA* pPackageInfo =
+	    (SecPkgInfoA*)sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
+
+	if (!pPackageInfo)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	pPackageInfo->fCapabilities = KERBEROS_SecPkgInfoA.fCapabilities;
+	pPackageInfo->wVersion = KERBEROS_SecPkgInfoA.wVersion;
+	pPackageInfo->wRPCID = KERBEROS_SecPkgInfoA.wRPCID;
+	pPackageInfo->cbMaxToken = KERBEROS_SecPkgInfoA.cbMaxToken;
+	pPackageInfo->Name = _strdup(KERBEROS_SecPkgInfoA.Name);
+	pPackageInfo->Comment = _strdup(KERBEROS_SecPkgInfoA.Comment);
+
+	if (!pPackageInfo->Name || !pPackageInfo->Comment)
+	{
+		sspi_ContextBufferFree(pPackageInfo);
+		return SEC_E_INSUFFICIENT_MEMORY;
+	}
+	PackageInfo->PackageInfo = pPackageInfo;
+	return SEC_E_OK;
+}
+
 static SECURITY_STATUS kerberos_ATTR_TICKET_LOGON(KRB_CONTEXT* context,
                                                   KRB_CREDENTIALS* credentials,
                                                   KERB_TICKET_LOGON* ticketLogon)
@@ -1882,6 +1909,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 		case SECPKG_ATTR_AUTH_IDENTITY:
 			return kerberos_ATTR_AUTH_IDENTITY(context, credentials,
 			                                   (SecPkgContext_AuthIdentity*)pBuffer);
+
+		case SECPKG_ATTR_PACKAGE_INFO:
+			return kerberos_ATTR_PACKAGE_INFO(context, credentials,
+			                                  (SecPkgContext_PackageInfo*)pBuffer);
 
 		case SECPKG_CRED_ATTR_TICKET_LOGON:
 			return kerberos_ATTR_TICKET_LOGON(context, credentials, (KERB_TICKET_LOGON*)pBuffer);
