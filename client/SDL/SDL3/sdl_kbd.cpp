@@ -319,23 +319,15 @@ BOOL sdlInput::keyboard_focus_in()
 	float fx = 0.0f;
 	float fy = 0.0f;
 	if (_sdl->fullscreen())
-	{
 		SDL_GetGlobalMouseState(&fx, &fy);
-	}
 	else
-	{
 		SDL_GetMouseState(&fx, &fy);
-	}
-	auto x = static_cast<int32_t>(fx);
-	auto y = static_cast<int32_t>(fy);
+
 	auto w = SDL_GetMouseFocus();
-	if (w)
-	{
-		auto id = SDL_GetWindowID(w);
-		if (!sdl_scale_coordinates(_sdl, id, &x, &y, TRUE, TRUE))
-			return FALSE;
-	}
-	return freerdp_client_send_button_event(_sdl->common(), FALSE, PTR_FLAGS_MOVE, x, y);
+	const auto& pos = _sdl->screenToPixel(SDL_GetWindowID(w), SDL_FPoint{ fx, fy });
+
+	return freerdp_client_send_button_event(_sdl->common(), FALSE, PTR_FLAGS_MOVE,
+	                                        static_cast<Sint32>(pos.x), static_cast<Sint32>(pos.y));
 }
 
 /* This function is called to update the keyboard indicator LED */

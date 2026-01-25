@@ -119,10 +119,10 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	rdpGdi* gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 
-	auto x = static_cast<INT32>(pointer->xPos);
-	auto y = static_cast<INT32>(pointer->yPos);
-	auto sw = w = static_cast<INT32>(pointer->width);
-	auto sh = h = static_cast<INT32>(pointer->height);
+	auto ix = static_cast<INT32>(pointer->xPos);
+	auto iy = static_cast<INT32>(pointer->yPos);
+	auto isw = w = static_cast<INT32>(pointer->width);
+	auto ish = h = static_cast<INT32>(pointer->height);
 
 	SDL_Window* window = SDL_GetMouseFocus();
 	if (!window)
@@ -130,13 +130,12 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 
 	const Uint32 id = SDL_GetWindowID(window);
 
-	if (!sdl_scale_coordinates(sdl, id, &x, &y, FALSE, FALSE) ||
-	    !sdl_scale_coordinates(sdl, id, &sw, &sh, FALSE, FALSE))
-		return FALSE;
+	auto pos = sdl->pixelToScreen(id, SDL_FRect{ ix * 1.0f, iy * 1.0f, isw * 1.0f, ish * 1.0f });
 
 	sdl_Pointer_Clear(ptr);
 
-	ptr->image = SDL_CreateSurface(sw, sh, sdl->pixelFormat());
+	ptr->image =
+	    SDL_CreateSurface(static_cast<int>(pos.w), static_cast<int>(pos.h), sdl->pixelFormat());
 	if (!ptr->image)
 		return FALSE;
 
@@ -157,16 +156,17 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	if (!fw)
 		return FALSE;
 
-	const auto hidpi_scale = SDL_GetWindowDisplayScale(fw->window());
-	auto normal = SDL_CreateSurface(
-	    static_cast<int>(static_cast<float>(ptr->image->w) / hidpi_scale),
-	    static_cast<int>(static_cast<float>(ptr->image->h) / hidpi_scale), ptr->image->format);
+	const auto hidpi_scale =
+	    sdl->pixelToScreen(fw->id(), SDL_FPoint{ static_cast<float>(ptr->image->w),
+	                                             static_cast<float>(ptr->image->h) });
+	auto normal = SDL_CreateSurface(static_cast<int>(hidpi_scale.x),
+	                                static_cast<int>(hidpi_scale.y), ptr->image->format);
 	assert(normal);
 	SDL_BlitSurfaceScaled(ptr->image, nullptr, normal, nullptr,
 	                      SDL_ScaleMode::SDL_SCALEMODE_LINEAR);
 	SDL_AddSurfaceAlternateImage(normal, ptr->image);
 
-	ptr->cursor = SDL_CreateColorCursor(normal, x, y);
+	ptr->cursor = SDL_CreateColorCursor(normal, static_cast<int>(pos.x), static_cast<int>(pos.y));
 	if (!ptr->cursor)
 		return FALSE;
 
