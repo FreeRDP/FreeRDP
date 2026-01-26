@@ -1781,8 +1781,8 @@ fail:
 	return krb5_error_to_SECURITY_STATUS(rv);
 }
 
-static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO(KRB_CONTEXT* context,
-                                                  KRB_CREDENTIALS* credentials,
+static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO(WINPR_ATTR_UNUSED KRB_CONTEXT* context,
+                                                  WINPR_ATTR_UNUSED KRB_CREDENTIALS* credentials,
                                                   SecPkgContext_PackageInfo* PackageInfo)
 {
 	size_t size = sizeof(SecPkgInfoA);
