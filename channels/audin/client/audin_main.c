@@ -207,6 +207,7 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 
 	Stream_Seek_UINT32(s); /* cbSizeFormatsPacket */
 
+	audin->format = NULL;
 	audio_formats_free(callback->formats, callback->formats_count);
 	callback->formats_count = 0;
 
@@ -284,6 +285,7 @@ out:
 
 	if (error != CHANNEL_RC_OK)
 	{
+		audin->format = NULL;
 		audio_formats_free(callback->formats, NumFormats);
 		callback->formats = NULL;
 	}
