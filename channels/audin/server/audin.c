@@ -146,11 +146,7 @@ static UINT audin_server_recv_formats(audin_server_context* context, wStream* s,
 		AUDIO_FORMAT* format = &pdu.SoundFormats[i];
 
 		if (!audio_format_read(s, format))
-		{
-			WLog_Print(audin->log, WLOG_ERROR, "Failed to read audio format");
-			audio_formats_free(pdu.SoundFormats, i + i);
-			return ERROR_INVALID_DATA;
-		}
+			goto fail;
 
 		audio_format_print(audin->log, WLOG_DEBUG, format);
 	}
