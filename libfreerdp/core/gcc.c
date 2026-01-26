@@ -2168,7 +2168,7 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 		const INT32 bottom = Stream_Get_INT32(s);  /* bottom */
 		const UINT32 flags = Stream_Get_UINT32(s); /* flags */
 
-		if ((left > right) || (top > bottom))
+		if ((1ll * left > right) || (1ll * top > bottom))
 		{
 			WLog_Print(mcs->log, WLOG_ERROR, "rdpMonitor::rect %dx%d-%dx%d invalid", left, top,
 			           right, bottom);
