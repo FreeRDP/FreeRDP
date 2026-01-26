@@ -1165,6 +1165,7 @@ static void libusb_udev_mark_channel_closed(IUDEVICE* idev)
 		const uint8_t devNr = idev->get_dev_number(idev);
 
 		pdev->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
+		pdev->iface.cancel_all_transfer_request(&pdev->iface);
 		urbdrc->udevman->unregister_udevice(urbdrc->udevman, busNr, devNr);
 	}
 }
