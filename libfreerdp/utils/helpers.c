@@ -28,6 +28,7 @@
 
 #if !defined(WITH_FULL_CONFIG_PATH)
 WINPR_ATTR_MALLOC(free, 1)
+WINPR_ATTR_NODISCARD
 static char* freerdp_settings_get_legacy_config_path(const char* filename)
 {
 	char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };

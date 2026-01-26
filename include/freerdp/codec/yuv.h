@@ -61,6 +61,7 @@ extern "C"
 	FREERDP_API void yuv_context_free(YUV_CONTEXT* context);
 
 	WINPR_ATTR_MALLOC(yuv_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags);
 
 #ifdef __cplusplus

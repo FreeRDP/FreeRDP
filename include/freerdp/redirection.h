@@ -55,6 +55,7 @@ extern "C"
 	FREERDP_API void redirection_free(rdpRedirection* redirection);
 
 	WINPR_ATTR_MALLOC(redirection_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpRedirection* redirection_new(void);
 
 	/** \brief This function checks if all necessary settings for a given \b rdpRedirection are

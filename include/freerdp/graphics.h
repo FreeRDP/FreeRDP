@@ -166,6 +166,7 @@ extern "C"
 	FREERDP_API void graphics_free(rdpGraphics* graphics);
 
 	WINPR_ATTR_MALLOC(graphics_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpGraphics* graphics_new(rdpContext* context);
 
 #ifdef __cplusplus

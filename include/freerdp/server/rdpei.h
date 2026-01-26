@@ -78,6 +78,7 @@ extern "C"
 	FREERDP_API void rdpei_server_context_free(RdpeiServerContext* context);
 
 	WINPR_ATTR_MALLOC(rdpei_server_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API RdpeiServerContext* rdpei_server_context_new(HANDLE vcm);
 
 	FREERDP_API void rdpei_server_context_reset(RdpeiServerContext* context);

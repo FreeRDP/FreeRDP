@@ -60,17 +60,20 @@ extern "C"
 	FREERDP_LOCAL void bitmap_cache_free(rdpBitmapCache* bitmap_cache);
 
 	WINPR_ATTR_MALLOC(bitmap_cache_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL rdpBitmapCache* bitmap_cache_new(rdpContext* context);
 
 	FREERDP_LOCAL void free_bitmap_update(rdpContext* context, BITMAP_UPDATE* pointer);
 
 	WINPR_ATTR_MALLOC(free_bitmap_update, 2)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BITMAP_UPDATE* copy_bitmap_update(rdpContext* context,
 	                                                const BITMAP_UPDATE* pointer);
 
 	FREERDP_LOCAL void free_cache_bitmap_order(rdpContext* context, CACHE_BITMAP_ORDER* order);
 
 	WINPR_ATTR_MALLOC(free_cache_bitmap_order, 2)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL CACHE_BITMAP_ORDER* copy_cache_bitmap_order(rdpContext* context,
 	                                                          const CACHE_BITMAP_ORDER* order);
 
@@ -78,6 +81,7 @@ extern "C"
 	                                              CACHE_BITMAP_V2_ORDER* order);
 
 	WINPR_ATTR_MALLOC(free_cache_bitmap_v2_order, 2)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL CACHE_BITMAP_V2_ORDER*
 	copy_cache_bitmap_v2_order(rdpContext* context, const CACHE_BITMAP_V2_ORDER* order);
 
@@ -85,6 +89,7 @@ extern "C"
 	                                              CACHE_BITMAP_V3_ORDER* order);
 
 	WINPR_ATTR_MALLOC(free_cache_bitmap_v3_order, 2)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL CACHE_BITMAP_V3_ORDER*
 	copy_cache_bitmap_v3_order(rdpContext* context, const CACHE_BITMAP_V3_ORDER* order);
 

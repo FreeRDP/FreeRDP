@@ -41,36 +41,45 @@ extern "C"
 	FREERDP_API void freerdp_certificate_free(rdpCertificate* certificate);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpCertificate* freerdp_certificate_new(void);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpCertificate* freerdp_certificate_new_from_file(const char* file);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpCertificate* freerdp_certificate_new_from_pem(const char* pem);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpCertificate* freerdp_certificate_new_from_der(const BYTE* data, size_t length);
 
 	FREERDP_API BOOL freerdp_certificate_is_rsa(const rdpCertificate* certificate);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_hash(const rdpCertificate* certificate,
 	                                               const char* hash, size_t* plength);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_fingerprint_by_hash(const rdpCertificate* certificate,
 	                                                              const char* hash);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char*
 	freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* certificate,
 	                                               const char* hash, BOOL separator);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_fingerprint(const rdpCertificate* certificate);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_pem(const rdpCertificate* certificate,
 	                                              size_t* pLength);
 
@@ -84,23 +93,29 @@ extern "C"
 	 * @since version 3.8.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_pem_ex(const rdpCertificate* certificate,
 	                                                 size_t* pLength, BOOL withCertChain);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BYTE* freerdp_certificate_get_der(const rdpCertificate* certificate,
 	                                              size_t* pLength);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_subject(const rdpCertificate* certificate);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_issuer(const rdpCertificate* certificate);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_upn(const rdpCertificate* certificate);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_email(const rdpCertificate* certificate);
 
 	/**
@@ -111,16 +126,19 @@ extern "C"
 	 * @since version 3.8.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_validity(const rdpCertificate* certificate,
 	                                                   BOOL startDate);
 
 	FREERDP_API WINPR_MD_TYPE freerdp_certificate_get_signature_alg(const rdpCertificate* cert);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_common_name(const rdpCertificate* cert,
 	                                                      size_t* plength);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char** freerdp_certificate_get_dns_names(const rdpCertificate* cert, size_t* pcount,
 	                                                     size_t** pplengths);
 	FREERDP_API void freerdp_certificate_free_dns_names(size_t count, size_t* lengths,
@@ -137,6 +155,7 @@ extern "C"
 	FREERDP_API BOOL freerdp_certificate_is_rdp_security_compatible(const rdpCertificate* cert);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_get_param(const rdpCertificate* cert,
 	                                                enum FREERDP_CERT_PARAM what, size_t* psize);
 

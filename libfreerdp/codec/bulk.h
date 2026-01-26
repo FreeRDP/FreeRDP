@@ -42,6 +42,7 @@ FREERDP_LOCAL void bulk_reset(rdpBulk* WINPR_RESTRICT bulk);
 FREERDP_LOCAL void bulk_free(rdpBulk* bulk);
 
 WINPR_ATTR_MALLOC(bulk_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpBulk* bulk_new(rdpContext* context);
 
 #endif /* FREERDP_LIB_CORE_BULK_H */

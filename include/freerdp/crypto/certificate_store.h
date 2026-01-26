@@ -43,12 +43,14 @@ extern "C"
 	FREERDP_API void freerdp_certificate_store_free(rdpCertificateStore* store);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_store_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpCertificateStore* freerdp_certificate_store_new(const rdpSettings* settings);
 
 	FREERDP_API freerdp_certificate_store_result freerdp_certificate_store_contains_data(
 	    rdpCertificateStore* store, const rdpCertificateData* data);
 
 	WINPR_ATTR_MALLOC(freerdp_certificate_data_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpCertificateData*
 	freerdp_certificate_store_load_data(rdpCertificateStore* store, const char* host, UINT16 port);
 
@@ -72,6 +74,8 @@ extern "C"
 	 *
 	 *  @return The certificate store file path or \b NULL
 	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_certificate_store_get_cert_path(const rdpCertificateStore* store,
 	                                                          const char* host, UINT16 port);
 

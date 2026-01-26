@@ -32,6 +32,7 @@ typedef struct rdp_rdg rdpRdg;
 FREERDP_LOCAL void rdg_free(rdpRdg* rdg);
 
 WINPR_ATTR_MALLOC(rdg_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpRdg* rdg_new(rdpContext* context);
 
 FREERDP_LOCAL BIO* rdg_get_front_bio_and_take_ownership(rdpRdg* rdg);

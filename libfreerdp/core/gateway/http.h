@@ -56,6 +56,7 @@ typedef struct s_http_context HttpContext;
 FREERDP_LOCAL void http_context_free(HttpContext* context);
 
 WINPR_ATTR_MALLOC(http_context_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL HttpContext* http_context_new(void);
 
 FREERDP_LOCAL BOOL http_context_set_method(HttpContext* context, const char* Method);
@@ -96,6 +97,7 @@ typedef struct s_http_request HttpRequest;
 FREERDP_LOCAL void http_request_free(HttpRequest* request);
 
 WINPR_ATTR_MALLOC(http_request_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL HttpRequest* http_request_new(void);
 
 FREERDP_LOCAL BOOL http_request_set_method(HttpRequest* request, const char* Method);
@@ -121,9 +123,11 @@ typedef struct s_http_response HttpResponse;
 FREERDP_LOCAL void http_response_free(HttpResponse* response);
 
 WINPR_ATTR_MALLOC(http_response_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL HttpResponse* http_response_new(void);
 
 WINPR_ATTR_MALLOC(http_response_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength);
 
 FREERDP_LOCAL UINT16 http_response_get_status_code(const HttpResponse* response);

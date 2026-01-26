@@ -64,9 +64,11 @@ extern "C"
 	FREERDP_API void progressive_context_free(PROGRESSIVE_CONTEXT* progressive);
 
 	WINPR_ATTR_MALLOC(progressive_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor);
 
 	WINPR_ATTR_MALLOC(progressive_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API PROGRESSIVE_CONTEXT* progressive_context_new_ex(BOOL Compressor,
 	                                                            UINT32 ThreadingFlags);
 

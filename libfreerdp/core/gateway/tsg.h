@@ -102,6 +102,7 @@ typedef enum
 FREERDP_LOCAL void tsg_free(rdpTsg* tsg);
 
 WINPR_ATTR_MALLOC(tsg_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
 
 FREERDP_LOCAL BOOL tsg_proxy_begin(rdpTsg* tsg);

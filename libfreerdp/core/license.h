@@ -67,6 +67,7 @@ FREERDP_LOCAL BOOL license_server_send_request(rdpLicense* license);
 FREERDP_LOCAL void license_free(rdpLicense* license);
 
 WINPR_ATTR_MALLOC(license_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpLicense* license_new(rdpRdp* rdp);
 
 #define LICENSE_TAG FREERDP_TAG("core.license")

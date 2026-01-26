@@ -61,15 +61,22 @@ extern "C"
 	FREERDP_LOCAL void glyph_cache_free(rdpGlyphCache* glyph);
 
 	WINPR_ATTR_MALLOC(glyph_cache_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL rdpGlyphCache* glyph_cache_new(rdpContext* context);
 
-	FREERDP_LOCAL CACHE_GLYPH_ORDER* copy_cache_glyph_order(rdpContext* context,
-	                                                        const CACHE_GLYPH_ORDER* glyph);
 	FREERDP_LOCAL void free_cache_glyph_order(rdpContext* context, CACHE_GLYPH_ORDER* glyph);
 
+	WINPR_ATTR_MALLOC(free_cache_glyph_order, 1)
+	WINPR_ATTR_NODISCARD
+	FREERDP_LOCAL CACHE_GLYPH_ORDER* copy_cache_glyph_order(rdpContext* context,
+	                                                        const CACHE_GLYPH_ORDER* glyph);
+
+	FREERDP_LOCAL void free_cache_glyph_v2_order(rdpContext* context, CACHE_GLYPH_V2_ORDER* glyph);
+
+	WINPR_ATTR_MALLOC(free_cache_glyph_v2_order, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL CACHE_GLYPH_V2_ORDER*
 	copy_cache_glyph_v2_order(rdpContext* context, const CACHE_GLYPH_V2_ORDER* glyph);
-	FREERDP_LOCAL void free_cache_glyph_v2_order(rdpContext* context, CACHE_GLYPH_V2_ORDER* glyph);
 
 #ifdef __cplusplus
 }

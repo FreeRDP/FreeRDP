@@ -600,6 +600,7 @@ static void rts_context_elem_free(p_cont_elem_t* ptr)
 }
 
 WINPR_ATTR_MALLOC(rts_context_elem_free, 1)
+WINPR_ATTR_NODISCARD
 static p_cont_elem_t* rts_context_elem_new(size_t count)
 {
 	p_cont_elem_t* ctx = calloc(count, sizeof(p_cont_elem_t));

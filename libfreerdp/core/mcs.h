@@ -185,6 +185,7 @@ FREERDP_LOCAL BOOL mcs_client_begin(rdpMcs* mcs);
 FREERDP_LOCAL void mcs_free(rdpMcs* mcs);
 
 WINPR_ATTR_MALLOC(mcs_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpMcs* mcs_new(rdpContext* context);
 
 #endif /* FREERDP_LIB_CORE_MCS_H */

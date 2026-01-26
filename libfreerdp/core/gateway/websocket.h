@@ -55,6 +55,7 @@ typedef struct s_websocket_context websocket_context;
 FREERDP_LOCAL void websocket_context_free(websocket_context* context);
 
 WINPR_ATTR_MALLOC(websocket_context_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL websocket_context* websocket_context_new(void);
 
 FREERDP_LOCAL BOOL websocket_context_reset(websocket_context* context);
@@ -67,6 +68,7 @@ FREERDP_LOCAL int websocket_context_read(websocket_context* encodingContext, BIO
                                          BYTE* pBuffer, size_t size);
 
 WINPR_ATTR_MALLOC(Stream_Free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL wStream* websocket_context_packet_new(size_t len, WEBSOCKET_OPCODE opcode,
                                                     UINT32* pMaskingKey);
 

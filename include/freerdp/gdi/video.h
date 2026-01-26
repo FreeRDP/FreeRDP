@@ -44,6 +44,7 @@ extern "C"
 	FREERDP_API void gdi_video_free(gdiVideoContext* context);
 
 	WINPR_ATTR_MALLOC(gdi_video_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API gdiVideoContext* gdi_video_new(rdpGdi* gdi);
 
 #ifdef __cplusplus

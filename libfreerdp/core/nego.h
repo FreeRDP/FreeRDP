@@ -109,6 +109,7 @@ FREERDP_LOCAL BOOL nego_send_negotiation_response(rdpNego* nego);
 FREERDP_LOCAL void nego_free(rdpNego* nego);
 
 WINPR_ATTR_MALLOC(nego_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpNego* nego_new(rdpTransport* transport);
 
 FREERDP_LOCAL void nego_init(rdpNego* nego);

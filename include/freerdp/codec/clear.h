@@ -50,6 +50,7 @@ extern "C"
 	FREERDP_API void clear_context_free(CLEAR_CONTEXT* WINPR_RESTRICT clear);
 
 	WINPR_ATTR_MALLOC(clear_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API CLEAR_CONTEXT* clear_context_new(BOOL Compressor);
 
 #ifdef __cplusplus

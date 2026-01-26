@@ -102,17 +102,22 @@ extern "C"
 	                                     const BYTE* WINPR_RESTRICT image_data, UINT32 width,
 	                                     UINT32 height, UINT32 rowstride);
 
+	WINPR_ATTR_MALLOC(rfx_message_free, 2)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 	                                            const RFX_RECT* WINPR_RESTRICT rects,
 	                                            size_t numRects, const BYTE* WINPR_RESTRICT data,
 	                                            UINT32 width, UINT32 height, size_t scanline);
 
+	FREERDP_API void rfx_message_list_free(RFX_MESSAGE_LIST* messages);
+
+	WINPR_ATTR_MALLOC(rfx_message_list_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API RFX_MESSAGE_LIST*
 	rfx_encode_messages(RFX_CONTEXT* WINPR_RESTRICT context, const RFX_RECT* WINPR_RESTRICT rects,
 	                    size_t numRects, const BYTE* WINPR_RESTRICT data, UINT32 width,
 	                    UINT32 height, UINT32 scanline, size_t* WINPR_RESTRICT numMessages,
 	                    size_t maxDataSize);
-	FREERDP_API void rfx_message_list_free(RFX_MESSAGE_LIST* messages);
 
 	FREERDP_API const RFX_MESSAGE*
 	rfx_message_list_get(const RFX_MESSAGE_LIST* WINPR_RESTRICT messages, size_t idx);
@@ -124,9 +129,11 @@ extern "C"
 	FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
 
 	WINPR_ATTR_MALLOC(rfx_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags);
 
 	WINPR_ATTR_MALLOC(rfx_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
 
 	FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* WINPR_RESTRICT context, UINT32 width,

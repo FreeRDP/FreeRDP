@@ -54,7 +54,10 @@ typedef enum
 
 typedef state_run_t (*TransportRecv)(rdpTransport* transport, wStream* stream, void* extra);
 
+WINPR_ATTR_MALLOC(Stream_Release, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL wStream* transport_send_stream_init(rdpTransport* transport, size_t size);
+
 FREERDP_LOCAL BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port,
                                      DWORD timeout);
 FREERDP_LOCAL BOOL transport_connect_childsession(rdpTransport* transport);
@@ -140,6 +143,8 @@ FREERDP_LOCAL rdpTls* transport_get_tls(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_set_tsg(rdpTransport* transport, rdpTsg* tsg);
 FREERDP_LOCAL rdpTsg* transport_get_tsg(rdpTransport* transport);
 
+WINPR_ATTR_MALLOC(Stream_Release, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL wStream* transport_take_from_pool(rdpTransport* transport, size_t size);
 
 FREERDP_LOCAL UINT64 transport_get_bytes_sent(rdpTransport* transport, BOOL resetCount);
@@ -166,6 +171,7 @@ transport_connect_layer(rdpTransport* transport, const char* hostname, int port,
 FREERDP_LOCAL void transport_free(rdpTransport* transport);
 
 WINPR_ATTR_MALLOC(transport_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
 
 FREERDP_LOCAL void transport_set_early_user_auth_mode(rdpTransport* transport, BOOL EUAMode);

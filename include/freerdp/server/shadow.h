@@ -352,6 +352,7 @@ extern "C"
 	FREERDP_API void shadow_server_free(rdpShadowServer* server);
 
 	WINPR_ATTR_MALLOC(shadow_server_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpShadowServer* shadow_server_new(void);
 
 	FREERDP_API int shadow_capture_align_clip_rect(RECTANGLE_16* rect, const RECTANGLE_16* clip);

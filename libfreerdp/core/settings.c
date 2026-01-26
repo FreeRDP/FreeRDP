@@ -421,6 +421,7 @@ static void alloc_free(UINT32** ptr)
 }
 
 WINPR_ATTR_MALLOC(alloc_free, 1)
+WINPR_ATTR_NODISCARD
 static UINT32** alloc_array(size_t count)
 {
 	// NOLINTNEXTLINE(clang-analyzer-unix.MallocSizeof)

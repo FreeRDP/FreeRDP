@@ -128,6 +128,7 @@ extern "C"
 	FREERDP_API void cam_dev_enum_server_context_free(CamDevEnumServerContext* context);
 
 	WINPR_ATTR_MALLOC(cam_dev_enum_server_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API CamDevEnumServerContext* cam_dev_enum_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus

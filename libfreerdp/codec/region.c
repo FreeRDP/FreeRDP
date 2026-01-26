@@ -204,6 +204,7 @@ void region16_clear(REGION16* region)
 }
 
 WINPR_ATTR_MALLOC(freeRegion, 1)
+WINPR_ATTR_NODISCARD
 static REGION16_DATA* allocateRegion(size_t nbItems)
 {
 	REGION16_DATA* data = calloc(1, sizeof(REGION16_DATA));

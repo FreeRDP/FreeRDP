@@ -301,7 +301,7 @@ typedef struct gdi_palette gdiPalette;
 
 	WINPR_DEPRECATED_VAR("[since 3.21.0] use freerdp_glyph_convert_ex instead",
 	                     WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	                         FREERDP_API BYTE* freerdp_glyph_convert(
+	                         WINPR_ATTR_NODISCARD FREERDP_API BYTE* freerdp_glyph_convert(
 	                             UINT32 width, UINT32 height, const BYTE* WINPR_RESTRICT data));
 #endif
 
@@ -317,6 +317,7 @@ typedef struct gdi_palette gdiPalette;
 	 * @since version 3.21.0
 	 */
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BYTE* freerdp_glyph_convert_ex(UINT32 width, UINT32 height,
 	                                           const BYTE* WINPR_RESTRICT data, size_t len);
 

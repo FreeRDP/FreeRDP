@@ -28,6 +28,7 @@ typedef struct freerdp_timer_s FreeRDPTimer;
 FREERDP_LOCAL void freerdp_timer_free(FreeRDPTimer* timer);
 
 WINPR_ATTR_MALLOC(freerdp_timer_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL FreeRDPTimer* freerdp_timer_new(rdpRdp* rdp);
 
 FREERDP_LOCAL bool freerdp_timer_poll(FreeRDPTimer* timer);

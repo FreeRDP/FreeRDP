@@ -94,6 +94,7 @@ extern "C"
 	 *  \return A newly allocated settings struct or NULL
 	 */
 	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpSettings* freerdp_settings_new(DWORD flags);
 
 	/** \brief Creates a deep copy of settings
@@ -103,6 +104,7 @@ extern "C"
 	 *  \return A newly allocated copy of \b settings or NULL
 	 */
 	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpSettings* freerdp_settings_clone(const rdpSettings* settings);
 
 	/** \brief Deep copies settings from \b src to \b dst
@@ -153,9 +155,11 @@ extern "C"
 	FREERDP_API void freerdp_addin_argv_free(ADDIN_ARGV* args);
 
 	WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* const argv[]);
 
 	WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args);
 
 	FREERDP_API BOOL freerdp_addin_argv_add_argument(ADDIN_ARGV* args, const char* argument);
@@ -193,10 +197,12 @@ extern "C"
 	FREERDP_API void freerdp_device_free(RDPDR_DEVICE* device);
 
 	WINPR_ATTR_MALLOC(freerdp_device_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count,
 	                                             const char* const args[]);
 
 	WINPR_ATTR_MALLOC(freerdp_device_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device);
 
 	FREERDP_API BOOL freerdp_device_equal(const RDPDR_DEVICE* one, const RDPDR_DEVICE* other);
@@ -754,6 +760,7 @@ extern "C"
 	 *  @note Since 3.17.1 this is a wrapper for \b freerdp_GetConfigFilePath(FALSE, "")
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_settings_get_config_path(void);
 
 	/** @brief Sort monitor array according to:
@@ -787,6 +794,7 @@ extern "C"
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_settings_serialize(const rdpSettings* settings, BOOL pretty,
 	                                             size_t* plength);
 
@@ -798,6 +806,7 @@ extern "C"
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpSettings* freerdp_settings_deserialize(const char* json, size_t length);
 
 #ifdef __cplusplus

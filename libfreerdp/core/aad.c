@@ -1013,6 +1013,7 @@ WINPR_JSON* freerdp_utils_aad_get_wellknown_custom_object(rdpContext* context, c
 }
 
 WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+WINPR_ATTR_NODISCARD
 WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const char* tenantid)
 {
 	WINPR_ASSERT(base);

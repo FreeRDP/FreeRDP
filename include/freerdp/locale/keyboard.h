@@ -243,6 +243,7 @@ FREERDP_API void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts, siz
  * @return An allocated array of keyboard layouts, free with \b freerdp_keyboard_layouts_free
  */
 WINPR_ATTR_MALLOC(freerdp_keyboard_layouts_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_API RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count);
 
 /** @brief Get a string representation of a keyboard layout.
@@ -298,6 +299,7 @@ FREERDP_API void freerdp_keyboard_remap_free(FREERDP_REMAP_TABLE* table);
  *  @since version 3.11.0
  */
 WINPR_ATTR_MALLOC(freerdp_keyboard_remap_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_API FREERDP_REMAP_TABLE* freerdp_keyboard_remap_string_to_list(const char* list);
 
 /** @brief does remap a RDP scancode according to the remap table provided.
@@ -336,6 +338,7 @@ FREERDP_API void freerdp_codepages_free(RDP_CODEPAGE* codepages);
  * freed by \ref freerdp_codepages_free
  */
 WINPR_ATTR_MALLOC(freerdp_codepages_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_API RDP_CODEPAGE* freerdp_keyboard_get_matching_codepages(DWORD column, const char* filter,
 	                                                              size_t* count);
 

@@ -35,7 +35,9 @@
 void freerdp_dsp_ffmpeg_context_free(FREERDP_DSP_CONTEXT* context);
 
 WINPR_ATTR_MALLOC(freerdp_dsp_ffmpeg_context_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_DSP_CONTEXT* freerdp_dsp_ffmpeg_context_new(BOOL encode);
+
 BOOL freerdp_dsp_ffmpeg_supports_format(const AUDIO_FORMAT* format, BOOL encode);
 BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
                                const BYTE* data, size_t length, wStream* out);

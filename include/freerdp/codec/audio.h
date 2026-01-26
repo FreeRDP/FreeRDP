@@ -221,9 +221,11 @@ extern "C"
 	FREERDP_API void audio_formats_free(AUDIO_FORMAT* formats, size_t count);
 
 	WINPR_ATTR_MALLOC(audio_formats_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API AUDIO_FORMAT* audio_format_new(void);
 
 	WINPR_ATTR_MALLOC(audio_formats_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API AUDIO_FORMAT* audio_formats_new(size_t count);
 
 #ifdef __cplusplus

@@ -122,6 +122,7 @@ extern "C"
 	FREERDP_LOCAL void freerdp_tls_free(rdpTls* tls);
 
 	WINPR_ATTR_MALLOC(freerdp_tls_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL rdpTls* freerdp_tls_new(rdpContext* context);
 
 #ifdef __cplusplus

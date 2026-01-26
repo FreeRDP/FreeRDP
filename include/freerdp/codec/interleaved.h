@@ -56,6 +56,7 @@ extern "C"
 	bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved);
 
 	WINPR_ATTR_MALLOC(bitmap_interleaved_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor);
 
 #ifdef __cplusplus
