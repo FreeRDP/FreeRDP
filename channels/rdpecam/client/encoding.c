@@ -220,6 +220,30 @@ static enum AVPixelFormat ecamToAVPixFormat(CAM_MEDIA_FORMAT ecamFormat)
 	}
 }
 
+static void ecam_sws_free(CameraDeviceStream* stream)
+{
+	if (stream->sws)
+	{
+		sws_freeContext(stream->sws);
+		stream->sws = NULL;
+	}
+}
+
+static BOOL ecam_sws_valid(const CameraDeviceStream* stream)
+{
+	if (!stream->sws)
+		return FALSE;
+	if (stream->swsWidth != stream->currMediaType.Width)
+		return FALSE;
+	if (stream->swsHeight != stream->currMediaType.Height)
+		return FALSE;
+	if (stream->currMediaType.Width > INT32_MAX)
+		return FALSE;
+	if (stream->currMediaType.Height > INT32_MAX)
+		return FALSE;
+	return TRUE;
+}
+
 /**
  * Function description
  * initialize libswscale
@@ -230,8 +254,15 @@ static BOOL ecam_init_sws_context(CameraDeviceStream* stream, enum AVPixelFormat
 {
 	WINPR_ASSERT(stream);
 
-	if (stream->sws)
+	if (stream->currMediaType.Width > INT32_MAX)
+		return FALSE;
+	if (stream->currMediaType.Height > INT32_MAX)
+		return FALSE;
+
+	if (ecam_sws_valid(stream))
 		return TRUE;
+
+	ecam_sws_free(stream);
 
 	/* replacing deprecated JPEG formats, still produced by decoder */
 	switch (pixFormat)
@@ -260,8 +291,10 @@ static BOOL ecam_init_sws_context(CameraDeviceStream* stream, enum AVPixelFormat
 			break;
 	}
 
-	const int width = (int)stream->currMediaType.Width;
-	const int height = (int)stream->currMediaType.Height;
+	stream->swsWidth = stream->currMediaType.Width;
+	stream->swsHeight = stream->currMediaType.Height;
+	const int width = WINPR_ASSERTING_INT_CAST(int, stream->currMediaType.Width);
+	const int height = WINPR_ASSERTING_INT_CAST(int, stream->currMediaType.Height);
 
 	const enum AVPixelFormat outPixFormat =
 	    h264_context_get_option(stream->h264, H264_CONTEXT_OPTION_HW_ACCEL) ? AV_PIX_FMT_NV12
@@ -294,6 +327,9 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 	prim_size_t size = { stream->currMediaType.Width, stream->currMediaType.Height };
 	CAM_MEDIA_FORMAT inputFormat = streamInputFormat(stream);
 	enum AVPixelFormat pixFormat = AV_PIX_FMT_NONE;
+
+	if (!ecam_sws_valid(stream))
+		return FALSE;
 
 #if defined(WITH_INPUT_FORMAT_H264)
 	if (inputFormat == CAM_MEDIA_FORMAT_MJPG_H264)
@@ -385,11 +421,7 @@ static void ecam_encoder_context_free_h264(CameraDeviceStream* stream)
 {
 	WINPR_ASSERT(stream);
 
-	if (stream->sws)
-	{
-		sws_freeContext(stream->sws);
-		stream->sws = NULL;
-	}
+	ecam_sws_free(stream);
 
 #if defined(WITH_INPUT_FORMAT_MJPG)
 	if (stream->avOutFrame)

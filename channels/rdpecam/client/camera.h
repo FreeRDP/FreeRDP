@@ -121,6 +121,8 @@ typedef struct
 #endif
 
 	/* sws_scale */
+	uint32_t swsWidth;
+	uint32_t swsHeight;
 	struct SwsContext* sws;
 
 } CameraDeviceStream;

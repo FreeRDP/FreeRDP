@@ -121,7 +121,7 @@ static BOOL mediaSupportDrops(CAM_MEDIA_FORMAT format)
 	}
 }
 
-static UINT ecam_dev_send_pending(CameraDevice* dev, int streamIndex, CameraDeviceStream* stream)
+static UINT ecam_dev_send_pending(CameraDevice* dev, size_t streamIndex, CameraDeviceStream* stream)
 {
 	WINPR_ASSERT(dev);
 	WINPR_ASSERT(stream);
@@ -160,8 +160,7 @@ static UINT ecam_dev_send_pending(CameraDevice* dev, int streamIndex, CameraDevi
 	stream->samplesRequested--;
 	stream->haveSample = FALSE;
 
-	return ecam_dev_send_sample_response(dev, WINPR_ASSERTING_INT_CAST(size_t, streamIndex),
-	                                     encodedSample, encodedSize);
+	return ecam_dev_send_sample_response(dev, streamIndex, encodedSample, encodedSize);
 }
 
 static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, int streamIndex,
@@ -229,7 +228,7 @@ static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, int streamIndex
 	Stream_SealLength(stream->pendingSample);
 	stream->haveSample = TRUE;
 
-	ret = ecam_dev_send_pending(dev, streamIndex, stream);
+	ret = ecam_dev_send_pending(dev, WINPR_ASSERTING_INT_CAST(size_t, streamIndex), stream);
 
 out:
 	LeaveCriticalSection(&stream->lock);
