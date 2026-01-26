@@ -88,11 +88,12 @@ extern "C"
 	                                           BYTE InterfaceNumber,
 	                                           MSUSB_INTERFACE_DESCRIPTOR* NewMsInterface);
 
-	WINPR_ATTR_MALLOC(msusb_msingerface_free, 1)
+	FREERDP_API void msusb_msinterface_free(MSUSB_INTERFACE_DESCRIPTOR* MsInterface);
+
+	WINPR_ATTR_MALLOC(msusb_msinterface_free, 1)
 	FREERDP_API MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* out);
 	FREERDP_API BOOL msusb_msinterface_write(const MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
 	                                         wStream* out);
-	FREERDP_API void msusb_msinterface_free(MSUSB_INTERFACE_DESCRIPTOR* MsInterface);
 
 #ifdef __cplusplus
 }
