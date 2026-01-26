@@ -539,19 +539,19 @@ static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BY
 	int error = 0;
 	int diff = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
-	URBDRC_PLUGIN* urbdrc = NULL;
-	MSUSB_CONFIG_DESCRIPTOR* MsConfig = NULL;
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
 
 	if (!pdev || !pdev->urbdrc)
 		return -1;
 
-	urbdrc = pdev->urbdrc;
-	MsConfig = pdev->MsConfig;
+	URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
+	MSUSB_CONFIG_DESCRIPTOR* MsConfig = pdev->MsConfig;
 
 	if (MsConfig)
 	{
-		MsInterfaces = MsConfig->MsInterfaces;
+		if (InterfaceNumber >= MsConfig->NumInterfaces)
+			return -2;
+
+		MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfig->MsInterfaces;
 		if (MsInterfaces)
 		{
 			WLog_Print(urbdrc->log, WLOG_INFO,
