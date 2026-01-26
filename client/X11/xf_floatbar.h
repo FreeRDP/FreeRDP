@@ -25,6 +25,7 @@ typedef struct xf_floatbar xfFloatbar;
 void xf_floatbar_free(xfFloatbar* floatbar);
 
 WINPR_ATTR_MALLOC(xf_floatbar_free, 1)
+WINPR_ATTR_NODISCARD
 xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* title, DWORD flags);
 
 BOOL xf_floatbar_is_window(xfFloatbar* floatbar, Window window);

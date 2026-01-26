@@ -28,6 +28,7 @@
 void xf_clipboard_free(xfClipboard* clipboard);
 
 WINPR_ATTR_MALLOC(xf_clipboard_free, 1)
+WINPR_ATTR_NODISCARD
 xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction);
 
 void xf_cliprdr_init(xfContext* xfc, CliprdrClientContext* cliprdr);
