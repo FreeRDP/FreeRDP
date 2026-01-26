@@ -80,6 +80,7 @@ extern "C"
 	WINPR_API void winpr_HMAC_Free(WINPR_HMAC_CTX* ctx);
 
 	WINPR_ATTR_MALLOC(winpr_HMAC_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_HMAC_CTX* winpr_HMAC_New(void);
 	WINPR_API BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const void* key,
 	                               size_t keylen);
@@ -107,6 +108,7 @@ extern "C"
 	WINPR_API void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx);
 
 	WINPR_ATTR_MALLOC(winpr_Digest_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_DIGEST_CTX* winpr_Digest_New(void);
 	WINPR_API BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md);
 	WINPR_API BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md);
@@ -156,9 +158,11 @@ extern "C"
 	WINPR_API void winpr_RC4_Free(WINPR_RC4_CTX* ctx);
 
 	WINPR_ATTR_MALLOC(winpr_RC4_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_RC4_CTX* winpr_RC4_New_Allow_FIPS(const void* key, size_t keylen);
 
 	WINPR_ATTR_MALLOC(winpr_RC4_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_RC4_CTX* winpr_RC4_New(const void* key, size_t keylen);
 	WINPR_API BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const void* input,
 	                                void* output);
@@ -267,10 +271,9 @@ extern "C"
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("[since 3.10.0] use winpr_Cipher_NewEx",
 	                     WINPR_ATTR_MALLOC(winpr_Cipher_Free, 1)
-	                         WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_New(WINPR_CIPHER_TYPE cipher,
-	                                                                      WINPR_CRYPTO_OPERATION op,
-	                                                                      const void* key,
-	                                                                      const void* iv));
+	                         WINPR_ATTR_NODISCARD WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_New(
+	                             WINPR_CIPHER_TYPE cipher, WINPR_CRYPTO_OPERATION op,
+	                             const void* key, const void* iv));
 #endif
 
 	/** @brief Create a new \b WINPR_CIPHER_CTX
@@ -290,6 +293,7 @@ extern "C"
 	 * @since version 3.10.0
 	 */
 	WINPR_ATTR_MALLOC(winpr_Cipher_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_NewEx(WINPR_CIPHER_TYPE cipher,
 	                                               WINPR_CRYPTO_OPERATION op, const void* key,
 	                                               size_t keylen, const void* iv, size_t ivlen);

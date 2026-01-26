@@ -64,6 +64,7 @@ extern "C"
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_JSON* WINPR_JSON_Parse(const char* value);
 
 	/**
@@ -75,6 +76,7 @@ extern "C"
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value, size_t buffer_length);
 
 	/**
@@ -85,6 +87,7 @@ extern "C"
 	 * @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_JSON* WINPR_JSON_ParseFromFile(const char* filename);
 
 	/**
@@ -95,6 +98,7 @@ extern "C"
 	 * @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API WINPR_JSON* WINPR_JSON_ParseFromFileFP(FILE* fp);
 
 	/**
@@ -403,6 +407,7 @@ extern "C"
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* WINPR_JSON_Print(WINPR_JSON* item);
 
 	/**
@@ -414,6 +419,7 @@ extern "C"
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* WINPR_JSON_PrintUnformatted(WINPR_JSON* item);
 
 #ifdef __cplusplus

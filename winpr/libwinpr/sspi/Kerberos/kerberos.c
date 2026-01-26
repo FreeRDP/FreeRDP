@@ -246,6 +246,7 @@ static BOOL isValidIP(const char* ipAddress)
 
 #if defined(WITH_KRB5_MIT)
 WINPR_ATTR_MALLOC(free, 1)
+WINPR_ATTR_NODISCARD
 static char* get_realm_name(krb5_data realm, size_t* plen)
 {
 	WINPR_ASSERT(plen);
@@ -260,6 +261,7 @@ static char* get_realm_name(krb5_data realm, size_t* plen)
 }
 #elif defined(WITH_KRB5_HEIMDAL)
 WINPR_ATTR_MALLOC(free, 1)
+WINPR_ATTR_NODISCARD
 static char* get_realm_name(Realm realm, size_t* plen)
 {
 	WINPR_ASSERT(plen);

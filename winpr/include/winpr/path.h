@@ -323,23 +323,29 @@ extern "C"
 	 *  @since version 3.9.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* winpr_GetConfigFilePath(BOOL system, const char* filename);
 
 	WINPR_API const char* GetKnownPathIdString(int id);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetKnownPath(eKnownPathTypes id);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetKnownSubPath(eKnownPathTypes id, const char* path);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetEnvironmentPath(char* name);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetEnvironmentSubPath(char* name, const char* path);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetCombinedPath(const char* basePath, const char* subPath);
 
 	WINPR_API BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes);

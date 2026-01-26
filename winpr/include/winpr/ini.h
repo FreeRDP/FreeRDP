@@ -140,6 +140,7 @@ extern "C"
 	 *  @return The newly allocated instance or \b NULL if failed.
 	 */
 	WINPR_ATTR_MALLOC(IniFile_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wIniFile* IniFile_New(void);
 
 	/** @brief Clone a ini instance

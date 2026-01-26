@@ -272,6 +272,7 @@ fail:
  */
 
 WINPR_ATTR_MALLOC(free, 1)
+WINPR_ATTR_NODISCARD
 static void* winpr_bitmap_write_buffer(const BYTE* data, WINPR_ATTR_UNUSED size_t size,
                                        UINT32 width, UINT32 height, UINT32 stride, UINT32 bpp,
                                        UINT32* pSize)

@@ -29,6 +29,7 @@
 #include "wlog.h"
 
 WINPR_ATTR_MALLOC(WLog_Appender_Free, 2)
+WINPR_ATTR_NODISCARD
 WINPR_LOCAL wLogAppender* WLog_UdpAppender_New(wLog* log);
 
 #endif /* WINPR_LIBWINPR_UTILS_WLOG_UDPAPPENDER_H_ */

@@ -192,26 +192,33 @@ extern "C"
 	WINPR_API void winpr_aligned_free(void* memblock);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_malloc(size_t size, size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_calloc(size_t count, size_t size, size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_realloc(void* memblock, size_t size, size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_recalloc(void* memblock, size_t num, size_t size,
 	                                       size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_offset_realloc(void* memblock, size_t size, size_t alignment,
 	                                             size_t offset);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size,
 	                                              size_t alignment, size_t offset);
 
