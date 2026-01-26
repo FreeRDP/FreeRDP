@@ -789,6 +789,9 @@ static UINT ecam_dev_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 
 	WLog_DBG(TAG, "entered");
 
+	for (size_t i = 0; i < ECAM_DEVICE_MAX_STREAMS; i++)
+		ecam_dev_stop_stream(dev, i);
+
 	/* make sure this channel is not used for sample responses */
 	for (size_t i = 0; i < ECAM_DEVICE_MAX_STREAMS; i++)
 		if (dev->streams[i].hSampleReqChannel == hchannel)
