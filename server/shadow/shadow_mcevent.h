@@ -39,6 +39,7 @@ extern "C"
 	void shadow_multiclient_free(rdpShadowMultiClientEvent* event);
 
 	WINPR_ATTR_MALLOC(shadow_multiclient_free, 1)
+	WINPR_ATTR_NODISCARD
 	rdpShadowMultiClientEvent* shadow_multiclient_new(void);
 
 	void shadow_multiclient_publish(rdpShadowMultiClientEvent* event);

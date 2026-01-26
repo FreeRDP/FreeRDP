@@ -43,6 +43,7 @@ extern "C"
 	void shadow_capture_free(rdpShadowCapture* capture);
 
 	WINPR_ATTR_MALLOC(shadow_capture_free, 1)
+	WINPR_ATTR_NODISCARD
 	rdpShadowCapture* shadow_capture_new(rdpShadowServer* server);
 
 #ifdef __cplusplus

@@ -72,6 +72,7 @@ extern "C"
 	void shadow_encoder_free(rdpShadowEncoder* encoder);
 
 	WINPR_ATTR_MALLOC(shadow_encoder_free, 1)
+	WINPR_ATTR_NODISCARD
 	rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client);
 
 #ifdef __cplusplus
