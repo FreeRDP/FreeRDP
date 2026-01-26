@@ -81,6 +81,7 @@ typedef enum
 
 FREERDP_LOCAL RdpEarPackageType rdpear_packageType_from_name(const WinPrAsn1_OctetString* package);
 WINPR_ATTR_MALLOC(Stream_Free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL wStream* rdpear_encodePayload(BOOL isKerb, wStream* payload);
 
 #define RDPEAR_COMMON_MESSAGE_DECL(V)                                                            \

@@ -79,6 +79,7 @@ static const char* filemap[] = { "PortDosName", "PnPName", "DriverName",
 	                             "CachedPrinterConfigData" };
 
 WINPR_ATTR_MALLOC(free, 1)
+WINPR_ATTR_NODISCARD
 static char* get_printer_hash(const WCHAR* name, size_t length)
 {
 	BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = { 0 };
@@ -90,6 +91,7 @@ static char* get_printer_hash(const WCHAR* name, size_t length)
 }
 
 WINPR_ATTR_MALLOC(free, 1)
+WINPR_ATTR_NODISCARD
 static char* get_printer_config_path(const rdpSettings* settings, const WCHAR* name, size_t length)
 {
 	char* config = NULL;
