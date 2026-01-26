@@ -44,6 +44,7 @@ extern "C"
 	RDTK_EXPORT void rdtk_engine_free(rdtkEngine* engine);
 
 	WINPR_ATTR_MALLOC(rdtk_engine_free, 1)
+	WINPR_ATTR_NODISCARD
 	RDTK_EXPORT rdtkEngine* rdtk_engine_new(void);
 
 	/* Surface */
