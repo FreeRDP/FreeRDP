@@ -440,9 +440,10 @@ static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cam_v4l_stream_capture_thread(void* param)
+static DWORD WINAPI cam_v4l_stream_capture_thread(LPVOID param)
 {
 	CamV4lStream* stream = (CamV4lStream*)param;
+	WINPR_ASSERT(stream);
 
 	int fd = stream->fd;
 
