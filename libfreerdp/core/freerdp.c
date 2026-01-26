@@ -257,14 +257,16 @@ BOOL freerdp_connect(freerdp* instance)
 
 		while (pcap_has_next_record(update->pcap_rfx) && status)
 		{
-			pcap_get_next_record_header(update->pcap_rfx, &record);
+			if (!pcap_get_next_record_header(update->pcap_rfx, &record))
+				break;
 
 			s = transport_take_from_pool(rdp->transport, record.length);
 			if (!s)
 				break;
 
 			record.data = Stream_Buffer(s);
-			pcap_get_next_record_content(update->pcap_rfx, &record);
+			if (!pcap_get_next_record_content(update->pcap_rfx, &record))
+				break;
 			Stream_SetLength(s, record.length);
 			Stream_SetPosition(s, 0);
 

@@ -713,7 +713,8 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POIN
 
 	if (pEntryPoints->device->Name)
 	{
-		smartcard_call_context_add(smartcard->callctx, pEntryPoints->device->Name);
+		if (!smartcard_call_context_add(smartcard->callctx, pEntryPoints->device->Name))
+			goto fail;
 	}
 
 	sSmartcard = smartcard;

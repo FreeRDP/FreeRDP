@@ -234,7 +234,8 @@ int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 		{
 			const size_t size = Stream_GetPosition(s) - start;
 			/* TODO: treat return values */
-			pcap_add_record(up->pcap_rfx, mark, size);
+			if (!pcap_add_record(up->pcap_rfx, mark, size))
+				return -1;
 			pcap_flush(up->pcap_rfx);
 		}
 	}
