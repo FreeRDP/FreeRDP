@@ -43,6 +43,7 @@ extern "C"
 	FREERDP_API void metrics_free(rdpMetrics* metrics);
 
 	WINPR_ATTR_MALLOC(metrics_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpMetrics* metrics_new(rdpContext* context);
 
 #ifdef __cplusplus

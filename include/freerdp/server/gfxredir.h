@@ -95,6 +95,7 @@ extern "C"
 	FREERDP_API void gfxredir_server_context_free(GfxRedirServerContext* context);
 
 	WINPR_ATTR_MALLOC(gfxredir_server_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API GfxRedirServerContext* gfxredir_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus

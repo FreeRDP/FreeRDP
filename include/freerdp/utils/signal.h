@@ -30,6 +30,7 @@ extern "C"
 
 	typedef void (*freerdp_signal_handler_t)(int signum, const char* signame, void* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_handle_signals(void);
 
 	/** \brief registers a cleanup handler for non fatal signals.

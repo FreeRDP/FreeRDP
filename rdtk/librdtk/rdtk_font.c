@@ -148,6 +148,7 @@ int rdtk_font_text_draw_size(rdtkFont* font, uint16_t* width, uint16_t* height, 
 }
 
 WINPR_ATTR_MALLOC(free, 1)
+WINPR_ATTR_NODISCARD
 static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 {
 	WINPR_ASSERT(filename);

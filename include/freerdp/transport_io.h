@@ -164,6 +164,7 @@ extern "C"
 	 * @since version 3.9.0
 	 */
 	WINPR_ATTR_MALLOC(transport_layer_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpTransportLayer* transport_layer_new(rdpTransport* transport, size_t contextSize);
 
 #ifdef __cplusplus

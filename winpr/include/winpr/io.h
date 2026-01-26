@@ -76,6 +76,7 @@ extern "C"
 	                               LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE CreateIoCompletionPort(HANDLE FileHandle, HANDLE ExistingCompletionPort,
 	                                        ULONG_PTR CompletionKey,
 	                                        DWORD NumberOfConcurrentThreads);

@@ -73,6 +73,7 @@ extern "C"
 	FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
 
 	WINPR_ATTR_MALLOC(nsc_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API NSC_CONTEXT* nsc_context_new(void);
 
 #ifdef __cplusplus

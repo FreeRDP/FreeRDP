@@ -566,8 +566,17 @@ extern "C"
 	WINPR_API int UnixChangeFileMode(const char* filename, int flags);
 
 	WINPR_API BOOL IsNamedPipeFileNameA(LPCSTR lpName);
+
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName);
+
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetNamedPipeUnixDomainSocketBaseFilePathA(void);
+
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName);
 
 	WINPR_API int GetNamePipeFileDescriptor(HANDLE hNamedPipe);

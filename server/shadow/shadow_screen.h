@@ -46,6 +46,7 @@ extern "C"
 	void shadow_screen_free(rdpShadowScreen* screen);
 
 	WINPR_ATTR_MALLOC(shadow_screen_free, 1)
+	WINPR_ATTR_NODISCARD
 	rdpShadowScreen* shadow_screen_new(rdpShadowServer* server);
 
 #ifdef __cplusplus

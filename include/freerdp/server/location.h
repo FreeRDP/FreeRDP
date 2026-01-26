@@ -133,6 +133,7 @@ extern "C"
 	FREERDP_API void location_server_context_free(LocationServerContext* context);
 
 	WINPR_ATTR_MALLOC(location_server_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API LocationServerContext* location_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus

@@ -214,6 +214,7 @@ static void fuse_file_free(void* data)
 
 WINPR_ATTR_FORMAT_ARG(1, 2)
 WINPR_ATTR_MALLOC(fuse_file_free, 1)
+WINPR_ATTR_NODISCARD
 static CliprdrFuseFile* fuse_file_new(WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	CliprdrFuseFile* file = calloc(1, sizeof(CliprdrFuseFile));

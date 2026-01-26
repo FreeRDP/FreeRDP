@@ -41,6 +41,7 @@ extern "C"
 	FREERDP_LOCAL void nine_grid_cache_free(rdpNineGridCache* nine_grid);
 
 	WINPR_ATTR_MALLOC(nine_grid_cache_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL rdpNineGridCache* nine_grid_cache_new(rdpContext* context);
 
 #ifdef __cplusplus

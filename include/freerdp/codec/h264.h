@@ -126,6 +126,7 @@ extern "C"
 	FREERDP_API void h264_context_free(H264_CONTEXT* h264);
 
 	WINPR_ATTR_MALLOC(h264_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API H264_CONTEXT* h264_context_new(BOOL Compressor);
 
 #ifdef __cplusplus

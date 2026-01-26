@@ -182,6 +182,7 @@ extern "C"
 	WINPR_API void BitStream_Free(wBitStream* bs);
 
 	WINPR_ATTR_MALLOC(BitStream_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wBitStream* BitStream_New(void);
 
 #ifdef __cplusplus

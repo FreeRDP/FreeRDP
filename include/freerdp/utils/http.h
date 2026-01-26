@@ -71,10 +71,13 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_http_request(const char* url, const char* body, long* status_code,
 	                                      BYTE** response, size_t* response_length);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_http_status_string(long status);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_http_status_string_format(long status, char* buffer,
 	                                                          size_t size);
 

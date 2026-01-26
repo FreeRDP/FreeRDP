@@ -29,6 +29,7 @@ FREERDP_LOCAL SSIZE_T rdstls_parse_pdu(wLog* log, wStream* s);
 FREERDP_LOCAL void rdstls_free(rdpRdstls* rdstls);
 
 WINPR_ATTR_MALLOC(rdstls_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpRdstls* rdstls_new(rdpContext* context, rdpTransport* transport);
 
 FREERDP_LOCAL int rdstls_authenticate(rdpRdstls* rdstls);

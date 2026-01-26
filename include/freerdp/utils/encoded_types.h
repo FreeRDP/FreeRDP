@@ -62,6 +62,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE for successful reading, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value);
 
 	/** Write a 4 byte signed integer to a stream
@@ -73,6 +74,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE for successful writing, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_write_four_byte_signed_integer(wStream* s, INT32 value);
 
 	/** Read a 4 byte float from a stream and store the decoded value
@@ -84,6 +86,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE for successful reading, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_read_four_byte_float(wStream* s, double* value);
 
 	/** Read a 4 byte float from a stream and store the decoded value and exponent
@@ -96,6 +99,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE for successful reading, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_read_four_byte_float_exp(wStream* s, double* value, BYTE* exp);
 
 	/** Write a 4 byte float to a stream
@@ -107,6 +111,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE for successful writing, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_write_four_byte_float(wStream* s, double value);
 
 #ifdef __cplusplus

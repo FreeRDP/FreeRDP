@@ -36,6 +36,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE if parsed successfully
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in);
 
 #ifdef __cplusplus

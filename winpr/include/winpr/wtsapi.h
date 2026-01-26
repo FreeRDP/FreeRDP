@@ -1012,15 +1012,19 @@ extern "C"
 	WINPR_API VOID WINAPI WTSCloseServer(HANDLE hServer);
 
 	WINPR_ATTR_MALLOC(WTSCloseServer, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE WINAPI WTSOpenServerW(LPWSTR pServerName);
 
 	WINPR_ATTR_MALLOC(WTSCloseServer, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE WINAPI WTSOpenServerA(LPSTR pServerName);
 
 	WINPR_ATTR_MALLOC(WTSCloseServer, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE WINAPI WTSOpenServerExW(LPWSTR pServerName);
 
 	WINPR_ATTR_MALLOC(WTSCloseServer, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE WINAPI WTSOpenServerExA(LPSTR pServerName);
 
 	WINPR_API BOOL WINAPI WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version,
@@ -1081,10 +1085,12 @@ extern "C"
 	WINPR_API BOOL WINAPI WTSVirtualChannelClose(HANDLE hChannelHandle);
 
 	WINPR_ATTR_MALLOC(WTSVirtualChannelClose, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE WINAPI WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId,
 	                                              LPSTR pVirtualName);
 
 	WINPR_ATTR_MALLOC(WTSVirtualChannelClose, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE WINAPI WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName,
 	                                                DWORD flags);
 

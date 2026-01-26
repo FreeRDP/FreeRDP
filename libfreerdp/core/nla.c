@@ -1250,6 +1250,7 @@ static BOOL nla_credentialTypeValid(UINT32 type)
 }
 
 WINPR_ATTR_MALLOC(free, 1)
+WINPR_ATTR_NODISCARD
 static MSV1_0_REMOTE_SUPPLEMENTAL_CREDENTIAL* nla_read_NtlmCreds(WINPR_ATTR_UNUSED rdpNla* nla,
                                                                  wStream* s)
 {

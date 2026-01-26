@@ -32,6 +32,7 @@ typedef struct rdp_wst rdpWst;
 FREERDP_LOCAL void wst_free(rdpWst* wst);
 
 WINPR_ATTR_MALLOC(wst_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpWst* wst_new(rdpContext* context);
 
 FREERDP_LOCAL BIO* wst_get_front_bio_and_take_ownership(rdpWst* wst);

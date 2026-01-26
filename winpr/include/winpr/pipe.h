@@ -74,12 +74,14 @@ extern "C"
 	 */
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode,
 	                                  DWORD nMaxInstances, DWORD nOutBufferSize,
 	                                  DWORD nInBufferSize, DWORD nDefaultTimeOut,
 	                                  LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode,
 	                                  DWORD nMaxInstances, DWORD nOutBufferSize,
 	                                  DWORD nInBufferSize, DWORD nDefaultTimeOut,

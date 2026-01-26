@@ -691,6 +691,7 @@ owned by rdpRdp */
 	FREERDP_API void freerdp_free(freerdp* instance);
 
 	WINPR_ATTR_MALLOC(freerdp_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API freerdp* freerdp_new(void);
 
 	FREERDP_API BOOL freerdp_focus_required(freerdp* instance);

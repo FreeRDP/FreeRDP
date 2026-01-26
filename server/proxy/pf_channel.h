@@ -36,6 +36,7 @@ typedef PfChannelResult (*ChannelTrackerPeekFn)(ChannelStateTracker* tracker, BO
 void channelTracker_free(ChannelStateTracker* t);
 
 WINPR_ATTR_MALLOC(channelTracker_free, 1)
+WINPR_ATTR_NODISCARD
 ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
                                         ChannelTrackerPeekFn fn, void* data);
 

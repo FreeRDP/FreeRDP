@@ -91,6 +91,7 @@ extern "C"
 	FREERDP_API void persistent_cache_free(rdpPersistentCache* persistent);
 
 	WINPR_ATTR_MALLOC(persistent_cache_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpPersistentCache* persistent_cache_new(void);
 
 #ifdef __cplusplus

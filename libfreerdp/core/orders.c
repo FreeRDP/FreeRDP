@@ -2329,6 +2329,7 @@ static BOOL update_read_ellipse_cb_order(const char* orderName, wStream* s,
 
 /* Secondary Drawing Orders */
 WINPR_ATTR_MALLOC(free_cache_bitmap_order, 2)
+WINPR_ATTR_NODISCARD
 static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wStream* s,
                                                           BOOL compressed, UINT16 flags)
 {
@@ -2449,6 +2450,7 @@ BOOL update_write_cache_bitmap_order(wStream* s, const CACHE_BITMAP_ORDER* cache
 }
 
 WINPR_ATTR_MALLOC(free_cache_bitmap_v2_order, 2)
+WINPR_ATTR_NODISCARD
 static CACHE_BITMAP_V2_ORDER* update_read_cache_bitmap_v2_order(rdpUpdate* update, wStream* s,
                                                                 BOOL compressed, UINT16 flags)
 {
@@ -2634,6 +2636,7 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache
 }
 
 WINPR_ATTR_MALLOC(free_cache_bitmap_v3_order, 2)
+WINPR_ATTR_NODISCARD
 static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* update, wStream* s,
                                                                 UINT16 flags)
 {
@@ -2742,6 +2745,7 @@ BOOL update_write_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache
 }
 
 WINPR_ATTR_MALLOC(free_cache_color_table_order, 2)
+WINPR_ATTR_NODISCARD
 static CACHE_COLOR_TABLE_ORDER* update_read_cache_color_table_order(rdpUpdate* update, wStream* s,
                                                                     WINPR_ATTR_UNUSED UINT16 flags)
 {

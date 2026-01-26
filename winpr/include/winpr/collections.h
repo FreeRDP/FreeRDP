@@ -185,6 +185,7 @@ extern "C"
 	 *  @return A newly allocated queue or \b NULL in case of failure
 	 */
 	WINPR_ATTR_MALLOC(Queue_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor);
 
 	/* System.Collections.Stack */
@@ -207,6 +208,7 @@ extern "C"
 	WINPR_API void Stack_Free(wStack* stack);
 
 	WINPR_ATTR_MALLOC(Stack_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wStack* Stack_New(BOOL synchronized);
 
 	/* System.Collections.ArrayList */
@@ -254,6 +256,7 @@ extern "C"
 	WINPR_API void ArrayList_Free(wArrayList* arrayList);
 
 	WINPR_ATTR_MALLOC(ArrayList_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wArrayList* ArrayList_New(BOOL synchronized);
 
 	/* System.Collections.DictionaryBase */
@@ -399,6 +402,7 @@ extern "C"
 	 *  @return A newly allocated dictionary or \b NULL in case of failure
 	 */
 	WINPR_ATTR_MALLOC(ListDictionary_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wListDictionary* ListDictionary_New(BOOL synchronized);
 
 	/* System.Collections.Generic.LinkedList<T> */
@@ -526,6 +530,7 @@ extern "C"
 	 * @return A pointer to the newly allocated linked list or \b NULL in case of failure
 	 */
 	WINPR_ATTR_MALLOC(LinkedList_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wLinkedList* LinkedList_New(void);
 
 	/** @brief Return the \b wObject function pointers for list elements
@@ -612,6 +617,7 @@ extern "C"
 	 *  @return The newly allocated event or \b NULL in case of failure
 	 */
 	WINPR_ATTR_MALLOC(CountdownEvent_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wCountdownEvent* CountdownEvent_New(size_t initialCount);
 
 	/* Hash Table */
@@ -651,6 +657,7 @@ extern "C"
 	WINPR_API void HashTable_Free(wHashTable* table);
 
 	WINPR_ATTR_MALLOC(HashTable_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wHashTable* HashTable_New(BOOL synchronized);
 
 	WINPR_API void HashTable_Lock(wHashTable* table);
@@ -678,6 +685,7 @@ extern "C"
 	WINPR_API void BufferPool_Free(wBufferPool* pool);
 
 	WINPR_ATTR_MALLOC(BufferPool_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignment);
 
 	/* ObjectPool */
@@ -693,6 +701,7 @@ extern "C"
 	WINPR_API void ObjectPool_Free(wObjectPool* pool);
 
 	WINPR_ATTR_MALLOC(ObjectPool_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wObjectPool* ObjectPool_New(BOOL synchronized);
 
 	/* Message Queue */
@@ -766,6 +775,7 @@ extern "C"
 	 * \return A pointer to a newly allocated MessageQueue or NULL.
 	 */
 	WINPR_ATTR_MALLOC(MessageQueue_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wMessageQueue* MessageQueue_New(const wObject* callback);
 
 	/* Message Pipe */
@@ -781,6 +791,7 @@ extern "C"
 	WINPR_API void MessagePipe_Free(wMessagePipe* pipe);
 
 	WINPR_ATTR_MALLOC(MessagePipe_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wMessagePipe* MessagePipe_New(void);
 
 	/* Publisher/Subscriber Pattern */
@@ -876,6 +887,7 @@ extern "C"
 	WINPR_API void PubSub_Free(wPubSub* pubSub);
 
 	WINPR_ATTR_MALLOC(PubSub_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wPubSub* PubSub_New(BOOL synchronized);
 
 #ifdef __cplusplus

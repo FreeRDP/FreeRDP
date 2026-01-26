@@ -565,7 +565,8 @@ static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 			break;
 
 		record.data = Stream_Buffer(s);
-		pcap_get_next_record_content(pcap_rfx, &record);
+		if (!pcap_get_next_record_content(pcap_rfx, &record))
+			break;
 		Stream_SetPosition(s, Stream_Capacity(s));
 
 		if (info->test_dump_rfx_realtime &&

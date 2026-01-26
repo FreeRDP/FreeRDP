@@ -44,6 +44,7 @@ extern "C"
 	 *  @since version 3.9.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_GetConfigFilePath(BOOL system, const char* filename);
 
 	/** @brief return a parsed JSON for a given config file name.
@@ -56,6 +57,7 @@ extern "C"
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API WINPR_JSON* freerdp_GetJSONConfigFile(BOOL system, const char* filename);
 
 #ifdef __cplusplus

@@ -95,6 +95,7 @@ extern "C"
 	FREERDP_API void encomsp_server_context_free(EncomspServerContext* context);
 
 	WINPR_ATTR_MALLOC(encomsp_server_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API EncomspServerContext* encomsp_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus

@@ -37,6 +37,7 @@ extern "C"
 	FREERDP_API void Emulate_Free(SmartcardEmulationContext* context);
 
 	WINPR_ATTR_MALLOC(Emulate_Free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API SmartcardEmulationContext* Emulate_New(const rdpSettings* settings);
 
 	FREERDP_API BOOL Emulate_IsConfigured(SmartcardEmulationContext* context);

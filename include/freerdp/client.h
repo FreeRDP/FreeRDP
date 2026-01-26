@@ -153,6 +153,7 @@ extern "C"
 	FREERDP_API void freerdp_client_context_free(rdpContext* context);
 
 	WINPR_ATTR_MALLOC(freerdp_client_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpContext* freerdp_client_context_new(const RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 	FREERDP_API int freerdp_client_start(rdpContext* context);
@@ -338,6 +339,7 @@ extern "C"
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_client_get_aad_url(rdpClientContext* cctx,
 	                                             freerdp_client_aad_type type, ...);
 

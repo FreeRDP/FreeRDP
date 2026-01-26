@@ -43,6 +43,7 @@ extern "C"
 	 *
 	 * @return The character read or \ref EOF in case of any failures
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_interruptible_getc(rdpContext* context, FILE* stream);
 
 	/** @brief read a line from \ref stream with (optinal) default value that can be manipulated.
@@ -58,6 +59,7 @@ extern "C"
 	 *
 	 * @return \b -1 in case of failure, otherwise \ref strlen of the result
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** lineptr,
 	                                                   size_t* size, FILE* stream);
 
@@ -71,6 +73,7 @@ extern "C"
 	 *
 	 * @return A pointer to \ref buf containing the password or \ref NULL in case of an error.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_passphrase_read(rdpContext* context, const char* prompt,
 	                                                char* buf, size_t bufsiz, int from_stdin);
 

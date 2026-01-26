@@ -91,9 +91,11 @@ extern "C"
 	WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
 
 	WINPR_ATTR_MALLOC(FreeEnvironmentStringsA, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API LPCH GetEnvironmentStrings(VOID);
 
 	WINPR_ATTR_MALLOC(FreeEnvironmentStringsW, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API LPWCH GetEnvironmentStringsW(VOID);
 
 	WINPR_API BOOL SetEnvironmentStringsA(LPCH NewEnvironment);
@@ -130,6 +132,7 @@ extern "C"
 #endif
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge);
 
 	WINPR_API DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer,
@@ -137,11 +140,13 @@ extern "C"
 	WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock);
 
 	WINPR_API DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize);
 
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetEnvAlloc(LPCSTR lpName);
 
 #ifdef __cplusplus

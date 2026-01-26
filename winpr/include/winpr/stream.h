@@ -90,6 +90,7 @@ extern "C"
 	WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 
 	WINPR_ATTR_MALLOC(Stream_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wStream* Stream_New(BYTE* buffer, size_t size);
 	WINPR_API wStream* Stream_StaticConstInit(wStream* s, const BYTE* buffer, size_t size);
 	WINPR_API wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size);
@@ -1385,6 +1386,7 @@ extern "C"
 	WINPR_API void Stream_Release(wStream* s);
 
 	WINPR_ATTR_MALLOC(Stream_Release, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wStream* StreamPool_Take(wStreamPool* pool, size_t size);
 
 	WINPR_API wStream* StreamPool_Find(wStreamPool* pool, const BYTE* ptr);
@@ -1416,6 +1418,7 @@ extern "C"
 	WINPR_API void StreamPool_Free(wStreamPool* pool);
 
 	WINPR_ATTR_MALLOC(StreamPool_Free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize);
 
 	WINPR_API char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size);

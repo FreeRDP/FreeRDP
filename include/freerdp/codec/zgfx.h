@@ -57,6 +57,7 @@ extern "C"
 	FREERDP_API void zgfx_context_free(ZGFX_CONTEXT* zgfx);
 
 	WINPR_ATTR_MALLOC(zgfx_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API ZGFX_CONTEXT* zgfx_context_new(BOOL Compressor);
 
 #ifdef __cplusplus

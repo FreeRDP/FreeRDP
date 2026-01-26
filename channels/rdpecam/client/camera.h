@@ -265,6 +265,7 @@ UINT ecam_channel_write(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel, 
 void ecam_dev_destroy(CameraDevice* dev);
 
 WINPR_ATTR_MALLOC(ecam_dev_destroy, 1)
+WINPR_ATTR_NODISCARD
 CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId, const char* deviceName);
 
 /* video encoding interface */

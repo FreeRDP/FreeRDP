@@ -35,6 +35,7 @@
 FREERDP_LOCAL void autodetect_free(rdpAutoDetect* autodetect);
 
 WINPR_ATTR_MALLOC(autodetect_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpAutoDetect* autodetect_new(rdpContext* context);
 
 FREERDP_LOCAL state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect,

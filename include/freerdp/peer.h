@@ -216,6 +216,7 @@ extern "C"
 	FREERDP_API void freerdp_peer_free(freerdp_peer* client);
 
 	WINPR_ATTR_MALLOC(freerdp_peer_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API freerdp_peer* freerdp_peer_new(int sockfd);
 
 	FREERDP_API BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,

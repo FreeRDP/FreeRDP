@@ -90,9 +90,11 @@ extern "C"
 	FREERDP_API void freerdp_client_rdp_file_free(rdpFile* file);
 
 	WINPR_ATTR_MALLOC(freerdp_client_rdp_file_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpFile* freerdp_client_rdp_file_new(void);
 
 	WINPR_ATTR_MALLOC(freerdp_client_rdp_file_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags);
 
 #ifdef __cplusplus

@@ -136,6 +136,7 @@ FREERDP_LOCAL int update_message_queue_process_pending_messages(rdpUpdate* updat
 FREERDP_LOCAL void update_message_proxy_free(rdpUpdateProxy* message);
 
 WINPR_ATTR_MALLOC(update_message_proxy_free, 1)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update);
 
 /**

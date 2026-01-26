@@ -432,6 +432,7 @@ extern "C"
 
 #if !defined(WINPR_HAVE_STRNDUP)
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API char* strndup(const char* s, size_t n);
 #endif
 
@@ -446,6 +447,7 @@ extern "C"
 	 *  @since version 3.10.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	WINPR_API WCHAR* wcsndup(const WCHAR* s, size_t n);
 
 #ifdef __cplusplus

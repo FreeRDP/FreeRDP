@@ -53,6 +53,7 @@ extern "C"
 	FREERDP_API void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT* context);
 
 	WINPR_ATTR_MALLOC(freerdp_bitmap_planar_context_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(DWORD flags, UINT32 width,
 	                                                                     UINT32 height);
 

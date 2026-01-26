@@ -114,6 +114,7 @@ static const char* key_cert_file = "CertificateFile";
 static const char* key_cert_content = "CertificateContent";
 
 WINPR_ATTR_MALLOC(CommandLineParserFree, 1)
+WINPR_ATTR_NODISCARD
 static char** pf_config_parse_comma_separated_list(const char* list, size_t* count)
 {
 	if (!list || !count)

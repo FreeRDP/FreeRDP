@@ -48,12 +48,16 @@ extern "C"
 		SmartcardKeyInfo* key_info;
 	} SmartcardCertInfo;
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL smartcard_enumerateCerts(const rdpSettings* settings,
 	                                          SmartcardCertInfo*** scCerts, size_t* retCount,
 	                                          BOOL gateway);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert,
 	                                   BOOL gateway);
+
 	FREERDP_API void smartcardCertInfo_Free(SmartcardCertInfo* pscCert);
+
 	FREERDP_API void smartcardCertList_Free(SmartcardCertInfo** pscCert, size_t count);
 
 #ifdef __cplusplus
