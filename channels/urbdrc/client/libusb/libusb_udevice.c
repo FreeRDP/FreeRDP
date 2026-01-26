@@ -554,13 +554,16 @@ static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BY
 		MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfig->MsInterfaces;
 		if (MsInterfaces)
 		{
+			const MSUSB_INTERFACE_DESCRIPTOR* ifc = MsInterfaces[InterfaceNumber];
+			if (!ifc)
+				return -3;
+
 			WLog_Print(urbdrc->log, WLOG_INFO,
 			           "select Interface(%" PRIu8 ") curr AlternateSetting(%" PRIu8
 			           ") new AlternateSetting(%" PRIu8 ")",
-			           InterfaceNumber, MsInterfaces[InterfaceNumber]->AlternateSetting,
-			           AlternateSetting);
+			           InterfaceNumber, ifc->AlternateSetting, AlternateSetting);
 
-			if (MsInterfaces[InterfaceNumber]->AlternateSetting != AlternateSetting)
+			if (ifc->AlternateSetting != AlternateSetting)
 			{
 				diff = 1;
 			}
