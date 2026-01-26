@@ -42,24 +42,28 @@ extern "C"
 		a->nvalues = 0;                                                                   \
 	}                                                                                     \
                                                                                           \
+	WINPR_ATTR_NODISCARD                                                                  \
 	static inline size_t array_##TLOWER##_size(const Array##T* a)                         \
 	{                                                                                     \
 		WINPR_ASSERT(a);                                                                  \
 		return a->nvalues;                                                                \
 	}                                                                                     \
                                                                                           \
+	WINPR_ATTR_NODISCARD                                                                  \
 	static inline T* array_##TLOWER##_data(const Array##T* a)                             \
 	{                                                                                     \
 		WINPR_ASSERT(a);                                                                  \
 		return a->values;                                                                 \
 	}                                                                                     \
                                                                                           \
+	WINPR_ATTR_NODISCARD                                                                  \
 	static inline const T* array_##TLOWER##_cdata(const Array##T* a)                      \
 	{                                                                                     \
 		WINPR_ASSERT(a);                                                                  \
 		return (const T*)a->values;                                                       \
 	}                                                                                     \
                                                                                           \
+	WINPR_ATTR_NODISCARD                                                                  \
 	static inline T array_##TLOWER##_get(const Array##T* a, size_t idx)                   \
 	{                                                                                     \
 		WINPR_ASSERT(a);                                                                  \
@@ -74,6 +78,7 @@ extern "C"
 		a->values[idx] = v;                                                               \
 	}                                                                                     \
                                                                                           \
+	WINPR_ATTR_NODISCARD                                                                  \
 	static inline BOOL array_##TLOWER##_append(Array##T* a, T v)                          \
 	{                                                                                     \
 		WINPR_ASSERT(a);                                                                  \
@@ -87,6 +92,7 @@ extern "C"
 		return TRUE;                                                                      \
 	}                                                                                     \
                                                                                           \
+	WINPR_ATTR_NODISCARD                                                                  \
 	static inline BOOL array_##TLOWER##_contains(const Array##T* a, T v)                  \
 	{                                                                                     \
 		WINPR_ASSERT(a);                                                                  \
@@ -100,6 +106,7 @@ extern "C"
 		return FALSE;                                                                     \
 	}                                                                                     \
                                                                                           \
+	WINPR_ATTR_NODISCARD                                                                  \
 	static inline BOOL array_##TLOWER##_foreach(Array##T* a, Array##T##Cb cb, void* data) \
 	{                                                                                     \
 		WINPR_ASSERT(a);                                                                  \

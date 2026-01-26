@@ -22,6 +22,7 @@
 #define FREERDP_UTILS_CLIPRDR_H
 
 #include <winpr/wtypes.h>
+#include <winpr/stream.h>
 #include <winpr/shell.h>
 #include <freerdp/api.h>
 
@@ -30,15 +31,20 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL cliprdr_read_filedescriptor(wStream* s, FILEDESCRIPTORW* descriptor);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL cliprdr_write_filedescriptor(wStream* s, const FILEDESCRIPTORW* descriptor);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	                                         FILEDESCRIPTORW** file_descriptor_array,
 	                                         UINT32* file_descriptor_count);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT cliprdr_serialize_file_list(const FILEDESCRIPTORW* file_descriptor_array,
 	                                             UINT32 file_descriptor_count, BYTE** format_data,
 	                                             UINT32* format_data_length);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT cliprdr_serialize_file_list_ex(UINT32 flags,
 	                                                const FILEDESCRIPTORW* file_descriptor_array,
 	                                                UINT32 file_descriptor_count,

@@ -63,13 +63,21 @@ extern "C"
 
 	typedef struct rdp_pcap rdpPcap;
 
-	FREERDP_API rdpPcap* pcap_open(const char* name, BOOL write);
 	FREERDP_API void pcap_close(rdpPcap* pcap);
 
+	WINPR_ATTR_MALLOC(pcap_close, 1)
+	WINPR_ATTR_NODISCARD
+	FREERDP_API rdpPcap* pcap_open(const char* name, BOOL write);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pcap_add_record(rdpPcap* pcap, const void* data, size_t length);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pcap_has_next_record(const rdpPcap* pcap);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record);
 	FREERDP_API void pcap_flush(rdpPcap* pcap);
 

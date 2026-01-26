@@ -36,10 +36,13 @@ extern "C"
 	 * @return The string representation of the capabilities
 	 * @since version 3.9.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* rdpgfx_caps_version_str(UINT32 capsVersion);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* rdpgfx_get_cmd_id_string(UINT16 cmdId);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* rdpgfx_get_codec_id_string(UINT16 codecId);
 
 #ifdef __cplusplus

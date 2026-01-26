@@ -30,8 +30,10 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer,
 	                                                        size_t size);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer,
 	                                                         size_t size);
 
@@ -45,6 +47,7 @@ extern "C"
 	 *
 	 * @since version 3.9.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_extract_key_value(const char* str, UINT32* pkey, UINT32* pvalue);
 
 	/** @brief Convert \ref FreeRDP_DesktopRotationFlags to string
