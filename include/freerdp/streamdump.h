@@ -40,17 +40,21 @@ extern "C"
 		STREAM_MSG_SRV_TX = 2
 	} StreamDumpDirection;
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API SSIZE_T stream_dump_append(const rdpContext* context, UINT32 flags, wStream* s,
 	                                       size_t* offset);
+	WINPR_ATTR_NODISCARD
 	FREERDP_API SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s,
 	                                    size_t* offset, UINT64* pts);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL stream_dump_register_handlers(rdpContext* context, CONNECTION_STATE state,
 	                                               BOOL isServer);
 
 	FREERDP_API void stream_dump_free(rdpStreamDumpContext* dump);
 
 	WINPR_ATTR_MALLOC(stream_dump_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpStreamDumpContext* stream_dump_new(void);
 
 #ifdef __cplusplus
