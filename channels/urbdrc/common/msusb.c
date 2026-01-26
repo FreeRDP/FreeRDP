@@ -100,6 +100,7 @@ out_error:
 	return NULL;
 }
 
+WINPR_ATTR_MALLOC(msusb_msinterface_free, 1)
 static MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_new(void)
 {
 	return (MSUSB_INTERFACE_DESCRIPTOR*)calloc(1, sizeof(MSUSB_INTERFACE_DESCRIPTOR));

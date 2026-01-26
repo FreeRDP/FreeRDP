@@ -526,7 +526,8 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 					Stream_SealLength(s);
 					Stream_SetPosition(s, 0);
 
-					if ((error = remdesk_server_receive_pdu(context, s)))
+					error = remdesk_server_receive_pdu(context, s);
+					if (error)
 					{
 						WLog_ERR(TAG, "remdesk_server_receive_pdu failed with error %" PRIu32 "!",
 						         error);

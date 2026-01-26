@@ -662,10 +662,8 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 	MSUSB_CONFIG_DESCRIPTOR* MsConfig = pdev->get_MsConfig(pdev);
 	const uint8_t InterfaceNumber = MsInterface->InterfaceNumber;
 	if (!msusb_msinterface_replace(MsConfig, InterfaceNumber, MsInterface))
-	{
-		msusb_msconfig_free(MsConfig);
 		return ERROR_BAD_CONFIGURATION;
-	}
+
 	/* complete configuration setup */
 	if (!pdev->complete_msconfig_setup(pdev, MsConfig))
 		return ERROR_BAD_CONFIGURATION;

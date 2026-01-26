@@ -539,28 +539,31 @@ static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BY
 	int error = 0;
 	int diff = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
-	URBDRC_PLUGIN* urbdrc = NULL;
-	MSUSB_CONFIG_DESCRIPTOR* MsConfig = NULL;
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
 
 	if (!pdev || !pdev->urbdrc)
 		return -1;
 
-	urbdrc = pdev->urbdrc;
-	MsConfig = pdev->MsConfig;
+	URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
+	MSUSB_CONFIG_DESCRIPTOR* MsConfig = pdev->MsConfig;
 
 	if (MsConfig)
 	{
-		MsInterfaces = MsConfig->MsInterfaces;
+		if (InterfaceNumber >= MsConfig->NumInterfaces)
+			return -2;
+
+		MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfig->MsInterfaces;
 		if (MsInterfaces)
 		{
+			const MSUSB_INTERFACE_DESCRIPTOR* ifc = MsInterfaces[InterfaceNumber];
+			if (!ifc)
+				return -3;
+
 			WLog_Print(urbdrc->log, WLOG_INFO,
 			           "select Interface(%" PRIu8 ") curr AlternateSetting(%" PRIu8
 			           ") new AlternateSetting(%" PRIu8 ")",
-			           InterfaceNumber, MsInterfaces[InterfaceNumber]->AlternateSetting,
-			           AlternateSetting);
+			           InterfaceNumber, ifc->AlternateSetting, AlternateSetting);
 
-			if (MsInterfaces[InterfaceNumber]->AlternateSetting != AlternateSetting)
+			if (ifc->AlternateSetting != AlternateSetting)
 			{
 				diff = 1;
 			}
@@ -1165,6 +1168,7 @@ static void libusb_udev_mark_channel_closed(IUDEVICE* idev)
 		const uint8_t devNr = idev->get_dev_number(idev);
 
 		pdev->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
+		pdev->iface.cancel_all_transfer_request(&pdev->iface);
 		urbdrc->udevman->unregister_udevice(urbdrc->udevman, busNr, devNr);
 	}
 }

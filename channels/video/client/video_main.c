@@ -680,19 +680,17 @@ static UINT video_control_send_client_notification(VideoClientContext* context,
 static void video_timer(VideoClientContext* video, UINT64 now)
 {
 	PresentationContext* presentation = NULL;
-	VideoClientContextPriv* priv = NULL;
-	VideoFrame* peekFrame = NULL;
 	VideoFrame* frame = NULL;
 
 	WINPR_ASSERT(video);
 
-	priv = video->priv;
+	VideoClientContextPriv* priv = video->priv;
 	WINPR_ASSERT(priv);
 
 	EnterCriticalSection(&priv->framesLock);
 	do
 	{
-		peekFrame = (VideoFrame*)Queue_Peek(priv->frames);
+		VideoFrame* peekFrame = (VideoFrame*)Queue_Peek(priv->frames);
 		if (!peekFrame)
 			break;
 
@@ -1032,13 +1030,13 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
                                                     IWTSVirtualChannelCallback** ppCallback)
 // NOLINTEND(readability-non-const-parameter)
 {
-	GENERIC_CHANNEL_CALLBACK* callback = NULL;
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)listenerCallback;
 
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);
 
-	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
+	GENERIC_CHANNEL_CALLBACK* callback =
+	    (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 	if (!callback)
 	{
 		WLog_ERR(TAG, "calloc failed!");
@@ -1052,7 +1050,7 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
 	callback->channel = channel;
 	listener_callback->channel_callback = callback;
 
-	*ppCallback = (IWTSVirtualChannelCallback*)callback;
+	*ppCallback = &callback->iface;
 
 	return CHANNEL_RC_OK;
 }
@@ -1084,7 +1082,7 @@ static UINT video_data_on_new_channel_connection(IWTSListenerCallback* pListener
 	callback->channel = pChannel;
 	listener_callback->channel_callback = callback;
 
-	*ppCallback = (IWTSVirtualChannelCallback*)callback;
+	*ppCallback = &callback->iface;
 
 	return CHANNEL_RC_OK;
 }

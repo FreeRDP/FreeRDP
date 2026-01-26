@@ -1278,11 +1278,29 @@ fail:
 	return CHANNEL_RC_NO_MEMORY;
 }
 
+static void rdpsnd_terminate_thread(rdpsndPlugin* rdpsnd)
+{
+	WINPR_ASSERT(rdpsnd);
+	if (rdpsnd->queue)
+		MessageQueue_PostQuit(rdpsnd->queue, 0);
+
+	if (rdpsnd->thread)
+	{
+		(void)WaitForSingleObject(rdpsnd->thread, INFINITE);
+		(void)CloseHandle(rdpsnd->thread);
+	}
+
+	MessageQueue_Free(rdpsnd->queue);
+	rdpsnd->thread = NULL;
+	rdpsnd->queue = NULL;
+}
+
 static void cleanup_internals(rdpsndPlugin* rdpsnd)
 {
 	if (!rdpsnd)
 		return;
 
+	rdpsnd_terminate_thread(rdpsnd);
 	if (rdpsnd->pool)
 		StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
 
@@ -1460,15 +1478,7 @@ void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 {
 	if (rdpsnd)
 	{
-		if (rdpsnd->queue)
-			MessageQueue_PostQuit(rdpsnd->queue, 0);
-
-		if (rdpsnd->thread)
-		{
-			(void)WaitForSingleObject(rdpsnd->thread, INFINITE);
-			(void)CloseHandle(rdpsnd->thread);
-		}
-		MessageQueue_Free(rdpsnd->queue);
+		rdpsnd_terminate_thread(rdpsnd);
 
 		free_internals(rdpsnd);
 		audio_formats_free(rdpsnd->fixed_format, 1);

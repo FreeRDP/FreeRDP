@@ -61,6 +61,7 @@ static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	        &context->gdi->palette))
 	{
 		winpr_aligned_free(ptr->data);
+		ptr->data = nullptr;
 		return FALSE;
 	}
 

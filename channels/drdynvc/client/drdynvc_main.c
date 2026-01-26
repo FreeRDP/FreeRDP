@@ -510,14 +510,13 @@ static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL 
 
 			{
 				IWTSVirtualChannelCallback* cb = channel->channel_callback;
+				channel->channel_callback = NULL;
 				if (cb)
 				{
 					check_open_close_receive(channel);
 					IFCALL(cb->OnClose, cb);
 				}
 			}
-
-			channel->channel_callback = NULL;
 
 			if (channel->dvcman && channel->dvcman->drdynvc)
 			{
@@ -796,14 +795,13 @@ out:
  */
 static UINT dvcman_open_channel(drdynvcPlugin* drdynvc, DVCMAN_CHANNEL* channel)
 {
-	IWTSVirtualChannelCallback* pCallback = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(drdynvc);
 	WINPR_ASSERT(channel);
 	if (channel->state == DVC_CHANNEL_RUNNING)
 	{
-		pCallback = channel->channel_callback;
+		IWTSVirtualChannelCallback* pCallback = channel->channel_callback;
 
 		if (pCallback->OnOpen)
 		{

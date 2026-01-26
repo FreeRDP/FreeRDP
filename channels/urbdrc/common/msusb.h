@@ -67,20 +67,6 @@ extern "C"
 {
 #endif
 
-	/* MSUSB_PIPE exported functions */
-	FREERDP_API BOOL msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
-	                                       MSUSB_PIPE_DESCRIPTOR** NewMsPipes,
-	                                       UINT32 NewNumberOfPipes);
-
-	/* MSUSB_INTERFACE exported functions */
-	FREERDP_API BOOL msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR* MsConfig,
-	                                           BYTE InterfaceNumber,
-	                                           MSUSB_INTERFACE_DESCRIPTOR* NewMsInterface);
-	FREERDP_API MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* out);
-	FREERDP_API BOOL msusb_msinterface_write(const MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
-	                                         wStream* out);
-	FREERDP_API void msusb_msinterface_free(MSUSB_INTERFACE_DESCRIPTOR* MsInterface);
-
 	/* MSUSB_CONFIG exported functions */
 	FREERDP_API void msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR* MsConfig);
 
@@ -93,6 +79,23 @@ extern "C"
 	FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces);
 	FREERDP_API BOOL msusb_msconfig_write(const MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out);
 	FREERDP_API void msusb_msconfig_dump(const MSUSB_CONFIG_DESCRIPTOR* MsConfg);
+
+	/* MSUSB_PIPE exported functions */
+	FREERDP_API BOOL msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
+	                                       MSUSB_PIPE_DESCRIPTOR** NewMsPipes,
+	                                       UINT32 NewNumberOfPipes);
+
+	/* MSUSB_INTERFACE exported functions */
+	FREERDP_API BOOL msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR* MsConfig,
+	                                           BYTE InterfaceNumber,
+	                                           MSUSB_INTERFACE_DESCRIPTOR* NewMsInterface);
+
+	FREERDP_API void msusb_msinterface_free(MSUSB_INTERFACE_DESCRIPTOR* MsInterface);
+
+	WINPR_ATTR_MALLOC(msusb_msinterface_free, 1)
+	FREERDP_API MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* out);
+	FREERDP_API BOOL msusb_msinterface_write(const MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
+	                                         wStream* out);
 
 #ifdef __cplusplus
 }

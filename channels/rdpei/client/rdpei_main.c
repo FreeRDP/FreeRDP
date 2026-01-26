@@ -1567,9 +1567,8 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 	free(rdpei->context);
 }
 
-static const IWTSVirtualChannelCallback geometry_callbacks = { rdpei_on_data_received,
-	                                                           NULL, /* Open */
-	                                                           rdpei_on_close, NULL };
+static const IWTSVirtualChannelCallback rdpei_callbacks = { rdpei_on_data_received, NULL, /* Open */
+	                                                        rdpei_on_close, NULL };
 
 /**
  * Function description
@@ -1580,5 +1579,5 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpei_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* p
 {
 	return freerdp_generic_DVCPluginEntry(pEntryPoints, RDPEI_TAG, RDPEI_DVC_CHANNEL_NAME,
 	                                      sizeof(RDPEI_PLUGIN), sizeof(GENERIC_CHANNEL_CALLBACK),
-	                                      &geometry_callbacks, init_plugin_cb, terminate_plugin_cb);
+	                                      &rdpei_callbacks, init_plugin_cb, terminate_plugin_cb);
 }
