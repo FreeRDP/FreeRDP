@@ -37,6 +37,7 @@
 #include <winpr/collections.h>
 
 #include <freerdp/addin.h>
+#include <freerdp/utils/string.h>
 #include <freerdp/client/channels.h>
 
 #include "disp_main.h"
@@ -133,9 +134,11 @@ disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 		         ") W/H=%" PRIu32 "x%" PRIu32 ")",
 		         index, current.Flags, current.Left, current.Top, current.Width, current.Height);
 		WLog_DBG(TAG,
-		         "\t   PhysicalWidth: %" PRIu32 " PhysicalHeight: %" PRIu32 " Orientation: %" PRIu32
-		         "",
-		         current.PhysicalWidth, current.PhysicalHeight, current.Orientation);
+		         "\t   PhysicalWidth: %" PRIu32 " PhysicalHeight: %" PRIu32
+		         " Orientation: %s DesktopScaleFactor=%" PRIu32 " DeviceScaleFactor=%" PRIu32 "",
+		         current.PhysicalWidth, current.PhysicalHeight,
+		         freerdp_desktop_rotation_flags_to_string(current.Orientation),
+		         current.DesktopScaleFactor, current.DeviceScaleFactor);
 	}
 
 out:
