@@ -1096,6 +1096,11 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 			const auto& cev = ev.wheel;
 			return handleEvent(cev);
 		}
+		case SDL_EVENT_CLIPBOARD_UPDATE:
+		{
+			const auto& cev = ev.clipboard;
+			return getClipboardChannelContext().handleEvent(cev);
+		}
 		default:
 			return true;
 	}

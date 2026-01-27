@@ -183,7 +183,7 @@ bool sdlClip::contains(const char** mime_types, Sint32 count)
 	return false;
 }
 
-bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
+bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 {
 	if (!_ctx || !_sync || ev.owner)
 	{

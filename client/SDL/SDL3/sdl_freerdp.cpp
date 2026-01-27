@@ -235,10 +235,6 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 					if (!sdl_Pointer_Set_Process(sdl))
 						return -1;
 					break;
-				case SDL_EVENT_CLIPBOARD_UPDATE:
-					if (!sdl->getClipboardChannelContext().handle_update(windowEvent.clipboard))
-						return -1;
-					break;
 				case SDL_EVENT_USER_QUIT:
 				default:
 					break;
