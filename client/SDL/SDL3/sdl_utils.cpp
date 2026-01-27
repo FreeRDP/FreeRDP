@@ -21,7 +21,6 @@
 #include <sstream>
 #include <iomanip>
 #include <random>
-#include <sstream>
 
 #include "sdl_utils.hpp"
 

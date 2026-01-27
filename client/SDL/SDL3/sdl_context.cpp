@@ -217,7 +217,24 @@ BOOL SdlContext::postConnect(freerdp* instance)
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon))
 	{
 		const auto driver = SDL_GetCurrentVideoDriver();
-		if (driver && strcmp(driver, "wayland") == 0)
+		bool buggy = false;
+		if (driver)
+		{
+			if (strcmp(driver, "wayland") == 0)
+				buggy = true;
+			else if (strcmp(driver, "x11") == 0)
+			{
+				auto env = SDL_GetEnvironment();
+				auto xdg = SDL_GetEnvironmentVariable(env, "XDG_SESSION_TYPE");
+				auto qpa = SDL_GetEnvironmentVariable(env, "QT_QPA_PLATFORM");
+				if (xdg && (strcmp(xdg, "wayland") == 0))
+					buggy = true;
+				else if (qpa && (strcmp(qpa, "wayland") == 0))
+					buggy = true;
+			}
+		}
+
+		if (buggy)
 		{
 			const auto name = SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING);
 
