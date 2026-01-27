@@ -1014,6 +1014,7 @@ UINT rdpei_send_frame(RdpeiClientContext* context, RDPINPUT_TOUCH_FRAME* frame)
  */
 static UINT rdpei_add_contact(RdpeiClientContext* context, const RDPINPUT_CONTACT_DATA* contact)
 {
+	UINT error = CHANNEL_RC_OK;
 	if (!context || !contact || !context->handle)
 		return ERROR_INTERNAL_ERROR;
 
@@ -1023,14 +1024,23 @@ static UINT rdpei_add_contact(RdpeiClientContext* context, const RDPINPUT_CONTAC
 	RDPINPUT_CONTACT_POINT* contactPoint = &rdpei->contactPoints[contact->contactId];
 
 	if (contactPoint->dirty && contactPoint->data.contactFlags != contact->contactFlags)
-		rdpei_add_frame(context);
+	{
+		const INT32 externalId = contactPoint->externalId;
+		error = rdpei_add_frame(context);
+		if (!contactPoint->active)
+		{
+			contactPoint->active = TRUE;
+			contactPoint->externalId = externalId;
+			contactPoint->contactId = contact->contactId;
+		}
+	}
 
 	contactPoint->data = *contact;
 	contactPoint->dirty = TRUE;
 	(void)SetEvent(rdpei->event);
 	LeaveCriticalSection(&rdpei->lock);
 
-	return CHANNEL_RC_OK;
+	return error;
 }
 
 static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, UINT32 contactFlags,
