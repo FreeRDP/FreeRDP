@@ -115,15 +115,6 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				case SDL_EVENT_QUIT:
 					freerdp_abort_connect_context(sdl->context());
 					break;
-				case SDL_EVENT_RENDER_TARGETS_RESET:
-					std::ignore = sdl->redraw();
-					break;
-				case SDL_EVENT_RENDER_DEVICE_RESET:
-					std::ignore = sdl->redraw();
-					break;
-				case SDL_EVENT_WILL_ENTER_FOREGROUND:
-					std::ignore = sdl->redraw();
-					break;
 				case SDL_EVENT_USER_CERT_DIALOG:
 				{
 					SDLConnectionDialogHider hider(sdl);

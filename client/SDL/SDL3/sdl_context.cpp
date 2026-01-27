@@ -1107,7 +1107,10 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 			const auto& cev = ev.key;
 			return getInputChannelContext().handleEvent(cev);
 		}
-		break;
+		case SDL_EVENT_RENDER_TARGETS_RESET:
+		case SDL_EVENT_RENDER_DEVICE_RESET:
+		case SDL_EVENT_WILL_ENTER_FOREGROUND:
+			return redraw();
 		default:
 			return true;
 	}
