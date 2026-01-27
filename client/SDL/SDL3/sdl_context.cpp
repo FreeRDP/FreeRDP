@@ -214,6 +214,28 @@ BOOL SdlContext::postConnect(freerdp* instance)
 
 	auto sdl = get_context(context);
 
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon))
+	{
+		const auto driver = SDL_GetCurrentVideoDriver();
+		if (driver && strcmp(driver, "wayland") == 0)
+		{
+			const auto name = SDL_GetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING);
+
+			WLog_Print(sdl->getWLog(), WLOG_WARN,
+			           "%s is affected by wayland bug "
+			           "https://gitlab.freedesktop.org/wayland/wayland-protocols/-/issues/179",
+			           name);
+			WLog_Print(
+			    sdl->getWLog(), WLOG_WARN,
+			    "you will not be able to properly use all monitors for FreeRDP unless this is "
+			    "resolved and the SDL library you are using supports this.");
+			WLog_Print(sdl->getWLog(), WLOG_WARN,
+			           "For the time being run %s from an X11 session or only use single monitor "
+			           "fullscreen /f",
+			           name);
+		}
+	}
+
 	// Retry was successful, discard dialog
 	sdl->getDialog().show(false);
 
