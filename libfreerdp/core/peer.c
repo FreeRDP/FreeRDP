@@ -789,20 +789,17 @@ static state_run_t rdp_peer_handle_state_active(freerdp_peer* client)
 static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* transport,
                                                wStream* s, void* extra)
 {
-	UINT32 SelectedProtocol = 0;
 	freerdp_peer* client = (freerdp_peer*)extra;
-	rdpRdp* rdp = NULL;
 	state_run_t ret = STATE_RUN_FAILED;
-	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 
-	rdp = client->context->rdp;
+	rdpRdp* rdp = client->context->rdp;
 	WINPR_ASSERT(rdp);
 
-	settings = client->context->settings;
+	rdpSettings* settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
 	IFCALL(client->ReachedState, client, rdp_get_state(rdp));
@@ -822,28 +819,37 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 			}
 			else
 			{
-				SelectedProtocol = nego_get_selected_protocol(rdp->nego);
+				const UINT32 SelectedProtocol = nego_get_selected_protocol(rdp->nego);
+
 				settings->RdstlsSecurity = (SelectedProtocol & PROTOCOL_RDSTLS) ? TRUE : FALSE;
 				settings->NlaSecurity = (SelectedProtocol & PROTOCOL_HYBRID) ? TRUE : FALSE;
 				settings->TlsSecurity = (SelectedProtocol & PROTOCOL_SSL) ? TRUE : FALSE;
 				settings->RdpSecurity = (SelectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE;
 
+				client->authenticated = FALSE;
 				if (SelectedProtocol & PROTOCOL_HYBRID)
 				{
 					SEC_WINNT_AUTH_IDENTITY_INFO* identity =
 					    (SEC_WINNT_AUTH_IDENTITY_INFO*)nego_get_identity(rdp->nego);
-					sspi_CopyAuthIdentity(&client->identity, identity);
-					IFCALLRET(client->Logon, client->authenticated, client, &client->identity,
-					          TRUE);
+					if (sspi_CopyAuthIdentity(&client->identity, identity) >= 0)
+					{
+						client->authenticated =
+						    IFCALLRESULT(TRUE, client->Logon, client, &client->identity, TRUE);
+					}
 					nego_free_nla(rdp->nego);
 				}
 				else
 				{
-					IFCALLRET(client->Logon, client->authenticated, client, &client->identity,
-					          FALSE);
+					client->authenticated =
+					    IFCALLRESULT(TRUE, client->Logon, client, &client->identity, FALSE);
 				}
-				if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST))
-					ret = STATE_RUN_SUCCESS;
+				if (!client->authenticated)
+					ret = STATE_RUN_FAILED;
+				else
+				{
+					if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST))
+						ret = STATE_RUN_SUCCESS;
+				}
 			}
 			break;
 
