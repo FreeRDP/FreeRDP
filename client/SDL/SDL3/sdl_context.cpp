@@ -1101,6 +1101,13 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 			const auto& cev = ev.clipboard;
 			return getClipboardChannelContext().handleEvent(cev);
 		}
+		case SDL_EVENT_KEY_DOWN:
+		case SDL_EVENT_KEY_UP:
+		{
+			const auto& cev = ev.key;
+			return getInputChannelContext().handleEvent(cev);
+		}
+		break;
 		default:
 			return true;
 	}

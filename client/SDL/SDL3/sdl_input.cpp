@@ -558,17 +558,16 @@ bool sdlInput::extract(const std::string& token, uint32_t& key, uint32_t& value)
 	return freerdp_extract_key_value(token.c_str(), &key, &value);
 }
 
-bool sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
+bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 {
-	WINPR_ASSERT(ev);
-	const UINT32 rdp_scancode = scancode_to_rdp(ev->scancode);
+	const UINT32 rdp_scancode = scancode_to_rdp(ev.scancode);
 	const SDL_Keymod mods = SDL_GetModState();
 
 	if (_hotkeysEnabled && (mods & _hotkeyModmask) == _hotkeyModmask)
 	{
-		if (ev->type == SDL_EVENT_KEY_DOWN)
+		if (ev.type == SDL_EVENT_KEY_DOWN)
 		{
-			if (ev->scancode == _hotkeyFullscreen)
+			if (ev.scancode == _hotkeyFullscreen)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling fullscreen state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyFullscreen));
@@ -576,7 +575,7 @@ bool sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 					return false;
 				return _sdl->toggleFullscreen();
 			}
-			if (ev->scancode == _hotkeyResizable)
+			if (ev.scancode == _hotkeyResizable)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling resizeable state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyResizable));
@@ -585,15 +584,15 @@ bool sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 				return _sdl->toggleResizeable();
 			}
 
-			if (ev->scancode == _hotkeyGrab)
+			if (ev.scancode == _hotkeyGrab)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, toggling grab state",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyGrab));
 				if (!keyboard_sync_state())
 					return false;
-				return keyboard_grab(ev->windowID, !_sdl->grabKeyboard());
+				return keyboard_grab(ev.windowID, !_sdl->grabKeyboard());
 			}
-			if (ev->scancode == _hotkeyDisconnect)
+			if (ev.scancode == _hotkeyDisconnect)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, disconnecting RDP session",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyDisconnect));
@@ -602,7 +601,7 @@ bool sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 				freerdp_abort_connect_context(_sdl->context());
 				return true;
 			}
-			if (ev->scancode == _hotkeyMinimize)
+			if (ev.scancode == _hotkeyMinimize)
 			{
 				WLog_Print(_sdl->getWLog(), WLOG_INFO, "%s+<%s> pressed, minimizing client",
 				           masktostr(_hotkeyModmask).c_str(), sdl_scancode_name(_hotkeyMinimize));
@@ -619,7 +618,7 @@ bool sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 		const DWORD sc = RDP_SCANCODE_CODE(rdp_scancode);
 		WLog_Print(_sdl->getWLog(), WLOG_DEBUG,
 		           "SDL keycode: %02" PRIX32 " -> rdp code: [%04" PRIx16 "] %02" PRIX8 "%s",
-		           ev->scancode, rdp_scancode, sc, ex ? " extended" : "");
+		           ev.scancode, rdp_scancode, sc, ex ? " extended" : "");
 	}
 #endif
 
@@ -631,11 +630,11 @@ bool sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 		WLog_Print(_sdl->getWLog(), WLOG_DEBUG,
 		           "SDL keycode: %02" PRIX32 " -> remapped rdp code: [%04" PRIx16 "] %02" PRIX8
 		           "%s",
-		           ev->scancode, scancode, sc, ex ? " extended" : "");
+		           ev.scancode, scancode, sc, ex ? " extended" : "");
 	}
 #endif
-	return freerdp_input_send_keyboard_event_ex(
-	    _sdl->context()->input, ev->type == SDL_EVENT_KEY_DOWN, ev->repeat, scancode);
+	return freerdp_input_send_keyboard_event_ex(_sdl->context()->input,
+	                                            ev.type == SDL_EVENT_KEY_DOWN, ev.repeat, scancode);
 }
 
 bool sdlInput::keyboard_grab(Uint32 windowID, bool enable)

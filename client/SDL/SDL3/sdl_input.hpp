@@ -47,7 +47,7 @@ class sdlInput
 	[[nodiscard]] bool keyboard_sync_state();
 	[[nodiscard]] bool keyboard_focus_in();
 
-	[[nodiscard]] bool keyboard_handle_event(const SDL_KeyboardEvent* ev);
+	[[nodiscard]] bool handleEvent(const SDL_KeyboardEvent& ev);
 
 	[[nodiscard]] bool keyboard_grab(Uint32 windowID, bool enable);
 	[[nodiscard]] bool mouse_focus(Uint32 windowID);

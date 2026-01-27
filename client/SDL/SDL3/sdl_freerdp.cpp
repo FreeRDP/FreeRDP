@@ -115,14 +115,6 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				case SDL_EVENT_QUIT:
 					freerdp_abort_connect_context(sdl->context());
 					break;
-				case SDL_EVENT_KEY_DOWN:
-				case SDL_EVENT_KEY_UP:
-				{
-					const SDL_KeyboardEvent* ev = &windowEvent.key;
-					if (!sdl->getInputChannelContext().keyboard_handle_event(ev))
-						return -1;
-				}
-				break;
 				case SDL_EVENT_RENDER_TARGETS_RESET:
 					std::ignore = sdl->redraw();
 					break;
