@@ -842,8 +842,15 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 					IFCALLRET(client->Logon, client->authenticated, client, &client->identity,
 					          FALSE);
 				}
-				if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST))
-					ret = STATE_RUN_SUCCESS;
+				if (client->Logon && !client->authenticated)
+				{
+					ret = STATE_RUN_FAILED;
+				}
+				else
+				{
+					if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST))
+						ret = STATE_RUN_SUCCESS;
+				}
 			}
 			break;
 
