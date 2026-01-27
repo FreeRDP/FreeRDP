@@ -45,8 +45,8 @@ class SdlInputWidgetPair
 	SdlInputWidgetPair& operator=(const SdlInputWidgetPair& other) = delete;
 	SdlInputWidgetPair& operator=(SdlInputWidgetPair&& other) = delete;
 
-	[[nodiscard]] bool set_mouseover(bool mouseOver);
-	[[nodiscard]] bool set_highlight(bool highlight);
+	bool set_mouseover(bool mouseOver);
+	bool set_highlight(bool highlight);
 
 	[[nodiscard]] bool set_str(const std::string& text);
 	[[nodiscard]] bool remove_str(size_t count);

@@ -30,7 +30,7 @@
 
 #include <SDL3/SDL.h>
 
-static bool send_mouse_wheel(SdlContext* sdl, UINT16 flags, INT32 avalue)
+[[nodiscard]] static bool send_mouse_wheel(SdlContext* sdl, UINT16 flags, INT32 avalue)
 {
 	WINPR_ASSERT(sdl);
 	if (avalue < 0)
@@ -54,7 +54,7 @@ static bool send_mouse_wheel(SdlContext* sdl, UINT16 flags, INT32 avalue)
 	return TRUE;
 }
 
-static UINT32 sdl_scale_pressure(const float pressure)
+[[nodiscard]] static UINT32 sdl_scale_pressure(const float pressure)
 {
 	const float val = pressure * 0x400; /* [MS-RDPEI] 2.2.3.3.1.1 RDPINPUT_TOUCH_CONTACT */
 	if (val < 0.0f)
@@ -130,13 +130,15 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseWheelEvent& ev)
 	if (y != 0)
 	{
 		flags |= PTR_FLAGS_WHEEL;
-		send_mouse_wheel(sdl, flags, y);
+		if (!send_mouse_wheel(sdl, flags, y))
+			return false;
 	}
 
 	if (x != 0)
 	{
 		flags |= PTR_FLAGS_HWHEEL;
-		send_mouse_wheel(sdl, flags, x);
+		if (!send_mouse_wheel(sdl, flags, x))
+			return false;
 	}
 	return TRUE;
 }

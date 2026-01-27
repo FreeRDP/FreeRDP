@@ -36,8 +36,8 @@ class SdlSelectableWidget : public SdlWidget
 	SdlSelectableWidget& operator=(const SdlSelectableWidget& other) = delete;
 	SdlSelectableWidget& operator=(SdlSelectableWidget&& other) = delete;
 
-	[[nodiscard]] bool highlight(bool enable);
-	[[nodiscard]] bool mouseover(bool enable);
+	bool highlight(bool enable);
+	bool mouseover(bool enable);
 
   protected:
 	[[nodiscard]] bool updateInternal() override;

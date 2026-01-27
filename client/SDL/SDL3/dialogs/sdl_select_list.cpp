@@ -23,10 +23,10 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 
 		const std::vector<int> buttonids = { INPUT_BUTTON_ACCEPT, INPUT_BUTTON_CANCEL };
 		const std::vector<std::string> buttonlabels = { "accept", "cancel" };
-		(void)_buttons.populate(
+		std::ignore = _buttons.populate(
 		    _renderer, buttonlabels, buttonids, widget_width, static_cast<Sint32>(total_height),
 		    static_cast<Sint32>(widget_width / 2), static_cast<Sint32>(widget_height));
-		(void)_buttons.set_highlight(0);
+		_buttons.set_highlight(0);
 	}
 }
 
@@ -187,7 +187,7 @@ void SdlSelectList::reset_mouseover()
 {
 	for (auto& cur : _list)
 	{
-		(void)cur.mouseover(false);
+		cur.mouseover(false);
 	}
 }
 
@@ -195,6 +195,6 @@ void SdlSelectList::reset_highlight()
 {
 	for (auto& cur : _list)
 	{
-		(void)cur.highlight(false);
+		cur.highlight(false);
 	}
 }

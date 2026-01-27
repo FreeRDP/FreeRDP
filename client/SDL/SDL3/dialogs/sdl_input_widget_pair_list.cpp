@@ -55,10 +55,10 @@ SdlInputWidgetPairList::SdlInputWidgetPairList(const std::string& title,
 			m_list.emplace_back(widget);
 		}
 
-		(void)_buttons.populate(
+		std::ignore = _buttons.populate(
 		    _renderer, buttonlabels, buttonids, total_width, static_cast<Sint32>(input_height),
 		    static_cast<Sint32>(widget_width), static_cast<Sint32>(widget_heigth));
-		(void)_buttons.set_highlight(0);
+		_buttons.set_highlight(0);
 		m_currentActiveTextInput = selected;
 	}
 }

@@ -25,9 +25,9 @@ class SdlButtonList
 	[[nodiscard]] std::shared_ptr<SdlButton> get_selected(const SDL_MouseButtonEvent& button);
 	[[nodiscard]] std::shared_ptr<SdlButton> get_selected(float x, float y);
 
-	[[nodiscard]] bool set_highlight_next(bool reset = false);
-	[[nodiscard]] bool set_highlight(size_t index);
-	[[nodiscard]] bool set_mouseover(float x, float y);
+	bool set_highlight_next(bool reset = false);
+	bool set_highlight(size_t index);
+	bool set_mouseover(float x, float y);
 
 	void clear();
 

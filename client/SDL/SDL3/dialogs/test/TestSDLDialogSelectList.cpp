@@ -41,14 +41,7 @@ static int runTest(fkt_t fkt)
 	return rc;
 }
 
-int main(int argc, char* argv[])
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
-	int rc = 0;
-
-	(void)argc;
-	(void)argv;
-
-	rc = runTest(select_dialogs);
-
-	return rc;
+	return runTest(select_dialogs);
 }

@@ -70,8 +70,8 @@ class SdlWidget
 	[[nodiscard]] bool update();
 
 #define widget_log_error(res, what) SdlWidget::error_ex(res, what, __FILE__, __LINE__, __func__)
-	[[nodiscard]] static bool error_ex(bool success, const char* what, const char* file,
-	                                   size_t line, const char* fkt);
+	static bool error_ex(bool success, const char* what, const char* file, size_t line,
+	                     const char* fkt);
 
   protected:
 	std::shared_ptr<SDL_Renderer> _renderer;

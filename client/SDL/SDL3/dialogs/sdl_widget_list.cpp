@@ -14,7 +14,7 @@ bool SdlWidgetList::reset(const std::string& title, size_t width, size_t height)
 	_renderer = std::shared_ptr<SDL_Renderer>(renderer, SDL_DestroyRenderer);
 	_window = std::shared_ptr<SDL_Window>(window, SDL_DestroyWindow);
 	if (!rc)
-		(void)widget_log_error(rc, "SDL_CreateWindowAndRenderer");
+		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
 	return rc;
 }
 
