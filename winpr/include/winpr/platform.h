@@ -75,10 +75,7 @@
 #define WINPR_FALLTHROUGH (void)0;
 #endif
 
-// C23 related macros
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202003L)
-#define WINPR_ATTR_NODISCARD [[nodiscard]]
-#elif defined(__clang__)
+#if defined(__clang__)
 #define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
 #elif defined(__GNUC__) && (__GNUC__ >= 7)
 #define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
