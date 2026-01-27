@@ -69,7 +69,7 @@ SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& r
 {
 	if (ops)
 	{
-		_image = std::shared_ptr<SDL_Texture>(IMG_LoadTexture_IO(renderer.get(), ops, 1),
+		_image = std::shared_ptr<SDL_Texture>(IMG_LoadTexture_IO(renderer.get(), ops, true),
 		                                      SDL_DestroyTexture);
 		if (!_image)
 			widget_log_error(false, "IMG_LoadTexture_IO");
@@ -313,7 +313,10 @@ bool SdlWidget::update_text(const std::string& text)
 		auto w = SDL_GetNumberProperty(propId, SDL_PROP_TEXTURE_WIDTH_NUMBER, -1);
 		auto h = SDL_GetNumberProperty(propId, SDL_PROP_TEXTURE_HEIGHT_NUMBER, -1);
 		if (w < 0 || h < 0)
-			widget_log_error(false, "SDL_GetTextureProperties");
+		{
+			if (!widget_log_error(false, "SDL_GetTextureProperties"))
+				return false;
+		}
 		src.w = static_cast<float>(w);
 		src.h = static_cast<float>(h);
 	}

@@ -34,5 +34,5 @@ class SDL3ResourceManager : public SDLResourceManager
 	SDL3ResourceManager& operator=(const SDL3ResourceManager& other) = delete;
 	SDL3ResourceManager& operator=(SDL3ResourceManager&& other) = delete;
 
-	static SDL_IOStream* get(const std::string& type, const std::string& id);
+	[[nodiscard]] static SDL_IOStream* get(const std::string& type, const std::string& id);
 };

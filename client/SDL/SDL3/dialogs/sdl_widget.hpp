@@ -59,15 +59,15 @@ class SdlWidget
 	SdlWidget& operator=(const SdlWidget& other) = delete;
 	SdlWidget& operator=(SdlWidget&& other) = delete;
 
-	bool fill(SDL_Color color) const;
-	bool fill(const std::vector<SDL_Color>& colors) const;
-	bool update_text(const std::string& text);
+	[[nodiscard]] bool fill(SDL_Color color) const;
+	[[nodiscard]] bool fill(const std::vector<SDL_Color>& colors) const;
+	[[nodiscard]] bool update_text(const std::string& text);
 
 	[[nodiscard]] bool wrap() const;
-	bool set_wrap(bool wrap = true, size_t width = 0);
+	[[nodiscard]] bool set_wrap(bool wrap = true, size_t width = 0);
 	[[nodiscard]] const SDL_FRect& rect() const;
 
-	bool update();
+	[[nodiscard]] bool update();
 
 #define widget_log_error(res, what) SdlWidget::error_ex(res, what, __FILE__, __LINE__, __func__)
 	static bool error_ex(bool success, const char* what, const char* file, size_t line,
@@ -83,11 +83,13 @@ class SdlWidget
 	virtual bool updateInternal();
 
   private:
-	bool draw_rect(const SDL_FRect& rect, SDL_Color color) const;
-	std::shared_ptr<SDL_Texture> render_text(const std::string& text, SDL_Color fgcolor,
-	                                         SDL_FRect& src, SDL_FRect& dst) const;
-	std::shared_ptr<SDL_Texture> render_text_wrapped(const std::string& text, SDL_Color fgcolor,
-	                                                 SDL_FRect& src, SDL_FRect& dst) const;
+	[[nodiscard]] bool draw_rect(const SDL_FRect& rect, SDL_Color color) const;
+	[[nodiscard]] std::shared_ptr<SDL_Texture>
+	render_text(const std::string& text, SDL_Color fgcolor, SDL_FRect& src, SDL_FRect& dst) const;
+	[[nodiscard]] std::shared_ptr<SDL_Texture> render_text_wrapped(const std::string& text,
+	                                                               SDL_Color fgcolor,
+	                                                               SDL_FRect& src,
+	                                                               SDL_FRect& dst) const;
 
 	std::shared_ptr<TTF_Font> _font = nullptr;
 	std::shared_ptr<SDL_Texture> _image = nullptr;

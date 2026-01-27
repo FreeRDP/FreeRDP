@@ -533,9 +533,7 @@ WINPR_PRAGMA_DIAG_POP
 #define WINPR_DEPRECATED_VAR(text, obj) obj
 #endif
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202202L)
-#define WINPR_NORETURN(obj) [[noreturn]] obj
-#elif defined(WIN32) && !defined(__CYGWIN__)
+#if defined(WIN32) && !defined(__CYGWIN__)
 #define WINPR_NORETURN(obj) __declspec(noreturn) obj
 #elif defined(__GNUC__)
 #define WINPR_NORETURN(obj) __attribute__((__noreturn__)) obj

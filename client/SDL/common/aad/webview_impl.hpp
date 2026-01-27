@@ -21,4 +21,5 @@
 
 #include <string>
 
-bool webview_impl_run(const std::string& title, const std::string& url, std::string& code);
+[[nodiscard]] bool webview_impl_run(const std::string& title, const std::string& url,
+                                    std::string& code);

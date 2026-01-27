@@ -47,8 +47,10 @@ bool SdlWidgetList::update()
 	if (!visible())
 		return true;
 
-	clearWindow();
-	updateInternal();
+	if (!clearWindow())
+		return false;
+	if (!updateInternal())
+		return false;
 	if (!_buttons.update())
 		return false;
 	auto rc = SDL_RenderPresent(_renderer.get());

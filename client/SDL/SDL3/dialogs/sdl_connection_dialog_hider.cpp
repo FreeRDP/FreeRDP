@@ -1,13 +1,13 @@
 #include "sdl_connection_dialog_hider.hpp"
-#include "../sdl_freerdp.hpp"
+#include "../sdl_context.hpp"
 
 SDLConnectionDialogHider::SDLConnectionDialogHider(SdlContext* sdl)
-    : _sdl(sdl), _visible(_sdl->dialog.isVisible())
+    : _sdl(sdl), _visible(_sdl->getDialog().isVisible())
 {
-	_sdl->dialog.show(false);
+	_sdl->getDialog().show(false);
 }
 
 SDLConnectionDialogHider::~SDLConnectionDialogHider()
 {
-	_sdl->dialog.show(_visible);
+	_sdl->getDialog().show(_visible);
 }

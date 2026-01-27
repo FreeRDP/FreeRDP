@@ -25,32 +25,35 @@
 #include "../sdl_types.hpp"
 #include "../sdl_utils.hpp"
 
-BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, char** domain,
-                         rdp_auth_reason reason);
-BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWORD count,
-                          DWORD* choice, BOOL gateway);
+[[nodiscard]] BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password,
+                                       char** domain, rdp_auth_reason reason);
+[[nodiscard]] BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list,
+                                        DWORD count, DWORD* choice, BOOL gateway);
 
-SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, void* userarg);
+[[nodiscard]] SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current,
+                                       void* userarg);
 
-DWORD sdl_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
-                                const char* common_name, const char* subject, const char* issuer,
-                                const char* fingerprint, DWORD flags);
+[[nodiscard]] DWORD sdl_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
+                                              const char* common_name, const char* subject,
+                                              const char* issuer, const char* fingerprint,
+                                              DWORD flags);
 
-DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UINT16 port,
-                                        const char* common_name, const char* subject,
-                                        const char* issuer, const char* new_fingerprint,
-                                        const char* old_subject, const char* old_issuer,
-                                        const char* old_fingerprint, DWORD flags);
+[[nodiscard]] DWORD
+sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UINT16 port,
+                                  const char* common_name, const char* subject, const char* issuer,
+                                  const char* new_fingerprint, const char* old_subject,
+                                  const char* old_issuer, const char* old_fingerprint, DWORD flags);
 
-int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
+[[nodiscard]] int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
 
-BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
-                                 BOOL isConsentMandatory, size_t length, const WCHAR* message);
+[[nodiscard]] BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type,
+                                               BOOL isDisplayMandatory, BOOL isConsentMandatory,
+                                               size_t length, const WCHAR* message);
 
-BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flags);
-BOOL sdl_cert_dialog_show(const char* title, const char* message);
-BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list);
-BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args);
+[[nodiscard]] BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flags);
+[[nodiscard]] BOOL sdl_cert_dialog_show(const char* title, const char* message);
+[[nodiscard]] BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list);
+[[nodiscard]] BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args);
 
 void sdl_dialogs_init();
 void sdl_dialogs_uninit();

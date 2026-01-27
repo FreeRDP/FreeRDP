@@ -48,19 +48,19 @@ class SdlInputWidgetPair
 	bool set_mouseover(bool mouseOver);
 	bool set_highlight(bool highlight);
 
-	bool set_str(const std::string& text);
-	bool remove_str(size_t count);
-	bool append_str(const std::string& text);
+	[[nodiscard]] bool set_str(const std::string& text);
+	[[nodiscard]] bool remove_str(size_t count);
+	[[nodiscard]] bool append_str(const std::string& text);
 
 	[[nodiscard]] const SDL_FRect& input_rect() const;
 	[[nodiscard]] std::string value() const;
 
 	[[nodiscard]] bool readonly() const;
 
-	bool update();
+	[[nodiscard]] bool update();
 
   protected:
-	bool update_input_text(const std::string& txt);
+	[[nodiscard]] bool update_input_text(const std::string& txt);
 
 	Uint32 _vpadding = 5;
 	Uint32 _hpadding = 10;

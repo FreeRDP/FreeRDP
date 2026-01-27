@@ -21,10 +21,10 @@ class SdlSelectList : public SdlWidgetList
 	SdlSelectList& operator=(const SdlSelectList& other) = delete;
 	SdlSelectList& operator=(SdlSelectList&& other) = delete;
 
-	int run();
+	[[nodiscard]] int run();
 
   protected:
-	bool updateInternal() override;
+	[[nodiscard]] bool updateInternal() override;
 
   private:
 	enum

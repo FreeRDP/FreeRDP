@@ -36,7 +36,7 @@ class SdlInputWidget : public SdlSelectableWidget
 
 	~SdlInputWidget() override;
 
-	std::string text() const;
+	[[nodiscard]] std::string text() const;
 
   private:
 	void init();

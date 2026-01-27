@@ -33,20 +33,21 @@ class SDLResourceManager
 	SDLResourceManager operator=(const SDLResourceManager& other) = delete;
 	SDLResourceManager& operator=(SDLResourceManager&& other) = delete;
 
-	static std::string typeFonts();
-	static std::string typeImages();
+	[[nodiscard]] static std::string typeFonts();
+	[[nodiscard]] static std::string typeImages();
 
   protected:
 	static void insert(const std::string& type, const std::string& id,
 	                   const std::vector<unsigned char>& data);
 
-	static const std::vector<unsigned char>* data(const std::string& type, const std::string& id);
-	static std::string filename(const std::string& type, const std::string& id);
+	[[nodiscard]] static const std::vector<unsigned char>* data(const std::string& type,
+	                                                            const std::string& id);
+	[[nodiscard]] static std::string filename(const std::string& type, const std::string& id);
 
-	static bool useCompiledResources();
+	[[nodiscard]] static bool useCompiledResources();
 
   private:
-	static std::map<std::string, std::vector<unsigned char>>& resources();
+	[[nodiscard]] static std::map<std::string, std::vector<unsigned char>>& resources();
 #if defined(SDL_USE_COMPILED_RESOURCES)
 	static void init(); // implemented in generated file
 #endif

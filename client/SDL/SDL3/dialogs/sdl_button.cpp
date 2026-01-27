@@ -31,8 +31,8 @@ SdlButton::SdlButton(std::shared_ptr<SDL_Renderer>& renderer, const std::string&
 	_highlightcolor = { 0xcd, 0xca, 0x35, 0x60 };
 	_mouseovercolor = { 0x66, 0xff, 0x66, 0x60 };
 	_fontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
-	update_text(label);
-	update();
+	std::ignore = update_text(label);
+	std::ignore = update();
 }
 
 SdlButton::SdlButton(SdlButton&& other) noexcept = default;

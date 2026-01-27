@@ -61,23 +61,10 @@ class ClipRequest
 class CliprdrFormat
 {
   public:
-	CliprdrFormat(uint32_t formatID, const char* formatName) : _formatID(formatID)
-	{
-		if (formatName)
-			_formatName = formatName;
-	}
+	CliprdrFormat(uint32_t formatID, const char* formatName);
 
-	[[nodiscard]] uint32_t formatId() const
-	{
-		return _formatID;
-	}
-
-	[[nodiscard]] const char* formatName() const
-	{
-		if (_formatName.empty())
-			return nullptr;
-		return _formatName.c_str();
-	}
+	[[nodiscard]] uint32_t formatId() const;
+	[[nodiscard]] const char* formatName() const;
 
   private:
 	uint32_t _formatID;
@@ -97,47 +84,51 @@ class sdlClip
 	sdlClip& operator=(const sdlClip&) = delete;
 	sdlClip& operator=(sdlClip&&) = delete;
 
-	BOOL init(CliprdrClientContext* clip);
-	BOOL uninit(CliprdrClientContext* clip);
+	[[nodiscard]] bool init(CliprdrClientContext* clip);
+	[[nodiscard]] bool uninit(CliprdrClientContext* clip);
 
-	bool handle_update(const SDL_ClipboardEvent& ev);
+	[[nodiscard]] bool handleEvent(const SDL_ClipboardEvent& ev);
 
   private:
-	UINT SendClientCapabilities();
+	[[nodiscard]] UINT SendClientCapabilities();
 	void clearServerFormats();
-	UINT SendFormatListResponse(BOOL status);
-	UINT SendDataResponse(const BYTE* data, size_t size);
-	UINT SendDataRequest(uint32_t formatID, const std::string& mime);
+	[[nodiscard]] UINT SendFormatListResponse(BOOL status);
+	[[nodiscard]] UINT SendDataResponse(const BYTE* data, size_t size);
+	[[nodiscard]] UINT SendDataRequest(uint32_t formatID, const std::string& mime);
 
-	std::string getServerFormat(uint32_t id);
-	uint32_t serverIdForMime(const std::string& mime);
+	[[nodiscard]] std::string getServerFormat(uint32_t id);
+	[[nodiscard]] uint32_t serverIdForMime(const std::string& mime);
 
-	bool contains(const char** mime_types, Sint32 count);
+	[[nodiscard]] bool contains(const char** mime_types, Sint32 count);
 
-	static UINT MonitorReady(CliprdrClientContext* context,
-	                         const CLIPRDR_MONITOR_READY* monitorReady);
+	[[nodiscard]] static UINT MonitorReady(CliprdrClientContext* context,
+	                                       const CLIPRDR_MONITOR_READY* monitorReady);
 
-	static UINT ReceiveServerCapabilities(CliprdrClientContext* context,
-	                                      const CLIPRDR_CAPABILITIES* capabilities);
-	static UINT ReceiveServerFormatList(CliprdrClientContext* context,
-	                                    const CLIPRDR_FORMAT_LIST* formatList);
-	static UINT ReceiveFormatListResponse(CliprdrClientContext* context,
-	                                      const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse);
-	static std::shared_ptr<BYTE> ReceiveFormatDataRequestHandle(
+	[[nodiscard]] static UINT ReceiveServerCapabilities(CliprdrClientContext* context,
+	                                                    const CLIPRDR_CAPABILITIES* capabilities);
+	[[nodiscard]] static UINT ReceiveServerFormatList(CliprdrClientContext* context,
+	                                                  const CLIPRDR_FORMAT_LIST* formatList);
+	[[nodiscard]] static UINT
+	ReceiveFormatListResponse(CliprdrClientContext* context,
+	                          const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse);
+	[[nodiscard]] static std::shared_ptr<BYTE> ReceiveFormatDataRequestHandle(
 	    sdlClip* clipboard, const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest, uint32_t& len);
-	static UINT ReceiveFormatDataRequest(CliprdrClientContext* context,
-	                                     const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest);
-	static UINT ReceiveFormatDataResponse(CliprdrClientContext* context,
-	                                      const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse);
+	[[nodiscard]] static UINT
+	ReceiveFormatDataRequest(CliprdrClientContext* context,
+	                         const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest);
+	[[nodiscard]] static UINT
+	ReceiveFormatDataResponse(CliprdrClientContext* context,
+	                          const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse);
 
-	static const void* SDLCALL ClipDataCb(void* userdata, const char* mime_type, size_t* size);
+	[[nodiscard]] static const void* SDLCALL ClipDataCb(void* userdata, const char* mime_type,
+	                                                    size_t* size);
 	static void SDLCALL ClipCleanCb(void* userdata);
 
-	static bool mime_is_file(const std::string& mime);
-	static bool mime_is_text(const std::string& mime);
-	static bool mime_is_image(const std::string& mime);
-	static bool mime_is_bmp(const std::string& mime);
-	static bool mime_is_html(const std::string& mime);
+	[[nodiscard]] static bool mime_is_file(const std::string& mime);
+	[[nodiscard]] static bool mime_is_text(const std::string& mime);
+	[[nodiscard]] static bool mime_is_image(const std::string& mime);
+	[[nodiscard]] static bool mime_is_bmp(const std::string& mime);
+	[[nodiscard]] static bool mime_is_html(const std::string& mime);
 
 	SdlContext* _sdl = nullptr;
 	CliprdrFileContext* _file = nullptr;
@@ -145,7 +136,7 @@ class sdlClip
 	wLog* _log = nullptr;
 	wClipboard* _system = nullptr;
 	std::atomic<bool> _sync = false;
-	HANDLE _event;
+	HANDLE _event = nullptr;
 	Uint64 _last_timestamp = 0;
 
 	std::vector<CliprdrFormat> _serverFormats;

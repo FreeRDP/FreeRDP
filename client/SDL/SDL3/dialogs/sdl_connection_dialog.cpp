@@ -21,7 +21,7 @@
 
 #include "sdl_connection_dialog.hpp"
 #include "../sdl_utils.hpp"
-#include "../sdl_freerdp.hpp"
+#include "../sdl_context.hpp"
 #include "res/sdl3_resource_manager.hpp"
 
 static const SDL_Color textcolor = { 0xd1, 0xcf, 0xcd, 0xff };
@@ -34,7 +34,7 @@ static const Uint32 hpadding = 5;
 
 SDLConnectionDialog::SDLConnectionDialog(rdpContext* context) : _context(context)
 {
-	hide();
+	std::ignore = hide();
 }
 
 SDLConnectionDialog::~SDLConnectionDialog()
@@ -109,7 +109,8 @@ bool SDLConnectionDialog::updateMsg(SdlConnectionDialogWrapper::MsgType type)
 		case SdlConnectionDialogWrapper::MSG_WARN:
 		case SdlConnectionDialogWrapper::MSG_ERROR:
 			_type_active = type;
-			createWindow();
+			if (!createWindow())
+				return false;
 			break;
 		case SdlConnectionDialogWrapper::MSG_DISCARD:
 			resetTimer();
@@ -130,13 +131,16 @@ bool SDLConnectionDialog::setModal()
 	if (_window)
 	{
 		auto sdl = get_context(_context);
-		if (sdl->windows.empty())
+		auto parent = sdl->getFirstWindow();
+		if (!parent)
 			return true;
 
-		auto parent = sdl->windows.begin()->second.window();
-		SDL_SetWindowParent(_window.get(), parent);
-		SDL_SetWindowModal(_window.get(), true);
-		SDL_RaiseWindow(_window.get());
+		if (!SDL_SetWindowParent(_window.get(), parent->window()))
+			return false;
+		if (!SDL_SetWindowModal(_window.get(), true))
+			return false;
+		if (!SDL_RaiseWindow(_window.get()))
+			return false;
 	}
 	return true;
 }
@@ -192,7 +196,8 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 			if (visible())
 			{
 				auto& ev = reinterpret_cast<const SDL_KeyboardEvent&>(event);
-				update();
+				if (!update())
+					return false;
 				switch (event.key.key)
 				{
 					case SDLK_RETURN:
@@ -202,11 +207,12 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 						if (event.type == SDL_EVENT_KEY_UP)
 						{
 							freerdp_abort_event(_context);
-							sdl_push_quit();
+							std::ignore = sdl_push_quit();
 						}
 						break;
 					case SDLK_TAB:
-						_buttons.set_highlight_next();
+						if (!_buttons.set_highlight_next())
+							return false;
 						break;
 					default:
 						break;
@@ -221,7 +227,8 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 				auto& ev = reinterpret_cast<const SDL_MouseMotionEvent&>(event);
 
 				_buttons.set_mouseover(event.button.x, event.button.y);
-				update();
+				if (!update())
+					return false;
 				return windowID == ev.windowID;
 			}
 			return false;
@@ -230,7 +237,8 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 			if (visible())
 			{
 				auto& ev = reinterpret_cast<const SDL_MouseButtonEvent&>(event);
-				update();
+				if (!update())
+					return false;
 
 				auto button = _buttons.get_selected(event.button);
 				if (button)
@@ -238,7 +246,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 					if (event.type == SDL_EVENT_MOUSE_BUTTON_UP)
 					{
 						freerdp_abort_event(_context);
-						sdl_push_quit();
+						std::ignore = sdl_push_quit();
 					}
 				}
 
@@ -249,7 +257,8 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 			if (visible())
 			{
 				auto& ev = reinterpret_cast<const SDL_MouseWheelEvent&>(event);
-				update();
+				if (!update())
+					return false;
 				return windowID == ev.windowID;
 			}
 			return false;
@@ -258,7 +267,8 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 			if (visible())
 			{
 				auto& ev = reinterpret_cast<const SDL_TouchFingerEvent&>(event);
-				update();
+				if (!update())
+					return false;
 				return windowID == ev.windowID;
 			}
 			return false;
@@ -272,12 +282,14 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 						if (windowID == ev.windowID)
 						{
 							freerdp_abort_event(_context);
-							sdl_push_quit();
+							std::ignore = sdl_push_quit();
 						}
 						break;
 					default:
-						update();
-						setModal();
+						if (!update())
+							return false;
+						if (!setModal())
+							return false;
 						break;
 				}
 
@@ -304,7 +316,8 @@ bool SDLConnectionDialog::createWindow()
 	if (!reset(_title, widget_width, total_height))
 		return false;
 
-	setModal();
+	if (!setModal())
+		return false;
 
 	SDL_Color res_bgcolor;
 	switch (_type_active)
@@ -343,16 +356,15 @@ bool SDLConnectionDialog::createWindow()
 			break;
 	}
 
-	const auto height = (total_height - 3ul * vpadding) / 2ul;
-	SDL_FRect iconRect{ hpadding, vpadding, widget_width / 4ul - 2ul * hpadding,
-		                static_cast<float>(height) };
+	const auto height = (total_height - 3.0f * vpadding) / 2.0f;
+	SDL_FRect iconRect{ hpadding, vpadding, widget_width / 4.0f - 2.0f * hpadding, height };
 	widget_cfg_t icon{ textcolor,
 		               res_bgcolor,
 		               { _renderer, iconRect,
 		                 SDL3ResourceManager::get(SDLResourceManager::typeImages(), res_name) } };
 	_list.emplace_back(std::move(icon));
 
-	iconRect.y += static_cast<float>(height);
+	iconRect.y += height;
 
 	widget_cfg_t logo{ textcolor,
 		               _backgroundcolor,
@@ -361,7 +373,7 @@ bool SDLConnectionDialog::createWindow()
 		                                          "FreeRDP_Icon.svg") } };
 	_list.emplace_back(std::move(logo));
 
-	SDL_FRect rect = { widget_width / 4ul, vpadding, widget_width * 3ul / 4ul,
+	SDL_FRect rect = { widget_width / 4.0f, vpadding, widget_width * 3.0f / 4.0f,
 		               total_height - 3ul * vpadding - widget_height };
 #else
 	SDL_FRect rect = { hpadding, vpadding, widget_width - 2ul * hpadding,
@@ -369,19 +381,25 @@ bool SDLConnectionDialog::createWindow()
 #endif
 
 	widget_cfg_t w{ textcolor, _backgroundcolor, { _renderer, rect } };
-	w.widget.set_wrap(true, widget_width);
+	if (!w.widget.set_wrap(true, widget_width))
+		return false;
 	_list.emplace_back(std::move(w));
 	rect.y += widget_height + vpadding;
 
 	const std::vector<int> buttonids = { 1 };
 	const std::vector<std::string> buttonlabels = { "cancel" };
-	_buttons.populate(_renderer, buttonlabels, buttonids, widget_width,
-	                  total_height - widget_height - vpadding,
-	                  static_cast<Sint32>(widget_width / 2), static_cast<Sint32>(widget_height));
-	_buttons.set_highlight(0);
+	if (!_buttons.populate(_renderer, buttonlabels, buttonids, widget_width,
+	                       total_height - widget_height - vpadding,
+	                       static_cast<Sint32>(widget_width / 2),
+	                       static_cast<Sint32>(widget_height)))
+		return false;
+	if (!_buttons.set_highlight(0))
+		return false;
 
-	SDL_ShowWindow(_window.get());
-	SDL_RaiseWindow(_window.get());
+	if (!SDL_ShowWindow(_window.get()))
+		return false;
+	if (!SDL_RaiseWindow(_window.get()))
+		return false;
 
 	return true;
 }
@@ -455,7 +473,7 @@ Uint32 SDLConnectionDialog::timeout(void* pvthis, [[maybe_unused]] SDL_TimerID t
                                     [[maybe_unused]] Uint32 intervalMS)
 {
 	auto self = static_cast<SDLConnectionDialog*>(pvthis);
-	self->hide();
+	std::ignore = self->hide();
 	self->_running = false;
 	return 0;
 }

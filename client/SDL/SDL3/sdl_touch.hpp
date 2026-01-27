@@ -24,13 +24,18 @@
 #include <SDL3/SDL.h>
 #include "sdl_types.hpp"
 
-BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* py,
-                           BOOL fromLocalToRDP, BOOL applyOffset);
+class SdlTouch
+{
+  public:
+	[[nodiscard]] static bool handleEvent(SdlContext* sdl, const SDL_MouseMotionEvent& ev);
+	[[nodiscard]] static bool handleEvent(SdlContext* sdl, const SDL_MouseWheelEvent& ev);
+	[[nodiscard]] static bool handleEvent(SdlContext* sdl, const SDL_MouseButtonEvent& ev);
 
-BOOL sdl_handle_mouse_motion(SdlContext* sdl, const SDL_MouseMotionEvent* ev);
-BOOL sdl_handle_mouse_wheel(SdlContext* sdl, const SDL_MouseWheelEvent* ev);
-BOOL sdl_handle_mouse_button(SdlContext* sdl, const SDL_MouseButtonEvent* ev);
+	[[nodiscard]] static bool handleEvent(SdlContext* sdl, const SDL_TouchFingerEvent& ev);
 
-BOOL sdl_handle_touch_down(SdlContext* sdl, const SDL_TouchFingerEvent* ev);
-BOOL sdl_handle_touch_up(SdlContext* sdl, const SDL_TouchFingerEvent* ev);
-BOOL sdl_handle_touch_motion(SdlContext* sdl, const SDL_TouchFingerEvent* ev);
+  private:
+	[[nodiscard]] static bool touchDown(SdlContext* sdl, const SDL_TouchFingerEvent& ev);
+	[[nodiscard]] static bool touchUp(SdlContext* sdl, const SDL_TouchFingerEvent& ev);
+	[[nodiscard]] static bool touchCancel(SdlContext* sdl, const SDL_TouchFingerEvent& ev);
+	[[nodiscard]] static bool touchMotion(SdlContext* sdl, const SDL_TouchFingerEvent& ev);
+};

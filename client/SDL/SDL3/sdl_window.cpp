@@ -17,6 +17,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <limits>
+#include <sstream>
+
 #include "sdl_window.hpp"
 #include "sdl_utils.hpp"
 
@@ -42,13 +45,13 @@ SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY,
 	_window = SDL_CreateWindowWithProperties(props);
 	SDL_DestroyProperties(props);
 
-	auto scale = SDL_GetWindowPixelDensity(_window);
-	const int iscale = static_cast<int>(scale * 100.0f);
+	auto sc = scale();
+	const int iscale = static_cast<int>(sc * 100.0f);
 	auto w = 100 * width / iscale;
 	auto h = 100 * height / iscale;
-	(void)SDL_SetWindowSize(_window, w, h);
+	std::ignore = resize({ w, h });
 	SDL_SetHint(SDL_HINT_APP_NAME, "");
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
@@ -62,7 +65,7 @@ SdlWindow::~SdlWindow()
 	SDL_DestroyWindow(_window);
 }
 
-Uint32 SdlWindow::id() const
+SDL_WindowID SdlWindow::id() const
 {
 	if (!_window)
 		return 0;
@@ -83,6 +86,17 @@ SDL_Rect SdlWindow::rect() const
 	{
 		SDL_GetWindowPosition(_window, &rect.x, &rect.y);
 		SDL_GetWindowSizeInPixels(_window, &rect.w, &rect.h);
+	}
+	return rect;
+}
+
+SDL_Rect SdlWindow::bounds() const
+{
+	SDL_Rect rect = {};
+	if (_window)
+	{
+		SDL_GetWindowPosition(_window, &rect.x, &rect.y);
+		SDL_GetWindowSize(_window, &rect.w, &rect.h);
 	}
 	return rect;
 }
@@ -112,27 +126,21 @@ Sint32 SdlWindow::offsetY() const
 	return _offset_y;
 }
 
-rdpMonitor SdlWindow::monitor() const
+rdpMonitor SdlWindow::monitor(bool isPrimary) const
 {
 	rdpMonitor mon{};
 
-	const auto factor = SDL_GetWindowDisplayScale(_window);
+	const auto factor = scale();
 	const auto dsf = static_cast<UINT32>(100 * factor);
 	mon.attributes.desktopScaleFactor = dsf;
 	mon.attributes.deviceScaleFactor = 100;
 
-	int pixelWidth = 0;
-	int pixelHeight = 0;
-	auto prc = SDL_GetWindowSizeInPixels(_window, &pixelWidth, &pixelHeight);
+	const auto r = rect();
+	mon.width = r.w;
+	mon.height = r.h;
 
-	if (prc)
-	{
-		mon.width = pixelWidth;
-		mon.height = pixelHeight;
-
-		mon.attributes.physicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, pixelWidth);
-		mon.attributes.physicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, pixelHeight);
-	}
+	mon.attributes.physicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, r.w);
+	mon.attributes.physicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, r.h);
 
 	SDL_Rect rect = {};
 	auto did = SDL_GetDisplayForWindow(_window);
@@ -144,13 +152,29 @@ rdpMonitor SdlWindow::monitor() const
 		mon.y = rect.y;
 	}
 
-	auto orientation = SDL_GetCurrentDisplayOrientation(did);
-	mon.attributes.orientation = sdl::utils::orientaion_to_rdp(orientation);
+	const auto orient = orientation();
+	mon.attributes.orientation = sdl::utils::orientaion_to_rdp(orient);
 
 	auto primary = SDL_GetPrimaryDisplay();
-	mon.is_primary = SDL_GetWindowID(_window) == primary;
+	mon.is_primary = isPrimary || (SDL_GetWindowID(_window) == primary);
 	mon.orig_screen = did;
+	if (mon.is_primary)
+	{
+		mon.x = 0;
+		mon.y = 0;
+	}
 	return mon;
+}
+
+float SdlWindow::scale() const
+{
+	return SDL_GetWindowDisplayScale(_window);
+}
+
+SDL_DisplayOrientation SdlWindow::orientation() const
+{
+	const auto did = displayIndex();
+	return SDL_GetCurrentDisplayOrientation(did);
 }
 
 bool SdlWindow::grabKeyboard(bool enable)
@@ -173,31 +197,84 @@ void SdlWindow::setBordered(bool bordered)
 {
 	if (_window)
 		SDL_SetWindowBordered(_window, bordered);
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 void SdlWindow::raise()
 {
 	SDL_RaiseWindow(_window);
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 void SdlWindow::resizeable(bool use)
 {
 	SDL_SetWindowResizable(_window, use);
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 void SdlWindow::fullscreen(bool enter)
 {
-	(void)SDL_SetWindowFullscreen(_window, enter);
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SetWindowFullscreen(_window, enter);
+	std::ignore = SDL_SyncWindow(_window);
 }
 
 void SdlWindow::minimize()
 {
 	SDL_MinimizeWindow(_window);
-	(void)SDL_SyncWindow(_window);
+	std::ignore = SDL_SyncWindow(_window);
+}
+
+bool SdlWindow::resize(const SDL_Point& size)
+{
+	return SDL_SetWindowSize(_window, size.x, size.y);
+}
+
+bool SdlWindow::drawRect(SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect)
+{
+	WINPR_ASSERT(surface);
+	SDL_Rect dstRect = { offset.x + srcRect.x, offset.y + srcRect.y, srcRect.w, srcRect.h };
+	return blit(surface, srcRect, dstRect);
+}
+
+bool SdlWindow::drawRects(SDL_Surface* surface, SDL_Point offset,
+                          const std::vector<SDL_Rect>& rects)
+{
+	if (rects.empty())
+	{
+		return drawRect(surface, offset, { 0, 0, surface->w, surface->h });
+	}
+	for (auto& srcRect : rects)
+	{
+		if (!drawRect(surface, offset, srcRect))
+			return false;
+	}
+	return true;
+}
+
+bool SdlWindow::drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
+                               const SDL_Rect& srcRect)
+{
+	SDL_Rect dstRect = srcRect;
+	dstRect.x = static_cast<Sint32>(static_cast<float>(dstRect.x) * scale.x);
+	dstRect.w = static_cast<Sint32>(static_cast<float>(dstRect.w) * scale.x);
+	dstRect.y = static_cast<Sint32>(static_cast<float>(dstRect.y) * scale.y);
+	dstRect.h = static_cast<Sint32>(static_cast<float>(dstRect.h) * scale.y);
+	return blit(surface, srcRect, dstRect);
+}
+
+bool SdlWindow::drawScaledRects(SDL_Surface* surface, const SDL_FPoint& scale,
+                                const std::vector<SDL_Rect>& rects)
+{
+	if (rects.empty())
+	{
+		return drawScaledRect(surface, scale, { 0, 0, surface->w, surface->h });
+	}
+	for (const auto& srcRect : rects)
+	{
+		if (!drawScaledRect(surface, scale, srcRect))
+			return false;
+	}
+	return true;
 }
 
 bool SdlWindow::fill(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
@@ -232,4 +309,38 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 void SdlWindow::updateSurface()
 {
 	SDL_UpdateWindowSurface(_window);
+}
+
+SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 flags, Uint32 width,
+                            Uint32 height)
+{
+	flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
+	auto startupX = static_cast<int>(SDL_WINDOWPOS_CENTERED_DISPLAY(id));
+	auto startupY = static_cast<int>(SDL_WINDOWPOS_CENTERED_DISPLAY(id));
+
+	if ((flags & SDL_WINDOW_FULLSCREEN) != 0)
+	{
+		SDL_Rect rect = {};
+		SDL_GetDisplayBounds(id, &rect);
+		startupX = rect.x;
+		startupY = rect.y;
+		width = static_cast<Uint32>(rect.w);
+		height = static_cast<Uint32>(rect.h);
+	}
+
+	std::stringstream ss;
+	ss << title << ":" << id;
+	SdlWindow window{
+		ss.str(), startupX, startupY, static_cast<int>(width), static_cast<int>(height), flags
+	};
+
+	if ((flags & (SDL_WINDOW_FULLSCREEN)) != 0)
+	{
+		SDL_Rect rect = {};
+		SDL_GetDisplayBounds(id, &rect);
+		window.setOffsetX(rect.x);
+		window.setOffsetY(rect.y);
+	}
+
+	return window;
 }

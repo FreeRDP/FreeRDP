@@ -23,9 +23,9 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 
 		const std::vector<int> buttonids = { INPUT_BUTTON_ACCEPT, INPUT_BUTTON_CANCEL };
 		const std::vector<std::string> buttonlabels = { "accept", "cancel" };
-		_buttons.populate(_renderer, buttonlabels, buttonids, widget_width,
-		                  static_cast<Sint32>(total_height), static_cast<Sint32>(widget_width / 2),
-		                  static_cast<Sint32>(widget_height));
+		std::ignore = _buttons.populate(
+		    _renderer, buttonlabels, buttonids, widget_width, static_cast<Sint32>(total_height),
+		    static_cast<Sint32>(widget_width / 2), static_cast<Sint32>(widget_height));
 		_buttons.set_highlight(0);
 	}
 }
@@ -147,7 +147,8 @@ int SdlSelectList::run()
 					throw;
 			}
 
-			update();
+			if (!update())
+				throw;
 		}
 	}
 	catch (...)

@@ -40,7 +40,7 @@ class SdlSelectableWidget : public SdlWidget
 	bool mouseover(bool enable);
 
   protected:
-	bool updateInternal() override;
+	[[nodiscard]] bool updateInternal() override;
 	SDL_Color _highlightcolor = { 0xcd, 0xca, 0x35, 0x60 };
 	SDL_Color _mouseovercolor = { 0x66, 0xff, 0x66, 0x60 };
 

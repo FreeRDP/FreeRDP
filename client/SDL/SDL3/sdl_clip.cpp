@@ -29,7 +29,7 @@
 #include <winpr/image.h>
 
 #include "sdl_clip.hpp"
-#include "sdl_freerdp.hpp"
+#include "sdl_context.hpp"
 
 #define TAG CLIENT_TAG("sdl.cliprdr")
 
@@ -37,7 +37,7 @@
 // NOLINTNEXTLINE(bugprone-suspicious-missing-comma)
 const char mime_text_utf8[] = mime_text_plain ";charset=utf-8";
 
-static const std::vector<const char*>& s_mime_text()
+[[nodiscard]] static const std::vector<const char*>& s_mime_text()
 {
 	static std::vector<const char*> values;
 	if (values.empty())
@@ -58,7 +58,7 @@ static const char s_mime_html[] = "text/html";
 
 #define BMP_MIME_LIST "image/bmp", "image/x-bmp", "image/x-MS-bmp", "image/x-win-bitmap"
 
-static const std::vector<const char*>& s_mime_bitmap()
+[[nodiscard]] static const std::vector<const char*>& s_mime_bitmap()
 {
 	static std::vector<const char*> values;
 	if (values.empty())
@@ -68,7 +68,7 @@ static const std::vector<const char*>& s_mime_bitmap()
 	return values;
 }
 
-static const std::vector<const char*>& s_mime_image()
+[[nodiscard]] static const std::vector<const char*>& s_mime_image()
 {
 	static std::vector<const char*> values;
 	if (values.empty())
@@ -144,10 +144,10 @@ sdlClip::~sdlClip()
 {
 	cliprdr_file_context_free(_file);
 	ClipboardDestroy(_system);
-	(void)CloseHandle(_event);
+	std::ignore = CloseHandle(_event);
 }
 
-BOOL sdlClip::init(CliprdrClientContext* clip)
+bool sdlClip::init(CliprdrClientContext* clip)
 {
 	WINPR_ASSERT(clip);
 	_ctx = clip;
@@ -162,14 +162,14 @@ BOOL sdlClip::init(CliprdrClientContext* clip)
 	return cliprdr_file_context_init(_file, _ctx);
 }
 
-BOOL sdlClip::uninit(CliprdrClientContext* clip)
+bool sdlClip::uninit(CliprdrClientContext* clip)
 {
 	WINPR_ASSERT(clip);
 	if (!cliprdr_file_context_uninit(_file, _ctx))
-		return FALSE;
+		return false;
 	_ctx = nullptr;
 	clip->custom = nullptr;
-	return TRUE;
+	return true;
 }
 
 bool sdlClip::contains(const char** mime_types, Sint32 count)
@@ -183,7 +183,7 @@ bool sdlClip::contains(const char** mime_types, Sint32 count)
 	return false;
 }
 
-bool sdlClip::handle_update(const SDL_ClipboardEvent& ev)
+bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 {
 	if (!_ctx || !_sync || ev.owner)
 	{
@@ -876,7 +876,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		clip->_request_queue.pop();
 
 		if (clip->_request_queue.empty())
-			(void)ResetEvent(clip->_event);
+			std::ignore = ResetEvent(clip->_event);
 
 		if (request.success())
 		{
@@ -987,4 +987,22 @@ bool ClipRequest::success() const
 void ClipRequest::setSuccess(bool status)
 {
 	_success = status;
+}
+
+CliprdrFormat::CliprdrFormat(uint32_t formatID, const char* formatName) : _formatID(formatID)
+{
+	if (formatName)
+		_formatName = formatName;
+}
+
+uint32_t CliprdrFormat::formatId() const
+{
+	return _formatID;
+}
+
+const char* CliprdrFormat::formatName() const
+{
+	if (_formatName.empty())
+		return nullptr;
+	return _formatName.c_str();
 }

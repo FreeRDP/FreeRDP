@@ -37,7 +37,7 @@ class SdlBlendModeGuard
 	SdlBlendModeGuard& operator=(const SdlBlendModeGuard& other) = delete;
 	SdlBlendModeGuard& operator=(SdlBlendModeGuard&& other) = delete;
 
-	bool update(SDL_BlendMode mode);
+	[[nodiscard]] bool update(SDL_BlendMode mode);
 
   private:
 	SDL_BlendMode _restore_mode = SDL_BLENDMODE_INVALID;

@@ -57,10 +57,10 @@ class SdlConnectionDialogWrapper
 	void create(rdpContext* context);
 	void destroy();
 
-	bool isRunning() const;
-	bool isVisible() const;
+	[[nodiscard]] bool isRunning() const;
+	[[nodiscard]] bool isVisible() const;
 
-	bool handleEvent(const SDL_Event& event);
+	[[nodiscard]] bool handleEvent(const SDL_Event& event);
 
 	WINPR_ATTR_FORMAT_ARG(2, 3)
 	void setTitle(WINPR_FORMAT_ARG const char* fmt, ...);
