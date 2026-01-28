@@ -384,7 +384,7 @@ static UINT device_server_recv_property_list_response(CameraDeviceServerContext*
                                                       const CAM_SHARED_MSG_HEADER* header)
 {
 	CAM_PROPERTY_LIST_RESPONSE pdu = { 0 };
-	UINT error = CHANNEL_RC_OK;
+	UINT error = ERROR_INVALID_DATA;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(header);
@@ -409,30 +409,23 @@ static UINT device_server_recv_property_list_response(CameraDeviceServerContext*
 			{
 				const UINT8 val = Stream_Get_UINT8(s);
 				if (!rdpecam_valid_CamPropertySet(val))
-				{
-					free(pdu.Properties);
-					return ERROR_INVALID_DATA;
-				}
+					goto fail;
 				cur->PropertySet = (CAM_PROPERTY_SET)val;
 			}
-			Stream_Read_UINT8(s, cur->PropertyId);
-			{
-				const UINT8 val = Stream_Get_UINT8(s);
-				if (!rdpecam_valid_CamPropertyCapabilities(val))
-				{
-					free(pdu.Properties);
-					return ERROR_INVALID_DATA;
-				}
-				cur->Capabilities = (CAM_PROPERTY_CAPABILITIES)val;
-			}
-			Stream_Read_INT32(s, cur->MinValue);
-			Stream_Read_INT32(s, cur->MaxValue);
-			Stream_Read_INT32(s, cur->Step);
-			Stream_Read_INT32(s, cur->DefaultValue);
+			cur->PropertyId = Stream_Get_UINT8(s);
+			cur->Capabilities = Stream_Get_UINT8(s);
+			if (!rdpecam_valid_CamPropertyCapabilities(cur->Capabilities))
+				goto fail;
+			cur->MinValue = Stream_Get_INT32(s);
+			cur->MaxValue = Stream_Get_INT32(s);
+			cur->Step = Stream_Get_INT32(s);
+			cur->DefaultValue = Stream_Get_INT32(s);
 		}
 	}
 
-	IFCALLRET(context->PropertyListResponse, error, context, &pdu);
+	error = IFCALLRESULT(CHANNEL_RC_OK, context->PropertyListResponse, context, &pdu);
+
+fail:
 	if (error)
 		WLog_ERR(TAG, "context->PropertyListResponse failed with error %" PRIu32 "", error);
 

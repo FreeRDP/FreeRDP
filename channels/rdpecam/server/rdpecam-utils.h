@@ -307,19 +307,16 @@ static inline bool rdpecam_valid_CamPropertySet_(UINT8 val, wLog* log, const cha
  */
 #define rdpecam_valid_CamPropertyCapabilities(val) \
 	rdpecam_valid_CamPropertyCapabilities_((val), WLog_Get(TAG), __FILE__, __func__, __LINE__)
-static inline bool rdpecam_valid_CamPropertyCapabilities_(UINT8 val, wLog* log, const char* file,
+static inline bool rdpecam_valid_CamPropertyCapabilities_(UINT32 val, wLog* log, const char* file,
                                                           const char* fkt, size_t line)
 {
-	switch (val)
+	if ((val & ~(CAM_PROPERTY_CAPABILITY_Manual | CAM_PROPERTY_CAPABILITY_Auto)) != 0)
 	{
-		case CAM_PROPERTY_CAPABILITY_Manual:
-		case CAM_PROPERTY_CAPABILITY_Auto:
-			return true;
-		default:
-			rdpecam_PrintWarning(log, file, fkt, line, "Invalid CAM_PROPERTY_CAPABILITIES %" PRIu8,
-			                     val);
-			return false;
+		rdpecam_PrintWarning(log, file, fkt, line, "Invalid CAM_PROPERTY_CAPABILITIES %" PRIu8,
+		                     val);
+		return false;
 	}
+	return true;
 }
 
 #endif
