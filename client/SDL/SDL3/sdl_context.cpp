@@ -664,7 +664,10 @@ int SdlContext::sdl_client_thread_run(std::string& error_msg)
 		const DWORD status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
+		{
+			WLog_Print(getWLog(), WLOG_ERROR, "WaitForMultipleObjects WAIT_FAILED");
 			break;
+		}
 
 		if (!freerdp_check_event_handles(context()))
 		{

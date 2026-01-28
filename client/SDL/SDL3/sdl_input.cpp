@@ -309,16 +309,14 @@ bool sdlInput::keyboard_focus_in()
 	WINPR_ASSERT(input);
 
 	auto syncFlags = sdl_get_kbd_flags();
-	freerdp_input_send_focus_in_event(input, WINPR_ASSERTING_INT_CAST(uint16_t, syncFlags));
+	if (!freerdp_input_send_focus_in_event(input, WINPR_ASSERTING_INT_CAST(uint16_t, syncFlags)))
+		return false;
 
 	/* finish with a mouse pointer position like mstsc.exe if required */
 	// TODO: fullscreen/remote app
 	float fx = 0.0f;
 	float fy = 0.0f;
-	if (_sdl->fullscreen())
-		SDL_GetGlobalMouseState(&fx, &fy);
-	else
-		SDL_GetMouseState(&fx, &fy);
+	SDL_GetMouseState(&fx, &fy);
 
 	auto w = SDL_GetMouseFocus();
 	const auto& pos = _sdl->screenToPixel(SDL_GetWindowID(w), SDL_FPoint{ fx, fy });
