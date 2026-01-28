@@ -805,7 +805,10 @@ bool SdlContext::drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& re
 	}
 	else
 	{
-		if (!window.drawRects(surface, { window.offsetX(), window.offsetY() }, rects))
+		SDL_Point offset{ 0, 0 };
+		if (freerdp_settings_get_bool(context()->settings, FreeRDP_UseMultimon))
+			offset = { window.offsetX(), window.offsetY() };
+		if (!window.drawRects(surface, offset, rects))
 			return false;
 	}
 
