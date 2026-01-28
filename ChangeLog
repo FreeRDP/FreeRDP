@@ -1,3 +1,59 @@
+# 2026-01-28 Version 3.22.0
+
+Major bugfix release:
+* Complete overhaul of SDL client
+* Introduction of new WINPR_ATTR_NODISCARD macro wrapping compiler or C language
+  version specific [[nodiscard]] attributes
+* Addition of WINPR_ATTR_NODISCARD to (some) public API functions so usage errors
+  are producing warnings now
+* Add some more stringify functions for logging
+* We've received CVE reports, check
+  https://github.com/FreeRDP/FreeRDP/security/advisories for more details!
+  * @Keryer reported an issue affecting client and proxy:
+    * CVE-2026-23948
+  * @ehdgks0627 did some more fuzzying and found quite a number of client side bugs.
+    * CVE-2026-24682
+    * CVE-2026-24683
+    * CVE-2026-24676
+    * CVE-2026-24677
+    * CVE-2026-24678
+    * CVE-2026-24684
+    * CVE-2026-24679
+    * CVE-2026-24681
+    * CVE-2026-24675
+    * CVE-2026-24491
+    * CVE-2026-24680
+
+## What's Changed
+* [core,info] fix missing NULL check (#12157)
+* [gateway,tsg] fix TSG_PACKET_RESPONSE parsing (#12161)
+* Allow querying auth identity with kerberos when running as a server (#12162)
+* Sspi krb heimdal (#12163)
+* Tsg fix idleTimeout parsing (#12167)
+* [channels,smartcard] revert 649f7deee4e32ecedf0dcdfe571e54134b5be81e (#12166)
+* [crypto] deprecate er and der modules (#12170)
+* [channels,rdpei] lock full update, not only parts (#12175)
+* [winpr,platform] add WINPR_ATTR_NODISCARD macro (#12178)
+* Wlog cleanup (#12179)
+* new stringify functions & touch API defines (#12180)
+* Add support for querying SECPKG_ATTR_PACKAGE_INFO to NTLM and Kerberos (#12171)
+* [channels,video] measure times in ns (#12184)
+* [utils] Nodiscard (#12187)
+* Error handling fixes (#12186)
+* [channels,drdynvc] check pointer before reset (#12189)
+* Winpr api def (#12190)
+* [winpr,platform] drop C23 [[nodiscard]] (#12192)
+* [gdi] add additional checks for a valid rdpGdi (#12194)
+* Sdl3 high dpiv2 (#12173)
+* peer: Disconnect if Logon() returned FALSE (#12196)
+* [channels,rdpecam] fix PROPERTY_DESCRIPTION parsing (#12197)
+* [channel,rdpsnd] only clean up thread before free (#12199)
+* [channels,rdpei] add RDPINPUT_CONTACT_FLAG_UP (#12195)
+
+
+For a complete and detailed change log since the last release run:
+git log 3.22.0...3.21.0
+
 # 2026-01-19 Version 3.21.0
 
 Bugfix release with a few new API functions addressing shortcomings with
