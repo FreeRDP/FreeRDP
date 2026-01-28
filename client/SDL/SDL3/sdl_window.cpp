@@ -23,15 +23,14 @@
 #include "sdl_window.hpp"
 #include "sdl_utils.hpp"
 
-SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY, Sint32 width,
-                     Sint32 height, [[maybe_unused]] Uint32 flags)
+SdlWindow::SdlWindow(const std::string& title, const SDL_Rect& rect, [[maybe_unused]] Uint32 flags)
 {
 	auto props = SDL_CreateProperties();
 	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title.c_str());
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, startupX);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, startupY);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, width);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, height);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, rect.x);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, rect.y);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, rect.w);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, rect.h);
 
 	if (flags & SDL_WINDOW_HIGH_PIXEL_DENSITY)
 		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
@@ -47,8 +46,8 @@ SdlWindow::SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY,
 
 	auto sc = scale();
 	const int iscale = static_cast<int>(sc * 100.0f);
-	auto w = 100 * width / iscale;
-	auto h = 100 * height / iscale;
+	auto w = 100 * rect.w / iscale;
+	auto h = 100 * rect.h / iscale;
 	std::ignore = resize({ w, h });
 	SDL_SetHint(SDL_HINT_APP_NAME, "");
 	std::ignore = SDL_SyncWindow(_window);
@@ -315,29 +314,20 @@ SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 f
                             Uint32 height)
 {
 	flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
-	auto startupX = static_cast<int>(SDL_WINDOWPOS_CENTERED_DISPLAY(id));
-	auto startupY = static_cast<int>(SDL_WINDOWPOS_CENTERED_DISPLAY(id));
+
+	SDL_Rect rect = { static_cast<int>(SDL_WINDOWPOS_CENTERED_DISPLAY(id)),
+		              static_cast<int>(SDL_WINDOWPOS_CENTERED_DISPLAY(id)), static_cast<int>(width),
+		              static_cast<int>(height) };
 
 	if ((flags & SDL_WINDOW_FULLSCREEN) != 0)
 	{
-		SDL_Rect rect = {};
-		SDL_GetDisplayBounds(id, &rect);
-		startupX = rect.x;
-		startupY = rect.y;
-		width = static_cast<Uint32>(rect.w);
-		height = static_cast<Uint32>(rect.h);
+		std::ignore = SDL_GetDisplayBounds(id, &rect);
 	}
 
-	std::stringstream ss;
-	ss << title << ":" << id;
-	SdlWindow window{
-		ss.str(), startupX, startupY, static_cast<int>(width), static_cast<int>(height), flags
-	};
+	SdlWindow window{ title, rect, flags };
 
 	if ((flags & (SDL_WINDOW_FULLSCREEN)) != 0)
 	{
-		SDL_Rect rect = {};
-		SDL_GetDisplayBounds(id, &rect);
 		window.setOffsetX(rect.x);
 		window.setOffsetY(rect.y);
 	}

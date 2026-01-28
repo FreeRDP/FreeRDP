@@ -1771,8 +1771,8 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 			cctx->lastX = x;
 			cctx->lastY = y;
 		}
-		freerdp_input_send_mouse_event(cctx->context.input, mflags, (UINT16)cctx->lastX,
-		                               (UINT16)cctx->lastY);
+		return freerdp_input_send_mouse_event(cctx->context.input, mflags, (UINT16)cctx->lastX,
+		                                      (UINT16)cctx->lastY);
 	}
 	return TRUE;
 }

@@ -411,9 +411,6 @@ bool SdlContext::createWindows()
 		if (!freerdp_settings_get_bool(settings, FreeRDP_Decorations))
 			flags |= SDL_WINDOW_BORDERLESS;
 
-		std::stringstream ss;
-		ss << title << ":" << x;
-
 		auto did = WINPR_ASSERTING_INT_CAST(SDL_DisplayID, id);
 		auto window = SdlWindow::create(did, title, flags, w, h);
 
@@ -667,7 +664,10 @@ int SdlContext::sdl_client_thread_run(std::string& error_msg)
 		const DWORD status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
+		{
+			WLog_Print(getWLog(), WLOG_ERROR, "WaitForMultipleObjects WAIT_FAILED");
 			break;
+		}
 
 		if (!freerdp_check_event_handles(context()))
 		{
@@ -763,6 +763,16 @@ int SdlContext::error_info_to_error(DWORD* pcode, char** msg, size_t* len) const
 	return exit_code;
 }
 
+void SdlContext::applyMonitorOffset(SDL_WindowID window, float& x, float& y) const
+{
+	if (!freerdp_settings_get_bool(context()->settings, FreeRDP_UseMultimon))
+		return;
+
+	auto w = getWindowForId(window);
+	x -= static_cast<float>(w->offsetX());
+	y -= static_cast<float>(w->offsetY());
+}
+
 bool SdlContext::drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& rects)
 {
 	if (!isConnected())
@@ -840,6 +850,14 @@ bool SdlContext::removeDisplay(SDL_DisplayID id)
 	return true;
 }
 
+const SdlWindow* SdlContext::getWindowForId(SDL_WindowID id) const
+{
+	auto it = _windows.find(id);
+	if (it == _windows.end())
+		return nullptr;
+	return &it->second;
+}
+
 SdlWindow* SdlContext::getWindowForId(SDL_WindowID id)
 {
 	auto it = _windows.find(id);
@@ -900,6 +918,7 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 		return false;
 	removeLocalScaling(copy.motion.x, copy.motion.y);
 	removeLocalScaling(copy.motion.xrel, copy.motion.yrel);
+	applyMonitorOffset(copy.motion.windowID, copy.motion.x, copy.motion.y);
 
 	return SdlTouch::handleEvent(this, copy.motion);
 }
@@ -937,6 +956,8 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 
 	switch (ev.type)
 	{
+		case SDL_EVENT_WINDOW_MOUSE_ENTER:
+			return restoreCursor();
 		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 			if (isConnected())
 			{
@@ -944,7 +965,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					return false;
 				if (!drawToWindow(*window))
 					return false;
-				if (!sdl_Pointer_Set_Process(this))
+				if (!restoreCursor())
 					return false;
 			}
 			break;
@@ -953,7 +974,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 				return false;
 			if (!drawToWindow(*window))
 				return false;
-			if (!sdl_Pointer_Set_Process(this))
+			if (!restoreCursor())
 				return false;
 			break;
 		case SDL_EVENT_WINDOW_MOVED:
@@ -1016,6 +1037,7 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 	if (!eventToPixelCoordinates(ev.windowID, copy))
 		return false;
 	removeLocalScaling(copy.button.x, copy.button.y);
+	applyMonitorOffset(copy.button.windowID, copy.button.x, copy.button.y);
 	return SdlTouch::handleEvent(this, copy.button);
 }
 
@@ -1027,6 +1049,7 @@ bool SdlContext::handleEvent(const SDL_TouchFingerEvent& ev)
 		return false;
 	removeLocalScaling(copy.tfinger.dx, copy.tfinger.dy);
 	removeLocalScaling(copy.tfinger.x, copy.tfinger.y);
+	applyMonitorOffset(copy.tfinger.windowID, copy.tfinger.x, copy.tfinger.y);
 	return SdlTouch::handleEvent(this, copy.tfinger);
 }
 
@@ -1035,9 +1058,11 @@ bool SdlContext::eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev)
 	auto w = getWindowForId(id);
 	if (!w)
 		return false;
+
+	/* Ignore errors here, sometimes SDL has no renderer */
 	auto renderer = SDL_GetRenderer(w->window());
 	if (!renderer)
-		return false;
+		return true;
 	return SDL_ConvertEventToRenderCoordinates(renderer, &ev);
 }
 
@@ -1065,9 +1090,11 @@ SDL_FPoint SdlContext::screenToPixel(SDL_WindowID id, const SDL_FPoint& pos)
 	auto w = getWindowForId(id);
 	if (!w)
 		return {};
+
+	/* Ignore errors here, sometimes SDL has no renderer */
 	auto renderer = SDL_GetRenderer(w->window());
 	if (!renderer)
-		return {};
+		return pos;
 
 	SDL_FPoint rpos{};
 	if (!SDL_RenderCoordinatesFromWindow(renderer, pos.x, pos.y, &rpos.x, &rpos.y))
@@ -1081,9 +1108,11 @@ SDL_FPoint SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos)
 	auto w = getWindowForId(id);
 	if (!w)
 		return {};
+
+	/* Ignore errors here, sometimes SDL has no renderer */
 	auto renderer = SDL_GetRenderer(w->window());
 	if (!renderer)
-		return {};
+		return pos;
 
 	SDL_FPoint rpos{};
 	if (!SDL_RenderCoordinatesToWindow(renderer, pos.x, pos.y, &rpos.x, &rpos.y))
@@ -1247,14 +1276,51 @@ rdpClientContext* SdlContext::common() const
 	return reinterpret_cast<rdpClientContext*>(context());
 }
 
-void SdlContext::setCursor(rdpPointer* cursor)
+bool SdlContext::setCursor(CursorType type)
+{
+	_cursorType = type;
+	return restoreCursor();
+}
+
+bool SdlContext::setCursor(rdpPointer* cursor)
 {
 	_cursor = cursor;
+	return setCursor(CURSOR_IMAGE);
 }
 
 rdpPointer* SdlContext::cursor() const
 {
 	return _cursor;
+}
+
+bool SdlContext::restoreCursor()
+{
+	WLog_Print(getWLog(), WLOG_DEBUG, "restore cursor: %d", _cursorType);
+	switch (_cursorType)
+	{
+		case CURSOR_NULL:
+			if (!SDL_HideCursor())
+				return false;
+
+			setHasCursor(false);
+			return true;
+
+		case CURSOR_DEFAULT:
+		{
+			auto def = SDL_GetDefaultCursor();
+			if (!SDL_SetCursor(def))
+				return false;
+			if (!SDL_ShowCursor())
+				return false;
+			setHasCursor(true);
+			return true;
+		}
+		case CURSOR_IMAGE:
+			setHasCursor(true);
+			return sdl_Pointer_Set_Process(this);
+		default:
+			return false;
+	}
 }
 
 void SdlContext::setMonitorIds(const std::vector<SDL_DisplayID>& ids)
