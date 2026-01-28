@@ -328,11 +328,8 @@ SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 f
 		height = static_cast<Uint32>(rect.h);
 	}
 
-	std::stringstream ss;
-	ss << title << ":" << id;
-	SdlWindow window{
-		ss.str(), startupX, startupY, static_cast<int>(width), static_cast<int>(height), flags
-	};
+	SdlWindow window{ title, startupX, startupY, static_cast<int>(width), static_cast<int>(height),
+		              flags };
 
 	if ((flags & (SDL_WINDOW_FULLSCREEN)) != 0)
 	{
