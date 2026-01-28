@@ -956,6 +956,8 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 
 	switch (ev.type)
 	{
+		case SDL_EVENT_WINDOW_MOUSE_ENTER:
+			return restoreCursor();
 		case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
 			if (isConnected())
 			{
@@ -963,7 +965,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					return false;
 				if (!drawToWindow(*window))
 					return false;
-				if (!sdl_Pointer_Set_Process(this))
+				if (!restoreCursor())
 					return false;
 			}
 			break;
@@ -972,7 +974,7 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 				return false;
 			if (!drawToWindow(*window))
 				return false;
-			if (!sdl_Pointer_Set_Process(this))
+			if (!restoreCursor())
 				return false;
 			break;
 		case SDL_EVENT_WINDOW_MOVED:
@@ -1177,8 +1179,6 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 		case SDL_EVENT_RENDER_DEVICE_RESET:
 		case SDL_EVENT_WILL_ENTER_FOREGROUND:
 			return redraw();
-		case SDL_EVENT_WINDOW_MOUSE_ENTER:
-			return sdl_Pointer_Set_Process(this);
 		default:
 			return true;
 	}
@@ -1276,14 +1276,51 @@ rdpClientContext* SdlContext::common() const
 	return reinterpret_cast<rdpClientContext*>(context());
 }
 
-void SdlContext::setCursor(rdpPointer* cursor)
+bool SdlContext::setCursor(CursorType type)
+{
+	_cursorType = type;
+	return restoreCursor();
+}
+
+bool SdlContext::setCursor(rdpPointer* cursor)
 {
 	_cursor = cursor;
+	return setCursor(CURSOR_IMAGE);
 }
 
 rdpPointer* SdlContext::cursor() const
 {
 	return _cursor;
+}
+
+bool SdlContext::restoreCursor()
+{
+	WLog_Print(getWLog(), WLOG_DEBUG, "restore cursor: %d", _cursorType);
+	switch (_cursorType)
+	{
+		case CURSOR_NULL:
+			if (!SDL_HideCursor())
+				return false;
+
+			setHasCursor(false);
+			return true;
+
+		case CURSOR_DEFAULT:
+		{
+			auto def = SDL_GetDefaultCursor();
+			if (!SDL_SetCursor(def))
+				return false;
+			if (!SDL_ShowCursor())
+				return false;
+			setHasCursor(true);
+			return true;
+		}
+		case CURSOR_IMAGE:
+			setHasCursor(true);
+			return sdl_Pointer_Set_Process(this);
+		default:
+			return false;
+	}
 }
 
 void SdlContext::setMonitorIds(const std::vector<SDL_DisplayID>& ids)

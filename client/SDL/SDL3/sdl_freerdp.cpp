@@ -198,19 +198,13 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 						throw ErrorMsg{ -1, windowEvent.type, "sdl->minimizeAllWindows" };
 					break;
 				case SDL_EVENT_USER_POINTER_NULL:
-					SDL_HideCursor();
-					sdl->setCursor(nullptr);
-					sdl->setHasCursor(false);
+					if (!sdl->setCursor(SdlContext::CURSOR_NULL))
+						throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };
 					break;
 				case SDL_EVENT_USER_POINTER_DEFAULT:
-				{
-					SDL_Cursor* def = SDL_GetDefaultCursor();
-					SDL_SetCursor(def);
-					SDL_ShowCursor();
-					sdl->setCursor(nullptr);
-					sdl->setHasCursor(true);
-				}
-				break;
+					if (!sdl->setCursor(SdlContext::CURSOR_DEFAULT))
+						throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };
+					break;
 				case SDL_EVENT_USER_POINTER_POSITION:
 				{
 					const auto x =
@@ -223,9 +217,8 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				}
 				break;
 				case SDL_EVENT_USER_POINTER_SET:
-					sdl->setCursor(static_cast<rdpPointer*>(windowEvent.user.data1));
-					if (!sdl_Pointer_Set_Process(sdl))
-						throw ErrorMsg{ -1, windowEvent.type, "sdl_Pointer_Set_Process" };
+					if (!sdl->setCursor(static_cast<rdpPointer*>(windowEvent.user.data1)))
+						throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };
 					break;
 				case SDL_EVENT_USER_QUIT:
 				default:

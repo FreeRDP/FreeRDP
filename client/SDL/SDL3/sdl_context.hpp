@@ -43,6 +43,13 @@
 class SdlContext
 {
   public:
+	enum CursorType
+	{
+		CURSOR_NULL,
+		CURSOR_DEFAULT,
+		CURSOR_IMAGE
+	};
+
 	explicit SdlContext(rdpContext* context);
 	SdlContext(const SdlContext& other) = delete;
 	SdlContext(SdlContext&& other) = delete;
@@ -78,15 +85,17 @@ class SdlContext
 	[[nodiscard]] rdpContext* context() const;
 	[[nodiscard]] rdpClientContext* common() const;
 
-	void setCursor(rdpPointer* cursor);
+	[[nodiscard]] bool setCursor(CursorType type);
+	[[nodiscard]] bool setCursor(rdpPointer* cursor);
 	[[nodiscard]] rdpPointer* cursor() const;
+	[[nodiscard]] bool restoreCursor();
 
 	void setMonitorIds(const std::vector<SDL_DisplayID>& ids);
-	const std::vector<SDL_DisplayID>& monitorIds() const;
-	int64_t monitorId(uint32_t index) const;
+	[[nodiscard]] const std::vector<SDL_DisplayID>& monitorIds() const;
+	[[nodiscard]] int64_t monitorId(uint32_t index) const;
 
 	void push(std::vector<SDL_Rect>&& rects);
-	std::vector<SDL_Rect> pop();
+	[[nodiscard]] std::vector<SDL_Rect> pop();
 
 	void setHasCursor(bool val);
 	[[nodiscard]] bool hasCursor() const;
@@ -171,6 +180,7 @@ class SdlContext
 	std::atomic<bool> _connected = false;
 	bool _cursor_visible = true;
 	rdpPointer* _cursor = nullptr;
+	CursorType _cursorType = CURSOR_NULL;
 	std::vector<SDL_DisplayID> _monitorIds;
 	std::mutex _queue_mux;
 	std::queue<std::vector<SDL_Rect>> _queue;

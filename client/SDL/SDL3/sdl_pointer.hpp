@@ -25,6 +25,6 @@
 
 #include <freerdp/graphics.h>
 
-[[nodiscard]] BOOL sdl_register_pointer(rdpGraphics* graphics);
+[[nodiscard]] bool sdl_register_pointer(rdpGraphics* graphics);
 
-[[nodiscard]] BOOL sdl_Pointer_Set_Process(SdlContext* sdl);
+[[nodiscard]] bool sdl_Pointer_Set_Process(SdlContext* sdl);

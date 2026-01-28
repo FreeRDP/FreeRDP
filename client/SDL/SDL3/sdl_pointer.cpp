@@ -103,7 +103,7 @@ static void sdl_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	return sdl_push_user_event(SDL_EVENT_USER_POINTER_SET, pointer);
 }
 
-BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
+bool sdl_Pointer_Set_Process(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
 
@@ -111,7 +111,7 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	auto pointer = sdl->cursor();
 	auto ptr = reinterpret_cast<sdlPointer*>(pointer);
 	if (!ptr)
-		return TRUE;
+		return true;
 
 	rdpGdi* gdi = context->gdi;
 	WINPR_ASSERT(gdi);
@@ -121,7 +121,7 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	auto isw = static_cast<float>(pointer->width);
 	auto ish = static_cast<float>(pointer->height);
 
-	SDL_Window* window = SDL_GetMouseFocus();
+	auto window = SDL_GetMouseFocus();
 	if (!window)
 		return sdl_Pointer_SetDefault(context);
 
@@ -134,9 +134,11 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	ptr->image =
 	    SDL_CreateSurface(static_cast<int>(pos.w), static_cast<int>(pos.h), sdl->pixelFormat());
 	if (!ptr->image)
-		return FALSE;
+		return false;
 
-	SDL_LockSurface(ptr->image);
+	if (!SDL_LockSurface(ptr->image))
+		return false;
+
 	auto pixels = static_cast<BYTE*>(ptr->image->pixels);
 	auto data = static_cast<const BYTE*>(ptr->data);
 	const BOOL rc = freerdp_image_scale(
@@ -145,13 +147,13 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	    gdi->dstFormat, 0, 0, 0, static_cast<UINT32>(isw), static_cast<UINT32>(ish));
 	SDL_UnlockSurface(ptr->image);
 	if (!rc)
-		return FALSE;
+		return false;
 
 	// create a cursor image in 100% display scale to trick SDL into creating the cursor with the
 	// correct size
 	auto fw = sdl->getFirstWindow();
 	if (!fw)
-		return FALSE;
+		return false;
 
 	const auto hidpi_scale =
 	    sdl->pixelToScreen(fw->id(), SDL_FPoint{ static_cast<float>(ptr->image->w),
@@ -159,20 +161,24 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	auto normal = SDL_CreateSurface(static_cast<int>(hidpi_scale.x),
 	                                static_cast<int>(hidpi_scale.y), ptr->image->format);
 	assert(normal);
-	SDL_BlitSurfaceScaled(ptr->image, nullptr, normal, nullptr,
-	                      SDL_ScaleMode::SDL_SCALEMODE_LINEAR);
-	SDL_AddSurfaceAlternateImage(normal, ptr->image);
+	if (!SDL_BlitSurfaceScaled(ptr->image, nullptr, normal, nullptr,
+	                           SDL_ScaleMode::SDL_SCALEMODE_LINEAR))
+		return false;
+	if (!SDL_AddSurfaceAlternateImage(normal, ptr->image))
+		return false;
 
 	ptr->cursor = SDL_CreateColorCursor(normal, static_cast<int>(pos.x), static_cast<int>(pos.y));
 	if (!ptr->cursor)
-		return FALSE;
+		return false;
 
 	SDL_DestroySurface(normal);
 
-	SDL_SetCursor(ptr->cursor);
-	SDL_ShowCursor();
+	if (!SDL_SetCursor(ptr->cursor))
+		return false;
+	if (!SDL_ShowCursor())
+		return false;
 	sdl->setHasCursor(true);
-	return TRUE;
+	return true;
 }
 
 [[nodiscard]] static BOOL sdl_Pointer_SetNull(rdpContext* context)
@@ -190,7 +196,7 @@ BOOL sdl_Pointer_Set_Process(SdlContext* sdl)
 	return sdl_push_user_event(SDL_EVENT_USER_POINTER_POSITION, x, y);
 }
 
-BOOL sdl_register_pointer(rdpGraphics* graphics)
+bool sdl_register_pointer(rdpGraphics* graphics)
 {
 	const rdpPointer pointer = { sizeof(sdlPointer),
 		                         sdl_Pointer_New,
@@ -211,5 +217,5 @@ BOOL sdl_register_pointer(rdpGraphics* graphics)
 		                         nullptr,
 		                         {} };
 	graphics_register_pointer(graphics, &pointer);
-	return TRUE;
+	return true;
 }
