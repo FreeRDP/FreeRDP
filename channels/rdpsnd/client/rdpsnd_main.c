@@ -117,6 +117,8 @@ struct rdpsnd_plugin
 	BOOL async;
 };
 
+static DWORD WINAPI play_thread(LPVOID arg);
+
 static const char* rdpsnd_is_dyn_str(BOOL dynamic)
 {
 	if (dynamic)
@@ -1300,7 +1302,6 @@ static void cleanup_internals(rdpsndPlugin* rdpsnd)
 	if (!rdpsnd)
 		return;
 
-	rdpsnd_terminate_thread(rdpsnd);
 	if (rdpsnd->pool)
 		StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
 
@@ -1376,6 +1377,7 @@ static void free_internals(rdpsndPlugin* rdpsnd)
 	if (rdpsnd->references > 0)
 		return;
 
+	rdpsnd_terminate_thread(rdpsnd);
 	freerdp_dsp_context_free(rdpsnd->dsp_context);
 	StreamPool_Free(rdpsnd->pool);
 	rdpsnd->pool = NULL;
@@ -1399,6 +1401,27 @@ static BOOL allocate_internals(rdpsndPlugin* rdpsnd)
 		if (!rdpsnd->dsp_context)
 			return FALSE;
 	}
+
+	if (rdpsnd->async)
+	{
+		if (!rdpsnd->queue)
+		{
+			wObject obj = { 0 };
+
+			obj.fnObjectFree = queue_free;
+			rdpsnd->queue = MessageQueue_New(&obj);
+			if (!rdpsnd->queue)
+				return CHANNEL_RC_NO_MEMORY;
+		}
+
+		if (!rdpsnd->thread)
+		{
+			rdpsnd->thread = CreateThread(NULL, 0, play_thread, rdpsnd, 0, NULL);
+			if (!rdpsnd->thread)
+				return CHANNEL_RC_INITIALIZATION_ERROR;
+		}
+	}
+
 	rdpsnd->references++;
 
 	return TRUE;
@@ -1454,20 +1477,6 @@ static UINT rdpsnd_virtual_channel_event_initialized(rdpsndPlugin* rdpsnd)
 	if (!rdpsnd)
 		return ERROR_INVALID_PARAMETER;
 
-	if (rdpsnd->async)
-	{
-		wObject obj = { 0 };
-
-		obj.fnObjectFree = queue_free;
-		rdpsnd->queue = MessageQueue_New(&obj);
-		if (!rdpsnd->queue)
-			return CHANNEL_RC_NO_MEMORY;
-
-		rdpsnd->thread = CreateThread(NULL, 0, play_thread, rdpsnd, 0, NULL);
-		if (!rdpsnd->thread)
-			return CHANNEL_RC_INITIALIZATION_ERROR;
-	}
-
 	if (!allocate_internals(rdpsnd))
 		return CHANNEL_RC_NO_MEMORY;
 
@@ -1478,8 +1487,6 @@ void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 {
 	if (rdpsnd)
 	{
-		rdpsnd_terminate_thread(rdpsnd);
-
 		free_internals(rdpsnd);
 		audio_formats_free(rdpsnd->fixed_format, 1);
 		free(rdpsnd->subsystem);
@@ -1701,13 +1708,13 @@ static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 
 	cleanup_internals(rdpsnd);
 
+	free_internals(rdpsnd);
 	if (rdpsnd->device)
 	{
 		IFCALL(rdpsnd->device->Free, rdpsnd->device);
 		rdpsnd->device = NULL;
 	}
 
-	free_internals(rdpsnd);
 	free(pChannelCallback);
 	return CHANNEL_RC_OK;
 }
