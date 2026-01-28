@@ -1150,6 +1150,8 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 		case SDL_EVENT_RENDER_DEVICE_RESET:
 		case SDL_EVENT_WILL_ENTER_FOREGROUND:
 			return redraw();
+		case SDL_EVENT_WINDOW_MOUSE_ENTER:
+			return sdl_Pointer_Set_Process(this);
 		default:
 			return true;
 	}
