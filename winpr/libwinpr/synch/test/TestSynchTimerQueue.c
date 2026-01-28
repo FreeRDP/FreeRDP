@@ -21,25 +21,21 @@ typedef struct apc_data APC_DATA;
 
 static VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 {
-	UINT32 TimerTime = 0;
-	APC_DATA* apcData = NULL;
-	UINT32 expectedTime = 0;
-	UINT32 CurrentTime = GetTickCount();
-
 	WINPR_UNUSED(TimerOrWaitFired);
 
 	if (!lpParam)
 		return;
 
-	apcData = (APC_DATA*)lpParam;
-
-	TimerTime = CurrentTime - apcData->StartTime;
-	expectedTime = apcData->DueTime + (apcData->Period * apcData->FireCount);
+	APC_DATA* apcData = (APC_DATA*)lpParam;
+	const UINT32 CurrentTime = GetTickCount();
+	const INT64 TimerTime = 1ll * CurrentTime - apcData->StartTime;
+	const INT64 expectedTime =
+	    1ll * apcData->DueTime + (1ll * apcData->Period * apcData->FireCount);
 
 	apcData->FireCount++;
 
-	printf("TimerRoutine: TimerId: %" PRIu32 " FireCount: %" PRIu32 " ActualTime: %" PRIu32
-	       " ExpectedTime: %" PRIu32 " Discrepancy: %" PRIu32 "\n",
+	printf("TimerRoutine: TimerId: %" PRIu32 " FireCount: %" PRIu32 " ActualTime: %" PRId64
+	       " ExpectedTime: %" PRId64 " Discrepancy: %" PRId64 "\n",
 	       apcData->TimerId, apcData->FireCount, TimerTime, expectedTime, TimerTime - expectedTime);
 
 	Sleep(11);
@@ -52,14 +48,13 @@ static VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 
 int TestSynchTimerQueue(int argc, char* argv[])
 {
-	HANDLE hTimerQueue = NULL;
-	HANDLE hTimers[TIMER_COUNT];
-	APC_DATA apcData[TIMER_COUNT];
+	HANDLE hTimers[TIMER_COUNT] = { 0 };
+	APC_DATA apcData[TIMER_COUNT] = { 0 };
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	hTimerQueue = CreateTimerQueue();
+	HANDLE hTimerQueue = CreateTimerQueue();
 
 	if (!hTimerQueue)
 	{
