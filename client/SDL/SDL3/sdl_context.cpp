@@ -763,7 +763,7 @@ int SdlContext::error_info_to_error(DWORD* pcode, char** msg, size_t* len) const
 	return exit_code;
 }
 
-void SdlContext::applyMonitorOffset(SDL_WindowID window, float& x, float& y)
+void SdlContext::applyMonitorOffset(SDL_WindowID window, float& x, float& y) const
 {
 	if (!freerdp_settings_get_bool(context()->settings, FreeRDP_UseMultimon))
 		return;
@@ -848,6 +848,14 @@ bool SdlContext::removeDisplay(SDL_DisplayID id)
 			_windows.erase(w.first);
 	}
 	return true;
+}
+
+const SdlWindow* SdlContext::getWindowForId(SDL_WindowID id) const
+{
+	auto it = _windows.find(id);
+	if (it == _windows.end())
+		return nullptr;
+	return &it->second;
 }
 
 SdlWindow* SdlContext::getWindowForId(SDL_WindowID id)
@@ -1048,9 +1056,11 @@ bool SdlContext::eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev)
 	auto w = getWindowForId(id);
 	if (!w)
 		return false;
+
+	/* Ignore errors here, sometimes SDL has no renderer */
 	auto renderer = SDL_GetRenderer(w->window());
 	if (!renderer)
-		return false;
+		return true;
 	return SDL_ConvertEventToRenderCoordinates(renderer, &ev);
 }
 
@@ -1078,9 +1088,11 @@ SDL_FPoint SdlContext::screenToPixel(SDL_WindowID id, const SDL_FPoint& pos)
 	auto w = getWindowForId(id);
 	if (!w)
 		return {};
+
+	/* Ignore errors here, sometimes SDL has no renderer */
 	auto renderer = SDL_GetRenderer(w->window());
 	if (!renderer)
-		return {};
+		return pos;
 
 	SDL_FPoint rpos{};
 	if (!SDL_RenderCoordinatesFromWindow(renderer, pos.x, pos.y, &rpos.x, &rpos.y))
@@ -1094,9 +1106,11 @@ SDL_FPoint SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos)
 	auto w = getWindowForId(id);
 	if (!w)
 		return {};
+
+	/* Ignore errors here, sometimes SDL has no renderer */
 	auto renderer = SDL_GetRenderer(w->window());
 	if (!renderer)
-		return {};
+		return pos;
 
 	SDL_FPoint rpos{};
 	if (!SDL_RenderCoordinatesToWindow(renderer, pos.x, pos.y, &rpos.x, &rpos.y))

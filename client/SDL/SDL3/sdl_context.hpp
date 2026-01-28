@@ -106,6 +106,7 @@ class SdlContext
 	[[nodiscard]] int exitCode() const;
 	[[nodiscard]] SDL_PixelFormat pixelFormat() const;
 
+	[[nodiscard]] const SdlWindow* getWindowForId(SDL_WindowID id) const;
 	[[nodiscard]] SdlWindow* getWindowForId(SDL_WindowID id);
 	[[nodiscard]] SdlWindow* getFirstWindow();
 
@@ -162,7 +163,7 @@ class SdlContext
 
 	[[nodiscard]] int error_info_to_error(DWORD* pcode, char** msg, size_t* len) const;
 
-	void applyMonitorOffset(SDL_WindowID window, float& x, float& y);
+	void applyMonitorOffset(SDL_WindowID window, float& x, float& y) const;
 
 	rdpContext* _context = nullptr;
 	wLog* _log = nullptr;
