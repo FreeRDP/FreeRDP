@@ -80,8 +80,7 @@ class SdlWindow
 	void updateSurface();
 
   protected:
-	SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY, Sint32 width,
-	          Sint32 height, Uint32 flags);
+	SdlWindow(const std::string& title, const SDL_Rect& rect, Uint32 flags);
 
   private:
 	SDL_Window* _window = nullptr;
