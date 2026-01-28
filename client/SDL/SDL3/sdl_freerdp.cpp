@@ -70,6 +70,37 @@
 #define SDL_TAG CLIENT_TAG("SDL")
 #endif
 
+class ErrorMsg : public std::exception
+{
+  public:
+	ErrorMsg(int rc, Uint32 type, const std::string& msg);
+
+	[[nodiscard]] int rc() const;
+	[[nodiscard]] const char* what() const noexcept override;
+
+  private:
+	int _rc;
+	Uint32 _type;
+	std::string _msg;
+	std::string _buffer;
+};
+const char* ErrorMsg::what() const noexcept
+{
+	return _buffer.c_str();
+}
+
+int ErrorMsg::rc() const
+{
+	return _rc;
+}
+
+ErrorMsg::ErrorMsg(int rc, Uint32 type, const std::string& msg) : _rc(rc), _type(type), _msg(msg)
+{
+	std::stringstream ss;
+	ss << _msg << " {" << sdl::utils::toString(_type) << "}";
+	_buffer = ss.str();
+}
+
 static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const char* signame,
                              [[maybe_unused]] void* context)
 {
@@ -80,13 +111,6 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 {
 	int rc = -1;
 	WINPR_ASSERT(sdl);
-
-	struct ErrorMsg
-	{
-		int rc;
-		Uint32 type;
-		std::string msg;
-	};
 
 	try
 	{
@@ -230,9 +254,8 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 	}
 	catch (ErrorMsg& msg)
 	{
-		WLog_Print(sdl->getWLog(), WLOG_ERROR, "[exception] %s {%s}", msg.msg.c_str(),
-		           sdl::utils::toString(msg.type).c_str());
-		rc = msg.rc;
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "[exception] %s", msg.what());
+		rc = msg.rc();
 	}
 
 	return rc;
