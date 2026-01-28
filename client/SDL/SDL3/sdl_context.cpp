@@ -760,6 +760,16 @@ int SdlContext::error_info_to_error(DWORD* pcode, char** msg, size_t* len) const
 	return exit_code;
 }
 
+void SdlContext::applyMonitorOffset(SDL_WindowID window, float& x, float& y)
+{
+	if (!freerdp_settings_get_bool(context()->settings, FreeRDP_UseMultimon))
+		return;
+
+	auto w = getWindowForId(window);
+	x -= static_cast<float>(w->offsetX());
+	y -= static_cast<float>(w->offsetY());
+}
+
 bool SdlContext::drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& rects)
 {
 	if (!isConnected())
@@ -897,6 +907,7 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 		return false;
 	removeLocalScaling(copy.motion.x, copy.motion.y);
 	removeLocalScaling(copy.motion.xrel, copy.motion.yrel);
+	applyMonitorOffset(copy.motion.windowID, copy.motion.x, copy.motion.y);
 
 	return SdlTouch::handleEvent(this, copy.motion);
 }
@@ -1013,6 +1024,7 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 	if (!eventToPixelCoordinates(ev.windowID, copy))
 		return false;
 	removeLocalScaling(copy.button.x, copy.button.y);
+	applyMonitorOffset(copy.button.windowID, copy.button.x, copy.button.y);
 	return SdlTouch::handleEvent(this, copy.button);
 }
 
@@ -1024,6 +1036,7 @@ bool SdlContext::handleEvent(const SDL_TouchFingerEvent& ev)
 		return false;
 	removeLocalScaling(copy.tfinger.dx, copy.tfinger.dy);
 	removeLocalScaling(copy.tfinger.x, copy.tfinger.y);
+	applyMonitorOffset(copy.tfinger.windowID, copy.tfinger.x, copy.tfinger.y);
 	return SdlTouch::handleEvent(this, copy.tfinger);
 }
 

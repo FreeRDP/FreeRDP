@@ -162,6 +162,8 @@ class SdlContext
 
 	[[nodiscard]] int error_info_to_error(DWORD* pcode, char** msg, size_t* len) const;
 
+	void applyMonitorOffset(SDL_WindowID window, float& x, float& y);
+
 	rdpContext* _context = nullptr;
 	wLog* _log = nullptr;
 
