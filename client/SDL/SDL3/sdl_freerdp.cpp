@@ -81,21 +81,30 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 	int rc = -1;
 	WINPR_ASSERT(sdl);
 
-	while (!sdl->shallAbort())
+	struct ErrorMsg
 	{
-		SDL_Event windowEvent = {};
-		while (!sdl->shallAbort() && SDL_WaitEventTimeout(nullptr, 1000))
+		int rc;
+		Uint32 type;
+		std::string msg;
+	};
+
+	try
+	{
+		while (!sdl->shallAbort())
 		{
-			/* Only poll standard SDL events and SDL_EVENT_USERS meant to create
-			 * dialogs. do not process the dialog return value events here.
-			 */
-			const int prc = SDL_PeepEvents(&windowEvent, 1, SDL_GETEVENT, SDL_EVENT_FIRST,
-			                               SDL_EVENT_USER_RETRY_DIALOG);
-			if (prc < 0)
+			SDL_Event windowEvent = {};
+			while (!sdl->shallAbort() && SDL_WaitEventTimeout(nullptr, 1000))
 			{
-				if (sdl_log_error(prc, sdl->getWLog(), "SDL_PeepEvents"))
-					continue;
-			}
+				/* Only poll standard SDL events and SDL_EVENT_USERS meant to create
+				 * dialogs. do not process the dialog return value events here.
+				 */
+				const int prc = SDL_PeepEvents(&windowEvent, 1, SDL_GETEVENT, SDL_EVENT_FIRST,
+				                               SDL_EVENT_USER_RETRY_DIALOG);
+				if (prc < 0)
+				{
+					if (sdl_log_error(prc, sdl->getWLog(), "SDL_PeepEvents"))
+						continue;
+				}
 
 #if defined(WITH_DEBUG_SDL_EVENTS)
 			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "got event %s [0x%08" PRIx32 "]",
@@ -108,12 +117,12 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				continue;
 
 			if (!sdl->handleEvent(windowEvent))
-				return -1;
+				throw ErrorMsg{ -1, windowEvent.type, "sdl->handleEvent" };
 
 			switch (windowEvent.type)
 			{
 				case SDL_EVENT_QUIT:
-					freerdp_abort_connect_context(sdl->context());
+					std::ignore = freerdp_abort_connect_context(sdl->context());
 					break;
 				case SDL_EVENT_USER_CERT_DIALOG:
 				{
@@ -121,7 +130,7 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char*>(windowEvent.user.data2);
 					if (!sdl_cert_dialog_show(title, msg))
-						return -1;
+						throw ErrorMsg{ -1, windowEvent.type, "sdl_cert_dialog_show" };
 				}
 				break;
 				case SDL_EVENT_USER_SHOW_DIALOG:
@@ -130,7 +139,7 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char*>(windowEvent.user.data2);
 					if (!sdl_message_dialog_show(title, msg, windowEvent.user.code))
-						return -1;
+						throw ErrorMsg{ -1, windowEvent.type, "sdl_message_dialog_show" };
 				}
 				break;
 				case SDL_EVENT_USER_SCARD_DIALOG:
@@ -139,7 +148,7 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char**>(windowEvent.user.data2);
 					if (!sdl_scard_dialog_show(title, windowEvent.user.code, msg))
-						return -1;
+						throw ErrorMsg{ -1, windowEvent.type, "sdl_scard_dialog_show" };
 				}
 				break;
 				case SDL_EVENT_USER_AUTH_DIALOG:
@@ -147,7 +156,7 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 					SDLConnectionDialogHider hider(sdl);
 					if (!sdl_auth_dialog_show(
 					        reinterpret_cast<const SDL_UserAuthArg*>(windowEvent.padding)))
-						return -1;
+						throw ErrorMsg{ -1, windowEvent.type, "sdl_auth_dialog_show" };
 				}
 				break;
 				case SDL_EVENT_USER_UPDATE:
@@ -157,7 +166,7 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 					{
 						rectangles = sdl->pop();
 						if (!sdl->drawToWindows(rectangles))
-							return -1;
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->drawToWindows" };
 					} while (!rectangles.empty());
 				}
 				break;
@@ -165,7 +174,7 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				{
 					auto ctx = static_cast<SdlContext*>(windowEvent.user.data1);
 					if (!ctx->createWindows())
-						return -1;
+						throw ErrorMsg{ -1, windowEvent.type, "sdl->createWindows" };
 				}
 				break;
 				case SDL_EVENT_USER_WINDOW_RESIZEABLE:
@@ -186,7 +195,7 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				break;
 				case SDL_EVENT_USER_WINDOW_MINIMIZE:
 					if (!sdl->minimizeAllWindows())
-						return -1;
+						throw ErrorMsg{ -1, windowEvent.type, "sdl->minimizeAllWindows" };
 					break;
 				case SDL_EVENT_USER_POINTER_NULL:
 					SDL_HideCursor();
@@ -210,22 +219,28 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data2));
 					if (!sdl->moveMouseTo(
 					        { static_cast<float>(x) * 1.0f, static_cast<float>(y) * 1.0f }))
-						return -1;
+						throw ErrorMsg{ -1, windowEvent.type, "sdl->moveMouseTo" };
 				}
 				break;
 				case SDL_EVENT_USER_POINTER_SET:
 					sdl->setCursor(static_cast<rdpPointer*>(windowEvent.user.data1));
 					if (!sdl_Pointer_Set_Process(sdl))
-						return -1;
+						throw ErrorMsg{ -1, windowEvent.type, "sdl_Pointer_Set_Process" };
 					break;
 				case SDL_EVENT_USER_QUIT:
 				default:
 					break;
 			}
+			}
 		}
-	}
-
 	rc = 1;
+	}
+	catch (ErrorMsg& msg)
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "[exception] %s {%s}", msg.msg.c_str(),
+		           sdl::utils::toString(msg.type).c_str());
+		rc = msg.rc;
+	}
 
 	return rc;
 }
