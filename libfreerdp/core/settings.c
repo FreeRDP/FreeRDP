@@ -36,6 +36,7 @@
 
 #include <freerdp/version.h>
 #include <freerdp/settings.h>
+#include <freerdp/utils/string.h>
 #include <freerdp/utils/helpers.h>
 #include <freerdp/build-config.h>
 
@@ -567,10 +568,12 @@ static void log_monitor(UINT32 idx, const rdpMonitor* monitor, wLog* log, DWORD 
 
 	WLog_Print(log, level,
 	           "[%" PRIu32 "] [%s] {%dx%d-%dx%d} [%" PRIu32 "] {%" PRIu32 "x%" PRIu32
-	           ", orientation: %" PRIu32 ", desktopScale: %" PRIu32 ", deviceScale: %" PRIu32 "}",
+	           ", orientation: %s [%" PRIu32 "], desktopScale: %" PRIu32 ", deviceScale: %" PRIu32
+	           "}",
 	           idx, monitor->is_primary ? "primary" : "       ", monitor->x, monitor->y,
 	           monitor->width, monitor->height, monitor->orig_screen,
 	           monitor->attributes.physicalWidth, monitor->attributes.physicalHeight,
+	           freerdp_desktop_rotation_flags_to_string(monitor->attributes.orientation),
 	           monitor->attributes.orientation, monitor->attributes.desktopScaleFactor,
 	           monitor->attributes.deviceScaleFactor);
 }
