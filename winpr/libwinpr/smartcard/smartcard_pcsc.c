@@ -2642,6 +2642,51 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 		}
 		else if (dwAttrId == SCARD_ATTR_DEVICE_SYSTEM_NAME_A)
 		{
+			/* Get reader name from SCardStatus */
+			CHAR szReader[256] = {0};
+			PCSC_DWORD cchReader = sizeof(szReader);
+			PCSC_DWORD dwState = 0;
+			PCSC_DWORD dwProtocol = 0;
+			PCSC_DWORD cbAtr = 0;
+			
+			LONG status = (LONG)g_PCSC.pfnSCardStatus(hCard, szReader, &cchReader,
+													  &dwState, &dwProtocol, NULL, &cbAtr);
+			if (status != SCARD_S_SUCCESS)
+				return status;
+			
+			*pcbAttrLen = cchReader; 
+			
+			if (pbAttr && *pcbAttrLen <= cbAttrLen)
+				memcpy(pbAttr, szReader, *pcbAttrLen);
+			
+			return SCARD_S_SUCCESS;
+		}
+		else if (dwAttrId == SCARD_ATTR_DEVICE_SYSTEM_NAME_W)
+		{
+			/* Get reader name from SCardStatus */
+			CHAR szReader[256] = {0};
+			PCSC_DWORD cchReader = sizeof(szReader);
+			PCSC_DWORD dwState = 0;
+			PCSC_DWORD dwProtocol = 0;
+			PCSC_DWORD cbAtr = 0;
+			
+			LONG status = (LONG)g_PCSC.pfnSCardStatus(hCard, szReader, &cchReader,
+													  &dwState, &dwProtocol, NULL, &cbAtr);
+			if (status != SCARD_S_SUCCESS)
+				return status;
+			
+			/* Convert to UTF-16LE para la versión _W */
+			size_t len = strnlen(szReader, cchReader);
+			*pcbAttrLen = (DWORD)((len + 1) * sizeof(WCHAR));  /* +1 null terminator */
+			
+			if (pbAttr && *pcbAttrLen <= cbAttrLen)
+			{
+				WCHAR* pwAttr = (WCHAR*)pbAttr;
+				for (size_t i = 0; i <= len; i++)  /* <= to include null terminator */
+					pwAttr[i] = (WCHAR)szReader[i];
+			}
+			
+			return SCARD_S_SUCCESS;
 		}
 		else if (dwAttrId == SCARD_ATTR_DEVICE_UNIT)
 		{
