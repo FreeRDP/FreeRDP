@@ -326,6 +326,37 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API char* winpr_GetConfigFilePath(BOOL system, const char* filename);
 
+	/** @brief Get a config file sub path with a formatting argument constructing the filename
+	 *
+	 *  @param system \b TRUE to return a system config path
+	 *  @param filename The format string to generate the filename. Must not be \b NULL. Must not
+	 * contain any forbidden characters.
+	 *
+	 *  @return A (absolute) configuration file path or \b NULL in case of failure.
+	 *  @since version 3.23.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_FORMAT_ARG(2, 3)
+	WINPR_API char* winpr_GetConfigFilePathV(BOOL system, WINPR_FORMAT_ARG const char* filename,
+	                                         ...);
+
+	/** @brief Get a config file sub path with a formatting argument constructing the filename
+	 *
+	 *  @param system \b TRUE to return a system config path
+	 *  @param filename The format string to generate the filename. Must not be \b NULL. Must not
+	 * contain any forbidden characters.
+	 *  @param ap The argument list
+	 *
+	 *  @return A (absolute) configuration file path or \b NULL in case of failure.
+	 *  @since version 3.23.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_FORMAT_ARG(2, 0)
+	WINPR_API char* winpr_GetConfigFilePathVA(BOOL system, WINPR_FORMAT_ARG const char* filename,
+	                                          va_list ap);
+
 	WINPR_API const char* GetKnownPathIdString(int id);
 
 	WINPR_ATTR_MALLOC(free, 1)
@@ -336,6 +367,33 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetKnownSubPath(eKnownPathTypes id, const char* path);
 
+	/** @brief Append a path to some existing known path type.
+	 *
+	 *  @param id a \ref eKnownPathTypes known path id
+	 *  @param path the format string generating the subpath. Must not be \b NULL
+	 *
+	 *  @return A string of combined \b id path and \b path or \b NULL in case of an error.
+	 * @since version 3.23.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_FORMAT_ARG(2, 3)
+	WINPR_API char* GetKnownSubPathV(eKnownPathTypes id, const char* path, ...);
+
+	/** @brief Append a path to some existing known path type.
+	 *
+	 *  @param id a \ref eKnownPathTypes known path id
+	 *  @param path the format string generating the subpath. Must not be \b NULL
+	 *  @param ap a va_list containing the format string arguments
+	 * 	     * 	       @return A string of combined \b basePath and \b path or \b NULL in case of an
+	 * error.
+	 * *  @version since 3.23.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_FORMAT_ARG(2, 0)
+	WINPR_API char* GetKnownSubPathVA(eKnownPathTypes id, const char* path, va_list ap);
+
 	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetEnvironmentPath(char* name);
@@ -344,9 +402,69 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetEnvironmentSubPath(char* name, const char* path);
 
+	/** @brief Append a path to some existing environment name.
+	 *
+	 *  @param name The prefix path to use, must not be \b NULL
+	 *  @param path A format string used to generate the path to append. Must not be \b NULL
+	 *
+	 *  @return A string of combined \b basePath and \b path or \b NULL in case of an error.
+	 * @version since 3.23.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_FORMAT_ARG(2, 3)
+	WINPR_API char* GetEnvironmentSubPathV(char* name, WINPR_FORMAT_ARG const char* path, ...);
+
+	/** @brief Append a path to some existing environment name.
+	 *
+	 * 	       @param name The prefix path to use, must not be \b NULL
+	 *  @param path A format string used to generate the path to append. Must not be \b NULL
+	 *  @param ap a va_list containing the format string arguments
+	 *
+	 * 	       @return A string of combined \b basePath and \b path or \b NULL in case of an error.
+	 * *  @version since 3.23.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_FORMAT_ARG(2, 0)
+	WINPR_API char* GetEnvironmentSubPathVA(char* name, WINPR_FORMAT_ARG const char* path,
+	                                        va_list ap);
+
 	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_ATTR_NODISCARD
 	WINPR_API char* GetCombinedPath(const char* basePath, const char* subPath);
+
+	/** @brief Append a path to some existing path. A system dependent path separator will be added
+	 * automatically.
+	 *
+	 *  @bug before version 3.23.0 the function did not allow subPath to be a format string.
+	 *
+	 *  @param basePath The prefix path to use, must not be \b NULL
+	 *  @param subPathFmt A format string used to generate the path to append. Must not be \b NULL
+	 *
+	 *  @return A string of combined \b basePath and \b subPathFmt or \b NULL in case of an error.
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_FORMAT_ARG(2, 3)
+	WINPR_API char* GetCombinedPathV(const char* basePath, WINPR_FORMAT_ARG const char* subPathFmt,
+	                                 ...);
+
+	/** @brief Append a path to some existing path. A system dependent path separator will be added
+	 * automatically.
+	 *
+	 *  @param basePath The prefix path to use, must not be \b NULL
+	 *  @param subPathFmt A format string used to generate the path to append. Must not be \b NULL
+	 *  @param ap a va_list containing the format string arguments
+	 *
+	 *  @return A string of combined \b basePath and \b subPathFmt or \b NULL in case of an error.
+	 *  @version since 3.23.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_FORMAT_ARG(2, 0)
+	WINPR_API char* GetCombinedPathVA(const char* basePath, WINPR_FORMAT_ARG const char* subPathFmt,
+	                                  va_list ap);
 
 	WINPR_API BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
 	WINPR_API BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
