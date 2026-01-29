@@ -31,6 +31,7 @@ class SdlWindow
   public:
 	[[nodiscard]] static SdlWindow create(SDL_DisplayID id, const std::string& title, Uint32 flags,
 	                                      Uint32 width = 0, Uint32 height = 0);
+	[[nodiscard]] static rdpMonitor query(SDL_DisplayID id, bool forceAsPrimary = false);
 
 	SdlWindow(SdlWindow&& other) noexcept;
 	SdlWindow(const SdlWindow& other) = delete;
@@ -81,6 +82,12 @@ class SdlWindow
 
   protected:
 	SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect& rect, Uint32 flags);
+
+	[[nodiscard]] static bool fill(SDL_Window* window, Uint8 r = 0x00, Uint8 g = 0x00,
+	                               Uint8 b = 0x00, Uint8 a = 0xff);
+	[[nodiscard]] static rdpMonitor query(SDL_Window* window, SDL_DisplayID id,
+	                                      bool forceAsPrimary = false);
+	[[nodiscard]] static SDL_Rect rect(SDL_Window* window);
 
   private:
 	SDL_Window* _window = nullptr;

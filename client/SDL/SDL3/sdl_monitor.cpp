@@ -21,6 +21,7 @@
 
 #include <freerdp/config.h>
 
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -181,10 +182,12 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 [[nodiscard]] static BOOL sdl_apply_monitor_properties(rdpMonitor& monitor, SDL_DisplayID id,
                                                        bool isPrimary)
 {
+	auto mode = SDL_GetCurrentDisplayMode(id);
+	if (!mode)
+		return FALSE;
 
-	float dpi = SDL_GetDisplayContentScale(id);
-	float hdpi = dpi;
-	float vdpi = dpi;
+	const float dpi = roundf(mode->pixel_density * 100.0f);
+	const float factor = mode->pixel_density;
 	SDL_Rect rect = {};
 
 	if (!SDL_GetDisplayBounds(id, &rect))
@@ -195,58 +198,20 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 
 	bool highDpi = dpi > 100;
 
-	if (highDpi)
-	{
-		// HighDPI is problematic with SDL: We can only get native resolution by creating a
-		// window. Work around this by checking the supported resolutions (and keep maximum)
-		// Also scale the DPI
-		const SDL_Rect scaleRect = rect;
-		int count = 0;
-		auto modes = SDL_GetFullscreenDisplayModes(id, &count);
-		for (int i = 0; i < count; i++)
-		{
-			auto mode = modes[i];
-			if (!mode)
-				break;
-
-			if (mode->w > rect.w)
-			{
-				rect.w = mode->w;
-				rect.h = mode->h;
-			}
-			else if (mode->w == rect.w)
-			{
-				if (mode->h > rect.h)
-				{
-					rect.w = mode->w;
-					rect.h = mode->h;
-				}
-			}
-		}
-		SDL_free(static_cast<void*>(modes));
-
-		const float dw = 1.0f * static_cast<float>(rect.w) / static_cast<float>(scaleRect.w);
-		const float dh = 1.0f * static_cast<float>(rect.h) / static_cast<float>(scaleRect.h);
-		hdpi /= dw;
-		vdpi /= dh;
-	}
-
 	const SDL_DisplayOrientation orientation = SDL_GetCurrentDisplayOrientation(id);
 	const UINT32 rdp_orientation = sdl::utils::orientaion_to_rdp(orientation);
 
-	/* windows uses 96 dpi as 'default' and the scale factors are in percent. */
-	const auto factor = dpi / 96.0f * 100.0f;
 	monitor.orig_screen = id;
 	monitor.x = rect.x;
 	monitor.y = rect.y;
-	monitor.width = rect.w;
-	monitor.height = rect.h;
+	monitor.width = roundf(rect.w * factor);
+	monitor.height = roundf(rect.h * factor);
 	monitor.is_primary = isPrimary;
-	monitor.attributes.desktopScaleFactor = static_cast<UINT32>(factor);
+	monitor.attributes.desktopScaleFactor = static_cast<UINT32>(dpi);
 	monitor.attributes.deviceScaleFactor = 100;
 	monitor.attributes.orientation = rdp_orientation;
-	monitor.attributes.physicalWidth = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.w), hdpi);
-	monitor.attributes.physicalHeight = scale(WINPR_ASSERTING_INT_CAST(uint32_t, rect.h), vdpi);
+	monitor.attributes.physicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, rect.w);
+	monitor.attributes.physicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, rect.h);
 	return TRUE;
 }
 
