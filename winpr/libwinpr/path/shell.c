@@ -395,7 +395,7 @@ char* GetKnownPath(eKnownPathTypes id)
 char* GetKnownSubPath(eKnownPathTypes id, const char* path)
 {
 	if (!path)
-		return GetKnownSubPathV(id, "");
+		return GetKnownSubPathV(id, "%s", "");
 	return GetKnownSubPathV(id, "%s", path);
 }
 
@@ -449,7 +449,7 @@ char* GetEnvironmentPath(char* name)
 char* GetEnvironmentSubPath(char* name, const char* path)
 {
 	if (!path)
-		return GetEnvironmentSubPathV(name, "");
+		return GetEnvironmentSubPathV(name, "%s", "");
 	return GetEnvironmentSubPathV(name, "%s", path);
 }
 
@@ -477,7 +477,7 @@ char* GetEnvironmentSubPathVA(char* name, WINPR_FORMAT_ARG const char* path, va_
 char* GetCombinedPath(const char* basePath, const char* subPathFmt)
 {
 	if (!subPathFmt)
-		return GetCombinedPathV(basePath, "");
+		return GetCombinedPathV(basePath, "%s", "");
 	return GetCombinedPathV(basePath, "%s", subPathFmt);
 }
 

@@ -1252,7 +1252,7 @@ char* winpr_GetConfigFilePathVA(BOOL system, WINPR_FORMAT_ARG const char* filena
 char* winpr_GetConfigFilePath(BOOL system, const char* filename)
 {
 	if (!filename)
-		return winpr_GetConfigFilePathV(system, "");
+		return winpr_GetConfigFilePathV(system, "%s", "");
 	return winpr_GetConfigFilePathV(system, "%s", filename);
 }
 

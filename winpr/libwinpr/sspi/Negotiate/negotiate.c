@@ -35,11 +35,11 @@
 #include "../NTLM/ntlm_export.h"
 #include "../Kerberos/kerberos.h"
 #include "../sspi.h"
+#include "../../utils.h"
 #include "../../log.h"
 #define TAG WINPR_TAG("negotiate")
 
-static const char NEGO_REG_KEY[] =
-    "Software\\" WINPR_VENDOR_STRING "\\" WINPR_PRODUCT_STRING "\\SSPI\\Negotiate";
+#define NEGO_REG_KEY "Software\\%s\\SSPI\\Negotiate"
 
 static const char PACKAGE_NAME_DISABLE_ALL[] = "none";
 static const char PACKAGE_NAME_NTLM[] = "ntlm";
@@ -318,7 +318,6 @@ fail:
 static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BOOL* u2u)
 {
 	HKEY hKey = NULL;
-	LONG rc = 0;
 
 	WINPR_ASSERT(kerberos);
 	WINPR_ASSERT(ntlm);
@@ -342,16 +341,22 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BO
 		return TRUE; // use explicit authentication package list
 	}
 
-	rc = RegOpenKeyExA(HKEY_LOCAL_MACHINE, NEGO_REG_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
-	if (rc == ERROR_SUCCESS)
 	{
-		DWORD dwValue = 0;
+		char* key = winpr_getApplicatonDetailsRegKey(NEGO_REG_KEY);
+		if (key)
+		{
+			const LONG rc =
+			    RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+			free(key);
+			if (rc == ERROR_SUCCESS)
+			{
+				DWORD dwValue = 0;
 
-		if (negotiate_get_dword(hKey, PACKAGE_NAME_KERBEROS, &dwValue))
-			*kerberos = (dwValue != 0) ? TRUE : FALSE;
+				if (negotiate_get_dword(hKey, PACKAGE_NAME_KERBEROS, &dwValue))
+					*kerberos = (dwValue != 0) ? TRUE : FALSE;
 
-		if (negotiate_get_dword(hKey, PACKAGE_NAME_KERBEROS_U2U, &dwValue))
-			*u2u = (dwValue != 0) ? TRUE : FALSE;
+				if (negotiate_get_dword(hKey, PACKAGE_NAME_KERBEROS_U2U, &dwValue))
+					*u2u = (dwValue != 0) ? TRUE : FALSE;
 
 #if !defined(WITH_KRB5_NO_NTLM_FALLBACK)
 		if (negotiate_get_dword(hKey, PACKAGE_NAME_NTLM, &dwValue))
@@ -359,6 +364,8 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BO
 #endif
 
 		RegCloseKey(hKey);
+			}
+		}
 	}
 
 	return TRUE;
