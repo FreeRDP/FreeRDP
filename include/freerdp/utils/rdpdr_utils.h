@@ -107,7 +107,7 @@ extern "C"
 	 *  @param type The value to convert
 	 *  @return A constant string representation of \ref type or the string \b
 	 * UNKNOWN for an invalid value
-	 *  @since verstion 3.22.0
+	 *  @since version 3.22.0
 	 */
 	FREERDP_API WINPR_ATTR_NODISCARD const char* rdpdr_device_type_string(UINT32 type);
 
