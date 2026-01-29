@@ -47,13 +47,14 @@
 #include "rfx_quantization.h"
 #include "rfx_dwt.h"
 #include "rfx_rlgr.h"
+#include "../core/utils.h"
 
 #include "sse/rfx_sse2.h"
 #include "neon/rfx_neon.h"
 
 #define TAG FREERDP_TAG("codec")
 
-#define RFX_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\RemoteFX"
+#define RFX_KEY "Software\\%s\\RemoteFX"
 
 /**
  * The quantization values control the compression rate and quality. The value
@@ -259,30 +260,32 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	if (!priv->BufferPool)
 		goto fail;
 
+	priv->UseThreads = FALSE;
 	if (!(ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
-	{
-		HKEY hKey = NULL;
 		priv->UseThreads = TRUE;
 
-		const LONG status =
-		    RegOpenKeyExA(HKEY_LOCAL_MACHINE, RFX_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
-
-		if (status == ERROR_SUCCESS)
-		{
-			DWORD dwType = 0;
-			DWORD dwValue = 0;
-			DWORD dwSize = sizeof(dwValue);
-
-			if (RegQueryValueEx(hKey, _T("UseThreads"), NULL, &dwType, (BYTE*)&dwValue, &dwSize) ==
-			    ERROR_SUCCESS)
-				priv->UseThreads = dwValue ? 1 : 0;
-
-			RegCloseKey(hKey);
-		}
-	}
-	else
 	{
-		priv->UseThreads = FALSE;
+		char* key = freerdp_getApplicatonDetailsRegKey(RFX_KEY);
+		if (key)
+		{
+			HKEY hKey = NULL;
+			const LONG status =
+			    RegOpenKeyExA(HKEY_LOCAL_MACHINE, RFX_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+			free(key);
+
+			if (status == ERROR_SUCCESS)
+			{
+				DWORD dwType = 0;
+				DWORD dwValue = 0;
+				DWORD dwSize = sizeof(dwValue);
+
+				if (RegQueryValueEx(hKey, _T("UseThreads"), NULL, &dwType, (BYTE*)&dwValue,
+				                    &dwSize) == ERROR_SUCCESS)
+					priv->UseThreads = dwValue ? 1 : 0;
+
+				RegCloseKey(hKey);
+			}
+		}
 	}
 
 	if (priv->UseThreads)

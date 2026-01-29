@@ -54,8 +54,6 @@
 
 #define TAG FREERDP_TAG("core.nla")
 
-// #define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\Server"
-
 #define NLA_AUTH_PKG NEGO_SSP_NAME
 
 typedef enum

@@ -60,6 +60,57 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API WINPR_JSON* freerdp_GetJSONConfigFile(BOOL system, const char* filename);
 
+	/** @brief set \b vendor and \b product information for an application
+	 *
+	 * This sets the application details for an application instance. These values determine where
+	 * to look for configuration files and other vendor/product specific settings data.
+	 * This function recursively also sets \ref freerdp_setApplicationDetails with a 'vendor' string
+	 * of 'vendor/product', a 'product' string of WINPR_PRODUCT_STRING (build time constant) and a
+	 * 'version' of -1. This limits the length of \b vendor + \b product to \b MAX_PATH or less..
+	 *
+	 * @note When calling this function, the compile time options \b
+	 * FREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR and \b WITH_FULL_CONFIG_PATH are ignored and the config
+	 * path will always have the format 'vendor/product' or 'vendor/product1' (1 for the actual
+	 * version set)
+	 *
+	 * @param vendor A vendor name to use. Must not be \b NULL. Must not contain forbidden
+	 * filesystem symbols for any os. Must be less than \b MAX_PATH bytes.
+	 * @param product A product name to use. Must not be \b NULL. Must not contain forbidden
+	 * filesystem symbols for any os. Must be less than \b MAX_PATH bytes.
+	 * @param version An optional versioning value to append to paths to settings. Use \b -1 to
+	 * disable.
+	 *
+	 * @return \b TRUE if set successfully, \b FALSE in case of any error.
+	 * @since version 3.23.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_setApplicationDetails(const char* vendor,
+	                                                                    const char* product,
+	                                                                    SSIZE_T version);
+
+	/** @brief Get the current \b vendor string of the application. Defaults to \ref
+	 * FREERDP_VENDOR_STRING
+	 *
+	 * @return The current string set as \b vendor.
+	 * @since version 3.23.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_getApplicationDetailsVendor(void);
+
+	/** @brief Get the current \b product string of the application. Defaults to \ref
+	 * FREERDP_PRODUCT_STRING
+	 *
+	 * @return The current string set as \b product.
+	 * @since version 3.23.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_getApplicationDetailsProduct(void);
+
+	/** @brief Get the current \b version of the application. Defaults to \ref FREERDP_API_VERSION
+	 * if \b WITH_RESOURCE_VERSIONING is defined, otherwise \b -1
+	 *
+	 * @return The current number set as \b version
+	 * @since version 3.23.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD SSIZE_T freerdp_getApplicationDetailsVersion(void);
+
 #ifdef __cplusplus
 }
 #endif
