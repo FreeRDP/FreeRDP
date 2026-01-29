@@ -55,7 +55,7 @@ extern "C"
 	 *  @param flags The value to convert
 	 *  @return A constant string representation of \ref flags or the string \b ORIENTATION_UNKNOWN
 	 * for an invalid value
-	 *  @since verstion 3.22.0
+	 *  @since version 3.22.0
 	 */
 	FREERDP_API WINPR_ATTR_NODISCARD const char*
 	freerdp_desktop_rotation_flags_to_string(UINT32 flags);
@@ -65,7 +65,7 @@ extern "C"
 	 *  @param flags The value to convert
 	 *  @return A constant string representation of \ref flag or the string \b
 	 * RDPINPUT_CONTACT_FLAG_UNKNOWN for an invalid value
-	 *  @since verstion 3.22.0
+	 *  @since version 3.22.0
 	 */
 	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_input_touch_state_string(DWORD flags);
 
@@ -74,7 +74,7 @@ extern "C"
 	 *  @param type The value to convert
 	 *  @return A constant string representation of \ref type or the string \b
 	 * UNKNOWN for an invalid value
-	 *  @since verstion 3.22.0
+	 *  @since version 3.22.0
 	 */
 	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_order_support_flags_string(UINT8 type);
 

@@ -465,7 +465,23 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 					attrs->physicalHeight =
 					    WINPR_ASSERTING_INT_CAST(uint32_t, rrmonitors[i].mheight);
 					ret = XRRRotations(xfc->display, WINPR_ASSERTING_INT_CAST(int, i), &rot);
-					attrs->orientation = ret;
+					switch (rot & ret)
+					{
+
+						case RR_Rotate_90:
+							attrs->orientation = ORIENTATION_PORTRAIT;
+							break;
+						case RR_Rotate_180:
+							attrs->orientation = ORIENTATION_LANDSCAPE_FLIPPED;
+							break;
+						case RR_Rotate_270:
+							attrs->orientation = ORIENTATION_PORTRAIT_FLIPPED;
+							break;
+						case RR_Rotate_0:
+						default:
+							attrs->orientation = ORIENTATION_LANDSCAPE;
+							break;
+					}
 				}
 
 #endif
