@@ -73,7 +73,8 @@
 class ErrorMsg : public std::exception
 {
   public:
-	ErrorMsg(int rc, Uint32 type, const std::string& msg);
+	ErrorMsg(int rc, Uint32 type, const std::string& msg,
+	         const std::string& sdlError = SDL_GetError());
 
 	[[nodiscard]] int rc() const;
 	[[nodiscard]] const char* what() const noexcept override;
@@ -82,6 +83,7 @@ class ErrorMsg : public std::exception
 	int _rc;
 	Uint32 _type;
 	std::string _msg;
+	std::string _sdlError;
 	std::string _buffer;
 };
 const char* ErrorMsg::what() const noexcept
@@ -94,10 +96,11 @@ int ErrorMsg::rc() const
 	return _rc;
 }
 
-ErrorMsg::ErrorMsg(int rc, Uint32 type, const std::string& msg) : _rc(rc), _type(type), _msg(msg)
+ErrorMsg::ErrorMsg(int rc, Uint32 type, const std::string& msg, const std::string& sdlError)
+    : _rc(rc), _type(type), _msg(msg), _sdlError(sdlError)
 {
 	std::stringstream ss;
-	ss << _msg << " {" << sdl::utils::toString(_type) << "}";
+	ss << _msg << " {" << sdl::utils::toString(_type) << "}{SDL:" << sdlError << "}";
 	_buffer = ss.str();
 }
 
