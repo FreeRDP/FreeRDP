@@ -144,7 +144,10 @@ bool sdl_push_user_event(Uint32 type, ...)
 			return false;
 	}
 	va_end(ap);
-	return SDL_PushEvent(&ev) == 1;
+	const auto rc = SDL_PushEvent(&ev);
+	if (rc != 1)
+		SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "[%s] SDL_PushEvent returned %d", __func__, rc);
+	return rc == 1;
 }
 
 bool sdl_push_quit()

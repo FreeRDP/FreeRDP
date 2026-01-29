@@ -1303,7 +1303,10 @@ bool SdlContext::restoreCursor()
 	{
 		case CURSOR_NULL:
 			if (!SDL_HideCursor())
+			{
+				WLog_Print(getWLog(), WLOG_ERROR, "SDL_HideCursor failed");
 				return false;
+			}
 
 			setHasCursor(false);
 			return true;
@@ -1312,9 +1315,16 @@ bool SdlContext::restoreCursor()
 		{
 			auto def = SDL_GetDefaultCursor();
 			if (!SDL_SetCursor(def))
+			{
+				WLog_Print(getWLog(), WLOG_ERROR, "SDL_SetCursor(default=%p) failed",
+				           static_cast<void*>(def));
 				return false;
+			}
 			if (!SDL_ShowCursor())
+			{
+				WLog_Print(getWLog(), WLOG_ERROR, "SDL_ShowCursor failed");
 				return false;
+			}
 			setHasCursor(true);
 			return true;
 		}
@@ -1322,6 +1332,8 @@ bool SdlContext::restoreCursor()
 			setHasCursor(true);
 			return sdl_Pointer_Set_Process(this);
 		default:
+			WLog_Print(getWLog(), WLOG_ERROR, "Unknown cursorType %s",
+			           sdl::utils::toString(_cursorType).c_str());
 			return false;
 	}
 }

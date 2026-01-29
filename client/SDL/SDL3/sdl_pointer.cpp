@@ -134,10 +134,16 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 	ptr->image =
 	    SDL_CreateSurface(static_cast<int>(pos.w), static_cast<int>(pos.h), sdl->pixelFormat());
 	if (!ptr->image)
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_CreateSurface failed");
 		return false;
+	}
 
 	if (!SDL_LockSurface(ptr->image))
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_LockSurface failed");
 		return false;
+	}
 
 	auto pixels = static_cast<BYTE*>(ptr->image->pixels);
 	auto data = static_cast<const BYTE*>(ptr->data);
@@ -147,13 +153,19 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 	    gdi->dstFormat, 0, 0, 0, static_cast<UINT32>(isw), static_cast<UINT32>(ish));
 	SDL_UnlockSurface(ptr->image);
 	if (!rc)
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "freerdp_image_scale failed");
 		return false;
+	}
 
 	// create a cursor image in 100% display scale to trick SDL into creating the cursor with the
 	// correct size
 	auto fw = sdl->getFirstWindow();
 	if (!fw)
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "sdl->getFirstWindow() NULL");
 		return false;
+	}
 
 	const auto hidpi_scale =
 	    sdl->pixelToScreen(fw->id(), SDL_FPoint{ static_cast<float>(ptr->image->w),
@@ -163,20 +175,36 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 	assert(normal);
 	if (!SDL_BlitSurfaceScaled(ptr->image, nullptr, normal, nullptr,
 	                           SDL_ScaleMode::SDL_SCALEMODE_LINEAR))
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_BlitSurfaceScaled failed");
 		return false;
+	}
 	if (!SDL_AddSurfaceAlternateImage(normal, ptr->image))
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_AddSurfaceAlternateImage failed");
 		return false;
+	}
 
 	ptr->cursor = SDL_CreateColorCursor(normal, static_cast<int>(pos.x), static_cast<int>(pos.y));
 	if (!ptr->cursor)
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_CreateColorCursor(%fx%f) failed",
+		           static_cast<double>(pos.x), static_cast<double>(pos.y));
 		return false;
+	}
 
 	SDL_DestroySurface(normal);
 
 	if (!SDL_SetCursor(ptr->cursor))
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_SetCursor failed");
 		return false;
+	}
 	if (!SDL_ShowCursor())
+	{
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_ShowCursor failed");
 		return false;
+	}
 	sdl->setHasCursor(true);
 	return true;
 }
