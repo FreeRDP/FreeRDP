@@ -121,6 +121,9 @@ class SdlContext
 
 	[[nodiscard]] bool addDisplayWindow(SDL_DisplayID id);
 	[[nodiscard]] bool removeDisplayWindow(SDL_DisplayID id);
+	[[nodiscard]] bool detectDisplays();
+	[[nodiscard]] rdpMonitor getDisplay(SDL_DisplayID id) const;
+	[[nodiscard]] std::vector<SDL_DisplayID> getDisplayIds() const;
 
 	[[nodiscard]] sdlDispContext& getDisplayChannelContext();
 	[[nodiscard]] sdlInput& getInputChannelContext();
@@ -161,6 +164,9 @@ class SdlContext
 	[[nodiscard]] bool handleEvent(const SDL_MouseMotionEvent& ev);
 	[[nodiscard]] bool handleEvent(const SDL_MouseWheelEvent& ev);
 	[[nodiscard]] bool handleEvent(const SDL_TouchFingerEvent& ev);
+
+	void addOrUpdateDisplay(SDL_DisplayID id, const rdpMonitor& monitor);
+	void deleteDisplay(SDL_DisplayID id);
 
 	[[nodiscard]] bool createPrimary();
 	[[nodiscard]] std::string windowTitle() const;
@@ -206,6 +212,7 @@ class SdlContext
 
 	SdlConnectionDialogWrapper _dialog;
 
+	std::map<SDL_DisplayID, rdpMonitor> _displays;
 	std::map<SDL_WindowID, SdlWindow> _windows;
 
 	uint32_t _windowWidth = 0;

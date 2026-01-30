@@ -888,6 +888,37 @@ bool SdlContext::removeDisplayWindow(SDL_DisplayID id)
 	return true;
 }
 
+bool SdlContext::detectDisplays()
+{
+	int count = 0;
+	auto display = SDL_GetDisplays(&count);
+	if (!display)
+		return false;
+	for (int x = 0; x < count; x++)
+	{
+		const auto id = display[x];
+		auto monitor = SdlWindow::query(id, false);
+		addOrUpdateDisplay(id, monitor);
+	}
+
+	return true;
+}
+
+rdpMonitor SdlContext::getDisplay(SDL_DisplayID id) const
+{
+	return _displays.at(id);
+}
+
+std::vector<SDL_DisplayID> SdlContext::getDisplayIds() const
+{
+	std::vector<SDL_DisplayID> keys;
+	for (const auto& entry : _displays)
+	{
+		keys.push_back(entry.first);
+	}
+	return keys;
+}
+
 const SdlWindow* SdlContext::getWindowForId(SDL_WindowID id) const
 {
 	auto it = _windows.find(id);
@@ -1089,6 +1120,16 @@ bool SdlContext::handleEvent(const SDL_TouchFingerEvent& ev)
 	removeLocalScaling(copy.tfinger.x, copy.tfinger.y);
 	applyMonitorOffset(copy.tfinger.windowID, copy.tfinger.x, copy.tfinger.y);
 	return SdlTouch::handleEvent(this, copy.tfinger);
+}
+
+void SdlContext::addOrUpdateDisplay(SDL_DisplayID id, const rdpMonitor& monitor)
+{
+	_displays.emplace(id, monitor);
+}
+
+void SdlContext::deleteDisplay(SDL_DisplayID id)
+{
+	_displays.erase(id);
 }
 
 bool SdlContext::eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev)
