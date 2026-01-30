@@ -58,8 +58,12 @@ public static class Commands
         .Run("net", $"user \"{userName}\" /passwordchg:no", throwOnNonZero: true, ct: ct);
 
     internal static Task DisablePasswordExpiration(this ProcessRunner processRunner, string userName, CancellationToken ct = default)
-    => processRunner.Run("wmic", $"useraccount WHERE Name='{userName.Replace("'","\\'")}' set PasswordExpires=false", throwOnNonZero: true, ct: ct);
-        
+    => processRunner.Run(
+        "powershell",
+        $"-NoProfile -NonInteractive -Command \"Set-LocalUser -Name '{userName.Replace("'", "''")}' -PasswordNeverExpires $true\"",
+        throwOnNonZero: true,
+        ct: ct);
+
     internal static Task EnsureUserIsInGroup(this ProcessRunner processRunner, string userName, string groupName, CancellationToken ct = default)
     => processRunner.Run("net", $"localgroup \"{groupName}\" \"{userName}\" /add", ct: ct);
 }
