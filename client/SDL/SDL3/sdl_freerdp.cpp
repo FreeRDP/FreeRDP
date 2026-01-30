@@ -605,6 +605,13 @@ int main(int argc, char* argv[])
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
 		return -1;
 
+	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
+	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+	SDL_SetHint(SDL_HINT_PEN_MOUSE_EVENTS, "0");
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+	SDL_SetHint(SDL_HINT_PEN_TOUCH_EVENTS, "1");
+	SDL_SetHint(SDL_HINT_TRACKPAD_IS_TOUCH_ONLY, "1");
+
 	/* Redirect SDL log messages to wLog */
 	SDL_SetLogOutputFunction(winpr_LogOutputFunction, sdl);
 	auto level = WLog_GetLogLevel(sdl->getWLog());
@@ -613,13 +620,6 @@ int main(int argc, char* argv[])
 	auto backend = SDL_GetCurrentVideoDriver();
 	WLog_Print(sdl->getWLog(), WLOG_DEBUG, "client is using backend '%s'", backend);
 	sdl_dialogs_init();
-
-	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
-	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
-	SDL_SetHint(SDL_HINT_PEN_MOUSE_EVENTS, "0");
-	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
-	SDL_SetHint(SDL_HINT_PEN_TOUCH_EVENTS, "1");
-	SDL_SetHint(SDL_HINT_TRACKPAD_IS_TOUCH_ONLY, "1");
 
 	/* SDL cleanup code if the client exits */
 	ScopeGuard guard(
@@ -630,6 +630,8 @@ int main(int argc, char* argv[])
 		    sdl_dialogs_uninit();
 		    SDL_Quit();
 	    });
+	if (!sdl->detectDisplays())
+		return -1;
 
 	/* Initialize RDP */
 	auto context = sdl->context();

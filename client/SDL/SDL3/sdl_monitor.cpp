@@ -179,42 +179,6 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 	return static_cast<Uint32>(sval);
 }
 
-[[nodiscard]] static BOOL sdl_apply_monitor_properties(rdpMonitor& monitor, SDL_DisplayID id,
-                                                       bool isPrimary)
-{
-	auto mode = SDL_GetCurrentDisplayMode(id);
-	if (!mode)
-		return FALSE;
-
-	const float dpi = roundf(mode->pixel_density * 100.0f);
-	const float factor = mode->pixel_density;
-	SDL_Rect rect = {};
-
-	if (!SDL_GetDisplayBounds(id, &rect))
-		return FALSE;
-
-	WINPR_ASSERT(rect.w > 0);
-	WINPR_ASSERT(rect.h > 0);
-
-	bool highDpi = dpi > 100;
-
-	const SDL_DisplayOrientation orientation = SDL_GetCurrentDisplayOrientation(id);
-	const UINT32 rdp_orientation = sdl::utils::orientaion_to_rdp(orientation);
-
-	monitor.orig_screen = id;
-	monitor.x = rect.x;
-	monitor.y = rect.y;
-	monitor.width = roundf(rect.w * factor);
-	monitor.height = roundf(rect.h * factor);
-	monitor.is_primary = isPrimary;
-	monitor.attributes.desktopScaleFactor = static_cast<UINT32>(dpi);
-	monitor.attributes.deviceScaleFactor = 100;
-	monitor.attributes.orientation = rdp_orientation;
-	monitor.attributes.physicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, rect.w);
-	monitor.attributes.physicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, rect.h);
-	return TRUE;
-}
-
 [[nodiscard]] static BOOL sdl_apply_display_properties(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
@@ -231,9 +195,10 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 			if (sdl->monitorIds().empty())
 				return FALSE;
 			const auto id = sdl->monitorIds().front();
-			rdpMonitor monitor = {};
-			if (!sdl_apply_monitor_properties(monitor, id, TRUE))
-				return FALSE;
+			auto monitor = sdl->getDisplay(id);
+			monitor.is_primary = true;
+			monitor.x = 0;
+			monitor.y = 0;
 			monitors.emplace_back(monitor);
 			return freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(),
 			                                                     monitors.size());
@@ -242,10 +207,7 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 	}
 	for (const auto& id : sdl->monitorIds())
 	{
-		rdpMonitor monitor = {};
-		const auto primary = SDL_GetPrimaryDisplay();
-		if (!sdl_apply_monitor_properties(monitor, id, id == primary))
-			return FALSE;
+		const auto monitor = sdl->getDisplay(id);
 		monitors.emplace_back(monitor);
 	}
 	return freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(),
@@ -297,17 +259,7 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	rdpSettings* settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
-	std::vector<SDL_DisplayID> ids;
-	{
-		int numDisplays = 0;
-		auto sids = SDL_GetDisplays(&numDisplays);
-		if (sids && (numDisplays > 0))
-			ids = std::vector<SDL_DisplayID>(sids, sids + numDisplays);
-		SDL_free(sids);
-		if (numDisplays < 0)
-			return FALSE;
-	}
-
+	const auto& ids = sdl->getDisplayIds();
 	auto nr = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 	if (nr == 0)
 	{
