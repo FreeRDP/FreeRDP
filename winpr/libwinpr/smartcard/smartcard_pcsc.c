@@ -2506,6 +2506,105 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 	return status;
 }
 
+static LONG PCSC_ReadDeviceSystemName(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr,
+                                      LPDWORD pcbAttrLen)
+{
+	/* Get reader name from SCardStatus */
+	CHAR* szReader = NULL;
+	PCSC_DWORD cchReader = 0;
+	PCSC_DWORD dwState = 0;
+	PCSC_DWORD dwProtocol = 0;
+	LONG status = 0;
+
+	const DWORD cbAttrLen = *pcbAttrLen;
+	if (cbAttrLen == SCARD_AUTOALLOCATE)
+		return SCARD_E_UNEXPECTED;
+	else
+	{
+		PCSC_DWORD cbAtr = 0;
+		const PCSC_LONG rc =
+		    g_PCSC.pfnSCardStatus(hCard, NULL, &cchReader, &dwState, &dwProtocol, NULL, &cbAtr);
+		status = WINPR_ASSERTING_INT_CAST(LONG, rc);
+		if (status != SCARD_S_SUCCESS)
+			return status;
+		switch (dwAttrId)
+		{
+			case SCARD_ATTR_DEVICE_SYSTEM_NAME_A:
+				if (cchReader > cbAttrLen)
+					return SCARD_E_INSUFFICIENT_BUFFER;
+				break;
+			case SCARD_ATTR_DEVICE_SYSTEM_NAME_W:
+				if (cchReader > cbAttrLen / sizeof(WCHAR))
+					return SCARD_E_INSUFFICIENT_BUFFER;
+				break;
+			default:
+				return SCARD_E_INVALID_PARAMETER;
+		}
+
+		if (cchReader == 0)
+		{
+			*pcbAttrLen = 0;
+			return SCARD_S_SUCCESS;
+		}
+
+		if (!pbAttr)
+			return SCARD_E_INVALID_VALUE;
+
+		szReader = calloc(cchReader, sizeof(CHAR));
+		if (!szReader)
+			return SCARD_E_NO_MEMORY;
+	}
+
+	{
+		PCSC_DWORD rlen = cchReader;
+		PCSC_DWORD cbAtr = 0;
+		const PCSC_LONG rc =
+		    g_PCSC.pfnSCardStatus(hCard, szReader, &rlen, &dwState, &dwProtocol, NULL, &cbAtr);
+		status = WINPR_ASSERTING_INT_CAST(LONG, rc);
+		if (status != SCARD_S_SUCCESS)
+			goto out;
+
+		if (cchReader != rlen)
+		{
+			status = SCARD_E_INVALID_VALUE;
+			goto out;
+		}
+	}
+	*pcbAttrLen = cchReader;
+
+	switch (dwAttrId)
+	{
+		case SCARD_ATTR_DEVICE_SYSTEM_NAME_A:
+			if (!strncpy((char*)pbAttr, szReader, *pcbAttrLen))
+			{
+				status = SCARD_E_NO_MEMORY;
+				goto out;
+			}
+			break;
+		case SCARD_ATTR_DEVICE_SYSTEM_NAME_W:
+			if (cchReader > cbAttrLen / sizeof(WCHAR))
+			{
+				status = SCARD_E_INSUFFICIENT_BUFFER;
+				goto out;
+			}
+			if (ConvertUtf8NToWChar(szReader, *pcbAttrLen, (WCHAR*)pbAttr, *pcbAttrLen) !=
+			    *pcbAttrLen)
+			{
+				status = SCARD_E_NO_MEMORY;
+				goto out;
+			}
+			*pcbAttrLen *= sizeof(WCHAR);
+			break;
+		default:
+			status = SCARD_E_INVALID_PARAMETER;
+			break;
+	}
+
+out:
+	free(szReader);
+	return status;
+}
+
 static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr,
                                        LPDWORD pcbAttrLen)
 {
@@ -2589,8 +2688,8 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 				PCSC_DWORD cbAtrLen = 0;
 				PCSC_DWORD dwProtocol = 0;
 				PCSC_DWORD cchReaderLen = 0;
-				status = (LONG)g_PCSC.pfnSCardStatus(hCard, NULL, &cchReaderLen, &dwState,
-				                                     &dwProtocol, NULL, &cbAtrLen);
+				status = g_PCSC.pfnSCardStatus(hCard, NULL, &cchReaderLen, &dwState, &dwProtocol,
+				                               NULL, &cbAtrLen);
 
 				if (status == SCARD_S_SUCCESS)
 				{
@@ -2642,6 +2741,13 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 		}
 		else if (dwAttrId == SCARD_ATTR_DEVICE_SYSTEM_NAME_A)
 		{
+			if (!pcbAttrLenAlloc)
+				status = PCSC_ReadDeviceSystemName(hCard, dwAttrId, pbAttr, pcbAttrLen);
+		}
+		else if (dwAttrId == SCARD_ATTR_DEVICE_SYSTEM_NAME_W)
+		{
+			if (!pcbAttrLenAlloc)
+				status = PCSC_ReadDeviceSystemName(hCard, dwAttrId, pbAttr, pcbAttrLen);
 		}
 		else if (dwAttrId == SCARD_ATTR_DEVICE_UNIT)
 		{
