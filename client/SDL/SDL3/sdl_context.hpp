@@ -120,7 +120,7 @@ class SdlContext
 	[[nodiscard]] SdlWindow* getFirstWindow();
 
 	[[nodiscard]] bool addDisplayWindow(SDL_DisplayID id);
-	[[nodiscard]] bool removeDisplay(SDL_DisplayID id);
+	[[nodiscard]] bool removeDisplayWindow(SDL_DisplayID id);
 
 	[[nodiscard]] sdlDispContext& getDisplayChannelContext();
 	[[nodiscard]] sdlInput& getInputChannelContext();
@@ -206,7 +206,7 @@ class SdlContext
 
 	SdlConnectionDialogWrapper _dialog;
 
-	std::map<Uint32, SdlWindow> _windows;
+	std::map<SDL_WindowID, SdlWindow> _windows;
 
 	uint32_t _windowWidth = 0;
 	uint32_t _windowHeigth = 0;

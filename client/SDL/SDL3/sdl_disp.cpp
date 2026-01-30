@@ -308,7 +308,7 @@ bool sdlDispContext::updateMonitors(SDL_EventType type, SDL_DisplayID displayID)
 				return false;
 			break;
 		case SDL_EVENT_DISPLAY_REMOVED:
-			if (!_sdl->removeDisplay(displayID))
+			if (!_sdl->removeDisplayWindow(displayID))
 				return false;
 			break;
 		default:

@@ -878,7 +878,7 @@ bool SdlContext::addDisplayWindow(SDL_DisplayID id)
 	return true;
 }
 
-bool SdlContext::removeDisplay(SDL_DisplayID id)
+bool SdlContext::removeDisplayWindow(SDL_DisplayID id)
 {
 	for (auto& w : _windows)
 	{
