@@ -328,8 +328,6 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 	CAM_MEDIA_FORMAT inputFormat = streamInputFormat(stream);
 	enum AVPixelFormat pixFormat = AV_PIX_FMT_NONE;
 
-	if (!ecam_sws_valid(stream))
-		return FALSE;
 
 #if defined(WITH_INPUT_FORMAT_H264)
 	if (inputFormat == CAM_MEDIA_FORMAT_MJPG_H264)
