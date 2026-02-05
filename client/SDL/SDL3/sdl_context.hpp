@@ -70,7 +70,7 @@ class SdlContext
 
 	[[nodiscard]] bool fullscreen() const;
 	[[nodiscard]] bool toggleFullscreen();
-	[[nodiscard]] bool setFullscreen(bool enter);
+	[[nodiscard]] bool setFullscreen(bool enter, bool forceOriginalDisplay = false);
 
 	[[nodiscard]] bool setMinimized();
 

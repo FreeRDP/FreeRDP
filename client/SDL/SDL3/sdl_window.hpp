@@ -61,7 +61,7 @@ class SdlWindow
 	void setBordered(bool bordered);
 	void raise();
 	void resizeable(bool use);
-	void fullscreen(bool enter);
+	void fullscreen(bool enter, bool forceOriginalDisplay);
 	void minimize();
 
 	[[nodiscard]] bool resize(const SDL_Point& size);
@@ -80,10 +80,11 @@ class SdlWindow
 	void updateSurface();
 
   protected:
-	SdlWindow(const std::string& title, const SDL_Rect& rect, Uint32 flags);
+	SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect& rect, Uint32 flags);
 
   private:
 	SDL_Window* _window = nullptr;
+	SDL_DisplayID _displayID = 0;
 	Sint32 _offset_x = 0;
 	Sint32 _offset_y = 0;
 };

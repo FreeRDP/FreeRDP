@@ -295,7 +295,8 @@ BOOL SdlContext::postConnect(freerdp* instance)
 	if (!sdl->setResizeable(false))
 		return FALSE;
 	if (!sdl->setFullscreen(freerdp_settings_get_bool(context->settings, FreeRDP_Fullscreen) ||
-	                        freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon)))
+	                            freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon),
+	                        true))
 		return FALSE;
 	sdl->setConnected(true);
 	return TRUE;
@@ -1379,11 +1380,12 @@ std::vector<SDL_Rect> SdlContext::pop()
 	return val;
 }
 
-bool SdlContext::setFullscreen(bool enter)
+bool SdlContext::setFullscreen(bool enter, bool forceOriginalDisplay)
 {
 	for (const auto& window : _windows)
 	{
-		if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_FULLSCREEN, &window.second, enter))
+		if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_FULLSCREEN, &window.second, enter,
+		                         forceOriginalDisplay))
 			return false;
 	}
 	_fullscreen = enter;
