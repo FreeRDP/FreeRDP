@@ -1367,6 +1367,8 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
 
+	wf_event_init();
+
 	WINPR_ASSERT(instance);
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
@@ -1399,6 +1401,8 @@ static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 	WINPR_UNUSED(instance);
 	if (!context)
 		return;
+
+	wf_event_uninit();
 
 #ifdef WITH_PROGRESS_BAR
 	CoUninitialize();
