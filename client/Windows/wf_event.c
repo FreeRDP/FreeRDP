@@ -39,6 +39,7 @@
 static HWND g_focus_hWnd = NULL;
 static HWND g_main_hWnd = NULL;
 static HWND g_parent_hWnd = NULL;
+static CRITICAL_SECTION g_event_cs;
 
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
@@ -55,15 +56,35 @@ static BOOL g_flipping_out = FALSE;
 
 static BOOL g_keystates[256] = { 0 };
 
+void wf_event_init(void)
+{
+	InitializeCriticalSection(&g_event_cs);
+}
+
+void wf_event_uninit(void)
+{
+	DeleteCriticalSection(&g_event_cs);
+}
+
 static BOOL ctrl_down(void)
 {
-	return g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	BOOL result;
+	/* 修复：使用Critical Section保护g_keystates读取 */
+	EnterCriticalSection(&g_event_cs);
+	result = g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	LeaveCriticalSection(&g_event_cs);
+	return result;
 }
 
 static BOOL alt_ctrl_down(void)
 {
-	const BOOL altDown = g_keystates[VK_MENU] || g_keystates[VK_LMENU] || g_keystates[VK_RMENU];
-	return altDown && ctrl_down();
+	BOOL altDown, ctrlDown;
+	/* 修复：使用Critical Section保护g_keystates读取 */
+	EnterCriticalSection(&g_event_cs);
+	altDown = g_keystates[VK_MENU] || g_keystates[VK_LMENU] || g_keystates[VK_RMENU];
+	ctrlDown = g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	LeaveCriticalSection(&g_event_cs);
+	return altDown && ctrlDown;
 }
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
