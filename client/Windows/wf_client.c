@@ -1032,6 +1032,14 @@ static BOOL wf_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDi
 	return TRUE;
 }
 
+/* Fix: Use an asynchronous disconnect helper thread to prevent freerdp_disconnect from blocking */
+static DWORD WINAPI wf_disconnect_thread(LPVOID lpParam)
+{
+	freerdp* instance = (freerdp*)lpParam;
+	freerdp_disconnect(instance);
+	return 0;
+}
+
 static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg = { 0 };
@@ -1067,7 +1075,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		if (freerdp_focus_required(instance))
 		{
 			wf_event_focus_in(wfc);
-			wf_event_focus_in(wfc);
+			/* Fix: Remove redundant call to avoid unnecessary overhead */
 		}
 
 		{
@@ -1154,8 +1162,31 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 			break;
 	}
 
-	/* cleanup */
-	freerdp_disconnect(instance);
+	/* Fix: Add timeout protection to disconnect to prevent hangs due to network issues */
+	{
+		HANDLE disconnect_thread;
+		DWORD wait_result;
+
+		/* Create asynchronous disconnect thread */
+		disconnect_thread = CreateThread(NULL, 0, wf_disconnect_thread, instance, 0, NULL);
+		if (disconnect_thread)
+		{
+			/* Wait for 2 seconds, give up if timeout */
+			wait_result = WaitForSingleObject(disconnect_thread, 2000);
+			if (wait_result == WAIT_TIMEOUT)
+			{
+				WLog_WARN(TAG, "Disconnect timeout after 2 seconds, abandoning connection");
+				TerminateThread(disconnect_thread, 1);
+			}
+			CloseHandle(disconnect_thread);
+		}
+		else
+		{
+			/* Thread creation failed, fall back to synchronous call (may block) */
+			WLog_WARN(TAG, "Failed to create disconnect thread, using sync disconnect");
+			freerdp_disconnect(instance);
+		}
+	}
 
 end:
 	error = freerdp_get_last_error(instance->context);
@@ -1497,8 +1528,18 @@ static int wfreerdp_client_stop(rdpContext* context)
 
 	if (wfc->keyboardThread)
 	{
+		DWORD wait_result;
 		PostThreadMessage(wfc->keyboardThreadId, WM_QUIT, 0, 0);
-		(void)WaitForSingleObject(wfc->keyboardThread, INFINITE);
+
+		/* Fix: Add 1 second timeout protection to prevent keyboard lock if keyboard hook is not uninstalled */
+		wait_result = WaitForSingleObject(wfc->keyboardThread, 1000);
+		if (wait_result == WAIT_TIMEOUT)
+		{
+			WLog_ERR(TAG, "Keyboard thread did not exit in time, terminating forcefully");
+			/* Force-terminate the thread. Note: TerminateThread does not call UnhookWindowsHookEx,
+			                      * but the system cleans up hooks on process exit, which is better than a permanently locked keyboard hook */			TerminateThread(wfc->keyboardThread, 1);
+		}
+
 		(void)CloseHandle(wfc->keyboardThread);
 		wfc->keyboardThread = NULL;
 		wfc->keyboardThreadId = 0;
