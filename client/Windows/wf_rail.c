@@ -704,13 +704,34 @@ static BOOL wf_rail_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* or
 	bpp = windowIcon->iconInfo->bpp;
 	width = windowIcon->iconInfo->width;
 	height = windowIcon->iconInfo->height;
+
+	/* 修复：防止整数溢出 - 检查图标尺寸合理性 */
+	if (width > 1024 || height > 1024)
+	{
+		WLog_ERR(TAG, "Icon dimensions too large: %ux%u", width, height);
+		ReleaseDC(NULL, hDC);
+		return NULL;
+	}
+
+	/* 修复：防止整数溢出 - 检查面积计算 */
+	UINT32 area = width * height;
+	if (area > 1048576)  /* 1024*1024 */
+	{
+		WLog_ERR(TAG, "Icon area too large: %u", area);
+		ReleaseDC(NULL, hDC);
+		return NULL;
+	}
+
 	bitmapInfoHeader->biSize = sizeof(BITMAPINFOHEADER);
 	bitmapInfoHeader->biWidth = width;
 	bitmapInfoHeader->biHeight = height;
 	bitmapInfoHeader->biPlanes = 1;
 	bitmapInfoHeader->biBitCount = bpp;
 	bitmapInfoHeader->biCompression = 0;
-	bitmapInfoHeader->biSizeImage = height * width * ((bpp + 7) / 8);
+
+	/* 修复：安全计算biSizeImage，已经验证过尺寸不会溢出 */
+	UINT32 bytes_per_pixel = (bpp + 7) / 8;
+	bitmapInfoHeader->biSizeImage = area * bytes_per_pixel;
 	bitmapInfoHeader->biXPelsPerMeter = width;
 	bitmapInfoHeader->biYPelsPerMeter = height;
 	bitmapInfoHeader->biClrUsed = 0;
