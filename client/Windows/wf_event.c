@@ -88,7 +88,29 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 	if (g_parent_hWnd && g_main_hWnd)
 	{
+		/* 修复：检查窗口句柄是否仍然有效 */
+		if (!IsWindow(g_main_hWnd))
+		{
+			g_main_hWnd = NULL;
+			g_focus_hWnd = NULL;
+			return CallNextHookEx(NULL, nCode, wParam, lParam);
+		}
+
 		wfc = (wfContext*)GetWindowLongPtr(g_main_hWnd, GWLP_USERDATA);
+
+		/* 修复：检查wfc有效性，避免访问无效指针 */
+		if (!wfc)
+		{
+			return CallNextHookEx(NULL, nCode, wParam, lParam);
+		}
+
+		/* 修复：检查连接状态，断开连接时不处理键盘事件 */
+		if (!wfc->common.context.instance ||
+		    freerdp_shall_disconnect_context(&wfc->common.context))
+		{
+			return CallNextHookEx(NULL, nCode, wParam, lParam);
+		}
+
 		GUITHREADINFO gui_thread_info;
 		gui_thread_info.cbSize = sizeof(GUITHREADINFO);
 		HWND fg_win_hwnd = GetForegroundWindow();
@@ -118,20 +140,34 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				if (!wfc || !p)
 					return 1;
 
+				/* 修复：再次检查连接状态（wfc可能刚重新获取） */
+				if (!wfc->common.context.instance ||
+				    freerdp_shall_disconnect_context(&wfc->common.context))
+				{
+					return CallNextHookEx(NULL, nCode, wParam, lParam);
+				}
+
 				input = wfc->common.context.input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE)p->scanCode, p->flags & LLKHF_EXTENDED);
-				keystate = g_keystates[p->scanCode & 0xFF];
+				/* 修复：此前用扫描码更新/读取 g_keystates，
+				   但组合键判断使用虚拟键码，导致 Ctrl+Alt+Enter 不触发。
+				   统一改为使用虚拟键码索引，保证组合键检测一致。 */
+				keystate = g_keystates[p->vkCode & 0xFF];
 
 				switch (wParam)
 				{
 					case WM_KEYDOWN:
 					case WM_SYSKEYDOWN:
-						g_keystates[p->scanCode & 0xFF] = TRUE;
+						/* 修复：按下时按虚拟键码置位，避免扫描码/虚拟键码不一致问题 */
+						if (p->vkCode < 256)
+							g_keystates[p->vkCode] = TRUE;
 						break;
 					case WM_KEYUP:
 					case WM_SYSKEYUP:
 					default:
-						g_keystates[p->scanCode & 0xFF] = FALSE;
+						/* 修复：弹起时按虚拟键码清零 */
+						if (p->vkCode < 256)
+							g_keystates[p->vkCode] = FALSE;
 						break;
 				}
 				DEBUG_KBD("keydown %d scanCode 0x%08lX flags 0x%08lX vkCode 0x%08lX",
@@ -218,7 +254,51 @@ void wf_event_focus_in(wfContext* wfc)
 	rdpInput* input;
 	POINT pt;
 	RECT rc;
+
+#define TAG CLIENT_TAG("windows")
+
+	/* 修复：添加NULL检查，防止崩溃 */
+	if (!wfc)
+	{
+		WLog_ERR(TAG, "wfc is NULL in wf_event_focus_in");
+		return;
+	}
+
+	/* 修复：检查窗口句柄是否有效（不仅检查NULL，还检查是否已销毁） */
+	if (!wfc->hwnd || !IsWindow(wfc->hwnd))
+	{
+		WLog_ERR(TAG, "wfc->hwnd is NULL or invalid in wf_event_focus_in");
+		return;
+	}
+
+	/* 修复：检查连接状态，避免在断开连接后调用input回调 */
+	if (!wfc->common.context.instance)
+	{
+		WLog_ERR(TAG, "instance is NULL in wf_event_focus_in");
+		return;
+	}
+
+	/* 修复：检查是否正在断开连接，避免访问已释放的资源 */
+	if (freerdp_shall_disconnect_context(&wfc->common.context))
+	{
+		WLog_DBG(TAG, "Skipping focus_in - connection is disconnecting");
+		return;
+	}
+
 	input = wfc->common.context.input;
+	if (!input)
+	{
+		WLog_ERR(TAG, "input is NULL in wf_event_focus_in");
+		return;
+	}
+
+	/* 修复：检查input回调函数指针是否有效 */
+	if (!input->FocusInEvent || !input->MouseEvent)
+	{
+		WLog_ERR(TAG, "input callbacks are NULL in wf_event_focus_in");
+		return;
+	}
+
 	syncFlags = 0;
 
 	if (GetKeyState(VK_NUMLOCK))
