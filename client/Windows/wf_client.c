@@ -1032,6 +1032,14 @@ static BOOL wf_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDi
 	return TRUE;
 }
 
+/* 修复：异步断开连接的辅助线程，防止freerdp_disconnect卡住 */
+static DWORD WINAPI wf_disconnect_thread(LPVOID lpParam)
+{
+	freerdp* instance = (freerdp*)lpParam;
+	freerdp_disconnect(instance);
+	return 0;
+}
+
 static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg = { 0 };
@@ -1067,7 +1075,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		if (freerdp_focus_required(instance))
 		{
 			wf_event_focus_in(wfc);
-			wf_event_focus_in(wfc);
+			/* 修复：删除重复调用，避免不必要的开销 */
 		}
 
 		{
@@ -1154,8 +1162,31 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 			break;
 	}
 
-	/* cleanup */
-	freerdp_disconnect(instance);
+	/* 修复：断开连接添加超时保护，防止网络卡住导致程序无响应 */
+	{
+		HANDLE disconnect_thread;
+		DWORD wait_result;
+
+		/* 创建异步断开线程 */
+		disconnect_thread = CreateThread(NULL, 0, wf_disconnect_thread, instance, 0, NULL);
+		if (disconnect_thread)
+		{
+			/* 等待2秒，超时则放弃 */
+			wait_result = WaitForSingleObject(disconnect_thread, 2000);
+			if (wait_result == WAIT_TIMEOUT)
+			{
+				WLog_WARN(TAG, "Disconnect timeout after 2 seconds, abandoning connection");
+				TerminateThread(disconnect_thread, 1);
+			}
+			CloseHandle(disconnect_thread);
+		}
+		else
+		{
+			/* 线程创建失败，回退到同步调用（可能卡住） */
+			WLog_WARN(TAG, "Failed to create disconnect thread, using sync disconnect");
+			freerdp_disconnect(instance);
+		}
+	}
 
 end:
 	error = freerdp_get_last_error(instance->context);
@@ -1497,8 +1528,19 @@ static int wfreerdp_client_stop(rdpContext* context)
 
 	if (wfc->keyboardThread)
 	{
+		DWORD wait_result;
 		PostThreadMessage(wfc->keyboardThreadId, WM_QUIT, 0, 0);
-		(void)WaitForSingleObject(wfc->keyboardThread, INFINITE);
+
+		/* 修复：添加1秒超时保护，防止键盘钩子未卸载导致系统键盘锁定 */
+		wait_result = WaitForSingleObject(wfc->keyboardThread, 1000);
+		if (wait_result == WAIT_TIMEOUT)
+		{
+			WLog_ERR(TAG, "Keyboard thread did not exit in time, terminating forcefully");
+			/* 强制终止线程。注意：TerminateThread不会调用UnhookWindowsHookEx，
+			 * 但系统会在进程终止时自动清理钩子，这比让键盘钩子永久锁定系统要好 */
+			TerminateThread(wfc->keyboardThread, 1);
+		}
+
 		(void)CloseHandle(wfc->keyboardThread);
 		wfc->keyboardThread = NULL;
 		wfc->keyboardThreadId = 0;
