@@ -1681,21 +1681,37 @@ static BOOL wf_cliprdr_array_ensure_capacity(wfClipboard* clipboard)
 		size_t new_size;
 		FILEDESCRIPTORW** new_fd;
 		WCHAR** new_name;
+
+		/* 修复漏洞#1：防止整数溢出 - 检查数组大小不会溢出 */
+		if (clipboard->file_array_size > (SIZE_MAX / 4))
+		{
+			WLog_ERR(TAG, "File array size too large, would overflow");
+			return FALSE;
+		}
+
 		new_size = (clipboard->file_array_size + 1) * 2;
+
+		/* 修复漏洞#1：检查乘法是否溢出 */
+		if (new_size > (SIZE_MAX / sizeof(FILEDESCRIPTORW*)))
+		{
+			WLog_ERR(TAG, "Allocation size would overflow for file descriptors");
+			return FALSE;
+		}
+
 		new_fd = (FILEDESCRIPTORW**)realloc(clipboard->fileDescriptor,
 		                                    new_size * sizeof(FILEDESCRIPTORW*));
-
-		if (new_fd)
-			clipboard->fileDescriptor = new_fd;
-
 		new_name = (WCHAR**)realloc(clipboard->file_names, new_size * sizeof(WCHAR*));
 
-		if (new_name)
-			clipboard->file_names = new_name;
-
+		/* 修复漏洞#8：改进错误处理 - 两个都成功才更新 */
 		if (!new_fd || !new_name)
+		{
+			/* realloc失败时保持原指针不变，不需要额外清理 */
 			return FALSE;
+		}
 
+		/* 两个都成功才更新 */
+		clipboard->fileDescriptor = new_fd;
+		clipboard->file_names = new_name;
 		clipboard->file_array_size = new_size;
 	}
 
@@ -2109,8 +2125,28 @@ static SSIZE_T wf_cliprdr_get_filedescriptor(wfClipboard* clipboard, BYTE** pDat
 	ReleaseStgMedium(&stg_medium);
 exit:
 {
-	const size_t size = 4ull + clipboard->nFiles * sizeof(FILEDESCRIPTORW);
-	FILEGROUPDESCRIPTORW* groupDsc = (FILEGROUPDESCRIPTORW*)calloc(size, 1);
+	/* 修复漏洞#2：防止整数溢出 - 检查文件数量合理性 */
+	FILEGROUPDESCRIPTORW* groupDsc = NULL;
+	size_t size = 0;  /* 在外层声明，以便后续rc = size时可访问 */
+
+	if (clipboard->nFiles > 10000)
+	{
+		WLog_ERR(TAG, "Too many files: %zu", clipboard->nFiles);
+	}
+	else
+	{
+		/* 修复漏洞#2：检查乘法是否溢出 */
+		size_t desc_size = clipboard->nFiles * sizeof(FILEDESCRIPTORW);
+		if (clipboard->nFiles > 0 && desc_size / clipboard->nFiles != sizeof(FILEDESCRIPTORW))
+		{
+			WLog_ERR(TAG, "File descriptor size would overflow");
+		}
+		else
+		{
+			size = 4ull + desc_size;
+			groupDsc = (FILEGROUPDESCRIPTORW*)calloc(size, 1);
+		}
+	}
 
 	if (groupDsc)
 	{
@@ -2278,9 +2314,24 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 	if (!clipboard)
 		return ERROR_INTERNAL_ERROR;
 
+	if (fileContentsRequest->listIndex >= clipboard->nFiles)
+	{
+		WLog_ERR(TAG, "invalid file index: %u >= %u", fileContentsRequest->listIndex,
+		         clipboard->nFiles);
+		return ERROR_INVALID_INDEX;
+	}
+
 	cbRequested = fileContentsRequest->cbRequested;
 	if (fileContentsRequest->dwFlags == FILECONTENTS_SIZE)
 		cbRequested = sizeof(UINT64);
+
+	/* 修复漏洞#7：防止DoS - 限制clipboard数据大小 */
+#define MAX_CLIPBOARD_DATA_SIZE (256 * 1024 * 1024)  /* 256MB */
+	if (cbRequested > MAX_CLIPBOARD_DATA_SIZE)
+	{
+		WLog_ERR(TAG, "Requested clipboard data size too large: %u", cbRequested);
+		return ERROR_INVALID_PARAMETER;
+	}
 
 	pData = (BYTE*)calloc(1, cbRequested);
 
