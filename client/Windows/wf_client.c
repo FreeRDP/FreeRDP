@@ -418,6 +418,12 @@ static BOOL wf_post_connect(freerdp* instance)
 	    wf_image_new(wfc, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), format, NULL);
 
+	if (!wfc->primary)
+	{
+		WLog_ERR(TAG, "Failed to allocate primary surface");
+		return FALSE;
+	}
+
 	if (!gdi_init_ex(instance, format, 0, wfc->primary->pdata, NULL))
 		return FALSE;
 
