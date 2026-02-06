@@ -256,21 +256,46 @@ static BOOL wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, 
 	WINPR_ASSERT(input);
 
 	DefWindowProc(hWnd, Msg, wParam, lParam);
-	delta = ((signed short)HIWORD(wParam)); /* GET_WHEEL_DELTA_WPARAM(wParam); */
+	/* 修复：滚轮幅度编码遵循 RDP 约定——方向用标志位表示，
+	   低 8 位仅放“步数”的绝对值（通常每步 WHEEL_DELTA=120）。
+	   旧代码用 9 位二补编码（delta = 0x100 + delta），与标志位叠加，
+	   在部分服务端/驱动上会导致滚动异常。 */
+	delta = ((signed short)HIWORD(wParam)); /* GET_WHEEL_DELTA_WPARAM(wParam) */
 
 	if (horizontal)
 		flags |= PTR_FLAGS_HWHEEL;
 	else
 		flags |= PTR_FLAGS_WHEEL;
 
+#ifndef WHEEL_DELTA
+#define WHEEL_DELTA 120
+#endif
+
+	/* 按 SDL/X11 一致的方式编码：
+	   - 方向：flags 上置位 PTR_FLAGS_WHEEL_NEGATIVE
+	   - 幅度：低 8 位为 9bit 二补数（负值：0x100 - steps），正值：steps */
+	/* 调整：直接使用原始增量幅度（Windows 常为 0x78=120/档）。
+	   方向：flags 置位 PTR_FLAGS_WHEEL_NEGATIVE；
+	   幅度：低 8 位使用 9bit 二补数（负向 0x100 - val，正向 val）。 */
+	BOOL negative = FALSE;
 	if (delta < 0)
 	{
+		negative = TRUE;
 		flags |= PTR_FLAGS_WHEEL_NEGATIVE;
-		/* 9bit twos complement, delta already negative */
-		delta = 0x100 + delta;
+		delta = -delta; /* 绝对值作为幅度 */
 	}
 
-	flags |= delta;
+	{
+		unsigned int cval = (unsigned int)delta;
+		if (cval == 0)
+			cval = 1; /* 保底一档 */
+		if (cval > 0xFF)
+			cval = 0xFF;
+		UINT16 val = (UINT16)cval;
+		if (negative)
+			val = (UINT16)(0x100 - val); /* 负值二补编码 */
+		flags |= val;
+	}
 	return wf_scale_mouse_event(wfc, flags, x, y);
 }
 
