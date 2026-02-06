@@ -91,45 +91,38 @@ struct s_FloatBar
 	HDC hdcmem;
 	RECT textRect;
 	UINT_PTR animating;
+	HPEN pen_shadow1;
+	HPEN pen_shadow2;
 };
 
 static BOOL floatbar_kill_timers(wfFloatBar* floatbar)
 {
-	UINT_PTR timers[] = { TIMER_HIDE, TIMER_ANIMAT_HIDE, TIMER_ANIMAT_SHOW };
-
 	if (!floatbar)
 		return FALSE;
 
-	for (size_t x = 0; x < ARRAYSIZE(timers); x++)
-		KillTimer(floatbar->hwnd, timers[x]);
+	KillTimer(floatbar->hwnd, TIMER_HIDE);
 
 	floatbar->animating = 0;
 	return TRUE;
 }
 
+static BOOL floatbar_show(wfFloatBar* floatbar);
+static BOOL floatbar_hide(wfFloatBar* floatbar);
+
 static BOOL floatbar_animation(wfFloatBar* const floatbar, const BOOL show)
 {
-	UINT_PTR timer = show ? TIMER_ANIMAT_SHOW : TIMER_ANIMAT_HIDE;
-
 	if (!floatbar)
 		return FALSE;
 
 	if (floatbar->shown == show)
 		return TRUE;
 
-	if (floatbar->animating == timer)
-		return TRUE;
+	floatbar->animating = 0;
 
-	floatbar->animating = timer;
-
-	if (SetTimer(floatbar->hwnd, timer, USER_TIMER_MINIMUM, NULL) == 0)
-	{
-		DWORD err = GetLastError();
-		WLog_ERR(TAG, "SetTimer failed with %08" PRIx32, err);
-		return FALSE;
-	}
-
-	return TRUE;
+	if (show)
+		return floatbar_show(floatbar);
+	else
+		return floatbar_hide(floatbar);
 }
 
 static BOOL floatbar_trigger_hide(wfFloatBar* floatbar)
@@ -155,7 +148,8 @@ static BOOL floatbar_hide(wfFloatBar* floatbar)
 	if (!floatbar_kill_timers(floatbar))
 		return FALSE;
 
-	floatbar->offset = floatbar->height - 2;
+	const int PEEK_HEIGHT = 2;
+	floatbar->offset = floatbar->height - PEEK_HEIGHT;
 
 	if (!MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset, floatbar->width,
 	                floatbar->height, TRUE))
@@ -180,8 +174,8 @@ static BOOL floatbar_show(wfFloatBar* floatbar)
 
 	floatbar->offset = 0;
 
-	if (!MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset, floatbar->width,
-	                floatbar->height, TRUE))
+	if (!MoveWindow(floatbar->hwnd, floatbar->rect.left, 0, floatbar->width, floatbar->height,
+	                TRUE))
 	{
 		DWORD err = GetLastError();
 		WLog_ERR(TAG, "MoveWindow failed with %08" PRIx32, err);
@@ -245,11 +239,14 @@ static int button_hit(Button* const button)
 			break;
 
 		case BUTTON_RESTORE:
-			wf_toggle_fullscreen(floatbar->wfc);
+			/* Prevent re-entrancy by deferring the fullscreen toggle to a worker thread. */
+			floatbar_kill_timers(floatbar);
+			ReleaseCapture();
+			wf_toggle_fullscreen_async(floatbar->wfc);
 			break;
 
 		case BUTTON_CLOSE:
-			SendMessage(floatbar->parent, WM_DESTROY, 0, 0);
+			PostMessage(floatbar->parent, WM_CLOSE, 0, 0);
 			break;
 
 		default:
@@ -361,14 +358,13 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 
 	GradientFill(hdc, triVertext, 2, &gradientRect, 1, GRADIENT_FILL_RECT_V);
 	/* paint shadow */
-	hpen = CreatePen(PS_SOLID, 1, RGB(71, 71, 71));
+	hpen = floatbar->pen_shadow1;
 	orig = SelectObject(hdc, hpen);
 	MoveToEx(hdc, left, top, NULL);
 	LineTo(hdc, left + angleOffset, bottom);
 	LineTo(hdc, right - angleOffset, bottom);
 	LineTo(hdc, right + 1, top - 1);
-	DeleteObject(hpen);
-	hpen = CreatePen(PS_SOLID, 1, RGB(107, 141, 184));
+	hpen = floatbar->pen_shadow2;
 	SelectObject(hdc, hpen);
 	left += 1;
 	bottom -= 1;
@@ -377,7 +373,6 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 	LineTo(hdc, left + (angleOffset - 1), bottom);
 	LineTo(hdc, right - (angleOffset - 1), bottom);
 	LineTo(hdc, right + 1, top - 1);
-	DeleteObject(hpen);
 	SelectObject(hdc, orig);
 
 	const size_t wlen = wcslen(floatbar->wfc->window_title);
@@ -536,45 +531,12 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 		}
 
 		case WM_TIMER:
-			switch (wParam)
-			{
-				case TIMER_HIDE:
-					floatbar_animation(floatbar, FALSE);
-					break;
-
-				case TIMER_ANIMAT_SHOW:
-				{
-					floatbar->offset--;
-					MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset,
-					           floatbar->width, floatbar->height, TRUE);
-
-					if (floatbar->offset <= 0)
-						floatbar_show(floatbar);
-
-					break;
-				}
-
-				case TIMER_ANIMAT_HIDE:
-				{
-					floatbar->offset++;
-					MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->offset,
-					           floatbar->width, floatbar->height, TRUE);
-
-					if (floatbar->offset >= floatbar->height - 2)
-						floatbar_hide(floatbar);
-
-					break;
-				}
-
-				default:
-					break;
-			}
-
+			if (wParam == TIMER_HIDE)
+				floatbar_animation(floatbar, FALSE);
 			break;
 
 		case WM_DESTROY:
 			DeleteDC(floatbar->hdcmem);
-			PostQuitMessage(0);
 			break;
 
 		default:
@@ -629,13 +591,62 @@ static BOOL floatbar_window_create(wfFloatBar* floatbar)
 	pt[3].y = BACKGROUND_H;
 	hRgn = CreatePolygonRgn(pt, 4, ALTERNATE);
 	SetWindowRgn(barWnd, hRgn, TRUE);
+
+	if (floatbar)
+	{
+		RECT rc = { 0 };
+		if (GetClientRect(floatbar->parent, &rc))
+		{
+			const int pw = rc.right - rc.left;
+			int nx = (pw - BACKGROUND_W) / 2;
+			if (nx < 0) nx = 0;
+			floatbar->rect.left = nx;
+			MoveWindow(barWnd, nx, 0, BACKGROUND_W, BACKGROUND_H, TRUE);
+		}
+	}
+
 	return TRUE;
+}
+
+void wf_floatbar_center(wfFloatBar* floatbar)
+{
+	if (!floatbar || !floatbar->parent || !floatbar->hwnd)
+		return;
+
+	RECT rc = { 0 };
+	RECT wnd = { 0 };
+
+	if ((floatbar->height <= 0) || (floatbar->width <= 0))
+	{
+		if (GetWindowRect(floatbar->hwnd, &wnd))
+		{
+			floatbar->width = wnd.right - wnd.left;
+			floatbar->height = wnd.bottom - wnd.top;
+		}
+	}
+
+	if (!GetClientRect(floatbar->parent, &rc))
+		return;
+
+	const int pw = rc.right - rc.left;
+	int nx = (pw - BACKGROUND_W) / 2;
+
+	if (nx < 0)
+		nx = 0;
+
+	floatbar->rect.left = nx;
+	const int PEEK_HEIGHT = 2;
+	const int y = floatbar->shown ? 0 : -(floatbar->height - PEEK_HEIGHT);
+	MoveWindow(floatbar->hwnd, nx, y, BACKGROUND_W, BACKGROUND_H, TRUE);
 }
 
 void wf_floatbar_free(wfFloatBar* floatbar)
 {
 	if (!floatbar)
 		return;
+
+	DeleteObject(floatbar->pen_shadow1);
+	DeleteObject(floatbar->pen_shadow2);
 
 	free(floatbar);
 }
@@ -665,6 +676,8 @@ wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags)
 	floatbar->hwnd = NULL;
 	floatbar->parent = wfc->hwnd;
 	floatbar->hdcmem = NULL;
+	floatbar->pen_shadow1 = CreatePen(PS_SOLID, 1, RGB(71, 71, 71));
+	floatbar->pen_shadow2 = CreatePen(PS_SOLID, 1, RGB(107, 141, 184));
 
 	if (wfc->fullscreen_toggle)
 	{
@@ -728,5 +741,6 @@ BOOL wf_floatbar_toggle_fullscreen(wfFloatBar* floatbar, BOOL fullscreen)
 		ShowWindow(floatbar->hwnd, SW_HIDE);
 	}
 
+	wf_floatbar_center(floatbar);
 	return TRUE;
 }

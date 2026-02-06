@@ -1129,6 +1129,8 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 					width = LOWORD(msg.lParam);
 					height = HIWORD(msg.lParam);
 					SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, width, height, SWP_FRAMECHANGED);
+					if (wfc->floatbar)
+						wf_floatbar_center(wfc->floatbar);
 					break;
 				}
 				case WM_FREERDP_SHOWWINDOW:

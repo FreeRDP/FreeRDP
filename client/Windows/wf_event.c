@@ -457,6 +457,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				if (wfc->client_width && wfc->client_height)
 				{
 					wf_size_scrollbars(wfc, LOWORD(lParam), HIWORD(lParam));
+					if (wfc->floatbar)
+						wf_floatbar_center(wfc->floatbar);
 
 					// Workaround: when the window is maximized, the call to "ShowScrollBars"
 					// returns TRUE but has no effect.
@@ -483,6 +485,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 			case WM_EXITSIZEMOVE:
 				wf_size_scrollbars(wfc, wfc->client_width, wfc->client_height);
+				if (wfc->floatbar)
+					wf_floatbar_center(wfc->floatbar);
 				wf_send_resize(wfc);
 				break;
 
@@ -743,6 +747,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					else
 					{
 						wf_size_scrollbars(wfc, wfc->client_width, wfc->client_height);
+						if (wfc->floatbar)
+							wf_floatbar_center(wfc->floatbar);
 						wf_send_resize(wfc);
 					}
 				}
