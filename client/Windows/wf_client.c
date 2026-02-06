@@ -418,6 +418,14 @@ static BOOL wf_post_connect(freerdp* instance)
 	    wf_image_new(wfc, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), format, NULL);
 
+	/* 修复漏洞#6：检查wfc->primary分配是否成功，防止空指针解引用 */
+	/* wfc->primary资源在wf_post_disconnect中释放 */
+	if (!wfc->primary)
+	{
+		WLog_ERR(TAG, "Failed to allocate primary surface");
+		return FALSE;
+	}
+
 	if (!gdi_init_ex(instance, format, 0, wfc->primary->pdata, NULL))
 		return FALSE;
 
