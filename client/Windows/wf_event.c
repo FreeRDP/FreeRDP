@@ -120,23 +120,18 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				input = wfc->common.context.input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE)p->scanCode, p->flags & LLKHF_EXTENDED);
-				/* 修复：此前用扫描码更新/读取 g_keystates，
-				   但组合键判断使用虚拟键码，导致 Ctrl+Alt+Enter 不触发。
-				   统一改为使用虚拟键码索引，保证组合键检测一致。 */
 				keystate = g_keystates[p->vkCode & 0xFF];
 
 				switch (wParam)
 				{
 					case WM_KEYDOWN:
 					case WM_SYSKEYDOWN:
-						/* 修复：按下时按虚拟键码置位，避免扫描码/虚拟键码不一致问题 */
 						if (p->vkCode < 256)
 							g_keystates[p->vkCode] = TRUE;
 						break;
 					case WM_KEYUP:
 					case WM_SYSKEYUP:
 					default:
-						/* 修复：弹起时按虚拟键码清零 */
 						if (p->vkCode < 256)
 							g_keystates[p->vkCode] = FALSE;
 						break;
