@@ -48,6 +48,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/settings.h>
+#include <freerdp/gdi/gdi.h>
 
 #include <freerdp/locale/locale.h>
 #include <freerdp/locale/keyboard.h>
@@ -177,7 +178,7 @@ static BOOL wf_begin_paint(rdpContext* context)
 
 static BOOL wf_desktop_resize(rdpContext* context)
 {
-	BOOL same;
+	BOOL same = FALSE;
 	RECT rect;
 	rdpSettings* settings;
 	wfContext* wfc = (wfContext*)context;
@@ -493,6 +494,24 @@ static void wf_post_disconnect(freerdp* instance)
 
 	wfc = (wfContext*)instance->context;
 	free(wfc->window_title);
+	wfc->window_title = NULL;
+
+	/* Unsubscribe channel handlers registered in pre_connect */
+	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
+	                                   wf_OnChannelConnectedEventHandler);
+	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
+	                                      wf_OnChannelDisconnectedEventHandler);
+
+	/* Free GDI resources and our backing surface */
+	if (instance->context->gdi)
+		gdi_free(instance);
+
+	if (wfc->primary)
+	{
+		wf_image_free(wfc->primary);
+		wfc->primary = NULL;
+		wfc->drawing = NULL;
+	}
 }
 
 static CREDUI_INFOW wfUiInfo = { sizeof(CREDUI_INFOW), NULL, L"Enter your credentials",
@@ -1396,13 +1415,26 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
+	wfContext* wfc = (wfContext*)context;
 	WINPR_UNUSED(instance);
-	if (!context)
+	if (!wfc)
 		return;
 
 #ifdef WITH_PROGRESS_BAR
+	if (wfc->taskBarList)
+	{
+		wfc->taskBarList->lpVtbl->Release(wfc->taskBarList);
+		wfc->taskBarList = NULL;
+	}
 	CoUninitialize();
 #endif
+
+	if (wfc->wndClassName)
+	{
+		UnregisterClass(wfc->wndClassName, wfc->hInstance);
+		free((void*)wfc->wndClassName);
+		wfc->wndClassName = NULL;
+	}
 }
 
 static int wfreerdp_client_start(rdpContext* context)
