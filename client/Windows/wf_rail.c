@@ -400,7 +400,6 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			break;
 
 		case WM_DESTROY:
-			PostQuitMessage(0);
 			break;
 
 		default:
