@@ -44,7 +44,7 @@
 
 #include "wf_cliprdr.h"
 
-#define TAG CLIENT_TAG("windows")
+#define TAG CLIENT_TAG("windows.cliprdr")
 
 #ifdef WITH_DEBUG_CLIPRDR
 #define DEBUG_CLIPRDR(...) WLog_DBG(TAG, __VA_ARGS__)
@@ -2109,7 +2109,16 @@ static SSIZE_T wf_cliprdr_get_filedescriptor(wfClipboard* clipboard, BYTE** pDat
 	ReleaseStgMedium(&stg_medium);
 exit:
 {
-	const size_t size = 4ull + clipboard->nFiles * sizeof(FILEDESCRIPTORW);
+	size_t size = 0;
+	/* SECURITY: Use safe math to prevent integer overflow when calculating buffer size. */
+	if (!winpr_SizeTMultiply(clipboard->nFiles, sizeof(FILEDESCRIPTORW), &size) ||
+	    !winpr_SizeTAdd(size, 4ull, &size))
+	{
+		WLog_Print(TAG, WLOG_ERROR, "Integer overflow calculating FILEGROUPDESCRIPTORW size");
+		IDataObject_Release(dataObj);
+		return 0;
+	}
+
 	FILEGROUPDESCRIPTORW* groupDsc = (FILEGROUPDESCRIPTORW*)calloc(size, 1);
 
 	if (groupDsc)
