@@ -1363,6 +1363,9 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	// AttachConsole and stdin do not work well.
 	// Use GUI input dialogs instead of command line ones.
 	wfc->isConsole = wf_has_console();
+	wfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!wfc->stopEvent)
+		return FALSE;
 
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
