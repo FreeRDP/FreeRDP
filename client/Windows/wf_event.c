@@ -936,7 +936,8 @@ static BOOL wf_scale_mouse_event(wfContext* wfc, UINT16 flags, INT32 x, INT32 y)
 	if (!wf_scale_mouse_pos(wfc, x, y, &px, &py))
 		return FALSE;
 
-	if (freerdp_client_send_button_event(&wfc->common, FALSE, flags, px, py))
+	/* Fix: correct return value check (TRUE means success). */
+	if (!freerdp_client_send_button_event(&wfc->common, FALSE, flags, px, py))
 		return FALSE;
 
 	return wf_pub_mouse_event(wfc, flags, px, py);
@@ -959,7 +960,8 @@ static BOOL wf_scale_mouse_event_ex(wfContext* wfc, UINT16 flags, UINT16 buttonM
 	if (!wf_scale_mouse_pos(wfc, x, y, &px, &py))
 		return FALSE;
 
-	if (freerdp_client_send_extended_button_event(&wfc->common, FALSE, flags, px, py))
+	/* Fix: correct return value check for extended mouse events. */
+	if (!freerdp_client_send_extended_button_event(&wfc->common, FALSE, flags, px, py))
 		return FALSE;
 
 	return wf_pub_mouse_event(wfc, flags, px, py);
