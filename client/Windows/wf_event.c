@@ -58,6 +58,7 @@ static BOOL g_keystates[256] = { 0 };
 
 void wf_event_init(void)
 {
+	/* Fix: ensure global critical section is initialized for thread-safe input tracking */
 	InitializeCriticalSection(&g_event_cs);
 }
 
@@ -68,21 +69,21 @@ void wf_event_uninit(void)
 
 static BOOL ctrl_down(void)
 {
-	BOOL result;
 	/* Fix: Use Critical Section to protect g_keystates access */
 	EnterCriticalSection(&g_event_cs);
-	result = g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	const BOOL result =
+	    g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
 	LeaveCriticalSection(&g_event_cs);
 	return result;
 }
 
 static BOOL alt_ctrl_down(void)
 {
-	BOOL altDown, ctrlDown;
 	/* Fix: Use Critical Section to protect g_keystates access */
 	EnterCriticalSection(&g_event_cs);
-	altDown = g_keystates[VK_MENU] || g_keystates[VK_LMENU] || g_keystates[VK_RMENU];
-	ctrlDown = g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	const BOOL altDown = g_keystates[VK_MENU] || g_keystates[VK_LMENU] || g_keystates[VK_RMENU];
+	const BOOL ctrlDown =
+	    g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
 	LeaveCriticalSection(&g_event_cs);
 	return altDown && ctrlDown;
 }
@@ -141,6 +142,9 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				input = wfc->common.context.input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE)p->scanCode, p->flags & LLKHF_EXTENDED);
+
+				/* Fix: Use Critical Section to protect shared keystate access */
+				EnterCriticalSection(&g_event_cs);
 				keystate = g_keystates[p->scanCode & 0xFF];
 
 				switch (wParam)
@@ -155,6 +159,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 						g_keystates[p->scanCode & 0xFF] = FALSE;
 						break;
 				}
+				LeaveCriticalSection(&g_event_cs);
 				DEBUG_KBD("keydown %d scanCode 0x%08lX flags 0x%08lX vkCode 0x%08lX",
 				          (wParam == WM_KEYDOWN), p->scanCode, p->flags, p->vkCode);
 
