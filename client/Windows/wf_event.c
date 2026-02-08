@@ -970,7 +970,7 @@ static BOOL wf_scale_mouse_event_ex(wfContext* wfc, UINT16 flags, UINT16 buttonM
 BOOL wf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 {
 	wfContext* wfc = (wfContext*)context;
-	BYTE keyState[256];
+	BYTE keyState[256] = { 0 };
 
 	if (!wfc || !GetKeyboardState(keyState))
 		return FALSE;
