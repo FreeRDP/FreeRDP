@@ -266,11 +266,16 @@ static BOOL wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, 
 	if (delta < 0)
 	{
 		flags |= PTR_FLAGS_WHEEL_NEGATIVE;
-		/* 9bit twos complement, delta already negative */
-		delta = 0x100 + delta;
+		delta = -delta;
 	}
 
-	flags |= delta;
+	{
+		UINT16 val = (UINT16)delta;
+		if (val > 0xFF)
+			val = 0xFF; /* Cap at max 8-bit value to prevent flag corruption */
+		flags |= val;
+	}
+
 	return wf_scale_mouse_event(wfc, flags, x, y);
 }
 
