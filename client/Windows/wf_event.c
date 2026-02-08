@@ -36,6 +36,8 @@
 
 #include <windowsx.h>
 
+#define TAG CLIENT_TAG("windows")
+
 static HWND g_focus_hWnd = NULL;
 static HWND g_main_hWnd = NULL;
 static HWND g_parent_hWnd = NULL;
@@ -105,6 +107,13 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 	if (g_focus_hWnd && (nCode == HC_ACTION))
 	{
+		/* Fix: ensure window handle is still valid to prevent hangs during exit */
+		if (!IsWindow(g_focus_hWnd))
+		{
+			g_focus_hWnd = NULL;
+			return CallNextHookEx(NULL, nCode, wParam, lParam);
+		}
+
 		switch (wParam)
 		{
 			case WM_KEYDOWN:
@@ -118,7 +127,16 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				if (!wfc || !p)
 					return 1;
 
+				if (p->vkCode >= 256)
+				{
+					WLog_Print(TAG, WLOG_DEBUG, "Processing VK code out of tracking range: 0x%08lX",
+					           p->vkCode);
+				}
+
 				input = wfc->common.context.input;
+				if (!input || !input->KeyboardEvent)
+					return 1;
+
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE)p->scanCode, p->flags & LLKHF_EXTENDED);
 				keystate = g_keystates[p->scanCode & 0xFF];
 
@@ -218,7 +236,15 @@ void wf_event_focus_in(wfContext* wfc)
 	rdpInput* input;
 	POINT pt;
 	RECT rc;
+
+	/* Fix: added NULL and validity checks to prevent crashes and hangs during focus changes */
+	if (!wfc || !wfc->hwnd || !IsWindow(wfc->hwnd))
+		return;
+
 	input = wfc->common.context.input;
+	if (!input || !input->FocusInEvent || !input->MouseEvent)
+		return;
+
 	syncFlags = 0;
 
 	if (GetKeyState(VK_NUMLOCK))
