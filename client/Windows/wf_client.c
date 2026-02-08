@@ -328,6 +328,8 @@ static void wf_append_item_to_system_menu(HMENU hMenu, UINT fMask, UINT wID, con
 	if (wfc)
 		item_info.dwItemData = (ULONG_PTR)wfc;
 	InsertMenuItem(hMenu, wfc->systemMenuInsertPosition++, TRUE, &item_info);
+
+	free(item_info.dwTypeData);
 }
 
 static void wf_add_system_menu(wfContext* wfc)
