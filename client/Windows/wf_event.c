@@ -40,6 +40,7 @@ static HWND g_focus_hWnd = NULL;
 static HWND g_main_hWnd = NULL;
 static HWND g_parent_hWnd = NULL;
 static CRITICAL_SECTION g_event_cs;
+static LONG g_event_cs_refcount = 0;
 
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
@@ -58,13 +59,16 @@ static BOOL g_keystates[256] = { 0 };
 
 void wf_event_init(void)
 {
-	/* Fix: ensure global critical section is initialized for thread-safe input tracking */
-	InitializeCriticalSection(&g_event_cs);
+	/* Initialize once, allow multiple callers. */
+	if (InterlockedIncrement(&g_event_cs_refcount) == 1)
+		InitializeCriticalSection(&g_event_cs);
 }
 
 void wf_event_uninit(void)
 {
-	DeleteCriticalSection(&g_event_cs);
+	/* Delete only after last user. */
+	if (InterlockedDecrement(&g_event_cs_refcount) == 0)
+		DeleteCriticalSection(&g_event_cs);
 }
 
 static BOOL ctrl_down(void)
