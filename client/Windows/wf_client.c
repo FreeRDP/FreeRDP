@@ -1176,30 +1176,43 @@ static DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 
 	if (hook_handle)
 	{
-		while ((status = GetMessage(&msg, NULL, 0, 0)) != 0)
+		while (TRUE)
 		{
-			if (status == -1)
-			{
-				WLog_ERR(TAG, "keyboard thread error getting message");
+			DWORD result =
+			    MsgWaitForMultipleObjects(1, &wfc->stopEvent, FALSE, INFINITE, QS_ALLINPUT);
+			if (result == WAIT_OBJECT_0)
 				break;
+			else if (result == WAIT_OBJECT_0 + 1)
+			{
+				while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+				{
+					if (msg.message == WM_QUIT)
+						goto loop_exit;
+					TranslateMessage(&msg);
+					DispatchMessage(&msg);
+				}
 			}
 			else
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
+				break;
 		}
-
-		UnhookWindowsHookEx(hook_handle);
+	loop_exit:
+		else
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
-	else
-	{
-		WLog_ERR(TAG, "failed to install keyboard hook");
-	}
 
-	WLog_DBG(TAG, "Keyboard thread exited.");
-	ExitThread(0);
-	return 0;
+	UnhookWindowsHookEx(hook_handle);
+}
+else
+{
+	WLog_ERR(TAG, "failed to install keyboard hook");
+}
+
+WLog_DBG(TAG, "Keyboard thread exited.");
+ExitThread(0);
+return 0;
 }
 
 int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
@@ -1500,6 +1513,8 @@ static int wfreerdp_client_stop(rdpContext* context)
 
 	if (wfc->keyboardThread)
 	{
+		if (wfc->stopEvent)
+			SetEvent(wfc->stopEvent);
 		PostThreadMessage(wfc->keyboardThreadId, WM_QUIT, 0, 0);
 		(void)WaitForSingleObject(wfc->keyboardThread, INFINITE);
 		(void)CloseHandle(wfc->keyboardThread);
