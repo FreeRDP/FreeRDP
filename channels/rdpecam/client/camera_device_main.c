@@ -168,7 +168,7 @@ static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, int streamIndex
 {
 	WINPR_ASSERT(dev);
 
-	if (streamIndex >= ECAM_DEVICE_MAX_STREAMS)
+	if ((streamIndex >= ECAM_DEVICE_MAX_STREAMS) || (streamIndex < 0))
 		return ERROR_INVALID_INDEX;
 
 	CameraDeviceStream* stream = &dev->streams[streamIndex];
