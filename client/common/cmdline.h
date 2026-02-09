@@ -393,7 +393,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Pass the hash (restricted admin mode)" },
 	{ "pwidth", COMMAND_LINE_VALUE_REQUIRED, "<width>", NULL, NULL, -1, NULL,
 	  "Physical width of display (in millimeters)" },
-	{ "rdp2tcp", COMMAND_LINE_VALUE_REQUIRED, "<executable path[:arg...]>", NULL, NULL, -1, NULL,
+	{ "rdp2tcp", COMMAND_LINE_VALUE_REQUIRED, "<executable path[:channel_name]>", NULL, NULL, -1, NULL,
 	  "TCP redirection" },
 	{ "reconnect-cookie", COMMAND_LINE_VALUE_REQUIRED, "<base64-cookie>", NULL, NULL, -1, NULL,
 	  "Pass base64 reconnect cookie to the connection" },
