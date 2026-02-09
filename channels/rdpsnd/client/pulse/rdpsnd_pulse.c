@@ -20,6 +20,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/utils/helpers.h>
 
 #include <errno.h>
 
@@ -722,9 +723,9 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndPulsePlugin* pulse, const ADDIN_
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
 	if (!client_name)
-		client_name = "freerdp";
+		client_name = freerdp_getApplicationDetailsString();
 	if (!stream_name)
-		stream_name = "freerdp";
+		stream_name = freerdp_getApplicationDetailsString();
 
 	pulse->client_name = _strdup(client_name);
 	pulse->stream_name = _strdup(stream_name);
