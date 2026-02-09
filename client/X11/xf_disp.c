@@ -35,6 +35,7 @@
 
 #endif
 
+#include "xfreerdp.h"
 #include "xf_disp.h"
 #include "xf_monitor.h"
 

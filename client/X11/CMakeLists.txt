@@ -40,6 +40,7 @@ include_directories(SYSTEM ${X11_INCLUDE_DIRS})
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 set(SRCS
+    xf_types.h
     xf_utils.h
     xf_utils.c
     xf_x11_utils.c

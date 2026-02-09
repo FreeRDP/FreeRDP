@@ -22,24 +22,9 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
-typedef struct
-{
-	RECTANGLE_16 area;
-	RECTANGLE_16 workarea;
-	BOOL primary;
-} MONITOR_INFO;
-
-typedef struct
-{
-	UINT32 nmonitors;
-	RECTANGLE_16 area;
-	RECTANGLE_16 workarea;
-	MONITOR_INFO* monitors;
-} VIRTUAL_SCREEN;
-
-#include "xf_client.h"
-#include "xfreerdp.h"
+#include "xf_types.h"
 
 FREERDP_API int xf_list_monitors(xfContext* xfc);
 FREERDP_API BOOL xf_detect_monitors(xfContext* xfc, UINT32* pWidth, UINT32* pHeight);

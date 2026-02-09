@@ -24,7 +24,11 @@
 
 #include <freerdp/config.h>
 
-typedef struct xf_context xfContext;
+#include "xf_types.h"
+#include "xf_disp.h"
+#include "xf_cliprdr.h"
+#include "xf_video.h"
+#include "xf_rail.h"
 
 #ifdef WITH_XCURSOR
 #include <X11/Xcursor/Xcursor.h>
@@ -54,6 +58,7 @@ typedef struct xf_context xfContext;
 #include <freerdp/codec/progressive.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/client.h>
 
 #if !defined(XcursorUInt)
 typedef unsigned int XcursorUInt;
@@ -108,11 +113,6 @@ struct xf_glyph
 	Pixmap pixmap;
 };
 typedef struct xf_glyph xfGlyph;
-
-typedef struct xf_clipboard xfClipboard;
-typedef struct s_xfDispContext xfDispContext;
-typedef struct s_xfVideoContext xfVideoContext;
-typedef struct xf_rail_icon_cache xfRailIconCache;
 
 /* Number of buttons that are mapped from X11 to RDP button events. */
 #define NUM_BUTTONS_MAPPED 11
