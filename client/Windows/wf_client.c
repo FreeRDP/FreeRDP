@@ -1357,6 +1357,7 @@ static void wfreerdp_client_global_uninit(void)
 static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	wfContext* wfc = (wfContext*)context;
+	BOOL event_inited = FALSE;
 	if (!wfc)
 		return FALSE;
 
@@ -1367,6 +1368,9 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
 
+	wf_event_init();
+	event_inited = TRUE;
+
 	WINPR_ASSERT(instance);
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
@@ -1375,7 +1379,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 #ifdef WITH_WINDOWS_CERT_STORE
 	if (!freerdp_settings_set_bool(context->settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
-		return FALSE;
+		goto fail;
 #endif
 
 	if (!wfc->isConsole)
@@ -1392,6 +1396,11 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 #endif
 
 	return TRUE;
+
+fail:
+	if (event_inited)
+		wf_event_uninit();
+	return FALSE;
 }
 
 static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
@@ -1399,6 +1408,18 @@ static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 	WINPR_UNUSED(instance);
 	if (!context)
 		return;
+
+	wfContext* wfc = (wfContext*)context;
+	if (wfc->keyboardThread)
+	{
+		PostThreadMessage(wfc->keyboardThreadId, WM_QUIT, 0, 0);
+		(void)WaitForSingleObject(wfc->keyboardThread, INFINITE);
+		(void)CloseHandle(wfc->keyboardThread);
+		wfc->keyboardThread = NULL;
+		wfc->keyboardThreadId = 0;
+	}
+
+	wf_event_uninit();
 
 #ifdef WITH_PROGRESS_BAR
 	CoUninitialize();

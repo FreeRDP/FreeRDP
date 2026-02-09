@@ -39,6 +39,8 @@
 static HWND g_focus_hWnd = NULL;
 static HWND g_main_hWnd = NULL;
 static HWND g_parent_hWnd = NULL;
+static CRITICAL_SECTION g_event_cs;
+static LONG g_event_cs_refcount = 0;
 
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
@@ -55,15 +57,39 @@ static BOOL g_flipping_out = FALSE;
 
 static BOOL g_keystates[256] = { 0 };
 
+void wf_event_init(void)
+{
+	/* Initialize once, allow multiple callers. */
+	if (InterlockedIncrement(&g_event_cs_refcount) == 1)
+		InitializeCriticalSection(&g_event_cs);
+}
+
+void wf_event_uninit(void)
+{
+	/* Delete only after last user. */
+	if (InterlockedDecrement(&g_event_cs_refcount) == 0)
+		DeleteCriticalSection(&g_event_cs);
+}
+
 static BOOL ctrl_down(void)
 {
-	return g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	/* Fix: Use Critical Section to protect g_keystates access */
+	EnterCriticalSection(&g_event_cs);
+	const BOOL result =
+	    g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	LeaveCriticalSection(&g_event_cs);
+	return result;
 }
 
 static BOOL alt_ctrl_down(void)
 {
+	/* Fix: Use Critical Section to protect g_keystates access */
+	EnterCriticalSection(&g_event_cs);
 	const BOOL altDown = g_keystates[VK_MENU] || g_keystates[VK_LMENU] || g_keystates[VK_RMENU];
-	return altDown && ctrl_down();
+	const BOOL ctrlDown =
+	    g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	LeaveCriticalSection(&g_event_cs);
+	return altDown && ctrlDown;
 }
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -120,6 +146,9 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				input = wfc->common.context.input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE)p->scanCode, p->flags & LLKHF_EXTENDED);
+
+				/* Fix: Use Critical Section to protect shared keystate access */
+				EnterCriticalSection(&g_event_cs);
 				keystate = g_keystates[p->scanCode & 0xFF];
 
 				switch (wParam)
@@ -134,6 +163,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 						g_keystates[p->scanCode & 0xFF] = FALSE;
 						break;
 				}
+				LeaveCriticalSection(&g_event_cs);
 				DEBUG_KBD("keydown %d scanCode 0x%08lX flags 0x%08lX vkCode 0x%08lX",
 				          (wParam == WM_KEYDOWN), p->scanCode, p->flags, p->vkCode);
 
