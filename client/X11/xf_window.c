@@ -1380,7 +1380,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	xf_unlock_x11(xfc);
 }
 
-static void xf_AppWindowDestroyImage(xfAppWindow* appWindow)
+void xf_AppWindowDestroyImage(xfAppWindow* appWindow)
 {
 	WINPR_ASSERT(appWindow);
 	if (appWindow->image)

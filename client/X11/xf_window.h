@@ -167,9 +167,12 @@ void xf_SetWindowMinimized(xfContext* xfc, xfWindow* window);
 void xf_SetWindowDecorations(xfContext* xfc, Window window, BOOL show);
 void xf_SetWindowUnlisted(xfContext* xfc, Window window);
 
-xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height);
-void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height);
 void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window);
+
+WINPR_ATTR_MALLOC(xf_DestroyDesktopWindow, 2)
+xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height);
+
+void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height);
 
 Window xf_CreateDummyWindow(xfContext* xfc);
 void xf_DestroyDummyWindow(xfContext* xfc, Window window);
@@ -196,6 +199,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
                          int height);
 UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface);
 
+void xf_AppWindowDestroyImage(xfAppWindow* appWindow);
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow);
 void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth, int maxHeight,
                             int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight,
