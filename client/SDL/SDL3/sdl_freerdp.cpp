@@ -134,126 +134,127 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				}
 
 #if defined(WITH_DEBUG_SDL_EVENTS)
-			SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "got event %s [0x%08" PRIx32 "]",
-			             sdl::utils::toString(windowEvent.type).c_str(), windowEvent.type);
+				SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "got event %s [0x%08" PRIx32 "]",
+				             sdl::utils::toString(windowEvent.type).c_str(), windowEvent.type);
 #endif
-			if (sdl->shallAbort(true))
-				continue;
+				if (sdl->shallAbort(true))
+					continue;
 
-			if (sdl->getDialog().handleEvent(windowEvent))
-				continue;
+				if (sdl->getDialog().handleEvent(windowEvent))
+					continue;
 
-			if (!sdl->handleEvent(windowEvent))
-				throw ErrorMsg{ -1, windowEvent.type, "sdl->handleEvent" };
+				if (!sdl->handleEvent(windowEvent))
+					throw ErrorMsg{ -1, windowEvent.type, "sdl->handleEvent" };
 
-			switch (windowEvent.type)
-			{
-				case SDL_EVENT_QUIT:
-					std::ignore = freerdp_abort_connect_context(sdl->context());
-					break;
-				case SDL_EVENT_USER_CERT_DIALOG:
+				switch (windowEvent.type)
 				{
-					SDLConnectionDialogHider hider(sdl);
-					auto title = static_cast<const char*>(windowEvent.user.data1);
-					auto msg = static_cast<const char*>(windowEvent.user.data2);
-					if (!sdl_cert_dialog_show(title, msg))
-						throw ErrorMsg{ -1, windowEvent.type, "sdl_cert_dialog_show" };
-				}
-				break;
-				case SDL_EVENT_USER_SHOW_DIALOG:
-				{
-					SDLConnectionDialogHider hider(sdl);
-					auto title = static_cast<const char*>(windowEvent.user.data1);
-					auto msg = static_cast<const char*>(windowEvent.user.data2);
-					if (!sdl_message_dialog_show(title, msg, windowEvent.user.code))
-						throw ErrorMsg{ -1, windowEvent.type, "sdl_message_dialog_show" };
-				}
-				break;
-				case SDL_EVENT_USER_SCARD_DIALOG:
-				{
-					SDLConnectionDialogHider hider(sdl);
-					auto title = static_cast<const char*>(windowEvent.user.data1);
-					auto msg = static_cast<const char**>(windowEvent.user.data2);
-					if (!sdl_scard_dialog_show(title, windowEvent.user.code, msg))
-						throw ErrorMsg{ -1, windowEvent.type, "sdl_scard_dialog_show" };
-				}
-				break;
-				case SDL_EVENT_USER_AUTH_DIALOG:
-				{
-					SDLConnectionDialogHider hider(sdl);
-					if (!sdl_auth_dialog_show(
-					        reinterpret_cast<const SDL_UserAuthArg*>(windowEvent.padding)))
-						throw ErrorMsg{ -1, windowEvent.type, "sdl_auth_dialog_show" };
-				}
-				break;
-				case SDL_EVENT_USER_UPDATE:
-				{
-					std::vector<SDL_Rect> rectangles;
-					do
+					case SDL_EVENT_QUIT:
+						std::ignore = freerdp_abort_connect_context(sdl->context());
+						break;
+					case SDL_EVENT_USER_CERT_DIALOG:
 					{
-						rectangles = sdl->pop();
-						if (!sdl->drawToWindows(rectangles))
-							throw ErrorMsg{ -1, windowEvent.type, "sdl->drawToWindows" };
-					} while (!rectangles.empty());
-				}
-				break;
-				case SDL_EVENT_USER_CREATE_WINDOWS:
-				{
-					auto ctx = static_cast<SdlContext*>(windowEvent.user.data1);
-					if (!ctx->createWindows())
-						throw ErrorMsg{ -1, windowEvent.type, "sdl->createWindows" };
-				}
-				break;
-				case SDL_EVENT_USER_WINDOW_RESIZEABLE:
-				{
-					auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
-					const bool use = windowEvent.user.code != 0;
-					if (window)
-						window->resizeable(use);
-				}
-				break;
-				case SDL_EVENT_USER_WINDOW_FULLSCREEN:
-				{
-					auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
-					const bool enter = windowEvent.user.code != 0;
-					if (window)
-						window->fullscreen(enter);
-				}
-				break;
-				case SDL_EVENT_USER_WINDOW_MINIMIZE:
-					if (!sdl->minimizeAllWindows())
-						throw ErrorMsg{ -1, windowEvent.type, "sdl->minimizeAllWindows" };
+						SDLConnectionDialogHider hider(sdl);
+						auto title = static_cast<const char*>(windowEvent.user.data1);
+						auto msg = static_cast<const char*>(windowEvent.user.data2);
+						if (!sdl_cert_dialog_show(title, msg))
+							throw ErrorMsg{ -1, windowEvent.type, "sdl_cert_dialog_show" };
+					}
 					break;
-				case SDL_EVENT_USER_POINTER_NULL:
-					if (!sdl->setCursor(SdlContext::CURSOR_NULL))
-						throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };
+					case SDL_EVENT_USER_SHOW_DIALOG:
+					{
+						SDLConnectionDialogHider hider(sdl);
+						auto title = static_cast<const char*>(windowEvent.user.data1);
+						auto msg = static_cast<const char*>(windowEvent.user.data2);
+						if (!sdl_message_dialog_show(title, msg, windowEvent.user.code))
+							throw ErrorMsg{ -1, windowEvent.type, "sdl_message_dialog_show" };
+					}
 					break;
-				case SDL_EVENT_USER_POINTER_DEFAULT:
-					if (!sdl->setCursor(SdlContext::CURSOR_DEFAULT))
-						throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };
+					case SDL_EVENT_USER_SCARD_DIALOG:
+					{
+						SDLConnectionDialogHider hider(sdl);
+						auto title = static_cast<const char*>(windowEvent.user.data1);
+						auto msg = static_cast<const char**>(windowEvent.user.data2);
+						if (!sdl_scard_dialog_show(title, windowEvent.user.code, msg))
+							throw ErrorMsg{ -1, windowEvent.type, "sdl_scard_dialog_show" };
+					}
 					break;
-				case SDL_EVENT_USER_POINTER_POSITION:
-				{
-					const auto x =
-					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data1));
-					const auto y =
-					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data2));
-					if (!sdl->moveMouseTo(
-					        { static_cast<float>(x) * 1.0f, static_cast<float>(y) * 1.0f }))
-						throw ErrorMsg{ -1, windowEvent.type, "sdl->moveMouseTo" };
+					case SDL_EVENT_USER_AUTH_DIALOG:
+					{
+						SDLConnectionDialogHider hider(sdl);
+						if (!sdl_auth_dialog_show(
+						        reinterpret_cast<const SDL_UserAuthArg*>(windowEvent.padding)))
+							throw ErrorMsg{ -1, windowEvent.type, "sdl_auth_dialog_show" };
+					}
+					break;
+					case SDL_EVENT_USER_UPDATE:
+					{
+						std::vector<SDL_Rect> rectangles;
+						do
+						{
+							rectangles = sdl->pop();
+							if (!sdl->drawToWindows(rectangles))
+								throw ErrorMsg{ -1, windowEvent.type, "sdl->drawToWindows" };
+						} while (!rectangles.empty());
+					}
+					break;
+					case SDL_EVENT_USER_CREATE_WINDOWS:
+					{
+						auto ctx = static_cast<SdlContext*>(windowEvent.user.data1);
+						if (!ctx->createWindows())
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->createWindows" };
+					}
+					break;
+					case SDL_EVENT_USER_WINDOW_RESIZEABLE:
+					{
+						auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
+						const bool use = windowEvent.user.code != 0;
+						if (window)
+							window->resizeable(use);
+					}
+					break;
+					case SDL_EVENT_USER_WINDOW_FULLSCREEN:
+					{
+						auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
+						const bool enter = windowEvent.user.code != 0;
+						const bool forceOriginalDisplay = windowEvent.user.data2 != nullptr;
+						if (window)
+							window->fullscreen(enter, forceOriginalDisplay);
+					}
+					break;
+					case SDL_EVENT_USER_WINDOW_MINIMIZE:
+						if (!sdl->minimizeAllWindows())
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->minimizeAllWindows" };
+						break;
+					case SDL_EVENT_USER_POINTER_NULL:
+						if (!sdl->setCursor(SdlContext::CURSOR_NULL))
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };
+						break;
+					case SDL_EVENT_USER_POINTER_DEFAULT:
+						if (!sdl->setCursor(SdlContext::CURSOR_DEFAULT))
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };
+						break;
+					case SDL_EVENT_USER_POINTER_POSITION:
+					{
+						const auto x =
+						    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data1));
+						const auto y =
+						    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data2));
+						if (!sdl->moveMouseTo(
+						        { static_cast<float>(x) * 1.0f, static_cast<float>(y) * 1.0f }))
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->moveMouseTo" };
+					}
+					break;
+					case SDL_EVENT_USER_POINTER_SET:
+						if (!sdl->setCursor(static_cast<rdpPointer*>(windowEvent.user.data1)))
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };
+						break;
+					case SDL_EVENT_USER_QUIT:
+					default:
+						break;
 				}
-				break;
-				case SDL_EVENT_USER_POINTER_SET:
-					if (!sdl->setCursor(static_cast<rdpPointer*>(windowEvent.user.data1)))
-						throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };
-					break;
-				case SDL_EVENT_USER_QUIT:
-				default:
-					break;
-			}
 			}
 		}
-	rc = 1;
+		rc = 1;
 	}
 	catch (ErrorMsg& msg)
 	{

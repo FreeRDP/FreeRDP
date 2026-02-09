@@ -23,7 +23,9 @@
 #include "sdl_window.hpp"
 #include "sdl_utils.hpp"
 
-SdlWindow::SdlWindow(const std::string& title, const SDL_Rect& rect, [[maybe_unused]] Uint32 flags)
+SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect& rect,
+                     [[maybe_unused]] Uint32 flags)
+    : _displayID(id)
 {
 	auto props = SDL_CreateProperties();
 	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title.c_str());
@@ -54,7 +56,8 @@ SdlWindow::SdlWindow(const std::string& title, const SDL_Rect& rect, [[maybe_unu
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
-    : _window(other._window), _offset_x(other._offset_x), _offset_y(other._offset_y)
+    : _window(other._window), _displayID(other._displayID), _offset_x(other._offset_x),
+      _offset_y(other._offset_y)
 {
 	other._window = nullptr;
 }
@@ -211,8 +214,18 @@ void SdlWindow::resizeable(bool use)
 	std::ignore = SDL_SyncWindow(_window);
 }
 
-void SdlWindow::fullscreen(bool enter)
+void SdlWindow::fullscreen(bool enter, bool forceOriginalDisplay)
 {
+	if (enter && forceOriginalDisplay && _displayID != 0)
+	{
+		/* Move the window to the desired display. We should not wait
+		 * for the window to be moved, because some backends can refuse
+		 * the move. The intent of moving the window is enough for SDL
+		 * to decide which display will be used for fullscreen. */
+		SDL_Rect rect = {};
+		std::ignore = SDL_GetDisplayBounds(_displayID, &rect);
+		std::ignore = SDL_SetWindowPosition(_window, rect.x, rect.y);
+	}
 	std::ignore = SDL_SetWindowFullscreen(_window, enter);
 	std::ignore = SDL_SyncWindow(_window);
 }
@@ -324,7 +337,7 @@ SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 f
 		std::ignore = SDL_GetDisplayBounds(id, &rect);
 	}
 
-	SdlWindow window{ title, rect, flags };
+	SdlWindow window{ id, title, rect, flags };
 
 	if ((flags & (SDL_WINDOW_FULLSCREEN)) != 0)
 	{

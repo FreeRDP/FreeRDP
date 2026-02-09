@@ -128,6 +128,10 @@ bool sdl_push_user_event(Uint32 type, ...)
 			event->data1 = va_arg(ap, void*);
 			break;
 		case SDL_EVENT_USER_WINDOW_FULLSCREEN:
+			event->data1 = va_arg(ap, void*);
+			event->code = va_arg(ap, int);
+			event->data2 = reinterpret_cast<void*>(static_cast<uintptr_t>(va_arg(ap, int)));
+			break;
 		case SDL_EVENT_USER_WINDOW_RESIZEABLE:
 			event->data1 = va_arg(ap, void*);
 			event->code = va_arg(ap, int);
