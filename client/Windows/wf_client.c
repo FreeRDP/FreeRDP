@@ -482,10 +482,14 @@ static BOOL wf_post_connect(freerdp* instance)
 	context->update->BeginPaint = wf_begin_paint;
 	context->update->DesktopResize = wf_desktop_resize;
 	context->update->EndPaint = wf_end_paint;
+	context->update->SetKeyboardIndicators = wf_keyboard_set_indicators;
 	wf_register_pointer(context->graphics);
 
 	wfc->floatbar = wf_floatbar_new(wfc, wfc->hInstance,
 	                                freerdp_settings_get_uint32(settings, FreeRDP_Floatbar));
+
+	wf_event_focus_in(wfc);
+
 	return TRUE;
 }
 

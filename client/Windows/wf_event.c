@@ -787,6 +787,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 			g_focus_hWnd = hWnd;
 			freerdp_set_focus(wfc->common.context.instance);
+			wf_event_focus_in(wfc);
 			break;
 
 		case WM_KILLFOCUS:
@@ -967,3 +968,34 @@ static BOOL wf_scale_mouse_event_ex(wfContext* wfc, UINT16 flags, UINT16 buttonM
 	return wf_pub_mouse_event(wfc, flags, px, py);
 }
 #endif
+
+BOOL wf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
+{
+	wfContext* wfc = (wfContext*)context;
+	BYTE keyState[256] = { 0 };
+
+	if (!wfc || !GetKeyboardState(keyState))
+		return FALSE;
+
+	if (led_flags & KBD_SYNC_NUM_LOCK)
+		keyState[VK_NUMLOCK] |= 1;
+	else
+		keyState[VK_NUMLOCK] &= ~1;
+
+	if (led_flags & KBD_SYNC_CAPS_LOCK)
+		keyState[VK_CAPITAL] |= 1;
+	else
+		keyState[VK_CAPITAL] &= ~1;
+
+	if (led_flags & KBD_SYNC_SCROLL_LOCK)
+		keyState[VK_SCROLL] |= 1;
+	else
+		keyState[VK_SCROLL] &= ~1;
+
+	if (led_flags & KBD_SYNC_KANA_LOCK)
+		keyState[VK_KANA] |= 1;
+	else
+		keyState[VK_KANA] &= ~1;
+
+	return SetKeyboardState(keyState);
+}

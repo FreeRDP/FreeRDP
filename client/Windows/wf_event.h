@@ -30,6 +30,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 void wf_event_focus_in(wfContext* wfc);
 
+BOOL wf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
+
 #define KBD_TAG CLIENT_TAG("windows")
 #ifdef WITH_DEBUG_KBD
 #define DEBUG_KBD(...) WLog_DBG(KBD_TAG, __VA_ARGS__)
