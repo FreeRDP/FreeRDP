@@ -23,6 +23,7 @@
 #include <winpr/assert.h>
 
 #include <freerdp/config.h>
+#include <freerdp/utils/helpers.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,18 +104,26 @@ typedef struct
 	rdpCupsPrintJob* printjob;
 } rdpCupsPrinter;
 
-static void printer_cups_get_printjob_name(char* buf, size_t size, size_t id)
+WINPR_ATTR_MALLOC(free, 1)
+static char* printer_cups_get_printjob_name(size_t id)
 {
 	struct tm tres = { 0 };
 	const time_t tt = time(NULL);
 	const struct tm* t = localtime_r(&tt, &tres);
 
-	WINPR_ASSERT(buf);
-	WINPR_ASSERT(size > 0);
+	char* str = NULL;
+	size_t len = 0;
+	const int rc =
+	    winpr_asprintf(&str, &len, "%s Print %04d-%02d-%02d %02d-%02d-%02d - Job %" PRIuz,
+	                   freerdp_getApplicationDetailsString(), t->tm_year + 1900, t->tm_mon + 1,
+	                   t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, id);
+	if (rc <= 0)
+	{
+		free(str);
+		return NULL;
+	}
 
-	(void)sprintf_s(buf, size - 1, "FreeRDP Print %04d-%02d-%02d %02d-%02d-%02d - Job %" PRIuz,
-	                t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec,
-	                id);
+	return str;
 }
 
 static bool http_status_ok(http_status_t status)
@@ -197,8 +206,6 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 	cups_printjob->printjob.Close = printer_cups_close_printjob;
 
 	{
-		char buf[100] = { 0 };
-
 		cups_printjob->printjob_object = httpConnect2(cupsServer(), ippPort(), NULL, AF_UNSPEC,
 		                                              HTTP_ENCRYPT_IF_REQUESTED, 1, 10000, NULL);
 
@@ -209,10 +216,16 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 			return NULL;
 		}
 
-		printer_cups_get_printjob_name(buf, sizeof(buf), cups_printjob->printjob.id);
+		char* jobTitle = printer_cups_get_printjob_name(cups_printjob->printjob.id);
+		if (!jobTitle)
+		{
+			httpClose(cups_printjob->printjob_object);
+			free(cups_printjob);
+			return NULL;
+		}
 
 		cups_printjob->printjob_id =
-		    cupsCreateJob(cups_printjob->printjob_object, printer->name, buf, 0, NULL);
+		    cupsCreateJob(cups_printjob->printjob_object, printer->name, jobTitle, 0, NULL);
 
 		if (!cups_printjob->printjob_id)
 		{
@@ -220,11 +233,14 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 			          printer->driver);
 			httpClose(cups_printjob->printjob_object);
 			free(cups_printjob);
+			free(jobTitle);
 			return NULL;
 		}
 
-		http_status_t rc = cupsStartDocument(cups_printjob->printjob_object, printer->name,
-		                                     cups_printjob->printjob_id, buf, CUPS_FORMAT_AUTO, 1);
+		http_status_t rc =
+		    cupsStartDocument(cups_printjob->printjob_object, printer->name,
+		                      cups_printjob->printjob_id, jobTitle, CUPS_FORMAT_AUTO, 1);
+		free(jobTitle);
 		if (!http_status_ok(rc))
 			WLog_WARN(TAG, "cupsStartDocument [printer '%s', driver '%s'] returned %s",
 			          printer->name, printer->driver, httpStatus(rc));

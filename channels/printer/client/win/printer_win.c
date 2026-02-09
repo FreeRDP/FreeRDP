@@ -72,27 +72,37 @@ typedef struct
 	rdpWinPrintJob* printjob;
 } rdpWinPrinter;
 
+WINPR_ATTR_MALLOC(free, 1)
 static WCHAR* printer_win_get_printjob_name(size_t id)
 {
-	time_t tt;
 	struct tm tres;
-	errno_t err;
-	WCHAR* str;
-	size_t len = 1024;
-	int rc;
+	WCHAR* str = NULL;
+	size_t len = 0;
 
-	tt = time(NULL);
-	err = localtime_s(&tres, &tt);
+	const time_t tt = time(NULL);
+	const errno_t err = localtime_s(&tres, &tt);
 
-	str = calloc(len, sizeof(WCHAR));
-	if (!str)
-		return NULL;
+	do
+	{
+		if (len > 0)
+		{
+			str = calloc(len + 1, sizeof(WCHAR));
+			if (!str)
+				return NULL;
+		}
 
-	rc = swprintf_s(str, len,
-	                WIDEN("FreeRDP Print %04d-%02d-%02d% 02d-%02d-%02d - Job %") WIDEN(PRIuz)
-	                    WIDEN("\0"),
-	                tres.tm_year + 1900, tres.tm_mon + 1, tres.tm_mday, tres.tm_hour, tres.tm_min,
-	                tres.tm_sec, id);
+		const int rc = swprintf_s(
+		    str, len,
+		    WIDEN("%s Print %04d-%02d-%02d% 02d-%02d-%02d - Job %") WIDEN(PRIuz) WIDEN("\0"),
+		    freerdp_getApplicationDetailsStringW(), tres.tm_year + 1900, tres.tm_mon + 1,
+		    tres.tm_mday, tres.tm_hour, tres.tm_min, tres.tm_sec, id);
+		if (rc <= 0)
+		{
+			free(str);
+			return NULL;
+		}
+		len = WINPR_ASSERTING_INT_CAST(size_t, rc) + 1ull;
+	} while (!str);
 
 	return str;
 }
