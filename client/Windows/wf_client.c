@@ -1346,14 +1346,11 @@ static BOOL wfreerdp_client_global_init(void)
 
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 
-	wf_event_init();
-
 	return TRUE;
 }
 
 static void wfreerdp_client_global_uninit(void)
 {
-	wf_event_uninit();
 	WSACleanup();
 }
 
@@ -1369,6 +1366,8 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
+
+	wf_event_init();
 
 	WINPR_ASSERT(instance);
 	instance->PreConnect = wf_pre_connect;
