@@ -37,22 +37,51 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
-static const char* error_code_names[] = { "RAIL_EXEC_S_OK",
-	                                      "RAIL_EXEC_E_HOOK_NOT_LOADED",
-	                                      "RAIL_EXEC_E_DECODE_FAILED",
-	                                      "RAIL_EXEC_E_NOT_IN_ALLOWLIST",
-	                                      "RAIL_EXEC_E_FILE_NOT_FOUND",
-	                                      "RAIL_EXEC_E_FAIL",
-	                                      "RAIL_EXEC_E_SESSION_LOCKED" };
+static const char* error_code2str(UINT32 code)
+{
+#define EVCASE(x) \
+	case x:       \
+		return #x
+	switch (code)
+	{
+		EVCASE(RAIL_EXEC_S_OK);
+		EVCASE(RAIL_EXEC_E_HOOK_NOT_LOADED);
+		EVCASE(RAIL_EXEC_E_DECODE_FAILED);
+		EVCASE(RAIL_EXEC_E_NOT_IN_ALLOWLIST);
+		EVCASE(RAIL_EXEC_E_FILE_NOT_FOUND);
+		EVCASE(RAIL_EXEC_E_FAIL);
+		EVCASE(RAIL_EXEC_E_SESSION_LOCKED);
+		default:
+			return "RAIL_EXEC_E_UNKNOWN";
+	}
+#undef EVCASE
+}
 
-#ifdef WITH_DEBUG_RAIL
-static const char* movetype_names[] = {
-	"(invalid)",        "RAIL_WMSZ_LEFT",       "RAIL_WMSZ_RIGHT",
-	"RAIL_WMSZ_TOP",    "RAIL_WMSZ_TOPLEFT",    "RAIL_WMSZ_TOPRIGHT",
-	"RAIL_WMSZ_BOTTOM", "RAIL_WMSZ_BOTTOMLEFT", "RAIL_WMSZ_BOTTOMRIGHT",
-	"RAIL_WMSZ_MOVE",   "RAIL_WMSZ_KEYMOVE",    "RAIL_WMSZ_KEYSIZE"
-};
-#endif
+static const char* movetype2str(UINT32 code)
+{
+#define EVCASE(x) \
+	case x:       \
+		return #x
+
+	switch (code)
+	{
+
+		EVCASE(RAIL_WMSZ_LEFT);
+		EVCASE(RAIL_WMSZ_RIGHT);
+		EVCASE(RAIL_WMSZ_TOP);
+		EVCASE(RAIL_WMSZ_TOPLEFT);
+		EVCASE(RAIL_WMSZ_TOPRIGHT);
+		EVCASE(RAIL_WMSZ_BOTTOM);
+		EVCASE(RAIL_WMSZ_BOTTOMLEFT);
+		EVCASE(RAIL_WMSZ_BOTTOMRIGHT);
+		EVCASE(RAIL_WMSZ_MOVE);
+		EVCASE(RAIL_WMSZ_KEYMOVE);
+		EVCASE(RAIL_WMSZ_KEYSIZE);
+		default:
+			return "RAIL_WMSZ_INVALID";
+	}
+#undef EVCASE
+}
 
 struct xf_rail_icon
 {
@@ -1013,8 +1042,9 @@ static UINT xf_rail_server_execute_result(RailClientContext* context,
 
 	if (execResult->execResult != RAIL_EXEC_S_OK)
 	{
-		WLog_ERR(TAG, "RAIL exec error: execResult=%s NtError=0x%X\n",
-		         error_code_names[execResult->execResult], execResult->rawResult);
+		WLog_ERR(TAG, "RAIL exec error: execResult=%s [0x%08" PRIx32 "] NtError=0x%X\n",
+		         error_code2str(execResult->execResult), execResult->execResult,
+		         execResult->rawResult);
 		freerdp_abort_connect_context(&xfc->common.context);
 	}
 
@@ -1078,6 +1108,8 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 	if (!appWindow)
 		return ERROR_INTERNAL_ERROR;
 
+	WLog_Print(xfc->log, WLOG_TRACE, "%s [0x%08" PRIx32 "]",
+	           movetype2str(localMoveSize->moveSizeType), localMoveSize->moveSizeType);
 	switch (localMoveSize->moveSizeType)
 	{
 		case RAIL_WMSZ_LEFT:
