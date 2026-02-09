@@ -368,7 +368,6 @@ static void window_state_log_style_int(wLog* log, const WINDOW_STATE_ORDER* wind
 static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                   const WINDOW_STATE_ORDER* windowState)
 {
-	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*)context;
 
 	WINPR_ASSERT(xfc);
@@ -377,7 +376,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	UINT32 fieldFlags = orderInfo->fieldFlags;
 	BOOL position_or_size_updated = FALSE;
-	appWindow = xf_rail_get_window(xfc, orderInfo->windowId);
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, orderInfo->windowId);
 
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
@@ -428,10 +427,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		}
 
 		if (!appWindow->title)
-		{
-			free(appWindow);
 			return FALSE;
-		}
 
 		xf_AppWindowInit(xfc, appWindow);
 	}
