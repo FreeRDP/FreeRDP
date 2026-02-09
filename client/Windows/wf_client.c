@@ -454,6 +454,11 @@ static BOOL wf_post_connect(freerdp* instance)
 	{
 		wfc->hwnd = CreateWindowEx(0, wfc->wndClassName, wfc->window_title, dwStyle, 0, 0, 0, 0,
 		                           wfc->hWndParent, NULL, wfc->hInstance, NULL);
+		if (!wfc->hwnd)
+		{
+			WLog_ERR(TAG, "CreateWindowEx failed with error: %lu", GetLastError());
+			return FALSE;
+		}
 		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR)wfc);
 	}
 
