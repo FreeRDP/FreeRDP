@@ -1576,12 +1576,16 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 			DEBUG_CLIPRDR("formatId: 0x%08" PRIx32 ", dstFormatId: 0x%08" PRIx32 "", formatId,
 			              dstFormatId);
 
+			wHashTable* table = clipboard->cachedData;
+			if (rawTransfer)
+				table = clipboard->cachedRawData;
+
+			HashTable_Lock(table);
+
 			if (!rawTransfer)
-				cached_data = HashTable_GetItemValue(clipboard->cachedData,
-				                                     format_to_cache_slot(dstFormatId));
+				cached_data = HashTable_GetItemValue(table, format_to_cache_slot(dstFormatId));
 			else
-				cached_data = HashTable_GetItemValue(clipboard->cachedRawData,
-				                                     format_to_cache_slot(formatId));
+				cached_data = HashTable_GetItemValue(table, format_to_cache_slot(formatId));
 
 			DEBUG_CLIPRDR("hasCachedData: %u, rawTransfer: %d", cached_data ? 1u : 0u, rawTransfer);
 
@@ -1635,6 +1639,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				delayRespond = TRUE;
 				xf_cliprdr_send_data_request(clipboard, formatId, cformat);
 			}
+			HashTable_Unlock(table);
 		}
 	}
 
