@@ -869,7 +869,11 @@ static void xf_clipboard_formats_free(xfClipboard* clipboard)
 {
 	WINPR_ASSERT(clipboard);
 
+	/* Synchronize RDP/X11 thread with channel thread */
+	xf_lock_x11(clipboard->xfc);
 	xf_cliprdr_free_formats(clipboard->lastSentFormats, clipboard->lastSentNumFormats);
+	xf_unlock_x11(clipboard->xfc);
+
 	clipboard->lastSentFormats = NULL;
 	clipboard->lastSentNumFormats = 0;
 }
@@ -1867,24 +1871,23 @@ static UINT xf_cliprdr_send_client_format_list_response(xfClipboard* clipboard, 
 static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context,
                                      const CLIPRDR_MONITOR_READY* monitorReady)
 {
-	UINT ret = 0;
-	xfClipboard* clipboard = NULL;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(monitorReady);
 
-	clipboard = cliprdr_file_context_get_context(context->custom);
+	xfClipboard* clipboard = cliprdr_file_context_get_context(context->custom);
 	WINPR_ASSERT(clipboard);
 
 	WINPR_UNUSED(monitorReady);
 
-	if ((ret = xf_cliprdr_send_client_capabilities(clipboard)) != CHANNEL_RC_OK)
+	const UINT ret = xf_cliprdr_send_client_capabilities(clipboard);
+	if (ret != CHANNEL_RC_OK)
 		return ret;
 
 	xf_clipboard_formats_free(clipboard);
 
-	if ((ret = xf_cliprdr_send_client_format_list(clipboard, TRUE)) != CHANNEL_RC_OK)
-		return ret;
+	const UINT ret2 = xf_cliprdr_send_client_format_list(clipboard, TRUE);
+	if (ret2 != CHANNEL_RC_OK)
+		return ret2;
 
 	clipboard->sync = TRUE;
 	return CHANNEL_RC_OK;
