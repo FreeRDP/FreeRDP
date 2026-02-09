@@ -202,6 +202,10 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth
                             int maxTrackWidth, int maxTrackHeight);
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y);
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
+
+void xf_rail_return_window(xfAppWindow* window);
+
+WINPR_ATTR_MALLOC(xf_rail_return_window, 1)
 xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
 
 const char* window_styles_to_string(UINT32 style, char* buffer, size_t length);

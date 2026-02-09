@@ -37,6 +37,10 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc);
 
 xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UINT32 width,
                                 UINT32 height, UINT32 surfaceId);
+
+void xf_rail_return_window(xfAppWindow* window);
+
+WINPR_ATTR_MALLOC(xf_rail_return_window, 1)
 xfAppWindow* xf_rail_get_window(xfContext* xfc, UINT64 id);
 
 BOOL xf_rail_del_window(xfContext* xfc, UINT64 id);

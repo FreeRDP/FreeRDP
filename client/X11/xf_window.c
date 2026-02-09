@@ -1436,6 +1436,7 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 	if (!xfc->railWindows)
 		return NULL;
 
+	HashTable_Lock(xfc->railWindows);
 	size_t count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
 	for (size_t index = 0; index < count; index++)
@@ -1444,17 +1445,20 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 
 		if (!appWindow)
 		{
+			HashTable_Unlock(xfc->railWindows);
 			free(pKeys);
 			return NULL;
 		}
 
 		if (appWindow->handle == wnd)
 		{
+			HashTable_Unlock(xfc->railWindows);
 			free(pKeys);
 			return appWindow;
 		}
 	}
 
+	HashTable_Unlock(xfc->railWindows);
 	free(pKeys);
 	return NULL;
 }
@@ -1535,6 +1539,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 
 	rc = CHANNEL_RC_OK;
 fail:
+	xf_rail_return_window(appWindow);
 	LogDynAndXFlush(xfc->log, xfc->display);
 	xf_unlock_x11(xfc);
 	return rc;
@@ -1571,4 +1576,5 @@ void xf_XSetTransientForHint(xfContext* xfc, xfAppWindow* window)
 		return;
 
 	(void)LogDynAndXSetTransientForHint(xfc->log, xfc->display, window->handle, parent->handle);
+	xf_rail_return_window(parent);
 }
