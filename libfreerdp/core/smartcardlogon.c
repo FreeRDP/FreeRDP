@@ -31,6 +31,7 @@
 
 #include <freerdp/utils/smartcardlogon.h>
 #include <freerdp/crypto/crypto.h>
+#include <freerdp/utils/helpers.h>
 
 #include <openssl/obj_mac.h>
 
@@ -747,7 +748,14 @@ static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const ch
 			goto fail;
 		}
 
-		cert->reader = ConvertUtf8ToWCharAlloc("FreeRDP Emulator", NULL);
+		{
+			char* str = NULL;
+			size_t len = 0;
+			(void)winpr_asprintf(&str, &len, "%s Emulator", freerdp_getApplicationDetailsString());
+			if (str)
+				cert->reader = ConvertUtf8NToWCharAlloc(str, len, NULL);
+			free(str);
+		}
 		if (!cert->reader)
 			goto fail;
 
