@@ -238,6 +238,34 @@ static BOOL TsProxyReadPacketSTringMessage(wLog* log, wStream* s, uint32_t* inde
                                            TSG_PACKET_STRING_MESSAGE* msg);
 static BOOL tsg_stream_align(wLog* log, wStream* s, size_t align);
 
+static const char* tsg_caps_to_string(UINT32 caps, char* buffer, size_t len)
+{
+	const UINT32 mask = ~(TSG_NAP_CAPABILITY_QUAR_SOH | TSG_NAP_CAPABILITY_IDLE_TIMEOUT |
+	                      TSG_MESSAGING_CAP_CONSENT_SIGN | TSG_MESSAGING_CAP_SERVICE_MSG |
+	                      TSG_MESSAGING_CAP_REAUTH);
+	const UINT32 val = caps & mask;
+
+	if ((caps & TSG_NAP_CAPABILITY_QUAR_SOH) != 0)
+		(void)winpr_str_append("TSG_NAP_CAPABILITY_QUAR_SOH", buffer, len, "|");
+	if ((caps & TSG_NAP_CAPABILITY_IDLE_TIMEOUT) != 0)
+		(void)winpr_str_append("TSG_NAP_CAPABILITY_IDLE_TIMEOUT", buffer, len, "|");
+	if ((caps & TSG_MESSAGING_CAP_CONSENT_SIGN) != 0)
+		(void)winpr_str_append("TSG_MESSAGING_CAP_CONSENT_SIGN", buffer, len, "|");
+	if ((caps & TSG_MESSAGING_CAP_SERVICE_MSG) != 0)
+		(void)winpr_str_append("TSG_MESSAGING_CAP_SERVICE_MSG", buffer, len, "|");
+	if ((caps & TSG_MESSAGING_CAP_REAUTH) != 0)
+		(void)winpr_str_append("TSG_MESSAGING_CAP_REAUTH", buffer, len, "|");
+
+	if (val != 0)
+	{
+		char number[32] = { 0 };
+		(void)_snprintf(number, sizeof(number), "TSG_UNKNOWN{0x%08" PRIx32 "}", val);
+		(void)winpr_str_append(number, buffer, len, "|");
+	}
+
+	return buffer;
+}
+
 static const char* tsg_packet_id_to_string(UINT32 packetId)
 {
 	switch (packetId)
@@ -512,16 +540,26 @@ static BOOL tsg_ndr_read_nap(wLog* log, wStream* s, TSG_CAPABILITY_NAP* nap)
 	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(log, s, 1, sizeof(UINT32)))
 		return FALSE;
 	Stream_Read_UINT32(s, nap->capabilities);
+	{
+		char buffer[256] = { 0 };
+		WLog_Print(log, WLOG_DEBUG, "Received version caps %s",
+		           tsg_caps_to_string(nap->capabilities, buffer, sizeof(buffer)));
+	}
 	return TRUE;
 }
 
-static BOOL tsg_ndr_write_nap(WINPR_ATTR_UNUSED wLog* log, wStream* s,
-                              const TSG_CAPABILITY_NAP* nap)
+static BOOL tsg_ndr_write_nap(wLog* log, wStream* s, const TSG_CAPABILITY_NAP* nap)
 {
 	WINPR_ASSERT(nap);
 
 	if (!Stream_EnsureRemainingCapacity(s, 1 * sizeof(UINT32)))
 		return FALSE;
+
+	{
+		char buffer[256] = { 0 };
+		WLog_Print(log, WLOG_DEBUG, "Sending version caps %s",
+		           tsg_caps_to_string(nap->capabilities, buffer, sizeof(buffer)));
+	}
 	Stream_Write_UINT32(s, nap->capabilities);
 	return TRUE;
 }
@@ -1902,11 +1940,16 @@ static BOOL tsg_ndr_read_packet_response_data(rdpTsg* tsg, wStream* s,
 	}
 	else if (rem > 0)
 	{
-		WLog_Print(tsg->log, WLOG_ERROR,
+		char buffer[256] = { 0 };
+		WLog_Print(tsg->log, WLOG_WARN,
 		           "2.2.9.2.1.5 TSG_PACKET_RESPONSE::responseDataLen=%" PRIu32
-		           ", but actually got %" PRIuz,
-		           response->responseDataLen, rem);
-		return FALSE;
+		           ", but actually got %" PRIuz " [flags=%s], ignoring.",
+		           response->responseDataLen, rem,
+		           tsg_caps_to_string(
+		               tsg->CapsResponse.versionCaps.tsgCaps.tsgPacket.tsgCapNap.capabilities,
+		               buffer, sizeof(buffer)));
+		if (!Stream_SafeSeek(s, rem))
+			return FALSE;
 	}
 
 	{
