@@ -812,7 +812,6 @@ char* freerdp_settings_get_config_path(void)
 
 rdpSettings* freerdp_settings_new(DWORD flags)
 {
-	char* issuers[] = { "FreeRDP", "FreeRDP-licenser" };
 	const BOOL server = (flags & FREERDP_SETTINGS_SERVER_MODE) != 0 ? TRUE : FALSE;
 	const BOOL remote = (flags & FREERDP_SETTINGS_REMOTE_MODE) != 0 ? TRUE : FALSE;
 	rdpSettings* settings = (rdpSettings*)calloc(1, sizeof(rdpSettings));
@@ -820,6 +819,32 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings)
 		return NULL;
 
+	{
+		const char* vendor = freerdp_getApplicationDetailsVendor();
+		const char* product = freerdp_getApplicationDetailsProduct();
+		const char* details = freerdp_getApplicationDetailsString();
+		char* issuer1 = NULL;
+		char* issuer2 = NULL;
+		char* issuer3 = NULL;
+		size_t len = 0;
+		(void)winpr_asprintf(&issuer1, &len, "%s-licenser", freerdp_getApplicationDetailsString());
+		(void)winpr_asprintf(&issuer2, &len, "%s-licenser", freerdp_getApplicationDetailsVendor());
+		(void)winpr_asprintf(&issuer3, &len, "%s-licenser", freerdp_getApplicationDetailsProduct());
+
+		char* issuers[] = { WINPR_CAST_CONST_PTR_AWAY(vendor, char*),
+			                WINPR_CAST_CONST_PTR_AWAY(product, char*),
+			                WINPR_CAST_CONST_PTR_AWAY(details, char*),
+			                issuer1,
+			                issuer2,
+			                issuer3 };
+
+		const BOOL res = freerdp_server_license_issuers_copy(settings, issuers, ARRAYSIZE(issuers));
+		free(issuer1);
+		free(issuer2);
+		free(issuer3);
+		if (!res)
+			goto out_fail;
+	}
 	if (!server && !remote)
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpUserAgent,
@@ -879,14 +904,26 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ClipboardFeatureMask,
 	                                 CLIPRDR_FLAG_DEFAULT_MASK))
 		goto out_fail;
-	if (!freerdp_settings_set_string(settings, FreeRDP_ServerLicenseCompanyName, "FreeRDP"))
+	if (!freerdp_settings_set_string(settings, FreeRDP_ServerLicenseCompanyName,
+	                                 freerdp_getApplicationDetailsVendor()))
 		goto out_fail;
-	if (!freerdp_settings_set_string(settings, FreeRDP_ServerLicenseProductName,
-	                                 "FreeRDP-licensing-server"))
-		goto out_fail;
+
+	{
+		size_t len = 0;
+		char* val = NULL;
+		(void)winpr_asprintf(&val, &len, "%s-licensing-server",
+		                     freerdp_getApplicationDetailsProduct());
+		if (!val)
+			goto out_fail;
+
+		const BOOL rc =
+		    freerdp_settings_set_string(settings, FreeRDP_ServerLicenseProductName, val);
+		free(val);
+		if (!rc)
+			goto out_fail;
+	}
+
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerLicenseProductVersion, 1))
-		goto out_fail;
-	if (!freerdp_server_license_issuers_copy(settings, issuers, ARRAYSIZE(issuers)))
 		goto out_fail;
 
 	if (!freerdp_settings_set_uint16(settings, FreeRDP_SupportedColorDepths,
