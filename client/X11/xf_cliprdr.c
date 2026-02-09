@@ -34,6 +34,7 @@
 #include <winpr/crt.h>
 #include <winpr/image.h>
 #include <winpr/stream.h>
+#include <winpr/synch.h>
 #include <winpr/clipboard.h>
 
 #include <freerdp/log.h>
@@ -115,6 +116,14 @@ struct xf_clipboard
 	/* last sent data */
 	CLIPRDR_FORMAT* lastSentFormats;
 	UINT32 lastSentNumFormats;
+
+	/* Lock protecting clipboard->data / data_raw cache against races
+	 * between the X11 event thread (reader in
+	 * xf_cliprdr_process_selection_request) and the cliprdr channel
+	 * thread (writer in xf_cliprdr_server_format_data_response and
+	 * xf_cliprdr_clear_cached_data).  Backport of upstream commit
+	 * d3e8b3b9365be96a4f11dda149d71b3287227d0a (CVE-2026-25959). */
+	CRITICAL_SECTION lock;
 };
 
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard);
@@ -1002,6 +1011,13 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 			matchingFormat = (formatId == clipboard->data_format_id) &&
 			                 (formatName == clipboard->data_format_name);
 
+			/* Lock the cached data while we read/free it.  The cliprdr
+			 * channel thread may concurrently free and re-populate
+			 * clipboard->data / clipboard->data_raw via
+			 * xf_cliprdr_server_format_data_response, leading to a heap
+			 * use-after-free passed to XChangeProperty (CVE-2026-25959). */
+			EnterCriticalSection(&clipboard->lock);
+
 			if (matchingFormat && (clipboard->data != 0) && !rawTransfer)
 			{
 				/* Cached converted clipboard data available. Send it now */
@@ -1035,6 +1051,8 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				delayRespond = TRUE;
 				xf_cliprdr_send_data_request(clipboard, formatId);
 			}
+
+			LeaveCriticalSection(&clipboard->lock);
 		}
 	}
 
@@ -1360,7 +1378,9 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 	xfContext* xfc = clipboard->xfc;
 	UINT ret;
 	xf_clipboard_formats_free(clipboard);
+	EnterCriticalSection(&clipboard->lock);
 	xf_cliprdr_clear_cached_data(clipboard);
+	LeaveCriticalSection(&clipboard->lock);
 	clipboard->data_format_id = -1;
 	clipboard->data_format_name = NULL;
 
@@ -1510,6 +1530,12 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	if (!clipboard->respond)
 		return CHANNEL_RC_OK;
 
+	/* Hold the cache lock from the moment we drop the previous cached
+	 * data through producing and consuming the new cached data, so the
+	 * X11 event thread can never observe a freed pointer.  Backport of
+	 * upstream commit d3e8b3b9365be96a4f11dda149d71b3287227d0a
+	 * (CVE-2026-25959). */
+	EnterCriticalSection(&clipboard->lock);
 	xf_cliprdr_clear_cached_data(clipboard);
 	pDstData = NULL;
 	DstSize = 0;
@@ -1579,6 +1605,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 			WLog_DBG(TAG, "skipping, empty data detected!");
 			free(clipboard->respond);
 			clipboard->respond = NULL;
+			LeaveCriticalSection(&clipboard->lock);
 			return CHANNEL_RC_OK;
 		}
 
@@ -1620,6 +1647,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	}
 
 	xf_cliprdr_provide_data(clipboard, clipboard->respond, pDstData, DstSize);
+	LeaveCriticalSection(&clipboard->lock);
 	{
 		union
 		{
@@ -1795,6 +1823,13 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 		return NULL;
 	}
 
+	if (!InitializeCriticalSectionAndSpinCount(&clipboard->lock, 4000))
+	{
+		WLog_ERR(TAG, "failed to initialize clipboard cache lock");
+		free(clipboard);
+		return NULL;
+	}
+
 	xfc->clipboard = clipboard;
 	clipboard->xfc = xfc;
 	channels = ((rdpContext*)xfc)->channels;
@@ -1925,6 +1960,7 @@ error:
 		free(clipboard->clientFormats[i].formatName);
 
 	ClipboardDestroy(clipboard->system);
+	DeleteCriticalSection(&clipboard->lock);
 	free(clipboard);
 	return NULL;
 }
@@ -1957,6 +1993,7 @@ void xf_clipboard_free(xfClipboard* clipboard)
 	free(clipboard->data_raw);
 	free(clipboard->respond);
 	free(clipboard->incr_data);
+	DeleteCriticalSection(&clipboard->lock);
 	free(clipboard);
 }
 
