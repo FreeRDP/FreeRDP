@@ -23,8 +23,133 @@
 #include <freerdp/utils/helpers.h>
 
 #include <winpr/path.h>
+#include <winpr/file.h>
+#include <winpr/build-config.h>
 #include <freerdp/version.h>
 #include <freerdp/build-config.h>
+
+#include "../core/utils.h"
+
+static INIT_ONCE s_freerdp_app_details_once = INIT_ONCE_STATIC_INIT;
+static char s_freerdp_vendor_string[MAX_PATH] = { 0 };
+static char s_freerdp_product_string[MAX_PATH] = { 0 };
+static SSIZE_T s_freerdp_version = -1;
+static BOOL s_freerdp_app_details_are_custom = FALSE;
+
+static BOOL CALLBACK init_app_details(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                      WINPR_ATTR_UNUSED PVOID param,
+                                      WINPR_ATTR_UNUSED PVOID* context)
+{
+	const size_t vlen = sizeof(FREERDP_VENDOR_STRING);
+	const size_t plen = sizeof(FREERDP_PRODUCT_STRING);
+	const char* rvlen = strncpy(s_freerdp_vendor_string, FREERDP_VENDOR_STRING, vlen);
+	const char* rplen = strncpy(s_freerdp_product_string, FREERDP_PRODUCT_STRING, plen);
+	if (!rvlen || !rplen)
+		return FALSE;
+
+#if defined(WITH_RESOURCE_VERSIONING)
+	s_freerdp_version = FREERDP_API_VERSION;
+#else
+	s_freerdp_version = -1;
+#endif
+	return TRUE;
+}
+
+static WINPR_ATTR_NODISCARD BOOL initializeApplicationDetails(void)
+{
+	InitOnceExecuteOnce(&s_freerdp_app_details_once, init_app_details, NULL, NULL);
+	return TRUE;
+}
+
+BOOL freerdp_setApplicationDetails(const char* vendor, const char* product, SSIZE_T version)
+{
+	if (!initializeApplicationDetails())
+		return -1;
+
+	if (!vendor || !product)
+		return FALSE;
+	const size_t vlen = strnlen(vendor, MAX_PATH);
+	const size_t plen = strnlen(product, MAX_PATH);
+	if ((vlen == MAX_PATH) || (plen == MAX_PATH))
+		return FALSE;
+
+	if (!strncpy(s_freerdp_vendor_string, vendor, vlen + 1))
+		return FALSE;
+
+	if (!strncpy(s_freerdp_product_string, product, plen + 1))
+		return FALSE;
+
+	s_freerdp_version = version;
+	s_freerdp_app_details_are_custom = TRUE;
+
+	const char separator = PathGetSeparatorA(PATH_STYLE_NATIVE);
+	char* str = freerdp_getApplicatonDetailsCombined(separator);
+	if (!str)
+		return FALSE;
+
+	const BOOL rc = winpr_setApplicationDetails(str, "WinPR", -1);
+	free(str);
+	return rc;
+}
+
+const char* freerdp_getApplicationDetailsVendor(void)
+{
+	if (!initializeApplicationDetails())
+		return NULL;
+	return s_freerdp_vendor_string;
+}
+
+const char* freerdp_getApplicationDetailsProduct(void)
+{
+	if (!initializeApplicationDetails())
+		return NULL;
+	return s_freerdp_product_string;
+}
+
+char* freerdp_getApplicatonDetailsRegKey(const char* fmt)
+{
+	char* val = freerdp_getApplicatonDetailsCombined('\\');
+	if (!val)
+		return NULL;
+
+	char* str = NULL;
+	size_t slen = 0;
+	(void)winpr_asprintf(&str, &slen, fmt, val);
+	free(val);
+	return str;
+}
+
+char* freerdp_getApplicatonDetailsCombined(char separator)
+{
+	const SSIZE_T version = freerdp_getApplicationDetailsVersion();
+	const char* vendor = freerdp_getApplicationDetailsVendor();
+	const char* product = freerdp_getApplicationDetailsProduct();
+
+	size_t slen = 0;
+	char* str = NULL;
+	if (version < 0)
+	{
+		(void)winpr_asprintf(&str, &slen, "%s%c%s", vendor, separator, product);
+	}
+	else
+	{
+		(void)winpr_asprintf(&str, &slen, "%s%c%s%" PRIdz, vendor, separator, product, version);
+	}
+
+	return str;
+}
+
+SSIZE_T freerdp_getApplicationDetailsVersion(void)
+{
+	if (!initializeApplicationDetails())
+		return -1;
+	return s_freerdp_version;
+}
+
+BOOL freerdp_areApplicationDetailsCustomized(void)
+{
+	return s_freerdp_app_details_are_custom;
+}
 
 #if !defined(WITH_FULL_CONFIG_PATH)
 WINPR_ATTR_MALLOC(free, 1)
@@ -47,31 +172,28 @@ static char* freerdp_settings_get_legacy_config_path(const char* filename)
 }
 #endif
 
-char* freerdp_GetConfigFilePath(BOOL system, const char* filename)
+WINPR_ATTR_NODISCARD
+WINPR_ATTR_MALLOC(free, 1) static char* getCustomConfigPath(BOOL system, const char* filename)
 {
 	eKnownPathTypes id = system ? KNOWN_PATH_SYSTEM_CONFIG_HOME : KNOWN_PATH_XDG_CONFIG_HOME;
 
-#if defined(FREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR)
-	char* vendor = GetKnownSubPath(id, FREERDP_VENDOR_STRING);
-#else
-#if !defined(WITH_FULL_CONFIG_PATH)
-	if (!system && (_stricmp(FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING) == 0))
-		return freerdp_settings_get_legacy_config_path(filename);
-#endif
+	const char* vendor = freerdp_getApplicationDetailsVendor();
+	const char* product = freerdp_getApplicationDetailsProduct();
+	const SSIZE_T version = freerdp_getApplicationDetailsVersion();
 
-	char* vendor = GetKnownPath(id);
-#endif
-	if (!vendor)
+	if (!vendor || !product)
 		return NULL;
 
-#if defined(WITH_RESOURCE_VERSIONING)
-	const char* verstr = FREERDP_PRODUCT_STRING FREERDP_API_VERSION;
-#else
-	const char* verstr = FREERDP_PRODUCT_STRING;
-#endif
+	char* config = GetKnownSubPathV(id, "%s", vendor);
+	if (!config)
+		return NULL;
 
-	char* base = GetCombinedPath(vendor, verstr);
-	free(vendor);
+	char* base = NULL;
+	if (version < 0)
+		base = GetCombinedPathV(config, "%s", product);
+	else
+		base = GetCombinedPathV(config, "%s%" PRIdz, product, version);
+	free(config);
 
 	if (!base)
 		return NULL;
@@ -79,7 +201,53 @@ char* freerdp_GetConfigFilePath(BOOL system, const char* filename)
 	if (!filename)
 		return base;
 
-	char* path = GetCombinedPath(base, filename);
+	char* path = GetCombinedPathV(base, "%s", filename);
+	free(base);
+	return path;
+}
+
+char* freerdp_GetConfigFilePath(BOOL system, const char* filename)
+{
+#if defined(FREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR)
+	const BOOL customized = TRUE;
+#else
+	const BOOL customized = freerdp_areApplicationDetailsCustomized();
+#endif
+	if (customized)
+		return getCustomConfigPath(system, filename);
+
+	eKnownPathTypes id = system ? KNOWN_PATH_SYSTEM_CONFIG_HOME : KNOWN_PATH_XDG_CONFIG_HOME;
+
+	const char* vendor = freerdp_getApplicationDetailsVendor();
+	const char* product = freerdp_getApplicationDetailsProduct();
+	const SSIZE_T version = freerdp_getApplicationDetailsVersion();
+
+	if (!vendor || !product)
+		return NULL;
+
+#if !defined(WITH_FULL_CONFIG_PATH)
+	if (!system && (_stricmp(vendor, product) == 0))
+		return freerdp_settings_get_legacy_config_path(filename);
+#endif
+
+	char* config = GetKnownPath(id);
+	if (!config)
+		return NULL;
+
+	char* base = NULL;
+	if (version < 0)
+		base = GetCombinedPathV(config, "%s", product);
+	else
+		base = GetCombinedPathV(config, "%s%" PRIdz, product, version);
+	free(config);
+
+	if (!base)
+		return NULL;
+
+	if (!filename)
+		return base;
+
+	char* path = GetCombinedPathV(base, "%s", filename);
 	free(base);
 	return path;
 }

@@ -27,6 +27,8 @@
 #include <winpr/path.h>
 #include <winpr/file.h>
 
+#include "../utils.h"
+
 #if defined(WITH_RESOURCE_VERSIONING)
 #define STR(x) #x
 #endif
@@ -1218,32 +1220,47 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 	return rc;
 }
 
-char* winpr_GetConfigFilePath(BOOL system, const char* filename)
+char* winpr_GetConfigFilePathVA(BOOL system, WINPR_FORMAT_ARG const char* filename, va_list ap)
 {
 	eKnownPathTypes id = system ? KNOWN_PATH_SYSTEM_CONFIG_HOME : KNOWN_PATH_XDG_CONFIG_HOME;
+	const char* vendor = winpr_getApplicationDetailsVendor();
+	const char* product = winpr_getApplicationDetailsProduct();
+	const SSIZE_T version = winpr_getApplicationDetailsVersion();
 
-#if defined(WINPR_USE_VENDOR_PRODUCT_CONFIG_DIR)
-	char* vendor = GetKnownSubPath(id, WINPR_VENDOR_STRING);
-	if (!vendor)
+	if (!vendor || !product)
 		return NULL;
-#if defined(WITH_RESOURCE_VERSIONING)
-	const char* prod = WINPR_PRODUCT_STRING STR(WINPR_VERSION_MAJOR);
-#else
-	const char* prod = WINPR_PRODUCT_STRING;
-#endif
-	char* base = GetCombinedPath(vendor, prod);
-	free(vendor);
-#else
-	char* base = GetKnownSubPath(id, "winpr");
-#endif
+
+	char* config = GetKnownSubPathV(id, "%s", vendor);
+	if (!config)
+		return NULL;
+
+	char* base = NULL;
+	if (version < 0)
+		base = GetCombinedPathV(config, "%s", product);
+	else
+		base = GetCombinedPathV(config, "%s%" PRIdz, product, version);
+	free(config);
 
 	if (!base)
 		return NULL;
-	if (!filename)
-		return base;
-
-	char* path = GetCombinedPath(base, filename);
+	char* path = GetCombinedPathVA(base, filename, ap);
 	free(base);
 
 	return path;
+}
+
+char* winpr_GetConfigFilePath(BOOL system, const char* filename)
+{
+	if (!filename)
+		return winpr_GetConfigFilePathV(system, "%s", "");
+	return winpr_GetConfigFilePathV(system, "%s", filename);
+}
+
+char* winpr_GetConfigFilePathV(BOOL system, const char* filename, ...)
+{
+	va_list ap;
+	va_start(ap, filename);
+	char* str = winpr_GetConfigFilePathVA(system, filename, ap);
+	va_end(ap);
+	return str;
 }

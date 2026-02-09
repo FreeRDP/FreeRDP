@@ -394,11 +394,28 @@ char* GetKnownPath(eKnownPathTypes id)
 
 char* GetKnownSubPath(eKnownPathTypes id, const char* path)
 {
+	if (!path)
+		return GetKnownSubPathV(id, "%s", "");
+	return GetKnownSubPathV(id, "%s", path);
+}
+
+char* GetKnownSubPathV(eKnownPathTypes id, const char* path, ...)
+{
+	va_list ap;
+
+	va_start(ap, path);
+	char* str = GetKnownSubPathVA(id, path, ap);
+	va_end(ap);
+	return str;
+}
+
+char* GetKnownSubPathVA(eKnownPathTypes id, const char* path, va_list ap)
+{
 	char* knownPath = GetKnownPath(id);
 	if (!knownPath)
 		return NULL;
 
-	char* subPath = GetCombinedPath(knownPath, path);
+	char* subPath = GetCombinedPathVA(knownPath, path, ap);
 	free(knownPath);
 	return subPath;
 }
@@ -431,19 +448,50 @@ char* GetEnvironmentPath(char* name)
 
 char* GetEnvironmentSubPath(char* name, const char* path)
 {
-	char* env = NULL;
-	char* subpath = NULL;
-	env = GetEnvironmentPath(name);
+	if (!path)
+		return GetEnvironmentSubPathV(name, "%s", "");
+	return GetEnvironmentSubPathV(name, "%s", path);
+}
+
+char* GetEnvironmentSubPathV(char* name, const char* path, ...)
+{
+	va_list ap;
+	va_start(ap, path);
+	char* str = GetEnvironmentSubPathVA(name, path, ap);
+	va_end(ap);
+	return str;
+}
+
+char* GetEnvironmentSubPathVA(char* name, WINPR_FORMAT_ARG const char* path, va_list ap)
+{
+	char* env = GetEnvironmentPath(name);
 
 	if (!env)
 		return NULL;
 
-	subpath = GetCombinedPath(env, path);
+	char* subpath = GetCombinedPathVA(env, path, ap);
 	free(env);
 	return subpath;
 }
 
-char* GetCombinedPath(const char* basePath, const char* subPath)
+char* GetCombinedPath(const char* basePath, const char* subPathFmt)
+{
+	if (!subPathFmt)
+		return GetCombinedPathV(basePath, "%s", "");
+	return GetCombinedPathV(basePath, "%s", subPathFmt);
+}
+
+char* GetCombinedPathV(const char* basePath, const char* subPathFmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, subPathFmt);
+	char* str = GetCombinedPathVA(basePath, subPathFmt, ap);
+	va_end(ap);
+	return str;
+}
+
+char* GetCombinedPathVA(const char* basePath, WINPR_FORMAT_ARG const char* subPathFmt, va_list ap)
 {
 	HRESULT status = 0;
 	char* subPathCpy = NULL;
@@ -453,8 +501,20 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 	if (basePath)
 		basePathLength = strlen(basePath);
 
-	if (subPath)
-		subPathLength = strlen(subPath);
+	bool haveSubPath = subPathFmt && (*subPathFmt != '\0');
+	if (haveSubPath)
+	{
+		const int rc = winpr_vasprintf(&subPathCpy, &subPathLength, subPathFmt, ap);
+		if (rc < 0)
+			return NULL;
+		if (rc == 0)
+		{
+			free(subPathCpy);
+			subPathCpy = NULL;
+			subPathLength = 0;
+			haveSubPath = false;
+		}
+	}
 
 	const size_t length = basePathLength + subPathLength + 1;
 	char* path = (char*)calloc(1, length + 1);
@@ -468,10 +528,8 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 	if (FAILED(PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE)))
 		goto fail;
 
-	if (!subPath)
+	if (!haveSubPath)
 		return path;
-
-	subPathCpy = _strdup(subPath);
 
 	if (!subPathCpy)
 		goto fail;

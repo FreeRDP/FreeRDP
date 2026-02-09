@@ -62,4 +62,35 @@ char* utils_redir_flags_to_string(UINT32 flags, char* buffer, size_t size);
 
 BOOL utils_reload_channels(rdpContext* context);
 
+/** @brief generate a registry key string of format 'someting\\%s\\foo'
+ *
+ *  @param fmt A format string that must contain a single '%s' being replaced by the
+ * 'vendor\\product` values.
+ *
+ *  @return A registry key to use or \b NULL if failed.
+ *  @version since 3.23.0
+ */
+WINPR_ATTR_MALLOC(free, 1)
+WINPR_ATTR_NODISCARD
+char* freerdp_getApplicatonDetailsRegKey(WINPR_FORMAT_ARG const char* fmt);
+
+/** @brief generate a 'vendor/product' string with desired separator
+ *
+ *  @param separator the separator character to use
+ *
+ *  @return A 'vendor/product' string to use or \b NULL if failed.
+ *  @version since 3.23.0
+ */
+WINPR_ATTR_MALLOC(free, 1)
+WINPR_ATTR_NODISCARD
+char* freerdp_getApplicatonDetailsCombined(char separator);
+
+/** @brief returns if we are using default compile time 'vendor' and 'product' settings or an
+ * application provided one.
+ *
+ *  @return \b TRUE if \b freerdp_setApplicationDetails was called, \b FALSE otherwise.
+ *  @version since 3.23.0
+ */
+WINPR_ATTR_NODISCARD BOOL freerdp_areApplicationDetailsCustomized(void);
+
 #endif /* FREERDP_LIB_CORE_UTILS_H */

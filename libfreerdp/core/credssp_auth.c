@@ -40,7 +40,7 @@
 
 #define TAG FREERDP_TAG("core.auth")
 
-#define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\Server"
+#define SERVER_KEY "Software\\%s\\Server"
 
 enum AUTH_STATE
 {
@@ -788,8 +788,14 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	WINPR_ASSERT(sspi_module);
 	*sspi_module = NULL;
 
-	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, SERVER_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey) !=
-	    ERROR_SUCCESS)
+	char* key = freerdp_getApplicatonDetailsRegKey(SERVER_KEY);
+	if (!key)
+		return;
+
+	const LONG rc = RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+	free(key);
+
+	if (rc != ERROR_SUCCESS)
 		return;
 
 	if (RegQueryValueExA(hKey, "SspiModule", NULL, &dwType, NULL, &dwSize) != ERROR_SUCCESS)

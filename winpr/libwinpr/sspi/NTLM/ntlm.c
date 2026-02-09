@@ -36,10 +36,12 @@
 
 #include "ntlm_message.h"
 
+#include "../../utils.h"
+
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.NTLM")
 
-#define WINPR_KEY "Software\\" WINPR_VENDOR_STRING "\\" WINPR_PRODUCT_STRING "\\WinPR\\NTLM"
+#define WINPR_KEY "Software\\%s\\WinPR\\NTLM"
 
 static char* NTLM_PACKAGE_NAME = "NTLM";
 
@@ -236,7 +238,6 @@ static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 static NTLM_CONTEXT* ntlm_ContextNew(void)
 {
 	HKEY hKey = 0;
-	LONG status = 0;
 	DWORD dwType = 0;
 	DWORD dwSize = 0;
 	DWORD dwValue = 0;
@@ -252,58 +253,67 @@ static NTLM_CONTEXT* ntlm_ContextNew(void)
 	context->SendWorkstationName = TRUE;
 	context->NegotiateKeyExchange = TRUE;
 	context->UseSamFileDatabase = TRUE;
-	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, WINPR_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
-	if (status == ERROR_SUCCESS)
 	{
-		if (RegQueryValueEx(hKey, _T("NTLMv2"), NULL, &dwType, (BYTE*)&dwValue, &dwSize) ==
-		    ERROR_SUCCESS)
-			context->NTLMv2 = dwValue ? 1 : 0;
-
-		if (RegQueryValueEx(hKey, _T("UseMIC"), NULL, &dwType, (BYTE*)&dwValue, &dwSize) ==
-		    ERROR_SUCCESS)
-			context->UseMIC = dwValue ? 1 : 0;
-
-		if (RegQueryValueEx(hKey, _T("SendVersionInfo"), NULL, &dwType, (BYTE*)&dwValue, &dwSize) ==
-		    ERROR_SUCCESS)
-			context->SendVersionInfo = dwValue ? 1 : 0;
-
-		if (RegQueryValueEx(hKey, _T("SendSingleHostData"), NULL, &dwType, (BYTE*)&dwValue,
-		                    &dwSize) == ERROR_SUCCESS)
-			context->SendSingleHostData = dwValue ? 1 : 0;
-
-		if (RegQueryValueEx(hKey, _T("SendWorkstationName"), NULL, &dwType, (BYTE*)&dwValue,
-		                    &dwSize) == ERROR_SUCCESS)
-			context->SendWorkstationName = dwValue ? 1 : 0;
-
-		if (RegQueryValueEx(hKey, _T("WorkstationName"), NULL, &dwType, NULL, &dwSize) ==
-		    ERROR_SUCCESS)
+		char* key = winpr_getApplicatonDetailsRegKey(WINPR_KEY);
+		if (key)
 		{
-			char* workstation = (char*)malloc(dwSize + 1);
+			const LONG status =
+			    RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+			free(key);
 
-			if (!workstation)
+			if (status == ERROR_SUCCESS)
 			{
-				free(context);
-				return NULL;
+				if (RegQueryValueEx(hKey, _T("NTLMv2"), NULL, &dwType, (BYTE*)&dwValue, &dwSize) ==
+				    ERROR_SUCCESS)
+					context->NTLMv2 = dwValue ? 1 : 0;
+
+				if (RegQueryValueEx(hKey, _T("UseMIC"), NULL, &dwType, (BYTE*)&dwValue, &dwSize) ==
+				    ERROR_SUCCESS)
+					context->UseMIC = dwValue ? 1 : 0;
+
+				if (RegQueryValueEx(hKey, _T("SendVersionInfo"), NULL, &dwType, (BYTE*)&dwValue,
+				                    &dwSize) == ERROR_SUCCESS)
+					context->SendVersionInfo = dwValue ? 1 : 0;
+
+				if (RegQueryValueEx(hKey, _T("SendSingleHostData"), NULL, &dwType, (BYTE*)&dwValue,
+				                    &dwSize) == ERROR_SUCCESS)
+					context->SendSingleHostData = dwValue ? 1 : 0;
+
+				if (RegQueryValueEx(hKey, _T("SendWorkstationName"), NULL, &dwType, (BYTE*)&dwValue,
+				                    &dwSize) == ERROR_SUCCESS)
+					context->SendWorkstationName = dwValue ? 1 : 0;
+
+				if (RegQueryValueEx(hKey, _T("WorkstationName"), NULL, &dwType, NULL, &dwSize) ==
+				    ERROR_SUCCESS)
+				{
+					char* workstation = (char*)malloc(dwSize + 1);
+
+					if (!workstation)
+					{
+						free(context);
+						return NULL;
+					}
+
+					const LONG rc = RegQueryValueExA(hKey, "WorkstationName", NULL, &dwType,
+					                                 (BYTE*)workstation, &dwSize);
+					if (rc != ERROR_SUCCESS)
+						WLog_WARN(TAG, "Key ''WorkstationName' not found");
+					workstation[dwSize] = '\0';
+
+					if (ntlm_SetContextWorkstation(context, workstation) < 0)
+					{
+						free(workstation);
+						free(context);
+						return NULL;
+					}
+
+					free(workstation);
+				}
+
+				RegCloseKey(hKey);
 			}
-
-			status = RegQueryValueExA(hKey, "WorkstationName", NULL, &dwType, (BYTE*)workstation,
-			                          &dwSize);
-			if (status != ERROR_SUCCESS)
-				WLog_WARN(TAG, "Key ''WorkstationName' not found");
-			workstation[dwSize] = '\0';
-
-			if (ntlm_SetContextWorkstation(context, workstation) < 0)
-			{
-				free(workstation);
-				free(context);
-				return NULL;
-			}
-
-			free(workstation);
 		}
-
-		RegCloseKey(hKey);
 	}
 
 	/*
@@ -311,8 +321,9 @@ static NTLM_CONTEXT* ntlm_ContextNew(void)
 	 * but enabling it in WinPR breaks TS Gateway at this point
 	 */
 	context->SuppressExtendedProtection = FALSE;
-	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("System\\CurrentControlSet\\Control\\LSA"), 0,
-	                      KEY_READ | KEY_WOW64_64KEY, &hKey);
+	const LONG status =
+	    RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("System\\CurrentControlSet\\Control\\LSA"), 0,
+	                 KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status == ERROR_SUCCESS)
 	{
