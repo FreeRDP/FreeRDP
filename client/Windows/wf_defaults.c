@@ -61,6 +61,9 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 		return;
 
 	int len = _snprintf(TargetName, 0, TERMSRV, ServerHostname);
+	if (len < 0)
+		goto fail;
+
 	len++;
 	TargetName = (PSTR)malloc(len);
 
