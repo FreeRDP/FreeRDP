@@ -477,13 +477,13 @@ cleanup:
 
 static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 {
-	WinPrAsn1Decoder dec;
-	WinPrAsn1Decoder dec2;
-	WinPrAsn1_OID oid;
+	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1_OID oid = { 0 };
 	WinPrAsn1_tagId contextual = 0;
 	WinPrAsn1_tag tag = 0;
 	size_t len = 0;
-	WinPrAsn1_OctetString octet_string;
+	WinPrAsn1_OctetString octet_string = { 0 };
 	BOOL err = 0;
 
 	WINPR_ASSERT(input);
@@ -990,8 +990,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 
 static const Mech* guessMech(PSecBuffer input_buffer, BOOL* spNego, WinPrAsn1_OID* oid)
 {
-	WinPrAsn1Decoder decoder;
-	WinPrAsn1Decoder appDecoder;
+	WinPrAsn1Decoder decoder = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder appDecoder = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1_tagId tag = 0;
 	const char ssp[] = "NTLMSSP";
 
@@ -1039,8 +1039,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
-	WinPrAsn1Decoder dec;
-	WinPrAsn1Decoder dec2;
+	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1_tagId tag = 0;
 	WinPrAsn1_OID oid = { 0 };
 	const Mech* first_mech = NULL;

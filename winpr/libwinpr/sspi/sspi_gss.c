@@ -86,8 +86,8 @@ cleanup:
 BOOL sspi_gss_unwrap_token(const SecBuffer* buf, WinPrAsn1_OID* oid, uint16_t* tok_id,
                            sspi_gss_data* token)
 {
-	WinPrAsn1Decoder dec;
-	WinPrAsn1Decoder dec2;
+	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1_tagId tag = 0;
 	wStream sbuffer = { 0 };
 	wStream* s = NULL;
