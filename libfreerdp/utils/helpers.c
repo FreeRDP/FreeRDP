@@ -80,7 +80,7 @@ static BOOL CALLBACK init_app_details(WINPR_ATTR_UNUSED PINIT_ONCE once,
 		return FALSE;
 
 #if defined(WITH_RESOURCE_VERSIONING)
-	s_freerdp_version = FREERDP_API_VERSION;
+	s_freerdp_version = FREERDP_VERSION_MAJOR;
 #else
 	s_freerdp_version = -1;
 #endif

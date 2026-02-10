@@ -246,29 +246,29 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 	for (size_t i = 0; i < nmonitors; i++)
 	{
 		auto monitor = &monitors[i];
-		auto layout = &layouts[i];
+		auto& layout = layouts.at(i);
 
-		layout->Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
-		layout->Left = monitor->x;
-		layout->Top = monitor->y;
-		layout->Width = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->width);
-		layout->Height = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->height);
-		layout->Orientation = ORIENTATION_LANDSCAPE;
-		layout->PhysicalWidth = monitor->attributes.physicalWidth;
-		layout->PhysicalHeight = monitor->attributes.physicalHeight;
+		layout.Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
+		layout.Left = monitor->x;
+		layout.Top = monitor->y;
+		layout.Width = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->width);
+		layout.Height = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->height);
+		layout.Orientation = ORIENTATION_LANDSCAPE;
+		layout.PhysicalWidth = monitor->attributes.physicalWidth;
+		layout.PhysicalHeight = monitor->attributes.physicalHeight;
 
 		switch (monitor->attributes.orientation)
 		{
 			case 90:
-				layout->Orientation = ORIENTATION_PORTRAIT;
+				layout.Orientation = ORIENTATION_PORTRAIT;
 				break;
 
 			case 180:
-				layout->Orientation = ORIENTATION_LANDSCAPE_FLIPPED;
+				layout.Orientation = ORIENTATION_LANDSCAPE_FLIPPED;
 				break;
 
 			case 270:
-				layout->Orientation = ORIENTATION_PORTRAIT_FLIPPED;
+				layout.Orientation = ORIENTATION_PORTRAIT_FLIPPED;
 				break;
 
 			case 0:
@@ -280,14 +280,13 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 				 *
 				 * So we default to ORIENTATION_LANDSCAPE
 				 */
-				layout->Orientation = ORIENTATION_LANDSCAPE;
+				layout.Orientation = ORIENTATION_LANDSCAPE;
 				break;
 		}
 
-		layout->DesktopScaleFactor =
+		layout.DesktopScaleFactor =
 		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
-		layout->DeviceScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
+		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 	}
 
 	WINPR_ASSERT(_disp);

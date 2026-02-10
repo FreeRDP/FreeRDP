@@ -1359,7 +1359,7 @@ int64_t SdlContext::monitorId(uint32_t index) const
 	{
 		return -1;
 	}
-	return _monitorIds[index];
+	return _monitorIds.at(index);
 }
 
 void SdlContext::push(std::vector<SDL_Rect>&& rects)

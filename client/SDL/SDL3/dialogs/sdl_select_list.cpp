@@ -106,7 +106,7 @@ int SdlSelectList::run()
 						reset_mouseover();
 						if (TextInputIndex >= 0)
 						{
-							auto& cur = _list[WINPR_ASSERTING_INT_CAST(size_t, TextInputIndex)];
+							auto& cur = _list.at(WINPR_ASSERTING_INT_CAST(size_t, TextInputIndex));
 							if (!cur.mouseover(true))
 								throw;
 						}
@@ -142,7 +142,7 @@ int SdlSelectList::run()
 			reset_highlight();
 			if (CurrentActiveTextInput >= 0)
 			{
-				auto& cur = _list[WINPR_ASSERTING_INT_CAST(size_t, CurrentActiveTextInput)];
+				auto& cur = _list.at(WINPR_ASSERTING_INT_CAST(size_t, CurrentActiveTextInput));
 				if (!cur.highlight(true))
 					throw;
 			}
@@ -174,7 +174,7 @@ ssize_t SdlSelectList::get_index(const SDL_MouseButtonEvent& button)
 	const auto y = button.y;
 	for (size_t i = 0; i < _list.size(); i++)
 	{
-		auto& cur = _list[i];
+		auto& cur = _list.at(i);
 		auto r = cur.rect();
 
 		if ((x >= r.x) && (x <= r.x + r.w) && (y >= r.y) && (y <= r.y + r.h))
