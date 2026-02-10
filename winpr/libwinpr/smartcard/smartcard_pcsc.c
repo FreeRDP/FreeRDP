@@ -2514,7 +2514,6 @@ static LONG PCSC_ReadDeviceSystemName(WINPR_ATTR_UNUSED SCARDCONTEXT hContext, S
                                       DWORD dwAttrId, LPBYTE pbAttr, LPDWORD pcbAttrLen)
 {
 	/* Get reader name from SCardStatus */
-	CHAR* szReader = NULL;
 	PCSC_DWORD dwState = 0;
 	PCSC_DWORD dwProtocol = 0;
 	LONG status = 0;
