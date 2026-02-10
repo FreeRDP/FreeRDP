@@ -48,7 +48,7 @@ typedef struct
 static CamV4lStream* cam_v4l_stream_create(const char* deviceId, size_t streamIndex);
 static void cam_v4l_stream_free(void* obj);
 static void cam_v4l_stream_close_device(CamV4lStream* stream);
-static UINT cam_v4l_stream_stop(CamV4lStream* stream);
+static CAM_ERROR_CODE cam_v4l_stream_stop(CamV4lStream* stream);
 
 /**
  * Function description
