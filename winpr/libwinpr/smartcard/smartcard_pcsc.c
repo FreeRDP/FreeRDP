@@ -2566,7 +2566,7 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 	DWORD cbAttrLen = 0;
 	SCARDCONTEXT hContext = 0;
 	BOOL pcbAttrLenAlloc = FALSE;
-	LONG status = SCARD_S_SUCCESS;
+	PCSC_LONG status = SCARD_S_SUCCESS;
 
 	if (NULL == pcbAttrLen)
 		return SCARD_E_INVALID_PARAMETER;
@@ -2742,7 +2742,7 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 		}
 	}
 
-	return status;
+	return WINPR_ASSERTING_INT_CAST(LONG, status);
 }
 
 static LONG WINAPI PCSC_SCardSetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPCBYTE pbAttr,
