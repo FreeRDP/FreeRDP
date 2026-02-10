@@ -16,7 +16,10 @@ int TestWtsApiExtraStartRemoteSessionEx(int argc, char* argv[])
 	DWORD bSuccess = GetEnvironmentVariableA("TEST_SESSION_LOGON_ID", logonIdStr, 10);
 	if (bSuccess > 0)
 	{
-		sscanf(logonIdStr, "%u\n", &logonId);
+		errno = 0;
+		logonId = strtoul(logonIdStr, NULL, 0);
+		if (errno != 0)
+			return -1;
 	}
 
 	bSuccess = WTSStartRemoteControlSessionEx(
