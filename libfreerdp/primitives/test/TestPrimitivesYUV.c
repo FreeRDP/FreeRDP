@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <errno.h>
 
 #include "prim_test.h"
 
@@ -1413,10 +1414,21 @@ int TestPrimitivesYUV(int argc, char* argv[])
 
 	if (argc > 1)
 	{
-		// NOLINTNEXTLINE(cert-err34-c)
-		int crc = sscanf(argv[1], "%" PRIu32 "x%" PRIu32, &roi.width, &roi.height);
+		BOOL reset = TRUE;
+		char* str = argv[1];
+		char* ptr = strchr(str, 'x');
+		if (ptr)
+		{
+			*ptr++ = '\0';
 
-		if (crc != 2)
+			errno = 0;
+			roi.width = strtoul(str, NULL, 0);
+			if (errno == 0)
+				roi.height = strtoul(str, NULL, 0);
+			reset = errno != 0;
+		}
+
+		if (reset)
 		{
 			roi.width = 1920;
 			roi.height = 1080;

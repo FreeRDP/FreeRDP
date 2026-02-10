@@ -45,7 +45,7 @@ typedef struct
 
 } CamV4lHal;
 
-static CamV4lStream* cam_v4l_stream_create(const char* deviceId, int streamIndex);
+static CamV4lStream* cam_v4l_stream_create(const char* deviceId, size_t streamIndex);
 static void cam_v4l_stream_free(void* obj);
 static void cam_v4l_stream_close_device(CamV4lStream* stream);
 static UINT cam_v4l_stream_stop(CamV4lStream* stream);
@@ -154,21 +154,21 @@ static int cam_v4l_open_device(const char* deviceId, int flags)
 	return fd;
 }
 
-static BOOL cam_v4l_activate(ICamHal* ihal, const char* deviceId, UINT32* errorCode)
+static BOOL cam_v4l_activate(ICamHal* ihal, const char* deviceId, CAM_ERROR_CODE* errorCode)
 {
 	WINPR_UNUSED(ihal);
 	WINPR_UNUSED(deviceId);
 
-	*errorCode = 0;
+	*errorCode = CAM_ERROR_CODE_None;
 	return TRUE;
 }
 
-static BOOL cam_v4l_deactivate(ICamHal* ihal, const char* deviceId, UINT32* errorCode)
+static BOOL cam_v4l_deactivate(ICamHal* ihal, const char* deviceId, CAM_ERROR_CODE* errorCode)
 {
 	WINPR_UNUSED(ihal);
 	WINPR_UNUSED(deviceId);
 
-	*errorCode = 0;
+	*errorCode = CAM_ERROR_CODE_None;
 	return TRUE;
 }
 
@@ -179,7 +179,7 @@ static BOOL cam_v4l_deactivate(ICamHal* ihal, const char* deviceId, UINT32* erro
  * in
  */
 static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* deviceId,
-                                                 int streamIndex,
+                                                 size_t streamIndex,
                                                  const CAM_MEDIA_FORMAT_INFO* supportedFormats,
                                                  size_t nSupportedFormats,
                                                  CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes,
@@ -520,7 +520,8 @@ void cam_v4l_stream_close_device(CamV4lStream* stream)
  *
  * @return Null on failure, otherwise pointer to new CamV4lStream
  */
-static CamV4lStream* cam_v4l_stream_create(const char* deviceId, int streamIndex)
+WINPR_ATTR_MALLOC(cam_v4l_stream_free, 1)
+CamV4lStream* cam_v4l_stream_create(const char* deviceId, size_t streamIndex)
 {
 	CamV4lStream* stream = calloc(1, sizeof(CamV4lStream));
 
@@ -548,10 +549,10 @@ static CamV4lStream* cam_v4l_stream_create(const char* deviceId, int streamIndex
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT cam_v4l_stream_stop(CamV4lStream* stream)
+CAM_ERROR_CODE cam_v4l_stream_stop(CamV4lStream* stream)
 {
 	if (!stream || !stream->streaming)
-		return CHANNEL_RC_OK;
+		return CAM_ERROR_CODE_None;
 
 	stream->streaming = FALSE; /* this will terminate capture thread */
 
@@ -578,33 +579,29 @@ UINT cam_v4l_stream_stop(CamV4lStream* stream)
 
 	LeaveCriticalSection(&stream->lock);
 
-	return CHANNEL_RC_OK;
+	return CAM_ERROR_CODE_None;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise CAM_ERROR_CODE
- */
-static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamIndex,
-                                 const CAM_MEDIA_TYPE_DESCRIPTION* mediaType,
-                                 ICamHalSampleCapturedCallback callback)
+static CAM_ERROR_CODE cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, size_t streamIndex,
+                                           const CAM_MEDIA_TYPE_DESCRIPTION* mediaType,
+                                           ICamHalSampleCapturedCallback callback)
 {
 	CamV4lHal* hal = (CamV4lHal*)ihal;
+	WINPR_ASSERT(hal);
 
 	CamV4lStream* stream = (CamV4lStream*)HashTable_GetItemValue(hal->streams, dev->deviceId);
 
 	if (!stream)
 	{
-		WLog_ERR(TAG, "Unable to find stream, device %s, streamIndex %d", dev->deviceId,
+		WLog_ERR(TAG, "Unable to find stream, device %s, streamIndex %" PRIuz, dev->deviceId,
 		         streamIndex);
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
 
 	if (stream->streaming)
 	{
-		WLog_ERR(TAG, "Streaming already in progress, device %s, streamIndex %d", dev->deviceId,
-		         streamIndex);
+		WLog_ERR(TAG, "Streaming already in progress, device %s, streamIndex %" PRIuz,
+		         dev->deviceId, streamIndex);
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
 
@@ -724,7 +721,7 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 	          mediaType->Width, mediaType->Height, mediaType->FrameRateNumerator,
 	          mediaType->FrameRateDenominator);
 
-	return CHANNEL_RC_OK;
+	return CAM_ERROR_CODE_None;
 }
 
 /**
@@ -732,15 +729,15 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cam_v4l_stream_stop_by_device_id(ICamHal* ihal, const char* deviceId,
-                                             WINPR_ATTR_UNUSED int streamIndex)
+static CAM_ERROR_CODE cam_v4l_stream_stop_by_device_id(ICamHal* ihal, const char* deviceId,
+                                                       WINPR_ATTR_UNUSED size_t streamIndex)
 {
 	CamV4lHal* hal = (CamV4lHal*)ihal;
 
 	CamV4lStream* stream = (CamV4lStream*)HashTable_GetItemValue(hal->streams, deviceId);
 
 	if (!stream)
-		return CHANNEL_RC_OK;
+		return CAM_ERROR_CODE_NotInitialized;
 
 	return cam_v4l_stream_stop(stream);
 }
@@ -768,18 +765,18 @@ void cam_v4l_stream_free(void* obj)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cam_v4l_free(ICamHal* ihal)
+static CAM_ERROR_CODE cam_v4l_free(ICamHal* ihal)
 {
 	CamV4lHal* hal = (CamV4lHal*)ihal;
 
 	if (hal == NULL)
-		return ERROR_INVALID_PARAMETER;
+		return CAM_ERROR_CODE_NotInitialized;
 
 	HashTable_Free(hal->streams);
 
 	free(hal);
 
-	return CHANNEL_RC_OK;
+	return CAM_ERROR_CODE_None;
 }
 
 /**

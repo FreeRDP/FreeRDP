@@ -1120,43 +1120,79 @@ fail:
 	return res;
 }
 
+static BOOL readUInt(FILE* fp, const char* prefix, const char* postfix, UINT32* pval)
+{
+	WINPR_ASSERT(fp);
+	WINPR_ASSERT(prefix);
+	WINPR_ASSERT(postfix);
+	WINPR_ASSERT(pval);
+
+	BOOL rc = FALSE;
+	const size_t plen = strlen(prefix);
+	const size_t polen = strlen(postfix);
+
+	char* str = NULL;
+	size_t len = SIZE_MAX;
+	const INT64 res = GetLine(&str, &len, fp);
+	if ((res < plen + polen) || !str)
+		goto fail;
+
+	if (strncmp(str, prefix, plen) != 0)
+		goto fail;
+
+	char* start = &str[plen];
+	char* end = strstr(start, postfix);
+	if (!end)
+		goto fail;
+	*end = '\0';
+
+	errno = 0;
+	unsigned long val = strtoul(start, NULL, 0);
+	if ((errno != 0) || (val > UINT32_MAX))
+		goto fail;
+
+	*pval = val;
+	rc = TRUE;
+
+fail:
+	free(str);
+	return rc;
+}
+
 static BOOL read_cmd(FILE* fp, RDPGFX_SURFACE_COMMAND* cmd, UINT32* frameId)
 {
 	WINPR_ASSERT(fp);
 	WINPR_ASSERT(cmd);
 	WINPR_ASSERT(frameId);
 
-	// NOLINTBEGIN(cert-err34-c)
-	if (1 != fscanf(fp, "frameid: %" PRIu32 "\n", frameId))
+	if (!readUInt(fp, "frameid: ", "\n", frameId))
 		return FALSE;
-	if (1 != fscanf(fp, "surfaceId: %" PRIu32 "\n", &cmd->surfaceId))
+	if (!readUInt(fp, "surfaceId: ", "\n", &cmd->surfaceId))
 		return FALSE;
-	if (1 != fscanf(fp, "codecId: %" PRIu32 "\n", &cmd->codecId))
+	if (!readUInt(fp, "codecId: ", "\n", &cmd->codecId))
 		return FALSE;
-	if (1 != fscanf(fp, "contextId: %" PRIu32 "\n", &cmd->contextId))
+	if (!readUInt(fp, "contextId: ", "\n", &cmd->contextId))
 		return FALSE;
-	if (1 != fscanf(fp, "format: %" PRIu32 "\n", &cmd->format))
+	if (!readUInt(fp, "format: ", "\n", &cmd->format))
 		return FALSE;
-	if (1 != fscanf(fp, "left: %" PRIu32 "\n", &cmd->left))
+	if (!readUInt(fp, "left: ", "\n", &cmd->left))
 		return FALSE;
-	if (1 != fscanf(fp, "top: %" PRIu32 "\n", &cmd->top))
+	if (!readUInt(fp, "top: ", "\n", &cmd->top))
 		return FALSE;
-	if (1 != fscanf(fp, "right: %" PRIu32 "\n", &cmd->right))
+	if (!readUInt(fp, "right: ", "\n", &cmd->right))
 		return FALSE;
-	if (1 != fscanf(fp, "bottom: %" PRIu32 "\n", &cmd->bottom))
+	if (!readUInt(fp, "bottom: ", "\n", &cmd->bottom))
 		return FALSE;
-	if (1 != fscanf(fp, "width: %" PRIu32 "\n", &cmd->width))
+	if (!readUInt(fp, "width: ", "\n", &cmd->width))
 		return FALSE;
-	if (1 != fscanf(fp, "height: %" PRIu32 "\n", &cmd->height))
+	if (!readUInt(fp, "height: ", "\n", &cmd->height))
 		return FALSE;
-	if (1 != fscanf(fp, "length: %" PRIu32 "\n", &cmd->length))
+	if (!readUInt(fp, "length: ", "\n", &cmd->length))
 		return FALSE;
-	// NOLINTEND(cert-err34-c)
 
 	char* data = NULL;
-
 	size_t dlen = SIZE_MAX;
-	SSIZE_T slen = GetLine(&data, &slen, fp);
+	INT64 slen = GetLine(&data, &dlen, fp);
 	if (slen < 0)
 		return FALSE;
 

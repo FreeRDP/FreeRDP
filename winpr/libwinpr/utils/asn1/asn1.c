@@ -1388,7 +1388,7 @@ size_t WinPrAsn1DecReadContextualBool(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tag
 {
 	size_t ret = 0;
 	size_t ret2 = 0;
-	WinPrAsn1Decoder content;
+	WinPrAsn1Decoder content = { .encoding = WINPR_ASN1_BER, { 0 } };
 
 	ret = readContextualHeader(dec, tagId, error, &content);
 	if (!ret)
@@ -1410,7 +1410,7 @@ size_t WinPrAsn1DecReadContextualInteger(WinPrAsn1Decoder* dec, WinPrAsn1_tagId 
 {
 	size_t ret = 0;
 	size_t ret2 = 0;
-	WinPrAsn1Decoder content;
+	WinPrAsn1Decoder content = { .encoding = WINPR_ASN1_BER, { 0 } };
 
 	ret = readContextualHeader(dec, tagId, error, &content);
 	if (!ret)
@@ -1432,7 +1432,7 @@ size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagI
 {
 	size_t ret = 0;
 	size_t ret2 = 0;
-	WinPrAsn1Decoder content;
+	WinPrAsn1Decoder content = { .encoding = WINPR_ASN1_BER, { 0 } };
 
 	ret = readContextualHeader(dec, tagId, error, &content);
 	if (!ret)
@@ -1455,7 +1455,7 @@ size_t WinPrAsn1DecReadContextualOctetString(WinPrAsn1Decoder* dec, WinPrAsn1_ta
 {
 	size_t ret = 0;
 	size_t ret2 = 0;
-	WinPrAsn1Decoder content;
+	WinPrAsn1Decoder content = { .encoding = WINPR_ASN1_BER, { 0 } };
 
 	ret = readContextualHeader(dec, tagId, error, &content);
 	if (!ret)
@@ -1477,7 +1477,7 @@ size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec, WinPrAsn1_tagId
 {
 	size_t ret = 0;
 	size_t ret2 = 0;
-	WinPrAsn1Decoder content;
+	WinPrAsn1Decoder content = { .encoding = WINPR_ASN1_BER, { 0 } };
 
 	ret = readContextualHeader(dec, tagId, error, &content);
 	if (!ret)

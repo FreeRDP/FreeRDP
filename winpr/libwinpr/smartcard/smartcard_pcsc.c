@@ -2510,11 +2510,10 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 	return status;
 }
 
-static LONG PCSC_ReadDeviceSystemName(SCARDCONTEXT hContext, SCARDHANDLE hCard, DWORD dwAttrId,
-                                      LPBYTE pbAttr, LPDWORD pcbAttrLen)
+static LONG PCSC_ReadDeviceSystemName(WINPR_ATTR_UNUSED SCARDCONTEXT hContext, SCARDHANDLE hCard,
+                                      DWORD dwAttrId, LPBYTE pbAttr, LPDWORD pcbAttrLen)
 {
 	/* Get reader name from SCardStatus */
-	CHAR* szReader = NULL;
 	PCSC_DWORD dwState = 0;
 	PCSC_DWORD dwProtocol = 0;
 	LONG status = 0;
@@ -2531,7 +2530,7 @@ static LONG PCSC_ReadDeviceSystemName(SCARDCONTEXT hContext, SCARDHANDLE hCard, 
 	const PCSC_LONG rc = g_PCSC.pfnSCardStatus(hCard, (LPSTR)pbAttr, &cchReader, &dwState,
 	                                           &dwProtocol, NULL, &cbAtr);
 
-	*pcbAttrLen = cchReader;
+	*pcbAttrLen = WINPR_ASSERTING_INT_CAST(DWORD, cchReader);
 	status = WINPR_ASSERTING_INT_CAST(LONG, rc);
 	if (status != SCARD_S_SUCCESS)
 		return status;
@@ -2552,7 +2551,7 @@ static LONG PCSC_ReadDeviceSystemName(SCARDCONTEXT hContext, SCARDHANDLE hCard, 
 			free(tmp);
 			return SCARD_E_INSUFFICIENT_BUFFER;
 		}
-		*pcbAttrLen = MIN(wlen, cchReader) * sizeof(WCHAR);
+		*pcbAttrLen = WINPR_ASSERTING_INT_CAST(DWORD, MIN(wlen, cchReader) * sizeof(WCHAR));
 		memcpy(pbAttr, tmp, *pcbAttrLen);
 		free(tmp);
 	}
@@ -2566,7 +2565,7 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 	DWORD cbAttrLen = 0;
 	SCARDCONTEXT hContext = 0;
 	BOOL pcbAttrLenAlloc = FALSE;
-	LONG status = SCARD_S_SUCCESS;
+	PCSC_LONG status = SCARD_S_SUCCESS;
 
 	if (NULL == pcbAttrLen)
 		return SCARD_E_INVALID_PARAMETER;
@@ -2742,7 +2741,7 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 		}
 	}
 
-	return status;
+	return WINPR_ASSERTING_INT_CAST(LONG, status);
 }
 
 static LONG WINAPI PCSC_SCardSetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPCBYTE pbAttr,

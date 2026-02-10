@@ -57,7 +57,7 @@ static BOOL CALLBACK init_app_details(WINPR_ATTR_UNUSED PINIT_ONCE once,
 		return FALSE;
 
 #if defined(WITH_RESOURCE_VERSIONING)
-	s_winpr_version = WINPR_API_VERSION;
+	s_winpr_version = WINPR_VERSION_MAJOR;
 #else
 	s_winpr_version = -1;
 #endif

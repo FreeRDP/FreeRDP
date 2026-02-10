@@ -57,7 +57,7 @@ bool SDLConnectionDialog::visible() const
 
 bool SDLConnectionDialog::setTitle(const char* fmt, ...)
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	va_list ap = {};
 	va_start(ap, fmt);
 	_title = print(fmt, ap);
@@ -97,25 +97,25 @@ bool SDLConnectionDialog::showError(const char* fmt, ...)
 
 bool SDLConnectionDialog::show()
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	return show(_type_active);
 }
 
 bool SDLConnectionDialog::hide()
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	return show(MSG_DISCARD);
 }
 
 bool SDLConnectionDialog::running() const
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	return _running;
 }
 
 bool SDLConnectionDialog::update()
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	switch (_type)
 	{
 		case MSG_INFO:
@@ -169,7 +169,7 @@ bool SDLConnectionDialog::clearWindow(SDL_Renderer* renderer)
 
 bool SDLConnectionDialog::update(SDL_Renderer* renderer)
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	if (!renderer)
 		return false;
 
@@ -433,7 +433,7 @@ void SDLConnectionDialog::destroyWindow()
 
 bool SDLConnectionDialog::show(MsgType type, const char* fmt, va_list ap)
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	_msg = print(fmt, ap);
 	return show(type);
 }
@@ -470,7 +470,7 @@ std::string SDLConnectionDialog::print(const char* fmt, va_list ap)
 
 bool SDLConnectionDialog::setTimer(Uint32 timeoutMS)
 {
-	std::lock_guard lock(_mux);
+	std::scoped_lock lock(_mux);
 	resetTimer();
 
 	_timer = SDL_AddTimer(timeoutMS, &SDLConnectionDialog::timeout, this);

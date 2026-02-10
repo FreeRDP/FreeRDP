@@ -171,7 +171,7 @@ static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
 
-	if (pa_context_connect(pulse->context, NULL, 0, NULL) < 0)
+	if (pa_context_connect(pulse->context, NULL, PA_CONTEXT_NOFLAGS, NULL) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		return FALSE;
@@ -301,8 +301,6 @@ static void rdpsnd_pulse_close(rdpsndDevicePlugin* device)
 
 static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_FORMAT* format)
 {
-	pa_sample_spec sample_spec = { 0 };
-
 	WINPR_ASSERT(format);
 
 	if (!rdpsnd_check_pulse(pulse, FALSE))
@@ -311,20 +309,18 @@ static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_F
 	if (!rdpsnd_pulse_format_supported(&pulse->device, format))
 		return FALSE;
 
-	sample_spec.rate = format->nSamplesPerSec;
-	sample_spec.channels = WINPR_ASSERTING_INT_CAST(uint8_t, format->nChannels);
-
+	pa_sample_format_t sformat = PA_SAMPLE_INVALID;
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
 			switch (format->wBitsPerSample)
 			{
 				case 8:
-					sample_spec.format = PA_SAMPLE_U8;
+					sformat = PA_SAMPLE_U8;
 					break;
 
 				case 16:
-					sample_spec.format = PA_SAMPLE_S16LE;
+					sformat = PA_SAMPLE_S16LE;
 					break;
 
 				default:
@@ -337,6 +333,10 @@ static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_F
 			return FALSE;
 	}
 
+	const pa_sample_spec sample_spec = { .format = sformat,
+		                                 .rate = format->nSamplesPerSec,
+		                                 .channels =
+		                                     WINPR_ASSERTING_INT_CAST(uint8_t, format->nChannels) };
 	pulse->sample_spec = sample_spec;
 	return TRUE;
 }
