@@ -50,8 +50,8 @@ SdlInputWidgetPairList::SdlInputWidgetPairList(const std::string& title,
 	{
 		for (size_t x = 0; x < labels.size(); x++)
 		{
-			std::shared_ptr<SdlInputWidgetPair> widget(new SdlInputWidgetPair(
-			    _renderer, labels[x], initial[x], flags[x], x, widget_width, widget_heigth));
+			auto widget = std::make_shared<SdlInputWidgetPair>(
+			    _renderer, labels[x], initial[x], flags[x], x, widget_width, widget_heigth);
 			m_list.emplace_back(widget);
 		}
 
