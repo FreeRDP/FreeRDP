@@ -45,6 +45,7 @@ typedef struct
 
 typedef enum
 {
+	SNDIN_VERSION_Invalid = 0x00000000,
 	SNDIN_VERSION_Version_1 = 0x00000001,
 	SNDIN_VERSION_Version_2 = 0x00000002,
 } SNDIN_VERSION_Version;

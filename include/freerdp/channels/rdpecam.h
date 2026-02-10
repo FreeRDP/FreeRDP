@@ -39,6 +39,7 @@ extern "C"
 
 	typedef enum
 	{
+		CAM_MSG_ID_Invalid = 0x00,
 		CAM_MSG_ID_SuccessResponse = 0x01,
 		CAM_MSG_ID_ErrorResponse = 0x02,
 		CAM_MSG_ID_SelectVersionRequest = 0x03,
@@ -107,6 +108,7 @@ typedef struct
 
 typedef enum
 {
+	CAM_ERROR_CODE_None = 0x00000000,
 	CAM_ERROR_CODE_UnexpectedError = 0x00000001,
 	CAM_ERROR_CODE_InvalidMessage = 0x00000002,
 	CAM_ERROR_CODE_NotInitialized = 0x00000003,
@@ -187,6 +189,7 @@ typedef enum
 
 typedef enum
 {
+	AM_MEDIA_TYPE_DESCRIPTION_FLAG_Invalid = 0x00,
 	CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired = 0x01,
 	CAM_MEDIA_TYPE_DESCRIPTION_FLAG_BottomUpImage = 0x02,
 } CAM_MEDIA_TYPE_DESCRIPTION_FLAGS;
