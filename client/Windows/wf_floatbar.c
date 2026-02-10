@@ -121,8 +121,7 @@ static BOOL floatbar_animation(wfFloatBar* const floatbar, const BOOL show)
 
 	if (show)
 		return floatbar_show(floatbar);
-	else
-		return floatbar_hide(floatbar);
+	return floatbar_hide(floatbar);
 }
 
 static BOOL floatbar_trigger_hide(wfFloatBar* floatbar)
