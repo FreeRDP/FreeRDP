@@ -601,13 +601,13 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 	char* pwd = nullptr;
 	if (rc > 0)
 	{
-		user = _strdup(result[0].c_str());
+		user = _strdup(result.at(0).c_str());
 		if (args->result == AUTH_SMARTCARD_PIN)
-			pwd = _strdup(result[1].c_str());
+			pwd = _strdup(result.at(1).c_str());
 		else
 		{
-			domain = _strdup(result[1].c_str());
-			pwd = _strdup(result[2].c_str());
+			domain = _strdup(result.at(1).c_str());
+			pwd = _strdup(result.at(2).c_str());
 		}
 	}
 	return sdl_push_user_event(SDL_USEREVENT_AUTH_RESULT, user, domain, pwd, rc);

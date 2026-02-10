@@ -37,7 +37,7 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	{
 		SDL_SetWindowTitle(_window, title.c_str());
 		for (size_t x = 0; x < labels.size(); x++)
-			_list.emplace_back(_renderer, labels[x], initial[x], flags[x], x, widget_width,
+			_list.emplace_back(_renderer, labels.at(x), initial.at(x), flags.at(x), x, widget_width,
 			                   widget_heigth);
 
 		_buttons.populate(_renderer, buttonlabels, buttonids, total_width,
@@ -79,7 +79,7 @@ bool SdlInputWidgetList::valid(ssize_t current) const
 	auto s = static_cast<size_t>(current);
 	if (s >= _list.size())
 		return false;
-	return !_list[s].readonly();
+	return !_list.at(s).readonly();
 }
 
 SdlInputWidget* SdlInputWidgetList::get(ssize_t index)
@@ -89,7 +89,7 @@ SdlInputWidget* SdlInputWidgetList::get(ssize_t index)
 	auto s = static_cast<size_t>(index);
 	if (s >= _list.size())
 		return nullptr;
-	return &_list[s];
+	return &_list.at(s);
 }
 
 SdlInputWidgetList::~SdlInputWidgetList()
@@ -121,7 +121,7 @@ ssize_t SdlInputWidgetList::get_index(const SDL_MouseButtonEvent& button)
 	assert(_list.size() <= std::numeric_limits<ssize_t>::max());
 	for (size_t i = 0; i < _list.size(); i++)
 	{
-		auto& cur = _list[i];
+		auto& cur = _list.at(i);
 		auto r = cur.input_rect();
 
 		if ((x >= r.x) && (x <= r.x + r.w) && (y >= r.y) && (y <= r.y + r.h))
@@ -191,7 +191,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 						case SDLK_v:
 							if (pressed.size() == 2)
 							{
-								if ((pressed[0] == SDLK_LCTRL) || (pressed[0] == SDLK_RCTRL))
+								if ((pressed.at(0) == SDLK_LCTRL) || (pressed.at(0) == SDLK_RCTRL))
 								{
 									auto cur = get(CurrentActiveTextInput);
 									if (cur)
@@ -230,7 +230,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 					}
 					if (TextInputIndex >= 0)
 					{
-						auto& cur = _list[static_cast<size_t>(TextInputIndex)];
+						auto& cur = _list.at(static_cast<size_t>(TextInputIndex));
 						if (!cur.set_mouseover(_renderer, true))
 							throw;
 					}

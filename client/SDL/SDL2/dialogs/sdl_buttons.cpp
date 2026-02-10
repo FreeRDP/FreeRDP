@@ -28,7 +28,7 @@ bool SdlButtonList::populate(SDL_Renderer* renderer, const std::vector<std::stri
 	{
 		const size_t curOffsetX = offsetX + x * (static_cast<size_t>(width) + hpadding);
 		const SDL_Rect rect = { static_cast<int>(curOffsetX), offsetY, width, height };
-		_list.emplace_back(renderer, labels[x], ids[x], rect);
+		_list.emplace_back(renderer, labels.at(x), ids.at(x), rect);
 	}
 	return true;
 }
@@ -60,7 +60,7 @@ bool SdlButtonList::set_highlight_next(bool reset)
 	{
 		auto next = _highlight_index++;
 		_highlight_index %= _list.size();
-		auto& element = _list[next];
+		auto& element = _list.at(next);
 		_highlighted = &element;
 	}
 	return true;
@@ -73,7 +73,7 @@ bool SdlButtonList::set_highlight(size_t index)
 		_highlighted = nullptr;
 		return false;
 	}
-	auto& element = _list[index];
+	auto& element = _list.at(index);
 	_highlighted = &element;
 	_highlight_index = ++index % _list.size();
 	return true;

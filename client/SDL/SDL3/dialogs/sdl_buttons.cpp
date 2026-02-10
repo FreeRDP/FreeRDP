@@ -25,7 +25,7 @@ bool SdlButtonList::populate(std::shared_ptr<SDL_Renderer>& renderer,
 		const size_t curOffsetX = offsetX + x * (static_cast<size_t>(width) + hpadding);
 		const SDL_FRect rect = { static_cast<float>(curOffsetX), static_cast<float>(offsetY),
 			                     static_cast<float>(width), static_cast<float>(height) };
-		auto button = std::make_shared<SdlButton>(renderer, labels[x], ids[x], rect);
+		auto button = std::make_shared<SdlButton>(renderer, labels.at(x), ids.at(x), rect);
 		_list.emplace_back(button);
 	}
 	return true;
@@ -58,7 +58,7 @@ bool SdlButtonList::set_highlight_next(bool reset)
 	{
 		auto next = _highlight_index++;
 		_highlight_index %= _list.size();
-		auto& element = _list[next];
+		auto& element = _list.at(next);
 		_highlighted = element;
 	}
 	return true;
@@ -71,7 +71,7 @@ bool SdlButtonList::set_highlight(size_t index)
 		_highlighted = nullptr;
 		return false;
 	}
-	auto& element = _list[index];
+	auto& element = _list.at(index);
 	_highlighted = element;
 	_highlight_index = ++index % _list.size();
 	return true;

@@ -50,8 +50,9 @@ SdlInputWidgetPairList::SdlInputWidgetPairList(const std::string& title,
 	{
 		for (size_t x = 0; x < labels.size(); x++)
 		{
-			auto widget = std::make_shared<SdlInputWidgetPair>(
-			    _renderer, labels[x], initial[x], flags[x], x, widget_width, widget_heigth);
+			auto widget =
+			    std::make_shared<SdlInputWidgetPair>(_renderer, labels.at(x), initial.at(x),
+			                                         flags.at(x), x, widget_width, widget_heigth);
 			m_list.emplace_back(widget);
 		}
 
@@ -95,7 +96,7 @@ bool SdlInputWidgetPairList::valid(ssize_t current) const
 	auto s = static_cast<size_t>(current);
 	if (s >= m_list.size())
 		return false;
-	return !m_list[s]->readonly();
+	return !m_list.at(s)->readonly();
 }
 
 std::shared_ptr<SdlInputWidgetPair> SdlInputWidgetPairList::get(ssize_t index)
@@ -105,7 +106,7 @@ std::shared_ptr<SdlInputWidgetPair> SdlInputWidgetPairList::get(ssize_t index)
 	auto s = static_cast<size_t>(index);
 	if (s >= m_list.size())
 		return nullptr;
-	return m_list[s];
+	return m_list.at(s);
 }
 
 SdlInputWidgetPairList::~SdlInputWidgetPairList()
@@ -133,7 +134,7 @@ ssize_t SdlInputWidgetPairList::get_index(const SDL_MouseButtonEvent& button)
 	const auto y = button.y;
 	for (size_t i = 0; i < m_list.size(); i++)
 	{
-		auto& cur = m_list[i];
+		auto& cur = m_list.at(i);
 		auto r = cur->input_rect();
 
 		if ((x >= r.x) && (x <= r.x + r.w) && (y >= r.y) && (y <= r.y + r.h))
@@ -240,7 +241,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 						}
 						if (TextInputIndex >= 0)
 						{
-							auto& cur = m_list[static_cast<size_t>(TextInputIndex)];
+							auto& cur = m_list.at(static_cast<size_t>(TextInputIndex));
 							cur->set_mouseover(true);
 						}
 
