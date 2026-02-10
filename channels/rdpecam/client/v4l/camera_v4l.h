@@ -38,7 +38,7 @@ typedef struct
 
 	/* members used to call the callback */
 	CameraDevice* dev;
-	int streamIndex;
+	size_t streamIndex;
 	ICamHalSampleCapturedCallback sampleCallback;
 
 	BOOL streaming;

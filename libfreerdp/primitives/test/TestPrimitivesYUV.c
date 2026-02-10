@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <errno.h>
 
 #include "prim_test.h"
 
