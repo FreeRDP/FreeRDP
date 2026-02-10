@@ -868,8 +868,8 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	WCHAR* PasswordW = ConvertUtf8ToWCharAlloc(password, &cbPasswordW);
 	WCHAR* PassStubW = ConvertUtf8ToWCharAlloc(passStub, &cbPassStubW);
 
-	cbPasswordW = (cbPasswordW) * sizeof(WCHAR);
-	cbPassStubW = (cbPassStubW) * sizeof(WCHAR);
+	cbPasswordW = cbPasswordW * sizeof(WCHAR);
+	cbPassStubW = cbPassStubW * sizeof(WCHAR);
 	const size_t EncryptedSize = cbPassStubW + 4;
 
 	if (!PasswordW || !PassStubW)
@@ -945,7 +945,7 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file)
 		return FALSE;
 	}
 
-	cbPasswordW = (cbPasswordW) * sizeof(WCHAR);
+	cbPasswordW = cbPasswordW * sizeof(WCHAR);
 
 	if (!winpr_Digest(WINPR_MD_SHA1, (BYTE*)PasswordW, cbPasswordW, PasswordHash,
 	                  sizeof(PasswordHash)))
