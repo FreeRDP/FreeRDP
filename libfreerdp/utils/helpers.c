@@ -33,8 +33,40 @@
 static INIT_ONCE s_freerdp_app_details_once = INIT_ONCE_STATIC_INIT;
 static char s_freerdp_vendor_string[MAX_PATH] = { 0 };
 static char s_freerdp_product_string[MAX_PATH] = { 0 };
+static char s_freerdp_details_string[3ull * MAX_PATH] = { 0 };
+static WCHAR s_freerdp_details_string_w[3ull * MAX_PATH] = { 0 };
 static SSIZE_T s_freerdp_version = -1;
 static BOOL s_freerdp_app_details_are_custom = FALSE;
+
+static void updateDetailsString(void)
+{
+	const char* vendor = s_freerdp_vendor_string;
+	const char* product = s_freerdp_product_string;
+	const SSIZE_T version = s_freerdp_version;
+
+	WINPR_ASSERT(vendor);
+	WINPR_ASSERT(product);
+	if (s_freerdp_app_details_are_custom)
+	{
+		if (version < 0)
+			(void)_snprintf(s_freerdp_details_string, sizeof(s_freerdp_details_string) - 1, "%s-%s",
+			                vendor, product);
+		else
+			(void)_snprintf(s_freerdp_details_string, sizeof(s_freerdp_details_string) - 1,
+			                "%s-%s%" PRIdz, vendor, product, version);
+	}
+	else if (version < 0)
+	{
+		(void)_snprintf(s_freerdp_details_string, sizeof(s_freerdp_details_string) - 1, "%s",
+		                product);
+	}
+	else
+		(void)_snprintf(s_freerdp_details_string, sizeof(s_freerdp_details_string) - 1, "%s%" PRIdz,
+		                product, version);
+
+	(void)ConvertUtf8NToWChar(s_freerdp_details_string, sizeof(s_freerdp_details_string),
+	                          s_freerdp_details_string_w, sizeof(s_freerdp_details_string_w) - 1);
+}
 
 static BOOL CALLBACK init_app_details(WINPR_ATTR_UNUSED PINIT_ONCE once,
                                       WINPR_ATTR_UNUSED PVOID param,
@@ -52,6 +84,7 @@ static BOOL CALLBACK init_app_details(WINPR_ATTR_UNUSED PINIT_ONCE once,
 #else
 	s_freerdp_version = -1;
 #endif
+	updateDetailsString();
 	return TRUE;
 }
 
@@ -89,6 +122,7 @@ BOOL freerdp_setApplicationDetails(const char* vendor, const char* product, SSIZ
 
 	const BOOL rc = winpr_setApplicationDetails(str, "WinPR", -1);
 	free(str);
+	updateDetailsString();
 	return rc;
 }
 
@@ -144,6 +178,16 @@ SSIZE_T freerdp_getApplicationDetailsVersion(void)
 	if (!initializeApplicationDetails())
 		return -1;
 	return s_freerdp_version;
+}
+
+const char* freerdp_getApplicationDetailsString(void)
+{
+	return s_freerdp_details_string;
+}
+
+const WCHAR* freerdp_getApplicationDetailsStringW(void)
+{
+	return s_freerdp_details_string_w;
 }
 
 BOOL freerdp_areApplicationDetailsCustomized(void)

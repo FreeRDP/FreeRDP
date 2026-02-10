@@ -111,6 +111,23 @@ extern "C"
 	 */
 	FREERDP_API WINPR_ATTR_NODISCARD SSIZE_T freerdp_getApplicationDetailsVersion(void);
 
+	/** @brief Get the current details of the application.
+	 *  Defaults to \b <Vendor>-<Product><Version> if \b WITH_RESOURCE_VERSIONING is defined,
+	 *  \b <Vendor>-<Product> if <Vendor> does not equal <Product> and <Product> otherwise.
+	 *
+	 * @return The current application details as string.
+	 * @since version 3.23.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD const char* freerdp_getApplicationDetailsString(void);
+
+	/** @brief Get the current details of the application. Wide character version.
+	 *  See \ref freerdp_getApplicationDetailsString for details.
+	 *
+	 * @return The current application details as string.
+	 * @since version 3.23.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD const WCHAR* freerdp_getApplicationDetailsStringW(void);
+
 #ifdef __cplusplus
 }
 #endif

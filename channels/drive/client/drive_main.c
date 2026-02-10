@@ -22,6 +22,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/utils/helpers.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -460,7 +461,6 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 	DWORD lpNumberOfFreeClusters = 0;
 	DWORD lpTotalNumberOfClusters = 0;
 	WIN32_FILE_ATTRIBUTE_DATA wfad = { 0 };
-	WCHAR LabelBuffer[32] = { 0 };
 
 	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
@@ -479,8 +479,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 		case FileFsVolumeInformation:
 		{
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
-			const WCHAR* volumeLabel =
-			    InitializeConstWCharFromUtf8("FREERDP", LabelBuffer, ARRAYSIZE(LabelBuffer));
+			const WCHAR* volumeLabel = freerdp_getApplicationDetailsStringW();
 			const size_t volumeLabelLen = (_wcslen(volumeLabel) + 1) * sizeof(WCHAR);
 			const size_t length = 17ul + volumeLabelLen;
 
@@ -525,6 +524,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 
 		case FileFsAttributeInformation:
 		{
+			WCHAR LabelBuffer[32] = { 0 };
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
 			const WCHAR* diskType =
 			    InitializeConstWCharFromUtf8("FAT32", LabelBuffer, ARRAYSIZE(LabelBuffer));

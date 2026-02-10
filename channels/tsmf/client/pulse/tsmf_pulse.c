@@ -134,7 +134,8 @@ static BOOL tsmf_pulse_open(ITSMFAudioDevice* audio, const char* device)
 		return FALSE;
 	}
 
-	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), "freerdp");
+	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop),
+	                                freerdp_getApplicationDetailsString());
 
 	if (!pulse->context)
 	{
@@ -233,7 +234,8 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 
 	DEBUG_TSMF("");
 	pa_threaded_mainloop_lock(pulse->mainloop);
-	pulse->stream = pa_stream_new(pulse->context, "freerdp", &pulse->sample_spec, NULL);
+	pulse->stream = pa_stream_new(pulse->context, freerdp_ApplicationDetailsString(),
+	                              &pulse->sample_spec, NULL);
 
 	if (!pulse->stream)
 	{

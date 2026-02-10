@@ -20,6 +20,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/utils/helpers.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -617,7 +618,7 @@ static COMMAND_LINE_ARGUMENT_A* create_merged_args(const COMMAND_LINE_ARGUMENT_A
 BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
                                                const COMMAND_LINE_ARGUMENT_A* custom)
 {
-	const char* name = "FreeRDP";
+	const char* name = freerdp_getApplicationDetailsString();
 
 	/* allocate a merged copy of implementation defined and default arguments */
 	size_t lcount = 0;
@@ -629,7 +630,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 		name = argv[0];
 
 	printf("\n");
-	printf("FreeRDP - A Free Remote Desktop Protocol Implementation\n");
+	printf("%s - A Free Remote Desktop Protocol Implementation\n", name);
 	printf("See www.freerdp.com for more information\n");
 	printf("\n");
 	printf("Usage: %s [file] [options] [/v:<server>[:port]]\n", argv[0]);
@@ -5574,7 +5575,8 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 	if (compatibility)
 	{
 		WLog_WARN(TAG, "Unsupported command line syntax!");
-		WLog_WARN(TAG, "FreeRDP 1.0 style syntax was dropped with version 3!");
+		WLog_WARN(TAG, "%s 1.0 style syntax was dropped with version 3!",
+		          freerdp_getApplicationDetailsString());
 		return -1;
 	}
 
