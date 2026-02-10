@@ -20,10 +20,14 @@
 #ifndef FREERDP_CLIENT_X11_CLIPRDR_H
 #define FREERDP_CLIENT_X11_CLIPRDR_H
 
-#include "xf_client.h"
-#include "xfreerdp.h"
-
+#include <freerdp/types.h>
 #include <freerdp/client/cliprdr.h>
+
+#include <X11/Xlib.h>
+
+#include "xf_types.h"
+
+typedef struct xf_clipboard xfClipboard;
 
 void xf_clipboard_free(xfClipboard* clipboard);
 

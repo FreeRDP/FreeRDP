@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Video Optimized Remoting Virtual Channel Extension for X11
+ * X11 Client
  *
- * Copyright 2017 David Fort <contact@hardening-consulting.com>
+ * Copyright 2026 Thincast Technologies GmbH
+ * Copyright 2026 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +17,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CLIENT_X11_XF_VIDEO_H_
-#define CLIENT_X11_XF_VIDEO_H_
 
-#include <freerdp/client/video.h>
+#pragma once
 
-#include "xf_types.h"
+#include <winpr/wtypes.h>
+#include <freerdp/types.h>
 
-typedef struct s_xfVideoContext xfVideoContext;
+/* Forward declarations */
+typedef struct xf_context xfContext;
 
-void xf_video_control_init(xfContext* xfc, VideoClientContext* video);
-void xf_video_control_uninit(xfContext* xfc, VideoClientContext* video);
+typedef struct
+{
+	RECTANGLE_16 area;
+	RECTANGLE_16 workarea;
+	BOOL primary;
+} MONITOR_INFO;
 
-void xf_video_free(xfVideoContext* context);
-
-WINPR_ATTR_MALLOC(xf_video_free, 1)
-WINPR_ATTR_NODISCARD
-xfVideoContext* xf_video_new(xfContext* xfc);
-
-#endif /* CLIENT_X11_XF_VIDEO_H_ */
+typedef struct
+{
+	UINT32 nmonitors;
+	RECTANGLE_16 area;
+	RECTANGLE_16 workarea;
+	MONITOR_INFO* monitors;
+} VIRTUAL_SCREEN;

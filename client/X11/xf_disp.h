@@ -22,8 +22,11 @@
 #include <freerdp/types.h>
 #include <freerdp/client/disp.h>
 
-#include "xf_client.h"
-#include "xfreerdp.h"
+#include <X11/Xlib.h>
+
+#include "xf_types.h"
+
+typedef struct s_xfDispContext xfDispContext;
 
 FREERDP_API BOOL xf_disp_init(xfDispContext* xfDisp, DispClientContext* disp);
 FREERDP_API BOOL xf_disp_uninit(xfDispContext* xfDisp, DispClientContext* disp);

@@ -30,6 +30,7 @@
 #include "xf_gfx.h"
 #include "xf_rail.h"
 #include "xf_utils.h"
+#include "xf_window.h"
 
 #include <X11/Xutil.h>
 
@@ -444,6 +445,27 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 	return status;
 }
 
+static UINT xf_UnmapWindowForSurface(RdpgfxClientContext* context, UINT64 windowID)
+{
+	WINPR_ASSERT(context);
+	rdpGdi* gdi = (rdpGdi*)context->custom;
+	WINPR_ASSERT(gdi);
+
+	xfContext* xfc = (xfContext*)gdi->context;
+	WINPR_ASSERT(gdi->context);
+
+	if (freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
+	{
+		xfAppWindow* appWindow = xf_rail_get_window(xfc, windowID);
+		if (appWindow)
+			xf_AppWindowDestroyImage(appWindow);
+		xf_rail_return_window(appWindow);
+	}
+
+	WLog_WARN(TAG, "function not implemented");
+	return CHANNEL_RC_OK;
+}
+
 static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurface* surface)
 {
 	WINPR_ASSERT(context);
@@ -482,7 +504,9 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 		gfx->CreateSurface = xf_CreateSurface;
 		gfx->DeleteSurface = xf_DeleteSurface;
 	}
+
 	gfx->UpdateWindowFromSurface = xf_UpdateWindowFromSurface;
+	gfx->UnmapWindowForSurface = xf_UnmapWindowForSurface;
 }
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)

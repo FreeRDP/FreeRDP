@@ -18,9 +18,13 @@
 #ifndef FREERDP_CLIENT_X11_FLOATBAR_H
 #define FREERDP_CLIENT_X11_FLOATBAR_H
 
-typedef struct xf_floatbar xfFloatbar;
+#include <winpr/wtypes.h>
 
-#include "xfreerdp.h"
+#include <X11/Xlib.h>
+
+#include "xf_types.h"
+
+typedef struct xf_floatbar xfFloatbar;
 
 void xf_floatbar_free(xfFloatbar* floatbar);
 

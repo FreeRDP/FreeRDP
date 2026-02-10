@@ -441,7 +441,9 @@ BOOL xf_generic_MotionNotify_(xfContext* xfc, int x, int y, Window window, BOOL 
 	if (app)
 	{
 		/* make sure window exists */
-		if (!xf_AppWindowFromX11Window(xfc, window))
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window);
+		xf_rail_return_window(appWindow);
+		if (!appWindow)
 			return TRUE;
 
 		/* Translate to desktop coordinates */
@@ -547,7 +549,9 @@ BOOL xf_generic_ButtonEvent_(xfContext* xfc, int x, int y, int button, Window wi
 			if (app)
 			{
 				/* make sure window exists */
-				if (!xf_AppWindowFromX11Window(xfc, window))
+				xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, window);
+				xf_rail_return_window(appWindow);
+				if (!appWindow)
 					return TRUE;
 
 				/* Translate to desktop coordinates */
@@ -708,6 +712,7 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 		 */
 		if (appWindow)
 			xf_rail_adjust_position(xfc, appWindow);
+		xf_rail_return_window(appWindow);
 	}
 
 	xf_keyboard_focus_in(xfc);
@@ -762,12 +767,13 @@ static BOOL xf_event_ClientMessage(xfContext* xfc, const XClientMessageEvent* ev
 	{
 		if (app)
 		{
+			BOOL rc = TRUE;
 			xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 			if (appWindow)
-				return xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_CLOSE);
-
-			return TRUE;
+				rc = xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_CLOSE);
+			xf_rail_return_window(appWindow);
+			return rc;
 		}
 		else
 		{
@@ -800,6 +806,7 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, const XEnterWindowEvent* event,
 
 		/* keep track of which window has focus so that we can apply pointer updates */
 		xfc->appWindow = appWindow;
+		xf_rail_return_window(appWindow);
 	}
 
 	return TRUE;
@@ -821,6 +828,7 @@ static BOOL xf_event_LeaveNotify(xfContext* xfc, const XLeaveWindowEvent* event,
 		/* keep track of which window has focus so that we can apply pointer updates */
 		if (xfc->appWindow == appWindow)
 			xfc->appWindow = NULL;
+		xf_rail_return_window(appWindow);
 	}
 	return TRUE;
 }
@@ -926,6 +934,7 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 					xf_rail_adjust_position(xfc, appWindow);
 			}
 		}
+		xf_rail_return_window(appWindow);
 	}
 	return xf_pointer_update_scale(xfc);
 }
@@ -949,6 +958,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 			// xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
 			appWindow->is_mapped = TRUE;
 		}
+		xf_rail_return_window(appWindow);
 	}
 
 	return TRUE;
@@ -963,13 +973,14 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL 
 		xf_keyboard_release_all_keypress(xfc);
 
 	if (!app)
-		gdi_send_suppress_output(xfc->common.context.gdi, TRUE);
-	else
+		return gdi_send_suppress_output(xfc->common.context.gdi, TRUE);
+
 	{
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 		if (appWindow)
 			appWindow->is_mapped = FALSE;
+		xf_rail_return_window(appWindow);
 	}
 
 	return TRUE;
@@ -977,6 +988,7 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, const XUnmapEvent* event, BOOL 
 
 static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event, BOOL app)
 {
+	BOOL rc = TRUE;
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 
@@ -1001,7 +1013,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 			appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
 			if (!appWindow)
-				return TRUE;
+				goto fail;
 		}
 
 		if (event->atom == xfc->NET_WM_STATE)
@@ -1073,8 +1085,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				if (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED)
 				{
 					appWindow->rail_state = WINDOW_SHOW_MAXIMIZED;
-					return xf_rail_send_client_system_command(xfc, appWindow->windowId,
-					                                          SC_MAXIMIZE);
+					rc = xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MAXIMIZE);
 				}
 			}
 			else if (appWindow->minimized)
@@ -1082,8 +1093,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				if (appWindow->rail_state != WINDOW_SHOW_MINIMIZED)
 				{
 					appWindow->rail_state = WINDOW_SHOW_MINIMIZED;
-					return xf_rail_send_client_system_command(xfc, appWindow->windowId,
-					                                          SC_MINIMIZE);
+					rc = xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MINIMIZE);
 				}
 			}
 			else
@@ -1091,15 +1101,18 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				if (appWindow->rail_state != WINDOW_SHOW && appWindow->rail_state != WINDOW_HIDE)
 				{
 					appWindow->rail_state = WINDOW_SHOW;
-					return xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
+					rc = xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
 				}
 			}
 		}
 		else if (minimizedChanged)
-			gdi_send_suppress_output(xfc->common.context.gdi, minimized);
+			rc = gdi_send_suppress_output(xfc->common.context.gdi, minimized);
+
+	fail:
+		xf_rail_return_window(appWindow);
 	}
 
-	return TRUE;
+	return rc;
 }
 
 static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, const XEvent* event)
@@ -1215,7 +1228,9 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 			/* Update "current" window for cursor change orders */
 			xfc->appWindow = appWindow;
 
-			if (xf_event_suppress_events(xfc, appWindow, event))
+			const BOOL rc = xf_event_suppress_events(xfc, appWindow, event);
+			xf_rail_return_window(appWindow);
+			if (rc)
 				return TRUE;
 		}
 	}

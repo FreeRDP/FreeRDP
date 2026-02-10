@@ -20,10 +20,97 @@
 #ifndef FREERDP_CLIENT_X11_RAIL_H
 #define FREERDP_CLIENT_X11_RAIL_H
 
-#include "xf_client.h"
-#include "xfreerdp.h"
-
 #include <freerdp/client/rail.h>
+
+#include <X11/X.h>
+#include <X11/Xlib.h>
+
+#include "xf_types.h"
+
+enum xf_localmove_state
+{
+	LMS_NOT_ACTIVE,
+	LMS_STARTING,
+	LMS_ACTIVE,
+	LMS_TERMINATING
+};
+
+struct xf_localmove
+{
+	int root_x;
+	int root_y;
+	int window_x;
+	int window_y;
+	enum xf_localmove_state state;
+	int direction;
+};
+typedef struct xf_localmove xfLocalMove;
+
+struct xf_app_window
+{
+	xfContext* xfc;
+
+	int x;
+	int y;
+	int width;
+	int height;
+	char* title;
+
+	UINT32 surfaceId;
+	UINT64 windowId;
+	UINT32 ownerWindowId;
+
+	UINT32 dwStyle;
+	UINT32 dwExStyle;
+	UINT32 showState;
+
+	INT32 clientOffsetX;
+	INT32 clientOffsetY;
+	UINT32 clientAreaWidth;
+	UINT32 clientAreaHeight;
+
+	INT32 windowOffsetX;
+	INT32 windowOffsetY;
+	INT32 windowClientDeltaX;
+	INT32 windowClientDeltaY;
+	UINT32 windowWidth;
+	UINT32 windowHeight;
+	UINT32 numWindowRects;
+	RECTANGLE_16* windowRects;
+
+	INT32 visibleOffsetX;
+	INT32 visibleOffsetY;
+	UINT32 numVisibilityRects;
+	RECTANGLE_16* visibilityRects;
+
+	UINT32 localWindowOffsetCorrX;
+	UINT32 localWindowOffsetCorrY;
+
+	UINT32 resizeMarginLeft;
+	UINT32 resizeMarginTop;
+	UINT32 resizeMarginRight;
+	UINT32 resizeMarginBottom;
+
+	GC gc;
+	int shmid;
+	Window handle;
+	Window* xfwin;
+	BOOL fullscreen;
+	BOOL decorations;
+	BOOL is_mapped;
+	BOOL is_transient;
+	xfLocalMove local_move;
+	BYTE rail_state;
+	BOOL maxVert;
+	BOOL maxHorz;
+	BOOL minimized;
+	BOOL rail_ignore_configure;
+
+	Pixmap pixmap;
+	XImage* image;
+};
+typedef struct xf_app_window xfAppWindow;
+typedef struct xf_rail_icon_cache xfRailIconCache;
 
 BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);
 BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect);
@@ -37,6 +124,10 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc);
 
 xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UINT32 width,
                                 UINT32 height, UINT32 surfaceId);
+
+void xf_rail_return_window(xfAppWindow* window);
+
+WINPR_ATTR_MALLOC(xf_rail_return_window, 1)
 xfAppWindow* xf_rail_get_window(xfContext* xfc, UINT64 id);
 
 BOOL xf_rail_del_window(xfContext* xfc, UINT64 id);
