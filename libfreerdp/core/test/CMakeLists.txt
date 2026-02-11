@@ -27,6 +27,10 @@ create_test_sourcelist(SRCS ${DRIVER} ${TESTS})
 
 add_executable(${MODULE_NAME} ${SRCS})
 
+if(WITH_RESOURCE_VERSIONING)
+  target_compile_definitions(${MODULE_NAME} PRIVATE WITH_RESOURCE_VERSIONING)
+endif()
+
 add_compile_definitions(TESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
 add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 

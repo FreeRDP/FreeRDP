@@ -421,10 +421,11 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 					goto fail;
 
 				rdpMonitor* monitor = &rdpmonitors[nmonitors];
+				const RECTANGLE_16* area = &vscreen->monitors[i].area;
 				monitor->x =
 				    WINPR_ASSERTING_INT_CAST(
 				        int32_t,
-				        vscreen->monitors[i].area.left*(
+				        area->left*(
 				            freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseWidth)
 				                ? freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)
 				                : 100)) /
@@ -432,7 +433,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				monitor->y =
 				    WINPR_ASSERTING_INT_CAST(
 				        int32_t,
-				        vscreen->monitors[i].area.top*(
+				        area->top*(
 				            freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseHeight)
 				                ? freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)
 				                : 100)) /
@@ -440,7 +441,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				monitor->width =
 				    WINPR_ASSERTING_INT_CAST(
 				        int32_t,
-				        (vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1) *
+				        (area->right - area->left + 1) *
 				            (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseWidth)
 				                 ? freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)
 				                 : 100)) /
@@ -448,8 +449,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				monitor->height =
 				    WINPR_ASSERTING_INT_CAST(
 				        int32_t,
-				        (vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1) *
-				            (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseWidth)
+				        (area->bottom - area->top + 1) *
+				            (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseHeight)
 				                 ? freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)
 				                 : 100)) /
 				    100;
@@ -573,19 +574,10 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				if (vB != destB)
 					xfc->fullscreenMonitors.bottom = orig;
 
-				const UINT32 ps = freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen);
-				WINPR_ASSERT(ps <= 100);
-
-				const int psuw = freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseWidth)
-				                     ? (int)ps
-				                     : 100;
-				const int psuh = freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseHeight)
-				                     ? (int)ps
-				                     : 100;
-				vX = (destX * psuw) / 100;
-				vY = (destY * psuh) / 100;
-				vR = (destR * psuw) / 100;
-				vB = (destB * psuh) / 100;
+				vX = destX;
+				vY = destY;
+				vR = destR;
+				vB = destB;
 			}
 
 			vscreen->area.left = 0;
