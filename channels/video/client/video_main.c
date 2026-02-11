@@ -708,21 +708,20 @@ static void video_timer(VideoClientContext* video, UINT64 now)
 	} while (1);
 	LeaveCriticalSection(&priv->framesLock);
 
-	if (!frame)
-		goto treat_feedback;
+	if (frame)
+	{
+		presentation = frame->presentation;
 
-	presentation = frame->presentation;
+		priv->publishedFrames++;
+		memcpy(presentation->surface->data, frame->surfaceData, 1ull * frame->scanline * frame->h);
 
-	priv->publishedFrames++;
-	memcpy(presentation->surface->data, frame->surfaceData, 1ull * frame->scanline * frame->h);
+		WINPR_ASSERT(video->showSurface);
+		video->showSurface(video, presentation->surface, presentation->ScaledWidth,
+		                   presentation->ScaledHeight);
 
-	WINPR_ASSERT(video->showSurface);
-	video->showSurface(video, presentation->surface, presentation->ScaledWidth,
-	                   presentation->ScaledHeight);
+		VideoFrame_free(&frame);
+	}
 
-	VideoFrame_free(&frame);
-
-treat_feedback:
 	if (priv->nextFeedbackTime < now)
 	{
 		/* we can compute some feedback only if we have some published frames and
@@ -787,7 +786,7 @@ treat_feedback:
 				video_control_send_client_notification(video, &notif);
 				priv->lastSentRate = computedRate;
 
-				WLog_DBG(TAG,
+				WLog_VRB(TAG,
 				         "server notified with rate %" PRIu32 " published=%" PRIu32
 				         " dropped=%" PRIu32,
 				         priv->lastSentRate, priv->publishedFrames, priv->droppedFrames);
@@ -795,9 +794,6 @@ treat_feedback:
 
 			PresentationContext_unref(&priv->currentPresentation);
 		}
-
-		WLog_DBG(TAG, "currentRate=%" PRIu32 " published=%" PRIu32 " dropped=%" PRIu32,
-		         priv->lastSentRate, priv->publishedFrames, priv->droppedFrames);
 
 		priv->droppedFrames = 0;
 		priv->publishedFrames = 0;
