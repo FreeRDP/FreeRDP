@@ -68,10 +68,14 @@ HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height, UINT32 srcFor
 
 wfBitmap* wf_image_new(wfContext* wfc, UINT32 width, UINT32 height, UINT32 format, const BYTE* data)
 {
-	HDC hdc;
-	wfBitmap* image;
-	hdc = GetDC(NULL);
-	image = (wfBitmap*)malloc(sizeof(wfBitmap));
+	wfBitmap* image = (wfBitmap*)malloc(sizeof(wfBitmap));
+	if (!image)
+	{
+		WLog_ERR(TAG, "malloc failed for wfBitmap");
+		return NULL;
+	}
+
+	HDC hdc = GetDC(NULL);
 	image->hdc = CreateCompatibleDC(hdc);
 	image->bitmap = wf_create_dib(wfc, width, height, format, data, &(image->pdata));
 	image->org_bitmap = (HBITMAP)SelectObject(image->hdc, image->bitmap);

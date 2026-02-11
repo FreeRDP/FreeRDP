@@ -118,6 +118,8 @@ static wfBitmap* wf_glyph_new(wfContext* wfc, GLYPH_DATA* glyph)
 {
 	wfBitmap* glyph_bmp;
 	glyph_bmp = wf_image_new(wfc, glyph->cx, glyph->cy, PIXEL_FORMAT_MONO, glyph->aj);
+	if (!glyph_bmp)
+		WLog_ERR(TAG, "wf_image_new failed for glyph");
 	return glyph_bmp;
 }
 
@@ -131,6 +133,11 @@ static BYTE* wf_glyph_convert(wfContext* wfc, int width, int height, const BYTE*
 	const int src_bytes_per_row = (width + 7) / 8;
 	const int dst_bytes_per_row = src_bytes_per_row + (src_bytes_per_row % 2);
 	BYTE* cdata = (BYTE*)malloc(dst_bytes_per_row * height);
+	if (!cdata)
+	{
+		WLog_ERR(TAG, "malloc failed for cdata buffer");
+		return NULL;
+	}
 	const BYTE* src = data;
 
 	for (int indexy = 0; indexy < height; indexy++)
@@ -654,6 +661,7 @@ static BOOL wf_gdi_line_to(rdpContext* context, const LINE_TO_ORDER* line_to)
 
 static BOOL wf_gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 {
+	BOOL rc = FALSE;
 	int org_rop2;
 	HPEN hpen;
 	HPEN org_hpen;
@@ -677,6 +685,11 @@ static BOOL wf_gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 		int numPoints;
 		numPoints = polyline->numDeltaEntries + 1;
 		pts = (POINT*)malloc(sizeof(POINT) * numPoints);
+		if (!pts)
+		{
+			WLog_ERR(TAG, "malloc failed for polyline points");
+			goto fail;
+		}
 		pts[0].x = temp.x = polyline->xStart;
 		pts[0].y = temp.y = polyline->yStart;
 
@@ -696,10 +709,13 @@ static BOOL wf_gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 		free(pts);
 	}
 
+	rc = TRUE;
+
+fail:
 	SelectObject(wfc->drawing->hdc, org_hpen);
 	wf_set_rop2(wfc->drawing->hdc, org_rop2);
 	DeleteObject(hpen);
-	return TRUE;
+	return rc;
 }
 
 static BOOL wf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
