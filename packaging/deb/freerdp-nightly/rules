@@ -70,6 +70,7 @@ DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
 						  -DCHANNEL_RDPEAR_CLIENT=ON \
 						  -DCHANNEL_SSHAGENT=ON \
 						  -DCHANNEL_SSHAGENT_CLIENT=ON \
+						  -DCMAKE_CTEST_ARGUMENTS="-DExperimentalTest;--output-on-failure;--no-compress-output" \
 						  $(AAC_SUPPORT) \
 						  $(SDL3_SUPPORT) \
 						  $(SANITIZE_ADDRESS) \
@@ -89,4 +90,3 @@ override_dh_strip:
 
 override_dh_missing:
 	dh_missing --fail-missing
-
