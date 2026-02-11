@@ -36,6 +36,11 @@ static char* create(const char* vendor, const char* product, SSIZE_T version, ch
 		(void)winpr_asprintf(&wvendor, &wlen, "%s%c%s", vendor, separator, product);
 	else
 		(void)winpr_asprintf(&wvendor, &wlen, "%s%c%s%" PRIdz, vendor, separator, product, version);
+	if (!wvendor)
+	{
+		(void)fprintf(stderr, "%s(vendor=%s, product=%s, version=%" PRIdz ", separator=%c) NULL\n",
+		              __func__, vendor, product, version, separator);
+	}
 	return wvendor;
 }
 
@@ -43,13 +48,25 @@ static bool checkCombined(const char* what, const char* vendor, const char* prod
                           SSIZE_T version, char separator)
 {
 	if (!what || !vendor || !product)
+	{
+		(void)fprintf(stderr,
+		              "%s(what=%s, vendor=%s, product=%s, version=%" PRIdz ", separator=%c)\n",
+		              what, vendor, product, version, separator);
 		return false;
+	}
 
 	char* cmp = create(vendor, product, version, separator);
 	if (!cmp)
 		return false;
 
 	const bool rc = strcmp(what, cmp) == 0;
+	if (!rc)
+	{
+		(void)fprintf(stderr,
+		              "%s(what=%s, vendor=%s, product=%s, version=%" PRIdz
+		              ", separator=%c) -> got %s\n",
+		              what, vendor, product, version, separator, cmp);
+	}
 	free(cmp);
 	return rc;
 }
@@ -160,9 +177,22 @@ static bool checkFreeRDPConfig(bool custom, const char* what, BOOL system, const
 		return false;
 	char* cmp = getFreeRDPConfig(custom, system, vendor, product, version, filename);
 	if (!cmp)
+	{
+		(void)fprintf(stderr,
+		              "%s(custom=%d, what=%s, system=%d, vendor=%s, product=%s, version=%" PRIdz
+		              ", file=%s) failed\n",
+		              __func__, custom, what, system, vendor, product, version, filename);
 		return false;
+	}
 
 	const bool rc = strcmp(what, cmp) == 0;
+	if (!rc)
+	{
+		(void)fprintf(stderr,
+		              "%s(custom=%d, what=%s, system=%d, vendor=%s, product=%s, version=%" PRIdz
+		              ", file=%s) failed compare: got %s\n",
+		              __func__, custom, what, system, vendor, product, version, filename, cmp);
+	}
 	free(cmp);
 	return rc;
 }
@@ -244,7 +274,10 @@ static bool checkFreeRDPResults(bool custom, const char* vendor, const char* pro
 		(void)winpr_asprintf(&cmp, &clen, FMT, pcmp);
 		free(pcmp);
 		if (!cmp)
+		{
+			(void)fprintf(stderr, "winpr_asprintf cmp NULL\n");
 			return false;
+		}
 
 		char* comb = freerdp_getApplicatonDetailsRegKey(FMT);
 #undef FMT
@@ -258,7 +291,10 @@ static bool checkFreeRDPResults(bool custom, const char* vendor, const char* pro
 		free(cmp);
 
 		if (!rc)
+		{
+			(void)fprintf(stderr, "strcmp(%s, %s) compare reg failed\n", cmp, comb);
 			return false;
+		}
 	}
 	{
 		char* comb = freerdp_getApplicatonDetailsCombined('/');
@@ -396,11 +432,19 @@ static bool checkWinPRResults(bool custom, const char* vendor, const char* produ
 
 int TestUtils(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])
 {
+	int rc = -23;
+
 	if (!checkWinPRResults(false, WINPR_VENDOR_STRING, WINPR_PRODUCT_STRING, WINPR_VERSION_MAJOR))
-		return -1;
+	{
+		rc = -1;
+		goto fail;
+	}
 	if (!checkFreeRDPResults(false, FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING,
 	                         FREERDP_VERSION_MAJOR))
-		return -2;
+	{
+		rc = -2;
+		goto fail;
+	}
 
 	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
 	{
@@ -410,7 +454,10 @@ int TestUtils(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])
 		{
 			(void)fprintf(stderr, "freerdp_setApplicationDetails(%s, %s, %" PRIdz ") failed\n",
 			              cur->vendor, cur->product, cur->version);
-			return -3;
+			{
+				rc = -3;
+				goto fail;
+			}
 		}
 
 		const char separator = PathGetSeparatorA(PATH_STYLE_NATIVE);
@@ -420,15 +467,26 @@ int TestUtils(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])
 		char* wvendor = create(cur->vendor, cur->product, cur->version, separator);
 #endif
 		if (!wvendor)
-			return -4;
+		{
+			rc = -4;
+			goto fail;
+		}
 		const BOOL wrc = checkWinPRResults(true, wvendor, "WinPR", -1);
 		free(wvendor);
 		if (!wrc)
-			return -5;
+		{
+			rc = -5;
+			goto fail;
+		}
 		if (!checkFreeRDPResults(true, cur->vendor, cur->product, cur->version))
-			return -6;
+		{
+			rc = -6;
+			goto fail;
+		}
 	}
 
-	printf("%s: success\n", __func__);
-	return 0;
+	rc = 0;
+fail:
+	printf("%s: result %d\n", __func__, rc);
+	return rc;
 }
