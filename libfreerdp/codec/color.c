@@ -404,6 +404,9 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 	if (!pDstData || !bitsColor)
 		return FALSE;
 
+	if ((nWidth == 0) || (nHeight == 0))
+		return TRUE;
+
 	/*
 	 * Color formats used by icons are DIB bitmap formats (2-bit format
 	 * is not used by MS-RDPERP). Note that 16-bit is RGB555, not RGB565,
@@ -446,7 +449,13 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 
 	/* Ensure we have enough source data bytes for image copy. */
 	if (cbBitsColor < nWidth * nHeight * FreeRDPGetBytesPerPixel(format))
+	{
+		WLog_ERR(TAG,
+		         "cbBitsColor{%" PRIu32 "} < nWidth{%" PRIu32 "} * nHeight{%" PRIu32
+		         "} * bpp{%" PRIu32 "}",
+		         cbBitsColor, nWidth, nHeight, FreeRDPGetBytesPerPixel(format));
 		return FALSE;
+	}
 
 	fill_gdi_palette_for_icon(colorTable, cbColorTable, &palette);
 	if (!freerdp_image_copy_no_overlap(pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight,
@@ -454,14 +463,8 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 		return FALSE;
 
 	/* apply alpha mask */
-	if (FreeRDPColorHasAlpha(DstFormat) && cbBitsMask)
+	if (FreeRDPColorHasAlpha(DstFormat) && (cbBitsMask > 0))
 	{
-		BYTE nextBit = 0;
-		const BYTE* maskByte = NULL;
-		UINT32 stride = 0;
-		BYTE r = 0;
-		BYTE g = 0;
-		BYTE b = 0;
 		BYTE* dstBuf = pDstData;
 		UINT32 dstBpp = FreeRDPGetBytesPerPixel(DstFormat);
 
@@ -470,20 +473,29 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 		 * And due to hysterical raisins, stride of DIB bitmaps must be
 		 * a multiple of 4 bytes.
 		 */
-		stride = round_up(div_ceil(nWidth, 8), 4);
+		const size_t stride = round_up(div_ceil(nWidth, 8), 4);
+		if (cbBitsMask < stride * (nHeight - 1ULL))
+		{
+			WLog_ERR(TAG,
+			         "cbBitsMask{%" PRIu32 "} < stride{%" PRIuz "} * (nHeight{%" PRIu32 "} - 1)",
+			         cbBitsMask, stride, nHeight);
+			return FALSE;
+		}
 
 		for (UINT32 y = 0; y < nHeight; y++)
 		{
-			maskByte = &bitsMask[1ULL * stride * (nHeight - 1 - y)];
-			nextBit = 0x80;
+			const BYTE* maskByte = &bitsMask[stride * (nHeight - 1ULL - y)];
+			BYTE nextBit = 0x80;
 
 			for (UINT32 x = 0; x < nWidth; x++)
 			{
-				UINT32 color = 0;
+				BYTE r = 0;
+				BYTE g = 0;
+				BYTE b = 0;
 				BYTE alpha = (*maskByte & nextBit) ? 0x00 : 0xFF;
 
 				/* read color back, add alpha and write it back */
-				color = FreeRDPReadColor_int(dstBuf, DstFormat);
+				UINT32 color = FreeRDPReadColor_int(dstBuf, DstFormat);
 				FreeRDPSplitColor(color, DstFormat, &r, &g, &b, NULL, &palette);
 				color = FreeRDPGetColor(DstFormat, r, g, b, alpha);
 				FreeRDPWriteColor_int(dstBuf, DstFormat, color);
