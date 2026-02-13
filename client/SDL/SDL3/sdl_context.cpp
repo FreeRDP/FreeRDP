@@ -173,6 +173,33 @@ BOOL SdlContext::preConnect(freerdp* instance)
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, maxHeight))
 				return FALSE;
 		}
+
+		/**
+		 * If /f is specified in combination with /smart-sizing:widthxheight then
+		 * we run the session in the /smart-sizing dimensions scaled to full screen
+		 */
+
+		const uint32_t sw = freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth);
+		const uint32_t sh = freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight);
+		const BOOL sm = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
+		if (sm && (sw > 0) && (sh > 0))
+		{
+			const BOOL mm = freerdp_settings_get_bool(settings, FreeRDP_UseMultimon);
+			if (mm)
+				WLog_Print(sdl->getWLog(), WLOG_WARN,
+				           "/smart-sizing and /multimon are currently not supported, ignoring "
+				           "/smart-sizing!");
+			else
+			{
+				sdl->_windowWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+				sdl->_windowHeigth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, sw))
+					return FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, sh))
+					return FALSE;
+			}
+		}
 	}
 	else
 	{
@@ -387,13 +414,20 @@ bool SdlContext::createWindows()
 		auto monitor = static_cast<rdpMonitor*>(
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
 
-		auto w = WINPR_ASSERTING_INT_CAST(Uint32, monitor->width);
-		auto h = WINPR_ASSERTING_INT_CAST(Uint32, monitor->height);
+		Uint32 w = WINPR_ASSERTING_INT_CAST(Uint32, monitor->width);
+		Uint32 h = WINPR_ASSERTING_INT_CAST(Uint32, monitor->height);
 		if (!(freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) ||
 		      freerdp_settings_get_bool(settings, FreeRDP_Fullscreen)))
 		{
-			w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-			h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+			if (_windowWidth > 0)
+				w = _windowWidth;
+			else
+				w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+
+			if (_windowHeigth > 0)
+				h = _windowHeigth;
+			else
+				h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 		}
 
 		Uint32 flags = SDL_WINDOW_HIGH_PIXEL_DENSITY;
