@@ -56,6 +56,8 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 	std::ignore = resize({ w, h });
 	SDL_SetHint(SDL_HINT_APP_NAME, "");
 	std::ignore = SDL_SyncWindow(_window);
+
+	_monitor = query(_window, id, true);
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
@@ -129,7 +131,18 @@ Sint32 SdlWindow::offsetY() const
 
 rdpMonitor SdlWindow::monitor(bool isPrimary) const
 {
-	return query(_window, displayIndex(), isPrimary);
+	auto m = _monitor;
+	if (isPrimary)
+	{
+		m.x = 0;
+		m.y = 0;
+	}
+	return m;
+}
+
+void SdlWindow::setMonitor(rdpMonitor monitor)
+{
+	_monitor = monitor;
 }
 
 float SdlWindow::scale() const
@@ -274,14 +287,12 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 	if (!window)
 		return {};
 
-	const auto& r = rect(window);
+	const auto& r = rect(window, forceAsPrimary);
 	const float factor = SDL_GetWindowDisplayScale(window);
 	const float dpi = std::roundf(factor * 100.0f);
 
 	WINPR_ASSERT(r.w > 0);
 	WINPR_ASSERT(r.h > 0);
-
-	bool highDpi = dpi > 100;
 
 	const auto primary = SDL_GetPrimaryDisplay();
 	const auto orientation = SDL_GetCurrentDisplayOrientation(id);
@@ -289,8 +300,8 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 
 	rdpMonitor monitor{};
 	monitor.orig_screen = id;
-	monitor.x = forceAsPrimary ? 0 : r.x;
-	monitor.y = forceAsPrimary ? 0 : r.y;
+	monitor.x = r.x;
+	monitor.y = r.y;
 	monitor.width = r.w;
 	monitor.height = r.h;
 	monitor.is_primary = forceAsPrimary || (id == primary);
@@ -316,18 +327,47 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 	return monitor;
 }
 
-SDL_Rect SdlWindow::rect(SDL_Window* window)
+SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 {
 	SDL_Rect rect = {};
 	if (!window)
 		return {};
 
-	if (!SDL_GetWindowPosition(window, &rect.x, &rect.y))
-		return {};
+	if (!forceAsPrimary)
+	{
+		if (!SDL_GetWindowPosition(window, &rect.x, &rect.y))
+			return {};
+	}
+
 	if (!SDL_GetWindowSizeInPixels(window, &rect.w, &rect.h))
 		return {};
 
 	return rect;
+}
+
+SdlWindow::HighDPIMode SdlWindow::isHighDPIWindowsMode(SDL_Window* window)
+{
+	if (!window)
+		return MODE_INVALID;
+
+	const auto id = SDL_GetDisplayForWindow(window);
+	if (id == 0)
+		return MODE_INVALID;
+
+	const auto cs = SDL_GetDisplayContentScale(id);
+	const auto ds = SDL_GetWindowDisplayScale(window);
+	const auto pd = SDL_GetWindowPixelDensity(window);
+
+	/* mac os x style, but no HighDPI display */
+	if ((cs == 1.0f) && (ds == 1.0f) && (pd == 1.0f))
+		return MODE_NONE;
+
+	/* mac os x style HighDPI */
+	if ((cs == 1.0f) && (ds > 1.0f) && (pd > 1.0f))
+		return MODE_MACOS;
+
+	/* rest is windows style */
+	return MODE_WINDOWS;
 }
 
 bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& dstRect)
@@ -420,4 +460,23 @@ rdpMonitor SdlWindow::query(SDL_DisplayID id, bool forceAsPrimary)
 		;
 
 	return query(window.get(), id, forceAsPrimary);
+}
+
+SDL_Rect SdlWindow::rect(SDL_DisplayID id, bool forceAsPrimary)
+{
+	std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(createDummy(id), SDL_DestroyWindow);
+	if (!window)
+		return {};
+
+	std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer*)> renderer(
+	    SDL_CreateRenderer(window.get(), nullptr), SDL_DestroyRenderer);
+
+	if (!SDL_SyncWindow(window.get()))
+		return {};
+
+	SDL_Event event{};
+	while (SDL_PollEvent(&event))
+		;
+
+	return rect(window.get(), forceAsPrimary);
 }

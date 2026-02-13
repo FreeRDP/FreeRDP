@@ -165,7 +165,7 @@ class SdlContext
 	[[nodiscard]] bool handleEvent(const SDL_MouseWheelEvent& ev);
 	[[nodiscard]] bool handleEvent(const SDL_TouchFingerEvent& ev);
 
-	void addOrUpdateDisplay(SDL_DisplayID id, const rdpMonitor& monitor);
+	void addOrUpdateDisplay(SDL_DisplayID id);
 	void deleteDisplay(SDL_DisplayID id);
 
 	[[nodiscard]] bool createPrimary();
@@ -179,6 +179,11 @@ class SdlContext
 	[[nodiscard]] int error_info_to_error(DWORD* pcode, char** msg, size_t* len) const;
 
 	void applyMonitorOffset(SDL_WindowID window, float& x, float& y) const;
+
+	[[nodiscard]] std::vector<SDL_DisplayID>
+	updateDisplayOffsetsForNeighbours(SDL_DisplayID id,
+	                                  const std::vector<SDL_DisplayID>& ignore = {});
+	void updateMonitorDataFromOffsets();
 
 	rdpContext* _context = nullptr;
 	wLog* _log = nullptr;
@@ -214,6 +219,7 @@ class SdlContext
 
 	std::map<SDL_DisplayID, rdpMonitor> _displays;
 	std::map<SDL_WindowID, SdlWindow> _windows;
+	std::map<SDL_DisplayID, std::pair<SDL_Rect, SDL_Rect>> _offsets;
 
 	uint32_t _windowWidth = 0;
 	uint32_t _windowHeigth = 0;

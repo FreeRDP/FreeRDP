@@ -172,13 +172,6 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 	return TRUE;
 }
 
-[[nodiscard]] static Uint32 scale(Uint32 val, float scale)
-{
-	const auto dval = static_cast<float>(val);
-	const auto sval = dval / scale;
-	return static_cast<Uint32>(sval);
-}
-
 [[nodiscard]] static BOOL sdl_apply_display_properties(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
@@ -242,7 +235,6 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 			sdl->setMonitorIds({ id });
 		}
 
-		// TODO: Fill monitor struct
 		if (!sdl_apply_display_properties(sdl))
 			return FALSE;
 		return sdl_apply_max_size(sdl, pMaxWidth, pMaxHeight);
