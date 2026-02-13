@@ -26,7 +26,7 @@ if(ENABLE_WARNING_VERBOSE)
   endif()
 endif()
 
-list(APPEND COMMON_COMPILER_FLAGS -Wimplicit-function-declaration)
+list(APPEND COMMON_COMPILER_FLAGS -Wimplicit-function-declaration -Wno-jump-misses-init)
 
 foreach(FLAG ${COMMON_COMPILER_FLAGS})
   checkcflag(${FLAG})
