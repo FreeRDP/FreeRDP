@@ -732,7 +732,8 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 
 	if (!inst || !inst->context)
 	{
-		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%lld", (void*)env, (void*)cls, instance);
+		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%" PRId64, (void*)env, (void*)cls,
+		           (int64_t)instance);
 		return JNI_FALSE;
 	}
 
@@ -753,7 +754,8 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 
 	if (!inst || !inst->context || !cls || !env)
 	{
-		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%lld", (void*)env, (void*)cls, instance);
+		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%" PRId64, (void*)env, (void*)cls,
+		           (int64_t)instance);
 		return JNI_FALSE;
 	}
 
@@ -792,7 +794,8 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1update_1graphics(JNIEn
 
 	if (!env || !cls || !inst)
 	{
-		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%lld", (void*)env, (void*)cls, instance);
+		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%" PRId64, (void*)env, (void*)cls,
+		           (int64_t)instance);
 		return JNI_FALSE;
 	}
 
