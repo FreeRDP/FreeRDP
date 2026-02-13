@@ -286,15 +286,14 @@ static bool checkFreeRDPResults(bool custom, const char* vendor, const char* pro
 		if (comb)
 		{
 			rc = strcmp(cmp, comb) == 0;
+			if (!rc)
+				(void)fprintf(stderr, "strcmp(%s, %s) compare reg failed\n", cmp, comb);
 		}
 		free(comb);
 		free(cmp);
 
 		if (!rc)
-		{
-			(void)fprintf(stderr, "strcmp(%s, %s) compare reg failed\n", cmp, comb);
 			return false;
-		}
 	}
 	{
 		char* comb = freerdp_getApplicatonDetailsCombined('/');
