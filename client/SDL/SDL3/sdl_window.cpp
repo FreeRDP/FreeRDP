@@ -17,6 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cmath>
 #include <limits>
 #include <sstream>
 
@@ -27,12 +28,14 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
                      [[maybe_unused]] Uint32 flags)
     : _displayID(id)
 {
+	// since scale not known until surface is mapped,
+	// create 1×1 and sync to get scale, then resize to logical size
 	auto props = SDL_CreateProperties();
 	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title.c_str());
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, rect.x);
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, rect.y);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, rect.w);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, rect.h);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, 1);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, 1);
 
 	if (flags & SDL_WINDOW_HIGH_PIXEL_DENSITY)
 		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
@@ -46,13 +49,22 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 	_window = SDL_CreateWindowWithProperties(props);
 	SDL_DestroyProperties(props);
 
-	auto sc = scale();
-	const int iscale = static_cast<int>(sc * 100.0f);
-	auto w = 100 * rect.w / iscale;
-	auto h = 100 * rect.h / iscale;
-	std::ignore = resize({ w, h });
-	SDL_SetHint(SDL_HINT_APP_NAME, "");
 	std::ignore = SDL_SyncWindow(_window);
+
+	if (!(flags & SDL_WINDOW_FULLSCREEN))
+	{
+		// windowed: convert physical pixels to logical coords
+		auto sc = scale();
+		if (sc < 1.0f)
+			sc = 1.0f;
+		auto logicalW = static_cast<int>(std::lroundf(static_cast<float>(rect.w) / sc));
+		auto logicalH = static_cast<int>(std::lroundf(static_cast<float>(rect.h) / sc));
+		std::ignore = resize({ logicalW, logicalH });
+		std::ignore = SDL_SyncWindow(_window);
+	}
+	// fullscreen: SDL sizes the window to the display automatically
+
+	SDL_SetHint(SDL_HINT_APP_NAME, "");
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
@@ -328,13 +340,18 @@ SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 f
 {
 	flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
+	// width/height from caller is actual physical pixels
 	SDL_Rect rect = { static_cast<int>(SDL_WINDOWPOS_CENTERED_DISPLAY(id)),
 		              static_cast<int>(SDL_WINDOWPOS_CENTERED_DISPLAY(id)), static_cast<int>(width),
 		              static_cast<int>(height) };
 
 	if ((flags & SDL_WINDOW_FULLSCREEN) != 0)
 	{
-		std::ignore = SDL_GetDisplayBounds(id, &rect);
+		// only use display bounds for positioning, let SDL handle fullscreen size
+		SDL_Rect bounds = {};
+		std::ignore = SDL_GetDisplayBounds(id, &bounds);
+		rect.x = bounds.x;
+		rect.y = bounds.y;
 	}
 
 	SdlWindow window{ id, title, rect, flags };

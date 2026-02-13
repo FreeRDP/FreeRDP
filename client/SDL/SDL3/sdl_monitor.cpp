@@ -193,13 +193,8 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 	WINPR_ASSERT(rect.w > 0);
 	WINPR_ASSERT(rect.h > 0);
 
-	bool highDpi = dpi > 100;
-
-	if (highDpi)
+	// always enumerate fullscreen modes since SDL_GetDisplayBounds might return logical coords
 	{
-		// HighDPI is problematic with SDL: We can only get native resolution by creating a
-		// window. Work around this by checking the supported resolutions (and keep maximum)
-		// Also scale the DPI
 		const SDL_Rect scaleRect = rect;
 		int count = 0;
 		auto modes = SDL_GetFullscreenDisplayModes(id, &count);
@@ -234,8 +229,7 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 	const SDL_DisplayOrientation orientation = SDL_GetCurrentDisplayOrientation(id);
 	const UINT32 rdp_orientation = sdl::utils::orientaion_to_rdp(orientation);
 
-	/* windows uses 96 dpi as 'default' and the scale factors are in percent. */
-	const auto factor = dpi / 96.0f * 100.0f;
+	const auto factor = dpi * 100.0f;
 	monitor.orig_screen = id;
 	monitor.x = rect.x;
 	monitor.y = rect.y;
