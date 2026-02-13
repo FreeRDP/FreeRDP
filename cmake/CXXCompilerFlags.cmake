@@ -30,6 +30,7 @@ if(ENABLE_WARNING_VERBOSE)
       -Wno-pre-c++17-compat
       -Wno-exit-time-destructors
       -Wno-gnu-zero-variadic-macro-arguments
+      -Wno-nrvo
     )
   endif()
 endif()

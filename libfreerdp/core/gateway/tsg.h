@@ -47,33 +47,31 @@ typedef enum
 	TSG_STATE_FINAL
 } TSG_STATE;
 
-#define TsProxyCreateTunnelOpnum 1
-#define TsProxyAuthorizeTunnelOpnum 2
-#define TsProxyMakeTunnelCallOpnum 3
-#define TsProxyCreateChannelOpnum 4
-#define TsProxyUnused5Opnum 5
-#define TsProxyCloseChannelOpnum 6
-#define TsProxyCloseTunnelOpnum 7
-#define TsProxySetupReceivePipeOpnum 8
-#define TsProxySendToServerOpnum 9
+static const uint16_t TsProxyCreateTunnelOpnum = 1u;
+static const uint16_t TsProxyAuthorizeTunnelOpnum = 2u;
+static const uint16_t TsProxyMakeTunnelCallOpnum = 3u;
+static const uint16_t TsProxyCreateChannelOpnum = 4u;
+static const uint16_t TsProxyUnused5Opnum = 5u;
+static const uint16_t TsProxyCloseChannelOpnum = 6u;
+static const uint16_t TsProxyCloseTunnelOpnum = 7u;
+static const uint16_t TsProxySetupReceivePipeOpnum = 8u;
+static const uint16_t TsProxySendToServerOpnum = 9u;
 
-#define MAX_RESOURCE_NAMES 50
+#define TS_GATEWAY_TRANSPORT 0x5452u
 
-#define TS_GATEWAY_TRANSPORT 0x5452
+#define TSG_ASYNC_MESSAGE_CONSENT_MESSAGE 0x00000001u
+#define TSG_ASYNC_MESSAGE_SERVICE_MESSAGE 0x00000002u
+#define TSG_ASYNC_MESSAGE_REAUTH 0x00000003u
 
-#define TSG_ASYNC_MESSAGE_CONSENT_MESSAGE 0x00000001
-#define TSG_ASYNC_MESSAGE_SERVICE_MESSAGE 0x00000002
-#define TSG_ASYNC_MESSAGE_REAUTH 0x00000003
+#define TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST 0x00000001u
+#define TSG_TUNNEL_CANCEL_ASYNC_MSG_REQUEST 0x00000002u
 
-#define TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST 0x00000001
-#define TSG_TUNNEL_CANCEL_ASYNC_MSG_REQUEST 0x00000002
-
-#define TSG_NAP_CAPABILITY_QUAR_SOH 0x00000001
-#define TSG_NAP_CAPABILITY_IDLE_TIMEOUT 0x00000002
-#define TSG_MESSAGING_CAP_CONSENT_SIGN 0x00000004
-#define TSG_MESSAGING_CAP_SERVICE_MSG 0x00000008
-#define TSG_MESSAGING_CAP_REAUTH 0x00000010
-#define TSG_MESSAGING_MAX_MESSAGE_LENGTH 65536
+#define TSG_NAP_CAPABILITY_QUAR_SOH 0x00000001u
+#define TSG_NAP_CAPABILITY_IDLE_TIMEOUT 0x00000002u
+#define TSG_MESSAGING_CAP_CONSENT_SIGN 0x00000004u
+#define TSG_MESSAGING_CAP_SERVICE_MSG 0x00000008u
+#define TSG_MESSAGING_CAP_REAUTH 0x00000010u
+#define TSG_MESSAGING_MAX_MESSAGE_LENGTH 65536u
 
 /* Error Codes */
 
