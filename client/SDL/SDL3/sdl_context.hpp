@@ -208,6 +208,8 @@ class SdlContext
 
 	std::map<Uint32, SdlWindow> _windows;
 
+	uint32_t _windowWidth = 0;
+	uint32_t _windowHeigth = 0;
 	WinPREvent _windowsCreatedEvent;
 	std::thread _thread;
 };
