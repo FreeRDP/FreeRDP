@@ -86,6 +86,8 @@ namespace sdl::utils
 	[[nodiscard]] std::string toString(SDL_DisplayOrientation orientation);
 	[[nodiscard]] std::string toString(const SDL_DisplayMode* mode);
 	[[nodiscard]] std::string toString(Uint32 type);
+	[[nodiscard]] std::string toString(SDL_Rect rect);
+	[[nodiscard]] std::string toString(SDL_FRect rect);
 
 	[[nodiscard]] UINT32 orientaion_to_rdp(SDL_DisplayOrientation orientation);
 

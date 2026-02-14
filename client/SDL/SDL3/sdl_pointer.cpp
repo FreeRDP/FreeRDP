@@ -127,12 +127,15 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 
 	const Uint32 id = SDL_GetWindowID(window);
 
-	auto pos = sdl->pixelToScreen(id, SDL_FRect{ ix, iy, isw, ish });
+	const SDL_FRect orig{ ix, iy, isw, ish };
+	auto pos = sdl->pixelToScreen(id, orig);
+	WLog_Print(sdl->getWLog(), WLOG_DEBUG, "cursor scale: pixel:%s, display:%s",
+	           sdl::utils::toString(orig).c_str(), sdl::utils::toString(pos).c_str());
 
 	sdl_Pointer_Clear(ptr);
 
 	ptr->image =
-	    SDL_CreateSurface(static_cast<int>(pos.w), static_cast<int>(pos.h), sdl->pixelFormat());
+	    SDL_CreateSurface(static_cast<int>(orig.w), static_cast<int>(orig.h), sdl->pixelFormat());
 	if (!ptr->image)
 	{
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_CreateSurface failed");
@@ -170,30 +173,32 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 	const auto hidpi_scale =
 	    sdl->pixelToScreen(fw->id(), SDL_FPoint{ static_cast<float>(ptr->image->w),
 	                                             static_cast<float>(ptr->image->h) });
-	auto normal = SDL_CreateSurface(static_cast<int>(hidpi_scale.x),
-	                                static_cast<int>(hidpi_scale.y), ptr->image->format);
+	std::unique_ptr<SDL_Surface, void (*)(SDL_Surface*)> normal{
+		SDL_CreateSurface(static_cast<int>(hidpi_scale.x), static_cast<int>(hidpi_scale.y),
+		                  ptr->image->format),
+		SDL_DestroySurface
+	};
 	assert(normal);
-	if (!SDL_BlitSurfaceScaled(ptr->image, nullptr, normal, nullptr,
+	if (!SDL_BlitSurfaceScaled(ptr->image, nullptr, normal.get(), nullptr,
 	                           SDL_ScaleMode::SDL_SCALEMODE_LINEAR))
 	{
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_BlitSurfaceScaled failed");
 		return false;
 	}
-	if (!SDL_AddSurfaceAlternateImage(normal, ptr->image))
+	if (!SDL_AddSurfaceAlternateImage(normal.get(), ptr->image))
 	{
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_AddSurfaceAlternateImage failed");
 		return false;
 	}
 
-	ptr->cursor = SDL_CreateColorCursor(normal, static_cast<int>(pos.x), static_cast<int>(pos.y));
+	ptr->cursor =
+	    SDL_CreateColorCursor(normal.get(), static_cast<int>(pos.x), static_cast<int>(pos.y));
 	if (!ptr->cursor)
 	{
-		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_CreateColorCursor(%fx%f) failed",
-		           static_cast<double>(pos.x), static_cast<double>(pos.y));
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_CreateColorCursor(display:%s, pixel:%s} failed",
+		           sdl::utils::toString(pos).c_str(), sdl::utils::toString(orig).c_str());
 		return false;
 	}
-
-	SDL_DestroySurface(normal);
 
 	if (!SDL_SetCursor(ptr->cursor))
 	{
