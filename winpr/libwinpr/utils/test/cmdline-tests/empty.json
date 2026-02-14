@@ -1,0 +1,7 @@
+{
+	"expectSuccess": true,
+	"csv": "xfreerdp",
+	"argv": [
+		"xfreerdp"
+	]
+}

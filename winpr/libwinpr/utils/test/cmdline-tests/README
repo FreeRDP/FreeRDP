@@ -1,0 +1,9 @@
+This folder contains unit test configurations for TestCommandLineToCommaSeparatedValues
+
+format is JSON, each file should contain a single object of the following format:
+
+{
+    "expectSuccess": true,
+    "cmd": "/v:host,/u:user",
+    "argv":["/v:host", "/u:user", null]
+}

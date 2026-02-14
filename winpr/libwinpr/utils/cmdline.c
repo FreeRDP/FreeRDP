@@ -535,337 +535,289 @@ static int is_quoted(char c)
 	}
 }
 
-static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
+static char* getNextComma(char* ptr)
 {
-	size_t count = 0;
-	int quoted = 0;
-	bool escaped = false;
-	BOOL finished = FALSE;
-	BOOL first = TRUE;
-	const char* it = list;
+	if (!ptr)
+		return NULL;
 
+	const size_t len = strlen(ptr);
+	bool escaped = false;
+	bool quoted = false;
+	for (size_t x = 0; x < len; x++)
+	{
+		const char cur = ptr[x];
+		if (escaped)
+		{
+			escaped = false;
+			continue;
+		}
+
+		if (!quoted && (cur == '\\'))
+		{
+			escaped = true;
+			continue;
+		}
+
+		if (!escaped && (cur == '"'))
+		{
+			quoted = !quoted;
+			continue;
+		}
+
+		if (!quoted && !escaped && (cur == ','))
+			return &ptr[x];
+	}
+
+	return &ptr[len];
+}
+
+static SSIZE_T countElements(const char* list)
+{
 	if (!list)
-		return 0;
-	if (strlen(list) == 0)
-		return 0;
-
-	while (!finished)
 	{
-		BOOL nextFirst = FALSE;
-
-		const char cur = *it++;
-
-		/* Ignore the symbol that was escaped. */
-		if (escaped)
-		{
-			escaped = false;
-			continue;
-		}
-
-		switch (cur)
-		{
-			case '\0':
-				if (quoted != 0)
-				{
-					log_comma_error("Invalid argument (missing closing quote)", list);
-					*failed = TRUE;
-					return 0;
-				}
-				finished = TRUE;
-				break;
-			case '\\':
-				if (!escaped)
-				{
-					escaped = true;
-					continue;
-				}
-				break;
-			case '\'':
-			case '"':
-				if (!fullquoted)
-				{
-					int now = is_quoted(cur) && !escaped;
-					if (now == quoted)
-						quoted = 0;
-					else if (quoted == 0)
-						quoted = now;
-				}
-				break;
-			case ',':
-				if (first)
-				{
-					log_comma_error("Invalid argument (empty list elements)", list);
-					*failed = TRUE;
-					return 0;
-				}
-				if (quoted == 0)
-				{
-					nextFirst = TRUE;
-					count++;
-				}
-				break;
-			default:
-				break;
-		}
-
-		first = nextFirst;
+		log_comma_error("Invalid argument (null)", list);
+		return 0;
 	}
-	return count + 1;
-}
 
-static char* get_next_comma(char* string, BOOL fullquoted)
-{
-	const char* log = string;
-	int quoted = 0;
-	bool first = true;
+	const size_t len = strlen(list);
+	if (len == 0)
+		return 0;
+
+	SSIZE_T elements = 0;
 	bool escaped = false;
+	bool quoted = false;
 
-	WINPR_ASSERT(string);
-
-	while (TRUE)
+	/* Parsing ruled:
+	 * 1. \ is the escape character, the following one is then ignored from other rules.
+	 * 2. "<string>" quotes build an escaped block that is ignored during parsing.
+	 * 2. , is the separation character. Ignored if escaped or in a quote block.
+	 */
+	for (size_t x = 0; x < len; x++)
 	{
-		char* last = string;
-		const char cur = *string++;
-		if (escaped)
+		const char cur = list[x];
+
+		if ((cur == '\\') && !escaped && !quoted)
 		{
-			escaped = false;
+			escaped = true;
 			continue;
 		}
 
-		switch (cur)
+		if (!escaped && (cur == '"'))
 		{
-			case '\0':
-				if (quoted != 0)
-					log_comma_error("Invalid quoted argument", log);
-				return NULL;
-
-			case '\\':
-				if (!escaped)
-				{
-					escaped = true;
-					continue;
-				}
-				break;
-			case '\'':
-			case '"':
-				if (!fullquoted)
-				{
-					int now = is_quoted(cur);
-					if ((quoted == 0) && !first)
-					{
-						log_comma_error("Invalid quoted argument", log);
-						return NULL;
-					}
-					if (now == quoted)
-						quoted = 0;
-					else if (quoted == 0)
-						quoted = now;
-				}
-				break;
-
-			case ',':
-				if (first)
-				{
-					log_comma_error("Invalid argument (empty list elements)", log);
-					return NULL;
-				}
-				if (quoted == 0)
-					return last;
-				break;
-
-			default:
-				break;
+			quoted = !quoted;
+			continue;
 		}
-		first = FALSE;
-	}
 
-	return NULL;
-}
+		if (!quoted && !escaped && (cur == ','))
+			elements++;
 
-static BOOL is_valid_fullquoted(const char* string)
-{
-	char cur = '\0';
-	char last = '\0';
-	const char quote = *string++;
-
-	/* We did not start with a quote. */
-	if (is_quoted(quote) == 0)
-		return FALSE;
-
-	while ((cur = *string++) != '\0')
-	{
-		/* A quote is found. */
-		if (cur == quote)
+		if (escaped)
 		{
-			/* If the quote was escaped, it is valid. */
-			if (last != '\\')
+			switch (cur)
 			{
-				/* Only allow unescaped quote as last character in string. */
-				if (*string != '\0')
-					return FALSE;
+				case '"':
+				case '\\':
+				case ',':
+					break;
+				default:
+					log_comma_error("Invalid argument (invalid escape sequence)", list);
+					return -1;
 			}
-			/* If the last quote in the string is escaped, it is wrong. */
-			else if (*string != '\0')
-				return FALSE;
 		}
-		last = cur;
+		escaped = false;
 	}
 
-	/* The string did not terminate with the same quote as it started. */
-	if (last != quote)
-		return FALSE;
-	return TRUE;
+	if (quoted)
+	{
+		log_comma_error("Invalid argument (missing closing quote)", list);
+		return -1;
+	}
+	if (escaped)
+	{
+		log_comma_error("Invalid argument (missing escaped char)", list);
+		return -1;
+	}
+
+	return elements + 1;
 }
 
-char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list, size_t* count)
+static bool unescape(char* list)
 {
-	char** p = NULL;
-	char* str = NULL;
-	size_t nArgs = 0;
-	size_t prefix = 0;
-	size_t len = 0;
-	size_t namelen = 0;
-	BOOL failed = FALSE;
-	char* copy = NULL;
-	char* unquoted = NULL;
-	BOOL fullquoted = FALSE;
+	if (!list)
+		return false;
 
-	BOOL success = FALSE;
-	if (count == NULL)
-		goto fail;
-
-	*count = 0;
-	if (list)
+	size_t len = strlen(list);
+	bool escaped = false;
+	bool quoted = false;
+	size_t pos = 0;
+	for (size_t x = 0; x < len; x++)
 	{
-		int start = 0;
-		int end = 0;
-		unquoted = copy = _strdup(list);
-		if (!copy)
+		const char cur = list[x];
+		if (escaped)
+		{
+			list[pos++] = cur;
+			escaped = false;
+			continue;
+		}
+		else if (!escaped && (cur == '"'))
+		{
+			quoted = !quoted;
+		}
+
+		if (!quoted && (cur == '\\'))
+		{
+			escaped = true;
+			continue;
+		}
+		list[pos++] = cur;
+	}
+	list[pos++] = '\0';
+
+	if (quoted)
+	{
+		log_comma_error("Invalid argument (unterminated quote sequence)", list);
+		return false;
+	}
+
+	if (escaped)
+	{
+		log_comma_error("Invalid argument (unterminated escape sequence)", list);
+		return false;
+	}
+
+	return true;
+}
+
+static bool unquote(char* list)
+{
+	if (!list)
+		return false;
+
+	size_t len = strlen(list);
+	if (len < 2)
+		return true;
+	if ((list[0] != '"') || (list[len - 1] != '"'))
+		return true;
+
+	for (size_t x = 1; x < len - 1; x++)
+	{
+		char cur = list[x];
+		if (cur == '\\')
+		{
+			x++;
+			continue;
+		}
+		if (cur == '"')
+			return true;
+	}
+
+	memmove(list, &list[1], len - 2);
+	list[len - 2] = '\0';
+
+	return true;
+}
+
+char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* clist, size_t* count)
+{
+	union
+	{
+		char** ppc;
+		char* pc;
+		void* pv;
+	} ptr;
+
+	ptr.pv = NULL;
+	size_t namelen = 0;
+	BOOL success = FALSE;
+
+	if (count == NULL)
+		return NULL;
+	*count = 0;
+
+	SSIZE_T rc = 0;
+	size_t len = 0;
+	char* arg = NULL;
+	if (clist)
+	{
+		arg = _strdup(clist);
+		if (!arg)
+			return NULL;
+
+		if (!unquote(arg))
 			goto fail;
 
-		len = strlen(unquoted);
-		if (len > 0)
-		{
-			start = is_quoted(unquoted[0]);
-			end = is_quoted(unquoted[len - 1]);
-
-			if ((start != 0) && (end != 0))
-			{
-				if (start != end)
-				{
-					log_comma_error("Invalid argument (quote mismatch)", list);
-					goto fail;
-				}
-				if (!is_valid_fullquoted(unquoted))
-					goto fail;
-				unquoted[len - 1] = '\0';
-				unquoted++;
-				len -= 2;
-				fullquoted = TRUE;
-			}
-		}
+		// Get the number of segments separated by ','
+		len = strlen(arg);
+		rc = countElements(arg);
+		if (rc < 0)
+			goto fail;
 	}
 
-	*count = get_element_count(unquoted, &failed, fullquoted);
-	if (failed)
+	size_t nArgs = WINPR_ASSERTING_INT_CAST(size_t, rc);
+
+	/* allocate buffer */
+	if (name)
+	{
+		namelen = strlen(name);
+		nArgs++;
+	}
+
+	const size_t prefix = (nArgs + 1UL) * sizeof(char*);
+	ptr.pv = calloc(prefix + len + 1 + namelen + 1 + nArgs, sizeof(char));
+
+	if (!ptr.pv)
 		goto fail;
 
-	if (*count == 0)
+	// No elements, just return empty
+	if (rc == 0)
 	{
 		if (!name)
 			goto fail;
-		else
-		{
-			size_t clen = strlen(name);
-			p = (char**)calloc(2UL + clen, sizeof(char*));
-
-			if (p)
-			{
-				char* dst = (char*)&p[1];
-				p[0] = dst;
-				(void)sprintf_s(dst, clen + 1, "%s", name);
-				*count = 1;
-				success = TRUE;
-				goto fail;
-			}
-		}
 	}
 
-	nArgs = *count;
-
-	if (name)
-		nArgs++;
-
-	prefix = (nArgs + 1UL) * sizeof(char*);
-	if (name)
-		namelen = strlen(name);
-	p = (char**)calloc(len + prefix + 1 + namelen + 1, sizeof(char*));
-
-	if (!p)
-		goto fail;
-
-	str = &((char*)p)[prefix];
-	memcpy(str, unquoted, len);
-
+	size_t offset = prefix;
 	if (name)
 	{
-		char* namestr = &((char*)p)[prefix + len + 1];
-		memcpy(namestr, name, namelen);
-
-		p[0] = namestr;
+		char* dst = &ptr.pc[offset];
+		offset += namelen + 1;
+		ptr.ppc[0] = dst;
+		strncpy(dst, name, namelen);
 	}
 
-	for (size_t index = name ? 1 : 0; index < nArgs; index++)
 	{
-		char* ptr = str;
-		const int quote = is_quoted(*ptr);
-		char* comma = get_next_comma(str, fullquoted);
+		char* str = &ptr.pc[offset];
+		strncpy(str, arg, len);
 
-		if ((quote != 0) && !fullquoted)
-			ptr++;
-
-		p[index] = ptr;
-
-		if (comma)
+		for (size_t index = name ? 1 : 0; (index < nArgs) && str; index++)
 		{
-			char* last = comma - 1;
-			const int lastQuote = is_quoted(*last);
+			char* cptr = str;
+			str = getNextComma(cptr);
+			if (str)
+				*str++ = '\0';
 
-			if (!fullquoted)
-			{
-				if (lastQuote != quote)
-				{
-					log_comma_error("Invalid argument (quote mismatch)", list);
-					goto fail;
-				}
-				else if (lastQuote != 0)
-					*last = '\0';
-			}
-			*comma = '\0';
-
-			str = comma + 1;
-		}
-		else if (quote)
-		{
-			char* end = strrchr(ptr, '"');
-			if (!end)
+			if (!unescape(cptr))
 				goto fail;
-			*end = '\0';
+			if (!unquote(cptr))
+				goto fail;
+
+			ptr.ppc[index] = cptr;
 		}
 	}
 
 	*count = nArgs;
 	success = TRUE;
+
 fail:
-	free(copy);
+	free(arg);
 	if (!success)
 	{
 		if (count)
 			*count = 0;
-		free((void*)p);
+		free(ptr.pv);
 		return NULL;
 	}
-	return p;
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): this is an allocator function
+	return ptr.ppc;
 }
 
 char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count)
@@ -892,28 +844,101 @@ static const char* filtered(const char* arg, const char* filters[], size_t numbe
 	return NULL;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
+static char* escape_comma(const char* str)
+{
+	WINPR_ASSERT(str);
+	const size_t len = strlen(str);
+	size_t toEscape = 0;
+
+	/* Get all symbols to escape.
+	 * might catch a few too many as we don't check for escaped ones.
+	 */
+	for (size_t x = 0; x < len; x++)
+	{
+		switch (str[x])
+		{
+			case ',':
+			case '\\':
+				toEscape++;
+				break;
+			default:
+				break;
+		}
+	}
+
+	char* copy = calloc(len + toEscape + 1, sizeof(char));
+	if (!copy)
+		return NULL;
+
+	bool escaped = false;
+	bool quoted = false;
+	for (size_t pos = 0, x = 0; x < len; x++)
+	{
+		const bool thisescaped = escaped;
+		escaped = false;
+
+		const char cur = str[x];
+		switch (cur)
+		{
+			case '"':
+				if (!thisescaped)
+					quoted = !quoted;
+				break;
+			case ',':
+			case '\\':
+				escaped = true;
+				if (!quoted)
+					copy[pos++] = '\\';
+				break;
+			default:
+				break;
+		}
+		copy[pos++] = cur;
+	}
+
+	if (quoted)
+	{
+		free(copy);
+		return NULL;
+	}
+	return copy;
+}
+
 char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[], const char* filters[],
                                           size_t number)
 {
-	char* str = NULL;
-	size_t offset = 0;
-	size_t size = WINPR_ASSERTING_INT_CAST(size_t, argc) + 1;
 	if ((argc <= 0) || !argv)
 		return NULL;
 
+	size_t size = WINPR_ASSERTING_INT_CAST(size_t, argc) + 1ull;
 	for (int x = 0; x < argc; x++)
-		size += strlen(argv[x]);
+		size += strlen(argv[x]) *
+		        2; /* Overallocate to allow (worst case) escaping every single character */
 
-	str = calloc(size, sizeof(char));
+	char* str = calloc(size, sizeof(char));
 	if (!str)
 		return NULL;
+
+	size_t offset = 0;
 	for (int x = 0; x < argc; x++)
 	{
 		int rc = 0;
-		const char* arg = filtered(argv[x], filters, number);
-		if (!arg)
+
+		const char* farg = filtered(argv[x], filters, number);
+		if (!farg)
 			continue;
+
+		char* arg = escape_comma(farg);
+		if (!arg)
+		{
+			free(str);
+			return NULL;
+		}
+
 		rc = _snprintf(&str[offset], size - offset, "%s,", arg);
+		free(arg);
+
 		if (rc <= 0)
 		{
 			free(str);
