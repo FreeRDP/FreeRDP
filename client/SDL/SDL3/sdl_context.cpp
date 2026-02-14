@@ -16,6 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <algorithm>
+
 #include "sdl_context.hpp"
 #include "sdl_config.hpp"
 #include "sdl_channels.hpp"
@@ -808,6 +811,78 @@ void SdlContext::applyMonitorOffset(SDL_WindowID window, float& x, float& y) con
 	y -= static_cast<float>(w->offsetY());
 }
 
+static bool alignX(const SDL_Rect& a, const SDL_Rect& b)
+{
+	if (a.x + a.w == b.x)
+		return true;
+	if (b.x + b.w == a.x)
+		return true;
+	return false;
+}
+
+static bool alignY(const SDL_Rect& a, const SDL_Rect& b)
+{
+	if (a.y + a.h == b.y)
+		return true;
+	if (b.y + b.h == a.y)
+		return true;
+	return false;
+}
+
+std::vector<SDL_DisplayID>
+SdlContext::updateDisplayOffsetsForNeighbours(SDL_DisplayID id,
+                                              const std::vector<SDL_DisplayID>& ignore)
+{
+	auto first = _offsets.at(id);
+	std::vector<SDL_DisplayID> neighbours;
+
+	for (auto& entry : _offsets)
+	{
+		if (entry.first == id)
+			continue;
+		if (std::find(ignore.begin(), ignore.end(), entry.first) != ignore.end())
+			continue;
+
+		bool neighbor = false;
+		if (alignX(entry.second.first, first.first))
+		{
+			if (entry.second.first.x < first.first.x)
+				entry.second.second.x = first.second.x - entry.second.second.w;
+			else
+				entry.second.second.x = first.second.x + first.second.w;
+			neighbor = true;
+		}
+		if (alignY(entry.second.first, first.first))
+		{
+			if (entry.second.first.y < first.first.y)
+				entry.second.second.y = first.second.y - entry.second.second.h;
+			else
+				entry.second.second.y = first.second.y + first.second.h;
+			neighbor = true;
+		}
+
+		if (neighbor)
+			neighbours.push_back(entry.first);
+	}
+	return neighbours;
+}
+
+void SdlContext::updateMonitorDataFromOffsets()
+{
+	for (auto& entry : _displays)
+	{
+		auto offsets = _offsets.at(entry.first);
+		entry.second.x = offsets.second.x;
+		entry.second.y = offsets.second.y;
+	}
+
+	for (auto& entry : _windows)
+	{
+		const auto& monitor = _displays.at(entry.first);
+		entry.second.setMonitor(monitor);
+	}
+}
+
 bool SdlContext::drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& rects)
 {
 	if (!isConnected())
@@ -878,7 +953,7 @@ bool SdlContext::addDisplayWindow(SDL_DisplayID id)
 	return true;
 }
 
-bool SdlContext::removeDisplay(SDL_DisplayID id)
+bool SdlContext::removeDisplayWindow(SDL_DisplayID id)
 {
 	for (auto& w : _windows)
 	{
@@ -886,6 +961,37 @@ bool SdlContext::removeDisplay(SDL_DisplayID id)
 			_windows.erase(w.first);
 	}
 	return true;
+}
+
+bool SdlContext::detectDisplays()
+{
+	int count = 0;
+	auto display = SDL_GetDisplays(&count);
+	if (!display)
+		return false;
+	for (int x = 0; x < count; x++)
+	{
+		const auto id = display[x];
+		addOrUpdateDisplay(id);
+	}
+
+	return true;
+}
+
+rdpMonitor SdlContext::getDisplay(SDL_DisplayID id) const
+{
+	return _displays.at(id);
+}
+
+std::vector<SDL_DisplayID> SdlContext::getDisplayIds() const
+{
+	std::vector<SDL_DisplayID> keys;
+	keys.reserve(_displays.size());
+	for (const auto& entry : _displays)
+	{
+		keys.push_back(entry.first);
+	}
+	return keys;
 }
 
 const SdlWindow* SdlContext::getWindowForId(SDL_WindowID id) const
@@ -1089,6 +1195,59 @@ bool SdlContext::handleEvent(const SDL_TouchFingerEvent& ev)
 	removeLocalScaling(copy.tfinger.x, copy.tfinger.y);
 	applyMonitorOffset(copy.tfinger.windowID, copy.tfinger.x, copy.tfinger.y);
 	return SdlTouch::handleEvent(this, copy.tfinger);
+}
+
+void SdlContext::addOrUpdateDisplay(SDL_DisplayID id)
+{
+	auto monitor = SdlWindow::query(id, false);
+	_displays.emplace(id, monitor);
+
+	/* Update actual display rectangles:
+	 *
+	 * 1. Get logical display bounds
+	 * 2. Use already known pixel width and height
+	 * 3. Iterate over each display and update the x and y offsets by adding all monitor
+	 * widths/heights from the primary
+	 */
+	_offsets.clear();
+	for (auto& entry : _displays)
+	{
+		SDL_Rect bounds{};
+		std::ignore = SDL_GetDisplayBounds(entry.first, &bounds);
+
+		SDL_Rect pixel{};
+		pixel.w = entry.second.width;
+		pixel.h = entry.second.height;
+		_offsets.emplace(entry.first, std::pair{ bounds, pixel });
+	}
+
+	/* 1. Find primary and update all neighbors
+	 * 2. For each neighbor update all neighbors
+	 * 3. repeat until all displays updated.
+	 */
+	const auto primary = SDL_GetPrimaryDisplay();
+	std::vector<SDL_DisplayID> handled;
+	handled.push_back(primary);
+
+	auto neighbors = updateDisplayOffsetsForNeighbours(primary);
+	while (!neighbors.empty())
+	{
+		auto neighbor = *neighbors.begin();
+		neighbors.pop_back();
+
+		if (std::find(handled.begin(), handled.end(), neighbor) != handled.end())
+			continue;
+		handled.push_back(neighbor);
+
+		auto next = updateDisplayOffsetsForNeighbours(neighbor, handled);
+		neighbors.insert(neighbors.end(), next.begin(), next.end());
+	}
+	updateMonitorDataFromOffsets();
+}
+
+void SdlContext::deleteDisplay(SDL_DisplayID id)
+{
+	_displays.erase(id);
 }
 
 bool SdlContext::eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev)
