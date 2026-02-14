@@ -135,7 +135,7 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 	sdl_Pointer_Clear(ptr);
 
 	ptr->image =
-	    SDL_CreateSurface(static_cast<int>(pos.w), static_cast<int>(pos.h), sdl->pixelFormat());
+	    SDL_CreateSurface(static_cast<int>(orig.w), static_cast<int>(orig.h), sdl->pixelFormat());
 	if (!ptr->image)
 	{
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_CreateSurface failed");
