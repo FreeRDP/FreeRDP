@@ -127,7 +127,10 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 
 	const Uint32 id = SDL_GetWindowID(window);
 
-	auto pos = sdl->pixelToScreen(id, SDL_FRect{ ix, iy, isw, ish });
+	const SDL_FRect orig{ ix, iy, isw, ish };
+	auto pos = sdl->pixelToScreen(id, orig);
+	WLog_Print(sdl->getWLog(), WLOG_DEBUG, "cursor scale: pixel:%s, display:%s",
+	           sdl::utils::toString(orig).c_str(), sdl::utils::toString(pos).c_str());
 
 	sdl_Pointer_Clear(ptr);
 
