@@ -474,6 +474,21 @@ namespace sdl::utils
 
 		return ss.str();
 	}
+
+	std::string toString(SDL_Rect rect)
+	{
+		std::stringstream ss;
+		ss << "SDL_Rect{" << rect.x << "x" << rect.y << "-" << rect.w << "x" << rect.h << "}";
+		return ss.str();
+	}
+
+	std::string toString(SDL_FRect rect)
+	{
+		std::stringstream ss;
+		ss << "SDL_Rect{" << rect.x << "x" << rect.y << "-" << rect.w << "x" << rect.h << "}";
+		return ss.str();
+	}
+
 } // namespace sdl::utils
 
 namespace sdl::error
