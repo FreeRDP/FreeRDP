@@ -62,7 +62,7 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
     : _window(other._window), _displayID(other._displayID), _offset_x(other._offset_x),
-      _offset_y(other._offset_y)
+      _offset_y(other._offset_y), _monitor(other._monitor)
 {
 	other._window = nullptr;
 }
