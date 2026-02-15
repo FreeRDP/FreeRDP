@@ -455,40 +455,41 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
                                             UINT32 nDstWidth, UINT32 nDstHeight,
                                             const gdiPalette* WINPR_RESTRICT palette)
 {
-	UINT16 xStart = 0;
-	UINT16 yStart = 0;
-	UINT16 width = 0;
-	UINT16 height = 0;
-	UINT32 bitmapDataByteCount = 0;
-	BYTE subcodecId = 0;
 	UINT32 suboffset = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, subcodecByteCount))
 		return FALSE;
 
-	suboffset = 0;
-
 	while (suboffset < subcodecByteCount)
 	{
-		UINT32 nXDstRel = 0;
-		UINT32 nYDstRel = 0;
-
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 13))
 			return FALSE;
 
-		Stream_Read_UINT16(s, xStart);
-		Stream_Read_UINT16(s, yStart);
-		Stream_Read_UINT16(s, width);
-		Stream_Read_UINT16(s, height);
-		Stream_Read_UINT32(s, bitmapDataByteCount);
-		Stream_Read_UINT8(s, subcodecId);
+		const UINT16 xStart = Stream_Get_UINT16(s);
+		const UINT16 yStart = Stream_Get_UINT16(s);
+		const UINT16 width = Stream_Get_UINT16(s);
+		const UINT16 height = Stream_Get_UINT16(s);
+		const UINT32 bitmapDataByteCount = Stream_Get_UINT32(s);
+		const UINT8 subcodecId = Stream_Get_UINT8(s);
 		suboffset += 13;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, bitmapDataByteCount))
 			return FALSE;
 
-		nXDstRel = nXDst + xStart;
-		nYDstRel = nYDst + yStart;
+		const UINT32 nXDstRel = nXDst + xStart;
+		const UINT32 nYDstRel = nYDst + yStart;
+		if (1ull * nXDstRel + width > nWidth)
+		{
+			WLog_ERR(TAG, "nXDstRel %" PRIu16 " + width %" PRIu16 " > nWidth %" PRIu32 "", xStart,
+			         width, nWidth);
+			return FALSE;
+		}
+		if (1ull * nYDstRel + height > nHeight)
+		{
+			WLog_ERR(TAG, "nYDstRel %" PRIu16 " + height %" PRIu16 " > nHeight %" PRIu32 "", yStart,
+			         height, nHeight);
+			return FALSE;
+		}
 
 		if (1ull * xStart + width > nWidth)
 		{
@@ -1044,6 +1045,18 @@ INT32 clear_decompress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RE
 
 	if ((nWidth > 0xFFFF) || (nHeight > 0xFFFF))
 		return -1004;
+
+	if (nXDst > nDstWidth)
+	{
+		WLog_WARN(TAG, "nXDst %" PRIu32 " > nDstWidth %" PRIu32, nXDst, nDstWidth);
+		return -1005;
+	}
+
+	if (nYDst > nDstHeight)
+	{
+		WLog_WARN(TAG, "nYDst %" PRIu32 " > nDstHeight %" PRIu32, nYDst, nDstHeight);
+		return -1006;
+	}
 
 	s = Stream_StaticConstInit(&sbuffer, pSrcData, SrcSize);
 
