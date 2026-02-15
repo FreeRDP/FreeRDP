@@ -51,8 +51,8 @@ extern "C"
 		FREERDP_RGNDATA geometry;
 
 		void* custom;
-		pcMappedGeometryUpdate MappedGeometryUpdate;
-		pcMappedGeometryClear MappedGeometryClear;
+		WINPR_ATTR_NODISCARD pcMappedGeometryUpdate MappedGeometryUpdate;
+		WINPR_ATTR_NODISCARD pcMappedGeometryClear MappedGeometryClear;
 	};
 
 	/** @brief the geometry context for client channel */
@@ -62,7 +62,7 @@ extern "C"
 		void* handle;
 		void* custom;
 
-		pcMappedGeometryAdded MappedGeometryAdded;
+		WINPR_ATTR_NODISCARD pcMappedGeometryAdded MappedGeometryAdded;
 		UINT32 remoteVersion;
 	};
 

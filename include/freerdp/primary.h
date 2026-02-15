@@ -423,9 +423,9 @@ typedef BOOL (*pMultiDstBlt)(rdpContext* context, const MULTI_DSTBLT_ORDER* mult
 typedef BOOL (*pMultiPatBlt)(rdpContext* context, const MULTI_PATBLT_ORDER* multi_patblt);
 typedef BOOL (*pMultiScrBlt)(rdpContext* context, const MULTI_SCRBLT_ORDER* multi_scrblt);
 typedef BOOL (*pMultiOpaqueRect)(rdpContext* context,
-                                 const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect);
+	                             const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect);
 typedef BOOL (*pMultiDrawNineGrid)(rdpContext* context,
-                                   const MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid);
+	                               const MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid);
 typedef BOOL (*pLineTo)(rdpContext* context, const LINE_TO_ORDER* line_to);
 typedef BOOL (*pPolyline)(rdpContext* context, const POLYLINE_ORDER* polyline);
 typedef BOOL (*pMemBlt)(rdpContext* context, MEMBLT_ORDER* memblt);
@@ -439,37 +439,37 @@ typedef BOOL (*pPolygonCB)(rdpContext* context, POLYGON_CB_ORDER* polygon_cb);
 typedef BOOL (*pEllipseSC)(rdpContext* context, const ELLIPSE_SC_ORDER* ellipse_sc);
 typedef BOOL (*pEllipseCB)(rdpContext* context, const ELLIPSE_CB_ORDER* ellipse_cb);
 typedef BOOL (*pOrderInfo)(rdpContext* context, const ORDER_INFO* order_info,
-                           const char* order_name);
+	                       const char* order_name);
 
 struct rdp_primary_update
 {
 	rdpContext* context;     /* 0 */
 	UINT32 paddingA[16 - 1]; /* 1 */
 
-	pDstBlt DstBlt;                       /* 16 */
-	pPatBlt PatBlt;                       /* 17 */
-	pScrBlt ScrBlt;                       /* 18 */
-	pOpaqueRect OpaqueRect;               /* 19 */
-	pDrawNineGrid DrawNineGrid;           /* 20 */
-	pMultiDstBlt MultiDstBlt;             /* 21 */
-	pMultiPatBlt MultiPatBlt;             /* 22 */
-	pMultiScrBlt MultiScrBlt;             /* 23 */
-	pMultiOpaqueRect MultiOpaqueRect;     /* 24 */
-	pMultiDrawNineGrid MultiDrawNineGrid; /* 25 */
-	pLineTo LineTo;                       /* 26 */
-	pPolyline Polyline;                   /* 27 */
-	pMemBlt MemBlt;                       /* 28 */
-	pMem3Blt Mem3Blt;                     /* 29 */
-	pSaveBitmap SaveBitmap;               /* 30 */
-	pGlyphIndex GlyphIndex;               /* 31 */
-	pFastIndex FastIndex;                 /* 32 */
-	pFastGlyph FastGlyph;                 /* 33 */
-	pPolygonSC PolygonSC;                 /* 34 */
-	pPolygonCB PolygonCB;                 /* 35 */
-	pEllipseSC EllipseSC;                 /* 36 */
-	pEllipseCB EllipseCB;                 /* 37 */
-	/* Statistics callback */
-	pOrderInfo OrderInfo;     /* 38 */
+	WINPR_ATTR_NODISCARD pDstBlt DstBlt;                       /* 16 */
+	WINPR_ATTR_NODISCARD pPatBlt PatBlt;                       /* 17 */
+	WINPR_ATTR_NODISCARD pScrBlt ScrBlt;                       /* 18 */
+	WINPR_ATTR_NODISCARD pOpaqueRect OpaqueRect;               /* 19 */
+	WINPR_ATTR_NODISCARD pDrawNineGrid DrawNineGrid;           /* 20 */
+	WINPR_ATTR_NODISCARD pMultiDstBlt MultiDstBlt;             /* 21 */
+	WINPR_ATTR_NODISCARD pMultiPatBlt MultiPatBlt;             /* 22 */
+	WINPR_ATTR_NODISCARD pMultiScrBlt MultiScrBlt;             /* 23 */
+	WINPR_ATTR_NODISCARD pMultiOpaqueRect MultiOpaqueRect;     /* 24 */
+	WINPR_ATTR_NODISCARD pMultiDrawNineGrid MultiDrawNineGrid; /* 25 */
+	WINPR_ATTR_NODISCARD pLineTo LineTo;                       /* 26 */
+	WINPR_ATTR_NODISCARD pPolyline Polyline;                   /* 27 */
+	WINPR_ATTR_NODISCARD pMemBlt MemBlt;                       /* 28 */
+	WINPR_ATTR_NODISCARD pMem3Blt Mem3Blt;                     /* 29 */
+	WINPR_ATTR_NODISCARD pSaveBitmap SaveBitmap;               /* 30 */
+	WINPR_ATTR_NODISCARD pGlyphIndex GlyphIndex;               /* 31 */
+	WINPR_ATTR_NODISCARD pFastIndex FastIndex;                 /* 32 */
+	WINPR_ATTR_NODISCARD pFastGlyph FastGlyph;                 /* 33 */
+	WINPR_ATTR_NODISCARD pPolygonSC PolygonSC;                 /* 34 */
+	WINPR_ATTR_NODISCARD pPolygonCB PolygonCB;                 /* 35 */
+	WINPR_ATTR_NODISCARD pEllipseSC EllipseSC;                 /* 36 */
+	WINPR_ATTR_NODISCARD pEllipseCB EllipseCB;                 /* 37 */
+		                                                       /* Statistics callback */
+	WINPR_ATTR_NODISCARD pOrderInfo OrderInfo;                 /* 38 */
 	UINT32 paddingB[48 - 39]; /* 39 */
 };
 typedef struct rdp_primary_update rdpPrimaryUpdate;

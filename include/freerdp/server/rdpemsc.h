@@ -68,54 +68,54 @@ extern "C"
 		 *
 		 * Defaults to externalThread=FALSE
 		 */
-		psMouseCursorServerInitialize Initialize;
+		WINPR_ATTR_NODISCARD psMouseCursorServerInitialize Initialize;
 
 		/**
 		 * Open the mouse cursor channel.
 		 */
-		psMouseCursorServerOpen Open;
+		WINPR_ATTR_NODISCARD psMouseCursorServerOpen Open;
 
 		/**
 		 * Close the mouse cursor channel.
 		 */
-		psMouseCursorServerClose Close;
+		WINPR_ATTR_NODISCARD psMouseCursorServerClose Close;
 
 		/**
 		 * Poll
 		 * When externalThread=TRUE, call Poll() periodically from your main loop.
 		 * If externalThread=FALSE do not call.
 		 */
-		psMouseCursorServerPoll Poll;
+		WINPR_ATTR_NODISCARD psMouseCursorServerPoll Poll;
 
 		/**
 		 * Retrieve the channel handle for use in conjunction with Poll().
 		 * If externalThread=FALSE do not call.
 		 */
-		psMouseCursorServerChannelHandle ChannelHandle;
+		WINPR_ATTR_NODISCARD psMouseCursorServerChannelHandle ChannelHandle;
 
 		/* All PDUs sent by the server don't require the pduType to be set */
 
 		/*
 		 * Send a CapsConfirm PDU.
 		 */
-		psMouseCursorServerCapsConfirm CapsConfirm;
+		WINPR_ATTR_NODISCARD psMouseCursorServerCapsConfirm CapsConfirm;
 
 		/*
 		 * Send a MouseptrUpdate PDU.
 		 */
-		psMouseCursorServerMouseptrUpdate MouseptrUpdate;
+		WINPR_ATTR_NODISCARD psMouseCursorServerMouseptrUpdate MouseptrUpdate;
 
 		/*** Callbacks registered by the server. ***/
 
 		/**
 		 * Callback, when the channel got its id assigned.
 		 */
-		psMouseCursorServerChannelIdAssigned ChannelIdAssigned;
+		WINPR_ATTR_NODISCARD psMouseCursorServerChannelIdAssigned ChannelIdAssigned;
 
 		/**
 		 * Callback for the CapsAdvertise PDU.
 		 */
-		psMouseCursorServerCapsAdvertise CapsAdvertise;
+		WINPR_ATTR_NODISCARD psMouseCursorServerCapsAdvertise CapsAdvertise;
 
 		rdpContext* rdpcontext;
 	};

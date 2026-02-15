@@ -64,7 +64,7 @@ extern "C"
 	{
 		HANDLE vcm;
 
-		psRdpsndStart Start;
+		WINPR_ATTR_NODISCARD psRdpsndStart Start;
 		psRdpsndStop Stop;
 
 		RdpsndServerPrivate* priv;
@@ -99,27 +99,27 @@ extern "C"
 		 * whether the initialization succeed. If not, the "Activated" callback
 		 * will not be called and the server must not call any API on this context.
 		 */
-		psRdpsndServerInitialize Initialize;
+		WINPR_ATTR_NODISCARD psRdpsndServerInitialize Initialize;
 
 		/**
 		 * Choose the audio format to be sent. The index argument is an index into
 		 * the client_formats array and must be smaller than num_client_formats.
 		 */
-		psRdpsndServerSelectFormat SelectFormat;
+		WINPR_ATTR_NODISCARD psRdpsndServerSelectFormat SelectFormat;
 		/**
 		 * Send audio samples. Actually bytes in the buffer must be:
 		 * nframes * src_format.nBitsPerSample * src_format.nChannels / 8
 		 */
-		psRdpsndServerSendSamples SendSamples;
+		WINPR_ATTR_NODISCARD psRdpsndServerSendSamples SendSamples;
 
 		/**
 		 * Called when block confirm is received from the client
 		 */
-		psRdpsndServerConfirmBlock ConfirmBlock;
+		WINPR_ATTR_NODISCARD psRdpsndServerConfirmBlock ConfirmBlock;
 		/**
 		 * Set the volume level of the client. Valid range is between 0 and 0xFFFF.
 		 */
-		psRdpsndServerSetVolume SetVolume;
+		WINPR_ATTR_NODISCARD psRdpsndServerSetVolume SetVolume;
 		/**
 		 * Close the audio stream.
 		 */
@@ -155,28 +155,28 @@ extern "C"
 		 * opening the channel.
 		 * Also used to restart the protocol after sending the Close PDU.
 		 */
-		psRdpsndServerSendFormats SendFormats;
+		WINPR_ATTR_NODISCARD psRdpsndServerSendFormats SendFormats;
 		/**
 		 * Send Training PDU.
 		 */
-		psRdpsndServerTraining Training;
+		WINPR_ATTR_NODISCARD psRdpsndServerTraining Training;
 
 		/**
 		 * Send encoded audio samples using a Wave2 PDU.
 		 * When successful, the block_no member is incremented.
 		 */
-		psRdpsndServerSendSamples2 SendSamples2;
+		WINPR_ATTR_NODISCARD psRdpsndServerSendSamples2 SendSamples2;
 
 		/**
 		 * Called when a TrainingConfirm PDU is received from the client.
 		 */
-		psRdpsndServerTrainingConfirm TrainingConfirm;
+		WINPR_ATTR_NODISCARD psRdpsndServerTrainingConfirm TrainingConfirm;
 
 		/**
 		 * Callback, when the channel got its id assigned.
 		 * Only called, when use_dynamic_virtual_channel=TRUE.
 		 */
-		psRdpsndChannelIdAssigned ChannelIdAssigned;
+		WINPR_ATTR_NODISCARD psRdpsndChannelIdAssigned ChannelIdAssigned;
 
 		UINT16 udpPort;  /** @since version 3.14.0 */
 		UINT8 lastblock; /** @since version 3.14.0 */

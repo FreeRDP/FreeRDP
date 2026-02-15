@@ -41,8 +41,8 @@ extern "C"
 		void* handle;
 		void* custom;
 
-		pcDispCaps DisplayControlCaps;
-		pcDispSendMonitorLayout SendMonitorLayout;
+		WINPR_ATTR_NODISCARD pcDispCaps DisplayControlCaps;
+		WINPR_ATTR_NODISCARD pcDispSendMonitorLayout SendMonitorLayout;
 	};
 
 #ifdef __cplusplus

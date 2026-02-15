@@ -325,7 +325,7 @@ typedef struct S_IRP IRP;
 typedef struct S_DEVMAN DEVMAN;
 
 typedef UINT (*pcCustomComponentRequest)(DEVICE* device, UINT16 component, UINT16 packetId,
-                                         wStream* s);
+	                                     wStream* s);
 typedef UINT (*pcIRPRequest)(DEVICE* device, IRP* irp);
 typedef UINT (*pcInitDevice)(DEVICE* device);
 typedef UINT (*pcFreeDevice)(DEVICE* device);
@@ -338,9 +338,9 @@ struct S_DEVICE
 	const char* name;
 	wStream* data;
 
-	pcCustomComponentRequest CustomComponentRequest;
-	pcIRPRequest IRPRequest;
-	pcInitDevice Init;
+	WINPR_ATTR_NODISCARD pcCustomComponentRequest CustomComponentRequest;
+	WINPR_ATTR_NODISCARD pcIRPRequest IRPRequest;
+	WINPR_ATTR_NODISCARD pcInitDevice Init;
 	pcFreeDevice Free;
 };
 
@@ -361,7 +361,7 @@ struct S_IRP
 	NTSTATUS IoStatus;
 	wStream* output;
 
-	pcIRPResponse Complete;
+	WINPR_ATTR_NODISCARD pcIRPResponse Complete;
 	pcIRPResponse Discard;
 
 	HANDLE thread;
@@ -381,7 +381,7 @@ typedef struct
 {
 	DEVMAN* devman;
 
-	pcRegisterDevice RegisterDevice;
+	WINPR_ATTR_NODISCARD pcRegisterDevice RegisterDevice;
 	RDPDR_DEVICE* device;
 	rdpContext* rdpcontext;
 } DEVICE_SERVICE_ENTRY_POINTS;

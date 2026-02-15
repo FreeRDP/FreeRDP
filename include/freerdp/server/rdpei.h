@@ -48,17 +48,20 @@ extern "C"
 		UINT32 protocolFlags;
 
 		/** callbacks that can be set by the user */
-		UINT (*onClientReady)(RdpeiServerContext* context);
-		UINT (*onTouchEvent)(RdpeiServerContext* context, const RDPINPUT_TOUCH_EVENT* touchEvent);
-		UINT (*onPenEvent)(RdpeiServerContext* context, const RDPINPUT_PEN_EVENT* penEvent);
-		UINT (*onTouchReleased)(RdpeiServerContext* context, BYTE contactId);
+		WINPR_ATTR_NODISCARD UINT (*onClientReady)(RdpeiServerContext* context);
+		WINPR_ATTR_NODISCARD UINT (*onTouchEvent)(RdpeiServerContext* context,
+		                                          const RDPINPUT_TOUCH_EVENT* touchEvent);
+		WINPR_ATTR_NODISCARD UINT (*onPenEvent)(RdpeiServerContext* context,
+		                                        const RDPINPUT_PEN_EVENT* penEvent);
+		WINPR_ATTR_NODISCARD UINT (*onTouchReleased)(RdpeiServerContext* context, BYTE contactId);
 
 		void* user_data; /* user data, useful for callbacks */
 
 		/**
 		 * Callback, when the channel got its id assigned.
 		 */
-		BOOL (*onChannelIdAssigned)(RdpeiServerContext* context, UINT32 channelId);
+		WINPR_ATTR_NODISCARD BOOL (*onChannelIdAssigned)(RdpeiServerContext* context,
+		                                                 UINT32 channelId);
 
 		/*** APIs called by the server. ***/
 
@@ -66,13 +69,13 @@ extern "C"
 		 * Open the input channel.
 		 * @since version 3.15.0
 		 */
-		psRdpeiServerOpen Open;
+		WINPR_ATTR_NODISCARD psRdpeiServerOpen Open;
 
 		/**
 		 * Close the input channel.
 		 * @since version 3.15.0
 		 */
-		psRdpeiServerClose Close;
+		WINPR_ATTR_NODISCARD psRdpeiServerClose Close;
 	};
 
 	FREERDP_API void rdpei_server_context_free(RdpeiServerContext* context);

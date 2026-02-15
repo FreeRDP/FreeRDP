@@ -62,25 +62,25 @@ extern "C"
 		/**
 		 * Open the echo channel.
 		 */
-		psEchoServerOpen Open;
+		WINPR_ATTR_NODISCARD psEchoServerOpen Open;
 		/**
 		 * Close the echo channel.
 		 */
-		psEchoServerClose Close;
+		WINPR_ATTR_NODISCARD psEchoServerClose Close;
 		/**
 		 * Send echo request PDU.
 		 */
-		psEchoServerRequest Request;
+		WINPR_ATTR_NODISCARD psEchoServerRequest Request;
 
 		/*** Callbacks registered by the server. ***/
 		/**
 		 * Indicate whether the channel is opened successfully.
 		 */
-		psEchoServerOpenResult OpenResult;
+		WINPR_ATTR_NODISCARD psEchoServerOpenResult OpenResult;
 		/**
 		 * Receive echo response PDU.
 		 */
-		psEchoServerResponse Response;
+		WINPR_ATTR_NODISCARD psEchoServerResponse Response;
 
 		rdpContext* rdpcontext;
 

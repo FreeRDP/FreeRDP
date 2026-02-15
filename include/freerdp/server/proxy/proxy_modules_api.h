@@ -65,52 +65,54 @@ extern "C"
 
 		UINT64 reserved1[32 - 2]; /* 2-32 */
 
-		BOOL (*PluginUnload)(proxyPlugin* plugin); /* 33 */
+		WINPR_ATTR_NODISCARD BOOL (*PluginUnload)(proxyPlugin* plugin); /* 33 */
 		UINT64 reserved2[66 - 34];                 /* 34 - 65 */
 
 		/* proxy hooks. a module can set these function pointers to register hooks */
-		proxyHookFn ClientInitConnect;     /* 66 custom=rdpContext* */
-		proxyHookFn ClientUninitConnect;   /* 67 custom=rdpContext* */
-		proxyHookFn ClientPreConnect;      /* 68 custom=rdpContext* */
-		proxyHookFn ClientPostConnect;     /* 69 custom=rdpContext* */
-		proxyHookFn ClientPostDisconnect;  /* 70 custom=rdpContext* */
-		proxyHookFn ClientX509Certificate; /* 71 custom=rdpContext* */
-		proxyHookFn ClientLoginFailure;    /* 72 custom=rdpContext* */
-		proxyHookFn ClientEndPaint;        /* 73 custom=rdpContext* */
-		proxyHookFn ClientRedirect;        /* 74 custom=rdpContext* */
-		proxyHookFn ClientLoadChannels;    /* 75 custom=rdpContext* */
+		WINPR_ATTR_NODISCARD proxyHookFn ClientInitConnect;     /* 66 custom=rdpContext* */
+		WINPR_ATTR_NODISCARD proxyHookFn ClientUninitConnect;   /* 67 custom=rdpContext* */
+		WINPR_ATTR_NODISCARD proxyHookFn ClientPreConnect;      /* 68 custom=rdpContext* */
+		WINPR_ATTR_NODISCARD proxyHookFn ClientPostConnect;     /* 69 custom=rdpContext* */
+		WINPR_ATTR_NODISCARD proxyHookFn ClientPostDisconnect;  /* 70 custom=rdpContext* */
+		WINPR_ATTR_NODISCARD proxyHookFn ClientX509Certificate; /* 71 custom=rdpContext* */
+		WINPR_ATTR_NODISCARD proxyHookFn ClientLoginFailure;    /* 72 custom=rdpContext* */
+		WINPR_ATTR_NODISCARD proxyHookFn ClientEndPaint;        /* 73 custom=rdpContext* */
+		WINPR_ATTR_NODISCARD proxyHookFn ClientRedirect;        /* 74 custom=rdpContext* */
+		WINPR_ATTR_NODISCARD proxyHookFn ClientLoadChannels;    /* 75 custom=rdpContext* */
 		UINT64 reserved3[96 - 76];         /* 76-95 */
 
-		proxyHookFn ServerPostConnect;       /* 96  custom=freerdp_peer* */
-		proxyHookFn ServerPeerActivate;      /* 97  custom=freerdp_peer* */
-		proxyHookFn ServerChannelsInit;      /* 98  custom=freerdp_peer* */
-		proxyHookFn ServerChannelsFree;      /* 99  custom=freerdp_peer* */
-		proxyHookFn ServerSessionEnd;        /* 100 custom=freerdp_peer* */
-		proxyHookFn ServerSessionInitialize; /* 101 custom=freerdp_peer* */
-		proxyHookFn ServerSessionStarted;    /* 102 custom=freerdp_peer* */
+		WINPR_ATTR_NODISCARD proxyHookFn ServerPostConnect;       /* 96  custom=freerdp_peer* */
+		WINPR_ATTR_NODISCARD proxyHookFn ServerPeerActivate;      /* 97  custom=freerdp_peer* */
+		WINPR_ATTR_NODISCARD proxyHookFn ServerChannelsInit;      /* 98  custom=freerdp_peer* */
+		WINPR_ATTR_NODISCARD proxyHookFn ServerChannelsFree;      /* 99  custom=freerdp_peer* */
+		WINPR_ATTR_NODISCARD proxyHookFn ServerSessionEnd;        /* 100 custom=freerdp_peer* */
+		WINPR_ATTR_NODISCARD proxyHookFn ServerSessionInitialize; /* 101 custom=freerdp_peer* */
+		WINPR_ATTR_NODISCARD proxyHookFn ServerSessionStarted;    /* 102 custom=freerdp_peer* */
 
 		UINT64 reserved4[128 - 103]; /* 103 - 127 */
 
 		/* proxy filters. a module can set these function pointers to register filters */
-		proxyFilterFn KeyboardEvent;         /* 128 */
-		proxyFilterFn MouseEvent;            /* 129 */
-		proxyFilterFn ClientChannelData;     /* 130 passthrough channels data */
-		proxyFilterFn ServerChannelData;     /* 131 passthrough channels data */
-		proxyFilterFn DynamicChannelCreate;  /* 132 passthrough drdynvc channel create data */
-		proxyFilterFn ServerFetchTargetAddr; /* 133 */
-		proxyFilterFn ServerPeerLogon;       /* 134 */
-		proxyFilterFn ChannelCreate;         /* 135 passthrough drdynvc channel create data */
-		proxyFilterFn UnicodeEvent;          /* 136 */
-		proxyFilterFn MouseExEvent;          /* 137 */
+		WINPR_ATTR_NODISCARD proxyFilterFn KeyboardEvent;     /* 128 */
+		WINPR_ATTR_NODISCARD proxyFilterFn MouseEvent;        /* 129 */
+		WINPR_ATTR_NODISCARD proxyFilterFn ClientChannelData; /* 130 passthrough channels data */
+		WINPR_ATTR_NODISCARD proxyFilterFn ServerChannelData; /* 131 passthrough channels data */
+		WINPR_ATTR_NODISCARD proxyFilterFn
+		    DynamicChannelCreate; /* 132 passthrough drdynvc channel create data */
+		WINPR_ATTR_NODISCARD proxyFilterFn ServerFetchTargetAddr; /* 133 */
+		WINPR_ATTR_NODISCARD proxyFilterFn ServerPeerLogon;       /* 134 */
+		WINPR_ATTR_NODISCARD proxyFilterFn
+		    ChannelCreate; /* 135 passthrough drdynvc channel create data */
+		WINPR_ATTR_NODISCARD proxyFilterFn UnicodeEvent; /* 136 */
+		WINPR_ATTR_NODISCARD proxyFilterFn MouseExEvent; /* 137 */
 
 		/* proxy dynamic channel filters:
 		 *
 		 * - a function that returns the list of channels to intercept
 		 * - a function to call with the data received
 		 */
-		proxyFilterFn DynChannelToIntercept;    /* 138 */
-		proxyFilterFn DynChannelIntercept;      /* 139 */
-		proxyFilterFn StaticChannelToIntercept; /* 140 */
+		WINPR_ATTR_NODISCARD proxyFilterFn DynChannelToIntercept;    /* 138 */
+		WINPR_ATTR_NODISCARD proxyFilterFn DynChannelIntercept;      /* 139 */
+		WINPR_ATTR_NODISCARD proxyFilterFn StaticChannelToIntercept; /* 140 */
 		UINT64 reserved5[160 - 141];            /* 141-159 */
 
 		/* Runtime data fields */
@@ -134,13 +136,16 @@ extern "C"
 	struct proxy_plugins_manager
 	{
 		/* 0 used for registering a fresh new proxy plugin. */
-		BOOL (*RegisterPlugin)(struct proxy_plugins_manager* mgr, const proxyPlugin* plugin);
+		WINPR_ATTR_NODISCARD BOOL (*RegisterPlugin)(struct proxy_plugins_manager* mgr,
+		                                            const proxyPlugin* plugin);
 
 		/* 1 used for setting plugin's per-session info. */
-		BOOL (*SetPluginData)(struct proxy_plugins_manager* mgr, const char*, proxyData*, void*);
+		WINPR_ATTR_NODISCARD BOOL (*SetPluginData)(struct proxy_plugins_manager* mgr, const char*,
+		                                           proxyData*, void*);
 
 		/* 2 used for getting plugin's per-session info. */
-		void* (*GetPluginData)(struct proxy_plugins_manager* mgr, const char*, proxyData*);
+		WINPR_ATTR_NODISCARD void* (*GetPluginData)(struct proxy_plugins_manager* mgr, const char*,
+		                                            proxyData*);
 
 		/* 3 used for aborting a session. */
 		void (*AbortConnect)(struct proxy_plugins_manager* mgr, proxyData*);
@@ -148,7 +153,8 @@ extern "C"
 		UINT64 reserved[128 - 4]; /* 4-127 reserved fields */
 	};
 
-	typedef BOOL (*proxyModuleEntryPoint)(proxyPluginsManager* plugins_manager, void* userdata);
+	typedef WINPR_ATTR_NODISCARD BOOL (*proxyModuleEntryPoint)(proxyPluginsManager* plugins_manager,
+	                                                           void* userdata);
 
 /* filter events parameters */
 #define WINPR_PACK_PUSH

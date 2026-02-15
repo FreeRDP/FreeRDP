@@ -132,30 +132,30 @@ extern "C"
 		 *
 		 * Defaults to externalThread=FALSE
 		 */
-		psCameraDeviceServerInitialize Initialize;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerInitialize Initialize;
 
 		/**
 		 * Open the camera device channel.
 		 */
-		psCameraDeviceServerOpen Open;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerOpen Open;
 
 		/**
 		 * Close the camera device channel.
 		 */
-		psCameraDeviceServerClose Close;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerClose Close;
 
 		/**
 		 * Poll
 		 * When externalThread=TRUE, call Poll() periodically from your main loop.
 		 * If externalThread=FALSE do not call.
 		 */
-		psCameraDeviceServerPoll Poll;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerPoll Poll;
 
 		/**
 		 * Retrieve the channel handle for use in conjunction with Poll().
 		 * If externalThread=FALSE do not call.
 		 */
-		psCameraDeviceServerChannelHandle ChannelHandle;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerChannelHandle ChannelHandle;
 
 		/**
 		 * For the following server to client PDUs,
@@ -165,109 +165,109 @@ extern "C"
 		/**
 		 * Send a Activate Device Request PDU.
 		 */
-		psCameraDeviceServerActivateDeviceRequest ActivateDeviceRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerActivateDeviceRequest ActivateDeviceRequest;
 
 		/**
 		 * Send a Deactivate Device Request PDU.
 		 */
-		psCameraDeviceServerDeactivateDeviceRequest DeactivateDeviceRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerDeactivateDeviceRequest DeactivateDeviceRequest;
 
 		/**
 		 * Send a Stream List Request PDU.
 		 */
-		psCameraDeviceServerStreamListRequest StreamListRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerStreamListRequest StreamListRequest;
 
 		/**
 		 * Send a Media Type List Request PDU.
 		 */
-		psCameraDeviceServerMediaTypeListRequest MediaTypeListRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerMediaTypeListRequest MediaTypeListRequest;
 
 		/**
 		 * Send a Current Media Type Request PDU.
 		 */
-		psCameraDeviceServerCurrentMediaTypeRequest CurrentMediaTypeRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerCurrentMediaTypeRequest CurrentMediaTypeRequest;
 
 		/**
 		 * Send a Start Streams Request PDU.
 		 */
-		psCameraDeviceServerStartStreamsRequest StartStreamsRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerStartStreamsRequest StartStreamsRequest;
 
 		/**
 		 * Send a Stop Streams Request PDU.
 		 */
-		psCameraDeviceServerStopStreamsRequest StopStreamsRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerStopStreamsRequest StopStreamsRequest;
 
 		/**
 		 * Send a Sample Request PDU.
 		 */
-		psCameraDeviceServerSampleRequest SampleRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerSampleRequest SampleRequest;
 
 		/**
 		 * Send a Property List Request PDU.
 		 */
-		psCameraDeviceServerPropertyListRequest PropertyListRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerPropertyListRequest PropertyListRequest;
 
 		/**
 		 * Send a Property Value Request PDU.
 		 */
-		psCameraDeviceServerPropertyValueRequest PropertyValueRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerPropertyValueRequest PropertyValueRequest;
 
 		/**
 		 * Send a Set Property Value Request PDU.
 		 */
-		psCameraDeviceServerSetPropertyValueRequest SetPropertyValueRequest;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerSetPropertyValueRequest SetPropertyValueRequest;
 
 		/*** Callbacks registered by the server. ***/
 
 		/**
 		 * Callback, when the channel got its id assigned.
 		 */
-		psCameraDeviceServerChannelIdAssigned ChannelIdAssigned;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerChannelIdAssigned ChannelIdAssigned;
 
 		/**
 		 * Callback for the Success Response PDU.
 		 */
-		psCameraDeviceServerSuccessResponse SuccessResponse;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerSuccessResponse SuccessResponse;
 
 		/**
 		 * Callback for the Error Response PDU.
 		 */
-		psCameraDeviceServerErrorResponse ErrorResponse;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerErrorResponse ErrorResponse;
 
 		/**
 		 * Callback for the Stream List Response PDU.
 		 */
-		psCameraDeviceServerStreamListResponse StreamListResponse;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerStreamListResponse StreamListResponse;
 
 		/**
 		 * Callback for the Media Type List Response PDU.
 		 */
-		psCameraDeviceServerMediaTypeListResponse MediaTypeListResponse;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerMediaTypeListResponse MediaTypeListResponse;
 
 		/**
 		 * Callback for the Current Media Type Response PDU.
 		 */
-		psCameraDeviceServerCurrentMediaTypeResponse CurrentMediaTypeResponse;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerCurrentMediaTypeResponse CurrentMediaTypeResponse;
 
 		/**
 		 * Callback for the Sample Response PDU.
 		 */
-		psCameraDeviceServerSampleResponse SampleResponse;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerSampleResponse SampleResponse;
 
 		/**
 		 * Callback for the Sample Error Response PDU.
 		 */
-		psCameraDeviceServerSampleErrorResponse SampleErrorResponse;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerSampleErrorResponse SampleErrorResponse;
 
 		/**
 		 * Callback for the Property List Response PDU.
 		 */
-		psCameraDeviceServerPropertyListResponse PropertyListResponse;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerPropertyListResponse PropertyListResponse;
 
 		/**
 		 * Callback for the Property Value Response PDU.
 		 */
-		psCameraDeviceServerPropertyValueResponse PropertyValueResponse;
+		WINPR_ATTR_NODISCARD psCameraDeviceServerPropertyValueResponse PropertyValueResponse;
 
 		rdpContext* rdpcontext;
 	};

@@ -72,40 +72,40 @@ typedef UINT (*psRdpdrStart)(RdpdrServerContext* context);
 typedef UINT (*psRdpdrStop)(RdpdrServerContext* context);
 
 typedef UINT (*psRdpdrCapablityPDU)(RdpdrServerContext* context,
-                                    const RDPDR_CAPABILITY_HEADER* header, size_t size,
-                                    const BYTE* data);
+	                                const RDPDR_CAPABILITY_HEADER* header, size_t size,
+	                                const BYTE* data);
 typedef UINT (*psRdpdrReceivePDU)(RdpdrServerContext* context, const RDPDR_HEADER* header,
-                                  UINT error);
+	                              UINT error);
 typedef UINT (*psRdpdrReceiveAnnounceResponse)(RdpdrServerContext* context, UINT16 VersionMajor,
-                                               UINT16 VersionMinor, UINT32 ClientId);
+	                                           UINT16 VersionMinor, UINT32 ClientId);
 typedef UINT (*psRdpdrSendServerAnnounce)(RdpdrServerContext* context);
 typedef UINT (*psRdpdrReceiveDeviceAnnounce)(RdpdrServerContext* context,
-                                             const RdpdrDevice* device);
+	                                         const RdpdrDevice* device);
 typedef UINT (*psRdpdrReceiveDeviceRemove)(RdpdrServerContext* context, UINT32 deviceId,
-                                           const RdpdrDevice* device);
+	                                       const RdpdrDevice* device);
 typedef UINT (*psRdpdrReceiveClientNameRequest)(RdpdrServerContext* context, size_t ComputerNameLen,
-                                                const char* name);
+	                                            const char* name);
 
 typedef UINT (*psRdpdrDriveCreateDirectory)(RdpdrServerContext* context, void* callbackData,
-                                            UINT32 deviceId, const char* path);
+	                                        UINT32 deviceId, const char* path);
 typedef UINT (*psRdpdrDriveDeleteDirectory)(RdpdrServerContext* context, void* callbackData,
-                                            UINT32 deviceId, const char* path);
+	                                        UINT32 deviceId, const char* path);
 typedef UINT (*psRdpdrDriveQueryDirectory)(RdpdrServerContext* context, void* callbackData,
-                                           UINT32 deviceId, const char* path);
+	                                       UINT32 deviceId, const char* path);
 typedef UINT (*psRdpdrDriveOpenFile)(RdpdrServerContext* context, void* callbackData,
-                                     UINT32 deviceId, const char* path, UINT32 desiredAccess,
-                                     UINT32 createDisposition);
+	                                 UINT32 deviceId, const char* path, UINT32 desiredAccess,
+	                                 UINT32 createDisposition);
 typedef UINT (*psRdpdrDriveReadFile)(RdpdrServerContext* context, void* callbackData,
-                                     UINT32 deviceId, UINT32 fileId, UINT32 length, UINT32 offset);
+	                                 UINT32 deviceId, UINT32 fileId, UINT32 length, UINT32 offset);
 typedef UINT (*psRdpdrDriveWriteFile)(RdpdrServerContext* context, void* callbackData,
-                                      UINT32 deviceId, UINT32 fileId, const char* buffer,
-                                      UINT32 length, UINT32 offset);
+	                                  UINT32 deviceId, UINT32 fileId, const char* buffer,
+	                                  UINT32 length, UINT32 offset);
 typedef UINT (*psRdpdrDriveCloseFile)(RdpdrServerContext* context, void* callbackData,
-                                      UINT32 deviceId, UINT32 fileId);
+	                                  UINT32 deviceId, UINT32 fileId);
 typedef UINT (*psRdpdrDriveDeleteFile)(RdpdrServerContext* context, void* callbackData,
-                                       UINT32 deviceId, const char* path);
+	                                   UINT32 deviceId, const char* path);
 typedef UINT (*psRdpdrDriveRenameFile)(RdpdrServerContext* context, void* callbackData,
-                                       UINT32 deviceId, const char* oldPath, const char* newPath);
+	                                   UINT32 deviceId, const char* oldPath, const char* newPath);
 
 typedef void (*psRdpdrOnDriveCreateDirectoryComplete)(RdpdrServerContext* context,
                                                       void* callbackData, UINT32 ioStatus);
@@ -134,7 +134,7 @@ struct s_rdpdr_server_context
 {
 	HANDLE vcm;
 
-	psRdpdrStart Start;
+	WINPR_ATTR_NODISCARD psRdpdrStart Start;
 	psRdpdrStop Stop;
 
 	RdpdrServerPrivate* priv;
@@ -152,37 +152,40 @@ struct s_rdpdr_server_context
 	UINT16 supported;
 
 	/*** RDPDR message intercept callbacks */
-	psRdpdrCapablityPDU ReceiveCaps; /**< Called for each received capability */
-	psRdpdrCapablityPDU SendCaps;    /**< Called for each capability to be sent */
-	psRdpdrReceivePDU ReceivePDU;    /**< Called after a RDPDR pdu was received and parsed */
-	psRdpdrSendServerAnnounce
-	    SendServerAnnounce; /**< Called before the server sends the announce message */
-	psRdpdrReceiveAnnounceResponse
-	    ReceiveAnnounceResponse; /**< Called after the client announce response is received */
-	psRdpdrReceiveClientNameRequest
-	    ReceiveClientNameRequest; /**< Called after a client name request is received */
-	psRdpdrReceiveDeviceAnnounce
-	    ReceiveDeviceAnnounce; /** < Called after a new device request was received but before the
-	                              device is added */
-	psRdpdrReceiveDeviceRemove ReceiveDeviceRemove; /**< Called after a new device request was
-	                                                   received, but before it is removed */
+	WINPR_ATTR_NODISCARD psRdpdrCapablityPDU
+		ReceiveCaps;                                   /**< Called for each received capability */
+	WINPR_ATTR_NODISCARD psRdpdrCapablityPDU SendCaps; /**< Called for each capability to be sent */
+	WINPR_ATTR_NODISCARD psRdpdrReceivePDU
+		ReceivePDU; /**< Called after a RDPDR pdu was received and parsed */
+	WINPR_ATTR_NODISCARD psRdpdrSendServerAnnounce
+		SendServerAnnounce; /**< Called before the server sends the announce message */
+	WINPR_ATTR_NODISCARD psRdpdrReceiveAnnounceResponse
+		ReceiveAnnounceResponse; /**< Called after the client announce response is received */
+	WINPR_ATTR_NODISCARD psRdpdrReceiveClientNameRequest
+		ReceiveClientNameRequest; /**< Called after a client name request is received */
+	WINPR_ATTR_NODISCARD psRdpdrReceiveDeviceAnnounce
+		ReceiveDeviceAnnounce; /** < Called after a new device request was received but before the
+		                          device is added */
+	WINPR_ATTR_NODISCARD psRdpdrReceiveDeviceRemove
+		ReceiveDeviceRemove; /**< Called after a new device request was
+		   received, but before it is removed */
 
 	/*** Drive APIs called by the server. ***/
-	psRdpdrDriveCreateDirectory DriveCreateDirectory;
-	psRdpdrDriveDeleteDirectory DriveDeleteDirectory;
-	psRdpdrDriveQueryDirectory DriveQueryDirectory;
-	psRdpdrDriveOpenFile DriveOpenFile;
-	psRdpdrDriveReadFile DriveReadFile;
-	psRdpdrDriveWriteFile DriveWriteFile;
-	psRdpdrDriveCloseFile DriveCloseFile;
-	psRdpdrDriveDeleteFile DriveDeleteFile;
-	psRdpdrDriveRenameFile DriveRenameFile;
+	WINPR_ATTR_NODISCARD psRdpdrDriveCreateDirectory DriveCreateDirectory;
+	WINPR_ATTR_NODISCARD psRdpdrDriveDeleteDirectory DriveDeleteDirectory;
+	WINPR_ATTR_NODISCARD psRdpdrDriveQueryDirectory DriveQueryDirectory;
+	WINPR_ATTR_NODISCARD psRdpdrDriveOpenFile DriveOpenFile;
+	WINPR_ATTR_NODISCARD psRdpdrDriveReadFile DriveReadFile;
+	WINPR_ATTR_NODISCARD psRdpdrDriveWriteFile DriveWriteFile;
+	WINPR_ATTR_NODISCARD psRdpdrDriveCloseFile DriveCloseFile;
+	WINPR_ATTR_NODISCARD psRdpdrDriveDeleteFile DriveDeleteFile;
+	WINPR_ATTR_NODISCARD psRdpdrDriveRenameFile DriveRenameFile;
 
 	/*** Drive callbacks registered by the server. ***/
-	psRdpdrOnDeviceCreate OnDriveCreate; /**< Called for devices of type \b RDPDR_DTYP_FILESYSTEM
-	                                        after \b ReceiveDeviceAnnounce */
-	psRdpdrOnDeviceDelete OnDriveDelete; /**< Called for devices of type \b RDPDR_DTYP_FILESYSTEM
-	                                        after \b ReceiveDeviceRemove */
+	WINPR_ATTR_NODISCARD psRdpdrOnDeviceCreate OnDriveCreate; /**< Called for devices of type \b
+		                                    RDPDR_DTYP_FILESYSTEM after \b ReceiveDeviceAnnounce */
+	WINPR_ATTR_NODISCARD psRdpdrOnDeviceDelete OnDriveDelete; /**< Called for devices of type \b
+		                                    RDPDR_DTYP_FILESYSTEM after \b ReceiveDeviceRemove */
 	psRdpdrOnDriveCreateDirectoryComplete OnDriveCreateDirectoryComplete;
 	psRdpdrOnDriveDeleteDirectoryComplete OnDriveDeleteDirectoryComplete;
 	psRdpdrOnDriveQueryDirectoryComplete OnDriveQueryDirectoryComplete;
@@ -194,28 +197,29 @@ struct s_rdpdr_server_context
 	psRdpdrOnDriveRenameFileComplete OnDriveRenameFileComplete;
 
 	/*** Serial Port callbacks registered by the server. ***/
-	psRdpdrOnDeviceCreate OnSerialPortCreate; /**< Called for devices of type \b RDPDR_DTYP_SERIAL
-	                                       after \b ReceiveDeviceAnnounce */
-	psRdpdrOnDeviceDelete OnSerialPortDelete; /**< Called for devices of type \b RDPDR_DTYP_SERIAL
-	                                       after \b ReceiveDeviceRemove */
+	WINPR_ATTR_NODISCARD psRdpdrOnDeviceCreate OnSerialPortCreate; /**< Called for devices of type
+		                                   \b RDPDR_DTYP_SERIAL after \b ReceiveDeviceAnnounce */
+	WINPR_ATTR_NODISCARD psRdpdrOnDeviceDelete OnSerialPortDelete; /**< Called for devices of type
+		                                   \b RDPDR_DTYP_SERIAL after \b ReceiveDeviceRemove */
 
 	/*** Parallel Port callbacks registered by the server. ***/
-	psRdpdrOnDeviceCreate OnParallelPortCreate; /**< Called for devices of type \b
-	                                       RDPDR_DTYP_PARALLEL after \b ReceiveDeviceAnnounce */
-	psRdpdrOnDeviceDelete OnParallelPortDelete; /**< Called for devices of type \b
-	                                       RDPDR_DTYP_PARALLEL after \b ReceiveDeviceRemove */
+	WINPR_ATTR_NODISCARD psRdpdrOnDeviceCreate OnParallelPortCreate; /**< Called for devices of type
+		                                   \b RDPDR_DTYP_PARALLEL after \b ReceiveDeviceAnnounce */
+	WINPR_ATTR_NODISCARD psRdpdrOnDeviceDelete OnParallelPortDelete; /**< Called for devices of type
+		                                   \b RDPDR_DTYP_PARALLEL after \b ReceiveDeviceRemove */
 
 	/*** Printer callbacks registered by the server. ***/
-	psRdpdrOnDeviceCreate OnPrinterCreate; /**< Called for devices of type RDPDR_DTYP_PRINT after \b
-	                                          ReceiveDeviceAnnounce */
-	psRdpdrOnDeviceDelete OnPrinterDelete; /**< Called for devices of type RDPDR_DTYP_PRINT after \b
-	                                          ReceiveDeviceRemove */
+	WINPR_ATTR_NODISCARD psRdpdrOnDeviceCreate OnPrinterCreate; /**< Called for devices of type
+		                                      RDPDR_DTYP_PRINT after \b ReceiveDeviceAnnounce */
+	WINPR_ATTR_NODISCARD psRdpdrOnDeviceDelete OnPrinterDelete; /**< Called for devices of type
+		                                      RDPDR_DTYP_PRINT after \b ReceiveDeviceRemove */
 
 	/*** Smartcard callbacks registered by the server. ***/
-	psRdpdrOnDeviceCreate OnSmartcardCreate; /**< Called for devices of type RDPDR_DTYP_SMARTCARD
-	                                            after                    \b ReceiveDeviceAnnounce */
-	psRdpdrOnDeviceDelete OnSmartcardDelete; /**< Called for devices of type RDPDR_DTYP_SMARTCARD
-	                                            after \b                ReceiveDeviceRemove */
+	WINPR_ATTR_NODISCARD psRdpdrOnDeviceCreate
+		OnSmartcardCreate; /**< Called for devices of type RDPDR_DTYP_SMARTCARD
+		 after                    \b ReceiveDeviceAnnounce */
+	WINPR_ATTR_NODISCARD psRdpdrOnDeviceDelete OnSmartcardDelete; /**< Called for devices of type
+		                                        RDPDR_DTYP_SMARTCARD after \b ReceiveDeviceRemove */
 
 	rdpContext* rdpcontext;
 };

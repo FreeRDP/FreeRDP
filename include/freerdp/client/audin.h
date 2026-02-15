@@ -43,25 +43,27 @@ extern "C"
 	typedef struct s_IAudinDevice IAudinDevice;
 	struct s_IAudinDevice
 	{
-		UINT (*Open)(IAudinDevice* devplugin, AudinReceive receive, void* userData);
-		BOOL (*FormatSupported)(IAudinDevice* devplugin, const AUDIO_FORMAT* format);
-		UINT(*SetFormat)
-		(IAudinDevice* devplugin, const AUDIO_FORMAT* format, UINT32 FramesPerPacket);
-		UINT (*Close)(IAudinDevice* devplugin);
-		UINT (*Free)(IAudinDevice* devplugin);
+		WINPR_ATTR_NODISCARD UINT (*Open)(IAudinDevice* devplugin, AudinReceive receive,
+		                                  void* userData);
+		WINPR_ATTR_NODISCARD BOOL (*FormatSupported)(IAudinDevice* devplugin,
+		                                             const AUDIO_FORMAT* format);
+		WINPR_ATTR_NODISCARD UINT (*SetFormat)(IAudinDevice* devplugin, const AUDIO_FORMAT* format,
+		                                       UINT32 FramesPerPacket);
+		WINPR_ATTR_NODISCARD UINT (*Close)(IAudinDevice* devplugin);
+		WINPR_ATTR_NODISCARD UINT (*Free)(IAudinDevice* devplugin);
 	};
 
 #define AUDIN_DEVICE_EXPORT_FUNC_NAME "freerdp_audin_client_subsystem_entry"
 
-typedef UINT (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
+	typedef UINT (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
 
-typedef struct
-{
-	IWTSPlugin* plugin;
-	PREGISTERAUDINDEVICE pRegisterAudinDevice;
-	const ADDIN_ARGV* args;
-	rdpContext* rdpcontext;
-} FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
+	typedef struct
+	{
+		IWTSPlugin* plugin;
+		WINPR_ATTR_NODISCARD PREGISTERAUDINDEVICE pRegisterAudinDevice;
+		const ADDIN_ARGV* args;
+		rdpContext* rdpcontext;
+	} FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 
 typedef UINT(VCAPITYPE* PFREERDP_AUDIN_DEVICE_ENTRY)(

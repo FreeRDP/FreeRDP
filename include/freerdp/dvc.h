@@ -73,7 +73,8 @@ extern "C"
 	struct s_IWTSListener
 	{
 		/* Retrieves the listener-specific configuration. */
-		UINT (*GetConfiguration)(IWTSListener* pListener, void** ppPropertyBag);
+		WINPR_ATTR_NODISCARD UINT (*GetConfiguration)(IWTSListener* pListener,
+		                                              void** ppPropertyBag);
 
 		void* pInterface;
 	};
@@ -81,45 +82,47 @@ extern "C"
 	struct s_IWTSVirtualChannel
 	{
 		/* Starts a write request on the channel. */
-		UINT(*Write)
-		(IWTSVirtualChannel* pChannel, ULONG cbSize, const BYTE* pBuffer, void* pReserved);
+		WINPR_ATTR_NODISCARD UINT (*Write)(IWTSVirtualChannel* pChannel, ULONG cbSize,
+		                                   const BYTE* pBuffer, void* pReserved);
 		/* Closes the channel. */
-		UINT (*Close)(IWTSVirtualChannel* pChannel);
+		WINPR_ATTR_NODISCARD UINT (*Close)(IWTSVirtualChannel* pChannel);
 	};
 
 	struct s_IWTSVirtualChannelManager
 	{
 		/* Returns an instance of a listener object that listens on a specific
 		   endpoint, or creates a static channel. */
-		UINT(*CreateListener)
-		(IWTSVirtualChannelManager* pChannelMgr, const char* pszChannelName, ULONG ulFlags,
-		 IWTSListenerCallback* pListenerCallback, IWTSListener** ppListener);
+		WINPR_ATTR_NODISCARD UINT (*CreateListener)(IWTSVirtualChannelManager* pChannelMgr,
+		                                            const char* pszChannelName, ULONG ulFlags,
+		                                            IWTSListenerCallback* pListenerCallback,
+		                                            IWTSListener** ppListener);
 		/* Find the channel or ID to send data to a specific endpoint. */
-		UINT32 (*GetChannelId)(IWTSVirtualChannel* channel);
-		IWTSVirtualChannel* (*FindChannelById)(IWTSVirtualChannelManager* pChannelMgr,
-		                                       UINT32 ChannelId);
-		const char* (*GetChannelName)(IWTSVirtualChannel* channel);
+		WINPR_ATTR_NODISCARD UINT32 (*GetChannelId)(IWTSVirtualChannel* channel);
+		WINPR_ATTR_NODISCARD IWTSVirtualChannel* (*FindChannelById)(
+		    IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId);
+		WINPR_ATTR_NODISCARD const char* (*GetChannelName)(IWTSVirtualChannel* channel);
 		UINT (*DestroyListener)(IWTSVirtualChannelManager* pChannelMgr, IWTSListener* ppListener);
 	};
 
 	struct s_IWTSPlugin
 	{
 		/* Used for the first call that is made from the client to the plug-in. */
-		UINT (*Initialize)(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr);
+		WINPR_ATTR_NODISCARD UINT (*Initialize)(IWTSPlugin* pPlugin,
+		                                        IWTSVirtualChannelManager* pChannelMgr);
 		/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
 		   has successfully connected to the Remote Desktop Session Host (RD
 		   Session Host) server. */
-		UINT (*Connected)(IWTSPlugin* pPlugin);
+		WINPR_ATTR_NODISCARD UINT (*Connected)(IWTSPlugin* pPlugin);
 		/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
 		   has disconnected from the RD Session Host server. */
-		UINT (*Disconnected)(IWTSPlugin* pPlugin, DWORD dwDisconnectCode);
+		WINPR_ATTR_NODISCARD UINT (*Disconnected)(IWTSPlugin* pPlugin, DWORD dwDisconnectCode);
 		/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
 		   has terminated. */
-		UINT (*Terminated)(IWTSPlugin* pPlugin);
+		WINPR_ATTR_NODISCARD UINT (*Terminated)(IWTSPlugin* pPlugin);
 
-		UINT (*Attached)(IWTSPlugin* pPlugin);
+		WINPR_ATTR_NODISCARD UINT (*Attached)(IWTSPlugin* pPlugin);
 
-		UINT (*Detached)(IWTSPlugin* pPlugin);
+		WINPR_ATTR_NODISCARD UINT (*Detached)(IWTSPlugin* pPlugin);
 
 		/* Extended */
 
@@ -130,24 +133,25 @@ extern "C"
 	{
 		/* Accepts or denies a connection request for an incoming connection to
 		   the associated listener. */
-		UINT(*OnNewChannelConnection)
-		(IWTSListenerCallback* pListenerCallback, IWTSVirtualChannel* pChannel, BYTE* Data,
-		 BOOL* pbAccept, IWTSVirtualChannelCallback** ppCallback);
+		WINPR_ATTR_NODISCARD
+		UINT (*OnNewChannelConnection)(IWTSListenerCallback* pListenerCallback,
+		                               IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
+		                               IWTSVirtualChannelCallback** ppCallback);
 
 		void* pInterface;
 	};
 
 	struct s_IWTSVirtualChannelCallback
 	{
-		UINT(*OnDataReceived)
-		(IWTSVirtualChannelCallback* pChannelCallback,
-		 wStream* data); /**< Notifies the user about data that is being received. */
-		UINT(*OnOpen)
-		(IWTSVirtualChannelCallback*
-		     pChannelCallback); /**< Notifies the user that the channel has been opened. */
-		UINT(*OnClose)
-		(IWTSVirtualChannelCallback*
-		     pChannelCallback); /**< Notifies the user that the channel has been closed. */
+		WINPR_ATTR_NODISCARD UINT (*OnDataReceived)(
+		    IWTSVirtualChannelCallback* pChannelCallback,
+		    wStream* data); /**< Notifies the user about data that is being received. */
+		WINPR_ATTR_NODISCARD UINT (*OnOpen)(
+		    IWTSVirtualChannelCallback*
+		        pChannelCallback); /**< Notifies the user that the channel has been opened. */
+		WINPR_ATTR_NODISCARD UINT (*OnClose)(
+		    IWTSVirtualChannelCallback*
+		        pChannelCallback); /**< Notifies the user that the channel has been closed. */
 
 		void* pInterface;
 	};
@@ -159,15 +163,15 @@ extern "C"
 	typedef struct S_IDRDYNVC_ENTRY_POINTS IDRDYNVC_ENTRY_POINTS;
 	struct S_IDRDYNVC_ENTRY_POINTS
 	{
-		UINT(*RegisterPlugin)
-		(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name, IWTSPlugin* pPlugin);
+		WINPR_ATTR_NODISCARD UINT (*RegisterPlugin)(IDRDYNVC_ENTRY_POINTS* pEntryPoints,
+		                                            const char* name, IWTSPlugin* pPlugin);
 		IWTSPlugin* (*GetPlugin)(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name);
 		const ADDIN_ARGV* (*GetPluginData)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
-		rdpSettings* (*GetRdpSettings)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
-		rdpContext* (*GetRdpContext)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
+		WINPR_ATTR_NODISCARD rdpSettings* (*GetRdpSettings)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
+		WINPR_ATTR_NODISCARD rdpContext* (*GetRdpContext)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
 	};
 
-	typedef UINT(VCAPITYPE* PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS*);
+	typedef WINPR_ATTR_NODISCARD UINT(VCAPITYPE* PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS*);
 
 	void* get_callback_by_name(const char* name, void** context);
 	void add_callback_by_name(const char* name, void* fkt, void* context);

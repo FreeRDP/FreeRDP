@@ -66,17 +66,17 @@ extern "C"
 		void* handle;
 		void* custom;
 
-		pcEncomspFilterUpdated FilterUpdated;
-		pcEncomspApplicationCreated ApplicationCreated;
-		pcEncomspApplicationRemoved ApplicationRemoved;
-		pcEncomspWindowCreated WindowCreated;
-		pcEncomspWindowRemoved WindowRemoved;
-		pcEncomspShowWindow ShowWindow;
-		pcEncomspParticipantCreated ParticipantCreated;
-		pcEncomspParticipantRemoved ParticipantRemoved;
-		pcEncomspChangeParticipantControlLevel ChangeParticipantControlLevel;
-		pcEncomspGraphicsStreamPaused GraphicsStreamPaused;
-		pcEncomspGraphicsStreamResumed GraphicsStreamResumed;
+		WINPR_ATTR_NODISCARD pcEncomspFilterUpdated FilterUpdated;
+		WINPR_ATTR_NODISCARD pcEncomspApplicationCreated ApplicationCreated;
+		WINPR_ATTR_NODISCARD pcEncomspApplicationRemoved ApplicationRemoved;
+		WINPR_ATTR_NODISCARD pcEncomspWindowCreated WindowCreated;
+		WINPR_ATTR_NODISCARD pcEncomspWindowRemoved WindowRemoved;
+		WINPR_ATTR_NODISCARD pcEncomspShowWindow ShowWindow;
+		WINPR_ATTR_NODISCARD pcEncomspParticipantCreated ParticipantCreated;
+		WINPR_ATTR_NODISCARD pcEncomspParticipantRemoved ParticipantRemoved;
+		WINPR_ATTR_NODISCARD pcEncomspChangeParticipantControlLevel ChangeParticipantControlLevel;
+		WINPR_ATTR_NODISCARD pcEncomspGraphicsStreamPaused GraphicsStreamPaused;
+		WINPR_ATTR_NODISCARD pcEncomspGraphicsStreamResumed GraphicsStreamResumed;
 
 		UINT32 participantId;
 	};

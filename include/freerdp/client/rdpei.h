@@ -71,34 +71,34 @@ extern "C"
 		void* handle;
 		void* custom;
 
-		pcRdpeiGetVersion GetVersion;
-		pcRdpeiGetFeatures GetFeatures;
+		WINPR_ATTR_NODISCARD pcRdpeiGetVersion GetVersion;
+		WINPR_ATTR_NODISCARD pcRdpeiGetFeatures GetFeatures;
 
-		pcRdpeiAddContact AddContact;
+		WINPR_ATTR_NODISCARD pcRdpeiAddContact AddContact;
 
-		pcRdpeiTouchEvent TouchBegin;
-		pcRdpeiTouchEvent TouchUpdate;
-		pcRdpeiTouchEvent TouchEnd;
+		WINPR_ATTR_NODISCARD pcRdpeiTouchEvent TouchBegin;
+		WINPR_ATTR_NODISCARD pcRdpeiTouchEvent TouchUpdate;
+		WINPR_ATTR_NODISCARD pcRdpeiTouchEvent TouchEnd;
 
-		pcRdpeiAddPen AddPen;
+		WINPR_ATTR_NODISCARD pcRdpeiAddPen AddPen;
 
-		pcRdpeiPen PenBegin;
-		pcRdpeiPen PenUpdate;
-		pcRdpeiPen PenEnd;
-		pcRdpeiPen PenHoverBegin;
-		pcRdpeiPen PenHoverUpdate;
-		pcRdpeiPen PenHoverCancel;
+		WINPR_ATTR_NODISCARD pcRdpeiPen PenBegin;
+		WINPR_ATTR_NODISCARD pcRdpeiPen PenUpdate;
+		WINPR_ATTR_NODISCARD pcRdpeiPen PenEnd;
+		WINPR_ATTR_NODISCARD pcRdpeiPen PenHoverBegin;
+		WINPR_ATTR_NODISCARD pcRdpeiPen PenHoverUpdate;
+		WINPR_ATTR_NODISCARD pcRdpeiPen PenHoverCancel;
 
-		pcRdpeiSuspendTouch SuspendTouch;
-		pcRdpeiResumeTouch ResumeTouch;
+		WINPR_ATTR_NODISCARD pcRdpeiSuspendTouch SuspendTouch;
+		WINPR_ATTR_NODISCARD pcRdpeiResumeTouch ResumeTouch;
 
-		pcRdpeiTouchEvent TouchCancel;
-		pcRdpeiTouchRawEvent TouchRawEvent;
-		pcRdpeiTouchRawEventVA TouchRawEventVA;
+		WINPR_ATTR_NODISCARD pcRdpeiTouchEvent TouchCancel;
+		WINPR_ATTR_NODISCARD pcRdpeiTouchRawEvent TouchRawEvent;
+		WINPR_ATTR_NODISCARD pcRdpeiTouchRawEventVA TouchRawEventVA;
 
-		pcRdpeiPen PenCancel;
-		pcRdpeiPenRawEvent PenRawEvent;
-		pcRdpeiPenRawEventVA PenRawEventVA;
+		WINPR_ATTR_NODISCARD pcRdpeiPen PenCancel;
+		WINPR_ATTR_NODISCARD pcRdpeiPenRawEvent PenRawEvent;
+		WINPR_ATTR_NODISCARD pcRdpeiPenRawEventVA PenRawEventVA;
 
 		UINT32 clientFeaturesMask;
 	};

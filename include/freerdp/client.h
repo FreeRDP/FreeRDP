@@ -72,14 +72,14 @@ extern "C"
 
 		rdpSettings* settings;
 
-		pRdpGlobalInit GlobalInit;
+		WINPR_ATTR_NODISCARD pRdpGlobalInit GlobalInit;
 		pRdpGlobalUninit GlobalUninit;
 
 		DWORD ContextSize;
-		pRdpClientNew ClientNew;
+		WINPR_ATTR_NODISCARD pRdpClientNew ClientNew;
 		pRdpClientFree ClientFree;
 
-		pRdpClientStart ClientStart;
+		WINPR_ATTR_NODISCARD pRdpClientStart ClientStart;
 		pRdpClientStop ClientStop;
 	};
 

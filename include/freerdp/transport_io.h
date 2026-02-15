@@ -68,11 +68,11 @@ extern "C"
 	typedef struct
 	{
 		ALIGN64 void* userContext;
-		ALIGN64 pTransportLayerRead Read;
-		ALIGN64 pTransportLayerWrite Write;
+		ALIGN64 WINPR_ATTR_NODISCARD pTransportLayerRead Read;
+		ALIGN64 WINPR_ATTR_NODISCARD pTransportLayerWrite Write;
 		ALIGN64 pTransportLayerFkt Close;
-		ALIGN64 pTransportLayerWait Wait;
-		ALIGN64 pTransportLayerGetEvent GetEvent;
+		ALIGN64 WINPR_ATTR_NODISCARD pTransportLayerWait Wait;
+		ALIGN64 WINPR_ATTR_NODISCARD pTransportLayerGetEvent GetEvent;
 		UINT64 reserved[64 - 6]; /* Reserve some space for ABI compatibility */
 	} rdpTransportLayer;
 
@@ -110,18 +110,18 @@ extern "C"
 
 	struct rdp_transport_io
 	{
-		pTCPConnect TCPConnect;
-		pTransportFkt TLSConnect;
-		pTransportFkt TLSAccept;
-		pTransportAttach TransportAttach;
-		pTransportFkt TransportDisconnect;
-		pTransportRWFkt ReadPdu;                   /* Reads a whole PDU from the transport */
-		pTransportRWFkt WritePdu;                  /* Writes a whole PDU to the transport */
-		pTransportRead ReadBytes;                  /* Reads up to a requested amount of bytes */
-		pTransportGetPublicKey GetPublicKey;       /** @since version 3.2.0 */
-		pTransportSetBlockingMode SetBlockingMode; /** @since version 3.3.0 */
-		pTransportConnectLayer ConnectLayer;       /** @since 3.9.0 */
-		pTransportAttachLayer AttachLayer;         /** @since 3.9.0 */
+		WINPR_ATTR_NODISCARD pTCPConnect TCPConnect;
+		WINPR_ATTR_NODISCARD pTransportFkt TLSConnect;
+		WINPR_ATTR_NODISCARD pTransportFkt TLSAccept;
+		WINPR_ATTR_NODISCARD pTransportAttach TransportAttach;
+		WINPR_ATTR_NODISCARD pTransportFkt TransportDisconnect;
+		WINPR_ATTR_NODISCARD pTransportRWFkt ReadPdu;  /* Reads a whole PDU from the transport */
+		WINPR_ATTR_NODISCARD pTransportRWFkt WritePdu; /* Writes a whole PDU to the transport */
+		WINPR_ATTR_NODISCARD pTransportRead ReadBytes; /* Reads up to a requested amount of bytes */
+		WINPR_ATTR_NODISCARD pTransportGetPublicKey GetPublicKey;       /** @since version 3.2.0 */
+		WINPR_ATTR_NODISCARD pTransportSetBlockingMode SetBlockingMode; /** @since version 3.3.0 */
+		WINPR_ATTR_NODISCARD pTransportConnectLayer ConnectLayer;       /** @since 3.9.0 */
+		WINPR_ATTR_NODISCARD pTransportAttachLayer AttachLayer;         /** @since 3.9.0 */
 		UINT64 reserved[64 - 12];                  /* Reserve some space for ABI compatibility */
 	};
 	typedef struct rdp_transport_io rdpTransportIo;

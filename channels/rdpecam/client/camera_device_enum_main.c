@@ -169,9 +169,7 @@ static UINT ecam_ihal_device_added_callback(CameraPlugin* ecam, GENERIC_CHANNEL_
  */
 static UINT ecam_enumerate_devices(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel)
 {
-	ecam->ihal->Enumerate(ecam->ihal, ecam_ihal_device_added_callback, ecam, hchannel);
-
-	return CHANNEL_RC_OK;
+	return ecam->ihal->Enumerate(ecam->ihal, ecam_ihal_device_added_callback, ecam, hchannel);
 }
 
 /**

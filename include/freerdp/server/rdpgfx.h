@@ -95,32 +95,32 @@ extern "C"
 		HANDLE vcm;
 		void* custom;
 
-		psRdpgfxServerOpen Open;
-		psRdpgfxServerClose Close;
+		WINPR_ATTR_NODISCARD psRdpgfxServerOpen Open;
+		WINPR_ATTR_NODISCARD psRdpgfxServerClose Close;
 
-		psRdpgfxResetGraphics ResetGraphics;
-		psRdpgfxStartFrame StartFrame;
-		psRdpgfxEndFrame EndFrame;
-		psRdpgfxSurfaceCommand SurfaceCommand;
-		psRdpgfxSurfaceFrameCommand SurfaceFrameCommand;
-		psRdpgfxDeleteEncodingContext DeleteEncodingContext;
-		psRdpgfxCreateSurface CreateSurface;
-		psRdpgfxDeleteSurface DeleteSurface;
-		psRdpgfxSolidFill SolidFill;
-		psRdpgfxSurfaceToSurface SurfaceToSurface;
-		psRdpgfxSurfaceToCache SurfaceToCache;
-		psRdpgfxCacheToSurface CacheToSurface;
-		psRdpgfxCacheImportOffer CacheImportOffer;
-		psRdpgfxCacheImportReply CacheImportReply;
-		psRdpgfxEvictCacheEntry EvictCacheEntry;
-		psRdpgfxMapSurfaceToOutput MapSurfaceToOutput;
-		psRdpgfxMapSurfaceToWindow MapSurfaceToWindow;
-		psRdpgfxMapSurfaceToScaledOutput MapSurfaceToScaledOutput;
-		psRdpgfxMapSurfaceToScaledWindow MapSurfaceToScaledWindow;
-		psRdpgfxCapsAdvertise CapsAdvertise;
-		psRdpgfxCapsConfirm CapsConfirm;
-		psRdpgfxFrameAcknowledge FrameAcknowledge;
-		psRdpgfxQoeFrameAcknowledge QoeFrameAcknowledge;
+		WINPR_ATTR_NODISCARD psRdpgfxResetGraphics ResetGraphics;
+		WINPR_ATTR_NODISCARD psRdpgfxStartFrame StartFrame;
+		WINPR_ATTR_NODISCARD psRdpgfxEndFrame EndFrame;
+		WINPR_ATTR_NODISCARD psRdpgfxSurfaceCommand SurfaceCommand;
+		WINPR_ATTR_NODISCARD psRdpgfxSurfaceFrameCommand SurfaceFrameCommand;
+		WINPR_ATTR_NODISCARD psRdpgfxDeleteEncodingContext DeleteEncodingContext;
+		WINPR_ATTR_NODISCARD psRdpgfxCreateSurface CreateSurface;
+		WINPR_ATTR_NODISCARD psRdpgfxDeleteSurface DeleteSurface;
+		WINPR_ATTR_NODISCARD psRdpgfxSolidFill SolidFill;
+		WINPR_ATTR_NODISCARD psRdpgfxSurfaceToSurface SurfaceToSurface;
+		WINPR_ATTR_NODISCARD psRdpgfxSurfaceToCache SurfaceToCache;
+		WINPR_ATTR_NODISCARD psRdpgfxCacheToSurface CacheToSurface;
+		WINPR_ATTR_NODISCARD psRdpgfxCacheImportOffer CacheImportOffer;
+		WINPR_ATTR_NODISCARD psRdpgfxCacheImportReply CacheImportReply;
+		WINPR_ATTR_NODISCARD psRdpgfxEvictCacheEntry EvictCacheEntry;
+		WINPR_ATTR_NODISCARD psRdpgfxMapSurfaceToOutput MapSurfaceToOutput;
+		WINPR_ATTR_NODISCARD psRdpgfxMapSurfaceToWindow MapSurfaceToWindow;
+		WINPR_ATTR_NODISCARD psRdpgfxMapSurfaceToScaledOutput MapSurfaceToScaledOutput;
+		WINPR_ATTR_NODISCARD psRdpgfxMapSurfaceToScaledWindow MapSurfaceToScaledWindow;
+		WINPR_ATTR_NODISCARD psRdpgfxCapsAdvertise CapsAdvertise;
+		WINPR_ATTR_NODISCARD psRdpgfxCapsConfirm CapsConfirm;
+		WINPR_ATTR_NODISCARD psRdpgfxFrameAcknowledge FrameAcknowledge;
+		WINPR_ATTR_NODISCARD psRdpgfxQoeFrameAcknowledge QoeFrameAcknowledge;
 
 		RdpgfxServerPrivate* priv;
 		rdpContext* rdpcontext;
@@ -128,7 +128,7 @@ extern "C"
 		/**
 		 * Callback, when the channel got its id assigned.
 		 */
-		psRdpgfxServerChannelIdAssigned ChannelIdAssigned;
+		WINPR_ATTR_NODISCARD psRdpgfxServerChannelIdAssigned ChannelIdAssigned;
 		/**
 		 * Optional: Set thread handling.
 		 * When externalThread=TRUE, the application is responsible to call
@@ -136,7 +136,7 @@ extern "C"
 		 *
 		 * Defaults to externalThread=FALSE
 		 */
-		psRdpgfxServerInitialize Initialize;
+		WINPR_ATTR_NODISCARD psRdpgfxServerInitialize Initialize;
 	};
 
 	FREERDP_API void rdpgfx_server_context_free(RdpgfxServerContext* context);

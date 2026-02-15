@@ -56,22 +56,22 @@ extern "C"
 		void* param3;
 		void* param4;
 
-		psListenerOpen Open;
-		psListenerOpenLocal OpenLocal;
+		WINPR_ATTR_NODISCARD psListenerOpen Open;
+		WINPR_ATTR_NODISCARD psListenerOpenLocal OpenLocal;
 #if defined(WITH_FREERDP_DEPRECATED)
 		WINPR_DEPRECATED_VAR("Use rdp_freerdp_listener::GetEventHandles instead",
-		                     psListenerGetFileDescriptor GetFileDescriptor;)
+		                     WINPR_ATTR_NODISCARD psListenerGetFileDescriptor GetFileDescriptor;)
 #else
 	void* reserved;
 #endif
-		psListenerGetEventHandles GetEventHandles;
-		psListenerCheckFileDescriptor CheckFileDescriptor;
+		WINPR_ATTR_NODISCARD psListenerGetEventHandles GetEventHandles;
+		WINPR_ATTR_NODISCARD psListenerCheckFileDescriptor CheckFileDescriptor;
 		psListenerClose Close;
 
-		psPeerAccepted PeerAccepted;
-		psListenerOpenFromSocket OpenFromSocket;
+		WINPR_ATTR_NODISCARD psPeerAccepted PeerAccepted;
+		WINPR_ATTR_NODISCARD psListenerOpenFromSocket OpenFromSocket;
 
-		psListenerCheckFileDescriptor CheckPeerAcceptRestrictions;
+		WINPR_ATTR_NODISCARD psListenerCheckFileDescriptor CheckPeerAcceptRestrictions;
 	};
 
 	FREERDP_API void freerdp_listener_free(freerdp_listener* instance);

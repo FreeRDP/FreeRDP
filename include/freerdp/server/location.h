@@ -68,64 +68,64 @@ extern "C"
 		 *
 		 * Defaults to externalThread=FALSE
 		 */
-		psLocationServerInitialize Initialize;
+		WINPR_ATTR_NODISCARD psLocationServerInitialize Initialize;
 
 		/**
 		 * Open the location channel.
 		 */
-		psLocationServerOpen Open;
+		WINPR_ATTR_NODISCARD psLocationServerOpen Open;
 
 		/**
 		 * Close the location channel.
 		 */
-		psLocationServerClose Close;
+		WINPR_ATTR_NODISCARD psLocationServerClose Close;
 
 		/**
 		 * Poll
 		 * When externalThread=TRUE, call Poll() periodically from your main loop.
 		 * If externalThread=FALSE do not call.
 		 */
-		psLocationServerPoll Poll;
+		WINPR_ATTR_NODISCARD psLocationServerPoll Poll;
 
 		/**
 		 * Retrieve the channel handle for use in conjunction with Poll().
 		 * If externalThread=FALSE do not call.
 		 */
-		psLocationServerChannelHandle ChannelHandle;
+		WINPR_ATTR_NODISCARD psLocationServerChannelHandle ChannelHandle;
 
 		/* All PDUs sent by the server don't require the header to be set */
 
 		/*
 		 * Send a ServerReady PDU.
 		 */
-		psLocationServerServerReady ServerReady;
+		WINPR_ATTR_NODISCARD psLocationServerServerReady ServerReady;
 
 		/*** Callbacks registered by the server. ***/
 
 		/**
 		 * Callback, when the channel got its id assigned.
 		 */
-		psLocationServerChannelIdAssigned ChannelIdAssigned;
+		WINPR_ATTR_NODISCARD psLocationServerChannelIdAssigned ChannelIdAssigned;
 
 		/**
 		 * Callback for the ClientReady PDU.
 		 */
-		psLocationServerClientReady ClientReady;
+		WINPR_ATTR_NODISCARD psLocationServerClientReady ClientReady;
 
 		/**
 		 * Callback for the BaseLocation3D PDU.
 		 */
-		psLocationServerBaseLocation3D BaseLocation3D;
+		WINPR_ATTR_NODISCARD psLocationServerBaseLocation3D BaseLocation3D;
 
 		/**
 		 * Callback for the Location2DDelta PDU.
 		 */
-		psLocationServerLocation2DDelta Location2DDelta;
+		WINPR_ATTR_NODISCARD psLocationServerLocation2DDelta Location2DDelta;
 
 		/**
 		 * Callback for the Location3DDelta PDU.
 		 */
-		psLocationServerLocation3DDelta Location3DDelta;
+		WINPR_ATTR_NODISCARD psLocationServerLocation3DDelta Location3DDelta;
 
 		rdpContext* rdpcontext;
 	};
