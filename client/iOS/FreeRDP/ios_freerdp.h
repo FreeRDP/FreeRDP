@@ -39,7 +39,7 @@ typedef struct mf_context
 	CLIPRDR_FORMAT *serverFormats;
 	CliprdrClientContext *cliprdr;
 	UINT32 clipboardCapabilities;
-	pServerCutText ServerCutText;
+	WINPR_ATTR_NODISCARD pServerCutText ServerCutText;
 } mfContext;
 
 struct mf_info

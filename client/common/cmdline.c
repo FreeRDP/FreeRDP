@@ -975,7 +975,7 @@ typedef struct
 	const char* optname;
 	FreeRDP_Settings_Keys_String id;
 	CmdLineSubOptionType opttype;
-	CmdLineSubOptionCb cb;
+	WINPR_ATTR_NODISCARD CmdLineSubOptionCb cb;
 } CmdLineSubOptions;
 
 static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts, size_t count,
