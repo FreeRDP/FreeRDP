@@ -18,6 +18,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/utils/helpers.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -234,7 +235,7 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 
 	DEBUG_TSMF("");
 	pa_threaded_mainloop_lock(pulse->mainloop);
-	pulse->stream = pa_stream_new(pulse->context, freerdp_ApplicationDetailsString(),
+	pulse->stream = pa_stream_new(pulse->context, freerdp_getApplicationDetailsString(),
 	                              &pulse->sample_spec, NULL);
 
 	if (!pulse->stream)
