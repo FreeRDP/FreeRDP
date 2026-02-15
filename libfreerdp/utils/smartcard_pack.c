@@ -200,6 +200,11 @@ static LONG smartcard_ndr_read_ex(wLog* log, wStream* s, BYTE** data, size_t min
 		return SCARD_E_NO_MEMORY;
 	Stream_Read(s, r, len);
 	const LONG pad = smartcard_unpack_read_size_align(s, len, 4);
+	if (pad < 0)
+	{
+		free(r);
+		return STATUS_INVALID_PARAMETER;
+	}
 	len += (size_t)pad;
 	*data = r;
 	if (plen)
@@ -1702,25 +1707,22 @@ void smartcard_pack_private_type_header(wStream* s, UINT32 objectBufferLength)
 
 LONG smartcard_unpack_read_size_align(wStream* s, size_t size, UINT32 alignment)
 {
-	size_t pad = 0;
+	const size_t padsize = (size + alignment - 1) & ~(alignment - 1);
+	const size_t pad = padsize - size;
 
-	pad = size;
-	size = (size + alignment - 1) & ~(alignment - 1);
-	pad = size - pad;
-
-	if (pad)
-		Stream_Seek(s, pad);
+	if (pad > 0)
+	{
+		if (!Stream_SafeSeek(s, pad))
+			return -1;
+	}
 
 	return (LONG)pad;
 }
 
 LONG smartcard_pack_write_size_align(wStream* s, size_t size, UINT32 alignment)
 {
-	size_t pad = 0;
-
-	pad = size;
-	size = (size + alignment - 1) & ~(alignment - 1);
-	pad = size - pad;
+	const size_t padsize = (size + alignment - 1) & ~(alignment - 1);
+	const size_t pad = padsize - size;
 
 	if (pad)
 	{
@@ -3085,7 +3087,8 @@ LONG smartcard_unpack_transmit_call(wStream* s, Transmit_Call* call)
 		call->pioSendPci->cbPciLength = (DWORD)(ioSendPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST));
 		pbExtraBytes = &((BYTE*)call->pioSendPci)[sizeof(SCARD_IO_REQUEST)];
 		Stream_Read(s, pbExtraBytes, ioSendPci.cbExtraBytes);
-		smartcard_unpack_read_size_align(s, ioSendPci.cbExtraBytes, 4);
+		if (smartcard_unpack_read_size_align(s, ioSendPci.cbExtraBytes, 4) < 0)
+			return STATUS_INVALID_PARAMETER;
 	}
 	else
 	{
@@ -3172,7 +3175,8 @@ LONG smartcard_unpack_transmit_call(wStream* s, Transmit_Call* call)
 			    (DWORD)(ioRecvPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST));
 			pbExtraBytes = &((BYTE*)call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
 			Stream_Read(s, pbExtraBytes, ioRecvPci.cbExtraBytes);
-			smartcard_unpack_read_size_align(s, ioRecvPci.cbExtraBytes, 4);
+			if (smartcard_unpack_read_size_align(s, ioRecvPci.cbExtraBytes, 4) < 0)
+				return STATUS_INVALID_PARAMETER;
 		}
 		else
 		{

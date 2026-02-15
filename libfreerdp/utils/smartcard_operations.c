@@ -786,7 +786,8 @@ LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32
 	    (ioControlCode != SCARD_IOCTL_RELEASETARTEDEVENT))
 	{
 		offset = (RDPDR_DEVICE_IO_REQUEST_LENGTH + RDPDR_DEVICE_IO_CONTROL_REQ_HDR_LENGTH);
-		smartcard_unpack_read_size_align(s, Stream_GetPosition(s) - offset, 8);
+		if (smartcard_unpack_read_size_align(s, Stream_GetPosition(s) - offset, 8) < 0)
+			return STATUS_INVALID_PARAMETER;
 	}
 
 	if (Stream_GetPosition(s) < Stream_Length(s))
