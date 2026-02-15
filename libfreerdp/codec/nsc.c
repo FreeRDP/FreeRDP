@@ -436,19 +436,25 @@ BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp, UINT32
                          UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
                          WINPR_ATTR_UNUSED UINT32 nHeight, UINT32 flip)
 {
-	wStream* s = NULL;
 	wStream sbuffer = { 0 };
 	BOOL ret = 0;
 	if (!context || !data || !pDstData)
 		return FALSE;
 
-	s = Stream_StaticConstInit(&sbuffer, data, length);
+	if (nXDst > nWidth)
+		return FALSE;
+	if (nYDst > nHeight)
+		return FALSE;
 
+	wStream* s = Stream_StaticConstInit(&sbuffer, data, length);
 	if (!s)
 		return FALSE;
 
+	const UINT32 minStride = nWidth * FreeRDPGetBytesPerPixel(DstFormat);
 	if (nDstStride == 0)
-		nDstStride = nWidth * FreeRDPGetBytesPerPixel(DstFormat);
+		nDstStride = minStride;
+	if (nDstStride < minStride)
+		return FALSE;
 
 	switch (bpp)
 	{

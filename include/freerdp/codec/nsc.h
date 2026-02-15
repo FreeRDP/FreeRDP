@@ -53,11 +53,33 @@ extern "C"
 	FREERDP_API BOOL nsc_context_set_parameters(NSC_CONTEXT* WINPR_RESTRICT context,
 	                                            NSC_PARAMETER what, UINT32 value);
 
+	/** @brief decode a NSC message
+	 *
+	 *  @param context The context to work on
+	 *  @param bpp The bit depth of the data
+	 *  @param width The width in pixels of the NSC surface
+	 *  @param height The height in pixels of the NSC surface
+	 *  @param data The data to decode
+	 *  @param length The length of \ref data in bytes
+	 *  @param pDstData The destination buffer. Must be at least \n nDstStride * nHeight in size.
+	 *  @param DstFormat The color format of the destination
+	 *  @param nDstStride The number of bytes per destination buffer line. Must be larger than
+	 * bytes(DstFormat) * nWidth or \0 (in which case it is set to former minimum bound)
+	 *  @param nXDst The X offset in the destination buffer in pixels
+	 *  @param nYDst The Y offset in the destination buffer in pixels
+	 *  @param nWidth The width of the destination buffer in pixels
+	 *  @param nHeight The height of the destination buffer in pixels
+	 *  @param flip Image flipping flags FREERDP_FLIP_NONE et al passed on to \ref
+	 * freerdp_image_copy
+	 *
+	 *  @return \b TRUE in case of success, \b FALSE for any error. Check WLog for details.
+	 */
 	FREERDP_API BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp,
 	                                     UINT32 width, UINT32 height, const BYTE* data,
 	                                     UINT32 length, BYTE* WINPR_RESTRICT pDstData,
 	                                     UINT32 DstFormat, UINT32 nDstStride, UINT32 nXDst,
 	                                     UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 flip);
+
 	FREERDP_API BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context,
 	                                     wStream* WINPR_RESTRICT s,
 	                                     const BYTE* WINPR_RESTRICT bmpdata, UINT32 width,
