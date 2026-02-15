@@ -974,7 +974,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	                                 DEFAULT_COOKIE_MAX_LENGTH) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_ClientBuild,
 	                                 18363) || /* Windows 10, Version 1909 */
-	    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardType, 4) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardType, WINPR_KBD_TYPE_IBM_ENHANCED) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardSubType, 0) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardFunctionKey, 12) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, 0) ||
