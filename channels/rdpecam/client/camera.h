@@ -169,9 +169,8 @@ struct s_ICamHal
 	 * @param hchannel the generic freerdp channel
 	 * @return the number of found cameras
 	 */
-	UINT(*Enumerate)
-	(ICamHal* ihal, ICamHalEnumCallback callback, CameraPlugin* ecam,
-	 GENERIC_CHANNEL_CALLBACK* hchannel);
+	WINPR_ATTR_NODISCARD UINT (*Enumerate)(ICamHal* ihal, ICamHalEnumCallback callback,
+	                                       CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel);
 
 	/**
 	 * callback to activate a given camera device
@@ -181,7 +180,8 @@ struct s_ICamHal
 	 * @return if the operation was successful
 	 * @since 3.18.0
 	 */
-	BOOL (*Activate)(ICamHal* ihal, const char* deviceId, CAM_ERROR_CODE* errorCode);
+	WINPR_ATTR_NODISCARD BOOL (*Activate)(ICamHal* ihal, const char* deviceId,
+	                                      CAM_ERROR_CODE* errorCode);
 
 	/**
 	 * callback to deactivate a given camera device
@@ -191,7 +191,8 @@ struct s_ICamHal
 	 * @return if the operation was successful
 	 * @since 3.18.0
 	 */
-	BOOL (*Deactivate)(ICamHal* ihal, const char* deviceId, CAM_ERROR_CODE* errorCode);
+	WINPR_ATTR_NODISCARD BOOL (*Deactivate)(ICamHal* ihal, const char* deviceId,
+	                                        CAM_ERROR_CODE* errorCode);
 
 	/**
 	 * callback that returns the list of compatible media types given a set of supported formats
@@ -204,10 +205,10 @@ struct s_ICamHal
 	 * @param nMediaTypes output number of media descriptors
 	 * @return number of matched supported formats
 	 */
-	INT16(*GetMediaTypeDescriptions)
-	(ICamHal* ihal, const char* deviceId, size_t streamIndex,
-	 const CAM_MEDIA_FORMAT_INFO* supportedFormats, size_t nSupportedFormats,
-	 CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes, size_t* nMediaTypes);
+	WINPR_ATTR_NODISCARD INT16 (*GetMediaTypeDescriptions)(
+	    ICamHal* ihal, const char* deviceId, size_t streamIndex,
+	    const CAM_MEDIA_FORMAT_INFO* supportedFormats, size_t nSupportedFormats,
+	    CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes, size_t* nMediaTypes);
 
 	/**
 	 * callback to start a stream
@@ -218,9 +219,10 @@ struct s_ICamHal
 	 * @param callback
 	 * @return \b CAM_ERROR_CODE_None on success, a CAM_Error otherwise
 	 */
-	CAM_ERROR_CODE(*StartStream)
-	(ICamHal* ihal, CameraDevice* dev, size_t streamIndex,
-	 const CAM_MEDIA_TYPE_DESCRIPTION* mediaType, ICamHalSampleCapturedCallback callback);
+	WINPR_ATTR_NODISCARD CAM_ERROR_CODE (*StartStream)(ICamHal* ihal, CameraDevice* dev,
+	                                                   size_t streamIndex,
+	                                                   const CAM_MEDIA_TYPE_DESCRIPTION* mediaType,
+	                                                   ICamHalSampleCapturedCallback callback);
 
 	/**
 	 * callback to stop a stream
@@ -239,12 +241,12 @@ struct s_ICamHal
 	CAM_ERROR_CODE (*Free)(ICamHal* ihal);
 };
 
-typedef UINT (*PREGISTERCAMERAHAL)(IWTSPlugin* plugin, ICamHal* hal);
+typedef WINPR_ATTR_NODISCARD UINT (*PREGISTERCAMERAHAL)(IWTSPlugin* plugin, ICamHal* hal);
 
 typedef struct
 {
 	IWTSPlugin* plugin;
-	PREGISTERCAMERAHAL pRegisterCameraHal;
+	WINPR_ATTR_NODISCARD PREGISTERCAMERAHAL pRegisterCameraHal;
 	CameraPlugin* ecam;
 	const ADDIN_ARGV* args;
 
@@ -253,7 +255,8 @@ typedef struct
 typedef FREERDP_CAMERA_HAL_ENTRY_POINTS* PFREERDP_CAMERA_HAL_ENTRY_POINTS;
 
 /* entry point called by addin manager */
-typedef UINT(VCAPITYPE* PFREERDP_CAMERA_HAL_ENTRY)(PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints);
+typedef WINPR_ATTR_NODISCARD
+UINT(VCAPITYPE* PFREERDP_CAMERA_HAL_ENTRY)(PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints);
 
 /* common functions */
 UINT ecam_channel_send_generic_msg(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel,

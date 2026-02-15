@@ -76,8 +76,8 @@ extern "C"
 	{
 		NdrTypeArity arity;
 		size_t itemSize;
-		NDR_READER_FN readFn;
-		NDR_WRITER_FN writeFn;
+		WINPR_ATTR_NODISCARD NDR_READER_FN readFn;
+		WINPR_ATTR_NODISCARD NDR_WRITER_FN writeFn;
 		NDR_DESTROY_FN destroyFn;
 		NDR_DUMP_FN dumpFn;
 	} NdrMessageDescr;

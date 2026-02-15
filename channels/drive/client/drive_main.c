@@ -923,7 +923,7 @@ static void drive_message_free(void* obj)
 	if (!irp)
 		return;
 	WINPR_ASSERT(irp->Discard);
-	irp->Discard(irp);
+	(void)irp->Discard(irp);
 }
 
 /**

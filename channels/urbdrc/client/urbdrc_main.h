@@ -45,12 +45,12 @@
 typedef struct S_IUDEVICE IUDEVICE;
 typedef struct S_IUDEVMAN IUDEVMAN;
 
-#define BASIC_DEV_STATE_DEFINED(_arg, _type) \
-	_type (*get_##_arg)(IUDEVICE * pdev);    \
+#define BASIC_DEV_STATE_DEFINED(_arg, _type)                   \
+	WINPR_ATTR_NODISCARD _type (*get_##_arg)(IUDEVICE * pdev); \
 	void (*set_##_arg)(IUDEVICE * pdev, _type _arg)
 
-#define BASIC_DEVMAN_STATE_DEFINED(_arg, _type) \
-	_type (*get_##_arg)(IUDEVMAN * udevman);    \
+#define BASIC_DEVMAN_STATE_DEFINED(_arg, _type)                   \
+	WINPR_ATTR_NODISCARD _type (*get_##_arg)(IUDEVMAN * udevman); \
 	void (*set_##_arg)(IUDEVMAN * udevman, _type _arg)
 
 typedef struct
@@ -72,7 +72,7 @@ typedef BOOL (*PREGISTERURBDRCSERVICE)(IWTSPlugin* plugin, IUDEVMAN* udevman);
 typedef struct
 {
 	IWTSPlugin* plugin;
-	PREGISTERURBDRCSERVICE pRegisterUDEVMAN;
+	WINPR_ATTR_NODISCARD PREGISTERURBDRCSERVICE pRegisterUDEVMAN;
 	const ADDIN_ARGV* args;
 } FREERDP_URBDRC_SERVICE_ENTRY_POINTS;
 typedef FREERDP_URBDRC_SERVICE_ENTRY_POINTS* PFREERDP_URBDRC_SERVICE_ENTRY_POINTS;
@@ -97,64 +97,67 @@ typedef void (*t_isoch_transfer_cb)(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* ca
 struct S_IUDEVICE
 {
 	/* Transfer */
-	int (*isoch_transfer)(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback, UINT32 MessageId,
-	                      UINT32 RequestId, UINT32 EndpointAddress, UINT32 TransferFlags,
-	                      UINT32 StartFrame, UINT32 ErrorCount, BOOL NoAck,
-	                      const BYTE* packetDescriptorData, UINT32 NumberOfPackets,
-	                      UINT32 BufferSize, const BYTE* Buffer, t_isoch_transfer_cb cb,
-	                      UINT32 Timeout);
+	WINPR_ATTR_NODISCARD int (*isoch_transfer)(
+	    IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback, UINT32 MessageId, UINT32 RequestId,
+	    UINT32 EndpointAddress, UINT32 TransferFlags, UINT32 StartFrame, UINT32 ErrorCount,
+	    BOOL NoAck, const BYTE* packetDescriptorData, UINT32 NumberOfPackets, UINT32 BufferSize,
+	    const BYTE* Buffer, t_isoch_transfer_cb cb, UINT32 Timeout);
 
-	BOOL(*control_transfer)
-	(IUDEVICE* idev, UINT32 RequestId, UINT32 EndpointAddress, UINT32 TransferFlags,
-	 BYTE bmRequestType, BYTE Request, UINT16 Value, UINT16 Index, UINT32* UrbdStatus,
-	 UINT32* BufferSize, BYTE* Buffer, UINT32 Timeout);
+	WINPR_ATTR_NODISCARD BOOL (*control_transfer)(IUDEVICE* idev, UINT32 RequestId,
+	                                              UINT32 EndpointAddress, UINT32 TransferFlags,
+	                                              BYTE bmRequestType, BYTE Request, UINT16 Value,
+	                                              UINT16 Index, UINT32* UrbdStatus,
+	                                              UINT32* BufferSize, BYTE* Buffer, UINT32 Timeout);
 
-	int (*bulk_or_interrupt_transfer)(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback,
-	                                  UINT32 MessageId, UINT32 RequestId, UINT32 EndpointAddress,
-	                                  UINT32 TransferFlags, BOOL NoAck, UINT32 BufferSize,
-	                                  const BYTE* data, t_isoch_transfer_cb cb, UINT32 Timeout);
+	WINPR_ATTR_NODISCARD int (*bulk_or_interrupt_transfer)(
+	    IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback, UINT32 MessageId, UINT32 RequestId,
+	    UINT32 EndpointAddress, UINT32 TransferFlags, BOOL NoAck, UINT32 BufferSize,
+	    const BYTE* data, t_isoch_transfer_cb cb, UINT32 Timeout);
 
-	int (*select_configuration)(IUDEVICE* idev, UINT32 bConfigurationValue);
+	WINPR_ATTR_NODISCARD int (*select_configuration)(IUDEVICE* idev, UINT32 bConfigurationValue);
 
-	int (*select_interface)(IUDEVICE* idev, BYTE InterfaceNumber, BYTE AlternateSetting);
+	WINPR_ATTR_NODISCARD int (*select_interface)(IUDEVICE* idev, BYTE InterfaceNumber,
+	                                             BYTE AlternateSetting);
 
-	int (*control_pipe_request)(IUDEVICE* idev, UINT32 RequestId, UINT32 EndpointAddress,
-	                            UINT32* UsbdStatus, int command);
+	WINPR_ATTR_NODISCARD int (*control_pipe_request)(IUDEVICE* idev, UINT32 RequestId,
+	                                                 UINT32 EndpointAddress, UINT32* UsbdStatus,
+	                                                 int command);
 
-	UINT32(*control_query_device_text)
-	(IUDEVICE* idev, UINT32 TextType, UINT16 LocaleId, UINT8* BufferSize, BYTE* Buffer);
+	WINPR_ATTR_NODISCARD UINT32 (*control_query_device_text)(IUDEVICE* idev, UINT32 TextType,
+	                                                         UINT16 LocaleId, UINT8* BufferSize,
+	                                                         BYTE* Buffer);
 
-	int (*os_feature_descriptor_request)(IUDEVICE* idev, UINT32 RequestId, BYTE Recipient,
-	                                     BYTE InterfaceNumber, BYTE Ms_PageIndex,
-	                                     UINT16 Ms_featureDescIndex, UINT32* UsbdStatus,
-	                                     UINT32* BufferSize, BYTE* Buffer, UINT32 Timeout);
+	WINPR_ATTR_NODISCARD int (*os_feature_descriptor_request)(
+	    IUDEVICE* idev, UINT32 RequestId, BYTE Recipient, BYTE InterfaceNumber, BYTE Ms_PageIndex,
+	    UINT16 Ms_featureDescIndex, UINT32* UsbdStatus, UINT32* BufferSize, BYTE* Buffer,
+	    UINT32 Timeout);
 
 	void (*cancel_all_transfer_request)(IUDEVICE* idev);
 
-	int (*cancel_transfer_request)(IUDEVICE* idev, UINT32 RequestId);
+	WINPR_ATTR_NODISCARD int (*cancel_transfer_request)(IUDEVICE* idev, UINT32 RequestId);
 
-	int (*query_device_descriptor)(IUDEVICE* idev, int offset);
+	WINPR_ATTR_NODISCARD int (*query_device_descriptor)(IUDEVICE* idev, int offset);
 
-	BOOL (*detach_kernel_driver)(IUDEVICE* idev);
+	WINPR_ATTR_NODISCARD BOOL (*detach_kernel_driver)(IUDEVICE* idev);
 
-	BOOL (*attach_kernel_driver)(IUDEVICE* idev);
+	WINPR_ATTR_NODISCARD BOOL (*attach_kernel_driver)(IUDEVICE* idev);
 
-	int (*query_device_port_status)(IUDEVICE* idev, UINT32* UsbdStatus, UINT32* BufferSize,
-	                                BYTE* Buffer);
+	WINPR_ATTR_NODISCARD int (*query_device_port_status)(IUDEVICE* idev, UINT32* UsbdStatus,
+	                                                     UINT32* BufferSize, BYTE* Buffer);
 
-	MSUSB_CONFIG_DESCRIPTOR* (*complete_msconfig_setup)(IUDEVICE* idev,
-	                                                    MSUSB_CONFIG_DESCRIPTOR* MsConfig);
+	WINPR_ATTR_NODISCARD MSUSB_CONFIG_DESCRIPTOR* (*complete_msconfig_setup)(
+	    IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsConfig);
 	/* Basic state */
-	int (*isCompositeDevice)(IUDEVICE* idev);
+	WINPR_ATTR_NODISCARD int (*isCompositeDevice)(IUDEVICE* idev);
 
-	int (*isExist)(IUDEVICE* idev);
-	int (*isAlreadySend)(IUDEVICE* idev);
-	int (*isChannelClosed)(IUDEVICE* idev);
+	WINPR_ATTR_NODISCARD int (*isExist)(IUDEVICE* idev);
+	WINPR_ATTR_NODISCARD int (*isAlreadySend)(IUDEVICE* idev);
+	WINPR_ATTR_NODISCARD int (*isChannelClosed)(IUDEVICE* idev);
 
 	void (*setAlreadySend)(IUDEVICE* idev);
 	void (*setChannelClosed)(IUDEVICE* idev);
 	void (*markChannelClosed)(IUDEVICE* idev);
-	char* (*getPath)(IUDEVICE* idev);
+	WINPR_ATTR_NODISCARD char* (*getPath)(IUDEVICE* idev);
 
 	void (*free)(IUDEVICE* idev);
 
@@ -179,16 +182,18 @@ struct S_IUDEVMAN
 
 	/* Manage devices */
 	void (*rewind)(IUDEVMAN* idevman);
-	BOOL (*has_next)(IUDEVMAN* idevman);
-	BOOL (*unregister_udevice)(IUDEVMAN* idevman, BYTE bus_number, BYTE dev_number);
-	size_t (*register_udevice)(IUDEVMAN* idevman, BYTE bus_number, BYTE dev_number, UINT16 idVendor,
-	                           UINT16 idProduct, UINT32 flag);
-	IUDEVICE* (*get_next)(IUDEVMAN* idevman);
-	IUDEVICE* (*get_udevice_by_UsbDevice)(IUDEVMAN* idevman, UINT32 UsbDevice);
-	IUDEVICE* (*get_udevice_by_ChannelID)(IUDEVMAN* idevman, UINT32 channelID);
+	WINPR_ATTR_NODISCARD BOOL (*has_next)(IUDEVMAN* idevman);
+	WINPR_ATTR_NODISCARD BOOL (*unregister_udevice)(IUDEVMAN* idevman, BYTE bus_number,
+	                                                BYTE dev_number);
+	WINPR_ATTR_NODISCARD size_t (*register_udevice)(IUDEVMAN* idevman, BYTE bus_number,
+	                                                BYTE dev_number, UINT16 idVendor,
+	                                                UINT16 idProduct, UINT32 flag);
+	WINPR_ATTR_NODISCARD IUDEVICE* (*get_next)(IUDEVMAN* idevman);
+	WINPR_ATTR_NODISCARD IUDEVICE* (*get_udevice_by_UsbDevice)(IUDEVMAN* idevman, UINT32 UsbDevice);
+	WINPR_ATTR_NODISCARD IUDEVICE* (*get_udevice_by_ChannelID)(IUDEVMAN* idevman, UINT32 channelID);
 
 	/* Extension */
-	int (*isAutoAdd)(IUDEVMAN* idevman);
+	WINPR_ATTR_NODISCARD int (*isAutoAdd)(IUDEVMAN* idevman);
 
 	/* Basic state */
 	BASIC_DEVMAN_STATE_DEFINED(device_num, UINT32);
@@ -197,8 +202,8 @@ struct S_IUDEVMAN
 	/* control semaphore or mutex lock */
 	void (*loading_lock)(IUDEVMAN* idevman);
 	void (*loading_unlock)(IUDEVMAN* idevman);
-	BOOL (*initialize)(IUDEVMAN* idevman, UINT32 channelId);
-	UINT (*listener_created_callback)(IUDEVMAN* idevman);
+	WINPR_ATTR_NODISCARD BOOL (*initialize)(IUDEVMAN* idevman, UINT32 channelId);
+	WINPR_ATTR_NODISCARD UINT (*listener_created_callback)(IUDEVMAN* idevman);
 
 	IWTSPlugin* plugin;
 	UINT32 controlChannelId;

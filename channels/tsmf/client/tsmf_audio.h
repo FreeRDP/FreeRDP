@@ -27,18 +27,19 @@ typedef struct s_ITSMFAudioDevice ITSMFAudioDevice;
 struct s_ITSMFAudioDevice
 {
 	/* Open the audio device. */
-	BOOL (*Open)(ITSMFAudioDevice* audio, const char* device);
+	WINPR_ATTR_NODISCARD BOOL (*Open)(ITSMFAudioDevice* audio, const char* device);
 	/* Set the audio data format. */
-	BOOL(*SetFormat)
-	(ITSMFAudioDevice* audio, UINT32 sample_rate, UINT32 channels, UINT32 bits_per_sample);
+	WINPR_ATTR_NODISCARD BOOL (*SetFormat)(ITSMFAudioDevice* audio, UINT32 sample_rate,
+	                                       UINT32 channels, UINT32 bits_per_sample);
 	/* Play audio data. */
-	BOOL (*Play)(ITSMFAudioDevice* audio, const BYTE* data, UINT32 data_size);
+	WINPR_ATTR_NODISCARD BOOL (*Play)(ITSMFAudioDevice* audio, const BYTE* data, UINT32 data_size);
 	/* Get the latency of the last written sample, in 100ns */
-	UINT64 (*GetLatency)(ITSMFAudioDevice* audio);
+	WINPR_ATTR_NODISCARD UINT64 (*GetLatency)(ITSMFAudioDevice* audio);
 	/* Change the playback volume level */
-	BOOL (*ChangeVolume)(ITSMFAudioDevice* audio, UINT32 newVolume, UINT32 muted);
+	WINPR_ATTR_NODISCARD BOOL (*ChangeVolume)(ITSMFAudioDevice* audio, UINT32 newVolume,
+	                                          UINT32 muted);
 	/* Flush queued audio data */
-	BOOL (*Flush)(ITSMFAudioDevice* audio);
+	WINPR_ATTR_NODISCARD BOOL (*Flush)(ITSMFAudioDevice* audio);
 	/* Free the audio device */
 	void (*Free)(ITSMFAudioDevice* audio);
 };
