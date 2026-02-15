@@ -57,7 +57,7 @@ struct DynChannelTrackerState
 	UINT32 CurrentDataReceived;
 	UINT32 CurrentDataFragments;
 	wStream* currentPacket;
-	dynamic_channel_on_data_fn dataCallback;
+	WINPR_ATTR_NODISCARD dynamic_channel_on_data_fn dataCallback;
 };
 
 typedef void (*channel_data_dtor_fn)(void** user_data);
