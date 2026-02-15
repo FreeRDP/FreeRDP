@@ -832,7 +832,7 @@ typedef int (*TestFunction)(void);
 struct UnitaryTest
 {
 	const char* name;
-	TestFunction func;
+	WINPR_ATTR_NODISCARD TestFunction func;
 };
 
 static struct UnitaryTest tests[] = { { "Basic trivial tests", test_basic },
