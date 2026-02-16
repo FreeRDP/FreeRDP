@@ -148,6 +148,7 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API RailServerContext* rail_server_context_new(HANDLE vcm);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT rail_server_handle_messages(RailServerContext* context);
 	FREERDP_API void rail_server_set_handshake_ex_flags(RailServerContext* context, DWORD flags);
 

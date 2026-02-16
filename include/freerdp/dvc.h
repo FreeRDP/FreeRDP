@@ -173,9 +173,10 @@ extern "C"
 
 	typedef WINPR_ATTR_NODISCARD UINT(VCAPITYPE* PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS*);
 
-	void* get_callback_by_name(const char* name, void** context);
-	void add_callback_by_name(const char* name, void* fkt, void* context);
-	void remove_callback_by_name(const char* name, void* context);
+	WINPR_ATTR_NODISCARD
+	FREERDP_API void* get_callback_by_name(const char* name, void** context);
+	FREERDP_API void add_callback_by_name(const char* name, void* fkt, void* context);
+	FREERDP_API void remove_callback_by_name(const char* name, void* context);
 
 #ifdef __cplusplus
 }

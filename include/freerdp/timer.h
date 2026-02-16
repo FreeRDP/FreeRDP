@@ -82,6 +82,7 @@ extern "C"
 	 *  @return A new timer ID or \b 0 in case of failure
 	 *  @since version 3.16.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API FreeRDP_TimerID freerdp_timer_add(rdpContext* context, uint64_t intervalNS,
 	                                              FreeRDP_TimerCallback callback, void* userdata,
 	                                              bool mainloop);

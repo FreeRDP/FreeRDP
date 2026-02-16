@@ -30,31 +30,66 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect,
 	                                       INT32 nBottomRect);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API GDI_RECT* gdi_CreateRect(INT32 xLeft, INT32 yTop, INT32 xRight, INT32 yBottom);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_RectToRgn(const GDI_RECT* rect, HGDI_RGN rgn);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_CRectToRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, HGDI_RGN rgn);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_RectToCRgn(const GDI_RECT* rect, INT32* x, INT32* y, INT32* w, INT32* h);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, INT32* x,
 	                                 INT32* y, INT32* w, INT32* h);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_RgnToRect(const GDI_RGN* rgn, GDI_RECT* rect);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_CRgnToRect(INT64 x, INT64 y, INT32 w, INT32 h, GDI_RECT* rect);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_RgnToCRect(const GDI_RGN* rgn, INT32* left, INT32* top, INT32* right,
 	                                INT32* bottom);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_CRgnToCRect(INT32 x, INT32 y, INT32 w, INT32 h, INT32* left, INT32* top,
 	                                 INT32* right, INT32* bottom);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_CopyOverlap(INT32 x, INT32 y, INT32 width, INT32 height, INT32 srcx,
 	                                 INT32 srcy);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_SetRect(GDI_RECT* rc, INT32 xLeft, INT32 yTop, INT32 xRight,
 	                             INT32 yBottom);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_SetRgn(HGDI_RGN hRgn, INT32 nXLeft, INT32 nYLeft, INT32 nWidth,
 	                            INT32 nHeight);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_SetRectRgn(HGDI_RGN hRgn, INT32 nLeftRect, INT32 nTopRect,
 	                                INT32 nRightRect, INT32 nBottomRect);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_EqualRgn(const GDI_RGN* hSrcRgn1, const GDI_RGN* hSrcRgn2);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_CopyRect(GDI_RECT* dst, const GDI_RECT* src);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_PtInRect(const GDI_RECT* rc, INT32 x, INT32 y);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h);
 
 #ifdef __cplusplus

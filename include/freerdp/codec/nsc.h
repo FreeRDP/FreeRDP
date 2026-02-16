@@ -48,8 +48,8 @@ extern "C"
 
 #if defined(WITH_FREERDP_DEPRECATED)
 	WINPR_DEPRECATED_VAR("Use nsc_context_set_parameters(NSC_COLOR_FORMAT)",
-	                     FREERDP_API BOOL nsc_context_set_pixel_format(NSC_CONTEXT* context,
-	                                                                   UINT32 pixel_format));
+	                     WINPR_ATTR_NODISCARD FREERDP_API BOOL nsc_context_set_pixel_format(
+	                         NSC_CONTEXT* context, UINT32 pixel_format));
 #endif
 
 	/** @brief Set a \ref NSC_PARAMETER for a \ref NSC_CONTEXT
@@ -60,6 +60,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE if successful, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL nsc_context_set_parameters(NSC_CONTEXT* WINPR_RESTRICT context,
 	                                            NSC_PARAMETER what, UINT32 value);
 
@@ -84,6 +85,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE in case of success, \b FALSE for any error. Check WLog for details.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp,
 	                                     UINT32 width, UINT32 height, const BYTE* data,
 	                                     UINT32 length, BYTE* WINPR_RESTRICT pDstData,
@@ -102,6 +104,7 @@ extern "C"
 	 *
 	 *  @bug Versions < 3.23.0 do not support \b 0 for scanlines and abort.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context,
 	                                     wStream* WINPR_RESTRICT s,
 	                                     const BYTE* WINPR_RESTRICT bmpdata, UINT32 width,
@@ -111,11 +114,10 @@ extern "C"
 
 	WINPR_DEPRECATED_VAR(
 	    "[since 3.23.0] deprecated, insecure! missing length checks. use nsc_process_message",
-	    FREERDP_API BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context,
-	                                           wStream* WINPR_RESTRICT s,
-	                                           BYTE* WINPR_RESTRICT bmpdata, UINT32 x, UINT32 y,
-	                                           UINT32 width, UINT32 height, UINT32 rowstride,
-	                                           UINT32 format, UINT32 flip));
+	    WINPR_ATTR_NODISCARD FREERDP_API BOOL
+	        nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+	                              BYTE* WINPR_RESTRICT bmpdata, UINT32 x, UINT32 y, UINT32 width,
+	                              UINT32 height, UINT32 rowstride, UINT32 format, UINT32 flip));
 #endif
 
 	/** @brief This function resets a \ref NSC_CONTEXT to a new resolution
@@ -126,6 +128,7 @@ extern "C"
 	 *
 	 *  @return \b TRUE if successful, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL nsc_context_reset(NSC_CONTEXT* WINPR_RESTRICT context, UINT32 width,
 	                                   UINT32 height);
 

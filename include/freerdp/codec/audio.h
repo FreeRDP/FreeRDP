@@ -203,18 +203,26 @@ extern "C"
 	 * Audio Format Functions
 	 */
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* audio_format_get_tag_string(UINT16 wFormatTag);
 
 	FREERDP_API void audio_format_print(wLog* log, DWORD level, const AUDIO_FORMAT* format);
 	FREERDP_API void audio_formats_print(wLog* log, DWORD level, const AUDIO_FORMAT* formats,
 	                                     UINT16 count);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format);
+
 	FREERDP_API BOOL audio_format_copy(const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
 	                                   AUDIO_FORMAT* WINPR_RESTRICT dstFormat);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what);
 
 	FREERDP_API void audio_format_free(AUDIO_FORMAT* format);

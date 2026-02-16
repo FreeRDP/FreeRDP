@@ -68,18 +68,25 @@ extern "C"
 	};
 
 #if defined(WITH_CHANNELS)
+	WINPR_ATTR_NODISCARD
 	FREERDP_API void* freerdp_channels_client_find_static_entry(const char* name,
 	                                                            const char* identifier);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName,
 	                                                                          LPCSTR pszSubsystem,
 	                                                                          LPCSTR pszType,
 	                                                                          DWORD dwFlags);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API FREERDP_ADDIN** freerdp_channels_list_addins(LPCSTR lpName, LPCSTR lpSubsystem,
 	                                                         LPCSTR lpType, DWORD dwFlags);
 	FREERDP_API void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_initialize_generic_dynvc_plugin(GENERIC_DYNVC_PLUGIN* plugin);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT freerdp_generic_DVCPluginEntry(
 	    IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* logTag, const char* name,
 	    size_t pluginSize, size_t channelCallbackSize,

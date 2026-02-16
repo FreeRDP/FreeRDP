@@ -29,6 +29,7 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_display_send_monitor_layout(rdpContext* context, UINT32 monitorCount,
 	                                                     const MONITOR_DEF* monitorDefArray);
 

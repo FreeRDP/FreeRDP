@@ -523,20 +523,37 @@ extern "C"
 	};
 	typedef struct rdp_gdi rdpGdi;
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API DWORD gdi_rop3_code(BYTE code);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* gdi_rop3_code_string(BYTE code);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* gdi_rop3_string(DWORD rop);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_decode_color(rdpGdi* gdi, UINT32 srcColor, UINT32* color, UINT32* format);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride,
 	                               UINT32 format, BYTE* buffer, void (*pfree)(void*));
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_init(freerdp* instance, UINT32 format);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	                             void (*pfree)(void*));
 	FREERDP_API void gdi_free(freerdp* instance);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_send_suppress_output(rdpGdi* gdi, BOOL suppress);
 
 #ifdef __cplusplus

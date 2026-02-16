@@ -126,6 +126,7 @@ extern "C"
 	 * @param file The file to write to. Existing files are truncated.
 	 * @return TRUE for success, FALSE if the file could not be written.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pf_server_config_dump(const char* file);
 
 	/**
@@ -183,6 +184,7 @@ extern "C"
 	 *
 	 * @return The number of required plugins configured.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API size_t pf_config_required_plugins_count(const proxyConfig* config);
 
 	/**
@@ -192,6 +194,7 @@ extern "C"
 	 *
 	 * @return The name of the plugin or NULL.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* pf_config_required_plugin(const proxyConfig* config, size_t index);
 
 	/**
@@ -201,6 +204,7 @@ extern "C"
 	 *
 	 * @return The number of proxy modules configured.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API size_t pf_config_modules_count(const proxyConfig* config);
 
 	/**
@@ -209,6 +213,7 @@ extern "C"
 	 *
 	 * @return An array of strings of size pf_config_modules_count with the module names.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char** pf_config_modules(const proxyConfig* config);
 
 	/**
@@ -218,6 +223,7 @@ extern "C"
 	 *
 	 * @return TRUE for success, FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config);
 
 	/**
@@ -229,6 +235,7 @@ extern "C"
 	 *
 	 * @return  TRUE for success, FALSE for failure
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata);
 
 	/**
@@ -239,6 +246,7 @@ extern "C"
 	 *
 	 * @return A pointer to the value for \b section/key or \b NULL if not found
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* pf_config_get(const proxyConfig* config, const char* section,
 	                                      const char* key);
 

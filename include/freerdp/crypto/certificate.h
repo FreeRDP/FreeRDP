@@ -56,6 +56,7 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpCertificate* freerdp_certificate_new_from_der(const BYTE* data, size_t length);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_certificate_is_rsa(const rdpCertificate* certificate);
 
 	WINPR_ATTR_MALLOC(free, 1)
@@ -130,6 +131,7 @@ extern "C"
 	FREERDP_API char* freerdp_certificate_get_validity(const rdpCertificate* certificate,
 	                                                   BOOL startDate);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API WINPR_MD_TYPE freerdp_certificate_get_signature_alg(const rdpCertificate* cert);
 
 	WINPR_ATTR_MALLOC(free, 1)
@@ -144,14 +146,18 @@ extern "C"
 	FREERDP_API void freerdp_certificate_free_dns_names(size_t count, size_t* lengths,
 	                                                    char** names);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_certificate_check_eku(const rdpCertificate* certificate, int nid);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert,
 	                                                    BYTE** PublicKey, DWORD* PublicKeyLength);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_certificate_verify(const rdpCertificate* cert,
 	                                            const char* certificate_store_path);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_certificate_is_rdp_security_compatible(const rdpCertificate* cert);
 
 	WINPR_ATTR_MALLOC(free, 1)

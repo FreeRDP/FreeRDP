@@ -40,11 +40,18 @@ extern "C"
 	 * set the context for the callback with this function. */
 	FREERDP_API void freerdp_client_rdp_file_set_callback_context(rdpFile* file, void* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name,
 	                                                  rdp_file_fkt_parse parse);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer,
 	                                                      size_t size);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer,
 	                                                         size_t size, rdp_file_fkt_parse parse);
 
@@ -57,6 +64,7 @@ extern "C"
 	 *  @return \b TRUE for success, \b FALSE otherwise
 	 *  @version since 3.17.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(
 	    const rdpFile* file, rdpSettings* settings);
 
@@ -67,23 +75,35 @@ extern "C"
 	 *
 	 *  @return \b TRUE for success, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file,
 	                                                                rdpSettings* settings);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file,
 	                                                                const rdpSettings* settings);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name,
 	                                               BOOL unicode);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer,
 	                                                        size_t size);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_client_rdp_file_set_string_option(rdpFile* file, const char* name,
 	                                                          const char* value);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_client_rdp_file_get_string_option(const rdpFile* file,
 	                                                                  const char* name);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_client_rdp_file_set_integer_option(rdpFile* file, const char* name,
 	                                                           int value);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_client_rdp_file_get_integer_option(const rdpFile* file,
 	                                                           const char* name);
 

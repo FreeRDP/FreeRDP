@@ -134,6 +134,7 @@ extern "C"
 		WINPR_ATTR_NODISCARD pcRailClientCaretBlinkRate ClientCaretBlinkRate;
 	};
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT client_rail_server_start_cmd(RailClientContext* context);
 
 #ifdef __cplusplus

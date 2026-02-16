@@ -52,6 +52,7 @@ extern "C"
 	 *
 	 * \return \b 0 in case of success, a negative number in case of failure.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	                                                                     int argc, char** argv,
 	                                                                     BOOL allowUnknown);
@@ -72,18 +73,24 @@ extern "C"
 	 *
 	 * \return \b 0 in case of success, a negative number in case of failure.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_client_settings_parse_command_line_arguments_ex(
 	    rdpSettings* settings, int argc, char** argv, BOOL allowUnknown,
 	    COMMAND_LINE_ARGUMENT_A* args, size_t count,
 	    freerdp_command_line_handle_option_t handle_option, void* handle_userdata);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_client_settings_command_line_status_print(rdpSettings* settings,
 	                                                                  int status, int argc,
 	                                                                  char** argv);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int
 	freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, int status,
 	                                                     int argc, char** argv,
 	                                                     const COMMAND_LINE_ARGUMENT_A* custom);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
 
 	/** Print a command line warning about the component being unmaintained.
@@ -116,6 +123,7 @@ extern "C"
 	 *  @since version 3.10.0
 	 */
 	FREERDP_API BOOL freerdp_client_print_version_ex(int argc, char** argv);
+
 	FREERDP_API BOOL freerdp_client_print_buildconfig(void);
 
 	/** @brief prints the buidconfiguration of the client including the binary name extracted from
@@ -129,21 +137,37 @@ extern "C"
 	 *  @since version 3.10.0
 	 */
 	FREERDP_API BOOL freerdp_client_print_buildconfig_ex(int argc, char** argv);
+
 	FREERDP_API BOOL freerdp_client_print_command_line_help(int argc, char** argv);
+
 	FREERDP_API BOOL freerdp_client_print_command_line_help_ex(
 	    int argc, char** argv, const COMMAND_LINE_ARGUMENT_A* custom);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_parse_username(const char* username, char** user, char** domain);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_parse_hostname(const char* hostname, char** host, int* port);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count,
 	                                                   const char* const* params);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count,
 	                                                   const char* const* params);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_del_static_channel(rdpSettings* settings, const char* name);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count,
 	                                                    const char* const* params);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_del_dynamic_channel(rdpSettings* settings, const char* name);
 
 #ifdef __cplusplus

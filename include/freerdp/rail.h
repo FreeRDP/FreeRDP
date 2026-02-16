@@ -579,21 +579,24 @@ typedef enum
 	TS_RAIL_ORDER_EXEC_RESULT = 0x0080
 } ORDER_TYPE;
 
-	FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
-	FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
-	                                            RAIL_UNICODE_STRING* unicode_string);
+WINPR_ATTR_NODISCARD
+FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
 
-	/** @brief convert rails handshake flags to a string representation
-	 *
-	 *  @param flags The flags to stringify
-	 *  @param buffer a string buffer to write to
-	 *  @param len the size in bytes of the string buffer
-	 *
-	 *  @return A pointer to buffer or \b NULL in case of failure
-	 *  @since version 3.5.0
-	 */
-	FREERDP_API const char* rail_handshake_ex_flags_to_string(UINT32 flags, char* buffer,
-	                                                          size_t len);
+WINPR_ATTR_NODISCARD
+FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
+	                                        RAIL_UNICODE_STRING* unicode_string);
+
+/** @brief convert rails handshake flags to a string representation
+ *
+ *  @param flags The flags to stringify
+ *  @param buffer a string buffer to write to
+ *  @param len the size in bytes of the string buffer
+ *
+ *  @return A pointer to buffer or \b NULL in case of failure
+ *  @since version 3.5.0
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_API const char* rail_handshake_ex_flags_to_string(UINT32 flags, char* buffer, size_t len);
 
 #ifdef __cplusplus
 }

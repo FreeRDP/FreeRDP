@@ -56,19 +56,30 @@ extern "C"
 	                                                                    LPCSTR pszType,
 	                                                                    DWORD dwFlags);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API LPSTR freerdp_get_library_install_path(void);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API LPSTR freerdp_get_dynamic_addin_install_path(void);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_register_addin_provider(FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN provider,
 	                                                DWORD dwFlags);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN freerdp_get_current_addin_provider(void);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath,
 	                                                            LPCSTR pszEntryName);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 	                                                                          LPCSTR pszSubsystem,
 	                                                                          LPCSTR pszType,
 	                                                                          DWORD dwFlags);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(LPCSTR pszName,
 	                                                                  LPCSTR pszSubsystem,
 	                                                                  LPCSTR pszType,

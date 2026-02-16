@@ -86,13 +86,23 @@ extern "C"
 
 	FREERDP_API void rdpei_server_context_reset(RdpeiServerContext* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HANDLE rdpei_server_get_event_handle(RdpeiServerContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT rdpei_server_init(RdpeiServerContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT rdpei_server_handle_messages(RdpeiServerContext* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version,
 	                                            UINT32 features);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT rdpei_server_suspend(RdpeiServerContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT rdpei_server_resume(RdpeiServerContext* context);
 
 #ifdef __cplusplus

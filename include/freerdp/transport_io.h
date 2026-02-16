@@ -126,13 +126,20 @@ extern "C"
 	};
 	typedef struct rdp_transport_io rdpTransportIo;
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_io_callback_set_event(rdpContext* context, BOOL set);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const rdpTransportIo* freerdp_get_io_callbacks(rdpContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_set_io_callbacks(rdpContext* context,
 	                                          const rdpTransportIo* io_callbacks);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_set_io_callback_context(rdpContext* context, void* usercontext);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API void* freerdp_get_io_callback_context(rdpContext* context);
 
 	/* PDU parser.
@@ -141,8 +148,13 @@ extern "C"
 	 *         >0 -> PDU header complete, length of PDU.
 	 *         <0 -> Abort, an error occurred
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpContext* transport_get_context(rdpTransport* transport);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpTransport* freerdp_get_transport(rdpContext* context);
 
 	/**

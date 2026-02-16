@@ -31,10 +31,13 @@ extern "C"
 
 	typedef struct S_YUV_CONTEXT YUV_CONTEXT;
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL yuv420_context_decode(
 	    YUV_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_RESTRICT pYUVData[3],
 	    const UINT32 iStride[3], UINT32 yuvHeight, DWORD DstFormat, BYTE* WINPR_RESTRICT dest,
 	    UINT32 nDstStep, const RECTANGLE_16* WINPR_RESTRICT regionRects, UINT32 numRegionRects);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL yuv420_context_encode(YUV_CONTEXT* WINPR_RESTRICT context,
 	                                       const BYTE* WINPR_RESTRICT rgbData, UINT32 srcStep,
 	                                       UINT32 srcFormat, const UINT32 iStride[3],
@@ -42,11 +45,14 @@ extern "C"
 	                                       const RECTANGLE_16* WINPR_RESTRICT regionRects,
 	                                       UINT32 numRegionRects);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL yuv444_context_decode(
 	    YUV_CONTEXT* WINPR_RESTRICT context, BYTE type, const BYTE* WINPR_RESTRICT pYUVData[3],
 	    const UINT32 iStride[3], UINT32 srcYuvHeight, BYTE* WINPR_RESTRICT pYUVDstData[3],
 	    const UINT32 iDstStride[3], DWORD DstFormat, BYTE* WINPR_RESTRICT dest, UINT32 nDstStep,
 	    const RECTANGLE_16* WINPR_RESTRICT regionRects, UINT32 numRegionRects);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL yuv444_context_encode(YUV_CONTEXT* WINPR_RESTRICT context, BYTE version,
 	                                       const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep,
 	                                       UINT32 SrcFormat, const UINT32 iStride[3],
@@ -55,6 +61,7 @@ extern "C"
 	                                       const RECTANGLE_16* WINPR_RESTRICT regionRects,
 	                                       UINT32 numRegionRects);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL yuv_context_reset(YUV_CONTEXT* WINPR_RESTRICT context, UINT32 width,
 	                                   UINT32 height);
 

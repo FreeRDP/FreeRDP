@@ -37,6 +37,7 @@ extern "C"
 	};
 	typedef struct rdp_metrics rdpMetrics;
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API double metrics_write_bytes(rdpMetrics* metrics, UINT32 UncompressedBytes,
 	                                       UINT32 CompressedBytes);
 

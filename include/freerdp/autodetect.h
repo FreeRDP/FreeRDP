@@ -139,6 +139,8 @@ extern "C"
 		    OnConnectTimeAutoDetectProgress;                                /* 28 */
 		UINT64 paddingB[32 - 29];                                           /* 29 */
 	};
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpAutoDetect* autodetect_get(rdpContext* context);
 
 #ifdef __cplusplus

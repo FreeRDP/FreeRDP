@@ -60,6 +60,7 @@ extern "C"
 	 *
 	 * @return TRUE for success, FALSE otherwise.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pf_server_add_module(proxyServer* server, proxyModuleEntryPoint ep,
 	                                      void* userdata);
 
@@ -70,6 +71,7 @@ extern "C"
 	 *
 	 * @return TRUE for success, FALSE on error
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pf_server_start(proxyServer* server);
 
 	/**
@@ -80,6 +82,7 @@ extern "C"
 	 *
 	 * @return TRUE for success, FALSE on error
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pf_server_start_from_socket(proxyServer* server, int socket);
 
 	/**
@@ -90,6 +93,7 @@ extern "C"
 	 *
 	 * @return TRUE for success, FALSE on error
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pf_server_start_with_peer_socket(proxyServer* server, int socket);
 
 	/**
@@ -107,6 +111,7 @@ extern "C"
 	 *
 	 * @return TRUE for successful termination, FALSE otherwise.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pf_server_run(proxyServer* server);
 
 #ifdef __cplusplus

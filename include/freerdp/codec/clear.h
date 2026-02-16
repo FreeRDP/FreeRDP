@@ -33,11 +33,13 @@ extern "C"
 
 	typedef struct S_CLEAR_CONTEXT CLEAR_CONTEXT;
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int clear_compress(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 	                               const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
 	                               BYTE** WINPR_RESTRICT ppDstData,
 	                               UINT32* WINPR_RESTRICT pDstSize);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API INT32 clear_decompress(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 	                                   const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
 	                                   UINT32 nWidth, UINT32 nHeight, BYTE* WINPR_RESTRICT pDstData,
@@ -45,6 +47,7 @@ extern "C"
 	                                   UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
 	                                   const gdiPalette* WINPR_RESTRICT palette);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL clear_context_reset(CLEAR_CONTEXT* WINPR_RESTRICT clear);
 
 	FREERDP_API void clear_context_free(CLEAR_CONTEXT* WINPR_RESTRICT clear);

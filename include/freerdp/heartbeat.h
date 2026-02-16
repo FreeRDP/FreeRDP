@@ -37,6 +37,7 @@ extern "C"
 		WINPR_ATTR_NODISCARD pServerHeartbeat ServerHeartbeat;
 	};
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_heartbeat_send_heartbeat_pdu(freerdp_peer* peer, BYTE period,
 	                                                      BYTE count1, BYTE count2);
 
