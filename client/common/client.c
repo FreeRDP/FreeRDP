@@ -988,7 +988,6 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
                                         BOOL isConsentMandatory, size_t length,
                                         const WCHAR* message)
 {
-	int answer = 0;
 	const char* msgType = (type == GATEWAY_MESSAGE_CONSENT) ? "Consent message" : "Service message";
 
 	WINPR_ASSERT(instance);
@@ -1018,7 +1017,7 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 	{
 		printf("I understand and agree to the terms of this policy (Y/N) \n");
 		(void)fflush(stdout);
-		answer = freerdp_interruptible_getc(instance->context, stdin);
+		const int answer = freerdp_interruptible_getc(instance->context, stdin);
 
 		if ((answer == EOF) || feof(stdin))
 		{
@@ -1026,18 +1025,17 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 			return FALSE;
 		}
 
+		const int confirm = freerdp_interruptible_getc(instance->context, stdin);
 		switch (answer)
 		{
 			case 'y':
 			case 'Y':
-				answer = freerdp_interruptible_getc(instance->context, stdin);
-				if (answer == EOF)
+				if (confirm == EOF)
 					return FALSE;
 				return TRUE;
 
 			case 'n':
 			case 'N':
-				(void)freerdp_interruptible_getc(instance->context, stdin);
 				return FALSE;
 
 			default:

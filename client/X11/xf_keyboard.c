@@ -681,7 +681,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 		 */
 		if (down)
 		{
-			(void)freerdp_input_send_keyboard_pause_event(input);
+			freerdp_input_send_keyboard_pause_event(input);
 		}
 	}
 	else
@@ -731,7 +731,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 				if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 					WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", event->keycode);
 				else
-					(void)freerdp_input_send_keyboard_event_ex(input, down, repeat, rdp_scancode);
+					freerdp_input_send_keyboard_event_ex(input, down, repeat, rdp_scancode);
 			}
 			else
 			{
@@ -741,14 +741,14 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 
 				WCHAR wbuffer[ARRAYSIZE(buffer)] = { 0 };
 				(void)ConvertUtf8ToWChar(str, wbuffer, rc);
-				(void)freerdp_input_send_unicode_keyboard_event(input, down ? 0 : KBD_FLAGS_RELEASE,
-				                                                wbuffer[0]);
+				freerdp_input_send_unicode_keyboard_event(input, down ? 0 : KBD_FLAGS_RELEASE,
+				                                          wbuffer[0]);
 			}
 		}
 		else if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 			WLog_ERR(TAG, "Unknown key with X keycode 0x%02" PRIx8 "", event->keycode);
 		else
-			(void)freerdp_input_send_keyboard_event_ex(input, down, repeat, rdp_scancode);
+			freerdp_input_send_keyboard_event_ex(input, down, repeat, rdp_scancode);
 	}
 }
 

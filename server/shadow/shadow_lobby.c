@@ -59,7 +59,8 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 	if (server->shareSubRect)
 	{
 		/* If we have shared sub rect setting, only fill shared rect */
-		rectangles_intersection(&invalidRect, &(server->subRect), &invalidRect);
+		if (!rectangles_intersection(&invalidRect, &(server->subRect), &invalidRect))
+			goto fail;
 	}
 
 	width = invalidRect.right - invalidRect.left;
@@ -78,7 +79,8 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 
 	rdtk_surface_free(surface);
 
-	region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect);
+	if (!region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect))
+		goto fail;
 
 	rc = TRUE;
 fail:

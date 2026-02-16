@@ -1568,7 +1568,7 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 	}
 
 	if (rdpei->event && !rdpei->async)
-		(void)freerdp_client_channel_unregister(rdpei->rdpcontext->channels, rdpei->event);
+		freerdp_client_channel_unregister(rdpei->rdpcontext->channels, rdpei->event);
 
 	if (rdpei->event)
 		(void)CloseHandle(rdpei->event);

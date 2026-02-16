@@ -513,8 +513,10 @@ BOOL ber_read_octet_string(wStream* s, BYTE** content, size_t* length)
 
 size_t ber_write_octet_string_tag(wStream* s, size_t length)
 {
-	ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
-	ber_write_length(s, length);
+	if (ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE) == 0)
+		return 0;
+	if (ber_write_length(s, length) == 0)
+		return 0;
 	return 1 + _ber_sizeof_length(length);
 }
 
@@ -640,24 +642,30 @@ size_t ber_write_integer(wStream* s, UINT32 value)
 
 	if (value < 0x80)
 	{
-		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
-		ber_write_length(s, 1);
+		if (ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE) == 0)
+			return 0;
+		if (ber_write_length(s, 1) == 0)
+			return 0;
 
 		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, value));
 		return 3;
 	}
 	else if (value < 0x8000)
 	{
-		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
-		ber_write_length(s, 2);
+		if (ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE) == 0)
+			return 0;
+		if (ber_write_length(s, 2) == 0)
+			return 0;
 
 		Stream_Write_UINT16_BE(s, WINPR_ASSERTING_INT_CAST(UINT16, value));
 		return 4;
 	}
 	else if (value < 0x800000)
 	{
-		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
-		ber_write_length(s, 3);
+		if (ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE) == 0)
+			return 0;
+		if (ber_write_length(s, 3) == 0)
+			return 0;
 
 		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, value >> 16));
 		Stream_Write_UINT16_BE(s, WINPR_ASSERTING_INT_CAST(UINT16, value));
@@ -665,8 +673,10 @@ size_t ber_write_integer(wStream* s, UINT32 value)
 	}
 	else if (value < 0x80000000)
 	{
-		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
-		ber_write_length(s, 4);
+		if (ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE) == 0)
+			return 0;
+		if (ber_write_length(s, 4) == 0)
+			return 0;
 
 		Stream_Write_UINT32_BE(s, value);
 		return 6;
@@ -674,8 +684,10 @@ size_t ber_write_integer(wStream* s, UINT32 value)
 	else
 	{
 		/* treat as signed integer i.e. NT/HRESULT error codes */
-		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
-		ber_write_length(s, 4);
+		if (ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE) == 0)
+			return 0;
+		if (ber_write_length(s, 4) == 0)
+			return 0;
 
 		Stream_Write_UINT32_BE(s, value);
 		return 6;
@@ -691,7 +703,8 @@ size_t ber_write_contextual_integer(wStream* s, BYTE tag, UINT32 value)
 	WINPR_ASSERT(Stream_EnsureRemainingCapacity(s, len + 5));
 
 	len += ber_write_contextual_tag(s, tag, len, TRUE);
-	ber_write_integer(s, value);
+	if (ber_write_integer(s, value) == 0)
+		return 0;
 	return len;
 }
 

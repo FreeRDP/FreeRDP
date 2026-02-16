@@ -335,12 +335,12 @@ void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup)
 		switch (cur->type)
 		{
 			case FREERDP_SETTINGS_TYPE_STRING: /* strings */
-				(void)freerdp_settings_set_string_copy_(dst, (FreeRDP_Settings_Keys_String)cur->id,
-				                                        NULL, 0, cleanup);
+				freerdp_settings_set_string_copy_(dst, (FreeRDP_Settings_Keys_String)cur->id, NULL,
+				                                  0, cleanup);
 				break;
 			case FREERDP_SETTINGS_TYPE_POINTER: /* pointer */
-				(void)freerdp_settings_set_pointer_len(dst, (FreeRDP_Settings_Keys_Pointer)cur->id,
-				                                       NULL, 0);
+				freerdp_settings_set_pointer_len(dst, (FreeRDP_Settings_Keys_Pointer)cur->id, NULL,
+				                                 0);
 				break;
 			default:
 				break;

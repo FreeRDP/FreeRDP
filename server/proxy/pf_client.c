@@ -90,7 +90,11 @@ static void pf_client_on_error_info(void* ctx, const ErrorInfoEventArgs* e)
 
 	/* forward error back to client */
 	freerdp_set_error_info(ps->context.rdp, e->code);
-	freerdp_send_error_info(ps->context.rdp);
+	if (!freerdp_send_error_info(ps->context.rdp))
+	{
+		PROXY_LOG_WARN(TAG, pc, "[fail] reply ErrorInfo PDU. code=0x%08" PRIu32 ", message: %s",
+		               e->code, freerdp_get_error_info_string(e->code));
+	}
 }
 
 static void pf_client_on_activated(void* ctx, WINPR_ATTR_UNUSED const ActivatedEventArgs* e)

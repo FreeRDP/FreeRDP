@@ -682,7 +682,8 @@ static UINT rdpgfx_save_persistent_cache(RDPGFX_PLUGIN* gfx)
 			if (context->ExportCacheEntry(context, cacheSlot, &cacheEntry) != CHANNEL_RC_OK)
 				continue;
 
-			persistent_cache_write_entry(persistent, &cacheEntry);
+			if (persistent_cache_write_entry(persistent, &cacheEntry) < 0)
+				goto fail;
 		}
 	}
 

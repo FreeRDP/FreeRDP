@@ -1825,7 +1825,9 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 	    (ioControlCode != SCARD_IOCTL_RELEASETARTEDEVENT))
 	{
 		offset = (RDPDR_DEVICE_IO_RESPONSE_LENGTH + RDPDR_DEVICE_IO_CONTROL_RSP_HDR_LENGTH);
-		smartcard_pack_write_size_align(out, Stream_GetPosition(out) - offset, 8);
+		const LONG rc = smartcard_pack_write_size_align(out, Stream_GetPosition(out) - offset, 8);
+		if (rc != SCARD_S_SUCCESS)
+			result = rc;
 	}
 
 	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT) &&

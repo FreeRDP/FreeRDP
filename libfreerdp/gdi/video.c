@@ -80,7 +80,7 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, const VideoSurface* s
 
 	if ((gdi->width < 0) || (gdi->height < 0))
 		goto fail;
-	else
+
 	{
 		const UINT32 nXSrc = surface->x;
 		const UINT32 nYSrc = surface->y;
@@ -106,11 +106,9 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, const VideoSurface* s
 		    (height > INT32_MAX))
 			goto fail;
 
-		gdi_InvalidateRegion(gdi->primary->hdc, (INT32)nXDst, (INT32)nYDst, (INT32)width,
-		                     (INT32)height);
+		rc = gdi_InvalidateRegion(gdi->primary->hdc, (INT32)nXDst, (INT32)nYDst, (INT32)width,
+		                          (INT32)height);
 	}
-
-	rc = TRUE;
 fail:
 
 	if (!update_end_paint(update))

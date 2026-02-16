@@ -846,7 +846,8 @@ static int sdl_run(SdlContext* sdl)
 	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
 #endif
 
-	freerdp_add_signal_cleanup_handler(sdl->context(), sdl_term_handler);
+	if (!freerdp_add_signal_cleanup_handler(sdl->context(), sdl_term_handler))
+		return -1;
 
 	sdl->initialized.set();
 

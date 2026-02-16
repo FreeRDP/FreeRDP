@@ -328,14 +328,16 @@ const char* utils_is_vsock(const char* hostname)
 
 static BOOL remove_rdpdr_type(rdpSettings* settings, UINT32 type)
 {
+	BOOL rc = TRUE;
 	RDPDR_DEVICE* printer = NULL;
 	do
 	{
 		printer = freerdp_device_collection_find_type(settings, type);
-		freerdp_device_collection_del(settings, printer);
+		if (!freerdp_device_collection_del(settings, printer))
+			rc = FALSE;
 		freerdp_device_free(printer);
 	} while (printer);
-	return TRUE;
+	return rc;
 }
 
 static BOOL disable_clipboard(rdpSettings* settings)

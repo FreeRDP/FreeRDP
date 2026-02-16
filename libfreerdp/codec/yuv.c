@@ -225,13 +225,14 @@ fail:
 
 YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags)
 {
-	SYSTEM_INFO sysInfos;
+	SYSTEM_INFO sysInfos = { 0 };
+	/** do it here to avoid a race condition between threads */
+	if (!primitives_get())
+		return NULL;
+
 	YUV_CONTEXT* ret = winpr_aligned_calloc(1, sizeof(*ret), 32);
 	if (!ret)
 		return NULL;
-
-	/** do it here to avoid a race condition between threads */
-	primitives_get();
 
 	ret->encoder = encoder;
 	if (!(ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))

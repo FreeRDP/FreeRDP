@@ -1371,11 +1371,13 @@ static DWORD WINAPI xf_handle_pipe(void* arg)
 	}
 
 	void* ctx = WINPR_CAST_CONST_PTR_AWAY(pipe, void*);
-	freerdp_add_signal_cleanup_handler(ctx, cleanup_pipe);
+	if (freerdp_add_signal_cleanup_handler(ctx, cleanup_pipe))
+	{
 
-	xf_process_pipe(context, pipe);
+		xf_process_pipe(context, pipe);
 
-	freerdp_del_signal_cleanup_handler(ctx, cleanup_pipe);
+		freerdp_del_signal_cleanup_handler(ctx, cleanup_pipe);
+	}
 
 	unlink(pipe);
 	return 0;

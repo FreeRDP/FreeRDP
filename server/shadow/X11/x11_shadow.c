@@ -876,8 +876,12 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	{
 		BOOL empty = 0;
 		EnterCriticalSection(&surface->lock);
-		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
-		region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
+		if (!region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
+		                         &invalidRect))
+			goto fail_capture;
+		if (!region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion),
+		                             &surfaceRect))
+			goto fail_capture;
 		empty = region16_is_empty(&(surface->invalidRegion));
 		LeaveCriticalSection(&surface->lock);
 
