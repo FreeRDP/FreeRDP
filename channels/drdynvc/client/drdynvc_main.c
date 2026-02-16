@@ -514,9 +514,7 @@ static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL 
 				IWTSVirtualChannelCallback* cb = channel->channel_callback;
 				channel->channel_callback = NULL;
 				if (cb)
-				{
-					IFCALL(cb->OnClose, cb);
-				}
+					error = IFCALLRESULT(CHANNEL_RC_OK, cb->OnClose, cb);
 			}
 
 			if (channel->dvcman && channel->dvcman->drdynvc)

@@ -350,7 +350,9 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 	size_t nrCompatIds = 3;
 
 	/* USB kernel driver detach!! */
-	pdev->detach_kernel_driver(pdev);
+	if (!pdev->detach_kernel_driver(pdev))
+		return ERROR_INTERNAL_ERROR;
+
 	{
 		const UINT16 idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
 		const UINT16 idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
@@ -505,7 +507,8 @@ static UINT urbdrc_device_control_channel(GENERIC_CHANNEL_CALLBACK* callback,
 		case INIT_CHANNEL_IN:
 			/* Control channel was established */
 			error = ERROR_SUCCESS;
-			udevman->initialize(udevman, channelId);
+			if (!udevman->initialize(udevman, channelId))
+				goto fail;
 
 			if (!urbdrc_announce_devices(udevman))
 				goto fail;

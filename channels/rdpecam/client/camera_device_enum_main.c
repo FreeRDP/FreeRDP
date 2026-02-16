@@ -401,11 +401,12 @@ static UINT ecam_plugin_terminated(IWTSPlugin* pPlugin)
 
 	HashTable_Free(ecam->devices);
 
+	UINT rc = CHANNEL_RC_OK;
 	if (ecam->ihal)
-		ecam->ihal->Free(ecam->ihal);
+		rc = ecam->ihal->Free(ecam->ihal);
 
 	free(ecam);
-	return CHANNEL_RC_OK;
+	return rc;
 }
 
 /**

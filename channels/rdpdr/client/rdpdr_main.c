@@ -1563,7 +1563,7 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 		WLog_Print(rdpdr->log, WLOG_ERROR, "device->IRPRequest failed with error %" PRIu32 "",
 		           error);
 	}
-	(void)irp->Discard(irp);
+	irp->Discard(irp);
 
 	return error;
 }

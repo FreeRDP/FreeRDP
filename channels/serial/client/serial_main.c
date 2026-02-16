@@ -710,7 +710,9 @@ error_handle:
 		(void)CloseHandle(irpThread);
 	irp->IoStatus = STATUS_NO_MEMORY;
 	WINPR_ASSERT(irp->Complete);
-	irp->Complete(irp);
+	const UINT rc = irp->Complete(irp);
+	if (rc != CHANNEL_RC_OK)
+		WLog_Print(serial->log, WLOG_WARN, "irp->Complete failed with %" PRIu32, rc);
 	free(data);
 }
 
