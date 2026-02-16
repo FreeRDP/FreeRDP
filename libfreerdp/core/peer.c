@@ -407,7 +407,11 @@ static state_run_t peer_recv_data_pdu(freerdp_peer* client, wStream* s,
 				return STATE_RUN_FAILED;
 
 			Stream_Read_UINT32(s, client->ack_frame_id);
-			IFCALL(update->SurfaceFrameAcknowledge, update->context, client->ack_frame_id);
+			if (update->SurfaceFrameAcknowledge)
+			{
+				if (!update->SurfaceFrameAcknowledge(update->context, client->ack_frame_id))
+					return STATE_RUN_FAILED;
+			}
 			break;
 
 		case DATA_PDU_TYPE_REFRESH_RECT:
@@ -802,7 +806,11 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 	rdpSettings* settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	IFCALL(client->ReachedState, client, rdp_get_state(rdp));
+	if (client->ReachedState)
+	{
+		if (!client->ReachedState(client, rdp_get_state(rdp)))
+			return STATE_RUN_FAILED;
+	}
 	switch (rdp_get_state(rdp))
 	{
 		case CONNECTION_STATE_INITIAL:
@@ -995,7 +1003,11 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 			{
 				MONITOR_DEF* monitors = NULL;
 
-				IFCALL(client->AdjustMonitorsLayout, client);
+				if (client->AdjustMonitorsLayout)
+				{
+					if (!client->AdjustMonitorsLayout(client))
+						return STATE_RUN_FAILED;
+				}
 
 				/* client supports the monitorLayout PDU, let's send him the monitors if any */
 				ret = STATE_RUN_SUCCESS;

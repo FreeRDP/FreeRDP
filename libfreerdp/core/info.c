@@ -1257,7 +1257,13 @@ static BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex* in
 	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
 	WLog_DBG(TAG, "LogonErrorInfo: Data: 0x%08" PRIX32 " Type: 0x%08" PRIX32 "",
 	         errorNotificationData, errorNotificationType);
-	IFCALL(instance->LogonErrorInfo, instance, errorNotificationData, errorNotificationType);
+	if (instance->LogonErrorInfo)
+	{
+		const int rc =
+		    instance->LogonErrorInfo(instance, errorNotificationData, errorNotificationType);
+		if (rc < 0)
+			return FALSE;
+	}
 	info->ErrorNotificationType = errorNotificationType;
 	info->ErrorNotificationData = errorNotificationData;
 	return TRUE;

@@ -2011,7 +2011,8 @@ void transport_layer_free(rdpTransportLayer* layer)
 	if (!layer)
 		return;
 
-	IFCALL(intern->pub.Close, intern->pub.userContext);
+	if (intern->pub.Close)
+		intern->pub.Close(intern->pub.userContext);
 	free(intern->userContextShadowPtr);
 	free(intern);
 }

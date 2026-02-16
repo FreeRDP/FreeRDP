@@ -1048,8 +1048,9 @@ static BOOL gdi_surface_frame_marker(rdpContext* context,
 		case SURFACECMD_FRAMEACTION_END:
 			if (freerdp_settings_get_uint32(context->settings, FreeRDP_FrameAcknowledge) > 0)
 			{
-				IFCALL(context->update->SurfaceFrameAcknowledge, context,
-				       surfaceFrameMarker->frameId);
+				if (!IFCALLRESULT(TRUE, context->update->SurfaceFrameAcknowledge, context,
+				                  surfaceFrameMarker->frameId))
+					return FALSE;
 			}
 
 			break;
