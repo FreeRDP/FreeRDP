@@ -190,7 +190,8 @@ static void test_peer_begin_frame(freerdp_peer* client)
 	fm.frameAction = SURFACECMD_FRAMEACTION_BEGIN;
 	fm.frameId = context->frame_id;
 	WINPR_ASSERT(update->SurfaceFrameMarker);
-	update->SurfaceFrameMarker(update->context, &fm);
+	if (!update->SurfaceFrameMarker(update->context, &fm))
+		WLog_WARN(TAG, "SurfaceFrameMarker failed");
 }
 
 static void test_peer_end_frame(freerdp_peer* client)
@@ -210,7 +211,8 @@ static void test_peer_end_frame(freerdp_peer* client)
 	fm.frameAction = SURFACECMD_FRAMEACTION_END;
 	fm.frameId = context->frame_id;
 	WINPR_ASSERT(update->SurfaceFrameMarker);
-	update->SurfaceFrameMarker(update->context, &fm);
+	if (!update->SurfaceFrameMarker(update->context, &fm))
+		WLog_WARN(TAG, "SurfaceFrameMarker failed");
 	context->frame_id++;
 }
 
@@ -306,8 +308,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client, const RFX_RECT* rect
 	cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 	cmd.bmp.bitmapData = Stream_Buffer(s);
 
-	update->SurfaceBits(update->context, &cmd);
-	ret = TRUE;
+	ret = update->SurfaceBits(update->context, &cmd);
 out:
 	free(rgb_data);
 	return ret;
@@ -453,7 +454,10 @@ static void test_send_cursor_update(freerdp_peer* client, UINT32 x, UINT32 y)
 	rdpUpdate* update = client->context->update;
 	WINPR_ASSERT(update);
 	WINPR_ASSERT(update->SurfaceBits);
-	update->SurfaceBits(update->context, &cmd);
+	if (!update->SurfaceBits(update->context, &cmd))
+	{
+		WLog_WARN(TAG, "update->SurfaceBits failed");
+	}
 	context->icon_x = x;
 	context->icon_y = y;
 }
@@ -575,7 +579,8 @@ static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 			break;
 
 		WINPR_ASSERT(update->SurfaceCommand);
-		update->SurfaceCommand(update->context, s);
+		if (!update->SurfaceCommand(update->context, s))
+			break;
 
 		WINPR_ASSERT(client->CheckFileDescriptor);
 		if (client->CheckFileDescriptor(client) != TRUE)
@@ -878,7 +883,8 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 			return FALSE;
 
 		WINPR_ASSERT(update->DesktopResize);
-		update->DesktopResize(update->context);
+		if (!update->DesktopResize(update->context))
+			return FALSE;
 		tcontext->activated = FALSE;
 	}
 	else if (((flags & KBD_FLAGS_RELEASE) == 0) && code == RDP_SCANCODE_KEY_C) /* 'c' key */
@@ -893,7 +899,8 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 	else if (((flags & KBD_FLAGS_RELEASE) == 0) && code == RDP_SCANCODE_KEY_X) /* 'x' key */
 	{
 		WINPR_ASSERT(client->Close);
-		client->Close(client);
+		if (!client->Close(client))
+			return FALSE;
 	}
 	else if (((flags & KBD_FLAGS_RELEASE) == 0) && code == RDP_SCANCODE_KEY_R) /* 'r' key */
 	{

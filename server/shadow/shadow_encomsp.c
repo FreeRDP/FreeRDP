@@ -113,7 +113,11 @@ int shadow_client_encomsp_init(rdpShadowClient* client)
 	encomsp->ChangeParticipantControlLevel = encomsp_change_participant_control_level;
 
 	if (client->encomsp)
-		client->encomsp->Start(client->encomsp);
+	{
+		const UINT rc = client->encomsp->Start(client->encomsp);
+		if (rc != CHANNEL_RC_OK)
+			return -1;
+	}
 
 	return 1;
 }

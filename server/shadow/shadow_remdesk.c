@@ -26,15 +26,20 @@
 
 int shadow_client_remdesk_init(rdpShadowClient* client)
 {
-	RemdeskServerContext* remdesk = NULL;
+	RemdeskServerContext* remdesk = client->remdesk = remdesk_server_context_new(client->vcm);
+	if (!remdesk)
+		return -1;
 
-	remdesk = client->remdesk = remdesk_server_context_new(client->vcm);
 	remdesk->rdpcontext = &client->context;
 
 	remdesk->custom = (void*)client;
 
 	if (client->remdesk)
-		client->remdesk->Start(client->remdesk);
+	{
+		const UINT rc = client->remdesk->Start(client->remdesk);
+		if (rc != CHANNEL_RC_OK)
+			return -1;
+	}
 
 	return 1;
 }
