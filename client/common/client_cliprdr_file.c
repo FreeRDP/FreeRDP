@@ -268,8 +268,12 @@ static void clip_data_entry_free(void* data)
 		unlock_clipboard_data.common.msgType = CB_UNLOCK_CLIPDATA;
 		unlock_clipboard_data.clipDataId = clip_data_entry->clip_data_id;
 
-		file_context->context->ClientUnlockClipboardData(file_context->context,
-		                                                 &unlock_clipboard_data);
+		const UINT rc = file_context->context->ClientUnlockClipboardData(file_context->context,
+		                                                                 &unlock_clipboard_data);
+		if (rc != CHANNEL_RC_OK)
+			WLog_Print(file_context->log, WLOG_DEBUG,
+			           "ClientUnlockClipboardData failed with %" PRIu32, rc);
+
 		clip_data_entry->has_clip_data_id = FALSE;
 
 		WLog_Print(file_context->log, WLOG_DEBUG, "Destroyed ClipDataEntry with id %u",

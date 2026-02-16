@@ -116,11 +116,11 @@ BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);
 BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect);
 
 BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 command);
-void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
-void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
-void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow);
-void xf_rail_enable_remoteapp_mode(xfContext* xfc);
-void xf_rail_disable_remoteapp_mode(xfContext* xfc);
+BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
+BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
+BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow);
+BOOL xf_rail_enable_remoteapp_mode(xfContext* xfc);
+BOOL xf_rail_disable_remoteapp_mode(xfContext* xfc);
 
 xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UINT32 width,
                                 UINT32 height, UINT32 surfaceId);

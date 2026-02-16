@@ -63,7 +63,7 @@ typedef struct
 	int type;
 	bool focus;
 	bool clicked;
-	WINPR_ATTR_NODISCARD OnClick onclick;
+	OnClick onclick;
 	Window handle;
 } xfFloatbarButton;
 
