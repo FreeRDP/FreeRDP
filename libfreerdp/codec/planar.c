@@ -732,8 +732,9 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 	if (planar->maxHeight < nSrcHeight)
 		return FALSE;
 
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(DstFormat);
 	if (nDstStep <= 0)
-		nDstStep = nDstWidth * FreeRDPGetBytesPerPixel(DstFormat);
+		nDstStep = nDstWidth * bpp;
 
 	const BYTE* srcp = pSrcData;
 
@@ -955,6 +956,24 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 		}
 		else /* RLE */
 		{
+			if (nYDst + nSrcHeight > nTotalHeight)
+			{
+				WLog_ERR(TAG,
+				         "planar plane destination Y %" PRIu32 " + height %" PRIu32
+				         " exceeds totalHeight %" PRIu32,
+				         nYDst, nSrcHeight, nTotalHeight);
+				return FALSE;
+			}
+
+			if ((nXDst + nSrcWidth) * bpp > nDstStep)
+			{
+				WLog_ERR(TAG,
+				         "planar plane destination (X %" PRIu32 " + width %" PRIu32
+				         ") * bpp %" PRIu32 " exceeds stride %" PRIu32,
+				         nXDst, nSrcWidth, bpp, nDstStep);
+				return FALSE;
+			}
+
 			status = planar_decompress_plane_rle(
 			    planes[0], WINPR_ASSERTING_INT_CAST(uint32_t, rleSizes[0]), pTempData, nTempStep,
 			    nXDst, nYDst, nSrcWidth, nSrcHeight, 2, vFlip); /* RedPlane */
