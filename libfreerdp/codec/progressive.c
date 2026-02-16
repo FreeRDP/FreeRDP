@@ -760,7 +760,11 @@ static inline int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* WINPR_RESTR
 	else if (!coeffDiff)
 		memcpy(current, buffer, bsize);
 	else
-		prims->add_16s_inplace(buffer, current, belements);
+	{
+		const pstatus_t rc = prims->add_16s_inplace(buffer, current, belements);
+		if (rc != PRIMITIVES_SUCCESS)
+			return -1;
+	}
 
 	INT16* temp = (INT16*)BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
 
@@ -787,7 +791,7 @@ static inline void progressive_rfx_decode_block(const primitives_t* prims,
 	if (!shift)
 		return;
 
-	prims->lShiftC_16s_inplace(buffer, shift, length);
+	(void)prims->lShiftC_16s_inplace(buffer, shift, length);
 }
 
 static inline int

@@ -47,11 +47,11 @@ extern "C"
 	struct rdp_bitmap
 	{
 		size_t size;                   /* 0 */
-		pBitmap_New New;               /* 1 */
-		pBitmap_Free Free;             /* 2 */
-		pBitmap_Paint Paint;           /* 3 */
-		pBitmap_Decompress Decompress; /* 4 */
-		pBitmap_SetSurface SetSurface; /* 5 */
+		WINPR_ATTR_NODISCARD pBitmap_New New;               /* 1 */
+		pBitmap_Free Free;                                  /* 2 */
+		WINPR_ATTR_NODISCARD pBitmap_Paint Paint;           /* 3 */
+		WINPR_ATTR_NODISCARD pBitmap_Decompress Decompress; /* 4 */
+		WINPR_ATTR_NODISCARD pBitmap_SetSurface SetSurface; /* 5 */
 		UINT32 paddingA[16 - 6];       /* 6 */
 
 		UINT32 left;              /* 16 */
@@ -89,12 +89,12 @@ extern "C"
 	struct rdp_pointer
 	{
 		size_t size;                      /* 0 */
-		pPointer_New New;                 /* 1 */
+		WINPR_ATTR_NODISCARD pPointer_New New; /* 1 */
 		pPointer_Free Free;               /* 2 */
-		pPointer_Set Set;                 /* 3 */
-		pPointer_SetNull SetNull;         /* 4*/
-		pPointer_SetDefault SetDefault;   /* 5 */
-		pPointer_SetPosition SetPosition; /* 6 */
+		WINPR_ATTR_NODISCARD pPointer_Set Set;                 /* 3 */
+		WINPR_ATTR_NODISCARD pPointer_SetNull SetNull;         /* 4*/
+		WINPR_ATTR_NODISCARD pPointer_SetDefault SetDefault;   /* 5 */
+		WINPR_ATTR_NODISCARD pPointer_SetPosition SetPosition; /* 6 */
 		UINT32 paddingA[16 - 7];          /* 7 */
 
 		UINT32 xPos;              /* 16 */
@@ -127,12 +127,12 @@ extern "C"
 	struct rdp_glyph
 	{
 		size_t size;                /* 0 */
-		pGlyph_New New;             /* 1 */
+		WINPR_ATTR_NODISCARD pGlyph_New New; /* 1 */
 		pGlyph_Free Free;           /* 2 */
-		pGlyph_Draw Draw;           /* 3 */
-		pGlyph_BeginDraw BeginDraw; /* 4 */
-		pGlyph_EndDraw EndDraw;     /* 5 */
-		pGlyph_SetBounds SetBounds; /* 6 */
+		WINPR_ATTR_NODISCARD pGlyph_Draw Draw;           /* 3 */
+		WINPR_ATTR_NODISCARD pGlyph_BeginDraw BeginDraw; /* 4 */
+		WINPR_ATTR_NODISCARD pGlyph_EndDraw EndDraw;     /* 5 */
+		WINPR_ATTR_NODISCARD pGlyph_SetBounds SetBounds; /* 6 */
 		UINT32 paddingA[16 - 7];    /* 7 */
 
 		INT32 x;                  /* 16 */

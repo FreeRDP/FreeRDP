@@ -450,9 +450,13 @@ static UINT urbdrc_process_query_device_text(IUDEVICE* pdev, GENERIC_CHANNEL_CAL
 	                                              DeviceDescription, bufferSize);
 }
 
-static void func_select_all_interface_for_msconfig(IUDEVICE* pdev,
+static void func_select_all_interface_for_msconfig(URBDRC_PLUGIN* urbdrc, IUDEVICE* pdev,
                                                    MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 {
+	WINPR_ASSERT(urbdrc);
+	WINPR_ASSERT(pdev);
+	WINPR_ASSERT(MsConfig);
+
 	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfig->MsInterfaces;
 	UINT32 NumInterfaces = MsConfig->NumInterfaces;
 
@@ -460,7 +464,12 @@ static void func_select_all_interface_for_msconfig(IUDEVICE* pdev,
 	{
 		const BYTE InterfaceNumber = MsInterfaces[inum]->InterfaceNumber;
 		const BYTE AlternateSetting = MsInterfaces[inum]->AlternateSetting;
-		pdev->select_interface(pdev, InterfaceNumber, AlternateSetting);
+		const int rc = pdev->select_interface(pdev, InterfaceNumber, AlternateSetting);
+		if (rc < 0)
+		{
+			WLog_Print(urbdrc->log, WLOG_WARN, "select_interface %" PRIu8 " [%" PRIu8 "] failed",
+			           InterfaceNumber, AlternateSetting);
+		}
 	}
 }
 
@@ -545,9 +554,16 @@ static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* c
 			return ERROR_INVALID_DATA;
 
 		/* select config */
-		pdev->select_configuration(pdev, MsConfig->bConfigurationValue);
+		const int lrc = pdev->select_configuration(pdev, MsConfig->bConfigurationValue);
+		if (lrc != 0)
+		{
+			msusb_msconfig_free(MsConfig);
+			MsConfig = NULL;
+			return ERROR_INTERNAL_ERROR;
+		}
+
 		/* select all interface */
-		func_select_all_interface_for_msconfig(pdev, MsConfig);
+		func_select_all_interface_for_msconfig(urbdrc, pdev, MsConfig);
 		/* complete configuration setup */
 		if (!pdev->complete_msconfig_setup(pdev, MsConfig))
 		{
@@ -657,7 +673,14 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 		return ERROR_INVALID_DATA;
 	}
 
-	pdev->select_interface(pdev, MsInterface->InterfaceNumber, MsInterface->AlternateSetting);
+	const int lerr =
+	    pdev->select_interface(pdev, MsInterface->InterfaceNumber, MsInterface->AlternateSetting);
+	if (lerr != 0)
+	{
+		msusb_msinterface_free(MsInterface);
+		return ERROR_INTERNAL_ERROR;
+	}
+
 	/* replace device's MsInterface */
 	MSUSB_CONFIG_DESCRIPTOR* MsConfig = pdev->get_MsConfig(pdev);
 	const uint8_t InterfaceNumber = MsInterface->InterfaceNumber;
@@ -1982,7 +2005,11 @@ UINT urbdrc_process_udev_data_transfer(GENERIC_CHANNEL_CALLBACK* callback, URBDR
 	}
 
 	/* USB kernel driver detach!! */
-	pdev->detach_kernel_driver(pdev);
+	if (!pdev->detach_kernel_driver(pdev))
+	{
+		error = ERROR_SUCCESS;
+		goto fail;
+	}
 
 	switch (FunctionId)
 	{

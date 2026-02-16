@@ -432,7 +432,9 @@ static UINT tsmf_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT tsmf_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-                                           IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
+                                           IWTSVirtualChannel* pChannel,
+                                           WINPR_ATTR_UNUSED BYTE* Data,
+                                           WINPR_ATTR_UNUSED BOOL* pbAccept,
                                            IWTSVirtualChannelCallback** ppCallback)
 {
 	TSMF_CHANNEL_CALLBACK* callback = NULL;

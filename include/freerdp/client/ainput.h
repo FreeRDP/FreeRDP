@@ -38,7 +38,7 @@ extern "C"
 		void* handle;
 		void* custom;
 
-		pcAInputSendInputEvent AInputSendInputEvent;
+		WINPR_ATTR_NODISCARD pcAInputSendInputEvent AInputSendInputEvent;
 	};
 
 #ifdef __cplusplus

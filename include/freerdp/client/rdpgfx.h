@@ -125,52 +125,52 @@ extern "C"
 		void* custom;
 
 		/* Implementations require locking */
-		pcRdpgfxResetGraphics ResetGraphics;
-		pcRdpgfxStartFrame StartFrame;
-		pcRdpgfxEndFrame EndFrame;
-		pcRdpgfxSurfaceCommand SurfaceCommand;
-		pcRdpgfxDeleteEncodingContext DeleteEncodingContext;
-		pcRdpgfxCreateSurface CreateSurface;
-		pcRdpgfxDeleteSurface DeleteSurface;
-		pcRdpgfxSolidFill SolidFill;
-		pcRdpgfxSurfaceToSurface SurfaceToSurface;
-		pcRdpgfxSurfaceToCache SurfaceToCache;
-		pcRdpgfxCacheToSurface CacheToSurface;
-		pcRdpgfxCacheImportOffer CacheImportOffer;
-		pcRdpgfxCacheImportReply CacheImportReply;
-		pcRdpgfxImportCacheEntry ImportCacheEntry;
-		pcRdpgfxExportCacheEntry ExportCacheEntry;
-		pcRdpgfxEvictCacheEntry EvictCacheEntry;
-		pcRdpgfxMapSurfaceToOutput MapSurfaceToOutput;
-		pcRdpgfxMapSurfaceToScaledOutput MapSurfaceToScaledOutput;
-		pcRdpgfxMapSurfaceToWindow MapSurfaceToWindow;
-		pcRdpgfxMapSurfaceToScaledWindow MapSurfaceToScaledWindow;
+		WINPR_ATTR_NODISCARD pcRdpgfxResetGraphics ResetGraphics;
+		WINPR_ATTR_NODISCARD pcRdpgfxStartFrame StartFrame;
+		WINPR_ATTR_NODISCARD pcRdpgfxEndFrame EndFrame;
+		WINPR_ATTR_NODISCARD pcRdpgfxSurfaceCommand SurfaceCommand;
+		WINPR_ATTR_NODISCARD pcRdpgfxDeleteEncodingContext DeleteEncodingContext;
+		WINPR_ATTR_NODISCARD pcRdpgfxCreateSurface CreateSurface;
+		WINPR_ATTR_NODISCARD pcRdpgfxDeleteSurface DeleteSurface;
+		WINPR_ATTR_NODISCARD pcRdpgfxSolidFill SolidFill;
+		WINPR_ATTR_NODISCARD pcRdpgfxSurfaceToSurface SurfaceToSurface;
+		WINPR_ATTR_NODISCARD pcRdpgfxSurfaceToCache SurfaceToCache;
+		WINPR_ATTR_NODISCARD pcRdpgfxCacheToSurface CacheToSurface;
+		WINPR_ATTR_NODISCARD pcRdpgfxCacheImportOffer CacheImportOffer;
+		WINPR_ATTR_NODISCARD pcRdpgfxCacheImportReply CacheImportReply;
+		WINPR_ATTR_NODISCARD pcRdpgfxImportCacheEntry ImportCacheEntry;
+		WINPR_ATTR_NODISCARD pcRdpgfxExportCacheEntry ExportCacheEntry;
+		WINPR_ATTR_NODISCARD pcRdpgfxEvictCacheEntry EvictCacheEntry;
+		WINPR_ATTR_NODISCARD pcRdpgfxMapSurfaceToOutput MapSurfaceToOutput;
+		WINPR_ATTR_NODISCARD pcRdpgfxMapSurfaceToScaledOutput MapSurfaceToScaledOutput;
+		WINPR_ATTR_NODISCARD pcRdpgfxMapSurfaceToWindow MapSurfaceToWindow;
+		WINPR_ATTR_NODISCARD pcRdpgfxMapSurfaceToScaledWindow MapSurfaceToScaledWindow;
 
-		pcRdpgfxGetSurfaceIds GetSurfaceIds;
-		pcRdpgfxSetSurfaceData SetSurfaceData;
-		pcRdpgfxGetSurfaceData GetSurfaceData;
-		pcRdpgfxSetCacheSlotData SetCacheSlotData;
-		pcRdpgfxGetCacheSlotData GetCacheSlotData;
+		WINPR_ATTR_NODISCARD pcRdpgfxGetSurfaceIds GetSurfaceIds;
+		WINPR_ATTR_NODISCARD pcRdpgfxSetSurfaceData SetSurfaceData;
+		WINPR_ATTR_NODISCARD pcRdpgfxGetSurfaceData GetSurfaceData;
+		WINPR_ATTR_NODISCARD pcRdpgfxSetCacheSlotData SetCacheSlotData;
+		WINPR_ATTR_NODISCARD pcRdpgfxGetCacheSlotData GetCacheSlotData;
 
 		/* Proxy callbacks */
-		pcRdpgfxOnOpen OnOpen;
-		pcRdpgfxOnClose OnClose;
-		pcRdpgfxCapsAdvertise CapsAdvertise;
-		pcRdpgfxCapsConfirm CapsConfirm;
-		pcRdpgfxFrameAcknowledge FrameAcknowledge;
-		pcRdpgfxQoeFrameAcknowledge QoeFrameAcknowledge;
+		WINPR_ATTR_NODISCARD pcRdpgfxOnOpen OnOpen;
+		WINPR_ATTR_NODISCARD pcRdpgfxOnClose OnClose;
+		WINPR_ATTR_NODISCARD pcRdpgfxCapsAdvertise CapsAdvertise;
+		WINPR_ATTR_NODISCARD pcRdpgfxCapsConfirm CapsConfirm;
+		WINPR_ATTR_NODISCARD pcRdpgfxFrameAcknowledge FrameAcknowledge;
+		WINPR_ATTR_NODISCARD pcRdpgfxQoeFrameAcknowledge QoeFrameAcknowledge;
 
 		/* No locking required */
-		pcRdpgfxUpdateSurfaces UpdateSurfaces;
-		pcRdpgfxUpdateSurfaceArea UpdateSurfaceArea;
-		pcRdpgfxUpdateWindowFromSurface UpdateWindowFromSurface;
+		WINPR_ATTR_NODISCARD pcRdpgfxUpdateSurfaces UpdateSurfaces;
+		WINPR_ATTR_NODISCARD pcRdpgfxUpdateSurfaceArea UpdateSurfaceArea;
+		WINPR_ATTR_NODISCARD pcRdpgfxUpdateWindowFromSurface UpdateWindowFromSurface;
 
 		/* These callbacks allow creating/destroying a window directly
 		 * mapped to a surface.
 		 * NOTE: The surface is already locked.
 		 */
-		pcRdpgfxMapWindowForSurface MapWindowForSurface;
-		pcRdpgfxUnmapWindowForSurface UnmapWindowForSurface;
+		WINPR_ATTR_NODISCARD pcRdpgfxMapWindowForSurface MapWindowForSurface;
+		WINPR_ATTR_NODISCARD pcRdpgfxUnmapWindowForSurface UnmapWindowForSurface;
 
 		CRITICAL_SECTION mux;
 		rdpCodecs* codecs;

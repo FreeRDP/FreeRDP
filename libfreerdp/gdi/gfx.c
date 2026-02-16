@@ -119,11 +119,14 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	if (update)
 	{
 		WINPR_ASSERT(update->DesktopResize);
-		update->DesktopResize(gdi->context);
+		if (!update->DesktopResize(gdi->context))
+			goto fail;
 	}
 
 	WINPR_ASSERT(context->GetSurfaceIds);
-	context->GetSurfaceIds(context, &pSurfaceIds, &count);
+	rc = context->GetSurfaceIds(context, &pSurfaceIds, &count);
+	if (rc != CHANNEL_RC_OK)
+		goto fail;
 
 	for (UINT32 index = 0; index < count; index++)
 	{
@@ -242,20 +245,19 @@ static UINT gdi_WindowUpdate(RdpgfxClientContext* context, gdiGfxSurface* surfac
 static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 {
 	UINT16 count = 0;
-	UINT status = ERROR_INTERNAL_ERROR;
 	UINT16* pSurfaceIds = NULL;
-	rdpGdi* gdi = NULL;
 
 	WINPR_ASSERT(context);
 
-	gdi = (rdpGdi*)context->custom;
+	rdpGdi* gdi = (rdpGdi*)context->custom;
 	WINPR_ASSERT(gdi);
 
 	EnterCriticalSection(&context->mux);
 
 	WINPR_ASSERT(context->GetSurfaceIds);
-	context->GetSurfaceIds(context, &pSurfaceIds, &count);
-	status = CHANNEL_RC_OK;
+	UINT status = context->GetSurfaceIds(context, &pSurfaceIds, &count);
+	if (status != CHANNEL_RC_OK)
+		goto fail;
 
 	for (UINT32 index = 0; index < count; index++)
 	{
@@ -282,6 +284,7 @@ static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 			break;
 	}
 
+fail:
 	free(pSurfaceIds);
 	LeaveCriticalSection(&context->mux);
 	return status;
@@ -1442,15 +1445,14 @@ fail:
 static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
                                const RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
 {
-	const RECTANGLE_16* rect = NULL;
-	gdiGfxSurface* surface = NULL;
 	gdiGfxCacheEntry* cacheEntry = NULL;
 	UINT rc = ERROR_INTERNAL_ERROR;
 	EnterCriticalSection(&context->mux);
-	rect = &(surfaceToCache->rectSrc);
+	const RECTANGLE_16* rect = &(surfaceToCache->rectSrc);
 
 	WINPR_ASSERT(context->GetSurfaceData);
-	surface = (gdiGfxSurface*)context->GetSurfaceData(context, surfaceToCache->surfaceId);
+	gdiGfxSurface* surface =
+	    (gdiGfxSurface*)context->GetSurfaceData(context, surfaceToCache->surfaceId);
 
 	if (!surface)
 		goto fail;
@@ -1476,7 +1478,9 @@ static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
 	{
 		RDPGFX_EVICT_CACHE_ENTRY_PDU evict = { surfaceToCache->cacheSlot };
 		WINPR_ASSERT(context->EvictCacheEntry);
-		context->EvictCacheEntry(context, &evict);
+		rc = context->EvictCacheEntry(context, &evict);
+		if (rc != CHANNEL_RC_OK)
+			goto fail;
 	}
 
 	WINPR_ASSERT(context->SetCacheSlotData);

@@ -44,7 +44,6 @@ static pstatus_t general_set_32s(INT32 val, INT32* WINPR_RESTRICT pDst, UINT32 l
 	INT32* dptr = pDst;
 	size_t span = 0;
 	size_t remaining = 0;
-	primitives_t* prims = NULL;
 
 	if (len < 256)
 	{
@@ -58,7 +57,7 @@ static pstatus_t general_set_32s(INT32 val, INT32* WINPR_RESTRICT pDst, UINT32 l
 	span = 1;
 	*dptr = val;
 	remaining = len - 1;
-	prims = primitives_get();
+	primitives_t* prims = primitives_get();
 
 	while (remaining)
 	{
@@ -69,7 +68,9 @@ static pstatus_t general_set_32s(INT32 val, INT32* WINPR_RESTRICT pDst, UINT32 l
 
 		const size_t s = thiswidth << 2;
 		WINPR_ASSERT(thiswidth <= INT32_MAX);
-		prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), (INT32)s);
+		const pstatus_t rc = prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), (INT32)s);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
 		remaining -= thiswidth;
 		span <<= 1;
 	}
@@ -108,7 +109,10 @@ static pstatus_t general_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32
 
 		const size_t s = thiswidth << 2;
 		WINPR_ASSERT(thiswidth <= INT32_MAX);
-		prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), (INT32)s);
+		const pstatus_t rc = prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), (INT32)s);
+		if (rc != PRIMITIVES_SUCCESS)
+			return rc;
+
 		remaining -= thiswidth;
 		span <<= 1;
 	}

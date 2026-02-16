@@ -48,10 +48,10 @@ typedef struct
 	HMODULE lib;
 	OpenH264Version version;
 #endif
-	pWelsGetCodecVersionEx WelsGetCodecVersionEx;
-	pWelsCreateDecoder WelsCreateDecoder;
+	WINPR_ATTR_NODISCARD pWelsGetCodecVersionEx WelsGetCodecVersionEx;
+	WINPR_ATTR_NODISCARD pWelsCreateDecoder WelsCreateDecoder;
 	pWelsDestroyDecoder WelsDestroyDecoder;
-	pWelsCreateSVCEncoder WelsCreateSVCEncoder;
+	WINPR_ATTR_NODISCARD pWelsCreateSVCEncoder WelsCreateSVCEncoder;
 	pWelsDestroySVCEncoder WelsDestroySVCEncoder;
 	ISVCDecoder* pDecoder;
 	ISVCEncoder* pEncoder;

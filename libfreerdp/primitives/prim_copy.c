@@ -120,7 +120,11 @@ static pstatus_t general_copy_8u_AC4r(const BYTE* WINPR_RESTRICT pSrc, INT32 src
 	{
 		do
 		{
-			generic->copy(src, dst, WINPR_ASSERTING_INT_CAST(int32_t, rowbytes));
+			const pstatus_t rc =
+			    generic->copy(src, dst, WINPR_ASSERTING_INT_CAST(int32_t, rowbytes));
+			if (rc != PRIMITIVES_SUCCESS)
+				return rc;
+
 			src += srcStep;
 			dst += dstStep;
 		} while (--height);

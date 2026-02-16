@@ -322,10 +322,10 @@ extern "C"
 
 	typedef struct
 	{
-		wLogCallbackData_t data;
-		wLogCallbackImage_t image;
-		wLogCallbackMessage_t message;
-		wLogCallbackPackage_t package;
+		WINPR_ATTR_NODISCARD wLogCallbackData_t data;
+		WINPR_ATTR_NODISCARD wLogCallbackImage_t image;
+		WINPR_ATTR_NODISCARD wLogCallbackMessage_t message;
+		WINPR_ATTR_NODISCARD wLogCallbackPackage_t package;
 	} wLogCallbacks;
 
 #ifdef __cplusplus

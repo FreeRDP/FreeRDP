@@ -267,7 +267,9 @@
 		/* Finish off the remainder. */                                                      \
 		while (len--)                                                                        \
 		{                                                                                    \
-			_slowWay_;                                                                       \
+			const pstatus_t rc = _slowWay_;                                                  \
+			if (rc != PRIMITIVES_SUCCESS)                                                    \
+				return rc;                                                                   \
 		}                                                                                    \
 		return PRIMITIVES_SUCCESS;                                                           \
 	}

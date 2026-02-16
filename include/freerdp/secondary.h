@@ -164,28 +164,28 @@ typedef BOOL (*pCacheBitmap)(rdpContext* context, const CACHE_BITMAP_ORDER* cach
 typedef BOOL (*pCacheBitmapV2)(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
 typedef BOOL (*pCacheBitmapV3)(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
 typedef BOOL (*pCacheColorTable)(rdpContext* context,
-                                 const CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
+	                             const CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
 typedef BOOL (*pCacheGlyph)(rdpContext* context, const CACHE_GLYPH_ORDER* cache_glyph_order);
 typedef BOOL (*pCacheGlyphV2)(rdpContext* context,
-                              const CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
+	                          const CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
 typedef BOOL (*pCacheBrush)(rdpContext* context, const CACHE_BRUSH_ORDER* cache_brush_order);
 typedef BOOL (*pCacheOrderInfo)(rdpContext* context, INT16 orderLength, UINT16 extraFlags,
-                                UINT8 orderType, const char* orderName);
+	                            UINT8 orderType, const char* orderName);
 
 struct rdp_secondary_update
 {
 	rdpContext* context;     /* 0 */
 	UINT32 paddingA[16 - 1]; /* 1 */
 
-	pCacheBitmap CacheBitmap;         /* 16 */
-	pCacheBitmapV2 CacheBitmapV2;     /* 17 */
-	pCacheBitmapV3 CacheBitmapV3;     /* 18 */
-	pCacheColorTable CacheColorTable; /* 19 */
-	pCacheGlyph CacheGlyph;           /* 20 */
-	pCacheGlyphV2 CacheGlyphV2;       /* 21 */
-	pCacheBrush CacheBrush;           /* 22 */
-	/* Statistics callback */
-	pCacheOrderInfo CacheOrderInfo; /* 23 */
+	WINPR_ATTR_NODISCARD pCacheBitmap CacheBitmap;         /* 16 */
+	WINPR_ATTR_NODISCARD pCacheBitmapV2 CacheBitmapV2;     /* 17 */
+	WINPR_ATTR_NODISCARD pCacheBitmapV3 CacheBitmapV3;     /* 18 */
+	WINPR_ATTR_NODISCARD pCacheColorTable CacheColorTable; /* 19 */
+	WINPR_ATTR_NODISCARD pCacheGlyph CacheGlyph;           /* 20 */
+	WINPR_ATTR_NODISCARD pCacheGlyphV2 CacheGlyphV2;       /* 21 */
+	WINPR_ATTR_NODISCARD pCacheBrush CacheBrush;           /* 22 */
+		                                                   /* Statistics callback */
+	WINPR_ATTR_NODISCARD pCacheOrderInfo CacheOrderInfo;   /* 23 */
 	UINT32 paddingE[32 - 24];       /* 24 */
 };
 typedef struct rdp_secondary_update rdpSecondaryUpdate;

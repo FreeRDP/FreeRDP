@@ -1536,13 +1536,12 @@ static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
  */
 static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 {
-	IRP* irp = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	irp = irp_new(rdpdr->devman, rdpdr->pool, s, rdpdr->log, &error);
+	IRP* irp = irp_new(rdpdr->devman, rdpdr->pool, s, rdpdr->log, &error);
 
 	if (!irp)
 	{
@@ -1557,16 +1556,14 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	}
 
 	if (irp->device->IRPRequest)
-		IFCALLRET(irp->device->IRPRequest, error, irp->device, irp);
-	else
-		irp->Discard(irp);
+		error = irp->device->IRPRequest(irp->device, irp);
 
 	if (error != CHANNEL_RC_OK)
 	{
 		WLog_Print(rdpdr->log, WLOG_ERROR, "device->IRPRequest failed with error %" PRIu32 "",
 		           error);
-		irp->Discard(irp);
 	}
+	irp->Discard(irp);
 
 	return error;
 }

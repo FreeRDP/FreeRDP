@@ -162,7 +162,9 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 
 	xfc = (xfContext*)gdi->context;
 	EnterCriticalSection(&context->mux);
-	context->GetSurfaceIds(context, &pSurfaceIds, &count);
+	status = context->GetSurfaceIds(context, &pSurfaceIds, &count);
+	if (status != CHANNEL_RC_OK)
+		goto fail;
 
 	for (UINT32 index = 0; index < count; index++)
 	{
@@ -187,6 +189,7 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 			break;
 	}
 
+fail:
 	free(pSurfaceIds);
 	LeaveCriticalSection(&context->mux);
 	return status;
@@ -422,7 +425,12 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 	if (surface)
 	{
 		if (surface->gdi.windowMapped)
-			IFCALL(context->UnmapWindowForSurface, context, surface->gdi.windowId);
+		{
+			const UINT rc = IFCALLRESULT(CHANNEL_RC_OK, context->UnmapWindowForSurface, context,
+			                             surface->gdi.windowId);
+			if (rc != CHANNEL_RC_OK)
+				return rc;
+		}
 
 #ifdef WITH_GFX_H264
 		h264_context_free(surface->gdi.h264);

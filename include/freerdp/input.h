@@ -90,15 +90,15 @@ extern "C"
 		void* param1;            /* 1 */
 		UINT32 paddingA[16 - 2]; /* 2 */
 
-		pSynchronizeEvent SynchronizeEvent;         /* 16 */
-		pKeyboardEvent KeyboardEvent;               /* 17 */
-		pUnicodeKeyboardEvent UnicodeKeyboardEvent; /* 18 */
-		pMouseEvent MouseEvent;                     /* 19 */
-		pExtendedMouseEvent ExtendedMouseEvent;     /* 20 */
-		pFocusInEvent FocusInEvent;                 /*21 */
-		pKeyboardPauseEvent KeyboardPauseEvent;     /* 22 */
-		pRelMouseEvent RelMouseEvent;               /* 23 */
-		pQoEEvent QoEEvent;                         /* 24 */
+		WINPR_ATTR_NODISCARD pSynchronizeEvent SynchronizeEvent;         /* 16 */
+		WINPR_ATTR_NODISCARD pKeyboardEvent KeyboardEvent;               /* 17 */
+		WINPR_ATTR_NODISCARD pUnicodeKeyboardEvent UnicodeKeyboardEvent; /* 18 */
+		WINPR_ATTR_NODISCARD pMouseEvent MouseEvent;                     /* 19 */
+		WINPR_ATTR_NODISCARD pExtendedMouseEvent ExtendedMouseEvent;     /* 20 */
+		WINPR_ATTR_NODISCARD pFocusInEvent FocusInEvent;                 /*21 */
+		WINPR_ATTR_NODISCARD pKeyboardPauseEvent KeyboardPauseEvent;     /* 22 */
+		WINPR_ATTR_NODISCARD pRelMouseEvent RelMouseEvent;               /* 23 */
+		WINPR_ATTR_NODISCARD pQoEEvent QoEEvent;                         /* 24 */
 
 		UINT32 paddingB[32 - 25]; /* 25 */
 	};

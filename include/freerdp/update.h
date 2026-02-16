@@ -202,16 +202,16 @@ extern "C"
 		rdpContext* context;     /* 0 */
 		UINT32 paddingA[16 - 1]; /* 1 */
 
-		pBeginPaint BeginPaint;                       /* 16 */
-		pEndPaint EndPaint;                           /* 17 */
-		pSetBounds SetBounds;                         /* 18 */
-		pSynchronize Synchronize;                     /* 19 */
-		pDesktopResize DesktopResize;                 /* 20 */
-		pBitmapUpdate BitmapUpdate;                   /* 21 */
-		pPalette Palette;                             /* 22 */
-		pPlaySound PlaySound;                         /* 23 */
-		pSetKeyboardIndicators SetKeyboardIndicators; /* 24 */
-		pSetKeyboardImeStatus SetKeyboardImeStatus;   /* 25 */
+		WINPR_ATTR_NODISCARD pBeginPaint BeginPaint;                       /* 16 */
+		WINPR_ATTR_NODISCARD pEndPaint EndPaint;                           /* 17 */
+		WINPR_ATTR_NODISCARD pSetBounds SetBounds;                         /* 18 */
+		WINPR_ATTR_NODISCARD pSynchronize Synchronize;                     /* 19 */
+		WINPR_ATTR_NODISCARD pDesktopResize DesktopResize;                 /* 20 */
+		WINPR_ATTR_NODISCARD pBitmapUpdate BitmapUpdate;                   /* 21 */
+		WINPR_ATTR_NODISCARD pPalette Palette;                             /* 22 */
+		WINPR_ATTR_NODISCARD pPlaySound PlaySound;                         /* 23 */
+		WINPR_ATTR_NODISCARD pSetKeyboardIndicators SetKeyboardIndicators; /* 24 */
+		WINPR_ATTR_NODISCARD pSetKeyboardImeStatus SetKeyboardImeStatus;   /* 25 */
 		UINT32 paddingB[32 - 26];                     /* 26 */
 
 		rdpPointerUpdate* pointer;     /* 32 */
@@ -226,13 +226,13 @@ extern "C"
 		pRemoteMonitors RemoteMonitors; /* 50 */
 		UINT32 paddingD[64 - 51];       /* 51 */
 
-		pSurfaceCommand SurfaceCommand;                   /* 64 */
-		pSurfaceBits SurfaceBits;                         /* 65 */
-		pSurfaceFrameMarker SurfaceFrameMarker;           /* 66 */
-		pSurfaceFrameBits SurfaceFrameBits;               /* 67 */
-		pSurfaceFrameAcknowledge SurfaceFrameAcknowledge; /* 68 */
-		pSaveSessionInfo SaveSessionInfo;                 /* 69 */
-		pServerStatusInfo ServerStatusInfo;               /* 70 */
+		WINPR_ATTR_NODISCARD pSurfaceCommand SurfaceCommand;                   /* 64 */
+		WINPR_ATTR_NODISCARD pSurfaceBits SurfaceBits;                         /* 65 */
+		WINPR_ATTR_NODISCARD pSurfaceFrameMarker SurfaceFrameMarker;           /* 66 */
+		WINPR_ATTR_NODISCARD pSurfaceFrameBits SurfaceFrameBits;               /* 67 */
+		WINPR_ATTR_NODISCARD pSurfaceFrameAcknowledge SurfaceFrameAcknowledge; /* 68 */
+		WINPR_ATTR_NODISCARD pSaveSessionInfo SaveSessionInfo;                 /* 69 */
+		WINPR_ATTR_NODISCARD pServerStatusInfo ServerStatusInfo;               /* 70 */
 		/* if autoCalculateBitmapData is set to TRUE, the server automatically
 		 * fills BITMAP_DATA struct members: flags, cbCompMainBodySize and cbCompFirstRowSize.
 		 */

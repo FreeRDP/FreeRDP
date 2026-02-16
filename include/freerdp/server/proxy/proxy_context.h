@@ -63,8 +63,8 @@ extern "C"
 		UINT32 front_channel_id;
 		UINT32 back_channel_id;
 		pf_utils_channel_mode channelMode;
-		proxyChannelDataFn onFrontData;
-		proxyChannelDataFn onBackData;
+		WINPR_ATTR_NODISCARD proxyChannelDataFn onFrontData;
+		WINPR_ATTR_NODISCARD proxyChannelDataFn onBackData;
 		proxyChannelContextDtor contextDtor;
 		void* context;
 	};
@@ -120,7 +120,8 @@ extern "C"
 
 		pReceiveChannelData client_receive_channel_data_original;
 		wQueue* cached_server_channel_data;
-		BOOL (*sendChannelData)(pClientContext* pc, const proxyChannelDataEventInfo* ev);
+		WINPR_ATTR_NODISCARD BOOL (*sendChannelData)(pClientContext* pc,
+		                                             const proxyChannelDataEventInfo* ev);
 
 		/* X509 specific */
 		char* remote_hostname;

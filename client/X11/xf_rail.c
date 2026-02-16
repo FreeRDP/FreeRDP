@@ -104,7 +104,7 @@ typedef struct
 	const RECTANGLE_16* rect;
 } rail_paint_fn_arg_t;
 
-void xf_rail_enable_remoteapp_mode(xfContext* xfc)
+BOOL xf_rail_enable_remoteapp_mode(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 	if (!xfc->remote_app)
@@ -121,9 +121,10 @@ void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 
 		gdi->suppressOutput = old;
 	}
+	return TRUE;
 }
 
-void xf_rail_disable_remoteapp_mode(xfContext* xfc)
+BOOL xf_rail_disable_remoteapp_mode(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 	if (xfc->remote_app)
@@ -142,15 +143,16 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 
 		gdi->suppressOutput = old;
 	}
+	return TRUE;
 }
 
-void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
+BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 {
 	RAIL_ACTIVATE_ORDER activate = { 0 };
 	xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xwindow);
 
 	if (!appWindow)
-		return;
+		return FALSE;
 
 	if (enabled)
 		xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
@@ -158,8 +160,9 @@ void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 	WINPR_ASSERT(appWindow->windowId <= UINT32_MAX);
 	activate.windowId = (UINT32)appWindow->windowId;
 	activate.enabled = enabled;
-	xfc->rail->ClientActivate(xfc->rail, &activate);
+	const UINT rc = xfc->rail->ClientActivate(xfc->rail, &activate);
 	xf_rail_return_window(appWindow);
+	return rc == CHANNEL_RC_OK;
 }
 
 BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 command)
@@ -181,14 +184,14 @@ BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 
  * send an update to the RDP server informing it of the new window position
  * and size.
  */
-void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
+BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 {
 	RAIL_WINDOW_MOVE_ORDER windowMove = { 0 };
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
 	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE)
-		return;
+		return FALSE;
 
 	/* If current window position disagrees with RDP window position, send update to RDP server */
 	if (appWindow->x != appWindow->windowOffsetX || appWindow->y != appWindow->windowOffsetY ||
@@ -210,11 +213,13 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + appWindow->width + right);
 		windowMove.bottom =
 		    WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + appWindow->height + bottom);
-		xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
+		const UINT rc = xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
+		return rc == CHANNEL_RC_OK;
 	}
+	return TRUE;
 }
 
-void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
+BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 {
 	int x = 0;
 	int y = 0;
@@ -253,7 +258,9 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + w); /* In the update to
 		           RDP the position is one past the window */
 		windowMove.bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + h);
-		xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
+		const UINT rc = xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
 	}
 
 	/*
@@ -266,7 +273,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	if ((appWindow->local_move.direction != NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
 	    (appWindow->local_move.direction != NET_WM_MOVERESIZE_SIZE_KEYBOARD))
 	{
-		freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_BUTTON1, x, y);
+		if (!freerdp_client_send_button_event(&xfc->common, FALSE, PTR_FLAGS_BUTTON1, x, y))
+			return FALSE;
 	}
 
 	/*
@@ -279,6 +287,7 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->windowWidth = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width);
 	appWindow->windowHeight = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->height);
 	appWindow->local_move.state = LMS_TERMINATING;
+	return TRUE;
 }
 
 BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect)

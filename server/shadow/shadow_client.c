@@ -2145,7 +2145,10 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 				if ((msg->xPos != client->pointerX) || (msg->yPos != client->pointerY))
 				{
 					WINPR_ASSERT(update->pointer);
-					IFCALL(update->pointer->PointerPosition, context, &pointerPosition);
+					if (CHANNEL_RC_OK != IFCALLRESULT(CHANNEL_RC_OK,
+					                                  update->pointer->PointerPosition, context,
+					                                  &pointerPosition))
+						return -1;
 					client->pointerX = msg->xPos;
 					client->pointerY = msg->yPos;
 				}
@@ -2178,16 +2181,21 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 
 			if (client->activated)
 			{
-				IFCALL(update->pointer->PointerNew, context, &pointerNew);
+				if (!IFCALLRESULT(TRUE, update->pointer->PointerNew, context, &pointerNew))
+					return -1;
 				if (client->server->ShowMouseCursor)
 				{
-					IFCALL(update->pointer->PointerCached, context, &pointerCached);
+					if (!IFCALLRESULT(TRUE, update->pointer->PointerCached, context,
+					                  &pointerCached))
+						return -1;
 				}
 				else
 				{
 					POINTER_SYSTEM_UPDATE pointer_system = { 0 };
 					pointer_system.type = SYSPTR_NULL;
-					IFCALL(update->pointer->PointerSystem, context, &pointer_system);
+					if (!IFCALLRESULT(TRUE, update->pointer->PointerSystem, context,
+					                  &pointer_system))
+						return -1;
 				}
 			}
 
@@ -2204,8 +2212,10 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 			if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
 			{
 				client->rdpsnd->src_format = msg->audio_format;
-				IFCALL(client->rdpsnd->SendSamples, client->rdpsnd, msg->buf, msg->nFrames,
-				       msg->wTimestamp);
+				if (CHANNEL_RC_OK != IFCALLRESULT(CHANNEL_RC_OK, client->rdpsnd->SendSamples,
+				                                  client->rdpsnd, msg->buf, msg->nFrames,
+				                                  msg->wTimestamp))
+					return -1;
 			}
 
 			break;
@@ -2218,7 +2228,9 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 
 			if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
 			{
-				IFCALL(client->rdpsnd->SetVolume, client->rdpsnd, msg->left, msg->right);
+				if (CHANNEL_RC_OK != IFCALLRESULT(CHANNEL_RC_OK, client->rdpsnd->SetVolume,
+				                                  client->rdpsnd, msg->left, msg->right))
+					return -1;
 			}
 
 			break;

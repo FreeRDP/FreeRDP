@@ -34,7 +34,7 @@ extern "C"
 
 	struct rdp_heartbeat
 	{
-		pServerHeartbeat ServerHeartbeat;
+		WINPR_ATTR_NODISCARD pServerHeartbeat ServerHeartbeat;
 	};
 
 	FREERDP_API BOOL freerdp_heartbeat_send_heartbeat_pdu(freerdp_peer* peer, BYTE period,

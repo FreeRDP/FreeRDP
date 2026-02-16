@@ -35,29 +35,32 @@ extern "C"
 	struct rdp_ext_plugin
 	{
 		void* ext;
-		int (*init)(rdpExtPlugin* plugin, freerdp* instance);
-		int (*uninit)(rdpExtPlugin* plugin, freerdp* instance);
+		WINPR_ATTR_NODISCARD int (*init)(rdpExtPlugin* plugin, freerdp* instance);
+		WINPR_ATTR_NODISCARD int (*uninit)(rdpExtPlugin* plugin, freerdp* instance);
 	};
 
-	typedef UINT32(FREERDP_CC* PFREERDP_EXTENSION_HOOK)(rdpExtPlugin* plugin, freerdp* instance);
+	typedef WINPR_ATTR_NODISCARD UINT32(FREERDP_CC* PFREERDP_EXTENSION_HOOK)(rdpExtPlugin* plugin,
+	                                                                         freerdp* instance);
 
-	typedef UINT32(FREERDP_CC* PREGISTEREXTENSION)(rdpExtPlugin* plugin);
-	typedef UINT32(FREERDP_CC* PREGISTERPRECONNECTHOOK)(rdpExtPlugin* plugin,
-	                                                    PFREERDP_EXTENSION_HOOK hook);
-	typedef UINT32(FREERDP_CC* PREGISTERPOSTCONNECTHOOK)(rdpExtPlugin* plugin,
-	                                                     PFREERDP_EXTENSION_HOOK hook);
+	typedef WINPR_ATTR_NODISCARD UINT32(FREERDP_CC* PREGISTEREXTENSION)(rdpExtPlugin* plugin);
+	typedef WINPR_ATTR_NODISCARD
+	UINT32(FREERDP_CC* PREGISTERPRECONNECTHOOK)(rdpExtPlugin* plugin, PFREERDP_EXTENSION_HOOK hook);
+	typedef WINPR_ATTR_NODISCARD
+	UINT32(FREERDP_CC* PREGISTERPOSTCONNECTHOOK)(rdpExtPlugin* plugin,
+	                                             PFREERDP_EXTENSION_HOOK hook);
 
 	typedef struct
 	{
 		void* ext; /* Reference to internal instance */
-		PREGISTEREXTENSION pRegisterExtension;
-		PREGISTERPRECONNECTHOOK pRegisterPreConnectHook;
-		PREGISTERPOSTCONNECTHOOK pRegisterPostConnectHook;
+		WINPR_ATTR_NODISCARD PREGISTEREXTENSION pRegisterExtension;
+		WINPR_ATTR_NODISCARD PREGISTERPRECONNECTHOOK pRegisterPreConnectHook;
+		WINPR_ATTR_NODISCARD PREGISTERPOSTCONNECTHOOK pRegisterPostConnectHook;
 		void* data;
 	} FREERDP_EXTENSION_ENTRY_POINTS;
 	typedef FREERDP_EXTENSION_ENTRY_POINTS* PFREERDP_EXTENSION_ENTRY_POINTS;
 
-	typedef int(FREERDP_CC* PFREERDP_EXTENSION_ENTRY)(PFREERDP_EXTENSION_ENTRY_POINTS pEntryPoints);
+	typedef WINPR_ATTR_NODISCARD int(FREERDP_CC* PFREERDP_EXTENSION_ENTRY)(
+	    PFREERDP_EXTENSION_ENTRY_POINTS pEntryPoints);
 
 #ifdef __cplusplus
 }

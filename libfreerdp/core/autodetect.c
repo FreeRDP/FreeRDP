@@ -860,8 +860,10 @@ state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSP
 		goto fail;
 	}
 
-	IFCALL(autodetect->RequestReceived, autodetect, transport, autodetectReqPdu.requestType,
-	       autodetectReqPdu.sequenceNumber);
+	if (!IFCALLRESULT(TRUE, autodetect->RequestReceived, autodetect, transport,
+	                  autodetectReqPdu.requestType, autodetectReqPdu.sequenceNumber))
+		goto fail;
+
 	switch (autodetectReqPdu.requestType)
 	{
 		case RDP_RTT_REQUEST_TYPE_CONTINUOUS:
@@ -981,8 +983,10 @@ state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANS
 		goto fail;
 	}
 
-	IFCALL(autodetect->ResponseReceived, autodetect, transport, autodetectRspPdu.responseType,
-	       autodetectRspPdu.sequenceNumber);
+	if (!IFCALLRESULT(TRUE, autodetect->ResponseReceived, autodetect, transport,
+	                  autodetectRspPdu.responseType, autodetectRspPdu.sequenceNumber))
+		goto fail;
+
 	switch (autodetectRspPdu.responseType)
 	{
 		case RDP_RTT_RESPONSE_TYPE:

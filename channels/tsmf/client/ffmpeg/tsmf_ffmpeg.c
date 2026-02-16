@@ -462,7 +462,7 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
 }
 
 static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size,
-                                     UINT32 extensions)
+                                     WINPR_ATTR_UNUSED UINT32 extensions)
 {
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*)decoder;
 	int len = 0;
@@ -686,7 +686,9 @@ static void tsmf_ffmpeg_free(ITSMFDecoder* decoder)
 }
 
 static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
-static BOOL CALLBACK InitializeAvCodecs(PINIT_ONCE once, PVOID param, PVOID* context)
+static BOOL CALLBACK InitializeAvCodecs(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                        WINPR_ATTR_UNUSED PVOID param,
+                                        WINPR_ATTR_UNUSED PVOID* context)
 {
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 10, 100)
 	avcodec_register_all();

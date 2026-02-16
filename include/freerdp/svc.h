@@ -43,10 +43,10 @@ extern "C"
 	{
 		UINT32 cbSize;
 		UINT32 protocolVersion;
-		PVIRTUALCHANNELINIT pVirtualChannelInit;
-		PVIRTUALCHANNELOPEN pVirtualChannelOpen;
-		PVIRTUALCHANNELCLOSE pVirtualChannelClose;
-		PVIRTUALCHANNELWRITE pVirtualChannelWrite;
+		WINPR_ATTR_NODISCARD PVIRTUALCHANNELINIT pVirtualChannelInit;
+		WINPR_ATTR_NODISCARD PVIRTUALCHANNELOPEN pVirtualChannelOpen;
+		WINPR_ATTR_NODISCARD PVIRTUALCHANNELCLOSE pVirtualChannelClose;
+		WINPR_ATTR_NODISCARD PVIRTUALCHANNELWRITE pVirtualChannelWrite;
 
 		/* Extended Fields */
 		UINT32 MagicNumber;  /* identifies FreeRDP */
@@ -60,10 +60,10 @@ extern "C"
 	{
 		UINT32 cbSize;
 		UINT32 protocolVersion;
-		PVIRTUALCHANNELINITEX pVirtualChannelInitEx;
-		PVIRTUALCHANNELOPENEX pVirtualChannelOpenEx;
+		WINPR_ATTR_NODISCARD PVIRTUALCHANNELINITEX pVirtualChannelInitEx;
+		WINPR_ATTR_NODISCARD PVIRTUALCHANNELOPENEX pVirtualChannelOpenEx;
 		PVIRTUALCHANNELCLOSEEX pVirtualChannelCloseEx;
-		PVIRTUALCHANNELWRITEEX pVirtualChannelWriteEx;
+		WINPR_ATTR_NODISCARD PVIRTUALCHANNELWRITEEX pVirtualChannelWriteEx;
 
 		/* Extended Fields */
 		UINT32 MagicNumber;  /* identifies FreeRDP */

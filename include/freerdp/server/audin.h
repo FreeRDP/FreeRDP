@@ -76,17 +76,17 @@ extern "C"
 		/**
 		 * Open the audio input channel.
 		 */
-		psAudinServerChannelOpen Open;
+		WINPR_ATTR_NODISCARD psAudinServerChannelOpen Open;
 
 		/**
 		 * Check, whether the audio input channel thread was created
 		 */
-		psAudinServerChannelIsOpen IsOpen;
+		WINPR_ATTR_NODISCARD psAudinServerChannelIsOpen IsOpen;
 
 		/**
 		 * Close the audio input channel.
 		 */
-		psAudinServerChannelClose Close;
+		WINPR_ATTR_NODISCARD psAudinServerChannelClose Close;
 
 		/**
 		 * For the following server to client PDUs,
@@ -96,59 +96,59 @@ extern "C"
 		/**
 		 * Send a Version PDU.
 		 */
-		psAudinServerVersion SendVersion;
+		WINPR_ATTR_NODISCARD psAudinServerVersion SendVersion;
 
 		/**
 		 * Send a Sound Formats PDU.
 		 */
-		psAudinServerFormats SendFormats;
+		WINPR_ATTR_NODISCARD psAudinServerFormats SendFormats;
 
 		/**
 		 * Send an Open PDU.
 		 */
-		psAudinServerOpen SendOpen;
+		WINPR_ATTR_NODISCARD psAudinServerOpen SendOpen;
 
 		/**
 		 * Send a Format Change PDU.
 		 */
-		psAudinServerFormatChange SendFormatChange;
+		WINPR_ATTR_NODISCARD psAudinServerFormatChange SendFormatChange;
 
 		/*** Callbacks registered by the server. ***/
 
 		/**
 		 * Callback, when the channel got its id assigned.
 		 */
-		psAudinServerChannelIdAssigned ChannelIdAssigned;
+		WINPR_ATTR_NODISCARD psAudinServerChannelIdAssigned ChannelIdAssigned;
 
 		/*
 		 * Callback for the Version PDU.
 		 */
-		psAudinServerVersion ReceiveVersion;
+		WINPR_ATTR_NODISCARD psAudinServerVersion ReceiveVersion;
 
 		/*
 		 * Callback for the Sound Formats PDU.
 		 */
-		psAudinServerFormats ReceiveFormats;
+		WINPR_ATTR_NODISCARD psAudinServerFormats ReceiveFormats;
 
 		/*
 		 * Callback for the Open Reply PDU.
 		 */
-		psAudinServerOpenReply OpenReply;
+		WINPR_ATTR_NODISCARD psAudinServerOpenReply OpenReply;
 
 		/*
 		 * Callback for the Incoming Data PDU.
 		 */
-		psAudinServerIncomingData IncomingData;
+		WINPR_ATTR_NODISCARD psAudinServerIncomingData IncomingData;
 
 		/*
 		 * Callback for the Data PDU.
 		 */
-		psAudinServerData Data;
+		WINPR_ATTR_NODISCARD psAudinServerData Data;
 
 		/*
 		 * Callback for the Format Change PDU.
 		 */
-		psAudinServerFormatChange ReceiveFormatChange;
+		WINPR_ATTR_NODISCARD psAudinServerFormatChange ReceiveFormatChange;
 
 		rdpContext* rdpcontext;
 	};

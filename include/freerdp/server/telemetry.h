@@ -60,41 +60,41 @@ extern "C"
 		 *
 		 * Defaults to externalThread=FALSE
 		 */
-		psTelemetryServerInitialize Initialize;
+		WINPR_ATTR_NODISCARD psTelemetryServerInitialize Initialize;
 
 		/**
 		 * Open the telemetry channel.
 		 */
-		psTelemetryServerOpen Open;
+		WINPR_ATTR_NODISCARD psTelemetryServerOpen Open;
 
 		/**
 		 * Close the telemetry channel.
 		 */
-		psTelemetryServerClose Close;
+		WINPR_ATTR_NODISCARD psTelemetryServerClose Close;
 
 		/**
 		 * Poll
 		 * When externalThread=TRUE, call Poll() periodically from your main loop.
 		 * If externalThread=FALSE do not call.
 		 */
-		psTelemetryServerPoll Poll;
+		WINPR_ATTR_NODISCARD psTelemetryServerPoll Poll;
 
 		/**
 		 * Retrieve the channel handle for use in conjunction with Poll().
 		 * If externalThread=FALSE do not call.
 		 */
-		psTelemetryServerChannelHandle ChannelHandle;
+		WINPR_ATTR_NODISCARD psTelemetryServerChannelHandle ChannelHandle;
 
 		/*** Callbacks registered by the server. ***/
 
 		/**
 		 * Callback, when the channel got its id assigned
 		 */
-		psTelemetryServerChannelIdAssigned ChannelIdAssigned;
+		WINPR_ATTR_NODISCARD psTelemetryServerChannelIdAssigned ChannelIdAssigned;
 		/**
 		 * Callback for the RDP Telemetry PDU.
 		 */
-		psTelemetryServerRdpTelemetry RdpTelemetry;
+		WINPR_ATTR_NODISCARD psTelemetryServerRdpTelemetry RdpTelemetry;
 
 		rdpContext* rdpcontext;
 	};

@@ -477,7 +477,7 @@ owned by rdpRdp */
 		             additional information after that.
 		          */
 
-		ALIGN64 pContextNew
+		ALIGN64 WINPR_ATTR_NODISCARD pContextNew
 		    ContextNew; /**< (offset 33)
 		             Callback for context allocation
 		             Can be set before calling freerdp_context_new() to have it executed after
@@ -492,36 +492,37 @@ owned by rdpRdp */
 
 		ALIGN64 UINT ConnectionCallbackState; /* 47 */
 
-		ALIGN64 pConnectCallback
+		ALIGN64 WINPR_ATTR_NODISCARD pConnectCallback
 		    PreConnect; /**< (offset 48)
 		             Callback for pre-connect operations.
 		             Can be set before calling freerdp_connect() to have it executed before the
 		             actual connection happens. Must be set to NULL if not needed. */
 
-		ALIGN64 pConnectCallback
+		ALIGN64 WINPR_ATTR_NODISCARD pConnectCallback
 		    PostConnect; /**< (offset 49)
 		              Callback for post-connect operations.
 		              Can be set before calling freerdp_connect() to have it executed after the
 		              actual connection has succeeded. Must be set to NULL if not needed. */
 
-		ALIGN64 pAuthenticate Authenticate; /**< (offset 50)
+		ALIGN64 WINPR_ATTR_NODISCARD pAuthenticate Authenticate; /**< (offset 50)
 		                                 Callback for authentication.
 		                                 It is used to get the username/password when it was not
 		                                 provided at connection time. */
 #if defined(WITH_FREERDP_DEPRECATED)
 		WINPR_DEPRECATED_VAR("Use VerifyCertificateEx or VerifyX509Certificate  instead",
-		                     ALIGN64 pVerifyCertificate VerifyCertificate;) /**< (offset 51) */
+		                     ALIGN64 WINPR_ATTR_NODISCARD pVerifyCertificate
+		                         VerifyCertificate;) /**< (offset 51) */
 		WINPR_DEPRECATED_VAR("Use VerifyChangedCertificateEx or VerifyX509Certificate  instead",
-		                     ALIGN64 pVerifyChangedCertificate
+		                     ALIGN64 WINPR_ATTR_NODISCARD pVerifyChangedCertificate
 		                         VerifyChangedCertificate;) /**< (offset 52) */
 #else
 	ALIGN64 UINT64 reserved[2];
 #endif
-		ALIGN64 pVerifyX509Certificate
+		ALIGN64 WINPR_ATTR_NODISCARD pVerifyX509Certificate
 		    VerifyX509Certificate; /**< (offset 53)  Callback for X509 certificate verification
 		                              (PEM format) */
 
-		ALIGN64 pLogonErrorInfo
+		ALIGN64 WINPR_ATTR_NODISCARD pLogonErrorInfo
 		    LogonErrorInfo; /**< (offset 54)  Callback for logon error info, important for logon
 		                       system messages with RemoteApp */
 
@@ -534,22 +535,22 @@ owned by rdpRdp */
 		                       channels.
  */
 
-		ALIGN64 pAuthenticate GatewayAuthenticate; /**< (offset 56)
+		ALIGN64 WINPR_ATTR_NODISCARD pAuthenticate GatewayAuthenticate; /**< (offset 56)
 		                                 Callback for gateway authentication.
 		                                 It is used to get the username/password when it was not
 		                                 provided at connection time. */
 
-		ALIGN64 pPresentGatewayMessage PresentGatewayMessage; /**< (offset 57)
+		ALIGN64 WINPR_ATTR_NODISCARD pPresentGatewayMessage PresentGatewayMessage; /**< (offset 57)
 		                                  Callback for gateway consent messages.
 		                                  It is used to present consent messages to the user. */
 
-		ALIGN64 pConnectCallback Redirect; /**< (offset 58)
+		ALIGN64 WINPR_ATTR_NODISCARD pConnectCallback Redirect; /**< (offset 58)
 		                                               Callback for redirect operations.
 		                                               Can be set after
 		             rdp_client_disconnect_and_clear and applying redirection settings but before
 		             rdp_client_connect() to have it executed after the actual connection has
 		             succeeded. Must be set to NULL if not needed. */
-		ALIGN64 pConnectCallback
+		ALIGN64 WINPR_ATTR_NODISCARD pConnectCallback
 		    LoadChannels; /**< (offset 59)
 		                   * callback for loading channel configuration. Might be called multiple
 		                   * times when redirection occurs. */
@@ -563,46 +564,47 @@ owned by rdpRdp */
 		                           */
 		UINT64 paddingD[64 - 61]; /* 61 */
 
-		ALIGN64 pSendChannelData
+		ALIGN64 WINPR_ATTR_NODISCARD pSendChannelData
 		    SendChannelData; /* (offset 64)
 		                Callback for sending data to a channel.
 		                By default, it is set by freerdp_new() to freerdp_send_channel_data(), which
 		                eventually calls freerdp_channel_send() */
-		ALIGN64 pReceiveChannelData
+		ALIGN64 WINPR_ATTR_NODISCARD pReceiveChannelData
 		    ReceiveChannelData; /* (offset 65)
 		                   Callback for receiving data from a channel.
 		                   This is called by freerdp_channel_process() (if not NULL).
 		                   Clients will typically use a function that calls freerdp_channels_data()
 		                   to perform the needed tasks. */
 
-		ALIGN64 pVerifyCertificateEx
+		ALIGN64 WINPR_ATTR_NODISCARD pVerifyCertificateEx
 		    VerifyCertificateEx; /**< (offset 66)
 		                  Callback for certificate validation.
 		                  Used to verify that an unknown certificate is trusted. */
-		ALIGN64 pVerifyChangedCertificateEx
+		ALIGN64 WINPR_ATTR_NODISCARD pVerifyChangedCertificateEx
 		    VerifyChangedCertificateEx; /**< (offset 67)
 		                         Callback for changed certificate validation.
 		                         Used when a certificate differs from stored fingerprint. */
-		ALIGN64 pSendChannelPacket
-		    SendChannelPacket;                  /* (offset 68)
-		                                         * Callback for sending RAW data to a channel. In contrast to
-		                                         * SendChannelData data fragmentation    is up to the user and this
-		                                         * function sends data as is with the provided flags.
-		                                         */
-		ALIGN64 pAuthenticateEx AuthenticateEx; /**< (offset 69)
+		ALIGN64 WINPR_ATTR_NODISCARD pSendChannelPacket
+		    SendChannelPacket;                                       /* (offset 68)
+		                                                              * Callback for sending RAW data to a channel. In contrast to
+		                                                              * SendChannelData data fragmentation    is up to the user and this
+		                                                              * function sends data as is with the provided flags.
+		                                                              */
+		ALIGN64 WINPR_ATTR_NODISCARD pAuthenticateEx AuthenticateEx; /**< (offset 69)
 		                                 Callback for authentication.
 		                                 It is used to get the username/password. The reason
 		                                 argument tells why it was called.  */
-		ALIGN64 pChooseSmartcard
-		    ChooseSmartcard;                    /* (offset 70)
-		                                      Callback for choosing a smartcard for logon.
-		                                      Used when multiple smartcards are available. Returns an index into a list
-		                                      of SmartcardCertInfo pointers	*/
-		ALIGN64 pGetAccessToken GetAccessToken; /* (offset 71)
+		ALIGN64 WINPR_ATTR_NODISCARD pChooseSmartcard
+		    ChooseSmartcard;                                         /* (offset 70)
+		                                                           Callback for choosing a smartcard for logon.
+		                                                           Used when multiple smartcards are available. Returns an index into a list
+		                                                           of SmartcardCertInfo pointers	*/
+		ALIGN64 WINPR_ATTR_NODISCARD pGetAccessToken GetAccessToken; /* (offset 71)
 		                                            Callback for obtaining an access token
 		                                            for \b AccessTokenType authentication */
-		ALIGN64 pRetryDialog RetryDialog; /* (offset 72) Callback for displaying a dialog in case of
-		                                     something needs a retry */
+		ALIGN64 WINPR_ATTR_NODISCARD pRetryDialog
+		    RetryDialog;                  /* (offset 72) Callback for displaying a dialog in case of
+		                something needs a retry */
 		UINT64 paddingE[80 - 73];         /* 73 */
 	};
 

@@ -126,7 +126,9 @@ rdpContext* freerdp_client_context_new(const RDP_CLIENT_ENTRY_POINTS* pEntryPoin
 	if (!pEntryPoints)
 		return NULL;
 
-	IFCALL(pEntryPoints->GlobalInit);
+	if (!IFCALLRESULT(TRUE, pEntryPoints->GlobalInit))
+		return NULL;
+
 	instance = freerdp_new();
 
 	if (!instance)
@@ -1465,9 +1467,8 @@ BOOL freerdp_client_encomsp_set_control(EncomspClientContext* encomsp, BOOL cont
 	if (control)
 		pdu.Flags |= ENCOMSP_REQUEST_INTERACT;
 
-	encomsp->ChangeParticipantControlLevel(encomsp, &pdu);
-
-	return TRUE;
+	const UINT rc = encomsp->ChangeParticipantControlLevel(encomsp, &pdu);
+	return rc == CHANNEL_RC_OK;
 }
 
 static UINT
@@ -1887,17 +1888,25 @@ static BOOL freerdp_handle_touch_up(rdpClientContext* cctx, const FreeRDP_TouchC
 		                                ? CONTACT_DATA_PRESSURE_PRESENT
 		                                : 0;
 		// Ensure contact position is unchanged from "engaged" to "out of range" state
-		rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId,
-		                     RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
-		                         RDPINPUT_CONTACT_FLAG_INCONTACT,
-		                     contactFlags, contact->pressure);
-		rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
-		                     contactFlags, contact->pressure);
+		const UINT rc1 =
+		    rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId,
+		                         RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
+		                             RDPINPUT_CONTACT_FLAG_INCONTACT,
+		                         contactFlags, contact->pressure);
+		if (rc1 != CHANNEL_RC_OK)
+			return FALSE;
+
+		const UINT rc2 = rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y,
+		                                      &contactId, flags, contactFlags, contact->pressure);
+		if (rc2 != CHANNEL_RC_OK)
+			return FALSE;
 	}
 	else
 	{
 		WINPR_ASSERT(rdpei->TouchEnd);
-		rdpei->TouchEnd(rdpei, contact->id, contact->x, contact->y, &contactId);
+		const UINT rc = rdpei->TouchEnd(rdpei, contact->id, contact->x, contact->y, &contactId);
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
 	}
 	return TRUE;
 #else
@@ -1928,13 +1937,17 @@ static BOOL freerdp_handle_touch_down(rdpClientContext* cctx, const FreeRDP_Touc
 		const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
 		                                ? CONTACT_DATA_PRESSURE_PRESENT
 		                                : 0;
-		rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
-		                     contactFlags, contact->pressure);
+		const UINT rc = rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId,
+		                                     flags, contactFlags, contact->pressure);
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
 	}
 	else
 	{
 		WINPR_ASSERT(rdpei->TouchBegin);
-		rdpei->TouchBegin(rdpei, contact->id, contact->x, contact->y, &contactId);
+		const UINT rc = rdpei->TouchBegin(rdpei, contact->id, contact->x, contact->y, &contactId);
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
 	}
 
 	return TRUE;
@@ -1976,13 +1989,17 @@ static BOOL freerdp_handle_touch_motion(rdpClientContext* cctx, const FreeRDP_To
 		const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
 		                                ? CONTACT_DATA_PRESSURE_PRESENT
 		                                : 0;
-		rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
-		                     contactFlags, contact->pressure);
+		const UINT rc = rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId,
+		                                     flags, contactFlags, contact->pressure);
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
 	}
 	else
 	{
 		WINPR_ASSERT(rdpei->TouchUpdate);
-		rdpei->TouchUpdate(rdpei, contact->id, contact->x, contact->y, &contactId);
+		const UINT rc = rdpei->TouchUpdate(rdpei, contact->id, contact->x, contact->y, &contactId);
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
 	}
 
 	return TRUE;
@@ -2012,13 +2029,17 @@ static BOOL freerdp_handle_touch_cancel(rdpClientContext* cctx, const FreeRDP_To
 		const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
 		                                ? CONTACT_DATA_PRESSURE_PRESENT
 		                                : 0;
-		rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
-		                     contactFlags, contact->pressure);
+		const UINT rc = rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId,
+		                                     flags, contactFlags, contact->pressure);
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
 	}
 	else
 	{
 		WINPR_ASSERT(rdpei->TouchUpdate);
-		rdpei->TouchEnd(rdpei, contact->id, contact->x, contact->y, &contactId);
+		const UINT rc = rdpei->TouchEnd(rdpei, contact->id, contact->x, contact->y, &contactId);
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
 	}
 
 	return TRUE;
@@ -2344,7 +2365,10 @@ BOOL freerdp_client_pen_cancel_all(rdpClientContext* cctx)
 		{
 			WLog_DBG(TAG, "unhover pen %" PRId32, pen->deviceid);
 			pen->hovering = FALSE;
-			rdpei->PenHoverCancel(rdpei, pen->deviceid, 0, pen->last_x, pen->last_y);
+			const UINT rc =
+			    rdpei->PenHoverCancel(rdpei, pen->deviceid, 0, pen->last_x, pen->last_y);
+			if (rc != CHANNEL_RC_OK)
+				return FALSE;
 		}
 	}
 	return TRUE;

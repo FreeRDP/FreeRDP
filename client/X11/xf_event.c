@@ -700,7 +700,10 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 	if (!app)
 		xf_keyboard_release_all_keypress(xfc);
 	else
-		xf_rail_send_activate(xfc, event->window, TRUE);
+	{
+		if (!xf_rail_send_activate(xfc, event->window, TRUE))
+			return FALSE;
+	}
 
 	xf_pointer_update_scale(xfc);
 
@@ -731,7 +734,7 @@ static BOOL xf_event_FocusOut(xfContext* xfc, const XFocusOutEvent* event, BOOL 
 
 	xf_keyboard_release_all_keypress(xfc);
 	if (app)
-		xf_rail_send_activate(xfc, event->window, FALSE);
+		return xf_rail_send_activate(xfc, event->window, FALSE);
 
 	return TRUE;
 }

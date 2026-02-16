@@ -69,7 +69,7 @@ extern "C"
 		void* handle;
 		void* custom;
 
-		pcTsmfFrameEvent FrameEvent;
+		WINPR_ATTR_NODISCARD pcTsmfFrameEvent FrameEvent;
 	};
 
 #ifdef __cplusplus

@@ -72,20 +72,20 @@ extern "C"
 		HANDLE vcm;
 		void* custom;
 
-		psEncomspStart Start;
+		WINPR_ATTR_NODISCARD psEncomspStart Start;
 		psEncomspStop Stop;
 
-		psEncomspFilterUpdated FilterUpdated;
-		psEncomspApplicationCreated ApplicationCreated;
-		psEncomspApplicationRemoved ApplicationRemoved;
-		psEncomspWindowCreated WindowCreated;
-		psEncomspWindowRemoved WindowRemoved;
-		psEncomspShowWindow ShowWindow;
-		psEncomspParticipantCreated ParticipantCreated;
-		psEncomspParticipantRemoved ParticipantRemoved;
-		psEncomspChangeParticipantControlLevel ChangeParticipantControlLevel;
-		psEncomspGraphicsStreamPaused GraphicsStreamPaused;
-		psEncomspGraphicsStreamResumed GraphicsStreamResumed;
+		WINPR_ATTR_NODISCARD psEncomspFilterUpdated FilterUpdated;
+		WINPR_ATTR_NODISCARD psEncomspApplicationCreated ApplicationCreated;
+		WINPR_ATTR_NODISCARD psEncomspApplicationRemoved ApplicationRemoved;
+		WINPR_ATTR_NODISCARD psEncomspWindowCreated WindowCreated;
+		WINPR_ATTR_NODISCARD psEncomspWindowRemoved WindowRemoved;
+		WINPR_ATTR_NODISCARD psEncomspShowWindow ShowWindow;
+		WINPR_ATTR_NODISCARD psEncomspParticipantCreated ParticipantCreated;
+		WINPR_ATTR_NODISCARD psEncomspParticipantRemoved ParticipantRemoved;
+		WINPR_ATTR_NODISCARD psEncomspChangeParticipantControlLevel ChangeParticipantControlLevel;
+		WINPR_ATTR_NODISCARD psEncomspGraphicsStreamPaused GraphicsStreamPaused;
+		WINPR_ATTR_NODISCARD psEncomspGraphicsStreamResumed GraphicsStreamResumed;
 
 		EncomspServerPrivate* priv;
 

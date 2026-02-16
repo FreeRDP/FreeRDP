@@ -40,7 +40,9 @@ static void rdpsnd_activated(RdpsndServerContext* context)
 		{
 			if (audio_format_compatible(&context->server_formats[j], &context->client_formats[i]))
 			{
-				context->SelectFormat(context, WINPR_ASSERTING_INT_CAST(UINT16, i));
+				const UINT rc = context->SelectFormat(context, WINPR_ASSERTING_INT_CAST(UINT16, i));
+				if (rc != CHANNEL_RC_OK)
+					WLog_WARN(TAG, "SelectFormat failed with %" PRIu32, rc);
 				return;
 			}
 		}
@@ -75,7 +77,8 @@ int shadow_client_rdpsnd_init(rdpShadowClient* client)
 		rdpsnd->src_format = &rdpsnd->server_formats[0];
 
 	rdpsnd->Activated = rdpsnd_activated;
-	rdpsnd->Initialize(rdpsnd, TRUE);
+	if (rdpsnd->Initialize(rdpsnd, TRUE) != CHANNEL_RC_OK)
+		return -1;
 	return 1;
 }
 

@@ -254,44 +254,44 @@ typedef fn_orC_32u_t __orC_32u_t;
 typedef struct
 {
 	/* Memory-to-memory copy routines */
-	fn_copy_t copy;                 /* memcpy/memmove, basically */
-	fn_copy_8u_t copy_8u;           /* more strongly typed */
-	fn_copy_8u_AC4r_t copy_8u_AC4r; /* pixel copy function */
-	/* Memory setting routines */
-	fn_set_8u_t set_8u; /* memset, basically */
-	fn_set_32s_t set_32s;
-	fn_set_32u_t set_32u;
-	fn_zero_t zero; /* bzero or faster */
-	/* Arithmetic functions */
-	fn_add_16s_t add_16s;
+	WINPR_ATTR_NODISCARD fn_copy_t copy;                 /* memcpy/memmove, basically */
+	WINPR_ATTR_NODISCARD fn_copy_8u_t copy_8u;           /* more strongly typed */
+	WINPR_ATTR_NODISCARD fn_copy_8u_AC4r_t copy_8u_AC4r; /* pixel copy function */
+		                                                 /* Memory setting routines */
+	WINPR_ATTR_NODISCARD fn_set_8u_t set_8u;             /* memset, basically */
+	WINPR_ATTR_NODISCARD fn_set_32s_t set_32s;
+	WINPR_ATTR_NODISCARD fn_set_32u_t set_32u;
+	WINPR_ATTR_NODISCARD fn_zero_t zero; /* bzero or faster */
+		                                 /* Arithmetic functions */
+	WINPR_ATTR_NODISCARD fn_add_16s_t add_16s;
 	/* And/or */
-	fn_andC_32u_t andC_32u;
-	fn_orC_32u_t orC_32u;
+	WINPR_ATTR_NODISCARD fn_andC_32u_t andC_32u;
+	WINPR_ATTR_NODISCARD fn_orC_32u_t orC_32u;
 	/* Shifts */
-	fn_lShiftC_16s_t lShiftC_16s;
-	fn_lShiftC_16u_t lShiftC_16u;
-	fn_rShiftC_16s_t rShiftC_16s;
-	fn_rShiftC_16u_t rShiftC_16u;
-	fn_shiftC_16s_t shiftC_16s;
-	fn_shiftC_16u_t shiftC_16u;
+	WINPR_ATTR_NODISCARD fn_lShiftC_16s_t lShiftC_16s;
+	WINPR_ATTR_NODISCARD fn_lShiftC_16u_t lShiftC_16u;
+	WINPR_ATTR_NODISCARD fn_rShiftC_16s_t rShiftC_16s;
+	WINPR_ATTR_NODISCARD fn_rShiftC_16u_t rShiftC_16u;
+	WINPR_ATTR_NODISCARD fn_shiftC_16s_t shiftC_16s;
+	WINPR_ATTR_NODISCARD fn_shiftC_16u_t shiftC_16u;
 	/* Alpha Composition */
-	fn_alphaComp_argb_t alphaComp_argb;
+	WINPR_ATTR_NODISCARD fn_alphaComp_argb_t alphaComp_argb;
 	/* Sign */
-	fn_sign_16s_t sign_16s;
+	WINPR_ATTR_NODISCARD fn_sign_16s_t sign_16s;
 	/* Color conversions */
-	fn_yCbCrToRGB_16s8u_P3AC4R_t yCbCrToRGB_16s8u_P3AC4R;
-	fn_yCbCrToRGB_16s16s_P3P3_t yCbCrToRGB_16s16s_P3P3;
-	fn_RGBToYCbCr_16s16s_P3P3_t RGBToYCbCr_16s16s_P3P3;
-	fn_RGBToRGB_16s8u_P3AC4R_t RGBToRGB_16s8u_P3AC4R;
-	fn_YCoCgToRGB_8u_AC4R_t YCoCgToRGB_8u_AC4R;
-	fn_YUV420ToRGB_8u_P3AC4R_t YUV420ToRGB_8u_P3AC4R;
-	fn_RGBToYUV420_8u_P3AC4R_t RGBToYUV420_8u_P3AC4R;
-	fn_RGBToYUV444_8u_P3AC4R_t RGBToYUV444_8u_P3AC4R;
-	fn_YUV420CombineToYUV444_t YUV420CombineToYUV444;
-	fn_YUV444SplitToYUV420_t YUV444SplitToYUV420;
-	fn_YUV444ToRGB_8u_P3AC4R_t YUV444ToRGB_8u_P3AC4R;
-	fn_RGBToAVC444YUV_t RGBToAVC444YUV;
-	fn_RGBToAVC444YUV_t RGBToAVC444YUVv2;
+	WINPR_ATTR_NODISCARD fn_yCbCrToRGB_16s8u_P3AC4R_t yCbCrToRGB_16s8u_P3AC4R;
+	WINPR_ATTR_NODISCARD fn_yCbCrToRGB_16s16s_P3P3_t yCbCrToRGB_16s16s_P3P3;
+	WINPR_ATTR_NODISCARD fn_RGBToYCbCr_16s16s_P3P3_t RGBToYCbCr_16s16s_P3P3;
+	WINPR_ATTR_NODISCARD fn_RGBToRGB_16s8u_P3AC4R_t RGBToRGB_16s8u_P3AC4R;
+	WINPR_ATTR_NODISCARD fn_YCoCgToRGB_8u_AC4R_t YCoCgToRGB_8u_AC4R;
+	WINPR_ATTR_NODISCARD fn_YUV420ToRGB_8u_P3AC4R_t YUV420ToRGB_8u_P3AC4R;
+	WINPR_ATTR_NODISCARD fn_RGBToYUV420_8u_P3AC4R_t RGBToYUV420_8u_P3AC4R;
+	WINPR_ATTR_NODISCARD fn_RGBToYUV444_8u_P3AC4R_t RGBToYUV444_8u_P3AC4R;
+	WINPR_ATTR_NODISCARD fn_YUV420CombineToYUV444_t YUV420CombineToYUV444;
+	WINPR_ATTR_NODISCARD fn_YUV444SplitToYUV420_t YUV444SplitToYUV420;
+	WINPR_ATTR_NODISCARD fn_YUV444ToRGB_8u_P3AC4R_t YUV444ToRGB_8u_P3AC4R;
+	WINPR_ATTR_NODISCARD fn_RGBToAVC444YUV_t RGBToAVC444YUV;
+	WINPR_ATTR_NODISCARD fn_RGBToAVC444YUV_t RGBToAVC444YUVv2;
 	/* flags */
 	DWORD flags;
 	primitives_uninit_t uninit;
@@ -299,9 +299,9 @@ typedef struct
 	/** \brief Do vecotor addition, store result in both input buffers
 	 *  pSrcDst1 = pSrcDst2 = pSrcDst1  + pSrcDst2
 	 */
-	fn_add_16s_inplace_t add_16s_inplace;         /** @since version 3.6.0 */
-	fn_lShiftC_16s_inplace_t lShiftC_16s_inplace; /** @since version 3.6.0 */
-	fn_copy_no_overlap_t copy_no_overlap;         /** @since version 3.6.0 */
+	WINPR_ATTR_NODISCARD fn_add_16s_inplace_t add_16s_inplace;         /** @since version 3.6.0 */
+	WINPR_ATTR_NODISCARD fn_lShiftC_16s_inplace_t lShiftC_16s_inplace; /** @since version 3.6.0 */
+	WINPR_ATTR_NODISCARD fn_copy_no_overlap_t copy_no_overlap;         /** @since version 3.6.0 */
 } primitives_t;
 
 typedef enum

@@ -55,17 +55,17 @@ extern "C"
 	{
 		rdpsndPlugin* rdpsnd;
 
-		pcFormatSupported FormatSupported;
-		pcOpen Open;
-		pcGetVolume GetVolume;
-		pcSetVolume SetVolume;
-		pcPlay Play;
+		WINPR_ATTR_NODISCARD pcFormatSupported FormatSupported;
+		WINPR_ATTR_NODISCARD pcOpen Open;
+		WINPR_ATTR_NODISCARD pcGetVolume GetVolume;
+		WINPR_ATTR_NODISCARD pcSetVolume SetVolume;
+		WINPR_ATTR_NODISCARD pcPlay Play;
 		pcStart Start; /* Deprecated, unused. */
 		pcClose Close;
 		pcFree Free;
-		pcDefaultFormat DefaultFormat;
-		pcServerFormatAnnounce ServerFormatAnnounce;
-		pcPlayEx PlayEx;
+		WINPR_ATTR_NODISCARD pcDefaultFormat DefaultFormat;
+		WINPR_ATTR_NODISCARD pcServerFormatAnnounce ServerFormatAnnounce;
+		WINPR_ATTR_NODISCARD pcPlayEx PlayEx;
 	};
 
 #define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"

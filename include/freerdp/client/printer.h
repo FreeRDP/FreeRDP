@@ -44,9 +44,9 @@ extern "C"
 
 	struct rdp_printer_driver
 	{
-		pcEnumPrinters EnumPrinters;
+		WINPR_ATTR_NODISCARD pcEnumPrinters EnumPrinters;
 		pcReleaseEnumPrinters ReleaseEnumPrinters;
-		pcGetPrinter GetPrinter;
+		WINPR_ATTR_NODISCARD pcGetPrinter GetPrinter;
 
 		pcReferencePrinterDriver AddRef;
 		pcReferencePrinterDriver ReleaseRef;
@@ -64,8 +64,8 @@ extern "C"
 
 		size_t references;
 		rdpPrinterDriver* backend;
-		pcCreatePrintJob CreatePrintJob;
-		pcFindPrintJob FindPrintJob;
+		WINPR_ATTR_NODISCARD pcCreatePrintJob CreatePrintJob;
+		WINPR_ATTR_NODISCARD pcFindPrintJob FindPrintJob;
 		pcReferencePrinter AddRef;
 		pcReferencePrinter ReleaseRef;
 	};
@@ -78,7 +78,7 @@ extern "C"
 		UINT32 id;
 		rdpPrinter* printer;
 
-		pcWritePrintJob Write;
+		WINPR_ATTR_NODISCARD pcWritePrintJob Write;
 		pcClosePrintJob Close;
 	};
 

@@ -51,7 +51,7 @@ static inline void rfx_quantization_decode_block(const primitives_t* WINPR_RESTR
 	if (factor == 0)
 		return;
 
-	prims->lShiftC_16s_inplace(buffer, factor, buffer_size);
+	(void)prims->lShiftC_16s_inplace(buffer, factor, buffer_size);
 }
 
 void rfx_quantization_decode(INT16* WINPR_RESTRICT buffer, const UINT32* WINPR_RESTRICT quantVals)

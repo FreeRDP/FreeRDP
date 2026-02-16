@@ -18,6 +18,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/utils/helpers.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -155,7 +156,8 @@ static BOOL tsmf_pulse_open(ITSMFAudioDevice* audio, const char* device)
 	return TRUE;
 }
 
-static void tsmf_pulse_stream_success_callback(pa_stream* stream, int success, void* userdata)
+static void tsmf_pulse_stream_success_callback(WINPR_ATTR_UNUSED pa_stream* stream,
+                                               WINPR_ATTR_UNUSED int success, void* userdata)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*)userdata;
 	pa_threaded_mainloop_signal(pulse->mainloop, 0);
@@ -200,7 +202,8 @@ static void tsmf_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 	}
 }
 
-static void tsmf_pulse_stream_request_callback(pa_stream* stream, size_t length, void* userdata)
+static void tsmf_pulse_stream_request_callback(WINPR_ATTR_UNUSED pa_stream* stream,
+                                               WINPR_ATTR_UNUSED size_t length, void* userdata)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*)userdata;
 	DEBUG_TSMF("%" PRIdz "", length);
@@ -234,7 +237,7 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 
 	DEBUG_TSMF("");
 	pa_threaded_mainloop_lock(pulse->mainloop);
-	pulse->stream = pa_stream_new(pulse->context, freerdp_ApplicationDetailsString(),
+	pulse->stream = pa_stream_new(pulse->context, freerdp_getApplicationDetailsString(),
 	                              &pulse->sample_spec, NULL);
 
 	if (!pulse->stream)
@@ -293,7 +296,7 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 }
 
 static BOOL tsmf_pulse_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UINT32 channels,
-                                  UINT32 bits_per_sample)
+                                  WINPR_ATTR_UNUSED UINT32 bits_per_sample)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*)audio;
 	DEBUG_TSMF("sample_rate %" PRIu32 " channels %" PRIu32 " bits_per_sample %" PRIu32 "",

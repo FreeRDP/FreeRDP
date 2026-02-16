@@ -716,8 +716,9 @@ static void video_timer(VideoClientContext* video, UINT64 now)
 		memcpy(presentation->surface->data, frame->surfaceData, 1ull * frame->scanline * frame->h);
 
 		WINPR_ASSERT(video->showSurface);
-		video->showSurface(video, presentation->surface, presentation->ScaledWidth,
-		                   presentation->ScaledHeight);
+		if (!video->showSurface(video, presentation->surface, presentation->ScaledWidth,
+		                        presentation->ScaledHeight))
+			WLog_WARN(TAG, "showSurface failed");
 
 		VideoFrame_free(&frame);
 	}
@@ -872,8 +873,9 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 				return CHANNEL_RC_OK;
 
 			WINPR_ASSERT(context->showSurface);
-			context->showSurface(context, presentation->surface, presentation->ScaledWidth,
-			                     presentation->ScaledHeight);
+			if (!context->showSurface(context, presentation->surface, presentation->ScaledWidth,
+			                          presentation->ScaledHeight))
+				return CHANNEL_RC_NOT_INITIALIZED;
 
 			priv->publishedFrames++;
 

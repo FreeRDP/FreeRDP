@@ -58,8 +58,8 @@ extern "C"
 
 		pcVideoSetGeometry setGeometry;
 		pcVideoTimer timer;
-		pcVideoCreateSurface createSurface;
-		pcVideoShowSurface showSurface;
+		WINPR_ATTR_NODISCARD pcVideoCreateSurface createSurface;
+		WINPR_ATTR_NODISCARD pcVideoShowSurface showSurface;
 		pcVideoDeleteSurface deleteSurface;
 	};
 

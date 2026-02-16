@@ -48,7 +48,8 @@ static void devman_device_free(void* obj)
 	if (!device)
 		return;
 
-	IFCALL(device->Free, device);
+	if (device->Free)
+		device->Free(device);
 }
 
 DEVMAN* devman_new(rdpdrPlugin* rdpdr)

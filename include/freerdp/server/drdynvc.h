@@ -45,7 +45,7 @@ extern "C"
 	{
 		HANDLE vcm;
 
-		psDrdynvcStart Start;
+		WINPR_ATTR_NODISCARD psDrdynvcStart Start;
 		psDrdynvcStop Stop;
 
 		DrdynvcServerPrivate* priv;

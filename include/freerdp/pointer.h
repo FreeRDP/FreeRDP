@@ -101,12 +101,12 @@ extern "C"
 		rdpContext* context;     /* 0 */
 		UINT32 paddingA[16 - 1]; /* 1 */
 
-		pPointerPosition PointerPosition; /* 16 */
-		pPointerSystem PointerSystem;     /* 17 */
-		pPointerColor PointerColor;       /* 18 */
-		pPointerNew PointerNew;           /* 19 */
-		pPointerCached PointerCached;     /* 20 */
-		pPointerLarge PointerLarge;       /* 21 */
+		WINPR_ATTR_NODISCARD pPointerPosition PointerPosition; /* 16 */
+		WINPR_ATTR_NODISCARD pPointerSystem PointerSystem;     /* 17 */
+		WINPR_ATTR_NODISCARD pPointerColor PointerColor;       /* 18 */
+		WINPR_ATTR_NODISCARD pPointerNew PointerNew;           /* 19 */
+		WINPR_ATTR_NODISCARD pPointerCached PointerCached;     /* 20 */
+		WINPR_ATTR_NODISCARD pPointerLarge PointerLarge;       /* 21 */
 		UINT32 paddingB[32 - 22];         /* 22 */
 	};
 	typedef struct rdp_pointer_update rdpPointerUpdate;

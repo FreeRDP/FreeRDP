@@ -86,9 +86,9 @@ extern "C"
 		void* handle;
 		void* custom;
 
-		pcRdpdrRegisterDevice RdpdrRegisterDevice;
-		pcRdpdrUnregisterDevice RdpdrUnregisterDevice;
-		pcRdpdrHotplugDevice RdpdrHotplugDevice;
+		WINPR_ATTR_NODISCARD pcRdpdrRegisterDevice RdpdrRegisterDevice;
+		WINPR_ATTR_NODISCARD pcRdpdrUnregisterDevice RdpdrUnregisterDevice;
+		WINPR_ATTR_NODISCARD pcRdpdrHotplugDevice RdpdrHotplugDevice;
 	};
 
 #ifdef __cplusplus

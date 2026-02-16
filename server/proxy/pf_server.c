@@ -608,7 +608,8 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 		goto out_free_peer;
 
 	WINPR_ASSERT(client->Initialize);
-	client->Initialize(client);
+	if (!client->Initialize(client))
+		goto out_free_peer;
 
 	PROXY_LOG_INFO(TAG, ps, "new connection: proxy address: %s, client address: %s",
 	               pdata->config->Host, client->hostname);

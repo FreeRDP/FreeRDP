@@ -198,7 +198,7 @@ static UINT64 tsmf_alsa_get_latency(ITSMFAudioDevice* audio)
 	return latency;
 }
 
-static BOOL tsmf_alsa_flush(ITSMFAudioDevice* audio)
+static BOOL tsmf_alsa_flush(WINPR_ATTR_UNUSED ITSMFAudioDevice* audio)
 {
 	return TRUE;
 }

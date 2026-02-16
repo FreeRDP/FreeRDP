@@ -48,7 +48,7 @@ extern "C"
 		HANDLE vcm;
 		void* custom;
 
-		psRemdeskStart Start;
+		WINPR_ATTR_NODISCARD psRemdeskStart Start;
 		psRemdeskStop Stop;
 
 		RemdeskServerPrivate* priv;

@@ -65,7 +65,7 @@ extern "C"
 		/**
 		 * Open the ainput channel.
 		 */
-		psAInputServerOpen Open;
+		WINPR_ATTR_NODISCARD psAInputServerOpen Open;
 
 		/**
 		 * Optional: Set thread handling.
@@ -74,42 +74,42 @@ extern "C"
 		 *
 		 * Defaults to externalThread=FALSE
 		 */
-		psAInputServerInitialize Initialize;
+		WINPR_ATTR_NODISCARD psAInputServerInitialize Initialize;
 
 		/**
 		 * @brief Poll When externalThread=TRUE call periodically from your main loop.
 		 * if externalThread=FALSE do not call.
 		 */
-		psAInputServerPoll Poll;
+		WINPR_ATTR_NODISCARD psAInputServerPoll Poll;
 
 		/**
 		 * @brief Poll When externalThread=TRUE call to get a handle to wait for events.
 		 * Will return FALSE until the handle is available.
 		 */
-		psAInputServerChannelHandle ChannelHandle;
+		WINPR_ATTR_NODISCARD psAInputServerChannelHandle ChannelHandle;
 
 		/**
 		 * Close the ainput channel.
 		 */
-		psAInputServerClose Close;
+		WINPR_ATTR_NODISCARD psAInputServerClose Close;
 		/**
 		 * Status of the ainput channel.
 		 */
-		psAInputServerIsOpen IsOpen;
+		WINPR_ATTR_NODISCARD psAInputServerIsOpen IsOpen;
 
 		/*** Callbacks registered by the server. ***/
 
 		/**
 		 * Receive ainput mouse event PDU.
 		 */
-		psAInputServerMouseEvent MouseEvent;
+		WINPR_ATTR_NODISCARD psAInputServerMouseEvent MouseEvent;
 
 		rdpContext* rdpcontext;
 
 		/**
 		 * Callback, when the channel got its id assigned.
 		 */
-		psAInputChannelIdAssigned ChannelIdAssigned;
+		WINPR_ATTR_NODISCARD psAInputChannelIdAssigned ChannelIdAssigned;
 	};
 
 	FREERDP_API void ainput_server_context_free(ainput_server_context* context);

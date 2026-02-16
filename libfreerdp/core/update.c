@@ -963,7 +963,11 @@ void update_reset_state(rdpUpdate* update)
 		WINPR_ASSERT(altsec);
 
 		altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
-		IFCALL(altsec->common.SwitchSurface, update->context, &(altsec->switch_surface));
+		if (altsec->common.SwitchSurface)
+		{
+			if (!altsec->common.SwitchSurface(update->context, &(altsec->switch_surface)))
+				WLog_Print(up->log, WLOG_WARN, "altsec->common.SwitchSurface failed");
+		}
 	}
 }
 
@@ -988,9 +992,10 @@ BOOL update_post_connect(rdpUpdate* update)
 	}
 
 	altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
-	IFCALL(update->altsec->SwitchSurface, update->context, &(altsec->switch_surface));
+	const BOOL rc = IFCALLRESULT(TRUE, update->altsec->SwitchSurface, update->context,
+	                             &(altsec->switch_surface));
 	up->initialState = FALSE;
-	return TRUE;
+	return rc;
 }
 
 void update_post_disconnect(rdpUpdate* update)

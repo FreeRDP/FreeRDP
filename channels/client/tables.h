@@ -33,35 +33,35 @@ typedef UINT(VCAPITYPE* static_entry_fn_t)();
 typedef struct
 {
 	const char* name;
-	static_entry_fn_t entry;
+	WINPR_ATTR_NODISCARD static_entry_fn_t entry;
 } STATIC_ENTRY;
 
 typedef BOOL(VCAPITYPE* static_entry_vc_fn_t)(PCHANNEL_ENTRY_POINTS);
 typedef struct
 {
 	const char* name;
-	static_entry_vc_fn_t entry;
+	WINPR_ATTR_NODISCARD static_entry_vc_fn_t entry;
 } STATIC_ENTRY_VC;
 
 typedef BOOL(VCAPITYPE* static_entry_vcex_fn_t)(PCHANNEL_ENTRY_POINTS_EX, PVOID);
 typedef struct
 {
 	const char* name;
-	static_entry_vcex_fn_t entry;
+	WINPR_ATTR_NODISCARD static_entry_vcex_fn_t entry;
 } STATIC_ENTRY_VCEX;
 
 typedef UINT(VCAPITYPE* static_entry_dvc_fn_t)(IDRDYNVC_ENTRY_POINTS*);
 typedef struct
 {
 	const char* name;
-	static_entry_dvc_fn_t entry;
+	WINPR_ATTR_NODISCARD static_entry_dvc_fn_t entry;
 } STATIC_ENTRY_DVC;
 
 typedef UINT(VCAPITYPE* static_entry_dse_fn_t)(PDEVICE_SERVICE_ENTRY_POINTS);
 typedef struct
 {
 	const char* name;
-	static_entry_dse_fn_t entry;
+	WINPR_ATTR_NODISCARD static_entry_dse_fn_t entry;
 } STATIC_ENTRY_DSE;
 
 typedef union
@@ -75,11 +75,11 @@ typedef union
 
 typedef union
 {
-	static_entry_fn_t cse;
-	static_entry_vc_fn_t csevc;
-	static_entry_vcex_fn_t csevcex;
-	static_entry_dvc_fn_t csedvc;
-	static_entry_dse_fn_t csedse;
+	WINPR_ATTR_NODISCARD static_entry_fn_t cse;
+	WINPR_ATTR_NODISCARD static_entry_vc_fn_t csevc;
+	WINPR_ATTR_NODISCARD static_entry_vcex_fn_t csevcex;
+	WINPR_ATTR_NODISCARD static_entry_dvc_fn_t csedvc;
+	WINPR_ATTR_NODISCARD static_entry_dse_fn_t csedse;
 } static_entry_fn_u;
 
 typedef struct
@@ -93,7 +93,7 @@ typedef struct
 {
 	const char* name;
 	const char* type;
-	static_subsystem_entry_fn_t entry;
+	WINPR_ATTR_NODISCARD static_subsystem_entry_fn_t entry;
 } STATIC_SUBSYSTEM_ENTRY;
 
 typedef struct

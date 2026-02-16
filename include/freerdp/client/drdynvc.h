@@ -22,6 +22,8 @@
 #ifndef FREERDP_CHANNEL_DRDYNVC_CLIENT_DRDYNVC_H
 #define FREERDP_CHANNEL_DRDYNVC_CLIENT_DRDYNVC_H
 
+#include <winpr/wtypes.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -48,11 +50,11 @@ extern "C"
 		void* handle;
 		void* custom;
 
-		pcDrdynvcGetVersion GetVersion;
-		pcDrdynvcOnChannelConnected OnChannelConnected;
-		pcDrdynvcOnChannelDisconnected OnChannelDisconnected;
-		pcDrdynvcOnChannelAttached OnChannelAttached;
-		pcDrdynvcOnChannelDetached OnChannelDetached;
+		WINPR_ATTR_NODISCARD pcDrdynvcGetVersion GetVersion;
+		WINPR_ATTR_NODISCARD pcDrdynvcOnChannelConnected OnChannelConnected;
+		WINPR_ATTR_NODISCARD pcDrdynvcOnChannelDisconnected OnChannelDisconnected;
+		WINPR_ATTR_NODISCARD pcDrdynvcOnChannelAttached OnChannelAttached;
+		WINPR_ATTR_NODISCARD pcDrdynvcOnChannelDetached OnChannelDetached;
 	};
 
 #ifdef __cplusplus

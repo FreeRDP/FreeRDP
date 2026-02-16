@@ -185,20 +185,20 @@ extern "C"
 		rdpContext* context;     /* 0 */
 		UINT32 paddingA[16 - 1]; /* 1 */
 
-		pCreateOffscreenBitmap CreateOffscreenBitmap; /* 16 */
-		pSwitchSurface SwitchSurface;                 /* 17 */
-		pCreateNineGridBitmap CreateNineGridBitmap;   /* 18 */
-		pFrameMarker FrameMarker;                     /* 19 */
-		pStreamBitmapFirst StreamBitmapFirst;         /* 20 */
-		pStreamBitmapNext StreamBitmapNext;           /* 21 */
-		pDrawGdiPlusFirst DrawGdiPlusFirst;           /* 22 */
-		pDrawGdiPlusNext DrawGdiPlusNext;             /* 23 */
-		pDrawGdiPlusEnd DrawGdiPlusEnd;               /* 24 */
-		pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst; /* 25 */
-		pDrawGdiPlusCacheNext DrawGdiPlusCacheNext;   /* 26 */
-		pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;     /* 27 */
-		/* Statistics callback */
-		pDrawOrderInfo DrawOrderInfo; /* 28 */
+		WINPR_ATTR_NODISCARD pCreateOffscreenBitmap CreateOffscreenBitmap; /* 16 */
+		WINPR_ATTR_NODISCARD pSwitchSurface SwitchSurface;                 /* 17 */
+		WINPR_ATTR_NODISCARD pCreateNineGridBitmap CreateNineGridBitmap;   /* 18 */
+		WINPR_ATTR_NODISCARD pFrameMarker FrameMarker;                     /* 19 */
+		WINPR_ATTR_NODISCARD pStreamBitmapFirst StreamBitmapFirst;         /* 20 */
+		WINPR_ATTR_NODISCARD pStreamBitmapNext StreamBitmapNext;           /* 21 */
+		WINPR_ATTR_NODISCARD pDrawGdiPlusFirst DrawGdiPlusFirst;           /* 22 */
+		WINPR_ATTR_NODISCARD pDrawGdiPlusNext DrawGdiPlusNext;             /* 23 */
+		WINPR_ATTR_NODISCARD pDrawGdiPlusEnd DrawGdiPlusEnd;               /* 24 */
+		WINPR_ATTR_NODISCARD pDrawGdiPlusCacheFirst DrawGdiPlusCacheFirst; /* 25 */
+		WINPR_ATTR_NODISCARD pDrawGdiPlusCacheNext DrawGdiPlusCacheNext;   /* 26 */
+		WINPR_ATTR_NODISCARD pDrawGdiPlusCacheEnd DrawGdiPlusCacheEnd;     /* 27 */
+		                                                                   /* Statistics callback */
+		WINPR_ATTR_NODISCARD pDrawOrderInfo DrawOrderInfo;                 /* 28 */
 		UINT32 paddingB[32 - 29];     /* 29 */
 	};
 	typedef struct rdp_altsec_update rdpAltSecUpdate;

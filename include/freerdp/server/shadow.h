@@ -200,16 +200,16 @@ extern "C"
 
 	struct S_RDP_SHADOW_ENTRY_POINTS
 	{
-		pfnShadowSubsystemNew New;
+		WINPR_ATTR_NODISCARD pfnShadowSubsystemNew New;
 		pfnShadowSubsystemFree Free;
 
-		pfnShadowSubsystemInit Init;
+		WINPR_ATTR_NODISCARD pfnShadowSubsystemInit Init;
 		pfnShadowSubsystemUninit Uninit;
 
-		pfnShadowSubsystemStart Start;
+		WINPR_ATTR_NODISCARD pfnShadowSubsystemStart Start;
 		pfnShadowSubsystemStop Stop;
 
-		pfnShadowEnumMonitors EnumMonitors;
+		WINPR_ATTR_NODISCARD pfnShadowEnumMonitors EnumMonitors;
 	};
 
 	struct rdp_shadow_subsystem
@@ -236,21 +236,21 @@ extern "C"
 		AUDIO_FORMAT* audinFormats;
 		size_t nAudinFormats;
 
-		pfnShadowSynchronizeEvent SynchronizeEvent;
-		pfnShadowKeyboardEvent KeyboardEvent;
-		pfnShadowUnicodeKeyboardEvent UnicodeKeyboardEvent;
-		pfnShadowMouseEvent MouseEvent;
-		pfnShadowExtendedMouseEvent ExtendedMouseEvent;
-		pfnShadowChannelAudinServerReceiveSamples AudinServerReceiveSamples;
+		WINPR_ATTR_NODISCARD pfnShadowSynchronizeEvent SynchronizeEvent;
+		WINPR_ATTR_NODISCARD pfnShadowKeyboardEvent KeyboardEvent;
+		WINPR_ATTR_NODISCARD pfnShadowUnicodeKeyboardEvent UnicodeKeyboardEvent;
+		WINPR_ATTR_NODISCARD pfnShadowMouseEvent MouseEvent;
+		WINPR_ATTR_NODISCARD pfnShadowExtendedMouseEvent ExtendedMouseEvent;
+		WINPR_ATTR_NODISCARD pfnShadowChannelAudinServerReceiveSamples AudinServerReceiveSamples;
 
-		pfnShadowAuthenticate Authenticate;
-		pfnShadowClientConnect ClientConnect;
+		WINPR_ATTR_NODISCARD pfnShadowAuthenticate Authenticate;
+		WINPR_ATTR_NODISCARD pfnShadowClientConnect ClientConnect;
 		pfnShadowClientDisconnect ClientDisconnect;
-		pfnShadowClientCapabilities ClientCapabilities;
+		WINPR_ATTR_NODISCARD pfnShadowClientCapabilities ClientCapabilities;
 
 		rdpShadowServer* server;
 
-		pfnShadowRelMouseEvent RelMouseEvent; /** @since version 3.15.0 */
+		WINPR_ATTR_NODISCARD pfnShadowRelMouseEvent RelMouseEvent; /** @since version 3.15.0 */
 	};
 
 /* Definition of message between subsystem and clients */

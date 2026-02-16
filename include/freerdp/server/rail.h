@@ -101,42 +101,42 @@ extern "C"
 		HANDLE vcm;
 		void* custom;
 
-		psRailStart Start;
+		WINPR_ATTR_NODISCARD psRailStart Start;
 		psRailStop Stop;
 
 		/* Callbacks from client */
-		psRailClientHandshake ClientHandshake;
-		psRailClientClientStatus ClientClientStatus;
-		psRailClientExec ClientExec;
-		psRailClientSysparam ClientSysparam;
-		psRailClientActivate ClientActivate;
-		psRailClientSysmenu ClientSysmenu;
-		psRailClientSyscommand ClientSyscommand;
-		psRailClientNotifyEvent ClientNotifyEvent;
-		psRailClientGetAppidReq ClientGetAppidReq;
-		psRailClientWindowMove ClientWindowMove;
-		psRailClientSnapArrange ClientSnapArrange;
-		psRailClientLangbarInfo ClientLangbarInfo;
-		psRailClientLanguageImeInfo ClientLanguageImeInfo;
-		psRailClientCompartmentInfo ClientCompartmentInfo;
-		psRailClientCloak ClientCloak;
-		psRailClientTextScale ClientTextScale;
-		psRailClientCaretBlinkRate ClientCaretBlinkRate;
+		WINPR_ATTR_NODISCARD psRailClientHandshake ClientHandshake;
+		WINPR_ATTR_NODISCARD psRailClientClientStatus ClientClientStatus;
+		WINPR_ATTR_NODISCARD psRailClientExec ClientExec;
+		WINPR_ATTR_NODISCARD psRailClientSysparam ClientSysparam;
+		WINPR_ATTR_NODISCARD psRailClientActivate ClientActivate;
+		WINPR_ATTR_NODISCARD psRailClientSysmenu ClientSysmenu;
+		WINPR_ATTR_NODISCARD psRailClientSyscommand ClientSyscommand;
+		WINPR_ATTR_NODISCARD psRailClientNotifyEvent ClientNotifyEvent;
+		WINPR_ATTR_NODISCARD psRailClientGetAppidReq ClientGetAppidReq;
+		WINPR_ATTR_NODISCARD psRailClientWindowMove ClientWindowMove;
+		WINPR_ATTR_NODISCARD psRailClientSnapArrange ClientSnapArrange;
+		WINPR_ATTR_NODISCARD psRailClientLangbarInfo ClientLangbarInfo;
+		WINPR_ATTR_NODISCARD psRailClientLanguageImeInfo ClientLanguageImeInfo;
+		WINPR_ATTR_NODISCARD psRailClientCompartmentInfo ClientCompartmentInfo;
+		WINPR_ATTR_NODISCARD psRailClientCloak ClientCloak;
+		WINPR_ATTR_NODISCARD psRailClientTextScale ClientTextScale;
+		WINPR_ATTR_NODISCARD psRailClientCaretBlinkRate ClientCaretBlinkRate;
 
 		/* Methods for sending server side messages */
-		psRailServerHandshake ServerHandshake;
-		psRailServerHandshakeEx ServerHandshakeEx;
-		psRailServerSysparam ServerSysparam;
-		psRailServerLocalMoveSize ServerLocalMoveSize;
-		psRailServerMinMaxInfo ServerMinMaxInfo;
-		psRailServerTaskbarInfo ServerTaskbarInfo;
-		psRailServerLangbarInfo ServerLangbarInfo;
-		psRailServerExecResult ServerExecResult;
-		psRailServerZOrderSync ServerZOrderSync;
-		psRailServerCloak ServerCloak;
-		psRailServerPowerDisplayRequest ServerPowerDisplayRequest;
-		psRailServerGetAppidResp ServerGetAppidResp;
-		psRailServerGetAppidRespEx ServerGetAppidRespEx;
+		WINPR_ATTR_NODISCARD psRailServerHandshake ServerHandshake;
+		WINPR_ATTR_NODISCARD psRailServerHandshakeEx ServerHandshakeEx;
+		WINPR_ATTR_NODISCARD psRailServerSysparam ServerSysparam;
+		WINPR_ATTR_NODISCARD psRailServerLocalMoveSize ServerLocalMoveSize;
+		WINPR_ATTR_NODISCARD psRailServerMinMaxInfo ServerMinMaxInfo;
+		WINPR_ATTR_NODISCARD psRailServerTaskbarInfo ServerTaskbarInfo;
+		WINPR_ATTR_NODISCARD psRailServerLangbarInfo ServerLangbarInfo;
+		WINPR_ATTR_NODISCARD psRailServerExecResult ServerExecResult;
+		WINPR_ATTR_NODISCARD psRailServerZOrderSync ServerZOrderSync;
+		WINPR_ATTR_NODISCARD psRailServerCloak ServerCloak;
+		WINPR_ATTR_NODISCARD psRailServerPowerDisplayRequest ServerPowerDisplayRequest;
+		WINPR_ATTR_NODISCARD psRailServerGetAppidResp ServerGetAppidResp;
+		WINPR_ATTR_NODISCARD psRailServerGetAppidRespEx ServerGetAppidRespEx;
 
 		RailServerPrivate* priv;
 		rdpContext* rdpcontext;

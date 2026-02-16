@@ -70,57 +70,59 @@ extern "C"
 		 *
 		 * Defaults to externalThread=FALSE
 		 */
-		psCamDevEnumServerServerInitialize Initialize;
+		WINPR_ATTR_NODISCARD psCamDevEnumServerServerInitialize Initialize;
 
 		/**
 		 * Open the camera device enumerator channel.
 		 */
-		psCamDevEnumServerServerOpen Open;
+		WINPR_ATTR_NODISCARD psCamDevEnumServerServerOpen Open;
 
 		/**
 		 * Close the camera device enumerator channel.
 		 */
-		psCamDevEnumServerServerClose Close;
+		WINPR_ATTR_NODISCARD psCamDevEnumServerServerClose Close;
 
 		/**
 		 * Poll
 		 * When externalThread=TRUE, call Poll() periodically from your main loop.
 		 * If externalThread=FALSE do not call.
 		 */
-		psCamDevEnumServerServerPoll Poll;
+		WINPR_ATTR_NODISCARD psCamDevEnumServerServerPoll Poll;
 
 		/**
 		 * Retrieve the channel handle for use in conjunction with Poll().
 		 * If externalThread=FALSE do not call.
 		 */
-		psCamDevEnumServerServerChannelHandle ChannelHandle;
+		WINPR_ATTR_NODISCARD psCamDevEnumServerServerChannelHandle ChannelHandle;
 
 		/*
 		 * Send a Select Version Response PDU.
 		 */
-		psCamDevEnumServerServerSelectVersionResponse SelectVersionResponse;
+		WINPR_ATTR_NODISCARD psCamDevEnumServerServerSelectVersionResponse SelectVersionResponse;
 
 		/*** Callbacks registered by the server. ***/
 
 		/**
 		 * Callback, when the channel got its id assigned.
 		 */
-		psCamDevEnumServerServerChannelIdAssigned ChannelIdAssigned;
+		WINPR_ATTR_NODISCARD psCamDevEnumServerServerChannelIdAssigned ChannelIdAssigned;
 
 		/**
 		 * Callback for the Select Version Request PDU.
 		 */
-		psCamDevEnumServerServerSelectVersionRequest SelectVersionRequest;
+		WINPR_ATTR_NODISCARD psCamDevEnumServerServerSelectVersionRequest SelectVersionRequest;
 
 		/**
 		 * Callback for the Device Added Notification PDU.
 		 */
-		psCamDevEnumServerServerDeviceAddedNotification DeviceAddedNotification;
+		WINPR_ATTR_NODISCARD psCamDevEnumServerServerDeviceAddedNotification
+		    DeviceAddedNotification;
 
 		/**
 		 * Callback for the Device Removed Notification PDU.
 		 */
-		psCamDevEnumServerServerDeviceRemovedNotification DeviceRemovedNotification;
+		WINPR_ATTR_NODISCARD psCamDevEnumServerServerDeviceRemovedNotification
+		    DeviceRemovedNotification;
 
 		rdpContext* rdpcontext;
 	};

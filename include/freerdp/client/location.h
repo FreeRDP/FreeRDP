@@ -58,7 +58,7 @@ extern "C"
 		 *
 		 * \return \b CHANNEL_RC_OK for success, an appropriate error otherwise.
 		 */
-		pcLocationStart LocationStart;
+		WINPR_ATTR_NODISCARD pcLocationStart LocationStart;
 
 		/**! \brief stop location services on client
 		 *
@@ -66,7 +66,7 @@ extern "C"
 		 *
 		 * \return \b CHANNEL_RC_OK for success, an appropriate error otherwise.
 		 */
-		pcLocationStop LocationStop;
+		WINPR_ATTR_NODISCARD pcLocationStop LocationStop;
 
 		/**! \brief Send a location update.
 		 *
@@ -97,7 +97,7 @@ extern "C"
 		 *
 		 * return \b CHANNEL_RC_OK for success, an appropriate error otherwise.
 		 */
-		pcLocationSend LocationSend;
+		WINPR_ATTR_NODISCARD pcLocationSend LocationSend;
 	};
 
 #ifdef __cplusplus
