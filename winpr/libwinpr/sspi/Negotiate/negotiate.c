@@ -1567,9 +1567,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesA(
 
 static SECURITY_STATUS SEC_ENTRY negotiate_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	MechCred* creds = NULL;
-
-	creds = sspi_SecureHandleGetLowerPointer(phCredential);
+	MechCred* creds = sspi_SecureHandleGetLowerPointer(phCredential);
 	if (!creds)
 		return SEC_E_INVALID_HANDLE;
 
