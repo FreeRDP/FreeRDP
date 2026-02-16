@@ -478,16 +478,16 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 
 		const UINT32 nXDstRel = nXDst + xStart;
 		const UINT32 nYDstRel = nYDst + yStart;
-		if (1ull * nXDstRel + width > nWidth)
+		if (1ull * nXDstRel + width > nDstWidth)
 		{
-			WLog_ERR(TAG, "nXDstRel %" PRIu16 " + width %" PRIu16 " > nWidth %" PRIu32 "", xStart,
-			         width, nWidth);
+			WLog_ERR(TAG, "nXDstRel %" PRIu32 " + width %" PRIu16 " > nDstWidth %" PRIu32 "",
+			         nXDstRel, width, nDstWidth);
 			return FALSE;
 		}
-		if (1ull * nYDstRel + height > nHeight)
+		if (1ull * nYDstRel + height > nDstHeight)
 		{
-			WLog_ERR(TAG, "nYDstRel %" PRIu16 " + height %" PRIu16 " > nHeight %" PRIu32 "", yStart,
-			         height, nHeight);
+			WLog_ERR(TAG, "nYDstRel %" PRIu32 " + height %" PRIu16 " > nDstHeight %" PRIu32 "",
+			         nYDstRel, height, nDstHeight);
 			return FALSE;
 		}
 
