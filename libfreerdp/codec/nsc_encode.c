@@ -495,6 +495,7 @@ BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RES
 	return nsc_write_message(context, s, &message);
 }
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
                            BYTE* WINPR_RESTRICT bmpdata, UINT32 x, UINT32 y, UINT32 width,
                            UINT32 height, UINT32 rowstride, UINT32 format, UINT32 flip)
@@ -511,3 +512,4 @@ BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_R
 	Stream_Seek(s, size);
 	return TRUE;
 }
+#endif

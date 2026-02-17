@@ -84,10 +84,17 @@ extern "C"
 	                                     wStream* WINPR_RESTRICT s,
 	                                     const BYTE* WINPR_RESTRICT bmpdata, UINT32 width,
 	                                     UINT32 height, UINT32 rowstride);
-	FREERDP_API BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context,
-	                                       wStream* WINPR_RESTRICT s, BYTE* WINPR_RESTRICT bmpdata,
-	                                       UINT32 x, UINT32 y, UINT32 width, UINT32 height,
-	                                       UINT32 rowstride, UINT32 format, UINT32 flip);
+
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
+
+	WINPR_DEPRECATED_VAR(
+	    "[since 3.23.0] deprecated, insecure! missing length checks. use nsc_process_message",
+	    FREERDP_API BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context,
+	                                           wStream* WINPR_RESTRICT s,
+	                                           BYTE* WINPR_RESTRICT bmpdata, UINT32 x, UINT32 y,
+	                                           UINT32 width, UINT32 height, UINT32 rowstride,
+	                                           UINT32 format, UINT32 flip));
+#endif
 
 	FREERDP_API BOOL nsc_context_reset(NSC_CONTEXT* WINPR_RESTRICT context, UINT32 width,
 	                                   UINT32 height);
