@@ -4,7 +4,7 @@ option(USE_GIT_FOR_REVISION "Extract git tag/commit" OFF)
 function(get_project_version VERSION_MAJOR VERSION_MINOR VERSION_REVISION VERSION_SUFFIX GIT_REVISION)
 
   # Default version, hard codec per release
-  set(RAW_VERSION_STRING "3.23.0")
+  set(RAW_VERSION_STRING "3.23.1-dev0")
 
   set(VERSION_REGEX "^(.*)([0-9]+)\\.([0-9]+)\\.([0-9]+)-?(.*)")
 
