@@ -759,7 +759,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 			alloc += ARRAYSIZE(dsc->cFileName) *
 			         8; /* Overallocate, just take the biggest value the result path can have */
 			            /* # (1 char) -> %23 (3 chars) , the first char is replaced inplace */
-			alloc += count_special_chars(dsc->cFileName) * 2;
+			alloc += count_special_chars(dsc->cFileName) * sizeof(WCHAR);
 			alloc += decoration_len;
 		}
 	}

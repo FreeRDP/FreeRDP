@@ -3302,7 +3302,7 @@ size_t update_approximate_create_offscreen_bitmap_order(
 	deleteList = &(create_offscreen_bitmap->deleteList);
 	WINPR_ASSERT(deleteList);
 
-	return 32 + deleteList->cIndices * 2;
+	return 32ull + deleteList->cIndices * 2ull;
 }
 
 BOOL update_write_create_offscreen_bitmap_order(

@@ -917,10 +917,10 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 				 * So also check the string length returned as server side does
 				 * not honor strings with multi '\0' characters well.
 				 */
-				const size_t rchar = _wcsnlen((WCHAR*)&data[2], sizeof(data) / 2);
+				const size_t rchar = _wcsnlen((WCHAR*)&data[2], sizeof(data) / sizeof(WCHAR));
 				len = MIN((BYTE)ret - 2, slen);
 				len = MIN(len, inSize);
-				len = MIN(len, rchar * 2 + sizeof(WCHAR));
+				len = MIN(len, rchar * sizeof(WCHAR) + sizeof(WCHAR));
 				memcpy(Buffer, &data[2], len);
 
 				/* Just as above, the returned WCHAR string should be '\0'

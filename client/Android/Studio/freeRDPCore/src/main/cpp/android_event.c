@@ -28,10 +28,16 @@ BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event)
 
 	if (aCtx->event_queue->count >= aCtx->event_queue->size)
 	{
-		int new_size;
-		void* new_events;
-		new_size = aCtx->event_queue->size * 2;
-		new_events = realloc((void*)aCtx->event_queue->events, sizeof(ANDROID_EVENT*) * new_size);
+		size_t new_size = aCtx->event_queue->size;
+		do
+		{
+			if (new_size >= SIZE_MAX - 128ull)
+				return FALSE;
+
+			new_size += 128ull;
+		} while (new_size <= aCtx->event_queue->count);
+		void* new_events =
+		    realloc((void*)aCtx->event_queue->events, sizeof(ANDROID_EVENT*) * new_size);
 
 		if (!new_events)
 			return FALSE;

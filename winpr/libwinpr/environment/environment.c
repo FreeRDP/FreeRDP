@@ -30,6 +30,10 @@
 
 #include <winpr/environment.h>
 
+#include "../log.h"
+
+#define TAG WINPR_TAG("environment")
+
 #ifndef _WIN32
 
 #include <errno.h>
@@ -100,19 +104,19 @@ DWORD GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer)
 
 DWORD GetCurrentDirectoryW(WINPR_ATTR_UNUSED DWORD nBufferLength, WINPR_ATTR_UNUSED LPWSTR lpBuffer)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return 0;
 }
 
 BOOL SetCurrentDirectoryA(WINPR_ATTR_UNUSED LPCSTR lpPathName)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return TRUE;
 }
 
 BOOL SetCurrentDirectoryW(WINPR_ATTR_UNUSED LPCWSTR lpPathName)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return TRUE;
 }
 
@@ -120,7 +124,7 @@ DWORD SearchPathA(WINPR_ATTR_UNUSED LPCSTR lpPath, WINPR_ATTR_UNUSED LPCSTR lpFi
                   WINPR_ATTR_UNUSED LPCSTR lpExtension, WINPR_ATTR_UNUSED DWORD nBufferLength,
                   WINPR_ATTR_UNUSED LPSTR lpBuffer, WINPR_ATTR_UNUSED LPSTR* lpFilePart)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return 0;
 }
 
@@ -128,31 +132,31 @@ DWORD SearchPathW(WINPR_ATTR_UNUSED LPCWSTR lpPath, WINPR_ATTR_UNUSED LPCWSTR lp
                   WINPR_ATTR_UNUSED LPCWSTR lpExtension, WINPR_ATTR_UNUSED DWORD nBufferLength,
                   WINPR_ATTR_UNUSED LPWSTR lpBuffer, WINPR_ATTR_UNUSED LPWSTR* lpFilePart)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return 0;
 }
 
 LPSTR GetCommandLineA(VOID)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return NULL;
 }
 
 LPWSTR GetCommandLineW(VOID)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return NULL;
 }
 
 BOOL NeedCurrentDirectoryForExePathA(WINPR_ATTR_UNUSED LPCSTR ExeName)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return TRUE;
 }
 
 BOOL NeedCurrentDirectoryForExePathW(WINPR_ATTR_UNUSED LPCWSTR ExeName)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return TRUE;
 }
 
@@ -192,7 +196,7 @@ DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 DWORD GetEnvironmentVariableW(WINPR_ATTR_UNUSED LPCWSTR lpName, WINPR_ATTR_UNUSED LPWSTR lpBuffer,
                               WINPR_ATTR_UNUSED DWORD nSize)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	SetLastError(ERROR_ENVVAR_NOT_FOUND);
 	return 0;
 }
@@ -224,7 +228,7 @@ BOOL SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 
 BOOL SetEnvironmentVariableW(WINPR_ATTR_UNUSED LPCWSTR lpName, WINPR_ATTR_UNUSED LPCWSTR lpValue)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return FALSE;
 }
 
@@ -249,32 +253,35 @@ extern char** environ;
 LPCH GetEnvironmentStringsA(VOID)
 {
 #if !defined(_UWP)
-	char* p = NULL;
 	size_t offset = 0;
-	size_t length = 0;
-	char** envp = NULL;
-	DWORD cchEnvironmentBlock = 0;
-	LPCH lpszEnvironmentBlock = NULL;
+	char** envp = environ;
+	const size_t blocksize = 128;
+	size_t cchEnvironmentBlock = blocksize;
+	LPCH lpszEnvironmentBlock = (LPCH)calloc(cchEnvironmentBlock, sizeof(CHAR));
 
-	offset = 0;
-	envp = environ;
-
-	cchEnvironmentBlock = 128;
-	lpszEnvironmentBlock = (LPCH)calloc(cchEnvironmentBlock, sizeof(CHAR));
 	if (!lpszEnvironmentBlock)
 		return NULL;
 
 	while (*envp)
 	{
-		length = strlen(*envp);
-
-		while ((offset + length + 8) > cchEnvironmentBlock)
+		const size_t length = strlen(*envp);
+		const size_t required = offset + length + 8ull;
+		if (required > UINT32_MAX)
 		{
-			DWORD new_size = 0;
-			LPCH new_blk = NULL;
+			WLog_ERR(TAG, "Environment block too large: %" PRIuz, required);
 
-			new_size = cchEnvironmentBlock * 2;
-			new_blk = (LPCH)realloc(lpszEnvironmentBlock, new_size * sizeof(CHAR));
+			free(lpszEnvironmentBlock);
+			return NULL;
+		}
+
+		if (required > cchEnvironmentBlock)
+		{
+			size_t new_size = cchEnvironmentBlock;
+			do
+			{
+				new_size += blocksize;
+			} while (new_size <= required);
+			LPCH new_blk = (LPCH)realloc(lpszEnvironmentBlock, new_size * sizeof(CHAR));
 			if (!new_blk)
 			{
 				free(lpszEnvironmentBlock);
@@ -285,12 +292,12 @@ LPCH GetEnvironmentStringsA(VOID)
 			cchEnvironmentBlock = new_size;
 		}
 
-		p = &(lpszEnvironmentBlock[offset]);
+		char* p = &(lpszEnvironmentBlock[offset]);
 
 		CopyMemory(p, *envp, length * sizeof(CHAR));
 		p[length] = '\0';
 
-		offset += (length + 1);
+		offset += (length + 1ull);
 		envp++;
 	}
 
@@ -304,33 +311,33 @@ LPCH GetEnvironmentStringsA(VOID)
 
 LPWCH GetEnvironmentStringsW(VOID)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return NULL;
 }
 
 BOOL SetEnvironmentStringsA(WINPR_ATTR_UNUSED LPCH NewEnvironment)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return TRUE;
 }
 
 BOOL SetEnvironmentStringsW(WINPR_ATTR_UNUSED LPWCH NewEnvironment)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return TRUE;
 }
 
 DWORD ExpandEnvironmentStringsA(WINPR_ATTR_UNUSED LPCSTR lpSrc, WINPR_ATTR_UNUSED LPSTR lpDst,
                                 WINPR_ATTR_UNUSED DWORD nSize)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return 0;
 }
 
 DWORD ExpandEnvironmentStringsW(WINPR_ATTR_UNUSED LPCWSTR lpSrc, WINPR_ATTR_UNUSED LPWSTR lpDst,
                                 WINPR_ATTR_UNUSED DWORD nSize)
 {
-	WLog_ERR("TODO", "TODO: not implemented");
+	WLog_ERR(TAG, "TODO: not implemented");
 	return 0;
 }
 

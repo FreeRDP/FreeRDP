@@ -1999,7 +1999,8 @@ BOOL gcc_write_server_network_data(wStream* s, const rdpMcs* mcs)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
-	const size_t payloadLen = 8 + mcs->channelCount * 2 + (mcs->channelCount % 2 == 1 ? 2 : 0);
+	const size_t payloadLen =
+	    8ull + mcs->channelCount * 2ull + (mcs->channelCount % 2 == 1 ? 2ull : 0ull);
 
 	WINPR_ASSERT(payloadLen <= UINT16_MAX);
 	if (!gcc_write_user_data_header(s, SC_NET, (UINT16)payloadLen))

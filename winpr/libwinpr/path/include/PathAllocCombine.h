@@ -78,7 +78,7 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore,
 	else
 	{
 		const size_t pszPathOutLength = pszPathInLength + pszMoreLength;
-		const size_t sizeOfBuffer = (pszPathOutLength + 1) * 2;
+		const size_t sizeOfBuffer = (pszPathOutLength + 1) * sizeof(WCHAR);
 		PWSTR pszPathOut = (PWSTR)calloc(sizeOfBuffer, 2);
 
 		if (!pszPathOut)
@@ -131,7 +131,7 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, WINPR_ATTR_UNUSED uns
 		if ((pszPathIn[1] == ':') && (pszPathIn[2] == CUR_PATH_SEPARATOR_CHR))
 		{
 			const size_t pszPathOutLength = 2 + pszMoreLength;
-			const size_t sizeOfBuffer = (pszPathOutLength + 1) * 2;
+			const size_t sizeOfBuffer = (pszPathOutLength + 1) * sizeof(WCHAR);
 			PSTR pszPathOut = calloc(sizeOfBuffer, 2);
 
 			if (!pszPathOut)
@@ -145,7 +145,7 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, WINPR_ATTR_UNUSED uns
 	else
 	{
 		const size_t pszPathOutLength = pszPathInLength + pszMoreLength;
-		const size_t sizeOfBuffer = (pszPathOutLength + 1) * 2;
+		const size_t sizeOfBuffer = (pszPathOutLength + 1) * sizeof(WCHAR);
 		PSTR pszPathOut = calloc(sizeOfBuffer, 2);
 
 		if (!pszPathOut)

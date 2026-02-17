@@ -96,16 +96,25 @@ static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 {
 	WINPR_ASSERT(queue);
 
-	if (queue->size + count >= queue->capacity)
+	const size_t required = queue->size + count;
+	// check for overflow
+	if ((required < queue->size) || (required < count))
+		return FALSE;
+
+	if (required >= queue->capacity)
 	{
-		wMessage* new_arr = NULL;
 		size_t old_capacity = queue->capacity;
-		size_t new_capacity = queue->capacity * 2;
+		size_t new_capacity = queue->capacity;
 
-		if (new_capacity < queue->size + count)
+		if (new_capacity < required)
+		{
 			new_capacity = queue->size + count;
+			// check for overflow
+			if (new_capacity < old_capacity)
+				return FALSE;
+		}
 
-		new_arr = (wMessage*)realloc(queue->array, sizeof(wMessage) * new_capacity);
+		wMessage* new_arr = (wMessage*)realloc(queue->array, sizeof(wMessage) * new_capacity);
 		if (!new_arr)
 			return FALSE;
 		queue->array = new_arr;

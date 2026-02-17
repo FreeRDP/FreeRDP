@@ -120,7 +120,7 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 
 #ifdef WITH_PKCS11
 	*wProviderCount += 1;
-	stringAllocSize += (_wcslen(MS_SCARD_PROV) + 1) * 2;
+	stringAllocSize += (_wcslen(MS_SCARD_PROV) + 1) * sizeof(WCHAR);
 	stringAllocSize += sizeof(emptyComment);
 #endif
 
@@ -135,7 +135,7 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 	strPtr = (LPWSTR)(ret + *wProviderCount);
 
 	ret->pszName = strPtr;
-	copyAmount = (_wcslen(MS_SCARD_PROV) + 1) * 2;
+	copyAmount = (_wcslen(MS_SCARD_PROV) + 1) * sizeof(WCHAR);
 	memcpy(strPtr, MS_SCARD_PROV, copyAmount);
 	strPtr += copyAmount / 2;
 

@@ -185,7 +185,7 @@ static UINT remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* co
 		return ERROR_INVALID_DATA;
 
 	cchStringW++;
-	const size_t cbRaConnectionStringW = cchStringW * 2;
+	const size_t cbRaConnectionStringW = cchStringW * sizeof(WCHAR);
 	pdu.raConnectionString =
 	    ConvertWCharNToUtf8Alloc(raConnectionStringW, cbRaConnectionStringW / sizeof(WCHAR), NULL);
 	if (!pdu.raConnectionString)
@@ -240,7 +240,7 @@ static UINT remdesk_recv_ctl_authenticate_pdu(WINPR_ATTR_UNUSED RemdeskServerCon
 		return ERROR_INVALID_DATA;
 
 	cchStringW++;
-	const size_t cbExpertBlobW = cchStringW * 2;
+	const size_t cbExpertBlobW = cchStringW * sizeof(WCHAR);
 	pdu.raConnectionString =
 	    ConvertWCharNToUtf8Alloc(raConnectionStringW, cbRaConnectionStringW / sizeof(WCHAR), NULL);
 	if (!pdu.raConnectionString)

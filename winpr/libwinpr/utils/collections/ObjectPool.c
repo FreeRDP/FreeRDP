@@ -92,13 +92,18 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 {
 	ObjectPool_Lock(pool);
 
-	if ((pool->size + 1) >= pool->capacity)
+	WINPR_ASSERT(pool->size < SIZE_MAX);
+	const size_t required = pool->size + 1ull;
+	if (required >= pool->capacity)
 	{
-		size_t new_cap = 0;
-		void** new_arr = NULL;
+		size_t new_cap = pool->capacity;
+		do
+		{
+			WINPR_ASSERT(new_cap <= SIZE_MAX - 128ull);
+			new_cap += 128ull;
+		} while (new_cap <= required);
 
-		new_cap = pool->capacity * 2;
-		new_arr = (void**)realloc((void*)pool->array, sizeof(void*) * new_cap);
+		void** new_arr = (void**)realloc((void*)pool->array, sizeof(void*) * new_cap);
 		if (!new_arr)
 			goto out;
 

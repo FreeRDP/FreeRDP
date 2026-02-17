@@ -46,20 +46,19 @@ BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 	WINPR_ASSERT(s);
 	if (s->capacity < size)
 	{
-		size_t position = 0;
-		size_t old_capacity = 0;
-		size_t new_capacity = 0;
 		BYTE* new_buf = NULL;
 
-		old_capacity = s->capacity;
-		new_capacity = old_capacity;
+		size_t old_capacity = s->capacity;
+		size_t new_capacity = old_capacity;
 
 		do
 		{
-			new_capacity *= 2;
-		} while (new_capacity < size);
+			if (new_capacity > SIZE_MAX - 128ull)
+				return FALSE;
+			new_capacity += 128ull;
+		} while (new_capacity <= size);
 
-		position = Stream_GetPosition(s);
+		const size_t position = Stream_GetPosition(s);
 
 		if (!s->isOwner)
 		{

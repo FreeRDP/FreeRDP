@@ -127,9 +127,20 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 {
 	if (count > 0)
 	{
-		if (pool->uSize + count > pool->uCapacity)
+		const SSIZE_T required = pool->uSize + count;
+		// check for overflow
+		if ((required < count) || (required < pool->uSize))
+			return FALSE;
+
+		if (required > pool->uCapacity)
 		{
-			SSIZE_T newUCapacity = pool->uCapacity * 2;
+			SSIZE_T newUCapacity = pool->uCapacity;
+			do
+			{
+				if (newUCapacity > SIZE_MAX - 128ull)
+					return FALSE;
+				newUCapacity += 128ull;
+			} while (newUCapacity <= required);
 			wBufferPoolItem* newUArray = NULL;
 			if (pool->alignment > 0)
 				newUArray = (wBufferPoolItem*)winpr_aligned_realloc(

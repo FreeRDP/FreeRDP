@@ -1285,11 +1285,11 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer*
 	if (credentials->identity.DomainLength > 0)
 	{
 		message->NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-		message->DomainName.Len = (UINT16)credentials->identity.DomainLength * 2;
+		message->DomainName.Len = (UINT16)credentials->identity.DomainLength * sizeof(WCHAR);
 		message->DomainName.Buffer = (BYTE*)credentials->identity.Domain;
 	}
 
-	message->UserName.Len = (UINT16)credentials->identity.UserLength * 2;
+	message->UserName.Len = (UINT16)credentials->identity.UserLength * sizeof(WCHAR);
 	message->UserName.Buffer = (BYTE*)credentials->identity.User;
 	message->LmChallengeResponse.Len = (UINT16)context->LmChallengeResponse.cbBuffer;
 	message->LmChallengeResponse.Buffer = (BYTE*)context->LmChallengeResponse.pvBuffer;
