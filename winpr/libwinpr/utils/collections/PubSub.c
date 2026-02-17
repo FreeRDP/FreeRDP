@@ -94,13 +94,19 @@ void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count)
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
 
-	while (pubSub->count + count >= pubSub->size)
-	{
-		size_t new_size = 0;
-		wEventType* new_event = NULL;
+	const size_t required = pubSub->count + count;
+	WINPR_ASSERT((required >= pubSub->count) && (required >= count));
 
-		new_size = pubSub->size * 2;
-		new_event = (wEventType*)realloc(pubSub->events, new_size * sizeof(wEventType));
+	if (required >= pubSub->size)
+	{
+		size_t new_size = pubSub->size;
+		do
+		{
+			WINPR_ASSERT(new_size <= SIZE_MAX - 128ull);
+			new_size += 128ull;
+		} while (new_size <= required);
+
+		wEventType* new_event = (wEventType*)realloc(pubSub->events, new_size * sizeof(wEventType));
 		if (!new_event)
 			goto fail;
 		pubSub->size = new_size;

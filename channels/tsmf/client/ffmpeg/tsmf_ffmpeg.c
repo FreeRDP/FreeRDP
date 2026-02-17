@@ -488,12 +488,12 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 		if (mdecoder->decoded_size_max - mdecoder->decoded_size < MAX_AUDIO_FRAME_SIZE)
 		{
 			BYTE* tmp_data = NULL;
-			tmp_data = realloc(mdecoder->decoded_data, mdecoder->decoded_size_max * 2 + 16);
+			tmp_data = realloc(mdecoder->decoded_data, mdecoder->decoded_size_max * 2ull + 16ull);
 
 			if (!tmp_data)
 				return FALSE;
 
-			mdecoder->decoded_size_max = mdecoder->decoded_size_max * 2 + 16;
+			mdecoder->decoded_size_max = mdecoder->decoded_size_max * 2ull + 16ull;
 			mdecoder->decoded_data = tmp_data;
 			dst = (BYTE*)(((uintptr_t)mdecoder->decoded_data + 15) & ~0x0F);
 

@@ -1403,7 +1403,7 @@ DWORD GetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, L
 	free(lpFileNameW);
 	free(lpBufferW);
 
-	return dwStatus * 2;
+	return WINPR_ASSERTING_INT_CAST(DWORD, dwStatus * sizeof(WCHAR));
 }
 
 BOOL GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector,

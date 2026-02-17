@@ -894,10 +894,8 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 		{
-			int alignedWidth = 0;
-			int alignedHeight = 0;
-			alignedWidth = (xfc->window->width / 2) * 2;
-			alignedHeight = (xfc->window->height / 2) * 2;
+			const int alignedWidth = (xfc->window->width / 2) * 2;
+			const int alignedHeight = (xfc->window->height / 2) * 2;
 			/* ask the server to resize using the display channel */
 			xf_disp_handle_configureNotify(xfc, alignedWidth, alignedHeight);
 		}

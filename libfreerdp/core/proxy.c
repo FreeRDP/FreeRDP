@@ -597,7 +597,7 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 
 	hostLen = strlen(hostname);
 	portLen = strnlen(port_str, sizeof(port_str));
-	reserveSize = strlen(connect) + (hostLen + 1 + portLen) * 2 + strlen(httpheader);
+	reserveSize = strlen(connect) + (hostLen + 1ull + portLen) * 2ull + strlen(httpheader);
 	s = Stream_New(NULL, reserveSize);
 	if (!s)
 		goto fail;

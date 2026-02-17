@@ -36,7 +36,7 @@ UINT remdesk_write_channel_header(wStream* s, const REMDESK_CHANNEL_HEADER* head
 	}
 
 	const size_t ChannelNameLen =
-	    (strnlen(header->ChannelName, sizeof(header->ChannelName)) + 1) * 2;
+	    (strnlen(header->ChannelName, sizeof(header->ChannelName)) + 1) * sizeof(WCHAR);
 	WINPR_ASSERT(ChannelNameLen <= ARRAYSIZE(header->ChannelName));
 
 	Stream_Write_UINT32(s, (UINT32)ChannelNameLen); /* ChannelNameLen (4 bytes) */

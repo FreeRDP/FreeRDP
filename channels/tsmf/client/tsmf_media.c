@@ -387,7 +387,7 @@ static char* guid_to_string(const BYTE* guid, char* str, size_t len)
 TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid)
 {
 	BOOL found = FALSE;
-	char guid_str[GUID_SIZE * 2 + 1] = { 0 };
+	char guid_str[GUID_SIZE * 2ull + 1] = { 0 };
 	TSMF_PRESENTATION* presentation = NULL;
 	ArrayList_Lock(presentation_list);
 	const size_t count = ArrayList_Count(presentation_list);

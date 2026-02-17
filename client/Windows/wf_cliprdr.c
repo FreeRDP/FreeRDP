@@ -1122,10 +1122,13 @@ static void map_ensure_capacity(wfClipboard* clipboard)
 
 	if (clipboard->map_size >= clipboard->map_capacity)
 	{
-		size_t new_size;
-		formatMapping* new_map;
-		new_size = clipboard->map_capacity * 2;
-		new_map =
+		size_t new_size = clipboard->map_capacity;
+		do
+		{
+			WINPR_ASSERT(new_size <= SIZE_MAX - 128ull);
+			new_size += 128ull;
+		} while (new_size <= clipboard->map_size);
+		formatMapping* new_map =
 		    (formatMapping*)realloc(clipboard->format_mappings, sizeof(formatMapping) * new_size);
 
 		if (!new_map)

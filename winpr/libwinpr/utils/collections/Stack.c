@@ -141,9 +141,15 @@ void Stack_Push(wStack* stack, void* obj)
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
 
-	if ((stack->size + 1) >= stack->capacity)
+	WINPR_ASSERT(stack->size < SIZE_MAX);
+	if ((stack->size + 1ull) >= stack->capacity)
 	{
-		const size_t new_cap = stack->capacity * 2;
+		size_t new_cap = stack->capacity;
+		do
+		{
+			WINPR_ASSERT(new_cap <= SIZE_MAX - 128ull);
+			new_cap += 128ull;
+		} while (new_cap <= stack->size + 1ull);
 		void** new_arr = (void**)realloc((void*)stack->array, sizeof(void*) * new_cap);
 
 		if (!new_arr)

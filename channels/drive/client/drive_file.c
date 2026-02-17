@@ -1052,7 +1052,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 	else if (!FindNextFileW(file->find_handle, &file->find_data))
 		goto out_fail;
 
-	length = _wcslen(file->find_data.cFileName) * 2;
+	length = _wcslen(file->find_data.cFileName) * sizeof(WCHAR);
 
 	switch (FsInformationClass)
 	{

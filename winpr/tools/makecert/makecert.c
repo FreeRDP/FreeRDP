@@ -78,12 +78,9 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 
 	while (offset >= length)
 	{
-		size_t new_len = 0;
 		size_t readBytes = 0;
 		char* new_str = NULL;
-		new_len = length * 2;
-		if (new_len == 0)
-			new_len = 2048;
+		size_t new_len = length + 2048ull;
 
 		if (new_len > INT_MAX)
 		{

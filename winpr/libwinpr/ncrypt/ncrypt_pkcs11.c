@@ -821,11 +821,12 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		{
 			/* sizeof keyName struct + "\<slotId>\<certId>" + keyName->pszAlgid */
 			DWORD algoSz = 0;
-			size_t KEYNAME_SZ =
-			    (1 + (sizeof(key->slotId) * 2) /*slotId*/ + 1 + (key->idLen * 2) + 1) * 2;
+			size_t KEYNAME_SZ = (1ull + (sizeof(key->slotId) * 2ull) /*slotId*/ + 1ull +
+			                     (key->idLen * 2ull) + 1ull) *
+			                    sizeof(WCHAR);
 
 			convertKeyType(key->keyType, NULL, 0, &algoSz);
-			KEYNAME_SZ += (1ULL + algoSz) * 2ULL;
+			KEYNAME_SZ += (1ULL + algoSz) * sizeof(WCHAR);
 
 			keyName = calloc(1, sizeof(*keyName) + KEYNAME_SZ);
 			if (!keyName)

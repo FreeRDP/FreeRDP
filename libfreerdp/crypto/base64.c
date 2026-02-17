@@ -313,7 +313,7 @@ static inline char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
 	if (crLf)
 	{
 		size_t nCrLf = (outLen + lineSize - 1) / lineSize;
-		extra = nCrLf * 2;
+		extra = nCrLf * 2ull;
 	}
 	size_t outCounter = 0;
 
