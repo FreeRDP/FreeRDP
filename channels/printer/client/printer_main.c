@@ -45,7 +45,7 @@
 #include "../printer.h"
 
 #include <freerdp/client/printer.h>
-
+#include <freerdp/utils/rdpdr_utils.h>
 #include <freerdp/channels/log.h>
 
 #define TAG CHANNELS_TAG("printer.client")
@@ -504,8 +504,7 @@ static UINT printer_process_irp_create(PRINTER_DEVICE* printer_dev, IRP* irp)
 		irp->IoStatus = STATUS_PRINT_QUEUE_FULL;
 	}
 
-	WINPR_ASSERT(irp->Complete);
-	return irp->Complete(irp);
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -536,8 +535,7 @@ static UINT printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
 	}
 
 	Stream_Zero(irp->output, 4); /* Padding(4) */
-	WINPR_ASSERT(irp->Complete);
-	return irp->Complete(irp);
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -589,9 +587,7 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 
 	Stream_Write_UINT32(irp->output, Length);
 	Stream_Write_UINT8(irp->output, 0); /* Padding */
-
-	WINPR_ASSERT(irp->Complete);
-	return irp->Complete(irp);
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -606,11 +602,23 @@ static UINT printer_process_irp_device_control(WINPR_ATTR_UNUSED PRINTER_DEVICE*
 	WINPR_ASSERT(irp);
 
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
-
-	WINPR_ASSERT(irp->Complete);
-	return irp->Complete(irp);
+	return CHANNEL_RC_OK;
 }
 
+static UINT printer_evaluate(UINT error, IRP* irp)
+{
+	WINPR_ASSERT(irp);
+	if (error == CHANNEL_RC_OK)
+	{
+		WINPR_ASSERT(irp->Complete);
+		return irp->Complete(irp);
+	}
+
+	WLog_ERR(TAG, "IRP %s failed with %" PRIu32, rdpdr_irp_string(irp->MajorFunction), error);
+	WINPR_ASSERT(irp->Discard);
+	irp->Discard(irp);
+	return error;
+}
 /**
  * Function description
  *
@@ -618,7 +626,7 @@ static UINT printer_process_irp_device_control(WINPR_ATTR_UNUSED PRINTER_DEVICE*
  */
 static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
-	UINT error = 0;
+	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(printer_dev);
 	WINPR_ASSERT(irp);
@@ -626,49 +634,27 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 	switch (irp->MajorFunction)
 	{
 		case IRP_MJ_CREATE:
-			if ((error = printer_process_irp_create(printer_dev, irp)))
-			{
-				WLog_ERR(TAG, "printer_process_irp_create failed with error %" PRIu32 "!", error);
-				return error;
-			}
-
+			error = printer_process_irp_create(printer_dev, irp);
 			break;
 
 		case IRP_MJ_CLOSE:
-			if ((error = printer_process_irp_close(printer_dev, irp)))
-			{
-				WLog_ERR(TAG, "printer_process_irp_close failed with error %" PRIu32 "!", error);
-				return error;
-			}
-
+			error = printer_process_irp_close(printer_dev, irp);
 			break;
 
 		case IRP_MJ_WRITE:
-			if ((error = printer_process_irp_write(printer_dev, irp)))
-			{
-				WLog_ERR(TAG, "printer_process_irp_write failed with error %" PRIu32 "!", error);
-				return error;
-			}
-
+			error = printer_process_irp_write(printer_dev, irp);
 			break;
 
 		case IRP_MJ_DEVICE_CONTROL:
-			if ((error = printer_process_irp_device_control(printer_dev, irp)))
-			{
-				WLog_ERR(TAG, "printer_process_irp_device_control failed with error %" PRIu32 "!",
-				         error);
-				return error;
-			}
-
+			error = printer_process_irp_device_control(printer_dev, irp);
 			break;
 
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
-			WINPR_ASSERT(irp->Complete);
-			return irp->Complete(irp);
+			break;
 	}
 
-	return CHANNEL_RC_OK;
+	return printer_evaluate(error, irp);
 }
 
 static DWORD WINAPI printer_thread_func(LPVOID arg)

@@ -119,8 +119,7 @@ static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 	Stream_Write_UINT32(irp->output, parallel->id);
 	Stream_Write_UINT8(irp->output, 0);
 	free(path);
-	WINPR_ASSERT(irp->Complete);
-	return irp->Complete(irp);
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -136,8 +135,7 @@ static UINT parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 	(void)close(parallel->file);
 
 	Stream_Zero(irp->output, 5); /* Padding(5) */
-	WINPR_ASSERT(irp->Complete);
-	return irp->Complete(irp);
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -198,8 +196,7 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	}
 
 	free(buffer);
-	WINPR_ASSERT(irp->Complete);
-	return irp->Complete(irp);
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -247,8 +244,7 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	Stream_Write_UINT32(irp->output, Length);
 	Stream_Write_UINT8(irp->output, 0); /* Padding */
-	WINPR_ASSERT(irp->Complete);
-	return irp->Complete(irp);
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -263,8 +259,7 @@ static UINT parallel_process_irp_device_control(WINPR_ATTR_UNUSED PARALLEL_DEVIC
 	WINPR_ASSERT(irp);
 
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
-	WINPR_ASSERT(irp->Complete);
-	return irp->Complete(irp);
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -272,6 +267,22 @@ static UINT parallel_process_irp_device_control(WINPR_ATTR_UNUSED PARALLEL_DEVIC
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+
+static UINT parallel_eval(UINT error, IRP* irp)
+{
+	WINPR_ASSERT(irp);
+	if (error == CHANNEL_RC_OK)
+	{
+		WINPR_ASSERT(irp->Complete);
+		return irp->Complete(irp);
+	}
+
+	WLog_ERR(TAG, "IRP %s failed with %" PRIu32, rdpdr_irp_string(irp->MajorFunction), error);
+	WINPR_ASSERT(irp->Discard);
+	irp->Discard(irp);
+	return error;
+}
+
 static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	UINT error = ERROR_INTERNAL_ERROR;
@@ -303,10 +314,11 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
-			WINPR_ASSERT(irp->Complete);
-			error = irp->Complete(irp);
+			error = CHANNEL_RC_OK;
 			break;
 	}
+
+	error = parallel_eval(error, irp);
 
 	DWORD level = WLOG_TRACE;
 	if (error)
@@ -379,6 +391,7 @@ static UINT parallel_irp_request(DEVICE* device, IRP* irp)
 	if (!MessageQueue_Post(parallel->queue, NULL, 0, (void*)irp, NULL))
 	{
 		WLog_Print(parallel->log, WLOG_ERROR, "MessageQueue_Post failed!");
+		irp->Discard(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
 
