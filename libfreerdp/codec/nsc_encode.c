@@ -463,6 +463,9 @@ BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RES
 	if (!context || !s || !data)
 		return FALSE;
 
+	if (scanline == 0)
+		scanline = width * FreeRDPGetBytesPerPixel(context->format);
+
 	context->width = WINPR_ASSERTING_INT_CAST(UINT16, width);
 	context->height = WINPR_ASSERTING_INT_CAST(UINT16, height);
 
