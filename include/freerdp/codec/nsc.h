@@ -34,12 +34,14 @@ extern "C"
 {
 #endif
 
+	/// parameter types available to change in a \ref NSC_CONTEXT See [MS-RDPNSC] 2.2.1 NSCodec
+	/// Capability Set (TS_NSCODEC_CAPABILITYSET) for details
 	typedef enum
 	{
-		NSC_COLOR_LOSS_LEVEL,
-		NSC_ALLOW_SUBSAMPLING,
-		NSC_DYNAMIC_COLOR_FIDELITY,
-		NSC_COLOR_FORMAT
+		NSC_COLOR_LOSS_LEVEL,       /**< \b colorLossLevel */
+		NSC_ALLOW_SUBSAMPLING,      /**< \b fAllowSubsampling */
+		NSC_DYNAMIC_COLOR_FIDELITY, /**< \b fAllowDynamicFidelity */
+		NSC_COLOR_FORMAT /**< \ref PIXEL_FORMAT color format used for internal bitmap buffer */
 	} NSC_PARAMETER;
 
 	typedef struct S_NSC_CONTEXT NSC_CONTEXT;
@@ -50,12 +52,20 @@ extern "C"
 	                                                                   UINT32 pixel_format));
 #endif
 
+	/** @brief Set a \ref NSC_PARAMETER for a \ref NSC_CONTEXT
+	 *
+	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b NULL
+	 *  @param what A \ref NSC_PARAMETER to identify what to change
+	 *  @param value The value to set
+	 *
+	 *  @return \b TRUE if successful, \b FALSE otherwise
+	 */
 	FREERDP_API BOOL nsc_context_set_parameters(NSC_CONTEXT* WINPR_RESTRICT context,
 	                                            NSC_PARAMETER what, UINT32 value);
 
 	/** @brief decode a NSC message
 	 *
-	 *  @param context The context to work on
+	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b NULL
 	 *  @param bpp The bit depth of the data
 	 *  @param width The width in pixels of the NSC surface
 	 *  @param height The height in pixels of the NSC surface
@@ -80,15 +90,42 @@ extern "C"
 	                                     UINT32 DstFormat, UINT32 nDstStride, UINT32 nXDst,
 	                                     UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 flip);
 
+	/** @brief Encode a bitmap with \b NSC
+	 *
+	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b NULL
+	 *  @param s a \ref wStream used to write \b NSC encoded data to. Must not be \b NULL
+	 *  @param bmpdata A pointer to the bitmap to encode. Format must match \b NSC_COLOR_FORMAT
+	 *  @param width The width of the bitmap in pixels
+	 *  @param height The height of the bitmap in pixels
+	 *  @param scanline The stride of a bitmap line in bytes. If \b 0 the value of \b width * bytes
+	 * \b NSC_COLOR_FORMAT is used.
+	 *
+	 *  @bug Versions < 3.23.0 do not support \b 0 for scanlines and abort.
+	 */
 	FREERDP_API BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context,
 	                                     wStream* WINPR_RESTRICT s,
 	                                     const BYTE* WINPR_RESTRICT bmpdata, UINT32 width,
-	                                     UINT32 height, UINT32 rowstride);
-	FREERDP_API BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context,
-	                                       wStream* WINPR_RESTRICT s, BYTE* WINPR_RESTRICT bmpdata,
-	                                       UINT32 x, UINT32 y, UINT32 width, UINT32 height,
-	                                       UINT32 rowstride, UINT32 format, UINT32 flip);
+	                                     UINT32 height, UINT32 scanline);
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
+
+	WINPR_DEPRECATED_VAR(
+	    "[since 3.23.0] deprecated, insecure! missing length checks. use nsc_process_message",
+	    FREERDP_API BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context,
+	                                           wStream* WINPR_RESTRICT s,
+	                                           BYTE* WINPR_RESTRICT bmpdata, UINT32 x, UINT32 y,
+	                                           UINT32 width, UINT32 height, UINT32 rowstride,
+	                                           UINT32 format, UINT32 flip));
+#endif
+
+	/** @brief This function resets a \ref NSC_CONTEXT to a new resolution
+	 *
+	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b NULL
+	 *  @param width The width of the context in pixels
+	 *  @param height The height of the context in pixels
+	 *
+	 *  @return \b TRUE if successful, \b FALSE otherwise
+	 */
 	FREERDP_API BOOL nsc_context_reset(NSC_CONTEXT* WINPR_RESTRICT context, UINT32 width,
 	                                   UINT32 height);
 

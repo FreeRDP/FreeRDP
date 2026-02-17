@@ -1144,8 +1144,9 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 			if (!nsc_process_message(
 			        context->codecs->nsc, cmd->bmp.bpp, cmd->bmp.width, cmd->bmp.height,
 			        cmd->bmp.bitmapData, cmd->bmp.bitmapDataLength, gdi->primary_buffer, format,
-			        gdi->stride, cmdRect.left, cmdRect.top, cmdRect.right - cmdRect.left,
-			        cmdRect.bottom - cmdRect.top, FREERDP_FLIP_VERTICAL))
+			        gdi->stride, cmdRect.left, cmdRect.top,
+			        WINPR_ASSERTING_INT_CAST(UINT32, gdi->width),
+			        WINPR_ASSERTING_INT_CAST(UINT32, gdi->height), FREERDP_FLIP_VERTICAL))
 			{
 				WLog_ERR(TAG, "Failed to process NSCodec message");
 				goto out;
