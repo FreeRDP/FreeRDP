@@ -439,12 +439,24 @@ BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp, UINT32
 	wStream sbuffer = { 0 };
 	BOOL ret = 0;
 	if (!context || !data || !pDstData)
+	{
+		WLog_ERR(TAG, "Invalid argument: context=%p, data=%p, pDstData=%p", (void*)context,
+		         (const void*)data, (void*)pDstData);
 		return FALSE;
+	}
 
 	if (nXDst > nWidth)
+	{
+		WLog_Print(context->priv->log, WLOG_ERROR, "nXDst %" PRIu32 " > nWidth %" PRIu32, nXDst,
+		           nWidth);
 		return FALSE;
+	}
 	if (nYDst > nHeight)
+	{
+		WLog_Print(context->priv->log, WLOG_ERROR, "nYDst %" PRIu32 " > nHeight %" PRIu32, nYDst,
+		           nHeight);
 		return FALSE;
+	}
 
 	wStream* s = Stream_StaticConstInit(&sbuffer, data, length);
 	if (!s)
@@ -454,7 +466,11 @@ BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp, UINT32
 	if (nDstStride == 0)
 		nDstStride = minStride;
 	if (nDstStride < minStride)
+	{
+		WLog_Print(context->priv->log, WLOG_ERROR,
+		           "nDstStride %" PRIu32 " < minimum stride %" PRIu32, nDstStride, minStride);
 		return FALSE;
+	}
 
 	switch (bpp)
 	{
