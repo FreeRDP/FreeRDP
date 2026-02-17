@@ -281,10 +281,13 @@ bool sdlDispContext::addTimer()
 	return true;
 }
 
-bool sdlDispContext::updateMonitor([[maybe_unused]] SDL_WindowID id)
+bool sdlDispContext::updateMonitor(SDL_WindowID id)
 {
 	if (!freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_DynamicResolutionUpdate))
 		return true;
+
+	if (!_sdl->updateWindow(id))
+		return false;
 
 	if (!_sdl->updateWindowList())
 		return false;

@@ -475,6 +475,23 @@ bool SdlContext::updateWindowList()
 	                                                     list.size());
 }
 
+bool SdlContext::updateWindow(SDL_WindowID id)
+{
+	if (freerdp_settings_get_bool(_context->settings, FreeRDP_Fullscreen) ||
+	    freerdp_settings_get_bool(_context->settings, FreeRDP_UseMultimon))
+		return true;
+
+	auto& w = _windows.at(id);
+	auto m = w.monitor(true);
+	auto r = w.rect();
+	m.width = r.w;
+	m.height = r.h;
+	m.attributes.physicalWidth = static_cast<UINT32>(r.w);
+	m.attributes.physicalHeight = static_cast<UINT32>(r.h);
+	w.setMonitor(m);
+	return true;
+}
+
 std::string SdlContext::windowTitle() const
 {
 	const char* prefix = "FreeRDP:";
