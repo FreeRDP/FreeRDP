@@ -974,7 +974,7 @@ bool SdlContext::detectDisplays()
 		const auto id = display[x];
 		addOrUpdateDisplay(id);
 	}
-
+	SDL_free(display);
 	return true;
 }
 
