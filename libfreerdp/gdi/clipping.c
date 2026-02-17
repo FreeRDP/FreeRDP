@@ -101,7 +101,7 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 			if (!gdi_RgnToRect(hdc->clip, &clip))
 				return TRUE;
 			if (!gdi_CRgnToRect(0, 0, hBmp->width, hBmp->height, &bmp))
-				return FALSE;
+				return TRUE;
 
 			if (clip.left < bmp.left)
 				clip.left = bmp.left;
@@ -123,7 +123,7 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 	}
 
 	if (!gdi_CRgnToRect(*x, *y, *w, *h, &coords))
-		return FALSE;
+		return TRUE;
 
 	if (coords.right >= clip.left && coords.left <= clip.right && coords.bottom >= clip.top &&
 	    coords.top <= clip.bottom)
