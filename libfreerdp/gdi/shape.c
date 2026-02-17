@@ -39,21 +39,15 @@
 
 #define TAG FREERDP_TAG("gdi.shape")
 
-static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
+WINPR_ATTR_NODISCARD
+static BOOL Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 {
-	INT32 e = 0;
-	INT32 e2 = 0;
-	INT32 dx = 0;
-	INT32 dy = 0;
-	INT32 a = 0;
-	INT32 b = 0;
-	INT32 c = 0;
-	a = (x1 < x2) ? x2 - x1 : x1 - x2;
-	b = (y1 < y2) ? y2 - y1 : y1 - y2;
-	c = b & 1;
-	dx = 4 * (1 - a) * b * b;
-	dy = 4 * (c + 1) * a * a;
-	e = dx + dy + c * a * a;
+	INT32 a = (x1 < x2) ? x2 - x1 : x1 - x2;
+	const INT32 b = (y1 < y2) ? y2 - y1 : y1 - y2;
+	INT32 c = b & 1;
+	INT32 dx = 4 * (1 - a) * b * b;
+	INT32 dy = 4 * (c + 1) * a * a;
+	INT32 e = dx + dy + c * a * a;
 
 	if (x1 > x2)
 	{
@@ -79,7 +73,8 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 		             WINPR_ASSERTING_INT_CAST(UINT32, y2), 0);
 		gdi_SetPixel(hdc, WINPR_ASSERTING_INT_CAST(UINT32, x2),
 		             WINPR_ASSERTING_INT_CAST(UINT32, y2), 0);
-		e2 = 2 * e;
+
+		const INT32 e2 = 2 * e;
 
 		if (e2 >= dx)
 		{
@@ -106,6 +101,7 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 		gdi_SetPixel(hdc, WINPR_ASSERTING_INT_CAST(uint32_t, x1 - 1),
 		             WINPR_ASSERTING_INT_CAST(uint32_t, y2), 0);
 	}
+	return TRUE;
 }
 
 /**
@@ -122,8 +118,7 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
  */
 BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
 {
-	Ellipse_Bresenham(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect);
-	return TRUE;
+	return Ellipse_Bresenham(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect);
 }
 
 /**
@@ -148,7 +143,8 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 	INT32 nHeight = 0;
 	const BYTE* srcp = NULL;
 	DWORD formatSize = 0;
-	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
+	if (!gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight))
+		return FALSE;
 
 	if (!hdc || !hbr)
 		return FALSE;

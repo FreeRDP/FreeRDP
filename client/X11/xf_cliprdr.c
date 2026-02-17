@@ -1906,20 +1906,17 @@ static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context,
 static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context,
                                            const CLIPRDR_CAPABILITIES* capabilities)
 {
-	const CLIPRDR_GENERAL_CAPABILITY_SET* generalCaps = NULL;
-	const BYTE* capsPtr = NULL;
-	xfClipboard* clipboard = NULL;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(capabilities);
 
-	clipboard = cliprdr_file_context_get_context(context->custom);
+	xfClipboard* clipboard = cliprdr_file_context_get_context(context->custom);
 	WINPR_ASSERT(clipboard);
 
-	capsPtr = (const BYTE*)capabilities->capabilitySets;
+	const BYTE* capsPtr = (const BYTE*)capabilities->capabilitySets;
 	WINPR_ASSERT(capsPtr);
 
-	cliprdr_file_context_remote_set_flags(clipboard->file, 0);
+	if (!cliprdr_file_context_remote_set_flags(clipboard->file, 0))
+		return ERROR_INTERNAL_ERROR;
 
 	for (UINT32 i = 0; i < capabilities->cCapabilitiesSets; i++)
 	{
@@ -1927,9 +1924,11 @@ static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context,
 
 		if (caps->capabilitySetType == CB_CAPSTYPE_GENERAL)
 		{
-			generalCaps = (const CLIPRDR_GENERAL_CAPABILITY_SET*)caps;
+			const CLIPRDR_GENERAL_CAPABILITY_SET* generalCaps =
+			    (const CLIPRDR_GENERAL_CAPABILITY_SET*)caps;
 
-			cliprdr_file_context_remote_set_flags(clipboard->file, generalCaps->generalFlags);
+			if (!cliprdr_file_context_remote_set_flags(clipboard->file, generalCaps->generalFlags))
+				return ERROR_INTERNAL_ERROR;
 		}
 
 		capsPtr += caps->capabilitySetLength;
@@ -2564,7 +2563,8 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 			const UINT32 uid = ClipboardGetFormatId(clipboard->system, mime_uri_list);
 			if (uid)
 			{
-				cliprdr_file_context_set_locally_available(clipboard->file, TRUE);
+				if (!cliprdr_file_context_set_locally_available(clipboard->file, TRUE))
+					goto fail;
 				clientFormat->atom =
 				    Logging_XInternAtom(xfc->log, xfc->display, mime_uri_list, False);
 				clientFormat->localFormat = uid;
@@ -2582,7 +2582,8 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 			const UINT32 gid = ClipboardGetFormatId(clipboard->system, mime_gnome_copied_files);
 			if (gid != 0)
 			{
-				cliprdr_file_context_set_locally_available(clipboard->file, TRUE);
+				if (!cliprdr_file_context_set_locally_available(clipboard->file, TRUE))
+					goto fail;
 				clientFormat->atom =
 				    Logging_XInternAtom(xfc->log, xfc->display, mime_gnome_copied_files, False);
 				clientFormat->localFormat = gid;
@@ -2600,7 +2601,8 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 			const UINT32 mid = ClipboardGetFormatId(clipboard->system, mime_mate_copied_files);
 			if (mid != 0)
 			{
-				cliprdr_file_context_set_locally_available(clipboard->file, TRUE);
+				if (!cliprdr_file_context_set_locally_available(clipboard->file, TRUE))
+					goto fail;
 				clientFormat->atom =
 				    Logging_XInternAtom(xfc->log, xfc->display, mime_mate_copied_files, False);
 				clientFormat->localFormat = mid;

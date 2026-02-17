@@ -167,9 +167,11 @@ extern "C"
 	 *
 	 *  \return \b TRUE if successful and at least one format is supported, \b FALSE otherwise.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL audin_server_set_formats(audin_server_context* context, SSIZE_T count,
 	                                          const AUDIO_FORMAT* formats);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const AUDIO_FORMAT*
 	audin_server_get_negotiated_format(const audin_server_context* context);
 

@@ -39,7 +39,10 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API LONG smartcard_pack_write_size_align(wStream* s, size_t size, UINT32 alignment);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API LONG smartcard_unpack_read_size_align(wStream* s, size_t size, UINT32 alignment);
 
 	WINPR_ATTR_NODISCARD

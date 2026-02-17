@@ -77,10 +77,9 @@ BOOL gdi_SetNullClipRgn(HGDI_DC hdc)
 
 BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* srcx, INT32* srcy)
 {
-	GDI_RECT bmp;
-	GDI_RECT clip;
-	GDI_RECT coords;
-	HGDI_BITMAP hBmp = NULL;
+	GDI_RECT bmp = { 0 };
+	GDI_RECT clip = { 0 };
+	GDI_RECT coords = { 0 };
 	int dx = 0;
 	int dy = 0;
 	BOOL draw = TRUE;
@@ -88,18 +87,21 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 	if (hdc == NULL)
 		return FALSE;
 
-	hBmp = (HGDI_BITMAP)hdc->selectedObject;
+	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdc->selectedObject;
 
 	if (hBmp != NULL)
 	{
 		if (hdc->clip->null)
 		{
-			gdi_CRgnToRect(0, 0, hBmp->width, hBmp->height, &clip);
+			if (!gdi_CRgnToRect(0, 0, hBmp->width, hBmp->height, &clip))
+				return TRUE;
 		}
 		else
 		{
-			gdi_RgnToRect(hdc->clip, &clip);
-			gdi_CRgnToRect(0, 0, hBmp->width, hBmp->height, &bmp);
+			if (!gdi_RgnToRect(hdc->clip, &clip))
+				return TRUE;
+			if (!gdi_CRgnToRect(0, 0, hBmp->width, hBmp->height, &bmp))
+				return FALSE;
 
 			if (clip.left < bmp.left)
 				clip.left = bmp.left;
@@ -116,10 +118,12 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 	}
 	else
 	{
-		gdi_RgnToRect(hdc->clip, &clip);
+		if (!gdi_RgnToRect(hdc->clip, &clip))
+			return TRUE;
 	}
 
-	gdi_CRgnToRect(*x, *y, *w, *h, &coords);
+	if (!gdi_CRgnToRect(*x, *y, *w, *h, &coords))
+		return FALSE;
 
 	if (coords.right >= clip.left && coords.left <= clip.right && coords.bottom >= clip.top &&
 	    coords.top <= clip.bottom)
@@ -159,6 +163,7 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 	if (srcy != NULL)
 		*srcy += dy;
 
-	gdi_RectToCRgn(&coords, x, y, w, h);
+	if (!gdi_RectToCRgn(&coords, x, y, w, h))
+		return FALSE;
 	return draw;
 }

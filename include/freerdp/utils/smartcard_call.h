@@ -45,6 +45,7 @@ extern "C"
 	FREERDP_API scard_call_context* smartcard_call_context_new(const rdpSettings* settings);
 
 	FREERDP_API BOOL smartcard_call_context_signal_stop(scard_call_context* ctx, BOOL reset);
+
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL smartcard_call_context_add(scard_call_context* ctx, const char* name);
 
@@ -53,6 +54,7 @@ extern "C"
 	FREERDP_API BOOL smartcard_call_cancel_all_context(scard_call_context* ctx);
 
 	FREERDP_API BOOL smartcard_call_release_context(scard_call_context* ctx, SCARDCONTEXT context);
+
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL smartcard_call_is_configured(scard_call_context* ctx);
 

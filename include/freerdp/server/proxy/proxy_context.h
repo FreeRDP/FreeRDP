@@ -50,6 +50,7 @@ extern "C"
 	/* All proxy interception channels derive from this base struct
 	 * and set their cleanup function accordingly. */
 	FREERDP_API void intercept_context_entry_free(void* obj);
+
 	typedef PfChannelResult (*proxyChannelDataFn)(proxyData* pdata,
 	                                              const pServerStaticChannelContext* channel,
 	                                              const BYTE* xdata, size_t xsize, UINT32 flags,
@@ -69,7 +70,7 @@ extern "C"
 		void* context;
 	};
 
-	void StaticChannelContext_free(pServerStaticChannelContext* ctx);
+	FREERDP_API void StaticChannelContext_free(pServerStaticChannelContext* ctx);
 
 	/**
 	 * Wraps rdpContext and holds the state for the proxy's server.
@@ -165,7 +166,10 @@ extern "C"
 		psPeerReceiveChannelData server_receive_channel_data_original;
 	};
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pf_context_init_server_context(freerdp_peer* client);
 
 	WINPR_ATTR_MALLOC(freerdp_client_context_free, 1)
@@ -180,6 +184,7 @@ extern "C"
 	FREERDP_API void proxy_data_set_client_context(proxyData* pdata, pClientContext* context);
 	FREERDP_API void proxy_data_set_server_context(proxyData* pdata, pServerContext* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL proxy_data_shall_disconnect(proxyData* pdata);
 	FREERDP_API void proxy_data_abort_connect(proxyData* pdata);
 

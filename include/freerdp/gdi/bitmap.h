@@ -30,16 +30,26 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos);
+
 	FREERDP_API UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y, UINT32 crColor);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HGDI_BITMAP gdi_CreateBitmap(UINT32 nWidth, UINT32 nHeight, UINT32 format,
 	                                         BYTE* data);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight, UINT32 format,
 	                                           UINT32 stride, BYTE* data, void (*fkt_free)(void*));
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeight);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL gdi_BitBlt(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nWidth,
 	                            INT32 nHeight, HGDI_DC hdcSrc, INT32 nXSrc, INT32 nYSrc, DWORD rop,
 	                            const gdiPalette* palette);

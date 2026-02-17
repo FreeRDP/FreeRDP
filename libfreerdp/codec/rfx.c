@@ -293,7 +293,8 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 		/* Call primitives_get here in order to avoid race conditions when using primitives_get */
 		/* from multiple threads. This call will initialize all function pointers correctly     */
 		/* before any decoding threads are started */
-		primitives_get();
+		if (!primitives_get())
+			goto fail;
 	}
 
 	/* initialize the default pixel format */
@@ -1289,7 +1290,12 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 			const uint16_t bottom = WINPR_ASSERTING_INT_CAST(UINT16, MIN(rh, dstHeight));
 			clippingRect.right = right;
 			clippingRect.bottom = bottom;
-			region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
+			if (!region16_union_rect(&clippingRects, &clippingRects, &clippingRect))
+			{
+				region16_uninit(&updateRegion);
+				region16_uninit(&clippingRects);
+				return FALSE;
+			}
 		}
 
 		for (UINT32 i = 0; i < message->numTiles; i++)
@@ -1305,7 +1311,12 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 			updateRect.right = updateRect.left + 64;
 			updateRect.bottom = updateRect.top + 64;
 			region16_init(&updateRegion);
-			region16_intersect_rect(&updateRegion, &clippingRects, &updateRect);
+			if (!region16_intersect_rect(&updateRegion, &clippingRects, &updateRect))
+			{
+				region16_uninit(&updateRegion);
+				region16_uninit(&clippingRects);
+				return FALSE;
+			}
 			updateRects = region16_rects(&updateRegion, &nbUpdateRects);
 
 			for (UINT32 j = 0; j < nbUpdateRects; j++)
@@ -1332,7 +1343,14 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 				}
 
 				if (invalidRegion)
-					region16_union_rect(invalidRegion, invalidRegion, cur);
+				{
+					if (!region16_union_rect(invalidRegion, invalidRegion, cur))
+					{
+						region16_uninit(&updateRegion);
+						region16_uninit(&clippingRects);
+						return FALSE;
+					}
+				}
 			}
 
 			region16_uninit(&updateRegion);

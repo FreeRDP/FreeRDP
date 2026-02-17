@@ -42,6 +42,7 @@ extern "C"
 	 *
 	 *  \return \b TRUE if registered successfully, \b FALSE otherwise.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_add_signal_cleanup_handler(void* context,
 	                                                    freerdp_signal_handler_t handler);
 

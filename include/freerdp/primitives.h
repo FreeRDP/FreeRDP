@@ -312,41 +312,55 @@ typedef enum
 	PRIMITIVES_AUTODETECT /** detect the best routines */
 } primitive_hints;
 
-	FREERDP_API primitives_t* primitives_get(void);
-	FREERDP_API void primitives_set_hints(primitive_hints hints);
-	FREERDP_API primitive_hints primitives_get_hints(void);
-	FREERDP_API primitives_t* primitives_get_generic(void);
-	FREERDP_API DWORD primitives_flags(primitives_t* p);
-	FREERDP_API BOOL primitives_init(primitives_t* p, primitive_hints hints);
-	FREERDP_API void primitives_uninit(void);
+WINPR_ATTR_NODISCARD
+FREERDP_API primitives_t* primitives_get(void);
 
-	/** @brief get a specific primitives implementation
-	 *
-	 *  This will try to return the primitives implementation suggested by \b type
-	 *  If that does not exist or does not work on the platform any other (e.g. usually pure
-	 * software) is returned
-	 *
-	 *  @param type the type of primitives desired.
-	 *  @return A primitive implementation matching the hint closest or \b NULL in case of failure.
-	 *  @since version 3.11.0
-	 */
-	FREERDP_API primitives_t* primitives_get_by_type(primitive_hints type);
+FREERDP_API void primitives_set_hints(primitive_hints hints);
 
-	/** @brief stringify a \b avc444_frame_type
-	 *
-	 *  @param type the type to stringify
-	 *  @return A string representation of \b type
-	 *  @since version 3.11.0
-	 */
-	FREERDP_API const char* primitives_avc444_frame_type_str(avc444_frame_type type);
+WINPR_ATTR_NODISCARD
+FREERDP_API primitive_hints primitives_get_hints(void);
 
-	/** @brief convert a hint to a string
-	 *
-	 *  @param hint the hint to stringify
-	 *  @return the string representation of the hint
-	 *  @since version 3.11.0
-	 */
-	FREERDP_API const char* primtives_hint_str(primitive_hints hint);
+WINPR_ATTR_NODISCARD
+FREERDP_API primitives_t* primitives_get_generic(void);
+
+WINPR_ATTR_NODISCARD
+FREERDP_API DWORD primitives_flags(primitives_t* p);
+
+WINPR_ATTR_NODISCARD
+FREERDP_API BOOL primitives_init(primitives_t* p, primitive_hints hints);
+
+FREERDP_API void primitives_uninit(void);
+
+/** @brief get a specific primitives implementation
+ *
+ *  This will try to return the primitives implementation suggested by \b type
+ *  If that does not exist or does not work on the platform any other (e.g. usually pure
+ * software) is returned
+ *
+ *  @param type the type of primitives desired.
+ *  @return A primitive implementation matching the hint closest or \b NULL in case of failure.
+ *  @since version 3.11.0
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_API primitives_t* primitives_get_by_type(primitive_hints type);
+
+/** @brief stringify a \b avc444_frame_type
+ *
+ *  @param type the type to stringify
+ *  @return A string representation of \b type
+ *  @since version 3.11.0
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_API const char* primitives_avc444_frame_type_str(avc444_frame_type type);
+
+/** @brief convert a hint to a string
+ *
+ *  @param hint the hint to stringify
+ *  @return the string representation of the hint
+ *  @since version 3.11.0
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_API const char* primtives_hint_str(primitive_hints hint);
 
 #ifdef __cplusplus
 }

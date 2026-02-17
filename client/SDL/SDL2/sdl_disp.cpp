@@ -354,15 +354,13 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 	{
 		case SDL_WINDOWEVENT_HIDDEN:
 		case SDL_WINDOWEVENT_MINIMIZED:
-			gdi_send_suppress_output(_sdl->context()->gdi, TRUE);
-			return TRUE;
+			return gdi_send_suppress_output(_sdl->context()->gdi, TRUE);
 
 		case SDL_WINDOWEVENT_EXPOSED:
 		case SDL_WINDOWEVENT_SHOWN:
 		case SDL_WINDOWEVENT_MAXIMIZED:
 		case SDL_WINDOWEVENT_RESTORED:
-			gdi_send_suppress_output(_sdl->context()->gdi, FALSE);
-			return TRUE;
+			return gdi_send_suppress_output(_sdl->context()->gdi, FALSE);
 
 		case SDL_WINDOWEVENT_RESIZED:
 		case SDL_WINDOWEVENT_SIZE_CHANGED:

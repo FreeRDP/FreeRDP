@@ -30,11 +30,19 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HGDI_DC gdi_GetDC(void);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HGDI_DC gdi_CreateDC(UINT32 format);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc);
+
 	FREERDP_API HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject);
+
 	FREERDP_API BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject);
+
 	FREERDP_API BOOL gdi_DeleteDC(HGDI_DC hdc);
 
 #ifdef __cplusplus

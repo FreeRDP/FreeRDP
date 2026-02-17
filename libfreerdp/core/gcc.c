@@ -1791,8 +1791,8 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	}
 	return TRUE;
 fail:
-	(void)freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, NULL, 0);
-	(void)freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, NULL, 0);
+	freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, NULL, 0);
+	freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, NULL, 0);
 	return FALSE;
 }
 

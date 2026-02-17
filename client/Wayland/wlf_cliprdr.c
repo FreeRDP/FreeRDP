@@ -230,7 +230,8 @@ static UINT wlf_cliprdr_send_client_format_list(wfClipboard* clipboard)
 		                                     .formats = clipboard->clientFormats,
 		                                     .common.msgType = CB_FORMAT_LIST };
 
-	cliprdr_file_context_clear(clipboard->file);
+	if (!cliprdr_file_context_clear(clipboard->file))
+		return ERROR_INTERNAL_ERROR;
 
 	WLog_VRB(TAG, "-------------- client format list [%" PRIu32 "] ------------------",
 	         formatList.numFormats);
@@ -601,7 +602,8 @@ static UINT wlf_cliprdr_server_format_list(CliprdrClientContext* context,
 	WINPR_ASSERT(clipboard);
 
 	wlf_cliprdr_free_server_formats(clipboard);
-	cliprdr_file_context_clear(clipboard->file);
+	if (!cliprdr_file_context_clear(clipboard->file))
+		return ERROR_INTERNAL_ERROR;
 
 	if (!(clipboard->serverFormats =
 	          (CLIPRDR_FORMAT*)calloc(formatList->numFormats, sizeof(CLIPRDR_FORMAT))))

@@ -354,8 +354,10 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, 
 			if (!brush)
 				return FALSE;
 
-			gdi_FillRect(gdi->drawing->hdc, &rect, brush);
+			const BOOL res = gdi_FillRect(gdi->drawing->hdc, &rect, brush);
 			gdi_DeleteObject((HGDIOBJECT)brush);
+			if (!res)
+				return res;
 		}
 	}
 
@@ -414,7 +416,10 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 wid
 			rect.bottom = y + height - 1;
 
 			if ((x + width > rect.left) && (y + height > rect.top))
-				gdi_FillRect(gdi->drawing->hdc, &rect, brush);
+			{
+				if (!gdi_FillRect(gdi->drawing->hdc, &rect, brush))
+					return FALSE;
+			}
 
 			gdi_DeleteObject((HGDIOBJECT)brush);
 		}

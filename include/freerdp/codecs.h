@@ -66,8 +66,11 @@ extern "C"
 	};
 	typedef struct rdp_codecs rdpCodecs;
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width,
 	                                               UINT32 height);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width,
 	                                             UINT32 height);
 
@@ -102,6 +105,7 @@ extern "C"
 	 *  @return The name of the codecid
 	 *  @since version 3.18.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_codec_id_to_str(UINT32 id);
 
 #ifdef __cplusplus

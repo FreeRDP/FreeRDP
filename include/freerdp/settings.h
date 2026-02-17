@@ -150,6 +150,7 @@ extern "C"
 	 *
 	 *  \return \b TRUE if not equal, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* src,
 	                                             const rdpSettings* other);
 
@@ -163,19 +164,32 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_addin_argv_add_argument(ADDIN_ARGV* args, const char* argument);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_addin_argv_add_argument_ex(ADDIN_ARGV* args, const char* argument,
 	                                                    size_t len);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_addin_argv_del_argument(ADDIN_ARGV* args, const char* argument);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_addin_set_argument(ADDIN_ARGV* args, const char* argument);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_addin_replace_argument(ADDIN_ARGV* args, const char* previous,
 	                                               const char* argument);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, const char* option,
 	                                                 const char* value);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, const char* previous,
 	                                                     const char* option, const char* value);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
 
 	/** \brief Removed a device from the settings, returns ownership of the allocated device to
@@ -188,6 +202,7 @@ extern "C"
 	 *
 	 *  \return \b TRUE if the device was removed, \b FALSE if device was not found or is NULL
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_device_collection_del(rdpSettings* settings,
 	                                               const RDPDR_DEVICE* device);
 	WINPR_ATTR_NODISCARD
@@ -213,22 +228,27 @@ extern "C"
 
 	FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_static_channel_collection_add(rdpSettings* settings,
 	                                                       ADDIN_ARGV* channel);
+
 	FREERDP_API BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* name);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings,
 	                                                               const char* name);
 #if defined(WITH_FREERDP_DEPRECATED)
-	WINPR_DEPRECATED(FREERDP_API ADDIN_ARGV* WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
-	                     WINPR_ATTR_NODISCARD freerdp_static_channel_clone(ADDIN_ARGV* channel));
+	WINPR_DEPRECATED(
+	    WINPR_ATTR_NODISCARD FREERDP_API ADDIN_ARGV* WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
+	        WINPR_ATTR_NODISCARD freerdp_static_channel_clone(ADDIN_ARGV* channel));
 #endif
 
 	FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings,
 	                                                        ADDIN_ARGV* channel);
+
 	FREERDP_API BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings,
 	                                                        const char* name);
 
@@ -237,8 +257,9 @@ extern "C"
 	                                                                const char* name);
 
 #if defined(WITH_FREERDP_DEPRECATED)
-	WINPR_DEPRECATED(FREERDP_API ADDIN_ARGV* WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
-	                     WINPR_ATTR_NODISCARD freerdp_dynamic_channel_clone(ADDIN_ARGV* channel));
+	WINPR_DEPRECATED(
+	    WINPR_ATTR_NODISCARD FREERDP_API ADDIN_ARGV* WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
+	        WINPR_ATTR_NODISCARD freerdp_dynamic_channel_clone(ADDIN_ARGV* channel));
 #endif
 
 	FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
@@ -287,7 +308,7 @@ extern "C"
 	                     FREERDP_API int freerdp_set_param_int(rdpSettings* settings, int id,
 	                                                           int param));
 
-	WINPR_DEPRECATED_VAR("Use freerdp_settings_set_uint32 instead",
+	WINPR_DEPRECATED_VAR("Use freerdp_settings_get_uint32 instead",
 	                     WINPR_ATTR_NODISCARD FREERDP_API UINT32
 	                         freerdp_get_param_uint32(const rdpSettings* settings, int id));
 	WINPR_DEPRECATED_VAR("Use freerdp_settings_set_uint32 instead",
@@ -533,6 +554,7 @@ extern "C"
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_settings_append_string(rdpSettings* settings,
 	                                                FreeRDP_Settings_Keys_String id,
 	                                                const char* separator, const char* param);
@@ -788,6 +810,7 @@ extern "C"
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_encryption_level_string(UINT32 EncryptionLevel);
+
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_encryption_methods_string(UINT32 EncryptionLevel, char* buffer,
 	                                                          size_t size);

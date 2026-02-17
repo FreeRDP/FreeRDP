@@ -30,7 +30,10 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats);
 
 	FREERDP_API void freerdp_server_warn_unmaintained(int argc, char* argv[]);

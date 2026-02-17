@@ -67,10 +67,14 @@ extern "C"
 
 	FREERDP_API void free_h264_metablock(RDPGFX_H264_METABLOCK* meta);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option,
 	                                         UINT32 value);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	                                  UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
 	                                  const RECTANGLE_16* regionRect, BYTE** ppDstData,
@@ -87,6 +91,7 @@ extern "C"
 	 *  @return \b >= 0 for success, \b <0 for an error
 	 *  @since version 3.6.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API INT32 h264_get_yuv_buffer(H264_CONTEXT* h264, UINT32 nSrcStride, UINT32 nSrcWidth,
 	                                      UINT32 nSrcHeight, BYTE* YUVData[3], UINT32 stride[3]);
 
@@ -99,13 +104,16 @@ extern "C"
 	 * @return \b >= 0 for success, \b <0 for an error
 	 * @since version 3.6.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API INT32 h264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
 	                                    BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
 	                                    UINT32 nDstWidth, UINT32 nDstHeight,
 	                                    const RECTANGLE_16* regionRects, UINT32 numRegionRect);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	                                  UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
 	                                  BYTE version, const RECTANGLE_16* regionRect, BYTE* op,
@@ -113,6 +121,7 @@ extern "C"
 	                                  UINT32* pAuxDstSize, RDPGFX_H264_METABLOCK* meta,
 	                                  RDPGFX_H264_METABLOCK* auxMeta);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
 	                                    const RECTANGLE_16* regionRects, UINT32 numRegionRect,
 	                                    const BYTE* pSrcData, UINT32 SrcSize,
@@ -121,6 +130,7 @@ extern "C"
 	                                    DWORD DstFormat, UINT32 nDstStep, UINT32 nDstWidth,
 	                                    UINT32 nDstHeight, UINT32 codecId);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height);
 
 	FREERDP_API void h264_context_free(H264_CONTEXT* h264);

@@ -28,6 +28,7 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL jpeg_decompress(const BYTE* input, BYTE* output, int width, int height,
 	                                 int size, int bpp);
 

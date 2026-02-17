@@ -46,6 +46,7 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpCertificateStore* freerdp_certificate_store_new(const rdpSettings* settings);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API freerdp_certificate_store_result freerdp_certificate_store_contains_data(
 	    rdpCertificateStore* store, const rdpCertificateData* data);
 
@@ -54,13 +55,19 @@ extern "C"
 	FREERDP_API rdpCertificateData*
 	freerdp_certificate_store_load_data(rdpCertificateStore* store, const char* host, UINT16 port);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_certificate_store_save_data(rdpCertificateStore* store,
 	                                                     const rdpCertificateData* data);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_certificate_store_remove_data(rdpCertificateStore* store,
 	                                                       const rdpCertificateData* data);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char*
 	freerdp_certificate_store_get_certs_path(const rdpCertificateStore* store);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char*
 	freerdp_certificate_store_get_hosts_path(const rdpCertificateStore* store);
 

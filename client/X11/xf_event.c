@@ -946,7 +946,10 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 {
 	WINPR_ASSERT(xfc);
 	if (!app)
-		gdi_send_suppress_output(xfc->common.context.gdi, FALSE);
+	{
+		if (!gdi_send_suppress_output(xfc->common.context.gdi, FALSE))
+			return FALSE;
+	}
 	else
 	{
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);

@@ -53,18 +53,25 @@ extern "C"
 	                                                       const char* passStub,
 	                                                       size_t* pEncryptedSize);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_assistance_set_connection_string2(rdpAssistanceFile* file,
 	                                                          const char* string,
 	                                                          const char* password);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file,
 	                                                     const char* buffer, size_t size,
 	                                                     const char* password);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name,
 	                                              const char* password);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_assistance_populate_settings_from_assistance_file(
 	    rdpAssistanceFile* file, rdpSettings* settings);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_assistance_get_encrypted_pass_stub(rdpAssistanceFile* file,
 	                                                            const char** pwd, size_t* size);
 

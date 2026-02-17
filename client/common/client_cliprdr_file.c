@@ -1184,13 +1184,15 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 
 	if (file->fuse_sess != NULL)
 	{
-		freerdp_add_signal_cleanup_handler(file, fuse_abort);
-		if (0 == fuse_session_mount(file->fuse_sess, file->path))
+		if (freerdp_add_signal_cleanup_handler(file, fuse_abort))
 		{
-			fuse_session_loop(file->fuse_sess);
-			fuse_session_unmount(file->fuse_sess);
+			if (0 == fuse_session_mount(file->fuse_sess, file->path))
+			{
+				fuse_session_loop(file->fuse_sess);
+				fuse_session_unmount(file->fuse_sess);
+			}
+			freerdp_del_signal_cleanup_handler(file, fuse_abort);
 		}
-		freerdp_del_signal_cleanup_handler(file, fuse_abort);
 
 		WLog_Print(file->log, WLOG_DEBUG, "Waiting for FUSE stop sync");
 		if (WaitForSingleObject(file->fuse_stop_sync, INFINITE) == WAIT_FAILED)

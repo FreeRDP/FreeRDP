@@ -190,7 +190,10 @@ extern "C"
 
 	FREERDP_API void rdpsnd_server_context_reset(RdpsndServerContext*);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HANDLE rdpsnd_server_get_event_handle(RdpsndServerContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT rdpsnd_server_handle_messages(RdpsndServerContext* context);
 
 #ifdef __cplusplus

@@ -37,6 +37,7 @@ extern "C"
 
 	typedef struct S_PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	                                     const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
 	                                     UINT32 SrcFormat, UINT32 Width, UINT32 Height,
@@ -45,6 +46,7 @@ extern "C"
 	                                     BYTE** WINPR_RESTRICT ppDstData,
 	                                     UINT32* WINPR_RESTRICT pDstSize);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API INT32 progressive_decompress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	                                         const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
 	                                         BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
@@ -52,13 +54,16 @@ extern "C"
 	                                         REGION16* WINPR_RESTRICT invalidRegion,
 	                                         UINT16 surfaceId, UINT32 frameId);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API INT32
 	progressive_create_surface_context(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	                                   UINT16 surfaceId, UINT32 width, UINT32 height);
+
 	FREERDP_API int
 	progressive_delete_surface_context(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 	                                   UINT16 surfaceId);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive);
 
 	FREERDP_API void progressive_context_free(PROGRESSIVE_CONTEXT* progressive);
@@ -81,6 +86,7 @@ extern "C"
 	 *  @since version 3.0.0
 	 *  @return \b TRUE in case of success, \b FALSE for any error
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL progressive_rfx_write_message_progressive_simple(
 	    PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive, wStream* WINPR_RESTRICT s,
 	    const RFX_MESSAGE* WINPR_RESTRICT msg);

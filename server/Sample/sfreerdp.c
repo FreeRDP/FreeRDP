@@ -130,7 +130,8 @@ static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 
 	{
 		const UINT32 rlgr = freerdp_settings_get_uint32(ctx->settings, FreeRDP_RemoteFxRlgrMode);
-		rfx_context_set_mode(context->rfx_context, WINPR_ASSERTING_INT_CAST(RLGR_MODE, rlgr));
+		if (!rfx_context_set_mode(context->rfx_context, WINPR_ASSERTING_INT_CAST(RLGR_MODE, rlgr)))
+			goto fail;
 	}
 
 	if (!(context->nsc_context = nsc_context_new()))
@@ -285,11 +286,13 @@ static BOOL test_peer_draw_background(freerdp_peer* client, const RFX_RECT* rect
 	else
 	{
 		WLog_DBG(TAG, "Using NSCodec");
-		nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, colorFormat);
+		if (!nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, colorFormat))
+			goto out;
 
 		WINPR_ASSERT(bpp <= UINT16_MAX);
-		nsc_compose_message(context->nsc_context, s, rgb_data, rect->width, rect->height,
-		                    (UINT32)(bpp * rect->width));
+		if (!nsc_compose_message(context->nsc_context, s, rgb_data, rect->width, rect->height,
+		                         (UINT32)(bpp * rect->width)))
+			goto out;
 		const UINT32 NSCodecId = freerdp_settings_get_uint32(settings, FreeRDP_NSCodecId);
 		WINPR_ASSERT(NSCodecId <= UINT16_MAX);
 		cmd.bmp.codecID = (UINT16)NSCodecId;
@@ -430,14 +433,17 @@ static void test_send_cursor_update(freerdp_peer* client, UINT32 x, UINT32 y)
 		if (RemoteFxCodec)
 		{
 			rfx_context_set_pixel_format(context->rfx_context, colorFormat);
-			rfx_compose_message(context->rfx_context, s, &rect, 1, context->image->data, rect.width,
-			                    rect.height, context->image->scanline);
+			if (!rfx_compose_message(context->rfx_context, s, &rect, 1, context->image->data,
+			                         rect.width, rect.height, context->image->scanline))
+				WLog_WARN(TAG, "rfx_compose_message failed");
 		}
 		else
 		{
-			nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, colorFormat);
-			nsc_compose_message(context->nsc_context, s, context->image->data, rect.width,
-			                    rect.height, context->image->scanline);
+			if (!nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, colorFormat))
+				WLog_WARN(TAG, "nsc_context_set_parameters failed");
+			else if (!nsc_compose_message(context->nsc_context, s, context->image->data, rect.width,
+			                              rect.height, context->image->scanline))
+				WLog_WARN(TAG, "rfx_compose_message failed");
 		}
 	}
 
@@ -1204,7 +1210,8 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		replay = *cb;
 		context->io = *cb;
 		replay.WritePdu = hook_peer_write_pdu;
-		freerdp_set_io_callbacks(client->context, &replay);
+		if (!freerdp_set_io_callbacks(client->context, &replay))
+			goto fail;
 	}
 
 	WLog_INFO(TAG, "We've got a client %s", client->local ? "(local)" : client->hostname);

@@ -173,8 +173,13 @@ extern "C"
 #define ERRINFO_SUCCESS 0x00000000
 #define ERRINFO_NONE 0xFFFFFFFF
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_error_info_string(UINT32 code);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_error_info_name(UINT32 code);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_error_info_category(UINT32 code);
 
 	/**
@@ -199,8 +204,13 @@ extern "C"
 #define ERRBASE_SUCCESS ERRINFO_SUCCESS
 #define ERRBASE_NONE ERRINFO_NONE
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_error_base_string(UINT32 code);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_error_base_name(UINT32 code);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_error_base_category(UINT32 code);
 
 #define FREERDP_ERROR_SUCCESS ERRINFO_SUCCESS
@@ -275,8 +285,13 @@ extern "C"
 #define ERRCONNECT_SUCCESS ERRINFO_SUCCESS
 #define ERRCONNECT_NONE ERRINFO_NONE
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_error_connect_string(UINT32 code);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_error_connect_name(UINT32 code);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_error_connect_category(UINT32 code);
 
 #define FREERDP_ERROR_CONNECT_CLASS (FREERDP_ERROR_BASE + 2)

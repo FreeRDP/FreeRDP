@@ -36,6 +36,7 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpPrivateKey* freerdp_key_new(void);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpPrivateKey* freerdp_key_new_from_file(const char* keyfile);
 
 	WINPR_ATTR_MALLOC(freerdp_key_free, 1)
@@ -65,8 +66,10 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpPrivateKey* freerdp_key_new_from_pem_enc(const char* pem, const char* password);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_key_is_rsa(const rdpPrivateKey* key);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API size_t freerdp_key_get_bits(const rdpPrivateKey* key);
 
 	/** @brief Create a PEM from a private key
@@ -91,6 +94,7 @@ extern "C"
 	 *  @return \b TRUE for success, \b FALSE otherwise
 	 *  @since version 3.16.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_key_generate(rdpPrivateKey* key, const char* type, size_t count, ...);
 
 #ifdef __cplusplus

@@ -63,8 +63,9 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	LogDynAndXSetClipMask(xfc->log, xfc->display, xfc->gc, None);
 	LogDynAndXSetFunction(xfc->log, xfc->display, xfc->gc, GXcopy);
 	LogDynAndXSetFillStyle(xfc->log, xfc->display, xfc->gc, FillSolid);
-	region16_intersect_rect(&(surface->gdi.invalidRegion), &(surface->gdi.invalidRegion),
-	                        &surfaceRect);
+	if (!region16_intersect_rect(&(surface->gdi.invalidRegion), &(surface->gdi.invalidRegion),
+	                             &surfaceRect))
+		return ERROR_INTERNAL_ERROR;
 
 	WINPR_ASSERT(surface->gdi.mappedWidth);
 	WINPR_ASSERT(surface->gdi.mappedHeight);
@@ -246,8 +247,14 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 			intersection.top -= surfaceRect.top;
 			intersection.right -= surfaceRect.left;
 			intersection.bottom -= surfaceRect.top;
-			region16_union_rect(&surface->gdi.invalidRegion, &surface->gdi.invalidRegion,
-			                    &intersection);
+			if (!region16_union_rect(&surface->gdi.invalidRegion, &surface->gdi.invalidRegion,
+			                         &intersection))
+			{
+				free(pSurfaceIds);
+				LeaveCriticalSection(&context->mux);
+
+				goto fail;
+			}
 		}
 	}
 
@@ -417,19 +424,20 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
                              const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
 	rdpCodecs* codecs = NULL;
-	xfGfxSurface* surface = NULL;
+
 	UINT status = 0;
 	EnterCriticalSection(&context->mux);
-	surface = (xfGfxSurface*)context->GetSurfaceData(context, deleteSurface->surfaceId);
+	xfGfxSurface* surface =
+	    (xfGfxSurface*)context->GetSurfaceData(context, deleteSurface->surfaceId);
 
 	if (surface)
 	{
 		if (surface->gdi.windowMapped)
 		{
-			const UINT rc = IFCALLRESULT(CHANNEL_RC_OK, context->UnmapWindowForSurface, context,
-			                             surface->gdi.windowId);
-			if (rc != CHANNEL_RC_OK)
-				return rc;
+			status = IFCALLRESULT(CHANNEL_RC_OK, context->UnmapWindowForSurface, context,
+			                      surface->gdi.windowId);
+			if (status != CHANNEL_RC_OK)
+				goto fail;
 		}
 
 #ifdef WITH_GFX_H264
@@ -449,6 +457,7 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 	if (codecs && codecs->progressive)
 		progressive_delete_surface_context(codecs->progressive, deleteSurface->surfaceId);
 
+fail:
 	LeaveCriticalSection(&context->mux);
 	return status;
 }

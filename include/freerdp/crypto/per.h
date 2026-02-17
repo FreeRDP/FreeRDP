@@ -29,29 +29,72 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_length(wStream* s, UINT16* length);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_length(wStream* s, UINT16 length);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_choice(wStream* s, BYTE* choice);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_choice(wStream* s, BYTE choice);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_selection(wStream* s, BYTE* selection);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_selection(wStream* s, BYTE selection);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_number_of_sets(wStream* s, BYTE* number);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_number_of_sets(wStream* s, BYTE number);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_padding(wStream* s, UINT16 length);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_padding(wStream* s, UINT16 length);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_integer(wStream* s, UINT32* integer);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_integer(wStream* s, UINT32 integer);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_integer16(wStream* s, UINT16 integer, UINT16 min);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_enumerated(wStream* s, BYTE* enumerated, BYTE count);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_enumerated(wStream* s, BYTE enumerated, BYTE count);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_object_identifier(wStream* s, const BYTE oid[6]);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_object_identifier(wStream* s, const BYTE oid[6]);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length,
 	                                       UINT16 min);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length,
 	                                        UINT16 min);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_read_numeric_string(wStream* s, UINT16 min);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length,
 	                                          UINT16 min);
 

@@ -38,6 +38,7 @@ extern "C"
 	};
 	typedef struct rdp_CertInfo rdpCertInfo;
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* crypto_base64_encode(const BYTE* WINPR_RESTRICT data, size_t length);
 
 	/** BASE64 encode data
@@ -50,6 +51,7 @@ extern "C"
 	 *
 	 *  @return The encoded BASE64 string or \b NULL if failed
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* crypto_base64_encode_ex(const BYTE* WINPR_RESTRICT data, size_t length,
 	                                          BOOL withCrLf);
 
@@ -57,13 +59,17 @@ extern "C"
 	                                      BYTE** WINPR_RESTRICT dec_data,
 	                                      size_t* WINPR_RESTRICT res_length);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* crypto_base64url_encode(const BYTE* WINPR_RESTRICT data, size_t length);
 	FREERDP_API void crypto_base64url_decode(const char* WINPR_RESTRICT enc_data, size_t length,
 	                                         BYTE** WINPR_RESTRICT dec_data,
 	                                         size_t* WINPR_RESTRICT res_length);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API char* crypto_read_pem(const char* WINPR_RESTRICT filename,
 	                                  size_t* WINPR_RESTRICT plength);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL crypto_write_pem(const char* WINPR_RESTRICT filename,
 	                                  const char* WINPR_RESTRICT pem, size_t length);
 

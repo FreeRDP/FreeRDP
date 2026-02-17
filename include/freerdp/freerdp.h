@@ -617,11 +617,16 @@ owned by rdpRdp */
 
 	FREERDP_API void freerdp_context_free(freerdp* instance);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_context_new(freerdp* instance);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_context_reset(freerdp* instance);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_connect(freerdp* instance);
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
@@ -630,14 +635,19 @@ owned by rdpRdp */
 #endif
 
 	FREERDP_API BOOL freerdp_abort_connect_context(rdpContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HANDLE freerdp_abort_event(rdpContext* context);
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("use freerdp_shall_disconnect_context instead",
-	                     FREERDP_API BOOL freerdp_shall_disconnect(const freerdp* instance));
+	                     WINPR_ATTR_NODISCARD FREERDP_API BOOL
+	                         freerdp_shall_disconnect(const freerdp* instance));
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_shall_disconnect_context(const rdpContext* context);
+
 	FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 
 	/** @brief stringify disconnect reason of type Disconnect_Ultimatum
@@ -648,46 +658,77 @@ owned by rdpRdp */
 	 *
 	 *  @since version 3.13.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_disconnect_reason_string(int reason);
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("use freerdp_disconnect_before_reconnect_context instead",
-	                     FREERDP_API BOOL freerdp_disconnect_before_reconnect(freerdp* instance));
+	                     WINPR_ATTR_NODISCARD FREERDP_API BOOL
+	                         freerdp_disconnect_before_reconnect(freerdp* instance));
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_disconnect_before_reconnect_context(rdpContext* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT freerdp_channels_attach(freerdp* instance);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT freerdp_channels_detach(freerdp* instance);
 
 #if defined(WITH_FREERDP_DEPRECATED)
 	WINPR_DEPRECATED_VAR("Use freerdp_get_event_handles",
-	                     FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds,
-	                                                      int* rcount, void** wfds, int* wcount));
+	                     WINPR_ATTR_NODISCARD FREERDP_API BOOL
+	                         freerdp_get_fds(freerdp* instance, void** rfds, int* rcount,
+	                                         void** wfds, int* wcount));
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_check_fds(freerdp* instance);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events, DWORD count);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_check_event_handles(rdpContext* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HANDLE freerdp_get_message_queue_event_handle(freerdp* instance, DWORD id);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_message_queue_process_message(freerdp* instance, DWORD id,
 	                                                      wMessage* message);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 freerdp_error_info(const freerdp* instance);
+
 	FREERDP_API void freerdp_set_error_info(rdpRdp* rdp, UINT32 error);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_send_error_info(rdpRdp* rdp);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_get_stats(const rdpRdp* rdp, UINT64* inBytes, UINT64* outBytes,
 	                                   UINT64* inPackets, UINT64* outPackets);
 
 	FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_version_string(void);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_build_revision(void);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_build_config(void);
 
 	FREERDP_API void freerdp_free(freerdp* instance);
@@ -696,14 +737,23 @@ owned by rdpRdp */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API freerdp* freerdp_new(void);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_focus_required(freerdp* instance);
 	FREERDP_API void freerdp_set_focus(freerdp* instance);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API int freerdp_get_disconnect_ultimatum(const rdpContext* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 freerdp_get_last_error(const rdpContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_last_error_name(UINT32 error);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_last_error_string(UINT32 error);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_last_error_category(UINT32 error);
 
 #define freerdp_set_last_error(context, lastError) \
@@ -721,19 +771,30 @@ owned by rdpRdp */
 	FREERDP_API void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError,
 	                                           const char* fkt, const char* file, int line);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_logon_error_info_type(UINT32 type);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_logon_error_info_type_ex(UINT32 type, char* buffer,
 	                                                             size_t size);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_logon_error_info_data(UINT32 data);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_logon_error_info_data_ex(UINT32 data, char* buffer,
 	                                                             size_t size);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API ULONG freerdp_get_transport_sent(const rdpContext* context, BOOL resetCount);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_nla_impersonate(rdpContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_nla_revert_to_self(rdpContext* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 freerdp_get_nla_sspi_error(const rdpContext* context);
 
 	/** Encrypts the provided buffer using the NLA's GSSAPI context
@@ -744,6 +805,7 @@ owned by rdpRdp */
 	 *	\returns if the operation completed successfully
 	 *	\since version 3.9.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_nla_encrypt(rdpContext* context, const SecBuffer* inBuffer,
 	                                     SecBuffer* outBuffer);
 
@@ -755,6 +817,7 @@ owned by rdpRdp */
 	 *	\returns if the operation completed successfully
 	 *	\since version 3.9.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_nla_decrypt(rdpContext* context, const SecBuffer* inBuffer,
 	                                     SecBuffer* outBuffer);
 
@@ -767,6 +830,7 @@ owned by rdpRdp */
 	 *	\returns a SECURITY_STATUS indicating if the operation completed successfully
 	 *	\since version 3.9.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API SECURITY_STATUS freerdp_nla_QueryContextAttributes(rdpContext* context,
 	                                                               DWORD ulAttr, PVOID pBuffer);
 
@@ -779,15 +843,26 @@ owned by rdpRdp */
 	 *
 	 *  Supported buffers are ones retrieved from SECPKG_ATTR_PACKAGE_INFO.
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API SECURITY_STATUS freerdp_nla_FreeContextBuffer(rdpContext* context, PVOID pBuffer);
 
 	FREERDP_API void clearChannelError(rdpContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT getChannelError(const rdpContext* context);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* getChannelErrorDescription(const rdpContext* context);
+
 	FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, const char* format, ...);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_nego_get_routing_token(const rdpContext* context,
 	                                                       DWORD* length);
 
@@ -797,6 +872,7 @@ owned by rdpRdp */
 	 *
 	 *  \return A \b CONNECTION_STATE the context is currently in
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API CONNECTION_STATE freerdp_get_state(const rdpContext* context);
 
 	/** \brief returns a string representation of a \b CONNECTION_STATE
@@ -805,6 +881,7 @@ owned by rdpRdp */
 	 *
 	 *  \return The string representation of the \b CONNECTION_STATE
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_state_string(CONNECTION_STATE state);
 
 	/** \brief Queries if the current \b CONNECTION_STATE of the context is an active connection.
@@ -816,11 +893,16 @@ owned by rdpRdp */
 	 *
 	 *  \return \b TRUE if the connection state indicates an active connection, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_is_active_state(const rdpContext* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_channels_from_mcs(rdpSettings* settings, const rdpContext* context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_is_valid_mcs_create_request(const BYTE* data, size_t size);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_is_valid_mcs_create_response(const BYTE* data, size_t size);
 
 	/** \brief Persist the current credentials (gateway, target server, ...)
@@ -835,6 +917,7 @@ owned by rdpRdp */
 	 * state, ...)
 	 *  \since version 3.12.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_persist_credentials(rdpContext* context);
 
 	/** @brief set a new function to be called when an access token is requested.
@@ -845,6 +928,7 @@ owned by rdpRdp */
 	 * @return \b TRUE for success, \b FALSE otherwise
 	 * @since version 3.16.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_set_common_access_token(rdpContext* context,
 	                                                 pGetCommonAccessToken GetCommonAccessToken);
 
@@ -854,6 +938,7 @@ owned by rdpRdp */
 	 *  @return The current function pointer set or \b NULL
 	 *  @since version 3.16.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API pGetCommonAccessToken freerdp_get_common_access_token(const rdpContext* context);
 
 #ifdef __cplusplus

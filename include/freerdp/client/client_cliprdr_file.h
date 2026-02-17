@@ -44,6 +44,7 @@ extern "C"
 	 *
 	 * \return \b TRUE if files can be pasted locally, \b FALSE if not (e.g. no FUSE, ...)
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL cliprdr_file_context_has_local_support(CliprdrFileContext* file);
 
 	/**! \brief sets state of local file paste support
@@ -54,25 +55,35 @@ extern "C"
 	 *
 	 * \return \b TRUE for success, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL cliprdr_file_context_set_locally_available(CliprdrFileContext* file,
 	                                                            BOOL available);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL cliprdr_file_context_remote_set_flags(CliprdrFileContext* file, UINT32 flags);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 cliprdr_file_context_remote_get_flags(CliprdrFileContext* file);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT32 cliprdr_file_context_current_flags(CliprdrFileContext* file);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API void* cliprdr_file_context_get_context(CliprdrFileContext* file);
 
 	FREERDP_API BOOL cliprdr_file_context_init(CliprdrFileContext* file,
 	                                           CliprdrClientContext* cliprdr);
+
 	FREERDP_API BOOL cliprdr_file_context_uninit(CliprdrFileContext* file,
 	                                             CliprdrClientContext* cliprdr);
 
 	FREERDP_API BOOL cliprdr_file_context_clear(CliprdrFileContext* file);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT
 	cliprdr_file_context_notify_new_server_format_list(CliprdrFileContext* file_context);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_API UINT
 	cliprdr_file_context_notify_new_client_format_list(CliprdrFileContext* file_context);
 
@@ -95,6 +106,7 @@ extern "C"
 	 *
 	 * \return \b TRUE for success, \b FALSE otherwise
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file,
 	                                                         wClipboard* clip, const void* data,
 	                                                         size_t size);

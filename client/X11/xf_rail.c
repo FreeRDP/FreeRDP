@@ -308,8 +308,10 @@ BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* 
 
 	REGION16 windowInvalidRegion = { 0 };
 	region16_init(&windowInvalidRegion);
-	region16_union_rect(&windowInvalidRegion, &windowInvalidRegion, &windowRect);
-	region16_intersect_rect(&windowInvalidRegion, &windowInvalidRegion, rect);
+	if (!region16_union_rect(&windowInvalidRegion, &windowInvalidRegion, &windowRect))
+		return FALSE;
+	if (!region16_intersect_rect(&windowInvalidRegion, &windowInvalidRegion, rect))
+		return FALSE;
 
 	if (!region16_is_empty(&windowInvalidRegion))
 	{

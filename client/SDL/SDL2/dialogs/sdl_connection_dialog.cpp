@@ -233,7 +233,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 					case SDLK_KP_ENTER:
 						if (event.type == SDL_KEYUP)
 						{
-							freerdp_abort_event(_context);
+							freerdp_abort_connect_context(_context);
 							sdl_push_quit();
 						}
 						break;
@@ -269,7 +269,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 				{
 					if (event.type == SDL_MOUSEBUTTONUP)
 					{
-						freerdp_abort_event(_context);
+						freerdp_abort_connect_context(_context);
 						sdl_push_quit();
 					}
 				}
@@ -306,7 +306,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 				case SDL_WINDOWEVENT_CLOSE:
 					if (windowID == ev.windowID)
 					{
-						freerdp_abort_event(_context);
+						freerdp_abort_connect_context(_context);
 						sdl_push_quit();
 					}
 					break;

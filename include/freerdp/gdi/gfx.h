@@ -64,6 +64,7 @@ extern "C"
 	typedef struct gdi_gfx_cache_entry gdiGfxCacheEntry;
 
 	FREERDP_API BOOL gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx);
+
 	FREERDP_API BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 	                                               pcRdpgfxMapWindowForSurface map,
 	                                               pcRdpgfxUnmapWindowForSurface unmap,

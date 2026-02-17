@@ -414,7 +414,8 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 		context->priv->out_buffer_size = out_buffer_size;
 	}
 
-	freerdp_dsp_context_reset(context->priv->dsp_context, format, 0u);
+	if (!freerdp_dsp_context_reset(context->priv->dsp_context, format, 0u))
+		error = ERROR_INTERNAL_ERROR;
 out:
 	LeaveCriticalSection(&context->priv->lock);
 	return error;

@@ -864,7 +864,7 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 	if (!channels->connected)
 		return 0;
 
-	(void)freerdp_channels_check_fds(channels, instance);
+	freerdp_channels_check_fds(channels, instance);
 
 	/* tell all libraries we are shutting down */
 	for (int index = 0; index < channels->clientDataCount; index++)
@@ -894,7 +894,7 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 	channels->connected = FALSE;
 
 	/* Flush pending messages */
-	(void)freerdp_channels_check_fds(channels, instance);
+	freerdp_channels_check_fds(channels, instance);
 	return error;
 }
 
@@ -907,7 +907,7 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	WINPR_ASSERT(instance);
 
 	MessageQueue_PostQuit(channels->queue, 0);
-	(void)freerdp_channels_check_fds(channels, instance);
+	freerdp_channels_check_fds(channels, instance);
 
 	/* tell all libraries we are shutting down */
 	for (int index = 0; index < channels->clientDataCount; index++)
