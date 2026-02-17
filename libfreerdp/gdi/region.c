@@ -655,6 +655,16 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 	if (!gdi_SetRgn(&cinvalid[hdc->hwnd->ninvalid++], x, y, w, h))
 		return FALSE;
 
+	if (!gdi_CRgnToRect(x, y, w, h, &rgn))
+	{
+		invalid->x = 0;
+		invalid->y = 0;
+		invalid->w = 0;
+		invalid->h = 0;
+		invalid->null = TRUE;
+		return TRUE;
+	}
+
 	if (invalid->null)
 	{
 		invalid->x = x;
@@ -665,8 +675,6 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 		return TRUE;
 	}
 
-	if (!gdi_CRgnToRect(x, y, w, h, &rgn))
-		return FALSE;
 	if (!gdi_RgnToRect(invalid, &inv))
 		return FALSE;
 

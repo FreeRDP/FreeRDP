@@ -137,9 +137,9 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 			SSIZE_T newUCapacity = pool->uCapacity;
 			do
 			{
-				if (newUCapacity > SIZE_MAX - 128ull)
+				if (newUCapacity > SSIZE_MAX - 128ll)
 					return FALSE;
-				newUCapacity += 128ull;
+				newUCapacity += 128ll;
 			} while (newUCapacity <= required);
 			wBufferPoolItem* newUArray = NULL;
 			if (pool->alignment > 0)

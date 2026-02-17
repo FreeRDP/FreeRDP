@@ -101,25 +101,16 @@ static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 	if ((required < queue->size) || (required < count))
 		return FALSE;
 
-	if (required >= queue->capacity)
+	if (required > queue->capacity)
 	{
-		size_t old_capacity = queue->capacity;
-		size_t new_capacity = queue->capacity;
+		const size_t old_capacity = queue->capacity;
 
-		if (new_capacity < required)
-		{
-			new_capacity = queue->size + count;
-			// check for overflow
-			if (new_capacity < old_capacity)
-				return FALSE;
-		}
-
-		wMessage* new_arr = (wMessage*)realloc(queue->array, sizeof(wMessage) * new_capacity);
+		wMessage* new_arr = (wMessage*)realloc(queue->array, sizeof(wMessage) * required);
 		if (!new_arr)
 			return FALSE;
 		queue->array = new_arr;
-		queue->capacity = new_capacity;
-		ZeroMemory(&(queue->array[old_capacity]), (new_capacity - old_capacity) * sizeof(wMessage));
+		queue->capacity = required;
+		ZeroMemory(&(queue->array[old_capacity]), (required - old_capacity) * sizeof(wMessage));
 
 		/* rearrange wrapped entries */
 		if (queue->tail <= queue->head)

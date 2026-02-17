@@ -108,6 +108,7 @@ class SdlContext
 
 	[[nodiscard]] bool createWindows();
 	[[nodiscard]] bool updateWindowList();
+	[[nodiscard]] bool updateWindow(SDL_WindowID id);
 
 	[[nodiscard]] bool drawToWindows(const std::vector<SDL_Rect>& rects = {});
 	[[nodiscard]] bool drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& rects = {});

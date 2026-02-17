@@ -596,11 +596,15 @@ static UINT smartcard_irp_request(DEVICE* device, IRP* irp)
 	SMARTCARD_DEVICE* smartcard = CAST_FROM_DEVICE(device);
 
 	if (!smartcard)
+	{
+		irp->Discard(irp);
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!MessageQueue_Post(smartcard->IrpQueue, NULL, 0, (void*)irp, NULL))
 	{
 		WLog_ERR(TAG, "MessageQueue_Post failed!");
+		irp->Discard(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
 
