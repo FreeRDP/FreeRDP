@@ -433,15 +433,17 @@ BOOL nsc_context_set_parameters(NSC_CONTEXT* WINPR_RESTRICT context, NSC_PARAMET
 BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp, UINT32 width,
                          UINT32 height, const BYTE* data, UINT32 length,
                          BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStride,
-                         UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
-                         WINPR_ATTR_UNUSED UINT32 nHeight, UINT32 flip)
+                         UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 flip)
 {
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+
 	wStream sbuffer = { 0 };
 	BOOL ret = 0;
-	if (!context || !data || !pDstData)
+	if (!data || !pDstData)
 	{
-		WLog_ERR(TAG, "Invalid argument: context=%p, data=%p, pDstData=%p", (void*)context,
-		         (const void*)data, (void*)pDstData);
+		WLog_Print(context->priv->log, WLOG_ERROR, "Invalid argument: data=%p, pDstData=%p",
+		           (const void*)data, (void*)pDstData);
 		return FALSE;
 	}
 

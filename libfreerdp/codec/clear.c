@@ -133,7 +133,8 @@ static BOOL convert_color(BYTE* WINPR_RESTRICT dst, UINT32 nDstStep, UINT32 DstF
 static BOOL clear_decompress_nscodec(NSC_CONTEXT* WINPR_RESTRICT nsc, UINT32 width, UINT32 height,
                                      wStream* WINPR_RESTRICT s, UINT32 bitmapDataByteCount,
                                      BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
-                                     UINT32 nDstStep, UINT32 nXDstRel, UINT32 nYDstRel)
+                                     UINT32 nDstStep, UINT32 nXDstRel, UINT32 nYDstRel,
+                                     UINT32 nDstWidth, UINT32 nDstHeight)
 {
 	BOOL rc = 0;
 
@@ -141,8 +142,8 @@ static BOOL clear_decompress_nscodec(NSC_CONTEXT* WINPR_RESTRICT nsc, UINT32 wid
 		return FALSE;
 
 	rc = nsc_process_message(nsc, 32, width, height, Stream_Pointer(s), bitmapDataByteCount,
-	                         pDstData, DstFormat, nDstStep, nXDstRel, nYDstRel, width, height,
-	                         FREERDP_FLIP_NONE);
+	                         pDstData, DstFormat, nDstStep, nXDstRel, nYDstRel, nDstWidth,
+	                         nDstHeight, FREERDP_FLIP_NONE);
 	Stream_Seek(s, bitmapDataByteCount);
 	return rc;
 }
@@ -532,7 +533,8 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 
 			case 1: /* NSCodec */
 				if (!clear_decompress_nscodec(clear->nsc, width, height, s, bitmapDataByteCount,
-				                              pDstData, DstFormat, nDstStep, nXDstRel, nYDstRel))
+				                              pDstData, DstFormat, nDstStep, nXDstRel, nYDstRel,
+				                              nDstWidth, nDstHeight))
 					return FALSE;
 
 				break;
