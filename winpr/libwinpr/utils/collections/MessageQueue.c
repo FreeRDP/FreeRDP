@@ -94,29 +94,52 @@ BOOL MessageQueue_Wait(wMessageQueue* queue)
 
 static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 {
+	const size_t increment = 128;
 	WINPR_ASSERT(queue);
 
 	const size_t required = queue->size + count;
 	// check for overflow
-	if ((required < queue->size) || (required < count))
+	if ((required < queue->size) || (required < count) ||
+	    (required > (SIZE_MAX - increment) / sizeof(wMessage)))
 		return FALSE;
 
 	if (required > queue->capacity)
 	{
 		const size_t old_capacity = queue->capacity;
+		const size_t new_capacity = required + increment;
 
-		wMessage* new_arr = (wMessage*)realloc(queue->array, sizeof(wMessage) * required);
+		wMessage* new_arr = (wMessage*)realloc(queue->array, sizeof(wMessage) * new_capacity);
 		if (!new_arr)
 			return FALSE;
 		queue->array = new_arr;
-		queue->capacity = required;
-		ZeroMemory(&(queue->array[old_capacity]), (required - old_capacity) * sizeof(wMessage));
+		queue->capacity = new_capacity;
+		ZeroMemory(&(queue->array[old_capacity]), (new_capacity - old_capacity) * sizeof(wMessage));
 
-		/* rearrange wrapped entries */
+		/* rearrange wrapped entries:
+		 * fill up the newly available space and move tail
+		 * back by the amount of elements that have been moved to the newly
+		 * allocated space.
+		 */
 		if (queue->tail <= queue->head)
 		{
-			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(wMessage));
-			queue->tail += old_capacity;
+			size_t tocopy = queue->tail;
+			size_t slots = new_capacity - old_capacity;
+			const size_t batch = (tocopy < slots) ? tocopy : slots;
+			CopyMemory(&(queue->array[old_capacity]), queue->array, batch * sizeof(wMessage));
+			ZeroMemory(queue->array, batch * sizeof(wMessage));
+
+			/* Tail is decremented. if the whole thing is appended
+			 * just move the existing tail by old_capacity */
+			if (tocopy < slots)
+				queue->tail += old_capacity;
+			else
+			{
+				const size_t movesize = (queue->tail - batch) * sizeof(wMessage);
+				memmove_s(queue->array, queue->tail * sizeof(wMessage), &queue->array[batch],
+				          movesize);
+				ZeroMemory(&queue->array[batch], movesize);
+				queue->tail -= batch;
+			}
 		}
 	}
 
