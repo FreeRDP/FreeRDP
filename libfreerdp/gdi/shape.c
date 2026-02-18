@@ -134,15 +134,11 @@ BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int n
 
 BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 {
-	UINT32 color = 0;
-	UINT32 dstColor = 0;
-	BOOL monochrome = FALSE;
 	INT32 nXDest = 0;
 	INT32 nYDest = 0;
 	INT32 nWidth = 0;
 	INT32 nHeight = 0;
-	const BYTE* srcp = NULL;
-	DWORD formatSize = 0;
+
 	if (!gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight))
 		return FALSE;
 
@@ -155,7 +151,8 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 	switch (hbr->style)
 	{
 		case GDI_BS_SOLID:
-			color = hbr->color;
+		{
+			const UINT32 color = hbr->color;
 
 			for (INT32 x = 0; x < nWidth; x++)
 			{
@@ -165,21 +162,28 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 					FreeRDPWriteColor(dstp, hdc->format, color);
 			}
 
-			srcp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest);
-			formatSize = FreeRDPGetBytesPerPixel(hdc->format);
+			const BYTE* srcp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest);
+			const UINT32 formatSize = FreeRDPGetBytesPerPixel(hdc->format);
+			if (formatSize == 0)
+				return FALSE;
 
 			for (INT32 y = 1; y < nHeight; y++)
 			{
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
+				if (!dstp)
+					return FALSE;
 				memcpy(dstp, srcp, 1ull * WINPR_ASSERTING_INT_CAST(size_t, nWidth) * formatSize);
 			}
-
-			break;
+		}
+		break;
 
 		case GDI_BS_HATCHED:
 		case GDI_BS_PATTERN:
-			monochrome = (hbr->pattern->format == PIXEL_FORMAT_MONO);
-			formatSize = FreeRDPGetBytesPerPixel(hbr->pattern->format);
+		{
+			const BOOL monochrome = (hbr->pattern->format == PIXEL_FORMAT_MONO);
+			const UINT32 formatSize = FreeRDPGetBytesPerPixel(hbr->pattern->format);
+			if (formatSize == 0)
+				return FALSE;
 
 			for (INT32 y = 0; y < nHeight; y++)
 			{
@@ -197,6 +201,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 					                       formatSize;
 					const BYTE* patp = &hbr->pattern->data[yOffset + xOffset];
 
+					UINT32 dstColor = 0;
 					if (monochrome)
 					{
 						if (*patp == 0)
@@ -206,9 +211,9 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 					}
 					else
 					{
-						dstColor = FreeRDPReadColor(patp, hbr->pattern->format);
+						const UINT32 tmp = FreeRDPReadColor(patp, hbr->pattern->format);
 						dstColor =
-						    FreeRDPConvertColor(dstColor, hbr->pattern->format, hdc->format, NULL);
+						    FreeRDPConvertColor(tmp, hbr->pattern->format, hdc->format, NULL);
 					}
 
 					BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x, nYDest + y);
@@ -216,8 +221,8 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 						FreeRDPWriteColor(dstp, hdc->format, dstColor);
 				}
 			}
-
-			break;
+		}
+		break;
 
 		default:
 			break;
