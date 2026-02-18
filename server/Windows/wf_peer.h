@@ -24,6 +24,6 @@
 
 #include <freerdp/listener.h>
 
-BOOL wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
+WINPR_ATTR_NODISCARD BOOL wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
 
 #endif /* FREERDP_SERVER_WIN_PEER_H */

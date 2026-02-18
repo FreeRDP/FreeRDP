@@ -28,20 +28,20 @@
 
 #include "mf_interface.h"
 
-int mf_info_lock(mfInfo* mfi);
-int mf_info_try_lock(mfInfo* mfi, UINT32 ms);
-int mf_info_unlock(mfInfo* mfi);
+WINPR_ATTR_NODISCARD int mf_info_lock(mfInfo* mfi);
+WINPR_ATTR_NODISCARD int mf_info_try_lock(mfInfo* mfi, UINT32 ms);
+WINPR_ATTR_NODISCARD int mf_info_unlock(mfInfo* mfi);
 
-mfInfo* mf_info_get_instance(void);
+WINPR_ATTR_NODISCARD mfInfo* mf_info_get_instance(void);
 void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context);
 void mf_info_peer_unregister(mfInfo* mfi, mfPeerContext* context);
 
-BOOL mf_info_have_updates(mfInfo* mfi);
+WINPR_ATTR_NODISCARD BOOL mf_info_have_updates(mfInfo* mfi);
 void mf_info_update_changes(mfInfo* mfi);
 void mf_info_find_invalid_region(mfInfo* mfi);
 void mf_info_clear_invalid_region(mfInfo* mfi);
 void mf_info_invalidate_full_screen(mfInfo* mfi);
-BOOL mf_info_have_invalid_region(mfInfo* mfi);
+WINPR_ATTR_NODISCARD BOOL mf_info_have_invalid_region(mfInfo* mfi);
 void mf_info_getScreenData(mfInfo* mfi, long* width, long* height, BYTE** pBits, int* pitch);
 // BOOL CALLBACK mf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM
 // dwData);

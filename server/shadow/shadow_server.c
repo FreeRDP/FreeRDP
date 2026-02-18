@@ -618,7 +618,8 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 	BOOL running = TRUE;
 	DWORD status = 0;
 	freerdp_listener* listener = server->listener;
-	shadow_subsystem_start(server->subsystem);
+	if (shadow_subsystem_start(server->subsystem) < 0)
+		running = FALSE;
 
 	while (running)
 	{

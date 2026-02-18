@@ -159,7 +159,7 @@ BOOL shadow_screen_resize(rdpShadowScreen* screen)
 			/* screen size is changed. Store new size and reinit lobby */
 			screen->width = (UINT32)width;
 			screen->height = (UINT32)height;
-			shadow_client_init_lobby(screen->server);
+			return shadow_client_init_lobby(screen->server);
 		}
 		return TRUE;
 	}

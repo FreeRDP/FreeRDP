@@ -60,16 +60,16 @@ struct mf_event_region
 };
 
 void mf_event_push(mfEventQueue* event_queue, mfEvent* event);
-mfEvent* mf_event_peek(mfEventQueue* event_queue);
-mfEvent* mf_event_pop(mfEventQueue* event_queue);
+WINPR_ATTR_NODISCARD mfEvent* mf_event_peek(mfEventQueue* event_queue);
+WINPR_ATTR_NODISCARD mfEvent* mf_event_pop(mfEventQueue* event_queue);
 
-mfEventRegion* mf_event_region_new(int x, int y, int width, int height);
+WINPR_ATTR_NODISCARD mfEventRegion* mf_event_region_new(int x, int y, int width, int height);
 void mf_event_region_free(mfEventRegion* event_region);
 
-mfEvent* mf_event_new(int type);
+WINPR_ATTR_NODISCARD mfEvent* mf_event_new(int type);
 void mf_event_free(mfEvent* event);
 
-mfEventQueue* mf_event_queue_new(void);
+WINPR_ATTR_NODISCARD mfEventQueue* mf_event_queue_new(void);
 void mf_event_queue_free(mfEventQueue* event_queue);
 
 #endif /* FREERDP_SERVER_MAC_EVENT_H */

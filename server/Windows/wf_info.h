@@ -25,22 +25,22 @@
 #define FREERDP_SERVER_WIN_INFO_DEFAULT_FPS 24
 #define FREERDP_SERVER_WIN_INFO_MAXPEERS 32
 
-BOOL wf_info_lock(wfInfo* wfi);
-BOOL wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
-BOOL wf_info_unlock(wfInfo* wfi);
+WINPR_ATTR_NODISCARD BOOL wf_info_lock(wfInfo* wfi);
+WINPR_ATTR_NODISCARD BOOL wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
+WINPR_ATTR_NODISCARD BOOL wf_info_unlock(wfInfo* wfi);
 
-wfInfo* wf_info_get_instance(void);
-BOOL wf_info_peer_register(wfInfo* wfi, wfPeerContext* context);
+WINPR_ATTR_NODISCARD wfInfo* wf_info_get_instance(void);
+WINPR_ATTR_NODISCARD BOOL wf_info_peer_register(wfInfo* wfi, wfPeerContext* context);
 void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context);
 
-BOOL wf_info_have_updates(wfInfo* wfi);
+WINPR_ATTR_NODISCARD BOOL wf_info_have_updates(wfInfo* wfi);
 void wf_info_update_changes(wfInfo* wfi);
 void wf_info_find_invalid_region(wfInfo* wfi);
 void wf_info_clear_invalid_region(wfInfo* wfi);
 void wf_info_invalidate_full_screen(wfInfo* wfi);
-BOOL wf_info_have_invalid_region(wfInfo* wfi);
+WINPR_ATTR_NODISCARD BOOL wf_info_have_invalid_region(wfInfo* wfi);
 void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits, int* pitch);
-BOOL CALLBACK wf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor,
-                                LPARAM dwData);
+WINPR_ATTR_NODISCARD BOOL CALLBACK wf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor,
+                                                     LPRECT lprcMonitor, LPARAM dwData);
 
 #endif /* FREERDP_SERVER_WIN_INFO_H */
