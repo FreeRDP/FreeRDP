@@ -81,6 +81,19 @@ size_t Queue_Count(wQueue* queue)
 	return ret;
 }
 
+size_t Queue_Capacity(wQueue* queue)
+{
+	WINPR_ASSERT(queue);
+
+	Queue_Lock(queue);
+
+	const size_t ret = queue->capacity;
+
+	Queue_Unlock(queue);
+
+	return ret;
+}
+
 /**
  * Lock access to the ArrayList
  */

@@ -93,6 +93,14 @@ extern "C"
 	 */
 	WINPR_API size_t Queue_Count(wQueue* queue);
 
+	/** @brief Return the allocated elements in the queue
+	 *
+	 *  @param queue A pointer to a queue, must not be \b NULL
+	 *
+	 *  @return the number of objects allocated
+	 */
+	WINPR_API size_t Queue_Capacity(wQueue* queue);
+
 	/** @brief Mutex-Lock a queue
 	 *
 	 *  @param queue A pointer to a queue, must not be \b NULL
