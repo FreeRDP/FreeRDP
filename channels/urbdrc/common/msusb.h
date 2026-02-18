@@ -84,7 +84,7 @@ extern "C"
 	FREERDP_LOCAL void msusb_msconfig_dump(const MSUSB_CONFIG_DESCRIPTOR* MsConfg);
 
 	/* MSUSB_PIPE exported functions */
-	FREERDP_LOCAL BOOL msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
+	FREERDP_LOCAL void msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
 	                                         MSUSB_PIPE_DESCRIPTOR** NewMsPipes,
 	                                         UINT32 NewNumberOfPipes);
 

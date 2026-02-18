@@ -487,8 +487,11 @@ static DWORD WINAPI cam_v4l_stream_capture_thread(LPVOID param)
 			/* dequeue buffers until empty */
 			while (ioctl(fd, VIDIOC_DQBUF, &buf) != -1)
 			{
-				stream->sampleCallback(stream->dev, stream->streamIndex,
-				                       stream->buffers[buf.index].start, buf.bytesused);
+				const UINT error =
+				    stream->sampleCallback(stream->dev, stream->streamIndex,
+				                           stream->buffers[buf.index].start, buf.bytesused);
+				if (error != CHANNEL_RC_OK)
+					WLog_ERR(TAG, "Failure in sampleCallback: %" PRIu32, error);
 
 				/* enqueue buffer back */
 				if (ioctl(fd, VIDIOC_QBUF, &buf) == -1)
