@@ -376,12 +376,10 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, 
 static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 width, INT32 height,
                                 UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
-	rdpGdi* gdi = NULL;
-
 	if (!context || !context->gdi)
 		return FALSE;
 
-	gdi = context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	if (!gdi->drawing || !gdi->drawing->hdc)
 		return FALSE;
@@ -394,11 +392,12 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 wid
 		if (!gdi_decode_color(gdi, fgcolor, &fgcolor, NULL))
 			return FALSE;
 
-		gdi_SetClipRgn(gdi->drawing->hdc, x, y, width, height);
+		if (!gdi_SetClipRgn(gdi->drawing->hdc, x, y, width, height))
+			return FALSE;
+
 		gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 		gdi_SetBkColor(gdi->drawing->hdc, fgcolor);
 
-		if (1)
 		{
 			GDI_RECT rect = { 0 };
 			HGDI_BRUSH brush = gdi_CreateSolidBrush(fgcolor);
@@ -415,13 +414,13 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 wid
 			rect.right = x + width - 1;
 			rect.bottom = y + height - 1;
 
+			BOOL res = TRUE;
 			if ((x + width > rect.left) && (y + height > rect.top))
-			{
-				if (!gdi_FillRect(gdi->drawing->hdc, &rect, brush))
-					return FALSE;
-			}
+				res = gdi_FillRect(gdi->drawing->hdc, &rect, brush);
 
 			gdi_DeleteObject((HGDIOBJECT)brush);
+			if (!res)
+				return FALSE;
 		}
 
 		return gdi_SetNullClipRgn(gdi->drawing->hdc);
