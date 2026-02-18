@@ -8,4 +8,3 @@
 #pragma once
 
 static const char openclProgram[] = { @FILEDATA@ };
-

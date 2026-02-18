@@ -184,9 +184,7 @@ static BOOL cl_kernel_process(primitives_cl_kernel* ctx, BYTE* pDst)
 	WINPR_ASSERT(ctx);
 	WINPR_ASSERT(pDst);
 
-	size_t indexes[2] = { 0 };
-	indexes[0] = ctx->roi.width;
-	indexes[1] = ctx->roi.height;
+	const size_t indexes[2] = { ctx->roi.width, ctx->roi.height };
 
 	cl_int ret = clEnqueueNDRangeKernel(ctx->cl->commandQueue, ctx->kernel, 2, NULL, indexes, NULL,
 	                                    0, NULL, NULL);
@@ -401,27 +399,19 @@ static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3]
 
 	switch (DstFormat)
 	{
+		case PIXEL_FORMAT_XBGR32:
 		case PIXEL_FORMAT_ABGR32:
 			kernel_name = "yuv420_to_abgr_1b";
 			break;
-		case PIXEL_FORMAT_XBGR32:
-			kernel_name = "yuv420_to_xbgr_1b";
-			break;
 		case PIXEL_FORMAT_RGBX32:
+		case PIXEL_FORMAT_RGBA32:
 			kernel_name = "yuv420_to_rgba_1b";
 			break;
-		case PIXEL_FORMAT_RGBA32:
-			kernel_name = "yuv420_to_rgbx_1b";
-			break;
+		case PIXEL_FORMAT_BGRX32:
 		case PIXEL_FORMAT_BGRA32:
 			kernel_name = "yuv420_to_bgra_1b";
 			break;
-		case PIXEL_FORMAT_BGRX32:
-			kernel_name = "yuv420_to_bgrx_1b";
-			break;
 		case PIXEL_FORMAT_XRGB32:
-			kernel_name = "yuv420_to_xrgb_1b";
-			break;
 		case PIXEL_FORMAT_ARGB32:
 			kernel_name = "yuv420_to_argb_1b";
 			break;
@@ -446,27 +436,19 @@ static pstatus_t opencl_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3]
 
 	switch (DstFormat)
 	{
+		case PIXEL_FORMAT_XBGR32:
 		case PIXEL_FORMAT_ABGR32:
 			kernel_name = "yuv444_to_abgr_1b";
 			break;
-		case PIXEL_FORMAT_XBGR32:
-			kernel_name = "yuv444_to_xbgr_1b";
-			break;
 		case PIXEL_FORMAT_RGBX32:
+		case PIXEL_FORMAT_RGBA32:
 			kernel_name = "yuv444_to_rgba_1b";
 			break;
-		case PIXEL_FORMAT_RGBA32:
-			kernel_name = "yuv444_to_rgbx_1b";
-			break;
+		case PIXEL_FORMAT_BGRX32:
 		case PIXEL_FORMAT_BGRA32:
 			kernel_name = "yuv444_to_bgra_1b";
 			break;
-		case PIXEL_FORMAT_BGRX32:
-			kernel_name = "yuv444_to_bgrx_1b";
-			break;
 		case PIXEL_FORMAT_XRGB32:
-			kernel_name = "yuv444_to_xrgb_1b";
-			break;
 		case PIXEL_FORMAT_ARGB32:
 			kernel_name = "yuv444_to_argb_1b";
 			break;
