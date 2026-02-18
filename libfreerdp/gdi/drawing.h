@@ -30,12 +30,21 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL INT32 gdi_GetROP2(HGDI_DC hdc);
+
 	FREERDP_LOCAL INT32 gdi_SetROP2(HGDI_DC hdc, INT32 fnDrawMode);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL UINT32 gdi_GetBkColor(HGDI_DC hdc);
+
 	FREERDP_LOCAL UINT32 gdi_SetBkColor(HGDI_DC hdc, UINT32 crColor);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL INT32 gdi_GetBkMode(HGDI_DC hdc);
+
 	FREERDP_LOCAL INT32 gdi_SetBkMode(HGDI_DC hdc, INT32 iBkMode);
+
 	FREERDP_LOCAL UINT32 gdi_SetTextColor(HGDI_DC hdc, UINT32 crColor);
 
 #ifdef __cplusplus

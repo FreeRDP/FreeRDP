@@ -79,37 +79,56 @@
 
 FREERDP_LOCAL void rts_generate_cookie(BYTE* cookie);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_write_pdu_auth3(wStream* s, const rpcconn_rpc_auth_3_hdr_t* auth);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_write_pdu_bind(wStream* s, const rpcconn_bind_hdr_t* bind);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_read_pdu_header(wStream* s, rpcconn_hdr_t* header);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_read_pdu_header_ex(wStream* s, rpcconn_hdr_t* header, BOOL silent);
+
 FREERDP_LOCAL void rts_free_pdu_header(rpcconn_hdr_t* header, BOOL allocated);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_read_common_pdu_header(wStream* s, rpcconn_common_hdr_t* header,
                                               BOOL ignoreErrors);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_command_length(UINT32 CommandType, wStream* s, size_t* length, BOOL silent);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_send_CONN_A1_pdu(rdpRpc* rpc);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_recv_CONN_A3_pdu(rdpRpc* rpc, wStream* buffer);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_send_CONN_B1_pdu(rdpRpc* rpc);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_send_OUT_R1_A3_pdu(rdpRpc* rpc);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer,
                                                 const rpcconn_hdr_t* header);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_recv_ping_pdu(rdpRpc* rpc, wStream* s);
 
 #define Stream_ConditionalCheckAndLogRequiredLength(tag, s, size, silent) \
 	rts_conditional_check_and_log(tag, s, size, silent, __func__, __FILE__, __LINE__)
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_conditional_check_and_log(const char* tag, wStream* s, size_t size,
                                                  BOOL silent, const char* fkt, const char* file,
                                                  size_t line);
@@ -117,6 +136,7 @@ FREERDP_LOCAL BOOL rts_conditional_check_and_log(const char* tag, wStream* s, si
 #define Stream_ConditionalSafeSeek(s, size, silent) \
 	rts_conditional_safe_seek(s, size, silent, __func__, __FILE__, __LINE__)
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_conditional_safe_seek(wStream* s, size_t size, BOOL silent, const char* fkt,
                                              const char* file, size_t line);
 

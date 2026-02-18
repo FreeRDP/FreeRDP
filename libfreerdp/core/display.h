@@ -23,6 +23,7 @@
 #include <freerdp/display.h>
 #include "rdp.h"
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
                                                               const rdpMonitor* monitorDefArray,
                                                               MONITOR_DEF** result);

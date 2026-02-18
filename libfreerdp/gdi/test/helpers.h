@@ -24,13 +24,19 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/gdi/bitmap.h>
 
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL
 HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat, UINT32 SrcStride, UINT32 xSrc,
                                    UINT32 ySrc, UINT32 DstFormat, UINT32 DstStride, UINT32 xDst,
                                    UINT32 yDst, UINT32 nWidth, UINT32 nHeight,
 
                                    const gdiPalette* hPalette);
 
+FREERDP_LOCAL
 void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL
 BOOL test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual, HGDI_BITMAP hBmpExpected, const char* name,
                                const gdiPalette* palette);
 

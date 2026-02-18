@@ -44,14 +44,31 @@ enum X224_TPDU_TYPE
 #define TPDU_CONNECTION_CONFIRM_LENGTH (TPKT_HEADER_LENGTH + TPDU_CONNECTION_CONFIRM_HEADER_LENGTH)
 #define TPDU_DISCONNECT_REQUEST_LENGTH (TPKT_HEADER_LENGTH + TPDU_DISCONNECT_REQUEST_HEADER_LENGTH)
 
-const char* tpdu_type_to_string(int type);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL const char* tpdu_type_to_string(int type);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tpdu_read_connection_request(wStream* s, BYTE* li, UINT16 tpktlength);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tpdu_write_connection_request(wStream* s, UINT16 length);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li, UINT16 tpktlength);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tpdu_write_connection_confirm(wStream* s, UINT16 length);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tpdu_write_disconnect_request(wStream* s, UINT16 length);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tpdu_read_data(wStream* s, UINT16* li, UINT16 tpktlength);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tpdu_write_data(wStream* s);
 
 #endif /* FREERDP_LIB_CORE_TPDU_H */

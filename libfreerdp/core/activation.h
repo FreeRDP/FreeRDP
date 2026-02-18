@@ -58,25 +58,55 @@ typedef struct
 #define FONTLIST_FIRST 0x0001
 #define FONTLIST_LAST 0x0002
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL const char* rdp_ctrlaction_string(UINT16 action, char* buffer, size_t size);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_deactivate_all(rdpRdp* rdp);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_server_synchronize_pdu(rdpRdp* rdp, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_server_synchronize_pdu(rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_client_synchronize_pdu(rdpRdp* rdp);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_server_control_cooperate_pdu(rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_client_font_list_pdu(rdpRdp* rdp, UINT16 flags);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_server_accept_client_persistent_key_list_pdu(rdpRdp* rdp, wStream* s);
 
 #endif /* FREERDP_LIB_CORE_ACTIVATION_H */

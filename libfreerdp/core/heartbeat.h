@@ -31,6 +31,7 @@
 
 #include "state.h"
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s);
 
 FREERDP_LOCAL void heartbeat_free(rdpHeartbeat* heartbeat);

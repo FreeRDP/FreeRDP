@@ -153,16 +153,27 @@
 #define CLW_ENTROPY_RLGR1 0x01
 #define CLW_ENTROPY_RLGR3 0x04
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId,
                                               UINT16* length);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s, UINT16 pduSource, UINT16 length);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_demand_active(rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_confirm_active(rdpRdp* rdp);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_read_capability_set(wLog* log, wStream* sub, UINT16 type,
                                            rdpSettings* settings, BOOL isServer);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL const char* rdp_input_flag_string(UINT16 flags, char* buffer, size_t len);
 
 #endif /* FREERDP_LIB_CORE_CAPABILITIES_H */

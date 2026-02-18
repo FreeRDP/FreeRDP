@@ -36,15 +36,21 @@ typedef struct rdp_redirection rdpRedirection;
 #define CERT_ctl_file_element 34
 #define CERT_keyid_file_element 35
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rdp_redirection_apply_settings(rdpRdp* rdp);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL
 rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirection* redirection);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_redirection_read_target_cert(rdpCertificate** ptargetCertificate,
                                                     const BYTE* data, size_t length);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_set_target_certificate(rdpSettings* settings, const rdpCertificate* tcert);
 
 #define REDIR_TAG FREERDP_TAG("core.redirection")

@@ -24,6 +24,7 @@
 
 #include <freerdp/api.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL nsc_encode(NSC_CONTEXT* WINPR_RESTRICT context,
                               const BYTE* WINPR_RESTRICT bmpdata, UINT32 rowstride);
 

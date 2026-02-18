@@ -34,6 +34,7 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp);
 	FREERDP_LOCAL void brush_cache_put(rdpBrushCache* brush, UINT32 index, void* entry, UINT32 bpp);
 

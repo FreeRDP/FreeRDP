@@ -103,19 +103,30 @@ WINPR_ATTR_MALLOC(tsg_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tsg_proxy_begin(rdpTsg* tsg);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tsg_disconnect(rdpTsg* tsg);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL tsg_check_event_handles(rdpTsg* tsg);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL TSG_STATE tsg_get_state(rdpTsg* tsg);
+
 FREERDP_LOCAL BOOL tsg_set_state(rdpTsg* tsg, TSG_STATE state);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BIO* tsg_get_bio(rdpTsg* tsg);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_TSG_H */

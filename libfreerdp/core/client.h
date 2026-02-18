@@ -42,8 +42,8 @@
 
 typedef struct
 {
-	PVIRTUALCHANNELENTRY entry;
-	PVIRTUALCHANNELENTRYEX entryEx;
+	WINPR_ATTR_NODISCARD PVIRTUALCHANNELENTRY entry;
+	WINPR_ATTR_NODISCARD PVIRTUALCHANNELENTRYEX entryEx;
 	PCHANNEL_INIT_EVENT_FN pChannelInitEventProc;
 	PCHANNEL_INIT_EVENT_EX_FN pChannelInitEventProcEx;
 	void* pInitHandle;
@@ -118,13 +118,19 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpChannels* freerdp_channels_new(freerdp* instance);
 
 FREERDP_LOCAL UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance);
+
 FREERDP_LOCAL void freerdp_channels_close(rdpChannels* channels, freerdp* instance);
 
 FREERDP_LOCAL void freerdp_channels_register_instance(rdpChannels* channels, freerdp* instance);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance);
 
 /** @since version 3.9.0 */
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL SSIZE_T freerdp_client_channel_get_registered_event_handles(rdpChannels* channels,
                                                                           HANDLE* events,
                                                                           DWORD count);

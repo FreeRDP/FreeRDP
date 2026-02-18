@@ -34,9 +34,12 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
 	                                BYTE* pDstBuffer, const BYTE** ppDstData, UINT32* pDstSize,
 	                                UINT32* pFlags);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
 	                                  const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
 
@@ -44,8 +47,11 @@ extern "C"
 
 	FREERDP_LOCAL void mppc_context_reset(MPPC_CONTEXT* mppc, BOOL flush);
 
-	FREERDP_LOCAL MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor);
 	FREERDP_LOCAL void mppc_context_free(MPPC_CONTEXT* mppc);
+
+	WINPR_ATTR_MALLOC(mppc_context_free, 1)
+	WINPR_ATTR_NODISCARD
+	FREERDP_LOCAL MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor);
 
 #ifdef __cplusplus
 }
