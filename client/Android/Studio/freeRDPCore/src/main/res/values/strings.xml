@@ -68,6 +68,16 @@
         <item>24</item>
         <item>32</item>
     </string-array>
+    <string-array name="scale_array">
+        <item>100%</item>
+        <item>140%</item>
+        <item>180%</item>
+    </string-array>
+    <string-array name="scale_values_array" translatable="false">
+        <item>100</item>
+        <item>140</item>
+        <item>180</item>
+    </string-array>
     <string name="settings_resolution">Resolution</string>
     <string name="resolution_automatic">Automatic</string>
     <string name="resolution_fit">Fit screen</string>
