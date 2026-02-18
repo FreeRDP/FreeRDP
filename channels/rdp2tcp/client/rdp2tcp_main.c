@@ -43,6 +43,7 @@ typedef struct
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
 	char buffer[16 * 1024];
 	char* commandline;
+	char* channel_name;
 } Plugin;
 
 static int init_external_addin(Plugin* plugin)
@@ -95,6 +96,21 @@ static int init_external_addin(Plugin* plugin)
 	}
 
 	plugin->commandline = _strdup(args->argv[1]);
+
+	char* sep = strstr(plugin->commandline, ":");
+	if (sep)
+	{
+		sep[0] = 0;
+		plugin->channel_name = (sep + 1);
+	}
+	else
+	{
+		plugin->channel_name = RDP2TCP_DVC_CHANNEL_NAME;
+	}
+
+	WLog_DBG(TAG, "Command line: %s", plugin->commandline);
+	WLog_DBG(TAG, "Channel name: %s", plugin->channel_name);
+
 	if (!CreateProcessA(NULL,
 	                    plugin->commandline, // command line
 	                    NULL,                // process security attributes
@@ -270,7 +286,7 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 			WINPR_ASSERT(plugin);
 			WINPR_ASSERT(plugin->channelEntryPoints.pVirtualChannelOpenEx);
 			if (plugin->channelEntryPoints.pVirtualChannelOpenEx(
-			        pInitHandle, &plugin->openHandle, RDP2TCP_DVC_CHANNEL_NAME,
+			        pInitHandle, &plugin->openHandle, plugin->channel_name,
 			        VirtualChannelOpenEventEx) != CHANNEL_RC_OK)
 				return;
 
@@ -313,7 +329,7 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
 	}
 
 	CHANNEL_DEF channelDef = { 0 };
-	strncpy(channelDef.name, RDP2TCP_DVC_CHANNEL_NAME, sizeof(channelDef.name));
+	strncpy(channelDef.name, plugin->channel_name, sizeof(channelDef.name));
 	channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;
 
