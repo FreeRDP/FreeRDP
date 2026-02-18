@@ -182,6 +182,14 @@ extern "C"
 
 	/** @brief Creates a new queue
 	 *
+	 *  @param synchronized If \b TRUE all functions are thread safe, if \b FALSE no synchronization
+	 * is done.
+	 *  @param capacity The initial capacity of the queue. If \b 0 or \b -1 default settings are
+	 * applied.
+	 *  @param growthFactor allocation behaviour when the queue capacity should be increased. Larger
+	 * values increase the allocation contingent. \b 0 or \b -1 apply default settings.
+	 *
+	 *
 	 *  @return A newly allocated queue or \b NULL in case of failure
 	 */
 	WINPR_ATTR_MALLOC(Queue_Free, 1)
