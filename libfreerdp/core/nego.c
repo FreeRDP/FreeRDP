@@ -1555,8 +1555,10 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	Stream_SetPosition(s, bm);
 	status = tpkt_write_header(s, length);
 	if (status)
+		status = tpdu_write_connection_confirm(s, length - 5);
+
+	if (status)
 	{
-		tpdu_write_connection_confirm(s, length - 5);
 		Stream_SetPosition(s, em);
 		Stream_SealLength(s);
 
@@ -1739,8 +1741,8 @@ void nego_free(rdpNego* nego)
 
 BOOL nego_set_target(rdpNego* nego, const char* hostname, UINT16 port)
 {
-	if (!nego || !hostname)
-		return FALSE;
+	WINPR_ASSERT(nego);
+	WINPR_ASSERT(hostname);
 
 	nego->hostname = hostname;
 	nego->port = port;
@@ -2046,9 +2048,7 @@ NEGO_STATE nego_get_state(const rdpNego* nego)
 
 BOOL nego_set_state(rdpNego* nego, NEGO_STATE state)
 {
-	if (!nego)
-		return FALSE;
-
+	WINPR_ASSERT(nego);
 	nego->state = state;
 	return TRUE;
 }

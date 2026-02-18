@@ -40,12 +40,19 @@ static inline void rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
                                         const BYTE* WINPR_RESTRICT data, size_t size,
                                         INT16* WINPR_RESTRICT buffer)
 {
-	INT16* dwt_buffer = NULL;
-	dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
+	INT16* dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
+	WINPR_ASSERT(dwt_buffer);
+
 	PROFILER_ENTER(context->priv->prof_rfx_decode_component)
 	PROFILER_ENTER(context->priv->prof_rfx_rlgr_decode)
 	WINPR_ASSERT(size <= UINT32_MAX);
-	context->rlgr_decode(context->mode, data, (UINT32)size, buffer, 4096);
+
+	{
+		const int rc = context->rlgr_decode(context->mode, data, (UINT32)size, buffer, 4096);
+		if (rc < 0)
+			WLog_Print(context->priv->log, WLOG_ERROR, "context->rlgr_decode failed: %d", rc);
+	}
+
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_decode)
 	PROFILER_ENTER(context->priv->prof_rfx_differential_decode)
 	rfx_differential_decode(buffer + 4032, 64);

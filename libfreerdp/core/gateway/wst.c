@@ -315,10 +315,12 @@ static wStream* wst_build_http_request(rdpWst* wst)
 	}
 	else if (freerdp_settings_get_string(wst->context->settings, FreeRDP_GatewayHttpExtAuthBearer))
 	{
-		http_request_set_auth_scheme(request, "Bearer");
-		http_request_set_auth_param(
-		    request,
-		    freerdp_settings_get_string(wst->context->settings, FreeRDP_GatewayHttpExtAuthBearer));
+		if (!http_request_set_auth_scheme(request, "Bearer"))
+			goto out;
+		if (!http_request_set_auth_param(
+		        request, freerdp_settings_get_string(wst->context->settings,
+		                                             FreeRDP_GatewayHttpExtAuthBearer)))
+			goto out;
 	}
 
 	s = http_request_write(wst->http, request);
@@ -365,9 +367,15 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 		WLog_Print(wst->log, WLOG_INFO, "Got ARRAffinity cookie         %s", affinity);
 		WLog_Print(wst->log, WLOG_INFO, "Got ARRAffinitySameSite cookie %s", samesite);
 		if (affinity)
-			http_context_set_cookie(wst->http, "ARRAffinity", affinity);
+		{
+			if (!http_context_set_cookie(wst->http, "ARRAffinity", affinity))
+				return FALSE;
+		}
 		if (samesite)
-			http_context_set_cookie(wst->http, "ARRAffinitySameSite", samesite);
+		{
+			if (!http_context_set_cookie(wst->http, "ARRAffinitySameSite", samesite))
+				return FALSE;
+		}
 		http_response_free(*ppresponse);
 		*ppresponse = NULL;
 		/* Terminate this connection and make a new one with the Loadbalancing Cookie */
@@ -523,7 +531,11 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 		 * we need to get a Loadbalancing Cookie (ARRAffinity)
 		 * This is done by a plain GET request on the websocket URL
 		 */
-		http_context_enable_websocket_upgrade(wst->http, FALSE);
+		if (!http_context_enable_websocket_upgrade(wst->http, FALSE))
+		{
+			freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_FAILED);
+			return FALSE;
+		}
 	}
 	if (!wst_send_http_request(wst, wst->tls))
 	{

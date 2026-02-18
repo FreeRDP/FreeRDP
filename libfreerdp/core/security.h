@@ -68,11 +68,9 @@ FREERDP_LOCAL BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_establish_keys(rdpRdp* rdp);
 
-WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL security_lock(rdpRdp* rdp);
+FREERDP_LOCAL void security_lock(rdpRdp* rdp);
 
-WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL security_unlock(rdpRdp* rdp);
+FREERDP_LOCAL void security_unlock(rdpRdp* rdp);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_encrypt(BYTE* data, size_t length, rdpRdp* rdp);

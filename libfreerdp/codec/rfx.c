@@ -780,7 +780,11 @@ rfx_process_message_tile_work_callback(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE i
 {
 	RFX_TILE_PROCESS_WORK_PARAM* param = (RFX_TILE_PROCESS_WORK_PARAM*)context;
 	WINPR_ASSERT(param);
-	rfx_decode_rgb(param->context, param->tile, param->tile->data, 64 * 4);
+	WINPR_ASSERT(param->context);
+	WINPR_ASSERT(param->context->priv);
+
+	if (!rfx_decode_rgb(param->context, param->tile, param->tile->data, 64 * 4))
+		WLog_Print(param->context->priv->log, WLOG_ERROR, "rfx_decode_rgb failed");
 }
 
 static inline BOOL rfx_allocate_tiles(RFX_MESSAGE* WINPR_RESTRICT message, size_t count,
@@ -1073,7 +1077,11 @@ static inline BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 			}
 			else
 			{
-				rfx_decode_rgb(context, tile, tile->data, 64 * 4);
+				if (!rfx_decode_rgb(context, tile, tile->data, 64 * 4))
+				{
+					rc = FALSE;
+					break;
+				}
 			}
 		}
 	}
@@ -1581,7 +1589,11 @@ rfx_compose_message_tile_work_callback(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE i
 {
 	RFX_TILE_COMPOSE_WORK_PARAM* param = (RFX_TILE_COMPOSE_WORK_PARAM*)context;
 	WINPR_ASSERT(param);
-	rfx_encode_rgb(param->context, param->tile);
+	WINPR_ASSERT(param->context);
+	WINPR_ASSERT(param->context->priv);
+
+	if (!rfx_encode_rgb(param->context, param->tile))
+		WLog_Print(param->context->priv->log, WLOG_ERROR, "rfx_encode_rgb failed");
 }
 
 static inline BOOL computeRegion(const RFX_RECT* WINPR_RESTRICT rects, size_t numRects,
@@ -1838,7 +1850,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 						}
 						else
 						{
-							rfx_encode_rgb(context, tile);
+							if (!rfx_encode_rgb(context, tile))
+								goto skip_encoding_loop;
 						}
 
 						if (!region16_union_rect(&tilesRegion, &tilesRegion, &currentTileRect))

@@ -293,7 +293,8 @@ BOOL freerdp_connect(freerdp* instance)
 	if (rdp->errorInfo == ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES)
 		freerdp_set_last_error_log(instance->context, FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
 
-	transport_set_connected_event(rdp->transport);
+	if (status)
+		status = transport_set_connected_event(rdp->transport);
 
 freerdp_connect_finally:
 	EventArgsInit(&e, "freerdp");

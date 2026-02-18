@@ -402,8 +402,7 @@ BOOL rts_print_pdu_signature(wLog* log, DWORD level, const RtsPduSignature* sign
 	UINT32 SignatureId = 0;
 	const RTS_PDU_SIGNATURE_ENTRY* entry = NULL;
 
-	if (!signature)
-		return FALSE;
+	WINPR_ASSERT(signature);
 
 	WLog_Print(log, level,
 	           "RTS PDU Signature: Flags: 0x%04" PRIX16 " NumberOfCommands: %" PRIu16 "",

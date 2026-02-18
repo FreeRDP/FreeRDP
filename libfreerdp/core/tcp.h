@@ -135,7 +135,6 @@ FREERDP_LOCAL struct addrinfo* freerdp_tcp_resolve_host(const char* hostname, in
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6);
 
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_tcp_set_nodelay(wLog* log, DWORD level, int sockfd);
 
 #endif /* FREERDP_LIB_CORE_TCP_H */

@@ -462,7 +462,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 				return FALSE;
 		}
 
-		transport_set_blocking_mode(rdp->transport, FALSE);
+		if (!transport_set_blocking_mode(rdp->transport, FALSE))
+			return FALSE;
 	}
 	else
 	{
@@ -762,8 +763,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (!crypt_client_random)
 		return FALSE;
 
-	crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, info,
-	                          crypt_client_random, info->ModulusLength);
+	if (crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, info,
+	                              crypt_client_random, info->ModulusLength) < 0)
+		return FALSE;
 	/* send crypt client random to server */
 	const size_t length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4ULL +
 	                      info->ModulusLength + 8ULL;
@@ -1451,7 +1453,8 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	nego = rdp->nego;
 	WINPR_ASSERT(nego);
 
-	transport_set_blocking_mode(rdp->transport, TRUE);
+	if (!transport_set_blocking_mode(rdp->transport, TRUE))
+		return FALSE;
 
 	if (!nego_read_request(nego, s))
 		return FALSE;
@@ -1547,9 +1550,7 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	if (!status)
 		return FALSE;
 
-	transport_set_blocking_mode(rdp->transport, FALSE);
-
-	return TRUE;
+	return transport_set_blocking_mode(rdp->transport, FALSE);
 }
 
 static BOOL rdp_update_encryption_level(rdpSettings* settings)
