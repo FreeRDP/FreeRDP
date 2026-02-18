@@ -1908,12 +1908,16 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	if (!surface)
 		return FALSE;
 
-	EnterCriticalSection(&(client->lock));
-	region16_init(&invalidRegion);
-	if (!region16_copy(&invalidRegion, &(client->invalidRegion)))
-		goto out;
-	region16_clear(&(client->invalidRegion));
-	LeaveCriticalSection(&(client->lock));
+	{
+		EnterCriticalSection(&(client->lock));
+		region16_init(&invalidRegion);
+
+		const BOOL res = region16_copy(&invalidRegion, &(client->invalidRegion));
+		region16_clear(&(client->invalidRegion));
+		LeaveCriticalSection(&(client->lock));
+		if (!res)
+			goto out;
+	}
 
 	EnterCriticalSection(&surface->lock);
 	rects = region16_rects(&(surface->invalidRegion), &numRects);
