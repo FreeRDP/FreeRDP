@@ -96,6 +96,9 @@ include(SetFreeRDPCMakeInstallDir)
 include(Doxygen)
 include(GetSysconfDir)
 
+# FreeRDP internal builds should always check results
+add_compile_definitions(WINPR_DEFINE_ATTR_NODISCARD)
+
 # Soname versioning
 set(BUILD_NUMBER 0)
 if($ENV{BUILD_NUMBER})
