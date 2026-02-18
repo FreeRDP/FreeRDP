@@ -93,6 +93,14 @@ extern "C"
 	 */
 	WINPR_API size_t Queue_Count(wQueue* queue);
 
+	/** @brief Return the allocated elements in the queue
+	 *
+	 *  @param queue A pointer to a queue, must not be \b NULL
+	 *
+	 *  @return the number of objects allocated
+	 */
+	WINPR_API size_t Queue_Capacity(wQueue* queue);
+
 	/** @brief Mutex-Lock a queue
 	 *
 	 *  @param queue A pointer to a queue, must not be \b NULL
@@ -181,6 +189,14 @@ extern "C"
 	WINPR_API void Queue_Free(wQueue* queue);
 
 	/** @brief Creates a new queue
+	 *
+	 *  @param synchronized If \b TRUE all functions are thread safe, if \b FALSE no synchronization
+	 * is done.
+	 *  @param capacity The initial capacity of the queue. If \b 0 or \b -1 default settings are
+	 * applied.
+	 *  @param growthFactor allocation behaviour when the queue capacity should be increased. Larger
+	 * values increase the allocation contingent. \b 0 or \b -1 apply default settings.
+	 *
 	 *
 	 *  @return A newly allocated queue or \b NULL in case of failure
 	 */
@@ -727,7 +743,22 @@ extern "C"
 	WINPR_API wObject* MessageQueue_Object(wMessageQueue* queue);
 	WINPR_API HANDLE MessageQueue_Event(wMessageQueue* queue);
 	WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
+
+	/** @brief return the currently used number of elements in the queue
+	 *
+	 *  @param queue A pointer to the queue to query. Must not be \b NULL
+	 *
+	 *  @return The number of elements in the queue
+	 */
 	WINPR_API size_t MessageQueue_Size(wMessageQueue* queue);
+
+	/** @brief return the currently allocated elements in the queue
+	 *
+	 *  @param queue A pointer to the queue to query. Must not be \b NULL
+	 *
+	 *  @return The number of currently allocated elements in the queue
+	 */
+	WINPR_API size_t MessageQueue_Capacity(wMessageQueue* queue);
 
 	WINPR_API BOOL MessageQueue_Dispatch(wMessageQueue* queue, const wMessage* message);
 	WINPR_API BOOL MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam,
