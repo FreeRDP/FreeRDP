@@ -26,26 +26,58 @@
 
 #define TAG CHANNELS_TAG("rdpecam-device.client")
 
-/* supported formats in preference order:
- * H264, MJPG, I420 (used as input for H264 encoder), other YUV based, RGB based
+/**
+ * @brief Get supported format list based on available codecs
+ *
+ * Returns supported formats in preference order:
+ * H264, MJPG (if decoder available), I420, other YUV based, RGB based
+ *
+ * @param pCount Output parameter for number of formats
+ * @return Pointer to format array
  */
-static const CAM_MEDIA_FORMAT_INFO supportedFormats[] = {
-/* inputFormat, outputFormat */
-#if defined(WITH_INPUT_FORMAT_H264)
-	{ CAM_MEDIA_FORMAT_H264, CAM_MEDIA_FORMAT_H264 }, /* passthrough */
-	{ CAM_MEDIA_FORMAT_MJPG_H264, CAM_MEDIA_FORMAT_H264 },
-#endif
-#if defined(WITH_INPUT_FORMAT_MJPG)
-	{ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_MJPG },
-#endif
-	{ CAM_MEDIA_FORMAT_I420, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_YUY2, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_NV12, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_RGB24, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_RGB32, CAM_MEDIA_FORMAT_H264 },
-};
-static const size_t nSupportedFormats = ARRAYSIZE(supportedFormats);
+static const CAM_MEDIA_FORMAT_INFO* getSupportedFormats(size_t* pCount)
+{
+	WINPR_ASSERT(pCount);
+
+	static CAM_MEDIA_FORMAT_INFO formats[16]; /* Max possible formats */
+	static size_t count = 0;
+	static BOOL initialized = FALSE;
+
+	if (initialized)
+	{
+		*pCount = count;
+		return formats;
+	}
+
+	count = 0;
+
+	/* H264 passthrough formats - only if H264 encoding is available */
+	if (freerdp_video_feature_available(FREERDP_VIDEO_FEATURE_H264_ENCODE))
+	{
+		formats[count++] =
+		    (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_H264, CAM_MEDIA_FORMAT_H264 };
+		formats[count++] =
+		    (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_MJPG_H264, CAM_MEDIA_FORMAT_H264 };
+	}
+
+	/* MJPG formats - only if decoder is available */
+	if (freerdp_video_feature_available(FREERDP_VIDEO_FEATURE_MJPEG_DECODE))
+	{
+		formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_H264 };
+		formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_MJPG };
+	}
+
+	/* Raw YUV and RGB formats */
+	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_I420, CAM_MEDIA_FORMAT_H264 };
+	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_YUY2, CAM_MEDIA_FORMAT_H264 };
+	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_NV12, CAM_MEDIA_FORMAT_H264 };
+	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_RGB24, CAM_MEDIA_FORMAT_H264 };
+	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_RGB32, CAM_MEDIA_FORMAT_H264 };
+
+	initialized = TRUE;
+	*pCount = count;
+	return formats;
+}
 
 static void ecam_dev_write_media_type(wStream* s, CAM_MEDIA_TYPE_DESCRIPTION* mediaType)
 {
@@ -578,6 +610,9 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_OutOfMemory);
 		return CHANNEL_RC_NO_MEMORY;
 	}
+
+	size_t nSupportedFormats = 0;
+	const CAM_MEDIA_FORMAT_INFO* supportedFormats = getSupportedFormats(&nSupportedFormats);
 
 	INT16 formatIndex =
 	    dev->ihal->GetMediaTypeDescriptions(dev->ihal, dev->deviceId, streamIndex, supportedFormats,

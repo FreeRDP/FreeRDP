@@ -96,7 +96,7 @@ static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 {
 	WINPR_ASSERT(queue);
 
-	const size_t required = queue->size + count;
+	size_t required = queue->size + count;
 	// check for overflow
 	if ((required < queue->size) || (required < count))
 		return FALSE;
@@ -104,6 +104,18 @@ static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 	if (required > queue->capacity)
 	{
 		const size_t old_capacity = queue->capacity;
+
+		/* When queue is wrapped (tail <= head), we need extra space to unwrap it.
+		 * Entries will be copied from position 0 to position old_capacity.
+		 * After unwrapping, tail will be at old_capacity + queue->tail.
+		 * We need room for unwrapped entries PLUS the new entries being added,
+		 * so minimum capacity is old_capacity + queue->tail + count. */
+		if (queue->tail <= queue->head)
+		{
+			const size_t unwrap_required = old_capacity + queue->tail + count;
+			if (unwrap_required > required)
+				required = unwrap_required;
+		}
 
 		wMessage* new_arr = (wMessage*)realloc(queue->array, sizeof(wMessage) * required);
 		if (!new_arr)
