@@ -58,8 +58,11 @@ typedef struct
 	rdpContext* rdpcontext;
 } TSMF_PLUGIN;
 
-BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id);
-BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id,
-                       UINT64 duration, UINT32 data_size);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL
+tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL
+tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id, UINT64 duration,
+                  UINT32 data_size);
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_MAIN_H */

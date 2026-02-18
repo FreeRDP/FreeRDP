@@ -25,27 +25,35 @@
 
 #define NDR_PTR_NULL (0UL)
 
-#define NDR_SIMPLE_TYPE_DECL(LOWER, UPPER)                                                        \
-	BOOL ndr_read_##LOWER(NdrContext* context, wStream* s, UPPER* v);                             \
-	BOOL ndr_read_##LOWER##_(NdrContext* context, wStream* s, const void* hints, void* v);        \
-	BOOL ndr_write_##LOWER(NdrContext* context, wStream* s, UPPER v);                             \
-	BOOL ndr_write_##LOWER##_(NdrContext* context, wStream* s, const void* hints, const void* v); \
-	extern const NdrMessageDescr ndr_##LOWER##_descr_s;                                           \
-	NdrMessageType ndr_##LOWER##_descr(void)
+#define NDR_SIMPLE_TYPE_DECL(LOWER, UPPER)                                                       \
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_##LOWER(NdrContext* context, wStream* s,    \
+	                                                         UPPER* v);                          \
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_##LOWER##_(NdrContext* context, wStream* s, \
+	                                                            const void* hints, void* v);     \
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_##LOWER(NdrContext* context, wStream* s,   \
+	                                                          UPPER v);                          \
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_##LOWER##_(                                \
+	    NdrContext* context, wStream* s, const void* hints, const void* v);                      \
+	FREERDP_LOCAL                                                                                \
+	extern const NdrMessageDescr ndr_##LOWER##_descr_s;                                          \
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL NdrMessageType ndr_##LOWER##_descr(void)
 
-#define NDR_ARRAY_OF_TYPE_DECL(TYPE, UPPERTYPE)                                               \
-	BOOL ndr_read_##TYPE##Array(NdrContext* context, wStream* s, const void* hints, void* v); \
-	BOOL ndr_write_##TYPE##Array(NdrContext* context, wStream* s, const void* hints,          \
-	                             const void* v);                                              \
-	void ndr_destroy_##TYPE##Array(NdrContext* context, const void* hints, void* obj);        \
-	extern const NdrMessageDescr ndr_##TYPE##Array_descr_s;                                   \
-	NdrMessageType ndr_##TYPE##Array_descr(void);                                             \
-                                                                                              \
-	BOOL ndr_read_##TYPE##VaryingArray(NdrContext* context, wStream* s, const void* hints,    \
-	                                   void* v);                                              \
-	BOOL ndr_write_##TYPE##VaryingArray(NdrContext* context, wStream* s, const void* hints,   \
-	                                    const void* v);                                       \
-	extern const NdrMessageDescr ndr_##TYPE##VaryingArray_descr_s;                            \
+#define NDR_ARRAY_OF_TYPE_DECL(TYPE, UPPERTYPE)                                        \
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_##TYPE##Array(                    \
+	    NdrContext* context, wStream* s, const void* hints, void* v);                  \
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_##TYPE##Array(                   \
+	    NdrContext* context, wStream* s, const void* hints, const void* v);            \
+	FREERDP_LOCAL                                                                      \
+	void ndr_destroy_##TYPE##Array(NdrContext* context, const void* hints, void* obj); \
+	FREERDP_LOCAL                                                                      \
+	extern const NdrMessageDescr ndr_##TYPE##Array_descr_s;                            \
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL NdrMessageType ndr_##TYPE##Array_descr(void);   \
+                                                                                       \
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_##TYPE##VaryingArray(             \
+	    NdrContext* context, wStream* s, const void* hints, void* v);                  \
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_##TYPE##VaryingArray(            \
+	    NdrContext* context, wStream* s, const void* hints, const void* v);            \
+	extern const NdrMessageDescr ndr_##TYPE##VaryingArray_descr_s;                     \
 	NdrMessageType ndr_##TYPE##VaryingArray_descr(void)
 
 #ifdef __cplusplus
@@ -120,7 +128,7 @@ extern "C"
 		NdrMessageType msg;
 	} NdrDeferredEntry;
 
-	void ndr_context_free(NdrContext* context);
+	FREERDP_LOCAL void ndr_context_free(NdrContext* context);
 
 	static inline void ndr_context_destroy(NdrContext** pcontext)
 	{
@@ -131,19 +139,19 @@ extern "C"
 
 	WINPR_ATTR_MALLOC(ndr_context_free, 1)
 	WINPR_ATTR_NODISCARD
-	NdrContext* ndr_context_new(BOOL bigEndianDrep, BYTE version);
+	FREERDP_LOCAL NdrContext* ndr_context_new(BOOL bigEndianDrep, BYTE version);
 
-	void ndr_context_reset(NdrContext* context);
-
-	WINPR_ATTR_MALLOC(ndr_context_free, 1)
-	WINPR_ATTR_NODISCARD
-	NdrContext* ndr_context_copy(const NdrContext* src);
+	FREERDP_LOCAL void ndr_context_reset(NdrContext* context);
 
 	WINPR_ATTR_MALLOC(ndr_context_free, 1)
 	WINPR_ATTR_NODISCARD
-	NdrContext* ndr_read_header(wStream* s);
+	FREERDP_LOCAL NdrContext* ndr_context_copy(const NdrContext* src);
 
-	BOOL ndr_write_header(NdrContext* context, wStream* s);
+	WINPR_ATTR_MALLOC(ndr_context_free, 1)
+	WINPR_ATTR_NODISCARD
+	FREERDP_LOCAL NdrContext* ndr_read_header(wStream* s);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_header(NdrContext* context, wStream* s);
 
 	NDR_SIMPLE_TYPE_DECL(uint8, UINT8);
 	NDR_SIMPLE_TYPE_DECL(uint16, UINT16);
@@ -153,21 +161,34 @@ extern "C"
 	NDR_ARRAY_OF_TYPE_DECL(uint8, BYTE);
 	NDR_ARRAY_OF_TYPE_DECL(uint16, UINT16);
 
-	BOOL ndr_skip_bytes(NdrContext* context, wStream* s, size_t nbytes);
-	BOOL ndr_read_align(NdrContext* context, wStream* s, size_t sz);
-	BOOL ndr_write_align(NdrContext* context, wStream* s, size_t sz);
-	BOOL ndr_write_data(NdrContext* context, wStream* s, const void* data, size_t sz);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_skip_bytes(NdrContext* context, wStream* s,
+	                                                       size_t nbytes);
 
-	BOOL ndr_read_pickle(NdrContext* context, wStream* s);
-	BOOL ndr_write_pickle(NdrContext* context, wStream* s);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_align(NdrContext* context, wStream* s,
+	                                                       size_t sz);
 
-	BOOL ndr_read_constructed(NdrContext* context, wStream* s, wStream* target);
-	BOOL ndr_write_constructed(NdrContext* context, wStream* s, wStream* payload);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_align(NdrContext* context, wStream* s,
+	                                                        size_t sz);
 
-	BOOL ndr_start_constructed(NdrContext* context, wStream* s);
-	BOOL ndr_end_constructed(NdrContext* context, wStream* s);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_data(NdrContext* context, wStream* s,
+	                                                       const void* data, size_t sz);
 
-	BOOL ndr_read_wchar(NdrContext* context, wStream* s, WCHAR* ptr);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_pickle(NdrContext* context, wStream* s);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_pickle(NdrContext* context, wStream* s);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_constructed(NdrContext* context, wStream* s,
+	                                                             wStream* target);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_constructed(NdrContext* context, wStream* s,
+	                                                              wStream* payload);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_start_constructed(NdrContext* context, wStream* s);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_end_constructed(NdrContext* context, wStream* s);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_wchar(NdrContext* context, wStream* s,
+	                                                       WCHAR* ptr);
 
 	/** @brief hints for a varying conformant array */
 	typedef struct
@@ -176,12 +197,13 @@ extern "C"
 		UINT32 maxLength;
 	} NdrVaryingArrayHints;
 
-	BOOL ndr_read_uconformant_varying_array(NdrContext* context, wStream* s,
-	                                        const NdrVaryingArrayHints* hints,
-	                                        NdrMessageType itemType, void* ptarget);
-	BOOL ndr_write_uconformant_varying_array(NdrContext* context, wStream* s,
-	                                         const NdrVaryingArrayHints* hints,
-	                                         NdrMessageType itemType, const void* src);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_uconformant_varying_array(
+	    NdrContext* context, wStream* s, const NdrVaryingArrayHints* hints, NdrMessageType itemType,
+	    void* ptarget);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_uconformant_varying_array(
+	    NdrContext* context, wStream* s, const NdrVaryingArrayHints* hints, NdrMessageType itemType,
+	    const void* src);
 
 	/** @brief hints for a conformant array */
 	typedef struct
@@ -189,30 +211,55 @@ extern "C"
 		UINT32 count;
 	} NdrArrayHints;
 
-	BOOL ndr_read_uconformant_array(NdrContext* context, wStream* s, const NdrArrayHints* hints,
-	                                NdrMessageType itemType, void* vtarget);
-	BOOL ndr_write_uconformant_array(NdrContext* context, wStream* s, UINT32 len,
-	                                 NdrMessageType itemType, const BYTE* ptr);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_uconformant_array(NdrContext* context,
+	                                                                   wStream* s,
+	                                                                   const NdrArrayHints* hints,
+	                                                                   NdrMessageType itemType,
+	                                                                   void* vtarget);
 
-	BOOL ndr_struct_read_fromDescr(NdrContext* context, wStream* s, const NdrStructDescr* descr,
-	                               void* target);
-	BOOL ndr_struct_write_fromDescr(NdrContext* context, wStream* s, const NdrStructDescr* descr,
-	                                const void* src);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_write_uconformant_array(NdrContext* context,
+	                                                                    wStream* s, UINT32 len,
+	                                                                    NdrMessageType itemType,
+	                                                                    const BYTE* ptr);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_struct_read_fromDescr(NdrContext* context,
+	                                                                  wStream* s,
+	                                                                  const NdrStructDescr* descr,
+	                                                                  void* target);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_struct_write_fromDescr(NdrContext* context,
+	                                                                   wStream* s,
+	                                                                   const NdrStructDescr* descr,
+	                                                                   const void* src);
+	FREERDP_LOCAL
 	void ndr_struct_dump_fromDescr(wLog* logger, UINT32 lvl, size_t identLevel,
 	                               const NdrStructDescr* descr, const void* obj);
+	FREERDP_LOCAL
 	void ndr_struct_destroy(NdrContext* context, const NdrStructDescr* descr, void* pptr);
 
-	ndr_refid ndr_pointer_refid(const void* ptr);
-	BOOL ndr_read_refpointer(NdrContext* context, wStream* s, UINT32* refId);
-	BOOL ndr_context_allocatePtr(NdrContext* context, const void* ptr, ndr_refid* prefId,
-	                             BOOL* pnewPtr);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL ndr_refid ndr_pointer_refid(const void* ptr);
 
-	BOOL ndr_read_pointedMessageEx(NdrContext* context, wStream* s, ndr_refid ptrId,
-	                               NdrMessageType descr, void* hints, void** target);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_refpointer(NdrContext* context, wStream* s,
+	                                                            UINT32* refId);
 
-	BOOL ndr_push_deferreds(NdrContext* context, NdrDeferredEntry* deferreds, size_t ndeferred);
-	BOOL ndr_treat_deferred_read(NdrContext* context, wStream* s);
-	BOOL ndr_treat_deferred_write(NdrContext* context, wStream* s);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_context_allocatePtr(NdrContext* context,
+	                                                                const void* ptr,
+	                                                                ndr_refid* prefId,
+	                                                                BOOL* pnewPtr);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_read_pointedMessageEx(NdrContext* context,
+	                                                                  wStream* s, ndr_refid ptrId,
+	                                                                  NdrMessageType descr,
+	                                                                  void* hints, void** target);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_push_deferreds(NdrContext* context,
+	                                                           NdrDeferredEntry* deferreds,
+	                                                           size_t ndeferred);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_treat_deferred_read(NdrContext* context,
+	                                                                wStream* s);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ndr_treat_deferred_write(NdrContext* context,
+	                                                                 wStream* s);
 
 #ifdef __cplusplus
 }

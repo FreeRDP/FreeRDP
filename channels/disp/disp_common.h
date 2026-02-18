@@ -26,7 +26,10 @@
 #include <freerdp/channels/disp.h>
 #include <freerdp/api.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT disp_read_header(wStream* s, DISPLAY_CONTROL_HEADER* header);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT disp_write_header(wStream* s, const DISPLAY_CONTROL_HEADER* header);
 
 #endif /* FREERDP_CHANNEL_DISP_COMMON_H */

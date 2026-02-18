@@ -63,23 +63,43 @@ typedef struct
 
 } TSMFGstreamerDecoder;
 
-const char* tsmf_platform_get_video_sink(void);
-const char* tsmf_platform_get_audio_sink(void);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL const char* tsmf_platform_get_video_sink(void);
 
-int tsmf_platform_create(TSMFGstreamerDecoder* decoder);
-int tsmf_platform_set_format(TSMFGstreamerDecoder* decoder);
-int tsmf_platform_register_handler(TSMFGstreamerDecoder* decoder);
-int tsmf_platform_free(TSMFGstreamerDecoder* decoder);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL const char* tsmf_platform_get_audio_sink(void);
 
-int tsmf_window_create(TSMFGstreamerDecoder* decoder);
-int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width, int height,
-                       int nr_rect, RDP_RECT* visible);
-int tsmf_window_destroy(TSMFGstreamerDecoder* decoder);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL int tsmf_platform_create(TSMFGstreamerDecoder* decoder);
 
-int tsmf_window_map(TSMFGstreamerDecoder* decoder);
-int tsmf_window_unmap(TSMFGstreamerDecoder* decoder);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL int tsmf_platform_set_format(TSMFGstreamerDecoder* decoder);
 
-BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder* mdecoder);
-void tsmf_gstreamer_remove_pad(TSMFGstreamerDecoder* mdecoder);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL int tsmf_platform_register_handler(TSMFGstreamerDecoder* decoder);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL int tsmf_platform_free(TSMFGstreamerDecoder* decoder);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL int tsmf_window_create(TSMFGstreamerDecoder* decoder);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width,
+                                     int height, int nr_rect, RDP_RECT* visible);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL int tsmf_window_destroy(TSMFGstreamerDecoder* decoder);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL int tsmf_window_map(TSMFGstreamerDecoder* decoder);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL int tsmf_window_unmap(TSMFGstreamerDecoder* decoder);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder* mdecoder);
+
+FREERDP_LOCAL void tsmf_gstreamer_remove_pad(TSMFGstreamerDecoder* mdecoder);
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_GST_PLATFORM_H */

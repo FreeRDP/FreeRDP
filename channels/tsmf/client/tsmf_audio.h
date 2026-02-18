@@ -47,6 +47,7 @@ struct s_ITSMFAudioDevice
 #define TSMF_AUDIO_DEVICE_EXPORT_FUNC_NAME "TSMFAudioDeviceEntry"
 typedef UINT(VCAPITYPE* TSMF_AUDIO_DEVICE_ENTRY)(ITSMFAudioDevice** dev);
 
-ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL ITSMFAudioDevice* tsmf_load_audio_device(const char* name,
+                                                                            const char* device);
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_AUDIO_H */
