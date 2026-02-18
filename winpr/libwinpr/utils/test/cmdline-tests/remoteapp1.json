@@ -1,0 +1,9 @@
+{
+	"expectSuccess": true,
+	"csv": "someappname,/v:localhost,/app:program:foo\\,file:bar\\,foo:bar",
+	"argv": [
+		"someappname",
+		"/v:localhost",
+		"/app:program:foo,file:bar,foo:bar"
+	]
+}
