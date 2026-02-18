@@ -239,3 +239,54 @@ name = msusb_msconfig_new
 change_kind = function-subtype-change
 name = msusb_msinterface_free
 
+# Functions not actually part of the API
+# These were not hidden in versions < 3.23.0
+# ignore these.
+[suppress_function]
+change_kind = deleted-function
+name = add_device
+
+[suppress_function]
+change_kind = deleted-function
+name = del_device
+
+[suppress_function]
+change_kind = deleted-function
+name = msusb_msconfig_dump
+
+[suppress_function]
+change_kind = deleted-function
+name = msusb_msconfig_free
+
+[suppress_function]
+change_kind = deleted-function
+name = msusb_msconfig_new
+
+[suppress_function]
+change_kind = deleted-function
+name = msusb_msconfig_read
+
+[suppress_function]
+change_kind = deleted-function
+name = msusb_msconfig_write
+
+[suppress_function]
+change_kind = deleted-function
+name = msusb_msinterface_free
+
+[suppress_function]
+change_kind = deleted-function
+name = msusb_msinterface_read
+
+[suppress_function]
+change_kind = deleted-function
+name = msusb_msinterface_replace
+
+[suppress_function]
+change_kind = deleted-function
+name = msusb_msinterface_write
+
+[suppress_function]
+change_kind = deleted-function
+name = msusb_mspipes_replace
+
