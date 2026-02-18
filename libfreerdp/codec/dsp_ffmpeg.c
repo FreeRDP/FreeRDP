@@ -813,9 +813,6 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!context || !format || !sdata || !out || !context->common.encoder)
 		return FALSE;
 
-	if (!context || !sdata || !out)
-		return FALSE;
-
 	/* https://github.com/FreeRDP/FreeRDP/issues/7607
 	 *
 	 * we get noisy data with channel transformation, so do it ourselves.

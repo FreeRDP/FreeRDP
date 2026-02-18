@@ -2086,7 +2086,8 @@ static BOOL freerdp_client_touch_update(rdpClientContext* cctx, UINT32 flags, IN
 BOOL freerdp_client_handle_touch(rdpClientContext* cctx, UINT32 flags, INT32 finger,
                                  UINT32 pressure, INT32 x, INT32 y)
 {
-	const UINT32 mask = FREERDP_TOUCH_DOWN | FREERDP_TOUCH_UP | FREERDP_TOUCH_MOTION;
+	const UINT32 mask =
+	    FREERDP_TOUCH_DOWN | FREERDP_TOUCH_UP | FREERDP_TOUCH_MOTION | FREERDP_TOUCH_CANCEL;
 	WINPR_ASSERT(cctx);
 
 	FreeRDP_TouchContact contact = { 0 };
