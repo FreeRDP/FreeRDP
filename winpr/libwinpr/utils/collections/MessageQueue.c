@@ -77,6 +77,15 @@ size_t MessageQueue_Size(wMessageQueue* queue)
 	return ret;
 }
 
+size_t MessageQueue_Capacity(wMessageQueue* queue)
+{
+	WINPR_ASSERT(queue);
+	EnterCriticalSection(&queue->lock);
+	const size_t ret = queue->capacity;
+	LeaveCriticalSection(&queue->lock);
+	return ret;
+}
+
 /**
  * Methods
  */

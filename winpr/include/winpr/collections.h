@@ -727,7 +727,22 @@ extern "C"
 	WINPR_API wObject* MessageQueue_Object(wMessageQueue* queue);
 	WINPR_API HANDLE MessageQueue_Event(wMessageQueue* queue);
 	WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
+
+	/** @brief return the currently used number of elements in the queue
+	 *
+	 *  @param queue A pointer to the queue to query. Must not be \b NULL
+	 *
+	 *  @return The number of elements in the queue
+	 */
 	WINPR_API size_t MessageQueue_Size(wMessageQueue* queue);
+
+	/** @brief return the currently allocated elements in the queue
+	 *
+	 *  @param queue A pointer to the queue to query. Must not be \b NULL
+	 *
+	 *  @return The number of currently allocated elements in the queue
+	 */
+	WINPR_API size_t MessageQueue_Capacity(wMessageQueue* queue);
 
 	WINPR_API BOOL MessageQueue_Dispatch(wMessageQueue* queue, const wMessage* message);
 	WINPR_API BOOL MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam,
