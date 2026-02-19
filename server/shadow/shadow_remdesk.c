@@ -26,6 +26,7 @@
 
 int shadow_client_remdesk_init(rdpShadowClient* client)
 {
+	WINPR_ASSERT(client);
 	RemdeskServerContext* remdesk = client->remdesk = remdesk_server_context_new(client->vcm);
 	if (!remdesk)
 		return -1;
@@ -46,6 +47,7 @@ int shadow_client_remdesk_init(rdpShadowClient* client)
 
 void shadow_client_remdesk_uninit(rdpShadowClient* client)
 {
+	WINPR_ASSERT(client);
 	if (client->remdesk)
 	{
 		client->remdesk->Stop(client->remdesk);

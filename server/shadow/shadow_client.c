@@ -2168,9 +2168,8 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 				if ((msg->xPos != client->pointerX) || (msg->yPos != client->pointerY))
 				{
 					WINPR_ASSERT(update->pointer);
-					if (CHANNEL_RC_OK != IFCALLRESULT(CHANNEL_RC_OK,
-					                                  update->pointer->PointerPosition, context,
-					                                  &pointerPosition))
+					if (!IFCALLRESULT(TRUE, update->pointer->PointerPosition, context,
+					                  &pointerPosition))
 						return -1;
 					client->pointerX = msg->xPos;
 					client->pointerY = msg->yPos;
@@ -2235,9 +2234,11 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 			if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
 			{
 				client->rdpsnd->src_format = msg->audio_format;
-				if (CHANNEL_RC_OK != IFCALLRESULT(CHANNEL_RC_OK, client->rdpsnd->SendSamples,
-				                                  client->rdpsnd, msg->buf, msg->nFrames,
-				                                  msg->wTimestamp))
+
+				const UINT error =
+				    IFCALLRESULT(CHANNEL_RC_OK, client->rdpsnd->SendSamples, client->rdpsnd,
+				                 msg->buf, msg->nFrames, msg->wTimestamp);
+				if (CHANNEL_RC_OK != error)
 					return -1;
 			}
 
@@ -2251,8 +2252,9 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 
 			if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
 			{
-				if (CHANNEL_RC_OK != IFCALLRESULT(CHANNEL_RC_OK, client->rdpsnd->SetVolume,
-				                                  client->rdpsnd, msg->left, msg->right))
+				const UINT error = IFCALLRESULT(CHANNEL_RC_OK, client->rdpsnd->SetVolume,
+				                                client->rdpsnd, msg->left, msg->right);
+				if (CHANNEL_RC_OK != error)
 					return -1;
 			}
 
@@ -2729,7 +2731,6 @@ int shadow_client_boardcast_msg(rdpShadowServer* server, void* context, UINT32 t
                                 SHADOW_MSG_OUT* msg, void* lParam)
 {
 	wMessage message = { 0 };
-	rdpShadowClient* client = NULL;
 	int count = 0;
 
 	WINPR_ASSERT(server);
@@ -2749,7 +2750,7 @@ int shadow_client_boardcast_msg(rdpShadowServer* server, void* context, UINT32 t
 
 	for (size_t index = 0; index < ArrayList_Count(server->clients); index++)
 	{
-		client = (rdpShadowClient*)ArrayList_GetItem(server->clients, index);
+		rdpShadowClient* client = (rdpShadowClient*)ArrayList_GetItem(server->clients, index);
 
 		if (shadow_client_dispatch_msg(client, &message))
 		{
