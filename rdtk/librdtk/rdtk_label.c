@@ -38,7 +38,9 @@ int rdtk_label_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint16
 	rdtkEngine* engine = surface->engine;
 	rdtkFont* font = engine->font;
 
-	rdtk_font_text_draw_size(font, &textWidth, &textHeight, text);
+	const int rc1 = rdtk_font_text_draw_size(font, &textWidth, &textHeight, text);
+	if (rc1 < 0)
+		return rc1;
 
 	if ((textWidth > 0) && (textHeight > 0))
 	{
@@ -51,7 +53,9 @@ int rdtk_label_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint16
 		if (textHeight < nHeight)
 			offsetY = ((nHeight - textHeight) / 2);
 
-		rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
+		const int rc2 = rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
+		if (rc2 < 0)
+			return rc2;
 	}
 
 	return 1;

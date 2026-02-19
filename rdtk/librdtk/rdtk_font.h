@@ -57,14 +57,20 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	int rdtk_font_text_draw_size(rdtkFont* font, uint16_t* width, uint16_t* height,
 	                             const char* text);
 
+	WINPR_ATTR_NODISCARD
 	int rdtk_font_engine_init(rdtkEngine* engine);
+
 	int rdtk_font_engine_uninit(rdtkEngine* engine);
 
-	rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file);
 	void rdtk_font_free(rdtkFont* font);
+
+	WINPR_ATTR_MALLOC(rdtk_font_free, 1)
+	WINPR_ATTR_NODISCARD
+	rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file);
 
 #ifdef __cplusplus
 }

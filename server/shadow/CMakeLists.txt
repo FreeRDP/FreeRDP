@@ -54,28 +54,24 @@ set(SRCS
     shadow.h
 )
 
-if(NOT FREERDP_UNIFIED_BUILD)
-  find_package(rdtk 0 REQUIRED)
-  include_directories(SYSTEM ${RDTK_INCLUDE_DIR})
-else()
-  if(NOT WITH_RDTK)
-    message(FATAL_ERROR "-DWITH_RDTK=ON is required for unified FreeRDP build with shadow server")
+if(WITH_RDTK)
+  if(NOT FREERDP_UNIFIED_BUILD)
+    find_package(rdtk 0 REQUIRED)
+    include_directories(SYSTEM ${RDTK_INCLUDE_DIR})
+  else()
+    include_directories(${PROJECT_SOURCE_DIR}/rdtk/include)
+    include_directories(${PROJECT_BINARY_DIR}/rdtk/include)
   endif()
-  include_directories(${PROJECT_SOURCE_DIR}/rdtk/include)
-  include_directories(${PROJECT_BINARY_DIR}/rdtk/include)
 endif()
 
 addtargetwithresourcefile(${MODULE_NAME} "FALSE" "${FREERDP_VERSION}" SRCS)
 
-list(
-  APPEND
-  LIBS
-  freerdp
-  freerdp-server
-  winpr
-  winpr-tools
-  rdtk
-)
+if(WITH_RDTK)
+  target_compile_definitions(${MODULE_NAME} PRIVATE WITH_RDTK)
+  list(APPEND LIBS rdtk)
+endif()
+
+list(APPEND LIBS freerdp freerdp-server winpr winpr-tools)
 
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})

@@ -59,15 +59,23 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image);
+
+	WINPR_ATTR_NODISCARD
 	int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
 	                         rdtkNinePatch* ninePatch);
 
+	WINPR_ATTR_NODISCARD
 	int rdtk_nine_patch_engine_init(rdtkEngine* engine);
+
 	int rdtk_nine_patch_engine_uninit(rdtkEngine* engine);
 
-	rdtkNinePatch* rdtk_nine_patch_new(rdtkEngine* engine);
 	void rdtk_nine_patch_free(rdtkNinePatch* ninePatch);
+
+	WINPR_ATTR_MALLOC(rdtk_nine_patch_free, 1)
+	WINPR_ATTR_NODISCARD
+	rdtkNinePatch* rdtk_nine_patch_new(rdtkEngine* engine);
 
 #ifdef __cplusplus
 }

@@ -41,6 +41,7 @@
 #define FILE_EXT "bmp"
 #endif
 
+WINPR_ATTR_NODISCARD
 static int rdtk_font_draw_glyph(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst,
                                 rdtkFont* font, rdtkGlyph* glyph)
 {
@@ -115,7 +116,9 @@ int rdtk_font_draw_text(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, rd
 	for (size_t index = 0; index < length; index++)
 	{
 		rdtkGlyph* glyph = &font->glyphs[text[index] - 32];
-		rdtk_font_draw_glyph(surface, nXDst, nYDst, font, glyph);
+		const int rc = rdtk_font_draw_glyph(surface, nXDst, nYDst, font, glyph);
+		if (rc < 0)
+			return rc;
 		nXDst += (glyph->width + 1);
 	}
 
@@ -206,6 +209,7 @@ fail:
 	return NULL;
 }
 
+WINPR_ATTR_NODISCARD
 static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, uint8_t* utf8)
 {
 	WINPR_ASSERT(str);
@@ -244,6 +248,7 @@ static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, uint8_t* u
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, char* buffer,
                                              WINPR_ATTR_UNUSED size_t size)
 {
@@ -602,7 +607,9 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, char* buffer,
 						goto fail;
 
 					*q = '\0';
-					rdtk_font_convert_descriptor_code_to_utf8(p, glyph->code);
+					rc = rdtk_font_convert_descriptor_code_to_utf8(p, glyph->code);
+					if (rc < 0)
+						goto fail;
 					*q = '"';
 				}
 				/* finish parsing glyph */
@@ -620,6 +627,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int rdtk_font_load_descriptor(rdtkFont* font, const char* filename)
 {
 	size_t size = 0;
@@ -698,6 +706,8 @@ cleanup:
 	return NULL;
 }
 
+WINPR_ATTR_MALLOC(rdtk_font_free, 1)
+WINPR_ATTR_NODISCARD
 static rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, const uint8_t* imageData,
                                         size_t imageSize, const uint8_t* descriptorData,
                                         size_t descriptorSize)

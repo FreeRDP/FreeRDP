@@ -37,11 +37,16 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	int rdtk_text_field_engine_init(rdtkEngine* engine);
+
 	int rdtk_text_field_engine_uninit(rdtkEngine* engine);
 
-	rdtkTextField* rdtk_text_field_new(rdtkEngine* engine, rdtkNinePatch* ninePatch);
 	void rdtk_text_field_free(rdtkTextField* textField);
+
+	WINPR_ATTR_MALLOC(rdtk_text_field_free, 1)
+	WINPR_ATTR_NODISCARD
+	rdtkTextField* rdtk_text_field_new(rdtkEngine* engine, rdtkNinePatch* ninePatch);
 
 #ifdef __cplusplus
 }
