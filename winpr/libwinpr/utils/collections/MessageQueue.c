@@ -135,18 +135,24 @@ static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 			size_t slots = new_capacity - old_capacity;
 			const size_t batch = (tocopy < slots) ? tocopy : slots;
 			CopyMemory(&(queue->array[old_capacity]), queue->array, batch * sizeof(wMessage));
-			ZeroMemory(queue->array, batch * sizeof(wMessage));
 
 			/* Tail is decremented. if the whole thing is appended
 			 * just move the existing tail by old_capacity */
 			if (tocopy < slots)
+			{
+				ZeroMemory(queue->array, batch * sizeof(wMessage));
 				queue->tail += old_capacity;
+			}
 			else
 			{
-				const size_t movesize = (queue->tail - batch) * sizeof(wMessage);
+				const size_t remain = queue->tail - batch;
+				const size_t movesize = remain * sizeof(wMessage);
 				memmove_s(queue->array, queue->tail * sizeof(wMessage), &queue->array[batch],
 				          movesize);
-				ZeroMemory(&queue->array[batch], movesize);
+
+				const size_t zerooffset = remain;
+				const size_t zerosize = (queue->tail - remain) * sizeof(wMessage);
+				ZeroMemory(&queue->array[zerooffset], zerosize);
 				queue->tail -= batch;
 			}
 		}

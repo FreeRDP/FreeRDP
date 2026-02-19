@@ -188,18 +188,23 @@ BOOL Queue_Contains(wQueue* queue, const void* obj)
 
 static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
 {
+	const size_t blocksize = 32ull;
 	WINPR_ASSERT(queue);
 
-	if (queue->size + count > queue->capacity)
+	if (queue->growthFactor > SIZE_MAX / blocksize)
+		return FALSE;
+
+	const size_t increment = blocksize * queue->growthFactor;
+	if (queue->size > SIZE_MAX - count)
+		return FALSE;
+
+	const size_t required = queue->size + count;
+	if (required > queue->capacity)
 	{
-		if (queue->growthFactor > SIZE_MAX / 32ull)
-			return FALSE;
-		if (queue->size > SIZE_MAX - count)
+		const size_t old_capacity = queue->capacity;
+		if (required > SIZE_MAX - increment)
 			return FALSE;
 
-		const size_t increment = 32ull * queue->growthFactor;
-		const size_t old_capacity = queue->capacity;
-		const size_t required = queue->size + count;
 		const size_t new_capacity = required + increment - required % increment;
 		if (new_capacity > SIZE_MAX / sizeof(BYTE*))
 			return FALSE;
@@ -222,18 +227,24 @@ static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
 			const size_t batch = (tocopy < slots) ? tocopy : slots;
 
 			CopyMemory(&(queue->array[old_capacity]), queue->array, batch * sizeof(uintptr_t));
-			ZeroMemory(queue->array, batch * sizeof(uintptr_t));
 
 			/* Tail is decremented. if the whole thing is appended
 			 * just move the existing tail by old_capacity */
 			if (tocopy < slots)
+			{
+				ZeroMemory(queue->array, batch * sizeof(uintptr_t));
 				queue->tail += old_capacity;
+			}
 			else
 			{
-				const size_t movesize = (queue->tail - batch) * sizeof(uintptr_t);
+				const size_t remain = queue->tail - batch;
+				const size_t movesize = remain * sizeof(uintptr_t);
 				memmove_s(queue->array, queue->tail * sizeof(uintptr_t), &queue->array[batch],
 				          movesize);
-				ZeroMemory(&queue->array[batch], movesize);
+
+				const size_t zerooffset = remain;
+				const size_t zerosize = (queue->tail - remain) * sizeof(uintptr_t);
+				ZeroMemory(&queue->array[zerooffset], zerosize);
 				queue->tail -= batch;
 			}
 		}
