@@ -34,6 +34,7 @@
 
 static void rdpsnd_activated(RdpsndServerContext* context)
 {
+	WINPR_ASSERT(context);
 	for (size_t i = 0; i < context->num_client_formats; i++)
 	{
 		for (size_t j = 0; j < context->num_server_formats; j++)
@@ -53,8 +54,8 @@ static void rdpsnd_activated(RdpsndServerContext* context)
 
 int shadow_client_rdpsnd_init(rdpShadowClient* client)
 {
-	RdpsndServerContext* rdpsnd = NULL;
-	rdpsnd = client->rdpsnd = rdpsnd_server_context_new(client->vcm);
+	WINPR_ASSERT(client);
+	RdpsndServerContext* rdpsnd = client->rdpsnd = rdpsnd_server_context_new(client->vcm);
 
 	if (!rdpsnd)
 	{
@@ -77,13 +78,16 @@ int shadow_client_rdpsnd_init(rdpShadowClient* client)
 		rdpsnd->src_format = &rdpsnd->server_formats[0];
 
 	rdpsnd->Activated = rdpsnd_activated;
-	if (rdpsnd->Initialize(rdpsnd, TRUE) != CHANNEL_RC_OK)
+
+	const UINT error = rdpsnd->Initialize(rdpsnd, TRUE);
+	if (error != CHANNEL_RC_OK)
 		return -1;
 	return 1;
 }
 
 void shadow_client_rdpsnd_uninit(rdpShadowClient* client)
 {
+	WINPR_ASSERT(client);
 	if (client->rdpsnd)
 	{
 		client->rdpsnd->Stop(client->rdpsnd);

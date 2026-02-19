@@ -993,8 +993,10 @@ static BOOL shadow_server_check_peer_restrictions(freerdp_listener* listener)
 int shadow_server_init(rdpShadowServer* server)
 {
 	int status = 0;
-	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
-	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
+	if (!winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT))
+		return -1;
+	if (!WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi()))
+		return -1;
 
 	if (!(server->clients = ArrayList_New(TRUE)))
 		goto fail;

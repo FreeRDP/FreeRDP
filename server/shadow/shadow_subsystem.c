@@ -85,7 +85,8 @@ int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server
 	if (!(subsystem->updateEvent = shadow_multiclient_new()))
 		goto fail;
 
-	if ((status = subsystem->ep.Init(subsystem)) >= 0)
+	status = subsystem->ep.Init(subsystem);
+	if (status >= 0)
 		return status;
 
 fail:

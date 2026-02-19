@@ -102,9 +102,11 @@ encomsp_change_participant_control_level(EncomspServerContext* context,
 
 int shadow_client_encomsp_init(rdpShadowClient* client)
 {
-	EncomspServerContext* encomsp = NULL;
+	WINPR_ASSERT(client);
 
-	encomsp = client->encomsp = encomsp_server_context_new(client->vcm);
+	EncomspServerContext* encomsp = client->encomsp = encomsp_server_context_new(client->vcm);
+	if (!encomsp)
+		return -1;
 
 	encomsp->rdpcontext = &client->context;
 
@@ -124,6 +126,7 @@ int shadow_client_encomsp_init(rdpShadowClient* client)
 
 void shadow_client_encomsp_uninit(rdpShadowClient* client)
 {
+	WINPR_ASSERT(client);
 	if (client->encomsp)
 	{
 		client->encomsp->Stop(client->encomsp);

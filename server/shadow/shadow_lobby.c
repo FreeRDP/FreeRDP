@@ -33,7 +33,9 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 	int width = 0;
 	int height = 0;
 	rdtkSurface* surface = NULL;
-	RECTANGLE_16 invalidRect;
+	RECTANGLE_16 invalidRect = { 0 };
+
+	WINPR_ASSERT(server);
 	rdpShadowSurface* lobby = server->lobby;
 
 	if (!lobby)
