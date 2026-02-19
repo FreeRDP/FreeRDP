@@ -51,28 +51,38 @@ static const CAM_MEDIA_FORMAT_INFO* getSupportedFormats(size_t* pCount)
 
 	count = 0;
 
-	/* H264 passthrough formats - only if H264 encoding is available */
-	if (freerdp_video_feature_available(FREERDP_VIDEO_FEATURE_H264_ENCODE))
+	const BOOL h264Available = freerdp_video_conversion_supported(
+	    FREERDP_VIDEO_FORMAT_YUV420P, FREERDP_VIDEO_FORMAT_H264);
+
+	if (h264Available)
 	{
-		formats[count++] =
-		    (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_H264, CAM_MEDIA_FORMAT_H264 };
+		formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_H264, CAM_MEDIA_FORMAT_H264 };
 		formats[count++] =
 		    (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_MJPG_H264, CAM_MEDIA_FORMAT_H264 };
+
+		if (freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT_MJPEG,
+		                                       FREERDP_VIDEO_FORMAT_YUV420P))
+		{
+			formats[count++] =
+			    (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_H264 };
+		}
+
+		if (freerdp_video_available())
+		{
+			formats[count++] =
+			    (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_I420, CAM_MEDIA_FORMAT_H264 };
+			formats[count++] =
+			    (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_YUY2, CAM_MEDIA_FORMAT_H264 };
+			formats[count++] =
+			    (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_NV12, CAM_MEDIA_FORMAT_H264 };
+			formats[count++] =
+			    (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_RGB24, CAM_MEDIA_FORMAT_H264 };
+			formats[count++] =
+			    (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_RGB32, CAM_MEDIA_FORMAT_H264 };
+		}
 	}
 
-	/* MJPG formats - only if decoder is available */
-	if (freerdp_video_feature_available(FREERDP_VIDEO_FEATURE_MJPEG_DECODE))
-	{
-		formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_H264 };
-		formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_MJPG };
-	}
-
-	/* Raw YUV and RGB formats */
-	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_I420, CAM_MEDIA_FORMAT_H264 };
-	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_YUY2, CAM_MEDIA_FORMAT_H264 };
-	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_NV12, CAM_MEDIA_FORMAT_H264 };
-	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_RGB24, CAM_MEDIA_FORMAT_H264 };
-	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_RGB32, CAM_MEDIA_FORMAT_H264 };
+	formats[count++] = (CAM_MEDIA_FORMAT_INFO){ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_MJPG };
 
 	initialized = TRUE;
 	*pCount = count;

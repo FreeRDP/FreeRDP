@@ -84,17 +84,6 @@ extern "C"
 	} FREERDP_VIDEO_CONTEXT_OPTION;
 
 	/**
-	 * @brief Video feature flags for capability checking
-	 */
-	typedef enum
-	{
-		FREERDP_VIDEO_FEATURE_NONE = 0,
-		FREERDP_VIDEO_FEATURE_MJPEG_DECODE = (1 << 0), /** MJPEG decoding support */
-		FREERDP_VIDEO_FEATURE_H264_ENCODE = (1 << 1), /** H264 encoding support */
-		FREERDP_VIDEO_FEATURE_H264_DECODE = (1 << 2) /** H264 decoding support */
-	} FREERDP_VIDEO_FEATURE;
-
-	/**
 	 * @brief Free a video processing context
 	 *
 	 * @param context Context to free
@@ -123,46 +112,6 @@ extern "C"
 	                                             UINT32 height);
 
 	/**
-	 * @brief Decode MJPEG frame to raw pixels
-	 *
-	 * @param context Video context
-	 * @param srcData MJPEG compressed data
-	 * @param srcSize Size of compressed data
-	 * @param dstData Output planes (array of 4 pointers)
-	 * @param dstLineSize Output line sizes (array of 4 ints)
-	 * @param dstFormat Output pixel format
-	 * @return TRUE on success
-	 */
-	FREERDP_API BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context,
-	                                            const BYTE* srcData, size_t srcSize,
-	                                            BYTE* dstData[4], int dstLineSize[4],
-	                                            FREERDP_VIDEO_FORMAT* dstFormat);
-
-	/**
-	 * @brief Convert pixel format to YUV for encoding
-	 *
-	 * This function handles color space conversion from various input formats
-	 * to YUV420P or NV12 for video encoding. It wraps libswscale functionality.
-	 *
-	 * @param context Video context (can be NULL for stateless operation)
-	 * @param srcData Source image planes (array of 4 pointers)
-	 * @param srcLineSize Source line sizes (array of 4 ints)
-	 * @param srcFormat Source pixel format
-	 * @param dstData Destination YUV planes (array of 3 pointers)
-	 * @param dstLineSize Destination line sizes (array of 3 ints)
-	 * @param dstFormat Destination YUV format (YUV420P or NV12)
-	 * @param width Frame width
-	 * @param height Frame height
-	 * @return TRUE on success
-	 */
-	FREERDP_API BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context,
-	                                              const BYTE* srcData[4], const int srcLineSize[4],
-	                                              FREERDP_VIDEO_FORMAT srcFormat, BYTE* dstData[3],
-	                                              const int dstLineSize[3],
-	                                              FREERDP_VIDEO_FORMAT dstFormat, UINT32 width,
-	                                              UINT32 height);
-
-	/**
 	 * @brief Fill image plane pointers and line sizes
 	 *
 	 * Helper function to initialize plane pointers and line sizes for a given format
@@ -187,12 +136,136 @@ extern "C"
 	FREERDP_API BOOL freerdp_video_available(void);
 
 	/**
-	 * @brief Check if specific video features are available
+	 * @brief Video frame data container
 	 *
-	 * @param features Feature flags to check (can combine with bitwise OR)
-	 * @return TRUE if all requested features are available
+	 * Flexible structure that can hold both compressed and raw video data.
+	 * The format field determines which union member is valid:
+	 * - Compressed formats (MJPEG, H264) use the compressed member
+	 * - Raw/planar formats use the raw member
 	 */
-	FREERDP_API BOOL freerdp_video_feature_available(UINT32 features);
+	typedef struct
+	{
+		FREERDP_VIDEO_FORMAT format; /** Format of the data */
+		UINT32 width;                 /** Frame width in pixels */
+		UINT32 height;                /** Frame height in pixels */
+
+		union
+		{
+			/** For compressed formats (MJPEG, H264) */
+			struct
+			{
+				BYTE* data;  /** Compressed bitstream */
+				size_t size; /** Size in bytes */
+			} compressed;
+
+			/** For raw/planar formats */
+			struct
+			{
+				BYTE* data[4];     /** Plane pointers (Y, U, V, A) */
+				int linesize[4];   /** Stride for each plane */
+			} raw;
+		};
+	} FREERDP_VIDEO_FRAME;
+
+	/**
+	 * @brief Initialize a frame structure for compressed data
+	 *
+	 * @param frame Frame structure to initialize
+	 * @param format Video format (must be MJPEG or H264)
+	 * @param data Compressed bitstream data
+	 * @param size Size of compressed data in bytes
+	 * @param width Frame width in pixels
+	 * @param height Frame height in pixels
+	 */
+	FREERDP_API void freerdp_video_frame_init_compressed(FREERDP_VIDEO_FRAME* frame,
+	                                                     FREERDP_VIDEO_FORMAT format, BYTE* data,
+	                                                     size_t size, UINT32 width, UINT32 height);
+
+	/**
+	 * @brief Initialize a frame structure for raw/planar data
+	 *
+	 * @param frame Frame structure to initialize
+	 * @param format Video format (raw/planar format)
+	 * @param data Array of plane pointers
+	 * @param linesize Array of stride values for each plane
+	 * @param width Frame width in pixels
+	 * @param height Frame height in pixels
+	 */
+	FREERDP_API void freerdp_video_frame_init_raw(FREERDP_VIDEO_FRAME* frame,
+	                                              FREERDP_VIDEO_FORMAT format, BYTE* data[4],
+	                                              int linesize[4], UINT32 width, UINT32 height);
+
+	/**
+	 * @brief Initialize a frame structure for packed data (convenience)
+	 *
+	 * For formats like YUY2, RGB24 where data is in a single contiguous buffer.
+	 * This is a convenience wrapper around freerdp_video_frame_init_raw().
+	 *
+	 * @param frame Frame structure to initialize
+	 * @param format Video format (packed format like YUYV422, RGB24, etc.)
+	 * @param buffer Pointer to packed pixel data
+	 * @param width Frame width in pixels
+	 * @param height Frame height in pixels
+	 */
+	FREERDP_API void freerdp_video_frame_init_packed(FREERDP_VIDEO_FRAME* frame,
+	                                                 FREERDP_VIDEO_FORMAT format, BYTE* buffer,
+	                                                 UINT32 width, UINT32 height);
+
+	/**
+	 * @brief Convert video data between formats
+	 *
+	 * Unified function that handles:
+	 * - Decoding compressed formats (MJPEG, H264)
+	 * - Pixel format conversion (YUY2 → YUV420P, etc.)
+	 * - Encoding to compressed formats
+	 *
+	 * The function automatically detects required operations based on src/dst formats.
+	 *
+	 * @param context Video context (reused for efficiency, can be NULL for one-shot)
+	 * @param src Source frame
+	 * @param dst Destination frame (data buffers must be pre-allocated by caller)
+	 * @return TRUE on success, FALSE on failure
+	 *
+	 * @note For compressed output, caller must provide dst->compressed.data buffer
+	 *       with sufficient size. Use freerdp_video_estimate_size() to determine size.
+	 *
+	 * @example
+	 * // MJPEG → YUV420P conversion
+	 * FREERDP_VIDEO_FRAME src, dst;
+	 * BYTE* dstPlanes[4] = {yBuffer, uBuffer, vBuffer, NULL};
+	 * int dstLinesize[4] = {width, width/2, width/2, 0};
+	 *
+	 * freerdp_video_frame_init_compressed(&src, FREERDP_VIDEO_FORMAT_MJPEG,
+	 *                                     mjpegData, mjpegSize, width, height);
+	 * freerdp_video_frame_init_raw(&dst, FREERDP_VIDEO_FORMAT_YUV420P,
+	 *                              dstPlanes, dstLinesize, width, height);
+	 *
+	 * if (freerdp_video_convert(ctx, &src, &dst))
+	 *     // Conversion successful
+	 */
+	FREERDP_API BOOL freerdp_video_convert(FREERDP_VIDEO_CONTEXT* context,
+	                                       const FREERDP_VIDEO_FRAME* src,
+	                                       FREERDP_VIDEO_FRAME* dst);
+
+	/**
+	 * @brief Check if a specific format conversion is supported
+	 *
+	 * Queries whether the video subsystem can convert from srcFormat to dstFormat.
+	 * This allows dynamic capability checking based on compiled backends.
+	 *
+	 * @param srcFormat Source video format
+	 * @param dstFormat Destination video format
+	 * @return TRUE if conversion is supported, FALSE otherwise
+	 *
+	 * @example
+	 * if (freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT_MJPEG,
+	 *                                        FREERDP_VIDEO_FORMAT_YUV420P))
+	 * {
+	 *     // Can decode MJPEG to YUV420P
+	 * }
+	 */
+	FREERDP_API BOOL freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT srcFormat,
+	                                                    FREERDP_VIDEO_FORMAT dstFormat);
 
 #ifdef __cplusplus
 }

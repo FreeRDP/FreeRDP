@@ -251,13 +251,10 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
                                        size_t srcSize, BYTE** ppDstData, size_t* pDstSize)
 {
 	UINT32 dstSize = 0;
-	BYTE* srcSlice[4] = { 0 };
-	int srcLineSizes[4] = { 0 };
 	BYTE* yuvData[3] = { 0 };
 	UINT32 yuvLineSizes[3] = { 0 };
 	prim_size_t size = { stream->currMediaType.Width, stream->currMediaType.Height };
 	CAM_MEDIA_FORMAT inputFormat = streamInputFormat(stream);
-	FREERDP_VIDEO_FORMAT videoFormat = FREERDP_VIDEO_FORMAT_NONE;
 
 	if (inputFormat == CAM_MEDIA_FORMAT_MJPG_H264)
 	{
@@ -267,28 +264,6 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 		*ppDstData = stream->h264Frame;
 		*pDstSize = dstSize;
 		return dstSize > 0;
-	}
-	else if (inputFormat == CAM_MEDIA_FORMAT_MJPG)
-	{
-		WLog_DBG(TAG, "Decoding MJPEG frame: size=%zu", srcSize);
-		if (!freerdp_video_decode_mjpeg(stream->video, srcData, srcSize, srcSlice, srcLineSizes,
-		                                &videoFormat))
-		{
-			WLog_ERR(TAG, "freerdp_video_decode_mjpeg failed");
-			return FALSE;
-		}
-		WLog_DBG(TAG, "MJPEG decode OK: format=%d, lines=[%d,%d,%d,%d]",
-		         videoFormat, srcLineSizes[0], srcLineSizes[1], srcLineSizes[2], srcLineSizes[3]);
-	}
-	else
-	{
-		videoFormat = ecamToVideoFormat(inputFormat);
-		if (!freerdp_video_fill_plane_info(srcSlice, srcLineSizes, videoFormat, size.width,
-		                                   size.height, srcData))
-		{
-			WLog_ERR(TAG, "freerdp_video_fill_plane_info failed");
-			return FALSE;
-		}
 	}
 
 	if (h264_get_yuv_buffer(stream->h264, 0, size.width, size.height, yuvData, yuvLineSizes) < 0)
@@ -301,17 +276,34 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
 	if (!ecam_init_video_context(stream))
 		return FALSE;
 
-	const BYTE* cSrcSlice[4] = { srcSlice[0], srcSlice[1], srcSlice[2], srcSlice[3] };
-	WLog_DBG(TAG, "Converting to YUV: %dx%d, srcFmt=%d, dstFmt=%d",
-	         size.width, size.height, videoFormat, outputFormat);
-	if (!freerdp_video_convert_to_yuv(stream->video, cSrcSlice, srcLineSizes, videoFormat,
-	                                  yuvData, (const int*)yuvLineSizes, outputFormat, size.width,
-	                                  size.height))
+	FREERDP_VIDEO_FRAME src = { 0 };
+	FREERDP_VIDEO_FRAME dst = { 0 };
+
+	if (inputFormat == CAM_MEDIA_FORMAT_MJPG)
 	{
-		WLog_ERR(TAG, "freerdp_video_convert_to_yuv failed");
+		WLog_DBG(TAG, "Decoding and converting MJPEG frame: size=%zu", srcSize);
+		freerdp_video_frame_init_compressed(&src, FREERDP_VIDEO_FORMAT_MJPEG,
+		                                    (BYTE*)srcData, srcSize, size.width, size.height);
+	}
+	else
+	{
+		FREERDP_VIDEO_FORMAT videoFormat = ecamToVideoFormat(inputFormat);
+		WLog_DBG(TAG, "Converting raw format %d to YUV: %dx%d", videoFormat, size.width, size.height);
+		freerdp_video_frame_init_packed(&src, videoFormat, (BYTE*)srcData, size.width, size.height);
+	}
+
+	BYTE* dstData[4] = { yuvData[0], yuvData[1], yuvData[2], NULL };
+	int dstLineSizes[4] = { (int)yuvLineSizes[0], (int)yuvLineSizes[1], (int)yuvLineSizes[2], 0 };
+	freerdp_video_frame_init_raw(&dst, outputFormat, dstData, dstLineSizes, size.width, size.height);
+
+	WLog_DBG(TAG, "Converting to YUV: %dx%d, srcFmt=%d, dstFmt=%d",
+	         size.width, size.height, src.format, outputFormat);
+	if (!freerdp_video_convert(stream->video, &src, &dst))
+	{
+		WLog_ERR(TAG, "freerdp_video_convert failed");
 		return FALSE;
 	}
-	WLog_DBG(TAG, "YUV conversion OK");
+	WLog_DBG(TAG, "Video conversion OK");
 
 	WLog_DBG(TAG, "Starting H.264 compression");
 	if (h264_compress(stream->h264, ppDstData, &dstSize) < 0)

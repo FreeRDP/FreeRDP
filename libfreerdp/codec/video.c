@@ -183,35 +183,7 @@ BOOL freerdp_video_available(void)
 	return freerdp_swscale_available() && freerdp_avutil_available();
 }
 
-BOOL freerdp_video_feature_available(UINT32 features)
-{
-	if (features & FREERDP_VIDEO_FEATURE_MJPEG_DECODE)
-	{
-#if !defined(WITH_MJPEG_DECODER)
-		return FALSE;
-#endif
-	}
-
-	if (features & FREERDP_VIDEO_FEATURE_H264_ENCODE)
-	{
-		/* H264 encoding available if any H264 backend is compiled */
-#if !defined(WITH_OPENH264) && !defined(WITH_VIDEO_FFMPEG) && \
-    !defined(WITH_MEDIA_FOUNDATION) && !defined(WITH_MEDIACODEC)
-		return FALSE;
-#endif
-	}
-
-	if (features & FREERDP_VIDEO_FEATURE_H264_DECODE)
-	{
-		/* H264 decoding available if any H264 backend is compiled */
-#if !defined(WITH_OPENH264) && !defined(WITH_VIDEO_FFMPEG) && \
-    !defined(WITH_MEDIA_FOUNDATION) && !defined(WITH_MEDIACODEC)
-		return FALSE;
-#endif
-	}
-
-	return TRUE;
-}
+/* Removed - was never released, replaced by freerdp_video_conversion_supported() */
 
 FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(UINT32 width, UINT32 height)
 {
@@ -336,9 +308,9 @@ BOOL freerdp_video_context_reset(FREERDP_VIDEO_CONTEXT* context, UINT32 width, U
 	return TRUE;
 }
 
-BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcData,
-                                size_t srcSize, BYTE* dstData[4], int dstLineSize[4],
-                                FREERDP_VIDEO_FORMAT* dstFormat)
+static BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcData,
+                                       size_t srcSize, BYTE* dstData[4], int dstLineSize[4],
+                                       FREERDP_VIDEO_FORMAT* dstFormat)
 {
 #if defined(WITH_MJPEG_DECODER)
 	WINPR_ASSERT(context);
@@ -392,10 +364,10 @@ BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcD
 #endif
 }
 
-BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcData[4],
-                                  const int srcLineSize[4], FREERDP_VIDEO_FORMAT srcFormat,
-                                  BYTE* dstData[3], const int dstLineSize[3],
-                                  FREERDP_VIDEO_FORMAT dstFormat, UINT32 width, UINT32 height)
+static BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcData[4],
+                                         const int srcLineSize[4], FREERDP_VIDEO_FORMAT srcFormat,
+                                         BYTE* dstData[3], const int dstLineSize[3],
+                                         FREERDP_VIDEO_FORMAT dstFormat, UINT32 width, UINT32 height)
 {
 	WINPR_ASSERT(srcData);
 	WINPR_ASSERT(srcLineSize);
@@ -496,18 +468,191 @@ BOOL freerdp_video_fill_plane_info(BYTE* data[4], int lineSize[4], FREERDP_VIDEO
 	return TRUE;
 }
 
+static BOOL is_compressed_format(FREERDP_VIDEO_FORMAT format)
+{
+	return (format == FREERDP_VIDEO_FORMAT_MJPEG || format == FREERDP_VIDEO_FORMAT_H264);
+}
+
+void freerdp_video_frame_init_compressed(FREERDP_VIDEO_FRAME* frame, FREERDP_VIDEO_FORMAT format,
+                                         BYTE* data, size_t size, UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(frame);
+	WINPR_ASSERT(is_compressed_format(format));
+
+	frame->format = format;
+	frame->width = width;
+	frame->height = height;
+	frame->compressed.data = data;
+	frame->compressed.size = size;
+}
+
+void freerdp_video_frame_init_raw(FREERDP_VIDEO_FRAME* frame, FREERDP_VIDEO_FORMAT format,
+                                  BYTE* data[4], int linesize[4], UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(frame);
+	WINPR_ASSERT(!is_compressed_format(format));
+
+	frame->format = format;
+	frame->width = width;
+	frame->height = height;
+
+	for (size_t i = 0; i < 4; i++)
+	{
+		frame->raw.data[i] = data[i];
+		frame->raw.linesize[i] = linesize[i];
+	}
+}
+
+void freerdp_video_frame_init_packed(FREERDP_VIDEO_FRAME* frame, FREERDP_VIDEO_FORMAT format,
+                                     BYTE* buffer, UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(frame);
+	WINPR_ASSERT(!is_compressed_format(format));
+
+	BYTE* data[4] = { 0 };
+	int linesize[4] = { 0 };
+
+	if (!freerdp_video_fill_plane_info(data, linesize, format, width, height, buffer))
+	{
+		WLog_ERR(TAG, "Failed to fill plane info for packed format");
+		return;
+	}
+
+	freerdp_video_frame_init_raw(frame, format, data, linesize, width, height);
+}
+
+BOOL freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT srcFormat,
+                                        FREERDP_VIDEO_FORMAT dstFormat)
+{
+	if (!freerdp_video_available())
+		return FALSE;
+
+	if (srcFormat == FREERDP_VIDEO_FORMAT_MJPEG)
+	{
+#if !defined(WITH_MJPEG_DECODER)
+		return FALSE;
+#endif
+	}
+	else if (srcFormat == FREERDP_VIDEO_FORMAT_H264)
+	{
+		return FALSE;
+	}
+
+	if (dstFormat == FREERDP_VIDEO_FORMAT_MJPEG)
+	{
+		return FALSE;
+	}
+	else if (dstFormat == FREERDP_VIDEO_FORMAT_H264)
+	{
+#if !defined(WITH_OPENH264) && !defined(WITH_VIDEO_FFMPEG) && \
+    !defined(WITH_MEDIA_FOUNDATION) && !defined(WITH_MEDIACODEC)
+		return FALSE;
+#endif
+	}
+
+	return TRUE;
+}
+
+BOOL freerdp_video_convert(FREERDP_VIDEO_CONTEXT* context, const FREERDP_VIDEO_FRAME* src,
+                           FREERDP_VIDEO_FRAME* dst)
+{
+	WINPR_ASSERT(src);
+	WINPR_ASSERT(dst);
+
+	if (!freerdp_video_available())
+	{
+		WLog_ERR(TAG, "Video codecs not available");
+		return FALSE;
+	}
+
+	BYTE* intermediate_data[4] = { 0 };
+	int intermediate_linesize[4] = { 0 };
+	FREERDP_VIDEO_FORMAT intermediate_format = FREERDP_VIDEO_FORMAT_NONE;
+
+	if (is_compressed_format(src->format))
+	{
+		if (src->format == FREERDP_VIDEO_FORMAT_MJPEG)
+		{
+#if defined(WITH_MJPEG_DECODER)
+			if (!freerdp_video_decode_mjpeg(context, src->compressed.data, src->compressed.size,
+			                                intermediate_data, intermediate_linesize,
+			                                &intermediate_format))
+			{
+				WLog_ERR(TAG, "MJPEG decode failed");
+				return FALSE;
+			}
+#else
+			WLog_ERR(TAG, "MJPEG decoder not available");
+			return FALSE;
+#endif
+		}
+		else if (src->format == FREERDP_VIDEO_FORMAT_H264)
+		{
+			WLog_ERR(TAG, "H264 decoding not implemented in video API");
+			return FALSE;
+		}
+		else
+		{
+			WLog_ERR(TAG, "Unknown compressed format: %d", src->format);
+			return FALSE;
+		}
+	}
+	else
+	{
+		for (size_t i = 0; i < 4; i++)
+		{
+			intermediate_data[i] = src->raw.data[i];
+			intermediate_linesize[i] = src->raw.linesize[i];
+		}
+		intermediate_format = src->format;
+	}
+
+	BOOL needsConversion =
+	    (!is_compressed_format(dst->format) && (intermediate_format != dst->format));
+
+	if (needsConversion)
+	{
+		if (!freerdp_video_convert_to_yuv(context, (const BYTE**)intermediate_data,
+		                                  intermediate_linesize, intermediate_format,
+		                                  dst->raw.data, dst->raw.linesize, dst->format,
+		                                  dst->width, dst->height))
+		{
+			WLog_ERR(TAG, "Format conversion failed");
+			return FALSE;
+		}
+	}
+	else if (!is_compressed_format(dst->format))
+	{
+		for (size_t i = 0; i < 4; i++)
+		{
+			dst->raw.data[i] = intermediate_data[i];
+			dst->raw.linesize[i] = intermediate_linesize[i];
+		}
+	}
+
+	if (is_compressed_format(dst->format))
+	{
+		if (dst->format == FREERDP_VIDEO_FORMAT_MJPEG)
+		{
+			WLog_ERR(TAG, "MJPEG encoding not implemented in video API");
+			return FALSE;
+		}
+		else if (dst->format == FREERDP_VIDEO_FORMAT_H264)
+		{
+			WLog_ERR(TAG, "H264 encoding not implemented in video API");
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 #else /* !WITH_SWSCALE */
 
 /* Stubs when swscale is not available */
 
 BOOL freerdp_video_available(void)
 {
-	return FALSE;
-}
-
-BOOL freerdp_video_feature_available(UINT32 features)
-{
-	WINPR_UNUSED(features);
 	return FALSE;
 }
 
@@ -531,36 +676,6 @@ BOOL freerdp_video_context_reset(FREERDP_VIDEO_CONTEXT* context, UINT32 width, U
 	return FALSE;
 }
 
-BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcData,
-                                size_t srcSize, BYTE* dstData[4], int dstLineSize[4],
-                                FREERDP_VIDEO_FORMAT* dstFormat)
-{
-	WINPR_UNUSED(context);
-	WINPR_UNUSED(srcData);
-	WINPR_UNUSED(srcSize);
-	WINPR_UNUSED(dstData);
-	WINPR_UNUSED(dstLineSize);
-	WINPR_UNUSED(dstFormat);
-	return FALSE;
-}
-
-BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcData[4],
-                                  const int srcLineSize[4], FREERDP_VIDEO_FORMAT srcFormat,
-                                  BYTE* dstData[3], const int dstLineSize[3],
-                                  FREERDP_VIDEO_FORMAT dstFormat, UINT32 width, UINT32 height)
-{
-	WINPR_UNUSED(context);
-	WINPR_UNUSED(srcData);
-	WINPR_UNUSED(srcLineSize);
-	WINPR_UNUSED(srcFormat);
-	WINPR_UNUSED(dstData);
-	WINPR_UNUSED(dstLineSize);
-	WINPR_UNUSED(dstFormat);
-	WINPR_UNUSED(width);
-	WINPR_UNUSED(height);
-	return FALSE;
-}
-
 BOOL freerdp_video_fill_plane_info(BYTE* data[4], int lineSize[4], FREERDP_VIDEO_FORMAT format,
                                    UINT32 width, UINT32 height, const BYTE* buffer)
 {
@@ -570,6 +685,55 @@ BOOL freerdp_video_fill_plane_info(BYTE* data[4], int lineSize[4], FREERDP_VIDEO
 	WINPR_UNUSED(width);
 	WINPR_UNUSED(height);
 	WINPR_UNUSED(buffer);
+	return FALSE;
+}
+
+void freerdp_video_frame_init_compressed(FREERDP_VIDEO_FRAME* frame, FREERDP_VIDEO_FORMAT format,
+                                         BYTE* data, size_t size, UINT32 width, UINT32 height)
+{
+	WINPR_UNUSED(frame);
+	WINPR_UNUSED(format);
+	WINPR_UNUSED(data);
+	WINPR_UNUSED(size);
+	WINPR_UNUSED(width);
+	WINPR_UNUSED(height);
+}
+
+void freerdp_video_frame_init_raw(FREERDP_VIDEO_FRAME* frame, FREERDP_VIDEO_FORMAT format,
+                                  BYTE* data[4], int linesize[4], UINT32 width, UINT32 height)
+{
+	WINPR_UNUSED(frame);
+	WINPR_UNUSED(format);
+	WINPR_UNUSED(data);
+	WINPR_UNUSED(linesize);
+	WINPR_UNUSED(width);
+	WINPR_UNUSED(height);
+}
+
+void freerdp_video_frame_init_packed(FREERDP_VIDEO_FRAME* frame, FREERDP_VIDEO_FORMAT format,
+                                     BYTE* buffer, UINT32 width, UINT32 height)
+{
+	WINPR_UNUSED(frame);
+	WINPR_UNUSED(format);
+	WINPR_UNUSED(buffer);
+	WINPR_UNUSED(width);
+	WINPR_UNUSED(height);
+}
+
+BOOL freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT srcFormat,
+                                        FREERDP_VIDEO_FORMAT dstFormat)
+{
+	WINPR_UNUSED(srcFormat);
+	WINPR_UNUSED(dstFormat);
+	return FALSE;
+}
+
+BOOL freerdp_video_convert(FREERDP_VIDEO_CONTEXT* context, const FREERDP_VIDEO_FRAME* src,
+                           FREERDP_VIDEO_FRAME* dst)
+{
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(src);
+	WINPR_UNUSED(dst);
 	return FALSE;
 }
 
