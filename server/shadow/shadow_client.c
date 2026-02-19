@@ -1170,8 +1170,11 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 
 	if (client->first_frame)
 	{
-		if (!rfx_context_reset(encoder->rfx, nWidth, nHeight))
-			return FALSE;
+		if (encoder->rfx)
+		{
+			if (!rfx_context_reset(encoder->rfx, nWidth, nHeight))
+				return FALSE;
+		}
 		client->first_frame = FALSE;
 	}
 
@@ -2501,7 +2504,8 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		{
 			if (WaitForSingleObject(gfxevent, 0) == WAIT_OBJECT_0)
 			{
-				if (!rdpgfx_server_handle_messages(client->rdpgfx))
+				const UINT error = rdpgfx_server_handle_messages(client->rdpgfx);
+				if (error != CHANNEL_RC_OK)
 					goto fail;
 			}
 		}
