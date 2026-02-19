@@ -480,6 +480,8 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 	Atom actual_type = None;
 	int actual_format = 0;
 
+	WINPR_ASSERT(prop);
+
 	if (property == None)
 		return FALSE;
 
@@ -493,6 +495,9 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 	if (actual_type == None)
 	{
 		WLog_DBG(TAG, "Property %lu does not exist", (unsigned long)property);
+		if (*prop)
+			XFree(*prop);
+		*prop = NULL;
 		return FALSE;
 	}
 
@@ -513,16 +518,18 @@ static BOOL xf_GetNumberOfDesktops(xfContext* xfc, Window root, unsigned* pval)
 
 	long* prop = (long*)bprop;
 	*pval = 0;
-	if (!rc)
-		return FALSE;
 
 	BOOL res = FALSE;
-	if ((*prop >= 0) && (*prop <= UINT32_MAX))
+	if (rc)
 	{
-		*pval = (UINT32)*prop;
-		res = TRUE;
+		if ((*prop >= 0) && (*prop <= UINT32_MAX))
+		{
+			*pval = (UINT32)*prop;
+			res = TRUE;
+		}
 	}
-	XFree(prop);
+	if (prop)
+		XFree(prop);
 	return res;
 }
 
@@ -543,12 +550,11 @@ static BOOL xf_GetCurrentDesktop(xfContext* xfc, Window root)
 
 	long* prop = (long*)bprop;
 	xfc->current_desktop = 0;
-	if (!rc)
-		return FALSE;
-
-	xfc->current_desktop = (int)MIN(max - 1, *prop);
-	XFree(prop);
-	return TRUE;
+	if (rc)
+		xfc->current_desktop = (int)MIN(max - 1, *prop);
+	if (prop)
+		XFree(prop);
+	return rc;
 }
 
 static BOOL xf_GetWorkArea_NET_WORKAREA(xfContext* xfc, Window root)

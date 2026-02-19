@@ -1125,6 +1125,8 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 	const int rc = LogDynAndXGetWindowProperty(
 	    xfc->log, xfc->display, xfc->drawable, clipboard->property_atom, 0, 0, False, target, &type,
 	    &format_property, &length, &total_bytes, &property_data);
+	if (property_data)
+		XFree(property_data);
 	if (rc != Success)
 	{
 		xf_cliprdr_send_data_response(clipboard, format, NULL, 0);
