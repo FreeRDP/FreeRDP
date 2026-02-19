@@ -27,6 +27,7 @@ typedef struct wf_context wfContext;
 
 wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags);
 void wf_floatbar_free(wfFloatBar* floatbar);
+void wf_floatbar_center(wfFloatBar* floatbar);
 
 BOOL wf_floatbar_toggle_fullscreen(wfFloatBar* floatbar, BOOL fullscreen);
 

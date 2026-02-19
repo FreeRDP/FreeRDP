@@ -443,6 +443,8 @@ void wf_toggle_fullscreen(wfContext* wfc)
 	wf_resize_window(wfc);
 	ShowWindow(wfc->hwnd, SW_SHOW);
 	SetForegroundWindow(wfc->hwnd);
+	if (wfc->floatbar)
+		wf_floatbar_center(wfc->floatbar);
 
 	if (!wfc->fullscreen)
 	{
@@ -450,6 +452,27 @@ void wf_toggle_fullscreen(wfContext* wfc)
 		// errors.
 		wfc->disablewindowtracking = FALSE;
 	}
+}
+
+static DWORD WINAPI wf_toggle_fullscreen_thread(LPVOID lpParam)
+{
+	wfContext* wfc = (wfContext*)lpParam;
+	if (!wfc)
+		return 0;
+
+	if (InterlockedCompareExchange(&wfc->togglingFullscreen, 1, 0) != 0)
+		return 0;
+
+	wf_toggle_fullscreen(wfc);
+	InterlockedExchange(&wfc->togglingFullscreen, 0);
+	return 0;
+}
+
+void wf_toggle_fullscreen_async(wfContext* wfc)
+{
+	HANDLE h = CreateThread(NULL, 0, wf_toggle_fullscreen_thread, wfc, 0, NULL);
+	if (h)
+		CloseHandle(h);
 }
 
 static BOOL wf_gdi_palette_update(rdpContext* context, const PALETTE_UPDATE* palette)
