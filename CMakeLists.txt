@@ -517,7 +517,7 @@ if(FREERDP_UNIFIED_BUILD)
   endif()
 
   if(WITH_SERVER)
-    option(WITH_RDTK "build rdtk toolkit" ON)
+    option(WITH_RDTK "build rdtk toolkit" OFF)
     if(WITH_RDTK)
       add_subdirectory(rdtk)
     endif()
