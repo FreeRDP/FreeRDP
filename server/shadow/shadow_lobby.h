@@ -24,8 +24,6 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
-#include <rdtk/rdtk.h>
-
 #ifdef __cplusplus
 extern "C"
 {
