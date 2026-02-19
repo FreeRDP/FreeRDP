@@ -31,6 +31,7 @@
 #define FILE_EXT "bmp"
 #endif
 
+WINPR_ATTR_NODISCARD
 static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDst, int nYDst,
                                        int nWidth, int nHeight, const uint8_t* pSrcData,
                                        int nSrcStep, int nXSrc, int nYSrc)
@@ -103,8 +104,12 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	int nYSrc = 0;
 	int width = ninePatch->scaleLeft;
 	int height = ninePatch->scaleTop;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
-	                            nSrcStep, nXSrc, nYSrc);
+	{
+		const int rc = rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width,
+		                                           height, pSrcData, nSrcStep, nXSrc, nYSrc);
+		if (rc < 0)
+			return rc;
+	}
 	x += width;
 	/* top middle (scalable) */
 	nXSrc = ninePatch->scaleLeft;
@@ -118,8 +123,10 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 		if (width > ninePatch->scaleWidth)
 			width = ninePatch->scaleWidth;
 
-		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
-		                            pSrcData, nSrcStep, nXSrc, nYSrc);
+		const int rc = rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width,
+		                                           height, pSrcData, nSrcStep, nXSrc, nYSrc);
+		if (rc < 0)
+			return rc;
 		x += width;
 	}
 
@@ -128,8 +135,12 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = 0;
 	width = ninePatch->width - ninePatch->scaleRight;
 	height = ninePatch->scaleTop;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
-	                            nSrcStep, nXSrc, nYSrc);
+	{
+		const int rc = rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width,
+		                                           height, pSrcData, nSrcStep, nXSrc, nYSrc);
+		if (rc < 0)
+			return rc;
+	}
 	/* middle */
 	x = 0;
 	y = ninePatch->scaleTop;
@@ -138,8 +149,12 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = ninePatch->scaleTop;
 	width = ninePatch->scaleLeft;
 	height = ninePatch->scaleHeight;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
-	                            nSrcStep, nXSrc, nYSrc);
+	{
+		const int rc = rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width,
+		                                           height, pSrcData, nSrcStep, nXSrc, nYSrc);
+		if (rc < 0)
+			return rc;
+	}
 	x += width;
 	/* middle (scalable) */
 	nXSrc = ninePatch->scaleLeft;
@@ -153,8 +168,13 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 		if (width > ninePatch->scaleWidth)
 			width = ninePatch->scaleWidth;
 
-		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
-		                            pSrcData, nSrcStep, nXSrc, nYSrc);
+		{
+			const int rc =
+			    rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
+			                                pSrcData, nSrcStep, nXSrc, nYSrc);
+			if (rc < 0)
+				return rc;
+		}
 		x += width;
 	}
 
@@ -163,8 +183,12 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = ninePatch->scaleTop;
 	width = ninePatch->width - ninePatch->scaleRight;
 	height = ninePatch->scaleHeight;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
-	                            nSrcStep, nXSrc, nYSrc);
+	{
+		const int rc = rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width,
+		                                           height, pSrcData, nSrcStep, nXSrc, nYSrc);
+		if (rc < 0)
+			return rc;
+	}
 	/* bottom */
 	x = 0;
 	y = ninePatch->scaleBottom;
@@ -173,8 +197,12 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = ninePatch->scaleBottom;
 	width = ninePatch->scaleLeft;
 	height = ninePatch->height - ninePatch->scaleBottom;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
-	                            nSrcStep, nXSrc, nYSrc);
+	{
+		const int rc = rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width,
+		                                           height, pSrcData, nSrcStep, nXSrc, nYSrc);
+		if (rc < 0)
+			return rc;
+	}
 	x += width;
 	/* bottom middle (scalable) */
 	nXSrc = ninePatch->scaleLeft;
@@ -188,8 +216,13 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 		if (width > ninePatch->scaleWidth)
 			width = ninePatch->scaleWidth;
 
-		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
-		                            pSrcData, nSrcStep, nXSrc, nYSrc);
+		{
+			const int rc =
+			    rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
+			                                pSrcData, nSrcStep, nXSrc, nYSrc);
+			if (rc < 0)
+				return rc;
+		}
 		x += width;
 	}
 
@@ -198,11 +231,33 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	nYSrc = ninePatch->scaleBottom;
 	width = ninePatch->width - ninePatch->scaleRight;
 	height = ninePatch->height - ninePatch->scaleBottom;
-	rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height, pSrcData,
-	                            nSrcStep, nXSrc, nYSrc);
-	return 1;
+	return rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
+	                                   pSrcData, nSrcStep, nXSrc, nYSrc);
 }
 
+WINPR_ATTR_NODISCARD
+static uint32_t rdtk_get_image_pixel(const wImage* image, size_t y, size_t x)
+{
+	WINPR_ASSERT(image);
+	WINPR_ASSERT(y < image->height);
+	WINPR_ASSERT(x < image->width);
+	WINPR_ASSERT(image->bytesPerPixel > 0);
+	WINPR_ASSERT(image->bytesPerPixel <= 4);
+	WINPR_ASSERT(image->scanline >= image->width * image->bytesPerPixel);
+
+	const size_t offset = 1ull * image->scanline * y;
+	const BYTE* data = &image->data[offset + 1ull * image->bytesPerPixel * x];
+
+	uint32_t result = 0;
+	for (size_t i = 0; i < image->bytesPerPixel; i++)
+	{
+		result <<= 8;
+		result |= data[i];
+	}
+	return result;
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL rdtk_nine_patch_get_scale_lr(rdtkNinePatch* ninePatch, wImage* image)
 {
 	WINPR_ASSERT(image);
@@ -214,20 +269,23 @@ static BOOL rdtk_nine_patch_get_scale_lr(rdtkNinePatch* ninePatch, wImage* image
 	int64_t beg = -1;
 	int64_t end = -1;
 
-	for (uint32_t x = 1; x < image->width - 1; x++)
+	for (uint32_t y = 0; y < image->height; y++)
 	{
-		const uint32_t* pixel = (const uint32_t*)&image->data[sizeof(uint32_t) * x]; /* (1, 0) */
-		if (beg < 0)
+		for (uint32_t x = 1; x < image->width - 1; x++)
 		{
-			if (*pixel)
-				beg = x;
-		}
-		else if (end < 0)
-		{
-			if (!(*pixel))
+			const uint32_t pixel = rdtk_get_image_pixel(image, y, x); /* (1, 0) */
+			if (beg < 0)
 			{
-				end = x;
-				break;
+				if (pixel != 0)
+					beg = x;
+			}
+			else if (end < 0)
+			{
+				if (pixel == 0)
+				{
+					end = x;
+					break;
+				}
 			}
 		}
 	}
@@ -244,6 +302,19 @@ static BOOL rdtk_nine_patch_get_scale_lr(rdtkNinePatch* ninePatch, wImage* image
 	return TRUE;
 }
 
+static bool lineValid(const wImage* image, size_t y)
+{
+	for (size_t x = 0; x < image->width; x++)
+	{
+		const uint32_t p = rdtk_get_image_pixel(image, y, x);
+		if (p != 0)
+			return true;
+	}
+
+	return false;
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL rdtk_nine_patch_get_scale_ht(rdtkNinePatch* ninePatch, wImage* image)
 {
 	WINPR_ASSERT(image);
@@ -251,23 +322,20 @@ static BOOL rdtk_nine_patch_get_scale_ht(rdtkNinePatch* ninePatch, wImage* image
 
 	WINPR_ASSERT(image->data);
 	WINPR_ASSERT(image->height > 0);
-	WINPR_ASSERT(image->scanline > 0);
 
 	int64_t beg = -1;
 	int64_t end = -1;
 
 	for (uint32_t y = 1; y < image->height - 1; y++)
 	{
-		const uint32_t* pixel =
-		    (const uint32_t*)&image->data[1ULL * image->scanline * y]; /* (1, 0) */
 		if (beg < 0)
 		{
-			if (*pixel)
+			if (lineValid(image, y))
 				beg = y;
 		}
 		else if (end < 0)
 		{
-			if (!(*pixel))
+			if (!lineValid(image, y))
 			{
 				end = y;
 				break;
@@ -287,6 +355,7 @@ static BOOL rdtk_nine_patch_get_scale_ht(rdtkNinePatch* ninePatch, wImage* image
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdtk_nine_patch_get_fill_lr(rdtkNinePatch* ninePatch, wImage* image)
 {
 	WINPR_ASSERT(image);
@@ -295,27 +364,28 @@ static BOOL rdtk_nine_patch_get_fill_lr(rdtkNinePatch* ninePatch, wImage* image)
 	WINPR_ASSERT(image->data);
 	WINPR_ASSERT(image->width > 0);
 	WINPR_ASSERT(image->height > 0);
-	WINPR_ASSERT(image->scanline > 0);
 
 	int64_t beg = -1;
 	int64_t end = -1;
 
-	for (uint32_t x = 1; x < image->width - 1; x++)
+	for (uint32_t y = 0; y < image->height; y++)
 	{
-		const uint32_t* pixel =
-		    (uint32_t*)&image->data[((1ULL * image->height - 1ULL) * image->scanline) +
-		                            x * sizeof(uint32_t)]; /* (1, height - 1) */
-		if (beg < 0)
+		for (uint32_t x = 1; x < image->width - 1; x++)
 		{
-			if (*pixel)
-				beg = x;
-		}
-		else if (end < 0)
-		{
-			if (!(*pixel))
+			const uint32_t pixel =
+			    rdtk_get_image_pixel(image, image->height - 1 - y, x); /* (1, height - 1) */
+			if (beg < 0)
 			{
-				end = x;
-				break;
+				if (pixel != 0)
+					beg = x;
+			}
+			else if (end < 0)
+			{
+				if (pixel == 0)
+				{
+					end = x;
+					break;
+				}
 			}
 		}
 	}
@@ -333,6 +403,7 @@ static BOOL rdtk_nine_patch_get_fill_lr(rdtkNinePatch* ninePatch, wImage* image)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdtk_nine_patch_get_fill_ht(rdtkNinePatch* ninePatch, wImage* image)
 {
 	WINPR_ASSERT(image);
@@ -341,27 +412,28 @@ static BOOL rdtk_nine_patch_get_fill_ht(rdtkNinePatch* ninePatch, wImage* image)
 	WINPR_ASSERT(image->data);
 	WINPR_ASSERT(image->width > 0);
 	WINPR_ASSERT(image->height > 0);
-	WINPR_ASSERT(image->scanline > 0);
 
 	int64_t beg = -1;
 	int64_t end = -1;
 
 	for (uint32_t y = 1; y < image->height - 1; y++)
 	{
-		const uint32_t* pixel =
-		    (uint32_t*)&image->data[((image->width - 1) * sizeof(uint32_t)) +
-		                            1ull * image->scanline * y]; /* (width - 1, 1) */
-		if (beg < 0)
+		for (uint32_t x = 0; x < image->width; x++)
 		{
-			if (*pixel)
-				beg = y;
-		}
-		else if (end < 0)
-		{
-			if (!(*pixel))
+			const uint32_t pixel =
+			    rdtk_get_image_pixel(image, y, image->width - 1 - x); /* (width - 1, 1) */
+			if (beg < 0)
 			{
-				end = y;
-				break;
+				if (pixel != 0)
+					beg = y;
+			}
+			else if (end < 0)
+			{
+				if (pixel == 0)
+				{
+					end = y;
+					break;
+				}
 			}
 		}
 	}
@@ -440,15 +512,17 @@ void rdtk_nine_patch_free(rdtkNinePatch* ninePatch)
 int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 {
 	int status = 0;
-	wImage* image = NULL;
 	rdtkNinePatch* ninePatch = NULL;
 
 	WINPR_ASSERT(engine);
 
 	if (!engine->button9patch)
+
 	{
 		SSIZE_T size = 0;
 		const uint8_t* data = NULL;
+		wImage* image = NULL;
+
 		status = -1;
 		size = rdtk_get_embedded_resource_file("btn_default_normal.9." FILE_EXT, &data);
 
@@ -465,7 +539,11 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			ninePatch = engine->button9patch = rdtk_nine_patch_new(engine);
 
 			if (ninePatch)
-				rdtk_nine_patch_set_image(ninePatch, image);
+			{
+				const int rc = rdtk_nine_patch_set_image(ninePatch, image);
+				if (rc < 0)
+					return rc;
+			}
 			else
 				winpr_image_free(image, TRUE);
 		}
@@ -475,11 +553,11 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 
 	if (!engine->textField9patch)
 	{
-		SSIZE_T size = 0;
 		const uint8_t* data = NULL;
 		status = -1;
-		size = rdtk_get_embedded_resource_file("textfield_default.9." FILE_EXT, &data);
-		image = NULL;
+		const SSIZE_T size =
+		    rdtk_get_embedded_resource_file("textfield_default.9." FILE_EXT, &data);
+		wImage* image = NULL;
 
 		if (size > 0)
 		{
@@ -494,7 +572,11 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			ninePatch = engine->textField9patch = rdtk_nine_patch_new(engine);
 
 			if (ninePatch)
-				rdtk_nine_patch_set_image(ninePatch, image);
+			{
+				const int rc = rdtk_nine_patch_set_image(ninePatch, image);
+				if (rc < 0)
+					return rc;
+			}
 			else
 				winpr_image_free(image, TRUE);
 		}

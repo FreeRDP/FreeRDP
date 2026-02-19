@@ -40,9 +40,12 @@ int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, u
 	textField = surface->engine->textField;
 	rdtkNinePatch* ninePatch = textField->ninePatch;
 
-	rdtk_font_text_draw_size(font, &textWidth, &textHeight, text);
-
-	rdtk_nine_patch_draw(surface, nXDst, nYDst, nWidth, nHeight, ninePatch);
+	const int rc = rdtk_font_text_draw_size(font, &textWidth, &textHeight, text);
+	if (rc < 0)
+		return rc;
+	const int rc2 = rdtk_nine_patch_draw(surface, nXDst, nYDst, nWidth, nHeight, ninePatch);
+	if (rc2 < 0)
+		return rc2;
 
 	if ((textWidth > 0) && (textHeight > 0))
 	{
@@ -76,7 +79,7 @@ int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, u
 			offsetY = WINPR_ASSERTING_INT_CAST(uint16_t, wd);
 		}
 
-		rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
+		return rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
 	}
 
 	return 1;

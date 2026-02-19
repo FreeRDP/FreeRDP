@@ -30,6 +30,7 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	SSIZE_T rdtk_get_embedded_resource_file(const char* filename, const uint8_t** pData);
 
 #ifdef __cplusplus

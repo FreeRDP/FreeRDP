@@ -90,10 +90,14 @@ int main(int argc, char** argv)
 
 	surface = rdtk_surface_new(engine, buffer, width, height, scanline);
 
-	rdtk_surface_fill(surface, 0, 0, width, height, 0x3BB9FF);
-	rdtk_label_draw(surface, 16, 16, 128, 32, NULL, "label", 0, 0);
-	rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button");
-	rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field");
+	if (rdtk_surface_fill(surface, 0, 0, width, height, 0x3BB9FF) < 0)
+		goto fail;
+	if (rdtk_label_draw(surface, 16, 16, 128, 32, NULL, "label", 0, 0) < 0)
+		goto fail;
+	if (rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button") < 0)
+		goto fail;
+	if (rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field") < 0)
+		goto fail;
 
 	window = XCreateSimpleWindow(display, root_window, x, y, width, height, 1, border, background);
 

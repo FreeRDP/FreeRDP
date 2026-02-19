@@ -49,32 +49,40 @@ extern "C"
 
 	/* Surface */
 
+	WINPR_ATTR_NODISCARD
 	RDTK_EXPORT int rdtk_surface_fill(rdtkSurface* surface, uint16_t x, uint16_t y, uint16_t width,
 	                                  uint16_t height, uint32_t color);
 
+	RDTK_EXPORT void rdtk_surface_free(rdtkSurface* surface);
+
+	WINPR_ATTR_MALLOC(rdtk_surface_free, 1)
+	WINPR_ATTR_NODISCARD
 	RDTK_EXPORT rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 	                                          uint16_t height, uint32_t scanline);
-	RDTK_EXPORT void rdtk_surface_free(rdtkSurface* surface);
 
 	/* Font */
 
+	WINPR_ATTR_NODISCARD
 	RDTK_EXPORT int rdtk_font_draw_text(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst,
 	                                    rdtkFont* font, const char* text);
 
 	/* Button */
 
+	WINPR_ATTR_NODISCARD
 	RDTK_EXPORT int rdtk_button_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst,
 	                                 uint16_t nWidth, uint16_t nHeight, rdtkButton* button,
 	                                 const char* text);
 
 	/* Label */
 
+	WINPR_ATTR_NODISCARD
 	RDTK_EXPORT int rdtk_label_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst,
 	                                uint16_t nWidth, uint16_t nHeight, rdtkLabel* label,
 	                                const char* text, uint16_t hAlign, uint16_t vAlign);
 
 	/* TextField */
 
+	WINPR_ATTR_NODISCARD
 	RDTK_EXPORT int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst,
 	                                     uint16_t nWidth, uint16_t nHeight,
 	                                     rdtkTextField* textField, const char* text);

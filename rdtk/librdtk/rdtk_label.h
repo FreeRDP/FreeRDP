@@ -35,11 +35,16 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	int rdtk_label_engine_init(rdtkEngine* engine);
+	WINPR_ATTR_NODISCARD
 	int rdtk_label_engine_uninit(rdtkEngine* engine);
 
-	rdtkLabel* rdtk_label_new(rdtkEngine* engine);
 	void rdtk_label_free(rdtkLabel* label);
+
+	WINPR_ATTR_MALLOC(rdtk_label_free, 1)
+	WINPR_ATTR_NODISCARD
+	rdtkLabel* rdtk_label_new(rdtkEngine* engine);
 
 #ifdef __cplusplus
 }

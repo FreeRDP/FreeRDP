@@ -39,9 +39,13 @@ int rdtk_button_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint1
 	rdtkFont* font = engine->font;
 	rdtkNinePatch* ninePatch = button->ninePatch;
 
-	rdtk_font_text_draw_size(font, &textWidth, &textHeight, text);
+	const int rc1 = rdtk_font_text_draw_size(font, &textWidth, &textHeight, text);
+	if (rc1 < 0)
+		return rc1;
 
-	rdtk_nine_patch_draw(surface, nXDst, nYDst, nWidth, nHeight, ninePatch);
+	const int rc2 = rdtk_nine_patch_draw(surface, nXDst, nYDst, nWidth, nHeight, ninePatch);
+	if (rc2 < 0)
+		return rc2;
 
 	if ((textWidth > 0) && (textHeight > 0))
 	{
@@ -75,7 +79,7 @@ int rdtk_button_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint1
 			offsetY = WINPR_ASSERTING_INT_CAST(uint16_t, twd);
 		}
 
-		rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
+		return rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
 	}
 
 	return 1;

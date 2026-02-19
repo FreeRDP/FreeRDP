@@ -37,11 +37,16 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	int rdtk_button_engine_init(rdtkEngine* engine);
+
 	int rdtk_button_engine_uninit(rdtkEngine* engine);
 
-	rdtkButton* rdtk_button_new(rdtkEngine* engine, rdtkNinePatch* ninePatch);
 	void rdtk_button_free(rdtkButton* button);
+
+	WINPR_ATTR_MALLOC(rdtk_button_free, 1)
+	WINPR_ATTR_NODISCARD
+	rdtkButton* rdtk_button_new(rdtkEngine* engine, rdtkNinePatch* ninePatch);
 
 #ifdef __cplusplus
 }
