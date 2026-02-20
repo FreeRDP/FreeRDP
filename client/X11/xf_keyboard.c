@@ -325,6 +325,180 @@ static const struct x11_key_scancode_t XKB_KEY_NAME_SCANCODE_TABLE[] = {
 	{ "I255", RDP_SCANCODE_UNKNOWN }              /* 255: I255 [XF86RFKill] */
 };
 
+struct x11_keysym_scancode_t
+{
+	KeySym keysym;
+	DWORD sc;
+};
+
+/* clang-format off */
+static const struct x11_keysym_scancode_t KEYSYM_SCANCODE_TABLE[] = {
+	{ XK_a, RDP_SCANCODE_KEY_A },
+	{ XK_b, RDP_SCANCODE_KEY_B },
+	{ XK_c, RDP_SCANCODE_KEY_C },
+	{ XK_d, RDP_SCANCODE_KEY_D },
+	{ XK_e, RDP_SCANCODE_KEY_E },
+	{ XK_f, RDP_SCANCODE_KEY_F },
+	{ XK_g, RDP_SCANCODE_KEY_G },
+	{ XK_h, RDP_SCANCODE_KEY_H },
+	{ XK_i, RDP_SCANCODE_KEY_I },
+	{ XK_j, RDP_SCANCODE_KEY_J },
+	{ XK_k, RDP_SCANCODE_KEY_K },
+	{ XK_l, RDP_SCANCODE_KEY_L },
+	{ XK_m, RDP_SCANCODE_KEY_M },
+	{ XK_n, RDP_SCANCODE_KEY_N },
+	{ XK_o, RDP_SCANCODE_KEY_O },
+	{ XK_p, RDP_SCANCODE_KEY_P },
+	{ XK_q, RDP_SCANCODE_KEY_Q },
+	{ XK_r, RDP_SCANCODE_KEY_R },
+	{ XK_s, RDP_SCANCODE_KEY_S },
+	{ XK_t, RDP_SCANCODE_KEY_T },
+	{ XK_u, RDP_SCANCODE_KEY_U },
+	{ XK_v, RDP_SCANCODE_KEY_V },
+	{ XK_w, RDP_SCANCODE_KEY_W },
+	{ XK_x, RDP_SCANCODE_KEY_X },
+	{ XK_y, RDP_SCANCODE_KEY_Y },
+	{ XK_z, RDP_SCANCODE_KEY_Z },
+	{ XK_A, RDP_SCANCODE_KEY_A },
+	{ XK_B, RDP_SCANCODE_KEY_B },
+	{ XK_C, RDP_SCANCODE_KEY_C },
+	{ XK_D, RDP_SCANCODE_KEY_D },
+	{ XK_E, RDP_SCANCODE_KEY_E },
+	{ XK_F, RDP_SCANCODE_KEY_F },
+	{ XK_G, RDP_SCANCODE_KEY_G },
+	{ XK_H, RDP_SCANCODE_KEY_H },
+	{ XK_I, RDP_SCANCODE_KEY_I },
+	{ XK_J, RDP_SCANCODE_KEY_J },
+	{ XK_K, RDP_SCANCODE_KEY_K },
+	{ XK_L, RDP_SCANCODE_KEY_L },
+	{ XK_M, RDP_SCANCODE_KEY_M },
+	{ XK_N, RDP_SCANCODE_KEY_N },
+	{ XK_O, RDP_SCANCODE_KEY_O },
+	{ XK_P, RDP_SCANCODE_KEY_P },
+	{ XK_Q, RDP_SCANCODE_KEY_Q },
+	{ XK_R, RDP_SCANCODE_KEY_R },
+	{ XK_S, RDP_SCANCODE_KEY_S },
+	{ XK_T, RDP_SCANCODE_KEY_T },
+	{ XK_U, RDP_SCANCODE_KEY_U },
+	{ XK_V, RDP_SCANCODE_KEY_V },
+	{ XK_W, RDP_SCANCODE_KEY_W },
+	{ XK_X, RDP_SCANCODE_KEY_X },
+	{ XK_Y, RDP_SCANCODE_KEY_Y },
+	{ XK_Z, RDP_SCANCODE_KEY_Z },
+	{ XK_0, RDP_SCANCODE_KEY_0 },
+	{ XK_1, RDP_SCANCODE_KEY_1 },
+	{ XK_2, RDP_SCANCODE_KEY_2 },
+	{ XK_3, RDP_SCANCODE_KEY_3 },
+	{ XK_4, RDP_SCANCODE_KEY_4 },
+	{ XK_5, RDP_SCANCODE_KEY_5 },
+	{ XK_6, RDP_SCANCODE_KEY_6 },
+	{ XK_7, RDP_SCANCODE_KEY_7 },
+	{ XK_8, RDP_SCANCODE_KEY_8 },
+	{ XK_9, RDP_SCANCODE_KEY_9 },
+	{ XK_F1, RDP_SCANCODE_F1 },
+	{ XK_F2, RDP_SCANCODE_F2 },
+	{ XK_F3, RDP_SCANCODE_F3 },
+	{ XK_F4, RDP_SCANCODE_F4 },
+	{ XK_F5, RDP_SCANCODE_F5 },
+	{ XK_F6, RDP_SCANCODE_F6 },
+	{ XK_F7, RDP_SCANCODE_F7 },
+	{ XK_F8, RDP_SCANCODE_F8 },
+	{ XK_F9, RDP_SCANCODE_F9 },
+	{ XK_F10, RDP_SCANCODE_F10 },
+	{ XK_F11, RDP_SCANCODE_F11 },
+	{ XK_F12, RDP_SCANCODE_F12 },
+	{ XK_F13, RDP_SCANCODE_F13 },
+	{ XK_F14, RDP_SCANCODE_F14 },
+	{ XK_F15, RDP_SCANCODE_F15 },
+	{ XK_F16, RDP_SCANCODE_F16 },
+	{ XK_F17, RDP_SCANCODE_F17 },
+	{ XK_F18, RDP_SCANCODE_F18 },
+	{ XK_F19, RDP_SCANCODE_F19 },
+	{ XK_F20, RDP_SCANCODE_F20 },
+	{ XK_F21, RDP_SCANCODE_F21 },
+	{ XK_F22, RDP_SCANCODE_F22 },
+	{ XK_F23, RDP_SCANCODE_F23 },
+	{ XK_F24, RDP_SCANCODE_F24 },
+	{ XK_Shift_L, RDP_SCANCODE_LSHIFT },
+	{ XK_Shift_R, RDP_SCANCODE_RSHIFT },
+	{ XK_Control_L, RDP_SCANCODE_LCONTROL },
+	{ XK_Control_R, RDP_SCANCODE_RCONTROL },
+	{ XK_Alt_L, RDP_SCANCODE_LMENU },
+	{ XK_Alt_R, RDP_SCANCODE_RMENU },
+	{ XK_Super_L, RDP_SCANCODE_LWIN },
+	{ XK_Super_R, RDP_SCANCODE_RWIN },
+	{ XK_Meta_L, RDP_SCANCODE_LWIN },
+	{ XK_Meta_R, RDP_SCANCODE_RWIN },
+	{ XK_Hyper_L, RDP_SCANCODE_LWIN },
+	{ XK_Hyper_R, RDP_SCANCODE_RWIN },
+	{ XK_Menu, RDP_SCANCODE_APPS },
+	{ XK_ISO_Level3_Shift, RDP_SCANCODE_RMENU },
+	{ XK_Mode_switch, RDP_SCANCODE_RMENU },
+	{ XK_Caps_Lock, RDP_SCANCODE_CAPSLOCK },
+	{ XK_Num_Lock, RDP_SCANCODE_NUMLOCK },
+	{ XK_Scroll_Lock, RDP_SCANCODE_SCROLLLOCK },
+	{ XK_Return, RDP_SCANCODE_RETURN },
+	{ XK_Escape, RDP_SCANCODE_ESCAPE },
+	{ XK_BackSpace, RDP_SCANCODE_BACKSPACE },
+	{ XK_Tab, RDP_SCANCODE_TAB },
+	{ XK_ISO_Left_Tab, RDP_SCANCODE_TAB },
+	{ XK_space, RDP_SCANCODE_SPACE },
+	{ XK_Insert, RDP_SCANCODE_INSERT },
+	{ XK_Delete, RDP_SCANCODE_DELETE },
+	{ XK_Pause, RDP_SCANCODE_PAUSE },
+	{ XK_Print, RDP_SCANCODE_PRINTSCREEN },
+	{ XK_Help, RDP_SCANCODE_HELP },
+	{ XK_Home, RDP_SCANCODE_HOME },
+	{ XK_End, RDP_SCANCODE_END },
+	{ XK_Prior, RDP_SCANCODE_PRIOR },
+	{ XK_Next, RDP_SCANCODE_NEXT },
+	{ XK_Up, RDP_SCANCODE_UP },
+	{ XK_Down, RDP_SCANCODE_DOWN },
+	{ XK_Left, RDP_SCANCODE_LEFT },
+	{ XK_Right, RDP_SCANCODE_RIGHT },
+	{ XK_minus, RDP_SCANCODE_OEM_MINUS },
+	{ XK_equal, RDP_SCANCODE_OEM_PLUS },
+	{ XK_bracketleft, RDP_SCANCODE_OEM_4 },
+	{ XK_bracketright, RDP_SCANCODE_OEM_6 },
+	{ XK_backslash, RDP_SCANCODE_OEM_5 },
+	{ XK_semicolon, RDP_SCANCODE_OEM_1 },
+	{ XK_apostrophe, RDP_SCANCODE_OEM_7 },
+	{ XK_grave, RDP_SCANCODE_OEM_3 },
+	{ XK_comma, RDP_SCANCODE_OEM_COMMA },
+	{ XK_period, RDP_SCANCODE_OEM_PERIOD },
+	{ XK_slash, RDP_SCANCODE_OEM_2 },
+	{ XK_less, RDP_SCANCODE_OEM_102 },
+	{ XK_KP_0, RDP_SCANCODE_NUMPAD0 },
+	{ XK_KP_Insert, RDP_SCANCODE_NUMPAD0 },
+	{ XK_KP_1, RDP_SCANCODE_NUMPAD1 },
+	{ XK_KP_End, RDP_SCANCODE_NUMPAD1 },
+	{ XK_KP_2, RDP_SCANCODE_NUMPAD2 },
+	{ XK_KP_Down, RDP_SCANCODE_NUMPAD2 },
+	{ XK_KP_3, RDP_SCANCODE_NUMPAD3 },
+	{ XK_KP_Next, RDP_SCANCODE_NUMPAD3 },
+	{ XK_KP_4, RDP_SCANCODE_NUMPAD4 },
+	{ XK_KP_Left, RDP_SCANCODE_NUMPAD4 },
+	{ XK_KP_5, RDP_SCANCODE_NUMPAD5 },
+	{ XK_KP_Begin, RDP_SCANCODE_NUMPAD5 },
+	{ XK_KP_6, RDP_SCANCODE_NUMPAD6 },
+	{ XK_KP_Right, RDP_SCANCODE_NUMPAD6 },
+	{ XK_KP_7, RDP_SCANCODE_NUMPAD7 },
+	{ XK_KP_Home, RDP_SCANCODE_NUMPAD7 },
+	{ XK_KP_8, RDP_SCANCODE_NUMPAD8 },
+	{ XK_KP_Up, RDP_SCANCODE_NUMPAD8 },
+	{ XK_KP_9, RDP_SCANCODE_NUMPAD9 },
+	{ XK_KP_Prior, RDP_SCANCODE_NUMPAD9 },
+	{ XK_KP_Enter, RDP_SCANCODE_RETURN_KP },
+	{ XK_KP_Multiply, RDP_SCANCODE_MULTIPLY },
+	{ XK_KP_Add, RDP_SCANCODE_ADD },
+	{ XK_KP_Subtract, RDP_SCANCODE_SUBTRACT },
+	{ XK_KP_Decimal, RDP_SCANCODE_DECIMAL },
+	{ XK_KP_Delete, RDP_SCANCODE_DECIMAL },
+	{ XK_KP_Separator, RDP_SCANCODE_DECIMAL },
+	{ XK_KP_Divide, RDP_SCANCODE_DIVIDE },
+};
+/* clang-format on */
+
 static UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc);
 static BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym);
 static void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym);
@@ -422,6 +596,24 @@ static int xkb_cmp(const void* pva, const void* pvb)
 	return strcmp(a->name, b->name);
 }
 
+static int keysym_cmp(const void* pva, const void* pvb)
+{
+	const struct x11_keysym_scancode_t* a = pva;
+	const struct x11_keysym_scancode_t* b = pvb;
+
+	if (!a && !b)
+		return 0;
+	if (!a)
+		return 1;
+	if (!b)
+		return -1;
+	if (a->keysym < b->keysym)
+		return -1;
+	if (a->keysym > b->keysym)
+		return 1;
+	return 0;
+}
+
 static BOOL try_add(xfContext* xfc, size_t offset, const char* xkb_keyname)
 {
 	WINPR_ASSERT(xfc);
@@ -452,6 +644,27 @@ static BOOL try_add(xfContext* xfc, size_t offset, const char* xkb_keyname)
 	}
 
 	return FALSE;
+}
+
+/* Keysym fallback for X11 forwarding where XKB key names don't match evdev */
+static DWORD xf_keysym_to_rdp_scancode(KeySym keysym)
+{
+	static BOOL initialized = FALSE;
+	static struct x11_keysym_scancode_t copy[ARRAYSIZE(KEYSYM_SCANCODE_TABLE)] = { 0 };
+	if (!initialized)
+	{
+		memcpy(copy, KEYSYM_SCANCODE_TABLE, sizeof(copy));
+		qsort(copy, ARRAYSIZE(copy), sizeof(struct x11_keysym_scancode_t), keysym_cmp);
+		initialized = TRUE;
+	}
+
+	struct x11_keysym_scancode_t key = { .keysym = keysym, .sc = 0 };
+	struct x11_keysym_scancode_t* found =
+	    bsearch(&key, copy, ARRAYSIZE(copy), sizeof(struct x11_keysym_scancode_t), keysym_cmp);
+	if (found)
+		return found->sc;
+
+	return RDP_SCANCODE_UNKNOWN;
 }
 
 static int load_map_from_xkbfile(xfContext* xfc)
@@ -518,6 +731,46 @@ static int load_map_from_xkbfile(xfContext* xfc)
 	return status;
 }
 
+/* Keysym-based fallback for unmapped keycodes (e.g. X11 forwarding) */
+static BOOL load_map_from_keysym(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+
+	if (!xfc->display)
+		return FALSE;
+
+	BOOL mapped = FALSE;
+	int min_kc = 0;
+	int max_kc = 0;
+	XDisplayKeycodes(xfc->display, &min_kc, &max_kc);
+
+	for (int i = min_kc; i <= max_kc; i++)
+	{
+		if (i < 0 || (size_t)i >= ARRAYSIZE(xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE))
+			continue;
+
+		if (xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE[i] != RDP_SCANCODE_UNKNOWN)
+			continue;
+
+		const KeySym ks = XkbKeycodeToKeysym(xfc->display, (KeyCode)i, 0, 0);
+		if (ks == NoSymbol)
+			continue;
+
+		const DWORD sc = xf_keysym_to_rdp_scancode(ks);
+		if (sc != RDP_SCANCODE_UNKNOWN)
+		{
+			xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE[i] = sc;
+			mapped = TRUE;
+			WLog_Print(xfc->log, WLOG_DEBUG,
+			           "keycode: 0x%02x -> keysym: 0x%04lx -> rdp scancode: 0x%08" PRIx32
+			           " (keysym fallback)",
+			           i, (unsigned long)ks, sc);
+		}
+	}
+
+	return mapped;
+}
+
 BOOL xf_keyboard_init(xfContext* xfc)
 {
 	rdpSettings* settings = NULL;
@@ -549,7 +802,10 @@ BOOL xf_keyboard_init(xfContext* xfc)
 	}
 
 	const int rc = load_map_from_xkbfile(xfc);
-	if (rc != 0)
+
+	const BOOL keysym_mapped = load_map_from_keysym(xfc);
+
+	if (rc != 0 && !keysym_mapped)
 		return FALSE;
 
 	return xf_keyboard_update_modifier_map(xfc);
