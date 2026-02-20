@@ -102,6 +102,9 @@ extern "C"
 #ifdef WITH_VIDEO_FFMPEG
 	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec;
 #endif
+#ifdef WITH_VIDEOTOOLBOX
+	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_VideoToolbox;
+#endif
 
 #ifdef __cplusplus
 }

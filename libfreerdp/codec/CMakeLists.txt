@@ -133,6 +133,16 @@ if(ANDROID AND WITH_MEDIACODEC)
   list(APPEND CODEC_LIBS ${MEDIACODEC})
 endif()
 
+if(APPLE AND WITH_VIDEOTOOLBOX)
+  list(APPEND CODEC_SRCS h264_videotoolbox.c)
+  list(APPEND CODEC_LIBS
+    "-framework VideoToolbox"
+    "-framework CoreVideo"
+    "-framework CoreMedia"
+    "-framework CoreFoundation"
+  )
+endif()
+
 add_library(freerdp-codecs OBJECT ${CODEC_SRCS})
 freerdp_library_add(${CODEC_LIBS})
 freerdp_object_library_add(freerdp-codecs)

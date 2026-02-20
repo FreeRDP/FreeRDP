@@ -298,6 +298,12 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_GfxH264,
 	                               freerdp_settings_get_bool(srvSettings, FreeRDP_GfxH264)))
 		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444,
+	                               freerdp_settings_get_bool(srvSettings, FreeRDP_GfxAVC444)))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2,
+	                               freerdp_settings_get_bool(srvSettings, FreeRDP_GfxAVC444v2)))
+		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_DrawAllowSkipAlpha, TRUE))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_DrawAllowColorSubsampling, TRUE))

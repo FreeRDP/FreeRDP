@@ -647,6 +647,12 @@ static BOOL CALLBACK h264_register_subsystems(WINPR_ATTR_UNUSED PINIT_ONCE once,
 {
 	int i = 0;
 
+#ifdef WITH_VIDEOTOOLBOX
+	{
+		subSystems[i] = &g_Subsystem_VideoToolbox;
+		i++;
+	}
+#endif
 #ifdef WITH_MEDIACODEC
 	{
 		subSystems[i] = &g_Subsystem_mediacodec;
