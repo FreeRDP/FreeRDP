@@ -75,10 +75,14 @@
 #define WINPR_FALLTHROUGH (void)0;
 #endif
 
+#if defined(WINPR_DEFINE_ATTR_NODISCARD)
 #if defined(__clang__)
 #define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
 #elif defined(__GNUC__) && (__GNUC__ >= 7)
 #define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
+#else
+#define WINPR_ATTR_NODISCARD
+#endif
 #else
 #define WINPR_ATTR_NODISCARD
 #endif
