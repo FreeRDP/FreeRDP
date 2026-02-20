@@ -325,28 +325,29 @@ bool sdlDispContext::updateMonitors(SDL_EventType type, SDL_DisplayID displayID)
 
 bool sdlDispContext::handleEvent(const SDL_DisplayEvent& ev)
 {
+	const auto cat = SDL_LOG_CATEGORY_APPLICATION;
 	switch (ev.type)
 	{
 		case SDL_EVENT_DISPLAY_ADDED:
-			SDL_Log("A new display with id %u was connected", ev.displayID);
+			SDL_LogDebug(cat, "A new display with id %u was connected", ev.displayID);
 			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_REMOVED:
-			SDL_Log("The display with id %u was disconnected", ev.displayID);
+			SDL_LogDebug(cat, "The display with id %u was disconnected", ev.displayID);
 			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_ORIENTATION:
-			SDL_Log("The orientation of display with id %u was changed", ev.displayID);
+			SDL_LogDebug(cat, "The orientation of display with id %u was changed", ev.displayID);
 			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_MOVED:
-			SDL_Log("The display with id %u was moved", ev.displayID);
+			SDL_LogDebug(cat, "The display with id %u was moved", ev.displayID);
 			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED:
-			SDL_Log("The display with id %u changed scale", ev.displayID);
+			SDL_LogDebug(cat, "The display with id %u changed scale", ev.displayID);
 			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED:
-			SDL_Log("The display with id %u changed mode", ev.displayID);
+			SDL_LogDebug(cat, "The display with id %u changed mode", ev.displayID);
 			return updateMonitors(ev.type, ev.displayID);
 		case SDL_EVENT_DISPLAY_DESKTOP_MODE_CHANGED:
-			SDL_Log("The display with id %u changed desktop mode", ev.displayID);
+			SDL_LogDebug(cat, "The display with id %u changed desktop mode", ev.displayID);
 			return updateMonitors(ev.type, ev.displayID);
 		default:
 			return true;

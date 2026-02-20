@@ -581,8 +581,7 @@ static UINT urb_select_configuration(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* c
 /* [MS-RDPEUSB[ 2.2.10.3 TS_URB_SELECT_INTERFACE_RESULT */
 static UINT urb_select_interface_result(GENERIC_CHANNEL_CALLBACK* callback, UINT32 RequestId,
                                         UINT32 InterfaceId, UINT32 MessageId,
-                                        MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
-                                        UINT32 ConfigurationHandle)
+                                        MSUSB_INTERFACE_DESCRIPTOR* MsInterface)
 {
 	WINPR_ASSERT(callback);
 	WINPR_ASSERT(MsInterface);
@@ -681,8 +680,7 @@ static UINT urb_select_interface(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 	if (noAck)
 		return CHANNEL_RC_OK;
 
-	return urb_select_interface_result(callback, RequestId, InterfaceId, MessageId, MsInterface,
-	                                   ConfigurationHandle);
+	return urb_select_interface_result(callback, RequestId, InterfaceId, MessageId, MsInterface);
 }
 
 static UINT urb_control_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,

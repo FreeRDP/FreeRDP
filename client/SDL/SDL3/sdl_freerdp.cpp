@@ -466,11 +466,12 @@ static void SDLCALL winpr_LogOutputFunction(void* userdata, int category, SDL_Lo
 
 static void sdl_quit()
 {
+	const auto cat = SDL_LOG_CATEGORY_APPLICATION;
 	SDL_Event ev = {};
 	ev.type = SDL_EVENT_QUIT;
 	if (!SDL_PushEvent(&ev))
 	{
-		SDL_Log("An error occurred: %s", SDL_GetError());
+		SDL_LogError(cat, "An error occurred: %s", SDL_GetError());
 	}
 }
 
@@ -479,23 +480,24 @@ static void SDLCALL rdp_file_cb(void* userdata, const char* const* filelist,
 {
 	auto rdp = static_cast<std::string*>(userdata);
 
+	const auto cat = SDL_LOG_CATEGORY_APPLICATION;
 	if (!filelist)
 	{
-		SDL_Log("An error occurred: %s", SDL_GetError());
+		SDL_LogError(cat, "An error occurred: %s", SDL_GetError());
 		sdl_quit();
 		return;
 	}
 	else if (!*filelist)
 	{
-		SDL_Log("The user did not select any file.");
-		SDL_Log("Most likely, the dialog was canceled.");
+		SDL_LogError(cat, "The user did not select any file.");
+		SDL_LogError(cat, "Most likely, the dialog was canceled.");
 		sdl_quit();
 		return;
 	}
 
 	while (*filelist)
 	{
-		SDL_Log("Full path to selected file: '%s'", *filelist);
+		SDL_LogError(cat, "Full path to selected file: '%s'", *filelist);
 		*rdp = *filelist;
 		filelist++;
 	}
