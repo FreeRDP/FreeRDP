@@ -249,13 +249,15 @@ pstatus_t generic_image_copy_no_overlap_convert(
 		{
 			const UINT32 color = FreeRDPReadColor_int(&srcLine[(x + nXSrc) * srcByte], SrcFormat);
 			const UINT32 dstColor = FreeRDPConvertColor(color, SrcFormat, DstFormat, palette);
-			FreeRDPWriteColor_int(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
+			if (!FreeRDPWriteColor_int(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor))
+				return -1;
 		}
 		for (; x < nWidth; x++)
 		{
 			const UINT32 color = FreeRDPReadColor_int(&srcLine[(x + nXSrc) * srcByte], SrcFormat);
 			const UINT32 dstColor = FreeRDPConvertColor(color, SrcFormat, DstFormat, palette);
-			FreeRDPWriteColor_int(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
+			if (!FreeRDPWriteColor_int(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor))
+				return -1;
 		}
 	}
 	return PRIMITIVES_SUCCESS;

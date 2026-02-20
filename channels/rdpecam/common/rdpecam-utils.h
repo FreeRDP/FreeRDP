@@ -53,6 +53,7 @@ static inline void rdpecam_PrintWarning(wLog* log, const char* file, const char*
  */
 #define rdpecam_valid_messageId(id) \
 	rdpecam_valid_messageId_((id), WLog_Get(TAG), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
 static inline bool rdpecam_valid_messageId_(UINT8 id, wLog* log, const char* file, const char* fkt,
                                             size_t line)
 {
@@ -102,6 +103,7 @@ static inline bool rdpecam_valid_messageId_(UINT8 id, wLog* log, const char* fil
  */
 #define rdpecam_valid_CamErrorCode(code) \
 	rdpecam_valid_CamErrorCode_((code), WLog_Get(TAG), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
 static inline bool rdpecam_valid_CamErrorCode_(UINT32 code, wLog* log, const char* file,
                                                const char* fkt, size_t line)
 {
@@ -137,6 +139,7 @@ static inline bool rdpecam_valid_CamErrorCode_(UINT32 code, wLog* log, const cha
  */
 #define rdpecam_valid_CamStreamFrameSourceType(val) \
 	rdpecam_valid_CamStreamFrameSourceType_((val), WLog_Get(TAG), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
 static inline bool rdpecam_valid_CamStreamFrameSourceType_(UINT16 val, wLog* log, const char* file,
                                                            const char* fkt, size_t line)
 {
@@ -166,6 +169,7 @@ static inline bool rdpecam_valid_CamStreamFrameSourceType_(UINT16 val, wLog* log
  */
 #define rdpecam_valid_CamStreamCategory(val) \
 	rdpecam_valid_CamStreamCategory_((val), WLog_Get(TAG), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
 static inline bool rdpecam_valid_CamStreamCategory_(UINT8 val, wLog* log, const char* file,
                                                     const char* fkt, size_t line)
 {
@@ -192,6 +196,7 @@ static inline bool rdpecam_valid_CamStreamCategory_(UINT8 val, wLog* log, const 
  */
 #define rdpecam_valid_CamMediaFormat(val) \
 	rdpecam_valid_CamMediaFormat_((val), WLog_Get(TAG), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
 static inline bool rdpecam_valid_CamMediaFormat_(UINT8 val, wLog* log, const char* file,
                                                  const char* fkt, size_t line)
 {
@@ -225,6 +230,7 @@ static inline bool rdpecam_valid_CamMediaFormat_(UINT8 val, wLog* log, const cha
  */
 #define rdpecam_valid_MediaTypeDescriptionFlags(val) \
 	rdpecam_valid_MediaTypeDescriptionFlags_((val), WLog_Get(TAG), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
 static inline bool rdpecam_valid_MediaTypeDescriptionFlags_(UINT8 val, wLog* log, const char* file,
                                                             const char* fkt, size_t line)
 {
@@ -280,6 +286,7 @@ static inline bool rdpecam_valid_CamPropertyMode_(UINT8 val, wLog* log, const ch
  */
 #define rdpecam_valid_CamPropertySet(val) \
 	rdpecam_valid_CamPropertySet_((val), WLog_Get(TAG), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
 static inline bool rdpecam_valid_CamPropertySet_(UINT8 val, wLog* log, const char* file,
                                                  const char* fkt, size_t line)
 {
@@ -307,6 +314,7 @@ static inline bool rdpecam_valid_CamPropertySet_(UINT8 val, wLog* log, const cha
  */
 #define rdpecam_valid_CamPropertyCapabilities(val) \
 	rdpecam_valid_CamPropertyCapabilities_((val), WLog_Get(TAG), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
 static inline bool rdpecam_valid_CamPropertyCapabilities_(UINT32 val, wLog* log, const char* file,
                                                           const char* fkt, size_t line)
 {

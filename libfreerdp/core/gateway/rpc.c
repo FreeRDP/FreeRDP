@@ -500,9 +500,7 @@ SSIZE_T rpc_channel_write_int(RpcChannel* channel, const BYTE* data, size_t leng
 
 BOOL rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state)
 {
-	if (!inChannel)
-		return FALSE;
-
+	WINPR_ASSERT(inChannel);
 	inChannel->State = state;
 	WLog_Print(inChannel->common.rpc->log, WLOG_DEBUG, "%s", client_in_state_str(state));
 	return TRUE;
@@ -617,8 +615,7 @@ void rpc_channel_free(RpcChannel* channel)
 
 BOOL rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state)
 {
-	if (!outChannel)
-		return FALSE;
+	WINPR_ASSERT(outChannel);
 
 	outChannel->State = state;
 	WLog_Print(outChannel->common.rpc->log, WLOG_DEBUG, "%s", client_out_state_str(state));
@@ -659,9 +656,7 @@ RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc, const GUID* guid)
 BOOL rpc_virtual_connection_transition_to_state(rdpRpc* rpc, RpcVirtualConnection* connection,
                                                 VIRTUAL_CONNECTION_STATE state)
 {
-	if (!connection)
-		return FALSE;
-
+	WINPR_ASSERT(connection);
 	WINPR_ASSERT(rpc);
 	connection->State = state;
 	WLog_Print(rpc->log, WLOG_DEBUG, "%s", rpc_vc_state_str(state));

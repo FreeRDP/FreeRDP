@@ -59,8 +59,11 @@
 #define BIO_meth_set_destroy(b, f) (b)->destroy = (f)
 #define BIO_meth_set_callback_ctrl(b, f) (b)->callback_ctrl = (f)
 
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL
 BIO_METHOD* BIO_meth_new(int type, const char* name);
-void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM** d);
+
+FREERDP_LOCAL void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM** d);
 
 #endif /* OPENSSL < 1.1.0 || LIBRESSL */
 #endif /* WITH_OPENSSL */
@@ -69,6 +72,7 @@ void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM
 #if defined(LIBRESSL_VERSION_NUMBER) || \
     (defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER < 0x1010000fL))
 
+WINPR_ATTR_NODISCARD
 static inline STACK_OF(X509) * sk_X509_deep_copy(const STACK_OF(X509) * sk,
                                                  X509* (*copyfunc)(const X509*),
                                                  void (*freefunc)(X509*))
@@ -106,6 +110,7 @@ fail:
  * While the TYPE_dup function take non const arguments
  * the TYPE_sk versions require the arguments to be const...
  */
+WINPR_ATTR_NODISCARD
 static inline X509* X509_const_dup(const X509* x509)
 {
 	X509* ptr = WINPR_CAST_CONST_PTR_AWAY(x509, X509*);

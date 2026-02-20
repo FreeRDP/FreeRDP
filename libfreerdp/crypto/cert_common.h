@@ -35,16 +35,25 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BOOL cert_info_create(rdpCertInfo* dst, const BIGNUM* rsa, const BIGNUM* rsa_e);
+
 	FREERDP_LOCAL void cert_info_free(rdpCertInfo* info);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BOOL cert_info_clone(rdpCertInfo* dst, const rdpCertInfo* src);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BOOL cert_info_read_modulus(rdpCertInfo* info, size_t size, wStream* s);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BOOL cert_info_read_exponent(rdpCertInfo* info, size_t size, wStream* s);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BOOL read_bignum(BYTE** dst, DWORD* length, const BIGNUM* num, BOOL alloc);
 
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL X509* x509_from_rsa(const RSA* rsa);
 #endif
 

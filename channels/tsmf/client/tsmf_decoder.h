@@ -36,43 +36,52 @@ typedef struct s_ITSMFDecoder ITSMFDecoder;
 struct s_ITSMFDecoder
 {
 	/* Set the decoder format. Return true if supported. */
-	BOOL (*SetFormat)(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);
+	WINPR_ATTR_NODISCARD BOOL (*SetFormat)(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);
 	/* Decode a sample. */
-	BOOL (*Decode)(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size, UINT32 extensions);
+	WINPR_ATTR_NODISCARD BOOL (*Decode)(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size,
+	                                    UINT32 extensions);
 	/* Get the decoded data */
-	BYTE* (*GetDecodedData)(ITSMFDecoder* decoder, UINT32* size);
+	WINPR_ATTR_NODISCARD BYTE* (*GetDecodedData)(ITSMFDecoder* decoder, UINT32* size);
 	/* Get the pixel format of decoded video frame */
-	UINT32 (*GetDecodedFormat)(ITSMFDecoder* decoder);
+	WINPR_ATTR_NODISCARD UINT32 (*GetDecodedFormat)(ITSMFDecoder* decoder);
 	/* Get the width and height of decoded video frame */
-	BOOL (*GetDecodedDimension)(ITSMFDecoder* decoder, UINT32* width, UINT32* height);
+	WINPR_ATTR_NODISCARD BOOL (*GetDecodedDimension)(ITSMFDecoder* decoder, UINT32* width,
+	                                                 UINT32* height);
 	/* Free the decoder */
 	void (*Free)(ITSMFDecoder* decoder);
 	/* Optional Control function */
-	BOOL (*Control)(ITSMFDecoder* decoder, ITSMFControlMsg control_msg, UINT32* arg);
+	WINPR_ATTR_NODISCARD BOOL (*Control)(ITSMFDecoder* decoder, ITSMFControlMsg control_msg,
+	                                     UINT32* arg);
 	/* Decode a sample with extended interface. */
-	BOOL(*DecodeEx)
-	(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size, UINT32 extensions,
-	 UINT64 start_time, UINT64 end_time, UINT64 duration);
+	WINPR_ATTR_NODISCARD BOOL (*DecodeEx)(ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size,
+	                                      UINT32 extensions, UINT64 start_time, UINT64 end_time,
+	                                      UINT64 duration);
 	/* Get current play time */
-	UINT64 (*GetRunningTime)(ITSMFDecoder* decoder);
+	WINPR_ATTR_NODISCARD UINT64 (*GetRunningTime)(ITSMFDecoder* decoder);
 	/* Update Gstreamer Rendering Area */
-	BOOL(*UpdateRenderingArea)
-	(ITSMFDecoder* decoder, UINT32 newX, UINT32 newY, UINT32 newWidth, UINT32 newHeight,
-	 UINT32 numRectangles, const RECTANGLE_32* rectangles);
+	WINPR_ATTR_NODISCARD BOOL (*UpdateRenderingArea)(ITSMFDecoder* decoder, UINT32 newX,
+	                                                 UINT32 newY, UINT32 newWidth, UINT32 newHeight,
+	                                                 UINT32 numRectangles,
+	                                                 const RECTANGLE_32* rectangles);
 	/* Change Gstreamer Audio Volume */
-	BOOL (*ChangeVolume)(ITSMFDecoder* decoder, UINT32 newVolume, UINT32 muted);
+	WINPR_ATTR_NODISCARD BOOL (*ChangeVolume)(ITSMFDecoder* decoder, UINT32 newVolume,
+	                                          UINT32 muted);
 	/* Check buffer level */
-	BOOL (*BufferLevel)(ITSMFDecoder* decoder);
+	WINPR_ATTR_NODISCARD BOOL (*BufferLevel)(ITSMFDecoder* decoder);
 	/* Register a callback for frame ack. */
-	BOOL (*SetAckFunc)(ITSMFDecoder* decoder, BOOL (*cb)(void*, BOOL), void* stream);
+	WINPR_ATTR_NODISCARD BOOL (*SetAckFunc)(ITSMFDecoder* decoder, BOOL (*cb)(void*, BOOL),
+	                                        void* stream);
 	/* Register a callback for stream seek detection. */
-	BOOL (*SetSyncFunc)(ITSMFDecoder* decoder, void (*cb)(void*), void* stream);
+	WINPR_ATTR_NODISCARD BOOL (*SetSyncFunc)(ITSMFDecoder* decoder, void (*cb)(void*),
+	                                         void* stream);
 };
 
 #define TSMF_DECODER_EXPORT_FUNC_NAME "TSMFDecoderEntry"
 typedef UINT(VCAPITYPE* TSMF_DECODER_ENTRY)(ITSMFDecoder** decoder);
 
-ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type);
-BOOL tsmf_check_decoder_available(const char* name);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL ITSMFDecoder* tsmf_load_decoder(const char* name,
+                                                                   TS_AM_MEDIA_TYPE* media_type);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL tsmf_check_decoder_available(const char* name);
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_DECODER_H */

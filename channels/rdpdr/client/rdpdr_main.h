@@ -118,7 +118,10 @@ typedef struct
 	RdpdrClientContext context;
 } rdpdrPlugin;
 
-BOOL rdpdr_state_advance(rdpdrPlugin* rdpdr, enum RDPDR_CHANNEL_STATE next);
-UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdpdr_state_advance(rdpdrPlugin* rdpdr, enum RDPDR_CHANNEL_STATE next);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H */

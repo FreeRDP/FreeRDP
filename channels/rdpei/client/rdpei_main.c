@@ -300,6 +300,7 @@ static UINT rdpei_write_pen_frame(wStream* s, const RDPINPUT_PEN_FRAME* frame)
 static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, size_t frameOffset,
                                      const RDPINPUT_PEN_FRAME* frames, size_t count)
 {
+	UINT status = ERROR_OUTOFMEMORY;
 	WINPR_ASSERT(callback);
 
 	if (frameOffset > UINT32_MAX)
@@ -327,24 +328,26 @@ static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, size_t 
 	 * the time that has elapsed (in milliseconds) from when the oldest touch frame
 	 * was generated to when it was encoded for transmission by the client.
 	 */
-	rdpei_write_4byte_unsigned(s,
-	                           (UINT32)frameOffset); /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
-	rdpei_write_2byte_unsigned(s, (UINT16)count);    /* (frameCount) TWO_BYTE_UNSIGNED_INTEGER */
+	if (!rdpei_write_4byte_unsigned(
+	        s, (UINT32)frameOffset)) /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
+		goto fail;
+	if (!rdpei_write_2byte_unsigned(s, (UINT16)count)) /* (frameCount) TWO_BYTE_UNSIGNED_INTEGER */
+		goto fail;
 
 	for (size_t x = 0; x < count; x++)
 	{
-		const UINT status = rdpei_write_pen_frame(s, &frames[x]);
+		status = rdpei_write_pen_frame(s, &frames[x]);
 		if (status)
 		{
 			WLog_Print(rdpei->base.log, WLOG_ERROR,
 			           "rdpei_write_pen_frame failed with error %" PRIu32 "!", status);
-			Stream_Free(s, TRUE);
-			return status;
+			goto fail;
 		}
 	}
 	Stream_SealLength(s);
 
-	const UINT status = rdpei_send_pdu(callback, s, EVENTID_PEN, Stream_Length(s));
+	status = rdpei_send_pdu(callback, s, EVENTID_PEN, Stream_Length(s));
+fail:
 	Stream_Free(s, TRUE);
 	return status;
 }
@@ -614,14 +617,16 @@ static UINT rdpei_write_touch_frame(wLog* log, wStream* s, RDPINPUT_TOUCH_FRAME*
 	WLog_Print(log, WLOG_DEBUG, "contactCount: %" PRIu32 "", frame->contactCount);
 	WLog_Print(log, WLOG_DEBUG, "frameOffset: 0x%016" PRIX64 "", frame->frameOffset);
 #endif
-	rdpei_write_2byte_unsigned(s,
-	                           frame->contactCount); /* contactCount (TWO_BYTE_UNSIGNED_INTEGER) */
+	if (!rdpei_write_2byte_unsigned(
+	        s, frame->contactCount)) /* contactCount (TWO_BYTE_UNSIGNED_INTEGER) */
+		return ERROR_OUTOFMEMORY;
 	/**
 	 * the time offset from the previous frame (in microseconds).
 	 * If this is the first frame being transmitted then this field MUST be set to zero.
 	 */
-	rdpei_write_8byte_unsigned(s, frame->frameOffset *
-	                                  1000); /* frameOffset (EIGHT_BYTE_UNSIGNED_INTEGER) */
+	if (!rdpei_write_8byte_unsigned(s, frame->frameOffset *
+	                                       1000)) /* frameOffset (EIGHT_BYTE_UNSIGNED_INTEGER) */
+		return ERROR_OUTOFMEMORY;
 
 	if (!Stream_EnsureRemainingCapacity(s, (size_t)frame->contactCount * 64))
 	{
@@ -652,34 +657,44 @@ static UINT rdpei_write_touch_frame(wLog* log, wStream* s, RDPINPUT_TOUCH_FRAME*
 		Stream_Write_UINT8(
 		    s, WINPR_ASSERTING_INT_CAST(uint8_t, contact->contactId)); /* contactId (1 byte) */
 		/* fieldsPresent (TWO_BYTE_UNSIGNED_INTEGER) */
-		rdpei_write_2byte_unsigned(s, contact->fieldsPresent);
-		rdpei_write_4byte_signed(s, contact->x); /* x (FOUR_BYTE_SIGNED_INTEGER) */
-		rdpei_write_4byte_signed(s, contact->y); /* y (FOUR_BYTE_SIGNED_INTEGER) */
+		if (!rdpei_write_2byte_unsigned(s, contact->fieldsPresent))
+			return ERROR_OUTOFMEMORY;
+		if (!rdpei_write_4byte_signed(s, contact->x)) /* x (FOUR_BYTE_SIGNED_INTEGER) */
+			return ERROR_OUTOFMEMORY;
+		if (!rdpei_write_4byte_signed(s, contact->y)) /* y (FOUR_BYTE_SIGNED_INTEGER) */
+			return ERROR_OUTOFMEMORY;
 		/* contactFlags (FOUR_BYTE_UNSIGNED_INTEGER) */
-		rdpei_write_4byte_unsigned(s, contact->contactFlags);
+		if (!rdpei_write_4byte_unsigned(s, contact->contactFlags))
+			return ERROR_OUTOFMEMORY;
 
 		if (contact->fieldsPresent & CONTACT_DATA_CONTACTRECT_PRESENT)
 		{
 			/* contactRectLeft (TWO_BYTE_SIGNED_INTEGER) */
-			rdpei_write_2byte_signed(s, contact->contactRectLeft);
+			if (!rdpei_write_2byte_signed(s, contact->contactRectLeft))
+				return ERROR_OUTOFMEMORY;
 			/* contactRectTop (TWO_BYTE_SIGNED_INTEGER) */
-			rdpei_write_2byte_signed(s, contact->contactRectTop);
+			if (!rdpei_write_2byte_signed(s, contact->contactRectTop))
+				return ERROR_OUTOFMEMORY;
 			/* contactRectRight (TWO_BYTE_SIGNED_INTEGER) */
-			rdpei_write_2byte_signed(s, contact->contactRectRight);
+			if (!rdpei_write_2byte_signed(s, contact->contactRectRight))
+				return ERROR_OUTOFMEMORY;
 			/* contactRectBottom (TWO_BYTE_SIGNED_INTEGER) */
-			rdpei_write_2byte_signed(s, contact->contactRectBottom);
+			if (!rdpei_write_2byte_signed(s, contact->contactRectBottom))
+				return ERROR_OUTOFMEMORY;
 		}
 
 		if (contact->fieldsPresent & CONTACT_DATA_ORIENTATION_PRESENT)
 		{
 			/* orientation (FOUR_BYTE_UNSIGNED_INTEGER) */
-			rdpei_write_4byte_unsigned(s, contact->orientation);
+			if (!rdpei_write_4byte_unsigned(s, contact->orientation))
+				return ERROR_OUTOFMEMORY;
 		}
 
 		if (contact->fieldsPresent & CONTACT_DATA_PRESSURE_PRESENT)
 		{
 			/* pressure (FOUR_BYTE_UNSIGNED_INTEGER) */
-			rdpei_write_4byte_unsigned(s, contact->pressure);
+			if (!rdpei_write_4byte_unsigned(s, contact->pressure))
+				return ERROR_OUTOFMEMORY;
 		}
 	}
 
@@ -694,6 +709,7 @@ static UINT rdpei_write_touch_frame(wLog* log, wStream* s, RDPINPUT_TOUCH_FRAME*
 static UINT rdpei_send_touch_event_pdu(GENERIC_CHANNEL_CALLBACK* callback,
                                        RDPINPUT_TOUCH_FRAME* frame)
 {
+	UINT status = ERROR_OUTOFMEMORY;
 	WINPR_ASSERT(callback);
 
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*)callback->plugin;
@@ -714,27 +730,31 @@ static UINT rdpei_send_touch_event_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	Stream_Seek(s, RDPINPUT_HEADER_LENGTH);
+	if (!Stream_SafeSeek(s, RDPINPUT_HEADER_LENGTH))
+		goto fail;
 	/**
 	 * the time that has elapsed (in milliseconds) from when the oldest touch frame
 	 * was generated to when it was encoded for transmission by the client.
 	 */
-	rdpei_write_4byte_unsigned(
-	    s, (UINT32)frame->frameOffset); /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
-	rdpei_write_2byte_unsigned(s, 1);   /* (frameCount) TWO_BYTE_UNSIGNED_INTEGER */
+	if (!rdpei_write_4byte_unsigned(
+	        s, (UINT32)frame->frameOffset)) /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
+		goto fail;
+	if (!rdpei_write_2byte_unsigned(s, 1)) /* (frameCount) TWO_BYTE_UNSIGNED_INTEGER */
+		goto fail;
 
 	const UINT rc = rdpei_write_touch_frame(rdpei->base.log, s, frame);
 	if (rc)
 	{
 		WLog_Print(rdpei->base.log, WLOG_ERROR,
 		           "rdpei_write_touch_frame failed with error %" PRIu32 "!", rc);
-		Stream_Free(s, TRUE);
-		return rc;
+		status = rc;
+		goto fail;
 	}
 
 	Stream_SealLength(s);
 
-	const UINT status = rdpei_send_pdu(callback, s, EVENTID_TOUCH, Stream_Length(s));
+	status = rdpei_send_pdu(callback, s, EVENTID_TOUCH, Stream_Length(s));
+fail:
 	Stream_Free(s, TRUE);
 	return status;
 }

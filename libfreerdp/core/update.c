@@ -1046,14 +1046,15 @@ static BOOL s_update_begin_paint(rdpContext* context)
 
 static BOOL s_update_end_paint(rdpContext* context)
 {
-	wStream* s = NULL;
+	BOOL rc = FALSE;
+
 	WINPR_ASSERT(context);
 	rdp_update_internal* update = update_cast(context->update);
 
 	if (!update->us)
 		return FALSE;
 
-	s = update->us;
+	wStream* s = update->us;
 	Stream_SealLength(s);
 	Stream_SetPosition(s, update->offsetOrders);
 	Stream_Write_UINT16(s, update->numberOrders); /* numberOrders (2 bytes) */
@@ -1062,15 +1063,18 @@ static BOOL s_update_end_paint(rdpContext* context)
 	if (update->numberOrders > 0)
 	{
 		WLog_DBG(TAG, "sending %" PRIu16 " orders", update->numberOrders);
-		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s, FALSE);
+		if (!fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s, FALSE))
+			goto fail;
 	}
 
 	update->combineUpdates = FALSE;
 	update->numberOrders = 0;
 	update->offsetOrders = 0;
 	update->us = NULL;
+	rc = TRUE;
+fail:
 	Stream_Free(s, TRUE);
-	return TRUE;
+	return rc;
 }
 
 static BOOL update_flush(rdpContext* context)
@@ -1233,6 +1237,7 @@ static size_t update_prepare_order_info(rdpContext* context, ORDER_INFO* orderIn
 	return length;
 }
 
+WINPR_ATTR_NODISCARD
 static int update_write_order_info(rdpContext* context, wStream* s, const ORDER_INFO* orderInfo,
                                    size_t offset)
 {
@@ -1611,7 +1616,8 @@ static BOOL update_send_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 	if (!update_write_dstblt_order(s, &orderInfo, dstblt))
 		return FALSE;
 
-	update_write_order_info(context, s, &orderInfo, offset);
+	if (update_write_order_info(context, s, &orderInfo, offset) < 0)
+		return FALSE;
 	update->numberOrders++;
 	return TRUE;
 }
@@ -1641,8 +1647,10 @@ static BOOL update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		return FALSE;
 
 	Stream_Seek(s, headerLength);
-	update_write_patblt_order(s, &orderInfo, patblt);
-	update_write_order_info(context, s, &orderInfo, offset);
+	if (!update_write_patblt_order(s, &orderInfo, patblt))
+		return FALSE;
+	if (update_write_order_info(context, s, &orderInfo, offset) < 0)
+		return FALSE;
 	update->numberOrders++;
 	return TRUE;
 }
@@ -1671,8 +1679,10 @@ static BOOL update_send_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 		return FALSE;
 
 	Stream_Seek(s, headerLength);
-	update_write_scrblt_order(s, &orderInfo, scrblt);
-	update_write_order_info(context, s, &orderInfo, offset);
+	if (!update_write_scrblt_order(s, &orderInfo, scrblt))
+		return FALSE;
+	if (update_write_order_info(context, s, &orderInfo, offset) < 0)
+		return FALSE;
 	update->numberOrders++;
 	return TRUE;
 }
@@ -1703,8 +1713,10 @@ static BOOL update_send_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER
 		return FALSE;
 
 	Stream_Seek(s, headerLength);
-	update_write_opaque_rect_order(s, &orderInfo, opaque_rect);
-	update_write_order_info(context, s, &orderInfo, offset);
+	if (!update_write_opaque_rect_order(s, &orderInfo, opaque_rect))
+		return FALSE;
+	if (update_write_order_info(context, s, &orderInfo, offset) < 0)
+		return FALSE;
 	update->numberOrders++;
 	return TRUE;
 }
@@ -1732,8 +1744,10 @@ static BOOL update_send_line_to(rdpContext* context, const LINE_TO_ORDER* line_t
 		return FALSE;
 
 	Stream_Seek(s, headerLength);
-	update_write_line_to_order(s, &orderInfo, line_to);
-	update_write_order_info(context, s, &orderInfo, offset);
+	if (!update_write_line_to_order(s, &orderInfo, line_to))
+		return FALSE;
+	if (update_write_order_info(context, s, &orderInfo, offset) < 0)
+		return FALSE;
 	update->numberOrders++;
 	return TRUE;
 }
@@ -1762,8 +1776,10 @@ static BOOL update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 		return FALSE;
 
 	Stream_Seek(s, headerLength);
-	update_write_memblt_order(s, &orderInfo, memblt);
-	update_write_order_info(context, s, &orderInfo, offset);
+	if (!update_write_memblt_order(s, &orderInfo, memblt))
+		return FALSE;
+	if (update_write_order_info(context, s, &orderInfo, offset) < 0)
+		return FALSE;
 	update->numberOrders++;
 	return TRUE;
 }
@@ -1793,8 +1809,10 @@ static BOOL update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyp
 		return FALSE;
 
 	Stream_Seek(s, headerLength);
-	update_write_glyph_index_order(s, &orderInfo, glyph_index);
-	update_write_order_info(context, s, &orderInfo, offset);
+	if (!update_write_glyph_index_order(s, &orderInfo, glyph_index))
+		return FALSE;
+	if (update_write_order_info(context, s, &orderInfo, offset) < 0)
+		return FALSE;
 	update->numberOrders++;
 	return TRUE;
 }

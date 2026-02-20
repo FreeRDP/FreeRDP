@@ -23,9 +23,14 @@
 #ifndef FREERDP_CHANNEL_RDPDR_CLIENT_CAPABILITIES_H
 #define FREERDP_CHANNEL_RDPDR_CLIENT_CAPABILITIES_H
 
+#include <winpr/wtypes.h>
+
 #include "rdpdr_main.h"
 
-UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s);
-UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_CAPABILITIES_H */

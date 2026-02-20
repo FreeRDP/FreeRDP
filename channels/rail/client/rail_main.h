@@ -54,7 +54,8 @@ typedef struct
 	BOOL sendHandshake;
 } railPlugin;
 
-RailClientContext* rail_get_client_interface(railPlugin* rail);
-UINT rail_send_channel_data(railPlugin* rail, wStream* s);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL RailClientContext* rail_get_client_interface(railPlugin* rail);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT rail_send_channel_data(railPlugin* rail, wStream* s);
 
 #endif /* FREERDP_CHANNEL_RAIL_CLIENT_MAIN_H */

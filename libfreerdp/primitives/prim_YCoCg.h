@@ -30,6 +30,7 @@
 #include "prim_internal.h"
 
 FREERDP_LOCAL void primitives_init_YCoCg_ssse3_int(primitives_t* WINPR_RESTRICT prims);
+
 static inline void primitives_init_YCoCg_ssse3(primitives_t* WINPR_RESTRICT prims)
 {
 	if (!IsProcessorFeaturePresentEx(PF_EX_SSSE3) ||
@@ -41,6 +42,7 @@ static inline void primitives_init_YCoCg_ssse3(primitives_t* WINPR_RESTRICT prim
 }
 
 FREERDP_LOCAL void primitives_init_YCoCg_neon_int(primitives_t* WINPR_RESTRICT prims);
+
 static inline void primitives_init_YCoCg_neon(primitives_t* WINPR_RESTRICT prims)
 {
 	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))

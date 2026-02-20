@@ -926,8 +926,9 @@ static BOOL cert_write_rsa_signature(wStream* s, const void* sigData, size_t sig
 	if (!winpr_Digest(WINPR_MD_MD5, sigData, sigDataLen, signature, sizeof(signature)))
 		return FALSE;
 
-	crypto_rsa_private_encrypt(signature, sizeof(signature), priv_key_tssk, encryptedSignature,
-	                           sizeof(encryptedSignature));
+	if (crypto_rsa_private_encrypt(signature, sizeof(signature), priv_key_tssk, encryptedSignature,
+	                               sizeof(encryptedSignature)) < 0)
+		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT16) + sizeof(encryptedSignature) + 8))
 		return FALSE;

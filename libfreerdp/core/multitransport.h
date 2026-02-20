@@ -44,10 +44,16 @@ typedef state_run_t (*MultiTransportResponseCb)(rdpMultitransport* multi, UINT32
 #define RDPUDP_COOKIE_LEN 16
 #define RDPUDP_COOKIE_HASHLEN 32
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t multitransport_recv_request(rdpMultitransport* multi, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t multitransport_server_request(rdpMultitransport* multi, UINT16 reqProto);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t multitransport_recv_response(rdpMultitransport* multi, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_client_send_response(rdpMultitransport* multi, UINT32 reqId,
                                                        HRESULT hr);
 

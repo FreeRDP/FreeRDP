@@ -26,13 +26,20 @@
 
 #include "dsp.h"
 
-BOOL fdk_aac_dsp_init(FREERDP_DSP_COMMON_CONTEXT* context, size_t frames_per_packet);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL fdk_aac_dsp_init(FREERDP_DSP_COMMON_CONTEXT* context,
+                                                         size_t frames_per_packet);
+
+FREERDP_LOCAL
 void fdk_aac_dsp_uninit(FREERDP_DSP_COMMON_CONTEXT* context);
 
-BOOL fdk_aac_dsp_encode(FREERDP_DSP_COMMON_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
-                        const BYTE* data, size_t length, wStream* out);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL fdk_aac_dsp_encode(FREERDP_DSP_COMMON_CONTEXT* context,
+                                                           const AUDIO_FORMAT* srcFormat,
+                                                           const BYTE* data, size_t length,
+                                                           wStream* out);
 
-BOOL fdk_aac_dsp_decode(FREERDP_DSP_COMMON_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
-                        const BYTE* data, size_t length, wStream* out);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL fdk_aac_dsp_decode(FREERDP_DSP_COMMON_CONTEXT* context,
+                                                           const AUDIO_FORMAT* srcFormat,
+                                                           const BYTE* data, size_t length,
+                                                           wStream* out);
 
 #endif

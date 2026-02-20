@@ -28,41 +28,67 @@
 
 #include <winpr/stream.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_master_secret(const BYTE* premaster_secret, size_t pre_len,
                                           const BYTE* client_random, size_t client_len,
                                           const BYTE* server_random, size_t server_len,
                                           BYTE* output, size_t out_len);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_session_key_blob(const BYTE* master_secret, size_t master_len,
                                              const BYTE* client_random, size_t client_len,
                                              const BYTE* server_random, size_t server_len,
                                              BYTE* output, size_t out_len);
+
 FREERDP_LOCAL void security_mac_salt_key(const BYTE* session_key_blob, size_t session_len,
                                          const BYTE* client_random, size_t client_len,
                                          const BYTE* server_random, size_t server_len, BYTE* output,
                                          size_t out_len);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_licensing_encryption_key(const BYTE* session_key_blob,
                                                      size_t session_len, const BYTE* client_random,
                                                      size_t client_len, const BYTE* server_random,
                                                      size_t server_len, BYTE* output,
                                                      size_t out_len);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_mac_data(const BYTE* mac_salt_key, size_t mac_salt_key_length,
                                      const BYTE* data, size_t length, BYTE* output,
                                      size_t output_length);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
                                           BYTE* output, size_t out_len);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
                                                  BOOL encryption, BYTE* output, size_t out_len);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_establish_keys(rdpRdp* rdp);
 
-FREERDP_LOCAL BOOL security_lock(rdpRdp* rdp);
-FREERDP_LOCAL BOOL security_unlock(rdpRdp* rdp);
+FREERDP_LOCAL void security_lock(rdpRdp* rdp);
 
+FREERDP_LOCAL void security_unlock(rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_encrypt(BYTE* data, size_t length, rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_hmac_signature(const BYTE* data, size_t length, BYTE* output,
                                            size_t out_len, rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_fips_encrypt(BYTE* data, size_t length, rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* sig,
                                                  size_t sig_len, rdpRdp* rdp);
 

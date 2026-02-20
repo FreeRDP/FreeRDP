@@ -30,6 +30,7 @@
 
 #include "rdpgfx_main.h"
 
+FREERDP_LOCAL
 FREERDP_LOCAL UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd);
 
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_CODEC_H */

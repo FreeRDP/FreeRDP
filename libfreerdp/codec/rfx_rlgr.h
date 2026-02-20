@@ -23,10 +23,12 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data,
                                   UINT32 data_size, BYTE* WINPR_RESTRICT buffer,
                                   UINT32 buffer_size);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData,
                                   UINT32 SrcSize, INT16* WINPR_RESTRICT pDstData, UINT32 rDstSize);
 

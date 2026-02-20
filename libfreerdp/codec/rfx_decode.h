@@ -26,6 +26,7 @@
 #include <freerdp/api.h>
 
 /* stride is bytes between rows in the output buffer. */
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rfx_decode_rgb(RFX_CONTEXT* WINPR_RESTRICT context,
                                   const RFX_TILE* WINPR_RESTRICT tile,
                                   BYTE* WINPR_RESTRICT rgb_buffer, UINT32 stride);

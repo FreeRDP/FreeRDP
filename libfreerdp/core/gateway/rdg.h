@@ -35,9 +35,13 @@ WINPR_ATTR_MALLOC(rdg_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpRdg* rdg_new(rdpContext* context);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BIO* rdg_get_front_bio_and_take_ownership(rdpRdg* rdg);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RDG_H */

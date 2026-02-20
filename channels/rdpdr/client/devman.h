@@ -23,14 +23,25 @@
 #ifndef FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H
 #define FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H
 
+#include <winpr/wtypes.h>
+
 #include "rdpdr_main.h"
 
-void devman_unregister_device(DEVMAN* devman, void* key);
-UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext* rdpcontext);
-DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id);
-DEVICE* devman_get_device_by_type(DEVMAN* devman, UINT32 type);
+FREERDP_LOCAL void devman_unregister_device(DEVMAN* devman, void* key);
+FREERDP_LOCAL void devman_free(DEVMAN* devman);
 
-DEVMAN* devman_new(rdpdrPlugin* rdpdr);
-void devman_free(DEVMAN* devman);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device,
+                                              rdpContext* rdpcontext);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL DEVICE* devman_get_device_by_type(DEVMAN* devman, UINT32 type);
+
+WINPR_ATTR_MALLOC(devman_free, 1)
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL DEVMAN* devman_new(rdpdrPlugin* rdpdr);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H */

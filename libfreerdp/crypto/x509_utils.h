@@ -33,28 +33,59 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert);
+
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length);
 
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BYTE* x509_utils_to_pem(const X509* xcert, const STACK_OF(X509) * chain,
 	                                      size_t* length);
+
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL X509* x509_utils_from_pem(const char* data, size_t length, BOOL fromFile);
 
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL char* x509_utils_get_subject(const X509* xcert);
+
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL char* x509_utils_get_issuer(const X509* xcert);
+
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL char* x509_utils_get_email(const X509* x509);
+
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL char* x509_utils_get_upn(const X509* x509);
+
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL char* x509_utils_get_date(const X509* x509, BOOL startDate);
 
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL char* x509_utils_get_common_name(const X509* xcert, size_t* plength);
+
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL char** x509_utils_get_dns_names(const X509* xcert, size_t* count,
 	                                              size_t** pplengths);
 
 	FREERDP_LOCAL void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BOOL x509_utils_check_eku(const X509* scert, int nid);
+
 	FREERDP_LOCAL void x509_utils_print_info(const X509* xcert);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain,
 	                                     const char* certificate_store_path);
 

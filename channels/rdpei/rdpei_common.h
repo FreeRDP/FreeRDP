@@ -23,6 +23,8 @@
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
+
+#include <freerdp/api.h>
 #include <freerdp/channels/rdpei.h>
 
 /** @brief input event ids */
@@ -37,21 +39,36 @@ enum
 	EVENTID_PEN = 0x0008
 };
 
-BOOL rdpei_read_2byte_unsigned(wStream* s, UINT16* value);
-BOOL rdpei_write_2byte_unsigned(wStream* s, UINT16 value);
-BOOL rdpei_read_2byte_signed(wStream* s, INT16* value);
-BOOL rdpei_write_2byte_signed(wStream* s, INT16 value);
-BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value);
-BOOL rdpei_write_4byte_unsigned(wStream* s, UINT32 value);
-BOOL rdpei_read_4byte_signed(wStream* s, INT32* value);
-BOOL rdpei_write_4byte_signed(wStream* s, INT32 value);
-BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value);
-BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rdpei_read_2byte_unsigned(wStream* s, UINT16* value);
 
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rdpei_write_2byte_unsigned(wStream* s, UINT16 value);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rdpei_read_2byte_signed(wStream* s, INT16* value);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rdpei_write_2byte_signed(wStream* s, INT16 value);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rdpei_write_4byte_unsigned(wStream* s, UINT32 value);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rdpei_read_4byte_signed(wStream* s, INT32* value);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rdpei_write_4byte_signed(wStream* s, INT32 value);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value);
+
+FREERDP_LOCAL
 void touch_event_reset(RDPINPUT_TOUCH_EVENT* event);
+
+FREERDP_LOCAL
 void touch_frame_reset(RDPINPUT_TOUCH_FRAME* frame);
 
+FREERDP_LOCAL
 void pen_event_reset(RDPINPUT_PEN_EVENT* event);
+
+FREERDP_LOCAL
 void pen_frame_reset(RDPINPUT_PEN_FRAME* frame);
 
 #endif /* FREERDP_CHANNEL_RDPEI_COMMON_H */

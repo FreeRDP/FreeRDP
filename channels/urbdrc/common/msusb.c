@@ -43,18 +43,17 @@ static void msusb_mspipes_free(MSUSB_PIPE_DESCRIPTOR** MsPipes, UINT32 NumberOfP
 	}
 }
 
-BOOL msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
+void msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
                            MSUSB_PIPE_DESCRIPTOR** NewMsPipes, UINT32 NewNumberOfPipes)
 {
-	if (!MsInterface || !NewMsPipes)
-		return FALSE;
+	WINPR_ASSERT(MsInterface);
+	WINPR_ASSERT(NewMsPipes || (NewNumberOfPipes == 0));
 
 	/* free original MsPipes */
 	msusb_mspipes_free(MsInterface->MsPipes, MsInterface->NumberOfPipes);
 	/* And replace it */
 	MsInterface->MsPipes = NewMsPipes;
 	MsInterface->NumberOfPipes = NewNumberOfPipes;
-	return TRUE;
 }
 
 static MSUSB_PIPE_DESCRIPTOR** msusb_mspipes_read(wStream* s, UINT32 NumberOfPipes)

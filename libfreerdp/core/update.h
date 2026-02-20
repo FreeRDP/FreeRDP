@@ -120,6 +120,7 @@ typedef struct
 	BOOL glyph_v2;
 } rdp_secondary_update_internal;
 
+WINPR_ATTR_NODISCARD
 static inline rdp_update_internal* update_cast(rdpUpdate* update)
 {
 	union
@@ -133,6 +134,7 @@ static inline rdp_update_internal* update_cast(rdpUpdate* update)
 	return cnv.internal;
 }
 
+WINPR_ATTR_NODISCARD
 static inline rdp_altsec_update_internal* altsec_update_cast(rdpAltSecUpdate* update)
 {
 	union
@@ -146,6 +148,7 @@ static inline rdp_altsec_update_internal* altsec_update_cast(rdpAltSecUpdate* up
 	return cnv.internal;
 }
 
+WINPR_ATTR_NODISCARD
 static inline rdp_primary_update_internal* primary_update_cast(rdpPrimaryUpdate* update)
 {
 	union
@@ -159,6 +162,7 @@ static inline rdp_primary_update_internal* primary_update_cast(rdpPrimaryUpdate*
 	return cnv.internal;
 }
 
+WINPR_ATTR_NODISCARD
 static inline rdp_secondary_update_internal* secondary_update_cast(rdpSecondaryUpdate* update)
 {
 	union
@@ -179,11 +183,19 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpUpdate* update_new(rdpRdp* rdp);
 
 FREERDP_LOCAL void update_reset_state(rdpUpdate* update);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_post_connect(rdpUpdate* update);
+
 FREERDP_LOCAL void update_post_disconnect(rdpUpdate* update);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_recv_play_sound(rdpUpdate* update, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_recv_pointer(rdpUpdate* update, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_recv(rdpUpdate* update, wStream* s);
 
 WINPR_ATTR_MALLOC(free_bitmap_update, 2)
@@ -219,13 +231,22 @@ WINPR_ATTR_MALLOC(free_pointer_cached_update, 2)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL POINTER_CACHED_UPDATE* update_read_pointer_cached(rdpUpdate* update, wStream* s);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_read_suppress_output(rdpUpdate* update, wStream* s);
+
 FREERDP_LOCAL void update_register_server_callbacks(rdpUpdate* update);
 FREERDP_LOCAL void update_register_client_callbacks(rdpUpdate* update);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int update_process_messages(rdpUpdate* update);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_begin_paint(rdpUpdate* update);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_end_paint(rdpUpdate* update);
 
 #endif /* FREERDP_LIB_CORE_UPDATE_H */

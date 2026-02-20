@@ -971,13 +971,15 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 				switch (ret)
 				{
 					case STATE_RUN_SUCCESS:
-						rdp_server_transition_to_state(
-						    rdp, CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE);
+						if (!rdp_server_transition_to_state(
+						        rdp, CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_RESPONSE))
+							ret = STATE_RUN_FAILED;
 						break;
 					case STATE_RUN_CONTINUE:
 						/* mismatch on the supported kind of UDP transports */
-						rdp_server_transition_to_state(
-						    rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
+						if (!rdp_server_transition_to_state(
+						        rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE))
+							ret = STATE_RUN_FAILED;
 						break;
 					default:
 						break;
@@ -1238,7 +1240,8 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_SupportErrorInfoPdu))
 	{
-		rdp_send_error_info(context->rdp);
+		if (!rdp_send_error_info(context->rdp))
+			return FALSE;
 	}
 
 	return mcs_send_disconnect_provider_ultimatum(context->rdp->mcs,

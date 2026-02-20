@@ -40,19 +40,30 @@ extern "C"
 		FREERDP_KEY_PARAM_RSA_N
 	};
 
+	WINPR_ATTR_MALLOC(freerdp_key_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL rdpPrivateKey* freerdp_key_clone(const rdpPrivateKey* key);
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL const rdpCertInfo* freerdp_key_get_info(const rdpPrivateKey* key);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL const BYTE* freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength);
 
 	/** \brief returns a pointer to a EVP_PKEY structure.
 	 *  Call EVP_PKEY_free when done.
 	 */
+	WINPR_ATTR_MALLOC(EVP_PKEY_free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key);
 
+	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BYTE* freerdp_key_get_param(const rdpPrivateKey* key,
 	                                          enum FREERDP_KEY_PARAM param, size_t* plength);
 
+	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_MALLOC(winpr_Digest_Free, 1)
 	FREERDP_LOCAL WINPR_DIGEST_CTX* freerdp_key_digest_sign(rdpPrivateKey* key,
 	                                                        WINPR_MD_TYPE digest);
 

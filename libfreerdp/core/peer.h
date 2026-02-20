@@ -26,6 +26,7 @@
 
 #include <freerdp/peer.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t rdp_peer_handle_state_demand_active(freerdp_peer* client);
 
 #endif /* FREERDP_LIB_CORE_PEER_H */

@@ -28,12 +28,14 @@
 
 #define INT_COLOR_TAG FREERDP_TAG("codec.color.h")
 
+WINPR_ATTR_NODISCARD
 static inline DWORD FreeRDPAreColorFormatsEqualNoAlpha_int(DWORD first, DWORD second)
 {
 	const DWORD mask = (DWORD) ~(8UL << 12UL);
 	return (first & mask) == (second & mask);
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL FreeRDPWriteColor_int(BYTE* WINPR_RESTRICT dst, UINT32 format, UINT32 color)
 {
 	switch (FreeRDPGetBitsPerPixel(format))
@@ -76,6 +78,7 @@ static inline BOOL FreeRDPWriteColor_int(BYTE* WINPR_RESTRICT dst, UINT32 format
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL FreeRDPWriteColorIgnoreAlpha_int(BYTE* WINPR_RESTRICT dst, UINT32 format,
                                                     UINT32 color)
 {
@@ -102,6 +105,7 @@ static inline BOOL FreeRDPWriteColorIgnoreAlpha_int(BYTE* WINPR_RESTRICT dst, UI
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static inline UINT32 FreeRDPReadColor_int(const BYTE* WINPR_RESTRICT src, UINT32 format)
 {
 	UINT32 color = 0;

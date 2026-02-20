@@ -41,10 +41,19 @@ enum RPC_BIND_STATE
 	RPC_BIND_STATE_COMPLETE
 };
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rpc_recv_bind_ack_pdu(rdpRpc* rpc, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL enum RPC_BIND_STATE rpc_bind_state(rdpRpc* rpc);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BYTE rpc_auth_pkg_to_security_provider(const char* name);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_BIND_H */
