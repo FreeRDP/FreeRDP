@@ -2053,6 +2053,7 @@ BOOL smartcard_call_cancel_all_context(scard_call_context* ctx)
 {
 	WINPR_ASSERT(ctx);
 
+	smartcard_call_context_signal_stop(ctx, FALSE);
 	HashTable_Clear(ctx->rgSCardContextList);
 	return TRUE;
 }
