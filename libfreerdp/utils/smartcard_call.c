@@ -120,7 +120,7 @@ static LONG smartcard_EstablishContext_Call(scard_call_context* smartcard, wStre
 
 		if (!HashTable_Insert(smartcard->rgSCardContextList, key, (void*)pContext))
 		{
-			WLog_Print(smartcard->log, WLOG_ERROR, "ListDictionary_Add failed!");
+			WLog_Print(smartcard->log, WLOG_ERROR, "HashTable_Insert failed!");
 			context_free(pContext);
 			return STATUS_INTERNAL_ERROR;
 		}

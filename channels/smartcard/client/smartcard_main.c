@@ -74,7 +74,6 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 {
 	SMARTCARD_CONTEXT* pContext = (SMARTCARD_CONTEXT*)arg;
 	DWORD nCount = 0;
-	LONG status = 0;
 	DWORD waitStatus = 0;
 	HANDLE hEvents[2] = { 0 };
 	wMessage message = { 0 };
@@ -111,7 +110,7 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 			if (!MessageQueue_Peek(pContext->IrpQueue, &message, TRUE))
 			{
 				WLog_ERR(TAG, "MessageQueue_Peek failed!");
-				status = ERROR_INTERNAL_ERROR;
+				error = ERROR_INTERNAL_ERROR;
 				break;
 			}
 
@@ -125,14 +124,17 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 				BOOL handled = FALSE;
 				WINPR_ASSERT(smartcard);
 
-				if ((status = smartcard_irp_device_control_call(
-				         smartcard->callctx, element->irp->output, &element->irp->IoStatus,
-				         &element->operation)))
+				const LONG status =
+				    smartcard_irp_device_control_call(smartcard->callctx, element->irp->output,
+				                                      &element->irp->IoStatus, &element->operation);
+				if (status)
 				{
 					element->irp->Discard(element->irp);
 					smartcard_operation_free(&element->operation, TRUE);
-					WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %" PRId32 "",
-					         status);
+					WLog_ERR(TAG,
+					         "smartcard_irp_device_control_call failed with error %s [%" PRId32 "]",
+					         NtStatus2Tag(status), status);
+					error = (UINT)status;
 					break;
 				}
 
@@ -143,17 +145,18 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 
 				if (error)
 				{
-					WLog_ERR(TAG, "Queue_Enqueue failed!");
+					WLog_ERR(TAG, "smartcard_complete_irp failed with %s [%" PRIu32 "]",
+					         WTSErrorToString(error), error);
 					break;
 				}
 			}
 		}
 	}
 
-	if (status && smartcard->rdpcontext)
+	if (error && smartcard->rdpcontext)
 		setChannelError(smartcard->rdpcontext, error, "smartcard_context_thread reported an error");
 
-	ExitThread((uint32_t)status);
+	ExitThread(error);
 	return error;
 }
 
