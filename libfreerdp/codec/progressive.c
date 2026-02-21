@@ -1129,10 +1129,9 @@ static inline int16_t rawShift(wBitStream* raw, UINT32 numBits)
 	WINPR_ASSERT(numBits > 0);
 
 	raw->mask = ((1 << numBits) - 1);
+	const int16_t input = (int16_t)((raw->accumulator >> (32 - numBits)) & raw->mask);
 	BitStream_Shift(raw, numBits);
-	const unsigned input = ((raw->accumulator >> (32 - numBits)) & raw->mask);
-	int16_t val = (int16_t)input;
-	return val;
+	return input;
 }
 
 static inline int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* WINPR_RESTRICT state,
@@ -1173,19 +1172,16 @@ static inline int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* W
 		{
 			/* sign < 0, read from raw */
 			input = rawShift(raw, numBits);
+			input *= -1;
 		}
 		else
 		{
 			/* sign == 0, read from srl */
 			input = progressive_rfx_srl_read(state, numBits);
 			sign[index] = WINPR_ASSERTING_INT_CAST(int16_t, input);
-			if (sign[index] < 0)
-				input *= -1;
 		}
 
-		int32_t val = input << shift;
-		if (sign[index] < 0)
-			val *= -1;
+		const int32_t val = input << shift;
 		const int32_t ival = buffer[index] + val;
 		buffer[index] = WINPR_ASSERTING_INT_CAST(INT16, ival);
 	}
