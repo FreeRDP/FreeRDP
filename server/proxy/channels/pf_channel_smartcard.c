@@ -44,8 +44,6 @@ typedef struct
 {
 	InterceptContextMapEntry base;
 	scard_call_context* callctx;
-	PTP_POOL ThreadPool;
-	TP_CALLBACK_ENVIRON ThreadPoolEnv;
 	wArrayList* workObjects;
 } pf_channel_client_context;
 
@@ -145,7 +143,7 @@ static BOOL start_irp_thread(pf_channel_client_context* scard,
 	if (!arg->e)
 		goto fail;
 
-	work = CreateThreadpoolWork(irp_thread, arg, &scard->ThreadPoolEnv);
+	work = CreateThreadpoolWork(irp_thread, arg, NULL);
 	if (!work)
 		goto fail;
 	ArrayList_Append(scard->workObjects, work);
@@ -291,8 +289,6 @@ static void pf_channel_scard_client_context_free(InterceptContextMapEntry* base)
 	 * available polling slot */
 	channel_stop_and_wait(entry, FALSE);
 	ArrayList_Free(entry->workObjects);
-	CloseThreadpool(entry->ThreadPool);
-	DestroyThreadpoolEnvironment(&entry->ThreadPoolEnv);
 
 	smartcard_call_context_free(entry->callctx);
 	free(entry);
@@ -357,12 +353,6 @@ BOOL pf_channel_smartcard_client_new(pClientContext* pc)
 	obj = ArrayList_Object(scard->workObjects);
 	WINPR_ASSERT(obj);
 	obj->fnObjectFree = work_object_free;
-
-	scard->ThreadPool = CreateThreadpool(NULL);
-	if (!scard->ThreadPool)
-		goto fail;
-	InitializeThreadpoolEnvironment(&scard->ThreadPoolEnv);
-	SetThreadpoolCallbackPool(&scard->ThreadPoolEnv, scard->ThreadPool);
 
 	return HashTable_Insert(pc->interceptContextMap, SCARD_SVC_CHANNEL_NAME, scard);
 fail:
