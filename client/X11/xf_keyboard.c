@@ -332,7 +332,8 @@ struct x11_keysym_scancode_t
 };
 
 /* clang-format off */
-static const struct x11_keysym_scancode_t KEYSYM_SCANCODE_TABLE[] = {
+static const struct x11_keysym_scancode_t KEYSYM_SCANCODE_TABLE[] = 
+{
 	{ XK_a, RDP_SCANCODE_KEY_A },
 	{ XK_b, RDP_SCANCODE_KEY_B },
 	{ XK_c, RDP_SCANCODE_KEY_C },
@@ -495,7 +496,7 @@ static const struct x11_keysym_scancode_t KEYSYM_SCANCODE_TABLE[] = {
 	{ XK_KP_Decimal, RDP_SCANCODE_DECIMAL },
 	{ XK_KP_Delete, RDP_SCANCODE_DECIMAL },
 	{ XK_KP_Separator, RDP_SCANCODE_DECIMAL },
-	{ XK_KP_Divide, RDP_SCANCODE_DIVIDE },
+	{ XK_KP_Divide, RDP_SCANCODE_DIVIDE }
 };
 /* clang-format on */
 
