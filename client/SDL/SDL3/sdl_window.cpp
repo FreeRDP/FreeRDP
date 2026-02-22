@@ -23,6 +23,7 @@
 
 #include "sdl_window.hpp"
 #include "sdl_utils.hpp"
+#include "sdl_context.hpp"
 
 #include <freerdp/utils/string.h>
 
@@ -61,15 +62,184 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
-    : _window(other._window), _displayID(other._displayID), _offset_x(other._offset_x),
+    : _parent(other._parent), _window(other._window), _displayID(other._displayID), _offset_x(other._offset_x),
       _offset_y(other._offset_y), _monitor(other._monitor)
 {
+	other._parent = nullptr;
 	other._window = nullptr;
 }
 
 SdlWindow::~SdlWindow()
 {
 	SDL_DestroyWindow(_window);
+}
+
+bool SDLCALL SdlWindow::SDLMessageHook(void* userdata, MSG* msg)
+{
+	// Received SdlContext as userdata
+	SdlContext* p_sdlcontext = static_cast<SdlContext*>(userdata);
+	SdlWindow* p_sdlwindow = p_sdlcontext->getWindowForId(p_sdlcontext->getMainWindowId());
+
+	if (p_sdlwindow == nullptr)
+	{
+		return true;
+	}
+
+	switch (msg->message)
+	{
+		case SDL_PARENT_FOCUSED:
+			{
+				// Keyboard will stop working unless we
+				// take focus when parent gets focus.
+				HWND sdl_hwnd = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(p_sdlwindow->_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+				SetFocus(sdl_hwnd);
+				SetActiveWindow(sdl_hwnd);
+				SetForegroundWindow(sdl_hwnd);
+				SDL_PumpEvents();
+			}
+			break;
+		case SDL_PARENT_RESIZED:
+			{
+				UINT16 w = HIWORD(msg->wParam);
+				UINT16 h = LOWORD(msg->wParam);
+				SDL_Log("[INFO] Parent window resized, w = %" PRIu16 " h = %" PRIu16 "\n", w, h);
+
+				int currentW, currentH;
+				SDL_GetWindowSize(p_sdlwindow->_window, &currentW, &currentH);
+				if (w != currentW || h != currentH) {
+					// Not sure what's best here.
+					// SDL_SetWindowSize may contain additional overhead.
+					// So using native winapi for now.
+					//SDL_SetWindowSize(p_sdlwindow->_window, w, h);
+					//SDL_SyncWindow(p_sdlwindow->_window);
+					HWND sdl_hwnd = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(p_sdlwindow->_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+					SetWindowPos(sdl_hwnd, HWND_TOP, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+
+					// Re-apply style - api seems to reapply frame
+					// unless window is initially created as child
+					p_sdlwindow->setChildWindowStyle(sdl_hwnd);
+				}
+				return false;
+			}
+			break;
+		case SDL_PARENT_CLOSING:
+			{
+				SDL_Event quitEvent;
+				SDL_zero(quitEvent);
+				quitEvent.type = SDL_EVENT_QUIT;
+				SDL_PushEvent(&quitEvent);
+
+				return false;
+			}
+			break;
+		default:
+			break;
+	}
+
+	return true;
+}
+
+bool SdlWindow::setChildWindowStyle(HWND hwnd)
+{
+	LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+	if(style == 0) {
+
+		return false;
+	}
+	style &= ~(WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX |
+	           WS_MAXIMIZEBOX | WS_BORDER | WS_POPUP);
+	style |= WS_CHILD;
+
+	if(0 == SetWindowLongPtr(hwnd, GWL_STYLE, style)){
+		return false;
+	}
+
+	return true;
+}
+
+bool SdlWindow::setParent(Uint64 nativeWindowID)
+{
+	SDL_Log("[INFO] Setting parent: %" PRIu64 "", nativeWindowID);
+	SDL_DestroyWindow(_parent);
+	_parent = nullptr;
+
+	auto props = SDL_CreateProperties();
+	if (props == 0)
+		return false;
+
+	auto success = false;
+	auto ptr = reinterpret_cast<void*>(nativeWindowID);
+	sdl::utils::Platform platform = sdl::utils::platform();
+	switch (platform)
+	{
+		case sdl::utils::Mac:
+			success =
+			    SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_COCOA_WINDOW_POINTER, ptr);
+			break;
+
+		case sdl::utils::X11:
+			success = SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X11_WINDOW_NUMBER,
+			                                Sint64(nativeWindowID));
+			break;
+
+		case sdl::utils::Wayland:
+			success = SDL_SetPointerProperty(
+			    props, SDL_PROP_WINDOW_CREATE_WAYLAND_WL_SURFACE_POINTER, ptr);
+			break;
+
+		case sdl::utils::Windows:
+			success = SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, ptr);
+			break;
+		default:
+			break;
+	}
+
+	if (success)
+	{
+		_parent = SDL_CreateWindowWithProperties(props);
+	}
+	SDL_DestroyProperties(props);
+	if (!_parent)
+		return false;
+
+	switch (platform)
+	{
+		case sdl::utils::Windows:
+			//
+			// TODO: Break this out. We need functions for reparenting on different platforms.
+			//       this switch will get big as a result.
+			//
+
+			// Update window style before re-parenting!
+			HWND sdl_hwnd = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+
+			if(!this->setChildWindowStyle(sdl_hwnd))
+				SDL_Log("[ERROR] Could not set child window style");
+
+			if (SDL_SetWindowParent(_window, _parent))
+			{
+				DWORD childThread = GetWindowThreadProcessId(sdl_hwnd, nullptr);
+				DWORD parentThread = GetWindowThreadProcessId((HWND)nativeWindowID, nullptr);
+				SetWindowPos(sdl_hwnd, NULL, 0, 0, 800, 600, SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOSIZE);
+				ShowWindow(sdl_hwnd, SW_SHOW);
+				UpdateWindow(sdl_hwnd);
+
+				// Need to connect input threads for keyboard
+				AttachThreadInput(parentThread, childThread, TRUE);
+				SetFocus(sdl_hwnd);
+				SetActiveWindow(sdl_hwnd);
+				SetForegroundWindow(sdl_hwnd);
+				AttachThreadInput(parentThread, childThread, FALSE);
+				SDL_PumpEvents();
+
+				// Notify new parent window we've added ourself as child window
+				// Parent should send its client size after receiving this.
+				PostMessage((HWND)nativeWindowID, SDL_PARENT_UPDATED, (WPARAM)sdl_hwnd, 0);
+				return true;
+			}
+			break;
+	}
+	return false;
 }
 
 SDL_WindowID SdlWindow::id() const

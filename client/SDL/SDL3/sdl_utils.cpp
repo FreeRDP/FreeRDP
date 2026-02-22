@@ -427,6 +427,32 @@ namespace sdl::utils
 		return ss.str();
 	}
 
+	Platform platform()
+	{
+		const auto platform = SDL_GetPlatform();
+		if (!platform)
+			return Invalid;
+		if (strcmp("Windows", platform) == 0)
+			return Windows;
+		if (strcmp("macOS", platform) == 0)
+			return Mac;
+		if (strcmp("iOS", platform) == 0)
+			return iOS;
+		if (strcmp("android", platform) == 0)
+			return Android;
+		if (strcmp("Linux", platform) == 0)
+		{
+			const auto driver = SDL_GetCurrentVideoDriver();
+			if (!driver)
+				return Invalid;
+			if (strcmp("x11", driver) == 0)
+				return X11;
+			if (strcmp("wayland", driver) == 0)
+				return Wayland;
+		}
+		return Invalid;
+	}
+	
 	HighDpiScaleMode platformScaleMode()
 	{
 		const auto platform = SDL_GetPlatform();

@@ -26,6 +26,13 @@
 
 #include <freerdp/settings_types.h>
 
+// WM_USER + 200-299 for received messages
+#define SDL_PARENT_RESIZED WM_USER + 200
+#define SDL_PARENT_FOCUSED WM_USER + 201
+#define SDL_PARENT_CLOSING WM_USER + 202
+// WM_USER + 300-399 for sending messages
+#define SDL_PARENT_UPDATED WM_USER + 300
+
 class SdlWindow
 {
   public:
@@ -39,6 +46,8 @@ class SdlWindow
 
 	SdlWindow& operator=(const SdlWindow& other) = delete;
 	SdlWindow& operator=(SdlWindow&& other) = delete;
+
+	[[nodiscard]] bool setParent(Uint64 nativeWindowID);
 
 	[[nodiscard]] SDL_WindowID id() const;
 	[[nodiscard]] SDL_DisplayID displayIndex() const;
@@ -81,6 +90,10 @@ class SdlWindow
 	[[nodiscard]] bool blit(SDL_Surface* surface, const SDL_Rect& src, SDL_Rect& dst);
 	void updateSurface();
 
+	// Support for embedding SDL window
+	static bool SDLCALL SDLMessageHook(void *userdata, MSG *msg);
+	bool setChildWindowStyle(HWND hwnd);
+
   protected:
 	SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect& rect, Uint32 flags);
 
@@ -102,6 +115,7 @@ class SdlWindow
 	[[nodiscard]] static enum HighDPIMode isHighDPIWindowsMode(SDL_Window* window);
 
   private:
+  	SDL_Window* _parent = nullptr;
 	SDL_Window* _window = nullptr;
 	SDL_DisplayID _displayID = 0;
 	Sint32 _offset_x = 0;

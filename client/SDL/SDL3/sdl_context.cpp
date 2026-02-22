@@ -452,16 +452,37 @@ bool SdlContext::createWindows()
 		auto did = WINPR_ASSERTING_INT_CAST(SDL_DisplayID, id);
 		auto window = SdlWindow::create(did, title, flags, w, h);
 
+		const auto parent = freerdp_settings_get_uint64(settings, FreeRDP_ParentWindowId);
+		bool isParentSet = FALSE;
+		if (parent != 0)
+		{
+			isParentSet = window.setParent(parent);
+			if (!isParentSet)
+				return false;
+		}
+
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
 			window.setOffsetX(originX - monitor->x);
 			window.setOffsetY(originY - monitor->y);
 		}
 
+		SDL_WindowID winId = window.id(); // get value now before move ctor nulls window
+
 		_windows.insert({ window.id(), std::move(window) });
+
+		// in case of failure, do not apply hook.
+		if(isParentSet) {
+			_mainWindowID = winId;
+			SDL_SetWindowsMessageHook(SdlWindow::SDLMessageHook, reinterpret_cast<void*>(this));
+		}
 	}
 
 	return true;
+}
+
+SDL_WindowID SdlContext::getMainWindowId() {
+	return _mainWindowID;
 }
 
 bool SdlContext::updateWindowList()
@@ -1343,6 +1364,7 @@ SDL_FRect SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FRect& pos)
 
 bool SdlContext::handleEvent(const SDL_Event& ev)
 {
+	SDL_Log("[DEBUG] handleEvent %" PRIu32 "", ev.type);
 	if ((ev.type >= SDL_EVENT_DISPLAY_FIRST) && (ev.type <= SDL_EVENT_DISPLAY_LAST))
 	{
 		const auto& dev = ev.display;

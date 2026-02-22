@@ -3,3 +3,10 @@
 build
 checker
 abi-checker
+
+# ignore treytesoro scripts and artifacts
+.vscode/
+**/*.log
+winscripts/
+/freerdpinstall
+/libs

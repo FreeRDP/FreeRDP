@@ -93,6 +93,19 @@ namespace sdl::utils
 
 	[[nodiscard]] std::string generate_uuid_v4();
 
+	enum Platform
+	{
+		Invalid,
+		Wayland,
+		X11,
+		Windows,
+		Mac,
+		iOS,
+		Android
+	};
+
+	[[nodiscard]] Platform platform();
+	
 	enum HighDpiScaleMode
 	{
 		SCALE_MODE_INVALID,
