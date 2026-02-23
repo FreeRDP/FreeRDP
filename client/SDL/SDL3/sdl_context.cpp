@@ -457,6 +457,7 @@ bool SdlContext::createWindows()
 		{
 			if (!window.setParent(parent))
 				return false;
+			window.setBordered(false);
 		}
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
