@@ -53,7 +53,7 @@
 
 /* HTTP channel response fields present flags. */
 #define HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID 0x1
-#define HTTP_CHANNEL_RESPONSE_OPTIONAL 0x2
+#define HTTP_CHANNEL_RESPONSE_FIELD_AUTHNCOOKIE 0x2
 #define HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT 0x4
 
 /* HTTP extended auth. */
@@ -181,7 +181,7 @@ static const t_flag_mapping tunnel_response_fields_present[] = {
 
 static const t_flag_mapping channel_response_fields_present[] = {
 	{ HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID, "HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID" },
-	{ HTTP_CHANNEL_RESPONSE_OPTIONAL, "HTTP_CHANNEL_RESPONSE_OPTIONAL" },
+	{ HTTP_CHANNEL_RESPONSE_FIELD_AUTHNCOOKIE, "HTTP_CHANNEL_RESPONSE_FIELD_AUTHNCOOKIE" },
 	{ HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT, "HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT" }
 };
 
@@ -213,7 +213,7 @@ static const char* rdg_pkt_type_to_string(int type)
 {
 #define ENTRY(x) \
 	case x:      \
-		return "#x"
+		return #x
 
 	switch (type)
 	{
@@ -1063,6 +1063,37 @@ static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
 	return FALSE;
 }
 
+static BOOL rdg_process_channel_response_optional(rdpRdg* rdg, wStream* s, UINT16 fieldsPresent)
+{
+	if ((fieldsPresent & HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID) != 0)
+	{
+		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, 4))
+			return FALSE;
+		const UINT32 channelId = Stream_Get_UINT32(s);
+		WLog_Print(rdg->log, WLOG_DEBUG, "TODO: Got channelId=%" PRIu32, channelId);
+	}
+	if ((fieldsPresent & HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT) != 0)
+	{
+		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, 2))
+			return FALSE;
+		const UINT16 udpPort = Stream_Get_UINT16(s);
+		WLog_Print(rdg->log, WLOG_DEBUG, "TODO: Got udpPort=%" PRIu32, udpPort);
+	}
+	if ((fieldsPresent & HTTP_CHANNEL_RESPONSE_FIELD_AUTHNCOOKIE) != 0)
+	{
+		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, 2))
+			return FALSE;
+		const UINT16 blobLen = Stream_Get_UINT16(s);
+		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, blobLen))
+			return FALSE;
+		WLog_Print(rdg->log, WLOG_DEBUG, "TODO: Got UDP auth blob=%" PRIu32, blobLen);
+		if (!Stream_SafeSeek(s, blobLen))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 {
 	UINT16 fieldsPresent = 0;
@@ -1092,6 +1123,9 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 		freerdp_set_last_error_log(rdg->context, errorCode);
 		return FALSE;
 	}
+
+	if (!rdg_process_channel_response_optional(rdg, s, fieldsPresent))
+		return FALSE;
 
 	rdg->state = RDG_CLIENT_STATE_OPENED;
 	return TRUE;

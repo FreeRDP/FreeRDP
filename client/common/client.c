@@ -1364,8 +1364,20 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 		return FALSE;
 	}
 
-	switch (freerdp_get_last_error(instance->context))
+	const UINT err = freerdp_get_last_error(instance->context);
+	switch (err)
 	{
+		case FREERDP_ERROR_CONNECT_LOGON_FAILURE:
+		case FREERDP_ERROR_CONNECT_CLIENT_REVOKED:
+		case FREERDP_ERROR_CONNECT_WRONG_PASSWORD:
+		case FREERDP_ERROR_CONNECT_ACCESS_DENIED:
+		case FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION:
+		case FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT:
+		case FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED:
+		case FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS:
+			WLog_WARN(TAG, "Connection aborted: credentials do not work [%s]",
+			          freerdp_get_last_error_name(err));
+			return FALSE;
 		case FREERDP_ERROR_CONNECT_CANCELLED:
 			WLog_WARN(TAG, "Connection aborted by user");
 			return FALSE;
