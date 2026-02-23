@@ -311,19 +311,23 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 	monitor.attributes.physicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, r.w);
 	monitor.attributes.physicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, r.h);
 
-	SDL_Log("monitor.orig_screen                   %" PRIu32, monitor.orig_screen);
-	SDL_Log("monitor.x                             %" PRId32, monitor.x);
-	SDL_Log("monitor.y                             %" PRId32, monitor.y);
-	SDL_Log("monitor.width                         %" PRId32, monitor.width);
-	SDL_Log("monitor.height                        %" PRId32, monitor.height);
-	SDL_Log("monitor.is_primary                    %" PRIu32, monitor.is_primary);
-	SDL_Log("monitor.attributes.desktopScaleFactor %" PRIu32,
-	        monitor.attributes.desktopScaleFactor);
-	SDL_Log("monitor.attributes.deviceScaleFactor  %" PRIu32, monitor.attributes.deviceScaleFactor);
-	SDL_Log("monitor.attributes.orientation        %s",
-	        freerdp_desktop_rotation_flags_to_string(monitor.attributes.orientation));
-	SDL_Log("monitor.attributes.physicalWidth      %" PRIu32, monitor.attributes.physicalWidth);
-	SDL_Log("monitor.attributes.physicalHeight     %" PRIu32, monitor.attributes.physicalHeight);
+	const auto cat = SDL_LOG_CATEGORY_APPLICATION;
+	SDL_LogDebug(cat, "monitor.orig_screen                   %" PRIu32, monitor.orig_screen);
+	SDL_LogDebug(cat, "monitor.x                             %" PRId32, monitor.x);
+	SDL_LogDebug(cat, "monitor.y                             %" PRId32, monitor.y);
+	SDL_LogDebug(cat, "monitor.width                         %" PRId32, monitor.width);
+	SDL_LogDebug(cat, "monitor.height                        %" PRId32, monitor.height);
+	SDL_LogDebug(cat, "monitor.is_primary                    %" PRIu32, monitor.is_primary);
+	SDL_LogDebug(cat, "monitor.attributes.desktopScaleFactor %" PRIu32,
+	             monitor.attributes.desktopScaleFactor);
+	SDL_LogDebug(cat, "monitor.attributes.deviceScaleFactor  %" PRIu32,
+	             monitor.attributes.deviceScaleFactor);
+	SDL_LogDebug(cat, "monitor.attributes.orientation        %s",
+	             freerdp_desktop_rotation_flags_to_string(monitor.attributes.orientation));
+	SDL_LogDebug(cat, "monitor.attributes.physicalWidth      %" PRIu32,
+	             monitor.attributes.physicalWidth);
+	SDL_LogDebug(cat, "monitor.attributes.physicalHeight     %" PRIu32,
+	             monitor.attributes.physicalHeight);
 	return monitor;
 }
 
