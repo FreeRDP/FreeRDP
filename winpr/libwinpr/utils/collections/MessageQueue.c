@@ -67,6 +67,66 @@ BOOL MessageQueue_Wait(wMessageQueue* queue)
 	return status;
 }
 
+static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
+{
+	const size_t increment = 128;
+	WINPR_ASSERT(queue);
+
+	const size_t required = queue->size + count;
+	// check for overflow
+	if ((required < queue->size) || (required < count) ||
+	    (required > (SIZE_MAX - increment) / sizeof(wMessage)))
+		return FALSE;
+
+	if (required > queue->capacity)
+	{
+		const size_t old_capacity = queue->capacity;
+		const size_t new_capacity = required + increment;
+
+		wMessage* new_arr = (wMessage*)realloc(queue->array, sizeof(wMessage) * new_capacity);
+		if (!new_arr)
+			return FALSE;
+		queue->array = new_arr;
+		queue->capacity = new_capacity;
+		ZeroMemory(&(queue->array[old_capacity]), (new_capacity - old_capacity) * sizeof(wMessage));
+
+		/* rearrange wrapped entries:
+		 * fill up the newly available space and move tail
+		 * back by the amount of elements that have been moved to the newly
+		 * allocated space.
+		 */
+		if (queue->tail <= queue->head)
+		{
+			size_t tocopy = queue->tail;
+			size_t slots = new_capacity - old_capacity;
+			const size_t batch = (tocopy < slots) ? tocopy : slots;
+			CopyMemory(&(queue->array[old_capacity]), queue->array, batch * sizeof(wMessage));
+
+			/* Tail is decremented. if the whole thing is appended
+			 * just move the existing tail by old_capacity */
+			if (tocopy < slots)
+			{
+				ZeroMemory(queue->array, batch * sizeof(wMessage));
+				queue->tail += old_capacity;
+			}
+			else
+			{
+				const size_t remain = queue->tail - batch;
+				const size_t movesize = remain * sizeof(wMessage);
+				memmove_s(queue->array, queue->tail * sizeof(wMessage), &queue->array[batch],
+				          movesize);
+
+				const size_t zerooffset = remain;
+				const size_t zerosize = (queue->tail - remain) * sizeof(wMessage);
+				ZeroMemory(&queue->array[zerooffset], zerosize);
+				queue->tail -= batch;
+			}
+		}
+	}
+
+	return TRUE;
+}
+
 BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 {
 	BOOL ret = FALSE;
@@ -75,29 +135,8 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 
 	EnterCriticalSection(&queue->lock);
 
-	if (queue->size == queue->capacity)
-	{
-		int old_capacity;
-		int new_capacity;
-		wMessage* new_arr;
-
-		old_capacity = queue->capacity;
-		new_capacity = queue->capacity * 2;
-
-		new_arr = (wMessage*)realloc(queue->array, sizeof(wMessage) * new_capacity);
-		if (!new_arr)
-			goto out;
-		queue->array = new_arr;
-		queue->capacity = new_capacity;
-		ZeroMemory(&(queue->array[old_capacity]), (new_capacity - old_capacity) * sizeof(wMessage));
-
-		/* rearrange wrapped entries */
-		if (queue->tail <= queue->head)
-		{
-			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(wMessage));
-			queue->tail += old_capacity;
-		}
-	}
+	if (!MessageQueue_EnsureCapacity(queue, 1))
+		goto out;
 
 	CopyMemory(&(queue->array[queue->tail]), message, sizeof(wMessage));
 
@@ -200,13 +239,11 @@ wMessageQueue* MessageQueue_New(const wObject* callback)
 	if (!queue)
 		return NULL;
 
-	queue->capacity = 32;
-	queue->array = (wMessage*)calloc(queue->capacity, sizeof(wMessage));
-	if (!queue->array)
-		goto error_array;
-
 	if (!InitializeCriticalSectionAndSpinCount(&queue->lock, 4000))
 		goto error_spinlock;
+
+	if (!MessageQueue_EnsureCapacity(queue, 32))
+		goto error_event;
 
 	queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (!queue->event)
