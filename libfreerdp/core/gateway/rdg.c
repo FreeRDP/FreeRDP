@@ -213,7 +213,7 @@ static const char* rdg_pkt_type_to_string(int type)
 {
 #define ENTRY(x) \
 	case x:      \
-		return "#x"
+		return #x
 
 	switch (type)
 	{
