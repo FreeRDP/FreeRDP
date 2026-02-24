@@ -444,8 +444,7 @@ static BOOL gdi_Glyph_EndDraw(rdpContext* context, WINPR_ATTR_UNUSED INT32 x,
 	if (!gdi->drawing || !gdi->drawing->hdc)
 		return FALSE;
 
-	gdi_SetNullClipRgn(gdi->drawing->hdc);
-	return TRUE;
+	return gdi_SetNullClipRgn(gdi->drawing->hdc);
 }
 
 /* Graphics Module */

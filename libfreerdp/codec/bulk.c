@@ -73,12 +73,12 @@ static inline const char* bulk_get_compression_flags_string(UINT32 flags)
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static UINT32 bulk_compression_level(rdpBulk* WINPR_RESTRICT bulk)
 {
-	rdpSettings* settings = NULL;
 	WINPR_ASSERT(bulk);
 	WINPR_ASSERT(bulk->context);
-	settings = bulk->context->settings;
+	rdpSettings* settings = bulk->context->settings;
 	WINPR_ASSERT(settings);
 	bulk->CompressionLevel = (settings->CompressionLevel >= PACKET_COMPR_TYPE_RDP61)
 	                             ? PACKET_COMPR_TYPE_RDP61
@@ -87,11 +87,15 @@ static UINT32 bulk_compression_level(rdpBulk* WINPR_RESTRICT bulk)
 	return bulk->CompressionLevel;
 }
 
-UINT16 bulk_compression_max_size(rdpBulk* WINPR_RESTRICT bulk)
+static void bulk_update_compression_max_size(rdpBulk* WINPR_RESTRICT bulk)
 {
 	WINPR_ASSERT(bulk);
-	(void)bulk_compression_level(bulk);
-	bulk->CompressionMaxSize = (bulk->CompressionLevel < PACKET_COMPR_TYPE_64K) ? 8192 : UINT16_MAX;
+	const UINT32 CompressionLevel = bulk_compression_level(bulk);
+	bulk->CompressionMaxSize = (CompressionLevel < PACKET_COMPR_TYPE_64K) ? 8192 : UINT16_MAX;
+}
+UINT16 bulk_compression_max_size(rdpBulk* WINPR_RESTRICT bulk)
+{
+	bulk_update_compression_max_size(bulk);
 	return bulk->CompressionMaxSize;
 }
 
@@ -162,7 +166,7 @@ int bulk_decompress(rdpBulk* WINPR_RESTRICT bulk, const BYTE* WINPR_RESTRICT pSr
 	rdpMetrics* metrics = bulk->context->metrics;
 	WINPR_ASSERT(metrics);
 
-	(void)bulk_compression_max_size(bulk);
+	bulk_update_compression_max_size(bulk);
 	const UINT32 type = flags & BULK_COMPRESSION_TYPE_MASK;
 
 	if (flags & BULK_COMPRESSION_FLAGS_MASK)
@@ -260,14 +264,14 @@ int bulk_compress(rdpBulk* WINPR_RESTRICT bulk, const BYTE* WINPR_RESTRICT pSrcD
 	}
 
 	*pDstSize = sizeof(bulk->OutputBuffer);
-	(void)bulk_compression_level(bulk);
-	(void)bulk_compression_max_size(bulk);
+	const UINT32 CompressionLevel = bulk_compression_level(bulk);
+	bulk_update_compression_max_size(bulk);
 
-	switch (bulk->CompressionLevel)
+	switch (CompressionLevel)
 	{
 		case PACKET_COMPR_TYPE_8K:
 		case PACKET_COMPR_TYPE_64K:
-			mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
+			mppc_set_compression_level(bulk->mppcSend, CompressionLevel);
 			status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, bulk->OutputBuffer, ppDstData,
 			                       pDstSize, pFlags);
 			break;
@@ -280,11 +284,11 @@ int bulk_compress(rdpBulk* WINPR_RESTRICT bulk, const BYTE* WINPR_RESTRICT pSrcD
 			                         ppDstData, pDstSize, pFlags);
 			break;
 		case PACKET_COMPR_TYPE_RDP8:
-			WLog_ERR(TAG, "Unsupported bulk compression type %08" PRIx32, bulk->CompressionLevel);
+			WLog_ERR(TAG, "Unsupported bulk compression type %08" PRIx32, CompressionLevel);
 			status = -1;
 			break;
 		default:
-			WLog_ERR(TAG, "Unknown bulk compression type %08" PRIx32, bulk->CompressionLevel);
+			WLog_ERR(TAG, "Unknown bulk compression type %08" PRIx32, CompressionLevel);
 			status = -1;
 			break;
 	}

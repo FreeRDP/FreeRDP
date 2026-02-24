@@ -71,9 +71,9 @@ struct S_NSC_CONTEXT
 	/* color palette allocated by the application */
 	const BYTE* palette;
 
-	BOOL (*decode)(NSC_CONTEXT* WINPR_RESTRICT context);
-	BOOL(*encode)
-	(NSC_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_RESTRICT BitmapData, UINT32 rowstride);
+	WINPR_ATTR_NODISCARD BOOL (*decode)(NSC_CONTEXT* WINPR_RESTRICT context);
+	WINPR_ATTR_NODISCARD BOOL (*encode)(NSC_CONTEXT* WINPR_RESTRICT context,
+	                                    const BYTE* WINPR_RESTRICT BitmapData, UINT32 rowstride);
 
 	NSC_CONTEXT_PRIV* priv;
 };

@@ -32,11 +32,16 @@ typedef enum
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL aad_is_supported(void);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int aad_client_begin(rdpAad* aad);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int aad_recv(rdpAad* aad, wStream* s);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL AAD_STATE aad_get_state(rdpAad* aad);
 
 FREERDP_LOCAL void aad_free(rdpAad* aad);

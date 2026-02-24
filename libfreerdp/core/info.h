@@ -58,10 +58,19 @@
 
 #define SAVE_SESSION_PDU_VERSION_ONE 0x0001
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_client_info(rdpRdp* rdp);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_server_status_info(rdpContext* context, UINT32 status);
 
 #endif /* FREERDP_LIB_CORE_INFO_H */

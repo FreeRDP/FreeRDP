@@ -28,6 +28,7 @@
 /**
  * Write a foreground/background image to a destination buffer.
  */
+WINPR_ATTR_NODISCARD
 static inline BYTE* WRITEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
                                    const BYTE* WINPR_RESTRICT pbDestEnd, UINT32 rowDelta,
                                    BYTE bitmask, PIXEL fgPel, UINT32 cBits)
@@ -63,6 +64,7 @@ static inline BYTE* WRITEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
  * Write a foreground/background image to a destination buffer
  * for the first line of compressed data.
  */
+WINPR_ATTR_NODISCARD
 static inline BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
                                             const BYTE* WINPR_RESTRICT pbDestEnd, BYTE bitmask,
                                             PIXEL fgPel, UINT32 cBits)
@@ -95,6 +97,7 @@ static inline BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
 /**
  * Decompress an RLE compressed bitmap.
  */
+WINPR_ATTR_NODISCARD
 static inline BOOL RLEDECOMPRESS(const BYTE* WINPR_RESTRICT pbSrcBuffer, UINT32 cbSrcBuffer,
                                  BYTE* WINPR_RESTRICT pbDestBuffer, UINT32 rowDelta, UINT32 width,
                                  UINT32 height)

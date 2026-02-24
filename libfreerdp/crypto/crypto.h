@@ -33,15 +33,22 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL SSIZE_T crypto_rsa_public_encrypt(const BYTE* input, size_t length,
 	                                                const rdpCertInfo* cert, BYTE* output,
 	                                                size_t output_length);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL SSIZE_T crypto_rsa_public_decrypt(const BYTE* input, size_t length,
 	                                                const rdpCertInfo* cert, BYTE* output,
 	                                                size_t output_length);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL SSIZE_T crypto_rsa_private_encrypt(const BYTE* input, size_t length,
 	                                                 const rdpPrivateKey* key, BYTE* output,
 	                                                 size_t output_length);
+
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length,
 	                                                 const rdpPrivateKey* key, BYTE* output,
 	                                                 size_t output_length);

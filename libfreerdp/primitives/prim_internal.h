@@ -41,6 +41,7 @@
 #define HAVE_CPU_OPTIMIZED_PRIMITIVES 1
 #endif
 
+WINPR_ATTR_NODISCARD
 static inline BYTE* writePixelBGRA(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                    BYTE B, BYTE A)
 {
@@ -54,6 +55,7 @@ static inline BYTE* writePixelBGRA(BYTE* dst, DWORD formatSize, UINT32 format, B
 	return dst;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE* writePixelBGRX(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                    BYTE B, BYTE A)
 {
@@ -69,6 +71,7 @@ static inline BYTE* writePixelBGRX(BYTE* dst, DWORD formatSize, UINT32 format, B
 	return dst;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE* writePixelRGBA(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                    BYTE B, BYTE A)
 {
@@ -82,6 +85,7 @@ static inline BYTE* writePixelRGBA(BYTE* dst, DWORD formatSize, UINT32 format, B
 	return dst;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE* writePixelRGBX(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                    BYTE B, BYTE A)
 {
@@ -97,6 +101,7 @@ static inline BYTE* writePixelRGBX(BYTE* dst, DWORD formatSize, UINT32 format, B
 	return dst;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE* writePixelABGR(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                    BYTE B, BYTE A)
 {
@@ -110,6 +115,7 @@ static inline BYTE* writePixelABGR(BYTE* dst, DWORD formatSize, UINT32 format, B
 	return dst;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE* writePixelXBGR(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                    BYTE B, BYTE A)
 {
@@ -124,6 +130,7 @@ static inline BYTE* writePixelXBGR(BYTE* dst, DWORD formatSize, UINT32 format, B
 	return dst;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE* writePixelARGB(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                    BYTE B, BYTE A)
 {
@@ -137,6 +144,7 @@ static inline BYTE* writePixelARGB(BYTE* dst, DWORD formatSize, UINT32 format, B
 	return dst;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE* writePixelXRGB(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                    BYTE B, BYTE A)
 {
@@ -151,6 +159,7 @@ static inline BYTE* writePixelXRGB(BYTE* dst, DWORD formatSize, UINT32 format, B
 	return dst;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE* writePixelGenericAlpha(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R,
                                            BYTE G, BYTE B, BYTE A)
 {
@@ -159,6 +168,7 @@ static inline BYTE* writePixelGenericAlpha(BYTE* dst, DWORD formatSize, UINT32 f
 	return dst + formatSize;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE* writePixelGeneric(BYTE* dst, DWORD formatSize, UINT32 format, BYTE R, BYTE G,
                                       BYTE B, BYTE A)
 {
@@ -169,6 +179,7 @@ static inline BYTE* writePixelGeneric(BYTE* dst, DWORD formatSize, UINT32 format
 
 typedef BYTE* (*fkt_writePixel)(BYTE*, DWORD, UINT32, BYTE, BYTE, BYTE, BYTE);
 
+WINPR_ATTR_NODISCARD
 static inline fkt_writePixel getPixelWriteFunction(DWORD format, BOOL useAlpha)
 {
 	switch (format)
@@ -194,6 +205,7 @@ static inline fkt_writePixel getPixelWriteFunction(DWORD format, BOOL useAlpha)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE CLIP(INT64 X)
 {
 	if (X > 255L)
@@ -205,6 +217,7 @@ static inline BYTE CLIP(INT64 X)
 	return (BYTE)X;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE CONDITIONAL_CLIP(INT32 in, BYTE original)
 {
 	BYTE out = CLIP(in);
@@ -238,6 +251,7 @@ static inline INT32 E(INT32 V)
 	return (V)-128;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE YUV2R(INT32 Y, INT32 U, INT32 V)
 {
 	const INT32 r = (256 * C(Y) + 0 * D(U) + 403 * E(V));
@@ -245,6 +259,7 @@ static inline BYTE YUV2R(INT32 Y, INT32 U, INT32 V)
 	return CLIP(r8);
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE YUV2G(INT32 Y, INT32 U, INT32 V)
 {
 	const INT32 g = (256 * C(Y) - 48 * D(U) - 120 * E(V));
@@ -252,6 +267,7 @@ static inline BYTE YUV2G(INT32 Y, INT32 U, INT32 V)
 	return CLIP(g8);
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE YUV2B(INT32 Y, INT32 U, INT32 V)
 {
 	const INT32 b = (256 * C(Y) + 475 * D(U) + 0 * E(V));
@@ -264,18 +280,21 @@ static inline BYTE YUV2B(INT32 Y, INT32 U, INT32 V)
  * | U | =  ( | -29   -99    128 | | G | ) >> 8 + | 128 |
  * | V |    ( | 128  -116    -12 | | B | )        | 128 |
  */
+WINPR_ATTR_NODISCARD
 static inline BYTE RGB2Y(INT32 R, INT32 G, INT32 B)
 {
 	const INT32 val = ((54 * R + 183 * G + 18 * B) >> 8);
 	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE RGB2U(INT32 R, INT32 G, INT32 B)
 {
 	const INT32 val = (((-29 * R - 99 * G + 128 * B) >> 8) + 128);
 	return WINPR_ASSERTING_INT_CAST(BYTE, val);
 }
 
+WINPR_ATTR_NODISCARD
 static inline BYTE RGB2V(INT32 R, INT32 G, INT32 B)
 {
 	const INT32 val = (((128 * R - 116 * G - 12 * B) >> 8) + 128);
@@ -332,6 +351,7 @@ FREERDP_LOCAL void primitives_init_YCoCg_opt(primitives_t* WINPR_RESTRICT prims)
 FREERDP_LOCAL void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims);
 
 #if defined(WITH_OPENCL)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL primitives_init_opencl(primitives_t* WINPR_RESTRICT prims);
 #endif
 

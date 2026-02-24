@@ -20,8 +20,12 @@
 #ifndef FREERDP_LIB_CORE_CHILDSESSION_H
 #define FREERDP_LIB_CORE_CHILDSESSION_H
 
+#include <winpr/wtypes.h>
+#include <freerdp/api.h>
+
 #include <openssl/bio.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BIO* createChildSessionBio(void);
 
 #endif /* FREERDP_LIB_CORE_CHILDSESSION_H */

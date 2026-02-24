@@ -565,14 +565,10 @@ static BOOL gdi_set_bounds(rdpContext* context, const rdpBounds* bounds)
 		return FALSE;
 
 	if (bounds)
-	{
-		gdi_SetClipRgn(gdi->drawing->hdc, bounds->left, bounds->top,
-		               bounds->right - bounds->left + 1, bounds->bottom - bounds->top + 1);
-	}
-	else
-		gdi_SetNullClipRgn(gdi->drawing->hdc);
+		return gdi_SetClipRgn(gdi->drawing->hdc, bounds->left, bounds->top,
+		                      bounds->right - bounds->left + 1, bounds->bottom - bounds->top + 1);
 
-	return TRUE;
+	return gdi_SetNullClipRgn(gdi->drawing->hdc);
 }
 
 static BOOL gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
@@ -791,6 +787,7 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 
 static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 {
+	BOOL rc = FALSE;
 	UINT32 color = 0;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(lineTo);
@@ -811,14 +808,20 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)hPen);
 	gdi_SetROP2(gdi->drawing->hdc, WINPR_ASSERTING_INT_CAST(int32_t, lineTo->bRop2));
-	gdi_MoveToEx(gdi->drawing->hdc, lineTo->nXStart, lineTo->nYStart, NULL);
-	gdi_LineTo(gdi->drawing->hdc, lineTo->nXEnd, lineTo->nYEnd);
+	if (!gdi_MoveToEx(gdi->drawing->hdc, lineTo->nXStart, lineTo->nYStart, NULL))
+		goto fail;
+	if (!gdi_LineTo(gdi->drawing->hdc, lineTo->nXEnd, lineTo->nYEnd))
+		goto fail;
+
+	rc = TRUE;
+fail:
 	gdi_DeleteObject((HGDIOBJECT)hPen);
-	return TRUE;
+	return rc;
 }
 
 static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 {
+	BOOL rc = FALSE;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(polyline);
 
@@ -841,19 +844,24 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	gdi_SetROP2(gdi->drawing->hdc, WINPR_ASSERTING_INT_CAST(int32_t, polyline->bRop2));
 	INT32 x = polyline->xStart;
 	INT32 y = polyline->yStart;
-	gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
+	if (!gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL))
+		goto fail;
 	DELTA_POINT* points = polyline->points;
 
 	for (UINT32 i = 0; i < polyline->numDeltaEntries; i++)
 	{
 		x += points[i].x;
 		y += points[i].y;
-		gdi_LineTo(gdi->drawing->hdc, x, y);
-		gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
+		if (!gdi_LineTo(gdi->drawing->hdc, x, y))
+			goto fail;
+		if (!gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL))
+			goto fail;
 	}
 
+	rc = TRUE;
+fail:
 	gdi_DeleteObject((HGDIOBJECT)hPen);
-	return TRUE;
+	return rc;
 }
 
 static BOOL gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)

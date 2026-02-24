@@ -747,8 +747,7 @@ BOOL security_establish_keys(rdpRdp* rdp)
 		rdp->rc4_key_len = 16;
 	}
 
-	if (!security_lock(rdp))
-		return FALSE;
+	security_lock(rdp);
 	memcpy(rdp->decrypt_update_key, rdp->decrypt_key, 16);
 	memcpy(rdp->encrypt_update_key, rdp->encrypt_key, 16);
 	rdp->decrypt_use_count = 0;
@@ -756,7 +755,8 @@ BOOL security_establish_keys(rdpRdp* rdp)
 	rdp->encrypt_use_count = 0;
 	rdp->encrypt_checksum_use_count = 0;
 
-	return security_unlock(rdp);
+	security_unlock(rdp);
+	return TRUE;
 }
 
 static BOOL security_key_update(BYTE* key, BYTE* update_key, size_t key_len, rdpRdp* rdp)
@@ -991,16 +991,14 @@ out:
 	return result;
 }
 
-BOOL security_lock(rdpRdp* rdp)
+void security_lock(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 	EnterCriticalSection(&rdp->critical);
-	return TRUE;
 }
 
-BOOL security_unlock(rdpRdp* rdp)
+void security_unlock(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 	LeaveCriticalSection(&rdp->critical);
-	return TRUE;
 }

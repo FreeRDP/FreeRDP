@@ -46,27 +46,46 @@ typedef enum
 	NLA_STATE_FINAL
 } NLA_STATE;
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int nla_authenticate(rdpNla* nla);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int nla_client_begin(rdpNla* nla);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int nla_recv_pdu(rdpNla* nla, wStream* s);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL SEC_WINNT_AUTH_IDENTITY* nla_get_identity(rdpNla* nla);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL NLA_STATE nla_get_state(const rdpNla* nla);
+
 FREERDP_LOCAL BOOL nla_set_state(rdpNla* nla, NLA_STATE state);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL const char* nla_get_state_str(NLA_STATE state);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL DWORD nla_get_error(const rdpNla* nla);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL INT32 nla_get_sspi_error(const rdpNla* nla);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL nla_set_service_principal(rdpNla* nla, const char* service,
                                              const char* hostname);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL nla_set_sspi_module(rdpNla* nla, const char* sspiModule);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL nla_sspi_module_init(rdpNla* nla);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL nla_impersonate(rdpNla* nla);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL nla_revert_to_self(rdpNla* nla);
 
 FREERDP_LOCAL void nla_free(rdpNla* nla);
@@ -76,9 +95,17 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpNla* nla_new(rdpContext* context, rdpTransport* transport);
 
 FREERDP_LOCAL void nla_set_early_user_auth(rdpNla* nla, BOOL earlyUserAuth);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL nla_encrypt(rdpNla* nla, const SecBuffer* inBuffer, SecBuffer* outBuffer);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL nla_decrypt(rdpNla* nla, const SecBuffer* inBuffer, SecBuffer* outBuffer);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL SECURITY_STATUS nla_QueryContextAttributes(rdpNla* nla, DWORD ulAttr, PVOID pBuffer);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL SECURITY_STATUS nla_FreeContextBuffer(rdpNla* nla, PVOID pBuffer);
 
 #endif /* FREERDP_LIB_CORE_NLA_H */

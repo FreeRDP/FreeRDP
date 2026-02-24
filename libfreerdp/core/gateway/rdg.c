@@ -720,11 +720,14 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 
 	else if (rdg->extAuth == HTTP_EXTENDED_AUTH_BEARER)
 	{
-		http_request_set_auth_scheme(request, "Bearer");
-		http_request_set_auth_param(request, rdg->context->settings->GatewayHttpExtAuthBearer);
+		if (!http_request_set_auth_scheme(request, "Bearer"))
+			goto out;
+		if (!http_request_set_auth_param(request, rdg->context->settings->GatewayHttpExtAuthBearer))
+			goto out;
 	}
 
-	http_request_set_transfer_encoding(request, transferEncoding);
+	if (!http_request_set_transfer_encoding(request, transferEncoding))
+		goto out;
 
 	s = http_request_write(rdg->http, request);
 out:

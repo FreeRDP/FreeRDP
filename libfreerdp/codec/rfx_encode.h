@@ -23,6 +23,7 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context,
                                   RFX_TILE* WINPR_RESTRICT tile);
 

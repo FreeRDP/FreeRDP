@@ -58,12 +58,18 @@ WINPR_ATTR_MALLOC(websocket_context_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL websocket_context* websocket_context_new(void);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL websocket_context_reset(websocket_context* context);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL websocket_context_write_wstream(websocket_context* context, BIO* bio,
                                                    wStream* sPacket, WEBSOCKET_OPCODE opcode);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int websocket_context_write(websocket_context* context, BIO* bio, const BYTE* buf,
                                           int isize, WEBSOCKET_OPCODE opcode);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int websocket_context_read(websocket_context* encodingContext, BIO* bio,
                                          BYTE* pBuffer, size_t size);
 
@@ -72,6 +78,7 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL wStream* websocket_context_packet_new(size_t len, WEBSOCKET_OPCODE opcode,
                                                     UINT32* pMaskingKey);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL websocket_context_mask_and_send(BIO* bio, wStream* sPacket, wStream* sDataPacket,
                                                    UINT32 maskingKey);
 

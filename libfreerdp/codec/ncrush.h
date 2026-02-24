@@ -34,17 +34,22 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize,
 	                                  BYTE* pDstBuffer, const BYTE** ppDstData, UINT32* pDstSize,
 	                                  UINT32* pFlags);
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData,
 	                                    UINT32 SrcSize, const BYTE** ppDstData, UINT32* pDstSize,
 	                                    UINT32 flags);
 
 	FREERDP_LOCAL void ncrush_context_reset(NCRUSH_CONTEXT* ncrush, BOOL flush);
 
-	FREERDP_LOCAL NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor);
 	FREERDP_LOCAL void ncrush_context_free(NCRUSH_CONTEXT* ncrush);
+
+	WINPR_ATTR_MALLOC(ncrush_context_free, 1)
+	WINPR_ATTR_NODISCARD
+	FREERDP_LOCAL NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor);
 
 #ifdef __cplusplus
 }
