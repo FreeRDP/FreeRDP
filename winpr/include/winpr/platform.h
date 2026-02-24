@@ -59,7 +59,11 @@
 #endif
 
 // C23 related macros
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201904L)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define WINPR_FALLTHROUGH \
+	(void)0;              \
+	[[fallthrough]];
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201904L)
 #define WINPR_FALLTHROUGH \
 	(void)0;              \
 	[[fallthrough]];
