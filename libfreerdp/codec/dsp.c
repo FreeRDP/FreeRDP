@@ -1443,9 +1443,13 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format, BOOL
 				return TRUE;
 
 #endif
+#if defined(WITH_FDK_AAC)
+			return TRUE;
+#else
+			return FALSE;
+#endif
+
 #if defined(WITH_OPUS)
-			/* fallthrough */
-			WINPR_FALLTHROUGH
 		case WAVE_FORMAT_OPUS:
 			return opus_is_valid_samplerate(format);
 #endif
