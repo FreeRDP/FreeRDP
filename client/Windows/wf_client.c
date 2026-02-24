@@ -55,6 +55,7 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/utils/signal.h>
 
 #include "wf_gdi.h"
 #include "wf_rail.h"
