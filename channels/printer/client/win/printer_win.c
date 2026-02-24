@@ -34,6 +34,7 @@
 #include <winspool.h>
 
 #include <freerdp/client/printer.h>
+#include <freerdp/utils/helpers.h>
 
 #define WIDEN_INT(x) L##x
 #define WIDEN(x) WIDEN_INT(x)
@@ -75,7 +76,7 @@ typedef struct
 WINPR_ATTR_MALLOC(free, 1)
 static WCHAR* printer_win_get_printjob_name(size_t id)
 {
-	struct tm tres;
+	struct tm tres = { 0 };
 	WCHAR* str = NULL;
 	size_t len = 0;
 
@@ -93,7 +94,7 @@ static WCHAR* printer_win_get_printjob_name(size_t id)
 
 		const int rc = swprintf_s(
 		    str, len,
-		    WIDEN("%s Print %04d-%02d-%02d% 02d-%02d-%02d - Job %") WIDEN(PRIuz) WIDEN("\0"),
+		    WIDEN("%s Print %04d-%02d-%02d %02d-%02d-%02d - Job %") WIDEN(PRIuz) WIDEN("\0"),
 		    freerdp_getApplicationDetailsStringW(), tres.tm_year + 1900, tres.tm_mon + 1,
 		    tres.tm_mday, tres.tm_hour, tres.tm_min, tres.tm_sec, id);
 		if (rc <= 0)

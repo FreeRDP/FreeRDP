@@ -42,7 +42,7 @@ typedef struct
 } WINPR_MD5_CTX;
 
 extern void winpr_MD5_Init(WINPR_MD5_CTX* ctx);
-extern void winpr_MD5_Update(WINPR_MD5_CTX* ctx, const void* data, unsigned long size);
+extern void winpr_MD5_Update(WINPR_MD5_CTX* ctx, const void* data, size_t size);
 extern void winpr_MD5_Final(unsigned char* result, WINPR_MD5_CTX* ctx);
 
 #endif
