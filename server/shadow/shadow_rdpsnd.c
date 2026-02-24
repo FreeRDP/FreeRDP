@@ -92,6 +92,6 @@ void shadow_client_rdpsnd_uninit(rdpShadowClient* client)
 	{
 		client->rdpsnd->Stop(client->rdpsnd);
 		rdpsnd_server_context_free(client->rdpsnd);
-		client->rdpsnd = NULL;
+		client->rdpsnd = nullptr;
 	}
 }

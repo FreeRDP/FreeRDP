@@ -820,7 +820,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_INT8 instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_INT8_unchecked(wStream* _s, INT8 _v)
@@ -845,7 +845,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_UINT8 instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_UINT8_unchecked(wStream* _s, UINT8 _v)
@@ -871,7 +871,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_INT16 instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_INT16_unchecked(wStream* _s, INT16 _v)
@@ -897,7 +897,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_UINT16 instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_UINT16_unchecked(wStream* _s, UINT16 _v)
@@ -923,7 +923,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_UINT16_BE instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_UINT16_BE_unchecked(wStream* _s, UINT16 _v)
@@ -949,7 +949,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_UINT16_BE instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 *
 	 * @since version 3.10.0
@@ -977,7 +977,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_UINT24_BE instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_UINT24_BE_unchecked(wStream* _s, UINT32 _v)
@@ -1005,7 +1005,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_INT32 instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_INT32_unchecked(wStream* _s, INT32 _v)
@@ -1031,7 +1031,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_INT32 instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 *
 	 * @since version 3.10.0
@@ -1059,7 +1059,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_UINT32 instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_UINT32_unchecked(wStream* _s, UINT32 _v)
@@ -1085,7 +1085,7 @@ extern "C"
 	 *
 	 * Do not use directly, use the define @ref Stream_Write_UINT32_BE instead
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_UINT32_BE_unchecked(wStream* _s, UINT32 _v)
@@ -1099,7 +1099,7 @@ extern "C"
 	/** @brief writes a \b UINT64 as \b little endian to a \b wStream. The stream must be large
 	 * enough to hold the data.
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_UINT64(wStream* _s, UINT64 _v)
@@ -1115,7 +1115,7 @@ extern "C"
 	/** @brief writes a \b UINT64 as \b big endian to a \b wStream. The stream must be large enough
 	 * to hold the data.
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 */
 	static inline void Stream_Write_UINT64_BE(wStream* _s, UINT64 _v)
@@ -1131,7 +1131,7 @@ extern "C"
 	/** @brief writes a \b INT64 as \b little endian to a \b wStream. The stream must be large
 	 * enough to hold the data.
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 * \since version 3.10.0
 	 */
@@ -1148,7 +1148,7 @@ extern "C"
 	/** @brief writes a \b INT64 as \b big endian to a \b wStream. The stream must be large enough
 	 * to hold the data.
 	 *
-	 * \param _s The stream to write to, must not be \b NULL
+	 * \param _s The stream to write to, must not be \b nullptr
 	 * \param _v The value to write
 	 * \since version 3.10.0
 	 */
@@ -1341,9 +1341,9 @@ extern "C"
 	 *
 	 *  \param s The stream to read data from
 	 *  \param wcharLength The number of WCHAR characters to read (NOT the size in bytes!)
-	 *  \param pUtfCharLength Ignored if \b NULL, otherwise will be set to the number of
+	 *  \param pUtfCharLength Ignored if \b nullptr, otherwise will be set to the number of
 	 *         characters in the resulting UTF-8 string
-	 *  \return A '\0' terminated UTF-8 encoded string or NULL for any failure.
+	 *  \return A '\0' terminated UTF-8 encoded string or nullptr for any failure.
 	 */
 	WINPR_API char* Stream_Read_UTF16_String_As_UTF8(wStream* s, size_t wcharLength,
 	                                                 size_t* pUtfCharLength);
@@ -1404,7 +1404,7 @@ extern "C"
 
 	/** Return the number of streams still not returned to the pool
 	 *
-	 *  @param pool The pool to query, must not be \b NULL
+	 *  @param pool The pool to query, must not be \b nullptr
 	 *
 	 *  @return the number of streams still in use
 	 *
@@ -1415,7 +1415,7 @@ extern "C"
 	/** Wait up to \b timeoutMS milliseconds for streams to be returned to the pool.
 	 *  Use \b INFINITE for an infinite timeout
 	 *
-	 *  @param pool The pool to query, must not be \b NULL
+	 *  @param pool The pool to query, must not be \b nullptr
 	 *  @param timeoutMS Milliseconds to wait at most, use \b INFINITE for no timeout.
 	 *
 	 *  @return \b TRUE in case all streams were returned, \b FALSE otherwise.

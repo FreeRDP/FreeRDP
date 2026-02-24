@@ -84,7 +84,7 @@ static pstatus_t general_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32
 	UINT32* dptr = pDst;
 	size_t span = 0;
 	size_t remaining = 0;
-	primitives_t* prims = NULL;
+	primitives_t* prims = nullptr;
 
 	if (len < 256)
 	{

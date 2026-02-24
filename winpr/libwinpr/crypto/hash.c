@@ -69,7 +69,7 @@ const EVP_MD* winpr_openssl_get_evp_md(WINPR_MD_TYPE md)
 {
 	const char* name = winpr_md_type_to_string(md);
 	if (!name)
-		return NULL;
+		return nullptr;
 	return EVP_get_digestbyname(name);
 }
 #endif
@@ -115,21 +115,16 @@ struct hash_map
 	const char* name;
 	WINPR_MD_TYPE md;
 };
-static const struct hash_map hashes[] = { { "md2", WINPR_MD_MD2 },
-	                                      { "md4", WINPR_MD_MD4 },
-	                                      { "md5", WINPR_MD_MD5 },
-	                                      { "sha1", WINPR_MD_SHA1 },
-	                                      { "sha224", WINPR_MD_SHA224 },
-	                                      { "sha256", WINPR_MD_SHA256 },
-	                                      { "sha384", WINPR_MD_SHA384 },
-	                                      { "sha512", WINPR_MD_SHA512 },
-	                                      { "sha3_224", WINPR_MD_SHA3_224 },
-	                                      { "sha3_256", WINPR_MD_SHA3_256 },
-	                                      { "sha3_384", WINPR_MD_SHA3_384 },
-	                                      { "sha3_512", WINPR_MD_SHA3_512 },
-	                                      { "shake128", WINPR_MD_SHAKE128 },
-	                                      { "shake256", WINPR_MD_SHAKE256 },
-	                                      { NULL, WINPR_MD_NONE } };
+static const struct hash_map hashes[] = {
+	{ "md2", WINPR_MD_MD2 },           { "md4", WINPR_MD_MD4 },
+	{ "md5", WINPR_MD_MD5 },           { "sha1", WINPR_MD_SHA1 },
+	{ "sha224", WINPR_MD_SHA224 },     { "sha256", WINPR_MD_SHA256 },
+	{ "sha384", WINPR_MD_SHA384 },     { "sha512", WINPR_MD_SHA512 },
+	{ "sha3_224", WINPR_MD_SHA3_224 }, { "sha3_256", WINPR_MD_SHA3_256 },
+	{ "sha3_384", WINPR_MD_SHA3_384 }, { "sha3_512", WINPR_MD_SHA3_512 },
+	{ "shake128", WINPR_MD_SHAKE128 }, { "shake256", WINPR_MD_SHAKE256 },
+	{ nullptr, WINPR_MD_NONE }
+};
 
 WINPR_MD_TYPE winpr_md_type_from_string(const char* name)
 {
@@ -152,7 +147,7 @@ const char* winpr_md_type_to_string(WINPR_MD_TYPE md)
 			return cur->name;
 		cur++;
 	}
-	return NULL;
+	return nullptr;
 }
 
 struct winpr_hmac_ctx_private_st
@@ -178,7 +173,7 @@ WINPR_HMAC_CTX* winpr_HMAC_New(void)
 {
 	WINPR_HMAC_CTX* ctx = (WINPR_HMAC_CTX*)calloc(1, sizeof(WINPR_HMAC_CTX));
 	if (!ctx)
-		return NULL;
+		return nullptr;
 #if defined(WITH_OPENSSL)
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
     (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
@@ -191,7 +186,7 @@ WINPR_HMAC_CTX* winpr_HMAC_New(void)
 	if (!(ctx->hmac = HMAC_CTX_new()))
 		goto fail;
 #else
-	EVP_MAC* emac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+	EVP_MAC* emac = EVP_MAC_fetch(nullptr, "HMAC", nullptr);
 	if (!emac)
 		goto fail;
 	ctx->xhmac = EVP_MAC_CTX_new(emac);
@@ -209,7 +204,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	winpr_HMAC_Free(ctx);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const void* key, size_t keylen)
@@ -252,11 +247,11 @@ BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const void* key, siz
 		return FALSE;
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L) || \
     (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
-	HMAC_Init_ex(hmac, key, (int)keylen, evp, NULL); /* no return value on OpenSSL 0.9.x */
+	HMAC_Init_ex(hmac, key, (int)keylen, evp, nullptr); /* no return value on OpenSSL 0.9.x */
 	return TRUE;
 #else
 
-	if (HMAC_Init_ex(hmac, key, (int)keylen, evp, NULL) == 1)
+	if (HMAC_Init_ex(hmac, key, (int)keylen, evp, nullptr) == 1)
 		return TRUE;
 
 #endif
@@ -344,18 +339,18 @@ BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, void* output, size_t olen)
 
 #if defined(WITH_OPENSSL)
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-	const int rc = EVP_MAC_final(ctx->xhmac, output, NULL, olen);
+	const int rc = EVP_MAC_final(ctx->xhmac, output, nullptr, olen);
 	if (rc == 1)
 		return TRUE;
 #else
 	HMAC_CTX* hmac = ctx->hmac;
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L) || \
     (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
-	HMAC_Final(hmac, output, NULL); /* no return value on OpenSSL 0.9.x */
+	HMAC_Final(hmac, output, nullptr); /* no return value on OpenSSL 0.9.x */
 	return TRUE;
 #else
 
-	if (HMAC_Final(hmac, output, NULL) == 1)
+	if (HMAC_Final(hmac, output, nullptr) == 1)
 		return TRUE;
 
 #endif
@@ -453,7 +448,7 @@ WINPR_DIGEST_CTX* winpr_Digest_New(void)
 {
 	WINPR_DIGEST_CTX* ctx = calloc(1, sizeof(WINPR_DIGEST_CTX));
 	if (!ctx)
-		return NULL;
+		return nullptr;
 
 #if defined(WITH_OPENSSL)
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
@@ -480,7 +475,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	winpr_Digest_Free(ctx);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 #if defined(WITH_OPENSSL)
@@ -492,7 +487,7 @@ static BOOL winpr_Digest_Init_Internal(WINPR_DIGEST_CTX* ctx, const EVP_MD* evp)
 	if (!mdctx || !evp)
 		return FALSE;
 
-	if (EVP_DigestInit_ex(mdctx, evp, NULL) != 1)
+	if (EVP_DigestInit_ex(mdctx, evp, nullptr) != 1)
 	{
 		WLog_ERR(TAG, "Failed to initialize digest %s", winpr_md_type_to_string(ctx->md));
 		return FALSE;
@@ -544,7 +539,7 @@ BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 #if !defined(WITH_INTERNAL_MD5)
 			if (md == WINPR_MD_MD5)
 			{
-				EVP_MD* md5 = EVP_MD_fetch(NULL, "MD5", "fips=no");
+				EVP_MD* md5 = EVP_MD_fetch(nullptr, "MD5", "fips=no");
 				BOOL rc = winpr_Digest_Init_Internal(ctx, md5);
 				EVP_MD_free(md5);
 				return rc;
@@ -657,7 +652,7 @@ BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, void* output, WINPR_ATTR_UNUSED s
 #if defined(WITH_OPENSSL)
 	EVP_MD_CTX* mdctx = ctx->mdctx;
 
-	if (EVP_DigestFinal_ex(mdctx, output, NULL) == 1)
+	if (EVP_DigestFinal_ex(mdctx, output, nullptr) == 1)
 		return TRUE;
 
 #elif defined(WITH_MBEDTLS)
@@ -679,7 +674,7 @@ BOOL winpr_DigestSign_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md, void* key)
 	if (!evp)
 		return FALSE;
 
-	const int rdsi = EVP_DigestSignInit(ctx->mdctx, NULL, evp, NULL, key);
+	const int rdsi = EVP_DigestSignInit(ctx->mdctx, nullptr, evp, nullptr, key);
 	if (rdsi <= 0)
 		return FALSE;
 	return TRUE;

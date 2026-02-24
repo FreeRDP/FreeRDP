@@ -184,7 +184,7 @@ UINT tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
 UINT tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 {
 	UINT status = CHANNEL_RC_OK;
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	DEBUG_TSMF("");
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, GUID_SIZE))
@@ -219,8 +219,8 @@ UINT tsmf_ifman_add_stream(TSMF_IFMAN* ifman, rdpContext* rdpcontext)
 {
 	UINT32 StreamId = 0;
 	UINT status = CHANNEL_RC_OK;
-	TSMF_STREAM* stream = NULL;
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_STREAM* stream = nullptr;
+	TSMF_PRESENTATION* presentation = nullptr;
 	DEBUG_TSMF("");
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, GUID_SIZE + 8))
@@ -286,8 +286,8 @@ UINT tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 {
 	int status = CHANNEL_RC_OK;
 	UINT32 StreamId = 0;
-	TSMF_STREAM* stream = NULL;
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_STREAM* stream = nullptr;
+	TSMF_PRESENTATION* presentation = nullptr;
 	DEBUG_TSMF("");
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, 20))
@@ -332,7 +332,7 @@ static float tsmf_stream_read_float(wStream* s)
 UINT tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
 {
 	UINT status = CHANNEL_RC_OK;
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	DEBUG_TSMF("");
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, 32))
@@ -368,7 +368,7 @@ UINT tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	DEBUG_TSMF("");
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, GUID_SIZE))
@@ -399,7 +399,7 @@ UINT tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_on_stream_volume(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	UINT32 newVolume = 0;
 	UINT32 muted = 0;
 	DEBUG_TSMF("on stream volume");
@@ -435,7 +435,7 @@ UINT tsmf_ifman_on_stream_volume(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_on_channel_volume(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	DEBUG_TSMF("on channel volume");
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, GUID_SIZE + 8))
@@ -477,14 +477,14 @@ UINT tsmf_ifman_set_video_window(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	UINT32 numGeometryInfo = 0;
 	UINT32 Left = 0;
 	UINT32 Top = 0;
 	UINT32 Width = 0;
 	UINT32 Height = 0;
 	UINT32 cbVisibleRect = 0;
-	RECTANGLE_32* rects = NULL;
+	RECTANGLE_32* rects = nullptr;
 	UINT error = CHANNEL_RC_OK;
 	size_t pos = 0;
 
@@ -570,8 +570,8 @@ UINT tsmf_ifman_notify_preroll(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation = NULL;
-	TSMF_STREAM* stream = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
+	TSMF_STREAM* stream = nullptr;
 	UINT32 StreamId = 0;
 	UINT64 SampleStartTime = 0;
 	UINT64 SampleEndTime = 0;
@@ -643,8 +643,8 @@ UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 {
 	UINT32 StreamId = 0;
-	TSMF_PRESENTATION* presentation = NULL;
-	TSMF_STREAM* stream = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
+	TSMF_STREAM* stream = nullptr;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, 20))
 		return ERROR_INVALID_DATA;
@@ -685,8 +685,8 @@ UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 UINT tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 {
 	UINT32 StreamId = 0;
-	TSMF_STREAM* stream = NULL;
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_STREAM* stream = nullptr;
+	TSMF_PRESENTATION* presentation = nullptr;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, 20))
 		return ERROR_INVALID_DATA;
@@ -716,7 +716,7 @@ UINT tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	DEBUG_TSMF("");
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, 16))
@@ -747,7 +747,7 @@ UINT tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_on_playback_paused(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	DEBUG_TSMF("");
 	ifman->output_pending = TRUE;
 	/* Added pause control so gstreamer pipeline can be paused accordingly */
@@ -771,7 +771,7 @@ UINT tsmf_ifman_on_playback_paused(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_on_playback_restarted(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	DEBUG_TSMF("");
 	ifman->output_pending = TRUE;
 	/* Added restart control so gstreamer pipeline can be resumed accordingly */
@@ -795,7 +795,7 @@ UINT tsmf_ifman_on_playback_restarted(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_on_playback_stopped(TSMF_IFMAN* ifman)
 {
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	DEBUG_TSMF("");
 	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
 

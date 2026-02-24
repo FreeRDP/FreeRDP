@@ -11,8 +11,8 @@ int TestCryptoProtectMemory(int argc, char* argv[])
 {
 	UINT32 cbPlainText = 0;
 	UINT32 cbCipherText = 0;
-	const char* pPlainText = NULL;
-	BYTE* pCipherText = NULL;
+	const char* pPlainText = nullptr;
+	BYTE* pCipherText = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

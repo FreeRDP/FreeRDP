@@ -48,14 +48,14 @@ void* winpr_execinfo_backtrace(DWORD size)
 	t_execinfo* data = calloc(1, sizeof(t_execinfo));
 
 	if (!data)
-		return NULL;
+		return nullptr;
 
 	data->buffer = (void**)calloc(size, sizeof(void*));
 
 	if (!data->buffer)
 	{
 		free(data);
-		return NULL;
+		return nullptr;
 	}
 
 	assert(size <= INT32_MAX);
@@ -63,7 +63,7 @@ void* winpr_execinfo_backtrace(DWORD size)
 	if (rc < 0)
 	{
 		free(data);
-		return NULL;
+		return nullptr;
 	}
 	data->max = size;
 	data->used = (size_t)rc;
@@ -77,7 +77,7 @@ char** winpr_execinfo_backtrace_symbols(void* buffer, size_t* used)
 		*used = 0;
 
 	if (!data)
-		return NULL;
+		return nullptr;
 
 	if (used)
 		*used = data->used;

@@ -810,7 +810,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 	UINT16 type = 0;
 	UINT16 offset = 0;
 	UINT16 blockLength = 0;
-	BYTE* holdp = NULL;
+	BYTE* holdp = nullptr;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
@@ -820,7 +820,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 		char buffer[64] = WINPR_C_ARRAY_INIT;
 		size_t rest = 0;
 		wStream subbuffer;
-		wStream* sub = NULL;
+		wStream* sub = nullptr;
 
 		if (!gcc_read_user_data_header(mcs->log, s, &type, &blockLength))
 		{
@@ -1766,7 +1766,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 		return FALSE;
 
 	/* serverRandom */
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, NULL,
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, nullptr,
 	                                      settings->ServerRandomLength))
 		goto fail;
 
@@ -1776,7 +1776,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 		goto fail;
 
 	/* serverCertificate */
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, NULL,
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, nullptr,
 	                                      settings->ServerCertificateLength))
 		goto fail;
 
@@ -1791,8 +1791,8 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	}
 	return TRUE;
 fail:
-	freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, NULL, 0);
-	freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, NULL, 0);
+	freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, nullptr, 0);
+	freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, nullptr, 0);
 	return FALSE;
 }
 
@@ -1800,7 +1800,7 @@ static BOOL gcc_update_server_random(rdpSettings* settings)
 {
 	const size_t length = 32;
 	WINPR_ASSERT(settings);
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, NULL, length))
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, nullptr, length))
 		return FALSE;
 	BYTE* data = freerdp_settings_get_pointer_writable(settings, FreeRDP_ServerRandom);
 	if (!data)

@@ -78,7 +78,7 @@ typedef struct
  */
 static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	char* path = NULL;
+	char* path = nullptr;
 	UINT32 PathLength = 0;
 
 	WINPR_ASSERT(parallel);
@@ -96,7 +96,7 @@ static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 	const WCHAR* ptr = Stream_ConstPointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, PathLength))
 		return ERROR_INVALID_DATA;
-	path = ConvertWCharNToUtf8Alloc(ptr, PathLength / sizeof(WCHAR), NULL);
+	path = ConvertWCharNToUtf8Alloc(ptr, PathLength / sizeof(WCHAR), nullptr);
 	if (!path)
 		return CHANNEL_RC_NO_MEMORY;
 
@@ -148,7 +148,7 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	UINT32 Length = 0;
 	UINT64 Offset = 0;
 	ssize_t status = 0;
-	BYTE* buffer = NULL;
+	BYTE* buffer = nullptr;
 
 	WINPR_ASSERT(parallel);
 	WINPR_ASSERT(irp);
@@ -173,7 +173,7 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		free(buffer);
-		buffer = NULL;
+		buffer = nullptr;
 		Length = 0;
 	}
 	else
@@ -388,7 +388,7 @@ static UINT parallel_irp_request(DEVICE* device, IRP* irp)
 
 	WINPR_ASSERT(parallel);
 
-	if (!MessageQueue_Post(parallel->queue, NULL, 0, (void*)irp, NULL))
+	if (!MessageQueue_Post(parallel->queue, nullptr, 0, (void*)irp, nullptr))
 	{
 		WLog_Print(parallel->log, WLOG_ERROR, "MessageQueue_Post failed!");
 		irp->Discard(irp);
@@ -453,7 +453,7 @@ static void parallel_message_free(void* obj)
 FREERDP_ENTRY_POINT(
     UINT VCAPITYPE parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-	PARALLEL_DEVICE* parallel = NULL;
+	PARALLEL_DEVICE* parallel = nullptr;
 	UINT error = 0;
 
 	WINPR_ASSERT(pEntryPoints);
@@ -491,7 +491,7 @@ FREERDP_ENTRY_POINT(
 		parallel->device.Free = parallel_free;
 		parallel->rdpcontext = pEntryPoints->rdpcontext;
 		const size_t length = strlen(name);
-		parallel->device.data = Stream_New(NULL, length + 1);
+		parallel->device.data = Stream_New(nullptr, length + 1);
 
 		if (!parallel->device.data)
 		{
@@ -504,7 +504,7 @@ FREERDP_ENTRY_POINT(
 			Stream_Write_INT8(parallel->device.data, name[i] < 0 ? '_' : name[i]);
 
 		parallel->path = path;
-		parallel->queue = MessageQueue_New(NULL);
+		parallel->queue = MessageQueue_New(nullptr);
 
 		if (!parallel->queue)
 		{
@@ -525,7 +525,7 @@ FREERDP_ENTRY_POINT(
 			goto error_out;
 		}
 
-		parallel->thread = CreateThread(NULL, 0, parallel_thread_func, parallel, 0, NULL);
+		parallel->thread = CreateThread(nullptr, 0, parallel_thread_func, parallel, 0, nullptr);
 		if (!parallel->thread)
 		{
 			WLog_Print(parallel->log, WLOG_ERROR, "CreateThread failed!");

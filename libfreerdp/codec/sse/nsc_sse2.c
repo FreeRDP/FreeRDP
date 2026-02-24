@@ -382,12 +382,12 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 
 static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 {
-	BYTE* co_dst = NULL;
-	BYTE* cg_dst = NULL;
-	INT8* co_src0 = NULL;
-	INT8* co_src1 = NULL;
-	INT8* cg_src0 = NULL;
-	INT8* cg_src1 = NULL;
+	BYTE* co_dst = nullptr;
+	BYTE* cg_dst = nullptr;
+	INT8* co_src0 = nullptr;
+	INT8* co_src1 = nullptr;
+	INT8* cg_src0 = nullptr;
+	INT8* cg_src1 = nullptr;
 	UINT32 tempWidth = 0;
 	UINT32 tempHeight = 0;
 	__m128i t;

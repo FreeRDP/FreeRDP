@@ -31,7 +31,7 @@ PTP_IO winpr_CreateThreadpoolIo(WINPR_ATTR_UNUSED HANDLE fl,
                                 WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 {
 	WLog_ERR("TODO", "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 VOID winpr_CloseThreadpoolIo(WINPR_ATTR_UNUSED PTP_IO pio)

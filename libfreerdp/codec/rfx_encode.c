@@ -42,13 +42,13 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
                                   const BYTE* WINPR_RESTRICT palette, INT16* WINPR_RESTRICT r_buf,
                                   INT16* WINPR_RESTRICT g_buf, INT16* WINPR_RESTRICT b_buf)
 {
-	const BYTE* src = NULL;
+	const BYTE* src = nullptr;
 	INT16 r = 0;
 	INT16 g = 0;
 	INT16 b = 0;
-	INT16* r_last = NULL;
-	INT16* g_last = NULL;
-	INT16* b_last = NULL;
+	INT16* r_last = nullptr;
+	INT16* g_last = nullptr;
+	INT16* b_last = nullptr;
 	uint32_t x_exceed = 64 - width;
 	uint32_t y_exceed = 64 - height;
 

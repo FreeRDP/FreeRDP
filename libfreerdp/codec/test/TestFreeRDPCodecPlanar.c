@@ -82,8 +82,8 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 			const BYTE* b = &lineB[x * FreeRDPGetBytesPerPixel(srcBFormat)];
 			UINT32 colorA = FreeRDPReadColor(a, srcAFormat);
 			UINT32 colorB = FreeRDPReadColor(b, srcBFormat);
-			FreeRDPSplitColor(colorA, srcAFormat, &sR, &sG, &sB, &sA, NULL);
-			FreeRDPSplitColor(colorB, srcBFormat, &dR, &dG, &dB, &dA, NULL);
+			FreeRDPSplitColor(colorA, srcAFormat, &sR, &sG, &sB, &sA, nullptr);
+			FreeRDPSplitColor(colorB, srcBFormat, &dR, &dG, &dB, &dA, nullptr);
 
 			if (fabs((double)sR - dR) > maxDiff)
 				return FALSE;
@@ -117,7 +117,7 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* encplanar, BITMAP_PLANAR_CONTEX
 		return FALSE;
 
 	BYTE* compressedBitmap = freerdp_bitmap_compress_planar(encplanar, srcBitmap, srcFormat, width,
-	                                                        height, 0, NULL, &dstSize);
+	                                                        height, 0, nullptr, &dstSize);
 	BYTE* decompressedBitmap =
 	    (BYTE*)calloc(height, 1ULL * width * FreeRDPGetBytesPerPixel(dstFormat));
 
@@ -187,7 +187,7 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 			BOOL failed = TRUE;
 			const UINT32 srcSize = width * height * FreeRDPGetBytesPerPixel(srcFormat);
 			const UINT32 dstSize = width * height * FreeRDPGetBytesPerPixel(dstFormat);
-			BYTE* compressedBitmap = NULL;
+			BYTE* compressedBitmap = nullptr;
 			BYTE* bmp = malloc(srcSize);
 			BYTE* decompressedBitmap = (BYTE*)malloc(dstSize);
 
@@ -206,7 +206,7 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32
 			}
 
 			compressedBitmap = freerdp_bitmap_compress_planar(planar, bmp, srcFormat, width, height,
-			                                                  0, NULL, &compressedSize);
+			                                                  0, nullptr, &compressedSize);
 
 			if (!compressedBitmap)
 				goto fail_loop;

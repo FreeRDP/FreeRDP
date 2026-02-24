@@ -29,7 +29,7 @@ extern "C"
 
 	/*
 	 * Demangles a C++ symbol name.
-	 * If name is NULL or if the name cannot be demangled, returns NULL.
+	 * If name is nullptr or if the name cannot be demangled, returns nullptr.
 	 * Otherwise, returns a newly allocated string that contains the demangled name.
 	 *
 	 * The caller must free the returned string using free().

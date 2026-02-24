@@ -243,7 +243,7 @@ BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16* length)
 
 static BOOL fastpath_recv_orders(rdpFastPath* fastpath, wStream* s)
 {
-	rdpUpdate* update = NULL;
+	rdpUpdate* update = nullptr;
 	UINT16 numberOrders = 0;
 
 	if (!fastpath || !fastpath->rdp || !s)
@@ -280,8 +280,8 @@ static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
 {
 	BOOL rc = FALSE;
 	UINT16 updateType = 0;
-	rdpUpdate* update = NULL;
-	rdpContext* context = NULL;
+	rdpUpdate* update = nullptr;
+	rdpContext* context = nullptr;
 	BOOL defaultReturn = 0;
 
 	if (!fastpath || !s || !fastpath->rdp)
@@ -498,7 +498,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	BYTE compression = 0;
 	BYTE compressionFlags = 0;
 	UINT32 DstSize = 0;
-	const BYTE* pDstData = NULL;
+	const BYTE* pDstData = nullptr;
 
 	if (!fastpath || !s)
 		return -1;
@@ -567,7 +567,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	}
 	else
 	{
-		rdpContext* context = NULL;
+		rdpContext* context = nullptr;
 		const size_t totalSize = Stream_GetPosition(fastpath->updateData);
 
 		context = transport_get_context(transport);
@@ -707,7 +707,7 @@ static BOOL fastpath_recv_input_event_scancode(rdpFastPath* fastpath, wStream* s
 static BOOL fastpath_recv_input_event_mouse(rdpFastPath* fastpath, wStream* s,
                                             WINPR_ATTR_UNUSED BYTE eventFlags)
 {
-	rdpInput* input = NULL;
+	rdpInput* input = nullptr;
 	UINT16 pointerFlags = 0;
 	UINT16 xPos = 0;
 	UINT16 yPos = 0;
@@ -730,7 +730,7 @@ static BOOL fastpath_recv_input_event_mouse(rdpFastPath* fastpath, wStream* s,
 static BOOL fastpath_recv_input_event_relmouse(rdpFastPath* fastpath, wStream* s,
                                                WINPR_ATTR_UNUSED BYTE eventFlags)
 {
-	rdpInput* input = NULL;
+	rdpInput* input = nullptr;
 	UINT16 pointerFlags = 0;
 	INT16 xDelta = 0;
 	INT16 yDelta = 0;
@@ -793,7 +793,7 @@ static BOOL fastpath_recv_input_event_qoe(rdpFastPath* fastpath, wStream* s,
 static BOOL fastpath_recv_input_event_mousex(rdpFastPath* fastpath, wStream* s,
                                              WINPR_ATTR_UNUSED BYTE eventFlags)
 {
-	rdpInput* input = NULL;
+	rdpInput* input = nullptr;
 	UINT16 pointerFlags = 0;
 	UINT16 xPos = 0;
 	UINT16 yPos = 0;
@@ -828,7 +828,7 @@ static BOOL fastpath_recv_input_event_mousex(rdpFastPath* fastpath, wStream* s,
 static BOOL fastpath_recv_input_event_sync(rdpFastPath* fastpath, WINPR_ATTR_UNUSED wStream* s,
                                            BYTE eventFlags)
 {
-	rdpInput* input = NULL;
+	rdpInput* input = nullptr;
 
 	WINPR_ASSERT(fastpath);
 	WINPR_ASSERT(fastpath->rdp);
@@ -973,13 +973,13 @@ static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath, UINT16* sec_flags)
 {
 	if (!fastpath || !fastpath->rdp)
-		return NULL;
+		return nullptr;
 
 	rdpRdp* rdp = fastpath->rdp;
 	wStream* s = transport_send_stream_init(rdp->transport, 256);
 
 	if (!s)
-		return NULL;
+		return nullptr;
 
 	Stream_Seek(s, 3); /* fpInputHeader, length1 and length2 */
 
@@ -998,11 +998,11 @@ wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath, UINT16* sec_flags
 wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode,
                                  UINT16* sec_flags)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	s = fastpath_input_pdu_init_header(fastpath, sec_flags);
 
 	if (!s)
-		return NULL;
+		return nullptr;
 
 	WINPR_ASSERT(eventCode < 8);
 	WINPR_ASSERT(eventFlags < 0x20);
@@ -1016,7 +1016,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	BOOL rc = FALSE;
 	BYTE eventHeader = 0;
 	BOOL should_unlock = FALSE;
-	rdpRdp* rdp = NULL;
+	rdpRdp* rdp = nullptr;
 
 	WINPR_ASSERT(iNumEvents > 0);
 	if (!s)
@@ -1160,8 +1160,8 @@ wStream* fastpath_update_pdu_init(rdpFastPath* fastpath)
 
 wStream* fastpath_update_pdu_init_new(WINPR_ATTR_UNUSED rdpFastPath* fastpath)
 {
-	wStream* s = NULL;
-	s = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
+	wStream* s = nullptr;
+	s = Stream_New(nullptr, FASTPATH_MAX_PACKET_SIZE);
 	return s;
 }
 
@@ -1169,9 +1169,9 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
                               BOOL skipCompression)
 {
 	BOOL status = TRUE;
-	wStream* fs = NULL;
-	rdpSettings* settings = NULL;
-	rdpRdp* rdp = NULL;
+	wStream* fs = nullptr;
+	rdpSettings* settings = nullptr;
+	rdpRdp* rdp = nullptr;
 	UINT32 fpHeaderSize = 6;
 	UINT32 fpUpdatePduHeaderSize = 0;
 	UINT32 fpUpdateHeaderSize = 0;
@@ -1229,10 +1229,10 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	for (int fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
 		UINT32 DstSize = 0;
-		const BYTE* pDstData = NULL;
+		const BYTE* pDstData = nullptr;
 		UINT32 compressionFlags = 0;
 		BYTE pad = 0;
-		BYTE* pSignature = NULL;
+		BYTE* pSignature = nullptr;
 		fpUpdatePduHeader.action = 0;
 		fpUpdatePduHeader.secFlags = 0;
 		fpUpdateHeader.compression = 0;
@@ -1376,19 +1376,19 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 rdpFastPath* fastpath_new(rdpRdp* rdp)
 {
-	rdpFastPath* fastpath = NULL;
+	rdpFastPath* fastpath = nullptr;
 
 	WINPR_ASSERT(rdp);
 
 	fastpath = (rdpFastPath*)calloc(1, sizeof(rdpFastPath));
 
 	if (!fastpath)
-		return NULL;
+		return nullptr;
 
 	fastpath->rdp = rdp;
 	fastpath->fragmentation = -1;
-	fastpath->fs = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
-	fastpath->updateData = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
+	fastpath->fs = Stream_New(nullptr, FASTPATH_MAX_PACKET_SIZE);
+	fastpath->updateData = Stream_New(nullptr, FASTPATH_MAX_PACKET_SIZE);
 
 	if (!fastpath->fs || !fastpath->updateData)
 		goto out_free;
@@ -1396,7 +1396,7 @@ rdpFastPath* fastpath_new(rdpRdp* rdp)
 	return fastpath;
 out_free:
 	fastpath_free(fastpath);
-	return NULL;
+	return nullptr;
 }
 
 void fastpath_free(rdpFastPath* fastpath)

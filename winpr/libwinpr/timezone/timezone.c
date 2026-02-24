@@ -52,7 +52,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 
 	char* tzid = malloc(length);
 	if (!tzid)
-		return NULL;
+		return nullptr;
 
 	do
 	{
@@ -66,7 +66,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 		if (read > length - 1UL)
 		{
 			free(tzid);
-			return NULL;
+			return nullptr;
 		}
 
 		length += CHUNK_SIZE;
@@ -74,7 +74,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 		if (!tmp)
 		{
 			free(tzid);
-			return NULL;
+			return nullptr;
 		}
 
 		tzid = tmp;
@@ -83,7 +83,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 	if (ferror(fp))
 	{
 		free(tzid);
-		return NULL;
+		return nullptr;
 	}
 
 	tzid[read] = '\0';
@@ -100,7 +100,7 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 {
 	const char* _links[] = { "/etc/localtime", "/etc/TZ" };
 
-	if (links == NULL)
+	if (links == nullptr)
 	{
 		links = _links;
 		count = ARRAYSIZE(_links);
@@ -115,9 +115,9 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 
 	for (size_t x = 0; x < count; x++)
 	{
-		char* tzid = NULL;
+		char* tzid = nullptr;
 		const char* link = links[x];
-		char* buf = realpath(link, NULL);
+		char* buf = realpath(link, nullptr);
 
 		if (buf)
 		{
@@ -161,7 +161,7 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 			return tzid;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 #if defined(ANDROID)
@@ -169,7 +169,7 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 
 static char* winpr_get_android_timezone_identifier(void)
 {
-	char* tzid = NULL;
+	char* tzid = nullptr;
 	JNIEnv* jniEnv;
 
 	/* Preferred: Try to get identifier from java TimeZone class */
@@ -181,7 +181,7 @@ static char* winpr_get_android_timezone_identifier(void)
 		jmethodID jDefaultTimezone;
 		jmethodID jTimezoneIdentifier;
 		jstring tzJId;
-		jboolean attached = (*jniVm)->AttachCurrentThread(jniVm, &jniEnv, NULL);
+		jboolean attached = (*jniVm)->AttachCurrentThread(jniVm, &jniEnv, nullptr);
 		jObjClass = (*jniEnv)->FindClass(jniEnv, "java/util/TimeZone");
 
 		if (!jObjClass)
@@ -242,8 +242,8 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 #if defined(ANDROID)
 	return winpr_get_android_timezone_identifier();
 #else
-	FILE* fp = NULL;
-	char* tzid = NULL;
+	FILE* fp = nullptr;
+	char* tzid = nullptr;
 #if !defined(WINPR_TIMEZONE_FILE)
 #error \
     "Please define WINPR_TIMEZONE_FILE with the path to your timezone file (e.g. /etc/timezone or similar)"
@@ -251,12 +251,12 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 	fp = winpr_fopen(WINPR_TIMEZONE_FILE, "r");
 #endif
 
-	if (NULL == fp)
-		return NULL;
+	if (nullptr == fp)
+		return nullptr;
 
 	tzid = winpr_read_unix_timezone_identifier_from_file(fp);
 	(void)fclose(fp);
-	if (tzid != NULL)
+	if (tzid != nullptr)
 		WLog_DBG(TAG, "tzid: %s", tzid);
 	return tzid;
 #endif
@@ -265,9 +265,9 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 static char* winpr_time_zone_from_env(void)
 {
 	LPCSTR tz = "TZ";
-	char* tzid = NULL;
+	char* tzid = nullptr;
 
-	DWORD nSize = GetEnvironmentVariableA(tz, NULL, 0);
+	DWORD nSize = GetEnvironmentVariableA(tz, nullptr, 0);
 	if (nSize > 0)
 	{
 		tzid = (char*)calloc(nSize, sizeof(char));
@@ -286,17 +286,17 @@ static char* winpr_time_zone_from_env(void)
 
 fail:
 	free(tzid);
-	return NULL;
+	return nullptr;
 }
 
 static char* winpr_translate_time_zone(const char* tzid)
 {
 	const char* zipath = "/usr/share/zoneinfo/";
-	char* buf = NULL;
+	char* buf = nullptr;
 	const char* links[] = { buf };
 
 	if (!tzid)
-		return NULL;
+		return nullptr;
 
 	if (tzid[0] == '/')
 	{
@@ -323,7 +323,7 @@ static char* winpr_guess_time_zone(void)
 	tzid = winpr_get_unix_timezone_identifier_from_file();
 	if (tzid)
 		goto end;
-	tzid = winpr_get_timezone_from_link(NULL, 0);
+	tzid = winpr_get_timezone_from_link(nullptr, 0);
 	if (tzid)
 		goto end;
 
@@ -481,7 +481,7 @@ static BOOL get_transition_date(const struct tm* start, BOOL toDst, SYSTEMTIME* 
 	WINPR_ASSERT(start);
 	WINPR_ASSERT(pdate);
 
-	*pdate = tm2transitiontime(NULL);
+	*pdate = tm2transitiontime(nullptr);
 
 	if (start->tm_isdst < 0)
 		return FALSE;
@@ -549,7 +549,7 @@ static BOOL map_iana_id(const char* iana, LPDYNAMIC_TIME_ZONE_INFORMATION tz)
 	if (winId)
 		(void)ConvertUtf8ToWChar(winId, tz->TimeZoneKeyName, ARRAYSIZE(tz->TimeZoneKeyName));
 
-	return winId != NULL;
+	return winId != nullptr;
 }
 
 static const char* weekday2str(WORD wDayOfWeek)
@@ -752,8 +752,8 @@ static int dynamic_time_zone_from_localtime(const struct tm* local_time,
 
 DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInformation)
 {
-	const char** list = NULL;
-	char* tzid = NULL;
+	const char** list = nullptr;
+	char* tzid = nullptr;
 	const char* defaultName = "Client Local Time";
 	DWORD res = TIME_ZONE_ID_UNKNOWN;
 	const DYNAMIC_TIME_ZONE_INFORMATION empty = WINPR_C_ARRAY_INIT;
@@ -764,7 +764,7 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInfo
 	(void)ConvertUtf8ToWChar(defaultName, pTimeZoneInformation->StandardName,
 	                         ARRAYSIZE(pTimeZoneInformation->StandardName));
 
-	const time_t t = time(NULL);
+	const time_t t = time(nullptr);
 	struct tm tres = WINPR_C_ARRAY_INIT;
 	struct tm* local_time = localtime_r(&t, &tres);
 	if (!local_time)
@@ -777,7 +777,7 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInfo
 	tzid = winpr_guess_time_zone();
 	if (!map_iana_id(tzid, pTimeZoneInformation))
 	{
-		const size_t len = TimeZoneIanaAbbrevGet(local_time->tm_zone, NULL, 0);
+		const size_t len = TimeZoneIanaAbbrevGet(local_time->tm_zone, nullptr, 0);
 		list = (const char**)calloc(len, sizeof(const char*));
 		if (!list)
 			goto out_error;
@@ -866,10 +866,10 @@ DWORD EnumDynamicTimeZoneInformation(DWORD dwIndex,
 		(void)ConvertUtf8ToWChar(entry->Id, lpTimeZoneInformation->TimeZoneKeyName,
 		                         ARRAYSIZE(lpTimeZoneInformation->TimeZoneKeyName));
 
-	const time_t t = time(NULL);
+	const time_t t = time(nullptr);
 	struct tm tres = WINPR_C_ARRAY_INIT;
 
-	char* tzcopy = entry->Iana ? setNewAndSaveOldTZ(entry->Iana) : NULL;
+	char* tzcopy = entry->Iana ? setNewAndSaveOldTZ(entry->Iana) : nullptr;
 
 	struct tm* local_time = localtime_r(&t, &tres);
 
@@ -917,7 +917,7 @@ char* setNewAndSaveOldTZ(const char* val)
 {
 	// NOLINTBEGIN(concurrency-mt-unsafe)
 	const char* otz = getenv("TZ");
-	char* oldtz = NULL;
+	char* oldtz = nullptr;
 	if (otz)
 		oldtz = _strdup(otz);
 	setenv("TZ", val, 1);

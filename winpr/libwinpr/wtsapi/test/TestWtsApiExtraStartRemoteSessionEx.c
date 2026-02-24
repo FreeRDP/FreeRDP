@@ -17,13 +17,13 @@ int TestWtsApiExtraStartRemoteSessionEx(int argc, char* argv[])
 	if (bSuccess > 0)
 	{
 		errno = 0;
-		logonId = strtoul(logonIdStr, NULL, 0);
+		logonId = strtoul(logonIdStr, nullptr, 0);
 		if (errno != 0)
 			return -1;
 	}
 
 	bSuccess = WTSStartRemoteControlSessionEx(
-	    NULL, logonId, VK_F10, REMOTECONTROL_KBDSHIFT_HOTKEY | REMOTECONTROL_KBDCTRL_HOTKEY,
+	    nullptr, logonId, VK_F10, REMOTECONTROL_KBDSHIFT_HOTKEY | REMOTECONTROL_KBDCTRL_HOTKEY,
 	    REMOTECONTROL_FLAG_DISABLE_INPUT);
 
 	if (!bSuccess)

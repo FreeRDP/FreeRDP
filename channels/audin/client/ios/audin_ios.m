@@ -99,7 +99,7 @@ static BOOL audin_ios_format_supported(IAudinDevice *device, const AUDIO_FORMAT 
 	AudinIosDevice *ios = (AudinIosDevice *)device;
 	AudioFormatID req_fmt = 0;
 
-	if (device == NULL || format == NULL)
+	if (device == nullptr || format == nullptr)
 		return FALSE;
 
 	req_fmt = audin_ios_get_format(format);
@@ -120,7 +120,7 @@ static UINT audin_ios_set_format(IAudinDevice *device, const AUDIO_FORMAT *forma
 {
 	AudinIosDevice *ios = (AudinIosDevice *)device;
 
-	if (device == NULL || format == NULL)
+	if (device == nullptr || format == nullptr)
 		return ERROR_INVALID_PARAMETER;
 
 	ios->FramesPerPacket = FramesPerPacket;
@@ -164,7 +164,7 @@ static void ios_audio_queue_input_cb(void *aqData, AudioQueueRef inAQ, AudioQueu
 	if (buffer_size > 0)
 		error = ios->receive(&ios->format, buffer, buffer_size, ios->user_data);
 
-	AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
+	AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, nullptr);
 
 	if (error)
 	{
@@ -180,7 +180,7 @@ static UINT audin_ios_close(IAudinDevice *device)
 	OSStatus devStat;
 	AudinIosDevice *ios = (AudinIosDevice *)device;
 
-	if (device == NULL)
+	if (device == nullptr)
 		return ERROR_INVALID_PARAMETER;
 
 	if (ios->isOpen)
@@ -208,11 +208,11 @@ static UINT audin_ios_close(IAudinDevice *device)
 			         winpr_strerror(errCode, errString, sizeof(errString)), errCode);
 		}
 
-		ios->audioQueue = NULL;
+		ios->audioQueue = nullptr;
 	}
 
-	ios->receive = NULL;
-	ios->user_data = NULL;
+	ios->receive = nullptr;
+	ios->user_data = nullptr;
 	return errCode;
 }
 
@@ -225,7 +225,7 @@ static UINT audin_ios_open(IAudinDevice *device, AudinReceive receive, void *use
 
 	ios->receive = receive;
 	ios->user_data = user_data;
-	devStat = AudioQueueNewInput(&(ios->audioFormat), ios_audio_queue_input_cb, ios, NULL,
+	devStat = AudioQueueNewInput(&(ios->audioFormat), ios_audio_queue_input_cb, ios, nullptr,
 	                             kCFRunLoopCommonModes, 0, &(ios->audioQueue));
 
 	if (devStat != 0)
@@ -250,7 +250,7 @@ static UINT audin_ios_open(IAudinDevice *device, AudinReceive receive, void *use
 			goto err_out;
 		}
 
-		devStat = AudioQueueEnqueueBuffer(ios->audioQueue, ios->audioBuffers[index], 0, NULL);
+		devStat = AudioQueueEnqueueBuffer(ios->audioQueue, ios->audioBuffers[index], 0, nullptr);
 
 		if (devStat != 0)
 		{
@@ -261,7 +261,7 @@ static UINT audin_ios_open(IAudinDevice *device, AudinReceive receive, void *use
 		}
 	}
 
-	devStat = AudioQueueStart(ios->audioQueue, NULL);
+	devStat = AudioQueueStart(ios->audioQueue, nullptr);
 
 	if (devStat != 0)
 	{
@@ -283,7 +283,7 @@ static UINT audin_ios_free(IAudinDevice *device)
 	AudinIosDevice *ios = (AudinIosDevice *)device;
 	int error;
 
-	if (device == NULL)
+	if (device == nullptr)
 		return ERROR_INVALID_PARAMETER;
 
 	if ((error = audin_ios_close(device)))

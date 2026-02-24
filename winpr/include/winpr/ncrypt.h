@@ -203,7 +203,7 @@ extern "C"
 	 *
 	 * @param phProvider [out] resulting provider handle
 	 * @param dwFlags [in] the flags to use
-	 * @param modulePaths [in] an array of library path to try to load ended with a NULL string
+	 * @param modulePaths [in] an array of library path to try to load ended with a nullptr string
 	 * @return ERROR_SUCCESS or an NTE error code something failed
 	 */
 	WINPR_API SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,

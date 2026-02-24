@@ -84,7 +84,7 @@ static void data_device_data_offer(void* data, struct wl_data_device* data_devic
 		seat->offer = data_offer;
 	}
 	else
-		seat->offer = NULL;
+		seat->offer = nullptr;
 }
 
 static void data_device_selection(void* data, struct wl_data_device* data_device,
@@ -138,7 +138,7 @@ static UwacReturnCode UwacCreateDataSource(UwacSeat* s)
 
 UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 {
-	UwacClipboardEvent* event = NULL;
+	UwacClipboardEvent* event = nullptr;
 
 	if (!s)
 		return UWAC_ERROR_INTERNAL;
@@ -194,7 +194,7 @@ static const struct wl_callback_listener callback_listener = { .done = callback_
 
 static uint32_t get_serial(UwacSeat* s)
 {
-	struct wl_callback* callback = NULL;
+	struct wl_callback* callback = nullptr;
 	uint32_t serial = 0;
 	callback = wl_display_sync(s->display->display);
 	wl_callback_add_listener(callback, &callback_listener, &serial);
@@ -229,15 +229,15 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 	ssize_t r = 0;
 	size_t alloc = 0;
 	size_t pos = 0;
-	char* data = NULL;
+	char* data = nullptr;
 	int pipefd[2] = WINPR_C_ARRAY_INIT;
 
 	if (!seat || !mime || !size || !seat->offer)
-		return NULL;
+		return nullptr;
 
 	*size = 0;
 	if (pipe(pipefd) != 0)
-		return NULL;
+		return nullptr;
 
 	wl_data_offer_receive(seat->offer, mime, pipefd[1]);
 	close(pipefd[1]);
@@ -278,5 +278,5 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 fail:
 	free(data);
 	close(pipefd[0]);
-	return NULL;
+	return nullptr;
 }

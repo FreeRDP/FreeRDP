@@ -19,7 +19,7 @@ int TestEnvironmentGetEnvironmentStrings(int argc, char* argv[])
 	while (p[0] && p[1])
 	{
 		const size_t max = _tcslen(p);
-		const int rc = _sntprintf(NULL, 0, _T("%s\n"), p);
+		const int rc = _sntprintf(nullptr, 0, _T("%s\n"), p);
 		if (rc < 1)
 		{
 			_tprintf(_T("test failed: return %d\n"), rc);

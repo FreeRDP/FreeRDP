@@ -15,7 +15,8 @@ static BOOL test_DsMakeSpnA(void)
 	DWORD status = 0;
 	DWORD SpnLength = -1;
 
-	status = DsMakeSpnA(testServiceClass, testServiceName, NULL, 0, NULL, &SpnLength, NULL);
+	status =
+	    DsMakeSpnA(testServiceClass, testServiceName, nullptr, 0, nullptr, &SpnLength, nullptr);
 
 	if (status != ERROR_INVALID_PARAMETER)
 	{
@@ -24,7 +25,8 @@ static BOOL test_DsMakeSpnA(void)
 	}
 
 	SpnLength = 0;
-	status = DsMakeSpnA(testServiceClass, testServiceName, NULL, 0, NULL, &SpnLength, NULL);
+	status =
+	    DsMakeSpnA(testServiceClass, testServiceName, nullptr, 0, nullptr, &SpnLength, nullptr);
 
 	if (status != ERROR_BUFFER_OVERFLOW)
 	{
@@ -38,7 +40,7 @@ static BOOL test_DsMakeSpnA(void)
 		goto fail;
 	}
 
-	status = DsMakeSpnA(testServiceClass, testServiceName, NULL, 0, NULL, &SpnLength, Spn);
+	status = DsMakeSpnA(testServiceClass, testServiceName, nullptr, 0, nullptr, &SpnLength, Spn);
 
 	if (status != ERROR_SUCCESS)
 	{
@@ -82,7 +84,8 @@ static BOOL test_DsMakeSpnW(void)
 	                          ARRAYSIZE(testServiceName));
 	(void)ConvertUtf8NToWChar(ctestSpn, ARRAYSIZE(ctestSpn), testSpn, ARRAYSIZE(testSpn));
 
-	status = DsMakeSpnW(testServiceClass, testServiceName, NULL, 0, NULL, &SpnLength, NULL);
+	status =
+	    DsMakeSpnW(testServiceClass, testServiceName, nullptr, 0, nullptr, &SpnLength, nullptr);
 
 	if (status != ERROR_INVALID_PARAMETER)
 	{
@@ -91,7 +94,8 @@ static BOOL test_DsMakeSpnW(void)
 	}
 
 	SpnLength = 0;
-	status = DsMakeSpnW(testServiceClass, testServiceName, NULL, 0, NULL, &SpnLength, NULL);
+	status =
+	    DsMakeSpnW(testServiceClass, testServiceName, nullptr, 0, nullptr, &SpnLength, nullptr);
 
 	if (status != ERROR_BUFFER_OVERFLOW)
 	{
@@ -105,7 +109,7 @@ static BOOL test_DsMakeSpnW(void)
 		goto fail;
 	}
 
-	status = DsMakeSpnW(testServiceClass, testServiceName, NULL, 0, NULL, &SpnLength, Spn);
+	status = DsMakeSpnW(testServiceClass, testServiceName, nullptr, 0, nullptr, &SpnLength, Spn);
 
 	if (status != ERROR_SUCCESS)
 	{

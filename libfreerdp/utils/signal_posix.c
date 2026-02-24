@@ -56,10 +56,10 @@ static void fatal_handler(int signum)
 	default_sigaction.sa_handler = SIG_DFL;
 	sigfillset(&(default_sigaction.sa_mask));
 	default_sigaction.sa_flags = 0;
-	sigaction(signum, &default_sigaction, NULL);
+	sigaction(signum, &default_sigaction, nullptr);
 	sigemptyset(&this_mask);
 	sigaddset(&this_mask, signum);
-	pthread_sigmask(SIG_UNBLOCK, &this_mask, NULL);
+	pthread_sigmask(SIG_UNBLOCK, &this_mask, nullptr);
 	(void)raise(signum);
 }
 
@@ -101,16 +101,16 @@ static BOOL register_handlers(const int* signals, size_t count, void (*handler)(
 	for (size_t x = 0; x < count; x++)
 	{
 		struct sigaction orig_sigaction = WINPR_C_ARRAY_INIT;
-		if (sigaction(signals[x], NULL, &orig_sigaction) == 0)
+		if (sigaction(signals[x], nullptr, &orig_sigaction) == 0)
 		{
 			if (orig_sigaction.sa_handler != SIG_IGN)
 			{
-				sigaction(signals[x], &saction, NULL);
+				sigaction(signals[x], &saction, nullptr);
 			}
 		}
 	}
 
-	pthread_sigmask(SIG_SETMASK, &orig_set, NULL);
+	pthread_sigmask(SIG_SETMASK, &orig_set, nullptr);
 
 	return TRUE;
 }
@@ -132,10 +132,10 @@ static void unregister_handlers(const int* signals, size_t count)
 
 	for (size_t x = 0; x < count; x++)
 	{
-		sigaction(signals[x], &saction, NULL);
+		sigaction(signals[x], &saction, nullptr);
 	}
 
-	pthread_sigmask(SIG_SETMASK, &orig_set, NULL);
+	pthread_sigmask(SIG_SETMASK, &orig_set, nullptr);
 }
 
 static void unregister_all_handlers(void)

@@ -1162,7 +1162,7 @@ UINT rail_send_handshake_ex_order(railPlugin* rail, const RAIL_HANDSHAKE_EX_ORDE
  */
 UINT rail_send_client_status_order(railPlugin* rail, const RAIL_CLIENT_STATUS_ORDER* clientStatus)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!rail || !clientStatus)
@@ -1199,7 +1199,7 @@ UINT rail_send_client_exec_order(railPlugin* rail, UINT16 flags,
                                  const RAIL_UNICODE_STRING* workingDir,
                                  const RAIL_UNICODE_STRING* arguments)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 	size_t length = 0;
 
@@ -1235,7 +1235,7 @@ out:
  */
 UINT rail_send_client_activate_order(railPlugin* rail, const RAIL_ACTIVATE_ORDER* activate)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!rail || !activate)
@@ -1268,7 +1268,7 @@ UINT rail_send_client_activate_order(railPlugin* rail, const RAIL_ACTIVATE_ORDER
  */
 UINT rail_send_client_sysmenu_order(railPlugin* rail, const RAIL_SYSMENU_ORDER* sysmenu)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!rail || !sysmenu)
@@ -1301,7 +1301,7 @@ UINT rail_send_client_sysmenu_order(railPlugin* rail, const RAIL_SYSMENU_ORDER* 
  */
 UINT rail_send_client_syscommand_order(railPlugin* rail, const RAIL_SYSCOMMAND_ORDER* syscommand)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!rail || !syscommand)
@@ -1335,7 +1335,7 @@ UINT rail_send_client_syscommand_order(railPlugin* rail, const RAIL_SYSCOMMAND_O
 UINT rail_send_client_notify_event_order(railPlugin* rail,
                                          const RAIL_NOTIFY_EVENT_ORDER* notifyEvent)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!rail || !notifyEvent)
@@ -1368,7 +1368,7 @@ UINT rail_send_client_notify_event_order(railPlugin* rail,
  */
 UINT rail_send_client_window_move_order(railPlugin* rail, const RAIL_WINDOW_MOVE_ORDER* windowMove)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!rail || !windowMove)
@@ -1402,7 +1402,7 @@ UINT rail_send_client_window_move_order(railPlugin* rail, const RAIL_WINDOW_MOVE
 UINT rail_send_client_get_appid_req_order(railPlugin* rail,
                                           const RAIL_GET_APPID_REQ_ORDER* getAppIdReq)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!rail || !getAppIdReq)
@@ -1435,7 +1435,7 @@ UINT rail_send_client_get_appid_req_order(railPlugin* rail,
 UINT rail_send_client_langbar_info_order(railPlugin* rail,
                                          const RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!rail || !langBarInfo)
@@ -1466,7 +1466,7 @@ UINT rail_send_client_langbar_info_order(railPlugin* rail,
 UINT rail_send_client_languageime_info_order(railPlugin* rail,
                                              const RAIL_LANGUAGEIME_INFO_ORDER* langImeInfo)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!rail || !langImeInfo)
@@ -1497,7 +1497,7 @@ UINT rail_send_client_languageime_info_order(railPlugin* rail,
 UINT rail_send_client_compartment_info_order(railPlugin* rail,
                                              const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!rail || !compartmentInfo)

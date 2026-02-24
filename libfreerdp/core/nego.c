@@ -117,8 +117,8 @@ BOOL nego_update_settings_from_state(rdpNego* nego, rdpSettings* settings)
 
 BOOL nego_connect(rdpNego* nego)
 {
-	rdpContext* context = NULL;
-	rdpSettings* settings = NULL;
+	rdpContext* context = nullptr;
+	rdpSettings* settings = nullptr;
 	WINPR_ASSERT(nego);
 	context = transport_get_context(nego->transport);
 	WINPR_ASSERT(context);
@@ -350,7 +350,7 @@ BOOL nego_security_connect(rdpNego* nego)
 
 static BOOL nego_tcp_connect(rdpNego* nego)
 {
-	rdpContext* context = NULL;
+	rdpContext* context = nullptr;
 	WINPR_ASSERT(nego);
 	if (!nego->TcpConnected)
 	{
@@ -447,10 +447,10 @@ BOOL nego_transport_disconnect(rdpNego* nego)
 
 BOOL nego_send_preconnection_pdu(rdpNego* nego)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT32 cbSize = 0;
 	UINT16 cchPCB = 0;
-	WCHAR* wszPCB = NULL;
+	WCHAR* wszPCB = nullptr;
 
 	WINPR_ASSERT(nego);
 
@@ -476,7 +476,7 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 		cbSize += cchPCB * sizeof(WCHAR);
 	}
 
-	s = Stream_New(NULL, cbSize);
+	s = Stream_New(nullptr, cbSize);
 
 	if (!s)
 	{
@@ -746,10 +746,10 @@ static void nego_attempt_rdp(rdpNego* nego)
 BOOL nego_recv_response(rdpNego* nego)
 {
 	int status = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(nego);
-	s = Stream_New(NULL, 1024);
+	s = Stream_New(nullptr, 1024);
 
 	if (!s)
 	{
@@ -1076,13 +1076,13 @@ void nego_send(rdpNego* nego)
 BOOL nego_send_negotiation_request(rdpNego* nego)
 {
 	BOOL rc = FALSE;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t length = 0;
 	size_t bm = 0;
 	size_t em = 0;
 	BYTE flags = 0;
 	size_t cookie_length = 0;
-	s = Stream_New(NULL, 512);
+	s = Stream_New(nullptr, 512);
 
 	WINPR_ASSERT(nego);
 	if (!s)
@@ -1496,10 +1496,10 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	size_t bm = 0;
 	size_t em = 0;
 	BOOL status = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	BYTE flags = 0;
-	rdpContext* context = NULL;
-	rdpSettings* settings = NULL;
+	rdpContext* context = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(nego);
 	context = transport_get_context(nego->transport);
@@ -1508,7 +1508,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	s = Stream_New(NULL, 512);
+	s = Stream_New(nullptr, 512);
 
 	if (!s)
 	{
@@ -1698,7 +1698,7 @@ void nego_init(rdpNego* nego)
  *
  * @param transport The transport to use
  *
- * @return A pointer to the allocated NEGO instance or NULL
+ * @return A pointer to the allocated NEGO instance or nullptr
  */
 
 rdpNego* nego_new(rdpTransport* transport)
@@ -1706,7 +1706,7 @@ rdpNego* nego_new(rdpTransport* transport)
 	rdpNego* nego = (rdpNego*)calloc(1, sizeof(rdpNego));
 
 	if (!nego)
-		return NULL;
+		return nullptr;
 
 	nego->log = WLog_Get(NEGO_TAG);
 	WINPR_ASSERT(nego->log);
@@ -1948,7 +1948,7 @@ BOOL nego_set_cookie(rdpNego* nego, const char* cookie)
 	if (nego->cookie)
 	{
 		free(nego->cookie);
-		nego->cookie = NULL;
+		nego->cookie = nullptr;
 	}
 
 	if (!cookie)
@@ -2055,9 +2055,9 @@ BOOL nego_set_state(rdpNego* nego, NEGO_STATE state)
 
 SEC_WINNT_AUTH_IDENTITY* nego_get_identity(rdpNego* nego)
 {
-	rdpNla* nla = NULL;
+	rdpNla* nla = nullptr;
 	if (!nego)
-		return NULL;
+		return nullptr;
 
 	nla = transport_get_nla(nego->transport);
 	return nla_get_identity(nla);
@@ -2068,13 +2068,13 @@ void nego_free_nla(rdpNego* nego)
 	if (!nego || !nego->transport)
 		return;
 
-	transport_set_nla(nego->transport, NULL);
+	transport_set_nla(nego->transport, nullptr);
 }
 
 const BYTE* nego_get_routing_token(const rdpNego* nego, DWORD* RoutingTokenLength)
 {
 	if (!nego)
-		return NULL;
+		return nullptr;
 	if (RoutingTokenLength)
 		*RoutingTokenLength = nego->RoutingTokenLength;
 	return nego->RoutingToken;

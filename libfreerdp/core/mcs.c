@@ -137,10 +137,10 @@
  *
  * DataPriority ::= CHOICE
  * {
- * 	top				NULL,
- * 	high				NULL,
- * 	medium				NULL,
- * 	low				NULL,
+ * 	top				nullptr,
+ * 	high				nullptr,
+ * 	medium				nullptr,
+ * 	low				nullptr,
  * 	...
  * }
  *
@@ -455,7 +455,7 @@ static BOOL mcs_write_domain_parameters(wLog* log, wStream* s, DomainParameters*
 	if (!s || !domainParameters)
 		return FALSE;
 
-	wStream* tmps = Stream_New(NULL, Stream_Capacity(s));
+	wStream* tmps = Stream_New(nullptr, Stream_Capacity(s));
 
 	if (!tmps)
 	{
@@ -735,13 +735,13 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 BOOL mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData)
 {
 	size_t length = 0;
-	wStream* tmps = NULL;
+	wStream* tmps = nullptr;
 	BOOL ret = FALSE;
 
 	if (!s || !mcs || !userData)
 		return FALSE;
 
-	tmps = Stream_New(NULL, Stream_Capacity(s));
+	tmps = Stream_New(nullptr, Stream_Capacity(s));
 
 	if (!tmps)
 	{
@@ -796,13 +796,13 @@ out:
 BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData)
 {
 	size_t length = 0;
-	wStream* tmps = NULL;
+	wStream* tmps = nullptr;
 	BOOL ret = FALSE;
 
 	if (!s || !mcs || !userData)
 		return FALSE;
 
-	tmps = Stream_New(NULL, Stream_Capacity(s));
+	tmps = Stream_New(nullptr, Stream_Capacity(s));
 
 	if (!tmps)
 	{
@@ -839,16 +839,16 @@ static BOOL mcs_send_connect_initial(rdpMcs* mcs)
 {
 	int status = -1;
 	size_t length = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t bm = 0;
 	size_t em = 0;
-	wStream* gcc_CCrq = NULL;
+	wStream* gcc_CCrq = nullptr;
 
 	if (!mcs || !mcs->context)
 		return FALSE;
 
 	mcs_initialize_client_channels(mcs, mcs->context->settings);
-	wStream* client_data = Stream_New(NULL, 512);
+	wStream* client_data = Stream_New(nullptr, 512);
 
 	if (!client_data)
 	{
@@ -858,7 +858,7 @@ static BOOL mcs_send_connect_initial(rdpMcs* mcs)
 
 	if (!gcc_write_client_data_blocks(client_data, mcs))
 		goto out;
-	gcc_CCrq = Stream_New(NULL, 1024);
+	gcc_CCrq = Stream_New(nullptr, 1024);
 
 	if (!gcc_CCrq)
 	{
@@ -869,7 +869,7 @@ static BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	if (!gcc_write_conference_create_request(gcc_CCrq, client_data))
 		goto out;
 	length = Stream_GetPosition(gcc_CCrq) + 7;
-	s = Stream_New(NULL, 1024 + length);
+	s = Stream_New(nullptr, 1024 + length);
 
 	if (!s)
 	{
@@ -961,15 +961,15 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 {
 	size_t length = 0;
 	int status = -1;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t bm = 0;
 	size_t em = 0;
-	wStream* gcc_CCrsp = NULL;
+	wStream* gcc_CCrsp = nullptr;
 
 	if (!mcs)
 		return FALSE;
 
-	wStream* server_data = Stream_New(NULL, 512);
+	wStream* server_data = Stream_New(nullptr, 512);
 
 	if (!server_data)
 	{
@@ -980,7 +980,7 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	if (!gcc_write_server_data_blocks(server_data, mcs))
 		goto out;
 
-	gcc_CCrsp = Stream_New(NULL, 512 + Stream_Capacity(server_data));
+	gcc_CCrsp = Stream_New(nullptr, 512 + Stream_Capacity(server_data));
 
 	if (!gcc_CCrsp)
 	{
@@ -991,7 +991,7 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	if (!gcc_write_conference_create_response(gcc_CCrsp, server_data))
 		goto out;
 	length = Stream_GetPosition(gcc_CCrsp) + 7;
-	s = Stream_New(NULL, length + 1024);
+	s = Stream_New(nullptr, length + 1024);
 
 	if (!s)
 	{
@@ -1045,7 +1045,8 @@ BOOL mcs_recv_erect_domain_request(rdpMcs* mcs, wStream* s)
 	WINPR_ASSERT(mcs);
 	WINPR_ASSERT(s);
 
-	if (!mcs_read_domain_mcspdu_header(mcs->log, s, DomainMCSPDU_ErectDomainRequest, &length, NULL))
+	if (!mcs_read_domain_mcspdu_header(mcs->log, s, DomainMCSPDU_ErectDomainRequest, &length,
+	                                   nullptr))
 		return FALSE;
 
 	if (!per_read_integer(s, &subHeight)) /* subHeight (INTEGER) */
@@ -1071,7 +1072,7 @@ BOOL mcs_send_erect_domain_request(rdpMcs* mcs)
 	if (!mcs)
 		return FALSE;
 
-	wStream* s = Stream_New(NULL, length);
+	wStream* s = Stream_New(nullptr, length);
 
 	if (!s)
 	{
@@ -1108,7 +1109,8 @@ BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s)
 	if (!mcs || !s)
 		return FALSE;
 
-	if (!mcs_read_domain_mcspdu_header(mcs->log, s, DomainMCSPDU_AttachUserRequest, &length, NULL))
+	if (!mcs_read_domain_mcspdu_header(mcs->log, s, DomainMCSPDU_AttachUserRequest, &length,
+	                                   nullptr))
 		return FALSE;
 	return tpkt_ensure_stream_consumed(mcs->log, s, length);
 }
@@ -1127,7 +1129,7 @@ BOOL mcs_send_attach_user_request(rdpMcs* mcs)
 	if (!mcs)
 		return FALSE;
 
-	wStream* s = Stream_New(NULL, length);
+	wStream* s = Stream_New(nullptr, length);
 
 	if (!s)
 	{
@@ -1162,7 +1164,8 @@ BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s)
 	if (!mcs || !s)
 		return FALSE;
 
-	if (!mcs_read_domain_mcspdu_header(mcs->log, s, DomainMCSPDU_AttachUserConfirm, &length, NULL))
+	if (!mcs_read_domain_mcspdu_header(mcs->log, s, DomainMCSPDU_AttachUserConfirm, &length,
+	                                   nullptr))
 		return FALSE;
 	if (!per_read_enumerated(s, &result, MCS_Result_enum_length)) /* result */
 		return FALSE;
@@ -1185,7 +1188,7 @@ BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
 	if (!mcs)
 		return FALSE;
 
-	wStream* s = Stream_New(NULL, length);
+	wStream* s = Stream_New(nullptr, length);
 
 	if (!s)
 	{
@@ -1225,7 +1228,8 @@ BOOL mcs_recv_channel_join_request(rdpMcs* mcs, const rdpSettings* settings, wSt
 	if (!mcs || !s || !channelId)
 		return FALSE;
 
-	if (!mcs_read_domain_mcspdu_header(mcs->log, s, DomainMCSPDU_ChannelJoinRequest, &length, NULL))
+	if (!mcs_read_domain_mcspdu_header(mcs->log, s, DomainMCSPDU_ChannelJoinRequest, &length,
+	                                   nullptr))
 		return FALSE;
 
 	if (!per_read_integer16(s, &userId, MCS_BASE_CHANNEL_ID))
@@ -1260,7 +1264,7 @@ BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId)
 
 	WINPR_ASSERT(mcs);
 
-	wStream* s = Stream_New(NULL, length);
+	wStream* s = Stream_New(nullptr, length);
 
 	if (!s)
 	{
@@ -1300,7 +1304,8 @@ BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId)
 	WINPR_ASSERT(mcs);
 	WINPR_ASSERT(channelId);
 
-	if (!mcs_read_domain_mcspdu_header(mcs->log, s, DomainMCSPDU_ChannelJoinConfirm, &length, NULL))
+	if (!mcs_read_domain_mcspdu_header(mcs->log, s, DomainMCSPDU_ChannelJoinConfirm, &length,
+	                                   nullptr))
 		return FALSE;
 
 	if (!per_read_enumerated(s, &result, MCS_Result_enum_length)) /* result */
@@ -1328,7 +1333,7 @@ BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channelId)
 	if (!mcs)
 		return FALSE;
 
-	wStream* s = Stream_New(NULL, length);
+	wStream* s = Stream_New(nullptr, length);
 
 	if (!s)
 	{
@@ -1421,7 +1426,7 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs, enum Disconnect_Ultimat
 
 	WINPR_ASSERT(mcs);
 
-	wStream* s = Stream_New(NULL, length);
+	wStream* s = Stream_New(nullptr, length);
 
 	if (!s)
 		goto fail;
@@ -1472,7 +1477,7 @@ rdpMcs* mcs_new(rdpContext* context)
 	rdpMcs* mcs = (rdpMcs*)calloc(1, sizeof(rdpMcs));
 
 	if (!mcs)
-		return NULL;
+		return nullptr;
 	mcs->log = WLog_Get(MCS_TAG);
 	WINPR_ASSERT(mcs->log);
 
@@ -1492,7 +1497,7 @@ rdpMcs* mcs_new(rdpContext* context)
 	return mcs;
 out_free:
 	free(mcs);
-	return NULL;
+	return nullptr;
 }
 
 /**

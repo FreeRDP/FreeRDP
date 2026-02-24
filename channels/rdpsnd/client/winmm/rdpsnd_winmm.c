@@ -95,7 +95,7 @@ static DWORD WINAPI waveOutProc(LPVOID lpParameter)
 {
 	MSG msg;
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*)lpParameter;
-	while (GetMessage(&msg, NULL, 0, 0))
+	while (GetMessage(&msg, nullptr, 0, 0))
 	{
 		if (msg.message == MM_WOM_CLOSE)
 		{
@@ -129,7 +129,7 @@ static BOOL rdpsnd_winmm_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* fo
 	if (!rdpsnd_winmm_set_format(device, format, latency))
 		return FALSE;
 
-	winmm->hThread = CreateThread(NULL, 0, waveOutProc, winmm, 0, &winmm->threadId);
+	winmm->hThread = CreateThread(nullptr, 0, waveOutProc, winmm, 0, &winmm->threadId);
 	if (!winmm->hThread)
 	{
 		WLog_Print(winmm->log, WLOG_ERROR, "CreateThread failed: %" PRIu32 "", GetLastError());
@@ -175,14 +175,14 @@ static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
 
 		LeaveCriticalSection(&winmm->cs);
 
-		winmm->hWaveOut = NULL;
+		winmm->hWaveOut = nullptr;
 	}
 
 	if (winmm->hThread)
 	{
 		(void)WaitForSingleObject(winmm->hThread, INFINITE);
 		(void)CloseHandle(winmm->hThread);
-		winmm->hThread = NULL;
+		winmm->hThread = nullptr;
 	}
 }
 
@@ -206,7 +206,7 @@ static BOOL rdpsnd_winmm_format_supported(rdpsndDevicePlugin* device, const AUDI
 	WINPR_UNUSED(device);
 	if (rdpsnd_winmm_convert_format(format, &out))
 	{
-		result = waveOutOpen(NULL, WAVE_MAPPER, &out, 0, 0, WAVE_FORMAT_QUERY);
+		result = waveOutOpen(nullptr, WAVE_MAPPER, &out, 0, 0, WAVE_FORMAT_QUERY);
 
 		if (result == MMSYSERR_NOERROR)
 			return TRUE;

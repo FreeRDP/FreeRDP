@@ -93,7 +93,7 @@ typedef struct
 
 static void libavcodec_destroy_encoder_context(H264_CONTEXT* WINPR_RESTRICT h264)
 {
-	H264_CONTEXT_LIBAVCODEC* sys = NULL;
+	H264_CONTEXT_LIBAVCODEC* sys = nullptr;
 
 	if (!h264 || !h264->subsystem)
 		return;
@@ -110,15 +110,15 @@ static void libavcodec_destroy_encoder_context(H264_CONTEXT* WINPR_RESTRICT h264
 #endif
 	}
 
-	sys->codecEncoderContext = NULL;
+	sys->codecEncoderContext = nullptr;
 }
 
 #ifdef WITH_VAAPI_H264_ENCODING
 static int set_hw_frames_ctx(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
-	AVBufferRef* hw_frames_ref = NULL;
-	AVHWFramesContext* frames_ctx = NULL;
+	AVBufferRef* hw_frames_ref = nullptr;
+	AVHWFramesContext* frames_ctx = nullptr;
 	int err = 0;
 
 	if (!(hw_frames_ref = av_hwframe_ctx_alloc(sys->hwctx)))
@@ -153,7 +153,7 @@ static int set_hw_frames_ctx(H264_CONTEXT* WINPR_RESTRICT h264)
 static BOOL libavcodec_create_encoder_context(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 	BOOL recreate = FALSE;
-	H264_CONTEXT_LIBAVCODEC* sys = NULL;
+	H264_CONTEXT_LIBAVCODEC* sys = nullptr;
 
 	if (!h264 || !h264->subsystem)
 		return FALSE;
@@ -232,7 +232,7 @@ static BOOL libavcodec_create_encoder_context(H264_CONTEXT* WINPR_RESTRICT h264)
 		sys->codecEncoderContext->pix_fmt = AV_PIX_FMT_YUV420P;
 	}
 
-	if (avcodec_open2(sys->codecEncoderContext, sys->codecEncoder, NULL) < 0)
+	if (avcodec_open2(sys->codecEncoderContext, sys->codecEncoder, nullptr) < 0)
 		goto EXCEPTION;
 
 	return TRUE;
@@ -252,7 +252,7 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	int rc = -1;
 	int status = 0;
 	int gotFrame = 0;
-	AVPacket* packet = NULL;
+	AVPacket* packet = nullptr;
 
 	WINPR_ASSERT(h264);
 	WINPR_ASSERT(pSrcData || (SrcSize == 0));
@@ -411,7 +411,7 @@ static int libavcodec_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 	}
 
 	WINPR_ASSERT(sys->packet);
-	sys->packet->data = NULL;
+	sys->packet->data = nullptr;
 	sys->packet->size = 0;
 
 	WINPR_ASSERT(sys->videoFrame);
@@ -598,7 +598,7 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 
 	libavcodec_destroy_encoder_context(h264);
 	free(sys);
-	h264->pSystemData = NULL;
+	h264->pSystemData = nullptr;
 }
 
 #ifdef WITH_VAAPI
@@ -659,7 +659,7 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 
 static BOOL libavcodec_init(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_LIBAVCODEC* sys = NULL;
+	H264_CONTEXT_LIBAVCODEC* sys = nullptr;
 
 	WINPR_ASSERT(h264);
 	sys = (H264_CONTEXT_LIBAVCODEC*)calloc(1, sizeof(H264_CONTEXT_LIBAVCODEC));
@@ -704,15 +704,15 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 		if (!sys->hwctx)
 		{
-			int ret =
-			    av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE, NULL, 0);
+			int ret = av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE,
+			                                 nullptr, 0);
 
 			if (ret < 0)
 			{
 				WLog_Print(h264->log, WLOG_ERROR,
 				           "Could not initialize hardware decoder, falling back to software: %s",
 				           av_err2str(ret));
-				sys->hwctx = NULL;
+				sys->hwctx = nullptr;
 				goto fail_hwdevice_create;
 			}
 		}
@@ -727,7 +727,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 	fail_hwdevice_create:
 #endif
 
-		if (avcodec_open2(sys->codecDecoderContext, sys->codecDecoder, NULL) < 0)
+		if (avcodec_open2(sys->codecDecoderContext, sys->codecDecoder, nullptr) < 0)
 		{
 			WLog_Print(h264->log, WLOG_ERROR, "Failed to open libav codec");
 			goto EXCEPTION;
@@ -751,12 +751,12 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "H264 VAAPI encoder not found");
 			}
-			else if (av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE, NULL,
-			                                0) < 0)
+			else if (av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE,
+			                                nullptr, 0) < 0)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "av_hwdevice_ctx_create failed");
-				sys->codecEncoder = NULL;
-				sys->hwctx = NULL;
+				sys->codecEncoder = nullptr;
+				sys->hwctx = nullptr;
 			}
 			else
 			{

@@ -43,7 +43,7 @@
 
 #define SERVER_KEY "Software\\" FREERDP_VENDOR_STRING "\\" FREERDP_PRODUCT_STRING "\\Server"
 
-static cbCallback cbEvent = NULL;
+static cbCallback cbEvent = nullptr;
 
 int get_screen_info(int id, _TCHAR* name, size_t length, int* width, int* height, int* bpp)
 {
@@ -51,18 +51,18 @@ int get_screen_info(int id, _TCHAR* name, size_t length, int* width, int* height
 
 	dd.cb = sizeof(DISPLAY_DEVICE);
 
-	if (EnumDisplayDevices(NULL, id, &dd, 0) != 0)
+	if (EnumDisplayDevices(nullptr, id, &dd, 0) != 0)
 	{
 		HDC dc;
 
-		if (name != NULL)
+		if (name != nullptr)
 			_stprintf_s(name, length, _T("%s (%s)"), dd.DeviceName, dd.DeviceString);
 
-		dc = CreateDC(dd.DeviceName, NULL, NULL, NULL);
+		dc = CreateDC(dd.DeviceName, nullptr, nullptr, nullptr);
 		*width = GetDeviceCaps(dc, HORZRES);
 		*height = GetDeviceCaps(dc, VERTRES);
 		*bpp = GetDeviceCaps(dc, BITSPIXEL);
-		// ReleaseDC(NULL, dc);
+		// ReleaseDC(nullptr, dc);
 		DeleteDC(dc);
 	}
 	else
@@ -146,10 +146,11 @@ BOOL wfreerdp_server_start(wfServer* server)
 
 	wf_settings_read_dword(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("DefaultPort"), &server->port);
 
-	if (!instance->Open(instance, NULL, (UINT16)server->port))
+	if (!instance->Open(instance, nullptr, (UINT16)server->port))
 		return FALSE;
 
-	if (!(server->thread = CreateThread(NULL, 0, wf_server_main_loop, (void*)instance, 0, NULL)))
+	if (!(server->thread =
+	          CreateThread(nullptr, 0, wf_server_main_loop, (void*)instance, 0, nullptr)))
 		return FALSE;
 
 	return TRUE;
@@ -174,7 +175,7 @@ wfServer* wfreerdp_server_new()
 	wfServer* server;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-		return NULL;
+		return nullptr;
 
 	server = (wfServer*)calloc(1, sizeof(wfServer));
 
@@ -185,7 +186,7 @@ wfServer* wfreerdp_server_new()
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
-	cbEvent = NULL;
+	cbEvent = nullptr;
 
 	return server;
 }

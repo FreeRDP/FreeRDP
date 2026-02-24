@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
 				vscreen_w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 				vscreen_h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 				WLog_INFO(TAG, "");
-				EnumDisplayMonitors(NULL, NULL, moncb, 0);
+				EnumDisplayMonitors(nullptr, nullptr, moncb, 0);
 				IDcount = 0;
 				WLog_INFO(TAG, "Virtual Screen = %dx%d", vscreen_w, vscreen_h);
 			}
@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
 				return 0;
 			}
 
-			val = strtoul(argv[index], NULL, 0);
+			val = strtoul(argv[index], nullptr, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return -1;
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
 
 		if (index == argc - 1)
 		{
-			UINT32 val = strtoul(argv[index], NULL, 0);
+			UINT32 val = strtoul(argv[index], nullptr, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
 				return -1;

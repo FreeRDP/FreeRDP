@@ -1126,7 +1126,7 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder)
 	FREERDP_DSP_CONTEXT* context = calloc(1, sizeof(FREERDP_DSP_CONTEXT));
 
 	if (!context)
-		return NULL;
+		return nullptr;
 
 	if (!freerdp_dsp_common_context_init(&context->common, encoder))
 		goto fail;
@@ -1178,7 +1178,7 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder)
 	return context;
 fail:
 	freerdp_dsp_context_free(context);
-	return NULL;
+	return nullptr;
 #endif
 }
 
@@ -1262,7 +1262,7 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		return FALSE;
 
 	AUDIO_FORMAT format = *srcFormat;
-	const BYTE* resampleData = NULL;
+	const BYTE* resampleData = nullptr;
 	size_t resampleLength = 0;
 
 	if (!freerdp_dsp_channel_mix(context, pdata, length, srcFormat, &resampleData, &resampleLength))
@@ -1270,7 +1270,7 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 	format.nChannels = context->common.format.nChannels;
 
-	const BYTE* data = NULL;
+	const BYTE* data = nullptr;
 	if (!freerdp_dsp_resample(context, resampleData, resampleLength, &format, &data, &length))
 		return FALSE;
 
@@ -1570,7 +1570,7 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		soxr_delete(context->sox);
 		context->sox =
 		    soxr_create(context->common.format.nSamplesPerSec, targetFormat->nSamplesPerSec,
-		                targetFormat->nChannels, &error, &iospec, NULL, NULL);
+		                targetFormat->nChannels, &error, &iospec, nullptr, nullptr);
 
 		if (!context->sox || (error != 0))
 			return FALSE;
@@ -1584,15 +1584,15 @@ BOOL freerdp_dsp_common_context_init(FREERDP_DSP_COMMON_CONTEXT* context, BOOL e
 {
 	WINPR_ASSERT(context);
 	context->encoder = encode;
-	context->buffer = Stream_New(NULL, 1024);
+	context->buffer = Stream_New(nullptr, 1024);
 	if (!context->buffer)
 		goto fail;
 
-	context->channelmix = Stream_New(NULL, 1024);
+	context->channelmix = Stream_New(nullptr, 1024);
 	if (!context->channelmix)
 		goto fail;
 
-	context->resample = Stream_New(NULL, 1024);
+	context->resample = Stream_New(nullptr, 1024);
 	if (!context->resample)
 		goto fail;
 
@@ -1611,7 +1611,7 @@ void freerdp_dsp_common_context_uninit(FREERDP_DSP_COMMON_CONTEXT* context)
 	Stream_Free(context->channelmix, TRUE);
 	Stream_Free(context->resample, TRUE);
 
-	context->buffer = NULL;
-	context->channelmix = NULL;
-	context->resample = NULL;
+	context->buffer = nullptr;
+	context->channelmix = nullptr;
+	context->resample = nullptr;
 }

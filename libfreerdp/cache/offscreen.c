@@ -105,14 +105,14 @@ static BOOL update_gdi_switch_surface(rdpContext* context,
 
 	if (switchSurface->bitmapId == SCREEN_BITMAP_SURFACE)
 	{
-		if (!bitmap->SetSurface(context, NULL, TRUE))
+		if (!bitmap->SetSurface(context, nullptr, TRUE))
 			return FALSE;
 	}
 	else
 	{
-		rdpBitmap* bmp = NULL;
+		rdpBitmap* bmp = nullptr;
 		bmp = offscreen_cache_get(cache->offscreen, switchSurface->bitmapId);
-		if (bmp == NULL)
+		if (bmp == nullptr)
 			return FALSE;
 
 		if (!bitmap->SetSurface(context, bmp, FALSE))
@@ -125,14 +125,14 @@ static BOOL update_gdi_switch_surface(rdpContext* context,
 
 rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
 {
-	rdpBitmap* bitmap = NULL;
+	rdpBitmap* bitmap = nullptr;
 
 	WINPR_ASSERT(offscreenCache);
 
 	if (index >= offscreenCache->maxEntries)
 	{
 		WLog_ERR(TAG, "invalid offscreen bitmap index: 0x%08" PRIX32 "", index);
-		return NULL;
+		return nullptr;
 	}
 
 	bitmap = offscreenCache->entries[index];
@@ -140,7 +140,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
 	if (!bitmap)
 	{
 		WLog_ERR(TAG, "invalid offscreen bitmap at index: 0x%08" PRIX32 "", index);
-		return NULL;
+		return nullptr;
 	}
 
 	return bitmap;
@@ -172,21 +172,21 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 
 	rdpBitmap* prevBitmap = offscreenCache->entries[index];
 
-	if (prevBitmap != NULL)
+	if (prevBitmap != nullptr)
 	{
 		WINPR_ASSERT(offscreenCache->context);
 
 		/* Ensure that the bitmap is no longer used in GDI */
 		if (prevBitmap->SetSurface)
 		{
-			if (!prevBitmap->SetSurface(offscreenCache->context, NULL, FALSE))
+			if (!prevBitmap->SetSurface(offscreenCache->context, nullptr, FALSE))
 				WLog_WARN(TAG, "prevBitmap->SetSurface failed");
 		}
 
 		Bitmap_Free(offscreenCache->context, prevBitmap);
 	}
 
-	offscreenCache->entries[index] = NULL;
+	offscreenCache->entries[index] = nullptr;
 }
 
 void offscreen_cache_register_callbacks(rdpUpdate* update)
@@ -200,8 +200,8 @@ void offscreen_cache_register_callbacks(rdpUpdate* update)
 
 rdpOffscreenCache* offscreen_cache_new(rdpContext* context)
 {
-	rdpOffscreenCache* offscreenCache = NULL;
-	rdpSettings* settings = NULL;
+	rdpOffscreenCache* offscreenCache = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -211,7 +211,7 @@ rdpOffscreenCache* offscreen_cache_new(rdpContext* context)
 	offscreenCache = (rdpOffscreenCache*)calloc(1, sizeof(rdpOffscreenCache));
 
 	if (!offscreenCache)
-		return NULL;
+		return nullptr;
 
 	offscreenCache->context = context;
 	offscreenCache->currentSurface = SCREEN_BITMAP_SURFACE;
@@ -233,7 +233,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	offscreen_cache_free(offscreenCache);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void offscreen_cache_free(rdpOffscreenCache* offscreenCache)

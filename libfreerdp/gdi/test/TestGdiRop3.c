@@ -118,8 +118,8 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 		}
 		else
 		{
-			char* a = NULL;
-			char* b = NULL;
+			char* a = nullptr;
+			char* b = nullptr;
 
 			/* token is an operator */
 			unary = FALSE;
@@ -189,7 +189,7 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 
 end:
 	Stack_Free(stack);
-	return NULL;
+	return nullptr;
 }
 
 static const char* test_ROP3[] = { "DSPDxax",  "PSDPxax", "SPna",   "DSna",   "DPa",

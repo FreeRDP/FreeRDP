@@ -15,8 +15,8 @@ static int test_hash_table_pointer(void)
 {
 	int rc = -1;
 	size_t count = 0;
-	char* value = NULL;
-	wHashTable* table = NULL;
+	char* value = nullptr;
+	wHashTable* table = nullptr;
 	table = HashTable_New(TRUE);
 
 	if (!table)
@@ -151,7 +151,7 @@ static int test_hash_table_string(void)
 {
 	int rc = -1;
 	size_t count = 0;
-	char* value = NULL;
+	char* value = nullptr;
 	wHashTable* table = HashTable_New(TRUE);
 
 	if (!table)
@@ -370,7 +370,7 @@ static BOOL foreachFn3(const void* key, void* value, void* arg)
 static int test_hash_foreach(void)
 {
 	ForeachData foreachData;
-	wHashTable* table = NULL;
+	wHashTable* table = nullptr;
 	int retCode = 0;
 
 	foreachData.table = table = HashTable_New(TRUE);

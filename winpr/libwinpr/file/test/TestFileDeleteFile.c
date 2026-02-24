@@ -28,7 +28,7 @@ int TestFileDeleteFile(int argc, char* argv[])
 	int fd = 0;
 	char validA[] = "/tmp/valid-test-file-XXXXXX";
 	char validW[] = "/tmp/valid-test-file-XXXXXX";
-	WCHAR* validWW = NULL;
+	WCHAR* validWW = nullptr;
 	const char invalidA[] = "/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 	WCHAR invalidW[sizeof(invalidA)] = WINPR_C_ARRAY_INIT;
 
@@ -57,7 +57,7 @@ int TestFileDeleteFile(int argc, char* argv[])
 	if (fd < 0)
 		return -1;
 
-	validWW = ConvertUtf8NToWCharAlloc(validW, ARRAYSIZE(validW), NULL);
+	validWW = ConvertUtf8NToWCharAlloc(validW, ARRAYSIZE(validW), nullptr);
 	if (validWW)
 		rc = DeleteFileW(validWW);
 	free(validWW);

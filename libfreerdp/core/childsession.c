@@ -59,7 +59,8 @@ static int transport_bio_named_write(BIO* bio, const char* buf, int size)
 	DWORD written = 0;
 
 	const UINT64 start = GetTickCount64();
-	BOOL ret = WriteFile(ptr->hFile, buf, WINPR_ASSERTING_INT_CAST(uint32_t, size), &written, NULL);
+	BOOL ret =
+	    WriteFile(ptr->hFile, buf, WINPR_ASSERTING_INT_CAST(uint32_t, size), &written, nullptr);
 	// winpr_HexDump(TAG, WLOG_DEBUG, buf, size);
 
 	if (!ret)
@@ -357,13 +358,13 @@ static void BIO_NAMED_free(WINPR_BIO_NAMED* ptr)
 	if (ptr->hFile)
 	{
 		(void)CloseHandle(ptr->hFile);
-		ptr->hFile = NULL;
+		ptr->hFile = nullptr;
 	}
 
 	if (ptr->readEvent)
 	{
 		(void)CloseHandle(ptr->readEvent);
-		ptr->readEvent = NULL;
+		ptr->readEvent = nullptr;
 	}
 
 	ringbuffer_destroy(&ptr->readBuffer);
@@ -393,7 +394,7 @@ static int transport_bio_named_new(BIO* bio)
 	if (!ringbuffer_init(&ptr->readBuffer, 0xfffff))
 		goto error;
 
-	ptr->readEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+	ptr->readEvent = CreateEventA(nullptr, TRUE, FALSE, nullptr);
 	if (!ptr->readEvent || ptr->readEvent == INVALID_HANDLE_VALUE)
 		goto error;
 
@@ -410,7 +411,7 @@ error:
 
 static int transport_bio_named_free(BIO* bio)
 {
-	WINPR_BIO_NAMED* ptr = NULL;
+	WINPR_BIO_NAMED* ptr = nullptr;
 
 	if (!bio)
 		return 0;
@@ -419,19 +420,19 @@ static int transport_bio_named_free(BIO* bio)
 
 	ptr = (WINPR_BIO_NAMED*)BIO_get_data(bio);
 	if (ptr)
-		BIO_set_data(bio, NULL);
+		BIO_set_data(bio, nullptr);
 
 	return 1;
 }
 
 static BIO_METHOD* BIO_s_namedpipe(void)
 {
-	static BIO_METHOD* bio_methods = NULL;
+	static BIO_METHOD* bio_methods = nullptr;
 
-	if (bio_methods == NULL)
+	if (bio_methods == nullptr)
 	{
 		if (!(bio_methods = BIO_meth_new(BIO_TYPE_NAMEDPIPE, "NamedPipe")))
-			return NULL;
+			return nullptr;
 
 		BIO_meth_set_write(bio_methods, transport_bio_named_write);
 		BIO_meth_set_read(bio_methods, transport_bio_named_read);
@@ -450,7 +451,7 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 {
 	WINPR_ASSERT(pFile);
 
-	HANDLE hModule = NULL;
+	HANDLE hModule = nullptr;
 	BOOL ret = FALSE;
 	*pFile = INVALID_HANDLE_VALUE;
 
@@ -524,8 +525,8 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 		WLog_DBG(TAG, "child session is at '%s'", pipePathA);
 
 		{
-			HANDLE f = CreateFileW(pipePath, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
-			                       FILE_FLAG_OVERLAPPED, NULL);
+			HANDLE f = CreateFileW(pipePath, GENERIC_READ | GENERIC_WRITE, 0, nullptr,
+			                       OPEN_EXISTING, FILE_FLAG_OVERLAPPED, nullptr);
 			if (f == INVALID_HANDLE_VALUE)
 			{
 				WLog_ERR(TAG, "error when connecting to local named pipe");
@@ -547,13 +548,13 @@ BIO* createChildSessionBio(void)
 {
 	HANDLE f = INVALID_HANDLE_VALUE;
 	if (!createChildSessionTransport(&f))
-		return NULL;
+		return nullptr;
 
 	BIO* lowLevelBio = BIO_new(BIO_s_namedpipe());
 	if (!lowLevelBio)
 	{
 		(void)CloseHandle(f);
-		return NULL;
+		return nullptr;
 	}
 
 	BIO_set_handle(lowLevelBio, f);
@@ -562,7 +563,7 @@ BIO* createChildSessionBio(void)
 	if (!bufferedBio)
 	{
 		BIO_free_all(lowLevelBio);
-		return NULL;
+		return nullptr;
 	}
 
 	bufferedBio = BIO_push(bufferedBio, lowLevelBio);

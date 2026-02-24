@@ -46,7 +46,7 @@ extern "C"
 
 	/*
 	 * Maximum number of characters we support using the "\\?\" syntax
-	 * (0x7FFF + 1 for NULL terminator)
+	 * (0x7FFF + 1 for nullptr terminator)
 	 */
 
 #define PATHCCH_MAX_CCH 0x8000
@@ -310,14 +310,14 @@ extern "C"
 #endif
 
 	/** @brief Return the absolute path of a configuration file (the path of the configuration
-	 * directory if \b filename is \b NULL)
+	 * directory if \b filename is \b nullptr)
 	 *
 	 *  @param system a boolean indicating the configuration base, \b TRUE for system configuration,
 	 * \b FALSE for user configuration
 	 *  @param filename an optional configuration file name to append.
 	 *
-	 *  @return The absolute path of the desired configuration or \b NULL in case of failure. Use \b
-	 * free to clean up the allocated string.
+	 *  @return The absolute path of the desired configuration or \b nullptr in case of failure. Use
+	 * \b free to clean up the allocated string.
 	 *
 	 *
 	 *  @since version 3.9.0
@@ -329,10 +329,10 @@ extern "C"
 	/** @brief Get a config file sub path with a formatting argument constructing the filename
 	 *
 	 *  @param system \b TRUE to return a system config path
-	 *  @param filename The format string to generate the filename. Must not be \b NULL. Must not
+	 *  @param filename The format string to generate the filename. Must not be \b nullptr. Must not
 	 * contain any forbidden characters.
 	 *
-	 *  @return A (absolute) configuration file path or \b NULL in case of failure.
+	 *  @return A (absolute) configuration file path or \b nullptr in case of failure.
 	 *  @since version 3.23.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
@@ -344,11 +344,11 @@ extern "C"
 	/** @brief Get a config file sub path with a formatting argument constructing the filename
 	 *
 	 *  @param system \b TRUE to return a system config path
-	 *  @param filename The format string to generate the filename. Must not be \b NULL. Must not
+	 *  @param filename The format string to generate the filename. Must not be \b nullptr. Must not
 	 * contain any forbidden characters.
 	 *  @param ap The argument list
 	 *
-	 *  @return A (absolute) configuration file path or \b NULL in case of failure.
+	 *  @return A (absolute) configuration file path or \b nullptr in case of failure.
 	 *  @since version 3.23.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
@@ -370,9 +370,9 @@ extern "C"
 	/** @brief Append a path to some existing known path type.
 	 *
 	 *  @param id a \ref eKnownPathTypes known path id
-	 *  @param path the format string generating the subpath. Must not be \b NULL
+	 *  @param path the format string generating the subpath. Must not be \b nullptr
 	 *
-	 *  @return A string of combined \b id path and \b path or \b NULL in case of an error.
+	 *  @return A string of combined \b id path and \b path or \b nullptr in case of an error.
 	 * @since version 3.23.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
@@ -383,10 +383,10 @@ extern "C"
 	/** @brief Append a path to some existing known path type.
 	 *
 	 *  @param id a \ref eKnownPathTypes known path id
-	 *  @param path the format string generating the subpath. Must not be \b NULL
+	 *  @param path the format string generating the subpath. Must not be \b nullptr
 	 *  @param ap a va_list containing the format string arguments
-	 * 	     * 	       @return A string of combined \b basePath and \b path or \b NULL in case of an
-	 * error.
+	 * 	     * 	       @return A string of combined \b basePath and \b path or \b nullptr in case of
+	 * an error.
 	 * *  @version since 3.23.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
@@ -404,10 +404,10 @@ extern "C"
 
 	/** @brief Append a path to some existing environment name.
 	 *
-	 *  @param name The prefix path to use, must not be \b NULL
-	 *  @param path A format string used to generate the path to append. Must not be \b NULL
+	 *  @param name The prefix path to use, must not be \b nullptr
+	 *  @param path A format string used to generate the path to append. Must not be \b nullptr
 	 *
-	 *  @return A string of combined \b basePath and \b path or \b NULL in case of an error.
+	 *  @return A string of combined \b basePath and \b path or \b nullptr in case of an error.
 	 * @version since 3.23.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
@@ -417,11 +417,12 @@ extern "C"
 
 	/** @brief Append a path to some existing environment name.
 	 *
-	 * 	       @param name The prefix path to use, must not be \b NULL
-	 *  @param path A format string used to generate the path to append. Must not be \b NULL
+	 * 	       @param name The prefix path to use, must not be \b nullptr
+	 *  @param path A format string used to generate the path to append. Must not be \b nullptr
 	 *  @param ap a va_list containing the format string arguments
 	 *
-	 * 	       @return A string of combined \b basePath and \b path or \b NULL in case of an error.
+	 * 	       @return A string of combined \b basePath and \b path or \b nullptr in case of an
+	 * error.
 	 * *  @version since 3.23.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
@@ -439,10 +440,12 @@ extern "C"
 	 *
 	 *  @bug before version 3.23.0 the function did not allow subPath to be a format string.
 	 *
-	 *  @param basePath The prefix path to use, must not be \b NULL
-	 *  @param subPathFmt A format string used to generate the path to append. Must not be \b NULL
+	 *  @param basePath The prefix path to use, must not be \b nullptr
+	 *  @param subPathFmt A format string used to generate the path to append. Must not be \b
+	 * nullptr
 	 *
-	 *  @return A string of combined \b basePath and \b subPathFmt or \b NULL in case of an error.
+	 *  @return A string of combined \b basePath and \b subPathFmt or \b nullptr in case of an
+	 * error.
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_ATTR_NODISCARD
@@ -453,11 +456,13 @@ extern "C"
 	/** @brief Append a path to some existing path. A system dependent path separator will be added
 	 * automatically.
 	 *
-	 *  @param basePath The prefix path to use, must not be \b NULL
-	 *  @param subPathFmt A format string used to generate the path to append. Must not be \b NULL
+	 *  @param basePath The prefix path to use, must not be \b nullptr
+	 *  @param subPathFmt A format string used to generate the path to append. Must not be \b
+	 * nullptr
 	 *  @param ap a va_list containing the format string arguments
 	 *
-	 *  @return A string of combined \b basePath and \b subPathFmt or \b NULL in case of an error.
+	 *  @return A string of combined \b basePath and \b subPathFmt or \b nullptr in case of an
+	 * error.
 	 *  @version since 3.23.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)

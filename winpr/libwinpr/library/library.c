@@ -88,7 +88,7 @@ DLL_DIRECTORY_COOKIE AddDllDirectory(WINPR_ATTR_UNUSED PCWSTR NewDirectory)
 	/* TODO: Implement */
 	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return NULL;
+	return nullptr;
 }
 
 BOOL RemoveDllDirectory(WINPR_ATTR_UNUSED DLL_DIRECTORY_COOKIE Cookie)
@@ -110,16 +110,16 @@ BOOL SetDefaultDllDirectories(WINPR_ATTR_UNUSED DWORD DirectoryFlags)
 HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 {
 	if (!lpLibFileName)
-		return NULL;
+		return nullptr;
 
 #if defined(_UWP)
 	int status;
-	HMODULE hModule = NULL;
-	WCHAR* filenameW = NULL;
+	HMODULE hModule = nullptr;
+	WCHAR* filenameW = nullptr;
 
-	filenameW = ConvertUtf8ToWCharAlloc(lpLibFileName, NULL);
+	filenameW = ConvertUtf8ToWCharAlloc(lpLibFileName, nullptr);
 	if (filenameW)
-		return NULL;
+		return nullptr;
 
 	hModule = LoadLibraryW(filenameW);
 	free(filenameW);
@@ -132,7 +132,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		const char* err = dlerror();
 		WLog_ERR(TAG, "failed with %s", err);
-		return NULL;
+		return nullptr;
 	}
 
 	return library;
@@ -144,10 +144,10 @@ HMODULE LoadLibraryW(LPCWSTR lpLibFileName)
 #if defined(_UWP)
 	return LoadPackagedLibrary(lpLibFileName, 0);
 #else
-	char* name = NULL;
+	char* name = nullptr;
 
 	if (lpLibFileName)
-		name = ConvertWCharToUtf8Alloc(lpLibFileName, NULL);
+		name = ConvertWCharToUtf8Alloc(lpLibFileName, nullptr);
 
 	HMODULE module = LoadLibraryA(name);
 	free(name);
@@ -161,7 +161,7 @@ HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 		WLog_WARN(TAG, "does not support dwFlags 0x%08" PRIx32, dwFlags);
 
 	if (hFile)
-		WLog_WARN(TAG, "does not support hFile != NULL");
+		WLog_WARN(TAG, "does not support hFile != nullptr");
 
 	return LoadLibraryA(lpLibFileName);
 }
@@ -172,7 +172,7 @@ HMODULE LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 		WLog_WARN(TAG, "does not support dwFlags 0x%08" PRIx32, dwFlags);
 
 	if (hFile)
-		WLog_WARN(TAG, "does not support hFile != NULL");
+		WLog_WARN(TAG, "does not support hFile != nullptr");
 
 	return LoadLibraryW(lpLibFileName);
 }
@@ -183,14 +183,14 @@ HMODULE LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 
 FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {
-	FARPROC proc = NULL;
+	FARPROC proc = nullptr;
 	proc = dlsym(hModule, lpProcName);
 
-	if (proc == NULL)
+	if (proc == nullptr)
 	{
 		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		WLog_ERR(TAG, "GetProcAddress: could not find procedure %s: %s", lpProcName, dlerror());
-		return (FARPROC)NULL;
+		return (FARPROC) nullptr;
 	}
 
 	return proc;
@@ -214,9 +214,9 @@ HMODULE GetModuleHandleA(LPCSTR lpModuleName)
 
 HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
 {
-	char* name = NULL;
+	char* name = nullptr;
 	if (lpModuleName)
-		name = ConvertWCharToUtf8Alloc(lpModuleName, NULL);
+		name = ConvertWCharToUtf8Alloc(lpModuleName, nullptr);
 	HANDLE hdl = GetModuleHandleA(name);
 	free(name);
 	return hdl;
@@ -311,7 +311,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 	size_t cb = nSize;
 
 	{
-		const int rc = sysctl(mib, ARRAYSIZE(mib), NULL, &cb, NULL, 0);
+		const int rc = sysctl(mib, ARRAYSIZE(mib), nullptr, &cb, nullptr, 0);
 		if (rc != 0)
 		{
 			SetLastError(ERROR_INTERNAL_ERROR);
@@ -328,7 +328,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 
 	{
 		size_t cb2 = cb;
-		const int rc = sysctl(mib, ARRAYSIZE(mib), fullname, &cb2, NULL, 0);
+		const int rc = sysctl(mib, ARRAYSIZE(mib), fullname, &cb2, nullptr, 0);
 		if ((rc != 0) || (cb2 != cb))
 		{
 			SetLastError(ERROR_INTERNAL_ERROR);
@@ -395,11 +395,11 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 HMODULE LoadLibraryX(LPCSTR lpLibFileName)
 {
 #if defined(_WIN32)
-	HMODULE hm = NULL;
-	WCHAR* wstr = NULL;
+	HMODULE hm = nullptr;
+	WCHAR* wstr = nullptr;
 
 	if (lpLibFileName)
-		wstr = ConvertUtf8ToWCharAlloc(lpLibFileName, NULL);
+		wstr = ConvertUtf8ToWCharAlloc(lpLibFileName, nullptr);
 
 	hm = LoadLibraryW(wstr);
 	free(wstr);
@@ -412,10 +412,10 @@ HMODULE LoadLibraryX(LPCSTR lpLibFileName)
 HMODULE LoadLibraryExX(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
 	if (!lpLibFileName)
-		return NULL;
+		return nullptr;
 #if defined(_WIN32)
-	HMODULE hm = NULL;
-	WCHAR* wstr = ConvertUtf8ToWCharAlloc(lpLibFileName, NULL);
+	HMODULE hm = nullptr;
+	WCHAR* wstr = ConvertUtf8ToWCharAlloc(lpLibFileName, nullptr);
 	if (wstr)
 		hm = LoadLibraryExW(wstr, hFile, dwFlags);
 	free(wstr);

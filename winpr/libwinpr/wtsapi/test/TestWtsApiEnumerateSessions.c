@@ -8,14 +8,14 @@ int TestWtsApiEnumerateSessions(int argc, char* argv[])
 {
 	DWORD count = 0;
 	BOOL bSuccess = 0;
-	HANDLE hServer = NULL;
-	PWTS_SESSION_INFOA pSessionInfo = NULL;
+	HANDLE hServer = nullptr;
+	PWTS_SESSION_INFOA pSessionInfo = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
 #ifndef _WIN32
-	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0))
+	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", nullptr, 0))
 	{
 		printf("%s: No RDS environment detected, skipping test\n", __func__);
 		return 0;
@@ -25,7 +25,7 @@ int TestWtsApiEnumerateSessions(int argc, char* argv[])
 	hServer = WTS_CURRENT_SERVER_HANDLE;
 
 	count = 0;
-	pSessionInfo = NULL;
+	pSessionInfo = nullptr;
 
 	bSuccess = WTSEnumerateSessionsA(hServer, 0, 1, &pSessionInfo, &count);
 

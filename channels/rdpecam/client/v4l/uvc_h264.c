@@ -291,7 +291,7 @@ static BOOL get_devpath_from_device_id(const char* deviceId, char* path, size_t 
 	if (!p)
 		return FALSE;
 
-	p++; // now points to NULL terminated devpath
+	p++; // now points to nullptr terminated devpath
 
 	strncpy(path, p, size - 1);
 	return TRUE;
@@ -398,7 +398,7 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
 	for (uint8_t i = 0; i < ddesc.bNumConfigurations; ++i)
 	{
 		uint8_t rc = 0;
-		struct libusb_config_descriptor* config = NULL;
+		struct libusb_config_descriptor* config = nullptr;
 
 		if (libusb_get_config_descriptor(device, i, &config) != 0)
 		{
@@ -431,8 +431,8 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
 static uint8_t get_guid_unit_id(const char* deviceId, const uint8_t* guid)
 {
 	char cam_devpath[MAX_DEVPATH_STR_SIZE] = WINPR_C_ARRAY_INIT;
-	libusb_context* usb_ctx = NULL;
-	libusb_device** device_list = NULL;
+	libusb_context* usb_ctx = nullptr;
+	libusb_device** device_list = nullptr;
 	uint8_t unit_id = 0;
 
 	if (!get_devpath_from_device_id(deviceId, cam_devpath, sizeof(cam_devpath)))

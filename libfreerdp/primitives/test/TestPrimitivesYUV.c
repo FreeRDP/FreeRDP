@@ -69,8 +69,8 @@ static BOOL similarRGB(size_t y, const BYTE* src, const BYTE* dst, size_t size, 
 		dColor = FreeRDPReadColor(dst, format);
 		src += bpp;
 		dst += bpp;
-		FreeRDPSplitColor(sColor, format, &sR, &sG, &sB, &sA, NULL);
-		FreeRDPSplitColor(dColor, format, &dR, &dG, &dB, &dA, NULL);
+		FreeRDPSplitColor(sColor, format, &sR, &sG, &sB, &sA, nullptr);
+		FreeRDPSplitColor(dColor, format, &dR, &dG, &dB, &dA, nullptr);
 
 		const long diffr = labs(1L * sR - dR);
 		const long diffg = labs(1L * sG - dG);
@@ -133,8 +133,8 @@ static void get_size(BOOL large, UINT32* width, UINT32* height)
 static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const char* buffer)
 {
 	BOOL rc = TRUE;
-	const BYTE* src = NULL;
-	const BYTE* esrc = NULL;
+	const BYTE* src = nullptr;
+	const BYTE* esrc = nullptr;
 	size_t halfPad = (padding + 1) / 2;
 
 	if (!psrc)
@@ -183,11 +183,11 @@ static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const c
 static void* set_padding(size_t size, size_t padding)
 {
 	size_t halfPad = (padding + 1) / 2;
-	BYTE* psrc = NULL;
+	BYTE* psrc = nullptr;
 	BYTE* src = winpr_aligned_malloc(size + 2 * halfPad, 16);
 
 	if (!src)
-		return NULL;
+		return nullptr;
 
 	memset(&src[0], 'A', halfPad);
 	memset(&src[halfPad], PADDING_FILL_VALUE, size);
@@ -197,7 +197,7 @@ static void* set_padding(size_t size, size_t padding)
 	if (!check_padding(psrc, size, padding, "init"))
 	{
 		winpr_aligned_free(src);
-		return NULL;
+		return nullptr;
 	}
 
 	return psrc;
@@ -205,7 +205,7 @@ static void* set_padding(size_t size, size_t padding)
 
 static void free_padding(void* src, size_t padding)
 {
-	BYTE* ptr = NULL;
+	BYTE* ptr = nullptr;
 
 	if (!src)
 		return;
@@ -440,8 +440,8 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 	UINT32 aheight = 0;
 	BYTE* yuv[3] = WINPR_C_ARRAY_INIT;
 	UINT32 yuv_step[3] = WINPR_C_ARRAY_INIT;
-	BYTE* rgb = NULL;
-	BYTE* rgb_dst = NULL;
+	BYTE* rgb = nullptr;
+	BYTE* rgb_dst = nullptr;
 	size_t size = 0;
 	size_t uvsize = 0;
 	size_t uvwidth = 0;
@@ -663,9 +663,9 @@ static void free_yuv420(BYTE** planes, UINT32 padding)
 	free_padding(planes[0], padding);
 	free_padding(planes[1], padding);
 	free_padding(planes[2], padding);
-	planes[0] = NULL;
-	planes[1] = NULL;
-	planes[2] = NULL;
+	planes[0] = nullptr;
+	planes[1] = nullptr;
+	planes[2] = nullptr;
 }
 
 static BOOL check_yuv420(BYTE** planes, UINT32 width, UINT32 height, UINT32 padding)
@@ -746,13 +746,13 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 	BYTE* lumaGeneric[3] = WINPR_C_ARRAY_INIT;
 	BYTE* chromaGeneric[3] = WINPR_C_ARRAY_INIT;
 	UINT32 yuv_step[3];
-	BYTE* rgb = NULL;
+	BYTE* rgb = nullptr;
 	size_t size = 0;
 	size_t uvwidth = 0;
 	const size_t padding = 0x1000;
 	UINT32 stride = 0;
-	fn_RGBToAVC444YUV_t fkt = NULL;
-	fn_RGBToAVC444YUV_t gen = NULL;
+	fn_RGBToAVC444YUV_t fkt = nullptr;
+	fn_RGBToAVC444YUV_t gen = nullptr;
 	const UINT32 formats[] = { PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_ARGB32,
 		                       PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32,
 		                       PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
@@ -971,7 +971,7 @@ static void free_yuv(BYTE* yuv[3])
 	for (size_t x = 0; x < 3; x++)
 	{
 		free(yuv[x]);
-		yuv[x] = NULL;
+		yuv[x] = nullptr;
 	}
 }
 
@@ -1072,12 +1072,12 @@ static BOOL compare_yuv444_to_rgb(prim_size_t roi, DWORD type)
 			BYTE r1 = 0;
 			BYTE g1 = 0;
 			BYTE b1 = 0;
-			FreeRDPSplitColor(color1, format, &r1, &g1, &b1, NULL, NULL);
+			FreeRDPSplitColor(color1, format, &r1, &g1, &b1, nullptr, nullptr);
 
 			BYTE r2 = 0;
 			BYTE g2 = 0;
 			BYTE b2 = 0;
-			FreeRDPSplitColor(color2, format, &r2, &g2, &b2, NULL, NULL);
+			FreeRDPSplitColor(color2, format, &r2, &g2, &b2, nullptr, nullptr);
 
 			const int dr12 = abs(r1 - r2);
 			const int dg12 = abs(g1 - g2);
@@ -1245,12 +1245,12 @@ static BOOL compare_yuv420_to_rgb(prim_size_t roi, DWORD type)
 			BYTE r1 = 0;
 			BYTE g1 = 0;
 			BYTE b1 = 0;
-			FreeRDPSplitColor(color1, format, &r1, &g1, &b1, NULL, NULL);
+			FreeRDPSplitColor(color1, format, &r1, &g1, &b1, nullptr, nullptr);
 
 			BYTE r2 = 0;
 			BYTE g2 = 0;
 			BYTE b2 = 0;
-			FreeRDPSplitColor(color2, format, &r2, &g2, &b2, NULL, NULL);
+			FreeRDPSplitColor(color2, format, &r2, &g2, &b2, nullptr, nullptr);
 
 			const int dr12 = abs(r1 - r2);
 			const int dg12 = abs(g1 - g2);
@@ -1422,9 +1422,9 @@ int TestPrimitivesYUV(int argc, char* argv[])
 			*ptr++ = '\0';
 
 			errno = 0;
-			roi.width = strtoul(str, NULL, 0);
+			roi.width = strtoul(str, nullptr, 0);
 			if (errno == 0)
-				roi.height = strtoul(str, NULL, 0);
+				roi.height = strtoul(str, nullptr, 0);
 			reset = errno != 0;
 		}
 

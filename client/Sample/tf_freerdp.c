@@ -51,7 +51,7 @@
  * It can be used to reset invalidated areas. */
 static BOOL tf_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = NULL;
+	rdpGdi* gdi = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -71,7 +71,7 @@ static BOOL tf_begin_paint(rdpContext* context)
  */
 static BOOL tf_end_paint(rdpContext* context)
 {
-	rdpGdi* gdi = NULL;
+	rdpGdi* gdi = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -95,8 +95,8 @@ static BOOL tf_end_paint(rdpContext* context)
 
 static BOOL tf_desktop_resize(rdpContext* context)
 {
-	rdpGdi* gdi = NULL;
-	rdpSettings* settings = NULL;
+	rdpGdi* gdi = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -144,7 +144,7 @@ static BOOL tf_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
  * Set all configuration options to support and load channels here. */
 static BOOL tf_pre_connect(freerdp* instance)
 {
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
@@ -185,7 +185,7 @@ static BOOL tf_pre_connect(freerdp* instance)
  */
 static BOOL tf_post_connect(freerdp* instance)
 {
-	rdpContext* context = NULL;
+	rdpContext* context = nullptr;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
 		return FALSE;
@@ -215,7 +215,7 @@ static BOOL tf_post_connect(freerdp* instance)
  */
 static void tf_post_disconnect(freerdp* instance)
 {
-	tfContext* context = NULL;
+	tfContext* context = nullptr;
 
 	if (!instance)
 		return;
@@ -312,7 +312,7 @@ static void tf_client_global_uninit(void)
 
 static int tf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
-	tfContext* tf = NULL;
+	tfContext* tf = nullptr;
 	const char* str_data = freerdp_get_logon_error_info_data(data);
 	const char* str_type = freerdp_get_logon_error_info_type(type);
 

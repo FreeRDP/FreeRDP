@@ -265,7 +265,7 @@ static UINT rail_write_get_appid_resp_ex_order(wStream* s,
 static UINT rail_send_server_handshake(RailServerContext* context,
                                        const RAIL_HANDSHAKE_ORDER* handshake)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !handshake)
@@ -293,7 +293,7 @@ static UINT rail_send_server_handshake(RailServerContext* context,
 static UINT rail_send_server_handshake_ex(RailServerContext* context,
                                           const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !handshakeEx || !context->priv)
@@ -323,9 +323,9 @@ static UINT rail_send_server_handshake_ex(RailServerContext* context,
 static UINT rail_send_server_sysparam(RailServerContext* context,
                                       const RAIL_SYSPARAM_ORDER* sysparam)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
-	RailServerPrivate* priv = NULL;
+	RailServerPrivate* priv = nullptr;
 	BOOL extendedSpiSupported = 0;
 
 	if (!context || !sysparam)
@@ -360,7 +360,7 @@ static UINT rail_send_server_sysparam(RailServerContext* context,
 static UINT rail_send_server_local_move_size(RailServerContext* context,
                                              const RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !localMoveSize)
@@ -388,7 +388,7 @@ static UINT rail_send_server_local_move_size(RailServerContext* context,
 static UINT rail_send_server_min_max_info(RailServerContext* context,
                                           const RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !minMaxInfo)
@@ -416,7 +416,7 @@ static UINT rail_send_server_min_max_info(RailServerContext* context,
 static UINT rail_send_server_taskbar_info(RailServerContext* context,
                                           const RAIL_TASKBAR_INFO_ORDER* taskbarInfo)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !taskbarInfo)
@@ -444,7 +444,7 @@ static UINT rail_send_server_taskbar_info(RailServerContext* context,
 static UINT rail_send_server_langbar_info(RailServerContext* context,
                                           const RAIL_LANGBAR_INFO_ORDER* langbarInfo)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !langbarInfo)
@@ -472,7 +472,7 @@ static UINT rail_send_server_langbar_info(RailServerContext* context,
 static UINT rail_send_server_exec_result(RailServerContext* context,
                                          const RAIL_EXEC_RESULT_ORDER* execResult)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !execResult)
@@ -500,7 +500,7 @@ static UINT rail_send_server_exec_result(RailServerContext* context,
 static UINT rail_send_server_z_order_sync(RailServerContext* context,
                                           const RAIL_ZORDER_SYNC* zOrderSync)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !zOrderSync)
@@ -527,7 +527,7 @@ static UINT rail_send_server_z_order_sync(RailServerContext* context,
  */
 static UINT rail_send_server_cloak(RailServerContext* context, const RAIL_CLOAK* cloak)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !cloak)
@@ -556,7 +556,7 @@ static UINT
 rail_send_server_power_display_request(RailServerContext* context,
                                        const RAIL_POWER_DISPLAY_REQUEST* powerDisplayRequest)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !powerDisplayRequest)
@@ -584,7 +584,7 @@ rail_send_server_power_display_request(RailServerContext* context,
 static UINT rail_send_server_get_app_id_resp(RailServerContext* context,
                                              const RAIL_GET_APPID_RESP_ORDER* getAppidResp)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !getAppidResp)
@@ -612,7 +612,7 @@ static UINT rail_send_server_get_app_id_resp(RailServerContext* context,
 static UINT rail_send_server_get_appid_resp_ex(RailServerContext* context,
                                                const RAIL_GET_APPID_RESP_EX* getAppidRespEx)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT error = 0;
 
 	if (!context || !getAppidRespEx)
@@ -672,7 +672,8 @@ static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec, char* args[]
 	if (exeLen > 0)
 	{
 		const size_t len = exeLen / sizeof(WCHAR);
-		exec->RemoteApplicationProgram = args[0] = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
+		exec->RemoteApplicationProgram = args[0] =
+		    Stream_Read_UTF16_String_As_UTF8(s, len, nullptr);
 		if (!exec->RemoteApplicationProgram)
 			goto fail;
 	}
@@ -680,14 +681,15 @@ static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec, char* args[]
 	{
 		const size_t len = workLen / sizeof(WCHAR);
 		exec->RemoteApplicationWorkingDir = args[1] =
-		    Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
+		    Stream_Read_UTF16_String_As_UTF8(s, len, nullptr);
 		if (!exec->RemoteApplicationWorkingDir)
 			goto fail;
 	}
 	if (argLen > 0)
 	{
 		const size_t len = argLen / sizeof(WCHAR);
-		exec->RemoteApplicationArguments = args[2] = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
+		exec->RemoteApplicationArguments = args[2] =
+		    Stream_Read_UTF16_String_As_UTF8(s, len, nullptr);
 		if (!exec->RemoteApplicationArguments)
 			goto fail;
 	}
@@ -1412,7 +1414,7 @@ static DWORD WINAPI rail_server_thread(LPVOID arg)
  */
 static UINT rail_server_start(RailServerContext* context)
 {
-	void* buffer = NULL;
+	void* buffer = nullptr;
 	DWORD bytesReturned = 0;
 	RailServerPrivate* priv = context->priv;
 	UINT error = ERROR_INTERNAL_ERROR;
@@ -1442,7 +1444,7 @@ static UINT rail_server_start(RailServerContext* context)
 
 	priv->channelEvent = *(HANDLE*)buffer;
 	WTSFreeMemory(buffer);
-	context->priv->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	context->priv->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
 	if (!context->priv->stopEvent)
 	{
@@ -1450,7 +1452,8 @@ static UINT rail_server_start(RailServerContext* context)
 		goto out_close;
 	}
 
-	context->priv->thread = CreateThread(NULL, 0, rail_server_thread, (void*)context, 0, NULL);
+	context->priv->thread =
+	    CreateThread(nullptr, 0, rail_server_thread, (void*)context, 0, nullptr);
 
 	if (!context->priv->thread)
 	{
@@ -1461,10 +1464,10 @@ static UINT rail_server_start(RailServerContext* context)
 	return CHANNEL_RC_OK;
 out_stop_event:
 	(void)CloseHandle(context->priv->stopEvent);
-	context->priv->stopEvent = NULL;
+	context->priv->stopEvent = nullptr;
 out_close:
 	(void)WTSVirtualChannelClose(context->priv->rail_channel);
-	context->priv->rail_channel = NULL;
+	context->priv->rail_channel = nullptr;
 	return error;
 }
 
@@ -1484,30 +1487,30 @@ static BOOL rail_server_stop(RailServerContext* context)
 
 		(void)CloseHandle(priv->thread);
 		(void)CloseHandle(priv->stopEvent);
-		priv->thread = NULL;
-		priv->stopEvent = NULL;
+		priv->thread = nullptr;
+		priv->stopEvent = nullptr;
 	}
 
 	if (priv->rail_channel)
 	{
 		(void)WTSVirtualChannelClose(priv->rail_channel);
-		priv->rail_channel = NULL;
+		priv->rail_channel = nullptr;
 	}
 
-	priv->channelEvent = NULL;
+	priv->channelEvent = nullptr;
 	return TRUE;
 }
 
 RailServerContext* rail_server_context_new(HANDLE vcm)
 {
-	RailServerContext* context = NULL;
-	RailServerPrivate* priv = NULL;
+	RailServerContext* context = nullptr;
+	RailServerPrivate* priv = nullptr;
 	context = (RailServerContext*)calloc(1, sizeof(RailServerContext));
 
 	if (!context)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		return NULL;
+		return nullptr;
 	}
 
 	context->vcm = vcm;
@@ -1535,7 +1538,7 @@ RailServerContext* rail_server_context_new(HANDLE vcm)
 	}
 
 	/* Create shared input stream */
-	priv->input_stream = Stream_New(NULL, 4096);
+	priv->input_stream = Stream_New(nullptr, 4096);
 
 	if (!priv->input_stream)
 	{
@@ -1548,7 +1551,7 @@ out_free_priv:
 	free(context->priv);
 out_free:
 	free(context);
-	return NULL;
+	return nullptr;
 }
 
 void rail_server_context_free(RailServerContext* context)
@@ -1562,7 +1565,7 @@ void rail_server_context_free(RailServerContext* context)
 
 void rail_server_set_handshake_ex_flags(RailServerContext* context, DWORD flags)
 {
-	RailServerPrivate* priv = NULL;
+	RailServerPrivate* priv = nullptr;
 
 	if (!context || !context->priv)
 		return;

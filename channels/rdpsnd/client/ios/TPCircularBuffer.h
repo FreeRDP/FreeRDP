@@ -100,14 +100,14 @@ extern "C"
 	 *
 	 * @param buffer Circular buffer
 	 * @param availableBytes On output, the number of bytes ready for reading
-	 * @return Pointer to the first bytes ready for reading, or NULL if buffer is empty
+	 * @return Pointer to the first bytes ready for reading, or nullptr if buffer is empty
 	 */
 	static inline __attribute__((always_inline)) void*
 	TPCircularBufferTail(TPCircularBuffer* buffer, int32_t* availableBytes)
 	{
 		*availableBytes = buffer->fillCount;
 		if (*availableBytes == 0)
-			return NULL;
+			return nullptr;
 		return (void*)((char*)buffer->buffer + buffer->tail);
 	}
 
@@ -147,14 +147,14 @@ extern "C"
 	 *
 	 * @param buffer Circular buffer
 	 * @param availableBytes On output, the number of bytes ready for writing
-	 * @return Pointer to the first bytes ready for writing, or NULL if buffer is full
+	 * @return Pointer to the first bytes ready for writing, or nullptr if buffer is full
 	 */
 	static inline __attribute__((always_inline)) void*
 	TPCircularBufferHead(TPCircularBuffer* buffer, int32_t* availableBytes)
 	{
 		*availableBytes = (buffer->length - buffer->fillCount);
 		if (*availableBytes == 0)
-			return NULL;
+			return nullptr;
 		return (void*)((char*)buffer->buffer + buffer->head);
 	}
 

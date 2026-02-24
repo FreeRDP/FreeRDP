@@ -83,14 +83,14 @@ SetUnhandledExceptionFilter(
     WINPR_ATTR_UNUSED LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter)
 {
 	WLog_ERR("TODO", "TOdO: implement");
-	return NULL;
+	return nullptr;
 }
 
 PVOID AddVectoredExceptionHandler(WINPR_ATTR_UNUSED ULONG First,
                                   WINPR_ATTR_UNUSED PVECTORED_EXCEPTION_HANDLER Handler)
 {
 	WLog_ERR("TODO", "TOdO: implement");
-	return NULL;
+	return nullptr;
 }
 
 ULONG RemoveVectoredExceptionHandler(WINPR_ATTR_UNUSED PVOID Handle)
@@ -103,7 +103,7 @@ PVOID AddVectoredContinueHandler(WINPR_ATTR_UNUSED ULONG First,
                                  WINPR_ATTR_UNUSED PVECTORED_EXCEPTION_HANDLER Handler)
 {
 	WLog_ERR("TODO", "TOdO: implement");
-	return NULL;
+	return nullptr;
 }
 
 ULONG RemoveVectoredContinueHandler(WINPR_ATTR_UNUSED PVOID Handle)

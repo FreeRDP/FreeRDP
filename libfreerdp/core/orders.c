@@ -80,7 +80,7 @@ static inline BOOL check_val_fits_int16_int(INT32 value, WINPR_ATTR_UNUSED const
                                             WINPR_ATTR_UNUSED size_t line)
 {
 	const DWORD level = WLOG_WARN;
-	static wLog* log = NULL;
+	static wLog* log = nullptr;
 	if (!log)
 		log = WLog_Get(TAG);
 
@@ -300,7 +300,7 @@ static BOOL check_order_activated(wLog* log, const rdpSettings* settings, const 
 static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE orderType,
                                       const char* orderName)
 {
-	const char* extendedMessage = NULL;
+	const char* extendedMessage = nullptr;
 	BOOL condition = FALSE;
 
 	switch (orderType)
@@ -350,7 +350,7 @@ static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE ord
 static BOOL check_secondary_order_supported(wLog* log, rdpSettings* settings, BYTE orderType,
                                             const char* orderName)
 {
-	const char* extendedMessage = NULL;
+	const char* extendedMessage = nullptr;
 	BOOL condition = FALSE;
 
 	switch (orderType)
@@ -410,7 +410,7 @@ static BOOL check_secondary_order_supported(wLog* log, rdpSettings* settings, BY
 static BOOL check_primary_order_supported(wLog* log, const rdpSettings* settings, UINT32 orderType,
                                           const char* orderName)
 {
-	const char* extendedMessage = NULL;
+	const char* extendedMessage = nullptr;
 	BOOL condition = FALSE;
 
 	switch (orderType)
@@ -1043,7 +1043,7 @@ static inline BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, c
 {
 	UINT32 number = *nr;
 	BYTE flags = 0;
-	BYTE* zeroBits = NULL;
+	BYTE* zeroBits = nullptr;
 	UINT32 zeroBitsSize = 0;
 
 	if (number > 45)
@@ -1108,7 +1108,7 @@ static inline BOOL update_read_delta_points(wStream* s, DELTA_POINT** points, UI
                                             WINPR_ATTR_UNUSED INT16 x, WINPR_ATTR_UNUSED INT16 y)
 {
 	BYTE flags = 0;
-	BYTE* zeroBits = NULL;
+	BYTE* zeroBits = nullptr;
 	UINT32 zeroBitsSize = ((number + 3) / 4);
 
 	WINPR_ASSERT(points);
@@ -1895,7 +1895,7 @@ static BOOL update_read_memblt_order(const char* orderName, wStream* s, const OR
 		return FALSE;
 	memblt->colorIndex = (memblt->cacheId >> 8);
 	memblt->cacheId = (memblt->cacheId & 0xFF);
-	memblt->bitmap = NULL;
+	memblt->bitmap = nullptr;
 	return TRUE;
 }
 
@@ -1959,7 +1959,7 @@ static BOOL update_read_mem3blt_order(const char* orderName, wStream* s,
 		return FALSE;
 	mem3blt->colorIndex = (mem3blt->cacheId >> 8);
 	mem3blt->cacheId = (mem3blt->cacheId & 0xFF);
-	mem3blt->bitmap = NULL;
+	mem3blt->bitmap = nullptr;
 	return TRUE;
 }
 static BOOL update_read_save_bitmap_order(const char* orderName, wStream* s,
@@ -2151,9 +2151,9 @@ static BOOL update_read_fast_glyph_order(const char* orderName, wStream* s,
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_15) != 0)
 	{
-		const BYTE* src = NULL;
+		const BYTE* src = nullptr;
 		wStream subbuffer;
-		wStream* sub = NULL;
+		wStream* sub = nullptr;
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 			return FALSE;
 
@@ -2200,7 +2200,7 @@ static BOOL update_read_fast_glyph_order(const char* orderName, wStream* s,
 			else
 			{
 				free(glyph->aj);
-				glyph->aj = NULL;
+				glyph->aj = nullptr;
 			}
 		}
 	}
@@ -2333,11 +2333,11 @@ WINPR_ATTR_NODISCARD
 static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wStream* s,
                                                           BOOL compressed, UINT16 flags)
 {
-	CACHE_BITMAP_ORDER* cache_bitmap = NULL;
+	CACHE_BITMAP_ORDER* cache_bitmap = nullptr;
 	rdp_update_internal* up = update_cast(update);
 
 	if (!update || !s)
-		return NULL;
+		return nullptr;
 
 	cache_bitmap = calloc(1, sizeof(CACHE_BITMAP_ORDER));
 
@@ -2395,7 +2395,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_bitmap_order(update->context, cache_bitmap);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 size_t update_approximate_cache_bitmap_order(const CACHE_BITMAP_ORDER* cache_bitmap,
@@ -2456,10 +2456,10 @@ static CACHE_BITMAP_V2_ORDER* update_read_cache_bitmap_v2_order(rdpUpdate* updat
 {
 	BOOL rc = 0;
 	BYTE bitsPerPixelId = 0;
-	CACHE_BITMAP_V2_ORDER* cache_bitmap_v2 = NULL;
+	CACHE_BITMAP_V2_ORDER* cache_bitmap_v2 = nullptr;
 
 	if (!update || !s)
-		return NULL;
+		return nullptr;
 
 	cache_bitmap_v2 = calloc(1, sizeof(CACHE_BITMAP_V2_ORDER));
 
@@ -2543,7 +2543,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_bitmap_v2_order(update->context, cache_bitmap_v2);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 size_t update_approximate_cache_bitmap_v2_order(CACHE_BITMAP_V2_ORDER* cache_bitmap_v2,
@@ -2642,14 +2642,14 @@ static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* updat
 {
 	BOOL rc = 0;
 	BYTE bitsPerPixelId = 0;
-	BITMAP_DATA_EX* bitmapData = NULL;
+	BITMAP_DATA_EX* bitmapData = nullptr;
 	UINT32 new_len = 0;
-	BYTE* new_data = NULL;
-	CACHE_BITMAP_V3_ORDER* cache_bitmap_v3 = NULL;
+	BYTE* new_data = nullptr;
+	CACHE_BITMAP_V3_ORDER* cache_bitmap_v3 = nullptr;
 	rdp_update_internal* up = update_cast(update);
 
 	if (!update || !s)
-		return NULL;
+		return nullptr;
 
 	cache_bitmap_v3 = calloc(1, sizeof(CACHE_BITMAP_V3_ORDER));
 
@@ -2702,7 +2702,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_bitmap_v3_order(update->context, cache_bitmap_v3);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 size_t update_approximate_cache_bitmap_v3_order(CACHE_BITMAP_V3_ORDER* cache_bitmap_v3,
@@ -2717,7 +2717,7 @@ BOOL update_write_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache
 {
 	BOOL rc = 0;
 	BYTE bitsPerPixelId = 0;
-	BITMAP_DATA_EX* bitmapData = NULL;
+	BITMAP_DATA_EX* bitmapData = nullptr;
 
 	if (!Stream_EnsureRemainingCapacity(
 	        s, update_approximate_cache_bitmap_v3_order(cache_bitmap_v3, flags)))
@@ -2749,7 +2749,7 @@ WINPR_ATTR_NODISCARD
 static CACHE_COLOR_TABLE_ORDER* update_read_cache_color_table_order(rdpUpdate* update, wStream* s,
                                                                     WINPR_ATTR_UNUSED UINT16 flags)
 {
-	UINT32* colorTable = NULL;
+	UINT32* colorTable = nullptr;
 	CACHE_COLOR_TABLE_ORDER* cache_color_table = calloc(1, sizeof(CACHE_COLOR_TABLE_ORDER));
 
 	if (!cache_color_table)
@@ -2781,7 +2781,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_color_table_order(update->context, cache_color_table);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 size_t update_approximate_cache_color_table_order(const CACHE_COLOR_TABLE_ORDER* cache_color_table,
@@ -2798,7 +2798,7 @@ BOOL update_write_cache_color_table_order(wStream* s,
                                           UINT16* flags)
 {
 	size_t inf = 0;
-	const UINT32* colorTable = NULL;
+	const UINT32* colorTable = nullptr;
 
 	if (cache_color_table->numberColors != 256)
 		return FALSE;
@@ -2881,7 +2881,7 @@ static CACHE_GLYPH_ORDER* update_read_cache_glyph_order(rdpUpdate* update, wStre
 	return cache_glyph_order;
 fail:
 	free_cache_glyph_order(update->context, cache_glyph_order);
-	return NULL;
+	return nullptr;
 }
 
 size_t update_approximate_cache_glyph_order(const CACHE_GLYPH_ORDER* cache_glyph,
@@ -2894,7 +2894,7 @@ size_t update_approximate_cache_glyph_order(const CACHE_GLYPH_ORDER* cache_glyph
 
 BOOL update_write_cache_glyph_order(wStream* s, const CACHE_GLYPH_ORDER* cache_glyph, UINT16* flags)
 {
-	const GLYPH_DATA* glyph = NULL;
+	const GLYPH_DATA* glyph = nullptr;
 	size_t inf = update_approximate_cache_glyph_order(cache_glyph, flags);
 
 	if (!Stream_EnsureRemainingCapacity(s, inf))
@@ -2983,7 +2983,7 @@ static CACHE_GLYPH_V2_ORDER* update_read_cache_glyph_v2_order(rdpUpdate* update,
 	return cache_glyph_v2;
 fail:
 	free_cache_glyph_v2_order(update->context, cache_glyph_v2);
-	return NULL;
+	return nullptr;
 }
 
 size_t update_approximate_cache_glyph_v2_order(const CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
@@ -3153,7 +3153,7 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 	return cache_brush;
 fail:
 	free_cache_brush_order(update->context, cache_brush);
-	return NULL;
+	return nullptr;
 }
 
 size_t update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush,
@@ -3238,7 +3238,7 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 {
 	UINT16 flags = 0;
 	BOOL deleteListPresent = 0;
-	OFFSCREEN_DELETE_LIST* deleteList = NULL;
+	OFFSCREEN_DELETE_LIST* deleteList = nullptr;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
 		return FALSE;
@@ -3266,7 +3266,7 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 
 		if (deleteList->cIndices > deleteList->sIndices)
 		{
-			UINT16* new_indices = NULL;
+			UINT16* new_indices = nullptr;
 			new_indices = (UINT16*)realloc(deleteList->indices, 2ULL * deleteList->cIndices);
 
 			if (!new_indices)
@@ -3295,7 +3295,7 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 size_t update_approximate_create_offscreen_bitmap_order(
     const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
-	const OFFSCREEN_DELETE_LIST* deleteList = NULL;
+	const OFFSCREEN_DELETE_LIST* deleteList = nullptr;
 
 	WINPR_ASSERT(create_offscreen_bitmap);
 
@@ -3310,7 +3310,7 @@ BOOL update_write_create_offscreen_bitmap_order(
 {
 	UINT16 flags = 0;
 	BOOL deleteListPresent = 0;
-	const OFFSCREEN_DELETE_LIST* deleteList = NULL;
+	const OFFSCREEN_DELETE_LIST* deleteList = nullptr;
 
 	if (!Stream_EnsureRemainingCapacity(
 	        s, update_approximate_create_offscreen_bitmap_order(create_offscreen_bitmap)))
@@ -3367,7 +3367,7 @@ static BOOL
 update_read_create_nine_grid_bitmap_order(wStream* s,
                                           CREATE_NINE_GRID_BITMAP_ORDER* create_nine_grid_bitmap)
 {
-	NINE_GRID_BITMAP_INFO* nineGridInfo = NULL;
+	NINE_GRID_BITMAP_INFO* nineGridInfo = nullptr;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 19))
 		return FALSE;
@@ -4079,7 +4079,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	if (flags & ORDER_BOUNDS)
 	{
-		rc = IFCALLRESULT(defaultReturn, update->SetBounds, context, NULL);
+		rc = IFCALLRESULT(defaultReturn, update->SetBounds, context, nullptr);
 	}
 
 	return rc;
@@ -4099,7 +4099,7 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, WINPR_ATT
 	rdpContext* context = update->context;
 	rdpSettings* settings = context->settings;
 	rdpSecondaryUpdate* secondary = update->secondary;
-	const char* name = NULL;
+	const char* name = nullptr;
 	BOOL defaultReturn = 0;
 
 	defaultReturn = freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding);

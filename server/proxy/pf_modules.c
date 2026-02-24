@@ -357,7 +357,7 @@ static BOOL pf_modules_set_plugin_data(WINPR_ATTR_UNUSED proxyPluginsManager* mg
 	WINPR_ASSERT(plugin_name);
 
 	ccharconv.ccp = plugin_name;
-	if (data == NULL) /* no need to store anything */
+	if (data == nullptr) /* no need to store anything */
 		return FALSE;
 
 	if (!HashTable_Insert(pdata->modules_info, ccharconv.cp, data))
@@ -373,7 +373,7 @@ static BOOL pf_modules_set_plugin_data(WINPR_ATTR_UNUSED proxyPluginsManager* mg
  * returns per-session data needed a plugin.
  *
  * @context: current session server's rdpContext instance.
- * if there's no data related to `plugin_name` in `context` (current session), a NULL will be
+ * if there's no data related to `plugin_name` in `context` (current session), a nullptr will be
  * returned.
  */
 WINPR_ATTR_NODISCARD
@@ -504,9 +504,9 @@ static BOOL pf_modules_load_static_module(const char* module_name, proxyModule* 
 {
 	WINPR_ASSERT(module);
 
-	HANDLE handle = GetModuleHandleA(NULL);
+	HANDLE handle = GetModuleHandleA(nullptr);
 
-	if (handle == NULL)
+	if (handle == nullptr)
 	{
 		WLog_DBG(TAG, "failed loading static library: %s", module_name);
 		return FALSE;
@@ -550,7 +550,7 @@ static BOOL pf_modules_load_dynamic_module(const char* module_path, proxyModule*
 
 	HANDLE handle = LoadLibraryX(module_path);
 
-	if (handle == NULL)
+	if (handle == nullptr)
 	{
 		WLog_DBG(TAG, "failed loading external library: %s", module_path);
 		return FALSE;
@@ -649,18 +649,18 @@ static void* new_plugin(const void* obj)
 	const proxyPlugin* src = obj;
 	proxyPlugin* proxy = calloc(1, sizeof(proxyPlugin));
 	if (!proxy)
-		return NULL;
+		return nullptr;
 	*proxy = *src;
 	return proxy;
 }
 
 proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t count)
 {
-	wObject* obj = NULL;
-	char* path = NULL;
+	wObject* obj = nullptr;
+	char* path = nullptr;
 	proxyModule* module = calloc(1, sizeof(proxyModule));
 	if (!module)
-		return NULL;
+		return nullptr;
 
 	module->mgr.RegisterPlugin = pf_modules_register_plugin;
 	module->mgr.SetPluginData = pf_modules_set_plugin_data;
@@ -668,7 +668,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 	module->mgr.AbortConnect = pf_modules_abort_connect;
 	module->plugins = ArrayList_New(FALSE);
 
-	if (module->plugins == NULL)
+	if (module->plugins == nullptr)
 	{
 		WLog_ERR(TAG, "ArrayList_New failed!");
 		goto error;
@@ -680,7 +680,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 	obj->fnObjectNew = new_plugin;
 
 	module->handles = ArrayList_New(FALSE);
-	if (module->handles == NULL)
+	if (module->handles == nullptr)
 	{
 
 		WLog_ERR(TAG, "ArrayList_New failed!");
@@ -698,7 +698,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 
 		if (!winpr_PathFileExists(path))
 		{
-			if (!winpr_PathMakePath(path, NULL))
+			if (!winpr_PathMakePath(path, nullptr))
 			{
 				WLog_ERR(TAG, "error occurred while creating modules directory: %s", root_dir);
 			}
@@ -710,7 +710,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 		for (size_t i = 0; i < count; i++)
 		{
 			const char* module_name = modules[i];
-			if (!pf_modules_load_module(path, module_name, module, NULL))
+			if (!pf_modules_load_module(path, module_name, module, nullptr))
 				WLog_WARN(TAG, "Failed to load proxy module '%s'", module_name);
 			else
 				WLog_INFO(TAG, "Successfully loaded proxy module '%s'", module_name);
@@ -723,7 +723,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 error:
 	free(path);
 	pf_modules_free(module);
-	return NULL;
+	return nullptr;
 }
 
 void pf_modules_free(proxyModule* module)

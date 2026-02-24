@@ -30,7 +30,7 @@ WINPR_ATTR_MALLOC(free, 1)
 WINPR_ATTR_NODISCARD
 static char* create(const char* vendor, const char* product, SSIZE_T version, char separator)
 {
-	char* wvendor = NULL;
+	char* wvendor = nullptr;
 	size_t wlen = 0;
 	if (version < 0)
 		(void)winpr_asprintf(&wvendor, &wlen, "%s%c%s", vendor, separator, product);
@@ -38,7 +38,8 @@ static char* create(const char* vendor, const char* product, SSIZE_T version, ch
 		(void)winpr_asprintf(&wvendor, &wlen, "%s%c%s%" PRIdz, vendor, separator, product, version);
 	if (!wvendor)
 	{
-		(void)fprintf(stderr, "%s(vendor=%s, product=%s, version=%" PRIdz ", separator=%c) NULL\n",
+		(void)fprintf(stderr,
+		              "%s(vendor=%s, product=%s, version=%" PRIdz ", separator=%c) nullptr\n",
 		              __func__, vendor, product, version, separator);
 	}
 	return wvendor;
@@ -81,7 +82,7 @@ static char* freerdp_settings_get_legacy_config_path(const char* filename, const
 
 	const size_t plen = strnlen(cproduct, sizeof(product));
 	if (plen == MAX_PATH)
-		return NULL;
+		return nullptr;
 
 	for (size_t i = 0; i < plen; i++)
 		product[i] = (char)tolower(cproduct[i]);
@@ -89,7 +90,7 @@ static char* freerdp_settings_get_legacy_config_path(const char* filename, const
 	char* path = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
 
 	if (!path)
-		return NULL;
+		return nullptr;
 
 	if (!filename)
 		return path;
@@ -108,7 +109,7 @@ char* getFreeRDPDefaultConfig(BOOL system, const char* product, const char* vend
 	eKnownPathTypes id = system ? KNOWN_PATH_SYSTEM_CONFIG_HOME : KNOWN_PATH_XDG_CONFIG_HOME;
 
 	if (!vendor || !product)
-		return NULL;
+		return nullptr;
 
 #if !defined(WITH_FULL_CONFIG_PATH)
 	if (!system && (_stricmp(vendor, product) == 0))
@@ -117,9 +118,9 @@ char* getFreeRDPDefaultConfig(BOOL system, const char* product, const char* vend
 
 	char* config = GetKnownPath(id);
 	if (!config)
-		return NULL;
+		return nullptr;
 
-	char* base = NULL;
+	char* base = nullptr;
 	if (version < 0)
 		base = GetCombinedPathV(config, "%s", product);
 	else
@@ -127,7 +128,7 @@ char* getFreeRDPDefaultConfig(BOOL system, const char* product, const char* vend
 	free(config);
 
 	if (!base)
-		return NULL;
+		return nullptr;
 
 	if (!filename)
 		return base;
@@ -150,9 +151,9 @@ static char* getFreeRDPConfig(bool custom, BOOL system, const char* vendor, cons
 	eKnownPathTypes id = system ? KNOWN_PATH_SYSTEM_CONFIG_HOME : KNOWN_PATH_XDG_CONFIG_HOME;
 	char* config = GetKnownSubPathV(id, "%s", vendor);
 	if (!config)
-		return NULL;
+		return nullptr;
 
-	char* base = NULL;
+	char* base = nullptr;
 	if (version < 0)
 		base = GetCombinedPathV(config, "%s", product);
 	else
@@ -160,7 +161,7 @@ static char* getFreeRDPConfig(bool custom, BOOL system, const char* vendor, cons
 	free(config);
 
 	if (!base)
-		return NULL;
+		return nullptr;
 	if (!filename)
 		return base;
 
@@ -233,8 +234,8 @@ static bool checkFreeRDPResults(bool custom, const char* vendor, const char* pro
 	}
 
 	{
-		char* sys = freerdp_GetConfigFilePath(TRUE, NULL);
-		const bool rc = checkFreeRDPConfig(custom, sys, TRUE, vendor, product, version, NULL);
+		char* sys = freerdp_GetConfigFilePath(TRUE, nullptr);
+		const bool rc = checkFreeRDPConfig(custom, sys, TRUE, vendor, product, version, nullptr);
 		free(sys);
 		if (!rc)
 			return rc;
@@ -248,8 +249,8 @@ static bool checkFreeRDPResults(bool custom, const char* vendor, const char* pro
 			return rc;
 	}
 	{
-		char* sys = freerdp_GetConfigFilePath(FALSE, NULL);
-		const bool rc = checkFreeRDPConfig(custom, sys, FALSE, vendor, product, version, NULL);
+		char* sys = freerdp_GetConfigFilePath(FALSE, nullptr);
+		const bool rc = checkFreeRDPConfig(custom, sys, FALSE, vendor, product, version, nullptr);
 		free(sys);
 		if (!rc)
 			return rc;
@@ -268,14 +269,14 @@ static bool checkFreeRDPResults(bool custom, const char* vendor, const char* pro
 		char* pcmp = create(vendor, product, version, '\\');
 		if (!pcmp)
 			return false;
-		char* cmp = NULL;
+		char* cmp = nullptr;
 		size_t clen = 0;
 #define FMT "foo\\bar\\%s\\gaga"
 		(void)winpr_asprintf(&cmp, &clen, FMT, pcmp);
 		free(pcmp);
 		if (!cmp)
 		{
-			(void)fprintf(stderr, "winpr_asprintf cmp NULL\n");
+			(void)fprintf(stderr, "winpr_asprintf cmp nullptr\n");
 			return false;
 		}
 
@@ -329,9 +330,9 @@ static char* getWinPRConfig(BOOL system, const char* vendor, const char* product
 	eKnownPathTypes id = system ? KNOWN_PATH_SYSTEM_CONFIG_HOME : KNOWN_PATH_XDG_CONFIG_HOME;
 	char* config = GetKnownSubPathV(id, "%s", vendor);
 	if (!config)
-		return NULL;
+		return nullptr;
 
-	char* base = NULL;
+	char* base = nullptr;
 	if (version < 0)
 		base = GetCombinedPathV(config, "%s", product);
 	else
@@ -339,7 +340,7 @@ static char* getWinPRConfig(BOOL system, const char* vendor, const char* product
 	free(config);
 
 	if (!base)
-		return NULL;
+		return nullptr;
 	if (!filename)
 		return base;
 
@@ -398,8 +399,8 @@ static bool checkWinPRResults(bool custom, const char* vendor, const char* produ
 	}
 
 	{
-		char* sys = winpr_GetConfigFilePath(TRUE, NULL);
-		const bool rc = checkWinPRConfig(sys, TRUE, vendor, product, version, NULL);
+		char* sys = winpr_GetConfigFilePath(TRUE, nullptr);
+		const bool rc = checkWinPRConfig(sys, TRUE, vendor, product, version, nullptr);
 		free(sys);
 		if (!rc)
 			return rc;
@@ -412,8 +413,8 @@ static bool checkWinPRResults(bool custom, const char* vendor, const char* produ
 			return rc;
 	}
 	{
-		char* sys = winpr_GetConfigFilePath(FALSE, NULL);
-		const bool rc = checkWinPRConfig(sys, FALSE, vendor, product, version, NULL);
+		char* sys = winpr_GetConfigFilePath(FALSE, nullptr);
+		const bool rc = checkWinPRConfig(sys, FALSE, vendor, product, version, nullptr);
 		free(sys);
 		if (!rc)
 			return rc;

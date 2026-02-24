@@ -36,7 +36,7 @@ HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height, UINT32 srcFor
 	int negHeight;
 	HBITMAP bitmap;
 	BITMAPINFO bmi;
-	BYTE* cdata = NULL;
+	BYTE* cdata = nullptr;
 	UINT32 dstFormat = srcFormat;
 	/**
 	 * See: http://msdn.microsoft.com/en-us/library/dd183376
@@ -45,14 +45,14 @@ HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height, UINT32 srcFor
 	 * Since we get top-down bitmaps, let's keep it that way
 	 */
 	negHeight = (height < 0) ? height : height * (-1);
-	hdc = GetDC(NULL);
+	hdc = GetDC(nullptr);
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFO);
 	bmi.bmiHeader.biWidth = width;
 	bmi.bmiHeader.biHeight = negHeight;
 	bmi.bmiHeader.biPlanes = 1;
 	bmi.bmiHeader.biBitCount = FreeRDPGetBitsPerPixel(dstFormat);
 	bmi.bmiHeader.biCompression = BI_RGB;
-	bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**)&cdata, NULL, 0);
+	bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**)&cdata, nullptr, 0);
 
 	if (data)
 		freerdp_image_copy(cdata, dstFormat, 0, 0, 0, width, height, data, srcFormat, 0, 0, 0,
@@ -61,7 +61,7 @@ HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height, UINT32 srcFor
 	if (pdata)
 		*pdata = cdata;
 
-	ReleaseDC(NULL, hdc);
+	ReleaseDC(nullptr, hdc);
 	GdiFlush();
 	return bitmap;
 }
@@ -72,14 +72,14 @@ wfBitmap* wf_image_new(wfContext* wfc, UINT32 width, UINT32 height, UINT32 forma
 	if (!image)
 	{
 		WLog_ERR(TAG, "malloc failed for wfBitmap");
-		return NULL;
+		return nullptr;
 	}
 
-	HDC hdc = GetDC(NULL);
+	HDC hdc = GetDC(nullptr);
 	image->hdc = CreateCompatibleDC(hdc);
 	image->bitmap = wf_create_dib(wfc, width, height, format, data, &(image->pdata));
 	image->org_bitmap = (HBITMAP)SelectObject(image->hdc, image->bitmap);
-	ReleaseDC(NULL, hdc);
+	ReleaseDC(nullptr, hdc);
 	return image;
 }
 
@@ -106,17 +106,17 @@ static BOOL wf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		return FALSE;
 
 	wf_bitmap = (wfBitmap*)bitmap;
-	hdc = GetDC(NULL);
+	hdc = GetDC(nullptr);
 	wf_bitmap->hdc = CreateCompatibleDC(hdc);
 
 	if (!bitmap->data)
 		wf_bitmap->bitmap = CreateCompatibleBitmap(hdc, bitmap->width, bitmap->height);
 	else
-		wf_bitmap->bitmap =
-		    wf_create_dib(wfc, bitmap->width, bitmap->height, bitmap->format, bitmap->data, NULL);
+		wf_bitmap->bitmap = wf_create_dib(wfc, bitmap->width, bitmap->height, bitmap->format,
+		                                  bitmap->data, nullptr);
 
 	wf_bitmap->org_bitmap = (HBITMAP)SelectObject(wf_bitmap->hdc, wf_bitmap->bitmap);
-	ReleaseDC(NULL, hdc);
+	ReleaseDC(nullptr, hdc);
 	return TRUE;
 }
 
@@ -131,7 +131,7 @@ static void wf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 		DeleteDC(wf_bitmap->hdc);
 
 		winpr_aligned_free(wf_bitmap->_bitmap.data);
-		wf_bitmap->_bitmap.data = NULL;
+		wf_bitmap->_bitmap.data = nullptr;
 	}
 }
 
@@ -209,7 +209,7 @@ static BOOL wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 	if (pointer->xorBpp == 1)
 	{
-		BYTE* pdata = NULL;
+		BYTE* pdata = nullptr;
 
 		if ((pointer->lengthAndMask > 0) || (pointer->lengthXorMask > 0))
 		{
@@ -224,12 +224,12 @@ static BOOL wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		CopyMemory(pdata + pointer->lengthAndMask, pointer->xorMaskData, pointer->lengthXorMask);
 		info.hbmMask = CreateBitmap(pointer->width, pointer->height * 2, 1, 1, pdata);
 		winpr_aligned_free(pdata);
-		info.hbmColor = NULL;
+		info.hbmColor = nullptr;
 	}
 	else
 	{
 		UINT32 srcFormat;
-		BYTE* pdata = NULL;
+		BYTE* pdata = nullptr;
 
 		if (pointer->lengthAndMask > 0)
 		{
@@ -250,7 +250,7 @@ static BOOL wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 			goto fail;
 
 		info.hbmColor = wf_create_dib((wfContext*)context, pointer->width, pointer->height,
-		                              gdi->dstFormat, NULL, &pdata);
+		                              gdi->dstFormat, nullptr, &pdata);
 
 		if (!info.hbmColor)
 			goto fail;
@@ -301,7 +301,7 @@ static BOOL wf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 
 	hCur = ((wfPointer*)pointer)->cursor;
 
-	if (hCur != NULL)
+	if (hCur != nullptr)
 	{
 		SetCursor(hCur);
 		wfc->cursor = hCur;

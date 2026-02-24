@@ -54,10 +54,10 @@ static AMediaFormat* mediacodec_format_new(wLog* log, int width, int height)
 {
 	const char* media_format;
 	AMediaFormat* format = AMediaFormat_new();
-	if (format == NULL)
+	if (format == nullptr)
 	{
 		WLog_Print(log, WLOG_ERROR, "AMediaFormat_new failed");
-		return NULL;
+		return nullptr;
 	}
 
 	AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, CODEC_NAME);
@@ -66,11 +66,11 @@ static AMediaFormat* mediacodec_format_new(wLog* log, int width, int height)
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, COLOR_FormatYUV420Planar);
 
 	media_format = AMediaFormat_toString(format);
-	if (media_format == NULL)
+	if (media_format == nullptr)
 	{
 		WLog_Print(log, WLOG_ERROR, "AMediaFormat_toString failed");
 		AMediaFormat_delete(format);
-		return NULL;
+		return nullptr;
 	}
 
 	WLog_Print(log, WLOG_DEBUG, "MediaCodec configuring with desired output format [%s]",
@@ -94,7 +94,7 @@ static void set_mediacodec_format(H264_CONTEXT* h264, AMediaFormat** formatVaria
 	if (*formatVariable == newFormat)
 		return;
 
-	if (*formatVariable != NULL)
+	if (*formatVariable != nullptr)
 	{
 		status = AMediaFormat_delete(*formatVariable);
 		if (status != AMEDIA_OK)
@@ -119,7 +119,7 @@ static int update_mediacodec_inputformat(H264_CONTEXT* h264)
 
 #if __ANDROID__ >= 21
 	inputFormat = AMediaCodec_getInputFormat(sys->decoder);
-	if (inputFormat == NULL)
+	if (inputFormat == nullptr)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getInputFormat failed");
 		return -1;
@@ -130,7 +130,7 @@ static int update_mediacodec_inputformat(H264_CONTEXT* h264)
 	set_mediacodec_format(h264, &sys->inputFormat, inputFormat);
 
 	mediaFormatName = AMediaFormat_toString(sys->inputFormat);
-	if (mediaFormatName == NULL)
+	if (mediaFormatName == nullptr)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaFormat_toString failed");
 		return -1;
@@ -154,7 +154,7 @@ static int update_mediacodec_outputformat(H264_CONTEXT* h264)
 	WINPR_ASSERT(sys);
 
 	outputFormat = AMediaCodec_getOutputFormat(sys->decoder);
-	if (outputFormat == NULL)
+	if (outputFormat == nullptr)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getOutputFormat failed");
 		return -1;
@@ -162,7 +162,7 @@ static int update_mediacodec_outputformat(H264_CONTEXT* h264)
 	set_mediacodec_format(h264, &sys->outputFormat, outputFormat);
 
 	mediaFormatName = AMediaFormat_toString(sys->outputFormat);
-	if (mediaFormatName == NULL)
+	if (mediaFormatName == nullptr)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaFormat_toString failed");
 		return -1;
@@ -302,7 +302,7 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 			}
 
 			inputBuffer = AMediaCodec_getInputBuffer(sys->decoder, inputBufferId, &inputBufferSize);
-			if (inputBuffer == NULL)
+			if (inputBuffer == nullptr)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getInputBuffer failed");
 				return -1;
@@ -412,7 +412,7 @@ static void mediacodec_uninit(H264_CONTEXT* h264)
 	if (!sys)
 		return;
 
-	if (sys->decoder != NULL)
+	if (sys->decoder != nullptr)
 	{
 		release_current_outputbuffer(h264);
 		status = AMediaCodec_stop(sys->decoder);
@@ -427,14 +427,14 @@ static void mediacodec_uninit(H264_CONTEXT* h264)
 			WLog_Print(h264->log, WLOG_ERROR, "Error AMediaCodec_delete %d", status);
 		}
 
-		sys->decoder = NULL;
+		sys->decoder = nullptr;
 	}
 
-	set_mediacodec_format(h264, &sys->inputFormat, NULL);
-	set_mediacodec_format(h264, &sys->outputFormat, NULL);
+	set_mediacodec_format(h264, &sys->inputFormat, nullptr);
+	set_mediacodec_format(h264, &sys->outputFormat, nullptr);
 
 	free(sys);
-	h264->pSystemData = NULL;
+	h264->pSystemData = nullptr;
 }
 
 static BOOL mediacodec_init(H264_CONTEXT* h264)
@@ -467,7 +467,7 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 	sys->width = sys->outputWidth = MEDIACODEC_MINIMUM_WIDTH;
 	sys->height = sys->outputHeight = MEDIACODEC_MINIMUM_HEIGHT;
 	sys->decoder = AMediaCodec_createDecoderByType(CODEC_NAME);
-	if (sys->decoder == NULL)
+	if (sys->decoder == nullptr)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_createCodecByName failed");
 		goto EXCEPTION;
@@ -489,7 +489,7 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 	set_mediacodec_format(h264, &sys->inputFormat,
 	                      mediacodec_format_new(h264->log, sys->width, sys->height));
 
-	status = AMediaCodec_configure(sys->decoder, sys->inputFormat, NULL, NULL, 0);
+	status = AMediaCodec_configure(sys->decoder, sys->inputFormat, nullptr, nullptr, 0);
 	if (status != AMEDIA_OK)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_configure failed: %d", status);

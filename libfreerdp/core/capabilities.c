@@ -2046,7 +2046,7 @@ static BOOL rdp_apply_bitmap_cache_v2_capability_set(rdpSettings* settings, cons
 	{
 		const UINT32 BitmapCacheV2NumCells =
 		    freerdp_settings_get_uint32(src, FreeRDP_BitmapCacheV2NumCells);
-		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_BitmapCacheV2CellInfo, NULL,
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_BitmapCacheV2CellInfo, nullptr,
 		                                      BitmapCacheV2NumCells))
 			return FALSE;
 
@@ -3978,7 +3978,7 @@ BOOL rdp_print_capability_sets(wLog* log, wStream* s, size_t start, BOOL receivi
 	{
 		size_t rest = 0;
 		wStream subBuffer;
-		wStream* sub = NULL;
+		wStream* sub = nullptr;
 
 		if (!rdp_read_capability_set_header(log, s, &length, &type))
 			goto fail;
@@ -4534,7 +4534,7 @@ static BOOL rdp_read_capability_sets(wLog* log, wStream* s, rdpSettings* setting
 		UINT16 type = 0;
 		UINT16 length = 0;
 		wStream subbuffer;
-		wStream* sub = NULL;
+		wStream* sub = nullptr;
 
 		if (!rdp_read_capability_set_header(log, s, &length, &type))
 			goto fail;
@@ -4739,7 +4739,7 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 
 BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 {
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 	UINT16 lengthSourceDescriptor = 0;
 	UINT16 lengthCombinedCapabilities = 0;
 

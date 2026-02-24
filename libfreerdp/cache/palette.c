@@ -35,7 +35,7 @@ static void palette_cache_put(rdpPaletteCache* palette, UINT32 index, void* entr
 static BOOL update_gdi_cache_color_table(rdpContext* context,
                                          const CACHE_COLOR_TABLE_ORDER* cacheColorTable)
 {
-	UINT32* colorTable = NULL;
+	UINT32* colorTable = nullptr;
 	rdpCache* cache = context->cache;
 	colorTable = (UINT32*)malloc(sizeof(UINT32) * 256);
 
@@ -69,7 +69,7 @@ void palette_cache_register_callbacks(rdpUpdate* update)
 
 rdpPaletteCache* palette_cache_new(rdpContext* context)
 {
-	rdpPaletteCache* paletteCache = NULL;
+	rdpPaletteCache* paletteCache = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -117,5 +117,5 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_palette_update(context, dst);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }

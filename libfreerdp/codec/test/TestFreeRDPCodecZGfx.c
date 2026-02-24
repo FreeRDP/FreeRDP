@@ -28,11 +28,11 @@ static int test_ZGfxCompressFox(void)
 	int rc = -1;
 	int status = 0;
 	UINT32 Flags = 0;
-	const BYTE* pSrcData = NULL;
+	const BYTE* pSrcData = nullptr;
 	UINT32 SrcSize = 0;
 	UINT32 DstSize = 0;
-	BYTE* pDstData = NULL;
-	ZGFX_CONTEXT* zgfx = NULL;
+	BYTE* pDstData = nullptr;
+	ZGFX_CONTEXT* zgfx = nullptr;
 	UINT32 expectedSize = 0;
 	zgfx = zgfx_context_new(TRUE);
 
@@ -80,11 +80,11 @@ static int test_ZGfxDecompressFoxSingle(void)
 	int rc = -1;
 	int status = 0;
 	UINT32 Flags = 0;
-	const BYTE* pSrcData = NULL;
+	const BYTE* pSrcData = nullptr;
 	UINT32 SrcSize = 0;
 	UINT32 DstSize = 0;
-	BYTE* pDstData = NULL;
-	ZGFX_CONTEXT* zgfx = NULL;
+	BYTE* pDstData = nullptr;
+	ZGFX_CONTEXT* zgfx = nullptr;
 	UINT32 expectedSize = 0;
 	zgfx = zgfx_context_new(TRUE);
 
@@ -132,11 +132,11 @@ static int test_ZGfxDecompressFoxMultipart(void)
 	int rc = -1;
 	int status = 0;
 	UINT32 Flags = 0;
-	const BYTE* pSrcData = NULL;
+	const BYTE* pSrcData = nullptr;
 	UINT32 SrcSize = 0;
 	UINT32 DstSize = 0;
-	BYTE* pDstData = NULL;
-	ZGFX_CONTEXT* zgfx = NULL;
+	BYTE* pDstData = nullptr;
+	ZGFX_CONTEXT* zgfx = nullptr;
 	UINT32 expectedSize = 0;
 	zgfx = zgfx_context_new(TRUE);
 
@@ -185,13 +185,13 @@ static int test_ZGfxCompressConsistent(void)
 	int status = 0;
 
 	UINT32 Flags = 0;
-	const BYTE* pSrcData = NULL;
+	const BYTE* pSrcData = nullptr;
 	UINT32 SrcSize = 0;
 	UINT32 DstSize = 0;
-	BYTE* pDstData = NULL;
+	BYTE* pDstData = nullptr;
 	UINT32 DstSize2 = 0;
-	BYTE* pDstData2 = NULL;
-	ZGFX_CONTEXT* zgfx = NULL;
+	BYTE* pDstData2 = nullptr;
+	ZGFX_CONTEXT* zgfx = nullptr;
 	UINT32 expectedSize = 0;
 	BYTE BigBuffer[65536];
 	memset(BigBuffer, 0xaa, sizeof(BigBuffer));

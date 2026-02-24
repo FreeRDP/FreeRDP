@@ -242,7 +242,7 @@ PCSTR winpr_inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBuf
 		in.sin_family = AF_INET;
 		memcpy(&in.sin_addr, pAddr, sizeof(struct in_addr));
 		getnameinfo((struct sockaddr*)&in, sizeof(struct sockaddr_in), pStringBuf, StringBufSize,
-		            NULL, 0, NI_NUMERICHOST);
+		            nullptr, 0, NI_NUMERICHOST);
 		return pStringBuf;
 	}
 	else if (Family == AF_INET6)
@@ -252,11 +252,11 @@ PCSTR winpr_inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBuf
 		in.sin6_family = AF_INET6;
 		memcpy(&in.sin6_addr, pAddr, sizeof(struct in_addr6));
 		getnameinfo((struct sockaddr*)&in, sizeof(struct sockaddr_in6), pStringBuf, StringBufSize,
-		            NULL, 0, NI_NUMERICHOST);
+		            nullptr, 0, NI_NUMERICHOST);
 		return pStringBuf;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf)
@@ -267,7 +267,7 @@ INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf)
 	if ((Family != AF_INET) && (Family != AF_INET6))
 		return -1;
 
-	if (WSAStringToAddressA((char*)pszAddrString, Family, NULL, (struct sockaddr*)&addr,
+	if (WSAStringToAddressA((char*)pszAddrString, Family, nullptr, (struct sockaddr*)&addr,
 	                        &addr_len) != 0)
 		return 0;
 
@@ -722,7 +722,7 @@ int WSAGetLastError(void)
 
 HANDLE WSACreateEvent(void)
 {
-	return CreateEvent(NULL, TRUE, FALSE, NULL);
+	return CreateEvent(nullptr, TRUE, FALSE, nullptr);
 }
 
 BOOL WSASetEvent(HANDLE hEvent)
@@ -801,7 +801,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, WINPR_ATTR_UNUSED LPVOID lpvInBuff
 	ULONG nFlags = 0;
 	size_t offset = 0;
 	size_t ifreq_len = 0;
-	struct ifreq* ifreq = NULL;
+	struct ifreq* ifreq = nullptr;
 	struct ifconf ifconf = WINPR_C_ARRAY_INIT;
 	char address[128] = WINPR_C_ARRAY_INIT;
 	char broadcast[128] = WINPR_C_ARRAY_INIT;
@@ -809,11 +809,11 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, WINPR_ATTR_UNUSED LPVOID lpvInBuff
 	char buffer[4096] = WINPR_C_ARRAY_INIT;
 	size_t numInterfaces = 0;
 	size_t maxNumInterfaces = 0;
-	INTERFACE_INFO* pInterface = NULL;
-	INTERFACE_INFO* pInterfaces = NULL;
-	struct sockaddr_in* pAddress = NULL;
-	struct sockaddr_in* pBroadcast = NULL;
-	struct sockaddr_in* pNetmask = NULL;
+	INTERFACE_INFO* pInterface = nullptr;
+	INTERFACE_INFO* pInterfaces = nullptr;
+	struct sockaddr_in* pAddress = nullptr;
+	struct sockaddr_in* pBroadcast = nullptr;
+	struct sockaddr_in* pNetmask = nullptr;
 
 	if ((dwIoControlCode != SIO_GET_INTERFACE_LIST) ||
 	    (!lpvOutBuffer || !cbOutBuffer || !lpcbBytesReturned))
@@ -827,7 +827,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, WINPR_ATTR_UNUSED LPVOID lpvInBuff
 	maxNumInterfaces = cbOutBuffer / sizeof(INTERFACE_INFO);
 #ifdef WSAIOCTL_IFADDRS
 	{
-		struct ifaddrs* ifap = NULL;
+		struct ifaddrs* ifap = nullptr;
 
 		if (getifaddrs(&ifap) != 0)
 		{
@@ -966,7 +966,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, WINPR_ATTR_UNUSED LPVOID lpvInBuff
 		if ((ifreq->ifr_addr.sa_family != AF_INET) && (ifreq->ifr_addr.sa_family != AF_INET6))
 			goto next_ifreq;
 
-		getnameinfo(&ifreq->ifr_addr, sizeof(ifreq->ifr_addr), address, sizeof(address), 0, 0,
+		getnameinfo(&ifreq->ifr_addr, sizeof(ifreq->ifr_addr), address, sizeof(address), nullptr, 0,
 		            NI_NUMERICHOST);
 		inet_pton(ifreq->ifr_addr.sa_family, address, (void*)&pAddress->sin_addr);
 
@@ -976,8 +976,8 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, WINPR_ATTR_UNUSED LPVOID lpvInBuff
 		if ((ifreq->ifr_addr.sa_family != AF_INET) && (ifreq->ifr_addr.sa_family != AF_INET6))
 			goto next_ifreq;
 
-		getnameinfo(&ifreq->ifr_addr, sizeof(ifreq->ifr_addr), broadcast, sizeof(broadcast), 0, 0,
-		            NI_NUMERICHOST);
+		getnameinfo(&ifreq->ifr_addr, sizeof(ifreq->ifr_addr), broadcast, sizeof(broadcast),
+		            nullptr, 0, NI_NUMERICHOST);
 		inet_pton(ifreq->ifr_addr.sa_family, broadcast, (void*)&pBroadcast->sin_addr);
 
 		if (ioctl(fd, SIOCGIFNETMASK, ifreq) != 0)
@@ -986,7 +986,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, WINPR_ATTR_UNUSED LPVOID lpvInBuff
 		if ((ifreq->ifr_addr.sa_family != AF_INET) && (ifreq->ifr_addr.sa_family != AF_INET6))
 			goto next_ifreq;
 
-		getnameinfo(&ifreq->ifr_addr, sizeof(ifreq->ifr_addr), netmask, sizeof(netmask), 0, 0,
+		getnameinfo(&ifreq->ifr_addr, sizeof(ifreq->ifr_addr), netmask, sizeof(netmask), nullptr, 0,
 		            NI_NUMERICHOST);
 		inet_pton(ifreq->ifr_addr.sa_family, netmask, (void*)&pNetmask->sin_addr);
 		numInterfaces++;
@@ -1249,7 +1249,7 @@ SOCKET _socket(int af, int type, int protocol)
 
 struct hostent* _gethostbyaddr(const char* addr, int len, int type)
 {
-	struct hostent* host = NULL;
+	struct hostent* host = nullptr;
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	host = gethostbyaddr((const void*)addr, (socklen_t)len, type);
 	return host;

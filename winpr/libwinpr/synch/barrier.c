@@ -46,7 +46,7 @@
 
 #ifdef _WIN32
 
-static HMODULE g_Kernel32 = NULL;
+static HMODULE g_Kernel32 = nullptr;
 static BOOL g_NativeBarrier = FALSE;
 static INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT;
 
@@ -56,9 +56,9 @@ typedef BOOL(WINAPI* fnEnterSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lp
                                                     DWORD dwFlags);
 typedef BOOL(WINAPI* fnDeleteSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier);
 
-static fnInitializeSynchronizationBarrier pfnInitializeSynchronizationBarrier = NULL;
-static fnEnterSynchronizationBarrier pfnEnterSynchronizationBarrier = NULL;
-static fnDeleteSynchronizationBarrier pfnDeleteSynchronizationBarrier = NULL;
+static fnInitializeSynchronizationBarrier pfnInitializeSynchronizationBarrier = nullptr;
+static fnEnterSynchronizationBarrier pfnEnterSynchronizationBarrier = nullptr;
+static fnDeleteSynchronizationBarrier pfnDeleteSynchronizationBarrier = nullptr;
 
 static BOOL CALLBACK InitOnce_Barrier(PINIT_ONCE once, PVOID param, PVOID* context)
 {
@@ -90,11 +90,11 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
                                                    LONG lTotalThreads, LONG lSpinCount)
 {
 	SYSTEM_INFO sysinfo;
-	HANDLE hEvent0 = NULL;
-	HANDLE hEvent1 = NULL;
+	HANDLE hEvent0 = nullptr;
+	HANDLE hEvent1 = nullptr;
 
 #ifdef _WIN32
-	InitOnceExecuteOnce(&g_InitOnce, InitOnce_Barrier, NULL, NULL);
+	InitOnceExecuteOnce(&g_InitOnce, InitOnce_Barrier, nullptr, nullptr);
 
 	if (g_NativeBarrier)
 		return pfnInitializeSynchronizationBarrier(lpBarrier, lTotalThreads, lSpinCount);
@@ -111,10 +111,10 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 	if (lSpinCount == -1)
 		lSpinCount = 2000;
 
-	if (!(hEvent0 = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(hEvent0 = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		return FALSE;
 
-	if (!(hEvent1 = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(hEvent1 = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
 		(void)CloseHandle(hEvent0);
 		return FALSE;
@@ -137,8 +137,8 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags)
 {
 	LONG remainingThreads = 0;
-	HANDLE hCurrentEvent = NULL;
-	HANDLE hDormantEvent = NULL;
+	HANDLE hCurrentEvent = nullptr;
+	HANDLE hDormantEvent = nullptr;
 
 #ifdef _WIN32
 	if (g_NativeBarrier)

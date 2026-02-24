@@ -82,7 +82,7 @@ extern "C"
 
 	/** \brief Free a settings struct with all data in it
 	 *
-	 *  \param settings A pointer to the settings to free, May be NULL
+	 *  \param settings A pointer to the settings to free, May be nullptr
 	 */
 	FREERDP_API void freerdp_settings_free(rdpSettings* settings);
 
@@ -91,7 +91,7 @@ extern "C"
 	 *  \param flags Flags for creation, use \b FREERDP_SETTINGS_SERVER_MODE for server settings, 0
 	 * for client.
 	 *
-	 *  \return A newly allocated settings struct or NULL
+	 *  \return A newly allocated settings struct or nullptr
 	 */
 	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
 	WINPR_ATTR_NODISCARD
@@ -99,9 +99,9 @@ extern "C"
 
 	/** \brief Creates a deep copy of settings
 	 *
-	 *  \param settings A pointer to a settings struct to copy. May be NULL (returns NULL)
+	 *  \param settings A pointer to a settings struct to copy. May be nullptr (returns nullptr)
 	 *
-	 *  \return A newly allocated copy of \b settings or NULL
+	 *  \return A newly allocated copy of \b settings or nullptr
 	 */
 	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
 	WINPR_ATTR_NODISCARD
@@ -111,8 +111,8 @@ extern "C"
 	 *
 	 * The function frees up all allocated data in \b dst before copying the data from \b src
 	 *
-	 * \param dst A pointer for the settings to copy data to. May be NULL (fails copy)
-	 * \param src A pointer to the settings to copy. May be NULL (fails copy)
+	 * \param dst A pointer for the settings to copy data to. May be nullptr (fails copy)
+	 * \param src A pointer to the settings to copy. May be nullptr (fails copy)
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure.
 	 */
@@ -123,8 +123,8 @@ extern "C"
 	 *
 	 * The function frees up all allocated data in \b dst before copying the data from \b src
 	 *
-	 * \param dst A pointer for the settings to copy data to. May be NULL (fails copy)
-	 * \param src A pointer to the settings to copy. May be NULL (fails copy)
+	 * \param dst A pointer for the settings to copy data to. May be nullptr (fails copy)
+	 * \param src A pointer to the settings to copy. May be nullptr (fails copy)
 	 * \param id The settings identifier to copy
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure.
@@ -135,18 +135,18 @@ extern "C"
 
 	/** \brief Dumps the contents of a settings struct to a WLog logger
 	 *
-	 *  \param log The logger to write to, must not be NULL
+	 *  \param log The logger to write to, must not be nullptr
 	 *  \param level The WLog level to use for the log entries
-	 *  \param settings A pointer to the settings to dump. May be NULL.
+	 *  \param settings A pointer to the settings to dump. May be nullptr.
 	 */
 	FREERDP_API void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings);
 
 	/** \brief Dumps the difference between two settings structs to a WLog
 	 *
-	 *  \param log The logger to write to, must not be NULL.
+	 *  \param log The logger to write to, must not be nullptr.
 	 *  \param  level The WLog level to use for the log entries.
-	 *  \param src A pointer to the settings to dump. May be NULL.
-	 *  \param other A pointer to the settings to dump. May be NULL.
+	 *  \param src A pointer to the settings to dump. May be nullptr.
+	 *  \param other A pointer to the settings to dump. May be nullptr.
 	 *
 	 *  \return \b TRUE if not equal, \b FALSE otherwise
 	 */
@@ -200,7 +200,7 @@ extern "C"
 	 *
 	 *  \since version 3.4.0
 	 *
-	 *  \return \b TRUE if the device was removed, \b FALSE if device was not found or is NULL
+	 *  \return \b TRUE if the device was removed, \b FALSE if device was not found or is nullptr
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_device_collection_del(rdpSettings* settings,
@@ -344,7 +344,7 @@ extern "C"
 
 	/** \brief Returns a boolean settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the value of the boolean key
@@ -355,7 +355,7 @@ extern "C"
 
 	/** \brief Sets a BOOL settings value.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *  \param param The value to set.
 	 *
@@ -366,7 +366,7 @@ extern "C"
 
 	/** \brief Returns a INT16 settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the value of the INT16 key
@@ -377,7 +377,7 @@ extern "C"
 
 	/** \brief Sets a INT16 settings value.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *  \param param The value to set.
 	 *
@@ -388,7 +388,7 @@ extern "C"
 
 	/** \brief Returns a UINT16 settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the value of the UINT16 key
@@ -399,7 +399,7 @@ extern "C"
 
 	/** \brief Sets a UINT16 settings value.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *  \param param The value to set.
 	 *
@@ -410,7 +410,7 @@ extern "C"
 
 	/** \brief Returns a INT32 settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the value of the INT32 key
@@ -421,7 +421,7 @@ extern "C"
 
 	/** \brief Sets a INT32 settings value.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *  \param param The value to set.
 	 *
@@ -432,7 +432,7 @@ extern "C"
 
 	/** \brief Returns a UINT32 settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the value of the UINT32 key
@@ -443,7 +443,7 @@ extern "C"
 
 	/** \brief Sets a UINT32 settings value.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *  \param param The value to set.
 	 *
@@ -454,7 +454,7 @@ extern "C"
 
 	/** \brief Returns a INT64 settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the value of the INT64 key
@@ -465,7 +465,7 @@ extern "C"
 
 	/** \brief Sets a INT64 settings value.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *  \param param The value to set.
 	 *
@@ -476,7 +476,7 @@ extern "C"
 
 	/** \brief Returns a UINT64 settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the value of the UINT64 key
@@ -487,7 +487,7 @@ extern "C"
 
 	/** \brief Sets a UINT64 settings value.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *  \param param The value to set.
 	 *
@@ -498,7 +498,7 @@ extern "C"
 
 	/** \brief Returns a immutable string settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the immutable string pointer
@@ -509,7 +509,7 @@ extern "C"
 
 	/** \brief Returns a string settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the string pointer
@@ -520,9 +520,9 @@ extern "C"
 
 	/** \brief Sets a string settings value. The \b param is copied.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
-	 *  \param param The value to set. If NULL allocates an empty string buffer of \b len size,
+	 *  \param param The value to set. If nullptr allocates an empty string buffer of \b len size,
 	 * otherwise a copy is created. \param len The length of \b param, 0 to remove the old entry.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
@@ -533,9 +533,10 @@ extern "C"
 
 	/** \brief Sets a string settings value. The \b param is copied.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
-	 *  \param param The value to set. If NULL removes the old entry, otherwise a copy is created.
+	 *  \param param The value to set. If nullptr removes the old entry, otherwise a copy is
+	 * created.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
@@ -547,9 +548,9 @@ extern "C"
 	 *  If the initial value of the setting was not empty, @code <old value><separator><param>
 	 * @endcode is created
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
-	 *  \param separator The separator string to use. May be NULL (no separator)
+	 *  \param separator The separator string to use. May be nullptr (no separator)
 	 *  \param param The value to append
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
@@ -561,9 +562,10 @@ extern "C"
 
 	/** \brief Sets a string settings value. The \b param is converted to UTF-8 and the copy stored.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
-	 *  \param param The value to set. If NULL removes the old entry, otherwise a copy is created.
+	 *  \param param The value to set. If nullptr removes the old entry, otherwise a copy is
+	 * created.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
@@ -573,9 +575,10 @@ extern "C"
 
 	/** \brief Sets a string settings value. The \b param is converted to UTF-8 and the copy stored.
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
-	 *  \param param The value to set. If NULL removes the old entry, otherwise a copy is created.
+	 *  \param param The value to set. If nullptr removes the old entry, otherwise a copy is
+	 * created.
 	 *  \param length The length of the WCHAR string in number of WCHAR characters
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
@@ -588,7 +591,7 @@ extern "C"
 	 * \param settings A pointer to the settings struct to use
 	 * \param id The settings identifier
 	 *
-	 * \return An allocated, '\0' terminated WCHAR string or NULL
+	 * \return An allocated, '\0' terminated WCHAR string or nullptr
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_ATTR_NODISCARD
@@ -598,7 +601,7 @@ extern "C"
 
 	/** \brief Returns a immutable pointer settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the immutable pointer value
@@ -609,7 +612,7 @@ extern "C"
 
 	/** \brief Returns a mutable pointer settings value
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
 	 *  \return the mutable pointer value
@@ -620,7 +623,7 @@ extern "C"
 
 	/** \brief Set a pointer to value \b data
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to update
 	 *  \param data The data to set (direct update, no copy created, previous value overwritten)
 	 *
@@ -632,7 +635,7 @@ extern "C"
 
 	/** \brief Set a pointer to value \b data
 	 *
-	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to update
 	 *  \param data The data to set (copy created, previous value freed)
 	 *
@@ -665,10 +668,10 @@ extern "C"
 	 *   - Strings are passed on as is
 	 *   - Pointers are also passed as is
 	 *
-	 *  @param settings The settings instance to set the value, must not be \b NULL
+	 *  @param settings The settings instance to set the value, must not be \b nullptr
 	 *  @param name The name of the settings key (like 'FreeRDP_Domain', same as output of \ref
-	 * freerdp_settings_get_name_for_key ) Must not be \b NULL
-	 *  @param value The value of the setting. Must not be \b NULL
+	 * freerdp_settings_get_name_for_key ) Must not be \b nullptr
+	 *  @param value The value of the setting. Must not be \b nullptr
 	 *
 	 *  @note If the function fails check \ref wLog output for details
 	 *
@@ -727,7 +730,7 @@ extern "C"
 	/** \brief Returns the type name for a \b key
 	 *
 	 *  \param key the key number to stringify
-	 *  \return the name of the key or \b NULL
+	 *  \return the name of the key or \b nullptr
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_settings_get_name_for_key(SSIZE_T key);
@@ -770,9 +773,9 @@ extern "C"
 	 * The server name might be in key FreeRDP_ServerHostname or if used in
 	 * FreeRDP_UserSpecifiedServerName. This function returns the correct name to use.
 	 *
-	 *  \param settings The settings to query, must not be NULL.
+	 *  \param settings The settings to query, must not be nullptr.
 	 *
-	 *  \return A string pointer or NULL in case of failure.
+	 *  \return A string pointer or nullptr in case of failure.
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_settings_get_server_name(const rdpSettings* settings);
@@ -783,7 +786,7 @@ extern "C"
 	 *  \param buffer A pointer to the string buffer to write to
 	 *  \param length The size of the string buffer
 	 *
-	 *  \return A pointer to \b buffer for success, NULL otherwise
+	 *  \return A pointer to \b buffer for success, nullptr otherwise
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer,
@@ -827,7 +830,7 @@ extern "C"
 	                                                              size_t size);
 
 	/** \brief return the configuration directory for the library
-	 *  @return The current configuration path or \b NULL
+	 *  @return The current configuration path or \b nullptr
 	 *  @since version 3.6.0
 	 *  @note Since 3.17.1 this is a wrapper for \b freerdp_GetConfigFilePath(FALSE, "")
 	 */
@@ -862,8 +865,8 @@ extern "C"
 	 *  @param settings The settings instance to serialize
 	 *  @param pretty Format the resulting \b JSON human readable
 	 *  @param plength An optional pointer that receives the length (strlen) of the returned string.
-	 *  @return A \b JSON string representing the serialized form of the \b rdpSettings or \b NULL
-	 * in case of an error.
+	 *  @return A \b JSON string representing the serialized form of the \b rdpSettings or \b
+	 * nullptr in case of an error.
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
@@ -875,7 +878,7 @@ extern "C"
 	 *
 	 *  @param json The \b JSON string
 	 *  @param length The strlen of the \b JSON string
-	 *  @return An allocated \b rdpSettings struct or \b NULL in case of an error
+	 *  @return An allocated \b rdpSettings struct or \b nullptr in case of an error
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)

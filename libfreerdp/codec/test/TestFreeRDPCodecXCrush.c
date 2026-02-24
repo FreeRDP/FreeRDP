@@ -77,7 +77,7 @@ static BOOL test_run(const char* fkt, const void* src, UINT32 src_size, const vo
 	BOOL rc = FALSE;
 	int status = -1;
 	UINT32 Flags = 0;
-	const BYTE* pDstData = NULL;
+	const BYTE* pDstData = nullptr;
 	BYTE OutputBuffer[65536] = WINPR_C_ARRAY_INIT;
 	UINT32 DstSize = sizeof(OutputBuffer);
 	XCRUSH_CONTEXT* xcrush = xcrush_context_new(TRUE);

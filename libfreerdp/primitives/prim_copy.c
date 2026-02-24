@@ -26,7 +26,7 @@
 
 #include <freerdp/codec/color.h>
 
-static primitives_t* generic = NULL;
+static primitives_t* generic = nullptr;
 
 /* ------------------------------------------------------------------------- */
 /*static inline BOOL memory_regions_overlap_1d(*/

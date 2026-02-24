@@ -33,11 +33,11 @@ static bool dupstr(char** dst, const char* src)
 {
 	assert(dst);
 	free(*dst);
-	*dst = NULL;
+	*dst = nullptr;
 	if (!src)
 		return true;
 	*dst = strdup(src);
-	return *dst != NULL;
+	return *dst != nullptr;
 }
 
 static void output_handle_geometry(void* data, struct wl_output* wl_output, int x, int y,
@@ -151,7 +151,7 @@ UwacOutput* UwacCreateOutput(UwacDisplay* d, uint32_t id, uint32_t version)
 {
 	UwacOutput* o = xzalloc(sizeof *o);
 	if (!o)
-		return NULL;
+		return nullptr;
 
 	o->display = d;
 	o->server_output_id = id;

@@ -138,7 +138,7 @@ def write_getter(f, entry_dict, entry_type, entry_name, postfix, compat_dict):
     else:
         f.write(' freerdp_settings_get_' + entry_name.lower() + '(WINPR_ATTR_UNUSED const rdpSettings* settings, WINPR_ATTR_UNUSED ' + typestr + ' id)\n')
     if isString or isPointer:
-        ret = 'NULL';
+        ret = 'nullptr';
     elif 'bool' in entry_name:
         ret = 'FALSE';
     else:
@@ -304,7 +304,7 @@ try:
         f.write('\t\tif (*current)\n')
         f.write('\t\t\tmemset(*current, 0, strlen(*current));\n')
         f.write('\t\tfree(*current);\n')
-        f.write('\t\t(*current) = NULL;\n')
+        f.write('\t\t(*current) = nullptr;\n')
         f.write('\t}\n')
         f.write('}\n\n')
 
@@ -313,7 +313,7 @@ try:
         f.write('\tif (!next && (next_len > 0))\n')
         f.write('\t{\n')
         f.write('\t\t*current = calloc(next_len, 1);\n')
-        f.write('\t\treturn (*current != NULL);\n')
+        f.write('\t\treturn (*current != nullptr);\n')
         f.write('\t}\n')
         f.write('\treturn FALSE;\n')
         f.write('}\n\n')
@@ -326,8 +326,8 @@ try:
         f.write('\tif (alloc_empty_string(current, next, next_len))\n')
         f.write('\t\treturn TRUE;\n')
         f.write('\n')
-        f.write('\t*current = (next ? strndup(next, next_len) : NULL);\n')
-        f.write('\treturn !next || (*current != NULL);\n')
+        f.write('\t*current = (next ? strndup(next, next_len) : nullptr);\n')
+        f.write('\treturn !next || (*current != nullptr);\n')
         f.write('}\n\n')
 
         f.write('static BOOL update_string_(char** current, char* next, size_t next_len)\n')
@@ -338,7 +338,7 @@ try:
         f.write('\t\treturn TRUE;\n')
         f.write('\n')
         f.write('\t*current = next;\n')
-        f.write('\treturn !next || (*current != NULL);\n')
+        f.write('\treturn !next || (*current != nullptr);\n')
         f.write('}\n\n')
 
         getter_list = dict(type_list)

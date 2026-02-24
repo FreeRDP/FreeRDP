@@ -155,7 +155,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 
 		if (xpointer->nCursors == xpointer->mCursors)
 		{
-			void* tmp2 = NULL;
+			void* tmp2 = nullptr;
 			xpointer->mCursors = (xpointer->mCursors == 0 ? 1 : xpointer->mCursors * 2);
 
 			tmp2 = realloc(xpointer->cursorWidths, sizeof(UINT32) * xpointer->mCursors);
@@ -275,7 +275,7 @@ static Window xf_Pointer_get_window(xfContext* xfc)
 
 BOOL xf_pointer_update_scale(xfContext* xfc)
 {
-	xfPointer* pointer = NULL;
+	xfPointer* pointer = nullptr;
 	WINPR_ASSERT(xfc);
 
 	pointer = xfc->pointer;
@@ -325,7 +325,7 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	rc = TRUE;
 
 fail:
-	WLog_DBG(TAG, "%p", WINPR_CXX_COMPAT_CAST(const void*, rc ? pointer : NULL));
+	WLog_DBG(TAG, "%p", WINPR_CXX_COMPAT_CAST(const void*, rc ? pointer : nullptr));
 	return rc;
 }
 
@@ -409,7 +409,7 @@ static BOOL xf_Pointer_SetNull(rdpContext* context)
 		nullcursor = XcursorImageLoadCursor(xfc->display, &ci);
 	}
 
-	xfc->pointer = NULL;
+	xfc->pointer = nullptr;
 
 	if ((handle) && (nullcursor != None))
 		XDefineCursor(xfc->display, handle, nullcursor);
@@ -427,7 +427,7 @@ static BOOL xf_Pointer_SetDefault(rdpContext* context)
 	xfContext* xfc = (xfContext*)context;
 	Window handle = xf_Pointer_get_window(xfc);
 	xf_lock_x11(xfc);
-	xfc->pointer = NULL;
+	xfc->pointer = nullptr;
 
 	if (handle)
 		XUndefineCursor(xfc->display, handle);

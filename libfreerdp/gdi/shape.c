@@ -145,7 +145,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 	if (!hdc || !hbr)
 		return FALSE;
 
-	if (!gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL))
+	if (!gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, nullptr, nullptr))
 		return TRUE;
 
 	switch (hbr->style)
@@ -213,7 +213,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 					{
 						const UINT32 tmp = FreeRDPReadColor(patp, hbr->pattern->format);
 						dstColor =
-						    FreeRDPConvertColor(tmp, hbr->pattern->format, hdc->format, NULL);
+						    FreeRDPConvertColor(tmp, hbr->pattern->format, hdc->format, nullptr);
 					}
 
 					BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x, nYDest + y);
@@ -269,7 +269,7 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 {
 	UINT32 color = 0;
 
-	if (!gdi_ClipCoords(hdc, &nXDst, &nYDst, &nWidth, &nHeight, NULL, NULL))
+	if (!gdi_ClipCoords(hdc, &nXDst, &nYDst, &nWidth, &nHeight, nullptr, nullptr))
 		return TRUE;
 
 	color = hdc->textColor;

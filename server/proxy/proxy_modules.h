@@ -82,7 +82,7 @@ extern "C"
 
 	/**
 	 * @brief pf_modules_add Registers a new plugin
-	 * @param ep A module entry point function, must NOT be NULL
+	 * @param ep A module entry point function, must NOT be nullptr
 	 * @return TRUE for success, FALSE otherwise
 	 */
 	WINPR_ATTR_NODISCARD BOOL pf_modules_add(proxyModule* module, proxyModuleEntryPoint ep,

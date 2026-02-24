@@ -39,7 +39,7 @@ typedef struct
 static BOOL WLog_JournaldAppender_Open(wLog* log, wLogAppender* appender)
 {
 	int fd = 0;
-	wLogJournaldAppender* journaldAppender = NULL;
+	wLogJournaldAppender* journaldAppender = nullptr;
 
 	if (!log || !appender)
 		return FALSE;
@@ -59,7 +59,7 @@ static BOOL WLog_JournaldAppender_Open(wLog* log, wLogAppender* appender)
 		return FALSE;
 	}
 
-	setbuffer(journaldAppender->stream, NULL, 0);
+	setbuffer(journaldAppender->stream, nullptr, 0);
 	return TRUE;
 }
 
@@ -79,7 +79,7 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 
 	wLogJournaldAppender* journaldAppender = (wLogJournaldAppender*)appender;
 
-	const char* formatStr = NULL;
+	const char* formatStr = nullptr;
 	switch (cmessage->Level)
 	{
 		case WLOG_TRACE:
@@ -154,12 +154,12 @@ static BOOL WLog_JournaldAppender_Set(wLogAppender* appender, const char* settin
 	if (journaldAppender->identifier)
 		free(journaldAppender->identifier);
 
-	return ((journaldAppender->identifier = _strdup((const char*)value)) != NULL);
+	return ((journaldAppender->identifier = _strdup((const char*)value)) != nullptr);
 }
 
 static void WLog_JournaldAppender_Free(wLogAppender* appender)
 {
-	wLogJournaldAppender* journaldAppender = NULL;
+	wLogJournaldAppender* journaldAppender = nullptr;
 	if (appender)
 	{
 		journaldAppender = (wLogJournaldAppender*)appender;
@@ -176,7 +176,7 @@ wLogAppender* WLog_JournaldAppender_New(wLog* log)
 
 	wLogJournaldAppender* appender = (wLogJournaldAppender*)calloc(1, sizeof(wLogJournaldAppender));
 	if (!appender)
-		return NULL;
+		return nullptr;
 
 	appender->common.Type = WLOG_APPENDER_JOURNALD;
 	appender->common.Open = WLog_JournaldAppender_Open;
@@ -187,7 +187,7 @@ wLogAppender* WLog_JournaldAppender_New(wLog* log)
 	appender->common.Set = WLog_JournaldAppender_Set;
 	appender->common.Free = WLog_JournaldAppender_Free;
 
-	const DWORD nSize = GetEnvironmentVariableA(name, NULL, 0);
+	const DWORD nSize = GetEnvironmentVariableA(name, nullptr, 0);
 	if (nSize)
 	{
 		appender->identifier = (LPSTR)malloc(nSize);
@@ -206,5 +206,5 @@ wLogAppender* WLog_JournaldAppender_New(wLog* log)
 error_open:
 	free(appender->identifier);
 	free(appender);
-	return NULL;
+	return nullptr;
 }

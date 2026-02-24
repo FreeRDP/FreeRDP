@@ -30,7 +30,7 @@
 #if defined(NEON_INTRINSICS_ENABLED)
 #include <arm_neon.h>
 
-static primitives_t* generic = NULL;
+static primitives_t* generic = nullptr;
 
 static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R_X(const INT16* WINPR_RESTRICT pSrc[3], UINT32 srcStep,
                                                 BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,

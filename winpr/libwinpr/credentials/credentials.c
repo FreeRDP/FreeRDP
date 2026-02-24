@@ -167,13 +167,13 @@ static size_t cred_encode(const BYTE* bin, size_t len, char* cred, size_t credle
 BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential,
                             LPWSTR* MarshaledCredential)
 {
-	char* b = NULL;
+	char* b = nullptr;
 	if (!CredMarshalCredentialA(CredType, Credential, &b) || !b)
 		return FALSE;
 
-	*MarshaledCredential = ConvertUtf8ToWCharAlloc(b, NULL);
+	*MarshaledCredential = ConvertUtf8ToWCharAlloc(b, nullptr);
 	free(b);
-	return (*MarshaledCredential != NULL);
+	return (*MarshaledCredential != nullptr);
 }
 
 BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
@@ -211,9 +211,9 @@ BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
 
 BOOL CredUnmarshalCredentialW(LPCWSTR cred, PCRED_MARSHAL_TYPE pcredType, PVOID* out)
 {
-	char* str = NULL;
+	char* str = nullptr;
 	if (cred)
-		str = ConvertWCharToUtf8Alloc(cred, NULL);
+		str = ConvertWCharToUtf8Alloc(cred, nullptr);
 	const BOOL rc = CredUnmarshalCredentialA(str, pcredType, out);
 	free(str);
 	return rc;
@@ -275,7 +275,7 @@ BOOL CredUnmarshalCredentialA(LPCSTR cred, PCRED_MARSHAL_TYPE CredType, PVOID* C
 BOOL CredIsMarshaledCredentialW(LPCWSTR MarshaledCredential)
 {
 	CRED_MARSHAL_TYPE t = BinaryBlobForSystem;
-	void* out = NULL;
+	void* out = nullptr;
 
 	BOOL ret = CredUnmarshalCredentialW(MarshaledCredential, &t, &out);
 	if (out)
@@ -287,7 +287,7 @@ BOOL CredIsMarshaledCredentialW(LPCWSTR MarshaledCredential)
 BOOL CredIsMarshaledCredentialA(LPCSTR MarshaledCredential)
 {
 	CRED_MARSHAL_TYPE t = BinaryBlobForSystem;
-	void* out = NULL;
+	void* out = nullptr;
 	BOOL ret = CredUnmarshalCredentialA(MarshaledCredential, &t, &out);
 	if (out)
 		CredFree(out);

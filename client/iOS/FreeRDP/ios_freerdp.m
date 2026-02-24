@@ -319,7 +319,7 @@ int ios_run_freerdp(freerdp *instance)
 	}
 
 	CGContextRelease(mfi->bitmap_context);
-	mfi->bitmap_context = NULL;
+	mfi->bitmap_context = nullptr;
 	mfi->connection_state = TSXConnectionDisconnected;
 	// Cleanup
 	freerdp_disconnect(instance);
@@ -340,7 +340,7 @@ static BOOL ios_client_new(freerdp *instance, rdpContext *context)
 	if (!instance || !context)
 		return FALSE;
 
-	if ((ctx->mfi = calloc(1, sizeof(mfInfo))) == NULL)
+	if ((ctx->mfi = calloc(1, sizeof(mfInfo))) == nullptr)
 		return FALSE;
 
 	ctx->mfi->context = (mfContext *)context;
@@ -357,7 +357,7 @@ static BOOL ios_client_new(freerdp *instance, rdpContext *context)
 	instance->GatewayAuthenticate = ios_ui_gw_authenticate;
 	instance->VerifyCertificateEx = ios_ui_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = ios_ui_verify_changed_certificate_ex;
-	instance->LogonErrorInfo = NULL;
+	instance->LogonErrorInfo = nullptr;
 	return TRUE;
 }
 
@@ -380,13 +380,13 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS *pEntryPoints)
 	ZeroMemory(pEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
 	pEntryPoints->Version = RDP_CLIENT_INTERFACE_VERSION;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
-	pEntryPoints->GlobalInit = NULL;
-	pEntryPoints->GlobalUninit = NULL;
+	pEntryPoints->GlobalInit = nullptr;
+	pEntryPoints->GlobalUninit = nullptr;
 	pEntryPoints->ContextSize = sizeof(mfContext);
 	pEntryPoints->ClientNew = ios_client_new;
 	pEntryPoints->ClientFree = ios_client_free;
-	pEntryPoints->ClientStart = NULL;
-	pEntryPoints->ClientStop = NULL;
+	pEntryPoints->ClientStart = nullptr;
+	pEntryPoints->ClientStop = nullptr;
 	return 0;
 }
 
@@ -401,7 +401,7 @@ freerdp *ios_freerdp_new()
 	context = freerdp_client_context_new(&clientEntryPoints);
 
 	if (!context)
-		return NULL;
+		return nullptr;
 
 	return context->instance;
 }

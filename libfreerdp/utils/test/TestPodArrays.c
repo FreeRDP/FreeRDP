@@ -65,8 +65,8 @@ int TestPodArrays(int argc, char* argv[])
 	UINT32 sum = 0;
 	UINT32 foreach_index = 0;
 	ArrayUINT32 uint32s = WINPR_C_ARRAY_INIT;
-	UINT32* ptr = NULL;
-	const UINT32* cptr = NULL;
+	UINT32* ptr = nullptr;
+	const UINT32* cptr = nullptr;
 	ArrayBasicStruct basicStructs = WINPR_C_ARRAY_INIT;
 	BasicStruct basicStruct = { 1, 2 };
 
@@ -107,7 +107,7 @@ int TestPodArrays(int argc, char* argv[])
 		goto fail;
 
 	/* test modifying values of the array during the foreach */
-	if (!array_uint32_foreach(&uint32s, cb_set_to_1, NULL) || array_uint32_get(&uint32s, 5) != 1)
+	if (!array_uint32_foreach(&uint32s, cb_set_to_1, nullptr) || array_uint32_get(&uint32s, 5) != 1)
 		goto fail;
 
 	/* this one is to test that we can modify the array itself during the foreach and that things
@@ -119,7 +119,7 @@ int TestPodArrays(int argc, char* argv[])
 	if (!array_basicstruct_append(&basicStructs, basicStruct))
 		goto fail;
 
-	if (!array_basicstruct_foreach(&basicStructs, cb_basic_struct, NULL))
+	if (!array_basicstruct_foreach(&basicStructs, cb_basic_struct, nullptr))
 		goto fail;
 
 	rc = 0;

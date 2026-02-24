@@ -9,13 +9,13 @@
 
 int TestFileCreateFile(int argc, char* argv[])
 {
-	HANDLE handle = NULL;
+	HANDLE handle = nullptr;
 	HRESULT hr = 0;
 	DWORD written = 0;
 	const char buffer[] = "Some random text\r\njust want it done.";
 	char cmp[sizeof(buffer)];
 	char sname[8192];
-	LPSTR name = NULL;
+	LPSTR name = nullptr;
 	int rc = 0;
 	SYSTEMTIME systemTime;
 	WINPR_UNUSED(argc);
@@ -38,8 +38,8 @@ int TestFileCreateFile(int argc, char* argv[])
 	if (FAILED(hr))
 		rc = -1;
 
-	handle = CreateFileA(name, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW,
-	                     FILE_ATTRIBUTE_NORMAL, NULL);
+	handle = CreateFileA(name, GENERIC_READ | GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+	                     FILE_ATTRIBUTE_NORMAL, nullptr);
 
 	if (!handle)
 	{
@@ -50,28 +50,28 @@ int TestFileCreateFile(int argc, char* argv[])
 	if (!winpr_PathFileExists(name))
 		rc = -1;
 
-	if (!WriteFile(handle, buffer, sizeof(buffer), &written, NULL))
+	if (!WriteFile(handle, buffer, sizeof(buffer), &written, nullptr))
 		rc = -1;
 
 	if (written != sizeof(buffer))
 		rc = -1;
 
-	written = SetFilePointer(handle, 5, NULL, FILE_BEGIN);
+	written = SetFilePointer(handle, 5, nullptr, FILE_BEGIN);
 
 	if (written != 5)
 		rc = -1;
 
-	written = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
+	written = SetFilePointer(handle, 0, nullptr, FILE_CURRENT);
 
 	if (written != 5)
 		rc = -1;
 
-	written = SetFilePointer(handle, -5, NULL, FILE_CURRENT);
+	written = SetFilePointer(handle, -5, nullptr, FILE_CURRENT);
 
 	if (written != 0)
 		rc = -1;
 
-	if (!ReadFile(handle, cmp, sizeof(cmp), &written, NULL))
+	if (!ReadFile(handle, cmp, sizeof(cmp), &written, nullptr))
 		rc = -1;
 
 	if (written != sizeof(cmp))

@@ -846,8 +846,8 @@ int TestFreeRDPCodecRemoteFX(int argc, char* argv[])
 {
 	int rc = -1;
 	REGION16 region = WINPR_C_ARRAY_INIT;
-	RFX_CONTEXT* context = NULL;
-	BYTE* dest = NULL;
+	RFX_CONTEXT* context = nullptr;
+	BYTE* dest = nullptr;
 	size_t stride = FORMAT_SIZE * IMG_WIDTH;
 
 	WINPR_UNUSED(argc);

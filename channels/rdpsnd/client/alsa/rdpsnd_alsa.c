@@ -70,7 +70,7 @@ typedef struct
 static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 {
 	int status = 0;
-	snd_pcm_hw_params_t* hw_params = NULL;
+	snd_pcm_hw_params_t* hw_params = nullptr;
 	snd_pcm_uframes_t buffer_size_max = 0;
 	status = snd_pcm_hw_params_malloc(&hw_params);
 	SND_PCM_CHECK("snd_pcm_hw_params_malloc", status);
@@ -84,7 +84,8 @@ static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 	status = snd_pcm_hw_params_set_format(alsa->pcm_handle, hw_params, alsa->format);
 	SND_PCM_CHECK("snd_pcm_hw_params_set_format", status);
 	/* Set sample rate */
-	status = snd_pcm_hw_params_set_rate_near(alsa->pcm_handle, hw_params, &alsa->actual_rate, NULL);
+	status =
+	    snd_pcm_hw_params_set_rate_near(alsa->pcm_handle, hw_params, &alsa->actual_rate, nullptr);
 	SND_PCM_CHECK("snd_pcm_hw_params_set_rate_near", status);
 	/* Set number of channels */
 	status = snd_pcm_hw_params_set_channels(alsa->pcm_handle, hw_params, alsa->actual_channels);
@@ -129,7 +130,7 @@ static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 	SND_PCM_CHECK("snd_pcm_hw_params_set_buffer_size_near", status);
 	/* Set period size */
 	status = snd_pcm_hw_params_set_period_size_near(alsa->pcm_handle, hw_params, &alsa->period_size,
-	                                                NULL);
+	                                                nullptr);
 	SND_PCM_CHECK("snd_pcm_hw_params_set_period_size_near", status);
 	status = snd_pcm_hw_params(alsa->pcm_handle, hw_params);
 	SND_PCM_CHECK("snd_pcm_hw_params", status);
@@ -140,7 +141,7 @@ static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 static int rdpsnd_alsa_set_sw_params(rdpsndAlsaPlugin* alsa)
 {
 	int status = 0;
-	snd_pcm_sw_params_t* sw_params = NULL;
+	snd_pcm_sw_params_t* sw_params = nullptr;
 	status = snd_pcm_sw_params_malloc(&sw_params);
 	SND_PCM_CHECK("snd_pcm_sw_params_malloc", status);
 	status = snd_pcm_sw_params_current(alsa->pcm_handle, sw_params);
@@ -226,7 +227,7 @@ static void rdpsnd_alsa_close_mixer(rdpsndAlsaPlugin* alsa)
 	if (alsa && alsa->mixer_handle)
 	{
 		snd_mixer_close(alsa->mixer_handle);
-		alsa->mixer_handle = NULL;
+		alsa->mixer_handle = nullptr;
 	}
 }
 
@@ -253,7 +254,7 @@ static BOOL rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 		goto fail;
 	}
 
-	status = snd_mixer_selem_register(alsa->mixer_handle, NULL, NULL);
+	status = snd_mixer_selem_register(alsa->mixer_handle, nullptr, nullptr);
 
 	if (status < 0)
 	{
@@ -281,7 +282,7 @@ static void rdpsnd_alsa_pcm_close(rdpsndAlsaPlugin* alsa)
 	{
 		snd_pcm_drain(alsa->pcm_handle);
 		snd_pcm_close(alsa->pcm_handle);
-		alsa->pcm_handle = 0;
+		alsa->pcm_handle = nullptr;
 	}
 }
 
@@ -442,7 +443,7 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 		{
 			WLog_ERR(TAG, "status: %ld\n", status);
 			rdpsnd_alsa_close(device);
-			rdpsnd_alsa_open(device, NULL, alsa->latency);
+			rdpsnd_alsa_open(device, nullptr, alsa->latency);
 			break;
 		}
 
@@ -470,15 +471,16 @@ static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN
 {
 	int status = 0;
 	DWORD flags = 0;
-	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
+	const COMMAND_LINE_ARGUMENT_A* arg = nullptr;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
-	COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
-		                                             NULL, NULL, -1, NULL, "device" },
-		                                           { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
+	COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] = {
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", nullptr, nullptr, -1, nullptr, "device" },
+		{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
+	};
 	flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_alsa_args, flags, alsa, NULL,
-	                                    NULL);
+	status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_alsa_args, flags, alsa,
+	                                    nullptr, nullptr);
 
 	if (status < 0)
 	{
@@ -501,7 +503,7 @@ static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN
 				return CHANNEL_RC_NO_MEMORY;
 		}
 		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 
 	return CHANNEL_RC_OK;
 }
@@ -514,8 +516,8 @@ static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN
 FREERDP_ENTRY_POINT(UINT VCAPITYPE alsa_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args = NULL;
-	rdpsndAlsaPlugin* alsa = NULL;
+	const ADDIN_ARGV* args = nullptr;
+	rdpsndAlsaPlugin* alsa = nullptr;
 	UINT error = 0;
 	alsa = (rdpsndAlsaPlugin*)calloc(1, sizeof(rdpsndAlsaPlugin));
 
@@ -555,7 +557,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE alsa_freerdp_rdpsnd_client_subsystem_entry(
 		}
 	}
 
-	alsa->pcm_handle = 0;
+	alsa->pcm_handle = nullptr;
 	alsa->actual_rate = 22050;
 	alsa->format = SND_PCM_FORMAT_S16_LE;
 	alsa->actual_channels = 2;

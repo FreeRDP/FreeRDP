@@ -14,15 +14,15 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 	int a = 0;
 	int b = 0;
 	int c = 0;
-	HINSTANCE library = NULL;
-	TEST_AB_FN pFunctionA = NULL;
-	TEST_AB_FN pFunctionB = NULL;
-	LPCSTR SharedLibraryExtension = NULL;
+	HINSTANCE library = nullptr;
+	TEST_AB_FN pFunctionA = nullptr;
+	TEST_AB_FN pFunctionB = nullptr;
+	LPCSTR SharedLibraryExtension = nullptr;
 	CHAR LibraryPath[PATHCCH_MAX_CCH] = WINPR_C_ARRAY_INIT;
-	PCHAR p = NULL;
+	PCHAR p = nullptr;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))
+	if (!GetModuleFileNameA(nullptr, LibraryPath, PATHCCH_MAX_CCH))
 	{
 		const UINT32 err = GetLastError();
 		const HRESULT herr = HRESULT_FROM_WIN32(err);

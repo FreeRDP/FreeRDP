@@ -11,14 +11,14 @@ int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 {
 	int rc = -1;
 	DWORD nSize = 0;
-	LPSTR lpBuffer = NULL;
+	LPSTR lpBuffer = nullptr;
 	DWORD error = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
 	SetEnvironmentVariableA(TEST_NAME, TEST_VALUE);
-	nSize = GetEnvironmentVariableA(TEST_NAME, NULL, 0);
+	nSize = GetEnvironmentVariableA(TEST_NAME, nullptr, 0);
 
 	/* check if value returned is len + 1 ) */
 	if (nSize != strnlen(TEST_VALUE, sizeof(TEST_VALUE)) + 1)
@@ -56,8 +56,8 @@ int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 	}
 
 	/* clear variable */
-	SetEnvironmentVariableA(TEST_NAME, NULL);
-	nSize = GetEnvironmentVariableA(TEST_VALUE, NULL, 0);
+	SetEnvironmentVariableA(TEST_NAME, nullptr);
+	nSize = GetEnvironmentVariableA(TEST_VALUE, nullptr, 0);
 
 	if (0 != nSize)
 	{

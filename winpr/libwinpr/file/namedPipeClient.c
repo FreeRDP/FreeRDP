@@ -96,24 +96,24 @@ static HANDLE_OPS ops = {
 	NamedPipeClientIsHandled,
 	NamedPipeClientCloseHandle,
 	NamedPipeClientGetFd,
-	NULL, /* CleanupHandle */
+	nullptr, /* CleanupHandle */
 	NamedPipeRead,
-	NULL, /* FileReadEx */
-	NULL, /* FileReadScatter */
+	nullptr, /* FileReadEx */
+	nullptr, /* FileReadScatter */
 	NamedPipeWrite,
-	NULL, /* FileWriteEx */
-	NULL, /* FileWriteGather */
-	NULL, /* FileGetFileSize */
-	NULL, /*  FlushFileBuffers */
-	NULL, /* FileSetEndOfFile */
-	NULL, /* FileSetFilePointer */
-	NULL, /* SetFilePointerEx */
-	NULL, /* FileLockFile */
-	NULL, /* FileLockFileEx */
-	NULL, /* FileUnlockFile */
-	NULL, /* FileUnlockFileEx */
-	NULL, /* SetFileTime */
-	NULL, /* FileGetFileInformationByHandle */
+	nullptr, /* FileWriteEx */
+	nullptr, /* FileWriteGather */
+	nullptr, /* FileGetFileSize */
+	nullptr, /*  FlushFileBuffers */
+	nullptr, /* FileSetEndOfFile */
+	nullptr, /* FileSetFilePointer */
+	nullptr, /* SetFilePointerEx */
+	nullptr, /* FileLockFile */
+	nullptr, /* FileLockFileEx */
+	nullptr, /* FileUnlockFile */
+	nullptr, /* FileUnlockFileEx */
+	nullptr, /* SetFileTime */
+	nullptr, /* FileGetFileInformationByHandle */
 };
 
 static HANDLE
@@ -233,13 +233,13 @@ BOOL IsNamedPipeFileNameA(LPCSTR lpName)
 
 char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
 {
-	char* lpFileName = NULL;
+	char* lpFileName = nullptr;
 
 	if (!lpName)
-		return NULL;
+		return nullptr;
 
 	if (!IsNamedPipeFileNameA(lpName))
-		return NULL;
+		return nullptr;
 
 	lpFileName = _strdup(&lpName[strnlen(NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH))]);
 	return lpFileName;
@@ -247,12 +247,12 @@ char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
 
 char* GetNamedPipeUnixDomainSocketBaseFilePathA(void)
 {
-	char* lpTempPath = NULL;
-	char* lpPipePath = NULL;
+	char* lpTempPath = nullptr;
+	char* lpPipePath = nullptr;
 	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
 
 	if (!lpTempPath)
-		return NULL;
+		return nullptr;
 
 	lpPipePath = GetCombinedPath(lpTempPath, ".pipe");
 	free(lpTempPath);
@@ -261,9 +261,9 @@ char* GetNamedPipeUnixDomainSocketBaseFilePathA(void)
 
 char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName)
 {
-	char* lpPipePath = NULL;
-	char* lpFileName = NULL;
-	char* lpFilePath = NULL;
+	char* lpPipePath = nullptr;
+	char* lpFileName = nullptr;
+	char* lpFilePath = nullptr;
 	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
 	lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
 	lpFilePath = GetCombinedPath(lpPipePath, lpFileName);

@@ -4,9 +4,9 @@
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
-	rdpCertificateData* data = NULL;
+	rdpCertificateData* data = nullptr;
 	char* pem = calloc(Size + 1, sizeof(char));
-	if (pem == NULL)
+	if (pem == nullptr)
 		goto cleanup;
 	memcpy(pem, Data, Size);
 

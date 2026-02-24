@@ -56,7 +56,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 {
 	char buffer[128] = WINPR_C_ARRAY_INIT;
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
-	const SERIAL_DRIVER* pServerSerialDriver = NULL;
+	const SERIAL_DRIVER* pServerSerialDriver = nullptr;
 
 	if (!CommIsHandleValid(hDevice))
 		return FALSE;
@@ -67,9 +67,10 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 		return FALSE;
 	}
 
-	if (lpBytesReturned == NULL)
+	if (lpBytesReturned == nullptr)
 	{
-		SetLastError(ERROR_INVALID_PARAMETER); /* since we doesn't support lpOverlapped != NULL */
+		SetLastError(
+		    ERROR_INVALID_PARAMETER); /* since we doesn't support lpOverlapped != nullptr */
 		return FALSE;
 	}
 
@@ -107,7 +108,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 			break;
 	}
 
-	WINPR_ASSERT(pServerSerialDriver != NULL);
+	WINPR_ASSERT(pServerSerialDriver != nullptr);
 
 	switch (dwIoControlCode)
 	{

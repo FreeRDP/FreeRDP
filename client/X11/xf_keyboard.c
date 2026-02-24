@@ -504,7 +504,7 @@ static void xf_keyboard_modifier_map_free(xfContext* xfc)
 	if (xfc->modifierMap)
 	{
 		XFreeModifiermap(xfc->modifierMap);
-		xfc->modifierMap = NULL;
+		xfc->modifierMap = nullptr;
 	}
 }
 
@@ -513,7 +513,7 @@ BOOL xf_keyboard_update_modifier_map(xfContext* xfc)
 	WINPR_ASSERT(xfc);
 	xf_keyboard_modifier_map_free(xfc);
 	xfc->modifierMap = XGetModifierMapping(xfc->display);
-	return xfc->modifierMap != NULL;
+	return xfc->modifierMap != nullptr;
 }
 
 static void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEvent* ev);
@@ -551,7 +551,7 @@ static void xf_keyboard_action_script_free(xfContext* xfc)
 	if (xfc->keyCombinations)
 	{
 		ArrayList_Free(xfc->keyCombinations);
-		xfc->keyCombinations = NULL;
+		xfc->keyCombinations = nullptr;
 		xfc->actionScriptExists = FALSE;
 	}
 }
@@ -571,7 +571,7 @@ BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	obj->fnObjectNew = winpr_ObjectStringClone;
 	obj->fnObjectFree = winpr_ObjectStringFree;
 
-	if (!run_action_script(xfc, "key", NULL, xf_action_script_append, NULL))
+	if (!run_action_script(xfc, "key", nullptr, xf_action_script_append, nullptr))
 		return FALSE;
 
 	return xf_event_action_script_init(xfc);
@@ -655,7 +655,7 @@ static int load_map_from_xkbfile(xfContext* xfc)
 	XkbDescPtr xkb = XkbGetMap(xfc->display, 0, XkbUseCoreKbd);
 	if (!xkb)
 	{
-		WLog_Print(xfc->log, WLOG_WARN, "XkbGetMap() == NULL");
+		WLog_Print(xfc->log, WLOG_WARN, "XkbGetMap() == nullptr");
 		return -3;
 	}
 
@@ -799,7 +799,7 @@ static BOOL compareKey(const struct x11_key_scancode_t* a, size_t counta,
 
 BOOL xf_keyboard_init(xfContext* xfc)
 {
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(xfc);
 
@@ -1001,7 +1001,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 					break;
 				default:
 				{
-					XIM xim = XOpenIM(xfc->display, 0, 0, 0);
+					XIM xim = XOpenIM(xfc->display, nullptr, nullptr, nullptr);
 					if (!xim)
 					{
 						WLog_WARN(TAG, "Failed to XOpenIM");
@@ -1009,7 +1009,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 					else
 					{
 						XIC xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-						                    NULL);
+						                    nullptr);
 						if (!xic)
 						{
 							WLog_WARN(TAG, "XCreateIC failed");
@@ -1261,7 +1261,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 
 	const char* keyStr = XKeysymToString(keysym);
 
-	if (keyStr == 0)
+	if (keyStr == nullptr)
 	{
 		return 1;
 	}
@@ -1300,7 +1300,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 		return 1;
 
 	(void)sprintf_s(command, sizeof(command), "key %s", combination);
-	if (!run_action_script(xfc, command, NULL, action_script_run, &status))
+	if (!run_action_script(xfc, command, nullptr, action_script_run, &status))
 		return -1;
 
 	return status;

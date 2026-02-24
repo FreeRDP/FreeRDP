@@ -62,8 +62,8 @@ static BOOL gdiVideoShowSurface(VideoClientContext* video, const VideoSurface* s
                                 UINT32 destinationWidth, UINT32 destinationHeight)
 {
 	BOOL rc = FALSE;
-	rdpGdi* gdi = NULL;
-	rdpUpdate* update = NULL;
+	rdpGdi* gdi = nullptr;
+	rdpUpdate* update = nullptr;
 
 	WINPR_ASSERT(video);
 	WINPR_ASSERT(surface);
@@ -140,7 +140,7 @@ void gdi_video_control_init(rdpGdi* gdi, VideoClientContext* video)
 void gdi_video_control_uninit(rdpGdi* gdi, WINPR_ATTR_UNUSED VideoClientContext* video)
 {
 	WINPR_ASSERT(gdi);
-	gdi->video = NULL;
+	gdi->video = nullptr;
 }
 
 void gdi_video_data_init(WINPR_ATTR_UNUSED rdpGdi* gdi, WINPR_ATTR_UNUSED VideoClientContext* video)
@@ -158,13 +158,13 @@ void gdi_video_data_uninit(WINPR_ATTR_UNUSED rdpGdi* gdi,
 
 VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, UINT32 w, UINT32 h)
 {
-	VideoSurface* ret = NULL;
+	VideoSurface* ret = nullptr;
 
 	WINPR_ASSERT(size >= sizeof(VideoSurface));
 
 	ret = calloc(1, size);
 	if (!ret)
-		return NULL;
+		return nullptr;
 
 	ret->format = PIXEL_FORMAT_BGRX32;
 	ret->x = x;
@@ -181,7 +181,7 @@ VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, U
 	return ret;
 fail:
 	VideoClient_DestroyCommonContext(ret);
-	return NULL;
+	return nullptr;
 }
 
 void VideoClient_DestroyCommonContext(VideoSurface* surface)

@@ -4,22 +4,22 @@
 
 int TestSynchEvent(int argc, char* argv[])
 {
-	HANDLE event = NULL;
+	HANDLE event = nullptr;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	if (ResetEvent(NULL))
+	if (ResetEvent(nullptr))
 	{
-		printf("ResetEvent(NULL) unexpectedly succeeded\n");
+		printf("ResetEvent(nullptr) unexpectedly succeeded\n");
 		return -1;
 	}
 
-	if (SetEvent(NULL))
+	if (SetEvent(nullptr))
 	{
-		printf("SetEvent(NULL) unexpectedly succeeded\n");
+		printf("SetEvent(nullptr) unexpectedly succeeded\n");
 		return -1;
 	}
 
-	event = CreateEvent(NULL, TRUE, TRUE, NULL);
+	event = CreateEvent(nullptr, TRUE, TRUE, nullptr);
 
 	if (!event)
 	{

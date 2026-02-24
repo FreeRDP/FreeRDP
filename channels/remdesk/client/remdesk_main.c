@@ -70,10 +70,10 @@ static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
  */
 static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 {
-	const char* name = NULL;
-	char* pass = NULL;
-	const char* password = NULL;
-	rdpSettings* settings = NULL;
+	const char* name = nullptr;
+	char* pass = nullptr;
+	const char* password = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(remdesk);
 
@@ -192,7 +192,7 @@ static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 
 	pdu.versionMajor = 1;
 	pdu.versionMinor = 2;
-	wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
+	wStream* s = Stream_New(nullptr, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -260,7 +260,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 {
 	UINT error = ERROR_INTERNAL_ERROR;
 	size_t cbExpertBlobW = 0;
-	WCHAR* expertBlobW = NULL;
+	WCHAR* expertBlobW = nullptr;
 	size_t cbRaConnectionStringW = 0;
 	REMDESK_CTL_HEADER ctlHeader = WINPR_C_ARRAY_INIT;
 
@@ -299,7 +299,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 		goto out;
 
 	{
-		wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
+		wStream* s = Stream_New(nullptr, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
 		if (!s)
 		{
 			WLog_ERR(TAG, "Stream_New failed!");
@@ -359,7 +359,7 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 		goto out;
 
 	{
-		wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
+		wStream* s = Stream_New(nullptr, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
 
 		if (!s)
 		{
@@ -420,7 +420,7 @@ static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 
 	{
 		wStream* s =
-		    Stream_New(NULL, 1ULL * REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
+		    Stream_New(nullptr, 1ULL * REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
 		if (!s)
 		{
@@ -476,7 +476,7 @@ static UINT remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 	if (error)
 		return error;
 
-	wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
+	wStream* s = Stream_New(nullptr, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -682,7 +682,7 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
                                                         UINT32 dataLength, UINT32 totalLength,
                                                         UINT32 dataFlags)
 {
-	wStream* data_in = NULL;
+	wStream* data_in = nullptr;
 
 	WINPR_ASSERT(remdesk);
 
@@ -696,7 +696,7 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 		if (remdesk->data_in)
 			Stream_Free(remdesk->data_in, TRUE);
 
-		remdesk->data_in = Stream_New(NULL, totalLength);
+		remdesk->data_in = Stream_New(nullptr, totalLength);
 
 		if (!remdesk->data_in)
 		{
@@ -723,11 +723,11 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		remdesk->data_in = NULL;
+		remdesk->data_in = nullptr;
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		if (!MessageQueue_Post(remdesk->queue, NULL, 0, (void*)data_in, NULL))
+		if (!MessageQueue_Post(remdesk->queue, nullptr, 0, (void*)data_in, nullptr))
 		{
 			WLog_ERR(TAG, "MessageQueue_Post failed!");
 			return ERROR_INTERNAL_ERROR;
@@ -789,7 +789,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 
 static DWORD WINAPI remdesk_virtual_channel_client_thread(LPVOID arg)
 {
-	wStream* data = NULL;
+	wStream* data = nullptr;
 	wMessage message = WINPR_C_ARRAY_INIT;
 	remdeskPlugin* remdesk = (remdeskPlugin*)arg;
 	UINT error = CHANNEL_RC_OK;
@@ -853,7 +853,7 @@ static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk,
 
 	WINPR_ASSERT(remdesk);
 
-	remdesk->queue = MessageQueue_New(NULL);
+	remdesk->queue = MessageQueue_New(nullptr);
 
 	if (!remdesk->queue)
 	{
@@ -863,7 +863,7 @@ static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk,
 	}
 
 	remdesk->thread =
-	    CreateThread(NULL, 0, remdesk_virtual_channel_client_thread, (void*)remdesk, 0, NULL);
+	    CreateThread(nullptr, 0, remdesk_virtual_channel_client_thread, (void*)remdesk, 0, nullptr);
 
 	if (!remdesk->thread)
 	{
@@ -877,7 +877,7 @@ static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk,
 	    remdesk_virtual_channel_open_event_ex);
 error_out:
 	MessageQueue_Free(remdesk->queue);
-	remdesk->queue = NULL;
+	remdesk->queue = nullptr;
 	return error;
 }
 
@@ -920,9 +920,9 @@ static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 	MessageQueue_Free(remdesk->queue);
 	(void)CloseHandle(remdesk->thread);
 	Stream_Free(remdesk->data_in, TRUE);
-	remdesk->data_in = NULL;
-	remdesk->queue = NULL;
-	remdesk->thread = NULL;
+	remdesk->data_in = nullptr;
+	remdesk->queue = nullptr;
+	remdesk->thread = nullptr;
 	return rc;
 }
 
@@ -930,7 +930,7 @@ static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 {
 	WINPR_ASSERT(remdesk);
 
-	remdesk->InitHandle = 0;
+	remdesk->InitHandle = nullptr;
 	free(remdesk->context);
 	free(remdesk);
 }
@@ -988,9 +988,9 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
                                                          PVOID pInitHandle))
 {
 	UINT rc = 0;
-	remdeskPlugin* remdesk = NULL;
-	RemdeskClientContext* context = NULL;
-	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx = NULL;
+	remdeskPlugin* remdesk = nullptr;
+	RemdeskClientContext* context = nullptr;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx = nullptr;
 
 	if (!pEntryPoints)
 	{

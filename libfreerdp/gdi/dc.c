@@ -45,7 +45,7 @@ HGDI_DC gdi_GetDC(void)
 	HGDI_DC hDC = (HGDI_DC)calloc(1, sizeof(GDI_DC));
 
 	if (!hDC)
-		return NULL;
+		return nullptr;
 
 	hDC->format = PIXEL_FORMAT_XRGB32;
 	hDC->drawMode = GDI_R2_BLACK;
@@ -54,11 +54,11 @@ HGDI_DC gdi_GetDC(void)
 	if (!hDC->clip)
 	{
 		free(hDC);
-		return NULL;
+		return nullptr;
 	}
 
 	hDC->clip->null = TRUE;
-	hDC->hwnd = NULL;
+	hDC->hwnd = nullptr;
 	return hDC;
 }
 
@@ -71,10 +71,10 @@ HGDI_DC gdi_GetDC(void)
 
 HGDI_DC gdi_CreateDC(UINT32 format)
 {
-	HGDI_DC hDC = NULL;
+	HGDI_DC hDC = nullptr;
 
 	if (!(hDC = (HGDI_DC)calloc(1, sizeof(GDI_DC))))
-		return NULL;
+		return nullptr;
 
 	hDC->drawMode = GDI_R2_BLACK;
 
@@ -82,7 +82,7 @@ HGDI_DC gdi_CreateDC(UINT32 format)
 		goto fail;
 
 	hDC->clip->null = TRUE;
-	hDC->hwnd = NULL;
+	hDC->hwnd = nullptr;
 	hDC->format = format;
 
 	if (!(hDC->hwnd = (HGDI_WND)calloc(1, sizeof(GDI_WND))))
@@ -101,7 +101,7 @@ HGDI_DC gdi_CreateDC(UINT32 format)
 	return hDC;
 fail:
 	gdi_DeleteDC(hDC);
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -116,18 +116,18 @@ HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 	HGDI_DC hDC = (HGDI_DC)calloc(1, sizeof(GDI_DC));
 
 	if (!hDC)
-		return NULL;
+		return nullptr;
 
 	if (!(hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0)))
 	{
 		free(hDC);
-		return NULL;
+		return nullptr;
 	}
 
 	hDC->clip->null = TRUE;
 	hDC->format = hdc->format;
 	hDC->drawMode = hdc->drawMode;
-	hDC->hwnd = NULL;
+	hDC->hwnd = nullptr;
 	return hDC;
 }
 
@@ -144,8 +144,8 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 {
 	HGDIOBJECT previousSelectedObject = hdc->selectedObject;
 
-	if (hgdiobject == NULL)
-		return NULL;
+	if (hgdiobject == nullptr)
+		return nullptr;
 
 	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{
@@ -174,7 +174,7 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 	else
 	{
 		/* Unknown GDI Object Type */
-		return NULL;
+		return nullptr;
 	}
 
 	return previousSelectedObject;
@@ -199,7 +199,7 @@ BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 		if (hBitmap->data && hBitmap->free)
 		{
 			hBitmap->free(hBitmap->data);
-			hBitmap->data = NULL;
+			hBitmap->data = nullptr;
 		}
 
 		free(hBitmap);

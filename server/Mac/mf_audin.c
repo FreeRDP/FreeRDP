@@ -53,7 +53,7 @@ BOOL mf_peer_audin_init(mfPeerContext* context)
 
 	context->audin->Data = mf_peer_audin_data;
 
-	return audin_server_set_formats(context->audin, -1, NULL);
+	return audin_server_set_formats(context->audin, -1, nullptr);
 }
 
 void mf_peer_audin_uninit(mfPeerContext* context)
@@ -61,5 +61,5 @@ void mf_peer_audin_uninit(mfPeerContext* context)
 	WINPR_ASSERT(context);
 
 	audin_server_context_free(context->audin);
-	context->audin = NULL;
+	context->audin = nullptr;
 }

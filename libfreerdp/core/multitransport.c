@@ -65,7 +65,7 @@ state_run_t multitransport_recv_request(rdpMultitransport* multi, wStream* s)
 	UINT32 requestId = 0;
 	UINT16 requestedProto = 0;
 	UINT16 reserved = 0;
-	const BYTE* cookie = NULL;
+	const BYTE* cookie = nullptr;
 
 	Stream_Read_UINT32(s, requestId);      /* requestId (4 bytes) */
 	Stream_Read_UINT16(s, requestedProto); /* requestedProtocol (2 bytes) */
@@ -218,7 +218,7 @@ rdpMultitransport* multitransport_new(rdpRdp* rdp, WINPR_ATTR_UNUSED UINT16 prot
 
 	rdpMultitransport* multi = calloc(1, sizeof(rdpMultitransport));
 	if (!multi)
-		return NULL;
+		return nullptr;
 
 	if (settings->ServerMode)
 	{

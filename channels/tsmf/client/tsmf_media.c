@@ -148,7 +148,7 @@ struct S_TSMF_SAMPLE
 	UINT64 ack_time;
 };
 
-static wArrayList* presentation_list = NULL;
+static wArrayList* presentation_list = nullptr;
 static int TERMINATING = 0;
 
 static void s_tsmf_presentation_free(void* obj);
@@ -163,16 +163,16 @@ static UINT64 get_current_time(void)
 
 static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 {
-	TSMF_SAMPLE* sample = NULL;
+	TSMF_SAMPLE* sample = nullptr;
 	BOOL pending = FALSE;
 
 	if (!stream)
-		return NULL;
+		return nullptr;
 
 	TSMF_PRESENTATION* presentation = stream->presentation;
 
 	if (Queue_Count(stream->sample_list) < 1)
-		return NULL;
+		return nullptr;
 
 	if (sync)
 	{
@@ -228,7 +228,7 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 	}
 
 	if (pending)
-		return NULL;
+		return nullptr;
 
 	sample = (TSMF_SAMPLE*)Queue_Dequeue(stream->sample_list);
 
@@ -282,7 +282,7 @@ static BOOL tsmf_sample_queue_ack(TSMF_SAMPLE* sample)
 static BOOL tsmf_stream_process_ack(void* arg, BOOL force)
 {
 	TSMF_STREAM* stream = arg;
-	TSMF_SAMPLE* sample = NULL;
+	TSMF_SAMPLE* sample = nullptr;
 	UINT64 ack_time = 0;
 	BOOL rc = FALSE;
 
@@ -335,18 +335,18 @@ finally:
 TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid,
                                          IWTSVirtualChannelCallback* pChannelCallback)
 {
-	wObject* obj = NULL;
-	TSMF_PRESENTATION* presentation = NULL;
+	wObject* obj = nullptr;
+	TSMF_PRESENTATION* presentation = nullptr;
 
 	if (!guid || !pChannelCallback)
-		return NULL;
+		return nullptr;
 
 	presentation = (TSMF_PRESENTATION*)calloc(1, sizeof(TSMF_PRESENTATION));
 
 	if (!presentation)
 	{
 		WLog_ERR(TAG, "calloc failed");
-		return NULL;
+		return nullptr;
 	}
 
 	CopyMemory(presentation->presentation_id, guid, GUID_SIZE);
@@ -370,13 +370,13 @@ error_add:
 	ArrayList_Free(presentation->stream_list);
 error_stream_list:
 	free(presentation);
-	return NULL;
+	return nullptr;
 }
 
 static char* guid_to_string(const BYTE* guid, char* str, size_t len)
 {
 	if (!guid || !str)
-		return NULL;
+		return nullptr;
 
 	for (size_t i = 0; i < GUID_SIZE && (len > 2 * i); i++)
 		(void)sprintf_s(str + (2 * i), len - 2 * i, "%02" PRIX8 "", guid[i]);
@@ -388,7 +388,7 @@ TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid)
 {
 	BOOL found = FALSE;
 	char guid_str[GUID_SIZE * 2ull + 1] = WINPR_C_ARRAY_INIT;
-	TSMF_PRESENTATION* presentation = NULL;
+	TSMF_PRESENTATION* presentation = nullptr;
 	ArrayList_Lock(presentation_list);
 	const size_t count = ArrayList_Count(presentation_list);
 
@@ -409,7 +409,7 @@ TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid)
 		WLog_WARN(TAG, "presentation id %s not found",
 		          guid_to_string(guid, guid_str, sizeof(guid_str)));
 
-	return (found) ? presentation : NULL;
+	return (found) ? presentation : nullptr;
 }
 
 static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
@@ -504,7 +504,7 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 
 		/* The frame data ownership is passed to the event object, and is freed after the event is
 		 * processed. */
-		sample->data = NULL;
+		sample->data = nullptr;
 		sample->decoded_size = 0;
 
 		if (tsmf->FrameEvent)
@@ -530,7 +530,7 @@ static BOOL tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 		ret =
 		    sample->stream->audio->Play(sample->stream->audio, sample->data, sample->decoded_size);
 		free(sample->data);
-		sample->data = NULL;
+		sample->data = nullptr;
 		sample->decoded_size = 0;
 
 		if (stream->audio->GetLatency)
@@ -575,7 +575,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 			 */
 			if (stream->major_type == TSMF_MAJOR_TYPE_VIDEO)
 			{
-				TSMF_STREAM* temp_stream = NULL;
+				TSMF_STREAM* temp_stream = nullptr;
 				TSMF_PRESENTATION* presentation = stream->presentation;
 				ArrayList_Lock(presentation->stream_list);
 				const size_t count = ArrayList_Count(presentation->stream_list);
@@ -635,7 +635,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 	}
 
 	free(sample->data);
-	sample->data = NULL;
+	sample->data = nullptr;
 
 	if (stream->major_type == TSMF_MAJOR_TYPE_VIDEO)
 	{
@@ -769,7 +769,7 @@ static DWORD WINAPI tsmf_stream_ack_func(LPVOID arg)
 				tsmf_stream_flush(stream);
 
 				if (stream->decoder && stream->decoder->Control)
-					stream->decoder->Control(stream->decoder, Control_Stop, NULL);
+					stream->decoder->Control(stream->decoder, Control_Stop, nullptr);
 			}
 		}
 
@@ -807,7 +807,7 @@ static DWORD WINAPI tsmf_stream_ack_func(LPVOID arg)
 static DWORD WINAPI tsmf_stream_playback_func(LPVOID arg)
 {
 	HANDLE hdl[2];
-	TSMF_SAMPLE* sample = NULL;
+	TSMF_SAMPLE* sample = nullptr;
 	TSMF_STREAM* stream = (TSMF_STREAM*)arg;
 	TSMF_PRESENTATION* presentation = stream->presentation;
 	UINT error = CHANNEL_RC_OK;
@@ -824,10 +824,10 @@ static DWORD WINAPI tsmf_stream_playback_func(LPVOID arg)
 				stream->audio = tsmf_load_audio_device(
 				    presentation->audio_name && presentation->audio_name[0]
 				        ? presentation->audio_name
-				        : NULL,
+				        : nullptr,
 				    presentation->audio_device && presentation->audio_device[0]
 				        ? presentation->audio_device
-				        : NULL);
+				        : nullptr);
 
 				if (stream->audio)
 				{
@@ -884,7 +884,7 @@ static DWORD WINAPI tsmf_stream_playback_func(LPVOID arg)
 	if (stream->audio)
 	{
 		stream->audio->Free(stream->audio);
-		stream->audio = NULL;
+		stream->audio = nullptr;
 	}
 
 	if (error && stream->rdpcontext)
@@ -901,7 +901,7 @@ static BOOL tsmf_stream_start(TSMF_STREAM* stream)
 		return TRUE;
 
 	stream->eos = 0;
-	return stream->decoder->Control(stream->decoder, Control_Restart, NULL);
+	return stream->decoder->Control(stream->decoder, Control_Restart, nullptr);
 }
 
 static BOOL tsmf_stream_stop(TSMF_STREAM* stream)
@@ -924,7 +924,7 @@ static BOOL tsmf_stream_stop(TSMF_STREAM* stream)
 	{
 		DEBUG_TSMF("Stop with no pending eos response, so do it immediately.");
 		tsmf_stream_flush(stream);
-		return stream->decoder->Control(stream->decoder, Control_Stop, NULL);
+		return stream->decoder->Control(stream->decoder, Control_Stop, nullptr);
 	}
 }
 
@@ -933,7 +933,7 @@ static BOOL tsmf_stream_pause(TSMF_STREAM* stream)
 	if (!stream || !stream->decoder || !stream->decoder->Control)
 		return TRUE;
 
-	return stream->decoder->Control(stream->decoder, Control_Pause, NULL);
+	return stream->decoder->Control(stream->decoder, Control_Pause, nullptr);
 }
 
 static BOOL tsmf_stream_restart(TSMF_STREAM* stream)
@@ -942,7 +942,7 @@ static BOOL tsmf_stream_restart(TSMF_STREAM* stream)
 		return TRUE;
 
 	stream->eos = 0;
-	return stream->decoder->Control(stream->decoder, Control_Restart, NULL);
+	return stream->decoder->Control(stream->decoder, Control_Restart, nullptr);
 }
 
 static BOOL tsmf_stream_change_volume(TSMF_STREAM* stream, UINT32 newVolume, UINT32 muted)
@@ -950,11 +950,11 @@ static BOOL tsmf_stream_change_volume(TSMF_STREAM* stream, UINT32 newVolume, UIN
 	if (!stream || !stream->decoder)
 		return TRUE;
 
-	if (stream->decoder != NULL && stream->decoder->ChangeVolume)
+	if (stream->decoder != nullptr && stream->decoder->ChangeVolume)
 	{
 		return stream->decoder->ChangeVolume(stream->decoder, newVolume, muted);
 	}
-	else if (stream->audio != NULL && stream->audio->ChangeVolume)
+	else if (stream->audio != nullptr && stream->audio->ChangeVolume)
 	{
 		return stream->audio->ChangeVolume(stream->audio, newVolume, muted);
 	}
@@ -965,7 +965,7 @@ static BOOL tsmf_stream_change_volume(TSMF_STREAM* stream, UINT32 newVolume, UIN
 BOOL tsmf_presentation_volume_changed(TSMF_PRESENTATION* presentation, UINT32 newVolume,
                                       UINT32 muted)
 {
-	TSMF_STREAM* stream = NULL;
+	TSMF_STREAM* stream = nullptr;
 	BOOL ret = TRUE;
 	presentation->volume = newVolume;
 	presentation->muted = muted;
@@ -984,7 +984,7 @@ BOOL tsmf_presentation_volume_changed(TSMF_PRESENTATION* presentation, UINT32 ne
 
 BOOL tsmf_presentation_paused(TSMF_PRESENTATION* presentation)
 {
-	TSMF_STREAM* stream = NULL;
+	TSMF_STREAM* stream = nullptr;
 	BOOL ret = TRUE;
 	ArrayList_Lock(presentation->stream_list);
 	size_t count = ArrayList_Count(presentation->stream_list);
@@ -1001,7 +1001,7 @@ BOOL tsmf_presentation_paused(TSMF_PRESENTATION* presentation)
 
 BOOL tsmf_presentation_restarted(TSMF_PRESENTATION* presentation)
 {
-	TSMF_STREAM* stream = NULL;
+	TSMF_STREAM* stream = nullptr;
 	BOOL ret = TRUE;
 	ArrayList_Lock(presentation->stream_list);
 	size_t count = ArrayList_Count(presentation->stream_list);
@@ -1018,7 +1018,7 @@ BOOL tsmf_presentation_restarted(TSMF_PRESENTATION* presentation)
 
 BOOL tsmf_presentation_start(TSMF_PRESENTATION* presentation)
 {
-	TSMF_STREAM* stream = NULL;
+	TSMF_STREAM* stream = nullptr;
 	BOOL ret = TRUE;
 	ArrayList_Lock(presentation->stream_list);
 	size_t count = ArrayList_Count(presentation->stream_list);
@@ -1062,7 +1062,7 @@ UINT tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
 
 BOOL tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
 {
-	TSMF_STREAM* stream = NULL;
+	TSMF_STREAM* stream = nullptr;
 	BOOL ret = TRUE;
 	ArrayList_Lock(presentation->stream_list);
 	size_t count = ArrayList_Count(presentation->stream_list);
@@ -1083,7 +1083,7 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation, UINT32
                                          UINT32 width, UINT32 height, UINT32 num_rects,
                                          const RECTANGLE_32* rects)
 {
-	TSMF_STREAM* stream = NULL;
+	TSMF_STREAM* stream = nullptr;
 	BOOL ret = TRUE;
 
 	/* The server may send messages with invalid width / height.
@@ -1148,7 +1148,7 @@ BOOL tsmf_stream_flush(TSMF_STREAM* stream)
 
 	stream->eos = 0;
 	stream->eos_message_id = 0;
-	stream->eos_channel_callback = NULL;
+	stream->eos_channel_callback = nullptr;
 	stream->delayed_stop = 0;
 	stream->last_end_time = 0;
 	stream->next_start_time = 0;
@@ -1185,14 +1185,14 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
                              rdpContext* rdpcontext)
 {
-	wObject* obj = NULL;
-	TSMF_STREAM* stream = NULL;
+	wObject* obj = nullptr;
+	TSMF_STREAM* stream = nullptr;
 	stream = tsmf_stream_find_by_id(presentation, stream_id);
 
 	if (stream)
 	{
 		WLog_ERR(TAG, "duplicated stream id %" PRIu32 "!", stream_id);
-		return NULL;
+		return nullptr;
 	}
 
 	stream = (TSMF_STREAM*)calloc(1, sizeof(TSMF_STREAM));
@@ -1200,7 +1200,7 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 	if (!stream)
 	{
 		WLog_ERR(TAG, "Calloc failed");
-		return NULL;
+		return nullptr;
 	}
 
 	stream->minBufferLevel = VIDEO_MIN_BUFFER_LEVEL;
@@ -1209,15 +1209,15 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 	stream->seeking = FALSE;
 	stream->eos = 0;
 	stream->eos_message_id = 0;
-	stream->eos_channel_callback = NULL;
+	stream->eos_channel_callback = nullptr;
 	stream->stream_id = stream_id;
 	stream->presentation = presentation;
-	stream->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	stream->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
 	if (!stream->stopEvent)
 		goto error_stopEvent;
 
-	stream->ready = CreateEvent(NULL, TRUE, TRUE, NULL);
+	stream->ready = CreateEvent(nullptr, TRUE, TRUE, nullptr);
 
 	if (!stream->ready)
 		goto error_ready;
@@ -1243,13 +1243,13 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 	obj->fnObjectFree = tsmf_sample_free;
 
 	stream->play_thread =
-	    CreateThread(NULL, 0, tsmf_stream_playback_func, stream, CREATE_SUSPENDED, NULL);
+	    CreateThread(nullptr, 0, tsmf_stream_playback_func, stream, CREATE_SUSPENDED, nullptr);
 
 	if (!stream->play_thread)
 		goto error_play_thread;
 
 	stream->ack_thread =
-	    CreateThread(NULL, 0, tsmf_stream_ack_func, stream, CREATE_SUSPENDED, NULL);
+	    CreateThread(nullptr, 0, tsmf_stream_ack_func, stream, CREATE_SUSPENDED, nullptr);
 
 	if (!stream->ack_thread)
 		goto error_ack_thread;
@@ -1281,7 +1281,7 @@ error_ready:
 	(void)CloseHandle(stream->stopEvent);
 error_stopEvent:
 	free(stream);
-	return NULL;
+	return nullptr;
 }
 
 void tsmf_stream_start_threads(TSMF_STREAM* stream)
@@ -1293,7 +1293,7 @@ void tsmf_stream_start_threads(TSMF_STREAM* stream)
 TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 {
 	BOOL found = FALSE;
-	TSMF_STREAM* stream = NULL;
+	TSMF_STREAM* stream = nullptr;
 	ArrayList_Lock(presentation->stream_list);
 	size_t count = ArrayList_Count(presentation->stream_list);
 
@@ -1309,7 +1309,7 @@ TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stre
 	}
 
 	ArrayList_Unlock(presentation->stream_list);
-	return (found) ? stream : NULL;
+	return (found) ? stream : nullptr;
 }
 
 static void tsmf_stream_resync(void* arg)
@@ -1412,7 +1412,7 @@ void s_tsmf_stream_free(void* obj)
 		}
 
 		(void)CloseHandle(stream->play_thread);
-		stream->play_thread = NULL;
+		stream->play_thread = nullptr;
 	}
 
 	if (stream->ack_thread)
@@ -1424,7 +1424,7 @@ void s_tsmf_stream_free(void* obj)
 		}
 
 		(void)CloseHandle(stream->ack_thread);
-		stream->ack_thread = NULL;
+		stream->ack_thread = nullptr;
 	}
 
 	Queue_Free(stream->sample_list);
@@ -1433,7 +1433,7 @@ void s_tsmf_stream_free(void* obj)
 	if (stream->decoder && stream->decoder->Free)
 	{
 		stream->decoder->Free(stream->decoder);
-		stream->decoder = NULL;
+		stream->decoder = nullptr;
 	}
 
 	(void)CloseHandle(stream->stopEvent);
@@ -1520,7 +1520,7 @@ static void tsmf_signal_handler(int s)
 
 BOOL tsmf_media_init(void)
 {
-	wObject* obj = NULL;
+	wObject* obj = nullptr;
 #ifndef _WIN32
 	struct sigaction sigtrap;
 	sigtrap.sa_handler = tsmf_signal_handler;

@@ -30,22 +30,22 @@
 char* WLog_Message_GetOutputFileName(int id, const char* ext)
 {
 	DWORD ProcessId = 0;
-	char* FilePath = NULL;
-	char* FileName = NULL;
-	char* FullFileName = NULL;
+	char* FilePath = nullptr;
+	char* FileName = nullptr;
+	char* FullFileName = nullptr;
 
 	if (!(FileName = (char*)malloc(256)))
-		return NULL;
+		return nullptr;
 
 	FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
 
 	if (!winpr_PathFileExists(FilePath))
 	{
-		if (!winpr_PathMakePath(FilePath, NULL))
+		if (!winpr_PathMakePath(FilePath, nullptr))
 		{
 			free(FileName);
 			free(FilePath);
-			return NULL;
+			return nullptr;
 		}
 	}
 

@@ -34,7 +34,7 @@ int mac_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 	mfContext *mfc = (mfContext *)cliprdr->custom;
 	WINPR_ASSERT(mfc);
 
-	pFormatIds = NULL;
+	pFormatIds = nullptr;
 	numFormats = ClipboardGetFormatIds(mfc->clipboard, &pFormatIds);
 
 	formats = (CLIPRDR_FORMAT *)calloc(numFormats, sizeof(CLIPRDR_FORMAT));
@@ -48,7 +48,7 @@ int mac_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 		formatName = ClipboardGetFormatName(mfc->clipboard, formatId);
 
 		formats[index].formatId = formatId;
-		formats[index].formatName = NULL;
+		formats[index].formatName = nullptr;
 
 		if ((formatId > CF_MAX) && formatName)
 			formats[index].formatName = _strdup(formatName);
@@ -193,7 +193,7 @@ static UINT mac_cliprdr_server_format_list(CliprdrClientContext *cliprdr,
 		}
 
 		free(mfc->serverFormats);
-		mfc->serverFormats = NULL;
+		mfc->serverFormats = nullptr;
 		mfc->numServerFormats = 0;
 	}
 
@@ -209,7 +209,7 @@ static UINT mac_cliprdr_server_format_list(CliprdrClientContext *cliprdr,
 	for (UINT32 index = 0; index < mfc->numServerFormats; index++)
 	{
 		mfc->serverFormats[index].formatId = formatList->formats[index].formatId;
-		mfc->serverFormats[index].formatName = NULL;
+		mfc->serverFormats[index].formatName = nullptr;
 
 		if (formatList->formats[index].formatName)
 			mfc->serverFormats[index].formatName = _strdup(formatList->formats[index].formatName);
@@ -305,7 +305,7 @@ mac_cliprdr_server_format_data_request(CliprdrClientContext *cliprdr,
 	{
 		response.common.msgFlags = CB_RESPONSE_FAIL;
 		response.common.dataLen = 0;
-		response.requestedFormatData = NULL;
+		response.requestedFormatData = nullptr;
 	}
 
 	cliprdr->ClientFormatDataResponse(cliprdr, &response);
@@ -325,7 +325,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
                                         const CLIPRDR_FORMAT_DATA_RESPONSE *formatDataResponse)
 {
 	UINT32 formatId;
-	CLIPRDR_FORMAT *format = NULL;
+	CLIPRDR_FORMAT *format = nullptr;
 	mfContext *mfc = (mfContext *)cliprdr->custom;
 	MRDPView *view = (MRDPView *)mfc->view;
 
@@ -409,7 +409,7 @@ void mac_cliprdr_init(mfContext *mfc, CliprdrClientContext *cliprdr)
 	mfc->cliprdr = cliprdr;
 
 	mfc->clipboard = ClipboardCreate();
-	mfc->clipboardRequestEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	mfc->clipboardRequestEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
 	cliprdr->MonitorReady = mac_cliprdr_monitor_ready;
 	cliprdr->ServerCapabilities = mac_cliprdr_server_capabilities;
@@ -425,8 +425,8 @@ void mac_cliprdr_init(mfContext *mfc, CliprdrClientContext *cliprdr)
 
 void mac_cliprdr_uninit(mfContext *mfc, CliprdrClientContext *cliprdr)
 {
-	cliprdr->custom = NULL;
-	mfc->cliprdr = NULL;
+	cliprdr->custom = nullptr;
+	mfc->cliprdr = nullptr;
 
 	ClipboardDestroy(mfc->clipboard);
 	(void)CloseHandle(mfc->clipboardRequestEvent);

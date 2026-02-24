@@ -399,7 +399,7 @@ void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 			free(fields->Buffer);
 			fields->Len = 0;
 			fields->MaxLen = 0;
-			fields->Buffer = NULL;
+			fields->Buffer = nullptr;
 			fields->BufferOffset = 0;
 		}
 	}
@@ -492,10 +492,10 @@ static BOOL ntlm_write_message_integrity_check(wStream* s, size_t offset, const 
 SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	wStream sbuffer;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t length = 0;
 	const NTLM_NEGOTIATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
-	NTLM_NEGOTIATE_MESSAGE* message = NULL;
+	NTLM_NEGOTIATE_MESSAGE* message = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -566,10 +566,10 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* buffer)
 {
 	wStream sbuffer;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t length = 0;
 	const NTLM_NEGOTIATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
-	NTLM_NEGOTIATE_MESSAGE* message = NULL;
+	NTLM_NEGOTIATE_MESSAGE* message = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -657,13 +657,13 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 {
 	SECURITY_STATUS status = SEC_E_INVALID_TOKEN;
 	wStream sbuffer;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t length = 0;
 	size_t StartOffset = 0;
 	size_t PayloadOffset = 0;
-	NTLM_AV_PAIR* AvTimestamp = NULL;
+	NTLM_AV_PAIR* AvTimestamp = nullptr;
 	const NTLM_CHALLENGE_MESSAGE empty = WINPR_C_ARRAY_INIT;
-	NTLM_CHALLENGE_MESSAGE* message = NULL;
+	NTLM_CHALLENGE_MESSAGE* message = nullptr;
 
 	if (!context || !buffer)
 		return SEC_E_INTERNAL_ERROR;
@@ -754,7 +754,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (context->ChallengeMessage.pvBuffer)
 		CopyMemory(context->ChallengeMessage.pvBuffer, Stream_Buffer(s) + StartOffset, length);
 #if defined(WITH_DEBUG_NTLM)
-	ntlm_print_challenge_message(&context->ChallengeMessage, message, NULL);
+	ntlm_print_challenge_message(&context->ChallengeMessage, message, nullptr);
 #endif
 	/* AV_PAIRs */
 
@@ -821,11 +821,11 @@ fail:
 SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* buffer)
 {
 	wStream sbuffer;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t length = 0;
 	UINT32 PayloadOffset = 0;
 	const NTLM_CHALLENGE_MESSAGE empty = WINPR_C_ARRAY_INIT;
-	NTLM_CHALLENGE_MESSAGE* message = NULL;
+	NTLM_CHALLENGE_MESSAGE* message = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -933,14 +933,14 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 {
 	SECURITY_STATUS status = SEC_E_INVALID_TOKEN;
 	wStream sbuffer;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t length = 0;
 	UINT32 flags = 0;
-	NTLM_AV_PAIR* AvFlags = NULL;
+	NTLM_AV_PAIR* AvFlags = nullptr;
 	size_t PayloadBufferOffset = 0;
 	const NTLM_AUTHENTICATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
-	NTLM_AUTHENTICATE_MESSAGE* message = NULL;
-	SSPI_CREDENTIALS* credentials = NULL;
+	NTLM_AUTHENTICATE_MESSAGE* message = nullptr;
+	SSPI_CREDENTIALS* credentials = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -1083,7 +1083,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	status = SEC_E_INTERNAL_ERROR;
 
 #if defined(WITH_DEBUG_NTLM)
-	ntlm_print_authenticate_message(&context->AuthenticateMessage, message, flags, NULL);
+	ntlm_print_authenticate_message(&context->AuthenticateMessage, message, flags, nullptr);
 #endif
 
 	if (message->UserName.Len > 0)
@@ -1222,12 +1222,12 @@ fail:
 SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer* buffer)
 {
 	wStream sbuffer;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t length = 0;
 	UINT32 PayloadBufferOffset = 0;
 	const NTLM_AUTHENTICATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
-	NTLM_AUTHENTICATE_MESSAGE* message = NULL;
-	SSPI_CREDENTIALS* credentials = NULL;
+	NTLM_AUTHENTICATE_MESSAGE* message = nullptr;
+	SSPI_CREDENTIALS* credentials = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);

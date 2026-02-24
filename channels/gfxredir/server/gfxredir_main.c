@@ -204,7 +204,7 @@ static UINT gfxredir_server_handle_messages(GfxRedirServerContext* context)
 	/* Check whether the dynamic channel is ready */
 	if (!priv->isReady)
 	{
-		void* buffer = NULL;
+		void* buffer = nullptr;
 		DWORD BytesReturned = 0;
 		if (WTSVirtualChannelQuery(priv->gfxredir_channel, WTSVirtualChannelReady, &buffer,
 		                           &BytesReturned) == FALSE)
@@ -226,7 +226,7 @@ static UINT gfxredir_server_handle_messages(GfxRedirServerContext* context)
 		Stream_SetPosition(s, 0);
 
 		DWORD BytesReturned = 0;
-		if (!WTSVirtualChannelRead(priv->gfxredir_channel, 0, NULL, 0, &BytesReturned))
+		if (!WTSVirtualChannelRead(priv->gfxredir_channel, 0, nullptr, 0, &BytesReturned))
 		{
 			if (GetLastError() == ERROR_NO_DATA)
 				return ERROR_NO_DATA;
@@ -330,7 +330,7 @@ static DWORD WINAPI gfxredir_server_thread_func(LPVOID arg)
 static wStream* gfxredir_server_single_packet_new(UINT32 cmdId, size_t length)
 {
 	GFXREDIR_HEADER header = WINPR_C_ARRAY_INIT;
-	wStream* s = Stream_New(NULL, GFXREDIR_HEADER_SIZE + length);
+	wStream* s = Stream_New(nullptr, GFXREDIR_HEADER_SIZE + length);
 
 	if (!s)
 	{
@@ -351,7 +351,7 @@ static wStream* gfxredir_server_single_packet_new(UINT32 cmdId, size_t length)
 	return s;
 error:
 	Stream_Free(s, TRUE);
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -464,7 +464,7 @@ static UINT gfxredir_send_open_pool(GfxRedirServerContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (openPool->sectionNameLength == 0 || openPool->sectionName == NULL)
+	if (openPool->sectionNameLength == 0 || openPool->sectionName == nullptr)
 	{
 		WLog_ERR(TAG, "section name must be provided!");
 		return ERROR_INVALID_DATA;
@@ -473,7 +473,7 @@ static UINT gfxredir_send_open_pool(GfxRedirServerContext* context,
 	/* make sure null-terminate */
 	if (openPool->sectionName[openPool->sectionNameLength - 1] != 0)
 	{
-		WLog_ERR(TAG, "section name must be terminated with NULL!");
+		WLog_ERR(TAG, "section name must be terminated with nullptr!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -657,8 +657,8 @@ static UINT gfxredir_server_open(GfxRedirServerContext* context)
 	WINPR_ASSERT(priv);
 
 	DWORD BytesReturned = 0;
-	PULONG pSessionId = NULL;
-	void* buffer = NULL;
+	PULONG pSessionId = nullptr;
+	void* buffer = nullptr;
 	priv->SessionId = WTS_CURRENT_SESSION;
 
 	if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
@@ -701,20 +701,20 @@ static UINT gfxredir_server_open(GfxRedirServerContext* context)
 	priv->channelEvent = *(HANDLE*)buffer;
 	WTSFreeMemory(buffer);
 
-	if (priv->thread == NULL)
+	if (priv->thread == nullptr)
 	{
-		if (!(priv->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		if (!(priv->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			goto out_close;
 		}
 
-		if (!(priv->thread =
-		          CreateThread(NULL, 0, gfxredir_server_thread_func, (void*)context, 0, NULL)))
+		if (!(priv->thread = CreateThread(nullptr, 0, gfxredir_server_thread_func, (void*)context,
+		                                  0, nullptr)))
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			(void)CloseHandle(priv->stopEvent);
-			priv->stopEvent = NULL;
+			priv->stopEvent = nullptr;
 			goto out_close;
 		}
 	}
@@ -722,8 +722,8 @@ static UINT gfxredir_server_open(GfxRedirServerContext* context)
 	return CHANNEL_RC_OK;
 out_close:
 	WTSVirtualChannelClose(priv->gfxredir_channel);
-	priv->gfxredir_channel = NULL;
-	priv->channelEvent = NULL;
+	priv->gfxredir_channel = nullptr;
+	priv->channelEvent = nullptr;
 	return rc;
 }
 
@@ -753,14 +753,14 @@ static UINT gfxredir_server_close(GfxRedirServerContext* context)
 
 		(void)CloseHandle(priv->thread);
 		(void)CloseHandle(priv->stopEvent);
-		priv->thread = NULL;
-		priv->stopEvent = NULL;
+		priv->thread = nullptr;
+		priv->stopEvent = nullptr;
 	}
 
 	if (priv->gfxredir_channel)
 	{
 		WTSVirtualChannelClose(priv->gfxredir_channel);
-		priv->gfxredir_channel = NULL;
+		priv->gfxredir_channel = nullptr;
 	}
 
 	return error;
@@ -774,7 +774,7 @@ GfxRedirServerContext* gfxredir_server_context_new(HANDLE vcm)
 	if (!context)
 	{
 		WLog_ERR(TAG, "gfxredir_server_context_new(): calloc GfxRedirServerContext failed!");
-		return NULL;
+		return nullptr;
 	}
 
 	GfxRedirServerPrivate* priv = context->priv =
@@ -786,7 +786,7 @@ GfxRedirServerContext* gfxredir_server_context_new(HANDLE vcm)
 		goto fail;
 	}
 
-	priv->input_stream = Stream_New(NULL, 4);
+	priv->input_stream = Stream_New(nullptr, 4);
 
 	if (!priv->input_stream)
 	{
@@ -809,7 +809,7 @@ GfxRedirServerContext* gfxredir_server_context_new(HANDLE vcm)
 	return context;
 fail:
 	gfxredir_server_context_free(context);
-	return NULL;
+	return nullptr;
 }
 
 void gfxredir_server_context_free(GfxRedirServerContext* context)

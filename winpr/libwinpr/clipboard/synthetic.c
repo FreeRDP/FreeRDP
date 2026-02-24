@@ -56,7 +56,7 @@ static inline char* b64_encode(const BYTE* WINPR_RESTRICT data, size_t length, s
 	const size_t alen = outLen + extra + 1ull;
 	BYTE* p = malloc(alen);
 	if (!p)
-		return NULL;
+		return nullptr;
 
 	BYTE* ret = p;
 
@@ -125,7 +125,7 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
                                           UINT32* pSize)
 {
 	size_t size = 0;
-	char* pDstData = NULL;
+	char* pDstData = nullptr;
 
 	if (formatId == CF_UNICODETEXT)
 	{
@@ -134,7 +134,7 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
 		if (!str || (size > UINT32_MAX))
 		{
 			free(str);
-			return NULL;
+			return nullptr;
 		}
 
 		pDstData = ConvertLineEndingToCRLF(str, &size);
@@ -151,14 +151,14 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
 		if (!pDstData || (size > *pSize))
 		{
 			free(pDstData);
-			return NULL;
+			return nullptr;
 		}
 
 		*pSize = (UINT32)size;
 		return pDstData;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -184,11 +184,11 @@ static void* clipboard_synthesize_cf_locale(WINPR_ATTR_UNUSED wClipboard* clipbo
                                             WINPR_ATTR_UNUSED const void* data,
                                             WINPR_ATTR_UNUSED UINT32* pSize)
 {
-	UINT32* pDstData = NULL;
+	UINT32* pDstData = nullptr;
 	pDstData = (UINT32*)malloc(sizeof(UINT32));
 
 	if (!pDstData)
-		return NULL;
+		return nullptr;
 
 	*pDstData = 0x0409; /* English - United States */
 	return (void*)pDstData;
@@ -204,21 +204,21 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
                                                  const void* data, UINT32* pSize)
 {
 	size_t size = 0;
-	char* crlfStr = NULL;
-	WCHAR* pDstData = NULL;
+	char* crlfStr = nullptr;
+	WCHAR* pDstData = nullptr;
 
 	if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
 	    (formatId == ClipboardGetFormatId(clipboard, mime_text_plain)))
 	{
 		size_t len = 0;
 		if (!pSize || (*pSize > INT32_MAX))
-			return NULL;
+			return nullptr;
 
 		size = *pSize;
 		crlfStr = ConvertLineEndingToCRLF((const char*)data, &size);
 
 		if (!crlfStr)
-			return NULL;
+			return nullptr;
 
 		pDstData = ConvertUtf8NToWCharAlloc(crlfStr, size, &len);
 		free(crlfStr);
@@ -226,7 +226,7 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 		if ((len < 1) || ((len + 1) > UINT32_MAX / sizeof(WCHAR)))
 		{
 			free(pDstData);
-			return NULL;
+			return nullptr;
 		}
 
 		const size_t slen = (len + 1) * sizeof(WCHAR);
@@ -251,7 +251,7 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 		char* pDstData = ConvertWCharNToUtf8Alloc(data, *pSize / sizeof(WCHAR), &size);
 
 		if (!pDstData)
-			return NULL;
+			return nullptr;
 
 		const size_t rc = ConvertLineEndingToLF(pDstData, size);
 		WINPR_ASSERT(rc <= UINT32_MAX);
@@ -265,7 +265,7 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 		char* pDstData = calloc(size + 1, sizeof(char));
 
 		if (!pDstData)
-			return NULL;
+			return nullptr;
 
 		CopyMemory(pDstData, data, size);
 		const size_t rc = ConvertLineEndingToLF(pDstData, size);
@@ -274,7 +274,7 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 		return pDstData;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 static BOOL is_format_bitmap(wClipboard* clipboard, UINT32 formatId)
@@ -301,7 +301,7 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 {
 	UINT32 SrcSize = 0;
 	UINT32 DstSize = 0;
-	BYTE* pDstData = NULL;
+	BYTE* pDstData = nullptr;
 	SrcSize = *pSize;
 
 #if defined(WINPR_UTILS_IMAGE_DIBv5)
@@ -318,13 +318,13 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 		wStream sbuffer = WINPR_C_ARRAY_INIT;
 		wStream* s = Stream_StaticConstInit(&sbuffer, data, SrcSize);
 		if (!readBitmapFileHeader(s, &pFileHeader))
-			return NULL;
+			return nullptr;
 
 		DstSize = SrcSize - sizeof(BITMAPFILEHEADER);
 		pDstData = (BYTE*)malloc(DstSize);
 
 		if (!pDstData)
-			return NULL;
+			return nullptr;
 
 		data = (const void*)&((const BYTE*)data)[sizeof(BITMAPFILEHEADER)];
 		CopyMemory(pDstData, data, DstSize);
@@ -337,7 +337,7 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 		          ClipboardGetFormatName(clipboard, formatId));
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -386,7 +386,7 @@ static void* clipboard_synthesize_cf_dibv5(wClipboard* clipboard, UINT32 formatI
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 #endif
 
@@ -398,15 +398,15 @@ static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoH
 
 	*pSize = 0;
 	if ((pInfoHeader->biBitCount < 1) || (pInfoHeader->biBitCount > 32))
-		return NULL;
+		return nullptr;
 
 	const size_t DstSize = sizeof(WINPR_BITMAP_FILE_HEADER) + size;
 	if (DstSize > UINT32_MAX)
-		return NULL;
+		return nullptr;
 
-	wStream* s = Stream_New(NULL, DstSize);
+	wStream* s = Stream_New(nullptr, DstSize);
 	if (!s)
-		return NULL;
+		return nullptr;
 
 	WINPR_BITMAP_FILE_HEADER fileHeader = WINPR_C_ARRAY_INIT;
 	fileHeader.bfType[0] = 'B';
@@ -436,7 +436,7 @@ static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoH
 
 fail:
 	Stream_Free(s, TRUE);
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -453,14 +453,14 @@ static void* clipboard_synthesize_image_bmp(WINPR_ATTR_UNUSED wClipboard* clipbo
 	if (formatId == CF_DIB)
 	{
 		if (SrcSize < sizeof(BITMAPINFOHEADER))
-			return NULL;
+			return nullptr;
 
 		wStream sbuffer = WINPR_C_ARRAY_INIT;
 		size_t offset = 0;
 		WINPR_BITMAP_INFO_HEADER header = WINPR_C_ARRAY_INIT;
 		wStream* s = Stream_StaticConstInit(&sbuffer, data, SrcSize);
 		if (!readBitmapInfoHeader(s, &header, &offset))
-			return NULL;
+			return nullptr;
 
 		return clipboard_prepend_bmp_header(&header, data, SrcSize, pSize);
 	}
@@ -477,7 +477,7 @@ static void* clipboard_synthesize_image_bmp(WINPR_ATTR_UNUSED wClipboard* clipbo
 		          ClipboardGetFormatName(clipboard, formatId));
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 #if defined(WINPR_UTILS_IMAGE_PNG) || defined(WINPR_UTILS_IMAGE_WEBP) || \
@@ -491,7 +491,7 @@ static void* clipboard_synthesize_image_bmp_to_format(wClipboard* clipboard, UIN
 	WINPR_ASSERT(pSize);
 
 	size_t dsize = 0;
-	void* result = NULL;
+	void* result = nullptr;
 
 	wImage* img = winpr_image_new();
 	void* bmp = clipboard_synthesize_image_bmp(clipboard, formatId, data, pSize);
@@ -512,7 +512,7 @@ static void* clipboard_synthesize_image_bmp_to_format(wClipboard* clipboard, UIN
 		else
 		{
 			free(result);
-			result = NULL;
+			result = nullptr;
 		}
 	}
 
@@ -542,7 +542,7 @@ static void* clipboard_synthesize_image_format_to_bmp(WINPR_ATTR_UNUSED wClipboa
 	WINPR_ASSERT(data);
 	WINPR_ASSERT(pSize);
 
-	BYTE* dst = NULL;
+	BYTE* dst = nullptr;
 	const UINT32 SrcSize = *pSize;
 	size_t size = 0;
 	wImage* image = winpr_image_new();
@@ -557,7 +557,7 @@ static void* clipboard_synthesize_image_format_to_bmp(WINPR_ATTR_UNUSED wClipboa
 	if ((size < sizeof(WINPR_BITMAP_FILE_HEADER)) || (size > UINT32_MAX))
 	{
 		free(dst);
-		dst = NULL;
+		dst = nullptr;
 		goto fail;
 	}
 	*pSize = (UINT32)size;
@@ -626,9 +626,9 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		const BYTE* cpb;
 		WCHAR* pv;
 	} pSrcData;
-	char* pDstData = NULL;
+	char* pDstData = nullptr;
 
-	pSrcData.cpv = NULL;
+	pSrcData.cpv = nullptr;
 
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(pSize);
@@ -637,7 +637,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 	{
 		const size_t SrcSize = (size_t)*pSize;
 		const size_t DstSize = SrcSize + 200;
-		char* body = NULL;
+		char* body = nullptr;
 		char num[20] = WINPR_C_ARRAY_INIT;
 
 		/* Create a copy, we modify the input data */
@@ -659,7 +659,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 			if ((pSrcData.cpb[0] == 0xFF) && (pSrcData.cpb[1] == 0xFE))
 			{
 				char* utfString =
-				    ConvertWCharNToUtf8Alloc(&pSrcData.pv[1], SrcSize / sizeof(WCHAR), NULL);
+				    ConvertWCharNToUtf8Alloc(&pSrcData.pv[1], SrcSize / sizeof(WCHAR), nullptr);
 				free(pSrcData.pv);
 				pSrcData.cpc = utfString;
 				if (!utfString)
@@ -689,30 +689,30 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 
 		if (!body)
 		{
-			if (!winpr_str_append("<HTML><BODY>", pDstData, DstSize, NULL))
+			if (!winpr_str_append("<HTML><BODY>", pDstData, DstSize, nullptr))
 				goto fail;
 		}
 
-		if (!winpr_str_append("<!--StartFragment-->", pDstData, DstSize, NULL))
+		if (!winpr_str_append("<!--StartFragment-->", pDstData, DstSize, nullptr))
 			goto fail;
 
 		/* StartFragment */
 		(void)sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
 		CopyMemory(&pDstData[69], num, 10);
 
-		if (!winpr_str_append(pSrcData.cpc, pDstData, DstSize, NULL))
+		if (!winpr_str_append(pSrcData.cpc, pDstData, DstSize, nullptr))
 			goto fail;
 
 		/* EndFragment */
 		(void)sprintf_s(num, sizeof(num), "%010" PRIuz "", strnlen(pDstData, SrcSize + 200));
 		CopyMemory(&pDstData[93], num, 10);
 
-		if (!winpr_str_append("<!--EndFragment-->", pDstData, DstSize, NULL))
+		if (!winpr_str_append("<!--EndFragment-->", pDstData, DstSize, nullptr))
 			goto fail;
 
 		if (!body)
 		{
-			if (!winpr_str_append("</BODY></HTML>", pDstData, DstSize, NULL))
+			if (!winpr_str_append("</BODY></HTML>", pDstData, DstSize, nullptr))
 				goto fail;
 		}
 
@@ -755,14 +755,14 @@ static void* clipboard_wrap_html(const char* mime, const char* idata, size_t ile
 	size_t b64len = 0;
 	char* b64 = b64_encode((const BYTE*)idata, ilength, &b64len);
 	if (!b64)
-		return NULL;
+		return nullptr;
 
 	const size_t mimelen = strlen(mime);
-	wStream* s = Stream_New(NULL, b64len + 225 + mimelen);
+	wStream* s = Stream_New(nullptr, b64len + 225 + mimelen);
 	if (!s)
 	{
 		free(b64);
-		return NULL;
+		return nullptr;
 	}
 
 	char* startHTML = html_pre_write(s, "Version:0.9\r\nStartHTML:");
@@ -805,7 +805,7 @@ static void* clipboard_wrap_html(const char* mime, const char* idata, size_t ile
 static void* clipboard_wrap_format_to_html(uint32_t bmpFormat, const char* idata, size_t ilength,
                                            uint32_t* plen)
 {
-	void* res = NULL;
+	void* res = nullptr;
 	wImage* img = winpr_image_new();
 	if (!img)
 		goto fail;
@@ -864,7 +864,7 @@ static void* clipboard_synthesize_image_html(WINPR_ATTR_UNUSED wClipboard* clipb
 				WLog_WARN(TAG, "failed to convert formatId 0x%08" PRIx32 " [%s]", formatId,
 				          ClipboardGetFormatName(clipboard, formatId));
 				*pSize = 0;
-				return NULL;
+				return nullptr;
 			}
 
 			void* res = clipboard_wrap_bmp_to_html(bmp, bmplen, pSize);
@@ -908,7 +908,7 @@ static void* clipboard_synthesize_image_html(WINPR_ATTR_UNUSED wClipboard* clipb
 			WLog_WARN(TAG, "Unsupported image format id 0x%08" PRIx32 " [%s]", formatId,
 			          ClipboardGetFormatName(clipboard, formatId));
 			*pSize = 0;
-			return NULL;
+			return nullptr;
 		}
 	}
 }
@@ -922,7 +922,7 @@ static void* clipboard_synthesize_image_html(WINPR_ATTR_UNUSED wClipboard* clipb
 static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 formatId,
                                             const void* data, UINT32* pSize)
 {
-	char* pDstData = NULL;
+	char* pDstData = nullptr;
 
 	if (formatId == ClipboardGetFormatId(clipboard, mime_ms_html))
 	{
@@ -932,25 +932,25 @@ static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 format
 		const char* endStr = strstr(str, "EndHTML:");
 
 		if (!begStr || !endStr)
-			return NULL;
+			return nullptr;
 
 		errno = 0;
-		const long beg = strtol(&begStr[10], NULL, 10);
+		const long beg = strtol(&begStr[10], nullptr, 10);
 
 		if (errno != 0)
-			return NULL;
+			return nullptr;
 
-		const long end = strtol(&endStr[8], NULL, 10);
+		const long end = strtol(&endStr[8], nullptr, 10);
 
 		if ((beg < 0) || (end < 0) || ((size_t)beg > SrcSize) || ((size_t)end > SrcSize) ||
 		    (beg >= end) || (errno != 0))
-			return NULL;
+			return nullptr;
 
 		const size_t DstSize = (size_t)(end - beg);
 		pDstData = calloc(DstSize + 1, sizeof(char));
 
 		if (!pDstData)
-			return NULL;
+			return nullptr;
 
 		CopyMemory(pDstData, &str[beg], DstSize);
 		const size_t rc = ConvertLineEndingToLF(pDstData, DstSize);

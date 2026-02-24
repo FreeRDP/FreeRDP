@@ -27,7 +27,7 @@
 
 BOOL WLog_DataMessage_Write(const char* filename, const void* data, size_t length)
 {
-	FILE* fp = NULL;
+	FILE* fp = nullptr;
 	BOOL ret = TRUE;
 
 	fp = winpr_fopen(filename, "w+b");

@@ -53,12 +53,12 @@ static CAM_ERROR_CODE cam_v4l_stream_stop(CamV4lStream* stream);
 /**
  * Function description
  *
- * @return NULL-terminated fourcc string
+ * @return \0-terminated fourcc string
  */
 static const char* cam_v4l_get_fourcc_str(unsigned int fourcc, char* buffer, size_t size)
 {
 	if (size < 5)
-		return NULL;
+		return nullptr;
 
 	buffer[0] = (char)(fourcc & 0xFF);
 	buffer[1] = (char)((fourcc >> 8) & 0xFF);
@@ -355,7 +355,7 @@ static void cam_v4l_stream_free_buffers(CamV4lStream* stream)
 	}
 
 	free(stream->buffers);
-	stream->buffers = NULL;
+	stream->buffers = nullptr;
 	stream->nBuffers = 0;
 }
 
@@ -406,7 +406,7 @@ static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
 			return 0;
 		}
 
-		stream->buffers[i].start = mmap(NULL, vbuffer.length, PROT_READ | PROT_WRITE, MAP_SHARED,
+		stream->buffers[i].start = mmap(nullptr, vbuffer.length, PROT_READ | PROT_WRITE, MAP_SHARED,
 		                                stream->fd, vbuffer.m.offset);
 
 		if (MAP_FAILED == stream->buffers[i].start)
@@ -531,7 +531,7 @@ CamV4lStream* cam_v4l_stream_create(const char* deviceId, size_t streamIndex)
 	if (!stream)
 	{
 		WLog_ERR(TAG, "Failure in calloc");
-		return NULL;
+		return nullptr;
 	}
 	stream->streamIndex = streamIndex;
 	stream->fd = -1;
@@ -541,7 +541,7 @@ CamV4lStream* cam_v4l_stream_create(const char* deviceId, size_t streamIndex)
 	{
 		WLog_ERR(TAG, "Failure in calloc");
 		free(stream);
-		return NULL;
+		return nullptr;
 	}
 
 	return stream;
@@ -563,7 +563,7 @@ CAM_ERROR_CODE cam_v4l_stream_stop(CamV4lStream* stream)
 	{
 		(void)WaitForSingleObject(stream->captureThread, INFINITE);
 		(void)CloseHandle(stream->captureThread);
-		stream->captureThread = NULL;
+		stream->captureThread = nullptr;
 	}
 
 	EnterCriticalSection(&stream->lock);
@@ -706,7 +706,8 @@ static CAM_ERROR_CODE cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, siz
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
 
-	stream->captureThread = CreateThread(NULL, 0, cam_v4l_stream_capture_thread, stream, 0, NULL);
+	stream->captureThread =
+	    CreateThread(nullptr, 0, cam_v4l_stream_capture_thread, stream, 0, nullptr);
 	if (!stream->captureThread)
 	{
 		WLog_ERR(TAG, "CreateThread failure");
@@ -772,7 +773,7 @@ static CAM_ERROR_CODE cam_v4l_free(ICamHal* ihal)
 {
 	CamV4lHal* hal = (CamV4lHal*)ihal;
 
-	if (hal == NULL)
+	if (hal == nullptr)
 		return CAM_ERROR_CODE_NotInitialized;
 
 	HashTable_Free(hal->streams);
@@ -795,7 +796,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE v4l_freerdp_rdpecam_client_subsystem_entry(
 
 	CamV4lHal* hal = (CamV4lHal*)calloc(1, sizeof(CamV4lHal));
 
-	if (hal == NULL)
+	if (hal == nullptr)
 		return CHANNEL_RC_NO_MEMORY;
 
 	hal->iHal.Enumerate = cam_v4l_enumerate;

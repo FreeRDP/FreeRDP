@@ -99,18 +99,18 @@ static void rpc_pdu_reset(RPC_PDU* pdu)
 
 static RPC_PDU* rpc_pdu_new(void)
 {
-	RPC_PDU* pdu = NULL;
+	RPC_PDU* pdu = nullptr;
 	pdu = (RPC_PDU*)malloc(sizeof(RPC_PDU));
 
 	if (!pdu)
-		return NULL;
+		return nullptr;
 
-	pdu->s = Stream_New(NULL, 4096);
+	pdu->s = Stream_New(nullptr, 4096);
 
 	if (!pdu->s)
 	{
 		free(pdu);
-		return NULL;
+		return nullptr;
 	}
 
 	rpc_pdu_reset(pdu);
@@ -198,7 +198,8 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 	WLog_Print(rpc->log, WLOG_TRACE, "client state %s, vc state %s",
 	           rpc_client_state_str(rpc->State), rpc_vc_state_str(rpc->VirtualConnection->State));
 
-	const BOOL rc = rts_match_pdu_signature_ex(&RTS_PDU_PING_SIGNATURE, pdu->s, NULL, &found, TRUE);
+	const BOOL rc =
+	    rts_match_pdu_signature_ex(&RTS_PDU_PING_SIGNATURE, pdu->s, nullptr, &found, TRUE);
 	rts_print_pdu_signature(rpc->log, WLOG_TRACE, &found);
 	if (rc)
 		return rts_recv_ping_pdu(rpc, pdu->s);
@@ -366,10 +367,10 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 {
 	int rc = -1;
-	RPC_PDU* pdu = NULL;
+	RPC_PDU* pdu = nullptr;
 	size_t StubOffset = 0;
 	size_t StubLength = 0;
-	RpcClientCall* call = NULL;
+	RpcClientCall* call = nullptr;
 	rpcconn_hdr_t header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rpc);
@@ -568,10 +569,10 @@ fail:
 static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 {
 	SSIZE_T status = -1;
-	HttpResponse* response = NULL;
-	RpcInChannel* inChannel = NULL;
-	RpcOutChannel* outChannel = NULL;
-	HANDLE outChannelEvent = NULL;
+	HttpResponse* response = nullptr;
+	RpcInChannel* inChannel = nullptr;
+	RpcOutChannel* outChannel = nullptr;
+	HANDLE outChannelEvent = nullptr;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	inChannel = connection->DefaultInChannel;
 	outChannel = connection->DefaultOutChannel;
@@ -733,7 +734,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 				{
 					rpc_channel_free(&connection->DefaultOutChannel->common);
 					connection->DefaultOutChannel = connection->NonDefaultOutChannel;
-					connection->NonDefaultOutChannel = NULL;
+					connection->NonDefaultOutChannel = nullptr;
 					rpc_out_channel_transition_to_state(connection->DefaultOutChannel,
 					                                    CLIENT_OUT_CHANNEL_STATE_OPENED);
 					rpc_virtual_connection_transition_to_state(
@@ -752,9 +753,9 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 static SSIZE_T rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 {
 	SSIZE_T status = -1;
-	HttpResponse* response = NULL;
-	RpcOutChannel* nextOutChannel = NULL;
-	HANDLE nextOutChannelEvent = NULL;
+	HttpResponse* response = nullptr;
+	RpcOutChannel* nextOutChannel = nullptr;
+	HANDLE nextOutChannelEvent = nullptr;
 	nextOutChannel = rpc->VirtualConnection->NonDefaultOutChannel;
 	BIO_get_event(nextOutChannel->common.tls->bio, &nextOutChannelEvent);
 
@@ -847,10 +848,10 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 int rpc_client_in_channel_recv(rdpRpc* rpc)
 {
 	int status = 1;
-	HttpResponse* response = NULL;
-	RpcInChannel* inChannel = NULL;
-	RpcOutChannel* outChannel = NULL;
-	HANDLE InChannelEvent = NULL;
+	HttpResponse* response = nullptr;
+	RpcInChannel* inChannel = nullptr;
+	RpcOutChannel* outChannel = nullptr;
+	HANDLE InChannelEvent = nullptr;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	inChannel = connection->DefaultInChannel;
 	outChannel = connection->DefaultOutChannel;
@@ -933,10 +934,10 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId)
 {
-	RpcClientCall* clientCall = NULL;
+	RpcClientCall* clientCall = nullptr;
 
 	if (!client)
-		return NULL;
+		return nullptr;
 
 	ArrayList_Lock(client->ClientCallList);
 	const size_t count = ArrayList_Count(client->ClientCallList);
@@ -955,11 +956,11 @@ RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId)
 
 RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum)
 {
-	RpcClientCall* clientCall = NULL;
+	RpcClientCall* clientCall = nullptr;
 	clientCall = (RpcClientCall*)calloc(1, sizeof(RpcClientCall));
 
 	if (!clientCall)
-		return NULL;
+		return nullptr;
 
 	clientCall->CallId = CallId;
 	clientCall->OpNum = OpNum;
@@ -980,7 +981,7 @@ static void rpc_array_client_call_free(void* call)
 int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t length)
 {
 	SSIZE_T status = 0;
-	RpcClientCall* clientCall = NULL;
+	RpcClientCall* clientCall = nullptr;
 	wStream s;
 	rpcconn_common_hdr_t header = WINPR_C_ARRAY_INIT;
 
@@ -1021,15 +1022,15 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 {
 	size_t offset = 0;
-	BYTE* buffer = NULL;
+	BYTE* buffer = nullptr;
 	size_t stub_data_pad = 0;
 	SecBuffer plaintext;
 	SecBuffer ciphertext = WINPR_C_ARRAY_INIT;
-	RpcClientCall* clientCall = NULL;
-	rdpCredsspAuth* auth = NULL;
+	RpcClientCall* clientCall = nullptr;
+	rdpCredsspAuth* auth = nullptr;
 	rpcconn_request_hdr_t request_pdu = WINPR_C_ARRAY_INIT;
-	RpcVirtualConnection* connection = NULL;
-	RpcInChannel* inChannel = NULL;
+	RpcVirtualConnection* connection = nullptr;
+	RpcInChannel* inChannel = nullptr;
 	BOOL rc = FALSE;
 
 	if (!s)
@@ -1161,7 +1162,7 @@ fail:
 static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT16* port,
                                        BOOL* isProxy)
 {
-	struct addrinfo* result = NULL;
+	struct addrinfo* result = nullptr;
 
 	if (!settings || !host || !port || !isProxy)
 		return FALSE;
@@ -1178,7 +1179,7 @@ static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT1
 			return FALSE;
 
 		*host =
-		    freerdp_tcp_address_to_string((const struct sockaddr_storage*)result->ai_addr, NULL);
+		    freerdp_tcp_address_to_string((const struct sockaddr_storage*)result->ai_addr, nullptr);
 		freeaddrinfo(result);
 		return TRUE;
 	}
@@ -1186,11 +1187,11 @@ static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT1
 
 RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 {
-	wObject* obj = NULL;
+	wObject* obj = nullptr;
 	RpcClient* client = (RpcClient*)calloc(1, sizeof(RpcClient));
 
 	if (!client)
-		return NULL;
+		return nullptr;
 
 	if (!rpc_client_resolve_gateway(context->settings, &client->host, &client->port,
 	                                &client->isProxy))
@@ -1206,12 +1207,12 @@ RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 	if (!client->pdu)
 		goto fail;
 
-	client->ReceiveFragment = Stream_New(NULL, max_recv_frag);
+	client->ReceiveFragment = Stream_New(nullptr, max_recv_frag);
 
 	if (!client->ReceiveFragment)
 		goto fail;
 
-	client->PipeEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	client->PipeEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
 	if (!client->PipeEvent)
 		goto fail;
@@ -1235,7 +1236,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	rpc_client_free(client);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void rpc_client_free(RpcClient* client)

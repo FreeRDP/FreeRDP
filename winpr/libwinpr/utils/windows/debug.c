@@ -54,7 +54,7 @@ void* winpr_win_backtrace(DWORD size)
 	t_win_stack* data = calloc(1, sizeof(t_win_stack));
 
 	if (!data)
-		return NULL;
+		return nullptr;
 
 	data->max = size;
 	data->stack = calloc(data->max, sizeof(PVOID));
@@ -62,11 +62,11 @@ void* winpr_win_backtrace(DWORD size)
 	if (!data->stack)
 	{
 		free(data);
-		return NULL;
+		return nullptr;
 	}
 
-	SymInitialize(process, NULL, TRUE);
-	data->used = RtlCaptureStackBackTrace(2, size, data->stack, NULL);
+	SymInitialize(process, nullptr, TRUE);
+	data->used = RtlCaptureStackBackTrace(2, size, data->stack, nullptr);
 	return data;
 }
 
@@ -76,7 +76,7 @@ char** winpr_win_backtrace_symbols(void* buffer, size_t* used)
 		*used = 0;
 
 	if (!buffer)
-		return NULL;
+		return nullptr;
 
 	{
 		size_t line_len = 1024;
@@ -93,7 +93,7 @@ char** winpr_win_backtrace_symbols(void* buffer, size_t* used)
 			free(vlines);
 			free(symbol);
 			free(line);
-			return NULL;
+			return nullptr;
 		}
 
 		line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
@@ -132,7 +132,7 @@ char* winpr_win_strerror(DWORD dw, char* dmsg, size_t size)
 {
 	DWORD nSize = 0;
 	DWORD dwFlags = 0;
-	LPTSTR msg = NULL;
+	LPTSTR msg = nullptr;
 	BOOL alloc = FALSE;
 	dwFlags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 #ifdef FORMAT_MESSAGE_ALLOCATE_BUFFER
@@ -142,13 +142,14 @@ char* winpr_win_strerror(DWORD dw, char* dmsg, size_t size)
 	nSize = (DWORD)(size * sizeof(WCHAR));
 	msg = (LPTSTR)calloc(nSize, sizeof(WCHAR));
 #endif
-	const DWORD rc = FormatMessage(dwFlags, NULL, dw, 0, alloc ? (LPTSTR)&msg : msg, nSize, NULL);
+	const DWORD rc =
+	    FormatMessage(dwFlags, nullptr, dw, 0, alloc ? (LPTSTR)&msg : msg, nSize, nullptr);
 
 	if (rc > 0)
 	{
 #if defined(UNICODE)
 		(void)WideCharToMultiByte(CP_ACP, 0, msg, (int)rc, dmsg, (int)(MIN(size - 1, INT_MAX)),
-		                          NULL, NULL);
+		                          nullptr, nullptr);
 #else  /* defined(UNICODE) */
 		memcpy(dmsg, msg, MIN(rc, size - 1));
 #endif /* defined(UNICODE) */

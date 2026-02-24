@@ -654,7 +654,7 @@ static UINT encomsp_send_change_participant_control_level_pdu(
 	header.Type = ODTYPE_PARTICIPANT_CTRL_CHANGED;
 	header.Length = ENCOMSP_ORDER_HEADER_SIZE + 6;
 
-	wStream* s = Stream_New(NULL, header.Length);
+	wStream* s = Stream_New(nullptr, header.Length);
 
 	if (!s)
 	{
@@ -946,7 +946,7 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 		if (encomsp->data_in)
 			Stream_Free(encomsp->data_in, TRUE);
 
-		encomsp->data_in = Stream_New(NULL, totalLength);
+		encomsp->data_in = Stream_New(nullptr, totalLength);
 
 		if (!encomsp->data_in)
 		{
@@ -973,11 +973,11 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 			return ERROR_INVALID_DATA;
 		}
 
-		encomsp->data_in = NULL;
+		encomsp->data_in = nullptr;
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		if (!MessageQueue_Post(encomsp->queue, NULL, 0, (void*)data_in, NULL))
+		if (!MessageQueue_Post(encomsp->queue, nullptr, 0, (void*)data_in, nullptr))
 		{
 			WLog_ERR(TAG, "MessageQueue_Post failed!");
 			return ERROR_INTERNAL_ERROR;
@@ -1033,7 +1033,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 
 static DWORD WINAPI encomsp_virtual_channel_client_thread(LPVOID arg)
 {
-	wStream* data = NULL;
+	wStream* data = nullptr;
 	wMessage message = WINPR_C_ARRAY_INIT;
 	encomspPlugin* encomsp = (encomspPlugin*)arg;
 	UINT error = CHANNEL_RC_OK;
@@ -1092,7 +1092,7 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
 {
 	WINPR_ASSERT(encomsp);
 
-	encomsp->queue = MessageQueue_New(NULL);
+	encomsp->queue = MessageQueue_New(nullptr);
 
 	if (!encomsp->queue)
 	{
@@ -1100,8 +1100,8 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if (!(encomsp->thread = CreateThread(NULL, 0, encomsp_virtual_channel_client_thread,
-	                                     (void*)encomsp, 0, NULL)))
+	if (!(encomsp->thread = CreateThread(nullptr, 0, encomsp_virtual_channel_client_thread,
+	                                     (void*)encomsp, 0, nullptr)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		MessageQueue_Free(encomsp->queue);
@@ -1137,8 +1137,8 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 
 	MessageQueue_Free(encomsp->queue);
 	(void)CloseHandle(encomsp->thread);
-	encomsp->queue = NULL;
-	encomsp->thread = NULL;
+	encomsp->queue = nullptr;
+	encomsp->thread = nullptr;
 
 	WINPR_ASSERT(encomsp->channelEntryPoints.pVirtualChannelCloseEx);
 	const UINT rc = encomsp->channelEntryPoints.pVirtualChannelCloseEx(encomsp->InitHandle,
@@ -1156,7 +1156,7 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 	if (encomsp->data_in)
 	{
 		Stream_Free(encomsp->data_in, TRUE);
-		encomsp->data_in = NULL;
+		encomsp->data_in = nullptr;
 	}
 
 	return CHANNEL_RC_OK;
@@ -1171,7 +1171,7 @@ static UINT encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
 {
 	WINPR_ASSERT(encomsp);
 
-	encomsp->InitHandle = 0;
+	encomsp->InitHandle = nullptr;
 	free(encomsp->context);
 	free(encomsp);
 	return CHANNEL_RC_OK;
@@ -1247,7 +1247,7 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
 	    (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 	WINPR_ASSERT(pEntryPointsEx);
 
-	EncomspClientContext* context = NULL;
+	EncomspClientContext* context = nullptr;
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
@@ -1260,17 +1260,17 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
 		}
 
 		context->handle = (void*)encomsp;
-		context->FilterUpdated = NULL;
-		context->ApplicationCreated = NULL;
-		context->ApplicationRemoved = NULL;
-		context->WindowCreated = NULL;
-		context->WindowRemoved = NULL;
-		context->ShowWindow = NULL;
-		context->ParticipantCreated = NULL;
-		context->ParticipantRemoved = NULL;
+		context->FilterUpdated = nullptr;
+		context->ApplicationCreated = nullptr;
+		context->ApplicationRemoved = nullptr;
+		context->WindowCreated = nullptr;
+		context->WindowRemoved = nullptr;
+		context->ShowWindow = nullptr;
+		context->ParticipantCreated = nullptr;
+		context->ParticipantRemoved = nullptr;
 		context->ChangeParticipantControlLevel = encomsp_send_change_participant_control_level_pdu;
-		context->GraphicsStreamPaused = NULL;
-		context->GraphicsStreamResumed = NULL;
+		context->GraphicsStreamPaused = nullptr;
+		context->GraphicsStreamResumed = nullptr;
 		encomsp->context = context;
 		encomsp->rdpcontext = pEntryPointsEx->context;
 		isFreerdp = TRUE;

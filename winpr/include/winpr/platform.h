@@ -85,6 +85,7 @@
 	} /** @since version 3.24.0 */
 #else
 #define WINPR_C_ARRAY_INIT { 0 } /** @since version 3.24.0 */
+#define nullptr NULL /** @since version 3.24.0 */
 #endif
 
 #if defined(WINPR_DEFINE_ATTR_NODISCARD)

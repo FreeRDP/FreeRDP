@@ -59,7 +59,7 @@ static bool test_gdi_coords(size_t testNr, HGDI_DC hdc, const GDI_RGN* clip, con
 	}
 
 	const BOOL draw =
-	    gdi_ClipCoords(hdc, &(rgn1->x), &(rgn1->y), &(rgn1->w), &(rgn1->h), NULL, NULL);
+	    gdi_ClipCoords(hdc, &(rgn1->x), &(rgn1->y), &(rgn1->w), &(rgn1->h), nullptr, nullptr);
 	if (expect)
 	{
 		if (!draw)
@@ -101,8 +101,8 @@ fail:
 static int test_gdi_ClipCoords(void)
 {
 	int rc = -1;
-	HGDI_DC hdc = NULL;
-	HGDI_BITMAP bmp = NULL;
+	HGDI_DC hdc = nullptr;
+	HGDI_BITMAP bmp = nullptr;
 	const UINT32 format = PIXEL_FORMAT_ARGB32;
 
 	if (!(hdc = gdi_GetDC()))
@@ -112,7 +112,7 @@ static int test_gdi_ClipCoords(void)
 	}
 
 	hdc->format = format;
-	bmp = gdi_CreateBitmapEx(1024, 768, PIXEL_FORMAT_XRGB32, 0, NULL, NULL);
+	bmp = gdi_CreateBitmapEx(1024, 768, PIXEL_FORMAT_XRGB32, 0, nullptr, nullptr);
 	gdi_SelectObject(hdc, (HGDIOBJECT)bmp);
 	gdi_SetNullClipRgn(hdc);
 
@@ -140,17 +140,17 @@ static int test_gdi_ClipCoords(void)
 
 	const struct testcase_t testcases[] = {
 		/* null clipping region */
-		{ NULL, &rgn20x20_100x100, &rgn20x20_100x100 },
+		{ nullptr, &rgn20x20_100x100, &rgn20x20_100x100 },
 		/* region all inside clipping region */
 		{ &rgn0x0_1024x768, &rgn20x20_100x100, &rgn20x20_100x100 },
 		/* region all outside clipping region, on the left */
-		{ &rgn300x300_100x100, &rgn20x20_100x100, NULL },
+		{ &rgn300x300_100x100, &rgn20x20_100x100, nullptr },
 		/* region all outside clipping region, on the right */
-		{ &rgn300x300_100x100, &rgn420x420_100x100, NULL },
+		{ &rgn300x300_100x100, &rgn420x420_100x100, nullptr },
 		/* region all outside clipping region, on top */
-		{ &rgn300x300_100x100, &rgn300x20_100x100, NULL },
+		{ &rgn300x300_100x100, &rgn300x20_100x100, nullptr },
 		/* region all outside clipping region, at the bottom */
-		{ &rgn300x300_100x100, &rgn300x420_100x100, NULL },
+		{ &rgn300x300_100x100, &rgn300x420_100x100, nullptr },
 		/* left outside, right = clip, top = clip, bottom = clip */
 		{ &rgn300x300_100x100, &rgn100x300_300x100, &rgn300x300_100x100 },
 		/* left outside, right inside, top = clip, bottom = clip */
@@ -184,11 +184,11 @@ fail:
 static int test_gdi_InvalidateRegion(void)
 {
 	int rc = -1;
-	HGDI_DC hdc = NULL;
-	HGDI_RGN rgn1 = NULL;
-	HGDI_RGN rgn2 = NULL;
-	HGDI_RGN invalid = NULL;
-	HGDI_BITMAP bmp = NULL;
+	HGDI_DC hdc = nullptr;
+	HGDI_RGN rgn1 = nullptr;
+	HGDI_RGN rgn2 = nullptr;
+	HGDI_RGN invalid = nullptr;
+	HGDI_BITMAP bmp = nullptr;
 	const UINT32 format = PIXEL_FORMAT_XRGB32;
 
 	if (!(hdc = gdi_GetDC()))
@@ -198,7 +198,7 @@ static int test_gdi_InvalidateRegion(void)
 	}
 
 	hdc->format = format;
-	bmp = gdi_CreateBitmapEx(1024, 768, PIXEL_FORMAT_XRGB32, 0, NULL, NULL);
+	bmp = gdi_CreateBitmapEx(1024, 768, PIXEL_FORMAT_XRGB32, 0, nullptr, nullptr);
 	gdi_SelectObject(hdc, (HGDIOBJECT)bmp);
 	gdi_SetNullClipRgn(hdc);
 	hdc->hwnd = (HGDI_WND)calloc(1, sizeof(GDI_WND));

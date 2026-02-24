@@ -120,7 +120,7 @@ static BOOL test_alphaComp_func(void)
 	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT * 4]) = WINPR_C_ARRAY_INIT;
 	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT * 4]) = WINPR_C_ARRAY_INIT;
 	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT * 4]) = WINPR_C_ARRAY_INIT;
-	UINT32* ptr = NULL;
+	UINT32* ptr = nullptr;
 	winpr_RAND(src1, sizeof(src1));
 	/* Special-case the first two values */
 	src1[0] &= 0x00FFFFFFU;
@@ -161,7 +161,7 @@ static int test_alphaComp_speed(void)
 	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT]) = WINPR_C_ARRAY_INIT;
 	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT]) = WINPR_C_ARRAY_INIT;
 	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT]) = WINPR_C_ARRAY_INIT;
-	UINT32* ptr = NULL;
+	UINT32* ptr = nullptr;
 
 	winpr_RAND(src1, sizeof(src1));
 	/* Special-case the first two values */

@@ -51,7 +51,7 @@ char** string_list_copy(const char* const* string_list)
 
 	if (!copy)
 	{
-		return 0;
+		return nullptr;
 	}
 
 	for (int i = 0; i < length; i++)
@@ -59,7 +59,7 @@ char** string_list_copy(const char* const* string_list)
 		copy[i] = _strdup(string_list[i]);
 	}
 
-	copy[length] = 0;
+	copy[length] = nullptr;
 	return copy;
 }
 

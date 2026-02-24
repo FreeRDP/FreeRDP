@@ -1521,14 +1521,14 @@ static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 static BOOL set_break_on(WINPR_COMM* pComm)
 {
 	WINPR_ASSERT(pComm);
-	return CommIoCtl(pComm, TIOCSBRK, NULL);
+	return CommIoCtl(pComm, TIOCSBRK, nullptr);
 }
 
 static BOOL set_break_off(WINPR_COMM* pComm)
 {
 	WINPR_ASSERT(pComm);
 
-	return CommIoCtl(pComm, TIOCCBRK, NULL);
+	return CommIoCtl(pComm, TIOCCBRK, nullptr);
 }
 
 static BOOL set_xoff(WINPR_COMM* pComm)
@@ -1610,7 +1610,7 @@ static BOOL immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
 	 * FIXME: see also get_commstatus()'s WaitForImmediate boolean
 	 */
 
-	result = CommWriteFile(pComm, pChar, 1, &nbBytesWritten, NULL);
+	result = CommWriteFile(pComm, pChar, 1, &nbBytesWritten, nullptr);
 
 	WINPR_ASSERT(nbBytesWritten == 1);
 

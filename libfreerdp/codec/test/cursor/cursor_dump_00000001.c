@@ -167,12 +167,12 @@ const gdiPalette cursor_dump_00000001_palette = {
 };
 
 const rdpPointer cursor_dump_00000001_pointer = { .size = 0,
-	                                              .New = NULL,
-	                                              .Free = NULL,
-	                                              .Set = NULL,
-	                                              .SetNull = NULL,
-	                                              .SetDefault = NULL,
-	                                              .SetPosition = NULL,
+	                                              .New = nullptr,
+	                                              .Free = nullptr,
+	                                              .Set = nullptr,
+	                                              .SetNull = nullptr,
+	                                              .SetDefault = nullptr,
+	                                              .SetPosition = nullptr,
 	                                              .paddingA = { 0 },
 	                                              .xPos = 0,
 	                                              .yPos = 0,

@@ -88,9 +88,9 @@ static BOOL parse_xkb_rule_names(char* xkb_rule, unsigned long num_bytes, char**
 static DWORD kbd_layout_id_from_x_property(wLog* log, Display* display, Window root,
                                            char* property_name)
 {
-	char* layout = NULL;
-	char* variant = NULL;
-	char* rule = NULL;
+	char* layout = nullptr;
+	char* variant = nullptr;
+	char* rule = nullptr;
 	Atom type = None;
 	int item_size = 0;
 	unsigned long items = 0;
@@ -124,7 +124,7 @@ static DWORD kbd_layout_id_from_x_property(wLog* log, Display* display, Window r
 
 int xf_detect_keyboard_layout_from_xkb(wLog* log, DWORD* keyboardLayoutId)
 {
-	Display* display = XOpenDisplay(NULL);
+	Display* display = XOpenDisplay(nullptr);
 
 	if (!display)
 		return 0;

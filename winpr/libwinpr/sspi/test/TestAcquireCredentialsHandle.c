@@ -15,7 +15,7 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 	CredHandle credentials = WINPR_C_ARRAY_INIT;
 	TimeStamp expiration;
 	SEC_WINNT_AUTH_IDENTITY identity;
-	SecurityFunctionTable* table = NULL;
+	SecurityFunctionTable* table = nullptr;
 	SecPkgCredentials_Names credential_names;
 
 	WINPR_UNUSED(argc);
@@ -34,8 +34,9 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 	identity.DomainLength = strlen(test_Domain);
 	identity.PasswordLength = strlen(test_Password);
 	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
-	status = table->AcquireCredentialsHandle(NULL, NTLM_SSP_NAME, SECPKG_CRED_OUTBOUND, NULL,
-	                                         &identity, NULL, NULL, &credentials, &expiration);
+	status =
+	    table->AcquireCredentialsHandle(nullptr, NTLM_SSP_NAME, SECPKG_CRED_OUTBOUND, nullptr,
+	                                    &identity, nullptr, nullptr, &credentials, &expiration);
 
 	if (status != SEC_E_OK)
 		goto fail;

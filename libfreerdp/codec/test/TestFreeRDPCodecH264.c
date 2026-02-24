@@ -67,7 +67,7 @@ static void* allocRGB(uint32_t format, uint32_t width, uint32_t height, uint32_t
 
 	uint8_t* rgb = calloc(stride, height);
 	if (!rgb)
-		return NULL;
+		return nullptr;
 
 	for (size_t x = 0; x < height; x++)
 	{
@@ -98,8 +98,8 @@ static BOOL compareRGB(const uint8_t* src, const uint8_t* dst, uint32_t format, 
 static BOOL testEncode(uint32_t format, uint32_t width, uint32_t height)
 {
 	BOOL rc = FALSE;
-	void* src = NULL;
-	void* out = NULL;
+	void* src = nullptr;
+	void* out = nullptr;
 	RDPGFX_H264_METABLOCK meta = WINPR_C_ARRAY_INIT;
 	H264_CONTEXT* h264 = h264_context_new(TRUE);
 	H264_CONTEXT* h264dec = h264_context_new(FALSE);
@@ -120,7 +120,7 @@ static BOOL testEncode(uint32_t format, uint32_t width, uint32_t height)
 
 	const RECTANGLE_16 rect = { .left = 0, .top = 0, .right = width, .bottom = height };
 	uint32_t dstsize = 0;
-	uint8_t* dst = NULL;
+	uint8_t* dst = nullptr;
 	if (avc420_compress(h264, src, format, stride, width, height, &rect, &dst, &dstsize, &meta) < 0)
 		goto fail;
 	if ((dstsize == 0) || !dst)
@@ -156,8 +156,8 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 	if (argc == 3)
 	{
 		errno = 0;
-		width = strtoul(argv[1], NULL, 0);
-		height = strtoul(argv[2], NULL, 0);
+		width = strtoul(argv[1], nullptr, 0);
+		height = strtoul(argv[2], nullptr, 0);
 		if ((errno != 0) || (width == 0) || (height == 0))
 		{
 			char buffer[128] = WINPR_C_ARRAY_INIT;

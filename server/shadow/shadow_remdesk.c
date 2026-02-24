@@ -52,6 +52,6 @@ void shadow_client_remdesk_uninit(rdpShadowClient* client)
 	{
 		client->remdesk->Stop(client->remdesk);
 		remdesk_server_context_free(client->remdesk);
-		client->remdesk = NULL;
+		client->remdesk = nullptr;
 	}
 }

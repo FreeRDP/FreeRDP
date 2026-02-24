@@ -71,7 +71,7 @@ BOOL MutexCloseHandle(HANDLE handle)
 		{
 			size_t used = 0;
 			void* stack = winpr_backtrace(20);
-			char** msg = NULL;
+			char** msg = nullptr;
 
 			if (stack)
 				msg = winpr_backtrace_symbols(stack, &used);
@@ -97,38 +97,21 @@ BOOL MutexCloseHandle(HANDLE handle)
 	return TRUE;
 }
 
-static HANDLE_OPS ops = { MutexIsHandled,
-	                      MutexCloseHandle,
-	                      MutexGetFd,
-	                      NULL, /* CleanupHandle */
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL };
+static HANDLE_OPS ops = { MutexIsHandled, MutexCloseHandle, MutexGetFd, nullptr, /* CleanupHandle */
+	                      nullptr,        nullptr,          nullptr,    nullptr, nullptr, nullptr,
+	                      nullptr,        nullptr,          nullptr,    nullptr, nullptr, nullptr,
+	                      nullptr,        nullptr,          nullptr,    nullptr, nullptr };
 
 HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
 {
-	HANDLE handle = NULL;
-	char* name = NULL;
+	HANDLE handle = nullptr;
+	char* name = nullptr;
 
 	if (lpName)
 	{
-		name = ConvertWCharToUtf8Alloc(lpName, NULL);
+		name = ConvertWCharToUtf8Alloc(lpName, nullptr);
 		if (!name)
-			return NULL;
+			return nullptr;
 	}
 
 	handle = CreateMutexA(lpMutexAttributes, bInitialOwner, name);
@@ -138,8 +121,8 @@ HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 
 HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName)
 {
-	HANDLE handle = NULL;
-	WINPR_MUTEX* mutex = NULL;
+	HANDLE handle = nullptr;
+	WINPR_MUTEX* mutex = nullptr;
 	mutex = (WINPR_MUTEX*)calloc(1, sizeof(WINPR_MUTEX));
 
 	if (lpMutexAttributes)
@@ -159,7 +142,7 @@ HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 			pthread_mutex_lock(&mutex->mutex);
 
 		if (lpName)
-			mutex->name = strdup(lpName); /* Non runtime relevant information, skip NULL check */
+			mutex->name = strdup(lpName); /* Non runtime relevant information, skip nullptr check */
 	}
 
 	return handle;
@@ -207,7 +190,7 @@ HANDLE OpenMutexA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 	WINPR_UNUSED(bInheritHandle);
 	WINPR_UNUSED(lpName);
 	WLog_ERR(TAG, "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
@@ -217,13 +200,13 @@ HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
 	WINPR_UNUSED(bInheritHandle);
 	WINPR_UNUSED(lpName);
 	WLog_ERR(TAG, "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 BOOL ReleaseMutex(HANDLE hMutex)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* Object = NULL;
+	WINPR_HANDLE* Object = nullptr;
 
 	if (!winpr_Handle_GetInfo(hMutex, &Type, &Object))
 		return FALSE;

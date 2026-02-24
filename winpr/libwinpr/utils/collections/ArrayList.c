@@ -152,7 +152,7 @@ void ArrayList_Unlock(wArrayList* arrayList)
 
 void* ArrayList_GetItem(wArrayList* arrayList, size_t index)
 {
-	void* obj = NULL;
+	void* obj = nullptr;
 
 	WINPR_ASSERT(arrayList);
 	if (index < arrayList->size)
@@ -202,7 +202,7 @@ static BOOL ArrayList_EnsureCapacity(wArrayList* arrayList, size_t count)
 
 	if (arrayList->size + count > arrayList->capacity)
 	{
-		void** newArray = NULL;
+		void** newArray = nullptr;
 		size_t newCapacity = arrayList->capacity * arrayList->growthFactor;
 		if (newCapacity < arrayList->size + count)
 			newCapacity = arrayList->size + count;
@@ -265,7 +265,7 @@ void ArrayList_Clear(wArrayList* arrayList)
 		if (arrayList->object.fnObjectFree)
 			arrayList->object.fnObjectFree(arrayList->array[index]);
 
-		arrayList->array[index] = NULL;
+		arrayList->array[index] = nullptr;
 	}
 
 	arrayList->size = 0;
@@ -575,12 +575,12 @@ fail:
 
 wArrayList* ArrayList_New(BOOL synchronized)
 {
-	wObject* obj = NULL;
-	wArrayList* arrayList = NULL;
+	wObject* obj = nullptr;
+	wArrayList* arrayList = nullptr;
 	arrayList = (wArrayList*)calloc(1, sizeof(wArrayList));
 
 	if (!arrayList)
-		return NULL;
+		return nullptr;
 
 	arrayList->synchronized = synchronized;
 	arrayList->growthFactor = 2;
@@ -598,7 +598,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	ArrayList_Free(arrayList);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void ArrayList_Free(wArrayList* arrayList)

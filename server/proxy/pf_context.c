@@ -88,7 +88,7 @@ pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const 
 	if (!ret)
 	{
 		PROXY_LOG_ERR(TAG, ps, "error allocating channel context for '%s'", name);
-		return NULL;
+		return nullptr;
 	}
 
 	ret->front_channel_id = id;
@@ -97,7 +97,7 @@ pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const 
 	{
 		PROXY_LOG_ERR(TAG, ps, "error allocating name in channel context for '%s'", name);
 		free(ret);
-		return NULL;
+		return nullptr;
 	}
 
 	proxyChannelToInterceptData channel = { .name = name, .channelId = id, .intercept = FALSE };
@@ -136,20 +136,20 @@ static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx);
 WINPR_ATTR_NODISCARD
 static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 {
-	wObject* obj = NULL;
+	wObject* obj = nullptr;
 	pServerContext* context = (pServerContext*)ctx;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(context);
 
-	context->dynvcReady = NULL;
+	context->dynvcReady = nullptr;
 
 	context->vcm = WTSOpenServerA((LPSTR)client->context);
 
 	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
 		goto error;
 
-	if (!(context->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(context->dynvcReady = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto error;
 
 	context->interceptContextMap = HashTable_New(FALSE);
@@ -204,7 +204,7 @@ void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 	if (context->dynvcReady)
 	{
 		(void)CloseHandle(context->dynvcReady);
-		context->dynvcReady = NULL;
+		context->dynvcReady = nullptr;
 	}
 
 	HashTable_Free(context->interceptContextMap);
@@ -213,7 +213,7 @@ void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 
 	if (context->vcm && (context->vcm != INVALID_HANDLE_VALUE))
 		WTSCloseServer(context->vcm);
-	context->vcm = NULL;
+	context->vcm = nullptr;
 }
 
 BOOL pf_context_init_server_context(freerdp_peer* client)
@@ -259,7 +259,7 @@ void intercept_context_entry_free(void* obj)
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 {
 	BOOL rc = FALSE;
-	rdpSettings* before_copy = NULL;
+	rdpSettings* before_copy = nullptr;
 	const FreeRDP_Settings_Keys_String to_revert[] = { FreeRDP_ConfigPath,
 		                                               FreeRDP_CertificateName };
 
@@ -288,11 +288,11 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 			goto out_fail;
 
 		/*
-		 * RdpServerRsaKey must be set to NULL if `dst` is client's context
-		 * it must be freed before setting it to NULL to avoid a memory leak!
+		 * RdpServerRsaKey must be set to nullptr if `dst` is client's context
+		 * it must be freed before setting it to nullptr to avoid a memory leak!
 		 */
 
-		if (!freerdp_settings_set_pointer_len(dst, FreeRDP_RdpServerRsaKey, NULL, 1))
+		if (!freerdp_settings_set_pointer_len(dst, FreeRDP_RdpServerRsaKey, nullptr, 1))
 			goto out_fail;
 	}
 
@@ -314,7 +314,7 @@ pClientContext* pf_context_create_client_context(const rdpSettings* clientSettin
 	rdpContext* context = freerdp_client_context_new(&clientEntryPoints);
 
 	if (!context)
-		return NULL;
+		return nullptr;
 
 	pClientContext* pc = (pClientContext*)context;
 
@@ -324,23 +324,23 @@ pClientContext* pf_context_create_client_context(const rdpSettings* clientSettin
 	return pc;
 error:
 	freerdp_client_context_free(context);
-	return NULL;
+	return nullptr;
 }
 
 proxyData* proxy_data_new(void)
 {
 	BYTE temp[16];
-	char* hex = NULL;
-	proxyData* pdata = NULL;
+	char* hex = nullptr;
+	proxyData* pdata = nullptr;
 
 	pdata = calloc(1, sizeof(proxyData));
 	if (!pdata)
-		return NULL;
+		return nullptr;
 
-	if (!(pdata->abort_event = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(pdata->abort_event = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto error;
 
-	if (!(pdata->gfx_server_ready = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(pdata->gfx_server_ready = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto error;
 
 	winpr_RAND(&temp, 16);
@@ -365,7 +365,7 @@ error:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	proxy_data_free(pdata);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 /* updates circular pointers between proxyData and pClientContext instances */

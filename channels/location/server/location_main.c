@@ -77,9 +77,9 @@ static UINT location_server_open_channel(location_server* location)
 {
 	LocationServerContext* context = &location->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent = NULL;
+	HANDLE hEvent = nullptr;
 	DWORD BytesReturned = 0;
-	PULONG pSessionId = NULL;
+	PULONG pSessionId = nullptr;
 	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
@@ -187,10 +187,10 @@ static UINT location_server_recv_base_location3d(LocationServerContext* context,
 		                                    .latitude = FP_NAN,
 		                                    .longitude = FP_NAN,
 		                                    .altitude = 0,
-		                                    .speed = NULL,
-		                                    .heading = NULL,
-		                                    .horizontalAccuracy = NULL,
-		                                    .source = NULL };
+		                                    .speed = nullptr,
+		                                    .heading = nullptr,
+		                                    .horizontalAccuracy = nullptr,
+		                                    .source = nullptr };
 
 	if (!freerdp_read_four_byte_float(s, &pdu.latitude) ||
 	    !freerdp_read_four_byte_float(s, &pdu.longitude) ||
@@ -248,8 +248,8 @@ static UINT location_server_recv_location2d_delta(LocationServerContext* context
 	RDPLOCATION_LOCATION2D_DELTA_PDU pdu = { .header = *header,
 		                                     .latitudeDelta = FP_NAN,
 		                                     .longitudeDelta = FP_NAN,
-		                                     .speedDelta = NULL,
-		                                     .headingDelta = NULL };
+		                                     .speedDelta = nullptr,
+		                                     .headingDelta = nullptr };
 
 	if (!freerdp_read_four_byte_float(s, &pdu.latitudeDelta) ||
 	    !freerdp_read_four_byte_float(s, &pdu.longitudeDelta))
@@ -286,8 +286,8 @@ static UINT location_server_recv_location3d_delta(LocationServerContext* context
 	RDPLOCATION_LOCATION3D_DELTA_PDU pdu = { .header = *header,
 		                                     .latitudeDelta = FP_NAN,
 		                                     .longitudeDelta = FP_NAN,
-		                                     .speedDelta = NULL,
-		                                     .headingDelta = NULL };
+		                                     .speedDelta = nullptr,
+		                                     .headingDelta = nullptr };
 
 	if (!freerdp_read_four_byte_float(s, &pdu.latitudeDelta) ||
 	    !freerdp_read_four_byte_float(s, &pdu.longitudeDelta) ||
@@ -323,7 +323,8 @@ static UINT location_process_message(location_server* location)
 	WINPR_ASSERT(s);
 
 	Stream_SetPosition(s, 0);
-	const BOOL rc = WTSVirtualChannelRead(location->location_channel, 0, NULL, 0, &BytesReturned);
+	const BOOL rc =
+	    WTSVirtualChannelRead(location->location_channel, 0, nullptr, 0, &BytesReturned);
 	if (!rc)
 		goto out;
 
@@ -412,9 +413,9 @@ static UINT location_server_context_poll_int(LocationServerContext* context)
 
 static HANDLE location_server_get_channel_handle(location_server* location)
 {
-	void* buffer = NULL;
+	void* buffer = nullptr;
 	DWORD BytesReturned = 0;
-	HANDLE ChannelEvent = NULL;
+	HANDLE ChannelEvent = nullptr;
 
 	WINPR_ASSERT(location);
 
@@ -478,7 +479,7 @@ static DWORD WINAPI location_server_thread_func(LPVOID arg)
 	}
 
 	(void)WTSVirtualChannelClose(location->location_channel);
-	location->location_channel = NULL;
+	location->location_channel = nullptr;
 
 	if (error && location->context.rdpcontext)
 		setChannelError(location->context.rdpcontext, error,
@@ -494,21 +495,22 @@ static UINT location_server_open(LocationServerContext* context)
 
 	WINPR_ASSERT(location);
 
-	if (!location->externalThread && (location->thread == NULL))
+	if (!location->externalThread && (location->thread == nullptr))
 	{
-		location->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		location->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 		if (!location->stopEvent)
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		location->thread = CreateThread(NULL, 0, location_server_thread_func, location, 0, NULL);
+		location->thread =
+		    CreateThread(nullptr, 0, location_server_thread_func, location, 0, nullptr);
 		if (!location->thread)
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
 			(void)CloseHandle(location->stopEvent);
-			location->stopEvent = NULL;
+			location->stopEvent = nullptr;
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
@@ -537,15 +539,15 @@ static UINT location_server_close(LocationServerContext* context)
 
 		(void)CloseHandle(location->thread);
 		(void)CloseHandle(location->stopEvent);
-		location->thread = NULL;
-		location->stopEvent = NULL;
+		location->thread = nullptr;
+		location->stopEvent = nullptr;
 	}
 	if (location->externalThread)
 	{
 		if (location->state != LOCATION_INITIAL)
 		{
 			(void)WTSVirtualChannelClose(location->location_channel);
-			location->location_channel = NULL;
+			location->location_channel = nullptr;
 			location->state = LOCATION_INITIAL;
 		}
 	}
@@ -616,7 +618,7 @@ out:
 static UINT location_server_send_server_ready(LocationServerContext* context,
                                               const RDPLOCATION_SERVER_READY_PDU* serverReady)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT32 pduLength = 0;
 	UINT32 protocolVersion = 0;
 
@@ -627,7 +629,7 @@ static UINT location_server_send_server_ready(LocationServerContext* context,
 
 	pduLength = LOCATION_HEADER_SIZE + 4 + 4;
 
-	s = Stream_New(NULL, pduLength);
+	s = Stream_New(nullptr, pduLength);
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
@@ -649,7 +651,7 @@ LocationServerContext* location_server_context_new(HANDLE vcm)
 	location_server* location = (location_server*)calloc(1, sizeof(location_server));
 
 	if (!location)
-		return NULL;
+		return nullptr;
 
 	location->context.vcm = vcm;
 	location->context.Initialize = location_server_initialize;
@@ -660,7 +662,7 @@ LocationServerContext* location_server_context_new(HANDLE vcm)
 
 	location->context.ServerReady = location_server_send_server_ready;
 
-	location->buffer = Stream_New(NULL, 4096);
+	location->buffer = Stream_New(nullptr, 4096);
 	if (!location->buffer)
 		goto fail;
 
@@ -670,7 +672,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	location_server_context_free(&location->context);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void location_server_context_free(LocationServerContext* context)

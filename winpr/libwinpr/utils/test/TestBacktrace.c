@@ -5,7 +5,7 @@ int TestBacktrace(int argc, char* argv[])
 {
 	int rc = -1;
 	size_t used = 0;
-	char** msg = NULL;
+	char** msg = nullptr;
 	void* stack = winpr_backtrace(20);
 
 	WINPR_UNUSED(argc);

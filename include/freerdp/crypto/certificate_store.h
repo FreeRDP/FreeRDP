@@ -79,7 +79,7 @@ extern "C"
 	 *
 	 *  @since version 3.0.0
 	 *
-	 *  @return The certificate store file path or \b NULL
+	 *  @return The certificate store file path or \b nullptr
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_ATTR_NODISCARD

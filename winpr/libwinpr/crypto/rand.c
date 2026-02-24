@@ -62,8 +62,8 @@ int winpr_RAND(void* output, size_t len)
 	mbedtls_hmac_drbg_init(&hmac_drbg);
 
 	md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
-	if ((status = mbedtls_hmac_drbg_seed(&hmac_drbg, md_info, mbedtls_entropy_func, &entropy, NULL,
-	                                     0)) != 0)
+	if ((status = mbedtls_hmac_drbg_seed(&hmac_drbg, md_info, mbedtls_entropy_func, &entropy,
+	                                     nullptr, 0)) != 0)
 		return -1;
 
 	status = mbedtls_hmac_drbg_random(&hmac_drbg, output, len);

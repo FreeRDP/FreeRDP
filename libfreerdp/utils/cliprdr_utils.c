@@ -64,7 +64,7 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	UINT result = NO_ERROR;
 	UINT32 count = 0;
 	wStream sbuffer;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	if (!format_data || !file_descriptor_array || !file_descriptor_count)
 		return ERROR_BAD_ARGUMENTS;
@@ -196,7 +196,7 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 {
 	UINT result = NO_ERROR;
 	size_t len = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	if (!file_descriptor_array || !format_data || !format_data_length)
 		return ERROR_BAD_ARGUMENTS;
@@ -207,7 +207,7 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 		return ERROR_BAD_ARGUMENTS;
 	}
 
-	s = Stream_New(NULL, 4 + file_descriptor_count * CLIPRDR_FILEDESCRIPTOR_SIZE);
+	s = Stream_New(nullptr, 4 + file_descriptor_count * CLIPRDR_FILEDESCRIPTOR_SIZE);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 

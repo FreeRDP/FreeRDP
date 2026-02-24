@@ -77,7 +77,7 @@ static BOOL primitives_init_generic(primitives_t* prims)
 	primitives_init_colors(prims);
 	primitives_init_YCoCg(prims);
 	primitives_init_YUV(prims);
-	prims->uninit = NULL;
+	prims->uninit = nullptr;
 	return TRUE;
 }
 
@@ -134,9 +134,9 @@ static void primitives_YUV_benchmark_free(primitives_YUV_benchmark* bench)
 
 static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_benchmark* ret)
 {
-	prim_size_t* roi = NULL;
+	prim_size_t* roi = nullptr;
 	if (!ret)
-		return NULL;
+		return nullptr;
 
 	memset(ret, 0, sizeof(primitives_YUV_benchmark));
 	roi = &ret->roi;
@@ -210,17 +210,16 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 		UINT32 count;
 	};
 
-	struct prim_benchmark testcases[] =
-	{
-		{ "generic", NULL, PRIMITIVES_PURE_SOFT, 0 },
+	struct prim_benchmark testcases[] = {
+		{ "generic", nullptr, PRIMITIVES_PURE_SOFT, 0 },
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-		{ "optimized", NULL, PRIMITIVES_ONLY_CPU, 0 },
+		{ "optimized", nullptr, PRIMITIVES_ONLY_CPU, 0 },
 #endif
 #if defined(WITH_OPENCL)
-		{ "opencl", NULL, PRIMITIVES_ONLY_GPU, 0 },
+		{ "opencl", nullptr, PRIMITIVES_ONLY_GPU, 0 },
 #endif
 	};
-	const struct prim_benchmark* best = NULL;
+	const struct prim_benchmark* best = nullptr;
 
 #if !defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) || !defined(WITH_OPENCL)
 	{
@@ -366,14 +365,14 @@ void primitives_uninit(void)
 /* ------------------------------------------------------------------------- */
 static void setup(void)
 {
-	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, NULL, NULL);
+	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, nullptr, nullptr);
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-	InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, NULL, NULL);
+	InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, nullptr, nullptr);
 #endif
 #if defined(WITH_OPENCL)
-	InitOnceExecuteOnce(&gpu_primitives_InitOnce, primitives_init_gpu_cb, NULL, NULL);
+	InitOnceExecuteOnce(&gpu_primitives_InitOnce, primitives_init_gpu_cb, nullptr, nullptr);
 #endif
-	InitOnceExecuteOnce(&auto_primitives_InitOnce, primitives_auto_init_cb, NULL, NULL);
+	InitOnceExecuteOnce(&auto_primitives_InitOnce, primitives_auto_init_cb, nullptr, nullptr);
 }
 
 primitives_t* primitives_get(void)
@@ -384,26 +383,28 @@ primitives_t* primitives_get(void)
 
 primitives_t* primitives_get_generic(void)
 {
-	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, NULL, NULL);
+	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, nullptr, nullptr);
 	return &pPrimitivesGeneric;
 }
 
 primitives_t* primitives_get_by_type(primitive_hints type)
 {
-	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, NULL, NULL);
+	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, nullptr, nullptr);
 
 	switch (type)
 	{
 		case PRIMITIVES_ONLY_GPU:
 #if defined(WITH_OPENCL)
-			if (!InitOnceExecuteOnce(&gpu_primitives_InitOnce, primitives_init_gpu_cb, NULL, NULL))
-				return NULL;
+			if (!InitOnceExecuteOnce(&gpu_primitives_InitOnce, primitives_init_gpu_cb, nullptr,
+			                         nullptr))
+				return nullptr;
 			return &pPrimitivesGpu;
 #endif
 		case PRIMITIVES_ONLY_CPU:
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-			if (!InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, NULL, NULL))
-				return NULL;
+			if (!InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, nullptr,
+			                         nullptr))
+				return nullptr;
 			return &pPrimitivesCpu;
 #endif
 		case PRIMITIVES_PURE_SOFT:

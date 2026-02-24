@@ -95,7 +95,7 @@ void Stack_Clear(wStack* stack)
 		if (stack->object.fnObjectFree)
 			stack->object.fnObjectFree(stack->array[index]);
 
-		stack->array[index] = NULL;
+		stack->array[index] = nullptr;
 	}
 
 	stack->size = 0;
@@ -172,7 +172,7 @@ end:
 
 void* Stack_Pop(wStack* stack)
 {
-	void* obj = NULL;
+	void* obj = nullptr;
 
 	WINPR_ASSERT(stack);
 	if (stack->synchronized)
@@ -193,7 +193,7 @@ void* Stack_Pop(wStack* stack)
 
 void* Stack_Peek(wStack* stack)
 {
-	void* obj = NULL;
+	void* obj = nullptr;
 
 	WINPR_ASSERT(stack);
 	if (stack->synchronized)
@@ -219,11 +219,11 @@ static BOOL default_stack_equals(const void* obj1, const void* obj2)
 
 wStack* Stack_New(BOOL synchronized)
 {
-	wStack* stack = NULL;
+	wStack* stack = nullptr;
 	stack = (wStack*)calloc(1, sizeof(wStack));
 
 	if (!stack)
-		return NULL;
+		return nullptr;
 
 	stack->object.fnObjectEquals = default_stack_equals;
 	stack->synchronized = synchronized;
@@ -242,7 +242,7 @@ out_free:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	Stack_Free(stack);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void Stack_Free(wStack* stack)

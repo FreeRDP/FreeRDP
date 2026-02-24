@@ -85,35 +85,35 @@
 #endif
 #endif
 
-#define IFCALL(_cb, ...)                                             \
-	do                                                               \
-	{                                                                \
-		if (_cb != NULL)                                             \
-			_cb(__VA_ARGS__);                                        \
-		else                                                         \
-			WLog_VRB("com.freerdp.api", "IFCALL(" #_cb ") == NULL"); \
-	} while (0)
-#define IFCALLRET(_cb, _ret, ...)                                       \
+#define IFCALL(_cb, ...)                                                \
 	do                                                                  \
 	{                                                                   \
-		if (_cb != NULL)                                                \
-			_ret = _cb(__VA_ARGS__);                                    \
+		if (_cb != nullptr)                                             \
+			_cb(__VA_ARGS__);                                           \
 		else                                                            \
-			WLog_VRB("com.freerdp.api", "IFCALLRET(" #_cb ") == NULL"); \
+			WLog_VRB("com.freerdp.api", "IFCALL(" #_cb ") == nullptr"); \
+	} while (0)
+#define IFCALLRET(_cb, _ret, ...)                                          \
+	do                                                                     \
+	{                                                                      \
+		if (_cb != nullptr)                                                \
+			_ret = _cb(__VA_ARGS__);                                       \
+		else                                                               \
+			WLog_VRB("com.freerdp.api", "IFCALLRET(" #_cb ") == nullptr"); \
 	} while (0)
 
 #if defined(__GNUC__) || defined(__clang__)
-#define IFCALLRESULT(_default_return, _cb, ...)                            \
-	__extension__({                                                        \
-		if (_cb == NULL)                                                   \
-		{                                                                  \
-			WLog_VRB("com.freerdp.api", "IFCALLRESULT(" #_cb ") == NULL"); \
-		}                                                                  \
-		((_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return));            \
+#define IFCALLRESULT(_default_return, _cb, ...)                               \
+	__extension__({                                                           \
+		if (_cb == nullptr)                                                   \
+		{                                                                     \
+			WLog_VRB("com.freerdp.api", "IFCALLRESULT(" #_cb ") == nullptr"); \
+		}                                                                     \
+		((_cb != nullptr) ? _cb(__VA_ARGS__) : (_default_return));            \
 	})
 #else
 #define IFCALLRESULT(_default_return, _cb, ...) \
-	((_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return))
+	((_cb != nullptr) ? _cb(__VA_ARGS__) : (_default_return))
 #endif
 
 #define ALIGN64 DECLSPEC_ALIGN(8)

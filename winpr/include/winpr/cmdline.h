@@ -159,7 +159,7 @@ extern "C"
 
 	/** @brief free arrays allocated by CommandLineParseCommaSeparatedValues(Ex)
 	 *
-	 *  @param ptr the pointer to free, may be \b NULL
+	 *  @param ptr the pointer to free, may be \b nullptr
 	 *
 	 *  @since version 3.10.0
 	 */

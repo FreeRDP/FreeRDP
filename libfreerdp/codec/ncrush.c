@@ -2024,7 +2024,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 	UINT32 CopyOffset = 0;
 	UINT32 CopyLength = 0;
 	UINT32 OldCopyOffset = 0;
-	const BYTE* CopyOffsetPtr = NULL;
+	const BYTE* CopyOffsetPtr = nullptr;
 	UINT32 LengthOfMatch = 0;
 	UINT32 CopyOffsetIndex = 0;
 	UINT32 OffsetCacheIndex = 0;
@@ -2523,16 +2523,16 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
                     const BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	BYTE Literal = 0;
-	const BYTE* SrcPtr = NULL;
-	BYTE* DstPtr = NULL;
+	const BYTE* SrcPtr = nullptr;
+	BYTE* DstPtr = nullptr;
 	UINT32 bits = 0;
 	UINT32 offset = 0;
 	UINT32 MaskedBits = 0;
 	UINT32 accumulator = 0;
-	const BYTE* SrcEndPtr = NULL;
-	BYTE* DstEndPtr = NULL;
-	BYTE* HistoryPtr = NULL;
-	BYTE* pDstData = NULL;
+	const BYTE* SrcEndPtr = nullptr;
+	BYTE* DstEndPtr = nullptr;
+	BYTE* HistoryPtr = nullptr;
+	BYTE* pDstData = nullptr;
 	UINT32 DstSize = 0;
 	BOOL PacketAtFront = FALSE;
 	BOOL PacketFlushed = FALSE;
@@ -2545,12 +2545,12 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 	UINT32 CopyOffset = 0;
 	UINT32 MatchOffset = 0;
 	UINT32 OldCopyOffset = 0;
-	UINT32* OffsetCache = NULL;
+	UINT32* OffsetCache = nullptr;
 	UINT32 OffsetCacheIndex = 0;
 	UINT32 HistoryOffset = 0;
-	BYTE* HistoryBuffer = NULL;
+	BYTE* HistoryBuffer = nullptr;
 	UINT32 HistoryBufferSize = 0;
-	BYTE* HistoryBufferEndPtr = NULL;
+	BYTE* HistoryBufferEndPtr = nullptr;
 	UINT32 CopyOffsetIndex = 0;
 	UINT32 CopyOffsetBits = 0;
 	UINT32 CompressionLevel = 2;
@@ -3032,7 +3032,7 @@ NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor)
 	return ncrush;
 fail:
 	ncrush_context_free(ncrush);
-	return NULL;
+	return nullptr;
 }
 
 void ncrush_context_free(NCRUSH_CONTEXT* ncrush)

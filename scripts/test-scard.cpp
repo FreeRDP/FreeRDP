@@ -222,7 +222,7 @@ static bool test_list_readers_a(SCARDCONTEXT context)
 		auto rc = SCardListReadersA(context, cur, reinterpret_cast<LPSTR>(&mszReaders), &chReaders);
 		if (!cur)
 		{
-			cur = "NULL";
+			cur = "nullptr";
 		}
 		if (rc != SCARD_S_SUCCESS)
 		{
@@ -258,7 +258,7 @@ static bool test_list_readers_w(SCARDCONTEXT context)
 		    SCardListReadersW(context, cur, reinterpret_cast<LPWSTR>(&mszReaders), &chReaders);
 		if (!cur)
 		{
-			cur = L"NULL";
+			cur = L"nullptr";
 		}
 		if (rc != SCARD_S_SUCCESS)
 		{

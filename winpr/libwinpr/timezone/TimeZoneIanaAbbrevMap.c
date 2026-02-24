@@ -38,7 +38,7 @@ typedef struct
 
 const static char* zonepath = "/usr/share/zoneinfo";
 
-static TimeZoneInanaAbbrevMapEntry* TimeZoneIanaAbbrevMap = NULL;
+static TimeZoneInanaAbbrevMapEntry* TimeZoneIanaAbbrevMap = nullptr;
 static size_t TimeZoneIanaAbbrevMapSize = 0;
 
 static void append(const char* iana, const char* sname)
@@ -59,7 +59,7 @@ static void append(const char* iana, const char* sname)
 
 static void append_timezone(const char* dir, const char* name)
 {
-	char* tz = NULL;
+	char* tz = nullptr;
 	if (!dir && !name)
 		return;
 	if (!dir)
@@ -77,7 +77,7 @@ static void append_timezone(const char* dir, const char* name)
 
 	char* oldtz = setNewAndSaveOldTZ(tz);
 
-	const time_t t = time(NULL);
+	const time_t t = time(nullptr);
 	struct tm lt = WINPR_C_ARRAY_INIT;
 	(void)localtime_r(&t, &lt);
 	append(tz, lt.tm_zone);
@@ -90,10 +90,10 @@ static void handle_link(const char* base, const char* dir, const char* name);
 static char* topath(const char* base, const char* bname, const char* name)
 {
 	size_t plen = 0;
-	char* path = NULL;
+	char* path = nullptr;
 
 	if (!base && !bname && !name)
-		return NULL;
+		return nullptr;
 
 	if (!base && !name)
 		return _strdup(bname);
@@ -124,9 +124,9 @@ static void iterate_subdir_recursive(const char* base, const char* bname, const 
 	DIR* d = opendir(path);
 	if (d)
 	{
-		struct dirent* dp = NULL;
+		struct dirent* dp = nullptr;
 		// NOLINTNEXTLINE(concurrency-mt-unsafe)
-		while ((dp = readdir(d)) != NULL)
+		while ((dp = readdir(d)) != nullptr)
 		{
 			switch (dp->d_type)
 			{
@@ -136,7 +136,7 @@ static void iterate_subdir_recursive(const char* base, const char* bname, const 
 						continue;
 					if (strcmp(dp->d_name, "..") == 0)
 						continue;
-					iterate_subdir_recursive(path, dp->d_name, NULL);
+					iterate_subdir_recursive(path, dp->d_name, nullptr);
 				}
 				break;
 				case DT_LNK:
@@ -156,14 +156,14 @@ static void iterate_subdir_recursive(const char* base, const char* bname, const 
 
 static char* get_link_target(const char* base, const char* dir, const char* name)
 {
-	char* apath = NULL;
+	char* apath = nullptr;
 	char* path = topath(base, dir, name);
 	if (!path)
-		return NULL;
+		return nullptr;
 
 	SSIZE_T rc = -1;
 	size_t size = 0;
-	char* target = NULL;
+	char* target = nullptr;
 	do
 	{
 		size += 64;
@@ -226,7 +226,7 @@ static void TimeZoneIanaAbbrevCleanup(void)
 		free(entry->Abbrev);
 	}
 	free(TimeZoneIanaAbbrevMap);
-	TimeZoneIanaAbbrevMap = NULL;
+	TimeZoneIanaAbbrevMap = nullptr;
 	TimeZoneIanaAbbrevMapSize = 0;
 }
 
@@ -234,7 +234,7 @@ static BOOL CALLBACK TimeZoneIanaAbbrevInitialize(WINPR_ATTR_UNUSED PINIT_ONCE o
                                                   WINPR_ATTR_UNUSED PVOID param,
                                                   WINPR_ATTR_UNUSED PVOID* context)
 {
-	iterate_subdir_recursive(zonepath, NULL, NULL);
+	iterate_subdir_recursive(zonepath, nullptr, nullptr);
 	(void)atexit(TimeZoneIanaAbbrevCleanup);
 
 	return TRUE;
@@ -244,7 +244,7 @@ size_t TimeZoneIanaAbbrevGet(const char* abbrev, const char** list, size_t lists
 {
 	static INIT_ONCE init_guard = INIT_ONCE_STATIC_INIT;
 
-	InitOnceExecuteOnce(&init_guard, TimeZoneIanaAbbrevInitialize, NULL, NULL);
+	InitOnceExecuteOnce(&init_guard, TimeZoneIanaAbbrevInitialize, nullptr, nullptr);
 
 	size_t rc = 0;
 	for (size_t x = 0; x < TimeZoneIanaAbbrevMapSize; x++)

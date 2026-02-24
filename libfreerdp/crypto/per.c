@@ -31,7 +31,7 @@
  * Read PER length.
  *
  * @param s stream to read from
- * @param length A pointer to return the length read, must not be NULL
+ * @param length A pointer to return the length read, must not be nullptr
  *
  * @return \b TRUE for success, \b FALSE otherwise.
  */
@@ -298,7 +298,7 @@ BOOL per_write_integer(wStream* s, UINT32 integer)
  * Read PER INTEGER (UINT16).
  *
  * @param s The stream to read from
- * @param integer The integer result variable pointer, must not be NULL
+ * @param integer The integer result variable pointer, must not be nullptr
  * @param min minimum value
  *
  * @return \b TRUE for success, \b FALSE otherwise
@@ -345,7 +345,7 @@ BOOL per_write_integer16(wStream* s, UINT16 integer, UINT16 min)
  * Read PER ENUMERATED.
  *
  * @param s The stream to read from
- * @param enumerated enumerated result variable, must not be NULL
+ * @param enumerated enumerated result variable, must not be nullptr
  * @param count enumeration count
  *
  * @return \b TRUE for success, \b FALSE otherwise

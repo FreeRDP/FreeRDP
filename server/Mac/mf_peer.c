@@ -87,7 +87,7 @@ static void mf_peer_rfx_update(freerdp_peer* client)
 	long width;
 	long height;
 	int pitch;
-	BYTE* dataBits = NULL;
+	BYTE* dataBits = nullptr;
 	mf_info_getScreenData(mfi, &width, &height, &dataBits, &pitch);
 	mf_info_clear_invalid_region(mfi);
 	// encode
@@ -151,7 +151,7 @@ static BOOL mf_peer_check_fds(freerdp_peer* client)
 
 	event = mf_event_peek(info_event_queue);
 
-	if (event != NULL)
+	if (event != nullptr)
 	{
 		if (event->type == FREERDP_SERVER_MAC_EVENT_TYPE_REGION)
 		{
@@ -193,7 +193,7 @@ static BOOL mf_peer_context_new(freerdp_peer* client, rdpContext* context)
 	rfx_context_set_mode(peer->rfx_context, RLGR3);
 	rfx_context_set_pixel_format(peer->rfx_context, PIXEL_FORMAT_BGRA32);
 
-	if (!(peer->s = Stream_New(NULL, 0xFFFF)))
+	if (!(peer->s = Stream_New(nullptr, 0xFFFF)))
 		goto fail;
 
 	peer->vcm = WTSOpenServerA((LPSTR)client->context);
@@ -387,7 +387,7 @@ static void* mf_peer_main_loop(void* arg)
 	WINPR_ASSERT(settings);
 
 	/* Initialize the real server settings here */
-	rdpPrivateKey* key = freerdp_key_new_from_file_enc(info->key, NULL);
+	rdpPrivateKey* key = freerdp_key_new_from_file_enc(info->key, nullptr);
 	if (!key)
 		goto fail;
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
@@ -475,7 +475,7 @@ static void* mf_peer_main_loop(void* arg)
 	freerdp_peer_context_free(client);
 fail:
 	freerdp_peer_free(client);
-	return NULL;
+	return nullptr;
 }
 
 BOOL mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)

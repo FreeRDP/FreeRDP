@@ -35,7 +35,7 @@ static void crypto_print_name(const BYTE* b, DWORD sz)
 	if (!bio)
 		return;
 
-	X509* x509 = d2i_X509_bio(bio, NULL);
+	X509* x509 = d2i_X509_bio(bio, nullptr);
 	if (!x509)
 		goto bio_release;
 
@@ -62,7 +62,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 {
 	int rc = -1;
 	DWORD providerCount = 0;
-	NCryptProviderName* names = NULL;
+	NCryptProviderName* names = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -76,9 +76,9 @@ int TestNCryptSmartcard(int argc, char* argv[])
 		const NCryptProviderName* name = &names[j];
 		NCRYPT_PROV_HANDLE provider = 0;
 		char providerNameStr[256] = WINPR_C_ARRAY_INIT;
-		PVOID enumState = NULL;
+		PVOID enumState = nullptr;
 		size_t i = 0;
-		NCryptKeyName* keyName = NULL;
+		NCryptKeyName* keyName = nullptr;
 
 		if (ConvertWCharToUtf8(name->pszName, providerNameStr, ARRAYSIZE(providerNameStr)) < 0)
 			continue;
@@ -88,7 +88,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 		if (status != ERROR_SUCCESS)
 			continue;
 
-		while ((status = NCryptEnumKeys(provider, NULL, &keyName, &enumState,
+		while ((status = NCryptEnumKeys(provider, nullptr, &keyName, &enumState,
 		                                NCRYPT_SILENT_FLAG)) == ERROR_SUCCESS)
 		{
 			NCRYPT_KEY_HANDLE phKey = 0;
@@ -96,7 +96,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 			DWORD cbOutput = 0;
 			char keyNameStr[256] = WINPR_C_ARRAY_INIT;
 			WCHAR reader[1024] = WINPR_C_ARRAY_INIT;
-			PBYTE certBytes = NULL;
+			PBYTE certBytes = nullptr;
 
 			if (ConvertWCharToUtf8(keyName->pszName, keyNameStr, ARRAYSIZE(keyNameStr)) < 0)
 				continue;
@@ -121,8 +121,8 @@ int TestNCryptSmartcard(int argc, char* argv[])
 			}
 
 			cbOutput = 0;
-			status =
-			    NCryptGetProperty(phKey, NCRYPT_CERTIFICATE_PROPERTY, NULL, 0, &cbOutput, dwFlags);
+			status = NCryptGetProperty(phKey, NCRYPT_CERTIFICATE_PROPERTY, nullptr, 0, &cbOutput,
+			                           dwFlags);
 			if (status != ERROR_SUCCESS)
 			{
 				WLog_ERR(TAG, "unable to retrieve certificate len for key '%s'", keyNameStr);
