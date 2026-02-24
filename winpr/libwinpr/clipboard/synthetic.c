@@ -534,7 +534,7 @@ static void* clipboard_synthesize_image_bmp_to_png(wClipboard* clipboard, UINT32
 
 #if defined(WINPR_UTILS_IMAGE_PNG) || defined(WINPR_UTILS_IMAGE_WEBP) || \
     defined(WINPR_UTILS_IMAGE_JPEG)
-static void* clipboard_synthesize_image_format_to_bmp(wClipboard* clipboard,
+static void* clipboard_synthesize_image_format_to_bmp(WINPR_ATTR_UNUSED wClipboard* clipboard,
                                                       WINPR_ATTR_UNUSED UINT32 srcFormatId,
                                                       const void* data, UINT32* pSize)
 {

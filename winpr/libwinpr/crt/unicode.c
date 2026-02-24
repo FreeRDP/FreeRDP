@@ -256,7 +256,7 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cb
 
 	if (allocate)
 	{
-		*lpWideCharStr = (LPWSTR)calloc(cchWideChar + 1, sizeof(WCHAR));
+		*lpWideCharStr = (LPWSTR)calloc((size_t)cchWideChar + 1ull, sizeof(WCHAR));
 
 		if (!(*lpWideCharStr))
 		{
@@ -325,7 +325,7 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 
 	if (allocate)
 	{
-		*lpMultiByteStr = (LPSTR)calloc(1, cbMultiByte + 1);
+		*lpMultiByteStr = (LPSTR)calloc(1, (size_t)cbMultiByte + 1ull);
 
 		if (!(*lpMultiByteStr))
 		{
