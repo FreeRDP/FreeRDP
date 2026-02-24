@@ -241,7 +241,7 @@ struct s_ICamHal
 	CAM_ERROR_CODE (*Free)(ICamHal* ihal);
 };
 
-typedef WINPR_ATTR_NODISCARD UINT (*PREGISTERCAMERAHAL)(IWTSPlugin* plugin, ICamHal* hal);
+typedef UINT (*PREGISTERCAMERAHAL)(IWTSPlugin* plugin, ICamHal* hal);
 
 typedef struct
 {
@@ -255,8 +255,7 @@ typedef struct
 typedef FREERDP_CAMERA_HAL_ENTRY_POINTS* PFREERDP_CAMERA_HAL_ENTRY_POINTS;
 
 /* entry point called by addin manager */
-typedef WINPR_ATTR_NODISCARD
-UINT(VCAPITYPE* PFREERDP_CAMERA_HAL_ENTRY)(PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints);
+typedef UINT(VCAPITYPE* PFREERDP_CAMERA_HAL_ENTRY)(PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints);
 
 /* common functions */
 UINT ecam_channel_send_generic_msg(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel,

@@ -68,11 +68,11 @@ extern "C"
 	typedef struct
 	{
 		ALIGN64 void* userContext;
-		ALIGN64 WINPR_ATTR_NODISCARD pTransportLayerRead Read;
-		ALIGN64 WINPR_ATTR_NODISCARD pTransportLayerWrite Write;
+		WINPR_ATTR_NODISCARD ALIGN64 pTransportLayerRead Read;
+		WINPR_ATTR_NODISCARD ALIGN64 pTransportLayerWrite Write;
 		ALIGN64 pTransportLayerFkt Close;
-		ALIGN64 WINPR_ATTR_NODISCARD pTransportLayerWait Wait;
-		ALIGN64 WINPR_ATTR_NODISCARD pTransportLayerGetEvent GetEvent;
+		WINPR_ATTR_NODISCARD ALIGN64 pTransportLayerWait Wait;
+		WINPR_ATTR_NODISCARD ALIGN64 pTransportLayerGetEvent GetEvent;
 		UINT64 reserved[64 - 6]; /* Reserve some space for ABI compatibility */
 	} rdpTransportLayer;
 

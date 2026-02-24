@@ -109,7 +109,8 @@ static BOOL BitmapUpdateProxyEx(rdpShadowClient* client, const BITMAP_UPDATE* bi
 	return TRUE;
 }
 
-static inline WINPR_ATTR_NODISCARD BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
+WINPR_ATTR_NODISCARD
+static inline BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_CREATE_SURFACE_PDU createSurface;
@@ -152,8 +153,8 @@ static inline WINPR_ATTR_NODISCARD BOOL shadow_client_rdpgfx_new_surface(rdpShad
 	return TRUE;
 }
 
-static inline WINPR_ATTR_NODISCARD BOOL
-shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
+WINPR_ATTR_NODISCARD
+static inline BOOL shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_DELETE_SURFACE_PDU pdu;
@@ -176,7 +177,8 @@ shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
 	return TRUE;
 }
 
-static inline WINPR_ATTR_NODISCARD BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
+WINPR_ATTR_NODISCARD
+static inline BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_RESET_GRAPHICS_PDU pdu = { 0 };
@@ -389,7 +391,8 @@ fail:
  *
  * @return TRUE if width/height changed.
  */
-static inline WINPR_ATTR_NODISCARD BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
+WINPR_ATTR_NODISCARD
+static inline BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
 {
 	INT32 width = 0;
 	INT32 height = 0;
@@ -1147,8 +1150,8 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	return CHANNEL_RC_UNSUPPORTED_VERSION;
 }
 
-static inline WINPR_ATTR_NODISCARD UINT32
-rdpgfx_estimate_h264_avc420(RDPGFX_AVC420_BITMAP_STREAM* havc420)
+WINPR_ATTR_NODISCARD
+static inline UINT32 rdpgfx_estimate_h264_avc420(RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
 	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
 	WINPR_ASSERT(havc420);
@@ -2146,8 +2149,8 @@ static BOOL shadow_client_surface_update(rdpShadowClient* client, REGION16* regi
  * @return TRUE on success
  */
 WINPR_ATTR_NODISCARD
-static inline WINPR_ATTR_NODISCARD BOOL shadow_client_no_surface_update(rdpShadowClient* client,
-                                                                        SHADOW_GFX_STATUS* pStatus)
+static inline BOOL shadow_client_no_surface_update(rdpShadowClient* client,
+                                                   SHADOW_GFX_STATUS* pStatus)
 {
 	rdpShadowServer* server = NULL;
 	rdpShadowSurface* surface = NULL;
