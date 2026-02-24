@@ -119,9 +119,9 @@ static BOOL log_mmresult(AudinWinmmDevice* winmm, const char* what, MMRESULT res
 {
 	if (result != MMSYSERR_NOERROR)
 	{
-		CHAR buffer[8192] = { 0 };
-		CHAR msg[8192] = { 0 };
-		CHAR cmsg[8192] = { 0 };
+		CHAR buffer[8192] = WINPR_C_ARRAY_INIT;
+		CHAR msg[8192] = WINPR_C_ARRAY_INIT;
+		CHAR cmsg[8192] = WINPR_C_ARRAY_INIT;
 		waveInGetErrorTextA(result, buffer, sizeof(buffer));
 
 		_snprintf(msg, sizeof(msg) - 1, "%s failed. %" PRIu32 " [%s]", what, result, buffer);
@@ -137,7 +137,7 @@ static BOOL log_mmresult(AudinWinmmDevice* winmm, const char* what, MMRESULT res
 static BOOL test_format_supported(const PWAVEFORMATEX pwfx)
 {
 	MMRESULT rc;
-	WAVEINCAPSA caps = { 0 };
+	WAVEINCAPSA caps = WINPR_C_ARRAY_INIT;
 
 	rc = waveInGetDevCapsA(WAVE_MAPPER, &caps, sizeof(caps));
 	if (rc != MMSYSERR_NOERROR)
@@ -171,7 +171,7 @@ static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*)arg;
 	char* buffer = NULL;
 	int size = 0;
-	WAVEHDR waveHdr[4] = { 0 };
+	WAVEHDR waveHdr[4] = WINPR_C_ARRAY_INIT;
 	DWORD status = 0;
 	MMRESULT rc = 0;
 

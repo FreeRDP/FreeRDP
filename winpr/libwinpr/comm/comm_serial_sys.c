@@ -196,7 +196,7 @@ static const char* get_modem_status_str(int status, char* buffer, size_t size)
 		}
 	}
 
-	char number[32] = { 0 };
+	char number[32] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(number, sizeof(number), "}[0x%08x]", (unsigned)status);
 	winpr_str_append(number, buffer, size, "");
 	return buffer;
@@ -270,7 +270,7 @@ static BOOL get_properties(WINPR_ATTR_UNUSED WINPR_COMM* pComm, COMMPROP* pPrope
 static BOOL set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 {
 	speed_t newSpeed = 0;
-	struct termios futureState = { 0 };
+	struct termios futureState = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pBaudRate);
@@ -316,7 +316,7 @@ static BOOL set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 static BOOL get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
 {
 	speed_t currentSpeed = 0;
-	struct termios currentState = { 0 };
+	struct termios currentState = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pBaudRate);
@@ -356,7 +356,7 @@ static BOOL get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
 static BOOL set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChars)
 {
 	BOOL result = TRUE;
-	struct termios upcomingTermios = { 0 };
+	struct termios upcomingTermios = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pSerialChars);
@@ -429,7 +429,7 @@ static BOOL set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChars
 
 static BOOL get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
 {
-	struct termios currentTermios = { 0 };
+	struct termios currentTermios = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pSerialChars);
@@ -461,7 +461,7 @@ static BOOL get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
 static BOOL set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLineControl)
 {
 	BOOL result = TRUE;
-	struct termios upcomingTermios = { 0 };
+	struct termios upcomingTermios = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pLineControl);
@@ -577,7 +577,7 @@ static BOOL set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLine
 
 static BOOL get_line_control(WINPR_COMM* pComm, SERIAL_LINE_CONTROL* pLineControl)
 {
-	struct termios currentTermios = { 0 };
+	struct termios currentTermios = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pLineControl);
@@ -626,7 +626,7 @@ static BOOL get_line_control(WINPR_COMM* pComm, SERIAL_LINE_CONTROL* pLineContro
 static BOOL set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 {
 	BOOL result = TRUE;
-	struct termios upcomingTermios = { 0 };
+	struct termios upcomingTermios = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pHandflow);
@@ -810,7 +810,7 @@ static BOOL set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 
 static BOOL get_handflow(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow)
 {
-	struct termios currentTermios = { 0 };
+	struct termios currentTermios = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pHandflow);
@@ -941,7 +941,7 @@ static BOOL clear_lines(WINPR_COMM* pComm, UINT32 lines)
 
 static BOOL set_dtr(WINPR_COMM* pComm)
 {
-	SERIAL_HANDFLOW handflow = { 0 };
+	SERIAL_HANDFLOW handflow = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(pComm);
 
 	if (!get_handflow(pComm, &handflow))
@@ -961,7 +961,7 @@ static BOOL set_dtr(WINPR_COMM* pComm)
 
 static BOOL clear_dtr(WINPR_COMM* pComm)
 {
-	SERIAL_HANDFLOW handflow = { 0 };
+	SERIAL_HANDFLOW handflow = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(pComm);
 
 	if (!get_handflow(pComm, &handflow))
@@ -981,7 +981,7 @@ static BOOL clear_dtr(WINPR_COMM* pComm)
 
 static BOOL set_rts(WINPR_COMM* pComm)
 {
-	SERIAL_HANDFLOW handflow = { 0 };
+	SERIAL_HANDFLOW handflow = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(pComm);
 
 	if (!get_handflow(pComm, &handflow))
@@ -998,7 +998,7 @@ static BOOL set_rts(WINPR_COMM* pComm)
 
 static BOOL clear_rts(WINPR_COMM* pComm)
 {
-	SERIAL_HANDFLOW handflow = { 0 };
+	SERIAL_HANDFLOW handflow = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(pComm);
 	if (!get_handflow(pComm, &handflow))
 		return FALSE;
@@ -1019,7 +1019,7 @@ static BOOL get_raw_modemstatus(WINPR_COMM* pComm, int* pRegister)
 
 	const BOOL rc = CommIoCtl(pComm, TIOCMGET, pRegister);
 
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	CommLog_Print(WLOG_DEBUG, "status %s",
 	              get_modem_status_str(*pRegister, buffer, sizeof(buffer)));
 	return rc;
@@ -1190,7 +1190,7 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 		{
 			if (errno != EAGAIN)
 			{
-				char ebuffer[256] = { 0 };
+				char ebuffer[256] = WINPR_C_ARRAY_INIT;
 				CommLog_Print(WLOG_WARN, "eventfd_write failed, errno=[%d] %s", errno,
 				              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			}
@@ -1208,7 +1208,7 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 		{
 			if (errno != EAGAIN)
 			{
-				char ebuffer[256] = { 0 };
+				char ebuffer[256] = WINPR_C_ARRAY_INIT;
 				CommLog_Print(WLOG_WARN, "eventfd_write failed, errno=[%d] %s", errno,
 				              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			}
@@ -1224,7 +1224,7 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 
 		if (tcflush(pComm->fd, TCOFLUSH) < 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			CommLog_Print(WLOG_WARN, "tcflush(TCOFLUSH) failure, errno=[%d] %s", errno,
 			              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			SetLastError(ERROR_CANCELLED);
@@ -1238,7 +1238,7 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 
 		if (tcflush(pComm->fd, TCIFLUSH) < 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			CommLog_Print(WLOG_WARN, "tcflush(TCIFLUSH) failure, errno=[%d] %s", errno,
 			              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			SetLastError(ERROR_CANCELLED);
@@ -1258,7 +1258,7 @@ static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 	BOOL rc = FALSE;
 	/* http://msdn.microsoft.com/en-us/library/jj673022%28v=vs.85%29.aspx */
 #if defined(WINPR_HAVE_COMM_COUNTERS)
-	struct serial_icounter_struct currentCounters = { 0 };
+	struct serial_icounter_struct currentCounters = WINPR_C_ARRAY_INIT;
 #endif
 	WINPR_ASSERT(pComm);
 	WINPR_ASSERT(pCommstatus);
@@ -1419,7 +1419,7 @@ fail:
 
 static BOOL refresh_PendingEvents(WINPR_COMM* pComm)
 {
-	SERIAL_STATUS serialStatus = { 0 };
+	SERIAL_STATUS serialStatus = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pComm);
 
@@ -1537,7 +1537,7 @@ static BOOL set_xoff(WINPR_COMM* pComm)
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	if (tcflow(pComm->fd, TCIOFF) < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		CommLog_Print(WLOG_WARN, "TCIOFF failure, errno=[%d] %s", errno,
 		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
@@ -1553,7 +1553,7 @@ static BOOL set_xon(WINPR_COMM* pComm)
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	if (tcflow(pComm->fd, TCION) < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		CommLog_Print(WLOG_WARN, "TCION failure, errno=[%d] %s", errno,
 		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);

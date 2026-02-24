@@ -1115,8 +1115,8 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
                          UINT32 dstFormat, UINT32 dstStride, UINT32 dstHeight,
                          REGION16* WINPR_RESTRICT invalidRegion)
 {
-	REGION16 updateRegion = { 0 };
-	wStream inStream = { 0 };
+	REGION16 updateRegion = WINPR_C_ARRAY_INIT;
+	wStream inStream = WINPR_C_ARRAY_INIT;
 	BOOL ok = TRUE;
 
 	if (!context || !data || !length)
@@ -1129,7 +1129,7 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 
 	while (ok && Stream_GetRemainingLength(s) > 6)
 	{
-		wStream subStreamBuffer = { 0 };
+		wStream subStreamBuffer = WINPR_C_ARRAY_INIT;
 		size_t extraBlockLen = 0;
 		UINT32 blockLen = 0;
 		UINT32 blockType = 0;
@@ -1271,7 +1271,7 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 	if (ok)
 	{
 		UINT32 nbUpdateRects = 0;
-		REGION16 clippingRects = { 0 };
+		REGION16 clippingRects = WINPR_C_ARRAY_INIT;
 		const RECTANGLE_16* updateRects = NULL;
 		const DWORD formatSize = FreeRDPGetBytesPerPixel(context->pixel_format);
 		const UINT32 dstWidth = dstStride / FreeRDPGetBytesPerPixel(dstFormat);
@@ -1281,7 +1281,7 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 		WINPR_ASSERT(dstHeight <= UINT16_MAX);
 		for (UINT32 i = 0; i < message->numRects; i++)
 		{
-			RECTANGLE_16 clippingRect = { 0 };
+			RECTANGLE_16 clippingRect = WINPR_C_ARRAY_INIT;
 			const RFX_RECT* rect = &(message->rects[i]);
 
 			WINPR_ASSERT(left + rect->x <= UINT16_MAX);
@@ -1308,7 +1308,7 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 
 		for (UINT32 i = 0; i < message->numTiles; i++)
 		{
-			RECTANGLE_16 updateRect = { 0 };
+			RECTANGLE_16 updateRect = WINPR_C_ARRAY_INIT;
 			const RFX_TILE* tile = rfx_message_get_tile(message, i);
 
 			WINPR_ASSERT(left + tile->x <= UINT16_MAX);
@@ -1451,7 +1451,7 @@ void rfx_message_free(RFX_CONTEXT* WINPR_RESTRICT context, RFX_MESSAGE* WINPR_RE
 	}
 
 	const BOOL freeArray = message->freeArray;
-	const RFX_MESSAGE empty = { 0 };
+	const RFX_MESSAGE empty = WINPR_C_ARRAY_INIT;
 	*message = empty;
 
 	if (!freeArray)
@@ -1606,7 +1606,7 @@ static inline BOOL computeRegion(const RFX_RECT* WINPR_RESTRICT rects, size_t nu
 	for (size_t i = 0; i < numRects; i++)
 	{
 		const RFX_RECT* rect = &rects[i];
-		RECTANGLE_16 rect16 = { 0 };
+		RECTANGLE_16 rect16 = WINPR_C_ARRAY_INIT;
 		rect16.left = rect->x;
 		rect16.top = rect->y;
 		rect16.right = rect->x + rect->width;
@@ -1668,9 +1668,9 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 	PTP_WORK* workObject = NULL;
 	RFX_TILE_COMPOSE_WORK_PARAM* workParam = NULL;
 	BOOL success = FALSE;
-	REGION16 rectsRegion = { 0 };
-	REGION16 tilesRegion = { 0 };
-	RECTANGLE_16 currentTileRect = { 0 };
+	REGION16 rectsRegion = WINPR_C_ARRAY_INIT;
+	REGION16 tilesRegion = WINPR_C_ARRAY_INIT;
+	RECTANGLE_16 currentTileRect = WINPR_C_ARRAY_INIT;
 	const RECTANGLE_16* regionRect = NULL;
 
 	WINPR_ASSERT(data);

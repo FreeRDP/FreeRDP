@@ -201,7 +201,7 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 
 	if (toBack)
 	{
-		proxyChannelDataEventInfo ev = { 0 };
+		proxyChannelDataEventInfo ev = WINPR_C_ARRAY_INIT;
 
 		ev.channel_id = WINPR_ASSERTING_INT_CAST(UINT16, channel->front_channel_id);
 		ev.channel_name = channel->channel_name;
@@ -231,7 +231,7 @@ static PfChannelResult pf_channel_generic_back_data(proxyData* pdata,
                                                     const BYTE* xdata, size_t xsize, UINT32 flags,
                                                     size_t totalSize)
 {
-	proxyChannelDataEventInfo ev = { 0 };
+	proxyChannelDataEventInfo ev = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(channel);
@@ -266,7 +266,7 @@ static PfChannelResult pf_channel_generic_front_data(proxyData* pdata,
                                                      const BYTE* xdata, size_t xsize, UINT32 flags,
                                                      size_t totalSize)
 {
-	proxyChannelDataEventInfo ev = { 0 };
+	proxyChannelDataEventInfo ev = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(channel);

@@ -128,7 +128,7 @@ static BOOL update_recv_surfcmd_is_rect_valid(const rdpContext* context,
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT16 cmdType)
 {
 	BOOL rc = FALSE;
-	SURFACE_BITS_COMMAND cmd = { 0 };
+	SURFACE_BITS_COMMAND cmd = WINPR_C_ARRAY_INIT;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		goto fail;
@@ -158,7 +158,7 @@ fail:
 
 static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 {
-	SURFACE_FRAME_MARKER marker = { 0 };
+	SURFACE_FRAME_MARKER marker = WINPR_C_ARRAY_INIT;
 	rdp_update_internal* up = update_cast(update);
 
 	WINPR_ASSERT(s);

@@ -16,7 +16,7 @@ static BOOL test_NCrushCompressBells(void)
 	int status = 0;
 	UINT32 Flags = 0;
 	const BYTE* pDstData = NULL;
-	BYTE OutputBuffer[65536] = { 0 };
+	BYTE OutputBuffer[65536] = WINPR_C_ARRAY_INIT;
 	const UINT32 SrcSize = sizeof(TEST_BELLS_DATA) - 1;
 	const BYTE* pSrcData = TEST_BELLS_DATA;
 	const UINT32 expectedSize = sizeof(TEST_BELLS_NCRUSH) - 1;

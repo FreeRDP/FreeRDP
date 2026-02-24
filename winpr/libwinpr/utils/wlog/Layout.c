@@ -91,7 +91,7 @@ WINPR_ATTR_FORMAT_ARG(3, 4)
 static void WLog_PrintMessagePrefix(char* prefix, size_t prefixlen,
                                     WINPR_FORMAT_ARG const char* format, ...)
 {
-	va_list args = { 0 };
+	va_list args = WINPR_C_ARRAY_INIT;
 	va_start(args, format);
 	WLog_PrintMessagePrefixVA(prefix, prefixlen, format, args);
 	va_end(args);
@@ -167,7 +167,7 @@ static const char* skip_if_null(const struct format_option* opt, const char* fmt
 
 	const size_t replacelen = WINPR_ASSERTING_INT_CAST(size_t, end - str);
 
-	char buffer[WLOG_MAX_PREFIX_SIZE] = { 0 };
+	char buffer[WLOG_MAX_PREFIX_SIZE] = WINPR_C_ARRAY_INIT;
 	memcpy(buffer, str, MIN(replacelen, ARRAYSIZE(buffer) - 1));
 
 	if (!replace_format_string(buffer, opt->recurse, opt->recurse->buffer,
@@ -238,15 +238,15 @@ static BOOL replace_format_string(const char* FormatString, struct format_option
 BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, const wLogMessage* message,
                                   char* prefix, size_t prefixlen)
 {
-	char format[WLOG_MAX_PREFIX_SIZE] = { 0 };
+	char format[WLOG_MAX_PREFIX_SIZE] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(layout);
 	WINPR_ASSERT(message);
 	WINPR_ASSERT(prefix);
 
-	struct format_tid_arg targ = { 0 };
+	struct format_tid_arg targ = WINPR_C_ARRAY_INIT;
 
-	SYSTEMTIME localTime = { 0 };
+	SYSTEMTIME localTime = WINPR_C_ARRAY_INIT;
 	GetLocalTime(&localTime);
 
 	struct format_option_recurse recurse = {

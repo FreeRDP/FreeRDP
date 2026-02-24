@@ -852,7 +852,7 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
                                       const ADDIN_ARGV* args)
 {
-	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints = { 0 };
+	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints = WINPR_C_ARRAY_INIT;
 	UINT error = 0;
 	DWORD flags = FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX;
 	if (rdpsnd->dynamic)
@@ -1406,7 +1406,7 @@ static BOOL allocate_internals(rdpsndPlugin* rdpsnd)
 	{
 		if (!rdpsnd->queue)
 		{
-			wObject obj = { 0 };
+			wObject obj = WINPR_C_ARRAY_INIT;
 
 			obj.fnObjectFree = queue_free;
 			rdpsnd->queue = MessageQueue_New(&obj);
@@ -1438,11 +1438,11 @@ static DWORD WINAPI play_thread(LPVOID arg)
 	while (TRUE)
 	{
 		int rc = -1;
-		wMessage message = { 0 };
+		wMessage message = WINPR_C_ARRAY_INIT;
 		wStream* s = NULL;
 		DWORD status = 0;
 		DWORD nCount = 0;
-		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 
 		handles[nCount++] = MessageQueue_Event(rdpsnd->queue);
 		handles[nCount++] = freerdp_abort_event(rdpsnd->rdpcontext);

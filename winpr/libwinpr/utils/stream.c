@@ -131,7 +131,7 @@ wStream* Stream_StaticConstInit(wStream* s, const BYTE* buffer, size_t size)
 
 wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
 {
-	const wStream empty = { 0 };
+	const wStream empty = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(buffer);
@@ -312,7 +312,7 @@ BOOL Stream_CheckAndLogRequiredCapacityEx(const char* tag, DWORD level, wStream*
 
 	if (actual < nmemb)
 	{
-		va_list args = { 0 };
+		va_list args = WINPR_C_ARRAY_INIT;
 
 		va_start(args, fmt);
 		Stream_CheckAndLogRequiredCapacityExVa(tag, level, s, nmemb, size, fmt, args);
@@ -346,7 +346,7 @@ BOOL Stream_CheckAndLogRequiredCapacityWLogExVa(wLog* log, DWORD level, wStream*
 
 	if (actual < nmemb)
 	{
-		char prefix[1024] = { 0 };
+		char prefix[1024] = WINPR_C_ARRAY_INIT;
 
 		(void)vsnprintf(prefix, sizeof(prefix), fmt, args);
 
@@ -370,7 +370,7 @@ BOOL Stream_CheckAndLogRequiredCapacityWLogEx(wLog* log, DWORD level, wStream* s
 
 	if (actual < nmemb)
 	{
-		va_list args = { 0 };
+		va_list args = WINPR_C_ARRAY_INIT;
 
 		va_start(args, fmt);
 		Stream_CheckAndLogRequiredCapacityWLogExVa(log, level, s, nmemb, size, fmt, args);
@@ -390,7 +390,7 @@ BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s
 
 	if (actual < nmemb)
 	{
-		va_list args = { 0 };
+		va_list args = WINPR_C_ARRAY_INIT;
 
 		va_start(args, fmt);
 		Stream_CheckAndLogRequiredLengthExVa(tag, level, s, nmemb, size, fmt, args);
@@ -421,7 +421,7 @@ BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s, 
 
 	if (actual < nmemb)
 	{
-		va_list args = { 0 };
+		va_list args = WINPR_C_ARRAY_INIT;
 
 		va_start(args, fmt);
 		Stream_CheckAndLogRequiredLengthWLogExVa(log, level, s, nmemb, size, fmt, args);
@@ -442,7 +442,7 @@ BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s
 
 	if (actual < nmemb)
 	{
-		char prefix[1024] = { 0 };
+		char prefix[1024] = WINPR_C_ARRAY_INIT;
 
 		(void)vsnprintf(prefix, sizeof(prefix), fmt, args);
 

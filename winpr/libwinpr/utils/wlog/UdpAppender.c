@@ -38,9 +38,9 @@ typedef struct
 static BOOL WLog_UdpAppender_Open(WINPR_ATTR_UNUSED wLog* log, wLogAppender* appender)
 {
 	wLogUdpAppender* udpAppender = NULL;
-	char addressString[256] = { 0 };
-	struct addrinfo hints = { 0 };
-	struct addrinfo* result = { 0 };
+	char addressString[256] = WINPR_C_ARRAY_INIT;
+	struct addrinfo hints = WINPR_C_ARRAY_INIT;
+	struct addrinfo* result = WINPR_C_ARRAY_INIT;
 	int status = 0;
 	char* colonPos = NULL;
 
@@ -95,7 +95,7 @@ static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender,
 
 	wLogUdpAppender* udpAppender = (wLogUdpAppender*)appender;
 
-	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
+	char prefix[WLOG_MAX_PREFIX_SIZE] = WINPR_C_ARRAY_INIT;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
 	(void)_sendto(udpAppender->sock, prefix, (int)strnlen(prefix, ARRAYSIZE(prefix)), 0,

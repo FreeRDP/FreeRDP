@@ -95,7 +95,7 @@ static void mf_peer_rfx_update(freerdp_peer* client)
 	RFX_RECT rect;
 	rdpUpdate* update;
 	mfPeerContext* mfp;
-	SURFACE_BITS_COMMAND cmd = { 0 };
+	SURFACE_BITS_COMMAND cmd = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(client);
 
@@ -437,7 +437,7 @@ static void* mf_peer_main_loop(void* arg)
 	while (1)
 	{
 		DWORD status;
-		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD count = client->GetEventHandles(client, handles, ARRAYSIZE(handles));
 
 		if ((count == 0) || (count == MAXIMUM_WAIT_OBJECTS))

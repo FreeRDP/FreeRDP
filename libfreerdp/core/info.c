@@ -141,8 +141,8 @@ static char* rdp_info_package_flags_description(UINT32 flags)
 
 static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 {
-	BYTE ClientRandom[CLIENT_RANDOM_LENGTH] = { 0 };
-	BYTE AutoReconnectRandom[32] = { 0 };
+	BYTE ClientRandom[CLIENT_RANDOM_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE AutoReconnectRandom[32] = WINPR_C_ARRAY_INIT;
 	ARC_SC_PRIVATE_PACKET* serverCookie = NULL;
 	ARC_CS_PRIVATE_PACKET* clientCookie = NULL;
 
@@ -1048,7 +1048,7 @@ static void rdp_free_logon_info(logon_info* info)
 	free(info->domain);
 	free(info->username);
 
-	const logon_info empty = { 0 };
+	const logon_info empty = WINPR_C_ARRAY_INIT;
 	*info = empty;
 }
 
@@ -1343,8 +1343,8 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 {
 	UINT32 infoType = 0;
 	BOOL status = 0;
-	logon_info logonInfo = { 0 };
-	logon_info_ex logonInfoEx = { 0 };
+	logon_info logonInfo = WINPR_C_ARRAY_INIT;
+	logon_info_ex logonInfoEx = WINPR_C_ARRAY_INIT;
 	rdpContext* context = rdp->context;
 	rdpUpdate* update = rdp->context->update;
 

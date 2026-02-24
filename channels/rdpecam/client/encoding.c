@@ -320,10 +320,10 @@ static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* s
                                        size_t srcSize, BYTE** ppDstData, size_t* pDstSize)
 {
 	UINT32 dstSize = 0;
-	BYTE* srcSlice[4] = { 0 };
-	int srcLineSizes[4] = { 0 };
-	BYTE* yuvData[3] = { 0 };
-	UINT32 yuvLineSizes[3] = { 0 };
+	BYTE* srcSlice[4] = WINPR_C_ARRAY_INIT;
+	int srcLineSizes[4] = WINPR_C_ARRAY_INIT;
+	BYTE* yuvData[3] = WINPR_C_ARRAY_INIT;
+	UINT32 yuvLineSizes[3] = WINPR_C_ARRAY_INIT;
 	prim_size_t size = { stream->currMediaType.Width, stream->currMediaType.Height };
 	CAM_MEDIA_FORMAT inputFormat = streamInputFormat(stream);
 	enum AVPixelFormat pixFormat = AV_PIX_FMT_NONE;

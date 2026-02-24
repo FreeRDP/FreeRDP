@@ -949,7 +949,7 @@ BOOL nla_encrypt_public_key_echo(rdpNla* nla)
 	sspi_SecBufferFree(&nla->pubKeyAuth);
 	if (nla->server)
 	{
-		SecBuffer buf = { 0 };
+		SecBuffer buf = WINPR_C_ARRAY_INIT;
 		if (!sspi_SecBufferAlloc(&buf, nla->PublicKey.cbBuffer))
 			return FALSE;
 		ap_integer_increment_le(buf.pvBuffer, buf.cbBuffer);
@@ -969,7 +969,7 @@ BOOL nla_encrypt_public_key_hash(rdpNla* nla)
 {
 	BOOL status = FALSE;
 	WINPR_DIGEST_CTX* sha256 = NULL;
-	SecBuffer buf = { 0 };
+	SecBuffer buf = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(nla);
 
@@ -1016,7 +1016,7 @@ out:
 BOOL nla_decrypt_public_key_echo(rdpNla* nla)
 {
 	BOOL status = FALSE;
-	SecBuffer public_key = { 0 };
+	SecBuffer public_key = WINPR_C_ARRAY_INIT;
 
 	if (!nla)
 		goto fail;
@@ -1053,7 +1053,7 @@ fail:
 BOOL nla_decrypt_public_key_hash(rdpNla* nla)
 {
 	WINPR_DIGEST_CTX* sha256 = NULL;
-	BYTE serverClientHash[WINPR_SHA256_DIGEST_LENGTH] = { 0 };
+	BYTE serverClientHash[WINPR_SHA256_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	BOOL status = FALSE;
 
 	WINPR_ASSERT(nla);
@@ -1061,7 +1061,7 @@ BOOL nla_decrypt_public_key_hash(rdpNla* nla)
 	const BYTE* hashMagic = nla->server ? ClientServerHashMagic : ServerClientHashMagic;
 	const size_t hashSize =
 	    nla->server ? sizeof(ClientServerHashMagic) : sizeof(ServerClientHashMagic);
-	SecBuffer hash = { 0 };
+	SecBuffer hash = WINPR_C_ARRAY_INIT;
 
 	if (!credssp_auth_decrypt(nla->auth, &nla->pubKeyAuth, &hash, nla->recvSeqNum++))
 		return FALSE;
@@ -1302,10 +1302,10 @@ static BOOL nla_read_TSRemoteGuardPackageCred(WINPR_ATTR_UNUSED rdpNla* nla, Win
                                               RemoteGuardPackageCredType* credsType,
                                               wStream* payload)
 {
-	WinPrAsn1_OctetString packageName = { 0 };
-	WinPrAsn1_OctetString credBuffer = { 0 };
+	WinPrAsn1_OctetString packageName = WINPR_C_ARRAY_INIT;
+	WinPrAsn1_OctetString credBuffer = WINPR_C_ARRAY_INIT;
 	BOOL error = FALSE;
-	char packageNameStr[100] = { 0 };
+	char packageNameStr[100] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(dec);
@@ -1357,7 +1357,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 {
 	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
-	WinPrAsn1_OctetString credentials = { 0 };
+	WinPrAsn1_OctetString credentials = WINPR_C_ARRAY_INIT;
 	BOOL error = FALSE;
 	WinPrAsn1_INTEGER credType = -1;
 	BOOL ret = TRUE;
@@ -1456,7 +1456,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 				return FALSE;
 
 			RemoteGuardPackageCredType logonCredsType = RCG_TYPE_NONE;
-			wStream logonPayload = { 0 };
+			wStream logonPayload = WINPR_C_ARRAY_INIT;
 			if (!nla_read_TSRemoteGuardPackageCred(nla, &logonCredsSeq, &logonCredsType,
 			                                       &logonPayload))
 				return FALSE;
@@ -1484,7 +1484,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 					return FALSE;
 
 				RemoteGuardPackageCredType suppCredsType = RCG_TYPE_NONE;
-				wStream ntlmPayload = { 0 };
+				wStream ntlmPayload = WINPR_C_ARRAY_INIT;
 				if (!nla_read_TSRemoteGuardPackageCred(nla, &ntlmCredsSeq, &suppCredsType,
 				                                       &ntlmPayload))
 					return FALSE;
@@ -1549,7 +1549,7 @@ static BOOL nla_get_KERB_TICKET_LOGON(rdpNla* nla, KERB_TICKET_LOGON* logonTicke
 	WINPR_ASSERT(logonTicket);
 
 	SecurityFunctionTable* table = NULL;
-	CtxtHandle context = { 0 };
+	CtxtHandle context = WINPR_C_ARRAY_INIT;
 	credssp_auth_tableAndContext(nla->auth, &table, &context);
 	return table->QueryContextAttributes(&context, SECPKG_CRED_ATTR_TICKET_LOGON, logonTicket) ==
 	       SEC_E_OK;
@@ -1640,7 +1640,7 @@ static BOOL nla_encode_ts_smartcard_credentials(rdpNla* nla, WinPrAsn1Encoder* e
 		                   { 2, FreeRDP_ReaderName },
 		                   { 3, FreeRDP_ContainerName },
 		                   { 4, FreeRDP_CspName } };
-	WinPrAsn1_OctetString octet_string = { 0 };
+	WinPrAsn1_OctetString octet_string = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(enc);
@@ -1725,9 +1725,9 @@ static BOOL nla_encode_ts_smartcard_credentials(rdpNla* nla, WinPrAsn1Encoder* e
 
 static BOOL nla_encode_ts_password_credentials(rdpNla* nla, WinPrAsn1Encoder* enc)
 {
-	WinPrAsn1_OctetString username = { 0 };
-	WinPrAsn1_OctetString domain = { 0 };
-	WinPrAsn1_OctetString password = { 0 };
+	WinPrAsn1_OctetString username = WINPR_C_ARRAY_INIT;
+	WinPrAsn1_OctetString domain = WINPR_C_ARRAY_INIT;
+	WinPrAsn1_OctetString password = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(enc);
@@ -1816,7 +1816,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	BOOL ret = FALSE;
 	WinPrAsn1Encoder* enc = NULL;
 	size_t length = 0;
-	wStream s = { 0 };
+	wStream s = WINPR_C_ARRAY_INIT;
 	TsCredentialsType credType = TSCREDS_INVALID;
 
 	WINPR_ASSERT(nla);
@@ -1937,7 +1937,7 @@ static BOOL nla_write_octet_string(WinPrAsn1Encoder* enc, const SecBuffer* buffe
 	if (buffer->cbBuffer > 0)
 	{
 		size_t rc = 0;
-		WinPrAsn1_OctetString octet_string = { 0 };
+		WinPrAsn1_OctetString octet_string = WINPR_C_ARRAY_INIT;
 
 		WLog_DBG(TAG, "   ----->> %s", msg);
 		octet_string.data = buffer->pvBuffer;
@@ -2068,8 +2068,8 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
 	BOOL error = FALSE;
-	WinPrAsn1_tagId tag = { 0 };
-	WinPrAsn1_INTEGER val = { 0 };
+	WinPrAsn1_tagId tag = WINPR_C_ARRAY_INIT;
+	WinPrAsn1_INTEGER val = WINPR_C_ARRAY_INIT;
 	UINT32 version = 0;
 
 	WINPR_ASSERT(nla);
@@ -2109,7 +2109,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	while (WinPrAsn1DecReadContextualTag(&dec, &tag, &dec2) != 0)
 	{
 		WinPrAsn1Decoder dec3 = { .encoding = WINPR_ASN1_BER, { 0 } };
-		WinPrAsn1_OctetString octet_string = { 0 };
+		WinPrAsn1_OctetString octet_string = WINPR_C_ARRAY_INIT;
 
 		switch (tag)
 		{
@@ -2449,7 +2449,7 @@ SECURITY_STATUS nla_QueryContextAttributes(rdpNla* nla, DWORD ulAttr, PVOID pBuf
 	WINPR_ASSERT(nla);
 
 	SecurityFunctionTable* table = NULL;
-	CtxtHandle context = { 0 };
+	CtxtHandle context = WINPR_C_ARRAY_INIT;
 	credssp_auth_tableAndContext(nla->auth, &table, &context);
 
 	return table->QueryContextAttributes(&context, ulAttr, pBuffer);
@@ -2460,7 +2460,7 @@ SECURITY_STATUS nla_FreeContextBuffer(rdpNla* nla, PVOID pBuffer)
 	WINPR_ASSERT(nla);
 
 	SecurityFunctionTable* table = NULL;
-	CtxtHandle context = { 0 };
+	CtxtHandle context = WINPR_C_ARRAY_INIT;
 	credssp_auth_tableAndContext(nla->auth, &table, &context);
 
 	return table->FreeContextBuffer(pBuffer);

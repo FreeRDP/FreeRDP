@@ -194,7 +194,7 @@ static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 	UINT64 time = 0;
 	INT32 x = 0;
 	INT32 y = 0;
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(ainput);
 	WINPR_ASSERT(s);
@@ -237,7 +237,7 @@ static HANDLE ainput_server_get_channel_handle(ainput_server* ainput)
 static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 {
 	DWORD nCount = 0;
-	HANDLE events[2] = { 0 };
+	HANDLE events[2] = WINPR_C_ARRAY_INIT;
 	ainput_server* ainput = (ainput_server*)arg;
 	UINT error = CHANNEL_RC_OK;
 	DWORD status = 0;

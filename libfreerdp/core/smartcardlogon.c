@@ -53,7 +53,7 @@ static void delete_file(char* path)
 		FILE* fp = winpr_fopen(path, "r+");
 		if (fp)
 		{
-			const char buffer[8192] = { 0 };
+			const char buffer[8192] = WINPR_C_ARRAY_INIT;
 			INT64 size = 0;
 			int rs = _fseeki64(fp, 0, SEEK_END);
 			if (rs == 0)
@@ -546,10 +546,10 @@ static BOOL list_provider_keys(WINPR_ATTR_UNUSED const rdpSettings* settings,
 out:
 	if (count == 0)
 	{
-		char cspa[128] = { 0 };
+		char cspa[128] = WINPR_C_ARRAY_INIT;
 
 		(void)ConvertWCharToUtf8(csp, cspa, sizeof(cspa));
-		char scopea[128] = { 0 };
+		char scopea[128] = WINPR_C_ARRAY_INIT;
 		(void)ConvertWCharToUtf8(scope, scopea, sizeof(scopea));
 		WLog_WARN(TAG, "%s [%s] no certificates found", cspa, scopea);
 	}
@@ -624,7 +624,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		DWORD provType, cbProvName = 0;
 		for (DWORD i = 0; CryptEnumProvidersW(i, NULL, 0, &provType, NULL, &cbProvName); ++i)
 		{
-			char providerNameStr[256] = { 0 };
+			char providerNameStr[256] = WINPR_C_ARRAY_INIT;
 			LPWSTR szProvName = malloc(cbProvName * sizeof(WCHAR));
 			if (!CryptEnumProvidersW(i, NULL, 0, &provType, szProvName, &cbProvName))
 			{
@@ -664,7 +664,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 
 		for (DWORD i = 0; i < nproviders; i++)
 		{
-			char providerNameStr[256] = { 0 };
+			char providerNameStr[256] = WINPR_C_ARRAY_INIT;
 			const NCryptProviderName* name = &names[i];
 
 			if (ConvertWCharToUtf8(name->pszName, providerNameStr, ARRAYSIZE(providerNameStr)) < 0)

@@ -292,7 +292,7 @@ BOOL rts_match_pdu_signature_ex(const RtsPduSignature* signature, wStream* src,
                                 const rpcconn_hdr_t* header, RtsPduSignature* found_signature,
                                 BOOL silent)
 {
-	RtsPduSignature extracted = { 0 };
+	RtsPduSignature extracted = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(signature);
 	WINPR_ASSERT(src);
@@ -315,8 +315,8 @@ BOOL rts_extract_pdu_signature_ex(RtsPduSignature* signature, wStream* src,
                                   const rpcconn_hdr_t* header, BOOL silent)
 {
 	BOOL rc = FALSE;
-	wStream sbuffer = { 0 };
-	rpcconn_hdr_t rheader = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	rpcconn_hdr_t rheader = WINPR_C_ARRAY_INIT;
 	const rpcconn_rts_hdr_t* rts = NULL;
 
 	WINPR_ASSERT(signature);

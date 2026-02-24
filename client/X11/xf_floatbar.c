@@ -175,7 +175,7 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 {
 	xfContext* xfc = NULL;
 	Status status = 0;
-	XWindowAttributes attr = { 0 };
+	XWindowAttributes attr = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(floatbar);
 	if (floatbar->created)
@@ -391,8 +391,8 @@ static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 	GC gc = NULL;
 	GC shape_gc = NULL;
 	Pixmap pmap = 0;
-	XPoint shape[5] = { 0 };
-	XPoint border[5] = { 0 };
+	XPoint shape[5] = WINPR_C_ARRAY_INIT;
+	XPoint border[5] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(floatbar);
 	WINPR_ASSERT(floatbar->xfc);

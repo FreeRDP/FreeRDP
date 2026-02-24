@@ -218,7 +218,7 @@ typedef struct
 } PCSC_SCARDHANDLE;
 
 static HMODULE g_PCSCModule = NULL;
-static PCSCFunctionTable g_PCSC = { 0 };
+static PCSCFunctionTable g_PCSC = WINPR_C_ARRAY_INIT;
 
 static HANDLE g_StartedEvent = NULL;
 static int g_StartedEventRefCount = 0;

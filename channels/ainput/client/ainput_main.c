@@ -86,8 +86,8 @@ static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 
 static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, INT32 x, INT32 y)
 {
-	BYTE buffer[32] = { 0 };
-	wStream sbuffer = { 0 };
+	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 
 	WINPR_ASSERT(s);
@@ -105,7 +105,7 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 	}
 
 	{
-		char ebuffer[128] = { 0 };
+		char ebuffer[128] = WINPR_C_ARRAY_INIT;
 		WLog_VRB(TAG, "sending timestamp=0x%08" PRIx64 ", flags=%s, %" PRId32 "x%" PRId32, time,
 		         ainput_flags_to_string(flags, ebuffer, sizeof(ebuffer)), x, y);
 	}

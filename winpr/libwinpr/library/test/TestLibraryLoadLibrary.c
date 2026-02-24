@@ -11,7 +11,7 @@ int TestLibraryLoadLibrary(int argc, char* argv[])
 {
 	HINSTANCE library = NULL;
 	LPCSTR SharedLibraryExtension = NULL;
-	CHAR LibraryPath[PATHCCH_MAX_CCH] = { 0 };
+	CHAR LibraryPath[PATHCCH_MAX_CCH] = WINPR_C_ARRAY_INIT;
 	PCHAR p = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

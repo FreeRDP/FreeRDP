@@ -167,7 +167,7 @@ static const UINT32 FORMAT = PIXEL_FORMAT_XRGB32;
 static int TestFreeRDPCodecRemoteFX(const uint8_t* Data, size_t Size)
 {
 	int rc = -1;
-	REGION16 region = { 0 };
+	REGION16 region = WINPR_C_ARRAY_INIT;
 	RFX_CONTEXT* context = rfx_context_new(FALSE);
 	BYTE* dest = calloc(IMG_WIDTH * IMG_HEIGHT, FORMAT_SIZE);
 	size_t stride = FORMAT_SIZE * IMG_WIDTH;
@@ -293,7 +293,7 @@ static BOOL progressive_decode(const uint8_t* Data, size_t Size)
 	int rc = 0;
 	BYTE* resultData = NULL;
 	UINT32 ColorFormat = PIXEL_FORMAT_BGRX32;
-	REGION16 invalidRegion = { 0 };
+	REGION16 invalidRegion = WINPR_C_ARRAY_INIT;
 	UINT32 scanline = 4240;
 	UINT32 width = 1060;
 	UINT32 height = 827;

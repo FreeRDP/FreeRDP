@@ -39,7 +39,7 @@ UINT ios_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 	UINT32 *pFormatIds;
 	const char *formatName;
 	CLIPRDR_FORMAT *formats;
-	CLIPRDR_FORMAT_LIST formatList = { 0 };
+	CLIPRDR_FORMAT_LIST formatList = WINPR_C_ARRAY_INIT;
 
 	if (!cliprdr)
 		return ERROR_INVALID_PARAMETER;
@@ -91,7 +91,7 @@ static UINT ios_cliprdr_send_client_format_data_request(CliprdrClientContext *cl
                                                         UINT32 formatId)
 {
 	UINT rc = ERROR_INVALID_PARAMETER;
-	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest = { 0 };
+	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest = WINPR_C_ARRAY_INIT;
 	mfContext *afc;
 
 	if (!cliprdr)
@@ -325,7 +325,7 @@ ios_cliprdr_server_format_data_request(CliprdrClientContext *cliprdr,
 	BYTE *data;
 	UINT32 size;
 	UINT32 formatId;
-	CLIPRDR_FORMAT_DATA_RESPONSE response = { 0 };
+	CLIPRDR_FORMAT_DATA_RESPONSE response = WINPR_C_ARRAY_INIT;
 	mfContext *afc;
 
 	if (!cliprdr || !formatDataRequest || !cliprdr->ClientFormatDataResponse)

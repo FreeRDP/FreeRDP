@@ -74,7 +74,7 @@ void free_synthetic_file(struct synthetic_file* file);
 static struct synthetic_file* make_synthetic_file(const WCHAR* local_name, const WCHAR* remote_name)
 {
 	struct synthetic_file* file = NULL;
-	WIN32_FIND_DATAW fd = { 0 };
+	WIN32_FIND_DATAW fd = WINPR_C_ARRAY_INIT;
 	HANDLE hFind = NULL;
 
 	WINPR_ASSERT(local_name);
@@ -158,7 +158,7 @@ static WCHAR* convert_local_name_component_to_remote(wClipboard* clipboard, cons
 	 */
 	if (!delegate->IsFileNameComponentValid(remote_name))
 	{
-		char name[MAX_PATH] = { 0 };
+		char name[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		ConvertWCharToUtf8(local_name, name, sizeof(name) - 1);
 		WLog_ERR(TAG, "invalid file name component: %s", name);
 		goto error;
@@ -205,8 +205,8 @@ static BOOL add_directory_entry_to_list(wClipboard* clipboard, const WCHAR* loca
 	WCHAR* remote_name = NULL;
 	WCHAR* remote_base_name = NULL;
 
-	WCHAR dotbuffer[6] = { 0 };
-	WCHAR dotdotbuffer[6] = { 0 };
+	WCHAR dotbuffer[6] = WINPR_C_ARRAY_INIT;
+	WCHAR dotdotbuffer[6] = WINPR_C_ARRAY_INIT;
 	const WCHAR* dot = InitializeConstWCharFromUtf8(".", dotbuffer, ARRAYSIZE(dotbuffer));
 	const WCHAR* dotdot = InitializeConstWCharFromUtf8("..", dotdotbuffer, ARRAYSIZE(dotdotbuffer));
 
@@ -248,7 +248,7 @@ static BOOL do_add_directory_contents_to_list(wClipboard* clipboard, const WCHAR
 	WINPR_ASSERT(files);
 	WINPR_ASSERT(namebuf);
 
-	WIN32_FIND_DATAW FindData = { 0 };
+	WIN32_FIND_DATAW FindData = WINPR_C_ARRAY_INIT;
 	HANDLE hFind = FindFirstFileW(namebuf, &FindData);
 	if (INVALID_HANDLE_VALUE == hFind)
 	{
@@ -728,7 +728,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	if (baseLength < 1)
 		return NULL;
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, data, *pSize);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return NULL;
@@ -785,7 +785,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 			continue;
 		}
 		int rc = -1;
-		char curName[520] = { 0 };
+		char curName[520] = WINPR_C_ARRAY_INIT;
 		const char* stop_at = NULL;
 		const char* previous_at = NULL;
 
@@ -1067,13 +1067,13 @@ static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 si
 
 	if (INVALID_HANDLE_VALUE == file->fd)
 	{
-		BY_HANDLE_FILE_INFORMATION FileInfo = { 0 };
+		BY_HANDLE_FILE_INFORMATION FileInfo = WINPR_C_ARRAY_INIT;
 
 		file->fd = CreateFileW(file->local_name, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 		                       FILE_ATTRIBUTE_NORMAL, NULL);
 		if (INVALID_HANDLE_VALUE == file->fd)
 		{
-			char name[MAX_PATH] = { 0 };
+			char name[MAX_PATH] = WINPR_C_ARRAY_INIT;
 			ConvertWCharToUtf8(file->local_name, name, sizeof(name) - 1);
 			error = GetLastError();
 			WLog_ERR(TAG, "failed to open file %s: 0x%08" PRIx32, name, error);
@@ -1082,7 +1082,7 @@ static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 si
 
 		if (!GetFileInformationByHandle(file->fd, &FileInfo))
 		{
-			char name[MAX_PATH] = { 0 };
+			char name[MAX_PATH] = WINPR_C_ARRAY_INIT;
 			ConvertWCharToUtf8(file->local_name, name, sizeof(name) - 1);
 			(void)CloseHandle(file->fd);
 			file->fd = INVALID_HANDLE_VALUE;

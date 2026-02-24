@@ -239,7 +239,7 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
                                               BYTE** pData)
 {
 	BOOL rc = FALSE;
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	const BYTE* ptr = NULL;
 
 	if (!rdp_redirection_get_data(s, pLength, &ptr))
@@ -353,7 +353,7 @@ BOOL rdp_redirection_read_target_cert(rdpCertificate** ptargetCertificate, const
 {
 	WINPR_ASSERT(ptargetCertificate);
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, data, length);
 
 	freerdp_certificate_free(*ptargetCertificate);
@@ -643,7 +643,7 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 
 static BOOL rdp_redirection_read_data(UINT32 flag, wStream* s, UINT32* pLength, BYTE** pData)
 {
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	const BYTE* ptr = NULL;
 
 	if (!rdp_redirection_get_data(s, pLength, &ptr))
@@ -663,7 +663,7 @@ static BOOL rdp_redirection_read_data(UINT32 flag, wStream* s, UINT32* pLength, 
 
 static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 {
-	char buffer[256] = { 0 };
+	char buffer[256] = WINPR_C_ARRAY_INIT;
 	UINT16 flags = 0;
 	UINT16 length = 0;
 	rdpRedirection* redirection = rdp->redirection;
@@ -674,8 +674,8 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, flags); /* flags (2 bytes) */
 	if (flags != SEC_REDIRECTION_PKT)
 	{
-		char buffer1[1024] = { 0 };
-		char buffer2[1024] = { 0 };
+		char buffer1[1024] = WINPR_C_ARRAY_INIT;
+		char buffer2[1024] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "received invalid flags=%s, expected %s",
 		         rdp_security_flag_string(flags, buffer1, sizeof(buffer1)),
 		         rdp_security_flag_string(SEC_REDIRECTION_PKT, buffer2, sizeof(buffer2)));
@@ -1211,8 +1211,8 @@ BOOL redirection_set_session_id(rdpRedirection* redirection, UINT32 session_id)
 
 static BOOL redirection_unsupported(const char* fkt, UINT32 flag, UINT32 mask)
 {
-	char buffer[1024] = { 0 };
-	char buffer2[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
+	char buffer2[1024] = WINPR_C_ARRAY_INIT;
 	WLog_WARN(TAG, "[%s] supported flags are {%s}, have {%s}", fkt,
 	          rdp_redirection_flags_to_string(mask, buffer, sizeof(buffer)),
 	          rdp_redirection_flags_to_string(flag, buffer2, sizeof(buffer2)));

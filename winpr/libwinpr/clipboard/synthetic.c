@@ -314,8 +314,8 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 #endif
 	    if (is_format_bitmap(clipboard, formatId))
 	{
-		WINPR_BITMAP_FILE_HEADER pFileHeader = { 0 };
-		wStream sbuffer = { 0 };
+		WINPR_BITMAP_FILE_HEADER pFileHeader = WINPR_C_ARRAY_INIT;
+		wStream sbuffer = WINPR_C_ARRAY_INIT;
 		wStream* s = Stream_StaticConstInit(&sbuffer, data, SrcSize);
 		if (!readBitmapFileHeader(s, &pFileHeader))
 			return NULL;
@@ -408,7 +408,7 @@ static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoH
 	if (!s)
 		return NULL;
 
-	WINPR_BITMAP_FILE_HEADER fileHeader = { 0 };
+	WINPR_BITMAP_FILE_HEADER fileHeader = WINPR_C_ARRAY_INIT;
 	fileHeader.bfType[0] = 'B';
 	fileHeader.bfType[1] = 'M';
 	fileHeader.bfSize = (UINT32)DstSize;
@@ -455,9 +455,9 @@ static void* clipboard_synthesize_image_bmp(WINPR_ATTR_UNUSED wClipboard* clipbo
 		if (SrcSize < sizeof(BITMAPINFOHEADER))
 			return NULL;
 
-		wStream sbuffer = { 0 };
+		wStream sbuffer = WINPR_C_ARRAY_INIT;
 		size_t offset = 0;
-		WINPR_BITMAP_INFO_HEADER header = { 0 };
+		WINPR_BITMAP_INFO_HEADER header = WINPR_C_ARRAY_INIT;
 		wStream* s = Stream_StaticConstInit(&sbuffer, data, SrcSize);
 		if (!readBitmapInfoHeader(s, &header, &offset))
 			return NULL;
@@ -638,7 +638,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		const size_t SrcSize = (size_t)*pSize;
 		const size_t DstSize = SrcSize + 200;
 		char* body = NULL;
-		char num[20] = { 0 };
+		char num[20] = WINPR_C_ARRAY_INIT;
 
 		/* Create a copy, we modify the input data */
 		pSrcData.pv = calloc(1, SrcSize + 1);
@@ -739,7 +739,7 @@ static char* html_pre_write(wStream* s, const char* what)
 
 static void html_fill_number(char* pos, size_t val)
 {
-	char str[11] = { 0 };
+	char str[11] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(str, sizeof(str), "%010" PRIuz, val);
 	memcpy(pos, str, 10);
 }

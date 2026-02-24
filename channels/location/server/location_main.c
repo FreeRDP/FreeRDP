@@ -433,7 +433,7 @@ static HANDLE location_server_get_channel_handle(location_server* location)
 static DWORD WINAPI location_server_thread_func(LPVOID arg)
 {
 	DWORD nCount = 0;
-	HANDLE events[2] = { 0 };
+	HANDLE events[2] = WINPR_C_ARRAY_INIT;
 	location_server* location = (location_server*)arg;
 	UINT error = CHANNEL_RC_OK;
 	DWORD status = 0;

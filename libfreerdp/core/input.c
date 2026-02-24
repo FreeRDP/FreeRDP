@@ -70,7 +70,7 @@ static const char* SyncEventFlags2Str(const char* prefix, uint32_t flags, char* 
 		const uint32_t flag = tflags[x];
 		if (flags & flag)
 		{
-			char ibuffer[64] = { 0 };
+			char ibuffer[64] = WINPR_C_ARRAY_INIT;
 			(void)_snprintf(ibuffer, sizeof(ibuffer), "%s%s", prefix, SyncEventFlag2Str(flag));
 			if (!winpr_str_append(ibuffer, &buffer[1], len - 2, "|"))
 				return NULL;
@@ -979,7 +979,7 @@ BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)
 	rdp_input_internal* in = input_cast(input);
 	const BOOL suspended =
 	    freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput);
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	WLog_Print(in->log, WLOG_DEBUG, "Keyboard {Sync, suspend: %d} [%s]", suspended,
 	           freerdp_input_keyboard_flags_string(flags, buffer, sizeof(buffer)));
 	if (suspended)
@@ -1081,7 +1081,7 @@ BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 	rdp_input_internal* in = input_cast(input);
 	const BOOL suspended =
 	    freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput);
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	WLog_Print(in->log, WLOG_DEBUG, "Keyboard {FocusIn, suspend: %s} [%s]",
 	           suspended ? "true" : "false",
 	           freerdp_input_keyboard_flags_string(toggleStates, buffer, sizeof(buffer)));

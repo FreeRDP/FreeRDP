@@ -852,7 +852,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 	else if (ulAttribute == SECPKG_ATTR_AUTH_IDENTITY)
 	{
 		SSPI_CREDENTIALS* credentials = NULL;
-		const SecPkgContext_AuthIdentity empty = { 0 };
+		const SecPkgContext_AuthIdentity empty = WINPR_C_ARRAY_INIT;
 		SecPkgContext_AuthIdentity* AuthIdentity = (SecPkgContext_AuthIdentity*)pBuffer;
 
 		WINPR_ASSERT(AuthIdentity);
@@ -1086,8 +1086,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 {
 	const UINT32 SeqNo = MessageSeqNo;
 	UINT32 value = 0;
-	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
-	BYTE checksum[8] = { 0 };
+	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE checksum[8] = WINPR_C_ARRAY_INIT;
 	ULONG version = 1;
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer signature_buffer = NULL;
@@ -1179,10 +1179,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 {
 	const UINT32 SeqNo = (UINT32)MessageSeqNo;
 	UINT32 value = 0;
-	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
-	BYTE checksum[8] = { 0 };
+	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE checksum[8] = WINPR_C_ARRAY_INIT;
 	UINT32 version = 1;
-	BYTE expected_signature[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE expected_signature[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer signature_buffer = NULL;
 	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
@@ -1276,8 +1276,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext,
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer sig_buffer = NULL;
 	UINT32 seq_no = 0;
-	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
-	BYTE checksum[8] = { 0 };
+	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE checksum[8] = WINPR_C_ARRAY_INIT;
 
 	NTLM_CONTEXT* context = sspi_SecureHandleGetLowerPointer(phContext);
 	if (!check_context(context))
@@ -1326,9 +1326,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer sig_buffer = NULL;
 	UINT32 seq_no = 0;
-	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
-	BYTE checksum[8] = { 0 };
-	BYTE signature[16] = { 0 };
+	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE checksum[8] = WINPR_C_ARRAY_INIT;
+	BYTE signature[16] = WINPR_C_ARRAY_INIT;
 
 	NTLM_CONTEXT* context = sspi_SecureHandleGetLowerPointer(phContext);
 	if (!check_context(context))
@@ -1444,8 +1444,8 @@ const SecPkgInfoA NTLM_SecPkgInfoA = {
 	"NTLM Security Package" /* Comment */
 };
 
-static WCHAR NTLM_SecPkgInfoW_NameBuffer[32] = { 0 };
-static WCHAR NTLM_SecPkgInfoW_CommentBuffer[32] = { 0 };
+static WCHAR NTLM_SecPkgInfoW_NameBuffer[32] = WINPR_C_ARRAY_INIT;
+static WCHAR NTLM_SecPkgInfoW_CommentBuffer[32] = WINPR_C_ARRAY_INIT;
 
 const SecPkgInfoW NTLM_SecPkgInfoW = {
 	0x00082B37,                    /* fCapabilities */

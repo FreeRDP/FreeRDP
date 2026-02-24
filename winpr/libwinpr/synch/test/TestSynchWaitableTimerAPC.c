@@ -38,8 +38,8 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 	DWORD rc = 0;
 	HANDLE hTimer = NULL;
 	BOOL bSuccess = 0;
-	LARGE_INTEGER due = { 0 };
-	APC_DATA apcData = { 0 };
+	LARGE_INTEGER due = WINPR_C_ARRAY_INIT;
+	APC_DATA apcData = WINPR_C_ARRAY_INIT;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	g_Event = CreateEvent(NULL, TRUE, FALSE, NULL);

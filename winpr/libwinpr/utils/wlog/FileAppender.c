@@ -138,7 +138,7 @@ static BOOL WLog_FileAppender_WriteMessage(wLog* log, wLogAppender* appender,
 	if (!fp)
 		return FALSE;
 
-	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
+	char prefix[WLOG_MAX_PREFIX_SIZE] = WINPR_C_ARRAY_INIT;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 	(void)fprintf(fp, "%s%s\n", prefix, cmessage->TextString);
 	(void)fflush(fp); /* slow! */

@@ -348,7 +348,7 @@ static DWORD WINAPI parallel_thread_func(LPVOID arg)
 			break;
 		}
 
-		wMessage message = { 0 };
+		wMessage message = WINPR_C_ARRAY_INIT;
 		if (!MessageQueue_Peek(parallel->queue, &message, TRUE))
 		{
 			WLog_Print(parallel->log, WLOG_ERROR, "MessageQueue_Peek failed!");

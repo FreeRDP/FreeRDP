@@ -1030,7 +1030,7 @@ PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 
 PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 {
-	static WCHAR buffer[6][16] = { 0 };
+	static WCHAR buffer[6][16] = WINPR_C_ARRAY_INIT;
 	const WCHAR* SharedLibraryExtensionDotDllW = InitializeConstWCharFromUtf8(
 	    SharedLibraryExtensionDotDllA, buffer[0], ARRAYSIZE(buffer[0]));
 	const WCHAR* SharedLibraryExtensionDotSoW =
@@ -1156,7 +1156,7 @@ BOOL winpr_RemoveDirectory_RecursiveA(LPCSTR lpPathName)
 		goto fail;
 
 	{
-		WIN32_FIND_DATAA findFileData = { 0 };
+		WIN32_FIND_DATAA findFileData = WINPR_C_ARRAY_INIT;
 		dir = FindFirstFileA(path_slash, &findFileData);
 
 		if (dir == INVALID_HANDLE_VALUE)
@@ -1258,7 +1258,7 @@ char* winpr_GetConfigFilePath(BOOL system, const char* filename)
 
 char* winpr_GetConfigFilePathV(BOOL system, const char* filename, ...)
 {
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, filename);
 	char* str = winpr_GetConfigFilePathVA(system, filename, ap);
 	va_end(ap);

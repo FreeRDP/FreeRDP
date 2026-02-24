@@ -32,12 +32,12 @@ int TestASN1Read(int argc, char* argv[])
 {
 	WinPrAsn1Decoder decoder = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1Decoder seqDecoder = { .encoding = WINPR_ASN1_BER, { 0 } };
-	wStream staticS = { 0 };
+	wStream staticS = WINPR_C_ARRAY_INIT;
 	WinPrAsn1_BOOL boolV = 0;
 	WinPrAsn1_INTEGER integerV = 0;
-	WinPrAsn1_OID oidV = { 0 };
+	WinPrAsn1_OID oidV = WINPR_C_ARRAY_INIT;
 	WinPrAsn1_IA5STRING ia5stringV = NULL;
-	WinPrAsn1_UTCTIME utctimeV = { 0 };
+	WinPrAsn1_UTCTIME utctimeV = WINPR_C_ARRAY_INIT;
 	WinPrAsn1_tag tag = 0;
 	size_t len = 0;
 	BOOL error = 0;

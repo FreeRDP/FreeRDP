@@ -188,7 +188,7 @@ int tsmf_platform_create(TSMFGstreamerDecoder* decoder)
 	hdl->shmid = shm_open(get_shm_id(), (O_RDWR | O_CREAT), (PROT_READ | PROT_WRITE));
 	if (hdl->shmid == -1)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "failed to get access to shared memory - shmget(%s): %i - %s", get_shm_id(),
 		         errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return -2;

@@ -485,7 +485,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 	}
 	else
 	{
-		VARIANT var = { 0 };
+		VARIANT var = WINPR_C_ARRAY_INIT;
 		hr = sys->MFStartup(MF_VERSION, 0);
 
 		if (FAILED(hr))

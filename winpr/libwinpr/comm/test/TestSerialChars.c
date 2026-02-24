@@ -31,11 +31,11 @@
 
 static BOOL test_SerCxSys(HANDLE hComm)
 {
-	DCB dcb = { 0 };
+	DCB dcb = WINPR_C_ARRAY_INIT;
 	UCHAR XonChar = 0;
 	UCHAR XoffChar = 0;
 
-	struct termios currentTermios = { 0 };
+	struct termios currentTermios = WINPR_C_ARRAY_INIT;
 
 	if (tcgetattr(((WINPR_COMM*)hComm)->fd, &currentTermios) < 0)
 	{
@@ -111,7 +111,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 
 static BOOL test_SerCx2Sys(HANDLE hComm)
 {
-	DCB dcb = { 0 };
+	DCB dcb = WINPR_C_ARRAY_INIT;
 
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
@@ -132,7 +132,7 @@ static BOOL test_SerCx2Sys(HANDLE hComm)
 
 int TestSerialChars(int argc, char* argv[])
 {
-	struct stat statbuf = { 0 };
+	struct stat statbuf = WINPR_C_ARRAY_INIT;
 	BOOL result = 0;
 	HANDLE hComm = NULL;
 

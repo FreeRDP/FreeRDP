@@ -506,10 +506,10 @@ BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	ULONG AvPairsLength = 0;
 	NTLM_AV_PAIR* pAvPairList = NULL;
 	size_t cbAvPairList = 0;
-	UNICODE_STRING NbDomainName = { 0 };
-	UNICODE_STRING NbComputerName = { 0 };
-	UNICODE_STRING DnsDomainName = { 0 };
-	UNICODE_STRING DnsComputerName = { 0 };
+	UNICODE_STRING NbDomainName = WINPR_C_ARRAY_INIT;
+	UNICODE_STRING NbComputerName = WINPR_C_ARRAY_INIT;
+	UNICODE_STRING DnsDomainName = WINPR_C_ARRAY_INIT;
+	UNICODE_STRING DnsComputerName = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 

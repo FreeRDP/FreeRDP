@@ -271,7 +271,7 @@ WINPR_ATTR_FORMAT_ARG(2, 0)
 static BOOL list_append(HttpContext* context, WINPR_FORMAT_ARG const char* str, va_list ap)
 {
 	BOOL rc = FALSE;
-	va_list vat = { 0 };
+	va_list vat = WINPR_C_ARRAY_INIT;
 	char* Pragma = NULL;
 	size_t PragmaSize = 0;
 
@@ -314,7 +314,7 @@ BOOL http_context_set_pragma(HttpContext* context, WINPR_FORMAT_ARG const char* 
 	free(context->Pragma);
 	context->Pragma = NULL;
 
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, Pragma);
 	return list_append(context, Pragma, ap);
 }
@@ -325,7 +325,7 @@ BOOL http_context_append_pragma(HttpContext* context, const char* Pragma, ...)
 	if (!context || !Pragma)
 		return FALSE;
 
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, Pragma);
 	return list_append(context, Pragma, ap);
 }
@@ -351,7 +351,7 @@ BOOL http_context_set_rdg_connection_id(HttpContext* context, const GUID* RdgCon
 	if (!context || !RdgConnectionId)
 		return FALSE;
 
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	return http_context_set_header(context, "RDG-Connection-Id", "%s",
 	                               guid2str(RdgConnectionId, buffer, sizeof(buffer)));
 }
@@ -361,7 +361,7 @@ BOOL http_context_set_rdg_correlation_id(HttpContext* context, const GUID* RdgCo
 	if (!context || !RdgCorrelationId)
 		return FALSE;
 
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	return http_context_set_header(context, "RDG-Correlation-Id", "%s",
 	                               guid2str(RdgCorrelationId, buffer, sizeof(buffer)));
 }
@@ -372,7 +372,7 @@ BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable)
 
 	if (enable)
 	{
-		GUID key = { 0 };
+		GUID key = WINPR_C_ARRAY_INIT;
 		if (RPC_S_OK != UuidCreate(&key))
 			return FALSE;
 
@@ -501,7 +501,7 @@ WINPR_ATTR_FORMAT_ARG(2, 3)
 static BOOL http_encode_print(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	char* str = NULL;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	int length = 0;
 	int used = 0;
 
@@ -972,7 +972,7 @@ fail:
 static void http_response_print(wLog* log, DWORD level, const HttpResponse* response,
                                 const char* file, size_t line, const char* fkt)
 {
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(log);
 	WINPR_ASSERT(response);
@@ -1091,7 +1091,7 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 			break;
 			case ChunkStateFooter:
 			{
-				char _dummy[2] = { 0 };
+				char _dummy[2] = WINPR_C_ARRAY_INIT;
 				WINPR_ASSERT(encodingContext->nextOffset == 0);
 				WINPR_ASSERT(encodingContext->headerFooterPos < 2);
 				ERR_clear_error();
@@ -1266,7 +1266,7 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 
 	if ((response->TransferEncoding == TransferEncodingChunked) && readContentLength)
 	{
-		http_encoding_chunked_context ctx = { 0 };
+		http_encoding_chunked_context ctx = WINPR_C_ARRAY_INIT;
 		ctx.state = ChunkStateLenghHeader;
 		ctx.nextOffset = 0;
 		ctx.headerFooterPos = 0;
@@ -1670,7 +1670,7 @@ void http_response_log_error_status_(wLog* log, DWORD level, const HttpResponse*
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	const UINT16 status = http_response_get_status_code(response);
 	WLog_PrintTextMessage(log, level, line, file, fkt, "Unexpected HTTP status: %s",
 	                      freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
@@ -1702,7 +1702,7 @@ FREERDP_LOCAL BOOL http_context_set_header(HttpContext* context, const char* key
                                            ...)
 {
 	WINPR_ASSERT(context);
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, value);
 	const BOOL rc = http_context_set_header_va(context, key, value, ap);
 	va_end(ap);
@@ -1714,7 +1714,7 @@ BOOL http_request_set_header(HttpRequest* request, const char* key, const char* 
 	WINPR_ASSERT(request);
 	char* v = NULL;
 	size_t vlen = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, value);
 	winpr_vasprintf(&v, &vlen, value, ap);
 	va_end(ap);

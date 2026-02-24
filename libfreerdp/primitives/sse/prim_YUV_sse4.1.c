@@ -711,8 +711,8 @@ static inline void sse41_RGBToYUV420_BGRX_UV(const BYTE* WINPR_RESTRICT src1,
 
 	for (; x < width - width % 2; x += 2)
 	{
-		BYTE u[4] = { 0 };
-		BYTE v[4] = { 0 };
+		BYTE u[4] = WINPR_C_ARRAY_INIT;
+		BYTE v[4] = WINPR_C_ARRAY_INIT;
 		sse41_BGRX_TO_YUV(&src1[4ULL * x], NULL, &u[0], &v[0]);
 		sse41_BGRX_TO_YUV(&src1[4ULL * (1ULL + x)], NULL, &u[1], &v[1]);
 		sse41_BGRX_TO_YUV(&src2[4ULL * x], NULL, &u[2], &v[2]);
@@ -841,7 +841,7 @@ static inline void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			 * We need to split these according to
 			 * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
 			__m128i ue;
-			__m128i uo = { 0 };
+			__m128i uo = WINPR_C_ARRAY_INIT;
 			{
 				const __m128i ue1 =
 				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
@@ -919,7 +919,7 @@ static inline void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			 * We need to split these according to
 			 * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
 			__m128i ve;
-			__m128i vo = { 0 };
+			__m128i vo = WINPR_C_ARRAY_INIT;
 			{
 				const __m128i ve1 =
 				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),

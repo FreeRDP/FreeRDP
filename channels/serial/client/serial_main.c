@@ -719,7 +719,7 @@ error_handle:
 static DWORD WINAPI serial_thread_func(LPVOID arg)
 {
 	IRP* irp = NULL;
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)arg;
 	UINT error = CHANNEL_RC_OK;
 

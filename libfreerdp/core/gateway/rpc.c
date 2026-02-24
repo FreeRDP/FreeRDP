@@ -273,7 +273,7 @@ void rpc_pdu_header_print(wLog* log, const rpcconn_hdr_t* header)
 
 rpcconn_common_hdr_t rpc_pdu_header_init(const rdpRpc* rpc)
 {
-	rpcconn_common_hdr_t header = { 0 };
+	rpcconn_common_hdr_t header = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(rpc);
 
 	header.rpc_vers = rpc->rpc_vers;

@@ -135,7 +135,7 @@ static BOOL InitializeThreadpool(PTP_POOL pool)
 #endif
 
 	{
-		SYSTEM_INFO info = { 0 };
+		SYSTEM_INFO info = WINPR_C_ARRAY_INIT;
 		GetSystemInfo(&info);
 
 		DWORD min = info.dwNumberOfProcessors;
@@ -209,7 +209,7 @@ VOID winpr_CloseThreadpool(PTP_POOL ptpp)
 	(void)CloseHandle(ptpp->TerminateEvent);
 
 	{
-		TP_POOL empty = { 0 };
+		TP_POOL empty = WINPR_C_ARRAY_INIT;
 		*ptpp = empty;
 	}
 

@@ -7,8 +7,8 @@
 
 int TestStreamPool(int argc, char* argv[])
 {
-	wStream* s[5] = { 0 };
-	char buffer[8192] = { 0 };
+	wStream* s[5] = WINPR_C_ARRAY_INIT;
+	char buffer[8192] = WINPR_C_ARRAY_INIT;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

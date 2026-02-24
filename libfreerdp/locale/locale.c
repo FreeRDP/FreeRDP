@@ -734,8 +734,8 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t
 
 static const SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 {
-	char language[LOCALE_LANGUAGE_LEN] = { 0 };
-	char country[LOCALE_COUNTRY_LEN] = { 0 };
+	char language[LOCALE_LANGUAGE_LEN] = WINPR_C_ARRAY_INIT;
+	char country[LOCALE_COUNTRY_LEN] = WINPR_C_ARRAY_INIT;
 	const SYSTEM_LOCALE* locale = NULL;
 
 	freerdp_get_system_language_and_country_codes(language, ARRAYSIZE(language), country,
@@ -770,7 +770,7 @@ static const SYSTEM_LOCALE* get_locale_from_str(const char* name)
 {
 	for (size_t i = 0; i < ARRAYSIZE(SYSTEM_LOCALE_TABLE); i++)
 	{
-		char buffer[LOCALE_LANGUAGE_LEN + LOCALE_COUNTRY_LEN + 2] = { 0 };
+		char buffer[LOCALE_LANGUAGE_LEN + LOCALE_COUNTRY_LEN + 2] = WINPR_C_ARRAY_INIT;
 		const SYSTEM_LOCALE* current = &SYSTEM_LOCALE_TABLE[i];
 
 		(void)_snprintf(buffer, sizeof(buffer), "%s_%s", current->language, current->country);
@@ -844,13 +844,13 @@ INT64 freerdp_get_locale_id_from_string(const char* locale)
 
 int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 {
-	char language[LOCALE_LANGUAGE_LEN] = { 0 };
-	char country[LOCALE_COUNTRY_LEN] = { 0 };
+	char language[LOCALE_LANGUAGE_LEN] = WINPR_C_ARRAY_INIT;
+	char country[LOCALE_COUNTRY_LEN] = WINPR_C_ARRAY_INIT;
 
 	freerdp_get_system_language_and_country_codes(language, ARRAYSIZE(language), country,
 	                                              ARRAYSIZE(country));
 
-	char locale[LOCALE_COUNTRY_LEN + LOCALE_LANGUAGE_LEN + 2] = { 0 };
+	char locale[LOCALE_COUNTRY_LEN + LOCALE_LANGUAGE_LEN + 2] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(locale, sizeof(locale), "%s_%s", language, country);
 	const int64_t id = freerdp_detect_keyboard_layout_from_locale(locale);
 	if (id < 0)

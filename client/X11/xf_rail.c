@@ -148,7 +148,7 @@ BOOL xf_rail_disable_remoteapp_mode(xfContext* xfc)
 
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 {
-	RAIL_ACTIVATE_ORDER activate = { 0 };
+	RAIL_ACTIVATE_ORDER activate = WINPR_C_ARRAY_INIT;
 	xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xwindow);
 
 	if (!appWindow)
@@ -186,7 +186,7 @@ BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 
  */
 BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 {
-	RAIL_WINDOW_MOVE_ORDER windowMove = { 0 };
+	RAIL_WINDOW_MOVE_ORDER windowMove = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
@@ -235,7 +235,7 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	if ((appWindow->local_move.direction == NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
 	    (appWindow->local_move.direction == NET_WM_MOVERESIZE_SIZE_KEYBOARD))
 	{
-		RAIL_WINDOW_MOVE_ORDER windowMove = { 0 };
+		RAIL_WINDOW_MOVE_ORDER windowMove = WINPR_C_ARRAY_INIT;
 
 		/*
 		 * For keyboard moves send and explicit update to RDP server
@@ -306,7 +306,7 @@ BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* 
 		.bottom = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->y + appWindow->height, 0))
 	};
 
-	REGION16 windowInvalidRegion = { 0 };
+	REGION16 windowInvalidRegion = WINPR_C_ARRAY_INIT;
 	region16_init(&windowInvalidRegion);
 	if (!region16_union_rect(&windowInvalidRegion, &windowInvalidRegion, &windowRect))
 		return FALSE;
@@ -366,8 +366,8 @@ static void window_state_log_style_int(wLog* log, const WINDOW_STATE_ORDER* wind
 	WINPR_ASSERT(windowState);
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		char buffer1[128] = { 0 };
-		char buffer2[128] = { 0 };
+		char buffer1[128] = WINPR_C_ARRAY_INIT;
+		char buffer2[128] = WINPR_C_ARRAY_INIT;
 
 		window_styles_to_string(windowState->style, buffer1, sizeof(buffer1));
 		window_styles_ex_to_string(windowState->extendedStyle, buffer2, sizeof(buffer2));

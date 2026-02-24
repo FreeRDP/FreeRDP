@@ -43,8 +43,8 @@ SECURITY_STATUS checkNCryptHandle(NCRYPT_HANDLE handle, NCryptHandleType matchTy
 	const NCryptBaseHandle* base = (NCryptBaseHandle*)handle;
 	if (memcmp(base->magic, NCRYPT_MAGIC, ARRAYSIZE(NCRYPT_MAGIC)) != 0)
 	{
-		char magic1[ARRAYSIZE(NCRYPT_MAGIC) + 1] = { 0 };
-		char magic2[ARRAYSIZE(NCRYPT_MAGIC) + 1] = { 0 };
+		char magic1[ARRAYSIZE(NCRYPT_MAGIC) + 1] = WINPR_C_ARRAY_INIT;
+		char magic2[ARRAYSIZE(NCRYPT_MAGIC) + 1] = WINPR_C_ARRAY_INIT;
 
 		memcpy(magic1, base->magic, ARRAYSIZE(NCRYPT_MAGIC));
 		memcpy(magic2, NCRYPT_MAGIC, ARRAYSIZE(NCRYPT_MAGIC));
@@ -111,7 +111,7 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 	size_t stringAllocSize = 0;
 #ifdef WITH_PKCS11
 	LPWSTR strPtr = NULL;
-	static const WCHAR emptyComment[] = { 0 };
+	static const WCHAR emptyComment[] = WINPR_C_ARRAY_INIT;
 	size_t copyAmount = 0;
 #endif
 
@@ -164,7 +164,7 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
 	                        (_wcscmp(pszProviderName, MS_SCARD_PROV) == 0)))
 		return NCryptOpenP11StorageProviderEx(phProvider, pszProviderName, dwFlags, modulePaths);
 
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	(void)ConvertWCharToUtf8(pszProviderName, buffer, sizeof(buffer));
 	WLog_WARN(TAG, "provider '%s' not supported", buffer);
 	return ERROR_NOT_SUPPORTED;

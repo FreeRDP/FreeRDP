@@ -62,7 +62,7 @@ typedef struct
 	{                                                                     \
 		if ((_error) != 0)                                                \
 		{                                                                 \
-			char ebuffer[256] = { 0 };                                    \
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;                       \
 			WLog_ERR(TAG, "%s: %i - %s", (_text), (_error),               \
 			         winpr_strerror((_error), ebuffer, sizeof(ebuffer))); \
 		}                                                                 \

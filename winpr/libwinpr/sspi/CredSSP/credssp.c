@@ -317,8 +317,8 @@ const SecPkgInfoA CREDSSP_SecPkgInfoA = {
 	"Microsoft CredSSP Security Provider" /* Comment */
 };
 
-static WCHAR CREDSSP_SecPkgInfoW_NameBuffer[128] = { 0 };
-static WCHAR CREDSSP_SecPkgInfoW_CommentBuffer[128] = { 0 };
+static WCHAR CREDSSP_SecPkgInfoW_NameBuffer[128] = WINPR_C_ARRAY_INIT;
+static WCHAR CREDSSP_SecPkgInfoW_CommentBuffer[128] = WINPR_C_ARRAY_INIT;
 
 const SecPkgInfoW CREDSSP_SecPkgInfoW = {
 	0x000110733,                      /* fCapabilities */

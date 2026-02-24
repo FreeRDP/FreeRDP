@@ -84,7 +84,7 @@ static DWORD TimerCleanupHandle(HANDLE handle)
 	{
 		if (length < 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			switch (errno)
 			{
 				case ETIMEDOUT:
@@ -259,7 +259,7 @@ static int InitializeWaitableTimer(WINPR_TIMER* timer)
 	if (timer->fd <= 0)
 		return -1;
 #elif defined(TIMER_IMPL_POSIX)
-	struct sigevent sigev = { 0 };
+	struct sigevent sigev = WINPR_C_ARRAY_INIT;
 	InitOnceExecuteOnce(&TimerSignalHandler_InitOnce, InstallTimerSignalHandler, NULL, NULL);
 	sigev.sigev_notify = SIGEV_SIGNAL;
 	sigev.sigev_signo = SIGALRM;
@@ -998,7 +998,7 @@ BOOL DeleteTimerQueue(HANDLE TimerQueue)
 BOOL CreateTimerQueueTimer(HANDLE* phNewTimer, HANDLE TimerQueue, WAITORTIMERCALLBACK Callback,
                            void* Parameter, DWORD DueTime, DWORD Period, ULONG Flags)
 {
-	struct timespec CurrentTime = { 0 };
+	struct timespec CurrentTime = WINPR_C_ARRAY_INIT;
 
 	if (!TimerQueue)
 		return FALSE;

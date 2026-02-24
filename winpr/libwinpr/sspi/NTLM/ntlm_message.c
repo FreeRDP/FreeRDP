@@ -254,7 +254,7 @@ static BOOL ntlm_read_message_header(wStream* s, NTLM_MESSAGE_HEADER* header, UI
 
 	if (strncmp((char*)header->Signature, NTLM_SIGNATURE, 8) != 0)
 	{
-		char Signature[sizeof(header->Signature) * 3 + 1] = { 0 };
+		char Signature[sizeof(header->Signature) * 3 + 1] = WINPR_C_ARRAY_INIT;
 		winpr_BinToHexStringBuffer(header->Signature, sizeof(header->Signature), Signature,
 		                           sizeof(Signature), TRUE);
 
@@ -408,7 +408,7 @@ void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 static BOOL ntlm_read_negotiate_flags(wStream* s, UINT32* flags, UINT32 required, const char* name)
 {
 	UINT32 NegotiateFlags = 0;
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(flags);
 	WINPR_ASSERT(name);
@@ -433,7 +433,7 @@ static BOOL ntlm_read_negotiate_flags(wStream* s, UINT32* flags, UINT32 required
 
 static BOOL ntlm_write_negotiate_flags(wStream* s, UINT32 flags, const char* name)
 {
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(name);
 
@@ -494,7 +494,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	wStream sbuffer;
 	wStream* s = NULL;
 	size_t length = 0;
-	const NTLM_NEGOTIATE_MESSAGE empty = { 0 };
+	const NTLM_NEGOTIATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 	NTLM_NEGOTIATE_MESSAGE* message = NULL;
 
 	WINPR_ASSERT(context);
@@ -568,7 +568,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* bu
 	wStream sbuffer;
 	wStream* s = NULL;
 	size_t length = 0;
-	const NTLM_NEGOTIATE_MESSAGE empty = { 0 };
+	const NTLM_NEGOTIATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 	NTLM_NEGOTIATE_MESSAGE* message = NULL;
 
 	WINPR_ASSERT(context);
@@ -662,7 +662,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	size_t StartOffset = 0;
 	size_t PayloadOffset = 0;
 	NTLM_AV_PAIR* AvTimestamp = NULL;
-	const NTLM_CHALLENGE_MESSAGE empty = { 0 };
+	const NTLM_CHALLENGE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 	NTLM_CHALLENGE_MESSAGE* message = NULL;
 
 	if (!context || !buffer)
@@ -824,7 +824,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* bu
 	wStream* s = NULL;
 	size_t length = 0;
 	UINT32 PayloadOffset = 0;
-	const NTLM_CHALLENGE_MESSAGE empty = { 0 };
+	const NTLM_CHALLENGE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 	NTLM_CHALLENGE_MESSAGE* message = NULL;
 
 	WINPR_ASSERT(context);
@@ -938,7 +938,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	UINT32 flags = 0;
 	NTLM_AV_PAIR* AvFlags = NULL;
 	size_t PayloadBufferOffset = 0;
-	const NTLM_AUTHENTICATE_MESSAGE empty = { 0 };
+	const NTLM_AUTHENTICATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 	NTLM_AUTHENTICATE_MESSAGE* message = NULL;
 	SSPI_CREDENTIALS* credentials = NULL;
 
@@ -1131,7 +1131,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
-		BYTE messageIntegrityCheck[16] = { 0 };
+		BYTE messageIntegrityCheck[16] = WINPR_C_ARRAY_INIT;
 
 		ntlm_compute_message_integrity_check(context, messageIntegrityCheck,
 		                                     sizeof(messageIntegrityCheck));
@@ -1225,7 +1225,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer*
 	wStream* s = NULL;
 	size_t length = 0;
 	UINT32 PayloadBufferOffset = 0;
-	const NTLM_AUTHENTICATE_MESSAGE empty = { 0 };
+	const NTLM_AUTHENTICATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 	NTLM_AUTHENTICATE_MESSAGE* message = NULL;
 	SSPI_CREDENTIALS* credentials = NULL;
 
@@ -1350,7 +1350,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer*
 
 	if (context->UseMIC)
 	{
-		const BYTE data[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+		const BYTE data[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 
 		context->MessageIntegrityCheckOffset = Stream_GetPosition(s);
 		if (!ntlm_write_message_integrity_check(s, Stream_GetPosition(s), data, sizeof(data),

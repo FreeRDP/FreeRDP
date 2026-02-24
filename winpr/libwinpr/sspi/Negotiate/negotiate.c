@@ -77,8 +77,8 @@ const SecPkgInfoA NEGOTIATE_SecPkgInfoA = {
 	"Microsoft Package Negotiator" /* Comment */
 };
 
-static WCHAR NEGOTIATE_SecPkgInfoW_NameBuffer[32] = { 0 };
-static WCHAR NEGOTIATE_SecPkgInfoW_CommentBuffer[32] = { 0 };
+static WCHAR NEGOTIATE_SecPkgInfoW_NameBuffer[32] = WINPR_C_ARRAY_INIT;
+static WCHAR NEGOTIATE_SecPkgInfoW_CommentBuffer[32] = WINPR_C_ARRAY_INIT;
 
 const SecPkgInfoW NEGOTIATE_SecPkgInfoW = {
 	0x00083BB3,                         /* fCapabilities */
@@ -479,11 +479,11 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 {
 	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
-	WinPrAsn1_OID oid = { 0 };
+	WinPrAsn1_OID oid = WINPR_C_ARRAY_INIT;
 	WinPrAsn1_tagId contextual = 0;
 	WinPrAsn1_tag tag = 0;
 	size_t len = 0;
-	WinPrAsn1_OctetString octet_string = { 0 };
+	WinPrAsn1_OctetString octet_string = WINPR_C_ARRAY_INIT;
 	BOOL err = 0;
 
 	WINPR_ASSERT(input);
@@ -616,7 +616,7 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegToken* input_token,
                                               NegToken* output_token, PSecBuffer output_buffer)
 {
-	SecBuffer mic_buffers[2] = { 0 };
+	SecBuffer mic_buffers[2] = WINPR_C_ARRAY_INIT;
 	SecBufferDesc mic_buffer_desc = { SECBUFFER_VERSION, 2, mic_buffers };
 	SECURITY_STATUS status = 0;
 
@@ -692,7 +692,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	PSecBuffer bindings_buffer = NULL;
-	SecBuffer mech_input_buffers[2] = { 0 };
+	SecBuffer mech_input_buffers[2] = WINPR_C_ARRAY_INIT;
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 2, mech_input_buffers };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
@@ -1042,7 +1042,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
 	WinPrAsn1_tagId tag = 0;
-	WinPrAsn1_OID oid = { 0 };
+	WinPrAsn1_OID oid = WINPR_C_ARRAY_INIT;
 	const Mech* first_mech = NULL;
 
 	if (!phCredential || !SecIsValidHandle(phCredential))

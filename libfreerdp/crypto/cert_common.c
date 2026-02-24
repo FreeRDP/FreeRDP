@@ -87,7 +87,7 @@ BOOL read_bignum(BYTE** dst, DWORD* length, const BIGNUM* num, BOOL alloc)
 
 BOOL cert_info_create(rdpCertInfo* dst, const BIGNUM* rsa, const BIGNUM* rsa_e)
 {
-	const rdpCertInfo empty = { 0 };
+	const rdpCertInfo empty = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(rsa);

@@ -258,7 +258,7 @@ static const char* tsg_caps_to_string(UINT32 caps, char* buffer, size_t len)
 
 	if (val != 0)
 	{
-		char number[32] = { 0 };
+		char number[32] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(number, sizeof(number), "TSG_UNKNOWN{0x%08" PRIx32 "}", val);
 		(void)winpr_str_append(number, buffer, len, "|");
 	}
@@ -511,8 +511,8 @@ static BOOL tsg_ndr_read_packet_header(wLog* log, wStream* s, TSG_PACKET_HEADER*
 
 	if (ComponentId != header->ComponentId)
 	{
-		char buffer[64] = { 0 };
-		char buffer2[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
+		char buffer2[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, WLOG_ERROR, "Unexpected ComponentId: %s, Expected %s",
 		           tsg_component_id_to_string(header->ComponentId, buffer, sizeof(buffer)),
 		           tsg_component_id_to_string(ComponentId, buffer2, sizeof(buffer2)));
@@ -541,7 +541,7 @@ static BOOL tsg_ndr_read_nap(wLog* log, wStream* s, TSG_CAPABILITY_NAP* nap)
 		return FALSE;
 	Stream_Read_UINT32(s, nap->capabilities);
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, WLOG_DEBUG, "Received version caps %s",
 		           tsg_caps_to_string(nap->capabilities, buffer, sizeof(buffer)));
 	}
@@ -556,7 +556,7 @@ static BOOL tsg_ndr_write_nap(wLog* log, wStream* s, const TSG_CAPABILITY_NAP* n
 		return FALSE;
 
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, WLOG_DEBUG, "Sending version caps %s",
 		           tsg_caps_to_string(nap->capabilities, buffer, sizeof(buffer)));
 	}
@@ -802,7 +802,7 @@ WINPR_ATTR_FORMAT_ARG(3, 4)
 static BOOL tsg_print(char** buffer, size_t* len, WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	int rc = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	if (!buffer || !len || !fmt)
 		return FALSE;
 	va_start(ap, fmt);
@@ -992,7 +992,7 @@ static BOOL tsg_packet_response_to_string(char** buffer, size_t* length,
 {
 	BOOL rc = FALSE;
 	char* strdata = NULL;
-	char tbuffer[8192] = { 0 };
+	char tbuffer[8192] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(length);
@@ -1025,7 +1025,7 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 	BOOL rc = FALSE;
 	char* strdata = NULL;
 	RPC_CSTR uuid = NULL;
-	char tbuffer[8192] = { 0 };
+	char tbuffer[8192] = WINPR_C_ARRAY_INIT;
 	size_t size = ARRAYSIZE(tbuffer);
 	char* ptbuffer = tbuffer;
 
@@ -1179,7 +1179,7 @@ static BOOL tsg_packet_reauth_to_string(char** buffer, size_t* length,
 static const char* tsg_packet_to_string(const TSG_PACKET* packet)
 {
 	size_t len = 8192;
-	static char sbuffer[8193] = { 0 };
+	static char sbuffer[8193] = WINPR_C_ARRAY_INIT;
 	char* buffer = sbuffer;
 
 	if (!tsg_print(&buffer, &len, "TSG_PACKET { packetId=%s [0x%08" PRIx32 "], ",
@@ -1502,7 +1502,7 @@ fail:
 static BOOL tsg_ndr_read_consent_message(wLog* log, rdpContext* context, wStream* s, UINT32* index,
                                          BOOL isMessagePresent)
 {
-	TSG_PACKET_STRING_MESSAGE packetStringMessage = { 0 };
+	TSG_PACKET_STRING_MESSAGE packetStringMessage = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(index);
@@ -1629,7 +1629,7 @@ static BOOL tsg_ndr_read_caps_response(wLog* log, rdpContext* context, wStream* 
 
 	if (PacketPtr)
 	{
-		TSG_PACKET_MSG_RESPONSE pkg = { 0 };
+		TSG_PACKET_MSG_RESPONSE pkg = WINPR_C_ARRAY_INIT;
 		UINT32 MsgPtr = 0;
 
 		if (!tsg_ndr_read_TSG_PACKET_MSG_RESPONSE_header(log, s, &pkg))
@@ -1656,7 +1656,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, const RPC_PDU* pdu,
 {
 	BOOL rc = FALSE;
 	UINT32 index = 0;
-	TSG_PACKET packet = { 0 };
+	TSG_PACKET packet = WINPR_C_ARRAY_INIT;
 	UINT32 SwitchValue = 0;
 	rdpContext* context = NULL;
 	UINT32 PacketPtr = 0;
@@ -1940,7 +1940,7 @@ static BOOL tsg_ndr_read_packet_response_data(rdpTsg* tsg, wStream* s,
 	}
 	else if (rem > 0)
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_Print(tsg->log, WLOG_WARN,
 		           "2.2.9.2.1.5 TSG_PACKET_RESPONSE::responseDataLen=%" PRIu32
 		           ", but actually got %" PRIuz " [flags=%s], ignoring.",
@@ -1968,7 +1968,7 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, const RPC_PDU* pdu)
 	BOOL rc = FALSE;
 	UINT32 SwitchValue = 0;
 	UINT32 index = 0;
-	TSG_PACKET packet = { 0 };
+	TSG_PACKET packet = WINPR_C_ARRAY_INIT;
 	UINT32 PacketPtr = 0;
 	UINT32 PacketResponseDataPtr = 0;
 
@@ -2109,7 +2109,7 @@ static BOOL TsProxyReadPacketSTringMessage(wLog* log, wStream* s, uint32_t* inde
 
 	WINPR_ASSERT(msg);
 
-	const TSG_PACKET_STRING_MESSAGE empty = { 0 };
+	const TSG_PACKET_STRING_MESSAGE empty = WINPR_C_ARRAY_INIT;
 	*msg = empty;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 12))
@@ -2141,9 +2141,9 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, const RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
 	UINT32 index = 0;
-	TSG_PACKET packet = { 0 };
+	TSG_PACKET packet = WINPR_C_ARRAY_INIT;
 	rdpContext* context = NULL;
-	TSG_PACKET_MSG_RESPONSE packetMsgResponse = { 0 };
+	TSG_PACKET_MSG_RESPONSE packetMsgResponse = WINPR_C_ARRAY_INIT;
 	UINT32 PacketPtr = 0;
 	UINT32 PacketMsgResponsePtr = 0;
 
@@ -2483,13 +2483,13 @@ static BOOL tsg_initialize_version_caps(const rdpTsg* tsg,
 static void resetCaps(rdpTsg* tsg)
 {
 	WINPR_ASSERT(tsg);
-	const TSG_PACKET_QUARENC_RESPONSE empty = { 0 };
+	const TSG_PACKET_QUARENC_RESPONSE empty = WINPR_C_ARRAY_INIT;
 	tsg->CapsResponse = empty;
 }
 
 BOOL tsg_proxy_begin(rdpTsg* tsg)
 {
-	TSG_PACKET tsgPacket = { 0 };
+	TSG_PACKET tsgPacket = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(tsg);
 
@@ -2509,7 +2509,7 @@ BOOL tsg_proxy_begin(rdpTsg* tsg)
 
 static BOOL tsg_proxy_reauth(rdpTsg* tsg)
 {
-	TSG_PACKET tsgPacket = { 0 };
+	TSG_PACKET tsgPacket = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(tsg);
 
@@ -2903,7 +2903,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 {
 	UINT64 looptimeout = timeout * 1000ULL;
 	DWORD nCount = 0;
-	HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(tsg);
 

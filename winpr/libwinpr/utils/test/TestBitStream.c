@@ -6,7 +6,7 @@
 
 static void BitStrGen(void)
 {
-	char str[64] = { 0 };
+	char str[64] = WINPR_C_ARRAY_INIT;
 
 	for (DWORD i = 0; i < 256;)
 	{
@@ -52,7 +52,7 @@ static void BitStrGen(void)
 int TestBitStream(int argc, char* argv[])
 {
 	wBitStream* bs = NULL;
-	BYTE buffer[1024] = { 0 };
+	BYTE buffer[1024] = WINPR_C_ARRAY_INIT;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

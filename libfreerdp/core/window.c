@@ -660,7 +660,7 @@ static void dump_window_style_ex(char* buffer, size_t bufferSize, UINT32 extende
 static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORDER_INFO* order,
                                     const WINDOW_STATE_ORDER* state)
 {
-	char buffer[3000] = { 0 };
+	char buffer[3000] = WINPR_C_ARRAY_INIT;
 	const size_t bufferSize = sizeof(buffer) - 1;
 
 	(void)_snprintf(buffer, bufferSize, "%s windowId=%" PRIu32 "", msg, order->windowId);
@@ -826,7 +826,7 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_ICON)
 	{
-		WINDOW_ICON_ORDER window_icon = { 0 };
+		WINDOW_ICON_ORDER window_icon = WINPR_C_ARRAY_INIT;
 		result = update_read_window_icon_order(s, orderInfo, &window_icon);
 
 		if (result)
@@ -841,7 +841,7 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
 	{
-		WINDOW_CACHED_ICON_ORDER window_cached_icon = { 0 };
+		WINDOW_CACHED_ICON_ORDER window_cached_icon = WINPR_C_ARRAY_INIT;
 		result = update_read_window_cached_icon_order(s, orderInfo, &window_cached_icon);
 
 		if (result)
@@ -859,7 +859,7 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 	}
 	else
 	{
-		WINDOW_STATE_ORDER windowState = { 0 };
+		WINDOW_STATE_ORDER windowState = WINPR_C_ARRAY_INIT;
 		result = update_read_window_state_order(s, orderInfo, &windowState);
 
 		if (result)
@@ -974,7 +974,7 @@ static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream*
 	}
 	else
 	{
-		NOTIFY_ICON_STATE_ORDER notify_icon_state = { 0 };
+		NOTIFY_ICON_STATE_ORDER notify_icon_state = WINPR_C_ARRAY_INIT;
 		result = update_read_notification_icon_state_order(s, orderInfo, &notify_icon_state);
 
 		if (!result)
@@ -1062,7 +1062,7 @@ static void update_read_desktop_non_monitored_order(WINPR_ATTR_UNUSED wStream* s
 static void dump_monitored_desktop(wLog* log, const char* msg, const WINDOW_ORDER_INFO* orderInfo,
                                    const MONITORED_DESKTOP_ORDER* monitored)
 {
-	char buffer[1000] = { 0 };
+	char buffer[1000] = WINPR_C_ARRAY_INIT;
 	const size_t bufferSize = sizeof(buffer) - 1;
 
 	DUMP_APPEND(buffer, bufferSize, "%s", msg);
@@ -1105,7 +1105,7 @@ static BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s,
 	}
 	else
 	{
-		MONITORED_DESKTOP_ORDER monitored_desktop = { 0 };
+		MONITORED_DESKTOP_ORDER monitored_desktop = WINPR_C_ARRAY_INIT;
 		result = update_read_desktop_actively_monitored_order(s, orderInfo, &monitored_desktop);
 
 		if (result)
@@ -1139,7 +1139,7 @@ BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)
 	BOOL rc = TRUE;
 	size_t remaining = 0;
 	UINT16 orderSize = 0;
-	WINDOW_ORDER_INFO orderInfo = { 0 };
+	WINDOW_ORDER_INFO orderInfo = WINPR_C_ARRAY_INIT;
 	rdp_update_internal* up = update_cast(update);
 
 	remaining = Stream_GetRemainingLength(s);

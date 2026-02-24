@@ -129,7 +129,7 @@ static UINT enumerator_server_handle_select_version_request(CamDevEnumServerCont
                                                             WINPR_ATTR_UNUSED wStream* s,
                                                             const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_SELECT_VERSION_REQUEST pdu = { 0 };
+	CAM_SELECT_VERSION_REQUEST pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -264,7 +264,7 @@ static UINT enumerator_process_message(enumerator_server* enumerator)
 	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
 	ULONG BytesReturned = 0;
-	CAM_SHARED_MSG_HEADER header = { 0 };
+	CAM_SHARED_MSG_HEADER header = WINPR_C_ARRAY_INIT;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(enumerator);
@@ -387,7 +387,7 @@ static HANDLE enumerator_server_get_channel_handle(enumerator_server* enumerator
 static DWORD WINAPI enumerator_server_thread_func(LPVOID arg)
 {
 	DWORD nCount = 0;
-	HANDLE events[2] = { 0 };
+	HANDLE events[2] = WINPR_C_ARRAY_INIT;
 	enumerator_server* enumerator = (enumerator_server*)arg;
 	UINT error = CHANNEL_RC_OK;
 	DWORD status = 0;

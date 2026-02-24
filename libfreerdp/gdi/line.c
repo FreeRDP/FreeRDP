@@ -242,7 +242,7 @@ BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32 cPoints)
 
 	if (cPoints > 0)
 	{
-		GDI_POINT pt = { 0 };
+		GDI_POINT pt = WINPR_C_ARRAY_INIT;
 
 		if (!gdi_MoveToEx(hdc, lppt[0].x, lppt[0].y, &pt))
 			return FALSE;

@@ -139,7 +139,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 	UINT32 size = 0;
 	UINT32 index = 0;
 	const BYTE* fragments = NULL;
-	RDP_RECT bound = { 0 };
+	RDP_RECT bound = WINPR_C_ARRAY_INIT;
 	BOOL rc = FALSE;
 
 	if (!context || !data || !context->graphics || !context->cache || !context->cache->glyph)
@@ -405,7 +405,7 @@ static BOOL update_gdi_fast_glyph(rdpContext* context, const FAST_GLYPH_ORDER* f
 {
 	INT32 x = 0;
 	INT32 y = 0;
-	BYTE text_data[4] = { 0 };
+	BYTE text_data[4] = WINPR_C_ARRAY_INIT;
 	INT32 opLeft = 0;
 	INT32 opTop = 0;
 	INT32 opRight = 0;

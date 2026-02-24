@@ -150,7 +150,7 @@ static BOOL wlf_Pointer_SetPosition(WINPR_ATTR_UNUSED rdpContext* context,
 
 BOOL wlf_register_pointer(rdpGraphics* graphics)
 {
-	rdpPointer pointer = { 0 };
+	rdpPointer pointer = WINPR_C_ARRAY_INIT;
 
 	pointer.size = sizeof(wlfPointer);
 	pointer.New = wlf_Pointer_New;

@@ -296,7 +296,7 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
                                                    GENERIC_CHANNEL_CALLBACK* hchannel, wStream* s)
 {
 	BYTE streamIndex = 0;
-	CAM_MEDIA_TYPE_DESCRIPTION mediaType = { 0 };
+	CAM_MEDIA_TYPE_DESCRIPTION mediaType = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(dev);
 

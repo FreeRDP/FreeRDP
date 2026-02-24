@@ -48,7 +48,7 @@ static const WtsApiFunctionTable* g_WtsApi = NULL;
 
 #if defined(_WIN32)
 static HMODULE g_WtsApi32Module = NULL;
-static WtsApiFunctionTable WtsApi32_WtsApiFunctionTable = { 0 };
+static WtsApiFunctionTable WtsApi32_WtsApiFunctionTable = WINPR_C_ARRAY_INIT;
 
 #ifdef __MINGW32__
 #define WTSAPI32_LOAD_PROC(NAME, TYPE) \

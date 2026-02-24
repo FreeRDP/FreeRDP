@@ -410,7 +410,7 @@ int zgfx_decompress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, const BYTE* WINPR_RESTRIC
 {
 	int status = -1;
 	BYTE descriptor = 0;
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	size_t used = 0;
 	BYTE* pConcatenated = NULL;
 	wStream* stream = Stream_StaticConstInit(&sbuffer, pSrcData, SrcSize);

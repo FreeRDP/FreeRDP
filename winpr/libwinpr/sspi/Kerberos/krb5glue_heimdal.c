@@ -116,7 +116,7 @@ krb5_error_code krb5glue_crypto_length(krb5_context ctx, krb5glue_key key, int t
 
 krb5_error_code krb5glue_log_error(krb5_context ctx, krb5_data* msg, const char* tag)
 {
-	krb5_error error = { 0 };
+	krb5_error error = WINPR_C_ARRAY_INIT;
 	krb5_error_code rv = 0;
 
 	WINPR_ASSERT(ctx);
@@ -153,7 +153,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 	krb5_deltat start_time = 0;
 	krb5_get_init_creds_opt* gic_opt = NULL;
 	krb5_init_creds_context creds_ctx = NULL;
-	krb5_creds creds = { 0 };
+	krb5_creds creds = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(ctx);
 

@@ -77,7 +77,7 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 
 	if (munmap(data, size) < 0)
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		(void)fprintf(stderr, "%s: munmap(%p, %zu) failed with [%d] %s\n", __func__, data, size,
 		              errno, uwac_strerror(errno, buffer, sizeof(buffer)));
 	}
@@ -278,7 +278,7 @@ static void keyboard_handle_enter(void* data, struct wl_keyboard* keyboard, uint
 static void keyboard_handle_leave(void* data, struct wl_keyboard* keyboard, uint32_t serial,
                                   struct wl_surface* surface)
 {
-	struct itimerspec its = { 0 };
+	struct itimerspec its = WINPR_C_ARRAY_INIT;
 	uint32_t* pressedKey = NULL;
 	size_t i = 0;
 

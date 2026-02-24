@@ -303,9 +303,9 @@ static BOOL FuzzPlanar(void)
 
 	for (UINT32 x = 0; x < 100; x++)
 	{
-		BYTE data[0x10000] = { 0 };
+		BYTE data[0x10000] = WINPR_C_ARRAY_INIT;
 		size_t dataSize = 0x10000;
-		BYTE dstData[0x10000] = { 0 };
+		BYTE dstData[0x10000] = WINPR_C_ARRAY_INIT;
 
 		UINT32 DstFormat = 0;
 		UINT32 nDstStep = 0;

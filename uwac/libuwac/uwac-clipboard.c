@@ -230,7 +230,7 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 	size_t alloc = 0;
 	size_t pos = 0;
 	char* data = NULL;
-	int pipefd[2] = { 0 };
+	int pipefd[2] = WINPR_C_ARRAY_INIT;
 
 	if (!seat || !mime || !size || !seat->offer)
 		return NULL;

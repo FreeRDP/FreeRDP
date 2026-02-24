@@ -26,7 +26,7 @@
 static BOOL test_copy8u_func(void)
 {
 	primitives_t* prims = primitives_get();
-	BYTE ALIGN(data[COPY_TESTSIZE + 15]) = { 0 };
+	BYTE ALIGN(data[COPY_TESTSIZE + 15]) = WINPR_C_ARRAY_INIT;
 	winpr_RAND(data, sizeof(data));
 
 	for (int soff = 0; soff < 16; ++soff)
@@ -35,7 +35,7 @@ static BOOL test_copy8u_func(void)
 		{
 			for (int length = 1; length <= COPY_TESTSIZE - doff; ++length)
 			{
-				BYTE ALIGN(dest[COPY_TESTSIZE + 15]) = { 0 };
+				BYTE ALIGN(dest[COPY_TESTSIZE + 15]) = WINPR_C_ARRAY_INIT;
 
 				if (prims->copy_8u(data + soff, dest + doff, length) != PRIMITIVES_SUCCESS)
 					return FALSE;

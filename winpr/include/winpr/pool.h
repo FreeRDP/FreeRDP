@@ -249,7 +249,7 @@ extern "C"
 
 	static inline VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
 	{
-		const TP_CALLBACK_ENVIRON empty = { 0 };
+		const TP_CALLBACK_ENVIRON empty = WINPR_C_ARRAY_INIT;
 		*pcbe = empty;
 		pcbe->Version = 1;
 	}

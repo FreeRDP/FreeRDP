@@ -111,7 +111,7 @@ const p_uuid_t BTFN_UUID = {
 
 static int rpc_bind_setup(rdpRpc* rpc)
 {
-	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
+	SEC_WINNT_AUTH_IDENTITY identity = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rpc);
 
@@ -177,7 +177,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 	UINT32 offset = 0;
 	RpcClientCall* clientCall = NULL;
 	p_cont_elem_t* p_cont_elem = NULL;
-	rpcconn_bind_hdr_t bind_pdu = { 0 };
+	rpcconn_bind_hdr_t bind_pdu = WINPR_C_ARRAY_INIT;
 	RpcVirtualConnection* connection = NULL;
 	RpcInChannel* inChannel = NULL;
 	const SecBuffer* sbuffer = NULL;
@@ -325,8 +325,8 @@ BOOL rpc_recv_bind_ack_pdu(rdpRpc* rpc, wStream* s)
 	const BYTE* auth_data = NULL;
 	size_t pos = 0;
 	size_t end = 0;
-	rpcconn_hdr_t header = { 0 };
-	SecBuffer buffer = { 0 };
+	rpcconn_hdr_t header = WINPR_C_ARRAY_INIT;
+	SecBuffer buffer = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(rpc->auth);
@@ -379,7 +379,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	size_t offset = 0;
 	const SecBuffer* sbuffer = NULL;
 	RpcClientCall* clientCall = NULL;
-	rpcconn_rpc_auth_3_hdr_t auth_3_pdu = { 0 };
+	rpcconn_rpc_auth_3_hdr_t auth_3_pdu = WINPR_C_ARRAY_INIT;
 	RpcVirtualConnection* connection = NULL;
 	RpcInChannel* inChannel = NULL;
 

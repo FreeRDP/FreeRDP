@@ -63,7 +63,7 @@ static DWORD SemaphoreCleanupHandle(HANDLE handle)
 
 	if (length != 1)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "semaphore read() failure [%d] %s", errno,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return WAIT_FAILED;

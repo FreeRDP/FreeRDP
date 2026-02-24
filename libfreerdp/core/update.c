@@ -348,7 +348,7 @@ static BOOL update_read_play_sound(wStream* s, PLAY_SOUND_UPDATE* play_sound)
 
 BOOL update_recv_play_sound(rdpUpdate* update, wStream* s)
 {
-	PLAY_SOUND_UPDATE play_sound = { 0 };
+	PLAY_SOUND_UPDATE play_sound = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(update);
 
@@ -1589,7 +1589,7 @@ static BOOL update_send_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE*
 
 static BOOL update_send_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 {
-	ORDER_INFO orderInfo = { 0 };
+	ORDER_INFO orderInfo = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(dstblt);
@@ -1625,7 +1625,7 @@ static BOOL update_send_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 static BOOL update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	size_t offset = 0;
-	ORDER_INFO orderInfo = { 0 };
+	ORDER_INFO orderInfo = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(patblt);
@@ -1657,7 +1657,7 @@ static BOOL update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 static BOOL update_send_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 {
-	ORDER_INFO orderInfo = { 0 };
+	ORDER_INFO orderInfo = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(scrblt);
@@ -1690,7 +1690,7 @@ static BOOL update_send_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 static BOOL update_send_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER* opaque_rect)
 {
 	size_t offset = 0;
-	ORDER_INFO orderInfo = { 0 };
+	ORDER_INFO orderInfo = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(opaque_rect);
@@ -1723,7 +1723,7 @@ static BOOL update_send_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER
 
 static BOOL update_send_line_to(rdpContext* context, const LINE_TO_ORDER* line_to)
 {
-	ORDER_INFO orderInfo = { 0 };
+	ORDER_INFO orderInfo = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(line_to);
@@ -1755,7 +1755,7 @@ static BOOL update_send_line_to(rdpContext* context, const LINE_TO_ORDER* line_t
 static BOOL update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	size_t offset = 0;
-	ORDER_INFO orderInfo = { 0 };
+	ORDER_INFO orderInfo = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(memblt);
@@ -1786,7 +1786,7 @@ static BOOL update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 static BOOL update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
 {
-	ORDER_INFO orderInfo = { 0 };
+	ORDER_INFO orderInfo = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(glyph_index);
@@ -2414,7 +2414,7 @@ static BOOL update_send_pointer_cached(rdpContext* context,
 BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 {
 	BYTE numberOfAreas = 0;
-	RECTANGLE_16 areas[256] = { 0 };
+	RECTANGLE_16 areas[256] = WINPR_C_ARRAY_INIT;
 	rdp_update_internal* up = update_cast(update);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
@@ -2450,7 +2450,7 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 {
 	rdp_update_internal* up = update_cast(update);
 	RECTANGLE_16* prect = NULL;
-	RECTANGLE_16 rect = { 0 };
+	RECTANGLE_16 rect = WINPR_C_ARRAY_INIT;
 	BYTE allowDisplayUpdates = 0;
 
 	WINPR_ASSERT(up);

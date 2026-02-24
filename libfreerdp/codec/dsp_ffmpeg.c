@@ -808,7 +808,7 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                const BYTE* WINPR_RESTRICT sdata, size_t length,
                                wStream* WINPR_RESTRICT out)
 {
-	AUDIO_FORMAT fmt = { 0 };
+	AUDIO_FORMAT fmt = WINPR_C_ARRAY_INIT;
 
 	if (!context || !format || !sdata || !out || !context->common.encoder)
 		return FALSE;

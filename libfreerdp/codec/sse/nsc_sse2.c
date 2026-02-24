@@ -218,7 +218,7 @@ static inline size_t nsc_encode_next_rgb16(const BYTE* src, __m128i* r_val, __m1
 static inline size_t nsc_encode_next_a4(const BYTE* src, const BYTE* palette, __m128i* r_val,
                                         __m128i* g_val, __m128i* b_val, __m128i* a_val)
 {
-	BYTE idx[8] = { 0 };
+	BYTE idx[8] = WINPR_C_ARRAY_INIT;
 
 	for (int shift = 7; shift >= 0; shift--)
 	{
@@ -325,10 +325,10 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 
 		for (UINT16 x = 0; x < context->width; x += 8)
 		{
-			__m128i r_val = { 0 };
-			__m128i g_val = { 0 };
-			__m128i b_val = { 0 };
-			__m128i a_val = { 0 };
+			__m128i r_val = WINPR_C_ARRAY_INIT;
+			__m128i g_val = WINPR_C_ARRAY_INIT;
+			__m128i b_val = WINPR_C_ARRAY_INIT;
+			__m128i a_val = WINPR_C_ARRAY_INIT;
 
 			const size_t rc = nsc_encode_next_rgba(context->format, src, context->palette, &r_val,
 			                                       &g_val, &b_val, &a_val);

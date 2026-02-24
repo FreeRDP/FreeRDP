@@ -144,7 +144,7 @@ BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 	rdpSettings* settings = NULL;
 	freerdp* instance = NULL;
 	auth_status rc = AUTH_FAILED;
-	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
+	SEC_WINNT_AUTH_IDENTITY identity = WINPR_C_ARRAY_INIT;
 
 	if (!context || !channel)
 		return FALSE;

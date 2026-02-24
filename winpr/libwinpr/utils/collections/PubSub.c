@@ -127,7 +127,7 @@ int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, ...)
 	int status = -1;
 	WINPR_ASSERT(pubSub);
 
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, EventName);
 	pEventHandler EventHandler = va_arg(ap, pEventHandler);
 
@@ -160,7 +160,7 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 	WINPR_ASSERT(pubSub);
 	WINPR_ASSERT(EventName);
 
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, EventName);
 	pEventHandler EventHandler = va_arg(ap, pEventHandler);
 

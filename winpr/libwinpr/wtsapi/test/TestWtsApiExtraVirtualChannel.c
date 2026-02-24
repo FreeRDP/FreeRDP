@@ -9,7 +9,7 @@ int TestWtsApiExtraVirtualChannel(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 	const size_t length = sizeof(buffer);
 
 	HANDLE hVirtualChannel =

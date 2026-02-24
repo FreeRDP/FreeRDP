@@ -1522,7 +1522,7 @@ BOOL mcs_server_apply_to_settings(const rdpMcs* mcs, rdpSettings* settings)
 	for (UINT32 x = 0; x < mcs->channelCount; x++)
 	{
 		const rdpMcsChannel* current = &mcs->channels[x];
-		CHANNEL_DEF def = { 0 };
+		CHANNEL_DEF def = WINPR_C_ARRAY_INIT;
 		def.options = current->options;
 		memcpy(def.name, current->Name, sizeof(def.name));
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_ChannelDefArray, x, &def))

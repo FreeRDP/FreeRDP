@@ -145,7 +145,7 @@ static int get_file_size(const char* pathname)
 
 	if (fd < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		D("Can't open %s: %s\n", pathname, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return -1;
 	}
@@ -156,7 +156,7 @@ static int get_file_size(const char* pathname)
 
 		if (ret < 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			if (errno == EINTR)
 				continue;
 
@@ -187,7 +187,7 @@ static int read_file(const char* pathname, char* buffer, size_t buffsize)
 
 	if (fd < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		D("Could not open %s: %s\n", pathname, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return -1;
 	}
@@ -200,7 +200,7 @@ static int read_file(const char* pathname, char* buffer, size_t buffsize)
 
 		if (ret < 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			if (errno == EINTR)
 				continue;
 
@@ -484,7 +484,7 @@ static void cpulist_read_from(CpuList* list, const char* filename)
 
 	if (filelen < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		D("Could not read %s: %s\n", filename, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return;
 	}
@@ -595,7 +595,7 @@ static uint32_t get_elf_hwcap_from_proc_self_auxv(void)
 
 	if (fd < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		D("Could not open %s: %s\n", filepath, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return 0;
 	}
@@ -614,7 +614,7 @@ static uint32_t get_elf_hwcap_from_proc_self_auxv(void)
 
 		if (ret < 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			D("Error while reading %s: %s\n", filepath,
 			  winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			break;

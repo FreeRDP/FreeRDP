@@ -387,7 +387,7 @@ static char* guid_to_string(const BYTE* guid, char* str, size_t len)
 TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid)
 {
 	BOOL found = FALSE;
-	char guid_str[GUID_SIZE * 2ull + 1] = { 0 };
+	char guid_str[GUID_SIZE * 2ull + 1] = WINPR_C_ARRAY_INIT;
 	TSMF_PRESENTATION* presentation = NULL;
 	ArrayList_Lock(presentation_list);
 	const size_t count = ArrayList_Count(presentation_list);
@@ -460,7 +460,7 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 
 		stream->next_start_time = t + sample->duration - 50000;
 
-		TSMF_VIDEO_FRAME_EVENT event = { 0 };
+		TSMF_VIDEO_FRAME_EVENT event = WINPR_C_ARRAY_INIT;
 		event.frameData = sample->data;
 		event.frameSize = sample->decoded_size;
 		event.framePixFmt = sample->pixfmt;

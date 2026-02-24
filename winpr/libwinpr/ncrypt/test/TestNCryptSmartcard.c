@@ -75,7 +75,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 	{
 		const NCryptProviderName* name = &names[j];
 		NCRYPT_PROV_HANDLE provider = 0;
-		char providerNameStr[256] = { 0 };
+		char providerNameStr[256] = WINPR_C_ARRAY_INIT;
 		PVOID enumState = NULL;
 		size_t i = 0;
 		NCryptKeyName* keyName = NULL;
@@ -94,8 +94,8 @@ int TestNCryptSmartcard(int argc, char* argv[])
 			NCRYPT_KEY_HANDLE phKey = 0;
 			DWORD dwFlags = 0;
 			DWORD cbOutput = 0;
-			char keyNameStr[256] = { 0 };
-			WCHAR reader[1024] = { 0 };
+			char keyNameStr[256] = WINPR_C_ARRAY_INIT;
+			WCHAR reader[1024] = WINPR_C_ARRAY_INIT;
 			PBYTE certBytes = NULL;
 
 			if (ConvertWCharToUtf8(keyName->pszName, keyNameStr, ARRAYSIZE(keyNameStr)) < 0)
@@ -114,7 +114,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 			                           &cbOutput, dwFlags);
 			if (status == ERROR_SUCCESS)
 			{
-				char readerStr[1024] = { 0 };
+				char readerStr[1024] = WINPR_C_ARRAY_INIT;
 
 				(void)ConvertWCharNToUtf8(reader, cbOutput, readerStr, ARRAYSIZE(readerStr));
 				printf("\treader: %s\n", readerStr);

@@ -169,7 +169,7 @@ static UINT remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* co
                                                         REMDESK_CHANNEL_HEADER* header)
 {
 	size_t cchStringW = 0;
-	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu = { 0 };
+	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = 0;
 	UINT32 msgLength = header->DataLength - 4;
 	const WCHAR* pStringW = Stream_ConstPointer(s);
@@ -210,7 +210,7 @@ static UINT remdesk_recv_ctl_authenticate_pdu(WINPR_ATTR_UNUSED RemdeskServerCon
 {
 	size_t cchTmpStringW = 0;
 	const WCHAR* expertBlobW = NULL;
-	REMDESK_CTL_AUTHENTICATE_PDU pdu = { 0 };
+	REMDESK_CTL_AUTHENTICATE_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT32 msgLength = header->DataLength - 4;
 	const WCHAR* pStringW = Stream_ConstPointer(s);
 	const WCHAR* raConnectionStringW = pStringW;
@@ -267,7 +267,7 @@ static UINT remdesk_recv_ctl_authenticate_pdu(WINPR_ATTR_UNUSED RemdeskServerCon
 static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, wStream* s,
                                                  REMDESK_CHANNEL_HEADER* header)
 {
-	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu = { 0 };
+	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu = WINPR_C_ARRAY_INIT;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
@@ -427,7 +427,7 @@ static UINT remdesk_server_receive_pdu(RemdeskServerContext* context, wStream* s
 static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 {
 	void* buffer = NULL;
-	HANDLE events[8] = { 0 };
+	HANDLE events[8] = WINPR_C_ARRAY_INIT;
 	HANDLE ChannelEvent = NULL;
 	DWORD BytesReturned = 0;
 	UINT error = 0;

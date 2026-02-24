@@ -83,7 +83,7 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
                                const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize)
 {
 	DECODING_STATE state = dsInvalidArgument;
-	SBufferInfo sBufferInfo = { 0 };
+	SBufferInfo sBufferInfo = WINPR_C_ARRAY_INIT;
 	SSysMEMBuffer* pSystemBuffer = NULL;
 	H264_CONTEXT_OPENH264* sys = NULL;
 	UINT32* iStride = NULL;
@@ -184,8 +184,8 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
                              UINT32* WINPR_RESTRICT pDstSize)
 {
 	int status = 0;
-	SFrameBSInfo info = { 0 };
-	SSourcePicture pic = { 0 };
+	SFrameBSInfo info = WINPR_C_ARRAY_INIT;
+	SSourcePicture pic = WINPR_C_ARRAY_INIT;
 
 	H264_CONTEXT_OPENH264* sys = NULL;
 
@@ -316,7 +316,7 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 			case H264_RATECONTROL_VBR:
 				if (sys->EncParamExt.iTargetBitrate != (int)h264->BitRate)
 				{
-					SBitrateInfo bitrate = { 0 };
+					SBitrateInfo bitrate = WINPR_C_ARRAY_INIT;
 
 					sys->EncParamExt.iTargetBitrate = (int)h264->BitRate;
 					bitrate.iLayer = SPATIAL_LAYER_ALL;
@@ -557,7 +557,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 	for (UINT32 x = 0; x < h264->numSystemData; x++)
 	{
-		SDecodingParam sDecParam = { 0 };
+		SDecodingParam sDecParam = WINPR_C_ARRAY_INIT;
 		H264_CONTEXT_OPENH264* sys = &sysContexts[x];
 
 		if (h264->Compressor)

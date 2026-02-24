@@ -140,7 +140,7 @@ static BOOL x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
 
 	for (size_t x = 0; x < ARRAYSIZE(hints); x++)
 	{
-		char path[MAX_PATH] = { 0 };
+		char path[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		const char* hint = hints[x];
 
 		(void)_snprintf(path, sizeof(path), "%s/%s", base, hint);
@@ -160,7 +160,7 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
                                        const char* user, const char* domain, const char* password)
 {
 	int pam_status = 0;
-	SHADOW_PAM_AUTH_INFO info = { 0 };
+	SHADOW_PAM_AUTH_INFO info = WINPR_C_ARRAY_INIT;
 	WINPR_UNUSED(subsystem);
 	WINPR_UNUSED(client);
 
@@ -486,7 +486,7 @@ static int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 {
 	UINT32 msgId = SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID;
 	rdpShadowServer* server = NULL;
-	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE templateMsg = { 0 };
+	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE templateMsg = WINPR_C_ARRAY_INIT;
 	int count = 0;
 
 	if (!subsystem || !subsystem->common.server || !subsystem->common.server->clients)
@@ -917,7 +917,7 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 	WINPR_ASSERT(subsystem);
 
-	RECTANGLE_16 surfaceRect = { 0 };
+	RECTANGLE_16 surfaceRect = WINPR_C_ARRAY_INIT;
 	rdpShadowServer* server = subsystem->common.server;
 	WINPR_ASSERT(server);
 
@@ -937,7 +937,7 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	}
 
 	XImage* image = NULL;
-	RECTANGLE_16 invalidRect = { 0 };
+	RECTANGLE_16 invalidRect = WINPR_C_ARRAY_INIT;
 	int status = -1;
 	{
 		XLockDisplay(subsystem->display);
@@ -1395,7 +1395,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	int pf_count = 0;
 	int vi_count = 0;
 	int nextensions = 0;
-	XVisualInfo xtemplate = { 0 };
+	XVisualInfo xtemplate = WINPR_C_ARRAY_INIT;
 	XPixmapFormatValues* pf = NULL;
 
 	x11ShadowSubsystem* subsystem = (x11ShadowSubsystem*)sub;

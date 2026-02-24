@@ -69,7 +69,7 @@ void winpr_HexLogDump(wLog* log, UINT32 level, const void* data, size_t length)
 
 	if (!buffer)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, WLOG_ERROR, "malloc(%" PRIuz ") failed with [%d] %s", blen, errno,
 		           winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return;
@@ -141,7 +141,7 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const void* data, size_t le
 
 	if (!buffer)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(tag, "malloc(%" PRIuz ") failed with [%d] %s", llen, errno,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return;

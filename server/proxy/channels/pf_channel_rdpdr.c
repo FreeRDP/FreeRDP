@@ -607,7 +607,7 @@ static UINT rdpdr_process_server_core_capability_request(pf_channel_client_conte
 
 	for (UINT16 i = 0; i < numCapabilities; i++)
 	{
-		RDPDR_CAPABILITY_HEADER header = { 0 };
+		RDPDR_CAPABILITY_HEADER header = WINPR_C_ARRAY_INIT;
 		UINT error = rdpdr_read_capset_header(rdpdr->log, s, &header);
 		if (error != CHANNEL_RC_OK)
 			return error;
@@ -777,7 +777,7 @@ static UINT rdpdr_process_client_capability_response(pf_channel_server_context* 
 
 	for (UINT16 x = 0; x < numCapabilities; x++)
 	{
-		RDPDR_CAPABILITY_HEADER header = { 0 };
+		RDPDR_CAPABILITY_HEADER header = WINPR_C_ARRAY_INIT;
 		UINT error = rdpdr_read_capset_header(rdpdr->log, s, &header);
 		if (error != CHANNEL_RC_OK)
 			return error;
@@ -1092,7 +1092,7 @@ static BOOL pf_channel_rdpdr_rewrite_device_list_to(wStream* s, UINT32 fromVersi
 
 		for (UINT32 x = 0; x < count; x++)
 		{
-			RdpdrDevice device = { 0 };
+			RdpdrDevice device = WINPR_C_ARRAY_INIT;
 			const size_t charCount = ARRAYSIZE(device.PreferredDosName);
 			if (Stream_GetRemainingLength(clone) < 20)
 				goto fail;

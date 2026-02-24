@@ -78,7 +78,7 @@ void region16_init(REGION16* region)
 {
 	WINPR_ASSERT(region);
 
-	const REGION16 empty = { 0 };
+	const REGION16 empty = WINPR_C_ARRAY_INIT;
 	*region = empty;
 }
 
@@ -168,7 +168,7 @@ BOOL rectangles_equal(const RECTANGLE_16* r1, const RECTANGLE_16* r2)
 
 BOOL rectangles_intersects(const RECTANGLE_16* r1, const RECTANGLE_16* r2)
 {
-	RECTANGLE_16 tmp = { 0 };
+	RECTANGLE_16 tmp = WINPR_C_ARRAY_INIT;
 	return rectangles_intersection(r1, r2, &tmp);
 }
 
@@ -199,7 +199,7 @@ void region16_clear(REGION16* region)
 	freeRegion(region->data);
 	region->data = NULL;
 
-	const RECTANGLE_16 empty = { 0 };
+	const RECTANGLE_16 empty = WINPR_C_ARRAY_INIT;
 	region->extents = empty;
 }
 
@@ -237,7 +237,7 @@ static inline RECTANGLE_16* nextRect(REGION16_DATA* data, size_t index)
 			return NULL;
 		}
 
-		const RECTANGLE_16 empty = { 0 };
+		const RECTANGLE_16 empty = WINPR_C_ARRAY_INIT;
 		rects[index] = empty;
 		data->nbRects = index + 1;
 		data->rects = rects;
@@ -272,7 +272,7 @@ static BOOL resizeRegion(REGION16* region, size_t nbItems)
 
 	for (size_t x = region->data->nbRects; x < nbItems; x++)
 	{
-		const RECTANGLE_16 empty = { 0 };
+		const RECTANGLE_16 empty = WINPR_C_ARRAY_INIT;
 		rects[x] = empty;
 	}
 	region->data->rects = rects;
@@ -800,7 +800,7 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 {
 	const RECTANGLE_16* endPtr = NULL;
 	UINT32 nbRects = 0;
-	RECTANGLE_16 common = { 0 };
+	RECTANGLE_16 common = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(src);
@@ -833,7 +833,7 @@ BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE
 
 	RECTANGLE_16* dstPtr = newItems->rects;
 	UINT32 usedRects = 0;
-	RECTANGLE_16 newExtents = { 0 };
+	RECTANGLE_16 newExtents = WINPR_C_ARRAY_INIT;
 
 	/* accumulate intersecting rectangles, the final region16_simplify_bands() will
 	 * do all the bad job to recreate correct rectangles

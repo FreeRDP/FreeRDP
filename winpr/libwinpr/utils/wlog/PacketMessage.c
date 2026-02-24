@@ -150,8 +150,8 @@ void Pcap_Close(wPcap* pcap)
 static BOOL WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader* ethernet)
 {
 	wStream* s = NULL;
-	wStream sbuffer = { 0 };
-	BYTE buffer[14] = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	BYTE buffer[14] = WINPR_C_ARRAY_INIT;
 	BOOL ret = TRUE;
 
 	if (!pcap || !pcap->fp || !ethernet)
@@ -193,8 +193,8 @@ static UINT16 IPv4Checksum(const BYTE* ipv4, int length)
 static BOOL WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 {
 	wStream* s = NULL;
-	wStream sbuffer = { 0 };
-	BYTE buffer[20] = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	BYTE buffer[20] = WINPR_C_ARRAY_INIT;
 	int ret = TRUE;
 
 	if (!pcap || !pcap->fp || !ipv4)
@@ -226,8 +226,8 @@ static BOOL WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 static BOOL WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 {
 	wStream* s = NULL;
-	wStream sbuffer = { 0 };
-	BYTE buffer[20] = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	BYTE buffer[20] = WINPR_C_ARRAY_INIT;
 	BOOL ret = TRUE;
 
 	if (!pcap || !pcap->fp || !tcp)

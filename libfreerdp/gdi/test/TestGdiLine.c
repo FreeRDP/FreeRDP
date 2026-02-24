@@ -578,7 +578,7 @@ int TestGdiLine(int argc, char* argv[])
 
 	for (size_t ifmt = 0; ifmt < number_formats; ifmt++)
 	{
-		gdiPalette g = { 0 };
+		gdiPalette g = WINPR_C_ARRAY_INIT;
 		HGDI_DC hdc = NULL;
 		HGDI_PEN pen = NULL;
 		HGDI_BITMAP hBmp = NULL;
@@ -683,7 +683,7 @@ int TestGdiLine(int argc, char* argv[])
 
 		for (UINT32 x = 0; x < map_size; x++)
 		{
-			char name[1024] = { 0 };
+			char name[1024] = WINPR_C_ARRAY_INIT;
 			_snprintf(name, sizeof(name), "%s [%s]", gdi_rop_to_string(rop_map[x].rop),
 			          FreeRDPGetColorFormatName(hdc->format));
 

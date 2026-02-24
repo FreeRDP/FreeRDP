@@ -199,8 +199,8 @@ BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poff
 BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 {
 	BYTE* result = NULL;
-	WINPR_BITMAP_FILE_HEADER bf = { 0 };
-	WINPR_BITMAP_INFO_HEADER bi = { 0 };
+	WINPR_BITMAP_FILE_HEADER bf = WINPR_C_ARRAY_INIT;
+	WINPR_BITMAP_INFO_HEADER bi = WINPR_C_ARRAY_INIT;
 
 	size_t stride = (width * bpp + 7) / 8;
 	if ((stride % 4) != 0)
@@ -416,9 +416,9 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 {
 	int rc = -1;
 	BOOL vFlip = 0;
-	WINPR_BITMAP_FILE_HEADER bf = { 0 };
-	WINPR_BITMAP_INFO_HEADER bi = { 0 };
-	wStream sbuffer = { 0 };
+	WINPR_BITMAP_FILE_HEADER bf = WINPR_C_ARRAY_INIT;
+	WINPR_BITMAP_INFO_HEADER bi = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, buffer, size);
 
 	if (!s)
@@ -584,7 +584,7 @@ int winpr_image_read(wImage* image, const char* filename)
 
 int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 {
-	BYTE sig[12] = { 0 };
+	BYTE sig[12] = WINPR_C_ARRAY_INIT;
 	int status = -1;
 
 	if (size < sizeof(sig))
@@ -678,7 +678,7 @@ static void* winpr_convert_to_jpeg(WINPR_ATTR_UNUSED const void* data,
 #else
 	BYTE* outbuffer = NULL;
 	unsigned long outsize = 0;
-	struct jpeg_compress_struct cinfo = { 0 };
+	struct jpeg_compress_struct cinfo = WINPR_C_ARRAY_INIT;
 
 	const size_t expect1 = 1ull * stride * height;
 	const size_t bytes = (bpp + 7) / 8;
@@ -689,7 +689,7 @@ static void* winpr_convert_to_jpeg(WINPR_ATTR_UNUSED const void* data,
 		return NULL;
 
 	/* Set up the error handler. */
-	struct jpeg_error_mgr jerr = { 0 };
+	struct jpeg_error_mgr jerr = WINPR_C_ARRAY_INIT;
 	cinfo.err = jpeg_std_error(&jerr);
 
 	jpeg_create_compress(&cinfo);
@@ -750,7 +750,7 @@ SSIZE_T winpr_convert_from_jpeg(WINPR_ATTR_UNUSED const BYTE* comp_data,
 	WLog_WARN(TAG, "JPEG not supported in this build");
 	return -1;
 #else
-	struct jpeg_decompress_struct cinfo = { 0 };
+	struct jpeg_decompress_struct cinfo = WINPR_C_ARRAY_INIT;
 	struct jpeg_error_mgr jerr;
 	SSIZE_T size = -1;
 	BYTE* decomp_data = NULL;
@@ -923,7 +923,7 @@ static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, uint32_t stride, UIN
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
 	png_byte** row_pointers = NULL;
-	struct png_mem_encode state = { 0 };
+	struct png_mem_encode state = WINPR_C_ARRAY_INIT;
 
 	*pDstData = NULL;
 
@@ -1032,7 +1032,7 @@ static void* winpr_read_png_from_buffer(const void* data, size_t SrcSize, size_t
 	int color_type = 0;
 	int interlace_type = 0;
 	int transforms = PNG_TRANSFORM_IDENTITY;
-	MEMORY_READER_STATE memory_reader_state = { 0 };
+	MEMORY_READER_STATE memory_reader_state = WINPR_C_ARRAY_INIT;
 	png_bytepp row_pointers = NULL;
 	png_infop info_ptr = NULL;
 	if (SrcSize > UINT32_MAX)

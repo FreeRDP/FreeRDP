@@ -205,7 +205,7 @@ static void log_dec_info(const CStreamInfo* info, void (*log)(const char* fmt, .
 
 static void log_enc_info(const AACENC_InfoStruct* info, fdk_log_fkt_t log)
 {
-	char confBuf[1024] = { 0 };
+	char confBuf[1024] = WINPR_C_ARRAY_INIT;
 
 	assert(info);
 	assert(log);
@@ -460,7 +460,7 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		return -1;
 	}
 
-	AACENC_InfoStruct info = { 0 };
+	AACENC_InfoStruct info = WINPR_C_ARRAY_INIT;
 	err = aacEncInfo(self, &info);
 	if (err != AACENC_OK)
 	{
@@ -535,7 +535,7 @@ ssize_t fdk_aac_dsp_impl_stream_info(void* handle, int encoder, fdk_log_fkt_t lo
 
 	if (encoder)
 	{
-		AACENC_InfoStruct info = { 0 };
+		AACENC_InfoStruct info = WINPR_C_ARRAY_INIT;
 		HANDLE_AACENCODER self = (HANDLE_AACENCODER)handle;
 		AACENC_ERROR err = aacEncInfo(self, &info);
 		if (err != AACENC_OK)
@@ -595,7 +595,7 @@ ssize_t fdk_aac_dsp_impl_encode(void* handle, const void* data, size_t size, voi
 	const AACENC_InArgs inArgs = { .numInSamples =
 		                               (INT)(size / sizeof(INT_PCM)), /* TODO: 8/16 bit input? */
 		                           .numAncBytes = 0 };
-	AACENC_OutArgs outArgs = { 0 };
+	AACENC_OutArgs outArgs = WINPR_C_ARRAY_INIT;
 
 	HANDLE_AACENCODER self = (HANDLE_AACENCODER)handle;
 

@@ -740,7 +740,7 @@ static int test_MppcCompressBellsRdp5(void)
 	int rc = -1;
 	int status = 0;
 	UINT32 Flags = 0;
-	BYTE OutputBuffer[65536] = { 0 };
+	BYTE OutputBuffer[65536] = WINPR_C_ARRAY_INIT;
 	const UINT32 SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
 	const BYTE* pSrcData = (const BYTE*)TEST_MPPC_BELLS;
 	UINT32 DstSize = sizeof(OutputBuffer);
@@ -788,7 +788,7 @@ static int test_MppcCompressBellsRdp4(void)
 	int rc = -1;
 	int status = 0;
 	UINT32 Flags = 0;
-	BYTE OutputBuffer[65536] = { 0 };
+	BYTE OutputBuffer[65536] = WINPR_C_ARRAY_INIT;
 	const BYTE* pSrcData = (const BYTE*)TEST_MPPC_BELLS;
 	const UINT32 SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
 	UINT32 DstSize = sizeof(OutputBuffer);
@@ -929,7 +929,7 @@ static int test_MppcCompressIslandRdp5(void)
 	int rc = -1;
 	int status = 0;
 	UINT32 Flags = 0;
-	BYTE OutputBuffer[65536] = { 0 };
+	BYTE OutputBuffer[65536] = WINPR_C_ARRAY_INIT;
 	const UINT32 SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
 	const BYTE* pSrcData = (const BYTE*)TEST_ISLAND_DATA;
 	const UINT32 expectedSize = sizeof(TEST_ISLAND_DATA_RDP5) - 1;
@@ -976,7 +976,7 @@ static int test_MppcCompressBufferRdp5(void)
 	int rc = -1;
 	int status = 0;
 	UINT32 Flags = 0;
-	BYTE OutputBuffer[65536] = { 0 };
+	BYTE OutputBuffer[65536] = WINPR_C_ARRAY_INIT;
 	const UINT32 SrcSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
 	const BYTE* pSrcData = (const BYTE*)TEST_RDP5_UNCOMPRESSED_DATA;
 	const UINT32 expectedSize = sizeof(TEST_RDP5_COMPRESSED_DATA);

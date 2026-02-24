@@ -588,8 +588,8 @@ static BOOL rdp_apply_order_capability_set(rdpSettings* settings, const rdpSetti
 
 static BOOL rdp_read_order_capability_set(wLog* log, wStream* s, rdpSettings* settings)
 {
-	char terminalDescriptor[17] = { 0 };
-	BYTE orderSupport[32] = { 0 };
+	char terminalDescriptor[17] = WINPR_C_ARRAY_INIT;
+	BYTE orderSupport[32] = WINPR_C_ARRAY_INIT;
 	BOOL BitmapCacheV3Enabled = FALSE;
 	BOOL FrameMarkerCommandEnabled = FALSE;
 
@@ -645,7 +645,7 @@ static BOOL rdp_read_order_capability_set(wLog* log, wStream* s, rdpSettings* se
 
 static BOOL rdp_write_order_capability_set(wLog* log, wStream* s, const rdpSettings* settings)
 {
-	char terminalDescriptor[16] = { 0 };
+	char terminalDescriptor[16] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(settings);
 	if (!Stream_EnsureRemainingCapacity(s, 64))
@@ -1456,8 +1456,8 @@ static BOOL rdp_read_input_capability_set(wLog* log, wStream* s, rdpSettings* se
 	Stream_Read_UINT32(s, settings->KeyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
 
 	{
-		WCHAR wstr[32] = { 0 };
-		char str[65] = { 0 };
+		WCHAR wstr[32] = WINPR_C_ARRAY_INIT;
+		char str[65] = WINPR_C_ARRAY_INIT;
 
 		/* Older windows versions report invalid UTF16
 		 * [MS-RDPBCGR] <29> Section 2.2.7.1.6: Microsoft RDP 4.0, 5.0, 5.1, and 5.2 servers do not
@@ -1782,8 +1782,8 @@ static BOOL rdp_write_glyph_cache_capability_set(wLog* log, wStream* s, const rd
 #ifdef WITH_DEBUG_CAPABILITIES
 static BOOL rdp_print_glyph_cache_capability_set(wLog* log, wStream* s)
 {
-	GLYPH_CACHE_DEFINITION glyphCache[10] = { 0 };
-	GLYPH_CACHE_DEFINITION fragCache = { 0 };
+	GLYPH_CACHE_DEFINITION glyphCache[10] = WINPR_C_ARRAY_INIT;
+	GLYPH_CACHE_DEFINITION fragCache = WINPR_C_ARRAY_INIT;
 	UINT16 glyphSupportLevel = 0;
 	UINT16 pad2Octets = 0;
 	WLog_Print(log, WLOG_TRACE,
@@ -2160,7 +2160,7 @@ static BOOL rdp_write_bitmap_cache_v2_capability_set(wLog* log, wStream* s,
 #ifdef WITH_DEBUG_CAPABILITIES
 static BOOL rdp_print_bitmap_cache_v2_capability_set(wLog* log, wStream* s)
 {
-	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[5] = { 0 };
+	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[5] = WINPR_C_ARRAY_INIT;
 	WLog_Print(log, WLOG_TRACE,
 	           "BitmapCacheV2CapabilitySet (length %" PRIuz "):", Stream_GetRemainingLength(s));
 
@@ -3074,7 +3074,7 @@ static char* rdp_get_bitmap_codec_guid_name(const GUID* guid)
 
 static BOOL rdp_read_bitmap_codec_guid(wLog* log, wStream* s, GUID* guid)
 {
-	BYTE g[16] = { 0 };
+	BYTE g[16] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(guid);
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 16))
@@ -3096,7 +3096,7 @@ static BOOL rdp_read_bitmap_codec_guid(wLog* log, wStream* s, GUID* guid)
 
 static void rdp_write_bitmap_codec_guid(wStream* s, const GUID* guid)
 {
-	BYTE g[16] = { 0 };
+	BYTE g[16] = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(guid);
 	g[0] = guid->Data1 & 0xFF;
 	g[1] = (guid->Data1 >> 8) & 0xFF;
@@ -3296,7 +3296,7 @@ static BOOL rdp_read_codec_ts_rfx_capset(wLog* log, wStream* s, rdpSettings* set
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, blockLen - 6ull))
 		return FALSE;
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* sub = Stream_StaticConstInit(&sbuffer, Stream_Pointer(s), blockLen - 6ull);
 	WINPR_ASSERT(sub);
 
@@ -3401,7 +3401,7 @@ static BOOL rdp_read_codec_ts_rfx_clnt_caps_container(wLog* log, wStream* s, rdp
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, rfxPropsLength - 4ull))
 		return FALSE;
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* sub = Stream_StaticConstInit(&sbuffer, Stream_Pointer(s), rfxPropsLength - 4ull);
 	WINPR_ASSERT(sub);
 
@@ -3419,7 +3419,7 @@ static BOOL rdp_read_codec_ts_rfx_clnt_caps_container(wLog* log, wStream* s, rdp
 	settings->RemoteFxOnly = (captureFlags & CARDP_CAPS_CAPTURE_NON_CAC) ? FALSE : TRUE;
 
 	/* [MS_RDPRFX] 2.2.1.1.1 TS_RFX_CAPS */
-	wStream tsbuffer = { 0 };
+	wStream tsbuffer = WINPR_C_ARRAY_INIT;
 	wStream* ts_sub = Stream_StaticConstInit(&tsbuffer, Stream_Pointer(sub), rfxCapsLength);
 	WINPR_ASSERT(ts_sub);
 	return rdp_read_codec_ts_rfx_caps(log, ts_sub, settings);
@@ -3434,7 +3434,7 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wLog* log, wStream* s, rdpSett
                                                   BOOL isServer)
 {
 	BYTE codecId = 0;
-	GUID codecGuid = { 0 };
+	GUID codecGuid = WINPR_C_ARRAY_INIT;
 	BYTE bitmapCodecCount = 0;
 	UINT16 codecPropertiesLength = 0;
 
@@ -3450,7 +3450,7 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wLog* log, wStream* s, rdpSett
 
 	while (bitmapCodecCount > 0)
 	{
-		wStream subbuffer = { 0 };
+		wStream subbuffer = WINPR_C_ARRAY_INIT;
 
 		if (!rdp_read_bitmap_codec_guid(log, s, &codecGuid)) /* codecGuid (16 bytes) */
 			return FALSE;
@@ -3801,7 +3801,7 @@ static BOOL rdp_write_bitmap_codecs_capability_set(wLog* log, wStream* s,
 #ifdef WITH_DEBUG_CAPABILITIES
 static BOOL rdp_print_bitmap_codecs_capability_set(wLog* log, wStream* s)
 {
-	GUID codecGuid = { 0 };
+	GUID codecGuid = WINPR_C_ARRAY_INIT;
 	BYTE bitmapCodecCount = 0;
 	BYTE codecId = 0;
 	UINT16 codecPropertiesLength = 0;
@@ -4977,7 +4977,7 @@ BOOL rdp_send_confirm_active(rdpRdp* rdp)
 
 const char* rdp_input_flag_string(UINT16 flags, char* buffer, size_t len)
 {
-	char prefix[16] = { 0 };
+	char prefix[16] = WINPR_C_ARRAY_INIT;
 
 	(void)_snprintf(prefix, sizeof(prefix), "[0x%04" PRIx16 "][", flags);
 	winpr_str_append(prefix, buffer, len, "");

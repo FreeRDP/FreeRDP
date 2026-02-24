@@ -203,7 +203,7 @@ static BOOL ios_Pointer_SetDefault(rdpContext *context)
 
 static BOOL ios_register_pointer(rdpGraphics *graphics)
 {
-	rdpPointer pointer = { 0 };
+	rdpPointer pointer = WINPR_C_ARRAY_INIT;
 
 	if (!graphics)
 		return FALSE;
@@ -279,7 +279,7 @@ int ios_run_freerdp(freerdp *instance)
 	{
 		DWORD status;
 		DWORD nCount = 0;
-		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		pool = [[NSAutoreleasePool alloc] init];
 
 		nCount = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));

@@ -186,7 +186,7 @@ static const char PARALLEL_SERVICE_NAME[] = "parallel";
 UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext* rdpcontext)
 {
 	const char* ServiceName = NULL;
-	DEVICE_SERVICE_ENTRY_POINTS ep = { 0 };
+	DEVICE_SERVICE_ENTRY_POINTS ep = WINPR_C_ARRAY_INIT;
 	union
 	{
 		const RDPDR_DEVICE* cdp;

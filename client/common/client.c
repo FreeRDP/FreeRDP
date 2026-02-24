@@ -467,7 +467,7 @@ static int client_cli_read_string(freerdp* instance, const char* what, const cha
 	const SSIZE_T rc = freerdp_interruptible_get_line(instance->context, &line, &size, stdin);
 	if (rc < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		free(line);
@@ -650,7 +650,7 @@ BOOL client_cli_choose_smartcard(WINPR_ATTR_UNUSED freerdp* instance, SmartcardC
 
 	while (1)
 	{
-		char input[10] = { 0 };
+		char input[10] = WINPR_C_ARRAY_INIT;
 
 		printf("\nChoose a smartcard to use for %s (0 - %" PRIu32 "): ",
 		       gateway ? "gateway authentication" : "logon", count - 1);
@@ -1198,7 +1198,7 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 				          "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
 				          ", ignoring",
 				          count);
-			va_list ap = { 0 };
+			va_list ap = WINPR_C_ARRAY_INIT;
 			va_start(ap, count);
 			const char* scope = va_arg(ap, const char*);
 			const char* req_cnf = va_arg(ap, const char*);
@@ -1249,7 +1249,7 @@ BOOL client_common_get_access_token(freerdp* instance, const char* request, char
 
 	if (resp_code != HTTP_STATUS_OK)
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 
 		WLog_Print(log, WLOG_ERROR,
 		           "Server unwilling to provide access token; returned status code %s",
@@ -1466,7 +1466,7 @@ BOOL freerdp_client_encomsp_toggle_control(EncomspClientContext* encomsp)
 
 BOOL freerdp_client_encomsp_set_control(EncomspClientContext* encomsp, BOOL control)
 {
-	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu = { 0 };
+	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu = WINPR_C_ARRAY_INIT;
 
 	if (!encomsp)
 		return FALSE;
@@ -2085,7 +2085,7 @@ static BOOL freerdp_client_touch_update(rdpClientContext* cctx, UINT32 flags, IN
 			const BOOL resetcontact = (flags & FREERDP_TOUCH_UP) != 0;
 			if (resetcontact)
 			{
-				FreeRDP_TouchContact empty = { 0 };
+				FreeRDP_TouchContact empty = WINPR_C_ARRAY_INIT;
 				*contact = empty;
 			}
 			return TRUE;
@@ -2102,7 +2102,7 @@ BOOL freerdp_client_handle_touch(rdpClientContext* cctx, UINT32 flags, INT32 fin
 	    FREERDP_TOUCH_DOWN | FREERDP_TOUCH_UP | FREERDP_TOUCH_MOTION | FREERDP_TOUCH_CANCEL;
 	WINPR_ASSERT(cctx);
 
-	FreeRDP_TouchContact contact = { 0 };
+	FreeRDP_TouchContact contact = WINPR_C_ARRAY_INIT;
 
 	if (!freerdp_client_touch_update(cctx, flags, finger, pressure, x, y, &contact))
 		return FALSE;
@@ -2183,7 +2183,7 @@ static BOOL freerdp_client_register_pen(rdpClientContext* cctx, UINT32 flags, IN
 	FreeRDP_PenDevice* pen = freerdp_client_get_pen(cctx, null_deviceid, &pos);
 	if (pen)
 	{
-		const FreeRDP_PenDevice empty = { 0 };
+		const FreeRDP_PenDevice empty = WINPR_C_ARRAY_INIT;
 		*pen = empty;
 
 		pen->deviceid = deviceid;
@@ -2203,7 +2203,7 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 #if defined(CHANNEL_RDPEI_CLIENT)
 	if ((flags & FREERDP_PEN_REGISTER) != 0)
 	{
-		va_list args = { 0 };
+		va_list args = WINPR_C_ARRAY_INIT;
 
 		va_start(args, deviceid);
 		double pressure = va_arg(args, double);
@@ -2231,7 +2231,7 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 	UINT16 rotation = 0;
 	INT16 tiltX = 0;
 	INT16 tiltY = 0;
-	va_list args = { 0 };
+	va_list args = WINPR_C_ARRAY_INIT;
 	va_start(args, deviceid);
 
 	x = va_arg(args, INT32);
@@ -2572,7 +2572,7 @@ char* freerdp_client_get_aad_url(rdpClientContext* cctx, freerdp_client_aad_type
 	WINPR_ASSERT(cctx);
 	char* str = NULL;
 
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, type);
 	switch (type)
 	{

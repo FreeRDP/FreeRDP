@@ -370,7 +370,7 @@ static UINT audin_pulse_close(IAudinDevice* device)
 static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* user_data)
 {
 	pa_stream_state_t state = PA_STREAM_FAILED;
-	pa_buffer_attr buffer_attr = { 0 };
+	pa_buffer_attr buffer_attr = WINPR_C_ARRAY_INIT;
 	AudinPulseDevice* pulse = (AudinPulseDevice*)device;
 
 	if (!pulse || !receive || !user_data)

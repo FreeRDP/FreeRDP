@@ -106,9 +106,9 @@ static UINT rail_client_execute(RailClientContext* context, const RAIL_EXEC_ORDE
 	UINT error = 0;
 	railPlugin* rail = NULL;
 	UINT16 flags = 0;
-	RAIL_UNICODE_STRING ruExeOrFile = { 0 };
-	RAIL_UNICODE_STRING ruWorkingDir = { 0 };
-	RAIL_UNICODE_STRING ruArguments = { 0 };
+	RAIL_UNICODE_STRING ruExeOrFile = WINPR_C_ARRAY_INIT;
+	RAIL_UNICODE_STRING ruWorkingDir = WINPR_C_ARRAY_INIT;
+	RAIL_UNICODE_STRING ruArguments = WINPR_C_ARRAY_INIT;
 
 	if (!context || !exec)
 		return ERROR_INVALID_PARAMETER;

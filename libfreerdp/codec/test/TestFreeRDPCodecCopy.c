@@ -107,7 +107,7 @@ int TestFreeRDPCodecCopy(int argc, char* argv[])
 		height = strtoul(argv[2], NULL, 0);
 		if ((errno != 0) || (width == 0) || (height == 0))
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			(void)fprintf(stderr, "%s failed: width=%" PRIu32 ", height=%" PRIu32 ", errno=%s\n",
 			              __func__, width, height, winpr_strerror(errno, buffer, sizeof(buffer)));
 			return -1;

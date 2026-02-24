@@ -484,7 +484,7 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, char* buffer,
 
 				p += sizeof("offset=\"") - 1;
 
-				char* tok[4] = { 0 };
+				char* tok[4] = WINPR_C_ARRAY_INIT;
 				{
 					char* q = strchr(p, '"');
 

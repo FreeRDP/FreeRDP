@@ -61,20 +61,20 @@ static BOOL freerdp_listener_open_from_vsock(WINPR_ATTR_UNUSED freerdp_listener*
 	const int sockfd = socket(AF_VSOCK, SOCK_STREAM, 0);
 	if (sockfd == -1)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "Error creating socket: %s", winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return FALSE;
 	}
 	const int flags = fcntl(sockfd, F_GETFL, 0);
 	if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "Error making socket nonblocking: %s",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		close(sockfd);
 		return FALSE;
 	}
-	struct sockaddr_vm addr = { 0 };
+	struct sockaddr_vm addr = WINPR_C_ARRAY_INIT;
 
 	addr.svm_family = AF_VSOCK;
 	addr.svm_port = port;
@@ -89,7 +89,7 @@ static BOOL freerdp_listener_open_from_vsock(WINPR_ATTR_UNUSED freerdp_listener*
 			val = UINT32_MAX;
 		else
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "could not extract port from '%s', value=%lu, error=%s", bind_address,
 			         val, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			close(sockfd);
@@ -99,7 +99,7 @@ static BOOL freerdp_listener_open_from_vsock(WINPR_ATTR_UNUSED freerdp_listener*
 	addr.svm_cid = WINPR_ASSERTING_INT_CAST(unsigned int, val);
 	if (bind(sockfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_vm)) == -1)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "Error binding vsock at cid %u port %d: %s", addr.svm_cid, port,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		close(sockfd);
@@ -108,7 +108,7 @@ static BOOL freerdp_listener_open_from_vsock(WINPR_ATTR_UNUSED freerdp_listener*
 
 	if (listen(sockfd, 10) == -1)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "Error listening to socket at cid %u port %d: %s", addr.svm_cid, port,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		close(sockfd);
@@ -248,7 +248,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 #ifndef _WIN32
 	int status = 0;
 	int sockfd = 0;
-	struct sockaddr_un addr = { 0 };
+	struct sockaddr_un addr = WINPR_C_ARRAY_INIT;
 	rdpListener* listener = (rdpListener*)instance->listener;
 	HANDLE hevent = NULL;
 
@@ -484,7 +484,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 	for (int i = 0; i < listener->num_sockfds; i++)
 	{
-		struct sockaddr_storage peer_addr = { 0 };
+		struct sockaddr_storage peer_addr = WINPR_C_ARRAY_INIT;
 
 		(void)WSAResetEvent(listener->events[i]);
 		int peer_addr_size = sizeof(peer_addr);
@@ -493,7 +493,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 		if (peer_sockfd == (SOCKET)-1)
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 #ifdef _WIN32
 			int wsa_error = WSAGetLastError();
 

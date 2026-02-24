@@ -170,7 +170,7 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 		return FALSE;
 
 	/* Set the format for the AudioUnit. */
-	AudioStreamBasicDescription audioFormat = { 0 };
+	AudioStreamBasicDescription audioFormat = WINPR_C_ARRAY_INIT;
 	audioFormat.mSampleRate = format->nSamplesPerSec;
 	audioFormat.mFormatID = kAudioFormatLinearPCM;
 	audioFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
@@ -190,7 +190,7 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 	}
 
 	/* Set up the AudioUnit callback. */
-	AURenderCallbackStruct callbackStruct = { 0 };
+	AURenderCallbackStruct callbackStruct = WINPR_C_ARRAY_INIT;
 	callbackStruct.inputProc = rdpsnd_ios_render_cb;
 	callbackStruct.inputProcRefCon = p;
 	status =

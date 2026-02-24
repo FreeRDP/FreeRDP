@@ -270,7 +270,7 @@ DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 #if defined(__linux__) || defined(__NetBSD__) || defined(__DragonFly__)
 static DWORD module_from_proc(const char* proc, LPSTR lpFilename, DWORD nSize)
 {
-	char buffer[8192] = { 0 };
+	char buffer[8192] = WINPR_C_ARRAY_INIT;
 	ssize_t status = readlink(proc, buffer, ARRAYSIZE(buffer) - 1);
 
 	if ((status < 0) || ((size_t)status >= ARRAYSIZE(buffer)))
@@ -353,8 +353,8 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 #elif defined(__DragonFly__)
 	return module_from_proc("/proc/curproc/file", lpFilename, nSize);
 #elif defined(__MACOSX__)
-	char path[4096] = { 0 };
-	char buffer[4096] = { 0 };
+	char path[4096] = WINPR_C_ARRAY_INIT;
+	char buffer[4096] = WINPR_C_ARRAY_INIT;
 	uint32_t size = sizeof(path);
 	const int status = _NSGetExecutablePath(path, &size);
 

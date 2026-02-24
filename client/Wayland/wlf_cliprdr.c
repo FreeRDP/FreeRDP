@@ -341,7 +341,7 @@ static UINT wlf_cliprdr_send_data_request(wfClipboard* clipboard, const wlf_cons
  */
 static UINT wlf_cliprdr_send_data_response(wfClipboard* clipboard, const BYTE* data, size_t size)
 {
-	CLIPRDR_FORMAT_DATA_RESPONSE response = { 0 };
+	CLIPRDR_FORMAT_DATA_RESPONSE response = WINPR_C_ARRAY_INIT;
 
 	if (size > UINT32_MAX)
 		return ERROR_INVALID_PARAMETER;
@@ -530,7 +530,7 @@ static void wlf_cliprdr_transfer_data(UwacSeat* seat, void* context, const char*
 
 	EnterCriticalSection(&clipboard->lock);
 
-	wlf_const_request request = { 0 };
+	wlf_const_request request = WINPR_C_ARRAY_INIT;
 	if (wlf_mime_is_html(mime))
 	{
 		request.responseMime = mime_html;

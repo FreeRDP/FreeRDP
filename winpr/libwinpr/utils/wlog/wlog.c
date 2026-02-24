@@ -349,7 +349,7 @@ static BOOL WLog_PrintTextMessageInternal(wLog* log, const wLogMessage* cmessage
 {
 	assert(cmessage);
 
-	char formattedLogMessage[WLOG_MAX_STRING_SIZE] = { 0 };
+	char formattedLogMessage[WLOG_MAX_STRING_SIZE] = WINPR_C_ARRAY_INIT;
 	wLogMessage message = *cmessage;
 	message.TextString = formattedLogMessage;
 
@@ -367,7 +367,7 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line, const 
                          const char* function, va_list args)
 {
 	BOOL status = FALSE;
-	wLogMessage message = { 0 };
+	wLogMessage message = WINPR_C_ARRAY_INIT;
 	message.Type = type;
 	message.Level = level;
 	message.LineNumber = line;
@@ -413,7 +413,7 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line, const 
 BOOL WLog_PrintTextMessageVA(wLog* log, DWORD level, size_t line, const char* file,
                              const char* function, const char* fmt, va_list args)
 {
-	wLogMessage message = { 0 };
+	wLogMessage message = WINPR_C_ARRAY_INIT;
 	message.Type = WLOG_MESSAGE_TEXT;
 	message.Level = level;
 	message.LineNumber = line;
@@ -429,7 +429,7 @@ BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, size_t line, const ch
                        const char* function, ...)
 {
 	BOOL status = 0;
-	va_list args = { 0 };
+	va_list args = WINPR_C_ARRAY_INIT;
 	va_start(args, function);
 	status = WLog_PrintMessageVA(log, type, level, line, file, function, args);
 	va_end(args);
@@ -440,7 +440,7 @@ BOOL WLog_PrintTextMessage(wLog* log, DWORD level, size_t line, const char* file
                            const char* function, const char* fmt, ...)
 {
 	BOOL status = 0;
-	va_list args = { 0 };
+	va_list args = WINPR_C_ARRAY_INIT;
 	va_start(args, fmt);
 	status = WLog_PrintTextMessageVA(log, level, line, file, function, fmt, args);
 	va_end(args);

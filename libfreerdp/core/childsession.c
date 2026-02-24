@@ -222,7 +222,7 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 	}
 	if ((size >= 0) && ret)
 	{
-		DataChunk chunks[2] = { 0 };
+		DataChunk chunks[2] = WINPR_C_ARRAY_INIT;
 		const int nchunks =
 		    ringbuffer_peek(&ptr->readBuffer, chunks, WINPR_ASSERTING_INT_CAST(size_t, ret));
 		for (int i = 0; i < nchunks; i++)
@@ -477,8 +477,8 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 		return FALSE;
 
 	{
-		WCHAR pipePath[0x80] = { 0 };
-		char pipePathA[0x80] = { 0 };
+		WCHAR pipePath[0x80] = WINPR_C_ARRAY_INIT;
+		char pipePathA[0x80] = WINPR_C_ARRAY_INIT;
 
 		{
 			WinStationCreateChildSessionTransportFn createChildSessionFn =

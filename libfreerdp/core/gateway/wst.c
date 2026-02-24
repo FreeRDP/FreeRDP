@@ -102,7 +102,7 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 
 	rdpContext* context = wst->context;
 	rdpSettings* settings = context->settings;
-	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
+	SEC_WINNT_AUTH_IDENTITY identity = WINPR_C_ARRAY_INIT;
 	int rc = 0;
 
 	wst->auth_required = TRUE;
@@ -167,7 +167,7 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 	size_t len = 0;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
-	SecBuffer authToken = { 0 };
+	SecBuffer authToken = WINPR_C_ARRAY_INIT;
 	int rc = 0;
 
 	if (!auth || !response)
@@ -506,7 +506,7 @@ static BOOL wst_handle_http_code(rdpWst* wst, UINT16 StatusCode)
 			break;
 	}
 
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	WLog_Print(wst->log, WLOG_ERROR, "Unexpected HTTP status: %s",
 	           freerdp_http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
 	freerdp_set_last_error_if_not(wst->context, FREERDP_ERROR_CONNECT_FAILED);
@@ -826,7 +826,7 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 
 	if (*pos == ':')
 	{
-		char port[6] = { 0 };
+		char port[6] = WINPR_C_ARRAY_INIT;
 		char* portNumberEnd = NULL;
 		pos++;
 		const char* portStart = pos;

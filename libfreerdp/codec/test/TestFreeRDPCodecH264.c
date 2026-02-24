@@ -52,7 +52,7 @@ fail:
 	h264_context_free(h264);
 	const UINT64 end = winpr_GetUnixTimeNS();
 
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	printf("[%s] %" PRIu32 "x%" PRIu32 " took %s\n", __func__, width, height,
 	       print_ns(start, end, buffer, sizeof(buffer)));
 	return rc;
@@ -100,7 +100,7 @@ static BOOL testEncode(uint32_t format, uint32_t width, uint32_t height)
 	BOOL rc = FALSE;
 	void* src = NULL;
 	void* out = NULL;
-	RDPGFX_H264_METABLOCK meta = { 0 };
+	RDPGFX_H264_METABLOCK meta = WINPR_C_ARRAY_INIT;
 	H264_CONTEXT* h264 = h264_context_new(TRUE);
 	H264_CONTEXT* h264dec = h264_context_new(FALSE);
 	if (!h264 || !h264dec)
@@ -160,7 +160,7 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 		height = strtoul(argv[2], NULL, 0);
 		if ((errno != 0) || (width == 0) || (height == 0))
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			(void)fprintf(stderr, "%s failed: width=%" PRIu32 ", height=%" PRIu32 ", errno=%s\n",
 			              __func__, width, height, winpr_strerror(errno, buffer, sizeof(buffer)));
 			return -1;

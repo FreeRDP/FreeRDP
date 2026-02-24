@@ -221,7 +221,7 @@ static UINT freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, 
                                                  void* pInterface)
 {
 	UINT status = CHANNEL_RC_OK;
-	ChannelConnectedEventArgs e = { 0 };
+	ChannelConnectedEventArgs e = WINPR_C_ARRAY_INIT;
 	rdpChannels* channels = (rdpChannels*)context->custom;
 	freerdp* instance = channels->instance;
 	EventArgsInit(&e, "freerdp");
@@ -240,7 +240,7 @@ static UINT freerdp_drdynvc_on_channel_disconnected(DrdynvcClientContext* contex
                                                     void* pInterface)
 {
 	UINT status = CHANNEL_RC_OK;
-	ChannelDisconnectedEventArgs e = { 0 };
+	ChannelDisconnectedEventArgs e = WINPR_C_ARRAY_INIT;
 	rdpChannels* channels = (rdpChannels*)context->custom;
 	freerdp* instance = channels->instance;
 	EventArgsInit(&e, "freerdp");
@@ -254,7 +254,7 @@ static UINT freerdp_drdynvc_on_channel_attached(DrdynvcClientContext* context, c
                                                 void* pInterface)
 {
 	UINT status = CHANNEL_RC_OK;
-	ChannelAttachedEventArgs e = { 0 };
+	ChannelAttachedEventArgs e = WINPR_C_ARRAY_INIT;
 	rdpChannels* channels = (rdpChannels*)context->custom;
 	freerdp* instance = channels->instance;
 	EventArgsInit(&e, "freerdp");
@@ -268,7 +268,7 @@ static UINT freerdp_drdynvc_on_channel_detached(DrdynvcClientContext* context, c
                                                 void* pInterface)
 {
 	UINT status = CHANNEL_RC_OK;
-	ChannelDetachedEventArgs e = { 0 };
+	ChannelDetachedEventArgs e = WINPR_C_ARRAY_INIT;
 	rdpChannels* channels = (rdpChannels*)context->custom;
 	freerdp* instance = channels->instance;
 	EventArgsInit(&e, "freerdp");
@@ -342,7 +342,7 @@ UINT freerdp_channels_attach(freerdp* instance)
 			const void* cpv;
 			void* pv;
 		} cnv;
-		ChannelAttachedEventArgs e = { 0 };
+		ChannelAttachedEventArgs e = WINPR_C_ARRAY_INIT;
 		CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 
 		cnv.cpv = hostname;
@@ -406,7 +406,7 @@ UINT freerdp_channels_detach(freerdp* instance)
 			void* pv;
 		} cnv;
 
-		ChannelDetachedEventArgs e = { 0 };
+		ChannelDetachedEventArgs e = WINPR_C_ARRAY_INIT;
 		CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 
 		cnv.cpv = hostname;
@@ -468,7 +468,7 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 			const void* pcb;
 			void* pb;
 		} cnv;
-		ChannelConnectedEventArgs e = { 0 };
+		ChannelConnectedEventArgs e = WINPR_C_ARRAY_INIT;
 		CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 		pChannelClientData = &channels->clientDataList[index];
 
@@ -691,7 +691,7 @@ fail:
 static BOOL freerdp_channels_process_sync(rdpChannels* channels, freerdp* instance)
 {
 	BOOL status = TRUE;
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(channels);
 
@@ -869,7 +869,7 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 	/* tell all libraries we are shutting down */
 	for (int index = 0; index < channels->clientDataCount; index++)
 	{
-		ChannelDisconnectedEventArgs e = { 0 };
+		ChannelDisconnectedEventArgs e = WINPR_C_ARRAY_INIT;
 		pChannelClientData = &channels->clientDataList[index];
 
 		if (pChannelClientData->pChannelInitEventProc)
@@ -1254,7 +1254,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 	CHANNEL_INIT_DATA* pChannelInitData = NULL;
 	CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 	CHANNEL_OPEN_EVENT* pChannelOpenEvent = NULL;
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 
 	if (!pInitHandle)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
@@ -1309,7 +1309,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 static UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData, ULONG dataLength,
                                                   LPVOID pUserData)
 {
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 	CHANNEL_OPEN_EVENT* pChannelOpenEvent = NULL;
 	rdpChannels* channels = NULL;

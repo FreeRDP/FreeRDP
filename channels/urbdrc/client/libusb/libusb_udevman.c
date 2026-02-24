@@ -516,7 +516,7 @@ static BOOL device_is_filtered(struct libusb_device* dev,
                                const struct libusb_device_descriptor* desc,
                                libusb_hotplug_event event)
 {
-	char buffer[8192] = { 0 };
+	char buffer[8192] = WINPR_C_ARRAY_INIT;
 	char* what = NULL;
 	BOOL filtered = FALSE;
 	append(buffer, sizeof(buffer), usb_interface_class_to_string(desc->bDeviceClass));

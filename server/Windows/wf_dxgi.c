@@ -107,7 +107,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 {
 	HRESULT status;
 	UINT dTop, i = 0;
-	DXGI_OUTPUT_DESC desc = { 0 };
+	DXGI_OUTPUT_DESC desc = WINPR_C_ARRAY_INIT;
 	IDXGIOutput* pOutput;
 	IDXGIDevice* DxgiDevice = NULL;
 	IDXGIAdapter* DxgiAdapter = NULL;

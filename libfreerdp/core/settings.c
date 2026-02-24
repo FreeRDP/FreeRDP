@@ -247,9 +247,9 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 				for (unsigned x = 0; x < 5; x++)
 				{
 					DWORD val = 0;
-					TCHAR numentries[64] = { 0 };
-					TCHAR persist[64] = { 0 };
-					BITMAP_CACHE_V2_CELL_INFO cache = { 0 };
+					TCHAR numentries[64] = WINPR_C_ARRAY_INIT;
+					TCHAR persist[64] = WINPR_C_ARRAY_INIT;
+					BITMAP_CACHE_V2_CELL_INFO cache = WINPR_C_ARRAY_INIT;
 					(void)_sntprintf(numentries, ARRAYSIZE(numentries), _T("Cell%uNumEntries"), x);
 					(void)_sntprintf(persist, ARRAYSIZE(persist), _T("Cell%uPersistent"), x);
 					if (!settings_reg_query_dword_val(hKey, numentries, &val) ||
@@ -283,9 +283,9 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 				                         _T("SupportLevel"));
 				for (; x < 10; x++)
 				{
-					GLYPH_CACHE_DEFINITION cache = { 0 };
-					TCHAR numentries[64] = { 0 };
-					TCHAR maxsize[64] = { 0 };
+					GLYPH_CACHE_DEFINITION cache = WINPR_C_ARRAY_INIT;
+					TCHAR numentries[64] = WINPR_C_ARRAY_INIT;
+					TCHAR maxsize[64] = WINPR_C_ARRAY_INIT;
 					(void)_sntprintf(numentries, ARRAYSIZE(numentries), _T("Cache%uNumEntries"), x);
 					(void)_sntprintf(maxsize, ARRAYSIZE(maxsize), _T("Cache%uMaxCellSize"), x);
 
@@ -296,7 +296,7 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 						WLog_WARN(TAG, "Failed to store GlyphCache %u", x);
 				}
 				{
-					GLYPH_CACHE_DEFINITION cache = { 0 };
+					GLYPH_CACHE_DEFINITION cache = WINPR_C_ARRAY_INIT;
 					settings_reg_query_word_val(hKey, _T("FragCacheNumEntries"),
 					                            &cache.cacheEntries);
 					settings_reg_query_word_val(hKey, _T("FragCacheMaxCellSize"),
@@ -370,7 +370,7 @@ static void settings_load_hkey_local_machine(rdpSettings* settings)
 
 static BOOL settings_init_computer_name(rdpSettings* settings)
 {
-	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1] = { 0 };
+	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1] = WINPR_C_ARRAY_INIT;
 	DWORD nSize = ARRAYSIZE(computerName);
 
 	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
@@ -386,7 +386,7 @@ void freerdp_settings_print_warnings(const rdpSettings* settings)
 	const UINT32 level = freerdp_settings_get_uint32(settings, FreeRDP_GlyphSupportLevel);
 	if (level != GLYPH_SUPPORT_NONE)
 	{
-		char buffer[32] = { 0 };
+		char buffer[32] = WINPR_C_ARRAY_INIT;
 		WLog_WARN(TAG, "[experimental] enabled GlyphSupportLevel %s, expect visual artefacts!",
 		          freerdp_settings_glyph_level_string(level, buffer, sizeof(buffer)));
 	}
@@ -408,8 +408,8 @@ static BOOL monitor_operlaps(const rdpSettings* settings, UINT32 orig, UINT32 st
 
 		if (intersect_rects(&rect1, &rect2))
 		{
-			char buffer1[32] = { 0 };
-			char buffer2[32] = { 0 };
+			char buffer1[32] = WINPR_C_ARRAY_INIT;
+			char buffer2[32] = WINPR_C_ARRAY_INIT;
 
 			WLog_ERR(TAG, "Monitor %" PRIu32 " and %" PRIu32 " are overlapping:", orig, x);
 			WLog_ERR(TAG, "%s overlapps with %s", bounds2str(&rect1, buffer1, sizeof(buffer1)),
@@ -662,7 +662,7 @@ static BOOL freerdp_settings_client_monitors_check_primary_and_origin(const rdpS
 	BOOL primaryIsOrigin = FALSE;
 	BOOL rc = TRUE;
 
-	struct bounds_t bounds = { 0 };
+	struct bounds_t bounds = WINPR_C_ARRAY_INIT;
 
 	if (count == 0)
 	{
@@ -1055,7 +1055,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 
 	{
-		char tmp[32] = { 0 };
+		char tmp[32] = WINPR_C_ARRAY_INIT;
 		if (!freerdp_settings_set_string_len(settings, FreeRDP_ClientProductId, tmp, sizeof(tmp)))
 			goto out_fail;
 	}
@@ -1102,7 +1102,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 
 	{
-		BITMAP_CACHE_V2_CELL_INFO cache = { 0 };
+		BITMAP_CACHE_V2_CELL_INFO cache = WINPR_C_ARRAY_INIT;
 		cache.numEntries = 600;
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, 0,
 		                                        &cache) ||
@@ -1134,7 +1134,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	for (size_t x = 0; x < 10; x++)
 	{
-		GLYPH_CACHE_DEFINITION cache = { 0 };
+		GLYPH_CACHE_DEFINITION cache = WINPR_C_ARRAY_INIT;
 		cache.cacheEntries = 254;
 		switch (x)
 		{
@@ -1172,7 +1172,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 			goto out_fail;
 	}
 	{
-		GLYPH_CACHE_DEFINITION cache = { 0 };
+		GLYPH_CACHE_DEFINITION cache = WINPR_C_ARRAY_INIT;
 		cache.cacheEntries = 256;
 		cache.cacheMaximumCellSize = 256;
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_FragCache, 0, &cache))
@@ -1225,13 +1225,13 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, TRUE))
 		goto out_fail;
 	{
-		ARC_CS_PRIVATE_PACKET cookie = { 0 };
+		ARC_CS_PRIVATE_PACKET cookie = WINPR_C_ARRAY_INIT;
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ClientAutoReconnectCookie, &cookie,
 		                                      1))
 			goto out_fail;
 	}
 	{
-		ARC_SC_PRIVATE_PACKET cookie = { 0 };
+		ARC_SC_PRIVATE_PACKET cookie = WINPR_C_ARRAY_INIT;
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerAutoReconnectCookie, &cookie,
 		                                      1))
 			goto out_fail;
@@ -1244,7 +1244,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	if (!settings->ServerMode)
 	{
-		DYNAMIC_TIME_ZONE_INFORMATION dynamic = { 0 };
+		DYNAMIC_TIME_ZONE_INFORMATION dynamic = WINPR_C_ARRAY_INIT;
 		TIME_ZONE_INFORMATION* tz =
 		    freerdp_settings_get_pointer_writable(settings, FreeRDP_ClientTimeZone);
 		WINPR_ASSERT(tz);
@@ -1782,7 +1782,7 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_MonitorCount, 1))
 			return FALSE;
 
-		rdpMonitor monitor = { 0 };
+		rdpMonitor monitor = WINPR_C_ARRAY_INIT;
 		monitor.x = 0;
 		monitor.y = 0;
 		monitor.width = WINPR_ASSERTING_INT_CAST(int32_t, width);

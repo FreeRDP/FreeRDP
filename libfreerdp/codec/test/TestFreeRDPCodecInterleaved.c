@@ -218,7 +218,7 @@ static bool RunEncoderTest(const char* name, uint32_t format, uint32_t width, ui
 		                          0, NULL, bpp))
 			goto fail;
 
-		char encname[128] = { 0 };
+		char encname[128] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(encname, sizeof(encname), "enc-%" PRIu32, bpp);
 #if defined(CREATE_TEST_OUTPUT)
 		test_codec_helper_write_data("interleaved", encname, name, encdata, enclen);
@@ -247,7 +247,7 @@ static bool RunDecoderTest(const char* name, uint32_t format, uint32_t width, ui
 	if (!decoder)
 		goto fail;
 
-	char encname[128] = { 0 };
+	char encname[128] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(encname, sizeof(encname), "enc-%" PRIu32, bpp);
 
 	size_t srclen = 0;
@@ -267,7 +267,7 @@ static bool RunDecoderTest(const char* name, uint32_t format, uint32_t width, ui
 		                            NULL))
 			goto fail;
 
-		char decname[128] = { 0 };
+		char decname[128] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(decname, sizeof(decname), "dec-%s", encname);
 #if defined(CREATE_TEST_OUTPUT)
 		test_codec_helper_write_data("interleaved", decname, name, decdata, declen);

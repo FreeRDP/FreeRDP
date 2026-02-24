@@ -176,7 +176,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 	size_t cchAddinPath = 0;
 	size_t cchInstallPrefix = 0;
 	FREERDP_ADDIN** ppAddins = NULL;
-	WIN32_FIND_DATAW FindData = { 0 };
+	WIN32_FIND_DATAW FindData = WINPR_C_ARRAY_INIT;
 	cchAddinPath = strnlen(pszAddinPath, sizeof(FREERDP_ADDIN_PATH));
 	cchInstallPrefix = strnlen(pszInstallPrefix, sizeof(FREERDP_INSTALL_PREFIX));
 	pszExtension = PathGetSharedLibraryExtensionA(0);
@@ -273,7 +273,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		if (nDashes == 1)
 		{
 			size_t len = 0;
-			char* p[2] = { 0 };
+			char* p[2] = WINPR_C_ARRAY_INIT;
 			/* <name>-client.<extension> */
 			p[0] = cFileName;
 			p[1] = strchr(p[0], '-');
@@ -299,7 +299,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		else if (nDashes == 2)
 		{
 			size_t len = 0;
-			char* p[4] = { 0 };
+			char* p[4] = WINPR_C_ARRAY_INIT;
 			/* <name>-client-<subsystem>.<extension> */
 			p[0] = cFileName;
 			p[1] = strchr(p[0], '-');
@@ -342,7 +342,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		else if (nDashes == 3)
 		{
 			size_t len = 0;
-			char* p[5] = { 0 };
+			char* p[5] = WINPR_C_ARRAY_INIT;
 			/* <name>-client-<subsystem>-<type>.<extension> */
 			p[0] = cFileName;
 			p[1] = strchr(p[0], '-');
@@ -531,7 +531,7 @@ static DWORD WINAPI channel_client_thread_proc(LPVOID userdata)
 {
 	UINT error = CHANNEL_RC_OK;
 	wStream* data = NULL;
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	msg_proc_internals* internals = userdata;
 
 	WINPR_ASSERT(internals);
@@ -626,7 +626,7 @@ void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler
 	if ((freerdp_settings_get_uint32(ctx->settings, FreeRDP_ThreadingFlags) &
 	     THREADING_FLAGS_DISABLE_THREADS) == 0)
 	{
-		wObject obj = { 0 };
+		wObject obj = WINPR_C_ARRAY_INIT;
 		obj.fnObjectFree = free_msg;
 		internals->queue = MessageQueue_New(&obj);
 		if (!internals->queue)

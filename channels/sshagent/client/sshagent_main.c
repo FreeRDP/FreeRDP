@@ -107,7 +107,7 @@ static int connect_to_sshagent(const char* udspath)
 		return -1;
 	}
 
-	struct sockaddr_un addr = { 0 };
+	struct sockaddr_un addr = WINPR_C_ARRAY_INIT;
 
 	addr.sun_family = AF_UNIX;
 
@@ -136,7 +136,7 @@ static DWORD WINAPI sshagent_read_thread(LPVOID data)
 	SSHAGENT_CHANNEL_CALLBACK* callback = (SSHAGENT_CHANNEL_CALLBACK*)data;
 	WINPR_ASSERT(callback);
 
-	BYTE buffer[4096] = { 0 };
+	BYTE buffer[4096] = WINPR_C_ARRAY_INIT;
 	int going = 1;
 	UINT status = CHANNEL_RC_OK;
 

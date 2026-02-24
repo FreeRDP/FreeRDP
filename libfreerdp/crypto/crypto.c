@@ -235,7 +235,7 @@ char* crypto_read_pem(const char* WINPR_RESTRICT filename, size_t* WINPR_RESTRIC
 
 fail:
 {
-	char buffer[8192] = { 0 };
+	char buffer[8192] = WINPR_C_ARRAY_INIT;
 	WLog_WARN(TAG, "Failed to read PEM from file '%s' [%s]", filename,
 	          winpr_strerror(errno, buffer, sizeof(buffer)));
 }
@@ -264,7 +264,7 @@ BOOL crypto_write_pem(const char* WINPR_RESTRICT filename, const char* WINPR_RES
 fail:
 	if (rc == 0)
 	{
-		char buffer[8192] = { 0 };
+		char buffer[8192] = WINPR_C_ARRAY_INIT;
 		WLog_WARN(TAG, "Failed to write PEM [%" PRIuz "] to file '%s' [%s]", length, filename,
 		          winpr_strerror(errno, buffer, sizeof(buffer)));
 	}

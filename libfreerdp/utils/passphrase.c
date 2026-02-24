@@ -53,7 +53,7 @@ const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, cha
 {
 	WCHAR UserNameW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 'p', 'r', 'e', 'f', 'i',
 		                                                'l', 'l', 'e', 'd', '\0' };
-	WCHAR PasswordW[CREDUI_MAX_PASSWORD_LENGTH + 1] = { 0 };
+	WCHAR PasswordW[CREDUI_MAX_PASSWORD_LENGTH + 1] = WINPR_C_ARRAY_INIT;
 	BOOL fSave = FALSE;
 	DWORD dwFlags = 0;
 	WCHAR* promptW = ConvertUtf8ToWCharAlloc(prompt, NULL);
@@ -90,7 +90,7 @@ static int wait_for_fd(int fd, int timeout)
 {
 	int status = 0;
 #if defined(WINPR_HAVE_POLL_H) && !defined(__APPLE__)
-	struct pollfd pollset = { 0 };
+	struct pollfd pollset = WINPR_C_ARRAY_INIT;
 	pollset.fd = fd;
 	pollset.events = POLLIN;
 	pollset.revents = 0;
@@ -101,8 +101,8 @@ static int wait_for_fd(int fd, int timeout)
 	} while ((status < 0) && (errno == EINTR));
 
 #else
-	fd_set rset = { 0 };
-	struct timeval tv = { 0 };
+	fd_set rset = WINPR_C_ARRAY_INIT;
+	struct timeval tv = WINPR_C_ARRAY_INIT;
 	FD_ZERO(&rset);
 	FD_SET(fd, &rset);
 
@@ -136,7 +136,7 @@ static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* 
                                                size_t bufsiz, int from_stdin)
 {
 	BOOL terminal_needs_reset = FALSE;
-	char term_name[L_ctermid] = { 0 };
+	char term_name[L_ctermid] = WINPR_C_ARRAY_INIT;
 
 	FILE* fout = NULL;
 
@@ -173,10 +173,10 @@ static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* 
 		}
 	}
 
-	struct termios orig_flags = { 0 };
+	struct termios orig_flags = WINPR_C_ARRAY_INIT;
 	if (tcgetattr(terminal_fildes, &orig_flags) != -1)
 	{
-		struct termios new_flags = { 0 };
+		struct termios new_flags = WINPR_C_ARRAY_INIT;
 		new_flags = orig_flags;
 		new_flags.c_lflag &= (uint32_t)~ECHO;
 		new_flags.c_lflag |= ECHONL;
@@ -238,7 +238,7 @@ error:
 static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,
                                                    char const* askpass_env)
 {
-	char command[4096] = { 0 };
+	char command[4096] = WINPR_C_ARRAY_INIT;
 
 	(void)sprintf_s(command, sizeof(command), "%s 'FreeRDP authentication\n%s'", askpass_env,
 	                prompt);
@@ -282,7 +282,7 @@ BOOL set_termianl_nonblock(int ifd, BOOL nonblock)
 	static int fd = -1;
 	static bool registered = false;
 	static int orig = 0;
-	static struct termios termios = { 0 };
+	static struct termios termios = WINPR_C_ARRAY_INIT;
 
 	if (ifd >= 0)
 		fd = ifd;
@@ -301,7 +301,7 @@ BOOL set_termianl_nonblock(int ifd, BOOL nonblock)
 		const int rc1 = fcntl(fd, F_SETFL, orig | O_NONBLOCK);
 		if (rc1 != 0)
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "fcntl(F_SETFL) failed with %s",
 			         winpr_strerror(errno, buffer, sizeof(buffer)));
 			return FALSE;
@@ -309,7 +309,7 @@ BOOL set_termianl_nonblock(int ifd, BOOL nonblock)
 		const int rc2 = tcgetattr(fd, &termios);
 		if (rc2 != 0)
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "tcgetattr() failed with %s",
 			         winpr_strerror(errno, buffer, sizeof(buffer)));
 			return FALSE;
@@ -320,7 +320,7 @@ BOOL set_termianl_nonblock(int ifd, BOOL nonblock)
 		const int rc3 = tcsetattr(fd, TCSANOW, &now);
 		if (rc3 != 0)
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "tcsetattr(TCSANOW) failed with %s",
 			         winpr_strerror(errno, buffer, sizeof(buffer)));
 			return FALSE;
@@ -331,7 +331,7 @@ BOOL set_termianl_nonblock(int ifd, BOOL nonblock)
 		const int rc1 = tcsetattr(fd, TCSANOW, &termios);
 		if (rc1 != 0)
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "tcsetattr(TCSANOW) failed with %s",
 			         winpr_strerror(errno, buffer, sizeof(buffer)));
 			return FALSE;
@@ -339,7 +339,7 @@ BOOL set_termianl_nonblock(int ifd, BOOL nonblock)
 		const int rc2 = fcntl(fd, F_SETFL, orig);
 		if (rc2 != 0)
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "fcntl(F_SETFL) failed with %s",
 			         winpr_strerror(errno, buffer, sizeof(buffer)));
 			return FALSE;
@@ -417,7 +417,7 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 	{
 		const int fd = fileno(stream);
 
-		struct termios termios = { 0 };
+		struct termios termios = WINPR_C_ARRAY_INIT;
 		/* This might fail if /from-stdin is used. */
 		if (tcgetattr(fd, &termios) == 0)
 			echo = (termios.c_lflag & ECHO) != 0;

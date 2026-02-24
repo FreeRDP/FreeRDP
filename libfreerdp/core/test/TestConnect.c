@@ -12,7 +12,7 @@ static HANDLE s_sync = NULL;
 static int runInstance(int argc, char* argv[], freerdp** inst, DWORD timeout)
 {
 	int rc = -1;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = WINPR_C_ARRAY_INIT;
 	rdpContext* context = NULL;
 
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
@@ -186,7 +186,7 @@ static int testAbort(int port)
 static char* concatenate(size_t count, ...)
 {
 	char* rc = NULL;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, count);
 	rc = _strdup(va_arg(ap, char*));
 	for (size_t x = 1; x < count; x++)
@@ -205,9 +205,9 @@ static BOOL prepare_certificates(const char* path)
 	BOOL rc = FALSE;
 	char* exe = NULL;
 	DWORD status = 0;
-	STARTUPINFOA si = { 0 };
-	PROCESS_INFORMATION process = { 0 };
-	char commandLine[8192] = { 0 };
+	STARTUPINFOA si = WINPR_C_ARRAY_INIT;
+	PROCESS_INFORMATION process = WINPR_C_ARRAY_INIT;
+	char commandLine[8192] = WINPR_C_ARRAY_INIT;
 
 	if (!path)
 		return FALSE;
@@ -236,8 +236,8 @@ static int testSuccess(int port)
 {
 	int r = 0;
 	int rc = -2;
-	STARTUPINFOA si = { 0 };
-	PROCESS_INFORMATION process = { 0 };
+	STARTUPINFOA si = WINPR_C_ARRAY_INIT;
+	PROCESS_INFORMATION process = WINPR_C_ARRAY_INIT;
 	char arg1[] = "/v:127.0.0.1:XXXXX";
 	char* clientArgs[] = { "test", "/v:127.0.0.1:XXXXX", "/cert:ignore", "/rfx", NULL };
 	char* commandLine = NULL;

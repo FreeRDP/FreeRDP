@@ -27,7 +27,7 @@
 
 static BOOL test_generic(HANDLE hComm)
 {
-	DCB dcb = { 0 };
+	DCB dcb = WINPR_C_ARRAY_INIT;
 	DCB* pDcb = NULL;
 	BOOL result = 0;
 
@@ -77,7 +77,7 @@ static BOOL test_generic(HANDLE hComm)
 
 int TestGetCommState(int argc, char* argv[])
 {
-	struct stat statbuf = { 0 };
+	struct stat statbuf = WINPR_C_ARRAY_INIT;
 	BOOL result = 0;
 	HANDLE hComm = NULL;
 

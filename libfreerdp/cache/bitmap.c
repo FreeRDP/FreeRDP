@@ -322,7 +322,7 @@ static int bitmap_cache_save_persistent(rdpBitmapCache* bitmapCache)
 			BITMAP_V2_CELL* cell = &bitmapCache->cells[i];
 			for (UINT32 j = 0; j < cell->number + 1 && cell->entries; j++)
 			{
-				PERSISTENT_CACHE_ENTRY cacheEntry = { 0 };
+				PERSISTENT_CACHE_ENTRY cacheEntry = WINPR_C_ARRAY_INIT;
 				rdpBitmap* bitmap = cell->entries[j];
 
 				if (!bitmap || !bitmap->key64)

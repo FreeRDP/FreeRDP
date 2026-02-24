@@ -187,7 +187,7 @@ int websocket_context_write(websocket_context* context, BIO* bio, const BYTE* bu
 	if (isize < 0)
 		return -1;
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, buf, (size_t)isize);
 	if (!websocket_context_write_wstream(context, bio, s, opcode))
 		return -2;
@@ -366,7 +366,7 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 		{
 			case WebsocketStateOpcodeAndFin:
 			{
-				BYTE buffer[1] = { 0 };
+				BYTE buffer[1] = WINPR_C_ARRAY_INIT;
 
 				ERR_clear_error();
 				status = BIO_read(bio, (char*)buffer, sizeof(buffer));
@@ -383,7 +383,7 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 			break;
 			case WebsocketStateLengthAndMasking:
 			{
-				BYTE buffer[1] = { 0 };
+				BYTE buffer[1] = WINPR_C_ARRAY_INIT;
 
 				ERR_clear_error();
 				status = BIO_read(bio, (char*)buffer, sizeof(buffer));
@@ -410,7 +410,7 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 			case WebsocketStateShortLength:
 			case WebsocketStateLongLength:
 			{
-				BYTE buffer[1] = { 0 };
+				BYTE buffer[1] = WINPR_C_ARRAY_INIT;
 				const BYTE lenLength =
 				    (encodingContext->state == WebsocketStateShortLength ? 2 : 8);
 				while (encodingContext->lengthAndMaskPosition < lenLength)

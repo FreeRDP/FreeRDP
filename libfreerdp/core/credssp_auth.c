@@ -107,8 +107,8 @@ static BOOL log_status_(SECURITY_STATUS status, DWORD level, const char* file, c
 
 	if (WLog_IsLevelActive(log, level))
 	{
-		char fwhat[128] = { 0 };
-		va_list ap = { 0 };
+		char fwhat[128] = WINPR_C_ARRAY_INIT;
+		va_list ap = WINPR_C_ARRAY_INIT;
 		va_start(ap, what);
 		(void)vsnprintf(fwhat, sizeof(fwhat) - 1, what, ap);
 		va_end(ap);
@@ -287,7 +287,7 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
                                const char* pkinit)
 {
 	void* pAuthData = NULL;
-	SEC_WINNT_AUTH_IDENTITY_WINPR winprAuthData = { 0 };
+	SEC_WINNT_AUTH_IDENTITY_WINPR winprAuthData = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
@@ -339,7 +339,7 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 BOOL credssp_auth_setup_server(rdpCredsspAuth* auth)
 {
 	void* pAuthData = NULL;
-	SEC_WINNT_AUTH_IDENTITY_WINPR winprAuthData = { 0 };
+	SEC_WINNT_AUTH_IDENTITY_WINPR winprAuthData = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
@@ -415,7 +415,7 @@ void credssp_auth_set_flags(rdpCredsspAuth* auth, ULONG flags)
 int credssp_auth_authenticate(rdpCredsspAuth* auth)
 {
 	SECURITY_STATUS status = ERROR_INTERNAL_ERROR;
-	SecBuffer input_buffers[2] = { 0 };
+	SecBuffer input_buffers[2] = WINPR_C_ARRAY_INIT;
 	SecBufferDesc input_buffer_desc = { SECBUFFER_VERSION, 1, input_buffers };
 	CtxtHandle* context = NULL;
 
@@ -513,7 +513,7 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
                           size_t* signature_length, ULONG sequence)
 {
 	SECURITY_STATUS status = ERROR_INTERNAL_ERROR;
-	SecBuffer buffers[2] = { 0 };
+	SecBuffer buffers[2] = WINPR_C_ARRAY_INIT;
 	SecBufferDesc buffer_desc = { SECBUFFER_VERSION, 2, buffers };
 	BYTE* buf = NULL;
 
@@ -673,7 +673,7 @@ void credssp_auth_take_input_buffer(rdpCredsspAuth* auth, SecBuffer* buffer)
 	auth->input_buffer.BufferType = SECBUFFER_TOKEN;
 
 	/* Invalidate original, rdpCredsspAuth now has ownership of the buffer */
-	SecBuffer empty = { 0 };
+	SecBuffer empty = WINPR_C_ARRAY_INIT;
 	*buffer = empty;
 }
 

@@ -283,9 +283,9 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
                       BYTE** ppDstData, UINT32* pDstSize, RDPGFX_H264_METABLOCK* meta)
 {
 	INT32 rc = -1;
-	BYTE* pYUVData[3] = { 0 };
-	const BYTE* pcYUVData[3] = { 0 };
-	BYTE* pOldYUVData[3] = { 0 };
+	BYTE* pYUVData[3] = WINPR_C_ARRAY_INIT;
+	const BYTE* pcYUVData[3] = WINPR_C_ARRAY_INIT;
+	BYTE* pOldYUVData[3] = WINPR_C_ARRAY_INIT;
 
 	if (!h264 || !regionRect || !meta || !h264->Compressor)
 		return -1;
@@ -639,7 +639,7 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 
 #define MAX_SUBSYSTEMS 10
 static INIT_ONCE subsystems_once = INIT_ONCE_STATIC_INIT;
-static const H264_CONTEXT_SUBSYSTEM* subSystems[MAX_SUBSYSTEMS] = { 0 };
+static const H264_CONTEXT_SUBSYSTEM* subSystems[MAX_SUBSYSTEMS] = WINPR_C_ARRAY_INIT;
 
 static BOOL CALLBACK h264_register_subsystems(WINPR_ATTR_UNUSED PINIT_ONCE once,
                                               WINPR_ATTR_UNUSED PVOID param,
@@ -780,7 +780,7 @@ void h264_context_free(H264_CONTEXT* h264)
 
 void free_h264_metablock(RDPGFX_H264_METABLOCK* meta)
 {
-	RDPGFX_H264_METABLOCK m = { 0 };
+	RDPGFX_H264_METABLOCK m = WINPR_C_ARRAY_INIT;
 	if (!meta)
 		return;
 	free(meta->quantQualityVals);

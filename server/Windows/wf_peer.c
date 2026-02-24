@@ -201,7 +201,7 @@ static DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 	while (1)
 	{
 		DWORD status;
-		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD count = client->GetEventHandles(client, handles, ARRAYSIZE(handles));
 
 		if (count == 0)

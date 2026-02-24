@@ -37,7 +37,7 @@ static BOOL test_SerialSys(HANDLE hComm)
 
 int TestHandflow(int argc, char* argv[])
 {
-	struct stat statbuf = { 0 };
+	struct stat statbuf = WINPR_C_ARRAY_INIT;
 	BOOL result = 0;
 	HANDLE hComm = NULL;
 

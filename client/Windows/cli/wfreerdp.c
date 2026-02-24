@@ -50,7 +50,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	rdpSettings* settings;
 	LPWSTR cmd;
 	char** argv = NULL;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = WINPR_C_ARRAY_INIT;
 	int ret = 1;
 	int argc = 0;
 	LPWSTR* args = NULL;

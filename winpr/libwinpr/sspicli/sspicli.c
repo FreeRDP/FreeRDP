@@ -165,7 +165,7 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, WINPR_ATTR_UNUSED LPCSTR
 				goto fail;
 
 			{
-				struct passwd pwd = { 0 };
+				struct passwd pwd = WINPR_C_ARRAY_INIT;
 				struct passwd* pw = NULL;
 				const int rc = getpwnam_r(lpszUsername, &pwd, buf,
 				                          WINPR_ASSERTING_INT_CAST(size_t, buflen), &pw);
@@ -229,7 +229,7 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 #if defined(WINPR_HAVE_GETPWUID_R)
 		{
 			int rc = 0;
-			struct passwd pwd = { 0 };
+			struct passwd pwd = WINPR_C_ARRAY_INIT;
 			struct passwd* result = NULL;
 			uid_t uid = getuid();
 

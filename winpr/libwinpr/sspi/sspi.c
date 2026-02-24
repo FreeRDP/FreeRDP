@@ -46,8 +46,8 @@ static wLog* g_Log = NULL;
 static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
 #if defined(WITH_NATIVE_SSPI)
 static HMODULE g_SspiModule = NULL;
-static SecurityFunctionTableW windows_SecurityFunctionTableW = { 0 };
-static SecurityFunctionTableA windows_SecurityFunctionTableA = { 0 };
+static SecurityFunctionTableW windows_SecurityFunctionTableW = WINPR_C_ARRAY_INIT;
+static SecurityFunctionTableA windows_SecurityFunctionTableA = WINPR_C_ARRAY_INIT;
 #endif
 
 static SecurityFunctionTableW* g_SspiW = NULL;
@@ -1141,6 +1141,6 @@ void sspi_FreeAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity)
 		len -= SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
 	zfree(identity->Password, len, wc);
 
-	const SEC_WINNT_AUTH_IDENTITY empty = { 0 };
+	const SEC_WINNT_AUTH_IDENTITY empty = WINPR_C_ARRAY_INIT;
 	*identity = empty;
 }

@@ -89,7 +89,7 @@ static BOOL security_salted_hash(const BYTE* salt, size_t salt_len, const BYTE* 
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
-	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
+	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	BOOL result = FALSE;
 
 	/* SaltedHash(Salt, Input, Salt1, Salt2) = MD5(S + SHA1(Input + Salt + Salt1 + Salt2)) */
@@ -305,8 +305,8 @@ BOOL security_mac_data(const BYTE* mac_salt_key, size_t mac_salt_key_length, con
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
-	BYTE length_le[4] = { 0 };
-	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
+	BYTE length_le[4] = WINPR_C_ARRAY_INIT;
+	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	BOOL result = FALSE;
 
 	WINPR_ASSERT(length <= UINT32_MAX);
@@ -378,9 +378,9 @@ BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length, BYTE* 
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
-	BYTE length_le[4] = { 0 };
-	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
-	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
+	BYTE length_le[4] = WINPR_C_ARRAY_INIT;
+	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	BOOL result = FALSE;
 
 	WINPR_ASSERT(rdp);
@@ -448,10 +448,10 @@ BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
-	BYTE length_le[4] = { 0 };
-	BYTE use_count_le[4] = { 0 };
-	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
-	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
+	BYTE length_le[4] = WINPR_C_ARRAY_INIT;
+	BYTE use_count_le[4] = WINPR_C_ARRAY_INIT;
+	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	BOOL result = FALSE;
 
 	WINPR_ASSERT(rdp);
@@ -569,7 +569,7 @@ static BOOL security_X(const BYTE* master_secret, size_t master_len, const BYTE*
 static void fips_expand_key_bits(const BYTE* in, WINPR_ATTR_UNUSED size_t in_len, BYTE* out,
                                  WINPR_ATTR_UNUSED size_t out_len)
 {
-	BYTE buf[21] = { 0 };
+	BYTE buf[21] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(in);
 	WINPR_ASSERT(in_len >= sizeof(buf));
@@ -611,9 +611,9 @@ static void fips_expand_key_bits(const BYTE* in, WINPR_ATTR_UNUSED size_t in_len
 
 BOOL security_establish_keys(rdpRdp* rdp)
 {
-	BYTE pre_master_secret[48] = { 0 };
-	BYTE master_secret[48] = { 0 };
-	BYTE session_key_blob[48] = { 0 };
+	BYTE pre_master_secret[48] = WINPR_C_ARRAY_INIT;
+	BYTE master_secret[48] = WINPR_C_ARRAY_INIT;
+	BYTE session_key_blob[48] = WINPR_C_ARRAY_INIT;
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 	BOOL status = FALSE;
 
@@ -635,8 +635,8 @@ BOOL security_establish_keys(rdpRdp* rdp)
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		BYTE client_encrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1] = { 0 };
-		BYTE client_decrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1] = { 0 };
+		BYTE client_encrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1] = WINPR_C_ARRAY_INIT;
+		BYTE client_decrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1] = WINPR_C_ARRAY_INIT;
 		WINPR_DIGEST_CTX* sha1 = winpr_Digest_New();
 		if (!sha1)
 			return FALSE;
@@ -761,7 +761,7 @@ BOOL security_establish_keys(rdpRdp* rdp)
 
 static BOOL security_key_update(BYTE* key, BYTE* update_key, size_t key_len, rdpRdp* rdp)
 {
-	BYTE sha1h[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
+	BYTE sha1h[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
 	WINPR_RC4_CTX* rc4 = NULL;
@@ -891,8 +891,8 @@ fail:
 BOOL security_hmac_signature(const BYTE* data, size_t length, BYTE* output, size_t out_len,
                              rdpRdp* rdp)
 {
-	BYTE buf[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
-	BYTE use_count_le[4] = { 0 };
+	BYTE buf[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE use_count_le[4] = WINPR_C_ARRAY_INIT;
 	WINPR_HMAC_CTX* hmac = NULL;
 	BOOL result = FALSE;
 
@@ -959,8 +959,8 @@ BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* sig, size_t sig_len,
                                    rdpRdp* rdp)
 {
-	BYTE buf[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
-	BYTE use_count_le[4] = { 0 };
+	BYTE buf[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE use_count_le[4] = WINPR_C_ARRAY_INIT;
 	WINPR_HMAC_CTX* hmac = NULL;
 	BOOL result = FALSE;
 

@@ -708,8 +708,8 @@ DWORD GetEnvironmentVariableX(const char* lpName, char* lpBuffer, DWORD nSize)
 
 	if (!lpBuffer)
 	{
-		char lpBufferMaxA[WINPR_MAX_ENVIRONMENT_LENGTH] = { 0 };
-		WCHAR lpBufferMaxW[WINPR_MAX_ENVIRONMENT_LENGTH] = { 0 };
+		char lpBufferMaxA[WINPR_MAX_ENVIRONMENT_LENGTH] = WINPR_C_ARRAY_INIT;
+		WCHAR lpBufferMaxW[WINPR_MAX_ENVIRONMENT_LENGTH] = WINPR_C_ARRAY_INIT;
 		LPSTR lpTmpBuffer = lpBufferMaxA;
 
 		nSizeW = ARRAYSIZE(lpBufferMaxW);

@@ -29,7 +29,7 @@
 
 static char* get_path(const char* codec, const char* type, const char* name)
 {
-	char path[500] = { 0 };
+	char path[500] = WINPR_C_ARRAY_INIT;
 	(void)snprintf(path, sizeof(path), "%s-%s-%s.bin", codec, type, name);
 	char* s1 = GetCombinedPath(CMAKE_CURRENT_SOURCE_DIR, codec);
 	if (!s1)
@@ -56,7 +56,7 @@ static FILE* open_path(const char* codec, const char* type, const char* name, co
 	FILE* fp = winpr_fopen(path, mode);
 	if (!fp)
 	{
-		char buffer[128] = { 0 };
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 		(void)printf("%s: %s %s: fopen(%s, %s) failed: %s\n", __func__, type, name, path, mode,
 		             winpr_strerror(errno, buffer, sizeof(buffer)));
 	}

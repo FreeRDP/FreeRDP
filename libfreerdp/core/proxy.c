@@ -214,8 +214,8 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 	WINPR_ASSERT(val);
 	WINPR_ASSERT(hostname);
 
-	struct sockaddr_in sa4 = { 0 };
-	struct sockaddr_in6 sa6 = { 0 };
+	struct sockaddr_in sa4 = WINPR_C_ARRAY_INIT;
+	struct sockaddr_in6 sa6 = WINPR_C_ARRAY_INIT;
 
 	if (inet_pton(AF_INET, hostname, &sa4.sin_addr) == 1)
 	{
@@ -227,7 +227,7 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 		if (sub)
 			*sub++ = '\0';
 
-		struct sockaddr_in mask = { 0 };
+		struct sockaddr_in mask = WINPR_C_ARRAY_INIT;
 		if (inet_pton(AF_INET, val, &mask.sin_addr) == 0)
 			return FALSE;
 
@@ -247,7 +247,7 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 		if (val[0] == '[')
 			val++;
 
-		char str[INET6_ADDRSTRLEN + 1] = { 0 };
+		char str[INET6_ADDRSTRLEN + 1] = WINPR_C_ARRAY_INIT;
 		strncpy(str, val, INET6_ADDRSTRLEN);
 
 		const size_t len = strnlen(str, INET6_ADDRSTRLEN);
@@ -265,7 +265,7 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 		if (sub)
 			*sub++ = '\0';
 
-		struct sockaddr_in6 mask = { 0 };
+		struct sockaddr_in6 mask = WINPR_C_ARRAY_INIT;
 		if (inet_pton(AF_INET6, str, &mask.sin6_addr) == 0)
 			return FALSE;
 
@@ -577,8 +577,8 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 	BOOL rc = FALSE;
 	int status = 0;
 	wStream* s = NULL;
-	char port_str[10] = { 0 };
-	char recv_buf[256] = { 0 };
+	char port_str[10] = WINPR_C_ARRAY_INIT;
+	char recv_buf[256] = WINPR_C_ARRAY_INIT;
 	char* eol = NULL;
 	size_t resultsize = 0;
 	size_t reserveSize = 0;
@@ -835,7 +835,7 @@ static BOOL socks_proxy_userpass(rdpContext* context, BIO* bufferedBio, const ch
 
 	/* user/password v1 method */
 	{
-		BYTE buf[2 * 255 + 3] = { 0 };
+		BYTE buf[2 * 255 + 3] = WINPR_C_ARRAY_INIT;
 		size_t offset = 0;
 		buf[offset++] = 1;
 
@@ -858,7 +858,7 @@ static BOOL socks_proxy_userpass(rdpContext* context, BIO* bufferedBio, const ch
 		}
 	}
 
-	BYTE buf[2] = { 0 };
+	BYTE buf[2] = WINPR_C_ARRAY_INIT;
 	const int status = recv_socks_reply(context, bufferedBio, buf, sizeof(buf), "AUTH REQ", 1);
 
 	if (status < 2)
@@ -903,7 +903,7 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 	}
 
 	{
-		BYTE buf[2] = { 0 };
+		BYTE buf[2] = WINPR_C_ARRAY_INIT;
 		const int status = recv_socks_reply(context, bufferedBio, buf, sizeof(buf), "AUTH REQ", 5);
 
 		if (status <= 0)
@@ -932,7 +932,7 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 	}
 	/* CONN request */
 	{
-		BYTE buf[262] = { 0 };
+		BYTE buf[262] = WINPR_C_ARRAY_INIT;
 		size_t offset = 0;
 		buf[offset++] = 5;                 /* SOCKS version */
 		buf[offset++] = SOCKS_CMD_CONNECT; /* command */
@@ -974,7 +974,7 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 		}
 	}
 
-	BYTE buf[255] = { 0 };
+	BYTE buf[255] = WINPR_C_ARRAY_INIT;
 	const int status = recv_socks_reply(context, bufferedBio, buf, sizeof(buf), "CONN REQ", 5);
 
 	if (status < 4)

@@ -17,7 +17,7 @@ int TestFileFindNextFile(int argc, char* argv[])
 	HANDLE hFind = NULL;
 	LPTSTR BasePath = NULL;
 	WIN32_FIND_DATA FindData;
-	TCHAR FilePath[PATHCCH_MAX_CCH] = { 0 };
+	TCHAR FilePath[PATHCCH_MAX_CCH] = WINPR_C_ARRAY_INIT;
 	WINPR_UNUSED(argc);
 	str = argv[1];
 #ifdef UNICODE

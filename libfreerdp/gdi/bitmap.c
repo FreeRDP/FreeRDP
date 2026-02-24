@@ -230,7 +230,7 @@ static BOOL op_xor(UINT32* stack, UINT32* stackp)
 
 static UINT32 process_rop(UINT32 src, UINT32 dst, UINT32 pat, const char* rop, UINT32 format)
 {
-	UINT32 stack[10] = { 0 };
+	UINT32 stack[10] = WINPR_C_ARRAY_INIT;
 	UINT32 stackp = 0;
 
 	while (*rop != '\0')

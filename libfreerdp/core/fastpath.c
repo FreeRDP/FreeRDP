@@ -400,7 +400,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
 		{
-			POINTER_SYSTEM_UPDATE pointer_system = { 0 };
+			POINTER_SYSTEM_UPDATE pointer_system = WINPR_C_ARRAY_INIT;
 			pointer_system.type = SYSPTR_NULL;
 			rc = IFCALLRESULT(defaultReturn, pointer->PointerSystem, context, &pointer_system);
 		}
@@ -408,7 +408,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 		case FASTPATH_UPDATETYPE_PTR_DEFAULT:
 		{
-			POINTER_SYSTEM_UPDATE pointer_system = { 0 };
+			POINTER_SYSTEM_UPDATE pointer_system = WINPR_C_ARRAY_INIT;
 			pointer_system.type = SYSPTR_DEFAULT;
 			rc = IFCALLRESULT(defaultReturn, pointer->PointerSystem, context, &pointer_system);
 		}
@@ -1175,8 +1175,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	UINT32 fpHeaderSize = 6;
 	UINT32 fpUpdatePduHeaderSize = 0;
 	UINT32 fpUpdateHeaderSize = 0;
-	FASTPATH_UPDATE_PDU_HEADER fpUpdatePduHeader = { 0 };
-	FASTPATH_UPDATE_HEADER fpUpdateHeader = { 0 };
+	FASTPATH_UPDATE_PDU_HEADER fpUpdatePduHeader = WINPR_C_ARRAY_INIT;
+	FASTPATH_UPDATE_HEADER fpUpdateHeader = WINPR_C_ARRAY_INIT;
 	UINT16 sec_flags = 0;
 
 	if (!fastpath || !fastpath->rdp || !fastpath->fs || !s)

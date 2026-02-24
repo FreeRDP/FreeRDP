@@ -160,7 +160,7 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 	{
 		if ((codecId == RDP_CODEC_ID_REMOTEFX) || (codecId == RDP_CODEC_ID_IMAGE_REMOTEFX))
 		{
-			REGION16 invalidRegion = { 0 };
+			REGION16 invalidRegion = WINPR_C_ARRAY_INIT;
 			region16_init(&invalidRegion);
 
 			const BOOL rc =
@@ -333,7 +333,7 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, 
 
 	if (!fOpRedundant)
 	{
-		GDI_RECT rect = { 0 };
+		GDI_RECT rect = WINPR_C_ARRAY_INIT;
 
 		if (x > 0)
 			rect.left = x;
@@ -399,7 +399,7 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 wid
 		gdi_SetBkColor(gdi->drawing->hdc, fgcolor);
 
 		{
-			GDI_RECT rect = { 0 };
+			GDI_RECT rect = WINPR_C_ARRAY_INIT;
 			HGDI_BRUSH brush = gdi_CreateSolidBrush(fgcolor);
 
 			if (!brush)
@@ -450,8 +450,8 @@ static BOOL gdi_Glyph_EndDraw(rdpContext* context, WINPR_ATTR_UNUSED INT32 x,
 /* Graphics Module */
 BOOL gdi_register_graphics(rdpGraphics* graphics)
 {
-	rdpBitmap bitmap = { 0 };
-	rdpGlyph glyph = { 0 };
+	rdpBitmap bitmap = WINPR_C_ARRAY_INIT;
+	rdpGlyph glyph = WINPR_C_ARRAY_INIT;
 	bitmap.size = sizeof(gdiBitmap);
 	bitmap.New = gdi_Bitmap_New;
 	bitmap.Free = gdi_Bitmap_Free;

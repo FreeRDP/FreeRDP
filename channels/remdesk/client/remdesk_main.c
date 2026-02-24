@@ -182,7 +182,7 @@ static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s
  */
 static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 {
-	REMDESK_CTL_VERSION_INFO_PDU pdu = { 0 };
+	REMDESK_CTL_VERSION_INFO_PDU pdu = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(remdesk);
 
@@ -262,7 +262,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	size_t cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
 	size_t cbRaConnectionStringW = 0;
-	REMDESK_CTL_HEADER ctlHeader = { 0 };
+	REMDESK_CTL_HEADER ctlHeader = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(remdesk);
 
@@ -352,7 +352,7 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 	if (!raConnectionStringW)
 		return ERROR_INTERNAL_ERROR;
 
-	REMDESK_CTL_HEADER ctlHeader = { 0 };
+	REMDESK_CTL_HEADER ctlHeader = WINPR_C_ARRAY_INIT;
 	error = remdesk_prepare_ctl_header(&ctlHeader, REMDESK_CTL_REMOTE_CONTROL_DESKTOP,
 	                                   cbRaConnectionStringW);
 	if (error != CHANNEL_RC_OK)
@@ -395,7 +395,7 @@ out:
 static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 {
 	size_t cbExpertBlobW = 0;
-	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu = { 0 };
+	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(remdesk);
 
@@ -456,7 +456,7 @@ out:
  */
 static UINT remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 {
-	REMDESK_CTL_EXPERT_ON_VISTA_PDU pdu = { 0 };
+	REMDESK_CTL_EXPERT_ON_VISTA_PDU pdu = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(remdesk);
 
@@ -790,7 +790,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 static DWORD WINAPI remdesk_virtual_channel_client_thread(LPVOID arg)
 {
 	wStream* data = NULL;
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	remdeskPlugin* remdesk = (remdeskPlugin*)arg;
 	UINT error = CHANNEL_RC_OK;
 

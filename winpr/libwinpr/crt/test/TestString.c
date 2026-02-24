@@ -121,7 +121,7 @@ int TestString(int argc, char* argv[])
 		return -1;
 
 	/* _wcslen */
-	WCHAR testStringW[ARRAYSIZE(testStringA)] = { 0 };
+	WCHAR testStringW[ARRAYSIZE(testStringA)] = WINPR_C_ARRAY_INIT;
 	(void)ConvertUtf8NToWChar(testStringA, ARRAYSIZE(testStringA), testStringW,
 	                          ARRAYSIZE(testStringW));
 	const size_t testStringW_Length = testStringA_Length;
@@ -171,15 +171,15 @@ int TestString(int argc, char* argv[])
 	}
 
 	/* wcstok_s */
-	WCHAR testDelimiterW[ARRAYSIZE(testDelimiterA)] = { 0 };
-	WCHAR testTokensW[ARRAYSIZE(testTokensA)] = { 0 };
+	WCHAR testDelimiterW[ARRAYSIZE(testDelimiterA)] = WINPR_C_ARRAY_INIT;
+	WCHAR testTokensW[ARRAYSIZE(testTokensA)] = WINPR_C_ARRAY_INIT;
 	(void)ConvertUtf8NToWChar(testTokensA, ARRAYSIZE(testTokensA), testTokensW,
 	                          ARRAYSIZE(testTokensW));
 	(void)ConvertUtf8NToWChar(testDelimiterA, ARRAYSIZE(testDelimiterA), testDelimiterW,
 	                          ARRAYSIZE(testDelimiterW));
 	p = wcstok_s(testTokensW, testDelimiterW, &context);
 
-	WCHAR testToken1W[ARRAYSIZE(testToken1A)] = { 0 };
+	WCHAR testToken1W[ARRAYSIZE(testToken1A)] = WINPR_C_ARRAY_INIT;
 	(void)ConvertUtf8NToWChar(testToken1A, ARRAYSIZE(testToken1A), testToken1W,
 	                          ARRAYSIZE(testToken1W));
 	if (memcmp(p, testToken1W, sizeof(testToken1W)) != 0)
@@ -190,7 +190,7 @@ int TestString(int argc, char* argv[])
 
 	p = wcstok_s(NULL, testDelimiterW, &context);
 
-	WCHAR testToken2W[ARRAYSIZE(testToken2A)] = { 0 };
+	WCHAR testToken2W[ARRAYSIZE(testToken2A)] = WINPR_C_ARRAY_INIT;
 	(void)ConvertUtf8NToWChar(testToken2A, ARRAYSIZE(testToken2A), testToken2W,
 	                          ARRAYSIZE(testToken2W));
 	if (memcmp(p, testToken2W, sizeof(testToken2W)) != 0)
@@ -201,7 +201,7 @@ int TestString(int argc, char* argv[])
 
 	p = wcstok_s(NULL, testDelimiterW, &context);
 
-	WCHAR testToken3W[ARRAYSIZE(testToken3A)] = { 0 };
+	WCHAR testToken3W[ARRAYSIZE(testToken3A)] = WINPR_C_ARRAY_INIT;
 	(void)ConvertUtf8NToWChar(testToken3A, ARRAYSIZE(testToken3A), testToken3W,
 	                          ARRAYSIZE(testToken3W));
 	if (memcmp(p, testToken3W, sizeof(testToken3W)) != 0)

@@ -141,8 +141,8 @@ static BOOL log_libusb_result_(wLog* log, DWORD lvl, WINPR_FORMAT_ARG const char
 
 	if (error < 0)
 	{
-		char buffer[8192] = { 0 };
-		va_list ap = { 0 };
+		char buffer[8192] = WINPR_C_ARRAY_INIT;
+		va_list ap = WINPR_C_ARRAY_INIT;
 		va_start(ap, error);
 		(void)vsnprintf(buffer, sizeof(buffer), fmt, ap);
 		va_end(ap);
@@ -860,7 +860,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 	UDEVICE* pdev = (UDEVICE*)idev;
 	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor = NULL;
 	const char strDesc[] = "Generic Usb String";
-	char deviceLocation[25] = { 0 };
+	char deviceLocation[25] = WINPR_C_ARRAY_INIT;
 	BYTE bus_number = 0;
 	BYTE device_address = 0;
 	int ret = 0;
@@ -882,7 +882,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 	{
 		case DeviceTextDescription:
 		{
-			BYTE data[0x100] = { 0 };
+			BYTE data[0x100] = WINPR_C_ARRAY_INIT;
 			ret = libusb_get_string_descriptor(pdev->libusb_handle, devDescriptor->iProduct,
 			                                   LocaleId, data, 0xFF);
 			/* The returned data in the buffer is:
@@ -963,7 +963,7 @@ static int libusb_udev_os_feature_descriptor_request(IUDEVICE* idev,
                                                      BYTE* Buffer, UINT32 Timeout)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
-	BYTE ms_string_desc[0x13] = { 0 };
+	BYTE ms_string_desc[0x13] = WINPR_C_ARRAY_INIT;
 	int error = 0;
 
 	WINPR_ASSERT(idev);
@@ -1632,7 +1632,7 @@ static int udev_get_device_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UD
                                   UINT16 bus_number, UINT16 dev_number)
 {
 	int error = -1;
-	uint8_t port_numbers[16] = { 0 };
+	uint8_t port_numbers[16] = WINPR_C_ARRAY_INIT;
 	LIBUSB_DEVICE** libusb_list = NULL;
 	const ssize_t total_device = libusb_get_device_list(ctx, &libusb_list);
 

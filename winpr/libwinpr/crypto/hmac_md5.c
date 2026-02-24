@@ -6,9 +6,9 @@
 
 void hmac_md5_init(WINPR_HMAC_MD5_CTX* ctx, const unsigned char* key, size_t key_len)
 {
-	const WINPR_HMAC_MD5_CTX empty = { 0 };
-	unsigned char k_ipad[KEY_IOPAD_SIZE] = { 0 };
-	unsigned char k_opad[KEY_IOPAD_SIZE] = { 0 };
+	const WINPR_HMAC_MD5_CTX empty = WINPR_C_ARRAY_INIT;
+	unsigned char k_ipad[KEY_IOPAD_SIZE] = WINPR_C_ARRAY_INIT;
+	unsigned char k_opad[KEY_IOPAD_SIZE] = WINPR_C_ARRAY_INIT;
 
 	assert(ctx);
 	*ctx = empty;
@@ -20,7 +20,7 @@ void hmac_md5_init(WINPR_HMAC_MD5_CTX* ctx, const unsigned char* key, size_t key
 	}
 	else
 	{
-		WINPR_MD5_CTX lctx = { 0 };
+		WINPR_MD5_CTX lctx = WINPR_C_ARRAY_INIT;
 
 		winpr_MD5_Init(&lctx);
 		winpr_MD5_Update(&lctx, key, key_len);

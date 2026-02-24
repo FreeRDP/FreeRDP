@@ -132,7 +132,7 @@ static const char* where2str(int where, char* ibuffer, size_t ilen)
 	if (where & SSL_CB_LOOP)
 		winpr_str_append("SSL_CB_LOOP", buffer, len, "|");
 
-	char nr[32] = { 0 };
+	char nr[32] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(nr, sizeof(nr), "]{0x%08" PRIx32 "}", (unsigned)where);
 	winpr_str_append(nr, buffer, len, "");
 	return buffer;
@@ -142,7 +142,7 @@ static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 {
 	if (where & SSL_CB_ALERT)
 	{
-		char buffer[128] = { 0 };
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 		rdpTransport* transport = (rdpTransport*)SSL_get_app_data(ssl);
 		WINPR_ASSERT(transport);
 
@@ -809,7 +809,7 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc,
 
 	if (ERR_peek_error() == 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 
 		if (saveerrno == 0)
 			WLog_PrintTextMessage(transport->log, level, line, file, func, "%s retries exceeded",
@@ -823,7 +823,7 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc,
 
 	while ((sslerr = ERR_get_error()))
 	{
-		char buf[120] = { 0 };
+		char buf[120] = WINPR_C_ARRAY_INIT;
 
 		ERR_error_string_n(sslerr, buf, 120);
 		WLog_PrintTextMessage(transport->log, level, line, file, func, "%s returned an error: %s",
@@ -958,7 +958,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 static SSIZE_T parse_nla_mode_pdu(rdpTransport* transport, wStream* stream)
 {
 	SSIZE_T pduLength = 0;
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(stream), Stream_Length(stream));
 	/*
 	 * In case NlaMode is set TSRequest package(s) are expected
@@ -1017,7 +1017,7 @@ static SSIZE_T parse_nla_mode_pdu(rdpTransport* transport, wStream* stream)
 static SSIZE_T parse_default_mode_pdu(rdpTransport* transport, wStream* stream)
 {
 	SSIZE_T pduLength = 0;
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(stream), Stream_Length(stream));
 
 	UINT8 version = 0;
@@ -1427,7 +1427,7 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
 	DWORD nCount = 0;
-	HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(rfds);
@@ -1528,7 +1528,7 @@ int transport_check_fds(rdpTransport* transport)
 
 	if (state_run_failed(recv_status))
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(transport->log, WLOG_ERROR,
 		           "transport_check_fds: transport->ReceiveCallback() - %s",
 		           state_run_result_string(recv_status, buffer, ARRAYSIZE(buffer)));

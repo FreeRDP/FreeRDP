@@ -242,7 +242,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 	DWORD nCount = 0;
 	DWORD status = 0;
 	DWORD result = 0;
-	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 	BOOL rc = freerdp_connect(instance);
 
 	WINPR_ASSERT(instance->context);
@@ -387,7 +387,7 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 int main(int argc, char* argv[])
 {
 	int rc = -1;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = WINPR_C_ARRAY_INIT;
 
 	RdpClientEntry(&clientEntryPoints);
 	rdpContext* context = freerdp_client_context_new(&clientEntryPoints);

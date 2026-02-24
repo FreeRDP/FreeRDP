@@ -28,11 +28,11 @@
 
 int TestCommConfig(int argc, char* argv[])
 {
-	DCB dcb = { 0 };
+	DCB dcb = WINPR_C_ARRAY_INIT;
 	BOOL success = FALSE;
 	LPCSTR lpFileName = "\\\\.\\COM1";
-	COMMPROP commProp = { 0 };
-	struct stat statbuf = { 0 };
+	COMMPROP commProp = WINPR_C_ARRAY_INIT;
+	struct stat statbuf = WINPR_C_ARRAY_INIT;
 
 	HANDLE hComm =
 	    CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);

@@ -192,8 +192,8 @@ BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
 	{
 		case CertCredential:
 		{
-			char buffer[3ULL + (sizeof(cert->rgbHashOfCert) * 4 / 3) +
-			            1ULL /* rounding error */] = { 0 };
+			char buffer[3ULL + (sizeof(cert->rgbHashOfCert) * 4 / 3) + 1ULL /* rounding error */] =
+			    WINPR_C_ARRAY_INIT;
 
 			const char c = WINPR_ASSERTING_INT_CAST(char, 'A' + CredType);
 			(void)_snprintf(buffer, sizeof(buffer), "@@%c", c);
@@ -247,7 +247,7 @@ BOOL CredUnmarshalCredentialA(LPCSTR cred, PCRED_MARSHAL_TYPE CredType, PVOID* C
 	{
 		case CertCredential:
 		{
-			BYTE hash[CERT_HASH_LENGTH] = { 0 };
+			BYTE hash[CERT_HASH_LENGTH] = WINPR_C_ARRAY_INIT;
 
 			if ((len != 30) || !cred_decode(&cred[3], len - 3, hash))
 			{

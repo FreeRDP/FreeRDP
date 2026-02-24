@@ -48,9 +48,9 @@ typedef struct
 static int init_external_addin(Plugin* plugin)
 {
 	int rc = -1;
-	SECURITY_ATTRIBUTES saAttr = { 0 };
-	STARTUPINFOA siStartInfo = { 0 }; /* Using ANSI type to match CreateProcessA */
-	PROCESS_INFORMATION procInfo = { 0 };
+	SECURITY_ATTRIBUTES saAttr = WINPR_C_ARRAY_INIT;
+	STARTUPINFOA siStartInfo = WINPR_C_ARRAY_INIT; /* Using ANSI type to match CreateProcessA */
+	PROCESS_INFORMATION procInfo = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(plugin);
 
@@ -312,7 +312,7 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
 		return FALSE;
 	}
 
-	CHANNEL_DEF channelDef = { 0 };
+	CHANNEL_DEF channelDef = WINPR_C_ARRAY_INIT;
 	strncpy(channelDef.name, RDP2TCP_DVC_CHANNEL_NAME, sizeof(channelDef.name));
 	channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;

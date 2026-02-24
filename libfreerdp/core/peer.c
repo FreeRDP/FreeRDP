@@ -471,7 +471,7 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (channelId == MCS_GLOBAL_CHANNEL_ID)
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		UINT16 pduLength = 0;
 		UINT16 remain = 0;
 		if (!rdp_read_share_control_header(rdp, s, &pduLength, &remain, &pduType, &pduSource))
@@ -705,7 +705,7 @@ state_run_t peer_recv_pdu(freerdp_peer* client, wStream* s)
 
 static state_run_t peer_unexpected_client_message(rdpRdp* rdp, UINT32 flag)
 {
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 	WLog_WARN(TAG, "Unexpected client message in state %s, missing flag %s",
 	          rdp_get_state_string(rdp), rdp_finalize_flags_to_str(flag, buffer, sizeof(buffer)));
 	return STATE_RUN_SUCCESS; /* we ignore this as per spec input PDU are already allowed */
@@ -1179,7 +1179,7 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 
 static state_run_t peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	state_run_t rc = STATE_RUN_FAILED;
 	const size_t start = Stream_GetPosition(s);
 	const rdpContext* context = transport_get_context(transport);

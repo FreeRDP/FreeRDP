@@ -301,8 +301,8 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	if (!match)
 		return FALSE;
 
-	char command[2048] = { 0 };
-	char arg[2048] = { 0 };
+	char command[2048] = WINPR_C_ARRAY_INIT;
+	char arg[2048] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(command, sizeof(command), "xevent %s", xeventName);
 	(void)_snprintf(arg, sizeof(arg), "%lu", (unsigned long)xfc->window->handle);
 	return run_action_script(xfc, command, arg, action_script_run, NULL);
@@ -628,7 +628,7 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BO
 static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 {
 	KeySym keysym = 0;
-	char str[256] = { 0 };
+	char str[256] = WINPR_C_ARRAY_INIT;
 	union
 	{
 		const XKeyEvent* cev;
@@ -644,7 +644,7 @@ static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 static BOOL xf_event_KeyRelease(xfContext* xfc, const XKeyEvent* event, BOOL app)
 {
 	KeySym keysym = 0;
-	char str[256] = { 0 };
+	char str[256] = WINPR_C_ARRAY_INIT;
 	union
 	{
 		const XKeyEvent* cev;
@@ -667,7 +667,7 @@ static BOOL xf_event_KeyReleaseOrIgnore(xfContext* xfc, const XKeyEvent* event, 
 
 	if ((event->type == KeyRelease) && XEventsQueued(xfc->display, QueuedAfterReading))
 	{
-		XEvent nev = { 0 };
+		XEvent nev = WINPR_C_ARRAY_INIT;
 		XPeekEvent(xfc->display, &nev);
 
 		if ((nev.type == KeyPress) && (nev.xkey.time == event->time) &&

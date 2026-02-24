@@ -78,9 +78,9 @@ BOOL gdi_SetNullClipRgn(HGDI_DC hdc)
 
 BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* srcx, INT32* srcy)
 {
-	GDI_RECT bmp = { 0 };
-	GDI_RECT clip = { 0 };
-	GDI_RECT coords = { 0 };
+	GDI_RECT bmp = WINPR_C_ARRAY_INIT;
+	GDI_RECT clip = WINPR_C_ARRAY_INIT;
+	GDI_RECT coords = WINPR_C_ARRAY_INIT;
 	int dx = 0;
 	int dy = 0;
 	BOOL draw = TRUE;

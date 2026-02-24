@@ -48,7 +48,7 @@
 #define DEBUG_WSTR(msg, wstr)                                    \
 	do                                                           \
 	{                                                            \
-		char lpstr[1024] = { 0 };                                \
+		char lpstr[1024] = WINPR_C_ARRAY_INIT;                   \
 		(void)ConvertWCharToUtf8(wstr, lpstr, ARRAYSIZE(lpstr)); \
 		WLog_DBG(TAG, msg, lpstr);                               \
 	} while (0)
@@ -92,7 +92,7 @@ static BOOL drive_file_fix_path(WCHAR* path, size_t length)
 
 static BOOL contains_dotdot(const WCHAR* path, size_t base_length, size_t path_length)
 {
-	WCHAR dotdotbuffer[6] = { 0 };
+	WCHAR dotdotbuffer[6] = WINPR_C_ARRAY_INIT;
 	const WCHAR* dotdot = InitializeConstWCharFromUtf8("..", dotdotbuffer, ARRAYSIZE(dotdotbuffer));
 	const WCHAR* tst = path;
 
@@ -147,7 +147,7 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 		/* Ensure the path does not contain sequences like '..' */
 		if (contains_dotdot(&fullpath[base_path_length], base_path_length, PathWCharLength))
 		{
-			char abuffer[MAX_PATH] = { 0 };
+			char abuffer[MAX_PATH] = WINPR_C_ARRAY_INIT;
 			(void)ConvertWCharToUtf8(&fullpath[base_path_length], abuffer, ARRAYSIZE(abuffer));
 
 			WLog_WARN(TAG, "[rdpdr] received invalid file path '%s' from server, aborting!",
@@ -305,7 +305,7 @@ static BOOL drive_file_init(DRIVE_FILE* file)
 			                       FORMAT_MESSAGE_IGNORE_INSERTS,
 			                   NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 			                   (LPSTR)&messageBuffer, 0, NULL);
-			char fullpath[MAX_PATH] = { 0 };
+			char fullpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 			(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
 			WLog_ERR(TAG, "Error in drive_file_init: %s %s", messageBuffer, fullpath);
 			/* Free the buffer. */
@@ -402,7 +402,7 @@ fail:
 
 BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset)
 {
-	LARGE_INTEGER loffset = { 0 };
+	LARGE_INTEGER loffset = WINPR_C_ARRAY_INIT;
 
 	if (!file)
 		return FALSE;
@@ -587,7 +587,7 @@ static BOOL drive_file_query_from_attributes(const DRIVE_FILE* file,
 
 BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, wStream* output)
 {
-	BY_HANDLE_FILE_INFORMATION fileInformation = { 0 };
+	BY_HANDLE_FILE_INFORMATION fileInformation = WINPR_C_ARRAY_INIT;
 	BOOL status = 0;
 
 	if (!file || !output)
@@ -620,7 +620,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 	/* If we failed before (i.e. if information for a drive is queried) fall back to
 	 * GetFileAttributesExW */
 	{
-		WIN32_FILE_ATTRIBUTE_DATA fileAttributes = { 0 };
+		WIN32_FILE_ATTRIBUTE_DATA fileAttributes = WINPR_C_ARRAY_INIT;
 		if (!GetFileAttributesExW(file->fullpath, GetFileExInfoStandard, &fileAttributes))
 			goto out_fail;
 
@@ -657,16 +657,16 @@ static BOOL drive_file_set_basic_information(DRIVE_FILE* file, UINT32 Length, wS
 
 	if (file->file_handle == INVALID_HANDLE_VALUE)
 	{
-		char fullpath[MAX_PATH] = { 0 };
+		char fullpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath) - 1);
 
 		WLog_ERR(TAG, "Unable to set file time %s (%" PRIu32 ")", fullpath, GetLastError());
 		return FALSE;
 	}
 
-	FILETIME ftCreationTime = { 0 };
-	FILETIME ftLastAccessTime = { 0 };
-	FILETIME ftLastWriteTime = { 0 };
+	FILETIME ftCreationTime = WINPR_C_ARRAY_INIT;
+	FILETIME ftLastAccessTime = WINPR_C_ARRAY_INIT;
+	FILETIME ftLastWriteTime = WINPR_C_ARRAY_INIT;
 	FILETIME* pftCreationTime = NULL;
 	FILETIME* pftLastAccessTime = NULL;
 	FILETIME* pftLastWriteTime = NULL;
@@ -702,7 +702,7 @@ static BOOL drive_file_set_basic_information(DRIVE_FILE* file, UINT32 Length, wS
 
 	if (!SetFileAttributesW(file->fullpath, FileAttributes))
 	{
-		char fullpath[MAX_PATH] = { 0 };
+		char fullpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
 		WLog_ERR(TAG, "Unable to set file attributes for %s", fullpath);
 		return FALSE;
@@ -710,7 +710,7 @@ static BOOL drive_file_set_basic_information(DRIVE_FILE* file, UINT32 Length, wS
 
 	if (!SetFileTime(file->file_handle, pftCreationTime, pftLastAccessTime, pftLastWriteTime))
 	{
-		char fullpath[MAX_PATH] = { 0 };
+		char fullpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
 		WLog_ERR(TAG, "Unable to set file time for %s", fullpath);
 		return FALSE;
@@ -733,7 +733,7 @@ static BOOL drive_file_set_alloc_information(DRIVE_FILE* file, UINT32 Length, wS
 
 	if (file->file_handle == INVALID_HANDLE_VALUE)
 	{
-		char fullpath[MAX_PATH] = { 0 };
+		char fullpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
 		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRIu32 ")", fullpath, size,
 		         GetLastError());
@@ -744,7 +744,7 @@ static BOOL drive_file_set_alloc_information(DRIVE_FILE* file, UINT32 Length, wS
 
 	if (!SetFilePointerEx(file->file_handle, liSize, NULL, FILE_BEGIN))
 	{
-		char fullpath[MAX_PATH] = { 0 };
+		char fullpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
 		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRIu32 ")", fullpath, size,
 		         GetLastError());
@@ -755,7 +755,7 @@ static BOOL drive_file_set_alloc_information(DRIVE_FILE* file, UINT32 Length, wS
 
 	if (SetEndOfFile(file->file_handle) == 0)
 	{
-		char fullpath[MAX_PATH] = { 0 };
+		char fullpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
 		WLog_ERR(TAG, "Unable to truncate %s to %" PRId64 " (%" PRIu32 ")", fullpath, size,
 		         GetLastError());

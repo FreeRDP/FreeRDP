@@ -15,7 +15,7 @@ static void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* con
 	{
 		BYTE a[1024];
 		BYTE b[1024];
-		BYTE c[1024] = { 0 };
+		BYTE c[1024] = WINPR_C_ARRAY_INIT;
 
 		FillMemory(a, ARRAYSIZE(a), 0xAA);
 		FillMemory(b, ARRAYSIZE(b), 0xBB);

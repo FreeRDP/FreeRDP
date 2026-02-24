@@ -748,7 +748,7 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(multi_opaque_rect);
 
-	GDI_RECT rect = { 0 };
+	GDI_RECT rect = WINPR_C_ARRAY_INIT;
 	UINT32 brush_color = 0;
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = TRUE;
@@ -1112,7 +1112,7 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 	DWORD format = 0;
 	size_t size = 0;
 	REGION16 region;
-	RECTANGLE_16 cmdRect = { 0 };
+	RECTANGLE_16 cmdRect = WINPR_C_ARRAY_INIT;
 
 	if (!context || !cmd)
 		return FALSE;

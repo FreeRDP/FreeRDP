@@ -698,7 +698,7 @@ int IniFile_SetKeyValueString(wIniFile* ini, const char* section, const char* ke
 
 int IniFile_SetKeyValueInt(wIniFile* ini, const char* section, const char* key, int value)
 {
-	char strVal[128] = { 0 };
+	char strVal[128] = WINPR_C_ARRAY_INIT;
 	wIniFileKey* pKey = NULL;
 	wIniFileSection* pSection = NULL;
 

@@ -21,7 +21,7 @@ void fsig_lock(void)
 	const int rc = pthread_mutex_lock(&signal_handler_lock);
 	if (rc != 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "[pthread_mutex_lock] failed with %s [%d]",
 		         winpr_strerror(rc, ebuffer, sizeof(ebuffer)), rc);
 	}
@@ -32,7 +32,7 @@ void fsig_unlock(void)
 	const int rc = pthread_mutex_unlock(&signal_handler_lock);
 	if (rc != 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "[pthread_mutex_lock] failed with %s [%d]",
 		         winpr_strerror(rc, ebuffer, sizeof(ebuffer)), rc);
 	}
@@ -87,8 +87,8 @@ static BOOL register_handlers(const int* signals, size_t count, void (*handler)(
 	WINPR_ASSERT(signals || (count == 0));
 	WINPR_ASSERT(handler);
 
-	sigset_t orig_set = { 0 };
-	struct sigaction saction = { 0 };
+	sigset_t orig_set = WINPR_C_ARRAY_INIT;
+	struct sigaction saction = WINPR_C_ARRAY_INIT;
 
 	pthread_sigmask(SIG_BLOCK, &(saction.sa_mask), &orig_set);
 
@@ -100,7 +100,7 @@ static BOOL register_handlers(const int* signals, size_t count, void (*handler)(
 
 	for (size_t x = 0; x < count; x++)
 	{
-		struct sigaction orig_sigaction = { 0 };
+		struct sigaction orig_sigaction = WINPR_C_ARRAY_INIT;
 		if (sigaction(signals[x], NULL, &orig_sigaction) == 0)
 		{
 			if (orig_sigaction.sa_handler != SIG_IGN)
@@ -119,8 +119,8 @@ static void unregister_handlers(const int* signals, size_t count)
 {
 	WINPR_ASSERT(signals || (count == 0));
 
-	sigset_t orig_set = { 0 };
-	struct sigaction saction = { 0 };
+	sigset_t orig_set = WINPR_C_ARRAY_INIT;
+	struct sigaction saction = WINPR_C_ARRAY_INIT;
 
 	pthread_sigmask(SIG_BLOCK, &(saction.sa_mask), &orig_set);
 

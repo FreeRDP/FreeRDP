@@ -132,7 +132,7 @@ static const char* general_name_type_label(int general_name_type)
 	}
 	else
 	{
-		static char buffer[80] = { 0 };
+		static char buffer[80] = WINPR_C_ARRAY_INIT;
 		(void)snprintf(buffer, sizeof(buffer), "Unknown general name type (%d)", general_name_type);
 		return buffer;
 	}
@@ -456,7 +456,7 @@ char* x509_utils_get_email(const X509* x509)
 char* x509_utils_get_upn(const X509* x509)
 {
 	char* result = 0;
-	object_list list = { 0 };
+	object_list list = WINPR_C_ARRAY_INIT;
 	object_list_initialize(&list);
 	list.type_id = OBJ_nid2obj(NID_ms_upn);
 	list.maximum = 1;
@@ -521,7 +521,7 @@ void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names)
 char** x509_utils_get_dns_names(const X509* x509, size_t* count, size_t** lengths)
 {
 	char** result = 0;
-	string_list list = { 0 };
+	string_list list = WINPR_C_ARRAY_INIT;
 	string_list_initialize(&list);
 	map_subject_alt_name(x509, GEN_DNS, extract_string, &list);
 	(*count) = list.count;

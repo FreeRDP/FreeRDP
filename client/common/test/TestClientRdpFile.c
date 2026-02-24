@@ -241,7 +241,7 @@ static char* append(const char* fmt, ...)
 {
 	int rc = 0;
 	char* dst = NULL;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 
 	va_start(ap, fmt);
 	rc = vsnprintf(NULL, 0, fmt, ap);
@@ -305,7 +305,7 @@ static void* read_rdp_data(const char* name, size_t* plen)
 fail:
 	if (!success)
 	{
-		char buffer[128] = { 0 };
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(__func__, "failed to read data from '%s': %s", name,
 		         winpr_strerror(errno, buffer, sizeof(buffer)));
 		free(json);
@@ -500,7 +500,7 @@ static bool test_rdp_files(bool allowCreate)
 	if (!path)
 		goto fail;
 
-	WIN32_FIND_DATAW FindData = { 0 };
+	WIN32_FIND_DATAW FindData = WINPR_C_ARRAY_INIT;
 	hdl = FindFirstFileUTF8(path, &FindData);
 
 	if (hdl == INVALID_HANDLE_VALUE)
@@ -517,8 +517,8 @@ static bool test_rdp_files(bool allowCreate)
 	{
 		if ((FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
 		{
-			char cFileName[6 * MAX_PATH] = { 0 };
-			char rdp[6 * MAX_PATH] = { 0 };
+			char cFileName[6 * MAX_PATH] = WINPR_C_ARRAY_INIT;
+			char rdp[6 * MAX_PATH] = WINPR_C_ARRAY_INIT;
 			ConvertWCharToUtf8(FindData.cFileName, cFileName, sizeof(cFileName));
 			const size_t len = strnlen(cFileName, sizeof(cFileName));
 			if (len < 4)

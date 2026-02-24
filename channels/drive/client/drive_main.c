@@ -459,7 +459,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 	DWORD lpBytesPerSector = 0;
 	DWORD lpNumberOfFreeClusters = 0;
 	DWORD lpTotalNumberOfClusters = 0;
-	WIN32_FILE_ATTRIBUTE_DATA wfad = { 0 };
+	WIN32_FILE_ATTRIBUTE_DATA wfad = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(drive);
 	WINPR_ASSERT(irp);
@@ -523,7 +523,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 
 		case FileFsAttributeInformation:
 		{
-			WCHAR LabelBuffer[32] = { 0 };
+			WCHAR LabelBuffer[32] = WINPR_C_ARRAY_INIT;
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
 			const WCHAR* diskType =
 			    InitializeConstWCharFromUtf8("FAT32", LabelBuffer, ARRAYSIZE(LabelBuffer));
@@ -820,7 +820,7 @@ static DWORD WINAPI drive_thread_func(LPVOID arg)
 		if (MessageQueue_Size(drive->IrpQueue) < 1)
 			continue;
 
-		wMessage message = { 0 };
+		wMessage message = WINPR_C_ARRAY_INIT;
 		if (!MessageQueue_Peek(drive->IrpQueue, &message, TRUE))
 		{
 			WLog_ERR(TAG, "MessageQueue_Peek failed!");

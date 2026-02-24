@@ -80,7 +80,7 @@ const char* CB_MSG_FLAGS_STRING(UINT16 msgFlags, char* buffer, size_t size)
 	if (!len)
 		winpr_str_append("NONE", buffer, size, "");
 
-	char val[32] = { 0 };
+	char val[32] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(val, sizeof(val), "[0x%04" PRIx16 "]", msgFlags);
 	winpr_str_append(val, buffer, size, "|");
 	return buffer;
@@ -385,7 +385,7 @@ UINT cliprdr_read_format_list(wLog* log, wStream* s, CLIPRDR_FORMAT_LIST* format
 	size_t formatNameLength = 0;
 	const char* szFormatName = NULL;
 	const WCHAR* wszFormatName = NULL;
-	wStream sub1buffer = { 0 };
+	wStream sub1buffer = WINPR_C_ARRAY_INIT;
 	CLIPRDR_FORMAT* formats = NULL;
 	UINT error = ERROR_INTERNAL_ERROR;
 

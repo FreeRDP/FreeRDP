@@ -114,7 +114,7 @@ static BOOL FileCloseHandle(HANDLE handle)
 static BOOL log_error_(const char* name, const WINPR_FILE* pFile, const char* file, const char* fkt,
                        size_t line)
 {
-	char ebuffer[256] = { 0 };
+	char ebuffer[256] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(name);
 	WINPR_ASSERT(pFile);
@@ -479,7 +479,7 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, WINPR_ATTR_UNUSED DWORD 
 
 	if (fcntl(fileno(pFile->fp), lckcmd, &lock) == -1)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "F_SETLK failed with %s [0x%08X]",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		SetLastError(map_posix_err(errno));
@@ -593,7 +593,7 @@ static struct timespec filetimeToTimespec(const FILETIME* ftime)
 {
 	WINPR_ASSERT(ftime);
 	INT64 tmp = FileTimeToUS(ftime);
-	struct timespec ts = { 0 };
+	struct timespec ts = WINPR_C_ARRAY_INIT;
 	ts.tv_sec = tmp / 1000000LL;
 	ts.tv_nsec = (tmp % 1000000LL) * 1000LL;
 	return ts;
@@ -619,7 +619,7 @@ static BOOL FileSetFileTime(HANDLE hFile, WINPR_ATTR_UNUSED const FILETIME* lpCr
 	const int rc = futimens(fileno(pFile->fp), times);
 	if (rc != 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "futimens failed: %s [%d]", winpr_strerror(errno, ebuffer, sizeof(ebuffer)),
 		         errno);
 		SetLastError(map_posix_err(errno));
@@ -633,7 +633,7 @@ static struct timeval filetimeToTimeval(const FILETIME* ftime)
 {
 	WINPR_ASSERT(ftime);
 	UINT64 tmp = FileTimeToUS(ftime);
-	struct timeval tv = { 0 };
+	struct timeval tv = WINPR_C_ARRAY_INIT;
 	tv.tv_sec = tmp / 1000000ULL;
 	tv.tv_usec = tmp % 1000000ULL;
 	return tv;
@@ -642,7 +642,7 @@ static struct timeval filetimeToTimeval(const FILETIME* ftime)
 static struct timeval statToTimeval(const struct stat* sval)
 {
 	WINPR_ASSERT(sval);
-	struct timeval tv = { 0 };
+	struct timeval tv = WINPR_C_ARRAY_INIT;
 #if defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
 	tv.tv_sec = sval->st_atime;
 #ifdef _POSIX_SOURCE
@@ -660,7 +660,7 @@ static struct timeval statToTimeval(const struct stat* sval)
 static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
                             const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime)
 {
-	struct stat buf = { 0 };
+	struct stat buf = WINPR_C_ARRAY_INIT;
 	/* OpenBSD, NetBSD and DragonflyBSD support POSIX futimens */
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 
@@ -670,7 +670,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	const int rc = fstat(fileno(pFile->fp), &buf);
 	if (rc < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "fstat failed: %s [%d]", winpr_strerror(errno, ebuffer, sizeof(ebuffer)),
 		         errno);
 		SetLastError(map_posix_err(errno));
@@ -689,7 +689,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 		const int res = utimes(pFile->lpFileName, timevals);
 		if (res != 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "utimes failed: %s [%d]", winpr_strerror(errno, ebuffer, sizeof(ebuffer)),
 			         errno);
 			SetLastError(map_posix_err(errno));
@@ -841,7 +841,7 @@ UINT32 map_posix_err(int fs_errno)
 
 		default:
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "Missing ERRNO mapping %s [%d]",
 			         winpr_strerror(fs_errno, ebuffer, sizeof(ebuffer)), fs_errno);
 			rc = STATUS_UNSUCCESSFUL;
@@ -1030,7 +1030,7 @@ const HANDLE_CREATOR* GetFileHandleCreator(void)
 static WINPR_FILE* FileHandle_New(FILE* fp)
 {
 	WINPR_FILE* pFile = NULL;
-	char name[MAX_PATH] = { 0 };
+	char name[MAX_PATH] = WINPR_C_ARRAY_INIT;
 
 	(void)_snprintf(name, sizeof(name), "device_%d", fileno(fp));
 	pFile = (WINPR_FILE*)calloc(1, sizeof(WINPR_FILE));
@@ -1099,7 +1099,7 @@ BOOL GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWO
 #define STATVFS statvfs
 #endif
 
-	struct STATVFS svfst = { 0 };
+	struct STATVFS svfst = WINPR_C_ARRAY_INIT;
 	STATVFS(lpRootPathName, &svfst);
 	*lpSectorsPerCluster = (UINT32)MIN(svfst.f_frsize, UINT32_MAX);
 	*lpBytesPerSector = 1;
@@ -1217,7 +1217,7 @@ HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	HANDLE hFile;
-	CREATEFILE2_EXTENDED_PARAMETERS params = { 0 };
+	CREATEFILE2_EXTENDED_PARAMETERS params = WINPR_C_ARRAY_INIT;
 
 	params.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
 

@@ -20,7 +20,7 @@ int TestPathMakePath(int argc, char* argv[])
 {
 	size_t baseLen = 0;
 	BOOL success = 0;
-	char tmp[64] = { 0 };
+	char tmp[64] = WINPR_C_ARRAY_INIT;
 	char* path = NULL;
 	char* cur = NULL;
 	char delim = PathGetSeparatorA(0);

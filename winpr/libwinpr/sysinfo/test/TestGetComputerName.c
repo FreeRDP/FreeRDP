@@ -24,8 +24,8 @@ static BOOL Test_GetComputerName(void)
 	 *
 	 */
 
-	CHAR netbiosName1[MAX_COMPUTERNAME_LENGTH + 1] = { 0 };
-	CHAR netbiosName2[MAX_COMPUTERNAME_LENGTH + 1] = { 0 };
+	CHAR netbiosName1[MAX_COMPUTERNAME_LENGTH + 1] = WINPR_C_ARRAY_INIT;
+	CHAR netbiosName2[MAX_COMPUTERNAME_LENGTH + 1] = WINPR_C_ARRAY_INIT;
 	const size_t netbiosBufferSize = ARRAYSIZE(netbiosName1);
 	DWORD dwSize = 0;
 	DWORD dwNameLength = 0;

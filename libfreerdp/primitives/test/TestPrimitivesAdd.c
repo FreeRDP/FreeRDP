@@ -23,10 +23,10 @@ static BOOL test_add16s_func(void)
 {
 	pstatus_t status = 0;
 
-	INT16 ALIGN(src1[FUNC_TEST_SIZE + 3]) = { 0 };
-	INT16 ALIGN(src2[FUNC_TEST_SIZE + 3]) = { 0 };
-	INT16 ALIGN(d1[FUNC_TEST_SIZE + 3]) = { 0 };
-	INT16 ALIGN(d2[FUNC_TEST_SIZE + 3]) = { 0 };
+	INT16 ALIGN(src1[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	INT16 ALIGN(src2[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	INT16 ALIGN(d1[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	INT16 ALIGN(d2[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
 
 	winpr_RAND(src1, sizeof(src1));
 	winpr_RAND(src2, sizeof(src2));

@@ -438,7 +438,7 @@ BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp, UINT32
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	BOOL ret = 0;
 	if (!data || !pDstData)
 	{

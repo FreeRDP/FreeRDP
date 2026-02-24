@@ -228,7 +228,7 @@ static CliprdrFuseFile* fuse_file_new(WINPR_FORMAT_ARG const char* fmt, ...)
 	WINPR_ASSERT(fmt);
 
 	{
-		va_list ap = { 0 };
+		va_list ap = WINPR_C_ARRAY_INIT;
 		va_start(ap, fmt);
 		const int rc =
 		    winpr_vasprintf(&file->filename_with_root, &file->filename_with_root_len, fmt, ap);
@@ -261,7 +261,7 @@ static void clip_data_entry_free(void* data)
 	if (clip_data_entry->has_clip_data_id)
 	{
 		CliprdrFileContext* file_context = clip_data_entry->file_context;
-		CLIPRDR_UNLOCK_CLIPBOARD_DATA unlock_clipboard_data = { 0 };
+		CLIPRDR_UNLOCK_CLIPBOARD_DATA unlock_clipboard_data = WINPR_C_ARRAY_INIT;
 
 		WINPR_ASSERT(file_context);
 
@@ -315,7 +315,7 @@ static CliprdrFuseClipDataEntry* clip_data_entry_new(CliprdrFileContext* file_co
                                                      BOOL needs_clip_data_id)
 {
 	CliprdrFuseClipDataEntry* clip_data_entry = NULL;
-	CLIPRDR_LOCK_CLIPBOARD_DATA lock_clipboard_data = { 0 };
+	CLIPRDR_LOCK_CLIPBOARD_DATA lock_clipboard_data = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file_context);
 
@@ -449,7 +449,7 @@ static BOOL invalidate_inode(void* data, WINPR_ATTR_UNUSED size_t index, va_list
 static void clear_selection(CliprdrFileContext* file_context, BOOL all_selections,
                             CliprdrFuseClipDataEntry* clip_data_entry)
 {
-	FuseFileClearContext clear_context = { 0 };
+	FuseFileClearContext clear_context = WINPR_C_ARRAY_INIT;
 	CliprdrFuseFile* clip_data_dir = NULL;
 
 	WINPR_ASSERT(file_context);
@@ -654,7 +654,7 @@ static void writelog(wLog* log, DWORD level, const char* fname, const char* fkt,
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fmt);
 	WLog_PrintTextMessageVA(log, level, line, fname, fkt, fmt, ap);
 	va_end(ap);
@@ -755,7 +755,7 @@ static BOOL request_file_size_async(CliprdrFileContext* file_context, CliprdrFus
                                     fuse_req_t fuse_req, FuseLowlevelOperationType operation_type)
 {
 	CliprdrFuseRequest* fuse_request = NULL;
-	CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = { 0 };
+	CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(fuse_file);
@@ -819,7 +819,7 @@ static void cliprdr_file_fuse_lookup(fuse_req_t fuse_req, fuse_ino_t parent_ino,
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
 	CliprdrFuseFile* parent = NULL;
 	CliprdrFuseFile* fuse_file = NULL;
-	struct fuse_entry_param entry = { 0 };
+	struct fuse_entry_param entry = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file_context);
 
@@ -869,7 +869,7 @@ static void cliprdr_file_fuse_getattr(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
 	CliprdrFuseFile* fuse_file = NULL;
-	struct stat attr = { 0 };
+	struct stat attr = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file_context);
 
@@ -942,7 +942,7 @@ static void cliprdr_file_fuse_open(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
 static BOOL request_file_range_async(CliprdrFileContext* file_context, CliprdrFuseFile* fuse_file,
                                      fuse_req_t fuse_req, off_t offset, size_t requested_size)
 {
-	CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = { 0 };
+	CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(fuse_file);
@@ -1063,7 +1063,7 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
 	CliprdrFuseFile* fuse_file = NULL;
 	CliprdrFuseFile* child = NULL;
-	struct stat attr = { 0 };
+	struct stat attr = WINPR_C_ARRAY_INIT;
 	size_t written_size = 0;
 	size_t entry_size = 0;
 	char* filename = NULL;
@@ -1213,7 +1213,7 @@ static UINT cliprdr_file_context_server_file_contents_response(
 {
 	CliprdrFileContext* file_context = NULL;
 	CliprdrFuseRequest* fuse_request = NULL;
-	struct fuse_entry_param entry = { 0 };
+	struct fuse_entry_param entry = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(cliprdr_context);
 	WINPR_ASSERT(file_contents_response);
@@ -1307,7 +1307,7 @@ static UINT cliprdr_file_context_server_file_contents_response(
 static UINT cliprdr_file_context_send_file_contents_failure(
     CliprdrFileContext* file, const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
+	CLIPRDR_FILE_CONTENTS_RESPONSE response = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file);
 	WINPR_ASSERT(fileContentsRequest);
@@ -1411,7 +1411,7 @@ static CliprdrLocalFile* file_for_request(CliprdrFileContext* file, UINT32 lockI
 		}
 		if (!f->fp)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			writelog(file->log, WLOG_WARN, __FILE__, __func__, __LINE__,
 			         "[lockID %" PRIu32 ", index %" PRIu32
 			         "] failed to open file '%s' [size %" PRId64 "] %s [%d]",
@@ -1692,7 +1692,7 @@ static BOOL cliprdr_file_content_changed_and_update(void* ihash, size_t hsize, c
                                                     size_t size)
 {
 
-	BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = { 0 };
+	BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 
 	if (hsize < sizeof(hash))
 		return FALSE;
@@ -1816,7 +1816,7 @@ static BOOL is_fuse_file_not_parent(WINPR_ATTR_UNUSED const void* key, void* val
 
 static CliprdrFuseFile* get_parent_directory(CliprdrFileContext* file_context, const char* path)
 {
-	CliprdrFuseFindParentContext find_context = { 0 };
+	CliprdrFuseFindParentContext find_context = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(path);
@@ -1852,7 +1852,7 @@ static BOOL selection_handle_file(CliprdrFileContext* file_context,
 	CliprdrFuseFile* clip_data_dir = clip_data_entry->clip_data_dir;
 	WINPR_ASSERT(clip_data_dir);
 
-	char filename[ARRAYSIZE(file->cFileName) * 8] = { 0 };
+	char filename[ARRAYSIZE(file->cFileName) * 8] = WINPR_C_ARRAY_INIT;
 	const SSIZE_T filenamelen = ConvertWCharNToUtf8(file->cFileName, ARRAYSIZE(file->cFileName),
 	                                                filename, ARRAYSIZE(filename) - 1);
 	if (filenamelen < 0)
@@ -2119,7 +2119,7 @@ static BOOL create_base_path(CliprdrFileContext* file)
 {
 	WINPR_ASSERT(file);
 
-	char base[64] = { 0 };
+	char base[64] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(base, sizeof(base), "com.freerdp.client.cliprdr.%" PRIu32,
 	                GetCurrentProcessId());
 
@@ -2137,7 +2137,7 @@ static BOOL create_base_path(CliprdrFileContext* file)
 
 static void cliprdr_local_file_free(CliprdrLocalFile* file)
 {
-	const CliprdrLocalFile empty = { 0 };
+	const CliprdrLocalFile empty = WINPR_C_ARRAY_INIT;
 	if (!file)
 		return;
 	if (file->fp)
@@ -2152,7 +2152,7 @@ static void cliprdr_local_file_free(CliprdrLocalFile* file)
 static BOOL cliprdr_local_file_new(CliprdrFileContext* context, CliprdrLocalFile* f,
                                    const char* path)
 {
-	const CliprdrLocalFile empty = { 0 };
+	const CliprdrLocalFile empty = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(f);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(path);
@@ -2214,7 +2214,7 @@ static BOOL is_directory(const char* path)
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
 
-	BY_HANDLE_FILE_INFORMATION fileInformation = { 0 };
+	BY_HANDLE_FILE_INFORMATION fileInformation = WINPR_C_ARRAY_INIT;
 	const BOOL status = GetFileInformationByHandle(hFile, &fileInformation);
 	(void)CloseHandle(hFile);
 	if (!status)
@@ -2233,7 +2233,7 @@ static BOOL add_directory(CliprdrLocalStream* stream, const char* path)
 	if (!wpath)
 		return FALSE;
 
-	WIN32_FIND_DATAW FindFileData = { 0 };
+	WIN32_FIND_DATAW FindFileData = WINPR_C_ARRAY_INIT;
 	HANDLE hFind = FindFirstFileW(wpath, &FindFileData);
 	free(wpath);
 
@@ -2243,8 +2243,8 @@ static BOOL add_directory(CliprdrLocalStream* stream, const char* path)
 	BOOL rc = FALSE;
 	char* next = NULL;
 
-	WCHAR dotbuffer[6] = { 0 };
-	WCHAR dotdotbuffer[6] = { 0 };
+	WCHAR dotbuffer[6] = WINPR_C_ARRAY_INIT;
+	WCHAR dotdotbuffer[6] = WINPR_C_ARRAY_INIT;
 	const WCHAR* dot = InitializeConstWCharFromUtf8(".", dotbuffer, ARRAYSIZE(dotbuffer));
 	const WCHAR* dotdot = InitializeConstWCharFromUtf8("..", dotdotbuffer, ARRAYSIZE(dotdotbuffer));
 	do
@@ -2254,7 +2254,7 @@ static BOOL add_directory(CliprdrLocalStream* stream, const char* path)
 		if (_wcscmp(FindFileData.cFileName, dotdot) == 0)
 			continue;
 
-		char cFileName[MAX_PATH] = { 0 };
+		char cFileName[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		(void)ConvertWCharNToUtf8(FindFileData.cFileName, ARRAYSIZE(FindFileData.cFileName),
 		                          cFileName, ARRAYSIZE(cFileName));
 

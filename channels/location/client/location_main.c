@@ -113,8 +113,8 @@ static UINT location_channel_send(IWTSVirtualChannel* channel, wStream* s)
 
 static UINT location_send_client_ready_pdu(const LOCATION_CALLBACK* callback)
 {
-	wStream sbuffer = { 0 };
-	BYTE buffer[32] = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 
@@ -187,8 +187,8 @@ static UINT location_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 			}
 
 			{
-				char cbuffer[64] = { 0 };
-				char sbuffer[64] = { 0 };
+				char cbuffer[64] = WINPR_C_ARRAY_INIT;
+				char sbuffer[64] = WINPR_C_ARRAY_INIT;
 				WLog_Print(plugin->baseDynPlugin.log, WLOG_DEBUG,
 				           "Server version %s, client version %s",
 				           location_version_str(callback->serverVersion, sbuffer, sizeof(sbuffer)),
@@ -218,8 +218,8 @@ static UINT location_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 static UINT location_send_base_location3d(IWTSVirtualChannel* channel,
                                           const RDPLOCATION_BASE_LOCATION3D_PDU* pdu)
 {
-	wStream sbuffer = { 0 };
-	BYTE buffer[32] = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(channel);
@@ -260,8 +260,8 @@ static UINT location_send_base_location3d(IWTSVirtualChannel* channel,
 static UINT location_send_location2d_delta(IWTSVirtualChannel* channel,
                                            const RDPLOCATION_LOCATION2D_DELTA_PDU* pdu)
 {
-	wStream sbuffer = { 0 };
-	BYTE buffer[32] = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 
@@ -297,8 +297,8 @@ static UINT location_send_location2d_delta(IWTSVirtualChannel* channel,
 static UINT location_send_location3d_delta(IWTSVirtualChannel* channel,
                                            const RDPLOCATION_LOCATION3D_DELTA_PDU* pdu)
 {
-	wStream sbuffer = { 0 };
-	BYTE buffer[32] = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 
@@ -352,7 +352,7 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 	WINPR_ASSERT(callback);
 
 	UINT32 res = ERROR_INTERNAL_ERROR;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, count);
 	switch (type)
 	{

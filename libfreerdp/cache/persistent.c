@@ -56,7 +56,7 @@ int persistent_cache_get_count(rdpPersistentCache* persistent)
 static int persistent_cache_read_entry_v2(rdpPersistentCache* persistent,
                                           PERSISTENT_CACHE_ENTRY* entry)
 {
-	PERSISTENT_CACHE_ENTRY_V2 entry2 = { 0 };
+	PERSISTENT_CACHE_ENTRY_V2 entry2 = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(persistent);
 	WINPR_ASSERT(entry);
@@ -81,7 +81,7 @@ static int persistent_cache_read_entry_v2(rdpPersistentCache* persistent,
 static int persistent_cache_write_entry_v2(rdpPersistentCache* persistent,
                                            const PERSISTENT_CACHE_ENTRY* entry)
 {
-	PERSISTENT_CACHE_ENTRY_V2 entry2 = { 0 };
+	PERSISTENT_CACHE_ENTRY_V2 entry2 = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(persistent);
 	WINPR_ASSERT(entry);
@@ -118,7 +118,7 @@ static int persistent_cache_read_v2(rdpPersistentCache* persistent)
 	WINPR_ASSERT(persistent);
 	while (1)
 	{
-		PERSISTENT_CACHE_ENTRY_V2 entry = { 0 };
+		PERSISTENT_CACHE_ENTRY_V2 entry = WINPR_C_ARRAY_INIT;
 
 		if (fread((void*)&entry, sizeof(entry), 1, persistent->fp) != 1)
 			break;
@@ -135,7 +135,7 @@ static int persistent_cache_read_v2(rdpPersistentCache* persistent)
 static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
                                           PERSISTENT_CACHE_ENTRY* entry)
 {
-	PERSISTENT_CACHE_ENTRY_V3 entry3 = { 0 };
+	PERSISTENT_CACHE_ENTRY_V3 entry3 = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(persistent);
 	WINPR_ASSERT(entry);
@@ -175,7 +175,7 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 static int persistent_cache_write_entry_v3(rdpPersistentCache* persistent,
                                            const PERSISTENT_CACHE_ENTRY* entry)
 {
-	PERSISTENT_CACHE_ENTRY_V3 entry3 = { 0 };
+	PERSISTENT_CACHE_ENTRY_V3 entry3 = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(persistent);
 	WINPR_ASSERT(entry);
@@ -200,7 +200,7 @@ static int persistent_cache_read_v3(rdpPersistentCache* persistent)
 	WINPR_ASSERT(persistent);
 	while (1)
 	{
-		PERSISTENT_CACHE_ENTRY_V3 entry = { 0 };
+		PERSISTENT_CACHE_ENTRY_V3 entry = WINPR_C_ARRAY_INIT;
 
 		if (fread((void*)&entry, sizeof(entry), 1, persistent->fp) != 1)
 			break;
@@ -243,7 +243,7 @@ int persistent_cache_write_entry(rdpPersistentCache* persistent,
 
 static int persistent_cache_open_read(rdpPersistentCache* persistent)
 {
-	BYTE sig[8] = { 0 };
+	BYTE sig[8] = WINPR_C_ARRAY_INIT;
 	int status = 1;
 	long offset = 0;
 
@@ -295,7 +295,7 @@ static int persistent_cache_open_write(rdpPersistentCache* persistent)
 
 	if (persistent->version == 3)
 	{
-		PERSISTENT_CACHE_HEADER_V3 header = { 0 };
+		PERSISTENT_CACHE_HEADER_V3 header = WINPR_C_ARRAY_INIT;
 		memcpy(header.sig, sig_str, MIN(sizeof(header.sig), sizeof(sig_str)));
 		header.flags = 0x00000006;
 

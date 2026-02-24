@@ -230,7 +230,7 @@ static BOOL tsmf_pulse_close_stream(TSMFPulseAudioDevice* pulse)
 static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 {
 	pa_stream_state_t state = PA_STREAM_FAILED;
-	pa_buffer_attr buffer_attr = { 0 };
+	pa_buffer_attr buffer_attr = WINPR_C_ARRAY_INIT;
 
 	if (!pulse->context)
 		return FALSE;

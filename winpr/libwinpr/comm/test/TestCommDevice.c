@@ -24,7 +24,7 @@
 
 static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 {
-	TCHAR lpTargetPath[MAX_PATH] = { 0 };
+	TCHAR lpTargetPath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 
 	BOOL result = DefineCommDevice(lpDeviceName, _T("/dev/test"));
 	if ((!expectedResult && result) || (expectedResult && !result)) /* logical XOR */

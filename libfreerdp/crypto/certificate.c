@@ -293,7 +293,7 @@ static BOOL is_rsa_key(const X509* x509)
 
 static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertInfo* info)
 {
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = NULL;
 	size_t length = 0;
 	BYTE padding = 0;
@@ -441,7 +441,7 @@ error:
 
 static rdpX509CertChain certificate_new_x509_certificate_chain(UINT32 count)
 {
-	rdpX509CertChain x509_cert_chain = { 0 };
+	rdpX509CertChain x509_cert_chain = WINPR_C_ARRAY_INIT;
 
 	x509_cert_chain.array = (rdpCertBlob*)calloc(count, sizeof(rdpCertBlob));
 
@@ -661,7 +661,7 @@ fail:
 static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream* s,
                                                   WINPR_ATTR_UNUSED UINT32 length)
 {
-	char magic[sizeof(rsa_magic)] = { 0 };
+	char magic[sizeof(rsa_magic)] = WINPR_C_ARRAY_INIT;
 	UINT32 keylen = 0;
 	UINT32 bitlen = 0;
 	UINT32 datalen = 0;
@@ -919,8 +919,8 @@ static BOOL cert_write_rsa_public_key(wStream* s, const rdpCertificate* cert)
 
 static BOOL cert_write_rsa_signature(wStream* s, const void* sigData, size_t sigDataLen)
 {
-	BYTE encryptedSignature[TSSK_KEY_LENGTH] = { 0 };
-	BYTE signature[sizeof(initial_signature)] = { 0 };
+	BYTE encryptedSignature[TSSK_KEY_LENGTH] = WINPR_C_ARRAY_INIT;
+	BYTE signature[sizeof(initial_signature)] = WINPR_C_ARRAY_INIT;
 
 	memcpy(signature, initial_signature, sizeof(initial_signature));
 	if (!winpr_Digest(WINPR_MD_MD5, sigData, sigDataLen, signature, sizeof(signature)))

@@ -47,7 +47,7 @@ static cbCallback cbEvent = NULL;
 
 int get_screen_info(int id, _TCHAR* name, size_t length, int* width, int* height, int* bpp)
 {
-	DISPLAY_DEVICE dd = { 0 };
+	DISPLAY_DEVICE dd = WINPR_C_ARRAY_INIT;
 
 	dd.cb = sizeof(DISPLAY_DEVICE);
 
@@ -107,7 +107,7 @@ static DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 	while (wfi->force_all_disconnect == FALSE)
 	{
 		DWORD status;
-		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD count = instance->GetEventHandles(instance, handles, ARRAYSIZE(handles));
 
 		if (count == 0)

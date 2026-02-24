@@ -477,7 +477,7 @@ static BOOL computeCalHash(wLog* log, const char* hostname, char* hashStr, size_
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	BOOL ret = FALSE;
-	BYTE hash[20] = { 0 };
+	BYTE hash[20] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(hostname);
 	WINPR_ASSERT(hashStr);
@@ -508,11 +508,11 @@ out:
 static BOOL saveCal(wLog* log, const rdpSettings* settings, const BYTE* data, size_t length,
                     const char* hostname)
 {
-	char hash[41] = { 0 };
+	char hash[41] = WINPR_C_ARRAY_INIT;
 	FILE* fp = NULL;
 	char* licenseStorePath = NULL;
-	char filename[MAX_PATH] = { 0 };
-	char filenameNew[MAX_PATH] = { 0 };
+	char filename[MAX_PATH] = WINPR_C_ARRAY_INIT;
+	char filenameNew[MAX_PATH] = WINPR_C_ARRAY_INIT;
 	char* filepath = NULL;
 	char* filepathNew = NULL;
 
@@ -604,8 +604,8 @@ static BYTE* loadCalFile(wLog* log, const rdpSettings* settings, const char* hos
 {
 	char* licenseStorePath = NULL;
 	char* calPath = NULL;
-	char calFilename[MAX_PATH] = { 0 };
-	char hash[41] = { 0 };
+	char calFilename[MAX_PATH] = WINPR_C_ARRAY_INIT;
+	char hash[41] = WINPR_C_ARRAY_INIT;
 	INT64 length = 0;
 	size_t status = 0;
 	FILE* fp = NULL;
@@ -1116,7 +1116,7 @@ BOOL license_generate_hwid(rdpLicense* license)
 {
 	const BYTE* hashTarget = NULL;
 	size_t targetLen = 0;
-	BYTE macAddress[6] = { 0 };
+	BYTE macAddress[6] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
@@ -1131,7 +1131,7 @@ BOOL license_generate_hwid(rdpLicense* license)
 	}
 	else
 	{
-		wStream buffer = { 0 };
+		wStream buffer = WINPR_C_ARRAY_INIT;
 		const char* hostname = license->rdp->settings->ClientHostname;
 		wStream* s = Stream_StaticInit(&buffer, license->HardwareId, 4);
 		Stream_Write_UINT32(s, license->PlatformId);
@@ -1297,7 +1297,7 @@ static BOOL license_encrypt_and_MAC(rdpLicense* license, const BYTE* input, size
 static BOOL license_decrypt_and_check_MAC(rdpLicense* license, const BYTE* input, size_t len,
                                           LICENSE_BLOB* target, const BYTE* packetMac)
 {
-	BYTE macData[sizeof(license->MACData)] = { 0 };
+	BYTE macData[sizeof(license->MACData)] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(target);
@@ -1811,8 +1811,8 @@ static BOOL license_check_preferred_alg(rdpLicense* license, UINT32 PreferredKey
 
 	if (license->PreferredKeyExchangeAlg != PreferredKeyExchangeAlg)
 	{
-		char buffer1[64] = { 0 };
-		char buffer2[64] = { 0 };
+		char buffer1[64] = WINPR_C_ARRAY_INIT;
+		char buffer2[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(license->log, WLOG_WARN, "%s::PreferredKeyExchangeAlg, expected %s, got %s",
 		           where,
 		           license_preferred_key_exchange_alg_string(license->PreferredKeyExchangeAlg,
@@ -1995,7 +1995,7 @@ fail:
 
 BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 {
-	BYTE macData[LICENSING_ENCRYPTION_KEY_LENGTH] = { 0 };
+	BYTE macData[LICENSING_ENCRYPTION_KEY_LENGTH] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(license);
 
@@ -2144,10 +2144,10 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	UINT32 cbCompanyName = 0;
 	UINT32 cbProductId = 0;
 	UINT32 cbLicenseInfo = 0;
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* licenseStream = NULL;
 	BOOL ret = FALSE;
-	BYTE computedMac[16] = { 0 };
+	BYTE computedMac[16] = WINPR_C_ARRAY_INIT;
 	const BYTE* readMac = NULL;
 
 	WINPR_ASSERT(license);
@@ -2448,7 +2448,7 @@ BOOL license_answer_license_request(rdpLicense* license)
 	if (license_data)
 	{
 		LICENSE_BLOB* calBlob = NULL;
-		BYTE signature[LICENSING_ENCRYPTION_KEY_LENGTH] = { 0 };
+		BYTE signature[LICENSING_ENCRYPTION_KEY_LENGTH] = WINPR_C_ARRAY_INIT;
 
 		DEBUG_LICENSE("Sending Saved License Packet");
 
@@ -2631,7 +2631,7 @@ BOOL license_read_platform_challenge_response(WINPR_ATTR_UNUSED rdpLicense* lice
 	if (!dblob)
 		return FALSE;
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	UINT16 wVersion = 0;
 	UINT16 cbChallenge = 0;
 	const BYTE* pbChallenge = NULL;

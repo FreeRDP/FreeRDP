@@ -30,7 +30,7 @@ int TestFileDeleteFile(int argc, char* argv[])
 	char validW[] = "/tmp/valid-test-file-XXXXXX";
 	WCHAR* validWW = NULL;
 	const char invalidA[] = "/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-	WCHAR invalidW[sizeof(invalidA)] = { 0 };
+	WCHAR invalidW[sizeof(invalidA)] = WINPR_C_ARRAY_INIT;
 
 	(void)ConvertUtf8NToWChar(invalidA, ARRAYSIZE(invalidA), invalidW, ARRAYSIZE(invalidW));
 

@@ -273,11 +273,7 @@ extern "C"
 
 		if (WLog_IsLevelActive(log_cached_ptr, log_level))
 		{
-#if defined(__cplusplus)
-			va_list ap = {};
-#else
-		    va_list ap = { 0 };
-#endif
+			va_list ap = WINPR_C_ARRAY_INIT;
 			va_start(ap, fmt);
 			WLog_PrintTextMessageVA(log_cached_ptr, log_level, line, file, fkt, fmt, ap);
 			va_end(ap);

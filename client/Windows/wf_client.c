@@ -84,9 +84,9 @@ static BOOL wf_has_console(void)
 
 static BOOL wf_end_paint(rdpContext* context)
 {
-	RECT updateRect = { 0 };
-	REGION16 invalidRegion = { 0 };
-	RECTANGLE_16 invalidRect = { 0 };
+	RECT updateRect = WINPR_C_ARRAY_INIT;
+	REGION16 invalidRegion = WINPR_C_ARRAY_INIT;
+	RECTANGLE_16 invalidRect = WINPR_C_ARRAY_INIT;
 	const RECTANGLE_16* extents = NULL;
 
 	WINPR_ASSERT(context);
@@ -285,7 +285,7 @@ static BOOL wf_pre_connect(freerdp* instance)
 	DWORD keyboardLayoutId = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
 
 	{
-		CHAR name[KL_NAMELENGTH + 1] = { 0 };
+		CHAR name[KL_NAMELENGTH + 1] = WINPR_C_ARRAY_INIT;
 		if (GetKeyboardLayoutNameA(name))
 		{
 			ULONG rc = 0;
@@ -319,7 +319,7 @@ static BOOL wf_pre_connect(freerdp* instance)
 static void wf_append_item_to_system_menu(HMENU hMenu, UINT fMask, UINT wID, const wchar_t* text,
                                           wfContext* wfc)
 {
-	MENUITEMINFO item_info = { 0 };
+	MENUITEMINFO item_info = WINPR_C_ARRAY_INIT;
 	item_info.fMask = fMask;
 	item_info.cbSize = sizeof(MENUITEMINFO);
 	item_info.wID = wID;
@@ -521,10 +521,10 @@ static BOOL wf_authenticate_ex(freerdp* instance, char** username, char** passwo
 	BOOL fSave;
 	DWORD status;
 	DWORD dwFlags;
-	WCHAR UserNameW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
-	WCHAR UserW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
-	WCHAR DomainW[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
-	WCHAR PasswordW[CREDUI_MAX_PASSWORD_LENGTH + 1] = { 0 };
+	WCHAR UserNameW[CREDUI_MAX_USERNAME_LENGTH + 1] = WINPR_C_ARRAY_INIT;
+	WCHAR UserW[CREDUI_MAX_USERNAME_LENGTH + 1] = WINPR_C_ARRAY_INIT;
+	WCHAR DomainW[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = WINPR_C_ARRAY_INIT;
+	WCHAR PasswordW[CREDUI_MAX_PASSWORD_LENGTH + 1] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
@@ -610,9 +610,9 @@ static BOOL wf_authenticate_ex(freerdp* instance, char** username, char** passwo
 			                              ARRAYSIZE(DomainW));
 			if (status != NO_ERROR)
 			{
-				CHAR User[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
-				CHAR UserName[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
-				CHAR Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
+				CHAR User[CREDUI_MAX_USERNAME_LENGTH + 1] = WINPR_C_ARRAY_INIT;
+				CHAR UserName[CREDUI_MAX_USERNAME_LENGTH + 1] = WINPR_C_ARRAY_INIT;
+				CHAR Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = WINPR_C_ARRAY_INIT;
 
 				(void)ConvertWCharNToUtf8(UserNameW, ARRAYSIZE(UserNameW), UserName,
 				                          ARRAYSIZE(UserName));
@@ -664,7 +664,7 @@ static WCHAR* wf_format_text(const WCHAR* fmt, ...)
 	do
 	{
 		WCHAR* tmp = NULL;
-		va_list ap = { 0 };
+		va_list ap = WINPR_C_ARRAY_INIT;
 		va_start(ap, fmt);
 		rc = _vsnwprintf(buffer, size, fmt, ap);
 		va_end(ap);
@@ -740,12 +740,12 @@ static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char*
 	HCERTCHAINENGINE hChainEngine = NULL;
 	PCCERT_CHAIN_CONTEXT pChainContext = NULL;
 
-	CERT_ENHKEY_USAGE EnhkeyUsage = { 0 };
-	CERT_USAGE_MATCH CertUsage = { 0 };
-	CERT_CHAIN_PARA ChainPara = { 0 };
-	CERT_CHAIN_POLICY_PARA ChainPolicy = { 0 };
-	CERT_CHAIN_POLICY_STATUS PolicyStatus = { 0 };
-	CERT_CHAIN_ENGINE_CONFIG EngineConfig = { 0 };
+	CERT_ENHKEY_USAGE EnhkeyUsage = WINPR_C_ARRAY_INIT;
+	CERT_USAGE_MATCH CertUsage = WINPR_C_ARRAY_INIT;
+	CERT_CHAIN_PARA ChainPara = WINPR_C_ARRAY_INIT;
+	CERT_CHAIN_POLICY_PARA ChainPolicy = WINPR_C_ARRAY_INIT;
+	CERT_CHAIN_POLICY_STATUS PolicyStatus = WINPR_C_ARRAY_INIT;
+	CERT_CHAIN_ENGINE_CONFIG EngineConfig = WINPR_C_ARRAY_INIT;
 
 	DWORD derPubKeyLen = WINPR_ASSERTING_INT_CAST(uint32_t, strlen(fingerprint));
 	char* derPubKey = calloc(derPubKeyLen, sizeof(char));
@@ -1050,7 +1050,7 @@ static BOOL wf_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDi
 
 static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
-	MSG msg = { 0 };
+	MSG msg = WINPR_C_ARRAY_INIT;
 	int width = 0;
 	int height = 0;
 	BOOL msg_ret = FALSE;
@@ -1077,7 +1077,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 
 	while (!freerdp_shall_disconnect_context(instance->context))
 	{
-		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD nCount = 0;
 
 		if (freerdp_focus_required(instance))

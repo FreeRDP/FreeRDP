@@ -12,7 +12,7 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 {
 	int rc = -1;
 	SECURITY_STATUS status = 0;
-	CredHandle credentials = { 0 };
+	CredHandle credentials = WINPR_C_ARRAY_INIT;
 	TimeStamp expiration;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecurityFunctionTable* table = NULL;

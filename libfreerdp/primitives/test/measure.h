@@ -77,8 +77,8 @@ extern void measure_floatprint(float t, char* output, size_t len);
 	{                                                  \
 		int _count = (_count_);                        \
 		int _loop;                                     \
-		char str1[32] = { 0 };                         \
-		char str2[32] = { 0 };                         \
+		char str1[32] = WINPR_C_ARRAY_INIT;            \
+		char str2[32] = WINPR_C_ARRAY_INIT;            \
 		char* _prefix = _strdup(_prefix_);             \
 		const UINT64 start = winpr_GetTickCount64NS(); \
 		PROFILER_START(_prefix);                       \

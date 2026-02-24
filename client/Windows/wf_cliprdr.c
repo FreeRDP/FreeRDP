@@ -821,8 +821,8 @@ void CliprdrDataObject_Delete(CliprdrDataObject* instance)
 
 static BOOL wf_create_file_obj(wfClipboard* clipboard, IDataObject** ppDataObject)
 {
-	FORMATETC fmtetc[2] = { 0 };
-	STGMEDIUM stgmeds[2] = { 0 };
+	FORMATETC fmtetc[2] = WINPR_C_ARRAY_INIT;
+	STGMEDIUM stgmeds[2] = WINPR_C_ARRAY_INIT;
 
 	if (!ppDataObject)
 		return FALSE;
@@ -1218,7 +1218,7 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 	UINT32 formatId = 0;
 	char formatName[1024];
 	CLIPRDR_FORMAT* formats = NULL;
-	CLIPRDR_FORMAT_LIST formatList = { 0 };
+	CLIPRDR_FORMAT_LIST formatList = WINPR_C_ARRAY_INIT;
 
 	if (!clipboard)
 		return ERROR_INTERNAL_ERROR;
@@ -1503,7 +1503,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 
 static int create_cliprdr_window(wfClipboard* clipboard)
 {
-	WNDCLASSEX wnd_cls = { 0 };
+	WNDCLASSEX wnd_cls = WINPR_C_ARRAY_INIT;
 
 	wnd_cls.cbSize = sizeof(WNDCLASSEX);
 	wnd_cls.style = CS_OWNDC;
@@ -2049,8 +2049,8 @@ static SSIZE_T wf_cliprdr_get_filedescriptor(wfClipboard* clipboard, BYTE** pDat
 
 	SSIZE_T rc = -1;
 	LPDATAOBJECT dataObj = NULL;
-	FORMATETC format_etc = { 0 };
-	STGMEDIUM stg_medium = { 0 };
+	FORMATETC format_etc = WINPR_C_ARRAY_INIT;
+	STGMEDIUM stg_medium = WINPR_C_ARRAY_INIT;
 
 	*pData = NULL;
 
@@ -2262,9 +2262,9 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 	DWORD uSize = 0;
 	BYTE* pData = NULL;
 	HRESULT hRet = S_OK;
-	FORMATETC vFormatEtc = { 0 };
+	FORMATETC vFormatEtc = WINPR_C_ARRAY_INIT;
 	LPDATAOBJECT pDataObj = NULL;
-	STGMEDIUM vStgMedium = { 0 };
+	STGMEDIUM vStgMedium = WINPR_C_ARRAY_INIT;
 	BOOL bIsStreamFile = TRUE;
 	static LPSTREAM pStreamStc = NULL;
 	static UINT32 uStreamIdStc = 0;
@@ -2349,7 +2349,7 @@ wf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 	{
 		if (fileContentsRequest->dwFlags == FILECONTENTS_SIZE)
 		{
-			STATSTG vStatStg = { 0 };
+			STATSTG vStatStg = WINPR_C_ARRAY_INIT;
 			hRet = IStream_Stat(pStreamStc, &vStatStg, STATFLAG_NONAME);
 
 			if (hRet == S_OK)

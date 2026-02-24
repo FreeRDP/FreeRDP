@@ -257,7 +257,7 @@ static BOOL android_Pointer_SetDefault(rdpContext* context)
 
 static BOOL android_register_pointer(rdpGraphics* graphics)
 {
-	rdpPointer pointer = { 0 };
+	rdpPointer pointer = WINPR_C_ARRAY_INIT;
 
 	if (!graphics)
 		return FALSE;
@@ -646,7 +646,7 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 
 	if (setenv("HOME", _strdup(envStr), 1) != 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_FATAL(TAG, "Failed to set environment HOME=%s %s [%d]", envStr,
 		           winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		return (jlong)NULL;

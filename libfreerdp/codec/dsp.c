@@ -451,7 +451,7 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT contex
 	while (offset < size)
 	{
 		int rc;
-		gsm_signal gsmBlockBuffer[160] = { 0 };
+		gsm_signal gsmBlockBuffer[160] = WINPR_C_ARRAY_INIT;
 		rc = gsm_decode(context->gsm, (gsm_byte*)/* API does not modify */ &src[offset],
 		                gsmBlockBuffer);
 

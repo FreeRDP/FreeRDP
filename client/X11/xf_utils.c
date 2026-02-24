@@ -47,7 +47,7 @@ WINPR_ATTR_FORMAT_ARG(6, 7)
 static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line,
                       WINPR_FORMAT_ARG const char* fmt, ...)
 {
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fmt);
 	WLog_PrintTextMessageVA(log, level, line, fname, fkt, fmt, ap);
 	va_end(ap);
@@ -73,7 +73,7 @@ static int write_result_log_va(wLog* log, DWORD level, const char* fname, const 
 	const BOOL ignore = ignore_code(rc, count, ap);
 	if (!ignore)
 	{
-		char buffer[128] = { 0 };
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 
 		if (WLog_IsLevelActive(log, level))
 		{
@@ -90,7 +90,7 @@ static int write_result_log_expect_success(wLog* log, DWORD level, const char* f
 {
 	if (rc != Success)
 	{
-		va_list ap = { 0 };
+		va_list ap = WINPR_C_ARRAY_INIT;
 		(void)write_result_log_va(log, level, fname, fkt, line, display, name, rc, 0, ap);
 	}
 	return rc;
@@ -101,7 +101,7 @@ static int write_result_log_expect_one(wLog* log, DWORD level, const char* fname
 {
 	if (rc != 1)
 	{
-		va_list ap = { 0 };
+		va_list ap = WINPR_C_ARRAY_INIT;
 		(void)write_result_log_va(log, level, fname, fkt, line, display, name, rc, 0, ap);
 	}
 	return rc;
@@ -243,7 +243,7 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 	}
 
 	{
-		char command[2048] = { 0 };
+		char command[2048] = WINPR_C_ARRAY_INIT;
 		(void)sprintf_s(command, sizeof(command), "%s %s", ActionScript, what);
 		keyScript = popen(command, "r");
 
@@ -255,7 +255,7 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 
 		{
 			BOOL read_data = FALSE;
-			char buffer[2048] = { 0 };
+			char buffer[2048] = WINPR_C_ARRAY_INIT;
 			while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
 			{
 				char* context = NULL;
@@ -289,7 +289,7 @@ int LogDynAndXCopyArea_ex(wLog* log, const char* file, const char* fkt, size_t l
 {
 	if (WLog_IsLevelActive(log, log_level))
 	{
-		XWindowAttributes attr = { 0 };
+		XWindowAttributes attr = WINPR_C_ARRAY_INIT;
 		const Status rc = XGetWindowAttributes(display, dest, &attr);
 
 		write_log(log, log_level, file, fkt, line,

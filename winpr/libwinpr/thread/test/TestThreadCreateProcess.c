@@ -29,12 +29,12 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	DWORD dwCreationFlags = 0;
 	LPVOID lpEnvironment = NULL;
 	LPCTSTR lpCurrentDirectory = NULL;
-	STARTUPINFO StartupInfo = { 0 };
-	PROCESS_INFORMATION ProcessInformation = { 0 };
+	STARTUPINFO StartupInfo = WINPR_C_ARRAY_INIT;
+	PROCESS_INFORMATION ProcessInformation = WINPR_C_ARRAY_INIT;
 	LPTCH lpszEnvironmentBlock = NULL;
 	HANDLE pipe_read = NULL;
 	HANDLE pipe_write = NULL;
-	char buf[1024] = { 0 };
+	char buf[1024] = WINPR_C_ARRAY_INIT;
 	DWORD read_bytes = 0;
 	int ret = 0;
 	SECURITY_ATTRIBUTES saAttr;

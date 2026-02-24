@@ -30,7 +30,7 @@
 #error "The library detected is too old, need >= 2.13.0"
 #endif
 
-static WINPR_TLS char lasterror[256] = { 0 };
+static WINPR_TLS char lasterror[256] = WINPR_C_ARRAY_INIT;
 
 #if defined(WITH_DEBUG_JANSSON)
 #include "../log.h"
@@ -107,7 +107,7 @@ static WINPR_JSON* updateError(WINPR_JSON* json, const json_error_t* error)
 
 WINPR_JSON* WINPR_JSON_Parse(const char* value)
 {
-	json_error_t error = { 0 };
+	json_error_t error = WINPR_C_ARRAY_INIT;
 	WINPR_JSON* json = revcast(json_loads(value, JSON_DECODE_ANY, &error));
 	return updateError(json, &error);
 }
@@ -117,7 +117,7 @@ WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value, size_t buffer_length)
 	if (!value || (buffer_length == 0))
 		return NULL;
 
-	json_error_t error = { 0 };
+	json_error_t error = WINPR_C_ARRAY_INIT;
 	const size_t slen = strnlen(value, buffer_length);
 	WINPR_JSON* json = revcast(json_loadb(value, slen, JSON_DECODE_ANY, &error));
 	return updateError(json, &error);

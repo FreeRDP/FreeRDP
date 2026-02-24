@@ -340,7 +340,7 @@ static BOOL WINAPI Win32_WTSVirtualChannelRead_Static(WTSAPI_CHANNEL* pChannel,
 	else if (pChannel->readSync)
 	{
 		BOOL bSuccess;
-		OVERLAPPED overlapped = { 0 };
+		OVERLAPPED overlapped = WINPR_C_ARRAY_INIT;
 		DWORD numBytesRead = 0;
 		DWORD numBytesToRead = 0;
 
@@ -459,7 +459,7 @@ static BOOL WINAPI Win32_WTSVirtualChannelRead_Dynamic(WTSAPI_CHANNEL* pChannel,
 	if (pChannel->readSync)
 	{
 		BOOL bSuccess;
-		OVERLAPPED overlapped = { 0 };
+		OVERLAPPED overlapped = WINPR_C_ARRAY_INIT;
 		DWORD numBytesRead = 0;
 		DWORD numBytesToRead = 0;
 
@@ -584,7 +584,7 @@ static BOOL WINAPI Win32_WTSVirtualChannelRead(HANDLE hChannel, DWORD dwMillisec
 
 	if (!pChannel->waitObjectMode)
 	{
-		OVERLAPPED overlapped = { 0 };
+		OVERLAPPED overlapped = WINPR_C_ARRAY_INIT;
 
 		if (ReadFile(pChannel->hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesTransferred,
 		             &overlapped))
@@ -632,7 +632,7 @@ static BOOL WINAPI Win32_WTSVirtualChannelWrite(HANDLE hChannel, PCHAR lpBuffer,
                                                 DWORD nNumberOfBytesToWrite,
                                                 LPDWORD lpNumberOfBytesTransferred)
 {
-	OVERLAPPED overlapped = { 0 };
+	OVERLAPPED overlapped = WINPR_C_ARRAY_INIT;
 	WTSAPI_CHANNEL* pChannel = (WTSAPI_CHANNEL*)hChannel;
 
 	if (!pChannel || (pChannel->magic != WTSAPI_CHANNEL_MAGIC))
@@ -657,7 +657,7 @@ static BOOL WINAPI Win32_WTSVirtualChannelWrite(HANDLE hChannel, PCHAR lpBuffer,
 
 static BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoControlCode)
 {
-	IO_STATUS_BLOCK ioStatusBlock = { 0 };
+	IO_STATUS_BLOCK ioStatusBlock = WINPR_C_ARRAY_INIT;
 	WTSAPI_CHANNEL* pChannel = (WTSAPI_CHANNEL*)hChannelHandle;
 
 	if (!pChannel || (pChannel->magic != WTSAPI_CHANNEL_MAGIC))

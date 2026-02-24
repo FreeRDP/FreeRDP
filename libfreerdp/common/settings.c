@@ -481,7 +481,7 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 		RDPDR_SMARTCARD* smartcard;
 	} copy;
 	size_t count = 0;
-	const char* args[4] = { 0 };
+	const char* args[4] = WINPR_C_ARRAY_INIT;
 
 	copy.dev = NULL;
 	src.dev = device;
@@ -2177,7 +2177,7 @@ const char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, siz
 		winpr_str_append("RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED", buffer, length, "|");
 	if ((flags & ~mask) != 0)
 	{
-		char tbuffer[64] = { 0 };
+		char tbuffer[64] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(tbuffer, sizeof(tbuffer), "RAIL_FLAG_UNKNOWN 0x%08" PRIx32, flags & mask);
 		winpr_str_append(tbuffer, buffer, length, "|");
 	}
@@ -2200,7 +2200,7 @@ BOOL freerdp_settings_update_from_caps(rdpSettings* settings, const BYTE* capsFl
 	{
 		if (capsFlags[x])
 		{
-			wStream buffer = { 0 };
+			wStream buffer = WINPR_C_ARRAY_INIT;
 			wStream* sub = Stream_StaticConstInit(&buffer, capsData[x], capsSizes[x]);
 
 			if (!rdp_read_capability_set(log, sub, (UINT16)x, settings, serverReceivedCaps))
@@ -2383,11 +2383,11 @@ const char* freerdp_supported_color_depths_string(UINT16 mask, char* buffer, siz
 
 	if (invalid != 0)
 	{
-		char str[32] = { 0 };
+		char str[32] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(str, sizeof(str), "RNS_UD_INVALID[0x%04" PRIx32 "]", invalid);
 		winpr_str_append(str, buffer, size, "|");
 	}
-	char hex[32] = { 0 };
+	char hex[32] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(hex, sizeof(hex), "[0x%04" PRIx16 "]", mask);
 	return buffer;
 }
@@ -2929,7 +2929,7 @@ static BOOL tz_info_to_json(WINPR_JSON* json, const TIME_ZONE_INFORMATION* ptz)
 	if (!WINPR_JSON_AddItemToArray(json, obj))
 		return FALSE;
 
-	TIME_ZONE_INFORMATION tz = { 0 };
+	TIME_ZONE_INFORMATION tz = WINPR_C_ARRAY_INIT;
 	if (ptz)
 		tz = *ptz;
 

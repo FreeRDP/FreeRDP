@@ -47,7 +47,7 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 	PWSTR ParsedUserNameW = NULL;
 	PWSTR ParsedDomainW = NULL;
 	PWSTR PasswordNullTerminatedW = NULL;
-	PCREDENTIALW Credential = { 0 };
+	PCREDENTIALW Credential = WINPR_C_ARRAY_INIT;
 
 	PCSTR ServerHostname = freerdp_settings_get_string(settings, idHostname);
 

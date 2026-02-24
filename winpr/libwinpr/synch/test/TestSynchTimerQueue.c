@@ -48,8 +48,8 @@ static VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 
 int TestSynchTimerQueue(int argc, char* argv[])
 {
-	HANDLE hTimers[TIMER_COUNT] = { 0 };
-	APC_DATA apcData[TIMER_COUNT] = { 0 };
+	HANDLE hTimers[TIMER_COUNT] = WINPR_C_ARRAY_INIT;
+	APC_DATA apcData[TIMER_COUNT] = WINPR_C_ARRAY_INIT;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

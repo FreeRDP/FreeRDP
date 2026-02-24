@@ -64,13 +64,13 @@ static void discard_entry(struct s_StreamPoolEntry* entry, BOOL discardStream)
 	if (discardStream && entry->s)
 		Stream_Free(entry->s, entry->s->isAllocatedStream);
 
-	const struct s_StreamPoolEntry empty = { 0 };
+	const struct s_StreamPoolEntry empty = WINPR_C_ARRAY_INIT;
 	*entry = empty;
 }
 
 static struct s_StreamPoolEntry add_entry(wStream* s)
 {
-	struct s_StreamPoolEntry entry = { 0 };
+	struct s_StreamPoolEntry entry = WINPR_C_ARRAY_INIT;
 
 #if defined(WITH_STREAMPOOL_DEBUG)
 	void* stack = winpr_backtrace(20);
@@ -480,7 +480,7 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 	if ((offset > 0) && ((size_t)offset < size - used))
 		used += (size_t)offset;
 
-	struct s_StreamPoolEntry entry = { 0 };
+	struct s_StreamPoolEntry entry = WINPR_C_ARRAY_INIT;
 	void* stack = winpr_backtrace(20);
 	if (stack)
 		entry.msg = winpr_backtrace_symbols(stack, &entry.lines);
@@ -513,7 +513,7 @@ BOOL StreamPool_WaitForReturn(wStreamPool* pool, UINT32 timeoutMS)
 			return TRUE;
 		WLog_Print(log, WLOG_DEBUG, "%" PRIuz " streams still in use, sleeping...", used);
 
-		char buffer[4096] = { 0 };
+		char buffer[4096] = WINPR_C_ARRAY_INIT;
 		StreamPool_GetStatistics(pool, buffer, sizeof(buffer));
 		WLog_Print(log, WLOG_TRACE, "Pool statistics: %s", buffer);
 

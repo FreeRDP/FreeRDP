@@ -225,7 +225,7 @@ fail:
 
 YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags)
 {
-	SYSTEM_INFO sysInfos = { 0 };
+	SYSTEM_INFO sysInfos = WINPR_C_ARRAY_INIT;
 	/** do it here to avoid a race condition between threads */
 	if (!primitives_get())
 		return NULL;
@@ -264,7 +264,7 @@ static inline YUV_PROCESS_WORK_PARAM pool_decode_param(const RECTANGLE_16* WINPR
                                                        const UINT32 iStride[3], UINT32 DstFormat,
                                                        BYTE* WINPR_RESTRICT dest, UINT32 nDstStep)
 {
-	YUV_PROCESS_WORK_PARAM current = { 0 };
+	YUV_PROCESS_WORK_PARAM current = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rect);
 	WINPR_ASSERT(context);
@@ -501,7 +501,7 @@ pool_decode_rect_param(const RECTANGLE_16* WINPR_RESTRICT rect, YUV_CONTEXT* WIN
                        BYTE type, const BYTE* WINPR_RESTRICT pYUVData[3], const UINT32 iStride[3],
                        BYTE* WINPR_RESTRICT pYUVDstData[3], const UINT32 iDstStride[3])
 {
-	YUV_COMBINE_WORK_PARAM current = { 0 };
+	YUV_COMBINE_WORK_PARAM current = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rect);
 	WINPR_ASSERT(context);
@@ -735,7 +735,7 @@ pool_encode_fill(const RECTANGLE_16* WINPR_RESTRICT rect, YUV_CONTEXT* WINPR_RES
                  const UINT32 iStride[], BYTE* WINPR_RESTRICT pYUVLumaData[],
                  BYTE* WINPR_RESTRICT pYUVChromaData[])
 {
-	YUV_ENCODE_WORK_PARAM current = { 0 };
+	YUV_ENCODE_WORK_PARAM current = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rect);
 	WINPR_ASSERT(context);

@@ -69,7 +69,7 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	const proxyConfig* config = NULL;
-	proxyKeyboardEventInfo event = { 0 };
+	proxyKeyboardEventInfo event = WINPR_C_ARRAY_INIT;
 	pServerContext* ps = NULL;
 	pClientContext* pc = NULL;
 
@@ -103,7 +103,7 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	const proxyConfig* config = NULL;
-	proxyUnicodeEventInfo event = { 0 };
+	proxyUnicodeEventInfo event = WINPR_C_ARRAY_INIT;
 	pServerContext* ps = NULL;
 	pClientContext* pc = NULL;
 
@@ -134,7 +134,7 @@ static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT
 WINPR_ATTR_NODISCARD
 static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	proxyMouseEventInfo event = { 0 };
+	proxyMouseEventInfo event = WINPR_C_ARRAY_INIT;
 	const proxyConfig* config = NULL;
 	pServerContext* ps = NULL;
 	pClientContext* pc = NULL;
@@ -170,7 +170,7 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	const proxyConfig* config = NULL;
-	proxyMouseExEventInfo event = { 0 };
+	proxyMouseExEventInfo event = WINPR_C_ARRAY_INIT;
 	pServerContext* ps = NULL;
 	pClientContext* pc = NULL;
 

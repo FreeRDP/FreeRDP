@@ -186,7 +186,7 @@ static void SamLookupFinish(WINPR_SAM* sam)
 
 static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
-	char* p[5] = { 0 };
+	char* p[5] = WINPR_C_ARRAY_INIT;
 	size_t count = 0;
 
 	if (!sam || !entry || !sam->line)

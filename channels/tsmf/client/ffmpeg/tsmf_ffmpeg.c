@@ -389,7 +389,7 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
 	len = avcodec_decode_video(mdecoder->codec_context, mdecoder->frame, &decoded, data, data_size);
 #else
 	{
-		AVPacket pkt = { 0 };
+		AVPacket pkt = WINPR_C_ARRAY_INIT;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 		av_init_packet(&pkt);
 #endif
@@ -448,7 +448,7 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
 		                     mdecoder->codec_context->pix_fmt, mdecoder->codec_context->width,
 		                     mdecoder->codec_context->height, 1);
 
-		const uint8_t* ptr[AV_NUM_DATA_POINTERS] = { 0 };
+		const uint8_t* ptr[AV_NUM_DATA_POINTERS] = WINPR_C_ARRAY_INIT;
 		for (size_t x = 0; x < AV_NUM_DATA_POINTERS; x++)
 			ptr[x] = mdecoder->frame->data[x];
 
@@ -521,7 +521,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 			AVFrame* decoded_frame = av_frame_alloc();
 #endif
 			int got_frame = 0;
-			AVPacket pkt = { 0 };
+			AVPacket pkt = WINPR_C_ARRAY_INIT;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 			av_init_packet(&pkt);
 #endif

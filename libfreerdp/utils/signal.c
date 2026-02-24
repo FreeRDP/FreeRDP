@@ -44,7 +44,7 @@ typedef struct
 } cleanup_handler_t;
 
 static size_t cleanup_handler_count = 0;
-static cleanup_handler_t cleanup_handlers[20] = { 0 };
+static cleanup_handler_t cleanup_handlers[20] = WINPR_C_ARRAY_INIT;
 
 void fsig_term_handler(int signum)
 {
@@ -60,7 +60,7 @@ void fsig_term_handler(int signum)
 	fsig_lock();
 	for (size_t x = 0; x < cleanup_handler_count; x++)
 	{
-		const cleanup_handler_t empty = { 0 };
+		const cleanup_handler_t empty = WINPR_C_ARRAY_INIT;
 		cleanup_handler_t* cur = &cleanup_handlers[x];
 		if (cur->handler)
 		{
@@ -105,7 +105,7 @@ BOOL freerdp_del_signal_cleanup_handler(void* context, freerdp_signal_handler_t 
 			cleanup_handler_t* cur = &cleanup_handlers[x];
 			if ((cur->context == context) && (cur->handler == handler))
 			{
-				const cleanup_handler_t empty = { 0 };
+				const cleanup_handler_t empty = WINPR_C_ARRAY_INIT;
 				for (size_t y = x + 1; y < cleanup_handler_count - 1; y++)
 				{
 					*cur++ = cleanup_handlers[y];

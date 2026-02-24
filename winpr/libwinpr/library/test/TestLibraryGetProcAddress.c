@@ -18,7 +18,7 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 	TEST_AB_FN pFunctionA = NULL;
 	TEST_AB_FN pFunctionB = NULL;
 	LPCSTR SharedLibraryExtension = NULL;
-	CHAR LibraryPath[PATHCCH_MAX_CCH] = { 0 };
+	CHAR LibraryPath[PATHCCH_MAX_CCH] = WINPR_C_ARRAY_INIT;
 	PCHAR p = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

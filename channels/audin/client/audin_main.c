@@ -233,7 +233,7 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	/* SoundFormats (variable) */
 	for (UINT32 i = 0; i < NumFormats; i++)
 	{
-		AUDIO_FORMAT format = { 0 };
+		AUDIO_FORMAT format = WINPR_C_ARRAY_INIT;
 
 		if (!audio_format_read(s, &format))
 		{
@@ -407,7 +407,7 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format, const BYTE* data
 static BOOL audin_open_device(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* callback)
 {
 	UINT error = ERROR_INTERNAL_ERROR;
-	AUDIO_FORMAT format = { 0 };
+	AUDIO_FORMAT format = WINPR_C_ARRAY_INIT;
 
 	if (!audin || !audin->device)
 		return FALSE;
@@ -816,7 +816,7 @@ static UINT audin_load_device_plugin(AUDIN_PLUGIN* audin, const char* name, cons
 {
 	WINPR_ASSERT(audin);
 
-	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints = { 0 };
+	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints = WINPR_C_ARRAY_INIT;
 	UINT error = ERROR_INTERNAL_ERROR;
 
 	PVIRTUALCHANNELENTRY pvce = freerdp_load_channel_addin_entry(AUDIN_CHANNEL_NAME, name, NULL, 0);

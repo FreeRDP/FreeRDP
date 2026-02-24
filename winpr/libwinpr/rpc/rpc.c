@@ -859,7 +859,7 @@ RPC_STATUS UuidToStringW(WINPR_ATTR_UNUSED const UUID* Uuid, WINPR_ATTR_UNUSED R
 
 RPC_STATUS UuidFromStringA(RPC_CSTR StringUuid, UUID* Uuid)
 {
-	BYTE bin[36] = { 0 };
+	BYTE bin[36] = WINPR_C_ARRAY_INIT;
 
 	if (!StringUuid)
 		return UuidCreateNil(Uuid);

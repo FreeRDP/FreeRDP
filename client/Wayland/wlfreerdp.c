@@ -53,10 +53,10 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	BOOL res = FALSE;
 	rdpGdi* gdi = NULL;
 	char* data = NULL;
-	UwacSize geometry = { 0 };
+	UwacSize geometry = WINPR_C_ARRAY_INIT;
 	size_t stride = 0;
 	UwacReturnCode rc = UWAC_ERROR_INTERNAL;
-	RECTANGLE_16 area = { 0 };
+	RECTANGLE_16 area = WINPR_C_ARRAY_INIT;
 
 	if (!context_w)
 		return FALSE;
@@ -474,7 +474,7 @@ static BOOL handle_window_events(freerdp* instance)
 static int wlfreerdp_run(freerdp* instance)
 {
 	wlfContext* context = NULL;
-	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 	DWORD status = WAIT_ABANDONED;
 
 	if (!instance)
@@ -754,7 +754,7 @@ BOOL wlf_copy_image(const void* src, size_t srcStride, size_t srcWidth, size_t s
 BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fromLocalToRDP)
 {
 	wlfContext* wlf = (wlfContext*)context;
-	UwacSize geometry = { 0 };
+	UwacSize geometry = WINPR_C_ARRAY_INIT;
 
 	if (!context || !px || !py || !context->gdi)
 		return FALSE;

@@ -478,7 +478,7 @@ int win_shadow_wds_wnd_init(winShadowSubsystem* subsystem)
 {
 	HMODULE hModule;
 	HINSTANCE hInstance;
-	WNDCLASSEX wndClassEx = { 0 };
+	WNDCLASSEX wndClassEx = WINPR_C_ARRAY_INIT;
 	hModule = GetModuleHandle(NULL);
 
 	wndClassEx.cbSize = sizeof(WNDCLASSEX);

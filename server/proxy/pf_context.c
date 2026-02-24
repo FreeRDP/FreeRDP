@@ -306,7 +306,7 @@ out_fail:
 
 pClientContext* pf_context_create_client_context(const rdpSettings* clientSettings)
 {
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(clientSettings);
 
