@@ -30,8 +30,8 @@ static const BYTE utctimeContent[] = { 0x17, 0x0D, 0x32, 0x31, 0x30, 0x33, 0x31,
 
 int TestASN1Read(int argc, char* argv[])
 {
-	WinPrAsn1Decoder decoder = { .encoding = WINPR_ASN1_BER, { 0 } };
-	WinPrAsn1Decoder seqDecoder = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder decoder = WinPrAsn1Decoder_init();
+	WinPrAsn1Decoder seqDecoder = WinPrAsn1Decoder_init();
 	wStream staticS = WINPR_C_ARRAY_INIT;
 	WinPrAsn1_BOOL boolV = 0;
 	WinPrAsn1_INTEGER integerV = 0;

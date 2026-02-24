@@ -51,6 +51,17 @@ extern "C"
 		BOOL isOwner;
 	} wStream;
 
+	/** @brief helper initializing a \b wStream context
+	 *
+	 * @return The initialized context
+	 * @since version 3.24.0
+	 */
+	static inline wStream Stream_Init(void)
+	{
+		const wStream empty = { NULL, NULL, 0, 0, 0, NULL, FALSE, FALSE };
+		return empty;
+	}
+
 	static inline size_t Stream_Capacity(const wStream* _s);
 	WINPR_API size_t Stream_GetRemainingCapacity(const wStream* _s);
 	WINPR_API size_t Stream_GetRemainingLength(const wStream* _s);

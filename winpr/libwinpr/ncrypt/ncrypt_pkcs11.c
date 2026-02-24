@@ -875,8 +875,8 @@ static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, const BYT
 	char container_name[PIV_CONTAINER_NAME_LEN + 1] = WINPR_C_ARRAY_INIT;
 	DWORD buf_len = 0;
 	SECURITY_STATUS ret = NTE_BAD_KEY;
-	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
-	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec = WinPrAsn1Decoder_init();
+	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
 	size_t len = 0;
 	BYTE tag = 0;
 	BYTE* p = NULL;

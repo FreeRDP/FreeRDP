@@ -68,6 +68,18 @@ struct WinPrAsn1Decoder
 
 typedef struct WinPrAsn1Decoder WinPrAsn1Decoder;
 
+/** @brief helper initializing a \b WinPrAsn1Decoder context
+ *
+ * @return The initialized context
+ * @since version 3.24.0
+ */
+static inline WinPrAsn1Decoder WinPrAsn1Decoder_init(void)
+{
+	const wStream stream = Stream_Init();
+	const WinPrAsn1Decoder empty = { WINPR_ASN1_BER, stream };
+	return empty;
+}
+
 typedef BYTE WinPrAsn1_tag;
 typedef BYTE WinPrAsn1_tagId;
 typedef BOOL WinPrAsn1_BOOL;

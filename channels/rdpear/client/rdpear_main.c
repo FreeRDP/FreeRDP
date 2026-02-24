@@ -394,9 +394,9 @@ static char* KERB_RPC_UNICODESTR_to_charptr(const RPC_UNICODE_STRING* src)
 
 static BOOL extractAuthData(const KERB_ASN1_DATA* src, krb5_authdata* authData, BOOL* haveData)
 {
-	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
-	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
-	WinPrAsn1Decoder dec3 = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec = WinPrAsn1Decoder_init();
+	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
+	WinPrAsn1Decoder dec3 = WinPrAsn1Decoder_init();
 	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, src->Asn1Buffer, src->Asn1BufferHints.count);
 	BOOL error = FALSE;
 	WinPrAsn1_INTEGER adType = 0;
@@ -429,8 +429,8 @@ static BOOL extractAuthData(const KERB_ASN1_DATA* src, krb5_authdata* authData, 
 
 static BOOL extractChecksum(const KERB_ASN1_DATA* src, krb5_checksum* dst)
 {
-	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
-	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec = WinPrAsn1Decoder_init();
+	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
 	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, src->Asn1Buffer, src->Asn1BufferHints.count);
 	BOOL error = FALSE;
 	WinPrAsn1_OctetString os;
@@ -626,8 +626,8 @@ out:
 
 static BOOL rdpear_findEncryptedData(const KERB_ASN1_DATA* src, int* penctype, krb5_data* data)
 {
-	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
-	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec = WinPrAsn1Decoder_init();
+	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
 	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, src->Asn1Buffer, src->Asn1BufferHints.count);
 	BOOL error = FALSE;
 	WinPrAsn1_INTEGER encType = 0;
@@ -974,8 +974,8 @@ static UINT rdpear_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	if (!freerdp_nla_decrypt(rdpear->rdp_context, &inBuffer, &decrypted))
 		goto out;
 
-	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
-	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec = WinPrAsn1Decoder_init();
+	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
 	wStream decodedStream = WINPR_C_ARRAY_INIT;
 	Stream_StaticInit(&decodedStream, decrypted.pvBuffer, decrypted.cbBuffer);
 	WinPrAsn1Decoder_Init(&dec, WINPR_ASN1_DER, &decodedStream);
