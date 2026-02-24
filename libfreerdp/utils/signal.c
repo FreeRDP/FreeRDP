@@ -31,6 +31,10 @@
 
 #define TAG FREERDP_TAG("utils.signal")
 
+#if defined(_WIN32)
+const char* strsignal(int signum);
+#endif
+
 BOOL fsig_handlers_registered = FALSE;
 
 typedef struct
