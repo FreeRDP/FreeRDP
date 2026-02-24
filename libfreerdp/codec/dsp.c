@@ -48,7 +48,7 @@
 #if defined(WITH_OPUS)
 #include <opus/opus.h>
 
-#define OPUS_MAX_FRAMES 5760
+#define OPUS_MAX_FRAMES 5760ull
 #endif
 
 #if defined(WITH_FAAD2)
