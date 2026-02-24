@@ -29,6 +29,7 @@ void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry)
 	pSubsystemEntry = pEntry;
 }
 
+WINPR_ATTR_NODISCARD
 static int shadow_subsystem_load_entry_points(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	WINPR_ASSERT(pEntryPoints);
@@ -45,20 +46,20 @@ static int shadow_subsystem_load_entry_points(RDP_SHADOW_ENTRY_POINTS* pEntryPoi
 
 rdpShadowSubsystem* shadow_subsystem_new(void)
 {
-	RDP_SHADOW_ENTRY_POINTS ep;
-	rdpShadowSubsystem* subsystem = NULL;
+	RDP_SHADOW_ENTRY_POINTS ep = { 0 };
 
-	shadow_subsystem_load_entry_points(&ep);
+	if (shadow_subsystem_load_entry_points(&ep) < 0)
+		return NULL;
 
 	if (!ep.New)
 		return NULL;
 
-	subsystem = ep.New();
+	rdpShadowSubsystem* subsystem = ep.New();
 
 	if (!subsystem)
 		return NULL;
 
-	CopyMemory(&(subsystem->ep), &ep, sizeof(RDP_SHADOW_ENTRY_POINTS));
+	subsystem->ep = ep;
 
 	return subsystem;
 }

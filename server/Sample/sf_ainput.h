@@ -30,7 +30,7 @@
 void sf_peer_ainput_init(testPeerContext* context);
 void sf_peer_ainput_uninit(testPeerContext* context);
 
-BOOL sf_peer_ainput_running(testPeerContext* context);
+WINPR_ATTR_NODISCARD BOOL sf_peer_ainput_running(testPeerContext* context);
 BOOL sf_peer_ainput_start(testPeerContext* context);
 BOOL sf_peer_ainput_stop(testPeerContext* context);
 

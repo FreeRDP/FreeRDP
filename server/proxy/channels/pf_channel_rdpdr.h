@@ -23,25 +23,28 @@
 
 #include <freerdp/server/proxy/proxy_context.h>
 
-BOOL pf_channel_setup_rdpdr(pServerContext* ps, pServerStaticChannelContext* channel);
+WINPR_ATTR_NODISCARD BOOL pf_channel_setup_rdpdr(pServerContext* ps,
+                                                 pServerStaticChannelContext* channel);
 
 void pf_channel_rdpdr_client_free(pClientContext* pc);
 
-BOOL pf_channel_rdpdr_client_new(pClientContext* pc);
+WINPR_ATTR_NODISCARD BOOL pf_channel_rdpdr_client_new(pClientContext* pc);
 
 BOOL pf_channel_rdpdr_client_reset(pClientContext* pc);
 
-BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const char* channel_name,
-                                    const BYTE* xdata, size_t xsize, UINT32 flags,
-                                    size_t totalSize);
+WINPR_ATTR_NODISCARD BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId,
+                                                         const char* channel_name,
+                                                         const BYTE* xdata, size_t xsize,
+                                                         UINT32 flags, size_t totalSize);
 
 void pf_channel_rdpdr_server_free(pServerContext* ps);
 
-BOOL pf_channel_rdpdr_server_new(pServerContext* ps);
+WINPR_ATTR_NODISCARD BOOL pf_channel_rdpdr_server_new(pServerContext* ps);
 
-BOOL pf_channel_rdpdr_server_announce(pServerContext* ps);
-BOOL pf_channel_rdpdr_server_handle(pServerContext* ps, UINT16 channelId, const char* channel_name,
-                                    const BYTE* xdata, size_t xsize, UINT32 flags,
-                                    size_t totalSize);
+WINPR_ATTR_NODISCARD BOOL pf_channel_rdpdr_server_announce(pServerContext* ps);
+WINPR_ATTR_NODISCARD BOOL pf_channel_rdpdr_server_handle(pServerContext* ps, UINT16 channelId,
+                                                         const char* channel_name,
+                                                         const BYTE* xdata, size_t xsize,
+                                                         UINT32 flags, size_t totalSize);
 
 #endif /* FREERDP_SERVER_PROXY_RDPDR_H */

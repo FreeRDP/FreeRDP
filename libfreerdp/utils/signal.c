@@ -27,7 +27,7 @@
 #include <freerdp/utils/signal.h>
 #include <freerdp/log.h>
 
-#include "signal.h"
+#include "platform_signal.h"
 
 #define TAG FREERDP_TAG("utils.signal")
 

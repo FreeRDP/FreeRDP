@@ -22,20 +22,21 @@
 
 #include "wf_interface.h"
 
-int wf_dxgi_init(wfInfo* context);
+WINPR_ATTR_NODISCARD int wf_dxgi_init(wfInfo* context);
 
-int wf_dxgi_createDevice(wfInfo* context);
+WINPR_ATTR_NODISCARD int wf_dxgi_createDevice(wfInfo* context);
 
-int wf_dxgi_getDuplication(wfInfo* context);
+WINPR_ATTR_NODISCARD int wf_dxgi_getDuplication(wfInfo* context);
 
-int wf_dxgi_cleanup(wfInfo* context);
+WINPR_ATTR_NODISCARD int wf_dxgi_cleanup(wfInfo* context);
 
-int wf_dxgi_nextFrame(wfInfo* context, UINT timeout);
+WINPR_ATTR_NODISCARD int wf_dxgi_nextFrame(wfInfo* context, UINT timeout);
 
-int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch, RECT* invalid);
+WINPR_ATTR_NODISCARD int wf_dxgi_getPixelData(wfInfo* context, BYTE** data, int* pitch,
+                                              RECT* invalid);
 
-int wf_dxgi_releasePixelData(wfInfo* context);
+WINPR_ATTR_NODISCARD int wf_dxgi_releasePixelData(wfInfo* context);
 
-int wf_dxgi_getInvalidRegion(RECT* invalid);
+WINPR_ATTR_NODISCARD int wf_dxgi_getInvalidRegion(RECT* invalid);
 
 #endif /* FREERDP_SERVER_WIN_DXGI_H */

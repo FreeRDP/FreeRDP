@@ -26,22 +26,27 @@ UINT shadow_client_channels_post_connect(rdpShadowClient* client)
 {
 	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, ENCOMSP_SVC_CHANNEL_NAME))
 	{
-		shadow_client_encomsp_init(client);
+		if (shadow_client_encomsp_init(client) < 0)
+			return ERROR_NOT_READY;
 	}
 
 	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, REMDESK_SVC_CHANNEL_NAME))
 	{
-		shadow_client_remdesk_init(client);
+		if (shadow_client_remdesk_init(client) < 0)
+			return ERROR_NOT_READY;
 	}
 
 	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, RDPSND_CHANNEL_NAME))
 	{
-		shadow_client_rdpsnd_init(client);
+		if (shadow_client_rdpsnd_init(client) < 0)
+			return ERROR_NOT_READY;
 	}
 
-	shadow_client_audin_init(client);
+	if (!shadow_client_audin_init(client))
+		return ERROR_NOT_READY;
 
-	shadow_client_rdpgfx_init(client);
+	if (shadow_client_rdpgfx_init(client) < 0)
+		return ERROR_NOT_READY;
 
 	return CHANNEL_RC_OK;
 }

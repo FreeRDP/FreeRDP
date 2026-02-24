@@ -31,6 +31,7 @@
 
 #if defined(CHANNEL_AUDIN_SERVER)
 
+WINPR_ATTR_NODISCARD
 static UINT AudinServerData(audin_server_context* audin, const SNDIN_DATA* data)
 {
 	rdpShadowClient* client = NULL;

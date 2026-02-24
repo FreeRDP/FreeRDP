@@ -56,6 +56,7 @@ typedef struct
 	pf_scard_send_fkt_t send_fkt;
 } pf_channel_client_queue_element;
 
+WINPR_ATTR_NODISCARD
 static pf_channel_client_context* scard_get_client_context(pClientContext* pc)
 {
 	pf_channel_client_context* scard = NULL;
@@ -69,6 +70,7 @@ static pf_channel_client_context* scard_get_client_context(pClientContext* pc)
 	return scard;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_channel_client_write_iostatus(wStream* out, const SMARTCARD_OPERATION* op,
                                              NTSTATUS ioStatus)
 {
@@ -109,6 +111,9 @@ struct thread_arg
 };
 
 static void queue_free(void* obj);
+
+WINPR_ATTR_MALLOC(queue_free, 1)
+WINPR_ATTR_NODISCARD
 static void* queue_copy(const void* obj);
 
 static VOID irp_thread(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE Instance, PVOID Context,
@@ -131,6 +136,7 @@ static VOID irp_thread(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE Instance, PVOID C
 	ArrayList_Remove(scard->workObjects, Work);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL start_irp_thread(pf_channel_client_context* scard,
                              const pf_channel_client_queue_element* e)
 {
@@ -304,6 +310,8 @@ static void queue_free(void* obj)
 	free(element);
 }
 
+WINPR_ATTR_MALLOC(queue_free, 1)
+WINPR_ATTR_NODISCARD
 static void* queue_copy(const void* obj)
 {
 	const pf_channel_client_queue_element* other = obj;

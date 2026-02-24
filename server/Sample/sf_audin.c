@@ -34,6 +34,7 @@
 
 #if defined(CHANNEL_AUDIN_SERVER)
 
+WINPR_ATTR_NODISCARD
 static UINT sf_peer_audin_data(WINPR_ATTR_UNUSED audin_server_context* audin,
                                const SNDIN_DATA* data)
 {

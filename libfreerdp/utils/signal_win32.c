@@ -9,7 +9,7 @@
 #include <freerdp/log.h>
 #include <freerdp/utils/signal.h>
 
-#include "signal.h"
+#include "platform_signal.h"
 
 #define TAG FREERDP_TAG("utils.signal.posix")
 

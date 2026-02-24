@@ -35,6 +35,7 @@
 
 #define TAG PROXY_TAG("update")
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
 	pServerContext* ps = (pServerContext*)context;
@@ -48,6 +49,7 @@ static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count, const RECTAN
 	return pc->update->RefreshRect(pc, count, areas);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
 	pServerContext* ps = (pServerContext*)context;
@@ -67,6 +69,7 @@ static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow, const REC
  * This function is called whenever a new frame starts.
  * It can be used to reset invalidated areas.
  */
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_begin_paint(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*)context;
@@ -88,6 +91,7 @@ static BOOL pf_client_begin_paint(rdpContext* context)
  * frame. Read out the changed areas and blit them to your output device.
  * The image buffer will have the format specified by gdi_init
  */
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_end_paint(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*)context;
@@ -113,6 +117,7 @@ static BOOL pf_client_end_paint(rdpContext* context)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
 {
 	pClientContext* pc = (pClientContext*)context;
@@ -129,6 +134,7 @@ static BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bi
 	return ps->update->BitmapUpdate(ps, bitmap);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_desktop_resize(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*)context;
@@ -151,6 +157,7 @@ static BOOL pf_client_desktop_resize(rdpContext* context)
 	return ps->update->DesktopResize(ps);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_remote_monitors(rdpContext* context, UINT32 count,
                                       const MONITOR_DEF* monitors)
 {
@@ -166,6 +173,7 @@ static BOOL pf_client_remote_monitors(rdpContext* context, UINT32 count,
 	return freerdp_display_send_monitor_layout(ps, count, monitors);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_send_pointer_system(rdpContext* context,
                                           const POINTER_SYSTEM_UPDATE* pointer_system)
 {
@@ -184,6 +192,7 @@ static BOOL pf_client_send_pointer_system(rdpContext* context,
 	return ps->update->pointer->PointerSystem(ps, pointer_system);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_send_pointer_position(rdpContext* context,
                                             const POINTER_POSITION_UPDATE* pointerPosition)
 {
@@ -202,6 +211,7 @@ static BOOL pf_client_send_pointer_position(rdpContext* context,
 	return ps->update->pointer->PointerPosition(ps, pointerPosition);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_send_pointer_color(rdpContext* context,
                                          const POINTER_COLOR_UPDATE* pointer_color)
 {
@@ -220,6 +230,7 @@ static BOOL pf_client_send_pointer_color(rdpContext* context,
 	return ps->update->pointer->PointerColor(ps, pointer_color);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_send_pointer_large(rdpContext* context,
                                          const POINTER_LARGE_UPDATE* pointer_large)
 {
@@ -238,6 +249,7 @@ static BOOL pf_client_send_pointer_large(rdpContext* context,
 	return ps->update->pointer->PointerLarge(ps, pointer_large);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_send_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new)
 {
 	pClientContext* pc = (pClientContext*)context;
@@ -255,6 +267,7 @@ static BOOL pf_client_send_pointer_new(rdpContext* context, const POINTER_NEW_UP
 	return ps->update->pointer->PointerNew(ps, pointer_new);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_send_pointer_cached(rdpContext* context,
                                           const POINTER_CACHED_UPDATE* pointer_cached)
 {
@@ -273,6 +286,7 @@ static BOOL pf_client_send_pointer_cached(rdpContext* context,
 	return ps->update->pointer->PointerCached(ps, pointer_cached);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* data)
 {
 	logon_info* logonInfo = NULL;
@@ -307,6 +321,7 @@ static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* 
 	return ps->update->SaveSessionInfo(ps, type, data);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_server_status_info(rdpContext* context, UINT32 status)
 {
 	pClientContext* pc = (pClientContext*)context;
@@ -324,6 +339,7 @@ static BOOL pf_client_server_status_info(rdpContext* context, UINT32 status)
 	return ps->update->ServerStatusInfo(ps, status);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
 {
 	pClientContext* pc = (pClientContext*)context;
@@ -341,6 +357,7 @@ static BOOL pf_client_set_keyboard_indicators(rdpContext* context, UINT16 led_fl
 	return ps->update->SetKeyboardIndicators(ps, led_flags);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_set_keyboard_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                               UINT32 imeConvMode)
 {
@@ -359,6 +376,7 @@ static BOOL pf_client_set_keyboard_ime_status(rdpContext* context, UINT16 imeId,
 	return ps->update->SetKeyboardImeStatus(ps, imeId, imeState, imeConvMode);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_window_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                     const WINDOW_STATE_ORDER* windowState)
 {
@@ -382,6 +400,7 @@ static BOOL pf_client_window_create(rdpContext* context, const WINDOW_ORDER_INFO
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_window_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                     const WINDOW_STATE_ORDER* windowState)
 {
@@ -405,6 +424,7 @@ static BOOL pf_client_window_update(rdpContext* context, const WINDOW_ORDER_INFO
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                   const WINDOW_ICON_ORDER* windowIcon)
 {
@@ -428,6 +448,7 @@ static BOOL pf_client_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* 
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                          const WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
@@ -451,6 +472,7 @@ static BOOL pf_client_window_cached_icon(rdpContext* context, const WINDOW_ORDER
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
 	BOOL rc = 0;
@@ -473,6 +495,7 @@ static BOOL pf_client_window_delete(rdpContext* context, const WINDOW_ORDER_INFO
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_notify_icon_create(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                          const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
@@ -496,6 +519,7 @@ static BOOL pf_client_notify_icon_create(rdpContext* context, const WINDOW_ORDER
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_notify_icon_update(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                          const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
@@ -519,6 +543,7 @@ static BOOL pf_client_notify_icon_update(rdpContext* context, const WINDOW_ORDER
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_notify_icon_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
 	BOOL rc = 0;
@@ -542,6 +567,7 @@ static BOOL pf_client_notify_icon_delete(rdpContext* context, const WINDOW_ORDER
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                         const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
@@ -565,6 +591,7 @@ static BOOL pf_client_monitored_desktop(rdpContext* context, const WINDOW_ORDER_
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_client_non_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
 	BOOL rc = 0;

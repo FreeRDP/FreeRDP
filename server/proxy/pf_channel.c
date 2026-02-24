@@ -41,6 +41,7 @@ struct sChannelStateTracker
 	proxyData* pdata;
 };
 
+WINPR_ATTR_NODISCARD
 static BOOL channelTracker_resetCurrentPacket(ChannelStateTracker* tracker)
 {
 	WINPR_ASSERT(tracker);
@@ -224,6 +225,7 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 	return r ? PF_CHANNEL_RESULT_DROP : PF_CHANNEL_RESULT_ERROR;
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult pf_channel_generic_back_data(proxyData* pdata,
                                                     const pServerStaticChannelContext* channel,
                                                     const BYTE* xdata, size_t xsize, UINT32 flags,
@@ -258,6 +260,7 @@ static PfChannelResult pf_channel_generic_back_data(proxyData* pdata,
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static PfChannelResult pf_channel_generic_front_data(proxyData* pdata,
                                                      const pServerStaticChannelContext* channel,
                                                      const BYTE* xdata, size_t xsize, UINT32 flags,

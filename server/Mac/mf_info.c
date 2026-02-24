@@ -88,11 +88,10 @@ int mf_info_unlock(mfInfo* mfi)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static mfInfo* mf_info_init(void)
 {
-	mfInfo* mfi;
-
-	mfi = (mfInfo*)calloc(1, sizeof(mfInfo));
+	mfInfo* mfi = (mfInfo*)calloc(1, sizeof(mfInfo));
 
 	if (mfi != NULL)
 	{

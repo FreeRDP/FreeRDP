@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-	BOOL shadow_client_audin_init(rdpShadowClient* client);
+	WINPR_ATTR_NODISCARD BOOL shadow_client_audin_init(rdpShadowClient* client);
 	void shadow_client_audin_uninit(rdpShadowClient* client);
 
 #ifdef __cplusplus

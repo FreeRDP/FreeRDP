@@ -48,6 +48,7 @@ struct proxy_module
 	wArrayList* handles;
 };
 
+WINPR_ATTR_NODISCARD
 static const char* pf_modules_get_filter_type_string(PF_FILTER_TYPE result)
 {
 	switch (result)
@@ -85,6 +86,7 @@ static const char* pf_modules_get_filter_type_string(PF_FILTER_TYPE result)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static const char* pf_modules_get_hook_type_string(PF_HOOK_TYPE result)
 {
 	switch (result)
@@ -130,6 +132,7 @@ static const char* pf_modules_get_hook_type_string(PF_HOOK_TYPE result)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_proxy_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
@@ -239,6 +242,7 @@ BOOL pf_modules_run_hook(proxyModule* module, PF_HOOK_TYPE type, proxyData* pdat
 	                         custom);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
@@ -340,6 +344,7 @@ BOOL pf_modules_run_filter(proxyModule* module, PF_FILTER_TYPE type, proxyData* 
  * @context: current session server's rdpContext instance.
  * @info: pointer to per-session data.
  */
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_set_plugin_data(WINPR_ATTR_UNUSED proxyPluginsManager* mgr,
                                        const char* plugin_name, proxyData* pdata, void* data)
 {
@@ -371,6 +376,7 @@ static BOOL pf_modules_set_plugin_data(WINPR_ATTR_UNUSED proxyPluginsManager* mg
  * if there's no data related to `plugin_name` in `context` (current session), a NULL will be
  * returned.
  */
+WINPR_ATTR_NODISCARD
 static void* pf_modules_get_plugin_data(WINPR_ATTR_UNUSED proxyPluginsManager* mgr,
                                         const char* plugin_name, proxyData* pdata)
 {
@@ -393,6 +399,7 @@ static void pf_modules_abort_connect(WINPR_ATTR_UNUSED proxyPluginsManager* mgr,
 	proxy_data_abort_connect(pdata);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_register_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
@@ -408,6 +415,7 @@ static BOOL pf_modules_register_ArrayList_ForEachFkt(void* data, size_t index, v
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_register_plugin(proxyPluginsManager* mgr,
                                        const proxyPlugin* plugin_to_register)
 {
@@ -435,6 +443,7 @@ static BOOL pf_modules_register_plugin(proxyPluginsManager* mgr,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_load_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
@@ -461,6 +470,7 @@ BOOL pf_modules_is_plugin_loaded(proxyModule* module, const char* plugin_name)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_print_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
@@ -488,6 +498,7 @@ void pf_modules_list_loaded_plugins(proxyModule* module)
 	ArrayList_ForEach(module->plugins, pf_modules_print_ArrayList_ForEachFkt);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_load_static_module(const char* module_name, proxyModule* module,
                                           void* userdata)
 {
@@ -527,6 +538,7 @@ error:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_load_dynamic_module(const char* module_path, proxyModule* module,
                                            void* userdata)
 {
@@ -563,6 +575,7 @@ error:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_try_load_dynamic_module(const char* module_path, proxyModule* module,
                                                void* userdata, size_t count, const char* names[])
 {
@@ -582,6 +595,7 @@ static BOOL pf_modules_try_load_dynamic_module(const char* module_path, proxyMod
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pf_modules_load_module(const char* module_path, const char* module_name,
                                    proxyModule* module, void* userdata)
 {
@@ -628,6 +642,8 @@ static void free_plugin(void* obj)
 	free(plugin);
 }
 
+WINPR_ATTR_MALLOC(free_plugin, 1)
+WINPR_ATTR_NODISCARD
 static void* new_plugin(const void* obj)
 {
 	const proxyPlugin* src = obj;

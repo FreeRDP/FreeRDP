@@ -26,6 +26,6 @@
 
 #include "sfreerdp.h"
 
-BOOL sf_peer_encomsp_init(testPeerContext* context);
+WINPR_ATTR_NODISCARD BOOL sf_peer_encomsp_init(testPeerContext* context);
 
 #endif /* FREERDP_SERVER_SAMPLE_SF_ENCOMSP_H */

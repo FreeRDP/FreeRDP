@@ -24,6 +24,7 @@
 
 #define TAG SERVER_TAG("shadow.input")
 
+WINPR_ATTR_NODISCARD
 static BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	WINPR_ASSERT(input);
@@ -40,6 +41,7 @@ static BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 	return IFCALLRESULT(TRUE, subsystem->SynchronizeEvent, subsystem, client, flags);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	WINPR_ASSERT(input);
@@ -56,6 +58,7 @@ static BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT8 cod
 	return IFCALLRESULT(TRUE, subsystem->KeyboardEvent, subsystem, client, flags, code);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	WINPR_ASSERT(input);
@@ -72,6 +75,7 @@ static BOOL shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, U
 	return IFCALLRESULT(TRUE, subsystem->UnicodeKeyboardEvent, subsystem, client, flags, code);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	WINPR_ASSERT(input);
@@ -109,6 +113,7 @@ static BOOL shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UI
 	return IFCALLRESULT(TRUE, subsystem->MouseEvent, subsystem, client, flags, x, y);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL shadow_input_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDelta, INT16 yDelta)
 {
 	WINPR_ASSERT(input);
@@ -134,6 +139,7 @@ static BOOL shadow_input_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xD
 	return IFCALLRESULT(TRUE, subsystem->RelMouseEvent, subsystem, client, flags, xDelta, yDelta);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	WINPR_ASSERT(input);

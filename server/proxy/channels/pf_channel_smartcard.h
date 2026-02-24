@@ -26,14 +26,15 @@
 
 typedef UINT (*pf_scard_send_fkt_t)(wLog* log, pClientContext*, wStream*);
 
-BOOL pf_channel_smartcard_client_new(pClientContext* pc);
+WINPR_ATTR_NODISCARD BOOL pf_channel_smartcard_client_new(pClientContext* pc);
 void pf_channel_smartcard_client_free(pClientContext* pc);
 
 BOOL pf_channel_smartcard_client_reset(pClientContext* pc);
-BOOL pf_channel_smartcard_client_emulate(pClientContext* pc);
+WINPR_ATTR_NODISCARD BOOL pf_channel_smartcard_client_emulate(pClientContext* pc);
 
-BOOL pf_channel_smartcard_client_handle(wLog* log, pClientContext* pc, wStream* s, wStream* out,
-                                        pf_scard_send_fkt_t fkt);
-BOOL pf_channel_smartcard_server_handle(pServerContext* ps, wStream* s);
+WINPR_ATTR_NODISCARD BOOL pf_channel_smartcard_client_handle(wLog* log, pClientContext* pc,
+                                                             wStream* s, wStream* out,
+                                                             pf_scard_send_fkt_t fkt);
+WINPR_ATTR_NODISCARD BOOL pf_channel_smartcard_server_handle(pServerContext* ps, wStream* s);
 
 #endif /* FREERDP_SERVER_PROXY_SCARD_H */

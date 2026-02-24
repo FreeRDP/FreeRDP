@@ -35,8 +35,9 @@ extern "C"
 		/* Additional platform specific stuff goes here */
 	};
 
-	FREERDP_API const char* ShadowSubsystemName(void);
-	FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
+	FREERDP_API WINPR_ATTR_NODISCARD const char* ShadowSubsystemName(void);
+	FREERDP_API WINPR_ATTR_NODISCARD int
+	ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
 
 #ifdef __cplusplus
 }

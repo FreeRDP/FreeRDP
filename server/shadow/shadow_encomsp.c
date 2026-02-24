@@ -32,6 +32,7 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT
 encomsp_change_participant_control_level(EncomspServerContext* context,
                                          ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
@@ -93,7 +94,8 @@ encomsp_change_participant_control_level(EncomspServerContext* context,
 
 	if (inLobby != client->inLobby)
 	{
-		shadow_encoder_reset(client->encoder);
+		if (shadow_encoder_reset(client->encoder) < 0)
+			return ERROR_NOT_READY;
 		client->inLobby = inLobby;
 	}
 

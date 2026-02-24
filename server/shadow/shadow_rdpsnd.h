@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-	int shadow_client_rdpsnd_init(rdpShadowClient* client);
+	WINPR_ATTR_NODISCARD int shadow_client_rdpsnd_init(rdpShadowClient* client);
 	void shadow_client_rdpsnd_uninit(rdpShadowClient* client);
 
 #ifdef __cplusplus

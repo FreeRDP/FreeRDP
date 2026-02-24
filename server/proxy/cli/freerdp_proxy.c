@@ -35,6 +35,7 @@
 static proxyServer* server = NULL;
 
 #if defined(_WIN32)
+WINPR_ATTR_NODISCARD
 static const char* strsignal(int signum)
 {
 	switch (signum)
@@ -83,12 +84,14 @@ static int usage(const char* app)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int version(const char* app)
 {
 	printf("%s version %s", app, freerdp_get_version_string());
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int buildconfig(WINPR_ATTR_UNUSED const char* app)
 {
 	printf("This is FreeRDP version %s (%s)\n", FREERDP_VERSION_FULL, FREERDP_GIT_REVISION);

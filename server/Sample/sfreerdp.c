@@ -109,6 +109,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 {
 	testPeerContext* context = (testPeerContext*)ctx;
@@ -153,6 +154,7 @@ fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_peer_init(freerdp_peer* client)
 {
 	WINPR_ASSERT(client);
@@ -163,6 +165,7 @@ static BOOL test_peer_init(freerdp_peer* client)
 	return freerdp_peer_context_new(client);
 }
 
+WINPR_ATTR_NODISCARD
 static wStream* test_peer_stream_init(testPeerContext* context)
 {
 	WINPR_ASSERT(context);
@@ -217,6 +220,7 @@ static void test_peer_end_frame(freerdp_peer* client)
 	context->frame_id++;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL stream_surface_bits_supported(const rdpSettings* settings)
 {
 	const UINT32 supported =
@@ -317,6 +321,7 @@ out:
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static int open_icon(wImage* img)
 {
 	char* paths[] = { SAMPLE_RESOURCE_ROOT, "." };
@@ -342,6 +347,7 @@ static int open_icon(wImage* img)
 	return -1;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_peer_load_icon(freerdp_peer* client)
 {
 	testPeerContext* context = NULL;
@@ -494,6 +500,7 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	test_peer_end_frame(client);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_sleep_tsdiff(UINT32* old_sec, UINT32* old_usec, UINT32 new_sec, UINT32 new_usec)
 {
 	INT64 sec = 0;
@@ -600,6 +607,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 {
 	void* fd = NULL;
@@ -671,6 +679,7 @@ fail:
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tf_peer_post_connect(freerdp_peer* client)
 {
 	testPeerContext* context = NULL;
@@ -762,16 +771,19 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 
 	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, RDPSND_CHANNEL_NAME))
 	{
-		sf_peer_rdpsnd_init(context); /* Audio Output */
+		if (!sf_peer_rdpsnd_init(context)) /* Audio Output */
+			return FALSE;
 	}
 
 	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, ENCOMSP_SVC_CHANNEL_NAME))
 	{
-		sf_peer_encomsp_init(context); /* Lync Multiparty */
+		if (!sf_peer_encomsp_init(context)) /* Lync Multiparty */
+			return FALSE;
 	}
 
 	/* Dynamic Virtual Channels */
-	sf_peer_audin_init(context); /* Audio Input */
+	if (!sf_peer_audin_init(context)) /* Audio Input */
+		return FALSE;
 
 #if defined(CHANNEL_AINPUT_SERVER)
 	sf_peer_ainput_init(context);
@@ -781,17 +793,16 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tf_peer_activate(freerdp_peer* client)
 {
-	testPeerContext* context = NULL;
-	rdpSettings* settings = NULL;
-
+	BOOL rc = TRUE;
 	WINPR_ASSERT(client);
 
-	context = (testPeerContext*)client->context;
+	testPeerContext* context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
 
-	settings = client->context->settings;
+	rdpSettings* settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
 	struct server_info* info = client->ContextExtra;
@@ -821,13 +832,14 @@ static BOOL tf_peer_activate(freerdp_peer* client)
 			.height = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)
 		};
 		test_peer_begin_frame(client);
-		test_peer_draw_background(client, &rect);
+		rc = test_peer_draw_background(client, &rect);
 		test_peer_end_frame(client);
 	}
 
-	return TRUE;
+	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	WINPR_UNUSED(input);
@@ -836,6 +848,7 @@ static BOOL tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	freerdp_peer* client = NULL;
@@ -925,6 +938,7 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	WINPR_UNUSED(input);
@@ -936,6 +950,7 @@ static BOOL tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	WINPR_UNUSED(flags);
@@ -948,6 +963,7 @@ static BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 add(UINT32 old, UINT32 max, INT16 diff)
 {
 	INT64 val = old;
@@ -959,6 +975,7 @@ static UINT32 add(UINT32 old, UINT32 max, INT16 diff)
 	return WINPR_ASSERTING_INT_CAST(uint32_t, val);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tf_peer_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDelta, INT16 yDelta)
 {
 	WINPR_UNUSED(flags);
@@ -982,6 +999,7 @@ static BOOL tf_peer_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDelta,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	WINPR_UNUSED(flags);
@@ -996,6 +1014,7 @@ static BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
 	WINPR_UNUSED(context);
@@ -1013,6 +1032,7 @@ static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count, const RECTANGL
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
 	WINPR_UNUSED(context);
@@ -1032,6 +1052,7 @@ static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow, const RECTA
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 {
 	UINT64 ts = 0;
@@ -1095,6 +1116,7 @@ fail:
 	return -1;
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 {
 	BOOL rc = 0;
@@ -1300,6 +1322,7 @@ fail:
 	return error;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	HANDLE hThread = NULL;
@@ -1383,6 +1406,7 @@ static void print_entry(FILE* fp, WINPR_FORMAT_ARG const char* fmt, const char* 
 }
 WINPR_PRAGMA_DIAG_POP
 
+WINPR_ATTR_NODISCARD
 static int usage(const char* app, const char* invalid)
 {
 	FILE* fp = stdout;

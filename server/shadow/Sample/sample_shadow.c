@@ -30,6 +30,7 @@
 
 #define TAG SERVER_TAG("shadow.sample")
 
+WINPR_ATTR_NODISCARD
 static BOOL sample_shadow_input_synchronize_event(WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem,
                                                   WINPR_ATTR_UNUSED rdpShadowClient* client,
                                                   WINPR_ATTR_UNUSED UINT32 flags)
@@ -38,6 +39,7 @@ static BOOL sample_shadow_input_synchronize_event(WINPR_ATTR_UNUSED rdpShadowSub
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL sample_shadow_input_keyboard_event(WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem,
                                                WINPR_ATTR_UNUSED rdpShadowClient* client,
                                                WINPR_ATTR_UNUSED UINT16 flags,
@@ -47,6 +49,7 @@ static BOOL sample_shadow_input_keyboard_event(WINPR_ATTR_UNUSED rdpShadowSubsys
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL sample_shadow_input_unicode_keyboard_event(
     WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem, WINPR_ATTR_UNUSED rdpShadowClient* client,
     WINPR_ATTR_UNUSED UINT16 flags, WINPR_ATTR_UNUSED UINT16 code)
@@ -55,6 +58,7 @@ static BOOL sample_shadow_input_unicode_keyboard_event(
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL sample_shadow_input_mouse_event(WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem,
                                             WINPR_ATTR_UNUSED rdpShadowClient* client,
                                             WINPR_ATTR_UNUSED UINT16 flags,
@@ -64,6 +68,7 @@ static BOOL sample_shadow_input_mouse_event(WINPR_ATTR_UNUSED rdpShadowSubsystem
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL sample_shadow_input_extended_mouse_event(
     WINPR_ATTR_UNUSED rdpShadowSubsystem* subsystem, WINPR_ATTR_UNUSED rdpShadowClient* client,
     WINPR_ATTR_UNUSED UINT16 flags, WINPR_ATTR_UNUSED UINT16 x, WINPR_ATTR_UNUSED UINT16 y)
@@ -72,6 +77,7 @@ static BOOL sample_shadow_input_extended_mouse_event(
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 sample_shadow_enum_monitors(WINPR_ATTR_UNUSED MONITOR_DEF* monitors,
                                           WINPR_ATTR_UNUSED UINT32 maxMonitors)
 {
@@ -79,6 +85,7 @@ static UINT32 sample_shadow_enum_monitors(WINPR_ATTR_UNUSED MONITOR_DEF* monitor
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int sample_shadow_subsystem_init(rdpShadowSubsystem* arg)
 {
 	sampleShadowSubsystem* subsystem = (sampleShadowSubsystem*)arg;
@@ -97,6 +104,7 @@ static int sample_shadow_subsystem_init(rdpShadowSubsystem* arg)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int sample_shadow_subsystem_uninit(rdpShadowSubsystem* arg)
 {
 	sampleShadowSubsystem* subsystem = (sampleShadowSubsystem*)arg;
@@ -108,6 +116,7 @@ static int sample_shadow_subsystem_uninit(rdpShadowSubsystem* arg)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int sample_shadow_subsystem_start(rdpShadowSubsystem* arg)
 {
 	sampleShadowSubsystem* subsystem = (sampleShadowSubsystem*)arg;
@@ -120,6 +129,7 @@ static int sample_shadow_subsystem_start(rdpShadowSubsystem* arg)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int sample_shadow_subsystem_stop(rdpShadowSubsystem* arg)
 {
 	sampleShadowSubsystem* subsystem = (sampleShadowSubsystem*)arg;
@@ -143,6 +153,8 @@ static void sample_shadow_subsystem_free(rdpShadowSubsystem* arg)
 	free(subsystem);
 }
 
+WINPR_ATTR_MALLOC(sample_shadow_subsystem_free, 1)
+WINPR_ATTR_NODISCARD
 static rdpShadowSubsystem* sample_shadow_subsystem_new(void)
 {
 	sampleShadowSubsystem* subsystem =

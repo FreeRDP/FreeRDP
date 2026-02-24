@@ -22,17 +22,19 @@
 
 #include <freerdp/codec/rfx.h>
 
-int mf_mlion_display_info(UINT32* disp_width, UINT32* dispHeight, UINT32* scale);
+WINPR_ATTR_NODISCARD int mf_mlion_display_info(UINT32* disp_width, UINT32* dispHeight,
+                                               UINT32* scale);
 
-int mf_mlion_screen_updates_init(void);
+WINPR_ATTR_NODISCARD int mf_mlion_screen_updates_init(void);
 
-int mf_mlion_start_getting_screen_updates(void);
-int mf_mlion_stop_getting_screen_updates(void);
+WINPR_ATTR_NODISCARD int mf_mlion_start_getting_screen_updates(void);
+WINPR_ATTR_NODISCARD int mf_mlion_stop_getting_screen_updates(void);
 
-int mf_mlion_get_dirty_region(RFX_RECT* invalid);
-int mf_mlion_peek_dirty_region(RFX_RECT* invalid);
-int mf_mlion_clear_dirty_region(void);
+WINPR_ATTR_NODISCARD int mf_mlion_get_dirty_region(RFX_RECT* invalid);
+WINPR_ATTR_NODISCARD int mf_mlion_peek_dirty_region(RFX_RECT* invalid);
+WINPR_ATTR_NODISCARD int mf_mlion_clear_dirty_region(void);
 
-int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE** pxData);
+WINPR_ATTR_NODISCARD int mf_mlion_get_pixelData(long x, long y, long width, long height,
+                                                BYTE** pxData);
 
 #endif /* FREERDP_SERVER_MAC_MLION_H */
