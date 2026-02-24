@@ -178,7 +178,7 @@ static BOOL arm_fetch_wellknown(rdpArm* arm)
 		    freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayAvdAadtenantid);
 
 	rdp->wellknown = freerdp_utils_aad_get_wellknown(arm->log, base, tenantid);
-	return rdp->wellknown ? TRUE : FALSE;
+	return (rdp->wellknown != NULL);
 }
 
 static wStream* arm_build_http_request(rdpArm* arm, const char* method,

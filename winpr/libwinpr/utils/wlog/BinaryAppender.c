@@ -78,10 +78,7 @@ static BOOL WLog_BinaryAppender_Open(wLog* log, wLogAppender* appender)
 
 	binaryAppender->FileDescriptor = winpr_fopen(binaryAppender->FullFileName, "a+");
 
-	if (!binaryAppender->FileDescriptor)
-		return FALSE;
-
-	return TRUE;
+	return binaryAppender->FileDescriptor != NULL;
 }
 
 static BOOL WLog_BinaryAppender_Close(WINPR_ATTR_UNUSED wLog* log, wLogAppender* appender)

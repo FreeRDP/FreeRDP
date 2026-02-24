@@ -1806,7 +1806,7 @@ static BOOL CommStatusErrorEx(WINPR_COMM* pComm, unsigned long int ctl, const ch
                               const char* fkt, size_t line)
 {
 	WINPR_ASSERT(pComm);
-	BOOL rc = pComm->permissive ? TRUE : FALSE;
+	BOOL rc = (pComm->permissive);
 	const DWORD level = rc ? WLOG_DEBUG : WLOG_WARN;
 	char ebuffer[256] = WINPR_C_ARRAY_INIT;
 	const char* str = CommIoCtlToStr(ctl);

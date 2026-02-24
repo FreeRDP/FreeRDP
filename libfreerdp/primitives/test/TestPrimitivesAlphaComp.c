@@ -174,12 +174,9 @@ static int test_alphaComp_speed(void)
 	for (UINT32 i = 0; i < sizeof(src2) / 4; ++i)
 		*ptr++ |= 0xFF000000U;
 
-	if (!speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->alphaComp_argb,
-	                (speed_test_fkt)optimized->alphaComp_argb, src1, 4 * SRC1_WIDTH, src2,
-	                4 * SRC2_WIDTH, dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT))
-		return FALSE;
-
-	return TRUE;
+	return (speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->alphaComp_argb,
+	                   (speed_test_fkt)optimized->alphaComp_argb, src1, 4 * SRC1_WIDTH, src2,
+	                   4 * SRC2_WIDTH, dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT));
 }
 
 int TestPrimitivesAlphaComp(int argc, char* argv[])

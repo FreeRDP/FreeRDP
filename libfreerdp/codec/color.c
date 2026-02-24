@@ -321,7 +321,7 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* WINPR_RESTRICT pDstData, UINT32 Ds
 		for (size_t x = 0; x < nWidth; x++)
 		{
 			BYTE* pDstPixel = &pDstLine[((nXDst + x) * FreeRDPGetBytesPerPixel(DstFormat))];
-			BOOL monoPixel = (*monoBits & monoBit) ? TRUE : FALSE;
+			BOOL monoPixel = (*monoBits & monoBit) != 0;
 
 			if (!(monoBit >>= 1))
 			{
@@ -531,7 +531,7 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(
 	UINT32 xorPixel = 0;
 	UINT32 andPixel = 0;
 
-	vFlip = (xorBpp == 1) ? FALSE : TRUE;
+	vFlip = (xorBpp != 1);
 	andStep = (nWidth + 7) / 8;
 	andStep += (andStep % 2);
 
@@ -621,7 +621,7 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
 	UINT32 xorBytesPerPixel = 0;
 	dstBitsPerPixel = FreeRDPGetBitsPerPixel(DstFormat);
 
-	vFlip = (xorBpp == 1) ? FALSE : TRUE;
+	vFlip = (xorBpp != 1);
 	andStep = (nWidth + 7) / 8;
 	andStep += (andStep % 2);
 
@@ -990,7 +990,7 @@ BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep
 	const UINT32 copyDstWidth = nWidth * dstByte;
 	const UINT32 xSrcOffset = nXSrc * srcByte;
 	const UINT32 xDstOffset = nXDst * dstByte;
-	const BOOL vSrcVFlip = (flags & FREERDP_FLIP_VERTICAL) ? TRUE : FALSE;
+	const BOOL vSrcVFlip = (flags & FREERDP_FLIP_VERTICAL) != 0;
 	int64_t srcVOffset = 0;
 	int64_t srcVMultiplier = 1;
 	int64_t dstVOffset = 0;

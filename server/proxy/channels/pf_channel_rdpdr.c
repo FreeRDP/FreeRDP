@@ -473,7 +473,7 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, unicodeFlag);
-	rdpdr->common.computerNameUnicode = ((unicodeFlag & 1) != 0) ? TRUE : FALSE;
+	rdpdr->common.computerNameUnicode = ((unicodeFlag & 1) != 0);
 
 	Stream_Read_UINT32(s, codePage);
 	WINPR_UNUSED(codePage); /* Field is ignored */
@@ -694,9 +694,7 @@ static BOOL rdpdr_write_printer_capset(wLog* log, pf_channel_common_context* rdp
 
 	const RDPDR_CAPABILITY_HEADER header = { CAP_PRINTER_TYPE, 8,
 		                                     rdpdr->capabilityVersions[CAP_PRINTER_TYPE] };
-	if (rdpdr_write_capset_header(log, s, &header) != CHANNEL_RC_OK)
-		return FALSE;
-	return TRUE;
+	return (rdpdr_write_capset_header(log, s, &header) == CHANNEL_RC_OK);
 }
 
 WINPR_ATTR_NODISCARD
@@ -707,9 +705,7 @@ static BOOL rdpdr_write_port_capset(wLog* log, pf_channel_common_context* rdpdr,
 
 	const RDPDR_CAPABILITY_HEADER header = { CAP_PORT_TYPE, 8,
 		                                     rdpdr->capabilityVersions[CAP_PORT_TYPE] };
-	if (rdpdr_write_capset_header(log, s, &header) != CHANNEL_RC_OK)
-		return FALSE;
-	return TRUE;
+	return (rdpdr_write_capset_header(log, s, &header) == CHANNEL_RC_OK);
 }
 
 WINPR_ATTR_NODISCARD
@@ -720,9 +716,7 @@ static BOOL rdpdr_write_drive_capset(wLog* log, pf_channel_common_context* rdpdr
 
 	const RDPDR_CAPABILITY_HEADER header = { CAP_DRIVE_TYPE, 8,
 		                                     rdpdr->capabilityVersions[CAP_DRIVE_TYPE] };
-	if (rdpdr_write_capset_header(log, s, &header) != CHANNEL_RC_OK)
-		return FALSE;
-	return TRUE;
+	return (rdpdr_write_capset_header(log, s, &header) == CHANNEL_RC_OK);
 }
 
 WINPR_ATTR_NODISCARD
@@ -733,9 +727,7 @@ static BOOL rdpdr_write_smartcard_capset(wLog* log, pf_channel_common_context* r
 
 	const RDPDR_CAPABILITY_HEADER header = { CAP_SMARTCARD_TYPE, 8,
 		                                     rdpdr->capabilityVersions[CAP_SMARTCARD_TYPE] };
-	if (rdpdr_write_capset_header(log, s, &header) != CHANNEL_RC_OK)
-		return FALSE;
-	return TRUE;
+	return (rdpdr_write_capset_header(log, s, &header) == CHANNEL_RC_OK);
 }
 
 WINPR_ATTR_NODISCARD

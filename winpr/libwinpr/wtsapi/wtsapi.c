@@ -690,9 +690,7 @@ BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table)
 	} cnv;
 	cnv.cpv = table;
 	InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, cnv.pv, NULL);
-	if (!g_WtsApi)
-		return FALSE;
-	return TRUE;
+	return g_WtsApi != NULL;
 }
 
 static BOOL LoadAndInitialize(char* library)

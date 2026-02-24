@@ -188,7 +188,7 @@ static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 			}
 		}
 
-		Stream_Free(s, buffer ? FALSE : TRUE);
+		Stream_Free(s, buffer == NULL);
 		free(buffer);
 	}
 
@@ -198,7 +198,7 @@ fail:
 
 	if (s)
 	{
-		Stream_Free(s, buffer ? FALSE : TRUE);
+		Stream_Free(s, buffer == NULL);
 	}
 
 	return FALSE;

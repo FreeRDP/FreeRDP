@@ -715,7 +715,7 @@ static UINT rail_read_activate_order(wStream* s, RAIL_ACTIVATE_ORDER* activate)
 
 	Stream_Read_UINT32(s, activate->windowId); /* WindowId (4 bytes) */
 	Stream_Read_UINT8(s, enabled);             /* Enabled (1 byte) */
-	activate->enabled = (enabled != 0) ? TRUE : FALSE;
+	activate->enabled = (enabled != 0);
 	return CHANNEL_RC_OK;
 }
 
@@ -884,7 +884,7 @@ static UINT rail_read_cloak_order(wStream* s, RAIL_CLOAK* cloak)
 
 	Stream_Read_UINT32(s, cloak->windowId); /* WindowId (4 bytes) */
 	Stream_Read_UINT8(s, cloaked);          /* Cloaked (1 byte) */
-	cloak->cloak = (cloaked != 0) ? TRUE : FALSE;
+	cloak->cloak = (cloaked != 0);
 	return CHANNEL_RC_OK;
 }
 

@@ -404,7 +404,7 @@ RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* const ar
 						goto fail;
 				}
 				if (count > 2)
-					device.drive->automount = (args[2] == NULL) ? TRUE : FALSE;
+					device.drive->automount = (args[2] == NULL);
 				break;
 			default:
 				goto fail;
@@ -1089,34 +1089,22 @@ void freerdp_performance_flags_split(rdpSettings* settings)
 {
 	freerdp_settings_set_bool(settings, FreeRDP_AllowFontSmoothing,
 	                          (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
-	                           PERF_ENABLE_FONT_SMOOTHING)
-	                              ? TRUE
-	                              : FALSE);
+	                           PERF_ENABLE_FONT_SMOOTHING) != 0);
 	freerdp_settings_set_bool(settings, FreeRDP_AllowDesktopComposition,
 	                          (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
-	                           PERF_ENABLE_DESKTOP_COMPOSITION)
-	                              ? TRUE
-	                              : FALSE);
-	freerdp_settings_set_bool(
-	    settings, FreeRDP_DisableWallpaper,
-	    (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) & PERF_DISABLE_WALLPAPER)
-	        ? TRUE
-	        : FALSE);
+	                           PERF_ENABLE_DESKTOP_COMPOSITION) != 0);
+	freerdp_settings_set_bool(settings, FreeRDP_DisableWallpaper,
+	                          (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
+	                           PERF_DISABLE_WALLPAPER) != 0);
 	freerdp_settings_set_bool(settings, FreeRDP_DisableFullWindowDrag,
 	                          (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
-	                           PERF_DISABLE_FULLWINDOWDRAG)
-	                              ? TRUE
-	                              : FALSE);
+	                           PERF_DISABLE_FULLWINDOWDRAG) != 0);
 	freerdp_settings_set_bool(settings, FreeRDP_DisableMenuAnims,
 	                          (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
-	                           PERF_DISABLE_MENUANIMATIONS)
-	                              ? TRUE
-	                              : FALSE);
-	freerdp_settings_set_bool(
-	    settings, FreeRDP_DisableThemes,
-	    (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) & PERF_DISABLE_THEMING)
-	        ? TRUE
-	        : FALSE);
+	                           PERF_DISABLE_MENUANIMATIONS) != 0);
+	freerdp_settings_set_bool(settings, FreeRDP_DisableThemes,
+	                          (freerdp_settings_get_uint32(settings, FreeRDP_PerformanceFlags) &
+	                           PERF_DISABLE_THEMING) != 0);
 }
 
 BOOL freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsageMethod)

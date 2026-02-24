@@ -277,10 +277,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	nego_set_RCG_supported(rdp->nego, settings->RemoteCredentialGuard);
 	nego_set_restricted_admin_mode_supported(rdp->nego, settings->RestrictedAdminModeSupported);
 
-	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
-		return FALSE;
-
-	return TRUE;
+	return (rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL));
 }
 
 #if defined(WITH_FREERDP_DEPRECATED)
@@ -330,10 +327,7 @@ static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
 	rdp = peer->context->rdp;
 	status = rdp_check_fds(rdp);
 
-	if (status < 0)
-		return FALSE;
-
-	return TRUE;
+	return (status >= 0);
 }
 
 static state_run_t peer_recv_data_pdu(freerdp_peer* client, wStream* s,
@@ -829,10 +823,10 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 			{
 				const UINT32 SelectedProtocol = nego_get_selected_protocol(rdp->nego);
 
-				settings->RdstlsSecurity = (SelectedProtocol & PROTOCOL_RDSTLS) ? TRUE : FALSE;
-				settings->NlaSecurity = (SelectedProtocol & PROTOCOL_HYBRID) ? TRUE : FALSE;
-				settings->TlsSecurity = (SelectedProtocol & PROTOCOL_SSL) ? TRUE : FALSE;
-				settings->RdpSecurity = (SelectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE;
+				settings->RdstlsSecurity = (SelectedProtocol & PROTOCOL_RDSTLS) != 0;
+				settings->NlaSecurity = (SelectedProtocol & PROTOCOL_HYBRID) != 0;
+				settings->TlsSecurity = (SelectedProtocol & PROTOCOL_SSL) != 0;
+				settings->RdpSecurity = (SelectedProtocol == PROTOCOL_RDP) != 0;
 
 				client->authenticated = FALSE;
 				if (SelectedProtocol & PROTOCOL_HYBRID)

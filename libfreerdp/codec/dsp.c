@@ -290,7 +290,7 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	Stream_SetLength(context->common.resample, odone * rbytes);
 	*data = Stream_Buffer(context->common.resample);
 	*length = Stream_Length(context->common.resample);
-	return (error == 0) ? TRUE : FALSE;
+	return (error == 0) != 0;
 #else
 	WLog_ERR(TAG, "Missing resample support, recompile -DWITH_SOXR=ON or -DWITH_DSP_FFMPEG=ON");
 	return FALSE;
@@ -893,7 +893,7 @@ static const INT32 ms_adpcm_coeffs2[7] = { 0, -256, 0, 64, 0, -208, -232 };
 static inline INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, BYTE sample,
                                                        size_t channel)
 {
-	const INT8 nibble = (sample & 0x08) ? (INT8)(sample - 16) : (INT8)sample;
+	const INT8 nibble = (INT8)((sample & 0x08) ? (sample - 16) : sample);
 	INT32 presample =
 	    ((adpcm->ms.sample1[channel] * ms_adpcm_coeffs1[adpcm->ms.predictor[channel]]) +
 	     (adpcm->ms.sample2[channel] * ms_adpcm_coeffs2[adpcm->ms.predictor[channel]])) /

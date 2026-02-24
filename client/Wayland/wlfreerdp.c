@@ -465,10 +465,7 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 static BOOL handle_window_events(freerdp* instance)
 {
-	if (!instance)
-		return FALSE;
-
-	return TRUE;
+	return instance != NULL;
 }
 
 static int wlfreerdp_run(freerdp* instance)
@@ -554,10 +551,7 @@ static BOOL wlf_client_global_init(void)
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	(void)setlocale(LC_ALL, "");
 
-	if (freerdp_handle_signals() != 0)
-		return FALSE;
-
-	return TRUE;
+	return (freerdp_handle_signals() == 0);
 }
 
 static void wlf_client_global_uninit(void)

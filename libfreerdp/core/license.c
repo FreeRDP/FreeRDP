@@ -465,12 +465,9 @@ static BOOL license_check_stream_capacity(wLog* log, wStream* s, size_t expect, 
 {
 	WINPR_ASSERT(where);
 
-	if (!Stream_CheckAndLogRequiredCapacityWLogEx(log, WLOG_WARN, s, expect, 1,
-	                                              "%s(%s:%" PRIuz ") %s", __func__, __FILE__,
-	                                              (size_t)__LINE__, where))
-		return FALSE;
-
-	return TRUE;
+	return (Stream_CheckAndLogRequiredCapacityWLogEx(log, WLOG_WARN, s, expect, 1,
+	                                                 "%s(%s:%" PRIuz ") %s", __func__, __FILE__,
+	                                                 (size_t)__LINE__, where));
 }
 
 static BOOL computeCalHash(wLog* log, const char* hostname, char* hashStr, size_t len)
@@ -1081,6 +1078,8 @@ static BOOL license_generate_keys(rdpLicense* license)
 	    sizeof(license->ClientRandom), license->ServerRandom, sizeof(license->ServerRandom),
 	    license->LicensingEncryptionKey,
 	    sizeof(license->LicensingEncryptionKey)); /* LicensingEncryptionKey */
+
+	WLog_Print(license->log, WLOG_TRACE, "license keys %s generated", ret ? "successfully" : "NOT");
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_Print(license->log, WLOG_DEBUG, "ClientRandom:");
@@ -2025,6 +2024,8 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	                                   license->PlatformChallenge, macData))
 		return FALSE;
 
+	WLog_Print(license->log, WLOG_TRACE, "platform challenge read");
+
 #ifdef WITH_DEBUG_LICENSE
 	WLog_Print(license->log, WLOG_DEBUG, "EncryptedPlatformChallenge:");
 	winpr_HexLogDump(license->log, WLOG_DEBUG, license->EncryptedPlatformChallenge->data,
@@ -2357,6 +2358,8 @@ BOOL license_write_new_license_request_packet(const rdpLicense* license, wStream
 	{
 		return FALSE;
 	}
+
+	WLog_Print(license->log, WLOG_TRACE, "new license written");
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_Print(license->log, WLOG_DEBUG, "PreferredKeyExchangeAlg: 0x%08" PRIX32 "",

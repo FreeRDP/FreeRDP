@@ -351,10 +351,7 @@ static BOOL rdg_write_chunked(BIO* bio, wStream* sPacket)
 	status = BIO_write(bio, Stream_Buffer(sChunk), (int)len);
 	Stream_Free(sChunk, TRUE);
 
-	if (status != (SSIZE_T)len)
-		return FALSE;
-
-	return TRUE;
+	return (status == (SSIZE_T)len);
 }
 
 static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
@@ -780,10 +777,7 @@ static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* r
 		free(authTokenData);
 
 	rc = credssp_auth_authenticate(auth);
-	if (rc < 0)
-		return FALSE;
-
-	return TRUE;
+	return (rc >= 0);
 }
 
 static BOOL rdg_skip_seed_payload(rdpContext* context, rdpTls* tls, size_t lastResponseLength,
@@ -1305,10 +1299,7 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 	credssp_auth_set_flags(rdg->auth, ISC_REQ_CONFIDENTIALITY | ISC_REQ_MUTUAL_AUTH);
 
 	rc = credssp_auth_authenticate(rdg->auth);
-	if (rc < 0)
-		return FALSE;
-
-	return TRUE;
+	return (rc >= 0);
 }
 
 static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
@@ -1685,10 +1676,7 @@ BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback)
 
 	status = rdg_tunnel_connect(rdg);
 
-	if (!status)
-		return FALSE;
-
-	return TRUE;
+	return (status);
 }
 
 static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isize)
@@ -1809,7 +1797,7 @@ static BOOL rdg_process_close_packet(rdpRdg* rdg, wStream* s)
 	status = rdg_write_packet(rdg, sClose);
 	Stream_Free(sClose, TRUE);
 
-	return (status < 0 ? FALSE : TRUE);
+	return ((status >= 0));
 }
 
 static BOOL rdg_process_keep_alive_packet(rdpRdg* rdg)
@@ -1830,7 +1818,7 @@ static BOOL rdg_process_keep_alive_packet(rdpRdg* rdg)
 	status = rdg_write_packet(rdg, sKeepAlive);
 	Stream_Free(sKeepAlive, TRUE);
 
-	return (status < 0 ? FALSE : TRUE);
+	return ((status >= 0));
 }
 
 static BOOL rdg_process_service_message(rdpRdg* rdg, wStream* s)

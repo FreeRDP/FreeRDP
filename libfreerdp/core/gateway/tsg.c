@@ -702,10 +702,7 @@ static BOOL tsg_ndr_read_quarenc_response(wLog* log, wStream* s, UINT32* index,
 		return FALSE;
 	Stream_Read(s, &quarenc->nonce, sizeof(quarenc->nonce));
 
-	if (!tsg_ndr_pointer_read(log, s, index, &VersionCapsPtr, TRUE))
-		return FALSE;
-
-	return TRUE;
+	return (tsg_ndr_pointer_read(log, s, index, &VersionCapsPtr, TRUE));
 }
 
 static BOOL tsg_ndr_read_quarenc_data(wLog* log, wStream* s, UINT32* index,

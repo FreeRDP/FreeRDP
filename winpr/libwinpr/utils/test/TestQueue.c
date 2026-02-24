@@ -113,9 +113,7 @@ static bool check_size(wQueue* queue, size_t expected)
 	WINPR_ASSERT(queue);
 	const size_t count = Queue_Count(queue);
 	printf("queue count: %" PRIuz "\n", count);
-	if (count != expected)
-		return false;
-	return true;
+	return (count == expected);
 }
 
 static bool enqueue(wQueue* queue, size_t val)
@@ -130,9 +128,7 @@ static bool dequeue(wQueue* queue, size_t expected)
 	WINPR_ASSERT(queue);
 	const void* pexpect = (void*)(23 + expected);
 	void* ptr = Queue_Dequeue(queue);
-	if (pexpect != ptr)
-		return false;
-	return true;
+	return (pexpect == ptr);
 }
 
 static bool legacy_test(wQueue* queue)
@@ -214,9 +210,7 @@ static bool legacy_test(wQueue* queue)
 
 	Queue_Clear(queue);
 
-	if (!check_size(queue, 0))
-		return false;
-	return true;
+	return check_size(queue, 0);
 }
 
 int TestQueue(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])

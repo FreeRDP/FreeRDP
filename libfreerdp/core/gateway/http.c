@@ -177,10 +177,7 @@ BOOL http_context_set_method(HttpContext* context, const char* Method)
 	free(context->Method);
 	context->Method = _strdup(Method);
 
-	if (!context->Method)
-		return FALSE;
-
-	return TRUE;
+	return (context->Method != NULL);
 }
 
 BOOL http_request_set_content_type(HttpRequest* request, const char* ContentType)
@@ -207,10 +204,7 @@ BOOL http_context_set_uri(HttpContext* context, const char* URI)
 	free(context->URI);
 	context->URI = _strdup(URI);
 
-	if (!context->URI)
-		return FALSE;
-
-	return TRUE;
+	return (context->URI != NULL);
 }
 
 BOOL http_context_set_user_agent(HttpContext* context, const char* UserAgent)
@@ -261,10 +255,7 @@ BOOL http_context_set_connection(HttpContext* context, const char* Connection)
 	free(context->Connection);
 	context->Connection = _strdup(Connection);
 
-	if (!context->Connection)
-		return FALSE;
-
-	return TRUE;
+	return (context->Connection != NULL);
 }
 
 WINPR_ATTR_FORMAT_ARG(2, 0)
@@ -439,10 +430,7 @@ BOOL http_request_set_method(HttpRequest* request, const char* Method)
 	free(request->Method);
 	request->Method = _strdup(Method);
 
-	if (!request->Method)
-		return FALSE;
-
-	return TRUE;
+	return (request->Method != NULL);
 }
 
 BOOL http_request_set_uri(HttpRequest* request, const char* URI)
@@ -453,10 +441,7 @@ BOOL http_request_set_uri(HttpRequest* request, const char* URI)
 	free(request->URI);
 	request->URI = _strdup(URI);
 
-	if (!request->URI)
-		return FALSE;
-
-	return TRUE;
+	return (request->URI != NULL);
 }
 
 BOOL http_request_set_auth_scheme(HttpRequest* request, const char* AuthScheme)
@@ -467,10 +452,7 @@ BOOL http_request_set_auth_scheme(HttpRequest* request, const char* AuthScheme)
 	free(request->AuthScheme);
 	request->AuthScheme = _strdup(AuthScheme);
 
-	if (!request->AuthScheme)
-		return FALSE;
-
-	return TRUE;
+	return (request->AuthScheme != NULL);
 }
 
 BOOL http_request_set_auth_param(HttpRequest* request, const char* AuthParam)
@@ -481,10 +463,7 @@ BOOL http_request_set_auth_param(HttpRequest* request, const char* AuthParam)
 	free(request->AuthParam);
 	request->AuthParam = _strdup(AuthParam);
 
-	if (!request->AuthParam)
-		return FALSE;
-
-	return TRUE;
+	return (request->AuthParam != NULL);
 }
 
 BOOL http_request_set_transfer_encoding(HttpRequest* request, TRANSFER_ENCODING TransferEncoding)

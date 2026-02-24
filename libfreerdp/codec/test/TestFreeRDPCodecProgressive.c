@@ -1016,9 +1016,7 @@ static BOOL diff(BYTE a, BYTE b)
 {
 	BYTE big = MAX(a, b);
 	BYTE little = MIN(a, b);
-	if (big - little <= 0x25)
-		return TRUE;
-	return FALSE;
+	return (big - little <= 0x25);
 }
 
 static BOOL colordiff(UINT32 format, UINT32 a, UINT32 b)
@@ -1033,9 +1031,7 @@ static BOOL colordiff(UINT32 format, UINT32 a, UINT32 b)
 	BYTE ba = 0;
 	FreeRDPSplitColor(a, format, &ar, &ag, &ab, &aa, NULL);
 	FreeRDPSplitColor(b, format, &br, &bg, &bb, &ba, NULL);
-	if (!diff(aa, ba) || !diff(ar, br) || !diff(ag, bg) || !diff(ab, bb))
-		return FALSE;
-	return TRUE;
+	return !(!diff(aa, ba) || !diff(ar, br) || !diff(ag, bg) || !diff(ab, bb));
 }
 
 static BOOL test_encode_decode(const char* path)

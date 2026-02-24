@@ -132,10 +132,8 @@ static BOOL freerdp_path_valid(const char* path, BOOL* special)
 	if (!path)
 		return FALSE;
 
-	isSpecial =
-	    (option_equals("*", path) || option_equals(DynamicDrives, path) || option_equals("%", path))
-	        ? TRUE
-	        : FALSE;
+	isSpecial = (option_equals("*", path) || option_equals(DynamicDrives, path) ||
+	             option_equals("%", path));
 	if (!isSpecial)
 		isPath = winpr_PathFileExists(path);
 
@@ -712,9 +710,7 @@ static BOOL option_is_incident_file(const char* option)
 {
 	WINPR_ASSERT(option);
 
-	if (option_ends_with(option, ".msrcIncident"))
-		return TRUE;
-	return FALSE;
+	return (option_ends_with(option, ".msrcIncident"));
 }
 
 static int freerdp_client_command_line_pre_filter(void* context, int index, int argc, LPSTR* argv)
@@ -1043,7 +1039,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 {
 	rdpSettings* settings = (rdpSettings*)context;
 	int status = CHANNEL_RC_OK;
-	BOOL enable = arg->Value ? TRUE : FALSE;
+	BOOL enable = (arg->Value != NULL);
 
 	CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "a")
 	{
@@ -4708,7 +4704,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 
 	do
 	{
-		BOOL enable = arg->Value ? TRUE : FALSE;
+		BOOL enable = (arg->Value != NULL);
 
 		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 			continue;

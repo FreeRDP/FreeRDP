@@ -287,10 +287,7 @@ static BOOL does_server_support_clipdata_locking(CliprdrFileContext* file_contex
 {
 	WINPR_ASSERT(file_context);
 
-	if (cliprdr_file_context_remote_get_flags(file_context) & CB_CAN_LOCK_CLIPDATA)
-		return TRUE;
-
-	return FALSE;
+	return (cliprdr_file_context_remote_get_flags(file_context) & CB_CAN_LOCK_CLIPDATA) != 0;
 }
 
 static UINT32 get_next_free_clip_data_id(CliprdrFileContext* file_context)
@@ -1641,11 +1638,10 @@ BOOL cliprdr_file_context_init(CliprdrFileContext* file, CliprdrClientContext* c
 	cliprdr->ServerFileContentsResponse = cliprdr_file_context_server_file_contents_response;
 
 	CliprdrFuseFile* root_dir = fuse_file_new_root(file);
-	if (!root_dir)
-		return FALSE;
-#endif
-
+	return root_dir != NULL;
+#else
 	return TRUE;
+#endif
 }
 
 #if defined(WITH_FUSE)
@@ -2220,7 +2216,7 @@ static BOOL is_directory(const char* path)
 	if (!status)
 		return FALSE;
 
-	return (fileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? TRUE : FALSE;
+	return (fileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
 static BOOL add_directory(CliprdrLocalStream* stream, const char* path)

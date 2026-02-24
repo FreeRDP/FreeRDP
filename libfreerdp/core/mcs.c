@@ -907,7 +907,7 @@ out:
 	Stream_Free(s, TRUE);
 	Stream_Free(gcc_CCrq, TRUE);
 	Stream_Free(client_data, TRUE);
-	return (status < 0 ? FALSE : TRUE);
+	return ((status >= 0));
 }
 
 /**
@@ -1026,7 +1026,7 @@ out:
 	Stream_Free(s, TRUE);
 	Stream_Free(gcc_CCrsp, TRUE);
 	Stream_Free(server_data, TRUE);
-	return (status < 0) ? FALSE : TRUE;
+	return (status >= 0);
 }
 
 /**
@@ -1091,7 +1091,7 @@ BOOL mcs_send_erect_domain_request(rdpMcs* mcs)
 	status = transport_write(transport, s);
 out:
 	Stream_Free(s, TRUE);
-	return (status < 0) ? FALSE : TRUE;
+	return (status >= 0);
 }
 
 /**
@@ -1145,7 +1145,7 @@ BOOL mcs_send_attach_user_request(rdpMcs* mcs)
 
 fail:
 	Stream_Free(s, TRUE);
-	return (status < 0) ? FALSE : TRUE;
+	return (status >= 0);
 }
 
 /**
@@ -1206,7 +1206,7 @@ BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
 	status = transport_write(transport, s);
 out:
 	Stream_Free(s, TRUE);
-	return (status < 0) ? FALSE : TRUE;
+	return (status >= 0);
 }
 
 /**
@@ -1281,7 +1281,7 @@ BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId)
 
 out:
 	Stream_Free(s, TRUE);
-	return (status < 0) ? FALSE : TRUE;
+	return (status >= 0);
 }
 
 /**
@@ -1355,7 +1355,7 @@ BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channelId)
 
 fail:
 	Stream_Free(s, TRUE);
-	return (status < 0) ? FALSE : TRUE;
+	return (status >= 0);
 }
 
 /**
@@ -1441,7 +1441,7 @@ fail:
 	WLog_Print(mcs->log, WLOG_DEBUG, "sending DisconnectProviderUltimatum(%s)",
 	           freerdp_disconnect_reason_string((int)reason));
 	Stream_Free(s, TRUE);
-	return (status < 0) ? FALSE : TRUE;
+	return (status >= 0);
 }
 
 BOOL mcs_client_begin(rdpMcs* mcs)

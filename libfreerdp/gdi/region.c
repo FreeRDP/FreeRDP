@@ -548,13 +548,8 @@ inline BOOL gdi_EqualRgn(const GDI_RGN* hSrcRgn1, const GDI_RGN* hSrcRgn2)
 {
 	WINPR_ASSERT(hSrcRgn1);
 	WINPR_ASSERT(hSrcRgn2);
-	if ((hSrcRgn1->x == hSrcRgn2->x) && (hSrcRgn1->y == hSrcRgn2->y) &&
-	    (hSrcRgn1->w == hSrcRgn2->w) && (hSrcRgn1->h == hSrcRgn2->h))
-	{
-		return TRUE;
-	}
-
-	return FALSE;
+	return ((hSrcRgn1->x == hSrcRgn2->x) && (hSrcRgn1->y == hSrcRgn2->y) &&
+	        (hSrcRgn1->w == hSrcRgn2->w) && (hSrcRgn1->h == hSrcRgn2->h));
 }
 
 /**

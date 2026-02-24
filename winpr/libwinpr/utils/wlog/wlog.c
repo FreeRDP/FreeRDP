@@ -611,7 +611,7 @@ BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 		logLevel = WLOG_OFF;
 
 	log->Level = logLevel;
-	log->inherit = (logLevel == WLOG_LEVEL_INHERIT) ? TRUE : FALSE;
+	log->inherit = (logLevel == WLOG_LEVEL_INHERIT);
 
 	for (DWORD x = 0; x < log->ChildrenCount; x++)
 	{

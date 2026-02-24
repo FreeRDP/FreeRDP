@@ -523,7 +523,7 @@ SSIZE_T ArrayList_LastIndexOf(wArrayList* arrayList, const void* obj, SSIZE_T st
 
 static BOOL ArrayList_DefaultCompare(const void* objA, const void* objB)
 {
-	return objA == objB ? TRUE : FALSE;
+	return (objA == objB);
 }
 
 wObject* ArrayList_Object(wArrayList* arrayList)

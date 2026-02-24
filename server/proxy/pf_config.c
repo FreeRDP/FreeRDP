@@ -203,10 +203,7 @@ static BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* k
 
 	num_value = IniFile_GetKeyValueInt(ini, section, key);
 
-	if (num_value != 0)
-		return TRUE;
-
-	return FALSE;
+	return (num_value != 0);
 }
 
 WINPR_ATTR_NODISCARD

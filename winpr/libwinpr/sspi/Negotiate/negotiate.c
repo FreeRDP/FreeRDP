@@ -353,14 +353,14 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BO
 				DWORD dwValue = 0;
 
 				if (negotiate_get_dword(hKey, PACKAGE_NAME_KERBEROS, &dwValue))
-					*kerberos = (dwValue != 0) ? TRUE : FALSE;
+					*kerberos = (dwValue != 0);
 
 				if (negotiate_get_dword(hKey, PACKAGE_NAME_KERBEROS_U2U, &dwValue))
-					*u2u = (dwValue != 0) ? TRUE : FALSE;
+					*u2u = (dwValue != 0);
 
 #if !defined(WITH_KRB5_NO_NTLM_FALLBACK)
 		if (negotiate_get_dword(hKey, PACKAGE_NAME_NTLM, &dwValue))
-			*ntlm = (dwValue != 0) ? TRUE : FALSE;
+			*ntlm = (dwValue != 0);
 #endif
 
 		RegCloseKey(hKey);

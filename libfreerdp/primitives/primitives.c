@@ -294,10 +294,7 @@ static BOOL CALLBACK primitives_init_gpu_cb(PINIT_ONCE once, PVOID param, PVOID*
 	WINPR_UNUSED(param);
 	WINPR_UNUSED(context);
 
-	if (!primitives_init_opencl(&pPrimitivesGpu))
-		return FALSE;
-
-	return TRUE;
+	return primitives_init_opencl(&pPrimitivesGpu);
 }
 #endif
 
@@ -308,10 +305,7 @@ static BOOL CALLBACK primitives_init_cpu_cb(PINIT_ONCE once, PVOID param, PVOID*
 	WINPR_UNUSED(param);
 	WINPR_UNUSED(context);
 
-	if (!primitives_init_optimized(&pPrimitivesCpu))
-		return FALSE;
-
-	return TRUE;
+	return (primitives_init_optimized(&pPrimitivesCpu));
 }
 #endif
 

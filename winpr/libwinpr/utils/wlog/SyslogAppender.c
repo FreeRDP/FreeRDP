@@ -51,18 +51,12 @@ static int getSyslogLevel(DWORD level)
 
 static BOOL WLog_SyslogAppender_Open(wLog* log, wLogAppender* appender)
 {
-	if (!log || !appender)
-		return FALSE;
-
-	return TRUE;
+	return !(!log || !appender);
 }
 
 static BOOL WLog_SyslogAppender_Close(wLog* log, wLogAppender* appender)
 {
-	if (!log || !appender)
-		return FALSE;
-
-	return TRUE;
+	return !(!log || !appender);
 }
 
 static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogAppender* appender,

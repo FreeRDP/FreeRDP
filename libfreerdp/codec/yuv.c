@@ -90,11 +90,8 @@ static inline BOOL avc420_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
 	roi.width = WINPR_ASSERTING_INT_CAST(uint32_t, width);
 	roi.height = WINPR_ASSERTING_INT_CAST(uint32_t, height);
 
-	if (prims->YUV420ToRGB_8u_P3AC4R(pYUVPoint, iStride, pDstPoint, nDstStep, DstFormat, &roi) !=
-	    PRIMITIVES_SUCCESS)
-		return FALSE;
-
-	return TRUE;
+	return (prims->YUV420ToRGB_8u_P3AC4R(pYUVPoint, iStride, pDstPoint, nDstStep, DstFormat,
+	                                     &roi) == PRIMITIVES_SUCCESS);
 }
 
 static inline BOOL avc444_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
@@ -123,11 +120,8 @@ static inline BOOL avc444_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
 	roi.width = WINPR_ASSERTING_INT_CAST(uint32_t, width);
 	roi.height = WINPR_ASSERTING_INT_CAST(uint32_t, height);
 
-	if (prims->YUV444ToRGB_8u_P3AC4R(pYUVPoint, iStride, pDstPoint, nDstStep, DstFormat, &roi) !=
-	    PRIMITIVES_SUCCESS)
-		return FALSE;
-
-	return TRUE;
+	return (prims->YUV444ToRGB_8u_P3AC4R(pYUVPoint, iStride, pDstPoint, nDstStep, DstFormat,
+	                                     &roi) == PRIMITIVES_SUCCESS);
 }
 
 static void CALLBACK yuv420_process_work_callback(PTP_CALLBACK_INSTANCE instance, void* context,

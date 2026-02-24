@@ -342,7 +342,7 @@ static BOOL xf_cliprdr_is_raw_transfer_available(xfClipboard* clipboard)
 	if (result != Success)
 		return FALSE;
 
-	return is_enabled ? TRUE : FALSE;
+	return is_enabled != 0;
 }
 
 static BOOL xf_cliprdr_formats_equal(const CLIPRDR_FORMAT* server, const xfCliprdrFormat* client)
