@@ -1358,8 +1358,12 @@ static BOOL wfreerdp_client_global_init(void)
 	WSADATA wsaData;
 
 	WSAStartup(0x101, &wsaData);
+	if (freerdp_handle_signals() != 0)
+		return FALSE;
 
-	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
+	if (freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0) !=
+	    CHANNEL_RC_OK)
+		return FALSE;
 
 	return TRUE;
 }
