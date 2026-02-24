@@ -40,7 +40,7 @@ typedef struct
 } WINPR_MD4_CTX;
 
 extern void winpr_MD4_Init(WINPR_MD4_CTX* ctx);
-extern void winpr_MD4_Update(WINPR_MD4_CTX* ctx, const void* data, unsigned long size);
+extern void winpr_MD4_Update(WINPR_MD4_CTX* ctx, const void* data, size_t size);
 extern void winpr_MD4_Final(unsigned char* result, WINPR_MD4_CTX* ctx);
 
 #endif
