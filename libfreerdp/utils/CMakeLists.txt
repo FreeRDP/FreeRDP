@@ -27,8 +27,8 @@ set(${MODULE_PREFIX}_SRCS
     pcap.c
     profiler.c
     ringbuffer.c
+    platform_signal.h
     signal.c
-    signal.h
     string.c
     gfx.c
     drdynvc.c
