@@ -171,7 +171,7 @@ extern "C"
 		WINPR_ATTR_NODISCARD rdpContext* (*GetRdpContext)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
 	};
 
-	typedef WINPR_ATTR_NODISCARD UINT(VCAPITYPE* PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS*);
+	typedef UINT(VCAPITYPE* PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS*);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API void* get_callback_by_name(const char* name, void** context);

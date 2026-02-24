@@ -153,8 +153,7 @@ extern "C"
 		UINT64 reserved[128 - 4]; /* 4-127 reserved fields */
 	};
 
-	typedef WINPR_ATTR_NODISCARD BOOL (*proxyModuleEntryPoint)(proxyPluginsManager* plugins_manager,
-	                                                           void* userdata);
+	typedef BOOL (*proxyModuleEntryPoint)(proxyPluginsManager* plugins_manager, void* userdata);
 
 /* filter events parameters */
 #define WINPR_PACK_PUSH

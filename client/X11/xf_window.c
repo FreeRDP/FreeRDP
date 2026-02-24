@@ -278,7 +278,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	window->decorations = xfc->decorations;
 	/* show/hide decorations (e.g. title bar) as guided by xfc->decorations */
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
-	DEBUG_X11(TAG, "X window decoration set to %d", (int)window->decorations);
+	DEBUG_X11("X window decoration set to %d", (int)window->decorations);
 	xf_floatbar_toggle_fullscreen(xfc->window->floatbar, fullscreen);
 
 	if (fullscreen)
@@ -435,7 +435,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 			width = xfc->vscreen.area.right - xfc->vscreen.area.left + 1;
 			height = xfc->vscreen.area.bottom - xfc->vscreen.area.top + 1;
-			DEBUG_X11("X window move and resize %dx%d@%dx%d", startX, startY, width, height);
+			DEBUG_X11("X window move and resize %dx%d@%" PRIu32 "x%" PRIu32 "", startX, startY,
+			          width, height);
 			xf_ResizeDesktopWindow(xfc, window, WINPR_ASSERTING_INT_CAST(int, width),
 			                       WINPR_ASSERTING_INT_CAST(int, height));
 			LogDynAndXMoveWindow(xfc->log, xfc->display, window->handle, startX, startY);

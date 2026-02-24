@@ -120,22 +120,22 @@ extern "C"
 		ALIGN64 wLog* log;                      /* 11 */
 		UINT64 paddingA[16 - 12];               /* 12 */
 
-		ALIGN64 WINPR_ATTR_NODISCARD pRTTMeasureRequest RTTMeasureRequest;             /* 16 */
-		ALIGN64 WINPR_ATTR_NODISCARD pRTTMeasureResponse RTTMeasureResponse;           /* 17 */
-		ALIGN64 WINPR_ATTR_NODISCARD pBandwidthMeasureStart BandwidthMeasureStart;     /* 18 */
-		ALIGN64 WINPR_ATTR_NODISCARD pBandwidthMeasurePayload BandwidthMeasurePayload; /* 19 */
-		ALIGN64 WINPR_ATTR_NODISCARD pBandwidthMeasureStop BandwidthMeasureStop;       /* 20 */
-		ALIGN64 WINPR_ATTR_NODISCARD pBandwidthMeasureResults BandwidthMeasureResults; /* 21 */
-		ALIGN64 WINPR_ATTR_NODISCARD pNetworkCharacteristicsResult
+		WINPR_ATTR_NODISCARD ALIGN64 pRTTMeasureRequest RTTMeasureRequest;             /* 16 */
+		WINPR_ATTR_NODISCARD ALIGN64 pRTTMeasureResponse RTTMeasureResponse;           /* 17 */
+		WINPR_ATTR_NODISCARD ALIGN64 pBandwidthMeasureStart BandwidthMeasureStart;     /* 18 */
+		WINPR_ATTR_NODISCARD ALIGN64 pBandwidthMeasurePayload BandwidthMeasurePayload; /* 19 */
+		WINPR_ATTR_NODISCARD ALIGN64 pBandwidthMeasureStop BandwidthMeasureStop;       /* 20 */
+		WINPR_ATTR_NODISCARD ALIGN64 pBandwidthMeasureResults BandwidthMeasureResults; /* 21 */
+		WINPR_ATTR_NODISCARD ALIGN64 pNetworkCharacteristicsResult
 		    NetworkCharacteristicsResult; /* 22 */
-		ALIGN64 WINPR_ATTR_NODISCARD pClientBandwidthMeasureResult
+		WINPR_ATTR_NODISCARD ALIGN64 pClientBandwidthMeasureResult
 		    ClientBandwidthMeasureResult; /* 23 */
-		ALIGN64 WINPR_ATTR_NODISCARD pNetworkCharacteristicsSync
+		WINPR_ATTR_NODISCARD ALIGN64 pNetworkCharacteristicsSync
 		    NetworkCharacteristicsSync;                                                     /* 24 */
-		ALIGN64 WINPR_ATTR_NODISCARD pRxTxReceived RequestReceived;                         /* 25 */
-		ALIGN64 WINPR_ATTR_NODISCARD pRxTxReceived ResponseReceived;                        /* 26 */
-		ALIGN64 WINPR_ATTR_NODISCARD pOnConnectTimeAutoDetect OnConnectTimeAutoDetectBegin; /* 27 */
-		ALIGN64 WINPR_ATTR_NODISCARD pOnConnectTimeAutoDetect
+		WINPR_ATTR_NODISCARD ALIGN64 pRxTxReceived RequestReceived;                         /* 25 */
+		WINPR_ATTR_NODISCARD ALIGN64 pRxTxReceived ResponseReceived;                        /* 26 */
+		WINPR_ATTR_NODISCARD ALIGN64 pOnConnectTimeAutoDetect OnConnectTimeAutoDetectBegin; /* 27 */
+		WINPR_ATTR_NODISCARD ALIGN64 pOnConnectTimeAutoDetect
 		    OnConnectTimeAutoDetectProgress;                                /* 28 */
 		UINT64 paddingB[32 - 29];                                           /* 29 */
 	};

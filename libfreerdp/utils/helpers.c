@@ -88,7 +88,8 @@ static BOOL CALLBACK init_app_details(WINPR_ATTR_UNUSED PINIT_ONCE once,
 	return TRUE;
 }
 
-static WINPR_ATTR_NODISCARD BOOL initializeApplicationDetails(void)
+WINPR_ATTR_NODISCARD
+static BOOL initializeApplicationDetails(void)
 {
 	InitOnceExecuteOnce(&s_freerdp_app_details_once, init_app_details, NULL, NULL);
 	return TRUE;
