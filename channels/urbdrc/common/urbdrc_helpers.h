@@ -30,18 +30,27 @@ extern "C"
 
 #include <winpr/wlog.h>
 #include <winpr/stream.h>
+#include <freerdp/api.h>
 
-	const char* urb_function_string(UINT16 urb);
-	const char* mask_to_string(UINT32 mask);
-	const char* interface_to_string(UINT32 id);
-	const char* call_to_string(BOOL client, UINT32 interfaceNr, UINT32 functionId);
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL const char* urb_function_string(UINT16 urb);
 
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL const char* mask_to_string(UINT32 mask);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL const char* interface_to_string(UINT32 id);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL const char* call_to_string(BOOL client, UINT32 interfaceNr,
+	                                                              UINT32 functionId);
+
+	FREERDP_LOCAL
 	void urbdrc_dump_message(wLog* log, BOOL client, BOOL write, wStream* s);
 
-	wStream* create_shared_message_header_with_functionid(UINT32 InterfaceId, UINT32 MessageId,
-	                                                      UINT32 FunctionId, size_t OutputSize);
-	BOOL write_shared_message_header_with_functionid(wStream* s, UINT32 InterfaceId,
-	                                                 UINT32 MessageId, UINT32 FunctionId);
+	WINPR_ATTR_MALLOC(Stream_Free, 1)
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL wStream*
+	create_shared_message_header_with_functionid(UINT32 InterfaceId, UINT32 MessageId,
+	                                             UINT32 FunctionId, size_t OutputSize);
+
+	WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL write_shared_message_header_with_functionid(
+	    wStream* s, UINT32 InterfaceId, UINT32 MessageId, UINT32 FunctionId);
 
 #ifdef __cplusplus
 }

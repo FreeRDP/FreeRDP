@@ -496,7 +496,10 @@ static UINT send_urb_select_configuration_result(GENERIC_CHANNEL_CALLBACK* callb
 
 	/** TS_URB_SELECT_CONFIGURATION_RESULT */
 	if (MsConfig)
-		msusb_msconfig_write(MsConfig, out);
+	{
+		if (!msusb_msconfig_write(MsConfig, out))
+			goto fail;
+	}
 	else
 	{
 		Stream_Write_UINT32(out, 0); /** ConfigurationHandle */
@@ -887,7 +890,9 @@ static void urb_isoch_transfer_cb(WINPR_ATTR_UNUSED IUDEVICE* pdev,
 		Stream_Write_UINT32(out, OutputBufferSize); /** OutputBufferSize */
 		Stream_Seek(out, OutputBufferSize);
 
-		stream_write_and_free(callback->plugin, callback->channel, out);
+		const UINT rc = stream_write_and_free(callback->plugin, callback->channel, out);
+		if (rc != CHANNEL_RC_OK)
+			WLog_WARN(TAG, "stream_write_and_free failed with %" PRIu32, rc);
 	}
 }
 

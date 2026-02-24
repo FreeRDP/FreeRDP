@@ -26,7 +26,10 @@
 #include <freerdp/channels/gfxredir.h>
 #include <freerdp/api.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT gfxredir_read_header(wStream* s, GFXREDIR_HEADER* header);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT gfxredir_write_header(wStream* s, const GFXREDIR_HEADER* header);
 
 #endif /* FREERDP_CHANNEL_GFXREDIR_COMMON_H */

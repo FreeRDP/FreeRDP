@@ -25,6 +25,7 @@
 
 #include <freerdp/channels/ainput.h>
 
+WINPR_ATTR_NODISCARD
 static inline const char* ainput_flags_to_string(UINT64 flags, char* buffer, size_t size)
 {
 	char number[32] = { 0 };

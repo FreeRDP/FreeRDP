@@ -50,10 +50,14 @@ typedef struct
 	BOOL initialFormatListSent;
 } cliprdrPlugin;
 
-CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
-UINT cliprdr_send_error_response(cliprdrPlugin* cliprdr, UINT16 type);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
 
-extern const char type_FileGroupDescriptorW[];
-extern const char type_FileContents[];
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT cliprdr_send_error_response(cliprdrPlugin* cliprdr, UINT16 type);
+
+FREERDP_LOCAL extern const char type_FileGroupDescriptorW[];
+
+FREERDP_LOCAL extern const char type_FileContents[];
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_CLIENT_MAIN_H */

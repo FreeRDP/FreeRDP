@@ -30,16 +30,28 @@
 #include <freerdp/api.h>
 #include <freerdp/utils/gfx.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_write_header(wStream* s, const RDPGFX_HEADER* header);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_write_point16(wStream* s, const RDPGFX_POINT16* point16);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_write_rect16(wStream* s, const RECTANGLE_16* rect16);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_write_color32(wStream* s, const RDPGFX_COLOR32* color32);
 
 #ifdef WITH_DEBUG_RDPGFX

@@ -54,23 +54,45 @@
 #define RAIL_GET_APPID_RESP_ORDER_LENGTH 524      /* fixed */
 #define RAIL_GET_APPID_RESP_EX_ORDER_LENGTH 1048  /* fixed */
 
-UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT rail_read_handshake_order(wStream* s,
+                                                                  RAIL_HANDSHAKE_ORDER* handshake);
+
+FREERDP_LOCAL
 void rail_write_handshake_order(wStream* s, const RAIL_HANDSHAKE_ORDER* handshake);
-UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT
+rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
+
+FREERDP_LOCAL
 void rail_write_handshake_ex_order(wStream* s, const RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 
-wStream* rail_pdu_init(size_t length);
-UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength);
+WINPR_ATTR_MALLOC(Stream_Free, 1)
+WINPR_ATTR_NODISCARD FREERDP_LOCAL wStream* rail_pdu_init(size_t length);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT rail_read_pdu_header(wStream* s, UINT16* orderType,
+                                                             UINT16* orderLength);
+
+FREERDP_LOCAL
 void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength);
 
-UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_string);
-UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unicode_string);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT
+rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_string);
 
-UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL extendedSpiSupported);
-UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
-                               BOOL extendedSpiSupported);
-BOOL rail_is_extended_spi_supported(UINT32 channelFlags);
-const char* rail_get_order_type_string(UINT16 orderType);
-const char* rail_get_order_type_string_full(UINT16 orderType, char* buffer, size_t length);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT
+rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unicode_string);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT rail_read_sysparam_order(wStream* s,
+                                                                 RAIL_SYSPARAM_ORDER* sysparam,
+                                                                 BOOL extendedSpiSupported);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT rail_write_sysparam_order(
+    wStream* s, const RAIL_SYSPARAM_ORDER* sysparam, BOOL extendedSpiSupported);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL rail_is_extended_spi_supported(UINT32 channelFlags);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL const char* rail_get_order_type_string(UINT16 orderType);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL const char*
+rail_get_order_type_string_full(UINT16 orderType, char* buffer, size_t length);
 
 #endif /* FREERDP_CHANNEL_RAIL_COMMON_H */

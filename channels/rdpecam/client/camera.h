@@ -127,10 +127,13 @@ typedef struct
 
 } CameraDeviceStream;
 
+WINPR_ATTR_NODISCARD
 static inline CAM_MEDIA_FORMAT streamInputFormat(CameraDeviceStream* stream)
 {
 	return stream->formats.inputFormat;
 }
+
+WINPR_ATTR_NODISCARD
 static inline CAM_MEDIA_FORMAT streamOutputFormat(CameraDeviceStream* stream)
 {
 	return stream->formats.outputFormat;
@@ -259,25 +262,35 @@ typedef WINPR_ATTR_NODISCARD
 UINT(VCAPITYPE* PFREERDP_CAMERA_HAL_ENTRY)(PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints);
 
 /* common functions */
-UINT ecam_channel_send_generic_msg(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel,
-                                   CAM_MSG_ID msg);
-UINT ecam_channel_send_error_response(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel,
-                                      CAM_ERROR_CODE code);
-UINT ecam_channel_write(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel, CAM_MSG_ID msg,
-                        wStream* out, BOOL freeStream);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT ecam_channel_send_generic_msg(
+    CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel, CAM_MSG_ID msg);
+
+FREERDP_LOCAL UINT ecam_channel_send_error_response(CameraPlugin* ecam,
+                                                    GENERIC_CHANNEL_CALLBACK* hchannel,
+                                                    CAM_ERROR_CODE code);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT ecam_channel_write(CameraPlugin* ecam,
+                                                           GENERIC_CHANNEL_CALLBACK* hchannel,
+                                                           CAM_MSG_ID msg, wStream* out,
+                                                           BOOL freeStream);
 
 /* ecam device interface */
-void ecam_dev_destroy(CameraDevice* dev);
+FREERDP_LOCAL void ecam_dev_destroy(CameraDevice* dev);
 
 WINPR_ATTR_MALLOC(ecam_dev_destroy, 1)
 WINPR_ATTR_NODISCARD
-CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId, const char* deviceName);
+FREERDP_LOCAL CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId,
+                                            const char* deviceName);
 
 /* video encoding interface */
-BOOL ecam_encoder_context_init(CameraDeviceStream* stream);
-BOOL ecam_encoder_context_free(CameraDeviceStream* stream);
-BOOL ecam_encoder_compress(CameraDeviceStream* stream, const BYTE* srcData, size_t srcSize,
-                           BYTE** ppDstData, size_t* pDstSize);
-UINT32 h264_get_max_bitrate(UINT32 height);
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ecam_encoder_context_init(CameraDeviceStream* stream);
+
+FREERDP_LOCAL BOOL ecam_encoder_context_free(CameraDeviceStream* stream);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ecam_encoder_compress(CameraDeviceStream* stream,
+                                                              const BYTE* srcData, size_t srcSize,
+                                                              BYTE** ppDstData, size_t* pDstSize);
+
+WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT32 h264_get_max_bitrate(UINT32 height);
 
 #endif /* FREERDP_CLIENT_CAMERA_H */

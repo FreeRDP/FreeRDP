@@ -1268,13 +1268,12 @@ static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
  */
 static UINT rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 {
-	wStream* s = NULL;
-
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(rdpdr->state == RDPDR_CHANNEL_STATE_ANNOUNCE);
-	rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_ANNOUNCE_REPLY);
+	if (!rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_ANNOUNCE_REPLY))
+		return ERROR_INVALID_STATE;
 
-	s = StreamPool_Take(rdpdr->pool, 12);
+	wStream* s = StreamPool_Take(rdpdr->pool, 12);
 
 	if (!s)
 	{
@@ -1303,7 +1302,8 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(rdpdr->state == RDPDR_CHANNEL_STATE_ANNOUNCE_REPLY);
-	rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_NAME_REQUEST);
+	if (!rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_NAME_REQUEST))
+		return ERROR_INVALID_STATE;
 
 	const size_t len = strnlen(rdpdr->computerName, sizeof(rdpdr->computerName));
 	if (len == 0)
@@ -1677,7 +1677,8 @@ static BOOL rdpdr_state_check(rdpdrPlugin* rdpdr, UINT16 packetid, enum RDPDR_CH
 		           "channel [RDPDR] received %s, expected states [%s] but have state %s, aborting.",
 		           rdpdr_packetid_string(packetid), buffer, strstate);
 
-		rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_INITIAL);
+		if (!rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_INITIAL))
+			return FALSE;
 		return FALSE;
 	}
 	return rdpdr_state_advance(rdpdr, next);
@@ -1694,7 +1695,8 @@ static BOOL rdpdr_check_channel_state(rdpdrPlugin* rdpdr, UINT16 packetid)
 			 * it seems related to session login (e.g. first initialization for RDP/TLS style login,
 			 * then reinitialize the channel after login successful
 			 */
-			rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_INITIAL);
+			if (!rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_INITIAL))
+				return ERROR_INVALID_STATE;
 			return rdpdr_state_check(rdpdr, packetid, RDPDR_CHANNEL_STATE_ANNOUNCE, 1,
 			                         RDPDR_CHANNEL_STATE_INITIAL);
 		case PAKID_CORE_SERVER_CAPABILITY:
