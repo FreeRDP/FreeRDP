@@ -16,7 +16,7 @@ static char* resize(char** buffer, size_t* size, size_t increment)
 		              "Could not reallocate string buffer from %" PRIuz " to %" PRIuz " bytes.\n",
 		              *size, nsize);
 		free(*buffer);
-		return NULL;
+		return nullptr;
 	}
 	memset(&tmp[*size], '\0', increment);
 	*size = nsize;
@@ -33,7 +33,7 @@ static char* append(char** buffer, size_t* size, const char* str)
 	if (required > *size)
 	{
 		if (!resize(buffer, size, required - *size))
-			return NULL;
+			return nullptr;
 	}
 	strncpy(&(*buffer)[len], str, add);
 	return *buffer;
@@ -41,20 +41,20 @@ static char* append(char** buffer, size_t* size, const char* str)
 
 static LPSTR tr_esc_str(LPCSTR arg, bool format, int* failed)
 {
-	const char* str = NULL;
-	LPSTR tmp = NULL;
+	const char* str = nullptr;
+	LPSTR tmp = nullptr;
 	size_t ds = 0;
 
 	assert(failed);
 
-	if (NULL == arg)
-		return NULL;
+	if (nullptr == arg)
+		return nullptr;
 
 	const size_t s = strlen(arg) + 1;
 	if (!resize(&tmp, &ds, s))
 	{
 		*failed = -2;
-		return NULL;
+		return nullptr;
 	}
 
 	for (size_t x = 0; x < s; x++)
@@ -67,7 +67,7 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format, int* failed)
 				if (!append(&tmp, &ds, str))
 				{
 					*failed = -3;
-					return NULL;
+					return nullptr;
 				}
 				break;
 
@@ -80,7 +80,7 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format, int* failed)
 				if (!append(&tmp, &ds, str))
 				{
 					*failed = -4;
-					return NULL;
+					return nullptr;
 				}
 				break;
 
@@ -93,7 +93,7 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format, int* failed)
 				if (!append(&tmp, &ds, str))
 				{
 					*failed = -5;
-					return NULL;
+					return nullptr;
 				}
 				break;
 
@@ -102,7 +102,7 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format, int* failed)
 				if (!append(&tmp, &ds, str))
 				{
 					*failed = -6;
-					return NULL;
+					return nullptr;
 				}
 				break;
 
@@ -110,7 +110,7 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format, int* failed)
 				if (!append(&tmp, &ds, "\\&."))
 				{
 					*failed = -7;
-					return NULL;
+					return nullptr;
 				}
 				break;
 
@@ -119,7 +119,7 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format, int* failed)
 				if (!append(&tmp, &ds, "\n.br\n"))
 				{
 					*failed = -8;
-					return NULL;
+					return nullptr;
 				}
 				break;
 
@@ -128,7 +128,7 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format, int* failed)
 				if (!append(&tmp, &ds, data))
 				{
 					*failed = -9;
-					return NULL;
+					return nullptr;
 				}
 				break;
 		}
@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 
 	(void)fprintf(stdout, "Generating manpage file '%s'\n", fname);
 	FILE* fp = fopen(fname, "w");
-	if (NULL == fp)
+	if (nullptr == fp)
 	{
 		(void)fprintf(stderr, "Could not open '%s' for writing.\n", fname);
 		return -1;

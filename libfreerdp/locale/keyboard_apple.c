@@ -188,7 +188,7 @@ static const KEYBOARD_LAYOUT_MAPPING KEYBOARD_MAPPING_TABLE[] = {
 int freerdp_detect_keyboard_layout_from_cf(DWORD* keyboardLayoutId)
 {
 	CFIndex length;
-	char* inputSourceId = NULL;
+	char* inputSourceId = nullptr;
 	CFStringRef inputSourceIdRef;
 	TISInputSourceRef inputSrc = TISCopyCurrentKeyboardLayoutInputSource();
 	if (!inputSrc)

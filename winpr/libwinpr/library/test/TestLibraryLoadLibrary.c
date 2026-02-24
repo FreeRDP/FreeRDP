@@ -9,13 +9,13 @@
 
 int TestLibraryLoadLibrary(int argc, char* argv[])
 {
-	HINSTANCE library = NULL;
-	LPCSTR SharedLibraryExtension = NULL;
+	HINSTANCE library = nullptr;
+	LPCSTR SharedLibraryExtension = nullptr;
 	CHAR LibraryPath[PATHCCH_MAX_CCH] = WINPR_C_ARRAY_INIT;
-	PCHAR p = NULL;
+	PCHAR p = nullptr;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))
+	if (!GetModuleFileNameA(nullptr, LibraryPath, PATHCCH_MAX_CCH))
 	{
 		const UINT32 err = GetLastError();
 		const HRESULT herr = HRESULT_FROM_WIN32(err);

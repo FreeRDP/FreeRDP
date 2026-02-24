@@ -161,7 +161,7 @@ static BOOL test_format_supported(const PWAVEFORMATEX pwfx)
 			return FALSE;
 	}
 
-	rc = waveInOpen(NULL, WAVE_MAPPER, pwfx, 0, 0,
+	rc = waveInOpen(nullptr, WAVE_MAPPER, pwfx, 0, 0,
 	                WAVE_FORMAT_QUERY | WAVE_MAPPED_DEFAULT_COMMUNICATION_DEVICE);
 	return (rc == MMSYSERR_NOERROR);
 }
@@ -169,7 +169,7 @@ static BOOL test_format_supported(const PWAVEFORMATEX pwfx)
 static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
 {
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*)arg;
-	char* buffer = NULL;
+	char* buffer = nullptr;
 	int size = 0;
 	WAVEHDR waveHdr[4] = WINPR_C_ARRAY_INIT;
 	DWORD status = 0;
@@ -252,7 +252,7 @@ static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
 	{
 	}
 
-	winmm->hWaveIn = NULL;
+	winmm->hWaveIn = nullptr;
 	return 0;
 }
 
@@ -306,10 +306,10 @@ static UINT audin_winmm_close(IAudinDevice* device)
 
 	(void)CloseHandle(winmm->thread);
 	(void)CloseHandle(winmm->stopEvent);
-	winmm->thread = NULL;
-	winmm->stopEvent = NULL;
-	winmm->receive = NULL;
-	winmm->user_data = NULL;
+	winmm->thread = nullptr;
+	winmm->stopEvent = nullptr;
+	winmm->receive = nullptr;
+	winmm->user_data = nullptr;
 	return error;
 }
 
@@ -427,17 +427,17 @@ static UINT audin_winmm_open(IAudinDevice* device, AudinReceive receive, void* u
 	winmm->receive = receive;
 	winmm->user_data = user_data;
 
-	if (!(winmm->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(winmm->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
 		WLog_Print(winmm->log, WLOG_ERROR, "CreateEvent failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(winmm->thread = CreateThread(NULL, 0, audin_winmm_thread_func, winmm, 0, NULL)))
+	if (!(winmm->thread = CreateThread(nullptr, 0, audin_winmm_thread_func, winmm, 0, nullptr)))
 	{
 		WLog_Print(winmm->log, WLOG_ERROR, "CreateThread failed!");
 		(void)CloseHandle(winmm->stopEvent);
-		winmm->stopEvent = NULL;
+		winmm->stopEvent = nullptr;
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -455,14 +455,16 @@ static UINT audin_winmm_parse_addin_args(AudinWinmmDevice* device, const ADDIN_A
 	DWORD flags;
 	const COMMAND_LINE_ARGUMENT_A* arg;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*)device;
-	COMMAND_LINE_ARGUMENT_A audin_winmm_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
-		                                             NULL, NULL, -1, NULL, "audio device name" },
-		                                           { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
+	COMMAND_LINE_ARGUMENT_A audin_winmm_args[] = {
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", nullptr, nullptr, -1, nullptr,
+		  "audio device name" },
+		{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
+	};
 
 	flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv, audin_winmm_args, flags, winmm,
-	                                    NULL, NULL);
+	                                    nullptr, nullptr);
 	arg = audin_winmm_args;
 
 	do
@@ -481,7 +483,7 @@ static UINT audin_winmm_parse_addin_args(AudinWinmmDevice* device, const ADDIN_A
 			}
 		}
 		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 
 	return CHANNEL_RC_OK;
 }

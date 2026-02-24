@@ -8,9 +8,9 @@ int TestClipboardFormats(int argc, char* argv[])
 {
 	int rc = -1;
 	UINT32 count = 0;
-	UINT32* pFormatIds = NULL;
-	const char* formatName = NULL;
-	wClipboard* clipboard = NULL;
+	UINT32* pFormatIds = nullptr;
+	const char* formatName = nullptr;
+	wClipboard* clipboard = nullptr;
 	UINT32 utf8StringFormatId = 0;
 
 	WINPR_UNUSED(argc);
@@ -32,7 +32,7 @@ int TestClipboardFormats(int argc, char* argv[])
 	}
 
 	utf8StringFormatId = ClipboardRegisterFormat(clipboard, "UTF8_STRING");
-	pFormatIds = NULL;
+	pFormatIds = nullptr;
 	count = ClipboardGetRegisteredFormatIds(clipboard, &pFormatIds);
 
 	for (UINT32 index = 0; index < count; index++)
@@ -50,7 +50,7 @@ int TestClipboardFormats(int argc, char* argv[])
 		UINT32 SrcSize = 0;
 		UINT32 DstSize = 0;
 		const char pSrcData[] = "this is a test string";
-		char* pDstData = NULL;
+		char* pDstData = nullptr;
 
 		SrcSize = (UINT32)(strnlen(pSrcData, ARRAYSIZE(pSrcData)) + 1);
 		bSuccess = ClipboardSetData(clipboard, utf8StringFormatId, pSrcData, SrcSize);
@@ -64,18 +64,18 @@ int TestClipboardFormats(int argc, char* argv[])
 	if (1)
 	{
 		UINT32 DstSize = 0;
-		char* pSrcData = NULL;
-		WCHAR* pDstData = NULL;
+		char* pSrcData = nullptr;
+		WCHAR* pDstData = nullptr;
 		DstSize = 0;
 		pDstData = (WCHAR*)ClipboardGetData(clipboard, CF_UNICODETEXT, &DstSize);
-		pSrcData = ConvertWCharNToUtf8Alloc(pDstData, DstSize / sizeof(WCHAR), NULL);
+		pSrcData = ConvertWCharNToUtf8Alloc(pDstData, DstSize / sizeof(WCHAR), nullptr);
 
 		(void)fprintf(stderr, "ClipboardGetData (synthetic): %s\n", pSrcData);
 		free(pDstData);
 		free(pSrcData);
 	}
 
-	pFormatIds = NULL;
+	pFormatIds = nullptr;
 	count = ClipboardGetFormatIds(clipboard, &pFormatIds);
 
 	for (UINT32 index = 0; index < count; index++)

@@ -83,7 +83,7 @@ WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL utils_reload_channels(rdpContext* contex
  *  @param fmt A format string that must contain a single '%s' being replaced by the
  * 'vendor\\product` values.
  *
- *  @return A registry key to use or \b NULL if failed.
+ *  @return A registry key to use or \b nullptr if failed.
  *  @version since 3.23.0
  */
 WINPR_ATTR_MALLOC(free, 1)
@@ -95,7 +95,7 @@ char* freerdp_getApplicatonDetailsRegKey(WINPR_FORMAT_ARG const char* fmt);
  *
  *  @param separator the separator character to use
  *
- *  @return A 'vendor/product' string to use or \b NULL if failed.
+ *  @return A 'vendor/product' string to use or \b nullptr if failed.
  *  @version since 3.23.0
  */
 WINPR_ATTR_MALLOC(free, 1)

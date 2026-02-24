@@ -32,7 +32,7 @@
 
 #define TAG PROXY_TAG("server")
 
-static proxyServer* server = NULL;
+static proxyServer* server = nullptr;
 
 #if defined(_WIN32)
 WINPR_ATTR_NODISCARD

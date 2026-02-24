@@ -120,7 +120,7 @@ rdpRdstls* rdstls_new(rdpContext* context, rdpTransport* transport)
 	rdpRdstls* rdstls = (rdpRdstls*)calloc(1, sizeof(rdpRdstls));
 
 	if (!rdstls)
-		return NULL;
+		return nullptr;
 	rdstls->log = WLog_Get(FREERDP_TAG("core.rdstls"));
 	rdstls->context = context;
 	rdstls->transport = transport;
@@ -408,8 +408,8 @@ static BOOL rdstls_read_unicode_string(WINPR_ATTR_UNUSED wLog* log, wStream* s, 
 		return TRUE;
 	}
 
-	*str = Stream_Read_UTF16_String_As_UTF8(s, length / sizeof(WCHAR), NULL);
-	return (*str) != NULL;
+	*str = Stream_Read_UTF16_String_As_UTF8(s, length / sizeof(WCHAR), nullptr);
+	return (*str) != nullptr;
 }
 
 static BOOL rdstls_read_data(WINPR_ATTR_UNUSED wLog* log, wStream* s, UINT16* pLength,
@@ -418,7 +418,7 @@ static BOOL rdstls_read_data(WINPR_ATTR_UNUSED wLog* log, wStream* s, UINT16* pL
 	WINPR_ASSERT(pLength);
 	WINPR_ASSERT(pData);
 
-	*pData = NULL;
+	*pData = nullptr;
 	*pLength = 0;
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 2))
 		return FALSE;
@@ -493,11 +493,11 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 
 	BOOL rc = FALSE;
 
-	const BYTE* clientRedirectionGuid = NULL;
+	const BYTE* clientRedirectionGuid = nullptr;
 	UINT16 clientRedirectionGuidLength = 0;
-	char* clientPassword = NULL;
-	char* clientUsername = NULL;
-	char* clientDomain = NULL;
+	char* clientPassword = nullptr;
+	char* clientUsername = nullptr;
+	char* clientDomain = nullptr;
 
 	const rdpSettings* settings = rdstls->context->settings;
 	WINPR_ASSERT(settings);
@@ -643,7 +643,7 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 static BOOL rdstls_send(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra)
 {
 	rdpRdstls* rdstls = (rdpRdstls*)extra;
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(s);
@@ -670,7 +670,7 @@ static BOOL rdstls_send(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, v
 				if (!rdstls_write_authentication_request_with_password(rdstls, s))
 					return FALSE;
 			}
-			else if (settings->ServerAutoReconnectCookie != NULL)
+			else if (settings->ServerAutoReconnectCookie != nullptr)
 			{
 				if (!rdstls_write_authentication_request_with_cookie(rdstls, s))
 					return FALSE;
@@ -767,7 +767,7 @@ static BOOL rdstls_send_capabilities(rdpRdstls* rdstls)
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_CAPABILITIES))
 		return FALSE;
 
-	wStream* s = Stream_New(NULL, 512);
+	wStream* s = Stream_New(nullptr, 512);
 	if (!s)
 		goto fail;
 
@@ -788,7 +788,7 @@ static BOOL rdstls_recv_authentication_request(rdpRdstls* rdstls)
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
 		return FALSE;
 
-	wStream* s = Stream_New(NULL, 4096);
+	wStream* s = Stream_New(nullptr, 4096);
 	if (!s)
 		goto fail;
 
@@ -819,7 +819,7 @@ static BOOL rdstls_send_authentication_response(rdpRdstls* rdstls)
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_RSP))
 		return FALSE;
 
-	wStream* s = Stream_New(NULL, 512);
+	wStream* s = Stream_New(nullptr, 512);
 	if (!s)
 		goto fail;
 
@@ -840,7 +840,7 @@ static BOOL rdstls_recv_capabilities(rdpRdstls* rdstls)
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_CAPABILITIES))
 		return FALSE;
 
-	wStream* s = Stream_New(NULL, 512);
+	wStream* s = Stream_New(nullptr, 512);
 	if (!s)
 		goto fail;
 
@@ -871,7 +871,7 @@ static BOOL rdstls_send_authentication_request(rdpRdstls* rdstls)
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
 		return FALSE;
 
-	wStream* s = Stream_New(NULL, 4096);
+	wStream* s = Stream_New(nullptr, 4096);
 	if (!s)
 		goto fail;
 
@@ -894,7 +894,7 @@ static BOOL rdstls_recv_authentication_response(rdpRdstls* rdstls)
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_RSP))
 		return FALSE;
 
-	wStream* s = Stream_New(NULL, 512);
+	wStream* s = Stream_New(nullptr, 512);
 	if (!s)
 		goto fail;
 

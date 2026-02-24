@@ -59,7 +59,7 @@ static UINT echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 		return ERROR_INVALID_PARAMETER;
 
 	/* echo back what we have received. ECHO does not have any message IDs. */
-	return callback->channel->Write(callback->channel, (ULONG)cbSize, pBuffer, NULL);
+	return callback->channel->Write(callback->channel, (ULONG)cbSize, pBuffer, nullptr);
 }
 
 /**
@@ -76,8 +76,9 @@ static UINT echo_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	return CHANNEL_RC_OK;
 }
 
-static const IWTSVirtualChannelCallback echo_callbacks = { echo_on_data_received, NULL, /* Open */
-	                                                       echo_on_close, NULL };
+static const IWTSVirtualChannelCallback echo_callbacks = { echo_on_data_received,
+	                                                       nullptr, /* Open */
+	                                                       echo_on_close, nullptr };
 
 /**
  * Function description
@@ -88,5 +89,5 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE echo_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pE
 {
 	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, ECHO_DVC_CHANNEL_NAME,
 	                                      sizeof(ECHO_PLUGIN), sizeof(GENERIC_CHANNEL_CALLBACK),
-	                                      &echo_callbacks, NULL, NULL);
+	                                      &echo_callbacks, nullptr, nullptr);
 }

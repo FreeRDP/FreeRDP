@@ -64,7 +64,7 @@ VOID SetEventWhenCallbackReturns(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE pci,
                                  WINPR_ATTR_UNUSED HANDLE evt)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 	if (pSetEventWhenCallbackReturns)
 	{
 		pSetEventWhenCallbackReturns(pci, evt);
@@ -79,7 +79,7 @@ VOID ReleaseSemaphoreWhenCallbackReturns(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE
                                          WINPR_ATTR_UNUSED HANDLE sem, WINPR_ATTR_UNUSED DWORD crel)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 	if (pReleaseSemaphoreWhenCallbackReturns)
 	{
 		pReleaseSemaphoreWhenCallbackReturns(pci, sem, crel);
@@ -94,7 +94,7 @@ VOID ReleaseMutexWhenCallbackReturns(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE pci
                                      WINPR_ATTR_UNUSED HANDLE mut)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 	if (pReleaseMutexWhenCallbackReturns)
 	{
 		pReleaseMutexWhenCallbackReturns(pci, mut);
@@ -109,7 +109,7 @@ VOID LeaveCriticalSectionWhenCallbackReturns(WINPR_ATTR_UNUSED PTP_CALLBACK_INST
                                              WINPR_ATTR_UNUSED PCRITICAL_SECTION pcs)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 	if (pLeaveCriticalSectionWhenCallbackReturns)
 	{
 		pLeaveCriticalSectionWhenCallbackReturns(pci, pcs);
@@ -123,7 +123,7 @@ VOID FreeLibraryWhenCallbackReturns(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE pci,
                                     WINPR_ATTR_UNUSED HMODULE mod)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 	if (pFreeLibraryWhenCallbackReturns)
 	{
 		pFreeLibraryWhenCallbackReturns(pci, mod);
@@ -137,7 +137,7 @@ VOID FreeLibraryWhenCallbackReturns(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE pci,
 VOID DisassociateCurrentThreadFromCallback(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE pci)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 	if (pDisassociateCurrentThreadFromCallback)
 	{
 		pDisassociateCurrentThreadFromCallback(pci);

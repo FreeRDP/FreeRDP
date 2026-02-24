@@ -76,8 +76,8 @@ static int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg,
                                struct pam_response** resp, void* appdata_ptr)
 {
 	int pam_status = PAM_CONV_ERR;
-	SHADOW_PAM_AUTH_DATA* appdata = NULL;
-	struct pam_response* response = NULL;
+	SHADOW_PAM_AUTH_DATA* appdata = nullptr;
+	struct pam_response* response = nullptr;
 	WINPR_ASSERT(num_msg >= 0);
 	appdata = (SHADOW_PAM_AUTH_DATA*)appdata_ptr;
 	WINPR_ASSERT(appdata);
@@ -128,7 +128,7 @@ out_fail:
 
 	memset(response, 0, sizeof(struct pam_response) * (size_t)num_msg);
 	free(response);
-	*resp = NULL;
+	*resp = nullptr;
 	return pam_status;
 }
 
@@ -148,7 +148,7 @@ static BOOL x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
 		{
 
 			info->service_name = _strdup(hint);
-			return info->service_name != NULL;
+			return info->service_name != nullptr;
 		}
 	}
 	WLog_WARN(TAG, "Could not determine PAM service name");
@@ -172,7 +172,7 @@ static int x11_shadow_pam_authenticate(rdpShadowSubsystem* subsystem, rdpShadowC
 	info.appdata.password = password;
 	info.pamc.conv = &x11_shadow_pam_conv;
 	info.pamc.appdata_ptr = &info.appdata;
-	pam_status = pam_start(info.service_name, 0, &info.pamc, &info.handle);
+	pam_status = pam_start(info.service_name, nullptr, &info.pamc, &info.handle);
 
 	if (pam_status != PAM_SUCCESS)
 	{
@@ -278,8 +278,8 @@ static BOOL x11_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
 	unsigned int button = 0;
 	BOOL down = FALSE;
-	rdpShadowServer* server = NULL;
-	rdpShadowSurface* surface = NULL;
+	rdpShadowServer* server = nullptr;
+	rdpShadowSurface* surface = nullptr;
 
 	if (!subsystem || !client)
 		return FALSE;
@@ -417,8 +417,8 @@ static BOOL x11_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
 	x11ShadowSubsystem* x11 = (x11ShadowSubsystem*)subsystem;
 	UINT button = 0;
 	BOOL down = FALSE;
-	rdpShadowServer* server = NULL;
-	rdpShadowSurface* surface = NULL;
+	rdpShadowServer* server = nullptr;
+	rdpShadowSurface* surface = nullptr;
 
 	if (!subsystem || !client)
 		return FALSE;
@@ -485,7 +485,7 @@ WINPR_ATTR_NODISCARD
 static int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 {
 	UINT32 msgId = SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID;
-	rdpShadowServer* server = NULL;
+	rdpShadowServer* server = nullptr;
 	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE templateMsg = WINPR_C_ARRAY_INIT;
 	int count = 0;
 
@@ -500,7 +500,7 @@ static int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 
 	for (size_t index = 0; index < ArrayList_Count(server->clients); index++)
 	{
-		SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg = NULL;
+		SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg = nullptr;
 		rdpShadowClient* client = (rdpShadowClient*)ArrayList_GetItem(server->clients, index);
 
 		/* Skip the client which send us the latest mouse event */
@@ -517,7 +517,7 @@ static int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 
 		memcpy(msg, &templateMsg, sizeof(templateMsg));
 
-		if (shadow_client_post_msg(client, NULL, msgId, (SHADOW_MSG_OUT*)msg, NULL))
+		if (shadow_client_post_msg(client, nullptr, msgId, (SHADOW_MSG_OUT*)msg, nullptr))
 			count++;
 	}
 
@@ -548,8 +548,8 @@ static int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 	}
 
 	msg->common.Free = x11_shadow_message_free;
-	const int count = shadow_client_boardcast_msg(subsystem->common.server, NULL, msgId,
-	                                              (SHADOW_MSG_OUT*)msg, NULL);
+	const int count = shadow_client_boardcast_msg(subsystem->common.server, nullptr, msgId,
+	                                              (SHADOW_MSG_OUT*)msg, nullptr);
 	if (count < 0)
 		return -1;
 	return 1;
@@ -561,16 +561,16 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 	int x = 0;
 	int y = 0;
 	int n = 0;
-	rdpShadowServer* server = NULL;
-	rdpShadowSurface* surface = NULL;
+	rdpShadowServer* server = nullptr;
+	rdpShadowSurface* surface = nullptr;
 	server = subsystem->common.server;
 	surface = server->surface;
 
 	if (getImage)
 	{
 #ifdef WITH_XFIXES
-		UINT32* pDstPixel = NULL;
-		XFixesCursorImage* ci = NULL;
+		UINT32* pDstPixel = nullptr;
+		XFixesCursorImage* ci = nullptr;
 		XLockDisplay(subsystem->display);
 		ci = XFixesGetCursorImage(subsystem->display);
 		XUnlockDisplay(subsystem->display);
@@ -904,7 +904,7 @@ static BOOL x11_shadow_surface_update_contents(rdpShadowSurface* surface, UINT32
 	    WINPR_ASSERTING_INT_CAST(uint32_t, y), WINPR_ASSERTING_INT_CAST(uint32_t, width),
 	    WINPR_ASSERTING_INT_CAST(uint32_t, height), (BYTE*)image->data, format,
 	    WINPR_ASSERTING_INT_CAST(uint32_t, image->bytes_per_line),
-	    WINPR_ASSERTING_INT_CAST(UINT32, x), WINPR_ASSERTING_INT_CAST(UINT32, y), NULL,
+	    WINPR_ASSERTING_INT_CAST(UINT32, x), WINPR_ASSERTING_INT_CAST(UINT32, y), nullptr,
 	    FREERDP_FLIP_NONE);
 	LeaveCriticalSection(&surface->lock);
 	return success;
@@ -936,7 +936,7 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		LeaveCriticalSection(&surface->lock);
 	}
 
-	XImage* image = NULL;
+	XImage* image = nullptr;
 	RECTANGLE_16 invalidRect = WINPR_C_ARRAY_INIT;
 	int status = -1;
 	{
@@ -952,7 +952,7 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			goto fail_capture;
 
 		/* Restore the default error handler */
-		XSetErrorHandler(NULL);
+		XSetErrorHandler(nullptr);
 		XSync(subsystem->display, False);
 		XUnlockDisplay(subsystem->display);
 	}
@@ -977,7 +977,7 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 			if (count == 1)
 			{
-				rdpShadowClient* client = NULL;
+				rdpShadowClient* client = nullptr;
 				client = (rdpShadowClient*)ArrayList_GetItem(server->clients, 0);
 
 				if (client)
@@ -1032,7 +1032,7 @@ static DWORD WINAPI x11_shadow_subsystem_thread(LPVOID arg)
 	UINT64 frameTime = 0;
 	HANDLE events[32];
 	wMessage message;
-	wMessagePipe* MsgPipe = NULL;
+	wMessagePipe* MsgPipe = nullptr;
 	MsgPipe = subsystem->common.MsgPipe;
 	nCount = 0;
 	events[nCount++] = subsystem->common.event;
@@ -1113,11 +1113,11 @@ static int x11_shadow_subsystem_base_init(x11ShadowSubsystem* subsystem)
 	if (!XInitThreads())
 		return -1;
 
-	subsystem->display = XOpenDisplay(NULL);
+	subsystem->display = XOpenDisplay(nullptr);
 
 	if (!subsystem->display)
 	{
-		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(NULL));
+		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(nullptr));
 		return -1;
 	}
 
@@ -1214,7 +1214,7 @@ static int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
 		return -1;
 
 #ifdef WITH_XFIXES
-	subsystem->xdamage_region = XFixesCreateRegion(subsystem->display, NULL, 0);
+	subsystem->xdamage_region = XFixesCreateRegion(subsystem->display, nullptr, 0);
 
 	if (!subsystem->xdamage_region)
 		return -1;
@@ -1247,7 +1247,7 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 	subsystem->fb_shm_info.shmaddr = (char*)-1;
 	subsystem->fb_shm_info.readOnly = False;
 	subsystem->fb_image =
-	    XShmCreateImage(subsystem->display, subsystem->visual, subsystem->depth, ZPixmap, NULL,
+	    XShmCreateImage(subsystem->display, subsystem->visual, subsystem->depth, ZPixmap, nullptr,
 	                    &(subsystem->fb_shm_info), subsystem->width, subsystem->height);
 
 	if (!subsystem->fb_image)
@@ -1268,7 +1268,7 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	subsystem->fb_shm_info.shmaddr = shmat(subsystem->fb_shm_info.shmid, 0, 0);
+	subsystem->fb_shm_info.shmaddr = shmat(subsystem->fb_shm_info.shmid, nullptr, 0);
 	subsystem->fb_image->data = subsystem->fb_shm_info.shmaddr;
 
 	if (subsystem->fb_shm_info.shmaddr == ((char*)-1))
@@ -1281,7 +1281,7 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 		return -1;
 
 	XSync(subsystem->display, False);
-	shmctl(subsystem->fb_shm_info.shmid, IPC_RMID, 0);
+	shmctl(subsystem->fb_shm_info.shmid, IPC_RMID, nullptr);
 	subsystem->fb_pixmap = XShmCreatePixmap(
 	    subsystem->display, subsystem->root_window, subsystem->fb_image->data,
 	    &(subsystem->fb_shm_info), WINPR_ASSERTING_INT_CAST(uint32_t, subsystem->fb_image->width),
@@ -1305,7 +1305,7 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 
 UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 {
-	Display* display = NULL;
+	Display* display = nullptr;
 	int displayWidth = 0;
 	int displayHeight = 0;
 	int numMonitors = 0;
@@ -1317,11 +1317,11 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 		setenv("DISPLAY", ":0", 1);
 	}
 
-	display = XOpenDisplay(NULL);
+	display = XOpenDisplay(nullptr);
 
 	if (!display)
 	{
-		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(NULL));
+		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(nullptr));
 		return 0;
 	}
 
@@ -1335,7 +1335,7 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 #endif
 		int xinerama_event = 0;
 		int xinerama_error = 0;
-		XineramaScreenInfo* screens = NULL;
+		XineramaScreenInfo* screens = nullptr;
 
 		const Bool xinerama = XineramaQueryExtension(display, &xinerama_event, &xinerama_error);
 		const Bool damage =
@@ -1396,7 +1396,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	int vi_count = 0;
 	int nextensions = 0;
 	XVisualInfo xtemplate = WINPR_C_ARRAY_INIT;
-	XPixmapFormatValues* pf = NULL;
+	XPixmapFormatValues* pf = nullptr;
 
 	x11ShadowSubsystem* subsystem = (x11ShadowSubsystem*)sub;
 
@@ -1524,7 +1524,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	}
 
 	if (!(subsystem->common.event =
-	          CreateFileDescriptorEvent(NULL, FALSE, FALSE, subsystem->xfds, WINPR_FD_READ)))
+	          CreateFileDescriptorEvent(nullptr, FALSE, FALSE, subsystem->xfds, WINPR_FD_READ)))
 		return -1;
 
 	{
@@ -1556,19 +1556,19 @@ static int x11_shadow_subsystem_uninit(rdpShadowSubsystem* sub)
 	if (subsystem->display)
 	{
 		XCloseDisplay(subsystem->display);
-		subsystem->display = NULL;
+		subsystem->display = nullptr;
 	}
 
 	if (subsystem->common.event)
 	{
 		(void)CloseHandle(subsystem->common.event);
-		subsystem->common.event = NULL;
+		subsystem->common.event = nullptr;
 	}
 
 	if (subsystem->cursorPixels)
 	{
 		winpr_aligned_free(subsystem->cursorPixels);
-		subsystem->cursorPixels = NULL;
+		subsystem->cursorPixels = nullptr;
 	}
 
 	return 1;
@@ -1583,7 +1583,7 @@ static int x11_shadow_subsystem_start(rdpShadowSubsystem* sub)
 		return -1;
 
 	if (!(subsystem->thread =
-	          CreateThread(NULL, 0, x11_shadow_subsystem_thread, (void*)subsystem, 0, NULL)))
+	          CreateThread(nullptr, 0, x11_shadow_subsystem_thread, (void*)subsystem, 0, nullptr)))
 	{
 		WLog_ERR(TAG, "Failed to create thread");
 		return -1;
@@ -1606,7 +1606,7 @@ static int x11_shadow_subsystem_stop(rdpShadowSubsystem* sub)
 			(void)WaitForSingleObject(subsystem->thread, INFINITE);
 
 		(void)CloseHandle(subsystem->thread);
-		subsystem->thread = NULL;
+		subsystem->thread = nullptr;
 	}
 
 	return 1;
@@ -1618,7 +1618,7 @@ static rdpShadowSubsystem* x11_shadow_subsystem_new(void)
 	x11ShadowSubsystem* subsystem = (x11ShadowSubsystem*)calloc(1, sizeof(x11ShadowSubsystem));
 
 	if (!subsystem)
-		return NULL;
+		return nullptr;
 
 #ifdef WITH_PAM
 	subsystem->common.Authenticate = x11_shadow_pam_authenticate;

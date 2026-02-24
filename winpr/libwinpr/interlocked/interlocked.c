@@ -85,11 +85,11 @@ WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead,
 		newHeader.s.Depth = old.s.Depth + 1;
 		newHeader.s.Sequence = old.s.Sequence + 1;
 		if (old.Alignment > INT64_MAX)
-			return NULL;
+			return nullptr;
 		if (newHeader.Alignment > INT64_MAX)
-			return NULL;
+			return nullptr;
 		if (ListHead->Alignment > INT64_MAX)
-			return NULL;
+			return nullptr;
 	} while (InterlockedCompareExchange64((LONGLONG*)&ListHead->Alignment,
 	                                      (LONGLONG)newHeader.Alignment,
 	                                      (LONGLONG)old.Alignment) != (LONGLONG)old.Alignment);
@@ -113,14 +113,14 @@ WINPR_PSLIST_ENTRY InterlockedPushListSListEx(WINPR_ATTR_UNUSED WINPR_PSLIST_HEA
 #else
 
 #endif
-	return NULL;
+	return nullptr;
 }
 
 WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 {
 	WINPR_SLIST_HEADER old = WINPR_C_ARRAY_INIT;
 	WINPR_SLIST_HEADER newHeader = WINPR_C_ARRAY_INIT;
-	WINPR_PSLIST_ENTRY entry = NULL;
+	WINPR_PSLIST_ENTRY entry = nullptr;
 
 	WINPR_ASSERT(ListHead);
 
@@ -132,7 +132,7 @@ WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 		entry = (PSLIST_ENTRY)(((ULONG_PTR)old.HeaderX64.NextEntry) << 4);
 
 		if (!entry)
-			return NULL;
+			return nullptr;
 
 		newHeader.HeaderX64.NextEntry = ((ULONG_PTR)entry->Next) >> 4;
 		newHeader.HeaderX64.Depth = old.HeaderX64.Depth - 1;
@@ -153,18 +153,18 @@ WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 		entry = old.s.Next.Next;
 
 		if (!entry)
-			return NULL;
+			return nullptr;
 
 		newHeader.s.Next.Next = entry->Next;
 		newHeader.s.Depth = old.s.Depth - 1;
 		newHeader.s.Sequence = old.s.Sequence + 1;
 
 		if (old.Alignment > INT64_MAX)
-			return NULL;
+			return nullptr;
 		if (newHeader.Alignment > INT64_MAX)
-			return NULL;
+			return nullptr;
 		if (ListHead->Alignment > INT64_MAX)
-			return NULL;
+			return nullptr;
 	} while (InterlockedCompareExchange64((LONGLONG*)&ListHead->Alignment,
 	                                      (LONGLONG)newHeader.Alignment,
 	                                      (LONGLONG)old.Alignment) != (LONGLONG)old.Alignment);
@@ -179,7 +179,7 @@ WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead)
 
 	WINPR_ASSERT(ListHead);
 	if (!QueryDepthSList(ListHead))
-		return NULL;
+		return nullptr;
 
 #ifdef _WIN64
 	newHeader).Alignment = 0;
@@ -209,11 +209,11 @@ WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead)
 		newHeader.s.Sequence = old.s.Sequence + 1;
 
 		if (old.Alignment > INT64_MAX)
-			return NULL;
+			return nullptr;
 		if (newHeader.Alignment > INT64_MAX)
-			return NULL;
+			return nullptr;
 		if (ListHead->Alignment > INT64_MAX)
-			return NULL;
+			return nullptr;
 	} while (InterlockedCompareExchange64((LONGLONG*)&ListHead->Alignment,
 	                                      (LONGLONG)newHeader.Alignment,
 	                                      (LONGLONG)old.Alignment) != (LONGLONG)old.Alignment);
@@ -326,18 +326,19 @@ PVOID InterlockedCompareExchangePointer(PVOID volatile* Destination, PVOID Excha
 
 #elif defined(_WIN32) && defined(WINPR_INTERLOCKED_COMPARE_EXCHANGE64)
 
-static volatile HANDLE mutex = NULL;
+static volatile HANDLE mutex = nullptr;
 
 BOOL static_mutex_lock(volatile HANDLE* static_mutex)
 {
-	if (*static_mutex == NULL)
+	if (*static_mutex == nullptr)
 	{
 		HANDLE handle;
 
-		if (!(handle = CreateMutex(NULL, FALSE, NULL)))
+		if (!(handle = CreateMutex(nullptr, FALSE, nullptr)))
 			return FALSE;
 
-		if (InterlockedCompareExchangePointer((PVOID*)static_mutex, (PVOID)handle, NULL) != NULL)
+		if (InterlockedCompareExchangePointer((PVOID*)static_mutex, (PVOID)handle, nullptr) !=
+		    nullptr)
 			(void)CloseHandle(handle);
 	}
 
@@ -531,7 +532,7 @@ WINPR_PSINGLE_LIST_ENTRY PopEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead)
 	WINPR_ASSERT(ListHead);
 	WINPR_PSINGLE_LIST_ENTRY FirstEntry = ListHead->Next;
 
-	if (FirstEntry != NULL)
+	if (FirstEntry != nullptr)
 		ListHead->Next = FirstEntry->Next;
 
 	return FirstEntry;

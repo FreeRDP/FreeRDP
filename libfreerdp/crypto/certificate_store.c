@@ -53,7 +53,7 @@ static char* freerdp_certificate_store_file_path(const rdpCertificateStore* stor
 	const char* hosts = freerdp_certificate_store_get_hosts_path(store);
 
 	if (!hosts || !hash)
-		return NULL;
+		return nullptr;
 
 	return GetCombinedPath(hosts, hash);
 }
@@ -103,11 +103,11 @@ BOOL freerdp_certificate_store_save_data(rdpCertificateStore* store, const rdpCe
 	const char* base = freerdp_certificate_store_get_hosts_path(store);
 	const char* hash = freerdp_certificate_data_get_hash(data);
 	char* path = freerdp_certificate_store_file_path(store, hash);
-	FILE* fp = NULL;
+	FILE* fp = nullptr;
 
 	if (!winpr_PathFileExists(base))
 	{
-		if (!winpr_PathMakePath(base, NULL))
+		if (!winpr_PathMakePath(base, nullptr))
 			goto fail;
 	}
 
@@ -128,8 +128,8 @@ fail:
 rdpCertificateData* freerdp_certificate_store_load_data(rdpCertificateStore* store,
                                                         const char* host, UINT16 port)
 {
-	char* path = NULL;
-	rdpCertificateData* data = NULL;
+	char* path = nullptr;
+	rdpCertificateData* data = nullptr;
 
 	WINPR_ASSERT(store);
 
@@ -149,7 +149,7 @@ rdpCertificateStore* freerdp_certificate_store_new(const rdpSettings* settings)
 	rdpCertificateStore* store = (rdpCertificateStore*)calloc(1, sizeof(rdpCertificateStore));
 
 	if (!store)
-		return NULL;
+		return nullptr;
 
 	const char* base = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
 	if (!base)
@@ -167,7 +167,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	freerdp_certificate_store_free(store);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void freerdp_certificate_store_free(rdpCertificateStore* store)
@@ -199,7 +199,7 @@ char* freerdp_certificate_store_get_cert_path(const rdpCertificateStore* store, 
 
 	char* hash = freerdp_certificate_data_hash(host, port);
 	if (!hash)
-		return NULL;
+		return nullptr;
 	char* path = freerdp_certificate_store_file_path(store, hash);
 	free(hash);
 	return path;

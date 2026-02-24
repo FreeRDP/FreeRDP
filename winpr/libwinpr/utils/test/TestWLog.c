@@ -6,13 +6,13 @@
 
 int TestWLog(int argc, char* argv[])
 {
-	wLog* root = NULL;
-	wLog* logA = NULL;
-	wLog* logB = NULL;
-	wLogLayout* layout = NULL;
-	wLogAppender* appender = NULL;
-	char* tmp_path = NULL;
-	char* wlog_file = NULL;
+	wLog* root = nullptr;
+	wLog* logA = nullptr;
+	wLog* logB = nullptr;
+	wLogLayout* layout = nullptr;
+	wLogAppender* appender = nullptr;
+	char* tmp_path = nullptr;
+	char* wlog_file = nullptr;
 	int result = 1;
 
 	WINPR_UNUSED(argc);

@@ -77,10 +77,10 @@ WINPR_ATTR_MALLOC(free, 1)
 static WCHAR* printer_win_get_printjob_name(size_t id)
 {
 	struct tm tres = WINPR_C_ARRAY_INIT;
-	WCHAR* str = NULL;
+	WCHAR* str = nullptr;
 	size_t len = 0;
 
-	const time_t tt = time(NULL);
+	const time_t tt = time(nullptr);
 	const errno_t err = localtime_s(&tres, &tt);
 
 	do
@@ -89,7 +89,7 @@ static WCHAR* printer_win_get_printjob_name(size_t id)
 		{
 			str = calloc(len + 1, sizeof(WCHAR));
 			if (!str)
-				return NULL;
+				return nullptr;
 		}
 
 		const int rc = swprintf_s(
@@ -100,7 +100,7 @@ static WCHAR* printer_win_get_printjob_name(size_t id)
 		if (rc <= 0)
 		{
 			free(str);
-			return NULL;
+			return nullptr;
 		}
 		len = WINPR_ASSERTING_INT_CAST(size_t, rc) + 1ull;
 	} while (!str);
@@ -154,7 +154,7 @@ static void printer_win_close_printjob(rdpPrintJob* printjob)
 	{
 	}
 
-	win_printer->printjob = NULL;
+	win_printer->printjob = nullptr;
 
 	free(win_printjob->di.pDocName);
 	free(win_printjob);
@@ -165,18 +165,18 @@ static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, UINT32 id)
 	rdpWinPrinter* win_printer = (rdpWinPrinter*)printer;
 	rdpWinPrintJob* win_printjob;
 
-	if (win_printer->printjob != NULL)
-		return NULL;
+	if (win_printer->printjob != nullptr)
+		return nullptr;
 
 	win_printjob = (rdpWinPrintJob*)calloc(1, sizeof(rdpWinPrintJob));
 	if (!win_printjob)
-		return NULL;
+		return nullptr;
 
 	win_printjob->printjob.id = id;
 	win_printjob->printjob.printer = printer;
 	win_printjob->di.pDocName = printer_win_get_printjob_name(id);
-	win_printjob->di.pDatatype = NULL;
-	win_printjob->di.pOutputFile = NULL;
+	win_printjob->di.pDatatype = nullptr;
+	win_printjob->di.pOutputFile = nullptr;
 
 	win_printjob->handle = StartDocPrinter(win_printer->hPrinter, 1, (LPBYTE) & (win_printjob->di));
 
@@ -184,14 +184,14 @@ static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, UINT32 id)
 	{
 		free(win_printjob->di.pDocName);
 		free(win_printjob);
-		return NULL;
+		return nullptr;
 	}
 
 	if (!StartPagePrinter(win_printer->hPrinter))
 	{
 		free(win_printjob->di.pDocName);
 		free(win_printjob);
-		return NULL;
+		return nullptr;
 	}
 
 	win_printjob->printjob.Write = printer_win_write_printjob;
@@ -207,10 +207,10 @@ static rdpPrintJob* printer_win_find_printjob(rdpPrinter* printer, UINT32 id)
 	rdpWinPrinter* win_printer = (rdpWinPrinter*)printer;
 
 	if (!win_printer->printjob)
-		return NULL;
+		return nullptr;
 
 	if (win_printer->printjob->printjob.id != id)
-		return NULL;
+		return nullptr;
 
 	return (rdpPrintJob*)win_printer->printjob;
 }
@@ -254,18 +254,18 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 {
 	rdpWinPrinter* win_printer;
 	DWORD needed = 0;
-	PRINTER_INFO_2* prninfo = NULL;
+	PRINTER_INFO_2* prninfo = nullptr;
 
 	if (!name)
-		return NULL;
+		return nullptr;
 
 	win_printer = (rdpWinPrinter*)calloc(1, sizeof(rdpWinPrinter));
 	if (!win_printer)
-		return NULL;
+		return nullptr;
 
 	win_printer->printer.backend = &win_driver->driver;
 	win_printer->printer.id = win_driver->id_sequence++;
-	win_printer->printer.name = ConvertWCharToUtf8Alloc(name, NULL);
+	win_printer->printer.name = ConvertWCharToUtf8Alloc(name, nullptr);
 	if (!win_printer->printer.name)
 		goto fail;
 
@@ -278,7 +278,7 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	win_printer->printer.AddRef = printer_win_add_ref_printer;
 	win_printer->printer.ReleaseRef = printer_win_release_ref_printer;
 
-	if (!OpenPrinter(WINPR_CAST_CONST_PTR_AWAY(name, WCHAR*), &(win_printer->hPrinter), NULL))
+	if (!OpenPrinter(WINPR_CAST_CONST_PTR_AWAY(name, WCHAR*), &(win_printer->hPrinter), nullptr))
 		goto fail;
 
 	/* How many memory should be allocated for printer data */
@@ -297,9 +297,9 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	}
 
 	if (drivername)
-		win_printer->printer.driver = ConvertWCharToUtf8Alloc(drivername, NULL);
+		win_printer->printer.driver = ConvertWCharToUtf8Alloc(drivername, nullptr);
 	else
-		win_printer->printer.driver = ConvertWCharToUtf8Alloc(prninfo->pDriverName, NULL);
+		win_printer->printer.driver = ConvertWCharToUtf8Alloc(prninfo->pDriverName, nullptr);
 	GlobalFree(prninfo);
 	if (!win_printer->printer.driver)
 		goto fail;
@@ -310,14 +310,14 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 
 fail:
 	printer_win_free_printer(&win_printer->printer);
-	return NULL;
+	return nullptr;
 }
 
 static void printer_win_release_enum_printers(rdpPrinter** printers)
 {
 	rdpPrinter** cur = printers;
 
-	while ((cur != NULL) && ((*cur) != NULL))
+	while ((cur != nullptr) && ((*cur) != nullptr))
 	{
 		if ((*cur)->ReleaseRef)
 			(*cur)->ReleaseRef(*cur);
@@ -330,25 +330,25 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 {
 	rdpPrinter** printers;
 	int num_printers;
-	PRINTER_INFO_2* prninfo = NULL;
+	PRINTER_INFO_2* prninfo = nullptr;
 	DWORD needed, returned;
 	BOOL haveDefault = FALSE;
-	LPWSTR defaultPrinter = NULL;
+	LPWSTR defaultPrinter = nullptr;
 
-	GetDefaultPrinter(NULL, &needed);
+	GetDefaultPrinter(nullptr, &needed);
 	if (needed)
 	{
 		defaultPrinter = (LPWSTR)calloc(needed, sizeof(WCHAR));
 
 		if (!defaultPrinter)
-			return NULL;
+			return nullptr;
 
 		if (!GetDefaultPrinter(defaultPrinter, &needed))
 			defaultPrinter[0] = '\0';
 	}
 
 	/* find required size for the buffer */
-	EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS, NULL, 2, NULL, 0, &needed,
+	EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS, nullptr, 2, nullptr, 0, &needed,
 	             &returned);
 
 	/* allocate array of PRINTER_INFO structures */
@@ -356,11 +356,11 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 	if (!prninfo)
 	{
 		free(defaultPrinter);
-		return NULL;
+		return nullptr;
 	}
 
 	/* call again */
-	if (!EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS, NULL, 2, (LPBYTE)prninfo,
+	if (!EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS, nullptr, 2, (LPBYTE)prninfo,
 	                  needed, &needed, &returned))
 	{
 	}
@@ -370,7 +370,7 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 	{
 		GlobalFree(prninfo);
 		free(defaultPrinter);
-		return NULL;
+		return nullptr;
 	}
 
 	num_printers = 0;
@@ -384,7 +384,7 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 		if (!current)
 		{
 			printer_win_release_enum_printers(printers);
-			printers = NULL;
+			printers = nullptr;
 			break;
 		}
 		if (current->is_default)
@@ -403,22 +403,22 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver, const char* name,
                                            const char* driverName, BOOL isDefault)
 {
-	WCHAR* driverNameW = NULL;
-	WCHAR* nameW = NULL;
+	WCHAR* driverNameW = nullptr;
+	WCHAR* nameW = nullptr;
 	rdpWinPrinterDriver* win_driver = (rdpWinPrinterDriver*)driver;
-	rdpPrinter* myPrinter = NULL;
+	rdpPrinter* myPrinter = nullptr;
 
 	if (name)
 	{
-		nameW = ConvertUtf8ToWCharAlloc(name, NULL);
+		nameW = ConvertUtf8ToWCharAlloc(name, nullptr);
 		if (!nameW)
-			return NULL;
+			return nullptr;
 	}
 	if (driverName)
 	{
-		driverNameW = ConvertUtf8ToWCharAlloc(driverName, NULL);
+		driverNameW = ConvertUtf8ToWCharAlloc(driverName, nullptr);
 		if (!driverNameW)
-			return NULL;
+			return nullptr;
 	}
 
 	myPrinter = printer_win_new_printer(win_driver, nameW, driverNameW, isDefault);
@@ -436,7 +436,7 @@ static void printer_win_add_ref_driver(rdpPrinterDriver* driver)
 }
 
 /* Singleton */
-static rdpWinPrinterDriver* win_driver = NULL;
+static rdpWinPrinterDriver* win_driver = nullptr;
 
 static void printer_win_release_ref_driver(rdpPrinterDriver* driver)
 {
@@ -444,7 +444,7 @@ static void printer_win_release_ref_driver(rdpPrinterDriver* driver)
 	if (win->references <= 1)
 	{
 		free(win);
-		win_driver = NULL;
+		win_driver = nullptr;
 	}
 	else
 		win->references--;

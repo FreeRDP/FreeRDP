@@ -15,7 +15,7 @@ static void free_string(char** current, BOOL cleanup)
 		if (*current)
 			memset(*current, 0, strlen(*current));
 		free(*current);
-		(*current) = NULL;
+		(*current) = nullptr;
 	}
 }
 
@@ -24,7 +24,7 @@ static BOOL alloc_empty_string(char** current, const char* next, size_t next_len
 	if (!next && (next_len > 0))
 	{
 		*current = calloc(next_len, 1);
-		return (*current != NULL);
+		return (*current != nullptr);
 	}
 	return FALSE;
 }
@@ -36,8 +36,8 @@ static BOOL update_string_copy_(char** current, const char* next, size_t next_le
 	if (alloc_empty_string(current, next, next_len))
 		return TRUE;
 
-	*current = (next ? strndup(next, next_len) : NULL);
-	return !next || (*current != NULL);
+	*current = (next ? strndup(next, next_len) : nullptr);
+	return !next || (*current != nullptr);
 }
 
 static BOOL update_string_(char** current, char* next, size_t next_len)
@@ -48,7 +48,7 @@ static BOOL update_string_(char** current, char* next, size_t next_len)
 		return TRUE;
 
 	*current = next;
-	return !next || (*current != NULL);
+	return !next || (*current != nullptr);
 }
 
 BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
@@ -3041,7 +3041,7 @@ const char* freerdp_settings_get_string(WINPR_ATTR_UNUSED const rdpSettings* set
 			WLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),
 			         freerdp_settings_get_type_name_for_key(id));
 			WINPR_ASSERT(FALSE);
-			return NULL;
+			return nullptr;
 	}
 }
 
@@ -3373,7 +3373,7 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 			WLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),
 			         freerdp_settings_get_type_name_for_key(id));
 			WINPR_ASSERT(FALSE);
-			return NULL;
+			return nullptr;
 	}
 }
 
@@ -4188,7 +4188,7 @@ void* freerdp_settings_get_pointer_writable(rdpSettings* settings, FreeRDP_Setti
 			WLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),
 			         freerdp_settings_get_type_name_for_key(id));
 			WINPR_ASSERT(FALSE);
-			return NULL;
+			return nullptr;
 	}
 }
 

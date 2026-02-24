@@ -38,7 +38,7 @@ PROFILER* profiler_create(const char* name)
 	PROFILER* profiler = (PROFILER*)calloc(1, sizeof(PROFILER));
 
 	if (!profiler)
-		return NULL;
+		return nullptr;
 
 	profiler->name = _strdup(name);
 	profiler->stopwatch = stopwatch_create();
@@ -49,7 +49,7 @@ PROFILER* profiler_create(const char* name)
 	return profiler;
 fail:
 	profiler_free(profiler);
-	return NULL;
+	return nullptr;
 }
 
 void profiler_free(PROFILER* profiler)

@@ -74,7 +74,7 @@ static UINT irp_complete(IRP* irp)
 	Stream_SetPosition(irp->output, pos);
 
 	const UINT error = rdpdr_send(rdpdr, irp->output);
-	irp->output = NULL;
+	irp->output = nullptr;
 
 	irp_free(irp);
 	return error;
@@ -82,8 +82,8 @@ static UINT irp_complete(IRP* irp)
 
 IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* error)
 {
-	IRP* irp = NULL;
-	DEVICE* device = NULL;
+	IRP* irp = nullptr;
+	DEVICE* device = nullptr;
 	UINT32 DeviceId = 0;
 
 	WINPR_ASSERT(devman);
@@ -94,7 +94,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 	{
 		if (error)
 			*error = ERROR_INVALID_DATA;
-		return NULL;
+		return nullptr;
 	}
 
 	Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
@@ -105,7 +105,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 		if (error)
 			*error = ERROR_DEV_NOT_EXIST;
 
-		return NULL;
+		return nullptr;
 	}
 
 	irp = (IRP*)winpr_aligned_calloc(1, sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
@@ -115,7 +115,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 		WLog_Print(log, WLOG_ERROR, "_aligned_malloc failed!");
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
-		return NULL;
+		return nullptr;
 	}
 
 	Stream_Read_UINT32(s, irp->FileId);        /* FileId (4 bytes) */
@@ -135,7 +135,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 		irp_free(irp);
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
-		return NULL;
+		return nullptr;
 	}
 
 	if (!rdpdr_write_iocompletion_header(irp->output, DeviceId, irp->CompletionId, 0))
@@ -143,13 +143,13 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 		irp_free(irp);
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
-		return NULL;
+		return nullptr;
 	}
 
 	irp->Complete = irp_complete;
 	irp->Discard = irp_free;
 
-	irp->thread = NULL;
+	irp->thread = nullptr;
 	irp->cancelled = FALSE;
 
 	if (error)

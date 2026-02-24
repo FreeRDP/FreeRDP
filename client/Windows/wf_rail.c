@@ -179,7 +179,7 @@ static void PrintRailWindowState(const WINDOW_ORDER_INFO* orderInfo,
 	{
 		const WCHAR* str = (const WCHAR*)windowState->titleInfo.string;
 		char* title =
-		    ConvertWCharNToUtf8Alloc(str, windowState->titleInfo.length / sizeof(WCHAR), NULL);
+		    ConvertWCharNToUtf8Alloc(str, windowState->titleInfo.length / sizeof(WCHAR), nullptr);
 		WLog_INFO(TAG, "\tTitleInfo: %s (length = %hu)", title, windowState->titleInfo.length);
 		free(title);
 	}
@@ -289,9 +289,9 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	UINT32 yPos;
 	PAINTSTRUCT ps;
 	UINT32 inputFlags;
-	wfContext* wfc = NULL;
-	rdpInput* input = NULL;
-	rdpContext* context = NULL;
+	wfContext* wfc = nullptr;
+	rdpInput* input = nullptr;
+	rdpContext* context = nullptr;
 	wfRailWindow* railWindow;
 	railWindow = (wfRailWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
@@ -419,7 +419,7 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                   const WINDOW_STATE_ORDER* windowState)
 {
-	wfRailWindow* railWindow = NULL;
+	wfRailWindow* railWindow = nullptr;
 	wfContext* wfc = (wfContext*)context;
 	RailClientContext* rail = wfc->rail;
 	UINT32 fieldFlags = orderInfo->fieldFlags;
@@ -429,7 +429,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	{
 		BOOL rc;
 		HANDLE hInstance;
-		WCHAR* titleW = NULL;
+		WCHAR* titleW = nullptr;
 		WNDCLASSEX wndClassEx = WINPR_C_ARRAY_INIT;
 		railWindow = (wfRailWindow*)calloc(1, sizeof(wfRailWindow));
 
@@ -449,7 +449,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 		{
 			const WCHAR* str = (const WCHAR*)windowState->titleInfo.string;
-			char* title = NULL;
+			char* title = nullptr;
 
 			if (windowState->titleInfo.length == 0)
 			{
@@ -460,7 +460,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 				}
 			}
 			else if (!(title = ConvertWCharNToUtf8Alloc(
-			               str, windowState->titleInfo.length / sizeof(WCHAR), NULL)))
+			               str, windowState->titleInfo.length / sizeof(WCHAR), nullptr)))
 			{
 				WLog_ERR(TAG, "failed to convert window title");
 				/* error handled below */
@@ -480,21 +480,21 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			return FALSE;
 		}
 
-		titleW = ConvertUtf8ToWCharAlloc(railWindow->title, NULL);
-		hInstance = GetModuleHandle(NULL);
+		titleW = ConvertUtf8ToWCharAlloc(railWindow->title, nullptr);
+		hInstance = GetModuleHandle(nullptr);
 
 		wndClassEx.cbSize = sizeof(WNDCLASSEX);
 		wndClassEx.style = 0;
 		wndClassEx.lpfnWndProc = wf_RailWndProc;
 		wndClassEx.cbClsExtra = 0;
 		wndClassEx.cbWndExtra = 0;
-		wndClassEx.hIcon = NULL;
-		wndClassEx.hCursor = NULL;
-		wndClassEx.hbrBackground = NULL;
-		wndClassEx.lpszMenuName = NULL;
+		wndClassEx.hIcon = nullptr;
+		wndClassEx.hCursor = nullptr;
+		wndClassEx.hbrBackground = nullptr;
+		wndClassEx.lpszMenuName = nullptr;
 		wndClassEx.lpszClassName = _T("RdpRailWindow");
 		wndClassEx.hInstance = hInstance;
-		wndClassEx.hIconSm = NULL;
+		wndClassEx.hIconSm = nullptr;
 		RegisterClassEx(&wndClassEx);
 		railWindow->hWnd = CreateWindowExW(railWindow->dwExStyle, /* dwExStyle */
 		                                   _T("RdpRailWindow"),   /* lpClassName */
@@ -504,10 +504,10 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		                                   railWindow->y,         /* y */
 		                                   railWindow->width,     /* nWidth */
 		                                   railWindow->height,    /* nHeight */
-		                                   NULL,                  /* hWndParent */
-		                                   NULL,                  /* hMenu */
+		                                   nullptr,               /* hWndParent */
+		                                   nullptr,               /* hMenu */
 		                                   hInstance,             /* hInstance */
-		                                   NULL                   /* lpParam */
+		                                   nullptr                /* lpParam */
 		);
 
 		if (!railWindow->hWnd)
@@ -549,7 +549,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			railWindow->height = windowState->windowHeight;
 		}
 
-		SetWindowPos(railWindow->hWnd, NULL, railWindow->x, railWindow->y, railWindow->width,
+		SetWindowPos(railWindow->hWnd, nullptr, railWindow->x, railWindow->y, railWindow->width,
 		             railWindow->height, 0);
 	}
 
@@ -575,7 +575,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
 		const WCHAR* str = (const WCHAR*)windowState->titleInfo.string;
-		char* title = NULL;
+		char* title = nullptr;
 
 		if (windowState->titleInfo.length == 0)
 		{
@@ -586,7 +586,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			}
 		}
 		else if (!(title = ConvertWCharNToUtf8Alloc(
-		               str, windowState->titleInfo.length / sizeof(WCHAR), NULL)))
+		               str, windowState->titleInfo.length / sizeof(WCHAR), nullptr)))
 		{
 			WLog_ERR(TAG, "failed to convert window title");
 			return FALSE;
@@ -655,7 +655,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 static BOOL wf_rail_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
-	wfRailWindow* railWindow = NULL;
+	wfRailWindow* railWindow = nullptr;
 	wfContext* wfc = (wfContext*)context;
 	RailClientContext* rail = wfc->rail;
 	WLog_DBG(TAG, "RailWindowDelete");
@@ -731,7 +731,7 @@ static BOOL wf_rail_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* or
 		SendMessage(railWindow->hWnd, WM_SETICON, wParam, lParam);
 	}
 
-	ReleaseDC(NULL, hDC);
+	ReleaseDC(nullptr, hDC);
 
 	if (windowIcon->iconInfo->cacheEntry != 0xFFFF)
 	{
@@ -933,7 +933,7 @@ void wf_rail_invalidate_region(wfContext* wfc, REGION16* invalidRegion)
 {
 	RECT updateRect;
 	RECTANGLE_16 windowRect;
-	ULONG_PTR* pKeys = NULL;
+	ULONG_PTR* pKeys = nullptr;
 	wfRailWindow* railWindow;
 	const RECTANGLE_16* extents;
 	REGION16 windowInvalidRegion;
@@ -983,12 +983,12 @@ BOOL wf_rail_init(wfContext* wfc, RailClientContext* rail)
 	rail->ServerGetAppIdResponse = wf_rail_server_get_appid_response;
 	wf_rail_register_update_callbacks(context->update);
 	wfc->railWindows = HashTable_New(TRUE);
-	return (wfc->railWindows != NULL);
+	return (wfc->railWindows != nullptr);
 }
 
 void wf_rail_uninit(wfContext* wfc, RailClientContext* rail)
 {
-	wfc->rail = NULL;
-	rail->custom = NULL;
+	wfc->rail = nullptr;
+	rail->custom = nullptr;
 	HashTable_Free(wfc->railWindows);
 }

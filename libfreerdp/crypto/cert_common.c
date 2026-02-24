@@ -55,7 +55,7 @@ BOOL read_bignum(BYTE** dst, DWORD* length, const BIGNUM* num, BOOL alloc)
 	if (alloc)
 	{
 		free(*dst);
-		*dst = NULL;
+		*dst = nullptr;
 		*length = 0;
 	}
 
@@ -117,7 +117,7 @@ BOOL cert_info_clone(rdpCertInfo* dst, const rdpCertInfo* src)
 
 	*dst = *src;
 
-	dst->Modulus = NULL;
+	dst->Modulus = nullptr;
 	dst->ModulusLength = 0;
 	if (src->ModulusLength > 0)
 	{
@@ -135,7 +135,7 @@ void cert_info_free(rdpCertInfo* info)
 	WINPR_ASSERT(info);
 	free(info->Modulus);
 	info->ModulusLength = 0;
-	info->Modulus = NULL;
+	info->Modulus = nullptr;
 }
 
 BOOL cert_info_allocate(rdpCertInfo* info, size_t size)
@@ -193,8 +193,8 @@ BOOL cert_info_read_exponent(rdpCertInfo* info, size_t size, wStream* s)
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 X509* x509_from_rsa(const RSA* rsa)
 {
-	EVP_PKEY* pubkey = NULL;
-	X509* x509 = NULL;
+	EVP_PKEY* pubkey = nullptr;
+	X509* x509 = nullptr;
 	BIO* bio = BIO_new(
 #if defined(LIBRESSL_VERSION_NUMBER)
 	    BIO_s_mem()
@@ -205,7 +205,7 @@ X509* x509_from_rsa(const RSA* rsa)
 	if (!bio)
 	{
 		WLog_ERR(TAG, "BIO_new() failed");
-		return NULL;
+		return nullptr;
 	}
 
 	const int rc = PEM_write_bio_RSA_PUBKEY(bio, (RSA*)rsa);
@@ -215,10 +215,10 @@ X509* x509_from_rsa(const RSA* rsa)
 		goto fail;
 	}
 
-	pubkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
+	pubkey = PEM_read_bio_PUBKEY(bio, nullptr, nullptr, nullptr);
 	if (!pubkey)
 	{
-		WLog_ERR(TAG, "PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL) failed");
+		WLog_ERR(TAG, "PEM_read_bio_PUBKEY(bio, nullptr, nullptr, nullptr) failed");
 		goto fail;
 	}
 
@@ -234,7 +234,7 @@ X509* x509_from_rsa(const RSA* rsa)
 	{
 		WLog_ERR(TAG, "X509_set_pubkey(x509, pubkey) failed");
 		X509_free(x509);
-		x509 = NULL;
+		x509 = nullptr;
 		goto fail;
 	}
 fail:

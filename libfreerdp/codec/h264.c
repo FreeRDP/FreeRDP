@@ -212,7 +212,7 @@ static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE
 	size_t count = 0;
 	size_t wc = 0;
 	size_t hc = 0;
-	RECTANGLE_16* rectangles = NULL;
+	RECTANGLE_16* rectangles = nullptr;
 
 	if (!regionRect || !pYUVData || !pOldYUVData || !iStride || !meta)
 		return FALSE;
@@ -348,12 +348,12 @@ INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
                       RDPGFX_H264_METABLOCK* auxMeta)
 {
 	int rc = -1;
-	BYTE* coded = NULL;
+	BYTE* coded = nullptr;
 	UINT32 codedSize = 0;
-	BYTE** pYUV444Data = NULL;
-	BYTE** pOldYUV444Data = NULL;
-	BYTE** pYUVData = NULL;
-	BYTE** pOldYUVData = NULL;
+	BYTE** pYUV444Data = nullptr;
+	BYTE** pOldYUV444Data = nullptr;
+	BYTE** pYUVData = nullptr;
+	BYTE** pOldYUVData = nullptr;
 
 	if (!h264 || !h264->Compressor)
 		return -1;
@@ -677,8 +677,8 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 	if (!h264)
 		return FALSE;
 
-	h264->subsystem = NULL;
-	InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, NULL, NULL);
+	h264->subsystem = nullptr;
+	InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, nullptr, nullptr);
 
 	for (size_t i = 0; i < MAX_SUBSYSTEMS; i++)
 	{
@@ -717,7 +717,7 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 {
 	H264_CONTEXT* h264 = (H264_CONTEXT*)calloc(1, sizeof(H264_CONTEXT));
 	if (!h264)
-		return NULL;
+		return nullptr;
 
 	h264->log = WLog_Get(TAG);
 
@@ -746,7 +746,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	h264_context_free(h264);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void h264_context_free(H264_CONTEXT* h264)

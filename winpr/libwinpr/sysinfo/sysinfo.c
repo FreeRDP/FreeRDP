@@ -180,19 +180,19 @@ static DWORD GetNumberOfProcessors(void)
 #else
 		mib[1] = HW_AVAILCPU;
 #endif
-		sysctl(mib, 2, &numCPUs, &length, NULL, 0);
+		sysctl(mib, 2, &numCPUs, &length, nullptr, 0);
 
 		if (numCPUs < 1)
 		{
 			mib[1] = HW_NCPU;
-			sysctl(mib, 2, &numCPUs, &length, NULL, 0);
+			sysctl(mib, 2, &numCPUs, &length, nullptr, 0);
 
 			if (numCPUs < 1)
 				numCPUs = 1;
 		}
 	}
 #elif defined(__hpux)
-	numCPUs = (DWORD)mpctl(MPC_GETNUMSPUS, NULL, NULL);
+	numCPUs = (DWORD)mpctl(MPC_GETNUMSPUS, nullptr, nullptr);
 #elif defined(__sgi)
 	numCPUs = (DWORD)sysconf(_SC_NPROC_ONLN);
 #endif
@@ -246,7 +246,7 @@ void GetSystemTime(LPSYSTEMTIME lpSystemTime)
 {
 	time_t ct = 0;
 	struct tm tres;
-	struct tm* stm = NULL;
+	struct tm* stm = nullptr;
 	WORD wMilliseconds = 0;
 	UINT64 now = winpr_GetUnixTimeNS();
 	ct = WINPR_TIME_NS_TO_S(now);
@@ -278,7 +278,7 @@ VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
 {
 	time_t ct = 0;
 	struct tm tres;
-	struct tm* ltm = NULL;
+	struct tm* ltm = nullptr;
 	WORD wMilliseconds = 0;
 	UINT64 now = winpr_GetUnixTimeNS();
 	ct = WINPR_TIME_NS_TO_S(now);
@@ -415,7 +415,7 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 BOOL GetComputerNameW(LPWSTR lpBuffer, LPDWORD lpnSize)
 {
 	BOOL rc = 0;
-	LPSTR buffer = NULL;
+	LPSTR buffer = nullptr;
 	if (!lpnSize || (*lpnSize > INT_MAX))
 		return FALSE;
 
@@ -531,7 +531,7 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize)
 {
 	BOOL rc = 0;
-	LPSTR lpABuffer = NULL;
+	LPSTR lpABuffer = nullptr;
 
 	if (!lpnSize)
 	{
@@ -599,7 +599,7 @@ UINT64 winpr_GetTickCount64NS(void)
 #else
 	struct timeval tv = WINPR_C_ARRAY_INIT;
 
-	if (gettimeofday(&tv, NULL) == 0)
+	if (gettimeofday(&tv, nullptr) == 0)
 		ticks = (tv.tv_sec * 1000000000ull) + (tv.tv_usec * 1000ull);
 
 	/* We need to trick here:
@@ -645,7 +645,7 @@ UINT64 winpr_GetUnixTimeNS(void)
 	       WINPR_ASSERTING_INT_CAST(uint64_t, ts.tv_nsec);
 #else
 	struct timeval tv = WINPR_C_ARRAY_INIT;
-	if (gettimeofday(&tv, NULL) != 0)
+	if (gettimeofday(&tv, nullptr) != 0)
 		return 0;
 	return tv.tv_sec * 1000000000ULL + tv.tv_usec * 1000ull;
 #endif

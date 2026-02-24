@@ -41,9 +41,9 @@
 static BOOL g_winpr_openssl_initialized_by_winpr = FALSE;
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-static OSSL_PROVIDER* s_winpr_openssl_provider_fips = NULL;
-static OSSL_PROVIDER* s_winpr_openssl_provider_legacy = NULL;
-static OSSL_PROVIDER* s_winpr_openssl_provider_default = NULL;
+static OSSL_PROVIDER* s_winpr_openssl_provider_fips = nullptr;
+static OSSL_PROVIDER* s_winpr_openssl_provider_legacy = nullptr;
+static OSSL_PROVIDER* s_winpr_openssl_provider_default = nullptr;
 #endif
 
 /**
@@ -57,7 +57,7 @@ static OSSL_PROVIDER* s_winpr_openssl_provider_default = NULL;
 #define WINPR_OPENSSL_LOCKING_REQUIRED 1
 
 static int g_winpr_openssl_num_locks = 0;
-static HANDLE* g_winpr_openssl_locks = NULL;
+static HANDLE* g_winpr_openssl_locks = nullptr;
 
 struct CRYPTO_dynlock_value
 {
@@ -88,12 +88,12 @@ static struct CRYPTO_dynlock_value* _winpr_openssl_dynlock_create(const char* fi
 	struct CRYPTO_dynlock_value* dynlock;
 
 	if (!(dynlock = (struct CRYPTO_dynlock_value*)malloc(sizeof(struct CRYPTO_dynlock_value))))
-		return NULL;
+		return nullptr;
 
-	if (!(dynlock->mutex = CreateMutex(NULL, FALSE, NULL)))
+	if (!(dynlock->mutex = CreateMutex(nullptr, FALSE, nullptr)))
 	{
 		free(dynlock);
-		return NULL;
+		return nullptr;
 	}
 
 	return dynlock;
@@ -143,7 +143,7 @@ static BOOL _winpr_openssl_initialize_locking(void)
 
 			for (int i = 0; i < count; i++)
 			{
-				if (!(locks[i] = CreateMutex(NULL, FALSE, NULL)))
+				if (!(locks[i] = CreateMutex(nullptr, FALSE, nullptr)))
 				{
 					WLog_ERR(TAG, "error creating lock #%d", i);
 
@@ -199,7 +199,7 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 	/* undo our static locking modifications */
 	if (CRYPTO_get_locking_callback() == _winpr_openssl_locking)
 	{
-		CRYPTO_set_locking_callback(NULL);
+		CRYPTO_set_locking_callback(nullptr);
 
 		for (int i = 0; i < g_winpr_openssl_num_locks; i++)
 		{
@@ -208,31 +208,31 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 
 		g_winpr_openssl_num_locks = 0;
 		free(g_winpr_openssl_locks);
-		g_winpr_openssl_locks = NULL;
+		g_winpr_openssl_locks = nullptr;
 	}
 
 	/* unset our dynamic locking callbacks */
 
 	if (CRYPTO_get_dynlock_create_callback() == _winpr_openssl_dynlock_create)
 	{
-		CRYPTO_set_dynlock_create_callback(NULL);
+		CRYPTO_set_dynlock_create_callback(nullptr);
 	}
 
 	if (CRYPTO_get_dynlock_lock_callback() == _winpr_openssl_dynlock_lock)
 	{
-		CRYPTO_set_dynlock_lock_callback(NULL);
+		CRYPTO_set_dynlock_lock_callback(nullptr);
 	}
 
 	if (CRYPTO_get_dynlock_destroy_callback() == _winpr_openssl_dynlock_destroy)
 	{
-		CRYPTO_set_dynlock_destroy_callback(NULL);
+		CRYPTO_set_dynlock_destroy_callback(nullptr);
 	}
 
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
 
 	if (CRYPTO_get_id_callback() == _winpr_openssl_id)
 	{
-		CRYPTO_set_id_callback(NULL);
+		CRYPTO_set_id_callback(nullptr);
 	}
 
 #endif
@@ -252,18 +252,18 @@ static BOOL winpr_enable_fips(DWORD flags)
 		WLog_DBG(TAG, "Ensuring openssl fips mode is enabled");
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-		s_winpr_openssl_provider_fips = OSSL_PROVIDER_load(NULL, "fips");
-		if (s_winpr_openssl_provider_fips == NULL)
+		s_winpr_openssl_provider_fips = OSSL_PROVIDER_load(nullptr, "fips");
+		if (s_winpr_openssl_provider_fips == nullptr)
 		{
 			WLog_WARN(TAG, "OpenSSL FIPS provider failed to load");
 		}
-		if (!EVP_default_properties_is_fips_enabled(NULL))
+		if (!EVP_default_properties_is_fips_enabled(nullptr))
 #else
 		if (FIPS_mode() != 1)
 #endif
 		{
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-			if (EVP_set_default_properties(NULL, "fips=yes"))
+			if (EVP_set_default_properties(nullptr, "fips=yes"))
 #else
 			if (FIPS_mode_set(1))
 #endif
@@ -319,20 +319,20 @@ static BOOL CALLBACK winpr_openssl_initialize(WINPR_ATTR_UNUSED PINIT_ONCE once,
 	if (OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS |
 	                         OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS |
 	                         OPENSSL_INIT_ENGINE_ALL_BUILTIN,
-	                     NULL) != 1)
+	                     nullptr) != 1)
 		return FALSE;
 
 #endif
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
 	/* The legacy provider is needed for MD4. */
-	s_winpr_openssl_provider_legacy = OSSL_PROVIDER_load(NULL, "legacy");
-	if (s_winpr_openssl_provider_legacy == NULL)
+	s_winpr_openssl_provider_legacy = OSSL_PROVIDER_load(nullptr, "legacy");
+	if (s_winpr_openssl_provider_legacy == nullptr)
 	{
 		WLog_WARN(TAG, "OpenSSL LEGACY provider failed to load, no md4 support available!");
 	}
-	s_winpr_openssl_provider_default = OSSL_PROVIDER_load(NULL, "default");
-	if (s_winpr_openssl_provider_default == NULL)
+	s_winpr_openssl_provider_default = OSSL_PROVIDER_load(nullptr, "default");
+	if (s_winpr_openssl_provider_default == nullptr)
 	{
 		WLog_WARN(TAG, "OpenSSL DEFAULT provider failed to load");
 	}
@@ -349,7 +349,7 @@ BOOL winpr_InitializeSSL(DWORD flags)
 {
 	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
 
-	if (!InitOnceExecuteOnce(&once, winpr_openssl_initialize, &flags, NULL))
+	if (!InitOnceExecuteOnce(&once, winpr_openssl_initialize, &flags, nullptr))
 		return FALSE;
 
 	return winpr_enable_fips(flags);
@@ -404,14 +404,14 @@ BOOL winpr_CleanupSSL(DWORD flags)
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L) || defined(LIBRESSL_VERSION_NUMBER)
 		ERR_remove_state(0);
 #else
-		ERR_remove_thread_state(NULL);
+		ERR_remove_thread_state(nullptr);
 #endif
 	}
 
 #endif
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
 	OSSL_LIB_CTX* ctx = OSSL_LIB_CTX_get0_global_default();
-	OSSL_PROVIDER_do_all(ctx, unload, NULL);
+	OSSL_PROVIDER_do_all(ctx, unload, nullptr);
 #endif
 
 	return TRUE;
@@ -422,7 +422,7 @@ BOOL winpr_FIPSMode(void)
 #if (OPENSSL_VERSION_NUMBER < 0x10001000L) || defined(LIBRESSL_VERSION_NUMBER)
 	return FALSE;
 #elif defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-	return (EVP_default_properties_is_fips_enabled(NULL) == 1);
+	return (EVP_default_properties_is_fips_enabled(nullptr) == 1);
 #else
 	return (FIPS_mode() == 1);
 #endif

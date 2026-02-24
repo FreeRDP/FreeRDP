@@ -61,7 +61,7 @@ BOOL sf_peer_audin_init(testPeerContext* context)
 
 	context->audin->Data = sf_peer_audin_data;
 
-	return audin_server_set_formats(context->audin, -1, NULL);
+	return audin_server_set_formats(context->audin, -1, nullptr);
 #else
 	return TRUE;
 #endif
@@ -109,6 +109,6 @@ void sf_peer_audin_uninit(testPeerContext* context)
 
 #if defined(CHANNEL_AUDIN_SERVER)
 	audin_server_context_free(context->audin);
-	context->audin = NULL;
+	context->audin = nullptr;
 #endif
 }

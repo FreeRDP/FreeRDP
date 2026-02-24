@@ -184,7 +184,7 @@ extern "C"
 	/** @brief Set a custom context for a dynamic logger.
 	 *  This can be used to print a customized prefix, e.g. some session id for a specific context
 	 *
-	 *  @param log The logger to ste the context for. Must not be \b NULL
+	 *  @param log The logger to ste the context for. Must not be \b nullptr
 	 *  @param fkt A function pointer that is called to get the custimized string.
 	 *  @param context A context \b fkt is called with. Caller must ensure it is still allocated
 	 * when \b log is used
@@ -211,7 +211,7 @@ extern "C"
 #define WLog_Print_tag(_tag, _log_level, ...)                 \
 	do                                                        \
 	{                                                         \
-		static wLog* _log_cached_ptr = NULL;                  \
+		static wLog* _log_cached_ptr = nullptr;               \
 		if (!_log_cached_ptr)                                 \
 			_log_cached_ptr = WLog_Get(_tag);                 \
 		WLog_Print(_log_cached_ptr, _log_level, __VA_ARGS__); \
@@ -267,7 +267,7 @@ extern "C"
 	                                      size_t line, const char* file, const char* fkt,
 	                                      WINPR_FORMAT_ARG const char* fmt, ...)
 	{
-		static wLog* log_cached_ptr = NULL;
+		static wLog* log_cached_ptr = nullptr;
 		if (!log_cached_ptr)
 			log_cached_ptr = WLog_Get(tag);
 

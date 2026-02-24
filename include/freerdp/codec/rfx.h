@@ -187,7 +187,7 @@ extern "C"
 	 *
 	 *  @since version 3.0.0
 	 *
-	 *  @return The RFX palette that is currently in use or \b NULL
+	 *  @return The RFX palette that is currently in use or \b nullptr
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const BYTE* rfx_context_get_palette(RFX_CONTEXT* WINPR_RESTRICT context);

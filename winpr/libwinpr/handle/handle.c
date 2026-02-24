@@ -43,7 +43,7 @@
 BOOL CloseHandle(HANDLE hObject)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* Object = NULL;
+	WINPR_HANDLE* Object = nullptr;
 
 	if (!winpr_Handle_GetInfo(hObject, &Type, &Object))
 		return FALSE;

@@ -73,7 +73,7 @@ static SLresult openSLCreateEngine(OPENSL_STREAM* p)
 {
 	SLresult result;
 	// create engine
-	result = slCreateEngine(&(p->engineObject), 0, NULL, 0, NULL, NULL);
+	result = slCreateEngine(&(p->engineObject), 0, nullptr, 0, nullptr, nullptr);
 
 	if (result != SL_RESULT_SUCCESS)
 		goto engine_end;
@@ -96,7 +96,7 @@ static SLresult openSLCreateEngine(OPENSL_STREAM* p)
 
 	if (result != SL_RESULT_SUCCESS)
 	{
-		p->deviceVolume = NULL;
+		p->deviceVolume = nullptr;
 		result = SL_RESULT_SUCCESS;
 	}
 
@@ -171,8 +171,8 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 
 		// configure audio source
 		SLDataLocator_IODevice loc_dev = { SL_DATALOCATOR_IODEVICE, SL_IODEVICE_AUDIOINPUT,
-			                               SL_DEFAULTDEVICEID_AUDIOINPUT, NULL };
-		SLDataSource audioSrc = { &loc_dev, NULL };
+			                               SL_DEFAULTDEVICEID_AUDIOINPUT, nullptr };
+		SLDataSource audioSrc = { &loc_dev, nullptr };
 		// configure audio sink
 		int speakers;
 
@@ -259,20 +259,20 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 static void openSLDestroyEngine(OPENSL_STREAM* p)
 {
 	// destroy audio recorder object, and invalidate all associated interfaces
-	if (p->recorderObject != NULL)
+	if (p->recorderObject != nullptr)
 	{
 		(*p->recorderObject)->Destroy(p->recorderObject);
-		p->recorderObject = NULL;
-		p->recorderRecord = NULL;
-		p->recorderBufferQueue = NULL;
+		p->recorderObject = nullptr;
+		p->recorderRecord = nullptr;
+		p->recorderBufferQueue = nullptr;
 	}
 
 	// destroy engine object, and invalidate all associated interfaces
-	if (p->engineObject != NULL)
+	if (p->engineObject != nullptr)
 	{
 		(*p->engineObject)->Destroy(p->engineObject);
-		p->engineObject = NULL;
-		p->engineEngine = NULL;
+		p->engineObject = nullptr;
+		p->engineEngine = nullptr;
 	}
 }
 
@@ -292,7 +292,7 @@ static queue_element* opensles_queue_element_new(size_t size)
 	return q;
 fail:
 	free(q);
-	return NULL;
+	return nullptr;
 }
 
 static void opensles_queue_element_free(void* obj)
@@ -312,12 +312,12 @@ OPENSL_STREAM* android_OpenRecDevice(void* context, opensl_receive_t receive, in
 	OPENSL_STREAM* p;
 
 	if (!context || !receive)
-		return NULL;
+		return nullptr;
 
 	p = (OPENSL_STREAM*)calloc(1, sizeof(OPENSL_STREAM));
 
 	if (!p)
-		return NULL;
+		return nullptr;
 
 	p->context = context;
 	p->receive = receive;
@@ -348,13 +348,13 @@ OPENSL_STREAM* android_OpenRecDevice(void* context, opensl_receive_t receive, in
 	return p;
 fail:
 	android_CloseRecDevice(p);
-	return NULL;
+	return nullptr;
 }
 
 // close the android audio device
 void android_CloseRecDevice(OPENSL_STREAM* p)
 {
-	if (p == NULL)
+	if (p == nullptr)
 		return;
 
 	opensles_queue_element_free(p->next);

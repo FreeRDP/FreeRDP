@@ -228,13 +228,13 @@ static int read_file(const char* pathname, char* buffer, size_t buffsize)
  * the content of /proc/cpuinfo and return it as a heap-allocated
  * string that must be freed by the caller.
  *
- * Return NULL if not found
+ * Return nullptr if not found
  */
 static char* extract_cpuinfo_field(const char* buffer, int buflen, const char* field)
 {
 	int fieldlen = strlen(field);
 	const char* bufend = buffer + buflen;
-	char* result = NULL;
+	char* result = nullptr;
 	int len;
 	const char *p, *q;
 	/* Look for first field occurrence, and ensures it starts the line. */
@@ -244,7 +244,7 @@ static char* extract_cpuinfo_field(const char* buffer, int buflen, const char* f
 	{
 		p = memmem(p, bufend - p, field, fieldlen);
 
-		if (p == NULL)
+		if (p == nullptr)
 			goto EXIT;
 
 		if (p == buffer || p[-1] == '\n')
@@ -257,21 +257,21 @@ static char* extract_cpuinfo_field(const char* buffer, int buflen, const char* f
 	p += fieldlen;
 	p = memchr(p, ':', bufend - p);
 
-	if (p == NULL || p[1] != ' ')
+	if (p == nullptr || p[1] != ' ')
 		goto EXIT;
 
 	/* Find the end of the line */
 	p += 2;
 	q = memchr(p, '\n', bufend - p);
 
-	if (q == NULL)
+	if (q == nullptr)
 		q = bufend;
 
 	/* Copy the line into a heap-allocated buffer */
 	len = q - p;
 	result = malloc(len + 1);
 
-	if (result == NULL)
+	if (result == nullptr)
 		goto EXIT;
 
 	memcpy(result, p, len);
@@ -288,7 +288,7 @@ static int has_list_item(const char* list, const char* item)
 	const char* p = list;
 	int itemlen = strlen(item);
 
-	if (list == NULL)
+	if (list == nullptr)
 		return 0;
 
 	while (*p)
@@ -322,7 +322,7 @@ static int has_list_item(const char* list, const char* item)
  * NOTE: Does not skip over leading spaces, or deal with sign characters.
  * NOTE: Ignores overflows.
  *
- * The function returns NULL in case of error (bad format), or the new
+ * The function returns nullptr in case of error (bad format), or the new
  * position after the decimal number in case of success (which will always
  * be <= 'limit').
  */
@@ -356,7 +356,7 @@ static const char* parse_number(const char* input, const char* limit, int base, 
 	}
 
 	if (p == input)
-		return NULL;
+		return nullptr;
 
 	*result = val;
 	return p;
@@ -434,7 +434,7 @@ static void cpulist_parse(CpuList* list, const char* line, int line_len)
 		/* Find the end of current item, and put it into 'q' */
 		q = memchr(p, ',', end - p);
 
-		if (q == NULL)
+		if (q == nullptr)
 		{
 			q = end;
 		}
@@ -442,7 +442,7 @@ static void cpulist_parse(CpuList* list, const char* line, int line_len)
 		/* Get first value */
 		p = parse_decimal(p, q, &start_value);
 
-		if (p == NULL)
+		if (p == nullptr)
 			goto BAD_FORMAT;
 
 		end_value = start_value;
@@ -454,7 +454,7 @@ static void cpulist_parse(CpuList* list, const char* line, int line_len)
 		{
 			p = parse_decimal(p + 1, q, &end_value);
 
-			if (p == NULL)
+			if (p == nullptr)
 				goto BAD_FORMAT;
 		}
 
@@ -648,7 +648,7 @@ static uint32_t get_elf_hwcap_from_proc_cpuinfo(const char* cpuinfo, int cpuinfo
 
 	if (cpuArch)
 	{
-		architecture = strtol(cpuArch, NULL, 10);
+		architecture = strtol(cpuArch, nullptr, 10);
 		free(cpuArch);
 
 		if (architecture >= 8L)
@@ -664,7 +664,7 @@ static uint32_t get_elf_hwcap_from_proc_cpuinfo(const char* cpuinfo, int cpuinfo
 
 	char* cpuFeatures = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "Features");
 
-	if (cpuFeatures != NULL)
+	if (cpuFeatures != nullptr)
 	{
 		D("Found cpuFeatures = '%s'\n", cpuFeatures);
 
@@ -743,7 +743,7 @@ static void android_cpuInitFamily(void)
 
 static void android_cpuInit(void)
 {
-	char* cpuinfo = NULL;
+	char* cpuinfo = nullptr;
 	int cpuinfo_len;
 	android_cpuInitFamily();
 	g_cpuFeatures = 0;
@@ -759,7 +759,7 @@ static void android_cpuInit(void)
 
 	cpuinfo = malloc(cpuinfo_len);
 
-	if (cpuinfo == NULL)
+	if (cpuinfo == nullptr)
 	{
 		D("cpuinfo buffer could not be allocated");
 		return;
@@ -795,7 +795,7 @@ static void android_cpuInit(void)
 		 */
 		char* cpuArch = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "CPU architecture");
 
-		if (cpuArch != NULL)
+		if (cpuArch != nullptr)
 		{
 			char* end;
 			long archNumber;
@@ -824,7 +824,7 @@ static void android_cpuInit(void)
 			{
 				char* cpuProc = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "Processor");
 
-				if (cpuProc != NULL)
+				if (cpuProc != nullptr)
 				{
 					D("found cpuProc = '%s'\n", cpuProc);
 
@@ -982,7 +982,7 @@ static void android_cpuInit(void)
 			const struct CpuIdEntry* entry = &cpu_id_entries[i];
 			char* value = extract_cpuinfo_field(cpuinfo, cpuinfo_len, entry->field);
 
-			if (value == NULL)
+			if (value == nullptr)
 				continue;
 
 			D("field=%s value='%s'\n", entry->field, value);

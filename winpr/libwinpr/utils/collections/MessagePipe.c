@@ -44,18 +44,18 @@ void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode)
 
 wMessagePipe* MessagePipe_New(void)
 {
-	wMessagePipe* pipe = NULL;
+	wMessagePipe* pipe = nullptr;
 
 	pipe = (wMessagePipe*)malloc(sizeof(wMessagePipe));
 
 	if (!pipe)
-		return NULL;
+		return nullptr;
 
-	pipe->In = MessageQueue_New(NULL);
+	pipe->In = MessageQueue_New(nullptr);
 	if (!pipe->In)
 		goto error_in;
 
-	pipe->Out = MessageQueue_New(NULL);
+	pipe->Out = MessageQueue_New(nullptr);
 	if (!pipe->Out)
 		goto error_out;
 
@@ -65,7 +65,7 @@ error_out:
 	MessageQueue_Free(pipe->In);
 error_in:
 	free(pipe);
-	return NULL;
+	return nullptr;
 }
 
 void MessagePipe_Free(wMessagePipe* pipe)

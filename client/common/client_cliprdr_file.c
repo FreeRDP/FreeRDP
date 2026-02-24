@@ -219,7 +219,7 @@ static CliprdrFuseFile* fuse_file_new(WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	CliprdrFuseFile* file = calloc(1, sizeof(CliprdrFuseFile));
 	if (!file)
-		return NULL;
+		return nullptr;
 
 	file->children = ArrayList_New(FALSE);
 	if (!file->children)
@@ -248,7 +248,7 @@ static CliprdrFuseFile* fuse_file_new(WINPR_FORMAT_ARG const char* fmt, ...)
 	return file;
 fail:
 	fuse_file_free(file);
-	return NULL;
+	return nullptr;
 }
 
 static void clip_data_entry_free(void* data)
@@ -311,14 +311,14 @@ static UINT32 get_next_free_clip_data_id(CliprdrFileContext* file_context)
 static CliprdrFuseClipDataEntry* clip_data_entry_new(CliprdrFileContext* file_context,
                                                      BOOL needs_clip_data_id)
 {
-	CliprdrFuseClipDataEntry* clip_data_entry = NULL;
+	CliprdrFuseClipDataEntry* clip_data_entry = nullptr;
 	CLIPRDR_LOCK_CLIPBOARD_DATA lock_clipboard_data = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file_context);
 
 	clip_data_entry = calloc(1, sizeof(CliprdrFuseClipDataEntry));
 	if (!clip_data_entry)
-		return NULL;
+		return nullptr;
 
 	clip_data_entry->file_context = file_context;
 	clip_data_entry->clip_data_id = get_next_free_clip_data_id(file_context);
@@ -334,7 +334,7 @@ static CliprdrFuseClipDataEntry* clip_data_entry_new(CliprdrFileContext* file_co
 		HashTable_Lock(file_context->inode_table);
 		clip_data_entry_free(clip_data_entry);
 		HashTable_Unlock(file_context->inode_table);
-		return NULL;
+		return nullptr;
 	}
 	clip_data_entry->has_clip_data_id = TRUE;
 
@@ -447,7 +447,7 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
                             CliprdrFuseClipDataEntry* clip_data_entry)
 {
 	FuseFileClearContext clear_context = WINPR_C_ARRAY_INIT;
-	CliprdrFuseFile* clip_data_dir = NULL;
+	CliprdrFuseFile* clip_data_dir = nullptr;
 
 	WINPR_ASSERT(file_context);
 
@@ -462,7 +462,7 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
 	if (clip_data_entry)
 	{
 		clip_data_dir = clip_data_entry->clip_data_dir;
-		clip_data_entry->clip_data_dir = NULL;
+		clip_data_entry->clip_data_dir = nullptr;
 
 		WINPR_ASSERT(clip_data_dir);
 
@@ -535,7 +535,7 @@ static void clear_no_cdi_entry(CliprdrFileContext* file_context)
 		clear_entry_selection(file_context->clip_data_entry_without_id);
 
 		clip_data_entry_free(file_context->clip_data_entry_without_id);
-		file_context->clip_data_entry_without_id = NULL;
+		file_context->clip_data_entry_without_id = nullptr;
 	}
 	HashTable_Unlock(file_context->inode_table);
 }
@@ -553,7 +553,7 @@ static void clear_cdi_entries(CliprdrFileContext* file_context)
 	WINPR_ASSERT(file_context);
 
 	HashTable_Lock(file_context->inode_table);
-	HashTable_Foreach(file_context->clip_data_table, clear_clip_data_entries, NULL);
+	HashTable_Foreach(file_context->clip_data_table, clear_clip_data_entries, nullptr);
 
 	HashTable_Clear(file_context->clip_data_table);
 	HashTable_Unlock(file_context->inode_table);
@@ -561,7 +561,7 @@ static void clear_cdi_entries(CliprdrFileContext* file_context)
 
 static UINT prepare_clip_data_entry_with_id(CliprdrFileContext* file_context)
 {
-	CliprdrFuseClipDataEntry* clip_data_entry = NULL;
+	CliprdrFuseClipDataEntry* clip_data_entry = nullptr;
 
 	WINPR_ASSERT(file_context);
 
@@ -704,14 +704,14 @@ get_fuse_file_by_name_from_parent(WINPR_ATTR_UNUSED CliprdrFileContext* file_con
 	DEBUG_CLIPRDR(file_context->log, "Requested file \"%s\" in directory \"%s\" does not exist",
 	              name, parent->filename);
 
-	return NULL;
+	return nullptr;
 }
 
 static CliprdrFuseRequest* cliprdr_fuse_request_new(CliprdrFileContext* file_context,
                                                     CliprdrFuseFile* fuse_file, fuse_req_t fuse_req,
                                                     FuseLowlevelOperationType operation_type)
 {
-	CliprdrFuseRequest* fuse_request = NULL;
+	CliprdrFuseRequest* fuse_request = nullptr;
 	UINT32 stream_id = file_context->next_stream_id;
 
 	WINPR_ASSERT(file_context);
@@ -722,7 +722,7 @@ static CliprdrFuseRequest* cliprdr_fuse_request_new(CliprdrFileContext* file_con
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to allocate FUSE request for file \"%s\"",
 		           fuse_file->filename_with_root);
-		return NULL;
+		return nullptr;
 	}
 
 	fuse_request->fuse_file = fuse_file;
@@ -742,7 +742,7 @@ static CliprdrFuseRequest* cliprdr_fuse_request_new(CliprdrFileContext* file_con
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to track FUSE request for file \"%s\"",
 		           fuse_file->filename_with_root);
 		free(fuse_request);
-		return NULL;
+		return nullptr;
 	}
 
 	return fuse_request;
@@ -751,7 +751,7 @@ static CliprdrFuseRequest* cliprdr_fuse_request_new(CliprdrFileContext* file_con
 static BOOL request_file_size_async(CliprdrFileContext* file_context, CliprdrFuseFile* fuse_file,
                                     fuse_req_t fuse_req, FuseLowlevelOperationType operation_type)
 {
-	CliprdrFuseRequest* fuse_request = NULL;
+	CliprdrFuseRequest* fuse_request = nullptr;
 	CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file_context);
@@ -808,14 +808,14 @@ static void write_file_attributes(CliprdrFuseFile* fuse_file, struct stat* attr)
 	attr->st_uid = getuid();
 	attr->st_gid = getgid();
 	attr->st_atime = attr->st_mtime = attr->st_ctime =
-	    (fuse_file->has_last_write_time ? fuse_file->last_write_time_unix : time(NULL));
+	    (fuse_file->has_last_write_time ? fuse_file->last_write_time_unix : time(nullptr));
 }
 
 static void cliprdr_file_fuse_lookup(fuse_req_t fuse_req, fuse_ino_t parent_ino, const char* name)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
-	CliprdrFuseFile* parent = NULL;
-	CliprdrFuseFile* fuse_file = NULL;
+	CliprdrFuseFile* parent = nullptr;
+	CliprdrFuseFile* fuse_file = nullptr;
 	struct fuse_entry_param entry = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file_context);
@@ -865,7 +865,7 @@ static void cliprdr_file_fuse_getattr(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
                                       WINPR_ATTR_UNUSED struct fuse_file_info* file_info)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
-	CliprdrFuseFile* fuse_file = NULL;
+	CliprdrFuseFile* fuse_file = nullptr;
 	struct stat attr = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file_context);
@@ -905,7 +905,7 @@ static void cliprdr_file_fuse_open(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
                                    struct fuse_file_info* file_info)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
-	CliprdrFuseFile* fuse_file = NULL;
+	CliprdrFuseFile* fuse_file = nullptr;
 
 	WINPR_ASSERT(file_context);
 
@@ -987,7 +987,7 @@ static void cliprdr_file_fuse_read(fuse_req_t fuse_req, fuse_ino_t fuse_ino, siz
                                    off_t offset, WINPR_ATTR_UNUSED struct fuse_file_info* file_info)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
-	CliprdrFuseFile* fuse_file = NULL;
+	CliprdrFuseFile* fuse_file = nullptr;
 	BOOL result = 0;
 
 	WINPR_ASSERT(file_context);
@@ -1025,7 +1025,7 @@ static void cliprdr_file_fuse_opendir(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
                                       struct fuse_file_info* file_info)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
-	CliprdrFuseFile* fuse_file = NULL;
+	CliprdrFuseFile* fuse_file = nullptr;
 
 	WINPR_ASSERT(file_context);
 
@@ -1058,13 +1058,13 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
                                       WINPR_ATTR_UNUSED struct fuse_file_info* file_info)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
-	CliprdrFuseFile* fuse_file = NULL;
-	CliprdrFuseFile* child = NULL;
+	CliprdrFuseFile* fuse_file = nullptr;
+	CliprdrFuseFile* child = nullptr;
 	struct stat attr = WINPR_C_ARRAY_INIT;
 	size_t written_size = 0;
 	size_t entry_size = 0;
-	char* filename = NULL;
-	char* buf = NULL;
+	char* filename = nullptr;
+	char* buf = nullptr;
 
 	WINPR_ASSERT(file_context);
 
@@ -1088,7 +1088,7 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 	if ((offset < 0) || ((size_t)offset >= ArrayList_Count(fuse_file->children)))
 	{
 		HashTable_Unlock(file_context->inode_table);
-		fuse_reply_buf(fuse_req, NULL, 0);
+		fuse_reply_buf(fuse_req, nullptr, 0);
 		return;
 	}
 
@@ -1173,13 +1173,13 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 
 	DEBUG_CLIPRDR(file->log, "Starting fuse with mountpoint '%s'", file->path);
 
-	struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+	struct fuse_args args = FUSE_ARGS_INIT(0, nullptr);
 	fuse_opt_add_arg(&args, file->path);
 	file->fuse_sess = fuse_session_new(&args, &cliprdr_file_fuse_oper,
 	                                   sizeof(cliprdr_file_fuse_oper), (void*)file);
 	(void)SetEvent(file->fuse_start_sync);
 
-	if (file->fuse_sess != NULL)
+	if (file->fuse_sess != nullptr)
 	{
 		if (freerdp_add_signal_cleanup_handler(file, fuse_abort))
 		{
@@ -1208,8 +1208,8 @@ static UINT cliprdr_file_context_server_file_contents_response(
     CliprdrClientContext* cliprdr_context,
     const CLIPRDR_FILE_CONTENTS_RESPONSE* file_contents_response)
 {
-	CliprdrFileContext* file_context = NULL;
-	CliprdrFuseRequest* fuse_request = NULL;
+	CliprdrFileContext* file_context = nullptr;
+	CliprdrFuseRequest* fuse_request = nullptr;
 	struct fuse_entry_param entry = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(cliprdr_context);
@@ -1393,7 +1393,7 @@ static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 
 		HashTable_Foreach(file->local_streams, dump_streams, file);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 static CliprdrLocalFile* file_for_request(CliprdrFileContext* file, UINT32 lockId, UINT32 listIndex)
@@ -1414,7 +1414,7 @@ static CliprdrLocalFile* file_for_request(CliprdrFileContext* file, UINT32 lockI
 			         "] failed to open file '%s' [size %" PRId64 "] %s [%d]",
 			         lockId, listIndex, f->name, f->size,
 			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -1444,7 +1444,7 @@ static void cliprdr_local_file_try_close(CliprdrLocalFile* file, UINT res, UINT6
 	}
 	if (file->fp)
 		(void)fclose(file->fp);
-	file->fp = NULL;
+	file->fp = nullptr;
 }
 
 static UINT cliprdr_file_context_server_file_size_request(
@@ -1487,7 +1487,7 @@ static UINT cliprdr_file_context_server_file_size_request(
 static UINT cliprdr_file_context_server_file_range_request(
     CliprdrFileContext* file, const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	BYTE* data = NULL;
+	BYTE* data = nullptr;
 
 	WINPR_ASSERT(fileContentsRequest);
 
@@ -1540,12 +1540,12 @@ static UINT change_lock(CliprdrFileContext* file, UINT32 lockId, BOOL lock)
 		CliprdrLocalStream* stream = HashTable_GetItemValue(file->local_streams, &lockId);
 		if (lock && !stream)
 		{
-			stream = cliprdr_local_stream_new(file, lockId, NULL, 0);
+			stream = cliprdr_local_stream_new(file, lockId, nullptr, 0);
 			if (!HashTable_Insert(file->local_streams, &lockId, stream))
 			{
 				rc = ERROR_INTERNAL_ERROR;
 				cliprdr_local_stream_free(stream);
-				stream = NULL;
+				stream = nullptr;
 			}
 			file->local_lock_id = lockId;
 		}
@@ -1638,7 +1638,7 @@ BOOL cliprdr_file_context_init(CliprdrFileContext* file, CliprdrClientContext* c
 	cliprdr->ServerFileContentsResponse = cliprdr_file_context_server_file_contents_response;
 
 	CliprdrFuseFile* root_dir = fuse_file_new_root(file);
-	return root_dir != NULL;
+	return root_dir != nullptr;
 #else
 	return TRUE;
 #endif
@@ -1651,7 +1651,7 @@ static void clear_all_selections(CliprdrFileContext* file_context)
 	WINPR_ASSERT(file_context->inode_table);
 
 	HashTable_Lock(file_context->inode_table);
-	clear_selection(file_context, TRUE, NULL);
+	clear_selection(file_context, TRUE, nullptr);
 
 	HashTable_Clear(file_context->clip_data_table);
 	HashTable_Unlock(file_context->inode_table);
@@ -1675,10 +1675,10 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 
 	HashTable_Clear(file->local_streams);
 
-	file->context = NULL;
+	file->context = nullptr;
 
 #if defined(WITH_FUSE)
-	cliprdr->ServerFileContentsResponse = NULL;
+	cliprdr->ServerFileContentsResponse = nullptr;
 #endif
 
 	return TRUE;
@@ -1738,7 +1738,7 @@ static CliprdrFuseFile* clip_data_dir_new(CliprdrFileContext* file_context, BOOL
 
 	CliprdrFuseFile* clip_data_dir = fuse_file_new("/%" PRIu64, data_id);
 	if (!clip_data_dir)
-		return NULL;
+		return nullptr;
 
 	clip_data_dir->ino = get_next_free_inode(file_context);
 	clip_data_dir->is_directory = TRUE;
@@ -1751,13 +1751,13 @@ static CliprdrFuseFile* clip_data_dir_new(CliprdrFileContext* file_context, BOOL
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "FUSE root directory missing");
 		fuse_file_free(clip_data_dir);
-		return NULL;
+		return nullptr;
 	}
 	if (!ArrayList_Append(root_dir->children, clip_data_dir))
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to append FUSE file");
 		fuse_file_free(clip_data_dir);
-		return NULL;
+		return nullptr;
 	}
 	clip_data_dir->parent = root_dir;
 
@@ -1767,7 +1767,7 @@ static CliprdrFuseFile* clip_data_dir_new(CliprdrFileContext* file_context, BOOL
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to insert inode into inode table");
 		ArrayList_Remove(root_dir->children, clip_data_dir);
 		fuse_file_free(clip_data_dir);
-		return NULL;
+		return nullptr;
 	}
 
 	return clip_data_dir;
@@ -1785,7 +1785,7 @@ static char* get_parent_path(const char* filepath)
 	const size_t parent_path_length = 1ULL + (size_t)(base - filepath);
 	char* parent_path = calloc(parent_path_length + 1, sizeof(char));
 	if (!parent_path)
-		return NULL;
+		return nullptr;
 
 	memcpy(parent_path, filepath, parent_path_length);
 
@@ -1819,14 +1819,14 @@ static CliprdrFuseFile* get_parent_directory(CliprdrFileContext* file_context, c
 
 	find_context.parent_path = get_parent_path(path);
 	if (!find_context.parent_path)
-		return NULL;
+		return nullptr;
 
 	WINPR_ASSERT(!find_context.parent);
 
 	if (HashTable_Foreach(file_context->inode_table, is_fuse_file_not_parent, &find_context))
 	{
 		free(find_context.parent_path);
-		return NULL;
+		return nullptr;
 	}
 	WINPR_ASSERT(find_context.parent);
 
@@ -1964,8 +1964,8 @@ static BOOL set_selection_for_clip_data_entry(CliprdrFileContext* file_context,
 static BOOL update_exposed_path(CliprdrFileContext* file_context, wClipboard* clip,
                                 CliprdrFuseClipDataEntry* clip_data_entry)
 {
-	wClipboardDelegate* delegate = NULL;
-	CliprdrFuseFile* clip_data_dir = NULL;
+	wClipboardDelegate* delegate = nullptr;
+	CliprdrFuseFile* clip_data_dir = nullptr;
 
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(clip);
@@ -1985,7 +1985,7 @@ static BOOL update_exposed_path(CliprdrFileContext* file_context, wClipboard* cl
 
 	delegate->basePath = file_context->exposed_path;
 
-	return delegate->basePath != NULL;
+	return delegate->basePath != nullptr;
 }
 #endif
 
@@ -1993,8 +1993,8 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
                                              const void* data, size_t size)
 {
 #if defined(WITH_FUSE)
-	CliprdrFuseClipDataEntry* clip_data_entry = NULL;
-	FILEDESCRIPTORW* files = NULL;
+	CliprdrFuseClipDataEntry* clip_data_entry = nullptr;
+	FILEDESCRIPTORW* files = nullptr;
 	UINT32 n_files = 0;
 	BOOL rc = FALSE;
 
@@ -2123,7 +2123,7 @@ static BOOL create_base_path(CliprdrFileContext* file)
 	if (!file->path)
 		return FALSE;
 
-	if (!winpr_PathFileExists(file->path) && !winpr_PathMakePath(file->path, 0))
+	if (!winpr_PathFileExists(file->path) && !winpr_PathMakePath(file->path, nullptr))
 	{
 		WLog_Print(file->log, WLOG_ERROR, "Failed to create directory '%s'", file->path);
 		return FALSE;
@@ -2173,7 +2173,7 @@ static void cliprdr_local_files_free(CliprdrLocalStream* stream)
 		cliprdr_local_file_free(&stream->files[x]);
 	free(stream->files);
 
-	stream->files = NULL;
+	stream->files = nullptr;
 	stream->count = 0;
 }
 
@@ -2199,12 +2199,12 @@ static BOOL append_entry(CliprdrLocalStream* stream, const char* path)
 
 static BOOL is_directory(const char* path)
 {
-	WCHAR* wpath = ConvertUtf8ToWCharAlloc(path, NULL);
+	WCHAR* wpath = ConvertUtf8ToWCharAlloc(path, nullptr);
 	if (!wpath)
 		return FALSE;
 
-	HANDLE hFile =
-	    CreateFileW(wpath, 0, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hFile = CreateFileW(wpath, 0, FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+	                           FILE_ATTRIBUTE_NORMAL, nullptr);
 	free(wpath);
 
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -2224,7 +2224,7 @@ static BOOL add_directory(CliprdrLocalStream* stream, const char* path)
 	char* wildcardpath = GetCombinedPath(path, "*");
 	if (!wildcardpath)
 		return FALSE;
-	WCHAR* wpath = ConvertUtf8ToWCharAlloc(wildcardpath, NULL);
+	WCHAR* wpath = ConvertUtf8ToWCharAlloc(wildcardpath, nullptr);
 	free(wildcardpath);
 	if (!wpath)
 		return FALSE;
@@ -2237,7 +2237,7 @@ static BOOL add_directory(CliprdrLocalStream* stream, const char* path)
 		return FALSE;
 
 	BOOL rc = FALSE;
-	char* next = NULL;
+	char* next = nullptr;
 
 	WCHAR dotbuffer[6] = WINPR_C_ARRAY_INIT;
 	WCHAR dotdotbuffer[6] = WINPR_C_ARRAY_INIT;
@@ -2293,7 +2293,7 @@ static BOOL cliprdr_local_stream_update(CliprdrLocalStream* stream, const char* 
 	if (!copy)
 		return FALSE;
 
-	char* saveptr = NULL;
+	char* saveptr = nullptr;
 	char* ptr = strtok_s(copy, "\r\n", &saveptr);
 	while (ptr)
 	{
@@ -2312,7 +2312,7 @@ static BOOL cliprdr_local_stream_update(CliprdrLocalStream* stream, const char* 
 			if (!res)
 				goto fail;
 		}
-		ptr = strtok_s(NULL, "\r\n", &saveptr);
+		ptr = strtok_s(nullptr, "\r\n", &saveptr);
 	}
 
 	rc = TRUE;
@@ -2327,7 +2327,7 @@ CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context, UINT32
 	WINPR_ASSERT(context);
 	CliprdrLocalStream* stream = calloc(1, sizeof(CliprdrLocalStream));
 	if (!stream)
-		return NULL;
+		return nullptr;
 
 	stream->context = context;
 	if (!cliprdr_local_stream_update(stream, data, size))
@@ -2338,7 +2338,7 @@ CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context, UINT32
 
 fail:
 	cliprdr_local_stream_free(stream);
-	return NULL;
+	return nullptr;
 }
 
 static UINT32 UINTPointerHash(const void* id)
@@ -2361,11 +2361,11 @@ static void* UINTPointerClone(const void* other)
 {
 	const UINT32* src = other;
 	if (!src)
-		return NULL;
+		return nullptr;
 
 	UINT32* copy = calloc(1, sizeof(UINT32));
 	if (!copy)
-		return NULL;
+		return nullptr;
 
 	*copy = *src;
 	return copy;
@@ -2376,7 +2376,7 @@ CliprdrFuseFile* fuse_file_new_root(CliprdrFileContext* file_context)
 {
 	CliprdrFuseFile* root_dir = fuse_file_new("/");
 	if (!root_dir)
-		return NULL;
+		return nullptr;
 
 	root_dir->ino = FUSE_ROOT_ID;
 	root_dir->is_directory = TRUE;
@@ -2385,7 +2385,7 @@ CliprdrFuseFile* fuse_file_new_root(CliprdrFileContext* file_context)
 	if (!HashTable_Insert(file_context->inode_table, (void*)(uintptr_t)root_dir->ino, root_dir))
 	{
 		fuse_file_free(root_dir);
-		return NULL;
+		return nullptr;
 	}
 
 	return root_dir;
@@ -2396,7 +2396,7 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 {
 	CliprdrFileContext* file = calloc(1, sizeof(CliprdrFileContext));
 	if (!file)
-		return NULL;
+		return nullptr;
 
 	file->log = WLog_Get(CLIENT_TAG("common.cliprdr.file"));
 	file->clipboard = context;
@@ -2445,11 +2445,11 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 		goto fail;
 
 #if defined(WITH_FUSE)
-	if (!(file->fuse_start_sync = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(file->fuse_start_sync = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto fail;
-	if (!(file->fuse_stop_sync = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(file->fuse_stop_sync = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto fail;
-	if (!(file->fuse_thread = CreateThread(NULL, 0, cliprdr_file_fuse_thread, file, 0, NULL)))
+	if (!(file->fuse_thread = CreateThread(nullptr, 0, cliprdr_file_fuse_thread, file, 0, nullptr)))
 		goto fail;
 
 	if (WaitForSingleObject(file->fuse_start_sync, INFINITE) == WAIT_FAILED)
@@ -2462,7 +2462,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	cliprdr_file_context_free(file);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 BOOL local_stream_discard(const void* key, void* value, void* arg)

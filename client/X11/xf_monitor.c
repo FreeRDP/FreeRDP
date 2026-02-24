@@ -62,7 +62,7 @@ int xf_list_monitors(xfContext* xfc)
 	int major = 0;
 	int minor = 0;
 	int nmonitors = 0;
-	Display* display = XOpenDisplay(NULL);
+	Display* display = XOpenDisplay(nullptr);
 
 	if (!display)
 	{
@@ -118,7 +118,7 @@ int xf_list_monitors(xfContext* xfc)
 
 static BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 {
-	const rdpSettings* settings = NULL;
+	const rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(xfc);
 
@@ -149,13 +149,13 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	int _dummy_i = 0;
 	Window _dummy_w = 0;
 	UINT32 current_monitor = 0;
-	Screen* screen = NULL;
+	Screen* screen = nullptr;
 #if defined WITH_XINERAMA || defined WITH_XRANDR
 	int major = 0;
 	int minor = 0;
 #endif
 #if defined(USABLE_XRANDR)
-	XRRMonitorInfo* rrmonitors = NULL;
+	XRRMonitorInfo* rrmonitors = nullptr;
 	BOOL useXRandr = FALSE;
 #endif
 
@@ -412,7 +412,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			}
 			for (UINT32 i = 0; i < vscreen->nmonitors; i++)
 			{
-				MONITOR_ATTRIBUTES* attrs = NULL;
+				MONITOR_ATTRIBUTES* attrs = nullptr;
 
 				if (!xf_is_monitor_id_active(xfc, i))
 					continue;

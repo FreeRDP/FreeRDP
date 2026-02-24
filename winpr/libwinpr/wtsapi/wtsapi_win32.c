@@ -62,15 +62,15 @@ typedef struct
 } WTSAPI_CHANNEL;
 
 static BOOL g_Initialized = FALSE;
-static HMODULE g_WinStaModule = NULL;
+static HMODULE g_WinStaModule = nullptr;
 
 typedef HANDLE(WINAPI* fnWinStationVirtualOpen)(HANDLE hServer, DWORD SessionId,
                                                 LPSTR pVirtualName);
 typedef HANDLE(WINAPI* fnWinStationVirtualOpenEx)(HANDLE hServer, DWORD SessionId,
                                                   LPSTR pVirtualName, DWORD flags);
 
-static fnWinStationVirtualOpen pfnWinStationVirtualOpen = NULL;
-static fnWinStationVirtualOpenEx pfnWinStationVirtualOpenEx = NULL;
+static fnWinStationVirtualOpen pfnWinStationVirtualOpen = nullptr;
+static fnWinStationVirtualOpenEx pfnWinStationVirtualOpenEx = nullptr;
 
 static BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel);
 
@@ -183,19 +183,19 @@ static HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD 
 	if (!virtualNameLen)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
-		return NULL;
+		return nullptr;
 	}
 
 	if (!pfnWinStationVirtualOpenEx)
 	{
 		SetLastError(ERROR_INVALID_FUNCTION);
-		return NULL;
+		return nullptr;
 	}
 
 	hFile = pfnWinStationVirtualOpenEx(hServer, SessionId, pVirtualName, flags);
 
 	if (!hFile)
-		return NULL;
+		return nullptr;
 
 	pChannel = (WTSAPI_CHANNEL*)_wts_calloc(1, sizeof(WTSAPI_CHANNEL));
 
@@ -203,7 +203,7 @@ static HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD 
 	{
 		(void)CloseHandle(hFile);
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return NULL;
+		return nullptr;
 	}
 
 	hChannel = (HANDLE)pChannel;
@@ -217,7 +217,7 @@ static HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD 
 		(void)CloseHandle(hFile);
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		_wts_free(pChannel);
-		return NULL;
+		return nullptr;
 	}
 	memcpy(pChannel->VirtualName, pVirtualName, virtualNameLen);
 
@@ -232,14 +232,14 @@ static HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD 
 	pChannel->header = (CHANNEL_PDU_HEADER*)pChannel->readBuffer;
 	pChannel->chunk = &(pChannel->readBuffer[sizeof(CHANNEL_PDU_HEADER)]);
 
-	pChannel->hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	pChannel->hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	pChannel->overlapped.hEvent = pChannel->hEvent;
 
 	if (!pChannel->hEvent || !pChannel->VirtualName || !pChannel->readBuffer)
 	{
 		Win32_WTSVirtualChannelClose(hChannel);
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return NULL;
+		return nullptr;
 	}
 
 	return hChannel;
@@ -276,25 +276,25 @@ static BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel)
 		}
 
 		status = CloseHandle(pChannel->hFile);
-		pChannel->hFile = NULL;
+		pChannel->hFile = nullptr;
 	}
 
 	if (pChannel->hEvent)
 	{
 		(void)CloseHandle(pChannel->hEvent);
-		pChannel->hEvent = NULL;
+		pChannel->hEvent = nullptr;
 	}
 
 	if (pChannel->VirtualName)
 	{
 		_wts_free(pChannel->VirtualName);
-		pChannel->VirtualName = NULL;
+		pChannel->VirtualName = nullptr;
 	}
 
 	if (pChannel->readBuffer)
 	{
 		_wts_free(pChannel->readBuffer);
-		pChannel->readBuffer = NULL;
+		pChannel->readBuffer = nullptr;
 	}
 
 	pChannel->magic = 0;
@@ -735,7 +735,7 @@ static BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle,
 		*pBytesReturned = sizeof(HANDLE);
 		*ppBuffer = _wts_calloc(1, *pBytesReturned);
 
-		if (*ppBuffer == NULL)
+		if (*ppBuffer == nullptr)
 		{
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 			return FALSE;
@@ -748,7 +748,7 @@ static BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle,
 		*pBytesReturned = sizeof(HANDLE);
 		*ppBuffer = _wts_calloc(1, *pBytesReturned);
 
-		if (*ppBuffer == NULL)
+		if (*ppBuffer == nullptr)
 		{
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 			return FALSE;

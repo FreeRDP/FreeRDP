@@ -108,7 +108,7 @@ HGDI_BITMAP gdi_CreateBitmap(UINT32 nWidth, UINT32 nHeight, UINT32 format, BYTE*
  * @param nHeight height
  * @param format the color format used
  * @param data pixel buffer
- * @param fkt_free The function used for deallocation of the buffer, NULL for none.
+ * @param fkt_free The function used for deallocation of the buffer, nullptr for none.
  * @return new bitmap
  */
 
@@ -118,7 +118,7 @@ HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight, UINT32 format, UIN
 	HGDI_BITMAP hBitmap = (HGDI_BITMAP)calloc(1, sizeof(GDI_BITMAP));
 
 	if (!hBitmap)
-		return NULL;
+		return nullptr;
 
 	hBitmap->objectType = GDIOBJECT_BITMAP;
 	hBitmap->format = format;
@@ -151,7 +151,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 	HGDI_BITMAP hBitmap = (HGDI_BITMAP)calloc(1, sizeof(GDI_BITMAP));
 
 	if (!hBitmap)
-		return NULL;
+		return nullptr;
 
 	hBitmap->objectType = GDIOBJECT_BITMAP;
 	hBitmap->format = hdc->format;
@@ -168,7 +168,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 	if (!hBitmap->data)
 	{
 		free(hBitmap);
-		return NULL;
+		return nullptr;
 	}
 
 	/* Initialize with 0xff */
@@ -355,7 +355,7 @@ static inline BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, INT32 nXDest, I
 static BOOL adjust_src_coordinates(HGDI_DC hdcSrc, INT32 nWidth, INT32 nHeight, INT32* px,
                                    INT32* py)
 {
-	HGDI_BITMAP hSrcBmp = NULL;
+	HGDI_BITMAP hSrcBmp = nullptr;
 	INT32 nXSrc = 0;
 	INT32 nYSrc = 0;
 
@@ -398,7 +398,7 @@ static BOOL adjust_src_coordinates(HGDI_DC hdcSrc, INT32 nWidth, INT32 nHeight, 
 static BOOL adjust_src_dst_coordinates(HGDI_DC hdcDest, INT32* pnXSrc, INT32* pnYSrc, INT32* pnXDst,
                                        INT32* pnYDst, INT32* pnWidth, INT32* pnHeight)
 {
-	HGDI_BITMAP hDstBmp = NULL;
+	HGDI_BITMAP hDstBmp = nullptr;
 	volatile INT32 diffX = 0;
 	volatile INT32 diffY = 0;
 	volatile INT32 nXSrc = 0;
@@ -591,8 +591,8 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nW
 BOOL gdi_BitBlt(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nWidth, INT32 nHeight,
                 HGDI_DC hdcSrc, INT32 nXSrc, INT32 nYSrc, DWORD rop, const gdiPalette* palette)
 {
-	HGDI_BITMAP hSrcBmp = NULL;
-	HGDI_BITMAP hDstBmp = NULL;
+	HGDI_BITMAP hSrcBmp = nullptr;
+	HGDI_BITMAP hDstBmp = nullptr;
 
 	if (!hdcDest)
 		return FALSE;

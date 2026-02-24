@@ -36,9 +36,9 @@ typedef krb5_authenticator* krb5glue_authenticator;
 #define krb5glue_crypto_length_iov(ctx, key, iov, size) \
 	krb5_c_crypto_length_iov(ctx, krb5_k_key_enctype(ctx, key), iov, size)
 #define krb5glue_encrypt_iov(ctx, key, usage, iov, size) \
-	krb5_k_encrypt_iov(ctx, key, usage, NULL, iov, size)
+	krb5_k_encrypt_iov(ctx, key, usage, nullptr, iov, size)
 #define krb5glue_decrypt_iov(ctx, key, usage, iov, size) \
-	krb5_k_decrypt_iov(ctx, key, usage, NULL, iov, size)
+	krb5_k_decrypt_iov(ctx, key, usage, nullptr, iov, size)
 #define krb5glue_make_checksum_iov(ctx, key, usage, iov, size) \
 	krb5_k_make_checksum_iov(ctx, 0, key, usage, iov, size)
 #define krb5glue_verify_checksum_iov(ctx, key, usage, iov, size, is_valid) \
@@ -65,11 +65,11 @@ krb5_error_code krb5glue_crypto_length(krb5_context ctx, krb5glue_key key, int t
                                        unsigned int* size);
 #define krb5glue_crypto_length_iov(ctx, key, iov, size) krb5_crypto_length_iov(ctx, key, iov, size)
 #define krb5glue_encrypt_iov(ctx, key, usage, iov, size) \
-	krb5_encrypt_iov_ivec(ctx, key, usage, iov, size, NULL)
+	krb5_encrypt_iov_ivec(ctx, key, usage, iov, size, nullptr)
 #define krb5glue_decrypt_iov(ctx, key, usage, iov, size) \
-	krb5_decrypt_iov_ivec(ctx, key, usage, iov, size, NULL)
+	krb5_decrypt_iov_ivec(ctx, key, usage, iov, size, nullptr)
 #define krb5glue_make_checksum_iov(ctx, key, usage, iov, size) \
-	krb5_create_checksum_iov(ctx, key, usage, iov, size, NULL)
+	krb5_create_checksum_iov(ctx, key, usage, iov, size, nullptr)
 krb5_error_code krb5glue_verify_checksum_iov(krb5_context ctx, krb5glue_key key,
                                              krb5_keyusage usage, krb5_crypto_iov* iov,
                                              unsigned int iov_size, krb5_boolean* is_valid);

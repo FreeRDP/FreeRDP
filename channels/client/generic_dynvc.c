@@ -29,8 +29,8 @@ static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCal
                                               WINPR_ATTR_UNUSED BOOL* pbAccept,
                                               IWTSVirtualChannelCallback** ppCallback)
 {
-	GENERIC_CHANNEL_CALLBACK* callback = NULL;
-	GENERIC_DYNVC_PLUGIN* plugin = NULL;
+	GENERIC_CHANNEL_CALLBACK* callback = nullptr;
+	GENERIC_DYNVC_PLUGIN* plugin = nullptr;
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	if (!listener_callback || !listener_callback->plugin)
@@ -64,7 +64,7 @@ static UINT generic_dynvc_plugin_initialize(IWTSPlugin* pPlugin,
                                             IWTSVirtualChannelManager* pChannelMgr)
 {
 	UINT rc = 0;
-	GENERIC_LISTENER_CALLBACK* listener_callback = NULL;
+	GENERIC_LISTENER_CALLBACK* listener_callback = nullptr;
 	GENERIC_DYNVC_PLUGIN* plugin = (GENERIC_DYNVC_PLUGIN*)pPlugin;
 
 	if (!plugin)
@@ -158,7 +158,7 @@ UINT freerdp_generic_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const c
                                     DYNVC_PLUGIN_INIT_FN initPluginFn,
                                     DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn)
 {
-	GENERIC_DYNVC_PLUGIN* plugin = NULL;
+	GENERIC_DYNVC_PLUGIN* plugin = nullptr;
 	UINT error = CHANNEL_RC_INITIALIZATION_ERROR;
 
 	WINPR_ASSERT(pEntryPoints);
@@ -169,7 +169,7 @@ UINT freerdp_generic_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const c
 	WINPR_ASSERT(channelCallbackSize >= sizeof(GENERIC_CHANNEL_CALLBACK));
 
 	plugin = (GENERIC_DYNVC_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, name);
-	if (plugin != NULL)
+	if (plugin != nullptr)
 		return CHANNEL_RC_ALREADY_INITIALIZED;
 
 	plugin = (GENERIC_DYNVC_PLUGIN*)calloc(1, pluginSize);
@@ -184,8 +184,8 @@ UINT freerdp_generic_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const c
 	plugin->channel_callbacks = channel_callbacks;
 	plugin->channelCallbackSize = channelCallbackSize;
 	plugin->iface.Initialize = generic_dynvc_plugin_initialize;
-	plugin->iface.Connected = NULL;
-	plugin->iface.Disconnected = NULL;
+	plugin->iface.Connected = nullptr;
+	plugin->iface.Disconnected = nullptr;
 	plugin->iface.Terminated = generic_plugin_terminated;
 	plugin->iface.Attached = generic_dynvc_plugin_attached;
 	plugin->iface.Detached = generic_dynvc_plugin_detached;

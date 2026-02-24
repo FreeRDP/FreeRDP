@@ -32,7 +32,7 @@
 #include <emmintrin.h>
 #include <tmmintrin.h>
 
-static primitives_t* generic = NULL;
+static primitives_t* generic = nullptr;
 
 /* ------------------------------------------------------------------------- */
 static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSrc, UINT32 srcStep,

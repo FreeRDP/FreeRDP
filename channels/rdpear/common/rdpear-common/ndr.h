@@ -134,7 +134,7 @@ extern "C"
 	{
 		WINPR_ASSERT(pcontext);
 		ndr_context_free(*pcontext);
-		*pcontext = NULL;
+		*pcontext = nullptr;
 	}
 
 	WINPR_ATTR_MALLOC(ndr_context_free, 1)

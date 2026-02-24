@@ -34,16 +34,16 @@ extern "C"
 	/**
 	 * @brief pf_server_free Cleans up a (stopped) proxy server instance.
 	 *
-	 * @param server The proxy server to clean up. Might be NULL.
+	 * @param server The proxy server to clean up. Might be nullptr.
 	 */
 	FREERDP_API void pf_server_free(proxyServer* server);
 
 	/**
 	 * @brief pf_server_new Creates a new proxy server instance
 	 *
-	 * @param config The proxy server configuration to use. Must NOT be NULL.
+	 * @param config The proxy server configuration to use. Must NOT be nullptr.
 	 *
-	 * @return A new proxy server instance or NULL on failure.
+	 * @return A new proxy server instance or nullptr on failure.
 	 */
 	WINPR_ATTR_MALLOC(pf_server_free, 1)
 	WINPR_ATTR_NODISCARD
@@ -54,9 +54,9 @@ extern "C"
 	 *                             built-in instead of shipped as separate
 	 *                             module loaded at runtime.
 	 *
-	 * @param server A proxy instance to add the module to. Must NOT be NULL
-	 * @param ep     The proxy entry function to add. Must NOT be NULL
-	 * @param userdata Custom data for the module. May be NULL
+	 * @param server A proxy instance to add the module to. Must NOT be nullptr
+	 * @param ep     The proxy entry function to add. Must NOT be nullptr
+	 * @param userdata Custom data for the module. May be nullptr
 	 *
 	 * @return TRUE for success, FALSE otherwise.
 	 */
@@ -67,7 +67,7 @@ extern "C"
 	/**
 	 * @brief pf_server_start Starts the proxy, binding the configured port.
 	 *
-	 * @param server The server instance. Must NOT be NULL.
+	 * @param server The server instance. Must NOT be nullptr.
 	 *
 	 * @return TRUE for success, FALSE on error
 	 */
@@ -77,7 +77,7 @@ extern "C"
 	/**
 	 * @brief pf_server_start_from_socket Starts the proxy using an existing bound socket
 	 *
-	 * @param server The server instance. Must NOT be NULL.
+	 * @param server The server instance. Must NOT be nullptr.
 	 * @param socket The bound socket to wait for events on.
 	 *
 	 * @return TRUE for success, FALSE on error
@@ -88,7 +88,7 @@ extern "C"
 	/**
 	 * @brief pf_server_start_with_peer_socket Use existing peer socket
 	 *
-	 * @param server The server instance. Must NOT be NULL.
+	 * @param server The server instance. Must NOT be nullptr.
 	 * @param socket Ready to use peer socket
 	 *
 	 * @return TRUE for success, FALSE on error
@@ -99,7 +99,7 @@ extern "C"
 	/**
 	 * @brief pf_server_stop Stops a server instance asynchronously.
 	 *        Can be called from any thread to stop a running server instance.
-	 * @param server A pointer to the server instance to stop. May be NULL.
+	 * @param server A pointer to the server instance to stop. May be nullptr.
 	 */
 	FREERDP_API void pf_server_stop(proxyServer* server);
 
@@ -107,7 +107,7 @@ extern "C"
 	 * @brief pf_server_run This (blocking) function runs the main loop of the
 	 *                      proxy.
 	 *
-	 * @param server The server instance. Must NOT be NULL.
+	 * @param server The server instance. Must NOT be nullptr.
 	 *
 	 * @return TRUE for successful termination, FALSE otherwise.
 	 */

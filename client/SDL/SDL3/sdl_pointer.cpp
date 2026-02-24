@@ -166,7 +166,7 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 	auto fw = sdl->getFirstWindow();
 	if (!fw)
 	{
-		WLog_Print(sdl->getWLog(), WLOG_ERROR, "sdl->getFirstWindow() NULL");
+		WLog_Print(sdl->getWLog(), WLOG_ERROR, "sdl->getFirstWindow() nullptr");
 		return false;
 	}
 

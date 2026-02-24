@@ -61,6 +61,7 @@
 #include <sys/epoll.h>
 #include <sys/stat.h>
 
+#include <winpr/wtypes.h>
 #include <uwac/config.h>
 
 #include "uwac-os.h"
@@ -120,9 +121,9 @@ int uwac_os_dupfd_cloexec(int fd, long minfd)
 static ssize_t recvmsg_cloexec_fallback(int sockfd, struct msghdr* msg, int flags)
 {
 	ssize_t len = 0;
-	struct cmsghdr* cmsg = NULL;
-	unsigned char* data = NULL;
-	int* end = NULL;
+	struct cmsghdr* cmsg = nullptr;
+	unsigned char* data = nullptr;
+	int* end = nullptr;
 	len = recvmsg(sockfd, msg, flags);
 
 	if (len == -1)
@@ -133,7 +134,7 @@ static ssize_t recvmsg_cloexec_fallback(int sockfd, struct msghdr* msg, int flag
 
 	cmsg = CMSG_FIRSTHDR(msg);
 
-	for (; cmsg != NULL; cmsg = CMSG_NXTHDR(msg, cmsg))
+	for (; cmsg != nullptr; cmsg = CMSG_NXTHDR(msg, cmsg))
 	{
 		if (cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SCM_RIGHTS)
 			continue;
@@ -236,7 +237,7 @@ int uwac_create_anonymous_file(off_t size)
 {
 	static const char template[] = "/weston-shared-XXXXXX";
 	size_t length = 0;
-	char* name = NULL;
+	char* name = nullptr;
 	int fd = 0;
 	int ret = 0;
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)

@@ -132,7 +132,7 @@ extern "C"
 	/**
 	 * @brief pf_server_config_free Releases all resources associated with proxyConfig
 	 *
-	 * @param config A pointer to the proxyConfig to clean up. Might be NULL.
+	 * @param config A pointer to the proxyConfig to clean up. Might be nullptr.
 	 */
 	FREERDP_API void pf_server_config_free(proxyConfig* config);
 
@@ -140,9 +140,9 @@ extern "C"
 	 * @brief server_config_load_ini Create a proxyConfig from a already loaded
 	 * INI file.
 	 *
-	 * @param ini A pointer to the parsed INI file. Must NOT be NULL.
+	 * @param ini A pointer to the parsed INI file. Must NOT be nullptr.
 	 *
-	 * @return A proxyConfig or NULL in case of failure.
+	 * @return A proxyConfig or nullptr in case of failure.
 	 */
 	WINPR_ATTR_MALLOC(pf_server_config_free, 1)
 	WINPR_ATTR_NODISCARD
@@ -152,7 +152,7 @@ extern "C"
 	 *
 	 * @param path The path of the INI file
 	 *
-	 * @return A proxyConfig or NULL in case of failure.
+	 * @return A proxyConfig or nullptr in case of failure.
 	 */
 	WINPR_ATTR_MALLOC(pf_server_config_free, 1)
 	WINPR_ATTR_NODISCARD
@@ -164,7 +164,7 @@ extern "C"
 	 *
 	 * @param buffer A pointer to the '\0' terminated INI string.
 	 *
-	 * @return A proxyConfig or NULL in case of failure.
+	 * @return A proxyConfig or nullptr in case of failure.
 	 */
 	WINPR_ATTR_MALLOC(pf_server_config_free, 1)
 	WINPR_ATTR_NODISCARD
@@ -173,14 +173,14 @@ extern "C"
 	/**
 	 * @brief pf_server_config_print Print the configuration to stdout
 	 *
-	 * @param config A pointer to the configuration to print. Must NOT be NULL.
+	 * @param config A pointer to the configuration to print. Must NOT be nullptr.
 	 */
 	FREERDP_API void pf_server_config_print(const proxyConfig* config);
 
 	/**
 	 * @brief pf_config_required_plugins_count
 	 *
-	 * @param config A pointer to the proxyConfig. Must NOT be NULL.
+	 * @param config A pointer to the proxyConfig. Must NOT be nullptr.
 	 *
 	 * @return The number of required plugins configured.
 	 */
@@ -189,10 +189,10 @@ extern "C"
 
 	/**
 	 * @brief pf_config_required_plugin
-	 * @param config A pointer to the proxyConfig. Must NOT be NULL.
+	 * @param config A pointer to the proxyConfig. Must NOT be nullptr.
 	 * @param index The index of the plugin to return
 	 *
-	 * @return The name of the plugin or NULL.
+	 * @return The name of the plugin or nullptr.
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* pf_config_required_plugin(const proxyConfig* config, size_t index);
@@ -200,7 +200,7 @@ extern "C"
 	/**
 	 * @brief pf_config_modules_count
 	 *
-	 * @param config A pointer to the proxyConfig. Must NOT be NULL.
+	 * @param config A pointer to the proxyConfig. Must NOT be nullptr.
 	 *
 	 * @return The number of proxy modules configured.
 	 */
@@ -209,7 +209,7 @@ extern "C"
 
 	/**
 	 * @brief pf_config_modules
-	 * @param config A pointer to the proxyConfig. Must NOT be NULL.
+	 * @param config A pointer to the proxyConfig. Must NOT be nullptr.
 	 *
 	 * @return An array of strings of size pf_config_modules_count with the module names.
 	 */
@@ -240,11 +240,11 @@ extern "C"
 
 	/**
 	 * @brief pf_config_get get a value for a section/key
-	 * @param config A pointer to the proxyConfig. Must NOT be NULL.
-	 * @param section The name of the section the key is in, must not be \b NULL
-	 * @param key The name of the key to look for. Must not be \b NULL
+	 * @param config A pointer to the proxyConfig. Must NOT be nullptr.
+	 * @param section The name of the section the key is in, must not be \b nullptr
+	 * @param key The name of the key to look for. Must not be \b nullptr
 	 *
-	 * @return A pointer to the value for \b section/key or \b NULL if not found
+	 * @return A pointer to the value for \b section/key or \b nullptr if not found
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* pf_config_get(const proxyConfig* config, const char* section,

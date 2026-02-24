@@ -49,31 +49,31 @@ static int NoneHandleGetFd(HANDLE handle)
 static HANDLE_OPS ops = { NoneHandleIsHandle,
 	                      NoneHandleCloseHandle,
 	                      NoneHandleGetFd,
-	                      NULL, /* CleanupHandle */
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL };
+	                      nullptr, /* CleanupHandle */
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr };
 
 HANDLE CreateNoneHandle(void)
 {
 	WINPR_NONE_HANDLE* none = (WINPR_NONE_HANDLE*)calloc(1, sizeof(WINPR_NONE_HANDLE));
 
 	if (!none)
-		return NULL;
+		return nullptr;
 
 	none->common.ops = &ops;
 	return (HANDLE)none;

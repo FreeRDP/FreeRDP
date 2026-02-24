@@ -170,7 +170,7 @@ wCountdownEvent* CountdownEvent_New(size_t initialCount)
 	wCountdownEvent* countdown = (wCountdownEvent*)calloc(1, sizeof(wCountdownEvent));
 
 	if (!countdown)
-		return NULL;
+		return nullptr;
 
 	countdown->count = initialCount;
 	countdown->initialCount = initialCount;
@@ -178,7 +178,7 @@ wCountdownEvent* CountdownEvent_New(size_t initialCount)
 	if (!InitializeCriticalSectionAndSpinCount(&countdown->lock, 4000))
 		goto fail;
 
-	countdown->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	countdown->event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	if (!countdown->event)
 		goto fail;
 
@@ -195,7 +195,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	CountdownEvent_Free(countdown);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void CountdownEvent_Free(wCountdownEvent* countdown)

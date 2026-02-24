@@ -71,7 +71,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		apcData[index].FireCount = 0;
 		apcData[index].MaxFireCount = FIRE_COUNT;
 
-		if (!(apcData[index].CompletionEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		if (!(apcData[index].CompletionEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		{
 			printf("Failed to create apcData[%" PRIu32 "] event (%" PRIu32 ")\n", index,
 			       GetLastError());

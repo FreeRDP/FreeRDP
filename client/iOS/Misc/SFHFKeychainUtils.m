@@ -77,7 +77,7 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 	list.count = 4;
 	list.attr = attributes;
 
-	OSStatus status = SecKeychainItemCopyContent(item, NULL, &list, &length, (void **)&password);
+	OSStatus status = SecKeychainItemCopyContent(item, nullptr, &list, &length, (void **)&password);
 
 	if (status != noErr)
 	{
@@ -87,7 +87,7 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 
 	NSString *passwordString = nil;
 
-	if (password != NULL)
+	if (password != nullptr)
 	{
 		char passwordBuffer[1024];
 
@@ -135,17 +135,17 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 
 	if (item)
 	{
-		status = SecKeychainItemModifyAttributesAndData(item, NULL, strlen([password UTF8String]),
-		                                                [password UTF8String]);
+		status = SecKeychainItemModifyAttributesAndData(
+		    item, nullptr, strlen([password UTF8String]), [password UTF8String]);
 
 		CFRelease(item);
 	}
 	else
 	{
 		status = SecKeychainAddGenericPassword(
-		    NULL, strlen([serverName UTF8String]), [serverName UTF8String],
+		    nullptr, strlen([serverName UTF8String]), [serverName UTF8String],
 		    strlen([username UTF8String]), [username UTF8String], strlen([password UTF8String]),
-		    [password UTF8String], NULL);
+		    [password UTF8String], nullptr);
 	}
 
 	if (status != noErr)
@@ -205,8 +205,8 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 	SecKeychainItemRef item;
 
 	OSStatus status = SecKeychainFindGenericPassword(
-	    NULL, strlen([serverName UTF8String]), [serverName UTF8String],
-	    strlen([username UTF8String]), [username UTF8String], NULL, NULL, &item);
+	    nullptr, strlen([serverName UTF8String]), [serverName UTF8String],
+	    strlen([username UTF8String]), [username UTF8String], nullptr, nullptr, &item);
 
 	if (status != noErr)
 	{
@@ -259,7 +259,7 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 	// (incorrect) version of this code (which set the password as a generic attribute instead of
 	// password data).
 
-	NSDictionary *attributeResult = NULL;
+	NSDictionary *attributeResult = nullptr;
 	NSMutableDictionary *attributeQuery = [query mutableCopy];
 	[attributeQuery setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnAttributes];
 	OSStatus status =
@@ -443,7 +443,7 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 		NSDictionary *query = [[[NSDictionary alloc] initWithObjects:objects
 		                                                     forKeys:keys] autorelease];
 
-		status = SecItemAdd((CFDictionaryRef)query, NULL);
+		status = SecItemAdd((CFDictionaryRef)query, nullptr);
 	}
 
 	if (error != nil && status != noErr)

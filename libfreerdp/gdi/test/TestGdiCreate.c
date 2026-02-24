@@ -24,7 +24,7 @@ static const UINT32 colorFormatCount = sizeof(colorFormatList) / sizeof(colorFor
 static int test_gdi_GetDC(void)
 {
 	int rc = -1;
-	HGDI_DC hdc = NULL;
+	HGDI_DC hdc = nullptr;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -47,8 +47,8 @@ fail:
 static int test_gdi_CreateCompatibleDC(void)
 {
 	int rc = -1;
-	HGDI_DC hdc = NULL;
-	HGDI_DC chdc = NULL;
+	HGDI_DC hdc = nullptr;
+	HGDI_DC chdc = nullptr;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -87,8 +87,8 @@ static int test_gdi_CreateBitmap(void)
 	UINT32 format = PIXEL_FORMAT_ARGB32;
 	INT32 width = 0;
 	INT32 height = 0;
-	BYTE* data = NULL;
-	HGDI_BITMAP hBitmap = NULL;
+	BYTE* data = nullptr;
+	HGDI_BITMAP hBitmap = nullptr;
 	width = 32;
 	height = 16;
 
@@ -133,10 +133,10 @@ fail:
 static int test_gdi_CreateCompatibleBitmap(void)
 {
 	int rc = -1;
-	HGDI_DC hdc = NULL;
+	HGDI_DC hdc = nullptr;
 	INT32 width = 0;
 	INT32 height = 0;
-	HGDI_BITMAP hBitmap = NULL;
+	HGDI_BITMAP hBitmap = nullptr;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -178,7 +178,7 @@ static int test_gdi_CreatePen(void)
 {
 	int rc = -1;
 	const UINT32 format = PIXEL_FORMAT_RGBA32;
-	HGDI_PEN hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD, format, NULL);
+	HGDI_PEN hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD, format, nullptr);
 
 	if (!hPen)
 	{
@@ -224,9 +224,9 @@ fail:
 static int test_gdi_CreatePatternBrush(void)
 {
 	int rc = -1;
-	HGDI_BRUSH hBrush = NULL;
-	HGDI_BITMAP hBitmap = NULL;
-	hBitmap = gdi_CreateBitmap(64, 64, 32, NULL);
+	HGDI_BRUSH hBrush = nullptr;
+	HGDI_BITMAP hBitmap = nullptr;
+	hBitmap = gdi_CreateBitmap(64, 64, 32, nullptr);
 	hBrush = gdi_CreatePatternBrush(hBitmap);
 
 	if (!hBitmap || !hBrush)
@@ -292,7 +292,7 @@ fail:
 static int test_gdi_CreateRect(void)
 {
 	int rc = -1;
-	GDI_RECT* hRect = NULL;
+	GDI_RECT* hRect = nullptr;
 	INT32 x1 = 32;
 	INT32 y1 = 64;
 	INT32 x2 = 128;
@@ -339,10 +339,10 @@ static BOOL test_gdi_GetPixel(void)
 	for (UINT32 x = 0; x < colorFormatCount; x++)
 	{
 		UINT32 bpp = 0;
-		HGDI_DC hdc = NULL;
+		HGDI_DC hdc = nullptr;
 		UINT32 width = 128;
 		UINT32 height = 64;
-		HGDI_BITMAP hBitmap = NULL;
+		HGDI_BITMAP hBitmap = nullptr;
 
 		if (!(hdc = gdi_GetDC()))
 		{
@@ -398,10 +398,10 @@ static BOOL test_gdi_SetPixel(void)
 	for (UINT32 x = 0; x < colorFormatCount; x++)
 	{
 		UINT32 bpp = 0;
-		HGDI_DC hdc = NULL;
+		HGDI_DC hdc = nullptr;
 		UINT32 width = 128;
 		UINT32 height = 64;
-		HGDI_BITMAP hBitmap = NULL;
+		HGDI_BITMAP hBitmap = nullptr;
 
 		if (!(hdc = gdi_GetDC()))
 		{
@@ -446,7 +446,7 @@ static BOOL test_gdi_SetPixel(void)
 static int test_gdi_SetROP2(void)
 {
 	int rc = -1;
-	HGDI_DC hdc = NULL;
+	HGDI_DC hdc = nullptr;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -468,11 +468,11 @@ fail:
 static int test_gdi_MoveToEx(void)
 {
 	int rc = -1;
-	HGDI_DC hdc = NULL;
-	HGDI_PEN hPen = NULL;
-	HGDI_POINT prevPoint = NULL;
+	HGDI_DC hdc = nullptr;
+	HGDI_PEN hPen = nullptr;
+	HGDI_POINT prevPoint = nullptr;
 	const UINT32 format = PIXEL_FORMAT_RGBA32;
-	gdiPalette* palette = NULL;
+	gdiPalette* palette = nullptr;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -487,7 +487,7 @@ static int test_gdi_MoveToEx(void)
 	}
 
 	gdi_SelectObject(hdc, (HGDIOBJECT)hPen);
-	gdi_MoveToEx(hdc, 128, 256, NULL);
+	gdi_MoveToEx(hdc, 128, 256, nullptr);
 
 	if (hdc->pen->posX != 128)
 		goto fail;

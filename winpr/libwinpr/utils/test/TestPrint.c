@@ -25,8 +25,8 @@ static BOOL test_bin_tohex_string(void)
 		const char empty[33] = WINPR_C_ARRAY_INIT;
 		char strbuffer[33] = WINPR_C_ARRAY_INIT;
 
-		size_t len =
-		    winpr_BinToHexStringBuffer(NULL, sizeof(binbuffer), strbuffer, sizeof(strbuffer), TRUE);
+		size_t len = winpr_BinToHexStringBuffer(nullptr, sizeof(binbuffer), strbuffer,
+		                                        sizeof(strbuffer), TRUE);
 		if (len != 0)
 			goto fail;
 		if (memcmp(strbuffer, empty, sizeof(strbuffer)) != 0)
@@ -36,8 +36,8 @@ static BOOL test_bin_tohex_string(void)
 			goto fail;
 		if (memcmp(strbuffer, empty, sizeof(strbuffer)) != 0)
 			goto fail;
-		len =
-		    winpr_BinToHexStringBuffer(binbuffer, sizeof(binbuffer), NULL, sizeof(strbuffer), TRUE);
+		len = winpr_BinToHexStringBuffer(binbuffer, sizeof(binbuffer), nullptr, sizeof(strbuffer),
+		                                 TRUE);
 		if (len != 0)
 			goto fail;
 		if (memcmp(strbuffer, empty, sizeof(strbuffer)) != 0)
@@ -52,28 +52,28 @@ static BOOL test_bin_tohex_string(void)
 			goto fail;
 		if (memcmp(strbuffer, empty, sizeof(strbuffer)) != 0)
 			goto fail;
-		len = winpr_BinToHexStringBuffer(binbuffer, sizeof(binbuffer), NULL, 0, TRUE);
+		len = winpr_BinToHexStringBuffer(binbuffer, sizeof(binbuffer), nullptr, 0, TRUE);
 		if (len != 0)
 			goto fail;
 		if (memcmp(strbuffer, empty, sizeof(strbuffer)) != 0)
 			goto fail;
-		len = winpr_BinToHexStringBuffer(NULL, sizeof(binbuffer), strbuffer, 0, TRUE);
+		len = winpr_BinToHexStringBuffer(nullptr, sizeof(binbuffer), strbuffer, 0, TRUE);
 		if (len != 0)
 			goto fail;
 		if (memcmp(strbuffer, empty, sizeof(strbuffer)) != 0)
 			goto fail;
 
-		len = winpr_BinToHexStringBuffer(binbuffer, 0, NULL, 0, TRUE);
+		len = winpr_BinToHexStringBuffer(binbuffer, 0, nullptr, 0, TRUE);
 		if (len != 0)
 			goto fail;
 		if (memcmp(strbuffer, empty, sizeof(strbuffer)) != 0)
 			goto fail;
-		len = winpr_BinToHexStringBuffer(NULL, 0, NULL, 0, TRUE);
+		len = winpr_BinToHexStringBuffer(nullptr, 0, nullptr, 0, TRUE);
 		if (len != 0)
 			goto fail;
 		if (memcmp(strbuffer, empty, sizeof(strbuffer)) != 0)
 			goto fail;
-		len = winpr_BinToHexStringBuffer(binbuffer, 0, NULL, 0, FALSE);
+		len = winpr_BinToHexStringBuffer(binbuffer, 0, nullptr, 0, FALSE);
 		if (len != 0)
 			goto fail;
 		if (memcmp(strbuffer, empty, sizeof(strbuffer)) != 0)
@@ -127,11 +127,11 @@ fail:
 static BOOL test_bin_tohex_string_alloc(void)
 {
 	BOOL rc = FALSE;
-	char* str = NULL;
+	char* str = nullptr;
 	{
 		const BYTE binbuffer[33] = WINPR_C_ARRAY_INIT;
 
-		str = winpr_BinToHexString(NULL, sizeof(binbuffer), TRUE);
+		str = winpr_BinToHexString(nullptr, sizeof(binbuffer), TRUE);
 		if (str)
 			goto fail;
 		str = winpr_BinToHexString(binbuffer, 0, TRUE);
@@ -140,7 +140,7 @@ static BOOL test_bin_tohex_string_alloc(void)
 		str = winpr_BinToHexString(binbuffer, 0, FALSE);
 		if (str)
 			goto fail;
-		str = winpr_BinToHexString(NULL, sizeof(binbuffer), FALSE);
+		str = winpr_BinToHexString(nullptr, sizeof(binbuffer), FALSE);
 		if (str)
 			goto fail;
 	}
@@ -161,7 +161,7 @@ static BOOL test_bin_tohex_string_alloc(void)
 		if (memcmp(strbuffer1_space, str, sizeof(strbuffer1_space)) != 0)
 			goto fail;
 		free(str);
-		str = NULL;
+		str = nullptr;
 	}
 	{
 		const BYTE binbuffer1[] = { 0xF1, 0xe2, 0xD3, 0xc4, 0xB5, 0xA6, 0x97, 0x88, 0x79,
@@ -181,7 +181,7 @@ static BOOL test_bin_tohex_string_alloc(void)
 		if (memcmp(strbuffer1_space, str, sizeof(strbuffer1_space)) != 0)
 			goto fail;
 		free(str);
-		str = NULL;
+		str = nullptr;
 	}
 	rc = TRUE;
 fail:
@@ -196,12 +196,12 @@ static BOOL test_hex_string_to_bin(void)
 		const char stringbuffer[] = "123456789ABCDEFabcdef";
 		const BYTE empty[1024] = WINPR_C_ARRAY_INIT;
 		BYTE buffer[1024] = WINPR_C_ARRAY_INIT;
-		size_t len = winpr_HexStringToBinBuffer(NULL, 0, NULL, 0);
+		size_t len = winpr_HexStringToBinBuffer(nullptr, 0, nullptr, 0);
 		if (len != 0)
 			goto fail;
 		if (memcmp(buffer, empty, sizeof(buffer)) != 0)
 			goto fail;
-		len = winpr_HexStringToBinBuffer(NULL, sizeof(stringbuffer), buffer, sizeof(buffer));
+		len = winpr_HexStringToBinBuffer(nullptr, sizeof(stringbuffer), buffer, sizeof(buffer));
 		if (len != 0)
 			goto fail;
 		if (memcmp(buffer, empty, sizeof(buffer)) != 0)
@@ -211,7 +211,8 @@ static BOOL test_hex_string_to_bin(void)
 			goto fail;
 		if (memcmp(buffer, empty, sizeof(buffer)) != 0)
 			goto fail;
-		len = winpr_HexStringToBinBuffer(stringbuffer, sizeof(stringbuffer), NULL, sizeof(buffer));
+		len =
+		    winpr_HexStringToBinBuffer(stringbuffer, sizeof(stringbuffer), nullptr, sizeof(buffer));
 		if (len != 0)
 			goto fail;
 		if (memcmp(buffer, empty, sizeof(buffer)) != 0)

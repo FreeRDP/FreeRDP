@@ -222,11 +222,11 @@ YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags)
 	SYSTEM_INFO sysInfos = WINPR_C_ARRAY_INIT;
 	/** do it here to avoid a race condition between threads */
 	if (!primitives_get())
-		return NULL;
+		return nullptr;
 
 	YUV_CONTEXT* ret = winpr_aligned_calloc(1, sizeof(*ret), 32);
 	if (!ret)
-		return NULL;
+		return nullptr;
 
 	ret->encoder = encoder;
 	if (!(ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
@@ -294,12 +294,12 @@ static BOOL submit_object(PTP_WORK* WINPR_RESTRICT work_object, PTP_WORK_CALLBAC
 	if (!work_object)
 		return FALSE;
 
-	*work_object = NULL;
+	*work_object = nullptr;
 
 	if (!param || !context)
 		return FALSE;
 
-	*work_object = CreateThreadpoolWork(cb, cnv.pv, NULL);
+	*work_object = CreateThreadpoolWork(cb, cnv.pv, nullptr);
 	if (!*work_object)
 		return FALSE;
 
@@ -314,7 +314,7 @@ static void free_objects(PTP_WORK* work_objects, UINT32 waitCount)
 	for (UINT32 i = 0; i < waitCount; i++)
 	{
 		PTP_WORK cur = work_objects[i];
-		work_objects[i] = NULL;
+		work_objects[i] = nullptr;
 
 		if (!cur)
 			continue;
@@ -389,7 +389,7 @@ static BOOL pool_decode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 			const RECTANGLE_16 rect = clamp(context, &regionRects[y], yuvHeight);
 			YUV_PROCESS_WORK_PARAM current =
 			    pool_decode_param(&rect, context, pYUVData, iStride, DstFormat, dest, nDstStep);
-			cb(NULL, &current, NULL);
+			cb(nullptr, &current, nullptr);
 		}
 		return TRUE;
 	}
@@ -545,7 +545,7 @@ static BOOL pool_decode_rect(YUV_CONTEXT* WINPR_RESTRICT context, BYTE type,
 		{
 			YUV_COMBINE_WORK_PARAM current = pool_decode_rect_param(
 			    &regionRects[y], context, type, pYUVData, iStride, pYUVDstData, iDstStride);
-			cb(NULL, &current, NULL);
+			cb(nullptr, &current, nullptr);
 		}
 		return TRUE;
 	}
@@ -553,7 +553,7 @@ static BOOL pool_decode_rect(YUV_CONTEXT* WINPR_RESTRICT context, BYTE type,
 	/* case where we use threads */
 	for (waitCount = 0; waitCount < numRegionRects; waitCount++)
 	{
-		YUV_COMBINE_WORK_PARAM* current = NULL;
+		YUV_COMBINE_WORK_PARAM* current = nullptr;
 
 		if (context->work_object_count <= waitCount)
 		{
@@ -624,7 +624,7 @@ static void CALLBACK yuv420_encode_work_callback(PTP_CALLBACK_INSTANCE instance,
 	YUV_ENCODE_WORK_PARAM* param = (YUV_ENCODE_WORK_PARAM*)context;
 	primitives_t* prims = primitives_get();
 	BYTE* pYUVData[3];
-	const BYTE* src = NULL;
+	const BYTE* src = nullptr;
 
 	WINPR_UNUSED(instance);
 	WINPR_UNUSED(work);
@@ -656,7 +656,7 @@ static void CALLBACK yuv444v1_encode_work_callback(PTP_CALLBACK_INSTANCE instanc
 	primitives_t* prims = primitives_get();
 	BYTE* pYUVLumaData[3];
 	BYTE* pYUVChromaData[3];
-	const BYTE* src = NULL;
+	const BYTE* src = nullptr;
 
 	WINPR_UNUSED(instance);
 	WINPR_UNUSED(work);
@@ -693,7 +693,7 @@ static void CALLBACK yuv444v2_encode_work_callback(PTP_CALLBACK_INSTANCE instanc
 	primitives_t* prims = primitives_get();
 	BYTE* pYUVLumaData[3];
 	BYTE* pYUVChromaData[3];
-	const BYTE* src = NULL;
+	const BYTE* src = nullptr;
 
 	WINPR_UNUSED(instance);
 	WINPR_UNUSED(work);
@@ -797,7 +797,7 @@ static BOOL pool_encode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 			YUV_ENCODE_WORK_PARAM current =
 			    pool_encode_fill(&regionRects[x], context, pSrcData, nSrcStep, SrcFormat, iStride,
 			                     pYUVLumaData, pYUVChromaData);
-			cb(NULL, &current, NULL);
+			cb(nullptr, &current, nullptr);
 		}
 		return TRUE;
 	}
@@ -821,7 +821,7 @@ static BOOL pool_encode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 		for (UINT32 y = 0; y < steps; y++)
 		{
 			RECTANGLE_16 r = *rect;
-			YUV_ENCODE_WORK_PARAM* current = NULL;
+			YUV_ENCODE_WORK_PARAM* current = nullptr;
 
 			if (context->work_object_count <= waitCount)
 			{
@@ -854,7 +854,7 @@ BOOL yuv420_context_encode(YUV_CONTEXT* WINPR_RESTRICT context, const BYTE* WINP
 		return FALSE;
 
 	return pool_encode(context, yuv420_encode_work_callback, pSrcData, nSrcStep, SrcFormat, iStride,
-	                   pYUVData, NULL, regionRects, numRegionRects);
+	                   pYUVData, nullptr, regionRects, numRegionRects);
 }
 
 BOOL yuv444_context_encode(YUV_CONTEXT* WINPR_RESTRICT context, BYTE version,
@@ -863,7 +863,7 @@ BOOL yuv444_context_encode(YUV_CONTEXT* WINPR_RESTRICT context, BYTE version,
                            BYTE* WINPR_RESTRICT pYUVChromaData[3],
                            const RECTANGLE_16* WINPR_RESTRICT regionRects, UINT32 numRegionRects)
 {
-	PTP_WORK_CALLBACK cb = NULL;
+	PTP_WORK_CALLBACK cb = nullptr;
 	switch (version)
 	{
 		case 1:

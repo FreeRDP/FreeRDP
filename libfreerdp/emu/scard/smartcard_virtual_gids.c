@@ -273,7 +273,7 @@ static vgidsEF* vgids_ef_new(vgidsContext* ctx, USHORT id)
 	vgidsEF* ef = calloc(1, sizeof(vgidsEF));
 
 	ef->id = id;
-	ef->data = Stream_New(NULL, 1024);
+	ef->data = Stream_New(nullptr, 1024);
 	if (!ef->data)
 	{
 		WLog_ERR(TAG, "Failed to create file data stream");
@@ -291,7 +291,7 @@ static vgidsEF* vgids_ef_new(vgidsContext* ctx, USHORT id)
 
 create_failed:
 	vgids_ef_free(ef);
-	return NULL;
+	return nullptr;
 }
 
 static BOOL vgids_write_tlv(wStream* s, UINT16 tag, const void* data, size_t dataSize)
@@ -383,7 +383,7 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 
 		if (nextDOID == doID)
 		{
-			BYTE* outData = NULL;
+			BYTE* outData = nullptr;
 
 			/* Include Tag and length in result */
 			doSize += (UINT16)(Stream_GetPosition(ef->data) - curPos);
@@ -454,8 +454,8 @@ static BOOL vgids_prepare_certificate(const rdpCertificate* cert, BYTE** kxc, DW
 	    ZLIB compressed cert
 	*/
 	uLongf destSize = 0;
-	wStream* s = NULL;
-	BYTE* comprData = NULL;
+	wStream* s = nullptr;
+	BYTE* comprData = nullptr;
 
 	WINPR_ASSERT(cert);
 
@@ -484,7 +484,7 @@ static BOOL vgids_prepare_certificate(const rdpCertificate* cert, BYTE** kxc, DW
 	}
 
 	/* Write container data */
-	s = Stream_New(NULL, destSize + 4);
+	s = Stream_New(nullptr, destSize + 4);
 	Stream_Write_UINT16(s, 0x0001);
 	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(uint16_t, certSize));
 	Stream_Write(s, comprData, destSize);
@@ -540,7 +540,7 @@ static BOOL vgids_prepare_keymap(vgidsContext* context, BYTE** outData, DWORD* o
 	    BYTE unknown (count?): 0x01
 	    Array of vgidsKeymapRecord
 	*/
-	BYTE* data = NULL;
+	BYTE* data = nullptr;
 	vgidsKeymapRecord record = {
 		1,                                /* state */
 		0,                                /* algo */
@@ -643,7 +643,7 @@ static BOOL vgids_create_response(UINT16 status, const BYTE* answer, DWORD answe
 
 static BOOL vgids_read_do_fkt(void* data, size_t index, va_list ap)
 {
-	BYTE* response = NULL;
+	BYTE* response = nullptr;
 	DWORD responseSize = 0;
 	vgidsEF* file = (vgidsEF*)data;
 	vgidsContext* context = va_arg(ap, vgidsContext*);
@@ -672,13 +672,13 @@ static void vgids_read_do(vgidsContext* context, UINT16 efID, UINT16 doID)
 static void vgids_reset_context_response(vgidsContext* context)
 {
 	Stream_Free(context->responseData, TRUE);
-	context->responseData = NULL;
+	context->responseData = nullptr;
 }
 
 static void vgids_reset_context_command_data(vgidsContext* context)
 {
 	Stream_Free(context->commandData, TRUE);
-	context->commandData = NULL;
+	context->commandData = nullptr;
 }
 
 static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
@@ -688,12 +688,12 @@ static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
 	BYTE p2 = 0;
 	BYTE lc = 0;
 	DWORD resultDataSize = 0;
-	const BYTE* resultData = NULL;
+	const BYTE* resultData = nullptr;
 	UINT16 status = ISO_STATUS_SUCCESS;
 
 	/* The only select operations performed are either select by AID or select 3FFF (return
 	 * information about the currently selected DF) */
-	if (!vgids_parse_apdu_header(s, NULL, NULL, &p1, &p2, &lc, NULL))
+	if (!vgids_parse_apdu_header(s, nullptr, nullptr, &p1, &p2, &lc, nullptr))
 		return FALSE;
 
 	/* Check P1 for selection mode */
@@ -803,8 +803,8 @@ static UINT16 vgids_handle_chained_response(vgidsContext* context, const BYTE** 
 static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 {
 	BOOL rc = FALSE;
-	wStream* pubKey = NULL;
-	wStream* response = NULL;
+	wStream* pubKey = nullptr;
+	wStream* response = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -818,14 +818,14 @@ static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 	if (!n || !e)
 		goto handle_error;
 
-	pubKey = Stream_New(NULL, nSize + eSize + 0x10);
+	pubKey = Stream_New(nullptr, nSize + eSize + 0x10);
 	if (!pubKey)
 	{
 		WLog_ERR(TAG, "Failed to allocate public key stream");
 		goto handle_error;
 	}
 
-	response = Stream_New(NULL, Stream_Capacity(pubKey) + 0x10);
+	response = Stream_New(nullptr, Stream_Capacity(pubKey) + 0x10);
 	if (!response)
 	{
 		WLog_ERR(TAG, "Failed to allocate response stream");
@@ -846,7 +846,7 @@ static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 	/* set response data */
 	Stream_SetPosition(response, 0);
 	context->responseData = response;
-	response = NULL;
+	response = nullptr;
 
 	rc = TRUE;
 handle_error:
@@ -866,14 +866,14 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 	BYTE p2 = 0;
 	BYTE lc = 0;
 	DWORD resultDataSize = 0;
-	const BYTE* resultData = NULL;
+	const BYTE* resultData = nullptr;
 	UINT16 status = ISO_STATUS_SUCCESS;
 
 	/* GetData is called a lot!
 	     - To retrieve DOs from files
 	     - To retrieve public key information
 	*/
-	if (!vgids_parse_apdu_header(s, NULL, NULL, &p1, &p2, &lc, NULL))
+	if (!vgids_parse_apdu_header(s, nullptr, nullptr, &p1, &p2, &lc, nullptr))
 		return FALSE;
 
 	/* free any previous queried data */
@@ -984,14 +984,14 @@ static BOOL vgids_ins_manage_security_environment(vgidsContext* context, wStream
 	BYTE p2 = 0;
 	BYTE lc = 0;
 	DWORD resultDataSize = 0;
-	const BYTE* resultData = NULL;
+	const BYTE* resultData = nullptr;
 	UINT16 status = ISO_STATUS_SUCCESS;
 
 	vgids_reset_context_command_data(context);
 	vgids_reset_context_response(context);
 
 	/* Manage security environment prepares the card for performing crypto operations. */
-	if (!vgids_parse_apdu_header(s, NULL, NULL, &p1, &p2, &lc, NULL))
+	if (!vgids_parse_apdu_header(s, nullptr, nullptr, &p1, &p2, &lc, nullptr))
 		return FALSE;
 
 	/* Check APDU params */
@@ -1043,7 +1043,7 @@ static BOOL vgids_perform_digital_signature(vgidsContext* context)
 {
 	size_t sigSize = 0;
 	size_t msgSize = 0;
-	EVP_PKEY_CTX* ctx = NULL;
+	EVP_PKEY_CTX* ctx = nullptr;
 	EVP_PKEY* pk = freerdp_key_get_evp_pkey(context->privateKey);
 	const vgidsDigestInfoMap gidsDigestInfo[VGIDS_MAX_DIGEST_INFO] = {
 		{ g_PKCS1_SHA1, sizeof(g_PKCS1_SHA1), EVP_sha1() },
@@ -1081,7 +1081,7 @@ static BOOL vgids_perform_digital_signature(vgidsContext* context)
 			msgSize = Stream_GetRemainingLength(context->commandData);
 
 			/* setup signing context */
-			ctx = EVP_PKEY_CTX_new(pk, NULL);
+			ctx = EVP_PKEY_CTX_new(pk, nullptr);
 			if (!ctx)
 			{
 				WLog_ERR(TAG, "Failed to create signing context");
@@ -1111,14 +1111,14 @@ static BOOL vgids_perform_digital_signature(vgidsContext* context)
 			}
 
 			/* Determine buffer length */
-			if (EVP_PKEY_sign(ctx, NULL, &sigSize, Stream_Pointer(context->commandData), msgSize) <=
-			    0)
+			if (EVP_PKEY_sign(ctx, nullptr, &sigSize, Stream_Pointer(context->commandData),
+			                  msgSize) <= 0)
 			{
 				WLog_ERR(TAG, "Failed to determine signature size");
 				goto sign_failed;
 			}
 
-			context->responseData = Stream_New(NULL, sigSize);
+			context->responseData = Stream_New(nullptr, sigSize);
 			if (!context->responseData)
 			{
 				WLog_ERR(TAG, "Failed to allocate signing buffer");
@@ -1153,7 +1153,7 @@ sign_failed:
 
 static BOOL vgids_perform_decrypt(vgidsContext* context)
 {
-	EVP_PKEY_CTX* ctx = NULL;
+	EVP_PKEY_CTX* ctx = nullptr;
 	BOOL rc = FALSE;
 	int res = 0;
 	int padding = RSA_NO_PADDING;
@@ -1170,7 +1170,7 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 	EVP_PKEY* pkey = freerdp_key_get_evp_pkey(context->privateKey);
 	if (!pkey)
 		goto decrypt_failed;
-	ctx = EVP_PKEY_CTX_new(pkey, NULL);
+	ctx = EVP_PKEY_CTX_new(pkey, nullptr);
 	if (!ctx)
 		goto decrypt_failed;
 	if (EVP_PKEY_decrypt_init(ctx) <= 0)
@@ -1182,7 +1182,7 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 	{
 		const size_t inlen = Stream_Length(context->commandData);
 		size_t outlen = 0;
-		res = EVP_PKEY_decrypt(ctx, NULL, &outlen, Stream_Buffer(context->commandData), inlen);
+		res = EVP_PKEY_decrypt(ctx, nullptr, &outlen, Stream_Buffer(context->commandData), inlen);
 		if (res < 0)
 		{
 			WLog_ERR(TAG, "Failed to decrypt data");
@@ -1190,7 +1190,7 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 		}
 
 		/* Prepare output buffer */
-		context->responseData = Stream_New(NULL, outlen);
+		context->responseData = Stream_New(nullptr, outlen);
 
 		if (!context->responseData)
 		{
@@ -1229,11 +1229,11 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 	BYTE p2 = 0;
 	BYTE lc = 0;
 	DWORD resultDataSize = 0;
-	const BYTE* resultData = NULL;
+	const BYTE* resultData = nullptr;
 	UINT16 status = ISO_STATUS_SUCCESS;
 
 	/* Perform security operation */
-	if (!vgids_parse_apdu_header(s, &cla, NULL, &p1, &p2, &lc, NULL))
+	if (!vgids_parse_apdu_header(s, &cla, nullptr, &p1, &p2, &lc, nullptr))
 		return FALSE;
 
 	if (lc == 0)
@@ -1259,7 +1259,7 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 	/* Append the data to the context command buffer (PSO might chain command data) */
 	if (!context->commandData)
 	{
-		context->commandData = Stream_New(NULL, lc);
+		context->commandData = Stream_New(nullptr, lc);
 		if (!context->commandData)
 			return FALSE;
 	}
@@ -1319,7 +1319,7 @@ static BOOL vgids_ins_getresponse(vgidsContext* context, wStream* s, BYTE** resp
 	BYTE p2 = 0;
 	BYTE le = 0;
 	DWORD resultDataSize = 0;
-	const BYTE* resultData = NULL;
+	const BYTE* resultData = nullptr;
 	DWORD expectedLen = 0;
 	DWORD remainingSize = 0;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -1332,7 +1332,7 @@ static BOOL vgids_ins_getresponse(vgidsContext* context, wStream* s, BYTE** resp
 		goto create_response;
 	}
 
-	if (!vgids_parse_apdu_header(s, NULL, NULL, &p1, &p2, NULL, &le))
+	if (!vgids_parse_apdu_header(s, nullptr, nullptr, &p1, &p2, nullptr, &le))
 		return FALSE;
 
 	/* Check APDU params */
@@ -1380,7 +1380,7 @@ static BOOL vgids_ins_verify(vgidsContext* context, wStream* s, BYTE** response,
 	char pin[VGIDS_MAX_PIN_SIZE + 1] = WINPR_C_ARRAY_INIT;
 
 	/* Verify is always called for the application password (PIN) P2=0x80 */
-	if (!vgids_parse_apdu_header(s, NULL, &ins, &p1, &p2, NULL, NULL))
+	if (!vgids_parse_apdu_header(s, nullptr, &ins, &p1, &p2, nullptr, nullptr))
 		return FALSE;
 
 	/* Check APDU params */
@@ -1435,12 +1435,12 @@ static BOOL vgids_ins_verify(vgidsContext* context, wStream* s, BYTE** response,
 	}
 
 create_response:
-	return vgids_create_response(status, NULL, 0, response, responseSize);
+	return vgids_create_response(status, nullptr, 0, response, responseSize);
 }
 
 vgidsContext* vgids_new(void)
 {
-	wObject* obj = NULL;
+	wObject* obj = nullptr;
 	vgidsContext* ctx = calloc(1, sizeof(vgidsContext));
 
 	ctx->files = ArrayList_New(FALSE);
@@ -1457,7 +1457,7 @@ vgidsContext* vgids_new(void)
 
 create_failed:
 	vgids_free(ctx);
-	return NULL;
+	return nullptr;
 }
 
 BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, const char* pin)
@@ -1466,12 +1466,12 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	DWORD keymapSize = 0;
 	DWORD fsTableSize = 0;
 	BOOL rc = FALSE;
-	BYTE* kxc = NULL;
-	BYTE* keymap = NULL;
-	BYTE* fsTable = NULL;
-	vgidsEF* masterEF = NULL;
-	vgidsEF* cardidEF = NULL;
-	vgidsEF* commonEF = NULL;
+	BYTE* kxc = nullptr;
+	BYTE* keymap = nullptr;
+	BYTE* fsTable = nullptr;
+	vgidsEF* masterEF = nullptr;
+	vgidsEF* cardidEF = nullptr;
+	vgidsEF* commonEF = nullptr;
 	BYTE cardid[VGIDS_CARDID_SIZE] = WINPR_C_ARRAY_INIT;
 	vgidsContainerMapEntry cmrec = { { 'P', 'r', 'i', 'v', 'a', 't', 'e', ' ', 'K', 'e', 'y', ' ',
 		                               '0', '0' },
@@ -1492,7 +1492,7 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	/* Check params */
 	if (!cert || !privateKey || !pin)
 	{
-		WLog_DBG(TAG, "Passed invalid NULL argument: cert=%p, privateKey=%p, pin=%p",
+		WLog_DBG(TAG, "Passed invalid nullptr argument: cert=%p, privateKey=%p, pin=%p",
 		         WINPR_CXX_COMPAT_CAST(const void*, cert),
 		         WINPR_CXX_COMPAT_CAST(const void*, privateKey),
 		         WINPR_CXX_COMPAT_CAST(const void*, pin));
@@ -1504,7 +1504,7 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	if (!ctx->certificate)
 		goto init_failed;
 
-	ctx->privateKey = freerdp_key_new_from_pem_enc(privateKey, NULL);
+	ctx->privateKey = freerdp_key_new_from_pem_enc(privateKey, nullptr);
 	if (!ctx->privateKey)
 		goto init_failed;
 
@@ -1594,7 +1594,7 @@ BOOL vgids_process_apdu(vgidsContext* context, const BYTE* data, DWORD dataSize,
 	/* Check params */
 	if (!context || !data || !response || !responseSize)
 	{
-		WLog_ERR(TAG, "Invalid NULL pointer passed");
+		WLog_ERR(TAG, "Invalid nullptr pointer passed");
 		return FALSE;
 	}
 
@@ -1627,7 +1627,7 @@ BOOL vgids_process_apdu(vgidsContext* context, const BYTE* data, DWORD dataSize,
 	}
 
 	/* return command not allowed */
-	return vgids_create_response(ISO_STATUS_COMMANDNOTALLOWED, NULL, 0, response, responseSize);
+	return vgids_create_response(ISO_STATUS_COMMANDNOTALLOWED, nullptr, 0, response, responseSize);
 }
 
 void vgids_free(vgidsContext* context)

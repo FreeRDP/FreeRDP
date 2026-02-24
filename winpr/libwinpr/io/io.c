@@ -87,7 +87,7 @@ HANDLE CreateIoCompletionPort(WINPR_ATTR_UNUSED HANDLE FileHandle,
 {
 	WLog_ERR(TAG, "Not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return NULL;
+	return nullptr;
 }
 
 BOOL GetQueuedCompletionStatus(WINPR_ATTR_UNUSED HANDLE CompletionPort,
@@ -176,7 +176,7 @@ HANDLE CreateIoCompletionPort(HANDLE FileHandle, HANDLE ExistingCompletionPort,
 {
 	WLog_ERR(TAG, "Not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return NULL;
+	return nullptr;
 }
 
 BOOL GetQueuedCompletionStatus(HANDLE CompletionPort, LPDWORD lpNumberOfBytesTransferred,
@@ -207,7 +207,7 @@ BOOL PostQueuedCompletionStatus(HANDLE CompletionPort, DWORD dwNumberOfBytesTran
 
 BOOL CancelIo(HANDLE hFile)
 {
-	return CancelIoEx(hFile, NULL);
+	return CancelIoEx(hFile, nullptr);
 }
 
 BOOL CancelSynchronousIo(HANDLE hThread)

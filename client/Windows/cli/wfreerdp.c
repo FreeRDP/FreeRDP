@@ -49,11 +49,11 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	rdpContext* context;
 	rdpSettings* settings;
 	LPWSTR cmd;
-	char** argv = NULL;
+	char** argv = nullptr;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = WINPR_C_ARRAY_INIT;
 	int ret = 1;
 	int argc = 0;
-	LPWSTR* args = NULL;
+	LPWSTR* args = nullptr;
 
 	WINPR_UNUSED(hInstance);
 	WINPR_UNUSED(hPrevInstance);
@@ -83,7 +83,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	for (int i = 0; i < argc; i++)
 	{
-		int size = WideCharToMultiByte(CP_UTF8, 0, args[i], -1, NULL, 0, NULL, NULL);
+		int size = WideCharToMultiByte(CP_UTF8, 0, args[i], -1, nullptr, 0, nullptr, nullptr);
 		if (size <= 0)
 			goto out;
 		argv[i] = calloc((size_t)size, sizeof(char));
@@ -91,7 +91,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (!argv[i])
 			goto out;
 
-		if (WideCharToMultiByte(CP_UTF8, 0, args[i], -1, argv[i], size, NULL, NULL) != size)
+		if (WideCharToMultiByte(CP_UTF8, 0, args[i], -1, argv[i], size, nullptr, nullptr) != size)
 			goto out;
 	}
 
@@ -147,6 +147,6 @@ out:
 #ifdef WITH_WIN_CONSOLE
 int main()
 {
-	return WinMain(NULL, NULL, NULL, 0);
+	return WinMain(nullptr, nullptr, nullptr, 0);
 }
 #endif

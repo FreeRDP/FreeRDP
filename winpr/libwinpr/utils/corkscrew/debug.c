@@ -96,7 +96,7 @@ typedef struct
 } t_corkscrew;
 
 static pthread_once_t initialized = PTHREAD_ONCE_INIT;
-static t_corkscrew* fkt = NULL;
+static t_corkscrew* fkt = nullptr;
 
 void load_library(void)
 {
@@ -174,7 +174,7 @@ fail:
 	if (lib.hdl)
 		dlclose(lib.hdl);
 
-	fkt = NULL;
+	fkt = nullptr;
 }
 }
 
@@ -193,14 +193,14 @@ void* winpr_corkscrew_backtrace(DWORD size)
 	t_corkscrew_data* data = calloc(1, sizeof(t_corkscrew_data));
 
 	if (!data)
-		return NULL;
+		return nullptr;
 
 	data->buffer = calloc(size, sizeof(backtrace_frame_t));
 
 	if (!data->buffer)
 	{
 		free(data);
-		return NULL;
+		return nullptr;
 	}
 
 	pthread_once(&initialized, load_library);
@@ -216,14 +216,14 @@ char** winpr_corkscrew_backtrace_symbols(void* buffer, size_t* used)
 		*used = 0;
 
 	if (!data)
-		return NULL;
+		return nullptr;
 
 	pthread_once(&initialized, load_library);
 
 	if (!fkt)
 	{
 		LOGF(support_msg);
-		return NULL;
+		return nullptr;
 	}
 	else
 	{
@@ -237,7 +237,7 @@ char** winpr_corkscrew_backtrace_symbols(void* buffer, size_t* used)
 		{
 			free(vlines);
 			free(symbols);
-			return NULL;
+			return nullptr;
 		}
 
 		/* Set the pointers in the allocated buffer's initial array section */

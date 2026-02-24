@@ -292,7 +292,7 @@ out:
 
 void* Queue_Dequeue(wQueue* queue)
 {
-	void* obj = NULL;
+	void* obj = nullptr;
 
 	Queue_Lock(queue);
 
@@ -318,7 +318,7 @@ void* Queue_Dequeue(wQueue* queue)
 
 void* Queue_Peek(wQueue* queue)
 {
-	void* obj = NULL;
+	void* obj = nullptr;
 	Queue_Lock(queue);
 
 	if (queue->size > 0)
@@ -331,7 +331,7 @@ void* Queue_Peek(wQueue* queue)
 
 void Queue_Discard(wQueue* queue)
 {
-	void* obj = NULL;
+	void* obj = nullptr;
 
 	Queue_Lock(queue);
 	obj = Queue_Dequeue(queue);
@@ -355,7 +355,7 @@ wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor)
 	wQueue* queue = (wQueue*)calloc(1, sizeof(wQueue));
 
 	if (!queue)
-		return NULL;
+		return nullptr;
 
 	queue->synchronized = synchronized;
 
@@ -371,7 +371,7 @@ wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor)
 	if (!Queue_EnsureCapacity(queue, (size_t)capacity))
 		goto fail;
 
-	queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	queue->event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
 	if (!queue->event)
 		goto fail;
@@ -386,7 +386,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	Queue_Free(queue);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void Queue_Free(wQueue* queue)

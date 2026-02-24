@@ -141,18 +141,19 @@ typedef struct
 	SecBuffer mic;
 } NegToken;
 
-static const NegToken empty_neg_token = { NOSTATE,        FALSE,          { 0, NULL },
-	                                      { 0, 0, NULL }, { 0, 0, NULL }, { 0, 0, NULL } };
+static const NegToken empty_neg_token = { NOSTATE,           FALSE,
+	                                      { 0, nullptr },    { 0, 0, nullptr },
+	                                      { 0, 0, nullptr }, { 0, 0, nullptr } };
 
 static NEGOTIATE_CONTEXT* negotiate_ContextNew(NEGOTIATE_CONTEXT* init_context)
 {
-	NEGOTIATE_CONTEXT* context = NULL;
+	NEGOTIATE_CONTEXT* context = nullptr;
 
 	WINPR_ASSERT(init_context);
 
 	context = calloc(1, sizeof(NEGOTIATE_CONTEXT));
 	if (!context)
-		return NULL;
+		return nullptr;
 
 	if (init_context->spnego)
 	{
@@ -160,7 +161,7 @@ static NEGOTIATE_CONTEXT* negotiate_ContextNew(NEGOTIATE_CONTEXT* init_context)
 		if (!init_context->mechTypes.pvBuffer)
 		{
 			free(context);
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -213,7 +214,7 @@ static const Mech* negotiate_GetMechByOID(const WinPrAsn1_OID* oid)
 		if (sspi_gss_oid_compare(&testOid, MechTable[i].oid))
 			return &MechTable[i];
 	}
-	return NULL;
+	return nullptr;
 }
 
 static PSecHandle negotiate_FindCredential(MechCred* creds, const Mech* mech)
@@ -221,7 +222,7 @@ static PSecHandle negotiate_FindCredential(MechCred* creds, const Mech* mech)
 	WINPR_ASSERT(creds);
 
 	if (!mech)
-		return NULL;
+		return nullptr;
 
 	for (size_t i = 0; i < MECH_COUNT; i++)
 	{
@@ -231,11 +232,11 @@ static PSecHandle negotiate_FindCredential(MechCred* creds, const Mech* mech)
 		{
 			if (cred->valid)
 				return &cred->cred;
-			return NULL;
+			return nullptr;
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 static BOOL negotiate_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
@@ -243,7 +244,7 @@ static BOOL negotiate_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
 	DWORD dwValue = 0;
 	DWORD dwType = 0;
 	DWORD dwSize = sizeof(dwValue);
-	LONG rc = RegQueryValueExA(hKey, subkey, NULL, &dwType, (BYTE*)&dwValue, &dwSize);
+	LONG rc = RegQueryValueExA(hKey, subkey, nullptr, &dwType, (BYTE*)&dwValue, &dwSize);
 
 	if (rc != ERROR_SUCCESS)
 		return FALSE;
@@ -258,8 +259,8 @@ static BOOL negotiate_get_config_from_auth_package_list(void* pAuthData, BOOL* k
                                                         BOOL* u2u)
 {
 	BOOL rc = FALSE;
-	char* tok_ctx = NULL;
-	char* PackageList = NULL;
+	char* tok_ctx = nullptr;
+	char* PackageList = nullptr;
 
 	if (!sspi_CopyAuthPackageListA((const SEC_WINNT_AUTH_IDENTITY_INFO*)pAuthData, &PackageList))
 		return FALSE;
@@ -306,7 +307,7 @@ static BOOL negotiate_get_config_from_auth_package_list(void* pAuthData, BOOL* k
 			WLog_WARN(TAG, "Unknown authentication package name: %s, ignoring", PackageName);
 		}
 
-		tok_ptr = strtok_s(NULL, ",", &tok_ctx);
+		tok_ptr = strtok_s(nullptr, ",", &tok_ctx);
 	}
 
 	rc = TRUE;
@@ -317,7 +318,7 @@ fail:
 
 static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BOOL* u2u)
 {
-	HKEY hKey = NULL;
+	HKEY hKey = nullptr;
 
 	WINPR_ASSERT(kerberos);
 	WINPR_ASSERT(ntlm);
@@ -377,7 +378,7 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 	WINPR_ASSERT(token);
 
 	BOOL ret = FALSE;
-	WinPrAsn1Encoder* enc = NULL;
+	WinPrAsn1Encoder* enc = nullptr;
 	WinPrAsn1_MemoryChunk mechTypes = { token->mechTypes.cbBuffer, token->mechTypes.pvBuffer };
 	WinPrAsn1_OctetString mechToken = { token->mechToken.cbBuffer, token->mechToken.pvBuffer };
 	WinPrAsn1_OctetString mechListMic = { token->mic.cbBuffer, token->mic.pvBuffer };
@@ -636,7 +637,7 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 	{
 		mic_buffers[1] = input_token->mic;
 
-		status = table->VerifySignature(&context->sub_context, &mic_buffer_desc, 0, 0);
+		status = table->VerifySignature(&context->sub_context, &mic_buffer_desc, 0, nullptr);
 		if (status != SEC_E_OK)
 			return status;
 
@@ -682,24 +683,24 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	NEGOTIATE_CONTEXT* context = NULL;
+	NEGOTIATE_CONTEXT* context = nullptr;
 	NEGOTIATE_CONTEXT init_context = NEGOTIATE_CONTEXT_init();
-	MechCred* creds = NULL;
-	PCtxtHandle sub_context = NULL;
-	PCredHandle sub_cred = NULL;
+	MechCred* creds = nullptr;
+	PCtxtHandle sub_context = nullptr;
+	PCredHandle sub_cred = nullptr;
 	NegToken input_token = empty_neg_token;
 	NegToken output_token = empty_neg_token;
-	PSecBuffer input_buffer = NULL;
-	PSecBuffer output_buffer = NULL;
-	PSecBuffer bindings_buffer = NULL;
+	PSecBuffer input_buffer = nullptr;
+	PSecBuffer output_buffer = nullptr;
+	PSecBuffer bindings_buffer = nullptr;
 	SecBuffer mech_input_buffers[2] = WINPR_C_ARRAY_INIT;
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 2, mech_input_buffers };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	SECURITY_STATUS sub_status = SEC_E_INTERNAL_ERROR;
-	WinPrAsn1Encoder* enc = NULL;
+	WinPrAsn1Encoder* enc = nullptr;
 	wStream s;
-	const Mech* mech = NULL;
+	const Mech* mech = nullptr;
 
 	if (!phCredential || !SecIsValidHandle(phCredential))
 		return SEC_E_NO_CREDENTIALS;
@@ -756,7 +757,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 
 				WINPR_ASSERT(pkg->table_w->InitializeSecurityContextW);
 				sub_status = pkg->table_w->InitializeSecurityContextW(
-				    &cred->cred, NULL, pszTargetName, fContextReq | cred->mech->flags, Reserved1,
+				    &cred->cred, nullptr, pszTargetName, fContextReq | cred->mech->flags, Reserved1,
 				    TargetDataRep, &mech_input, Reserved2, &init_context.sub_context, &mech_output,
 				    pfContextAttr, ptsExpiry);
 
@@ -863,7 +864,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 
 			/* Clean up the optimistic mech */
 			context->mech->pkg->table_w->DeleteSecurityContext(&context->sub_context);
-			sub_context = NULL;
+			sub_context = nullptr;
 
 			context->mech = mech;
 			context->mic = TRUE;
@@ -911,7 +912,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 
 			status = context->mech->pkg->table_w->InitializeSecurityContextW(
 			    sub_cred, sub_context, pszTargetName, fContextReq | context->mech->flags, Reserved1,
-			    TargetDataRep, input_token.mechToken.cbBuffer ? &mech_input : NULL, Reserved2,
+			    TargetDataRep, input_token.mechToken.cbBuffer ? &mech_input : nullptr, Reserved2,
 			    &context->sub_context, &mech_output, pfContextAttr, ptsExpiry);
 
 			if (IsSecurityStatusError(status))
@@ -972,11 +973,11 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status = 0;
-	SEC_WCHAR* pszTargetNameW = NULL;
+	SEC_WCHAR* pszTargetNameW = nullptr;
 
 	if (pszTargetName)
 	{
-		pszTargetNameW = ConvertUtf8ToWCharAlloc(pszTargetName, NULL);
+		pszTargetNameW = ConvertUtf8ToWCharAlloc(pszTargetName, nullptr);
 		if (!pszTargetNameW)
 			return SEC_E_INTERNAL_ERROR;
 	}
@@ -1009,15 +1010,15 @@ static const Mech* guessMech(PSecBuffer input_buffer, BOOL* spNego, WinPrAsn1_OI
 	                         input_buffer->cbBuffer);
 
 	if (!WinPrAsn1DecReadApp(&decoder, &tag, &appDecoder) || tag != 0)
-		return NULL;
+		return nullptr;
 
 	if (!WinPrAsn1DecReadOID(&appDecoder, oid, FALSE))
-		return NULL;
+		return nullptr;
 
 	if (sspi_gss_oid_compare(oid, &spnego_OID))
 	{
 		*spNego = TRUE;
-		return NULL;
+		return nullptr;
 	}
 
 	return negotiate_GetMechByOID(oid);
@@ -1028,14 +1029,14 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
     ULONG TargetDataRep, PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr,
     PTimeStamp ptsTimeStamp)
 {
-	NEGOTIATE_CONTEXT* context = NULL;
+	NEGOTIATE_CONTEXT* context = nullptr;
 	NEGOTIATE_CONTEXT init_context = NEGOTIATE_CONTEXT_init();
-	MechCred* creds = NULL;
-	PCredHandle sub_cred = NULL;
+	MechCred* creds = nullptr;
+	PCredHandle sub_cred = nullptr;
 	NegToken input_token = empty_neg_token;
 	NegToken output_token = empty_neg_token;
-	PSecBuffer input_buffer = NULL;
-	PSecBuffer output_buffer = NULL;
+	PSecBuffer input_buffer = nullptr;
+	PSecBuffer output_buffer = nullptr;
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
@@ -1043,7 +1044,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
 	WinPrAsn1_tagId tag = 0;
 	WinPrAsn1_OID oid = WINPR_C_ARRAY_INIT;
-	const Mech* first_mech = NULL;
+	const Mech* first_mech = nullptr;
 
 	if (!phCredential || !SecIsValidHandle(phCredential))
 		return SEC_E_NO_CREDENTIALS;
@@ -1115,7 +1116,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			sub_cred = negotiate_FindCredential(creds, init_context.mech);
 
 			status = init_context.mech->pkg->table->AcceptSecurityContext(
-			    sub_cred, NULL, init_context.spnego ? &mech_input : pInput, fContextReq,
+			    sub_cred, nullptr, init_context.spnego ? &mech_input : pInput, fContextReq,
 			    TargetDataRep, &init_context.sub_context,
 			    init_context.spnego ? &mech_output : pOutput, pfContextAttr, ptsTimeStamp);
 		}
@@ -1127,7 +1128,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 
 			init_context.mic = TRUE;
 			first_mech = init_context.mech;
-			init_context.mech = NULL;
+			init_context.mech = nullptr;
 			output_token.mechToken.cbBuffer = 0;
 		}
 
@@ -1142,10 +1143,10 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 
 			/* Microsoft may send two versions of the kerberos OID */
 			if (init_context.mech == first_mech)
-				init_context.mech = NULL;
+				init_context.mech = nullptr;
 
 			if (init_context.mech && !negotiate_FindCredential(creds, init_context.mech))
-				init_context.mech = NULL;
+				init_context.mech = nullptr;
 		}
 
 		if (!init_context.mech)
@@ -1263,7 +1264,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 static SECURITY_STATUS SEC_ENTRY negotiate_CompleteAuthToken(PCtxtHandle phContext,
                                                              PSecBufferDesc pToken)
 {
-	NEGOTIATE_CONTEXT* context = NULL;
+	NEGOTIATE_CONTEXT* context = nullptr;
 	SECURITY_STATUS status = SEC_E_OK;
 	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -1281,10 +1282,10 @@ static SECURITY_STATUS SEC_ENTRY negotiate_CompleteAuthToken(PCtxtHandle phConte
 
 static SECURITY_STATUS SEC_ENTRY negotiate_DeleteSecurityContext(PCtxtHandle phContext)
 {
-	NEGOTIATE_CONTEXT* context = NULL;
+	NEGOTIATE_CONTEXT* context = nullptr;
 	SECURITY_STATUS status = SEC_E_OK;
 	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
-	const SecPkg* pkg = NULL;
+	const SecPkg* pkg = nullptr;
 
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
@@ -1391,7 +1392,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle
                                                                      ULONG ulAttribute,
                                                                      void* pBuffer, ULONG cbBuffer)
 {
-	MechCred* creds = NULL;
+	MechCred* creds = nullptr;
 	BOOL success = FALSE;
 	SECURITY_STATUS secStatus = 0;
 
@@ -1425,7 +1426,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle
                                                                      ULONG ulAttribute,
                                                                      void* pBuffer, ULONG cbBuffer)
 {
-	MechCred* creds = NULL;
+	MechCred* creds = nullptr;
 	BOOL success = FALSE;
 	SECURITY_STATUS secStatus = 0;
 
@@ -1676,30 +1677,30 @@ static SECURITY_STATUS SEC_ENTRY negotiate_VerifySignature(PCtxtHandle phContext
 
 const SecurityFunctionTableA NEGOTIATE_SecurityFunctionTableA = {
 	3,                                     /* dwVersion */
-	NULL,                                  /* EnumerateSecurityPackages */
+	nullptr,                               /* EnumerateSecurityPackages */
 	negotiate_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
 	negotiate_AcquireCredentialsHandleA,   /* AcquireCredentialsHandle */
 	negotiate_FreeCredentialsHandle,       /* FreeCredentialsHandle */
-	NULL,                                  /* Reserved2 */
+	nullptr,                               /* Reserved2 */
 	negotiate_InitializeSecurityContextA,  /* InitializeSecurityContext */
 	negotiate_AcceptSecurityContext,       /* AcceptSecurityContext */
 	negotiate_CompleteAuthToken,           /* CompleteAuthToken */
 	negotiate_DeleteSecurityContext,       /* DeleteSecurityContext */
-	NULL,                                  /* ApplyControlToken */
+	nullptr,                               /* ApplyControlToken */
 	negotiate_QueryContextAttributesA,     /* QueryContextAttributes */
 	negotiate_ImpersonateSecurityContext,  /* ImpersonateSecurityContext */
 	negotiate_RevertSecurityContext,       /* RevertSecurityContext */
 	negotiate_MakeSignature,               /* MakeSignature */
 	negotiate_VerifySignature,             /* VerifySignature */
-	NULL,                                  /* FreeContextBuffer */
-	NULL,                                  /* QuerySecurityPackageInfo */
-	NULL,                                  /* Reserved3 */
-	NULL,                                  /* Reserved4 */
-	NULL,                                  /* ExportSecurityContext */
-	NULL,                                  /* ImportSecurityContext */
-	NULL,                                  /* AddCredentials */
-	NULL,                                  /* Reserved8 */
-	NULL,                                  /* QuerySecurityContextToken */
+	nullptr,                               /* FreeContextBuffer */
+	nullptr,                               /* QuerySecurityPackageInfo */
+	nullptr,                               /* Reserved3 */
+	nullptr,                               /* Reserved4 */
+	nullptr,                               /* ExportSecurityContext */
+	nullptr,                               /* ImportSecurityContext */
+	nullptr,                               /* AddCredentials */
+	nullptr,                               /* Reserved8 */
+	nullptr,                               /* QuerySecurityContextToken */
 	negotiate_EncryptMessage,              /* EncryptMessage */
 	negotiate_DecryptMessage,              /* DecryptMessage */
 	negotiate_SetContextAttributesA,       /* SetContextAttributes */
@@ -1708,30 +1709,30 @@ const SecurityFunctionTableA NEGOTIATE_SecurityFunctionTableA = {
 
 const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW = {
 	3,                                     /* dwVersion */
-	NULL,                                  /* EnumerateSecurityPackages */
+	nullptr,                               /* EnumerateSecurityPackages */
 	negotiate_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
 	negotiate_AcquireCredentialsHandleW,   /* AcquireCredentialsHandle */
 	negotiate_FreeCredentialsHandle,       /* FreeCredentialsHandle */
-	NULL,                                  /* Reserved2 */
+	nullptr,                               /* Reserved2 */
 	negotiate_InitializeSecurityContextW,  /* InitializeSecurityContext */
 	negotiate_AcceptSecurityContext,       /* AcceptSecurityContext */
 	negotiate_CompleteAuthToken,           /* CompleteAuthToken */
 	negotiate_DeleteSecurityContext,       /* DeleteSecurityContext */
-	NULL,                                  /* ApplyControlToken */
+	nullptr,                               /* ApplyControlToken */
 	negotiate_QueryContextAttributesW,     /* QueryContextAttributes */
 	negotiate_ImpersonateSecurityContext,  /* ImpersonateSecurityContext */
 	negotiate_RevertSecurityContext,       /* RevertSecurityContext */
 	negotiate_MakeSignature,               /* MakeSignature */
 	negotiate_VerifySignature,             /* VerifySignature */
-	NULL,                                  /* FreeContextBuffer */
-	NULL,                                  /* QuerySecurityPackageInfo */
-	NULL,                                  /* Reserved3 */
-	NULL,                                  /* Reserved4 */
-	NULL,                                  /* ExportSecurityContext */
-	NULL,                                  /* ImportSecurityContext */
-	NULL,                                  /* AddCredentials */
-	NULL,                                  /* Reserved8 */
-	NULL,                                  /* QuerySecurityContextToken */
+	nullptr,                               /* FreeContextBuffer */
+	nullptr,                               /* QuerySecurityPackageInfo */
+	nullptr,                               /* Reserved3 */
+	nullptr,                               /* Reserved4 */
+	nullptr,                               /* ExportSecurityContext */
+	nullptr,                               /* ImportSecurityContext */
+	nullptr,                               /* AddCredentials */
+	nullptr,                               /* Reserved8 */
+	nullptr,                               /* QuerySecurityContextToken */
 	negotiate_EncryptMessage,              /* EncryptMessage */
 	negotiate_DecryptMessage,              /* DecryptMessage */
 	negotiate_SetContextAttributesW,       /* SetContextAttributes */

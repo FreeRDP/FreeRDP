@@ -98,10 +98,10 @@ extern "C"
 	 *
 	 * \param instance A pointer to the instance to work on
 	 * \param username A pointer to the username string. On input the current username, on output
-	 * the username that should be used. Must not be NULL. \param password A pointer to the password
-	 * string. On input the current password, on output the password that sohould be used. Must not
-	 * be NULL. \param domain A pointer to the domain string. On input the current domain, on output
-	 * the domain that sohould be used. Must not be NULL.
+	 * the username that should be used. Must not be nullptr. \param password A pointer to the
+	 * password string. On input the current password, on output the password that sohould be used.
+	 * Must not be nullptr. \param domain A pointer to the domain string. On input the current
+	 * domain, on output the domain that sohould be used. Must not be nullptr.
 	 *
 	 * \return \b FALSE no valid credentials supplied, continue without \b TRUE valid credentials
 	 * should be available.
@@ -117,11 +117,11 @@ extern "C"
 	 *
 	 * @param instance A pointer to the instance to work on
 	 * @param username A pointer to the username string. On input the current username, on output
-	 *          the username that should be used instead. Must not be NULL.
+	 *          the username that should be used instead. Must not be nullptr.
 	 * @param password A pointer to the password string. On input the current password, on output
-	 *          the password that sohould be used. Must not be NULL.
+	 *          the password that sohould be used. Must not be nullptr.
 	 * @param domain A pointer to the domain string. On input the current domain, on output the
-	 *          domain that sohould be used. Must not be NULL.
+	 *          domain that sohould be used. Must not be nullptr.
 	 * @param reason The reason the callback was called. (e.g. NLA, TLS, RDP, GATEWAY, ...)
 	 *
 	 * @return \b FALSE to abort the connection, \b TRUE otherwise.
@@ -144,7 +144,7 @@ extern "C"
 	 *  @param cert_list A list of smartcard certificates
 	 *  @param count The number of smartcard certificates in the list
 	 *  @param choice A pointer to an integer that will represent the selected certificate index.
-	 * Must not be \b NULL
+	 * Must not be \b nullptr
 	 *  @param gateway A indicator if the authentication is for a session (\b FALSE) or a gateway
 	 * (\b TRUE)
 	 *
@@ -481,13 +481,13 @@ owned by rdpRdp */
 		    ContextNew; /**< (offset 33)
 		             Callback for context allocation
 		             Can be set before calling freerdp_context_new() to have it executed after
-		             allocation and initialization. Must be set to NULL if not needed. */
+		             allocation and initialization. Must be set to nullptr if not needed. */
 
 		ALIGN64 pContextFree
 		    ContextFree;          /**< (offset 34)
 		                       Callback for context deallocation
 		                       Can be set before calling freerdp_context_free() to have it executed before
-		                       deallocation.		  Must be set to NULL if not needed. */
+		                       deallocation.		  Must be set to nullptr if not needed. */
 		UINT64 paddingC[47 - 35]; /* 35 */
 
 		ALIGN64 UINT ConnectionCallbackState; /* 47 */
@@ -496,13 +496,13 @@ owned by rdpRdp */
 		    PreConnect; /**< (offset 48)
 		             Callback for pre-connect operations.
 		             Can be set before calling freerdp_connect() to have it executed before the
-		             actual connection happens. Must be set to NULL if not needed. */
+		             actual connection happens. Must be set to nullptr if not needed. */
 
 		WINPR_ATTR_NODISCARD ALIGN64 pConnectCallback
 		    PostConnect; /**< (offset 49)
 		              Callback for post-connect operations.
 		              Can be set before calling freerdp_connect() to have it executed after the
-		              actual connection has succeeded. Must be set to NULL if not needed. */
+		              actual connection has succeeded. Must be set to nullptr if not needed. */
 
 		WINPR_ATTR_NODISCARD ALIGN64 pAuthenticate Authenticate; /**< (offset 50)
 		                                 Callback for authentication.
@@ -549,7 +549,7 @@ owned by rdpRdp */
 		                                               Can be set after
 		             rdp_client_disconnect_and_clear and applying redirection settings but before
 		             rdp_client_connect() to have it executed after the actual connection has
-		             succeeded. Must be set to NULL if not needed. */
+		             succeeded. Must be set to nullptr if not needed. */
 		WINPR_ATTR_NODISCARD ALIGN64 pConnectCallback
 		    LoadChannels; /**< (offset 59)
 		                   * callback for loading channel configuration. Might be called multiple
@@ -572,7 +572,7 @@ owned by rdpRdp */
 		WINPR_ATTR_NODISCARD ALIGN64 pReceiveChannelData
 		    ReceiveChannelData; /* (offset 65)
 		                   Callback for receiving data from a channel.
-		                   This is called by freerdp_channel_process() (if not NULL).
+		                   This is called by freerdp_channel_process() (if not nullptr).
 		                   Clients will typically use a function that calls freerdp_channels_data()
 		                   to perform the needed tasks. */
 
@@ -911,7 +911,7 @@ owned by rdpRdp */
 	 * is required. If a client modifies settings during runtime after pre-connect call this
 	 * function or the credentials will be lost on any reconnect, redirect, ...
 	 *
-	 *  \param context The RDP context to use, must not be \b NULL
+	 *  \param context The RDP context to use, must not be \b nullptr
 	 *
 	 *  \return \b TRUE if successful, \b FALSE if settings could not be applied (wrong session
 	 * state, ...)
@@ -922,8 +922,8 @@ owned by rdpRdp */
 
 	/** @brief set a new function to be called when an access token is requested.
 	 *
-	 * @param context The rdp context to set the function for. Must not be \b NULL
-	 * @param GetCommonAccessToken The function pointer to set, \b NULL to disable
+	 * @param context The rdp context to set the function for. Must not be \b nullptr
+	 * @param GetCommonAccessToken The function pointer to set, \b nullptr to disable
 	 *
 	 * @return \b TRUE for success, \b FALSE otherwise
 	 * @since version 3.16.0
@@ -934,8 +934,8 @@ owned by rdpRdp */
 
 	/** @brief get the current function pointer set as GetCommonAccessToken
 	 *
-	 *  @param context The rdp context to set the function for. Must not be \b NULL
-	 *  @return The current function pointer set or \b NULL
+	 *  @param context The rdp context to set the function for. Must not be \b nullptr
+	 *  @return The current function pointer set or \b nullptr
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_NODISCARD

@@ -348,7 +348,7 @@ NSString *TSXGetPrimaryMACAddress(NSString *sep)
 		return macaddress;
 	}
 
-	for (struct ifaddrs *cursor = addrs; cursor != NULL; cursor = cursor->ifa_next)
+	for (struct ifaddrs *cursor = addrs; cursor != nullptr; cursor = cursor->ifa_next)
 	{
 		if (strcmp(cursor->ifa_name, "en0"))
 			continue;
@@ -388,9 +388,9 @@ BOOL TSXDeviceHasJailBreak()
 NSString *TSXGetPlatform()
 {
 	size_t size;
-	sysctlbyname("hw.machine", NULL, &size, NULL, 0);
+	sysctlbyname("hw.machine", nullptr, &size, nullptr, 0);
 	char *machine = malloc(size);
-	sysctlbyname("hw.machine", machine, &size, NULL, 0);
+	sysctlbyname("hw.machine", machine, &size, nullptr, 0);
 	NSString *platform = [NSString stringWithCString:machine encoding:NSASCIIStringEncoding];
 	free(machine);
 	return platform;

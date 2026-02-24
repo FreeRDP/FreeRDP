@@ -66,7 +66,7 @@ void tf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnect
 	{
 		CliprdrClientContext* clip = (CliprdrClientContext*)e->pInterface;
 		WINPR_ASSERT(clip);
-		clip->custom = NULL;
+		clip->custom = nullptr;
 	}
 	else
 		freerdp_client_OnChannelDisconnectedEventHandler(&tf->common, e);

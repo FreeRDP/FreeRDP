@@ -4624,7 +4624,7 @@ const char* NtStatus2Tag(NTSTATUS ntstatus)
 	const struct ntstatus_map* found =
 	    bsearch(&ntstatus, ntstatusmap, count, base, ntstatus_compare);
 	if (!found)
-		return NULL;
+		return nullptr;
 	return found->tag;
 #else
 	for (size_t x = 0; x < ARRAYSIZE(ntstatusmap); x++)
@@ -4634,7 +4634,7 @@ const char* NtStatus2Tag(NTSTATUS ntstatus)
 			return cur->tag;
 	}
 
-	return NULL;
+	return nullptr;
 #endif
 }
 
@@ -4647,7 +4647,7 @@ const char* Win32ErrorCode2Tag(UINT16 code)
 	const struct ntstatus_map* found =
 	    bsearch(&ntstatus, win32errmap, count, base, ntstatus_compare);
 	if (!found)
-		return NULL;
+		return nullptr;
 	return found->tag;
 #else
 	for (size_t x = 0; x < ARRAYSIZE(win32errmap); x++)
@@ -4657,6 +4657,6 @@ const char* Win32ErrorCode2Tag(UINT16 code)
 			return cur->tag;
 	}
 
-	return NULL;
+	return nullptr;
 #endif
 }

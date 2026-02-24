@@ -41,7 +41,7 @@ static BYTE* parseHexBlock(const char* str, size_t* plen)
 				{
 					WLog_ERR("", "error parsing hex block, unpaired char");
 					free(ret);
-					return NULL;
+					return nullptr;
 				}
 				break;
 			case '0':
@@ -104,7 +104,7 @@ static BYTE* parseHexBlock(const char* str, size_t* plen)
 			default:
 				WLog_ERR("", "invalid char in hex block");
 				free(ret);
-				return NULL;
+				return nullptr;
 		}
 	}
 
@@ -121,7 +121,7 @@ static int TestNdrEarWrite(int argc, char* argv[])
 	BYTE buffer[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 	KERB_ASN1_DATA asn1 = { 7, { 16 }, buffer };
 
-	wStream* s = Stream_New(NULL, 100);
+	wStream* s = Stream_New(nullptr, 100);
 	if (!s)
 		return -1;
 
@@ -129,7 +129,7 @@ static int TestNdrEarWrite(int argc, char* argv[])
 	if (!context)
 		goto fail;
 
-	if (!ndr_write_KERB_ASN1_DATA(context, s, NULL, &asn1))
+	if (!ndr_write_KERB_ASN1_DATA(context, s, nullptr, &asn1))
 		goto fail;
 	if (!ndr_treat_deferred_write(context, s))
 		goto fail;
@@ -156,7 +156,7 @@ static BOOL run_payload(NdrContext* context, const BYTE* payload4, size_t sizeof
 	wStream* s = Stream_StaticInit(&staticS, payload4, sizeofPayload4);
 	if (!ndr_skip_bytes(context, s, 4)) /* skip union id */
 		return FALSE;
-	if (!ndr_read_CreateApReqAuthenticatorReq(context, s, NULL, &createApReqAuthenticatorReq))
+	if (!ndr_read_CreateApReqAuthenticatorReq(context, s, nullptr, &createApReqAuthenticatorReq))
 		return FALSE;
 	if (!ndr_treat_deferred_read(context, s))
 		return FALSE;
@@ -181,7 +181,7 @@ static BOOL run_payload(NdrContext* context, const BYTE* payload4, size_t sizeof
 	if (createApReqAuthenticatorReq.SkewTime->QuadPart != 0)
 		return FALSE;
 
-	ndr_destroy_CreateApReqAuthenticatorReq(context, NULL, &createApReqAuthenticatorReq);
+	ndr_destroy_CreateApReqAuthenticatorReq(context, nullptr, &createApReqAuthenticatorReq);
 	ndr_context_reset(context);
 	return TRUE;
 }
@@ -215,11 +215,11 @@ static int TestNdrEarRead(int argc, char* argv[])
 		wStream* s = Stream_StaticInit(&staticS, payload, sizeof(payload));
 
 		KERB_ASN1_DATA asn1 = WINPR_C_ARRAY_INIT;
-		if (!ndr_read_KERB_ASN1_DATA(context, s, NULL, &asn1) ||
+		if (!ndr_read_KERB_ASN1_DATA(context, s, nullptr, &asn1) ||
 		    !ndr_treat_deferred_read(context, s) || asn1.Asn1BufferHints.count != 2 ||
 		    *asn1.Asn1Buffer != 0x30)
 			goto out;
-		ndr_destroy_KERB_ASN1_DATA(context, NULL, &asn1);
+		ndr_destroy_KERB_ASN1_DATA(context, nullptr, &asn1);
 		ndr_context_reset(context);
 
 		/* ====================================================================== */
@@ -246,10 +246,10 @@ static int TestNdrEarRead(int argc, char* argv[])
 		wStream staticS = WINPR_C_ARRAY_INIT;
 		wStream* s = Stream_StaticInit(&staticS, payload2, sizeof(payload2));
 		RPC_UNICODE_STRING unicode = WINPR_C_ARRAY_INIT;
-		if (!ndr_read_RPC_UNICODE_STRING(context, s, NULL, &unicode) ||
+		if (!ndr_read_RPC_UNICODE_STRING(context, s, nullptr, &unicode) ||
 		    !ndr_treat_deferred_read(context, s))
 			goto out;
-		ndr_destroy_RPC_UNICODE_STRING(context, NULL, &unicode);
+		ndr_destroy_RPC_UNICODE_STRING(context, nullptr, &unicode);
 		ndr_context_reset(context);
 	}
 	{
@@ -281,10 +281,10 @@ static int TestNdrEarRead(int argc, char* argv[])
 
 		wStream staticS = WINPR_C_ARRAY_INIT;
 		wStream* s = Stream_StaticInit(&staticS, payload3, sizeof(payload3));
-		if (!ndr_read_KERB_RPC_INTERNAL_NAME(context, s, NULL, &intName) ||
+		if (!ndr_read_KERB_RPC_INTERNAL_NAME(context, s, nullptr, &intName) ||
 		    !ndr_treat_deferred_read(context, s))
 			goto out;
-		ndr_destroy_KERB_RPC_INTERNAL_NAME(context, NULL, &intName);
+		ndr_destroy_KERB_RPC_INTERNAL_NAME(context, nullptr, &intName);
 		ndr_context_reset(context);
 	}
 

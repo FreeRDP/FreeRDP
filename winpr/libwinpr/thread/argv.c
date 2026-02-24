@@ -88,44 +88,44 @@
 
 LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 {
-	const char* p = NULL;
+	const char* p = nullptr;
 	size_t length = 0;
-	const char* pBeg = NULL;
-	const char* pEnd = NULL;
-	char* buffer = NULL;
-	char* pOutput = NULL;
+	const char* pBeg = nullptr;
+	const char* pEnd = nullptr;
+	char* buffer = nullptr;
+	char* pOutput = nullptr;
 	int numArgs = 0;
-	LPSTR* pArgs = NULL;
+	LPSTR* pArgs = nullptr;
 	size_t maxNumArgs = 0;
 	size_t maxBufferSize = 0;
 	size_t cmdLineLength = 0;
-	BOOL* lpEscapedChars = NULL;
-	LPSTR lpEscapedCmdLine = NULL;
+	BOOL* lpEscapedChars = nullptr;
+	LPSTR lpEscapedCmdLine = nullptr;
 
 	if (!lpCmdLine)
-		return NULL;
+		return nullptr;
 
 	if (!pNumArgs)
-		return NULL;
+		return nullptr;
 
-	pArgs = NULL;
-	lpEscapedCmdLine = NULL;
+	pArgs = nullptr;
+	lpEscapedCmdLine = nullptr;
 	cmdLineLength = strlen(lpCmdLine);
 	lpEscapedChars = (BOOL*)calloc(cmdLineLength + 1, sizeof(BOOL));
 
 	if (!lpEscapedChars)
-		return NULL;
+		return nullptr;
 
 	if (strstr(lpCmdLine, "\\\""))
 	{
 		size_t n = 0;
-		const char* pLastEnd = NULL;
+		const char* pLastEnd = nullptr;
 		lpEscapedCmdLine = (char*)calloc(cmdLineLength + 1, sizeof(char));
 
 		if (!lpEscapedCmdLine)
 		{
 			free(lpEscapedChars);
-			return NULL;
+			return nullptr;
 		}
 
 		p = (const char*)lpCmdLine;
@@ -197,7 +197,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	{
 		free(lpEscapedCmdLine);
 		free(lpEscapedChars);
-		return NULL;
+		return nullptr;
 	}
 
 	pArgs = (LPSTR*)buffer;
@@ -279,7 +279,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 LPWSTR* CommandLineToArgvW(WINPR_ATTR_UNUSED LPCWSTR lpCmdLine, WINPR_ATTR_UNUSED int* pNumArgs)
 {
 	WLog_ERR("TODO", "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 #endif

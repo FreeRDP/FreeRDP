@@ -135,12 +135,13 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 				}
 				case XIValuatorClass:
 				{
-					static wLog* log = NULL;
+					static wLog* log = nullptr;
 					if (!log)
 						log = WLog_Get(TAG);
 
 					const XIValuatorClassInfo* t = (const XIValuatorClassInfo*)c_class;
-					char* name = t->label ? Safe_XGetAtomName(log, xfc->display, t->label) : NULL;
+					char* name =
+					    t->label ? Safe_XGetAtomName(log, xfc->display, t->label) : nullptr;
 
 					WLog_Print(log, WLOG_DEBUG,
 					           "%s device (id: %d) valuator %d label %s range %f - %f", dev->name,
@@ -155,7 +156,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 						strncpy(devName, dev->name, ARRAYSIZE(devName) - 1);
 						CharLowerBuffA(devName, ARRAYSIZE(devName));
 
-						if (strstr(devName, "eraser") != NULL)
+						if (strstr(devName, "eraser") != nullptr)
 						{
 							if (freerdp_client_handle_pen(&xfc->common,
 							                              FREERDP_PEN_REGISTER |
@@ -164,8 +165,8 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 							                              dev->deviceid, max_pressure))
 								WLog_DBG(TAG, "registered eraser");
 						}
-						else if (strstr(devName, "stylus") != NULL ||
-						         strstr(devName, "pen") != NULL)
+						else if (strstr(devName, "stylus") != nullptr ||
+						         strstr(devName, "pen") != nullptr)
 						{
 							if (freerdp_client_handle_pen(
 							        &xfc->common, FREERDP_PEN_REGISTER | FREERDP_PEN_HAS_PRESSURE,
@@ -199,7 +200,7 @@ static BOOL register_raw_events(xfContext* xfc, Window window)
 {
 	XIEventMask mask;
 	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = WINPR_C_ARRAY_INIT;
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(xfc);
 
@@ -289,7 +290,7 @@ int xf_input_init(xfContext* xfc, Window window)
 
 static BOOL xf_input_is_duplicate(xfContext* xfc, const XGenericEventCookie* cookie)
 {
-	const XIDeviceEvent* event = NULL;
+	const XIDeviceEvent* event = nullptr;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(cookie);
@@ -305,7 +306,7 @@ static BOOL xf_input_is_duplicate(xfContext* xfc, const XGenericEventCookie* coo
 
 static void xf_input_save_last_event(xfContext* xfc, const XGenericEventCookie* cookie)
 {
-	const XIDeviceEvent* event = NULL;
+	const XIDeviceEvent* event = nullptr;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(cookie);
@@ -894,7 +895,7 @@ int xf_input_init(xfContext* xfc, Window window)
 int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 {
 #ifdef WITH_XI
-	const rdpSettings* settings = NULL;
+	const rdpSettings* settings = nullptr;
 	WINPR_ASSERT(xfc);
 
 	settings = xfc->common.context.settings;

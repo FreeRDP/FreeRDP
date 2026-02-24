@@ -133,8 +133,8 @@ extern "C"
 	 *
 	 *  @since version 3.3.0
 	 *
-	 *  @return \b NULL in case of failure, a pointer to an allocated buffer otherwise. Use \b free
-	 * as deallocator
+	 *  @return \b nullptr in case of failure, a pointer to an allocated buffer otherwise. Use \b
+	 * free as deallocator
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_ATTR_NODISCARD
@@ -163,7 +163,7 @@ extern "C"
 	 *
 	 *  @since version 3.3.0
 	 *
-	 *  @return a extension string if format has one or \b NULL
+	 *  @return a extension string if format has one or \b nullptr
 	 */
 	WINPR_API const char* winpr_image_format_extension(UINT32 format);
 
@@ -173,7 +173,7 @@ extern "C"
 	 *
 	 *  @since version 3.3.0
 	 *
-	 *  @return a mime type string if format has one or \b NULL
+	 *  @return a mime type string if format has one or \b nullptr
 	 */
 	WINPR_API const char* winpr_image_format_mime(UINT32 format);
 

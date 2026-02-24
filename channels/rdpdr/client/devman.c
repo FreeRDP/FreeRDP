@@ -54,17 +54,17 @@ static void devman_device_free(void* obj)
 
 DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 {
-	DEVMAN* devman = NULL;
+	DEVMAN* devman = nullptr;
 
 	if (!rdpdr)
-		return NULL;
+		return nullptr;
 
 	devman = (DEVMAN*)calloc(1, sizeof(DEVMAN));
 
 	if (!devman)
 	{
 		WLog_Print(rdpdr->log, WLOG_INFO, "calloc failed!");
-		return NULL;
+		return nullptr;
 	}
 
 	devman->plugin = (void*)rdpdr;
@@ -75,7 +75,7 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 	{
 		WLog_Print(rdpdr->log, WLOG_INFO, "ListDictionary_New failed!");
 		free(devman);
-		return NULL;
+		return nullptr;
 	}
 
 	ListDictionary_ValueObject(devman->devices)->fnObjectFree = devman_device_free;
@@ -90,7 +90,7 @@ void devman_free(DEVMAN* devman)
 
 void devman_unregister_device(DEVMAN* devman, void* key)
 {
-	DEVICE* device = NULL;
+	DEVICE* device = nullptr;
 
 	if (!devman || !key)
 		return;
@@ -108,7 +108,7 @@ void devman_unregister_device(DEVMAN* devman, void* key)
  */
 static UINT devman_register_device(DEVMAN* devman, DEVICE* device)
 {
-	void* key = NULL;
+	void* key = nullptr;
 
 	if (!devman || !device)
 		return ERROR_INVALID_PARAMETER;
@@ -127,13 +127,13 @@ static UINT devman_register_device(DEVMAN* devman, DEVICE* device)
 
 DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
 {
-	DEVICE* device = NULL;
+	DEVICE* device = nullptr;
 	void* key = (void*)(size_t)id;
 
 	if (!devman)
 	{
-		WLog_ERR(TAG, "device manager=NULL");
-		return NULL;
+		WLog_ERR(TAG, "device manager=nullptr");
+		return nullptr;
 	}
 
 	device = (DEVICE*)ListDictionary_GetItemValue(devman->devices, key);
@@ -144,11 +144,11 @@ DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
 
 DEVICE* devman_get_device_by_type(DEVMAN* devman, UINT32 type)
 {
-	DEVICE* device = NULL;
-	ULONG_PTR* keys = NULL;
+	DEVICE* device = nullptr;
+	ULONG_PTR* keys = nullptr;
 
 	if (!devman)
-		return NULL;
+		return nullptr;
 
 	ListDictionary_Lock(devman->devices);
 	const size_t count = ListDictionary_GetKeys(devman->devices, &keys);
@@ -185,7 +185,7 @@ static const char PARALLEL_SERVICE_NAME[] = "parallel";
  */
 UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext* rdpcontext)
 {
-	const char* ServiceName = NULL;
+	const char* ServiceName = nullptr;
 	DEVICE_SERVICE_ENTRY_POINTS ep = WINPR_C_ARRAY_INIT;
 	union
 	{
@@ -220,7 +220,7 @@ UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext
 		WLog_INFO(TAG, "Loading device service %s (static)", ServiceName);
 
 	PVIRTUALCHANNELENTRY pvce =
-	    freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
+	    freerdp_load_channel_addin_entry(ServiceName, nullptr, "DeviceServiceEntry", 0);
 	PDEVICE_SERVICE_ENTRY entry = WINPR_FUNC_PTR_CAST(pvce, PDEVICE_SERVICE_ENTRY);
 
 	if (!entry)

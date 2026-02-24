@@ -99,7 +99,7 @@ static DWORD /*WINAPI*/ closeHandleTest(LPVOID lpThreadParameter)
 
 int TestSynchAPC(int argc, char* argv[])
 {
-	HANDLE thread = NULL;
+	HANDLE thread = nullptr;
 	UserApcArg userApcArg;
 
 	userApcArg.error = FALSE;
@@ -124,7 +124,7 @@ int TestSynchAPC(int argc, char* argv[])
 	userApcArg.called = FALSE;
 
 	/* test that the APC is cleaned up even when not called */
-	thread = CreateThread(NULL, 0, uncleanThread, &userApcArg, 0, NULL);
+	thread = CreateThread(nullptr, 0, uncleanThread, &userApcArg, 0, nullptr);
 	if (!thread)
 		return 10;
 	(void)WaitForSingleObject(thread, INFINITE);
@@ -134,7 +134,7 @@ int TestSynchAPC(int argc, char* argv[])
 		return 11;
 
 	/* test a remote APC queuing */
-	thread = CreateThread(NULL, 0, cleanThread, &userApcArg, 0, NULL);
+	thread = CreateThread(nullptr, 0, cleanThread, &userApcArg, 0, nullptr);
 	if (!thread)
 		return 20;
 

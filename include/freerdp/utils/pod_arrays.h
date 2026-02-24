@@ -38,7 +38,7 @@ extern "C"
 	static inline void array_##TLOWER##_init(Array##T* a)                                 \
 	{                                                                                     \
 		WINPR_ASSERT(a);                                                                  \
-		a->values = NULL;                                                                 \
+		a->values = nullptr;                                                              \
 		a->nvalues = 0;                                                                   \
 	}                                                                                     \
                                                                                           \
@@ -130,7 +130,7 @@ extern "C"
 		WINPR_ASSERT(a);                                                                  \
 		free(a->values);                                                                  \
                                                                                           \
-		a->values = NULL;                                                                 \
+		a->values = nullptr;                                                              \
 		a->nvalues = 0;                                                                   \
 	}
 

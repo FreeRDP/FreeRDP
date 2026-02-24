@@ -132,15 +132,15 @@ void rfx_dwt_2d_decode(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_b
 static void rfx_dwt_2d_encode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt,
                                     UINT32 subband_width)
 {
-	INT16* src = NULL;
-	INT16* l = NULL;
-	INT16* h = NULL;
-	INT16* l_src = NULL;
-	INT16* h_src = NULL;
-	INT16* hl = NULL;
-	INT16* lh = NULL;
-	INT16* hh = NULL;
-	INT16* ll = NULL;
+	INT16* src = nullptr;
+	INT16* l = nullptr;
+	INT16* h = nullptr;
+	INT16* l_src = nullptr;
+	INT16* h_src = nullptr;
+	INT16* hl = nullptr;
+	INT16* lh = nullptr;
+	INT16* hh = nullptr;
+	INT16* ll = nullptr;
 
 	const UINT32 total_width = subband_width << 1;
 

@@ -12,15 +12,15 @@
 static BOOL test_entry_read_write(void)
 {
 	BOOL rc = FALSE;
-	FILE* fp = NULL;
-	wStream* sw = NULL;
-	wStream* sr = NULL;
+	FILE* fp = nullptr;
+	wStream* sw = nullptr;
+	wStream* sr = nullptr;
 	size_t offset = 0;
 	UINT64 ts = 0;
 	UINT32 flags = 0;
 	BYTE tmp[16] = WINPR_C_ARRAY_INIT;
 	char tmp2[64] = WINPR_C_ARRAY_INIT;
-	char* name = NULL;
+	char* name = nullptr;
 	size_t entrysize = sizeof(UINT64) /* timestamp */ + sizeof(BYTE) /* direction */ +
 	                   sizeof(UINT32) /* CRC */ + sizeof(UINT64) /* size */;
 
@@ -35,8 +35,8 @@ static BOOL test_entry_read_write(void)
 		goto fail;
 	}
 
-	sw = Stream_New(NULL, 8123);
-	sr = Stream_New(NULL, 1024);
+	sw = Stream_New(nullptr, 8123);
+	sr = Stream_New(nullptr, 1024);
 	if (!sr || !sw)
 	{
 		(void)fprintf(stderr, "[%s] Could not create iostreams sw=%p, sr=%p\n", __func__, (void*)sw,

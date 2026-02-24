@@ -94,7 +94,7 @@ extern "C"
 	 *  @param ioCode1Mask A \ref RDPDR_CAPS_IRP_MJ value
 	 *  @param buffer A pointer to a buffer that can hold the string representation
 	 *  @param len The length of the buffer in bytes.
-	 *  @return A string representation of the constant mask or \b NULL in case the buffer is too
+	 *  @return A string representation of the constant mask or \b nullptr in case the buffer is too
 	 * small
 	 *
 	 *  @since version 3.21.0

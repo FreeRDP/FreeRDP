@@ -142,7 +142,7 @@ static BOOL WLog_CallbackAppender_Set(wLogAppender* appender, const char* settin
 
 static void WLog_CallbackAppender_Free(wLogAppender* appender)
 {
-	wLogCallbackAppender* callbackAppender = NULL;
+	wLogCallbackAppender* callbackAppender = nullptr;
 	if (!appender)
 	{
 		return;
@@ -159,7 +159,7 @@ wLogAppender* WLog_CallbackAppender_New(WINPR_ATTR_UNUSED wLog* log)
 	wLogCallbackAppender* CallbackAppender =
 	    (wLogCallbackAppender*)calloc(1, sizeof(wLogCallbackAppender));
 	if (!CallbackAppender)
-		return NULL;
+		return nullptr;
 
 	CallbackAppender->common.Type = WLOG_APPENDER_CALLBACK;
 	CallbackAppender->common.Open = WLog_CallbackAppender_Open;

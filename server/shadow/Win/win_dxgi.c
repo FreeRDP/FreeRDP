@@ -42,7 +42,7 @@ static D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE
 
 static UINT NumFeatureLevels = ARRAYSIZE(FeatureLevels);
 
-static HMODULE d3d11_module = NULL;
+static HMODULE d3d11_module = nullptr;
 
 typedef HRESULT(WINAPI* fnD3D11CreateDevice)(IDXGIAdapter* pAdapter, D3D_DRIVER_TYPE DriverType,
                                              HMODULE Software, UINT Flags,
@@ -52,7 +52,7 @@ typedef HRESULT(WINAPI* fnD3D11CreateDevice)(IDXGIAdapter* pAdapter, D3D_DRIVER_
                                              D3D_FEATURE_LEVEL* pFeatureLevel,
                                              ID3D11DeviceContext** ppImmediateContext);
 
-static fnD3D11CreateDevice pfnD3D11CreateDevice = NULL;
+static fnD3D11CreateDevice pfnD3D11CreateDevice = nullptr;
 
 #undef DEFINE_GUID
 #define INITGUID
@@ -300,10 +300,10 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	DXGI_OUTPUT_DESC outputDesc = WINPR_C_ARRAY_INIT;
 	DXGI_OUTPUT_DESC* pOutputDesc;
 	D3D11_TEXTURE2D_DESC textureDesc;
-	IDXGIDevice* dxgiDevice = NULL;
-	IDXGIAdapter* dxgiAdapter = NULL;
-	IDXGIOutput* dxgiOutput = NULL;
-	IDXGIOutput1* dxgiOutput1 = NULL;
+	IDXGIDevice* dxgiDevice = nullptr;
+	IDXGIAdapter* dxgiAdapter = nullptr;
+	IDXGIOutput* dxgiOutput = nullptr;
+	IDXGIOutput1* dxgiOutput1 = nullptr;
 
 	hr = subsystem->dxgiDevice->lpVtbl->QueryInterface(subsystem->dxgiDevice, &IID_IDXGIDevice,
 	                                                   (void**)&dxgiDevice);
@@ -320,7 +320,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	if (dxgiDevice)
 	{
 		dxgiDevice->lpVtbl->Release(dxgiDevice);
-		dxgiDevice = NULL;
+		dxgiDevice = nullptr;
 	}
 
 	if (FAILED(hr))
@@ -330,7 +330,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	pOutput = NULL;
+	pOutput = nullptr;
 
 	while (dxgiAdapter->lpVtbl->EnumOutputs(dxgiAdapter, i, &pOutput) != DXGI_ERROR_NOT_FOUND)
 	{
@@ -358,7 +358,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	if (dxgiAdapter)
 	{
 		dxgiAdapter->lpVtbl->Release(dxgiAdapter);
-		dxgiAdapter = NULL;
+		dxgiAdapter = nullptr;
 	}
 
 	if (FAILED(hr))
@@ -373,7 +373,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	if (dxgiOutput)
 	{
 		dxgiOutput->lpVtbl->Release(dxgiOutput);
-		dxgiOutput = NULL;
+		dxgiOutput = nullptr;
 	}
 
 	if (FAILED(hr))
@@ -389,7 +389,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	if (dxgiOutput1)
 	{
 		dxgiOutput1->lpVtbl->Release(dxgiOutput1);
-		dxgiOutput1 = NULL;
+		dxgiOutput1 = nullptr;
 	}
 
 	if (FAILED(hr))
@@ -411,8 +411,8 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 	textureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 	textureDesc.MiscFlags = 0;
 
-	hr = subsystem->dxgiDevice->lpVtbl->CreateTexture2D(subsystem->dxgiDevice, &textureDesc, NULL,
-	                                                    &(subsystem->dxgiStage));
+	hr = subsystem->dxgiDevice->lpVtbl->CreateTexture2D(subsystem->dxgiDevice, &textureDesc,
+	                                                    nullptr, &(subsystem->dxgiStage));
 
 	if (FAILED(hr))
 	{
@@ -430,10 +430,10 @@ int win_shadow_dxgi_init(winShadowSubsystem* subsystem)
 	HRESULT hr;
 	int status;
 	UINT DriverTypeIndex;
-	IDXGIDevice* DxgiDevice = NULL;
-	IDXGIAdapter* DxgiAdapter = NULL;
-	IDXGIOutput* DxgiOutput = NULL;
-	IDXGIOutput1* DxgiOutput1 = NULL;
+	IDXGIDevice* DxgiDevice = nullptr;
+	IDXGIAdapter* DxgiAdapter = nullptr;
+	IDXGIOutput* DxgiOutput = nullptr;
+	IDXGIOutput1* DxgiOutput1 = nullptr;
 
 	win_shadow_d3d11_module_init();
 
@@ -442,7 +442,7 @@ int win_shadow_dxgi_init(winShadowSubsystem* subsystem)
 
 	for (DriverTypeIndex = 0; DriverTypeIndex < NumDriverTypes; ++DriverTypeIndex)
 	{
-		hr = pfnD3D11CreateDevice(NULL, DriverTypes[DriverTypeIndex], NULL, 0, FeatureLevels,
+		hr = pfnD3D11CreateDevice(nullptr, DriverTypes[DriverTypeIndex], nullptr, 0, FeatureLevels,
 		                          NumFeatureLevels, D3D11_SDK_VERSION, &(subsystem->dxgiDevice),
 		                          &(subsystem->featureLevel), &(subsystem->dxgiDeviceContext));
 
@@ -466,31 +466,31 @@ int win_shadow_dxgi_uninit(winShadowSubsystem* subsystem)
 	if (subsystem->dxgiStage)
 	{
 		subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
-		subsystem->dxgiStage = NULL;
+		subsystem->dxgiStage = nullptr;
 	}
 
 	if (subsystem->dxgiDesktopImage)
 	{
 		subsystem->dxgiDesktopImage->lpVtbl->Release(subsystem->dxgiDesktopImage);
-		subsystem->dxgiDesktopImage = NULL;
+		subsystem->dxgiDesktopImage = nullptr;
 	}
 
 	if (subsystem->dxgiOutputDuplication)
 	{
 		subsystem->dxgiOutputDuplication->lpVtbl->Release(subsystem->dxgiOutputDuplication);
-		subsystem->dxgiOutputDuplication = NULL;
+		subsystem->dxgiOutputDuplication = nullptr;
 	}
 
 	if (subsystem->dxgiDeviceContext)
 	{
 		subsystem->dxgiDeviceContext->lpVtbl->Release(subsystem->dxgiDeviceContext);
-		subsystem->dxgiDeviceContext = NULL;
+		subsystem->dxgiDeviceContext = nullptr;
 	}
 
 	if (subsystem->dxgiDevice)
 	{
 		subsystem->dxgiDevice->lpVtbl->Release(subsystem->dxgiDevice);
-		subsystem->dxgiDevice = NULL;
+		subsystem->dxgiDevice = nullptr;
 	}
 
 	return 1;
@@ -568,7 +568,7 @@ int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem)
 		}
 
 		subsystem->dxgiSurface->lpVtbl->Release(subsystem->dxgiSurface);
-		subsystem->dxgiSurface = NULL;
+		subsystem->dxgiSurface = nullptr;
 	}
 
 	if (subsystem->dxgiOutputDuplication)
@@ -593,7 +593,7 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 	HRESULT hr = 0;
 	UINT timeout = 15;
 	UINT DataBufferSize = 0;
-	BYTE* DataBuffer = NULL;
+	BYTE* DataBuffer = nullptr;
 
 	if (subsystem->dxgiFrameAcquired)
 	{
@@ -603,7 +603,7 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 	if (subsystem->dxgiDesktopImage)
 	{
 		subsystem->dxgiDesktopImage->lpVtbl->Release(subsystem->dxgiDesktopImage);
-		subsystem->dxgiDesktopImage = NULL;
+		subsystem->dxgiDesktopImage = nullptr;
 	}
 
 	hr = subsystem->dxgiOutputDuplication->lpVtbl->AcquireNextFrame(
@@ -631,13 +631,13 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 			if (subsystem->dxgiDesktopImage)
 			{
 				subsystem->dxgiDesktopImage->lpVtbl->Release(subsystem->dxgiDesktopImage);
-				subsystem->dxgiDesktopImage = NULL;
+				subsystem->dxgiDesktopImage = nullptr;
 			}
 
 			if (subsystem->dxgiOutputDuplication)
 			{
 				subsystem->dxgiOutputDuplication->lpVtbl->Release(subsystem->dxgiOutputDuplication);
-				subsystem->dxgiOutputDuplication = NULL;
+				subsystem->dxgiOutputDuplication = nullptr;
 			}
 
 			status = win_shadow_dxgi_init_duplication(subsystem);
@@ -668,7 +668,7 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 	if (subsystem->dxgiResource)
 	{
 		subsystem->dxgiResource->lpVtbl->Release(subsystem->dxgiResource);
-		subsystem->dxgiResource = NULL;
+		subsystem->dxgiResource = nullptr;
 	}
 
 	if (FAILED(hr))

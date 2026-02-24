@@ -82,8 +82,8 @@ static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UI
 {
 	int error = 0;
 	snd_pcm_uframes_t frames = 0;
-	snd_pcm_hw_params_t* hw_params = NULL;
-	snd_pcm_sw_params_t* sw_params = NULL;
+	snd_pcm_hw_params_t* hw_params = nullptr;
+	snd_pcm_sw_params_t* sw_params = nullptr;
 	TSMFAlsaAudioDevice* alsa = (TSMFAlsaAudioDevice*)audio;
 
 	if (!alsa->out_handle)
@@ -104,7 +104,7 @@ static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UI
 	snd_pcm_hw_params_any(alsa->out_handle, hw_params);
 	snd_pcm_hw_params_set_access(alsa->out_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
 	snd_pcm_hw_params_set_format(alsa->out_handle, hw_params, SND_PCM_FORMAT_S16_LE);
-	snd_pcm_hw_params_set_rate_near(alsa->out_handle, hw_params, &alsa->actual_rate, NULL);
+	snd_pcm_hw_params_set_rate_near(alsa->out_handle, hw_params, &alsa->actual_rate, nullptr);
 	snd_pcm_hw_params_set_channels_near(alsa->out_handle, hw_params, &alsa->actual_channels);
 	frames = sample_rate;
 	snd_pcm_hw_params_set_buffer_size_near(alsa->out_handle, hw_params, &frames);
@@ -141,7 +141,7 @@ static BOOL tsmf_alsa_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UI
 
 static BOOL tsmf_alsa_play(ITSMFAudioDevice* audio, const BYTE* src, UINT32 data_size)
 {
-	const BYTE* pindex = NULL;
+	const BYTE* pindex = nullptr;
 	TSMFAlsaAudioDevice* alsa = (TSMFAlsaAudioDevice*)audio;
 	DEBUG_TSMF("data_size %" PRIu32 "", data_size);
 
@@ -221,7 +221,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE alsa_freerdp_tsmf_client_audio_subsystem_entr
 {
 	ITSMFAudioDevice** sptr = (ITSMFAudioDevice**)ptr;
 	WINPR_ASSERT(sptr);
-	*sptr = NULL;
+	*sptr = nullptr;
 
 	TSMFAlsaAudioDevice* alsa = calloc(1, sizeof(TSMFAlsaAudioDevice));
 	if (!alsa)

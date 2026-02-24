@@ -28,10 +28,10 @@ wStream* rdpear_enc_Checksum(UINT32 cksumtype, krb5_checksum* csum)
 	 *   checksum        [1] OCTET STRING
 	 * }
 	 */
-	wStream* ret = NULL;
+	wStream* ret = nullptr;
 	WinPrAsn1Encoder* enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 	if (!enc)
-		return NULL;
+		return nullptr;
 
 	if (!WinPrAsn1EncSeqContainer(enc))
 		goto out;
@@ -45,14 +45,14 @@ wStream* rdpear_enc_Checksum(UINT32 cksumtype, krb5_checksum* csum)
 	if (!WinPrAsn1EncContextualOctetString(enc, 1, &octets) || !WinPrAsn1EncEndContainer(enc))
 		goto out;
 
-	ret = Stream_New(NULL, 1024);
+	ret = Stream_New(nullptr, 1024);
 	if (!ret)
 		goto out;
 
 	if (!WinPrAsn1EncToStream(enc, ret))
 	{
 		Stream_Free(ret, TRUE);
-		ret = NULL;
+		ret = nullptr;
 		goto out;
 	}
 
@@ -70,10 +70,10 @@ wStream* rdpear_enc_EncryptedData(UINT32 encType, krb5_data* payload)
 	 *   cipher  [2] OCTET STRING -- ciphertext
 	 *	}
 	 */
-	wStream* ret = NULL;
+	wStream* ret = nullptr;
 	WinPrAsn1Encoder* enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 	if (!enc)
-		return NULL;
+		return nullptr;
 
 	if (!WinPrAsn1EncSeqContainer(enc))
 		goto out;
@@ -87,14 +87,14 @@ wStream* rdpear_enc_EncryptedData(UINT32 encType, krb5_data* payload)
 	if (!WinPrAsn1EncContextualOctetString(enc, 2, &octets) || !WinPrAsn1EncEndContainer(enc))
 		goto out;
 
-	ret = Stream_New(NULL, 1024);
+	ret = Stream_New(nullptr, 1024);
 	if (!ret)
 		goto out;
 
 	if (!WinPrAsn1EncToStream(enc, ret))
 	{
 		Stream_Free(ret, TRUE);
-		ret = NULL;
+		ret = nullptr;
 		goto out;
 	}
 

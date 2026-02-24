@@ -42,7 +42,7 @@ static int TestUnmarshal(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char** ar
 	for (size_t i = 0; i < ARRAYSIZE(testValues); i++)
 	{
 		CRED_MARSHAL_TYPE t = BinaryBlobForSystem;
-		CERT_CREDENTIAL_INFO* certInfo = NULL;
+		CERT_CREDENTIAL_INFO* certInfo = nullptr;
 		const TestItem* const val = &testValues[i];
 
 		if (!CredUnmarshalCredentialA(val->marshalled, &t, (void**)&certInfo) || !certInfo ||
@@ -69,7 +69,7 @@ static int TestMarshal(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char** argv
 		const TestItem* const val = &testValues[i];
 
 		memcpy(certInfo.rgbHashOfCert, val->source, sizeof(certInfo.rgbHashOfCert));
-		LPSTR out = NULL;
+		LPSTR out = nullptr;
 
 		if (!CredMarshalCredentialA(CertCredential, &certInfo, &out) || !out)
 			return -1;

@@ -275,9 +275,9 @@ void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 static BOOL ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 {
 	BOOL rc = FALSE;
-	WINPR_SAM* sam = NULL;
-	WINPR_SAM_ENTRY* entry = NULL;
-	SSPI_CREDENTIALS* credentials = NULL;
+	WINPR_SAM* sam = nullptr;
+	WINPR_SAM_ENTRY* entry = nullptr;
+	SSPI_CREDENTIALS* credentials = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(hash);
@@ -295,7 +295,7 @@ static BOOL ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	if (!entry)
 	{
 		entry = SamLookupUserW(sam, (LPWSTR)credentials->identity.User,
-		                       credentials->identity.UserLength * sizeof(WCHAR), NULL, 0);
+		                       credentials->identity.UserLength * sizeof(WCHAR), nullptr, 0);
 	}
 
 	if (!entry)
@@ -412,7 +412,7 @@ static int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash, size_t 
 
 static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 {
-	SSPI_CREDENTIALS* credentials = NULL;
+	SSPI_CREDENTIALS* credentials = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(hash);
@@ -501,7 +501,7 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 
 SECURITY_STATUS ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 {
-	BYTE* response = NULL;
+	BYTE* response = nullptr;
 	BYTE value[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
@@ -763,7 +763,7 @@ static BOOL ntlm_generate_signing_key(BYTE* exported_session_key, const SecBuffe
 {
 	BOOL rc = FALSE;
 	size_t length = 0;
-	BYTE* value = NULL;
+	BYTE* value = nullptr;
 
 	WINPR_ASSERT(exported_session_key);
 	WINPR_ASSERT(sign_magic);

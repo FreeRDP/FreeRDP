@@ -186,8 +186,8 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 static UINT cliprdr_server_monitor_ready(CliprdrServerContext* context,
                                          const CLIPRDR_MONITOR_READY* monitorReady)
 {
-	wStream* s = NULL;
-	CliprdrServerPrivate* cliprdr = NULL;
+	wStream* s = nullptr;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(monitorReady);
@@ -218,8 +218,8 @@ static UINT cliprdr_server_monitor_ready(CliprdrServerContext* context,
 static UINT cliprdr_server_format_list(CliprdrServerContext* context,
                                        const CLIPRDR_FORMAT_LIST* formatList)
 {
-	wStream* s = NULL;
-	CliprdrServerPrivate* cliprdr = NULL;
+	wStream* s = nullptr;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatList);
@@ -246,8 +246,8 @@ static UINT
 cliprdr_server_format_list_response(CliprdrServerContext* context,
                                     const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
-	wStream* s = NULL;
-	CliprdrServerPrivate* cliprdr = NULL;
+	wStream* s = nullptr;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatListResponse);
@@ -277,8 +277,8 @@ cliprdr_server_format_list_response(CliprdrServerContext* context,
 static UINT cliprdr_server_lock_clipboard_data(CliprdrServerContext* context,
                                                const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
-	wStream* s = NULL;
-	CliprdrServerPrivate* cliprdr = NULL;
+	wStream* s = nullptr;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(lockClipboardData);
@@ -308,8 +308,8 @@ static UINT
 cliprdr_server_unlock_clipboard_data(CliprdrServerContext* context,
                                      const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-	wStream* s = NULL;
-	CliprdrServerPrivate* cliprdr = NULL;
+	wStream* s = nullptr;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(unlockClipboardData);
@@ -339,8 +339,8 @@ cliprdr_server_unlock_clipboard_data(CliprdrServerContext* context,
 static UINT cliprdr_server_format_data_request(CliprdrServerContext* context,
                                                const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
-	wStream* s = NULL;
-	CliprdrServerPrivate* cliprdr = NULL;
+	wStream* s = nullptr;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatDataRequest);
@@ -372,8 +372,8 @@ static UINT
 cliprdr_server_format_data_response(CliprdrServerContext* context,
                                     const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
-	wStream* s = NULL;
-	CliprdrServerPrivate* cliprdr = NULL;
+	wStream* s = nullptr;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatDataResponse);
@@ -406,8 +406,8 @@ static UINT
 cliprdr_server_file_contents_request(CliprdrServerContext* context,
                                      const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	wStream* s = NULL;
-	CliprdrServerPrivate* cliprdr = NULL;
+	wStream* s = nullptr;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(fileContentsRequest);
@@ -438,8 +438,8 @@ static UINT
 cliprdr_server_file_contents_response(CliprdrServerContext* context,
                                       const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
-	wStream* s = NULL;
-	CliprdrServerPrivate* cliprdr = NULL;
+	wStream* s = nullptr;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(fileContentsResponse);
@@ -509,7 +509,7 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 	UINT error = ERROR_INVALID_DATA;
 	size_t cap_sets_size = 0;
 	CLIPRDR_CAPABILITIES capabilities = WINPR_C_ARRAY_INIT;
-	CLIPRDR_CAPABILITY_SET* capSet = NULL;
+	CLIPRDR_CAPABILITY_SET* capSet = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_UNUSED(header);
@@ -523,7 +523,7 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 
 	for (size_t index = 0; index < capabilities.cCapabilitiesSets; index++)
 	{
-		void* tmp = NULL;
+		void* tmp = nullptr;
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			goto out;
 		Stream_Read_UINT16(s, capabilitySetType);   /* capabilitySetType (2 bytes) */
@@ -533,7 +533,7 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 
 		if (cap_sets_size > 0)
 			tmp = realloc(capabilities.capabilitySets, cap_sets_size);
-		if (tmp == NULL)
+		if (tmp == nullptr)
 		{
 			WLog_ERR(TAG, "capabilities.capabilitySets realloc failed!");
 			free(capabilities.capabilitySets);
@@ -586,7 +586,7 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 {
 	size_t length = 0;
 	CLIPRDR_TEMP_DIRECTORY tempDirectory = WINPR_C_ARRAY_INIT;
-	CliprdrServerPrivate* cliprdr = NULL;
+	CliprdrServerPrivate* cliprdr = nullptr;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -1060,12 +1060,12 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
  */
 static UINT cliprdr_server_read(CliprdrServerContext* context)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t position = 0;
 	DWORD BytesToRead = 0;
 	DWORD BytesReturned = 0;
 	CLIPRDR_HEADER header = WINPR_C_ARRAY_INIT;
-	CliprdrServerPrivate* cliprdr = NULL;
+	CliprdrServerPrivate* cliprdr = nullptr;
 	UINT error = 0;
 	DWORD status = 0;
 
@@ -1208,9 +1208,9 @@ static DWORD WINAPI cliprdr_server_thread(LPVOID arg)
 	DWORD status = 0;
 	DWORD nCount = 0;
 	HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
-	HANDLE ChannelEvent = NULL;
+	HANDLE ChannelEvent = nullptr;
 	CliprdrServerContext* context = (CliprdrServerContext*)arg;
-	CliprdrServerPrivate* cliprdr = NULL;
+	CliprdrServerPrivate* cliprdr = nullptr;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -1290,9 +1290,9 @@ out:
  */
 static UINT cliprdr_server_open(CliprdrServerContext* context)
 {
-	void* buffer = NULL;
+	void* buffer = nullptr;
 	DWORD BytesReturned = 0;
-	CliprdrServerPrivate* cliprdr = NULL;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -1308,7 +1308,7 @@ static UINT cliprdr_server_open(CliprdrServerContext* context)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	cliprdr->ChannelEvent = NULL;
+	cliprdr->ChannelEvent = nullptr;
 
 	if (WTSVirtualChannelQuery(cliprdr->ChannelHandle, WTSVirtualEventHandle, &buffer,
 	                           &BytesReturned))
@@ -1339,7 +1339,7 @@ static UINT cliprdr_server_open(CliprdrServerContext* context)
  */
 static UINT cliprdr_server_close(CliprdrServerContext* context)
 {
-	CliprdrServerPrivate* cliprdr = NULL;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -1349,7 +1349,7 @@ static UINT cliprdr_server_close(CliprdrServerContext* context)
 	if (cliprdr->ChannelHandle)
 	{
 		(void)WTSVirtualChannelClose(cliprdr->ChannelHandle);
-		cliprdr->ChannelHandle = NULL;
+		cliprdr->ChannelHandle = nullptr;
 	}
 
 	return CHANNEL_RC_OK;
@@ -1363,7 +1363,7 @@ static UINT cliprdr_server_close(CliprdrServerContext* context)
 static UINT cliprdr_server_start(CliprdrServerContext* context)
 {
 	UINT error = 0;
-	CliprdrServerPrivate* cliprdr = NULL;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -1379,17 +1379,18 @@ static UINT cliprdr_server_start(CliprdrServerContext* context)
 		}
 	}
 
-	if (!(cliprdr->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(cliprdr->StopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
 		WLog_ERR(TAG, "CreateEvent failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(cliprdr->Thread = CreateThread(NULL, 0, cliprdr_server_thread, (void*)context, 0, NULL)))
+	if (!(cliprdr->Thread =
+	          CreateThread(nullptr, 0, cliprdr_server_thread, (void*)context, 0, nullptr)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		(void)CloseHandle(cliprdr->StopEvent);
-		cliprdr->StopEvent = NULL;
+		cliprdr->StopEvent = nullptr;
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -1404,7 +1405,7 @@ static UINT cliprdr_server_start(CliprdrServerContext* context)
 static UINT cliprdr_server_stop(CliprdrServerContext* context)
 {
 	UINT error = CHANNEL_RC_OK;
-	CliprdrServerPrivate* cliprdr = NULL;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -1434,7 +1435,7 @@ static UINT cliprdr_server_stop(CliprdrServerContext* context)
 
 static HANDLE cliprdr_server_get_event_handle(CliprdrServerContext* context)
 {
-	CliprdrServerPrivate* cliprdr = NULL;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -1455,7 +1456,7 @@ static UINT cliprdr_server_check_event_handle(CliprdrServerContext* context)
 
 CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 {
-	CliprdrServerPrivate* cliprdr = NULL;
+	CliprdrServerPrivate* cliprdr = nullptr;
 	CliprdrServerContext* context = (CliprdrServerContext*)calloc(1, sizeof(CliprdrServerContext));
 
 	if (context)
@@ -1482,21 +1483,21 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 		if (cliprdr)
 		{
 			cliprdr->vcm = vcm;
-			cliprdr->s = Stream_New(NULL, 4096);
+			cliprdr->s = Stream_New(nullptr, 4096);
 
 			if (!cliprdr->s)
 			{
 				WLog_ERR(TAG, "Stream_New failed!");
 				free(context->handle);
 				free(context);
-				return NULL;
+				return nullptr;
 			}
 		}
 		else
 		{
 			WLog_ERR(TAG, "calloc failed!");
 			free(context);
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -1505,7 +1506,7 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 
 void cliprdr_server_context_free(CliprdrServerContext* context)
 {
-	CliprdrServerPrivate* cliprdr = NULL;
+	CliprdrServerPrivate* cliprdr = nullptr;
 
 	if (!context)
 		return;

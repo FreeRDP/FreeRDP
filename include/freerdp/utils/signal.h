@@ -38,7 +38,7 @@ extern "C"
 	 *  This allows cleaning up resources like with \b atexit but for signals.
 	 *
 	 *  \param context a context for the clenaup handler.
-	 *  \param handler the function to call on cleanup. Must not be \b NULL
+	 *  \param handler the function to call on cleanup. Must not be \b nullptr
 	 *
 	 *  \return \b TRUE if registered successfully, \b FALSE otherwise.
 	 */
@@ -51,7 +51,7 @@ extern "C"
 	 *  This allows removal of a cleanup handler for signals.
 	 *
 	 *  \param context a context for the clenaup handler.
-	 *  \param handler the function to call on cleanup. Must not be \b NULL
+	 *  \param handler the function to call on cleanup. Must not be \b nullptr
 	 *
 	 *  \return \b TRUE if unregistered successfully, \b FALSE otherwise.
 	 */

@@ -79,7 +79,7 @@ void wf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnect
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
-		wfc->disp = NULL;
+		wfc->disp = nullptr;
 	}
 	else
 		freerdp_client_OnChannelDisconnectedEventHandler(context, e);

@@ -34,8 +34,8 @@ int TestCommConfig(int argc, char* argv[])
 	COMMPROP commProp = WINPR_C_ARRAY_INIT;
 	struct stat statbuf = WINPR_C_ARRAY_INIT;
 
-	HANDLE hComm =
-	    CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	HANDLE hComm = CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
+	                           0, nullptr);
 
 	if (hComm && (hComm != INVALID_HANDLE_VALUE))
 	{
@@ -59,9 +59,9 @@ int TestCommConfig(int argc, char* argv[])
 	}
 
 	hComm = CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE,
-	                    FILE_SHARE_WRITE, /* invalid parameter */
-	                    NULL, CREATE_NEW, /* invalid parameter */
-	                    0, (HANDLE)1234); /* invalid parameter */
+	                    FILE_SHARE_WRITE,    /* invalid parameter */
+	                    nullptr, CREATE_NEW, /* invalid parameter */
+	                    0, (HANDLE)1234);    /* invalid parameter */
 	if (hComm != INVALID_HANDLE_VALUE)
 	{
 		(void)fprintf(
@@ -70,7 +70,8 @@ int TestCommConfig(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	hComm = CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	hComm = CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0,
+	                    nullptr);
 
 	if (!hComm || (hComm == INVALID_HANDLE_VALUE))
 	{

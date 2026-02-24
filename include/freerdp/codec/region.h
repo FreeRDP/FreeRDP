@@ -76,9 +76,9 @@ extern "C"
 	FREERDP_API int region16_n_rects(const REGION16* region);
 
 	/** returns a pointer to rectangles and the number of rectangles in this region.
-	 * nbRects can be set to NULL if not interested in the number of rectangles.
+	 * nbRects can be set to nullptr if not interested in the number of rectangles.
 	 * @param region the input region
-	 * @param nbRects if non-NULL returns the number of rectangles
+	 * @param nbRects if non-nullptr returns the number of rectangles
 	 * @return a pointer on the rectangles
 	 */
 	WINPR_ATTR_NODISCARD

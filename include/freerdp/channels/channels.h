@@ -70,13 +70,13 @@ extern "C"
 	 *  @note This function may be called even without the \b event-handle to be set, so it must be
 	 * capable of handling these calls properly.
 	 *
-	 *  @param channels A pointer to the channels instance to register with. Must not be \b NULL
+	 *  @param channels A pointer to the channels instance to register with. Must not be \b nullptr
 	 *  @param handle A \b event-handle to be used to notify the RDP main thread that the callback
 	 * function should be called again. Must not be \b INVALID_HANDLE_PARAM
 	 *  @param fkt The callback function responsible to handle the channel specifics. Must not be \b
-	 * NULL
+	 * nullptr
 	 *  @param userdata A pointer to a channel specific context. Most likely the channel context.
-	 * May be \b NULL if not required.
+	 * May be \b nullptr if not required.
 	 *
 	 *  @return \b TRUE if successful, \b FALSE if any error occurs.
 	 *  @since version 3.9.0 */
@@ -87,7 +87,7 @@ extern "C"
 
 	/** @brief Remove an existing registration for \b event-handle from the channels instance
 	 *
-	 *  @param channels A pointer to the channels instance to register with. Must not be \b NULL
+	 *  @param channels A pointer to the channels instance to register with. Must not be \b nullptr
 	 *  @param handle A \b event-handle to be used to notify the RDP main thread that the callback
 	 * function should be called again. Must not be \b INVALID_HANDLE_PARAM
 	 *

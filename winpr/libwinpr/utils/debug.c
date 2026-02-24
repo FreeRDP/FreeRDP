@@ -93,7 +93,7 @@ void* winpr_backtrace(DWORD size)
 	return winpr_win_backtrace(size);
 #else
 	WLog_FATAL(TAG, "%s", support_msg);
-	/* return a non NULL buffer to allow the backtrace function family to succeed without failing
+	/* return a non nullptr buffer to allow the backtrace function family to succeed without failing
 	 */
 	return strndup(support_msg, sizeof(support_msg));
 #endif
@@ -107,7 +107,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 	if (!buffer)
 	{
 		WLog_FATAL(TAG, "%s", support_msg);
-		return NULL;
+		return nullptr;
 	}
 
 #if defined(USE_UNWIND)
@@ -130,7 +130,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 	size_t len = strnlen(support_msg, sizeof(support_msg));
 	char* ppmsg = calloc(sizeof(char*) + len + 1, sizeof(char));
 	if (!ppmsg)
-		return NULL;
+		return nullptr;
 	char** msgptr = (char**)ppmsg;
 	char* msg = &ppmsg[sizeof(char*)];
 
@@ -176,7 +176,7 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 void winpr_log_backtrace_ex(wLog* log, DWORD level, WINPR_ATTR_UNUSED DWORD size)
 {
 	size_t used = 0;
-	char** msg = NULL;
+	char** msg = nullptr;
 	void* stack = winpr_backtrace(20);
 
 	if (!stack)

@@ -880,7 +880,7 @@ DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, WINPR_KEYCODE_TYPE type)
 
 DWORD GetKeycodeFromVirtualKeyCode(DWORD keycode, WINPR_KEYCODE_TYPE type)
 {
-	DWORD* targetArray = NULL;
+	DWORD* targetArray = nullptr;
 	size_t targetSize = 0;
 
 	switch (type)

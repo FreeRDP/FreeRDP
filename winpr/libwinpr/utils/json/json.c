@@ -28,7 +28,7 @@ WINPR_JSON* WINPR_JSON_ParseFromFile(const char* filename)
 {
 	FILE* fp = winpr_fopen(filename, "r");
 	if (!fp)
-		return NULL;
+		return nullptr;
 	WINPR_JSON* json = WINPR_JSON_ParseFromFileFP(fp);
 	(void)fclose(fp);
 	return json;
@@ -37,24 +37,24 @@ WINPR_JSON* WINPR_JSON_ParseFromFile(const char* filename)
 WINPR_JSON* WINPR_JSON_ParseFromFileFP(FILE* fp)
 {
 	if (!fp)
-		return NULL;
+		return nullptr;
 
 	if (fseek(fp, 0, SEEK_END) != 0)
-		return NULL;
+		return nullptr;
 
 	const INT64 size = _ftelli64(fp);
 	if (size < 0)
-		return NULL;
+		return nullptr;
 
 	if (fseek(fp, 0, SEEK_SET) != 0)
-		return NULL;
+		return nullptr;
 
 	const size_t usize = WINPR_ASSERTING_INT_CAST(size_t, size);
 	char* str = calloc(usize + 1, sizeof(char));
 	if (!str)
-		return NULL;
+		return nullptr;
 
-	WINPR_JSON* json = NULL;
+	WINPR_JSON* json = nullptr;
 	const size_t s = fread(str, sizeof(char), usize, fp);
 	if (s == usize)
 		json = WINPR_JSON_ParseWithLength(str, usize);

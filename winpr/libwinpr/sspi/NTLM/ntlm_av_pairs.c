@@ -128,7 +128,7 @@ static inline BOOL ntlm_av_pair_get_id(const NTLM_AV_PAIR* pAvPair, size_t size,
 ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 {
 	size_t cbAvPair = 0;
-	NTLM_AV_PAIR* pAvPair = NULL;
+	NTLM_AV_PAIR* pAvPair = nullptr;
 
 	pAvPair = ntlm_av_pair_get(pAvPairList, cbAvPairList, MsvAvEOL, &cbAvPair);
 	if (!pAvPair)
@@ -217,12 +217,12 @@ static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPair, size_t* pcbAvPair)
 	size_t offset = 0;
 
 	if (!pcbAvPair)
-		return NULL;
+		return nullptr;
 	if (!ntlm_av_pair_check(pAvPair, *pcbAvPair))
-		return NULL;
+		return nullptr;
 
 	if (!ntlm_av_pair_get_next_offset(pAvPair, *pcbAvPair, &offset))
-		return NULL;
+		return nullptr;
 
 	*pcbAvPair -= offset;
 	return (NTLM_AV_PAIR*)((PBYTE)pAvPair + offset);
@@ -236,7 +236,7 @@ NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, N
 	NTLM_AV_PAIR* pAvPair = pAvPairList;
 
 	if (!ntlm_av_pair_check(pAvPair, cbAvPair))
-		pAvPair = NULL;
+		pAvPair = nullptr;
 
 	while (pAvPair && ntlm_av_pair_get_id(pAvPair, cbAvPair, &id))
 	{
@@ -244,7 +244,7 @@ NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, N
 			break;
 		if (id == MsvAvEOL)
 		{
-			pAvPair = NULL;
+			pAvPair = nullptr;
 			break;
 		}
 
@@ -263,7 +263,7 @@ static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTL
                              PBYTE Value, UINT16 AvLen)
 {
 	size_t cbAvPair = 0;
-	NTLM_AV_PAIR* pAvPair = NULL;
+	NTLM_AV_PAIR* pAvPair = nullptr;
 
 	pAvPair = ntlm_av_pair_get(pAvPairList, cbAvPairList, MsvAvEOL, &cbAvPair);
 
@@ -275,7 +275,7 @@ static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTL
 	ntlm_av_pair_set_len(pAvPair, AvLen);
 	if (AvLen)
 	{
-		WINPR_ASSERT(Value != NULL);
+		WINPR_ASSERT(Value != nullptr);
 		CopyMemory(ntlm_av_pair_get_value_pointer(pAvPair), Value, AvLen);
 	}
 
@@ -331,21 +331,21 @@ static char* get_name(COMPUTER_NAME_FORMAT type)
 {
 	DWORD nSize = 0;
 
-	if (GetComputerNameExA(type, NULL, &nSize))
-		return NULL;
+	if (GetComputerNameExA(type, nullptr, &nSize))
+		return nullptr;
 
 	if (GetLastError() != ERROR_MORE_DATA)
-		return NULL;
+		return nullptr;
 
 	char* computerName = calloc(1, nSize);
 
 	if (!computerName)
-		return NULL;
+		return nullptr;
 
 	if (!GetComputerNameExA(type, computerName, &nSize))
 	{
 		free(computerName);
-		return NULL;
+		return nullptr;
 	}
 
 	return computerName;
@@ -371,7 +371,7 @@ static int ntlm_get_target_computer_name(PUNICODE_STRING pName,
 	if (!pName->Buffer || (len == 0) || (len > UINT16_MAX / sizeof(WCHAR)))
 	{
 		free(pName->Buffer);
-		pName->Buffer = NULL;
+		pName->Buffer = nullptr;
 		return status;
 	}
 
@@ -387,7 +387,7 @@ static void ntlm_free_unicode_string(PUNICODE_STRING string)
 		if (string->Length > 0)
 		{
 			free(string->Buffer);
-			string->Buffer = NULL;
+			string->Buffer = nullptr;
 			string->Length = 0;
 			string->MaximumLength = 0;
 		}
@@ -434,10 +434,10 @@ static BOOL ntlm_md5_update_uint32_be(WINPR_DIGEST_CTX* md5, UINT32 num)
 
 static void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 {
-	WINPR_DIGEST_CTX* md5 = NULL;
-	BYTE* ChannelBindingToken = NULL;
+	WINPR_DIGEST_CTX* md5 = nullptr;
+	BYTE* ChannelBindingToken = nullptr;
 	UINT32 ChannelBindingTokenLength = 0;
-	SEC_CHANNEL_BINDINGS* ChannelBindings = NULL;
+	SEC_CHANNEL_BINDINGS* ChannelBindings = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -504,7 +504,7 @@ BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	BOOL rc = FALSE;
 	ULONG AvPairsCount = 0;
 	ULONG AvPairsLength = 0;
-	NTLM_AV_PAIR* pAvPairList = NULL;
+	NTLM_AV_PAIR* pAvPairList = nullptr;
 	size_t cbAvPairList = 0;
 	UNICODE_STRING NbDomainName = WINPR_C_ARRAY_INIT;
 	UNICODE_STRING NbComputerName = WINPR_C_ARRAY_INIT;
@@ -516,17 +516,17 @@ BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	if (ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS) < 0)
 		goto fail;
 
-	NbComputerName.Buffer = NULL;
+	NbComputerName.Buffer = nullptr;
 
 	if (ntlm_get_target_computer_name(&NbComputerName, ComputerNameNetBIOS) < 0)
 		goto fail;
 
-	DnsDomainName.Buffer = NULL;
+	DnsDomainName.Buffer = nullptr;
 
 	if (ntlm_get_target_computer_name(&DnsDomainName, ComputerNameDnsDomain) < 0)
 		goto fail;
 
-	DnsComputerName.Buffer = NULL;
+	DnsComputerName.Buffer = nullptr;
 
 	if (ntlm_get_target_computer_name(&DnsComputerName, ComputerNameDnsHostname) < 0)
 		goto fail;
@@ -580,14 +580,14 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 {
 	ULONG AvPairsCount = 0;
 	size_t AvPairsValueLength = 0;
-	NTLM_AV_PAIR* AvTimestamp = NULL;
-	NTLM_AV_PAIR* AvNbDomainName = NULL;
-	NTLM_AV_PAIR* AvNbComputerName = NULL;
-	NTLM_AV_PAIR* AvDnsDomainName = NULL;
-	NTLM_AV_PAIR* AvDnsComputerName = NULL;
-	NTLM_AV_PAIR* AvDnsTreeName = NULL;
-	NTLM_AV_PAIR* ChallengeTargetInfo = NULL;
-	NTLM_AV_PAIR* AuthenticateTargetInfo = NULL;
+	NTLM_AV_PAIR* AvTimestamp = nullptr;
+	NTLM_AV_PAIR* AvNbDomainName = nullptr;
+	NTLM_AV_PAIR* AvNbComputerName = nullptr;
+	NTLM_AV_PAIR* AvDnsDomainName = nullptr;
+	NTLM_AV_PAIR* AvDnsComputerName = nullptr;
+	NTLM_AV_PAIR* AvDnsTreeName = nullptr;
+	NTLM_AV_PAIR* ChallengeTargetInfo = nullptr;
+	NTLM_AV_PAIR* AuthenticateTargetInfo = nullptr;
 	size_t cbAvTimestamp = 0;
 	size_t cbAvNbDomainName = 0;
 	size_t cbAvNbComputerName = 0;
@@ -792,8 +792,8 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 
 	if (context->NTLMv2)
 	{
-		NTLM_AV_PAIR* AvEOL = NULL;
-		AvEOL = ntlm_av_pair_get(ChallengeTargetInfo, cbChallengeTargetInfo, MsvAvEOL, NULL);
+		NTLM_AV_PAIR* AvEOL = nullptr;
+		AvEOL = ntlm_av_pair_get(ChallengeTargetInfo, cbChallengeTargetInfo, MsvAvEOL, nullptr);
 
 		if (!AvEOL)
 			goto fail;

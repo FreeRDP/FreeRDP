@@ -51,8 +51,8 @@
 static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw, INT32 ih)
 {
 	BOOL res = FALSE;
-	rdpGdi* gdi = NULL;
-	char* data = NULL;
+	rdpGdi* gdi = nullptr;
+	char* data = nullptr;
 	UwacSize geometry = WINPR_C_ARRAY_INIT;
 	size_t stride = 0;
 	UwacReturnCode rc = UWAC_ERROR_INTERNAL;
@@ -152,7 +152,7 @@ static BOOL wl_end_paint(rdpContext* context)
 
 static BOOL wl_refresh_display(wlfContext* context)
 {
-	rdpGdi* gdi = NULL;
+	rdpGdi* gdi = nullptr;
 
 	if (!context || !context->common.context.gdi)
 		return FALSE;
@@ -176,9 +176,9 @@ static BOOL wl_resize_display(rdpContext* context)
 
 static BOOL wl_pre_connect(freerdp* instance)
 {
-	rdpSettings* settings = NULL;
-	wlfContext* context = NULL;
-	const UwacOutput* output = NULL;
+	rdpSettings* settings = nullptr;
+	wlfContext* context = nullptr;
+	const UwacOutput* output = nullptr;
 	UwacSize resolution;
 
 	if (!instance)
@@ -206,7 +206,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 		// Use the resolution of the first display output
 		output = UwacDisplayGetOutput(context->display, 0);
 
-		if ((output != NULL) && (UwacOutputGetResolution(output, &resolution) == UWAC_SUCCESS))
+		if ((output != nullptr) && (UwacOutputGetResolution(output, &resolution) == UWAC_SUCCESS))
 		{
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth,
 			                                 (UINT32)resolution.width))
@@ -276,7 +276,7 @@ static BOOL wl_post_connect(freerdp* instance)
 		return FALSE;
 
 	UwacWindowSetFullscreenState(
-	    context->window, NULL,
+	    context->window, nullptr,
 	    freerdp_settings_get_bool(instance->context->settings, FreeRDP_Fullscreen));
 	UwacWindowSetTitle(context->window, title);
 	UwacWindowSetAppId(context->window, app_id);
@@ -317,13 +317,13 @@ static void wl_post_disconnect(freerdp* instance)
 	if (context->window)
 		UwacDestroyWindow(&context->window);
 	freerdp_keyboard_remap_free(context->remap_table);
-	context->remap_table = NULL;
+	context->remap_table = nullptr;
 }
 
 static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 {
 	UwacEvent event;
-	wlfContext* context = NULL;
+	wlfContext* context = nullptr;
 
 	if (UwacDisplayDispatch(display, 1) < 0)
 		return FALSE;
@@ -343,7 +343,7 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 				break;
 
 			case UWAC_EVENT_REMOVED_SEAT:
-				context->seat = NULL;
+				context->seat = nullptr;
 				break;
 
 			case UWAC_EVENT_FRAME_DONE:
@@ -465,12 +465,12 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 static BOOL handle_window_events(freerdp* instance)
 {
-	return instance != NULL;
+	return instance != nullptr;
 }
 
 static int wlfreerdp_run(freerdp* instance)
 {
-	wlfContext* context = NULL;
+	wlfContext* context = nullptr;
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 	DWORD status = WAIT_ABANDONED;
 
@@ -560,7 +560,7 @@ static void wlf_client_global_uninit(void)
 
 static int wlf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
-	wlfContext* wlf = NULL;
+	wlfContext* wlf = nullptr;
 	const char* str_data = freerdp_get_logon_error_info_data(data);
 	const char* str_type = freerdp_get_logon_error_info_type(type);
 
@@ -590,19 +590,19 @@ static void wlf_client_free(freerdp* instance, rdpContext* context)
 
 static void* uwac_event_clone(const void* val)
 {
-	UwacEvent* copy = NULL;
+	UwacEvent* copy = nullptr;
 	const UwacEvent* ev = (const UwacEvent*)val;
 
 	copy = calloc(1, sizeof(UwacEvent));
 	if (!copy)
-		return NULL;
+		return nullptr;
 	*copy = *ev;
 	return copy;
 }
 
 static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 {
-	wObject* obj = NULL;
+	wObject* obj = nullptr;
 	UwacReturnCode status = UWAC_ERROR_INTERNAL;
 	wlfContext* wfl = (wlfContext*)context;
 
@@ -614,12 +614,12 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	instance->PostDisconnect = wl_post_disconnect;
 	instance->LogonErrorInfo = wlf_logon_error_info;
 	wfl->log = WLog_Get(TAG);
-	wfl->display = UwacOpenDisplay(NULL, &status);
+	wfl->display = UwacOpenDisplay(nullptr, &status);
 
 	if (!wfl->display || (status != UWAC_SUCCESS) || !wfl->log)
 		return FALSE;
 
-	wfl->displayHandle = CreateFileDescriptorEvent(NULL, FALSE, FALSE,
+	wfl->displayHandle = CreateFileDescriptorEvent(nullptr, FALSE, FALSE,
 	                                               UwacDisplayGetFd(wfl->display), WINPR_FD_READ);
 
 	if (!wfl->displayHandle)
@@ -665,9 +665,9 @@ int main(int argc, char* argv[])
 	int rc = -1;
 	int status = 0;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	rdpContext* context = NULL;
-	rdpSettings* settings = NULL;
-	wlfContext* wlc = NULL;
+	rdpContext* context = nullptr;
+	rdpSettings* settings = nullptr;
+	wlfContext* wlc = nullptr;
 
 	freerdp_client_warn_deprecated(argc, argv);
 
@@ -758,7 +758,7 @@ BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fro
 
 	rdpGdi* gdi = context->gdi;
 
-	if (UwacWindowGetDrawingBufferGeometry(wlf->window, &geometry, NULL) != UWAC_SUCCESS)
+	if (UwacWindowGetDrawingBufferGeometry(wlf->window, &geometry, nullptr) != UWAC_SUCCESS)
 		return FALSE;
 
 	const double sx = 1.0 * geometry.width / (double)gdi->width;

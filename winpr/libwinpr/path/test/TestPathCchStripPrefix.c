@@ -68,8 +68,8 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 		return -1;
 	}
 
-	/* NULL Path */
-	status = PathCchStripPrefix(NULL, PATHCCH_MAX_CCH);
+	/* nullptr Path */
+	status = PathCchStripPrefix(nullptr, PATHCCH_MAX_CCH);
 	if (status != E_INVALIDARG)
 	{
 		_tprintf(

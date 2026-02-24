@@ -43,7 +43,7 @@ winpr_int_RC4_CTX* winpr_int_rc4_new(const BYTE* key, size_t keylength)
 {
 	winpr_int_RC4_CTX* ctx = calloc(1, sizeof(winpr_int_RC4_CTX));
 	if (!ctx)
-		return NULL;
+		return nullptr;
 
 	for (size_t i = 0; i < CTX_SIZE; i++)
 	{

@@ -95,7 +95,7 @@ fail:
 	shadow_screen_free(screen);
 	WINPR_PRAGMA_DIAG_POP
 
-	return NULL;
+	return nullptr;
 }
 
 void shadow_screen_free(rdpShadowScreen* screen)
@@ -110,13 +110,13 @@ void shadow_screen_free(rdpShadowScreen* screen)
 	if (screen->primary)
 	{
 		shadow_surface_free(screen->primary);
-		screen->primary = NULL;
+		screen->primary = nullptr;
 	}
 
 	if (screen->lobby)
 	{
 		shadow_surface_free(screen->lobby);
-		screen->lobby = NULL;
+		screen->lobby = nullptr;
 	}
 
 	free(screen);

@@ -78,7 +78,7 @@ wStream* websocket_context_packet_new(size_t len, WEBSOCKET_OPCODE opcode, UINT3
 {
 	WINPR_ASSERT(pMaskingKey);
 	if (len > INT_MAX)
-		return NULL;
+		return nullptr;
 
 	size_t fullLen = 0;
 	if (len < 126)
@@ -88,9 +88,9 @@ wStream* websocket_context_packet_new(size_t len, WEBSOCKET_OPCODE opcode, UINT3
 	else
 		fullLen = len + 14; /* 2 byte "mini header" + 8 byte length + 4 byte masking key */
 
-	wStream* sWS = Stream_New(NULL, fullLen);
+	wStream* sWS = Stream_New(nullptr, fullLen);
 	if (!sWS)
-		return NULL;
+		return nullptr;
 
 	UINT32 maskingKey = 0;
 	winpr_RAND(&maskingKey, sizeof(maskingKey));
@@ -272,7 +272,7 @@ static BOOL websocket_reply_pong(BIO* bio, websocket_context* context, wStream* 
 	if (Stream_GetPosition(s) != 0)
 		return websocket_context_write_wstream(context, bio, s, WebsocketPongOpcode);
 
-	return websocket_reply_close(bio, context, NULL);
+	return websocket_reply_close(bio, context, nullptr);
 }
 
 static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
@@ -463,7 +463,7 @@ websocket_context* websocket_context_new(void)
 	if (!context)
 		goto fail;
 
-	context->responseStreamBuffer = Stream_New(NULL, 1024);
+	context->responseStreamBuffer = Stream_New(nullptr, 1024);
 	if (!context->responseStreamBuffer)
 		goto fail;
 
@@ -473,7 +473,7 @@ websocket_context* websocket_context_new(void)
 	return context;
 fail:
 	websocket_context_free(context);
-	return NULL;
+	return nullptr;
 }
 
 void websocket_context_free(websocket_context* context)

@@ -39,7 +39,7 @@ double metrics_write_bytes(rdpMetrics* metrics, UINT32 UncompressedBytes, UINT32
 
 rdpMetrics* metrics_new(rdpContext* context)
 {
-	rdpMetrics* metrics = NULL;
+	rdpMetrics* metrics = nullptr;
 
 	metrics = (rdpMetrics*)calloc(1, sizeof(rdpMetrics));
 

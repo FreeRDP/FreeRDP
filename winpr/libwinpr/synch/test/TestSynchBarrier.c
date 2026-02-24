@@ -9,7 +9,7 @@
 #include "../synch.h"
 
 static SYNCHRONIZATION_BARRIER gBarrier;
-static HANDLE gStartEvent = NULL;
+static HANDLE gStartEvent = nullptr;
 static LONG gErrorCount = 0;
 
 #define MAX_SLEEP_MS 22
@@ -100,7 +100,7 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 		goto fail;
 	}
 
-	if (!(gStartEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(gStartEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
 		printf("%s: CreateEvent failed with error 0x%08x", __func__, GetLastError());
 		goto fail;
@@ -109,7 +109,7 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 	DWORD i = 0;
 	for (; i < dwThreads; i++)
 	{
-		threads[i] = CreateThread(NULL, 0, test_synch_barrier_thread, &p, 0, NULL);
+		threads[i] = CreateThread(nullptr, 0, test_synch_barrier_thread, &p, 0, nullptr);
 		if (!threads[i])
 		{
 			printf("%s: CreateThread failed for thread #%" PRIu32 " with error 0x%08x\n", __func__,

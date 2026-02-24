@@ -51,15 +51,15 @@ rdpShadowMultiClientEvent* shadow_multiclient_new(void)
 	if (!event)
 		goto out_error;
 
-	event->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	event->event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	if (!event->event)
 		goto out_free;
 
-	event->barrierEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	event->barrierEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	if (!event->barrierEvent)
 		goto out_free_event;
 
-	event->doneEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	event->doneEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	if (!event->doneEvent)
 		goto out_free_barrierEvent;
 
@@ -87,7 +87,7 @@ out_free_event:
 out_free:
 	free(event);
 out_error:
-	return (rdpShadowMultiClientEvent*)NULL;
+	return (rdpShadowMultiClientEvent*)nullptr;
 }
 
 void shadow_multiclient_free(rdpShadowMultiClientEvent* event)
@@ -106,8 +106,8 @@ void shadow_multiclient_free(rdpShadowMultiClientEvent* event)
 
 static void Publish(rdpShadowMultiClientEvent* event)
 {
-	wArrayList* subscribers = NULL;
-	struct rdp_shadow_multiclient_subscriber* subscriber = NULL;
+	wArrayList* subscribers = nullptr;
+	struct rdp_shadow_multiclient_subscriber* subscriber = nullptr;
 
 	subscribers = event->subscribers;
 
@@ -240,10 +240,10 @@ static BOOL Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL w
 
 void* shadow_multiclient_get_subscriber(rdpShadowMultiClientEvent* event)
 {
-	struct rdp_shadow_multiclient_subscriber* subscriber = NULL;
+	struct rdp_shadow_multiclient_subscriber* subscriber = nullptr;
 
 	if (!event)
-		return NULL;
+		return nullptr;
 
 	EnterCriticalSection(&(event->lock));
 
@@ -272,7 +272,7 @@ out_free:
 	free(subscriber);
 out_error:
 	LeaveCriticalSection(&(event->lock));
-	return NULL;
+	return nullptr;
 }
 
 /*
@@ -283,8 +283,8 @@ out_error:
  */
 void shadow_multiclient_release_subscriber(void* subscriber)
 {
-	struct rdp_shadow_multiclient_subscriber* s = NULL;
-	rdpShadowMultiClientEvent* event = NULL;
+	struct rdp_shadow_multiclient_subscriber* s = nullptr;
+	rdpShadowMultiClientEvent* event = nullptr;
 
 	if (!subscriber)
 		return;
@@ -309,8 +309,8 @@ void shadow_multiclient_release_subscriber(void* subscriber)
 
 BOOL shadow_multiclient_consume(void* subscriber)
 {
-	struct rdp_shadow_multiclient_subscriber* s = NULL;
-	rdpShadowMultiClientEvent* event = NULL;
+	struct rdp_shadow_multiclient_subscriber* s = nullptr;
+	rdpShadowMultiClientEvent* event = nullptr;
 	BOOL ret = FALSE;
 
 	if (!subscriber)
@@ -335,7 +335,7 @@ BOOL shadow_multiclient_consume(void* subscriber)
 HANDLE shadow_multiclient_getevent(void* subscriber)
 {
 	if (!subscriber)
-		return (HANDLE)NULL;
+		return (HANDLE) nullptr;
 
 	return ((struct rdp_shadow_multiclient_subscriber*)subscriber)->ref->event;
 }

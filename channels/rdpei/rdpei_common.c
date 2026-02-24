@@ -616,14 +616,14 @@ void touch_event_reset(RDPINPUT_TOUCH_EVENT* event)
 		touch_frame_reset(&event->frames[i]);
 
 	free(event->frames);
-	event->frames = NULL;
+	event->frames = nullptr;
 	event->frameCount = 0;
 }
 
 void touch_frame_reset(RDPINPUT_TOUCH_FRAME* frame)
 {
 	free(frame->contacts);
-	frame->contacts = NULL;
+	frame->contacts = nullptr;
 	frame->contactCount = 0;
 }
 
@@ -633,13 +633,13 @@ void pen_event_reset(RDPINPUT_PEN_EVENT* event)
 		pen_frame_reset(&event->frames[i]);
 
 	free(event->frames);
-	event->frames = NULL;
+	event->frames = nullptr;
 	event->frameCount = 0;
 }
 
 void pen_frame_reset(RDPINPUT_PEN_FRAME* frame)
 {
 	free(frame->contacts);
-	frame->contacts = NULL;
+	frame->contacts = nullptr;
 	frame->contactCount = 0;
 }

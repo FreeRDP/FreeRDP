@@ -7,7 +7,7 @@ int TestBufferPool(int argc, char* argv[])
 {
 	DWORD PoolSize = 0;
 	SSIZE_T BufferSize = 0;
-	wBufferPool* pool = NULL;
+	wBufferPool* pool = nullptr;
 	BYTE* Buffers[10] = WINPR_C_ARRAY_INIT;
 	int DefaultSize = 1234;
 

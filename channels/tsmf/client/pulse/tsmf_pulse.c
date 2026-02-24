@@ -73,7 +73,7 @@ static BOOL tsmf_pulse_connect(TSMFPulseAudioDevice* pulse)
 	if (!pulse->context)
 		return FALSE;
 
-	if (pa_context_connect(pulse->context, NULL, 0, NULL))
+	if (pa_context_connect(pulse->context, nullptr, 0, nullptr))
 	{
 		WLog_ERR(TAG, "pa_context_connect failed (%d)", pa_context_errno(pulse->context));
 		return FALSE;
@@ -165,7 +165,7 @@ static void tsmf_pulse_stream_success_callback(WINPR_ATTR_UNUSED pa_stream* stre
 
 static void tsmf_pulse_wait_for_operation(TSMFPulseAudioDevice* pulse, pa_operation* operation)
 {
-	if (operation == NULL)
+	if (operation == nullptr)
 		return;
 
 	while (pa_operation_get_state(operation) == PA_OPERATION_RUNNING)
@@ -217,12 +217,12 @@ static BOOL tsmf_pulse_close_stream(TSMFPulseAudioDevice* pulse)
 
 	DEBUG_TSMF("");
 	pa_threaded_mainloop_lock(pulse->mainloop);
-	pa_stream_set_write_callback(pulse->stream, NULL, NULL);
+	pa_stream_set_write_callback(pulse->stream, nullptr, nullptr);
 	tsmf_pulse_wait_for_operation(
 	    pulse, pa_stream_drain(pulse->stream, tsmf_pulse_stream_success_callback, pulse));
 	pa_stream_disconnect(pulse->stream);
 	pa_stream_unref(pulse->stream);
-	pulse->stream = NULL;
+	pulse->stream = nullptr;
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 	return TRUE;
 }
@@ -238,7 +238,7 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 	DEBUG_TSMF("");
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	pulse->stream = pa_stream_new(pulse->context, freerdp_getApplicationDetailsString(),
-	                              &pulse->sample_spec, NULL);
+	                              &pulse->sample_spec, nullptr);
 
 	if (!pulse->stream)
 	{
@@ -256,9 +256,9 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice* pulse)
 	buffer_attr.fragsize = (UINT32)-1;
 
 	if (pa_stream_connect_playback(
-	        pulse->stream, pulse->device[0] ? pulse->device : NULL, &buffer_attr,
+	        pulse->stream, pulse->device[0] ? pulse->device : nullptr, &buffer_attr,
 	        PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE,
-	        NULL, NULL) < 0)
+	        nullptr, nullptr) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		WLog_ERR(TAG, "pa_stream_connect_playback failed (%d)", pa_context_errno(pulse->context));
@@ -312,7 +312,7 @@ static BOOL tsmf_pulse_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, U
 static BOOL tsmf_pulse_play(ITSMFAudioDevice* audio, const BYTE* data, UINT32 data_size)
 {
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*)audio;
-	const BYTE* src = NULL;
+	const BYTE* src = nullptr;
 	size_t len = 0;
 	int ret = 0;
 	DEBUG_TSMF("data_size %" PRIu32 "", data_size);
@@ -336,7 +336,7 @@ static BOOL tsmf_pulse_play(ITSMFAudioDevice* audio, const BYTE* data, UINT32 da
 			if (len > data_size)
 				len = data_size;
 
-			ret = pa_stream_write(pulse->stream, src, len, NULL, 0LL, PA_SEEK_RELATIVE);
+			ret = pa_stream_write(pulse->stream, src, len, nullptr, 0LL, PA_SEEK_RELATIVE);
 
 			if (ret < 0)
 			{
@@ -360,7 +360,7 @@ static UINT64 tsmf_pulse_get_latency(ITSMFAudioDevice* audio)
 	UINT64 latency = 0;
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*)audio;
 
-	if (pulse->stream && pa_stream_get_latency(pulse->stream, &usec, NULL) == 0)
+	if (pulse->stream && pa_stream_get_latency(pulse->stream, &usec, nullptr) == 0)
 	{
 		latency = ((UINT64)usec) * 10LL;
 	}
@@ -393,13 +393,13 @@ static void tsmf_pulse_free(ITSMFAudioDevice* audio)
 	{
 		pa_context_disconnect(pulse->context);
 		pa_context_unref(pulse->context);
-		pulse->context = NULL;
+		pulse->context = nullptr;
 	}
 
 	if (pulse->mainloop)
 	{
 		pa_threaded_mainloop_free(pulse->mainloop);
-		pulse->mainloop = NULL;
+		pulse->mainloop = nullptr;
 	}
 
 	free(pulse);
@@ -409,7 +409,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE pulse_freerdp_tsmf_client_audio_subsystem_ent
 {
 	ITSMFAudioDevice** sptr = (ITSMFAudioDevice**)ptr;
 	WINPR_ASSERT(sptr);
-	*sptr = NULL;
+	*sptr = nullptr;
 
 	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*)calloc(1, sizeof(TSMFPulseAudioDevice));
 

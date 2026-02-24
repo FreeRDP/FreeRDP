@@ -36,7 +36,7 @@ static void update_free_window_icon_info(ICON_INFO* iconInfo);
 BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	UINT16 new_len = 0;
-	BYTE* new_str = NULL;
+	BYTE* new_str = nullptr;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
@@ -49,7 +49,7 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 	if (!new_len)
 	{
 		free(unicode_string->string);
-		unicode_string->string = NULL;
+		unicode_string->string = nullptr;
 		unicode_string->length = 0;
 		return TRUE;
 	}
@@ -59,7 +59,7 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 	if (!new_str)
 	{
 		free(unicode_string->string);
-		unicode_string->string = NULL;
+		unicode_string->string = nullptr;
 		return FALSE;
 	}
 
@@ -71,10 +71,10 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 
 BOOL utf8_string_to_rail_string(const char* string, RAIL_UNICODE_STRING* unicode_string)
 {
-	WCHAR* buffer = NULL;
+	WCHAR* buffer = nullptr;
 	size_t len = 0;
 	free(unicode_string->string);
-	unicode_string->string = NULL;
+	unicode_string->string = nullptr;
 	unicode_string->length = 0;
 
 	if (!string || strlen(string) < 1)
@@ -105,7 +105,7 @@ static char* rail_string_to_utf8_string(const RAIL_UNICODE_STRING* unicode_strin
 /* See [MS-RDPERP] 2.2.1.2.3 Icon Info (TS_ICON_INFO) */
 static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 {
-	BYTE* newBitMask = NULL;
+	BYTE* newBitMask = nullptr;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
@@ -154,7 +154,7 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 		if (!newBitMask)
 		{
 			free(iconInfo->bitsMask);
-			iconInfo->bitsMask = NULL;
+			iconInfo->bitsMask = nullptr;
 			return FALSE;
 		}
 
@@ -166,20 +166,20 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	else
 	{
 		free(iconInfo->bitsMask);
-		iconInfo->bitsMask = NULL;
+		iconInfo->bitsMask = nullptr;
 		iconInfo->cbBitsMask = 0;
 	}
 
 	/* colorTable */
 	if (iconInfo->cbColorTable > 0)
 	{
-		BYTE* new_tab = NULL;
+		BYTE* new_tab = nullptr;
 		new_tab = (BYTE*)realloc(iconInfo->colorTable, iconInfo->cbColorTable);
 
 		if (!new_tab)
 		{
 			free(iconInfo->colorTable);
-			iconInfo->colorTable = NULL;
+			iconInfo->colorTable = nullptr;
 			return FALSE;
 		}
 
@@ -188,7 +188,7 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	else
 	{
 		free(iconInfo->colorTable);
-		iconInfo->colorTable = NULL;
+		iconInfo->colorTable = nullptr;
 	}
 
 	if (iconInfo->colorTable)
@@ -206,7 +206,7 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 		if (!newBitMask)
 		{
 			free(iconInfo->bitsColor);
-			iconInfo->bitsColor = NULL;
+			iconInfo->bitsColor = nullptr;
 			return FALSE;
 		}
 
@@ -218,7 +218,7 @@ static BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	else
 	{
 		free(iconInfo->bitsColor);
-		iconInfo->bitsColor = NULL;
+		iconInfo->bitsColor = nullptr;
 		iconInfo->cbBitsColor = 0;
 	}
 	return TRUE;
@@ -249,7 +249,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
                                            WINDOW_STATE_ORDER* windowState)
 {
 	size_t size = 0;
-	RECTANGLE_16* newRect = NULL;
+	RECTANGLE_16* newRect = nullptr;
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 	{
@@ -376,7 +376,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 			if (!newRect)
 			{
 				free(windowState->windowRects);
-				windowState->windowRects = NULL;
+				windowState->windowRects = nullptr;
 				return FALSE;
 			}
 
@@ -420,7 +420,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 			if (!newRect)
 			{
 				free(windowState->visibilityRects);
-				windowState->visibilityRects = NULL;
+				windowState->visibilityRects = nullptr;
 				return FALSE;
 			}
 
@@ -675,7 +675,7 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
 	{
-		const char* showStr = NULL;
+		const char* showStr = nullptr;
 		switch (state->showState)
 		{
 			case 0:
@@ -780,7 +780,7 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 		DUMP_APPEND(buffer, bufferSize, " appBarState=0x%" PRIx8 "", state->AppBarState);
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_APPBAR_EDGE)
 	{
-		const char* appBarEdgeStr = NULL;
+		const char* appBarEdgeStr = nullptr;
 		switch (state->AppBarEdge)
 		{
 			case 0:
@@ -1030,7 +1030,7 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s,
 			if (!newid)
 			{
 				free(monitored_desktop->windowIds);
-				monitored_desktop->windowIds = NULL;
+				monitored_desktop->windowIds = nullptr;
 				monitored_desktop->numWindowIds = 0;
 				return FALSE;
 			}
@@ -1046,7 +1046,7 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s,
 		else
 		{
 			free(monitored_desktop->windowIds);
-			monitored_desktop->windowIds = NULL;
+			monitored_desktop->windowIds = nullptr;
 		}
 	}
 
@@ -1127,11 +1127,11 @@ void update_free_window_icon_info(ICON_INFO* iconInfo)
 		return;
 
 	free(iconInfo->bitsColor);
-	iconInfo->bitsColor = NULL;
+	iconInfo->bitsColor = nullptr;
 	free(iconInfo->bitsMask);
-	iconInfo->bitsMask = NULL;
+	iconInfo->bitsMask = nullptr;
 	free(iconInfo->colorTable);
-	iconInfo->colorTable = NULL;
+	iconInfo->colorTable = nullptr;
 }
 
 BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)

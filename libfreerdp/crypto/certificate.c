@@ -274,7 +274,7 @@ void cert_blob_free(rdpCertBlob* blob)
 	if (!blob)
 		return;
 	free(blob->data);
-	blob->data = NULL;
+	blob->data = nullptr;
 	blob->length = 0;
 }
 
@@ -294,7 +294,7 @@ static BOOL is_rsa_key(const X509* x509)
 static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertInfo* info)
 {
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t length = 0;
 	BYTE padding = 0;
 	UINT32 version = 0;
@@ -334,7 +334,7 @@ static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertIn
 	version++;
 
 	/* serialNumber */
-	if (!ber_read_integer(s, NULL)) /* CertificateSerialNumber (INTEGER) */
+	if (!ber_read_integer(s, nullptr)) /* CertificateSerialNumber (INTEGER) */
 		goto error;
 
 	error++;
@@ -471,7 +471,7 @@ static void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_
 	}
 
 	free(x509_cert_chain->array);
-	x509_cert_chain->array = NULL;
+	x509_cert_chain->array = nullptr;
 	x509_cert_chain->count = 0;
 }
 
@@ -481,12 +481,12 @@ static OSSL_PARAM* get_params(const BIGNUM* e, const BIGNUM* mod)
 	WINPR_ASSERT(e);
 	WINPR_ASSERT(mod);
 
-	OSSL_PARAM* parameters = NULL;
+	OSSL_PARAM* parameters = nullptr;
 	OSSL_PARAM_BLD* param = OSSL_PARAM_BLD_new();
 	if (!param)
 	{
 		WLog_ERR(TAG, "OSSL_PARAM_BLD_new() failed");
-		return NULL;
+		return nullptr;
 	}
 
 	const int bits = BN_num_bits(e);
@@ -538,7 +538,7 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 	WINPR_ASSERT(cert);
 
 	X509_free(cert->x509);
-	cert->x509 = NULL;
+	cert->x509 = nullptr;
 
 	rdpCertInfo* info = &cert->cert_info;
 
@@ -574,21 +574,21 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 	}
 
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
-	const int rec = RSA_set0_key(rsa, mod, e, NULL);
+	const int rec = RSA_set0_key(rsa, mod, e, nullptr);
 	if (rec != 1)
 	{
-		WLog_ERR(TAG, "RSA_set0_key(rsa, mod, e, NULL) failed");
+		WLog_ERR(TAG, "RSA_set0_key(rsa, mod, e, nullptr) failed");
 		goto fail;
 	}
 
 	cert->x509 = x509_from_rsa(rsa);
 #else
 	{
-		EVP_PKEY* pkey = NULL;
-		EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+		EVP_PKEY* pkey = nullptr;
+		EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr);
 		if (!ctx)
 		{
-			WLog_ERR(TAG, "EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL) failed");
+			WLog_ERR(TAG, "EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr) failed");
 			goto fail2;
 		}
 
@@ -630,7 +630,7 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 		{
 			WLog_ERR(TAG, "X509_set_pubkey(cert->x509, pkey) failed");
 			X509_free(cert->x509);
-			cert->x509 = NULL;
+			cert->x509 = nullptr;
 		}
 	fail2:
 		EVP_PKEY_free(pkey);
@@ -1083,12 +1083,12 @@ BOOL freerdp_certificate_read_server_cert(rdpCertificate* certificate, const BYT
                                           size_t length)
 {
 	BOOL ret = FALSE;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	wStream sbuffer;
 	UINT32 dwVersion = 0;
 
 	WINPR_ASSERT(certificate);
-	if (length < 4) /* NULL certificate is not an error see #1795 */
+	if (length < 4) /* nullptr certificate is not an error see #1795 */
 	{
 		WLog_DBG(TAG, "Received empty certificate, ignoring...");
 		return TRUE;
@@ -1214,12 +1214,12 @@ BOOL cert_clone_int(rdpCertificate* dst, const rdpCertificate* src)
 rdpCertificate* freerdp_certificate_clone(const rdpCertificate* certificate)
 {
 	if (!certificate)
-		return NULL;
+		return nullptr;
 
 	rdpCertificate* _certificate = freerdp_certificate_new();
 
 	if (!_certificate)
-		return NULL;
+		return nullptr;
 
 	if (!cert_clone_int(_certificate, certificate))
 		goto out_fail;
@@ -1228,7 +1228,7 @@ rdpCertificate* freerdp_certificate_clone(const rdpCertificate* certificate)
 out_fail:
 
 	freerdp_certificate_free(_certificate);
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -1278,12 +1278,12 @@ static BOOL freerdp_rsa_from_x509(rdpCertificate* cert)
 		return TRUE;
 
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
-	RSA* rsa = NULL;
-	const BIGNUM* rsa_n = NULL;
-	const BIGNUM* rsa_e = NULL;
+	RSA* rsa = nullptr;
+	const BIGNUM* rsa_n = nullptr;
+	const BIGNUM* rsa_e = nullptr;
 #else
-	BIGNUM* rsa_n = NULL;
-	BIGNUM* rsa_e = NULL;
+	BIGNUM* rsa_n = nullptr;
+	BIGNUM* rsa_e = nullptr;
 #endif
 	EVP_PKEY* pubkey = X509_get0_pubkey(cert->x509);
 	if (!pubkey)
@@ -1300,7 +1300,7 @@ static BOOL freerdp_rsa_from_x509(rdpCertificate* cert)
 	/* Now we return failure again if something is wrong. */
 	rc = FALSE;
 
-	RSA_get0_key(rsa, &rsa_n, &rsa_e, NULL);
+	RSA_get0_key(rsa, &rsa_n, &rsa_e, nullptr);
 #else
 	if (!EVP_PKEY_get_bn_param(pubkey, OSSL_PKEY_PARAM_RSA_E, &rsa_e))
 		goto fail;
@@ -1331,7 +1331,7 @@ rdpCertificate* freerdp_certificate_new_from_der(const BYTE* data, size_t length
 
 	{
 		const BYTE* ptr = data;
-		cert->x509 = d2i_X509(NULL, &ptr, (int)length);
+		cert->x509 = d2i_X509(nullptr, &ptr, (int)length);
 	}
 
 	if (!cert->x509)
@@ -1341,7 +1341,7 @@ rdpCertificate* freerdp_certificate_new_from_der(const BYTE* data, size_t length
 	return cert;
 fail:
 	freerdp_certificate_free(cert);
-	return NULL;
+	return nullptr;
 }
 
 rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert, const STACK_OF(X509) * chain)
@@ -1350,7 +1350,7 @@ rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert, const STACK
 
 	rdpCertificate* cert = freerdp_certificate_new();
 	if (!cert)
-		return NULL;
+		return nullptr;
 
 	X509* wcert = WINPR_CAST_CONST_PTR_AWAY(xcert, X509*);
 	cert->x509 = X509_dup(wcert);
@@ -1366,17 +1366,17 @@ rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert, const STACK
 	return cert;
 fail:
 	freerdp_certificate_free(cert);
-	return NULL;
+	return nullptr;
 }
 
 static STACK_OF(X509) * extract_chain_from_pem(const char* pem, BOOL isFile)
 {
 	if (!pem)
 	{
-		return NULL;
+		return nullptr;
 	}
 
-	BIO* bio = NULL;
+	BIO* bio = nullptr;
 	if (isFile)
 		bio = BIO_new_file(pem, "rb");
 	else
@@ -1387,14 +1387,14 @@ static STACK_OF(X509) * extract_chain_from_pem(const char* pem, BOOL isFile)
 
 	if (!bio)
 	{
-		return NULL;
+		return nullptr;
 	}
 
-	X509* leaf = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+	X509* leaf = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
 	if (!leaf)
 	{
 		BIO_free(bio);
-		return NULL;
+		return nullptr;
 	}
 
 	STACK_OF(X509)* chain = sk_X509_new_null();
@@ -1402,11 +1402,11 @@ static STACK_OF(X509) * extract_chain_from_pem(const char* pem, BOOL isFile)
 	{
 		X509_free(leaf);
 		BIO_free(bio);
-		return NULL;
+		return nullptr;
 	}
 
-	X509* cert = NULL;
-	while ((cert = PEM_read_bio_X509(bio, NULL, NULL, NULL)) != NULL)
+	X509* cert = nullptr;
+	while ((cert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr)) != nullptr)
 	{
 		sk_X509_push(chain, cert);
 	}
@@ -1420,7 +1420,7 @@ static rdpCertificate* freerdp_certificate_new_from(const char* file, BOOL isFil
 {
 	X509* x509 = x509_utils_from_pem(file, strlen(file), isFile);
 	if (!x509)
-		return NULL;
+		return nullptr;
 	STACK_OF(X509)* chain = extract_chain_from_pem(file, isFile);
 	rdpCertificate* cert = freerdp_certificate_new_from_x509(x509, chain);
 	if (chain)
@@ -1443,7 +1443,7 @@ const rdpCertInfo* freerdp_certificate_get_info(const rdpCertificate* cert)
 {
 	WINPR_ASSERT(cert);
 	if (!freerdp_certificate_is_rsa(cert))
-		return NULL;
+		return nullptr;
 	return &cert->cert_info;
 }
 
@@ -1463,22 +1463,22 @@ char* freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* cert,
 	size_t fp_len = 0;
 	size_t pos = 0;
 	size_t size = 0;
-	BYTE* fp = NULL;
-	char* fp_buffer = NULL;
+	BYTE* fp = nullptr;
+	char* fp_buffer = nullptr;
 	if (!cert || !cert->x509)
 	{
 		WLog_ERR(TAG, "Invalid certificate [%p, %p]", WINPR_CXX_COMPAT_CAST(const void*, cert),
-		         WINPR_CXX_COMPAT_CAST(const void*, cert ? cert->x509 : NULL));
-		return NULL;
+		         WINPR_CXX_COMPAT_CAST(const void*, cert ? cert->x509 : nullptr));
+		return nullptr;
 	}
 	if (!hash)
 	{
 		WLog_ERR(TAG, "Invalid certificate hash %p", WINPR_CXX_COMPAT_CAST(const void*, hash));
-		return NULL;
+		return nullptr;
 	}
 	fp = x509_utils_get_hash(cert->x509, hash, &fp_len);
 	if (!fp)
-		return NULL;
+		return nullptr;
 
 	if (fp_len < 1)
 		goto fail;
@@ -1514,7 +1514,7 @@ char* freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* cert,
 fail:
 	free(fp);
 	free(fp_buffer);
-	return NULL;
+	return nullptr;
 }
 
 static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
@@ -1527,9 +1527,9 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 	const size_t blocksize = 2048;
 	size_t offset = 0;
 	size_t length = blocksize;
-	char* pem = NULL;
+	char* pem = nullptr;
 
-	*ppem = NULL;
+	*ppem = nullptr;
 	if (plength)
 		*plength = 0;
 
@@ -1586,7 +1586,7 @@ char* freerdp_certificate_get_pem_ex(const rdpCertificate* cert, size_t* pLength
 	WINPR_ASSERT(cert);
 
 	if (!cert->x509)
-		return NULL;
+		return nullptr;
 
 	/**
 	 * Don't manage certificates internally, leave it up entirely to the external client
@@ -1597,10 +1597,10 @@ char* freerdp_certificate_get_pem_ex(const rdpCertificate* cert, size_t* pLength
 	if (!bio)
 	{
 		WLog_ERR(TAG, "BIO_new() failure");
-		return NULL;
+		return nullptr;
 	}
 
-	char* pem = NULL;
+	char* pem = nullptr;
 
 	const int status = PEM_write_bio_X509(bio, cert->x509);
 	if (status < 0)
@@ -1670,11 +1670,11 @@ BOOL freerdp_certificate_check_eku(const rdpCertificate* cert, int nid)
 BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** PublicKey,
                                         DWORD* PublicKeyLength)
 {
-	BYTE* ptr = NULL;
-	BYTE* optr = NULL;
+	BYTE* ptr = nullptr;
+	BYTE* optr = nullptr;
 	int length = 0;
 	BOOL status = FALSE;
-	EVP_PKEY* pkey = NULL;
+	EVP_PKEY* pkey = nullptr;
 
 	WINPR_ASSERT(cert);
 
@@ -1686,7 +1686,7 @@ BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** Publi
 		goto exit;
 	}
 
-	length = i2d_PublicKey(pkey, NULL);
+	length = i2d_PublicKey(pkey, nullptr);
 
 	if (length < 1)
 	{
@@ -1765,18 +1765,18 @@ BOOL freerdp_certificate_publickey_encrypt(const rdpCertificate* cert, const BYT
 	WINPR_ASSERT(pcbOutput);
 
 	BOOL ret = FALSE;
-	BYTE* output = NULL;
+	BYTE* output = nullptr;
 	EVP_PKEY* pkey = X509_get0_pubkey(cert->x509);
 	if (!pkey)
 		return FALSE;
 
-	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(pkey, NULL);
+	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(pkey, nullptr);
 	if (!ctx)
 		return FALSE;
 
 	size_t outputSize = WINPR_ASSERTING_INT_CAST(size_t, EVP_PKEY_size(pkey));
 	output = malloc(outputSize);
-	if (output == NULL)
+	if (output == nullptr)
 		goto out;
 	*pcbOutput = outputSize;
 
@@ -1789,7 +1789,7 @@ BOOL freerdp_certificate_publickey_encrypt(const rdpCertificate* cert, const BYT
 	}
 
 	*poutput = output;
-	output = NULL;
+	output = nullptr;
 	ret = TRUE;
 out:
 	EVP_PKEY_CTX_free(ctx);
@@ -1803,11 +1803,11 @@ static RSA* freerdp_certificate_get_RSA(const rdpCertificate* cert)
 	WINPR_ASSERT(cert);
 
 	if (!freerdp_certificate_is_rsa(cert))
-		return NULL;
+		return nullptr;
 
 	EVP_PKEY* pubkey = X509_get0_pubkey(cert->x509);
 	if (!pubkey)
-		return NULL;
+		return nullptr;
 
 	return EVP_PKEY_get1_RSA(pubkey);
 }
@@ -1820,20 +1820,20 @@ BYTE* freerdp_certificate_get_der(const rdpCertificate* cert, size_t* pLength)
 	if (pLength)
 		*pLength = 0;
 
-	const int rc = i2d_X509(cert->x509, NULL);
+	const int rc = i2d_X509(cert->x509, nullptr);
 	if (rc <= 0)
-		return NULL;
+		return nullptr;
 
 	BYTE* ptr = calloc(WINPR_ASSERTING_INT_CAST(size_t, rc) + 1, sizeof(BYTE));
 	if (!ptr)
-		return NULL;
+		return nullptr;
 	BYTE* i2d_ptr = ptr;
 
 	const int rc2 = i2d_X509(cert->x509, &i2d_ptr);
 	if (rc2 <= 0)
 	{
 		free(ptr);
-		return NULL;
+		return nullptr;
 	}
 
 	if (pLength)
@@ -1867,39 +1867,39 @@ char* freerdp_certificate_get_param(const rdpCertificate* cert, enum FREERDP_CER
 	*psize = 0;
 
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
-	const BIGNUM* bn = NULL;
+	const BIGNUM* bn = nullptr;
 	RSA* rsa = freerdp_certificate_get_RSA(cert);
 	switch (what)
 	{
 		case FREERDP_CERT_RSA_E:
-			RSA_get0_key(rsa, NULL, &bn, NULL);
+			RSA_get0_key(rsa, nullptr, &bn, nullptr);
 			break;
 		case FREERDP_CERT_RSA_N:
-			RSA_get0_key(rsa, &bn, NULL, NULL);
+			RSA_get0_key(rsa, &bn, nullptr, nullptr);
 			break;
 		default:
 			RSA_free(rsa);
-			return NULL;
+			return nullptr;
 	}
 	RSA_free(rsa);
 #else
 	EVP_PKEY* pkey = X509_get0_pubkey(cert->x509);
 	if (!pkey)
-		return NULL;
+		return nullptr;
 
-	BIGNUM* bn = NULL;
+	BIGNUM* bn = nullptr;
 	switch (what)
 	{
 		case FREERDP_CERT_RSA_E:
 			if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &bn))
-				return NULL;
+				return nullptr;
 			break;
 		case FREERDP_CERT_RSA_N:
 			if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &bn))
-				return NULL;
+				return nullptr;
 			break;
 		default:
-			return NULL;
+			return nullptr;
 	}
 #endif
 

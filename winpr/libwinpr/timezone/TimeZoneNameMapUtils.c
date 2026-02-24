@@ -90,7 +90,7 @@ static void tz_context_free(void)
 		tz_entry_free(&tz_context.entries[x]);
 	free(tz_context.entries);
 	tz_context.count = 0;
-	tz_context.entries = NULL;
+	tz_context.entries = nullptr;
 }
 
 #if defined(WITH_TIMEZONE_FROM_FILE) && defined(WITH_WINPR_JSON)
@@ -101,7 +101,7 @@ static char* tz_get_object_str(WINPR_JSON* json, size_t pos, const char* name)
 	{
 		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", missing an Object named '%s'", pos,
 		          name);
-		return NULL;
+		return nullptr;
 	}
 	WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(json, name);
 	WINPR_ASSERT(obj);
@@ -110,15 +110,15 @@ static char* tz_get_object_str(WINPR_JSON* json, size_t pos, const char* name)
 		WLog_WARN(TAG,
 		          "Invalid JSON entry at entry %" PRIuz ", Object named '%s': Not of type string",
 		          pos, name);
-		return NULL;
+		return nullptr;
 	}
 
 	const char* str = WINPR_JSON_GetStringValue(obj);
 	if (!str)
 	{
-		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", Object named '%s': NULL string",
+		WLog_WARN(TAG, "Invalid JSON entry at entry %" PRIuz ", Object named '%s': nullptr string",
 		          pos, name);
-		return NULL;
+		return nullptr;
 	}
 
 	return _strdup(str);
@@ -189,7 +189,7 @@ static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvconte
 
 #if defined(WITH_TIMEZONE_FROM_FILE) && defined(WITH_WINPR_JSON)
 	{
-		WINPR_JSON* json = NULL;
+		WINPR_JSON* json = nullptr;
 		char* filename = GetCombinedPath(WINPR_RESOURCE_ROOT, "TimeZoneNameMap.json");
 		if (!filename)
 		{
@@ -248,9 +248,9 @@ const TimeZoneNameMapEntry* TimeZoneGetAt(size_t index)
 {
 	static INIT_ONCE init_guard = INIT_ONCE_STATIC_INIT;
 
-	InitOnceExecuteOnce(&init_guard, load_timezones, &tz_context, NULL);
+	InitOnceExecuteOnce(&init_guard, load_timezones, &tz_context, nullptr);
 	if (index >= tz_context.count)
-		return NULL;
+		return nullptr;
 	return &tz_context.entries[index];
 }
 
@@ -270,7 +270,7 @@ static const char* return_type(const TimeZoneNameMapEntry* entry, TimeZoneNameTy
 		case TIME_ZONE_NAME_DAYLIGHT:
 			return entry->DaylightName;
 		default:
-			return NULL;
+			return nullptr;
 	}
 }
 
@@ -299,7 +299,7 @@ static const char* get_for_type(const char* val, TimeZoneNameType type,
 	{
 		const TimeZoneNameMapEntry* entry = TimeZoneGetAt(index++);
 		if (!entry)
-			return NULL;
+			return nullptr;
 		if (cmp(entry, val))
 			return return_type(entry, type);
 	}
@@ -308,11 +308,11 @@ static const char* get_for_type(const char* val, TimeZoneNameType type,
 #if defined(WITH_TIMEZONE_ICU)
 static char* get_wzid_icu(const UChar* utzid, size_t utzid_len)
 {
-	char* res = NULL;
+	char* res = nullptr;
 	UErrorCode error = U_ZERO_ERROR;
 
 	int32_t rc = ucal_getWindowsTimeZoneID(utzid, WINPR_ASSERTING_INT_CAST(int32_t, utzid_len),
-	                                       NULL, 0, &error);
+	                                       nullptr, 0, &error);
 	if ((error == U_BUFFER_OVERFLOW_ERROR) && (rc > 0))
 	{
 		rc++; // make space for '\0'
@@ -323,7 +323,7 @@ static char* get_wzid_icu(const UChar* utzid, size_t utzid_len)
 			int32_t rc2 = ucal_getWindowsTimeZoneID(
 			    utzid, WINPR_ASSERTING_INT_CAST(int32_t, utzid_len), wzid, rc, &error2);
 			if (U_SUCCESS(error2) && (rc2 > 0))
-				res = ConvertWCharNToUtf8Alloc(wzid, (size_t)rc, NULL);
+				res = ConvertWCharNToUtf8Alloc(wzid, (size_t)rc, nullptr);
 			free(wzid);
 		}
 	}
@@ -335,7 +335,7 @@ static char* get(const char* iana)
 	size_t utzid_len = 0;
 	UChar* utzid = ConvertUtf8ToWCharAlloc(iana, &utzid_len);
 	if (!utzid)
-		return NULL;
+		return nullptr;
 
 	char* wzid = get_wzid_icu(utzid, utzid_len);
 	free(utzid);
@@ -346,7 +346,7 @@ static const char* map_fallback(const char* iana, TimeZoneNameType type)
 {
 	char* wzid = get(iana);
 	if (!wzid)
-		return NULL;
+		return nullptr;
 
 	const char* res = get_for_type(wzid, type, id_cmp);
 	free(wzid);
@@ -356,14 +356,14 @@ static const char* map_fallback(const char* iana, TimeZoneNameType type)
 static const char* map_fallback(const char* iana, WINPR_ATTR_UNUSED TimeZoneNameType type)
 {
 	if (!iana)
-		return NULL;
+		return nullptr;
 
 	for (size_t x = 0; x < WindowsZonesNrElements; x++)
 	{
 		const WINDOWS_TZID_ENTRY* const entry = &WindowsZones[x];
 		if (strchr(entry->tzid, ' '))
 		{
-			const char* res = NULL;
+			const char* res = nullptr;
 			char* tzid = _strdup(entry->tzid);
 			char* ctzid = tzid;
 			while (tzid)
@@ -386,14 +386,14 @@ static const char* map_fallback(const char* iana, WINPR_ATTR_UNUSED TimeZoneName
 			return entry->windows;
 	}
 
-	return NULL;
+	return nullptr;
 }
 #endif
 
 const char* TimeZoneIanaToWindows(const char* iana, TimeZoneNameType type)
 {
 	if (!iana)
-		return NULL;
+		return nullptr;
 
 	const char* val = get_for_type(iana, type, iana_cmp);
 	if (val)
@@ -401,7 +401,7 @@ const char* TimeZoneIanaToWindows(const char* iana, TimeZoneNameType type)
 
 	const char* wzid = map_fallback(iana, type);
 	if (!wzid)
-		return NULL;
+		return nullptr;
 
 	return get_for_type(wzid, type, id_cmp);
 }

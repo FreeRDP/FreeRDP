@@ -85,7 +85,7 @@ static BOOL test_winpr_asprintf(void)
 	const char test[] = "test string case";
 	const size_t len = strnlen(test, sizeof(test));
 
-	char* str = NULL;
+	char* str = nullptr;
 	size_t slen = 0;
 	const int res = winpr_asprintf(&str, &slen, "%s", test);
 	if (!str)
@@ -106,10 +106,10 @@ fail:
 
 int TestString(int argc, char* argv[])
 {
-	const WCHAR* p = NULL;
+	const WCHAR* p = nullptr;
 	size_t pos = 0;
 	size_t length = 0;
-	WCHAR* context = NULL;
+	WCHAR* context = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -163,9 +163,9 @@ int TestString(int argc, char* argv[])
 
 	p = _wcschr(&testStringW[pos + 1], search.w);
 
-	if (p != NULL)
+	if (p != nullptr)
 	{
-		printf("_wcschr error: return value mismatch: Actual: %p, Expected: NULL\n",
+		printf("_wcschr error: return value mismatch: Actual: %p, Expected: nullptr\n",
 		       (const void*)p);
 		return -1;
 	}
@@ -188,7 +188,7 @@ int TestString(int argc, char* argv[])
 		return -1;
 	}
 
-	p = wcstok_s(NULL, testDelimiterW, &context);
+	p = wcstok_s(nullptr, testDelimiterW, &context);
 
 	WCHAR testToken2W[ARRAYSIZE(testToken2A)] = WINPR_C_ARRAY_INIT;
 	(void)ConvertUtf8NToWChar(testToken2A, ARRAYSIZE(testToken2A), testToken2W,
@@ -199,7 +199,7 @@ int TestString(int argc, char* argv[])
 		return -1;
 	}
 
-	p = wcstok_s(NULL, testDelimiterW, &context);
+	p = wcstok_s(nullptr, testDelimiterW, &context);
 
 	WCHAR testToken3W[ARRAYSIZE(testToken3A)] = WINPR_C_ARRAY_INIT;
 	(void)ConvertUtf8NToWChar(testToken3A, ARRAYSIZE(testToken3A), testToken3W,
@@ -210,11 +210,11 @@ int TestString(int argc, char* argv[])
 		return -1;
 	}
 
-	p = wcstok_s(NULL, testDelimiterW, &context);
+	p = wcstok_s(nullptr, testDelimiterW, &context);
 
-	if (p != NULL)
+	if (p != nullptr)
 	{
-		printf("wcstok_s error: return value is not NULL\n");
+		printf("wcstok_s error: return value is not nullptr\n");
 		return -1;
 	}
 

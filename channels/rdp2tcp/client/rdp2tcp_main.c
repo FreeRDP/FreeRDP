@@ -56,7 +56,7 @@ static int init_external_addin(Plugin* plugin)
 
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	saAttr.bInheritHandle = TRUE;
-	saAttr.lpSecurityDescriptor = NULL;
+	saAttr.lpSecurityDescriptor = nullptr;
 	siStartInfo.cb = sizeof(STARTUPINFO);
 	siStartInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 	siStartInfo.dwFlags = STARTF_USESTDHANDLES;
@@ -95,14 +95,14 @@ static int init_external_addin(Plugin* plugin)
 	}
 
 	plugin->commandline = _strdup(args->argv[1]);
-	if (!CreateProcessA(NULL,
+	if (!CreateProcessA(nullptr,
 	                    plugin->commandline, // command line
-	                    NULL,                // process security attributes
-	                    NULL,                // primary thread security attributes
+	                    nullptr,             // process security attributes
+	                    nullptr,             // primary thread security attributes
 	                    TRUE,                // handles are inherited
 	                    0,                   // creation flags
-	                    NULL,                // use parent's environment
-	                    NULL,                // use parent's current directory
+	                    nullptr,             // use parent's environment
+	                    nullptr,             // use parent's current directory
 	                    &siStartInfo,        // STARTUPINFO pointer
 	                    &procInfo            // receives PROCESS_INFORMATION
 	                    ))
@@ -143,8 +143,8 @@ static DWORD WINAPI copyThread(void* data)
 		}
 
 		// if (!ReadFile(plugin->hStdOutputRead, plugin->buffer, sizeof plugin->buffer, &dwRead,
-		// NULL))
-		if (!ReadFile(plugin->hStdOutputRead, buffer, bufsize, &dwRead, NULL))
+		// nullptr))
+		if (!ReadFile(plugin->hStdOutputRead, buffer, bufsize, &dwRead, nullptr))
 		{
 			free(buffer);
 			goto fail;
@@ -190,11 +190,12 @@ static void dataReceived(Plugin* plugin, void* pData, UINT32 dataLength, UINT32 
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
-		if (!WriteFile(plugin->hStdInputWrite, &totalLength, sizeof(totalLength), &dwWritten, NULL))
+		if (!WriteFile(plugin->hStdInputWrite, &totalLength, sizeof(totalLength), &dwWritten,
+		               nullptr))
 			closeChannel(plugin);
 	}
 
-	if (!WriteFile(plugin->hStdInputWrite, pData, dataLength, &dwWritten, NULL))
+	if (!WriteFile(plugin->hStdInputWrite, pData, dataLength, &dwWritten, nullptr))
 		closeChannel(plugin);
 }
 
@@ -246,10 +247,10 @@ static void channel_initialized(Plugin* plugin)
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(!plugin->writeComplete);
-	plugin->writeComplete = CreateEvent(NULL, TRUE, FALSE, NULL);
+	plugin->writeComplete = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
 	WINPR_ASSERT(!plugin->copyThread);
-	plugin->copyThread = CreateThread(NULL, 0, copyThread, plugin, 0, NULL);
+	plugin->copyThread = CreateThread(nullptr, 0, copyThread, plugin, 0, nullptr);
 }
 
 static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInitHandle, UINT event,
@@ -317,7 +318,7 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
 	channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;
 
-	if (pEntryPointsEx->pVirtualChannelInitEx(plugin, NULL, pInitHandle, &channelDef, 1,
+	if (pEntryPointsEx->pVirtualChannelInitEx(plugin, nullptr, pInitHandle, &channelDef, 1,
 	                                          VIRTUAL_CHANNEL_VERSION_WIN2000,
 	                                          VirtualChannelInitEventEx) != CHANNEL_RC_OK)
 	{

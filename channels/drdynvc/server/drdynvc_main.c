@@ -44,11 +44,11 @@ static DWORD WINAPI drdynvc_server_thread(WINPR_ATTR_UNUSED LPVOID arg)
 	DrdynvcServerContext* context;
 	UINT error = ERROR_INTERNAL_ERROR;
 	context = (DrdynvcServerContext*) arg;
-	buffer = NULL;
+	buffer = nullptr;
 	BytesReturned = 0;
-	ChannelEvent = NULL;
+	ChannelEvent = nullptr;
 
-	s = Stream_New(NULL, 4096);
+	s = Stream_New(nullptr, 4096);
 
 	if (!s)
 	{
@@ -80,7 +80,7 @@ static DWORD WINAPI drdynvc_server_thread(WINPR_ATTR_UNUSED LPVOID arg)
 			break;
 		}
 
-		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0,
+		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, nullptr, 0,
 		                           &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -128,18 +128,18 @@ static UINT drdynvc_server_start(DrdynvcServerContext* context)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if (!(context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(context->priv->StopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
 		WLog_ERR(TAG, "CreateEvent failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
 	if (!(context->priv->Thread =
-	          CreateThread(NULL, 0, drdynvc_server_thread, (void*)context, 0, NULL)))
+	          CreateThread(nullptr, 0, drdynvc_server_thread, (void*)context, 0, nullptr)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		(void)CloseHandle(context->priv->StopEvent);
-		context->priv->StopEvent = NULL;
+		context->priv->StopEvent = nullptr;
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -169,7 +169,7 @@ static UINT drdynvc_server_stop(DrdynvcServerContext* context)
 
 DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm)
 {
-	DrdynvcServerContext* context = NULL;
+	DrdynvcServerContext* context = nullptr;
 	context = (DrdynvcServerContext*)calloc(1, sizeof(DrdynvcServerContext));
 
 	if (context)
@@ -183,7 +183,7 @@ DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm)
 		{
 			WLog_ERR(TAG, "calloc failed!");
 			free(context);
-			return NULL;
+			return nullptr;
 		}
 	}
 	else

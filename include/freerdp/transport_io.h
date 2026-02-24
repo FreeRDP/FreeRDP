@@ -159,7 +159,7 @@ extern "C"
 
 	/**
 	 * @brief Free a transport layer instance
-	 * @param layer A pointer to the layer to free or \b NULL
+	 * @param layer A pointer to the layer to free or \b nullptr
 	 * @since version 3.9.0
 	 */
 	FREERDP_API void transport_layer_free(rdpTransportLayer* layer);
@@ -172,7 +172,7 @@ extern "C"
 	 * @param transport A pointer to the transport instance to use
 	 * @param contextSize The size of the context to use. If \b 0 no rdpTransportLayer::userContext
 	 * is allocated or freed.
-	 * @return A new transport layer instance or \b NULL in case of failure
+	 * @return A new transport layer instance or \b nullptr in case of failure
 	 * @since version 3.9.0
 	 */
 	WINPR_ATTR_MALLOC(transport_layer_free, 1)

@@ -46,10 +46,10 @@ RdpEarPackageType rdpear_packageType_from_name(const WinPrAsn1_OctetString* pack
 
 wStream* rdpear_encodePayload(BOOL isKerb, wStream* payload)
 {
-	wStream* ret = NULL;
+	wStream* ret = nullptr;
 	WinPrAsn1Encoder* enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 	if (!enc)
-		return NULL;
+		return nullptr;
 
 	/* TSRemoteGuardInnerPacket ::= SEQUENCE { */
 	if (!WinPrAsn1EncSeqContainer(enc))
@@ -81,14 +81,14 @@ wStream* rdpear_encodePayload(BOOL isKerb, wStream* payload)
 	if (!WinPrAsn1EncEndContainer(enc))
 		goto out;
 
-	ret = Stream_New(NULL, 100);
+	ret = Stream_New(nullptr, 100);
 	if (!ret)
 		goto out;
 
 	if (!WinPrAsn1EncToStream(enc, ret))
 	{
 		Stream_Free(ret, TRUE);
-		ret = NULL;
+		ret = nullptr;
 		goto out;
 	}
 out:
@@ -244,7 +244,7 @@ void ndr_destroy_RPC_UNICODE_STRING(NdrContext* context, const void* hints, RPC_
 	if (!obj)
 		return;
 	free(obj->Buffer);
-	obj->Buffer = NULL;
+	obj->Buffer = nullptr;
 }
 
 static void ndr_descr_destroy_RPC_UNICODE_STRING(NdrContext* context, const void* hints, void* obj)
@@ -292,8 +292,8 @@ static const NdrMessageDescr RPC_UNICODE_STRING_Array_descr_s = {
 	sizeof(RPC_UNICODE_STRING),
 	ndr_read_RPC_UNICODE_STRING_Array,
 	ndr_write_RPC_UNICODE_STRING_Array,
-	NULL,
-	NULL
+	nullptr,
+	nullptr
 };
 
 static NdrMessageType ndr_RPC_UNICODE_STRING_Array_descr(void)
@@ -367,10 +367,10 @@ void ndr_destroy_KERB_RPC_INTERNAL_NAME(NdrContext* context, const void* hints,
 		return;
 
 	for (UINT32 i = 0; i < obj->nameHints.count; i++)
-		ndr_destroy_RPC_UNICODE_STRING(context, NULL, &obj->Names[i]);
+		ndr_destroy_RPC_UNICODE_STRING(context, nullptr, &obj->Names[i]);
 
 	free(obj->Names);
-	obj->Names = NULL;
+	obj->Names = nullptr;
 }
 
 static void ndr_descr_destroy_KERB_RPC_INTERNAL_NAME(NdrContext* context, const void* hints,
@@ -382,7 +382,7 @@ static void ndr_descr_destroy_KERB_RPC_INTERNAL_NAME(NdrContext* context, const 
 static NdrMessageDescr KERB_RPC_INTERNAL_NAME_descr_s = { NDR_ARITY_SIMPLE,
 	                                                      sizeof(KERB_RPC_INTERNAL_NAME),
 	                                                      ndr_descr_read_KERB_RPC_INTERNAL_NAME,
-	                                                      NULL,
+	                                                      nullptr,
 	                                                      ndr_descr_destroy_KERB_RPC_INTERNAL_NAME,
 	                                                      ndr_descr_dump_KERB_RPC_INTERNAL_NAME };
 

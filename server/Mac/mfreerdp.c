@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 	instance->info = &info;
 	instance->PeerAccepted = mf_peer_accepted;
 
-	if (instance->Open(instance, NULL, 3389))
+	if (instance->Open(instance, nullptr, 3389))
 	{
 		mf_server_main_loop(instance);
 	}

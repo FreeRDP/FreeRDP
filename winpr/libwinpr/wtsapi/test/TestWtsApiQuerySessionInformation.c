@@ -8,17 +8,17 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 {
 	DWORD count = 0;
 	BOOL bSuccess = 0;
-	HANDLE hServer = NULL;
-	LPSTR pBuffer = NULL;
+	HANDLE hServer = nullptr;
+	LPSTR pBuffer = nullptr;
 	DWORD sessionId = 0;
 	DWORD bytesReturned = 0;
-	PWTS_SESSION_INFOA pSessionInfo = NULL;
+	PWTS_SESSION_INFOA pSessionInfo = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
 #ifndef _WIN32
-	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0))
+	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", nullptr, 0))
 	{
 		printf("%s: No RDS environment detected, skipping test\n", __func__);
 		return 0;
@@ -28,7 +28,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 	hServer = WTS_CURRENT_SERVER_HANDLE;
 
 	count = 0;
-	pSessionInfo = NULL;
+	pSessionInfo = nullptr;
 
 	bSuccess = WTSEnumerateSessionsA(hServer, 0, 1, &pSessionInfo, &count);
 
@@ -42,18 +42,18 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 	for (DWORD index = 0; index < count; index++)
 	{
-		char* Username = NULL;
-		char* Domain = NULL;
-		char* ClientName = NULL;
+		char* Username = nullptr;
+		char* Domain = nullptr;
+		char* ClientName = nullptr;
 		ULONG ClientBuildNumber = 0;
 		USHORT ClientProductId = 0;
 		ULONG ClientHardwareId = 0;
 		USHORT ClientProtocolType = 0;
-		PWTS_CLIENT_DISPLAY ClientDisplay = NULL;
-		PWTS_CLIENT_ADDRESS ClientAddress = NULL;
+		PWTS_CLIENT_DISPLAY ClientDisplay = nullptr;
+		PWTS_CLIENT_ADDRESS ClientAddress = nullptr;
 		WTS_CONNECTSTATE_CLASS ConnectState = WTSInit;
 
-		pBuffer = NULL;
+		pBuffer = nullptr;
 		bytesReturned = 0;
 
 		sessionId = pSessionInfo[index].SessionId;

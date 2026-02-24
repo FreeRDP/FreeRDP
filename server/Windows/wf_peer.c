@@ -63,7 +63,7 @@ static BOOL wf_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 	if (!wf_info_peer_register(context->info, context))
 	{
 		WTSCloseServer(context->vcm);
-		context->vcm = NULL;
+		context->vcm = nullptr;
 		return FALSE;
 	}
 
@@ -113,7 +113,7 @@ static BOOL wf_peer_post_connect(freerdp_peer* client)
 	settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	if ((get_screen_info(wfi->screenID, NULL, 0, &wfi->servscreen_width, &wfi->servscreen_height,
+	if ((get_screen_info(wfi->screenID, nullptr, 0, &wfi->servscreen_width, &wfi->servscreen_height,
 	                     &wfi->bitsPerPixel) == 0) ||
 	    (wfi->servscreen_width == 0) || (wfi->servscreen_height == 0) || (wfi->bitsPerPixel == 0))
 	{
@@ -179,7 +179,7 @@ BOOL wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	HANDLE hThread;
 
-	if (!(hThread = CreateThread(NULL, 0, wf_peer_main_loop, client, 0, NULL)))
+	if (!(hThread = CreateThread(nullptr, 0, wf_peer_main_loop, client, 0, nullptr)))
 		return FALSE;
 
 	(void)CloseHandle(hThread);
@@ -237,7 +237,7 @@ static BOOL wf_peer_read_settings(freerdp_peer* client)
 	settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	char* CertificateFile = NULL;
+	char* CertificateFile = nullptr;
 	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("CertificateFile"),
 	                                   &(CertificateFile)))
 		CertificateFile = _strdup("server.crt");
@@ -250,12 +250,12 @@ static BOOL wf_peer_read_settings(freerdp_peer* client)
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
 		return FALSE;
 
-	char* PrivateKeyFile = NULL;
+	char* PrivateKeyFile = nullptr;
 	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("PrivateKeyFile"),
 	                                   &(PrivateKeyFile)))
 		PrivateKeyFile = _strdup("server.key");
 
-	rdpPrivateKey* key = freerdp_key_new_from_file_enc(PrivateKeyFile, NULL);
+	rdpPrivateKey* key = freerdp_key_new_from_file_enc(PrivateKeyFile, nullptr);
 	free(PrivateKeyFile);
 
 	if (!key)
@@ -328,13 +328,14 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 		client->context->input->ExtendedMouseEvent = wf_peer_extended_mouse_event_dummy;
 	}
 
-	if (!(context->socketEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(context->socketEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto fail_socket_event;
 
-	if (!(context->socketSemaphore = CreateSemaphore(NULL, 0, 1, NULL)))
+	if (!(context->socketSemaphore = CreateSemaphore(nullptr, 0, 1, nullptr)))
 		goto fail_socket_semaphore;
 
-	if (!(context->socketThread = CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL)))
+	if (!(context->socketThread =
+	          CreateThread(nullptr, 0, wf_peer_socket_listener, client, 0, nullptr)))
 		goto fail_socket_thread;
 
 	WLog_INFO(TAG, "We've got a client %s", client->local ? "(local)" : client->hostname);
@@ -358,7 +359,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 				wf_update_peer_send(wfi, context);
 
 			(void)ResetEvent(context->updateEvent);
-			ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
+			ReleaseSemaphore(wfi->updateSemaphore, 1, nullptr);
 		}
 
 		if (WaitForSingleObject(context->socketEvent, 0) == 0)
@@ -370,7 +371,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			}
 
 			(void)ResetEvent(context->socketEvent);
-			ReleaseSemaphore(context->socketSemaphore, 1, NULL);
+			ReleaseSemaphore(context->socketSemaphore, 1, nullptr);
 
 			if (context->socketClose)
 				break;
@@ -393,17 +394,17 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	if (WaitForSingleObject(context->updateEvent, 0) == 0)
 	{
 		(void)ResetEvent(context->updateEvent);
-		ReleaseSemaphore(wfi->updateSemaphore, 1, NULL);
+		ReleaseSemaphore(wfi->updateSemaphore, 1, nullptr);
 	}
 
 	wf_update_peer_deactivate(wfi, context);
 	client->Disconnect(client);
 fail_socket_thread:
 	(void)CloseHandle(context->socketSemaphore);
-	context->socketSemaphore = NULL;
+	context->socketSemaphore = nullptr;
 fail_socket_semaphore:
 	(void)CloseHandle(context->socketEvent);
-	context->socketEvent = NULL;
+	context->socketEvent = nullptr;
 fail_socket_event:
 fail_socked_closed:
 fail_client_initialize:

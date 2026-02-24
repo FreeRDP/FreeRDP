@@ -186,7 +186,7 @@ Shadow_IRDPSessionEvents_QueryInterface(__RPC__in _IRDPSessionEvents* This,
                                         /* [annotation][iid_is][out] */
                                         _COM_Outptr_ void** ppvObject)
 {
-	*ppvObject = NULL;
+	*ppvObject = nullptr;
 
 	if (IsEqualIID(riid, &DIID__IRDPSessionEvents) || IsEqualIID(riid, &IID_IDispatch) ||
 	    IsEqualIID(riid, &IID_IUnknown))
@@ -278,7 +278,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(_IRDPSessionEve
 			IDispatch* pDispatch;
 			IRDPSRAPIAttendee* pAttendee;
 			vr.vt = VT_DISPATCH;
-			vr.pdispVal = NULL;
+			vr.pdispVal = nullptr;
 			hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
 
 			if (FAILED(hr))
@@ -341,7 +341,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(_IRDPSessionEve
 			IDispatch* pDispatch;
 			IRDPSRAPIAttendee* pAttendee;
 			vr.vt = VT_INT;
-			vr.pdispVal = NULL;
+			vr.pdispVal = nullptr;
 			hr = DispGetParam(pDispParams, 1, VT_INT, &vr, &uArgErr);
 
 			if (FAILED(hr))
@@ -353,7 +353,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(_IRDPSessionEve
 
 			level = vr.intVal;
 			vr.vt = VT_DISPATCH;
-			vr.pdispVal = NULL;
+			vr.pdispVal = nullptr;
 			hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
 
 			if (FAILED(hr))
@@ -479,7 +479,7 @@ int win_shadow_wds_wnd_init(winShadowSubsystem* subsystem)
 	HMODULE hModule;
 	HINSTANCE hInstance;
 	WNDCLASSEX wndClassEx = WINPR_C_ARRAY_INIT;
-	hModule = GetModuleHandle(NULL);
+	hModule = GetModuleHandle(nullptr);
 
 	wndClassEx.cbSize = sizeof(WNDCLASSEX);
 	wndClassEx.style = 0;
@@ -487,12 +487,12 @@ int win_shadow_wds_wnd_init(winShadowSubsystem* subsystem)
 	wndClassEx.cbClsExtra = 0;
 	wndClassEx.cbWndExtra = 0;
 	wndClassEx.hInstance = hModule;
-	wndClassEx.hIcon = NULL;
-	wndClassEx.hCursor = NULL;
-	wndClassEx.hbrBackground = NULL;
+	wndClassEx.hIcon = nullptr;
+	wndClassEx.hCursor = nullptr;
+	wndClassEx.hbrBackground = nullptr;
 	wndClassEx.lpszMenuName = _T("ShadowWndMenu");
 	wndClassEx.lpszClassName = _T("ShadowWndClass");
-	wndClassEx.hIconSm = NULL;
+	wndClassEx.hIconSm = nullptr;
 
 	if (!RegisterClassEx(&wndClassEx))
 	{
@@ -502,7 +502,7 @@ int win_shadow_wds_wnd_init(winShadowSubsystem* subsystem)
 
 	hInstance = wndClassEx.hInstance;
 	subsystem->hWnd = CreateWindowEx(0, wndClassEx.lpszClassName, 0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0,
-	                                 hInstance, NULL);
+	                                 hInstance, nullptr);
 
 	if (!subsystem->hWnd)
 	{
@@ -521,17 +521,17 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	long top = 0;
 	long right = 0;
 	long bottom = 0;
-	BSTR bstrAuthString = NULL;
-	BSTR bstrGroupName = NULL;
-	BSTR bstrPassword = NULL;
-	BSTR bstrPropertyName = NULL;
+	BSTR bstrAuthString = nullptr;
+	BSTR bstrGroupName = nullptr;
+	BSTR bstrPassword = nullptr;
+	BSTR bstrPropertyName = nullptr;
 	VARIANT varPropertyValue;
-	rdpAssistanceFile* file = NULL;
-	IConnectionPoint* pCP = NULL;
-	IConnectionPointContainer* pCPC = NULL;
+	rdpAssistanceFile* file = nullptr;
+	IConnectionPoint* pCP = nullptr;
+	IConnectionPointContainer* pCPC = nullptr;
 
 	win_shadow_wds_wnd_init(subsystem);
-	HRESULT hr = OleInitialize(NULL);
+	HRESULT hr = OleInitialize(nullptr);
 
 	if (FAILED(hr))
 	{
@@ -539,7 +539,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
 	if (FAILED(hr))
 	{
@@ -547,7 +547,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	hr = CoCreateInstance(&CLSID_RDPSession, NULL, CLSCTX_ALL, &IID_IRDPSRAPISharingSession,
+	hr = CoCreateInstance(&CLSID_RDPSession, nullptr, CLSCTX_ALL, &IID_IRDPSRAPISharingSession,
 	                      (void**)&(subsystem->pSharingSession));
 
 	if (FAILED(hr))
@@ -743,7 +743,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 			return -1;
 		}
 
-		ConnectionString2 = ConvertWCharToUtf8Alloc(bstrConnectionString, NULL);
+		ConnectionString2 = ConvertWCharToUtf8Alloc(bstrConnectionString, nullptr);
 		SysFreeString(bstrConnectionString);
 		status2 = freerdp_assistance_set_connection_string2(file, ConnectionString2, "Shadow123!");
 		free(ConnectionString2);
@@ -794,61 +794,61 @@ int win_shadow_wds_uninit(winShadowSubsystem* subsystem)
 	{
 		subsystem->pSharingSession->lpVtbl->Close(subsystem->pSharingSession);
 		subsystem->pSharingSession->lpVtbl->Release(subsystem->pSharingSession);
-		subsystem->pSharingSession = NULL;
+		subsystem->pSharingSession = nullptr;
 	}
 
 	if (subsystem->pVirtualChannelMgr)
 	{
 		subsystem->pVirtualChannelMgr->lpVtbl->Release(subsystem->pVirtualChannelMgr);
-		subsystem->pVirtualChannelMgr = NULL;
+		subsystem->pVirtualChannelMgr = nullptr;
 	}
 
 	if (subsystem->pApplicationFilter)
 	{
 		subsystem->pApplicationFilter->lpVtbl->Release(subsystem->pApplicationFilter);
-		subsystem->pApplicationFilter = NULL;
+		subsystem->pApplicationFilter = nullptr;
 	}
 
 	if (subsystem->pAttendeeMgr)
 	{
 		subsystem->pAttendeeMgr->lpVtbl->Release(subsystem->pAttendeeMgr);
-		subsystem->pAttendeeMgr = NULL;
+		subsystem->pAttendeeMgr = nullptr;
 	}
 
 	if (subsystem->pSessionProperties)
 	{
 		subsystem->pSessionProperties->lpVtbl->Release(subsystem->pSessionProperties);
-		subsystem->pSessionProperties = NULL;
+		subsystem->pSessionProperties = nullptr;
 	}
 
 	if (subsystem->pInvitationMgr)
 	{
 		subsystem->pInvitationMgr->lpVtbl->Release(subsystem->pInvitationMgr);
-		subsystem->pInvitationMgr = NULL;
+		subsystem->pInvitationMgr = nullptr;
 	}
 
 	if (subsystem->pInvitation)
 	{
 		subsystem->pInvitation->lpVtbl->Release(subsystem->pInvitation);
-		subsystem->pInvitation = NULL;
+		subsystem->pInvitation = nullptr;
 	}
 
 	if (subsystem->pAssistanceFile)
 	{
 		freerdp_assistance_file_free(subsystem->pAssistanceFile);
-		subsystem->pAssistanceFile = NULL;
+		subsystem->pAssistanceFile = nullptr;
 	}
 
 	if (subsystem->hWnd)
 	{
 		DestroyWindow(subsystem->hWnd);
-		subsystem->hWnd = NULL;
+		subsystem->hWnd = nullptr;
 	}
 
 	if (subsystem->shw)
 	{
 		win_shadow_rdp_uninit(subsystem);
-		subsystem->shw = NULL;
+		subsystem->shw = nullptr;
 	}
 
 	return 1;

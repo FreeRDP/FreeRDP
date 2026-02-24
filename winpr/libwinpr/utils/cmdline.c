@@ -60,7 +60,7 @@ static void log_error_(DWORD flags, LPCSTR message, int index, WINPR_ATTR_UNUSED
 	if ((flags & COMMAND_LINE_SILENCE_PARSER) == 0)
 	{
 		const DWORD level = WLOG_ERROR;
-		static wLog* log = NULL;
+		static wLog* log = nullptr;
 		if (!log)
 			log = WLog_Get(TAG);
 
@@ -83,7 +83,7 @@ static void log_comma_error_(const char* message, WINPR_ATTR_UNUSED const char* 
                              const char* file, const char* fkt, size_t line)
 {
 	const DWORD level = WLOG_ERROR;
-	static wLog* log = NULL;
+	static wLog* log = nullptr;
 	if (!log)
 		log = WLog_Get(TAG);
 
@@ -106,12 +106,12 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 	int status = 0;
 	int count = 0;
 	BOOL notescaped = FALSE;
-	const char* sigil = NULL;
+	const char* sigil = nullptr;
 	size_t sigil_length = 0;
-	char* keyword = NULL;
+	char* keyword = nullptr;
 	size_t keyword_index = 0;
-	char* separator = NULL;
-	char* value = NULL;
+	char* separator = nullptr;
+	char* value = nullptr;
 	int toggle = 0;
 
 	if (!argv)
@@ -230,7 +230,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				}
 			}
 
-			separator = NULL;
+			separator = nullptr;
 
 			if ((flags & COMMAND_LINE_SEPARATOR_COLON) && (!separator))
 				separator = strchr(keyword, ':');
@@ -254,13 +254,13 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				}
 
 				keyword_length = length - keyword_index;
-				value = NULL;
+				value = nullptr;
 			}
 
 			if (!escaped)
 				continue;
 
-			for (size_t j = 0; options[j].Name != NULL; j++)
+			for (size_t j = 0; options[j].Name != nullptr; j++)
 			{
 				COMMAND_LINE_ARGUMENT_A* cur = &options[j];
 				BOOL match = FALSE;
@@ -271,7 +271,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 						match = TRUE;
 				}
 
-				if ((!match) && (cur->Alias != NULL))
+				if ((!match) && (cur->Alias != nullptr))
 				{
 					if (strncmp(cur->Alias, keyword, keyword_length) == 0)
 					{
@@ -319,7 +319,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 					}
 					else if (!value_present && (cur->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 					{
-						value = NULL;
+						value = nullptr;
 					}
 					else if (!value_present && argument)
 					{
@@ -341,7 +341,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 					if (value && (cur->Flags & COMMAND_LINE_VALUE_FLAG))
 					{
 						i--;
-						value = NULL;
+						value = nullptr;
 					}
 				}
 
@@ -442,10 +442,10 @@ int CommandLineParseArgumentsW(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED LPW
 
 int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options)
 {
-	for (size_t i = 0; options[i].Name != NULL; i++)
+	for (size_t i = 0; options[i].Name != nullptr; i++)
 	{
 		options[i].Flags &= COMMAND_LINE_INPUT_FLAG_MASK;
-		options[i].Value = NULL;
+		options[i].Value = nullptr;
 	}
 
 	return 0;
@@ -453,10 +453,10 @@ int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options)
 
 int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options)
 {
-	for (int i = 0; options[i].Name != NULL; i++)
+	for (int i = 0; options[i].Name != nullptr; i++)
 	{
 		options[i].Flags &= COMMAND_LINE_INPUT_FLAG_MASK;
-		options[i].Value = NULL;
+		options[i].Value = nullptr;
 	}
 
 	return 0;
@@ -468,19 +468,19 @@ const COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(const COMMAND_LINE_ARGUM
 	WINPR_ASSERT(options);
 	WINPR_ASSERT(Name);
 
-	for (size_t i = 0; options[i].Name != NULL; i++)
+	for (size_t i = 0; options[i].Name != nullptr; i++)
 	{
 		if (strcmp(options[i].Name, Name) == 0)
 			return &options[i];
 
-		if (options[i].Alias != NULL)
+		if (options[i].Alias != nullptr)
 		{
 			if (strcmp(options[i].Alias, Name) == 0)
 				return &options[i];
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 const COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(const COMMAND_LINE_ARGUMENT_W* options,
@@ -489,32 +489,32 @@ const COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(const COMMAND_LINE_ARGUM
 	WINPR_ASSERT(options);
 	WINPR_ASSERT(Name);
 
-	for (size_t i = 0; options[i].Name != NULL; i++)
+	for (size_t i = 0; options[i].Name != nullptr; i++)
 	{
 		if (_wcscmp(options[i].Name, Name) == 0)
 			return &options[i];
 
-		if (options[i].Alias != NULL)
+		if (options[i].Alias != nullptr)
 		{
 			if (_wcscmp(options[i].Alias, Name) == 0)
 				return &options[i];
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 const COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(const COMMAND_LINE_ARGUMENT_A* argument)
 {
-	const COMMAND_LINE_ARGUMENT_A* nextArgument = NULL;
+	const COMMAND_LINE_ARGUMENT_A* nextArgument = nullptr;
 
 	if (!argument || !argument->Name)
-		return NULL;
+		return nullptr;
 
 	nextArgument = &argument[1];
 
-	if (nextArgument->Name == NULL)
-		return NULL;
+	if (nextArgument->Name == nullptr)
+		return nullptr;
 
 	return nextArgument;
 }
@@ -634,7 +634,7 @@ static char* get_next_comma(char* string, BOOL fullquoted)
 			case '\0':
 				if (quoted != 0)
 					log_comma_error("Invalid quoted argument", log);
-				return NULL;
+				return nullptr;
 
 			case '\\':
 				if (!escaped)
@@ -651,7 +651,7 @@ static char* get_next_comma(char* string, BOOL fullquoted)
 					if ((quoted == 0) && !first)
 					{
 						log_comma_error("Invalid quoted argument", log);
-						return NULL;
+						return nullptr;
 					}
 					if (now == quoted)
 						quoted = 0;
@@ -664,7 +664,7 @@ static char* get_next_comma(char* string, BOOL fullquoted)
 				if (first)
 				{
 					log_comma_error("Invalid argument (empty list elements)", log);
-					return NULL;
+					return nullptr;
 				}
 				if (quoted == 0)
 					return last;
@@ -675,8 +675,6 @@ static char* get_next_comma(char* string, BOOL fullquoted)
 		}
 		first = FALSE;
 	}
-
-	return NULL;
 }
 
 static BOOL is_valid_fullquoted(const char* string)
@@ -714,19 +712,19 @@ static BOOL is_valid_fullquoted(const char* string)
 
 char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list, size_t* count)
 {
-	char** p = NULL;
-	char* str = NULL;
+	char** p = nullptr;
+	char* str = nullptr;
 	size_t nArgs = 0;
 	size_t prefix = 0;
 	size_t len = 0;
 	size_t namelen = 0;
 	BOOL failed = FALSE;
-	char* copy = NULL;
-	char* unquoted = NULL;
+	char* copy = nullptr;
+	char* unquoted = nullptr;
 	BOOL fullquoted = FALSE;
 
 	BOOL success = FALSE;
-	if (count == NULL)
+	if (count == nullptr)
 		goto fail;
 
 	*count = 0;
@@ -858,19 +856,19 @@ fail:
 		if (count)
 			*count = 0;
 		free((void*)p);
-		return NULL;
+		return nullptr;
 	}
 	return p;
 }
 
 char** CommandLineParseCommaSeparatedValues(const char* list, size_t* count)
 {
-	return CommandLineParseCommaSeparatedValuesEx(NULL, list, count);
+	return CommandLineParseCommaSeparatedValuesEx(nullptr, list, count);
 }
 
 char* CommandLineToCommaSeparatedValues(int argc, char* argv[])
 {
-	return CommandLineToCommaSeparatedValuesEx(argc, argv, NULL, 0);
+	return CommandLineToCommaSeparatedValuesEx(argc, argv, nullptr, 0);
 }
 
 static const char* filtered(const char* arg, const char* filters[], size_t number)
@@ -884,24 +882,24 @@ static const char* filtered(const char* arg, const char* filters[], size_t numbe
 		if (_strnicmp(arg, filter, len) == 0)
 			return &arg[len];
 	}
-	return NULL;
+	return nullptr;
 }
 
 char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[], const char* filters[],
                                           size_t number)
 {
-	char* str = NULL;
+	char* str = nullptr;
 	size_t offset = 0;
 	size_t size = WINPR_ASSERTING_INT_CAST(size_t, argc) + 1;
 	if ((argc <= 0) || !argv)
-		return NULL;
+		return nullptr;
 
 	for (int x = 0; x < argc; x++)
 		size += strlen(argv[x]);
 
 	str = calloc(size, sizeof(char));
 	if (!str)
-		return NULL;
+		return nullptr;
 	for (int x = 0; x < argc; x++)
 	{
 		int rc = 0;
@@ -912,7 +910,7 @@ char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[], const char* fi
 		if (rc <= 0)
 		{
 			free(str);
-			return NULL;
+			return nullptr;
 		}
 		offset += (size_t)rc;
 	}

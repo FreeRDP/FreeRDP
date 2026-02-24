@@ -114,7 +114,7 @@ wLogAppender* WLog_SyslogAppender_New(WINPR_ATTR_UNUSED wLog* log)
 {
 	wLogSyslogAppender* appender = (wLogSyslogAppender*)calloc(1, sizeof(wLogSyslogAppender));
 	if (!appender)
-		return NULL;
+		return nullptr;
 
 	appender->common.Type = WLOG_APPENDER_SYSLOG;
 

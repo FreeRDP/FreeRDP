@@ -21,8 +21,8 @@ int TestPathMakePath(int argc, char* argv[])
 	size_t baseLen = 0;
 	BOOL success = 0;
 	char tmp[64] = WINPR_C_ARRAY_INIT;
-	char* path = NULL;
-	char* cur = NULL;
+	char* path = nullptr;
+	char* cur = nullptr;
 	char delim = PathGetSeparatorA(0);
 	char* base = GetKnownPath(KNOWN_PATH_TEMP);
 
@@ -53,7 +53,7 @@ int TestPathMakePath(int argc, char* argv[])
 	}
 
 	printf("Creating path %s\n", path);
-	success = winpr_PathMakePath(path, NULL);
+	success = winpr_PathMakePath(path, nullptr);
 
 	if (!success)
 	{

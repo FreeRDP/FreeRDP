@@ -240,7 +240,8 @@ extern "C"
 #endif /* !defined(_WIN32) || (defined(__MINGW32__) ... */
 
 #if defined(_WIN32) && (!defined(__MINGW32__) || defined(_UCRT))
-#define winpr_aligned_calloc(count, size, alignment) _aligned_recalloc(NULL, count, size, alignment)
+#define winpr_aligned_calloc(count, size, alignment) \
+	_aligned_recalloc(nullptr, count, size, alignment)
 #endif /* defined(_WIN32) && (!defined(__MINGW32__) || defined(_UCRT)) */
 
 // NOLINTEND(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)

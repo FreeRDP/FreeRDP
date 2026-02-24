@@ -39,11 +39,11 @@ static inline BYTE* WRITEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
 	if (cBits > 8)
 	{
 		WLog_ERR(TAG, "cBits %" PRIu32 " > 8", cBits);
-		return NULL;
+		return nullptr;
 	}
 
 	if (!ENSURE_CAPACITY(pbDest, pbDestEnd, cBits))
-		return NULL;
+		return nullptr;
 
 	UNROLL(cBits, {
 		PIXEL data = 0;
@@ -74,11 +74,11 @@ static inline BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
 	if (cBits > 8)
 	{
 		WLog_ERR(TAG, "cBits %" PRIu32 " > 8", cBits);
-		return NULL;
+		return nullptr;
 	}
 
 	if (!ENSURE_CAPACITY(pbDest, pbDestEnd, cBits))
-		return NULL;
+		return nullptr;
 
 	UNROLL(cBits, {
 		PIXEL data;
