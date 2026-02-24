@@ -322,13 +322,13 @@ static const struct x11_key_scancode_t XKB_KEY_NAME_SCANCODE_TABLE[] = {
 	{ "VOL-", RDP_SCANCODE_VOLUME_DOWN }          /* 122: VOL- [XF86AudioLowerVolume] */
 };
 
-struct x11_keysym_scancode_t
+typedef struct
 {
 	KeySym keysym;
 	DWORD sc;
-};
+} x11_keysym_scancode_t;
 
-static const struct x11_keysym_scancode_t KEYSYM_SCANCODE_TABLE[] = {
+static const x11_keysym_scancode_t KEYSYM_SCANCODE_TABLE[] = {
 	{ XK_space, RDP_SCANCODE_SPACE },
 	{ XK_apostrophe, RDP_SCANCODE_OEM_7 },
 	{ XK_comma, RDP_SCANCODE_OEM_COMMA },
@@ -593,8 +593,8 @@ static int xkb_cmp(const void* pva, const void* pvb)
 
 static int keysym_cmp(const void* pva, const void* pvb)
 {
-	const struct x11_keysym_scancode_t* a = pva;
-	const struct x11_keysym_scancode_t* b = pvb;
+	const x11_keysym_scancode_t* a = pva;
+	const x11_keysym_scancode_t* b = pvb;
 
 	if (!a && !b)
 		return 0;
@@ -634,10 +634,10 @@ static BOOL try_add(xfContext* xfc, size_t offset, const char* xkb_keyname)
 /* Keysym fallback for X11 forwarding where XKB key names don't match evdev */
 static DWORD xf_keysym_to_rdp_scancode(KeySym keysym)
 {
-	struct x11_keysym_scancode_t key = { .keysym = keysym, .sc = 0 };
-	struct x11_keysym_scancode_t* found =
+	x11_keysym_scancode_t key = { .keysym = keysym, .sc = 0 };
+	x11_keysym_scancode_t* found =
 	    bsearch(&key, KEYSYM_SCANCODE_TABLE, ARRAYSIZE(KEYSYM_SCANCODE_TABLE),
-	            sizeof(struct x11_keysym_scancode_t), keysym_cmp);
+	            sizeof(x11_keysym_scancode_t), keysym_cmp);
 	if (found)
 		return found->sc;
 
@@ -757,16 +757,16 @@ BOOL xf_keyboard_init(xfContext* xfc)
 /* When assertions are enabled assert the lists are sorted. */
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
 	{
-		struct x11_keysym_scancode_t copy[ARRAYSIZE(KEYSYM_SCANCODE_TABLE)] = { 0 };
+		x11_keysym_scancode_t copy[ARRAYSIZE(KEYSYM_SCANCODE_TABLE)] = { 0 };
 		memcpy(copy, KEYSYM_SCANCODE_TABLE, sizeof(copy));
-		qsort(copy, ARRAYSIZE(copy), sizeof(struct x11_keysym_scancode_t), keysym_cmp);
+		qsort(copy, ARRAYSIZE(copy), sizeof(x11_keysym_scancode_t), keysym_cmp);
 
 		if (memcmp(KEYSYM_SCANCODE_TABLE, copy, sizeof(KEYSYM_SCANCODE_TABLE)) != 0)
 		{
 			for (size_t x = 0; x < ARRAYSIZE(KEYSYM_SCANCODE_TABLE); x++)
 			{
-				const struct x11_keysym_scancode_t* a = &KEYSYM_SCANCODE_TABLE[x];
-				const struct x11_keysym_scancode_t* b = &copy[x];
+				const x11_keysym_scancode_t* a = &KEYSYM_SCANCODE_TABLE[x];
+				const x11_keysym_scancode_t* b = &copy[x];
 				if (a->keysym != b->keysym)
 					WLog_ERR(TAG, "%" PRIuz "\ta=%lx, should be %lx", x, a->keysym, b->keysym);
 			}
