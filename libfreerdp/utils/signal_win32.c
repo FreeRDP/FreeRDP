@@ -71,7 +71,7 @@ static BOOL register_handlers(const int* signals, size_t count, void (*handler)(
 
 	for (size_t x = 0; x < count; x++)
 	{
-		signal(signals[x], handler);
+		(void)signal(signals[x], handler);
 	}
 
 	return TRUE;
@@ -83,7 +83,7 @@ static void unregister_handlers(const int* signals, size_t count)
 
 	for (size_t x = 0; x < count; x++)
 	{
-		signal(signals[x], SIG_IGN);
+		(void)signal(signals[x], SIG_IGN);
 	}
 }
 
