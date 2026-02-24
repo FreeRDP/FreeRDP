@@ -60,10 +60,6 @@
 
 #include "../sspi.h"
 #include "../../log.h"
-#define TAG WINPR_TAG("sspi.Kerberos")
-
-#define KRB_TGT_REQ 16
-#define KRB_TGT_REP 17
 
 const SecPkgInfoA KERBEROS_SecPkgInfoA = {
 	0x000F3BBF,                 /* fCapabilities */
@@ -87,6 +83,10 @@ const SecPkgInfoW KERBEROS_SecPkgInfoW = {
 };
 
 #ifdef WITH_KRB5
+#define TAG WINPR_TAG("sspi.Kerberos")
+
+#define KRB_TGT_REQ 16
+#define KRB_TGT_REP 17
 
 enum KERBEROS_STATE
 {
@@ -298,9 +298,10 @@ fail:
 #endif /* WITH_KRB5 */
 
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
-    SEC_CHAR* pszPrincipal, WINPR_ATTR_UNUSED SEC_CHAR* pszPackage, ULONG fCredentialUse,
-    WINPR_ATTR_UNUSED void* pvLogonID, void* pAuthData, WINPR_ATTR_UNUSED SEC_GET_KEY_FN pGetKeyFn,
-    WINPR_ATTR_UNUSED void* pvGetKeyArgument, PCredHandle phCredential,
+    WINPR_ATTR_UNUSED SEC_CHAR* pszPrincipal, WINPR_ATTR_UNUSED SEC_CHAR* pszPackage,
+    WINPR_ATTR_UNUSED ULONG fCredentialUse, WINPR_ATTR_UNUSED void* pvLogonID,
+    WINPR_ATTR_UNUSED void* pAuthData, WINPR_ATTR_UNUSED SEC_GET_KEY_FN pGetKeyFn,
+    WINPR_ATTR_UNUSED void* pvGetKeyArgument, WINPR_ATTR_UNUSED PCredHandle phCredential,
     WINPR_ATTR_UNUSED PTimeStamp ptsExpiry)
 {
 #ifdef WITH_KRB5
@@ -578,7 +579,8 @@ static void credentials_unref(KRB_CREDENTIALS* credentials)
 }
 #endif
 
-static SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCredential)
+static SECURITY_STATUS
+    SEC_ENTRY kerberos_FreeCredentialsHandle(WINPR_ATTR_UNUSED PCredHandle phCredential)
 {
 #ifdef WITH_KRB5
 	KRB_CREDENTIALS* credentials = sspi_SecureHandleGetLowerPointer(phCredential);
@@ -595,7 +597,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCr
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesW(
-    WINPR_ATTR_UNUSED PCredHandle phCredential, ULONG ulAttribute, WINPR_ATTR_UNUSED void* pBuffer)
+    WINPR_ATTR_UNUSED PCredHandle phCredential, WINPR_ATTR_UNUSED ULONG ulAttribute,
+    WINPR_ATTR_UNUSED void* pBuffer)
 {
 #ifdef WITH_KRB5
 	switch (ulAttribute)
@@ -909,8 +912,6 @@ static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb
 	return FALSE;
 }
 
-#endif /* WITH_KRB5 */
-
 static BOOL kerberos_hash_channel_bindings(WINPR_DIGEST_CTX* md5, SEC_CHANNEL_BINDINGS* bindings)
 {
 	BYTE buf[4];
@@ -953,10 +954,14 @@ static BOOL kerberos_hash_channel_bindings(WINPR_DIGEST_CTX* md5, SEC_CHANNEL_BI
 	return TRUE;
 }
 
+#endif /* WITH_KRB5 */
+
 static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
-    PCredHandle phCredential, PCtxtHandle phContext, SEC_CHAR* pszTargetName, ULONG fContextReq,
-    WINPR_ATTR_UNUSED ULONG Reserved1, WINPR_ATTR_UNUSED ULONG TargetDataRep, PSecBufferDesc pInput,
-    WINPR_ATTR_UNUSED ULONG Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
+    WINPR_ATTR_UNUSED PCredHandle phCredential, WINPR_ATTR_UNUSED PCtxtHandle phContext,
+    WINPR_ATTR_UNUSED SEC_CHAR* pszTargetName, WINPR_ATTR_UNUSED ULONG fContextReq,
+    WINPR_ATTR_UNUSED ULONG Reserved1, WINPR_ATTR_UNUSED ULONG TargetDataRep,
+    WINPR_ATTR_UNUSED PSecBufferDesc pInput, WINPR_ATTR_UNUSED ULONG Reserved2,
+    WINPR_ATTR_UNUSED PCtxtHandle phNewContext, WINPR_ATTR_UNUSED PSecBufferDesc pOutput,
     WINPR_ATTR_UNUSED ULONG* pfContextAttr, WINPR_ATTR_UNUSED PTimeStamp ptsExpiry)
 {
 #ifdef WITH_KRB5
@@ -1416,9 +1421,10 @@ out:
 #endif
 
 static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
-    PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput,
-    WINPR_ATTR_UNUSED ULONG fContextReq, WINPR_ATTR_UNUSED ULONG TargetDataRep,
-    PCtxtHandle phNewContext, PSecBufferDesc pOutput, ULONG* pfContextAttr,
+    WINPR_ATTR_UNUSED PCredHandle phCredential, WINPR_ATTR_UNUSED PCtxtHandle phContext,
+    WINPR_ATTR_UNUSED PSecBufferDesc pInput, WINPR_ATTR_UNUSED ULONG fContextReq,
+    WINPR_ATTR_UNUSED ULONG TargetDataRep, WINPR_ATTR_UNUSED PCtxtHandle phNewContext,
+    WINPR_ATTR_UNUSED PSecBufferDesc pOutput, WINPR_ATTR_UNUSED ULONG* pfContextAttr,
     WINPR_ATTR_UNUSED PTimeStamp ptsExpity)
 {
 #ifdef WITH_KRB5
@@ -1624,7 +1630,8 @@ static BOOL copy_krb5_data(krb5_data* data, PUCHAR* ptr, ULONG* psize)
 }
 #endif
 
-static SECURITY_STATUS SEC_ENTRY kerberos_DeleteSecurityContext(PCtxtHandle phContext)
+static SECURITY_STATUS
+    SEC_ENTRY kerberos_DeleteSecurityContext(WINPR_ATTR_UNUSED PCtxtHandle phContext)
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
@@ -1887,8 +1894,9 @@ out:
 
 #endif /* WITH_KRB5 */
 
-static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext,
-                                                                  ULONG ulAttribute, void* pBuffer)
+static SECURITY_STATUS
+    SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext,
+                                               WINPR_ATTR_UNUSED ULONG ulAttribute, void* pBuffer)
 {
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
@@ -1949,10 +1957,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetContextAttributesA(
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(PCredHandle phCredential,
-                                                                    ULONG ulAttribute,
-                                                                    void* pBuffer, ULONG cbBuffer,
-                                                                    WINPR_ATTR_UNUSED BOOL unicode)
+static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(
+    WINPR_ATTR_UNUSED PCredHandle phCredential, WINPR_ATTR_UNUSED ULONG ulAttribute,
+    WINPR_ATTR_UNUSED void* pBuffer, WINPR_ATTR_UNUSED ULONG cbBuffer,
+    WINPR_ATTR_UNUSED BOOL unicode)
 {
 #ifdef WITH_KRB5
 	KRB_CREDENTIALS* credentials = NULL;
@@ -2027,9 +2035,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesA(PCredHandle 
 	return kerberos_SetCredentialsAttributesX(phCredential, ulAttribute, pBuffer, cbBuffer, FALSE);
 }
 
-static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
-                                                         PSecBufferDesc pMessage,
-                                                         ULONG MessageSeqNo)
+static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(WINPR_ATTR_UNUSED PCtxtHandle phContext,
+                                                         WINPR_ATTR_UNUSED ULONG fQOP,
+                                                         WINPR_ATTR_UNUSED PSecBufferDesc pMessage,
+                                                         WINPR_ATTR_UNUSED ULONG MessageSeqNo)
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
@@ -2117,9 +2126,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 #endif
 }
 
-static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
-                                                         PSecBufferDesc pMessage,
-                                                         ULONG MessageSeqNo, ULONG* pfQOP)
+static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxtHandle phContext,
+                                                         WINPR_ATTR_UNUSED PSecBufferDesc pMessage,
+                                                         WINPR_ATTR_UNUSED ULONG MessageSeqNo,
+                                                         WINPR_ATTR_UNUSED ULONG* pfQOP)
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
@@ -2223,9 +2233,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 #endif
 }
 
-static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext,
+static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(WINPR_ATTR_UNUSED PCtxtHandle phContext,
                                                         WINPR_ATTR_UNUSED ULONG fQOP,
-                                                        PSecBufferDesc pMessage, ULONG MessageSeqNo)
+                                                        WINPR_ATTR_UNUSED PSecBufferDesc pMessage,
+                                                        WINPR_ATTR_UNUSED ULONG MessageSeqNo)
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
@@ -2294,9 +2305,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext,
 #endif
 }
 
-static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
-                                                          PSecBufferDesc pMessage,
-                                                          ULONG MessageSeqNo,
+static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(WINPR_ATTR_UNUSED PCtxtHandle phContext,
+                                                          WINPR_ATTR_UNUSED PSecBufferDesc pMessage,
+                                                          WINPR_ATTR_UNUSED ULONG MessageSeqNo,
                                                           WINPR_ATTR_UNUSED ULONG* pfQOP)
 {
 #ifdef WITH_KRB5
