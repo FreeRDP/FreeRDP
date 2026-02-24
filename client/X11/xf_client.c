@@ -288,14 +288,10 @@ BOOL xf_picture_transform_required(xfContext* xfc)
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	if ((xfc->offset_x != 0) || (xfc->offset_y != 0) ||
+	return (
+	    (xfc->offset_x != 0) || (xfc->offset_y != 0) ||
 	    (xfc->scaledWidth != (INT64)freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)) ||
-	    (xfc->scaledHeight != (INT64)freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
-	{
-		return TRUE;
-	}
-
-	return FALSE;
+	    (xfc->scaledHeight != (INT64)freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)));
 }
 #endif /* WITH_XRENDER defined */
 
@@ -345,7 +341,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 
 	if (xfc->primary)
 	{
-		BOOL same = (xfc->primary == xfc->drawing) ? TRUE : FALSE;
+		BOOL same = (xfc->primary == xfc->drawing);
 		LogDynAndXFreePixmap(xfc->log, xfc->display, xfc->primary);
 
 		WINPR_ASSERT(xfc->depth != 0);
@@ -824,7 +820,7 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	if (xfc->debug)
 		xf_ungrab(xfc);
 
-	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
+	xfc->fullscreen = !((xfc->fullscreen));
 	xfc->decorations =
 	    (xfc->fullscreen) ? FALSE : freerdp_settings_get_bool(settings, FreeRDP_Decorations);
 	xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
@@ -902,10 +898,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	}
 
 	XFree(pfs);
-	if ((xfc->visual == nullptr) || (xfc->scanline_pad == 0))
-		return FALSE;
-
-	return TRUE;
+	return !((xfc->visual == nullptr) || (xfc->scanline_pad == 0));
 }
 
 static int xf_error_handler(Display* d, XErrorEvent* ev)
@@ -1805,10 +1798,7 @@ static BOOL xfreerdp_client_global_init(void)
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	(void)setlocale(LC_ALL, "");
 
-	if (freerdp_handle_signals() != 0)
-		return FALSE;
-
-	return TRUE;
+	return (freerdp_handle_signals() == 0);
 }
 
 static void xfreerdp_client_global_uninit(void)

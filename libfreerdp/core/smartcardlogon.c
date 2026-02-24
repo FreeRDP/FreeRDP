@@ -256,10 +256,8 @@ static BOOL build_pkinit_args(NCRYPT_PROV_HANDLE provider, SmartcardCertInfo* sc
 	const char* pkModule = winpr_NCryptGetModulePath(provider);
 	size_t size = 0;
 
-	if (winpr_asprintf(&scCert->pkinitArgs, &size, "PKCS11:module_name=%s:slotid=%" PRIu16,
-	                   pkModule, (UINT16)scCert->slotId) <= 0)
-		return FALSE;
-	return TRUE;
+	return (winpr_asprintf(&scCert->pkinitArgs, &size, "PKCS11:module_name=%s:slotid=%" PRIu16,
+	                       pkModule, (UINT16)scCert->slotId) > 0);
 }
 #endif /* _WIN32 */
 

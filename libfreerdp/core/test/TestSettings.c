@@ -725,7 +725,7 @@ static BOOL check_args(const RDPDR_DEVICE* what, size_t count, const char* args[
 			}
 			if (count > 2)
 			{
-				return a->automount == (args[2] == nullptr) ? TRUE : FALSE;
+				return (a->automount == (args[2] == nullptr));
 			}
 			else
 				return !a->automount;

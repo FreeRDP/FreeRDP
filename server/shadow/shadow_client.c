@@ -426,11 +426,8 @@ static inline BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
 	WINPR_ASSERT(width <= UINT16_MAX);
 	WINPR_ASSERT(height >= 0);
 	WINPR_ASSERT(height <= UINT16_MAX);
-	if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) != (UINT32)width ||
-	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) != (UINT32)height)
-		return TRUE;
-
-	return FALSE;
+	return (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) != (UINT32)width ||
+	        freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) != (UINT32)height);
 }
 
 WINPR_ATTR_NODISCARD
@@ -693,7 +690,7 @@ static BOOL shadow_client_suppress_output(rdpContext* context, BYTE allow, const
 
 	WINPR_ASSERT(client);
 
-	client->suppressOutput = allow ? FALSE : TRUE;
+	client->suppressOutput = !(allow);
 
 	if (allow)
 	{
@@ -725,7 +722,7 @@ static BOOL shadow_client_activate(freerdp_peer* peer)
 
 	shadow_reset_desktop_resize(client);
 	client->activated = TRUE;
-	client->inLobby = client->mayView ? FALSE : TRUE;
+	client->inLobby = !(client->mayView);
 
 	if (shadow_encoder_reset(client->encoder) < 0)
 	{
@@ -936,7 +933,7 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 			flags = pdu.capsSet->flags;
 
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
-			                               (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE : FALSE))
+			                               (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) != 0))
 				return FALSE;
 
 			avc444v2 = avc444 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
@@ -1081,12 +1078,10 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 					return rc;
 
 				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxThinClient,
-				                               (flags & RDPGFX_CAPS_FLAG_THINCLIENT) ? TRUE
-				                                                                     : FALSE))
+				                               (flags & RDPGFX_CAPS_FLAG_THINCLIENT) != 0))
 					return rc;
 				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
-				                               (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE
-				                                                                      : FALSE))
+				                               (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) != 0))
 					return rc;
 
 #ifndef WITH_GFX_H264
@@ -1097,9 +1092,8 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 				if (h264)
 				{
-					if (!freerdp_settings_set_bool(
-					        clientSettings, FreeRDP_GfxH264,
-					        (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED) ? TRUE : FALSE))
+					if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264,
+					                               (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED) != 0))
 						return rc;
 				}
 				else
@@ -1135,12 +1129,10 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 					return rc;
 
 				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxThinClient,
-				                               (flags & RDPGFX_CAPS_FLAG_THINCLIENT) ? TRUE
-				                                                                     : FALSE))
+				                               (flags & RDPGFX_CAPS_FLAG_THINCLIENT) != 0))
 					return rc;
 				if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
-				                               (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE
-				                                                                      : FALSE))
+				                               (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) != 0))
 					return rc;
 
 				return shadow_client_send_caps_confirm(context, client, &pdu);
@@ -1622,8 +1614,8 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 			WINPR_ASSERT(Stream_GetPosition(s) <= UINT32_MAX);
 			cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 			cmd.bmp.bitmapData = Stream_Buffer(s);
-			first = (i == 0) ? TRUE : FALSE;
-			last = ((i + 1) == numMessages) ? TRUE : FALSE;
+			first = (i == 0);
+			last = ((i + 1) == numMessages);
 
 			if (!encoder->frameAck)
 				IFCALLRET(update->SurfaceBits, ret, update->context, &cmd);

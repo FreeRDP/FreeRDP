@@ -1237,10 +1237,7 @@ BOOL FindClose(HANDLE hFindFile)
 BOOL CreateDirectoryA(LPCSTR lpPathName,
                       WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	if (!mkdir(lpPathName, S_IRUSR | S_IWUSR | S_IXUSR))
-		return TRUE;
-
-	return FALSE;
+	return (!mkdir(lpPathName, S_IRUSR | S_IWUSR | S_IXUSR));
 }
 
 BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)

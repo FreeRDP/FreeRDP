@@ -81,10 +81,7 @@ static BOOL WLog_UdpAppender_Open(WINPR_ATTR_UNUSED wLog* log, wLogAppender* app
 
 static BOOL WLog_UdpAppender_Close(wLog* log, wLogAppender* appender)
 {
-	if (!log || !appender)
-		return FALSE;
-
-	return TRUE;
+	return !(!log || !appender);
 }
 
 static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender,
@@ -111,19 +108,13 @@ static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender,
 static BOOL WLog_UdpAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
                                               const wLogMessage* message)
 {
-	if (!log || !appender || !message)
-		return FALSE;
-
-	return TRUE;
+	return !(!log || !appender || !message);
 }
 
 static BOOL WLog_UdpAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
                                                const wLogMessage* message)
 {
-	if (!log || !appender || !message)
-		return FALSE;
-
-	return TRUE;
+	return !(!log || !appender || !message);
 }
 
 static BOOL WLog_UdpAppender_Set(wLogAppender* appender, const char* setting, void* value)

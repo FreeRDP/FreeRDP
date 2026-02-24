@@ -93,7 +93,7 @@ BOOL rdpei_read_2byte_signed(wStream* s, INT16* value)
 
 	Stream_Read_UINT8(s, byte);
 
-	negative = (byte & 0x40) ? TRUE : FALSE;
+	negative = (byte & 0x40) != 0;
 
 	const BYTE val = (byte & 0x3F);
 
@@ -265,7 +265,7 @@ BOOL rdpei_read_4byte_signed(wStream* s, INT32* value)
 	Stream_Read_UINT8(s, byte);
 
 	count = (byte & 0xC0) >> 6;
-	negative = (byte & 0x20) ? TRUE : FALSE;
+	negative = (byte & 0x20) != 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, count))
 		return FALSE;

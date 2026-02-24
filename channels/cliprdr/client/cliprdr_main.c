@@ -165,11 +165,11 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 
 	cliprdr_print_general_capability_flags(cliprdr->log, generalFlags);
 
-	cliprdr->useLongFormatNames = (generalFlags & CB_USE_LONG_FORMAT_NAMES) ? TRUE : FALSE;
-	cliprdr->streamFileClipEnabled = (generalFlags & CB_STREAM_FILECLIP_ENABLED) ? TRUE : FALSE;
-	cliprdr->fileClipNoFilePaths = (generalFlags & CB_FILECLIP_NO_FILE_PATHS) ? TRUE : FALSE;
-	cliprdr->canLockClipData = (generalFlags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
-	cliprdr->hasHugeFileSupport = (generalFlags & CB_HUGE_FILE_SUPPORT_ENABLED) ? TRUE : FALSE;
+	cliprdr->useLongFormatNames = (generalFlags & CB_USE_LONG_FORMAT_NAMES) != 0;
+	cliprdr->streamFileClipEnabled = (generalFlags & CB_STREAM_FILECLIP_ENABLED) != 0;
+	cliprdr->fileClipNoFilePaths = (generalFlags & CB_FILECLIP_NO_FILE_PATHS) != 0;
+	cliprdr->canLockClipData = (generalFlags & CB_CAN_LOCK_CLIPDATA) != 0;
+	cliprdr->hasHugeFileSupport = (generalFlags & CB_HUGE_FILE_SUPPORT_ENABLED) != 0;
 	cliprdr->capabilitiesReceived = TRUE;
 
 	capabilities.common.msgType = CB_CLIP_CAPS;
@@ -601,11 +601,11 @@ static UINT cliprdr_client_capabilities(CliprdrClientContext* context,
 	if (!cliprdr->hasHugeFileSupport)
 		flags &= (uint32_t)~CB_HUGE_FILE_SUPPORT_ENABLED;
 
-	cliprdr->useLongFormatNames = (flags & CB_USE_LONG_FORMAT_NAMES) ? TRUE : FALSE;
-	cliprdr->streamFileClipEnabled = (flags & CB_STREAM_FILECLIP_ENABLED) ? TRUE : FALSE;
-	cliprdr->fileClipNoFilePaths = (flags & CB_FILECLIP_NO_FILE_PATHS) ? TRUE : FALSE;
-	cliprdr->canLockClipData = (flags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
-	cliprdr->hasHugeFileSupport = (flags & CB_HUGE_FILE_SUPPORT_ENABLED) ? TRUE : FALSE;
+	cliprdr->useLongFormatNames = (flags & CB_USE_LONG_FORMAT_NAMES) != 0;
+	cliprdr->streamFileClipEnabled = (flags & CB_STREAM_FILECLIP_ENABLED) != 0;
+	cliprdr->fileClipNoFilePaths = (flags & CB_FILECLIP_NO_FILE_PATHS) != 0;
+	cliprdr->canLockClipData = (flags & CB_CAN_LOCK_CLIPDATA) != 0;
+	cliprdr->hasHugeFileSupport = (flags & CB_HUGE_FILE_SUPPORT_ENABLED) != 0;
 
 	Stream_Write_UINT32(s, flags); /* generalFlags */
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientCapabilities");

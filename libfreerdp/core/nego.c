@@ -768,10 +768,7 @@ BOOL nego_recv_response(rdpNego* nego)
 	status = nego_recv(nego->transport, s, nego);
 	Stream_Free(s, TRUE);
 
-	if (status < 0)
-		return FALSE;
-
-	return TRUE;
+	return (status >= 0);
 }
 
 /**
@@ -1956,10 +1953,7 @@ BOOL nego_set_cookie(rdpNego* nego, const char* cookie)
 
 	nego->cookie = _strdup(cookie);
 
-	if (!nego->cookie)
-		return FALSE;
-
-	return TRUE;
+	return (nego->cookie != nullptr);
 }
 
 /**

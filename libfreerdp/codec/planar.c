@@ -752,9 +752,9 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 
 	const BYTE FormatHeader = *srcp++;
 	const BYTE cll = (FormatHeader & PLANAR_FORMAT_HEADER_CLL_MASK);
-	const BYTE cs = (FormatHeader & PLANAR_FORMAT_HEADER_CS) ? TRUE : FALSE;
-	const BYTE rle = (FormatHeader & PLANAR_FORMAT_HEADER_RLE) ? TRUE : FALSE;
-	const BYTE alpha = (FormatHeader & PLANAR_FORMAT_HEADER_NA) ? FALSE : TRUE;
+	const BYTE cs = (FormatHeader & PLANAR_FORMAT_HEADER_CS) != 0;
+	const BYTE rle = (FormatHeader & PLANAR_FORMAT_HEADER_RLE) != 0;
+	const BYTE alpha = !(FormatHeader & PLANAR_FORMAT_HEADER_NA);
 
 	DstFormat = planar_invert_format(planar, alpha, DstFormat);
 
@@ -1334,7 +1334,7 @@ static inline UINT32 freerdp_bitmap_planar_encode_rle_bytes(const BYTE* WINPR_RE
 		if (!inBufferSize)
 			break;
 
-		const UINT32 bSymbolMatch = (symbol == *pInput) ? TRUE : FALSE;
+		const UINT32 bSymbolMatch = (symbol == *pInput) != 0;
 		symbol = *pInput;
 		pInput++;
 		inBufferSize--;
@@ -1364,7 +1364,7 @@ static inline UINT32 freerdp_bitmap_planar_encode_rle_bytes(const BYTE* WINPR_RE
 		}
 
 		nRunLength += bSymbolMatch;
-		cRawBytes += (!bSymbolMatch) ? TRUE : FALSE;
+		cRawBytes += (!bSymbolMatch) != 0;
 	} while (outBufferSize);
 
 	if (cRawBytes || nRunLength)
@@ -1466,11 +1466,8 @@ static inline BOOL freerdp_bitmap_planar_compress_planes_rle(BYTE* WINPR_RESTRIC
 	/* GreenChromeOrBluePlane */
 	dstSizes[3] = outPlanesSize;
 
-	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[3], width, height, outPlanes,
-	                                              &dstSizes[3]))
-		return FALSE;
-
-	return TRUE;
+	return (freerdp_bitmap_planar_compress_plane_rle(inPlanes[3], width, height, outPlanes,
+	                                                 &dstSizes[3]));
 }
 
 BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* WINPR_RESTRICT inPlane, UINT32 width,

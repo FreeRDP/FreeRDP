@@ -111,7 +111,7 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 	size_t stringAllocSize = 0;
 #ifdef WITH_PKCS11
 	LPWSTR strPtr = nullptr;
-	const WCHAR emptyComment[] = WINPR_C_ARRAY_INIT;
+	const WCHAR emptyComment[1] = WINPR_C_ARRAY_INIT;
 	size_t copyAmount = 0;
 #endif
 

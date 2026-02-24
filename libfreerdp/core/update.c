@@ -1145,10 +1145,8 @@ static BOOL update_set_bounds(rdpContext* context, const rdpBounds* bounds)
 static BOOL update_bounds_is_null(rdpBounds* bounds)
 {
 	WINPR_ASSERT(bounds);
-	if ((bounds->left == 0) && (bounds->top == 0) && (bounds->right == 0) && (bounds->bottom == 0))
-		return TRUE;
-
-	return FALSE;
+	return ((bounds->left == 0) && (bounds->top == 0) && (bounds->right == 0) &&
+	        (bounds->bottom == 0));
 }
 
 static BOOL update_bounds_equals(rdpBounds* bounds1, rdpBounds* bounds2)
@@ -1156,11 +1154,8 @@ static BOOL update_bounds_equals(rdpBounds* bounds1, rdpBounds* bounds2)
 	WINPR_ASSERT(bounds1);
 	WINPR_ASSERT(bounds2);
 
-	if ((bounds1->left == bounds2->left) && (bounds1->top == bounds2->top) &&
-	    (bounds1->right == bounds2->right) && (bounds1->bottom == bounds2->bottom))
-		return TRUE;
-
-	return FALSE;
+	return ((bounds1->left == bounds2->left) && (bounds1->top == bounds2->top) &&
+	        (bounds1->right == bounds2->right) && (bounds1->bottom == bounds2->bottom));
 }
 
 static size_t update_prepare_bounds(rdpContext* context, ORDER_INFO* orderInfo)

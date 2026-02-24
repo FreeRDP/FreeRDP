@@ -1436,7 +1436,7 @@ static LONG smartcard_GetAttrib_Call(scard_call_context* smartcard, wStream* out
 
 	if (!call->fpbAttrIsNULL)
 	{
-		autoAllocate = (call->cbAttrLen == SCARD_AUTOALLOCATE) ? TRUE : FALSE;
+		autoAllocate = (call->cbAttrLen == SCARD_AUTOALLOCATE);
 		cbAttrLen = call->cbAttrLen;
 		if (cbAttrLen && !autoAllocate)
 		{

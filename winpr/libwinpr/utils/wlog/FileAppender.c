@@ -39,22 +39,19 @@ typedef struct
 
 static BOOL WLog_FileAppender_SetOutputFileName(wLogFileAppender* appender, const char* filename)
 {
+	WINPR_ASSERT(appender);
+	WINPR_ASSERT(filename);
+
 	appender->FileName = _strdup(filename);
 
-	if (!appender->FileName)
-		return FALSE;
-
-	return TRUE;
+	return appender->FileName != nullptr;
 }
 
 static BOOL WLog_FileAppender_SetOutputFilePath(wLogFileAppender* appender, const char* filepath)
 {
 	appender->FilePath = _strdup(filepath);
 
-	if (!appender->FilePath)
-		return FALSE;
-
-	return TRUE;
+	return appender->FilePath != nullptr;
 }
 
 static BOOL WLog_FileAppender_Open(wLog* log, wLogAppender* appender)

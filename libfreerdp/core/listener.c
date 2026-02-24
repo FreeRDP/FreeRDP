@@ -240,7 +240,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 	}
 
 	freeaddrinfo(res);
-	return (listener->num_sockfds > 0 ? TRUE : FALSE);
+	return ((listener->num_sockfds > 0));
 }
 
 static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* path)

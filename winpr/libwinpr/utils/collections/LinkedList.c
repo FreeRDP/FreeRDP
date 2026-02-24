@@ -116,7 +116,7 @@ BOOL LinkedList_Contains(wLinkedList* list, const void* value)
 		item = item->next;
 	}
 
-	return (item) ? TRUE : FALSE;
+	return (item != nullptr);
 }
 
 static wLinkedListNode* LinkedList_FreeNode(wLinkedList* list, wLinkedListNode* node)

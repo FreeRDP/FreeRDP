@@ -272,23 +272,23 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "may-view")
 		{
-			server->mayView = arg->Value ? TRUE : FALSE;
+			server->mayView = arg->Value != nullptr;
 		}
 		CommandLineSwitchCase(arg, "bitmap-compat")
 		{
-			server->SupportMultiRectBitmapUpdates = arg->Value ? FALSE : TRUE;
+			server->SupportMultiRectBitmapUpdates = arg->Value == nullptr;
 		}
 		CommandLineSwitchCase(arg, "may-interact")
 		{
-			server->mayInteract = arg->Value ? TRUE : FALSE;
+			server->mayInteract = arg->Value != nullptr;
 		}
 		CommandLineSwitchCase(arg, "server-side-cursor")
 		{
-			server->ShowMouseCursor = arg->Value ? TRUE : FALSE;
+			server->ShowMouseCursor = arg->Value != nullptr;
 		}
 		CommandLineSwitchCase(arg, "mouse-relative")
 		{
-			const BOOL val = arg->Value ? TRUE : FALSE;
+			const BOOL val = arg->Value != nullptr;
 			if (!freerdp_settings_set_bool(settings, FreeRDP_MouseUseRelativeMove, val) ||
 			    !freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, val))
 				return fail_at(arg, COMMAND_LINE_ERROR);
@@ -383,24 +383,23 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "auth")
 		{
-			server->authentication = arg->Value ? TRUE : FALSE;
+			server->authentication = arg->Value != nullptr;
 		}
 		CommandLineSwitchCase(arg, "remote-guard")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteCredentialGuard,
-			                               arg->Value ? TRUE : FALSE))
+			                               arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "restricted-admin")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RestrictedAdminModeSupported,
-			                               arg->Value ? TRUE : FALSE))
+			                               arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "vmconnect")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_VmConnectMode,
-			                               arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_VmConnectMode, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "sec")
@@ -459,26 +458,22 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity,
-			                               arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "sec-tls")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity,
-			                               arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "sec-nla")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity,
-			                               arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "sec-ext")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity,
-			                               arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "sam-file")
@@ -500,49 +495,45 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "nsc")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "rfx")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec,
-			                               arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "gfx")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline,
-			                               arg->Value ? TRUE : FALSE))
+			                               arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "gfx-progressive")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive,
-			                               arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "gfx-rfx")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec,
-			                               arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "gfx-planar")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxPlanar, arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxPlanar, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "gfx-avc420")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxH264, arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxH264, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "gfx-avc444")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2,
-			                               arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
-			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, arg->Value ? TRUE : FALSE))
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
 		CommandLineSwitchCase(arg, "keytab")

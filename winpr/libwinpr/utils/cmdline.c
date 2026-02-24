@@ -309,11 +309,8 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 							value_present = 0;
 					}
 
-					if ((cur->Flags & COMMAND_LINE_VALUE_REQUIRED) ||
-					    (cur->Flags & COMMAND_LINE_VALUE_OPTIONAL))
-						argument = TRUE;
-					else
-						argument = FALSE;
+					argument = ((cur->Flags & COMMAND_LINE_VALUE_REQUIRED) ||
+					            (cur->Flags & COMMAND_LINE_VALUE_OPTIONAL));
 
 					if (value_present && argument)
 					{
@@ -710,9 +707,7 @@ static BOOL is_valid_fullquoted(const char* string)
 	}
 
 	/* The string did not terminate with the same quote as it started. */
-	if (last != quote)
-		return FALSE;
-	return TRUE;
+	return (last == quote);
 }
 
 char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list, size_t* count)

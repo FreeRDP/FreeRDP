@@ -671,8 +671,5 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nWidth, INT32
 			break;
 	}
 
-	if (!gdi_InvalidateRegion(hdcDest, nXDest, nYDest, nWidth, nHeight))
-		return FALSE;
-
-	return TRUE;
+	return gdi_InvalidateRegion(hdcDest, nXDest, nYDest, nWidth, nHeight);
 }

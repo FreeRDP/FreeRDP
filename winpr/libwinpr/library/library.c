@@ -201,10 +201,7 @@ BOOL FreeLibrary(HMODULE hLibModule)
 	int status = 0;
 	status = dlclose(hLibModule);
 
-	if (status != 0)
-		return FALSE;
-
-	return TRUE;
+	return (status == 0);
 }
 
 HMODULE GetModuleHandleA(LPCSTR lpModuleName)

@@ -389,7 +389,7 @@ UINT cliprdr_read_format_list(wLog* log, wStream* s, CLIPRDR_FORMAT_LIST* format
 	CLIPRDR_FORMAT* formats = nullptr;
 	UINT error = ERROR_INTERNAL_ERROR;
 
-	const BOOL asciiNames = (formatList->common.msgFlags & CB_ASCII_NAMES) ? TRUE : FALSE;
+	const BOOL asciiNames = (formatList->common.msgFlags & CB_ASCII_NAMES) != 0;
 
 	index = 0;
 	/* empty format list */

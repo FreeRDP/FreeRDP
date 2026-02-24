@@ -262,10 +262,7 @@ BOOL set_h264_muxed_format(CamV4lStream* stream, const CAM_MEDIA_TYPE_DESCRIPTIO
 
 	/* commit the format */
 	err = uvcx_video_commit(stream, &config_probe_req);
-	if (err != 0)
-		return FALSE;
-
-	return TRUE;
+	return (err == 0);
 }
 
 /*

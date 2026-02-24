@@ -395,7 +395,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
 			status = update_recv_surfcmds(update, s);
-			rc = (status < 0) ? FALSE : TRUE;
+			rc = (status >= 0);
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:

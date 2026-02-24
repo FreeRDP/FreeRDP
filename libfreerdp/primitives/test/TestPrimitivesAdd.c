@@ -36,10 +36,7 @@ static BOOL test_add16s_func(void)
 
 	/* Unaligned */
 	status = optimized->add_16s(src1 + 1, src2 + 1, d2 + 2, FUNC_TEST_SIZE);
-	if (status != PRIMITIVES_SUCCESS)
-		return FALSE;
-
-	return TRUE;
+	return (status == PRIMITIVES_SUCCESS);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -55,11 +52,8 @@ static BOOL test_add16s_speed(void)
 	winpr_RAND(src1, sizeof(src1));
 	winpr_RAND(src2, sizeof(src2));
 
-	if (!speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->add_16s,
-	                (speed_test_fkt)optimized->add_16s, src1, src2, dst, FUNC_TEST_SIZE))
-		return FALSE;
-
-	return TRUE;
+	return (speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->add_16s,
+	                   (speed_test_fkt)optimized->add_16s, src1, src2, dst, FUNC_TEST_SIZE));
 }
 
 int TestPrimitivesAdd(int argc, char* argv[])

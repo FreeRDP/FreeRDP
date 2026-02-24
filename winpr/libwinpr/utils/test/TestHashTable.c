@@ -309,9 +309,7 @@ static BOOL foreachFn2(const void* key, void* value, void* arg)
 	WINPR_UNUSED(value);
 	d->foreachCalls++;
 
-	if (d->foreachCalls == 2)
-		return FALSE;
-	return TRUE;
+	return (d->foreachCalls != 2);
 }
 
 static BOOL foreachFn3(const void* key, void* value, void* arg)

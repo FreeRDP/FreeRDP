@@ -692,9 +692,7 @@ BOOL WTSIsChannelJoinedByName(freerdp_peer* client, const char* channel_name)
 	if (!client || !client->context || !client->context->rdp)
 		return FALSE;
 
-	return wts_get_joined_channel_by_name(client->context->rdp->mcs, channel_name) == nullptr
-	           ? FALSE
-	           : TRUE;
+	return (wts_get_joined_channel_by_name(client->context->rdp->mcs, channel_name) != nullptr);
 }
 
 BOOL WTSIsChannelJoinedById(freerdp_peer* client, UINT16 channel_id)
@@ -702,8 +700,7 @@ BOOL WTSIsChannelJoinedById(freerdp_peer* client, UINT16 channel_id)
 	if (!client || !client->context || !client->context->rdp)
 		return FALSE;
 
-	return wts_get_joined_channel_by_id(client->context->rdp->mcs, channel_id) == nullptr ? FALSE
-	                                                                                      : TRUE;
+	return (wts_get_joined_channel_by_id(client->context->rdp->mcs, channel_id) != nullptr);
 }
 
 BOOL WTSVirtualChannelManagerIsChannelJoined(HANDLE hServer, const char* name)
@@ -713,7 +710,7 @@ BOOL WTSVirtualChannelManagerIsChannelJoined(HANDLE hServer, const char* name)
 	if (!vcm || !vcm->rdp)
 		return FALSE;
 
-	return wts_get_joined_channel_by_name(vcm->rdp->mcs, name) == nullptr ? FALSE : TRUE;
+	return (wts_get_joined_channel_by_name(vcm->rdp->mcs, name) != nullptr);
 }
 
 BYTE WTSVirtualChannelManagerGetDrdynvcState(HANDLE hServer)

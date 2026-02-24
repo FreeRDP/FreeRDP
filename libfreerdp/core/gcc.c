@@ -936,10 +936,8 @@ BOOL gcc_read_user_data_header(wLog* log, wStream* s, UINT16* type, UINT16* leng
 	Stream_Read_UINT16(s, *type);   /* type */
 	Stream_Read_UINT16(s, *length); /* length */
 
-	if ((*length < 4) || (!Stream_CheckAndLogRequiredLengthWLog(log, s, (size_t)(*length - 4))))
-		return FALSE;
-
-	return TRUE;
+	return !((*length < 4) ||
+	         (!Stream_CheckAndLogRequiredLengthWLog(log, s, (size_t)(*length - 4))));
 }
 
 /**
@@ -1074,8 +1072,7 @@ static BOOL updateEarlyClientCaps(wLog* log, rdpSettings* settings, UINT32 early
 	WINPR_ASSERT(settings);
 
 	if (settings->SupportErrorInfoPdu)
-		settings->SupportErrorInfoPdu =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_ERRINFO_PDU) ? TRUE : FALSE;
+		settings->SupportErrorInfoPdu = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_ERRINFO_PDU) != 0;
 
 	/* RNS_UD_CS_WANT_32BPP_SESSION is already handled in gcc_read_client_core_data:
 	 *
@@ -1085,11 +1082,11 @@ static BOOL updateEarlyClientCaps(wLog* log, rdpSettings* settings, UINT32 early
 
 	if (settings->SupportStatusInfoPdu)
 		settings->SupportStatusInfoPdu =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_STATUSINFO_PDU) ? TRUE : FALSE;
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_STATUSINFO_PDU) != 0;
 
 	if (settings->SupportAsymetricKeys)
 		settings->SupportAsymetricKeys =
-		    (earlyCapabilityFlags & RNS_UD_CS_STRONG_ASYMMETRIC_KEYS) ? TRUE : FALSE;
+		    (earlyCapabilityFlags & RNS_UD_CS_STRONG_ASYMMETRIC_KEYS) != 0;
 
 	if (settings->HasRelativeMouseEvent)
 	{
@@ -1098,7 +1095,7 @@ static BOOL updateEarlyClientCaps(wLog* log, rdpSettings* settings, UINT32 early
 		if (settings->RdpVersion >= RDP_VERSION_10_12)
 		{
 			settings->HasRelativeMouseEvent =
-			    (earlyCapabilityFlags & RNS_UD_CS_RELATIVE_MOUSE_INPUT) ? TRUE : FALSE;
+			    (earlyCapabilityFlags & RNS_UD_CS_RELATIVE_MOUSE_INPUT) != 0;
 		}
 		else
 			settings->HasRelativeMouseEvent = FALSE;
@@ -1106,27 +1103,27 @@ static BOOL updateEarlyClientCaps(wLog* log, rdpSettings* settings, UINT32 early
 
 	if (settings->NetworkAutoDetect)
 		settings->NetworkAutoDetect =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT) ? TRUE : FALSE;
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT) != 0;
 
 	if (settings->SupportSkipChannelJoin)
 		settings->SupportSkipChannelJoin =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN) ? TRUE : FALSE;
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN) != 0;
 
 	if (settings->SupportMonitorLayoutPdu)
 		settings->SupportMonitorLayoutPdu =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU) ? TRUE : FALSE;
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU) != 0;
 
 	if (settings->SupportHeartbeatPdu)
 		settings->SupportHeartbeatPdu =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_HEARTBEAT_PDU) ? TRUE : FALSE;
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_HEARTBEAT_PDU) != 0;
 
 	if (settings->SupportGraphicsPipeline)
 		settings->SupportGraphicsPipeline =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL) ? TRUE : FALSE;
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL) != 0;
 
 	if (settings->SupportDynamicTimeZone)
 		settings->SupportDynamicTimeZone =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE) ? TRUE : FALSE;
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE) != 0;
 
 	if ((earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE) == 0)
 		connectionType = 0;
@@ -1141,25 +1138,15 @@ static BOOL updateEarlyServerCaps(wLog* log, rdpSettings* settings, UINT32 early
 {
 	WINPR_ASSERT(settings);
 
-	settings->SupportEdgeActionV1 =
-	    settings->SupportEdgeActionV1 &&
-	            (earlyCapabilityFlags & RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V1)
-	        ? TRUE
-	        : FALSE;
-	settings->SupportDynamicTimeZone =
-	    settings->SupportDynamicTimeZone && (earlyCapabilityFlags & RNS_UD_SC_DYNAMIC_DST_SUPPORTED)
-	        ? TRUE
-	        : FALSE;
-	settings->SupportEdgeActionV2 =
-	    settings->SupportEdgeActionV2 &&
-	            (earlyCapabilityFlags & RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2)
-	        ? TRUE
-	        : FALSE;
+	settings->SupportEdgeActionV1 = (settings->SupportEdgeActionV1 &&
+	                                 (earlyCapabilityFlags & RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V1));
+	settings->SupportDynamicTimeZone = (settings->SupportDynamicTimeZone &&
+	                                    (earlyCapabilityFlags & RNS_UD_SC_DYNAMIC_DST_SUPPORTED));
+	settings->SupportEdgeActionV2 = (settings->SupportEdgeActionV2 &&
+	                                 (earlyCapabilityFlags & RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2));
 	settings->SupportSkipChannelJoin =
-	    settings->SupportSkipChannelJoin &&
-	            (earlyCapabilityFlags & RNS_UD_SC_SKIP_CHANNELJOIN_SUPPORTED)
-	        ? TRUE
-	        : FALSE;
+	    (settings->SupportSkipChannelJoin &&
+	     (earlyCapabilityFlags & RNS_UD_SC_SKIP_CHANNELJOIN_SUPPORTED));
 
 	filterAndLogEarlyServerCapabilityFlags(log, earlyCapabilityFlags);
 	return TRUE;
@@ -2052,10 +2039,8 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs)
 	if (settings->ClusterInfoFlags & REDIRECTED_SESSIONID_FIELD_VALID)
 		settings->RedirectedSessionId = redirectedSessionId;
 
-	settings->ConsoleSession =
-	    (settings->ClusterInfoFlags & REDIRECTED_SESSIONID_FIELD_VALID) ? TRUE : FALSE;
-	settings->RedirectSmartCards =
-	    (settings->ClusterInfoFlags & REDIRECTED_SMARTCARD) ? TRUE : FALSE;
+	settings->ConsoleSession = (settings->ClusterInfoFlags & REDIRECTED_SESSIONID_FIELD_VALID) != 0;
+	settings->RedirectSmartCards = (settings->ClusterInfoFlags & REDIRECTED_SMARTCARD) != 0;
 
 	if (Stream_GetRemainingLength(s) > 0)
 	{
@@ -2189,7 +2174,7 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 		current->y = top;
 		current->width = WINPR_ASSERTING_INT_CAST(int32_t, w + 1);
 		current->height = WINPR_ASSERTING_INT_CAST(int32_t, h + 1);
-		current->is_primary = (flags & MONITOR_PRIMARY) ? TRUE : FALSE;
+		current->is_primary = (flags & MONITOR_PRIMARY) != 0;
 	}
 
 	return TRUE;

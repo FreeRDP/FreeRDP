@@ -213,10 +213,7 @@ BOOL ndr_read_pickle(NdrContext* context, wStream* s)
 	UINT32 v = 0;
 
 	/* NDR format label */
-	if (!ndr_read_uint32(context, s, &v) || v != 0x20000)
-		return FALSE;
-
-	return TRUE;
+	return !(!ndr_read_uint32(context, s, &v) || v != 0x20000);
 }
 
 BOOL ndr_write_pickle(NdrContext* context, wStream* s)
@@ -224,10 +221,7 @@ BOOL ndr_write_pickle(NdrContext* context, wStream* s)
 	WINPR_ASSERT(context);
 
 	/* NDR format label */
-	if (!ndr_write_uint32(context, s, 0x20000))
-		return FALSE;
-
-	return TRUE;
+	return ndr_write_uint32(context, s, 0x20000);
 }
 
 BOOL ndr_read_constructed(NdrContext* context, wStream* s, wStream* target)

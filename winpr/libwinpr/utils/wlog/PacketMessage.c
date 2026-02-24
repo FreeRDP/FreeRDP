@@ -36,30 +36,22 @@
 
 static BOOL Pcap_Read_Header(wPcap* pcap, wPcapHeader* header)
 {
-	if (pcap && pcap->fp && fread((void*)header, sizeof(wPcapHeader), 1, pcap->fp) == 1)
-		return TRUE;
-	return FALSE;
+	return (pcap && pcap->fp && fread((void*)header, sizeof(wPcapHeader), 1, pcap->fp) == 1);
 }
 
 static BOOL Pcap_Write_Header(wPcap* pcap, wPcapHeader* header)
 {
-	if (pcap && pcap->fp && fwrite((void*)header, sizeof(wPcapHeader), 1, pcap->fp) == 1)
-		return TRUE;
-	return FALSE;
+	return (pcap && pcap->fp && fwrite((void*)header, sizeof(wPcapHeader), 1, pcap->fp) == 1);
 }
 
 static BOOL Pcap_Write_RecordHeader(wPcap* pcap, wPcapRecordHeader* record)
 {
-	if (pcap && pcap->fp && fwrite((void*)record, sizeof(wPcapRecordHeader), 1, pcap->fp) == 1)
-		return TRUE;
-	return FALSE;
+	return (pcap && pcap->fp && fwrite((void*)record, sizeof(wPcapRecordHeader), 1, pcap->fp) == 1);
 }
 
 static BOOL Pcap_Write_RecordContent(wPcap* pcap, wPcapRecord* record)
 {
-	if (pcap && pcap->fp && fwrite(record->data, record->length, 1, pcap->fp) == 1)
-		return TRUE;
-	return FALSE;
+	return (pcap && pcap->fp && fwrite(record->data, record->length, 1, pcap->fp) == 1);
 }
 
 static BOOL Pcap_Write_Record(wPcap* pcap, wPcapRecord* record)

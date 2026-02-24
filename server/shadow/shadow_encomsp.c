@@ -46,8 +46,8 @@ encomsp_change_participant_control_level(EncomspServerContext* context,
 	          "ChangeParticipantControlLevel: ParticipantId: %" PRIu32 " Flags: 0x%04" PRIX16 "",
 	          pdu->ParticipantId, pdu->Flags);
 
-	mayView = (pdu->Flags & ENCOMSP_MAY_VIEW) ? TRUE : FALSE;
-	mayInteract = (pdu->Flags & ENCOMSP_MAY_INTERACT) ? TRUE : FALSE;
+	mayView = (pdu->Flags & ENCOMSP_MAY_VIEW) != 0;
+	mayInteract = (pdu->Flags & ENCOMSP_MAY_INTERACT) != 0;
 
 	if (mayInteract && !mayView)
 		mayView = TRUE; /* may interact implies may view */
@@ -90,7 +90,7 @@ encomsp_change_participant_control_level(EncomspServerContext* context,
 		}
 	}
 
-	inLobby = client->mayView ? FALSE : TRUE;
+	inLobby = !(client->mayView);
 
 	if (inLobby != client->inLobby)
 	{

@@ -533,11 +533,9 @@ static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	pYUVDstData[0] = ppYUVDstData[0];
 	pYUVDstData[1] = ppYUVDstData[1];
 	pYUVDstData[2] = ppYUVDstData[2];
-	if (!yuv444_context_decode(h264->yuv, (BYTE)type, pYUVData, piStride, h264->height, pYUVDstData,
-	                           piDstStride, DstFormat, pDstData, nDstStep, rects, nrRects))
-		return FALSE;
-
-	return TRUE;
+	return (yuv444_context_decode(h264->yuv, (BYTE)type, pYUVData, piStride, h264->height,
+	                              pYUVDstData, piDstStride, DstFormat, pDstData, nDstStep, rects,
+	                              nrRects));
 }
 
 #if defined(AVC444_FRAME_STAT)
@@ -824,7 +822,7 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 			h264->UsageType = value;
 			return TRUE;
 		case H264_CONTEXT_OPTION_HW_ACCEL:
-			h264->hwAccel = value ? TRUE : FALSE;
+			h264->hwAccel = (value);
 			return TRUE;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",

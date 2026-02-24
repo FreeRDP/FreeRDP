@@ -183,7 +183,7 @@ static BOOL test_load_file(const char* name)
 		goto fail;
 
 	const int res = winpr_image_read(image, name);
-	rc = (res > 0) ? TRUE : FALSE;
+	rc = (res > 0);
 
 fail:
 	winpr_image_free(image, TRUE);

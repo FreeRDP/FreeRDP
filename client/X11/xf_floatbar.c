@@ -124,7 +124,7 @@ static BOOL xf_floatbar_button_onclick_locked(xfFloatbar* floatbar)
 	if (!floatbar)
 		return FALSE;
 
-	floatbar->locked = (floatbar->locked) ? FALSE : TRUE;
+	floatbar->locked = !((floatbar->locked));
 	return xf_floatbar_hide_and_show(floatbar);
 }
 
@@ -345,7 +345,7 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* name, DWO
 	floatbar->root_window = window;
 	floatbar->flags = flags;
 	floatbar->xfc = xfc;
-	floatbar->locked = (flags & 0x0002) != 0 ? TRUE : FALSE;
+	floatbar->locked = (flags & 0x0002) != 0;
 	xf_floatbar_toggle_fullscreen(floatbar, FALSE);
 
 	{

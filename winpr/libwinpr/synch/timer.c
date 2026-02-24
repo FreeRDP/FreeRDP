@@ -381,7 +381,7 @@ HANDLE CreateWaitableTimerW(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 HANDLE CreateWaitableTimerExA(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCSTR lpTimerName,
                               DWORD dwFlags, DWORD dwDesiredAccess)
 {
-	BOOL bManualReset = (dwFlags & CREATE_WAITABLE_TIMER_MANUAL_RESET) ? TRUE : FALSE;
+	BOOL bManualReset = (dwFlags & CREATE_WAITABLE_TIMER_MANUAL_RESET) != 0;
 
 	if (dwDesiredAccess != 0)
 		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, lpTimerName,

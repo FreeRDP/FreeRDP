@@ -1719,7 +1719,7 @@ static LONG WINAPI PCSC_SCardConnect_Internal(SCARDCONTEXT hContext, LPCSTR szRe
 	if (!g_PCSC.pfnSCardConnect)
 		return PCSC_SCard_LogError("g_PCSC.pfnSCardConnect");
 
-	shared = (dwShareMode == SCARD_SHARE_DIRECT) ? TRUE : FALSE;
+	shared = (dwShareMode == SCARD_SHARE_DIRECT) != 0;
 	PCSC_WaitForCardAccess(hContext, 0, shared);
 	szReaderPCSC = szReader;
 
@@ -1811,7 +1811,7 @@ static LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard, DWORD dwShareMode,
 	if (!g_PCSC.pfnSCardReconnect)
 		return PCSC_SCard_LogError("g_PCSC.pfnSCardReconnect");
 
-	shared = (dwShareMode == SCARD_SHARE_DIRECT) ? TRUE : FALSE;
+	shared = (dwShareMode == SCARD_SHARE_DIRECT) != 0;
 	PCSC_WaitForCardAccess(0, hCard, shared);
 	pcsc_dwPreferredProtocols = (PCSC_DWORD)PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
 	status = g_PCSC.pfnSCardReconnect(hCard, pcsc_dwShareMode, pcsc_dwPreferredProtocols,

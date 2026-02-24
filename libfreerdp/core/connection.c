@@ -581,11 +581,8 @@ static BOOL rdp_client_redirect_try_fqdn(rdpSettings* settings)
 		if (settings->GatewayEnabled ||
 		    rdp_client_redirect_resolvable(settings->RedirectionTargetFQDN))
 		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
-			                                 settings->RedirectionTargetFQDN))
-				return FALSE;
-
-			return TRUE;
+			return (freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
+			                                    settings->RedirectionTargetFQDN));
 		}
 	}
 
@@ -596,11 +593,8 @@ static BOOL rdp_client_redirect_try_ip(rdpSettings* settings)
 {
 	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
-		                                 settings->TargetNetAddress))
-			return FALSE;
-
-		return TRUE;
+		return (freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
+		                                    settings->TargetNetAddress));
 	}
 
 	return FALSE;
@@ -613,11 +607,8 @@ static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 		if (settings->GatewayEnabled ||
 		    rdp_client_redirect_resolvable(settings->RedirectionTargetNetBiosName))
 		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
-			                                 settings->RedirectionTargetNetBiosName))
-				return FALSE;
-
-			return TRUE;
+			return (freerdp_settings_set_string(settings, FreeRDP_ServerHostname,
+			                                    settings->RedirectionTargetNetBiosName));
 		}
 	}
 
@@ -685,8 +676,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	settings->RdstlsSecurity =
-	    (settings->RedirectionFlags & LB_PASSWORD_IS_PK_ENCRYPTED) != 0 ? TRUE : FALSE;
+	settings->RdstlsSecurity = ((settings->RedirectionFlags & LB_PASSWORD_IS_PK_ENCRYPTED) != 0);
 
 	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(rdp->context->instance);
@@ -919,7 +909,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	rdp->do_crypt_license = (sec_flags & SEC_LICENSE_ENCRYPT_SC) != 0 ? TRUE : FALSE;
+	rdp->do_crypt_license = ((sec_flags & SEC_LICENSE_ENCRYPT_SC) != 0);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 4))
 		return FALSE;

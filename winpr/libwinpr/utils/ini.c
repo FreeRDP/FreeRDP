@@ -83,7 +83,7 @@ static BOOL IniFile_Load_NextLine(wIniFile* ini, char* str)
 			ini->nextLine = nullptr;
 	}
 
-	return (ini->nextLine) ? TRUE : FALSE;
+	return (ini->nextLine != nullptr);
 }
 
 static BOOL IniFile_BufferResize(wIniFile* ini, size_t size)
@@ -195,7 +195,7 @@ static BOOL IniFile_Load_HasNextLine(wIniFile* ini)
 {
 	WINPR_ASSERT(ini);
 
-	return (ini->nextLine) ? TRUE : FALSE;
+	return (ini->nextLine != nullptr);
 }
 
 static char* IniFile_Load_GetNextLine(wIniFile* ini)

@@ -479,23 +479,19 @@ static UINT cliprdr_server_receive_general_capability(CliprdrServerContext* cont
 	Stream_Read_UINT32(s, cap_set->generalFlags); /* generalFlags (4 bytes) */
 
 	if (context->useLongFormatNames)
-		context->useLongFormatNames =
-		    (cap_set->generalFlags & CB_USE_LONG_FORMAT_NAMES) ? TRUE : FALSE;
+		context->useLongFormatNames = (cap_set->generalFlags & CB_USE_LONG_FORMAT_NAMES) != 0;
 
 	if (context->streamFileClipEnabled)
-		context->streamFileClipEnabled =
-		    (cap_set->generalFlags & CB_STREAM_FILECLIP_ENABLED) ? TRUE : FALSE;
+		context->streamFileClipEnabled = (cap_set->generalFlags & CB_STREAM_FILECLIP_ENABLED) != 0;
 
 	if (context->fileClipNoFilePaths)
-		context->fileClipNoFilePaths =
-		    (cap_set->generalFlags & CB_FILECLIP_NO_FILE_PATHS) ? TRUE : FALSE;
+		context->fileClipNoFilePaths = (cap_set->generalFlags & CB_FILECLIP_NO_FILE_PATHS) != 0;
 
 	if (context->canLockClipData)
-		context->canLockClipData = (cap_set->generalFlags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
+		context->canLockClipData = (cap_set->generalFlags & CB_CAN_LOCK_CLIPDATA) != 0;
 
 	if (context->hasHugeFileSupport)
-		context->hasHugeFileSupport =
-		    (cap_set->generalFlags & CB_HUGE_FILE_SUPPORT_ENABLED) ? TRUE : FALSE;
+		context->hasHugeFileSupport = (cap_set->generalFlags & CB_HUGE_FILE_SUPPORT_ENABLED) != 0;
 
 	return CHANNEL_RC_OK;
 }

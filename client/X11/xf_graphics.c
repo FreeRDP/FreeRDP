@@ -96,10 +96,7 @@ BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 	color->red = (unsigned short)(r << 8);
 	color->flags = DoRed | DoGreen | DoBlue;
 
-	if (XAllocColor(xfc->display, xfc->colormap, color) == 0)
-		return FALSE;
-
-	return TRUE;
+	return (XAllocColor(xfc->display, xfc->colormap, color) != 0);
 }
 
 static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer* pointer,

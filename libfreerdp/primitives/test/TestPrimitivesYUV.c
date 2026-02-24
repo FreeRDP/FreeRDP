@@ -1291,9 +1291,7 @@ static BOOL similarYUV(const BYTE* line1, const BYTE* line2, size_t len)
 		const int a = line1[x];
 		const int b = line2[x];
 		const int diff = abs(a - b);
-		if (diff >= 2)
-			return FALSE;
-		return TRUE;
+		return (diff < 2);
 	}
 }
 

@@ -183,7 +183,7 @@ static BOOL settings_reg_query_bool(rdpSettings* settings, FreeRDP_Settings_Keys
 	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
 		return FALSE;
 
-	return freerdp_settings_set_bool(settings, id, dwValue != 0 ? TRUE : FALSE);
+	return freerdp_settings_set_bool(settings, id, (dwValue != 0));
 }
 
 static void settings_client_load_hkey_local_machine(rdpSettings* settings)
@@ -812,8 +812,8 @@ char* freerdp_settings_get_config_path(void)
 
 rdpSettings* freerdp_settings_new(DWORD flags)
 {
-	const BOOL server = (flags & FREERDP_SETTINGS_SERVER_MODE) != 0 ? TRUE : FALSE;
-	const BOOL remote = (flags & FREERDP_SETTINGS_REMOTE_MODE) != 0 ? TRUE : FALSE;
+	const BOOL server = ((flags & FREERDP_SETTINGS_SERVER_MODE) != 0);
+	const BOOL remote = ((flags & FREERDP_SETTINGS_REMOTE_MODE) != 0);
 	rdpSettings* settings = (rdpSettings*)calloc(1, sizeof(rdpSettings));
 
 	if (!settings)
@@ -1661,9 +1661,7 @@ BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY* identity,
 	                                               Password, pwdLen);
 	zfree(Username, UserLen);
 	zfree(Domain, DomainLen);
-	if (rc < 0)
-		return FALSE;
-	return TRUE;
+	return (rc >= 0);
 }
 
 BOOL identity_set_from_settings(SEC_WINNT_AUTH_IDENTITY_W* identity, const rdpSettings* settings,
@@ -1711,14 +1709,10 @@ BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* identity,
 	                                               Password, pwdLen);
 	zfree(Password, pwdLen);
 	CredFree(marshalledCredentials);
-	if (rc < 0)
-		return FALSE;
-
+	return (rc >= 0);
 #else
-	if (!identity_set_from_settings(identity, settings, userId, domainId, pwdId))
-		return FALSE;
+	return identity_set_from_settings(identity, settings, userId, domainId, pwdId);
 #endif /* _WIN32 */
-	return TRUE;
 }
 
 const char* freerdp_settings_glyph_level_string(UINT32 level, char* buffer, size_t size)

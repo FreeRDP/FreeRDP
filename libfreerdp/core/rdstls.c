@@ -347,10 +347,7 @@ static BOOL rdstls_write_authentication_request_with_cookie(WINPR_ATTR_UNUSED rd
 	Stream_Write_UINT16(s, RDSTLS_DATA_AUTORECONNECT_COOKIE);
 	Stream_Write_UINT32(s, settings->RedirectedSessionId);
 
-	if (!rdstls_write_cookie(s, settings->ServerAutoReconnectCookie))
-		return FALSE;
-
-	return TRUE;
+	return (rdstls_write_cookie(s, settings->ServerAutoReconnectCookie));
 }
 
 static BOOL rdstls_write_authentication_response(rdpRdstls* rdstls, wStream* s)
@@ -412,10 +409,7 @@ static BOOL rdstls_read_unicode_string(WINPR_ATTR_UNUSED wLog* log, wStream* s, 
 	}
 
 	*str = Stream_Read_UTF16_String_As_UTF8(s, length / sizeof(WCHAR), nullptr);
-	if (!*str)
-		return FALSE;
-
-	return TRUE;
+	return (*str) != nullptr;
 }
 
 static BOOL rdstls_read_data(WINPR_ATTR_UNUSED wLog* log, wStream* s, UINT16* pLength,
@@ -698,10 +692,7 @@ static BOOL rdstls_send(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, v
 			return FALSE;
 	}
 
-	if (transport_write(rdstls->transport, s) < 0)
-		return FALSE;
-
-	return TRUE;
+	return (transport_write(rdstls->transport, s) >= 0);
 }
 
 static int rdstls_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra)

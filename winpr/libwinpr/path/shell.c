@@ -690,10 +690,7 @@ BOOL PathFileExistsA(LPCSTR pszPath)
 {
 	struct stat stat_info;
 
-	if (stat(pszPath, &stat_info) != 0)
-		return FALSE;
-
-	return TRUE;
+	return (stat(pszPath, &stat_info) == 0);
 }
 
 BOOL PathFileExistsW(LPCWSTR pszPath)
@@ -819,7 +816,7 @@ BOOL winpr_DeleteFile(const char* lpFileName)
 		return FALSE;
 
 	const int status = unlink(lpFileName);
-	return (status != -1) ? TRUE : FALSE;
+	return (status != -1);
 #else
 	LPWSTR lpFileNameW = nullptr;
 	BOOL result = FALSE;

@@ -154,10 +154,7 @@ BOOL pcap_has_next_record(const rdpPcap* pcap)
 {
 	WINPR_ASSERT(pcap);
 
-	if (pcap->file_size - (_ftelli64(pcap->fp)) <= 16)
-		return FALSE;
-
-	return TRUE;
+	return (pcap->file_size - (_ftelli64(pcap->fp)) > 16);
 }
 
 BOOL pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)

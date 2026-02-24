@@ -65,9 +65,17 @@ static BOOL WLog_JournaldAppender_Open(wLog* log, wLogAppender* appender)
 
 static BOOL WLog_JournaldAppender_Close(wLog* log, wLogAppender* appender)
 {
+	wLogJournaldAppender* journaldAppender = (wLogJournaldAppender*)appender;
 	if (!log || !appender)
 		return FALSE;
 
+	if (journaldAppender->stream)
+		(void)fclose(journaldAppender->stream);
+
+	free(journaldAppender->identifier);
+
+	journaldAppender->stream = nullptr;
+	journaldAppender->identifier = nullptr;
 	return TRUE;
 }
 
@@ -124,6 +132,7 @@ static BOOL WLog_JournaldAppender_WriteDataMessage(wLog* log, wLogAppender* appe
 	if (!log || !appender || !message)
 		return FALSE;
 
+	(void)fprintf(stderr, "[TODO: %s] data messages not implemented! Ignoring.\n", __func__);
 	return TRUE;
 }
 
@@ -133,6 +142,7 @@ static BOOL WLog_JournaldAppender_WriteImageMessage(wLog* log, wLogAppender* app
 	if (!log || !appender || !message)
 		return FALSE;
 
+	(void)fprintf(stderr, "[TODO: %s] image messages not implemented! Ignoring.\n", __func__);
 	return TRUE;
 }
 

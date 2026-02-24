@@ -298,15 +298,10 @@ static BOOL xf_input_is_duplicate(xfContext* xfc, const XGenericEventCookie* coo
 	event = cookie->data;
 	WINPR_ASSERT(event);
 
-	if ((xfc->lastEvent.time == event->time) && (xfc->lastEvType == cookie->evtype) &&
-	    (xfc->lastEvent.detail == event->detail) &&
-	    (fabs(xfc->lastEvent.event_x - event->event_x) < DBL_EPSILON) &&
-	    (fabs(xfc->lastEvent.event_y - event->event_y) < DBL_EPSILON))
-	{
-		return TRUE;
-	}
-
-	return FALSE;
+	return ((xfc->lastEvent.time == event->time) && (xfc->lastEvType == cookie->evtype) &&
+	        (xfc->lastEvent.detail == event->detail) &&
+	        (fabs(xfc->lastEvent.event_x - event->event_x) < DBL_EPSILON) &&
+	        (fabs(xfc->lastEvent.event_y - event->event_y) < DBL_EPSILON));
 }
 
 static void xf_input_save_last_event(xfContext* xfc, const XGenericEventCookie* cookie)

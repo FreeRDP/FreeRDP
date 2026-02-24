@@ -117,9 +117,7 @@ static BOOL rdp_read_capability_set_header(wLog* log, wStream* s, UINT16* length
 		return FALSE;
 	Stream_Read_UINT16(s, *type);   /* capabilitySetType */
 	Stream_Read_UINT16(s, *length); /* lengthCapability */
-	if (*length < 4)
-		return FALSE;
-	return TRUE;
+	return (*length >= 4);
 }
 
 static void rdp_write_capability_set_header(wStream* s, UINT16 length, UINT16 type)
@@ -239,13 +237,12 @@ static BOOL rdp_read_general_capability_set(wLog* log, wStream* s, rdpSettings* 
 	    s, settings->CapsGeneralCompressionLevel); /* generalCompressionLevel (2 bytes) */
 	Stream_Read_UINT8(s, refreshRectSupport);      /* refreshRectSupport (1 byte) */
 	Stream_Read_UINT8(s, suppressOutputSupport);   /* suppressOutputSupport (1 byte) */
-	settings->NoBitmapCompressionHeader = (extraFlags & NO_BITMAP_COMPRESSION_HDR) ? TRUE : FALSE;
-	settings->LongCredentialsSupported = (extraFlags & LONG_CREDENTIALS_SUPPORTED) ? TRUE : FALSE;
+	settings->NoBitmapCompressionHeader = (extraFlags & NO_BITMAP_COMPRESSION_HDR) != 0;
+	settings->LongCredentialsSupported = (extraFlags & LONG_CREDENTIALS_SUPPORTED) != 0;
 
-	settings->AutoReconnectionPacketSupported =
-	    (extraFlags & AUTORECONNECT_SUPPORTED) ? TRUE : FALSE;
-	settings->FastPathOutput = (extraFlags & FASTPATH_OUTPUT_SUPPORTED) ? TRUE : FALSE;
-	settings->SaltedChecksum = (extraFlags & ENC_SALTED_CHECKSUM) ? TRUE : FALSE;
+	settings->AutoReconnectionPacketSupported = (extraFlags & AUTORECONNECT_SUPPORTED) != 0;
+	settings->FastPathOutput = (extraFlags & FASTPATH_OUTPUT_SUPPORTED) != 0;
+	settings->SaltedChecksum = (extraFlags & ENC_SALTED_CHECKSUM) != 0;
 	settings->RefreshRect = refreshRectSupport;
 	settings->SuppressOutput = suppressOutputSupport;
 
@@ -422,11 +419,10 @@ static BOOL rdp_read_bitmap_capability_set(wLog* log, wStream* s, rdpSettings* s
 	settings->DesktopResize = desktopResizeFlag;
 	settings->DesktopWidth = desktopWidth;
 	settings->DesktopHeight = desktopHeight;
-	settings->DrawAllowSkipAlpha = (drawingFlags & DRAW_ALLOW_SKIP_ALPHA) ? TRUE : FALSE;
+	settings->DrawAllowSkipAlpha = (drawingFlags & DRAW_ALLOW_SKIP_ALPHA) != 0;
 	settings->DrawAllowDynamicColorFidelity =
-	    (drawingFlags & DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY) ? TRUE : FALSE;
-	settings->DrawAllowColorSubsampling =
-	    (drawingFlags & DRAW_ALLOW_COLOR_SUBSAMPLING) ? TRUE : FALSE;
+	    (drawingFlags & DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY) != 0;
+	settings->DrawAllowColorSubsampling = (drawingFlags & DRAW_ALLOW_COLOR_SUBSAMPLING) != 0;
 
 	return TRUE;
 }
@@ -573,10 +569,8 @@ static BOOL rdp_apply_order_capability_set(rdpSettings* settings, const rdpSetti
 	else
 		settings->BitmapCacheV3Enabled = FALSE;
 
-	if (FrameMarkerCommandEnabled && src->FrameMarkerCommandEnabled)
-		settings->FrameMarkerCommandEnabled = TRUE;
-	else
-		settings->FrameMarkerCommandEnabled = FALSE;
+	settings->FrameMarkerCommandEnabled =
+	    (FrameMarkerCommandEnabled && src->FrameMarkerCommandEnabled);
 
 	return TRUE;
 }
@@ -623,10 +617,9 @@ static BOOL rdp_read_order_capability_set(wLog* log, wStream* s, rdpSettings* se
 
 	if (settings->OrderSupportFlags & ORDER_FLAGS_EXTRA_SUPPORT)
 	{
-		BitmapCacheV3Enabled =
-		    (settings->OrderSupportFlagsEx & CACHE_BITMAP_V3_SUPPORT) ? TRUE : FALSE;
+		BitmapCacheV3Enabled = (settings->OrderSupportFlagsEx & CACHE_BITMAP_V3_SUPPORT) != 0;
 		FrameMarkerCommandEnabled =
-		    (settings->OrderSupportFlagsEx & ALTSEC_FRAME_MARKER_SUPPORT) ? TRUE : FALSE;
+		    (settings->OrderSupportFlagsEx & ALTSEC_FRAME_MARKER_SUPPORT) != 0;
 	}
 
 	settings->BitmapCacheV3Enabled = BitmapCacheV3Enabled;
@@ -1105,12 +1098,10 @@ static BOOL rdp_apply_pointer_capability_set(rdpSettings* settings, const rdpSet
 	const UINT32 actualPointerCacheSize = MIN(pointerCacheSize, dstPointerCacheSize);
 	const UINT32 actualColorPointerCacheSize = MIN(colorPointerCacheSize, dstColorPointerCacheSize);
 
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_PointerCacheSize, actualPointerCacheSize) ||
+	return !(
+	    !freerdp_settings_set_uint32(settings, FreeRDP_PointerCacheSize, actualPointerCacheSize) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_ColorPointerCacheSize,
-	                                 actualColorPointerCacheSize))
-		return FALSE;
-
-	return TRUE;
+	                                 actualColorPointerCacheSize));
 }
 
 /*
@@ -1350,7 +1341,7 @@ static BOOL rdp_read_sound_capability_set(wLog* log, wStream* s, rdpSettings* se
 
 	Stream_Read_UINT16(s, soundFlags); /* soundFlags (2 bytes) */
 	Stream_Seek_UINT16(s);             /* pad2OctetsA (2 bytes) */
-	settings->SoundBeepsEnabled = (soundFlags & SOUND_BEEPS_FLAG) ? TRUE : FALSE;
+	settings->SoundBeepsEnabled = (soundFlags & SOUND_BEEPS_FLAG) != 0;
 	return TRUE;
 }
 
@@ -1478,19 +1469,19 @@ static BOOL rdp_read_input_capability_set(wLog* log, wStream* s, rdpSettings* se
 	                                   (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_HasHorizontalWheel,
-	                               (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL) ? TRUE : FALSE))
+	                               (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL) != 0))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput,
-	                               (inputFlags & INPUT_FLAG_UNICODE) ? TRUE : FALSE))
+	                               (inputFlags & INPUT_FLAG_UNICODE) != 0))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent,
-	                               (inputFlags & INPUT_FLAG_MOUSE_RELATIVE) ? TRUE : FALSE))
+	                               (inputFlags & INPUT_FLAG_MOUSE_RELATIVE) != 0))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_HasExtendedMouseEvent,
-	                               (inputFlags & INPUT_FLAG_MOUSEX) ? TRUE : FALSE))
+	                               (inputFlags & INPUT_FLAG_MOUSEX) != 0))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_HasQoeEvent,
-	                               (inputFlags & TS_INPUT_FLAG_QOE_TIMESTAMPS) ? TRUE : FALSE))
+	                               (inputFlags & TS_INPUT_FLAG_QOE_TIMESTAMPS) != 0))
 		return FALSE;
 
 	return TRUE;
@@ -2334,8 +2325,7 @@ static BOOL rdp_read_draw_nine_grid_cache_capability_set(wLog* log, wStream* s,
 	                   settings->DrawNineGridCacheEntries); /* drawNineGridCacheEntries (2 bytes) */
 
 	settings->DrawNineGridEnabled =
-	    (drawNineGridSupportLevel & (DRAW_NINEGRID_SUPPORTED | DRAW_NINEGRID_SUPPORTED_V2)) ? TRUE
-	                                                                                        : FALSE;
+	    (drawNineGridSupportLevel & (DRAW_NINEGRID_SUPPORTED | DRAW_NINEGRID_SUPPORTED_V2)) != 0;
 
 	return TRUE;
 }
@@ -2424,10 +2414,8 @@ static BOOL rdp_read_draw_gdiplus_cache_capability_set(wLog* log, wStream* s, rd
 	Stream_Seek(s, 8);                              /* GdipCacheChunkSize (8 bytes) */
 	Stream_Seek(s, 6);                              /* GdipImageCacheProperties (6 bytes) */
 
-	settings->DrawGdiPlusEnabled =
-	    (drawGDIPlusSupportLevel & DRAW_GDIPLUS_SUPPORTED) ? TRUE : FALSE;
-	settings->DrawGdiPlusCacheEnabled =
-	    (drawGdiplusCacheLevel & DRAW_GDIPLUS_CACHE_LEVEL_ONE) ? TRUE : FALSE;
+	settings->DrawGdiPlusEnabled = (drawGDIPlusSupportLevel & DRAW_GDIPLUS_SUPPORTED) != 0;
+	settings->DrawGdiPlusCacheEnabled = (drawGdiplusCacheLevel & DRAW_GDIPLUS_CACHE_LEVEL_ONE) != 0;
 
 	return TRUE;
 }
@@ -2522,7 +2510,7 @@ static BOOL rdp_read_remote_programs_capability_set(wLog* log, wStream* s, rdpSe
 
 	Stream_Read_UINT32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
 
-	settings->RemoteApplicationMode = (railSupportLevel & RAIL_LEVEL_SUPPORTED) ? TRUE : FALSE;
+	settings->RemoteApplicationMode = (railSupportLevel & RAIL_LEVEL_SUPPORTED) != 0;
 	settings->RemoteApplicationSupportLevel = railSupportLevel;
 	return TRUE;
 }
@@ -2963,8 +2951,8 @@ static BOOL rdp_read_surface_commands_capability_set(wLog* log, wStream* s, rdpS
 	Stream_Seek_UINT32(s);           /* reserved (4 bytes) */
 	settings->SurfaceCommandsSupported = cmdFlags;
 	settings->SurfaceCommandsEnabled =
-	    (cmdFlags & (SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS)) ? TRUE : FALSE;
-	settings->SurfaceFrameMarkerEnabled = (cmdFlags & SURFCMDS_FRAME_MARKER) ? TRUE : FALSE;
+	    (cmdFlags & (SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS)) != 0;
+	settings->SurfaceFrameMarkerEnabled = (cmdFlags & SURFCMDS_FRAME_MARKER) != 0;
 	return TRUE;
 }
 
@@ -3416,7 +3404,7 @@ static BOOL rdp_read_codec_ts_rfx_clnt_caps_container(wLog* log, wStream* s, rdp
 		return FALSE;
 
 	settings->RemoteFxCaptureFlags = captureFlags;
-	settings->RemoteFxOnly = (captureFlags & CARDP_CAPS_CAPTURE_NON_CAC) ? FALSE : TRUE;
+	settings->RemoteFxOnly = !(captureFlags & CARDP_CAPS_CAPTURE_NON_CAC);
 
 	/* [MS_RDPRFX] 2.2.1.1.1 TS_RFX_CAPS */
 	wStream tsbuffer = WINPR_C_ARRAY_INIT;
@@ -3611,9 +3599,8 @@ static BOOL rdp_write_nsc_client_capability_container(wStream* s, const rdpSetti
 
 	Stream_Write_UINT16(s, 3); /* codecPropertiesLength */
 	/* TS_NSCODEC_CAPABILITYSET */
-	Stream_Write_UINT8(s,
-	                   fAllowDynamicFidelity ? TRUE : FALSE); /* fAllowDynamicFidelity (1 byte) */
-	Stream_Write_UINT8(s, fAllowSubsampling ? TRUE : FALSE);  /* fAllowSubsampling (1 byte) */
+	Stream_Write_UINT8(s, fAllowDynamicFidelity != 0);        /* fAllowDynamicFidelity (1 byte) */
+	Stream_Write_UINT8(s, fAllowSubsampling != 0);            /* fAllowSubsampling (1 byte) */
 	Stream_Write_UINT8(s, (UINT8)colorLossLevel);             /* colorLossLevel (1 byte) */
 	return TRUE;
 }

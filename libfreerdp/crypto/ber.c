@@ -557,7 +557,7 @@ BOOL ber_read_BOOL(wStream* s, BOOL* value)
 		return FALSE;
 
 	Stream_Read_UINT8(s, v);
-	*value = (v ? TRUE : FALSE);
+	*value = (v != 0);
 	return TRUE;
 }
 

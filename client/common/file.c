@@ -720,9 +720,7 @@ static BOOL freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, 
 			free(*targetValue);
 
 		*targetValue = _strdup(value);
-		if (!(*targetValue))
-			return FALSE;
-		return TRUE;
+		return ((*targetValue) != nullptr);
 	}
 
 	if (line)
@@ -1285,9 +1283,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->DisableThemes = WINPR_ASSERTING_INT_CAST(
 	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_DisableThemes));
 	file->BandwidthAutoDetect = (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) >=
-	                             CONNECTION_TYPE_AUTODETECT)
-	                                ? TRUE
-	                                : FALSE;
+	                             CONNECTION_TYPE_AUTODETECT);
 	file->NetworkAutoDetect =
 	    freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect) ? 1 : 0;
 	file->AutoReconnectionEnabled = WINPR_ASSERTING_INT_CAST(
@@ -1350,7 +1346,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->RedirectComPorts = (freerdp_settings_get_bool(settings, FreeRDP_RedirectSerialPorts) ||
 	                          freerdp_settings_get_bool(settings, FreeRDP_RedirectParallelPorts));
 	file->RedirectLocation =
-	    freerdp_dynamic_channel_collection_find(settings, LOCATION_CHANNEL_NAME) ? TRUE : FALSE;
+	    (freerdp_dynamic_channel_collection_find(settings, LOCATION_CHANNEL_NAME) != nullptr);
 	if (!FILE_POPULATE_STRING(&file->DrivesToRedirect, settings, FreeRDP_DrivesToRedirect) ||
 	    !FILE_POPULATE_STRING(&file->PreconnectionBlob, settings, FreeRDP_PreconnectionBlob) ||
 	    !FILE_POPULATE_STRING(&file->KdcProxyName, settings, FreeRDP_KerberosKdcUrl))
@@ -1448,7 +1444,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 	}
 
 	free(buffer);
-	return (status == 0) ? TRUE : FALSE;
+	return (status == 0);
 }
 
 WINPR_ATTR_FORMAT_ARG(3, 4)
@@ -1997,15 +1993,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 		 * 1: The remote session will appear in a window.
 		 * 2: The remote session will appear full screen.
 		 */
-		if (!freerdp_settings_set_bool(settings, FreeRDP_Fullscreen,
-		                               (file->ScreenModeId == 2) ? TRUE : FALSE))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_Fullscreen, (file->ScreenModeId == 2)))
 			return FALSE;
 	}
 
 	if (~(file->SmartSizing))
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_SmartSizing,
-		                               (file->SmartSizing == 1) ? TRUE : FALSE))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_SmartSizing, (file->SmartSizing == 1)))
 			return FALSE;
 		/**
 		 *  SmartSizingWidth and SmartSizingHeight:

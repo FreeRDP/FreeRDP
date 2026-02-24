@@ -172,10 +172,7 @@ static BOOL wlf_mime_is_image(const char* mime)
 
 static BOOL wlf_mime_is_html(const char* mime)
 {
-	if (strcmp(mime, mime_html) == 0)
-		return TRUE;
-
-	return FALSE;
+	return strcmp(mime, mime_html) == 0;
 }
 
 static void wlf_cliprdr_free_server_formats(wfClipboard* clipboard)
@@ -309,9 +306,7 @@ static BOOL wlf_cliprdr_add_client_format(wfClipboard* clipboard, const char* mi
 	}
 
 	ClipboardUnlock(clipboard->system);
-	if (wlf_cliprdr_send_client_format_list(clipboard) != CHANNEL_RC_OK)
-		return FALSE;
-	return TRUE;
+	return (wlf_cliprdr_send_client_format_list(clipboard) == CHANNEL_RC_OK);
 }
 
 /**

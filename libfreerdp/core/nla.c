@@ -1900,11 +1900,8 @@ static BOOL nla_encrypt_ts_credentials(rdpNla* nla)
 		return FALSE;
 
 	sspi_SecBufferFree(&nla->authInfo);
-	if (!credssp_auth_encrypt(nla->auth, &nla->tsCredentials, &nla->authInfo, nullptr,
-	                          nla->sendSeqNum++))
-		return FALSE;
-
-	return TRUE;
+	return (credssp_auth_encrypt(nla->auth, &nla->tsCredentials, &nla->authInfo, nullptr,
+	                             nla->sendSeqNum++));
 }
 
 static BOOL nla_decrypt_ts_credentials(rdpNla* nla)
@@ -2379,9 +2376,7 @@ BOOL nla_set_state(rdpNla* nla, NLA_STATE state)
 
 BOOL nla_set_service_principal(rdpNla* nla, const char* service, const char* hostname)
 {
-	if (!credssp_auth_set_spn(nla->auth, service, hostname))
-		return FALSE;
-	return TRUE;
+	return (credssp_auth_set_spn(nla->auth, service, hostname));
 }
 
 BOOL nla_impersonate(rdpNla* nla)

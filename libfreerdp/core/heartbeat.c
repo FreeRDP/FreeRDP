@@ -73,10 +73,7 @@ BOOL freerdp_heartbeat_send_heartbeat_pdu(freerdp_peer* peer, BYTE period, BYTE 
 	         "sending Heartbeat PDU -> period=%" PRIu8 ", count1=%" PRIu8 ", count2=%" PRIu8 "",
 	         period, count1, count2);
 
-	if (!rdp_send_message_channel_pdu(rdp, s, sec_flags | SEC_HEARTBEAT))
-		return FALSE;
-
-	return TRUE;
+	return (rdp_send_message_channel_pdu(rdp, s, sec_flags | SEC_HEARTBEAT));
 }
 
 rdpHeartbeat* heartbeat_new(void)

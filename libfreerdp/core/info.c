@@ -78,7 +78,7 @@ static BOOL rdp_read_info_null_string(rdpSettings* settings, FreeRDP_Settings_Ke
                                       const char* what, UINT32 flags, wStream* s, size_t cbLen,
                                       size_t max)
 {
-	const BOOL unicode = (flags & INFO_UNICODE) ? TRUE : FALSE;
+	const BOOL unicode = (flags & INFO_UNICODE) != 0;
 
 	if (!freerdp_settings_set_string(settings, id, nullptr))
 		return FALSE;
@@ -325,7 +325,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
 	Stream_Read_UINT16(s, cbClientAddress);     /* cbClientAddress (2 bytes) */
 
-	settings->IPv6Enabled = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE);
+	settings->IPv6Enabled = ((clientAddressFamily == ADDRESS_FAMILY_INET6));
 
 	if (!rdp_read_info_null_string(settings, FreeRDP_ClientAddress, "cbClientAddress", INFO_UNICODE,
 	                               s, cbClientAddress, rdp_get_client_address_max_size(rdp)))
@@ -600,7 +600,7 @@ static BOOL rdp_read_info_string(rdpSettings* settings, FreeRDP_Settings_Keys_St
 		BYTE b[2];
 	} terminator;
 
-	const BOOL unicode = (flags & INFO_UNICODE) ? TRUE : FALSE;
+	const BOOL unicode = (flags & INFO_UNICODE) != 0;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
 	if (!freerdp_settings_set_string(settings, id, nullptr))
@@ -673,18 +673,18 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 
 	Stream_Read_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes ) */
 	Stream_Read_UINT32(s, flags);                      /* flags (4 bytes) */
-	settings->AudioCapture = ((flags & INFO_AUDIOCAPTURE) ? TRUE : FALSE);
-	settings->AudioPlayback = ((flags & INFO_NOAUDIOPLAYBACK) ? FALSE : TRUE);
-	settings->AutoLogonEnabled = ((flags & INFO_AUTOLOGON) ? TRUE : FALSE);
-	settings->RemoteApplicationMode = ((flags & INFO_RAIL) ? TRUE : FALSE);
-	settings->HiDefRemoteApp = ((flags & INFO_HIDEF_RAIL_SUPPORTED) ? TRUE : FALSE);
-	settings->RemoteConsoleAudio = ((flags & INFO_REMOTECONSOLEAUDIO) ? TRUE : FALSE);
-	settings->CompressionEnabled = ((flags & INFO_COMPRESSION) ? TRUE : FALSE);
-	settings->LogonNotify = ((flags & INFO_LOGONNOTIFY) ? TRUE : FALSE);
-	settings->MouseHasWheel = ((flags & INFO_MOUSE_HAS_WHEEL) ? TRUE : FALSE);
-	settings->DisableCtrlAltDel = ((flags & INFO_DISABLECTRLALTDEL) ? TRUE : FALSE);
-	settings->ForceEncryptedCsPdu = ((flags & INFO_FORCE_ENCRYPTED_CS_PDU) ? TRUE : FALSE);
-	settings->PasswordIsSmartcardPin = ((flags & INFO_PASSWORD_IS_SC_PIN) ? TRUE : FALSE);
+	settings->AudioCapture = ((flags & INFO_AUDIOCAPTURE) != 0);
+	settings->AudioPlayback = (!(flags & INFO_NOAUDIOPLAYBACK));
+	settings->AutoLogonEnabled = ((flags & INFO_AUTOLOGON) != 0);
+	settings->RemoteApplicationMode = ((flags & INFO_RAIL) != 0);
+	settings->HiDefRemoteApp = ((flags & INFO_HIDEF_RAIL_SUPPORTED) != 0);
+	settings->RemoteConsoleAudio = ((flags & INFO_REMOTECONSOLEAUDIO) != 0);
+	settings->CompressionEnabled = ((flags & INFO_COMPRESSION) != 0);
+	settings->LogonNotify = ((flags & INFO_LOGONNOTIFY) != 0);
+	settings->MouseHasWheel = ((flags & INFO_MOUSE_HAS_WHEEL) != 0);
+	settings->DisableCtrlAltDel = ((flags & INFO_DISABLECTRLALTDEL) != 0);
+	settings->ForceEncryptedCsPdu = ((flags & INFO_FORCE_ENCRYPTED_CS_PDU) != 0);
+	settings->PasswordIsSmartcardPin = ((flags & INFO_PASSWORD_IS_SC_PIN) != 0);
 
 	if (flags & INFO_COMPRESSION)
 	{

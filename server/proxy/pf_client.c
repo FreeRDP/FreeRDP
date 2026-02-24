@@ -67,10 +67,7 @@ static BOOL proxy_server_reactivate(rdpContext* ps, const rdpContext* pc)
 	 * which causes the reactivation.
 	 */
 	WINPR_ASSERT(ps->update);
-	if (!ps->update->DesktopResize(ps))
-		return FALSE;
-
-	return TRUE;
+	return (ps->update->DesktopResize(ps));
 }
 
 static void pf_client_on_error_info(void* ctx, const ErrorInfoEventArgs* e)

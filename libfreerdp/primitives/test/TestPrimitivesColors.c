@@ -238,13 +238,10 @@ static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 	output[1] = g;
 	output[2] = b;
 
-	if (!speed_test("yCbCrToRGB_16s16s_P3P3", "aligned", g_Iterations,
-	                (speed_test_fkt)generic->yCbCrToRGB_16s16s_P3P3,
-	                (speed_test_fkt)optimized->yCbCrToRGB_16s16s_P3P3, input, 64 * 2, output,
-	                64 * 2, &roi))
-		return FALSE;
-
-	return TRUE;
+	return (speed_test("yCbCrToRGB_16s16s_P3P3", "aligned", g_Iterations,
+	                   (speed_test_fkt)generic->yCbCrToRGB_16s16s_P3P3,
+	                   (speed_test_fkt)optimized->yCbCrToRGB_16s16s_P3P3, input, 64 * 2, output,
+	                   64 * 2, &roi));
 }
 
 int TestPrimitivesColors(int argc, char* argv[])

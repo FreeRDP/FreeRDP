@@ -2587,10 +2587,7 @@ fail:
 
 BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive)
 {
-	if (!progressive)
-		return FALSE;
-
-	return TRUE;
+	return (progressive != nullptr);
 }
 
 PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)

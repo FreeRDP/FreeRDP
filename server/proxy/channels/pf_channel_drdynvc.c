@@ -434,8 +434,8 @@ static PfChannelResult DynvcTrackerHandleCreateBack(ChannelStateTracker* tracker
 
 	dynChannel->openStatus = CHANNEL_OPENSTATE_WAITING_OPEN_STATUS;
 
-	const BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST) ? TRUE : FALSE;
-	const BOOL lastPacket = (flags & CHANNEL_FLAG_LAST) ? TRUE : FALSE;
+	const BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST) != 0;
+	const BOOL lastPacket = (flags & CHANNEL_FLAG_LAST) != 0;
 
 	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert owns dynChannel
 	return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, FALSE);
@@ -463,8 +463,8 @@ static PfChannelResult DynvcTrackerHandleCreateFront(ChannelStateTracker* tracke
 	if (dynChannel && (creationStatus == 0))
 		dynChannel->openStatus = CHANNEL_OPENSTATE_OPENED;
 
-	const BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST) ? TRUE : FALSE;
-	const BOOL lastPacket = (flags & CHANNEL_FLAG_LAST) ? TRUE : FALSE;
+	const BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST) != 0;
+	const BOOL lastPacket = (flags & CHANNEL_FLAG_LAST) != 0;
 
 	return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, TRUE);
 }
@@ -482,7 +482,7 @@ static PfChannelResult DynvcTrackerHandleCreate(ChannelStateTracker* tracker, wS
 	    (DynChannelContext*)channelTracker_getCustomData(tracker);
 	WINPR_ASSERT(dynChannelContext);
 
-	const BOOL lastPacket = (flags & CHANNEL_FLAG_LAST) ? TRUE : FALSE;
+	const BOOL lastPacket = (flags & CHANNEL_FLAG_LAST) != 0;
 	const BOOL isBackData = (tracker == dynChannelContext->backTracker);
 
 	proxyData* pdata = channelTracker_getPData(tracker);

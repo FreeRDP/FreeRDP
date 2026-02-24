@@ -71,10 +71,7 @@ BOOL websocket_context_mask_and_send(BIO* bio, wStream* sPacket, wStream* sDataP
 	const int status = websocket_write_all(bio, Stream_Buffer(sPacket), size);
 	Stream_Free(sPacket, TRUE);
 
-	if ((status < 0) || ((size_t)status != size))
-		return FALSE;
-
-	return TRUE;
+	return !((status < 0) || ((size_t)status != size));
 }
 
 wStream* websocket_context_packet_new(size_t len, WEBSOCKET_OPCODE opcode, UINT32* pMaskingKey)

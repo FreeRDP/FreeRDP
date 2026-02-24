@@ -586,7 +586,7 @@ UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
 
 BOOL rail_is_extended_spi_supported(UINT32 channelFlags)
 {
-	return (channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) ? TRUE : FALSE;
+	return (channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) != 0;
 }
 
 const char* rail_handshake_ex_flags_to_string(UINT32 flags, char* buffer, size_t len)

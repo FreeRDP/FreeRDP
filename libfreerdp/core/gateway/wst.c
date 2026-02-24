@@ -127,10 +127,7 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 	credssp_auth_set_flags(wst->auth, ISC_REQ_CONFIDENTIALITY | ISC_REQ_MUTUAL_AUTH);
 
 	rc = credssp_auth_authenticate(wst->auth);
-	if (rc < 0)
-		return FALSE;
-
-	return TRUE;
+	return (rc >= 0);
 }
 
 static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
@@ -203,10 +200,7 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 		free(authTokenData);
 
 	rc = credssp_auth_authenticate(auth);
-	if (rc < 0)
-		return FALSE;
-
-	return TRUE;
+	return (rc >= 0);
 }
 
 static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, UINT32 timeout)
@@ -845,9 +839,7 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 	else
 		wst->gwport = 443;
 	wst->gwpath = _strdup(pos);
-	if (!wst->gwpath)
-		return FALSE;
-	return TRUE;
+	return (wst->gwpath != nullptr);
 }
 
 rdpWst* wst_new(rdpContext* context)

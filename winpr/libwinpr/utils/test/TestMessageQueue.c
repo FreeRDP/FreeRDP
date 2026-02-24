@@ -161,10 +161,7 @@ static bool test_operation_run(wMessageQueue* queue, HANDLE thread)
 		return false;
 
 	const DWORD status = WaitForSingleObject(thread, INFINITE);
-	if (status != WAIT_OBJECT_0)
-		return false;
-
-	return true;
+	return (status == WAIT_OBJECT_0);
 }
 
 static bool test_operation(wMessageQueue* queue)
