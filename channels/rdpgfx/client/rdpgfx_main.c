@@ -1065,7 +1065,9 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	Stream_Read_UINT8(s, pdu.pixelFormat);       /* pixelFormat (1 byte) */
 	Stream_Read_UINT32(s, pdu.bitmapDataLength); /* bitmapDataLength (4 bytes) */
 	pdu.bitmapData = Stream_Pointer(s);
-	Stream_Seek(s, pdu.bitmapDataLength);
+	if (!Stream_SafeSeek(s, pdu.bitmapDataLength))
+		return ERROR_INVALID_DATA;
+
 	DEBUG_RDPGFX(gfx->log,
 	             "RecvWireToSurface2Pdu: surfaceId: %" PRIu16 " codecId: %s (0x%04" PRIX16 ") "
 	             "codecContextId: %" PRIu32 " pixelFormat: 0x%02" PRIX8

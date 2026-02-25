@@ -137,6 +137,72 @@ BOOL Queue_Contains(wQueue* queue, void* obj)
 	return found;
 }
 
+static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
+{
+	const size_t blocksize = 32ull;
+	WINPR_ASSERT(queue);
+
+	if (queue->growthFactor > SIZE_MAX / blocksize)
+		return FALSE;
+
+	const size_t increment = blocksize * queue->growthFactor;
+	if (queue->size > SIZE_MAX - count)
+		return FALSE;
+
+	const size_t required = queue->size + count;
+	if (required > queue->capacity)
+	{
+		const size_t old_capacity = queue->capacity;
+		if (required > SIZE_MAX - increment)
+			return FALSE;
+
+		const size_t new_capacity = required + increment - required % increment;
+		if (new_capacity > SIZE_MAX / sizeof(BYTE*))
+			return FALSE;
+
+		uintptr_t* newArray = (uintptr_t*)realloc(queue->array, sizeof(uintptr_t) * new_capacity);
+
+		if (!newArray)
+			return FALSE;
+
+		queue->capacity = new_capacity;
+		queue->array = newArray;
+		ZeroMemory(&(queue->array[old_capacity]),
+		           (new_capacity - old_capacity) * sizeof(uintptr_t));
+
+		/* rearrange wrapped entries */
+		if (queue->tail <= queue->head)
+		{
+			const size_t tocopy = queue->tail;
+			const size_t slots = new_capacity - old_capacity;
+			const size_t batch = (tocopy < slots) ? tocopy : slots;
+
+			CopyMemory(&(queue->array[old_capacity]), queue->array, batch * sizeof(uintptr_t));
+
+			/* Tail is decremented. if the whole thing is appended
+			 * just move the existing tail by old_capacity */
+			if (tocopy < slots)
+			{
+				ZeroMemory(queue->array, batch * sizeof(uintptr_t));
+				queue->tail += old_capacity;
+			}
+			else
+			{
+				const size_t remain = queue->tail - batch;
+				const size_t movesize = remain * sizeof(uintptr_t);
+				memmove_s(queue->array, queue->tail * sizeof(uintptr_t), &queue->array[batch],
+				          movesize);
+
+				const size_t zerooffset = remain;
+				const size_t zerosize = (queue->tail - remain) * sizeof(uintptr_t);
+				ZeroMemory(&queue->array[zerooffset], zerosize);
+				queue->tail -= batch;
+			}
+		}
+	}
+	return TRUE;
+}
+
 /**
  * Adds an object to the end of the Queue.
  */
@@ -148,32 +214,8 @@ BOOL Queue_Enqueue(wQueue* queue, void* obj)
 	if (queue->synchronized)
 		EnterCriticalSection(&queue->lock);
 
-	if (queue->size == queue->capacity)
-	{
-		int old_capacity;
-		int new_capacity;
-		void** newArray;
-		old_capacity = queue->capacity;
-		new_capacity = queue->capacity * queue->growthFactor;
-		newArray = (void**)realloc(queue->array, sizeof(void*) * new_capacity);
-
-		if (!newArray)
-		{
-			ret = FALSE;
-			goto out;
-		}
-
-		queue->capacity = new_capacity;
-		queue->array = newArray;
-		ZeroMemory(&(queue->array[old_capacity]), (new_capacity - old_capacity) * sizeof(void*));
-
-		/* rearrange wrapped entries */
-		if (queue->tail <= queue->head)
-		{
-			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(void*));
-			queue->tail += old_capacity;
-		}
-	}
+	if (!Queue_EnsureCapacity(queue, 1))
+		goto out;
 
 	queue->array[queue->tail] = obj;
 	queue->tail = (queue->tail + 1) % queue->capacity;
@@ -252,20 +294,18 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 	if (!queue)
 		return NULL;
 
-	queue->capacity = 32;
+	size_t scapacity = 32;
 	queue->growthFactor = 2;
 	queue->synchronized = synchronized;
 
 	if (capacity > 0)
-		queue->capacity = capacity;
+		scapacity = capacity;
 
 	if (growthFactor > 0)
 		queue->growthFactor = growthFactor;
 
-	queue->array = (void**)calloc(queue->capacity, sizeof(void*));
-
-	if (!queue->array)
-		goto out_free;
+	if (!Queue_EnsureCapacity(queue, scapacity))
+		goto out_free_array;
 
 	queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 

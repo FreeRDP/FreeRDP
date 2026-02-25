@@ -1,3 +1,22 @@
+# 2026-02-25 Version 2.11.8
+
+This release will be the last official one for the 2.x series of FreeRDP.
+From this point on we will no longer maintain this branch and urge all to
+upgrade to FreeRDP 3.x.
+
+Noteworthy changes:
+* Backported #12319 bugfixes from 3.x
+* Fix incompatible pointer type issues by @AlessandroBono (#10172)
+* X11: fix pointer/integer type mismatch by @floppym (#10207)
+* Warn backport by @akallabeth (#10456)
+* [core] eliminate rdpRdp::instance by @akallabeth (#10782)
+* X11 client: ignore grab related LeaveNotify events by @akallabeth (#10888)
+* [winpr,pubsub] add NULL parameter checks by @akallabeth (#10898)
+* fix: correct server port assignment logic by @LeeEirc (#11793)
+
+For a complete and detailed change log since the last release run:
+git log 2.11.8...2.11.7
+
 # 2024-04-22 Version 2.11.7
 
 Noteworthy changes:
