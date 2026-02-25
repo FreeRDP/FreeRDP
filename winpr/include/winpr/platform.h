@@ -63,7 +63,7 @@
 #define WINPR_FALLTHROUGH \
 	(void)0;              \
 	[[fallthrough]];
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201904L)
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
 #define WINPR_FALLTHROUGH \
 	(void)0;              \
 	[[fallthrough]];
@@ -80,7 +80,9 @@
 #endif
 
 #if defined(WINPR_DEFINE_ATTR_NODISCARD)
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202003L)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define WINPR_ATTR_NODISCARD [[nodiscard]]
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
 #define WINPR_ATTR_NODISCARD [[nodiscard]]
 #elif defined(__clang__)
 #define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
@@ -532,7 +534,10 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 WINPR_PRAGMA_DIAG_POP
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201904L)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define WINPR_DEPRECATED(obj) [[deprecated]] obj
+#define WINPR_DEPRECATED_VAR(text, obj) [[deprecated("[deprecated] " text)]] obj
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
 #define WINPR_DEPRECATED(obj) [[deprecated]] obj
 #define WINPR_DEPRECATED_VAR(text, obj) [[deprecated("[deprecated] " text)]] obj
 #elif defined(__GNUC__)
@@ -543,7 +548,9 @@ WINPR_PRAGMA_DIAG_POP
 #define WINPR_DEPRECATED_VAR(text, obj) obj
 #endif
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202202L)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define WINPR_NORETURN(obj) [[noreturn]] obj
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
 #define WINPR_NORETURN(obj) [[noreturn]] obj
 #elif defined(WIN32) && !defined(__CYGWIN__)
 #define WINPR_NORETURN(obj) __declspec(noreturn) obj
@@ -572,7 +579,13 @@ WINPR_PRAGMA_DIAG_POP
 #endif
 #else
 #if defined(__GNUC__) && (__GNUC__ >= 4)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define WINPR_API [[gnu::visibility("default")]]
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define WINPR_API [[gnu::visibility("default")]]
+#else
 #define WINPR_API __attribute__((visibility("default")))
+#endif
 #else
 #define WINPR_API
 #endif
@@ -581,13 +594,29 @@ WINPR_PRAGMA_DIAG_POP
 #define WINPR_API
 #endif
 
-#if defined(__clang__) || defined(__GNUC__) && (__GNUC__ <= 10)
+#if defined(__clang__)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
 #define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
-	__attribute__((malloc, warn_unused_result)) /** @since version 3.3.0 */
-#elif defined(__GNUC__)
+	[[gnu::malloc, nodiscard]] /** @since version 3.3.0 */
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
+	[[gnu::malloc, nodiscard]] /** @since version 3.3.0 */
+#else
+#define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
+	[[gnu::malloc, nodiscard]] /** @since version 3.3.0 */
+#endif
+#elif defined(__GNUC__) && (__GNUC__ > 10)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
+	[[gnu::malloc(deallocator, ptrindex), nodiscard]] /** @since version 3.3.0 */
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
+	[[gnu::malloc(deallocator, ptrindex), nodiscard]] /** @since version 3.3.0 */
+#else
 #define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
 	__attribute__((malloc(deallocator, ptrindex), warn_unused_result)) /** @since version 3.3.0 */
-#else
+#endif
+#elif defined(_MSC_VER)
 #define WINPR_ATTR_MALLOC(deallocator, ptrindex) __declspec(restrict) /** @since version 3.3.0 */
 #endif
 
@@ -635,19 +664,11 @@ WINPR_PRAGMA_DIAG_POP
 #define WINPR_TLS
 #endif
 
-#if defined(__GNUC__) || defined(__clang__)
-#define WINPR_ALIGN64 __attribute__((aligned(8))) /** @since version 3.4.0 */
-#else
-#ifdef _WIN32
-#define WINPR_ALIGN64 __declspec(align(8)) /** @since version 3.4.0 */
-#else
-#define WINPR_ALIGN64 /** @since version 3.4.0 */
-#endif
-#endif
+#define WINPR_ALIGN64 DECLSPEC_ALIGN(8)
 
 #if defined(__cplusplus) && (__cplusplus >= 201703L)
 #define WINPR_ATTR_UNUSED [[maybe_unused]] /** @since version 3.12.0 */
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201904L)
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
 #define WINPR_ATTR_UNUSED [[maybe_unused]] /** @since version 3.12.0 */
 #elif defined(__GNUC__) || defined(__clang__)
 #define WINPR_ATTR_UNUSED __attribute__((unused)) /** @since version 3.12.0 */

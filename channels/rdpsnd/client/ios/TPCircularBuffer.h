@@ -102,7 +102,7 @@ extern "C"
 	 * @param availableBytes On output, the number of bytes ready for reading
 	 * @return Pointer to the first bytes ready for reading, or NULL if buffer is empty
 	 */
-	static __inline__ __attribute__((always_inline)) void*
+	static inline __attribute__((always_inline)) void*
 	TPCircularBufferTail(TPCircularBuffer* buffer, int32_t* availableBytes)
 	{
 		*availableBytes = buffer->fillCount;
@@ -119,7 +119,7 @@ extern "C"
 	 * @param buffer Circular buffer
 	 * @param amount Number of bytes to consume
 	 */
-	static __inline__ __attribute__((always_inline)) void
+	static inline __attribute__((always_inline)) void
 	TPCircularBufferConsume(TPCircularBuffer* buffer, int32_t amount)
 	{
 		buffer->tail = (buffer->tail + amount) % buffer->length;
@@ -131,7 +131,7 @@ extern "C"
 	 * Version of TPCircularBufferConsume without the memory barrier, for more optimal use in
 	 * single-threaded contexts
 	 */
-	static __inline__ __attribute__((always_inline)) void
+	static inline __attribute__((always_inline)) void
 	TPCircularBufferConsumeNoBarrier(TPCircularBuffer* buffer, int32_t amount)
 	{
 		buffer->tail = (buffer->tail + amount) % buffer->length;
@@ -149,7 +149,7 @@ extern "C"
 	 * @param availableBytes On output, the number of bytes ready for writing
 	 * @return Pointer to the first bytes ready for writing, or NULL if buffer is full
 	 */
-	static __inline__ __attribute__((always_inline)) void*
+	static inline __attribute__((always_inline)) void*
 	TPCircularBufferHead(TPCircularBuffer* buffer, int32_t* availableBytes)
 	{
 		*availableBytes = (buffer->length - buffer->fillCount);
@@ -168,7 +168,7 @@ extern "C"
 	 * @param buffer Circular buffer
 	 * @param amount Number of bytes to produce
 	 */
-	static __inline__ __attribute__((always_inline)) void
+	static inline __attribute__((always_inline)) void
 	TPCircularBufferProduce(TPCircularBuffer* buffer, int amount)
 	{
 		buffer->head = (buffer->head + amount) % buffer->length;
@@ -180,7 +180,7 @@ extern "C"
 	 * Version of TPCircularBufferProduce without the memory barrier, for more optimal use in
 	 * single-threaded contexts
 	 */
-	static __inline__ __attribute__((always_inline)) void
+	static inline __attribute__((always_inline)) void
 	TPCircularBufferProduceNoBarrier(TPCircularBuffer* buffer, int amount)
 	{
 		buffer->head = (buffer->head + amount) % buffer->length;
@@ -198,7 +198,7 @@ extern "C"
 	 * @param len Number of bytes in source buffer
 	 * @return true if bytes copied, false if there was insufficient space
 	 */
-	static __inline__ __attribute__((always_inline)) bool
+	static inline __attribute__((always_inline)) bool
 	TPCircularBufferProduceBytes(TPCircularBuffer* buffer, const void* src, int32_t len)
 	{
 		int32_t space;

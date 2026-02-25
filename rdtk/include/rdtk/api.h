@@ -37,7 +37,13 @@
 #endif
 #else
 #if __GNUC__ >= 4
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define RDTK_EXPORT [[gnu::visibility("default")]]
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define RDTK_EXPORT [[gnu::visibility("default")]]
+#else
 #define RDTK_EXPORT __attribute__((visibility("default")))
+#endif
 #else
 #define RDTK_EXPORT
 #endif

@@ -82,7 +82,13 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
 #define DECLSPEC_ALIGN(x) __declspec(align(x))
 #elif defined(__GNUC__)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define DECLSPEC_ALIGN(x) [[gnu::aligned(x)]]
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define DECLSPEC_ALIGN(x) [[gnu::aligned(x)]]
+#else
 #define DECLSPEC_ALIGN(x) __attribute__((__aligned__(x)))
+#endif
 #else
 #define DECLSPEC_ALIGN(x)
 #endif
@@ -997,7 +1003,13 @@ extern "C++"
 #endif /* __GNUC__ */
 #else
 #if defined(__GNUC__) && __GNUC__ >= 4
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define DECLSPEC_EXPORT [[gnu::visibility("default")]]
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define DECLSPEC_EXPORT [[gnu::visibility("default")]]
+#else
 #define DECLSPEC_EXPORT __attribute__((visibility("default")))
+#endif
 #define DECLSPEC_IMPORT
 #else
 #define DECLSPEC_EXPORT

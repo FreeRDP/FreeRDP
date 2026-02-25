@@ -27,7 +27,13 @@
 #include <stdbool.h>
 
 #if defined(__GNUC__) && (__GNUC__ >= 4)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define UWAC_API [[gnu::visibility("default")]]
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define UWAC_API [[gnu::visibility("default")]]
+#else
 #define UWAC_API __attribute__((visibility("default")))
+#endif
 #else
 #define UWAC_API
 #endif
