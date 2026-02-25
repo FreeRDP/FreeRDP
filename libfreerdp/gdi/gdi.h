@@ -30,7 +30,7 @@
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate);
 
-FREERDP_LOCAL void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
+FREERDP_LOCAL void gdi_bitmap_free_ex(gdiBitmap* bitmap);
 
 WINPR_ATTR_MALLOC(gdi_bitmap_free_ex, 1)
 WINPR_ATTR_NODISCARD

@@ -79,8 +79,8 @@ extern "C"
 	                                                                          DWORD dwFlags);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_API FREERDP_ADDIN** freerdp_channels_list_addins(LPCSTR lpName, LPCSTR lpSubsystem,
-	                                                         LPCSTR lpType, DWORD dwFlags);
+	FREERDP_API FREERDP_ADDIN** freerdp_channels_list_addins(LPCSTR pszName, LPCSTR pszSubsystem,
+	                                                         LPCSTR pszType, DWORD dwFlags);
 	FREERDP_API void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins);
 
 	WINPR_ATTR_NODISCARD

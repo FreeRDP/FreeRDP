@@ -79,9 +79,9 @@ extern "C"
 	FREERDP_LOCAL MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_LOCAL BOOL msusb_msconfig_write(const MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out);
+	FREERDP_LOCAL BOOL msusb_msconfig_write(const MSUSB_CONFIG_DESCRIPTOR* MsConfig, wStream* out);
 
-	FREERDP_LOCAL void msusb_msconfig_dump(const MSUSB_CONFIG_DESCRIPTOR* MsConfg);
+	FREERDP_LOCAL void msusb_msconfig_dump(const MSUSB_CONFIG_DESCRIPTOR* MsConfig);
 
 	/* MSUSB_PIPE exported functions */
 	FREERDP_LOCAL void msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,

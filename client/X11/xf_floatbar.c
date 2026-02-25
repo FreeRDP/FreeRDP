@@ -315,11 +315,11 @@ xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type)
 	return button;
 }
 
-xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* name, DWORD flags)
+xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* title, DWORD flags)
 {
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->display);
-	WINPR_ASSERT(name);
+	WINPR_ASSERT(title);
 
 	/* Floatbar not enabled */
 	if ((flags & 0x0001) == 0)
@@ -337,7 +337,7 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* name, DWO
 	if (!floatbar)
 		return NULL;
 
-	floatbar->title = _strdup(name);
+	floatbar->title = _strdup(title);
 
 	if (!floatbar->title)
 		goto fail;

@@ -496,14 +496,14 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 	Stream_SetPosition(s, gpos);
 }
 
-void rdpdr_dump_received_packet(wLog* log, DWORD lvl, wStream* s, const char* custom)
+void rdpdr_dump_received_packet(wLog* log, DWORD lvl, wStream* out, const char* custom)
 {
-	rdpdr_dump_packet(log, lvl, s, custom, FALSE);
+	rdpdr_dump_packet(log, lvl, out, custom, FALSE);
 }
 
-void rdpdr_dump_send_packet(wLog* log, DWORD lvl, wStream* s, const char* custom)
+void rdpdr_dump_send_packet(wLog* log, DWORD lvl, wStream* out, const char* custom)
 {
-	rdpdr_dump_packet(log, lvl, s, custom, TRUE);
+	rdpdr_dump_packet(log, lvl, out, custom, TRUE);
 }
 
 const char* rdpdr_irp_string(UINT32 major)

@@ -26,9 +26,9 @@
 FREERDP_LOCAL int rpc_recv_fault_pdu(UINT32 status);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL const char* rpc_error_to_string(UINT32 error);
+FREERDP_LOCAL const char* rpc_error_to_string(UINT32 code);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL const char* rpc_error_to_category(UINT32 error);
+FREERDP_LOCAL const char* rpc_error_to_category(UINT32 code);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_FAULT_H */

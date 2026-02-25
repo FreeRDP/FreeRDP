@@ -145,13 +145,14 @@ extern "C"
 	 *
 	 *  \param log The logger to write to, must not be NULL.
 	 *  \param  level The WLog level to use for the log entries.
-	 *  \param src A pointer to the settings to dump. May be NULL.
+	 *  \param settings A pointer to the settings to dump. May be NULL.
 	 *  \param other A pointer to the settings to dump. May be NULL.
 	 *
 	 *  \return \b TRUE if not equal, \b FALSE otherwise
 	 */
 	WINPR_ATTR_NODISCARD
-	FREERDP_API BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* src,
+	FREERDP_API BOOL freerdp_settings_print_diff(wLog* log, DWORD level,
+	                                             const rdpSettings* settings,
 	                                             const rdpSettings* other);
 
 	FREERDP_API void freerdp_addin_argv_free(ADDIN_ARGV* args);
@@ -224,7 +225,7 @@ extern "C"
 	FREERDP_API RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_API BOOL freerdp_device_equal(const RDPDR_DEVICE* one, const RDPDR_DEVICE* other);
+	FREERDP_API BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* other);
 
 	FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 
@@ -271,7 +272,7 @@ extern "C"
 	FREERDP_API void freerdp_server_license_issuers_free(rdpSettings* settings);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_API BOOL freerdp_server_license_issuers_copy(rdpSettings* settings, char** addresses,
+	FREERDP_API BOOL freerdp_server_license_issuers_copy(rdpSettings* settings, char** issuers,
 	                                                     UINT32 count);
 
 	FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);
@@ -357,12 +358,12 @@ extern "C"
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query
-	 *  \param param The value to set.
+	 *  \param val The value to set.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
 	FREERDP_API BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool id,
-	                                           BOOL param);
+	                                           BOOL val);
 
 	/** \brief Returns a INT16 settings value
 	 *
@@ -379,12 +380,12 @@ extern "C"
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query
-	 *  \param param The value to set.
+	 *  \param val The value to set.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
 	FREERDP_API BOOL freerdp_settings_set_int16(rdpSettings* settings,
-	                                            FreeRDP_Settings_Keys_Int16 id, INT16 param);
+	                                            FreeRDP_Settings_Keys_Int16 id, INT16 val);
 
 	/** \brief Returns a UINT16 settings value
 	 *
@@ -401,12 +402,12 @@ extern "C"
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query
-	 *  \param param The value to set.
+	 *  \param val The value to set.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
 	FREERDP_API BOOL freerdp_settings_set_uint16(rdpSettings* settings,
-	                                             FreeRDP_Settings_Keys_UInt16 id, UINT16 param);
+	                                             FreeRDP_Settings_Keys_UInt16 id, UINT16 val);
 
 	/** \brief Returns a INT32 settings value
 	 *
@@ -423,12 +424,12 @@ extern "C"
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query
-	 *  \param param The value to set.
+	 *  \param val The value to set.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
 	FREERDP_API BOOL freerdp_settings_set_int32(rdpSettings* settings,
-	                                            FreeRDP_Settings_Keys_Int32 id, INT32 param);
+	                                            FreeRDP_Settings_Keys_Int32 id, INT32 val);
 
 	/** \brief Returns a UINT32 settings value
 	 *
@@ -445,12 +446,12 @@ extern "C"
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query
-	 *  \param param The value to set.
+	 *  \param val The value to set.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
 	FREERDP_API BOOL freerdp_settings_set_uint32(rdpSettings* settings,
-	                                             FreeRDP_Settings_Keys_UInt32 id, UINT32 param);
+	                                             FreeRDP_Settings_Keys_UInt32 id, UINT32 val);
 
 	/** \brief Returns a INT64 settings value
 	 *
@@ -467,12 +468,12 @@ extern "C"
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query
-	 *  \param param The value to set.
+	 *  \param val The value to set.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
 	FREERDP_API BOOL freerdp_settings_set_int64(rdpSettings* settings,
-	                                            FreeRDP_Settings_Keys_Int64 id, INT64 param);
+	                                            FreeRDP_Settings_Keys_Int64 id, INT64 val);
 
 	/** \brief Returns a UINT64 settings value
 	 *
@@ -489,12 +490,12 @@ extern "C"
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query
-	 *  \param param The value to set.
+	 *  \param val The value to set.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
 	FREERDP_API BOOL freerdp_settings_set_uint64(rdpSettings* settings,
-	                                             FreeRDP_Settings_Keys_UInt64 id, UINT64 param);
+	                                             FreeRDP_Settings_Keys_UInt64 id, UINT64 val);
 
 	/** \brief Returns a immutable string settings value
 	 *
@@ -518,30 +519,30 @@ extern "C"
 	FREERDP_API char* freerdp_settings_get_string_writable(rdpSettings* settings,
 	                                                       FreeRDP_Settings_Keys_String id);
 
-	/** \brief Sets a string settings value. The \b param is copied.
+	/** \brief Sets a string settings value. The \b val is copied.
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query
-	 *  \param param The value to set. If NULL allocates an empty string buffer of \b len size,
-	 * otherwise a copy is created. \param len The length of \b param, 0 to remove the old entry.
+	 *  \param val The value to set. If NULL allocates an empty string buffer of \b len size,
+	 * otherwise a copy is created. \param len The length of \b val, 0 to remove the old entry.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
 	FREERDP_API BOOL freerdp_settings_set_string_len(rdpSettings* settings,
 	                                                 FreeRDP_Settings_Keys_String id,
-	                                                 const char* param, size_t len);
+	                                                 const char* val, size_t len);
 
 	/** \brief Sets a string settings value. The \b param is copied.
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to query
-	 *  \param param The value to set. If NULL removes the old entry, otherwise a copy is created.
+	 *  \param val The value to set. If NULL removes the old entry, otherwise a copy is
+	 * created.
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
 	FREERDP_API BOOL freerdp_settings_set_string(rdpSettings* settings,
-	                                             FreeRDP_Settings_Keys_String id,
-	                                             const char* param);
+	                                             FreeRDP_Settings_Keys_String id, const char* val);
 
 	/** \brief appends a string to a settings value. The \b param is copied.
 	 *  If the initial value of the setting was not empty, @code <old value><separator><param>
@@ -618,17 +619,17 @@ extern "C"
 	FREERDP_API void* freerdp_settings_get_pointer_writable(rdpSettings* settings,
 	                                                        FreeRDP_Settings_Keys_Pointer id);
 
-	/** \brief Set a pointer to value \b data
+	/** \brief Set a pointer to value \b val
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
 	 *  \param id The key to update
-	 *  \param data The data to set (direct update, no copy created, previous value overwritten)
+	 *  \param val The data to set (direct update, no copy created, previous value overwritten)
 	 *
 	 *  \return \b TRUE for success, \b FALSE for failure
 	 */
 	FREERDP_API BOOL freerdp_settings_set_pointer(rdpSettings* settings,
 	                                              FreeRDP_Settings_Keys_Pointer id,
-	                                              const void* data);
+	                                              const void* val);
 
 	/** \brief Set a pointer to value \b data
 	 *
@@ -812,8 +813,8 @@ extern "C"
 	FREERDP_API const char* freerdp_encryption_level_string(UINT32 EncryptionLevel);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_API const char* freerdp_encryption_methods_string(UINT32 EncryptionLevel, char* buffer,
-	                                                          size_t size);
+	FREERDP_API const char* freerdp_encryption_methods_string(UINT32 EncryptionMethods,
+	                                                          char* buffer, size_t size);
 
 	/** @brief returns a string representation of \b RNS_UD_XXBPP_SUPPORT values
 	 * @param mask A bitmask of supported color dephts \b RNS_UD_*
@@ -873,14 +874,14 @@ extern "C"
 
 	/** @brief A function that converts a \b JSON string to a \b rdpSettings struct
 	 *
-	 *  @param json The \b JSON string
+	 *  @param jstr The \b JSON string
 	 *  @param length The strlen of the \b JSON string
 	 *  @return An allocated \b rdpSettings struct or \b NULL in case of an error
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(freerdp_settings_free, 1)
 	WINPR_ATTR_NODISCARD
-	FREERDP_API rdpSettings* freerdp_settings_deserialize(const char* json, size_t length);
+	FREERDP_API rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length);
 
 #ifdef __cplusplus
 }
