@@ -691,8 +691,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 			Stream_SetPosition(fragment, 0);
 
 			/* Ignore errors, the PDU might not be complete. */
-			if (!rts_read_common_pdu_header(fragment, &header, TRUE))
-				return -1;
+			(void)rts_read_common_pdu_header(fragment, &header, TRUE);
 			Stream_SetPosition(fragment, pos);
 
 			if (header.frag_length > rpc->max_recv_frag)
