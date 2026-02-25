@@ -24,6 +24,12 @@
 #define FREERDP_CHANNEL_CLIPRDR_CLIENT_FORMAT_H
 
 #include <winpr/wtypes.h>
+#include <winpr/stream.h>
+
+#include <freerdp/api.h>
+#include <freerdp/channels/cliprdr.h>
+
+#include "cliprdr_main.h"
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL

@@ -613,23 +613,21 @@ static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                     const BYTE* WINPR_RESTRICT src, size_t size,
                                     wStream* WINPR_RESTRICT out)
 {
-	size_t max_size = 5760;
-	int frames;
-
 	if (!context || !src || !out)
 		return FALSE;
 
 	/* Max packet duration is 120ms (5760 at 48KHz) */
-	max_size = OPUS_MAX_FRAMES * context->common.format.nChannels * sizeof(int16_t);
+	const size_t max_size = OPUS_MAX_FRAMES * context->common.format.nChannels * sizeof(int16_t);
 	if (!Stream_EnsureRemainingCapacity(context->common.buffer, max_size))
 		return FALSE;
 
-	frames = opus_decode(context->opus_decoder, src, WINPR_ASSERTING_INT_CAST(opus_int32, size),
-	                     Stream_Pointer(out), OPUS_MAX_FRAMES, 0);
+	const opus_int32 frames =
+	    opus_decode(context->opus_decoder, src, WINPR_ASSERTING_INT_CAST(opus_int32, size),
+	                Stream_Pointer(out), OPUS_MAX_FRAMES, 0);
 	if (frames < 0)
 		return FALSE;
 
-	Stream_Seek(out, frames * context->common.format.nChannels * sizeof(int16_t));
+	Stream_Seek(out, (size_t)frames * context->common.format.nChannels * sizeof(int16_t));
 
 	return TRUE;
 }
@@ -648,12 +646,13 @@ static BOOL freerdp_dsp_encode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 	const size_t src_frames = size / sizeof(opus_int16) / context->common.format.nChannels;
 	const opus_int16* src_data = (const opus_int16*)src;
-	const int frames = opus_encode(
+	const opus_int32 frames = opus_encode(
 	    context->opus_encoder, src_data, WINPR_ASSERTING_INT_CAST(opus_int32, src_frames),
 	    Stream_Pointer(out), WINPR_ASSERTING_INT_CAST(opus_int32, max_size));
 	if (frames < 0)
 		return FALSE;
-	return Stream_SafeSeek(out, frames * context->common.format.nChannels * sizeof(int16_t));
+	return Stream_SafeSeek(out,
+	                       (size_t)frames * context->common.format.nChannels * sizeof(int16_t));
 }
 #endif
 
@@ -1450,8 +1449,6 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format, BOOL
 		case WAVE_FORMAT_OPUS:
 			return opus_is_valid_samplerate(format);
 #endif
-			/* fallthrough */
-			WINPR_FALLTHROUGH
 		default:
 			return FALSE;
 	}
@@ -1509,9 +1506,9 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		{
 			int opus_error = OPUS_OK;
 
-			context->opus_decoder =
-			    opus_decoder_create(context->common.format.nSamplesPerSec,
-			                        context->common.format.nChannels, &opus_error);
+			context->opus_decoder = opus_decoder_create(
+			    WINPR_ASSERTING_INT_CAST(opus_int32, context->common.format.nSamplesPerSec),
+			    context->common.format.nChannels, &opus_error);
 			if (opus_error != OPUS_OK)
 				return FALSE;
 		}
@@ -1519,9 +1516,9 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		{
 			int opus_error = OPUS_OK;
 
-			context->opus_encoder = opus_encoder_create(context->common.format.nSamplesPerSec,
-			                                            context->common.format.nChannels,
-			                                            OPUS_APPLICATION_VOIP, &opus_error);
+			context->opus_encoder = opus_encoder_create(
+			    WINPR_ASSERTING_INT_CAST(opus_int32, context->common.format.nSamplesPerSec),
+			    context->common.format.nChannels, OPUS_APPLICATION_VOIP, &opus_error);
 			if (opus_error != OPUS_OK)
 				return FALSE;
 

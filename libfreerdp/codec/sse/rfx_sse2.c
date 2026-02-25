@@ -50,8 +50,8 @@
 #define ATTRIBUTES __gnu_inline__, __always_inline__
 #endif
 
-static __inline void __attribute__((ATTRIBUTES))
-mm_prefetch_buffer(char* WINPR_RESTRICT buffer, size_t num_bytes)
+static inline void __attribute__((ATTRIBUTES)) mm_prefetch_buffer(char* WINPR_RESTRICT buffer,
+                                                                  size_t num_bytes)
 {
 	__m128i* buf = (__m128i*)buffer;
 
@@ -64,7 +64,7 @@ mm_prefetch_buffer(char* WINPR_RESTRICT buffer, size_t num_bytes)
 /* rfx_decode_ycbcr_to_rgb_sse2 code now resides in the primitives library. */
 /* rfx_encode_rgb_to_ycbcr_sse2 code now resides in the primitives library. */
 
-static __inline void __attribute__((ATTRIBUTES))
+static inline void __attribute__((ATTRIBUTES))
 rfx_quantization_decode_block_sse2(INT16* WINPR_RESTRICT buffer, const size_t buffer_size,
                                    const UINT32 factor)
 {
@@ -103,7 +103,7 @@ static void rfx_quantization_decode_sse2(INT16* WINPR_RESTRICT buffer,
 	rfx_quantization_decode_block_sse2(&buffer[4032], 64, quantVals[0] - 1);   /* LL3 */
 }
 
-static __inline void __attribute__((ATTRIBUTES))
+static inline void __attribute__((ATTRIBUTES))
 rfx_quantization_encode_block_sse2(INT16* WINPR_RESTRICT buffer, const unsigned buffer_size,
                                    const INT16 factor)
 {
@@ -160,7 +160,7 @@ static void rfx_quantization_encode_sse2(INT16* WINPR_RESTRICT buffer,
 	rfx_quantization_encode_block_sse2(buffer, 4096, 5);
 }
 
-static __inline void __attribute__((ATTRIBUTES))
+static inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT h,
                                    INT16* WINPR_RESTRICT dst, size_t subband_width)
 {
@@ -229,7 +229,7 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRIC
 	}
 }
 
-static __inline void __attribute__((ATTRIBUTES))
+static inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_vert_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT h,
                                   INT16* WINPR_RESTRICT dst, size_t subband_width)
 {
@@ -300,7 +300,7 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT
 	}
 }
 
-static __inline void __attribute__((ATTRIBUTES))
+static inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_sse2(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT idwt,
                              size_t subband_width)
 {
@@ -333,7 +333,7 @@ static void rfx_dwt_2d_decode_sse2(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RE
 	rfx_dwt_2d_decode_block_sse2(&buffer[0], dwt_buffer, 32);
 }
 
-static __inline void __attribute__((ATTRIBUTES))
+static inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_vert_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTRICT l,
                                   INT16* WINPR_RESTRICT h, size_t subband_width)
 {
@@ -375,7 +375,7 @@ rfx_dwt_2d_encode_block_vert_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTRI
 	}
 }
 
-static __inline void __attribute__((ATTRIBUTES))
+static inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_horiz_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTRICT l,
                                    INT16* WINPR_RESTRICT h, size_t subband_width)
 {
@@ -418,7 +418,7 @@ rfx_dwt_2d_encode_block_horiz_sse2(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTR
 	}
 }
 
-static __inline void __attribute__((ATTRIBUTES))
+static inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_sse2(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt,
                              size_t subband_width)
 {

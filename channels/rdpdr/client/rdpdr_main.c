@@ -1696,7 +1696,7 @@ static BOOL rdpdr_check_channel_state(rdpdrPlugin* rdpdr, UINT16 packetid)
 			 * then reinitialize the channel after login successful
 			 */
 			if (!rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_INITIAL))
-				return ERROR_INVALID_STATE;
+				return FALSE;
 			return rdpdr_state_check(rdpdr, packetid, RDPDR_CHANNEL_STATE_ANNOUNCE, 1,
 			                         RDPDR_CHANNEL_STATE_INITIAL);
 		case PAKID_CORE_SERVER_CAPABILITY:

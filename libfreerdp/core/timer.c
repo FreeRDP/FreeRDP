@@ -33,7 +33,7 @@
 #define TAG FREERDP_TAG("timer")
 #endif
 
-typedef ALIGN64 struct
+typedef struct ALIGN64
 {
 	FreeRDP_TimerID id;
 	uint64_t intervallNS;

@@ -23,7 +23,6 @@
 
 #include <freerdp/api.h>
 
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int freerdp_detect_keyboard_layout_from_cf(DWORD* keyboardLayoutId);
 
 #endif /* FREERDP_LOCALE_KEYBOARD_APPLE_H */

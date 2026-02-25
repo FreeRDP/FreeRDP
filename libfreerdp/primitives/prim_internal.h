@@ -25,13 +25,7 @@
 
 #include "../core/simd.h"
 
-#ifdef __GNUC__
-#define PRIM_ALIGN_128 __attribute__((aligned(16)))
-#else
-#ifdef _WIN32
-#define PRIM_ALIGN_128 __declspec(align(16))
-#endif
-#endif
+#define PRIM_ALIGN_128 DECLSPEC_ALIGN(16)
 
 #if defined(SSE_AVX_INTRINSICS_ENABLED) || defined(NEON_INTRINSICS_ENABLED) || defined(WITH_OPENCL)
 #define HAVE_OPTIMIZED_PRIMITIVES 1

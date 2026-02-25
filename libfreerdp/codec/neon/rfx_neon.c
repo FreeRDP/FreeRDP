@@ -36,7 +36,7 @@
 
 /* rfx_decode_YCbCr_to_RGB_NEON code now resides in the primitives library. */
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 rfx_quantization_decode_block_NEON(INT16* buffer, const size_t buffer_size, const UINT32 factor)
 {
 	int16x8_t quantFactors = vdupq_n_s16(factor);
@@ -69,7 +69,7 @@ static void rfx_quantization_decode_NEON(INT16* buffer, const UINT32* WINPR_REST
 	rfx_quantization_decode_block_NEON(&buffer[4032], 64, quantVals[0] - 1);   /* LL3 */
 }
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 rfx_dwt_2d_decode_block_horiz_NEON(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT h,
                                    INT16* WINPR_RESTRICT dst, size_t subband_width)
 {
@@ -132,7 +132,7 @@ rfx_dwt_2d_decode_block_horiz_NEON(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRIC
 	}
 }
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 rfx_dwt_2d_decode_block_vert_NEON(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT h,
                                   INT16* WINPR_RESTRICT dst, size_t subband_width)
 {
@@ -203,7 +203,7 @@ rfx_dwt_2d_decode_block_vert_NEON(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT
 	}
 }
 
-static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+static inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 rfx_dwt_2d_decode_block_NEON(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT idwt,
                              size_t subband_width)
 {

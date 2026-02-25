@@ -1,4 +1,6 @@
 message("PRELOADING cache")
+set(CMAKE_C_STANDARD 23 CACHE STRING "preload")
+set(CMAKE_C_FLAGS "-Wno-pre-c23-compat" CACHE STRING "preload")
 set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "preload")
 set(WITH_VERBOSE_WINPR_ASSERT ON CACHE BOOL "oss fuzz")
 
