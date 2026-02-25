@@ -20,7 +20,10 @@
 #ifndef FREERDP_METRICS_H
 #define FREERDP_METRICS_H
 
+#include <winpr/wtypes.h>
+
 #include <freerdp/api.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"
