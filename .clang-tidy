@@ -31,6 +31,7 @@ Checks: >
     -clang-analyzer-webkit.NoUncountedMemberChecker,
     -clang-analyzer-optin.performance.Padding,
     -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+    -clang-analyzer-security.VAList,
     -clang-analyzer-valist.Uninitialized,
     -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
     -cppcoreguidelines-owning-memory,
