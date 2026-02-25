@@ -333,8 +333,11 @@ static BOOL remove_rdpdr_type(rdpSettings* settings, UINT32 type)
 	do
 	{
 		printer = freerdp_device_collection_find_type(settings, type);
-		if (!freerdp_device_collection_del(settings, printer))
-			rc = FALSE;
+		if (printer)
+		{
+			if (!freerdp_device_collection_del(settings, printer))
+				rc = FALSE;
+		}
 		freerdp_device_free(printer);
 	} while (printer);
 	return rc;
