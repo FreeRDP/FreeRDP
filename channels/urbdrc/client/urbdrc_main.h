@@ -220,11 +220,14 @@ struct S_IUDEVMAN
 	(DEVICE_ADD_FLAG_BUS | DEVICE_ADD_FLAG_DEV | DEVICE_ADD_FLAG_VENDOR | \
 	 DEVICE_ADD_FLAG_PRODUCT | DEVICE_ADD_FLAG_REGISTER)
 
-FREERDP_API BOOL add_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum,
-                            UINT16 idVendor, UINT16 idProduct);
-FREERDP_API BOOL del_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum,
-                            UINT16 idVendor, UINT16 idProduct);
+FREERDP_LOCAL BOOL add_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum,
+                              UINT16 idVendor, UINT16 idProduct);
 
-UINT stream_write_and_free(IWTSPlugin* plugin, IWTSVirtualChannel* channel, wStream* out);
+FREERDP_LOCAL BOOL del_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum,
+                              UINT16 idVendor, UINT16 idProduct);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT stream_write_and_free(IWTSPlugin* plugin, IWTSVirtualChannel* channel,
+                                         wStream* out);
 
 #endif /* FREERDP_CHANNEL_URBDRC_CLIENT_MAIN_H */

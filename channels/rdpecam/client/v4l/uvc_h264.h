@@ -163,7 +163,11 @@ typedef struct
 #define WINPR_PACK_POP
 #include <winpr/pack.h>
 
-uint8_t get_uvc_h624_unit_id(const char* deviceId);
-BOOL set_h264_muxed_format(CamV4lStream* stream, const CAM_MEDIA_TYPE_DESCRIPTION* mediaType);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL uint8_t get_uvc_h624_unit_id(const char* deviceId);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL set_h264_muxed_format(CamV4lStream* stream,
+                                         const CAM_MEDIA_TYPE_DESCRIPTION* mediaType);
 
 #endif /* UVC_H264_H */

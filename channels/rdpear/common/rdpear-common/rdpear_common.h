@@ -79,17 +79,22 @@ typedef enum
 	// End NTLM remote calls
 } RemoteGuardCallId;
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL RdpEarPackageType rdpear_packageType_from_name(const WinPrAsn1_OctetString* package);
+
 WINPR_ATTR_MALLOC(Stream_Free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL wStream* rdpear_encodePayload(BOOL isKerb, wStream* payload);
 
 #define RDPEAR_COMMON_MESSAGE_DECL(V)                                                            \
+	WINPR_ATTR_NODISCARD                                                                         \
 	FREERDP_LOCAL BOOL ndr_read_##V(NdrContext* context, wStream* s, const void* hints, V* obj); \
+	WINPR_ATTR_NODISCARD                                                                         \
 	FREERDP_LOCAL BOOL ndr_write_##V(NdrContext* context, wStream* s, const void* hints,         \
 	                                 const V* obj);                                              \
 	FREERDP_LOCAL void ndr_destroy_##V(NdrContext* context, const void* hints, V* obj);          \
 	FREERDP_LOCAL void ndr_dump_##V(wLog* logger, UINT32 lvl, size_t indentLevel, const V* obj); \
+	WINPR_ATTR_NODISCARD                                                                         \
 	FREERDP_LOCAL NdrMessageType ndr_##V##_descr(void)
 
 /** @brief 2.2.1.2.2 KERB_RPC_OCTET_STRING */

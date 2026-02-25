@@ -445,6 +445,10 @@ wStream* create_shared_message_header_with_functionid(UINT32 InterfaceId, UINT32
 	wStream* out = Stream_New(NULL, 12ULL + OutputSize);
 	if (!out)
 		return NULL;
-	(void)write_shared_message_header_with_functionid(out, InterfaceId, MessageId, FunctionId);
+	if (!write_shared_message_header_with_functionid(out, InterfaceId, MessageId, FunctionId))
+	{
+		Stream_Free(out, TRUE);
+		return NULL;
+	}
 	return out;
 }

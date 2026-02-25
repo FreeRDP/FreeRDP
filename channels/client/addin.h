@@ -16,13 +16,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
+
+#include <winpr/wtypes.h>
+#include <winpr/stream.h>
+
+#include <freerdp/api.h>
 
 typedef UINT (*MsgHandler)(LPVOID userdata, wStream* data);
 
+WINPR_ATTR_NODISCARD
 FREERDP_API void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata,
                                                 MsgHandler handler, const char* channel_name);
 
-UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLength,
-                                 UINT32 totalLength, UINT32 dataFlags);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLength,
+                                               UINT32 totalLength, UINT32 dataFlags);
 
-UINT channel_client_quit_handler(void* MsgsHandle);
+FREERDP_LOCAL UINT channel_client_quit_handler(void* MsgsHandle);

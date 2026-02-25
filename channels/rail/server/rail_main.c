@@ -345,8 +345,9 @@ static UINT rail_send_server_sysparam(RailServerContext* context,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rail_write_sysparam_order(s, sysparam, extendedSpiSupported);
-	error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_SYSPARAM);
+	error = rail_write_sysparam_order(s, sysparam, extendedSpiSupported);
+	if (error == CHANNEL_RC_OK)
+		error = rail_server_send_pdu(context, s, TS_RAIL_ORDER_SYSPARAM);
 	Stream_Free(s, TRUE);
 	return error;
 }

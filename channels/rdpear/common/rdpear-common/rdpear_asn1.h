@@ -23,9 +23,14 @@
 #include <krb5.h>
 
 #include <winpr/stream.h>
+#include <freerdp/api.h>
 
-wStream* rdpear_enc_Checksum(UINT32 cksumtype, krb5_checksum* csum);
+WINPR_ATTR_MALLOC(Stream_Free, 1)
+WINPR_ATTR_NODISCARD FREERDP_LOCAL wStream* rdpear_enc_Checksum(UINT32 cksumtype,
+                                                                krb5_checksum* csum);
 
-wStream* rdpear_enc_EncryptedData(UINT32 encType, krb5_data* payload);
+WINPR_ATTR_MALLOC(Stream_Free, 1)
+WINPR_ATTR_NODISCARD FREERDP_LOCAL wStream* rdpear_enc_EncryptedData(UINT32 encType,
+                                                                     krb5_data* payload);
 
 #endif /* RPDEAR_RDPEAR_ASN1_H__ */
