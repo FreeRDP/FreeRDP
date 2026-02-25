@@ -95,6 +95,14 @@
 #define WINPR_ATTR_NODISCARD
 #endif
 
+/* GCC does not like [[nodiscard]] on function pointers.
+ * it does not complain when using attribute syntax thoug...
+ */
+#if defined(__GNUC__) && !defined(__clang__)
+#undef WINPR_ATTR_NODISCARD
+#define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
+#endif
+
 #if defined(__clang__)
 #define WINPR_PRAGMA_DIAG_PUSH WINPR_DO_PRAGMA(clang diagnostic push)
 #define WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS \
