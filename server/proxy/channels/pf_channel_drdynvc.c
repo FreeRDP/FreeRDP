@@ -136,7 +136,7 @@ static void dyn_log_(wLog* log, DWORD level, const pServerDynamicChannelContext*
 	                     getDirection(isBackData), channelName, drdynvc_get_packet_type(cmd),
 	                     channelId);
 
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, fmt);
 	(void)winpr_vasprintf(&msg, &msglen, fmt, ap);
 	va_end(ap);

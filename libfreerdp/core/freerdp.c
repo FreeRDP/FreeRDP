@@ -807,7 +807,7 @@ static BOOL freerdp_common_context(rdpContext* context, AccessTokenType tokenTyp
 	if (!context->instance || !context->instance->GetAccessToken)
 		return TRUE;
 
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, count);
 	switch (tokenType)
 	{

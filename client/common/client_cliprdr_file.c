@@ -228,7 +228,7 @@ static CliprdrFuseFile* fuse_file_new(WINPR_FORMAT_ARG const char* fmt, ...)
 	WINPR_ASSERT(fmt);
 
 	{
-		va_list ap;
+		va_list ap = { 0 };
 		va_start(ap, fmt);
 		const int rc =
 		    winpr_vasprintf(&file->filename_with_root, &file->filename_with_root_len, fmt, ap);

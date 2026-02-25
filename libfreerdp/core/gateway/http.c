@@ -271,7 +271,7 @@ WINPR_ATTR_FORMAT_ARG(2, 0)
 static BOOL list_append(HttpContext* context, WINPR_FORMAT_ARG const char* str, va_list ap)
 {
 	BOOL rc = FALSE;
-	va_list vat;
+	va_list vat = { 0 };
 	char* Pragma = NULL;
 	size_t PragmaSize = 0;
 
@@ -1703,7 +1703,7 @@ FREERDP_LOCAL BOOL http_context_set_header(HttpContext* context, const char* key
                                            ...)
 {
 	WINPR_ASSERT(context);
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, value);
 	const BOOL rc = http_context_set_header_va(context, key, value, ap);
 	va_end(ap);
@@ -1715,7 +1715,7 @@ BOOL http_request_set_header(HttpRequest* request, const char* key, const char* 
 	WINPR_ASSERT(request);
 	char* v = NULL;
 	size_t vlen = 0;
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, value);
 	winpr_vasprintf(&v, &vlen, value, ap);
 	va_end(ap);

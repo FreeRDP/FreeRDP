@@ -54,7 +54,7 @@ static const char* event_names[] = {
 static bool uwac_default_error_handler(UwacDisplay* display, UwacReturnCode code, const char* msg,
                                        ...)
 {
-	va_list args;
+	va_list args = { 0 };
 	va_start(args, msg);
 	(void)vfprintf(stderr, "%s", args);
 	va_end(args);

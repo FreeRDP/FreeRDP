@@ -1258,7 +1258,7 @@ char* winpr_GetConfigFilePath(BOOL system, const char* filename)
 
 char* winpr_GetConfigFilePathV(BOOL system, const char* filename, ...)
 {
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, filename);
 	char* str = winpr_GetConfigFilePathVA(system, filename, ap);
 	va_end(ap);

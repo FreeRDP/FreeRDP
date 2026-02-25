@@ -748,6 +748,55 @@ static BOOL load_map_from_keysym(xfContext* xfc)
 	return mapped;
 }
 
+#if defined(WITH_VERBOSE_WINPR_ASSERT)
+static BOOL compareKeySym(const x11_keysym_scancode_t* a, size_t counta,
+                          const x11_keysym_scancode_t* b, size_t countb)
+{
+	WINPR_ASSERT(a || (counta == 0));
+	WINPR_ASSERT(b || (countb == 0));
+
+	if (counta != countb)
+		return FALSE;
+
+	for (size_t x = 0; x < counta; x++)
+	{
+		const x11_keysym_scancode_t* ca = &a[x];
+		const x11_keysym_scancode_t* cb = &b[x];
+		if (keysym_cmp(ca, cb) != 0)
+		{
+			WLog_ERR(TAG, "%" PRIuz "\ta=%lx, should be %lx", x, ca->keysym, cb->keysym);
+			WLog_ERR(TAG, "KEYSYM_SCANCODE_TABLE is not properly sorted!");
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+static BOOL compareKey(const struct x11_key_scancode_t* a, size_t counta,
+                       const struct x11_key_scancode_t* b, size_t countb)
+{
+	WINPR_ASSERT(a || (counta == 0));
+	WINPR_ASSERT(b || (countb == 0));
+
+	if (counta != countb)
+		return FALSE;
+
+	for (size_t x = 0; x < counta; x++)
+	{
+		const struct x11_key_scancode_t* ca = &a[x];
+		const struct x11_key_scancode_t* cb = &b[x];
+		if (xkb_cmp(ca, cb) != 0)
+		{
+			WLog_ERR(TAG, "%" PRIuz "\ta=%s [%" PRIu32 "], should be %s [%" PRIu32 "]", x, a->name,
+			         a->sc, b->name, b->sc);
+			WLog_ERR(TAG, "XKB_KEY_NAME_SCANCODE_TABLE is not properly sorted!");
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+#endif
+
 BOOL xf_keyboard_init(xfContext* xfc)
 {
 	rdpSettings* settings = NULL;
@@ -761,37 +810,18 @@ BOOL xf_keyboard_init(xfContext* xfc)
 		memcpy(copy, KEYSYM_SCANCODE_TABLE, sizeof(copy));
 		qsort(copy, ARRAYSIZE(copy), sizeof(x11_keysym_scancode_t), keysym_cmp);
 
-		if (memcmp(KEYSYM_SCANCODE_TABLE, copy, sizeof(KEYSYM_SCANCODE_TABLE)) != 0)
-		{
-			for (size_t x = 0; x < ARRAYSIZE(KEYSYM_SCANCODE_TABLE); x++)
-			{
-				const x11_keysym_scancode_t* a = &KEYSYM_SCANCODE_TABLE[x];
-				const x11_keysym_scancode_t* b = &copy[x];
-				if (a->keysym != b->keysym)
-					WLog_ERR(TAG, "%" PRIuz "\ta=%lx, should be %lx", x, a->keysym, b->keysym);
-			}
-			WLog_ERR(TAG, "KEYSYM_SCANCODE_TABLE is not properly sorted!");
+		if (!compareKeySym(KEYSYM_SCANCODE_TABLE, ARRAYSIZE(KEYSYM_SCANCODE_TABLE), copy,
+		                   ARRAYSIZE(copy)))
 			return FALSE;
-		}
 	}
 	{
 		struct x11_key_scancode_t copy[ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE)] = { 0 };
 		memcpy(copy, XKB_KEY_NAME_SCANCODE_TABLE, sizeof(copy));
 		qsort(copy, ARRAYSIZE(copy), sizeof(struct x11_key_scancode_t), xkb_cmp);
 
-		if (memcmp(XKB_KEY_NAME_SCANCODE_TABLE, copy, sizeof(XKB_KEY_NAME_SCANCODE_TABLE)) != 0)
-		{
-			for (size_t x = 0; x < ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE); x++)
-			{
-				const struct x11_key_scancode_t* a = &XKB_KEY_NAME_SCANCODE_TABLE[x];
-				const struct x11_key_scancode_t* b = &copy[x];
-				if (strcmp(a->name, b->name) != 0)
-					WLog_ERR(TAG, "%" PRIuz "\ta=%s [%" PRIu32 "], should be %s [%" PRIu32 "]", x,
-					         a->name, a->sc, b->name, b->sc);
-			}
-			WLog_ERR(TAG, "XKB_KEY_NAME_SCANCODE_TABLE is not properly sorted!");
+		if (!compareKey(XKB_KEY_NAME_SCANCODE_TABLE, ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE), copy,
+		                ARRAYSIZE(copy)))
 			return FALSE;
-		}
 	}
 #endif
 

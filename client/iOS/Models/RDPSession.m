@@ -46,7 +46,7 @@ NSString *TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 
 static BOOL addArgument(int *argc, char ***argv, const char *fmt, ...)
 {
-	va_list ap;
+	va_list ap = { 0 };
 	char *arg = NULL;
 	char **tmp = realloc(*argv, (*argc + 1) * sizeof(char *));
 

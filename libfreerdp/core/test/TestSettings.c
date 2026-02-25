@@ -15,7 +15,7 @@
 static void log_start_(const char* fkt, ...)
 {
 	(void)fprintf(stderr, "TestSettings [");
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, fkt);
 	(void)vfprintf(stderr, fkt, ap);
 	va_end(ap);
@@ -27,7 +27,7 @@ static void log_start_(const char* fkt, ...)
 static BOOL log_result_(BOOL value, const char* fkt, ...)
 {
 	(void)fprintf(stderr, "TestSettings [");
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, fkt);
 	(void)vfprintf(stderr, fkt, ap);
 	va_end(ap);

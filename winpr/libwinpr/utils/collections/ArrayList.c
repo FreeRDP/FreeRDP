@@ -546,7 +546,7 @@ BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...)
 BOOL ArrayList_ForEachAP(wArrayList* arrayList, ArrayList_ForEachFkt fkt, va_list ap)
 {
 	BOOL rc = FALSE;
-	va_list cap;
+	va_list cap = { 0 };
 
 	WINPR_ASSERT(arrayList);
 	WINPR_ASSERT(fkt);

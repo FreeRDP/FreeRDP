@@ -90,7 +90,7 @@ static int write_result_log_expect_success(wLog* log, DWORD level, const char* f
 {
 	if (rc != Success)
 	{
-		va_list ap;
+		va_list ap = { 0 };
 		(void)write_result_log_va(log, level, fname, fkt, line, display, name, rc, 0, ap);
 	}
 	return rc;
@@ -101,7 +101,7 @@ static int write_result_log_expect_one(wLog* log, DWORD level, const char* fname
 {
 	if (rc != 1)
 	{
-		va_list ap;
+		va_list ap = { 0 };
 		(void)write_result_log_va(log, level, fname, fkt, line, display, name, rc, 0, ap);
 	}
 	return rc;

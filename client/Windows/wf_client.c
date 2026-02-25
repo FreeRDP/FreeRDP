@@ -663,8 +663,8 @@ static WCHAR* wf_format_text(const WCHAR* fmt, ...)
 
 	do
 	{
-		WCHAR* tmp;
-		va_list ap;
+		WCHAR* tmp = NULL;
+		va_list ap = { 0 };
 		va_start(ap, fmt);
 		rc = _vsnwprintf(buffer, size, fmt, ap);
 		va_end(ap);

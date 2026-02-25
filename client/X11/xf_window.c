@@ -232,7 +232,7 @@ static void xf_SetWindowTitleText(xfContext* xfc, Window window, const char* nam
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...)
 {
 	XEvent xevent = { 0 };
-	va_list argp;
+	va_list argp = { 0 };
 	va_start(argp, numArgs);
 
 	xevent.xclient.type = ClientMessage;
