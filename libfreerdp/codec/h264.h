@@ -87,6 +87,7 @@ extern "C"
 		wLog* log;
 	};
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width,
 	                                        UINT32 height);
 

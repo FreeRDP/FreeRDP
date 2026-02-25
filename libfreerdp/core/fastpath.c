@@ -1070,8 +1070,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 
 		if (sec_flags & SEC_ENCRYPT)
 		{
-			if (!security_lock(rdp))
-				goto fail;
+			security_lock(rdp);
 			should_unlock = TRUE;
 
 			const size_t sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
@@ -1143,8 +1142,8 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 
 	rc = TRUE;
 fail:
-	if (should_unlock && !security_unlock(rdp))
-		rc = FALSE;
+	if (should_unlock)
+		security_unlock(rdp);
 	Stream_Release(s);
 	return rc;
 }
@@ -1325,8 +1324,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		BOOL res = FALSE;
 		if (sec_flags & SEC_ENCRYPT)
 		{
-			if (!security_lock(rdp))
-				return FALSE;
+			security_lock(rdp);
+
 			should_unlock = TRUE;
 			UINT32 dataSize = fpUpdateHeaderSize + DstSize + pad;
 			BYTE* data = Stream_PointerAs(fs, BYTE) - dataSize;
@@ -1363,8 +1362,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		}
 
 	unlock:
-		if (should_unlock && !security_unlock(rdp))
-			return FALSE;
+		if (should_unlock)
+			security_unlock(rdp);
 
 		if (!res || !status)
 			return FALSE;

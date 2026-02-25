@@ -27,13 +27,13 @@
 #include <freerdp/config.h>
 #include <freerdp/primitives.h>
 
-pstatus_t generic_image_copy_no_overlap_convert(
+WINPR_ATTR_NODISCARD FREERDP_LOCAL pstatus_t generic_image_copy_no_overlap_convert(
     BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
     int64_t srcVMultiplier, int64_t srcVOffset, int64_t dstVMultiplier, int64_t dstVOffset);
 
-pstatus_t generic_image_copy_no_overlap_memcpy(
+WINPR_ATTR_NODISCARD FREERDP_LOCAL pstatus_t generic_image_copy_no_overlap_memcpy(
     BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,

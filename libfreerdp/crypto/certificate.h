@@ -45,8 +45,11 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert,
                                                                 const STACK_OF(X509) * chain);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_certificate_read_server_cert(rdpCertificate* certificate,
                                                         const BYTE* server_cert, size_t length);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL SSIZE_T freerdp_certificate_write_server_cert(const rdpCertificate* certificate,
                                                             UINT32 dwVersion, wStream* s);
 
@@ -54,16 +57,22 @@ WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpCertificate* freerdp_certificate_clone(const rdpCertificate* certificate);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL const rdpCertInfo* freerdp_certificate_get_info(const rdpCertificate* certificate);
 
 /** \brief returns a pointer to a X509 structure.
  *  Call X509_free when done.
  */
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL X509* freerdp_certificate_get_x509(rdpCertificate* certificate);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL size_t freerdp_certificate_get_chain_len(rdpCertificate* certificate);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL X509* freerdp_certificate_get_chain_at(rdpCertificate* certificate, size_t offset);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_certificate_publickey_encrypt(const rdpCertificate* cert,
                                                          const BYTE* input, size_t cbInput,
                                                          BYTE** poutput, size_t* pcbOutput);

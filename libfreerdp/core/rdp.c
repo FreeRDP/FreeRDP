@@ -632,7 +632,8 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 			else if (reason == Disconnect_Ultimatum_user_requested)
 				errorInfo = ERRINFO_LOGOFF_BY_USER;
 
-			rdp_set_error_info(rdp, errorInfo);
+			if (!rdp_set_error_info(rdp, errorInfo))
+				return FALSE;
 		}
 
 		WLog_Print(rdp->log, WLOG_DEBUG, "DisconnectProviderUltimatum: reason: %d", reason);
@@ -840,8 +841,7 @@ BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id, UINT16 sec_flags)
 
 	if (sec_flags & SEC_ENCRYPT)
 	{
-		if (!security_lock(rdp))
-			goto fail;
+		security_lock(rdp);
 		should_unlock = TRUE;
 	}
 
@@ -864,8 +864,8 @@ BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id, UINT16 sec_flags)
 
 	rc = TRUE;
 fail:
-	if (should_unlock && !security_unlock(rdp))
-		rc = FALSE;
+	if (should_unlock)
+		security_unlock(rdp);
 	Stream_Release(s);
 	return rc;
 }
@@ -886,8 +886,7 @@ BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id, UINT1
 
 	if (sec_flags & SEC_ENCRYPT)
 	{
-		if (!security_lock(rdp))
-			goto fail;
+		security_lock(rdp);
 		should_unlock = TRUE;
 	}
 
@@ -916,8 +915,8 @@ BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id, UINT1
 
 	rc = TRUE;
 fail:
-	if (should_unlock && !security_unlock(rdp))
-		rc = FALSE;
+	if (should_unlock)
+		security_unlock(rdp);
 	return rc;
 }
 
@@ -937,8 +936,7 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id, UI
 
 	if (sec_flags & SEC_ENCRYPT)
 	{
-		if (!security_lock(rdp))
-			goto fail;
+		security_lock(rdp);
 		should_unlock = TRUE;
 	}
 
@@ -973,8 +971,8 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id, UI
 
 	rc = TRUE;
 fail:
-	if (should_unlock && !security_unlock(rdp))
-		rc = FALSE;
+	if (should_unlock)
+		security_unlock(rdp);
 	Stream_Release(s);
 	return rc;
 }
@@ -990,8 +988,7 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 
 	if (sec_flags & SEC_ENCRYPT)
 	{
-		if (!security_lock(rdp))
-			goto fail;
+		security_lock(rdp);
 		should_unlock = TRUE;
 	}
 
@@ -1014,8 +1011,9 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 
 	rc = TRUE;
 fail:
-	if (should_unlock && !security_unlock(rdp))
-		rc = FALSE;
+	if (should_unlock)
+		security_unlock(rdp);
+
 	Stream_Release(s);
 	return rc;
 }
@@ -1517,8 +1515,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(pLength);
 
-	if (!security_lock(rdp))
-		return FALSE;
+	security_lock(rdp);
 
 	INT32 length = *pLength;
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
@@ -1607,8 +1604,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	}
 	res = TRUE;
 unlock:
-	if (!security_unlock(rdp))
-		return FALSE;
+	security_unlock(rdp);
 	return res;
 }
 
@@ -1936,7 +1932,8 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 			}
 			else if (nla_get_state(rdp->nla) == NLA_STATE_POST_NEGO)
 			{
-				nego_recv(rdp->transport, s, (void*)rdp->nego);
+				if (nego_recv(rdp->transport, s, (void*)rdp->nego) < 0)
+					return STATE_RUN_FAILED;
 
 				if (!nego_update_settings_from_state(rdp->nego, rdp->settings))
 					return STATE_RUN_FAILED;
@@ -2114,9 +2111,11 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 		case CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_REQUEST:
 			if (!rdp_client_connect_auto_detect(rdp, s, WLOG_DEBUG))
 			{
-				(void)rdp_client_transition_to_state(
-				    rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE);
-				status = STATE_RUN_TRY_AGAIN;
+				if (!rdp_client_transition_to_state(
+				        rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE))
+					status = STATE_RUN_FAILED;
+				else
+					status = STATE_RUN_TRY_AGAIN;
 			}
 			break;
 
@@ -2480,7 +2479,7 @@ static void rdp_reset_free(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 
-	(void)security_lock(rdp);
+	security_lock(rdp);
 	rdp_free_rc4_decrypt_keys(rdp);
 	rdp_free_rc4_encrypt_keys(rdp);
 
@@ -2488,7 +2487,7 @@ static void rdp_reset_free(rdpRdp* rdp)
 	winpr_Cipher_Free(rdp->fips_decrypt);
 	rdp->fips_encrypt = NULL;
 	rdp->fips_decrypt = NULL;
-	(void)security_unlock(rdp);
+	security_unlock(rdp);
 
 	aad_free(rdp->aad);
 	mcs_free(rdp->mcs);

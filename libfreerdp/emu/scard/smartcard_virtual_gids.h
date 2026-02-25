@@ -23,13 +23,21 @@
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+
+#include <freerdp/api.h>
 #include <freerdp/channels/log.h>
 
 /* Virtual GIDS context */
 typedef struct vgids_context vgidsContext;
 
+/* frees a previously created virtual gids context */
+FREERDP_LOCAL
+void vgids_free(vgidsContext* context);
+
 /* Creates a new virtual gids context */
-vgidsContext* vgids_new(void);
+WINPR_ATTR_MALLOC(vgids_free, 1)
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL vgidsContext* vgids_new(void);
 
 /*
    Initializes the virtual gids context.
@@ -38,6 +46,8 @@ vgidsContext* vgids_new(void);
      pin: Pin protecting the usage of the private key
      Returns: TRUE on success, FALSE in case of an error
 */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL
 BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, const char* pin);
 
 /*
@@ -48,10 +58,9 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
      responseSize: Size of the returned data buffer
      Returns: TRUE on success, FALSE in case of an error
 */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL
 BOOL vgids_process_apdu(vgidsContext* context, const BYTE* data, DWORD dataSize, BYTE** response,
                         DWORD* responseSize);
-
-/* frees a previously created virtual gids context */
-void vgids_free(vgidsContext* context);
 
 #endif /* WINPR_SMARTCARD_VIRTUAL_GIDS_H */

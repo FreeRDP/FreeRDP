@@ -26,6 +26,7 @@
 
 #include "rpc.h"
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId);
 
 FREERDP_LOCAL void rpc_client_call_free(RpcClientCall* client_call);
@@ -34,14 +35,20 @@ WINPR_ATTR_MALLOC(rpc_client_call_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer,
                                           size_t length);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rpc_client_in_channel_recv(rdpRpc* rpc);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rpc_client_out_channel_recv(rdpRpc* rpc);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer, size_t length);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum);
 
 FREERDP_LOCAL void rpc_client_free(RpcClient* client);

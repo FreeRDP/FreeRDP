@@ -72,6 +72,7 @@ extern "C"
 {
 #endif
 
+	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL const char* rfx_get_progressive_block_type_string(UINT16 blockType);
 
 #ifdef __cplusplus

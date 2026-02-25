@@ -3338,9 +3338,7 @@ BIO* tsg_get_bio(rdpTsg* tsg)
 
 BOOL tsg_set_state(rdpTsg* tsg, TSG_STATE state)
 {
-	if (!tsg)
-		return FALSE;
-
+	WINPR_ASSERT(tsg);
 	tsg->state = state;
 	return TRUE;
 }

@@ -763,21 +763,29 @@ struct rdp_rpc
 	wLog* log;
 };
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL const char* rpc_vc_state_str(VIRTUAL_CONNECTION_STATE state);
+
 FREERDP_LOCAL void rpc_pdu_header_print(wLog* log, const rpcconn_hdr_t* header);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rpcconn_common_hdr_t rpc_pdu_header_init(const rdpRpc* rpc);
 
 FREERDP_LOCAL size_t rpc_offset_align(size_t* offset, size_t alignment);
+
 FREERDP_LOCAL size_t rpc_offset_pad(size_t* offset, size_t pad);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rpc_get_stub_data_info(rdpRpc* rpc, const rpcconn_hdr_t* header, size_t* offset,
                                           size_t* length);
 
 #define rpc_channel_write(channel, data, length) \
 	rpc_channel_write_int((channel), (data), (length), __FILE__, __LINE__, __func__)
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL SSIZE_T rpc_channel_write_int(RpcChannel* channel, const BYTE* data, size_t length,
                                             const char* file, size_t line, const char* fkt);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length);
 
 FREERDP_LOCAL void rpc_channel_free(RpcChannel* channel);
@@ -785,10 +793,13 @@ FREERDP_LOCAL void rpc_channel_free(RpcChannel* channel);
 WINPR_ATTR_MALLOC(rpc_channel_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc, const GUID* guid);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, uint32_t timeout);
 
 FREERDP_LOCAL BOOL rpc_in_channel_transition_to_state(RpcInChannel* inChannel,
                                                       CLIENT_IN_CHANNEL_STATE state);
+
 FREERDP_LOCAL BOOL rpc_out_channel_transition_to_state(RpcOutChannel* outChannel,
                                                        CLIENT_OUT_CHANNEL_STATE state);
 
@@ -796,6 +807,7 @@ FREERDP_LOCAL BOOL rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
                                                               RpcVirtualConnection* connection,
                                                               VIRTUAL_CONNECTION_STATE state);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rpc_connect(rdpRpc* rpc, UINT32 timeout);
 
 FREERDP_LOCAL void rpc_free(rdpRpc* rpc);

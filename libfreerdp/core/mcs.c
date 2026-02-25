@@ -1079,7 +1079,8 @@ BOOL mcs_send_erect_domain_request(rdpMcs* mcs)
 		return FALSE;
 	}
 
-	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ErectDomainRequest, length, 0);
+	if (!mcs_write_domain_mcspdu_header(s, DomainMCSPDU_ErectDomainRequest, length, 0))
+		goto out;
 	if (!per_write_integer(s, 0)) /* subHeight (INTEGER) */
 		goto out;
 	if (!per_write_integer(s, 0)) /* subInterval (INTEGER) */
@@ -1120,6 +1121,7 @@ BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s)
 
 BOOL mcs_send_attach_user_request(rdpMcs* mcs)
 {
+	int status = -1;
 	UINT16 length = 8;
 
 	if (!mcs)
@@ -1133,11 +1135,15 @@ BOOL mcs_send_attach_user_request(rdpMcs* mcs)
 		return FALSE;
 	}
 
-	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserRequest, length, 0);
+	if (!mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserRequest, length, 0))
+		goto fail;
+
 	Stream_SealLength(s);
 
 	rdpTransport* transport = freerdp_get_transport(mcs->context);
-	const int status = transport_write(transport, s);
+	status = transport_write(transport, s);
+
+fail:
 	Stream_Free(s, TRUE);
 	return (status < 0) ? FALSE : TRUE;
 }

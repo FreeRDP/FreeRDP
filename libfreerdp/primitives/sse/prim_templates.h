@@ -41,6 +41,7 @@
  * SCD = Source, Constant, Destination
  */
 #define SSE3_SCD_ROUTINE(_name_, _type_, _fallback_, _op_, _op_type_, _slowWay_) \
+	WINPR_ATTR_NODISCARD                                                         \
 	static pstatus_t _name_(const _type_* WINPR_RESTRICT pSrc, UINT32 val,       \
 	                        _type_* WINPR_RESTRICT pDst, UINT32 ulen)            \
 	{                                                                            \
@@ -132,6 +133,7 @@
  * PRE = preload xmm0 with the constant.
  */
 #define SSE3_SCD_PRE_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_)  \
+	WINPR_ATTR_NODISCARD                                                   \
 	static pstatus_t _name_(const _type_* WINPR_RESTRICT pSrc, _type_ val, \
 	                        _type_* WINPR_RESTRICT pDst, INT32 ilen)       \
 	{                                                                      \
@@ -198,6 +200,7 @@
  * SSD = Source1, Source2, Destination
  */
 #define SSE3_SSD_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_)                        \
+	WINPR_ATTR_NODISCARD                                                                     \
 	static pstatus_t _name_(const _type_* WINPR_RESTRICT pSrc1,                              \
 	                        const _type_* WINPR_RESTRICT pSrc2, _type_* WINPR_RESTRICT pDst, \
 	                        UINT32 ulen)                                                     \

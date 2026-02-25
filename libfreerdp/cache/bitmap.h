@@ -33,12 +33,12 @@ typedef struct
 
 typedef struct
 {
-	pMemBlt MemBlt;               /* 0 */
-	pMem3Blt Mem3Blt;             /* 1 */
-	pCacheBitmap CacheBitmap;     /* 2 */
-	pCacheBitmapV2 CacheBitmapV2; /* 3 */
-	pCacheBitmapV3 CacheBitmapV3; /* 4 */
-	pBitmapUpdate BitmapUpdate;   /* 5 */
+	WINPR_ATTR_NODISCARD pMemBlt MemBlt;               /* 0 */
+	WINPR_ATTR_NODISCARD pMem3Blt Mem3Blt;             /* 1 */
+	WINPR_ATTR_NODISCARD pCacheBitmap CacheBitmap;     /* 2 */
+	WINPR_ATTR_NODISCARD pCacheBitmapV2 CacheBitmapV2; /* 3 */
+	WINPR_ATTR_NODISCARD pCacheBitmapV3 CacheBitmapV3; /* 4 */
+	WINPR_ATTR_NODISCARD pBitmapUpdate BitmapUpdate;   /* 5 */
 	UINT32 paddingA[16 - 6];      /* 6 */
 
 	UINT32 maxCells;          /* 16 */

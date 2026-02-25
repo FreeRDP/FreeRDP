@@ -24,6 +24,9 @@
 #include <winpr/stream.h>
 #include <winpr/winpr.h>
 
+#include <freerdp/api.h>
+#include <freerdp/types.h>
+
 /* needed for BIO */
 #include <openssl/ssl.h>
 
@@ -35,9 +38,13 @@ WINPR_ATTR_MALLOC(wst_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpWst* wst_new(rdpContext* context);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BIO* wst_get_front_bio_and_take_ownership(rdpWst* wst);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL wst_connect(rdpWst* wst, DWORD timeout);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL DWORD wst_get_event_handles(rdpWst* wst, HANDLE* events, DWORD count);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_WEBSOCKET_TRANSPORT_H */

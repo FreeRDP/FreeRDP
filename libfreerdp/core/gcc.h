@@ -30,11 +30,22 @@
 
 #include <winpr/stream.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL gcc_read_conference_create_request(wStream* s, rdpMcs* mcs);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL gcc_write_conference_create_request(wStream* s, wStream* userData);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL gcc_read_conference_create_response(wStream* s, rdpMcs* mcs);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL gcc_write_conference_create_response(wStream* s, wStream* userData);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL gcc_write_client_data_blocks(wStream* s, const rdpMcs* mcs);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL gcc_write_server_data_blocks(wStream* s, rdpMcs* mcs);
 
 #endif /* FREERDP_LIB_CORE_GCC_H */

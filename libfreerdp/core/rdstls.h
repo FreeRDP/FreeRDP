@@ -24,6 +24,7 @@ typedef struct rdp_rdstls rdpRdstls;
 
 #include <freerdp/freerdp.h>
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL SSIZE_T rdstls_parse_pdu(wLog* log, wStream* s);
 
 FREERDP_LOCAL void rdstls_free(rdpRdstls* rdstls);
@@ -32,6 +33,7 @@ WINPR_ATTR_MALLOC(rdstls_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpRdstls* rdstls_new(rdpContext* context, rdpTransport* transport);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL int rdstls_authenticate(rdpRdstls* rdstls);
 
 #endif /* FREERDP_LIB_CORE_RDSTLS_H */

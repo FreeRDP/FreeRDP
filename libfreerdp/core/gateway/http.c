@@ -368,8 +368,7 @@ BOOL http_context_set_rdg_correlation_id(HttpContext* context, const GUID* RdgCo
 
 BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable)
 {
-	if (!context)
-		return FALSE;
+	WINPR_ASSERT(context);
 
 	if (enable)
 	{

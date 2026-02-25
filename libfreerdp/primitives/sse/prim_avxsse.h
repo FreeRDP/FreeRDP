@@ -27,6 +27,7 @@
 #include <emmintrin.h>
 #include <pmmintrin.h>
 
+WINPR_ATTR_NODISCARD
 static inline __m128i mm_set_epu32(uint32_t val1, uint32_t val2, uint32_t val3, uint32_t val4)
 {
 	return _mm_set_epi32(WINPR_CXX_COMPAT_CAST(int32_t, val1), WINPR_CXX_COMPAT_CAST(int32_t, val2),
@@ -34,6 +35,7 @@ static inline __m128i mm_set_epu32(uint32_t val1, uint32_t val2, uint32_t val3, 
 	                     WINPR_CXX_COMPAT_CAST(int32_t, val4));
 }
 
+WINPR_ATTR_NODISCARD
 static inline __m128i mm_set_epu8(uint8_t val1, uint8_t val2, uint8_t val3, uint8_t val4,
                                   uint8_t val5, uint8_t val6, uint8_t val7, uint8_t val8,
                                   uint8_t val9, uint8_t val10, uint8_t val11, uint8_t val12,
@@ -49,16 +51,19 @@ static inline __m128i mm_set_epu8(uint8_t val1, uint8_t val2, uint8_t val3, uint
 	                    WINPR_CXX_COMPAT_CAST(int8_t, val15), WINPR_CXX_COMPAT_CAST(int8_t, val16));
 }
 
+WINPR_ATTR_NODISCARD
 static inline __m128i mm_set1_epu32(uint32_t val)
 {
 	return _mm_set1_epi32(WINPR_CXX_COMPAT_CAST(int32_t, val));
 }
 
+WINPR_ATTR_NODISCARD
 static inline __m128i mm_set1_epu8(uint8_t val)
 {
 	return _mm_set1_epi8(WINPR_CXX_COMPAT_CAST(int8_t, val));
 }
 
+WINPR_ATTR_NODISCARD
 static inline __m128i LOAD_SI128(const void* ptr)
 {
 	const __m128i* mptr = WINPR_CXX_COMPAT_CAST(const __m128i*, ptr);

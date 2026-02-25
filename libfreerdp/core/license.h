@@ -56,12 +56,17 @@ typedef struct
 	LICENSE_BLOB** array;
 } SCOPE_LIST;
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL license_send_valid_client_error_packet(rdpRdp* rdp);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL state_run_t license_recv(rdpLicense* license, wStream* s);
 
 /* the configuration is applied from settings. Set FreeRDP_ServerLicense* settings */
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL license_server_configure(rdpLicense* license);
+
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL license_server_send_request(rdpLicense* license);
 
 FREERDP_LOCAL void license_free(rdpLicense* license);

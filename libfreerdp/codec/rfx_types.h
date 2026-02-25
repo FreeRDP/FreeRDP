@@ -166,10 +166,12 @@ struct S_RFX_CONTEXT
 	void (*dwt_2d_decode)(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_buffer);
 	void (*dwt_2d_extrapolate_decode)(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTRICT temp);
 	void (*dwt_2d_encode)(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_buffer);
-	int (*rlgr_decode)(RLGR_MODE mode, const BYTE* WINPR_RESTRICT data, UINT32 data_size,
-	                   INT16* WINPR_RESTRICT buffer, UINT32 buffer_size);
-	int (*rlgr_encode)(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 data_size,
-	                   BYTE* WINPR_RESTRICT buffer, UINT32 buffer_size);
+	WINPR_ATTR_NODISCARD int (*rlgr_decode)(RLGR_MODE mode, const BYTE* WINPR_RESTRICT data,
+	                                        UINT32 data_size, INT16* WINPR_RESTRICT buffer,
+	                                        UINT32 buffer_size);
+	WINPR_ATTR_NODISCARD int (*rlgr_encode)(RLGR_MODE mode, const INT16* WINPR_RESTRICT data,
+	                                        UINT32 data_size, BYTE* WINPR_RESTRICT buffer,
+	                                        UINT32 buffer_size);
 
 	/* private definitions */
 	RFX_CONTEXT_PRIV* priv;

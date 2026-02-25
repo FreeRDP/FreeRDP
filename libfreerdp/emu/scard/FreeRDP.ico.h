@@ -9,7 +9,9 @@
 #ifndef FREERDP_ICO_INTERNAL_
 #define FREERDP_ICO_INTERNAL_
 
-extern const unsigned char resources_FreeRDP_ico[];
-extern const unsigned int resources_FreeRDP_ico_len;
+#include <freerdp/api.h>
+
+FREERDP_LOCAL extern const unsigned char resources_FreeRDP_ico[];
+FREERDP_LOCAL extern const unsigned int resources_FreeRDP_ico_len;
 
 #endif /* FREERDP_ICO_INTERNAL_ */
