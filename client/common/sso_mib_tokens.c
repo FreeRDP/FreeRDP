@@ -153,7 +153,7 @@ static BOOL sso_mib_get_access_token(rdpContext* context, AccessTokenType tokenT
 	const char* scope = NULL;
 	const char* req_cnf = NULL;
 
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, count);
 
 	if (tokenType == ACCESS_TOKEN_TYPE_AAD)

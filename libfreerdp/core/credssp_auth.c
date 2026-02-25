@@ -108,7 +108,7 @@ static BOOL log_status_(SECURITY_STATUS status, DWORD level, const char* file, c
 	if (WLog_IsLevelActive(log, level))
 	{
 		char fwhat[128] = { 0 };
-		va_list ap;
+		va_list ap = { 0 };
 		va_start(ap, what);
 		(void)vsnprintf(fwhat, sizeof(fwhat) - 1, what, ap);
 		va_end(ap);

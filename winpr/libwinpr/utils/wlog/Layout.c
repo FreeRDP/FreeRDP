@@ -91,7 +91,7 @@ WINPR_ATTR_FORMAT_ARG(3, 4)
 static void WLog_PrintMessagePrefix(char* prefix, size_t prefixlen,
                                     WINPR_FORMAT_ARG const char* format, ...)
 {
-	va_list args;
+	va_list args = { 0 };
 	va_start(args, format);
 	WLog_PrintMessagePrefixVA(prefix, prefixlen, format, args);
 	va_end(args);

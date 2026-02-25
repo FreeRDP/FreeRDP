@@ -455,7 +455,7 @@ std::string SDLConnectionDialog::print(const char* fmt, va_list ap)
 		if (size > 0)
 			res.resize(WINPR_ASSERTING_INT_CAST(size_t, size));
 
-		va_list copy;
+		va_list copy = {};
 		va_copy(copy, ap);
 		WINPR_PRAGMA_DIAG_PUSH
 		WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL

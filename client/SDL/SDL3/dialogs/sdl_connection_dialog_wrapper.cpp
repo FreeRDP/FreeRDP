@@ -75,7 +75,7 @@ bool SdlConnectionDialogWrapper::handleEvent(const SDL_Event& event)
 WINPR_ATTR_FORMAT_ARG(1, 0)
 static std::string format(WINPR_FORMAT_ARG const char* fmt, va_list ap)
 {
-	va_list ap1;
+	va_list ap1 = {};
 	va_copy(ap1, ap);
 	const int size = vsnprintf(nullptr, 0, fmt, ap1);
 	va_end(ap1);
@@ -86,7 +86,7 @@ static std::string format(WINPR_FORMAT_ARG const char* fmt, va_list ap)
 	std::string msg;
 	msg.resize(static_cast<size_t>(size) + 1);
 
-	va_list ap2;
+	va_list ap2 = {};
 	va_copy(ap2, ap);
 	std::ignore = vsnprintf(msg.data(), msg.size(), fmt, ap2);
 	va_end(ap2);
@@ -95,7 +95,7 @@ static std::string format(WINPR_FORMAT_ARG const char* fmt, va_list ap)
 
 void SdlConnectionDialogWrapper::setTitle(const char* fmt, ...)
 {
-	va_list ap;
+	va_list ap = {};
 	va_start(ap, fmt);
 	setTitle(format(fmt, ap));
 	va_end(ap);
@@ -108,7 +108,7 @@ void SdlConnectionDialogWrapper::setTitle(const std::string& title)
 
 void SdlConnectionDialogWrapper::showInfo(const char* fmt, ...)
 {
-	va_list ap;
+	va_list ap = {};
 	va_start(ap, fmt);
 	showInfo(format(fmt, ap));
 	va_end(ap);
@@ -121,7 +121,7 @@ void SdlConnectionDialogWrapper::showInfo(const std::string& info)
 
 void SdlConnectionDialogWrapper::showWarn(const char* fmt, ...)
 {
-	va_list ap;
+	va_list ap = {};
 	va_start(ap, fmt);
 	showWarn(format(fmt, ap));
 	va_end(ap);
@@ -134,7 +134,7 @@ void SdlConnectionDialogWrapper::showWarn(const std::string& info)
 
 void SdlConnectionDialogWrapper::showError(const char* fmt, ...)
 {
-	va_list ap;
+	va_list ap = {};
 	va_start(ap, fmt);
 	showError(format(fmt, ap));
 	va_end(ap);

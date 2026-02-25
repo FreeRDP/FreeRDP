@@ -32,7 +32,7 @@ static inline void rdpecam_PrintWarning(wLog* log, const char* file, const char*
                                         WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	const DWORD level = WLOG_WARN;
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, fmt);
 	if (WLog_IsLevelActive(log, level))

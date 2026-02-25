@@ -2203,7 +2203,7 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 #if defined(CHANNEL_RDPEI_CLIENT)
 	if ((flags & FREERDP_PEN_REGISTER) != 0)
 	{
-		va_list args;
+		va_list args = { 0 };
 
 		va_start(args, deviceid);
 		double pressure = va_arg(args, double);
@@ -2231,7 +2231,7 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 	UINT16 rotation = 0;
 	INT16 tiltX = 0;
 	INT16 tiltY = 0;
-	va_list args;
+	va_list args = { 0 };
 	va_start(args, deviceid);
 
 	x = va_arg(args, INT32);
@@ -2572,7 +2572,7 @@ char* freerdp_client_get_aad_url(rdpClientContext* cctx, freerdp_client_aad_type
 	WINPR_ASSERT(cctx);
 	char* str = NULL;
 
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, type);
 	switch (type)
 	{

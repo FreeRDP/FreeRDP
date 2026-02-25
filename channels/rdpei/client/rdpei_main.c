@@ -1202,7 +1202,7 @@ static UINT rdpei_touch_raw_event(RdpeiClientContext* context, INT32 externalId,
                                   INT32* contactId, UINT32 flags, UINT32 fieldFlags, ...)
 {
 	UINT rc = 0;
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, fieldFlags);
 	rc = rdpei_touch_process(context, externalId, flags, x, y, contactId, fieldFlags, ap);
 	va_end(ap);
@@ -1345,7 +1345,7 @@ static UINT rdpei_pen_begin(RdpeiClientContext* context, INT32 externalId, UINT3
                             INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
@@ -1366,7 +1366,7 @@ static UINT rdpei_pen_update(RdpeiClientContext* context, INT32 externalId, UINT
                              INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
@@ -1386,7 +1386,7 @@ static UINT rdpei_pen_end(RdpeiClientContext* context, INT32 externalId, UINT32 
                           INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap;
+	va_list ap = { 0 };
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_UP | RDPINPUT_CONTACT_FLAG_INRANGE, fieldFlags,
@@ -1404,7 +1404,7 @@ static UINT rdpei_pen_hover_begin(RdpeiClientContext* context, INT32 externalId,
                                   INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
@@ -1424,7 +1424,7 @@ static UINT rdpei_pen_hover_update(RdpeiClientContext* context, INT32 externalId
                                    INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
@@ -1444,7 +1444,7 @@ static UINT rdpei_pen_hover_cancel(RdpeiClientContext* context, INT32 externalId
                                    INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
@@ -1459,7 +1459,7 @@ static UINT rdpei_pen_raw_event(RdpeiClientContext* context, INT32 externalId, U
                                 UINT32 fieldFlags, INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap;
+	va_list ap = { 0 };
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId, contactFlags, fieldFlags, x, y, ap);

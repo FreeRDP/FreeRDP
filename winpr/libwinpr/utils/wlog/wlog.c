@@ -429,7 +429,7 @@ BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, size_t line, const ch
                        const char* function, ...)
 {
 	BOOL status = 0;
-	va_list args;
+	va_list args = { 0 };
 	va_start(args, function);
 	status = WLog_PrintMessageVA(log, type, level, line, file, function, args);
 	va_end(args);
@@ -440,7 +440,7 @@ BOOL WLog_PrintTextMessage(wLog* log, DWORD level, size_t line, const char* file
                            const char* function, const char* fmt, ...)
 {
 	BOOL status = 0;
-	va_list args;
+	va_list args = { 0 };
 	va_start(args, fmt);
 	status = WLog_PrintTextMessageVA(log, level, line, file, function, fmt, args);
 	va_end(args);

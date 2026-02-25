@@ -312,7 +312,7 @@ BOOL Stream_CheckAndLogRequiredCapacityEx(const char* tag, DWORD level, wStream*
 
 	if (actual < nmemb)
 	{
-		va_list args;
+		va_list args = { 0 };
 
 		va_start(args, fmt);
 		Stream_CheckAndLogRequiredCapacityExVa(tag, level, s, nmemb, size, fmt, args);
@@ -370,7 +370,7 @@ BOOL Stream_CheckAndLogRequiredCapacityWLogEx(wLog* log, DWORD level, wStream* s
 
 	if (actual < nmemb)
 	{
-		va_list args;
+		va_list args = { 0 };
 
 		va_start(args, fmt);
 		Stream_CheckAndLogRequiredCapacityWLogExVa(log, level, s, nmemb, size, fmt, args);
@@ -390,7 +390,7 @@ BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s
 
 	if (actual < nmemb)
 	{
-		va_list args;
+		va_list args = { 0 };
 
 		va_start(args, fmt);
 		Stream_CheckAndLogRequiredLengthExVa(tag, level, s, nmemb, size, fmt, args);
@@ -421,7 +421,7 @@ BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s, 
 
 	if (actual < nmemb)
 	{
-		va_list args;
+		va_list args = { 0 };
 
 		va_start(args, fmt);
 		Stream_CheckAndLogRequiredLengthWLogExVa(log, level, s, nmemb, size, fmt, args);

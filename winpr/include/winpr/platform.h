@@ -594,7 +594,7 @@ WINPR_PRAGMA_DIAG_POP
 #if defined(__GNUC__) || defined(__clang__)
 #define WINPR_ATTR_FORMAT_ARG(pos, args) __attribute__((__format__(__printf__, pos, args)))
 #define WINPR_FORMAT_ARG /**/
-#else
+#elif defined(_MSC_VER)
 #define WINPR_ATTR_FORMAT_ARG(pos, args)
 #define WINPR_FORMAT_ARG _Printf_format_string_
 #endif
