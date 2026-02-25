@@ -82,7 +82,7 @@ WINPR_ATTR_MALLOC(free, 1)
 WINPR_ATTR_NODISCARD
 static char* get_printer_hash(const WCHAR* name, size_t length)
 {
-	BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = { 0 };
+	BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 
 	if (!winpr_Digest(WINPR_MD_SHA256, name, length, hash, sizeof(hash)))
 		return NULL;

@@ -417,7 +417,7 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 			/* Extract header for log message
 			 * expected format is '----- SOMETEXT -----'
 			 */
-			char hdr[128] = { 0 };
+			char hdr[128] = WINPR_C_ARRAY_INIT;
 			const char* end = strchr(&data[5], '-');
 			if (end)
 			{
@@ -1326,7 +1326,7 @@ static BOOL config_plugin_channel_create(proxyPlugin* plugin, WINPR_ATTR_UNUSED 
 BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata)
 {
 	struct config_plugin_data* custom = NULL;
-	proxyPlugin plugin = { 0 };
+	proxyPlugin plugin = WINPR_C_ARRAY_INIT;
 
 	plugin.name = config_plugin_name;
 	plugin.description = config_plugin_desc;

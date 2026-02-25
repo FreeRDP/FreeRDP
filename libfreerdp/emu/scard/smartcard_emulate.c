@@ -41,7 +41,7 @@
 static CHAR g_ReaderNameA[] = { 'F', 'r', 'e', 'e', 'R', 'D', 'P', ' ',  'E',
 	                            'm', 'u', 'l', 'a', 't', 'o', 'r', '\0', '\0' };
 static INIT_ONCE g_ReaderNameWGuard = INIT_ONCE_STATIC_INIT;
-static WCHAR g_ReaderNameW[32] = { 0 };
+static WCHAR g_ReaderNameW[32] = WINPR_C_ARRAY_INIT;
 static size_t g_ReaderNameWLen = 0;
 
 static char* card_id_and_name_a(const UUID* CardIdentifier, LPCSTR LookupName)
@@ -393,7 +393,7 @@ LONG WINAPI Emulate_SCardEstablishContext(SmartcardEmulationContext* smartcard, 
 
 	if (ctx)
 	{
-		SCARDCONTEXT context = { 0 };
+		SCARDCONTEXT context = WINPR_C_ARRAY_INIT;
 
 		winpr_RAND(&context, sizeof(SCARDCONTEXT));
 		if (HashTable_Insert(smartcard->contexts, (const void*)context, ctx))

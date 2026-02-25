@@ -11,7 +11,7 @@ int TestCommMonitor(int argc, char* argv[])
 	DWORD dwError = 0;
 	BOOL fSuccess = 0;
 	DWORD dwEvtMask = 0;
-	OVERLAPPED overlapped = { 0 };
+	OVERLAPPED overlapped = WINPR_C_ARRAY_INIT;
 	LPCSTR lpFileName = "\\\\.\\COM1";
 
 	hComm = CreateFileA(lpFileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,

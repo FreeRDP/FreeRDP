@@ -72,8 +72,8 @@ static bool test_gdi_coords(size_t testNr, HGDI_DC hdc, const GDI_RGN* clip, con
 
 		if (!gdi_EqualRgn(rgn1, rgn2))
 		{
-			char buffer1[64] = { 0 };
-			char buffer2[64] = { 0 };
+			char buffer1[64] = WINPR_C_ARRAY_INIT;
+			char buffer2[64] = WINPR_C_ARRAY_INIT;
 			(void)fprintf(stderr, "[%s:%" PRIuz "] gdi_EqualRgn failed: expected %s, got %s\n",
 			              __func__, testNr, buffer1, buffer2);
 			goto fail;

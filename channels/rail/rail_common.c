@@ -611,7 +611,7 @@ const char* rail_handshake_ex_flags_to_string(UINT32 flags, char* buffer, size_t
 	if (flags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_2_SUPPORTED)
 		winpr_str_append("EXTENDED_SPI_2_SUPPORTED", fbuffer, len, "|");
 
-	char number[16] = { 0 };
+	char number[16] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(number, sizeof(number), "[0x%08" PRIx32 "]", flags);
 	winpr_str_append(number, buffer, len, "}");
 	return buffer;

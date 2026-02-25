@@ -15,7 +15,7 @@
 static void log_start_(const char* fkt, ...)
 {
 	(void)fprintf(stderr, "TestSettings [");
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fkt);
 	(void)vfprintf(stderr, fkt, ap);
 	va_end(ap);
@@ -27,7 +27,7 @@ static void log_start_(const char* fkt, ...)
 static BOOL log_result_(BOOL value, const char* fkt, ...)
 {
 	(void)fprintf(stderr, "TestSettings [");
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fkt);
 	(void)vfprintf(stderr, fkt, ap);
 	va_end(ap);
@@ -567,7 +567,7 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 		UINT16 intEntryType = 0;
 		BOOL expect = 0;
 		BOOL have = 0;
-		char value[8192] = { 0 };
+		char value[8192] = WINPR_C_ARRAY_INIT;
 		union
 		{
 			UINT64 u64;
@@ -850,7 +850,7 @@ static BOOL test_write_offsets(rdpSettings* settings, size_t id, size_t elementS
 	for (size_t x = min; x < max; x++)
 	{
 		const void* ptr = NULL;
-		char buffer[8192] = { 0 };
+		char buffer[8192] = WINPR_C_ARRAY_INIT;
 
 		winpr_RAND(buffer, sizeof(buffer));
 		if (!freerdp_settings_set_pointer_array(settings, id, x, buffer))
@@ -1618,7 +1618,7 @@ static BOOL test_serialize_strings(DWORD flags, const char* str)
 		}
 	}
 
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(buffer, sizeof(buffer), "%s flags 0x%08" PRIx32 " {%s}", __func__, flags, str);
 	return test_serialize_with(src, buffer);
 }
@@ -1747,7 +1747,7 @@ static BOOL set_string_array(rdpSettings* src, FreeRDP_Settings_Keys_Pointer key
 
 	for (uint32_t x = 0; x < count; x++)
 	{
-		char buffer[32] = { 0 };
+		char buffer[32] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(buffer, sizeof(buffer), "foobar-0x%08" PRIu32, x);
 		if (!freerdp_settings_set_pointer_array(src, key, x, buffer))
 			return FALSE;
@@ -1829,8 +1829,8 @@ static BOOL test_serialize_pointer(DWORD flags)
 	if (!set_string_array(src, FreeRDP_ServerLicenseProductIssuers, 43))
 		goto fail;
 
-	char addresses[12][43] = { 0 };
-	char* strptr[12] = { 0 };
+	char addresses[12][43] = WINPR_C_ARRAY_INIT;
+	char* strptr[12] = WINPR_C_ARRAY_INIT;
 
 	for (size_t x = 0; x < ARRAYSIZE(addresses); x++)
 	{
@@ -1872,7 +1872,7 @@ static BOOL test_serialize_pointer(DWORD flags)
 			goto fail;
 	}
 
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(buffer, sizeof(buffer), "%s flags 0x%08" PRIx32, __func__, flags);
 	return test_serialize_with(src, buffer);
 fail:
@@ -1894,7 +1894,7 @@ static BOOL test_serialize(void)
 		for (uint32_t flags = 0;
 		     flags <= (FREERDP_SETTINGS_SERVER_MODE | FREERDP_SETTINGS_REMOTE_MODE); flags++)
 		{
-			char buffer[32] = { 0 };
+			char buffer[32] = WINPR_C_ARRAY_INIT;
 			(void)_snprintf(buffer, sizeof(buffer), "default (flags 0x%08" PRIx32 ")", flags);
 			if (!test_serialize_with(freerdp_settings_new(flags), buffer))
 				return FALSE;
@@ -2297,7 +2297,7 @@ static bool fillTargetBuffer(rdpSettings* settings, FreeRDP_Settings_Keys_Pointe
 	const size_t count = freerdp_settings_get_uint32(settings, getLenForKey(key));
 	for (size_t x = 0; x < count; x++)
 	{
-		char test[128] = { 0 };
+		char test[128] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(test, sizeof(test), "test_value_%" PRIuz, x);
 		if (!freerdp_settings_set_pointer_array(settings, key, x, test))
 			return false;
@@ -2310,7 +2310,7 @@ static bool checkTargetBuffer(rdpSettings* settings, FreeRDP_Settings_Keys_Point
 {
 	for (size_t x = 0; x < count; x++)
 	{
-		char test[128] = { 0 };
+		char test[128] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(test, sizeof(test), "test_value_%" PRIuz, x);
 		const char* cmp = freerdp_settings_get_pointer_array(settings, key, x);
 		if (!cmp)

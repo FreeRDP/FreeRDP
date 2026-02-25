@@ -172,7 +172,7 @@ BOOL pf_channel_smartcard_client_handle(wLog* log, pClientContext* pc, wStream* 
 	UINT32 FileId = 0;
 	UINT32 CompletionId = 0;
 	NTSTATUS ioStatus = 0;
-	pf_channel_client_queue_element e = { 0 };
+	pf_channel_client_queue_element e = WINPR_C_ARRAY_INIT;
 	pf_channel_client_context* scard = scard_get_client_context(pc);
 
 	WINPR_ASSERT(log);

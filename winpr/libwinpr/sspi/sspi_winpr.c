@@ -71,7 +71,7 @@ static const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] = {
 	{ "Schannel", &SCHANNEL_SecurityFunctionTableA }
 };
 
-static WCHAR BUFFER_NAME_LIST_W[5][32] = { 0 };
+static WCHAR BUFFER_NAME_LIST_W[5][32] = WINPR_C_ARRAY_INIT;
 
 static const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] = {
 	{ BUFFER_NAME_LIST_W[0], &NTLM_SecurityFunctionTableW },
@@ -94,7 +94,7 @@ typedef struct
 	CONTEXT_BUFFER_ALLOC_ENTRY* entries;
 } CONTEXT_BUFFER_ALLOC_TABLE;
 
-static CONTEXT_BUFFER_ALLOC_TABLE ContextBufferAllocTable = { 0 };
+static CONTEXT_BUFFER_ALLOC_TABLE ContextBufferAllocTable = WINPR_C_ARRAY_INIT;
 
 static int sspi_ContextBufferAllocTableNew(void)
 {

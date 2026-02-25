@@ -59,7 +59,7 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format, int* failed)
 
 	for (size_t x = 0; x < s; x++)
 	{
-		char data[2] = { 0 };
+		char data[2] = WINPR_C_ARRAY_INIT;
 		switch (arg[x])
 		{
 			case '-':

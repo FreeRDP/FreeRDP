@@ -419,7 +419,7 @@ BOOL per_read_object_identifier(wStream* s, const BYTE oid[6])
 {
 	BYTE t12 = 0;
 	UINT16 length = 0;
-	BYTE a_oid[6] = { 0 };
+	BYTE a_oid[6] = WINPR_C_ARRAY_INIT;
 
 	if (!per_read_length(s, &length))
 		return FALSE;

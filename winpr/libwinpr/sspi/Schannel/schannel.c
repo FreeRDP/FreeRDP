@@ -453,8 +453,8 @@ const SecPkgInfoA SCHANNEL_SecPkgInfoA = {
 	"Schannel Security Package" /* Comment */
 };
 
-static WCHAR SCHANNEL_SecPkgInfoW_NameBuffer[32] = { 0 };
-static WCHAR SCHANNEL_SecPkgInfoW_CommentBuffer[32] = { 0 };
+static WCHAR SCHANNEL_SecPkgInfoW_NameBuffer[32] = WINPR_C_ARRAY_INIT;
+static WCHAR SCHANNEL_SecPkgInfoW_CommentBuffer[32] = WINPR_C_ARRAY_INIT;
 
 const SecPkgInfoW SCHANNEL_SecPkgInfoW = {
 	0x000107B3,                        /* fCapabilities */

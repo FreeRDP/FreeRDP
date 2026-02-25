@@ -278,7 +278,7 @@ BOOL ndr_end_constructed(NdrContext* context, wStream* s)
 
 	size_t offset = context->constructs[context->constructLevel];
 
-	wStream staticS = { 0 };
+	wStream staticS = WINPR_C_ARRAY_INIT;
 	Stream_StaticInit(&staticS, Stream_Buffer(s) + offset, 4);
 
 	/* len */
@@ -644,7 +644,7 @@ BOOL ndr_struct_read_fromDescr(NdrContext* context, wStream* s, const NdrStructD
 	WINPR_ASSERT(target);
 
 #define NDR_MAX_STRUCT_DEFERRED 16
-	NdrDeferredEntry deferreds[NDR_MAX_STRUCT_DEFERRED] = { 0 };
+	NdrDeferredEntry deferreds[NDR_MAX_STRUCT_DEFERRED] = WINPR_C_ARRAY_INIT;
 	size_t ndeferred = 0;
 
 	for (size_t i = 0; i < descr->nfields; i++)
@@ -719,7 +719,7 @@ BOOL ndr_struct_write_fromDescr(NdrContext* context, wStream* s, const NdrStruct
 	WINPR_ASSERT(descr);
 	WINPR_ASSERT(src);
 
-	NdrDeferredEntry deferreds[NDR_MAX_STRUCT_DEFERRED] = { 0 };
+	NdrDeferredEntry deferreds[NDR_MAX_STRUCT_DEFERRED] = WINPR_C_ARRAY_INIT;
 	size_t ndeferred = 0;
 
 	for (size_t i = 0; i < descr->nfields; i++)

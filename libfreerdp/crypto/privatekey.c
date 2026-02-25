@@ -162,7 +162,7 @@ static BOOL key_read_private(rdpPrivateKey* key)
 	RSA* rsa = evp_pkey_to_rsa(key);
 	if (!rsa)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "unable to load RSA key: %s.",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		goto fail;
@@ -180,7 +180,7 @@ static BOOL key_read_private(rdpPrivateKey* key)
 
 		default:
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "unexpected error when checking RSA key: %s.",
 			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			goto fail;
@@ -408,7 +408,7 @@ BOOL freerdp_key_generate(rdpPrivateKey* key, const char* type, size_t count, ..
 		WLog_ERR(TAG, "Argument type=%s requires count=1, got %" PRIuz ", aborting", type, count);
 		return FALSE;
 	}
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, count);
 	const int key_length = va_arg(ap, int);
 	va_end(ap);

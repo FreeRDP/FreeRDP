@@ -357,7 +357,7 @@ void VideoClientContextPriv_free(VideoClientContextPriv* priv)
 static UINT video_control_send_presentation_response(VideoClientContext* context,
                                                      TSMM_PRESENTATION_RESPONSE* resp)
 {
-	BYTE buf[12] = { 0 };
+	BYTE buf[12] = WINPR_C_ARRAY_INIT;
 	wStream* s = NULL;
 	VIDEO_PLUGIN* video = NULL;
 	IWTSVirtualChannel* channel = NULL;
@@ -526,7 +526,7 @@ static UINT video_PresentationRequest(VideoClientContext* video,
 
 static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStream* s)
 {
-	TSMM_PRESENTATION_REQUEST req = { 0 };
+	TSMM_PRESENTATION_REQUEST req = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);

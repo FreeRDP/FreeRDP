@@ -161,7 +161,7 @@ static const char* rts_pdu_ptype_to_string(UINT32 ptype)
 
 static rpcconn_rts_hdr_t rts_pdu_header_init(void)
 {
-	rpcconn_rts_hdr_t header = { 0 };
+	rpcconn_rts_hdr_t header = WINPR_C_ARRAY_INIT;
 	header.header.rpc_vers = 5;
 	header.header.rpc_vers_minor = 0;
 	header.header.ptype = PTYPE_RTS;
@@ -1323,8 +1323,8 @@ static int rts_flow_control_ack_command_read(rdpRpc* rpc, wStream* buffer, UINT3
 
 	if (Command != RTS_CMD_FLOW_CONTROL_ACK)
 	{
-		char buffer1[64] = { 0 };
-		char buffer2[64] = { 0 };
+		char buffer1[64] = WINPR_C_ARRAY_INIT;
+		char buffer2[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(rpc->log, WLOG_ERROR, "got command %s, expected %s",
 		           rts_command_to_string(Command, buffer1, sizeof(buffer1)),
 		           rts_command_to_string(RTS_CMD_FLOW_CONTROL_ACK, buffer2, sizeof(buffer2)));
@@ -1677,7 +1677,7 @@ BOOL rts_recv_CONN_A3_pdu(rdpRpc* rpc, wStream* buffer)
 	BOOL rc = FALSE;
 	UINT32 ConnectionTimeout = 0;
 
-	rpcconn_hdr_t header = { 0 };
+	rpcconn_hdr_t header = WINPR_C_ARRAY_INIT;
 	if (!rts_read_pdu_header(buffer, &header))
 		goto fail;
 
@@ -1786,7 +1786,7 @@ BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer)
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
-	rpcconn_hdr_t header = { 0 };
+	rpcconn_hdr_t header = WINPR_C_ARRAY_INIT;
 	if (!rts_read_pdu_header(buffer, &header))
 		goto fail;
 
@@ -1894,7 +1894,7 @@ static int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, wStream* buffer)
 	int rc = 0;
 	UINT32 BytesReceived = 0;
 	UINT32 AvailableWindow = 0;
-	BYTE ChannelCookie[16] = { 0 };
+	BYTE ChannelCookie[16] = WINPR_C_ARRAY_INIT;
 
 	rc = rts_flow_control_ack_command_read(rpc, buffer, &BytesReceived, &AvailableWindow,
 	                                       (BYTE*)&ChannelCookie);
@@ -1919,7 +1919,7 @@ static int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, wStream* 
 	UINT32 Destination = 0;
 	UINT32 BytesReceived = 0;
 	UINT32 AvailableWindow = 0;
-	BYTE ChannelCookie[16] = { 0 };
+	BYTE ChannelCookie[16] = WINPR_C_ARRAY_INIT;
 	/**
 	 * When the sender receives a FlowControlAck RTS PDU, it MUST use the following formula to
 	 * recalculate its Sender AvailableWindow variable:
@@ -1943,8 +1943,8 @@ static int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, wStream* 
 
 	if (Command != RTS_CMD_DESTINATION)
 	{
-		char buffer1[64] = { 0 };
-		char buffer2[64] = { 0 };
+		char buffer1[64] = WINPR_C_ARRAY_INIT;
+		char buffer2[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(rpc->log, WLOG_ERROR, "got command %s, expected %s",
 		           rts_command_to_string(Command, buffer1, sizeof(buffer1)),
 		           rts_command_to_string(RTS_CMD_DESTINATION, buffer2, sizeof(buffer2)));
@@ -1993,7 +1993,7 @@ static int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, wStream* 
 BOOL rts_recv_ping_pdu(rdpRpc* rpc, wStream* s)
 {
 	BOOL rc = FALSE;
-	rpcconn_hdr_t header = { 0 };
+	rpcconn_hdr_t header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(rpc->auth);
@@ -2367,7 +2367,7 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 {
 	BOOL status = FALSE;
 	size_t length = 0;
-	RtsPduSignature signature = { 0 };
+	RtsPduSignature signature = WINPR_C_ARRAY_INIT;
 	RpcVirtualConnection* connection = NULL;
 
 	WINPR_ASSERT(rpc);

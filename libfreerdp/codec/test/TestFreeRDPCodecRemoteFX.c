@@ -845,7 +845,7 @@ static BOOL fuzzyCompareImage(const UINT32* crefImage, const BYTE* img, size_t n
 int TestFreeRDPCodecRemoteFX(int argc, char* argv[])
 {
 	int rc = -1;
-	REGION16 region = { 0 };
+	REGION16 region = WINPR_C_ARRAY_INIT;
 	RFX_CONTEXT* context = NULL;
 	BYTE* dest = NULL;
 	size_t stride = FORMAT_SIZE * IMG_WIDTH;

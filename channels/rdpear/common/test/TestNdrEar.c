@@ -150,9 +150,9 @@ static BOOL run_payload(NdrContext* context, const BYTE* payload4, size_t sizeof
 	if (!payload4)
 		return FALSE;
 
-	CreateApReqAuthenticatorReq createApReqAuthenticatorReq = { 0 };
+	CreateApReqAuthenticatorReq createApReqAuthenticatorReq = WINPR_C_ARRAY_INIT;
 
-	wStream staticS = { 0 };
+	wStream staticS = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&staticS, payload4, sizeofPayload4);
 	if (!ndr_skip_bytes(context, s, 4)) /* skip union id */
 		return FALSE;
@@ -211,10 +211,10 @@ static int TestNdrEarRead(int argc, char* argv[])
 			0x00, 0x00              // (padding)
 		};
 
-		wStream staticS = { 0 };
+		wStream staticS = WINPR_C_ARRAY_INIT;
 		wStream* s = Stream_StaticInit(&staticS, payload, sizeof(payload));
 
-		KERB_ASN1_DATA asn1 = { 0 };
+		KERB_ASN1_DATA asn1 = WINPR_C_ARRAY_INIT;
 		if (!ndr_read_KERB_ASN1_DATA(context, s, NULL, &asn1) ||
 		    !ndr_treat_deferred_read(context, s) || asn1.Asn1BufferHints.count != 2 ||
 		    *asn1.Asn1Buffer != 0x30)
@@ -243,9 +243,9 @@ static int TestNdrEarRead(int argc, char* argv[])
 			0x00, 0x00
 		};
 
-		wStream staticS = { 0 };
+		wStream staticS = WINPR_C_ARRAY_INIT;
 		wStream* s = Stream_StaticInit(&staticS, payload2, sizeof(payload2));
-		RPC_UNICODE_STRING unicode = { 0 };
+		RPC_UNICODE_STRING unicode = WINPR_C_ARRAY_INIT;
 		if (!ndr_read_RPC_UNICODE_STRING(context, s, NULL, &unicode) ||
 		    !ndr_treat_deferred_read(context, s))
 			goto out;
@@ -277,9 +277,9 @@ static int TestNdrEarRead(int argc, char* argv[])
 
 			0x00, 0x00
 		};
-		KERB_RPC_INTERNAL_NAME intName = { 0 };
+		KERB_RPC_INTERNAL_NAME intName = WINPR_C_ARRAY_INIT;
 
-		wStream staticS = { 0 };
+		wStream staticS = WINPR_C_ARRAY_INIT;
 		wStream* s = Stream_StaticInit(&staticS, payload3, sizeof(payload3));
 		if (!ndr_read_KERB_RPC_INTERNAL_NAME(context, s, NULL, &intName) ||
 		    !ndr_treat_deferred_read(context, s))

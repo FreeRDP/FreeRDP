@@ -172,7 +172,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc);
 #ifdef WITH_XRENDER
 static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 {
-	XTransform transform = { 0 };
+	XTransform transform = WINPR_C_ARRAY_INIT;
 	Picture windowPicture = 0;
 	Picture primaryPicture = 0;
 	XRenderPictureAttributes pa;
@@ -548,7 +548,7 @@ static BOOL xf_process_x_events(freerdp* instance)
 
 		if (pending_status)
 		{
-			XEvent xevent = { 0 };
+			XEvent xevent = WINPR_C_ARRAY_INIT;
 
 			XNextEvent(xfc->display, &xevent);
 			status = xf_event_process(instance, &xevent);
@@ -596,8 +596,8 @@ static char* xf_window_get_title(rdpSettings* settings)
 
 BOOL xf_create_window(xfContext* xfc)
 {
-	XGCValues gcv = { 0 };
-	XEvent xevent = { 0 };
+	XGCValues gcv = WINPR_C_ARRAY_INIT;
+	XEvent xevent = WINPR_C_ARRAY_INIT;
 	char* windowTitle = NULL;
 
 	WINPR_ASSERT(xfc);
@@ -609,7 +609,7 @@ BOOL xf_create_window(xfContext* xfc)
 	int height =
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 
-	const XSetWindowAttributes empty = { 0 };
+	const XSetWindowAttributes empty = WINPR_C_ARRAY_INIT;
 	xfc->attribs = empty;
 
 	if (xfc->remote_app)
@@ -617,7 +617,7 @@ BOOL xf_create_window(xfContext* xfc)
 	else
 		xfc->depth = DefaultDepthOfScreen(xfc->screen);
 
-	XVisualInfo vinfo = { 0 };
+	XVisualInfo vinfo = WINPR_C_ARRAY_INIT;
 	if (XMatchVisualInfo(xfc->display, xfc->screen_number, xfc->depth, TrueColor, &vinfo))
 	{
 		Window root = XDefaultRootWindow(xfc->display);
@@ -813,7 +813,7 @@ void xf_destroy_window(xfContext* xfc)
 
 void xf_toggle_fullscreen(xfContext* xfc)
 {
-	WindowStateChangeEventArgs e = { 0 };
+	WindowStateChangeEventArgs e = WINPR_C_ARRAY_INIT;
 	rdpContext* context = (rdpContext*)xfc;
 	rdpSettings* settings = context->settings;
 
@@ -835,7 +835,7 @@ void xf_toggle_fullscreen(xfContext* xfc)
 
 void xf_minimize(xfContext* xfc)
 {
-	WindowStateChangeEventArgs e = { 0 };
+	WindowStateChangeEventArgs e = WINPR_C_ARRAY_INIT;
 	rdpContext* context = (rdpContext*)xfc;
 	WINPR_ASSERT(context);
 
@@ -910,7 +910,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 
 static int xf_error_handler(Display* d, XErrorEvent* ev)
 {
-	char buf[256] = { 0 };
+	char buf[256] = WINPR_C_ARRAY_INIT;
 	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
 	const char* what = request_code_2_str(ev->request_code);
 	WLog_ERR(TAG, "%s: %s", what, buf);
@@ -1100,7 +1100,7 @@ void xf_button_map_init(xfContext* xfc)
 
 	/* logical mouse button which is used for each physical mouse  */
 	/* button (indexed from zero). This is the default map.        */
-	unsigned char x11_map[112] = { 0 };
+	unsigned char x11_map[112] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->common.context.settings);
@@ -1192,7 +1192,7 @@ static BOOL xf_pre_connect(freerdp* instance)
 	    !freerdp_settings_get_bool(settings, FreeRDP_CredentialsFromStdin) &&
 	    !freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon))
 	{
-		char login_name[MAX_PATH] = { 0 };
+		char login_name[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		ULONG size = sizeof(login_name) - 1;
 
 		if (GetUserNameExA(NameSamCompatible, login_name, &size))
@@ -1274,7 +1274,7 @@ static BOOL xf_pre_connect(freerdp* instance)
 
 static BOOL xf_inject_keypress(rdpContext* context, const char* buffer, size_t size)
 {
-	WCHAR wbuffer[64] = { 0 };
+	WCHAR wbuffer[64] = WINPR_C_ARRAY_INIT;
 	const SSIZE_T len = ConvertUtf8NToWChar(buffer, size, wbuffer, ARRAYSIZE(wbuffer));
 	if (len < 0)
 		return FALSE;
@@ -1298,18 +1298,18 @@ static BOOL xf_process_pipe(rdpContext* context, const char* pipe)
 	int fd = open(pipe, O_NONBLOCK | O_RDONLY);
 	if (fd < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "pipe '%s' open returned %s [%d]", pipe,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		return FALSE;
 	}
 	while (!freerdp_shall_disconnect_context(context))
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		ssize_t rd = read(fd, buffer, sizeof(buffer) - 1);
 		if (rd == 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			if ((errno == EAGAIN) || (errno == 0))
 			{
 				Sleep(100);
@@ -1323,7 +1323,7 @@ static BOOL xf_process_pipe(rdpContext* context, const char* pipe)
 		}
 		else if (rd < 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "pipe '%s' read returned %s [%d]", pipe,
 			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 			break;
@@ -1364,7 +1364,7 @@ static DWORD WINAPI xf_handle_pipe(void* arg)
 	const int rc = mkfifo(pipe, S_IWUSR | S_IRUSR);
 	if (rc != 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "Failed to create named pipe '%s': %s [%d]", pipe,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		return 0;
@@ -1390,7 +1390,7 @@ static DWORD WINAPI xf_handle_pipe(void* arg)
  */
 static BOOL xf_post_connect(freerdp* instance)
 {
-	ResizeWindowEventArgs e = { 0 };
+	ResizeWindowEventArgs e = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(instance);
 	xfContext* xfc = (xfContext*)instance->context;
@@ -1625,7 +1625,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 
 	while (!freerdp_shall_disconnect_context(instance->context))
 	{
-		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD nCount = 0;
 		handles[nCount++] = inputEvent;
 

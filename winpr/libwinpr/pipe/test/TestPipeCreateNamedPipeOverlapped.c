@@ -30,7 +30,7 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 	HANDLE hNamedPipe = NULL;
 	BYTE* lpReadBuffer = NULL;
 	BOOL fSuccess = FALSE;
-	OVERLAPPED overlapped = { 0 };
+	OVERLAPPED overlapped = WINPR_C_ARRAY_INIT;
 	DWORD nNumberOfBytesToRead = 0;
 	DWORD nNumberOfBytesToWrite = 0;
 	DWORD NumberOfBytesTransferred = 0;
@@ -159,7 +159,7 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 	HANDLE hEvent = NULL;
 	HANDLE hNamedPipe = NULL;
 	BYTE* lpReadBuffer = NULL;
-	OVERLAPPED overlapped = { 0 };
+	OVERLAPPED overlapped = WINPR_C_ARRAY_INIT;
 	BOOL fSuccess = FALSE;
 	BOOL fConnected = FALSE;
 	DWORD nNumberOfBytesToRead = 0;

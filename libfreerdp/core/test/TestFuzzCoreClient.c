@@ -8,7 +8,7 @@
 
 static BOOL test_client(const uint8_t* Data, size_t Size)
 {
-	RDP_CLIENT_ENTRY_POINTS entry = { 0 };
+	RDP_CLIENT_ENTRY_POINTS entry = WINPR_C_ARRAY_INIT;
 
 	entry.Version = RDP_CLIENT_INTERFACE_VERSION;
 	entry.Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
@@ -21,7 +21,7 @@ static BOOL test_client(const uint8_t* Data, size_t Size)
 	rdpRdp* rdp = context->rdp;
 	WINPR_ASSERT(rdp);
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, Data, Size);
 
 	{

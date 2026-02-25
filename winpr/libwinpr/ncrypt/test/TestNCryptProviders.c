@@ -40,7 +40,7 @@ int TestNCryptProviders(int argc, char* argv[])
 	for (DWORD i = 0; i < nproviders; i++)
 	{
 		const NCryptProviderName* provider = &providers[i];
-		char providerNameStr[256] = { 0 };
+		char providerNameStr[256] = WINPR_C_ARRAY_INIT;
 
 		(void)ConvertWCharToUtf8(provider->pszName, providerNameStr, ARRAYSIZE(providerNameStr));
 		printf("%d: %s\n", i, providerNameStr);

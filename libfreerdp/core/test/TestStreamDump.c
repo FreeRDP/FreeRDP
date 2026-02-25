@@ -18,8 +18,8 @@ static BOOL test_entry_read_write(void)
 	size_t offset = 0;
 	UINT64 ts = 0;
 	UINT32 flags = 0;
-	BYTE tmp[16] = { 0 };
-	char tmp2[64] = { 0 };
+	BYTE tmp[16] = WINPR_C_ARRAY_INIT;
+	char tmp2[64] = WINPR_C_ARRAY_INIT;
 	char* name = NULL;
 	size_t entrysize = sizeof(UINT64) /* timestamp */ + sizeof(BYTE) /* direction */ +
 	                   sizeof(UINT32) /* CRC */ + sizeof(UINT64) /* size */;

@@ -573,8 +573,8 @@ BOOL WTSVirtualChannelManagerOpen(HANDLE hServer)
 
 		if (channel)
 		{
-			BYTE capaBuffer[12] = { 0 };
-			wStream staticS = { 0 };
+			BYTE capaBuffer[12] = WINPR_C_ARRAY_INIT;
+			wStream staticS = WINPR_C_ARRAY_INIT;
 			wStream* s = Stream_StaticInit(&staticS, capaBuffer, sizeof(capaBuffer));
 
 			vcm->drdynvc_channel = channel;
@@ -598,7 +598,7 @@ BOOL WTSVirtualChannelManagerOpen(HANDLE hServer)
 
 BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen)
 {
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	BOOL status = TRUE;
 	WTSVirtualChannelManager* vcm = NULL;
 
@@ -1009,7 +1009,7 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 	freerdp_peer* client = NULL;
 	WTSVirtualChannelManager* vcm = NULL;
 	HANDLE hServer = INVALID_HANDLE_VALUE;
-	wObject queueCallbacks = { 0 };
+	wObject queueCallbacks = WINPR_C_ARRAY_INIT;
 
 	context = (rdpContext*)pServerName;
 
@@ -1334,7 +1334,7 @@ static rdpPeerChannel* channel_new(WTSVirtualChannelManager* vcm, freerdp_peer* 
                                    UINT32 ChannelId, UINT16 index, UINT16 type, size_t chunkSize,
                                    const char* name)
 {
-	wObject queueCallbacks = { 0 };
+	wObject queueCallbacks = WINPR_C_ARRAY_INIT;
 	queueCallbacks.fnObjectFree = peer_channel_queue_free_message;
 
 	rdpPeerChannel* channel =
@@ -1599,7 +1599,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, WINPR_ATTR_UNUS
                                           PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
 {
 	BYTE* buffer = NULL;
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	wtsChannelMessage* messageCtx = NULL;
 	rdpPeerChannel* channel = (rdpPeerChannel*)hChannelHandle;
 
@@ -1752,7 +1752,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 {
 	void* pfd = NULL;
 	BOOL bval = 0;
-	void* fds[10] = { 0 };
+	void* fds[10] = WINPR_C_ARRAY_INIT;
 	HANDLE hEvent = NULL;
 	int fds_count = 0;
 	BOOL status = FALSE;

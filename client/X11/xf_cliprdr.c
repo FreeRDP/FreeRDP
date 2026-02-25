@@ -432,7 +432,7 @@ static const CLIPRDR_FORMAT* xf_cliprdr_get_server_format_by_atom(xfClipboard* c
 static UINT xf_cliprdr_send_data_request(xfClipboard* clipboard, UINT32 formatId,
                                          WINPR_ATTR_UNUSED const xfCliprdrFormat* cformat)
 {
-	CLIPRDR_FORMAT_DATA_REQUEST request = { 0 };
+	CLIPRDR_FORMAT_DATA_REQUEST request = WINPR_C_ARRAY_INIT;
 	request.requestedFormatId = formatId;
 
 	DEBUG_CLIPRDR("requesting format 0x%08" PRIx32 " [%s] {local 0x%08" PRIx32 "} [%s]", formatId,
@@ -452,7 +452,7 @@ static UINT xf_cliprdr_send_data_request(xfClipboard* clipboard, UINT32 formatId
 static UINT xf_cliprdr_send_data_response(xfClipboard* clipboard, const xfCliprdrFormat* format,
                                           const BYTE* data, size_t size)
 {
-	CLIPRDR_FORMAT_DATA_RESPONSE response = { 0 };
+	CLIPRDR_FORMAT_DATA_RESPONSE response = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(clipboard);
 
@@ -1801,8 +1801,8 @@ void xf_cliprdr_handle_xevent(xfContext* xfc, const XEvent* event)
  */
 static UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
 {
-	CLIPRDR_CAPABILITIES capabilities = { 0 };
-	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet = { 0 };
+	CLIPRDR_CAPABILITIES capabilities = WINPR_C_ARRAY_INIT;
+	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(clipboard);
 
@@ -1858,7 +1858,7 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL forc
  */
 static UINT xf_cliprdr_send_client_format_list_response(xfClipboard* clipboard, BOOL status)
 {
-	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = { 0 };
+	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = WINPR_C_ARRAY_INIT;
 
 	formatListResponse.common.msgType = CB_FORMAT_LIST_RESPONSE;
 	formatListResponse.common.msgFlags = status ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;

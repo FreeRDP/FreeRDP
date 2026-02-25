@@ -110,7 +110,7 @@ static BOOL freerdp_client_print_codepages(const char* arg)
 	for (size_t x = 0; x < count; x++)
 	{
 		const RDP_CODEPAGE* page = &pages[x];
-		char buffer[2048] = { 0 };
+		char buffer[2048] = WINPR_C_ARRAY_INIT;
 
 		if (strnlen(page->subLanguageSymbol, ARRAYSIZE(page->subLanguageSymbol)) > 0)
 			(void)_snprintf(buffer, sizeof(buffer), "[%s|%s]", page->primaryLanguageSymbol,
@@ -1715,10 +1715,10 @@ static void freerdp_client_print_keyboard_list(void)
 static void freerdp_client_print_timezone_list(void)
 {
 	DWORD index = 0;
-	DYNAMIC_TIME_ZONE_INFORMATION info = { 0 };
+	DYNAMIC_TIME_ZONE_INFORMATION info = WINPR_C_ARRAY_INIT;
 	while (EnumDynamicTimeZoneInformation(index++, &info) != ERROR_NO_MORE_ITEMS)
 	{
-		char TimeZoneKeyName[ARRAYSIZE(info.TimeZoneKeyName) + 1] = { 0 };
+		char TimeZoneKeyName[ARRAYSIZE(info.TimeZoneKeyName) + 1] = WINPR_C_ARRAY_INIT;
 
 		(void)ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
 		                          TimeZoneKeyName, ARRAYSIZE(TimeZoneKeyName));
@@ -4638,8 +4638,8 @@ static int parse_command_line_option_timezone(rdpSettings* settings,
 {
 	BOOL found = FALSE;
 	DWORD index = 0;
-	DYNAMIC_TIME_ZONE_INFORMATION info = { 0 };
-	char TimeZoneKeyName[ARRAYSIZE(info.TimeZoneKeyName) + 1] = { 0 };
+	DYNAMIC_TIME_ZONE_INFORMATION info = WINPR_C_ARRAY_INIT;
+	char TimeZoneKeyName[ARRAYSIZE(info.TimeZoneKeyName) + 1] = WINPR_C_ARRAY_INIT;
 	while (EnumDynamicTimeZoneInformation(index++, &info) != ERROR_NO_MORE_ITEMS)
 	{
 		(void)ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
@@ -5643,7 +5643,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		freerdp* instance = freerdp_settings_get_pointer_writable(settings, FreeRDP_instance);
 		if (!freerdp_settings_get_string(settings, FreeRDP_Password))
 		{
-			char buffer[512 + 1] = { 0 };
+			char buffer[512 + 1] = WINPR_C_ARRAY_INIT;
 
 			if (!freerdp_passphrase_read(instance->context, "Password: ", buffer,
 			                             ARRAYSIZE(buffer) - 1, 1))
@@ -5657,7 +5657,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		{
 			if (!freerdp_settings_get_string(settings, FreeRDP_GatewayPassword))
 			{
-				char buffer[512 + 1] = { 0 };
+				char buffer[512 + 1] = WINPR_C_ARRAY_INIT;
 
 				if (!freerdp_passphrase_read(instance->context, "Gateway Password: ", buffer,
 				                             ARRAYSIZE(buffer) - 1, 1))

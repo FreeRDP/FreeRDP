@@ -200,7 +200,7 @@ out:
 
 BOOL MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam)
 {
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 
 	message.context = context;
 	message.id = type;

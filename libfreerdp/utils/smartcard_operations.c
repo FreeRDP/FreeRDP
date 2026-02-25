@@ -1030,7 +1030,7 @@ void smartcard_operation_free(SMARTCARD_OPERATION* op, BOOL allocated)
 	}
 
 	{
-		SMARTCARD_OPERATION empty = { 0 };
+		SMARTCARD_OPERATION empty = WINPR_C_ARRAY_INIT;
 		*op = empty;
 	}
 

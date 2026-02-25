@@ -78,7 +78,7 @@ static BOOL check_short_buffer(const char* prefix, int rc, size_t buffersize,
 static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, SSIZE_T inputlen,
                               const testcase_t* test, const char* fkt, size_t line)
 {
-	char prefix[8192] = { 0 };
+	char prefix[8192] = WINPR_C_ARRAY_INIT;
 	create_prefix(prefix, ARRAYSIZE(prefix), buffersize, rc, inputlen, test, fkt, line);
 
 	WINPR_ASSERT(what || (buffersize == 0));
@@ -133,7 +133,7 @@ static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, 
 static BOOL compare_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SSIZE_T inputlen,
                              const testcase_t* test, const char* fkt, size_t line)
 {
-	char prefix[8192] = { 0 };
+	char prefix[8192] = WINPR_C_ARRAY_INIT;
 	create_prefix(prefix, ARRAYSIZE(prefix), buffersize, rc, inputlen, test, fkt, line);
 
 	WINPR_ASSERT(what || (buffersize == 0));
@@ -193,7 +193,7 @@ static BOOL test_convert_to_utf16(const testcase_t* test)
 	const size_t wlen = _wcsnlen(test->utf16, test->utf16len);
 	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
-		char prefix[8192] = { 0 };
+		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
 		(void)fprintf(stderr,
 		              "%s ConvertUtf8ToWChar(%s, NULL, 0) expected %" PRIuz ", got %" PRIdz "\n",
@@ -202,7 +202,7 @@ static BOOL test_convert_to_utf16(const testcase_t* test)
 	}
 	for (size_t x = 0; x < max; x++)
 	{
-		WCHAR buffer[TESTCASE_BUFFER_SIZE] = { 0 };
+		WCHAR buffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 		const SSIZE_T rc = ConvertUtf8ToWChar(test->utf8, buffer, len[x]);
 		if (!compare_utf16(buffer, len[x], rc, -1, test))
 			return FALSE;
@@ -221,7 +221,7 @@ static BOOL test_convert_to_utf16_n(const testcase_t* test)
 	const size_t wlen = _wcsnlen(test->utf16, test->utf16len);
 	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
-		char prefix[8192] = { 0 };
+		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2,
 		              WINPR_ASSERTING_INT_CAST(SSIZE_T, test->utf8len), test, __func__, __LINE__);
 		(void)fprintf(stderr,
@@ -239,7 +239,7 @@ static BOOL test_convert_to_utf16_n(const testcase_t* test)
 
 		for (size_t y = 0; y < imax; y++)
 		{
-			WCHAR buffer[TESTCASE_BUFFER_SIZE] = { 0 };
+			WCHAR buffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 			SSIZE_T rc = ConvertUtf8NToWChar(test->utf8, ilen[x], buffer, len[x]);
 			if (!compare_utf16(buffer, len[x], rc, ilen[x], test))
 				return FALSE;
@@ -258,7 +258,7 @@ static BOOL test_convert_to_utf8(const testcase_t* test)
 	const size_t wlen = strnlen(test->utf8, test->utf8len);
 	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
-		char prefix[8192] = { 0 };
+		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
 		(void)fprintf(stderr,
 		              "%s ConvertWCharToUtf8(%s, NULL, 0) expected %" PRIuz ", got %" PRIdz "\n",
@@ -268,7 +268,7 @@ static BOOL test_convert_to_utf8(const testcase_t* test)
 
 	for (size_t x = 0; x < max; x++)
 	{
-		char buffer[TESTCASE_BUFFER_SIZE] = { 0 };
+		char buffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 		SSIZE_T rc = ConvertWCharToUtf8(test->utf16, buffer, len[x]);
 		if (!compare_utf8(buffer, len[x], rc, -1, test))
 			return FALSE;
@@ -287,7 +287,7 @@ static BOOL test_convert_to_utf8_n(const testcase_t* test)
 	const size_t wlen = strnlen(test->utf8, test->utf8len);
 	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
-		char prefix[8192] = { 0 };
+		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2,
 		              WINPR_ASSERTING_INT_CAST(SSIZE_T, test->utf16len), test, __func__, __LINE__);
 		(void)fprintf(stderr,
@@ -305,7 +305,7 @@ static BOOL test_convert_to_utf8_n(const testcase_t* test)
 
 		for (size_t y = 0; y < imax; y++)
 		{
-			char buffer[TESTCASE_BUFFER_SIZE] = { 0 };
+			char buffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 			SSIZE_T rc = ConvertWCharNToUtf8(test->utf16, ilen[x], buffer, len[x]);
 			if (!compare_utf8(buffer, len[x], rc, ilen[x], test))
 				return FALSE;
@@ -342,7 +342,7 @@ static BOOL test_conversion(const testcase_t* testcases, size_t count)
 static BOOL compare_win_utf16_int(const WCHAR* what, size_t buffersize, int rc, int inputlen,
                                   const testcase_t* test, const char* fkt, size_t line)
 {
-	char prefix[8192] = { 0 };
+	char prefix[8192] = WINPR_C_ARRAY_INIT;
 	create_prefix(prefix, ARRAYSIZE(prefix), buffersize, rc, inputlen, test, fkt, line);
 
 	WINPR_ASSERT(what || (buffersize == 0));
@@ -413,7 +413,7 @@ static BOOL compare_win_utf16_int(const WCHAR* what, size_t buffersize, int rc, 
 static BOOL compare_win_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SSIZE_T inputlen,
                                  const testcase_t* test, const char* fkt, size_t line)
 {
-	char prefix[8192] = { 0 };
+	char prefix[8192] = WINPR_C_ARRAY_INIT;
 	create_prefix(prefix, ARRAYSIZE(prefix), buffersize, rc, inputlen, test, fkt, line);
 
 	WINPR_ASSERT(what || (buffersize == 0));
@@ -487,7 +487,7 @@ static BOOL test_win_convert_to_utf16(const testcase_t* test)
 	const size_t wlen = _wcsnlen(test->utf16, test->utf16len);
 	if (rc2 != wlen + 1)
 	{
-		char prefix[8192] = { 0 };
+		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
 		(void)fprintf(stderr,
 		              "%s MultiByteToWideChar(CP_UTF8, 0, %s, [-1], NULL, 0) expected %" PRIuz
@@ -497,7 +497,7 @@ static BOOL test_win_convert_to_utf16(const testcase_t* test)
 	}
 	for (size_t x = 0; x < max; x++)
 	{
-		WCHAR buffer[TESTCASE_BUFFER_SIZE] = { 0 };
+		WCHAR buffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 		const int rc = MultiByteToWideChar(CP_UTF8, 0, test->utf8, -1, buffer, len[x]);
 		if (!compare_win_utf16(buffer, len[x], rc, -1, test))
 			return FALSE;
@@ -520,7 +520,7 @@ static BOOL test_win_convert_to_utf16_n(const testcase_t* test)
 
 	if (rc2 != wlen)
 	{
-		char prefix[8192] = { 0 };
+		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, test->utf8len, test, __func__, __LINE__);
 		(void)fprintf(stderr,
 		              "%s MultiByteToWideChar(CP_UTF8, 0, %s, %" PRIuz ", NULL, 0) expected %" PRIuz
@@ -537,8 +537,8 @@ static BOOL test_win_convert_to_utf16_n(const testcase_t* test)
 
 		for (size_t y = 0; y < imax; y++)
 		{
-			char mbuffer[TESTCASE_BUFFER_SIZE] = { 0 };
-			WCHAR buffer[TESTCASE_BUFFER_SIZE] = { 0 };
+			char mbuffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
+			WCHAR buffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 			strncpy(mbuffer, test->utf8, test->utf8len);
 			const int rc = MultiByteToWideChar(CP_UTF8, 0, mbuffer, ilen[x], buffer, len[x]);
 			if (!compare_win_utf16(buffer, len[x], rc, ilen[x], test))
@@ -560,7 +560,7 @@ static BOOL test_win_convert_to_utf8(const testcase_t* test)
 	const size_t wlen = strnlen(test->utf8, test->utf8len) + 1;
 	if (rc2 != wlen)
 	{
-		char prefix[8192] = { 0 };
+		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
 		(void)fprintf(
 		    stderr,
@@ -572,7 +572,7 @@ static BOOL test_win_convert_to_utf8(const testcase_t* test)
 
 	for (size_t x = 0; x < max; x++)
 	{
-		char buffer[TESTCASE_BUFFER_SIZE] = { 0 };
+		char buffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 		int rc = WideCharToMultiByte(CP_UTF8, 0, test->utf16, -1, buffer, len[x], NULL, NULL);
 		if (!compare_win_utf8(buffer, len[x], rc, -1, test))
 			return FALSE;
@@ -596,7 +596,7 @@ static BOOL test_win_convert_to_utf8_n(const testcase_t* test)
 
 	if (rc2 != wlen)
 	{
-		char prefix[8192] = { 0 };
+		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, test->utf16len, test, __func__, __LINE__);
 		(void)fprintf(stderr,
 		              "%s WideCharToMultiByte(CP_UTF8, 0, %s, %" PRIuz
@@ -613,8 +613,8 @@ static BOOL test_win_convert_to_utf8_n(const testcase_t* test)
 
 		for (size_t y = 0; y < imax; y++)
 		{
-			WCHAR wbuffer[TESTCASE_BUFFER_SIZE] = { 0 };
-			char buffer[TESTCASE_BUFFER_SIZE] = { 0 };
+			WCHAR wbuffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
+			char buffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 			memcpy(wbuffer, test->utf16, test->utf16len * sizeof(WCHAR));
 			const int rc =
 			    WideCharToMultiByte(CP_UTF8, 0, wbuffer, ilen[x], buffer, len[x], NULL, NULL);
@@ -1055,7 +1055,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 		char name[] = "someteststring";
 		const BYTE cmp[] = { 's', 0, 'o', 0, 'm', 0, 'e', 0, 't', 0, 'e', 0, 's', 0, 't', 0,
 			                 's', 0, 't', 0, 'r', 0, 'i', 0, 'n', 0, 'g', 0, 0,   0 };
-		WCHAR xname[128] = { 0 };
+		WCHAR xname[128] = WINPR_C_ARRAY_INIT;
 		LPWSTR aname = NULL;
 		LPWSTR wname = &xname[0];
 		const size_t len = strnlen(name, ARRAYSIZE(name) - 1);

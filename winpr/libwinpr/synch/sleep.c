@@ -124,9 +124,9 @@ VOID USleep(DWORD dwMicroseconds)
 #ifndef _WIN32
 	usleep(dwMicroseconds);
 #else
-	static LARGE_INTEGER freq = { 0 };
-	LARGE_INTEGER t1 = { 0 };
-	LARGE_INTEGER t2 = { 0 };
+	static LARGE_INTEGER freq = WINPR_C_ARRAY_INIT;
+	LARGE_INTEGER t1 = WINPR_C_ARRAY_INIT;
+	LARGE_INTEGER t2 = WINPR_C_ARRAY_INIT;
 
 	QueryPerformanceCounter(&t1);
 

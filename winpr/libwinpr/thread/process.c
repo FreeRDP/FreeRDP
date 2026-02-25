@@ -227,8 +227,8 @@ static BOOL CreateProcessExA(HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags
 #ifndef __sun
 		int maxfd = 0;
 #endif
-		sigset_t set = { 0 };
-		struct sigaction act = { 0 };
+		sigset_t set = WINPR_C_ARRAY_INIT;
+		struct sigaction act = WINPR_C_ARRAY_INIT;
 		/* set default signal handlers */
 		act.sa_handler = SIG_DFL;
 		act.sa_flags = 0;

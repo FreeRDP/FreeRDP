@@ -90,8 +90,8 @@ static BOOL TestStream_New(void)
 
 static BOOL TestStream_Static(void)
 {
-	BYTE buffer[20] = { 0 };
-	wStream staticStream = { 0 };
+	BYTE buffer[20] = WINPR_C_ARRAY_INIT;
+	wStream staticStream = WINPR_C_ARRAY_INIT;
 	wStream* s = &staticStream;
 	UINT16 v = 0;
 	/* Test creation of a static stream */

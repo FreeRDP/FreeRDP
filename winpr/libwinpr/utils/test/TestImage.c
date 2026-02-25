@@ -22,7 +22,7 @@ static BOOL test_equal_to(const wImage* bmp, const char* name, UINT32 format)
 	if (!cmp)
 		goto fail;
 
-	char path[MAX_PATH] = { 0 };
+	char path[MAX_PATH] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(path, sizeof(path), "%s.%s", name, winpr_image_format_extension(format));
 	const int cmpSize = winpr_image_read(cmp, path);
 	if (cmpSize <= 0)
@@ -48,7 +48,7 @@ static BOOL test_equal(void)
 	if (!bmp)
 		goto fail;
 
-	char path[MAX_PATH] = { 0 };
+	char path[MAX_PATH] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(path, sizeof(path), "%s.bmp", test_src_filename);
 	PathCchConvertStyleA(path, sizeof(path), PATH_STYLE_NATIVE);
 
@@ -83,10 +83,10 @@ static BOOL test_read_write_compare(const char* tname, const char* tdst, UINT32 
 	if (!bmp1 || !bmp2 || !bmp3)
 		goto fail;
 
-	char spath[MAX_PATH] = { 0 };
-	char dpath[MAX_PATH] = { 0 };
-	char bpath1[MAX_PATH] = { 0 };
-	char bpath2[MAX_PATH] = { 0 };
+	char spath[MAX_PATH] = WINPR_C_ARRAY_INIT;
+	char dpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
+	char bpath1[MAX_PATH] = WINPR_C_ARRAY_INIT;
+	char bpath2[MAX_PATH] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(spath, sizeof(spath), "%s.%s", tname, winpr_image_format_extension(format));
 	(void)_snprintf(dpath, sizeof(dpath), "%s.%s", tdst, winpr_image_format_extension(format));
 	(void)_snprintf(bpath1, sizeof(bpath1), "%s.src.%s", dpath,

@@ -75,8 +75,8 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 	SMARTCARD_CONTEXT* pContext = (SMARTCARD_CONTEXT*)arg;
 	DWORD nCount = 0;
 	DWORD waitStatus = 0;
-	HANDLE hEvents[2] = { 0 };
-	wMessage message = { 0 };
+	HANDLE hEvents[2] = WINPR_C_ARRAY_INIT;
+	wMessage message = WINPR_C_ARRAY_INIT;
 	SMARTCARD_DEVICE* smartcard = NULL;
 	UINT error = CHANNEL_RC_OK;
 	smartcard = pContext->smartcard;
@@ -520,8 +520,8 @@ static DWORD WINAPI smartcard_thread_func(LPVOID arg)
 	IRP* irp = NULL;
 	DWORD nCount = 0;
 	DWORD status = 0;
-	HANDLE hEvents[1] = { 0 };
-	wMessage message = { 0 };
+	HANDLE hEvents[1] = WINPR_C_ARRAY_INIT;
+	wMessage message = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	SMARTCARD_DEVICE* smartcard = CAST_FROM_DEVICE(arg);
 

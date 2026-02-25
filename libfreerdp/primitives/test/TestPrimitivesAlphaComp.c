@@ -117,9 +117,9 @@ static BOOL check(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2, UINT32 
 static BOOL test_alphaComp_func(void)
 {
 	pstatus_t status = 0;
-	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT * 4]) = { 0 };
-	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT * 4]) = { 0 };
-	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT * 4]) = { 0 };
+	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT * 4]) = WINPR_C_ARRAY_INIT;
+	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT * 4]) = WINPR_C_ARRAY_INIT;
+	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT * 4]) = WINPR_C_ARRAY_INIT;
 	UINT32* ptr = NULL;
 	winpr_RAND(src1, sizeof(src1));
 	/* Special-case the first two values */
@@ -158,9 +158,9 @@ static BOOL test_alphaComp_func(void)
 
 static int test_alphaComp_speed(void)
 {
-	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT]) = { 0 };
-	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT]) = { 0 };
-	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT]) = { 0 };
+	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT]) = WINPR_C_ARRAY_INIT;
+	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT]) = WINPR_C_ARRAY_INIT;
+	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT]) = WINPR_C_ARRAY_INIT;
 	UINT32* ptr = NULL;
 
 	winpr_RAND(src1, sizeof(src1));

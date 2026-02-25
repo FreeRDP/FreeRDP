@@ -77,7 +77,7 @@ WINPR_ATTR_MALLOC(free, 1)
 WINPR_ATTR_NODISCARD
 static char* freerdp_settings_get_legacy_config_path(const char* filename, const char* cproduct)
 {
-	char product[MAX_PATH] = { 0 };
+	char product[MAX_PATH] = WINPR_C_ARRAY_INIT;
 
 	const size_t plen = strnlen(cproduct, sizeof(product));
 	if (plen == MAX_PATH)

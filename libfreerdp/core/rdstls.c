@@ -1048,7 +1048,7 @@ static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s
 SSIZE_T rdstls_parse_pdu(wLog* log, wStream* stream)
 {
 	SSIZE_T pduLength = -1;
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(stream), Stream_Length(stream));
 
 	if (Stream_GetRemainingLength(s) < 2)

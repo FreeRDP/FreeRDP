@@ -491,7 +491,7 @@ fail:
 
 static void smartcard_log_redir_handle(wLog* log, const REDIR_SCARDHANDLE* pHandle)
 {
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pHandle);
 	WLog_Print(log, g_LogLevel, "  hContext: %s",
@@ -500,7 +500,7 @@ static void smartcard_log_redir_handle(wLog* log, const REDIR_SCARDHANDLE* pHand
 
 static void smartcard_log_context(wLog* log, const REDIR_SCARDCONTEXT* phContext)
 {
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(phContext);
 	WLog_Print(
@@ -526,7 +526,7 @@ static void smartcard_trace_context_and_string_call_w(wLog* log, const char* nam
                                                       const REDIR_SCARDCONTEXT* phContext,
                                                       const WCHAR* sz)
 {
-	char tmp[1024] = { 0 };
+	char tmp[1024] = WINPR_C_ARRAY_INIT;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
@@ -575,7 +575,7 @@ static void dump_reader_states_return(wLog* log, const ReaderState_Return* rgRea
 	WINPR_ASSERT(rgReaderStates || (cReaders == 0));
 	for (UINT32 index = 0; index < cReaders; index++)
 	{
-		char buffer[1024] = { 0 };
+		char buffer[1024] = WINPR_C_ARRAY_INIT;
 
 		const ReaderState_Return* readerState = &rgReaderStates[index];
 		char* szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);
@@ -600,7 +600,7 @@ static void dump_reader_states_a(wLog* log, const SCARD_READERSTATEA* rgReaderSt
 	WINPR_ASSERT(rgReaderStates || (cReaders == 0));
 	for (UINT32 index = 0; index < cReaders; index++)
 	{
-		char buffer[1024] = { 0 };
+		char buffer[1024] = WINPR_C_ARRAY_INIT;
 
 		const SCARD_READERSTATEA* readerState = &rgReaderStates[index];
 
@@ -628,7 +628,7 @@ static void dump_reader_states_w(wLog* log, const SCARD_READERSTATEW* rgReaderSt
 	WINPR_ASSERT(rgReaderStates || (cReaders == 0));
 	for (UINT32 index = 0; index < cReaders; index++)
 	{
-		char buffer[1024] = { 0 };
+		char buffer[1024] = WINPR_C_ARRAY_INIT;
 
 		const SCARD_READERSTATEW* readerState = &rgReaderStates[index];
 		(void)ConvertWCharToUtf8(readerState->szReader, buffer, sizeof(buffer));
@@ -726,7 +726,7 @@ static void smartcard_trace_locate_cards_by_atr_a_call(wLog* log,
 
 static void smartcard_trace_locate_cards_a_call(wLog* log, const LocateCardsA_Call* call)
 {
-	char buffer[8192] = { 0 };
+	char buffer[8192] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(call);
 
@@ -812,7 +812,7 @@ static void smartcard_trace_read_cache_return(wLog* log, const ReadCache_Return*
 
 	if (ret->ReturnCode == SCARD_S_SUCCESS)
 	{
-		char buffer[1024] = { 0 };
+		char buffer[1024] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, g_LogLevel, " cbDataLen=%" PRIu32, ret->cbDataLen);
 		WLog_Print(log, g_LogLevel, "  cbData: %s",
 		           smartcard_array_dump(ret->pbData, ret->cbDataLen, buffer, sizeof(buffer)));
@@ -823,7 +823,7 @@ static void smartcard_trace_read_cache_return(wLog* log, const ReadCache_Return*
 static void smartcard_trace_locate_cards_w_call(wLog* log, const LocateCardsW_Call* call)
 {
 	WINPR_ASSERT(call);
-	char buffer[8192] = { 0 };
+	char buffer[8192] = WINPR_C_ARRAY_INIT;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
@@ -894,7 +894,7 @@ static void smartcard_trace_get_status_change_return(wLog* log, const GetStatusC
 	{
 		for (UINT32 index = 0; index < ret->cReaders; index++)
 		{
-			char buffer[1024] = { 0 };
+			char buffer[1024] = WINPR_C_ARRAY_INIT;
 			const ReaderState_Return* rgReaderState = &(ret->rgReaderStates[index]);
 			char* szCurrentState = SCardGetReaderStateString(rgReaderState->dwCurrentState);
 			char* szEventState = SCardGetReaderStateString(rgReaderState->dwEventState);
@@ -933,8 +933,8 @@ static void smartcard_trace_context_and_two_strings_w_call(wLog* log,
                                                            const ContextAndTwoStringW_Call* call)
 {
 	WINPR_ASSERT(call);
-	char sz1[1024] = { 0 };
-	char sz2[1024] = { 0 };
+	char sz1[1024] = WINPR_C_ARRAY_INIT;
+	char sz2[1024] = WINPR_C_ARRAY_INIT;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
@@ -967,7 +967,7 @@ static void smartcard_trace_get_transmit_count_call(wLog* log, const GetTransmit
 static void smartcard_trace_write_cache_a_call(wLog* log, const WriteCacheA_Call* call)
 {
 	WINPR_ASSERT(call);
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
@@ -991,8 +991,8 @@ static void smartcard_trace_write_cache_a_call(wLog* log, const WriteCacheA_Call
 static void smartcard_trace_write_cache_w_call(wLog* log, const WriteCacheW_Call* call)
 {
 	WINPR_ASSERT(call);
-	char tmp[1024] = { 0 };
-	char buffer[1024] = { 0 };
+	char tmp[1024] = WINPR_C_ARRAY_INIT;
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
@@ -1018,7 +1018,7 @@ static void smartcard_trace_write_cache_w_call(wLog* log, const WriteCacheW_Call
 static void smartcard_trace_read_cache_a_call(wLog* log, const ReadCacheA_Call* call)
 {
 	WINPR_ASSERT(call);
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
@@ -1040,8 +1040,8 @@ static void smartcard_trace_read_cache_a_call(wLog* log, const ReadCacheA_Call* 
 static void smartcard_trace_read_cache_w_call(wLog* log, const ReadCacheW_Call* call)
 {
 	WINPR_ASSERT(call);
-	char tmp[1024] = { 0 };
-	char buffer[1024] = { 0 };
+	char tmp[1024] = WINPR_C_ARRAY_INIT;
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
@@ -1084,7 +1084,7 @@ static void smartcard_trace_transmit_call(wLog* log, const Transmit_Call* call)
 
 		if (cbExtraBytes)
 		{
-			char buffer[1024] = { 0 };
+			char buffer[1024] = WINPR_C_ARRAY_INIT;
 			WLog_Print(log, g_LogLevel, "pbExtraBytes: %s",
 			           smartcard_array_dump(pbExtraBytes, cbExtraBytes, buffer, sizeof(buffer)));
 		}
@@ -1098,7 +1098,7 @@ static void smartcard_trace_transmit_call(wLog* log, const Transmit_Call* call)
 
 	if (call->pbSendBuffer)
 	{
-		char buffer[1024] = { 0 };
+		char buffer[1024] = WINPR_C_ARRAY_INIT;
 		WLog_Print(
 		    log, g_LogLevel, "pbSendBuffer: %s",
 		    smartcard_array_dump(call->pbSendBuffer, call->cbSendLength, buffer, sizeof(buffer)));
@@ -1117,7 +1117,7 @@ static void smartcard_trace_transmit_call(wLog* log, const Transmit_Call* call)
 
 		if (cbExtraBytes)
 		{
-			char buffer[1024] = { 0 };
+			char buffer[1024] = WINPR_C_ARRAY_INIT;
 			WLog_Print(log, g_LogLevel, "pbExtraBytes: %s",
 			           smartcard_array_dump(pbExtraBytes, cbExtraBytes, buffer, sizeof(buffer)));
 		}
@@ -1172,7 +1172,7 @@ static void smartcard_trace_transmit_return(wLog* log, const Transmit_Return* re
 
 		if (cbExtraBytes)
 		{
-			char buffer[1024] = { 0 };
+			char buffer[1024] = WINPR_C_ARRAY_INIT;
 			WLog_Print(log, g_LogLevel, "  pbExtraBytes: %s",
 			           smartcard_array_dump(pbExtraBytes, cbExtraBytes, buffer, sizeof(buffer)));
 		}
@@ -1186,7 +1186,7 @@ static void smartcard_trace_transmit_return(wLog* log, const Transmit_Return* re
 
 	if (ret->pbRecvBuffer)
 	{
-		char buffer[1024] = { 0 };
+		char buffer[1024] = WINPR_C_ARRAY_INIT;
 		WLog_Print(
 		    log, g_LogLevel, "  pbRecvBuffer: %s",
 		    smartcard_array_dump(ret->pbRecvBuffer, ret->cbRecvLength, buffer, sizeof(buffer)));
@@ -1214,7 +1214,7 @@ static void smartcard_trace_control_return(wLog* log, const Control_Return* ret)
 
 	if (ret->pvOutBuffer)
 	{
-		char buffer[1024] = { 0 };
+		char buffer[1024] = WINPR_C_ARRAY_INIT;
 		WLog_Print(
 		    log, g_LogLevel, "pvOutBuffer: %s",
 		    smartcard_array_dump(ret->pvOutBuffer, ret->cbOutBufferSize, buffer, sizeof(buffer)));
@@ -1246,7 +1246,7 @@ static void smartcard_trace_control_call(wLog* log, const Control_Call* call)
 
 	if (call->pvInBuffer)
 	{
-		char buffer[1024] = { 0 };
+		char buffer[1024] = WINPR_C_ARRAY_INIT;
 		WLog_Print(
 		    log, WLOG_DEBUG, "pbInBuffer: %s",
 		    smartcard_array_dump(call->pvInBuffer, call->cbInBufferSize, buffer, sizeof(buffer)));
@@ -1262,7 +1262,7 @@ static void smartcard_trace_control_call(wLog* log, const Control_Call* call)
 static void smartcard_trace_set_attrib_call(wLog* log, const SetAttrib_Call* call)
 {
 	WINPR_ASSERT(call);
-	char buffer[8192] = { 0 };
+	char buffer[8192] = WINPR_C_ARRAY_INIT;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
@@ -1281,7 +1281,7 @@ static void smartcard_trace_get_attrib_return(wLog* log, const GetAttrib_Return*
                                               DWORD dwAttrId)
 {
 	WINPR_ASSERT(ret);
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
@@ -1338,7 +1338,7 @@ static void smartcard_trace_status_return(wLog* log, const Status_Return* ret, B
 {
 	WINPR_ASSERT(ret);
 	char* mszReaderNamesA = NULL;
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 	DWORD cBytes = 0;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
@@ -1370,7 +1370,7 @@ static void smartcard_trace_status_return(wLog* log, const Status_Return* ret, B
 static void smartcard_trace_state_return(wLog* log, const State_Return* ret)
 {
 	WINPR_ASSERT(ret);
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 	char* state = NULL;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
@@ -1429,7 +1429,7 @@ static void smartcard_trace_connect_a_call(wLog* log, const ConnectA_Call* call)
 static void smartcard_trace_connect_w_call(wLog* log, const ConnectW_Call* call)
 {
 	WINPR_ASSERT(call);
-	char szReaderA[1024] = { 0 };
+	char szReaderA[1024] = WINPR_C_ARRAY_INIT;
 
 	if (!WLog_IsLevelActive(log, g_LogLevel))
 		return;
@@ -1741,7 +1741,7 @@ LONG smartcard_pack_write_size_align(wStream* s, size_t size, UINT32 alignment)
 
 SCARDCONTEXT smartcard_scard_context_native_from_redir(REDIR_SCARDCONTEXT* context)
 {
-	SCARDCONTEXT hContext = { 0 };
+	SCARDCONTEXT hContext = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	if ((context->cbContext != sizeof(ULONG_PTR)) && (context->cbContext != 0))

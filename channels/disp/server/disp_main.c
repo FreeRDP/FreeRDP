@@ -127,7 +127,7 @@ static BOOL disp_server_is_monitor_layout_valid(const DISPLAY_CONTROL_MONITOR_LA
 static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerContext* context)
 {
 	UINT32 error = CHANNEL_RC_OK;
-	DISPLAY_CONTROL_MONITOR_LAYOUT_PDU pdu = { 0 };
+	DISPLAY_CONTROL_MONITOR_LAYOUT_PDU pdu = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(context);
@@ -215,7 +215,7 @@ static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 	UINT error = CHANNEL_RC_OK;
 	size_t beg = 0;
 	size_t end = 0;
-	DISPLAY_CONTROL_HEADER header = { 0 };
+	DISPLAY_CONTROL_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(context);
@@ -346,7 +346,7 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 	DispServerPrivate* priv = NULL;
 	DWORD status = 0;
 	DWORD nCount = 0;
-	HANDLE events[8] = { 0 };
+	HANDLE events[8] = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);

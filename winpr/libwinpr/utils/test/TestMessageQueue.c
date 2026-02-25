@@ -5,7 +5,7 @@
 
 static DWORD WINAPI message_queue_consumer_thread(LPVOID arg)
 {
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	wMessageQueue* queue = (wMessageQueue*)arg;
 
 	while (MessageQueue_Wait(queue))
@@ -79,7 +79,7 @@ static bool fill_capcity(wMessageQueue* queue, size_t* pos)
 
 static bool drain(wMessageQueue* queue, size_t expect)
 {
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	if (MessageQueue_Get(queue, &message) < 0)
 		return false;
 	if (!check(&message, expect))

@@ -68,7 +68,7 @@ static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 {
 	char* p = NULL;
 	char* path = NULL;
-	UINT8 containerId[17] = { 0 };
+	UINT8 containerId[17] = WINPR_C_ARRAY_INIT;
 	UINT16 idVendor = 0;
 	UINT16 idProduct = 0;
 	idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
@@ -96,7 +96,7 @@ static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 
 static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId, size_t len)
 {
-	char instanceId[17] = { 0 };
+	char instanceId[17] = WINPR_C_ARRAY_INIT;
 	(void)sprintf_s(instanceId, sizeof(instanceId), "\\%s", pdev->getPath(pdev));
 	/* format */
 	(void)sprintf_s(strInstanceId, len,
@@ -342,10 +342,10 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 	char CompatibilityIds[4][DEVICE_COMPATIBILITY_ID_SIZE] = { { 0 } };
 	const char* CCompatibilityIds[4] = { CompatibilityIds[0], CompatibilityIds[1],
 		                                 CompatibilityIds[2], CompatibilityIds[3] };
-	char strContainerId[DEVICE_CONTAINER_STR_SIZE] = { 0 };
-	char strInstanceId[DEVICE_INSTANCE_STR_SIZE] = { 0 };
-	size_t CompatibilityIdLen[4] = { 0 };
-	size_t HardwareIdsLen[2] = { 0 };
+	char strContainerId[DEVICE_CONTAINER_STR_SIZE] = WINPR_C_ARRAY_INIT;
+	char strInstanceId[DEVICE_INSTANCE_STR_SIZE] = WINPR_C_ARRAY_INIT;
+	size_t CompatibilityIdLen[4] = WINPR_C_ARRAY_INIT;
+	size_t HardwareIdsLen[2] = WINPR_C_ARRAY_INIT;
 	const size_t nrHwIds = ARRAYSIZE(HardwareIds);
 	size_t nrCompatIds = 3;
 
@@ -822,7 +822,7 @@ static BOOL urbdrc_register_udevman_addin(IWTSPlugin* pPlugin, IUDEVMAN* udevman
 static UINT urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, LPCSTR name, const ADDIN_ARGV* args)
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pPlugin;
-	FREERDP_URBDRC_SERVICE_ENTRY_POINTS entryPoints = { 0 };
+	FREERDP_URBDRC_SERVICE_ENTRY_POINTS entryPoints = WINPR_C_ARRAY_INIT;
 
 	PVIRTUALCHANNELENTRY pvce =
 	    freerdp_load_channel_addin_entry(URBDRC_CHANNEL_NAME, name, NULL, 0);

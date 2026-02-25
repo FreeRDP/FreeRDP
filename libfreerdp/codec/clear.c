@@ -165,7 +165,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* WINPR_RESTRICT s, UINT32 bitm
 	BYTE suiteIndex = 0;
 	BYTE suiteDepth = 0;
 	BYTE paletteCount = 0;
-	UINT32 palette[128] = { 0 };
+	UINT32 palette[128] = WINPR_C_ARRAY_INIT;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, bitmapDataByteCount))
 		return FALSE;
@@ -1035,7 +1035,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RE
 	UINT32 residualByteCount = 0;
 	UINT32 bandsByteCount = 0;
 	UINT32 subcodecByteCount = 0;
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = NULL;
 	BYTE* glyphData = NULL;
 

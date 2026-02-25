@@ -54,7 +54,7 @@ static const char* event_names[] = {
 static bool uwac_default_error_handler(UwacDisplay* display, UwacReturnCode code, const char* msg,
                                        ...)
 {
-	va_list args = { 0 };
+	va_list args = WINPR_C_ARRAY_INIT;
 	va_start(args, msg);
 	(void)vfprintf(stderr, "%s", args);
 	va_end(args);
@@ -402,7 +402,7 @@ UwacDisplay* UwacOpenDisplay(const char* name, UwacReturnCode* err)
 
 	if (ret->display == NULL)
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		(void)fprintf(stderr, "failed to connect to Wayland display %s: %s\n", name,
 		              uwac_strerror(errno, buffer, sizeof(buffer)));
 		*err = UWAC_ERROR_UNABLE_TO_CONNECT;

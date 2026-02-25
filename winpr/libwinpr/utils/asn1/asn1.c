@@ -538,7 +538,7 @@ static size_t asn1IntegerLen(WinPrAsn1_INTEGER value)
 static size_t WinPrAsn1EncIntegerLike(WinPrAsn1Encoder* enc, WinPrAsn1_tag b,
                                       WinPrAsn1_INTEGER value)
 {
-	wStream staticS = { 0 };
+	wStream staticS = WINPR_C_ARRAY_INIT;
 	wStream* s = &staticS;
 
 	const size_t len = asn1IntegerLen(value);
@@ -579,7 +579,7 @@ size_t WinPrAsn1EncEnumerated(WinPrAsn1Encoder* enc, WinPrAsn1_ENUMERATED value)
 static size_t WinPrAsn1EncContextualIntegerLike(WinPrAsn1Encoder* enc, WinPrAsn1_tag tag,
                                                 WinPrAsn1_tagId tagId, WinPrAsn1_INTEGER value)
 {
-	wStream staticS = { 0 };
+	wStream staticS = WINPR_C_ARRAY_INIT;
 	wStream* s = &staticS;
 
 	WINPR_ASSERT(enc);
@@ -766,7 +766,7 @@ static void write2digit(wStream* s, UINT8 v)
 
 size_t WinPrAsn1EncUtcTime(WinPrAsn1Encoder* enc, const WinPrAsn1_UTCTIME* utc)
 {
-	wStream staticS = { 0 };
+	wStream staticS = WINPR_C_ARRAY_INIT;
 	wStream* s = &staticS;
 
 	WINPR_ASSERT(enc);
@@ -1388,7 +1388,7 @@ size_t WinPrAsn1DecReadContextualBool(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tag
 {
 	size_t ret = 0;
 	size_t ret2 = 0;
-	WinPrAsn1Decoder content = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder content = WinPrAsn1Decoder_init();
 
 	ret = readContextualHeader(dec, tagId, error, &content);
 	if (!ret)
@@ -1410,7 +1410,7 @@ size_t WinPrAsn1DecReadContextualInteger(WinPrAsn1Decoder* dec, WinPrAsn1_tagId 
 {
 	size_t ret = 0;
 	size_t ret2 = 0;
-	WinPrAsn1Decoder content = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder content = WinPrAsn1Decoder_init();
 
 	ret = readContextualHeader(dec, tagId, error, &content);
 	if (!ret)
@@ -1432,7 +1432,7 @@ size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagI
 {
 	size_t ret = 0;
 	size_t ret2 = 0;
-	WinPrAsn1Decoder content = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder content = WinPrAsn1Decoder_init();
 
 	ret = readContextualHeader(dec, tagId, error, &content);
 	if (!ret)
@@ -1455,7 +1455,7 @@ size_t WinPrAsn1DecReadContextualOctetString(WinPrAsn1Decoder* dec, WinPrAsn1_ta
 {
 	size_t ret = 0;
 	size_t ret2 = 0;
-	WinPrAsn1Decoder content = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder content = WinPrAsn1Decoder_init();
 
 	ret = readContextualHeader(dec, tagId, error, &content);
 	if (!ret)
@@ -1477,7 +1477,7 @@ size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec, WinPrAsn1_tagId
 {
 	size_t ret = 0;
 	size_t ret2 = 0;
-	WinPrAsn1Decoder content = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder content = WinPrAsn1Decoder_init();
 
 	ret = readContextualHeader(dec, tagId, error, &content);
 	if (!ret)
@@ -1496,7 +1496,7 @@ size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec, WinPrAsn1_tagId
 
 wStream WinPrAsn1DecGetStream(WinPrAsn1Decoder* dec)
 {
-	wStream s = { 0 };
+	wStream s = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(dec);
 
 	Stream_StaticConstInit(&s, Stream_ConstPointer(&dec->source),

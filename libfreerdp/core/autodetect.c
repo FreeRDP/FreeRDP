@@ -796,7 +796,7 @@ static BOOL autodetect_recv_netchar_request(rdpAutoDetect* autodetect, RDP_TRANS
 state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
                                            wStream* s)
 {
-	AUTODETECT_REQ_PDU autodetectReqPdu = { 0 };
+	AUTODETECT_REQ_PDU autodetectReqPdu = WINPR_C_ARRAY_INIT;
 	const rdpSettings* settings = NULL;
 	BOOL success = FALSE;
 
@@ -816,11 +816,11 @@ state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSP
 
 	if (WLog_IsLevelActive(autodetect->log, WLOG_TRACE))
 	{
-		char rbuffer[128] = { 0 };
+		char rbuffer[128] = WINPR_C_ARRAY_INIT;
 		const char* requestTypeStr = autodetect_request_type_to_string_buffer(
 		    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
 
-		char hbuffer[128] = { 0 };
+		char hbuffer[128] = WINPR_C_ARRAY_INIT;
 		const char* headerStr =
 		    autodetect_header_type_string(autodetectReqPdu.headerTypeId, hbuffer, sizeof(hbuffer));
 
@@ -833,7 +833,7 @@ state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSP
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
 	{
-		char rbuffer[128] = { 0 };
+		char rbuffer[128] = WINPR_C_ARRAY_INIT;
 		const char* requestTypeStr = autodetect_request_type_to_string_buffer(
 		    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
 
@@ -846,10 +846,10 @@ state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSP
 
 	if (autodetectReqPdu.headerTypeId != TYPE_ID_AUTODETECT_REQUEST)
 	{
-		char rbuffer[128] = { 0 };
+		char rbuffer[128] = WINPR_C_ARRAY_INIT;
 		const char* requestTypeStr = autodetect_request_type_to_string_buffer(
 		    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
-		char hbuffer[128] = { 0 };
+		char hbuffer[128] = WINPR_C_ARRAY_INIT;
 		const char* headerStr =
 		    autodetect_header_type_string(autodetectReqPdu.headerTypeId, hbuffer, sizeof(hbuffer));
 
@@ -919,7 +919,7 @@ fail:
 state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
                                             wStream* s)
 {
-	AUTODETECT_RSP_PDU autodetectRspPdu = { 0 };
+	AUTODETECT_RSP_PDU autodetectRspPdu = WINPR_C_ARRAY_INIT;
 	const rdpSettings* settings = NULL;
 	BOOL success = FALSE;
 
@@ -940,10 +940,10 @@ state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANS
 
 	if (WLog_IsLevelActive(autodetect->log, WLOG_TRACE))
 	{
-		char rbuffer[128] = { 0 };
+		char rbuffer[128] = WINPR_C_ARRAY_INIT;
 		const char* requestStr = autodetect_request_type_to_string_buffer(
 		    autodetectRspPdu.responseType, rbuffer, sizeof(rbuffer));
-		char hbuffer[128] = { 0 };
+		char hbuffer[128] = WINPR_C_ARRAY_INIT;
 		const char* headerStr =
 		    autodetect_header_type_string(autodetectRspPdu.headerTypeId, hbuffer, sizeof(hbuffer));
 
@@ -956,7 +956,7 @@ state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANS
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
 	{
-		char rbuffer[128] = { 0 };
+		char rbuffer[128] = WINPR_C_ARRAY_INIT;
 
 		const char* requestStr = autodetect_request_type_to_string_buffer(
 		    autodetectRspPdu.responseType, rbuffer, sizeof(rbuffer));
@@ -970,10 +970,10 @@ state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANS
 
 	if (autodetectRspPdu.headerTypeId != TYPE_ID_AUTODETECT_RESPONSE)
 	{
-		char rbuffer[128] = { 0 };
+		char rbuffer[128] = WINPR_C_ARRAY_INIT;
 		const char* requestStr = autodetect_request_type_to_string_buffer(
 		    autodetectRspPdu.responseType, rbuffer, sizeof(rbuffer));
-		char hbuffer[128] = { 0 };
+		char hbuffer[128] = WINPR_C_ARRAY_INIT;
 		const char* headerStr =
 		    autodetect_header_type_string(autodetectRspPdu.headerTypeId, hbuffer, sizeof(hbuffer));
 		WLog_Print(autodetect->log, WLOG_ERROR,

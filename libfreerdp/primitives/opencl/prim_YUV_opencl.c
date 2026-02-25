@@ -184,7 +184,7 @@ static BOOL cl_kernel_process(primitives_cl_kernel* ctx, BYTE* pDst)
 	WINPR_ASSERT(ctx);
 	WINPR_ASSERT(pDst);
 
-	size_t indexes[2] = { 0 };
+	size_t indexes[2] = WINPR_C_ARRAY_INIT;
 	indexes[0] = ctx->roi.width;
 	indexes[1] = ctx->roi.height;
 
@@ -234,7 +234,7 @@ fail:
 	return res;
 }
 
-static primitives_opencl_context openclContext = { 0 };
+static primitives_opencl_context openclContext = WINPR_C_ARRAY_INIT;
 
 static primitives_opencl_context* primitives_get_opencl_context(void)
 {
@@ -289,8 +289,8 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_REST
 	{
 		cl_device_id device_id = NULL;
 		cl_context context = NULL;
-		char platformName[1000] = { 0 };
-		char deviceName[1000] = { 0 };
+		char platformName[1000] = WINPR_C_ARRAY_INIT;
+		char deviceName[1000] = WINPR_C_ARRAY_INIT;
 
 		ret = clGetPlatformInfo(platform_ids[i], CL_PLATFORM_NAME, sizeof(platformName),
 		                        platformName, NULL);

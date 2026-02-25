@@ -45,7 +45,7 @@ CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, 
 	    checkMask & (CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
 	WINPR_ASSERT(list);
 
-	CLIPRDR_FORMAT_LIST filtered = { 0 };
+	CLIPRDR_FORMAT_LIST filtered = WINPR_C_ARRAY_INIT;
 	filtered.common.msgType = CB_FORMAT_LIST;
 	filtered.numFormats = list->numFormats;
 	filtered.formats = calloc(filtered.numFormats, sizeof(CLIPRDR_FORMAT));
@@ -112,8 +112,8 @@ CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, 
 UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
                                  UINT16 msgFlags)
 {
-	CLIPRDR_FORMAT_LIST formatList = { 0 };
-	CLIPRDR_FORMAT_LIST filteredFormatList = { 0 };
+	CLIPRDR_FORMAT_LIST formatList = WINPR_C_ARRAY_INIT;
+	CLIPRDR_FORMAT_LIST filteredFormatList = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -182,7 +182,7 @@ error_out:
 UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, WINPR_ATTR_UNUSED wStream* s,
                                           UINT32 dataLen, UINT16 msgFlags)
 {
-	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = { 0 };
+	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -208,7 +208,7 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, WINPR_ATTR_UNU
 UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
                                          UINT16 msgFlags)
 {
-	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest = { 0 };
+	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -247,7 +247,7 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
                                           UINT16 msgFlags)
 {
-	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse = { 0 };
+	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 

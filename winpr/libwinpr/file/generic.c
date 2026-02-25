@@ -483,11 +483,11 @@ BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName,
 	if (!fd)
 		return FALSE;
 
-	struct stat fileStat = { 0 };
+	struct stat fileStat = WINPR_C_ARRAY_INIT;
 	if (stat(lpFileName, &fileStat) != 0)
 		return FALSE;
 
-	WIN32_FIND_DATAA findFileData = { 0 };
+	WIN32_FIND_DATAA findFileData = WINPR_C_ARRAY_INIT;
 	if (!FindDataFromStat(lpFileName, &fileStat, &findFileData))
 		return FALSE;
 
@@ -521,7 +521,7 @@ BOOL WINAPI GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInf
 
 DWORD WINAPI GetFileAttributesA(LPCSTR lpFileName)
 {
-	struct stat fileStat = { 0 };
+	struct stat fileStat = WINPR_C_ARRAY_INIT;
 	if (stat(lpFileName, &fileStat) != 0)
 		return INVALID_FILE_ATTRIBUTES;
 
@@ -573,7 +573,7 @@ static char* append(char* buffer, size_t size, const char* append)
 
 static const char* flagsToStr(char* buffer, size_t size, DWORD flags)
 {
-	char strflags[32] = { 0 };
+	char strflags[32] = WINPR_C_ARRAY_INIT;
 	if (flags & FILE_ATTRIBUTE_READONLY)
 		append(buffer, size, "FILE_ATTRIBUTE_READONLY");
 	if (flags & FILE_ATTRIBUTE_HIDDEN)
@@ -617,7 +617,7 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 	const uint32_t mask = ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_NORMAL);
 	if (dwFileAttributes & mask)
 	{
-		char buffer[8192] = { 0 };
+		char buffer[8192] = WINPR_C_ARRAY_INIT;
 		const char* flags = flagsToStr(buffer, sizeof(buffer), dwFileAttributes & mask);
 		WLog_WARN(TAG, "Unsupported flags %s, ignoring!", flags);
 	}
@@ -626,7 +626,7 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 	if (fd < 0)
 		return FALSE;
 
-	struct stat st = { 0 };
+	struct stat st = WINPR_C_ARRAY_INIT;
 	if (fstat(fd, &st) != 0)
 		goto fail;
 
@@ -894,7 +894,7 @@ static WIN32_FILE_SEARCH* file_search_new(const char* name, size_t namelen, cons
 		 * parent directories are not accessible, so if we have a directory without pattern
 		 * try to open it directly and set pattern to '*'
 		 */
-		struct stat fileStat = { 0 };
+		struct stat fileStat = WINPR_C_ARRAY_INIT;
 		if (stat(name, &fileStat) == 0)
 		{
 			if (S_ISDIR(fileStat.st_mode))
@@ -998,7 +998,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	const WIN32_FIND_DATAA empty = { 0 };
+	const WIN32_FIND_DATAA empty = WINPR_C_ARRAY_INIT;
 	*lpFindFileData = empty;
 
 	WIN32_FILE_SEARCH* pFileSearch = NULL;
@@ -1122,7 +1122,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 	if (!lpFindFileData)
 		return FALSE;
 
-	const WIN32_FIND_DATAA empty = { 0 };
+	const WIN32_FIND_DATAA empty = WINPR_C_ARRAY_INIT;
 	*lpFindFileData = empty;
 
 	if (!is_valid_file_search_handle(hFindFile))
@@ -1156,7 +1156,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			memcpy(fullpath + pathlen, pDirent->d_name, namelen);
 			fullpath[pathlen + namelen] = 0;
 
-			struct stat fileStat = { 0 };
+			struct stat fileStat = WINPR_C_ARRAY_INIT;
 			if (stat(fullpath, &fileStat) != 0)
 			{
 				free(fullpath);

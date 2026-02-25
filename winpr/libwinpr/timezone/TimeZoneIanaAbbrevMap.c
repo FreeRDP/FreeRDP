@@ -78,7 +78,7 @@ static void append_timezone(const char* dir, const char* name)
 	char* oldtz = setNewAndSaveOldTZ(tz);
 
 	const time_t t = time(NULL);
-	struct tm lt = { 0 };
+	struct tm lt = WINPR_C_ARRAY_INIT;
 	(void)localtime_r(&t, &lt);
 	append(tz, lt.tm_zone);
 	restoreSavedTZ(oldtz);
@@ -193,7 +193,7 @@ void handle_link(const char* base, const char* dir, const char* name)
 	char* target = get_link_target(base, dir, name);
 	if (target)
 	{
-		struct stat s = { 0 };
+		struct stat s = WINPR_C_ARRAY_INIT;
 		const int rc3 = stat(target, &s);
 		if (rc3 == 0)
 			isDir = S_ISDIR(s.st_mode);

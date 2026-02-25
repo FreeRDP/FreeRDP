@@ -431,7 +431,7 @@ static UINT urbdrc_process_query_device_text(IUDEVICE* pdev, GENERIC_CHANNEL_CAL
 	UINT32 TextType = 0;
 	UINT32 LocaleId = 0;
 	UINT8 bufferSize = 0xFF;
-	BYTE DeviceDescription[0x100] = { 0 };
+	BYTE DeviceDescription[0x100] = WINPR_C_ARRAY_INIT;
 
 	if (!pdev || !callback || !s || !udevman)
 		return ERROR_INVALID_PARAMETER;

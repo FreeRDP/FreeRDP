@@ -440,7 +440,7 @@ static inline void* base64_decode(const signed char* WINPR_RESTRICT alphabet, si
                                   const char* WINPR_RESTRICT s, size_t length,
                                   size_t* WINPR_RESTRICT data_len, BOOL pad)
 {
-	int n[4] = { 0 };
+	int n[4] = WINPR_C_ARRAY_INIT;
 	BYTE* data = NULL;
 	const size_t remainder = length % 4;
 

@@ -58,7 +58,7 @@ static BOOL generate_pop_key(rdpAad* aad);
 WINPR_ATTR_FORMAT_ARG(2, 3)
 static SSIZE_T stream_sprintf(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 {
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fmt);
 	const int rc = vsnprintf(NULL, 0, fmt, ap);
 	va_end(ap);
@@ -645,7 +645,7 @@ static char* generate_rsa_digest_base64_str(rdpAad* aad, const char* input, size
 	}
 
 	{
-		BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = { 0 };
+		BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 		if (!winpr_Digest_Final(digest, hash, sizeof(hash)))
 		{
 			WLog_Print(aad->log, WLOG_ERROR, "winpr_Digest_Final(%" PRIuz ") failed", sizeof(hash));

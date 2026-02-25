@@ -231,8 +231,8 @@ static void xf_SetWindowTitleText(xfContext* xfc, Window window, const char* nam
  */
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...)
 {
-	XEvent xevent = { 0 };
-	va_list argp = { 0 };
+	XEvent xevent = WINPR_C_ARRAY_INIT;
+	va_list argp = WINPR_C_ARRAY_INIT;
 	va_start(argp, numArgs);
 
 	xevent.xclient.type = ClientMessage;
@@ -385,7 +385,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 			}
 			else
 			{
-				XSetWindowAttributes xswa = { 0 };
+				XSetWindowAttributes xswa = WINPR_C_ARRAY_INIT;
 				xswa.override_redirect = True;
 				LogDynAndXChangeWindowAttributes(xfc->log, xfc->display, window->handle,
 				                                 CWOverrideRedirect, &xswa);
@@ -654,7 +654,7 @@ void xf_DestroyDummyWindow(xfContext* xfc, Window window)
 
 xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height)
 {
-	XEvent xevent = { 0 };
+	XEvent xevent = WINPR_C_ARRAY_INIT;
 	int input_mask = 0;
 	XClassHint* classHints = NULL;
 	xfWindow* window = (xfWindow*)calloc(1, sizeof(xfWindow));
@@ -691,7 +691,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 		if (rc != 0)
 		{
 #ifdef WITH_DEBUG_X11
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			DEBUG_X11("ftruncate failed with %s [%d]", winpr_strerror(rc, ebuffer, sizeof(ebuffer)),
 			          rc);
 #endif
@@ -917,7 +917,7 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 		 * sees that as a focus out event from the window owning the
 		 * dropdown.
 		 */
-		XSetWindowAttributes attrs = { 0 };
+		XSetWindowAttributes attrs = WINPR_C_ARRAY_INIT;
 		attrs.override_redirect = redirect ? True : False;
 		LogDynAndXChangeWindowAttributes(xfc->log, xfc->display, appWindow->handle,
 		                                 CWOverrideRedirect, &attrs);
@@ -1031,7 +1031,7 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 
 BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 {
-	XGCValues gcv = { 0 };
+	XGCValues gcv = WINPR_C_ARRAY_INIT;
 	int input_mask = 0;
 	XWMHints* InputModeHint = NULL;
 	XClassHint* class_hints = NULL;

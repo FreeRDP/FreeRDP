@@ -341,7 +341,7 @@ end:
 
 static SYSTEMTIME tm2systemtime(const struct tm* t)
 {
-	SYSTEMTIME st = { 0 };
+	SYSTEMTIME st = WINPR_C_ARRAY_INIT;
 
 	if (t)
 	{
@@ -359,7 +359,7 @@ static SYSTEMTIME tm2systemtime(const struct tm* t)
 
 static struct tm systemtime2tm(const SYSTEMTIME* st)
 {
-	struct tm t = { 0 };
+	struct tm t = WINPR_C_ARRAY_INIT;
 	if (st)
 	{
 		if (st->wYear >= 1900)
@@ -422,7 +422,7 @@ static WORD get_transition_weekday_occurrence(const SYSTEMTIME* st)
 		const time_t t = mktime(&next);
 		next.tm_mday++;
 
-		struct tm cur = { 0 };
+		struct tm cur = WINPR_C_ARRAY_INIT;
 		(void)localtime_r(&t, &cur);
 
 		if (cur.tm_mon + 1 != st->wMonth)
@@ -577,7 +577,7 @@ static const char* weekday2str(WORD wDayOfWeek)
 
 static char* systemtime2str(const SYSTEMTIME* t, char* buffer, size_t len)
 {
-	const SYSTEMTIME empty = { 0 };
+	const SYSTEMTIME empty = WINPR_C_ARRAY_INIT;
 
 	if (memcmp(t, &empty, sizeof(SYSTEMTIME)) == 0)
 		(void)_snprintf(buffer, len, "{ not set }");
@@ -599,7 +599,7 @@ static void log_print(wLog* log, DWORD level, const char* file, const char* fkt,
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fmt);
 	WLog_PrintTextMessageVA(log, level, line, file, fkt, fmt, ap);
 	va_end(ap);
@@ -611,7 +611,7 @@ static void log_timezone_(const DYNAMIC_TIME_ZONE_INFORMATION* tzif, DWORD resul
 {
 	WINPR_ASSERT(tzif);
 
-	char buffer[130] = { 0 };
+	char buffer[130] = WINPR_C_ARRAY_INIT;
 	DWORD level = WLOG_TRACE;
 	wLog* log = WLog_Get(TAG);
 	log_print(log, level, file, fkt, line, "DYNAMIC_TIME_ZONE_INFORMATION {");
@@ -652,7 +652,7 @@ static void log_timezone_(const DYNAMIC_TIME_ZONE_INFORMATION* tzif, DWORD resul
 
 DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
-	DYNAMIC_TIME_ZONE_INFORMATION dyn = { 0 };
+	DYNAMIC_TIME_ZONE_INFORMATION dyn = WINPR_C_ARRAY_INIT;
 	DWORD rc = GetDynamicTimeZoneInformation(&dyn);
 	lpTimeZoneInformation->Bias = dyn.Bias;
 	lpTimeZoneInformation->DaylightBias = dyn.DaylightBias;
@@ -756,7 +756,7 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInfo
 	char* tzid = NULL;
 	const char* defaultName = "Client Local Time";
 	DWORD res = TIME_ZONE_ID_UNKNOWN;
-	const DYNAMIC_TIME_ZONE_INFORMATION empty = { 0 };
+	const DYNAMIC_TIME_ZONE_INFORMATION empty = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pTimeZoneInformation);
 
@@ -765,7 +765,7 @@ DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInfo
 	                         ARRAYSIZE(pTimeZoneInformation->StandardName));
 
 	const time_t t = time(NULL);
-	struct tm tres = { 0 };
+	struct tm tres = WINPR_C_ARRAY_INIT;
 	struct tm* local_time = localtime_r(&t, &tres);
 	if (!local_time)
 		goto out_error;
@@ -849,7 +849,7 @@ DWORD EnumDynamicTimeZoneInformation(DWORD dwIndex,
 {
 	if (!lpTimeZoneInformation)
 		return ERROR_INVALID_PARAMETER;
-	const DYNAMIC_TIME_ZONE_INFORMATION empty = { 0 };
+	const DYNAMIC_TIME_ZONE_INFORMATION empty = WINPR_C_ARRAY_INIT;
 	*lpTimeZoneInformation = empty;
 
 	const TimeZoneNameMapEntry* entry = TimeZoneGetAt(dwIndex);
@@ -867,7 +867,7 @@ DWORD EnumDynamicTimeZoneInformation(DWORD dwIndex,
 		                         ARRAYSIZE(lpTimeZoneInformation->TimeZoneKeyName));
 
 	const time_t t = time(NULL);
-	struct tm tres = { 0 };
+	struct tm tres = WINPR_C_ARRAY_INIT;
 
 	char* tzcopy = entry->Iana ? setNewAndSaveOldTZ(entry->Iana) : NULL;
 

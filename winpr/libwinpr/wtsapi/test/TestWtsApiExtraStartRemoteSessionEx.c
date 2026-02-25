@@ -11,7 +11,7 @@ int TestWtsApiExtraStartRemoteSessionEx(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 
 	ULONG logonId = 0;
-	char logonIdStr[10] = { 0 };
+	char logonIdStr[10] = WINPR_C_ARRAY_INIT;
 
 	DWORD bSuccess = GetEnvironmentVariableA("TEST_SESSION_LOGON_ID", logonIdStr, 10);
 	if (bSuccess > 0)

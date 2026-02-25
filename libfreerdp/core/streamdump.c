@@ -311,7 +311,7 @@ static int stream_dump_transport_read(rdpTransport* transport, wStream* s)
 
 static BOOL stream_dump_register_write_handlers(rdpContext* context)
 {
-	rdpTransportIo dump = { 0 };
+	rdpTransportIo dump = WINPR_C_ARRAY_INIT;
 	const rdpTransportIo* dfl = freerdp_get_io_callbacks(context);
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_TransportDump))

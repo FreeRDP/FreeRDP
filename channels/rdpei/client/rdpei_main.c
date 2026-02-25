@@ -159,8 +159,8 @@ static RDPINPUT_CONTACT_POINT* rdpei_contact(RDPEI_PLUGIN* rdpei, INT32 external
  */
 static UINT rdpei_add_frame(RdpeiClientContext* context)
 {
-	RDPINPUT_TOUCH_FRAME frame = { 0 };
-	RDPINPUT_CONTACT_DATA contacts[MAX_CONTACTS] = { 0 };
+	RDPINPUT_TOUCH_FRAME frame = WINPR_C_ARRAY_INIT;
+	RDPINPUT_CONTACT_DATA contacts[MAX_CONTACTS] = WINPR_C_ARRAY_INIT;
 
 	if (!context || !context->handle)
 		return ERROR_INTERNAL_ERROR;
@@ -394,8 +394,8 @@ static UINT rdpei_send_pen_frame(RdpeiClientContext* context, RDPINPUT_PEN_FRAME
 
 static UINT rdpei_add_pen_frame(RdpeiClientContext* context)
 {
-	RDPINPUT_PEN_FRAME penFrame = { 0 };
-	RDPINPUT_PEN_CONTACT penContacts[MAX_PEN_CONTACTS] = { 0 };
+	RDPINPUT_PEN_FRAME penFrame = WINPR_C_ARRAY_INIT;
+	RDPINPUT_PEN_CONTACT penContacts[MAX_PEN_CONTACTS] = WINPR_C_ARRAY_INIT;
 
 	if (!context || !context->handle)
 		return ERROR_INTERNAL_ERROR;
@@ -1088,7 +1088,7 @@ static UINT rdpei_touch_process(RdpeiClientContext* context, INT32 externalId, U
 
 	if (contactIdlocal >= 0)
 	{
-		RDPINPUT_CONTACT_DATA contact = { 0 };
+		RDPINPUT_CONTACT_DATA contact = WINPR_C_ARRAY_INIT;
 		contact.x = x;
 		contact.y = y;
 		contact.contactId = (UINT32)contactIdlocal;
@@ -1156,7 +1156,7 @@ static UINT rdpei_touch_begin(RdpeiClientContext* context, INT32 externalId, INT
                               INT32* contactId)
 {
 	UINT rc = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	rc = rdpei_touch_process(context, externalId,
 	                         RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INRANGE |
 	                             RDPINPUT_CONTACT_FLAG_INCONTACT,
@@ -1173,7 +1173,7 @@ static UINT rdpei_touch_update(RdpeiClientContext* context, INT32 externalId, IN
                                INT32* contactId)
 {
 	UINT rc = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	rc = rdpei_touch_process(context, externalId,
 	                         RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
 	                             RDPINPUT_CONTACT_FLAG_INCONTACT,
@@ -1190,7 +1190,7 @@ static UINT rdpei_touch_end(RdpeiClientContext* context, INT32 externalId, INT32
                             INT32* contactId)
 {
 	UINT error = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	error = rdpei_touch_process(context, externalId,
 	                            RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
 	                                RDPINPUT_CONTACT_FLAG_INCONTACT,
@@ -1211,7 +1211,7 @@ static UINT rdpei_touch_cancel(RdpeiClientContext* context, INT32 externalId, IN
                                INT32* contactId)
 {
 	UINT rc = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	rc = rdpei_touch_process(context, externalId,
 	                         RDPINPUT_CONTACT_FLAG_UP | RDPINPUT_CONTACT_FLAG_CANCELED, x, y,
 	                         contactId, 0, ap);
@@ -1222,7 +1222,7 @@ static UINT rdpei_touch_raw_event(RdpeiClientContext* context, INT32 externalId,
                                   INT32* contactId, UINT32 flags, UINT32 fieldFlags, ...)
 {
 	UINT rc = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fieldFlags);
 	rc = rdpei_touch_process(context, externalId, flags, x, y, contactId, fieldFlags, ap);
 	va_end(ap);
@@ -1314,7 +1314,7 @@ static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UIN
 
 	if (contactPoint != NULL)
 	{
-		RDPINPUT_PEN_CONTACT contact = { 0 };
+		RDPINPUT_PEN_CONTACT contact = WINPR_C_ARRAY_INIT;
 
 		contact.x = x;
 		contact.y = y;
@@ -1365,7 +1365,7 @@ static UINT rdpei_pen_begin(RdpeiClientContext* context, INT32 externalId, UINT3
                             INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
@@ -1386,7 +1386,7 @@ static UINT rdpei_pen_update(RdpeiClientContext* context, INT32 externalId, UINT
                              INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
@@ -1406,7 +1406,7 @@ static UINT rdpei_pen_end(RdpeiClientContext* context, INT32 externalId, UINT32 
                           INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_UP | RDPINPUT_CONTACT_FLAG_INRANGE, fieldFlags,
@@ -1424,7 +1424,7 @@ static UINT rdpei_pen_hover_begin(RdpeiClientContext* context, INT32 externalId,
                                   INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
@@ -1444,7 +1444,7 @@ static UINT rdpei_pen_hover_update(RdpeiClientContext* context, INT32 externalId
                                    INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
@@ -1464,7 +1464,7 @@ static UINT rdpei_pen_hover_cancel(RdpeiClientContext* context, INT32 externalId
                                    INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
@@ -1479,7 +1479,7 @@ static UINT rdpei_pen_raw_event(RdpeiClientContext* context, INT32 externalId, U
                                 UINT32 fieldFlags, INT32 x, INT32 y, ...)
 {
 	UINT error = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId, contactFlags, fieldFlags, x, y, ap);

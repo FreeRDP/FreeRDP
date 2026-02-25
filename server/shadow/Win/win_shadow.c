@@ -95,7 +95,7 @@ static BOOL win_shadow_input_mouse_event(rdpShadowSubsystem* subsystem, rdpShado
                                          UINT16 flags, UINT16 x, UINT16 y)
 {
 	UINT rc = 1;
-	INPUT event = { 0 };
+	INPUT event = WINPR_C_ARRAY_INIT;
 	float width;
 	float height;
 
@@ -180,7 +180,7 @@ static BOOL win_shadow_input_extended_mouse_event(rdpShadowSubsystem* subsystem,
                                                   UINT16 y)
 {
 	UINT rc = 1;
-	INPUT event = { 0 };
+	INPUT event = WINPR_C_ARRAY_INIT;
 	float width;
 	float height;
 
@@ -426,7 +426,7 @@ static UINT32 win_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors
 	DWORD iDevNum = 0;
 	int numMonitors = 0;
 	MONITOR_DEF* monitor;
-	DISPLAY_DEVICE displayDevice = { 0 };
+	DISPLAY_DEVICE displayDevice = WINPR_C_ARRAY_INIT;
 
 	displayDevice.cb = sizeof(DISPLAY_DEVICE);
 

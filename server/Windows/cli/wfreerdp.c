@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 
 			for (int i = 0;; i++)
 			{
-				_TCHAR name[128] = { 0 };
+				_TCHAR name[128] = WINPR_C_ARRAY_INIT;
 				if (get_screen_info(i, name, ARRAYSIZE(name), &width, &height, &bpp) != 0)
 				{
 					if ((width * height * bpp) == 0)
@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
 
 		for (int i = 0;; i++)
 		{
-			_TCHAR name[128] = { 0 };
+			_TCHAR name[128] = WINPR_C_ARRAY_INIT;
 			if (get_screen_info(i, name, ARRAYSIZE(name), &width, &height, &bpp) != 0)
 			{
 				if ((width * height * bpp) == 0)

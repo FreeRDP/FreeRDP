@@ -168,7 +168,7 @@ static DWORD WINAPI rdpei_server_thread_func(LPVOID arg)
 {
 	RdpeiServerContext* context = (RdpeiServerContext*)arg;
 	RdpeiServerPrivate* priv = NULL;
-	HANDLE events[2] = { 0 };
+	HANDLE events[2] = WINPR_C_ARRAY_INIT;
 	DWORD nCount = 0;
 	UINT error = CHANNEL_RC_OK;
 	DWORD status = 0;

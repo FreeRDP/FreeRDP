@@ -315,7 +315,7 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 		break;
 		case PAKID_CORE_CLIENT_NAME:
 		{
-			char name[256] = { 0 };
+			char name[256] = WINPR_C_ARRAY_INIT;
 			UINT32 unicodeFlag = 0;
 			UINT32 codePage = 0;
 			UINT32 computerNameLen = 0;
@@ -414,7 +414,7 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 			           numCapabilities, pos);
 			for (UINT16 x = 0; x < numCapabilities; x++)
 			{
-				RDPDR_CAPABILITY_HEADER header = { 0 };
+				RDPDR_CAPABILITY_HEADER header = WINPR_C_ARRAY_INIT;
 				const UINT error = rdpdr_read_capset_header(log, s, &header);
 				if (error == CHANNEL_RC_OK)
 					Stream_Seek(s, header.CapabilityLength);
@@ -435,7 +435,7 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 
 			for (UINT32 x = 0; x < count; x++)
 			{
-				RdpdrDevice device = { 0 };
+				RdpdrDevice device = WINPR_C_ARRAY_INIT;
 
 				offset += 20;
 				if (pos >= offset)
@@ -661,7 +661,7 @@ const char* rdpdr_irp_mask2str(UINT32 ioCode1Mask, char* buffer, size_t len)
 		}
 	}
 
-	char number[16] = { 0 };
+	char number[16] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(number, sizeof(number), "}[0x%08" PRIx32 "]", ioCode1Mask);
 	if (!winpr_str_append(number, buffer, len, NULL))
 		return NULL;

@@ -375,7 +375,7 @@ static void log_(const char* tag, const char* msg, CK_RV rv, CK_ULONG index, CK_
 
 static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKeysState* state)
 {
-	CK_OBJECT_HANDLE slotObjects[MAX_KEYS_PER_SLOT] = { 0 };
+	CK_OBJECT_HANDLE slotObjects[MAX_KEYS_PER_SLOT] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(provider);
 
@@ -387,8 +387,8 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 	for (CK_ULONG i = 0; i < state->nslots; i++)
 	{
 		CK_SESSION_HANDLE session = (CK_SESSION_HANDLE)NULL;
-		CK_SLOT_INFO slotInfo = { 0 };
-		CK_TOKEN_INFO tokenInfo = { 0 };
+		CK_SLOT_INFO slotInfo = WINPR_C_ARRAY_INIT;
+		CK_TOKEN_INFO tokenInfo = WINPR_C_ARRAY_INIT;
 
 		WINPR_ASSERT(p11->C_GetSlotInfo);
 		CK_RV rv = p11->C_GetSlotInfo(state->slots[i], &slotInfo);
@@ -563,7 +563,7 @@ static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 
 static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG idLen)
 {
-	char asciiName[128] = { 0 };
+	char asciiName[128] = WINPR_C_ARRAY_INIT;
 	char* ptr = asciiName;
 	const CK_BYTE* bytePtr = NULL;
 
@@ -638,7 +638,7 @@ static size_t parseHex(const char* str, const char* end, CK_BYTE* target)
 static SECURITY_STATUS parseKeyName(LPCWSTR pszKeyName, CK_SLOT_ID* slotId, CK_BYTE* id,
                                     CK_ULONG* idLen)
 {
-	char asciiKeyName[128] = { 0 };
+	char asciiKeyName[128] = WINPR_C_ARRAY_INIT;
 	char* pos = NULL;
 
 	if (ConvertWCharToUtf8(pszKeyName, asciiKeyName, ARRAYSIZE(asciiKeyName)) < 0)
@@ -671,10 +671,10 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 {
 	NCryptP11ProviderHandle* provider = (NCryptP11ProviderHandle*)hProvider;
 	P11EnumKeysState* state = (P11EnumKeysState*)*ppEnumState;
-	CK_RV rv = { 0 };
-	CK_SLOT_ID currentSlot = { 0 };
+	CK_RV rv = WINPR_C_ARRAY_INIT;
+	CK_SLOT_ID currentSlot = WINPR_C_ARRAY_INIT;
 	CK_SESSION_HANDLE currentSession = (CK_SESSION_HANDLE)NULL;
-	char slotFilterBuffer[65] = { 0 };
+	char slotFilterBuffer[65] = WINPR_C_ARRAY_INIT;
 	char* slotFilter = NULL;
 	size_t slotFilterLen = 0;
 
@@ -688,7 +688,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		 * check whether pszScope is of the form \\.\<reader name>\ for filtering by
 		 * card reader
 		 */
-		char asciiScope[128 + 6 + 1] = { 0 };
+		char asciiScope[128 + 6 + 1] = WINPR_C_ARRAY_INIT;
 		size_t asciiScopeLen = 0;
 
 		if (ConvertWCharToUtf8(pszScope, asciiScope, ARRAYSIZE(asciiScope) - 1) < 0)
@@ -864,23 +864,23 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, const BYTE* piv_tag,
                                               BYTE* output, size_t output_len)
 {
-	CK_SLOT_INFO slot_info = { 0 };
+	CK_SLOT_INFO slot_info = WINPR_C_ARRAY_INIT;
 	CK_FUNCTION_LIST_PTR p11 = NULL;
 	WCHAR* reader = NULL;
 	SCARDCONTEXT context = 0;
 	SCARDHANDLE card = 0;
 	DWORD proto = 0;
 	const SCARD_IO_REQUEST* pci = NULL;
-	BYTE buf[258] = { 0 };
-	char container_name[PIV_CONTAINER_NAME_LEN + 1] = { 0 };
+	BYTE buf[258] = WINPR_C_ARRAY_INIT;
+	char container_name[PIV_CONTAINER_NAME_LEN + 1] = WINPR_C_ARRAY_INIT;
 	DWORD buf_len = 0;
 	SECURITY_STATUS ret = NTE_BAD_KEY;
-	WinPrAsn1Decoder dec = { .encoding = WINPR_ASN1_BER, { 0 } };
-	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec = WinPrAsn1Decoder_init();
+	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
 	size_t len = 0;
 	BYTE tag = 0;
 	BYTE* p = NULL;
-	wStream s = { 0 };
+	wStream s = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(key);
 	WINPR_ASSERT(piv_tag);
@@ -1214,7 +1214,7 @@ static SECURITY_STATUS NCryptP11OpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY
 {
 	SECURITY_STATUS ret = 0;
 	CK_SLOT_ID slotId = 0;
-	CK_BYTE keyCertId[64] = { 0 };
+	CK_BYTE keyCertId[64] = WINPR_C_ARRAY_INIT;
 	CK_ULONG keyCertIdLen = 0;
 	NCryptP11KeyHandle* keyHandle = NULL;
 

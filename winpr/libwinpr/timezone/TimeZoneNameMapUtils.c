@@ -49,7 +49,7 @@ typedef struct
 	TimeZoneNameMapEntry* entries;
 } TimeZoneNameMapContext;
 
-static TimeZoneNameMapContext tz_context = { 0 };
+static TimeZoneNameMapContext tz_context = WINPR_C_ARRAY_INIT;
 
 static void tz_entry_free(TimeZoneNameMapEntry* entry)
 {
@@ -61,13 +61,13 @@ static void tz_entry_free(TimeZoneNameMapEntry* entry)
 	free(entry->Id);
 	free(entry->StandardName);
 
-	const TimeZoneNameMapEntry empty = { 0 };
+	const TimeZoneNameMapEntry empty = WINPR_C_ARRAY_INIT;
 	*entry = empty;
 }
 
 static TimeZoneNameMapEntry tz_entry_clone(const TimeZoneNameMapEntry* entry)
 {
-	TimeZoneNameMapEntry clone = { 0 };
+	TimeZoneNameMapEntry clone = WINPR_C_ARRAY_INIT;
 	if (!entry)
 		return clone;
 
@@ -184,7 +184,7 @@ static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvconte
 	WINPR_UNUSED(pvcontext);
 	WINPR_UNUSED(once);
 
-	const TimeZoneNameMapContext empty = { 0 };
+	const TimeZoneNameMapContext empty = WINPR_C_ARRAY_INIT;
 	*context = empty;
 
 #if defined(WITH_TIMEZONE_FROM_FILE) && defined(WITH_WINPR_JSON)

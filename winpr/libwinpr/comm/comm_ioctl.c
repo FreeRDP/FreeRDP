@@ -54,7 +54,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
                                   DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
                                   LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	const SERIAL_DRIVER* pServerSerialDriver = NULL;
 
@@ -679,14 +679,14 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 int comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
 {
-	struct termios currentState = { 0 };
+	struct termios currentState = WINPR_C_ARRAY_INIT;
 	size_t count = 0;
 	do
 	{
 		const int src = tcsetattr(fd, optional_actions, termios_p);
 		if (src < 0)
 		{
-			char buffer[64] = { 0 };
+			char buffer[64] = WINPR_C_ARRAY_INIT;
 			CommLog_Print(WLOG_WARN, "[%" PRIuz "] tcsetattr failure, errno: %s [%d]", count,
 			              winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			return src;
@@ -696,7 +696,7 @@ int comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* ter
 		const int rrc = tcgetattr(fd, &currentState);
 		if (rrc < 0)
 		{
-			char buffer[64] = { 0 };
+			char buffer[64] = WINPR_C_ARRAY_INIT;
 			CommLog_Print(WLOG_WARN, "[%" PRIuz "] tcgetattr failure, errno: %s [%d]", count,
 			              winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			return rrc;
@@ -751,7 +751,7 @@ const char* comm_ioctl_modem_status_string(ULONG status, char* buffer, size_t si
 		}
 	}
 
-	char number[32] = { 0 };
+	char number[32] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(number, sizeof(number), "}[0x%08" PRIx32 "]", status);
 	winpr_str_append(number, buffer, size, "");
 	return buffer;

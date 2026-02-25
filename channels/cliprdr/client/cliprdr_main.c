@@ -142,8 +142,8 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 {
 	UINT32 version = 0;
 	UINT32 generalFlags = 0;
-	CLIPRDR_CAPABILITIES capabilities = { 0 };
-	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet = { 0 };
+	CLIPRDR_CAPABILITIES capabilities = WINPR_C_ARRAY_INIT;
+	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -255,7 +255,7 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s,
 static UINT cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, WINPR_ATTR_UNUSED wStream* s,
                                           UINT32 length, UINT16 flags)
 {
-	CLIPRDR_MONITOR_READY monitorReady = { 0 };
+	CLIPRDR_MONITOR_READY monitorReady = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -297,7 +297,7 @@ static UINT cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, WINPR_ATTR_UNU
 static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 length,
                                                  UINT16 flags)
 {
-	CLIPRDR_FILE_CONTENTS_REQUEST request = { 0 };
+	CLIPRDR_FILE_CONTENTS_REQUEST request = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -337,7 +337,7 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream
 static UINT cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 length,
                                                   UINT16 flags)
 {
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
+	CLIPRDR_FILE_CONTENTS_RESPONSE response = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -370,7 +370,7 @@ static UINT cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStrea
 static UINT cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UINT32 length,
                                           UINT16 flags)
 {
-	CLIPRDR_LOCK_CLIPBOARD_DATA lockClipboardData = { 0 };
+	CLIPRDR_LOCK_CLIPBOARD_DATA lockClipboardData = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -403,7 +403,7 @@ static UINT cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UI
 static UINT cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UINT32 length,
                                             UINT16 flags)
 {
-	CLIPRDR_UNLOCK_CLIPBOARD_DATA unlockClipboardData = { 0 };
+	CLIPRDR_UNLOCK_CLIPBOARD_DATA unlockClipboardData = WINPR_C_ARRAY_INIT;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -454,8 +454,8 @@ static UINT cliprdr_order_recv(LPVOID userdata, wStream* s)
 	if (!Stream_CheckAndLogRequiredLengthWLog(cliprdr->log, s, dataLen))
 		return ERROR_INVALID_DATA;
 
-	char buffer1[64] = { 0 };
-	char buffer2[64] = { 0 };
+	char buffer1[64] = WINPR_C_ARRAY_INIT;
+	char buffer2[64] = WINPR_C_ARRAY_INIT;
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "msgType: %s (%" PRIu16 "), msgFlags: %s dataLen: %" PRIu32 "",
 	           CB_MSG_TYPE_STRING(msgType, buffer1, sizeof(buffer1)), msgType,

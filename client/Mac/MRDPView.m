@@ -127,7 +127,7 @@ DWORD WINAPI mac_client_thread(void *param)
 	{
 		int status;
 		DWORD rc;
-		HANDLE events[16] = { 0 };
+		HANDLE events[16] = WINPR_C_ARRAY_INIT;
 		HANDLE inputEvent;
 		DWORD nCount;
 		DWORD nCountTmp;
@@ -906,7 +906,7 @@ BOOL mac_pre_connect(freerdp *instance)
 BOOL mac_post_connect(freerdp *instance)
 {
 	rdpGdi *gdi;
-	rdpPointer rdp_pointer = { 0 };
+	rdpPointer rdp_pointer = WINPR_C_ARRAY_INIT;
 	mfContext *mfc;
 	MRDPView *view;
 
@@ -1151,7 +1151,7 @@ DWORD mac_verify_certificate_ex(freerdp *instance, const char *host, UINT16 port
 	MRDPView *view = (MRDPView *)mfc->view;
 	CertificateDialog *dialog = [CertificateDialog new];
 	const char *type = "RDP-Server";
-	char hostname[8192] = { 0 };
+	char hostname[8192] = WINPR_C_ARRAY_INIT;
 
 	if (flags & VERIFY_CERT_FLAG_GATEWAY)
 		type = "RDP-Gateway";

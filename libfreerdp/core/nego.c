@@ -247,7 +247,7 @@ BOOL nego_connect(rdpNego* nego)
 	}
 
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(nego->log, WLOG_DEBUG, "Negotiated %s security",
 		           nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
 	}
@@ -277,7 +277,7 @@ BOOL nego_connect(rdpNego* nego)
 	/* finally connect security layer (if not already done) */
 	if (!nego_security_connect(nego))
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(nego->log, WLOG_DEBUG, "Failed to connect with %s security",
 		           nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
 		return FALSE;
@@ -810,7 +810,7 @@ int nego_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra
 				if (!nego_process_negotiation_response(nego, s))
 					return -1;
 				{
-					char buffer[64] = { 0 };
+					char buffer[64] = WINPR_C_ARRAY_INIT;
 					WLog_Print(
 					    nego->log, WLOG_DEBUG, "selected_protocol: %s",
 					    nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
@@ -1132,7 +1132,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	}
 
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(nego->log, WLOG_DEBUG, "RequestedProtocols: %s",
 		           nego_protocol_to_str(nego->RequestedProtocols, buffer, sizeof(buffer)));
 	}
@@ -1175,7 +1175,7 @@ static BOOL nego_process_correlation_info(WINPR_ATTR_UNUSED rdpNego* nego, wStre
 	UINT8 type = 0;
 	UINT8 flags = 0;
 	UINT16 length = 0;
-	BYTE correlationId[16] = { 0 };
+	BYTE correlationId[16] = WINPR_C_ARRAY_INIT;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(nego->log, s, 36))
 	{
@@ -1311,7 +1311,7 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 	}
 
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(nego->log, WLOG_DEBUG, "RDP_NEG_REQ: RequestedProtocol: %s",
 		           nego_protocol_to_str(nego->RequestedProtocols, buffer, sizeof(buffer)));
 	}
@@ -1324,7 +1324,7 @@ static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 	const uint32_t mask =
 	    (EXTENDED_CLIENT_DATA_SUPPORTED | DYNVC_GFX_PROTOCOL_SUPPORTED | RDP_NEGRSP_RESERVED |
 	     RESTRICTED_ADMIN_MODE_SUPPORTED | REDIRECTED_AUTHENTICATION_MODE_SUPPORTED);
-	static char buffer[1024] = { 0 };
+	static char buffer[1024] = WINPR_C_ARRAY_INIT;
 
 	(void)_snprintf(buffer, ARRAYSIZE(buffer), "[0x%02" PRIx32 "] ", flags);
 	if (flags & EXTENDED_CLIENT_DATA_SUPPORTED)
@@ -1339,7 +1339,7 @@ static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 		winpr_str_append("REDIRECTED_AUTHENTICATION_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
 	if (flags & ~mask)
 	{
-		char buffer2[32] = { 0 };
+		char buffer2[32] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(buffer2, sizeof(buffer2), "UNKNOWN[0x%04" PRIx32 "]", flags & ~mask);
 		winpr_str_append(buffer2, buffer, sizeof(buffer), "|");
 	}
@@ -1404,7 +1404,7 @@ static void nego_disable_all_except(rdpNego* nego, uint32_t what)
 {
 	WINPR_ASSERT(nego);
 
-	char buffer[32] = { 0 };
+	char buffer[32] = WINPR_C_ARRAY_INIT;
 	WLog_Print(nego->log, WLOG_DEBUG, "Disabling all modes except %s",
 	           nego_protocol_to_str(what, buffer, sizeof(buffer)));
 
@@ -2084,7 +2084,7 @@ const char* nego_protocol_to_str(UINT32 protocol, char* buffer, size_t size)
 {
 	const UINT32 mask = ~(PROTOCOL_SSL | PROTOCOL_HYBRID | PROTOCOL_RDSTLS | PROTOCOL_HYBRID_EX |
 	                      PROTOCOL_RDSAAD | PROTOCOL_FAILED_NEGO);
-	char str[48] = { 0 };
+	char str[48] = WINPR_C_ARRAY_INIT;
 
 	if (protocol & PROTOCOL_SSL)
 		(void)winpr_str_append("SSL", str, sizeof(str), "|");

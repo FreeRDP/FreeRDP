@@ -70,7 +70,7 @@ static UINT audin_server_recv_version(audin_server_context* context, wStream* s,
                                       const SNDIN_PDU* header)
 {
 	audin_server* audin = (audin_server*)context;
-	SNDIN_VERSION pdu = { 0 };
+	SNDIN_VERSION pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -113,7 +113,7 @@ static UINT audin_server_recv_formats(audin_server_context* context, wStream* s,
                                       const SNDIN_PDU* header)
 {
 	audin_server* audin = (audin_server*)context;
-	SNDIN_FORMATS pdu = { 0 };
+	SNDIN_FORMATS pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -184,7 +184,7 @@ static UINT audin_server_recv_open_reply(audin_server_context* context, wStream*
                                          const SNDIN_PDU* header)
 {
 	audin_server* audin = (audin_server*)context;
-	SNDIN_OPEN_REPLY pdu = { 0 };
+	SNDIN_OPEN_REPLY pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -209,7 +209,7 @@ static UINT audin_server_recv_data_incoming(audin_server_context* context,
                                             WINPR_ATTR_UNUSED wStream* s, const SNDIN_PDU* header)
 {
 	audin_server* audin = (audin_server*)context;
-	SNDIN_DATA_INCOMING pdu = { 0 };
+	SNDIN_DATA_INCOMING pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -229,8 +229,8 @@ static UINT audin_server_recv_data(audin_server_context* context, wStream* s,
                                    const SNDIN_PDU* header)
 {
 	audin_server* audin = (audin_server*)context;
-	SNDIN_DATA pdu = { 0 };
-	wStream dataBuffer = { 0 };
+	SNDIN_DATA pdu = WINPR_C_ARRAY_INIT;
+	wStream dataBuffer = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -251,7 +251,7 @@ static UINT audin_server_recv_format_change(audin_server_context* context, wStre
                                             const SNDIN_PDU* header)
 {
 	audin_server* audin = (audin_server*)context;
-	SNDIN_FORMATCHANGE pdu = { 0 };
+	SNDIN_FORMATCHANGE pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -277,7 +277,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 	wStream* s = NULL;
 	void* buffer = NULL;
 	DWORD nCount = 0;
-	HANDLE events[8] = { 0 };
+	HANDLE events[8] = WINPR_C_ARRAY_INIT;
 	BOOL ready = FALSE;
 	HANDLE ChannelEvent = NULL;
 	DWORD BytesReturned = 0;
@@ -348,7 +348,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 
 	if (ready)
 	{
-		SNDIN_VERSION version = { 0 };
+		SNDIN_VERSION version = WINPR_C_ARRAY_INIT;
 
 		version.Version = audin->context.serverVersion;
 
@@ -361,7 +361,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 
 	while (ready)
 	{
-		SNDIN_PDU header = { 0 };
+		SNDIN_PDU header = WINPR_C_ARRAY_INIT;
 
 		if ((status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE)) == WAIT_OBJECT_0)
 			break;
@@ -717,7 +717,7 @@ static UINT audin_server_receive_version_default(audin_server_context* audin_ctx
                                                  const SNDIN_VERSION* version)
 {
 	audin_server* audin = (audin_server*)audin_ctx;
-	SNDIN_FORMATS formats = { 0 };
+	SNDIN_FORMATS formats = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(audin);
 	WINPR_ASSERT(version);
@@ -738,7 +738,7 @@ static UINT audin_server_receive_version_default(audin_server_context* audin_ctx
 
 static UINT send_open(audin_server* audin)
 {
-	SNDIN_OPEN open = { 0 };
+	SNDIN_OPEN open = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(audin);
 

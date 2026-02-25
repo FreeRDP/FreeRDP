@@ -41,7 +41,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	UINT rc = ERROR_INTERNAL_ERROR;
 	UINT32 surfaceX = 0;
 	UINT32 surfaceY = 0;
-	RECTANGLE_16 surfaceRect = { 0 };
+	RECTANGLE_16 surfaceRect = WINPR_C_ARRAY_INIT;
 	UINT32 nbRects = 0;
 	const RECTANGLE_16* rects = NULL;
 
@@ -200,8 +200,8 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 {
 	UINT16 count = 0;
 	UINT status = ERROR_INTERNAL_ERROR;
-	RECTANGLE_16 invalidRect = { 0 };
-	RECTANGLE_16 intersection = { 0 };
+	RECTANGLE_16 invalidRect = WINPR_C_ARRAY_INIT;
+	RECTANGLE_16 intersection = WINPR_C_ARRAY_INIT;
 	UINT16* pSurfaceIds = NULL;
 	RdpgfxClientContext* context = NULL;
 
@@ -227,7 +227,7 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 	}
 	for (UINT32 index = 0; index < count; index++)
 	{
-		RECTANGLE_16 surfaceRect = { 0 };
+		RECTANGLE_16 surfaceRect = WINPR_C_ARRAY_INIT;
 		xfGfxSurface* surface = (xfGfxSurface*)context->GetSurfaceData(context, pSurfaceIds[index]);
 
 		if (!surface || (!surface->gdi.outputMapped && !surface->gdi.windowMapped))

@@ -126,7 +126,7 @@ error_out:
 static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error = 0;
-	RDPGFX_AVC420_BITMAP_STREAM h264 = { 0 };
+	RDPGFX_AVC420_BITMAP_STREAM h264 = WINPR_C_ARRAY_INIT;
 	RdpgfxClientContext* context = gfx->context;
 	wStream* s = Stream_New(cmd->data, cmd->length);
 
@@ -173,7 +173,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	size_t pos1 = 0;
 	size_t pos2 = 0;
 
-	RDPGFX_AVC444_BITMAP_STREAM h264 = { 0 };
+	RDPGFX_AVC444_BITMAP_STREAM h264 = WINPR_C_ARRAY_INIT;
 	RdpgfxClientContext* context = gfx->context;
 	wStream* s = Stream_New(cmd->data, cmd->length);
 

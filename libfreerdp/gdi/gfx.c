@@ -867,7 +867,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	else
 	{
 		UINT32 startOffsetX = 0;
-		RECTANGLE_16 rect = { 0 };
+		RECTANGLE_16 rect = WINPR_C_ARRAY_INIT;
 		rect.left = (UINT16)MIN(UINT16_MAX, cmd->left);
 		rect.top = (UINT16)MIN(UINT16_MAX, cmd->top);
 		rect.right = (UINT16)MIN(UINT16_MAX, cmd->left + cmd->width);
@@ -938,7 +938,7 @@ static void dump_cmd(const RDPGFX_SURFACE_COMMAND* cmd, UINT32 frameId)
 	static UINT64 xxx = 0;
 	const char* path = "/tmp/dump/";
 	WINPR_ASSERT(cmd);
-	char fname[1024] = { 0 };
+	char fname[1024] = WINPR_C_ARRAY_INIT;
 
 	snprintf(fname, sizeof(fname), "%s/%08" PRIx64 ".raw", path, xxx++);
 	FILE* fp = fopen(fname, "w");
@@ -1291,7 +1291,7 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context, const RDPGFX_SOLID_FILL_
 {
 	UINT status = ERROR_INTERNAL_ERROR;
 	BYTE a = 0xff;
-	RECTANGLE_16 invalidRect = { 0 };
+	RECTANGLE_16 invalidRect = WINPR_C_ARRAY_INIT;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 
 	EnterCriticalSection(&context->mux);

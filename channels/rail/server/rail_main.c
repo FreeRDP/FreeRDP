@@ -63,7 +63,7 @@ static UINT rail_send(RailServerContext* context, wStream* s, ULONG length)
  */
 static UINT rail_server_send_pdu(RailServerContext* context, wStream* s, UINT16 orderType)
 {
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	UINT16 orderLength = 0;
 
 	if (!context || !s)
@@ -653,7 +653,7 @@ static UINT rail_read_client_status_order(wStream* s, RAIL_CLIENT_STATUS_ORDER* 
  */
 static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec, char* args[])
 {
-	RAIL_EXEC_ORDER order = { 0 };
+	RAIL_EXEC_ORDER order = WINPR_C_ARRAY_INIT;
 	UINT16 exeLen = 0;
 	UINT16 workLen = 0;
 	UINT16 argLen = 0;
@@ -950,8 +950,8 @@ static UINT rail_recv_client_client_status_order(RailServerContext* context,
 static UINT rail_recv_client_exec_order(RailServerContext* context, wStream* s)
 {
 	UINT error = 0;
-	char* args[3] = { 0 };
-	RAIL_EXEC_ORDER exec = { 0 };
+	char* args[3] = WINPR_C_ARRAY_INIT;
+	RAIL_EXEC_ORDER exec = WINPR_C_ARRAY_INIT;
 
 	if (!context || !s)
 		return ERROR_INVALID_PARAMETER;
@@ -1573,7 +1573,7 @@ void rail_server_set_handshake_ex_flags(RailServerContext* context, DWORD flags)
 
 UINT rail_server_handle_messages(RailServerContext* context)
 {
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	UINT status = CHANNEL_RC_OK;
 	DWORD bytesReturned = 0;
 	UINT16 orderType = 0;
@@ -1645,7 +1645,7 @@ UINT rail_server_handle_messages(RailServerContext* context)
 
 		case TS_RAIL_ORDER_SYSPARAM:
 		{
-			RAIL_SYSPARAM_ORDER sysparam = { 0 };
+			RAIL_SYSPARAM_ORDER sysparam = WINPR_C_ARRAY_INIT;
 			return rail_recv_client_sysparam_order(context, &sysparam, s);
 		}
 

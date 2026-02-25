@@ -39,8 +39,8 @@
 #endif
 
 static INIT_ONCE s_winpr_app_details_once = INIT_ONCE_STATIC_INIT;
-static char s_winpr_vendor_string[MAX_PATH] = { 0 };
-static char s_winpr_product_string[MAX_PATH] = { 0 };
+static char s_winpr_vendor_string[MAX_PATH] = WINPR_C_ARRAY_INIT;
+static char s_winpr_product_string[MAX_PATH] = WINPR_C_ARRAY_INIT;
 static SSIZE_T s_winpr_version = -1;
 static BOOL s_winpr_app_details_are_custom = FALSE;
 

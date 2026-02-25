@@ -68,7 +68,7 @@ typedef struct comm_device COMM_DEVICE;
 /* _CommDevices is a NULL-terminated array with a maximum of COMM_DEVICE_MAX COMM_DEVICE */
 #define COMM_DEVICE_MAX 128
 static COMM_DEVICE** sCommDevices = NULL;
-static CRITICAL_SECTION sCommDevicesLock = { 0 };
+static CRITICAL_SECTION sCommDevicesLock = WINPR_C_ARRAY_INIT;
 
 static pthread_once_t sCommInitialized = PTHREAD_ONCE_INIT;
 
@@ -205,7 +205,7 @@ void CommLog_PrintEx(DWORD level, const char* file, size_t line, const char* fkt
 
 	if (!WLog_IsLevelActive(sLog, level))
 		return;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fmt);
 	WLog_PrintTextMessageVA(sLog, level, line, file, fkt, fmt, ap);
 	va_end(ap);
@@ -510,7 +510,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	lpLocalDcb->XoffLim = WINPR_ASSERTING_INT_CAST(WORD, handflow.XoffLimit);
 
 	{
-		SERIAL_LINE_CONTROL lineControl = { 0 };
+		SERIAL_LINE_CONTROL lineControl = WINPR_C_ARRAY_INIT;
 
 		if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_LINE_CONTROL, NULL, 0, &lineControl,
 		                         sizeof(SERIAL_LINE_CONTROL), &bytesReturned, NULL))
@@ -525,7 +525,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	{
-		SERIAL_CHARS serialChars = { 0 };
+		SERIAL_CHARS serialChars = WINPR_C_ARRAY_INIT;
 
 		if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_CHARS, NULL, 0, &serialChars,
 		                         sizeof(SERIAL_CHARS), &bytesReturned, NULL))
@@ -561,7 +561,7 @@ error_handle:
  */
 BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 {
-	struct termios upcomingTermios = { 0 };
+	struct termios upcomingTermios = WINPR_C_ARRAY_INIT;
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
 	DWORD bytesReturned = 0;
 
@@ -624,7 +624,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 		return FALSE;
 	}
 
-	SERIAL_HANDFLOW handflow = { 0 };
+	SERIAL_HANDFLOW handflow = WINPR_C_ARRAY_INIT;
 
 	if (lpDCB->fOutxCtsFlow)
 	{
@@ -1262,10 +1262,10 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
                        LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                        DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	CHAR devicePath[MAX_PATH] = { 0 };
-	struct stat deviceStat = { 0 };
+	CHAR devicePath[MAX_PATH] = WINPR_C_ARRAY_INIT;
+	struct stat deviceStat = WINPR_C_ARRAY_INIT;
 	WINPR_COMM* pComm = NULL;
-	struct termios upcomingTermios = { 0 };
+	struct termios upcomingTermios = WINPR_C_ARRAY_INIT;
 
 	if (!CommInitialized())
 		return INVALID_HANDLE_VALUE;
@@ -1808,7 +1808,7 @@ static BOOL CommStatusErrorEx(WINPR_COMM* pComm, unsigned long int ctl, const ch
 	WINPR_ASSERT(pComm);
 	BOOL rc = pComm->permissive ? TRUE : FALSE;
 	const DWORD level = rc ? WLOG_DEBUG : WLOG_WARN;
-	char ebuffer[256] = { 0 };
+	char ebuffer[256] = WINPR_C_ARRAY_INIT;
 	const char* str = CommIoCtlToStr(ctl);
 
 	if (CommInitialized())
@@ -1920,7 +1920,7 @@ const char* CommSerialEvString(ULONG status, char* buffer, size_t size)
 		}
 	}
 
-	char number[32] = { 0 };
+	char number[32] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(number, sizeof(number), "}[0x%08" PRIx32 "]", status);
 	winpr_str_append(number, buffer, size, "");
 	return buffer;

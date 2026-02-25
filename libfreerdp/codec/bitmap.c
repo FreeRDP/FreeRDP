@@ -38,7 +38,7 @@ struct count
 
 static inline void reset_counts(struct count* counts)
 {
-	const struct count empty = { 0 };
+	const struct count empty = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(counts);
 	*counts = empty;
 }
@@ -454,12 +454,12 @@ static inline SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
                                                  UINT32 start_line, wStream* WINPR_RESTRICT temp_s,
                                                  UINT32 e)
 {
-	uint8_t fom_mask[8192] = { 0 }; /* good for up to 64K bitmap */
+	uint8_t fom_mask[8192] = WINPR_C_ARRAY_INIT; /* good for up to 64K bitmap */
 	SSIZE_T lines_sent = 0;
 	UINT16 count = 0;
 	UINT32 last_pixel = 0;
 	UINT32 last_ypixel = 0;
-	struct count counts = { 0 };
+	struct count counts = WINPR_C_ARRAY_INIT;
 	UINT32 bicolor1 = 0;
 	UINT32 bicolor2 = 0;
 	UINT32 end = width + e;
@@ -777,12 +777,12 @@ static inline SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
                                                  UINT32 byte_limit, UINT32 start_line,
                                                  wStream* WINPR_RESTRICT temp_s, UINT32 e)
 {
-	uint8_t fom_mask[8192] = { 0 }; /* good for up to 64K bitmap */
+	uint8_t fom_mask[8192] = WINPR_C_ARRAY_INIT; /* good for up to 64K bitmap */
 	SSIZE_T lines_sent = 0;
 	UINT16 count = 0;
 	UINT16 last_pixel = 0;
 	UINT16 last_ypixel = 0;
-	struct count counts = { 0 };
+	struct count counts = WINPR_C_ARRAY_INIT;
 	UINT16 bicolor1 = 0;
 	UINT16 bicolor2 = 0;
 	UINT32 end = width + e;

@@ -571,7 +571,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
 		UINT32 numMonitors = 0;
-		MONITOR_DEF monitors[16] = { 0 };
+		MONITOR_DEF monitors[16] = WINPR_C_ARRAY_INIT;
 		numMonitors = shadow_enum_monitors(monitors, 16);
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -626,7 +626,7 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 
 	while (running)
 	{
-		HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD nCount = 0;
 		events[nCount++] = server->StopEvent;
 		nCount += listener->GetEventHandles(listener, &events[nCount], ARRAYSIZE(events) - nCount);

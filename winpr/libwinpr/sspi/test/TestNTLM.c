@@ -474,7 +474,7 @@ static int test_ntlm_server_authenticate(const struct test_input_t* targ, TEST_N
 
 	if (status == SEC_I_CONTINUE_NEEDED)
 	{
-		SecPkgContext_AuthNtlmHash AuthNtlmHash = { 0 };
+		SecPkgContext_AuthNtlmHash AuthNtlmHash = WINPR_C_ARRAY_INIT;
 
 		if (ntlm->UseNtlmV2Hash)
 		{
@@ -577,9 +577,9 @@ static BOOL test_default(const struct test_input_t* arg)
 
 	if (!arg->dynamic)
 	{
-		SecPkgContext_AuthNtlmTimestamp AuthNtlmTimestamp = { 0 };
-		SecPkgContext_AuthNtlmClientChallenge AuthNtlmClientChallenge = { 0 };
-		SecPkgContext_AuthNtlmServerChallenge AuthNtlmServerChallenge = { 0 };
+		SecPkgContext_AuthNtlmTimestamp AuthNtlmTimestamp = WINPR_C_ARRAY_INIT;
+		SecPkgContext_AuthNtlmClientChallenge AuthNtlmClientChallenge = WINPR_C_ARRAY_INIT;
+		SecPkgContext_AuthNtlmServerChallenge AuthNtlmServerChallenge = WINPR_C_ARRAY_INIT;
 		CopyMemory(AuthNtlmTimestamp.Timestamp, TEST_NTLM_TIMESTAMP, 8);
 		AuthNtlmTimestamp.ChallengeOrResponse = TRUE;
 		SECURITY_STATUS rc = client->table->SetContextAttributes(
@@ -643,9 +643,9 @@ static BOOL test_default(const struct test_input_t* arg)
 
 	if (!arg->dynamic)
 	{
-		SecPkgContext_AuthNtlmTimestamp AuthNtlmTimestamp = { 0 };
-		SecPkgContext_AuthNtlmClientChallenge AuthNtlmClientChallenge = { 0 };
-		SecPkgContext_AuthNtlmServerChallenge AuthNtlmServerChallenge = { 0 };
+		SecPkgContext_AuthNtlmTimestamp AuthNtlmTimestamp = WINPR_C_ARRAY_INIT;
+		SecPkgContext_AuthNtlmClientChallenge AuthNtlmClientChallenge = WINPR_C_ARRAY_INIT;
+		SecPkgContext_AuthNtlmServerChallenge AuthNtlmServerChallenge = WINPR_C_ARRAY_INIT;
 		CopyMemory(AuthNtlmTimestamp.Timestamp, TEST_NTLM_TIMESTAMP, 8);
 		AuthNtlmTimestamp.ChallengeOrResponse = TRUE;
 		SECURITY_STATUS rc = client->table->SetContextAttributes(
@@ -676,7 +676,7 @@ static BOOL test_default(const struct test_input_t* arg)
 
 	if (!arg->dynamic)
 	{
-		SecPkgContext_AuthNtlmMessage AuthNtlmMessage = { 0 };
+		SecPkgContext_AuthNtlmMessage AuthNtlmMessage = WINPR_C_ARRAY_INIT;
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_CHALLENGE) - 1;
 		free(pSecBuffer->pvBuffer);
 		pSecBuffer->pvBuffer = malloc(pSecBuffer->cbBuffer);

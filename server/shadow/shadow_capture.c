@@ -234,7 +234,7 @@ int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1, UINT32
 	UINT32 b = 0;
 	const size_t bppA = FreeRDPGetBytesPerPixel(format1);
 	const size_t bppB = FreeRDPGetBytesPerPixel(format2);
-	const RECTANGLE_16 empty = { 0 };
+	const RECTANGLE_16 empty = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(rect);
 
 	*rect = empty;

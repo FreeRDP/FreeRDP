@@ -136,7 +136,7 @@ static void dyn_log_(wLog* log, DWORD level, const pServerDynamicChannelContext*
 	                     getDirection(isBackData), channelName, drdynvc_get_packet_type(cmd),
 	                     channelId);
 
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fmt);
 	(void)winpr_vasprintf(&msg, &msglen, fmt, ap);
 	va_end(ap);
@@ -374,7 +374,7 @@ static PfChannelResult DynvcTrackerHandleCreateBack(ChannelStateTracker* tracker
                                                     DynChannelContext* dynChannelContext,
                                                     UINT64 dynChannelId)
 {
-	proxyChannelDataEventInfo dev = { 0 };
+	proxyChannelDataEventInfo dev = WINPR_C_ARRAY_INIT;
 	const char* name = Stream_ConstPointer(s);
 	const size_t nameLen = Stream_GetRemainingLength(s);
 	const size_t len = strnlen(name, nameLen);
@@ -383,7 +383,7 @@ static PfChannelResult DynvcTrackerHandleCreateBack(ChannelStateTracker* tracker
 
 	if ((len == 0) || (len == nameLen) || (dynChannelId > UINT16_MAX))
 	{
-		char namebuffer[64] = { 0 };
+		char namebuffer[64] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(namebuffer, sizeof(namebuffer) - 1, "%s", name);
 
 		DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd, isBackData,

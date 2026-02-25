@@ -4,7 +4,7 @@
 
 int TestGetNativeSystemInfo(int argc, char* argv[])
 {
-	SYSTEM_INFO sysinfo = { 0 };
+	SYSTEM_INFO sysinfo = WINPR_C_ARRAY_INIT;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

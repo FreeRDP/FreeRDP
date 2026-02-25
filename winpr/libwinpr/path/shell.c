@@ -401,7 +401,7 @@ char* GetKnownSubPath(eKnownPathTypes id, const char* path)
 
 char* GetKnownSubPathV(eKnownPathTypes id, const char* path, ...)
 {
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 
 	va_start(ap, path);
 	char* str = GetKnownSubPathVA(id, path, ap);
@@ -455,7 +455,7 @@ char* GetEnvironmentSubPath(char* name, const char* path)
 
 char* GetEnvironmentSubPathV(char* name, const char* path, ...)
 {
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, path);
 	char* str = GetEnvironmentSubPathVA(name, path, ap);
 	va_end(ap);
@@ -483,7 +483,7 @@ char* GetCombinedPath(const char* basePath, const char* subPathFmt)
 
 char* GetCombinedPathV(const char* basePath, const char* subPathFmt, ...)
 {
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 
 	va_start(ap, subPathFmt);
 	char* str = GetCombinedPathVA(basePath, subPathFmt, ap);

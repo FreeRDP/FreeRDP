@@ -60,7 +60,7 @@ BOOL ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
 	WINPR_ASSERT(versionInfo);
 
 #if defined(WITH_WINPR_DEPRECATED)
-	OSVERSIONINFOA osVersionInfo = { 0 };
+	OSVERSIONINFOA osVersionInfo = WINPR_C_ARRAY_INIT;
 	osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
 	if (!GetVersionExA(&osVersionInfo))
 		return FALSE;
@@ -248,7 +248,7 @@ BOOL ntlm_write_ntlm_v2_response(wStream* s, const NTLMv2_RESPONSE* response)
 
 void ntlm_current_time(BYTE* timestamp)
 {
-	FILETIME ft = { 0 };
+	FILETIME ft = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(timestamp);
 
@@ -503,7 +503,7 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 SECURITY_STATUS ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 {
 	BYTE* response = NULL;
-	BYTE value[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE value[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 
@@ -550,8 +550,8 @@ SECURITY_STATUS ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 
 SECURITY_STATUS ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 {
-	SecBuffer ntlm_v2_temp = { 0 };
-	SecBuffer ntlm_v2_temp_chal = { 0 };
+	SecBuffer ntlm_v2_temp = WINPR_C_ARRAY_INIT;
+	SecBuffer ntlm_v2_temp_chal = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 
@@ -921,7 +921,7 @@ BOOL ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT
 		if (context->MessageIntegrityCheckOffset > 0)
 		{
 			const BYTE* auth = (BYTE*)context->AuthenticateMessage.pvBuffer;
-			const BYTE data[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+			const BYTE data[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 			const size_t rest = context->MessageIntegrityCheckOffset + sizeof(data);
 
 			WINPR_ASSERT(rest <= context->AuthenticateMessage.cbBuffer);

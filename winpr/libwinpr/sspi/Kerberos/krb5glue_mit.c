@@ -176,7 +176,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 		}
 		if (krb_settings->kdcUrl && (strnlen(krb_settings->kdcUrl, 2) > 0))
 		{
-			const char* names[4] = { 0 };
+			const char* names[4] = WINPR_C_ARRAY_INIT;
 			char* realm = NULL;
 			char* kdc_url = NULL;
 			size_t size = 0;

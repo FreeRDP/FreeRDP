@@ -240,8 +240,8 @@ static const char* rdg_pkt_type_to_string(int type)
 
 static const char* flags_to_string(UINT32 flags, const t_flag_mapping* map, size_t elements)
 {
-	static char buffer[1024] = { 0 };
-	char fields[12] = { 0 };
+	static char buffer[1024] = WINPR_C_ARRAY_INIT;
+	char fields[12] = WINPR_C_ARRAY_INIT;
 
 	for (size_t x = 0; x < elements; x++)
 	{
@@ -744,7 +744,7 @@ static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* r
 	size_t len = 0;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
-	SecBuffer authToken = { 0 };
+	SecBuffer authToken = WINPR_C_ARRAY_INIT;
 	int rc = 0;
 
 	if (!auth || !response)
@@ -789,7 +789,7 @@ static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* r
 static BOOL rdg_skip_seed_payload(rdpContext* context, rdpTls* tls, size_t lastResponseLength,
                                   rdg_http_encoding_context* transferEncoding)
 {
-	BYTE seed_payload[10] = { 0 };
+	BYTE seed_payload[10] = WINPR_C_ARRAY_INIT;
 	const size_t size = sizeof(seed_payload);
 
 	/* Per [MS-TSGU] 3.3.5.1 step 4, after final OK response RDG server sends
@@ -1021,7 +1021,7 @@ static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
 {
 	INT32 errorCode = 0;
 	UINT16 authBlobLen = 0;
-	SecBuffer authToken = { 0 };
+	SecBuffer authToken = WINPR_C_ARRAY_INIT;
 	BYTE* authTokenData = NULL;
 
 	WINPR_ASSERT(rdg);
@@ -1245,7 +1245,7 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 {
 	rdpContext* context = rdg->context;
 	rdpSettings* settings = context->settings;
-	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
+	SEC_WINNT_AUTH_IDENTITY identity = WINPR_C_ARRAY_INIT;
 	int rc = 0;
 
 	rdg->auth = credssp_auth_new(context);
@@ -1412,7 +1412,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
                                           const char* peerAddress, UINT32 timeout,
                                           BOOL* rpcFallback)
 {
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	HttpResponse* response = NULL;
 
 	if (!rdg_tls_connect(rdg, tls, peerAddress, timeout))
@@ -1725,7 +1725,7 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	maskingKey.u32 = (maskingKey.u32 & 0xffff) << 16 | (maskingKey.u32 >> 16);
 
 	WINPR_ASSERT(rdg->tlsOut);
-	wStream sPacket = { 0 };
+	wStream sPacket = WINPR_C_ARRAY_INIT;
 	Stream_StaticConstInit(&sPacket, buf, (size_t)isize);
 	if (!websocket_context_mask_and_send(rdg->tlsOut->bio, sWS, &sPacket, maskingKey.u32))
 		return -1;
@@ -1747,7 +1747,7 @@ static int rdg_write_chunked_data_packet(rdpRdg* rdg, const BYTE* buf, int isize
 		return 0;
 
 	const size_t packetSize = size + 10;
-	char chunkSize[11] = { 0 };
+	char chunkSize[11] = WINPR_C_ARRAY_INIT;
 	(void)sprintf_s(chunkSize, sizeof(chunkSize), "%" PRIxz "\r\n", packetSize);
 	sChunk = Stream_New(NULL, strnlen(chunkSize, sizeof(chunkSize)) + packetSize + 2);
 
@@ -1951,7 +1951,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 
 static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 {
-	RdgPacketHeader header = { 0 };
+	RdgPacketHeader header = WINPR_C_ARRAY_INIT;
 	size_t readCount = 0;
 	size_t readSize = 0;
 	int status = 0;

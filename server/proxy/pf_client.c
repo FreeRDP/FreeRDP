@@ -397,7 +397,7 @@ static BOOL pf_client_load_channels(freerdp* instance)
 			for (; x < size;)
 			{
 				CHANNEL_DEF* cur = &channels[x];
-				proxyChannelDataEventInfo dev = { 0 };
+				proxyChannelDataEventInfo dev = WINPR_C_ARRAY_INIT;
 
 				dev.channel_name = cur->name;
 				dev.flags = cur->options;
@@ -800,7 +800,7 @@ static DWORD WINAPI pf_client_thread_proc(pClientContext* pc)
 	proxyData* pdata = NULL;
 	DWORD nCount = 0;
 	DWORD status = 0;
-	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pc);
 

@@ -827,7 +827,7 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 	int nXSrc = 0;
 	int nYSrc = 0;
 
-	RECTANGLE_16 clippingRect = { 0 };
+	RECTANGLE_16 clippingRect = WINPR_C_ARRAY_INIT;
 	clippingRect.right = g_Width;
 	clippingRect.bottom = g_Height;
 
@@ -878,7 +878,7 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 
 			const RECTANGLE_16 tileRect = { tile->x, tile->y, tile->x + tile->width,
 				                            tile->y + tile->height };
-			RECTANGLE_16 updateRect = { 0 };
+			RECTANGLE_16 updateRect = WINPR_C_ARRAY_INIT;
 			rectangles_intersection(&tileRect, &clippingRect, &updateRect);
 			const UINT16 nXDst = updateRect.left;
 			const UINT16 nYDst = updateRect.top;
@@ -915,8 +915,8 @@ static int test_progressive_ms_sample(char* ms_sample_path)
 {
 	int count = 0;
 	int status = 0;
-	EGFX_SAMPLE_FILE files[3][4][4] = { 0 };
-	EGFX_SAMPLE_FILE bitmaps[3][4][4] = { 0 };
+	EGFX_SAMPLE_FILE files[3][4][4] = WINPR_C_ARRAY_INIT;
+	EGFX_SAMPLE_FILE bitmaps[3][4][4] = WINPR_C_ARRAY_INIT;
 	PROGRESSIVE_CONTEXT* progressive = NULL;
 	g_Width = 1920;
 	g_Height = 1080;
@@ -1046,7 +1046,7 @@ static BOOL test_encode_decode(const char* path)
 	BYTE* dstData = NULL;
 	UINT32 dstSize = 0;
 	UINT32 ColorFormat = PIXEL_FORMAT_BGRX32;
-	REGION16 invalidRegion = { 0 };
+	REGION16 invalidRegion = WINPR_C_ARRAY_INIT;
 	wImage* image = winpr_image_new();
 	wImage* dstImage = winpr_image_new();
 	char* name = GetCombinedPath(path, "progressive.bmp");
@@ -1291,11 +1291,11 @@ static int test_dump(int argc, char* argv[])
 			break;
 
 		UINT32 frameId = 0;
-		RDPGFX_SURFACE_COMMAND cmd = { 0 };
+		RDPGFX_SURFACE_COMMAND cmd = WINPR_C_ARRAY_INIT;
 
 		if (read_cmd(fp, &cmd, &frameId))
 		{
-			REGION16 invalid = { 0 };
+			REGION16 invalid = WINPR_C_ARRAY_INIT;
 			region16_init(&invalid);
 
 			const char* cname = rdpgfx_get_codec_id_string(cmd.codecId);

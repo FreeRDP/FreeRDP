@@ -369,7 +369,7 @@ static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cb
                                        size_t* pBlockSize)
 {
 	WINPR_CIPHER_CTX* ret = NULL;
-	char algoName[100] = { 0 };
+	char algoName[100] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pBlockSize);
 	SSIZE_T algoSz = ConvertWCharNToUtf8((const WCHAR*)pbInput, cbInput / sizeof(WCHAR), algoName,
@@ -397,7 +397,7 @@ static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cb
 	cbInput -= algoLen;
 
 	/* BCRYPT_KEY_DATA_BLOB_HEADER */
-	wStream staticStream = { 0 };
+	wStream staticStream = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&staticStream, &pbInput[algoLen], cbInput);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 12))

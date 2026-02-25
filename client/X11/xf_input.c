@@ -76,8 +76,8 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 #define MAX_NR_MASKS 64
 	int ndevices = 0;
 	int nmasks = 0;
-	XIEventMask evmasks[MAX_NR_MASKS] = { 0 };
-	BYTE masks[MAX_NR_MASKS][XIMaskLen(XI_LASTEVENT)] = { 0 };
+	XIEventMask evmasks[MAX_NR_MASKS] = WINPR_C_ARRAY_INIT;
+	BYTE masks[MAX_NR_MASKS][XIMaskLen(XI_LASTEVENT)] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(xfc);
 
@@ -151,7 +151,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 					{
 						double max_pressure = t->max;
 
-						char devName[200] = { 0 };
+						char devName[200] = WINPR_C_ARRAY_INIT;
 						strncpy(devName, dev->name, ARRAYSIZE(devName) - 1);
 						CharLowerBuffA(devName, ARRAYSIZE(devName));
 
@@ -198,7 +198,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 static BOOL register_raw_events(xfContext* xfc, Window window)
 {
 	XIEventMask mask;
-	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
+	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = WINPR_C_ARRAY_INIT;
 	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
@@ -224,8 +224,8 @@ static BOOL register_raw_events(xfContext* xfc, Window window)
 
 static BOOL register_device_events(xfContext* xfc, Window window)
 {
-	XIEventMask mask = { 0 };
-	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
+	XIEventMask mask = WINPR_C_ARRAY_INIT;
+	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(xfc);
 
@@ -410,7 +410,7 @@ static void xf_input_detect_pan(xfContext* xfc)
 
 static void xf_input_detect_pinch(xfContext* xfc)
 {
-	ZoomingChangeEventArgs e = { 0 };
+	ZoomingChangeEventArgs e = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(xfc);
 	rdpContext* ctx = &xfc->common.context;
@@ -575,7 +575,7 @@ static void xf_input_hide_cursor(xfContext* xfc)
 
 	if (!xfc->cursorHidden)
 	{
-		XcursorImage ci = { 0 };
+		XcursorImage ci = WINPR_C_ARRAY_INIT;
 		XcursorPixel xp = 0;
 		static Cursor nullcursor = None;
 		xf_lock_x11(xfc);

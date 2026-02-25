@@ -45,7 +45,7 @@
 
 BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSize)
 {
-	struct passwd pwd = { 0 };
+	struct passwd pwd = WINPR_C_ARRAY_INIT;
 	struct passwd* pw = NULL;
 	WINPR_ACCESS_TOKEN* token = (WINPR_ACCESS_TOKEN*)hToken;
 

@@ -67,7 +67,7 @@ static void OSS_LOG_ERR(const char* _text, int _error)
 {
 	if ((_error) != 0)
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "%s: %i - %s\n", (_text), (_error),
 		         winpr_strerror((_error), buffer, sizeof(buffer)));
 	}

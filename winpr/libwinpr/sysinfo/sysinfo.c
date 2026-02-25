@@ -63,7 +63,7 @@ static UINT64 scaleHighPrecision(UINT64 i, UINT32 numer, UINT32 denom)
 
 static UINT64 mac_get_time_ns(void)
 {
-	mach_timebase_info_data_t timebase = { 0 };
+	mach_timebase_info_data_t timebase = WINPR_C_ARRAY_INIT;
 	mach_timebase_info(&timebase);
 	UINT64 t = mach_absolute_time();
 	return scaleHighPrecision(t, timebase.numer, timebase.denom);
@@ -227,7 +227,7 @@ static DWORD GetSystemPageSize(void)
 
 void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 {
-	const SYSTEM_INFO empty = { 0 };
+	const SYSTEM_INFO empty = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(lpSystemInfo);
 
 	*lpSystemInfo = empty;
@@ -446,7 +446,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 		return FALSE;
 	}
 
-	char hostname[256 + 1] = { 0 };
+	char hostname[256 + 1] = WINPR_C_ARRAY_INIT;
 	if (gethostname(hostname, ARRAYSIZE(hostname) - 1) == -1)
 		return FALSE;
 
@@ -475,7 +475,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize)
 {
 	size_t length = 0;
-	char hostname[256] = { 0 };
+	char hostname[256] = WINPR_C_ARRAY_INIT;
 
 	if (!lpnSize)
 	{
@@ -584,7 +584,7 @@ UINT64 winpr_GetTickCount64NS(void)
 {
 	UINT64 ticks = 0;
 #if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
-	struct timespec ts = { 0 };
+	struct timespec ts = WINPR_C_ARRAY_INIT;
 
 	if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) == 0)
 		ticks = (WINPR_ASSERTING_INT_CAST(uint64_t, ts.tv_sec) * 1000000000ull) +
@@ -592,12 +592,12 @@ UINT64 winpr_GetTickCount64NS(void)
 #elif defined(__MACH__) && defined(__APPLE__)
 	ticks = mac_get_time_ns();
 #elif defined(_WIN32)
-	LARGE_INTEGER li = { 0 };
-	LARGE_INTEGER freq = { 0 };
+	LARGE_INTEGER li = WINPR_C_ARRAY_INIT;
+	LARGE_INTEGER freq = WINPR_C_ARRAY_INIT;
 	if (QueryPerformanceFrequency(&freq) && QueryPerformanceCounter(&li))
 		ticks = li.QuadPart * 1000000000ull / freq.QuadPart;
 #else
-	struct timeval tv = { 0 };
+	struct timeval tv = WINPR_C_ARRAY_INIT;
 
 	if (gettimeofday(&tv, NULL) == 0)
 		ticks = (tv.tv_sec * 1000000000ull) + (tv.tv_usec * 1000ull);
@@ -613,7 +613,7 @@ UINT64 winpr_GetTickCount64NS(void)
 	static UINT64 uptime = 0;
 	if (first == 0)
 	{
-		struct sysinfo info = { 0 };
+		struct sysinfo info = WINPR_C_ARRAY_INIT;
 		if (sysinfo(&info) == 0)
 		{
 			first = ticks;
@@ -634,17 +634,17 @@ UINT64 winpr_GetUnixTimeNS(void)
 	{
 		UINT64 u64;
 		FILETIME ft;
-	} t = { 0 };
+	} t = WINPR_C_ARRAY_INIT;
 	GetSystemTimeAsFileTime(&t.ft);
 	return (t.u64 - FILETIME_TO_UNIX_OFFSET_S * 10000000ull) * 100ull;
 #elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
-	struct timespec ts = { 0 };
+	struct timespec ts = WINPR_C_ARRAY_INIT;
 	if (clock_gettime(CLOCK_REALTIME, &ts) != 0)
 		return 0;
 	return WINPR_ASSERTING_INT_CAST(uint64_t, ts.tv_sec) * 1000000000ull +
 	       WINPR_ASSERTING_INT_CAST(uint64_t, ts.tv_nsec);
 #else
-	struct timeval tv = { 0 };
+	struct timeval tv = WINPR_C_ARRAY_INIT;
 	if (gettimeofday(&tv, NULL) != 0)
 		return 0;
 	return tv.tv_sec * 1000000000ULL + tv.tv_usec * 1000ull;
@@ -1074,8 +1074,8 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 DWORD GetTickCountPrecise(void)
 {
 #ifdef _WIN32
-	LARGE_INTEGER freq = { 0 };
-	LARGE_INTEGER current = { 0 };
+	LARGE_INTEGER freq = WINPR_C_ARRAY_INIT;
+	LARGE_INTEGER current = WINPR_C_ARRAY_INIT;
 	QueryPerformanceFrequency(&freq);
 	QueryPerformanceCounter(&current);
 	return (DWORD)(current.QuadPart * 1000LL / freq.QuadPart);

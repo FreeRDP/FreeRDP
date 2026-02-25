@@ -46,7 +46,7 @@ static int shadow_subsystem_load_entry_points(RDP_SHADOW_ENTRY_POINTS* pEntryPoi
 
 rdpShadowSubsystem* shadow_subsystem_new(void)
 {
-	RDP_SHADOW_ENTRY_POINTS ep = { 0 };
+	RDP_SHADOW_ENTRY_POINTS ep = WINPR_C_ARRAY_INIT;
 
 	if (shadow_subsystem_load_entry_points(&ep) < 0)
 		return NULL;

@@ -226,16 +226,16 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 	size_t awidth = 0;
 	size_t aheight = 0;
 	BOOL rc = FALSE;
-	BYTE* luma[3] = { 0 };
-	BYTE* chroma[3] = { 0 };
-	BYTE* yuv[3] = { 0 };
-	BYTE* pmain[3] = { 0 };
-	BYTE* paux[3] = { 0 };
-	UINT32 lumaStride[3] = { 0 };
-	UINT32 chromaStride[3] = { 0 };
-	UINT32 yuvStride[3] = { 0 };
+	BYTE* luma[3] = WINPR_C_ARRAY_INIT;
+	BYTE* chroma[3] = WINPR_C_ARRAY_INIT;
+	BYTE* yuv[3] = WINPR_C_ARRAY_INIT;
+	BYTE* pmain[3] = WINPR_C_ARRAY_INIT;
+	BYTE* paux[3] = WINPR_C_ARRAY_INIT;
+	UINT32 lumaStride[3] = WINPR_C_ARRAY_INIT;
+	UINT32 chromaStride[3] = WINPR_C_ARRAY_INIT;
+	UINT32 yuvStride[3] = WINPR_C_ARRAY_INIT;
 	const size_t padding = 10000;
-	RECTANGLE_16 rect = { 0 };
+	RECTANGLE_16 rect = WINPR_C_ARRAY_INIT;
 	PROFILER_DEFINE(yuvCombine)
 	PROFILER_DEFINE(yuvSplit)
 
@@ -438,8 +438,8 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 	BOOL res = FALSE;
 	UINT32 awidth = 0;
 	UINT32 aheight = 0;
-	BYTE* yuv[3] = { 0 };
-	UINT32 yuv_step[3] = { 0 };
+	BYTE* yuv[3] = WINPR_C_ARRAY_INIT;
+	UINT32 yuv_step[3] = WINPR_C_ARRAY_INIT;
 	BYTE* rgb = NULL;
 	BYTE* rgb_dst = NULL;
 	size_t size = 0;
@@ -741,10 +741,10 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 	BOOL res = FALSE;
 	UINT32 awidth = 0;
 	UINT32 aheight = 0;
-	BYTE* luma[3] = { 0 };
-	BYTE* chroma[3] = { 0 };
-	BYTE* lumaGeneric[3] = { 0 };
-	BYTE* chromaGeneric[3] = { 0 };
+	BYTE* luma[3] = WINPR_C_ARRAY_INIT;
+	BYTE* chroma[3] = WINPR_C_ARRAY_INIT;
+	BYTE* lumaGeneric[3] = WINPR_C_ARRAY_INIT;
+	BYTE* chromaGeneric[3] = WINPR_C_ARRAY_INIT;
 	UINT32 yuv_step[3];
 	BYTE* rgb = NULL;
 	size_t size = 0;
@@ -1023,7 +1023,7 @@ static BOOL compare_yuv444_to_rgb(prim_size_t roi, DWORD type)
 {
 	BOOL rc = FALSE;
 	const UINT32 format = PIXEL_FORMAT_BGRA32;
-	BYTE* yuv[3] = { 0 };
+	BYTE* yuv[3] = WINPR_C_ARRAY_INIT;
 	const UINT32 yuvStep[3] = { roi.width, roi.width, roi.width };
 	const size_t stride = 4ULL * roi.width;
 
@@ -1131,8 +1131,8 @@ static BOOL compare_rgb_to_yuv444(prim_size_t roi, DWORD type)
 	const UINT32 format = PIXEL_FORMAT_BGRA32;
 	const size_t stride = 4ULL * roi.width;
 	const UINT32 yuvStep[] = { roi.width, roi.width, roi.width };
-	BYTE* yuv1[3] = { 0 };
-	BYTE* yuv2[3] = { 0 };
+	BYTE* yuv1[3] = WINPR_C_ARRAY_INIT;
+	BYTE* yuv2[3] = WINPR_C_ARRAY_INIT;
 
 	primitives_t* prims = primitives_get_by_type(type);
 	if (!prims)
@@ -1196,7 +1196,7 @@ static BOOL compare_yuv420_to_rgb(prim_size_t roi, DWORD type)
 {
 	BOOL rc = FALSE;
 	const UINT32 format = PIXEL_FORMAT_BGRA32;
-	BYTE* yuv[3] = { 0 };
+	BYTE* yuv[3] = WINPR_C_ARRAY_INIT;
 	const UINT32 yuvStep[3] = { roi.width, roi.width / 2, roi.width / 2 };
 	const size_t stride = 4ULL * roi.width;
 
@@ -1328,8 +1328,8 @@ static BOOL compare_rgb_to_yuv420(prim_size_t roi, DWORD type)
 	const UINT32 format = PIXEL_FORMAT_BGRA32;
 	const size_t stride = 4ULL * roi.width;
 	const UINT32 yuvStep[] = { roi.width, roi.width / 2, roi.width / 2 };
-	BYTE* yuv1[3] = { 0 };
-	BYTE* yuv2[3] = { 0 };
+	BYTE* yuv1[3] = WINPR_C_ARRAY_INIT;
+	BYTE* yuv2[3] = WINPR_C_ARRAY_INIT;
 
 	primitives_t* prims = primitives_get_by_type(type);
 	if (!prims)
@@ -1410,7 +1410,7 @@ int TestPrimitivesYUV(int argc, char* argv[])
 	int rc = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	prim_size_t roi = { 0 };
+	prim_size_t roi = WINPR_C_ARRAY_INIT;
 
 	if (argc > 1)
 	{

@@ -66,7 +66,7 @@ disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 	wStream* s = NULL;
 	DISP_PLUGIN* disp = NULL;
 	UINT32 MonitorLayoutSize = 0;
-	DISPLAY_CONTROL_HEADER header = { 0 };
+	DISPLAY_CONTROL_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(callback);
 	WINPR_ASSERT(Monitors || (NumMonitors == 0));
@@ -191,7 +191,7 @@ static UINT disp_recv_display_control_caps_pdu(GENERIC_CHANNEL_CALLBACK* callbac
 static UINT disp_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 error = 0;
-	DISPLAY_CONTROL_HEADER header = { 0 };
+	DISPLAY_CONTROL_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(callback);
 	WINPR_ASSERT(s);

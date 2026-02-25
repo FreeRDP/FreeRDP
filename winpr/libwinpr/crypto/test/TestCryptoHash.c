@@ -11,7 +11,7 @@ static const BYTE TEST_MD5_HASH[] =
 static BOOL test_crypto_hash_md5(void)
 {
 	BOOL result = FALSE;
-	BYTE hash[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE hash[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	WINPR_DIGEST_CTX* ctx = NULL;
 
 	if (!(ctx = winpr_Digest_New()))
@@ -64,7 +64,7 @@ static const BYTE TEST_MD4_HASH[] =
 static BOOL test_crypto_hash_md4(void)
 {
 	BOOL result = FALSE;
-	BYTE hash[WINPR_MD4_DIGEST_LENGTH] = { 0 };
+	BYTE hash[WINPR_MD4_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	WINPR_DIGEST_CTX* ctx = NULL;
 
 	if (!(ctx = winpr_Digest_New()))
@@ -117,7 +117,7 @@ static const BYTE TEST_SHA1_HASH[] =
 static BOOL test_crypto_hash_sha1(void)
 {
 	BOOL result = FALSE;
-	BYTE hash[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
+	BYTE hash[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	WINPR_DIGEST_CTX* ctx = NULL;
 
 	if (!(ctx = winpr_Digest_New()))
@@ -172,7 +172,7 @@ static const BYTE TEST_HMAC_MD5_HASH[] =
 
 static BOOL test_crypto_hash_hmac_md5(void)
 {
-	BYTE hash[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE hash[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	WINPR_HMAC_CTX* ctx = NULL;
 	BOOL result = FALSE;
 
@@ -236,7 +236,7 @@ static const BYTE TEST_HMAC_SHA1_HASH[] =
 
 static BOOL test_crypto_hash_hmac_sha1(void)
 {
-	BYTE hash[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
+	BYTE hash[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	WINPR_HMAC_CTX* ctx = NULL;
 	BOOL result = FALSE;
 

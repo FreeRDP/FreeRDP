@@ -136,7 +136,7 @@ static const rdpSettings* mcs_get_const_settings(const rdpMcs* mcs)
 
 static char* rdp_early_server_caps_string(UINT32 flags, char* buffer, size_t size)
 {
-	char msg[32] = { 0 };
+	char msg[32] = WINPR_C_ARRAY_INIT;
 	const UINT32 mask = RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V1 | RNS_UD_SC_DYNAMIC_DST_SUPPORTED |
 	                    RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2 | RNS_UD_SC_SKIP_CHANNELJOIN_SUPPORTED;
 	const UINT32 unknown = flags & (~mask);
@@ -162,7 +162,7 @@ static char* rdp_early_server_caps_string(UINT32 flags, char* buffer, size_t siz
 
 static const char* rdp_early_client_caps_string(UINT32 flags, char* buffer, size_t size)
 {
-	char msg[32] = { 0 };
+	char msg[32] = WINPR_C_ARRAY_INIT;
 	const UINT32 mask = RNS_UD_CS_SUPPORT_ERRINFO_PDU | RNS_UD_CS_WANT_32BPP_SESSION |
 	                    RNS_UD_CS_SUPPORT_STATUSINFO_PDU | RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
 	                    RNS_UD_CS_RELATIVE_MOUSE_INPUT | RNS_UD_CS_VALID_CONNECTION_TYPE |
@@ -580,7 +580,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 
 	while (length > 0)
 	{
-		wStream sbuffer = { 0 };
+		wStream sbuffer = WINPR_C_ARRAY_INIT;
 		UINT16 type = 0;
 		UINT16 blockLength = 0;
 
@@ -596,7 +596,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 		Stream_Seek(s, blockLength - 4);
 
 		{
-			char buffer[64] = { 0 };
+			char buffer[64] = WINPR_C_ARRAY_INIT;
 			WLog_Print(mcs->log, WLOG_TRACE, "Processing block %s",
 			           gcc_block_type_string(type, buffer, sizeof(buffer)));
 		}
@@ -669,7 +669,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 		const size_t rem = Stream_GetRemainingLength(sub);
 		if (rem > 0)
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			const size_t total = Stream_Length(sub);
 			WLog_Print(mcs->log, WLOG_ERROR,
 			           "Error parsing GCC client data block %s: Actual Offset: %" PRIuz
@@ -679,7 +679,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 
 		if (blockLength > length)
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_Print(mcs->log, WLOG_ERROR,
 			           "Error parsing GCC client data block %s: got blockLength 0x%04" PRIx16
 			           ", but only 0x%04" PRIx16 "remaining",
@@ -817,7 +817,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 
 	while (offset < length)
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		size_t rest = 0;
 		wStream subbuffer;
 		wStream* sub = NULL;
@@ -973,7 +973,7 @@ static UINT32 filterAndLogEarlyServerCapabilityFlags(wLog* log, UINT32 flags)
 	const UINT32 unknown = flags & (~mask);
 	if (unknown != 0)
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, WLOG_WARN,
 		           "TS_UD_SC_CORE::EarlyCapabilityFlags [0x%08" PRIx32 " & 0x%08" PRIx32
 		           " --> 0x%08" PRIx32 "] filtering %s, feature not implemented",
@@ -1012,7 +1012,7 @@ static UINT16 filterAndLogEarlyClientCapabilityFlags(wLog* log, UINT32 flags)
 	const UINT32 unknown = flags & ~mask;
 	if (unknown != 0)
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, WLOG_WARN,
 		           "(TS_UD_CS_CORE)::EarlyCapabilityFlags [0x%08" PRIx32 " & 0x%08" PRIx32
 		           " --> 0x%08" PRIx32 "] filtering %s, feature not implemented",
@@ -1176,8 +1176,8 @@ static BOOL updateEarlyServerCaps(wLog* log, rdpSettings* settings, UINT32 early
 
 BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 {
-	char buffer[2048] = { 0 };
-	char strbuffer[130] = { 0 };
+	char buffer[2048] = WINPR_C_ARRAY_INIT;
+	char strbuffer[130] = WINPR_C_ARRAY_INIT;
 	UINT32 version = 0;
 	BYTE connectionType = 0;
 	UINT32 clientColorDepth = 0;
@@ -1423,8 +1423,8 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 {
-	char buffer[2048] = { 0 };
-	char dbuffer[2048] = { 0 };
+	char buffer[2048] = WINPR_C_ARRAY_INIT;
+	char dbuffer[2048] = WINPR_C_ARRAY_INIT;
 	BYTE connectionType = 0;
 	HIGH_COLOR_DEPTH highColorDepth = HIGH_COLOR_4BPP;
 
@@ -1538,7 +1538,7 @@ BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
 
 	if (Stream_GetRemainingLength(s) >= 4)
 	{
-		char buffer[2048] = { 0 };
+		char buffer[2048] = WINPR_C_ARRAY_INIT;
 
 		Stream_Read_UINT32(s, settings->EarlyCapabilityFlags); /* earlyCapabilityFlags */
 		WLog_Print(
@@ -2033,7 +2033,7 @@ BOOL gcc_write_server_network_data(wStream* s, const rdpMcs* mcs)
 
 BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs)
 {
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	UINT32 redirectedSessionId = 0;
 	rdpSettings* settings = mcs_get_settings(mcs);
 
@@ -2077,7 +2077,7 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_write_client_cluster_data(wStream* s, const rdpMcs* mcs)
 {
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	UINT32 flags = 0;
 	const rdpSettings* settings = mcs_get_const_settings(mcs);
 

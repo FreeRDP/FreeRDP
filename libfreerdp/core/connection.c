@@ -248,7 +248,7 @@ static BOOL rdp_client_wait_for_activation(rdpRdp* rdp)
 
 	for (; (now < dueDate) && !timedout; now = GetTickCount64())
 	{
-		HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD wstatus = 0;
 		DWORD nevents = freerdp_get_event_handles(rdp->context, events, ARRAYSIZE(events));
 		if (!nevents)
@@ -450,7 +450,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		if ((SelectedProtocol & PROTOCOL_SSL) || (SelectedProtocol == PROTOCOL_RDP) ||
 		    (SelectedProtocol == PROTOCOL_RDSTLS))
 		{
-			wStream s = { 0 };
+			wStream s = WINPR_C_ARRAY_INIT;
 
 			if ((settings->Username != NULL) &&
 			    ((freerdp_settings_get_string(settings, FreeRDP_Password) != NULL) ||
@@ -1259,8 +1259,8 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 
 	if ((securityFlags & SEC_LICENSE_PKT) == 0)
 	{
-		char buffer[512] = { 0 };
-		char lbuffer[32] = { 0 };
+		char buffer[512] = WINPR_C_ARRAY_INIT;
+		char lbuffer[32] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "securityFlags=%s, missing required flag %s",
 		         rdp_security_flag_string(securityFlags, buffer, sizeof(buffer)),
 		         rdp_security_flag_string(SEC_LICENSE_PKT, lbuffer, sizeof(lbuffer)));
@@ -1410,7 +1410,7 @@ BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE:
 		{
-			ActivatedEventArgs activatedEvent = { 0 };
+			ActivatedEventArgs activatedEvent = WINPR_C_ARRAY_INIT;
 			rdpContext* context = rdp->context;
 			EventArgsInit(&activatedEvent, "libfreerdp");
 			activatedEvent.firstActivation =
@@ -1425,7 +1425,7 @@ BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 	}
 
 	{
-		ConnectionStateChangeEventArgs stateEvent = { 0 };
+		ConnectionStateChangeEventArgs stateEvent = WINPR_C_ARRAY_INIT;
 		rdpContext* context = rdp->context;
 		EventArgsInit(&stateEvent, "libfreerdp");
 		stateEvent.state = WINPR_ASSERTING_INT_CAST(int32_t, rdp_get_state(rdp));
@@ -2128,7 +2128,7 @@ BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
 	for (UINT32 x = 0; x < mcs->channelCount; x++)
 	{
 		const rdpMcsChannel* mchannel = &mcs->channels[x];
-		CHANNEL_DEF cur = { 0 };
+		CHANNEL_DEF cur = WINPR_C_ARRAY_INIT;
 
 		memcpy(cur.name, mchannel->Name, sizeof(cur.name));
 		cur.options = mchannel->options;

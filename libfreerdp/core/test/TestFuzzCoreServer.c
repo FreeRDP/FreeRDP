@@ -19,7 +19,7 @@ static BOOL test_server(const uint8_t* Data, size_t Size)
 	rdpRdp* rdp = client->context->rdp;
 	WINPR_ASSERT(rdp);
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, Data, Size);
 
 	{

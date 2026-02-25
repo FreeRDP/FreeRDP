@@ -187,7 +187,7 @@ static BOOL rdp_write_share_data_header(rdpRdp* rdp, wStream* s, size_t length, 
 
 BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* length)
 {
-	char buffer[256] = { 0 };
+	char buffer[256] = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(flags);
 	WINPR_ASSERT(rdp);
@@ -230,7 +230,7 @@ BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* le
 
 BOOL rdp_write_security_header(rdpRdp* rdp, wStream* s, UINT16 flags)
 {
-	char buffer[256] = { 0 };
+	char buffer[256] = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(rdp);
 
@@ -274,7 +274,7 @@ BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s, UINT16* tpktLength,
 		if (remainingLength)
 			*remainingLength = 0;
 
-		char buffer[128] = { 0 };
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 		WLog_Print(rdp->log, WLOG_DEBUG,
 		           "[Flow control PDU] type=%s, tpktLength=%" PRIu16 ", remainingLength=%" PRIu16,
 		           pdu_type_to_str(*type, buffer, sizeof(buffer)), tpktLength ? *tpktLength : 0u,
@@ -310,7 +310,7 @@ BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s, UINT16* tpktLength,
 	else
 		*channel_id = 0; /* Windows XP can send such short DEACTIVATE_ALL PDUs. */
 
-	char buffer[128] = { 0 };
+	char buffer[128] = WINPR_C_ARRAY_INIT;
 	WLog_Print(rdp->log, WLOG_DEBUG, "type=%s, tpktLength=%" PRIu16 ", remainingLength=%" PRIuz,
 	           pdu_type_to_str(*type, buffer, sizeof(buffer)), len, remLen);
 	if (remainingLength)
@@ -495,7 +495,7 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 
 			if (context->pubSub)
 			{
-				ErrorInfoEventArgs e = { 0 };
+				ErrorInfoEventArgs e = WINPR_C_ARRAY_INIT;
 				EventArgsInit(&e, "freerdp");
 				e.code = rdp->errorInfo;
 				PubSub_OnErrorInfo(context->pubSub, context, &e);
@@ -610,7 +610,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	if (MCSPDU == DomainMCSPDU_DisconnectProviderUltimatum)
 	{
 		int reason = 0;
-		TerminateEventArgs e = { 0 };
+		TerminateEventArgs e = WINPR_C_ARRAY_INIT;
 
 		if (!mcs_recv_disconnect_provider_ultimatum(rdp->mcs, s, &reason))
 			return FALSE;
@@ -1449,8 +1449,8 @@ state_run_t rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s, UINT16 pduType
 			break;
 		default:
 		{
-			char buffer1[256] = { 0 };
-			char buffer2[256] = { 0 };
+			char buffer1[256] = WINPR_C_ARRAY_INIT;
+			char buffer2[256] = WINPR_C_ARRAY_INIT;
 
 			WLog_Print(rdp->log, WLOG_ERROR, "expected %s, got %s",
 			           pdu_type_to_str(PDU_TYPE_DEMAND_ACTIVE, buffer1, sizeof(buffer1)),
@@ -1506,8 +1506,8 @@ BOOL rdp_read_flow_control_pdu(rdpRdp* rdp, wStream* s, UINT16* type, UINT16* ch
 BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 {
 	BOOL res = FALSE;
-	BYTE cmac[8] = { 0 };
-	BYTE wmac[8] = { 0 };
+	BYTE cmac[8] = WINPR_C_ARRAY_INIT;
+	BYTE wmac[8] = WINPR_C_ARRAY_INIT;
 	BOOL status = FALSE;
 
 	WINPR_ASSERT(rdp);
@@ -1644,7 +1644,7 @@ const char* pdu_type_to_str(UINT16 pduType, char* buffer, size_t length)
 
 	winpr_str_append(str, buffer, length, "");
 	{
-		char msg[32] = { 0 };
+		char msg[32] = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", pduType);
 		winpr_str_append(msg, buffer, length, "");
 	}
@@ -1766,7 +1766,7 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 				default:
 				{
-					char buffer[256] = { 0 };
+					char buffer[256] = WINPR_C_ARRAY_INIT;
 					WLog_Print(rdp->log, WLOG_ERROR, "incorrect PDU type: %s",
 					           pdu_type_to_str(pduType, buffer, sizeof(buffer)));
 				}
@@ -1776,7 +1776,7 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			diff = Stream_GetRemainingLength(sub);
 			if (diff > 0)
 			{
-				char buffer[256] = { 0 };
+				char buffer[256] = WINPR_C_ARRAY_INIT;
 				WLog_Print(rdp->log, WLOG_WARN,
 				           "pduType %s not properly parsed, %" PRIuz
 				           " bytes remaining unhandled. Skipping.",
@@ -1859,8 +1859,8 @@ static state_run_t rdp_handle_sc_flags(rdpRdp* rdp, wStream* s, UINT32 flag,
 		}
 		else
 		{
-			char flag_buffer[256] = { 0 };
-			char mask_buffer[256] = { 0 };
+			char flag_buffer[256] = WINPR_C_ARRAY_INIT;
+			char mask_buffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_Print(rdp->log, WLOG_WARN,
 			           "[%s] unexpected server message, expected flag %s [have %s]",
 			           rdp_get_state_string(rdp),
@@ -2100,7 +2100,7 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 
 			if (state_run_failed(status))
 			{
-				char buffer[64] = { 0 };
+				char buffer[64] = WINPR_C_ARRAY_INIT;
 				WLog_Print(rdp->log, WLOG_DEBUG, "%s - rdp_client_connect_license() - %s",
 				           rdp_get_state_string(rdp),
 				           state_run_result_string(status, buffer, ARRAYSIZE(buffer)));
@@ -2124,7 +2124,7 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 
 			if (state_run_failed(status))
 			{
-				char buffer[64] = { 0 };
+				char buffer[64] = WINPR_C_ARRAY_INIT;
 				WLog_Print(rdp->log, WLOG_DEBUG,
 				           "%s - "
 				           "rdp_client_connect_demand_active() - %s",
@@ -2170,7 +2170,7 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 
 			if (state_run_failed(status))
 			{
-				char buffer[64] = { 0 };
+				char buffer[64] = WINPR_C_ARRAY_INIT;
 				WLog_Print(rdp->log, WLOG_DEBUG, "%s - rdp_recv_pdu() - %s",
 				           rdp_get_state_string(rdp),
 				           state_run_result_string(status, buffer, ARRAYSIZE(buffer)));
@@ -2186,7 +2186,7 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 
 	if (state_run_failed(status))
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(rdp->log, WLOG_ERROR, "%s status %s", rdp_get_state_string(rdp),
 		           state_run_result_string(status, buffer, ARRAYSIZE(buffer)));
 	}
@@ -2195,7 +2195,7 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 
 state_run_t rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 {
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	state_run_t rc = STATE_RUN_FAILED;
 	const size_t start = Stream_GetPosition(s);
 	const rdpContext* context = transport_get_context(transport);
@@ -2624,7 +2624,7 @@ void* rdp_get_io_callback_context(rdpRdp* rdp)
 
 const char* rdp_finalize_flags_to_str(UINT32 flags, char* buffer, size_t size)
 {
-	char number[32] = { 0 };
+	char number[32] = WINPR_C_ARRAY_INIT;
 	const UINT32 mask =
 	    (uint32_t)~(FINALIZE_SC_SYNCHRONIZE_PDU | FINALIZE_SC_CONTROL_COOPERATE_PDU |
 	                FINALIZE_SC_CONTROL_GRANTED_PDU | FINALIZE_SC_FONT_MAP_PDU |
@@ -2675,7 +2675,7 @@ BOOL rdp_finalize_reset_flags(rdpRdp* rdp, BOOL clearAll)
 
 BOOL rdp_finalize_set_flag(rdpRdp* rdp, UINT32 flag)
 {
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rdp);
 
@@ -2760,7 +2760,7 @@ const char* rdp_security_flag_string(UINT32 securityFlags, char* buffer, size_t 
 	if (securityFlags & SEC_FLAGSHI_VALID)
 		winpr_str_append("SEC_FLAGSHI_VALID", buffer, size, "|");
 	{
-		char msg[32] = { 0 };
+		char msg[32] = WINPR_C_ARRAY_INIT;
 
 		(void)_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", securityFlags);
 		winpr_str_append(msg, buffer, size, "");
@@ -3018,8 +3018,8 @@ static void log_build_warn_cipher(rdpRdp* rdp, log_line_t* firstLine, WINPR_CIPH
 {
 	BOOL haveCipher = FALSE;
 
-	char key[WINPR_CIPHER_MAX_KEY_LENGTH] = { 0 };
-	char iv[WINPR_CIPHER_MAX_IV_LENGTH] = { 0 };
+	char key[WINPR_CIPHER_MAX_KEY_LENGTH] = WINPR_C_ARRAY_INIT;
+	char iv[WINPR_CIPHER_MAX_IV_LENGTH] = WINPR_C_ARRAY_INIT;
 
 	/* RC4 only exists in the compatibility functions winpr_RC4_*
 	 * winpr_Cipher_* does not support that. */
@@ -3059,7 +3059,7 @@ static void log_build_warn_hmac(rdpRdp* rdp, log_line_t* firstLine, WINPR_MD_TYP
 		/* We need some key length, but there is no real limit here.
 		 * just take the cipher maximum key length as we already have that available.
 		 */
-		char key[WINPR_CIPHER_MAX_KEY_LENGTH] = { 0 };
+		char key[WINPR_CIPHER_MAX_KEY_LENGTH] = WINPR_C_ARRAY_INIT;
 		haveHmacX = winpr_HMAC_Init(hmac, md, key, sizeof(key));
 	}
 	winpr_HMAC_Free(hmac);
@@ -3092,7 +3092,7 @@ static void log_build_warn_ssl(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 
-	log_line_t firstHashLine = { 0 };
+	log_line_t firstHashLine = WINPR_C_ARRAY_INIT;
 	log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_MD4, "NTLM support not available");
 	log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_MD5,
 	                    "NTLM, assistance files with encrypted passwords, autoreconnect cookies, "
@@ -3105,12 +3105,12 @@ static void log_build_warn_ssl(rdpRdp* rdp)
 	    "file clipboard, AAD gateway, NLA security and certificates might not work");
 	print_last_line(rdp->log, &firstHashLine);
 
-	log_line_t firstHmacLine = { 0 };
+	log_line_t firstHmacLine = WINPR_C_ARRAY_INIT;
 	log_build_warn_hmac(rdp, &firstHmacLine, WINPR_MD_MD5, "Autoreconnect cookie not supported");
 	log_build_warn_hmac(rdp, &firstHmacLine, WINPR_MD_SHA1, "RDP security not supported");
 	print_last_line(rdp->log, &firstHmacLine);
 
-	log_line_t firstCipherLine = { 0 };
+	log_line_t firstCipherLine = WINPR_C_ARRAY_INIT;
 	log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_ARC4_128,
 	                      "assistance files with encrypted passwords, NTLM, RDP licensing and RDP "
 	                      "security will not work");

@@ -58,7 +58,7 @@ static const char* weekday2str(WORD wDayOfWeek)
 
 static char* systemtime2str(const SYSTEMTIME* t, char* buffer, size_t len)
 {
-	const SYSTEMTIME empty = { 0 };
+	const SYSTEMTIME empty = WINPR_C_ARRAY_INIT;
 
 	if (memcmp(t, &empty, sizeof(SYSTEMTIME)) == 0)
 		(void)_snprintf(buffer, len, "{ not set }");
@@ -80,7 +80,7 @@ static void log_print(wLog* log, DWORD level, const char* file, const char* fkt,
 	if (!WLog_IsLevelActive(log, level))
 		return;
 
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fmt);
 	WLog_PrintTextMessageVA(log, level, line, file, fkt, fmt, ap);
 	va_end(ap);
@@ -91,7 +91,7 @@ static void log_timezone_(const TIME_ZONE_INFORMATION* tzif, DWORD result, const
 {
 	WINPR_ASSERT(tzif);
 
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	DWORD level = WLOG_TRACE;
 	wLog* log = WLog_Get(TIMEZONE_TAG);
 	log_print(log, level, file, fkt, line, "TIME_ZONE_INFORMATION {");
@@ -189,7 +189,7 @@ BOOL rdp_write_system_time(wStream* s, const SYSTEMTIME* system_time)
 
 BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 {
-	LPTIME_ZONE_INFORMATION tz = { 0 };
+	LPTIME_ZONE_INFORMATION tz = WINPR_C_ARRAY_INIT;
 
 	if (!s || !settings)
 		return FALSE;

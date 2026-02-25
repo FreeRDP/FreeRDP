@@ -28,10 +28,10 @@
 
 int TestControlSettings(int argc, char* argv[])
 {
-	struct stat statbuf = { 0 };
+	struct stat statbuf = WINPR_C_ARRAY_INIT;
 	BOOL result = 0;
 	HANDLE hComm = NULL;
-	DCB dcb = { 0 };
+	DCB dcb = WINPR_C_ARRAY_INIT;
 
 	if (stat("/dev/ttyS0", &statbuf) < 0)
 	{

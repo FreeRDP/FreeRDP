@@ -53,7 +53,7 @@ static BOOL wf_scale_mouse_event_ex(wfContext* wfc, UINT16 flags, UINT16 buttonM
 static BOOL g_flipping_in = FALSE;
 static BOOL g_flipping_out = FALSE;
 
-static BOOL g_keystates[256] = { 0 };
+static BOOL g_keystates[256] = WINPR_C_ARRAY_INIT;
 
 static BOOL ctrl_down(void)
 {
@@ -340,7 +340,7 @@ static void wf_send_resize(wfContext* wfc)
 			if (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth) != targetWidth ||
 			    freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight) != targetHeight)
 			{
-				DISPLAY_CONTROL_MONITOR_LAYOUT layout = { 0 };
+				DISPLAY_CONTROL_MONITOR_LAYOUT layout = WINPR_C_ARRAY_INIT;
 
 				layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
 				layout.Top = layout.Left = 0;
@@ -371,12 +371,12 @@ static void wf_send_resize(wfContext* wfc)
 
 LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-	HDC hdc = { 0 };
-	PAINTSTRUCT ps = { 0 };
+	HDC hdc = WINPR_C_ARRAY_INIT;
+	PAINTSTRUCT ps = WINPR_C_ARRAY_INIT;
 	BOOL processed = FALSE;
-	RECT windowRect = { 0 };
+	RECT windowRect = WINPR_C_ARRAY_INIT;
 	MINMAXINFO* minmax = NULL;
-	SCROLLINFO si = { 0 };
+	SCROLLINFO si = WINPR_C_ARRAY_INIT;
 	processed = TRUE;
 	LONG_PTR ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	wfContext* wfc = (wfContext*)ptr;
@@ -919,7 +919,7 @@ static BOOL wf_scale_mouse_pos(wfContext* wfc, INT32 x, INT32 y, UINT16* px, UIN
 
 static BOOL wf_pub_mouse_event(wfContext* wfc, UINT16 flags, UINT16 x, UINT16 y)
 {
-	MouseEventEventArgs eventArgs = { 0 };
+	MouseEventEventArgs eventArgs = WINPR_C_ARRAY_INIT;
 
 	eventArgs.flags = flags;
 	eventArgs.x = x;
@@ -972,7 +972,7 @@ static BOOL wf_scale_mouse_event_ex(wfContext* wfc, UINT16 flags, UINT16 buttonM
 BOOL wf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 {
 	wfContext* wfc = (wfContext*)context;
-	BYTE keyState[256] = { 0 };
+	BYTE keyState[256] = WINPR_C_ARRAY_INIT;
 
 	if (!wfc || !GetKeyboardState(keyState))
 		return FALSE;

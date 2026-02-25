@@ -37,7 +37,7 @@ static void init_empty_dcb(DCB* pDcb)
 
 static BOOL test_fParity(HANDLE hComm)
 {
-	DCB dcb = { 0 };
+	DCB dcb = WINPR_C_ARRAY_INIT;
 	BOOL result = 0;
 
 	init_empty_dcb(&dcb);
@@ -122,7 +122,7 @@ static BOOL test_fParity(HANDLE hComm)
 
 static BOOL test_SerialSys(HANDLE hComm)
 {
-	DCB dcb = { 0 };
+	DCB dcb = WINPR_C_ARRAY_INIT;
 	BOOL result = 0;
 
 	init_empty_dcb(&dcb);
@@ -208,8 +208,8 @@ static BOOL test_SerCx2Sys(HANDLE hComm)
 
 static BOOL test_generic(HANDLE hComm)
 {
-	DCB dcb = { 0 };
-	DCB dcb2 = { 0 };
+	DCB dcb = WINPR_C_ARRAY_INIT;
+	DCB dcb2 = WINPR_C_ARRAY_INIT;
 	BOOL result = 0;
 
 	init_empty_dcb(&dcb);
@@ -259,7 +259,7 @@ static BOOL test_generic(HANDLE hComm)
 
 int TestSetCommState(int argc, char* argv[])
 {
-	struct stat statbuf = { 0 };
+	struct stat statbuf = WINPR_C_ARRAY_INIT;
 	BOOL result = 0;
 	HANDLE hComm = NULL;
 

@@ -32,7 +32,7 @@
 BOOL shadow_client_init_lobby(rdpShadowServer* server)
 {
 	BOOL rc = FALSE;
-	RECTANGLE_16 invalidRect = { 0 };
+	RECTANGLE_16 invalidRect = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(server);
 	rdpShadowSurface* lobby = server->lobby;

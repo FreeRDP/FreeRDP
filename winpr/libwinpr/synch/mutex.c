@@ -64,7 +64,7 @@ BOOL MutexCloseHandle(HANDLE handle)
 
 	if ((rc = pthread_mutex_destroy(&mutex->mutex)))
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "pthread_mutex_destroy failed with %s [%d]",
 		         winpr_strerror(rc, ebuffer, sizeof(ebuffer)), rc);
 #if defined(WITH_DEBUG_MUTEX)
@@ -189,7 +189,7 @@ HANDLE CreateMutexExW(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCWSTR lpName, D
 	/* TODO: support access modes */
 	if (dwDesiredAccess != 0)
 	{
-		char name[MAX_PATH] = { 0 };
+		char name[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		ConvertWCharToUtf8(lpName, name, sizeof(name) - 1);
 		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, name, dwDesiredAccess);
 	}
@@ -235,7 +235,7 @@ BOOL ReleaseMutex(HANDLE hMutex)
 
 		if (rc)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "pthread_mutex_unlock failed with %s [%d]",
 			         winpr_strerror(rc, ebuffer, sizeof(ebuffer)), rc);
 			return FALSE;

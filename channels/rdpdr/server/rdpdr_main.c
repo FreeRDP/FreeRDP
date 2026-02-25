@@ -281,7 +281,7 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 
 	if (length >= RDPDR_HEADER_LENGTH)
 	{
-		RDPDR_HEADER header = { 0 };
+		RDPDR_HEADER header = WINPR_C_ARRAY_INIT;
 		Stream_Read_UINT16(s, header.Component);
 		Stream_Read_UINT16(s, header.PacketId);
 
@@ -306,7 +306,7 @@ static UINT rdpdr_server_send_announce_request(RdpdrServerContext* context)
 {
 	UINT error = 0;
 	wStream* s = NULL;
-	RDPDR_HEADER header = { 0 };
+	RDPDR_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -512,7 +512,7 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	    s); /* extraFlags2 (4 bytes), must be set to zero, reserved for future use */
 
 	{
-		char buffer[1024] = { 0 };
+		char buffer[1024] = WINPR_C_ARRAY_INIT;
 		WLog_Print(context->priv->log, WLOG_TRACE,
 		           "OsType=%" PRIu32 ", OsVersion=%" PRIu32 ", VersionMajor=%" PRIu32
 		           ", VersionMinor=%" PRIu32 ", IoCode1=%s, IoCode2=%" PRIu32
@@ -563,7 +563,7 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 
 	if ((IoCode1 & mask) == 0)
 	{
-		char buffer[1024] = { 0 };
+		char buffer[1024] = WINPR_C_ARRAY_INIT;
 		WLog_Print(context->priv->log, WLOG_ERROR, "Missing IRP mask values %s",
 		           rdpdr_irp_mask2str(IoCode1 & mask, buffer, sizeof(buffer)));
 		return ERROR_INVALID_DATA;
@@ -809,7 +809,7 @@ static UINT rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* cont
 static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* context)
 {
 	wStream* s = NULL;
-	RDPDR_HEADER header = { 0 };
+	RDPDR_HEADER header = WINPR_C_ARRAY_INIT;
 	UINT16 numCapabilities = 0;
 	UINT error = 0;
 	WINPR_ASSERT(context);
@@ -929,7 +929,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 	UINT16 caps = 0;
 	for (UINT16 i = 0; i < numCapabilities; i++)
 	{
-		RDPDR_CAPABILITY_HEADER capabilityHeader = { 0 };
+		RDPDR_CAPABILITY_HEADER capabilityHeader = WINPR_C_ARRAY_INIT;
 		const size_t start = Stream_GetPosition(s);
 
 		if ((status = rdpdr_read_capset_header(context->priv->log, s, &capabilityHeader)))
@@ -1046,7 +1046,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 static UINT rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 {
 	wStream* s = NULL;
-	RDPDR_HEADER header = { 0 };
+	RDPDR_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -1094,7 +1094,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 	for (UINT32 i = 0; i < DeviceCount; i++)
 	{
 		UINT error = 0;
-		RdpdrDevice device = { 0 };
+		RdpdrDevice device = WINPR_C_ARRAY_INIT;
 
 		if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 20))
 			return ERROR_INVALID_DATA;
@@ -1830,7 +1830,7 @@ static UINT rdpdr_server_receive_device_io_completion(RdpdrServerContext* contex
 static UINT rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 {
 	wStream* s = NULL;
-	RDPDR_HEADER header = { 0 };
+	RDPDR_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -1852,7 +1852,7 @@ static UINT rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 
 static UINT rdpdr_server_receive_prn_cache_add_printer(RdpdrServerContext* context, wStream* s)
 {
-	char PortDosName[9] = { 0 };
+	char PortDosName[9] = WINPR_C_ARRAY_INIT;
 	UINT32 PnPNameLen = 0;
 	UINT32 DriverNameLen = 0;
 	UINT32 PrinterNameLen = 0;
@@ -2161,7 +2161,7 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 	DWORD status = 0;
 	DWORD nCount = 0;
 	void* buffer = NULL;
-	HANDLE events[8] = { 0 };
+	HANDLE events[8] = WINPR_C_ARRAY_INIT;
 	HANDLE ChannelEvent = NULL;
 	DWORD BytesReturned = 0;
 	UINT error = 0;
@@ -2254,7 +2254,7 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 
 			while (Stream_GetRemainingLength(s) >= RDPDR_HEADER_LENGTH)
 			{
-				RDPDR_HEADER header = { 0 };
+				RDPDR_HEADER header = WINPR_C_ARRAY_INIT;
 
 				Stream_Read_UINT16(s, header.Component); /* Component (2 bytes) */
 				Stream_Read_UINT16(s, header.PacketId);  /* PacketId (2 bytes) */
@@ -2925,7 +2925,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 {
 	UINT error = 0;
 	UINT32 length = 0;
-	FILE_DIRECTORY_INFORMATION fdi = { 0 };
+	FILE_DIRECTORY_INFORMATION fdi = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);

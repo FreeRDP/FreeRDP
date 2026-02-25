@@ -245,7 +245,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if (nbFds < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno,
 		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
@@ -275,7 +275,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			}
 			else
 			{
-				char ebuffer[256] = { 0 };
+				char ebuffer[256] = WINPR_C_ARRAY_INIT;
 				CommLog_Print(WLOG_WARN,
 				              "unexpected error on reading fd_read_event, errno=[%d] %s\n", errno,
 				              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
@@ -301,7 +301,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		if ((nbRead < 0) || (nbRead > nNumberOfBytesToRead))
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			CommLog_Print(WLOG_WARN,
 			              "CommReadFile failed, ReadIntervalTimeout=%" PRIu32
 			              ", ReadTotalTimeoutMultiplier=%" PRIu32
@@ -455,7 +455,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 		if (nbFds < 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno,
 			              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			SetLastError(ERROR_IO_DEVICE);
@@ -485,7 +485,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				}
 				else
 				{
-					char ebuffer[256] = { 0 };
+					char ebuffer[256] = WINPR_C_ARRAY_INIT;
 					CommLog_Print(WLOG_WARN,
 					              "unexpected error on reading fd_write_event, errno=[%d] %s\n",
 					              errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
@@ -516,7 +516,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 			if (nbWritten < 0)
 			{
-				char ebuffer[256] = { 0 };
+				char ebuffer[256] = WINPR_C_ARRAY_INIT;
 				CommLog_Print(WLOG_WARN,
 				              "CommWriteFile failed after %" PRIu32
 				              " bytes written, errno=[%d] %s\n",

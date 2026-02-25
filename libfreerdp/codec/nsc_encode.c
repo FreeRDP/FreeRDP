@@ -458,7 +458,7 @@ BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RES
                          UINT32 scanline)
 {
 	BOOL rc = 0;
-	NSC_MESSAGE message = { 0 };
+	NSC_MESSAGE message = WINPR_C_ARRAY_INIT;
 
 	if (!context || !s || !data)
 		return FALSE;

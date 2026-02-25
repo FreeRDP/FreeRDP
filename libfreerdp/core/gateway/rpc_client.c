@@ -188,7 +188,7 @@ static int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
 static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 {
 	int status = -1;
-	RtsPduSignature found = { 0 };
+	RtsPduSignature found = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(pdu);
@@ -370,7 +370,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 	size_t StubOffset = 0;
 	size_t StubLength = 0;
 	RpcClientCall* call = NULL;
-	rpcconn_hdr_t header = { 0 };
+	rpcconn_hdr_t header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(rpc->client);
@@ -673,7 +673,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 		while (1)
 		{
 			size_t pos = 0;
-			rpcconn_common_hdr_t header = { 0 };
+			rpcconn_common_hdr_t header = WINPR_C_ARRAY_INIT;
 
 			while (Stream_GetPosition(fragment) < RPC_COMMON_FIELDS_LENGTH)
 			{
@@ -982,7 +982,7 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 	SSIZE_T status = 0;
 	RpcClientCall* clientCall = NULL;
 	wStream s;
-	rpcconn_common_hdr_t header = { 0 };
+	rpcconn_common_hdr_t header = WINPR_C_ARRAY_INIT;
 
 	status = rpc_channel_write(&inChannel->common, buffer, length);
 
@@ -1024,10 +1024,10 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 	BYTE* buffer = NULL;
 	size_t stub_data_pad = 0;
 	SecBuffer plaintext;
-	SecBuffer ciphertext = { 0 };
+	SecBuffer ciphertext = WINPR_C_ARRAY_INIT;
 	RpcClientCall* clientCall = NULL;
 	rdpCredsspAuth* auth = NULL;
-	rpcconn_request_hdr_t request_pdu = { 0 };
+	rpcconn_request_hdr_t request_pdu = WINPR_C_ARRAY_INIT;
 	RpcVirtualConnection* connection = NULL;
 	RpcInChannel* inChannel = NULL;
 	BOOL rc = FALSE;

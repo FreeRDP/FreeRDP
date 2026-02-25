@@ -237,7 +237,7 @@ PCSTR winpr_inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBuf
 {
 	if (Family == AF_INET)
 	{
-		struct sockaddr_in in = { 0 };
+		struct sockaddr_in in = WINPR_C_ARRAY_INIT;
 
 		in.sin_family = AF_INET;
 		memcpy(&in.sin_addr, pAddr, sizeof(struct in_addr));
@@ -247,7 +247,7 @@ PCSTR winpr_inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBuf
 	}
 	else if (Family == AF_INET6)
 	{
-		struct sockaddr_in6 in = { 0 };
+		struct sockaddr_in6 in = WINPR_C_ARRAY_INIT;
 
 		in.sin6_family = AF_INET6;
 		memcpy(&in.sin6_addr, pAddr, sizeof(struct in_addr6));
@@ -802,11 +802,11 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, WINPR_ATTR_UNUSED LPVOID lpvInBuff
 	size_t offset = 0;
 	size_t ifreq_len = 0;
 	struct ifreq* ifreq = NULL;
-	struct ifconf ifconf = { 0 };
-	char address[128] = { 0 };
-	char broadcast[128] = { 0 };
-	char netmask[128] = { 0 };
-	char buffer[4096] = { 0 };
+	struct ifconf ifconf = WINPR_C_ARRAY_INIT;
+	char address[128] = WINPR_C_ARRAY_INIT;
+	char broadcast[128] = WINPR_C_ARRAY_INIT;
+	char netmask[128] = WINPR_C_ARRAY_INIT;
+	char buffer[4096] = WINPR_C_ARRAY_INIT;
 	size_t numInterfaces = 0;
 	size_t maxNumInterfaces = 0;
 	INTERFACE_INFO* pInterface = NULL;

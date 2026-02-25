@@ -218,8 +218,8 @@ static BOOL freerdp_assistance_crypt_derive_key_sha1(const BYTE* hash, size_t ha
                                                      size_t keyLength)
 {
 	BOOL rc = FALSE;
-	BYTE pad1[64] = { 0 };
-	BYTE pad2[64] = { 0 };
+	BYTE pad1[64] = WINPR_C_ARRAY_INIT;
+	BYTE pad2[64] = WINPR_C_ARRAY_INIT;
 
 	if (hashLength == 0)
 		return FALSE;
@@ -324,7 +324,7 @@ out:
 
 static BOOL freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
 {
-	char* tokens[8] = { 0 };
+	char* tokens[8] = WINPR_C_ARRAY_INIT;
 	BOOL rc = FALSE;
 
 	WINPR_ASSERT(file);
@@ -430,7 +430,7 @@ static BOOL freerdp_assistance_parse_attr(const char** opt, size_t* plength, con
 	if (!tag)
 		return FALSE;
 
-	char bkey[128] = { 0 };
+	char bkey[128] = WINPR_C_ARRAY_INIT;
 	const int rc = _snprintf(bkey, sizeof(bkey), "%s=\"", key);
 	WINPR_ASSERT(rc > 0);
 	WINPR_ASSERT((size_t)rc < sizeof(bkey));
@@ -503,7 +503,7 @@ static BOOL freerdp_assistance_parse_attr_uint32(UINT32* opt, const char* key, c
 	if (!freerdp_assistance_parse_attr(&copt, &size, key, tag))
 		return FALSE;
 
-	char buffer[64] = { 0 };
+	char buffer[64] = WINPR_C_ARRAY_INIT;
 	if ((!copt && (size > 0)) || (size >= sizeof(buffer)))
 	{
 		WLog_WARN(TAG, "Invalid UINT32 string '%s' [%" PRIuz "]", copt, size);
@@ -534,7 +534,7 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 	WINPR_ASSERT(key);
 	WINPR_ASSERT(plen);
 
-	char bkey[128] = { 0 };
+	char bkey[128] = WINPR_C_ARRAY_INIT;
 	const int rc = _snprintf(bkey, sizeof(bkey), "<%s", key);
 	WINPR_ASSERT(rc > 0);
 	WINPR_ASSERT((size_t)rc < sizeof(bkey));
@@ -575,7 +575,7 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 	const char* dend = start - 1;
 	if (*dend != '/')
 	{
-		char ekey[128] = { 0 };
+		char ekey[128] = WINPR_C_ARRAY_INIT;
 		const int erc = _snprintf(ekey, sizeof(ekey), "</%s>", key);
 		WINPR_ASSERT(erc > 0);
 		WINPR_ASSERT((size_t)erc < sizeof(ekey));
@@ -814,7 +814,7 @@ char* freerdp_assistance_construct_expert_blob(const char* name, const char* pas
 
 char* freerdp_assistance_generate_pass_stub(WINPR_ATTR_UNUSED DWORD flags)
 {
-	UINT32 nums[14] = { 0 };
+	UINT32 nums[14] = WINPR_C_ARRAY_INIT;
 	const char set1[64] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
 		                    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 		                    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
@@ -860,7 +860,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	BOOL rc = 0;
 	size_t cbPasswordW = 0;
 	size_t cbPassStubW = 0;
-	BYTE PasswordHash[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE PasswordHash[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 	WINPR_RC4_CTX* rc4Ctx = NULL;
 	BYTE* pbIn = NULL;
 	BYTE* pbOut = NULL;
@@ -929,9 +929,9 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file)
 	size_t cbOut = 0;
 	size_t cbIn = 0;
 	size_t cbFinal = 0;
-	BYTE DerivedKey[WINPR_AES_BLOCK_SIZE] = { 0 };
-	BYTE InitializationVector[WINPR_AES_BLOCK_SIZE] = { 0 };
-	BYTE PasswordHash[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
+	BYTE DerivedKey[WINPR_AES_BLOCK_SIZE] = WINPR_C_ARRAY_INIT;
+	BYTE InitializationVector[WINPR_AES_BLOCK_SIZE] = WINPR_C_ARRAY_INIT;
+	BYTE PasswordHash[WINPR_SHA1_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(file);
 

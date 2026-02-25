@@ -378,7 +378,7 @@ int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 		return -2;
 
 	char* rules = NULL;
-	XkbRF_VarDefsRec rules_names = { 0 };
+	XkbRF_VarDefsRec rules_names = WINPR_C_ARRAY_INIT;
 	const Bool rc = XkbRF_GetNamesProp(display, &rules, &rules_names);
 	if (!rc)
 	{
@@ -392,8 +392,8 @@ int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 		DEBUG_KBD("variants: %s", rules_names.variant ? rules_names.variant : "");
 
 		DWORD group = 0;
-		XkbStateRec state = { 0 };
-		XKeyboardState coreKbdState = { 0 };
+		XkbStateRec state = WINPR_C_ARRAY_INIT;
+		XKeyboardState coreKbdState = WINPR_C_ARRAY_INIT;
 		XGetKeyboardControl(display, &coreKbdState);
 
 		if (XkbGetState(display, XkbUseCoreKbd, &state) == Success)
@@ -437,7 +437,7 @@ static BOOL try_add(size_t offset, const char* xkb_keyname, DWORD* x11_keycode_t
                     WINPR_ATTR_UNUSED size_t count)
 {
 	static BOOL initialized = FALSE;
-	static XKB_KEY_NAME_SCANCODE copy[ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE)] = { 0 };
+	static XKB_KEY_NAME_SCANCODE copy[ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE)] = WINPR_C_ARRAY_INIT;
 	if (!initialized)
 	{
 		memcpy(copy, XKB_KEY_NAME_SCANCODE_TABLE, sizeof(copy));
@@ -445,7 +445,7 @@ static BOOL try_add(size_t offset, const char* xkb_keyname, DWORD* x11_keycode_t
 		initialized = TRUE;
 	}
 
-	XKB_KEY_NAME_SCANCODE key = { 0 };
+	XKB_KEY_NAME_SCANCODE key = WINPR_C_ARRAY_INIT;
 	key.xkb_keyname = xkb_keyname;
 	XKB_KEY_NAME_SCANCODE* found =
 	    bsearch(&key, copy, ARRAYSIZE(copy), sizeof(XKB_KEY_NAME_SCANCODE), xkb_cmp);

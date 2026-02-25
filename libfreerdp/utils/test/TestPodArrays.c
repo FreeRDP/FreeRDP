@@ -64,10 +64,10 @@ int TestPodArrays(int argc, char* argv[])
 	int rc = -1;
 	UINT32 sum = 0;
 	UINT32 foreach_index = 0;
-	ArrayUINT32 uint32s = { 0 };
+	ArrayUINT32 uint32s = WINPR_C_ARRAY_INIT;
 	UINT32* ptr = NULL;
 	const UINT32* cptr = NULL;
-	ArrayBasicStruct basicStructs = { 0 };
+	ArrayBasicStruct basicStructs = WINPR_C_ARRAY_INIT;
 	BasicStruct basicStruct = { 1, 2 };
 
 	array_uint32_init(&uint32s);

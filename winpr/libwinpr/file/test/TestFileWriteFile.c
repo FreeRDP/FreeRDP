@@ -101,7 +101,7 @@ fail:
 int TestFileWriteFile(int argc, char* argv[])
 {
 	const char data[] = "sometesttext\nanother line\r\ngogogo\r\tfoo\t\r\n\r";
-	char filename[MAX_PATH] = { 0 };
+	char filename[MAX_PATH] = WINPR_C_ARRAY_INIT;
 
 	int rc = -1;
 	if (!get_tmp(filename, sizeof(filename)))

@@ -513,10 +513,10 @@ static UINT handle_hotplug(WINPR_ATTR_UNUSED RdpdrClientContext* context,
 	rdpdrPlugin* rdpdr = context->handle;
 
 	struct dirent* pDirent = NULL;
-	char fullpath[PATH_MAX] = { 0 };
+	char fullpath[PATH_MAX] = WINPR_C_ARRAY_INIT;
 	char* szdir = (char*)"/Volumes";
-	struct stat buf = { 0 };
-	hotplug_dev dev_array[MAX_USB_DEVICES] = { 0 };
+	struct stat buf = WINPR_C_ARRAY_INIT;
+	hotplug_dev dev_array[MAX_USB_DEVICES] = WINPR_C_ARRAY_INIT;
 	int count = 0;
 	DEVICE_DRIVE_EXT* device_ext = NULL;
 	ULONG_PTR* keys = NULL;
@@ -730,9 +730,9 @@ static const char* automountLocations[] = { "/run/user/%lu/gvfs", "/run/media/%s
 static BOOL isAutomountLocation(const char* path)
 {
 	const size_t nrLocations = sizeof(automountLocations) / sizeof(automountLocations[0]);
-	char buffer[MAX_PATH] = { 0 };
+	char buffer[MAX_PATH] = WINPR_C_ARRAY_INIT;
 	uid_t uid = getuid();
-	char uname[MAX_PATH] = { 0 };
+	char uname[MAX_PATH] = WINPR_C_ARRAY_INIT;
 	ULONG size = sizeof(uname) - 1;
 
 	if (!GetUserNameExA(NameSamCompatible, uname, &size))
@@ -863,8 +863,8 @@ static struct mntent* getmntent_x(FILE* f, struct mntent* buffer, char* pathbuff
 static UINT handle_platform_mounts_linux(wLog* log, hotplug_dev* dev_array, size_t* size)
 {
 	FILE* f = NULL;
-	struct mntent mnt = { 0 };
-	char pathbuffer[PATH_MAX] = { 0 };
+	struct mntent mnt = WINPR_C_ARRAY_INIT;
+	char pathbuffer[PATH_MAX] = WINPR_C_ARRAY_INIT;
 	struct mntent* ent = NULL;
 	f = winpr_fopen("/proc/mounts", "r");
 	if (f == NULL)
@@ -1000,7 +1000,7 @@ static UINT handle_hotplug(RdpdrClientContext* context,
 	WINPR_ASSERT(context);
 	rdpdrPlugin* rdpdr = context->handle;
 
-	hotplug_dev dev_array[MAX_USB_DEVICES] = { 0 };
+	hotplug_dev dev_array[MAX_USB_DEVICES] = WINPR_C_ARRAY_INIT;
 	size_t size = 0;
 	UINT error = ERROR_SUCCESS;
 	struct hotplug_delete_arg arg = { dev_array, ARRAYSIZE(dev_array), rdpdr };
@@ -1446,7 +1446,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	size_t pos = 0;
 	wStream* s = NULL;
 	size_t count_pos = 0;
-	struct device_announce_arg arg = { 0 };
+	struct device_announce_arg arg = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(rdpdr->devman);
@@ -1657,7 +1657,7 @@ static const char* state_str(size_t count, va_list ap, char* buffer, size_t size
 static BOOL rdpdr_state_check(rdpdrPlugin* rdpdr, UINT16 packetid, enum RDPDR_CHANNEL_STATE next,
                               size_t count, ...)
 {
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(rdpdr);
 
 	va_start(ap, count);
@@ -1667,7 +1667,7 @@ static BOOL rdpdr_state_check(rdpdrPlugin* rdpdr, UINT16 packetid, enum RDPDR_CH
 	if (!rc)
 	{
 		const char* strstate = rdpdr_state_str(rdpdr->state);
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 
 		va_start(ap, count);
 		state_str(count, ap, buffer, sizeof(buffer));
@@ -2111,7 +2111,7 @@ static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
 
 	while (1)
 	{
-		wMessage message = { 0 };
+		wMessage message = WINPR_C_ARRAY_INIT;
 		WINPR_ASSERT(rdpdr);
 
 		if (!MessageQueue_Wait(rdpdr->queue))

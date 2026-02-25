@@ -105,7 +105,7 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 			return FALSE;
 	}
 
-	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
+	char prefix[WLOG_MAX_PREFIX_SIZE] = WINPR_C_ARRAY_INIT;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
 	if (cmessage->Level != WLOG_OFF)

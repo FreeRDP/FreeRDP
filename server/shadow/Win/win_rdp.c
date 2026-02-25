@@ -190,7 +190,7 @@ static DWORD WINAPI shw_client_thread(LPVOID arg)
 	while (1)
 	{
 		DWORD status;
-		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD count = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));
 
 		if ((count == 0) || (count == MAXIMUM_WAIT_OBJECTS))
@@ -388,7 +388,7 @@ int shw_RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 int win_shadow_rdp_init(winShadowSubsystem* subsystem)
 {
 	rdpContext* context;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = WINPR_C_ARRAY_INIT;
 
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;

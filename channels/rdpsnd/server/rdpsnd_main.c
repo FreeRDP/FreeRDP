@@ -266,7 +266,7 @@ static DWORD WINAPI rdpsnd_server_thread(LPVOID arg)
 {
 	DWORD nCount = 0;
 	DWORD status = 0;
-	HANDLE events[2] = { 0 };
+	HANDLE events[2] = WINPR_C_ARRAY_INIT;
 	RdpsndServerContext* context = (RdpsndServerContext*)arg;
 	UINT error = CHANNEL_RC_OK;
 

@@ -262,7 +262,7 @@ BOOL rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 		const INT16** cpv;
 		INT16** pv;
 	} cnv;
-	INT16* pSrcDst[3] = { 0 };
+	INT16* pSrcDst[3] = WINPR_C_ARRAY_INIT;
 	uint32_t CbLen = 0;
 	uint32_t CrLen = 0;
 	primitives_t* prims = primitives_get();

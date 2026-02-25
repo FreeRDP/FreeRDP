@@ -166,7 +166,7 @@ BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, wStream* s)
 			return rdp_finalize_set_flag(rdp, FINALIZE_SC_CONTROL_GRANTED_PDU);
 		default:
 		{
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_WARN(TAG, "Unexpected control PDU %s",
 			          rdp_ctrlaction_string(action, buffer, sizeof(buffer)));
 
@@ -319,7 +319,7 @@ static UINT16 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 
 		for (int index = 0; index < count; index++)
 		{
-			PERSISTENT_CACHE_ENTRY cacheEntry = { 0 };
+			PERSISTENT_CACHE_ENTRY cacheEntry = WINPR_C_ARRAY_INIT;
 
 			if (persistent_cache_read_entry(persistent, &cacheEntry) < 1)
 				continue;
@@ -342,7 +342,7 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 {
 	UINT16 keyMaxFrag = 2042;
 	UINT64* keyList = NULL;
-	RDP_BITMAP_PERSISTENT_INFO info = { 0 };
+	RDP_BITMAP_PERSISTENT_INFO info = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(rdp);
 	rdpSettings* settings = rdp->settings;
 	UINT16 keyCount = rdp_load_persistent_key_list(rdp, &keyList);
@@ -716,8 +716,8 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 		case CTRLACTION_REQUEST_CONTROL:
 			if (!rdp_finalize_is_flag_set(rdp, FINALIZE_CS_CONTROL_COOPERATE_PDU))
 			{
-				char abuffer[128] = { 0 };
-				char buffer[1024] = { 0 };
+				char abuffer[128] = WINPR_C_ARRAY_INIT;
+				char buffer[1024] = WINPR_C_ARRAY_INIT;
 				WLog_WARN(TAG,
 				          "Received action=%s with GrantId=0x%04" PRIx16 ", ControlId=0x%08" PRIx32
 				          " in unexpected state %s [missing %s]",
@@ -739,8 +739,8 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 		case CTRLACTION_COOPERATE:
 			if (!rdp_finalize_is_flag_set(rdp, FINALIZE_CS_SYNCHRONIZE_PDU))
 			{
-				char abuffer[128] = { 0 };
-				char buffer[1024] = { 0 };
+				char abuffer[128] = WINPR_C_ARRAY_INIT;
+				char buffer[1024] = WINPR_C_ARRAY_INIT;
 				WLog_WARN(
 				    TAG,
 				    "Received action=%s with GrantId=0x%04" PRIx16 ", ControlId=0x%08" PRIx32
@@ -761,7 +761,7 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 			return rdp_finalize_set_flag(rdp, FINALIZE_CS_CONTROL_COOPERATE_PDU);
 		default:
 		{
-			char abuffer[128] = { 0 };
+			char abuffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_WARN(TAG,
 			          "Received unexpected action=%s with GrantId=0x%04" PRIx16
 			          ", ControlId=0x%08" PRIx32,

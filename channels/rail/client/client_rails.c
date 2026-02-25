@@ -9,10 +9,10 @@
 UINT client_rail_server_start_cmd(RailClientContext* context)
 {
 	UINT status = 0;
-	char argsAndFile[520] = { 0 };
-	RAIL_EXEC_ORDER exec = { 0 };
-	RAIL_SYSPARAM_ORDER sysparam = { 0 };
-	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
+	char argsAndFile[520] = WINPR_C_ARRAY_INIT;
+	RAIL_EXEC_ORDER exec = WINPR_C_ARRAY_INIT;
+	RAIL_SYSPARAM_ORDER sysparam = WINPR_C_ARRAY_INIT;
+	RAIL_CLIENT_STATUS_ORDER clientStatus = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	railPlugin* rail = context->handle;

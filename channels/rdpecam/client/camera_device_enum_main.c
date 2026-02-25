@@ -474,7 +474,7 @@ static UINT ecam_load_hal_plugin(CameraPlugin* ecam, const char* name, const ADD
 {
 	WINPR_ASSERT(ecam);
 
-	FREERDP_CAMERA_HAL_ENTRY_POINTS entryPoints = { 0 };
+	FREERDP_CAMERA_HAL_ENTRY_POINTS entryPoints = WINPR_C_ARRAY_INIT;
 	UINT error = ERROR_INTERNAL_ERROR;
 	union
 	{

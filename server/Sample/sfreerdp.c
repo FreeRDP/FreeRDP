@@ -179,7 +179,7 @@ static wStream* test_peer_stream_init(testPeerContext* context)
 static void test_peer_begin_frame(freerdp_peer* client)
 {
 	rdpUpdate* update = NULL;
-	SURFACE_FRAME_MARKER fm = { 0 };
+	SURFACE_FRAME_MARKER fm = WINPR_C_ARRAY_INIT;
 	testPeerContext* context = NULL;
 
 	WINPR_ASSERT(client);
@@ -201,7 +201,7 @@ static void test_peer_begin_frame(freerdp_peer* client)
 static void test_peer_end_frame(freerdp_peer* client)
 {
 	rdpUpdate* update = NULL;
-	SURFACE_FRAME_MARKER fm = { 0 };
+	SURFACE_FRAME_MARKER fm = WINPR_C_ARRAY_INIT;
 	testPeerContext* context = NULL;
 
 	WINPR_ASSERT(client);
@@ -230,7 +230,7 @@ static BOOL stream_surface_bits_supported(const rdpSettings* settings)
 
 static BOOL test_peer_draw_background(freerdp_peer* client, const RFX_RECT* rect)
 {
-	SURFACE_BITS_COMMAND cmd = { 0 };
+	SURFACE_BITS_COMMAND cmd = WINPR_C_ARRAY_INIT;
 	BOOL ret = FALSE;
 	const UINT32 colorFormat = PIXEL_FORMAT_RGB24;
 	const size_t bpp = FreeRDPGetBytesPerPixel(colorFormat);
@@ -413,7 +413,7 @@ static void test_send_cursor_update(freerdp_peer* client, UINT32 x, UINT32 y)
 	if (y + context->image->height > h)
 		return;
 
-	SURFACE_BITS_COMMAND cmd = { 0 };
+	SURFACE_BITS_COMMAND cmd = WINPR_C_ARRAY_INIT;
 	if (RemoteFxCodec && stream_surface_bits_supported(settings))
 	{
 		const UINT32 RemoteFxCodecId =
@@ -551,7 +551,7 @@ static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 	UINT32 prev_useconds = 0;
 	rdpUpdate* update = NULL;
 	rdpPcap* pcap_rfx = NULL;
-	pcap_record record = { 0 };
+	pcap_record record = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
@@ -638,7 +638,7 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 	{
 		DWORD status = 0;
 		DWORD nCount = 0;
-		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 
 		handles[nCount++] = context->event;
 		handles[nCount++] = freerdp_abort_event(&context->_p);
@@ -1121,7 +1121,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 {
 	BOOL rc = 0;
 	DWORD error = CHANNEL_RC_OK;
-	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 	DWORD count = 0;
 	DWORD status = 0;
 	testPeerContext* context = NULL;
@@ -1344,7 +1344,7 @@ static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 
 static void test_server_mainloop(freerdp_listener* instance)
 {
-	HANDLE handles[32] = { 0 };
+	HANDLE handles[32] = WINPR_C_ARRAY_INIT;
 	DWORD count = 0;
 	DWORD status = 0;
 
@@ -1400,7 +1400,7 @@ WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
 WINPR_ATTR_FORMAT_ARG(2, 0)
 static void print_entry(FILE* fp, WINPR_FORMAT_ARG const char* fmt, const char* what, size_t size)
 {
-	char buffer[32] = { 0 };
+	char buffer[32] = WINPR_C_ARRAY_INIT;
 	strncpy(buffer, what, MIN(size, sizeof(buffer) - 1));
 	(void)fprintf(fp, fmt, buffer);
 }
@@ -1427,13 +1427,13 @@ int main(int argc, char* argv[])
 {
 	int rc = -1;
 	BOOL started = FALSE;
-	WSADATA wsaData = { 0 };
+	WSADATA wsaData = WINPR_C_ARRAY_INIT;
 	freerdp_listener* instance = NULL;
 	char* file = NULL;
-	char name[MAX_PATH] = { 0 };
+	char name[MAX_PATH] = WINPR_C_ARRAY_INIT;
 	long port = 3389;
 	BOOL localOnly = FALSE;
-	struct server_info info = { 0 };
+	struct server_info info = WINPR_C_ARRAY_INIT;
 	const char* app = argv[0];
 
 	info.test_dump_rfx_realtime = TRUE;

@@ -134,7 +134,7 @@ static void reg_load_finish(Reg* reg)
 
 static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 {
-	const char* p[5] = { 0 };
+	const char* p[5] = WINPR_C_ARRAY_INIT;
 	size_t length = 0;
 	char* name = NULL;
 	const char* type = NULL;

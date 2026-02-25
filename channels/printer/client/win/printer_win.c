@@ -76,7 +76,7 @@ typedef struct
 WINPR_ATTR_MALLOC(free, 1)
 static WCHAR* printer_win_get_printjob_name(size_t id)
 {
-	struct tm tres = { 0 };
+	struct tm tres = WINPR_C_ARRAY_INIT;
 	WCHAR* str = NULL;
 	size_t len = 0;
 

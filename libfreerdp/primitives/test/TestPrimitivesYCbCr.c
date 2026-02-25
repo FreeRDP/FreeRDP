@@ -1515,7 +1515,7 @@ static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, size_t size, i
 static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, size_t size, int channel,
                              int margin)
 {
-	int error[3] = { 0 };
+	int error[3] = WINPR_C_ARRAY_INIT;
 	int count = 0;
 	size /= 4;
 	actual += channel;

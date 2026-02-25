@@ -13,7 +13,7 @@ int TestPathIsUNCEx(int argc, char* argv[])
 {
 	BOOL status = 0;
 	LPCTSTR Server = NULL;
-	TCHAR Path[PATHCCH_MAX_CCH] = { 0 };
+	TCHAR Path[PATHCCH_MAX_CCH] = WINPR_C_ARRAY_INIT;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

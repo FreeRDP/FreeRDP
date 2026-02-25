@@ -46,7 +46,7 @@
 static UINT gfxredir_recv_legacy_caps_pdu(wStream* s, GfxRedirServerContext* context)
 {
 	UINT32 error = CHANNEL_RC_OK;
-	GFXREDIR_LEGACY_CAPS_PDU pdu = { 0 };
+	GFXREDIR_LEGACY_CAPS_PDU pdu = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 
@@ -70,7 +70,7 @@ static UINT gfxredir_recv_caps_advertise_pdu(wStream* s, UINT32 length,
                                              GfxRedirServerContext* context)
 {
 	UINT32 error = CHANNEL_RC_OK;
-	GFXREDIR_CAPS_ADVERTISE_PDU pdu = { 0 };
+	GFXREDIR_CAPS_ADVERTISE_PDU pdu = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 
@@ -102,7 +102,7 @@ static UINT gfxredir_recv_caps_advertise_pdu(wStream* s, UINT32 length,
 static UINT gfxredir_recv_present_buffer_ack_pdu(wStream* s, GfxRedirServerContext* context)
 {
 	UINT32 error = CHANNEL_RC_OK;
-	GFXREDIR_PRESENT_BUFFER_ACK_PDU pdu = { 0 };
+	GFXREDIR_PRESENT_BUFFER_ACK_PDU pdu = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 
@@ -128,7 +128,7 @@ static UINT gfxredir_recv_present_buffer_ack_pdu(wStream* s, GfxRedirServerConte
 static UINT gfxredir_server_receive_pdu(GfxRedirServerContext* context, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	GFXREDIR_HEADER header = { 0 };
+	GFXREDIR_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 
@@ -284,7 +284,7 @@ static DWORD WINAPI gfxredir_server_thread_func(LPVOID arg)
 	GfxRedirServerPrivate* priv = context->priv;
 	WINPR_ASSERT(priv);
 
-	HANDLE events[8] = { 0 };
+	HANDLE events[8] = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	DWORD nCount = 0;
 	events[nCount++] = priv->stopEvent;
@@ -329,7 +329,7 @@ static DWORD WINAPI gfxredir_server_thread_func(LPVOID arg)
  */
 static wStream* gfxredir_server_single_packet_new(UINT32 cmdId, size_t length)
 {
-	GFXREDIR_HEADER header = { 0 };
+	GFXREDIR_HEADER header = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_New(NULL, GFXREDIR_HEADER_SIZE + length);
 
 	if (!s)

@@ -185,7 +185,7 @@ static int freerdp_connect_begin(freerdp* instance)
 BOOL freerdp_connect(freerdp* instance)
 {
 	BOOL status = FALSE;
-	ConnectionResultEventArgs e = { 0 };
+	ConnectionResultEventArgs e = WINPR_C_ARRAY_INIT;
 	const int rc = freerdp_connect_begin(instance);
 	rdpRdp* rdp = NULL;
 	UINT status2 = ERROR_INTERNAL_ERROR;
@@ -243,7 +243,7 @@ BOOL freerdp_connect(freerdp* instance)
 	{
 		wStream* s = NULL;
 		rdp_update_internal* update = update_cast(instance->context->update);
-		pcap_record record = { 0 };
+		pcap_record record = WINPR_C_ARRAY_INIT;
 
 		WINPR_ASSERT(update);
 		update->pcap_rfx = pcap_open(rdp->settings->PlayRemoteFxFile, FALSE);
@@ -808,7 +808,7 @@ static BOOL freerdp_common_context(rdpContext* context, AccessTokenType tokenTyp
 	if (!context->instance || !context->instance->GetAccessToken)
 		return TRUE;
 
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, count);
 	switch (tokenType)
 	{
@@ -1415,7 +1415,7 @@ void clearChannelError(rdpContext* context)
 WINPR_ATTR_FORMAT_ARG(3, 4)
 void setChannelError(rdpContext* context, UINT errorNum, WINPR_FORMAT_ARG const char* format, ...)
 {
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, format);
 
 	WINPR_ASSERT(context);
@@ -1533,7 +1533,7 @@ fail:
 BOOL freerdp_is_valid_mcs_create_request(const BYTE* data, size_t size)
 {
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, data, size);
 
 	WINPR_ASSERT(data || (size == 0));
@@ -1550,7 +1550,7 @@ BOOL freerdp_is_valid_mcs_create_request(const BYTE* data, size_t size)
 BOOL freerdp_is_valid_mcs_create_response(const BYTE* data, size_t size)
 {
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, data, size);
 
 	WINPR_ASSERT(data || (size == 0));

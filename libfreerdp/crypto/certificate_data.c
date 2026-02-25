@@ -305,7 +305,7 @@ const char* freerdp_certificate_data_get_hash(const rdpCertificateData* cert)
 
 char* freerdp_certificate_data_hash(const char* hostname, UINT16 port)
 {
-	char name[MAX_PATH + 10] = { 0 };
+	char name[MAX_PATH + 10] = WINPR_C_ARRAY_INIT;
 	freerdp_certificate_data_hash_(hostname, port, name, sizeof(name));
 	return strndup(name, sizeof(name));
 }

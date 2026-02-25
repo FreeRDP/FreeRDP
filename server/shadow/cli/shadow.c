@@ -174,7 +174,7 @@ int main(int argc, char** argv)
 
 #ifdef _WIN32
 	{
-		MSG msg = { 0 };
+		MSG msg = WINPR_C_ARRAY_INIT;
 		while (GetMessage(&msg, 0, 0, 0))
 		{
 			TranslateMessage(&msg);

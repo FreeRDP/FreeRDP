@@ -67,7 +67,7 @@ static int close_threads(DWORD count, HANDLE* threads)
 static BOOL TestWaitForAll(void)
 {
 	BOOL rc = FALSE;
-	HANDLE threads[THREADS] = { 0 };
+	HANDLE threads[THREADS] = WINPR_C_ARRAY_INIT;
 	/* WaitForAll, timeout */
 	if (start_threads(ARRAYSIZE(threads), threads))
 	{
@@ -103,7 +103,7 @@ fail:
 static BOOL TestWaitOne(void)
 {
 	BOOL rc = FALSE;
-	HANDLE threads[THREADS] = { 0 };
+	HANDLE threads[THREADS] = WINPR_C_ARRAY_INIT;
 	/* WaitForAll, timeout */
 	if (start_threads(ARRAYSIZE(threads), threads))
 	{
@@ -138,7 +138,7 @@ fail:
 static BOOL TestWaitOneTimeout(void)
 {
 	BOOL rc = FALSE;
-	HANDLE threads[THREADS] = { 0 };
+	HANDLE threads[THREADS] = WINPR_C_ARRAY_INIT;
 	/* WaitForAll, timeout */
 	if (start_threads(ARRAYSIZE(threads), threads))
 	{
@@ -173,7 +173,7 @@ fail:
 static BOOL TestWaitOneTimeoutMultijoin(void)
 {
 	BOOL rc = FALSE;
-	HANDLE threads[THREADS] = { 0 };
+	HANDLE threads[THREADS] = WINPR_C_ARRAY_INIT;
 	/* WaitForAll, timeout */
 	if (start_threads(ARRAYSIZE(threads), threads))
 	{
@@ -212,7 +212,7 @@ fail:
 static BOOL TestDetach(void)
 {
 	BOOL rc = FALSE;
-	HANDLE threads[THREADS] = { 0 };
+	HANDLE threads[THREADS] = WINPR_C_ARRAY_INIT;
 	/* WaitForAll, timeout */
 	if (start_threads(ARRAYSIZE(threads), threads))
 	{

@@ -191,8 +191,8 @@ out:
 #define TESTNUMPIPESST 16
 static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 {
-	HANDLE servers[TESTNUMPIPESST] = { 0 };
-	HANDLE clients[TESTNUMPIPESST] = { 0 };
+	HANDLE servers[TESTNUMPIPESST] = WINPR_C_ARRAY_INIT;
+	HANDLE clients[TESTNUMPIPESST] = WINPR_C_ARRAY_INIT;
 	DWORD dwRead = 0;
 	DWORD dwWritten = 0;
 	int numPipes = 0;
@@ -299,8 +299,8 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	for (int i = 0; i < numPipes; i++)
 	{
 		{
-			char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
-			char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
+			char sndbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
+			char rcvbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 			/* Test writing from clients to servers */
 			(void)sprintf_s(sndbuf, sizeof(sndbuf), "CLIENT->SERVER ON PIPE #%05d", i);
 
@@ -325,8 +325,8 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 		}
 		{
 
-			char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
-			char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
+			char sndbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
+			char rcvbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 			/* Test writing from servers to clients */
 
 			(void)sprintf_s(sndbuf, sizeof(sndbuf), "SERVER->CLIENT ON PIPE #%05d", i);
@@ -360,8 +360,8 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	int i = numPipes - 1;
 	DisconnectNamedPipe(servers[i]);
 	{
-		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
-		char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
+		char sndbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
+		char rcvbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 		if (ReadFile(clients[i], rcvbuf, sizeof(rcvbuf), &dwRead, NULL))
 		{
 			printf("%s: Error ReadFile on client should have failed after DisconnectNamedPipe on "
@@ -390,8 +390,8 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	(void)CloseHandle(servers[i]);
 
 	{
-		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
-		char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
+		char sndbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
+		char rcvbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 
 		if (ReadFile(clients[i], rcvbuf, sizeof(rcvbuf), &dwRead, NULL))
 		{
@@ -419,8 +419,8 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	(void)CloseHandle(clients[i]);
 
 	{
-		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
-		char rcvbuf[PIPE_BUFFER_SIZE] = { 0 };
+		char sndbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
+		char rcvbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 
 		if (ReadFile(servers[i], rcvbuf, sizeof(rcvbuf), &dwRead, NULL))
 		{

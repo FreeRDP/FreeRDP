@@ -117,7 +117,7 @@ static BOOL test_set32s_func(void)
 
 	for (UINT32 off = 0; off < 16; ++off)
 	{
-		INT32 dest[1024] = { 0 };
+		INT32 dest[1024] = WINPR_C_ARRAY_INIT;
 
 		for (UINT32 len = 1; len < 48 - off; ++len)
 		{
@@ -133,7 +133,7 @@ static BOOL test_set32s_func(void)
 
 	for (UINT32 off = 0; off < 16; ++off)
 	{
-		INT32 dest[1024] = { 0 };
+		INT32 dest[1024] = WINPR_C_ARRAY_INIT;
 
 		for (UINT32 len = 1; len < 48 - off; ++len)
 		{
@@ -174,7 +174,7 @@ static BOOL test_set32u_func(void)
 
 	for (UINT32 off = 0; off < 16; ++off)
 	{
-		UINT32 dest[1024] = { 0 };
+		UINT32 dest[1024] = WINPR_C_ARRAY_INIT;
 
 		for (UINT32 len = 1; len < 48 - off; ++len)
 		{
@@ -190,7 +190,7 @@ static BOOL test_set32u_func(void)
 
 	for (UINT32 off = 0; off < 16; ++off)
 	{
-		UINT32 dest[1024] = { 0 };
+		UINT32 dest[1024] = WINPR_C_ARRAY_INIT;
 
 		for (UINT32 len = 1; len < 48 - off; ++len)
 		{

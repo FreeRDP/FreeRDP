@@ -337,7 +337,7 @@ static BOOL wf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 BOOL wf_register_pointer(rdpGraphics* graphics)
 {
 	wfContext* wfc;
-	rdpPointer pointer = { 0 };
+	rdpPointer pointer = WINPR_C_ARRAY_INIT;
 
 	if (!graphics)
 		return FALSE;

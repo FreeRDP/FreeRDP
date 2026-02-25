@@ -164,7 +164,7 @@ static BOOL update_timer(xfDispContext* xfDisp, uint64_t intervalNS)
 
 BOOL xf_disp_sendResize(xfDispContext* xfDisp, BOOL fromTimer)
 {
-	DISPLAY_CONTROL_MONITOR_LAYOUT layout = { 0 };
+	DISPLAY_CONTROL_MONITOR_LAYOUT layout = WINPR_C_ARRAY_INIT;
 
 	if (!xfDisp || !xfDisp->xfc)
 		return FALSE;

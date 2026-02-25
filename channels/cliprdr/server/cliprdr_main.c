@@ -512,7 +512,7 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 	UINT16 capabilitySetLength = 0;
 	UINT error = ERROR_INVALID_DATA;
 	size_t cap_sets_size = 0;
-	CLIPRDR_CAPABILITIES capabilities = { 0 };
+	CLIPRDR_CAPABILITIES capabilities = WINPR_C_ARRAY_INIT;
 	CLIPRDR_CAPABILITY_SET* capSet = NULL;
 
 	WINPR_ASSERT(context);
@@ -589,7 +589,7 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
                                                        const CLIPRDR_HEADER* header)
 {
 	size_t length = 0;
-	CLIPRDR_TEMP_DIRECTORY tempDirectory = { 0 };
+	CLIPRDR_TEMP_DIRECTORY tempDirectory = WINPR_C_ARRAY_INIT;
 	CliprdrServerPrivate* cliprdr = NULL;
 	UINT error = CHANNEL_RC_OK;
 
@@ -643,7 +643,7 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wStream* s,
                                                const CLIPRDR_HEADER* header)
 {
-	CLIPRDR_FORMAT_LIST formatList = { 0 };
+	CLIPRDR_FORMAT_LIST formatList = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -676,7 +676,7 @@ out:
 static UINT cliprdr_server_receive_format_list_response(CliprdrServerContext* context, wStream* s,
                                                         const CLIPRDR_HEADER* header)
 {
-	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = { 0 };
+	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -703,7 +703,7 @@ static UINT cliprdr_server_receive_format_list_response(CliprdrServerContext* co
 static UINT cliprdr_server_receive_lock_clipdata(CliprdrServerContext* context, wStream* s,
                                                  const CLIPRDR_HEADER* header)
 {
-	CLIPRDR_LOCK_CLIPBOARD_DATA lockClipboardData = { 0 };
+	CLIPRDR_LOCK_CLIPBOARD_DATA lockClipboardData = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -734,7 +734,7 @@ static UINT cliprdr_server_receive_lock_clipdata(CliprdrServerContext* context, 
 static UINT cliprdr_server_receive_unlock_clipdata(CliprdrServerContext* context, wStream* s,
                                                    const CLIPRDR_HEADER* header)
 {
-	CLIPRDR_UNLOCK_CLIPBOARD_DATA unlockClipboardData = { 0 };
+	CLIPRDR_UNLOCK_CLIPBOARD_DATA unlockClipboardData = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -765,7 +765,7 @@ static UINT cliprdr_server_receive_unlock_clipdata(CliprdrServerContext* context
 static UINT cliprdr_server_receive_format_data_request(CliprdrServerContext* context, wStream* s,
                                                        const CLIPRDR_HEADER* header)
 {
-	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest = { 0 };
+	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -796,7 +796,7 @@ static UINT cliprdr_server_receive_format_data_request(CliprdrServerContext* con
 static UINT cliprdr_server_receive_format_data_response(CliprdrServerContext* context, wStream* s,
                                                         const CLIPRDR_HEADER* header)
 {
-	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse = { 0 };
+	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -826,7 +826,7 @@ static UINT cliprdr_server_receive_format_data_response(CliprdrServerContext* co
 static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* context, wStream* s,
                                                         const CLIPRDR_HEADER* header)
 {
-	CLIPRDR_FILE_CONTENTS_REQUEST request = { 0 };
+	CLIPRDR_FILE_CONTENTS_REQUEST request = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -863,7 +863,7 @@ static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* co
 static UINT cliprdr_server_receive_filecontents_response(CliprdrServerContext* context, wStream* s,
                                                          const CLIPRDR_HEADER* header)
 {
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
+	CLIPRDR_FILE_CONTENTS_RESPONSE response = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);
@@ -899,8 +899,8 @@ static UINT cliprdr_server_receive_pdu(CliprdrServerContext* context, wStream* s
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(header);
 
-	char buffer1[64] = { 0 };
-	char buffer2[64] = { 0 };
+	char buffer1[64] = WINPR_C_ARRAY_INIT;
+	char buffer2[64] = WINPR_C_ARRAY_INIT;
 	WLog_DBG(TAG, "CliprdrServerReceivePdu: msgType: %s, msgFlags: %s dataLen: %" PRIu32 "",
 	         CB_MSG_TYPE_STRING(header->msgType, buffer1, sizeof(buffer1)),
 	         CB_MSG_FLAGS_STRING(header->msgFlags, buffer2, sizeof(buffer2)), header->dataLen);
@@ -1007,10 +1007,10 @@ static UINT cliprdr_server_receive_pdu(CliprdrServerContext* context, wStream* s
 static UINT cliprdr_server_init(CliprdrServerContext* context)
 {
 	UINT32 generalFlags = 0;
-	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet = { 0 };
+	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet = WINPR_C_ARRAY_INIT;
 	UINT error = 0;
-	CLIPRDR_MONITOR_READY monitorReady = { 0 };
-	CLIPRDR_CAPABILITIES capabilities = { 0 };
+	CLIPRDR_MONITOR_READY monitorReady = WINPR_C_ARRAY_INIT;
+	CLIPRDR_CAPABILITIES capabilities = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 
@@ -1068,7 +1068,7 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 	size_t position = 0;
 	DWORD BytesToRead = 0;
 	DWORD BytesReturned = 0;
-	CLIPRDR_HEADER header = { 0 };
+	CLIPRDR_HEADER header = WINPR_C_ARRAY_INIT;
 	CliprdrServerPrivate* cliprdr = NULL;
 	UINT error = 0;
 	DWORD status = 0;
@@ -1211,7 +1211,7 @@ static DWORD WINAPI cliprdr_server_thread(LPVOID arg)
 {
 	DWORD status = 0;
 	DWORD nCount = 0;
-	HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 	HANDLE ChannelEvent = NULL;
 	CliprdrServerContext* context = (CliprdrServerContext*)arg;
 	CliprdrServerPrivate* cliprdr = NULL;

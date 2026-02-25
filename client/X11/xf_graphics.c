@@ -108,7 +108,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 #if defined(WITH_XCURSOR) && defined(WITH_XRENDER)
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
-	XcursorImage ci = { 0 };
+	XcursorImage ci = WINPR_C_ARRAY_INIT;
 	int cursorIndex = -1;
 
 	if (!context || !pointer || !context->gdi)
@@ -398,7 +398,7 @@ static BOOL xf_Pointer_SetNull(rdpContext* context)
 
 	if (nullcursor == None)
 	{
-		XcursorImage ci = { 0 };
+		XcursorImage ci = WINPR_C_ARRAY_INIT;
 		XcursorPixel xp = 0;
 
 		ci.version = XCURSOR_IMAGE_VERSION;
@@ -441,8 +441,8 @@ static BOOL xf_Pointer_SetDefault(rdpContext* context)
 static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
 	xfContext* xfc = (xfContext*)context;
-	XWindowAttributes current = { 0 };
-	XSetWindowAttributes tmp = { 0 };
+	XWindowAttributes current = WINPR_C_ARRAY_INIT;
+	XSetWindowAttributes tmp = WINPR_C_ARRAY_INIT;
 	BOOL ret = FALSE;
 	Status rc = 0;
 	Window handle = xf_Pointer_get_window(xfc);
@@ -489,7 +489,7 @@ out:
 /* Graphics Module */
 BOOL xf_register_pointer(rdpGraphics* graphics)
 {
-	rdpPointer pointer = { 0 };
+	rdpPointer pointer = WINPR_C_ARRAY_INIT;
 
 	pointer.size = sizeof(xfPointer);
 	pointer.New = xf_Pointer_New;

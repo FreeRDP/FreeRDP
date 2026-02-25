@@ -535,7 +535,7 @@ wObject* ArrayList_Object(wArrayList* arrayList)
 BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...)
 {
 	BOOL rc = 0;
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	va_start(ap, fkt);
 	rc = ArrayList_ForEachAP(arrayList, fkt, ap);
 	va_end(ap);
@@ -546,7 +546,7 @@ BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...)
 BOOL ArrayList_ForEachAP(wArrayList* arrayList, ArrayList_ForEachFkt fkt, va_list ap)
 {
 	BOOL rc = FALSE;
-	va_list cap = { 0 };
+	va_list cap = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(arrayList);
 	WINPR_ASSERT(fkt);

@@ -241,8 +241,8 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			} while ((status < 0) && (errno == EINTR));
 
 #else
-			fd_set rset = { 0 };
-			struct timeval tv = { 0 };
+			fd_set rset = WINPR_C_ARRAY_INIT;
+			struct timeval tv = WINPR_C_ARRAY_INIT;
 			FD_ZERO(&rset);
 			FD_SET(sockfd, &rset);
 
@@ -280,8 +280,8 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			} while ((status < 0) && (errno == EINTR));
 
 #else
-			fd_set rset = { 0 };
-			struct timeval tv = { 0 };
+			fd_set rset = WINPR_C_ARRAY_INIT;
+			struct timeval tv = WINPR_C_ARRAY_INIT;
 			FD_ZERO(&rset);
 			FD_SET(sockfd, &rset);
 
@@ -462,7 +462,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	int ret = num;
 	int nchunks = 0;
 	size_t committedBytes = 0;
-	DataChunk chunks[2] = { 0 };
+	DataChunk chunks[2] = WINPR_C_ARRAY_INIT;
 	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*)BIO_get_data(bio);
 	BIO* next_bio = NULL;
 
@@ -664,7 +664,7 @@ BIO_METHOD* BIO_s_buffered_socket(void)
 
 char* freerdp_tcp_address_to_string(const struct sockaddr_storage* addr, BOOL* pIPv6)
 {
-	char ipAddress[INET6_ADDRSTRLEN + 1] = { 0 };
+	char ipAddress[INET6_ADDRSTRLEN + 1] = WINPR_C_ARRAY_INIT;
 	const struct sockaddr_in6* sockaddr_ipv6 = (const struct sockaddr_in6*)addr;
 	const struct sockaddr_in* sockaddr_ipv4 = (const struct sockaddr_in*)addr;
 
@@ -709,7 +709,7 @@ static bool freerdp_tcp_get_ip_address(rdpSettings* settings, int sockfd)
 {
 	WINPR_ASSERT(settings);
 
-	struct sockaddr_storage saddr = { 0 };
+	struct sockaddr_storage saddr = WINPR_C_ARRAY_INIT;
 	socklen_t length = sizeof(struct sockaddr_storage);
 
 	if (!freerdp_settings_set_string(settings, FreeRDP_ClientAddress, NULL))
@@ -724,7 +724,7 @@ static bool freerdp_tcp_get_ip_address(rdpSettings* settings, int sockfd)
 
 char* freerdp_tcp_get_peer_address(SOCKET sockfd)
 {
-	struct sockaddr_storage saddr = { 0 };
+	struct sockaddr_storage saddr = WINPR_C_ARRAY_INIT;
 	socklen_t length = sizeof(struct sockaddr_storage);
 
 	if (getpeername((int)sockfd, (struct sockaddr*)&saddr, &length) != 0)
@@ -740,7 +740,7 @@ static int freerdp_uds_connect(const char* path)
 #ifndef _WIN32
 	int status = 0;
 	int sockfd = 0;
-	struct sockaddr_un addr = { 0 };
+	struct sockaddr_un addr = WINPR_C_ARRAY_INIT;
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 
 	if (sockfd == -1)
@@ -771,7 +771,7 @@ struct addrinfo* freerdp_tcp_resolve_host(const char* hostname, int port, int ai
 	char* service = NULL;
 	char port_str[16];
 	int status = 0;
-	struct addrinfo hints = { 0 };
+	struct addrinfo hints = WINPR_C_ARRAY_INIT;
 	struct addrinfo* result = NULL;
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -811,7 +811,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
                                         size_t addrlen, UINT32 timeout)
 {
 	BOOL rc = FALSE;
-	HANDLE handles[2] = { 0 };
+	HANDLE handles[2] = WINPR_C_ARRAY_INIT;
 	DWORD count = 0;
 	u_long arg = 0;
 	DWORD tout = (timeout > 0) ? timeout : INFINITE;
@@ -865,7 +865,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 
 		if (optval != 0)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_DBG(TAG, "connect failed with error: %s [%" PRId32 "]",
 			         winpr_strerror(optval, ebuffer, sizeof(ebuffer)), optval);
 			goto fail;
@@ -1175,14 +1175,14 @@ static int freerdp_vsock_connect(rdpContext* context, const char* hostname, int 
 	int sockfd = socket(AF_VSOCK, SOCK_STREAM, 0);
 	if (sockfd < 0)
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_WARN(TAG, "socket(AF_VSOCK, SOCK_STREAM, 0) failed with %s",
 		          winpr_strerror(errno, buffer, sizeof(buffer)));
 		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
 		return -1;
 	}
 
-	struct sockaddr_vm addr = { 0 };
+	struct sockaddr_vm addr = WINPR_C_ARRAY_INIT;
 
 	addr.svm_family = AF_VSOCK;
 	addr.svm_port = WINPR_ASSERTING_INT_CAST(typeof(addr.svm_port), port);
@@ -1192,7 +1192,7 @@ static int freerdp_vsock_connect(rdpContext* context, const char* hostname, int 
 	unsigned long val = strtoul(hostname, &ptr, 10);
 	if (errno || (val > UINT32_MAX))
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "could not extract port from '%s', value=%lu, error=%s", hostname, val,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		close(sockfd);
@@ -1476,7 +1476,7 @@ static BOOL freerdp_tcp_layer_wait(void* userContext, BOOL waitWrite, DWORD time
 	int status = -1;
 	int sockfd = tcpLayer->sockfd;
 #ifdef WINPR_HAVE_POLL_H
-	struct pollfd pollset = { 0 };
+	struct pollfd pollset = WINPR_C_ARRAY_INIT;
 	pollset.fd = sockfd;
 	pollset.events = waitWrite ? POLLOUT : POLLIN;
 
@@ -1486,8 +1486,8 @@ static BOOL freerdp_tcp_layer_wait(void* userContext, BOOL waitWrite, DWORD time
 	} while ((status < 0) && (errno == EINTR));
 
 #else
-	fd_set rset = { 0 };
-	struct timeval tv = { 0 };
+	fd_set rset = WINPR_C_ARRAY_INIT;
+	struct timeval tv = WINPR_C_ARRAY_INIT;
 	FD_ZERO(&rset);
 	FD_SET(sockfd, &rset);
 
@@ -1583,7 +1583,7 @@ BOOL freerdp_tcp_set_nodelay(wLog* log, DWORD level, int sockfd)
 	const int rc = getsockopt(sockfd, SOL_SOCKET, SO_TYPE, ptype, &typelen);
 	if (rc < 0)
 	{
-		char buffer[128] = { 0 };
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, level, "can't get SOL_SOCKET|SO_TYPE (%s)",
 		           winpr_strerror(errno, buffer, sizeof(buffer)));
 		return FALSE;
@@ -1598,7 +1598,7 @@ BOOL freerdp_tcp_set_nodelay(wLog* log, DWORD level, int sockfd)
 		{
 			/* local unix sockets don't have the TCP_NODELAY implemented, so don't make this
 			 * error fatal */
-			char buffer[128] = { 0 };
+			char buffer[128] = WINPR_C_ARRAY_INIT;
 			WLog_Print(log, level, "can't set TCP_NODELAY (%s)",
 			           winpr_strerror(errno, buffer, sizeof(buffer)));
 			return FALSE;

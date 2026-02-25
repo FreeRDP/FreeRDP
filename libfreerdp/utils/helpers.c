@@ -31,10 +31,10 @@
 #include "../core/utils.h"
 
 static INIT_ONCE s_freerdp_app_details_once = INIT_ONCE_STATIC_INIT;
-static char s_freerdp_vendor_string[MAX_PATH] = { 0 };
-static char s_freerdp_product_string[MAX_PATH] = { 0 };
-static char s_freerdp_details_string[3ull * MAX_PATH] = { 0 };
-static WCHAR s_freerdp_details_string_w[3ull * MAX_PATH] = { 0 };
+static char s_freerdp_vendor_string[MAX_PATH] = WINPR_C_ARRAY_INIT;
+static char s_freerdp_product_string[MAX_PATH] = WINPR_C_ARRAY_INIT;
+static char s_freerdp_details_string[3ull * MAX_PATH] = WINPR_C_ARRAY_INIT;
+static WCHAR s_freerdp_details_string_w[3ull * MAX_PATH] = WINPR_C_ARRAY_INIT;
 static SSIZE_T s_freerdp_version = -1;
 static BOOL s_freerdp_app_details_are_custom = FALSE;
 
@@ -201,7 +201,7 @@ WINPR_ATTR_MALLOC(free, 1)
 WINPR_ATTR_NODISCARD
 static char* freerdp_settings_get_legacy_config_path(const char* filename)
 {
-	char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };
+	char product[sizeof(FREERDP_PRODUCT_STRING)] = WINPR_C_ARRAY_INIT;
 
 	for (size_t i = 0; i < sizeof(product); i++)
 		product[i] = (char)tolower(FREERDP_PRODUCT_STRING[i]);

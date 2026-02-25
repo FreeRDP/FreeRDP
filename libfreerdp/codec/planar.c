@@ -716,10 +716,10 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 	BOOL useAlpha = FALSE;
 	INT32 status = 0;
 	INT32 rleSizes[4] = { 0, 0, 0, 0 };
-	UINT32 rawSizes[4] = { 0 };
-	UINT32 rawWidths[4] = { 0 };
-	UINT32 rawHeights[4] = { 0 };
-	const BYTE* planes[4] = { 0 };
+	UINT32 rawSizes[4] = WINPR_C_ARRAY_INIT;
+	UINT32 rawWidths[4] = WINPR_C_ARRAY_INIT;
+	UINT32 rawHeights[4] = WINPR_C_ARRAY_INIT;
+	const BYTE* planes[4] = WINPR_C_ARRAY_INIT;
 	const UINT32 w = MIN(nSrcWidth, nDstWidth);
 	const UINT32 h = MIN(nSrcHeight, nDstHeight);
 	const primitives_t* prims = primitives_get();
@@ -1043,7 +1043,7 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 
 		if (rle) /* RLE encoded data. Decode and handle it like raw data. */
 		{
-			BYTE* rleBuffer[4] = { 0 };
+			BYTE* rleBuffer[4] = WINPR_C_ARRAY_INIT;
 
 			if (!planar->rlePlanesBuffer)
 				return FALSE;
@@ -1532,7 +1532,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT conte
 {
 	UINT32 size = 0;
 	BYTE* dstp = NULL;
-	UINT32 dstSizes[4] = { 0 };
+	UINT32 dstSizes[4] = WINPR_C_ARRAY_INIT;
 	BYTE FormatHeader = 0;
 
 	if (!context || !context->rlePlanesBuffer)

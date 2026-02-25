@@ -96,7 +96,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 	char* headers = NULL;
 	size_t size = 0;
 	int status = 0;
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 	BIO* bio = NULL;
 	SSL_CTX* ssl_ctx = NULL;
 	SSL* ssl = NULL;
@@ -244,7 +244,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 	*status_code = strtol(&buffer[sizeof(header)], NULL, 0);
 	if (errno != 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, WLOG_ERROR, "invalid HTTP status line: %s [%d]",
 		           winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		goto out;
@@ -267,7 +267,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 			*response_length = strtoul(val, NULL, 10);
 			if (errno)
 			{
-				char ebuffer[256] = { 0 };
+				char ebuffer[256] = WINPR_C_ARRAY_INIT;
 				WLog_Print(log, WLOG_ERROR, "could not parse content length (%s): %s [%d]", val,
 				           winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 				goto out;

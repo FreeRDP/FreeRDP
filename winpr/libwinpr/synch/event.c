@@ -333,7 +333,7 @@ HANDLE CreateEventExW(LPSECURITY_ATTRIBUTES lpEventAttributes, LPCWSTR lpName, D
 
 	if (dwDesiredAccess != 0)
 	{
-		char name[MAX_PATH] = { 0 };
+		char name[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		ConvertWCharToUtf8(lpName, name, sizeof(name) - 1);
 		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, name, dwDesiredAccess);
 	}
@@ -551,7 +551,7 @@ static BOOL dump_handle_list(void* data, size_t index, va_list ap)
 
 void DumpEventHandles_(const char* fkt, const char* file, size_t line)
 {
-	struct rlimit r = { 0 };
+	struct rlimit r = WINPR_C_ARRAY_INIT;
 	int rc = getrlimit(RLIMIT_NOFILE, &r);
 	if (rc >= 0)
 	{

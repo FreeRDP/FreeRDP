@@ -130,7 +130,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	wStream* output = NULL;
 	UINT error = CHANNEL_RC_OK;
 	BOOL processed = FALSE;
-	TSMF_IFMAN ifman = { 0 };
+	TSMF_IFMAN ifman = WINPR_C_ARRAY_INIT;
 	UINT32 MessageId = 0;
 	UINT32 FunctionId = 0;
 	UINT32 InterfaceId = 0;

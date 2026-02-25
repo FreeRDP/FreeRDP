@@ -31,8 +31,8 @@
 
 static BOOL test_generic(HANDLE hComm)
 {
-	COMMTIMEOUTS timeouts = { 0 };
-	COMMTIMEOUTS timeouts2 = { 0 };
+	COMMTIMEOUTS timeouts = WINPR_C_ARRAY_INIT;
+	COMMTIMEOUTS timeouts2 = WINPR_C_ARRAY_INIT;
 
 	timeouts.ReadIntervalTimeout = 1;
 	timeouts.ReadTotalTimeoutMultiplier = 2;

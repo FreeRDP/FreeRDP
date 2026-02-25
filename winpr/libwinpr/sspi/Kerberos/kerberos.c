@@ -70,8 +70,8 @@ const SecPkgInfoA KERBEROS_SecPkgInfoA = {
 	"Kerberos Security Package" /* Comment */
 };
 
-static WCHAR KERBEROS_SecPkgInfoW_NameBuffer[32] = { 0 };
-static WCHAR KERBEROS_SecPkgInfoW_CommentBuffer[32] = { 0 };
+static WCHAR KERBEROS_SecPkgInfoW_NameBuffer[32] = WINPR_C_ARRAY_INIT;
+static WCHAR KERBEROS_SecPkgInfoW_CommentBuffer[32] = WINPR_C_ARRAY_INIT;
 
 const SecPkgInfoW KERBEROS_SecPkgInfoW = {
 	0x000F3BBF,                        /* fCapabilities */
@@ -227,14 +227,14 @@ static inline krb5glue_key get_key(struct krb5glue_keyset* keyset)
 
 static BOOL isValidIPv4(const char* ipAddress)
 {
-	struct sockaddr_in sa = { 0 };
+	struct sockaddr_in sa = WINPR_C_ARRAY_INIT;
 	int result = inet_pton(AF_INET, ipAddress, &(sa.sin_addr));
 	return result != 0;
 }
 
 static BOOL isValidIPv6(const char* ipAddress)
 {
-	struct sockaddr_in6 sa = { 0 };
+	struct sockaddr_in6 sa = WINPR_C_ARRAY_INIT;
 	int result = inet_pton(AF_INET6, ipAddress, &(sa.sin6_addr));
 	return result != 0;
 }
@@ -286,7 +286,7 @@ static int build_krbtgt(krb5_context ctx, krb5_principal principal, krb5_princip
 		goto fail;
 
 	{
-		krb5_principal target = { 0 };
+		krb5_principal target = WINPR_C_ARRAY_INIT;
 		rv = krb5_parse_name(ctx, name, &target);
 		*ptarget = target;
 	}
@@ -447,8 +447,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	/* Get initial credentials if required */
 	if (fCredentialUse & SECPKG_CRED_OUTBOUND)
 	{
-		krb5_creds creds = { 0 };
-		krb5_creds matchCreds = { 0 };
+		krb5_creds creds = WINPR_C_ARRAY_INIT;
+		krb5_creds matchCreds = WINPR_C_ARRAY_INIT;
 		krb5_flags matchFlags = KRB5_TC_MATCH_TIMES;
 
 		krb5_timeofday(ctx, &matchCreds.times.endtime);
@@ -725,7 +725,7 @@ static BOOL append(char* dst, size_t dstSize, const char* src)
 static BOOL kerberos_rd_tgt_req_tag2(WinPrAsn1Decoder* dec, char* buf, size_t len)
 {
 	BOOL rc = FALSE;
-	WinPrAsn1Decoder seq = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder seq = WinPrAsn1Decoder_init();
 
 	/* server-name [2] PrincipalName (SEQUENCE) */
 	if (!WinPrAsn1DecReadSequence(dec, &seq))
@@ -810,7 +810,7 @@ static BOOL kerberos_rd_tgt_req(WinPrAsn1Decoder* dec, char** target)
 	if (len == 0)
 		return TRUE;
 
-	WinPrAsn1Decoder dec2 = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
 	WinPrAsn1_tagId tag = 0;
 	if (WinPrAsn1DecReadContextualTag(dec, &tag, &dec2) == 0)
 		return FALSE;
@@ -856,7 +856,7 @@ static BOOL kerberos_rd_tgt_rep(WinPrAsn1Decoder* dec, krb5_data* ticket)
 		return FALSE;
 
 	/* ticket [2] Ticket */
-	WinPrAsn1Decoder asnTicket = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder asnTicket = WinPrAsn1Decoder_init();
 	WinPrAsn1_tagId tag = 0;
 	if (WinPrAsn1DecReadContextualTag(dec, &tag, &asnTicket) == 0)
 		return FALSE;
@@ -884,11 +884,11 @@ static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb
 	if (target)
 		*target = NULL;
 
-	WinPrAsn1Decoder der = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder der = WinPrAsn1Decoder_init();
 	WinPrAsn1Decoder_InitMem(&der, WINPR_ASN1_DER, (BYTE*)token->data, token->length);
 
 	/* KERB-TGT-REQUEST (SEQUENCE) */
-	WinPrAsn1Decoder seq = { .encoding = WINPR_ASN1_BER, { 0 } };
+	WinPrAsn1Decoder seq = WinPrAsn1Decoder_init();
 	if (!WinPrAsn1DecReadSequence(&der, &seq))
 		return FALSE;
 
@@ -972,16 +972,16 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	char* target = NULL;
 	char* sname = NULL;
 	char* host = NULL;
-	krb5_data input_token = { 0 };
-	krb5_data output_token = { 0 };
+	krb5_data input_token = WINPR_C_ARRAY_INIT;
+	krb5_data output_token = WINPR_C_ARRAY_INIT;
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
-	WinPrAsn1_OID oid = { 0 };
+	WinPrAsn1_OID oid = WINPR_C_ARRAY_INIT;
 	uint16_t tok_id = 0;
 	krb5_ap_rep_enc_part* reply = NULL;
 	krb5_flags ap_flags = AP_OPTS_USE_SUBKEY;
-	char cksum_contents[24] = { 0 };
-	krb5_data cksum = { 0 };
-	krb5_creds in_creds = { 0 };
+	char cksum_contents[24] = WINPR_C_ARRAY_INIT;
+	krb5_data cksum = WINPR_C_ARRAY_INIT;
+	krb5_creds in_creds = WINPR_C_ARRAY_INIT;
 	krb5_creds* creds = NULL;
 	BOOL isNewContext = FALSE;
 	KRB_CONTEXT* context = NULL;
@@ -1241,7 +1241,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 cleanup:
 {
 	/* second_ticket is not allocated */
-	krb5_data edata = { 0 };
+	krb5_data edata = WINPR_C_ARRAY_INIT;
 	in_creds.second_ticket = edata;
 	krb5_free_cred_contents(credentials->ctx, &in_creds);
 }
@@ -1309,8 +1309,8 @@ static BOOL retrieveTgtForPrincipal(KRB_CREDENTIALS* credentials, krb5_principal
                                     krb5_creds* creds)
 {
 	BOOL ret = FALSE;
-	krb5_kt_cursor cur = { 0 };
-	krb5_keytab_entry entry = { 0 };
+	krb5_kt_cursor cur = WINPR_C_ARRAY_INIT;
+	krb5_keytab_entry entry = WINPR_C_ARRAY_INIT;
 	if (krb_log_exec(krb5_kt_start_seq_get, credentials->ctx, credentials->keytab, &cur))
 		goto cleanup;
 
@@ -1351,7 +1351,7 @@ cleanup:
 static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, krb5_creds* creds)
 {
 	BOOL ret = TRUE;
-	krb5_principal target_princ = { 0 };
+	krb5_principal target_princ = WINPR_C_ARRAY_INIT;
 	char* default_realm = NULL;
 
 	krb5_error_code rv =
@@ -1396,7 +1396,7 @@ static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, kr
 	 * if it's not working let's try with <host>$@<REALM> (note the dollar)
 	 */
 	{
-		char hostDollar[300] = { 0 };
+		char hostDollar[300] = WINPR_C_ARRAY_INIT;
 		if (target_princ->length < 2)
 			goto out;
 
@@ -1431,16 +1431,16 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 	BOOL isNewContext = FALSE;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
-	WinPrAsn1_OID oid = { 0 };
+	WinPrAsn1_OID oid = WINPR_C_ARRAY_INIT;
 	uint16_t tok_id = 0;
-	krb5_data input_token = { 0 };
-	krb5_data output_token = { 0 };
+	krb5_data input_token = WINPR_C_ARRAY_INIT;
+	krb5_data output_token = WINPR_C_ARRAY_INIT;
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	krb5_flags ap_flags = 0;
 	krb5glue_authenticator authenticator = NULL;
 	char* target = NULL;
-	krb5_keytab_entry entry = { 0 };
-	krb5_creds creds = { 0 };
+	krb5_keytab_entry entry = WINPR_C_ARRAY_INIT;
+	krb5_creds creds = WINPR_C_ARRAY_INIT;
 
 	/* behave like windows SSPIs that don't want empty context */
 	if (phContext && !phContext->dwLower && !phContext->dwUpper)
@@ -1719,7 +1719,7 @@ static SECURITY_STATUS kerberos_ATTR_AUTH_IDENTITY(KRB_CONTEXT* context,
                                                    KRB_CREDENTIALS* credentials,
                                                    SecPkgContext_AuthIdentity* AuthIdentity)
 {
-	const SecPkgContext_AuthIdentity empty = { 0 };
+	const SecPkgContext_AuthIdentity empty = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->auth_ctx);
@@ -1821,7 +1821,7 @@ static SECURITY_STATUS kerberos_ATTR_TICKET_LOGON(KRB_CONTEXT* context,
                                                   KRB_CREDENTIALS* credentials,
                                                   KERB_TICKET_LOGON* ticketLogon)
 {
-	krb5_creds matchCred = { 0 };
+	krb5_creds matchCred = WINPR_C_ARRAY_INIT;
 	krb5_auth_context authContext = NULL;
 	krb5_flags getCredsFlags = KRB5_GC_CACHED;
 	BOOL firstRun = TRUE;
@@ -1862,7 +1862,7 @@ again:
 		goto out;
 
 	{
-		krb5_data derOut = { 0 };
+		krb5_data derOut = WINPR_C_ARRAY_INIT;
 		if (krb_log_exec(krb5_fwd_tgt_creds, credentials->ctx, authContext, context->targetHost,
 		                 matchCred.client, matchCred.server, credentials->ccache, 1, &derOut))
 		{

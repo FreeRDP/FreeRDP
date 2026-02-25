@@ -46,23 +46,23 @@ primitive_hints primitives_get_hints(void)
 }
 
 /* Singleton pointer used throughout the program when requested. */
-static primitives_t pPrimitivesGeneric = { 0 };
+static primitives_t pPrimitivesGeneric = WINPR_C_ARRAY_INIT;
 static INIT_ONCE generic_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
 
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-static primitives_t pPrimitivesCpu = { 0 };
+static primitives_t pPrimitivesCpu = WINPR_C_ARRAY_INIT;
 static INIT_ONCE cpu_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
 
 #endif
 #if defined(WITH_OPENCL)
-static primitives_t pPrimitivesGpu = { 0 };
+static primitives_t pPrimitivesGpu = WINPR_C_ARRAY_INIT;
 static INIT_ONCE gpu_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
 
 #endif
 
 static INIT_ONCE auto_primitives_InitOnce = INIT_ONCE_STATIC_INIT;
 
-static primitives_t pPrimitives = { 0 };
+static primitives_t pPrimitives = WINPR_C_ARRAY_INIT;
 
 /* ------------------------------------------------------------------------- */
 static BOOL primitives_init_generic(primitives_t* prims)
@@ -170,7 +170,7 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
                                          UINT64 runTime, UINT32* computations)
 {
 	ULONGLONG dueDate = 0;
-	const BYTE* channels[3] = { 0 };
+	const BYTE* channels[3] = WINPR_C_ARRAY_INIT;
 	pstatus_t status = 0;
 
 	*computations = 0;
@@ -241,7 +241,7 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 #else
 	{
 		UINT64 benchDuration = 150; /* 150 ms */
-		primitives_YUV_benchmark bench = { 0 };
+		primitives_YUV_benchmark bench = WINPR_C_ARRAY_INIT;
 		primitives_YUV_benchmark* yuvBench = primitives_YUV_benchmark_init(&bench);
 		if (!yuvBench)
 			return FALSE;

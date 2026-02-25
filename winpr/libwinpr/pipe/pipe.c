@@ -306,7 +306,7 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 #ifdef WINPR_HAVE_SYS_AIO_H
 		{
 			int aio_status;
-			struct aiocb cb = { 0 };
+			struct aiocb cb = WINPR_C_ARRAY_INIT;
 
 			cb.aio_fildes = pipe->clientfd;
 			cb.aio_buf = lpBuffer;
@@ -393,7 +393,7 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 		pipe->lpOverlapped = lpOverlapped;
 #ifdef WINPR_HAVE_SYS_AIO_H
 		{
-			struct aiocb cb = { 0 };
+			struct aiocb cb = WINPR_C_ARRAY_INIT;
 
 			cb.aio_fildes = pipe->clientfd;
 			cb.aio_buf = (void*)lpBuffer;
@@ -627,7 +627,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	/* If this is the first instance of the named pipe... */
 	if (serverfd == -1)
 	{
-		struct sockaddr_un s = { 0 };
+		struct sockaddr_un s = WINPR_C_ARRAY_INIT;
 		/* Create the UNIX domain socket and start listening. */
 		if (!(lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA()))
 			goto out;
@@ -650,7 +650,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		if ((serverfd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "CreateNamedPipeA: socket error, %s",
 			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			goto out;
@@ -661,7 +661,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		if (bind(serverfd, (struct sockaddr*)&s, sizeof(struct sockaddr_un)) == -1)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "CreateNamedPipeA: bind error, %s",
 			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			goto out;
@@ -669,7 +669,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		if (listen(serverfd, 2) == -1)
 		{
-			char ebuffer[256] = { 0 };
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "CreateNamedPipeA: listen error, %s",
 			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			goto out;
@@ -757,7 +757,7 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 
 	if (!(pNamedPipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 	{
-		struct sockaddr_un s = { 0 };
+		struct sockaddr_un s = WINPR_C_ARRAY_INIT;
 		length = sizeof(struct sockaddr_un);
 		status = accept(pNamedPipe->serverfd, (struct sockaddr*)&s, &length);
 

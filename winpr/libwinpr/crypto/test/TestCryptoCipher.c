@@ -9,8 +9,8 @@ static BOOL test_crypto_cipher_aes_128_cbc(BOOL ex)
 	BOOL result = FALSE;
 	BYTE key[16] = "0123456789abcdeF";
 	BYTE iv[16] = "1234567887654321";
-	BYTE ibuf[1024] = { 0 };
-	BYTE obuf[1024] = { 0 };
+	BYTE ibuf[1024] = WINPR_C_ARRAY_INIT;
+	BYTE obuf[1024] = WINPR_C_ARRAY_INIT;
 	size_t ilen = 0;
 	size_t olen = 0;
 	size_t xlen = 0;
@@ -192,8 +192,8 @@ static const BYTE* TEST_CIPHER_IV =
 static BOOL test_crypto_cipher_key(void)
 {
 	int status = 0;
-	BYTE key[32] = { 0 };
-	BYTE iv[16] = { 0 };
+	BYTE key[32] = WINPR_C_ARRAY_INIT;
+	BYTE iv[16] = WINPR_C_ARRAY_INIT;
 	BYTE salt[8] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 };
 
 	status = winpr_Cipher_BytesToKey(WINPR_CIPHER_AES_256_CBC, WINPR_MD_SHA1, salt, TEST_RAND_DATA,

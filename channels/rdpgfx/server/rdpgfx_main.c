@@ -382,7 +382,7 @@ rdpgfx_process_cache_import_offer_pdu(RdpgfxServerContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cacheImportOffer);
 
-	RDPGFX_CACHE_IMPORT_REPLY_PDU reply = { 0 };
+	RDPGFX_CACHE_IMPORT_REPLY_PDU reply = WINPR_C_ARRAY_INIT;
 	WLog_DBG(TAG, "received %" PRIu16 " entries, reply with %" PRIu16 " entries",
 	         cacheImportOffer->cacheEntriesCount, reply.importedEntriesCount);
 	return IFCALLRESULT(CHANNEL_RC_OK, context->CacheImportReply, context, &reply);
@@ -1241,7 +1241,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 
-	RDPGFX_CACHE_IMPORT_OFFER_PDU pdu = { 0 };
+	RDPGFX_CACHE_IMPORT_OFFER_PDU pdu = WINPR_C_ARRAY_INIT;
 	RDPGFX_CACHE_ENTRY_METADATA* cacheEntry = NULL;
 	UINT error = CHANNEL_RC_OK;
 
@@ -1289,7 +1289,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream* s)
 {
 	RDPGFX_CAPSET* capsSets = NULL;
-	RDPGFX_CAPS_ADVERTISE_PDU pdu = { 0 };
+	RDPGFX_CAPS_ADVERTISE_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = ERROR_INVALID_DATA;
 
 	if (!context)
@@ -1497,7 +1497,7 @@ static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 	RdpgfxServerPrivate* priv = context->priv;
 	DWORD status = 0;
 	DWORD nCount = 0;
-	HANDLE events[8] = { 0 };
+	HANDLE events[8] = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(priv);
@@ -1612,7 +1612,7 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 		}
 
 		priv->isReady = FALSE;
-		const RDPGFX_CAPSET empty = { 0 };
+		const RDPGFX_CAPSET empty = WINPR_C_ARRAY_INIT;
 		priv->activeCapSet = empty;
 		if (priv->ownThread)
 		{
@@ -1676,7 +1676,7 @@ BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 	priv->channelEvent = NULL;
 	priv->isOpened = FALSE;
 	priv->isReady = FALSE;
-	const RDPGFX_CAPSET empty = { 0 };
+	const RDPGFX_CAPSET empty = WINPR_C_ARRAY_INIT;
 	priv->activeCapSet = empty;
 	return TRUE;
 }
@@ -1762,7 +1762,7 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	priv->ownThread = TRUE;
 
 	{
-		const RDPGFX_CAPSET empty = { 0 };
+		const RDPGFX_CAPSET empty = WINPR_C_ARRAY_INIT;
 		priv->activeCapSet = empty;
 	}
 

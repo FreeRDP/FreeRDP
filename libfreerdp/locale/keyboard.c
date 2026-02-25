@@ -54,9 +54,9 @@
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 static WINPR_KEYCODE_TYPE maptype = WINPR_KEYCODE_TYPE_NONE;
-static DWORD VIRTUAL_SCANCODE_TO_X11_KEYCODE[256][2] = { 0 };
-static DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256] = { 0 };
-static DWORD REMAPPING_TABLE[0x10000] = { 0 };
+static DWORD VIRTUAL_SCANCODE_TO_X11_KEYCODE[256][2] = WINPR_C_ARRAY_INIT;
+static DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256] = WINPR_C_ARRAY_INIT;
+static DWORD REMAPPING_TABLE[0x10000] = WINPR_C_ARRAY_INIT;
 #endif
 
 struct rdp_remap_table
@@ -234,7 +234,7 @@ static const struct scancode_map_entry RDP_SCANCODE_MAP[] = {
 static int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 {
 #if defined(_WIN32)
-	CHAR name[KL_NAMELENGTH + 1] = { 0 };
+	CHAR name[KL_NAMELENGTH + 1] = WINPR_C_ARRAY_INIT;
 	if (GetKeyboardLayoutNameA(name))
 	{
 		ULONG rc;

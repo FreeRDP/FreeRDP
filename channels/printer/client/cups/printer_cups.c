@@ -50,14 +50,14 @@
 
 static bool is_mac_os_sonoma_or_later(void)
 {
-	char str[256] = { 0 };
+	char str[256] = WINPR_C_ARRAY_INIT;
 	size_t size = sizeof(str);
 
 	errno = 0;
 	int ret = sysctlbyname("kern.osrelease", str, &size, NULL, 0);
 	if (ret != 0)
 	{
-		char buffer[256] = { 0 };
+		char buffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_WARN(TAG, "sysctlbyname('kern.osrelease') failed with %s [%d]",
 		          winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 		return false;
@@ -107,7 +107,7 @@ typedef struct
 WINPR_ATTR_MALLOC(free, 1)
 static char* printer_cups_get_printjob_name(size_t id)
 {
-	struct tm tres = { 0 };
+	struct tm tres = WINPR_C_ARRAY_INIT;
 	const time_t tt = time(NULL);
 	const struct tm* t = localtime_r(&tt, &tres);
 

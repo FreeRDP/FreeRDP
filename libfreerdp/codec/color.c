@@ -221,7 +221,7 @@ static void dump_pointer_data(UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 
 	const uint32_t bpp = FreeRDPGetBytesPerPixel(format);
 	const uint32_t step = nWidth * bpp;
 	BYTE* bmp = calloc(step * 2, nHeight);
-	char prefix[64] = { 0 };
+	char prefix[64] = WINPR_C_ARRAY_INIT;
 	char* path = get_dump_name(prefix, sizeof(prefix));
 
 	if (!bmp || !path)

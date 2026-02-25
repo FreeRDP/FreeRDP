@@ -61,7 +61,7 @@ static uint16_t get_length_xu_control(CamV4lStream* stream, uint8_t unit, uint8_
 
 	if (ioctl(stream->fd, UVCIOC_CTRL_QUERY, &xu_ctrl_query) < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "UVCIOC_CTRL_QUERY (GET_LEN) - Error: %s",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return 0;
@@ -94,7 +94,7 @@ static int query_xu_control(CamV4lStream* stream, uint8_t unit, uint8_t selector
 	/*get query data*/
 	if ((err = ioctl(stream->fd, UVCIOC_CTRL_QUERY, &xu_ctrl_query)) < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "UVCIOC_CTRL_QUERY (%" PRIu8 ") - Error: %s", query,
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 	}
@@ -113,14 +113,14 @@ static int uvcx_video_encoder_reset(CamV4lStream* stream)
 {
 	WINPR_ASSERT(stream);
 
-	uvcx_encoder_reset encoder_reset_req = { 0 };
+	uvcx_encoder_reset encoder_reset_req = WINPR_C_ARRAY_INIT;
 
 	int err = 0;
 
 	if ((err = query_xu_control(stream, stream->h264UnitId, UVCX_ENCODER_RESET, UVC_SET_CUR,
 	                            &encoder_reset_req)) < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "UVCX_ENCODER_RESET error: %s",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 	}
@@ -147,7 +147,7 @@ static int uvcx_video_probe(CamV4lStream* stream, uint8_t query,
 	if ((err = query_xu_control(stream, stream->h264UnitId, UVCX_VIDEO_CONFIG_PROBE, query,
 	                            uvcx_video_config)) < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "UVCX_VIDEO_CONFIG_PROBE error: %s",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 	}
@@ -173,7 +173,7 @@ static int uvcx_video_commit(CamV4lStream* stream,
 	if ((err = query_xu_control(stream, stream->h264UnitId, UVCX_VIDEO_CONFIG_COMMIT, UVC_SET_CUR,
 	                            uvcx_video_config)) < 0)
 	{
-		char ebuffer[256] = { 0 };
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "UVCX_VIDEO_CONFIG_COMMIT error: %s",
 		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 	}
@@ -194,7 +194,7 @@ BOOL set_h264_muxed_format(CamV4lStream* stream, const CAM_MEDIA_TYPE_DESCRIPTIO
 	WINPR_ASSERT(stream);
 	WINPR_ASSERT(mediaType);
 
-	uvcx_video_config_probe_commit_t config_probe_req = { 0 };
+	uvcx_video_config_probe_commit_t config_probe_req = WINPR_C_ARRAY_INIT;
 	int err = 0;
 
 	/* reset the encoder */
@@ -309,7 +309,7 @@ static BOOL get_devpath_from_device_id(const char* deviceId, char* path, size_t 
  */
 static BOOL get_devpath_from_device(libusb_device* device, char* path, size_t size)
 {
-	uint8_t ports[MAX_DEVPATH_DEPTH] = { 0 };
+	uint8_t ports[MAX_DEVPATH_DEPTH] = WINPR_C_ARRAY_INIT;
 	int nPorts = libusb_get_port_numbers(device, ports, sizeof(ports));
 
 	if (nPorts <= 0)
@@ -387,7 +387,7 @@ static uint8_t get_guid_unit_id_from_config_descriptor(struct libusb_config_desc
  */
 static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t* guid)
 {
-	struct libusb_device_descriptor ddesc = { 0 };
+	struct libusb_device_descriptor ddesc = WINPR_C_ARRAY_INIT;
 
 	if (libusb_get_device_descriptor(device, &ddesc) != 0)
 	{
@@ -430,7 +430,7 @@ static uint8_t get_guid_unit_id_from_device(libusb_device* device, const uint8_t
  */
 static uint8_t get_guid_unit_id(const char* deviceId, const uint8_t* guid)
 {
-	char cam_devpath[MAX_DEVPATH_STR_SIZE] = { 0 };
+	char cam_devpath[MAX_DEVPATH_STR_SIZE] = WINPR_C_ARRAY_INIT;
 	libusb_context* usb_ctx = NULL;
 	libusb_device** device_list = NULL;
 	uint8_t unit_id = 0;
@@ -451,7 +451,7 @@ static uint8_t get_guid_unit_id(const char* deviceId, const uint8_t* guid)
 
 	for (ssize_t i = 0; i < cnt; i++)
 	{
-		char path[MAX_DEVPATH_STR_SIZE] = { 0 };
+		char path[MAX_DEVPATH_STR_SIZE] = WINPR_C_ARRAY_INIT;
 		libusb_device* device = device_list[i];
 
 		if (!device || !get_devpath_from_device(device, path, sizeof(path)))

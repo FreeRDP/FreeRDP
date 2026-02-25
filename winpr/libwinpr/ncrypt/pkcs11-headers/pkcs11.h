@@ -1,7 +1,10 @@
 /* This file is in the Public Domain */
 
+#pragma once
+/*
 #ifndef _PD_PKCS11_
 #define _PD_PKCS11_
+*/
 
 #define CRYPTOKI_VERSION_MAJOR 3
 #define CRYPTOKI_VERSION_MINOR 1
@@ -2408,4 +2411,4 @@ struct CK_FUNCTION_LIST {
 };
 
 
-#endif
+//#endif

@@ -48,7 +48,7 @@
 #if defined(WITH_OPUS)
 #include <opus/opus.h>
 
-#define OPUS_MAX_FRAMES 5760
+#define OPUS_MAX_FRAMES 5760ull
 #endif
 
 #if defined(WITH_FAAD2)
@@ -451,7 +451,7 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT contex
 	while (offset < size)
 	{
 		int rc;
-		gsm_signal gsmBlockBuffer[160] = { 0 };
+		gsm_signal gsmBlockBuffer[160] = WINPR_C_ARRAY_INIT;
 		rc = gsm_decode(context->gsm, (gsm_byte*)/* API does not modify */ &src[offset],
 		                gsmBlockBuffer);
 
@@ -1443,9 +1443,13 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format, BOOL
 				return TRUE;
 
 #endif
+#if defined(WITH_FDK_AAC)
+			return TRUE;
+#else
+			return FALSE;
+#endif
+
 #if defined(WITH_OPUS)
-			/* fallthrough */
-			WINPR_FALLTHROUGH
 		case WAVE_FORMAT_OPUS:
 			return opus_is_valid_samplerate(format);
 #endif

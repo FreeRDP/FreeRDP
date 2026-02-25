@@ -18,7 +18,7 @@ int TestWtsApiExtraDynamicVirtualChannel(int argc, char* argv[])
 	}
 	printf("WTSVirtualChannelOpen opend");
 	ULONG bytesWritten = 0;
-	char buffer[1024] = { 0 };
+	char buffer[1024] = WINPR_C_ARRAY_INIT;
 	size_t length = sizeof(buffer);
 	BOOL bSuccess = WTSVirtualChannelWrite(hVirtualChannel, buffer, length, &bytesWritten);
 

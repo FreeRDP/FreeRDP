@@ -1455,7 +1455,7 @@ WINPR_ATTR_FORMAT_ARG(3, 4)
 static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* bufferSize,
                                                       WINPR_FORMAT_ARG const char* fmt, ...)
 {
-	va_list ap = { 0 };
+	va_list ap = WINPR_C_ARRAY_INIT;
 	SSIZE_T len = 0;
 	char* buf = NULL;
 	size_t bufSize = 0;
@@ -2456,7 +2456,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 		BOOL status = TRUE;
 		if (~file->EncodeRedirectedVideoCapture)
 		{
-			char encode[64] = { 0 };
+			char encode[64] = WINPR_C_ARRAY_INIT;
 			(void)_snprintf(encode, sizeof(encode), "encode:%" PRIu32,
 			                file->EncodeRedirectedVideoCapture);
 			if (!freerdp_addin_argv_add_argument(args, encode))
@@ -2464,7 +2464,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 		}
 		if (~file->RedirectedVideoCaptureEncodingQuality)
 		{
-			char quality[64] = { 0 };
+			char quality[64] = WINPR_C_ARRAY_INIT;
 			(void)_snprintf(quality, sizeof(quality), "quality:%" PRIu32,
 			                file->RedirectedVideoCaptureEncodingQuality);
 			if (!freerdp_addin_argv_add_argument(args, quality))

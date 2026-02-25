@@ -83,7 +83,7 @@ static UINT encomsp_write_header(wStream* s, const ENCOMSP_ORDER_HEADER* header)
 static UINT encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 {
 	WINPR_ASSERT(str);
-	const ENCOMSP_UNICODE_STRING empty = { 0 };
+	const ENCOMSP_UNICODE_STRING empty = WINPR_C_ARRAY_INIT;
 	*str = empty;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
@@ -143,7 +143,7 @@ static UINT encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s,
                                             const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_FILTER_UPDATED_PDU pdu = { 0 };
+	ENCOMSP_FILTER_UPDATED_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
@@ -195,7 +195,7 @@ static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s,
 static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s,
                                                  const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_APPLICATION_CREATED_PDU pdu = { 0 };
+	ENCOMSP_APPLICATION_CREATED_PDU pdu = WINPR_C_ARRAY_INIT;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
 	if (!context)
@@ -256,7 +256,7 @@ static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream
 static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s,
                                                  const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_APPLICATION_REMOVED_PDU pdu = { 0 };
+	ENCOMSP_APPLICATION_REMOVED_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
@@ -309,7 +309,7 @@ static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream
 static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
                                             const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_WINDOW_CREATED_PDU pdu = { 0 };
+	ENCOMSP_WINDOW_CREATED_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
@@ -371,7 +371,7 @@ static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
 static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s,
                                             const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_WINDOW_REMOVED_PDU pdu = { 0 };
+	ENCOMSP_WINDOW_REMOVED_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
@@ -424,7 +424,7 @@ static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s,
 static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s,
                                          const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_SHOW_WINDOW_PDU pdu = { 0 };
+	ENCOMSP_SHOW_WINDOW_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
@@ -477,7 +477,7 @@ static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s,
 static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s,
                                                  const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_PARTICIPANT_CREATED_PDU pdu = { 0 };
+	ENCOMSP_PARTICIPANT_CREATED_PDU pdu = WINPR_C_ARRAY_INIT;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
 	if (!context)
@@ -539,7 +539,7 @@ static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream
 static UINT encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s,
                                                  const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_PARTICIPANT_REMOVED_PDU pdu = { 0 };
+	ENCOMSP_PARTICIPANT_REMOVED_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
@@ -591,7 +591,7 @@ static UINT encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream
 static UINT encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wStream* s,
                                                               const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu = { 0 };
+	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
@@ -646,7 +646,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(encomspPlugin* enc
 static UINT encomsp_send_change_participant_control_level_pdu(
     EncomspClientContext* context, const ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
 {
-	ENCOMSP_ORDER_HEADER header = { 0 };
+	ENCOMSP_ORDER_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	encomspPlugin* encomsp = (encomspPlugin*)context->handle;
@@ -683,7 +683,7 @@ static UINT encomsp_send_change_participant_control_level_pdu(
 static UINT encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s,
                                                     const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU pdu = { 0 };
+	ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
@@ -732,7 +732,7 @@ static UINT encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStr
 static UINT encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wStream* s,
                                                      const ENCOMSP_ORDER_HEADER* header)
 {
-	ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU pdu = { 0 };
+	ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	EncomspClientContext* context = encomsp_get_client_interface(encomsp);
 
@@ -781,7 +781,7 @@ static UINT encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wSt
 static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	ENCOMSP_ORDER_HEADER header = { 0 };
+	ENCOMSP_ORDER_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(encomsp);
 	while (Stream_GetRemainingLength(s) > 0)
@@ -1034,7 +1034,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 static DWORD WINAPI encomsp_virtual_channel_client_thread(LPVOID arg)
 {
 	wStream* data = NULL;
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	encomspPlugin* encomsp = (encomspPlugin*)arg;
 	UINT error = CHANNEL_RC_OK;
 

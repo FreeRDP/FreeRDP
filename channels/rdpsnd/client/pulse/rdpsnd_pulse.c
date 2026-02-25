@@ -364,8 +364,8 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 {
 	pa_stream_state_t state = PA_STREAM_FAILED;
 	int flags = PA_STREAM_NOFLAGS;
-	pa_buffer_attr buffer_attr = { 0 };
-	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX] = { 0 };
+	pa_buffer_attr buffer_attr = WINPR_C_ARRAY_INIT;
+	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX] = WINPR_C_ARRAY_INIT;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 	WINPR_ASSERT(pulse);
 
@@ -577,7 +577,7 @@ static void rdpsnd_set_volume_success_cb(pa_context* c, int success, void* userd
 
 static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
-	pa_cvolume cv = { 0 };
+	pa_cvolume cv = WINPR_C_ARRAY_INIT;
 	pa_volume_t left = 0;
 	pa_volume_t right = 0;
 	pa_operation* operation = NULL;

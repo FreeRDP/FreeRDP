@@ -403,7 +403,7 @@ BOOL utils_apply_gateway_policy(wLog* log, rdpContext* context, UINT32 flags, co
 	}
 	else if (freerdp_settings_get_bool(settings, FreeRDP_GatewayIgnoreRedirectionPolicy))
 	{
-		char buffer[128] = { 0 };
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, WLOG_INFO, "[%s] policy ignored on user request %s", module,
 		           utils_redir_flags_to_string(flags, buffer, sizeof(buffer)));
 	}
@@ -482,7 +482,7 @@ char* utils_redir_flags_to_string(UINT32 flags, char* buffer, size_t size)
 	if (flags & HTTP_TUNNEL_REDIR_DISABLE_PNP)
 		winpr_str_append("DISABLE_PNP", buffer, size, "|");
 
-	char fbuffer[16] = { 0 };
+	char fbuffer[16] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(fbuffer, sizeof(fbuffer), "[0x%08" PRIx32 "]", flags);
 
 	winpr_str_append(fbuffer, buffer, size, " ");

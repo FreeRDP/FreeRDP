@@ -948,7 +948,7 @@ static void clear_keyboard_layout(RDP_KEYBOARD_LAYOUT* layout)
 		return;
 
 	free(layout->name);
-	const RDP_KEYBOARD_LAYOUT empty = { 0 };
+	const RDP_KEYBOARD_LAYOUT empty = WINPR_C_ARRAY_INIT;
 	*layout = empty;
 }
 
@@ -958,7 +958,7 @@ static void clear_keyboard_variant(RDP_KEYBOARD_LAYOUT_VARIANT* layout)
 		return;
 
 	free(layout->name);
-	const RDP_KEYBOARD_LAYOUT_VARIANT empty = { 0 };
+	const RDP_KEYBOARD_LAYOUT_VARIANT empty = WINPR_C_ARRAY_INIT;
 	*layout = empty;
 }
 
@@ -969,7 +969,7 @@ static void clear_keyboard_ime(RDP_KEYBOARD_IME* layout)
 
 	free(layout->file);
 	free(layout->name);
-	const RDP_KEYBOARD_IME empty = { 0 };
+	const RDP_KEYBOARD_IME empty = WINPR_C_ARRAY_INIT;
 	*layout = empty;
 }
 
@@ -1139,7 +1139,7 @@ static BOOL parse_json_variant_entry(WINPR_JSON* json, size_t pos,
 		return FALSE;
 	}
 
-	RDP_KEYBOARD_LAYOUT val = { 0 };
+	RDP_KEYBOARD_LAYOUT val = WINPR_C_ARRAY_INIT;
 	const BOOL rc = parse_json_layout_entry_id(json, pos, &val);
 	entry->code = val.code;
 	entry->name = val.name;

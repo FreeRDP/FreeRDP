@@ -703,7 +703,7 @@ static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
 		case 0x04:
 		{
 			/* read AID from APDU */
-			BYTE aid[ISO_AID_MAX_SIZE] = { 0 };
+			BYTE aid[ISO_AID_MAX_SIZE] = WINPR_C_ARRAY_INIT;
 			if (lc > ISO_AID_MAX_SIZE)
 			{
 				WLog_ERR(TAG, "The LC byte is greater than the maximum AID length");
@@ -1377,7 +1377,7 @@ static BOOL vgids_ins_verify(vgidsContext* context, wStream* s, BYTE** response,
 	BYTE p2 = 0;
 	BYTE lc = 0;
 	UINT16 status = ISO_STATUS_SUCCESS;
-	char pin[VGIDS_MAX_PIN_SIZE + 1] = { 0 };
+	char pin[VGIDS_MAX_PIN_SIZE + 1] = WINPR_C_ARRAY_INIT;
 
 	/* Verify is always called for the application password (PIN) P2=0x80 */
 	if (!vgids_parse_apdu_header(s, NULL, &ins, &p1, &p2, NULL, NULL))
@@ -1472,7 +1472,7 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	vgidsEF* masterEF = NULL;
 	vgidsEF* cardidEF = NULL;
 	vgidsEF* commonEF = NULL;
-	BYTE cardid[VGIDS_CARDID_SIZE] = { 0 };
+	BYTE cardid[VGIDS_CARDID_SIZE] = WINPR_C_ARRAY_INIT;
 	vgidsContainerMapEntry cmrec = { { 'P', 'r', 'i', 'v', 'a', 't', 'e', ' ', 'K', 'e', 'y', ' ',
 		                               '0', '0' },
 		                             CONTAINER_MAP_VALID_CONTAINER |

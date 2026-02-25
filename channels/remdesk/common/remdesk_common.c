@@ -25,7 +25,7 @@
 
 UINT remdesk_write_channel_header(wStream* s, const REMDESK_CHANNEL_HEADER* header)
 {
-	WCHAR ChannelNameW[32] = { 0 };
+	WCHAR ChannelNameW[32] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);

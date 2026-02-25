@@ -36,8 +36,8 @@
 static BOOL test_signed_integer_read_write_equal(INT32 value)
 {
 	INT32 rvalue = 0;
-	BYTE buffer[32] = { 0 };
-	wStream sbuffer = { 0 };
+	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 
@@ -68,8 +68,8 @@ static BOOL test_signed_integer_read_write_equal(INT32 value)
 
 static BOOL test_signed_integer_write_oor(INT32 value)
 {
-	BYTE buffer[32] = { 0 };
-	wStream sbuffer = { 0 };
+	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 
@@ -120,8 +120,8 @@ static BOOL test_float_read_write_equal(double value)
 {
 	BYTE exp = 0;
 	double rvalue = FP_NAN;
-	BYTE buffer[32] = { 0 };
-	wStream sbuffer = { 0 };
+	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 
@@ -153,8 +153,8 @@ static BOOL test_float_read_write_equal(double value)
 
 static BOOL test_floag_write_oor(double value)
 {
-	BYTE buffer[32] = { 0 };
-	wStream sbuffer = { 0 };
+	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 

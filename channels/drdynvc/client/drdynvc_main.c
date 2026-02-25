@@ -382,7 +382,7 @@ static UINT dvcman_load_addin(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager*
 
 	if (pDVCPluginEntry)
 	{
-		DVCMAN_ENTRY_POINTS entryPoints = { 0 };
+		DVCMAN_ENTRY_POINTS entryPoints = WINPR_C_ARRAY_INIT;
 
 		entryPoints.iface.RegisterPlugin = dvcman_register_plugin;
 		entryPoints.iface.GetPlugin = dvcman_get_plugin;
@@ -1652,7 +1652,7 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 {
 	/* TODO: rewrite this */
 	wStream* data = NULL;
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 	drdynvcPlugin* drdynvc = (drdynvcPlugin*)arg;
 

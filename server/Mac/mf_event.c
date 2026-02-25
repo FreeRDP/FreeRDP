@@ -35,7 +35,7 @@ static int mf_is_event_set(mfEventQueue* event_queue)
 {
 	fd_set rfds;
 	int num_set;
-	struct timeval time = { 0 };
+	struct timeval time = WINPR_C_ARRAY_INIT;
 
 	FD_ZERO(&rfds);
 	FD_SET(event_queue->pipe_fd[0], &rfds);

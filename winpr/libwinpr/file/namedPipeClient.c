@@ -124,7 +124,7 @@ NamedPipeClientCreateFileA(LPCSTR lpFileName, WINPR_ATTR_UNUSED DWORD dwDesiredA
                            DWORD dwFlagsAndAttributes, WINPR_ATTR_UNUSED HANDLE hTemplateFile)
 {
 	int status = 0;
-	struct sockaddr_un s = { 0 };
+	struct sockaddr_un s = WINPR_C_ARRAY_INIT;
 
 	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
 	{

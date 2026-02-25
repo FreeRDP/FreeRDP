@@ -58,7 +58,7 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
 
 	wLogConsoleAppender* consoleAppender = (wLogConsoleAppender*)appender;
 
-	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
+	char prefix[WLOG_MAX_PREFIX_SIZE] = WINPR_C_ARRAY_INIT;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
 #ifdef _WIN32

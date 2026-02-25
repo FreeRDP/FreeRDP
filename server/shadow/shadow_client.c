@@ -86,7 +86,7 @@ static BOOL BitmapUpdateProxyEx(rdpShadowClient* client, const BITMAP_UPDATE* bi
 	{
 		for (UINT32 x = 0; x < bitmap->number; x++)
 		{
-			BITMAP_UPDATE cur = { 0 };
+			BITMAP_UPDATE cur = WINPR_C_ARRAY_INIT;
 			BITMAP_DATA* bmp = &bitmap->rectangles[x];
 			cur.rectangles = bmp;
 			cur.number = 1;
@@ -181,7 +181,7 @@ WINPR_ATTR_NODISCARD
 static inline BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
-	RDPGFX_RESET_GRAPHICS_PDU pdu = { 0 };
+	RDPGFX_RESET_GRAPHICS_PDU pdu = WINPR_C_ARRAY_INIT;
 	RdpgfxServerContext* context = NULL;
 	rdpSettings* settings = NULL;
 
@@ -373,7 +373,7 @@ static inline void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 nu
 	}
 	else
 	{
-		RECTANGLE_16 screenRegion = { 0 };
+		RECTANGLE_16 screenRegion = WINPR_C_ARRAY_INIT;
 		WINPR_ASSERT(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) <= UINT16_MAX);
 		WINPR_ASSERT(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) <= UINT16_MAX);
 		screenRegion.right = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
@@ -398,7 +398,7 @@ static inline BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
 	INT32 height = 0;
 	rdpShadowServer* server = NULL;
 	rdpSettings* settings = NULL;
-	RECTANGLE_16 viewport = { 0 };
+	RECTANGLE_16 viewport = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(client);
 	server = client->server;
@@ -637,7 +637,7 @@ static inline void shadow_client_convert_rects(rdpShadowClient* client, RECTANGL
 WINPR_ATTR_NODISCARD
 static BOOL shadow_client_refresh_request(rdpShadowClient* client)
 {
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	wMessagePipe* MsgPipe = NULL;
 
 	WINPR_ASSERT(client);
@@ -929,7 +929,7 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 			BOOL avc420 = FALSE;
 			BOOL progressive = FALSE;
 			RDPGFX_CAPSET caps = *currentCaps;
-			RDPGFX_CAPS_CONFIRM_PDU pdu = { 0 };
+			RDPGFX_CAPS_CONFIRM_PDU pdu = WINPR_C_ARRAY_INIT;
 			pdu.capsSet = &caps;
 
 			flags = pdu.capsSet->flags;
@@ -1176,10 +1176,10 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	const rdpContext* context = (const rdpContext*)client;
 	const rdpSettings* settings = NULL;
 	rdpShadowEncoder* encoder = NULL;
-	RDPGFX_SURFACE_COMMAND cmd = { 0 };
-	RDPGFX_START_FRAME_PDU cmdstart = { 0 };
-	RDPGFX_END_FRAME_PDU cmdend = { 0 };
-	SYSTEMTIME sTime = { 0 };
+	RDPGFX_SURFACE_COMMAND cmd = WINPR_C_ARRAY_INIT;
+	RDPGFX_START_FRAME_PDU cmdstart = WINPR_C_ARRAY_INIT;
+	RDPGFX_END_FRAME_PDU cmdend = WINPR_C_ARRAY_INIT;
+	SYSTEMTIME sTime = WINPR_C_ARRAY_INIT;
 
 	if (!context || !pSrcData)
 		return FALSE;
@@ -1222,8 +1222,8 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	if (GfxAVC444 || GfxAVC444v2)
 	{
 		INT32 rc = 0;
-		RDPGFX_AVC444_BITMAP_STREAM avc444 = { 0 };
-		RECTANGLE_16 regionRect = { 0 };
+		RDPGFX_AVC444_BITMAP_STREAM avc444 = WINPR_C_ARRAY_INIT;
+		RECTANGLE_16 regionRect = WINPR_C_ARRAY_INIT;
 		BYTE version = GfxAVC444v2 ? 2 : 1;
 
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_AVC444) < 0)
@@ -1272,7 +1272,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	else if (GfxH264)
 	{
 		INT32 rc = 0;
-		RDPGFX_AVC420_BITMAP_STREAM avc420 = { 0 };
+		RDPGFX_AVC420_BITMAP_STREAM avc420 = WINPR_C_ARRAY_INIT;
 		RECTANGLE_16 regionRect;
 
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_AVC420) < 0)
@@ -1543,7 +1543,7 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 	rdpContext* context = (rdpContext*)client;
 	rdpSettings* settings = NULL;
 	rdpShadowEncoder* encoder = NULL;
-	SURFACE_BITS_COMMAND cmd = { 0 };
+	SURFACE_BITS_COMMAND cmd = WINPR_C_ARRAY_INIT;
 
 	if (!context || !pSrcData)
 		return FALSE;
@@ -1564,7 +1564,7 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 	if (stream_surface_bits_supported(settings) &&
 	    freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) && (rfxID != 0))
 	{
-		RFX_RECT rect = { 0 };
+		RFX_RECT rect = WINPR_C_ARRAY_INIT;
 
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_REMOTEFX) < 0)
 		{
@@ -1709,7 +1709,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 	UINT32 totalBitmapSize = 0;
 	UINT32 updateSizeEstimate = 0;
 	BITMAP_DATA* bitmapData = NULL;
-	BITMAP_UPDATE bitmapUpdate = { 0 };
+	BITMAP_UPDATE bitmapUpdate = WINPR_C_ARRAY_INIT;
 
 	if (!context || !pSrcData)
 		return FALSE;
@@ -2213,9 +2213,9 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 
 		case SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID:
 		{
-			POINTER_NEW_UPDATE pointerNew = { 0 };
-			POINTER_COLOR_UPDATE* pointerColor = { 0 };
-			POINTER_CACHED_UPDATE pointerCached = { 0 };
+			POINTER_NEW_UPDATE pointerNew = WINPR_C_ARRAY_INIT;
+			POINTER_COLOR_UPDATE* pointerColor = WINPR_C_ARRAY_INIT;
+			POINTER_CACHED_UPDATE pointerCached = WINPR_C_ARRAY_INIT;
 			const SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* msg =
 			    (const SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)message->wParam;
 
@@ -2245,7 +2245,7 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 				}
 				else
 				{
-					POINTER_SYSTEM_UPDATE pointer_system = { 0 };
+					POINTER_SYSTEM_UPDATE pointer_system = WINPR_C_ARRAY_INIT;
 					pointer_system.type = SYSPTR_NULL;
 					if (!IFCALLRESULT(TRUE, update->pointer->PointerSystem, context,
 					                  &pointer_system))
@@ -2308,10 +2308,10 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	rdpShadowClient* client = (rdpShadowClient*)arg;
 	BOOL rc = FALSE;
 	DWORD status = 0;
-	wMessage message = { 0 };
-	wMessage pointerPositionMsg = { 0 };
-	wMessage pointerAlphaMsg = { 0 };
-	wMessage audioVolumeMsg = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
+	wMessage pointerPositionMsg = WINPR_C_ARRAY_INIT;
+	wMessage pointerAlphaMsg = WINPR_C_ARRAY_INIT;
+	wMessage audioVolumeMsg = WINPR_C_ARRAY_INIT;
 	HANDLE ChannelEvent = 0;
 	void* UpdateSubscriber = NULL;
 	HANDLE UpdateEvent = 0;
@@ -2322,7 +2322,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	rdpShadowSubsystem* subsystem = NULL;
 	wMessageQueue* MsgQueue = NULL;
 	/* This should only be visited in client thread */
-	SHADOW_GFX_STATUS gfxstatus = { 0 };
+	SHADOW_GFX_STATUS gfxstatus = WINPR_C_ARRAY_INIT;
 	rdpUpdate* update = NULL;
 
 	WINPR_ASSERT(client);
@@ -2382,7 +2382,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	WINPR_ASSERT(rc);
 	while (1)
 	{
-		HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		HANDLE events[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD nCount = 0;
 		events[nCount++] = UpdateEvent;
 		{
@@ -2756,7 +2756,7 @@ static BOOL shadow_client_dispatch_msg(rdpShadowClient* client, wMessage* messag
 BOOL shadow_client_post_msg(rdpShadowClient* client, void* context, UINT32 type,
                             SHADOW_MSG_OUT* msg, void* lParam)
 {
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	message.context = context;
 	message.id = type;
 	message.wParam = (void*)msg;
@@ -2768,7 +2768,7 @@ BOOL shadow_client_post_msg(rdpShadowClient* client, void* context, UINT32 type,
 int shadow_client_boardcast_msg(rdpShadowServer* server, void* context, UINT32 type,
                                 SHADOW_MSG_OUT* msg, void* lParam)
 {
-	wMessage message = { 0 };
+	wMessage message = WINPR_C_ARRAY_INIT;
 	int count = 0;
 
 	WINPR_ASSERT(server);

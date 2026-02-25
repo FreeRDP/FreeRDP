@@ -218,11 +218,11 @@ static int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle
 	BYTE* ioBuffer;
 	UINT32 ioBufferLength;
 	BYTE* pMessageBuffer;
-	SecBuffer Buffers[4] = { 0 };
+	SecBuffer Buffers[4] = WINPR_C_ARRAY_INIT;
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 	DWORD NumberOfBytesWritten;
-	SecPkgContext_StreamSizes StreamSizes = { 0 };
+	SecPkgContext_StreamSizes StreamSizes = WINPR_C_ARRAY_INIT;
 
 	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
 	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
@@ -278,11 +278,11 @@ static int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle
 	BYTE* ioBuffer;
 	UINT32 ioBufferLength;
 	// BYTE* pMessageBuffer;
-	SecBuffer Buffers[4] = { 0 };
+	SecBuffer Buffers[4] = WINPR_C_ARRAY_INIT;
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 	DWORD NumberOfBytesRead;
-	SecPkgContext_StreamSizes StreamSizes = { 0 };
+	SecPkgContext_StreamSizes StreamSizes = WINPR_C_ARRAY_INIT;
 
 	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
 	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
@@ -344,7 +344,7 @@ static DWORD WINAPI schannel_test_server_thread(LPVOID arg)
 	UINT32 cbMaxToken;
 	UINT32 fContextReq;
 	ULONG fContextAttr;
-	SCHANNEL_CRED cred = { 0 };
+	SCHANNEL_CRED cred = WINPR_C_ARRAY_INIT;
 	CtxtHandle context;
 	CredHandle credentials;
 	DWORD cchNameString;
@@ -352,8 +352,8 @@ static DWORD WINAPI schannel_test_server_thread(LPVOID arg)
 	HCERTSTORE hCertStore;
 	PCCERT_CONTEXT pCertContext;
 	PSecBuffer pSecBuffer;
-	SecBuffer SecBuffer_in[2] = { 0 };
-	SecBuffer SecBuffer_out[2] = { 0 };
+	SecBuffer SecBuffer_in[2] = WINPR_C_ARRAY_INIT;
+	SecBuffer SecBuffer_out[2] = WINPR_C_ARRAY_INIT;
 	SecBufferDesc SecBufferDesc_in;
 	SecBufferDesc SecBufferDesc_out;
 	DWORD NumberOfBytesRead;
@@ -598,7 +598,7 @@ int TestSchannel(int argc, char* argv[])
 	BYTE* lpTokenOut;
 	TimeStamp expiry;
 	UINT32 cbMaxToken;
-	SCHANNEL_CRED cred = { 0 };
+	SCHANNEL_CRED cred = WINPR_C_ARRAY_INIT;
 	UINT32 fContextReq;
 	ULONG fContextAttr;
 	CtxtHandle context;
@@ -609,9 +609,9 @@ int TestSchannel(int argc, char* argv[])
 	PSecurityFunctionTable table;
 	DWORD NumberOfBytesRead;
 	DWORD NumberOfBytesWritten;
-	SecPkgCred_SupportedAlgs SupportedAlgs = { 0 };
-	SecPkgCred_CipherStrengths CipherStrengths = { 0 };
-	SecPkgCred_SupportedProtocols SupportedProtocols = { 0 };
+	SecPkgCred_SupportedAlgs SupportedAlgs = WINPR_C_ARRAY_INIT;
+	SecPkgCred_CipherStrengths CipherStrengths = WINPR_C_ARRAY_INIT;
+	SecPkgCred_SupportedProtocols SupportedProtocols = WINPR_C_ARRAY_INIT;
 	return 0; /* disable by default - causes crash */
 	sspi_GlobalInit();
 	dump_test_certificate_files();
@@ -732,10 +732,10 @@ int TestSchannel(int argc, char* argv[])
 
 	do
 	{
-		SecBuffer SecBuffer_in[2] = { 0 };
-		SecBuffer SecBuffer_out[1] = { 0 };
-		SecBufferDesc SecBufferDesc_in = { 0 };
-		SecBufferDesc SecBufferDesc_out = { 0 };
+		SecBuffer SecBuffer_in[2] = WINPR_C_ARRAY_INIT;
+		SecBuffer SecBuffer_out[1] = WINPR_C_ARRAY_INIT;
+		SecBufferDesc SecBufferDesc_in = WINPR_C_ARRAY_INIT;
+		SecBufferDesc SecBufferDesc_out = WINPR_C_ARRAY_INIT;
 		if (g_ClientWait)
 		{
 			if (!ReadFile(g_ClientReadPipe, lpTokenIn, cbMaxToken, &NumberOfBytesRead, NULL))

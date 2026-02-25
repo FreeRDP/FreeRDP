@@ -544,7 +544,7 @@ static const char* primary_order_string(UINT32 orderType)
 		                     "[0x%02" PRIx8 "] EllipseCB",
 		                     "[0x%02" PRIx8 "] GlyphIndex" };
 	const char* fmt = "[0x%02" PRIx8 "] UNKNOWN";
-	static char buffer[64] = { 0 };
+	static char buffer[64] = WINPR_C_ARRAY_INIT;
 
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
@@ -564,7 +564,7 @@ static const char* secondary_order_string(UINT32 orderType)
 		                     "[0x%02" PRIx8 "] Cache Brush",
 		                     "[0x%02" PRIx8 "] Cache Bitmap V3" };
 	const char* fmt = "[0x%02" PRIx8 "] UNKNOWN";
-	static char buffer[64] = { 0 };
+	static char buffer[64] = WINPR_C_ARRAY_INIT;
 
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
@@ -584,7 +584,7 @@ static const char* altsec_order_string(BYTE orderType)
 		"[0x%02" PRIx8 "] Desktop Composition",    "[0x%02" PRIx8 "] Frame Marker"
 	};
 	const char* fmt = "[0x%02" PRIx8 "] UNKNOWN";
-	static char buffer[64] = { 0 };
+	static char buffer[64] = WINPR_C_ARRAY_INIT;
 
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];

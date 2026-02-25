@@ -78,7 +78,7 @@ static VOID CALLBACK Timer2APCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dw
 
 static DWORD /*WINAPI*/ closeHandleTest(LPVOID lpThreadParameter)
 {
-	LARGE_INTEGER dueTime = { 0 };
+	LARGE_INTEGER dueTime = WINPR_C_ARRAY_INIT;
 	UncleanCloseData* data = (UncleanCloseData*)lpThreadParameter;
 	data->endTest = FALSE;
 

@@ -17,10 +17,10 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	CtxtHandle context;
 	ULONG pfContextAttr = 0;
 	SECURITY_STATUS status = 0;
-	CredHandle credentials = { 0 };
+	CredHandle credentials = WINPR_C_ARRAY_INIT;
 	TimeStamp expiration;
 	PSecPkgInfo pPackageInfo = NULL;
-	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
+	SEC_WINNT_AUTH_IDENTITY identity = WINPR_C_ARRAY_INIT;
 	SecurityFunctionTable* table = NULL;
 	PSecBuffer p_SecBuffer = NULL;
 	SecBuffer output_SecBuffer;

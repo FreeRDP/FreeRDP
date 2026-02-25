@@ -62,7 +62,7 @@
 static struct timespec ts_from_ns(void)
 {
 	const UINT64 ns = winpr_GetUnixTimeNS();
-	struct timespec timeout = { 0 };
+	struct timespec timeout = WINPR_C_ARRAY_INIT;
 	timeout.tv_sec = WINPR_TIME_NS_TO_S(ns);
 	timeout.tv_nsec = WINPR_TIME_NS_REM_NS(ns);
 	return timeout;
@@ -98,8 +98,8 @@ static long long ts_difftime(const struct timespec* o, const struct timespec* n)
 STATIC_NEEDED int pthread_mutex_timedlock(pthread_mutex_t* mutex,
                                           CONST_NEEDED struct timespec* timeout)
 {
-	struct timespec timenow = { 0 };
-	struct timespec sleepytime = { 0 };
+	struct timespec timenow = WINPR_C_ARRAY_INIT;
+	struct timespec sleepytime = WINPR_C_ARRAY_INIT;
 	unsigned long long diff = 0;
 	int retcode = -1;
 	/* This is just to avoid a completely busy wait */
@@ -136,7 +136,7 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 {
 	ULONG Type = 0;
 	WINPR_HANDLE* Object = NULL;
-	WINPR_POLL_SET pollset = { 0 };
+	WINPR_POLL_SET pollset = WINPR_C_ARRAY_INIT;
 
 	if (!winpr_Handle_GetInfo(hHandle, &Type, &Object))
 	{
@@ -164,7 +164,7 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 			}
 			else if (ret < 0)
 			{
-				char ebuffer[256] = { 0 };
+				char ebuffer[256] = WINPR_C_ARRAY_INIT;
 				WLog_ERR(TAG, "waitpid failure [%d] %s", errno,
 				         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 				SetLastError(ERROR_INTERNAL_ERROR);
@@ -267,7 +267,7 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 			status = pollset_poll(&pollset, dwMilliseconds);
 			if (status < 0)
 			{
-				char ebuffer[256] = { 0 };
+				char ebuffer[256] = WINPR_C_ARRAY_INIT;
 				WLog_ERR(TAG, "pollset_poll() failure [%d] %s", errno,
 				         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 				goto out;
@@ -303,14 +303,14 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 {
 	DWORD signalled = 0;
 	DWORD polled = 0;
-	DWORD poll_map[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	DWORD poll_map[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 	BOOL signalled_handles[MAXIMUM_WAIT_OBJECTS] = { FALSE };
 	int fd = -1;
 	int status = -1;
 	ULONG Type = 0;
 	WINPR_HANDLE* Object = NULL;
 	WINPR_THREAD* thread = NULL;
-	WINPR_POLL_SET pollset = { 0 };
+	WINPR_POLL_SET pollset = WINPR_C_ARRAY_INIT;
 	DWORD ret = WAIT_FAILED;
 	size_t extraFds = 0;
 	UINT64 now = 0;
@@ -424,7 +424,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 			status = pollset_poll(&pollset, waitTime);
 			if (status < 0)
 			{
-				char ebuffer[256] = { 0 };
+				char ebuffer[256] = WINPR_C_ARRAY_INIT;
 #ifdef WINPR_HAVE_POLL_H
 				WLog_ERR(TAG, "poll() handle %" PRIu32 " (%" PRIu32 ") failure [%d] %s", idx,
 				         nCount, errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));

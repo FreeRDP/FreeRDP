@@ -430,7 +430,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		BOOL rc;
 		HANDLE hInstance;
 		WCHAR* titleW = NULL;
-		WNDCLASSEX wndClassEx = { 0 };
+		WNDCLASSEX wndClassEx = WINPR_C_ARRAY_INIT;
 		railWindow = (wfRailWindow*)calloc(1, sizeof(wfRailWindow));
 
 		if (!railWindow)
@@ -680,8 +680,8 @@ static BOOL wf_rail_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* or
 	int height;
 	HICON hIcon;
 	BOOL bigIcon;
-	ICONINFO iconInfo = { 0 };
-	BITMAPINFO bitmapInfo = { 0 };
+	ICONINFO iconInfo = WINPR_C_ARRAY_INIT;
+	BITMAPINFO bitmapInfo = WINPR_C_ARRAY_INIT;
 	wfRailWindow* railWindow;
 	BITMAPINFOHEADER* bitmapInfoHeader;
 	wfContext* wfc = (wfContext*)context;

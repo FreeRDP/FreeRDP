@@ -257,7 +257,7 @@ static HANDLE telemetry_server_get_channel_handle(telemetry_server* telemetry)
 static DWORD WINAPI telemetry_server_thread_func(LPVOID arg)
 {
 	DWORD nCount = 0;
-	HANDLE events[2] = { 0 };
+	HANDLE events[2] = WINPR_C_ARRAY_INIT;
 	telemetry_server* telemetry = (telemetry_server*)arg;
 	UINT error = CHANNEL_RC_OK;
 	DWORD status = 0;

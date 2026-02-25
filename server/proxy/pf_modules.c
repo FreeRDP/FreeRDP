@@ -419,7 +419,7 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_modules_register_plugin(proxyPluginsManager* mgr,
                                        const proxyPlugin* plugin_to_register)
 {
-	proxyPlugin internal = { 0 };
+	proxyPlugin internal = WINPR_C_ARRAY_INIT;
 	proxyModule* module = (proxyModule*)mgr;
 	WINPR_ASSERT(module);
 
@@ -512,7 +512,7 @@ static BOOL pf_modules_load_static_module(const char* module_name, proxyModule* 
 		return FALSE;
 	}
 
-	char name[256] = { 0 };
+	char name[256] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(name, sizeof(name), "%s_%s", module_name, MODULE_ENTRY_POINT);
 	for (size_t x = 0; x < strnlen(name, sizeof(name)); x++)
 	{
@@ -604,7 +604,7 @@ static BOOL pf_modules_load_module(const char* module_path, const char* module_n
 	if (pf_modules_load_static_module(module_name, module, userdata))
 		return TRUE;
 
-	char names[5][MAX_PATH] = { 0 };
+	char names[5][MAX_PATH] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(names[0], sizeof(names[0]), "proxy-%s-plugin%s", module_name,
 	                FREERDP_SHARED_LIBRARY_SUFFIX);
 	(void)_snprintf(names[1], sizeof(names[1]), "%sproxy-%s-plugin%s",

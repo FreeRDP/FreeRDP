@@ -114,7 +114,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
                                       const proxyConfig* config)
 {
 	pServerContext* ps = (pServerContext*)context;
-	proxyFetchTargetEventInfo ev = { 0 };
+	proxyFetchTargetEventInfo ev = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(ps);
@@ -380,7 +380,7 @@ static BOOL pf_server_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* i
 {
 	pServerContext* ps = NULL;
 	proxyData* pdata = NULL;
-	proxyServerPeerLogon info = { 0 };
+	proxyServerPeerLogon info = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(peer);
 
@@ -446,7 +446,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 		{
 			case PF_CHANNEL_RESULT_PASS:
 			{
-				proxyChannelDataEventInfo ev = { 0 };
+				proxyChannelDataEventInfo ev = WINPR_C_ARRAY_INIT;
 
 				ev.channel_id = channelId;
 				ev.channel_name = channel->channel_name;
@@ -584,7 +584,7 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 WINPR_ATTR_NODISCARD
 static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 {
-	HANDLE eventHandles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	HANDLE eventHandles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 	pServerContext* ps = NULL;
 	proxyData* pdata = NULL;
 	peer_thread_args* args = arg;
@@ -1007,7 +1007,7 @@ out:
 BOOL pf_server_run(proxyServer* server)
 {
 	BOOL rc = TRUE;
-	HANDLE eventHandles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	HANDLE eventHandles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 	DWORD eventCount = 0;
 	DWORD status = 0;
 	freerdp_listener* listener = NULL;
