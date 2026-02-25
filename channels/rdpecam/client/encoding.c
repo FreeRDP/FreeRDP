@@ -24,7 +24,6 @@
 
 #define TAG CHANNELS_TAG("rdpecam-video.client")
 
-#if defined(WITH_INPUT_FORMAT_H264)
 /*
  * demux a H264 frame from a MJPG container
  * args:
@@ -157,7 +156,6 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 	const intptr_t diff = ph264 - h264_data;
 	return WINPR_ASSERTING_INT_CAST(size_t, diff);
 }
-#endif
 
 /**
  * Function description
@@ -198,80 +196,49 @@ UINT32 h264_get_max_bitrate(UINT32 height)
 /**
  * Function description
  *
- * @return enum AVPixelFormat value
+ * @return FREERDP_VIDEO_FORMAT value
  */
-static enum AVPixelFormat ecamToAVPixFormat(CAM_MEDIA_FORMAT ecamFormat)
+static FREERDP_VIDEO_FORMAT ecamToVideoFormat(CAM_MEDIA_FORMAT ecamFormat)
 {
 	switch (ecamFormat)
 	{
 		case CAM_MEDIA_FORMAT_YUY2:
-			return AV_PIX_FMT_YUYV422;
+			return FREERDP_VIDEO_FORMAT_YUYV422;
 		case CAM_MEDIA_FORMAT_NV12:
-			return AV_PIX_FMT_NV12;
+			return FREERDP_VIDEO_FORMAT_NV12;
 		case CAM_MEDIA_FORMAT_I420:
-			return AV_PIX_FMT_YUV420P;
+			return FREERDP_VIDEO_FORMAT_YUV420P;
 		case CAM_MEDIA_FORMAT_RGB24:
-			return AV_PIX_FMT_RGB24;
+			return FREERDP_VIDEO_FORMAT_RGB24;
 		case CAM_MEDIA_FORMAT_RGB32:
-			return AV_PIX_FMT_RGB32;
+			return FREERDP_VIDEO_FORMAT_RGB32;
+		case CAM_MEDIA_FORMAT_MJPG:
+		case CAM_MEDIA_FORMAT_MJPG_H264:
+			return FREERDP_VIDEO_FORMAT_MJPEG;
 		default:
-			WLog_ERR(TAG, "Unsupported ecamFormat %d", ecamFormat);
-			return AV_PIX_FMT_NONE;
+			WLog_ERR(TAG, "Unsupported ecamFormat %u", ecamFormat);
+			return FREERDP_VIDEO_FORMAT_NONE;
 	}
 }
 
 /**
  * Function description
- * initialize libswscale
+ * initialize video context
  *
  * @return success/failure
  */
-static BOOL ecam_init_sws_context(CameraDeviceStream* stream, enum AVPixelFormat pixFormat)
+static BOOL ecam_init_video_context(CameraDeviceStream* stream)
 {
 	WINPR_ASSERT(stream);
 
-	if (stream->sws)
+	if (stream->video)
 		return TRUE;
 
-	/* replacing deprecated JPEG formats, still produced by decoder */
-	switch (pixFormat)
+	stream->video = freerdp_video_context_new(stream->currMediaType.Width,
+	                                          stream->currMediaType.Height);
+	if (!stream->video)
 	{
-		case AV_PIX_FMT_YUVJ411P:
-			pixFormat = AV_PIX_FMT_YUV411P;
-			break;
-
-		case AV_PIX_FMT_YUVJ420P:
-			pixFormat = AV_PIX_FMT_YUV420P;
-			break;
-
-		case AV_PIX_FMT_YUVJ422P:
-			pixFormat = AV_PIX_FMT_YUV422P;
-			break;
-
-		case AV_PIX_FMT_YUVJ440P:
-			pixFormat = AV_PIX_FMT_YUV440P;
-			break;
-
-		case AV_PIX_FMT_YUVJ444P:
-			pixFormat = AV_PIX_FMT_YUV444P;
-			break;
-
-		default:
-			break;
-	}
-
-	const int width = (int)stream->currMediaType.Width;
-	const int height = (int)stream->currMediaType.Height;
-
-	const enum AVPixelFormat outPixFormat =
-	    h264_context_get_option(stream->h264, H264_CONTEXT_OPTION_HW_ACCEL) ? AV_PIX_FMT_NV12
-	                                                                        : AV_PIX_FMT_YUV420P;
-
-	stream->sws =
-	    sws_getContext(width, height, pixFormat, width, height, outPixFormat, 0, NULL, NULL, NULL);
-	if (!stream->sws)
-	{
-		WLog_ERR(TAG, "sws_getContext failed");
+		WLog_ERR(TAG, "freerdp_video_context_new failed");
 		return FALSE;
 	}
 
@@ -286,93 +253,36 @@ static BOOL ecam_init_sws_context(CameraDeviceStream* stream, enum AVPixelFormat
 static BOOL ecam_encoder_compress_h264(CameraDeviceStream* stream, const BYTE* srcData,
                                        size_t srcSize, BYTE** ppDstData, size_t* pDstSize)
 {
-	UINT32 dstSize = 0;
-	BYTE* srcSlice[4] = { 0 };
-	int srcLineSizes[4] = { 0 };
-	BYTE* yuvData[3] = { 0 };
-	UINT32 yuvLineSizes[3] = { 0 };
-	prim_size_t size = { stream->currMediaType.Width, stream->currMediaType.Height };
+	WINPR_ASSERT(stream);
+	WINPR_ASSERT(stream->video);
+
 	CAM_MEDIA_FORMAT inputFormat = streamInputFormat(stream);
-	enum AVPixelFormat pixFormat = AV_PIX_FMT_NONE;
+	FREERDP_VIDEO_FORMAT videoFormat = ecamToVideoFormat(inputFormat);
 
-#if defined(WITH_INPUT_FORMAT_H264)
-	if (inputFormat == CAM_MEDIA_FORMAT_MJPG_H264)
+	if (videoFormat == FREERDP_VIDEO_FORMAT_NONE)
 	{
-		const size_t rc =
-		    demux_uvcH264(srcData, srcSize, stream->h264Frame, stream->h264FrameMaxSize);
-		dstSize = WINPR_ASSERTING_INT_CAST(uint32_t, rc);
-		*ppDstData = stream->h264Frame;
-		*pDstSize = dstSize;
-		return dstSize > 0;
-	}
-	else
-#endif
-
-#if defined(WITH_INPUT_FORMAT_MJPG)
-	    if (inputFormat == CAM_MEDIA_FORMAT_MJPG)
-	{
-		stream->avInputPkt->data = WINPR_CAST_CONST_PTR_AWAY(srcData, uint8_t*);
-		WINPR_ASSERT(srcSize <= INT32_MAX);
-		stream->avInputPkt->size = (int)srcSize;
-
-		if (avcodec_send_packet(stream->avContext, stream->avInputPkt) < 0)
-		{
-			WLog_ERR(TAG, "avcodec_send_packet failed");
-			return FALSE;
-		}
-
-		if (avcodec_receive_frame(stream->avContext, stream->avOutFrame) < 0)
-		{
-			WLog_ERR(TAG, "avcodec_receive_frame failed");
-			return FALSE;
-		}
-
-		for (size_t i = 0; i < 4; i++)
-		{
-			srcSlice[i] = stream->avOutFrame->data[i];
-			srcLineSizes[i] = stream->avOutFrame->linesize[i];
-		}
-
-		/* get pixFormat produced by MJPEG decoder */
-		pixFormat = stream->avContext->pix_fmt;
-	}
-	else
-#endif
-	{
-		pixFormat = ecamToAVPixFormat(inputFormat);
-
-		if (av_image_fill_linesizes(srcLineSizes, pixFormat, (int)size.width) < 0)
-		{
-			WLog_ERR(TAG, "av_image_fill_linesizes failed");
-			return FALSE;
-		}
-
-		if (av_image_fill_pointers(srcSlice, pixFormat, (int)size.height,
-		                           WINPR_CAST_CONST_PTR_AWAY(srcData, BYTE*), srcLineSizes) < 0)
-		{
-			WLog_ERR(TAG, "av_image_fill_pointers failed");
-			return FALSE;
-		}
+		WLog_ERR(TAG, "Unsupported input format %u", inputFormat);
+		return FALSE;
 	}
 
-	/* get buffers for YUV420P or NV12 */
-	if (h264_get_yuv_buffer(stream->h264, 0, size.width, size.height, yuvData, yuvLineSizes) < 0)
-		return FALSE;
+	if (!stream->h264Output)
+	{
+		stream->h264Output = Stream_New(NULL, 1024 * 1024);
+		if (!stream->h264Output)
+			return FALSE;
+	}
 
-	/* convert from source format to YUV420P or NV12 */
-	if (!ecam_init_sws_context(stream, pixFormat))
-		return FALSE;
+	Stream_SetPosition(stream->h264Output, 0);
 
-	const BYTE* cSrcSlice[4] = { srcSlice[0], srcSlice[1], srcSlice[2], srcSlice[3] };
-	if (sws_scale(stream->sws, cSrcSlice, srcLineSizes, 0, (int)size.height, yuvData,
-	              (int*)yuvLineSizes) <= 0)
+	if (!freerdp_video_sample_convert(stream->video, videoFormat, srcData, srcSize,
+	                                  stream->currMediaType.Width, stream->currMediaType.Height,
+	                                  FREERDP_VIDEO_FORMAT_H264, stream->h264Output))
+	{
 		return FALSE;
+	}
 
-	/* encode from YUV420P or NV12 to H264 */
-	if (h264_compress(stream->h264, ppDstData, &dstSize) < 0)
-		return FALSE;
-
-	*pDstSize = dstSize;
+	*ppDstData = Stream_Buffer(stream->h264Output);
+	*pDstSize = Stream_GetPosition(stream->h264Output);
 
 	return TRUE;
 }
@@ -385,96 +295,19 @@ static void ecam_encoder_context_free_h264(CameraDeviceStream* stream)
 {
 	WINPR_ASSERT(stream);
 
-	if (stream->sws)
+	if (stream->video)
 	{
-		sws_freeContext(stream->sws);
-		stream->sws = NULL;
+		freerdp_video_context_free(stream->video);
+		stream->video = NULL;
 	}
 
-#if defined(WITH_INPUT_FORMAT_MJPG)
-	if (stream->avOutFrame)
-		av_frame_free(&stream->avOutFrame); /* sets to NULL */
-
-	if (stream->avInputPkt)
+	if (stream->h264Output)
 	{
-		stream->avInputPkt->data = NULL;
-		stream->avInputPkt->size = 0;
-		av_packet_free(&stream->avInputPkt); /* sets to NULL */
-	}
-
-	if (stream->avContext)
-		avcodec_free_context(&stream->avContext); /* sets to NULL */
-#endif
-
-#if defined(WITH_INPUT_FORMAT_H264)
-	if (stream->h264Frame)
-	{
-		free(stream->h264Frame);
-		stream->h264Frame = NULL;
-	}
-#endif
-
-	if (stream->h264)
-	{
-		h264_context_free(stream->h264);
-		stream->h264 = NULL;
+		Stream_Free(stream->h264Output, TRUE);
+		stream->h264Output = NULL;
 	}
 }
 
-#if defined(WITH_INPUT_FORMAT_MJPG)
-/**
- * Function description
- *
- * @return success/failure
- */
-static BOOL ecam_init_mjpeg_decoder(CameraDeviceStream* stream)
-{
-	WINPR_ASSERT(stream);
-
-	const AVCodec* avcodec = avcodec_find_decoder(AV_CODEC_ID_MJPEG);
-	if (!avcodec)
-	{
-		WLog_ERR(TAG, "avcodec_find_decoder failed to find MJPEG codec");
-		return FALSE;
-	}
-
-	stream->avContext = avcodec_alloc_context3(avcodec);
-	if (!stream->avContext)
-	{
-		WLog_ERR(TAG, "avcodec_alloc_context3 failed");
-		return FALSE;
-	}
-
-	stream->avContext->width = WINPR_ASSERTING_INT_CAST(int, stream->currMediaType.Width);
-	stream->avContext->height = WINPR_ASSERTING_INT_CAST(int, stream->currMediaType.Height);
-
-	/* AV_EF_EXPLODE flag is to abort decoding on minor error detection,
-	 * return error, so we can skip corrupted frames, if any */
-	stream->avContext->err_recognition |= AV_EF_EXPLODE;
-
-	if (avcodec_open2(stream->avContext, avcodec, NULL) < 0)
-	{
-		WLog_ERR(TAG, "avcodec_open2 failed");
-		return FALSE;
-	}
-
-	stream->avInputPkt = av_packet_alloc();
-	if (!stream->avInputPkt)
-	{
-		WLog_ERR(TAG, "av_packet_alloc failed");
-		return FALSE;
-	}
-
-	stream->avOutFrame = av_frame_alloc();
-	if (!stream->avOutFrame)
-	{
-		WLog_ERR(TAG, "av_frame_alloc failed");
-		return FALSE;
-	}
-
-	return TRUE;
-}
-#endif
 
 /**
  * Function description
@@ -485,72 +318,21 @@ static BOOL ecam_encoder_context_init_h264(CameraDeviceStream* stream)
 {
 	WINPR_ASSERT(stream);
 
-#if defined(WITH_INPUT_FORMAT_H264)
-	if (streamInputFormat(stream) == CAM_MEDIA_FORMAT_MJPG_H264)
-	{
-		stream->h264FrameMaxSize = 1ULL * stream->currMediaType.Width *
-		                           stream->currMediaType.Height; /* 1 byte per pixel */
-		stream->h264Frame = (BYTE*)calloc(stream->h264FrameMaxSize, sizeof(BYTE));
-		return TRUE; /* encoder not needed */
-	}
-#endif
+	if (!ecam_init_video_context(stream))
+		return FALSE;
 
-	if (!stream->h264)
-		stream->h264 = h264_context_new(TRUE);
+	UINT32 framerate = stream->currMediaType.FrameRateNumerator /
+	                   stream->currMediaType.FrameRateDenominator;
 
-	if (!stream->h264)
+	if (!freerdp_video_context_configure_h264(stream->video, stream->currMediaType.Width,
+	                                         stream->currMediaType.Height, framerate, 0,
+	                                         H264_CAMERA_VIDEO_REAL_TIME))
 	{
-		WLog_ERR(TAG, "h264_context_new failed");
+		WLog_ERR(TAG, "Failed to configure H.264 encoder");
 		return FALSE;
 	}
 
-	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_USAGETYPE,
-	                             H264_CAMERA_VIDEO_REAL_TIME))
-		goto fail;
-
-	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_FRAMERATE,
-	                             stream->currMediaType.FrameRateNumerator /
-	                                 stream->currMediaType.FrameRateDenominator))
-		goto fail;
-
-	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_BITRATE,
-	                             h264_get_max_bitrate(stream->currMediaType.Height)))
-		goto fail;
-
-	/* Using CQP mode for rate control. It produces more comparable quality
-	 * between VAAPI and software encoding than VBR mode
-	 */
-	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_RATECONTROL,
-	                             H264_RATECONTROL_CQP))
-		goto fail;
-
-	/* Using 26 as CQP value. Lower values will produce better quality but
-	 * higher bitrate; higher values - lower bitrate but degraded quality
-	 */
-	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_QP, 26))
-		goto fail;
-
-	/* Requesting hardware acceleration before calling h264_context_reset */
-	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_HW_ACCEL, TRUE))
-		goto fail;
-
-	if (!h264_context_reset(stream->h264, stream->currMediaType.Width,
-	                        stream->currMediaType.Height))
-	{
-		WLog_ERR(TAG, "h264_context_reset failed");
-		goto fail;
-	}
-
-#if defined(WITH_INPUT_FORMAT_MJPG)
-	if (streamInputFormat(stream) == CAM_MEDIA_FORMAT_MJPG && !ecam_init_mjpeg_decoder(stream))
-		goto fail;
-#endif
-
 	return TRUE;
-
-fail:
-	ecam_encoder_context_free_h264(stream);
-	return FALSE;
 }
 
 /**
@@ -568,7 +350,7 @@ BOOL ecam_encoder_context_init(CameraDeviceStream* stream)
 			return ecam_encoder_context_init_h264(stream);
 
 		default:
-			WLog_ERR(TAG, "Unsupported output format %d", format);
+			WLog_ERR(TAG, "Unsupported output format %u", format);
 			return FALSE;
 	}
 }
@@ -607,7 +389,7 @@ BOOL ecam_encoder_compress(CameraDeviceStream* stream, const BYTE* srcData, size
 		case CAM_MEDIA_FORMAT_H264:
 			return ecam_encoder_compress_h264(stream, srcData, srcSize, ppDstData, pDstSize);
 		default:
-			WLog_ERR(TAG, "Unsupported output format %d", format);
+			WLog_ERR(TAG, "Unsupported output format %u", format);
 			return FALSE;
 	}
 }

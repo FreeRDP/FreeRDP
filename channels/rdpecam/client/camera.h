@@ -42,6 +42,7 @@
 #include <freerdp/channels/log.h>
 #include <freerdp/channels/rdpecam.h>
 #include <freerdp/codecs.h>
+#include <freerdp/codec/video.h>
 #include <freerdp/primitives.h>
 
 #define ECAM_PROTO_VERSION 0x02
@@ -107,21 +108,8 @@ typedef struct
 	volatile BOOL haveSample;
 	wStream* sampleRespBuffer;
 
-	H264_CONTEXT* h264;
-
-#if defined(WITH_INPUT_FORMAT_MJPG)
-	AVCodecContext* avContext;
-	AVPacket* avInputPkt;
-	AVFrame* avOutFrame;
-#endif
-
-#if defined(WITH_INPUT_FORMAT_H264)
-	size_t h264FrameMaxSize;
-	BYTE* h264Frame;
-#endif
-
-	/* sws_scale */
-	struct SwsContext* sws;
+	FREERDP_VIDEO_CONTEXT* video;
+	wStream* h264Output;
 
 } CameraDeviceStream;
 
