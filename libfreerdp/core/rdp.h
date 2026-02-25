@@ -225,8 +225,8 @@ FREERDP_LOCAL BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s, UINT16
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_read_share_data_header(rdpRdp* rdp, wStream* s, UINT16* length, BYTE* type,
-                                              UINT32* share_id, BYTE* compressed_type,
-                                              UINT16* compressed_len);
+                                              UINT32* shareId, BYTE* compressedType,
+                                              UINT16* compressedLength);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channelId, UINT16 sec_flags);
@@ -240,10 +240,10 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL wStream* rdp_send_stream_pdu_init(rdpRdp* rdp, UINT16* sec_flags);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id);
+FREERDP_LOCAL BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channel_id,
+FREERDP_LOCAL BOOL rdp_write_header(rdpRdp* rdp, wStream* s, size_t length, UINT16 channelId,
                                     UINT16 sec_flags);
 
 WINPR_ATTR_NODISCARD

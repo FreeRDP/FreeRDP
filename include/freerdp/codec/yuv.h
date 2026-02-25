@@ -39,9 +39,9 @@ extern "C"
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL yuv420_context_encode(YUV_CONTEXT* WINPR_RESTRICT context,
-	                                       const BYTE* WINPR_RESTRICT rgbData, UINT32 srcStep,
-	                                       UINT32 srcFormat, const UINT32 iStride[3],
-	                                       BYTE* WINPR_RESTRICT yuvData[3],
+	                                       const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep,
+	                                       UINT32 SrcFormat, const UINT32 iStride[3],
+	                                       BYTE* WINPR_RESTRICT pYUVData[3],
 	                                       const RECTANGLE_16* WINPR_RESTRICT regionRects,
 	                                       UINT32 numRegionRects);
 

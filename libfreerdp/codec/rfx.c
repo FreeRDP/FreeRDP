@@ -2471,33 +2471,33 @@ const char* rfx_get_progressive_block_type_string(UINT16 blockType)
 	}
 }
 
-BOOL rfx_write_message_progressive_simple(RFX_CONTEXT* WINPR_RESTRICT context,
+BOOL rfx_write_message_progressive_simple(RFX_CONTEXT* WINPR_RESTRICT rfx,
                                           wStream* WINPR_RESTRICT s,
                                           const RFX_MESSAGE* WINPR_RESTRICT msg)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(msg);
-	WINPR_ASSERT(context);
+	WINPR_ASSERT(rfx);
 
-	if (context->mode != RLGR1)
+	if (rfx->mode != RLGR1)
 	{
 		WLog_ERR(TAG, "error, RLGR1 mode is required!");
 		return FALSE;
 	}
 
-	if (!rfx_write_progressive_wb_sync(context, s))
+	if (!rfx_write_progressive_wb_sync(rfx, s))
 		return FALSE;
 
-	if (!rfx_write_progressive_wb_context(context, s))
+	if (!rfx_write_progressive_wb_context(rfx, s))
 		return FALSE;
 
-	if (!rfx_write_progressive_frame_begin(context, s, msg))
+	if (!rfx_write_progressive_frame_begin(rfx, s, msg))
 		return FALSE;
 
-	if (!rfx_write_progressive_region(context, s, msg))
+	if (!rfx_write_progressive_region(rfx, s, msg))
 		return FALSE;
 
-	if (!rfx_write_progressive_frame_end(context, s))
+	if (!rfx_write_progressive_frame_end(rfx, s))
 		return FALSE;
 
 	return TRUE;

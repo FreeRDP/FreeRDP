@@ -820,14 +820,7 @@ static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT16 sec_flags)
 	return sec_bytes;
 }
 
-/**
- * Send an RDP packet.
- * @param rdp RDP module
- * @param s stream
- * @param channel_id channel id
- */
-
-BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id, UINT16 sec_flags)
+BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channelId, UINT16 sec_flags)
 {
 	BOOL rc = FALSE;
 	UINT32 pad = 0;
@@ -848,7 +841,7 @@ BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id, UINT16 sec_flags)
 	{
 		size_t length = Stream_GetPosition(s);
 		Stream_SetPosition(s, 0);
-		if (!rdp_write_header(rdp, s, length, channel_id, sec_flags))
+		if (!rdp_write_header(rdp, s, length, channelId, sec_flags))
 			goto fail;
 
 		if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))

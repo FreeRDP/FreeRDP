@@ -35,7 +35,7 @@ extern "C"
 #endif
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_LOCAL rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, UINT32 index);
+	FREERDP_LOCAL rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index);
 
 	FREERDP_LOCAL void offscreen_cache_register_callbacks(rdpUpdate* update);
 

@@ -1009,17 +1009,17 @@ fail:
 	return rc;
 }
 
-BYTE* freerdp_assistance_hex_string_to_bin(const void* raw, size_t* size)
+BYTE* freerdp_assistance_hex_string_to_bin(const void* str, size_t* size)
 {
 	BYTE* buffer = nullptr;
-	if (!raw || !size)
+	if (!str || !size)
 		return nullptr;
 	*size = 0;
-	const size_t length = strlen(raw);
+	const size_t length = strlen(str);
 	buffer = calloc(length, sizeof(BYTE));
 	if (!buffer)
 		return nullptr;
-	const size_t rc = winpr_HexStringToBinBuffer(raw, length, buffer, length);
+	const size_t rc = winpr_HexStringToBinBuffer(str, length, buffer, length);
 	if (rc == 0)
 	{
 		free(buffer);
@@ -1029,9 +1029,9 @@ BYTE* freerdp_assistance_hex_string_to_bin(const void* raw, size_t* size)
 	return buffer;
 }
 
-char* freerdp_assistance_bin_to_hex_string(const void* raw, size_t size)
+char* freerdp_assistance_bin_to_hex_string(const void* data, size_t size)
 {
-	return winpr_BinToHexString(raw, size, FALSE);
+	return winpr_BinToHexString(data, size, FALSE);
 }
 
 static int freerdp_assistance_parse_uploadinfo(rdpAssistanceFile* file, char* uploadinfo,

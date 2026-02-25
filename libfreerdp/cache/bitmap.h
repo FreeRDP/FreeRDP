@@ -57,7 +57,7 @@ extern "C"
 
 	FREERDP_LOCAL void bitmap_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_LOCAL void bitmap_cache_free(rdpBitmapCache* bitmap_cache);
+	FREERDP_LOCAL void bitmap_cache_free(rdpBitmapCache* bitmapCache);
 
 	WINPR_ATTR_MALLOC(bitmap_cache_free, 1)
 	WINPR_ATTR_NODISCARD

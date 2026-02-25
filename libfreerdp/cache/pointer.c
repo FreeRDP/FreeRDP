@@ -392,33 +392,33 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 }
 
 POINTER_COLOR_UPDATE* copy_pointer_color_update(rdpContext* context,
-                                                const POINTER_COLOR_UPDATE* src)
+                                                const POINTER_COLOR_UPDATE* pointer)
 {
 	POINTER_COLOR_UPDATE* dst = calloc(1, sizeof(POINTER_COLOR_UPDATE));
 
-	if (!dst || !src)
+	if (!dst || !pointer)
 		goto fail;
 
-	*dst = *src;
+	*dst = *pointer;
 
-	if (src->lengthAndMask > 0)
+	if (pointer->lengthAndMask > 0)
 	{
-		dst->andMaskData = calloc(src->lengthAndMask, sizeof(BYTE));
+		dst->andMaskData = calloc(pointer->lengthAndMask, sizeof(BYTE));
 
 		if (!dst->andMaskData)
 			goto fail;
 
-		memcpy(dst->andMaskData, src->andMaskData, src->lengthAndMask);
+		memcpy(dst->andMaskData, pointer->andMaskData, pointer->lengthAndMask);
 	}
 
-	if (src->lengthXorMask > 0)
+	if (pointer->lengthXorMask > 0)
 	{
-		dst->xorMaskData = calloc(src->lengthXorMask, sizeof(BYTE));
+		dst->xorMaskData = calloc(pointer->lengthXorMask, sizeof(BYTE));
 
 		if (!dst->xorMaskData)
 			goto fail;
 
-		memcpy(dst->xorMaskData, src->xorMaskData, src->lengthXorMask);
+		memcpy(dst->xorMaskData, pointer->xorMaskData, pointer->lengthXorMask);
 	}
 
 	return dst;
@@ -440,33 +440,33 @@ void free_pointer_color_update(rdpContext* context, POINTER_COLOR_UPDATE* pointe
 }
 
 POINTER_LARGE_UPDATE* copy_pointer_large_update(rdpContext* context,
-                                                const POINTER_LARGE_UPDATE* src)
+                                                const POINTER_LARGE_UPDATE* pointer)
 {
 	POINTER_LARGE_UPDATE* dst = calloc(1, sizeof(POINTER_LARGE_UPDATE));
 
-	if (!dst || !src)
+	if (!dst || !pointer)
 		goto fail;
 
-	*dst = *src;
+	*dst = *pointer;
 
-	if (src->lengthAndMask > 0)
+	if (pointer->lengthAndMask > 0)
 	{
-		dst->andMaskData = calloc(src->lengthAndMask, sizeof(BYTE));
+		dst->andMaskData = calloc(pointer->lengthAndMask, sizeof(BYTE));
 
 		if (!dst->andMaskData)
 			goto fail;
 
-		memcpy(dst->andMaskData, src->andMaskData, src->lengthAndMask);
+		memcpy(dst->andMaskData, pointer->andMaskData, pointer->lengthAndMask);
 	}
 
-	if (src->lengthXorMask > 0)
+	if (pointer->lengthXorMask > 0)
 	{
-		dst->xorMaskData = calloc(src->lengthXorMask, sizeof(BYTE));
+		dst->xorMaskData = calloc(pointer->lengthXorMask, sizeof(BYTE));
 
 		if (!dst->xorMaskData)
 			goto fail;
 
-		memcpy(dst->xorMaskData, src->xorMaskData, src->lengthXorMask);
+		memcpy(dst->xorMaskData, pointer->xorMaskData, pointer->lengthXorMask);
 	}
 
 	return dst;
@@ -486,35 +486,35 @@ void free_pointer_large_update(rdpContext* context, POINTER_LARGE_UPDATE* pointe
 	free(pointer);
 }
 
-POINTER_NEW_UPDATE* copy_pointer_new_update(rdpContext* context, const POINTER_NEW_UPDATE* src)
+POINTER_NEW_UPDATE* copy_pointer_new_update(rdpContext* context, const POINTER_NEW_UPDATE* pointer)
 {
 	POINTER_NEW_UPDATE* dst = calloc(1, sizeof(POINTER_NEW_UPDATE));
 
-	if (!dst || !src)
+	if (!dst || !pointer)
 		goto fail;
 
-	*dst = *src;
+	*dst = *pointer;
 
-	if (src->colorPtrAttr.lengthAndMask > 0)
+	if (pointer->colorPtrAttr.lengthAndMask > 0)
 	{
-		dst->colorPtrAttr.andMaskData = calloc(src->colorPtrAttr.lengthAndMask, sizeof(BYTE));
+		dst->colorPtrAttr.andMaskData = calloc(pointer->colorPtrAttr.lengthAndMask, sizeof(BYTE));
 
 		if (!dst->colorPtrAttr.andMaskData)
 			goto fail;
 
-		memcpy(dst->colorPtrAttr.andMaskData, src->colorPtrAttr.andMaskData,
-		       src->colorPtrAttr.lengthAndMask);
+		memcpy(dst->colorPtrAttr.andMaskData, pointer->colorPtrAttr.andMaskData,
+		       pointer->colorPtrAttr.lengthAndMask);
 	}
 
-	if (src->colorPtrAttr.lengthXorMask > 0)
+	if (pointer->colorPtrAttr.lengthXorMask > 0)
 	{
-		dst->colorPtrAttr.xorMaskData = calloc(src->colorPtrAttr.lengthXorMask, sizeof(BYTE));
+		dst->colorPtrAttr.xorMaskData = calloc(pointer->colorPtrAttr.lengthXorMask, sizeof(BYTE));
 
 		if (!dst->colorPtrAttr.xorMaskData)
 			goto fail;
 
-		memcpy(dst->colorPtrAttr.xorMaskData, src->colorPtrAttr.xorMaskData,
-		       src->colorPtrAttr.lengthXorMask);
+		memcpy(dst->colorPtrAttr.xorMaskData, pointer->colorPtrAttr.xorMaskData,
+		       pointer->colorPtrAttr.lengthXorMask);
 	}
 
 	return dst;

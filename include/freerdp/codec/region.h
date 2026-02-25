@@ -141,12 +141,12 @@ extern "C"
 	/** computes the intersection between a region and a rectangle
 	 * @param dst destination region
 	 * @param src the source region
-	 * @param arg2 the rectangle that intersects
+	 * @param rect the rectangle that intersects
 	 * @return if the operation was successful (false meaning out-of-memory)
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL region16_intersect_rect(REGION16* dst, const REGION16* src,
-	                                         const RECTANGLE_16* arg2);
+	                                         const RECTANGLE_16* rect);
 
 	/** release internal data associated with this region
 	 * @param region the region to release

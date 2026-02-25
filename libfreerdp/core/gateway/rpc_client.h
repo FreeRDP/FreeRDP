@@ -29,7 +29,7 @@
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId);
 
-FREERDP_LOCAL void rpc_client_call_free(RpcClientCall* client_call);
+FREERDP_LOCAL void rpc_client_call_free(RpcClientCall* clientCall);
 
 WINPR_ATTR_MALLOC(rpc_client_call_free, 1)
 WINPR_ATTR_NODISCARD

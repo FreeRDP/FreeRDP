@@ -109,18 +109,18 @@ void smartcardCertInfo_Free(SmartcardCertInfo* scCert)
 	free(scCert);
 }
 
-void smartcardCertList_Free(SmartcardCertInfo** cert_list, size_t count)
+void smartcardCertList_Free(SmartcardCertInfo** pscCert, size_t count)
 {
-	if (!cert_list)
+	if (!pscCert)
 		return;
 
 	for (size_t i = 0; i < count; i++)
 	{
-		SmartcardCertInfo* cert = cert_list[i];
+		SmartcardCertInfo* cert = pscCert[i];
 		smartcardCertInfo_Free(cert);
 	}
 
-	free((void*)cert_list);
+	free((void*)pscCert);
 }
 
 static BOOL add_cert_to_list(SmartcardCertInfo*** certInfoList, size_t* count,

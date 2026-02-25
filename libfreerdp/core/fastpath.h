@@ -149,7 +149,7 @@ FREERDP_LOCAL wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE event
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s,
-                                                    size_t iEventCount, UINT16 sec_flags);
+                                                    size_t iNumEvents, UINT16 sec_flags);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s, UINT16 sec_flags);

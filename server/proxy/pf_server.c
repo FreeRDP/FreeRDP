@@ -885,7 +885,7 @@ error:
 	return FALSE;
 }
 
-BOOL pf_server_start_with_peer_socket(proxyServer* server, int peer_fd)
+BOOL pf_server_start_with_peer_socket(proxyServer* server, int socket)
 {
 	struct sockaddr_storage peer_addr;
 	socklen_t len = sizeof(peer_addr);
@@ -896,11 +896,11 @@ BOOL pf_server_start_with_peer_socket(proxyServer* server, int peer_fd)
 	if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
 		goto fail;
 
-	client = freerdp_peer_new(peer_fd);
+	client = freerdp_peer_new(socket);
 	if (!client)
 		goto fail;
 
-	if (getpeername(peer_fd, (struct sockaddr*)&peer_addr, &len) != 0)
+	if (getpeername(socket, (struct sockaddr*)&peer_addr, &len) != 0)
 		goto fail;
 
 	if (!freerdp_peer_set_local_and_hostname(client, &peer_addr))

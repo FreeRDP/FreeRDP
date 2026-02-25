@@ -47,7 +47,7 @@ extern "C"
 
 	FREERDP_LOCAL void palette_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_LOCAL void palette_cache_free(rdpPaletteCache* palette_cache);
+	FREERDP_LOCAL void palette_cache_free(rdpPaletteCache* paletteCache);
 
 	WINPR_ATTR_MALLOC(palette_cache_free, 1)
 	WINPR_ATTR_NODISCARD

@@ -109,9 +109,9 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL rfx_compose_message(RFX_CONTEXT* WINPR_RESTRICT context,
 	                                     wStream* WINPR_RESTRICT s,
-	                                     const RFX_RECT* WINPR_RESTRICT rects, size_t num_rects,
-	                                     const BYTE* WINPR_RESTRICT image_data, UINT32 width,
-	                                     UINT32 height, UINT32 rowstride);
+	                                     const RFX_RECT* WINPR_RESTRICT rects, size_t numRects,
+	                                     const BYTE* WINPR_RESTRICT data, UINT32 width,
+	                                     UINT32 height, UINT32 scanline);
 
 	WINPR_ATTR_MALLOC(rfx_message_free, 2)
 	WINPR_ATTR_NODISCARD

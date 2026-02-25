@@ -518,12 +518,12 @@ void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names)
 	}
 }
 
-char** x509_utils_get_dns_names(const X509* x509, size_t* count, size_t** lengths)
+char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** lengths)
 {
 	char** result = nullptr;
 	string_list list = WINPR_C_ARRAY_INIT;
 	string_list_initialize(&list);
-	map_subject_alt_name(x509, GEN_DNS, extract_string, &list);
+	map_subject_alt_name(xcert, GEN_DNS, extract_string, &list);
 	(*count) = list.count;
 
 	if (list.count <= 0)

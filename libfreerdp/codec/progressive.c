@@ -734,13 +734,13 @@ static inline void progressive_rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buf
 	                       nBandL + nBandH);
 }
 
-void rfx_dwt_2d_extrapolate_decode(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT temp)
+void rfx_dwt_2d_extrapolate_decode(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_buffer)
 {
 	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(temp);
-	progressive_rfx_dwt_2d_decode_block(&buffer[3807], temp, 3);
-	progressive_rfx_dwt_2d_decode_block(&buffer[3007], temp, 2);
-	progressive_rfx_dwt_2d_decode_block(&buffer[0], temp, 1);
+	WINPR_ASSERT(dwt_buffer);
+	progressive_rfx_dwt_2d_decode_block(&buffer[3807], dwt_buffer, 3);
+	progressive_rfx_dwt_2d_decode_block(&buffer[3007], dwt_buffer, 2);
+	progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt_buffer, 1);
 }
 
 static inline int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,

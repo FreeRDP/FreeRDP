@@ -142,9 +142,9 @@ BOOL msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR* MsConfig, BYTE Interface
 	return TRUE;
 }
 
-MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* s)
+MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* out)
 {
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 12))
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (out), 12))
 		return nullptr;
 
 	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = msusb_msinterface_new();
@@ -152,12 +152,12 @@ MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* s)
 	if (!MsInterface)
 		return nullptr;
 
-	Stream_Read_UINT16(s, MsInterface->Length);
-	Stream_Read_UINT16(s, MsInterface->NumberOfPipesExpected);
-	Stream_Read_UINT8(s, MsInterface->InterfaceNumber);
-	Stream_Read_UINT8(s, MsInterface->AlternateSetting);
-	Stream_Seek(s, 2);
-	Stream_Read_UINT32(s, MsInterface->NumberOfPipes);
+	Stream_Read_UINT16(out, MsInterface->Length);
+	Stream_Read_UINT16(out, MsInterface->NumberOfPipesExpected);
+	Stream_Read_UINT8(out, MsInterface->InterfaceNumber);
+	Stream_Read_UINT8(out, MsInterface->AlternateSetting);
+	Stream_Seek(out, 2);
+	Stream_Read_UINT32(out, MsInterface->NumberOfPipes);
 	MsInterface->InterfaceHandle = 0;
 	MsInterface->bInterfaceClass = 0;
 	MsInterface->bInterfaceSubClass = 0;
@@ -167,7 +167,7 @@ MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* s)
 
 	if (MsInterface->NumberOfPipes > 0)
 	{
-		MsInterface->MsPipes = msusb_mspipes_read(s, MsInterface->NumberOfPipes);
+		MsInterface->MsPipes = msusb_mspipes_read(out, MsInterface->NumberOfPipes);
 
 		if (!MsInterface->MsPipes)
 			goto out_error;
@@ -260,22 +260,22 @@ fail:
 	return nullptr;
 }
 
-BOOL msusb_msconfig_write(const MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out)
+BOOL msusb_msconfig_write(const MSUSB_CONFIG_DESCRIPTOR* MsConfig, wStream* out)
 {
-	if (!MsConfg)
+	if (!MsConfig)
 		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(out, 8))
 		return FALSE;
 
 	/* ConfigurationHandle*/
-	Stream_Write_UINT32(out, MsConfg->ConfigurationHandle);
+	Stream_Write_UINT32(out, MsConfig->ConfigurationHandle);
 	/* NumInterfaces*/
-	Stream_Write_UINT32(out, MsConfg->NumInterfaces);
+	Stream_Write_UINT32(out, MsConfig->NumInterfaces);
 	/* Interfaces */
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfg->MsInterfaces;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfig->MsInterfaces;
 
-	for (UINT32 inum = 0; inum < MsConfg->NumInterfaces; inum++)
+	for (UINT32 inum = 0; inum < MsConfig->NumInterfaces; inum++)
 	{
 		const MSUSB_INTERFACE_DESCRIPTOR* MsInterface = MsInterfaces[inum];
 

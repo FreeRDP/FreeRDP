@@ -66,7 +66,7 @@ extern "C"
 	FREERDP_API void* smartcard_call_get_context(scard_call_context* ctx, SCARDCONTEXT hContext);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_API LONG smartcard_irp_device_control_call(scard_call_context* context, wStream* out,
+	FREERDP_API LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out,
 	                                                   NTSTATUS* pIoStatus,
 	                                                   SMARTCARD_OPERATION* operation);
 
