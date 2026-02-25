@@ -1,3 +1,100 @@
+# 2026-02-25 Version 3.23.0
+
+A new release and again a lot of changes:
+* We've received in depth analysis of FreeRDP client code and have addressed shortcomings uncovered by these.
+CVE-2026-26965
+CVE-2026-26955
+CVE-2026-26271
+CVE-2026-25997
+CVE-2026-25959
+CVE-2026-25955
+CVE-2026-25954
+CVE-2026-25953
+CVE-2026-25952
+CVE-2026-25942
+CVE-2026-25941
+
+Another weakness was reported, see https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-qcfc-ghxr-h927
+
+* Configuration isolation was added. 3rd party client/server applications should check
+  the new API freerdp_setApplicationDetails and winpr_setApplicationDetails which allows
+  using a custom namespace for configuration files and runtime data per application
+* For developers, we've marked most of the API with [[nodiscard]] now so compilers
+  might start complaining about unchecked return values now. This is intentional and should
+  give some incentive to clean up code. Functions where the return is optional have been
+  omitted. For the time being these checks are automatically applied for FreeRDP builds, external
+  projects can opt in by defining WINPR_DEFINE_ATTR_NODISCARD in their build system.
+* For developers: Please start testing your applications against FreeRDP builds with
+  `-DWITHOUT_FREERDP_3x_DEPRECATED=ON` to ensure you're not using some soon to be removed API.
+* SDL client did get a huge update, multimonitor and high DPI modes are now much improved
+* We got a contribution for smartcard channel adding support for new attributes, so more
+  applications might work now.
+
+## What's Changed
+* Sdl cleanup (#12202)
+* [client,sdl] do not apply window offset (#12205)
+* [client,sdl] add SDL_Error to exceptions (#12214)
+* Rdp monitor log (#12215)
+* [winpr,smartcard] implement some attributes (#12213)
+* [client,windows] Fix return value checks for mouse event functions (#12279)
+* [channels,rdpecam] fix sws context checks (#12272)
+* [client,windows] Enhance error handling and context validation (#12264)
+* [client,windows] Add window handle validation in RDP_EVENT_TYPE_WINDOW_NEW (#12261)
+* [client,sdl] fix multimon/fullscreen on wayland (#12248)
+* Vendor by app (#12207)
+* [core,gateway] relax TSG parsing (#12283)
+* [winpr,smartcard] simplify PCSC_ReadDeviceSystemName (#12273)
+* [client,windows] Implement complete keyboard indicator synchronization (#12268)
+* Fixes more more more (#12286)
+* Use application details for names (#12285)
+* warning cleanups (#12289)
+* Warning cleanup (#12291)
+* [client,windows] Enhance memory safety with NULL checks and resource protection (#12271)
+* [client,x11] apply /size:xx% only once (#12293)
+* Freerdp config test (#12295)
+* [winpr,smartcard] fix returned attribute length (#12296)
+* [client,SDL3] Fix properly handle smart-sizing with fullscreen (#12298)
+* [core,test] fix use after free (#12299)
+* Sign warnings (#12300)
+* [cmake,compiler] disable -Wjump-misses-init (#12301)
+* [codec,color] fix input length checks (#12302)
+* [client,sdl] improve cursor updates, fix surface sizes (#12303)
+* Sdl fullscreen (#12217)
+* [client,sdl] fix move constructor of SdlWindow (#12305)
+* [utils,smartcard] check stream length on padding (#12306)
+* [android] Fix invert scrolling default value mismatch (#12309)
+* Clear fix bounds checks (#12310)
+* Winpr attr nodiscard fkt ptr (#12311)
+* [codec,planar] fix missing destination bounds checks (#12312)
+* [codec,clear] fix destination checks (#12315)
+* NSC Codec fixes (#12317)
+* Freerdp api nodiscard (#12313)
+* [allocations] fix growth of preallocated buffers (#12319)
+* Rdpdr simplify (#12320)
+* Resource fix (#12323)
+* [winpr,utils] ensure message queue capacity (#12322)
+* [server,shadow] fix return and parameter checks (#12330)
+* Shadow fixes (#12331)
+* [rdtk,nodiscard] mark rdtk API nodiscard (#12329)
+* [client,x11] fix XGetWindowProperty return handling (#12334)
+* Win32 signal (#12335)
+* [channel,usb] fix message parsing and creation (#12336)
+* [cmake] Define WINPR_DEFINE_ATTR_NODISCARD (#12338)
+* Proxy config fix (#12345)
+* [codec,progressive] refine progressive decoding (#12347)
+* [client,sdl] fix sdl_Pointer_New (#12350)
+* [core,gateway] parse [MS-TSGU] 2.2.10.5 HTTP_CHANNEL_RESPONSE_OPTIONAL (#12353)
+* X11 kbd sym (#12354)
+* Windows compile warning fixes (#12357,#12358,#12359)
+
+## New Contributors
+* @tsz8899 made their first contribution in (#12279)
+* @morgan9e made their first contribution in (#12298)
+* @Wladefant made their first contribution in (#12309)
+
+For a complete and detailed change log since the last release run:
+git log 3.23.0...3.22.0
+
 # 2026-01-28 Version 3.22.0
 
 Major bugfix release:
