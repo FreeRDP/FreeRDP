@@ -439,16 +439,28 @@ error:
  * @return new X.509 certificate chain
  */
 
-static rdpX509CertChain certificate_new_x509_certificate_chain(UINT32 count)
+static BOOL certificate_new_x509_certificate_chain(UINT32 count, wStream* s,
+                                                   rdpX509CertChain* chain)
 {
+	WINPR_ASSERT(chain);
+
 	rdpX509CertChain x509_cert_chain = WINPR_C_ARRAY_INIT;
+	*chain = x509_cert_chain;
+
+	if (!Stream_CheckAndLogRequiredCapacityOfSize(TAG, s, count, sizeof(rdpCertBlob)))
+		return FALSE;
+
+	if (count == 0)
+		return TRUE;
 
 	x509_cert_chain.array = (rdpCertBlob*)calloc(count, sizeof(rdpCertBlob));
+	if (!x509_cert_chain.array)
+		return FALSE;
 
-	if (x509_cert_chain.array)
-		x509_cert_chain.count = count;
+	x509_cert_chain.count = count;
 
-	return x509_cert_chain;
+	*chain = x509_cert_chain;
+	return TRUE;
 }
 
 /**
@@ -1039,7 +1051,8 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* cert,
 
 	Stream_Read_UINT32(s, numCertBlobs); /* numCertBlobs */
 	certificate_free_x509_certificate_chain(&cert->x509_cert_chain);
-	cert->x509_cert_chain = certificate_new_x509_certificate_chain(numCertBlobs);
+	if (!certificate_new_x509_certificate_chain(numCertBlobs, s, &cert->x509_cert_chain))
+		return FALSE;
 
 	for (UINT32 i = 0; i < cert->x509_cert_chain.count; i++)
 	{
