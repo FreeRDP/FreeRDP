@@ -739,10 +739,10 @@ static const XKB_VARIANT tm_variants[] = {
 
 static const XKB_LAYOUT xkbLayouts[] = {
 	{ "us", KBD_US, us_variants },                           /* USA */
-	{ "ad", 0, NULL },                                       /* Andorra */
+	{ "ad", 0, nullptr },                                    /* Andorra */
 	{ "af", KBD_FARSI, af_variants },                        /* Afghanistan */
 	{ "ara", KBD_ARABIC_101, ara_variants },                 /* Arabic */
-	{ "al", 0, NULL },                                       /* Albania */
+	{ "al", 0, nullptr },                                    /* Albania */
 	{ "am", KBD_ARMENIAN_EASTERN, am_variants },             /* Armenia */
 	{ "az", KBD_AZERI_CYRILLIC, az_variants },               /* Azerbaijan */
 	{ "by", KBD_BELARUSIAN, by_variants },                   /* Belarus */
@@ -753,15 +753,15 @@ static const XKB_LAYOUT xkbLayouts[] = {
 	{ "br", KBD_PORTUGUESE_BRAZILIAN_ABNT, br_variants },    /* Brazil */
 	{ "bg", KBD_BULGARIAN_LATIN, bg_variants },              /* Bulgaria */
 	{ "ma", KBD_FRENCH, ma_variants },                       /* Morocco */
-	{ "mm", 0, NULL },                                       /* Myanmar */
+	{ "mm", 0, nullptr },                                    /* Myanmar */
 	{ "ca", KBD_US, ca_variants },                           /* Canada */
-	{ "cd", 0, NULL },                                       /* Congo, Democratic Republic of the */
+	{ "cd", 0, nullptr },                                    /* Congo, Democratic Republic of the */
 	{ "cn", KBD_CHINESE_TRADITIONAL_PHONETIC, cn_variants }, /* China */
 	{ "hr", KBD_CROATIAN, hr_variants },                     /* Croatia */
 	{ "cz", KBD_CZECH, cz_variants },                        /* Czechia */
 	{ "dk", KBD_DANISH, dk_variants },                       /* Denmark */
 	{ "nl", KBD_DUTCH, nl_variants },                        /* Netherlands */
-	{ "bt", 0, NULL },                                       /* Bhutan */
+	{ "bt", 0, nullptr },                                    /* Bhutan */
 	{ "ee", KBD_ESTONIAN, ee_variants },                     /* Estonia */
 	{ "ir", 0, ir_variants },                                /* Iran */
 	{ "iq", 0, iq_variants },                                /* Iraq */
@@ -769,7 +769,7 @@ static const XKB_LAYOUT xkbLayouts[] = {
 	{ "fi", KBD_FINNISH, fi_variants },                      /* Finland */
 	{ "fr", KBD_FRENCH, fr_variants },                       /* France */
 	{ "gh", 0, gh_variants },                                /* Ghana */
-	{ "gn", 0, NULL },                                       /* Guinea */
+	{ "gn", 0, nullptr },                                    /* Guinea */
 	{ "ge", KBD_GEORGIAN, ge_variants },                     /* Georgia */
 	{ "at", KBD_GERMAN, de_variants },                       /* Austria */
 	{ "de", KBD_GERMAN, de_variants },                       /* Germany */
@@ -780,17 +780,17 @@ static const XKB_LAYOUT xkbLayouts[] = {
 	{ "it", KBD_ITALIAN, it_variants },                      /* Italy */
 	{ "jp", KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002, jp_variants }, /* Japan */
 	{ "kg", 0, kg_variants },                                    /* Kyrgyzstan */
-	{ "kh", 0, NULL },                                           /* Cambodia */
+	{ "kh", 0, nullptr },                                        /* Cambodia */
 	{ "kz", KBD_KAZAKH, kz_variants },                           /* Kazakhstan */
-	{ "la", 0, NULL },                                           /* Laos */
+	{ "la", 0, nullptr },                                        /* Laos */
 	{ "latam", KBD_LATIN_AMERICAN, latam_variants },             /* Latin America */
 	{ "lt", KBD_LITHUANIAN, lt_variants },                       /* Lithuania */
 	{ "lv", KBD_LATVIAN, lv_variants },                          /* Latvia */
-	{ "mao", KBD_MAORI, NULL },                                  /* Maori */
+	{ "mao", KBD_MAORI, nullptr },                               /* Maori */
 	{ "me", KBD_SERBIAN_LATIN, me_variants },                    /* Montenegro */
 	{ "mk", KBD_FYRO_MACEDONIAN, mk_variants },                  /* Macedonia */
 	{ "mt", KBD_MALTESE_48_KEY, mt_variants },                   /* Malta */
-	{ "mn", KBD_MONGOLIAN_CYRILLIC, NULL },                      /* Mongolia */
+	{ "mn", KBD_MONGOLIAN_CYRILLIC, nullptr },                   /* Mongolia */
 	{ "no", KBD_NORWEGIAN, no_variants },                        /* Norway */
 	{ "pl", KBD_POLISH_PROGRAMMERS, pl_variants },               /* Poland */
 	{ "pt", KBD_PORTUGUESE, pt_variants },                       /* Portugal */
@@ -810,17 +810,17 @@ static const XKB_LAYOUT xkbLayouts[] = {
 	{ "ua", KBD_UKRAINIAN, ua_variants },                        /* Ukraine */
 	{ "gb", KBD_UNITED_KINGDOM, gb_variants },                   /* United Kingdom */
 	{ "uz", KBD_UZBEK_CYRILLIC, uz_variants },                   /* Uzbekistan */
-	{ "vn", KBD_VIETNAMESE, NULL },                              /* Vietnam */
+	{ "vn", KBD_VIETNAMESE, nullptr },                           /* Vietnam */
 	{ "kr", KBD_KOREAN_INPUT_SYSTEM_IME_2000, kr_variants },     /* Korea, Republic of */
 	{ "ie", KBD_UNITED_KINGDOM, ie_variants },                   /* Ireland */
 	{ "pk", 0, pk_variants },                                    /* Pakistan */
-	{ "mv", 0, NULL },                                           /* Maldives */
-	{ "za", KBD_US, NULL },                                      /* South Africa */
+	{ "mv", 0, nullptr },                                        /* Maldives */
+	{ "za", KBD_US, nullptr },                                   /* South Africa */
 	{ "epo", 0, epo_variants },                                  /* Esperanto */
-	{ "np", KBD_NEPALI, NULL },                                  /* Nepal */
+	{ "np", KBD_NEPALI, nullptr },                               /* Nepal */
 	{ "ng", 0, ng_variants },                                    /* Nigeria */
-	{ "et", 0, NULL },                                           /* Ethiopia */
-	{ "sn", 0, NULL },                                           /* Senegal */
+	{ "et", 0, nullptr },                                        /* Ethiopia */
+	{ "sn", 0, nullptr },                                        /* Senegal */
 	{ "brai", 0, brai_variants },                                /* Braille */
 	{ "tm", KBD_TURKISH_Q, tm_variants },                        /* Turkmenistan */
 };
@@ -854,7 +854,7 @@ static UINT32 find_keyboard_layout_variant(const XKB_LAYOUT* layout, const char*
 
 UINT32 xf_find_keyboard_layout_in_xorg_rules(const char* layout, const char* variant)
 {
-	if ((layout == NULL) || (variant == NULL))
+	if ((layout == nullptr) || (variant == nullptr))
 		return 0;
 
 	DEBUG_X11("xkbLayout: %s\txkbVariant: %s", layout, variant);

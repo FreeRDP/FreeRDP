@@ -37,13 +37,13 @@ typedef struct
 static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, UINT32 x, UINT32 y,
                                           UINT32 width, UINT32 height)
 {
-	xfContext* xfc = NULL;
-	xfVideoSurface* ret = NULL;
+	xfContext* xfc = nullptr;
+	xfVideoSurface* ret = nullptr;
 
 	WINPR_ASSERT(video);
 	ret = (xfVideoSurface*)VideoClient_CreateCommonContext(sizeof(xfContext), x, y, width, height);
 	if (!ret)
-		return NULL;
+		return nullptr;
 
 	xfc = (xfContext*)video->custom;
 	WINPR_ASSERT(xfc);
@@ -57,7 +57,7 @@ static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, UINT32 x, U
 	{
 		WLog_ERR(TAG, "unable to create surface image");
 		VideoClient_DestroyCommonContext(&ret->base);
-		return NULL;
+		return nullptr;
 	}
 
 	return &ret->base;
@@ -68,8 +68,8 @@ static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* su
                                WINPR_ATTR_UNUSED UINT32 destinationHeight)
 {
 	const xfVideoSurface* xfSurface = (const xfVideoSurface*)surface;
-	xfContext* xfc = NULL;
-	const rdpSettings* settings = NULL;
+	xfContext* xfc = nullptr;
+	const rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(video);
 	WINPR_ASSERT(xfSurface);

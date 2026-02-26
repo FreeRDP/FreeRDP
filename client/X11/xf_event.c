@@ -209,7 +209,7 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 	obj->fnObjectNew = winpr_ObjectStringClone;
 	obj->fnObjectFree = winpr_ObjectStringFree;
 
-	return run_action_script(xfc, "xevent", NULL, xf_action_script_append, NULL);
+	return run_action_script(xfc, "xevent", nullptr, xf_action_script_append, nullptr);
 }
 
 void xf_event_action_script_free(xfContext* xfc)
@@ -217,7 +217,7 @@ void xf_event_action_script_free(xfContext* xfc)
 	if (xfc->xevents)
 	{
 		ArrayList_Free(xfc->xevents);
-		xfc->xevents = NULL;
+		xfc->xevents = nullptr;
 	}
 }
 
@@ -241,7 +241,7 @@ static BOOL action_script_run(xfContext* xfc, const char* buffer, size_t size, v
 
 	if (winpr_PathFileExists(buffer))
 	{
-		char* cmd = NULL;
+		char* cmd = nullptr;
 		size_t cmdlen = 0;
 		winpr_asprintf(&cmd, &cmdlen, "%s %s %s", buffer, what, arg);
 		if (!cmd)
@@ -274,9 +274,9 @@ static BOOL action_script_run(xfContext* xfc, const char* buffer, size_t size, v
 static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 {
 	size_t count = 0;
-	char* name = NULL;
+	char* name = nullptr;
 	BOOL match = FALSE;
-	const char* xeventName = NULL;
+	const char* xeventName = nullptr;
 
 	if (!xfc->actionScriptExists || !xfc->xevents || !xfc->window)
 		return FALSE;
@@ -305,7 +305,7 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	char arg[2048] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(command, sizeof(command), "xevent %s", xeventName);
 	(void)_snprintf(arg, sizeof(arg), "%lu", (unsigned long)xfc->window->handle);
-	return run_action_script(xfc, command, arg, action_script_run, NULL);
+	return run_action_script(xfc, command, arg, action_script_run, nullptr);
 }
 
 void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
@@ -369,7 +369,7 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 	int y = 0;
 	int w = 0;
 	int h = 0;
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -636,7 +636,7 @@ static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 	} cnv;
 	cnv.cev = event;
 	WINPR_UNUSED(app);
-	XLookupString(cnv.ev, str, sizeof(str), &keysym, NULL);
+	XLookupString(cnv.ev, str, sizeof(str), &keysym, nullptr);
 	xf_keyboard_key_press(xfc, event, keysym);
 	return TRUE;
 }
@@ -653,7 +653,7 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, const XKeyEvent* event, BOOL app
 	cnv.cev = event;
 
 	WINPR_UNUSED(app);
-	XLookupString(cnv.ev, str, sizeof(str), &keysym, NULL);
+	XLookupString(cnv.ev, str, sizeof(str), &keysym, nullptr);
 	xf_keyboard_key_release(xfc, event, keysym);
 	return TRUE;
 }
@@ -830,7 +830,7 @@ static BOOL xf_event_LeaveNotify(xfContext* xfc, const XLeaveWindowEvent* event,
 
 		/* keep track of which window has focus so that we can apply pointer updates */
 		if (xfc->appWindow == appWindow)
-			xfc->appWindow = NULL;
+			xfc->appWindow = nullptr;
 		xf_rail_return_window(appWindow);
 	}
 	return TRUE;
@@ -839,7 +839,7 @@ static BOOL xf_event_LeaveNotify(xfContext* xfc, const XLeaveWindowEvent* event,
 static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* event, BOOL app)
 {
 	Window childWindow = None;
-	xfAppWindow* appWindow = NULL;
+	xfAppWindow* appWindow = nullptr;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -1009,8 +1009,8 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 		BOOL minimizedChanged = FALSE;
 		unsigned long nitems = 0;
 		unsigned long bytes = 0;
-		unsigned char* prop = NULL;
-		xfAppWindow* appWindow = NULL;
+		unsigned char* prop = nullptr;
+		xfAppWindow* appWindow = nullptr;
 
 		if (app)
 		{
@@ -1364,7 +1364,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 	}
 
 	xfWindow* window = xfc->window;
-	xfFloatbar* floatbar = NULL;
+	xfFloatbar* floatbar = nullptr;
 	if (window)
 		floatbar = window->floatbar;
 

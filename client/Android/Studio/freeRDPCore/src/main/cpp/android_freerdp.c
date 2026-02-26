@@ -419,7 +419,7 @@ static int android_freerdp_run(freerdp* instance)
 	DWORD count;
 	DWORD status = WAIT_FAILED;
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS];
-	HANDLE inputEvent = NULL;
+	HANDLE inputEvent = nullptr;
 	const rdpSettings* settings = instance->context->settings;
 	rdpContext* context = instance->context;
 
@@ -536,7 +536,7 @@ static BOOL android_client_new(freerdp* instance, rdpContext* context)
 	instance->GatewayAuthenticate = android_gw_authenticate;
 	instance->VerifyCertificateEx = android_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = android_verify_changed_certificate_ex;
-	instance->LogonErrorInfo = NULL;
+	instance->LogonErrorInfo = nullptr;
 	return TRUE;
 }
 
@@ -556,13 +556,13 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 
 	pEntryPoints->Version = RDP_CLIENT_INTERFACE_VERSION;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
-	pEntryPoints->GlobalInit = NULL;
-	pEntryPoints->GlobalUninit = NULL;
+	pEntryPoints->GlobalInit = nullptr;
+	pEntryPoints->GlobalUninit = nullptr;
 	pEntryPoints->ContextSize = sizeof(androidContext);
 	pEntryPoints->ClientNew = android_client_new;
 	pEntryPoints->ClientFree = android_client_free;
-	pEntryPoints->ClientStart = NULL;
-	pEntryPoints->ClientStop = NULL;
+	pEntryPoints->ClientStart = nullptr;
+	pEntryPoints->ClientStop = nullptr;
 	return 0;
 }
 
@@ -590,7 +590,7 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 	{
 		WLog_FATAL(TAG, "Failed to load class references %s=%p, %s=%p", JAVA_CONTEXT_CLASS,
 		           (void*)contextClass, JAVA_FILE_CLASS, (void*)fileClass);
-		return (jlong)NULL;
+		return (jlong) nullptr;
 	}
 
 	getFilesDirID =
@@ -599,7 +599,7 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 	if (!getFilesDirID)
 	{
 		WLog_FATAL(TAG, "Failed to find method ID getFilesDir ()L" JAVA_FILE_CLASS ";");
-		return (jlong)NULL;
+		return (jlong) nullptr;
 	}
 
 	getAbsolutePathID =
@@ -608,7 +608,7 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 	if (!getAbsolutePathID)
 	{
 		WLog_FATAL(TAG, "Failed to find method ID getAbsolutePath ()Ljava/lang/String;");
-		return (jlong)NULL;
+		return (jlong) nullptr;
 	}
 
 	filesDirObj = (*env)->CallObjectMethod(env, context, getFilesDirID);
@@ -616,7 +616,7 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 	if (!filesDirObj)
 	{
 		WLog_FATAL(TAG, "Failed to call getFilesDir");
-		return (jlong)NULL;
+		return (jlong) nullptr;
 	}
 
 	path = (*env)->CallObjectMethod(env, filesDirObj, getAbsolutePathID);
@@ -624,7 +624,7 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 	if (!path)
 	{
 		WLog_FATAL(TAG, "Failed to call getAbsolutePath");
-		return (jlong)NULL;
+		return (jlong) nullptr;
 	}
 
 	raw = (*env)->GetStringUTFChars(env, path, 0);
@@ -632,7 +632,7 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 	if (!raw)
 	{
 		WLog_FATAL(TAG, "Failed to get C string from java string");
-		return (jlong)NULL;
+		return (jlong) nullptr;
 	}
 
 	envStr = _strdup(raw);
@@ -641,7 +641,7 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 	if (!envStr)
 	{
 		WLog_FATAL(TAG, "_strdup(%s) failed", raw);
-		return (jlong)NULL;
+		return (jlong) nullptr;
 	}
 
 	if (setenv("HOME", _strdup(envStr), 1) != 0)
@@ -649,14 +649,14 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 		char ebuffer[256] = WINPR_C_ARRAY_INIT;
 		WLog_FATAL(TAG, "Failed to set environment HOME=%s %s [%d]", envStr,
 		           winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
-		return (jlong)NULL;
+		return (jlong) nullptr;
 	}
 
 	RdpClientEntry(&clientEntryPoints);
 	ctx = freerdp_client_context_new(&clientEntryPoints);
 
 	if (!ctx)
-		return (jlong)NULL;
+		return (jlong) nullptr;
 
 	return (jlong)ctx->instance;
 }
@@ -739,7 +739,7 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 
 	androidContext* ctx = (androidContext*)inst->context;
 
-	if (!(ctx->thread = CreateThread(NULL, 0, android_thread_func, inst, 0, NULL)))
+	if (!(ctx->thread = CreateThread(nullptr, 0, android_thread_func, inst, 0, nullptr)))
 	{
 		return JNI_FALSE;
 	}
@@ -927,7 +927,7 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1data(
 {
 	ANDROID_EVENT* event;
 	freerdp* inst = (freerdp*)instance;
-	const char* data = jdata != NULL ? (*env)->GetStringUTFChars(env, jdata, NULL) : NULL;
+	const char* data = jdata != nullptr ? (*env)->GetStringUTFChars(env, jdata, nullptr) : nullptr;
 	const size_t data_length = data ? (*env)->GetStringUTFLength(env, jdata) : 0;
 	jboolean ret = JNI_FALSE;
 	event = (ANDROID_EVENT*)android_event_clipboard_new((void*)data, data_length);
@@ -987,7 +987,7 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1get_1build_1config(JNI
 	return (*env)->NewStringUTF(env, freerdp_get_build_config());
 }
 
-static jclass gJavaActivityClass = NULL;
+static jclass gJavaActivityClass = nullptr;
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {

@@ -9,16 +9,16 @@
 int TestClientChannels(int argc, char* argv[])
 {
 	DWORD dwFlags = 0;
-	FREERDP_ADDIN** ppAddins = NULL;
+	FREERDP_ADDIN** ppAddins = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	dwFlags = FREERDP_ADDIN_DYNAMIC;
 
 	printf("Enumerate all\n");
-	ppAddins = freerdp_channels_list_addins(NULL, NULL, NULL, dwFlags);
+	ppAddins = freerdp_channels_list_addins(nullptr, nullptr, nullptr, dwFlags);
 
-	for (size_t index = 0; ppAddins[index] != NULL; index++)
+	for (size_t index = 0; ppAddins[index] != nullptr; index++)
 	{
 		FREERDP_ADDIN* pAddin = ppAddins[index];
 
@@ -29,9 +29,9 @@ int TestClientChannels(int argc, char* argv[])
 	freerdp_channels_addin_list_free(ppAddins);
 
 	printf("Enumerate rdpsnd\n");
-	ppAddins = freerdp_channels_list_addins(RDPSND_CHANNEL_NAME, NULL, NULL, dwFlags);
+	ppAddins = freerdp_channels_list_addins(RDPSND_CHANNEL_NAME, nullptr, nullptr, dwFlags);
 
-	for (size_t index = 0; ppAddins[index] != NULL; index++)
+	for (size_t index = 0; ppAddins[index] != nullptr; index++)
 	{
 		FREERDP_ADDIN* pAddin = ppAddins[index];
 
@@ -43,9 +43,9 @@ int TestClientChannels(int argc, char* argv[])
 
 #if defined(CHANNEL_TSMF_CLIENT)
 	printf("Enumerate tsmf video\n");
-	ppAddins = freerdp_channels_list_addins("tsmf", NULL, "video", dwFlags);
+	ppAddins = freerdp_channels_list_addins("tsmf", nullptr, "video", dwFlags);
 
-	for (size_t index = 0; ppAddins[index] != NULL; index++)
+	for (size_t index = 0; ppAddins[index] != nullptr; index++)
 	{
 		FREERDP_ADDIN* pAddin = ppAddins[index];
 
@@ -56,9 +56,9 @@ int TestClientChannels(int argc, char* argv[])
 	freerdp_channels_addin_list_free(ppAddins);
 #endif
 
-	ppAddins = freerdp_channels_list_addins("unknown", NULL, NULL, dwFlags);
+	ppAddins = freerdp_channels_list_addins("unknown", nullptr, nullptr, dwFlags);
 
-	for (size_t index = 0; ppAddins[index] != NULL; index++)
+	for (size_t index = 0; ppAddins[index] != nullptr; index++)
 	{
 		FREERDP_ADDIN* pAddin = ppAddins[index];
 
@@ -71,9 +71,9 @@ int TestClientChannels(int argc, char* argv[])
 	printf("Enumerate static addins\n");
 
 	dwFlags = FREERDP_ADDIN_STATIC;
-	ppAddins = freerdp_channels_list_addins(NULL, NULL, NULL, dwFlags);
+	ppAddins = freerdp_channels_list_addins(nullptr, nullptr, nullptr, dwFlags);
 
-	for (size_t index = 0; ppAddins[index] != NULL; index++)
+	for (size_t index = 0; ppAddins[index] != nullptr; index++)
 	{
 		FREERDP_ADDIN* pAddin = ppAddins[index];
 

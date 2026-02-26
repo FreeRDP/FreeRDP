@@ -47,7 +47,7 @@ NSString *TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 static BOOL addArgument(int *argc, char ***argv, const char *fmt, ...)
 {
 	va_list ap = WINPR_C_ARRAY_INIT;
-	char *arg = NULL;
+	char *arg = nullptr;
 	char **tmp = realloc(*argv, (*argc + 1) * sizeof(char *));
 
 	if (!tmp)
@@ -79,7 +79,7 @@ static void freeArguments(int argc, char **argv)
 - (id)initWithBookmark:(ComputerBookmark *)bookmark
 {
 	int status;
-	char **argv = NULL;
+	char **argv = nullptr;
 	int argc = 0;
 
 	if (!(self = [super init]))
@@ -350,7 +350,7 @@ out_free:
 	if (!_suspended)
 	{
 		_suspended = YES;
-		//        instance->update->SuppressOutput(instance->context, 0, NULL);
+		//        instance->update->SuppressOutput(instance->context, 0, nullptr);
 	}
 }
 

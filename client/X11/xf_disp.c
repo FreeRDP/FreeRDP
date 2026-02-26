@@ -74,7 +74,7 @@ static UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monito
 
 static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 {
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(xfDisp);
 	WINPR_ASSERT(xfDisp->xfc);
@@ -108,7 +108,7 @@ static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 
 static BOOL xf_update_last_sent(xfDispContext* xfDisp)
 {
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(xfDisp);
 	WINPR_ASSERT(xfDisp->xfc);
@@ -134,9 +134,9 @@ static uint64_t xf_disp_OnTimer(rdpContext* context, WINPR_ATTR_UNUSED void* use
                                 WINPR_ATTR_UNUSED uint64_t interval)
 
 {
-	xfContext* xfc = NULL;
-	xfDispContext* xfDisp = NULL;
-	rdpSettings* settings = NULL;
+	xfContext* xfc = nullptr;
+	xfDispContext* xfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
 		return interval;
@@ -157,7 +157,7 @@ static BOOL update_timer(xfDispContext* xfDisp, uint64_t intervalNS)
 	{
 		rdpContext* context = &xfDisp->xfc->common.context;
 
-		xfDisp->timerID = freerdp_timer_add(context, intervalNS, xf_disp_OnTimer, NULL, true);
+		xfDisp->timerID = freerdp_timer_add(context, intervalNS, xf_disp_OnTimer, nullptr, true);
 	}
 	return TRUE;
 }
@@ -237,7 +237,7 @@ static BOOL xf_disp_queueResize(xfDispContext* xfDisp, UINT32 width, UINT32 heig
 
 static BOOL xf_disp_set_window_resizable(xfDispContext* xfDisp)
 {
-	XSizeHints* size_hints = NULL;
+	XSizeHints* size_hints = nullptr;
 
 	if (!(size_hints = XAllocSizeHints()))
 		return FALSE;
@@ -257,7 +257,7 @@ static BOOL xf_disp_set_window_resizable(xfDispContext* xfDisp)
 BOOL xf_disp_check_context(void* context, xfContext** ppXfc, xfDispContext** ppXfDisp,
                            rdpSettings** ppSettings)
 {
-	xfContext* xfc = NULL;
+	xfContext* xfc = nullptr;
 
 	if (!context)
 		return FALSE;
@@ -278,9 +278,9 @@ BOOL xf_disp_check_context(void* context, xfContext** ppXfc, xfDispContext** ppX
 
 static void xf_disp_OnActivated(void* context, const ActivatedEventArgs* e)
 {
-	xfContext* xfc = NULL;
-	xfDispContext* xfDisp = NULL;
-	rdpSettings* settings = NULL;
+	xfContext* xfc = nullptr;
+	xfDispContext* xfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
 		return;
@@ -298,9 +298,9 @@ static void xf_disp_OnActivated(void* context, const ActivatedEventArgs* e)
 
 static void xf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs* e)
 {
-	xfContext* xfc = NULL;
-	xfDispContext* xfDisp = NULL;
-	rdpSettings* settings = NULL;
+	xfContext* xfc = nullptr;
+	xfDispContext* xfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_UNUSED(e);
 
@@ -316,9 +316,9 @@ static void xf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs*
 
 static void xf_disp_OnWindowStateChange(void* context, const WindowStateChangeEventArgs* e)
 {
-	xfContext* xfc = NULL;
-	xfDispContext* xfDisp = NULL;
-	rdpSettings* settings = NULL;
+	xfContext* xfc = nullptr;
+	xfDispContext* xfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_UNUSED(e);
 
@@ -333,9 +333,9 @@ static void xf_disp_OnWindowStateChange(void* context, const WindowStateChangeEv
 
 xfDispContext* xf_disp_new(xfContext* xfc)
 {
-	xfDispContext* ret = NULL;
-	const rdpSettings* settings = NULL;
-	wPubSub* pubSub = NULL;
+	xfDispContext* ret = nullptr;
+	const rdpSettings* settings = nullptr;
+	wPubSub* pubSub = nullptr;
 
 	WINPR_ASSERT(xfc);
 
@@ -348,7 +348,7 @@ xfDispContext* xf_disp_new(xfContext* xfc)
 	ret = calloc(1, sizeof(xfDispContext));
 
 	if (!ret)
-		return NULL;
+		return nullptr;
 
 	ret->xfc = xfc;
 #ifdef USABLE_XRANDR
@@ -388,9 +388,9 @@ void xf_disp_free(xfDispContext* disp)
 UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, UINT32 nmonitors)
 {
 	UINT ret = CHANNEL_RC_OK;
-	xfDispContext* xfDisp = NULL;
-	rdpSettings* settings = NULL;
-	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts = NULL;
+	xfDispContext* xfDisp = nullptr;
+	rdpSettings* settings = nullptr;
+	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts = nullptr;
 
 	WINPR_ASSERT(disp);
 	WINPR_ASSERT(monitors);
@@ -462,8 +462,8 @@ UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, UIN
 
 BOOL xf_disp_handle_xevent(xfContext* xfc, const XEvent* event)
 {
-	xfDispContext* xfDisp = NULL;
-	rdpSettings* settings = NULL;
+	xfDispContext* xfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 	UINT32 maxWidth = 0;
 	UINT32 maxHeight = 0;
 
@@ -500,7 +500,7 @@ BOOL xf_disp_handle_xevent(xfContext* xfc, const XEvent* event)
 
 BOOL xf_disp_handle_configureNotify(xfContext* xfc, int width, int height)
 {
-	xfDispContext* xfDisp = NULL;
+	xfDispContext* xfDisp = nullptr;
 
 	if (!xfc)
 		return FALSE;
@@ -519,8 +519,8 @@ static UINT xf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors
                                   UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB)
 {
 	/* we're called only if dynamic resolution update is activated */
-	xfDispContext* xfDisp = NULL;
-	rdpSettings* settings = NULL;
+	xfDispContext* xfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(disp);
 
@@ -546,7 +546,7 @@ static UINT xf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors
 
 BOOL xf_disp_init(xfDispContext* xfDisp, DispClientContext* disp)
 {
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	if (!xfDisp || !xfDisp->xfc || !disp)
 		return FALSE;
@@ -584,6 +584,6 @@ BOOL xf_disp_uninit(xfDispContext* xfDisp, DispClientContext* disp)
 		return FALSE;
 
 	WLog_DBG(TAG, "Channel %s closed", DISP_CHANNEL_NAME);
-	xfDisp->disp = NULL;
+	xfDisp->disp = nullptr;
 	return TRUE;
 }

@@ -72,8 +72,8 @@
 
 - (IBAction)onOK:(NSObject *)sender
 {
-	char *submittedUser = NULL;
-	char *submittedDomain = NULL;
+	char *submittedUser = nullptr;
+	char *submittedDomain = nullptr;
 
 	if (freerdp_parse_username(
 	        [self.usernameText.stringValue cStringUsingEncoding:NSUTF8StringEncoding],

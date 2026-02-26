@@ -55,7 +55,7 @@ static UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monit
 
 static BOOL wlf_disp_settings_changed(wlfDispContext* wlfDisp)
 {
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(wlfDisp);
 	WINPR_ASSERT(wlfDisp->wlc);
@@ -89,7 +89,7 @@ static BOOL wlf_disp_settings_changed(wlfDispContext* wlfDisp)
 
 static BOOL wlf_update_last_sent(wlfDispContext* wlfDisp)
 {
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(wlfDisp);
 	WINPR_ASSERT(wlfDisp->wlc);
@@ -114,9 +114,9 @@ static uint64_t wlf_disp_OnTimer(rdpContext* context, WINPR_ATTR_UNUSED void* us
                                  WINPR_ATTR_UNUSED FreeRDP_TimerID timerID,
                                  WINPR_ATTR_UNUSED uint64_t timestamp, uint64_t interval)
 {
-	wlfContext* wlc = NULL;
-	wlfDispContext* wlfDisp = NULL;
-	rdpSettings* settings = NULL;
+	wlfContext* wlc = nullptr;
+	wlfDispContext* wlfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
 		return interval;
@@ -137,7 +137,7 @@ static BOOL update_timer(wlfDispContext* wlfDisp, uint64_t intervalNS)
 	{
 		rdpContext* context = &wlfDisp->wlc->common.context;
 
-		wlfDisp->timerID = freerdp_timer_add(context, intervalNS, wlf_disp_OnTimer, NULL, true);
+		wlfDisp->timerID = freerdp_timer_add(context, intervalNS, wlf_disp_OnTimer, nullptr, true);
 	}
 	return TRUE;
 }
@@ -145,8 +145,8 @@ static BOOL update_timer(wlfDispContext* wlfDisp, uint64_t intervalNS)
 BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp, BOOL fromTimer)
 {
 	DISPLAY_CONTROL_MONITOR_LAYOUT layout;
-	wlfContext* wlc = NULL;
-	rdpSettings* settings = NULL;
+	wlfContext* wlc = nullptr;
+	rdpSettings* settings = nullptr;
 
 	if (!wlfDisp || !wlfDisp->wlc)
 		return FALSE;
@@ -209,7 +209,7 @@ static BOOL wlf_disp_set_window_resizable(WINPR_ATTR_UNUSED wlfDispContext* wlfD
 BOOL wlf_disp_check_context(void* context, wlfContext** ppwlc, wlfDispContext** ppwlfDisp,
                             rdpSettings** ppSettings)
 {
-	wlfContext* wlc = NULL;
+	wlfContext* wlc = nullptr;
 
 	if (!context)
 		return FALSE;
@@ -230,9 +230,9 @@ BOOL wlf_disp_check_context(void* context, wlfContext** ppwlc, wlfDispContext** 
 
 static void wlf_disp_OnActivated(void* context, const ActivatedEventArgs* e)
 {
-	wlfContext* wlc = NULL;
-	wlfDispContext* wlfDisp = NULL;
-	rdpSettings* settings = NULL;
+	wlfContext* wlc = nullptr;
+	wlfDispContext* wlfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
 		return;
@@ -252,9 +252,9 @@ static void wlf_disp_OnActivated(void* context, const ActivatedEventArgs* e)
 
 static void wlf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs* e)
 {
-	wlfContext* wlc = NULL;
-	wlfDispContext* wlfDisp = NULL;
-	rdpSettings* settings = NULL;
+	wlfContext* wlc = nullptr;
+	wlfDispContext* wlfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_UNUSED(e);
 	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
@@ -271,19 +271,19 @@ static void wlf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs
 
 wlfDispContext* wlf_disp_new(wlfContext* wlc)
 {
-	wlfDispContext* ret = NULL;
-	wPubSub* pubSub = NULL;
-	rdpSettings* settings = NULL;
+	wlfDispContext* ret = nullptr;
+	wPubSub* pubSub = nullptr;
+	rdpSettings* settings = nullptr;
 
 	if (!wlc || !wlc->common.context.settings || !wlc->common.context.pubSub)
-		return NULL;
+		return nullptr;
 
 	settings = wlc->common.context.settings;
 	pubSub = wlc->common.context.pubSub;
 	ret = calloc(1, sizeof(wlfDispContext));
 
 	if (!ret)
-		return NULL;
+		return nullptr;
 
 	ret->wlc = wlc;
 	ret->lastSentWidth = ret->targetWidth =
@@ -313,9 +313,9 @@ void wlf_disp_free(wlfDispContext* disp)
 UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, size_t nmonitors)
 {
 	UINT ret = CHANNEL_RC_OK;
-	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts = NULL;
-	wlfDispContext* wlfDisp = NULL;
-	rdpSettings* settings = NULL;
+	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts = nullptr;
+	wlfDispContext* wlfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(disp);
 	WINPR_ASSERT(monitors);
@@ -400,8 +400,8 @@ static UINT wlf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitor
                                    UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB)
 {
 	/* we're called only if dynamic resolution update is activated */
-	wlfDispContext* wlfDisp = NULL;
-	rdpSettings* settings = NULL;
+	wlfDispContext* wlfDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(disp);
 
@@ -427,7 +427,7 @@ static UINT wlf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitor
 
 BOOL wlf_disp_init(wlfDispContext* wlfDisp, DispClientContext* disp)
 {
-	rdpSettings* settings = NULL;
+	rdpSettings* settings = nullptr;
 
 	if (!wlfDisp || !wlfDisp->wlc || !disp)
 		return FALSE;
@@ -453,7 +453,7 @@ BOOL wlf_disp_uninit(wlfDispContext* wlfDisp, DispClientContext* disp)
 	if (!wlfDisp || !disp)
 		return FALSE;
 
-	wlfDisp->disp = NULL;
+	wlfDisp->disp = nullptr;
 	return TRUE;
 }
 

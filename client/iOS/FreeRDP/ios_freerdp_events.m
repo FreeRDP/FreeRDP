@@ -157,7 +157,7 @@ BOOL ios_events_create_pipe(mfInfo *mfi)
 
 	mfi->event_pipe_consumer = pipe_fds[0];
 	mfi->event_pipe_producer = pipe_fds[1];
-	mfi->handle = CreateFileDescriptorEvent(NULL, FALSE, FALSE, mfi->event_pipe_consumer,
+	mfi->handle = CreateFileDescriptorEvent(nullptr, FALSE, FALSE, mfi->event_pipe_consumer,
 	                                        WINPR_FD_READ | WINPR_FD_WRITE);
 	return TRUE;
 }

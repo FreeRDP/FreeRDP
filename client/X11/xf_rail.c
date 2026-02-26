@@ -117,7 +117,7 @@ BOOL xf_rail_enable_remoteapp_mode(xfContext* xfc)
 		xfc->remote_app = TRUE;
 		xfc->drawable = xf_CreateDummyWindow(xfc);
 		xf_DestroyDesktopWindow(xfc, xfc->window);
-		xfc->window = NULL;
+		xfc->window = nullptr;
 
 		gdi->suppressOutput = old;
 	}
@@ -413,7 +413,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 				WCHAR* wc;
 				BYTE* b;
 			} cnv;
-			char* title = NULL;
+			char* title = nullptr;
 
 			cnv.b = windowState->titleInfo.string;
 			if (windowState->titleInfo.length == 0)
@@ -425,7 +425,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 				}
 			}
 			else if (!(title = ConvertWCharNToUtf8Alloc(
-			               cnv.wc, windowState->titleInfo.length / sizeof(WCHAR), NULL)))
+			               cnv.wc, windowState->titleInfo.length / sizeof(WCHAR), nullptr)))
 			{
 				WLog_ERR(TAG, "failed to convert window title");
 				/* error handled below */
@@ -505,7 +505,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
-		char* title = NULL;
+		char* title = nullptr;
 		union
 		{
 			WCHAR* wc;
@@ -522,7 +522,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			}
 		}
 		else if (!(title = ConvertWCharNToUtf8Alloc(
-		               cnv.wc, windowState->titleInfo.length / sizeof(WCHAR), NULL)))
+		               cnv.wc, windowState->titleInfo.length / sizeof(WCHAR), nullptr)))
 		{
 			WLog_ERR(TAG, "failed to convert window title");
 			return FALSE;
@@ -555,7 +555,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		if (appWindow->windowRects)
 		{
 			free(appWindow->windowRects);
-			appWindow->windowRects = NULL;
+			appWindow->windowRects = nullptr;
 		}
 
 		appWindow->numWindowRects = windowState->numWindowRects;
@@ -584,7 +584,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		if (appWindow->visibilityRects)
 		{
 			free(appWindow->visibilityRects);
-			appWindow->visibilityRects = NULL;
+			appWindow->visibilityRects = nullptr;
 		}
 
 		appWindow->numVisibilityRects = windowState->numVisibilityRects;
@@ -690,7 +690,7 @@ static xfRailIconCache* RailIconCache_New(rdpSettings* settings)
 	xfRailIconCache* cache = calloc(1, sizeof(xfRailIconCache));
 
 	if (!cache)
-		return NULL;
+		return nullptr;
 
 	cache->numCaches = freerdp_settings_get_uint32(settings, FreeRDP_RemoteAppNumIconCaches);
 	cache->numCacheEntries =
@@ -702,7 +702,7 @@ static xfRailIconCache* RailIconCache_New(rdpSettings* settings)
 		WLog_ERR(TAG, "failed to allocate icon cache %" PRIu32 " x %" PRIu32 " entries",
 		         cache->numCaches, cache->numCacheEntries);
 		free(cache);
-		return NULL;
+		return nullptr;
 	}
 
 	return cache;
@@ -740,10 +740,10 @@ static xfRailIcon* RailIconCache_Lookup(xfRailIconCache* cache, UINT8 cacheId, U
 		return &cache->scratch;
 
 	if (cacheId >= cache->numCaches)
-		return NULL;
+		return nullptr;
 
 	if (cacheEntry >= cache->numCacheEntries)
-		return NULL;
+		return nullptr;
 
 	return &cache->entries[cache->numCacheEntries * cacheId + cacheEntry];
 }
@@ -763,8 +763,8 @@ static BOOL convert_rail_icon(const ICON_INFO* iconInfo, xfRailIcon* railIcon)
 	WINPR_ASSERT(iconInfo);
 	WINPR_ASSERT(railIcon);
 
-	BYTE* nextPixel = NULL;
-	long* pixels = NULL;
+	BYTE* nextPixel = nullptr;
+	long* pixels = nullptr;
 	BYTE* argbPixels = calloc(1ull * iconInfo->width * iconInfo->height, 4);
 
 	if (!argbPixels)
@@ -1337,20 +1337,20 @@ int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 
 	if (xfc->rail)
 	{
-		xfc->rail->custom = NULL;
-		xfc->rail = NULL;
+		xfc->rail->custom = nullptr;
+		xfc->rail = nullptr;
 	}
 
 	if (xfc->railWindows)
 	{
 		HashTable_Free(xfc->railWindows);
-		xfc->railWindows = NULL;
+		xfc->railWindows = nullptr;
 	}
 
 	if (xfc->railIconCache)
 	{
 		RailIconCache_Free(xfc->railIconCache);
-		xfc->railIconCache = NULL;
+		xfc->railIconCache = nullptr;
 	}
 
 	return 1;
@@ -1360,12 +1360,12 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UIN
                                 UINT32 height, UINT32 surfaceId)
 {
 	if (!xfc)
-		return NULL;
+		return nullptr;
 
 	xfAppWindow* appWindow = (xfAppWindow*)calloc(1, sizeof(xfAppWindow));
 
 	if (!appWindow)
-		return NULL;
+		return nullptr;
 
 	appWindow->xfc = xfc;
 	appWindow->windowId = id;
@@ -1382,7 +1382,7 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UIN
 	return appWindow;
 fail:
 	rail_window_free(appWindow);
-	return NULL;
+	return nullptr;
 }
 
 BOOL xf_rail_del_window(xfContext* xfc, UINT64 id)
@@ -1399,10 +1399,10 @@ BOOL xf_rail_del_window(xfContext* xfc, UINT64 id)
 xfAppWindow* xf_rail_get_window(xfContext* xfc, UINT64 id)
 {
 	if (!xfc)
-		return NULL;
+		return nullptr;
 
 	if (!xfc->railWindows)
-		return NULL;
+		return nullptr;
 
 	HashTable_Lock(xfc->railWindows);
 	xfAppWindow* window = HashTable_GetItemValue(xfc->railWindows, &id);

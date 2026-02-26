@@ -234,7 +234,7 @@ void ios_resize_display_buffer(mfInfo *mfi)
 {
 	// Release the old context in a thread-safe manner
 	CGContextRef old_context = mfi->bitmap_context;
-	mfi->bitmap_context = NULL;
+	mfi->bitmap_context = nullptr;
 	CGContextRelease(old_context);
 	// Create the new context
 	ios_create_bitmap_context(mfi);

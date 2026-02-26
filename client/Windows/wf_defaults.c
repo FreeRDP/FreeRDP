@@ -40,13 +40,13 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 {
 	static const PSTR TERMSRV = "TERMSRV/%s";
 
-	PSTR TargetName = NULL;
-	PSTR UserName = NULL;
-	PWSTR TargetNameW = NULL;
-	PWSTR ServerHostNameW = NULL;
-	PWSTR ParsedUserNameW = NULL;
-	PWSTR ParsedDomainW = NULL;
-	PWSTR PasswordNullTerminatedW = NULL;
+	PSTR TargetName = nullptr;
+	PSTR UserName = nullptr;
+	PWSTR TargetNameW = nullptr;
+	PWSTR ServerHostNameW = nullptr;
+	PWSTR ParsedUserNameW = nullptr;
+	PWSTR ParsedDomainW = nullptr;
+	PWSTR PasswordNullTerminatedW = nullptr;
 	PCREDENTIALW Credential = WINPR_C_ARRAY_INIT;
 
 	PCSTR ServerHostname = freerdp_settings_get_string(settings, idHostname);
@@ -74,7 +74,7 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 
 	TargetName[len - 1] = 0;
 
-	TargetNameW = ConvertUtf8ToWCharAlloc(TargetName, NULL);
+	TargetNameW = ConvertUtf8ToWCharAlloc(TargetName, nullptr);
 	if (!TargetNameW)
 		goto fail;
 
