@@ -1055,6 +1055,8 @@ static BOOL s_update_end_paint(rdpContext* context)
 		return FALSE;
 
 	wStream* s = update->us;
+	update->us = NULL;
+
 	Stream_SealLength(s);
 	Stream_SetPosition(s, update->offsetOrders);
 	Stream_Write_UINT16(s, update->numberOrders); /* numberOrders (2 bytes) */
@@ -1070,7 +1072,7 @@ static BOOL s_update_end_paint(rdpContext* context)
 	update->combineUpdates = FALSE;
 	update->numberOrders = 0;
 	update->offsetOrders = 0;
-	update->us = NULL;
+
 	rc = TRUE;
 fail:
 	Stream_Free(s, TRUE);
