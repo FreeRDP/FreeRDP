@@ -43,7 +43,7 @@ int wf_directsound_activate(RdpsndServerContext* context)
 		return 1;
 	}
 	WLog_DBG(TAG, "RDPSND (direct sound) Activated");
-	hr = DirectSoundCaptureCreate8(NULL, &cap, NULL);
+	hr = DirectSoundCaptureCreate8(nullptr, &cap, nullptr);
 
 	if (FAILED(hr))
 	{
@@ -58,9 +58,9 @@ int wf_directsound_activate(RdpsndServerContext* context)
 	dscbd.dwReserved = 0;
 	dscbd.lpwfxFormat = wfi->agreed_format;
 	dscbd.dwFXCount = 0;
-	dscbd.lpDSCFXDesc = NULL;
+	dscbd.lpDSCFXDesc = nullptr;
 
-	hr = cap->lpVtbl->CreateCaptureBuffer(cap, &dscbd, &pDSCB, NULL);
+	hr = cap->lpVtbl->CreateCaptureBuffer(cap, &dscbd, &pDSCB, nullptr);
 
 	if (FAILED(hr))
 	{
@@ -77,7 +77,7 @@ int wf_directsound_activate(RdpsndServerContext* context)
 	pDSCB->lpVtbl->Release(pDSCB);
 	lastPos = 0;
 
-	if (!(hThread = CreateThread(NULL, 0, wf_rdpsnd_directsound_thread, latestPeer, 0, NULL)))
+	if (!(hThread = CreateThread(nullptr, 0, wf_rdpsnd_directsound_thread, latestPeer, 0, nullptr)))
 	{
 		WLog_ERR(TAG, "Failed to create direct sound thread");
 		return 1;
@@ -96,11 +96,11 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 	wfPeerContext* context;
 	wfInfo* wfi;
 
-	VOID* pbCaptureData = NULL;
+	VOID* pbCaptureData = nullptr;
 	DWORD dwCaptureLength = 0;
-	VOID* pbCaptureData2 = NULL;
+	VOID* pbCaptureData2 = nullptr;
 	DWORD dwCaptureLength2 = 0;
-	VOID* pbPlayData = NULL;
+	VOID* pbPlayData = nullptr;
 	DWORD dwReadPos = 0;
 	LONG lLockSize = 0;
 
@@ -143,7 +143,7 @@ static DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 				break;
 			}
 
-			hr = capBuf->lpVtbl->GetCurrentPosition(capBuf, NULL, &dwReadPos);
+			hr = capBuf->lpVtbl->GetCurrentPosition(capBuf, nullptr, &dwReadPos);
 			if (FAILED(hr))
 			{
 				WLog_ERR(TAG, "Failed to get read pos");

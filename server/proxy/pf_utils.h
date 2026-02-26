@@ -28,8 +28,8 @@
  * @brief pf_utils_channel_is_passthrough Checks of a channel identified by 'name'
  *          should be handled as passthrough.
  *
- * @param config The proxy configuration to check against. Must NOT be NULL.
- * @param name The name of the channel. Must NOT be NULL.
+ * @param config The proxy configuration to check against. Must NOT be nullptr.
+ * @param name The name of the channel. Must NOT be nullptr.
  * @return -1 if the channel is not handled, 0 if the channel should be ignored,
  *         1 if the channel should be passed, 2 the channel will be intercepted
  *         e.g. proxy client and server are termination points and data passed

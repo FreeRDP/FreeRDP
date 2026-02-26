@@ -28,7 +28,7 @@
 #define MF_INFO_DEFAULT_FPS 30
 #define MF_INFO_MAXPEERS 32
 
-static mfInfo* mfInfoInstance = NULL;
+static mfInfo* mfInfoInstance = nullptr;
 
 int mf_info_lock(mfInfo* mfi)
 {
@@ -93,15 +93,15 @@ static mfInfo* mf_info_init(void)
 {
 	mfInfo* mfi = (mfInfo*)calloc(1, sizeof(mfInfo));
 
-	if (mfi != NULL)
+	if (mfi != nullptr)
 	{
-		pthread_mutex_init(&mfi->mutex, NULL);
+		pthread_mutex_init(&mfi->mutex, nullptr);
 
 		mfi->peers = (freerdp_peer**)calloc(MF_INFO_MAXPEERS, sizeof(freerdp_peer*));
 		if (!mfi->peers)
 		{
 			free(mfi);
-			return NULL;
+			return nullptr;
 		}
 
 		mfi->framesPerSecond = MF_INFO_DEFAULT_FPS;
@@ -113,7 +113,7 @@ static mfInfo* mf_info_init(void)
 
 mfInfo* mf_info_get_instance(void)
 {
-	if (mfInfoInstance == NULL)
+	if (mfInfoInstance == nullptr)
 		mfInfoInstance = mf_info_init();
 
 	return mfInfoInstance;
@@ -145,7 +145,7 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 		for (int i = 0; i < MF_INFO_MAXPEERS; ++i)
 		{
 			// empty index will be our peer id
-			if (mfi->peers[i] == NULL)
+			if (mfi->peers[i] == nullptr)
 			{
 				peerId = i;
 				break;
@@ -167,7 +167,7 @@ void mf_info_peer_unregister(mfInfo* mfi, mfPeerContext* context)
 		int peerId;
 
 		peerId = ((rdpContext*)context)->peer->pId;
-		mfi->peers[peerId] = NULL;
+		mfi->peers[peerId] = nullptr;
 		mfi->peerCount--;
 
 		if (mfi->peerCount == 0)

@@ -38,7 +38,7 @@ BOOL wf_settings_read_dword(HKEY key, LPCSTR subkey, LPTSTR name, DWORD* value)
 	{
 		dwSize = sizeof(DWORD);
 
-		status = RegQueryValueEx(hKey, name, NULL, &dwType, (BYTE*)&dwValue, &dwSize);
+		status = RegQueryValueEx(hKey, name, nullptr, &dwType, (BYTE*)&dwValue, &dwSize);
 
 		if (status == ERROR_SUCCESS)
 			*value = dwValue;
@@ -59,21 +59,21 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** 
 	DWORD dwType;
 	DWORD dwSize;
 	char* strA;
-	TCHAR* strX = NULL;
+	TCHAR* strX = nullptr;
 
 	status = RegOpenKeyExA(key, subkey, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status != ERROR_SUCCESS)
 		return FALSE;
 
-	status = RegQueryValueEx(hKey, name, NULL, &dwType, NULL, &dwSize);
+	status = RegQueryValueEx(hKey, name, nullptr, &dwType, nullptr, &dwSize);
 
 	if (status == ERROR_SUCCESS)
 	{
 		strX = (LPTSTR)malloc(dwSize + sizeof(TCHAR));
 		if (!strX)
 			return FALSE;
-		status = RegQueryValueEx(hKey, name, NULL, &dwType, (BYTE*)strX, &dwSize);
+		status = RegQueryValueEx(hKey, name, nullptr, &dwType, (BYTE*)strX, &dwSize);
 
 		if (status != ERROR_SUCCESS)
 		{
@@ -86,9 +86,10 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** 
 	if (strX)
 	{
 #ifdef UNICODE
-		length = WideCharToMultiByte(CP_UTF8, 0, strX, lstrlenW(strX), NULL, 0, NULL, NULL);
+		length =
+		    WideCharToMultiByte(CP_UTF8, 0, strX, lstrlenW(strX), nullptr, 0, nullptr, nullptr);
 		strA = (char*)malloc(length + 1);
-		WideCharToMultiByte(CP_UTF8, 0, strX, lstrlenW(strX), strA, length, NULL, NULL);
+		WideCharToMultiByte(CP_UTF8, 0, strX, lstrlenW(strX), strA, length, nullptr, nullptr);
 		strA[length] = '\0';
 		free(strX);
 #else

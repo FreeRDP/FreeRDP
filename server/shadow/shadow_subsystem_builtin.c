@@ -49,7 +49,7 @@ static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* na
 			return cur->entry;
 		}
 
-		return NULL;
+		return nullptr;
 	}
 
 	for (size_t index = 0; index < g_SubsystemCount; index++)
@@ -62,7 +62,7 @@ static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* na
 			return cur->entry;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void shadow_subsystem_set_entry_builtin(const char* name)

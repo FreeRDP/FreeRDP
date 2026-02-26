@@ -79,10 +79,10 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 		goto fail;
 
 	if (rdtk_label_draw(surface, invalidRect.left, invalidRect.top, (UINT16)width, (UINT16)height,
-	                    NULL, "Welcome", 0, 0) < 0)
+	                    nullptr, "Welcome", 0, 0) < 0)
 		goto fail;
-	// rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button");
-	// rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field");
+	// rdtk_button_draw(surface, 16, 64, 128, 32, nullptr, "button");
+	// rdtk_text_field_draw(surface, 16, 128, 128, 32, nullptr, "text field");
 #endif
 
 	if (!region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect))

@@ -30,7 +30,7 @@
 
 #define TAG SERVER_TAG("shadow.mac")
 
-static macShadowSubsystem* g_Subsystem = NULL;
+static macShadowSubsystem* g_Subsystem = nullptr;
 
 static BOOL mac_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
                                                rdpShadowClient* client, UINT32 flags)
@@ -394,7 +394,7 @@ static void (^mac_capture_stream_handler)(
 	  y = extents->top;
 	  width = extents->right - extents->left;
 	  height = extents->bottom - extents->top;
-	  IOSurfaceLock(frameSurface, kIOSurfaceLockReadOnly, NULL);
+	  IOSurfaceLock(frameSurface, kIOSurfaceLockReadOnly, nullptr);
 	  pSrcData = (BYTE*)IOSurfaceGetBaseAddress(frameSurface);
 	  nSrcStep = (int)IOSurfaceGetBytesPerRow(frameSurface);
 
@@ -407,11 +407,11 @@ static void (^mac_capture_stream_handler)(
 	  {
 		  freerdp_image_copy_no_overlap(surface->data, surface->format, surface->scanline, x, y,
 			                            width, height, pSrcData, PIXEL_FORMAT_BGRX32, nSrcStep, x,
-			                            y, NULL, FREERDP_FLIP_NONE);
+			                            y, nullptr, FREERDP_FLIP_NONE);
 	  }
 	  LeaveCriticalSection(&(surface->lock));
 
-	  IOSurfaceUnlock(frameSurface, kIOSurfaceLockReadOnly, NULL);
+	  IOSurfaceUnlock(frameSurface, kIOSurfaceLockReadOnly, nullptr);
 	  ArrayList_Lock(server->clients);
 	  count = ArrayList_Count(server->clients);
 	  shadow_subsystem_frame_update(&subsystem->common);
@@ -470,11 +470,11 @@ static int mac_shadow_capture_init(macShadowSubsystem* subsystem)
 	CFDictionaryRef opts;
 	CGDirectDisplayID displayId;
 	displayId = CGMainDisplayID();
-	subsystem->captureQueue = dispatch_queue_create("mac.shadow.capture", NULL);
+	subsystem->captureQueue = dispatch_queue_create("mac.shadow.capture", nullptr);
 	keys[0] = (void*)kCGDisplayStreamShowCursor;
 	values[0] = (void*)kCFBooleanFalse;
 	opts = CFDictionaryCreate(kCFAllocatorDefault, (const void**)keys, (const void**)values, 1,
-	                          NULL, NULL);
+	                          nullptr, nullptr);
 	subsystem->stream = CGDisplayStreamCreateWithDispatchQueue(
 	    displayId, subsystem->pixelWidth, subsystem->pixelHeight, 'BGRA', opts,
 	    subsystem->captureQueue, mac_capture_stream_handler);
@@ -601,7 +601,7 @@ static int mac_shadow_subsystem_uninit(rdpShadowSubsystem* rdpsubsystem)
 	if (subsystem->lastUpdate)
 	{
 		CFRelease(subsystem->lastUpdate);
-		subsystem->lastUpdate = NULL;
+		subsystem->lastUpdate = nullptr;
 	}
 
 	return 1;
@@ -617,7 +617,8 @@ static int mac_shadow_subsystem_start(rdpShadowSubsystem* rdpsubsystem)
 
 	mac_shadow_capture_start(subsystem);
 
-	if (!(thread = CreateThread(NULL, 0, mac_shadow_subsystem_thread, (void*)subsystem, 0, NULL)))
+	if (!(thread =
+	          CreateThread(nullptr, 0, mac_shadow_subsystem_thread, (void*)subsystem, 0, nullptr)))
 	{
 		WLog_ERR(TAG, "Failed to create thread");
 		return -1;
@@ -648,7 +649,7 @@ static rdpShadowSubsystem* mac_shadow_subsystem_new(void)
 	macShadowSubsystem* subsystem = calloc(1, sizeof(macShadowSubsystem));
 
 	if (!subsystem)
-		return NULL;
+		return nullptr;
 
 	subsystem->common.SynchronizeEvent = mac_shadow_input_synchronize_event;
 	subsystem->common.KeyboardEvent = mac_shadow_input_keyboard_event;

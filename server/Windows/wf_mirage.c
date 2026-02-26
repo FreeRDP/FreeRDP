@@ -43,7 +43,7 @@ BOOL wf_mirror_driver_find_display_device(wfInfo* wfi)
 	deviceNumber = 0;
 	deviceInfo.cb = sizeof(deviceInfo);
 
-	while (result = EnumDisplayDevices(NULL, deviceNumber, &deviceInfo, 0))
+	while (result = EnumDisplayDevices(nullptr, deviceNumber, &deviceInfo, 0))
 	{
 		if (_tcscmp(deviceInfo.DeviceString, _T("Mirage Driver")) == 0)
 		{
@@ -104,7 +104,8 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 	}
 
 	dwSize = sizeof(DWORD);
-	status = RegQueryValueEx(hKey, _T("Attach.ToDesktop"), NULL, &dwType, (BYTE*)&dwValue, &dwSize);
+	status =
+	    RegQueryValueEx(hKey, _T("Attach.ToDesktop"), nullptr, &dwType, (BYTE*)&dwValue, &dwSize);
 
 	if (status != ERROR_SUCCESS)
 	{
@@ -236,7 +237,7 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int mode)
 	deviceMode->dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_POSITION;
 	_tcsncpy_s(deviceMode->dmDeviceName, 32, wfi->deviceName, _tcslen(wfi->deviceName));
 	disp_change_status =
-	    ChangeDisplaySettingsEx(wfi->deviceName, deviceMode, NULL, CDS_UPDATEREGISTRY, NULL);
+	    ChangeDisplaySettingsEx(wfi->deviceName, deviceMode, nullptr, CDS_UPDATEREGISTRY, nullptr);
 	status = (disp_change_status == DISP_CHANGE_SUCCESSFUL) ? TRUE : FALSE;
 
 	if (!status)
@@ -248,9 +249,9 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int mode)
 BOOL wf_mirror_driver_map_memory(wfInfo* wfi)
 {
 	int status;
-	wfi->driverDC = CreateDC(wfi->deviceName, NULL, NULL, NULL);
+	wfi->driverDC = CreateDC(wfi->deviceName, nullptr, nullptr, nullptr);
 
-	if (wfi->driverDC == NULL)
+	if (wfi->driverDC == nullptr)
 	{
 		WLog_ERR(TAG, "Could not create device driver context!");
 		{
@@ -258,8 +259,8 @@ BOOL wf_mirror_driver_map_memory(wfInfo* wfi)
 			DWORD dw = GetLastError();
 			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
 			                  FORMAT_MESSAGE_IGNORE_INSERTS,
-			              NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0,
-			              NULL);
+			              nullptr, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf,
+			              0, nullptr);
 			// Display the error message and exit the process
 			WLog_ERR(TAG, "CreateDC failed on device [%s] with error %lu: %s", wfi->deviceName, dw,
 			         lpMsgBuf);
@@ -298,7 +299,7 @@ BOOL wf_mirror_driver_cleanup(wfInfo* wfi)
 		WLog_ERR(TAG, "Failed to unmap shared memory from the driver! code %d", status);
 	}
 
-	if (wfi->driverDC != NULL)
+	if (wfi->driverDC != nullptr)
 	{
 		status = DeleteDC(wfi->driverDC);
 
