@@ -59,7 +59,7 @@ typedef struct
 WINPR_ATTR_NODISCARD
 static pf_channel_client_context* scard_get_client_context(pClientContext* pc)
 {
-	pf_channel_client_context* scard = NULL;
+	pf_channel_client_context* scard = nullptr;
 
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(pc->interceptContextMap);
@@ -140,7 +140,7 @@ WINPR_ATTR_NODISCARD
 static BOOL start_irp_thread(pf_channel_client_context* scard,
                              const pf_channel_client_queue_element* e)
 {
-	PTP_WORK work = NULL;
+	PTP_WORK work = nullptr;
 	struct thread_arg* arg = calloc(1, sizeof(struct thread_arg));
 	if (!arg)
 		return FALSE;
@@ -149,7 +149,7 @@ static BOOL start_irp_thread(pf_channel_client_context* scard,
 	if (!arg->e)
 		goto fail;
 
-	work = CreateThreadpoolWork(irp_thread, arg, NULL);
+	work = CreateThreadpoolWork(irp_thread, arg, nullptr);
 	if (!work)
 		goto fail;
 	ArrayList_Append(scard->workObjects, work);
@@ -315,22 +315,22 @@ WINPR_ATTR_NODISCARD
 static void* queue_copy(const void* obj)
 {
 	const pf_channel_client_queue_element* other = obj;
-	pf_channel_client_queue_element* copy = NULL;
+	pf_channel_client_queue_element* copy = nullptr;
 	if (!other)
-		return NULL;
+		return nullptr;
 	copy = calloc(1, sizeof(pf_channel_client_queue_element));
 	if (!copy)
-		return NULL;
+		return nullptr;
 
 	*copy = *other;
-	copy->out = Stream_New(NULL, Stream_Capacity(other->out));
+	copy->out = Stream_New(nullptr, Stream_Capacity(other->out));
 	if (!copy->out)
 		goto fail;
 	Stream_Write(copy->out, Stream_Buffer(other->out), Stream_GetPosition(other->out));
 	return copy;
 fail:
 	queue_free(copy);
-	return NULL;
+	return nullptr;
 }
 
 static void work_object_free(void* arg)
@@ -341,8 +341,8 @@ static void work_object_free(void* arg)
 
 BOOL pf_channel_smartcard_client_new(pClientContext* pc)
 {
-	pf_channel_client_context* scard = NULL;
-	wObject* obj = NULL;
+	pf_channel_client_context* scard = nullptr;
+	wObject* obj = nullptr;
 
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(pc->interceptContextMap);

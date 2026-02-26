@@ -38,7 +38,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 {
 	OSStatus status;
 	BOOL formatAgreed = FALSE;
-	AUDIO_FORMAT* agreedFormat = NULL;
+	AUDIO_FORMAT* agreedFormat = nullptr;
 	// we should actually loop through the list of client formats here
 	// and see if we can send the client something that it supports...
 	WLog_DBG(TAG, "Client supports the following %d formats: ", context->num_client_formats);
@@ -100,7 +100,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	recorderState.snd_context = context;
 	status =
 	    AudioQueueNewInput(&recorderState.dataFormat, mf_peer_rdpsnd_input_callback, &recorderState,
-	                       NULL, kCFRunLoopCommonModes, 0, &recorderState.queue);
+	                       nullptr, kCFRunLoopCommonModes, 0, &recorderState.queue);
 
 	if (status != noErr)
 	{
@@ -117,12 +117,12 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	{
 		AudioQueueAllocateBuffer(recorderState.queue, recorderState.bufferByteSize,
 		                         &recorderState.buffers[x]);
-		AudioQueueEnqueueBuffer(recorderState.queue, recorderState.buffers[x], 0, NULL);
+		AudioQueueEnqueueBuffer(recorderState.queue, recorderState.buffers[x], 0, nullptr);
 	}
 
 	recorderState.currentPacket = 0;
 	recorderState.isRunning = true;
-	AudioQueueStart(recorderState.queue, NULL);
+	AudioQueueStart(recorderState.queue, nullptr);
 }
 
 BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
@@ -171,7 +171,7 @@ void mf_peer_rdpsnd_input_callback(void* inUserData, AudioQueueRef inAQ,
 	rState->snd_context->SendSamples(rState->snd_context, inBuffer->mAudioData,
 	                                 inBuffer->mAudioDataByteSize / 4,
 	                                 (UINT16)(GetTickCount() & 0xffff));
-	status = AudioQueueEnqueueBuffer(rState->queue, inBuffer, 0, NULL);
+	status = AudioQueueEnqueueBuffer(rState->queue, inBuffer, 0, nullptr);
 
 	if (status != noErr)
 	{

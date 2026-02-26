@@ -30,9 +30,9 @@ dispatch_semaphore_t data_sem;
 dispatch_queue_t screen_update_q;
 CGDisplayStreamRef stream;
 
-CGDisplayStreamUpdateRef lastUpdate = NULL;
+CGDisplayStreamUpdateRef lastUpdate = nullptr;
 
-BYTE* localBuf = NULL;
+BYTE* localBuf = nullptr;
 
 BOOL ready = FALSE;
 
@@ -57,7 +57,7 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef,
 	  mf_mlion_peek_dirty_region(&rect);
 
 	  // lock surface
-	  IOSurfaceLock(frameSurface, kIOSurfaceLockReadOnly, NULL);
+	  IOSurfaceLock(frameSurface, kIOSurfaceLockReadOnly, nullptr);
 	  // get pointer
 	  void* baseAddress = IOSurfaceGetBaseAddress(frameSurface);
 	  // copy region
@@ -71,7 +71,7 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef,
 	  }
 
 	  // unlock surface
-	  IOSurfaceUnlock(frameSurface, kIOSurfaceLockReadOnly, NULL);
+	  IOSurfaceUnlock(frameSurface, kIOSurfaceLockReadOnly, nullptr);
 
 	  ready = FALSE;
 	  dispatch_semaphore_signal(data_sem);
@@ -94,7 +94,7 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef,
 			  break;
 	  }
   }
-  else if (lastUpdate == NULL)
+  else if (lastUpdate == nullptr)
   {
 	  CFRetain(updateRef);
 	  lastUpdate = updateRef;
@@ -139,7 +139,7 @@ int mf_mlion_screen_updates_init()
 
 	display_id = CGMainDisplayID();
 
-	screen_update_q = dispatch_queue_create("mfreerdp.server.screenUpdate", NULL);
+	screen_update_q = dispatch_queue_create("mfreerdp.server.screenUpdate", nullptr);
 
 	region_sem = dispatch_semaphore_create(1);
 	data_sem = dispatch_semaphore_create(1);
@@ -163,7 +163,7 @@ int mf_mlion_screen_updates_init()
 	values[0] = (void*)kCFBooleanFalse;
 
 	opts = CFDictionaryCreate(kCFAllocatorDefault, (const void**)keys, (const void**)values, 1,
-	                          NULL, NULL);
+	                          nullptr, nullptr);
 
 	stream = CGDisplayStreamCreateWithDispatchQueue(display_id, pixelWidth, pixelHeight, 'BGRA',
 	                                                opts, screen_update_q, streamHandler);
@@ -204,7 +204,7 @@ int mf_mlion_get_dirty_region(RFX_RECT* invalid)
 {
 	dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
 
-	if (lastUpdate != NULL)
+	if (lastUpdate != nullptr)
 	{
 		mf_mlion_peek_dirty_region(invalid);
 	}
@@ -246,7 +246,7 @@ int mf_mlion_clear_dirty_region()
 	dispatch_semaphore_wait(region_sem, DISPATCH_TIME_FOREVER);
 
 	CFRelease(lastUpdate);
-	lastUpdate = NULL;
+	lastUpdate = nullptr;
 
 	dispatch_semaphore_signal(region_sem);
 

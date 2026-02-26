@@ -39,7 +39,7 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
 	pServerContext* ps = (pServerContext*)context;
-	rdpContext* pc = NULL;
+	rdpContext* pc = nullptr;
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->pdata);
 	pc = (rdpContext*)ps->pdata->pc;
@@ -53,7 +53,7 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
 	pServerContext* ps = (pServerContext*)context;
-	rdpContext* pc = NULL;
+	rdpContext* pc = nullptr;
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->pdata);
 	pc = (rdpContext*)ps->pdata->pc;
@@ -73,8 +73,8 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_client_begin_paint(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -95,8 +95,8 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_client_end_paint(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -121,8 +121,8 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_client_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmap)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -138,8 +138,8 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_client_desktop_resize(rdpContext* context)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -162,8 +162,8 @@ static BOOL pf_client_remote_monitors(rdpContext* context, UINT32 count,
                                       const MONITOR_DEF* monitors)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -178,8 +178,8 @@ static BOOL pf_client_send_pointer_system(rdpContext* context,
                                           const POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -197,8 +197,8 @@ static BOOL pf_client_send_pointer_position(rdpContext* context,
                                             const POINTER_POSITION_UPDATE* pointerPosition)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -216,8 +216,8 @@ static BOOL pf_client_send_pointer_color(rdpContext* context,
                                          const POINTER_COLOR_UPDATE* pointer_color)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -235,8 +235,8 @@ static BOOL pf_client_send_pointer_large(rdpContext* context,
                                          const POINTER_LARGE_UPDATE* pointer_large)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -253,8 +253,8 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_client_send_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -272,8 +272,8 @@ static BOOL pf_client_send_pointer_cached(rdpContext* context,
                                           const POINTER_CACHED_UPDATE* pointer_cached)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -289,10 +289,10 @@ static BOOL pf_client_send_pointer_cached(rdpContext* context,
 WINPR_ATTR_NODISCARD
 static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* data)
 {
-	logon_info* logonInfo = NULL;
+	logon_info* logonInfo = nullptr;
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -325,8 +325,8 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_client_server_status_info(rdpContext* context, UINT32 status)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -343,8 +343,8 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_client_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -362,8 +362,8 @@ static BOOL pf_client_set_keyboard_ime_status(rdpContext* context, UINT16 imeId,
                                               UINT32 imeConvMode)
 {
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -382,8 +382,8 @@ static BOOL pf_client_window_create(rdpContext* context, const WINDOW_ORDER_INFO
 {
 	BOOL rc = 0;
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -406,8 +406,8 @@ static BOOL pf_client_window_update(rdpContext* context, const WINDOW_ORDER_INFO
 {
 	BOOL rc = 0;
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -430,8 +430,8 @@ static BOOL pf_client_window_icon(rdpContext* context, const WINDOW_ORDER_INFO* 
 {
 	BOOL rc = 0;
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -454,8 +454,8 @@ static BOOL pf_client_window_cached_icon(rdpContext* context, const WINDOW_ORDER
 {
 	BOOL rc = 0;
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -477,8 +477,8 @@ static BOOL pf_client_window_delete(rdpContext* context, const WINDOW_ORDER_INFO
 {
 	BOOL rc = 0;
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -501,8 +501,8 @@ static BOOL pf_client_notify_icon_create(rdpContext* context, const WINDOW_ORDER
 {
 	BOOL rc = 0;
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -525,8 +525,8 @@ static BOOL pf_client_notify_icon_update(rdpContext* context, const WINDOW_ORDER
 {
 	BOOL rc = 0;
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -549,8 +549,8 @@ static BOOL pf_client_notify_icon_delete(rdpContext* context, const WINDOW_ORDER
 	BOOL rc = 0;
 
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -573,8 +573,8 @@ static BOOL pf_client_monitored_desktop(rdpContext* context, const WINDOW_ORDER_
 {
 	BOOL rc = 0;
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);
@@ -596,8 +596,8 @@ static BOOL pf_client_non_monitored_desktop(rdpContext* context, const WINDOW_OR
 {
 	BOOL rc = 0;
 	pClientContext* pc = (pClientContext*)context;
-	proxyData* pdata = NULL;
-	rdpContext* ps = NULL;
+	proxyData* pdata = nullptr;
+	rdpContext* ps = nullptr;
 	WINPR_ASSERT(pc);
 	pdata = pc->pdata;
 	WINPR_ASSERT(pdata);

@@ -108,7 +108,7 @@ void wf_update_encode(wfInfo* wfi)
 {
 	RFX_RECT rect;
 	long height, width;
-	BYTE* pDataBits = NULL;
+	BYTE* pDataBits = nullptr;
 	int stride;
 	SURFACE_BITS_COMMAND* cmd;
 	wf_info_find_invalid_region(wfi);
@@ -202,7 +202,7 @@ void wf_update_encoder_reset(wfInfo* wfi)
 			rfx_context_set_mode(wfi->rfx_context, RLGR3);
 			rfx_context_reset(wfi->rfx_context, wfi->servscreen_width, wfi->servscreen_height);
 			rfx_context_set_pixel_format(wfi->rfx_context, PIXEL_FORMAT_BGRA32);
-			wfi->s = Stream_New(NULL, 0xFFFF);
+			wfi->s = Stream_New(nullptr, 0xFFFF);
 		}
 
 		wf_info_invalidate_full_screen(wfi);

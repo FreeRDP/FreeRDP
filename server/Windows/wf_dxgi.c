@@ -50,10 +50,10 @@ UINT NumFeatureLevels = ARRAYSIZE(FeatureLevels);
 
 D3D_FEATURE_LEVEL FeatureLevel;
 
-ID3D11Device* gDevice = NULL;
-ID3D11DeviceContext* gContext = NULL;
-IDXGIOutputDuplication* gOutputDuplication = NULL;
-ID3D11Texture2D* gAcquiredDesktopImage = NULL;
+ID3D11Device* gDevice = nullptr;
+ID3D11DeviceContext* gContext = nullptr;
+IDXGIOutputDuplication* gOutputDuplication = nullptr;
+ID3D11Texture2D* gAcquiredDesktopImage = nullptr;
 
 IDXGISurface* surf;
 ID3D11Texture2D* sStage;
@@ -62,7 +62,7 @@ DXGI_OUTDUPL_FRAME_INFO FrameInfo;
 
 int wf_dxgi_init(wfInfo* wfi)
 {
-	gAcquiredDesktopImage = NULL;
+	gAcquiredDesktopImage = nullptr;
 
 	if (wf_dxgi_createDevice(wfi) != 0)
 	{
@@ -84,7 +84,7 @@ int wf_dxgi_createDevice(wfInfo* wfi)
 
 	for (DriverTypeIndex = 0; DriverTypeIndex < NumDriverTypes; ++DriverTypeIndex)
 	{
-		status = D3D11CreateDevice(NULL, DriverTypes[DriverTypeIndex], NULL, 0, FeatureLevels,
+		status = D3D11CreateDevice(nullptr, DriverTypes[DriverTypeIndex], nullptr, 0, FeatureLevels,
 		                           NumFeatureLevels, D3D11_SDK_VERSION, &gDevice, &FeatureLevel,
 		                           &gContext);
 		if (SUCCEEDED(status))
@@ -109,10 +109,10 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 	UINT dTop, i = 0;
 	DXGI_OUTPUT_DESC desc = WINPR_C_ARRAY_INIT;
 	IDXGIOutput* pOutput;
-	IDXGIDevice* DxgiDevice = NULL;
-	IDXGIAdapter* DxgiAdapter = NULL;
-	IDXGIOutput* DxgiOutput = NULL;
-	IDXGIOutput1* DxgiOutput1 = NULL;
+	IDXGIDevice* DxgiDevice = nullptr;
+	IDXGIAdapter* DxgiAdapter = nullptr;
+	IDXGIOutput* DxgiOutput = nullptr;
+	IDXGIOutput1* DxgiOutput1 = nullptr;
 
 	status = gDevice->lpVtbl->QueryInterface(gDevice, &IID_IDXGIDevice, (void**)&DxgiDevice);
 
@@ -124,7 +124,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 
 	status = DxgiDevice->lpVtbl->GetParent(DxgiDevice, &IID_IDXGIAdapter, (void**)&DxgiAdapter);
 	DxgiDevice->lpVtbl->Release(DxgiDevice);
-	DxgiDevice = NULL;
+	DxgiDevice = nullptr;
 
 	if (FAILED(status))
 	{
@@ -132,7 +132,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 		return 1;
 	}
 
-	pOutput = NULL;
+	pOutput = nullptr;
 
 	while (DxgiAdapter->lpVtbl->EnumOutputs(DxgiAdapter, i, &pOutput) != DXGI_ERROR_NOT_FOUND)
 	{
@@ -159,7 +159,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 
 	status = DxgiAdapter->lpVtbl->EnumOutputs(DxgiAdapter, dTop, &DxgiOutput);
 	DxgiAdapter->lpVtbl->Release(DxgiAdapter);
-	DxgiAdapter = NULL;
+	DxgiAdapter = nullptr;
 
 	if (FAILED(status))
 	{
@@ -170,7 +170,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 	status =
 	    DxgiOutput->lpVtbl->QueryInterface(DxgiOutput, &IID_IDXGIOutput1, (void**)&DxgiOutput1);
 	DxgiOutput->lpVtbl->Release(DxgiOutput);
-	DxgiOutput = NULL;
+	DxgiOutput = nullptr;
 
 	if (FAILED(status))
 	{
@@ -181,7 +181,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 	status =
 	    DxgiOutput1->lpVtbl->DuplicateOutput(DxgiOutput1, (IUnknown*)gDevice, &gOutputDuplication);
 	DxgiOutput1->lpVtbl->Release(DxgiOutput1);
-	DxgiOutput1 = NULL;
+	DxgiOutput1 = nullptr;
 
 	if (FAILED(status))
 	{
@@ -211,25 +211,25 @@ int wf_dxgi_cleanup(wfInfo* wfi)
 	if (gAcquiredDesktopImage)
 	{
 		gAcquiredDesktopImage->lpVtbl->Release(gAcquiredDesktopImage);
-		gAcquiredDesktopImage = NULL;
+		gAcquiredDesktopImage = nullptr;
 	}
 
 	if (gOutputDuplication)
 	{
 		gOutputDuplication->lpVtbl->Release(gOutputDuplication);
-		gOutputDuplication = NULL;
+		gOutputDuplication = nullptr;
 	}
 
 	if (gContext)
 	{
 		gContext->lpVtbl->Release(gContext);
-		gContext = NULL;
+		gContext = nullptr;
 	}
 
 	if (gDevice)
 	{
 		gDevice->lpVtbl->Release(gDevice);
-		gDevice = NULL;
+		gDevice = nullptr;
 	}
 
 	return 0;
@@ -240,8 +240,8 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 	HRESULT status = 0;
 	UINT i = 0;
 	UINT DataBufferSize = 0;
-	BYTE* DataBuffer = NULL;
-	IDXGIResource* DesktopResource = NULL;
+	BYTE* DataBuffer = nullptr;
+	IDXGIResource* DesktopResource = nullptr;
 
 	if (wfi->framesWaiting > 0)
 	{
@@ -251,7 +251,7 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 	if (gAcquiredDesktopImage)
 	{
 		gAcquiredDesktopImage->lpVtbl->Release(gAcquiredDesktopImage);
-		gAcquiredDesktopImage = NULL;
+		gAcquiredDesktopImage = nullptr;
 	}
 
 	status = gOutputDuplication->lpVtbl->AcquireNextFrame(gOutputDuplication, timeout, &FrameInfo,
@@ -272,13 +272,13 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 			if (gAcquiredDesktopImage)
 			{
 				gAcquiredDesktopImage->lpVtbl->Release(gAcquiredDesktopImage);
-				gAcquiredDesktopImage = NULL;
+				gAcquiredDesktopImage = nullptr;
 			}
 
 			if (gOutputDuplication)
 			{
 				gOutputDuplication->lpVtbl->Release(gOutputDuplication);
-				gOutputDuplication = NULL;
+				gOutputDuplication = nullptr;
 			}
 
 			wf_dxgi_getDuplication(wfi);
@@ -302,7 +302,7 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 	status = DesktopResource->lpVtbl->QueryInterface(DesktopResource, &IID_ID3D11Texture2D,
 	                                                 (void**)&gAcquiredDesktopImage);
 	DesktopResource->lpVtbl->Release(DesktopResource);
-	DesktopResource = NULL;
+	DesktopResource = nullptr;
 
 	if (FAILED(status))
 	{
@@ -350,7 +350,7 @@ int wf_dxgi_getPixelData(wfInfo* wfi, BYTE** data, int* pitch, RECT* invalid)
 	Box.front = 0;
 	Box.back = 1;
 
-	status = gDevice->lpVtbl->CreateTexture2D(gDevice, &tDesc, NULL, &sStage);
+	status = gDevice->lpVtbl->CreateTexture2D(gDevice, &tDesc, nullptr, &sStage);
 
 	if (FAILED(status))
 	{
@@ -392,9 +392,9 @@ int wf_dxgi_releasePixelData(wfInfo* wfi)
 
 	surf->lpVtbl->Unmap(surf);
 	surf->lpVtbl->Release(surf);
-	surf = NULL;
+	surf = nullptr;
 	sStage->lpVtbl->Release(sStage);
-	sStage = NULL;
+	sStage = nullptr;
 
 	status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
 
@@ -417,7 +417,7 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 	RECT* pRect;
 	BYTE* DirtyRects;
 	UINT DataBufferSize = 0;
-	BYTE* DataBuffer = NULL;
+	BYTE* DataBuffer = nullptr;
 
 	if (FrameInfo.AccumulatedFrames == 0)
 	{
@@ -432,7 +432,7 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 			if (DataBuffer)
 			{
 				free(DataBuffer);
-				DataBuffer = NULL;
+				DataBuffer = nullptr;
 			}
 
 			DataBuffer = (BYTE*)malloc(FrameInfo.TotalMetadataBufferSize);

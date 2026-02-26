@@ -249,7 +249,7 @@ static int shw_freerdp_client_start(rdpContext* context)
 	freerdp* instance = context->instance;
 	shw = (shwContext*)context;
 
-	if (!(shw->common.thread = CreateThread(NULL, 0, shw_client_thread, instance, 0, NULL)))
+	if (!(shw->common.thread = CreateThread(nullptr, 0, shw_client_thread, instance, 0, nullptr)))
 	{
 		WLog_ERR(TAG, "Failed to create thread");
 		return -1;
@@ -276,7 +276,7 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	shw = (shwContext*)instance->context;
 	WINPR_ASSERT(shw);
 
-	if (!(shw->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(shw->StopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		return FALSE;
 
 	instance->LoadChannels = freerdp_client_load_channels;
@@ -374,7 +374,7 @@ int shw_RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->Version = 1;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
-	pEntryPoints->settings = NULL;
+	pEntryPoints->settings = nullptr;
 	pEntryPoints->ContextSize = sizeof(shwContext);
 	pEntryPoints->GlobalInit = shw_freerdp_client_global_init;
 	pEntryPoints->GlobalUninit = shw_freerdp_client_global_uninit;
@@ -394,10 +394,10 @@ int win_shadow_rdp_init(winShadowSubsystem* subsystem)
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 	shw_RdpClientEntry(&clientEntryPoints);
 
-	if (!(subsystem->RdpUpdateEnterEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(subsystem->RdpUpdateEnterEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto fail_enter_event;
 
-	if (!(subsystem->RdpUpdateLeaveEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(subsystem->RdpUpdateLeaveEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto fail_leave_event;
 
 	if (!(context = freerdp_client_context_new(&clientEntryPoints)))

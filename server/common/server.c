@@ -46,14 +46,14 @@ size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats)
 	BYTE gsm610_data[] = { 0x40, 0x01 };
 	const AUDIO_FORMAT default_supported_audio_formats[] = {
 		/* Formats sent by windows 10 server */
-		{ WAVE_FORMAT_AAC_MS, 2, 44100, 24000, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_AAC_MS, 2, 44100, 20000, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_AAC_MS, 2, 44100, 16000, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_AAC_MS, 2, 44100, 12000, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
+		{ WAVE_FORMAT_AAC_MS, 2, 44100, 24000, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_AAC_MS, 2, 44100, 20000, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_AAC_MS, 2, 44100, 16000, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_AAC_MS, 2, 44100, 12000, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, nullptr },
 		{ WAVE_FORMAT_ADPCM, 2, 44100, 44359, 2048, 4, 32, adpcm_data_7 },
 		{ WAVE_FORMAT_DVI_ADPCM, 2, 44100, 44251, 2048, 4, 2, adpcm_dvi_data_7 },
-		{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL },
+		{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, nullptr },
 		{ WAVE_FORMAT_ADPCM, 2, 22050, 22311, 1024, 4, 32, adpcm_data_3 },
 		{ WAVE_FORMAT_DVI_ADPCM, 2, 22050, 22201, 1024, 4, 2, adpcm_dvi_data_3 },
 		{ WAVE_FORMAT_ADPCM, 1, 44100, 22179, 1024, 4, 32, adpcm_data_7 },
@@ -74,22 +74,22 @@ size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats)
 		{ WAVE_FORMAT_GSM610, 1, 8000, 1625, 65, 0, 2, gsm610_data },
 		/* Formats added for others */
 
-		{ WAVE_FORMAT_MSG723, 2, 44100, 0, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_MSG723, 2, 22050, 0, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_MSG723, 1, 44100, 0, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_MSG723, 1, 22050, 0, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_PCM, 2, 22050, 88200, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_PCM, 1, 44100, 88200, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_PCM, 1, 22050, 44100, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_MULAW, 2, 44100, 88200, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_MULAW, 2, 22050, 44100, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_MULAW, 1, 44100, 44100, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_MULAW, 1, 22050, 22050, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_ALAW, 2, 44100, 88200, 2, 8, 0, NULL },
-		{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL },
-		{ WAVE_FORMAT_ALAW, 1, 44100, 44100, 2, 8, 0, NULL },
-		{ WAVE_FORMAT_ALAW, 1, 22050, 22050, 2, 8, 0, NULL }
+		{ WAVE_FORMAT_MSG723, 2, 44100, 0, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_MSG723, 2, 22050, 0, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_MSG723, 1, 44100, 0, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_MSG723, 1, 22050, 0, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_PCM, 2, 22050, 88200, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_PCM, 1, 44100, 88200, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_PCM, 1, 22050, 44100, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_MULAW, 2, 44100, 88200, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_MULAW, 2, 22050, 44100, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_MULAW, 1, 44100, 44100, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_MULAW, 1, 22050, 22050, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_ALAW, 2, 44100, 88200, 2, 8, 0, nullptr },
+		{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, nullptr },
+		{ WAVE_FORMAT_ALAW, 1, 44100, 44100, 2, 8, 0, nullptr },
+		{ WAVE_FORMAT_ALAW, 1, 22050, 22050, 2, 8, 0, nullptr }
 	};
 	const size_t nrDefaultFormatsMax = ARRAYSIZE(default_supported_audio_formats);
 	size_t nr_formats = 0;
@@ -98,7 +98,7 @@ size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats)
 	if (!dst_formats)
 		goto fail;
 
-	*dst_formats = NULL;
+	*dst_formats = nullptr;
 
 	if (!formats)
 		goto fail;
@@ -127,14 +127,14 @@ size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats)
 {
 	/* Default supported audio formats */
 	static const AUDIO_FORMAT default_supported_audio_formats[] = {
-		{ WAVE_FORMAT_AAC_MS, 2, 44100, 176400, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_MPEGLAYER3, 2, 44100, 176400, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_MSG723, 2, 44100, 176400, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_GSM610, 2, 44100, 176400, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_ADPCM, 2, 44100, 176400, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
-		{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL },
-		{ WAVE_FORMAT_MULAW, 2, 22050, 44100, 2, 8, 0, NULL },
+		{ WAVE_FORMAT_AAC_MS, 2, 44100, 176400, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_MPEGLAYER3, 2, 44100, 176400, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_MSG723, 2, 44100, 176400, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_GSM610, 2, 44100, 176400, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_ADPCM, 2, 44100, 176400, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, nullptr },
+		{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, nullptr },
+		{ WAVE_FORMAT_MULAW, 2, 22050, 44100, 2, 8, 0, nullptr },
 	};
 	AUDIO_FORMAT* supported_audio_formats =
 	    audio_formats_new(ARRAYSIZE(default_supported_audio_formats));
@@ -160,7 +160,7 @@ fail:
 	audio_formats_free(supported_audio_formats, ARRAYSIZE(default_supported_audio_formats));
 
 	if (dst_formats)
-		*dst_formats = NULL;
+		*dst_formats = nullptr;
 
 	return 0;
 }

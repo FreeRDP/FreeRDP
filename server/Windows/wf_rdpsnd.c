@@ -46,7 +46,7 @@ static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 {
 	wfInfo* wfi;
 	wfi = wf_info_get_instance();
-	wfi->agreed_format = NULL;
+	wfi->agreed_format = nullptr;
 	WLog_DBG(TAG, "Client supports the following %d formats:", context->num_client_formats);
 
 	size_t i = 0;
@@ -66,11 +66,11 @@ static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 			}
 		}
 
-		if (wfi->agreed_format != NULL)
+		if (wfi->agreed_format != nullptr)
 			break;
 	}
 
-	if (wfi->agreed_format == NULL)
+	if (wfi->agreed_format == nullptr)
 	{
 		WLog_ERR(TAG, "Could not agree on a audio format with the server");
 		return;
@@ -133,7 +133,7 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 	if (!wfi)
 		return FALSE;
 
-	if (!(wfi->snd_mutex = CreateMutex(NULL, FALSE, NULL)))
+	if (!(wfi->snd_mutex = CreateMutex(nullptr, FALSE, nullptr)))
 		return FALSE;
 
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);

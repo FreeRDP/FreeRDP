@@ -161,7 +161,7 @@ static rdpShadowSubsystem* sample_shadow_subsystem_new(void)
 	    (sampleShadowSubsystem*)calloc(1, sizeof(sampleShadowSubsystem));
 
 	if (!subsystem)
-		return NULL;
+		return nullptr;
 
 	subsystem->base.SynchronizeEvent = sample_shadow_input_synchronize_event;
 	subsystem->base.KeyboardEvent = sample_shadow_input_keyboard_event;

@@ -22,7 +22,7 @@
 
 #include "shadow_subsystem.h"
 
-static pfnShadowSubsystemEntry pSubsystemEntry = NULL;
+static pfnShadowSubsystemEntry pSubsystemEntry = nullptr;
 
 void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry)
 {
@@ -49,15 +49,15 @@ rdpShadowSubsystem* shadow_subsystem_new(void)
 	RDP_SHADOW_ENTRY_POINTS ep = WINPR_C_ARRAY_INIT;
 
 	if (shadow_subsystem_load_entry_points(&ep) < 0)
-		return NULL;
+		return nullptr;
 
 	if (!ep.New)
-		return NULL;
+		return nullptr;
 
 	rdpShadowSubsystem* subsystem = ep.New();
 
 	if (!subsystem)
-		return NULL;
+		return nullptr;
 
 	subsystem->ep = ep;
 
@@ -94,13 +94,13 @@ fail:
 	if (subsystem->MsgPipe)
 	{
 		MessagePipe_Free(subsystem->MsgPipe);
-		subsystem->MsgPipe = NULL;
+		subsystem->MsgPipe = nullptr;
 	}
 
 	if (subsystem->updateEvent)
 	{
 		shadow_multiclient_free(subsystem->updateEvent);
-		subsystem->updateEvent = NULL;
+		subsystem->updateEvent = nullptr;
 	}
 
 	return status;
@@ -112,7 +112,7 @@ static void shadow_subsystem_free_queued_message(void* obj)
 	if (message->Free)
 	{
 		message->Free(message);
-		message->Free = NULL;
+		message->Free = nullptr;
 	}
 }
 
@@ -126,8 +126,8 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 
 	if (subsystem->MsgPipe)
 	{
-		wObject* obj1 = NULL;
-		wObject* obj2 = NULL;
+		wObject* obj1 = nullptr;
+		wObject* obj2 = nullptr;
 		/* Release resource in messages before free */
 		obj1 = MessageQueue_Object(subsystem->MsgPipe->In);
 
@@ -138,13 +138,13 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 		obj2->fnObjectFree = shadow_subsystem_free_queued_message;
 		MessageQueue_Clear(subsystem->MsgPipe->Out);
 		MessagePipe_Free(subsystem->MsgPipe);
-		subsystem->MsgPipe = NULL;
+		subsystem->MsgPipe = nullptr;
 	}
 
 	if (subsystem->updateEvent)
 	{
 		shadow_multiclient_free(subsystem->updateEvent);
-		subsystem->updateEvent = NULL;
+		subsystem->updateEvent = nullptr;
 	}
 }
 
@@ -208,7 +208,7 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
 	UINT32 xorStep = 0;
 	UINT32 andStep = 0;
 	UINT32 andBit = 0;
-	BYTE* andBits = NULL;
+	BYTE* andBits = nullptr;
 	UINT32 andPixel = 0;
 	const size_t bpp = FreeRDPGetBytesPerPixel(format);
 
@@ -230,7 +230,7 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
 	if (!pointerColor->andMaskData)
 	{
 		free(pointerColor->xorMaskData);
-		pointerColor->xorMaskData = NULL;
+		pointerColor->xorMaskData = nullptr;
 		return -1;
 	}
 
@@ -250,7 +250,7 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
 			BYTE A = 0;
 
 			const UINT32 color = FreeRDPReadColor(&pSrc8[x * bpp], format);
-			FreeRDPSplitColor(color, format, &R, &G, &B, &A, NULL);
+			FreeRDPSplitColor(color, format, &R, &G, &B, &A, nullptr);
 
 			andPixel = 0;
 

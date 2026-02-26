@@ -54,6 +54,6 @@ void shadow_client_rdpgfx_uninit(rdpShadowClient* client)
 #if defined(CHANNEL_RDPGFX_SERVER)
 		rdpgfx_server_context_free(client->rdpgfx);
 #endif
-		client->rdpgfx = NULL;
+		client->rdpgfx = nullptr;
 	}
 }
