@@ -28,6 +28,7 @@ void wf_invalidate_region(wfContext* wfc, UINT32 x, UINT32 y, UINT32 width, UINT
 void wf_update_offset(wfContext* wfc);
 void wf_resize_window(wfContext* wfc);
 void wf_toggle_fullscreen(wfContext* wfc);
+void wf_toggle_fullscreen_async(wfContext* wfc);
 BOOL wf_scale_rect(wfContext* wfc, RECT* source);
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update);

@@ -141,6 +141,7 @@ extern "C"
 		DispClientContext* disp;
 		UINT64 lastSentDate;
 		BOOL wasMaximized;
+		LONG togglingFullscreen;
 	};
 
 	/**
