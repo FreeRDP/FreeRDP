@@ -219,7 +219,7 @@ static pstatus_t avx2_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD
                                             UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
                                             const gdiPalette* WINPR_RESTRICT palette, UINT32 flags)
 {
-	const BOOL vSrcVFlip = (flags & FREERDP_FLIP_VERTICAL) ? TRUE : FALSE;
+	const BOOL vSrcVFlip = (flags & FREERDP_FLIP_VERTICAL) != 0;
 	int64_t srcVOffset = 0;
 	int64_t srcVMultiplier = 1;
 	int64_t dstVOffset = 0;

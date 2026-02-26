@@ -687,7 +687,7 @@ const SecBuffer* credssp_auth_get_output_buffer(const rdpCredsspAuth* auth)
 BOOL credssp_auth_have_output_token(rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth);
-	return auth->output_buffer.cbBuffer ? TRUE : FALSE;
+	return (auth->output_buffer.cbBuffer != 0);
 }
 
 BOOL credssp_auth_is_complete(const rdpCredsspAuth* auth)

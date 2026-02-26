@@ -203,9 +203,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li, UINT16 tpktlength)
 	 */
 	bytes_read = (Stream_GetPosition(s) - position) - 1;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(*li - bytes_read)))
-		return FALSE;
-	return TRUE;
+	return Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(*li - bytes_read));
 }
 
 /**

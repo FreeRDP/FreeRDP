@@ -124,7 +124,7 @@ static UINT rail_read_server_localmovesize_order(wStream* s,
 
 	Stream_Read_UINT32(s, localMoveSize->windowId); /* windowId (4 bytes) */
 	Stream_Read_UINT16(s, isMoveSizeStart);         /* isMoveSizeStart (2 bytes) */
-	localMoveSize->isMoveSizeStart = (isMoveSizeStart != 0) ? TRUE : FALSE;
+	localMoveSize->isMoveSizeStart = (isMoveSizeStart != 0);
 	Stream_Read_UINT16(s, localMoveSize->moveSizeType); /* moveSizeType (2 bytes) */
 	Stream_Read_INT16(s, localMoveSize->posX);          /* posX (2 bytes) */
 	Stream_Read_INT16(s, localMoveSize->posY);          /* posY (2 bytes) */
@@ -792,7 +792,7 @@ static UINT rail_read_cloak_order(wStream* s, RAIL_CLOAK* cloak)
 
 	Stream_Read_UINT32(s, cloak->windowId); /* WindowId (4 bytes) */
 	Stream_Read_UINT8(s, cloaked);          /* Cloaked (1 byte) */
-	cloak->cloak = (cloaked != 0) ? TRUE : FALSE;
+	cloak->cloak = (cloaked != 0);
 	return CHANNEL_RC_OK;
 }
 

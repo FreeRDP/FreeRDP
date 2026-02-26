@@ -718,9 +718,7 @@ HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 		return E_INVALIDARG;
 
 	hasPrefix = ((pszPath[0] == '\\') && (pszPath[1] == '\\') && (pszPath[2] == '?') &&
-	             (pszPath[3] == '\\'))
-	                ? TRUE
-	                : FALSE;
+	             (pszPath[3] == '\\'));
 
 	if (hasPrefix)
 	{
@@ -753,9 +751,7 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 		return E_INVALIDARG;
 
 	hasPrefix = ((pszPath[0] == '\\') && (pszPath[1] == '\\') && (pszPath[2] == '?') &&
-	             (pszPath[3] == '\\'))
-	                ? TRUE
-	                : FALSE;
+	             (pszPath[3] == '\\'));
 
 	if (hasPrefix)
 	{

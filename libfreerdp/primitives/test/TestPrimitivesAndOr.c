@@ -137,11 +137,9 @@ static BOOL test_or_32u_speed(void)
 
 	winpr_RAND(src, sizeof(src));
 
-	if (!speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->orC_32u,
-	                (speed_test_fkt)optimized->orC_32u, src + 1, VALUE, dst + 1, FUNC_TEST_SIZE))
-		return FALSE;
-
-	return TRUE;
+	return (speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->orC_32u,
+	                   (speed_test_fkt)optimized->orC_32u, src + 1, VALUE, dst + 1,
+	                   FUNC_TEST_SIZE));
 }
 
 int TestPrimitivesAndOr(int argc, char* argv[])

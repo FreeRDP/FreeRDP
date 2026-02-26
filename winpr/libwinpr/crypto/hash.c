@@ -239,8 +239,7 @@ BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const void* key, siz
 	const OSSL_PARAM param[] = { OSSL_PARAM_construct_utf8_string(param_name, hash, 0),
 		                         OSSL_PARAM_construct_end() };
 
-	if (EVP_MAC_init(ctx->xhmac, key, keylen, param) == 1)
-		return TRUE;
+	return EVP_MAC_init(ctx->xhmac, key, keylen, param) == 1;
 #else
 	HMAC_CTX* hmac = ctx->hmac;
 	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
@@ -301,8 +300,7 @@ BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const void* input, size_t ilen)
 
 #if defined(WITH_OPENSSL)
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-	if (EVP_MAC_update(ctx->xhmac, input, ilen) == 1)
-		return TRUE;
+	return EVP_MAC_update(ctx->xhmac, input, ilen) == 1;
 #else
 	HMAC_CTX* hmac = ctx->hmac;
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L) || \
@@ -345,8 +343,7 @@ BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, void* output, size_t olen)
 #if defined(WITH_OPENSSL)
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 	const int rc = EVP_MAC_final(ctx->xhmac, output, NULL, olen);
-	if (rc == 1)
-		return TRUE;
+	return (rc == 1);
 #else
 	HMAC_CTX* hmac = ctx->hmac;
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L) || \
@@ -616,8 +613,7 @@ BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const void* input, size_t ilen)
 #if defined(WITH_OPENSSL)
 	EVP_MD_CTX* mdctx = ctx->mdctx;
 
-	if (EVP_DigestUpdate(mdctx, input, ilen) != 1)
-		return FALSE;
+	return EVP_DigestUpdate(mdctx, input, ilen) == 1;
 
 #elif defined(WITH_MBEDTLS)
 	mbedtls_md_context_t* mdctx = ctx->mdctx;
@@ -657,8 +653,7 @@ BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, void* output, WINPR_ATTR_UNUSED s
 #if defined(WITH_OPENSSL)
 	EVP_MD_CTX* mdctx = ctx->mdctx;
 
-	if (EVP_DigestFinal_ex(mdctx, output, NULL) == 1)
-		return TRUE;
+	return EVP_DigestFinal_ex(mdctx, output, NULL) == 1;
 
 #elif defined(WITH_MBEDTLS)
 	mbedtls_md_context_t* mdctx = ctx->mdctx;
@@ -680,9 +675,7 @@ BOOL winpr_DigestSign_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md, void* key)
 		return FALSE;
 
 	const int rdsi = EVP_DigestSignInit(ctx->mdctx, NULL, evp, NULL, key);
-	if (rdsi <= 0)
-		return FALSE;
-	return TRUE;
+	return (rdsi > 0);
 #else
 	return FALSE;
 #endif
@@ -695,9 +688,7 @@ BOOL winpr_DigestSign_Update(WINPR_DIGEST_CTX* ctx, const void* input, size_t il
 #if defined(WITH_OPENSSL)
 	EVP_MD_CTX* mdctx = ctx->mdctx;
 
-	if (EVP_DigestSignUpdate(mdctx, input, ilen) != 1)
-		return FALSE;
-	return TRUE;
+	return (EVP_DigestSignUpdate(mdctx, input, ilen) == 1);
 #else
 	return FALSE;
 #endif

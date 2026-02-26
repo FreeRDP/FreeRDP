@@ -393,9 +393,7 @@ static BOOL pf_server_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* i
 
 	info.identity = identity;
 	info.automatic = automatic;
-	if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_SERVER_PEER_LOGON, pdata, &info))
-		return FALSE;
-	return TRUE;
+	return (pf_modules_run_filter(pdata->module, FILTER_TYPE_SERVER_PEER_LOGON, pdata, &info));
 }
 
 WINPR_ATTR_NODISCARD
@@ -571,9 +569,7 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	pdata->server_receive_channel_data_original = peer->ReceiveChannelData;
 	peer->ReceiveChannelData = pf_server_receive_channel_data_hook;
 
-	if (!stream_dump_register_handlers(peer->context, CONNECTION_STATE_NEGO, TRUE))
-		return FALSE;
-	return TRUE;
+	return (stream_dump_register_handlers(peer->context, CONNECTION_STATE_NEGO, TRUE));
 }
 
 /**

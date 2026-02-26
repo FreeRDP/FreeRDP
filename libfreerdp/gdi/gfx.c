@@ -1367,8 +1367,7 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 
 	WINPR_ASSERT(context->GetSurfaceData);
 	surfaceSrc = (gdiGfxSurface*)context->GetSurfaceData(context, surfaceToSurface->surfaceIdSrc);
-	sameSurface =
-	    (surfaceToSurface->surfaceIdSrc == surfaceToSurface->surfaceIdDest) ? TRUE : FALSE;
+	sameSurface = (surfaceToSurface->surfaceIdSrc == surfaceToSurface->surfaceIdDest);
 
 	if (!sameSurface)
 		surfaceDst =

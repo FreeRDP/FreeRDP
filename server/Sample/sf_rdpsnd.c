@@ -53,10 +53,5 @@ BOOL sf_peer_rdpsnd_init(testPeerContext* context)
 	context->rdpsnd->Activated = sf_peer_rdpsnd_activated;
 
 	WINPR_ASSERT(context->rdpsnd->Initialize);
-	if (context->rdpsnd->Initialize(context->rdpsnd, TRUE) != CHANNEL_RC_OK)
-	{
-		return FALSE;
-	}
-
-	return TRUE;
+	return (context->rdpsnd->Initialize(context->rdpsnd, TRUE) == CHANNEL_RC_OK);
 }

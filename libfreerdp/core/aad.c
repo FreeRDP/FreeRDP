@@ -676,11 +676,7 @@ static BOOL generate_json_base64_str(rdpAad* aad, const char* b64_hash)
 	aad->kid = crypto_base64url_encode((const BYTE*)buffer, (size_t)length);
 	free(buffer);
 
-	if (!aad->kid)
-	{
-		return FALSE;
-	}
-	return TRUE;
+	return aad->kid != NULL;
 }
 
 BOOL generate_pop_key(rdpAad* aad)
@@ -916,7 +912,7 @@ BOOL aad_fetch_wellknown(wLog* log, rdpContext* context)
 	if (useTenant)
 		tenantid = freerdp_settings_get_string(context->settings, FreeRDP_GatewayAvdAadtenantid);
 	rdp->wellknown = freerdp_utils_aad_get_wellknown(log, base, tenantid);
-	return rdp->wellknown ? TRUE : FALSE;
+	return rdp->wellknown != NULL;
 }
 
 const char* freerdp_utils_aad_get_wellknown_string(rdpContext* context, AAD_WELLKNOWN_VALUES which)

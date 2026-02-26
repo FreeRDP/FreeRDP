@@ -225,10 +225,7 @@ const HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void)
 
 BOOL IsNamedPipeFileNameA(LPCSTR lpName)
 {
-	if (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) != 0)
-		return FALSE;
-
-	return TRUE;
+	return (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) == 0);
 }
 
 char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)

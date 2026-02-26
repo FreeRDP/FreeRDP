@@ -471,9 +471,8 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	}
 	else if (context->HashCallback)
 	{
-		int ret = 0;
-		SecBuffer proofValue;
-		SecBuffer micValue;
+		SecBuffer proofValue = WINPR_C_ARRAY_INIT;
+		SecBuffer micValue = WINPR_C_ARRAY_INIT;
 
 		if (ntlm_computeProofValue(context, &proofValue) != SEC_E_OK)
 			return FALSE;
@@ -484,13 +483,13 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 			return FALSE;
 		}
 
-		ret = context->HashCallback(context->HashCallbackArg, &credentials->identity, &proofValue,
-		                            context->EncryptedRandomSessionKey,
-		                            context->AUTHENTICATE_MESSAGE.MessageIntegrityCheck, &micValue,
-		                            hash);
+		const SECURITY_STATUS ret = context->HashCallback(
+		    context->HashCallbackArg, &credentials->identity, &proofValue,
+		    context->EncryptedRandomSessionKey, context->AUTHENTICATE_MESSAGE.MessageIntegrityCheck,
+		    &micValue, hash);
 		sspi_SecBufferFree(&proofValue);
 		sspi_SecBufferFree(&micValue);
-		return ret ? TRUE : FALSE;
+		return ret == SEC_E_OK;
 	}
 	else if (context->UseSamFileDatabase)
 	{

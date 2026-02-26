@@ -1424,12 +1424,7 @@ static BOOL refresh_PendingEvents(WINPR_COMM* pComm)
 	WINPR_ASSERT(pComm);
 
 	/* NB: also ensures PendingEvents to be up to date */
-	if (!get_commstatus(pComm, &serialStatus))
-	{
-		return FALSE;
-	}
-
-	return TRUE;
+	return (get_commstatus(pComm, &serialStatus));
 }
 
 static void consume_event(WINPR_COMM* pComm, ULONG* pOutputMask, ULONG event)

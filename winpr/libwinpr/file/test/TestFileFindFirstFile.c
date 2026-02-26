@@ -190,9 +190,7 @@ static BOOL list_directory_star(const char* BasePath, wArrayList* files)
 		fcount++;
 	}
 
-	if (fcount != count)
-		return FALSE;
-	return TRUE;
+	return (fcount == count);
 }
 
 static BOOL find_first_file_fail(const char* FilePath)

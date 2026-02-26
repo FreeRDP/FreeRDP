@@ -26,12 +26,6 @@
 
 BOOL WLog_ImageMessage_Write(char* filename, void* data, size_t width, size_t height, size_t bpp)
 {
-	int status = 0;
-
-	status = winpr_bitmap_write(filename, data, width, height, bpp);
-
-	if (status < 0)
-		return FALSE;
-
-	return TRUE;
+	const int status = winpr_bitmap_write(filename, data, width, height, bpp);
+	return (status >= 0);
 }

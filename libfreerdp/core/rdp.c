@@ -2829,7 +2829,7 @@ static BOOL parse_on_off_option(const char* value)
 	errno = 0;
 	long val = strtol(value, NULL, 0);
 	if (errno == 0)
-		return val == 0 ? FALSE : TRUE;
+		return (val != 0);
 
 	return FALSE;
 }

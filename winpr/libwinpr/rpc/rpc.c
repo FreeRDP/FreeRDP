@@ -946,7 +946,7 @@ RPC_STATUS UuidCreateNil(UUID* NilUuid)
 
 int UuidEqual(const UUID* Uuid1, const UUID* Uuid2, RPC_STATUS* Status)
 {
-	return ((UuidCompare(Uuid1, Uuid2, Status) == 0) ? TRUE : FALSE);
+	return UuidCompare(Uuid1, Uuid2, Status) == 0;
 }
 
 unsigned short UuidHash(WINPR_ATTR_UNUSED const UUID* Uuid, WINPR_ATTR_UNUSED RPC_STATUS* Status)

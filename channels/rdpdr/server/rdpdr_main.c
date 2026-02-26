@@ -586,7 +586,7 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	}
 
 	context->priv->ExtendedPDU = ExtendedPdu;
-	context->priv->UserLoggedOnPdu = (ExtendedPdu & RDPDR_USER_LOGGEDON_PDU) ? TRUE : FALSE;
+	context->priv->UserLoggedOnPdu = (ExtendedPdu & RDPDR_USER_LOGGEDON_PDU) != 0;
 
 	if (ExtraFlags2 != 0)
 	{

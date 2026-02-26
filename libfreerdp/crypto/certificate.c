@@ -754,7 +754,10 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	Stream_Read(s, encsig, siglen);
 
 	if (siglen < 8)
+	{
+		WLog_WARN(TAG, "public signature too short: %" PRIu32, siglen);
 		return FALSE;
+	}
 
 	/* Last 8 bytes shall be all zero. */
 #if defined(CERT_VALIDATE_PADDING)

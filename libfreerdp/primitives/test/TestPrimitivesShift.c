@@ -58,10 +58,7 @@ static BOOL test_lShift_16s_func(void)
 
 	status = optimized->lShiftC_16s(src + 1, val, d1 + 2, FUNC_TEST_SIZE);
 
-	if (status != PRIMITIVES_SUCCESS)
-		return FALSE;
-
-	return TRUE;
+	return (status == PRIMITIVES_SUCCESS);
 }
 
 static BOOL test_lShift_16u_func(void)
@@ -104,10 +101,7 @@ static BOOL test_lShift_16u_func(void)
 
 	status = optimized->lShiftC_16u(src + 1, val, d1 + 2, FUNC_TEST_SIZE);
 
-	if (status != PRIMITIVES_SUCCESS)
-		return FALSE;
-
-	return TRUE;
+	return (status == PRIMITIVES_SUCCESS);
 }
 
 static BOOL test_rShift_16s_func(void)
@@ -150,10 +144,7 @@ static BOOL test_rShift_16s_func(void)
 
 	status = optimized->rShiftC_16s(src + 1, val, d1 + 2, FUNC_TEST_SIZE);
 
-	if (status != PRIMITIVES_SUCCESS)
-		return FALSE;
-
-	return TRUE;
+	return (status == PRIMITIVES_SUCCESS);
 }
 
 static BOOL test_rShift_16u_func(void)
@@ -195,10 +186,7 @@ static BOOL test_rShift_16u_func(void)
 
 	status = optimized->rShiftC_16u(src + 1, val, d1 + 2, FUNC_TEST_SIZE);
 
-	if (status != PRIMITIVES_SUCCESS)
-		return FALSE;
-
-	return TRUE;
+	return (status == PRIMITIVES_SUCCESS);
 }
 
 static BOOL test_ShiftWrapper_16s_func(void)
@@ -261,10 +249,7 @@ static BOOL test_ShiftWrapper_16s_func(void)
 
 	status = optimized->shiftC_16s(src + 1, -val, d1 + 2, FUNC_TEST_SIZE);
 
-	if (status != PRIMITIVES_SUCCESS)
-		return FALSE;
-
-	return TRUE;
+	return (status == PRIMITIVES_SUCCESS);
 }
 
 static BOOL test_ShiftWrapper_16u_func(void)
@@ -326,10 +311,7 @@ static BOOL test_ShiftWrapper_16u_func(void)
 
 	status = optimized->shiftC_16u(src + 1, -val, d1 + 2, FUNC_TEST_SIZE);
 
-	if (status != PRIMITIVES_SUCCESS)
-		return FALSE;
-
-	return TRUE;
+	return (status == PRIMITIVES_SUCCESS);
 }
 
 /* ------------------------------------------------------------------------- */

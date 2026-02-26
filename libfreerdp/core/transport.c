@@ -676,10 +676,8 @@ BOOL transport_connect_childsession(rdpTransport* transport)
 
 BOOL transport_accept_rdp(rdpTransport* transport)
 {
-	if (!transport)
-		return FALSE;
+	return transport != NULL;
 	/* RDP encryption */
-	return TRUE;
 }
 
 BOOL transport_accept_tls(rdpTransport* transport)
@@ -1561,7 +1559,7 @@ static BOOL transport_default_set_blocking_mode(rdpTransport* transport, BOOL bl
 
 	if (transport->frontBio)
 	{
-		if (!BIO_set_nonblock(transport->frontBio, blocking ? FALSE : TRUE))
+		if (!BIO_set_nonblock(transport->frontBio, !(blocking)))
 			return FALSE;
 	}
 

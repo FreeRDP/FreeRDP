@@ -339,7 +339,7 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, const void* key)
 	if (listDictionary->synchronized)
 		ListDictionary_Unlock(listDictionary);
 
-	return (item) ? TRUE : FALSE;
+	return (item != NULL);
 }
 
 /**
@@ -514,7 +514,7 @@ BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* ke
 		if (item)
 			item_set(listDictionary, item, value);
 
-		status = (item) ? TRUE : FALSE;
+		status = (item != NULL);
 	}
 
 	if (listDictionary->synchronized)

@@ -700,11 +700,8 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved
 
 	Stream_SetPosition(interleaved->bts, 0);
 
-	if (freerdp_bitmap_compress(interleaved->TempBuffer, nWidth, nHeight, s, bpp, maxSize,
-	                            nHeight - 1, interleaved->bts, 0) < 0)
-		status = FALSE;
-	else
-		status = TRUE;
+	status = (freerdp_bitmap_compress(interleaved->TempBuffer, nWidth, nHeight, s, bpp, maxSize,
+	                                  nHeight - 1, interleaved->bts, 0) >= 0);
 
 	Stream_SealLength(s);
 	*pDstSize = (UINT32)Stream_Length(s);
@@ -714,10 +711,7 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved
 
 BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved)
 {
-	if (!interleaved)
-		return FALSE;
-
-	return TRUE;
+	return (interleaved != NULL);
 }
 
 BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(WINPR_ATTR_UNUSED BOOL Compressor)

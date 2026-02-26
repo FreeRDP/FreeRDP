@@ -2503,9 +2503,7 @@ BOOL rts_conditional_check_and_log(const char* tag, wStream* s, size_t size, BOO
 	if (silent)
 	{
 		const size_t rem = Stream_GetRemainingLength(s);
-		if (rem < size)
-			return FALSE;
-		return TRUE;
+		return (rem >= size);
 	}
 
 	return Stream_CheckAndLogRequiredLengthEx(tag, WLOG_WARN, s, size, 1, "%s(%s:%" PRIuz ")", fkt,

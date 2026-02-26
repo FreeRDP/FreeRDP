@@ -214,10 +214,7 @@ FREERDP_API DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD first, DWORD second);
 	{
 		UINT32 alpha = (((format) >> 12) & 0x0F);
 
-		if (alpha == 0)
-			return FALSE;
-
-		return TRUE;
+		return (alpha != 0);
 	}
 
 	/***

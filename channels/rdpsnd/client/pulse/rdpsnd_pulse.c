@@ -354,10 +354,7 @@ static BOOL rdpsnd_pulse_context_connect(rdpsndDevicePlugin* device)
 
 	pa_context_set_state_callback(pulse->context, rdpsnd_pulse_context_state_callback, pulse);
 
-	if (!rdpsnd_pulse_connect((rdpsndDevicePlugin*)pulse))
-		return FALSE;
-
-	return TRUE;
+	return rdpsnd_pulse_connect(&pulse->device);
 }
 
 static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)

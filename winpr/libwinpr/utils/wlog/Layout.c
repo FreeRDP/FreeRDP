@@ -230,9 +230,7 @@ static BOOL replace_format_string(const char* FormatString, struct format_option
 		}
 	}
 
-	if (!check_and_log_format_size(format, formatlen, index, 0))
-		return FALSE;
-	return TRUE;
+	return check_and_log_format_size(format, formatlen, index, 0);
 }
 
 BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, const wLogMessage* message,

@@ -228,10 +228,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 			break;
 	}
 
-	if (!gdi_InvalidateRegion(hdc, nXDest, nYDest, nWidth, nHeight))
-		return FALSE;
-
-	return TRUE;
+	return gdi_InvalidateRegion(hdc, nXDest, nYDest, nWidth, nHeight);
 }
 
 /**

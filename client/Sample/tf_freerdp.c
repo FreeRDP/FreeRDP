@@ -299,10 +299,7 @@ disconnect:
  * if available. */
 static BOOL tf_client_global_init(void)
 {
-	if (freerdp_handle_signals() != 0)
-		return FALSE;
-
-	return TRUE;
+	return freerdp_handle_signals() == 0;
 }
 
 /* Optional global tear down */
