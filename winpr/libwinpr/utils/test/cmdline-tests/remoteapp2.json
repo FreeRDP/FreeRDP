@@ -1,0 +1,12 @@
+{
+	"expectSuccess": true,
+	"csv":
+	    "xfreerdp,/v:host,/u:user,/p:pwd,/app:program:foo\\,file:\"Z:\\Foto's\\This is a test folder\\Wallpaper1.jpg Z:\\Foto's\\This is a test folder\\Wallpaper2.jpg Z:\\F,o,t,o's\\Wallpaper3.jpg\"",
+	"argv": [
+		"xfreerdp",
+		"/v:host",
+		"/u:user",
+		"/p:pwd",
+		"/app:program:foo,file:\"Z:\\Foto's\\This is a test folder\\Wallpaper1.jpg Z:\\Foto's\\This is a test folder\\Wallpaper2.jpg Z:\\F,o,t,o's\\Wallpaper3.jpg\""
+	]
+}

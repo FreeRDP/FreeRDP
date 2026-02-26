@@ -1,0 +1,11 @@
+{
+	"expectSuccess": true,
+	"csv": "xfreerdp,/v:host,/p:pwd,/gateway:g:host.name\\,type:rpc\\,no-websocket,/network:auto",
+	"argv": [
+		"xfreerdp",
+		"/v:host",
+		"/p:pwd",
+		"/gateway:g:host.name,type:rpc,no-websocket",
+		"/network:auto"
+	]
+}
