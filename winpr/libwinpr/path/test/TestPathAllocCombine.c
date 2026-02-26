@@ -15,7 +15,7 @@ static const TCHAR testPathOutMorePathBackslash[] = _T("C:\\Microsoft Visual Stu
 int TestPathAllocCombine(int argc, char* argv[])
 {
 	HRESULT status = 0;
-	LPTSTR PathOut = NULL;
+	LPTSTR PathOut = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

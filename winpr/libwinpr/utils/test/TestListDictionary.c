@@ -14,8 +14,8 @@ static char* val3 = "val3";
 int TestListDictionary(int argc, char* argv[])
 {
 	size_t count = 0;
-	char* value = NULL;
-	wListDictionary* list = NULL;
+	char* value = nullptr;
+	wListDictionary* list = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

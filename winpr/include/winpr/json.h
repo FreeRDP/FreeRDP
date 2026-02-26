@@ -60,7 +60,7 @@ extern "C"
 	 * @brief Parse a '\0' terminated JSON string
 	 *
 	 * @param value A '\0' terminated JSON string
-	 * @return A @ref WINPR_JSON object holding the parsed string or \b NULL if failed
+	 * @return A @ref WINPR_JSON object holding the parsed string or \b nullptr if failed
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
@@ -72,7 +72,7 @@ extern "C"
 	 *
 	 * @param value A JSON string
 	 * @param buffer_length The length in bytes of the JSON string
-	 * @return A @ref WINPR_JSON object holding the parsed string or \b NULL if failed
+	 * @return A @ref WINPR_JSON object holding the parsed string or \b nullptr if failed
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
@@ -83,7 +83,7 @@ extern "C"
 	 * @brief Parse a JSON string read from a file \b filename
 	 *
 	 * @param filename the name of the file to read from
-	 * @return A @ref WINPR_JSON object holding the parsed string or \b NULL if failed
+	 * @return A @ref WINPR_JSON object holding the parsed string or \b nullptr if failed
 	 * @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
@@ -94,7 +94,7 @@ extern "C"
 	 * @brief Parse a JSON string read from a \b FILE
 	 *
 	 * @param fp a \b FILE pointer to read from.
-	 * @return A @ref WINPR_JSON object holding the parsed string or \b NULL if failed
+	 * @return A @ref WINPR_JSON object holding the parsed string or \b nullptr if failed
 	 * @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
@@ -115,7 +115,7 @@ extern "C"
 	 *
 	 * @param array the JSON instance to query
 	 * @param index The index of the array item
-	 * @return A pointer to the array item or \b NULL if failed
+	 * @return A pointer to the array item or \b nullptr if failed
 	 * @since version 3.6.0
 	 */
 	WINPR_API WINPR_JSON* WINPR_JSON_GetArrayItem(const WINPR_JSON* array, size_t index);
@@ -125,7 +125,7 @@ extern "C"
 	 * @param object the JSON object
 	 * @param string the name of the object (case is ignored)
 	 *
-	 * @return A pointer to the object identified by \b string or \b NULL
+	 * @return A pointer to the object identified by \b string or \b nullptr
 	 * @since version 3.6.0
 	 */
 	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object, const char* string);
@@ -135,7 +135,7 @@ extern "C"
 	 *
 	 * @param object the JSON instance to query
 	 * @param string the name of the object
-	 * @return A pointer to the object identified by \b string or \b NULL
+	 * @return A pointer to the object identified by \b string or \b nullptr
 	 * @since version 3.6.0
 	 */
 	WINPR_API WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object,
@@ -152,7 +152,7 @@ extern "C"
 
 	/**
 	 * @brief Return an error string
-	 * @return A string describing the last error that occurred or \b NULL
+	 * @return A string describing the last error that occurred or \b nullptr
 	 * @since version 3.6.0
 	 */
 	WINPR_API const char* WINPR_JSON_GetErrorPtr(void);
@@ -160,7 +160,7 @@ extern "C"
 	/**
 	 * @brief Return the String value of a JSON item
 	 * @param item the JSON item to query
-	 * @return The string value or \b NULL if failed
+	 * @return The string value or \b nullptr if failed
 	 * @since version 3.6.0
 	 */
 	WINPR_API const char* WINPR_JSON_GetStringValue(WINPR_JSON* item);
@@ -391,8 +391,8 @@ extern "C"
 
 	/**
 	 * @brief Add an item to an existing array
-	 * @param array An array to add to, must not be \b NULL
-	 * @param item An item to add, must not be \b NULL
+	 * @param array An array to add to, must not be \b nullptr
+	 * @param item An item to add, must not be \b nullptr
 	 * @return \b TRUE for success, \b FALSE for failure
 	 * @since version 3.7.0
 	 */
@@ -403,7 +403,7 @@ extern "C"
 	 * for minimal size without formatting see @ref WINPR_JSON_PrintUnformatted
 	 *
 	 * @param item The JSON instance to serialize
-	 * @return A string representation of the JSON instance or \b NULL
+	 * @return A string representation of the JSON instance or \b nullptr
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
@@ -415,7 +415,7 @@ extern "C"
 	 * for human readable formatted output see @ref WINPR_JSON_Print
 	 *
 	 * @param item The JSON instance to serialize
-	 * @return A string representation of the JSON instance or \b NULL
+	 * @return A string representation of the JSON instance or \b nullptr
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)

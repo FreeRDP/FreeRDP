@@ -57,7 +57,7 @@ static BOOL test_command_line_parsing_case(const char* line, const char** list, 
 
 	if ((numArgs > 0) && !pArgs)
 	{
-		(void)fprintf(stderr, "expected %d arguments, got NULL return\n", numArgs);
+		(void)fprintf(stderr, "expected %d arguments, got nullptr return\n", numArgs);
 		goto fail;
 	}
 

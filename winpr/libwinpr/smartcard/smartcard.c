@@ -37,44 +37,47 @@
 #endif
 
 static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
-static const SCardApiFunctionTable* g_SCardApi = NULL;
+static const SCardApiFunctionTable* g_SCardApi = nullptr;
 
 #define TAG WINPR_TAG("smartcard")
 
 #define xstr(s) str(s)
 #define str(s) #s
 
-#define SCARDAPI_STUB_CALL_LONG(_name, ...)                                                       \
-	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL);                     \
-	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                   \
-	{                                                                                             \
-		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",          \
-		         WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi),                                  \
-		         WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi ? g_SCardApi->pfn##_name : NULL)); \
-		return SCARD_E_NO_SERVICE;                                                                \
-	}                                                                                             \
+#define SCARDAPI_STUB_CALL_LONG(_name, ...)                                                     \
+	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr);             \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                 \
+	{                                                                                           \
+		WLog_DBG(                                                                               \
+		    TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",             \
+		    WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi),                                     \
+		    WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi ? g_SCardApi->pfn##_name : nullptr)); \
+		return SCARD_E_NO_SERVICE;                                                              \
+	}                                                                                           \
 	return g_SCardApi->pfn##_name(__VA_ARGS__)
 
-#define SCARDAPI_STUB_CALL_HANDLE(_name)                                                          \
-	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL);                     \
-	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                   \
-	{                                                                                             \
-		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",          \
-		         WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi),                                  \
-		         WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi ? g_SCardApi->pfn##_name : NULL)); \
-		return NULL;                                                                              \
-	}                                                                                             \
+#define SCARDAPI_STUB_CALL_HANDLE(_name)                                                        \
+	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr);             \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                 \
+	{                                                                                           \
+		WLog_DBG(                                                                               \
+		    TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",             \
+		    WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi),                                     \
+		    WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi ? g_SCardApi->pfn##_name : nullptr)); \
+		return nullptr;                                                                         \
+	}                                                                                           \
 	return g_SCardApi->pfn##_name()
 
-#define SCARDAPI_STUB_CALL_VOID(_name)                                                            \
-	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, NULL, NULL);                     \
-	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                   \
-	{                                                                                             \
-		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",          \
-		         WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi),                                  \
-		         WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi ? g_SCardApi->pfn##_name : NULL)); \
-		return;                                                                                   \
-	}                                                                                             \
+#define SCARDAPI_STUB_CALL_VOID(_name)                                                          \
+	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr);             \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                 \
+	{                                                                                           \
+		WLog_DBG(                                                                               \
+		    TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",             \
+		    WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi),                                     \
+		    WINPR_CXX_COMPAT_CAST(const void*, g_SCardApi ? g_SCardApi->pfn##_name : nullptr)); \
+		return;                                                                                 \
+	}                                                                                           \
 	g_SCardApi->pfn##_name()
 
 /**
@@ -1064,7 +1067,7 @@ WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState)
 	char* buffer = calloc(size, sizeof(char));
 
 	if (!buffer)
-		return NULL;
+		return nullptr;
 
 	if (dwReaderState & SCARD_STATE_IGNORE)
 		winpr_str_append("SCARD_STATE_IGNORE", buffer, size, "|");

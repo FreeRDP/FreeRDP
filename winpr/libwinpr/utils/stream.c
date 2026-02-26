@@ -52,7 +52,7 @@ BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 	const size_t new_capacity = size + increment - size % increment;
 	const size_t position = Stream_GetPosition(s);
 
-	BYTE* new_buf = NULL;
+	BYTE* new_buf = nullptr;
 	if (!s->isOwner)
 	{
 		new_buf = (BYTE*)malloc(new_capacity);
@@ -86,14 +86,14 @@ BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size)
 
 wStream* Stream_New(BYTE* buffer, size_t size)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	if (!buffer && !size)
-		return NULL;
+		return nullptr;
 
 	s = calloc(1, sizeof(wStream));
 	if (!s)
-		return NULL;
+		return nullptr;
 
 	if (buffer)
 		s->buffer = buffer;
@@ -103,14 +103,14 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	if (!s->buffer)
 	{
 		free(s);
-		return NULL;
+		return nullptr;
 	}
 
 	s->pointer = s->buffer;
 	s->capacity = size;
 	s->length = size;
 
-	s->pool = NULL;
+	s->pool = nullptr;
 	s->count = 1;
 	s->isAllocatedStream = TRUE;
 	s->isOwner = TRUE;
@@ -139,7 +139,7 @@ wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
 	*s = empty;
 	s->buffer = s->pointer = buffer;
 	s->capacity = s->length = size;
-	s->pool = NULL;
+	s->pool = nullptr;
 	s->count = 1;
 	s->isAllocatedStream = FALSE;
 	s->isOwner = FALSE;
@@ -230,7 +230,7 @@ BOOL Stream_SetBuffer(wStream* _s, BYTE* _b)
 
 	_s->buffer = _b;
 	_s->pointer = _b;
-	return _s->buffer != NULL;
+	return _s->buffer != nullptr;
 }
 
 void Stream_SetCapacity(wStream* _s, size_t _c)
@@ -483,10 +483,10 @@ char* Stream_Read_UTF16_String_As_UTF8(wStream* s, size_t wcharLength, size_t* p
 {
 	const WCHAR* str = Stream_ConstPointer(s);
 	if (wcharLength > SIZE_MAX / sizeof(WCHAR))
-		return NULL;
+		return nullptr;
 
 	if (!Stream_CheckAndLogRequiredLength(STREAM_TAG, s, wcharLength * sizeof(WCHAR)))
-		return NULL;
+		return nullptr;
 
 	Stream_Seek(s, wcharLength * sizeof(WCHAR));
 	return ConvertWCharNToUtf8Alloc(str, wcharLength, pUtfCharLength);

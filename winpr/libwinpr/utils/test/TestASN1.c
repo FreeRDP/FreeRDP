@@ -36,7 +36,7 @@ int TestASN1Read(int argc, char* argv[])
 	WinPrAsn1_BOOL boolV = 0;
 	WinPrAsn1_INTEGER integerV = 0;
 	WinPrAsn1_OID oidV = WINPR_C_ARRAY_INIT;
-	WinPrAsn1_IA5STRING ia5stringV = NULL;
+	WinPrAsn1_IA5STRING ia5stringV = nullptr;
 	WinPrAsn1_UTCTIME utctimeV = WINPR_C_ARRAY_INIT;
 	WinPrAsn1_tag tag = 0;
 	size_t len = 0;
@@ -153,11 +153,11 @@ static WinPrAsn1_OID oid4 = { sizeof(oid4_val), oid4_val };
 
 int TestASN1Write(int argc, char* argv[])
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t expectedOuputSz = 0;
 	int retCode = 100;
 	WinPrAsn1_UTCTIME utcTime;
-	WinPrAsn1_IA5STRING ia5string = NULL;
+	WinPrAsn1_IA5STRING ia5string = nullptr;
 	WinPrAsn1Encoder* enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 	if (!enc)
 		goto out;
@@ -286,7 +286,7 @@ int TestASN1Write(int argc, char* argv[])
 
 	/* let's output the result */
 	retCode = 201;
-	s = Stream_New(NULL, 1024);
+	s = Stream_New(nullptr, 1024);
 	if (!s)
 		goto out;
 

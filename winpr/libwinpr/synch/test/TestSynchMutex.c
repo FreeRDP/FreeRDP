@@ -5,10 +5,10 @@
 
 static BOOL test_mutex_basic(void)
 {
-	HANDLE mutex = NULL;
+	HANDLE mutex = nullptr;
 	DWORD rc = 0;
 
-	if (!(mutex = CreateMutex(NULL, FALSE, NULL)))
+	if (!(mutex = CreateMutex(nullptr, FALSE, nullptr)))
 	{
 		printf("%s: CreateMutex failed\n", __func__);
 		return FALSE;
@@ -45,11 +45,11 @@ static BOOL test_mutex_basic(void)
 
 static BOOL test_mutex_recursive(void)
 {
-	HANDLE mutex = NULL;
+	HANDLE mutex = nullptr;
 	DWORD rc = 0;
 	DWORD cnt = 50;
 
-	if (!(mutex = CreateMutex(NULL, TRUE, NULL)))
+	if (!(mutex = CreateMutex(nullptr, TRUE, nullptr)))
 	{
 		printf("%s: CreateMutex failed\n", __func__);
 		return FALSE;
@@ -98,8 +98,8 @@ static BOOL test_mutex_recursive(void)
 	return TRUE;
 }
 
-static HANDLE thread1_mutex1 = NULL;
-static HANDLE thread1_mutex2 = NULL;
+static HANDLE thread1_mutex1 = nullptr;
+static HANDLE thread1_mutex2 = nullptr;
 static BOOL thread1_failed = TRUE;
 
 static DWORD WINAPI test_mutex_thread1(LPVOID lpParam)
@@ -155,22 +155,22 @@ static DWORD WINAPI test_mutex_thread1(LPVOID lpParam)
 
 static BOOL test_mutex_threading(void)
 {
-	HANDLE hThread = NULL;
-	HANDLE hStartEvent = NULL;
+	HANDLE hThread = nullptr;
+	HANDLE hStartEvent = nullptr;
 
-	if (!(thread1_mutex1 = CreateMutex(NULL, TRUE, NULL)))
+	if (!(thread1_mutex1 = CreateMutex(nullptr, TRUE, nullptr)))
 	{
 		printf("%s: CreateMutex thread1_mutex1 failed\n", __func__);
 		goto fail;
 	}
 
-	if (!(thread1_mutex2 = CreateMutex(NULL, FALSE, NULL)))
+	if (!(thread1_mutex2 = CreateMutex(nullptr, FALSE, nullptr)))
 	{
 		printf("%s: CreateMutex thread1_mutex2 failed\n", __func__);
 		goto fail;
 	}
 
-	if (!(hStartEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(hStartEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
 		(void)fprintf(stderr, "%s: error creating start event\n", __func__);
 		goto fail;
@@ -178,7 +178,7 @@ static BOOL test_mutex_threading(void)
 
 	thread1_failed = TRUE;
 
-	if (!(hThread = CreateThread(NULL, 0, test_mutex_thread1, (LPVOID)hStartEvent, 0, NULL)))
+	if (!(hThread = CreateThread(nullptr, 0, test_mutex_thread1, (LPVOID)hStartEvent, 0, nullptr)))
 	{
 		(void)fprintf(stderr, "%s: error creating test_mutex_thread_1\n", __func__);
 		goto fail;

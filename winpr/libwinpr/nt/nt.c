@@ -48,11 +48,11 @@ static void sTebInitOnce(void)
 
 PTEB NtCurrentTeb(void)
 {
-	PTEB teb = NULL;
+	PTEB teb = nullptr;
 
 	if (pthread_once(&sTebOnceControl, sTebInitOnce) == 0)
 	{
-		if ((teb = pthread_getspecific(sTebKey)) == NULL)
+		if ((teb = pthread_getspecific(sTebKey)) == nullptr)
 		{
 			teb = calloc(1, sizeof(TEB));
 			if (teb)

@@ -52,7 +52,7 @@ static inline NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT_init(void)
 	const NEGOTIATE_CONTEXT empty = { .state = NEGOTIATE_STATE_INITIAL,
 		                              .sub_context = { 0 },
 		                              .mechTypes = { 0 },
-		                              .mech = NULL,
+		                              .mech = nullptr,
 		                              .mic = FALSE,
 		                              .spnego = FALSE };
 	return empty;

@@ -14,7 +14,7 @@ int TestThreadCreateProcess(int argc, char* argv[])
 {
 	BOOL status = 0;
 	DWORD exitCode = 0;
-	LPCTSTR lpApplicationName = NULL;
+	LPCTSTR lpApplicationName = nullptr;
 
 #ifdef _WIN32
 	TCHAR lpCommandLine[200] = _T("cmd /C set");
@@ -23,17 +23,17 @@ int TestThreadCreateProcess(int argc, char* argv[])
 #endif
 
 	// LPTSTR lpCommandLine;
-	LPSECURITY_ATTRIBUTES lpProcessAttributes = NULL;
-	LPSECURITY_ATTRIBUTES lpThreadAttributes = NULL;
+	LPSECURITY_ATTRIBUTES lpProcessAttributes = nullptr;
+	LPSECURITY_ATTRIBUTES lpThreadAttributes = nullptr;
 	BOOL bInheritHandles = 0;
 	DWORD dwCreationFlags = 0;
-	LPVOID lpEnvironment = NULL;
-	LPCTSTR lpCurrentDirectory = NULL;
+	LPVOID lpEnvironment = nullptr;
+	LPCTSTR lpCurrentDirectory = nullptr;
 	STARTUPINFO StartupInfo = WINPR_C_ARRAY_INIT;
 	PROCESS_INFORMATION ProcessInformation = WINPR_C_ARRAY_INIT;
-	LPTCH lpszEnvironmentBlock = NULL;
-	HANDLE pipe_read = NULL;
-	HANDLE pipe_write = NULL;
+	LPTCH lpszEnvironmentBlock = nullptr;
+	HANDLE pipe_read = nullptr;
+	HANDLE pipe_write = nullptr;
 	char buf[1024] = WINPR_C_ARRAY_INIT;
 	DWORD read_bytes = 0;
 	int ret = 0;
@@ -44,17 +44,17 @@ int TestThreadCreateProcess(int argc, char* argv[])
 
 	lpszEnvironmentBlock = GetEnvironmentStrings();
 
-	lpApplicationName = NULL;
+	lpApplicationName = nullptr;
 
-	lpProcessAttributes = NULL;
-	lpThreadAttributes = NULL;
+	lpProcessAttributes = nullptr;
+	lpThreadAttributes = nullptr;
 	bInheritHandles = FALSE;
 	dwCreationFlags = 0;
 #ifdef _UNICODE
 	dwCreationFlags |= CREATE_UNICODE_ENVIRONMENT;
 #endif
 	lpEnvironment = lpszEnvironmentBlock;
-	lpCurrentDirectory = NULL;
+	lpCurrentDirectory = nullptr;
 	StartupInfo.cb = sizeof(STARTUPINFO);
 
 	status = CreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes,
@@ -87,7 +87,7 @@ int TestThreadCreateProcess(int argc, char* argv[])
 
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 	saAttr.bInheritHandle = TRUE;
-	saAttr.lpSecurityDescriptor = NULL;
+	saAttr.lpSecurityDescriptor = nullptr;
 
 	if (!CreatePipe(&pipe_read, &pipe_write, &saAttr, 0))
 	{
@@ -133,7 +133,7 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	}
 
 	ZeroMemory(buf, sizeof(buf));
-	ReadFile(pipe_read, buf, sizeof(buf) - 1, &read_bytes, NULL);
+	ReadFile(pipe_read, buf, sizeof(buf) - 1, &read_bytes, nullptr);
 	if (!strstr((const char*)buf, TESTENV_A))
 	{
 		printf("No or unexpected data read from pipe\n");

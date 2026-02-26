@@ -5,13 +5,13 @@
 int TestSynchWaitableTimer(int argc, char* argv[])
 {
 	DWORD status = 0;
-	HANDLE timer = NULL;
+	HANDLE timer = nullptr;
 	LONG period = 0;
 	LARGE_INTEGER due = WINPR_C_ARRAY_INIT;
 	int result = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	timer = CreateWaitableTimer(NULL, FALSE, NULL);
+	timer = CreateWaitableTimer(nullptr, FALSE, nullptr);
 
 	if (!timer)
 	{
@@ -21,7 +21,7 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 
 	due.QuadPart = -1500000LL; /* 0.15 seconds */
 
-	if (!SetWaitableTimer(timer, &due, 0, NULL, NULL, 0))
+	if (!SetWaitableTimer(timer, &due, 0, nullptr, nullptr, 0))
 	{
 		printf("SetWaitableTimer failure\n");
 		goto out;
@@ -49,7 +49,7 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	due.QuadPart = 0;
 	period = 120; /* 0.12 seconds */
 
-	if (!SetWaitableTimer(timer, &due, period, NULL, NULL, 0))
+	if (!SetWaitableTimer(timer, &due, period, nullptr, nullptr, 0))
 	{
 		printf("SetWaitableTimer failure\n");
 		goto out;
@@ -63,7 +63,7 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 
 	printf("Timer Signaled\n");
 
-	if (!SetWaitableTimer(timer, &due, period, NULL, NULL, 0))
+	if (!SetWaitableTimer(timer, &due, period, nullptr, nullptr, 0))
 	{
 		printf("SetWaitableTimer failure\n");
 		goto out;

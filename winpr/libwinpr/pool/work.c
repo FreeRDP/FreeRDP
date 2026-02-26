@@ -60,20 +60,20 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 #endif
 
 static TP_CALLBACK_ENVIRON DEFAULT_CALLBACK_ENVIRONMENT = {
-	1,    /* Version */
-	NULL, /* Pool */
-	NULL, /* CleanupGroup */
-	NULL, /* CleanupGroupCancelCallback */
-	NULL, /* RaceDll */
-	NULL, /* FinalizationCallback */
-	{ 0 } /* Flags */
+	1,       /* Version */
+	nullptr, /* Pool */
+	nullptr, /* CleanupGroup */
+	nullptr, /* CleanupGroupCancelCallback */
+	nullptr, /* RaceDll */
+	nullptr, /* FinalizationCallback */
+	{ 0 }    /* Flags */
 };
 
 PTP_WORK winpr_CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
 {
-	PTP_WORK work = NULL;
+	PTP_WORK work = nullptr;
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 
 	if (pCreateThreadpoolWork)
 		return pCreateThreadpoolWork(pfnwk, pv, pcbe);
@@ -106,7 +106,7 @@ PTP_WORK winpr_CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLB
 VOID winpr_CloseThreadpoolWork(PTP_WORK pwk)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 
 	if (pCloseThreadpoolWork)
 	{
@@ -127,10 +127,10 @@ VOID winpr_CloseThreadpoolWork(PTP_WORK pwk)
 
 VOID winpr_SubmitThreadpoolWork(PTP_WORK pwk)
 {
-	PTP_POOL pool = NULL;
-	PTP_CALLBACK_INSTANCE callbackInstance = NULL;
+	PTP_POOL pool = nullptr;
+	PTP_CALLBACK_INSTANCE callbackInstance = nullptr;
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 
 	if (pSubmitThreadpoolWork)
 	{
@@ -160,7 +160,7 @@ BOOL winpr_TrySubmitThreadpoolCallback(WINPR_ATTR_UNUSED PTP_SIMPLE_CALLBACK pfn
                                        WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 
 	if (pTrySubmitThreadpoolCallback)
 		return pTrySubmitThreadpoolCallback(pfns, pv, pcbe);
@@ -173,11 +173,11 @@ BOOL winpr_TrySubmitThreadpoolCallback(WINPR_ATTR_UNUSED PTP_SIMPLE_CALLBACK pfn
 VOID winpr_WaitForThreadpoolWorkCallbacks(PTP_WORK pwk,
                                           WINPR_ATTR_UNUSED BOOL fCancelPendingCallbacks)
 {
-	HANDLE event = NULL;
-	PTP_POOL pool = NULL;
+	HANDLE event = nullptr;
+	PTP_POOL pool = nullptr;
 
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 
 	if (pWaitForThreadpoolWorkCallbacks)
 	{

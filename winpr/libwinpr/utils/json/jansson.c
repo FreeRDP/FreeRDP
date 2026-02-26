@@ -41,7 +41,7 @@ static const json_t* ccast_(const WINPR_JSON* json, const char* fkt)
 {
 	const json_t* jansson = (const json_t*)json;
 	if (!jansson)
-		WLog_DBG(TAG, "%s: NULL", fkt);
+		WLog_DBG(TAG, "%s: nullptr", fkt);
 	else
 	{
 		WLog_DBG(TAG, "%s: %" PRIuz, fkt, jansson->refcount);
@@ -54,7 +54,7 @@ static json_t* cast_(WINPR_JSON* json, const char* fkt)
 {
 	json_t* jansson = (json_t*)json;
 	if (!jansson)
-		WLog_DBG(TAG, "%s: NULL", fkt);
+		WLog_DBG(TAG, "%s: nullptr", fkt);
 	else
 	{
 		WLog_DBG(TAG, "%s: %" PRIuz, fkt, jansson->refcount);
@@ -67,7 +67,7 @@ static WINPR_JSON* revcast_(json_t* json, const char* fkt)
 {
 	json_t* jansson = (json_t*)json;
 	if (!jansson)
-		WLog_DBG(TAG, "%s: NULL", fkt);
+		WLog_DBG(TAG, "%s: nullptr", fkt);
 	else
 	{
 		WLog_DBG(TAG, "%s: %" PRIuz, fkt, jansson->refcount);
@@ -115,7 +115,7 @@ WINPR_JSON* WINPR_JSON_Parse(const char* value)
 WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value, size_t buffer_length)
 {
 	if (!value || (buffer_length == 0))
-		return NULL;
+		return nullptr;
 
 	json_error_t error = WINPR_C_ARRAY_INIT;
 	const size_t slen = strnlen(value, buffer_length);
@@ -149,7 +149,7 @@ WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object, const char* strin
 			return revcast(json_object_iter_value(it));
 		it = json_object_iter_next(json, it);
 	}
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object, const char* string)
@@ -159,7 +159,7 @@ WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object, cons
 
 BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* object, const char* string)
 {
-	return json_object_get(ccast(object), string) != NULL;
+	return json_object_get(ccast(object), string) != nullptr;
 }
 
 const char* WINPR_JSON_GetErrorPtr(void)
@@ -278,10 +278,10 @@ WINPR_JSON* WINPR_JSON_CreateObject(void)
 static WINPR_JSON* add_to_object(WINPR_JSON* object, const char* name, json_t* obj)
 {
 	if (!obj)
-		return NULL;
+		return nullptr;
 	const int rc = json_object_set_new(cast(object), name, obj);
 	if (rc != 0)
-		return NULL;
+		return nullptr;
 	return revcast(obj);
 }
 

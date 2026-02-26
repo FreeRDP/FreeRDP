@@ -78,11 +78,11 @@ struct winpr_rc4_ctx_private_st
 static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOOL override_fips)
 {
 	if (!key || (keylen == 0))
-		return NULL;
+		return nullptr;
 
 	WINPR_RC4_CTX* ctx = (WINPR_RC4_CTX*)calloc(1, sizeof(WINPR_RC4_CTX));
 	if (!ctx)
-		return NULL;
+		return nullptr;
 
 #if defined(WITH_INTERNAL_RC4)
 	WINPR_UNUSED(override_fips);
@@ -90,7 +90,7 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	if (!ctx->ictx)
 		goto fail;
 #elif defined(WITH_OPENSSL)
-	const EVP_CIPHER* evp = NULL;
+	const EVP_CIPHER* evp = nullptr;
 
 	if (keylen > INT_MAX)
 		goto fail;
@@ -105,7 +105,7 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 		goto fail;
 
 	EVP_CIPHER_CTX_reset(ctx->ctx);
-	if (EVP_EncryptInit_ex(ctx->ctx, evp, NULL, NULL, NULL) != 1)
+	if (EVP_EncryptInit_ex(ctx->ctx, evp, nullptr, nullptr, nullptr) != 1)
 		goto fail;
 
 	/* EVP_CIPH_FLAG_NON_FIPS_ALLOW does not exist before openssl 1.0.1 */
@@ -116,7 +116,7 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 
 #endif
 	EVP_CIPHER_CTX_set_key_length(ctx->ctx, (int)keylen);
-	if (EVP_EncryptInit_ex(ctx->ctx, NULL, NULL, key, NULL) != 1)
+	if (EVP_EncryptInit_ex(ctx->ctx, nullptr, nullptr, key, nullptr) != 1)
 		goto fail;
 #endif
 	return ctx;
@@ -127,7 +127,7 @@ fail:
 
 	winpr_RC4_Free(ctx);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 WINPR_RC4_CTX* winpr_RC4_New_Allow_FIPS(const void* key, size_t keylen)
@@ -280,7 +280,7 @@ WINPR_CIPHER_TYPE winpr_cipher_type_from_string(const char* name)
 #if defined(WITH_OPENSSL)
 static const EVP_CIPHER* winpr_openssl_get_evp_cipher(WINPR_CIPHER_TYPE cipher)
 {
-	const EVP_CIPHER* evp = NULL;
+	const EVP_CIPHER* evp = nullptr;
 
 	switch (cipher)
 	{
@@ -590,12 +590,12 @@ WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_NewEx(WINPR_CIPHER_TYPE cipher, WINPR_C
 	{
 		WLog_ERR(TAG,
 		         "WINPR_CIPHER_ARC4_128 (RC4) cipher not supported, use winpr_RC4_new instead");
-		return NULL;
+		return nullptr;
 	}
 
 	WINPR_CIPHER_CTX* ctx = calloc(1, sizeof(WINPR_CIPHER_CTX));
 	if (!ctx)
-		return NULL;
+		return nullptr;
 
 	ctx->cipher = cipher;
 	ctx->op = op;
@@ -611,7 +611,7 @@ WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_NewEx(WINPR_CIPHER_TYPE cipher, WINPR_C
 
 	{
 		const int operation = (op == WINPR_ENCRYPT) ? 1 : 0;
-		if (EVP_CipherInit_ex(ctx->ectx, evp, NULL, key, iv, operation) != 1)
+		if (EVP_CipherInit_ex(ctx->ectx, evp, nullptr, key, iv, operation) != 1)
 			goto fail;
 	}
 
@@ -647,7 +647,7 @@ WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_NewEx(WINPR_CIPHER_TYPE cipher, WINPR_C
 
 fail:
 	winpr_Cipher_Free(ctx);
-	return NULL;
+	return nullptr;
 }
 
 BOOL winpr_Cipher_SetPadding(WINPR_CIPHER_CTX* ctx, BOOL enabled)
@@ -757,8 +757,8 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 	 * https://www.openssl.org/docs/manmaster/crypto/EVP_BytesToKey.html
 	 */
 #if defined(WITH_OPENSSL)
-	const EVP_MD* evp_md = NULL;
-	const EVP_CIPHER* evp_cipher = NULL;
+	const EVP_MD* evp_md = nullptr;
+	const EVP_CIPHER* evp_cipher = nullptr;
 	evp_md = winpr_openssl_get_evp_md(md);
 	evp_cipher = winpr_openssl_get_evp_cipher(WINPR_ASSERTING_INT_CAST(WINPR_CIPHER_TYPE, cipher));
 	WINPR_ASSERT(datal <= INT_MAX);

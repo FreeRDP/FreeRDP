@@ -32,7 +32,7 @@ extern "C"
 
 	/** @brief read an ini file from a buffer
 	 *
-	 *  @param ini The instance to use, must not be \b NULL
+	 *  @param ini The instance to use, must not be \b nullptr
 	 *  @param buffer The buffer to read from, must be a '\0' terminated string.
 	 *
 	 *  @return > 0 for success, < 0 for failure
@@ -41,7 +41,7 @@ extern "C"
 
 	/** @brief read an ini file from a file
 	 *
-	 *  @param ini The instance to use, must not be \b NULL
+	 *  @param ini The instance to use, must not be \b nullptr
 	 *  @param filename The name of the file to read from, must be a '\0' terminated string.
 	 *
 	 *  @return > 0 for success, < 0 for failure
@@ -50,15 +50,15 @@ extern "C"
 
 	/** @brief write an ini instance to a buffer
 	 *
-	 *  @param ini The instance to use, must not be \b NULL
+	 *  @param ini The instance to use, must not be \b nullptr
 	 *
-	 *  @return A newly allocated string, use \b free after use. \b NULL in case of failure
+	 *  @return A newly allocated string, use \b free after use. \b nullptr in case of failure
 	 */
 	WINPR_API char* IniFile_WriteBuffer(wIniFile* ini);
 
 	/** @brief write an ini instance to a file
 	 *
-	 *  @param ini The instance to use, must not be \b NULL
+	 *  @param ini The instance to use, must not be \b nullptr
 	 *  @param filename The name of the file as '\0' terminated string.
 	 *
 	 *  @return > 0 for success, < 0 for failure
@@ -67,7 +67,7 @@ extern "C"
 
 	/** @brief Get the number and names of sections in the ini instance
 	 *
-	 *  @param ini The instance to use, must not be \b NULL
+	 *  @param ini The instance to use, must not be \b nullptr
 	 *  @param count A buffer that will contain the number of sections
 	 *
 	 *  @return A newly allocated array of strings (size \b count). Use \b free after use
@@ -76,7 +76,7 @@ extern "C"
 
 	/** @brief Get the number and names of keys of a section in the ini instance
 	 *
-	 *  @param ini The instance to use, must not be \b NULL
+	 *  @param ini The instance to use, must not be \b nullptr
 	 *  @param section The name of the section as '\0' terminated string.
 	 *  @param count A buffer that will contain the number of sections
 	 *
@@ -86,18 +86,18 @@ extern "C"
 
 	/** @brief Get an ini [section/key] value of type string
 	 *
-	 *  @param ini The instance to use, must not be \b NULL
+	 *  @param ini The instance to use, must not be \b nullptr
 	 *  @param section The name of the section as '\0' terminated string.
 	 *  @param key The name of the key as '\0' terminated string.
 	 *
-	 *  @return The value of the [section/key] as '\0' terminated string or \b NULL
+	 *  @return The value of the [section/key] as '\0' terminated string or \b nullptr
 	 */
 	WINPR_API const char* IniFile_GetKeyValueString(wIniFile* ini, const char* section,
 	                                                const char* key);
 
 	/** @brief Get an ini [section/key] value of type int
 	 *
-	 *  @param ini The instance to use, must not be \b NULL
+	 *  @param ini The instance to use, must not be \b nullptr
 	 *  @param section The name of the section as '\0' terminated string.
 	 *  @param key The name of the key as '\0' terminated string.
 	 *
@@ -107,7 +107,7 @@ extern "C"
 
 	/** @brief Set an ini [section/key] value of type string
 	 *
-	 *  @param ini The instance to use, must not be \b NULL
+	 *  @param ini The instance to use, must not be \b nullptr
 	 *  @param section The name of the section as '\0' terminated string.
 	 *  @param key The name of the key as '\0' terminated string.
 	 *  @param value The value of the [section/key] as '\0' terminated string.
@@ -119,7 +119,7 @@ extern "C"
 
 	/** @brief Set an ini [section/key] value of type int
 	 *
-	 *  @param ini The instance to use, must not be \b NULL
+	 *  @param ini The instance to use, must not be \b nullptr
 	 *  @param section The name of the section as '\0' terminated string.
 	 *  @param key The name of the key as '\0' terminated string.
 	 *  @param value The value of the [section/key]
@@ -131,13 +131,13 @@ extern "C"
 
 	/** @brief Free a ini instance
 	 *
-	 *  @param ini The instance to free, may be \b NULL
+	 *  @param ini The instance to free, may be \b nullptr
 	 */
 	WINPR_API void IniFile_Free(wIniFile* ini);
 
 	/** @brief Create a new ini instance
 	 *
-	 *  @return The newly allocated instance or \b NULL if failed.
+	 *  @return The newly allocated instance or \b nullptr if failed.
 	 */
 	WINPR_ATTR_MALLOC(IniFile_Free, 1)
 	WINPR_ATTR_NODISCARD
@@ -145,9 +145,9 @@ extern "C"
 
 	/** @brief Clone a ini instance
 	 *
-	 *  @param ini The instance to free, may be \b NULL
+	 *  @param ini The instance to free, may be \b nullptr
 	 *
-	 *  @return the cloned instance or \b NULL in case of \b ini was \b NULL or failure
+	 *  @return the cloned instance or \b nullptr in case of \b ini was \b nullptr or failure
 	 */
 	WINPR_API wIniFile* IniFile_Clone(const wIniFile* ini);
 

@@ -152,7 +152,7 @@ void* winpr_unwind_backtrace(DWORD size)
 	return ctx;
 fail:
 	winpr_unwind_backtrace_free(ctx);
-	return NULL;
+	return nullptr;
 }
 
 void winpr_unwind_backtrace_free(void* buffer)
@@ -173,14 +173,14 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 		char** cpp;
 	} cnv;
 	unwind_context_t* ctx = buffer;
-	cnv.cpp = NULL;
+	cnv.cpp = nullptr;
 
 	if (!ctx)
-		return NULL;
+		return nullptr;
 
 	cnv.pv = calloc(ctx->pos * (sizeof(char*) + UNWIND_MAX_LINE_SIZE), sizeof(char*));
 	if (!cnv.pv)
-		return NULL;
+		return nullptr;
 
 	if (used)
 		*used = ctx->pos;

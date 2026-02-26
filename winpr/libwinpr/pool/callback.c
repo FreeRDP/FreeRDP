@@ -29,7 +29,7 @@
 #ifdef _WIN32
 typedef BOOL(WINAPI* pCallbackMayRunLong_t)(PTP_CALLBACK_INSTANCE pci);
 static INIT_ONCE init_once_module = INIT_ONCE_STATIC_INIT;
-static pCallbackMayRunLong_t pCallbackMayRunLong = NULL;
+static pCallbackMayRunLong_t pCallbackMayRunLong = nullptr;
 
 static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 {
@@ -44,7 +44,7 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 BOOL winpr_CallbackMayRunLong(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE pci)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
+	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
 	if (pCallbackMayRunLong)
 		return pCallbackMayRunLong(pci);
 #endif

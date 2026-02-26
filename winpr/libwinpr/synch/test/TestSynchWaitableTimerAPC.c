@@ -4,7 +4,7 @@
 #include <winpr/sysinfo.h>
 
 static int g_Count = 0;
-static HANDLE g_Event = NULL;
+static HANDLE g_Event = nullptr;
 
 struct apc_data
 {
@@ -14,7 +14,7 @@ typedef struct apc_data APC_DATA;
 
 static VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
 {
-	APC_DATA* apcData = NULL;
+	APC_DATA* apcData = nullptr;
 	UINT32 CurrentTime = GetTickCount();
 	WINPR_UNUSED(dwTimerLowValue);
 	WINPR_UNUSED(dwTimerHighValue);
@@ -36,13 +36,13 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 {
 	int status = -1;
 	DWORD rc = 0;
-	HANDLE hTimer = NULL;
+	HANDLE hTimer = nullptr;
 	BOOL bSuccess = 0;
 	LARGE_INTEGER due = WINPR_C_ARRAY_INIT;
 	APC_DATA apcData = WINPR_C_ARRAY_INIT;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	g_Event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	g_Event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
 	if (!g_Event)
 	{
@@ -50,7 +50,7 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 		goto cleanup;
 	}
 
-	hTimer = CreateWaitableTimer(NULL, FALSE, NULL);
+	hTimer = CreateWaitableTimer(nullptr, FALSE, nullptr);
 	if (!hTimer)
 		goto cleanup;
 

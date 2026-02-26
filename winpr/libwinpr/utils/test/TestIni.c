@@ -42,10 +42,10 @@ int TestIni(int argc, char* argv[])
 	size_t nKeys = 0;
 	size_t nSections = 0;
 	UINT32 iValue = 0;
-	wIniFile* ini = NULL;
-	const char* sValue = NULL;
-	char** keyNames = NULL;
-	char** sectionNames = NULL;
+	wIniFile* ini = nullptr;
+	const char* sValue = nullptr;
+	char** keyNames = nullptr;
+	char** sectionNames = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

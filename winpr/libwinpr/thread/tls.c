@@ -38,7 +38,7 @@ DWORD TlsAlloc(void)
 {
 	pthread_key_t key = 0;
 
-	if (pthread_key_create(&key, NULL) != 0)
+	if (pthread_key_create(&key, nullptr) != 0)
 		return TLS_OUT_OF_INDEXES;
 
 	return key;
@@ -46,7 +46,7 @@ DWORD TlsAlloc(void)
 
 LPVOID TlsGetValue(DWORD dwTlsIndex)
 {
-	LPVOID value = NULL;
+	LPVOID value = nullptr;
 	pthread_key_t key = 0;
 	key = (pthread_key_t)dwTlsIndex;
 	value = (LPVOID)pthread_getspecific(key);

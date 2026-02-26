@@ -63,8 +63,8 @@ LPCSTR WLOG_LEVELS[7] = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "O
 
 static INIT_ONCE g_WLogInitialized = INIT_ONCE_STATIC_INIT;
 static DWORD g_FilterCount = 0;
-static wLogFilter* g_Filters = NULL;
-static wLog* g_RootLog = NULL;
+static wLogFilter* g_Filters = nullptr;
+static wLog* g_RootLog = nullptr;
 
 static wLog* WLog_New(LPCSTR name, wLog* rootLogger);
 static void WLog_Free(wLog* log);
@@ -76,7 +76,7 @@ static wLog* WLog_Get_int(wLog* root, LPCSTR name);
 
 static void WLog_Uninit_(void)
 {
-	wLog* child = NULL;
+	wLog* child = nullptr;
 	wLog* root = g_RootLog;
 
 	if (!root)
@@ -89,7 +89,7 @@ static void WLog_Uninit_(void)
 	}
 
 	WLog_Free(root);
-	g_RootLog = NULL;
+	g_RootLog = nullptr;
 }
 
 static void WLog_Lock(wLog* log)
@@ -106,7 +106,7 @@ static void WLog_Unlock(wLog* log)
 
 static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
 {
-	char* env = NULL;
+	char* env = nullptr;
 	DWORD nSize = 0;
 	DWORD logAppenderType = 0;
 	LPCSTR appender = "WLOG_APPENDER";
@@ -115,12 +115,12 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 	WINPR_UNUSED(Parameter);
 	WINPR_UNUSED(Context);
 
-	if (!(g_RootLog = WLog_New("", NULL)))
+	if (!(g_RootLog = WLog_New("", nullptr)))
 		return FALSE;
 
 	g_RootLog->IsRoot = TRUE;
 	logAppenderType = WLOG_APPENDER_CONSOLE;
-	nSize = GetEnvironmentVariableA(appender, NULL, 0);
+	nSize = GetEnvironmentVariableA(appender, nullptr, 0);
 
 	if (nSize)
 	{
@@ -176,7 +176,7 @@ fail:
 static BOOL log_recursion(LPCSTR file, LPCSTR fkt, size_t line)
 {
 	BOOL status = FALSE;
-	char** msg = NULL;
+	char** msg = nullptr;
 	size_t used = 0;
 	void* bt = winpr_backtrace(20);
 #if defined(ANDROID)
@@ -286,7 +286,7 @@ static BOOL WLog_WriteData(wLog* log, const wLogMessage* message)
 static BOOL WLog_WriteImage(wLog* log, wLogMessage* message)
 {
 	BOOL status = 0;
-	wLogAppender* appender = NULL;
+	wLogAppender* appender = nullptr;
 	appender = WLog_GetLogAppender(log);
 
 	if (!appender)
@@ -317,7 +317,7 @@ static BOOL WLog_WriteImage(wLog* log, wLogMessage* message)
 static BOOL WLog_WritePacket(wLog* log, wLogMessage* message)
 {
 	BOOL status = 0;
-	wLogAppender* appender = NULL;
+	wLogAppender* appender = nullptr;
 	appender = WLog_GetLogAppender(log);
 
 	if (!appender)
@@ -513,8 +513,8 @@ static BOOL WLog_reset_log_filters(wLog* log)
 
 static BOOL WLog_AddStringLogFilters_int(wLog* root, LPCSTR filter)
 {
-	LPSTR p = NULL;
-	LPCSTR filterStr = NULL;
+	LPSTR p = nullptr;
+	LPCSTR filterStr = nullptr;
 
 	if (!filter)
 		return FALSE;
@@ -522,7 +522,7 @@ static BOOL WLog_AddStringLogFilters_int(wLog* root, LPCSTR filter)
 	DWORD count = 1;
 	LPCSTR cpp = filter;
 
-	while ((cpp = strchr(cpp, ',')) != NULL)
+	while ((cpp = strchr(cpp, ',')) != nullptr)
 	{
 		count++;
 		cpp++;
@@ -567,7 +567,7 @@ static BOOL WLog_AddStringLogFilters_int(wLog* root, LPCSTR filter)
 			filterStr = p + 1;
 			p++;
 		}
-	} while (p != NULL);
+	} while (p != nullptr);
 
 	g_FilterCount = size;
 	free(cp);
@@ -651,11 +651,11 @@ int WLog_ParseLogLevel(LPCSTR level)
 
 BOOL WLog_ParseFilter(wLog* root, wLogFilter* filter, LPCSTR name)
 {
-	const char* pc = NULL;
-	char* p = NULL;
-	char* q = NULL;
+	const char* pc = nullptr;
+	char* p = nullptr;
+	char* q = nullptr;
 	size_t count = 0;
-	LPSTR names = NULL;
+	LPSTR names = nullptr;
 	int iLevel = 0;
 	count = 1;
 
@@ -668,7 +668,7 @@ BOOL WLog_ParseFilter(wLog* root, wLogFilter* filter, LPCSTR name)
 
 	if (pc)
 	{
-		while ((pc = strchr(pc, '.')) != NULL)
+		while ((pc = strchr(pc, '.')) != nullptr)
 		{
 			count++;
 			pc++;
@@ -690,7 +690,7 @@ BOOL WLog_ParseFilter(wLog* root, wLogFilter* filter, LPCSTR name)
 		return FALSE;
 	}
 
-	filter->Names[count] = NULL;
+	filter->Names[count] = nullptr;
 	count = 0;
 	p = (char*)names;
 	filter->Names[count++] = p;
@@ -700,7 +700,7 @@ BOOL WLog_ParseFilter(wLog* root, wLogFilter* filter, LPCSTR name)
 	{
 		free(names);
 		free((void*)filter->Names);
-		filter->Names = NULL;
+		filter->Names = nullptr;
 		filter->NameCount = 0;
 		return FALSE;
 	}
@@ -713,14 +713,14 @@ BOOL WLog_ParseFilter(wLog* root, wLogFilter* filter, LPCSTR name)
 	{
 		free(names);
 		free((void*)filter->Names);
-		filter->Names = NULL;
+		filter->Names = nullptr;
 		filter->NameCount = 0;
 		return FALSE;
 	}
 
 	filter->Level = (DWORD)iLevel;
 
-	while ((p = strchr(p, '.')) != NULL)
+	while ((p = strchr(p, '.')) != nullptr)
 	{
 		if (count < filter->NameCount)
 			filter->Names[count++] = p + 1;
@@ -736,12 +736,12 @@ BOOL WLog_ParseFilters(wLog* root)
 {
 	LPCSTR filter = "WLOG_FILTER";
 	BOOL res = FALSE;
-	char* env = NULL;
+	char* env = nullptr;
 	DWORD nSize = 0;
 	free(g_Filters);
-	g_Filters = NULL;
+	g_Filters = nullptr;
 	g_FilterCount = 0;
-	nSize = GetEnvironmentVariableA(filter, NULL, 0);
+	nSize = GetEnvironmentVariableA(filter, nullptr, 0);
 
 	if (nSize < 1)
 		return TRUE;
@@ -807,11 +807,11 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 static BOOL WLog_ParseName(wLog* log, LPCSTR name)
 {
 	const char* cp = name;
-	char* p = NULL;
+	char* p = nullptr;
 	size_t count = 1;
-	LPSTR names = NULL;
+	LPSTR names = nullptr;
 
-	while ((cp = strchr(cp, '.')) != NULL)
+	while ((cp = strchr(cp, '.')) != nullptr)
 	{
 		count++;
 		cp++;
@@ -831,12 +831,12 @@ static BOOL WLog_ParseName(wLog* log, LPCSTR name)
 		return FALSE;
 	}
 
-	log->Names[count] = NULL;
+	log->Names[count] = nullptr;
 	count = 0;
 	p = (char*)names;
 	log->Names[count++] = p;
 
-	while ((p = strchr(p, '.')) != NULL)
+	while ((p = strchr(p, '.')) != nullptr)
 	{
 		if (count < log->NameCount)
 			log->Names[count++] = p + 1;
@@ -850,14 +850,14 @@ static BOOL WLog_ParseName(wLog* log, LPCSTR name)
 
 wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 {
-	wLog* log = NULL;
-	char* env = NULL;
+	wLog* log = nullptr;
+	char* env = nullptr;
 	DWORD nSize = 0;
 	int iLevel = 0;
 	log = (wLog*)calloc(1, sizeof(wLog));
 
 	if (!log)
-		return NULL;
+		return nullptr;
 
 	log->Name = _strdup(name);
 
@@ -875,7 +875,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	if (!(log->Children = (wLog**)calloc(log->ChildrenSize, sizeof(wLog*))))
 		goto out_fail;
 
-	log->Appender = NULL;
+	log->Appender = nullptr;
 
 	if (rootLogger)
 	{
@@ -886,7 +886,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	{
 		LPCSTR level = "WLOG_LEVEL";
 		log->Level = WLOG_INFO;
-		nSize = GetEnvironmentVariableA(level, NULL, 0);
+		nSize = GetEnvironmentVariableA(level, nullptr, 0);
 
 		if (nSize)
 		{
@@ -926,7 +926,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	return log;
 out_fail:
 	WLog_Free(log);
-	return NULL;
+	return nullptr;
 }
 
 void WLog_Free(wLog* log)
@@ -936,7 +936,7 @@ void WLog_Free(wLog* log)
 		if (log->Appender)
 		{
 			WLog_Appender_Free(log, log->Appender);
-			log->Appender = NULL;
+			log->Appender = nullptr;
 		}
 
 		free(log->Name);
@@ -953,8 +953,8 @@ void WLog_Free(wLog* log)
 
 wLog* WLog_GetRoot(void)
 {
-	if (!InitOnceExecuteOnce(&g_WLogInitialized, WLog_InitializeRoot, NULL, NULL))
-		return NULL;
+	if (!InitOnceExecuteOnce(&g_WLogInitialized, WLog_InitializeRoot, nullptr, nullptr))
+		return nullptr;
 
 	return g_RootLog;
 }
@@ -967,13 +967,13 @@ static BOOL WLog_AddChild(wLog* parent, wLog* child)
 
 	if (parent->ChildrenCount >= parent->ChildrenSize)
 	{
-		wLog** tmp = NULL;
+		wLog** tmp = nullptr;
 		parent->ChildrenSize *= 2;
 
 		if (!parent->ChildrenSize)
 		{
 			free((void*)parent->Children);
-			parent->Children = NULL;
+			parent->Children = nullptr;
 		}
 		else
 		{
@@ -982,7 +982,7 @@ static BOOL WLog_AddChild(wLog* parent, wLog* child)
 			if (!tmp)
 			{
 				free((void*)parent->Children);
-				parent->Children = NULL;
+				parent->Children = nullptr;
 				goto exit;
 			}
 
@@ -1005,11 +1005,11 @@ exit:
 
 static wLog* WLog_FindChild(wLog* root, LPCSTR name)
 {
-	wLog* child = NULL;
+	wLog* child = nullptr;
 	BOOL found = FALSE;
 
 	if (!root)
-		return NULL;
+		return nullptr;
 
 	WLog_Lock(root);
 
@@ -1026,25 +1026,25 @@ static wLog* WLog_FindChild(wLog* root, LPCSTR name)
 
 	WLog_Unlock(root);
 
-	return (found) ? child : NULL;
+	return (found) ? child : nullptr;
 }
 
 static wLog* WLog_Get_int(wLog* root, LPCSTR name)
 {
-	wLog* log = NULL;
+	wLog* log = nullptr;
 
 	if (!(log = WLog_FindChild(root, name)))
 	{
 		if (!root)
-			return NULL;
+			return nullptr;
 
 		if (!(log = WLog_New(name, root)))
-			return NULL;
+			return nullptr;
 
 		if (!WLog_AddChild(root, log))
 		{
 			WLog_Free(log);
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -1060,7 +1060,7 @@ wLog* WLog_Get(LPCSTR name)
 #if defined(WITH_WINPR_DEPRECATED)
 BOOL WLog_Init(void)
 {
-	return WLog_GetRoot() != NULL;
+	return WLog_GetRoot() != nullptr;
 }
 
 BOOL WLog_Uninit(void)
@@ -1081,7 +1081,7 @@ BOOL WLog_Uninit(void)
 	WLog_Unlock(root);
 
 	WLog_Free(root);
-	g_RootLog = NULL;
+	g_RootLog = nullptr;
 
 	return TRUE;
 }

@@ -63,7 +63,7 @@ static void ObjectPool_Unlock(wObjectPool* pool)
 
 void* ObjectPool_Take(wObjectPool* pool)
 {
-	void* obj = NULL;
+	void* obj = nullptr;
 
 	ObjectPool_Lock(pool);
 
@@ -73,7 +73,7 @@ void* ObjectPool_Take(wObjectPool* pool)
 	if (!obj)
 	{
 		if (pool->object.fnObjectNew)
-			obj = pool->object.fnObjectNew(NULL);
+			obj = pool->object.fnObjectNew(nullptr);
 	}
 
 	if (pool->object.fnObjectInit)
@@ -151,7 +151,7 @@ void ObjectPool_Clear(wObjectPool* pool)
 
 wObjectPool* ObjectPool_New(BOOL synchronized)
 {
-	wObjectPool* pool = NULL;
+	wObjectPool* pool = nullptr;
 
 	pool = (wObjectPool*)calloc(1, sizeof(wObjectPool));
 
@@ -163,7 +163,7 @@ wObjectPool* ObjectPool_New(BOOL synchronized)
 		if (!pool->array)
 		{
 			free(pool);
-			return NULL;
+			return nullptr;
 		}
 		pool->synchronized = synchronized;
 

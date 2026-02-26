@@ -107,24 +107,24 @@ BOOL LogonUserCloseHandle(HANDLE handle)
 static HANDLE_OPS ops = { LogonUserIsHandled,
 	                      LogonUserCloseHandle,
 	                      LogonUserGetFd,
-	                      NULL, /* CleanupHandle */
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL };
+	                      nullptr, /* CleanupHandle */
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr,
+	                      nullptr };
 
 BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, WINPR_ATTR_UNUSED LPCSTR lpszPassword,
                 WINPR_ATTR_UNUSED DWORD dwLogonType, WINPR_ATTR_UNUSED DWORD dwLogonProvider,
@@ -166,7 +166,7 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, WINPR_ATTR_UNUSED LPCSTR
 
 			{
 				struct passwd pwd = WINPR_C_ARRAY_INIT;
-				struct passwd* pw = NULL;
+				struct passwd* pw = nullptr;
 				const int rc = getpwnam_r(lpszUsername, &pwd, buf,
 				                          WINPR_ASSERTING_INT_CAST(size_t, buflen), &pw);
 				free(buf);
@@ -230,13 +230,13 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 		{
 			int rc = 0;
 			struct passwd pwd = WINPR_C_ARRAY_INIT;
-			struct passwd* result = NULL;
+			struct passwd* result = nullptr;
 			uid_t uid = getuid();
 
 			rc = getpwuid_r(uid, &pwd, lpNameBuffer, *nSize, &result);
 			if (rc != 0)
 				return FALSE;
-			if (result == NULL)
+			if (result == nullptr)
 				return FALSE;
 		}
 #elif defined(WINPR_HAVE_GETLOGIN_R)
@@ -278,7 +278,7 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
 {
 	BOOL rc = FALSE;
-	char* name = NULL;
+	char* name = nullptr;
 
 	WINPR_ASSERT(nSize);
 	WINPR_ASSERT(lpNameBuffer);

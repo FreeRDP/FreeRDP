@@ -6,7 +6,7 @@
 
 int TestWtsApiSessionNotification(int argc, char* argv[])
 {
-	HWND hWnd = NULL;
+	HWND hWnd = nullptr;
 	BOOL bSuccess = 0;
 	DWORD dwFlags = 0;
 
@@ -14,7 +14,7 @@ int TestWtsApiSessionNotification(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 
 #ifndef _WIN32
-	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0))
+	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", nullptr, 0))
 	{
 		printf("%s: No RDS environment detected, skipping test\n", __func__);
 		return 0;
@@ -22,7 +22,7 @@ int TestWtsApiSessionNotification(int argc, char* argv[])
 #else
 	/* We create a message-only window and use the predefined class name "STATIC" for simplicity */
 	hWnd = CreateWindowA("STATIC", "TestWtsApiSessionNotification", 0, 0, 0, 0, 0, HWND_MESSAGE,
-	                     NULL, NULL, NULL);
+	                     nullptr, nullptr, nullptr);
 	if (!hWnd)
 	{
 		printf("%s: error creating message-only window: %" PRIu32 "\n", __func__, GetLastError());
@@ -47,7 +47,7 @@ int TestWtsApiSessionNotification(int argc, char* argv[])
 	if (hWnd)
 	{
 		DestroyWindow(hWnd);
-		hWnd = NULL;
+		hWnd = nullptr;
 	}
 #endif
 

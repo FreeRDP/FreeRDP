@@ -128,36 +128,36 @@ static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 static SERIAL_DRIVER SerCx2Sys = {
 	.id = SerialDriverSerCx2Sys,
 	.name = _T("SerCx2.sys"),
-	.set_baud_rate = NULL,
-	.get_baud_rate = NULL,
-	.get_properties = NULL,
+	.set_baud_rate = nullptr,
+	.get_baud_rate = nullptr,
+	.get_properties = nullptr,
 	.set_serial_chars = set_serial_chars,
 	.get_serial_chars = get_serial_chars,
-	.set_line_control = NULL,
-	.get_line_control = NULL,
-	.set_handflow = NULL,
-	.get_handflow = NULL,
-	.set_timeouts = NULL,
-	.get_timeouts = NULL,
-	.set_dtr = NULL,
-	.clear_dtr = NULL,
-	.set_rts = NULL,
-	.clear_rts = NULL,
-	.get_modemstatus = NULL,
+	.set_line_control = nullptr,
+	.get_line_control = nullptr,
+	.set_handflow = nullptr,
+	.get_handflow = nullptr,
+	.set_timeouts = nullptr,
+	.get_timeouts = nullptr,
+	.set_dtr = nullptr,
+	.clear_dtr = nullptr,
+	.set_rts = nullptr,
+	.clear_rts = nullptr,
+	.get_modemstatus = nullptr,
 	.set_wait_mask = set_wait_mask,
-	.get_wait_mask = NULL,
-	.wait_on_mask = NULL,
-	.set_queue_size = NULL,
+	.get_wait_mask = nullptr,
+	.wait_on_mask = nullptr,
+	.set_queue_size = nullptr,
 	.purge = purge,
-	.get_commstatus = NULL,
-	.set_break_on = NULL,
-	.set_break_off = NULL,
-	.set_xoff = NULL, /* not supported by SerCx2.sys */
-	.set_xon = NULL,  /* not supported by SerCx2.sys */
-	.get_dtrrts = NULL,
-	.config_size = NULL,    /* not supported by SerCx2.sys */
-	.immediate_char = NULL, /* not supported by SerCx2.sys */
-	.reset_device = NULL,   /* not supported by SerCx2.sys */
+	.get_commstatus = nullptr,
+	.set_break_on = nullptr,
+	.set_break_off = nullptr,
+	.set_xoff = nullptr, /* not supported by SerCx2.sys */
+	.set_xon = nullptr,  /* not supported by SerCx2.sys */
+	.get_dtrrts = nullptr,
+	.config_size = nullptr,    /* not supported by SerCx2.sys */
+	.immediate_char = nullptr, /* not supported by SerCx2.sys */
+	.reset_device = nullptr,   /* not supported by SerCx2.sys */
 };
 
 const SERIAL_DRIVER* SerCx2Sys_s(void)
@@ -166,7 +166,7 @@ const SERIAL_DRIVER* SerCx2Sys_s(void)
 	const SERIAL_DRIVER* pSerialSys = SerialSys_s();
 	const SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
 	if (!pSerialSys || !pSerCxSys)
-		return NULL;
+		return nullptr;
 
 	SerCx2Sys.set_baud_rate = pSerialSys->set_baud_rate;
 	SerCx2Sys.get_baud_rate = pSerialSys->get_baud_rate;

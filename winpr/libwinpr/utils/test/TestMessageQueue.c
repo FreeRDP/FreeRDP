@@ -24,7 +24,7 @@ static DWORD WINAPI message_queue_consumer_thread(LPVOID arg)
 
 static bool wrap_test(bool (*fkt)(wMessageQueue* queue))
 {
-	wMessageQueue* queue = MessageQueue_New(NULL);
+	wMessageQueue* queue = MessageQueue_New(nullptr);
 	if (!queue)
 		return false;
 
@@ -46,7 +46,7 @@ static bool check(const wMessage* message, size_t pos)
 		return false;
 	if (message->lParam != (void*)42)
 		return false;
-	if (message->Free != NULL)
+	if (message->Free != nullptr)
 		return false;
 	return true;
 }
@@ -57,7 +57,7 @@ static bool append(wMessageQueue* queue, size_t pos)
 		                       .id = WINPR_ASSERTING_INT_CAST(DWORD, pos),
 		                       .wParam = (void*)23,
 		                       .lParam = (void*)42,
-		                       .Free = NULL };
+		                       .Free = nullptr };
 
 	return MessageQueue_Dispatch(queue, &message);
 }
@@ -148,13 +148,13 @@ static bool test_operation_run(wMessageQueue* queue, HANDLE thread)
 	WINPR_ASSERT(queue);
 	WINPR_ASSERT(thread);
 
-	if (!MessageQueue_Post(queue, NULL, 123, NULL, NULL))
+	if (!MessageQueue_Post(queue, nullptr, 123, nullptr, nullptr))
 		return false;
 
-	if (!MessageQueue_Post(queue, NULL, 456, NULL, NULL))
+	if (!MessageQueue_Post(queue, nullptr, 456, nullptr, nullptr))
 		return false;
 
-	if (!MessageQueue_Post(queue, NULL, 789, NULL, NULL))
+	if (!MessageQueue_Post(queue, nullptr, 789, nullptr, nullptr))
 		return false;
 
 	if (!MessageQueue_PostQuit(queue, 0))
@@ -168,7 +168,7 @@ static bool test_operation(wMessageQueue* queue)
 {
 	WINPR_ASSERT(queue);
 
-	HANDLE thread = CreateThread(NULL, 0, message_queue_consumer_thread, queue, 0, NULL);
+	HANDLE thread = CreateThread(nullptr, 0, message_queue_consumer_thread, queue, 0, nullptr);
 	if (!thread)
 	{
 		printf("failed to create thread\n");

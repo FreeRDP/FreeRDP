@@ -127,7 +127,7 @@ extern "C"
 	/*
 	 * Finds a symbol using ptrace.
 	 * Returns the containing map and information about the symbol, or
-	 * NULL if one or the other is not available.
+	 * nullptr if one or the other is not available.
 	 */
 	void find_symbol_ptrace(const ptrace_context_t* context, uintptr_t addr,
 	                        const map_info_t** out_map_info, const symbol_t** out_symbol);

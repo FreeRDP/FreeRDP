@@ -56,7 +56,7 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
-static WINPR_FILE* pStdHandleFile = NULL;
+static WINPR_FILE* pStdHandleFile = nullptr;
 
 static void GetStdHandle_Uninit(void) __attribute__((destructor));
 
@@ -96,7 +96,7 @@ static BOOL FileCloseHandleInt(HANDLE handle, BOOL force)
 		if (fileno(file->fp) > 2)
 		{
 			(void)fclose(file->fp);
-			file->fp = NULL;
+			file->fp = nullptr;
 		}
 	}
 
@@ -122,7 +122,7 @@ static BOOL log_error_(const char* name, const WINPR_FILE* pFile, const char* fi
 	WINPR_ASSERT(fkt);
 
 	const DWORD level = WLOG_ERROR;
-	static wLog* log = NULL;
+	static wLog* log = nullptr;
 	if (!log)
 		log = WLog_Get(TAG);
 
@@ -235,7 +235,7 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                      LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
 	size_t io_status = 0;
-	WINPR_FILE* file = NULL;
+	WINPR_FILE* file = nullptr;
 	BOOL status = TRUE;
 
 	if (lpOverlapped)
@@ -276,7 +276,7 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
                       LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	size_t io_status = 0;
-	WINPR_FILE* file = NULL;
+	WINPR_FILE* file = nullptr;
 
 	if (lpOverlapped)
 	{
@@ -304,7 +304,7 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 
 static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 {
-	WINPR_FILE* file = NULL;
+	WINPR_FILE* file = nullptr;
 	INT64 cur = 0;
 	INT64 size = 0;
 
@@ -379,7 +379,7 @@ static BOOL FileGetFileInformationByHandle(HANDLE hFile,
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 	struct stat st;
 	UINT64 ft = 0;
-	const char* lastSep = NULL;
+	const char* lastSep = nullptr;
 
 	if (!pFile)
 		return FALSE;
@@ -719,19 +719,19 @@ static HANDLE_OPS fileOps = {
 	FileIsHandled,
 	FileCloseHandle,
 	FileGetFd,
-	NULL, /* CleanupHandle */
+	nullptr, /* CleanupHandle */
 	FileRead,
-	NULL, /* FileReadEx */
-	NULL, /* FileReadScatter */
+	nullptr, /* FileReadEx */
+	nullptr, /* FileReadScatter */
 	FileWrite,
-	NULL, /* FileWriteEx */
-	NULL, /* FileWriteGather */
+	nullptr, /* FileWriteEx */
+	nullptr, /* FileWriteGather */
 	FileGetFileSize,
 	FileFlushFileBuffers,
 	FileSetEndOfFile,
 	FileSetFilePointer,
 	FileSetFilePointerEx,
-	NULL, /* FileLockFile */
+	nullptr, /* FileLockFile */
 	FileLockFileEx,
 	FileUnlockFile,
 	FileUnlockFileEx,
@@ -743,23 +743,23 @@ static HANDLE_OPS shmOps = {
 	FileIsHandled,
 	FileCloseHandle,
 	FileGetFd,
-	NULL, /* CleanupHandle */
+	nullptr, /* CleanupHandle */
 	FileRead,
-	NULL, /* FileReadEx */
-	NULL, /* FileReadScatter */
+	nullptr, /* FileReadEx */
+	nullptr, /* FileReadScatter */
 	FileWrite,
-	NULL, /* FileWriteEx */
-	NULL, /* FileWriteGather */
-	NULL, /* FileGetFileSize */
-	NULL, /*  FlushFileBuffers */
-	NULL, /* FileSetEndOfFile */
-	NULL, /* FileSetFilePointer */
-	NULL, /* SetFilePointerEx */
-	NULL, /* FileLockFile */
-	NULL, /* FileLockFileEx */
-	NULL, /* FileUnlockFile */
-	NULL, /* FileUnlockFileEx */
-	NULL, /* FileSetFileTime */
+	nullptr, /* FileWriteEx */
+	nullptr, /* FileWriteGather */
+	nullptr, /* FileGetFileSize */
+	nullptr, /*  FlushFileBuffers */
+	nullptr, /* FileSetEndOfFile */
+	nullptr, /* FileSetFilePointer */
+	nullptr, /* SetFilePointerEx */
+	nullptr, /* FileLockFile */
+	nullptr, /* FileLockFileEx */
+	nullptr, /* FileUnlockFile */
+	nullptr, /* FileUnlockFileEx */
+	nullptr, /* FileSetFileTime */
 	FileGetFileInformationByHandle,
 };
 
@@ -857,7 +857,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
                               DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                               HANDLE hTemplateFile)
 {
-	WINPR_FILE* pFile = NULL;
+	WINPR_FILE* pFile = nullptr;
 	BOOL create = 0;
 	const char* mode = FileGetMode(dwDesiredAccess, dwCreationDisposition, &create);
 #ifdef __sun
@@ -865,7 +865,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 #else
 	int lock = 0;
 #endif
-	FILE* fp = NULL;
+	FILE* fp = nullptr;
 	struct stat st;
 
 	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
@@ -946,7 +946,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		}
 	}
 
-	if (NULL == fp)
+	if (nullptr == fp)
 		fp = winpr_fopen(pFile->lpFileName, mode);
 
 	pFile->fp = fp;
@@ -960,7 +960,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		return INVALID_HANDLE_VALUE;
 	}
 
-	(void)setvbuf(fp, NULL, _IONBF, 0);
+	(void)setvbuf(fp, nullptr, _IONBF, 0);
 
 #ifdef __sun
 	lock.l_start = 0;
@@ -1029,7 +1029,7 @@ const HANDLE_CREATOR* GetFileHandleCreator(void)
 
 static WINPR_FILE* FileHandle_New(FILE* fp)
 {
-	WINPR_FILE* pFile = NULL;
+	WINPR_FILE* pFile = nullptr;
 	char name[MAX_PATH] = WINPR_C_ARRAY_INIT;
 
 	(void)_snprintf(name, sizeof(name), "device_%d", fileno(fp));
@@ -1037,7 +1037,7 @@ static WINPR_FILE* FileHandle_New(FILE* fp)
 	if (!pFile)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return NULL;
+		return nullptr;
 	}
 	pFile->fp = fp;
 	pFile->common.ops = &shmOps;
@@ -1054,7 +1054,7 @@ void GetStdHandle_Uninit(void)
 
 HANDLE GetStdHandle(DWORD nStdHandle)
 {
-	FILE* fp = NULL;
+	FILE* fp = nullptr;
 
 	switch (nStdHandle)
 	{
@@ -1116,7 +1116,7 @@ BOOL GetDiskFreeSpaceW(LPCWSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
 	if (!lpRootPathName)
 		return FALSE;
 
-	char* rootPathName = ConvertWCharToUtf8Alloc(lpRootPathName, NULL);
+	char* rootPathName = ConvertWCharToUtf8Alloc(lpRootPathName, nullptr);
 	if (!rootPathName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -1308,12 +1308,12 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 {
 	HANDLE hFile;
 	if (!lpFileName)
-		return NULL;
+		return nullptr;
 
-	WCHAR* lpFileNameW = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
+	WCHAR* lpFileNameW = ConvertUtf8ToWCharAlloc(lpFileName, nullptr);
 
 	if (!lpFileNameW)
-		return NULL;
+		return nullptr;
 
 	hFile = CreateFileW(lpFileNameW, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
 	                    dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
@@ -1364,27 +1364,27 @@ DWORD SetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveH
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
 	return FindFirstFileExA(lpFileName, FindExInfoStandard, lpFindFileData, FindExSearchNameMatch,
-	                        NULL, 0);
+	                        nullptr, 0);
 }
 
 HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 {
 	return FindFirstFileExW(lpFileName, FindExInfoStandard, lpFindFileData, FindExSearchNameMatch,
-	                        NULL, 0);
+	                        nullptr, 0);
 }
 
 DWORD GetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, LPSTR* lpFilePart)
 {
 	DWORD dwStatus;
-	WCHAR* lpFileNameW = NULL;
-	WCHAR* lpBufferW = NULL;
-	WCHAR* lpFilePartW = NULL;
+	WCHAR* lpFileNameW = nullptr;
+	WCHAR* lpBufferW = nullptr;
+	WCHAR* lpFilePartW = nullptr;
 	DWORD nBufferLengthW = nBufferLength * sizeof(WCHAR);
 
 	if (!lpFileName || (nBufferLength < 1))
 		return 0;
 
-	lpFileNameW = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
+	lpFileNameW = ConvertUtf8ToWCharAlloc(lpFileName, nullptr);
 	if (!lpFileNameW)
 		return 0;
 
@@ -1486,8 +1486,8 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 #ifdef _WIN32
 	return (HANDLE)_get_osfhandle(fd);
 #else  /* _WIN32 */
-	WINPR_FILE* pFile = NULL;
-	FILE* fp = NULL;
+	WINPR_FILE* pFile = nullptr;
+	FILE* fp = nullptr;
 	int flags = 0;
 
 	/* Make sure it's a valid fd */
@@ -1506,7 +1506,7 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 	if (!fp)
 		return INVALID_HANDLE_VALUE;
 
-	(void)setvbuf(fp, NULL, _IONBF, 0);
+	(void)setvbuf(fp, nullptr, _IONBF, 0);
 
 	// NOLINTNEXTLINE(clang-analyzer-unix.Stream)
 	pFile = FileHandle_New(fp);
@@ -1522,18 +1522,18 @@ FILE* winpr_fopen(const char* path, const char* mode)
 #ifndef _WIN32
 	return fopen(path, mode);
 #else
-	LPWSTR lpPathW = NULL;
-	LPWSTR lpModeW = NULL;
-	FILE* result = NULL;
+	LPWSTR lpPathW = nullptr;
+	LPWSTR lpModeW = nullptr;
+	FILE* result = nullptr;
 
 	if (!path || !mode)
-		return NULL;
+		return nullptr;
 
-	lpPathW = ConvertUtf8ToWCharAlloc(path, NULL);
+	lpPathW = ConvertUtf8ToWCharAlloc(path, nullptr);
 	if (!lpPathW)
 		goto cleanup;
 
-	lpModeW = ConvertUtf8ToWCharAlloc(mode, NULL);
+	lpModeW = ConvertUtf8ToWCharAlloc(mode, nullptr);
 	if (!lpModeW)
 		goto cleanup;
 
@@ -1549,7 +1549,7 @@ cleanup:
 #if !defined(_UWP) && !defined(_WIN32)
 DWORD GetLogicalDriveStringsW(DWORD nBufferLength, LPWSTR lpBuffer)
 {
-	char* buffer = NULL;
+	char* buffer = nullptr;
 	if (nBufferLength > 0)
 	{
 		buffer = calloc(nBufferLength, sizeof(char));

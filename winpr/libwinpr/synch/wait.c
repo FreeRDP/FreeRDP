@@ -117,7 +117,7 @@ STATIC_NEEDED int pthread_mutex_timedlock(pthread_mutex_t* mutex,
 			return ETIMEDOUT;
 		}
 
-		nanosleep(&sleepytime, NULL);
+		nanosleep(&sleepytime, nullptr);
 	}
 
 	return retcode;
@@ -135,7 +135,7 @@ static void ts_add_ms(struct timespec* ts, DWORD dwMilliseconds)
 DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* Object = NULL;
+	WINPR_HANDLE* Object = nullptr;
 	WINPR_POLL_SET pollset = WINPR_C_ARRAY_INIT;
 
 	if (!winpr_Handle_GetInfo(hHandle, &Type, &Object))
@@ -210,7 +210,7 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 	else
 	{
 		int status = -1;
-		WINPR_THREAD* thread = NULL;
+		WINPR_THREAD* thread = nullptr;
 		BOOL isSet = FALSE;
 		size_t extraFds = 0;
 		DWORD ret = 0;
@@ -308,8 +308,8 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 	int fd = -1;
 	int status = -1;
 	ULONG Type = 0;
-	WINPR_HANDLE* Object = NULL;
-	WINPR_THREAD* thread = NULL;
+	WINPR_HANDLE* Object = nullptr;
+	WINPR_THREAD* thread = nullptr;
 	WINPR_POLL_SET pollset = WINPR_C_ARRAY_INIT;
 	DWORD ret = WAIT_FAILED;
 	size_t extraFds = 0;

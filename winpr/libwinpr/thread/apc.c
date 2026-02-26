@@ -62,8 +62,8 @@ BOOL apc_uninit(APC_QUEUE* apc)
 
 void apc_register(WINPR_THREAD* thread, WINPR_APC_ITEM* addItem)
 {
-	WINPR_APC_ITEM** nextp = NULL;
-	APC_QUEUE* apc = NULL;
+	WINPR_APC_ITEM** nextp = nullptr;
+	APC_QUEUE* apc = nullptr;
 
 	WINPR_ASSERT(thread);
 	WINPR_ASSERT(addItem);
@@ -113,7 +113,7 @@ static inline void apc_item_remove(APC_QUEUE* apc, WINPR_APC_ITEM* item)
 APC_REMOVE_RESULT apc_remove(WINPR_APC_ITEM* item)
 {
 	WINPR_THREAD* thread = winpr_GetCurrentThread();
-	APC_QUEUE* apc = NULL;
+	APC_QUEUE* apc = nullptr;
 	APC_REMOVE_RESULT ret = APC_REMOVE_OK;
 
 	WINPR_ASSERT(item);
@@ -155,9 +155,9 @@ out:
 
 BOOL apc_collectFds(WINPR_THREAD* thread, WINPR_POLL_SET* set, BOOL* haveAutoSignaled)
 {
-	WINPR_APC_ITEM* item = NULL;
+	WINPR_APC_ITEM* item = nullptr;
 	BOOL ret = FALSE;
-	APC_QUEUE* apc = NULL;
+	APC_QUEUE* apc = nullptr;
 
 	WINPR_ASSERT(thread);
 	WINPR_ASSERT(haveAutoSignaled);
@@ -186,8 +186,8 @@ out:
 
 int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t startIndex)
 {
-	APC_QUEUE* apc = NULL;
-	WINPR_APC_ITEM* nextItem = NULL;
+	APC_QUEUE* apc = nullptr;
+	WINPR_APC_ITEM* nextItem = nullptr;
 	size_t idx = startIndex;
 	int ret = 0;
 
@@ -241,9 +241,9 @@ int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t sta
 
 void apc_cleanupThread(WINPR_THREAD* thread)
 {
-	WINPR_APC_ITEM* item = NULL;
-	WINPR_APC_ITEM* nextItem = NULL;
-	APC_QUEUE* apc = NULL;
+	WINPR_APC_ITEM* item = nullptr;
+	WINPR_APC_ITEM* nextItem = nullptr;
+	APC_QUEUE* apc = nullptr;
 
 	WINPR_ASSERT(thread);
 
@@ -259,13 +259,13 @@ void apc_cleanupThread(WINPR_THREAD* thread)
 		if (item->type == APC_TYPE_HANDLE_FREE)
 			item->completion(item->completionArgs);
 
-		item->last = item->next = NULL;
+		item->last = item->next = nullptr;
 		item->linked = FALSE;
 		if (item->markedForFree)
 			free(item);
 	}
 
-	apc->head = apc->tail = NULL;
+	apc->head = apc->tail = nullptr;
 	pthread_mutex_unlock(&apc->mutex);
 }
 

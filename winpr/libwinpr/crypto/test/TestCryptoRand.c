@@ -5,7 +5,7 @@
 
 int TestCryptoRand(int argc, char* argv[])
 {
-	char* str = NULL;
+	char* str = nullptr;
 	BYTE rnd[16] = WINPR_C_ARRAY_INIT;
 
 	WINPR_UNUSED(argc);

@@ -5,13 +5,13 @@
 
 static BOOL TestStream_Verify(wStream* s, size_t mincap, size_t len, size_t pos)
 {
-	if (Stream_Buffer(s) == NULL)
+	if (Stream_Buffer(s) == nullptr)
 	{
 		printf("stream buffer is null\n");
 		return FALSE;
 	}
 
-	if (Stream_ConstPointer(s) == NULL)
+	if (Stream_ConstPointer(s) == nullptr)
 	{
 		printf("stream pointer is null\n");
 		return FALSE;
@@ -79,7 +79,7 @@ static BOOL TestStream_Verify(wStream* s, size_t mincap, size_t len, size_t pos)
 static BOOL TestStream_New(void)
 {
 	/* Test creation of a 0-size stream with no buffer */
-	wStream* s = Stream_New(NULL, 0);
+	wStream* s = Stream_New(nullptr, 0);
 
 	if (s)
 		return FALSE;
@@ -139,8 +139,8 @@ static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 {
 	size_t len = 0;
 	size_t cap = 0;
-	wStream* s = NULL;
-	void* buffer = NULL;
+	wStream* s = nullptr;
+	void* buffer = nullptr;
 
 	for (size_t i = 0; i < count; i++)
 	{
@@ -155,7 +155,7 @@ static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 			}
 		}
 
-		if (!(s = Stream_New(selfAlloc ? buffer : NULL, len)))
+		if (!(s = Stream_New(selfAlloc ? buffer : nullptr, len)))
 		{
 			printf("%s: Stream_New failed for stream #%" PRIuz "\n", __func__, i);
 			goto fail;
@@ -188,7 +188,7 @@ static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 			}
 		}
 
-		Stream_Free(s, buffer == NULL);
+		Stream_Free(s, buffer == nullptr);
 		free(buffer);
 	}
 
@@ -198,7 +198,7 @@ fail:
 
 	if (s)
 	{
-		Stream_Free(s, buffer == NULL);
+		Stream_Free(s, buffer == nullptr);
 	}
 
 	return FALSE;
@@ -206,10 +206,10 @@ fail:
 
 static BOOL TestStream_Extent(UINT32 maxSize)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	BOOL result = FALSE;
 
-	if (!(s = Stream_New(NULL, 1)))
+	if (!(s = Stream_New(nullptr, 1)))
 	{
 		printf("%s: Stream_New failed\n", __func__);
 		return FALSE;
@@ -333,7 +333,7 @@ static BOOL TestStream_WriteAndRead(UINT64 value)
 	} val;
 	val.u64 = value;
 
-	wStream* s = Stream_New(NULL, 1024);
+	wStream* s = Stream_New(nullptr, 1024);
 	if (!s)
 		return FALSE;
 	BOOL rc = FALSE;
@@ -460,7 +460,7 @@ fail:
 static BOOL TestStream_Reading(void)
 {
 	BYTE src[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	BOOL result = TRUE;
 
 	if (!(s = Stream_New(src, sizeof(src))))
@@ -489,7 +489,7 @@ static BOOL TestStream_Write(void)
 	UINT32 u32 = 0;
 	UINT64 u64 = 0;
 	const BYTE data[] = "someteststreamdata";
-	wStream* s = Stream_New(NULL, 100);
+	wStream* s = Stream_New(nullptr, 100);
 
 	if (!s)
 		goto out;
@@ -578,7 +578,7 @@ out:
 static BOOL TestStream_Seek(void)
 {
 	BOOL rc = FALSE;
-	wStream* s = Stream_New(NULL, 100);
+	wStream* s = Stream_New(nullptr, 100);
 
 	if (!s)
 		goto out;
@@ -620,7 +620,7 @@ out:
 static BOOL TestStream_Rewind(void)
 {
 	BOOL rc = FALSE;
-	wStream* s = Stream_New(NULL, 100);
+	wStream* s = Stream_New(nullptr, 100);
 
 	if (!s)
 		goto out;
@@ -668,7 +668,7 @@ static BOOL TestStream_Zero(void)
 {
 	BOOL rc = FALSE;
 	const BYTE data[] = "someteststreamdata";
-	wStream* s = Stream_New(NULL, sizeof(data));
+	wStream* s = Stream_New(nullptr, sizeof(data));
 
 	if (!s)
 		goto out;
@@ -716,7 +716,7 @@ static BOOL TestStream_Fill(void)
 	BOOL rc = FALSE;
 	const BYTE fill[7] = "XXXXXXX";
 	const BYTE data[] = "someteststreamdata";
-	wStream* s = Stream_New(NULL, sizeof(data));
+	wStream* s = Stream_New(nullptr, sizeof(data));
 
 	if (!s)
 		goto out;
@@ -757,8 +757,8 @@ static BOOL TestStream_Copy(void)
 {
 	BOOL rc = FALSE;
 	const BYTE data[] = "someteststreamdata";
-	wStream* s = Stream_New(NULL, sizeof(data));
-	wStream* d = Stream_New(NULL, sizeof(data));
+	wStream* s = Stream_New(nullptr, sizeof(data));
+	wStream* d = Stream_New(nullptr, sizeof(data));
 
 	if (!s || !d)
 		goto out;

@@ -36,7 +36,7 @@ static BOOL Test_GetComputerName(void)
 
 	/* test with null buffer and zero size (required if buffer is null) */
 	dwSize = 0;
-	if (GetComputerNameA(NULL, &dwSize) == TRUE)
+	if (GetComputerNameA(nullptr, &dwSize) == TRUE)
 	{
 		(void)fprintf(stderr, "%s: (1) GetComputerNameA unexpectedly succeeded with null buffer\n",
 		              __func__);
@@ -177,15 +177,15 @@ static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 	 * lpBuffer [out]
 	 * A pointer to a buffer that receives the computer name or the cluster virtual server name.
 	 * The length of the name may be greater than MAX_COMPUTERNAME_LENGTH characters because DNS
-	 * allows longer names. To ensure that this buffer is large enough, set this parameter to NULL
-	 * and use the required buffer size returned in the lpnSize parameter.
+	 * allows longer names. To ensure that this buffer is large enough, set this parameter to
+	 * nullptr and use the required buffer size returned in the lpnSize parameter.
 	 *
 	 * lpnSize [in, out]
 	 * On input, specifies the size of the buffer, in TCHARs.
 	 * On output, receives the number of TCHARs copied to the destination buffer, not including the
 	 * terminating null character. If the buffer is too small, the function fails and GetLastError
 	 * returns ERROR_MORE_DATA. This parameter receives the size of the buffer required, including
-	 * the terminating null character. If lpBuffer is NULL, this parameter must be zero.
+	 * the terminating null character. If lpBuffer is nullptr, this parameter must be zero.
 	 *
 	 */
 
@@ -214,7 +214,7 @@ static BOOL Test_GetComputerNameEx_Format(COMPUTER_NAME_FORMAT format)
 
 	/* test with null buffer and zero size (required if buffer is null) */
 	dwSize = 0;
-	if (GetComputerNameExA(format, NULL, &dwSize) == TRUE)
+	if (GetComputerNameExA(format, nullptr, &dwSize) == TRUE)
 	{
 		(void)fprintf(stderr,
 		              "%s: (1/%d) GetComputerNameExA unexpectedly succeeded with null buffer\n",

@@ -10,7 +10,7 @@ typedef struct
 	char* channel;
 } test_t;
 
-static const char* function = NULL;
+static const char* function = nullptr;
 static const char* channels[] = { "com.test.channelA", "com.test.channelB" };
 
 static const test_t messages[] = { { WLOG_INFO, "this is a test", "com.test.channelA" },
@@ -76,11 +76,11 @@ static BOOL CallbackAppenderPackage(const wLogMessage* msg)
 
 int TestWLogCallback(int argc, char* argv[])
 {
-	wLog* root = NULL;
-	wLog* logA = NULL;
-	wLog* logB = NULL;
-	wLogLayout* layout = NULL;
-	wLogAppender* appender = NULL;
+	wLog* root = nullptr;
+	wLog* logA = nullptr;
+	wLog* logB = nullptr;
+	wLogLayout* layout = nullptr;
+	wLogAppender* appender = nullptr;
 	wLogCallbacks callbacks;
 
 	WINPR_UNUSED(argc);

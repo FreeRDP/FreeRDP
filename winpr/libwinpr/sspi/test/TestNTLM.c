@@ -163,8 +163,8 @@ static int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const
 	}
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
-	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME, SECPKG_CRED_OUTBOUND,
-	                                               NULL, &ntlm->identity, NULL, NULL,
+	status = ntlm->table->AcquireCredentialsHandle(nullptr, NTLM_PACKAGE_NAME, SECPKG_CRED_OUTBOUND,
+	                                               nullptr, &ntlm->identity, nullptr, nullptr,
 	                                               &ntlm->credentials, &ntlm->expiration);
 
 	if (status != SEC_E_OK)
@@ -195,7 +195,7 @@ static void test_ntlm_client_uninit(TEST_NTLM_CLIENT* ntlm)
 	if (ntlm->outputBuffer[0].pvBuffer)
 	{
 		free(ntlm->outputBuffer[0].pvBuffer);
-		ntlm->outputBuffer[0].pvBuffer = NULL;
+		ntlm->outputBuffer[0].pvBuffer = nullptr;
 	}
 
 	free(ntlm->identity.User);
@@ -289,7 +289,7 @@ static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 	if (ntlm->outputBuffer[0].pvBuffer)
 	{
 		free(ntlm->outputBuffer[0].pvBuffer);
-		ntlm->outputBuffer[0].pvBuffer = NULL;
+		ntlm->outputBuffer[0].pvBuffer = nullptr;
 	}
 
 	ntlm->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
@@ -317,9 +317,9 @@ static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 	}
 
 	status = ntlm->table->InitializeSecurityContext(
-	    &ntlm->credentials, (ntlm->haveContext) ? &ntlm->context : NULL,
-	    (ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL, ntlm->fContextReq, 0,
-	    SECURITY_NATIVE_DREP, (ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL, 0,
+	    &ntlm->credentials, (ntlm->haveContext) ? &ntlm->context : nullptr,
+	    (ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : nullptr, ntlm->fContextReq, 0,
+	    SECURITY_NATIVE_DREP, (ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : nullptr, 0,
 	    &ntlm->context, &ntlm->outputBufferDesc, &ntlm->pfContextAttr, &ntlm->expiration);
 
 	if (IsSecurityStatusError(status))
@@ -356,7 +356,7 @@ static TEST_NTLM_CLIENT* test_ntlm_client_new(void)
 	TEST_NTLM_CLIENT* ntlm = (TEST_NTLM_CLIENT*)calloc(1, sizeof(TEST_NTLM_CLIENT));
 
 	if (!ntlm)
-		return NULL;
+		return nullptr;
 
 	return ntlm;
 }
@@ -392,9 +392,9 @@ static int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 	}
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
-	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME, SECPKG_CRED_INBOUND,
-	                                               NULL, NULL, NULL, NULL, &ntlm->credentials,
-	                                               &ntlm->expiration);
+	status = ntlm->table->AcquireCredentialsHandle(nullptr, NTLM_PACKAGE_NAME, SECPKG_CRED_INBOUND,
+	                                               nullptr, nullptr, nullptr, nullptr,
+	                                               &ntlm->credentials, &ntlm->expiration);
 
 	if (status != SEC_E_OK)
 	{
@@ -427,7 +427,7 @@ static void test_ntlm_server_uninit(TEST_NTLM_SERVER* ntlm)
 	if (ntlm->outputBuffer[0].pvBuffer)
 	{
 		free(ntlm->outputBuffer[0].pvBuffer);
-		ntlm->outputBuffer[0].pvBuffer = NULL;
+		ntlm->outputBuffer[0].pvBuffer = nullptr;
 	}
 
 	free(ntlm->identity.User);
@@ -468,7 +468,7 @@ static int test_ntlm_server_authenticate(const struct test_input_t* targ, TEST_N
 		return -1;
 
 	status = ntlm->table->AcceptSecurityContext(
-	    &ntlm->credentials, ntlm->haveContext ? &ntlm->context : NULL, &ntlm->inputBufferDesc,
+	    &ntlm->credentials, ntlm->haveContext ? &ntlm->context : nullptr, &ntlm->inputBufferDesc,
 	    ntlm->fContextReq, SECURITY_NATIVE_DREP, &ntlm->context, &ntlm->outputBufferDesc,
 	    &ntlm->pfContextAttr, &ntlm->expiration);
 
@@ -508,7 +508,7 @@ static TEST_NTLM_SERVER* test_ntlm_server_new(void)
 	TEST_NTLM_SERVER* ntlm = (TEST_NTLM_SERVER*)calloc(1, sizeof(TEST_NTLM_SERVER));
 
 	if (!ntlm)
-		return NULL;
+		return nullptr;
 
 	return ntlm;
 }
@@ -525,7 +525,7 @@ static void test_ntlm_server_free(TEST_NTLM_SERVER* ntlm)
 static BOOL test_default(const struct test_input_t* arg)
 {
 	BOOL rc = FALSE;
-	PSecBuffer pSecBuffer = NULL;
+	PSecBuffer pSecBuffer = nullptr;
 
 	WINPR_ASSERT(arg);
 
@@ -776,7 +776,7 @@ int TestNTLM(int argc, char* argv[])
 		  FALSE, TRUE },
 		{ TEST_NTLM_USER, TEST_NTLM_DOMAIN, "", TEST_EMPTY_PWD_NTLM_HASH,
 		  TEST_EMPTY_PWD_NTLM_V2_HASH, TRUE, TRUE },
-		{ TEST_NTLM_USER, TEST_NTLM_DOMAIN, NULL, TEST_EMPTY_PWD_NTLM_HASH,
+		{ TEST_NTLM_USER, TEST_NTLM_DOMAIN, nullptr, TEST_EMPTY_PWD_NTLM_HASH,
 		  TEST_EMPTY_PWD_NTLM_V2_HASH, TRUE, FALSE }
 	};
 

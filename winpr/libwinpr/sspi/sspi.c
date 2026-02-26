@@ -41,17 +41,17 @@ WINPR_PRAGMA_DIAG_POP
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES
 
-static wLog* g_Log = NULL;
+static wLog* g_Log = nullptr;
 
 static INIT_ONCE g_Initialized = INIT_ONCE_STATIC_INIT;
 #if defined(WITH_NATIVE_SSPI)
-static HMODULE g_SspiModule = NULL;
+static HMODULE g_SspiModule = nullptr;
 static SecurityFunctionTableW windows_SecurityFunctionTableW = WINPR_C_ARRAY_INIT;
 static SecurityFunctionTableA windows_SecurityFunctionTableA = WINPR_C_ARRAY_INIT;
 #endif
 
-static SecurityFunctionTableW* g_SspiW = NULL;
-static SecurityFunctionTableA* g_SspiA = NULL;
+static SecurityFunctionTableW* g_SspiW = nullptr;
+static SecurityFunctionTableA* g_SspiA = nullptr;
 
 #if defined(WITH_NATIVE_SSPI)
 static BOOL ShouldUseNativeSspi(void);
@@ -65,8 +65,8 @@ BOOL ShouldUseNativeSspi(void)
 #ifdef _WIN32
 	LPCSTR sspi = "WINPR_NATIVE_SSPI";
 	DWORD nSize;
-	char* env = NULL;
-	nSize = GetEnvironmentVariableA(sspi, NULL, 0);
+	char* env = nullptr;
+	nSize = GetEnvironmentVariableA(sspi, nullptr, 0);
 
 	if (!nSize)
 		return TRUE;
@@ -96,8 +96,8 @@ BOOL ShouldUseNativeSspi(void)
 #if defined(WITH_NATIVE_SSPI)
 BOOL InitializeSspiModule_Native(void)
 {
-	SecurityFunctionTableW* pSspiW = NULL;
-	SecurityFunctionTableA* pSspiA = NULL;
+	SecurityFunctionTableW* pSspiW = nullptr;
+	SecurityFunctionTableA* pSspiA = nullptr;
 	INIT_SECURITY_INTERFACE_W pInitSecurityInterfaceW;
 	INIT_SECURITY_INTERFACE_A pInitSecurityInterfaceA;
 	g_SspiModule = LoadLibraryA("secur32.dll");
@@ -490,14 +490,14 @@ BOOL IsSecurityStatusError(SECURITY_STATUS status)
 
 SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceExW(DWORD flags)
 {
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, &flags, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, &flags, nullptr);
 	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceExW");
 	return g_SspiW;
 }
 
 SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceExA(DWORD flags)
 {
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, &flags, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, &flags, nullptr);
 	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceExA");
 	return g_SspiA;
 }
@@ -512,7 +512,7 @@ SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesW(ULONG* pcPackages,
                                                           PSecPkgInfoW* ppPackageInfo)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->EnumerateSecurityPackagesW))
 	{
@@ -531,7 +531,7 @@ SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesA(ULONG* pcPackages,
                                                           PSecPkgInfoA* ppPackageInfo)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiA && g_SspiA->EnumerateSecurityPackagesA))
 	{
@@ -548,14 +548,14 @@ SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesA(ULONG* pcPackages,
 
 SecurityFunctionTableW* SEC_ENTRY sspi_InitSecurityInterfaceW(void)
 {
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceW");
 	return g_SspiW;
 }
 
 SecurityFunctionTableA* SEC_ENTRY sspi_InitSecurityInterfaceA(void)
 {
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceA");
 	return g_SspiA;
 }
@@ -564,7 +564,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageNa
                                                          PSecPkgInfoW* ppPackageInfo)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->QuerySecurityPackageInfoW))
 	{
@@ -583,7 +583,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoA(SEC_CHAR* pszPackageNam
                                                          PSecPkgInfoA* ppPackageInfo)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiA && g_SspiA->QuerySecurityPackageInfoA))
 	{
@@ -606,7 +606,7 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleW(
     PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->AcquireCredentialsHandleW))
 	{
@@ -629,7 +629,7 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleA(
     PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiA && g_SspiA->AcquireCredentialsHandleA))
 	{
@@ -650,7 +650,7 @@ SECURITY_STATUS SEC_ENTRY sspi_ExportSecurityContext(PCtxtHandle phContext, ULON
                                                      PSecBuffer pPackedContext, HANDLE* pToken)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->ExportSecurityContext))
 	{
@@ -668,7 +668,7 @@ SECURITY_STATUS SEC_ENTRY sspi_ExportSecurityContext(PCtxtHandle phContext, ULON
 SECURITY_STATUS SEC_ENTRY sspi_FreeCredentialsHandle(PCredHandle phCredential)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->FreeCredentialsHandle))
 	{
@@ -688,7 +688,7 @@ SECURITY_STATUS SEC_ENTRY sspi_ImportSecurityContextW(SEC_WCHAR* pszPackage,
                                                       PCtxtHandle phContext)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->ImportSecurityContextW))
 	{
@@ -708,7 +708,7 @@ SECURITY_STATUS SEC_ENTRY sspi_ImportSecurityContextA(SEC_CHAR* pszPackage,
                                                       PCtxtHandle phContext)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiA && g_SspiA->ImportSecurityContextA))
 	{
@@ -727,7 +727,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesW(PCredHandle phCredent
                                                            ULONG ulAttribute, void* pBuffer)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->QueryCredentialsAttributesW))
 	{
@@ -746,7 +746,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesA(PCredHandle phCredent
                                                            ULONG ulAttribute, void* pBuffer)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiA && g_SspiA->QueryCredentialsAttributesA))
 	{
@@ -771,7 +771,7 @@ SECURITY_STATUS SEC_ENTRY sspi_AcceptSecurityContext(PCredHandle phCredential,
                                                      PTimeStamp ptsTimeStamp)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->AcceptSecurityContext))
 	{
@@ -791,7 +791,7 @@ SECURITY_STATUS SEC_ENTRY sspi_AcceptSecurityContext(PCredHandle phCredential,
 SECURITY_STATUS SEC_ENTRY sspi_ApplyControlToken(PCtxtHandle phContext, PSecBufferDesc pInput)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->ApplyControlToken))
 	{
@@ -809,7 +809,7 @@ SECURITY_STATUS SEC_ENTRY sspi_ApplyControlToken(PCtxtHandle phContext, PSecBuff
 SECURITY_STATUS SEC_ENTRY sspi_CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->CompleteAuthToken))
 	{
@@ -827,7 +827,7 @@ SECURITY_STATUS SEC_ENTRY sspi_CompleteAuthToken(PCtxtHandle phContext, PSecBuff
 SECURITY_STATUS SEC_ENTRY sspi_DeleteSecurityContext(PCtxtHandle phContext)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->DeleteSecurityContext))
 	{
@@ -845,7 +845,7 @@ SECURITY_STATUS SEC_ENTRY sspi_DeleteSecurityContext(PCtxtHandle phContext)
 SECURITY_STATUS SEC_ENTRY sspi_FreeContextBuffer(void* pvContextBuffer)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->FreeContextBuffer))
 	{
@@ -863,7 +863,7 @@ SECURITY_STATUS SEC_ENTRY sspi_FreeContextBuffer(void* pvContextBuffer)
 SECURITY_STATUS SEC_ENTRY sspi_ImpersonateSecurityContext(PCtxtHandle phContext)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->ImpersonateSecurityContext))
 	{
@@ -884,7 +884,7 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextW(
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->InitializeSecurityContextW))
 	{
@@ -907,7 +907,7 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextA(
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiA && g_SspiA->InitializeSecurityContextA))
 	{
@@ -928,7 +928,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesW(PCtxtHandle phContext, UL
                                                        void* pBuffer)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->QueryContextAttributesW))
 	{
@@ -947,7 +947,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesA(PCtxtHandle phContext, UL
                                                        void* pBuffer)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiA && g_SspiA->QueryContextAttributesA))
 	{
@@ -965,7 +965,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesA(PCtxtHandle phContext, UL
 SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->QuerySecurityContextToken))
 	{
@@ -984,7 +984,7 @@ SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesW(PCtxtHandle phContext, ULON
                                                      void* pBuffer, ULONG cbBuffer)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->SetContextAttributesW))
 	{
@@ -1003,7 +1003,7 @@ SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesA(PCtxtHandle phContext, ULON
                                                      void* pBuffer, ULONG cbBuffer)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiA && g_SspiA->SetContextAttributesA))
 	{
@@ -1021,7 +1021,7 @@ SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesA(PCtxtHandle phContext, ULON
 SECURITY_STATUS SEC_ENTRY sspi_RevertSecurityContext(PCtxtHandle phContext)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->RevertSecurityContext))
 	{
@@ -1042,7 +1042,7 @@ SECURITY_STATUS SEC_ENTRY sspi_DecryptMessage(PCtxtHandle phContext, PSecBufferD
                                               ULONG MessageSeqNo, PULONG pfQOP)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->DecryptMessage))
 	{
@@ -1061,7 +1061,7 @@ SECURITY_STATUS SEC_ENTRY sspi_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
                                               PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->EncryptMessage))
 	{
@@ -1080,7 +1080,7 @@ SECURITY_STATUS SEC_ENTRY sspi_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
                                              PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->MakeSignature))
 	{
@@ -1099,7 +1099,7 @@ SECURITY_STATUS SEC_ENTRY sspi_VerifySignature(PCtxtHandle phContext, PSecBuffer
                                                ULONG MessageSeqNo, PULONG pfQOP)
 {
 	SECURITY_STATUS status = 0;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, NULL, NULL);
+	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, nullptr, nullptr);
 
 	if (!(g_SspiW && g_SspiW->VerifySignature))
 	{

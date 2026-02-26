@@ -48,9 +48,9 @@ extern "C"
 		                               or the absolute PC if the library is unknown */
 		uintptr_t relative_symbol_addr; /* relative offset of the symbol from the start of the
 		                            library or 0 if the library is unknown */
-		char* map_name;                 /* executable or library name, or NULL if unknown */
-		char* symbol_name;              /* symbol name, or NULL if unknown */
-		char* demangled_name;           /* demangled symbol name, or NULL if unknown */
+		char* map_name;                 /* executable or library name, or nullptr if unknown */
+		char* symbol_name;              /* symbol name, or nullptr if unknown */
+		char* demangled_name;           /* demangled symbol name, or nullptr if unknown */
 	} backtrace_symbol_t;
 
 	/*

@@ -90,9 +90,9 @@ int TestPathCchAddExtension(int argc, char* argv[])
 		return -1;
 	}
 
-	/* Path: NULL */
+	/* Path: nullptr */
 
-	status = PathCchAddExtension(NULL, PATHCCH_MAX_CCH, testExtDot);
+	status = PathCchAddExtension(nullptr, PATHCCH_MAX_CCH, testExtDot);
 	if (status != E_INVALIDARG)
 	{
 		_tprintf(_T("PathCchAddExtension with null buffer returned status: 0x%08") _T(
@@ -101,9 +101,9 @@ int TestPathCchAddExtension(int argc, char* argv[])
 		return -1;
 	}
 
-	/* Extension: NULL */
+	/* Extension: nullptr */
 
-	status = PathCchAddExtension(Path, PATHCCH_MAX_CCH, NULL);
+	status = PathCchAddExtension(Path, PATHCCH_MAX_CCH, nullptr);
 	if (status != E_INVALIDARG)
 	{
 		_tprintf(_T("PathCchAddExtension with null extension returned status: 0x%08") _T(

@@ -40,7 +40,7 @@ extern "C"
 
 	/*
 	 * Loads a symbol table from a given file.
-	 * Returns NULL on error.
+	 * Returns nullptr on error.
 	 */
 	symbol_table_t* load_symbol_table(const char* filename);
 
@@ -51,7 +51,7 @@ extern "C"
 
 	/*
 	 * Finds a symbol associated with an address in the symbol table.
-	 * Returns NULL if not found.
+	 * Returns nullptr if not found.
 	 */
 	const symbol_t* find_symbol(const symbol_table_t* table, uintptr_t addr);
 

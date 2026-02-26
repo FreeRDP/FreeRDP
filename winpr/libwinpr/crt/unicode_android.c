@@ -103,7 +103,7 @@ static int convert_int(JNIEnv* env, const void* data, size_t size, void* buffer,
 static int convert(const void* data, size_t size, void* buffer, size_t buffersize, BOOL toUTF16)
 {
 	int rc;
-	JNIEnv* env = NULL;
+	JNIEnv* env = nullptr;
 	jboolean attached = winpr_jni_attach_thread(&env);
 	rc = convert_int(env, data, size, buffer, buffersize, toUTF16);
 	if (attached)

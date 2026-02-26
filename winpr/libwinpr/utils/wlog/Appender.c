@@ -29,7 +29,7 @@ void WLog_Appender_Free(wLog* log, wLogAppender* appender)
 	if (appender->Layout)
 	{
 		WLog_Layout_Free(log, appender->Layout);
-		appender->Layout = NULL;
+		appender->Layout = nullptr;
 	}
 
 	DeleteCriticalSection(&appender->lock);
@@ -39,7 +39,7 @@ void WLog_Appender_Free(wLog* log, wLogAppender* appender)
 wLogAppender* WLog_GetLogAppender(wLog* log)
 {
 	if (!log)
-		return NULL;
+		return nullptr;
 
 	if (!log->Appender)
 		return WLog_GetLogAppender(log->Parent);
@@ -50,7 +50,7 @@ wLogAppender* WLog_GetLogAppender(wLog* log)
 BOOL WLog_OpenAppender(wLog* log)
 {
 	int status = 0;
-	wLogAppender* appender = NULL;
+	wLogAppender* appender = nullptr;
 
 	appender = WLog_GetLogAppender(log);
 
@@ -72,7 +72,7 @@ BOOL WLog_OpenAppender(wLog* log)
 BOOL WLog_CloseAppender(wLog* log)
 {
 	int status = 0;
-	wLogAppender* appender = NULL;
+	wLogAppender* appender = nullptr;
 
 	appender = WLog_GetLogAppender(log);
 
@@ -93,10 +93,10 @@ BOOL WLog_CloseAppender(wLog* log)
 
 static wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 {
-	wLogAppender* appender = NULL;
+	wLogAppender* appender = nullptr;
 
 	if (!log)
-		return NULL;
+		return nullptr;
 
 	switch (logAppenderType)
 	{
@@ -128,7 +128,7 @@ static wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 		default:
 			(void)fprintf(stderr, "%s: unknown handler type %" PRIu32 "\n", __func__,
 			              logAppenderType);
-			appender = NULL;
+			appender = nullptr;
 			break;
 	}
 
@@ -136,12 +136,12 @@ static wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 		appender = WLog_ConsoleAppender_New(log);
 
 	if (!appender)
-		return NULL;
+		return nullptr;
 
 	if (!(appender->Layout = WLog_Layout_New(log)))
 	{
 		WLog_Appender_Free(log, appender);
-		return NULL;
+		return nullptr;
 	}
 
 	InitializeCriticalSectionAndSpinCount(&appender->lock, 4000);
@@ -157,11 +157,11 @@ BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
 	if (log->Appender)
 	{
 		WLog_Appender_Free(log, log->Appender);
-		log->Appender = NULL;
+		log->Appender = nullptr;
 	}
 
 	log->Appender = WLog_Appender_New(log, logAppenderType);
-	return log->Appender != NULL;
+	return log->Appender != nullptr;
 }
 
 BOOL WLog_ConfigureAppender(wLogAppender* appender, const char* setting, void* value)

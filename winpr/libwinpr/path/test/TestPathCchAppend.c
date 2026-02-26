@@ -91,22 +91,22 @@ int TestPathCchAppend(int argc, char* argv[])
 		return -1;
 	}
 
-	/* According to msdn a NULL Path is an invalid argument */
-	status = PathCchAppend(NULL, PATHCCH_MAX_CCH, testMorePathNoBackslash);
+	/* According to msdn a nullptr Path is an invalid argument */
+	status = PathCchAppend(nullptr, PATHCCH_MAX_CCH, testMorePathNoBackslash);
 	if (status != E_INVALIDARG)
 	{
-		_tprintf(_T("PathCchAppend with NULL path unexpectedly returned status: 0x%08") _T(
+		_tprintf(_T("PathCchAppend with nullptr path unexpectedly returned status: 0x%08") _T(
 		             PRIX32) _T("\n"),
 		         status);
 		return -1;
 	}
 
-	/* According to msdn a NULL pszMore is an invalid argument (although optional !?) */
+	/* According to msdn a nullptr pszMore is an invalid argument (although optional !?) */
 	_tcsncpy(Path, testBasePathNoBackslash, ARRAYSIZE(Path));
-	status = PathCchAppend(Path, PATHCCH_MAX_CCH, NULL);
+	status = PathCchAppend(Path, PATHCCH_MAX_CCH, nullptr);
 	if (status != E_INVALIDARG)
 	{
-		_tprintf(_T("PathCchAppend with NULL pszMore unexpectedly returned status: 0x%08") _T(
+		_tprintf(_T("PathCchAppend with nullptr pszMore unexpectedly returned status: 0x%08") _T(
 		             PRIX32) _T("\n"),
 		         status);
 		return -1;

@@ -160,7 +160,7 @@ HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingTyp
                          WINPR_ATTR_UNUSED HCRYPTPROV_LEGACY hCryptProv,
                          WINPR_ATTR_UNUSED DWORD dwFlags, WINPR_ATTR_UNUSED const void* pvPara)
 {
-	WINPR_CERTSTORE* certstore = NULL;
+	WINPR_CERTSTORE* certstore = nullptr;
 
 	certstore = (WINPR_CERTSTORE*)calloc(1, sizeof(WINPR_CERTSTORE));
 
@@ -176,9 +176,9 @@ HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingTyp
 HCERTSTORE CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv,
                                 WINPR_ATTR_UNUSED LPCWSTR szSubsystemProtocol)
 {
-	HCERTSTORE hCertStore = NULL;
+	HCERTSTORE hCertStore = nullptr;
 
-	hCertStore = CertOpenStore(CERT_STORE_PROV_FILE, X509_ASN_ENCODING, hProv, 0, NULL);
+	hCertStore = CertOpenStore(CERT_STORE_PROV_FILE, X509_ASN_ENCODING, hProv, 0, nullptr);
 
 	return hCertStore;
 }
@@ -186,12 +186,12 @@ HCERTSTORE CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv,
 HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv,
                                 WINPR_ATTR_UNUSED LPCSTR szSubsystemProtocol)
 {
-	return CertOpenSystemStoreW(hProv, NULL);
+	return CertOpenSystemStoreW(hProv, nullptr);
 }
 
 BOOL CertCloseStore(HCERTSTORE hCertStore, WINPR_ATTR_UNUSED DWORD dwFlags)
 {
-	WINPR_CERTSTORE* certstore = NULL;
+	WINPR_CERTSTORE* certstore = nullptr;
 
 	certstore = (WINPR_CERTSTORE*)hCertStore;
 
@@ -215,7 +215,7 @@ PCCERT_CONTEXT CertEnumCertificatesInStore(WINPR_ATTR_UNUSED HCERTSTORE hCertSto
                                            WINPR_ATTR_UNUSED PCCERT_CONTEXT pPrevCertContext)
 {
 	WLog_ERR("TODO", "TODO: Implement");
-	return (PCCERT_CONTEXT)NULL;
+	return (PCCERT_CONTEXT) nullptr;
 }
 
 DWORD CertGetNameStringW(WINPR_ATTR_UNUSED PCCERT_CONTEXT pCertContext,

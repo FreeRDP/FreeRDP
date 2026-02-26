@@ -33,7 +33,7 @@
 #if JSON_C_MINOR_VERSION < 14
 static struct json_object* json_object_new_null(void)
 {
-	return NULL;
+	return nullptr;
 }
 #endif
 #endif
@@ -53,7 +53,7 @@ WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value, size_t buffer_length)
 	WINPR_ASSERT(buffer_length <= INT_MAX);
 	json_tokener* tok = json_tokener_new();
 	if (!tok)
-		return NULL;
+		return nullptr;
 	json_object* obj = json_tokener_parse_ex(tok, value, (int)buffer_length);
 	json_tokener_free(tok);
 	return obj;
@@ -87,7 +87,7 @@ WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object, const char* strin
 		}
 		json_object_iter_next(&it);
 	}
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object, const char* string)
@@ -97,7 +97,7 @@ WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object, cons
 
 BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* object, const char* string)
 {
-	return json_object_object_get_ex((const json_object*)object, string, NULL);
+	return json_object_object_get_ex((const json_object*)object, string, nullptr);
 }
 
 const char* WINPR_JSON_GetErrorPtr(void)
@@ -225,7 +225,7 @@ WINPR_JSON* WINPR_JSON_AddNullToObject(WINPR_JSON* object, const char* name)
 	if (json_object_object_add((json_object*)object, name, obj) != 0)
 	{
 		json_object_put(obj);
-		return NULL;
+		return nullptr;
 	}
 	return obj;
 }
@@ -236,7 +236,7 @@ WINPR_JSON* WINPR_JSON_AddTrueToObject(WINPR_JSON* object, const char* name)
 	if (json_object_object_add((json_object*)object, name, obj) != 0)
 	{
 		json_object_put(obj);
-		return NULL;
+		return nullptr;
 	}
 	return obj;
 }
@@ -247,7 +247,7 @@ WINPR_JSON* WINPR_JSON_AddFalseToObject(WINPR_JSON* object, const char* name)
 	if (json_object_object_add((json_object*)object, name, obj) != 0)
 	{
 		json_object_put(obj);
-		return NULL;
+		return nullptr;
 	}
 	return obj;
 }
@@ -258,7 +258,7 @@ WINPR_JSON* WINPR_JSON_AddBoolToObject(WINPR_JSON* object, const char* name, BOO
 	if (json_object_object_add((json_object*)object, name, obj) != 0)
 	{
 		json_object_put(obj);
-		return NULL;
+		return nullptr;
 	}
 	return obj;
 }
@@ -269,7 +269,7 @@ WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, d
 	if (json_object_object_add((json_object*)object, name, obj) != 0)
 	{
 		json_object_put(obj);
-		return NULL;
+		return nullptr;
 	}
 	return obj;
 }
@@ -280,7 +280,7 @@ WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name, 
 	if (json_object_object_add((json_object*)object, name, obj) != 0)
 	{
 		json_object_put(obj);
-		return NULL;
+		return nullptr;
 	}
 	return obj;
 }
@@ -291,7 +291,7 @@ WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name, c
 	if (json_object_object_add((json_object*)object, name, obj) != 0)
 	{
 		json_object_put(obj);
-		return NULL;
+		return nullptr;
 	}
 	return obj;
 }
@@ -302,7 +302,7 @@ WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* object, const char* name)
 	if (json_object_object_add((json_object*)object, name, obj) != 0)
 	{
 		json_object_put(obj);
-		return NULL;
+		return nullptr;
 	}
 	return obj;
 }
@@ -321,7 +321,7 @@ WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* object, const char* name)
 	if (json_object_object_add((json_object*)object, name, obj) != 0)
 	{
 		json_object_put(obj);
-		return NULL;
+		return nullptr;
 	}
 	return obj;
 }
@@ -330,7 +330,7 @@ char* WINPR_JSON_Print(WINPR_JSON* item)
 {
 	const char* str = json_object_to_json_string_ext((json_object*)item, JSON_C_TO_STRING_PRETTY);
 	if (!str)
-		return NULL;
+		return nullptr;
 	return _strdup(str);
 }
 
@@ -338,6 +338,6 @@ char* WINPR_JSON_PrintUnformatted(WINPR_JSON* item)
 {
 	const char* str = json_object_to_json_string_ext((json_object*)item, JSON_C_TO_STRING_PLAIN);
 	if (!str)
-		return NULL;
+		return nullptr;
 	return _strdup(str);
 }

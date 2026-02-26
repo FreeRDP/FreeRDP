@@ -36,7 +36,7 @@ extern "C"
 		bool is_readable;
 		bool is_writable;
 		bool is_executable;
-		void* data; // arbitrary data associated with the map by the user, initially NULL
+		void* data; // arbitrary data associated with the map by the user, initially nullptr
 		char name[];
 	} map_info_t;
 

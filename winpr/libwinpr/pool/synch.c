@@ -30,7 +30,7 @@ PTP_WAIT winpr_CreateThreadpoolWait(WINPR_ATTR_UNUSED PTP_WAIT_CALLBACK pfnwa,
                                     WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 {
 	WLog_ERR("TODO", "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 VOID winpr_CloseThreadpoolWait(WINPR_ATTR_UNUSED PTP_WAIT pwa)

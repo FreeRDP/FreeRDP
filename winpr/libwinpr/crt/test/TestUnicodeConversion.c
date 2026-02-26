@@ -189,14 +189,14 @@ static BOOL test_convert_to_utf16(const testcase_t* test)
 		                   test->utf16len - 1 };
 	const size_t max = test->utf16len > 0 ? ARRAYSIZE(len) : ARRAYSIZE(len) - 1;
 
-	const SSIZE_T rc2 = ConvertUtf8ToWChar(test->utf8, NULL, 0);
+	const SSIZE_T rc2 = ConvertUtf8ToWChar(test->utf8, nullptr, 0);
 	const size_t wlen = _wcsnlen(test->utf16, test->utf16len);
 	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
 		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
 		(void)fprintf(stderr,
-		              "%s ConvertUtf8ToWChar(%s, NULL, 0) expected %" PRIuz ", got %" PRIdz "\n",
+		              "%s ConvertUtf8ToWChar(%s, nullptr, 0) expected %" PRIuz ", got %" PRIdz "\n",
 		              prefix, test->utf8, wlen, rc2);
 		return FALSE;
 	}
@@ -217,7 +217,7 @@ static BOOL test_convert_to_utf16_n(const testcase_t* test)
 		                   test->utf16len - 1 };
 	const size_t max = test->utf16len > 0 ? ARRAYSIZE(len) : ARRAYSIZE(len) - 1;
 
-	const SSIZE_T rc2 = ConvertUtf8NToWChar(test->utf8, test->utf8len, NULL, 0);
+	const SSIZE_T rc2 = ConvertUtf8NToWChar(test->utf8, test->utf8len, nullptr, 0);
 	const size_t wlen = _wcsnlen(test->utf16, test->utf16len);
 	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
@@ -225,7 +225,7 @@ static BOOL test_convert_to_utf16_n(const testcase_t* test)
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2,
 		              WINPR_ASSERTING_INT_CAST(SSIZE_T, test->utf8len), test, __func__, __LINE__);
 		(void)fprintf(stderr,
-		              "%s ConvertUtf8NToWChar(%s, %" PRIuz ", NULL, 0) expected %" PRIuz
+		              "%s ConvertUtf8NToWChar(%s, %" PRIuz ", nullptr, 0) expected %" PRIuz
 		              ", got %" PRIdz "\n",
 		              prefix, test->utf8, test->utf8len, wlen, rc2);
 		return FALSE;
@@ -254,14 +254,14 @@ static BOOL test_convert_to_utf8(const testcase_t* test)
 		                   test->utf8len - 1 };
 	const size_t max = test->utf8len > 0 ? ARRAYSIZE(len) : ARRAYSIZE(len) - 1;
 
-	const SSIZE_T rc2 = ConvertWCharToUtf8(test->utf16, NULL, 0);
+	const SSIZE_T rc2 = ConvertWCharToUtf8(test->utf16, nullptr, 0);
 	const size_t wlen = strnlen(test->utf8, test->utf8len);
 	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
 		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
 		(void)fprintf(stderr,
-		              "%s ConvertWCharToUtf8(%s, NULL, 0) expected %" PRIuz ", got %" PRIdz "\n",
+		              "%s ConvertWCharToUtf8(%s, nullptr, 0) expected %" PRIuz ", got %" PRIdz "\n",
 		              prefix, test->utf8, wlen, rc2);
 		return FALSE;
 	}
@@ -283,7 +283,7 @@ static BOOL test_convert_to_utf8_n(const testcase_t* test)
 		                   test->utf8len - 1 };
 	const size_t max = test->utf8len > 0 ? ARRAYSIZE(len) : ARRAYSIZE(len) - 1;
 
-	const SSIZE_T rc2 = ConvertWCharNToUtf8(test->utf16, test->utf16len, NULL, 0);
+	const SSIZE_T rc2 = ConvertWCharNToUtf8(test->utf16, test->utf16len, nullptr, 0);
 	const size_t wlen = strnlen(test->utf8, test->utf8len);
 	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
@@ -291,7 +291,7 @@ static BOOL test_convert_to_utf8_n(const testcase_t* test)
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2,
 		              WINPR_ASSERTING_INT_CAST(SSIZE_T, test->utf16len), test, __func__, __LINE__);
 		(void)fprintf(stderr,
-		              "%s ConvertWCharNToUtf8(%s, %" PRIuz ", NULL, 0) expected %" PRIuz
+		              "%s ConvertWCharNToUtf8(%s, %" PRIuz ", nullptr, 0) expected %" PRIuz
 		              ", got %" PRIdz "\n",
 		              prefix, test->utf8, test->utf16len, wlen, rc2);
 		return FALSE;
@@ -483,14 +483,14 @@ static BOOL test_win_convert_to_utf16(const testcase_t* test)
 		                   test->utf16len - 1 };
 	const size_t max = test->utf16len > 0 ? ARRAYSIZE(len) : ARRAYSIZE(len) - 1;
 
-	const int rc2 = MultiByteToWideChar(CP_UTF8, 0, test->utf8, -1, NULL, 0);
+	const int rc2 = MultiByteToWideChar(CP_UTF8, 0, test->utf8, -1, nullptr, 0);
 	const size_t wlen = _wcsnlen(test->utf16, test->utf16len);
 	if (rc2 != wlen + 1)
 	{
 		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
 		(void)fprintf(stderr,
-		              "%s MultiByteToWideChar(CP_UTF8, 0, %s, [-1], NULL, 0) expected %" PRIuz
+		              "%s MultiByteToWideChar(CP_UTF8, 0, %s, [-1], nullptr, 0) expected %" PRIuz
 		              ", got %d\n",
 		              prefix, test->utf8, wlen + 1, rc2);
 		return FALSE;
@@ -513,7 +513,7 @@ static BOOL test_win_convert_to_utf16_n(const testcase_t* test)
 	const size_t max = test->utf16len > 0 ? ARRAYSIZE(len) : ARRAYSIZE(len) - 1;
 
 	BOOL isNullTerminated = strnlen(test->utf8, test->utf8len) < test->utf8len;
-	const int rc2 = MultiByteToWideChar(CP_UTF8, 0, test->utf8, test->utf8len, NULL, 0);
+	const int rc2 = MultiByteToWideChar(CP_UTF8, 0, test->utf8, test->utf8len, nullptr, 0);
 	size_t wlen = _wcsnlen(test->utf16, test->utf16len);
 	if (isNullTerminated)
 		wlen++;
@@ -523,8 +523,8 @@ static BOOL test_win_convert_to_utf16_n(const testcase_t* test)
 		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, test->utf8len, test, __func__, __LINE__);
 		(void)fprintf(stderr,
-		              "%s MultiByteToWideChar(CP_UTF8, 0, %s, %" PRIuz ", NULL, 0) expected %" PRIuz
-		              ", got %d\n",
+		              "%s MultiByteToWideChar(CP_UTF8, 0, %s, %" PRIuz
+		              ", nullptr, 0) expected %" PRIuz ", got %d\n",
 		              prefix, test->utf8, test->utf8len, wlen, rc2);
 		return FALSE;
 	}
@@ -556,24 +556,23 @@ static BOOL test_win_convert_to_utf8(const testcase_t* test)
 		                   test->utf8len - 1 };
 	const size_t max = test->utf8len > 0 ? ARRAYSIZE(len) : ARRAYSIZE(len) - 1;
 
-	const int rc2 = WideCharToMultiByte(CP_UTF8, 0, test->utf16, -1, NULL, 0, NULL, NULL);
+	const int rc2 = WideCharToMultiByte(CP_UTF8, 0, test->utf16, -1, nullptr, 0, nullptr, nullptr);
 	const size_t wlen = strnlen(test->utf8, test->utf8len) + 1;
 	if (rc2 != wlen)
 	{
 		char prefix[8192] = WINPR_C_ARRAY_INIT;
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __func__, __LINE__);
-		(void)fprintf(
-		    stderr,
-		    "%s WideCharToMultiByte(CP_UTF8, 0, %s, -1, NULL, 0, NULL, NULL) expected %" PRIuz
-		    ", got %d\n",
-		    prefix, test->utf8, wlen, rc2);
+		(void)fprintf(stderr,
+		              "%s WideCharToMultiByte(CP_UTF8, 0, %s, -1, nullptr, 0, nullptr, nullptr) "
+		              "expected %" PRIuz ", got %d\n",
+		              prefix, test->utf8, wlen, rc2);
 		return FALSE;
 	}
 
 	for (size_t x = 0; x < max; x++)
 	{
 		char buffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
-		int rc = WideCharToMultiByte(CP_UTF8, 0, test->utf16, -1, buffer, len[x], NULL, NULL);
+		int rc = WideCharToMultiByte(CP_UTF8, 0, test->utf16, -1, buffer, len[x], nullptr, nullptr);
 		if (!compare_win_utf8(buffer, len[x], rc, -1, test))
 			return FALSE;
 	}
@@ -589,7 +588,7 @@ static BOOL test_win_convert_to_utf8_n(const testcase_t* test)
 
 	const BOOL isNullTerminated = _wcsnlen(test->utf16, test->utf16len) < test->utf16len;
 	const int rc2 =
-	    WideCharToMultiByte(CP_UTF8, 0, test->utf16, test->utf16len, NULL, 0, NULL, NULL);
+	    WideCharToMultiByte(CP_UTF8, 0, test->utf16, test->utf16len, nullptr, 0, nullptr, nullptr);
 	size_t wlen = strnlen(test->utf8, test->utf8len);
 	if (isNullTerminated)
 		wlen++;
@@ -600,7 +599,7 @@ static BOOL test_win_convert_to_utf8_n(const testcase_t* test)
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, test->utf16len, test, __func__, __LINE__);
 		(void)fprintf(stderr,
 		              "%s WideCharToMultiByte(CP_UTF8, 0, %s, %" PRIuz
-		              ", NULL, 0, NULL, NULL) expected %" PRIuz ", got %d\n",
+		              ", nullptr, 0, nullptr, nullptr) expected %" PRIuz ", got %d\n",
 		              prefix, test->utf8, test->utf16len, wlen, rc2);
 		return FALSE;
 	}
@@ -617,7 +616,7 @@ static BOOL test_win_convert_to_utf8_n(const testcase_t* test)
 			char buffer[TESTCASE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 			memcpy(wbuffer, test->utf16, test->utf16len * sizeof(WCHAR));
 			const int rc =
-			    WideCharToMultiByte(CP_UTF8, 0, wbuffer, ilen[x], buffer, len[x], NULL, NULL);
+			    WideCharToMultiByte(CP_UTF8, 0, wbuffer, ilen[x], buffer, len[x], nullptr, nullptr);
 			if (!compare_win_utf8(buffer, len[x], rc, ilen[x], test))
 				return FALSE;
 		}
@@ -762,10 +761,10 @@ static int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideChar
 	int length = 0;
 	size_t cbMultiByte = 0;
 	int cchWideChar = 0;
-	LPWSTR lpWideCharStr = NULL;
+	LPWSTR lpWideCharStr = nullptr;
 
 	cbMultiByte = strlen((char*)lpMultiByteStr);
-	cchWideChar = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)lpMultiByteStr, -1, NULL, 0);
+	cchWideChar = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)lpMultiByteStr, -1, nullptr, 0);
 
 	printf("MultiByteToWideChar Input UTF8 String:\n");
 	string_hexdump(lpMultiByteStr, cbMultiByte + 1);
@@ -842,10 +841,11 @@ static int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByte
 	int length = 0;
 	int cchWideChar = 0;
 	int cbMultiByte = 0;
-	LPSTR lpMultiByteStr = NULL;
+	LPSTR lpMultiByteStr = nullptr;
 
 	cchWideChar = _wcslen((WCHAR*)lpWideCharStr);
-	cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)lpWideCharStr, -1, NULL, 0, NULL, NULL);
+	cbMultiByte =
+	    WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)lpWideCharStr, -1, nullptr, 0, nullptr, nullptr);
 
 	printf("WideCharToMultiByte Input UTF16 String:\n");
 	string_hexdump(lpWideCharStr, (cchWideChar + 1) * sizeof(WCHAR));
@@ -868,7 +868,7 @@ static int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByte
 	lpMultiByteStr[cbMultiByte - 1] =
 	    (CHAR)0xFF; /* should be overwritten if null terminator is inserted properly */
 	length = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)lpWideCharStr, cchWideChar + 1,
-	                             lpMultiByteStr, cbMultiByte, NULL, NULL);
+	                             lpMultiByteStr, cbMultiByte, nullptr, nullptr);
 
 	printf("WideCharToMultiByte converted length (BYTE): %d\n", length);
 
@@ -917,9 +917,9 @@ fail:
 #if defined(WITH_WINPR_DEPRECATED)
 static BOOL test_unicode_uppercasing(BYTE* lower, BYTE* upper)
 {
-	WCHAR* lowerW = NULL;
+	WCHAR* lowerW = nullptr;
 	int lowerLength = 0;
-	WCHAR* upperW = NULL;
+	WCHAR* upperW = nullptr;
 	int upperLength = 0;
 
 	lowerLength = ConvertToUnicode(CP_UTF8, 0, (LPSTR)lower, -1, &lowerW, 0);
@@ -957,7 +957,7 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	/*               00  01  02  03  04  05  06  07  08  09  10  11  12  13  14  15  16  17  18 */
 	const CHAR cmp0[] = { 'R', 'I', 'C', 'H', ' ', 'T', 'E', 'X', 'T',
 		                  ' ', 'F', 'O', 'R', 'M', 'A', 'T', 0 };
-	CHAR* dst = NULL;
+	CHAR* dst = nullptr;
 	int i = 0;
 
 	/* Test unterminated unicode string:
@@ -967,16 +967,16 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	printf("Input UTF16 String:\n");
 	string_hexdump((const BYTE*)src1, 19 * sizeof(WCHAR));
 
-	i = ConvertFromUnicode(CP_UTF8, 0, (const WCHAR*)src1, 16, &dst, 0, NULL, NULL);
+	i = ConvertFromUnicode(CP_UTF8, 0, (const WCHAR*)src1, 16, &dst, 0, nullptr, nullptr);
 	if (i != 16)
 	{
 		(void)fprintf(stderr,
 		              "ConvertFromUnicode failure A1: unexpectedly returned %d instead of 16\n", i);
 		goto fail;
 	}
-	if (dst == NULL)
+	if (dst == nullptr)
 	{
-		(void)fprintf(stderr, "ConvertFromUnicode failure A2: destination is NULL\n");
+		(void)fprintf(stderr, "ConvertFromUnicode failure A2: destination is nullptr\n");
 		goto fail;
 	}
 	if ((i = strlen(dst)) != 16)
@@ -993,23 +993,23 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	string_hexdump((BYTE*)dst, i + 1);
 
 	free(dst);
-	dst = NULL;
+	dst = nullptr;
 
 	/* Test null-terminated string */
 
 	printf("Input UTF16 String:\n");
 	string_hexdump((const BYTE*)src2, (_wcslen((const WCHAR*)src2) + 1) * sizeof(WCHAR));
 
-	i = ConvertFromUnicode(CP_UTF8, 0, (const WCHAR*)src2, -1, &dst, 0, NULL, NULL);
+	i = ConvertFromUnicode(CP_UTF8, 0, (const WCHAR*)src2, -1, &dst, 0, nullptr, nullptr);
 	if (i != 17)
 	{
 		(void)fprintf(stderr,
 		              "ConvertFromUnicode failure B1: unexpectedly returned %d instead of 17\n", i);
 		goto fail;
 	}
-	if (dst == NULL)
+	if (dst == nullptr)
 	{
-		(void)fprintf(stderr, "ConvertFromUnicode failure B2: destination is NULL\n");
+		(void)fprintf(stderr, "ConvertFromUnicode failure B2: destination is nullptr\n");
 		goto fail;
 	}
 	if ((i = strlen(dst)) != 16)
@@ -1026,7 +1026,7 @@ static BOOL test_ConvertFromUnicode_wrapper(void)
 	string_hexdump((BYTE*)dst, i + 1);
 
 	free(dst);
-	dst = NULL;
+	dst = nullptr;
 
 	printf("success\n\n");
 
@@ -1046,7 +1046,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 		                  ' ', 'F', 'O', 'R', 'M', 'A', 'T', 0 };
 	const BYTE cmp0[] = "\x52\x00\x49\x00\x43\x00\x48\x00\x20\x00\x54\x00\x45\x00\x58\x00\x54\x00"
 	                    "\x20\x00\x46\x00\x4f\x00\x52\x00\x4d\x00\x41\x00\x54\x00\x00\x00";
-	WCHAR* dst = NULL;
+	WCHAR* dst = nullptr;
 	int ii = 0;
 	size_t i = 0;
 
@@ -1056,7 +1056,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 		const BYTE cmp[] = { 's', 0, 'o', 0, 'm', 0, 'e', 0, 't', 0, 'e', 0, 's', 0, 't', 0,
 			                 's', 0, 't', 0, 'r', 0, 'i', 0, 'n', 0, 'g', 0, 0,   0 };
 		WCHAR xname[128] = WINPR_C_ARRAY_INIT;
-		LPWSTR aname = NULL;
+		LPWSTR aname = nullptr;
 		LPWSTR wname = &xname[0];
 		const size_t len = strnlen(name, ARRAYSIZE(name) - 1);
 		ii = ConvertToUnicode(CP_UTF8, 0, name, len, &wname, ARRAYSIZE(xname));
@@ -1090,9 +1090,9 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 		goto fail;
 	}
 	i = (size_t)ii;
-	if (dst == NULL)
+	if (dst == nullptr)
 	{
-		(void)fprintf(stderr, "ConvertToUnicode failure A2: destination is NULL\n");
+		(void)fprintf(stderr, "ConvertToUnicode failure A2: destination is nullptr\n");
 		goto fail;
 	}
 	if ((i = _wcslen(dst)) != 16)
@@ -1110,7 +1110,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	string_hexdump((const BYTE*)dst, (i + 1) * sizeof(WCHAR));
 
 	free(dst);
-	dst = NULL;
+	dst = nullptr;
 
 	/* Test null-terminated string */
 
@@ -1125,9 +1125,9 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 		    i);
 		goto fail;
 	}
-	if (dst == NULL)
+	if (dst == nullptr)
 	{
-		(void)fprintf(stderr, "ConvertToUnicode failure B2: destination is NULL\n");
+		(void)fprintf(stderr, "ConvertToUnicode failure B2: destination is nullptr\n");
 		goto fail;
 	}
 	if ((i = _wcslen(dst)) != 16)
@@ -1145,7 +1145,7 @@ static BOOL test_ConvertToUnicode_wrapper(void)
 	string_hexdump((BYTE*)dst, (i + 1) * 2);
 
 	free(dst);
-	dst = NULL;
+	dst = nullptr;
 
 	printf("success\n\n");
 
@@ -1284,15 +1284,15 @@ int TestUnicodeConversion(int argc, char* argv[])
 	        //BYTE src[] = { 'R',0,'I',0,'C',0,'H',0,' ',0,  0,0,  'T',0,'E',0,'X',0,'T',0,'
 	   ',0,'F',0,'O',0,'R',0,'M',0,'A',0,'T',0,'@',0,'@',0 };
 	        //BYTE src[] = { 0,0,'R',0,'I',0,'C',0,'H',0,' ',0, 'T',0,'E',0,'X',0,'T',0,'
-	   ',0,'F',0,'O',0,'R',0,'M',0,'A',0,'T',0,'@',0,'@',0 }; char* dst = NULL; int num; num =
-	   ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) src, 16, &dst, 0, NULL, NULL);
+	   ',0,'F',0,'O',0,'R',0,'M',0,'A',0,'T',0,'@',0,'@',0 }; char* dst = nullptr; int num; num =
+	   ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) src, 16, &dst, 0, nullptr, nullptr);
 	        printf("ConvertFromUnicode returned %d dst=[%s]\n", num, dst);
 	        string_hexdump((BYTE*)dst, num+1);
 	    }
 	    if (1)
 	    {
 	        char src[] = "RICH TEXT FORMAT@@@@@@";
-	        WCHAR *dst = NULL;
+	        WCHAR *dst = nullptr;
 	        int num;
 	        num = ConvertToUnicode(CP_UTF8, 0, src, 16, &dst, 0);
 	        printf("ConvertToUnicode returned %d dst=%p\n", num, (void*) dst);

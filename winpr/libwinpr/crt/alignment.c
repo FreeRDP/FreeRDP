@@ -54,7 +54,7 @@ void* winpr_aligned_malloc(size_t size, size_t alignment)
 
 void* winpr_aligned_calloc(size_t count, size_t size, size_t alignment)
 {
-	return winpr_aligned_recalloc(NULL, count, size, alignment);
+	return winpr_aligned_recalloc(nullptr, count, size, alignment);
 }
 
 void* winpr_aligned_realloc(void* memblock, size_t size, size_t alignment)
@@ -72,29 +72,29 @@ void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 	size_t header = 0;
 	size_t alignsize = 0;
 	uintptr_t basesize = 0;
-	void* base = NULL;
-	void* memblock = NULL;
-	WINPR_ALIGNED_MEM* pMem = NULL;
+	void* base = nullptr;
+	void* memblock = nullptr;
+	WINPR_ALIGNED_MEM* pMem = nullptr;
 
 	/* alignment must be a power of 2 */
 	if (alignment % 2 == 1)
-		return NULL;
+		return nullptr;
 
 	/* offset must be less than size */
 	if (offset >= size)
-		return NULL;
+		return nullptr;
 
 	/* minimum alignment is pointer size */
 	if (alignment < sizeof(void*))
 		alignment = sizeof(void*);
 
 	if (alignment > SIZE_MAX - sizeof(WINPR_ALIGNED_MEM))
-		return NULL;
+		return nullptr;
 
 	header = sizeof(WINPR_ALIGNED_MEM) + alignment;
 
 	if (size > SIZE_MAX - header)
-		return NULL;
+		return nullptr;
 
 	alignsize = size + header;
 	/* malloc size + alignment to make sure we can align afterwards */
@@ -102,12 +102,12 @@ void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 	base = aligned_alloc(alignment, alignsize);
 #elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L) || (_XOPEN_SOURCE >= 600)
 	if (posix_memalign(&base, alignment, alignsize) != 0)
-		return NULL;
+		return nullptr;
 #else
 	base = malloc(alignsize);
 #endif
 	if (!base)
-		return NULL;
+		return nullptr;
 
 	basesize = (uintptr_t)base;
 
@@ -115,7 +115,7 @@ void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 	    (basesize > UINTPTR_MAX - header - offset))
 	{
 		free(base);
-		return NULL;
+		return nullptr;
 	}
 
 	memblock = (void*)(((basesize + header + offset) & ~(alignment - 1)) - offset);
@@ -129,9 +129,9 @@ void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 void* winpr_aligned_offset_realloc(void* memblock, size_t size, size_t alignment, size_t offset)
 {
 	size_t copySize = 0;
-	void* newMemblock = NULL;
-	WINPR_ALIGNED_MEM* pMem = NULL;
-	WINPR_ALIGNED_MEM* pNewMem = NULL;
+	void* newMemblock = nullptr;
+	WINPR_ALIGNED_MEM* pMem = nullptr;
+	WINPR_ALIGNED_MEM* pNewMem = nullptr;
 
 	if (!memblock)
 		return winpr_aligned_offset_malloc(size, alignment, offset);
@@ -142,19 +142,19 @@ void* winpr_aligned_offset_realloc(void* memblock, size_t size, size_t alignment
 	{
 		WLog_ERR(TAG,
 		         "_aligned_offset_realloc: memory block was not allocated by _aligned_malloc!");
-		return NULL;
+		return nullptr;
 	}
 
 	if (size == 0)
 	{
 		winpr_aligned_free(memblock);
-		return NULL;
+		return nullptr;
 	}
 
 	newMemblock = winpr_aligned_offset_malloc(size, alignment, offset);
 
 	if (!newMemblock)
-		return NULL;
+		return nullptr;
 
 	pNewMem = WINPR_ALIGNED_MEM_STRUCT_FROM_PTR(newMemblock);
 	copySize = (pNewMem->size < pMem->size) ? pNewMem->size : pMem->size;
@@ -173,9 +173,9 @@ static inline size_t cMIN(size_t a, size_t b)
 void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment,
                                     size_t offset)
 {
-	char* newMemblock = NULL;
-	WINPR_ALIGNED_MEM* pMem = NULL;
-	WINPR_ALIGNED_MEM* pNewMem = NULL;
+	char* newMemblock = nullptr;
+	WINPR_ALIGNED_MEM* pMem = nullptr;
+	WINPR_ALIGNED_MEM* pNewMem = nullptr;
 
 	if (!memblock)
 	{
@@ -224,7 +224,7 @@ fail:
 size_t winpr_aligned_msize(void* memblock, WINPR_ATTR_UNUSED size_t alignment,
                            WINPR_ATTR_UNUSED size_t offset)
 {
-	WINPR_ALIGNED_MEM* pMem = NULL;
+	WINPR_ALIGNED_MEM* pMem = nullptr;
 
 	if (!memblock)
 		return 0;
@@ -242,7 +242,7 @@ size_t winpr_aligned_msize(void* memblock, WINPR_ATTR_UNUSED size_t alignment,
 
 void winpr_aligned_free(void* memblock)
 {
-	WINPR_ALIGNED_MEM* pMem = NULL;
+	WINPR_ALIGNED_MEM* pMem = nullptr;
 
 	if (!memblock)
 		return;

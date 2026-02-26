@@ -8,15 +8,15 @@ static const char* get_dir(char* filename, size_t len)
 {
 #if defined(WIN32)
 	if ((len == 0) || (strnlen_s(filename, len) == len))
-		return NULL;
+		return nullptr;
 	char* ptr = strrchr(filename, '\\');
 #else
 	if ((len == 0) || (strnlen(filename, len) == len))
-		return NULL;
+		return nullptr;
 	char* ptr = strrchr(filename, '/');
 #endif
 	if (!ptr)
-		return NULL;
+		return nullptr;
 	*ptr = '\0';
 	return filename;
 }
@@ -47,13 +47,13 @@ static BOOL test_write(const char* filename, const char* data, size_t datalen)
 	WINPR_ASSERT(data);
 	WINPR_ASSERT(datalen > 0);
 
-	HANDLE hdl =
-	    CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hdl = CreateFileA(filename, GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
+	                         nullptr);
 	if (!hdl || (hdl == INVALID_HANDLE_VALUE))
 		goto fail;
 
 	DWORD written = 0;
-	if (!WriteFile(hdl, data, datalen, &written, NULL))
+	if (!WriteFile(hdl, data, datalen, &written, nullptr))
 		goto fail;
 	if (written != datalen)
 		goto fail;
@@ -76,13 +76,13 @@ static BOOL test_read(const char* filename, const char* data, size_t datalen)
 	WINPR_ASSERT(datalen > 0);
 
 	char* cmp = calloc(datalen + 1, sizeof(char));
-	HANDLE hdl =
-	    CreateFileA(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hdl = CreateFileA(filename, GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+	                         FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (!hdl || (hdl == INVALID_HANDLE_VALUE) || !cmp)
 		goto fail;
 
 	DWORD read = 0;
-	if (!ReadFile(hdl, cmp, datalen, &read, NULL))
+	if (!ReadFile(hdl, cmp, datalen, &read, nullptr))
 		goto fail;
 	if (read != datalen)
 		goto fail;
