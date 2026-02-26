@@ -74,9 +74,9 @@ static UINT telemetry_server_open_channel(telemetry_server* telemetry)
 {
 	TelemetryServerContext* context = &telemetry->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent = NULL;
+	HANDLE hEvent = nullptr;
 	DWORD BytesReturned = 0;
-	PULONG pSessionId = NULL;
+	PULONG pSessionId = nullptr;
 	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
@@ -148,7 +148,7 @@ static UINT telemetry_process_message(telemetry_server* telemetry)
 	ULONG BytesReturned = 0;
 	BYTE MessageId = 0;
 	BYTE Length = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(telemetry);
 	WINPR_ASSERT(telemetry->telemetry_channel);
@@ -157,7 +157,7 @@ static UINT telemetry_process_message(telemetry_server* telemetry)
 	WINPR_ASSERT(s);
 
 	Stream_SetPosition(s, 0);
-	rc = WTSVirtualChannelRead(telemetry->telemetry_channel, 0, NULL, 0, &BytesReturned);
+	rc = WTSVirtualChannelRead(telemetry->telemetry_channel, 0, nullptr, 0, &BytesReturned);
 	if (!rc)
 		goto out;
 
@@ -236,9 +236,9 @@ static UINT telemetry_server_context_poll_int(TelemetryServerContext* context)
 
 static HANDLE telemetry_server_get_channel_handle(telemetry_server* telemetry)
 {
-	void* buffer = NULL;
+	void* buffer = nullptr;
 	DWORD BytesReturned = 0;
-	HANDLE ChannelEvent = NULL;
+	HANDLE ChannelEvent = nullptr;
 
 	WINPR_ASSERT(telemetry);
 
@@ -302,7 +302,7 @@ static DWORD WINAPI telemetry_server_thread_func(LPVOID arg)
 	}
 
 	(void)WTSVirtualChannelClose(telemetry->telemetry_channel);
-	telemetry->telemetry_channel = NULL;
+	telemetry->telemetry_channel = nullptr;
 
 	if (error && telemetry->context.rdpcontext)
 		setChannelError(telemetry->context.rdpcontext, error,
@@ -318,21 +318,22 @@ static UINT telemetry_server_open(TelemetryServerContext* context)
 
 	WINPR_ASSERT(telemetry);
 
-	if (!telemetry->externalThread && (telemetry->thread == NULL))
+	if (!telemetry->externalThread && (telemetry->thread == nullptr))
 	{
-		telemetry->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		telemetry->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 		if (!telemetry->stopEvent)
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		telemetry->thread = CreateThread(NULL, 0, telemetry_server_thread_func, telemetry, 0, NULL);
+		telemetry->thread =
+		    CreateThread(nullptr, 0, telemetry_server_thread_func, telemetry, 0, nullptr);
 		if (!telemetry->thread)
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
 			(void)CloseHandle(telemetry->stopEvent);
-			telemetry->stopEvent = NULL;
+			telemetry->stopEvent = nullptr;
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
@@ -361,15 +362,15 @@ static UINT telemetry_server_close(TelemetryServerContext* context)
 
 		(void)CloseHandle(telemetry->thread);
 		(void)CloseHandle(telemetry->stopEvent);
-		telemetry->thread = NULL;
-		telemetry->stopEvent = NULL;
+		telemetry->thread = nullptr;
+		telemetry->stopEvent = nullptr;
 	}
 	if (telemetry->externalThread)
 	{
 		if (telemetry->state != TELEMETRY_INITIAL)
 		{
 			(void)WTSVirtualChannelClose(telemetry->telemetry_channel);
-			telemetry->telemetry_channel = NULL;
+			telemetry->telemetry_channel = nullptr;
 			telemetry->state = TELEMETRY_INITIAL;
 		}
 	}
@@ -412,7 +413,7 @@ TelemetryServerContext* telemetry_server_context_new(HANDLE vcm)
 	telemetry_server* telemetry = (telemetry_server*)calloc(1, sizeof(telemetry_server));
 
 	if (!telemetry)
-		return NULL;
+		return nullptr;
 
 	telemetry->context.vcm = vcm;
 	telemetry->context.Initialize = telemetry_server_initialize;
@@ -421,7 +422,7 @@ TelemetryServerContext* telemetry_server_context_new(HANDLE vcm)
 	telemetry->context.Poll = telemetry_server_context_poll;
 	telemetry->context.ChannelHandle = telemetry_server_context_handle;
 
-	telemetry->buffer = Stream_New(NULL, 4096);
+	telemetry->buffer = Stream_New(nullptr, 4096);
 	if (!telemetry->buffer)
 		goto fail;
 
@@ -431,7 +432,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	telemetry_server_context_free(&telemetry->context);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void telemetry_server_context_free(TelemetryServerContext* context)

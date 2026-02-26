@@ -86,12 +86,13 @@ static UINT rdpsnd_fake_parse_addin_args(rdpsndFakePlugin* fake, const ADDIN_ARG
 {
 	int status = 0;
 	DWORD flags = 0;
-	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
-	COMMAND_LINE_ARGUMENT_A rdpsnd_fake_args[] = { { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
+	const COMMAND_LINE_ARGUMENT_A* arg = nullptr;
+	COMMAND_LINE_ARGUMENT_A rdpsnd_fake_args[] = { { nullptr, 0, nullptr, nullptr, nullptr, -1,
+		                                             nullptr, nullptr } };
 	flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_fake_args, flags, fake, NULL,
-	                                    NULL);
+	status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_fake_args, flags, fake,
+	                                    nullptr, nullptr);
 
 	if (status < 0)
 		return ERROR_INVALID_DATA;
@@ -104,7 +105,7 @@ static UINT rdpsnd_fake_parse_addin_args(rdpsndFakePlugin* fake, const ADDIN_ARG
 			continue;
 
 		CommandLineSwitchStart(arg) CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 
 	return CHANNEL_RC_OK;
 }
@@ -117,8 +118,8 @@ static UINT rdpsnd_fake_parse_addin_args(rdpsndFakePlugin* fake, const ADDIN_ARG
 FREERDP_ENTRY_POINT(UINT VCAPITYPE fake_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args = NULL;
-	rdpsndFakePlugin* fake = NULL;
+	const ADDIN_ARGV* args = nullptr;
+	rdpsndFakePlugin* fake = nullptr;
 	UINT ret = CHANNEL_RC_OK;
 	fake = (rdpsndFakePlugin*)calloc(1, sizeof(rdpsndFakePlugin));
 

@@ -201,7 +201,7 @@ int tsmf_platform_create(TSMFGstreamerDecoder* decoder)
 		return -3;
 	}
 
-	hdl->disp = XOpenDisplay(NULL);
+	hdl->disp = XOpenDisplay(nullptr);
 	if (!hdl->disp)
 	{
 		WLog_ERR(TAG, "Failed to open display");
@@ -242,7 +242,8 @@ int tsmf_platform_register_handler(TSMFGstreamerDecoder* decoder)
 	bus = gst_pipeline_get_bus(GST_PIPELINE(decoder->pipe));
 
 #if GST_VERSION_MAJOR > 0
-	gst_bus_set_sync_handler(bus, (GstBusSyncHandler)tsmf_platform_bus_sync_handler, decoder, NULL);
+	gst_bus_set_sync_handler(bus, (GstBusSyncHandler)tsmf_platform_bus_sync_handler, decoder,
+	                         nullptr);
 #else
 	gst_bus_set_sync_handler(bus, (GstBusSyncHandler)tsmf_platform_bus_sync_handler, decoder);
 #endif
@@ -275,7 +276,7 @@ int tsmf_platform_free(TSMFGstreamerDecoder* decoder)
 		close(hdl->shmid);
 
 	free(hdl);
-	decoder->platform = NULL;
+	decoder->platform = nullptr;
 
 	return 0;
 }
@@ -384,7 +385,7 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width, i
 #if defined(WITH_XEXT)
 		if (hdl->has_shape)
 		{
-			XRectangle* xrects = NULL;
+			XRectangle* xrects = nullptr;
 
 			if (nr_rects == 0)
 			{
@@ -489,7 +490,7 @@ int tsmf_window_destroy(TSMFGstreamerDecoder* decoder)
 		XUnlockDisplay(hdl->disp);
 	}
 
-	hdl->overlay = NULL;
+	hdl->overlay = nullptr;
 	hdl->subwin = 0;
 	hdl->subwinMapped = FALSE;
 	hdl->subwinX = -1;

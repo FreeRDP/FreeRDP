@@ -54,7 +54,7 @@ static bool is_mac_os_sonoma_or_later(void)
 	size_t size = sizeof(str);
 
 	errno = 0;
-	int ret = sysctlbyname("kern.osrelease", str, &size, NULL, 0);
+	int ret = sysctlbyname("kern.osrelease", str, &size, nullptr, 0);
 	if (ret != 0)
 	{
 		char buffer[256] = WINPR_C_ARRAY_INIT;
@@ -108,10 +108,10 @@ WINPR_ATTR_MALLOC(free, 1)
 static char* printer_cups_get_printjob_name(size_t id)
 {
 	struct tm tres = WINPR_C_ARRAY_INIT;
-	const time_t tt = time(NULL);
+	const time_t tt = time(nullptr);
 	const struct tm* t = localtime_r(&tt, &tres);
 
-	char* str = NULL;
+	char* str = nullptr;
 	size_t len = 0;
 	const int rc =
 	    winpr_asprintf(&str, &len, "%s Print %04d-%02d-%02d %02d-%02d-%02d - Job %" PRIuz,
@@ -120,7 +120,7 @@ static char* printer_cups_get_printjob_name(size_t id)
 	if (rc <= 0)
 	{
 		free(str);
-		return NULL;
+		return nullptr;
 	}
 
 	return str;
@@ -164,7 +164,7 @@ static UINT printer_cups_write_printjob(rdpPrintJob* printjob, const BYTE* data,
 static void printer_cups_close_printjob(rdpPrintJob* printjob)
 {
 	rdpCupsPrintJob* cups_printjob = (rdpCupsPrintJob*)printjob;
-	rdpCupsPrinter* cups_printer = NULL;
+	rdpCupsPrinter* cups_printer = nullptr;
 
 	WINPR_ASSERT(cups_printjob);
 
@@ -178,26 +178,26 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 	cups_printer = (rdpCupsPrinter*)printjob->printer;
 	WINPR_ASSERT(cups_printer);
 
-	cups_printer->printjob = NULL;
+	cups_printer->printjob = nullptr;
 	free(cups_printjob);
 }
 
 static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 {
 	rdpCupsPrinter* cups_printer = (rdpCupsPrinter*)printer;
-	rdpCupsPrintJob* cups_printjob = NULL;
+	rdpCupsPrintJob* cups_printjob = nullptr;
 
 	WINPR_ASSERT(cups_printer);
 
-	if (cups_printer->printjob != NULL)
+	if (cups_printer->printjob != nullptr)
 	{
 		WLog_WARN(TAG, "printjob [printer '%s'] already existing, abort!", printer->name);
-		return NULL;
+		return nullptr;
 	}
 
 	cups_printjob = (rdpCupsPrintJob*)calloc(1, sizeof(rdpCupsPrintJob));
 	if (!cups_printjob)
-		return NULL;
+		return nullptr;
 
 	cups_printjob->printjob.id = id;
 	cups_printjob->printjob.printer = printer;
@@ -206,14 +206,14 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 	cups_printjob->printjob.Close = printer_cups_close_printjob;
 
 	{
-		cups_printjob->printjob_object = httpConnect2(cupsServer(), ippPort(), NULL, AF_UNSPEC,
-		                                              HTTP_ENCRYPT_IF_REQUESTED, 1, 10000, NULL);
+		cups_printjob->printjob_object = httpConnect2(cupsServer(), ippPort(), nullptr, AF_UNSPEC,
+		                                              HTTP_ENCRYPT_IF_REQUESTED, 1, 10000, nullptr);
 
 		if (!cups_printjob->printjob_object)
 		{
 			WLog_WARN(TAG, "httpConnect2 failed for '%s:%d", cupsServer(), ippPort());
 			free(cups_printjob);
-			return NULL;
+			return nullptr;
 		}
 
 		char* jobTitle = printer_cups_get_printjob_name(cups_printjob->printjob.id);
@@ -221,11 +221,11 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 		{
 			httpClose(cups_printjob->printjob_object);
 			free(cups_printjob);
-			return NULL;
+			return nullptr;
 		}
 
 		cups_printjob->printjob_id =
-		    cupsCreateJob(cups_printjob->printjob_object, printer->name, jobTitle, 0, NULL);
+		    cupsCreateJob(cups_printjob->printjob_object, printer->name, jobTitle, 0, nullptr);
 
 		if (!cups_printjob->printjob_id)
 		{
@@ -234,7 +234,7 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 			httpClose(cups_printjob->printjob_object);
 			free(cups_printjob);
 			free(jobTitle);
-			return NULL;
+			return nullptr;
 		}
 
 		http_status_t rc =
@@ -257,10 +257,10 @@ static rdpPrintJob* printer_cups_find_printjob(rdpPrinter* printer, UINT32 id)
 
 	WINPR_ASSERT(cups_printer);
 
-	if (cups_printer->printjob == NULL)
-		return NULL;
+	if (cups_printer->printjob == nullptr)
+		return nullptr;
 	if (cups_printer->printjob->printjob.id != id)
-		return NULL;
+		return nullptr;
 
 	return &cups_printer->printjob->printjob;
 }
@@ -306,11 +306,11 @@ static void printer_cups_release_ref_printer(rdpPrinter* printer)
 static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, const char* name,
                                             const char* driverName, BOOL is_default)
 {
-	rdpCupsPrinter* cups_printer = NULL;
+	rdpCupsPrinter* cups_printer = nullptr;
 
 	cups_printer = (rdpCupsPrinter*)calloc(1, sizeof(rdpCupsPrinter));
 	if (!cups_printer)
-		return NULL;
+		return nullptr;
 
 	cups_printer->printer.backend = &cups_driver->driver;
 
@@ -350,14 +350,14 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 
 fail:
 	printer_cups_free_printer(&cups_printer->printer);
-	return NULL;
+	return nullptr;
 }
 
 static void printer_cups_release_enum_printers(rdpPrinter** printers)
 {
 	rdpPrinter** cur = printers;
 
-	while ((cur != NULL) && ((*cur) != NULL))
+	while ((cur != nullptr) && ((*cur) != nullptr))
 	{
 		if ((*cur)->ReleaseRef)
 			(*cur)->ReleaseRef(*cur);
@@ -368,9 +368,9 @@ static void printer_cups_release_enum_printers(rdpPrinter** printers)
 
 static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 {
-	rdpPrinter** printers = NULL;
+	rdpPrinter** printers = nullptr;
 	int num_printers = 0;
-	cups_dest_t* dests = NULL;
+	cups_dest_t* dests = nullptr;
 	BOOL haveDefault = FALSE;
 	const int num_dests = cupsGetDests(&dests);
 
@@ -378,19 +378,19 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	if (num_dests >= 0)
 		printers = (rdpPrinter**)calloc((size_t)num_dests + 1, sizeof(rdpPrinter*));
 	if (!printers)
-		return NULL;
+		return nullptr;
 
 	for (size_t i = 0; i < (size_t)num_dests; i++)
 	{
 		const cups_dest_t* dest = &dests[i];
-		if (dest->instance == NULL)
+		if (dest->instance == nullptr)
 		{
 			rdpPrinter* current = printer_cups_new_printer((rdpCupsPrinterDriver*)driver,
-			                                               dest->name, NULL, dest->is_default);
+			                                               dest->name, nullptr, dest->is_default);
 			if (!current)
 			{
 				printer_cups_release_enum_printers(printers);
-				printers = NULL;
+				printers = nullptr;
 				break;
 			}
 
@@ -428,7 +428,7 @@ static void printer_cups_add_ref_driver(rdpPrinterDriver* driver)
 }
 
 /* Singleton */
-static rdpCupsPrinterDriver* uniq_cups_driver = NULL;
+static rdpCupsPrinterDriver* uniq_cups_driver = nullptr;
 
 static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 {
@@ -439,7 +439,7 @@ static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 	if (cups_driver->references <= 1)
 	{
 		if (uniq_cups_driver == cups_driver)
-			uniq_cups_driver = NULL;
+			uniq_cups_driver = nullptr;
 		free(cups_driver);
 	}
 	else

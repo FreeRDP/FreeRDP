@@ -56,7 +56,7 @@ struct AINPUT_PLUGIN_
 static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	UINT16 type = 0;
-	AINPUT_PLUGIN* ainput = NULL;
+	AINPUT_PLUGIN* ainput = nullptr;
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 
 	WINPR_ASSERT(callback);
@@ -127,7 +127,7 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 	WINPR_ASSERT(callback->channel);
 	WINPR_ASSERT(callback->channel->Write);
 	const UINT rc = callback->channel->Write(callback->channel, (ULONG)Stream_Length(s),
-	                                         Stream_Buffer(s), NULL);
+	                                         Stream_Buffer(s), nullptr);
 	LeaveCriticalSection(&ainput->lock);
 	return rc;
 }
@@ -184,8 +184,8 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 }
 
 static const IWTSVirtualChannelCallback ainput_functions = { ainput_on_data_received,
-	                                                         NULL, /* Open */
-	                                                         ainput_on_close, NULL };
+	                                                         nullptr, /* Open */
+	                                                         ainput_on_close, nullptr };
 
 /**
  * Function description

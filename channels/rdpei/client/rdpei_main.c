@@ -149,7 +149,7 @@ static RDPINPUT_CONTACT_POINT* rdpei_contact(RDPEI_PLUGIN* rdpei, INT32 external
 			return contactPoint;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -235,7 +235,7 @@ static UINT rdpei_send_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s, UINT1
 	Stream_Write_UINT32(s, (UINT32)pduLength); /* pduLength (4 bytes) */
 	Stream_SetPosition(s, Stream_Length(s));
 	const UINT status = callback->channel->Write(callback->channel, (UINT32)Stream_Length(s),
-	                                             Stream_Buffer(s), NULL);
+	                                             Stream_Buffer(s), nullptr);
 #ifdef WITH_DEBUG_RDPEI
 	WLog_Print(rdpei->base.log, WLOG_DEBUG,
 	           "rdpei_send_pdu: eventId: %" PRIu16 " (%s) length: %" PRIu32 " status: %" PRIu32 "",
@@ -315,7 +315,7 @@ static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, size_t 
 	if (!frames || (count == 0))
 		return ERROR_INTERNAL_ERROR;
 
-	wStream* s = Stream_New(NULL, 64);
+	wStream* s = Stream_New(nullptr, 64);
 
 	if (!s)
 	{
@@ -552,7 +552,7 @@ static UINT rdpei_send_cs_ready_pdu(GENERIC_CHANNEL_CALLBACK* callback)
 		flags |= CS_READY_FLAGS_ENABLE_MULTIPEN_INJECTION & rdpei->context->clientFeaturesMask;
 
 	UINT32 pduLength = RDPINPUT_HEADER_LENGTH + 10;
-	wStream* s = Stream_New(NULL, pduLength);
+	wStream* s = Stream_New(nullptr, pduLength);
 
 	if (!s)
 	{
@@ -722,7 +722,7 @@ static UINT rdpei_send_touch_event_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 		return ERROR_INTERNAL_ERROR;
 
 	size_t pduLength = 64ULL + (64ULL * frame->contactCount);
-	wStream* s = Stream_New(NULL, pduLength);
+	wStream* s = Stream_New(nullptr, pduLength);
 
 	if (!s)
 	{
@@ -959,7 +959,7 @@ static UINT rdpei_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 		if (rdpei && rdpei->base.listener_callback)
 		{
 			if (rdpei->base.listener_callback->channel_callback == callback)
-				rdpei->base.listener_callback->channel_callback = NULL;
+				rdpei->base.listener_callback->channel_callback = nullptr;
 		}
 	}
 	free(callback);
@@ -1240,7 +1240,7 @@ static RDPINPUT_PEN_CONTACT_POINT* rdpei_pen_contact(RDPEI_PLUGIN* rdpei, INT32 
                                                      BOOL active)
 {
 	if (!rdpei)
-		return NULL;
+		return nullptr;
 
 	for (UINT32 x = 0; x < rdpei->maxPenContacts; x++)
 	{
@@ -1263,7 +1263,7 @@ static RDPINPUT_PEN_CONTACT_POINT* rdpei_pen_contact(RDPEI_PLUGIN* rdpei, INT32 
 			}
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 static UINT rdpei_add_pen(RdpeiClientContext* context, INT32 externalId,
@@ -1292,7 +1292,7 @@ static UINT rdpei_add_pen(RdpeiClientContext* context, INT32 externalId,
 static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UINT32 contactFlags,
                               UINT32 fieldFlags, INT32 x, INT32 y, va_list ap)
 {
-	RDPINPUT_PEN_CONTACT_POINT* contactPoint = NULL;
+	RDPINPUT_PEN_CONTACT_POINT* contactPoint = nullptr;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!context || !context->handle)
@@ -1312,7 +1312,7 @@ static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UIN
 		}
 	}
 
-	if (contactPoint != NULL)
+	if (contactPoint != nullptr)
 	{
 		RDPINPUT_PEN_CONTACT contact = WINPR_C_ARRAY_INIT;
 
@@ -1511,7 +1511,7 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdp
 	WINPR_ASSERT(rdpei->base.log);
 
 	InitializeCriticalSection(&rdpei->lock);
-	rdpei->event = CreateEventA(NULL, TRUE, FALSE, NULL);
+	rdpei->event = CreateEventA(nullptr, TRUE, FALSE, nullptr);
 	if (!rdpei->event)
 	{
 		WLog_Print(rdpei->base.log, WLOG_ERROR, "calloc failed!");
@@ -1555,7 +1555,7 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdp
 	{
 		rdpei->running = TRUE;
 
-		rdpei->thread = CreateThread(NULL, 0, rdpei_periodic_update, rdpei, 0, NULL);
+		rdpei->thread = CreateThread(nullptr, 0, rdpei_periodic_update, rdpei, 0, nullptr);
 		if (!rdpei->thread)
 		{
 			WLog_Print(rdpei->base.log, WLOG_ERROR, "calloc failed!");
@@ -1597,8 +1597,9 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 	free(rdpei->context);
 }
 
-static const IWTSVirtualChannelCallback rdpei_callbacks = { rdpei_on_data_received, NULL, /* Open */
-	                                                        rdpei_on_close, NULL };
+static const IWTSVirtualChannelCallback rdpei_callbacks = { rdpei_on_data_received,
+	                                                        nullptr, /* Open */
+	                                                        rdpei_on_close, nullptr };
 
 /**
  * Function description

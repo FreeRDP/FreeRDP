@@ -56,7 +56,7 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 
 	sysparam.params = 0;
 	sysparam.params |= SPI_MASK_SET_HIGH_CONTRAST;
-	sysparam.highContrast.colorScheme.string = NULL;
+	sysparam.highContrast.colorScheme.string = nullptr;
 	sysparam.highContrast.colorScheme.length = 0;
 	sysparam.highContrast.flags = 0x7E;
 	sysparam.params |= SPI_MASK_SET_MOUSE_BUTTON_SWAP;

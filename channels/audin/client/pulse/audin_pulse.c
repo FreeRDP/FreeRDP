@@ -139,7 +139,7 @@ static UINT audin_pulse_connect(IAudinDevice* device)
 	if (!pulse->context)
 		return ERROR_INVALID_PARAMETER;
 
-	if (pa_context_connect(pulse->context, NULL, PA_CONTEXT_NOFLAGS, NULL))
+	if (pa_context_connect(pulse->context, nullptr, PA_CONTEXT_NOFLAGS, nullptr))
 	{
 		WLog_Print(pulse->log, WLOG_ERROR, "pa_context_connect failed (%d)",
 		           pa_context_errno(pulse->context));
@@ -200,13 +200,13 @@ static UINT audin_pulse_free(IAudinDevice* device)
 	{
 		pa_context_disconnect(pulse->context);
 		pa_context_unref(pulse->context);
-		pulse->context = NULL;
+		pulse->context = nullptr;
 	}
 
 	if (pulse->mainloop)
 	{
 		pa_threaded_mainloop_free(pulse->mainloop);
-		pulse->mainloop = NULL;
+		pulse->mainloop = nullptr;
 	}
 
 	free(pulse->device_name);
@@ -324,7 +324,7 @@ static void audin_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 
 static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length, void* userdata)
 {
-	const void* data = NULL;
+	const void* data = nullptr;
 	AudinPulseDevice* pulse = (AudinPulseDevice*)userdata;
 	UINT error = CHANNEL_RC_OK;
 	pa_stream_peek(stream, &data, &length);
@@ -353,12 +353,12 @@ static UINT audin_pulse_close(IAudinDevice* device)
 		pa_threaded_mainloop_lock(pulse->mainloop);
 		pa_stream_disconnect(pulse->stream);
 		pa_stream_unref(pulse->stream);
-		pulse->stream = NULL;
+		pulse->stream = nullptr;
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 	}
 
-	pulse->receive = NULL;
-	pulse->user_data = NULL;
+	pulse->receive = nullptr;
+	pulse->user_data = nullptr;
 	return CHANNEL_RC_OK;
 }
 
@@ -385,7 +385,7 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 	pulse->receive = receive;
 	pulse->user_data = user_data;
 	pa_threaded_mainloop_lock(pulse->mainloop);
-	pulse->stream = pa_stream_new(pulse->context, pulse->stream_name, &pulse->sample_spec, NULL);
+	pulse->stream = pa_stream_new(pulse->context, pulse->stream_name, &pulse->sample_spec, nullptr);
 
 	if (!pulse->stream)
 	{
@@ -456,27 +456,27 @@ static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 static UINT audin_pulse_parse_addin_args(AudinPulseDevice* pulse, const ADDIN_ARGV* args)
 {
 	COMMAND_LINE_ARGUMENT_A audin_pulse_args[] = {
-		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL,
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", nullptr, nullptr, -1, nullptr,
 		  "audio device name" },
-		{ "client_name", COMMAND_LINE_VALUE_REQUIRED, "<client_name>", NULL, NULL, -1, NULL,
-		  "name of pulse client" },
-		{ "stream_name", COMMAND_LINE_VALUE_REQUIRED, "<stream_name>", NULL, NULL, -1, NULL,
-		  "name of pulse stream" },
-		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		{ "client_name", COMMAND_LINE_VALUE_REQUIRED, "<client_name>", nullptr, nullptr, -1,
+		  nullptr, "name of pulse client" },
+		{ "stream_name", COMMAND_LINE_VALUE_REQUIRED, "<stream_name>", nullptr, nullptr, -1,
+		  nullptr, "name of pulse stream" },
+		{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
 	};
 
 	const DWORD flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	const int status = CommandLineParseArgumentsA(args->argc, args->argv, audin_pulse_args, flags,
-	                                              pulse, NULL, NULL);
+	                                              pulse, nullptr, nullptr);
 
 	if (status < 0)
 		return ERROR_INVALID_PARAMETER;
 
 	const COMMAND_LINE_ARGUMENT_A* arg = audin_pulse_args;
 
-	const char* client_name = NULL;
-	const char* stream_name = NULL;
+	const char* client_name = nullptr;
+	const char* stream_name = nullptr;
 	do
 	{
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
@@ -493,7 +493,7 @@ static UINT audin_pulse_parse_addin_args(AudinPulseDevice* pulse, const ADDIN_AR
 			}
 		}
 		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 
 	if (!client_name)
 		client_name = freerdp_getApplicationDetailsString();
@@ -516,8 +516,8 @@ static UINT audin_pulse_parse_addin_args(AudinPulseDevice* pulse, const ADDIN_AR
 FREERDP_ENTRY_POINT(UINT VCAPITYPE pulse_freerdp_audin_client_subsystem_entry(
     PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args = NULL;
-	AudinPulseDevice* pulse = NULL;
+	const ADDIN_ARGV* args = nullptr;
+	AudinPulseDevice* pulse = nullptr;
 	UINT error = 0;
 	pulse = (AudinPulseDevice*)calloc(1, sizeof(AudinPulseDevice));
 

@@ -19,7 +19,7 @@ int TestNdr(int argc, char* argv[])
 	wStream staticS;
 	wStream* s = Stream_StaticInit(&staticS, payload, sizeof(payload));
 
-	BYTE* target = NULL;
+	BYTE* target = nullptr;
 	NdrArrayHints hints = { 2 };
 	NdrDeferredEntry e = { 0x020028, "arrayContent", &hints, (void*)&target,
 		                   ndr_uint8Array_descr() };

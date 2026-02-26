@@ -442,13 +442,13 @@ BOOL write_shared_message_header_with_functionid(wStream* s, UINT32 InterfaceId,
 wStream* create_shared_message_header_with_functionid(UINT32 InterfaceId, UINT32 MessageId,
                                                       UINT32 FunctionId, size_t OutputSize)
 {
-	wStream* out = Stream_New(NULL, 12ULL + OutputSize);
+	wStream* out = Stream_New(nullptr, 12ULL + OutputSize);
 	if (!out)
-		return NULL;
+		return nullptr;
 	if (!write_shared_message_header_with_functionid(out, InterfaceId, MessageId, FunctionId))
 	{
 		Stream_Free(out, TRUE);
-		return NULL;
+		return nullptr;
 	}
 	return out;
 }

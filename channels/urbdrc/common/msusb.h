@@ -98,7 +98,7 @@ extern "C"
 
 	WINPR_ATTR_MALLOC(msusb_msinterface_free, 1)
 	WINPR_ATTR_NODISCARD
-	FREERDP_LOCAL MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* out);
+	FREERDP_LOCAL MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* s);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL BOOL msusb_msinterface_write(const MSUSB_INTERFACE_DESCRIPTOR* MsInterface,

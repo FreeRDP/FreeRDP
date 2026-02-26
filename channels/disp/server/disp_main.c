@@ -48,7 +48,7 @@ static wStream* disp_server_single_packet_new(UINT32 type, UINT32 length)
 {
 	UINT error = 0;
 	DISPLAY_CONTROL_HEADER header;
-	wStream* s = Stream_New(NULL, DISPLAY_CONTROL_HEADER_LENGTH + length);
+	wStream* s = Stream_New(nullptr, DISPLAY_CONTROL_HEADER_LENGTH + length);
 
 	if (!s)
 	{
@@ -68,7 +68,7 @@ static wStream* disp_server_single_packet_new(UINT32 type, UINT32 length)
 	return s;
 error:
 	Stream_Free(s, TRUE);
-	return NULL;
+	return nullptr;
 }
 
 static void disp_server_sanitize_monitor_layout(DISPLAY_CONTROL_MONITOR_LAYOUT* monitor)
@@ -260,10 +260,10 @@ static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 static UINT disp_server_handle_messages(DispServerContext* context)
 {
 	DWORD BytesReturned = 0;
-	void* buffer = NULL;
+	void* buffer = nullptr;
 	UINT ret = CHANNEL_RC_OK;
-	DispServerPrivate* priv = NULL;
-	wStream* s = NULL;
+	DispServerPrivate* priv = nullptr;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -293,7 +293,7 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 	/* Consume channel event only after the disp dynamic channel is ready */
 	Stream_SetPosition(s, 0);
 
-	if (!WTSVirtualChannelRead(priv->disp_channel, 0, NULL, 0, &BytesReturned))
+	if (!WTSVirtualChannelRead(priv->disp_channel, 0, nullptr, 0, &BytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)
 			return ERROR_NO_DATA;
@@ -343,7 +343,7 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 {
 	DispServerContext* context = (DispServerContext*)arg;
-	DispServerPrivate* priv = NULL;
+	DispServerPrivate* priv = nullptr;
 	DWORD status = 0;
 	DWORD nCount = 0;
 	HANDLE events[8] = WINPR_C_ARRAY_INIT;
@@ -392,10 +392,10 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 static UINT disp_server_open(DispServerContext* context)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	DispServerPrivate* priv = NULL;
+	DispServerPrivate* priv = nullptr;
 	DWORD BytesReturned = 0;
-	PULONG pSessionId = NULL;
-	void* buffer = NULL;
+	PULONG pSessionId = nullptr;
+	void* buffer = nullptr;
 	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
@@ -456,9 +456,9 @@ static UINT disp_server_open(DispServerContext* context)
 	priv->channelEvent = *(HANDLE*)buffer;
 	WTSFreeMemory(buffer);
 
-	if (priv->thread == NULL)
+	if (priv->thread == nullptr)
 	{
-		if (!(priv->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		if (!(priv->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			rc = ERROR_INTERNAL_ERROR;
@@ -466,11 +466,11 @@ static UINT disp_server_open(DispServerContext* context)
 		}
 
 		if (!(priv->thread =
-		          CreateThread(NULL, 0, disp_server_thread_func, (void*)context, 0, NULL)))
+		          CreateThread(nullptr, 0, disp_server_thread_func, (void*)context, 0, nullptr)))
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			(void)CloseHandle(priv->stopEvent);
-			priv->stopEvent = NULL;
+			priv->stopEvent = nullptr;
 			rc = ERROR_INTERNAL_ERROR;
 			goto out_close;
 		}
@@ -479,8 +479,8 @@ static UINT disp_server_open(DispServerContext* context)
 	return CHANNEL_RC_OK;
 out_close:
 	(void)WTSVirtualChannelClose(priv->disp_channel);
-	priv->disp_channel = NULL;
-	priv->channelEvent = NULL;
+	priv->disp_channel = nullptr;
+	priv->channelEvent = nullptr;
 	return rc;
 }
 
@@ -522,7 +522,7 @@ out:
  */
 static UINT disp_server_send_caps_pdu(DispServerContext* context)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -548,7 +548,7 @@ static UINT disp_server_send_caps_pdu(DispServerContext* context)
 static UINT disp_server_close(DispServerContext* context)
 {
 	UINT error = CHANNEL_RC_OK;
-	DispServerPrivate* priv = NULL;
+	DispServerPrivate* priv = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -568,14 +568,14 @@ static UINT disp_server_close(DispServerContext* context)
 
 		(void)CloseHandle(priv->thread);
 		(void)CloseHandle(priv->stopEvent);
-		priv->thread = NULL;
-		priv->stopEvent = NULL;
+		priv->thread = nullptr;
+		priv->stopEvent = nullptr;
 	}
 
 	if (priv->disp_channel)
 	{
 		(void)WTSVirtualChannelClose(priv->disp_channel);
-		priv->disp_channel = NULL;
+		priv->disp_channel = nullptr;
 	}
 
 	return error;
@@ -583,8 +583,8 @@ static UINT disp_server_close(DispServerContext* context)
 
 DispServerContext* disp_server_context_new(HANDLE vcm)
 {
-	DispServerContext* context = NULL;
-	DispServerPrivate* priv = NULL;
+	DispServerContext* context = nullptr;
+	DispServerPrivate* priv = nullptr;
 	context = (DispServerContext*)calloc(1, sizeof(DispServerContext));
 
 	if (!context)
@@ -601,7 +601,7 @@ DispServerContext* disp_server_context_new(HANDLE vcm)
 		goto fail;
 	}
 
-	priv->input_stream = Stream_New(NULL, 4);
+	priv->input_stream = Stream_New(nullptr, 4);
 
 	if (!priv->input_stream)
 	{
@@ -620,7 +620,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	disp_server_context_free(context);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void disp_server_context_free(DispServerContext* context)

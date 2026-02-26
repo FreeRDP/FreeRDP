@@ -53,7 +53,7 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 		WLog_ERR(TAG, "Expected srcSize >= 30, got %" PRIuz, srcSize);
 		return 0;
 	}
-	const uint8_t* spl = NULL;
+	const uint8_t* spl = nullptr;
 	uint8_t* ph264 = h264_data;
 
 	/* search for 1st APP4 marker
@@ -68,7 +68,7 @@ static size_t demux_uvcH264(const BYTE* srcData, size_t srcSize, BYTE* h264_data
 		}
 	}
 
-	if (spl == NULL)
+	if (spl == nullptr)
 	{
 		WLog_ERR(TAG, "Expected 1st APP4 marker but none found");
 		return 0;
@@ -225,7 +225,7 @@ static void ecam_sws_free(CameraDeviceStream* stream)
 	if (stream->sws)
 	{
 		sws_freeContext(stream->sws);
-		stream->sws = NULL;
+		stream->sws = nullptr;
 	}
 }
 
@@ -300,8 +300,8 @@ static BOOL ecam_init_sws_context(CameraDeviceStream* stream, enum AVPixelFormat
 	    h264_context_get_option(stream->h264, H264_CONTEXT_OPTION_HW_ACCEL) ? AV_PIX_FMT_NV12
 	                                                                        : AV_PIX_FMT_YUV420P;
 
-	stream->sws =
-	    sws_getContext(width, height, pixFormat, width, height, outPixFormat, 0, NULL, NULL, NULL);
+	stream->sws = sws_getContext(width, height, pixFormat, width, height, outPixFormat, 0, nullptr,
+	                             nullptr, nullptr);
 	if (!stream->sws)
 	{
 		WLog_ERR(TAG, "sws_getContext failed");
@@ -422,31 +422,31 @@ static void ecam_encoder_context_free_h264(CameraDeviceStream* stream)
 
 #if defined(WITH_INPUT_FORMAT_MJPG)
 	if (stream->avOutFrame)
-		av_frame_free(&stream->avOutFrame); /* sets to NULL */
+		av_frame_free(&stream->avOutFrame); /* sets to nullptr */
 
 	if (stream->avInputPkt)
 	{
-		stream->avInputPkt->data = NULL;
+		stream->avInputPkt->data = nullptr;
 		stream->avInputPkt->size = 0;
-		av_packet_free(&stream->avInputPkt); /* sets to NULL */
+		av_packet_free(&stream->avInputPkt); /* sets to nullptr */
 	}
 
 	if (stream->avContext)
-		avcodec_free_context(&stream->avContext); /* sets to NULL */
+		avcodec_free_context(&stream->avContext); /* sets to nullptr */
 #endif
 
 #if defined(WITH_INPUT_FORMAT_H264)
 	if (stream->h264Frame)
 	{
 		free(stream->h264Frame);
-		stream->h264Frame = NULL;
+		stream->h264Frame = nullptr;
 	}
 #endif
 
 	if (stream->h264)
 	{
 		h264_context_free(stream->h264);
-		stream->h264 = NULL;
+		stream->h264 = nullptr;
 	}
 }
 
@@ -481,7 +481,7 @@ static BOOL ecam_init_mjpeg_decoder(CameraDeviceStream* stream)
 	 * return error, so we can skip corrupted frames, if any */
 	stream->avContext->err_recognition |= AV_EF_EXPLODE;
 
-	if (avcodec_open2(stream->avContext, avcodec, NULL) < 0)
+	if (avcodec_open2(stream->avContext, avcodec, nullptr) < 0)
 	{
 		WLog_ERR(TAG, "avcodec_open2 failed");
 		return FALSE;

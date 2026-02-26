@@ -63,7 +63,7 @@ static OSStatus rdpsnd_ios_render_cb(void* inRefCon,
 		int32_t available_bytes = 0;
 		const void* buffer = TPCircularBufferTail(&p->buffer, &available_bytes);
 
-		if (buffer != NULL && available_bytes > 0)
+		if (buffer != nullptr && available_bytes > 0)
 		{
 			const int bytes_to_copy = MIN((int32_t)target_buffer->mDataByteSize, available_bytes);
 			memcpy(target_buffer->mData, buffer, bytes_to_copy);
@@ -158,9 +158,9 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 	desc.componentSubType = kAudioUnitSubType_RemoteIO;
 	desc.componentFlags = 0;
 	desc.componentFlagsMask = 0;
-	AudioComponent audioComponent = AudioComponentFindNext(NULL, &desc);
+	AudioComponent audioComponent = AudioComponentFindNext(nullptr, &desc);
 
-	if (audioComponent == NULL)
+	if (audioComponent == nullptr)
 		return FALSE;
 
 	/* Open the audio unit. */
@@ -185,7 +185,7 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 	if (status != 0)
 	{
 		AudioComponentInstanceDispose(p->audio_unit);
-		p->audio_unit = NULL;
+		p->audio_unit = nullptr;
 		return FALSE;
 	}
 
@@ -200,7 +200,7 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 	if (status != 0)
 	{
 		AudioComponentInstanceDispose(p->audio_unit);
-		p->audio_unit = NULL;
+		p->audio_unit = nullptr;
 		return FALSE;
 	}
 
@@ -210,7 +210,7 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 	if (status != 0)
 	{
 		AudioComponentInstanceDispose(p->audio_unit);
-		p->audio_unit = NULL;
+		p->audio_unit = nullptr;
 		return FALSE;
 	}
 
@@ -221,7 +221,7 @@ static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 	{
 		AudioUnitUninitialize(p->audio_unit);
 		AudioComponentInstanceDispose(p->audio_unit);
-		p->audio_unit = NULL;
+		p->audio_unit = nullptr;
 		return FALSE;
 	}
 
@@ -241,7 +241,7 @@ static void rdpsnd_ios_close(rdpsndDevicePlugin* device)
 		/* Close the device. */
 		AudioUnitUninitialize(p->audio_unit);
 		AudioComponentInstanceDispose(p->audio_unit);
-		p->audio_unit = NULL;
+		p->audio_unit = nullptr;
 		p->is_opened = 0;
 		/* Destroy the circular buffer. */
 		TPCircularBufferCleanup(&p->buffer);

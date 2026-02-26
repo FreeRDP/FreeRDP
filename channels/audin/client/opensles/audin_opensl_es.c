@@ -232,9 +232,9 @@ UINT audin_opensles_close(IAudinDevice* device)
 
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p", (void*)device);
 	android_CloseRecDevice(opensles->stream);
-	opensles->receive = NULL;
-	opensles->user_data = NULL;
-	opensles->stream = NULL;
+	opensles->receive = nullptr;
+	opensles->user_data = nullptr;
+	opensles->stream = nullptr;
 	return CHANNEL_RC_OK;
 }
 
@@ -250,16 +250,16 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, const A
 	const COMMAND_LINE_ARGUMENT_A* arg;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*)device;
 	COMMAND_LINE_ARGUMENT_A audin_opensles_args[] = {
-		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL,
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", nullptr, nullptr, -1, nullptr,
 		  "audio device name" },
-		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
 	};
 
 	WLog_Print(opensles->log, WLOG_DEBUG, "device=%p, args=%p", (void*)device, (void*)args);
 	flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, args->argv, audin_opensles_args, flags,
-	                                    opensles, NULL, NULL);
+	                                    opensles, nullptr, nullptr);
 
 	if (status < 0)
 		return status;
@@ -282,7 +282,7 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device, const A
 			}
 		}
 		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 
 	return CHANNEL_RC_OK;
 }

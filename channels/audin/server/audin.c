@@ -274,12 +274,12 @@ static UINT audin_server_recv_format_change(audin_server_context* context, wStre
 
 static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 {
-	wStream* s = NULL;
-	void* buffer = NULL;
+	wStream* s = nullptr;
+	void* buffer = nullptr;
 	DWORD nCount = 0;
 	HANDLE events[8] = WINPR_C_ARRAY_INIT;
 	BOOL ready = FALSE;
-	HANDLE ChannelEvent = NULL;
+	HANDLE ChannelEvent = nullptr;
 	DWORD BytesReturned = 0;
 	audin_server* audin = (audin_server*)arg;
 	UINT error = CHANNEL_RC_OK;
@@ -337,7 +337,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 			break;
 	}
 
-	s = Stream_New(NULL, 4096);
+	s = Stream_New(nullptr, 4096);
 
 	if (!s)
 	{
@@ -378,7 +378,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 
 		Stream_SetPosition(s, 0);
 
-		if (!WTSVirtualChannelRead(audin->audin_channel, 0, NULL, 0, &BytesReturned))
+		if (!WTSVirtualChannelRead(audin->audin_channel, 0, nullptr, 0, &BytesReturned))
 		{
 			WLog_Print(audin->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
 			error = ERROR_INTERNAL_ERROR;
@@ -444,7 +444,7 @@ out_capacity:
 	Stream_Free(s, TRUE);
 out:
 	(void)WTSVirtualChannelClose(audin->audin_channel);
-	audin->audin_channel = NULL;
+	audin->audin_channel = nullptr;
 
 	if (error && audin->context.rdpcontext)
 		setChannelError(audin->context.rdpcontext, error,
@@ -461,7 +461,7 @@ static BOOL audin_server_open(audin_server_context* context)
 	WINPR_ASSERT(audin);
 	if (!audin->thread)
 	{
-		PULONG pSessionId = NULL;
+		PULONG pSessionId = nullptr;
 		DWORD BytesReturned = 0;
 		audin->SessionId = WTS_CURRENT_SESSION;
 		UINT32 channelId = 0;
@@ -492,18 +492,18 @@ static BOOL audin_server_open(audin_server_context* context)
 			return FALSE;
 		}
 
-		if (!(audin->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		if (!(audin->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		{
 			WLog_Print(audin->log, WLOG_ERROR, "CreateEvent failed!");
 			return FALSE;
 		}
 
 		if (!(audin->thread =
-		          CreateThread(NULL, 0, audin_server_thread_func, (void*)audin, 0, NULL)))
+		          CreateThread(nullptr, 0, audin_server_thread_func, (void*)audin, 0, nullptr)))
 		{
 			WLog_Print(audin->log, WLOG_ERROR, "CreateThread failed!");
 			(void)CloseHandle(audin->stopEvent);
-			audin->stopEvent = NULL;
+			audin->stopEvent = nullptr;
 			return FALSE;
 		}
 
@@ -519,7 +519,7 @@ static BOOL audin_server_is_open(audin_server_context* context)
 	audin_server* audin = (audin_server*)context;
 
 	WINPR_ASSERT(audin);
-	return audin->thread != NULL;
+	return audin->thread != nullptr;
 }
 
 static BOOL audin_server_close(audin_server_context* context)
@@ -540,17 +540,17 @@ static BOOL audin_server_close(audin_server_context* context)
 
 		(void)CloseHandle(audin->thread);
 		(void)CloseHandle(audin->stopEvent);
-		audin->thread = NULL;
-		audin->stopEvent = NULL;
+		audin->thread = nullptr;
+		audin->stopEvent = nullptr;
 	}
 
 	if (audin->audin_channel)
 	{
 		(void)WTSVirtualChannelClose(audin->audin_channel);
-		audin->audin_channel = NULL;
+		audin->audin_channel = nullptr;
 	}
 
-	audin->audin_negotiated_format = NULL;
+	audin->audin_negotiated_format = nullptr;
 
 	return TRUE;
 }
@@ -560,11 +560,11 @@ static wStream* audin_server_packet_new(wLog* log, size_t size, BYTE MessageId)
 	WINPR_ASSERT(log);
 
 	/* Allocate what we need plus header bytes */
-	wStream* s = Stream_New(NULL, size + SNDIN_HEADER_SIZE);
+	wStream* s = Stream_New(nullptr, size + SNDIN_HEADER_SIZE);
 	if (!s)
 	{
 		WLog_Print(log, WLOG_ERROR, "Stream_New failed!");
-		return NULL;
+		return nullptr;
 	}
 
 	Stream_Write_UINT8(s, MessageId);
@@ -839,7 +839,7 @@ audin_server_context* audin_server_context_new(HANDLE vcm)
 	if (!audin)
 	{
 		WLog_ERR(AUDIN_TAG, "calloc failed!");
-		return NULL;
+		return nullptr;
 	}
 	audin->log = WLog_Get(AUDIN_TAG);
 	audin->context.vcm = vcm;
@@ -872,7 +872,7 @@ void audin_server_context_free(audin_server_context* context)
 
 	audin_server_close(context);
 	audio_formats_free(audin->audin_server_formats, audin->audin_n_server_formats);
-	audin->audin_server_formats = NULL;
+	audin->audin_server_formats = nullptr;
 	free(audin);
 }
 
@@ -884,8 +884,8 @@ BOOL audin_server_set_formats(audin_server_context* context, SSIZE_T count,
 
 	audio_formats_free(audin->audin_server_formats, audin->audin_n_server_formats);
 	audin->audin_n_server_formats = 0;
-	audin->audin_server_formats = NULL;
-	audin->audin_negotiated_format = NULL;
+	audin->audin_server_formats = nullptr;
+	audin->audin_negotiated_format = nullptr;
 
 	if (count < 0)
 	{
