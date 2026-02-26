@@ -93,9 +93,16 @@ FREERDP_LOCAL BOOL rts_read_pdu_header_ex(wStream* s, rpcconn_hdr_t* header, BOO
 
 FREERDP_LOCAL void rts_free_pdu_header(rpcconn_hdr_t* header, BOOL allocated);
 
+typedef enum
+{
+	RTS_PDU_FAIL = -1,
+	RTS_PDU_INCOMPLETE = 0,
+	RTS_PDU_VALID = 1
+} rts_pdu_status_t;
+
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL rts_read_common_pdu_header(wStream* s, rpcconn_common_hdr_t* header,
-                                              BOOL ignoreErrors);
+FREERDP_LOCAL rts_pdu_status_t rts_read_common_pdu_header(wStream* s, rpcconn_common_hdr_t* header,
+                                                          BOOL ignoreErrors);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_command_length(UINT32 CommandType, wStream* s, size_t* length, BOOL silent);

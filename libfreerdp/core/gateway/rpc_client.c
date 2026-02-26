@@ -691,7 +691,10 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 			Stream_SetPosition(fragment, 0);
 
 			/* Ignore errors, the PDU might not be complete. */
-			(void)rts_read_common_pdu_header(fragment, &header, TRUE);
+			const rts_pdu_status_t rc = rts_read_common_pdu_header(fragment, &header, TRUE);
+			if (rc == RTS_PDU_FAIL)
+				return -1;
+
 			Stream_SetPosition(fragment, pos);
 
 			if (header.frag_length > rpc->max_recv_frag)
@@ -978,19 +981,19 @@ static void rpc_array_client_call_free(void* call)
 
 int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t length)
 {
-	SSIZE_T status = 0;
 	RpcClientCall* clientCall = NULL;
-	wStream s;
+	wStream s = Stream_Init();
 	rpcconn_common_hdr_t header = WINPR_C_ARRAY_INIT;
 
-	status = rpc_channel_write(&inChannel->common, buffer, length);
+	SSIZE_T status = rpc_channel_write(&inChannel->common, buffer, length);
 
 	if (status <= 0)
 		return -1;
 
 	Stream_StaticConstInit(&s, buffer, length);
-	if (!rts_read_common_pdu_header(&s, &header, FALSE))
-		return -1;
+	const rts_pdu_status_t rc = rts_read_common_pdu_header(&s, &header, FALSE);
+	if (rc != RTS_PDU_VALID)
+		return FALSE;
 
 	clientCall = rpc_client_call_find_by_id(inChannel->common.client, header.call_id);
 	if (!clientCall)

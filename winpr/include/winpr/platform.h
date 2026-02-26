@@ -626,7 +626,11 @@ WINPR_PRAGMA_DIAG_POP
 #define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
 	__attribute__((malloc, warn_unused_result)) /** @since version 3.3.0 */
 #endif
-#elif defined(__GNUC__) && (__GNUC__ > 10)
+#elif defined(__GNUC__)
+#if (__GNUC__ <= 10)
+#define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
+	__attribute__((malloc, warn_unused_result)) /** @since version 3.3.0 */
+#else
 #if defined(__cplusplus) && (__cplusplus >= 201703L)
 #define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
 	[[gnu::malloc(deallocator, ptrindex), nodiscard]] /** @since version 3.3.0 */
@@ -636,6 +640,7 @@ WINPR_PRAGMA_DIAG_POP
 #else
 #define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
 	__attribute__((malloc(deallocator, ptrindex), warn_unused_result)) /** @since version 3.3.0 */
+#endif
 #endif
 #elif defined(_MSC_VER)
 #define WINPR_ATTR_MALLOC(deallocator, ptrindex) __declspec(restrict) /** @since version 3.3.0 */
