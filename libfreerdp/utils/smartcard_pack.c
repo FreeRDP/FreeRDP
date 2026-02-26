@@ -3968,12 +3968,12 @@ LONG smartcard_pack_get_reader_icon_return(wStream* s, const GetReaderIcon_Retur
 	return ret->ReturnCode;
 }
 
-LONG smartcard_pack_get_transmit_count_return(wStream* s, const GetTransmitCount_Return* ret)
+LONG smartcard_pack_get_transmit_count_return(wStream* s, const GetTransmitCount_Return* call)
 {
-	WINPR_ASSERT(ret);
+	WINPR_ASSERT(call);
 	wLog* log = scard_log();
 
-	smartcard_trace_get_transmit_count_return(log, ret);
+	smartcard_trace_get_transmit_count_return(log, call);
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
 	{
@@ -3981,9 +3981,9 @@ LONG smartcard_pack_get_transmit_count_return(wStream* s, const GetTransmitCount
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, ret->cTransmitCount); /* cBytes (4 cbDataLen) */
+	Stream_Write_UINT32(s, call->cTransmitCount); /* cBytes (4 cbDataLen) */
 
-	return ret->ReturnCode;
+	return call->ReturnCode;
 }
 
 LONG smartcard_pack_read_cache_return(wStream* s, const ReadCache_Return* ret)

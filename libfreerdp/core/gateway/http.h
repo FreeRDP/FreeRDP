@@ -104,7 +104,7 @@ FREERDP_LOCAL BOOL http_context_set_rdg_connection_id(HttpContext* context,
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL http_context_set_rdg_correlation_id(HttpContext* context,
-                                                       const GUID* RdgConnectionId);
+                                                       const GUID* RdgCorrelationId);
 
 WINPR_ATTR_NODISCARD
 WINPR_ATTR_FORMAT_ARG(3, 4)

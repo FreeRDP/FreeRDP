@@ -81,7 +81,7 @@ extern "C"
 	FREERDP_LOCAL void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_LOCAL BOOL x509_utils_check_eku(const X509* scert, int nid);
+	FREERDP_LOCAL BOOL x509_utils_check_eku(const X509* xcert, int nid);
 
 	FREERDP_LOCAL void x509_utils_print_info(const X509* xcert);
 

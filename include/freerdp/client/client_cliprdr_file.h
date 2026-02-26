@@ -91,12 +91,12 @@ extern "C"
 	 *
 	 * \param file the file context to update
 	 * \param data the file list
-	 * \param count the length of the file list
+	 * \param size the length of the file list
 	 *
 	 * \return \b TRUE for success, \b FALSE otherwise
 	 */
 	FREERDP_API BOOL cliprdr_file_context_update_client_data(CliprdrFileContext* file,
-	                                                         const char* data, size_t count);
+	                                                         const char* data, size_t size);
 	/** \brief updates the files the server announces to the client
 	 *
 	 * \param file the file context to update

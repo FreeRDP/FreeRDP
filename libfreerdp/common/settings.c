@@ -2062,25 +2062,25 @@ BOOL freerdp_target_net_addresses_copy(rdpSettings* settings, char** addresses, 
 	return TRUE;
 }
 
-BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* expect)
+BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* other)
 {
-	if (!what && !expect)
+	if (!what && !other)
 		return TRUE;
-	if (!what || !expect)
+	if (!what || !other)
 		return FALSE;
 
-	if (what->Id != expect->Id)
+	if (what->Id != other->Id)
 		return FALSE;
-	if (what->Type != expect->Type)
+	if (what->Type != other->Type)
 		return FALSE;
-	if (what->Name && expect->Name)
+	if (what->Name && other->Name)
 	{
-		if (strcmp(what->Name, expect->Name) != 0)
+		if (strcmp(what->Name, other->Name) != 0)
 			return FALSE;
 	}
 	else
 	{
-		if (what->Name != expect->Name)
+		if (what->Name != other->Name)
 			return FALSE;
 	}
 
@@ -2089,7 +2089,7 @@ BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* expect)
 		case RDPDR_DTYP_PRINT:
 		{
 			const RDPDR_PRINTER* a = (const RDPDR_PRINTER*)what;
-			const RDPDR_PRINTER* b = (const RDPDR_PRINTER*)expect;
+			const RDPDR_PRINTER* b = (const RDPDR_PRINTER*)other;
 			if (a->DriverName && b->DriverName)
 				return strcmp(a->DriverName, b->DriverName) == 0;
 			return a->DriverName == b->DriverName;
@@ -2098,7 +2098,7 @@ BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* expect)
 		case RDPDR_DTYP_SERIAL:
 		{
 			const RDPDR_SERIAL* a = (const RDPDR_SERIAL*)what;
-			const RDPDR_SERIAL* b = (const RDPDR_SERIAL*)expect;
+			const RDPDR_SERIAL* b = (const RDPDR_SERIAL*)other;
 
 			if (a->Path && b->Path)
 			{
@@ -2123,7 +2123,7 @@ BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* expect)
 		case RDPDR_DTYP_PARALLEL:
 		{
 			const RDPDR_PARALLEL* a = (const RDPDR_PARALLEL*)what;
-			const RDPDR_PARALLEL* b = (const RDPDR_PARALLEL*)expect;
+			const RDPDR_PARALLEL* b = (const RDPDR_PARALLEL*)other;
 			if (a->Path && b->Path)
 				return strcmp(a->Path, b->Path) == 0;
 			return a->Path == b->Path;
@@ -2134,7 +2134,7 @@ BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* expect)
 		case RDPDR_DTYP_FILESYSTEM:
 		{
 			const RDPDR_DRIVE* a = (const RDPDR_DRIVE*)what;
-			const RDPDR_DRIVE* b = (const RDPDR_DRIVE*)expect;
+			const RDPDR_DRIVE* b = (const RDPDR_DRIVE*)other;
 			if (a->automount != b->automount)
 				return FALSE;
 			if (a->Path && b->Path)

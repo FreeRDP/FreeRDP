@@ -748,13 +748,13 @@ owned by rdpRdp */
 	FREERDP_API UINT32 freerdp_get_last_error(const rdpContext* context);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_API const char* freerdp_get_last_error_name(UINT32 error);
+	FREERDP_API const char* freerdp_get_last_error_name(UINT32 code);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_API const char* freerdp_get_last_error_string(UINT32 error);
+	FREERDP_API const char* freerdp_get_last_error_string(UINT32 code);
 
 	WINPR_ATTR_NODISCARD
-	FREERDP_API const char* freerdp_get_last_error_category(UINT32 error);
+	FREERDP_API const char* freerdp_get_last_error_category(UINT32 code);
 
 #define freerdp_set_last_error(context, lastError) \
 	freerdp_set_last_error_ex((context), (lastError), __func__, __FILE__, __LINE__)

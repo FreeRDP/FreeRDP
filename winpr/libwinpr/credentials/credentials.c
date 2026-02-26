@@ -209,12 +209,12 @@ BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
 	}
 }
 
-BOOL CredUnmarshalCredentialW(LPCWSTR cred, PCRED_MARSHAL_TYPE pcredType, PVOID* out)
+BOOL CredUnmarshalCredentialW(LPCWSTR cred, PCRED_MARSHAL_TYPE CredType, PVOID* Credential)
 {
 	char* str = NULL;
 	if (cred)
 		str = ConvertWCharToUtf8Alloc(cred, NULL);
-	const BOOL rc = CredUnmarshalCredentialA(str, pcredType, out);
+	const BOOL rc = CredUnmarshalCredentialA(str, CredType, Credential);
 	free(str);
 	return rc;
 }

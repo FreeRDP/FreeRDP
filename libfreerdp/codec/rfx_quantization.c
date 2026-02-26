@@ -54,22 +54,23 @@ static inline BOOL rfx_quantization_decode_block(const primitives_t* WINPR_RESTR
 	return prims->lShiftC_16s_inplace(buffer, factor, buffer_size) == PRIMITIVES_SUCCESS;
 }
 
-void rfx_quantization_decode(INT16* WINPR_RESTRICT buffer, const UINT32* WINPR_RESTRICT quantVals)
+void rfx_quantization_decode(INT16* WINPR_RESTRICT buffer,
+                             const UINT32* WINPR_RESTRICT quantization_values)
 {
 	const primitives_t* prims = primitives_get();
 	WINPR_ASSERT(buffer);
-	WINPR_ASSERT(quantVals);
+	WINPR_ASSERT(quantization_values);
 
-	rfx_quantization_decode_block(prims, &buffer[0], 1024, quantVals[8] - 1);    /* HL1 */
-	rfx_quantization_decode_block(prims, &buffer[1024], 1024, quantVals[7] - 1); /* LH1 */
-	rfx_quantization_decode_block(prims, &buffer[2048], 1024, quantVals[9] - 1); /* HH1 */
-	rfx_quantization_decode_block(prims, &buffer[3072], 256, quantVals[5] - 1);  /* HL2 */
-	rfx_quantization_decode_block(prims, &buffer[3328], 256, quantVals[4] - 1);  /* LH2 */
-	rfx_quantization_decode_block(prims, &buffer[3584], 256, quantVals[6] - 1);  /* HH2 */
-	rfx_quantization_decode_block(prims, &buffer[3840], 64, quantVals[2] - 1);   /* HL3 */
-	rfx_quantization_decode_block(prims, &buffer[3904], 64, quantVals[1] - 1);   /* LH3 */
-	rfx_quantization_decode_block(prims, &buffer[3968], 64, quantVals[3] - 1);   /* HH3 */
-	rfx_quantization_decode_block(prims, &buffer[4032], 64, quantVals[0] - 1);   /* LL3 */
+	rfx_quantization_decode_block(prims, &buffer[0], 1024, quantization_values[8] - 1);    /* HL1 */
+	rfx_quantization_decode_block(prims, &buffer[1024], 1024, quantization_values[7] - 1); /* LH1 */
+	rfx_quantization_decode_block(prims, &buffer[2048], 1024, quantization_values[9] - 1); /* HH1 */
+	rfx_quantization_decode_block(prims, &buffer[3072], 256, quantization_values[5] - 1);  /* HL2 */
+	rfx_quantization_decode_block(prims, &buffer[3328], 256, quantization_values[4] - 1);  /* LH2 */
+	rfx_quantization_decode_block(prims, &buffer[3584], 256, quantization_values[6] - 1);  /* HH2 */
+	rfx_quantization_decode_block(prims, &buffer[3840], 64, quantization_values[2] - 1);   /* HL3 */
+	rfx_quantization_decode_block(prims, &buffer[3904], 64, quantization_values[1] - 1);   /* LH3 */
+	rfx_quantization_decode_block(prims, &buffer[3968], 64, quantization_values[3] - 1);   /* HH3 */
+	rfx_quantization_decode_block(prims, &buffer[4032], 64, quantization_values[0] - 1);   /* LL3 */
 }
 
 static inline void rfx_quantization_encode_block(INT16* WINPR_RESTRICT buffer, size_t buffer_size,

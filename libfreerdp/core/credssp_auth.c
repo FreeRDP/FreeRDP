@@ -135,12 +135,13 @@ static BOOL credssp_auth_update_name_cache(rdpCredsspAuth* auth, TCHAR* name)
 #endif
 	return TRUE;
 }
-rdpCredsspAuth* credssp_auth_new(const rdpContext* rdp_ctx)
+rdpCredsspAuth* credssp_auth_new(const rdpContext* context)
 {
+	WINPR_ASSERT(context);
 	rdpCredsspAuth* auth = calloc(1, sizeof(rdpCredsspAuth));
 
 	if (auth)
-		auth->rdp_ctx = rdp_ctx;
+		auth->rdp_ctx = context;
 
 	return auth;
 }

@@ -177,20 +177,20 @@ double WINPR_JSON_GetNumberValue(const WINPR_JSON* item)
 	return json_number_value(ccast(item));
 }
 
-BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* json)
+BOOL WINPR_JSON_IsInvalid(const WINPR_JSON* item)
 {
-	const json_t* item = ccast(json);
-	if (WINPR_JSON_IsArray(item))
+	const json_t* jitem = ccast(item);
+	if (WINPR_JSON_IsArray(jitem))
 		return FALSE;
-	if (WINPR_JSON_IsObject(item))
+	if (WINPR_JSON_IsObject(jitem))
 		return FALSE;
-	if (WINPR_JSON_IsNull(item))
+	if (WINPR_JSON_IsNull(jitem))
 		return FALSE;
-	if (WINPR_JSON_IsNumber(item))
+	if (WINPR_JSON_IsNumber(jitem))
 		return FALSE;
-	if (WINPR_JSON_IsBool(item))
+	if (WINPR_JSON_IsBool(jitem))
 		return FALSE;
-	if (WINPR_JSON_IsString(item))
+	if (WINPR_JSON_IsString(jitem))
 		return FALSE;
 	return TRUE;
 }

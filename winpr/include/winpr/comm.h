@@ -392,7 +392,7 @@ extern "C"
 	 */
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
 	WINPR_ATTR_NODISCARD
-	WINPR_API HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+	WINPR_API HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	                                 LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 	                                 DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
 	                                 HANDLE hTemplateFile);
