@@ -93,7 +93,7 @@ rdtkButton* rdtk_button_new(rdtkEngine* engine, rdtkNinePatch* ninePatch)
 	rdtkButton* button = (rdtkButton*)calloc(1, sizeof(rdtkButton));
 
 	if (!button)
-		return NULL;
+		return nullptr;
 
 	button->engine = engine;
 	button->ninePatch = ninePatch;
@@ -127,7 +127,7 @@ int rdtk_button_engine_uninit(rdtkEngine* engine)
 	if (engine->button)
 	{
 		rdtk_button_free(engine->button);
-		engine->button = NULL;
+		engine->button = nullptr;
 	}
 
 	return 1;

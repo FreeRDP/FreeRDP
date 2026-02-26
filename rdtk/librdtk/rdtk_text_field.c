@@ -93,7 +93,7 @@ rdtkTextField* rdtk_text_field_new(rdtkEngine* engine, rdtkNinePatch* ninePatch)
 	rdtkTextField* textField = (rdtkTextField*)calloc(1, sizeof(rdtkTextField));
 
 	if (!textField)
-		return NULL;
+		return nullptr;
 
 	textField->engine = engine;
 	textField->ninePatch = ninePatch;
@@ -126,7 +126,7 @@ int rdtk_text_field_engine_uninit(rdtkEngine* engine)
 	if (engine->textField)
 	{
 		rdtk_text_field_free(engine->textField);
-		engine->textField = NULL;
+		engine->textField = nullptr;
 	}
 
 	return 1;

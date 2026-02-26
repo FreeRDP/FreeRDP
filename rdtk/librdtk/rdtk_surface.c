@@ -49,7 +49,7 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 	rdtkSurface* surface = (rdtkSurface*)calloc(1, sizeof(rdtkSurface));
 
 	if (!surface)
-		return NULL;
+		return nullptr;
 
 	surface->engine = engine;
 
@@ -73,7 +73,7 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 		if (!surface->data)
 		{
 			free(surface);
-			return NULL;
+			return nullptr;
 		}
 
 		surface->owner = true;

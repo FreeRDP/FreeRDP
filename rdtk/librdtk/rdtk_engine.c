@@ -32,7 +32,7 @@ rdtkEngine* rdtk_engine_new(void)
 	rdtkEngine* engine = (rdtkEngine*)calloc(1, sizeof(rdtkEngine));
 
 	if (!engine)
-		return NULL;
+		return nullptr;
 
 	if (rdtk_font_engine_init(engine) < 0)
 		goto fail;
@@ -47,7 +47,7 @@ rdtkEngine* rdtk_engine_new(void)
 
 fail:
 	rdtk_engine_free(engine);
-	return NULL;
+	return nullptr;
 }
 
 void rdtk_engine_free(rdtkEngine* engine)

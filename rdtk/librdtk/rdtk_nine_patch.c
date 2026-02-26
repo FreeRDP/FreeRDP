@@ -494,7 +494,7 @@ rdtkNinePatch* rdtk_nine_patch_new(rdtkEngine* engine)
 	rdtkNinePatch* ninePatch = (rdtkNinePatch*)calloc(1, sizeof(rdtkNinePatch));
 
 	if (!ninePatch)
-		return NULL;
+		return nullptr;
 
 	ninePatch->engine = engine;
 	return ninePatch;
@@ -512,7 +512,7 @@ void rdtk_nine_patch_free(rdtkNinePatch* ninePatch)
 int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 {
 	int status = 0;
-	rdtkNinePatch* ninePatch = NULL;
+	rdtkNinePatch* ninePatch = nullptr;
 
 	WINPR_ASSERT(engine);
 
@@ -520,8 +520,8 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 
 	{
 		SSIZE_T size = 0;
-		const uint8_t* data = NULL;
-		wImage* image = NULL;
+		const uint8_t* data = nullptr;
+		wImage* image = nullptr;
 
 		status = -1;
 		size = rdtk_get_embedded_resource_file("btn_default_normal.9." FILE_EXT, &data);
@@ -553,11 +553,11 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 
 	if (!engine->textField9patch)
 	{
-		const uint8_t* data = NULL;
+		const uint8_t* data = nullptr;
 		status = -1;
 		const SSIZE_T size =
 		    rdtk_get_embedded_resource_file("textfield_default.9." FILE_EXT, &data);
-		wImage* image = NULL;
+		wImage* image = nullptr;
 
 		if (size > 0)
 		{
@@ -593,13 +593,13 @@ int rdtk_nine_patch_engine_uninit(rdtkEngine* engine)
 	if (engine->button9patch)
 	{
 		rdtk_nine_patch_free(engine->button9patch);
-		engine->button9patch = NULL;
+		engine->button9patch = nullptr;
 	}
 
 	if (engine->textField9patch)
 	{
 		rdtk_nine_patch_free(engine->textField9patch);
-		engine->textField9patch = NULL;
+		engine->textField9patch = nullptr;
 	}
 
 	return 1;
