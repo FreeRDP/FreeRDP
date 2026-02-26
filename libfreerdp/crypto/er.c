@@ -358,7 +358,7 @@ BOOL er_read_integer(wStream* s, UINT32* value)
 	er_read_universal_tag(s, ER_TAG_INTEGER, FALSE);
 	er_read_length(s, &length);
 
-	if (value == NULL)
+	if (value == nullptr)
 	{
 		Stream_Seek(s, WINPR_ASSERTING_INT_CAST(size_t, length));
 		return TRUE;

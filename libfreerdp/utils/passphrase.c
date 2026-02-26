@@ -56,13 +56,13 @@ const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, cha
 	WCHAR PasswordW[CREDUI_MAX_PASSWORD_LENGTH + 1] = WINPR_C_ARRAY_INIT;
 	BOOL fSave = FALSE;
 	DWORD dwFlags = 0;
-	WCHAR* promptW = ConvertUtf8ToWCharAlloc(prompt, NULL);
+	WCHAR* promptW = ConvertUtf8ToWCharAlloc(prompt, nullptr);
 	const DWORD status =
-	    CredUICmdLinePromptForCredentialsW(promptW, NULL, 0, UserNameW, ARRAYSIZE(UserNameW),
+	    CredUICmdLinePromptForCredentialsW(promptW, nullptr, 0, UserNameW, ARRAYSIZE(UserNameW),
 	                                       PasswordW, ARRAYSIZE(PasswordW), &fSave, dwFlags);
 	free(promptW);
 	if (ConvertWCharNToUtf8(PasswordW, ARRAYSIZE(PasswordW), buf, bufsiz) < 0)
-		return NULL;
+		return nullptr;
 	return buf;
 }
 
@@ -114,7 +114,7 @@ static int wait_for_fd(int fd, int timeout)
 
 	do
 	{
-		status = select(fd + 1, &rset, NULL, NULL, timeout ? &tv : NULL);
+		status = select(fd + 1, &rset, nullptr, nullptr, timeout ? &tv : nullptr);
 	} while ((status < 0) && (errno == EINTR));
 
 #endif
@@ -125,8 +125,8 @@ static void replace_char(char* buffer, WINPR_ATTR_UNUSED size_t buffer_len, cons
 {
 	while (*toreplace != '\0')
 	{
-		char* ptr = NULL;
-		while ((ptr = strrchr(buffer, *toreplace)) != NULL)
+		char* ptr = nullptr;
+		while ((ptr = strrchr(buffer, *toreplace)) != nullptr)
 			*ptr = '\0';
 		toreplace++;
 	}
@@ -138,12 +138,12 @@ static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* 
 	BOOL terminal_needs_reset = FALSE;
 	char term_name[L_ctermid] = WINPR_C_ARRAY_INIT;
 
-	FILE* fout = NULL;
+	FILE* fout = nullptr;
 
 	if (bufsiz == 0)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	ctermid(term_name);
@@ -167,7 +167,7 @@ static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* 
 			if (!fout)
 			{
 				close(term_file);
-				return NULL;
+				return nullptr;
 			}
 			terminal_fildes = term_file;
 		}
@@ -193,7 +193,7 @@ static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* 
 	(void)fflush(fout);
 
 	{
-		char* ptr = NULL;
+		char* ptr = nullptr;
 		size_t ptr_len = 0;
 		const SSIZE_T res = freerdp_interruptible_get_line(context, &ptr, &ptr_len, fp);
 		if (res < 0)
@@ -232,7 +232,7 @@ error:
 	errno = saved_errno;
 }
 
-	return NULL;
+	return nullptr;
 }
 
 static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf, size_t bufsiz,
@@ -245,15 +245,15 @@ static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf
 	// NOLINTNEXTLINE(clang-analyzer-optin.taint.GenericTaint)
 	FILE* askproc = popen(command, "r");
 	if (!askproc)
-		return NULL;
+		return nullptr;
 	WINPR_ASSERT(bufsiz <= INT32_MAX);
-	if (fgets(buf, (int)bufsiz, askproc) != NULL)
+	if (fgets(buf, (int)bufsiz, askproc) != nullptr)
 		buf[strcspn(buf, "\r\n")] = '\0';
 	else
-		buf = NULL;
+		buf = nullptr;
 	const int status = pclose(askproc);
 	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
-		buf = NULL;
+		buf = nullptr;
 
 	return buf;
 }
@@ -387,7 +387,7 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* stream)
 const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf,
                                     size_t bufsiz, int from_stdin)
 {
-	return NULL;
+	return nullptr;
 }
 
 int freerdp_interruptible_getc(rdpContext* context, FILE* f)
@@ -400,10 +400,10 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
                                        FILE* stream)
 {
 	int c = 0;
-	char* n = NULL;
+	char* n = nullptr;
 	size_t step = 32;
 	size_t used = 0;
-	char* ptr = NULL;
+	char* ptr = nullptr;
 	size_t len = 0;
 
 	if (!plineptr || !psize)
@@ -447,7 +447,7 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 			if (!n)
 			{
 				free(ptr);
-				*plineptr = NULL;
+				*plineptr = nullptr;
 				return -1;
 			}
 
@@ -484,7 +484,7 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 	if (c == EOF)
 	{
 		free(ptr);
-		*plineptr = NULL;
+		*plineptr = nullptr;
 		return EOF;
 	}
 	*plineptr = ptr;

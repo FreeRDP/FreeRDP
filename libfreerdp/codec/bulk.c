@@ -78,7 +78,7 @@ static UINT32 bulk_compression_level(rdpBulk* WINPR_RESTRICT bulk)
 {
 	WINPR_ASSERT(bulk);
 	WINPR_ASSERT(bulk->context);
-	rdpSettings* settings = bulk->context->settings;
+	const rdpSettings* settings = bulk->context->settings;
 	WINPR_ASSERT(settings);
 	bulk->CompressionLevel = (settings->CompressionLevel >= PACKET_COMPR_TYPE_RDP61)
 	                             ? PACKET_COMPR_TYPE_RDP61
@@ -104,8 +104,8 @@ static inline int bulk_compress_validate(rdpBulk* bulk, const BYTE* pSrcData, UI
                                          const BYTE* pDstData, UINT32 DstSize, UINT32 Flags)
 {
 	int status;
-	const BYTE* v_pSrcData = NULL;
-	const BYTE* v_pDstData = NULL;
+	const BYTE* v_pSrcData = nullptr;
+	const BYTE* v_pDstData = nullptr;
 	UINT32 v_SrcSize = 0;
 	UINT32 v_DstSize = 0;
 	UINT32 v_Flags = 0;
@@ -338,7 +338,7 @@ void bulk_reset(rdpBulk* WINPR_RESTRICT bulk)
 
 rdpBulk* bulk_new(rdpContext* context)
 {
-	rdpBulk* bulk = NULL;
+	rdpBulk* bulk = nullptr;
 	WINPR_ASSERT(context);
 
 	bulk = (rdpBulk*)calloc(1, sizeof(rdpBulk));
@@ -373,7 +373,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	bulk_free(bulk);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void bulk_free(rdpBulk* bulk)

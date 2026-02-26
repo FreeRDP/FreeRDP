@@ -84,10 +84,10 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 {
 	DECODING_STATE state = dsInvalidArgument;
 	SBufferInfo sBufferInfo = WINPR_C_ARRAY_INIT;
-	SSysMEMBuffer* pSystemBuffer = NULL;
-	H264_CONTEXT_OPENH264* sys = NULL;
-	UINT32* iStride = NULL;
-	BYTE** pYUVData = NULL;
+	SSysMEMBuffer* pSystemBuffer = nullptr;
+	H264_CONTEXT_OPENH264* sys = nullptr;
+	UINT32* iStride = nullptr;
+	BYTE** pYUVData = nullptr;
 
 	WINPR_ASSERT(h264);
 	WINPR_ASSERT(pSrcData || (SrcSize == 0));
@@ -107,9 +107,9 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	/*
 	 * Decompress the image.  The RDP host only seems to send I420 format.
 	 */
-	pYUVData[0] = NULL;
-	pYUVData[1] = NULL;
-	pYUVData[2] = NULL;
+	pYUVData[0] = nullptr;
+	pYUVData[1] = nullptr;
+	pYUVData[2] = nullptr;
 
 	WINPR_ASSERT(sys->pDecoder);
 	state = (*sys->pDecoder)
@@ -121,12 +121,14 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		if (state == dsNoParamSets)
 		{
 			/* this happens on the first frame due to missing parameter sets */
-			state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, pYUVData, &sBufferInfo);
+			state =
+			    (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, nullptr, 0, pYUVData, &sBufferInfo);
 		}
 		else if (state == dsErrorFree)
 		{
 			/* call DecodeFrame2 again to decode without delay */
-			state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, pYUVData, &sBufferInfo);
+			state =
+			    (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, nullptr, 0, pYUVData, &sBufferInfo);
 		}
 		else
 		{
@@ -187,7 +189,7 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 	SFrameBSInfo info = WINPR_C_ARRAY_INIT;
 	SSourcePicture pic = WINPR_C_ARRAY_INIT;
 
-	H264_CONTEXT_OPENH264* sys = NULL;
+	H264_CONTEXT_OPENH264* sys = nullptr;
 
 	WINPR_ASSERT(h264);
 	WINPR_ASSERT(pYUVData);
@@ -413,7 +415,7 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 
 static void openh264_uninit(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_OPENH264* sysContexts = NULL;
+	H264_CONTEXT_OPENH264* sysContexts = nullptr;
 
 	WINPR_ASSERT(h264);
 
@@ -429,14 +431,14 @@ static void openh264_uninit(H264_CONTEXT* h264)
 			{
 				(*sys->pDecoder)->Uninitialize(sys->pDecoder);
 				sysContexts->WelsDestroyDecoder(sys->pDecoder);
-				sys->pDecoder = NULL;
+				sys->pDecoder = nullptr;
 			}
 
 			if (sys->pEncoder)
 			{
 				(*sys->pEncoder)->Uninitialize(sys->pEncoder);
 				sysContexts->WelsDestroySVCEncoder(sys->pEncoder);
-				sys->pEncoder = NULL;
+				sys->pEncoder = nullptr;
 			}
 		}
 
@@ -445,7 +447,7 @@ static void openh264_uninit(H264_CONTEXT* h264)
 			FreeLibrary(sysContexts->lib);
 #endif
 		free(h264->pSystemData);
-		h264->pSystemData = NULL;
+		h264->pSystemData = nullptr;
 	}
 }
 
@@ -485,7 +487,7 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 	    !sysContexts->WelsGetCodecVersionEx)
 	{
 		FreeLibrary(sysContexts->lib);
-		sysContexts->lib = NULL;
+		sysContexts->lib = nullptr;
 		return FALSE;
 	}
 
@@ -502,7 +504,7 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 		    name, sysContexts->version.uMajor, sysContexts->version.uMinor,
 		    sysContexts->version.uRevision);
 		FreeLibrary(sysContexts->lib);
-		sysContexts->lib = NULL;
+		sysContexts->lib = nullptr;
 		return FALSE;
 	}
 
@@ -516,7 +518,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 	BOOL success = FALSE;
 #endif
 	long status = 0;
-	H264_CONTEXT_OPENH264* sysContexts = NULL;
+	H264_CONTEXT_OPENH264* sysContexts = nullptr;
 	static int traceLevel = WELS_LOG_DEBUG;
 #if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 	static EVideoFormatType videoFormat = videoFormatI420;

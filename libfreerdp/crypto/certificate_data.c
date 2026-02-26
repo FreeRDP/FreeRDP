@@ -136,7 +136,7 @@ fail:
 static rdpCertificateData* freerdp_certificate_data_new_nocopy(const char* hostname, UINT16 port,
                                                                rdpCertificate* xcert)
 {
-	rdpCertificateData* certdata = NULL;
+	rdpCertificateData* certdata = nullptr;
 
 	if (!hostname || !xcert)
 		goto fail;
@@ -160,14 +160,14 @@ static rdpCertificateData* freerdp_certificate_data_new_nocopy(const char* hostn
 	certdata->cert = xcert;
 	if (!freerdp_certificate_data_load_cache(certdata))
 	{
-		certdata->cert = NULL;
+		certdata->cert = nullptr;
 		goto fail;
 	}
 
 	return certdata;
 fail:
 	freerdp_certificate_data_free(certdata);
-	return NULL;
+	return nullptr;
 }
 
 rdpCertificateData* freerdp_certificate_data_new(const char* hostname, UINT16 port,
@@ -184,7 +184,7 @@ rdpCertificateData* freerdp_certificate_data_new_from_pem(const char* hostname, 
                                                           const char* pem, size_t length)
 {
 	if (!pem || (length == 0))
-		return NULL;
+		return nullptr;
 
 	rdpCertificate* cert = freerdp_certificate_new_from_pem(pem);
 	rdpCertificateData* data = freerdp_certificate_data_new_nocopy(hostname, port, cert);
@@ -197,7 +197,7 @@ rdpCertificateData* freerdp_certificate_data_new_from_file(const char* hostname,
                                                            const char* file)
 {
 	if (!file)
-		return NULL;
+		return nullptr;
 
 	rdpCertificate* cert = freerdp_certificate_new_from_file(file);
 	rdpCertificateData* data = freerdp_certificate_data_new_nocopy(hostname, port, cert);
@@ -208,7 +208,7 @@ rdpCertificateData* freerdp_certificate_data_new_from_file(const char* hostname,
 
 void freerdp_certificate_data_free(rdpCertificateData* data)
 {
-	if (data == NULL)
+	if (data == nullptr)
 		return;
 
 	free(data->hostname);
@@ -225,7 +225,7 @@ void freerdp_certificate_data_free(rdpCertificateData* data)
 const char* freerdp_certificate_data_get_host(const rdpCertificateData* cert)
 {
 	if (!cert)
-		return NULL;
+		return nullptr;
 	return cert->hostname;
 }
 
@@ -244,7 +244,7 @@ const char* freerdp_certificate_data_get_pem(const rdpCertificateData* cert)
 const char* freerdp_certificate_data_get_pem_ex(const rdpCertificateData* cert, BOOL withFullChain)
 {
 	if (!cert)
-		return NULL;
+		return nullptr;
 	if (withFullChain)
 		return cert->cached_pem_chain;
 	return cert->cached_pem;
@@ -253,7 +253,7 @@ const char* freerdp_certificate_data_get_pem_ex(const rdpCertificateData* cert, 
 const char* freerdp_certificate_data_get_subject(const rdpCertificateData* cert)
 {
 	if (!cert)
-		return NULL;
+		return nullptr;
 
 	return cert->cached_subject;
 }
@@ -261,14 +261,14 @@ const char* freerdp_certificate_data_get_subject(const rdpCertificateData* cert)
 const char* freerdp_certificate_data_get_issuer(const rdpCertificateData* cert)
 {
 	if (!cert)
-		return NULL;
+		return nullptr;
 
 	return cert->cached_issuer;
 }
 const char* freerdp_certificate_data_get_fingerprint(const rdpCertificateData* cert)
 {
 	if (!cert)
-		return NULL;
+		return nullptr;
 
 	return cert->cached_fingerprint;
 }
@@ -298,7 +298,7 @@ BOOL freerdp_certificate_data_equal(const rdpCertificateData* a, const rdpCertif
 const char* freerdp_certificate_data_get_hash(const rdpCertificateData* cert)
 {
 	if (!cert)
-		return NULL;
+		return nullptr;
 
 	return cert->cached_hash;
 }

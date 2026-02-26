@@ -60,7 +60,7 @@ static inline UINT32 GETPIXEL32(const void* WINPR_RESTRICT d, UINT32 x, UINT32 y
 static inline UINT16 IN_PIXEL16(const void* WINPR_RESTRICT in_ptr, UINT32 in_x, UINT32 in_y,
                                 UINT32 in_w, UINT16 in_last_pixel)
 {
-	if (in_ptr == 0)
+	if (in_ptr == nullptr)
 		return 0;
 	else if (in_x < in_w)
 		return GETPIXEL16(in_ptr, in_x, in_y, in_w);
@@ -72,7 +72,7 @@ static inline UINT16 IN_PIXEL16(const void* WINPR_RESTRICT in_ptr, UINT32 in_x, 
 static inline UINT32 IN_PIXEL32(const void* WINPR_RESTRICT in_ptr, UINT32 in_x, UINT32 in_y,
                                 UINT32 in_w, UINT32 in_last_pixel)
 {
-	if (in_ptr == 0)
+	if (in_ptr == nullptr)
 		return 0;
 	else if (in_x < in_w)
 		return GETPIXEL32(in_ptr, in_x, in_y, in_w);
@@ -467,7 +467,7 @@ static inline SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 	const UINT32 mix = 0xFFFFFF;
 	const char* start = (const char*)srcData;
 	const char* line = start + 4ULL * width * start_line;
-	const char* last_line = NULL;
+	const char* last_line = nullptr;
 
 	while ((line >= start) && (out_count < 32768))
 	{
@@ -640,7 +640,7 @@ static inline SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 		}
 
 		/* can't take fix, mix, or fom past first line */
-		if (last_line == 0)
+		if (last_line == nullptr)
 		{
 			if (counts.fill_count > 3 && counts.fill_count >= counts.color_count &&
 			    counts.fill_count >= counts.bicolor_count &&
@@ -790,7 +790,7 @@ static inline SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
 	const UINT32 mix = (bpp == 15) ? 0xBA1F : 0xFFFF;
 	const char* start = (const char*)srcData;
 	const char* line = start + 2ULL * width * start_line;
-	const char* last_line = NULL;
+	const char* last_line = nullptr;
 
 	while ((line >= start) && (out_count < 32768))
 	{
@@ -961,7 +961,7 @@ static inline SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
 		}
 
 		/* can't take fix, mix, or fom past first line */
-		if (last_line == 0)
+		if (last_line == nullptr)
 		{
 			if (counts.fill_count > 3 && counts.fill_count >= counts.color_count &&
 			    counts.fill_count >= counts.bicolor_count &&

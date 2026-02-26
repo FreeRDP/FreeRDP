@@ -33,7 +33,7 @@
 #if defined(NEON_INTRINSICS_ENABLED)
 #include <arm_neon.h>
 
-static primitives_t* generic = NULL;
+static primitives_t* generic = nullptr;
 
 static inline uint8x8_t neon_YUV2R_single(uint16x8_t C, int16x8_t D, int16x8_t E)
 {

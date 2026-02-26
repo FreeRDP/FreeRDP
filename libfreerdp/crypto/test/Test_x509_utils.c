@@ -35,7 +35,7 @@ static char* certificate_path(const char* filename)
 	const size_t flen = strlen(file) + sizeof(dirsep) + strlen(filename) + sizeof(char);
 	char* result = calloc(1, flen);
 	if (!result)
-		return NULL;
+		return nullptr;
 	(void)_snprintf(result, flen, "%s%c%s", file, dirsep, filename);
 	return result;
 #else
@@ -48,7 +48,7 @@ static char* certificate_path(const char* filename)
 		const size_t dirsepLen = last_dirsep - file + 1;
 		char* result = malloc(dirsepLen + filenameLen + 1);
 		if (!result)
-			return NULL;
+			return nullptr;
 		strncpy(result, file, dirsepLen);
 		strncpy(result + dirsepLen, filename, filenameLen + 1);
 		return result;
@@ -70,7 +70,7 @@ static const certificate_test_t certificate_tests[] = {
 	  "CN = TESTJEAN TESTMARTIN 9999999, C = FR, O = MINISTERE DES TESTS, OU = 0002 110014016, OU "
 	  "= PERSONNES, UID = 9999999, GN = TESTJEAN, SN = TESTMARTIN" },
 
-	{ DISABLED, "Kerberos principal name", 0, "testjean.testmartin@kpn.test.example.com" },
+	{ DISABLED, "Kerberos principal name", nullptr, "testjean.testmartin@kpn.test.example.com" },
 
 	{ ENABLED, "Certificate e-mail", x509_utils_get_email, "testjean.testmartin@test.example.com"
 
@@ -101,14 +101,14 @@ static int TestCertificateFile(const char* certificate_path,
 	for (size_t i = 0; i < count; i++)
 	{
 		const certificate_test_t* test = &ccertificate_tests[i];
-		char* result = NULL;
+		char* result = nullptr;
 
 		if (test->status == DISABLED)
 		{
 			continue;
 		}
 
-		result = (test->get_field ? test->get_field(certificate) : 0);
+		result = (test->get_field ? test->get_field(certificate) : nullptr);
 
 		if (result)
 		{

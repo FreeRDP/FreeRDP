@@ -43,18 +43,18 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 {
 	UINT32 nSrcStep = 0;
 	UINT32 nDstStep = 0;
-	BYTE* pSrcData = NULL;
-	BYTE* pDstData = NULL;
-	HGDI_BITMAP bitmap = NULL;
+	BYTE* pSrcData = nullptr;
+	BYTE* pDstData = nullptr;
+	HGDI_BITMAP bitmap = nullptr;
 
 	if (!gdi)
-		return NULL;
+		return nullptr;
 
 	nDstStep = nWidth * FreeRDPGetBytesPerPixel(gdi->dstFormat);
 	pDstData = winpr_aligned_malloc(1ull * nHeight * nDstStep, 16);
 
 	if (!pDstData)
-		return NULL;
+		return nullptr;
 
 	pSrcData = data;
 	nSrcStep = nWidth * FreeRDPGetBytesPerPixel(SrcFormat);
@@ -64,7 +64,7 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 	                                   FREERDP_FLIP_NONE))
 	{
 		winpr_aligned_free(pDstData);
-		return NULL;
+		return nullptr;
 	}
 
 	bitmap = gdi_CreateBitmap(nWidth, nHeight, gdi->dstFormat, pDstData);
@@ -73,7 +73,7 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 
 static BOOL gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 {
-	gdiBitmap* gdi_bitmap = NULL;
+	gdiBitmap* gdi_bitmap = nullptr;
 	rdpGdi* gdi = context->gdi;
 	gdi_bitmap = (gdiBitmap*)bitmap;
 	gdi_bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
@@ -93,13 +93,13 @@ static BOOL gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (!gdi_bitmap->bitmap)
 	{
 		gdi_DeleteDC(gdi_bitmap->hdc);
-		gdi_bitmap->hdc = NULL;
+		gdi_bitmap->hdc = nullptr;
 		return FALSE;
 	}
 
 	gdi_bitmap->hdc->format = gdi_bitmap->bitmap->format;
 	gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT)gdi_bitmap->bitmap);
-	gdi_bitmap->org_bitmap = NULL;
+	gdi_bitmap->org_bitmap = nullptr;
 	return TRUE;
 }
 
@@ -249,7 +249,7 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 
 static BOOL gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
-	rdpGdi* gdi = NULL;
+	rdpGdi* gdi = nullptr;
 
 	if (!context)
 		return FALSE;
@@ -298,13 +298,13 @@ static BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 	}
 
 	gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT)gdi_glyph->bitmap);
-	gdi_glyph->org_bitmap = NULL;
+	gdi_glyph->org_bitmap = nullptr;
 	return TRUE;
 }
 
 static void gdi_Glyph_Free(WINPR_ATTR_UNUSED rdpContext* context, rdpGlyph* glyph)
 {
-	gdiGlyph* gdi_glyph = NULL;
+	gdiGlyph* gdi_glyph = nullptr;
 	gdi_glyph = (gdiGlyph*)glyph;
 
 	if (gdi_glyph)
@@ -320,9 +320,9 @@ static void gdi_Glyph_Free(WINPR_ATTR_UNUSED rdpContext* context, rdpGlyph* glyp
 static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, INT32 y, INT32 w,
                            INT32 h, INT32 sx, INT32 sy, BOOL fOpRedundant)
 {
-	const gdiGlyph* gdi_glyph = NULL;
-	rdpGdi* gdi = NULL;
-	HGDI_BRUSH brush = NULL;
+	const gdiGlyph* gdi_glyph = nullptr;
+	rdpGdi* gdi = nullptr;
+	HGDI_BRUSH brush = nullptr;
 	BOOL rc = FALSE;
 
 	if (!context || !glyph)
@@ -386,10 +386,10 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 wid
 
 	if (!fOpRedundant)
 	{
-		if (!gdi_decode_color(gdi, bgcolor, &bgcolor, NULL))
+		if (!gdi_decode_color(gdi, bgcolor, &bgcolor, nullptr))
 			return FALSE;
 
-		if (!gdi_decode_color(gdi, fgcolor, &fgcolor, NULL))
+		if (!gdi_decode_color(gdi, fgcolor, &fgcolor, nullptr))
 			return FALSE;
 
 		if (!gdi_SetClipRgn(gdi->drawing->hdc, x, y, width, height))
@@ -434,7 +434,7 @@ static BOOL gdi_Glyph_EndDraw(rdpContext* context, WINPR_ATTR_UNUSED INT32 x,
                               WINPR_ATTR_UNUSED INT32 height, WINPR_ATTR_UNUSED UINT32 bgcolor,
                               WINPR_ATTR_UNUSED UINT32 fgcolor)
 {
-	rdpGdi* gdi = NULL;
+	rdpGdi* gdi = nullptr;
 
 	if (!context || !context->gdi)
 		return FALSE;

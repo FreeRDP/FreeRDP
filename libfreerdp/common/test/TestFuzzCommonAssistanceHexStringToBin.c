@@ -3,7 +3,7 @@
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
 	char* buf = calloc(Size + 1, sizeof(char));
-	if (buf == NULL)
+	if (buf == nullptr)
 		return 0;
 	memcpy(buf, Data, Size);
 	buf[Size] = '\0';

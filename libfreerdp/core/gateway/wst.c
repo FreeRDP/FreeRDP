@@ -86,7 +86,7 @@ static BOOL wst_get_gateway_credentials(wLog* log, rdpContext* context, rdp_auth
 			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 			return FALSE;
 		case AUTH_NO_CREDENTIALS:
-			WLog_Print(log, WLOG_INFO, "No credentials provided - using NULL identity");
+			WLog_Print(log, WLOG_INFO, "No credentials provided - using nullptr identity");
 			return TRUE;
 		case AUTH_FAILED:
 		default:
@@ -116,8 +116,8 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 	                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 		return FALSE;
 
-	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : NULL);
-	if (!credssp_auth_setup_client(wst->auth, "HTTP", wst->gwhostname, identityArg, NULL))
+	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : nullptr);
+	if (!credssp_auth_setup_client(wst->auth, "HTTP", wst->gwhostname, identityArg, nullptr))
 	{
 		sspi_FreeAuthIdentity(&identity);
 		return FALSE;
@@ -136,7 +136,7 @@ static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 	WINPR_ASSERT(request);
 
 	const SecBuffer* authToken = credssp_auth_get_output_buffer(auth);
-	char* base64AuthToken = NULL;
+	char* base64AuthToken = nullptr;
 
 	if (authToken)
 	{
@@ -163,7 +163,7 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 {
 	size_t len = 0;
 	size_t authTokenLength = 0;
-	BYTE* authTokenData = NULL;
+	BYTE* authTokenData = nullptr;
 	SecBuffer authToken = WINPR_C_ARRAY_INIT;
 	int rc = 0;
 
@@ -209,13 +209,13 @@ static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, UINT32 timeout)
 	WINPR_ASSERT(tls);
 	int sockfd = 0;
 	long status = 0;
-	BIO* socketBio = NULL;
-	BIO* bufferedBio = NULL;
+	BIO* socketBio = nullptr;
+	BIO* bufferedBio = nullptr;
 	rdpSettings* settings = wst->context->settings;
 	const char* peerHostname = wst->gwhostname;
 	UINT16 peerPort = wst->gwport;
-	const char* proxyUsername = NULL;
-	const char* proxyPassword = NULL;
+	const char* proxyUsername = nullptr;
+	const char* proxyPassword = nullptr;
 	BOOL isProxyConnection =
 	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 
@@ -286,18 +286,18 @@ static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, UINT32 timeout)
 
 static wStream* wst_build_http_request(rdpWst* wst)
 {
-	wStream* s = NULL;
-	HttpRequest* request = NULL;
-	const char* uri = NULL;
+	wStream* s = nullptr;
+	HttpRequest* request = nullptr;
+	const char* uri = nullptr;
 
 	if (!wst)
-		return NULL;
+		return nullptr;
 
 	uri = http_context_get_uri(wst->http);
 	request = http_request_new();
 
 	if (!request)
-		return NULL;
+		return nullptr;
 
 	if (!http_request_set_method(request, "GET") || !http_request_set_uri(request, uri))
 		goto out;
@@ -371,9 +371,9 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 				return FALSE;
 		}
 		http_response_free(*ppresponse);
-		*ppresponse = NULL;
+		*ppresponse = nullptr;
 		/* Terminate this connection and make a new one with the Loadbalancing Cookie */
-		const long fd = BIO_get_fd(wst->tls->bio, NULL);
+		const long fd = BIO_get_fd(wst->tls->bio, nullptr);
 		if ((fd >= 0) && (fd <= INT32_MAX))
 			closesocket((SOCKET)fd);
 		freerdp_tls_free(wst->tls);
@@ -385,9 +385,9 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 		if (freerdp_settings_get_string(wst->context->settings, FreeRDP_GatewayHttpExtAuthBearer) &&
 		    freerdp_settings_get_bool(wst->context->settings, FreeRDP_GatewayArmTransport))
 		{
-			char* urlWithAuth = NULL;
+			char* urlWithAuth = nullptr;
 			size_t urlLen = 0;
-			char firstParam = (strchr(wst->gwpath, '?') != NULL) ? '&' : '?';
+			char firstParam = (strchr(wst->gwpath, '?') != nullptr) ? '&' : '?';
 			const char* bearer = freerdp_settings_get_string(wst->context->settings,
 			                                                 FreeRDP_GatewayHttpExtAuthBearer);
 			const char* ua =
@@ -401,7 +401,7 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 			if (!utils_str_is_empty(ua))
 			{
 				size_t ualen = 0;
-				char* uastr = NULL;
+				char* uastr = nullptr;
 				winpr_asprintf(&uastr, &ualen, "%s&X-MS-User-Agent=%s", wst->gwpath, ua);
 				if (!uastr)
 					return FALSE;
@@ -576,7 +576,7 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 DWORD wst_get_event_handles(rdpWst* wst, HANDLE* events, DWORD count)
 {
 	DWORD nCount = 0;
-	WINPR_ASSERT(wst != NULL);
+	WINPR_ASSERT(wst != nullptr);
 
 	if (wst->tls)
 	{
@@ -762,12 +762,12 @@ static int wst_bio_free(BIO* bio)
 
 static BIO_METHOD* BIO_s_wst(void)
 {
-	static BIO_METHOD* bio_methods = NULL;
+	static BIO_METHOD* bio_methods = nullptr;
 
-	if (bio_methods == NULL)
+	if (bio_methods == nullptr)
 	{
 		if (!(bio_methods = BIO_meth_new(BIO_TYPE_TSG, "WSTransport")))
-			return NULL;
+			return nullptr;
 
 		BIO_meth_set_write(bio_methods, wst_bio_write);
 		BIO_meth_set_read(bio_methods, wst_bio_read);
@@ -783,15 +783,15 @@ static BIO_METHOD* BIO_s_wst(void)
 
 static BOOL wst_parse_url(rdpWst* wst, const char* url)
 {
-	const char* hostStart = NULL;
-	const char* pos = NULL;
+	const char* hostStart = nullptr;
+	const char* pos = nullptr;
 	WINPR_ASSERT(wst);
 	WINPR_ASSERT(url);
 
 	free(wst->gwhostname);
-	wst->gwhostname = NULL;
+	wst->gwhostname = nullptr;
 	free(wst->gwpath);
-	wst->gwpath = NULL;
+	wst->gwpath = nullptr;
 
 	if (strncmp("wss://", url, 6) != 0)
 	{
@@ -811,7 +811,7 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 	while (*pos != '\0' && *pos != ':' && *pos != '/')
 		pos++;
 	free(wst->gwhostname);
-	wst->gwhostname = NULL;
+	wst->gwhostname = nullptr;
 	if (pos - hostStart == 0)
 		return FALSE;
 	wst->gwhostname = strndup(hostStart, WINPR_ASSERTING_INT_CAST(size_t, (pos - hostStart)));
@@ -821,7 +821,7 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 	if (*pos == ':')
 	{
 		char port[6] = WINPR_C_ARRAY_INIT;
-		char* portNumberEnd = NULL;
+		char* portNumberEnd = nullptr;
 		pos++;
 		const char* portStart = pos;
 		while (*pos != '\0' && *pos != '/')
@@ -839,24 +839,24 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 	else
 		wst->gwport = 443;
 	wst->gwpath = _strdup(pos);
-	return (wst->gwpath != NULL);
+	return (wst->gwpath != nullptr);
 }
 
 rdpWst* wst_new(rdpContext* context)
 {
 	if (!context)
-		return NULL;
+		return nullptr;
 
 	rdpWst* wst = (rdpWst*)calloc(1, sizeof(rdpWst));
 	if (!wst)
-		return NULL;
+		return nullptr;
 
 	wst->log = WLog_Get(TAG);
 	wst->context = context;
 
-	wst->gwhostname = NULL;
+	wst->gwhostname = nullptr;
 	wst->gwport = 443;
-	wst->gwpath = NULL;
+	wst->gwpath = nullptr;
 
 	if (!wst_parse_url(wst, context->settings->GatewayUrl))
 		goto wst_alloc_error;
@@ -910,7 +910,7 @@ wst_alloc_error:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	wst_free(wst);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void wst_free(rdpWst* wst)
@@ -937,7 +937,7 @@ void wst_free(rdpWst* wst)
 BIO* wst_get_front_bio_and_take_ownership(rdpWst* wst)
 {
 	if (!wst)
-		return NULL;
+		return nullptr;
 
 	wst->attached = TRUE;
 	return wst->frontBio;

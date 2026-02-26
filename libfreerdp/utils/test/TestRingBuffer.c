@@ -82,8 +82,8 @@ int TestRingBuffer(int argc, char* argv[])
 {
 	RingBuffer ringBuffer;
 	int testNo = 0;
-	BYTE* tmpBuf = NULL;
-	BYTE* rb_ptr = NULL;
+	BYTE* tmpBuf = nullptr;
+	BYTE* rb_ptr = nullptr;
 	DataChunk chunks[2];
 
 	WINPR_UNUSED(argc);

@@ -40,33 +40,33 @@
 BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 {
 	UINT32 fp_len = EVP_MAX_MD_SIZE;
-	BYTE* fp = NULL;
+	BYTE* fp = nullptr;
 	const EVP_MD* md = EVP_get_digestbyname(hash);
 	if (!md)
 	{
 		WLog_ERR(TAG, "System does not support %s hash!", hash);
-		return NULL;
+		return nullptr;
 	}
 	if (!xcert || !length)
 	{
 		WLog_ERR(TAG, "Invalid arguments: xcert=%p, length=%p",
 		         WINPR_CXX_COMPAT_CAST(const void*, xcert),
 		         WINPR_CXX_COMPAT_CAST(const void*, length));
-		return NULL;
+		return nullptr;
 	}
 
 	fp = calloc(fp_len + 1, sizeof(BYTE));
 	if (!fp)
 	{
 		WLog_ERR(TAG, "could not allocate %" PRIu32 " bytes", fp_len);
-		return NULL;
+		return nullptr;
 	}
 
 	if (X509_digest(xcert, md, fp, &fp_len) != 1)
 	{
 		free(fp);
 		WLog_ERR(TAG, "certificate does not have a %s hash!", hash);
-		return NULL;
+		return nullptr;
 	}
 
 	*length = fp_len;
@@ -75,7 +75,7 @@ BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 
 static char* crypto_print_name(const X509_NAME* name)
 {
-	char* buffer = NULL;
+	char* buffer = nullptr;
 	BIO* outBIO = BIO_new(BIO_s_mem());
 
 	if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
@@ -93,7 +93,7 @@ static char* crypto_print_name(const X509_NAME* name)
 		if (rc <= 0)
 		{
 			free(buffer);
-			buffer = NULL;
+			buffer = nullptr;
 			goto fail;
 		}
 	}
@@ -105,11 +105,11 @@ fail:
 
 char* x509_utils_get_subject(const X509* xcert)
 {
-	char* subject = NULL;
+	char* subject = nullptr;
 	if (!xcert)
 	{
-		WLog_ERR(TAG, "Invalid certificate NULL");
-		return NULL;
+		WLog_ERR(TAG, "Invalid certificate nullptr");
+		return nullptr;
 	}
 	subject = crypto_print_name(X509_get_subject_name(xcert));
 	if (!subject)
@@ -189,8 +189,8 @@ static void map_subject_alt_name(const X509* x509, int general_name_type,
                                  general_name_mapper_pr mapper, void* data)
 {
 	int num = 0;
-	STACK_OF(GENERAL_NAME)* gens = NULL;
-	gens = X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL);
+	STACK_OF(GENERAL_NAME)* gens = nullptr;
+	gens = X509_get_ext_d2i(x509, NID_subject_alt_name, nullptr, nullptr);
 
 	if (!gens)
 	{
@@ -247,7 +247,7 @@ typedef struct string_list
 
 static void string_list_initialize(string_list* list)
 {
-	list->strings = 0;
+	list->strings = nullptr;
 	list->allocated = 0;
 	list->count = 0;
 	list->maximum = INT_MAX;
@@ -274,8 +274,8 @@ static void string_list_free(string_list* list)
 static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 {
 	string_list* list = data;
-	unsigned char* cstring = 0;
-	ASN1_STRING* str = NULL;
+	unsigned char* cstring = nullptr;
+	ASN1_STRING* str = nullptr;
 
 	WINPR_UNUSED(index);
 
@@ -300,7 +300,7 @@ static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 	if ((ASN1_STRING_to_UTF8(&cstring, str)) < 0)
 	{
 		WLog_ERR(TAG, "ASN1_STRING_to_UTF8() failed for %s: %s",
-		         general_name_type_label(name->type), ERR_error_string(ERR_get_error(), NULL));
+		         general_name_type_label(name->type), ERR_error_string(ERR_get_error(), nullptr));
 		return 1;
 	}
 
@@ -352,8 +352,8 @@ typedef struct object_list
 
 static void object_list_initialize(object_list* list)
 {
-	list->type_id = 0;
-	list->strings = 0;
+	list->type_id = nullptr;
+	list->strings = nullptr;
 	list->allocated = 0;
 	list->count = 0;
 	list->maximum = INT_MAX;
@@ -371,15 +371,15 @@ static void object_list_allocate(object_list* list, size_t allocate_count)
 
 static char* object_string(ASN1_TYPE* object)
 {
-	char* result = NULL;
-	unsigned char* utf8String = NULL;
+	char* result = nullptr;
+	unsigned char* utf8String = nullptr;
 
 	/* TODO: check that object.type is a string type. */
 	const int length = ASN1_STRING_to_UTF8(&utf8String, object->value.asn1_string);
 
 	if (length < 0)
 	{
-		return 0;
+		return nullptr;
 	}
 
 	result = strndup((char*)utf8String, WINPR_ASSERTING_INT_CAST(size_t, length));
@@ -435,7 +435,7 @@ static int extract_othername_object_as_string(GENERAL_NAME* name, void* data, in
 
 char* x509_utils_get_email(const X509* x509)
 {
-	char* result = 0;
+	char* result = nullptr;
 	string_list list;
 	string_list_initialize(&list);
 	list.maximum = 1;
@@ -444,7 +444,7 @@ char* x509_utils_get_email(const X509* x509)
 	if (list.count == 0)
 	{
 		string_list_free(&list);
-		return 0;
+		return nullptr;
 	}
 
 	result = _strdup(list.strings[0]);
@@ -455,7 +455,7 @@ char* x509_utils_get_email(const X509* x509)
 
 char* x509_utils_get_upn(const X509* x509)
 {
-	char* result = 0;
+	char* result = nullptr;
 	object_list list = WINPR_C_ARRAY_INIT;
 	object_list_initialize(&list);
 	list.type_id = OBJ_nid2obj(NID_ms_upn);
@@ -465,7 +465,7 @@ char* x509_utils_get_upn(const X509* x509)
 	if (list.count == 0)
 	{
 		object_list_free(&list);
-		return 0;
+		return nullptr;
 	}
 
 	result = list.strings[0];
@@ -479,16 +479,16 @@ char* x509_utils_get_date(const X509* x509, BOOL startDate)
 
 	const ASN1_TIME* date = startDate ? X509_get0_notBefore(x509) : X509_get0_notAfter(x509);
 	if (!date)
-		return NULL;
+		return nullptr;
 
 	BIO* bmem = BIO_new(BIO_s_mem());
 	if (!bmem)
-		return NULL;
+		return nullptr;
 
-	char* str = NULL;
+	char* str = nullptr;
 	if (ASN1_TIME_print(bmem, date))
 	{
-		BUF_MEM* bptr = NULL;
+		BUF_MEM* bptr = nullptr;
 
 		BIO_get_mem_ptr(bmem, &bptr);
 		str = strndup(bptr->data, bptr->length);
@@ -520,7 +520,7 @@ void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names)
 
 char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** lengths)
 {
-	char** result = 0;
+	char** result = nullptr;
 	string_list list = WINPR_C_ARRAY_INIT;
 	string_list_initialize(&list);
 	map_subject_alt_name(xcert, GEN_DNS, extract_string, &list);
@@ -529,7 +529,7 @@ char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** lengt
 	if (list.count <= 0)
 	{
 		string_list_free(&list);
-		return NULL;
+		return nullptr;
 	}
 
 	/* lengths are not useful,  since we converted the
@@ -542,9 +542,9 @@ char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** lengt
 		string_list_free(&list);
 		free((void*)result);
 		free(*lengths);
-		(*lengths) = 0;
+		(*lengths) = nullptr;
 		(*count) = 0;
-		return NULL;
+		return nullptr;
 	}
 
 	for (size_t i = 0; i < list.count; i++)
@@ -559,11 +559,11 @@ char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** lengt
 
 char* x509_utils_get_issuer(const X509* xcert)
 {
-	char* issuer = NULL;
+	char* issuer = nullptr;
 	if (!xcert)
 	{
-		WLog_ERR(TAG, "Invalid certificate NULL");
-		return NULL;
+		WLog_ERR(TAG, "Invalid certificate nullptr");
+		return nullptr;
 	}
 	issuer = crypto_print_name(X509_get_issuer_name(xcert));
 	if (!issuer)
@@ -585,8 +585,8 @@ static int asn1_object_cmp(const ASN1_OBJECT* const* a, const ASN1_OBJECT* const
 BOOL x509_utils_check_eku(const X509* xcert, int nid)
 {
 	BOOL ret = FALSE;
-	STACK_OF(ASN1_OBJECT)* oid_stack = NULL;
-	ASN1_OBJECT* oid = NULL;
+	STACK_OF(ASN1_OBJECT)* oid_stack = nullptr;
+	ASN1_OBJECT* oid = nullptr;
 
 	if (!xcert)
 		return FALSE;
@@ -595,7 +595,7 @@ BOOL x509_utils_check_eku(const X509* xcert, int nid)
 	if (!oid)
 		return FALSE;
 
-	oid_stack = X509_get_ext_d2i(xcert, NID_ext_key_usage, NULL, NULL);
+	oid_stack = X509_get_ext_d2i(xcert, NID_ext_key_usage, nullptr, nullptr);
 	if (!oid_stack)
 		return FALSE;
 
@@ -609,12 +609,12 @@ BOOL x509_utils_check_eku(const X509* xcert, int nid)
 
 void x509_utils_print_info(const X509* xcert)
 {
-	char* fp = NULL;
-	char* issuer = NULL;
-	char* subject = NULL;
+	char* fp = nullptr;
+	char* issuer = nullptr;
+	char* subject = nullptr;
 	subject = x509_utils_get_subject(xcert);
 	issuer = x509_utils_get_issuer(xcert);
-	fp = (char*)x509_utils_get_hash(xcert, "sha256", NULL);
+	fp = (char*)x509_utils_get_hash(xcert, "sha256", nullptr);
 
 	if (!fp)
 	{
@@ -638,14 +638,14 @@ out_free_issuer:
 
 X509* x509_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 {
-	X509* x509 = NULL;
-	BIO* bio = NULL;
+	X509* x509 = nullptr;
+	BIO* bio = nullptr;
 	if (fromFile)
 		bio = BIO_new_file(data, "rb");
 	else
 	{
 		if (len > INT_MAX)
-			return NULL;
+			return nullptr;
 
 		bio = BIO_new_mem_buf(data, (int)len);
 	}
@@ -653,13 +653,13 @@ X509* x509_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 	if (!bio)
 	{
 		WLog_ERR(TAG, "BIO_new failed for certificate");
-		return NULL;
+		return nullptr;
 	}
 
-	x509 = PEM_read_bio_X509(bio, NULL, NULL, 0);
+	x509 = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
 	BIO_free_all(bio);
 	if (!x509)
-		WLog_ERR(TAG, "PEM_read_bio_X509 returned NULL [input length %" PRIuz "]", len);
+		WLog_ERR(TAG, "PEM_read_bio_X509 returned nullptr [input length %" PRIuz "]", len);
 
 	return x509;
 }
@@ -712,15 +712,15 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 	WINPR_MD_TYPE message_digest = WINPR_MD_NONE;
 	WINPR_MD_TYPE mgf1_digest = WINPR_MD_NONE;
 	int param_type = 0;
-	const void* param_value = NULL;
-	const ASN1_STRING* sequence = NULL;
-	const unsigned char* inp = NULL;
-	RSA_PSS_PARAMS* params = NULL;
-	X509_ALGOR* mgf1_digest_alg = NULL;
+	const void* param_value = nullptr;
+	const ASN1_STRING* sequence = nullptr;
+	const unsigned char* inp = nullptr;
+	RSA_PSS_PARAMS* params = nullptr;
+	X509_ALGOR* mgf1_digest_alg = nullptr;
 
 	/* The RSA-PSS digest is encoded in a complex structure, defined in
 	https://www.rfc-editor.org/rfc/rfc4055.html. */
-	X509_ALGOR_get0(NULL, &param_type, &param_value, alg);
+	X509_ALGOR_get0(nullptr, &param_type, &param_value, alg);
 
 	/* param_type and param_value the parameter in ASN1_TYPE form, but split into two parameters. A
 	SEQUENCE is has type V_ASN1_SEQUENCE, and the value is an ASN1_STRING with the encoded
@@ -731,30 +731,30 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 
 	/* Decode the structure. */
 	inp = ASN1_STRING_get0_data(sequence);
-	params = d2i_RSA_PSS_PARAMS(NULL, &inp, ASN1_STRING_length(sequence));
-	if (params == NULL)
+	params = d2i_RSA_PSS_PARAMS(nullptr, &inp, ASN1_STRING_length(sequence));
+	if (params == nullptr)
 		goto end;
 
 	/* RSA-PSS uses two hash algorithms, a message digest and also an MGF function which is, itself,
 	parameterized by a hash function. Both fields default to SHA-1, so we must also check for the
-	value being NULL. */
+	value being nullptr. */
 	message_digest = WINPR_MD_SHA1;
-	if (params->hashAlgorithm != NULL)
+	if (params->hashAlgorithm != nullptr)
 	{
-		const ASN1_OBJECT* obj = NULL;
-		X509_ALGOR_get0(&obj, NULL, NULL, params->hashAlgorithm);
+		const ASN1_OBJECT* obj = nullptr;
+		X509_ALGOR_get0(&obj, nullptr, nullptr, params->hashAlgorithm);
 		message_digest = hash_nid_to_winpr(OBJ_obj2nid(obj));
 		if (message_digest == WINPR_MD_NONE)
 			goto end;
 	}
 
 	mgf1_digest = WINPR_MD_SHA1;
-	if (params->maskGenAlgorithm != NULL)
+	if (params->maskGenAlgorithm != nullptr)
 	{
-		const ASN1_OBJECT* obj = NULL;
+		const ASN1_OBJECT* obj = nullptr;
 		int mgf_param_type = 0;
-		const void* mgf_param_value = NULL;
-		const ASN1_STRING* mgf_param_sequence = NULL;
+		const void* mgf_param_value = nullptr;
+		const ASN1_STRING* mgf_param_sequence = nullptr;
 		/* First, check this is MGF-1, the only one ever defined. */
 		X509_ALGOR_get0(&obj, &mgf_param_type, &mgf_param_value, params->maskGenAlgorithm);
 		if (OBJ_obj2nid(obj) != NID_mgf1)
@@ -765,12 +765,12 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 			goto end;
 		mgf_param_sequence = mgf_param_value;
 		inp = ASN1_STRING_get0_data(mgf_param_sequence);
-		mgf1_digest_alg = d2i_X509_ALGOR(NULL, &inp, ASN1_STRING_length(mgf_param_sequence));
-		if (mgf1_digest_alg == NULL)
+		mgf1_digest_alg = d2i_X509_ALGOR(nullptr, &inp, ASN1_STRING_length(mgf_param_sequence));
+		if (mgf1_digest_alg == nullptr)
 			goto end;
 
 		/* Finally, extract the digest. */
-		X509_ALGOR_get0(&obj, NULL, NULL, mgf1_digest_alg);
+		X509_ALGOR_get0(&obj, nullptr, nullptr, mgf1_digest_alg);
 		mgf1_digest = hash_nid_to_winpr(OBJ_obj2nid(obj));
 		if (mgf1_digest == WINPR_MD_NONE)
 			goto end;
@@ -797,13 +797,13 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 
 	if (nid == NID_rsassaPss)
 	{
-		const X509_ALGOR* alg = NULL;
-		X509_get0_signature(NULL, &alg, xcert);
+		const X509_ALGOR* alg = nullptr;
+		X509_get0_signature(nullptr, &alg, xcert);
 		return get_rsa_pss_digest(alg);
 	}
 
 	int hash_nid = 0;
-	if (OBJ_find_sigid_algs(nid, &hash_nid, NULL) != 1)
+	if (OBJ_find_sigid_algs(nid, &hash_nid, nullptr) != 1)
 		return WINPR_MD_NONE;
 
 	return hash_nid_to_winpr(hash_nid);
@@ -812,25 +812,25 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 char* x509_utils_get_common_name(const X509* xcert, size_t* plength)
 {
 	X509_NAME* subject_name = X509_get_subject_name(xcert);
-	if (subject_name == NULL)
-		return NULL;
+	if (subject_name == nullptr)
+		return nullptr;
 
 	const int index = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
 	if (index < 0)
-		return NULL;
+		return nullptr;
 
 	const X509_NAME_ENTRY* entry = X509_NAME_get_entry(subject_name, index);
-	if (entry == NULL)
-		return NULL;
+	if (entry == nullptr)
+		return nullptr;
 
 	const ASN1_STRING* entry_data = X509_NAME_ENTRY_get_data(entry);
-	if (entry_data == NULL)
-		return NULL;
+	if (entry_data == nullptr)
+		return nullptr;
 
-	BYTE* common_name_raw = NULL;
+	BYTE* common_name_raw = nullptr;
 	const int length = ASN1_STRING_to_UTF8(&common_name_raw, entry_data);
 	if (length < 0)
-		return NULL;
+		return nullptr;
 
 	if (plength)
 		*plength = (size_t)length;
@@ -863,16 +863,16 @@ static int verify_cb(int ok, X509_STORE_CTX* csc)
 BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certificate_store_path)
 {
 	const int purposes[3] = { X509_PURPOSE_SSL_SERVER, X509_PURPOSE_SSL_CLIENT, X509_PURPOSE_ANY };
-	X509_STORE_CTX* csc = NULL;
+	X509_STORE_CTX* csc = nullptr;
 	BOOL status = FALSE;
-	X509_LOOKUP* lookup = NULL;
+	X509_LOOKUP* lookup = nullptr;
 
 	if (!xcert)
 		return FALSE;
 
 	X509_STORE* cert_ctx = X509_STORE_new();
 
-	if (cert_ctx == NULL)
+	if (cert_ctx == nullptr)
 		goto end;
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
@@ -880,7 +880,7 @@ BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certific
 #else
 	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS |
 	                        OPENSSL_INIT_LOAD_CONFIG,
-	                    NULL);
+	                    nullptr);
 #endif
 
 	if (X509_STORE_set_default_paths(cert_ctx) != 1)
@@ -888,12 +888,12 @@ BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certific
 
 	lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
 
-	if (lookup == NULL)
+	if (lookup == nullptr)
 		goto end;
 
-	X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+	X509_LOOKUP_add_dir(lookup, nullptr, X509_FILETYPE_DEFAULT);
 
-	if (certificate_store_path != NULL)
+	if (certificate_store_path != nullptr)
 	{
 		X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_PEM);
 	}
@@ -907,7 +907,7 @@ BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certific
 		int purpose = purposes[i];
 		csc = X509_STORE_CTX_new();
 
-		if (csc == NULL)
+		if (csc == nullptr)
 			goto skip;
 		if (!X509_STORE_CTX_init(csc, cert_ctx, xcert, chain))
 			goto skip;

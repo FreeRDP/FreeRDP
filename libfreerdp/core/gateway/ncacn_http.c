@@ -36,10 +36,10 @@
 static wStream* rpc_auth_http_request(HttpContext* http, const char* method, size_t contentLength,
                                       const SecBuffer* authToken, const char* auth_scheme)
 {
-	wStream* s = NULL;
-	HttpRequest* request = NULL;
-	char* base64AuthToken = NULL;
-	const char* uri = NULL;
+	wStream* s = nullptr;
+	HttpRequest* request = nullptr;
+	char* base64AuthToken = nullptr;
+	const char* uri = nullptr;
 
 	if (!http || !method)
 		goto fail;
@@ -75,11 +75,11 @@ fail:
 
 BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	SSIZE_T status = 0;
-	rdpCredsspAuth* auth = NULL;
-	HttpContext* http = NULL;
-	const SecBuffer* buffer = NULL;
+	rdpCredsspAuth* auth = nullptr;
+	HttpContext* http = nullptr;
+	const SecBuffer* buffer = nullptr;
 	int rc = 0;
 
 	if (!inChannel || !inChannel->auth || !inChannel->http)
@@ -93,7 +93,7 @@ BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 		return FALSE;
 
 	const size_t contentLength = (rc == 0) ? 0 : 0x40000000;
-	buffer = credssp_auth_have_output_token(auth) ? credssp_auth_get_output_buffer(auth) : NULL;
+	buffer = credssp_auth_have_output_token(auth) ? credssp_auth_get_output_buffer(auth) : nullptr;
 	s = rpc_auth_http_request(http, "RPC_IN_DATA", contentLength, buffer,
 	                          credssp_auth_pkg_name(auth));
 
@@ -108,7 +108,7 @@ BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel, HttpResponse* response)
 {
 	size_t authTokenLength = 0;
-	BYTE* authTokenData = NULL;
+	BYTE* authTokenData = nullptr;
 
 	if (!inChannel || !response || !inChannel->auth)
 		return FALSE;
@@ -139,10 +139,10 @@ BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel, HttpResponse
 
 BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 {
-	rdpTls* tls = NULL;
-	rdpCredsspAuth* auth = NULL;
-	rdpSettings* settings = NULL;
-	freerdp* instance = NULL;
+	rdpTls* tls = nullptr;
+	rdpCredsspAuth* auth = nullptr;
+	rdpSettings* settings = nullptr;
+	freerdp* instance = nullptr;
 	auth_status rc = AUTH_FAILED;
 	SEC_WINNT_AUTH_IDENTITY identity = WINPR_C_ARRAY_INIT;
 
@@ -167,7 +167,7 @@ BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 			return FALSE;
 		case AUTH_NO_CREDENTIALS:
-			WLog_INFO(TAG, "No credentials provided - using NULL identity");
+			WLog_INFO(TAG, "No credentials provided - using nullptr identity");
 			break;
 		case AUTH_FAILED:
 		default:
@@ -181,9 +181,9 @@ BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 	                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 		return FALSE;
 
-	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : NULL);
+	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : nullptr);
 	const BOOL res =
-	    credssp_auth_setup_client(auth, "HTTP", settings->GatewayHostname, identityArg, NULL);
+	    credssp_auth_setup_client(auth, "HTTP", settings->GatewayHostname, identityArg, nullptr);
 
 	sspi_FreeAuthIdentity(&identity);
 
@@ -198,17 +198,17 @@ void rpc_ncacn_http_auth_uninit(RpcChannel* channel)
 		return;
 
 	credssp_auth_free(channel->auth);
-	channel->auth = NULL;
+	channel->auth = nullptr;
 }
 
 BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel, BOOL replacement)
 {
 	BOOL status = TRUE;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	size_t contentLength = 0;
-	rdpCredsspAuth* auth = NULL;
-	HttpContext* http = NULL;
-	const SecBuffer* buffer = NULL;
+	rdpCredsspAuth* auth = nullptr;
+	HttpContext* http = nullptr;
+	const SecBuffer* buffer = nullptr;
 	int rc = 0;
 
 	if (!outChannel || !outChannel->auth || !outChannel->http)
@@ -226,7 +226,7 @@ BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel, BOOL replac
 	else
 		contentLength = (rc == 0) ? 0 : 120;
 
-	buffer = credssp_auth_have_output_token(auth) ? credssp_auth_get_output_buffer(auth) : NULL;
+	buffer = credssp_auth_have_output_token(auth) ? credssp_auth_get_output_buffer(auth) : nullptr;
 	s = rpc_auth_http_request(http, "RPC_OUT_DATA", contentLength, buffer,
 	                          credssp_auth_pkg_name(auth));
 
@@ -243,7 +243,7 @@ BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel, BOOL replac
 BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel, HttpResponse* response)
 {
 	size_t authTokenLength = 0;
-	BYTE* authTokenData = NULL;
+	BYTE* authTokenData = nullptr;
 
 	if (!outChannel || !response || !outChannel->auth)
 		return FALSE;

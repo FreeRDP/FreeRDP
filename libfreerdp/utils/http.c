@@ -54,7 +54,7 @@ static void log_errors_(wLog* log, const char* msg, const char* file, const char
 	{
 		error_logged = TRUE;
 		WLog_PrintTextMessage(log, level, line, file, fkt, "%s: %s", msg,
-		                      ERR_error_string(ec, NULL));
+		                      ERR_error_string(ec, nullptr));
 	}
 	if (!error_logged)
 		WLog_PrintTextMessage(log, level, line, file, fkt, "%s (no details available)", msg);
@@ -91,15 +91,15 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
                           size_t* response_length)
 {
 	BOOL ret = FALSE;
-	char* hostname = NULL;
-	const char* path = NULL;
-	char* headers = NULL;
+	char* hostname = nullptr;
+	const char* path = nullptr;
+	char* headers = nullptr;
 	size_t size = 0;
 	int status = 0;
 	char buffer[1024] = WINPR_C_ARRAY_INIT;
-	BIO* bio = NULL;
-	SSL_CTX* ssl_ctx = NULL;
-	SSL* ssl = NULL;
+	BIO* bio = nullptr;
+	SSL_CTX* ssl_ctx = nullptr;
+	SSL* ssl = nullptr;
 
 	WINPR_ASSERT(status_code);
 	WINPR_ASSERT(response);
@@ -108,7 +108,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 	wLog* log = WLog_Get(TAG);
 	WINPR_ASSERT(log);
 
-	*response = NULL;
+	*response = nullptr;
 
 	if (!url || strnlen(url, 8) < 8 || strncmp(url, "https://", 8) != 0 ||
 	    !(path = strchr(url + 8, '/')))
@@ -241,7 +241,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 	}
 
 	errno = 0;
-	*status_code = strtol(&buffer[sizeof(header)], NULL, 0);
+	*status_code = strtol(&buffer[sizeof(header)], nullptr, 0);
 	if (errno != 0)
 	{
 		char ebuffer[256] = WINPR_C_ARRAY_INIT;
@@ -259,12 +259,12 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 			goto out;
 		}
 
-		char* val = NULL;
+		char* val = nullptr;
 		char* name = strtok_s(buffer, ":", &val);
 		if (name && (_stricmp(name, "content-length") == 0))
 		{
 			errno = 0;
-			*response_length = strtoul(val, NULL, 10);
+			*response_length = strtoul(val, nullptr, 10);
 			if (errno)
 			{
 				char ebuffer[256] = WINPR_C_ARRAY_INIT;
@@ -313,7 +313,7 @@ out:
 	if (!ret)
 	{
 		free(*response);
-		*response = NULL;
+		*response = nullptr;
 		*response_length = 0;
 	}
 	free(hostname);

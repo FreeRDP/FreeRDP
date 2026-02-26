@@ -306,15 +306,15 @@ static void* freerdp_keyboard_xkb_init(void)
 {
 	int status = 0;
 
-	Display* display = XOpenDisplay(NULL);
+	Display* display = XOpenDisplay(nullptr);
 
 	if (!display)
-		return NULL;
+		return nullptr;
 
-	status = XkbQueryExtension(display, NULL, NULL, NULL, NULL, NULL);
+	status = XkbQueryExtension(display, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 	if (!status)
-		return NULL;
+		return nullptr;
 
 	return (void*)display;
 }
@@ -352,7 +352,7 @@ int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD* x11_keycode_to
 /* return substring starting after nth comma, ending at following comma */
 static char* comma_substring(char* s, size_t n)
 {
-	char* p = NULL;
+	char* p = nullptr;
 
 	if (!s)
 		return "";
@@ -377,7 +377,7 @@ int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 	if (!display)
 		return -2;
 
-	char* rules = NULL;
+	char* rules = nullptr;
 	XkbRF_VarDefsRec rules_names = WINPR_C_ARRAY_INIT;
 	const Bool rc = XkbRF_GetNamesProp(display, &rules, &rules_names);
 	if (!rc)
@@ -470,7 +470,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD* x11_keycode_to_
 	XkbDescPtr xkb = XkbGetMap(display, 0, XkbUseCoreKbd);
 	if (!xkb)
 	{
-		DEBUG_KBD("XkbGetMap() == NULL");
+		DEBUG_KBD("XkbGetMap() == nullptr");
 		return -3;
 	}
 

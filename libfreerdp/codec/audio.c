@@ -164,7 +164,7 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, format->cbSize))
 		return FALSE;
 
-	format->data = NULL;
+	format->data = nullptr;
 
 	if (format->cbSize > 0)
 	{

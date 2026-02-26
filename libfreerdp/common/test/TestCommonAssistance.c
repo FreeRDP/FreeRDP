@@ -210,9 +210,9 @@ static BOOL test_file_from_buffer(wLog* log, const char* data, size_t size, cons
 {
 	BOOL rc = FALSE;
 	int status = 0;
-	char* pass = NULL;
-	char* expertBlob = NULL;
-	const char* EncryptedPassStub = NULL;
+	char* pass = nullptr;
+	char* expertBlob = nullptr;
+	const char* EncryptedPassStub = nullptr;
 	size_t EncryptedPassStubLength = 0;
 	rdpAssistanceFile* file = freerdp_assistance_file_new();
 
@@ -271,7 +271,7 @@ static BOOL test_msrsc_incident_file_type1(wLog* log)
 static BOOL test_msrsc_incident_file_type2(wLog* log)
 {
 	if (!test_file_from_buffer(log, connectionstr2, sizeof(connectionstr2),
-	                           TEST_MSRC_INCIDENT_PASSWORD_TYPE2, NULL, 0))
+	                           TEST_MSRC_INCIDENT_PASSWORD_TYPE2, nullptr, 0))
 		return FALSE;
 	if (!test_file_from_buffer(log, connectionstr3, sizeof(connectionstr3), connectionpwd3,
 	                           connectionpwd3_enc, sizeof(connectionpwd3_enc)))
@@ -286,7 +286,7 @@ static BOOL test_msrsc_incident_file_type2(wLog* log)
 
 int TestCommonAssistance(int argc, char* argv[])
 {
-	wLog* log = NULL;
+	wLog* log = nullptr;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	log = WLog_Get(__func__);
@@ -297,7 +297,7 @@ int TestCommonAssistance(int argc, char* argv[])
 		const char* test = fail_tests[x];
 		const size_t len = strlen(test);
 
-		if (!run_test_parse(log, test, len + 1, NULL, FALSE))
+		if (!run_test_parse(log, test, len + 1, nullptr, FALSE))
 			return -1;
 	}
 

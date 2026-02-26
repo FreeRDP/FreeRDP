@@ -646,10 +646,10 @@ const char* rdpdr_irp_val2str(UINT32 ioCode1)
 const char* rdpdr_irp_mask2str(UINT32 ioCode1Mask, char* buffer, size_t len)
 {
 	if (len < 1)
-		return NULL;
+		return nullptr;
 
-	if (!winpr_str_append("{", buffer, len, NULL))
-		return NULL;
+	if (!winpr_str_append("{", buffer, len, nullptr))
+		return nullptr;
 
 	for (size_t x = 0; x < 32; x++)
 	{
@@ -657,14 +657,14 @@ const char* rdpdr_irp_mask2str(UINT32 ioCode1Mask, char* buffer, size_t len)
 		if (ioCode1Mask & mask)
 		{
 			if (!winpr_str_append(rdpdr_irp_val2str(mask), &buffer[1], len - 1, "|"))
-				return NULL;
+				return nullptr;
 		}
 	}
 
 	char number[16] = WINPR_C_ARRAY_INIT;
 	(void)_snprintf(number, sizeof(number), "}[0x%08" PRIx32 "]", ioCode1Mask);
-	if (!winpr_str_append(number, buffer, len, NULL))
-		return NULL;
+	if (!winpr_str_append(number, buffer, len, nullptr))
+		return nullptr;
 	return buffer;
 }
 

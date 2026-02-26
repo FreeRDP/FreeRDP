@@ -240,7 +240,7 @@ static int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 		ULONG rc;
 
 		errno = 0;
-		rc = strtoul(name, NULL, 16);
+		rc = strtoul(name, nullptr, 16);
 		if (errno == 0)
 			*keyboardLayoutId = rc;
 	}
@@ -365,7 +365,7 @@ FREERDP_REMAP_TABLE* freerdp_keyboard_remap_string_to_list(const char* list)
 
 	FREERDP_REMAP_TABLE* remap_table = calloc(1, sizeof(FREERDP_REMAP_TABLE));
 	if (!remap_table)
-		return NULL;
+		return nullptr;
 
 	for (size_t x = 0; x < ARRAYSIZE(remap_table->table); x++)
 		remap_table->table[x] = (UINT32)x;
@@ -379,7 +379,7 @@ FREERDP_REMAP_TABLE* freerdp_keyboard_remap_string_to_list(const char* list)
 		goto fail;
 
 	{
-		char* context = NULL;
+		char* context = nullptr;
 		char* token = strtok_s(copy, ",", &context);
 		while (token)
 		{
@@ -390,7 +390,7 @@ FREERDP_REMAP_TABLE* freerdp_keyboard_remap_string_to_list(const char* list)
 			if (key >= remap_table_size)
 				goto fail;
 			remap_table->table[key] = value;
-			token = strtok_s(NULL, ",", &context);
+			token = strtok_s(nullptr, ",", &context);
 		}
 	}
 
@@ -402,7 +402,7 @@ fail:
 	if (!success)
 	{
 		free(remap_table);
-		return NULL;
+		return nullptr;
 	}
 	return remap_table;
 }
@@ -416,8 +416,8 @@ DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemap
 	if (keyboardRemappingList)
 	{
 		char* copy = _strdup(keyboardRemappingList);
-		char* context = NULL;
-		char* token = NULL;
+		char* context = nullptr;
+		char* token = nullptr;
 		if (!copy)
 			goto fail;
 		token = strtok_s(copy, ",", &context);
@@ -430,7 +430,7 @@ DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemap
 			if (key >= ARRAYSIZE(REMAPPING_TABLE))
 				goto fail;
 			REMAPPING_TABLE[key] = value;
-			token = strtok_s(NULL, ",", &context);
+			token = strtok_s(nullptr, ",", &context);
 		}
 	fail:
 		free(copy);
@@ -507,7 +507,7 @@ const char* freerdp_keyboard_scancode_name(DWORD scancode)
 			return entry->name;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 DWORD freerdp_keyboard_remap_key(const FREERDP_REMAP_TABLE* remap_table, DWORD rdpScanCode)

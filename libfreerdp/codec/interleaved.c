@@ -586,7 +586,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleav
 
 	if (!interleaved->TempBuffer)
 	{
-		WLog_ERR(TAG, "interleaved->TempBuffer=NULL");
+		WLog_ERR(TAG, "interleaved->TempBuffer=nullptr");
 		return FALSE;
 	}
 
@@ -645,7 +645,7 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved
                           const gdiPalette* WINPR_RESTRICT palette, UINT32 bpp)
 {
 	BOOL status = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT32 DstFormat = 0;
 	const UINT32 maxSize = 64 * 64 * 4;
 
@@ -711,14 +711,14 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved
 
 BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved)
 {
-	return (interleaved != NULL);
+	return (interleaved != nullptr);
 }
 
 BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(WINPR_ATTR_UNUSED BOOL Compressor)
 {
-	BITMAP_INTERLEAVED_CONTEXT* interleaved = NULL;
+	BITMAP_INTERLEAVED_CONTEXT* interleaved = nullptr;
 	interleaved = (BITMAP_INTERLEAVED_CONTEXT*)winpr_aligned_recalloc(
-	    NULL, 1, sizeof(BITMAP_INTERLEAVED_CONTEXT), 32);
+	    nullptr, 1, sizeof(BITMAP_INTERLEAVED_CONTEXT), 32);
 
 	if (interleaved)
 	{
@@ -728,7 +728,7 @@ BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(WINPR_ATTR_UNUSED BOO
 		if (!interleaved->TempBuffer)
 			goto fail;
 
-		interleaved->bts = Stream_New(NULL, interleaved->TempSize);
+		interleaved->bts = Stream_New(nullptr, interleaved->TempSize);
 
 		if (!interleaved->bts)
 			goto fail;
@@ -741,7 +741,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	bitmap_interleaved_context_free(interleaved);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved)

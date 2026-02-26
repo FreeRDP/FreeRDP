@@ -223,7 +223,7 @@ BOOL freerdp_write_four_byte_signed_integer(wStream* s, INT32 value)
 
 BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 {
-	return freerdp_read_four_byte_float_exp(s, value, NULL);
+	return freerdp_read_four_byte_float_exp(s, value, nullptr);
 }
 
 BOOL freerdp_read_four_byte_float_exp(wStream* s, double* value, BYTE* exp)

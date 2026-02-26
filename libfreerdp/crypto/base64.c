@@ -320,7 +320,7 @@ static inline char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
 	const BYTE* q = data;
 	BYTE* p = malloc(outLen + extra + 1ull);
 	if (!p)
-		return NULL;
+		return nullptr;
 
 	char* ret = (char*)p;
 
@@ -441,18 +441,18 @@ static inline void* base64_decode(const signed char* WINPR_RESTRICT alphabet, si
                                   size_t* WINPR_RESTRICT data_len, BOOL pad)
 {
 	int n[4] = WINPR_C_ARRAY_INIT;
-	BYTE* data = NULL;
+	BYTE* data = nullptr;
 	const size_t remainder = length % 4;
 
 	if ((pad && remainder > 0) || (remainder == 1))
-		return NULL;
+		return nullptr;
 
 	if (!pad && remainder)
 		length += 4 - remainder;
 
 	BYTE* q = data = (BYTE*)malloc(length / 4 * 3 + 1);
 	if (!q)
-		return NULL;
+		return nullptr;
 
 	/* first treat complete blocks */
 	const size_t nBlocks = (length / 4);
@@ -461,7 +461,7 @@ static inline void* base64_decode(const signed char* WINPR_RESTRICT alphabet, si
 	if (nBlocks < 1)
 	{
 		free(data);
-		return NULL;
+		return nullptr;
 	}
 
 	for (size_t i = 0; i < nBlocks - 1; i++, q += 3)
@@ -522,7 +522,7 @@ static inline void* base64_decode(const signed char* WINPR_RESTRICT alphabet, si
 	return data;
 out_free:
 	free(data);
-	return NULL;
+	return nullptr;
 }
 
 char* crypto_base64_encode_ex(const BYTE* WINPR_RESTRICT data, size_t length, BOOL withCrLf)

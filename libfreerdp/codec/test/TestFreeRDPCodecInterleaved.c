@@ -52,8 +52,8 @@ static bool run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 		goto fail;
 
 	PROFILER_ENTER(profiler_comp)
-	rc =
-	    interleaved_compress(encoder, tmp, &DstSize, w, h, pSrcData, format, step, x, y, NULL, bpp);
+	rc = interleaved_compress(encoder, tmp, &DstSize, w, h, pSrcData, format, step, x, y, nullptr,
+	                          bpp);
 	PROFILER_EXIT(profiler_comp)
 
 	if (!rc)
@@ -61,7 +61,7 @@ static bool run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 
 	PROFILER_ENTER(profiler_decomp)
 	rc = interleaved_decompress(decoder, tmp, DstSize, w, h, bpp, pDstData, format, step, x, y, w,
-	                            h, NULL);
+	                            h, nullptr);
 	PROFILER_EXIT(profiler_decomp)
 
 	if (!rc)
@@ -82,8 +82,8 @@ static bool run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 			BYTE db = 0;
 			const UINT32 srcColor = FreeRDPReadColor(&srcLine[1ULL * j * bstep], format);
 			const UINT32 dstColor = FreeRDPReadColor(&dstLine[1ULL * j * bstep], format);
-			FreeRDPSplitColor(srcColor, format, &r, &g, &b, NULL, NULL);
-			FreeRDPSplitColor(dstColor, format, &dr, &dg, &db, NULL, NULL);
+			FreeRDPSplitColor(srcColor, format, &r, &g, &b, nullptr, nullptr);
+			FreeRDPSplitColor(dstColor, format, &dr, &dg, &db, nullptr, nullptr);
 
 			if (abs(r - dr) > maxDiff)
 				goto fail;
@@ -174,17 +174,17 @@ static bool TestColorConversion(void)
 		const UINT32 format = formats[x];
 		const UINT32 colorLow = FreeRDPGetColor(format, 0, 0, 0, 255);
 		const UINT32 colorHigh = FreeRDPGetColor(format, 255, 255, 255, 255);
-		const UINT32 colorLow32 = FreeRDPConvertColor(colorLow, format, dstFormat, NULL);
-		const UINT32 colorHigh32 = FreeRDPConvertColor(colorHigh, format, dstFormat, NULL);
+		const UINT32 colorLow32 = FreeRDPConvertColor(colorLow, format, dstFormat, nullptr);
+		const UINT32 colorHigh32 = FreeRDPConvertColor(colorHigh, format, dstFormat, nullptr);
 		BYTE r = 0;
 		BYTE g = 0;
 		BYTE b = 0;
 		BYTE a = 0;
-		FreeRDPSplitColor(colorLow32, dstFormat, &r, &g, &b, &a, NULL);
+		FreeRDPSplitColor(colorLow32, dstFormat, &r, &g, &b, &a, nullptr);
 		if ((r != 0) || (g != 0) || (b != 0))
 			return false;
 
-		FreeRDPSplitColor(colorHigh32, dstFormat, &r, &g, &b, &a, NULL);
+		FreeRDPSplitColor(colorHigh32, dstFormat, &r, &g, &b, &a, nullptr);
 		if ((r != 255) || (g != 255) || (b != 255))
 			return false;
 	}
@@ -196,8 +196,8 @@ static bool RunEncoderTest(const char* name, uint32_t format, uint32_t width, ui
                            uint32_t step, uint32_t bpp)
 {
 	bool rc = false;
-	void* data = NULL;
-	void* encdata = NULL;
+	void* data = nullptr;
+	void* encdata = nullptr;
 	BITMAP_INTERLEAVED_CONTEXT* encoder = bitmap_interleaved_context_new(true);
 	if (!encoder)
 		goto fail;
@@ -215,7 +215,7 @@ static bool RunEncoderTest(const char* name, uint32_t format, uint32_t width, ui
 	{
 		uint32_t enclen = WINPR_ASSERTING_INT_CAST(uint32_t, srclen);
 		if (!interleaved_compress(encoder, encdata, &enclen, width, height, data, format, step, 0,
-		                          0, NULL, bpp))
+		                          0, nullptr, bpp))
 			goto fail;
 
 		char encname[128] = WINPR_C_ARRAY_INIT;
@@ -241,8 +241,8 @@ static bool RunDecoderTest(const char* name, uint32_t format, uint32_t width, ui
                            uint32_t step, uint32_t bpp)
 {
 	bool rc = false;
-	void* data = NULL;
-	void* decdata = NULL;
+	void* data = nullptr;
+	void* decdata = nullptr;
 	BITMAP_INTERLEAVED_CONTEXT* decoder = bitmap_interleaved_context_new(false);
 	if (!decoder)
 		goto fail;
@@ -264,7 +264,7 @@ static bool RunDecoderTest(const char* name, uint32_t format, uint32_t width, ui
 	{
 		if (!interleaved_decompress(decoder, data, WINPR_ASSERTING_INT_CAST(uint32_t, srclen),
 		                            width, height, bpp, decdata, format, step, 0, 0, width, height,
-		                            NULL))
+		                            nullptr))
 			goto fail;
 
 		char decname[128] = WINPR_C_ARRAY_INIT;
@@ -364,8 +364,8 @@ static bool isObjectValid(const WINPR_JSON* obj)
 static bool TestEncoder(void)
 {
 	bool rc = false;
-	WINPR_JSON* json = NULL;
-	char* file = NULL;
+	WINPR_JSON* json = nullptr;
+	char* file = nullptr;
 	char* path = GetCombinedPath(CMAKE_CURRENT_SOURCE_DIR, "interleaved");
 	if (!path)
 		goto fail;
@@ -419,8 +419,8 @@ fail:
 
 int TestFreeRDPCodecInterleaved(int argc, char* argv[])
 {
-	BITMAP_INTERLEAVED_CONTEXT* encoder = NULL;
-	BITMAP_INTERLEAVED_CONTEXT* decoder = NULL;
+	BITMAP_INTERLEAVED_CONTEXT* encoder = nullptr;
+	BITMAP_INTERLEAVED_CONTEXT* decoder = nullptr;
 	int rc = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

@@ -552,7 +552,7 @@ static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX, UINT32
 	if ((cX > 0) || (cY > 0) || (cW > 0) || (cH > 0))
 		gdi_SetClipRgn(hdc, cX, cY, cW, cH);
 
-	gdi_MoveToEx(hdc, mX, mY, NULL);
+	gdi_MoveToEx(hdc, mX, mY, nullptr);
 	gdi_LineTo(hdc, lX, lY);
 
 	if (!test_assert_bitmaps_equal(hBmp, hOrgBmp, "Case 10", hPalette))
@@ -579,27 +579,27 @@ int TestGdiLine(int argc, char* argv[])
 	for (size_t ifmt = 0; ifmt < number_formats; ifmt++)
 	{
 		gdiPalette g = WINPR_C_ARRAY_INIT;
-		HGDI_DC hdc = NULL;
-		HGDI_PEN pen = NULL;
-		HGDI_BITMAP hBmp = NULL;
-		struct ropMap rop_map[] = { { GDI_R2_BLACK, NULL, line_to_R2_BLACK },
-			                        { GDI_R2_NOTMERGEPEN, NULL, line_to_R2_NOTMERGEPEN },
-			                        { GDI_R2_MASKNOTPEN, NULL, line_to_R2_MASKNOTPEN },
-			                        { GDI_R2_NOTCOPYPEN, NULL, line_to_R2_NOTCOPYPEN },
-			                        { GDI_R2_MASKPENNOT, NULL, line_to_R2_MASKPENNOT },
-			                        { GDI_R2_NOT, NULL, line_to_R2_NOT },
-			                        { GDI_R2_XORPEN, NULL, line_to_R2_XORPEN },
-			                        { GDI_R2_NOTMASKPEN, NULL, line_to_R2_NOTMASKPEN },
-			                        { GDI_R2_MASKPEN, NULL, line_to_R2_MASKPEN },
-			                        { GDI_R2_NOTXORPEN, NULL, line_to_R2_NOTXORPEN },
-			                        { GDI_R2_NOP, NULL, line_to_R2_NOP },
-			                        { GDI_R2_MERGENOTPEN, NULL, line_to_R2_MERGENOTPEN },
-			                        { GDI_R2_COPYPEN, NULL, line_to_R2_COPYPEN },
-			                        { GDI_R2_MERGEPENNOT, NULL, line_to_R2_MERGEPENNOT },
-			                        { GDI_R2_MERGEPEN, NULL, line_to_R2_MERGEPEN },
-			                        { GDI_R2_WHITE, NULL, line_to_R2_WHITE } };
+		HGDI_DC hdc = nullptr;
+		HGDI_PEN pen = nullptr;
+		HGDI_BITMAP hBmp = nullptr;
+		struct ropMap rop_map[] = { { GDI_R2_BLACK, nullptr, line_to_R2_BLACK },
+			                        { GDI_R2_NOTMERGEPEN, nullptr, line_to_R2_NOTMERGEPEN },
+			                        { GDI_R2_MASKNOTPEN, nullptr, line_to_R2_MASKNOTPEN },
+			                        { GDI_R2_NOTCOPYPEN, nullptr, line_to_R2_NOTCOPYPEN },
+			                        { GDI_R2_MASKPENNOT, nullptr, line_to_R2_MASKPENNOT },
+			                        { GDI_R2_NOT, nullptr, line_to_R2_NOT },
+			                        { GDI_R2_XORPEN, nullptr, line_to_R2_XORPEN },
+			                        { GDI_R2_NOTMASKPEN, nullptr, line_to_R2_NOTMASKPEN },
+			                        { GDI_R2_MASKPEN, nullptr, line_to_R2_MASKPEN },
+			                        { GDI_R2_NOTXORPEN, nullptr, line_to_R2_NOTXORPEN },
+			                        { GDI_R2_NOP, nullptr, line_to_R2_NOP },
+			                        { GDI_R2_MERGENOTPEN, nullptr, line_to_R2_MERGENOTPEN },
+			                        { GDI_R2_COPYPEN, nullptr, line_to_R2_COPYPEN },
+			                        { GDI_R2_MERGEPENNOT, nullptr, line_to_R2_MERGEPENNOT },
+			                        { GDI_R2_MERGEPEN, nullptr, line_to_R2_MERGEPEN },
+			                        { GDI_R2_WHITE, nullptr, line_to_R2_WHITE } };
 		const size_t map_size = sizeof(rop_map) / sizeof(rop_map[0]);
-		HGDI_BITMAP hBmp_LineTo[LINTETO_NUMBER] = { NULL };
+		HGDI_BITMAP hBmp_LineTo[LINTETO_NUMBER] = { nullptr };
 		gdiPalette* hPalette = &g;
 		UINT32 penColor = 0;
 		const UINT32 format = colorFormats[ifmt];
@@ -695,7 +695,7 @@ int TestGdiLine(int argc, char* argv[])
 			}
 
 			gdi_SetClipRgn(hdc, 0, 0, 16, 16);
-			gdi_MoveToEx(hdc, 0, 0, NULL);
+			gdi_MoveToEx(hdc, 0, 0, nullptr);
 			gdi_SetROP2(hdc, rop_map[x].rop);
 			gdi_LineTo(hdc, 16, 16);
 

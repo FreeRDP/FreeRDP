@@ -255,11 +255,11 @@ static void* entry_new(const void* val)
 {
 	const timer_entry_t* entry = val;
 	if (!entry)
-		return NULL;
+		return nullptr;
 
 	timer_entry_t* copy = calloc(1, sizeof(timer_entry_t));
 	if (!copy)
-		return NULL;
+		return nullptr;
 	*copy = *entry;
 	return copy;
 }
@@ -269,7 +269,7 @@ FreeRDPTimer* freerdp_timer_new(rdpRdp* rdp)
 	WINPR_ASSERT(rdp);
 	FreeRDPTimer* timer = calloc(1, sizeof(FreeRDPTimer));
 	if (!timer)
-		return NULL;
+		return nullptr;
 	timer->rdp = rdp;
 
 	timer->entries = ArrayList_New(TRUE);
@@ -283,17 +283,17 @@ FreeRDPTimer* freerdp_timer_new(rdpRdp* rdp)
 		obj->fnObjectFree = free;
 	}
 
-	timer->event = CreateEventA(NULL, TRUE, FALSE, NULL);
+	timer->event = CreateEventA(nullptr, TRUE, FALSE, nullptr);
 	if (!timer->event)
 		goto fail;
 
-	timer->mainevent = CreateEventA(NULL, TRUE, FALSE, NULL);
+	timer->mainevent = CreateEventA(nullptr, TRUE, FALSE, nullptr);
 	if (!timer->mainevent)
 		goto fail;
 
 #if defined(FREERDP_TIMER_SUPPORTED)
 	timer->running = true;
-	timer->thread = CreateThread(NULL, 0, timer_thread, timer, 0, NULL);
+	timer->thread = CreateThread(nullptr, 0, timer_thread, timer, 0, nullptr);
 	if (!timer->thread)
 		goto fail;
 #endif
@@ -301,7 +301,7 @@ FreeRDPTimer* freerdp_timer_new(rdpRdp* rdp)
 
 fail:
 	freerdp_timer_free(timer);
-	return NULL;
+	return nullptr;
 }
 
 static BOOL runExpiredTimerOnMainloop(void* data, WINPR_ATTR_UNUSED size_t index,

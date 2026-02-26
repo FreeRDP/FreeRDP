@@ -22,11 +22,11 @@
 /* ------------------------------------------------------------------------- */
 static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 {
-	INT16* r = NULL;
-	INT16* g = NULL;
-	INT16* b = NULL;
-	BYTE* out1 = NULL;
-	BYTE* out2 = NULL;
+	INT16* r = nullptr;
+	INT16* g = nullptr;
+	INT16* b = nullptr;
+	BYTE* out1 = nullptr;
+	BYTE* out2 = nullptr;
 	BOOL failed = FALSE;
 	const INT16* ptrs[3];
 	const UINT32 rgbStride = roi.width * 2;

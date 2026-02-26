@@ -98,7 +98,7 @@ static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid,
 	DWORD idx = 0;
 	GUID mediaGuid;
 	HRESULT hr = S_OK;
-	IMFMediaType* pMediaType = NULL;
+	IMFMediaType* pMediaType = nullptr;
 
 	while (1)
 	{
@@ -130,7 +130,7 @@ static HRESULT mf_create_output_sample(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 	if (sys->outputSample)
 	{
 		sys->outputSample->lpVtbl->Release(sys->outputSample);
-		sys->outputSample = NULL;
+		sys->outputSample = nullptr;
 	}
 
 	hr = sys->MFCreateSample(&sys->outputSample);
@@ -173,13 +173,13 @@ error:
 static int mf_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize)
 {
 	HRESULT hr;
-	BYTE* pbBuffer = NULL;
+	BYTE* pbBuffer = nullptr;
 	DWORD cbMaxLength = 0;
 	DWORD cbCurrentLength = 0;
 	DWORD outputStatus = 0;
-	IMFSample* inputSample = NULL;
-	IMFMediaBuffer* inputBuffer = NULL;
-	IMFMediaBuffer* outputBuffer = NULL;
+	IMFSample* inputSample = nullptr;
+	IMFMediaBuffer* inputBuffer = nullptr;
+	IMFMediaBuffer* outputBuffer = nullptr;
 	MFT_OUTPUT_DATA_BUFFER outputDataBuffer;
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*)h264->pSystemData;
 	UINT32* iStride = h264->iStride;
@@ -252,7 +252,7 @@ static int mf_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSiz
 
 	outputDataBuffer.dwStreamID = 0;
 	outputDataBuffer.dwStatus = 0;
-	outputDataBuffer.pEvents = NULL;
+	outputDataBuffer.pEvents = nullptr;
 	outputDataBuffer.pSample = sys->outputSample;
 	hr = sys->transform->lpVtbl->ProcessOutput(sys->transform, 0, 1, &outputDataBuffer,
 	                                           &outputStatus);
@@ -265,7 +265,7 @@ static int mf_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSiz
 		if (sys->outputType)
 		{
 			sys->outputType->lpVtbl->Release(sys->outputType);
-			sys->outputType = NULL;
+			sys->outputType = nullptr;
 		}
 
 		hr = mf_find_output_type(sys, &sMFVideoFormat_IYUV, &sys->outputType);
@@ -327,7 +327,7 @@ static int mf_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSiz
 	else
 	{
 		int offset = 0;
-		BYTE* buffer = NULL;
+		BYTE* buffer = nullptr;
 		DWORD bufferCount = 0;
 		DWORD cbMaxLength = 0;
 		DWORD cbCurrentLength = 0;
@@ -401,31 +401,31 @@ static void mf_uninit(H264_CONTEXT* h264)
 		if (sys->transform)
 		{
 			sys->transform->lpVtbl->Release(sys->transform);
-			sys->transform = NULL;
+			sys->transform = nullptr;
 		}
 
 		if (sys->codecApi)
 		{
 			sys->codecApi->lpVtbl->Release(sys->codecApi);
-			sys->codecApi = NULL;
+			sys->codecApi = nullptr;
 		}
 
 		if (sys->inputType)
 		{
 			sys->inputType->lpVtbl->Release(sys->inputType);
-			sys->inputType = NULL;
+			sys->inputType = nullptr;
 		}
 
 		if (sys->outputType)
 		{
 			sys->outputType->lpVtbl->Release(sys->outputType);
-			sys->outputType = NULL;
+			sys->outputType = nullptr;
 		}
 
 		if (sys->outputSample)
 		{
 			sys->outputSample->lpVtbl->Release(sys->outputSample);
-			sys->outputSample = NULL;
+			sys->outputSample = nullptr;
 		}
 
 		if (sys->mfplat)
@@ -434,7 +434,7 @@ static void mf_uninit(H264_CONTEXT* h264)
 				sys->MFShutdown();
 
 			FreeLibrary(sys->mfplat);
-			sys->mfplat = NULL;
+			sys->mfplat = nullptr;
 
 			if (mf_plat_loaded(sys))
 				CoUninitialize();
@@ -447,7 +447,7 @@ static void mf_uninit(H264_CONTEXT* h264)
 		memset(h264->iStride, 0, sizeof(h264->iStride));
 
 		free(sys);
-		h264->pSystemData = NULL;
+		h264->pSystemData = nullptr;
 	}
 }
 
@@ -478,7 +478,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 	if (!mf_plat_loaded(sys))
 		goto error;
 
-	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
 	if (h264->Compressor)
 	{
@@ -494,7 +494,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 			goto error;
 		}
 
-		hr = CoCreateInstance(&sCLSID_CMSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER,
+		hr = CoCreateInstance(&sCLSID_CMSH264DecoderMFT, nullptr, CLSCTX_INPROC_SERVER,
 		                      &sIID_IMFTransform, (void**)&sys->transform);
 
 		if (FAILED(hr))

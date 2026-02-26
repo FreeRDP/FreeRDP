@@ -123,7 +123,7 @@ static int prepare(const char* currentFileV2)
 		                    "someurl 3389 ff:11:22:dd c3ViamVjdA== aXNzdWVy\r\n"
 		                    " \t#anothercomment\r\n"
 		                    "otherurl\t3389\taa:bb:cc:dd\tsubject2\tissuer2\r" };
-	FILE* fc = NULL;
+	FILE* fc = nullptr;
 	fc = winpr_fopen(currentFileV2, "w+");
 
 	if (!fc)
@@ -147,7 +147,7 @@ finish:
 static BOOL setup_config(rdpSettings** settings)
 {
 	BOOL rc = FALSE;
-	char* path = NULL;
+	char* path = nullptr;
 	char sname[8192];
 	SYSTEMTIME systemTime;
 
@@ -169,7 +169,7 @@ static BOOL setup_config(rdpSettings** settings)
 		goto fail;
 	if (!winpr_PathFileExists(path))
 	{
-		if (!CreateDirectoryA(path, NULL))
+		if (!CreateDirectoryA(path, nullptr))
 		{
 			(void)fprintf(stderr, "Could not create %s!\n", path);
 			goto fail;
@@ -252,12 +252,12 @@ static BOOL test_get_data_ex(rdpCertificateStore* store, const rdpCertificateDat
 static BOOL test_certs_dir(void)
 {
 	BOOL rc = FALSE;
-	rdpSettings* settings = NULL;
-	rdpCertificateStore* store = NULL;
-	rdpCertificateData* data1 = NULL;
-	rdpCertificateData* data2 = NULL;
-	rdpCertificateData* data3 = NULL;
-	rdpCertificateData* data4 = NULL;
+	rdpSettings* settings = nullptr;
+	rdpCertificateStore* store = nullptr;
+	rdpCertificateData* data1 = nullptr;
+	rdpCertificateData* data2 = nullptr;
+	rdpCertificateData* data3 = nullptr;
+	rdpCertificateData* data4 = nullptr;
 
 	printf("%s\n", __func__);
 	if (!setup_config(&settings))

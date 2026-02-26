@@ -119,7 +119,7 @@ static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONG
 		return FALSE;
 
 	errno = 0;
-	rc = _strtoi64(value, NULL, 0);
+	rc = _strtoi64(value, nullptr, 0);
 
 	if (errno != 0)
 		return FALSE;
@@ -237,7 +237,7 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 
 		if (sub)
 		{
-			const unsigned long usub = strtoul(sub, NULL, 0);
+			const unsigned long usub = strtoul(sub, nullptr, 0);
 			if ((errno == 0) && (usub <= UINT8_MAX))
 				return cidr4_match(&sa4.sin_addr, &mask.sin_addr, (UINT8)usub);
 		}
@@ -275,7 +275,7 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 
 		if (sub)
 		{
-			const unsigned long usub = strtoul(sub, NULL, 0);
+			const unsigned long usub = strtoul(sub, nullptr, 0);
 			if ((errno == 0) && (usub <= UINT8_MAX))
 				return cidr6_match(&sa6.sin6_addr, &mask.sin6_addr, (UINT8)usub);
 		}
@@ -288,7 +288,7 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 {
 	const char* delimiter = ", ";
 	BOOL result = FALSE;
-	char* context = NULL;
+	char* context = nullptr;
 
 	if (!no_proxy || !settings)
 		return FALSE;
@@ -314,7 +314,7 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 				result = TRUE;
 		}
 
-		current = strtok_s(NULL, delimiter, &context);
+		current = strtok_s(nullptr, delimiter, &context);
 	}
 
 	free(copy);
@@ -323,7 +323,7 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 
 void proxy_read_environment(rdpSettings* settings, char* envname)
 {
-	const DWORD envlen = GetEnvironmentVariableA(envname, NULL, 0);
+	const DWORD envlen = GetEnvironmentVariableA(envname, nullptr, 0);
 
 	if (!envlen || (envlen <= 1))
 		return;
@@ -576,10 +576,10 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 {
 	BOOL rc = FALSE;
 	int status = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	char port_str[10] = WINPR_C_ARRAY_INIT;
 	char recv_buf[256] = WINPR_C_ARRAY_INIT;
-	char* eol = NULL;
+	char* eol = nullptr;
 	size_t resultsize = 0;
 	size_t reserveSize = 0;
 	size_t portLen = 0;
@@ -598,7 +598,7 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 	hostLen = strlen(hostname);
 	portLen = strnlen(port_str, sizeof(port_str));
 	reserveSize = strlen(connect) + (hostLen + 1ull + portLen) * 2ull + strlen(httpheader);
-	s = Stream_New(NULL, reserveSize);
+	s = Stream_New(nullptr, reserveSize);
 	if (!s)
 		goto fail;
 
@@ -624,7 +624,7 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 			else
 			{
 				const char basic[] = CRLF "Proxy-Authorization: Basic ";
-				char* base64 = NULL;
+				char* base64 = nullptr;
 
 				(void)sprintf_s(creds, size, "%s:%s", proxyUsername, proxyPassword);
 				base64 = crypto_base64_encode((const BYTE*)creds, size - 1);
@@ -668,7 +668,7 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 	 * Keep recv_buf a null-terminated string. */
 	{
 		const UINT64 start = GetTickCount64();
-		while (strstr(recv_buf, CRLF CRLF) == NULL)
+		while (strstr(recv_buf, CRLF CRLF) == nullptr)
 		{
 			if (resultsize >= sizeof(recv_buf) - 1)
 			{

@@ -144,7 +144,7 @@ typedef struct
 static int g_Width = 0;
 static int g_Height = 0;
 static int g_DstStep = 0;
-static BYTE* g_DstData = NULL;
+static BYTE* g_DstData = nullptr;
 
 static void sample_file_free(EGFX_SAMPLE_FILE* file)
 {
@@ -152,13 +152,13 @@ static void sample_file_free(EGFX_SAMPLE_FILE* file)
 		return;
 
 	free(file->buffer);
-	file->buffer = NULL;
+	file->buffer = nullptr;
 	file->size = 0;
 }
 
 static void test_fill_image_alpha_channel(BYTE* data, UINT32 width, UINT32 height, BYTE value)
 {
-	UINT32* pixel = NULL;
+	UINT32* pixel = nullptr;
 
 	for (UINT32 i = 0; i < height; i++)
 	{
@@ -183,7 +183,7 @@ static void* test_image_memset32(UINT32* ptr, UINT32 fill, size_t length)
 static int test_image_fill(BYTE* pDstData, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
                            UINT32 nWidth, UINT32 nHeight, UINT32 color)
 {
-	UINT32* pDstPixel = NULL;
+	UINT32* pDstPixel = nullptr;
 
 	if (nDstStep < 0)
 		nDstStep = 4 * nWidth;
@@ -280,13 +280,13 @@ static BYTE* test_progressive_load_file(const char* path, const char* file, size
 	char* filename = GetCombinedPath(path, file);
 
 	if (!filename)
-		return NULL;
+		return nullptr;
 
 	FILE* fp = winpr_fopen(filename, "r");
 	free(filename);
 
 	if (!fp)
-		return NULL;
+		return nullptr;
 
 	(void)_fseeki64(fp, 0, SEEK_END);
 	const INT64 pos = _ftelli64(fp);
@@ -299,14 +299,14 @@ static BYTE* test_progressive_load_file(const char* path, const char* file, size
 	if (!buffer)
 	{
 		(void)fclose(fp);
-		return NULL;
+		return nullptr;
 	}
 
 	if (fread(buffer, *size, 1, fp) != 1)
 	{
 		free(buffer);
 		(void)fclose(fp);
-		return NULL;
+		return nullptr;
 	}
 
 	(void)fclose(fp);
@@ -544,23 +544,23 @@ static int test_progressive_load_files(char* ms_sample_path, EGFX_SAMPLE_FILE fi
 static BYTE* test_progressive_load_bitmap(char* path, char* file, size_t* size, int quarter)
 {
 	int status = 0;
-	BYTE* buffer = NULL;
-	wImage* image = NULL;
-	char* filename = NULL;
+	BYTE* buffer = nullptr;
+	wImage* image = nullptr;
+	char* filename = nullptr;
 	filename = GetCombinedPath(path, file);
 
 	if (!filename)
-		return NULL;
+		return nullptr;
 
 	image = winpr_image_new();
 
 	if (!image)
-		return NULL;
+		return nullptr;
 
 	status = winpr_image_read(image, filename);
 
 	if (status < 0)
-		return NULL;
+		return nullptr;
 
 	buffer = image->data;
 	*size = 1ULL * image->height * image->scanline;
@@ -835,7 +835,7 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 	{
 		const int status =
 		    progressive_decompress(progressive, files[pass].buffer, files[pass].size, g_DstData,
-		                           PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, NULL, 0, 0);
+		                           PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, nullptr, 0, 0);
 		printf("ProgressiveDecompress: status: %d pass: %d\n", status, pass + 1);
 		PROGRESSIVE_BLOCK_REGION* region = &(progressive->region);
 
@@ -891,8 +891,8 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 			nXSrc = nXDst - WINPR_ASSERTING_INT_CAST(int, tile->x);
 			nYSrc = nYDst - WINPR_ASSERTING_INT_CAST(int, tile->y);
 			freerdp_image_copy(g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, nXDst, nYDst, nWidth,
-			                   nHeight, tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc, NULL,
-			                   FREERDP_FLIP_NONE);
+			                   nHeight, tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc,
+			                   nullptr, FREERDP_FLIP_NONE);
 		}
 
 		const size_t size = bitmaps[pass].size;
@@ -917,7 +917,7 @@ static int test_progressive_ms_sample(char* ms_sample_path)
 	int status = 0;
 	EGFX_SAMPLE_FILE files[3][4][4] = WINPR_C_ARRAY_INIT;
 	EGFX_SAMPLE_FILE bitmaps[3][4][4] = WINPR_C_ARRAY_INIT;
-	PROGRESSIVE_CONTEXT* progressive = NULL;
+	PROGRESSIVE_CONTEXT* progressive = nullptr;
 	g_Width = 1920;
 	g_Height = 1080;
 	g_DstStep = g_Width * 4;
@@ -1029,8 +1029,8 @@ static BOOL colordiff(UINT32 format, UINT32 a, UINT32 b)
 	BYTE bg = 0;
 	BYTE bb = 0;
 	BYTE ba = 0;
-	FreeRDPSplitColor(a, format, &ar, &ag, &ab, &aa, NULL);
-	FreeRDPSplitColor(b, format, &br, &bg, &bb, &ba, NULL);
+	FreeRDPSplitColor(a, format, &ar, &ag, &ab, &aa, nullptr);
+	FreeRDPSplitColor(b, format, &br, &bg, &bb, &ba, nullptr);
 	return !(!diff(aa, ba) || !diff(ar, br) || !diff(ag, bg) || !diff(ab, bb));
 }
 
@@ -1038,8 +1038,8 @@ static BOOL test_encode_decode(const char* path)
 {
 	BOOL res = FALSE;
 	int rc = 0;
-	BYTE* resultData = NULL;
-	BYTE* dstData = NULL;
+	BYTE* resultData = nullptr;
+	BYTE* dstData = nullptr;
 	UINT32 dstSize = 0;
 	UINT32 ColorFormat = PIXEL_FORMAT_BGRX32;
 	REGION16 invalidRegion = WINPR_C_ARRAY_INIT;
@@ -1063,7 +1063,7 @@ static BOOL test_encode_decode(const char* path)
 
 	// Progressive encode
 	rc = progressive_compress(progressiveEnc, image->data, image->scanline * image->height,
-	                          ColorFormat, image->width, image->height, image->scanline, NULL,
+	                          ColorFormat, image->width, image->height, image->scanline, nullptr,
 	                          &dstData, &dstSize);
 	if (rc < 0)
 		goto fail;
@@ -1127,7 +1127,7 @@ static BOOL readUInt(FILE* fp, const char* prefix, const char* postfix, UINT32* 
 	const size_t plen = strlen(prefix);
 	const size_t polen = strlen(postfix);
 
-	char* str = NULL;
+	char* str = nullptr;
 	size_t len = SIZE_MAX;
 	const INT64 res = GetLine(&str, &len, fp);
 	if ((res < plen + polen) || !str)
@@ -1143,7 +1143,7 @@ static BOOL readUInt(FILE* fp, const char* prefix, const char* postfix, UINT32* 
 	*end = '\0';
 
 	errno = 0;
-	unsigned long val = strtoul(start, NULL, 0);
+	unsigned long val = strtoul(start, nullptr, 0);
 	if ((errno != 0) || (val > UINT32_MAX))
 		goto fail;
 
@@ -1186,7 +1186,7 @@ static BOOL read_cmd(FILE* fp, RDPGFX_SURFACE_COMMAND* cmd, UINT32* frameId)
 	if (!readUInt(fp, "length: ", "\n", &cmd->length))
 		return FALSE;
 
-	char* data = NULL;
+	char* data = nullptr;
 	size_t dlen = SIZE_MAX;
 	INT64 slen = GetLine(&data, &dlen, fp);
 	if (slen < 0)
@@ -1252,10 +1252,10 @@ static int test_dump(int argc, char* argv[])
 
 	const char* path = argv[1];
 	errno = 0;
-	const unsigned long width = strtoul(argv[2], NULL, 0);
+	const unsigned long width = strtoul(argv[2], nullptr, 0);
 	if ((errno != 0) || (width <= 0))
 		usage(argv[0]);
-	const unsigned long height = strtoul(argv[3], NULL, 0);
+	const unsigned long height = strtoul(argv[3], nullptr, 0);
 	if ((errno != 0) || (height <= 0))
 		usage(argv[0]);
 
@@ -1277,7 +1277,7 @@ static int test_dump(int argc, char* argv[])
 	success = 0;
 	while (success >= 0)
 	{
-		char* fname = NULL;
+		char* fname = nullptr;
 		size_t flen = 0;
 		winpr_asprintf(&fname, &flen, "%s/%08" PRIx32 ".raw", path, count++);
 		FILE* fp = fopen(fname, "r");
@@ -1315,7 +1315,7 @@ static int test_dump(int argc, char* argv[])
 					const UINT64 start = winpr_GetTickCount64NS();
 					if (!freerdp_image_copy_no_overlap(dst, DstFormat, stride, cmd.left, cmd.top,
 					                                   cmd.width, cmd.height, cmd.data, cmd.format,
-					                                   0, 0, 0, NULL, FREERDP_FLIP_NONE))
+					                                   0, 0, 0, nullptr, FREERDP_FLIP_NONE))
 						success = -1;
 
 					RECTANGLE_16 invalidRect = { .left = (UINT16)MIN(UINT16_MAX, cmd.left),
@@ -1341,7 +1341,7 @@ static int test_dump(int argc, char* argv[])
 					const UINT64 start = winpr_GetTickCount64NS();
 					success = clear_decompress(codecs->clear, cmd.data, cmd.length, cmd.width,
 					                           cmd.height, dst, DstFormat, stride, cmd.left,
-					                           cmd.top, width, height, NULL);
+					                           cmd.top, width, height, nullptr);
 
 					const RECTANGLE_16 invalidRect = { .left = (UINT16)MIN(UINT16_MAX, cmd.left),
 						                               .top = (UINT16)MIN(UINT16_MAX, cmd.top),
@@ -1423,7 +1423,7 @@ static int test_dump(int argc, char* argv[])
 					const UINT32 h = rect->bottom - rect->top;
 					if (!freerdp_image_copy_no_overlap(output, DstFormat, stride, rect->left,
 					                                   rect->top, w, h, dst, DstFormat, stride,
-					                                   rect->left, rect->top, NULL, 0))
+					                                   rect->left, rect->top, nullptr, 0))
 						success = -42;
 				}
 				copytime += measure_diff_and_print(cname, frameId, start);
@@ -1467,7 +1467,7 @@ int TestFreeRDPCodecProgressive(int argc, char* argv[])
 		return test_dump(argc, argv);
 
 	int rc = -1;
-	char* ms_sample_path = NULL;
+	char* ms_sample_path = nullptr;
 	char name[8192];
 	SYSTEMTIME systemTime;
 	WINPR_UNUSED(argc);

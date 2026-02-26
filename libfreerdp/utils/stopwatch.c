@@ -35,7 +35,7 @@ STOPWATCH* stopwatch_create(void)
 {
 	STOPWATCH* sw = (STOPWATCH*)calloc(1, sizeof(STOPWATCH));
 	if (!sw)
-		return NULL;
+		return nullptr;
 	stopwatch_reset(sw);
 
 	return sw;

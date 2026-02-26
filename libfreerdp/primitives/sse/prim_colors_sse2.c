@@ -31,7 +31,7 @@
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <emmintrin.h>
 
-static primitives_t* generic = NULL;
+static primitives_t* generic = nullptr;
 
 #define CACHE_LINE_BYTES 64
 
@@ -577,7 +577,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const UINT32 pad = roi->width % 16;
 	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
-	BYTE* out = NULL;
+	BYTE* out = nullptr;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
 	out = pDst;
@@ -683,7 +683,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const UINT32 pad = roi->width % 16;
 	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
-	BYTE* out = NULL;
+	BYTE* out = nullptr;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
 	out = pDst;
@@ -794,7 +794,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const UINT32 pad = roi->width % 16;
 	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
-	BYTE* out = NULL;
+	BYTE* out = nullptr;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
 	out = pDst;
@@ -905,7 +905,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const __m128i a = mm_set1_epu32(0xFFFFFFFFU);
 	const UINT32 pad = roi->width % 16;
-	BYTE* out = NULL;
+	BYTE* out = nullptr;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
 	out = pDst;
