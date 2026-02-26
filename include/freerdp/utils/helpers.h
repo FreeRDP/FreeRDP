@@ -31,14 +31,14 @@ extern "C"
 #endif
 
 	/** @brief Return the absolute path of a configuration file (the path of the configuration
-	 * directory if \b filename is \b NULL)
+	 * directory if \b filename is \b nullptr)
 	 *
 	 *  @param system a boolean indicating the configuration base, \b TRUE for system configuration,
 	 * \b FALSE for user configuration
 	 *  @param filename an optional configuration file name to append.
 	 *
-	 *  @return The absolute path of the desired configuration or \b NULL in case of failure. Use \b
-	 * free to clean up the allocated string.
+	 *  @return The absolute path of the desired configuration or \b nullptr in case of failure. Use
+	 * \b free to clean up the allocated string.
 	 *
 	 *
 	 *  @since version 3.9.0
@@ -53,7 +53,7 @@ extern "C"
 	 * \b FALSE for user configuration
 	 *  @param filename an optional configuration file name to append.
 	 *
-	 *  @return A parsed \b WINPR_JSON object or \b NULL in case of any failure.
+	 *  @return A parsed \b WINPR_JSON object or \b nullptr in case of any failure.
 	 *  @since version 3.16.0
 	 */
 	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
@@ -73,9 +73,9 @@ extern "C"
 	 * path will always have the format 'vendor/product' or 'vendor/product1' (1 for the actual
 	 * version set)
 	 *
-	 * @param vendor A vendor name to use. Must not be \b NULL. Must not contain forbidden
+	 * @param vendor A vendor name to use. Must not be \b nullptr. Must not contain forbidden
 	 * filesystem symbols for any os. Must be less than \b MAX_PATH bytes.
-	 * @param product A product name to use. Must not be \b NULL. Must not contain forbidden
+	 * @param product A product name to use. Must not be \b nullptr. Must not contain forbidden
 	 * filesystem symbols for any os. Must be less than \b MAX_PATH bytes.
 	 * @param version An optional versioning value to append to paths to settings. Use \b -1 to
 	 * disable.

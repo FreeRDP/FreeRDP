@@ -54,7 +54,7 @@ extern "C"
 
 	/** @brief Set a \ref NSC_PARAMETER for a \ref NSC_CONTEXT
 	 *
-	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b NULL
+	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b nullptr
 	 *  @param what A \ref NSC_PARAMETER to identify what to change
 	 *  @param value The value to set
 	 *
@@ -66,7 +66,7 @@ extern "C"
 
 	/** @brief decode a NSC message
 	 *
-	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b NULL
+	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b nullptr
 	 *  @param bpp The bit depth of the data
 	 *  @param width The width in pixels of the NSC surface
 	 *  @param height The height in pixels of the NSC surface
@@ -94,8 +94,8 @@ extern "C"
 
 	/** @brief Encode a bitmap with \b NSC
 	 *
-	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b NULL
-	 *  @param s a \ref wStream used to write \b NSC encoded data to. Must not be \b NULL
+	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b nullptr
+	 *  @param s a \ref wStream used to write \b NSC encoded data to. Must not be \b nullptr
 	 *  @param bmpdata A pointer to the bitmap to encode. Format must match \b NSC_COLOR_FORMAT
 	 *  @param width The width of the bitmap in pixels
 	 *  @param height The height of the bitmap in pixels
@@ -122,7 +122,7 @@ extern "C"
 
 	/** @brief This function resets a \ref NSC_CONTEXT to a new resolution
 	 *
-	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b NULL
+	 *  @param context The \ref NSC_CONTEXT context to work on. Must not be \b nullptr
 	 *  @param width The width of the context in pixels
 	 *  @param height The height of the context in pixels
 	 *

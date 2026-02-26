@@ -338,7 +338,7 @@ FREERDP_API void primitives_uninit(void);
  * software) is returned
  *
  *  @param type the type of primitives desired.
- *  @return A primitive implementation matching the hint closest or \b NULL in case of failure.
+ *  @return A primitive implementation matching the hint closest or \b nullptr in case of failure.
  *  @since version 3.11.0
  */
 WINPR_ATTR_NODISCARD

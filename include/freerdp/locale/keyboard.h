@@ -258,7 +258,7 @@ FREERDP_API const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardL
 
 /** @brief Get a keyboard layout id from a string
  *
- *  @param name The string to convert to a layout id. Must not be \b NULL
+ *  @param name The string to convert to a layout id. Must not be \b nullptr
  *
  *  @return The keyboard layout id or \b 0 in case of no mapping
  */
@@ -286,7 +286,7 @@ WINPR_DEPRECATED_VAR("since 3.11.0, implement yourself in client",
 
 /** @brief deallocate a \b FREERDP_REMAP_TABLE
  *
- *  @param table The table to deallocate, may be \b NULL
+ *  @param table The table to deallocate, may be \b nullptr
  *
  *  @since version 3.11.0
  */
@@ -323,7 +323,7 @@ FREERDP_API DWORD freerdp_keyboard_remap_key(const FREERDP_REMAP_TABLE* remap_ta
 /** @brief deallocator for a \b RDP_CODEPAGE array allocated by \ref
  * freerdp_keyboard_get_matching_codepages
  *
- *  @param codepages The codepages to free, may be \b NULL
+ *  @param codepages The codepages to free, may be \b nullptr
  */
 FREERDP_API void freerdp_codepages_free(RDP_CODEPAGE* codepages);
 
@@ -335,12 +335,12 @@ FREERDP_API void freerdp_codepages_free(RDP_CODEPAGE* codepages);
  *    - 2 : RDP_CODEPAGE::PrimaryLanguageSymbol
  *    - 3 : RDP_CODEPAGE::Sublanguage
  *    - 4 : RDP_CODEPAGE::SublanguageSymbol
- *  @param filter A filter pattern or \b NULL for no filtering. Simple string match, no expressions
- * supported (e.g. \b strstr match)
- *  @param count A pointer that will be set to the number of codepages found, may be \b NULL
+ *  @param filter A filter pattern or \b nullptr for no filtering. Simple string match, no
+ * expressions supported (e.g. \b strstr match)
+ *  @param count A pointer that will be set to the number of codepages found, may be \b nullptr
  *
- *  @return An allocated array of \b RDP_CODEPAGE of size \b count or \b NULL if no match. Must be
- * freed by \ref freerdp_codepages_free
+ *  @return An allocated array of \b RDP_CODEPAGE of size \b count or \b nullptr if no match. Must
+ * be freed by \ref freerdp_codepages_free
  */
 WINPR_ATTR_MALLOC(freerdp_codepages_free, 1)
 WINPR_ATTR_NODISCARD
@@ -351,7 +351,7 @@ FREERDP_API RDP_CODEPAGE* freerdp_keyboard_get_matching_codepages(DWORD column, 
  *
  *  @param scancode The RDP scancode to get a string for
  *
- *  @return A string describing the RDP scancode or \b NULL if it does not exist
+ *  @return A string describing the RDP scancode or \b nullptr if it does not exist
  */
 WINPR_ATTR_NODISCARD
 FREERDP_API const char* freerdp_keyboard_scancode_name(DWORD scancode);

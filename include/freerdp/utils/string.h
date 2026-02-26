@@ -39,9 +39,9 @@ extern "C"
 
 	/** @brief extracts <key>=<value> pairs from a string
 	 *
-	 * @param str The string to extract data from, must not be \b NULL
-	 * @param pkey A pointer to store the key value, must not be \b NULL
-	 * @param pvalue A pointer to store the value, must not be \b NULL
+	 * @param str The string to extract data from, must not be \b nullptr
+	 * @param pkey A pointer to store the key value, must not be \b nullptr
+	 * @param pvalue A pointer to store the value, must not be \b nullptr
 	 *
 	 * @return \b TRUE if successfully extracted, \b FALSE if no matching data was found
 	 *

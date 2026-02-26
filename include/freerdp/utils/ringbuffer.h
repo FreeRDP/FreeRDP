@@ -95,7 +95,7 @@ extern "C"
 	 *
 	 * @param ringbuffer the ring buffer
 	 * @param sz the size to ensure
-	 * @return a pointer on the write head, or NULL in case of OOM
+	 * @return a pointer on the write head, or nullptr in case of OOM
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BYTE* ringbuffer_ensure_linear_write(RingBuffer* ringbuffer, size_t sz);

@@ -49,7 +49,7 @@ extern "C"
 	 *
 	 *  @since version 3.0.0
 	 *
-	 *  @return The encoded BASE64 string or \b NULL if failed
+	 *  @return The encoded BASE64 string or \b nullptr if failed
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API char* crypto_base64_encode_ex(const BYTE* WINPR_RESTRICT data, size_t length,
