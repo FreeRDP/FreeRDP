@@ -74,7 +74,7 @@ extern "C"
 	 *
 	 *  @param context The RDP context the timer belongs to
 	 *  @param intervalNS The (first) timer expiration interval in nanoseconds
-	 *  @param callback The function to be called when the timer expires. Must not be \b NULL
+	 *  @param callback The function to be called when the timer expires. Must not be \b nullptr
 	 *  @param userdata Custom userdata passed to the callback. The pointer is only passed, it is up
 	 * to the user to ensure the data exists when the timer expires.
 	 *  @param mainloop \b true run the callback in mainloop context or \b false from background

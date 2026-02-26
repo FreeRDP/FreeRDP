@@ -77,7 +77,7 @@ static void UwacWindowDestroyBuffers(UwacWindow* w)
 
 	w->nbuffers = 0;
 	free(w->buffers);
-	w->buffers = NULL;
+	w->buffers = nullptr;
 }
 
 static int UwacWindowShmAllocBuffers(UwacWindow* w, uint64_t nbuffers, uint64_t allocSize,
@@ -92,10 +92,10 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 	int32_t actual_height = height;
 	width *= scale;
 	height *= scale;
-	UwacConfigureEvent* event = NULL;
+	UwacConfigureEvent* event = nullptr;
 	int ret = 0;
 	int surfaceState = 0;
-	enum xdg_toplevel_state* state = NULL;
+	enum xdg_toplevel_state* state = nullptr;
 	surfaceState = 0;
 	wl_array_for_each(state, states)
 	{
@@ -175,7 +175,7 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 
 static void xdg_handle_toplevel_close(void* data, struct xdg_toplevel* xdg_toplevel)
 {
-	UwacCloseEvent* event = NULL;
+	UwacCloseEvent* event = nullptr;
 	UwacWindow* window = (UwacWindow*)data;
 	event = (UwacCloseEvent*)UwacDisplayNewEvent(window->display, UWAC_EVENT_CLOSE);
 
@@ -210,7 +210,7 @@ static void ivi_handle_configure(void* data, struct ivi_surface* surface, int32_
                                  int32_t height)
 {
 	UwacWindow* window = (UwacWindow*)data;
-	UwacConfigureEvent* event = NULL;
+	UwacConfigureEvent* event = nullptr;
 	int ret = 0;
 	event = (UwacConfigureEvent*)UwacDisplayNewEvent(window->display, UWAC_EVENT_CONFIGURE);
 
@@ -269,7 +269,7 @@ static void shell_configure(void* data, struct wl_shell_surface* surface, uint32
                             int32_t width, int32_t height)
 {
 	UwacWindow* window = (UwacWindow*)data;
-	UwacConfigureEvent* event = NULL;
+	UwacConfigureEvent* event = nullptr;
 	int ret = 0;
 	event = (UwacConfigureEvent*)UwacDisplayNewEvent(window->display, UWAC_EVENT_CONFIGURE);
 
@@ -326,8 +326,8 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, uint64_t nbuffers, uint64_t allocSi
 {
 	int ret = UWAC_SUCCESS;
 	int fd = 0;
-	void* data = NULL;
-	struct wl_shm_pool* pool = NULL;
+	void* data = nullptr;
+	struct wl_shm_pool* pool = nullptr;
 
 	if ((width > INT32_MAX) || (height > INT32_MAX))
 		return UWAC_ERROR_NOMEMORY;
@@ -363,7 +363,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, uint64_t nbuffers, uint64_t allocSi
 		return UWAC_ERROR_INTERNAL;
 	}
 
-	data = mmap(NULL, allocbuffersize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	data = mmap(nullptr, allocbuffersize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
 	if (data == MAP_FAILED)
 	{
@@ -437,7 +437,7 @@ static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 	if (ret != UWAC_SUCCESS)
 	{
 		w->display->last_error = ret;
-		return NULL;
+		return nullptr;
 	}
 
 	w->buffers[i].used = true;
@@ -483,12 +483,12 @@ static UwacReturnCode UwacWindowSetDecorations(UwacWindow* w)
 UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t height,
                                 enum wl_shm_format format)
 {
-	UwacWindow* w = NULL;
+	UwacWindow* w = nullptr;
 	int ret = 0;
 
 	if (!display)
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	w = xzalloc(sizeof(*w));
@@ -496,7 +496,7 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 	if (!w)
 	{
 		display->last_error = UWAC_ERROR_NOMEMORY;
-		return NULL;
+		return nullptr;
 	}
 
 	w->display = display;
@@ -533,7 +533,7 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 	if (env)
 	{
 		unsigned long val = 0;
-		char* endp = NULL;
+		char* endp = nullptr;
 
 		errno = 0;
 		val = strtoul(env, &endp, 10);
@@ -556,7 +556,7 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 	{
 		zwp_fullscreen_shell_v1_present_surface(display->fullscreen_shell, w->surface,
 		                                        ZWP_FULLSCREEN_SHELL_V1_PRESENT_METHOD_CENTER,
-		                                        NULL);
+		                                        nullptr);
 	}
 	else
 #endif
@@ -609,12 +609,12 @@ out_error_surface:
 	UwacWindowDestroyBuffers(w);
 out_error_free:
 	free(w);
-	return NULL;
+	return nullptr;
 }
 
 UwacReturnCode UwacDestroyWindow(UwacWindow** pwindow)
 {
-	UwacWindow* w = NULL;
+	UwacWindow* w = nullptr;
 	assert(pwindow);
 	w = *pwindow;
 	UwacWindowDestroyBuffers(w);
@@ -647,7 +647,7 @@ UwacReturnCode UwacDestroyWindow(UwacWindow** pwindow)
 	wl_surface_destroy(w->surface);
 	wl_list_remove(&w->link);
 	free(w);
-	*pwindow = NULL;
+	*pwindow = nullptr;
 	return UWAC_SUCCESS;
 }
 
@@ -693,14 +693,14 @@ UwacReturnCode UwacWindowSetInputRegion(UwacWindow* window, uint32_t x, uint32_t
 
 void* UwacWindowGetDrawingBuffer(UwacWindow* window)
 {
-	UwacBuffer* buffer = NULL;
+	UwacBuffer* buffer = nullptr;
 
 	if (window->drawingBufferIdx < 0)
-		return NULL;
+		return nullptr;
 
 	buffer = &window->buffers[window->drawingBufferIdx];
 	if (!buffer)
-		return NULL;
+		return nullptr;
 
 	return buffer->data;
 }
@@ -766,7 +766,7 @@ static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
 static void frame_done_cb(void* data, struct wl_callback* callback, uint32_t time)
 {
 	UwacWindow* window = (UwacWindow*)data;
-	UwacFrameDoneEvent* event = NULL;
+	UwacFrameDoneEvent* event = nullptr;
 
 	wl_callback_destroy(callback);
 	window->pendingBufferIdx = -1;
@@ -780,7 +780,7 @@ static void frame_done_cb(void* data, struct wl_callback* callback, uint32_t tim
 UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, uint32_t width,
                                    uint32_t height)
 {
-	UwacBuffer* buf = NULL;
+	UwacBuffer* buf = nullptr;
 
 	if (window->drawingBufferIdx < 0)
 		return UWAC_ERROR_INTERNAL;
@@ -797,7 +797,7 @@ UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, u
                                    uint32_t height)
 {
 	RECTANGLE_16 box;
-	UwacBuffer* buf = NULL;
+	UwacBuffer* buf = nullptr;
 
 	box.left = x;
 	box.top = y;
@@ -839,9 +839,9 @@ UwacReturnCode UwacWindowGetDrawingBufferGeometry(UwacWindow* window, UwacSize* 
 
 UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNextFrame)
 {
-	UwacBuffer* currentDrawingBuffer = NULL;
-	UwacBuffer* nextDrawingBuffer = NULL;
-	UwacBuffer* pendingBuffer = NULL;
+	UwacBuffer* currentDrawingBuffer = nullptr;
+	UwacBuffer* nextDrawingBuffer = nullptr;
+	UwacBuffer* pendingBuffer = nullptr;
 
 	if (window->drawingBufferIdx < 0)
 		return UWAC_ERROR_INTERNAL;
@@ -882,7 +882,7 @@ UwacReturnCode UwacWindowSetFullscreenState(UwacWindow* window, UwacOutput* outp
 	{
 		if (isFullscreen)
 		{
-			xdg_toplevel_set_fullscreen(window->xdg_toplevel, output ? output->output : NULL);
+			xdg_toplevel_set_fullscreen(window->xdg_toplevel, output ? output->output : nullptr);
 		}
 		else
 		{
@@ -895,7 +895,7 @@ UwacReturnCode UwacWindowSetFullscreenState(UwacWindow* window, UwacOutput* outp
 		{
 			wl_shell_surface_set_fullscreen(window->shell_surface,
 			                                WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT, 0,
-			                                output ? output->output : NULL);
+			                                output ? output->output : nullptr);
 		}
 		else
 		{

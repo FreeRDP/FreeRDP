@@ -31,8 +31,8 @@ extern "C"
 
 	/** @brief parse a proxy environment variable string and populate settings from it
 	 *
-	 *  @param settings the settings to populate, must not be \b NULL
-	 *  @param uri_in the proxy string to parse, must not be \b NULL
+	 *  @param settings the settings to populate, must not be \b nullptr
+	 *  @param uri_in the proxy string to parse, must not be \b nullptr
 	 *
 	 *  @return \b TRUE if parsed successfully
 	 */

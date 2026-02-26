@@ -47,7 +47,7 @@ static const char* event_names[] = {
 	"new seat",      "removed seat",      "new output",      "configure",    "pointer enter",
 	"pointer leave", "pointer motion",    "pointer buttons", "pointer axis", "keyboard enter",
 	"key",           "touch frame begin", "touch up",        "touch down",   "touch motion",
-	"touch cancel",  "touch frame end",   "frame done",      "close",        NULL
+	"touch cancel",  "touch frame end",   "frame done",      "close",        nullptr
 };
 #endif
 
@@ -109,8 +109,8 @@ static const struct zwp_fullscreen_shell_v1_listener fullscreen_shell_listener =
 
 static void display_destroy_seat(UwacDisplay* d, uint32_t name)
 {
-	UwacSeat* seat = NULL;
-	UwacSeat* tmp = NULL;
+	UwacSeat* seat = nullptr;
+	UwacSeat* tmp = nullptr;
 	wl_list_for_each_safe(seat, tmp, &d->seats, link)
 	{
 		if (seat->seat_id == name)
@@ -143,7 +143,7 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
                                    const char* interface, uint32_t version)
 {
 	UwacDisplay* d = data;
-	UwacGlobal* global = NULL;
+	UwacGlobal* global = nullptr;
 	global = xzalloc(sizeof *global);
 	global->name = id;
 	global->interface = xstrdup(interface);
@@ -163,8 +163,8 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	}
 	else if (strcmp(interface, "wl_output") == 0)
 	{
-		UwacOutput* output = NULL;
-		UwacOutputNewEvent* ev = NULL;
+		UwacOutput* output = nullptr;
+		UwacOutputNewEvent* ev = nullptr;
 		output = UwacCreateOutput(d, id, version);
 
 		if (!output)
@@ -180,8 +180,8 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	}
 	else if (strcmp(interface, "wl_seat") == 0)
 	{
-		UwacSeatNewEvent* ev = NULL;
-		UwacSeat* seat = NULL;
+		UwacSeatNewEvent* ev = nullptr;
+		UwacSeat* seat = nullptr;
 		seat = UwacSeatNew(d, id, min(version, TARGET_SEAT_INTERFACE));
 
 		if (!seat)
@@ -205,8 +205,8 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	}
 	else if (strcmp(interface, "wl_data_device_manager") == 0)
 	{
-		UwacSeat* seat = NULL;
-		UwacSeat* tmp = NULL;
+		UwacSeat* seat = nullptr;
+		UwacSeat* tmp = nullptr;
 
 		d->data_device_manager = wl_registry_bind(registry, id, &wl_data_device_manager_interface,
 		                                          min(TARGET_DDM_INTERFACE, version));
@@ -277,8 +277,8 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 static void registry_handle_global_remove(void* data, struct wl_registry* registry, uint32_t name)
 {
 	UwacDisplay* d = data;
-	UwacGlobal* global = NULL;
-	UwacGlobal* tmp = NULL;
+	UwacGlobal* global = nullptr;
+	UwacGlobal* tmp = nullptr;
 	wl_list_for_each_safe(global, tmp, &d->globals, link)
 	{
 		if (global->name != name)
@@ -293,7 +293,7 @@ static void registry_handle_global_remove(void* data, struct wl_registry* regist
 
 		if (strcmp(global->interface, "wl_seat") == 0)
 		{
-			UwacSeatRemovedEvent* ev = NULL;
+			UwacSeatRemovedEvent* ev = nullptr;
 			display_destroy_seat(d, name);
 			ev = (UwacSeatRemovedEvent*)UwacDisplayNewEvent(d, UWAC_EVENT_REMOVED_SEAT);
 
@@ -333,7 +333,7 @@ int UwacDisplayWatchFd(UwacDisplay* display, int fd, uint32_t events, UwacTask* 
 
 static void UwacDisplayUnwatchFd(UwacDisplay* display, int fd)
 {
-	epoll_ctl(display->epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+	epoll_ctl(display->epoll_fd, EPOLL_CTL_DEL, fd, nullptr);
 }
 
 static void display_exit(UwacDisplay* display)
@@ -385,13 +385,13 @@ static void display_dispatch_events(UwacTask* task, uint32_t events)
 
 UwacDisplay* UwacOpenDisplay(const char* name, UwacReturnCode* err)
 {
-	UwacDisplay* ret = NULL;
+	UwacDisplay* ret = nullptr;
 	ret = (UwacDisplay*)xzalloc(sizeof(*ret));
 
 	if (!ret)
 	{
 		*err = UWAC_ERROR_NOMEMORY;
-		return NULL;
+		return nullptr;
 	}
 
 	wl_list_init(&ret->globals);
@@ -400,7 +400,7 @@ UwacDisplay* UwacOpenDisplay(const char* name, UwacReturnCode* err)
 	wl_list_init(&ret->windows);
 	ret->display = wl_display_connect(name);
 
-	if (ret->display == NULL)
+	if (ret->display == nullptr)
 	{
 		char buffer[256] = WINPR_C_ARRAY_INIT;
 		(void)fprintf(stderr, "failed to connect to Wayland display %s: %s\n", name,
@@ -457,14 +457,14 @@ out_disconnect:
 	wl_display_disconnect(ret->display);
 out_free:
 	free(ret);
-	return NULL;
+	return nullptr;
 }
 
 int UwacDisplayDispatch(UwacDisplay* display, int timeout)
 {
 	int ret = 0;
 	int count = 0;
-	UwacTask* task = NULL;
+	UwacTask* task = nullptr;
 	struct epoll_event ep[16];
 	wl_display_dispatch_pending(display->display);
 
@@ -502,15 +502,15 @@ UwacReturnCode UwacDisplayGetLastError(const UwacDisplay* display)
 
 UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 {
-	UwacDisplay* display = NULL;
-	UwacSeat* seat = NULL;
-	UwacSeat* tmpSeat = NULL;
-	UwacWindow* window = NULL;
-	UwacWindow* tmpWindow = NULL;
-	UwacOutput* output = NULL;
-	UwacOutput* tmpOutput = NULL;
-	UwacGlobal* global = NULL;
-	UwacGlobal* tmpGlobal = NULL;
+	UwacDisplay* display = nullptr;
+	UwacSeat* seat = nullptr;
+	UwacSeat* tmpSeat = nullptr;
+	UwacWindow* window = nullptr;
+	UwacWindow* tmpWindow = nullptr;
+	UwacOutput* output = nullptr;
+	UwacOutput* tmpOutput = nullptr;
+	UwacGlobal* global = nullptr;
+	UwacGlobal* tmpGlobal = nullptr;
 	assert(pdisplay);
 	display = *pdisplay;
 
@@ -598,7 +598,7 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 	}
 
 	free(display);
-	*pdisplay = NULL;
+	*pdisplay = nullptr;
 	return UWAC_SUCCESS;
 }
 
@@ -631,8 +631,8 @@ const char* UwacErrorString(UwacReturnCode error)
 UwacReturnCode UwacDisplayQueryInterfaceVersion(const UwacDisplay* display, const char* name,
                                                 uint32_t* version)
 {
-	const UwacGlobal* global = NULL;
-	const UwacGlobal* tmp = NULL;
+	const UwacGlobal* global = nullptr;
+	const UwacGlobal* tmp = nullptr;
 
 	if (!display)
 		return UWAC_ERROR_INVALID_DISPLAY;
@@ -687,14 +687,14 @@ const UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index)
 {
 	int i = 0;
 	int display_count = 0;
-	UwacOutput* ret = NULL;
+	UwacOutput* ret = nullptr;
 
 	if (!display)
-		return NULL;
+		return nullptr;
 
 	display_count = wl_list_length(&display->outputs);
 	if (display_count <= index)
-		return NULL;
+		return nullptr;
 
 	wl_list_for_each(ret, &display->outputs, link)
 	{
@@ -706,7 +706,7 @@ const UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index)
 	if (!ret)
 	{
 		display->last_error = UWAC_NOT_FOUND;
-		return NULL;
+		return nullptr;
 	}
 
 	display->last_error = UWAC_SUCCESS;
@@ -730,11 +730,11 @@ UwacReturnCode UwacOutputGetPosition(const UwacOutput* output, UwacPosition* pos
 
 UwacEvent* UwacDisplayNewEvent(UwacDisplay* display, int type)
 {
-	UwacEventListItem* ret = NULL;
+	UwacEventListItem* ret = nullptr;
 
 	if (!display)
 	{
-		return 0;
+		return nullptr;
 	}
 
 	ret = xzalloc(sizeof(UwacEventListItem));
@@ -744,7 +744,7 @@ UwacEvent* UwacDisplayNewEvent(UwacDisplay* display, int type)
 		assert(uwacErrorHandler(display, UWAC_ERROR_NOMEMORY, "unable to allocate a '%s' event",
 		                        event_names[type]));
 		display->last_error = UWAC_ERROR_NOMEMORY;
-		return 0;
+		return nullptr;
 	}
 
 	ret->event.type = type;
@@ -761,12 +761,12 @@ UwacEvent* UwacDisplayNewEvent(UwacDisplay* display, int type)
 
 bool UwacHasEvent(UwacDisplay* display)
 {
-	return display->pop_queue != NULL;
+	return display->pop_queue != nullptr;
 }
 
 UwacReturnCode UwacNextEvent(UwacDisplay* display, UwacEvent* event)
 {
-	UwacEventListItem* prevItem = NULL;
+	UwacEventListItem* prevItem = nullptr;
 	int ret = 0;
 
 	if (!display)
@@ -788,9 +788,9 @@ UwacReturnCode UwacNextEvent(UwacDisplay* display, UwacEvent* event)
 	display->pop_queue = prevItem;
 
 	if (prevItem)
-		prevItem->tail = NULL;
+		prevItem->tail = nullptr;
 	else
-		display->push_queue = NULL;
+		display->push_queue = nullptr;
 
 	return UWAC_SUCCESS;
 }

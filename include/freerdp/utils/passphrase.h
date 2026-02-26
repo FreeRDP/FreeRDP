@@ -71,7 +71,7 @@ extern "C"
 	 * @param bufsiz The size of the buffer in bytes
 	 * @param from_stdin \b 0 if a terminal is expected, != 0 if data is read from stdin
 	 *
-	 * @return A pointer to \ref buf containing the password or \ref NULL in case of an error.
+	 * @return A pointer to \ref buf containing the password or \ref nullptr in case of an error.
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_passphrase_read(rdpContext* context, const char* prompt,

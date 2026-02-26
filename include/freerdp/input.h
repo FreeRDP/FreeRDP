@@ -134,7 +134,7 @@ extern "C"
 	 *  @param buffer A buffer to store the resulting string
 	 *  @param len The length of the buffer in bytes
 	 *
-	 *  @return A pointer to \ref buffer or \b NULL in case of failure
+	 *  @return A pointer to \ref buffer or \b nullptr in case of failure
 	 *  @since version 3.19.0
 	 */
 	WINPR_ATTR_NODISCARD

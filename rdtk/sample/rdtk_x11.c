@@ -35,15 +35,15 @@ int main(int argc, char** argv)
 	int rc = 1;
 	int pf_count = 0;
 	XEvent event;
-	XImage* image = NULL;
+	XImage* image = nullptr;
 	Pixmap pixmap = 0;
 	Window window = 0;
-	rdtkSurface* surface = NULL;
+	rdtkSurface* surface = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	Display* display = XOpenDisplay(NULL);
+	Display* display = XOpenDisplay(nullptr);
 
 	if (!display)
 	{
@@ -92,11 +92,11 @@ int main(int argc, char** argv)
 
 	if (rdtk_surface_fill(surface, 0, 0, width, height, 0x3BB9FF) < 0)
 		goto fail;
-	if (rdtk_label_draw(surface, 16, 16, 128, 32, NULL, "label", 0, 0) < 0)
+	if (rdtk_label_draw(surface, 16, 16, 128, 32, nullptr, "label", 0, 0) < 0)
 		goto fail;
-	if (rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button") < 0)
+	if (rdtk_button_draw(surface, 16, 64, 128, 32, nullptr, "button") < 0)
 		goto fail;
-	if (rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field") < 0)
+	if (rdtk_text_field_draw(surface, 16, 128, 128, 32, nullptr, "text field") < 0)
 		goto fail;
 
 	window = XCreateSimpleWindow(display, root_window, x, y, width, height, 1, border, background);

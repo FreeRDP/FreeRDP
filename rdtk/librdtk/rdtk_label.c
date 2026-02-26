@@ -67,7 +67,7 @@ rdtkLabel* rdtk_label_new(rdtkEngine* engine)
 	rdtkLabel* label = (rdtkLabel*)calloc(1, sizeof(rdtkLabel));
 
 	if (!label)
-		return NULL;
+		return nullptr;
 
 	label->engine = engine;
 
@@ -96,7 +96,7 @@ int rdtk_label_engine_uninit(rdtkEngine* engine)
 	if (engine->label)
 	{
 		rdtk_label_free(engine->label);
-		engine->label = NULL;
+		engine->label = nullptr;
 	}
 
 	return 1;

@@ -279,7 +279,7 @@ extern "C"
 	/**
 	 * @brief Query the list of supported system locales
 	 * @param count A pointer to hold the number of locales found
-	 * @return A pointer to @ref SYSTEM_LOCALE or \b NULL in case none found
+	 * @return A pointer to @ref SYSTEM_LOCALE or \b nullptr in case none found
 	 * @since version 3.6.0
 	 */
 	WINPR_ATTR_NODISCARD

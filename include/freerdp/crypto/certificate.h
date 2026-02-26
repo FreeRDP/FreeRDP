@@ -90,7 +90,7 @@ extern "C"
 	 * @param pLength A pointer to the size in bytes of the PEM string
 	 * @param withCertChain \b TRUE to export a full chain PEM, \b FALSE for only the last
 	 * certificate in the chain
-	 * @return A newly allocated string containing the requested PEM (free to deallocate) or NULL
+	 * @return A newly allocated string containing the requested PEM (free to deallocate) or nullptr
 	 * @since version 3.8.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)

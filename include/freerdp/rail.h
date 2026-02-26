@@ -592,7 +592,7 @@ FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
  *  @param buffer a string buffer to write to
  *  @param len the size in bytes of the string buffer
  *
- *  @return A pointer to buffer or \b NULL in case of failure
+ *  @return A pointer to buffer or \b nullptr in case of failure
  *  @since version 3.5.0
  */
 WINPR_ATTR_NODISCARD

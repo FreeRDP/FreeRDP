@@ -74,7 +74,7 @@ extern "C"
 	 *
 	 *  @since version 3.0.0
 	 *
-	 * @return The token string or \b NULL
+	 * @return The token string or \b nullptr
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_ATTR_NODISCARD
@@ -95,7 +95,7 @@ extern "C"
 	 *
 	 * @param context The rdpContext to query for
 	 * @param which The enum value of the field to query
-	 *  @return A constant string to be used for queries or \b NULL in case it does not exist.
+	 *  @return A constant string to be used for queries or \b nullptr in case it does not exist.
 	 *
 	 *  @since version 3.10.0
 	 */
@@ -107,7 +107,7 @@ extern "C"
 	 *
 	 * @param context The rdpContext to query for
 	 * @param which The raw string name of the field to query
-	 *  @return A constant string to be used for queries or \b NULL in case it does not exist.
+	 *  @return A constant string to be used for queries or \b nullptr in case it does not exist.
 	 *
 	 *  @since version 3.10.0
 	 */
@@ -119,7 +119,8 @@ extern "C"
 	 *
 	 * @param context The rdpContext to query for
 	 * @param which The enum value of the field to query
-	 *  @return A \b WINPR_JSON object to be used for queries or \b NULL in case it does not exist.
+	 *  @return A \b WINPR_JSON object to be used for queries or \b nullptr in case it does not
+	 * exist.
 	 *
 	 *  @since version 3.10.0
 	 */
@@ -131,7 +132,8 @@ extern "C"
 	 *
 	 * @param context The rdpContext to query for
 	 * @param which The raw string name of the field to query
-	 *  @return A \b WINPR_JSON object to be used for queries or \b NULL in case it does not exist.
+	 *  @return A \b WINPR_JSON object to be used for queries or \b nullptr in case it does not
+	 * exist.
 	 *
 	 *  @since version 3.10.0
 	 */
@@ -144,7 +146,8 @@ extern "C"
 	 * @param  log A logger instance to use
 	 * @param base the base URL to connect to
 	 * @param tenantid the tenant to use for the connection, use \b common for default
-	 *  @return A \b WINPR_JSON object to be used for queries or \b NULL in case it does not exist.
+	 *  @return A \b WINPR_JSON object to be used for queries or \b nullptr in case it does not
+	 * exist.
 	 *
 	 *  @since version 3.10.0
 	 */
