@@ -717,7 +717,8 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, size_t dwStackSize
 	WINPR_HANDLE_SET_TYPE_AND_MODE(thread, HANDLE_TYPE_THREAD, WINPR_FD_READ);
 	handle = (HANDLE)thread;
 
-	InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, nullptr, nullptr))
+		goto fail;
 
 	if (!(dwCreationFlags & CREATE_SUSPENDED))
 	{
@@ -888,7 +889,8 @@ WINPR_THREAD* winpr_GetCurrentThread(VOID)
 {
 	WINPR_THREAD* ret = nullptr;
 
-	InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, nullptr, nullptr))
+		return nullptr;
 	if (mainThreadId == pthread_self())
 		return (HANDLE)&mainThread;
 

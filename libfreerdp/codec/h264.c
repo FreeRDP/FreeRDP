@@ -678,7 +678,8 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 		return FALSE;
 
 	h264->subsystem = nullptr;
-	InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, nullptr, nullptr))
+		return FALSE;
 
 	for (size_t i = 0; i < MAX_SUBSYSTEMS; i++)
 	{

@@ -45,7 +45,8 @@ static const SCardApiFunctionTable* g_SCardApi = nullptr;
 #define str(s) #s
 
 #define SCARDAPI_STUB_CALL_LONG(_name, ...)                                                     \
-	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr);             \
+	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr))        \
+		return SCARD_E_NO_SERVICE;                                                              \
 	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                 \
 	{                                                                                           \
 		WLog_DBG(                                                                               \
@@ -57,7 +58,8 @@ static const SCardApiFunctionTable* g_SCardApi = nullptr;
 	return g_SCardApi->pfn##_name(__VA_ARGS__)
 
 #define SCARDAPI_STUB_CALL_HANDLE(_name)                                                        \
-	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr);             \
+	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr))        \
+		return nullptr;                                                                         \
 	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                 \
 	{                                                                                           \
 		WLog_DBG(                                                                               \
@@ -69,7 +71,8 @@ static const SCardApiFunctionTable* g_SCardApi = nullptr;
 	return g_SCardApi->pfn##_name()
 
 #define SCARDAPI_STUB_CALL_VOID(_name)                                                          \
-	InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr);             \
+	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr))        \
+		return;                                                                                 \
 	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                 \
 	{                                                                                           \
 		WLog_DBG(                                                                               \

@@ -248,7 +248,8 @@ const TimeZoneNameMapEntry* TimeZoneGetAt(size_t index)
 {
 	static INIT_ONCE init_guard = INIT_ONCE_STATIC_INIT;
 
-	InitOnceExecuteOnce(&init_guard, load_timezones, &tz_context, nullptr);
+	if (!InitOnceExecuteOnce(&init_guard, load_timezones, &tz_context, nullptr))
+		return nullptr;
 	if (index >= tz_context.count)
 		return nullptr;
 	return &tz_context.entries[index];

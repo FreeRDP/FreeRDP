@@ -156,7 +156,8 @@ static BOOL scard_status_transition(SCardContext* context)
 			memcpy(reader->rgbAtr, ATR, sizeof(ATR));
 		}
 			{
-				InitOnceExecuteOnce(&g_ReaderNameWGuard, g_ReaderNameWInit, nullptr, nullptr);
+				if (!InitOnceExecuteOnce(&g_ReaderNameWGuard, g_ReaderNameWInit, nullptr, nullptr))
+					return FALSE;
 				SCARD_READERSTATEW* reader = &context->readerStateW[0];
 				reader->szReader = g_ReaderNameW;
 				reader->dwEventState = SCARD_STATE_PRESENT;
@@ -564,7 +565,8 @@ LONG WINAPI Emulate_SCardListReadersW(SmartcardEmulationContext* smartcard, SCAR
 
 	WINPR_UNUSED(mszGroups); /* Not required */
 
-	InitOnceExecuteOnce(&g_ReaderNameWGuard, g_ReaderNameWInit, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&g_ReaderNameWGuard, g_ReaderNameWInit, nullptr, nullptr))
+		return FALSE;
 	if (SCARD_S_SUCCESS == status)
 	{
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);

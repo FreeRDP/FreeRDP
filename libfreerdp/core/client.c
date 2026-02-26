@@ -154,14 +154,15 @@ static void* channel_event_entry_clone(const void* data)
 
 rdpChannels* freerdp_channels_new(freerdp* instance)
 {
+	if (!InitOnceExecuteOnce(&g_ChannelHandlesOnce, init_channel_handles_table, nullptr, nullptr))
+		return nullptr;
+
 	wObject* obj = nullptr;
 	rdpChannels* channels = nullptr;
 	channels = (rdpChannels*)calloc(1, sizeof(rdpChannels));
 
 	if (!channels)
 		return nullptr;
-
-	InitOnceExecuteOnce(&g_ChannelHandlesOnce, init_channel_handles_table, nullptr, nullptr);
 
 	if (!g_ChannelHandles)
 		goto error;

@@ -704,7 +704,8 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE ffmpeg_freerdp_tsmf_client_decoder_subsystem_
 	*sptr = nullptr;
 
 	TSMFFFmpegDecoder* decoder = nullptr;
-	InitOnceExecuteOnce(&g_Initialized, InitializeAvCodecs, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&g_Initialized, InitializeAvCodecs, nullptr, nullptr))
+		return ERROR_INTERNAL_ERROR;
 	WLog_DBG(TAG, "TSMFDecoderEntry FFMPEG");
 	decoder = (TSMFFFmpegDecoder*)calloc(1, sizeof(TSMFFFmpegDecoder));
 
