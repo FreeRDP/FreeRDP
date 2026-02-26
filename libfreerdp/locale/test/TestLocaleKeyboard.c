@@ -213,7 +213,7 @@ static BOOL test_layouts(DWORD types)
 			              " elements, failed:\n",
 			              types, count);
 			(void)fprintf(stderr,
-			              "[%" PRIuz "]: freerdp_keyboard_get_layouts(%" PRIu32 ") -> NULL\n", x,
+			              "[%" PRIuz "]: freerdp_keyboard_get_layouts(%" PRIu32 ") -> nullptr\n", x,
 			              cur->code);
 			goto fail;
 		}
@@ -293,11 +293,11 @@ static BOOL test_codepages(void)
 	for (DWORD column = 0; column < 4; column++)
 	{
 		size_t count = 0;
-		RDP_CODEPAGE* cp = freerdp_keyboard_get_matching_codepages(column, NULL, &count);
+		RDP_CODEPAGE* cp = freerdp_keyboard_get_matching_codepages(column, nullptr, &count);
 		if (!cp || (count == 0))
 		{
 			(void)fprintf(stderr,
-			              "freerdp_keyboard_get_matching_codepages(%" PRIu32 ", NULL) failed!\n",
+			              "freerdp_keyboard_get_matching_codepages(%" PRIu32 ", nullptr) failed!\n",
 			              column);
 			return FALSE;
 		}
@@ -308,13 +308,13 @@ static BOOL test_codepages(void)
 	{
 		DWORD column = get_random(4);
 		size_t count = 0;
-		RDP_CODEPAGE* cp = freerdp_keyboard_get_matching_codepages(column, NULL, &count);
+		RDP_CODEPAGE* cp = freerdp_keyboard_get_matching_codepages(column, nullptr, &count);
 		freerdp_codepages_free(cp);
 		if (cp || (count != 0))
 		{
 			(void)fprintf(stderr,
 			              "freerdp_keyboard_get_matching_codepages(%" PRIu32
-			              ", NULL) returned not NULL!\n",
+			              ", nullptr) returned not nullptr!\n",
 			              column);
 			return FALSE;
 		}
@@ -336,10 +336,10 @@ static BOOL test_init(void)
 		return FALSE;
 	}
 
-	const DWORD kbdex = freerdp_keyboard_init_ex(0, NULL);
+	const DWORD kbdex = freerdp_keyboard_init_ex(0, nullptr);
 	if (kbd == 0)
 	{
-		(void)fprintf(stderr, "freerdp_keyboard_init_ex(0, NULL) returned invalid layout 0\n");
+		(void)fprintf(stderr, "freerdp_keyboard_init_ex(0, nullptr) returned invalid layout 0\n");
 		return FALSE;
 	}
 
@@ -347,7 +347,7 @@ static BOOL test_init(void)
 	{
 		(void)fprintf(
 		    stderr,
-		    "freerdp_keyboard_init(0) != freerdp_keyboard_init_ex(0, NULL): returned %" PRIu32
+		    "freerdp_keyboard_init(0) != freerdp_keyboard_init_ex(0, nullptr): returned %" PRIu32
 		    " vs %" PRIu32 "\n",
 		    kbd, kbdex);
 		return FALSE;

@@ -64,7 +64,7 @@ typedef struct
 
 static const char* autodetect_header_type_string(UINT8 headerType, char* buffer, size_t size)
 {
-	const char* str = NULL;
+	const char* str = nullptr;
 	switch (headerType)
 	{
 		case TYPE_ID_AUTODETECT_REQUEST:
@@ -135,7 +135,7 @@ static BOOL autodetect_send_rtt_measure_request(rdpAutoDetect* autodetect,
 {
 	UINT16 requestType = 0;
 	UINT16 sec_flags = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -162,7 +162,7 @@ static BOOL autodetect_send_rtt_measure_request(rdpAutoDetect* autodetect,
 static BOOL autodetect_send_rtt_measure_response(rdpAutoDetect* autodetect, UINT16 sequenceNumber)
 {
 	UINT16 sec_flags = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -189,7 +189,7 @@ static BOOL autodetect_send_bandwidth_measure_start(rdpAutoDetect* autodetect,
 {
 	UINT16 requestType = 0;
 	UINT16 sec_flags = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -219,7 +219,7 @@ autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
                                           UINT16 sequenceNumber, UINT16 payloadLength)
 {
 	UINT16 sec_flags = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -261,7 +261,7 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpAutoDetect* autodetect,
 {
 	UINT16 requestType = 0;
 	UINT16 sec_flags = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -374,7 +374,7 @@ static BOOL autodetect_send_netchar_result(rdpAutoDetect* autodetect,
                                            const rdpNetworkCharacteristicsResult* result)
 {
 	UINT16 sec_flags = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(autodetect);
 	WINPR_ASSERT(autodetect->context);
@@ -797,7 +797,7 @@ state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSP
                                            wStream* s)
 {
 	AUTODETECT_REQ_PDU autodetectReqPdu = WINPR_C_ARRAY_INIT;
-	const rdpSettings* settings = NULL;
+	const rdpSettings* settings = nullptr;
 	BOOL success = FALSE;
 
 	WINPR_ASSERT(autodetect);
@@ -920,7 +920,7 @@ state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANS
                                             wStream* s)
 {
 	AUTODETECT_RSP_PDU autodetectRspPdu = WINPR_C_ARRAY_INIT;
-	const rdpSettings* settings = NULL;
+	const rdpSettings* settings = nullptr;
 	BOOL success = FALSE;
 
 	WINPR_ASSERT(autodetect);
@@ -1047,7 +1047,7 @@ rdpAutoDetect* autodetect_new(rdpContext* context)
 {
 	rdpAutoDetect* autoDetect = (rdpAutoDetect*)calloc(1, sizeof(rdpAutoDetect));
 	if (!autoDetect)
-		return NULL;
+		return nullptr;
 	autoDetect->context = context;
 	autoDetect->log = WLog_Get(AUTODETECT_TAG);
 

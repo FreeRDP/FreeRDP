@@ -35,7 +35,7 @@ static const struct Encode64test encodeTests_base64[] = {
 	{ "890123456", 9, "ODkwMTIzNDU2" },
 	{ "7890123456", 10, "Nzg5MDEyMzQ1Ng==" },
 
-	{ NULL, -1, NULL }, /*  /!\ last one  /!\ */
+	{ nullptr, -1, nullptr }, /*  /!\ last one  /!\ */
 };
 
 static const struct Encode64test encodeTests_base64url[] = {
@@ -47,14 +47,14 @@ static const struct Encode64test encodeTests_base64url[] = {
 	{ "890123456", 9, "ODkwMTIzNDU2" },
 	{ "78?01>3456", 10, "Nzg_MDE-MzQ1Ng" },
 
-	{ NULL, -1, NULL }, /*  /!\ last one  /!\ */
+	{ nullptr, -1, nullptr }, /*  /!\ last one  /!\ */
 };
 
 int TestBase64(int argc, char* argv[])
 {
 	int testNb = 0;
 	size_t outLen = 0;
-	BYTE* decoded = NULL;
+	BYTE* decoded = nullptr;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	testNb++;

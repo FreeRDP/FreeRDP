@@ -448,7 +448,7 @@ size_t ber_write_contextual_char_to_unicode_octet_string(wStream* s, BYTE tag, c
 
 BOOL ber_read_unicode_octet_string(wStream* s, LPWSTR* str)
 {
-	LPWSTR ret = NULL;
+	LPWSTR ret = nullptr;
 	size_t length = 0;
 
 	if (!ber_read_octet_string_tag(s, &length))
@@ -471,13 +471,13 @@ BOOL ber_read_unicode_octet_string(wStream* s, LPWSTR* str)
 BOOL ber_read_char_from_unicode_octet_string(wStream* s, char** str)
 {
 	size_t length = 0;
-	char* ptr = NULL;
+	char* ptr = nullptr;
 
-	*str = NULL;
+	*str = nullptr;
 	if (!ber_read_octet_string_tag(s, &length))
 		return FALSE;
 
-	ptr = Stream_Read_UTF16_String_As_UTF8(s, length / sizeof(WCHAR), NULL);
+	ptr = Stream_Read_UTF16_String_As_UTF8(s, length / sizeof(WCHAR), nullptr);
 	if (!ptr)
 		return FALSE;
 	*str = ptr;
@@ -491,7 +491,7 @@ BOOL ber_read_octet_string_tag(wStream* s, size_t* length)
 
 BOOL ber_read_octet_string(wStream* s, BYTE** content, size_t* length)
 {
-	BYTE* ret = NULL;
+	BYTE* ret = nullptr;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(content);
@@ -534,7 +534,7 @@ size_t ber_sizeof_contextual_octet_string(size_t length)
 /** \brief Read a BER BOOLEAN
  *
  * @param s The stream to read from.
- * @param value A pointer to the value read, must not be NULL
+ * @param value A pointer to the value read, must not be nullptr
  *
  * \return \b TRUE for success, \b FALSE for any failure
  */
@@ -588,7 +588,7 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return FALSE;
 
-	if (value == NULL)
+	if (value == nullptr)
 	{
 		// even if we don't care the integer value, check the announced size
 		return Stream_SafeSeek(s, length);

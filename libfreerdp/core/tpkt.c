@@ -86,7 +86,7 @@ int tpkt_verify_header(wStream* s)
  * Read a TPKT header.
  *
  * @param s A stream to read from
- * @param length A pointer to the result, must not be NULL
+ * @param length A pointer to the result, must not be nullptr
  *
  * @return \b TRUE for success, \b FALSE otherwise
  */

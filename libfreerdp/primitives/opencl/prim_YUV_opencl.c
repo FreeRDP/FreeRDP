@@ -68,7 +68,7 @@ static void cl_kernel_free(primitives_cl_kernel* kernel)
 	for (size_t i = 0; i < ARRAYSIZE(kernel->srcObjs); i++)
 	{
 		cl_mem obj = kernel->srcObjs[i];
-		kernel->srcObjs[i] = NULL;
+		kernel->srcObjs[i] = nullptr;
 		if (obj)
 			clReleaseMemObject(obj);
 	}
@@ -104,7 +104,7 @@ static primitives_cl_kernel* cl_kernel_new(const char* kernelName, const prim_si
 	return kernel;
 fail:
 	cl_kernel_free(kernel);
-	return NULL;
+	return nullptr;
 }
 
 static BOOL cl_kernel_set_sources(primitives_cl_kernel* ctx, const BYTE* WINPR_RESTRICT pSrc[3],
@@ -155,7 +155,7 @@ static BOOL cl_kernel_set_destination(primitives_cl_kernel* ctx, UINT32 dstStep)
 	ctx->dstStep = dstStep;
 	cl_int ret = CL_INVALID_VALUE;
 	ctx->dstObj = clCreateBuffer(ctx->cl->context, CL_MEM_WRITE_ONLY,
-	                             1ull * dstStep * ctx->roi.height, NULL, &ret);
+	                             1ull * dstStep * ctx->roi.height, nullptr, &ret);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to create dest obj");
@@ -188,8 +188,8 @@ static BOOL cl_kernel_process(primitives_cl_kernel* ctx, BYTE* pDst)
 	indexes[0] = ctx->roi.width;
 	indexes[1] = ctx->roi.height;
 
-	cl_int ret = clEnqueueNDRangeKernel(ctx->cl->commandQueue, ctx->kernel, 2, NULL, indexes, NULL,
-	                                    0, NULL, NULL);
+	cl_int ret = clEnqueueNDRangeKernel(ctx->cl->commandQueue, ctx->kernel, 2, nullptr, indexes,
+	                                    nullptr, 0, nullptr, nullptr);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to enqueue call kernel");
@@ -198,7 +198,7 @@ static BOOL cl_kernel_process(primitives_cl_kernel* ctx, BYTE* pDst)
 
 	/* Transfer result to host */
 	ret = clEnqueueReadBuffer(ctx->cl->commandQueue, ctx->dstObj, CL_TRUE, 0,
-	                          ctx->roi.height * ctx->dstStep, pDst, 0, NULL, NULL);
+	                          ctx->roi.height * ctx->dstStep, pDst, 0, nullptr, nullptr);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to read back buffer");
@@ -265,12 +265,12 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_REST
 {
 	cl_uint ndevices = 0;
 	cl_uint nplatforms = 0;
-	cl_kernel kernel = NULL;
+	cl_kernel kernel = nullptr;
 
 	BOOL gotGPU = FALSE;
 	size_t programLen = 0;
 
-	cl_int ret = clGetPlatformIDs(0, NULL, &nplatforms);
+	cl_int ret = clGetPlatformIDs(0, nullptr, &nplatforms);
 	if (ret != CL_SUCCESS || nplatforms < 1)
 		return FALSE;
 
@@ -287,13 +287,13 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_REST
 
 	for (cl_uint i = 0; (i < nplatforms) && !gotGPU; i++)
 	{
-		cl_device_id device_id = NULL;
-		cl_context context = NULL;
+		cl_device_id device_id = nullptr;
+		cl_context context = nullptr;
 		char platformName[1000] = WINPR_C_ARRAY_INIT;
 		char deviceName[1000] = WINPR_C_ARRAY_INIT;
 
 		ret = clGetPlatformInfo(platform_ids[i], CL_PLATFORM_NAME, sizeof(platformName),
-		                        platformName, NULL);
+		                        platformName, nullptr);
 		if (ret != CL_SUCCESS)
 			continue;
 
@@ -301,7 +301,7 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_REST
 		if (ret != CL_SUCCESS)
 			continue;
 
-		ret = clGetDeviceInfo(device_id, CL_DEVICE_NAME, sizeof(deviceName), deviceName, NULL);
+		ret = clGetDeviceInfo(device_id, CL_DEVICE_NAME, sizeof(deviceName), deviceName, nullptr);
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "openCL: unable get device name for platform %s", platformName);
@@ -309,7 +309,7 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_REST
 			continue;
 		}
 
-		context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
+		context = clCreateContext(nullptr, 1, &device_id, nullptr, nullptr, &ret);
 		if (ret != CL_SUCCESS)
 		{
 			WLog_ERR(TAG, "openCL: unable to create context for platform %s, device %s",
@@ -319,7 +319,7 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_REST
 		}
 
 #if defined(CL_VERSION_2_0)
-		prims->commandQueue = clCreateCommandQueueWithProperties(context, device_id, NULL, &ret);
+		prims->commandQueue = clCreateCommandQueueWithProperties(context, device_id, nullptr, &ret);
 #else
 		prims->commandQueue = clCreateCommandQueue(context, device_id, 0, &ret);
 #endif
@@ -356,7 +356,7 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* WINPR_REST
 		goto fail;
 	}
 
-	ret = clBuildProgram(prims->program, 1, &prims->deviceId, NULL, NULL, NULL);
+	ret = clBuildProgram(prims->program, 1, &prims->deviceId, nullptr, nullptr, nullptr);
 	if (ret != CL_SUCCESS)
 	{
 		size_t length = 0;
@@ -397,7 +397,7 @@ static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3]
                                               UINT32 dstStep, UINT32 DstFormat,
                                               const prim_size_t* WINPR_RESTRICT roi)
 {
-	const char* kernel_name = NULL;
+	const char* kernel_name = nullptr;
 
 	switch (DstFormat)
 	{
@@ -442,7 +442,7 @@ static pstatus_t opencl_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3]
                                               UINT32 dstStep, UINT32 DstFormat,
                                               const prim_size_t* WINPR_RESTRICT roi)
 {
-	const char* kernel_name = NULL;
+	const char* kernel_name = nullptr;
 
 	switch (DstFormat)
 	{

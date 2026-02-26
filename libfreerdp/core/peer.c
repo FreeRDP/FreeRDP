@@ -50,9 +50,9 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 {
 	UINT32 index = 0;
 	BOOL joined = FALSE;
-	rdpMcsChannel* mcsChannel = NULL;
-	rdpPeerChannel* peerChannel = NULL;
-	rdpMcs* mcs = NULL;
+	rdpMcsChannel* mcsChannel = nullptr;
+	rdpPeerChannel* peerChannel = nullptr;
+	rdpMcs* mcs = nullptr;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
@@ -62,12 +62,12 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 	WINPR_ASSERT(mcs);
 
 	if (flags & WTS_CHANNEL_OPTION_DYNAMIC)
-		return NULL; /* not yet supported */
+		return nullptr; /* not yet supported */
 
 	const size_t length = strnlen(name, 9);
 
 	if (length > 8)
-		return NULL; /* SVC maximum name length is 8 */
+		return nullptr; /* SVC maximum name length is 8 */
 
 	for (; index < mcs->channelCount; index++)
 	{
@@ -84,7 +84,7 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 	}
 
 	if (!joined)
-		return NULL; /* channel is not joined */
+		return nullptr; /* channel is not joined */
 
 	peerChannel = (rdpPeerChannel*)mcsChannel->handle;
 
@@ -96,7 +96,7 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 
 	WINPR_ASSERT(index <= UINT16_MAX);
 	peerChannel =
-	    server_channel_common_new(client, (UINT16)index, mcsChannel->ChannelId, 128, NULL, name);
+	    server_channel_common_new(client, (UINT16)index, mcsChannel->ChannelId, 128, nullptr, name);
 
 	if (peerChannel)
 	{
@@ -111,8 +111,8 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 static BOOL freerdp_peer_virtual_channel_close(WINPR_ATTR_UNUSED freerdp_peer* client,
                                                HANDLE hChannel)
 {
-	rdpMcsChannel* mcsChannel = NULL;
-	rdpPeerChannel* peerChannel = NULL;
+	rdpMcsChannel* mcsChannel = nullptr;
+	rdpPeerChannel* peerChannel = nullptr;
 
 	WINPR_ASSERT(client);
 
@@ -122,7 +122,7 @@ static BOOL freerdp_peer_virtual_channel_close(WINPR_ATTR_UNUSED freerdp_peer* c
 	peerChannel = (rdpPeerChannel*)hChannel;
 	mcsChannel = peerChannel->mcsChannel;
 	WINPR_ASSERT(mcsChannel);
-	mcsChannel->handle = NULL;
+	mcsChannel->handle = nullptr;
 	server_channel_common_free(peerChannel);
 	return TRUE;
 }
@@ -130,14 +130,14 @@ static BOOL freerdp_peer_virtual_channel_close(WINPR_ATTR_UNUSED freerdp_peer* c
 static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChannel,
                                               const BYTE* buffer, UINT32 length)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	UINT32 flags = 0;
 	UINT32 chunkSize = 0;
 	UINT32 maxChunkSize = 0;
 	UINT32 totalLength = 0;
-	rdpPeerChannel* peerChannel = NULL;
-	rdpMcsChannel* mcsChannel = NULL;
-	rdpRdp* rdp = NULL;
+	rdpPeerChannel* peerChannel = nullptr;
+	rdpMcsChannel* mcsChannel = nullptr;
+	rdpRdp* rdp = nullptr;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
@@ -211,7 +211,7 @@ static void* freerdp_peer_virtual_channel_get_data(WINPR_ATTR_UNUSED freerdp_pee
 
 	WINPR_ASSERT(client);
 	if (!hChannel)
-		return NULL;
+		return nullptr;
 
 	return peerChannel->extra;
 }
@@ -238,8 +238,8 @@ static BOOL freerdp_peer_set_state(freerdp_peer* client, CONNECTION_STATE state)
 
 static BOOL freerdp_peer_initialize(freerdp_peer* client)
 {
-	rdpRdp* rdp = NULL;
-	rdpSettings* settings = NULL;
+	rdpRdp* rdp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
@@ -283,7 +283,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 #if defined(WITH_FREERDP_DEPRECATED)
 static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
-	rdpTransport* transport = NULL;
+	rdpTransport* transport = nullptr;
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(client->context->rdp);
@@ -297,8 +297,8 @@ static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 
 static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 {
-	HANDLE hEvent = NULL;
-	rdpTransport* transport = NULL;
+	HANDLE hEvent = nullptr;
+	rdpTransport* transport = nullptr;
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(client->context->rdp);
@@ -319,7 +319,7 @@ static DWORD freerdp_peer_get_event_handles(freerdp_peer* client, HANDLE* events
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
 {
 	int status = 0;
-	rdpRdp* rdp = NULL;
+	rdpRdp* rdp = nullptr;
 
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(peer->context);
@@ -338,7 +338,7 @@ static state_run_t peer_recv_data_pdu(freerdp_peer* client, wStream* s,
 	UINT32 share_id = 0;
 	BYTE compressed_type = 0;
 	UINT16 compressed_len = 0;
-	rdpUpdate* update = NULL;
+	rdpUpdate* update = nullptr;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(client);
@@ -506,7 +506,7 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	{
 		if (!settings->UseRdpSecurityLayer)
 		{
-			if (!rdp_read_security_header(rdp, s, &securityFlags, NULL))
+			if (!rdp_read_security_header(rdp, s, &securityFlags, nullptr))
 				return STATE_RUN_FAILED;
 		}
 
@@ -526,7 +526,7 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 static state_run_t peer_recv_handle_auto_detect(freerdp_peer* client, wStream* s)
 {
 	state_run_t ret = STATE_RUN_FAILED;
-	rdpRdp* rdp = NULL;
+	rdpRdp* rdp = nullptr;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(s);
@@ -600,8 +600,8 @@ static state_run_t peer_recv_handle_auto_detect(freerdp_peer* client, wStream* s
 static state_run_t peer_recv_handle_licensing(freerdp_peer* client, wStream* s)
 {
 	state_run_t ret = STATE_RUN_FAILED;
-	rdpRdp* rdp = NULL;
-	rdpSettings* settings = NULL;
+	rdpRdp* rdp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(s);
@@ -652,10 +652,10 @@ static state_run_t peer_recv_handle_licensing(freerdp_peer* client, wStream* s)
 
 static state_run_t peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 {
-	rdpRdp* rdp = NULL;
+	rdpRdp* rdp = nullptr;
 	UINT16 length = 0;
 	BOOL rc = 0;
-	rdpFastPath* fastpath = NULL;
+	rdpFastPath* fastpath = nullptr;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(client);
@@ -997,7 +997,7 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT:
 			if (freerdp_settings_get_bool(settings, FreeRDP_SupportMonitorLayoutPdu))
 			{
-				MONITOR_DEF* monitors = NULL;
+				MONITOR_DEF* monitors = nullptr;
 
 				if (client->AdjustMonitorsLayout)
 				{
@@ -1178,7 +1178,7 @@ static state_run_t peer_recv_callback(rdpTransport* transport, wStream* s, void*
 	const size_t start = Stream_GetPosition(s);
 	const rdpContext* context = transport_get_context(transport);
 	DWORD level = WLOG_TRACE;
-	static wLog* log = NULL;
+	static wLog* log = nullptr;
 	if (!log)
 		log = WLog_Get(TAG);
 
@@ -1207,7 +1207,7 @@ static state_run_t peer_recv_callback(rdpTransport* transport, wStream* s, void*
 static BOOL freerdp_peer_close(freerdp_peer* client)
 {
 	UINT32 SelectedProtocol = 0;
-	rdpContext* context = NULL;
+	rdpContext* context = nullptr;
 
 	WINPR_ASSERT(client);
 
@@ -1244,7 +1244,7 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 
 static void freerdp_peer_disconnect(freerdp_peer* client)
 {
-	rdpTransport* transport = NULL;
+	rdpTransport* transport = nullptr;
 	WINPR_ASSERT(client);
 
 	transport = freerdp_get_transport(client->context);
@@ -1294,7 +1294,7 @@ static BOOL freerdp_peer_send_channel_packet(freerdp_peer* client, UINT16 channe
 
 static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)
 {
-	rdpTransport* transport = NULL;
+	rdpTransport* transport = nullptr;
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(peer->context);
 	WINPR_ASSERT(peer->context->rdp);
@@ -1305,7 +1305,7 @@ static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)
 
 static int freerdp_peer_drain_output_buffer(freerdp_peer* peer)
 {
-	rdpTransport* transport = NULL;
+	rdpTransport* transport = nullptr;
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(peer->context);
 	WINPR_ASSERT(peer->context->rdp);
@@ -1325,7 +1325,7 @@ static BOOL freerdp_peer_has_more_to_read(freerdp_peer* peer)
 static LicenseCallbackResult freerdp_peer_nolicense(freerdp_peer* peer,
                                                     WINPR_ATTR_UNUSED wStream* s)
 {
-	rdpRdp* rdp = NULL;
+	rdpRdp* rdp = nullptr;
 
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(peer->context);
@@ -1343,7 +1343,7 @@ static LicenseCallbackResult freerdp_peer_nolicense(freerdp_peer* peer,
 
 BOOL freerdp_peer_context_new(freerdp_peer* client)
 {
-	return freerdp_peer_context_new_ex(client, NULL);
+	return freerdp_peer_context_new_ex(client, nullptr);
 }
 
 void freerdp_peer_context_free(freerdp_peer* client)
@@ -1358,18 +1358,18 @@ void freerdp_peer_context_free(freerdp_peer* client)
 		rdpContext* ctx = client->context;
 
 		(void)CloseHandle(ctx->channelErrorEvent);
-		ctx->channelErrorEvent = NULL;
+		ctx->channelErrorEvent = nullptr;
 		free(ctx->errorDescription);
-		ctx->errorDescription = NULL;
+		ctx->errorDescription = nullptr;
 		rdp_free(ctx->rdp);
-		ctx->rdp = NULL;
+		ctx->rdp = nullptr;
 		metrics_free(ctx->metrics);
-		ctx->metrics = NULL;
+		ctx->metrics = nullptr;
 		stream_dump_free(ctx->dump);
-		ctx->dump = NULL;
+		ctx->dump = nullptr;
 		free(ctx);
 	}
-	client->context = NULL;
+	client->context = nullptr;
 }
 
 static const char* os_major_type_to_string(UINT16 osMajorType)
@@ -1463,7 +1463,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 	freerdp_peer* client = (freerdp_peer*)calloc(1, sizeof(freerdp_peer));
 
 	if (!client)
-		return NULL;
+		return nullptr;
 
 	if (sockfd >= 0)
 	{
@@ -1492,7 +1492,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->VirtualChannelOpen = freerdp_peer_virtual_channel_open;
 		client->VirtualChannelClose = freerdp_peer_virtual_channel_close;
 		client->VirtualChannelWrite = freerdp_peer_virtual_channel_write;
-		client->VirtualChannelRead = NULL; /* must be defined by server application */
+		client->VirtualChannelRead = nullptr; /* must be defined by server application */
 		client->VirtualChannelGetData = freerdp_peer_virtual_channel_get_data;
 		client->VirtualChannelSetData = freerdp_peer_virtual_channel_set_data;
 		client->SetState = freerdp_peer_set_state;
@@ -1514,7 +1514,7 @@ void freerdp_peer_free(freerdp_peer* client)
 
 static BOOL freerdp_peer_transport_setup(freerdp_peer* client)
 {
-	rdpRdp* rdp = NULL;
+	rdpRdp* rdp = nullptr;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
@@ -1537,8 +1537,8 @@ static BOOL freerdp_peer_transport_setup(freerdp_peer* client)
 
 BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settings)
 {
-	rdpRdp* rdp = NULL;
-	rdpContext* context = NULL;
+	rdpRdp* rdp = nullptr;
+	rdpContext* context = nullptr;
 	BOOL ret = TRUE;
 
 	if (!client)
@@ -1586,7 +1586,7 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 	update_register_server_callbacks(rdp->update);
 	autodetect_register_server_callbacks(rdp->autodetect);
 
-	if (!(context->channelErrorEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(context->channelErrorEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
 		WLog_ERR(TAG, "CreateEvent failed!");
 		goto fail;

@@ -167,12 +167,12 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 	UINT32 nIdx = 0;
 	UINT32 val1 = 0;
 	UINT32 val2 = 0;
-	INT16* pOutput = NULL;
-	wBitStream* bs = NULL;
+	INT16* pOutput = nullptr;
+	wBitStream* bs = nullptr;
 	wBitStream s_bs = WINPR_C_ARRAY_INIT;
 	const SSIZE_T DstSize = rDstSize;
 
-	InitOnceExecuteOnce(&rfx_rlgr_init_once, rfx_rlgr_init, NULL, NULL);
+	InitOnceExecuteOnce(&rfx_rlgr_init_once, rfx_rlgr_init, nullptr, nullptr);
 
 	k = 1;
 	kp = k << LSGR;
@@ -658,7 +658,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 	uint32_t k = 0;
 	uint32_t kp = 0;
 	uint32_t krp = 0;
-	RFX_BITSTREAM* bs = NULL;
+	RFX_BITSTREAM* bs = nullptr;
 
 	if (!(bs = (RFX_BITSTREAM*)winpr_aligned_calloc(1, sizeof(RFX_BITSTREAM), 32)))
 		return 0;

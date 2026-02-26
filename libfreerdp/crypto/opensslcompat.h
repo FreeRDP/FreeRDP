@@ -82,7 +82,7 @@ static inline STACK_OF(X509) * sk_X509_deep_copy(const STACK_OF(X509) * sk,
 
 	STACK_OF(X509)* stack = sk_X509_new_null();
 	if (!stack)
-		return NULL;
+		return nullptr;
 
 	if (sk)
 	{
@@ -102,7 +102,7 @@ static inline STACK_OF(X509) * sk_X509_deep_copy(const STACK_OF(X509) * sk,
 
 fail:
 	sk_X509_pop_free(stack, freefunc);
-	return NULL;
+	return nullptr;
 }
 #endif
 

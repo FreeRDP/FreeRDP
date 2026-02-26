@@ -80,7 +80,7 @@ static BOOL freerdp_listener_open_from_vsock(WINPR_ATTR_UNUSED freerdp_listener*
 	addr.svm_port = port;
 
 	errno = 0;
-	char* ptr = NULL;
+	char* ptr = nullptr;
 	unsigned long val = strtoul(bind_address, &ptr, 10);
 	if (errno || (val > UINT32_MAX))
 	{
@@ -140,9 +140,9 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 	int status = 0;
 	int sockfd = 0;
 	char addr[64];
-	void* sin_addr = NULL;
+	void* sin_addr = nullptr;
 	int option_value = 0;
-	struct addrinfo* res = NULL;
+	struct addrinfo* res = nullptr;
 	rdpListener* listener = (rdpListener*)instance->listener;
 #ifdef _WIN32
 	u_long arg;
@@ -250,7 +250,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	int sockfd = 0;
 	struct sockaddr_un addr = WINPR_C_ARRAY_INIT;
 	rdpListener* listener = (rdpListener*)instance->listener;
-	HANDLE hevent = NULL;
+	HANDLE hevent = nullptr;
 
 	if (listener->num_sockfds == MAX_LISTENER_HANDLES)
 	{
@@ -295,7 +295,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 		return FALSE;
 	}
 
-	hevent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd, WINPR_FD_READ);
+	hevent = CreateFileDescriptorEvent(nullptr, FALSE, FALSE, sockfd, WINPR_FD_READ);
 
 	if (!hevent)
 	{
@@ -398,7 +398,7 @@ static DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HAND
 BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
                                          const struct sockaddr_storage* peer_addr)
 {
-	const void* sin_addr = NULL;
+	const void* sin_addr = nullptr;
 	const BYTE localhost6_bytes[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 
 	WINPR_ASSERT(client);
@@ -520,12 +520,12 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 freerdp_listener* freerdp_listener_new(void)
 {
-	freerdp_listener* instance = NULL;
-	rdpListener* listener = NULL;
+	freerdp_listener* instance = nullptr;
+	rdpListener* listener = nullptr;
 	instance = (freerdp_listener*)calloc(1, sizeof(freerdp_listener));
 
 	if (!instance)
-		return NULL;
+		return nullptr;
 
 	instance->Open = freerdp_listener_open;
 	instance->OpenLocal = freerdp_listener_open_local;
@@ -541,7 +541,7 @@ freerdp_listener* freerdp_listener_new(void)
 	if (!listener)
 	{
 		free(instance);
-		return NULL;
+		return nullptr;
 	}
 
 	listener->instance = instance;

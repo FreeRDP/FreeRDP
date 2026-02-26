@@ -72,13 +72,13 @@ void ringbuffer_destroy(RingBuffer* ringbuffer)
 		return;
 
 	free(ringbuffer->buffer);
-	ringbuffer->buffer = NULL;
+	ringbuffer->buffer = nullptr;
 }
 
 static BOOL ringbuffer_realloc(RingBuffer* ringbuffer, size_t targetSize)
 {
 	WINPR_ASSERT(ringbuffer);
-	BYTE* newData = NULL;
+	BYTE* newData = nullptr;
 	DEBUG_RINGBUFFER("ringbuffer_realloc(%p): targetSize: %" PRIdz "", (void*)rb, targetSize);
 
 	if (ringbuffer->writePtr == ringbuffer->readPtr)
@@ -212,7 +212,7 @@ BYTE* ringbuffer_ensure_linear_write(RingBuffer* ringbuffer, size_t sz)
 	if (ringbuffer->freeSize < sz)
 	{
 		if (!ringbuffer_realloc(ringbuffer, ringbuffer->size + sz - ringbuffer->freeSize + 32))
-			return NULL;
+			return nullptr;
 	}
 
 	if (ringbuffer->writePtr == ringbuffer->readPtr)

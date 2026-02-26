@@ -1539,8 +1539,8 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, size_t si
 			BYTE eG = 0;
 			BYTE eB = 0;
 
-			FreeRDPSplitColor(pixel, PIXEL_FORMAT_XRGB32, &R, &G, &B, NULL, NULL);
-			FreeRDPSplitColor(ePixel, PIXEL_FORMAT_XRGB32, &eR, &eG, &eB, NULL, NULL);
+			FreeRDPSplitColor(pixel, PIXEL_FORMAT_XRGB32, &R, &G, &B, nullptr, nullptr);
+			FreeRDPSplitColor(ePixel, PIXEL_FORMAT_XRGB32, &eR, &eG, &eB, nullptr, nullptr);
 			error[0] = (R > eR) ? R - eR : eR - R;
 			error[1] = (G > eG) ? G - eG : eG - G;
 			error[2] = (B > eB) ? B - eB : eB - B;
@@ -1575,11 +1575,11 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	pstatus_t status = -1;
 	int cnt[3];
 	float err[3];
-	BYTE* actual = NULL;
-	BYTE* actual1 = NULL;
+	BYTE* actual = nullptr;
+	BYTE* actual1 = nullptr;
 	const BYTE* expected = (const BYTE*)TEST_XRGB_IMAGE;
 	int margin = 1;
-	INT16* pYCbCr[3] = { NULL, NULL, NULL };
+	INT16* pYCbCr[3] = { nullptr, nullptr, nullptr };
 	const UINT32 srcStride = roi.width * 2;
 	const UINT32 dstStride = roi.width * FreeRDPGetBytesPerPixel(format);
 	const UINT32 srcSize = srcStride * roi.height;

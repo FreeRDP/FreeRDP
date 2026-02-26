@@ -29,6 +29,10 @@
 
 #include "dsp_fdk_impl.h"
 
+#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 202003L))
+#define nullptr NULL
+#endif
+
 #define WLOG_TRACE 0
 #define WLOG_DEBUG 1
 #define WLOG_INFO 2
@@ -319,7 +323,7 @@ int fdk_aac_dsp_impl_init(void** handle, int encoder, fdk_log_fkt_t log)
 	else
 	{
 		HANDLE_AACDECODER* h = (HANDLE_AACDECODER*)handle;
-		assert(NULL == *h);
+		assert(nullptr == *h);
 
 		*h = aacDecoder_Open(TT_MP4_RAW, 1);
 		if (!*h)
@@ -350,7 +354,7 @@ void fdk_aac_dsp_impl_uninit(void** handle, int encoder, fdk_log_fkt_t log)
 			aacDecoder_Close(*h);
 	}
 
-	*handle = NULL;
+	*handle = nullptr;
 }
 
 ssize_t fdk_aac_dsp_impl_decode_read(void* handle, void* dst, size_t dstSize, fdk_log_fkt_t log)
@@ -427,7 +431,7 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		                                   { AACENC_BITRATE, bytes_per_second * 8 },
 		                                   { AACENC_TRANSMUX, 0 },
 		                                   { AACENC_AFTERBURNER, 1 } };
-	HANDLE_AACENCODER self = NULL;
+	HANDLE_AACENCODER self = nullptr;
 	if (encoder)
 		self = (HANDLE_AACENCODER)handle;
 	else
@@ -453,7 +457,7 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		}
 	}
 
-	AACENC_ERROR err = aacEncEncode(self, NULL, NULL, NULL, NULL);
+	AACENC_ERROR err = aacEncEncode(self, nullptr, nullptr, nullptr, nullptr);
 	if (err != AACENC_OK)
 	{
 		log(WLOG_ERROR, "aacEncEncode failed with %s", enc_err_str(err));

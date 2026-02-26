@@ -77,30 +77,30 @@ static inline long BIO_set_handle(BIO* b, HANDLE h)
 
 static inline long BIO_set_nonblock(BIO* b, long c)
 {
-	return BIO_ctrl(b, BIO_C_SET_NONBLOCK, c, NULL);
+	return BIO_ctrl(b, BIO_C_SET_NONBLOCK, c, nullptr);
 }
 
 WINPR_ATTR_NODISCARD
 static inline long BIO_read_blocked(BIO* b)
 {
-	return BIO_ctrl(b, BIO_C_READ_BLOCKED, 0, NULL);
+	return BIO_ctrl(b, BIO_C_READ_BLOCKED, 0, nullptr);
 }
 
 WINPR_ATTR_NODISCARD
 static inline long BIO_write_blocked(BIO* b)
 {
-	return BIO_ctrl(b, BIO_C_WRITE_BLOCKED, 0, NULL);
+	return BIO_ctrl(b, BIO_C_WRITE_BLOCKED, 0, nullptr);
 }
 
 static inline long BIO_wait_read(BIO* b, long c)
 {
-	return BIO_ctrl(b, BIO_C_WAIT_READ, c, NULL);
+	return BIO_ctrl(b, BIO_C_WAIT_READ, c, nullptr);
 }
 
 WINPR_ATTR_NODISCARD
 static inline long BIO_wait_write(BIO* b, long c)
 {
-	return BIO_ctrl(b, BIO_C_WAIT_WRITE, c, NULL);
+	return BIO_ctrl(b, BIO_C_WAIT_WRITE, c, nullptr);
 }
 
 WINPR_ATTR_NODISCARD

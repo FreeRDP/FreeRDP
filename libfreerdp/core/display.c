@@ -45,7 +45,7 @@ BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
                                                 const rdpMonitor* monitorDefArray,
                                                 MONITOR_DEF** result)
 {
-	MONITOR_DEF* mdef = NULL;
+	MONITOR_DEF* mdef = nullptr;
 
 	if (!monitorDefArray || !result || (*result))
 		return FALSE;

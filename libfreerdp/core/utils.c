@@ -40,12 +40,12 @@ BOOL utils_str_copy(const char* value, char** dst)
 	WINPR_ASSERT(dst);
 
 	free(*dst);
-	*dst = NULL;
+	*dst = nullptr;
 	if (!value)
 		return TRUE;
 
 	(*dst) = _strdup(value);
-	return (*dst) != NULL;
+	return (*dst) != nullptr;
 }
 
 static BOOL utils_copy_smartcard_settings(const rdpSettings* settings, rdpSettings* origSettings)
@@ -65,8 +65,8 @@ static BOOL utils_copy_smartcard_settings(const rdpSettings* settings, rdpSettin
 
 auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason)
 {
-	rdpSettings* settings = NULL;
-	rdpSettings* origSettings = NULL;
+	rdpSettings* settings = nullptr;
+	rdpSettings* origSettings = nullptr;
 	BOOL prompt = FALSE;
 	BOOL proceed = 0;
 
@@ -135,8 +135,8 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 
 auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL override)
 {
-	rdpSettings* settings = NULL;
-	rdpSettings* origSettings = NULL;
+	rdpSettings* settings = nullptr;
+	rdpSettings* origSettings = nullptr;
 	BOOL prompt = !override;
 	BOOL proceed = 0;
 
@@ -157,7 +157,7 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 
 	/* Ask for auth data if no or an empty username was specified or no password was given */
 	if (utils_str_is_empty(freerdp_settings_get_string(settings, FreeRDP_Username)) ||
-	    (settings->Password == NULL && settings->RedirectionPassword == NULL))
+	    (settings->Password == nullptr && settings->RedirectionPassword == nullptr))
 		prompt = TRUE;
 
 	if (!prompt)
@@ -318,18 +318,18 @@ BOOL utils_abort_event_is_set(const rdpRdp* rdp)
 const char* utils_is_vsock(const char* hostname)
 {
 	if (!hostname)
-		return NULL;
+		return nullptr;
 
 	const char vsock[8] = { 'v', 's', 'o', 'c', 'k', ':', '/', '/' };
 	if (strncmp(hostname, vsock, sizeof(vsock)) == 0)
 		return &hostname[sizeof(vsock)];
-	return NULL;
+	return nullptr;
 }
 
 static BOOL remove_rdpdr_type(rdpSettings* settings, UINT32 type)
 {
 	BOOL rc = TRUE;
-	RDPDR_DEVICE* printer = NULL;
+	RDPDR_DEVICE* printer = nullptr;
 	do
 	{
 		printer = freerdp_device_collection_find_type(settings, type);

@@ -283,11 +283,11 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s,
 static UINT16 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 {
 	UINT16 keyCount = 0;
-	UINT64* keyList = NULL;
-	rdpPersistentCache* persistent = NULL;
+	UINT64* keyList = nullptr;
+	rdpPersistentCache* persistent = nullptr;
 	rdpSettings* settings = rdp->settings;
 
-	*pKeyList = NULL;
+	*pKeyList = nullptr;
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 		return 0;
@@ -341,7 +341,7 @@ error:
 BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 {
 	UINT16 keyMaxFrag = 2042;
-	UINT64* keyList = NULL;
+	UINT64* keyList = nullptr;
 	RDP_BITMAP_PERSISTENT_INFO info = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(rdp);
 	rdpSettings* settings = rdp->settings;
@@ -809,7 +809,7 @@ BOOL rdp_server_accept_client_persistent_key_list_pdu(rdpRdp* rdp, wStream* s)
 
 const char* rdp_ctrlaction_string(UINT16 action, char* buffer, size_t size)
 {
-	const char* actstr = NULL;
+	const char* actstr = nullptr;
 	switch (action)
 	{
 		case CTRLACTION_COOPERATE:

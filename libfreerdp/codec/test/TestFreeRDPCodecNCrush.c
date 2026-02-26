@@ -15,7 +15,7 @@ static BOOL test_NCrushCompressBells(void)
 	BOOL rc = FALSE;
 	int status = 0;
 	UINT32 Flags = 0;
-	const BYTE* pDstData = NULL;
+	const BYTE* pDstData = nullptr;
 	BYTE OutputBuffer[65536] = WINPR_C_ARRAY_INIT;
 	const UINT32 SrcSize = sizeof(TEST_BELLS_DATA) - 1;
 	const BYTE* pSrcData = TEST_BELLS_DATA;
@@ -66,11 +66,11 @@ static BOOL test_NCrushDecompressBells(void)
 	BOOL rc = FALSE;
 	int status = 0;
 	UINT32 Flags = 0;
-	const BYTE* pSrcData = NULL;
+	const BYTE* pSrcData = nullptr;
 	UINT32 SrcSize = 0;
 	UINT32 DstSize = 0;
 	UINT32 expectedSize = 0;
-	const BYTE* pDstData = NULL;
+	const BYTE* pDstData = nullptr;
 	NCRUSH_CONTEXT* ncrush = ncrush_context_new(FALSE);
 
 	if (!ncrush)

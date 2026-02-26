@@ -60,7 +60,7 @@ const char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t s
 		if (flags & cur->flag)
 		{
 			if (!winpr_str_append(cur->name, buffer, size, "|"))
-				return NULL;
+				return nullptr;
 		}
 	}
 	return buffer;
@@ -76,7 +76,7 @@ const char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t 
 	if (flags & REDIRECTED_SMARTCARD)
 		winpr_str_append("REDIRECTED_SMARTCARD", buffer, size, "|");
 
-	const char* str = NULL;
+	const char* str = nullptr;
 	switch (version)
 	{
 		case REDIRECTION_VERSION1:
@@ -115,14 +115,14 @@ BOOL freerdp_extract_key_value(const char* str, UINT32* pkey, UINT32* pvalue)
 	if (!str || !pkey || !pvalue)
 		return FALSE;
 
-	char* end1 = NULL;
+	char* end1 = nullptr;
 	errno = 0;
 	unsigned long key = strtoul(str, &end1, 0);
 	if ((errno != 0) || !end1 || (*end1 != '=') || (key > UINT32_MAX))
 		return FALSE;
 
 	errno = 0;
-	unsigned long val = strtoul(&end1[1], NULL, 0);
+	unsigned long val = strtoul(&end1[1], nullptr, 0);
 	if ((errno != 0) || (val > UINT32_MAX))
 		return FALSE;
 

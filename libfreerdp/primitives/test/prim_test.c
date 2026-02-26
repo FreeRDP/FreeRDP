@@ -27,8 +27,8 @@
 #include <winpr/platform.h>
 #include <winpr/crypto.h>
 
-primitives_t* generic = NULL;
-primitives_t* optimized = NULL;
+primitives_t* generic = nullptr;
+primitives_t* optimized = nullptr;
 BOOL g_TestPrimitivesPerformance = FALSE;
 UINT32 g_Iterations = 1000;
 

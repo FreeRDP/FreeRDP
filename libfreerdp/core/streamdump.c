@@ -168,12 +168,12 @@ fail:
 
 static FILE* stream_dump_get_file(const rdpSettings* settings, const char* mode)
 {
-	const char* cfolder = NULL;
-	char* file = NULL;
-	FILE* fp = NULL;
+	const char* cfolder = nullptr;
+	char* file = nullptr;
+	FILE* fp = nullptr;
 
 	if (!settings || !mode)
-		return NULL;
+		return nullptr;
 
 	cfolder = freerdp_settings_get_string(settings, FreeRDP_TransportDumpFile);
 	if (!cfolder)
@@ -193,7 +193,7 @@ fail:
 SSIZE_T stream_dump_append(const rdpContext* context, UINT32 flags, wStream* s, size_t* offset)
 {
 	SSIZE_T rc = -1;
-	FILE* fp = NULL;
+	FILE* fp = nullptr;
 	const UINT32 mask = STREAM_MSG_SRV_RX | STREAM_MSG_SRV_TX;
 	CONNECTION_STATE state = freerdp_get_state(context);
 	int r = 0;
@@ -241,7 +241,7 @@ SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s, si
                         UINT64* pts)
 {
 	SSIZE_T rc = -1;
-	FILE* fp = NULL;
+	FILE* fp = nullptr;
 	int r = 0;
 
 	if (!context || !s || !offset)
@@ -412,7 +412,7 @@ static rdpTransportLayer* stream_dump_replay_transport_connect_layer(
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(hostname);
 
-	return NULL;
+	return nullptr;
 }
 
 static BOOL stream_dump_replay_transport_tls_connect(WINPR_ATTR_UNUSED rdpTransport* transport)
@@ -480,7 +480,7 @@ rdpStreamDumpContext* stream_dump_new(void)
 {
 	rdpStreamDumpContext* dump = calloc(1, sizeof(rdpStreamDumpContext));
 	if (!dump)
-		return NULL;
+		return nullptr;
 	dump->log = WLog_Get(TAG);
 
 	return dump;

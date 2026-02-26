@@ -7,14 +7,14 @@ static BOOL test_alloc(void)
 {
 	BOOL rc = FALSE;
 	int rng = 0;
-	const char* param[] = { "foo:", "bar", "bla", "rdp", NULL };
-	ADDIN_ARGV* arg1 = NULL;
-	ADDIN_ARGV* arg2 = NULL;
-	ADDIN_ARGV* arg3 = NULL;
-	ADDIN_ARGV* arg4 = NULL;
+	const char* param[] = { "foo:", "bar", "bla", "rdp", nullptr };
+	ADDIN_ARGV* arg1 = nullptr;
+	ADDIN_ARGV* arg2 = nullptr;
+	ADDIN_ARGV* arg3 = nullptr;
+	ADDIN_ARGV* arg4 = nullptr;
 
 	/* Test empty allocation */
-	arg1 = freerdp_addin_argv_new(0, NULL);
+	arg1 = freerdp_addin_argv_new(0, nullptr);
 	if (!arg1 || (arg1->argc != 0) || (arg1->argv))
 		goto fail;
 
@@ -22,7 +22,7 @@ static BOOL test_alloc(void)
 	winpr_RAND(&rng, sizeof(rng));
 	rng = abs(rng % 8192) + 1;
 
-	arg2 = freerdp_addin_argv_new(rng, NULL);
+	arg2 = freerdp_addin_argv_new(rng, nullptr);
 	if (!arg2 || (arg2->argc != rng) || (!arg2->argv))
 		goto fail;
 	for (int x = 0; x < arg2->argc; x++)
@@ -42,7 +42,7 @@ static BOOL test_alloc(void)
 			goto fail;
 	}
 
-	/* Input lists with NULL elements are not allowed */
+	/* Input lists with nullptr elements are not allowed */
 	arg4 = freerdp_addin_argv_new(ARRAYSIZE(param), param);
 	if (arg4)
 		goto fail;
@@ -60,9 +60,9 @@ static BOOL test_clone(void)
 {
 	BOOL rc = FALSE;
 	const char* param[] = { "foo:", "bar", "bla", "rdp" };
-	ADDIN_ARGV* arg = NULL;
-	ADDIN_ARGV* clone = NULL;
-	ADDIN_ARGV* clone2 = NULL;
+	ADDIN_ARGV* arg = nullptr;
+	ADDIN_ARGV* clone = nullptr;
+	ADDIN_ARGV* clone2 = nullptr;
 
 	arg = freerdp_addin_argv_new(ARRAYSIZE(param), param);
 	if (!arg || (arg->argc != ARRAYSIZE(param)))
@@ -79,7 +79,7 @@ static BOOL test_clone(void)
 			goto fail;
 	}
 
-	clone2 = freerdp_addin_argv_clone(NULL);
+	clone2 = freerdp_addin_argv_clone(nullptr);
 	if (clone2)
 		goto fail;
 	rc = TRUE;
@@ -95,7 +95,7 @@ static BOOL test_add_remove(void)
 {
 	const char* args[] = { "foo", "bar", "bla", "gaga" };
 	BOOL rc = FALSE;
-	ADDIN_ARGV* arg = freerdp_addin_argv_new(0, NULL);
+	ADDIN_ARGV* arg = freerdp_addin_argv_new(0, nullptr);
 
 	if (!arg || (arg->argc != 0) || arg->argv)
 		goto fail;
@@ -117,11 +117,11 @@ static BOOL test_add_remove(void)
 		goto fail;
 
 	/* Invalid parameters, must return FALSE */
-	if (freerdp_addin_argv_del_argument(NULL, "foobar"))
+	if (freerdp_addin_argv_del_argument(nullptr, "foobar"))
 		goto fail;
 
 	/* Invalid parameters, must return FALSE */
-	if (freerdp_addin_argv_del_argument(arg, NULL))
+	if (freerdp_addin_argv_del_argument(arg, nullptr))
 		goto fail;
 
 	/* Remove elements one by one to test argument index move */
@@ -149,17 +149,17 @@ static BOOL test_set_argument(void)
 	const char* newarg = "foobar";
 	const char* args[] = { "foo", "bar", "bla", "gaga" };
 	BOOL rc = FALSE;
-	ADDIN_ARGV* arg = NULL;
+	ADDIN_ARGV* arg = nullptr;
 
 	arg = freerdp_addin_argv_new(ARRAYSIZE(args), args);
 	if (!arg || (arg->argc != ARRAYSIZE(args)) || !arg->argv)
 		goto fail;
 
 	/* Check invalid parameters */
-	ret = freerdp_addin_set_argument(NULL, "foo");
+	ret = freerdp_addin_set_argument(nullptr, "foo");
 	if (ret >= 0)
 		goto fail;
-	ret = freerdp_addin_set_argument(arg, NULL);
+	ret = freerdp_addin_set_argument(arg, nullptr);
 	if (ret >= 0)
 		goto fail;
 
@@ -187,20 +187,20 @@ static BOOL test_replace_argument(void)
 	const char* newarg = "foobar";
 	const char* args[] = { "foo", "bar", "bla", "gaga" };
 	BOOL rc = FALSE;
-	ADDIN_ARGV* arg = NULL;
+	ADDIN_ARGV* arg = nullptr;
 
 	arg = freerdp_addin_argv_new(ARRAYSIZE(args), args);
 	if (!arg || (arg->argc != ARRAYSIZE(args)) || !arg->argv)
 		goto fail;
 
 	/* Check invalid parameters */
-	ret = freerdp_addin_replace_argument(NULL, "foo", newarg);
+	ret = freerdp_addin_replace_argument(nullptr, "foo", newarg);
 	if (ret >= 0)
 		goto fail;
-	ret = freerdp_addin_replace_argument(arg, NULL, newarg);
+	ret = freerdp_addin_replace_argument(arg, nullptr, newarg);
 	if (ret >= 0)
 		goto fail;
-	ret = freerdp_addin_replace_argument(arg, "foo", NULL);
+	ret = freerdp_addin_replace_argument(arg, "foo", nullptr);
 	if (ret >= 0)
 		goto fail;
 
@@ -232,20 +232,20 @@ static BOOL test_set_argument_value(void)
 	const char* fullnewvalue = "lalala:foobar";
 	const char* args[] = { "foo", "foo:", "bar", "bla", "gaga" };
 	BOOL rc = FALSE;
-	ADDIN_ARGV* arg = NULL;
+	ADDIN_ARGV* arg = nullptr;
 
 	arg = freerdp_addin_argv_new(ARRAYSIZE(args), args);
 	if (!arg || (arg->argc != ARRAYSIZE(args)) || !arg->argv)
 		goto fail;
 
 	/* Check invalid parameters */
-	ret = freerdp_addin_set_argument_value(NULL, "foo", newarg1);
+	ret = freerdp_addin_set_argument_value(nullptr, "foo", newarg1);
 	if (ret >= 0)
 		goto fail;
-	ret = freerdp_addin_set_argument_value(arg, NULL, newarg1);
+	ret = freerdp_addin_set_argument_value(arg, nullptr, newarg1);
 	if (ret >= 0)
 		goto fail;
-	ret = freerdp_addin_set_argument_value(arg, "foo", NULL);
+	ret = freerdp_addin_set_argument_value(arg, "foo", nullptr);
 	if (ret >= 0)
 		goto fail;
 
@@ -280,23 +280,23 @@ static BOOL test_replace_argument_value(void)
 	const char* fullnewvalue = "lalala:foobar";
 	const char* args[] = { "foo", "foo:", "bar", "bla", "gaga" };
 	BOOL rc = FALSE;
-	ADDIN_ARGV* arg = NULL;
+	ADDIN_ARGV* arg = nullptr;
 
 	arg = freerdp_addin_argv_new(ARRAYSIZE(args), args);
 	if (!arg || (arg->argc != ARRAYSIZE(args)) || !arg->argv)
 		goto fail;
 
 	/* Check invalid parameters */
-	ret = freerdp_addin_replace_argument_value(NULL, "bar", "foo", newarg1);
+	ret = freerdp_addin_replace_argument_value(nullptr, "bar", "foo", newarg1);
 	if (ret >= 0)
 		goto fail;
-	ret = freerdp_addin_replace_argument_value(arg, NULL, "foo", newarg1);
+	ret = freerdp_addin_replace_argument_value(arg, nullptr, "foo", newarg1);
 	if (ret >= 0)
 		goto fail;
-	ret = freerdp_addin_replace_argument_value(arg, "foo", NULL, newarg1);
+	ret = freerdp_addin_replace_argument_value(arg, "foo", nullptr, newarg1);
 	if (ret >= 0)
 		goto fail;
-	ret = freerdp_addin_replace_argument_value(arg, "bar", "foo", NULL);
+	ret = freerdp_addin_replace_argument_value(arg, "bar", "foo", nullptr);
 	if (ret >= 0)
 		goto fail;
 

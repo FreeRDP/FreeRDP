@@ -41,15 +41,15 @@ static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_le
                                  const BYTE* modulus, const BYTE* exponent, size_t exponent_size,
                                  BYTE* output, size_t out_length)
 {
-	BN_CTX* ctx = NULL;
+	BN_CTX* ctx = nullptr;
 	int output_length = -1;
-	BYTE* input_reverse = NULL;
-	BYTE* modulus_reverse = NULL;
-	BYTE* exponent_reverse = NULL;
-	BIGNUM* mod = NULL;
-	BIGNUM* exp = NULL;
-	BIGNUM* x = NULL;
-	BIGNUM* y = NULL;
+	BYTE* input_reverse = nullptr;
+	BYTE* modulus_reverse = nullptr;
+	BYTE* exponent_reverse = nullptr;
+	BIGNUM* mod = nullptr;
+	BIGNUM* exp = nullptr;
+	BIGNUM* x = nullptr;
+	BIGNUM* y = nullptr;
 	size_t bufferSize = 0;
 
 	if (!input || !modulus || !exponent || !output)
@@ -188,8 +188,8 @@ void crypto_reverse(BYTE* data, size_t length)
 
 char* crypto_read_pem(const char* WINPR_RESTRICT filename, size_t* WINPR_RESTRICT plength)
 {
-	char* pem = NULL;
-	FILE* fp = NULL;
+	char* pem = nullptr;
+	FILE* fp = nullptr;
 
 	WINPR_ASSERT(filename);
 
@@ -242,7 +242,7 @@ fail:
 	if (fp)
 		(void)fclose(fp);
 	free(pem);
-	return NULL;
+	return nullptr;
 }
 
 BOOL crypto_write_pem(const char* WINPR_RESTRICT filename, const char* WINPR_RESTRICT pem,

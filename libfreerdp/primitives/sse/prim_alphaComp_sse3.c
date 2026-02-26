@@ -36,7 +36,7 @@
 #include <emmintrin.h>
 #include <pmmintrin.h>
 
-static primitives_t* generic = NULL;
+static primitives_t* generic = nullptr;
 
 static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 src1Step,
                                      const BYTE* WINPR_RESTRICT pSrc2, UINT32 src2Step,

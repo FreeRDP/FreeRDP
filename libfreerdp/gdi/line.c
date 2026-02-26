@@ -221,7 +221,7 @@ BOOL gdi_PolylineTo(HGDI_DC hdc, GDI_POINT* lppt, DWORD cCount)
 		if (!gdi_LineTo(hdc, lppt[i].x, lppt[i].y))
 			return FALSE;
 
-		if (!gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, NULL))
+		if (!gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, nullptr))
 			return FALSE;
 	}
 
@@ -252,11 +252,11 @@ BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32 cPoints)
 			if (!gdi_LineTo(hdc, lppt[i].x, lppt[i].y))
 				return FALSE;
 
-			if (!gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, NULL))
+			if (!gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, nullptr))
 				return FALSE;
 		}
 
-		if (!gdi_MoveToEx(hdc, pt.x, pt.y, NULL))
+		if (!gdi_MoveToEx(hdc, pt.x, pt.y, nullptr))
 			return FALSE;
 	}
 
@@ -304,7 +304,7 @@ BOOL gdi_MoveToEx(HGDI_DC hdc, INT32 X, INT32 Y, HGDI_POINT lpPoint)
 {
 	WINPR_ASSERT(hdc);
 
-	if (lpPoint != NULL)
+	if (lpPoint != nullptr)
 	{
 		lpPoint->x = hdc->pen->posX;
 		lpPoint->y = hdc->pen->posY;

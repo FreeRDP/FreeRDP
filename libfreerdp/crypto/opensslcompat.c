@@ -26,7 +26,7 @@ BIO_METHOD* BIO_meth_new(int type, const char* name)
 {
 	BIO_METHOD* m;
 	if (!(m = calloc(1, sizeof(BIO_METHOD))))
-		return NULL;
+		return nullptr;
 	m->type = type;
 	m->name = name;
 	return m;
@@ -34,11 +34,11 @@ BIO_METHOD* BIO_meth_new(int type, const char* name)
 
 void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM** d)
 {
-	if (n != NULL)
+	if (n != nullptr)
 		*n = r->n;
-	if (e != NULL)
+	if (e != nullptr)
 		*e = r->e;
-	if (d != NULL)
+	if (d != nullptr)
 		*d = r->d;
 }
 

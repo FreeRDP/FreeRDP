@@ -336,7 +336,7 @@ int persistent_cache_close(rdpPersistentCache* persistent)
 	if (persistent->fp)
 	{
 		(void)fclose(persistent->fp);
-		persistent->fp = NULL;
+		persistent->fp = nullptr;
 	}
 
 	return 1;
@@ -347,7 +347,7 @@ rdpPersistentCache* persistent_cache_new(void)
 	rdpPersistentCache* persistent = calloc(1, sizeof(rdpPersistentCache));
 
 	if (!persistent)
-		return NULL;
+		return nullptr;
 
 	persistent->bmpSize = 0x4000;
 	persistent->bmpData = calloc(1, persistent->bmpSize);
@@ -355,7 +355,7 @@ rdpPersistentCache* persistent_cache_new(void)
 	if (!persistent->bmpData)
 	{
 		free(persistent);
-		return NULL;
+		return nullptr;
 	}
 
 	return persistent;

@@ -116,11 +116,11 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* WINPR_RESTRICT context,
                                       const BYTE* WINPR_RESTRICT data, UINT32 scanline)
 {
 	size_t y = 0;
-	const BYTE* src = NULL;
-	BYTE* yplane = NULL;
-	BYTE* coplane = NULL;
-	BYTE* cgplane = NULL;
-	BYTE* aplane = NULL;
+	const BYTE* src = nullptr;
+	BYTE* yplane = nullptr;
+	BYTE* coplane = nullptr;
+	BYTE* cgplane = nullptr;
+	BYTE* aplane = nullptr;
 	INT16 r_val = 0;
 	INT16 g_val = 0;
 	INT16 b_val = 0;

@@ -28,7 +28,7 @@
 #include <emmintrin.h>
 #include <pmmintrin.h>
 
-static primitives_t* generic = NULL;
+static primitives_t* generic = nullptr;
 
 /* ------------------------------------------------------------------------- */
 SSE3_SCD_ROUTINE(sse2_lShiftC_16s, INT16, generic->lShiftC_16s, _mm_slli_epi16, int16_t,

@@ -85,12 +85,12 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 	int dy = 0;
 	BOOL draw = TRUE;
 
-	if (hdc == NULL)
+	if (hdc == nullptr)
 		return FALSE;
 
 	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdc->selectedObject;
 
-	if (hBmp != NULL)
+	if (hBmp != nullptr)
 	{
 		if (hdc->clip->null)
 		{
@@ -158,10 +158,10 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 		draw = FALSE;
 	}
 
-	if (srcx != NULL)
+	if (srcx != nullptr)
 		*srcx += dx;
 
-	if (srcy != NULL)
+	if (srcy != nullptr)
 		*srcy += dy;
 
 	if (!gdi_RectToCRgn(&coords, x, y, w, h))

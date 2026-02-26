@@ -40,7 +40,7 @@
 static char* gdi_rect_str(char* buffer, size_t size, const GDI_RECT* rect)
 {
 	if (!buffer || (size < 1) || !rect)
-		return NULL;
+		return nullptr;
 
 	(void)_snprintf(buffer, size - 1,
 	                "[top/left=%" PRId32 "x%" PRId32 "-bottom/right%" PRId32 "x%" PRId32 "]",
@@ -53,7 +53,7 @@ static char* gdi_rect_str(char* buffer, size_t size, const GDI_RECT* rect)
 static char* gdi_regn_str(char* buffer, size_t size, const GDI_RGN* rgn)
 {
 	if (!buffer || (size < 1) || !rgn)
-		return NULL;
+		return nullptr;
 
 	(void)_snprintf(buffer, size - 1, "[%" PRId32 "x%" PRId32 "-%" PRId32 "x%" PRId32 "]", rgn->x,
 	                rgn->y, rgn->w, rgn->h);
@@ -78,7 +78,7 @@ GDI_RGN* gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, IN
 {
 	INT64 w = 0;
 	INT64 h = 0;
-	GDI_RGN* hRgn = NULL;
+	GDI_RGN* hRgn = nullptr;
 
 	w = nRightRect - nLeftRect + 1ll;
 	h = nBottomRect - nTopRect + 1ll;
@@ -88,12 +88,12 @@ GDI_RGN* gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, IN
 		         "Can not create region top/left=%" PRId32 "x%" PRId32 "-bottom/right=%" PRId32
 		         "x%" PRId32,
 		         nTopRect, nLeftRect, nBottomRect, nRightRect);
-		return NULL;
+		return nullptr;
 	}
 	hRgn = (GDI_RGN*)calloc(1, sizeof(GDI_RGN));
 
 	if (!hRgn)
-		return NULL;
+		return nullptr;
 
 	hRgn->objectType = GDIOBJECT_REGION;
 	hRgn->x = nLeftRect;
@@ -115,17 +115,17 @@ GDI_RGN* gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, IN
 
 GDI_RECT* gdi_CreateRect(INT32 xLeft, INT32 yTop, INT32 xRight, INT32 yBottom)
 {
-	GDI_RECT* hRect = NULL;
+	GDI_RECT* hRect = nullptr;
 
 	if (xLeft > xRight)
-		return NULL;
+		return nullptr;
 	if (yTop > yBottom)
-		return NULL;
+		return nullptr;
 
 	hRect = (GDI_RECT*)calloc(1, sizeof(GDI_RECT));
 
 	if (!hRect)
-		return NULL;
+		return nullptr;
 
 	hRect->objectType = GDIOBJECT_RECT;
 	hRect->left = xLeft;
@@ -614,8 +614,8 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 {
 	GDI_RECT inv;
 	GDI_RECT rgn;
-	GDI_RGN* invalid = NULL;
-	GDI_RGN* cinvalid = NULL;
+	GDI_RGN* invalid = nullptr;
+	GDI_RGN* cinvalid = nullptr;
 
 	if (!hdc->hwnd)
 		return TRUE;
@@ -630,7 +630,7 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 
 	if ((hdc->hwnd->ninvalid + 1) > (INT64)hdc->hwnd->count)
 	{
-		GDI_RGN* new_rgn = NULL;
+		GDI_RGN* new_rgn = nullptr;
 		size_t new_cnt = 2ULL * hdc->hwnd->count;
 		if (new_cnt > UINT32_MAX)
 			return FALSE;

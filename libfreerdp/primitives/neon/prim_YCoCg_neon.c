@@ -29,7 +29,7 @@
 #if defined(NEON_INTRINSICS_ENABLED)
 #include <arm_neon.h>
 
-static primitives_t* generic = NULL;
+static primitives_t* generic = nullptr;
 
 static pstatus_t neon_YCoCgToRGB_8u_X(const BYTE* WINPR_RESTRICT pSrc, INT32 srcStep,
                                       BYTE* WINPR_RESTRICT pDst, UINT32 DstFormat, INT32 dstStep,

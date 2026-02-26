@@ -415,55 +415,55 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 {
 	BOOL rc = FALSE;
 	BOOL failed = FALSE;
-	HGDI_DC hdcSrc = NULL;
-	HGDI_DC hdcDst = NULL;
+	HGDI_DC hdcSrc = nullptr;
+	HGDI_DC hdcDst = nullptr;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
-	struct test_bitblt tests[] = { { GDI_SRCCOPY, bmp_SRCCOPY, NULL },
-		                           { GDI_SPna, bmp_SPna, NULL },
-		                           { GDI_BLACKNESS, bmp_BLACKNESS, NULL },
-		                           { GDI_WHITENESS, bmp_WHITENESS, NULL },
-		                           { GDI_SRCAND, bmp_SRCAND, NULL },
-		                           { GDI_SRCPAINT, bmp_SRCPAINT, NULL },
-		                           { GDI_SRCINVERT, bmp_SRCINVERT, NULL },
-		                           { GDI_SRCERASE, bmp_SRCERASE, NULL },
-		                           { GDI_NOTSRCCOPY, bmp_NOTSRCCOPY, NULL },
-		                           { GDI_NOTSRCERASE, bmp_NOTSRCERASE, NULL },
-		                           { GDI_DSTINVERT, bmp_DSTINVERT, NULL },
-		                           { GDI_MERGECOPY, bmp_MERGECOPY, NULL },
-		                           { GDI_MERGEPAINT, bmp_MERGEPAINT, NULL },
-		                           { GDI_PATCOPY, bmp_PATCOPY, NULL },
-		                           { GDI_PATPAINT, bmp_PATPAINT, NULL },
-		                           { GDI_PATINVERT, bmp_PATINVERT, NULL },
-		                           { GDI_DSTINVERT, bmp_SRC, NULL },
-		                           { GDI_DSPDxax, bmp_SRC, NULL },
-		                           { GDI_PSDPxax, bmp_SRC, NULL },
-		                           { GDI_DSna, bmp_SRC, NULL },
-		                           { GDI_DPa, bmp_SRC, NULL },
-		                           { GDI_PDxn, bmp_SRC, NULL },
-		                           { GDI_DSxn, bmp_SRC, NULL },
-		                           { GDI_PSDnox, bmp_SRC, NULL },
-		                           { GDI_PDSona, bmp_SRC, NULL },
-		                           { GDI_DSPDxox, bmp_SRC, NULL },
-		                           { GDI_DPSDonox, bmp_SRC, NULL },
-		                           { GDI_SPDSxax, bmp_SRC, NULL },
-		                           { GDI_DPon, bmp_SRC, NULL },
-		                           { GDI_DPna, bmp_SRC, NULL },
-		                           { GDI_Pn, bmp_SRC, NULL },
-		                           { GDI_PDna, bmp_SRC, NULL },
-		                           { GDI_DPan, bmp_SRC, NULL },
-		                           { GDI_DSan, bmp_SRC, NULL },
-		                           { GDI_DSxn, bmp_SRC, NULL },
-		                           { GDI_DPa, bmp_SRC, NULL },
-		                           { GDI_DSTCOPY, bmp_SRC, NULL },
-		                           { GDI_DPno, bmp_SRC, NULL },
-		                           { GDI_SDno, bmp_SRC, NULL },
-		                           { GDI_PDno, bmp_SRC, NULL },
-		                           { GDI_DPo, bmp_SRC, NULL } };
+	struct test_bitblt tests[] = { { GDI_SRCCOPY, bmp_SRCCOPY, nullptr },
+		                           { GDI_SPna, bmp_SPna, nullptr },
+		                           { GDI_BLACKNESS, bmp_BLACKNESS, nullptr },
+		                           { GDI_WHITENESS, bmp_WHITENESS, nullptr },
+		                           { GDI_SRCAND, bmp_SRCAND, nullptr },
+		                           { GDI_SRCPAINT, bmp_SRCPAINT, nullptr },
+		                           { GDI_SRCINVERT, bmp_SRCINVERT, nullptr },
+		                           { GDI_SRCERASE, bmp_SRCERASE, nullptr },
+		                           { GDI_NOTSRCCOPY, bmp_NOTSRCCOPY, nullptr },
+		                           { GDI_NOTSRCERASE, bmp_NOTSRCERASE, nullptr },
+		                           { GDI_DSTINVERT, bmp_DSTINVERT, nullptr },
+		                           { GDI_MERGECOPY, bmp_MERGECOPY, nullptr },
+		                           { GDI_MERGEPAINT, bmp_MERGEPAINT, nullptr },
+		                           { GDI_PATCOPY, bmp_PATCOPY, nullptr },
+		                           { GDI_PATPAINT, bmp_PATPAINT, nullptr },
+		                           { GDI_PATINVERT, bmp_PATINVERT, nullptr },
+		                           { GDI_DSTINVERT, bmp_SRC, nullptr },
+		                           { GDI_DSPDxax, bmp_SRC, nullptr },
+		                           { GDI_PSDPxax, bmp_SRC, nullptr },
+		                           { GDI_DSna, bmp_SRC, nullptr },
+		                           { GDI_DPa, bmp_SRC, nullptr },
+		                           { GDI_PDxn, bmp_SRC, nullptr },
+		                           { GDI_DSxn, bmp_SRC, nullptr },
+		                           { GDI_PSDnox, bmp_SRC, nullptr },
+		                           { GDI_PDSona, bmp_SRC, nullptr },
+		                           { GDI_DSPDxox, bmp_SRC, nullptr },
+		                           { GDI_DPSDonox, bmp_SRC, nullptr },
+		                           { GDI_SPDSxax, bmp_SRC, nullptr },
+		                           { GDI_DPon, bmp_SRC, nullptr },
+		                           { GDI_DPna, bmp_SRC, nullptr },
+		                           { GDI_Pn, bmp_SRC, nullptr },
+		                           { GDI_PDna, bmp_SRC, nullptr },
+		                           { GDI_DPan, bmp_SRC, nullptr },
+		                           { GDI_DSan, bmp_SRC, nullptr },
+		                           { GDI_DSxn, bmp_SRC, nullptr },
+		                           { GDI_DPa, bmp_SRC, nullptr },
+		                           { GDI_DSTCOPY, bmp_SRC, nullptr },
+		                           { GDI_DPno, bmp_SRC, nullptr },
+		                           { GDI_SDno, bmp_SRC, nullptr },
+		                           { GDI_PDno, bmp_SRC, nullptr },
+		                           { GDI_DPo, bmp_SRC, nullptr } };
 	const UINT32 number_tests = sizeof(tests) / sizeof(tests[0]);
-	HGDI_BITMAP hBmpSrc = NULL;
-	HGDI_BITMAP hBmpDst = NULL;
-	HGDI_BITMAP hBmpDstOriginal = NULL;
-	HGDI_BRUSH brush = NULL;
+	HGDI_BITMAP hBmpSrc = nullptr;
+	HGDI_BITMAP hBmpDst = nullptr;
+	HGDI_BITMAP hBmpDstOriginal = nullptr;
+	HGDI_BRUSH brush = nullptr;
 	gdiPalette g;
 	gdiPalette* hPalette = &g;
 	g.format = DstFormat;
@@ -526,7 +526,7 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 			failed = TRUE;
 	}
 
-	gdi_SelectObject(hdcDst, NULL);
+	gdi_SelectObject(hdcDst, nullptr);
 	gdi_DeleteObject((HGDIOBJECT)brush);
 	rc = !failed;
 fail:

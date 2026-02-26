@@ -365,7 +365,7 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 {
 	UINT32 nSrcStep = 0;
 	UINT32 suboffset = 0;
-	BYTE* dstBuffer = NULL;
+	BYTE* dstBuffer = nullptr;
 	UINT32 pixelIndex = 0;
 	UINT32 pixelCount = 0;
 
@@ -584,7 +584,7 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 
 	if (!vBarEntry->pixels && vBarEntry->size)
 	{
-		WLog_ERR(TAG, "vBarEntry->pixels is NULL but vBarEntry->size is %" PRIu32 "",
+		WLog_ERR(TAG, "vBarEntry->pixels is nullptr but vBarEntry->size is %" PRIu32 "",
 		         vBarEntry->size);
 		return FALSE;
 	}
@@ -651,10 +651,10 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 		for (UINT32 i = 0; i < vBarCount; i++)
 		{
 			UINT32 vBarHeight = 0;
-			CLEAR_VBAR_ENTRY* vBarEntry = NULL;
-			CLEAR_VBAR_ENTRY* vBarShortEntry = NULL;
+			CLEAR_VBAR_ENTRY* vBarEntry = nullptr;
+			CLEAR_VBAR_ENTRY* vBarShortEntry = nullptr;
 			BOOL vBarUpdate = FALSE;
-			const BYTE* cpSrcPixel = NULL;
+			const BYTE* cpSrcPixel = nullptr;
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				return FALSE;
@@ -770,8 +770,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 
 			if (vBarUpdate)
 			{
-				BYTE* pSrcPixel = NULL;
-				BYTE* dstBuffer = NULL;
+				BYTE* pSrcPixel = nullptr;
+				BYTE* dstBuffer = nullptr;
 
 				if (clear->VBarStorageCursor >= CLEARCODEC_VBAR_SIZE)
 				{
@@ -891,7 +891,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 					    &pDstData[((nYDstRel + y) * nDstStep) +
 					              ((nXDstRel + i) * FreeRDPGetBytesPerPixel(DstFormat))];
 					UINT32 color = FreeRDPReadColor(cpSrcPixel, clear->format);
-					color = FreeRDPConvertColor(color, clear->format, DstFormat, NULL);
+					color = FreeRDPConvertColor(color, clear->format, DstFormat, nullptr);
 
 					if (!FreeRDPWriteColor(pDstPixel8, DstFormat, color))
 						return FALSE;
@@ -916,7 +916,7 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 	UINT16 glyphIndex = 0;
 
 	if (ppGlyphData)
-		*ppGlyphData = NULL;
+		*ppGlyphData = nullptr;
 
 	if ((glyphFlags & CLEARCODEC_FLAG_GLYPH_HIT) && !(glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX))
 	{
@@ -948,11 +948,11 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 	{
 		UINT32 nSrcStep = 0;
 		CLEAR_GLYPH_ENTRY* glyphEntry = &(clear->GlyphCache[glyphIndex]);
-		BYTE* glyphData = NULL;
+		BYTE* glyphData = nullptr;
 
 		if (!glyphEntry)
 		{
-			WLog_ERR(TAG, "clear->GlyphCache[%" PRIu16 "]=NULL", glyphIndex);
+			WLog_ERR(TAG, "clear->GlyphCache[%" PRIu16 "]=nullptr", glyphIndex);
 			return FALSE;
 		}
 
@@ -960,7 +960,7 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 
 		if (!glyphData)
 		{
-			WLog_ERR(TAG, "clear->GlyphCache[%" PRIu16 "]->pixels=NULL", glyphIndex);
+			WLog_ERR(TAG, "clear->GlyphCache[%" PRIu16 "]->pixels=nullptr", glyphIndex);
 			return FALSE;
 		}
 
@@ -1001,7 +1001,7 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 
 		if (!glyphEntry->pixels)
 		{
-			WLog_ERR(TAG, "glyphEntry->pixels=NULL");
+			WLog_ERR(TAG, "glyphEntry->pixels=nullptr");
 			return FALSE;
 		}
 
@@ -1036,8 +1036,8 @@ INT32 clear_decompress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RE
 	UINT32 bandsByteCount = 0;
 	UINT32 subcodecByteCount = 0;
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
-	wStream* s = NULL;
-	BYTE* glyphData = NULL;
+	wStream* s = nullptr;
+	BYTE* glyphData = nullptr;
 
 	if (!pDstData)
 		return -1002;
@@ -1242,7 +1242,7 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 	CLEAR_CONTEXT* clear = (CLEAR_CONTEXT*)winpr_aligned_calloc(1, sizeof(CLEAR_CONTEXT), 32);
 
 	if (!clear)
-		return NULL;
+		return nullptr;
 
 	clear->Compressor = Compressor;
 	clear->nsc = nsc_context_new();
@@ -1268,7 +1268,7 @@ error_nsc:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	clear_context_free(clear);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void clear_context_free(CLEAR_CONTEXT* WINPR_RESTRICT clear)

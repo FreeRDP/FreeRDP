@@ -29,13 +29,13 @@
 #if defined(SSE_AVX_INTRINSICS_ENABLED)
 #include <emmintrin.h>
 
-static primitives_t* generic = NULL;
+static primitives_t* generic = nullptr;
 
 static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 ulen)
 {
 	size_t len = ulen;
 	BYTE byte = 0;
-	BYTE* dptr = NULL;
+	BYTE* dptr = nullptr;
 	__m128i xmm0;
 	size_t count = 0;
 

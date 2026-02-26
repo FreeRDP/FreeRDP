@@ -826,7 +826,7 @@ HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor)
 	HGDI_BRUSH hBrush = (HGDI_BRUSH)calloc(1, sizeof(GDI_BRUSH));
 
 	if (!hBrush)
-		return NULL;
+		return nullptr;
 
 	hBrush->objectType = GDIOBJECT_BRUSH;
 	hBrush->style = GDI_BS_SOLID;
@@ -845,7 +845,7 @@ HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp)
 	HGDI_BRUSH hBrush = (HGDI_BRUSH)calloc(1, sizeof(GDI_BRUSH));
 
 	if (!hBrush)
-		return NULL;
+		return nullptr;
 
 	hBrush->objectType = GDIOBJECT_BRUSH;
 	hBrush->style = GDI_BS_PATTERN;
@@ -858,7 +858,7 @@ HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp)
 	HGDI_BRUSH hBrush = (HGDI_BRUSH)calloc(1, sizeof(GDI_BRUSH));
 
 	if (!hBrush)
-		return NULL;
+		return nullptr;
 
 	hBrush->objectType = GDIOBJECT_BRUSH;
 	hBrush->style = GDI_BS_HATCHED;
