@@ -349,7 +349,7 @@ extern "C"
 	UWAC_API void UwacInstallErrorHandler(UwacErrorHandler handler);
 
 	/**
-	 *	Opens the corresponding wayland display, using NULL you will open the default
+	 *	Opens the corresponding wayland display, using nullptr you will open the default
 	 *	display.
 	 *
 	 * @param name the name of the display to open
@@ -436,7 +436,7 @@ extern "C"
 	 *
 	 * @param display the display to query
 	 * @param index index of the output
-	 * @return the given UwacOutput, NULL if something failed (so you should query
+	 * @return the given UwacOutput, nullptr if something failed (so you should query
 	 *UwacDisplayGetLastError() to have the reason)
 	 */
 	UWAC_API const UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index);
@@ -466,7 +466,7 @@ extern "C"
 	 * @param width the width of the window
 	 * @param height the height of the window
 	 * @param format format to use for the SHM surface
-	 * @return the created UwacWindow, NULL if something failed (use UwacDisplayGetLastError() to
+	 * @return the created UwacWindow, nullptr if something failed (use UwacDisplayGetLastError() to
 	 *know more about this)
 	 */
 	UWAC_API UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t height,
@@ -649,8 +649,8 @@ extern "C"
 
 	/**
 	 * @brief UwacSeatSetMouseCursor Sets the specified image as the new mouse cursor.
-	 *                               Special values: If data == NULL && length == 0
-	 *                               the cursor is hidden, if data == NULL && length != 0
+	 *                               Special values: If data == nullptr && length == 0
+	 *                               the cursor is hidden, if data == nullptr && length != 0
 	 *                               the default system cursor is used.
 	 *
 	 * @param seat   The UwacSeat to apply the cursor image to
