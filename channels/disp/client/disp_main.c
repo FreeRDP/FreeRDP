@@ -63,8 +63,8 @@ disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback,
                                              const DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
 	UINT status = 0;
-	wStream* s = NULL;
-	DISP_PLUGIN* disp = NULL;
+	wStream* s = nullptr;
+	DISP_PLUGIN* disp = nullptr;
 	UINT32 MonitorLayoutSize = 0;
 	DISPLAY_CONTROL_HEADER header = WINPR_C_ARRAY_INIT;
 
@@ -78,7 +78,7 @@ disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 	header.length = 8 + 8 + (NumMonitors * MonitorLayoutSize);
 	header.type = DISPLAY_CONTROL_PDU_TYPE_MONITOR_LAYOUT;
 
-	s = Stream_New(NULL, header.length);
+	s = Stream_New(nullptr, header.length);
 
 	if (!s)
 	{
@@ -144,7 +144,7 @@ disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 out:
 	Stream_SealLength(s);
 	status = callback->channel->Write(callback->channel, (UINT32)Stream_Length(s), Stream_Buffer(s),
-	                                  NULL);
+	                                  nullptr);
 	Stream_Free(s, TRUE);
 	return status;
 }
@@ -156,8 +156,8 @@ out:
  */
 static UINT disp_recv_display_control_caps_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	DISP_PLUGIN* disp = NULL;
-	DispClientContext* context = NULL;
+	DISP_PLUGIN* disp = nullptr;
+	DispClientContext* context = nullptr;
 	UINT ret = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(callback);
@@ -256,8 +256,8 @@ static UINT disp_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors,
                                      DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
-	DISP_PLUGIN* disp = NULL;
-	GENERIC_CHANNEL_CALLBACK* callback = NULL;
+	DISP_PLUGIN* disp = nullptr;
+	GENERIC_CHANNEL_CALLBACK* callback = nullptr;
 
 	WINPR_ASSERT(context);
 
@@ -278,7 +278,7 @@ static UINT disp_plugin_initialize(GENERIC_DYNVC_PLUGIN* base,
                                    WINPR_ATTR_UNUSED rdpContext* rcontext,
                                    WINPR_ATTR_UNUSED rdpSettings* settings)
 {
-	DispClientContext* context = NULL;
+	DispClientContext* context = nullptr;
 	DISP_PLUGIN* disp = (DISP_PLUGIN*)base;
 
 	WINPR_ASSERT(disp);
@@ -310,8 +310,9 @@ static void disp_plugin_terminated(GENERIC_DYNVC_PLUGIN* base)
 	free(disp->context);
 }
 
-static const IWTSVirtualChannelCallback disp_callbacks = { disp_on_data_received, NULL, /* Open */
-	                                                       disp_on_close, NULL };
+static const IWTSVirtualChannelCallback disp_callbacks = { disp_on_data_received,
+	                                                       nullptr, /* Open */
+	                                                       disp_on_close, nullptr };
 
 /**
  * Function description

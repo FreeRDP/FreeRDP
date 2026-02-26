@@ -32,7 +32,7 @@
 
 static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name)
 {
-	ITSMFDecoder* decoder = NULL;
+	ITSMFDecoder* decoder = nullptr;
 	union
 	{
 		PVIRTUALCHANNELENTRY pvce;
@@ -41,14 +41,14 @@ static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name)
 	cnv.pvce = freerdp_load_channel_addin_entry("tsmf", name, "decoder", 0);
 
 	if (!cnv.entry)
-		return NULL;
+		return nullptr;
 
 	const UINT rc = cnv.entry(&decoder);
 
 	if ((rc != CHANNEL_RC_OK) || !decoder)
 	{
 		WLog_ERR(TAG, "failed to call export function in %s", name);
-		return NULL;
+		return nullptr;
 	}
 
 	return decoder;
@@ -64,7 +64,7 @@ static BOOL tsmf_decoder_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* med
 
 ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type)
 {
-	ITSMFDecoder* decoder = NULL;
+	ITSMFDecoder* decoder = nullptr;
 
 	if (name)
 		decoder = tsmf_load_decoder_by_name(name);
@@ -84,7 +84,7 @@ ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type)
 		if (!tsmf_decoder_set_format(decoder, media_type))
 		{
 			decoder->Free(decoder);
-			decoder = NULL;
+			decoder = nullptr;
 		}
 	}
 
@@ -93,7 +93,7 @@ ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type)
 
 BOOL tsmf_check_decoder_available(const char* name)
 {
-	ITSMFDecoder* decoder = NULL;
+	ITSMFDecoder* decoder = nullptr;
 	BOOL retValue = FALSE;
 
 	if (name)
@@ -113,7 +113,7 @@ BOOL tsmf_check_decoder_available(const char* name)
 	if (decoder)
 	{
 		decoder->Free(decoder);
-		decoder = NULL;
+		decoder = nullptr;
 		retValue = TRUE;
 	}
 

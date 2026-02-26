@@ -41,7 +41,7 @@ static SLresult openSLCreateEngine(OPENSL_STREAM* p)
 {
 	SLresult result;
 	// create engine
-	result = slCreateEngine(&(p->engineObject), 0, NULL, 0, NULL, NULL);
+	result = slCreateEngine(&(p->engineObject), 0, nullptr, 0, nullptr, nullptr);
 	DEBUG_SND("engineObject=%p", (void*)p->engineObject);
 
 	if (result != SL_RESULT_SUCCESS)
@@ -169,7 +169,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		SLDataSource audioSrc = { &loc_bufq, &format_pcm };
 		// configure audio sink
 		SLDataLocator_OutputMix loc_outmix = { SL_DATALOCATOR_OUTPUTMIX, p->outputMixObject };
-		SLDataSink audioSnk = { &loc_outmix, NULL };
+		SLDataSink audioSnk = { &loc_outmix, nullptr };
 		// create audio player
 		const SLInterfaceID ids1[] = { SL_IID_ANDROIDSIMPLEBUFFERQUEUE, SL_IID_VOLUME };
 		const SLboolean req1[] = { SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE };
@@ -243,29 +243,29 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 static void openSLDestroyEngine(OPENSL_STREAM* p)
 {
 	// destroy buffer queue audio player object, and invalidate all associated interfaces
-	if (p->bqPlayerObject != NULL)
+	if (p->bqPlayerObject != nullptr)
 	{
 		(*p->bqPlayerObject)->Destroy(p->bqPlayerObject);
-		p->bqPlayerObject = NULL;
-		p->bqPlayerVolume = NULL;
-		p->bqPlayerPlay = NULL;
-		p->bqPlayerBufferQueue = NULL;
-		p->bqPlayerEffectSend = NULL;
+		p->bqPlayerObject = nullptr;
+		p->bqPlayerVolume = nullptr;
+		p->bqPlayerPlay = nullptr;
+		p->bqPlayerBufferQueue = nullptr;
+		p->bqPlayerEffectSend = nullptr;
 	}
 
 	// destroy output mix object, and invalidate all associated interfaces
-	if (p->outputMixObject != NULL)
+	if (p->outputMixObject != nullptr)
 	{
 		(*p->outputMixObject)->Destroy(p->outputMixObject);
-		p->outputMixObject = NULL;
+		p->outputMixObject = nullptr;
 	}
 
 	// destroy engine object, and invalidate all associated interfaces
-	if (p->engineObject != NULL)
+	if (p->engineObject != nullptr)
 	{
 		(*p->engineObject)->Destroy(p->engineObject);
-		p->engineObject = NULL;
-		p->engineEngine = NULL;
+		p->engineObject = nullptr;
+		p->engineEngine = nullptr;
 	}
 }
 
@@ -276,7 +276,7 @@ OPENSL_STREAM* android_OpenAudioDevice(int sr, int outchannels, int bufferframes
 	p = (OPENSL_STREAM*)calloc(1, sizeof(OPENSL_STREAM));
 
 	if (!p)
-		return NULL;
+		return nullptr;
 
 	p->queuesize = bufferframes;
 	p->outchannels = outchannels;
@@ -285,13 +285,13 @@ OPENSL_STREAM* android_OpenAudioDevice(int sr, int outchannels, int bufferframes
 	if (openSLCreateEngine(p) != SL_RESULT_SUCCESS)
 	{
 		android_CloseAudioDevice(p);
-		return NULL;
+		return nullptr;
 	}
 
 	if (openSLPlayOpen(p) != SL_RESULT_SUCCESS)
 	{
 		android_CloseAudioDevice(p);
-		return NULL;
+		return nullptr;
 	}
 
 	p->queue = Queue_New(TRUE, -1, -1);
@@ -299,7 +299,7 @@ OPENSL_STREAM* android_OpenAudioDevice(int sr, int outchannels, int bufferframes
 	if (!p->queue)
 	{
 		android_CloseAudioDevice(p);
-		return NULL;
+		return nullptr;
 	}
 
 	return p;
@@ -308,7 +308,7 @@ OPENSL_STREAM* android_OpenAudioDevice(int sr, int outchannels, int bufferframes
 // close the android audio device
 void android_CloseAudioDevice(OPENSL_STREAM* p)
 {
-	if (p == NULL)
+	if (p == nullptr)
 		return;
 
 	openSLDestroyEngine(p);

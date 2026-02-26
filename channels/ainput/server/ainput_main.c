@@ -89,10 +89,10 @@ static BOOL ainput_server_is_open(ainput_server_context* context)
 static UINT ainput_server_open_channel(ainput_server* ainput)
 {
 	DWORD Error = 0;
-	HANDLE hEvent = NULL;
+	HANDLE hEvent = nullptr;
 	DWORD StartTick = 0;
 	DWORD BytesReturned = 0;
-	PULONG pSessionId = NULL;
+	PULONG pSessionId = nullptr;
 
 	WINPR_ASSERT(ainput);
 
@@ -108,7 +108,7 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 	hEvent = WTSVirtualChannelManagerGetEventHandle(ainput->context.vcm);
 	StartTick = GetTickCount();
 
-	while (ainput->ainput_channel == NULL)
+	while (ainput->ainput_channel == nullptr)
 	{
 		if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
 		{
@@ -158,7 +158,7 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 static UINT ainput_server_send_version(ainput_server* ainput)
 {
 	ULONG written = 0;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(ainput);
 
@@ -216,9 +216,9 @@ static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 
 static HANDLE ainput_server_get_channel_handle(ainput_server* ainput)
 {
-	void* buffer = NULL;
+	void* buffer = nullptr;
 	DWORD BytesReturned = 0;
-	HANDLE ChannelEvent = NULL;
+	HANDLE ChannelEvent = nullptr;
 
 	WINPR_ASSERT(ainput);
 
@@ -293,7 +293,7 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 	}
 
 	(void)WTSVirtualChannelClose(ainput->ainput_channel);
-	ainput->ainput_channel = NULL;
+	ainput->ainput_channel = nullptr;
 
 	if (error && ainput->context.rdpcontext)
 		setChannelError(ainput->context.rdpcontext, error,
@@ -314,21 +314,21 @@ static UINT ainput_server_open(ainput_server_context* context)
 
 	WINPR_ASSERT(ainput);
 
-	if (!ainput->externalThread && (ainput->thread == NULL))
+	if (!ainput->externalThread && (ainput->thread == nullptr))
 	{
-		ainput->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		ainput->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 		if (!ainput->stopEvent)
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			return ERROR_INTERNAL_ERROR;
 		}
 
-		ainput->thread = CreateThread(NULL, 0, ainput_server_thread_func, ainput, 0, NULL);
+		ainput->thread = CreateThread(nullptr, 0, ainput_server_thread_func, ainput, 0, nullptr);
 		if (!ainput->thread)
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
 			(void)CloseHandle(ainput->stopEvent);
-			ainput->stopEvent = NULL;
+			ainput->stopEvent = nullptr;
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
@@ -362,15 +362,15 @@ static UINT ainput_server_close(ainput_server_context* context)
 
 		(void)CloseHandle(ainput->thread);
 		(void)CloseHandle(ainput->stopEvent);
-		ainput->thread = NULL;
-		ainput->stopEvent = NULL;
+		ainput->thread = nullptr;
+		ainput->stopEvent = nullptr;
 	}
 	if (ainput->externalThread)
 	{
 		if (ainput->state != AINPUT_INITIAL)
 		{
 			(void)WTSVirtualChannelClose(ainput->ainput_channel);
-			ainput->ainput_channel = NULL;
+			ainput->ainput_channel = nullptr;
 			ainput->state = AINPUT_INITIAL;
 		}
 	}
@@ -401,7 +401,7 @@ ainput_server_context* ainput_server_context_new(HANDLE vcm)
 	ainput_server* ainput = (ainput_server*)calloc(1, sizeof(ainput_server));
 
 	if (!ainput)
-		return NULL;
+		return nullptr;
 
 	ainput->context.vcm = vcm;
 	ainput->context.Open = ainput_server_open;
@@ -411,7 +411,7 @@ ainput_server_context* ainput_server_context_new(HANDLE vcm)
 	ainput->context.Poll = ainput_server_context_poll;
 	ainput->context.ChannelHandle = ainput_server_context_handle;
 
-	ainput->buffer = Stream_New(NULL, 4096);
+	ainput->buffer = Stream_New(nullptr, 4096);
 	if (!ainput->buffer)
 		goto fail;
 	return &ainput->context;
@@ -420,7 +420,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	ainput_server_context_free(&ainput->context);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void ainput_server_context_free(ainput_server_context* context)
@@ -447,7 +447,7 @@ static UINT ainput_process_message(ainput_server* ainput)
 	WINPR_ASSERT(s);
 
 	Stream_SetPosition(s, 0);
-	const BOOL rc = WTSVirtualChannelRead(ainput->ainput_channel, 0, NULL, 0, &BytesReturned);
+	const BOOL rc = WTSVirtualChannelRead(ainput->ainput_channel, 0, nullptr, 0, &BytesReturned);
 	if (!rc)
 		goto out;
 
@@ -546,7 +546,7 @@ UINT ainput_server_context_poll_int(ainput_server_context* context)
 			} buffer;
 			DWORD BytesReturned = 0;
 
-			buffer.pv = NULL;
+			buffer.pv = nullptr;
 
 			if (WTSVirtualChannelQuery(ainput->ainput_channel, WTSVirtualChannelReady, &buffer.pv,
 			                           &BytesReturned) != TRUE)

@@ -108,7 +108,7 @@ static UINT location_channel_send(IWTSVirtualChannel* channel, wStream* s)
 
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(channel->Write);
-	return channel->Write(channel, (UINT32)len, Stream_Buffer(s), NULL);
+	return channel->Write(channel, (UINT32)len, Stream_Buffer(s), nullptr);
 }
 
 static UINT location_send_client_ready_pdu(const LOCATION_CALLBACK* callback)
@@ -128,7 +128,7 @@ static UINT location_send_client_ready_pdu(const LOCATION_CALLBACK* callback)
 
 static const char* location_version_str(UINT32 version, char* buffer, size_t size)
 {
-	const char* str = NULL;
+	const char* str = nullptr;
 	switch (version)
 	{
 		case RDPLOCATION_PROTOCOL_VERSION_100:
@@ -198,7 +198,7 @@ static UINT location_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 			if (!plugin->context.LocationStart)
 			{
 				WLog_Print(plugin->baseDynPlugin.log, WLOG_WARN,
-				           "LocationStart=NULL, no location data will be sent");
+				           "LocationStart=nullptr, no location data will be sent");
 				return CHANNEL_RC_OK;
 			}
 
@@ -368,10 +368,10 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 				RDPLOCATION_BASE_LOCATION3D_PDU pdu = { .latitude = va_arg(ap, double),
 					                                    .longitude = va_arg(ap, double),
 					                                    .altitude = va_arg(ap, INT32),
-					                                    .speed = NULL,
-					                                    .heading = NULL,
-					                                    .horizontalAccuracy = NULL,
-					                                    .source = NULL };
+					                                    .speed = nullptr,
+					                                    .heading = nullptr,
+					                                    .horizontalAccuracy = nullptr,
+					                                    .source = nullptr };
 
 				if ((count > 3) && (callback->clientVersion >= RDPLOCATION_PROTOCOL_VERSION_200))
 				{
@@ -394,8 +394,8 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 			{
 				RDPLOCATION_LOCATION2D_DELTA_PDU pdu = { .latitudeDelta = va_arg(ap, double),
 					                                     .longitudeDelta = va_arg(ap, double),
-					                                     .speedDelta = NULL,
-					                                     .headingDelta = NULL };
+					                                     .speedDelta = nullptr,
+					                                     .headingDelta = nullptr };
 
 				double speedDelta = FP_NAN;
 				double headingDelta = FP_NAN;
@@ -420,8 +420,8 @@ static UINT location_send(LocationClientContext* context, LOCATION_PDUTYPE type,
 				RDPLOCATION_LOCATION3D_DELTA_PDU pdu = { .latitudeDelta = va_arg(ap, double),
 					                                     .longitudeDelta = va_arg(ap, double),
 					                                     .altitudeDelta = va_arg(ap, INT32),
-					                                     .speedDelta = NULL,
-					                                     .headingDelta = NULL };
+					                                     .speedDelta = nullptr,
+					                                     .headingDelta = nullptr };
 				if ((count > 3) && (callback->clientVersion >= RDPLOCATION_PROTOCOL_VERSION_200))
 				{
 					speedDelta = va_arg(ap, double);
@@ -476,8 +476,8 @@ static UINT location_init(GENERIC_DYNVC_PLUGIN* plugin, WINPR_ATTR_UNUSED rdpCon
 }
 
 static const IWTSVirtualChannelCallback location_callbacks = { location_on_data_received,
-	                                                           NULL, /* Open */
-	                                                           location_on_close, NULL };
+	                                                           nullptr, /* Open */
+	                                                           location_on_close, nullptr };
 
 /**
  * Function description
@@ -488,5 +488,5 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE location_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS
 {
 	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, LOCATION_DVC_CHANNEL_NAME,
 	                                      sizeof(LOCATION_PLUGIN), sizeof(LOCATION_CALLBACK),
-	                                      &location_callbacks, location_init, NULL);
+	                                      &location_callbacks, location_init, nullptr);
 }

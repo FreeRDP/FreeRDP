@@ -73,10 +73,10 @@ static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 	int tmp = 0;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 
-	if (oss == NULL || oss->pcm_handle != -1)
+	if (oss == nullptr || oss->pcm_handle != -1)
 		return FALSE;
 
-	if (device == NULL) /* Default device. */
+	if (device == nullptr) /* Default device. */
 	{
 		strncpy(oss->dev_name, "/dev/dsp", sizeof(oss->dev_name));
 	}
@@ -119,7 +119,7 @@ static BOOL tsmf_oss_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UIN
 	int tmp = 0;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 
-	if (oss == NULL || oss->pcm_handle == -1)
+	if (oss == nullptr || oss->pcm_handle == -1)
 		return FALSE;
 
 	oss->sample_rate = sample_rate;
@@ -156,10 +156,10 @@ static BOOL tsmf_oss_play(ITSMFAudioDevice* audio, const BYTE* data, UINT32 data
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 	DEBUG_TSMF("tsmf_oss_play: data_size %" PRIu32 "", data_size);
 
-	if (oss == NULL || oss->pcm_handle == -1)
+	if (oss == nullptr || oss->pcm_handle == -1)
 		return FALSE;
 
-	if (data == NULL || data_size == 0)
+	if (data == nullptr || data_size == 0)
 		return TRUE;
 
 	offset = 0;
@@ -186,7 +186,7 @@ static UINT64 tsmf_oss_get_latency(ITSMFAudioDevice* audio)
 	UINT64 latency = 0;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 
-	if (oss == NULL)
+	if (oss == nullptr)
 		return 0;
 
 	// latency = ((oss->data_size_last / (oss->bits_per_sample / 8)) * oss->sample_rate);
@@ -203,7 +203,7 @@ static void tsmf_oss_free(ITSMFAudioDevice* audio)
 {
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 
-	if (oss == NULL)
+	if (oss == nullptr)
 		return;
 
 	if (oss->pcm_handle != -1)
@@ -219,7 +219,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE oss_freerdp_tsmf_client_audio_subsystem_entry
 {
 	ITSMFAudioDevice** sptr = (ITSMFAudioDevice**)ptr;
 	WINPR_ASSERT(sptr);
-	*sptr = NULL;
+	*sptr = nullptr;
 
 	TSMFOssAudioDevice* oss = calloc(1, sizeof(TSMFOssAudioDevice));
 	if (!oss)

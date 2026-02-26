@@ -262,10 +262,10 @@ static void ecam_dev_stop_stream(CameraDevice* dev, size_t streamIndex)
 	}
 
 	Stream_Free(stream->sampleRespBuffer, TRUE);
-	stream->sampleRespBuffer = NULL;
+	stream->sampleRespBuffer = nullptr;
 
 	Stream_Free(stream->pendingSample, TRUE);
-	stream->pendingSample = NULL;
+	stream->pendingSample = nullptr;
 
 	ecam_encoder_context_free(stream);
 }
@@ -344,7 +344,7 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
 		return ERROR_INVALID_DATA;
 	}
 
-	stream->sampleRespBuffer = Stream_New(NULL, ECAM_SAMPLE_RESPONSE_BUFFER_SIZE);
+	stream->sampleRespBuffer = Stream_New(nullptr, ECAM_SAMPLE_RESPONSE_BUFFER_SIZE);
 	if (!stream->sampleRespBuffer)
 	{
 		WLog_ERR(TAG, "Stream_New failed");
@@ -367,7 +367,7 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
 		return ERROR_INVALID_DATA;
 	}
 
-	stream->pendingSample = Stream_New(NULL, 4ull * mediaType.Width * mediaType.Height);
+	stream->pendingSample = Stream_New(nullptr, 4ull * mediaType.Width * mediaType.Height);
 	if (!stream->pendingSample)
 	{
 		WLog_ERR(TAG, "pending stream failed");
@@ -418,7 +418,7 @@ static UINT ecam_dev_send_current_media_type_response(CameraDevice* dev,
 
 	WINPR_ASSERT(dev);
 
-	wStream* s = Stream_New(NULL, CAM_HEADER_SIZE + sizeof(CAM_MEDIA_TYPE_DESCRIPTION));
+	wStream* s = Stream_New(nullptr, CAM_HEADER_SIZE + sizeof(CAM_MEDIA_TYPE_DESCRIPTION));
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed");
@@ -523,8 +523,8 @@ static UINT ecam_dev_send_media_type_list_response(CameraDevice* dev,
 
 	WINPR_ASSERT(dev);
 
-	wStream* s = Stream_New(NULL, CAM_HEADER_SIZE + ECAM_MAX_MEDIA_TYPE_DESCRIPTORS *
-	                                                    sizeof(CAM_MEDIA_TYPE_DESCRIPTION));
+	wStream* s = Stream_New(nullptr, CAM_HEADER_SIZE + ECAM_MAX_MEDIA_TYPE_DESCRIPTORS *
+	                                                       sizeof(CAM_MEDIA_TYPE_DESCRIPTION));
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed");
@@ -552,7 +552,7 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 {
 	UINT error = CHANNEL_RC_OK;
 	BYTE streamIndex = 0;
-	CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes = NULL;
+	CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes = nullptr;
 	size_t nMediaTypes = ECAM_MAX_MEDIA_TYPE_DESCRIPTORS;
 
 	WINPR_ASSERT(dev);
@@ -624,7 +624,7 @@ static UINT ecam_dev_send_stream_list_response(CameraDevice* dev,
 
 	WINPR_ASSERT(dev);
 
-	wStream* s = Stream_New(NULL, CAM_HEADER_SIZE + sizeof(CAM_STREAM_DESCRIPTION));
+	wStream* s = Stream_New(nullptr, CAM_HEADER_SIZE + sizeof(CAM_STREAM_DESCRIPTION));
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed");
@@ -804,7 +804,7 @@ static UINT ecam_dev_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	/* make sure this channel is not used for sample responses */
 	for (size_t i = 0; i < ECAM_DEVICE_MAX_STREAMS; i++)
 		if (dev->streams[i].hSampleReqChannel == hchannel)
-			dev->streams[i].hSampleReqChannel = NULL;
+			dev->streams[i].hSampleReqChannel = nullptr;
 
 	free(hchannel);
 	return CHANNEL_RC_OK;
@@ -849,7 +849,7 @@ static UINT ecam_dev_on_new_channel_connection(IWTSListenerCallback* pListenerCa
 /**
  * Function description
  *
- * @return CameraDevice pointer or NULL in case of error
+ * @return CameraDevice pointer or nullptr in case of error
  */
 CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId,
                               WINPR_ATTR_UNUSED const char* deviceName)
@@ -867,7 +867,7 @@ CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId,
 	if (!dev)
 	{
 		WLog_ERR(TAG, "calloc failed");
-		return NULL;
+		return nullptr;
 	}
 
 	dev->ecam = ecam;
@@ -879,7 +879,7 @@ CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId,
 	{
 		free(dev);
 		WLog_ERR(TAG, "calloc failed");
-		return NULL;
+		return nullptr;
 	}
 
 	dev->hlistener->iface.OnNewChannelConnection = ecam_dev_on_new_channel_connection;
@@ -891,7 +891,7 @@ CameraDevice* ecam_dev_create(CameraPlugin* ecam, const char* deviceId,
 		free(dev->hlistener);
 		free(dev);
 		WLog_ERR(TAG, "CreateListener failed");
-		return NULL;
+		return nullptr;
 	}
 
 	return dev;

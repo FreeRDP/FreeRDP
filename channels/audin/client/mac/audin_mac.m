@@ -115,7 +115,7 @@ static BOOL audin_mac_format_supported(IAudinDevice *device, const AUDIO_FORMAT 
 	if (!mac->isAuthorized)
 		return FALSE;
 
-	if (device == NULL || format == NULL)
+	if (device == nullptr || format == nullptr)
 		return FALSE;
 
 	if (format->nChannels != 2)
@@ -142,7 +142,7 @@ static UINT audin_mac_set_format(IAudinDevice *device, const AUDIO_FORMAT *forma
 	if (!mac->isAuthorized)
 		return ERROR_INTERNAL_ERROR;
 
-	if (device == NULL || format == NULL)
+	if (device == nullptr || format == nullptr)
 		return ERROR_INVALID_PARAMETER;
 
 	mac->FramesPerPacket = FramesPerPacket;
@@ -186,7 +186,7 @@ static void mac_audio_queue_input_cb(void *aqData, AudioQueueRef inAQ, AudioQueu
 	if (buffer_size > 0)
 		error = mac->receive(&mac->format, buffer, buffer_size, mac->user_data);
 
-	AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
+	AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, nullptr);
 
 	if (error)
 	{
@@ -205,7 +205,7 @@ static UINT audin_mac_close(IAudinDevice *device)
 	if (!mac->isAuthorized)
 		return ERROR_INTERNAL_ERROR;
 
-	if (device == NULL)
+	if (device == nullptr)
 		return ERROR_INVALID_PARAMETER;
 
 	if (mac->isOpen)
@@ -233,11 +233,11 @@ static UINT audin_mac_close(IAudinDevice *device)
 			         winpr_strerror(errCode, errString, sizeof(errString)), errCode);
 		}
 
-		mac->audioQueue = NULL;
+		mac->audioQueue = nullptr;
 	}
 
-	mac->receive = NULL;
-	mac->user_data = NULL;
+	mac->receive = nullptr;
+	mac->user_data = nullptr;
 	return errCode;
 }
 
@@ -253,7 +253,7 @@ static UINT audin_mac_open(IAudinDevice *device, AudinReceive receive, void *use
 
 	mac->receive = receive;
 	mac->user_data = user_data;
-	devStat = AudioQueueNewInput(&(mac->audioFormat), mac_audio_queue_input_cb, mac, NULL,
+	devStat = AudioQueueNewInput(&(mac->audioFormat), mac_audio_queue_input_cb, mac, nullptr,
 	                             kCFRunLoopCommonModes, 0, &(mac->audioQueue));
 
 	if (devStat != 0)
@@ -278,7 +278,7 @@ static UINT audin_mac_open(IAudinDevice *device, AudinReceive receive, void *use
 			goto err_out;
 		}
 
-		devStat = AudioQueueEnqueueBuffer(mac->audioQueue, mac->audioBuffers[index], 0, NULL);
+		devStat = AudioQueueEnqueueBuffer(mac->audioQueue, mac->audioBuffers[index], 0, nullptr);
 
 		if (devStat != 0)
 		{
@@ -289,7 +289,7 @@ static UINT audin_mac_open(IAudinDevice *device, AudinReceive receive, void *use
 		}
 	}
 
-	devStat = AudioQueueStart(mac->audioQueue, NULL);
+	devStat = AudioQueueStart(mac->audioQueue, nullptr);
 
 	if (devStat != 0)
 	{
@@ -311,7 +311,7 @@ static UINT audin_mac_free(IAudinDevice *device)
 	AudinMacDevice *mac = (AudinMacDevice *)device;
 	int error;
 
-	if (device == NULL)
+	if (device == nullptr)
 		return ERROR_INVALID_PARAMETER;
 
 	if ((error = audin_mac_close(device)))
@@ -331,9 +331,11 @@ static UINT audin_mac_parse_addin_args(AudinMacDevice *device, const ADDIN_ARGV 
 	char *str_num, *eptr;
 	DWORD flags;
 	const COMMAND_LINE_ARGUMENT_A *arg;
-	COMMAND_LINE_ARGUMENT_A audin_mac_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
-		                                           NULL, NULL, -1, NULL, "audio device name" },
-		                                         { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
+	COMMAND_LINE_ARGUMENT_A audin_mac_args[] = {
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", nullptr, nullptr, -1, nullptr,
+		  "audio device name" },
+		{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
+	};
 
 	AudinMacDevice *mac = (AudinMacDevice *)device;
 
@@ -342,8 +344,8 @@ static UINT audin_mac_parse_addin_args(AudinMacDevice *device, const ADDIN_ARGV 
 
 	flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status =
-	    CommandLineParseArgumentsA(args->argc, args->argv, audin_mac_args, flags, mac, NULL, NULL);
+	status = CommandLineParseArgumentsA(args->argc, args->argv, audin_mac_args, flags, mac, nullptr,
+	                                    nullptr);
 
 	if (status < 0)
 		return ERROR_INVALID_PARAMETER;
@@ -375,7 +377,7 @@ static UINT audin_mac_parse_addin_args(AudinMacDevice *device, const ADDIN_ARGV 
 			free(str_num);
 		}
 		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 
 	return CHANNEL_RC_OK;
 }

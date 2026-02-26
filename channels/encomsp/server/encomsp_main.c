@@ -143,22 +143,22 @@ static UINT encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s
 
 static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 {
-	wStream* s = NULL;
+	wStream* s = nullptr;
 	DWORD nCount = 0;
-	void* buffer = NULL;
+	void* buffer = nullptr;
 	HANDLE events[8];
-	HANDLE ChannelEvent = NULL;
+	HANDLE ChannelEvent = nullptr;
 	DWORD BytesReturned = 0;
-	ENCOMSP_ORDER_HEADER* header = NULL;
-	EncomspServerContext* context = NULL;
+	ENCOMSP_ORDER_HEADER* header = nullptr;
+	EncomspServerContext* context = nullptr;
 	UINT error = CHANNEL_RC_OK;
 	DWORD status = 0;
 	context = (EncomspServerContext*)arg;
 
-	buffer = NULL;
+	buffer = nullptr;
 	BytesReturned = 0;
-	ChannelEvent = NULL;
-	s = Stream_New(NULL, 4096);
+	ChannelEvent = nullptr;
+	s = Stream_New(nullptr, 4096);
 
 	if (!s)
 	{
@@ -205,7 +205,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 			break;
 		}
 
-		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned))
+		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, nullptr, 0, &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			error = ERROR_INTERNAL_ERROR;
@@ -276,18 +276,18 @@ static UINT encomsp_server_start(EncomspServerContext* context)
 	if (!context->priv->ChannelHandle)
 		return CHANNEL_RC_BAD_CHANNEL;
 
-	if (!(context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(context->priv->StopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
 		WLog_ERR(TAG, "CreateEvent failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
 	if (!(context->priv->Thread =
-	          CreateThread(NULL, 0, encomsp_server_thread, (void*)context, 0, NULL)))
+	          CreateThread(nullptr, 0, encomsp_server_thread, (void*)context, 0, nullptr)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		(void)CloseHandle(context->priv->StopEvent);
-		context->priv->StopEvent = NULL;
+		context->priv->StopEvent = nullptr;
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -318,7 +318,7 @@ static UINT encomsp_server_stop(EncomspServerContext* context)
 
 EncomspServerContext* encomsp_server_context_new(HANDLE vcm)
 {
-	EncomspServerContext* context = NULL;
+	EncomspServerContext* context = nullptr;
 	context = (EncomspServerContext*)calloc(1, sizeof(EncomspServerContext));
 
 	if (context)
@@ -332,7 +332,7 @@ EncomspServerContext* encomsp_server_context_new(HANDLE vcm)
 		{
 			WLog_ERR(TAG, "calloc failed!");
 			free(context);
-			return NULL;
+			return nullptr;
 		}
 	}
 

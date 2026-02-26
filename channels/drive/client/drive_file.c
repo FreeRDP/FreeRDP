@@ -124,7 +124,7 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
                                           size_t PathWCharLength)
 {
 	BOOL ok = FALSE;
-	WCHAR* fullpath = NULL;
+	WCHAR* fullpath = nullptr;
 
 	if (!base_path || (!path && (PathWCharLength > 0)))
 		goto fail;
@@ -161,7 +161,7 @@ fail:
 	if (!ok)
 	{
 		free(fullpath);
-		fullpath = NULL;
+		fullpath = nullptr;
 	}
 	return fullpath;
 }
@@ -173,7 +173,7 @@ static BOOL drive_file_set_fullpath(DRIVE_FILE* file, const WCHAR* fullpath)
 
 	const size_t len = _wcslen(fullpath);
 	free(file->fullpath);
-	file->fullpath = NULL;
+	file->fullpath = nullptr;
 
 	if (len == 0)
 		return TRUE;
@@ -235,7 +235,7 @@ static BOOL drive_file_init(DRIVE_FILE* file)
 			if ((file->CreateDisposition == FILE_OPEN_IF) ||
 			    (file->CreateDisposition == FILE_CREATE))
 			{
-				if (CreateDirectoryW(file->fullpath, NULL) != 0)
+				if (CreateDirectoryW(file->fullpath, nullptr) != 0)
 				{
 					return TRUE;
 				}
@@ -288,7 +288,7 @@ static BOOL drive_file_init(DRIVE_FILE* file)
 		file->SharedAccess = 0;
 #endif
 		file->file_handle = CreateFileW(file->fullpath, file->DesiredAccess, file->SharedAccess,
-		                                NULL, CreateDisposition, file->FileAttributes, NULL);
+		                                nullptr, CreateDisposition, file->FileAttributes, nullptr);
 	}
 
 #ifdef WIN32
@@ -299,12 +299,12 @@ static BOOL drive_file_init(DRIVE_FILE* file)
 
 		if (errorMessageID != 0)
 		{
-			LPSTR messageBuffer = NULL;
+			LPSTR messageBuffer = nullptr;
 			size_t size =
 			    FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
 			                       FORMAT_MESSAGE_IGNORE_INSERTS,
-			                   NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			                   (LPSTR)&messageBuffer, 0, NULL);
+			                   nullptr, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			                   (LPSTR)&messageBuffer, 0, nullptr);
 			char fullpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 			(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
 			WLog_ERR(TAG, "Error in drive_file_init: %s %s", messageBuffer, fullpath);
@@ -324,14 +324,14 @@ DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 Pat
                            UINT32 CreateOptions, UINT32 FileAttributes, UINT32 SharedAccess)
 {
 	if (!base_path || (!path && (PathWCharLength > 0)))
-		return NULL;
+		return nullptr;
 
 	DRIVE_FILE* file = (DRIVE_FILE*)calloc(1, sizeof(DRIVE_FILE));
 
 	if (!file)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		return NULL;
+		return nullptr;
 	}
 
 	file->file_handle = INVALID_HANDLE_VALUE;
@@ -353,7 +353,7 @@ DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 Pat
 		DWORD lastError = GetLastError();
 		drive_file_free(file);
 		SetLastError(lastError);
-		return NULL;
+		return nullptr;
 	}
 
 	return file;
@@ -411,7 +411,7 @@ BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset)
 		return FALSE;
 
 	loffset.QuadPart = (LONGLONG)Offset;
-	return SetFilePointerEx(file->file_handle, loffset, NULL, FILE_BEGIN);
+	return SetFilePointerEx(file->file_handle, loffset, nullptr, FILE_BEGIN);
 }
 
 BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length)
@@ -423,7 +423,7 @@ BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length)
 
 	DEBUG_WSTR("Read file %s", file->fullpath);
 
-	if (ReadFile(file->file_handle, buffer, *Length, &read, NULL))
+	if (ReadFile(file->file_handle, buffer, *Length, &read, nullptr))
 	{
 		*Length = read;
 		return TRUE;
@@ -443,7 +443,7 @@ BOOL drive_file_write(DRIVE_FILE* file, const BYTE* buffer, UINT32 Length)
 
 	while (Length > 0)
 	{
-		if (!WriteFile(file->file_handle, buffer, Length, &written, NULL))
+		if (!WriteFile(file->file_handle, buffer, Length, &written, nullptr))
 			return FALSE;
 
 		Length -= written;
@@ -598,8 +598,8 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 
 	if (!file->is_dir)
 	{
-		HANDLE hFile = CreateFileW(file->fullpath, 0, FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
-		                           FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE hFile = CreateFileW(file->fullpath, 0, FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+		                           FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (hFile != INVALID_HANDLE_VALUE)
 		{
 			status = GetFileInformationByHandle(hFile, &fileInformation);
@@ -665,9 +665,9 @@ static BOOL drive_file_set_basic_information(DRIVE_FILE* file, UINT32 Length, wS
 	FILETIME ftCreationTime = WINPR_C_ARRAY_INIT;
 	FILETIME ftLastAccessTime = WINPR_C_ARRAY_INIT;
 	FILETIME ftLastWriteTime = WINPR_C_ARRAY_INIT;
-	FILETIME* pftCreationTime = NULL;
-	FILETIME* pftLastAccessTime = NULL;
-	FILETIME* pftLastWriteTime = NULL;
+	FILETIME* pftCreationTime = nullptr;
+	FILETIME* pftLastAccessTime = nullptr;
+	FILETIME* pftLastWriteTime = nullptr;
 	if (liCreationTime.QuadPart != 0)
 	{
 		ftCreationTime.dwHighDateTime = liCreationTime.u.HighPart;
@@ -740,7 +740,7 @@ static BOOL drive_file_set_alloc_information(DRIVE_FILE* file, UINT32 Length, wS
 
 	LARGE_INTEGER liSize = { .QuadPart = size };
 
-	if (!SetFilePointerEx(file->file_handle, liSize, NULL, FILE_BEGIN))
+	if (!SetFilePointerEx(file->file_handle, liSize, nullptr, FILE_BEGIN))
 	{
 		char fullpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 		(void)ConvertWCharToUtf8(file->fullpath, fullpath, sizeof(fullpath));
@@ -1028,7 +1028,7 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 {
 	BOOL rc = FALSE;
 	size_t length = 0;
-	WCHAR* ent_path = NULL;
+	WCHAR* ent_path = nullptr;
 
 	if (!file || !path || !output)
 		return FALSE;

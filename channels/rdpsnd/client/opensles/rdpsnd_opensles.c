@@ -160,7 +160,7 @@ static void rdpsnd_opensles_close(rdpsndDevicePlugin* device)
 		return;
 
 	android_CloseAudioDevice(opensles->stream);
-	opensles->stream = NULL;
+	opensles->stream = nullptr;
 }
 
 static void rdpsnd_opensles_free(rdpsndDevicePlugin* device)
@@ -289,8 +289,8 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device, const AD
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_opensles_args[] = {
-		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
-		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", nullptr, nullptr, -1, nullptr, "device" },
+		{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
 	};
 
 	WINPR_ASSERT(opensles);
@@ -299,7 +299,7 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device, const AD
 	const DWORD flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	const int status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_opensles_args,
-	                                              flags, opensles, NULL, NULL);
+	                                              flags, opensles, nullptr, nullptr);
 
 	if (status < 0)
 		return status;
@@ -319,7 +319,7 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device, const AD
 				return ERROR_OUTOFMEMORY;
 		}
 		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 
 	return status;
 }

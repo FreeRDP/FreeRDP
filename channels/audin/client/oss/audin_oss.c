@@ -100,7 +100,7 @@ static UINT32 audin_oss_get_format(const AUDIO_FORMAT* format)
 
 static BOOL audin_oss_format_supported(IAudinDevice* device, const AUDIO_FORMAT* format)
 {
-	if (device == NULL || format == NULL)
+	if (device == nullptr || format == nullptr)
 		return FALSE;
 
 	switch (format->wFormatTag)
@@ -130,7 +130,7 @@ static UINT audin_oss_set_format(IAudinDevice* device, const AUDIO_FORMAT* forma
 {
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 
-	if (device == NULL || format == NULL)
+	if (device == nullptr || format == nullptr)
 		return ERROR_INVALID_PARAMETER;
 
 	oss->FramesPerPacket = FramesPerPacket;
@@ -142,14 +142,14 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 {
 	char dev_name[PATH_MAX] = "/dev/dsp";
 	int pcm_handle = -1;
-	BYTE* buffer = NULL;
+	BYTE* buffer = nullptr;
 	unsigned long tmp = 0;
 	size_t buffer_size = 0;
 	AudinOSSDevice* oss = (AudinOSSDevice*)arg;
 	UINT error = 0;
 	DWORD status = 0;
 
-	if (oss == NULL)
+	if (oss == nullptr)
 	{
 		error = ERROR_INVALID_PARAMETER;
 		goto err_out;
@@ -192,7 +192,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 	    (1ull * oss->FramesPerPacket * oss->format.nChannels * (oss->format.wBitsPerSample / 8ull));
 	buffer = (BYTE*)calloc((buffer_size + sizeof(void*)), sizeof(BYTE));
 
-	if (NULL == buffer)
+	if (nullptr == buffer)
 	{
 		OSS_LOG_ERR("malloc() fail", errno);
 		error = ERROR_NOT_ENOUGH_MEMORY;
@@ -260,17 +260,17 @@ static UINT audin_oss_open(IAudinDevice* device, AudinReceive receive, void* use
 	oss->receive = receive;
 	oss->user_data = user_data;
 
-	if (!(oss->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(oss->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
 		WLog_ERR(TAG, "CreateEvent failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(oss->thread = CreateThread(NULL, 0, audin_oss_thread_func, oss, 0, NULL)))
+	if (!(oss->thread = CreateThread(nullptr, 0, audin_oss_thread_func, oss, 0, nullptr)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		(void)CloseHandle(oss->stopEvent);
-		oss->stopEvent = NULL;
+		oss->stopEvent = nullptr;
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -287,10 +287,10 @@ static UINT audin_oss_close(IAudinDevice* device)
 	UINT error = 0;
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 
-	if (device == NULL)
+	if (device == nullptr)
 		return ERROR_INVALID_PARAMETER;
 
-	if (oss->stopEvent != NULL)
+	if (oss->stopEvent != nullptr)
 	{
 		(void)SetEvent(oss->stopEvent);
 
@@ -302,13 +302,13 @@ static UINT audin_oss_close(IAudinDevice* device)
 		}
 
 		(void)CloseHandle(oss->stopEvent);
-		oss->stopEvent = NULL;
+		oss->stopEvent = nullptr;
 		(void)CloseHandle(oss->thread);
-		oss->thread = NULL;
+		oss->thread = nullptr;
 	}
 
-	oss->receive = NULL;
-	oss->user_data = NULL;
+	oss->receive = nullptr;
+	oss->user_data = nullptr;
 	return CHANNEL_RC_OK;
 }
 
@@ -322,7 +322,7 @@ static UINT audin_oss_free(IAudinDevice* device)
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 	UINT error = 0;
 
-	if (device == NULL)
+	if (device == nullptr)
 		return ERROR_INVALID_PARAMETER;
 
 	if ((error = audin_oss_close(device)))
@@ -342,19 +342,21 @@ static UINT audin_oss_free(IAudinDevice* device)
 static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV* args)
 {
 	int status = 0;
-	char* str_num = NULL;
-	char* eptr = NULL;
+	char* str_num = nullptr;
+	char* eptr = nullptr;
 	DWORD flags = 0;
-	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
+	const COMMAND_LINE_ARGUMENT_A* arg = nullptr;
 	AudinOSSDevice* oss = device;
-	COMMAND_LINE_ARGUMENT_A audin_oss_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
-		                                           NULL, NULL, -1, NULL, "audio device name" },
-		                                         { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
+	COMMAND_LINE_ARGUMENT_A audin_oss_args[] = {
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", nullptr, nullptr, -1, nullptr,
+		  "audio device name" },
+		{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
+	};
 
 	flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status =
-	    CommandLineParseArgumentsA(args->argc, args->argv, audin_oss_args, flags, oss, NULL, NULL);
+	status = CommandLineParseArgumentsA(args->argc, args->argv, audin_oss_args, flags, oss, nullptr,
+	                                    nullptr);
 
 	if (status < 0)
 		return ERROR_INVALID_PARAMETER;
@@ -395,7 +397,7 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
 			free(str_num);
 		}
 		CommandLineSwitchEnd(arg)
-	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
 
 	return CHANNEL_RC_OK;
 }
@@ -408,8 +410,8 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
 FREERDP_ENTRY_POINT(UINT VCAPITYPE oss_freerdp_audin_client_subsystem_entry(
     PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args = NULL;
-	AudinOSSDevice* oss = NULL;
+	const ADDIN_ARGV* args = nullptr;
+	AudinOSSDevice* oss = nullptr;
 	UINT error = 0;
 	oss = (AudinOSSDevice*)calloc(1, sizeof(AudinOSSDevice));
 
