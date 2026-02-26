@@ -35,9 +35,9 @@ void mappedGeometryUnref(MAPPED_GEOMETRY* g)
 	if (InterlockedDecrement(&g->refCounter))
 		return;
 
-	g->MappedGeometryUpdate = NULL;
-	g->MappedGeometryClear = NULL;
-	g->custom = NULL;
+	g->MappedGeometryUpdate = nullptr;
+	g->MappedGeometryClear = nullptr;
+	g->custom = nullptr;
 	free(g->geometry.rects);
 	free(g);
 }

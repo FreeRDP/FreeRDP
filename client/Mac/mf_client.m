@@ -48,7 +48,7 @@ static int mfreerdp_client_start(rdpContext *context)
 	MRDPView *view;
 	mfContext *mfc = (mfContext *)context;
 
-	if (mfc->view == NULL)
+	if (mfc->view == nullptr)
 	{
 		// view not specified beforehand. Create view dynamically
 		mfc->view = [[MRDPView alloc]
@@ -90,7 +90,7 @@ static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 	mfc = (mfContext *)instance->context;
 	WINPR_ASSERT(mfc);
 
-	mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	mfc->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	if (!mfc->stopEvent)
 		return FALSE;
 	context->instance->PreConnect = mac_pre_connect;

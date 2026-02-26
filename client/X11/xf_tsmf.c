@@ -75,16 +75,16 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 	int y = 0;
 	UINT32 width = 0;
 	UINT32 height = 0;
-	BYTE* data1 = NULL;
-	BYTE* data2 = NULL;
+	BYTE* data1 = nullptr;
+	BYTE* data2 = nullptr;
 	UINT32 pixfmt = 0;
 	UINT32 xvpixfmt = 0;
-	XvImage* image = NULL;
+	XvImage* image = nullptr;
 	int colorkey = 0;
 	int numRects = 0;
-	xfContext* xfc = NULL;
-	xfXvContext* xv = NULL;
-	XRectangle* xrects = NULL;
+	xfContext* xfc = nullptr;
+	xfXvContext* xv = nullptr;
+	XRectangle* xrects = nullptr;
 	XShmSegmentInfo shminfo;
 	BOOL converti420yv12 = FALSE;
 
@@ -110,7 +110,7 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 		return -1002;
 	}
 
-	xrects = NULL;
+	xrects = nullptr;
 	numRects = event->numVisibleRects;
 
 	if (numRects > 0)
@@ -196,7 +196,7 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 		if (xv->xv_image_size > 0)
 		{
 			shmdt(xv->xv_shmaddr);
-			shmctl(xv->xv_shmid, IPC_RMID, NULL);
+			shmctl(xv->xv_shmid, IPC_RMID, nullptr);
 		}
 
 		xv->xv_image_size = image->data_size;
@@ -316,10 +316,10 @@ static int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	unsigned int error_base = 0;
 	unsigned int request_base = 0;
 	unsigned int num_adaptors = 0;
-	xfXvContext* xv = NULL;
-	XvAdaptorInfo* ai = NULL;
-	XvAttribute* attr = NULL;
-	XvImageFormatValues* fo = NULL;
+	xfXvContext* xv = nullptr;
+	XvAdaptorInfo* ai = nullptr;
+	XvAttribute* attr = nullptr;
+	XvImageFormatValues* fo = nullptr;
 
 	if (xfc->xv_context)
 		return 1; /* context already created */
@@ -386,7 +386,7 @@ static int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 	{
 		if (strcmp(attr[i].name, "XV_COLORKEY") == 0)
 		{
-			static wLog* log = NULL;
+			static wLog* log = nullptr;
 			if (!log)
 				log = WLog_Get(TAG);
 			xv->xv_colorkey_atom = Logging_XInternAtom(log, xfc->display, "XV_COLORKEY", FALSE);
@@ -438,21 +438,21 @@ static int xf_tsmf_xv_uninit(xfContext* xfc, TsmfClientContext* tsmf)
 		if (xv->xv_image_size > 0)
 		{
 			shmdt(xv->xv_shmaddr);
-			shmctl(xv->xv_shmid, IPC_RMID, NULL);
+			shmctl(xv->xv_shmid, IPC_RMID, nullptr);
 		}
 		if (xv->xv_pixfmts)
 		{
 			free(xv->xv_pixfmts);
-			xv->xv_pixfmts = NULL;
+			xv->xv_pixfmts = nullptr;
 		}
 		free(xv);
-		xfc->xv_context = NULL;
+		xfc->xv_context = nullptr;
 	}
 
 	if (xfc->tsmf)
 	{
-		xfc->tsmf->custom = NULL;
-		xfc->tsmf = NULL;
+		xfc->tsmf->custom = nullptr;
+		xfc->tsmf = nullptr;
 	}
 
 	return 1;

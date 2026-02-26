@@ -74,7 +74,7 @@ jboolean jni_attach_thread(JNIEnv** env)
 	if ((*jVM)->GetEnv(jVM, (void**)env, JNI_VERSION_1_4) != JNI_OK)
 	{
 		WLog_DBG(TAG, "android_java_callback: attaching current thread");
-		(*jVM)->AttachCurrentThread(jVM, env, NULL);
+		(*jVM)->AttachCurrentThread(jVM, env, nullptr);
 
 		if ((*jVM)->GetEnv(jVM, (void**)env, JNI_VERSION_1_4) != JNI_OK)
 		{

@@ -43,7 +43,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	UINT32 surfaceY = 0;
 	RECTANGLE_16 surfaceRect = WINPR_C_ARRAY_INIT;
 	UINT32 nbRects = 0;
-	const RECTANGLE_16* rects = NULL;
+	const RECTANGLE_16* rects = nullptr;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(surface);
@@ -151,9 +151,9 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 {
 	UINT16 count = 0;
 	UINT status = CHANNEL_RC_OK;
-	UINT16* pSurfaceIds = NULL;
+	UINT16* pSurfaceIds = nullptr;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
-	xfContext* xfc = NULL;
+	xfContext* xfc = nullptr;
 
 	if (!gdi)
 		return status;
@@ -202,8 +202,8 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 	UINT status = ERROR_INTERNAL_ERROR;
 	RECTANGLE_16 invalidRect = WINPR_C_ARRAY_INIT;
 	RECTANGLE_16 intersection = WINPR_C_ARRAY_INIT;
-	UINT16* pSurfaceIds = NULL;
-	RdpgfxClientContext* context = NULL;
+	UINT16* pSurfaceIds = nullptr;
+	RdpgfxClientContext* context = nullptr;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->common.context.gdi);
@@ -298,7 +298,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 {
 	UINT ret = CHANNEL_RC_NO_MEMORY;
 	size_t size = 0;
-	xfGfxSurface* surface = NULL;
+	xfGfxSurface* surface = nullptr;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 	xfContext* xfc = (xfContext*)gdi->context;
 	surface = (xfGfxSurface*)calloc(1, sizeof(xfGfxSurface));
@@ -404,7 +404,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	return CHANNEL_RC_OK;
 error_set_surface_data:
-	surface->image->data = NULL;
+	surface->image->data = nullptr;
 	XDestroyImage(surface->image);
 error_surface_image:
 	winpr_aligned_free(surface->stage);
@@ -423,7 +423,7 @@ out_free:
 static UINT xf_DeleteSurface(RdpgfxClientContext* context,
                              const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
-	rdpCodecs* codecs = NULL;
+	rdpCodecs* codecs = nullptr;
 
 	UINT status = 0;
 	EnterCriticalSection(&context->mux);
@@ -443,7 +443,7 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 #ifdef WITH_GFX_H264
 		h264_context_free(surface->gdi.h264);
 #endif
-		surface->image->data = NULL;
+		surface->image->data = nullptr;
 		XDestroyImage(surface->image);
 		winpr_aligned_free(surface->gdi.data);
 		winpr_aligned_free(surface->stage);
@@ -452,7 +452,7 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 		free(surface);
 	}
 
-	status = context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
+	status = context->SetSurfaceData(context, deleteSurface->surfaceId, nullptr);
 
 	if (codecs && codecs->progressive)
 		progressive_delete_surface_context(codecs->progressive, deleteSurface->surfaceId);
@@ -503,8 +503,8 @@ static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurfa
 
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	rdpGdi* gdi = NULL;
-	const rdpSettings* settings = NULL;
+	rdpGdi* gdi = nullptr;
+	const rdpSettings* settings = nullptr;
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(gfx);
 
@@ -528,7 +528,7 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	rdpGdi* gdi = NULL;
+	rdpGdi* gdi = nullptr;
 
 	WINPR_ASSERT(xfc);
 

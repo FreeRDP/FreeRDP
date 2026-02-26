@@ -36,9 +36,9 @@
 
 #include <windowsx.h>
 
-static HWND g_focus_hWnd = NULL;
-static HWND g_main_hWnd = NULL;
-static HWND g_parent_hWnd = NULL;
+static HWND g_focus_hWnd = nullptr;
+static HWND g_main_hWnd = nullptr;
+static HWND g_parent_hWnd = nullptr;
 
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
@@ -70,7 +70,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	DWORD ext_proc_id = 0;
 
-	wfContext* wfc = NULL;
+	wfContext* wfc = nullptr;
 	DWORD rdp_scancode;
 	BOOL keystate;
 	rdpInput* input;
@@ -83,7 +83,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 		if (!alt_ctrl_down())
 			g_flipping_in = FALSE;
 
-		return CallNextHookEx(NULL, nCode, wParam, lParam);
+		return CallNextHookEx(nullptr, nCode, wParam, lParam);
 	}
 
 	if (g_parent_hWnd && g_main_hWnd)
@@ -96,8 +96,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 		BOOL result = GetGUIThreadInfo(fg_win_thread_id, &gui_thread_info);
 		if (gui_thread_info.hwndFocus != wfc->hWndParent)
 		{
-			g_focus_hWnd = NULL;
-			return CallNextHookEx(NULL, nCode, wParam, lParam);
+			g_focus_hWnd = nullptr;
+			return CallNextHookEx(nullptr, nCode, wParam, lParam);
 		}
 
 		g_focus_hWnd = g_main_hWnd;
@@ -205,11 +205,11 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 		if (!alt_ctrl_down())
 		{
 			g_flipping_out = FALSE;
-			g_focus_hWnd = NULL;
+			g_focus_hWnd = nullptr;
 		}
 	}
 
-	return CallNextHookEx(NULL, nCode, wParam, lParam);
+	return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
 
 void wf_event_focus_in(wfContext* wfc)
@@ -327,7 +327,8 @@ static void wf_send_resize(wfContext* wfc)
 	int targetHeight = wfc->client_height;
 	rdpSettings* settings = wfc->common.context.settings;
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate) && wfc->disp != NULL)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate) &&
+	    wfc->disp != nullptr)
 	{
 		if (GetTickCount64() - wfc->lastSentDate > RESIZE_MIN_DELAY)
 		{
@@ -375,13 +376,13 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	PAINTSTRUCT ps = WINPR_C_ARRAY_INIT;
 	BOOL processed = FALSE;
 	RECT windowRect = WINPR_C_ARRAY_INIT;
-	MINMAXINFO* minmax = NULL;
+	MINMAXINFO* minmax = nullptr;
 	SCROLLINFO si = WINPR_C_ARRAY_INIT;
 	processed = TRUE;
 	LONG_PTR ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	wfContext* wfc = (wfContext*)ptr;
 
-	if (wfc != NULL)
+	if (wfc != nullptr)
 	{
 		rdpInput* input = wfc->common.context.input;
 		rdpSettings* settings = wfc->common.context.settings;
@@ -475,7 +476,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					}
 					else if (wParam == SIZE_MINIMIZED)
 					{
-						g_focus_hWnd = NULL;
+						g_focus_hWnd = nullptr;
 					}
 				}
 
@@ -640,8 +641,9 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				// client area when ScrollWindowEx is called; however, it is
 				// necessary to call UpdateWindow in order to repaint the
 				// rectangle of pixels that were invalidated.)
-				ScrollWindowEx(wfc->hwnd, -xDelta, -yDelta, (CONST RECT*)NULL, (CONST RECT*)NULL,
-				               (HRGN)NULL, (PRECT)NULL, SW_INVALIDATE);
+				ScrollWindowEx(wfc->hwnd, -xDelta, -yDelta, (CONST RECT*)nullptr,
+				               (CONST RECT*)nullptr, (HRGN) nullptr, (PRECT) nullptr,
+				               SW_INVALIDATE);
 				UpdateWindow(wfc->hwnd);
 				// Reset the scroll bar.
 				si.cbSize = sizeof(si);
@@ -709,8 +711,9 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				// client area when ScrollWindowEx is called; however, it is
 				// necessary to call UpdateWindow in order to repaint the
 				// rectangle of pixels that were invalidated.)
-				ScrollWindowEx(wfc->hwnd, -xDelta, -yDelta, (CONST RECT*)NULL, (CONST RECT*)NULL,
-				               (HRGN)NULL, (PRECT)NULL, SW_INVALIDATE);
+				ScrollWindowEx(wfc->hwnd, -xDelta, -yDelta, (CONST RECT*)nullptr,
+				               (CONST RECT*)nullptr, (HRGN) nullptr, (PRECT) nullptr,
+				               SW_INVALIDATE);
 				UpdateWindow(wfc->hwnd);
 				// Reset the scroll bar.
 				si.cbSize = sizeof(si);
@@ -801,7 +804,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				if (alt_ctrl_down())
 					g_flipping_out = TRUE;
 				else
-					g_focus_hWnd = NULL;
+					g_focus_hWnd = nullptr;
 			}
 
 			break;
@@ -823,7 +826,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				if (alt_ctrl_down())
 					g_flipping_out = TRUE;
 				else
-					g_focus_hWnd = NULL;
+					g_focus_hWnd = nullptr;
 			}
 		}
 
@@ -869,7 +872,7 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 	else
 	{
 		SetStretchBltMode(hdc, HALFTONE);
-		SetBrushOrgEx(hdc, 0, 0, NULL);
+		SetBrushOrgEx(hdc, 0, 0, nullptr);
 		return StretchBlt(hdc, 0, 0, ww, wh, wfc->primary->hdc, 0, 0, dw, dh, SRCCOPY);
 	}
 

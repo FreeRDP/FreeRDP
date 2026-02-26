@@ -45,7 +45,7 @@
 
 	uint8_t *derived_key = calloc(1, TSXEncryptorPBKDF2KeySize);
 
-	if (CCKeyDerivationPBKDF != NULL)
+	if (CCKeyDerivationPBKDF != nullptr)
 	{
 		int ret = CCKeyDerivationPBKDF(
 		    kCCPBKDF2, plaintext_password_data, strlen(plaintext_password_data) - 1,

@@ -219,14 +219,14 @@ BOOL IsGnome(void)
 {
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	char* env = getenv("DESKTOP_SESSION");
-	return (env != NULL && strcmp(env, "gnome") == 0);
+	return (env != nullptr && strcmp(env, "gnome") == 0);
 }
 
 BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_action_script_run fkt,
                        void* user)
 {
 	BOOL rc = FALSE;
-	FILE* keyScript = NULL;
+	FILE* keyScript = nullptr;
 	WINPR_ASSERT(xfc);
 
 	rdpSettings* settings = xfc->common.context.settings;
@@ -256,9 +256,9 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 		{
 			BOOL read_data = FALSE;
 			char buffer[2048] = WINPR_C_ARRAY_INIT;
-			while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
+			while (fgets(buffer, sizeof(buffer), keyScript) != nullptr)
 			{
-				char* context = NULL;
+				char* context = nullptr;
 				(void)strtok_s(buffer, "\n", &context);
 
 				if (fkt)
@@ -738,10 +738,10 @@ int LogDynAndXReparentWindow_ex(wLog* log, const char* file, const char* fkt, si
 
 char* getConfigOption(BOOL system, const char* option)
 {
-	char* res = NULL;
+	char* res = nullptr;
 	WINPR_JSON* file = freerdp_GetJSONConfigFile(system, "xfreerdp.json");
 	if (!file)
-		return NULL;
+		return nullptr;
 
 	WINPR_JSON* obj = WINPR_JSON_GetObjectItemCaseSensitive(file, option);
 	if (obj)

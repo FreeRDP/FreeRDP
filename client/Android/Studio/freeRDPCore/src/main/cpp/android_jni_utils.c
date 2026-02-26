@@ -29,11 +29,11 @@ JavaVM* getJavaVM()
 
 JNIEnv* getJNIEnv()
 {
-	JNIEnv* env = NULL;
+	JNIEnv* env = nullptr;
 	if ((*g_JavaVm)->GetEnv(g_JavaVm, (void**)&env, JNI_VERSION_1_4) != JNI_OK)
 	{
 		WLog_FATAL(TAG, "Failed to obtain JNIEnv");
-		return NULL;
+		return nullptr;
 	}
 	return env;
 }
@@ -47,14 +47,14 @@ jobject create_string_builder(JNIEnv* env, char* initialStr)
 	// get class
 	cls = (*env)->FindClass(env, "java/lang/StringBuilder");
 	if (!cls)
-		return NULL;
+		return nullptr;
 
 	if (initialStr)
 	{
 		// get method id for constructor
 		methodId = (*env)->GetMethodID(env, cls, "<init>", "(Ljava/lang/String;)V");
 		if (!methodId)
-			return NULL;
+			return nullptr;
 
 		// create string that holds our initial string
 		jstring jstr = (*env)->NewStringUTF(env, initialStr);
@@ -67,7 +67,7 @@ jobject create_string_builder(JNIEnv* env, char* initialStr)
 		// get method id for constructor
 		methodId = (*env)->GetMethodID(env, cls, "<init>", "()V");
 		if (!methodId)
-			return NULL;
+			return nullptr;
 
 		// construct new StringBuilder
 		obj = (*env)->NewObject(env, cls, methodId);
@@ -87,20 +87,20 @@ char* get_string_from_string_builder(JNIEnv* env, jobject strBuilder)
 	// get class
 	cls = (*env)->FindClass(env, "java/lang/StringBuilder");
 	if (!cls)
-		return NULL;
+		return nullptr;
 
 	// get method id for constructor
 	methodId = (*env)->GetMethodID(env, cls, "toString", "()Ljava/lang/String;");
 	if (!methodId)
-		return NULL;
+		return nullptr;
 
 	// get jstring representation of our buffer
 	strObj = (*env)->CallObjectMethod(env, strBuilder, methodId);
 
 	// read string
-	native_str = (*env)->GetStringUTFChars(env, strObj, NULL);
+	native_str = (*env)->GetStringUTFChars(env, strObj, nullptr);
 	if (!native_str)
-		return NULL;
+		return nullptr;
 	result = _strdup(native_str);
 	(*env)->ReleaseStringUTFChars(env, strObj, native_str);
 
@@ -109,14 +109,14 @@ char* get_string_from_string_builder(JNIEnv* env, jobject strBuilder)
 
 jstring jniNewStringUTF(JNIEnv* env, const char* in, int len)
 {
-	jstring out = NULL;
-	jchar* unicode = NULL;
+	jstring out = nullptr;
+	jchar* unicode = nullptr;
 	jint result_size = 0;
 	unsigned char* utf8 = (unsigned char*)in;
 
 	if (!in)
 	{
-		return NULL;
+		return nullptr;
 	}
 	if (len < 0)
 		len = strlen(in);
@@ -124,7 +124,7 @@ jstring jniNewStringUTF(JNIEnv* env, const char* in, int len)
 	unicode = (jchar*)malloc(sizeof(jchar) * (len + 1));
 	if (!unicode)
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	for (jint i = 0; i < len; i++)

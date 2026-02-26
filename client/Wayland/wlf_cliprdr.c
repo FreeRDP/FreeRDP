@@ -123,7 +123,7 @@ static void* wlf_request_clone(const void* oth)
 	const wlf_request* other = (const wlf_request*)oth;
 	wlf_request* copy = wlf_request_new();
 	if (!copy)
-		return NULL;
+		return nullptr;
 	*copy = *other;
 	if (other->responseMime)
 	{
@@ -134,7 +134,7 @@ static void* wlf_request_clone(const void* oth)
 	return copy;
 fail:
 	wlf_request_free(copy);
-	return NULL;
+	return nullptr;
 }
 
 static BOOL wlf_mime_is_file(const char* mime)
@@ -186,7 +186,7 @@ static void wlf_cliprdr_free_server_formats(wfClipboard* clipboard)
 		}
 
 		free(clipboard->serverFormats);
-		clipboard->serverFormats = NULL;
+		clipboard->serverFormats = nullptr;
 		clipboard->numServerFormats = 0;
 	}
 
@@ -205,7 +205,7 @@ static void wlf_cliprdr_free_client_formats(wfClipboard* clipboard)
 		}
 
 		free(clipboard->clientFormats);
-		clipboard->clientFormats = NULL;
+		clipboard->clientFormats = nullptr;
 		clipboard->numClientFormats = 0;
 	}
 
@@ -245,7 +245,7 @@ static UINT wlf_cliprdr_send_client_format_list(wfClipboard* clipboard)
 
 static void wfl_cliprdr_add_client_format_id(wfClipboard* clipboard, UINT32 formatId)
 {
-	CLIPRDR_FORMAT* format = NULL;
+	CLIPRDR_FORMAT* format = nullptr;
 	const char* name = ClipboardGetFormatName(clipboard->system, formatId);
 
 	for (size_t x = 0; x < clipboard->numClientFormats; x++)
@@ -265,7 +265,7 @@ static void wfl_cliprdr_add_client_format_id(wfClipboard* clipboard, UINT32 form
 	clipboard->clientFormats = format;
 	format = &clipboard->clientFormats[clipboard->numClientFormats++];
 	format->formatId = formatId;
-	format->formatName = NULL;
+	format->formatName = nullptr;
 
 	if (name && (formatId >= CF_MAX))
 		format->formatName = _strdup(name);
@@ -515,7 +515,7 @@ static const char* wlf_get_server_format_name(const wfClipboard* clipboard, UINT
 		if (format->formatId == formatId)
 			return format->formatName;
 	}
-	return NULL;
+	return nullptr;
 }
 
 static void wlf_cliprdr_transfer_data(UwacSeat* seat, void* context, const char* mime, int fd)
@@ -550,7 +550,7 @@ static void wlf_cliprdr_transfer_data(UwacSeat* seat, void* context, const char*
 			request.responseFormat = CF_DIB;
 	}
 
-	if (request.responseMime != NULL)
+	if (request.responseMime != nullptr)
 	{
 		request.responseFile = fdopen(fd, "w");
 
@@ -614,7 +614,7 @@ static UINT wlf_cliprdr_server_format_list(CliprdrClientContext* context,
 	if (!clipboard->seat)
 	{
 		WLog_Print(clipboard->log, WLOG_ERROR,
-		           "clipboard->seat=NULL, check your client implementation");
+		           "clipboard->seat=nullptr, check your client implementation");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -724,15 +724,15 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
                                        const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	UINT rc = CHANNEL_RC_OK;
-	char* data = NULL;
+	char* data = nullptr;
 	size_t size = 0;
-	const char* mime = NULL;
+	const char* mime = nullptr;
 	UINT32 formatId = 0;
 	UINT32 localFormatId = 0;
-	wfClipboard* clipboard = 0;
+	wfClipboard* clipboard = nullptr;
 
 	UINT32 dsize = 0;
-	BYTE* ddata = NULL;
+	BYTE* ddata = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatDataRequest);
@@ -795,7 +795,7 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 		free(data);
 
 		UINT32 len = 0;
-		data = NULL;
+		data = nullptr;
 		if (res)
 			data = ClipboardGetData(clipboard->system, formatId, &len);
 
@@ -855,7 +855,7 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	ClipboardLock(clipboard->system);
 	EnterCriticalSection(&clipboard->lock);
 	{
-		BYTE* cdata = NULL;
+		BYTE* cdata = nullptr;
 		UINT32 srcFormatId = 0;
 		UINT32 dstFormatId = 0;
 		switch (request->responseFormat)
@@ -933,8 +933,8 @@ fail:
 
 wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 {
-	rdpChannels* channels = NULL;
-	wfClipboard* clipboard = NULL;
+	rdpChannels* channels = nullptr;
+	wfClipboard* clipboard = nullptr;
 
 	WINPR_ASSERT(wfc);
 
@@ -974,7 +974,7 @@ wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 
 fail:
 	wlf_clipboard_free(clipboard);
-	return NULL;
+	return nullptr;
 }
 
 void wlf_clipboard_free(wfClipboard* clipboard)
@@ -1019,7 +1019,7 @@ BOOL wlf_cliprdr_uninit(wfClipboard* clipboard, CliprdrClientContext* cliprdr)
 		return FALSE;
 
 	if (cliprdr)
-		cliprdr->custom = NULL;
+		cliprdr->custom = nullptr;
 
 	return TRUE;
 }

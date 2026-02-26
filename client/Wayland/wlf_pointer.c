@@ -70,7 +70,7 @@ static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	wlfContext* wlf = (wlfContext*)context;
 	wlfPointer* ptr = (wlfPointer*)pointer;
-	void* data = NULL;
+	void* data = nullptr;
 	size_t size = 0;
 	UwacReturnCode rc = UWAC_ERROR_INTERNAL;
 	BOOL res = FALSE;
@@ -121,7 +121,7 @@ static BOOL wlf_Pointer_SetNull(rdpContext* context)
 	if (!wlf || !wlf->seat)
 		return FALSE;
 
-	if (UwacSeatSetMouseCursor(wlf->seat, NULL, 0, 0, 0, 0, 0) != UWAC_SUCCESS)
+	if (UwacSeatSetMouseCursor(wlf->seat, nullptr, 0, 0, 0, 0, 0) != UWAC_SUCCESS)
 		return FALSE;
 
 	return TRUE;
@@ -134,7 +134,7 @@ static BOOL wlf_Pointer_SetDefault(rdpContext* context)
 	if (!wlf || !wlf->seat)
 		return FALSE;
 
-	if (UwacSeatSetMouseCursor(wlf->seat, NULL, 1, 0, 0, 0, 0) != UWAC_SUCCESS)
+	if (UwacSeatSetMouseCursor(wlf->seat, nullptr, 1, 0, 0, 0, 0) != UWAC_SUCCESS)
 		return FALSE;
 
 	return TRUE;
