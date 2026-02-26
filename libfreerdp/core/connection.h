@@ -41,7 +41,8 @@ enum CLIENT_CONNECTION_STATE
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_client_connect(rdpRdp* rdp);
 
-WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdp_client_connect_with_fallback(rdpRdp* rdp);
+
 FREERDP_LOCAL BOOL rdp_client_disconnect(rdpRdp* rdp);
 
 WINPR_ATTR_NODISCARD

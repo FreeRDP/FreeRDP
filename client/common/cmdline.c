@@ -662,6 +662,8 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("    %s connection.rdp /p:Pwd123! /f\n", name);
 	printf("    %s /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com\n", name);
 	printf("    %s /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489\n", name);
+	printf("    %s /v:primary.server.com /fallback-server:10.95.4.5 /u:user\n", name);
+	printf("    %s /v:primary.server.com /fallback-server:backup.server.com:3390 /u:user\n", name);
 	printf("    %s /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 "
 	       "/v:192.168.1.100\n",
 	       name);
@@ -4836,6 +4838,17 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			const int rc = parse_host_options(settings, arg);
 			if (rc != 0)
 				return fail_at(arg, rc);
+		}
+		CommandLineSwitchCase(arg, "fallback-server")
+		{
+			if (!arg->Value)
+				return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
+
+			// Store in FreeRDP_RedirectionTargetNetBiosName setting
+			// (repurposing this setting for fallback server)
+			if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionTargetNetBiosName,
+			                                 arg->Value))
+				return fail_at(arg, COMMAND_LINE_ERROR_MEMORY);
 		}
 		CommandLineSwitchCase(arg, "spn-class")
 		{

@@ -169,6 +169,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  -1, nullptr, "RDP standard security encryption methods" },
 	{ "f", COMMAND_LINE_VALUE_FLAG, nullptr, nullptr, nullptr, -1, nullptr,
 	  "Fullscreen mode (<Ctrl>+<Alt>+<Enter> toggles fullscreen)" },
+	{ "fallback-server", COMMAND_LINE_VALUE_REQUIRED, "<server[:port]>", NULL, NULL, -1, NULL,
+	  "Fallback server to use if primary connection fails" },
 	{ "fipsmode", COMMAND_LINE_VALUE_BOOL, nullptr, nullptr, nullptr, -1, nullptr, "FIPS mode" },
 	{ "floatbar", COMMAND_LINE_VALUE_OPTIONAL,
 	  "sticky:[on|off],default:[visible|hidden],show:[always|fullscreen|window]", nullptr, nullptr,

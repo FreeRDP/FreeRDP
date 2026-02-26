@@ -168,7 +168,7 @@ static int freerdp_connect_begin(freerdp* instance)
 		return 0;
 	}
 
-	rc = rdp_client_connect(rdp);
+	rc = rdp_client_connect_with_fallback(rdp);
 
 	/* --authonly tests the connection without a UI */
 	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_AuthenticationOnly))

@@ -192,6 +192,19 @@ static BOOL wf_desktop_resize(rdpContext* context)
 
 	settings = context->settings;
 
+	/* UPDATE WINDOW TITLE IF IT CHANGED */
+	const char* newTitle = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
+	if (newTitle && wfc->hwnd)
+	{
+		/* Convert to wide string for Windows API */
+		WCHAR* newTitleW = ConvertUtf8ToWCharAlloc(newTitle, NULL);
+		if (newTitleW)
+		{
+			SetWindowTextW(wfc->hwnd, newTitleW);
+			free(newTitleW);
+		}
+	}
+
 	if (wfc->primary)
 	{
 		same = (wfc->primary == wfc->drawing) ? TRUE : FALSE;
