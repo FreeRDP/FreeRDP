@@ -91,7 +91,7 @@ extern "C"
  * @param name The name of the function
  * @param type The type of the function pointer
  * @since version 3.9.0
- * @return A new function pointer or \b NULL
+ * @return A new function pointer or \b nullptr
  */
 #define GetProcAddressAs(module, name, type) WINPR_FUNC_PTR_CAST(GetProcAddress(module, name), type)
 

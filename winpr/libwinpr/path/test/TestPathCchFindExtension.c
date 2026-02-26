@@ -8,8 +8,8 @@ static const char testPathExtension[] = "C:\\Windows\\System32\\cmd.exe";
 
 int TestPathCchFindExtension(int argc, char* argv[])
 {
-	PCSTR pszExt = NULL;
-	PCSTR pszTmp = NULL;
+	PCSTR pszExt = nullptr;
+	PCSTR pszTmp = nullptr;
 	HRESULT hr = 0;
 
 	WINPR_UNUSED(argc);
@@ -17,13 +17,12 @@ int TestPathCchFindExtension(int argc, char* argv[])
 
 	/* Test invalid args */
 
-	hr = PathCchFindExtensionA(NULL, sizeof(testPathExtension), &pszExt);
+	hr = PathCchFindExtensionA(nullptr, sizeof(testPathExtension), &pszExt);
 	if (SUCCEEDED(hr))
 	{
-		printf(
-		    "PathCchFindExtensionA unexpectedly succeeded with pszPath = NULL. result: 0x%08" PRIX32
-		    "\n",
-		    hr);
+		printf("PathCchFindExtensionA unexpectedly succeeded with pszPath = nullptr. result: "
+		       "0x%08" PRIX32 "\n",
+		       hr);
 		return -1;
 	}
 
@@ -36,13 +35,12 @@ int TestPathCchFindExtension(int argc, char* argv[])
 		return -1;
 	}
 
-	hr = PathCchFindExtensionA(testPathExtension, sizeof(testPathExtension), NULL);
+	hr = PathCchFindExtensionA(testPathExtension, sizeof(testPathExtension), nullptr);
 	if (SUCCEEDED(hr))
 	{
-		printf(
-		    "PathCchFindExtensionA unexpectedly succeeded with ppszExt = NULL. result: 0x%08" PRIX32
-		    "\n",
-		    hr);
+		printf("PathCchFindExtensionA unexpectedly succeeded with ppszExt = nullptr. result: "
+		       "0x%08" PRIX32 "\n",
+		       hr);
 		return -1;
 	}
 
@@ -59,7 +57,7 @@ int TestPathCchFindExtension(int argc, char* argv[])
 
 	/* Test passing of an empty terminated string (must succeed) */
 
-	pszExt = NULL;
+	pszExt = nullptr;
 	pszTmp = "";
 	hr = PathCchFindExtensionA(pszTmp, 1, &pszExt);
 	if (hr != S_OK)
@@ -79,7 +77,7 @@ int TestPathCchFindExtension(int argc, char* argv[])
 
 	/* Test a path without file extension (must succeed) */
 
-	pszExt = NULL;
+	pszExt = nullptr;
 	pszTmp = "c:\\4.678\\";
 	hr = PathCchFindExtensionA(pszTmp, 10, &pszExt);
 	if (hr != S_OK)
@@ -88,7 +86,7 @@ int TestPathCchFindExtension(int argc, char* argv[])
 		return -1;
 	}
 	/* The extension must not have been found and pszExt must point to the
-	 * strings terminating NULL now */
+	 * strings terminating nullptr now */
 	if (pszExt != &pszTmp[9])
 	{
 		printf("PathCchFindExtensionA failed with a directory path: pszExt pointer mismatch\n");
@@ -97,7 +95,7 @@ int TestPathCchFindExtension(int argc, char* argv[])
 
 	/* Non-special tests */
 
-	pszExt = NULL;
+	pszExt = nullptr;
 	if (PathCchFindExtensionA(testPathExtension, sizeof(testPathExtension), &pszExt) != S_OK)
 	{
 		printf("PathCchFindExtensionA failure: expected S_OK\n");

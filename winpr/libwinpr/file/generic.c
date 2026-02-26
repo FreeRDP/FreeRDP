@@ -188,7 +188,7 @@ static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
 
 static void HandleCreatorsInit(void)
 {
-	WINPR_ASSERT(HandleCreators == NULL);
+	WINPR_ASSERT(HandleCreators == nullptr);
 	HandleCreators = ArrayList_New(TRUE);
 
 	if (!HandleCreators)
@@ -222,7 +222,7 @@ int InstallAioSignalHandler()
 		sigaddset(&action.sa_mask, SIGIO);
 		action.sa_flags = SA_SIGINFO;
 		action.sa_sigaction = (void*)&AioSignalHandler;
-		sigaction(SIGIO, &action, NULL);
+		sigaction(SIGIO, &action, nullptr);
 		g_AioSignalHandlerInstalled = TRUE;
 	}
 
@@ -252,7 +252,7 @@ HANDLE winpr_CreateFile(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareM
 		return INVALID_HANDLE_VALUE;
 	}
 
-	if (HandleCreators == NULL)
+	if (HandleCreators == nullptr)
 	{
 		SetLastError(ERROR_DLL_INIT_FAILED);
 		return INVALID_HANDLE_VALUE;
@@ -282,10 +282,10 @@ HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	HANDLE hdl = NULL;
+	HANDLE hdl = nullptr;
 	if (!lpFileName)
-		return NULL;
-	char* lpFileNameA = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+		return nullptr;
+	char* lpFileNameA = ConvertWCharToUtf8Alloc(lpFileName, nullptr);
 
 	if (!lpFileNameA)
 	{
@@ -309,7 +309,7 @@ BOOL DeleteFileW(LPCWSTR lpFileName)
 {
 	if (!lpFileName)
 		return FALSE;
-	LPSTR lpFileNameA = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+	LPSTR lpFileNameA = ConvertWCharToUtf8Alloc(lpFileName, nullptr);
 	BOOL rc = winpr_DeleteFile(lpFileNameA);
 	free(lpFileNameA);
 	return rc;
@@ -319,14 +319,14 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
               LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
 
 	/*
 	 * from http://msdn.microsoft.com/en-us/library/windows/desktop/aa365467%28v=vs.85%29.aspx
-	 * lpNumberOfBytesRead can be NULL only when the lpOverlapped parameter is not NULL.
+	 * lpNumberOfBytesRead can be nullptr only when the lpOverlapped parameter is not nullptr.
 	 */
 
 	if (!lpNumberOfBytesRead && !lpOverlapped)
@@ -349,7 +349,7 @@ BOOL ReadFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                 LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -371,7 +371,7 @@ BOOL ReadFileScatter(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[], DWORD n
                      LPDWORD lpReserved, LPOVERLAPPED lpOverlapped)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -393,7 +393,7 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -415,7 +415,7 @@ BOOL WriteFileEx(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                  LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -437,7 +437,7 @@ BOOL WriteFileGather(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[],
                      DWORD nNumberOfBytesToWrite, LPDWORD lpReserved, LPOVERLAPPED lpOverlapped)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -458,7 +458,7 @@ BOOL WriteFileGather(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[],
 BOOL FlushFileBuffers(HANDLE hFile)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -506,7 +506,7 @@ BOOL WINAPI GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInf
 	BOOL ret = 0;
 	if (!lpFileName)
 		return FALSE;
-	LPSTR lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+	LPSTR lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, nullptr);
 
 	if (!lpCFileName)
 	{
@@ -533,7 +533,7 @@ DWORD WINAPI GetFileAttributesW(LPCWSTR lpFileName)
 	DWORD ret = 0;
 	if (!lpFileName)
 		return FALSE;
-	LPSTR lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+	LPSTR lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, nullptr);
 	if (!lpCFileName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -548,7 +548,7 @@ DWORD WINAPI GetFileAttributesW(LPCWSTR lpFileName)
 BOOL GetFileInformationByHandle(HANDLE hFile, LPBY_HANDLE_FILE_INFORMATION lpFileInformation)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -606,7 +606,7 @@ static const char* flagsToStr(char* buffer, size_t size, DWORD flags)
 		append(buffer, size, "FILE_ATTRIBUTE_VIRTUAL");
 
 	(void)_snprintf(strflags, sizeof(strflags), " [0x%08" PRIx32 "]", flags);
-	winpr_str_append(strflags, buffer, size, NULL);
+	winpr_str_append(strflags, buffer, size, nullptr);
 	return buffer;
 }
 
@@ -656,7 +656,7 @@ BOOL SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes)
 	if (!lpFileName)
 		return FALSE;
 
-	char* lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+	char* lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, nullptr);
 	if (!lpCFileName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -671,7 +671,7 @@ BOOL SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes)
 BOOL SetEndOfFile(HANDLE hFile)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -691,7 +691,7 @@ BOOL SetEndOfFile(HANDLE hFile)
 DWORD WINAPI GetFileSize(HANDLE hFile, LPDWORD lpFileSizeHigh)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -712,7 +712,7 @@ DWORD SetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveH
                      DWORD dwMoveMethod)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -734,7 +734,7 @@ BOOL SetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove, PLARGE_INTEG
                       DWORD dwMoveMethod)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -756,7 +756,7 @@ BOOL LockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
               DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -778,7 +778,7 @@ BOOL LockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved, DWORD nNumberOfBy
                 DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -800,7 +800,7 @@ BOOL UnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
                 DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -822,7 +822,7 @@ BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLo
                   DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -844,7 +844,7 @@ BOOL WINAPI SetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
                         const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* handle = NULL;
+	WINPR_HANDLE* handle = nullptr;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -878,7 +878,7 @@ static WIN32_FILE_SEARCH* file_search_new(const char* name, size_t namelen, cons
 {
 	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*)calloc(1, sizeof(WIN32_FILE_SEARCH));
 	if (!pFileSearch)
-		return NULL;
+		return nullptr;
 	WINPR_ASSERT(sizeof(file_search_magic) == sizeof(pFileSearch->magic));
 	memcpy(pFileSearch->magic, file_search_magic, sizeof(pFileSearch->magic));
 
@@ -909,7 +909,7 @@ static WIN32_FILE_SEARCH* file_search_new(const char* name, size_t namelen, cons
 					if (!pFileSearch->lpPath || !pFileSearch->lpPattern)
 					{
 						closedir(pFileSearch->pDir);
-						pFileSearch->pDir = NULL;
+						pFileSearch->pDir = nullptr;
 					}
 				}
 			}
@@ -924,7 +924,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	FindClose(pFileSearch);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 static BOOL is_valid_file_search_handle(HANDLE handle)
@@ -941,7 +941,7 @@ static BOOL is_valid_file_search_handle(HANDLE handle)
 
 static DWORD FileAttributesFromStat(const char* path, const struct stat* fileStat)
 {
-	char* lastSep = NULL;
+	char* lastSep = nullptr;
 	DWORD dwFileAttributes = 0;
 
 	if (S_ISDIR(fileStat->st_mode))
@@ -1001,7 +1001,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	const WIN32_FIND_DATAA empty = WINPR_C_ARRAY_INIT;
 	*lpFindFileData = empty;
 
-	WIN32_FILE_SEARCH* pFileSearch = NULL;
+	WIN32_FILE_SEARCH* pFileSearch = nullptr;
 	size_t patternlen = 0;
 	const size_t flen = strlen(lpFileName);
 	const char sep = PathGetSeparatorA(PATH_STYLE_NATIVE);
@@ -1055,8 +1055,8 @@ static BOOL ConvertFindDataAToW(LPWIN32_FIND_DATAA lpFindFileDataA,
 
 HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 {
-	LPSTR utfFileName = NULL;
-	HANDLE h = NULL;
+	LPSTR utfFileName = nullptr;
+	HANDLE h = nullptr;
 	if (!lpFileName)
 		return INVALID_HANDLE_VALUE;
 
@@ -1068,7 +1068,7 @@ HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	utfFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
+	utfFileName = ConvertWCharToUtf8Alloc(lpFileName, nullptr);
 	if (!utfFileName)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -1129,9 +1129,9 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 		return FALSE;
 
 	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*)hFindFile;
-	struct dirent* pDirent = NULL;
+	struct dirent* pDirent = nullptr;
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
-	while ((pDirent = readdir(pFileSearch->pDir)) != NULL)
+	while ((pDirent = readdir(pFileSearch->pDir)) != nullptr)
 	{
 		if (FilePatternMatchA(pDirent->d_name, pFileSearch->lpPattern))
 		{
@@ -1142,7 +1142,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			size_t pathlen = strlen(pFileSearch->lpPath);
 			char* fullpath = (char*)malloc(pathlen + namelen + 2);
 
-			if (fullpath == NULL)
+			if (fullpath == nullptr)
 			{
 				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 				return FALSE;
@@ -1215,7 +1215,7 @@ BOOL FindClose(HANDLE hFindFile)
 	if (!pFileSearch)
 		return FALSE;
 
-	/* Since INVALID_HANDLE_VALUE != NULL the analyzer guesses that there
+	/* Since INVALID_HANDLE_VALUE != nullptr the analyzer guesses that there
 	 * is a initialized HANDLE that is not freed properly.
 	 * Disable this return to stop confusing the analyzer. */
 #ifndef __clang_analyzer__
@@ -1244,7 +1244,7 @@ BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttrib
 {
 	if (!lpPathName)
 		return FALSE;
-	char* utfPathName = ConvertWCharToUtf8Alloc(lpPathName, NULL);
+	char* utfPathName = ConvertWCharToUtf8Alloc(lpPathName, nullptr);
 	BOOL ret = FALSE;
 
 	if (!utfPathName)
@@ -1268,7 +1268,7 @@ BOOL RemoveDirectoryW(LPCWSTR lpPathName)
 {
 	if (!lpPathName)
 		return FALSE;
-	char* utfPathName = ConvertWCharToUtf8Alloc(lpPathName, NULL);
+	char* utfPathName = ConvertWCharToUtf8Alloc(lpPathName, nullptr);
 	BOOL ret = FALSE;
 
 	if (!utfPathName)
@@ -1293,8 +1293,8 @@ BOOL MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlag
 	if (!lpExistingFileName || !lpNewFileName)
 		return FALSE;
 
-	LPSTR lpCExistingFileName = ConvertWCharToUtf8Alloc(lpExistingFileName, NULL);
-	LPSTR lpCNewFileName = ConvertWCharToUtf8Alloc(lpNewFileName, NULL);
+	LPSTR lpCExistingFileName = ConvertWCharToUtf8Alloc(lpExistingFileName, nullptr);
+	LPSTR lpCNewFileName = ConvertWCharToUtf8Alloc(lpNewFileName, nullptr);
 	BOOL ret = FALSE;
 
 	if (!lpCExistingFileName || !lpCNewFileName)
@@ -1345,7 +1345,7 @@ int UnixChangeFileMode(const char* filename, int flags)
 	return chmod(filename, fl);
 #else
 	int rc;
-	WCHAR* wfl = ConvertUtf8ToWCharAlloc(filename, NULL);
+	WCHAR* wfl = ConvertUtf8ToWCharAlloc(filename, nullptr);
 
 	if (!wfl)
 		return -1;
@@ -1365,9 +1365,9 @@ HANDLE winpr_CreateFile(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareM
                         LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                         DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	WCHAR* filename = ConvertUtf8ToWCharAlloc(lpFileName, NULL);
+	WCHAR* filename = ConvertUtf8ToWCharAlloc(lpFileName, nullptr);
 	if (!filename)
-		return NULL;
+		return nullptr;
 
 	HANDLE hdl = CreateFileW(filename, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
 	                         dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);

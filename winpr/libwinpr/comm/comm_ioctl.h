@@ -182,7 +182,7 @@ extern "C"
 #define SERIAL_DCD_STATE ((ULONG)0x00000080)
 
 	/**
-	 * A function might be NULL if not supported by the underlying driver.
+	 * A function might be nullptr if not supported by the underlying driver.
 	 *
 	 * FIXME: better have to use input and output buffers for all functions?
 	 */

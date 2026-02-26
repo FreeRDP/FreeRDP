@@ -1020,8 +1020,6 @@ PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 		return SharedLibraryExtensionSoA;
 #endif
 	}
-
-	return NULL;
 }
 
 PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
@@ -1092,8 +1090,6 @@ PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 		return SharedLibraryExtensionSoW;
 #endif
 	}
-
-	return NULL;
 }
 
 const char* GetKnownPathIdString(int id)
@@ -1124,7 +1120,7 @@ static char* concat(const char* path, size_t pathlen, const char* name, size_t n
 	const size_t strsize = pathlen + namelen + 2;
 	char* str = calloc(strsize, sizeof(char));
 	if (!str)
-		return NULL;
+		return nullptr;
 
 	winpr_str_append(path, str, strsize, "");
 	winpr_str_append(name, str, strsize, "");
@@ -1208,7 +1204,7 @@ fail:
 
 BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 {
-	char* name = ConvertWCharToUtf8Alloc(lpPathName, NULL);
+	char* name = ConvertWCharToUtf8Alloc(lpPathName, nullptr);
 	if (!name)
 		return FALSE;
 	const BOOL rc = winpr_RemoveDirectory_RecursiveA(name);
@@ -1224,13 +1220,13 @@ char* winpr_GetConfigFilePathVA(BOOL system, WINPR_FORMAT_ARG const char* filena
 	const SSIZE_T version = winpr_getApplicationDetailsVersion();
 
 	if (!vendor || !product)
-		return NULL;
+		return nullptr;
 
 	char* config = GetKnownSubPathV(id, "%s", vendor);
 	if (!config)
-		return NULL;
+		return nullptr;
 
-	char* base = NULL;
+	char* base = nullptr;
 	if (version < 0)
 		base = GetCombinedPathV(config, "%s", product);
 	else
@@ -1238,7 +1234,7 @@ char* winpr_GetConfigFilePathVA(BOOL system, WINPR_FORMAT_ARG const char* filena
 	free(config);
 
 	if (!base)
-		return NULL;
+		return nullptr;
 	char* path = GetCombinedPathVA(base, filename, ap);
 	free(base);
 

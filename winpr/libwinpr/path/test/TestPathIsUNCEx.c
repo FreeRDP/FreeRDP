@@ -12,7 +12,7 @@ static const TCHAR testPathNotUNC[] = _T("C:\\share\\path\\file");
 int TestPathIsUNCEx(int argc, char* argv[])
 {
 	BOOL status = 0;
-	LPCTSTR Server = NULL;
+	LPCTSTR Server = nullptr;
 	TCHAR Path[PATHCCH_MAX_CCH] = WINPR_C_ARRAY_INIT;
 
 	WINPR_UNUSED(argc);

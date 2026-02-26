@@ -288,7 +288,7 @@ extern "C"
 	 * @param iv A pointer to the IV material (size must match expectations for the cipher used)
 	 * @param ivlen The length in bytes of the IV
 	 *
-	 * @return A newly allocated context or \b NULL
+	 * @return A newly allocated context or \b nullptr
 	 *
 	 * @since version 3.10.0
 	 */

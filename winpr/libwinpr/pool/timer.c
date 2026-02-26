@@ -30,7 +30,7 @@ PTP_TIMER winpr_CreateThreadpoolTimer(WINPR_ATTR_UNUSED PTP_TIMER_CALLBACK pfnti
                                       WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 {
 	WLog_ERR("TODO", "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 VOID winpr_CloseThreadpoolTimer(WINPR_ATTR_UNUSED PTP_TIMER pti)

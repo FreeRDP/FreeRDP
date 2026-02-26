@@ -10,11 +10,11 @@
 
 static INIT_ONCE initOnceTest = INIT_ONCE_STATIC_INIT;
 
-static HANDLE hStartEvent = NULL;
-static LONG* pErrors = NULL;
-static LONG* pTestThreadFunctionCalls = NULL;
-static LONG* pTestOnceFunctionCalls = NULL;
-static LONG* pInitOnceExecuteOnceCalls = NULL;
+static HANDLE hStartEvent = nullptr;
+static LONG* pErrors = nullptr;
+static LONG* pTestThreadFunctionCalls = nullptr;
+static LONG* pTestOnceFunctionCalls = nullptr;
+static LONG* pInitOnceExecuteOnceCalls = nullptr;
 
 static UINT32 prand(UINT32 max)
 {
@@ -65,7 +65,7 @@ static DWORD WINAPI TestThreadFunction(LPVOID lpParam)
 		return 0;
 	}
 
-	ok = InitOnceExecuteOnce(&initOnceTest, TestOnceFunction, NULL, NULL);
+	ok = InitOnceExecuteOnce(&initOnceTest, TestOnceFunction, nullptr, nullptr);
 	calls = InterlockedIncrement(pInitOnceExecuteOnceCalls);
 	if (!ok && calls > TEST_NUM_FAILURES)
 	{
@@ -101,7 +101,7 @@ int TestSynchInit(int argc, char* argv[])
 	*pTestOnceFunctionCalls = 0;
 	*pInitOnceExecuteOnceCalls = 0;
 
-	if (!(hStartEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(hStartEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
 		(void)fprintf(stderr, "error creating start event\n");
 		InterlockedIncrement(pErrors);
@@ -110,7 +110,7 @@ int TestSynchInit(int argc, char* argv[])
 
 	for (DWORD i = 0; i < TEST_NUM_THREADS; i++)
 	{
-		if (!(hThreads[i] = CreateThread(NULL, 0, TestThreadFunction, NULL, 0, NULL)))
+		if (!(hThreads[i] = CreateThread(nullptr, 0, TestThreadFunction, nullptr, 0, nullptr)))
 		{
 			(void)fprintf(stderr, "error creating thread #%" PRIu32 "\n", i);
 			InterlockedIncrement(pErrors);

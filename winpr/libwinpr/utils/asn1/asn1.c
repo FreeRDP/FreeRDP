@@ -78,7 +78,7 @@ void WinPrAsn1FreeOID(WinPrAsn1_OID* poid)
 {
 	WINPR_ASSERT(poid);
 	free(poid->data);
-	poid->data = NULL;
+	poid->data = nullptr;
 	poid->len = 0;
 }
 
@@ -147,14 +147,14 @@ WinPrAsn1Encoder* WinPrAsn1Encoder_New(WinPrAsn1EncodingRule encoding)
 {
 	WinPrAsn1Encoder* enc = calloc(1, sizeof(*enc));
 	if (!enc)
-		return NULL;
+		return nullptr;
 
 	enc->encoding = encoding;
-	enc->pool = Stream_New(NULL, 1024);
+	enc->pool = Stream_New(nullptr, 1024);
 	if (!enc->pool)
 	{
 		free(enc);
-		return NULL;
+		return nullptr;
 	}
 
 	enc->containers = &enc->staticContainers[0];
@@ -176,7 +176,7 @@ void WinPrAsn1Encoder_Reset(WinPrAsn1Encoder* enc)
 
 void WinPrAsn1Encoder_Free(WinPrAsn1Encoder** penc)
 {
-	WinPrAsn1Encoder* enc = NULL;
+	WinPrAsn1Encoder* enc = nullptr;
 
 	WINPR_ASSERT(penc);
 	enc = *penc;
@@ -191,13 +191,13 @@ void WinPrAsn1Encoder_Free(WinPrAsn1Encoder** penc)
 		Stream_Free(enc->pool, TRUE);
 		free(enc);
 	}
-	*penc = NULL;
+	*penc = nullptr;
 }
 
 static Asn1Chunk* asn1enc_get_free_chunk(WinPrAsn1Encoder* enc, size_t chunkSz, BOOL commit,
                                          size_t* id)
 {
-	Asn1Chunk* ret = NULL;
+	Asn1Chunk* ret = nullptr;
 	WINPR_ASSERT(enc);
 	WINPR_ASSERT(chunkSz);
 
@@ -210,7 +210,7 @@ static Asn1Chunk* asn1enc_get_free_chunk(WinPrAsn1Encoder* enc, size_t chunkSz, 
 		if (ret->capacity && ret->capacity == ret->used)
 		{
 			if (!Stream_EnsureRemainingCapacity(enc->pool, chunkSz))
-				return NULL;
+				return nullptr;
 
 			Stream_Seek(enc->pool, chunkSz);
 			ret->capacity += chunkSz;
@@ -224,10 +224,10 @@ static Asn1Chunk* asn1enc_get_free_chunk(WinPrAsn1Encoder* enc, size_t chunkSz, 
 	if (enc->freeChunkId == enc->chunksCapacity)
 	{
 		/* chunks need a resize */
-		Asn1Chunk* src = (enc->chunks != &enc->staticChunks[0]) ? enc->chunks : NULL;
+		Asn1Chunk* src = (enc->chunks != &enc->staticChunks[0]) ? enc->chunks : nullptr;
 		Asn1Chunk* tmp = realloc(src, (enc->chunksCapacity + 10) * sizeof(*src));
 		if (!tmp)
-			return NULL;
+			return nullptr;
 
 		if (enc->chunks == &enc->staticChunks[0])
 			memcpy(tmp, &enc->staticChunks[0], enc->chunksCapacity * sizeof(*src));
@@ -238,10 +238,10 @@ static Asn1Chunk* asn1enc_get_free_chunk(WinPrAsn1Encoder* enc, size_t chunkSz, 
 		enc->chunksCapacity += 10;
 	}
 	if (enc->freeChunkId == enc->chunksCapacity)
-		return NULL;
+		return nullptr;
 
 	if (!Stream_EnsureRemainingCapacity(enc->pool, chunkSz))
-		return NULL;
+		return nullptr;
 
 	ret = &enc->chunks[enc->freeChunkId];
 	ret->poolOffset = Stream_GetPosition(enc->pool);
@@ -257,17 +257,17 @@ static Asn1Chunk* asn1enc_get_free_chunk(WinPrAsn1Encoder* enc, size_t chunkSz, 
 
 static WinPrAsn1EncContainer* asn1enc_get_free_container(WinPrAsn1Encoder* enc, size_t* id)
 {
-	WinPrAsn1EncContainer* ret = NULL;
+	WinPrAsn1EncContainer* ret = nullptr;
 	WINPR_ASSERT(enc);
 
 	if (enc->freeContainerIndex == enc->containerCapacity)
 	{
 		/* containers need a resize (or switch from static to dynamic) */
 		WinPrAsn1EncContainer* src =
-		    (enc->containers != &enc->staticContainers[0]) ? enc->containers : NULL;
+		    (enc->containers != &enc->staticContainers[0]) ? enc->containers : nullptr;
 		WinPrAsn1EncContainer* tmp = realloc(src, (enc->containerCapacity + 10) * sizeof(*src));
 		if (!tmp)
-			return NULL;
+			return nullptr;
 
 		if (enc->containers == &enc->staticContainers[0])
 			memcpy(tmp, &enc->staticContainers[0], enc->containerCapacity * sizeof(*src));
@@ -276,7 +276,7 @@ static WinPrAsn1EncContainer* asn1enc_get_free_container(WinPrAsn1Encoder* enc, 
 		enc->containerCapacity += 10;
 	}
 	if (enc->freeContainerIndex == enc->containerCapacity)
-		return NULL;
+		return nullptr;
 
 	ret = &enc->containers[enc->freeContainerIndex];
 	*id = enc->freeContainerIndex;
@@ -333,11 +333,11 @@ static WinPrAsn1EncContainer* getAsn1Container(WinPrAsn1Encoder* enc, ContainerT
 {
 	size_t ret = 0;
 	size_t chunkId = 0;
-	WinPrAsn1EncContainer* container = NULL;
+	WinPrAsn1EncContainer* container = nullptr;
 
 	Asn1Chunk* chunk = asn1enc_get_free_chunk(enc, maxLen, FALSE, &chunkId);
 	if (!chunk)
-		return NULL;
+		return nullptr;
 
 	container = asn1enc_get_free_container(enc, &ret);
 	container->containerType = ctype;
@@ -350,42 +350,42 @@ static WinPrAsn1EncContainer* getAsn1Container(WinPrAsn1Encoder* enc, ContainerT
 BOOL WinPrAsn1EncAppContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId)
 {
 	WINPR_ASSERT_VALID_TAG(tagId);
-	return getAsn1Container(enc, ASN1_CONTAINER_APP, tagId, FALSE, 6) != NULL;
+	return getAsn1Container(enc, ASN1_CONTAINER_APP, tagId, FALSE, 6) != nullptr;
 }
 
 BOOL WinPrAsn1EncSeqContainer(WinPrAsn1Encoder* enc)
 {
-	return getAsn1Container(enc, ASN1_CONTAINER_SEQ, 0, FALSE, 6) != NULL;
+	return getAsn1Container(enc, ASN1_CONTAINER_SEQ, 0, FALSE, 6) != nullptr;
 }
 
 BOOL WinPrAsn1EncSetContainer(WinPrAsn1Encoder* enc)
 {
-	return getAsn1Container(enc, ASN1_CONTAINER_SET, 0, FALSE, 6) != NULL;
+	return getAsn1Container(enc, ASN1_CONTAINER_SET, 0, FALSE, 6) != nullptr;
 }
 
 BOOL WinPrAsn1EncContextualSeqContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId)
 {
-	return getAsn1Container(enc, ASN1_CONTAINER_SEQ, tagId, TRUE, 6 + 6) != NULL;
+	return getAsn1Container(enc, ASN1_CONTAINER_SEQ, tagId, TRUE, 6 + 6) != nullptr;
 }
 
 BOOL WinPrAsn1EncContextualSetContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId)
 {
-	return getAsn1Container(enc, ASN1_CONTAINER_SET, tagId, TRUE, 6 + 6) != NULL;
+	return getAsn1Container(enc, ASN1_CONTAINER_SET, tagId, TRUE, 6 + 6) != nullptr;
 }
 
 BOOL WinPrAsn1EncContextualContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId)
 {
-	return getAsn1Container(enc, ASN1_CONTAINER_CONTEXT_ONLY, tagId, TRUE, 6) != NULL;
+	return getAsn1Container(enc, ASN1_CONTAINER_CONTEXT_ONLY, tagId, TRUE, 6) != nullptr;
 }
 
 BOOL WinPrAsn1EncOctetStringContainer(WinPrAsn1Encoder* enc)
 {
-	return getAsn1Container(enc, ASN1_CONTAINER_OCTETSTRING, 0, FALSE, 6) != NULL;
+	return getAsn1Container(enc, ASN1_CONTAINER_OCTETSTRING, 0, FALSE, 6) != nullptr;
 }
 
 BOOL WinPrAsn1EncContextualOctetStringContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId)
 {
-	return getAsn1Container(enc, ASN1_CONTAINER_OCTETSTRING, tagId, TRUE, 6 + 6) != NULL;
+	return getAsn1Container(enc, ASN1_CONTAINER_OCTETSTRING, tagId, TRUE, 6 + 6) != nullptr;
 }
 
 size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc)
@@ -395,8 +395,8 @@ size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc)
 	size_t innerHeaderBytes = 0;
 	size_t outerHeaderBytes = 0;
 	BYTE containerByte = 0;
-	WinPrAsn1EncContainer* container = NULL;
-	Asn1Chunk* chunk = NULL;
+	WinPrAsn1EncContainer* container = nullptr;
+	Asn1Chunk* chunk = nullptr;
 	wStream staticS;
 	wStream* s = &staticS;
 
@@ -479,8 +479,8 @@ size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc)
 
 static BOOL asn1_getWriteStream(WinPrAsn1Encoder* enc, size_t len, wStream* s)
 {
-	BYTE* dest = NULL;
-	Asn1Chunk* chunk = asn1enc_get_free_chunk(enc, len, TRUE, NULL);
+	BYTE* dest = nullptr;
+	Asn1Chunk* chunk = asn1enc_get_free_chunk(enc, len, TRUE, nullptr);
 	if (!chunk)
 		return FALSE;
 
@@ -1114,7 +1114,7 @@ size_t WinPrAsn1DecReadIA5String(WinPrAsn1Decoder* dec, WinPrAsn1_IA5STRING* tar
 	WinPrAsn1_tag tag = 0;
 	size_t len = 0;
 	size_t ret = 0;
-	WinPrAsn1_IA5STRING s = NULL;
+	WinPrAsn1_IA5STRING s = nullptr;
 
 	WINPR_ASSERT(dec);
 	WINPR_ASSERT(target);
@@ -1141,7 +1141,7 @@ size_t WinPrAsn1DecReadGeneralString(WinPrAsn1Decoder* dec, WinPrAsn1_STRING* ta
 	WinPrAsn1_tag tag = 0;
 	size_t len = 0;
 	size_t ret = 0;
-	WinPrAsn1_IA5STRING s = NULL;
+	WinPrAsn1_IA5STRING s = nullptr;
 
 	WINPR_ASSERT(dec);
 	WINPR_ASSERT(target);

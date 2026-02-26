@@ -57,11 +57,11 @@ static double cJSON_GetNumberValue(const cJSON* prop)
 		return NAN;
 
 	errno = 0;
-	char* endptr = NULL;
+	char* endptr = nullptr;
 	double dval = strtod(val, &endptr);
 	if (val == endptr)
 		return NAN;
-	if (endptr != NULL)
+	if (endptr != nullptr)
 		return NAN;
 	if (errno != 0)
 		return NAN;
@@ -79,7 +79,7 @@ static cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length)
 	if (slen >= buffer_length)
 	{
 		if (value[buffer_length] != '\0')
-			return NULL;
+			return nullptr;
 	}
 	return cJSON_Parse(value);
 }
@@ -279,7 +279,7 @@ WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* object, const char* name)
 BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array, WINPR_JSON* item)
 {
 #if defined(USE_CJSON_COMPAT)
-	if ((array == NULL) || (item == NULL))
+	if ((array == nullptr) || (item == nullptr))
 		return FALSE;
 	cJSON_AddItemToArray((cJSON*)array, (cJSON*)item);
 	return TRUE;

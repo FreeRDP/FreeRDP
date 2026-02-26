@@ -14,11 +14,11 @@
 int TestUri(int argc, char* argv[])
 {
 	int nRet = 0;
-	const char* input[] = { /*uri,                      file or NULL*/
+	const char* input[] = { /*uri,                      file or nullptr*/
 		                    "file://root/a.txt",
-		                    NULL,
+		                    nullptr,
 		                    "file:a.txt",
-		                    NULL,
+		                    nullptr,
 		                    "file:///c:/windows/a.txt",
 		                    "c:/windows/a.txt",
 		                    "file:c:/windows/a.txt",

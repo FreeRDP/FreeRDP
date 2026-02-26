@@ -105,7 +105,7 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
 		__android_log_print(level, log->Name, "%s%s", prefix, cmessage->TextString);
 
 #else
-	FILE* fp = NULL;
+	FILE* fp = nullptr;
 	switch (consoleAppender->outputStream)
 	{
 		case WLOG_CONSOLE_STDOUT:
@@ -145,7 +145,7 @@ static BOOL WLog_ConsoleAppender_WriteDataMessage(WINPR_ATTR_UNUSED wLog* log,
 	return FALSE;
 #else
 	int DataId = 0;
-	char* FullFileName = NULL;
+	char* FullFileName = nullptr;
 
 	DataId = g_DataId++;
 	FullFileName = WLog_Message_GetOutputFileName(DataId, "dat");
@@ -168,7 +168,7 @@ static BOOL WLog_ConsoleAppender_WriteImageMessage(WINPR_ATTR_UNUSED wLog* log,
 	return FALSE;
 #else
 	int ImageId = 0;
-	char* FullFileName = NULL;
+	char* FullFileName = nullptr;
 
 	ImageId = g_ImageId++;
 	FullFileName = WLog_Message_GetOutputFileName(ImageId, "bmp");
@@ -191,7 +191,7 @@ static BOOL WLog_ConsoleAppender_WritePacketMessage(WINPR_ATTR_UNUSED wLog* log,
 #if defined(ANDROID)
 	return FALSE;
 #else
-	char* FullFileName = NULL;
+	char* FullFileName = nullptr;
 
 	g_PacketId++;
 
@@ -253,7 +253,7 @@ wLogAppender* WLog_ConsoleAppender_New(WINPR_ATTR_UNUSED wLog* log)
 	    (wLogConsoleAppender*)calloc(1, sizeof(wLogConsoleAppender));
 
 	if (!ConsoleAppender)
-		return NULL;
+		return nullptr;
 
 	ConsoleAppender->common.Type = WLOG_APPENDER_CONSOLE;
 	ConsoleAppender->common.Open = WLog_ConsoleAppender_Open;

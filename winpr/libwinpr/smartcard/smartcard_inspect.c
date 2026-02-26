@@ -40,7 +40,7 @@
 	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
 	{                                                                                    \
 		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p", \
-		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
+		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : nullptr);             \
 		status = SCARD_E_NO_SERVICE;                                                     \
 	}                                                                                    \
 	else                                                                                 \
@@ -50,8 +50,8 @@
 	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
 	{                                                                                    \
 		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p", \
-		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
-		status = NULL;                                                                   \
+		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : nullptr);             \
+		status = nullptr;                                                                \
 	}                                                                                    \
 	else                                                                                 \
 		status = g_SCardApi->pfn##_name(__VA_ARGS__)
@@ -60,15 +60,15 @@
 	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                          \
 	{                                                                                    \
 		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p", \
-		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : NULL);                \
+		         g_SCardApi, g_SCardApi ? g_SCardApi->pfn##_name : nullptr);             \
 	}                                                                                    \
 	else                                                                                 \
 		g_SCardApi->pfn##_name(__VA_ARGS__)
 
 static const DWORD g_LogLevel = WLOG_DEBUG;
-static wLog* g_Log = NULL;
+static wLog* g_Log = nullptr;
 
-static const SCardApiFunctionTable* g_SCardApi = NULL;
+static const SCardApiFunctionTable* g_SCardApi = nullptr;
 
 /**
  * Standard Windows Smart Card API
@@ -599,7 +599,7 @@ static LONG WINAPI Inspect_SCardFreeMemory(SCARDCONTEXT hContext, LPVOID pvMem)
 
 static HANDLE WINAPI Inspect_SCardAccessStartedEvent(void)
 {
-	HANDLE hEvent = NULL;
+	HANDLE hEvent = nullptr;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAccessStartedEvent {");
 

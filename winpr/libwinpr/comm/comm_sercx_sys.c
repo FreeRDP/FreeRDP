@@ -177,36 +177,36 @@ static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 static SERIAL_DRIVER SerCxSys = {
 	.id = SerialDriverSerCxSys,
 	.name = _T("SerCx.sys"),
-	.set_baud_rate = NULL,
-	.get_baud_rate = NULL,
-	.get_properties = NULL,
-	.set_serial_chars = NULL,
-	.get_serial_chars = NULL,
-	.set_line_control = NULL,
-	.get_line_control = NULL,
+	.set_baud_rate = nullptr,
+	.get_baud_rate = nullptr,
+	.get_properties = nullptr,
+	.set_serial_chars = nullptr,
+	.get_serial_chars = nullptr,
+	.set_line_control = nullptr,
+	.get_line_control = nullptr,
 	.set_handflow = set_handflow,
 	.get_handflow = get_handflow,
-	.set_timeouts = NULL,
-	.get_timeouts = NULL,
-	.set_dtr = NULL,
-	.clear_dtr = NULL,
-	.set_rts = NULL,
-	.clear_rts = NULL,
-	.get_modemstatus = NULL,
+	.set_timeouts = nullptr,
+	.get_timeouts = nullptr,
+	.set_dtr = nullptr,
+	.clear_dtr = nullptr,
+	.set_rts = nullptr,
+	.clear_rts = nullptr,
+	.get_modemstatus = nullptr,
 	.set_wait_mask = set_wait_mask,
-	.get_wait_mask = NULL,
-	.wait_on_mask = NULL,
-	.set_queue_size = NULL,
-	.purge = NULL,
-	.get_commstatus = NULL,
-	.set_break_on = NULL,
-	.set_break_off = NULL,
-	.set_xoff = NULL,
-	.set_xon = NULL,
-	.get_dtrrts = NULL,
-	.config_size = NULL, /* not supported by SerCx.sys */
-	.immediate_char = NULL,
-	.reset_device = NULL, /* not supported by SerCx.sys */
+	.get_wait_mask = nullptr,
+	.wait_on_mask = nullptr,
+	.set_queue_size = nullptr,
+	.purge = nullptr,
+	.get_commstatus = nullptr,
+	.set_break_on = nullptr,
+	.set_break_off = nullptr,
+	.set_xoff = nullptr,
+	.set_xon = nullptr,
+	.get_dtrrts = nullptr,
+	.config_size = nullptr, /* not supported by SerCx.sys */
+	.immediate_char = nullptr,
+	.reset_device = nullptr, /* not supported by SerCx.sys */
 };
 
 const SERIAL_DRIVER* SerCxSys_s(void)
@@ -214,7 +214,7 @@ const SERIAL_DRIVER* SerCxSys_s(void)
 	/* _SerCxSys completed with inherited functions from SerialSys */
 	const SERIAL_DRIVER* pSerialSys = SerialSys_s();
 	if (!pSerialSys)
-		return NULL;
+		return nullptr;
 
 	SerCxSys.set_baud_rate = pSerialSys->set_baud_rate;
 	SerCxSys.get_baud_rate = pSerialSys->get_baud_rate;

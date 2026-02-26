@@ -42,9 +42,9 @@ WINPR_API const char* winpr_get_build_config(void);
  * is ignored and the config path will always have the format 'vendor/product' or 'vendor/product1'
  * (1 for the actual version set)
  *
- * @param vendor A vendor name to use. Must not be \b NULL. Must not contain forbidden
+ * @param vendor A vendor name to use. Must not be \b nullptr. Must not contain forbidden
  * filesystem symbols for any os. Must be less than \b MAX_PATH bytes.
- * @param product A product name to use. Must not be \b NULL. Must not contain forbidden
+ * @param product A product name to use. Must not be \b nullptr. Must not contain forbidden
  * filesystem symbols for any os. Must be less than \b MAX_PATH bytes.
  * @param version An optional versioning value to append to paths to settings. Use \b -1 to
  * disable.

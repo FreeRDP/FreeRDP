@@ -7,7 +7,7 @@
 int TestWtsApiWaitSystemEvent(int argc, char* argv[])
 {
 	BOOL bSuccess = 0;
-	HANDLE hServer = NULL;
+	HANDLE hServer = nullptr;
 	DWORD eventMask = 0;
 	DWORD eventFlags = 0;
 
@@ -15,7 +15,7 @@ int TestWtsApiWaitSystemEvent(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 
 #ifndef _WIN32
-	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0))
+	if (!GetEnvironmentVariableA("WTSAPI_LIBRARY", nullptr, 0))
 	{
 		printf("%s: No RDS environment detected, skipping test\n", __func__);
 		return 0;

@@ -32,7 +32,7 @@ static wEventType Node_Events[] = { DEFINE_EVENT_ENTRY(MouseMotion),
 
 int TestPubSub(int argc, char* argv[])
 {
-	wPubSub* node = NULL;
+	wPubSub* node = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -53,7 +53,7 @@ int TestPubSub(int argc, char* argv[])
 		e.x = 64;
 		e.y = 128;
 
-		PubSub_OnMouseMotion(node, NULL, &e);
+		PubSub_OnMouseMotion(node, nullptr, &e);
 	}
 
 	{
@@ -64,7 +64,7 @@ int TestPubSub(int argc, char* argv[])
 		e.flags = 7;
 		e.button = 1;
 
-		PubSub_OnMouseButton(node, NULL, &e);
+		PubSub_OnMouseButton(node, nullptr, &e);
 	}
 
 	PubSub_Free(node);

@@ -41,7 +41,7 @@ void krb5glue_keys_free(krb5_context ctx, struct krb5glue_keyset* keyset)
 krb5_error_code krb5glue_update_keyset(krb5_context ctx, krb5_auth_context auth_ctx, BOOL acceptor,
                                        struct krb5glue_keyset* keyset)
 {
-	krb5_keyblock* keyblock = NULL;
+	krb5_keyblock* keyblock = nullptr;
 	krb5_error_code rv = 0;
 
 	WINPR_ASSERT(ctx);
@@ -55,7 +55,7 @@ krb5_error_code krb5glue_update_keyset(krb5_context ctx, krb5_auth_context auth_
 	{
 		krb5_crypto_init(ctx, keyblock, ENCTYPE_NULL, &keyset->session_key);
 		krb5_free_keyblock(ctx, keyblock);
-		keyblock = NULL;
+		keyblock = nullptr;
 	}
 
 	if (acceptor)
@@ -67,7 +67,7 @@ krb5_error_code krb5glue_update_keyset(krb5_context ctx, krb5_auth_context auth_
 	{
 		krb5_crypto_init(ctx, keyblock, ENCTYPE_NULL, &keyset->initiator_key);
 		krb5_free_keyblock(ctx, keyblock);
-		keyblock = NULL;
+		keyblock = nullptr;
 	}
 
 	if (acceptor)
@@ -94,7 +94,7 @@ krb5_error_code krb5glue_verify_checksum_iov(krb5_context ctx, krb5glue_key key,
 	WINPR_ASSERT(key);
 	WINPR_ASSERT(is_valid);
 
-	rv = krb5_verify_checksum_iov(ctx, key, usage, iov, iov_size, NULL);
+	rv = krb5_verify_checksum_iov(ctx, key, usage, iov, iov_size, nullptr);
 	*is_valid = (rv == 0);
 	return rv;
 }
@@ -151,8 +151,8 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 {
 	krb5_error_code rv = 0;
 	krb5_deltat start_time = 0;
-	krb5_get_init_creds_opt* gic_opt = NULL;
-	krb5_init_creds_context creds_ctx = NULL;
+	krb5_get_init_creds_opt* gic_opt = nullptr;
+	krb5_init_creds_context creds_ctx = nullptr;
 	krb5_creds creds = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(ctx);
@@ -179,7 +179,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 			{
 				if ((rv = krb5_get_init_creds_opt_set_pkinit(
 				         ctx, gic_opt, princ, krb_settings->pkinitX509Identity,
-				         krb_settings->pkinitX509Anchors, NULL, NULL, 0, prompter, password,
+				         krb_settings->pkinitX509Anchors, nullptr, nullptr, 0, prompter, password,
 				         password)) != 0)
 					break;
 			}
@@ -192,7 +192,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 			break;
 		if (krb_settings && krb_settings->armorCache)
 		{
-			krb5_ccache armor_cc = NULL;
+			krb5_ccache armor_cc = nullptr;
 			if ((rv = krb5_cc_resolve(ctx, krb_settings->armorCache, &armor_cc)) != 0)
 				break;
 			if ((rv = krb5_init_creds_set_fast_ccache(ctx, creds_ctx, armor_cc)) != 0)

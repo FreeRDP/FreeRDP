@@ -9,7 +9,7 @@
 /**
  * FIXME: These implementations of the PathAllocCombine functions have
  * several issues:
- * - pszPathIn or pszMore may be NULL (but not both)
+ * - pszPathIn or pszMore may be nullptr (but not both)
  * - no check if pszMore is fully qualified (if so, it must be directly
  *   copied to the output buffer without being combined with pszPathIn.
  * - if pszMore begins with a _single_ backslash it must be combined with

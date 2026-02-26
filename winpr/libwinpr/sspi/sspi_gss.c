@@ -30,7 +30,7 @@
 BOOL sspi_gss_wrap_token(SecBuffer* buf, const WinPrAsn1_OID* oid, uint16_t tok_id,
                          const sspi_gss_data* token)
 {
-	WinPrAsn1Encoder* enc = NULL;
+	WinPrAsn1Encoder* enc = nullptr;
 	BYTE tok_id_buf[2];
 	WinPrAsn1_MemoryChunk mc = { 2, tok_id_buf };
 	wStream s;
@@ -90,7 +90,7 @@ BOOL sspi_gss_unwrap_token(const SecBuffer* buf, WinPrAsn1_OID* oid, uint16_t* t
 	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
 	WinPrAsn1_tagId tag = 0;
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
-	wStream* s = NULL;
+	wStream* s = nullptr;
 
 	WINPR_ASSERT(buf);
 	WINPR_ASSERT(oid);

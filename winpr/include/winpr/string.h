@@ -180,9 +180,9 @@ extern "C"
 
 #define sprintf_s snprintf
 #define _snprintf snprintf
-#define _scprintf(...) snprintf(NULL, 0, __VA_ARGS__)
+#define _scprintf(...) snprintf(nullptr, 0, __VA_ARGS__)
 
-#define _scprintf(...) snprintf(NULL, 0, __VA_ARGS__)
+#define _scprintf(...) snprintf(nullptr, 0, __VA_ARGS__)
 
 	/* Unicode Conversion */
 
@@ -212,7 +212,7 @@ extern "C"
 	 * \warning Supplying a buffer length smaller than required will result in
 	 * platform dependent (=undefined) behaviour!
 	 *
-	 *  \param wstr A '\0' terminated WCHAR string, may be NULL
+	 *  \param wstr A '\0' terminated WCHAR string, may be nullptr
 	 *  \param str A pointer to the result string
 	 *  \param len The length in characters of the result buffer
 	 *
@@ -268,7 +268,7 @@ extern "C"
 	 * \warning Supplying a buffer length smaller than required will result in
 	 * platform dependent (=undefined) behaviour!
 	 *
-	 *  \param str A '\0' terminated CHAR string, may be NULL
+	 *  \param str A '\0' terminated CHAR string, may be nullptr
 	 *  \param wstr A pointer to the result WCHAR string
 	 *  \param wlen The length in WCHAR characters of the result buffer
 	 *
@@ -319,11 +319,11 @@ extern "C"
 	 *
 	 * The function does string conversions of any '\0' terminated input string
 	 *
-	 *  \param wstr A '\0' terminated WCHAR string, may be NULL
-	 *  \param pUtfCharLength Ignored if NULL, otherwise receives the length of the result string in
-	 * characters (strlen)
+	 *  \param wstr A '\0' terminated WCHAR string, may be nullptr
+	 *  \param pUtfCharLength Ignored if nullptr, otherwise receives the length of the result string
+	 * in characters (strlen)
 	 *
-	 *  \return An allocated zero terminated UTF-8 string or NULL in case of failure.
+	 *  \return An allocated zero terminated UTF-8 string or nullptr in case of failure.
 	 */
 	WINPR_API char* ConvertWCharToUtf8Alloc(const WCHAR* wstr, size_t* pUtfCharLength);
 
@@ -334,10 +334,10 @@ extern "C"
 	 *
 	 *  \param wstr A WCHAR string of \b wlen length
 	 *  \param wlen The (buffer) length in characters of \b wstr
-	 *  \param pUtfCharLength Ignored if NULL, otherwise receives the length of the result string in
-	 * characters (strlen)
+	 *  \param pUtfCharLength Ignored if nullptr, otherwise receives the length of the result string
+	 * in characters (strlen)
 	 *
-	 *  \return An allocated zero terminated UTF-8 string or NULL in case of failure.
+	 *  \return An allocated zero terminated UTF-8 string or nullptr in case of failure.
 	 */
 	WINPR_API char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen,
 	                                         size_t* pUtfCharLength);
@@ -349,10 +349,10 @@ extern "C"
 	 *
 	 *  \param wstr A WCHAR string of \b len character length
 	 *  \param wlen The (buffer) length in characters of \b str
-	 *  \param pUtfCharLength Ignored if NULL, otherwise receives the length of the result string in
-	 * characters (including any '\0' character)
+	 *  \param pUtfCharLength Ignored if nullptr, otherwise receives the length of the result string
+	 * in characters (including any '\0' character)
 	 *
-	 *  \return An allocated double zero terminated UTF-8 string or NULL in case of failure.
+	 *  \return An allocated double zero terminated UTF-8 string or nullptr in case of failure.
 	 */
 	WINPR_API char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen,
 	                                            size_t* pUtfCharLength);
@@ -361,11 +361,11 @@ extern "C"
 	 *
 	 * The function does string conversions of any '\0' terminated input string
 	 *
-	 *  \param str A '\0' terminated CHAR string, may be NULL
-	 *  \param pSize Ignored if NULL, otherwise receives the length of the result string in
+	 *  \param str A '\0' terminated CHAR string, may be nullptr
+	 *  \param pSize Ignored if nullptr, otherwise receives the length of the result string in
 	 * characters (wcslen)
 	 *
-	 *  \return An allocated zero terminated UTF-16 string or NULL in case of failure.
+	 *  \return An allocated zero terminated UTF-16 string or nullptr in case of failure.
 	 */
 	WINPR_API WCHAR* ConvertUtf8ToWCharAlloc(const char* str, size_t* pSize);
 
@@ -376,10 +376,10 @@ extern "C"
 	 *
 	 *  \param str A CHAR string of \b len length
 	 *  \param len The (buffer) length in characters of \b str
-	 *  \param pSize Ignored if NULL, otherwise receives the length of the result string in
+	 *  \param pSize Ignored if nullptr, otherwise receives the length of the result string in
 	 * characters (wcslen)
 	 *
-	 *  \return An allocated zero terminated UTF-16 string or NULL in case of failure.
+	 *  \return An allocated zero terminated UTF-16 string or nullptr in case of failure.
 	 */
 	WINPR_API WCHAR* ConvertUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize);
 
@@ -390,10 +390,10 @@ extern "C"
 	 *
 	 *  \param str A CHAR string of \b len byte length
 	 *  \param len The (buffer) length in characters of \b str
-	 *  \param pSize Ignored if NULL, otherwise receives the length of the result string in
+	 *  \param pSize Ignored if nullptr, otherwise receives the length of the result string in
 	 * characters (including any '\0' character)
 	 *
-	 *  \return An allocated double zero terminated UTF-16 string or NULL in case of failure.
+	 *  \return An allocated double zero terminated UTF-16 string or nullptr in case of failure.
 	 */
 	WINPR_API WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize);
 

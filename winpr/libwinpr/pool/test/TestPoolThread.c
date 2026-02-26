@@ -16,12 +16,12 @@
 
 int TestPoolThread(int argc, char* argv[])
 {
-	TP_POOL* pool = NULL;
+	TP_POOL* pool = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	if (!(pool = CreateThreadpool(NULL)))
+	if (!(pool = CreateThreadpool(nullptr)))
 	{
 		printf("CreateThreadpool failed\n");
 		return -1;

@@ -5,12 +5,12 @@
 
 int TestInterlockedAccess(int argc, char* argv[])
 {
-	LONG* Addend = NULL;
-	LONG* Target = NULL;
+	LONG* Addend = nullptr;
+	LONG* Target = nullptr;
 	LONG oldValue = 0;
-	LONG* Destination = NULL;
+	LONG* Destination = nullptr;
 	LONGLONG oldValue64 = 0;
-	LONGLONG* Destination64 = NULL;
+	LONGLONG* Destination64 = nullptr;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	/* InterlockedIncrement */

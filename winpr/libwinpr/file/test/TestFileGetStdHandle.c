@@ -26,7 +26,7 @@
 
 int TestFileGetStdHandle(int argc, char* argv[])
 {
-	HANDLE so = NULL;
+	HANDLE so = nullptr;
 	const char buf[] = "happy happy";
 	DWORD bytesWritten = 0;
 	WINPR_UNUSED(argc);
@@ -37,7 +37,7 @@ int TestFileGetStdHandle(int argc, char* argv[])
 		(void)fprintf(stderr, "GetStdHandle failed ;(\n");
 		return -1;
 	}
-	WriteFile(so, buf, strnlen(buf, sizeof(buf)), &bytesWritten, NULL);
+	WriteFile(so, buf, strnlen(buf, sizeof(buf)), &bytesWritten, nullptr);
 	if (bytesWritten != strnlen(buf, sizeof(buf)))
 	{
 		(void)fprintf(stderr, "write failed\n");

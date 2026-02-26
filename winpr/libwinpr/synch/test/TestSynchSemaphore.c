@@ -4,10 +4,10 @@
 
 int TestSynchSemaphore(int argc, char* argv[])
 {
-	HANDLE semaphore = NULL;
+	HANDLE semaphore = nullptr;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	semaphore = CreateSemaphore(NULL, 0, 1, NULL);
+	semaphore = CreateSemaphore(nullptr, 0, 1, nullptr);
 
 	if (!semaphore)
 	{

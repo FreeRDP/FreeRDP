@@ -114,7 +114,7 @@
 static WINPR_THREAD mainThread;
 
 #if defined(WITH_THREAD_LIST)
-static wListDictionary* thread_list = NULL;
+static wListDictionary* thread_list = nullptr;
 #endif
 
 static BOOL ThreadCloseHandle(HANDLE handle);
@@ -220,10 +220,10 @@ static BOOL mux_condition_bundle_init(mux_condition_bundle* bundle)
 	WINPR_ASSERT(bundle);
 
 	bundle->val = FALSE;
-	if (!run_mutex_init(pthread_mutex_init, &bundle->mux, NULL))
+	if (!run_mutex_init(pthread_mutex_init, &bundle->mux, nullptr))
 		return FALSE;
 
-	if (!run_cond_init(pthread_cond_init, &bundle->cond, NULL))
+	if (!run_cond_init(pthread_cond_init, &bundle->cond, nullptr))
 		return FALSE;
 	return TRUE;
 }
@@ -329,7 +329,7 @@ static DWORD ThreadCleanupHandle(HANDLE handle)
 
 	if (!thread->joined)
 	{
-		int rc = pthread_join(thread->thread, NULL);
+		int rc = pthread_join(thread->thread, nullptr);
 
 		if (rc != 0)
 		{
@@ -351,33 +351,18 @@ fail:
 	return status;
 }
 
-static HANDLE_OPS ops = { ThreadIsHandled,
-	                      ThreadCloseHandle,
-	                      ThreadGetFd,
-	                      ThreadCleanupHandle,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL,
-	                      NULL };
+static HANDLE_OPS ops = { ThreadIsHandled, ThreadCloseHandle, ThreadGetFd, ThreadCleanupHandle,
+	                      nullptr,         nullptr,           nullptr,     nullptr,
+	                      nullptr,         nullptr,           nullptr,     nullptr,
+	                      nullptr,         nullptr,           nullptr,     nullptr,
+	                      nullptr,         nullptr,           nullptr,     nullptr,
+	                      nullptr };
 
 static void dump_thread(WINPR_THREAD* thread)
 {
 #if defined(WITH_DEBUG_THREADS)
 	void* stack = winpr_backtrace(20);
-	char** msg = NULL;
+	char** msg = nullptr;
 	size_t used = 0;
 	WLog_DBG(TAG, "Called from:");
 	msg = winpr_backtrace_symbols(stack, &used);
@@ -519,7 +504,7 @@ static void* thread_launcher(void* arg)
 {
 	DWORD rc = 0;
 	WINPR_THREAD* thread = (WINPR_THREAD*)arg;
-	LPTHREAD_START_ROUTINE fkt = NULL;
+	LPTHREAD_START_ROUTINE fkt = nullptr;
 
 	if (!thread)
 	{
@@ -567,7 +552,7 @@ exit:
 			cleanup_handle(thread);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 static BOOL winpr_StartThread(WINPR_THREAD* thread)
@@ -632,7 +617,7 @@ error:
 BOOL SetThreadPriority(HANDLE hThread, int nPriority)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* Object = NULL;
+	WINPR_HANDLE* Object = nullptr;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
 		return FALSE;
@@ -690,11 +675,11 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, size_t dwStackSize
                     LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter,
                     DWORD dwCreationFlags, WINPR_ATTR_UNUSED LPDWORD lpThreadId)
 {
-	HANDLE handle = NULL;
+	HANDLE handle = nullptr;
 	WINPR_THREAD* thread = (WINPR_THREAD*)calloc(1, sizeof(WINPR_THREAD));
 
 	if (!thread)
-		return NULL;
+		return nullptr;
 
 	thread->dwStackSize = dwStackSize;
 	thread->lpParameter = lpParameter;
@@ -712,7 +697,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, size_t dwStackSize
 		goto fail;
 	}
 
-	if (!run_mutex_init(pthread_mutex_init, &thread->mutex, NULL))
+	if (!run_mutex_init(pthread_mutex_init, &thread->mutex, nullptr))
 	{
 		WLog_ERR(TAG, "failed to initialize thread mutex");
 		goto fail;
@@ -732,7 +717,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, size_t dwStackSize
 	WINPR_HANDLE_SET_TYPE_AND_MODE(thread, HANDLE_TYPE_THREAD, WINPR_FD_READ);
 	handle = (HANDLE)thread;
 
-	InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, NULL, NULL);
+	InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, nullptr, nullptr);
 
 	if (!(dwCreationFlags & CREATE_SUSPENDED))
 	{
@@ -748,7 +733,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, size_t dwStackSize
 	return handle;
 fail:
 	cleanup_handle(thread);
-	return NULL;
+	return nullptr;
 }
 
 void cleanup_handle(void* obj)
@@ -831,7 +816,7 @@ HANDLE CreateRemoteThread(WINPR_ATTR_UNUSED HANDLE hProcess,
 {
 	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return NULL;
+	return nullptr;
 }
 
 VOID ExitThread(DWORD dwExitCode)
@@ -884,8 +869,8 @@ VOID ExitThread(DWORD dwExitCode)
 BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* Object = NULL;
-	WINPR_THREAD* thread = NULL;
+	WINPR_HANDLE* Object = nullptr;
+	WINPR_THREAD* thread = nullptr;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
 	{
@@ -901,9 +886,9 @@ BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 
 WINPR_THREAD* winpr_GetCurrentThread(VOID)
 {
-	WINPR_THREAD* ret = NULL;
+	WINPR_THREAD* ret = nullptr;
 
-	InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, NULL, NULL);
+	InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, nullptr, nullptr);
 	if (mainThreadId == pthread_self())
 		return (HANDLE)&mainThread;
 
@@ -950,9 +935,9 @@ static void userAPC(LPVOID arg)
 DWORD QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* Object = NULL;
-	WINPR_APC_ITEM* apc = NULL;
-	UserApcItem* apcItem = NULL;
+	WINPR_HANDLE* Object = nullptr;
+	WINPR_APC_ITEM* apc = nullptr;
+	UserApcItem* apcItem = nullptr;
 
 	if (!pfnAPC)
 		return 1;
@@ -986,8 +971,8 @@ DWORD QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData)
 DWORD ResumeThread(HANDLE hThread)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* Object = NULL;
-	WINPR_THREAD* thread = NULL;
+	WINPR_HANDLE* Object = nullptr;
+	WINPR_THREAD* thread = nullptr;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
 	{
@@ -1040,8 +1025,8 @@ BOOL SwitchToThread(VOID)
 BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 {
 	ULONG Type = 0;
-	WINPR_HANDLE* Object = NULL;
-	WINPR_THREAD* thread = NULL;
+	WINPR_HANDLE* Object = nullptr;
+	WINPR_THREAD* thread = nullptr;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
 		return FALSE;
@@ -1069,7 +1054,7 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 VOID DumpThreadHandles(void)
 {
 #if defined(WITH_DEBUG_THREADS)
-	char** msg = NULL;
+	char** msg = nullptr;
 	size_t used = 0;
 	void* stack = winpr_backtrace(20);
 	WLog_DBG(TAG, "---------------- Called from ----------------------------");
@@ -1091,7 +1076,7 @@ VOID DumpThreadHandles(void)
 	}
 	else
 	{
-		ULONG_PTR* keys = NULL;
+		ULONG_PTR* keys = nullptr;
 		ListDictionary_Lock(thread_list);
 		int x, count = ListDictionary_GetKeys(thread_list, &keys);
 		WLog_DBG(TAG, "Dumping %d elements", count);

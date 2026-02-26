@@ -71,7 +71,7 @@ void PubSub_Unlock(wPubSub* pubSub)
 
 wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 {
-	wEventType* event = NULL;
+	wEventType* event = nullptr;
 
 	WINPR_ASSERT(pubSub);
 	WINPR_ASSERT(EventName);
@@ -123,7 +123,7 @@ fail:
 
 int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, ...)
 {
-	wEventType* event = NULL;
+	wEventType* event = nullptr;
 	int status = -1;
 	WINPR_ASSERT(pubSub);
 
@@ -155,7 +155,7 @@ int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, ...)
 
 int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 {
-	wEventType* event = NULL;
+	wEventType* event = nullptr;
 	int status = -1;
 	WINPR_ASSERT(pubSub);
 	WINPR_ASSERT(EventName);
@@ -177,7 +177,7 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 		{
 			if (event->EventHandlers[index] == EventHandler)
 			{
-				event->EventHandlers[index] = NULL;
+				event->EventHandlers[index] = nullptr;
 				event->EventHandlerCount--;
 				MoveMemory((void*)&event->EventHandlers[index],
 				           (void*)&event->EventHandlers[index + 1],
@@ -196,7 +196,7 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 
 int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, const wEventArgs* e)
 {
-	wEventType* event = NULL;
+	wEventType* event = nullptr;
 	int status = -1;
 
 	if (!pubSub)
@@ -237,7 +237,7 @@ wPubSub* PubSub_New(BOOL synchronized)
 	wPubSub* pubSub = (wPubSub*)calloc(1, sizeof(wPubSub));
 
 	if (!pubSub)
-		return NULL;
+		return nullptr;
 
 	pubSub->synchronized = synchronized;
 
@@ -257,7 +257,7 @@ fail:
 	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	PubSub_Free(pubSub);
 	WINPR_PRAGMA_DIAG_POP
-	return NULL;
+	return nullptr;
 }
 
 void PubSub_Free(wPubSub* pubSub)

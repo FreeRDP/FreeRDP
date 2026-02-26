@@ -66,9 +66,10 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 
 		if ((tlen >= (ARRAYSIZE(lpTargetPath) - 1)) || (lpTargetPath[tlen + 1] != 0))
 		{
-			_tprintf(_T("QueryCommDevice failure: device name: %s, the second NULL character is ")
-			         _T("missing at the end of the buffer\n"),
-			         lpDeviceName);
+			_tprintf(
+			    _T("QueryCommDevice failure: device name: %s, the second nullptr character is ")
+			    _T("missing at the end of the buffer\n"),
+			    lpDeviceName);
 			return FALSE;
 		}
 	}

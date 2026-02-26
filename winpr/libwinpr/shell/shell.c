@@ -46,7 +46,7 @@
 BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSize)
 {
 	struct passwd pwd = WINPR_C_ARRAY_INIT;
-	struct passwd* pw = NULL;
+	struct passwd* pw = nullptr;
 	WINPR_ACCESS_TOKEN* token = (WINPR_ACCESS_TOKEN*)hToken;
 
 	if (!AccessTokenIsValid(hToken))
@@ -105,7 +105,7 @@ BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchS
 {
 	BOOL bStatus = 0;
 	DWORD cchSizeA = 0;
-	LPSTR lpProfileDirA = NULL;
+	LPSTR lpProfileDirA = nullptr;
 
 	if (!lpcchSize)
 	{
@@ -114,13 +114,13 @@ BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchS
 	}
 
 	cchSizeA = *lpcchSize;
-	lpProfileDirA = NULL;
+	lpProfileDirA = nullptr;
 
 	if (lpProfileDir)
 	{
 		lpProfileDirA = (LPSTR)malloc(cchSizeA);
 
-		if (lpProfileDirA == NULL)
+		if (lpProfileDirA == nullptr)
 		{
 			SetLastError(ERROR_OUTOFMEMORY);
 			return FALSE;

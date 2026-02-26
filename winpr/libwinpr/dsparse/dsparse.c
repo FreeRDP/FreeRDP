@@ -48,11 +48,11 @@ DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName
                  USHORT InstancePort, LPCWSTR Referrer, DWORD* pcSpnLength, LPWSTR pszSpn)
 {
 	DWORD res = ERROR_OUTOFMEMORY;
-	char* ServiceClassA = NULL;
-	char* ServiceNameA = NULL;
-	char* InstanceNameA = NULL;
-	char* ReferrerA = NULL;
-	char* pszSpnA = NULL;
+	char* ServiceClassA = nullptr;
+	char* ServiceNameA = nullptr;
+	char* InstanceNameA = nullptr;
+	char* ReferrerA = nullptr;
+	char* pszSpnA = nullptr;
 	size_t length = 0;
 
 	WINPR_ASSERT(ServiceClass);
@@ -65,25 +65,25 @@ DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName
 
 	if (ServiceClass)
 	{
-		ServiceClassA = ConvertWCharToUtf8Alloc(ServiceClass, NULL);
+		ServiceClassA = ConvertWCharToUtf8Alloc(ServiceClass, nullptr);
 		if (!ServiceClassA)
 			goto fail;
 	}
 	if (ServiceName)
 	{
-		ServiceNameA = ConvertWCharToUtf8Alloc(ServiceName, NULL);
+		ServiceNameA = ConvertWCharToUtf8Alloc(ServiceName, nullptr);
 		if (!ServiceNameA)
 			goto fail;
 	}
 	if (InstanceName)
 	{
-		InstanceNameA = ConvertWCharToUtf8Alloc(InstanceName, NULL);
+		InstanceNameA = ConvertWCharToUtf8Alloc(InstanceName, nullptr);
 		if (!InstanceNameA)
 			goto fail;
 	}
 	if (Referrer)
 	{
-		ReferrerA = ConvertWCharToUtf8Alloc(Referrer, NULL);
+		ReferrerA = ConvertWCharToUtf8Alloc(Referrer, nullptr);
 		if (!ReferrerA)
 			goto fail;
 	}
@@ -120,7 +120,7 @@ DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName, U
 	WINPR_UNUSED(InstancePort);
 	WINPR_UNUSED(Referrer);
 
-	if ((*pcSpnLength != 0) && (pszSpn == NULL))
+	if ((*pcSpnLength != 0) && (pszSpn == nullptr))
 		return ERROR_INVALID_PARAMETER;
 
 	ServiceClassLength = (DWORD)strlen(ServiceClass);

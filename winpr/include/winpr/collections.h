@@ -63,14 +63,14 @@ extern "C"
 
 	/** @brief helper function to clone a string
 	 *  @param pvstr the source string to clone
-	 *  @return A clone of the source or \b NULL
+	 *  @return A clone of the source or \b nullptr
 	 *  @since version 3.3.0
 	 */
 	WINPR_API void* winpr_ObjectStringClone(const void* pvstr);
 
 	/** @brief helper function to clone a WCHAR string
 	 *  @param pvstr the source string to clone
-	 *  @return A clone of the source or \b NULL
+	 *  @return A clone of the source or \b nullptr
 	 *  @since version 3.3.0
 	 */
 	WINPR_API void* winpr_ObjectWStringClone(const void* pvstr);
@@ -87,7 +87,7 @@ extern "C"
 
 	/** @brief Return the number of elements in the queue
 	 *
-	 *  @param queue A pointer to a queue, must not be \b NULL
+	 *  @param queue A pointer to a queue, must not be \b nullptr
 	 *
 	 *  @return the number of objects queued
 	 */
@@ -95,7 +95,7 @@ extern "C"
 
 	/** @brief Return the allocated elements in the queue
 	 *
-	 *  @param queue A pointer to a queue, must not be \b NULL
+	 *  @param queue A pointer to a queue, must not be \b nullptr
 	 *
 	 *  @return the number of objects allocated
 	 */
@@ -103,26 +103,26 @@ extern "C"
 
 	/** @brief Mutex-Lock a queue
 	 *
-	 *  @param queue A pointer to a queue, must not be \b NULL
+	 *  @param queue A pointer to a queue, must not be \b nullptr
 	 */
 	WINPR_API void Queue_Lock(wQueue* queue);
 
 	/** @brief Mutex-Unlock a queue
 	 *
-	 *  @param queue A pointer to a queue, must not be \b NULL
+	 *  @param queue A pointer to a queue, must not be \b nullptr
 	 */
 	WINPR_API void Queue_Unlock(wQueue* queue);
 
 	/** @brief Get an event handle for the queue, usable by \b WaitForSingleObject or \b
 	 * WaitForMultipleObjects
 	 *
-	 *  @param queue A pointer to a queue, must not be \b NULL
+	 *  @param queue A pointer to a queue, must not be \b nullptr
 	 */
 	WINPR_API HANDLE Queue_Event(wQueue* queue);
 
 	/** @brief Mutex-Lock a queue
 	 *
-	 *  @param queue A pointer to a queue, must not be \b NULL
+	 *  @param queue A pointer to a queue, must not be \b nullptr
 	 *
 	 *  @return A pointer to a \b wObject that contains the allocation/cleanup handlers for queue
 	 * elements
@@ -131,13 +131,13 @@ extern "C"
 
 	/** @brief Remove all elements from a queue, call \b wObject cleanup functions \b fnObjectFree
 	 *
-	 *  @param queue A pointer to a queue, must not be \b NULL
+	 *  @param queue A pointer to a queue, must not be \b nullptr
 	 */
 	WINPR_API void Queue_Clear(wQueue* queue);
 
 	/** @brief Check if the queue contains an object
 	 *
-	 *  @param queue A pointer to a queue, must not be \b NULL
+	 *  @param queue A pointer to a queue, must not be \b nullptr
 	 *  @param obj The object to look for. \b fnObjectEquals is called internally
 	 *
 	 *  @return \b TRUE if the object was found, \b FALSE otherwise.
@@ -160,7 +160,7 @@ extern "C"
 	 *
 	 *  \param queue The queue to check
 	 *
-	 *  \return NULL if empty, a pointer to the memory on top of the queue otherwise.
+	 *  \return nullptr if empty, a pointer to the memory on top of the queue otherwise.
 	 */
 	WINPR_API void* Queue_Dequeue(wQueue* queue);
 
@@ -169,7 +169,7 @@ extern "C"
 	 *
 	 *  \param queue The queue to check
 	 *
-	 *  \return NULL if empty, a pointer to the memory on top of the queue otherwise.
+	 *  \return nullptr if empty, a pointer to the memory on top of the queue otherwise.
 	 */
 	WINPR_API void* Queue_Peek(wQueue* queue);
 
@@ -184,7 +184,7 @@ extern "C"
 
 	/** @brief Clean up a queue, free all resources (e.g. calls \b Queue_Clear)
 	 *
-	 *  @param queue The queue to free, may be \b NULL
+	 *  @param queue The queue to free, may be \b nullptr
 	 */
 	WINPR_API void Queue_Free(wQueue* queue);
 
@@ -198,7 +198,7 @@ extern "C"
 	 * values increase the allocation contingent. \b 0 or \b -1 apply default settings.
 	 *
 	 *
-	 *  @return A newly allocated queue or \b NULL in case of failure
+	 *  @return A newly allocated queue or \b nullptr in case of failure
 	 */
 	WINPR_ATTR_MALLOC(Queue_Free, 1)
 	WINPR_ATTR_NODISCARD
@@ -282,23 +282,23 @@ extern "C"
 
 	/** @brief Get the \b wObject function pointer struct for the \b key of the dictionary.
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *
-	 *  @return a \b wObject used to initialize the key object, \b NULL in case of failure
+	 *  @return a \b wObject used to initialize the key object, \b nullptr in case of failure
 	 */
 	WINPR_API wObject* ListDictionary_KeyObject(wListDictionary* listDictionary);
 
 	/** @brief Get the \b wObject function pointer struct for the \b value of the dictionary.
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *
-	 *  @return a \b wObject used to initialize the value object, \b NULL in case of failure
+	 *  @return a \b wObject used to initialize the value object, \b nullptr in case of failure
 	 */
 	WINPR_API wObject* ListDictionary_ValueObject(wListDictionary* listDictionary);
 
 	/** @brief Return the number of entries in the dictionary
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *
 	 *  @return the number of entries
 	 */
@@ -306,20 +306,20 @@ extern "C"
 
 	/** @brief mutex-lock a dictionary
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 */
 	WINPR_API void ListDictionary_Lock(wListDictionary* listDictionary);
 	/** @brief mutex-unlock a dictionary
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 */
 	WINPR_API void ListDictionary_Unlock(wListDictionary* listDictionary);
 
 	/** @brief mutex-lock a dictionary
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *  @param key The key identifying the entry, if set cloned with \b fnObjectNew
-	 *  @param value The value to store for the \b key. May be \b NULL. if set cloned with \b
+	 *  @param value The value to store for the \b key. May be \b nullptr. if set cloned with \b
 	 * fnObjectNew
 	 *
 	 *  @return \b TRUE for successful addition, \b FALSE for failure
@@ -329,16 +329,16 @@ extern "C"
 
 	/** @brief Remove an item from the dictionary and return the value. Cleanup is up to the caller.
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *  @param key The key identifying the entry
 	 *
-	 *  @return a pointer to the value stored or \b NULL in case of failure or not found
+	 *  @return a pointer to the value stored or \b nullptr in case of failure or not found
 	 */
 	WINPR_API void* ListDictionary_Take(wListDictionary* listDictionary, const void* key);
 
 	/** @brief Remove an item from the dictionary and call \b fnObjectFree for key and value
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *  @param key The key identifying the entry
 	 */
 	WINPR_API void ListDictionary_Remove(wListDictionary* listDictionary, const void* key);
@@ -346,27 +346,27 @@ extern "C"
 	/** @brief Remove the head item from the dictionary and return the value. Cleanup is up to the
 	 * caller.
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *
-	 *  @return a pointer to the value stored or \b NULL in case of failure or not found
+	 *  @return a pointer to the value stored or \b nullptr in case of failure or not found
 	 */
 	WINPR_API void* ListDictionary_Take_Head(wListDictionary* listDictionary);
 
 	/** @brief Remove the head item from the dictionary and call \b fnObjectFree for key and value
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 */
 	WINPR_API void ListDictionary_Remove_Head(wListDictionary* listDictionary);
 
 	/** @brief Remove all items from the dictionary and call \b fnObjectFree for key and value
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 */
 	WINPR_API void ListDictionary_Clear(wListDictionary* listDictionary);
 
 	/** @brief Check if a dictionary contains \b key (\b fnObjectEquals of the key object is called)
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *  @param key A key to look for
 	 *
 	 *  @return \b TRUE if found, \b FALSE otherwise
@@ -375,28 +375,28 @@ extern "C"
 
 	/** @brief return all keys the dictionary contains
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *  @param ppKeys A pointer to a \b ULONG_PTR array that will hold the result keys. Call \b free
 	 * if no longer required
 	 *
-	 *  @return the number of keys found in the dictionary or \b 0 if \b ppKeys is \b NULL
+	 *  @return the number of keys found in the dictionary or \b 0 if \b ppKeys is \b nullptr
 	 */
 	WINPR_API size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys);
 
 	/** @brief Get the value in the dictionary for a \b key. The ownership of the data stays with
 	 * the dictionary.
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *  @param key A key to look for (\b fnObjectEquals of the key object is called)
 	 *
-	 *  @return A pointer to the data in the dictionary or \b NULL if not found
+	 *  @return A pointer to the data in the dictionary or \b nullptr if not found
 	 */
 	WINPR_API void* ListDictionary_GetItemValue(wListDictionary* listDictionary, const void* key);
 
 	/** @brief Set the value in the dictionary for a \b key. The entry must already exist, \b value
 	 * is copied if \b fnObjectNew is set
 	 *
-	 *  @param listDictionary A dictionary to query, must not be \b NULL
+	 *  @param listDictionary A dictionary to query, must not be \b nullptr
 	 *  @param key A key to look for (\b fnObjectEquals of the key object is called)
 	 *  @param value A pointer to the value to set
 	 *
@@ -407,7 +407,7 @@ extern "C"
 
 	/** @brief Free memory allocated by a dictionary. Calls \b ListDictionary_Clear
 	 *
-	 *  @param listDictionary A dictionary to query, may be \b NULL
+	 *  @param listDictionary A dictionary to query, may be \b nullptr
 	 */
 	WINPR_API void ListDictionary_Free(wListDictionary* listDictionary);
 
@@ -415,7 +415,7 @@ extern "C"
 	 *
 	 *  @param synchronized Create the dictionary with automatic mutex lock
 	 *
-	 *  @return A newly allocated dictionary or \b NULL in case of failure
+	 *  @return A newly allocated dictionary or \b nullptr in case of failure
 	 */
 	WINPR_ATTR_MALLOC(ListDictionary_Free, 1)
 	WINPR_ATTR_NODISCARD
@@ -427,7 +427,7 @@ extern "C"
 
 	/** @brief Return the current number of elements in the linked list
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *
 	 * @return the number of elements in the list
 	 */
@@ -435,23 +435,23 @@ extern "C"
 
 	/** @brief Return the first element of the list, ownership stays with the list
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *
-	 *  @return A pointer to the element or \b NULL if empty
+	 *  @return A pointer to the element or \b nullptr if empty
 	 */
 	WINPR_API void* LinkedList_First(wLinkedList* list);
 
 	/** @brief Return the last element of the list, ownership stays with the list
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *
-	 *  @return A pointer to the element or \b NULL if empty
+	 *  @return A pointer to the element or \b nullptr if empty
 	 */
 	WINPR_API void* LinkedList_Last(wLinkedList* list);
 
 	/** @brief Check if the linked list contains a value
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *  @param value A value to check for
 	 *
 	 *  @return \b TRUE if found, \b FALSE otherwise
@@ -461,7 +461,7 @@ extern "C"
 	/** @brief Remove all elements of the linked list. \b fnObjectUninit and \b fnObjectFree are
 	 * called for each entry
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *
 	 */
 	WINPR_API void LinkedList_Clear(wLinkedList* list);
@@ -469,7 +469,7 @@ extern "C"
 	/** @brief Add a new element at the start of the linked list. \b fnObjectNew and \b fnObjectInit
 	 * is called for the new entry
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *  @param value The value to add
 	 *
 	 * @return \b TRUE if successful, \b FALSE otherwise.
@@ -479,7 +479,7 @@ extern "C"
 	/** @brief Add a new element at the end of the linked list. \b fnObjectNew and \b fnObjectInit
 	 * is called for the new entry
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *  @param value The value to add
 	 *
 	 * @return \b TRUE if successful, \b FALSE otherwise.
@@ -489,7 +489,7 @@ extern "C"
 	/** @brief Remove a element identified by \b value from the linked list. \b fnObjectUninit and
 	 * \b fnObjectFree is called for the entry
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *  @param value The value to remove
 	 *
 	 * @return \b TRUE if successful, \b FALSE otherwise.
@@ -499,7 +499,7 @@ extern "C"
 	/** @brief Remove the first element from the linked list. \b fnObjectUninit and \b fnObjectFree
 	 * is called for the entry
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *
 	 */
 	WINPR_API void LinkedList_RemoveFirst(wLinkedList* list);
@@ -507,29 +507,29 @@ extern "C"
 	/** @brief Remove the last element from the linked list. \b fnObjectUninit and \b fnObjectFree
 	 * is called for the entry
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *
 	 */
 	WINPR_API void LinkedList_RemoveLast(wLinkedList* list);
 
 	/** @brief Move enumerator to the first element
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *
 	 */
 	WINPR_API void LinkedList_Enumerator_Reset(wLinkedList* list);
 
 	/** @brief Return the value for the current position of the enumerator
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *
-	 * @return A pointer to the current entry or \b NULL
+	 * @return A pointer to the current entry or \b nullptr
 	 */
 	WINPR_API void* LinkedList_Enumerator_Current(wLinkedList* list);
 
 	/** @brief Move enumerator to the next element
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *
 	 *  @return \b TRUE if the move was successful, \b FALSE if not (e.g. no more entries)
 	 */
@@ -537,13 +537,13 @@ extern "C"
 
 	/** @brief Free a linked list
 	 *
-	 *  @param list A pointer to the list, may be \b NULL
+	 *  @param list A pointer to the list, may be \b nullptr
 	 */
 	WINPR_API void LinkedList_Free(wLinkedList* list);
 
 	/** @brief Allocate a linked list
 	 *
-	 * @return A pointer to the newly allocated linked list or \b NULL in case of failure
+	 * @return A pointer to the newly allocated linked list or \b nullptr in case of failure
 	 */
 	WINPR_ATTR_MALLOC(LinkedList_Free, 1)
 	WINPR_ATTR_NODISCARD
@@ -551,9 +551,9 @@ extern "C"
 
 	/** @brief Return the \b wObject function pointers for list elements
 	 *
-	 *  @param list A pointer to the list, must not be \b NULL
+	 *  @param list A pointer to the list, must not be \b nullptr
 	 *
-	 *  @return A pointer to the wObject or \b NULL in case of failure
+	 *  @return A pointer to the wObject or \b nullptr in case of failure
 	 */
 	WINPR_API wObject* LinkedList_Object(wLinkedList* list);
 
@@ -565,7 +565,7 @@ extern "C"
 
 	/** @brief return the current event count of the CountdownEvent
 	 *
-	 *  @param countdown A pointer to a CountdownEvent, must not be \b NULL
+	 *  @param countdown A pointer to a CountdownEvent, must not be \b nullptr
 	 *
 	 *  @return The current event count
 	 */
@@ -573,7 +573,7 @@ extern "C"
 
 	/** @brief return the initial event count of the CountdownEvent
 	 *
-	 *  @param countdown A pointer to a CountdownEvent, must not be \b NULL
+	 *  @param countdown A pointer to a CountdownEvent, must not be \b nullptr
 	 *
 	 *  @return The initial event count
 	 */
@@ -581,7 +581,7 @@ extern "C"
 
 	/** @brief return the current event state of the CountdownEvent
 	 *
-	 *  @param countdown A pointer to a CountdownEvent, must not be \b NULL
+	 *  @param countdown A pointer to a CountdownEvent, must not be \b nullptr
 	 *
 	 *  @return \b TRUE if set, \b FALSE otherwise
 	 */
@@ -590,15 +590,15 @@ extern "C"
 	/** @brief return the event HANDLE of the CountdownEvent to be used by \b WaitForSingleObject or
 	 * \b WaitForMultipleObjects
 	 *
-	 *  @param countdown A pointer to a CountdownEvent, must not be \b NULL
+	 *  @param countdown A pointer to a CountdownEvent, must not be \b nullptr
 	 *
-	 *  @return a \b HANDLE or \b NULL in case of failure
+	 *  @return a \b HANDLE or \b nullptr in case of failure
 	 */
 	WINPR_API HANDLE CountdownEvent_WaitHandle(wCountdownEvent* countdown);
 
 	/** @brief add \b signalCount to the current event count of the CountdownEvent
 	 *
-	 *  @param countdown A pointer to a CountdownEvent, must not be \b NULL
+	 *  @param countdown A pointer to a CountdownEvent, must not be \b nullptr
 	 *  @param signalCount The amount to add to CountdownEvent
 	 *
 	 */
@@ -606,7 +606,7 @@ extern "C"
 
 	/** @brief Increase the current event signal state of the CountdownEvent
 	 *
-	 *  @param countdown A pointer to a CountdownEvent, must not be \b NULL
+	 *  @param countdown A pointer to a CountdownEvent, must not be \b nullptr
 	 *  @param signalCount The amount of signaled events to add
 	 *
 	 *  @return \b TRUE if event is set, \b FALSE otherwise
@@ -615,14 +615,14 @@ extern "C"
 
 	/** @brief reset the CountdownEvent
 	 *
-	 *  @param countdown A pointer to a CountdownEvent, must not be \b NULL
+	 *  @param countdown A pointer to a CountdownEvent, must not be \b nullptr
 	 *
 	 */
 	WINPR_API void CountdownEvent_Reset(wCountdownEvent* countdown, size_t count);
 
 	/** @brief Free a CountdownEvent
 	 *
-	 *  @param countdown A pointer to a CountdownEvent, may be \b NULL
+	 *  @param countdown A pointer to a CountdownEvent, may be \b nullptr
 	 */
 	WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
 
@@ -630,7 +630,7 @@ extern "C"
 	 *
 	 *  @param initialCount The initial value of the event
 	 *
-	 *  @return The newly allocated event or \b NULL in case of failure
+	 *  @return The newly allocated event or \b nullptr in case of failure
 	 */
 	WINPR_ATTR_MALLOC(CountdownEvent_Free, 1)
 	WINPR_ATTR_NODISCARD
@@ -746,7 +746,7 @@ extern "C"
 
 	/** @brief return the currently used number of elements in the queue
 	 *
-	 *  @param queue A pointer to the queue to query. Must not be \b NULL
+	 *  @param queue A pointer to the queue to query. Must not be \b nullptr
 	 *
 	 *  @return The number of elements in the queue
 	 */
@@ -754,7 +754,7 @@ extern "C"
 
 	/** @brief return the currently allocated elements in the queue
 	 *
-	 *  @param queue A pointer to the queue to query. Must not be \b NULL
+	 *  @param queue A pointer to the queue to query. Must not be \b nullptr
 	 *
 	 *  @return The number of currently allocated elements in the queue
 	 */
@@ -801,9 +801,9 @@ extern "C"
 	 * 				 'MessageQueue_Clear'.
 	 *
 	 * \param callback a pointer to custom initialization / cleanup functions.
-	 * 								 Can be NULL if not used.
+	 * 								 Can be nullptr if not used.
 	 *
-	 * \return A pointer to a newly allocated MessageQueue or NULL.
+	 * \return A pointer to a newly allocated MessageQueue or nullptr.
 	 */
 	WINPR_ATTR_MALLOC(MessageQueue_Free, 1)
 	WINPR_ATTR_NODISCARD
@@ -892,12 +892,12 @@ extern "C"
 	DEFINE_EVENT_SUBSCRIBE(name) \
 	DEFINE_EVENT_UNSUBSCRIBE(name)
 
-#define DEFINE_EVENT_ENTRY(name)                     \
-	{                                                \
-#name, { sizeof(name##EventArgs), NULL }, 0, \
-		{                                            \
-			NULL                                     \
-		}                                            \
+#define DEFINE_EVENT_ENTRY(name)                        \
+	{                                                   \
+		#name, { sizeof(name##EventArgs), nullptr }, 0, \
+		{                                               \
+			nullptr                                     \
+		}                                               \
 	}
 
 	typedef struct s_wPubSub wPubSub;

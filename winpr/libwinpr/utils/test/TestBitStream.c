@@ -51,7 +51,7 @@ static void BitStrGen(void)
 
 int TestBitStream(int argc, char* argv[])
 {
-	wBitStream* bs = NULL;
+	wBitStream* bs = nullptr;
 	BYTE buffer[1024] = WINPR_C_ARRAY_INIT;
 
 	WINPR_UNUSED(argc);

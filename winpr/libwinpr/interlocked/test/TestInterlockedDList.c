@@ -13,9 +13,9 @@ typedef struct
 int TestInterlockedDList(int argc, char* argv[])
 {
 	ULONG Count = 0;
-	PLIST_ITEM pListItem = NULL;
-	WINPR_PLIST_ENTRY pListHead = NULL;
-	WINPR_PLIST_ENTRY pListEntry = NULL;
+	PLIST_ITEM pListItem = nullptr;
+	WINPR_PLIST_ENTRY pListHead = nullptr;
+	WINPR_PLIST_ENTRY pListEntry = nullptr;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	pListHead = (WINPR_PLIST_ENTRY)winpr_aligned_malloc(sizeof(WINPR_LIST_ENTRY),

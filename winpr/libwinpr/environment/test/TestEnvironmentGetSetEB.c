@@ -9,17 +9,17 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 	int rc = 0;
 #ifndef _WIN32
 	char test[1024];
-	TCHAR* p = NULL;
+	TCHAR* p = nullptr;
 	DWORD length = 0;
 	LPTCH lpszEnvironmentBlock = "SHELL=123\0test=1\0test1=2\0DISPLAY=WINPR_TEST_VALUE\0\0";
-	LPTCH lpszEnvironmentBlockNew = NULL;
+	LPTCH lpszEnvironmentBlockNew = nullptr;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
 	rc = -1;
 	/* Get length of an variable */
-	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "DISPLAY", NULL, 0);
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "DISPLAY", nullptr, 0);
 
 	if (0 == length)
 		return -1;
@@ -39,7 +39,7 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 		goto fail;
 
 	/* Get length of an non-existing variable */
-	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "BLA", NULL, 0);
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "BLA", nullptr, 0);
 
 	if (0 != length)
 	{
@@ -48,7 +48,7 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 	}
 
 	/* Get length of an similar called variables */
-	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "XDISPLAY", NULL, 0);
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "XDISPLAY", nullptr, 0);
 
 	if (0 != length)
 	{
@@ -56,7 +56,7 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 		goto fail;
 	}
 
-	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "DISPLAYX", NULL, 0);
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "DISPLAYX", nullptr, 0);
 
 	if (0 != length)
 	{
@@ -64,7 +64,7 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 		goto fail;
 	}
 
-	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "DISPLA", NULL, 0);
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "DISPLA", nullptr, 0);
 
 	if (0 != length)
 	{
@@ -72,7 +72,7 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 		goto fail;
 	}
 
-	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "ISPLAY", NULL, 0);
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock, "ISPLAY", nullptr, 0);
 
 	if (0 != length)
 	{
@@ -93,7 +93,7 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 	}
 
 	/* Clear variable */
-	if (SetEnvironmentVariableEBA(&lpszEnvironmentBlockNew, "test", NULL))
+	if (SetEnvironmentVariableEBA(&lpszEnvironmentBlockNew, "test", nullptr))
 	{
 		if (GetEnvironmentVariableEBA(lpszEnvironmentBlockNew, "test", test, 1023))
 			goto fail;

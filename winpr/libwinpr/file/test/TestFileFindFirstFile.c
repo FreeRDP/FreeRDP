@@ -12,8 +12,8 @@ static const CHAR testFile1A[] = "TestFile1A";
 
 static BOOL create_fileA(const char* FilePath)
 {
-	HANDLE hdl =
-	    CreateFileA(FilePath, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hdl = CreateFileA(FilePath, GENERIC_ALL, 0, nullptr, CREATE_ALWAYS,
+	                         FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hdl == INVALID_HANDLE_VALUE)
 		return FALSE;
 	(void)CloseHandle(hdl);
@@ -22,8 +22,8 @@ static BOOL create_fileA(const char* FilePath)
 
 static BOOL create_fileW(const WCHAR* FilePath)
 {
-	HANDLE hdl =
-	    CreateFileW(FilePath, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hdl = CreateFileW(FilePath, GENERIC_ALL, 0, nullptr, CREATE_ALWAYS,
+	                         FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hdl == INVALID_HANDLE_VALUE)
 		return FALSE;
 	(void)CloseHandle(hdl);
@@ -56,7 +56,7 @@ static BOOL create_layout_directories(size_t level, size_t max_level, const char
 	CHAR FilePath[PATHCCH_MAX_CCH] = WINPR_C_ARRAY_INIT;
 	strncpy(FilePath, BasePath, ARRAYSIZE(FilePath));
 	PathCchConvertStyleA(FilePath, ARRAYSIZE(FilePath), PATH_STYLE_NATIVE);
-	if (!winpr_PathMakePath(FilePath, NULL))
+	if (!winpr_PathMakePath(FilePath, nullptr))
 		return FALSE;
 	ArrayList_Append(files, FilePath);
 
@@ -270,7 +270,7 @@ fail:
 WINPR_ATTR_FORMAT_ARG(1, 0)
 static int printf1W(const char* WINPR_FORMAT_ARG fmt, const WCHAR* arg1)
 {
-	char* var1 = ConvertWCharToUtf8Alloc(arg1, NULL);
+	char* var1 = ConvertWCharToUtf8Alloc(arg1, nullptr);
 	const int rc = printf(fmt, var1);
 	free(var1);
 	return rc;
@@ -279,8 +279,8 @@ static int printf1W(const char* WINPR_FORMAT_ARG fmt, const WCHAR* arg1)
 WINPR_ATTR_FORMAT_ARG(1, 0)
 static int printf2W(const char* WINPR_FORMAT_ARG fmt, const WCHAR* arg1, const WCHAR* arg2)
 {
-	char* var1 = ConvertWCharToUtf8Alloc(arg1, NULL);
-	char* var2 = ConvertWCharToUtf8Alloc(arg2, NULL);
+	char* var1 = ConvertWCharToUtf8Alloc(arg1, nullptr);
+	char* var2 = ConvertWCharToUtf8Alloc(arg2, nullptr);
 	const int rc = printf(fmt, var1, var2);
 	free(var1);
 	free(var2);
@@ -349,7 +349,7 @@ int TestFileFindFirstFile(int argc, char* argv[])
 
 	int rc1 = -1;
 	int rc2 = -1;
-	if (winpr_PathMakePath(str, NULL))
+	if (winpr_PathMakePath(str, nullptr))
 	{
 		rc1 = TestFileFindFirstFileA(str);
 		rc2 = TestFileFindFirstFileW(str);

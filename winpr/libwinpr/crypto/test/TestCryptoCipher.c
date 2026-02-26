@@ -19,7 +19,7 @@ static BOOL test_crypto_cipher_aes_128_cbc(BOOL ex)
 
 	/* encrypt */
 
-	WINPR_CIPHER_CTX* ctx = NULL;
+	WINPR_CIPHER_CTX* ctx = nullptr;
 	if (ex)
 		ctx = winpr_Cipher_NewEx(WINPR_CIPHER_AES_128_CBC, WINPR_ENCRYPT, key, sizeof(key), iv,
 		                         sizeof(iv));
@@ -62,7 +62,7 @@ static BOOL test_crypto_cipher_aes_128_cbc(BOOL ex)
 	}
 
 	winpr_Cipher_Free(ctx);
-	ctx = NULL;
+	ctx = nullptr;
 
 	/* decrypt */
 
@@ -129,7 +129,7 @@ static const char TEST_RC4_CIPHERTEXT[] = "\xBB\xF3\x16\xE8\xD9\x40\xAF\x0A\xD3"
 static BOOL test_crypto_cipher_rc4(void)
 {
 	BOOL rc = FALSE;
-	WINPR_RC4_CTX* ctx = NULL;
+	WINPR_RC4_CTX* ctx = nullptr;
 
 	const size_t len = strnlen(TEST_RC4_PLAINTEXT, sizeof(TEST_RC4_PLAINTEXT));
 	BYTE* text = (BYTE*)calloc(1, len);
@@ -140,7 +140,7 @@ static BOOL test_crypto_cipher_rc4(void)
 		goto out;
 	}
 
-	if ((ctx = winpr_RC4_New(TEST_RC4_KEY, strnlen(TEST_RC4_KEY, sizeof(TEST_RC4_KEY)))) == NULL)
+	if ((ctx = winpr_RC4_New(TEST_RC4_KEY, strnlen(TEST_RC4_KEY, sizeof(TEST_RC4_KEY)))) == nullptr)
 	{
 		(void)fprintf(stderr, "%s: winpr_RC4_New failed\n", __func__);
 		goto out;
@@ -155,8 +155,8 @@ static BOOL test_crypto_cipher_rc4(void)
 
 	if (memcmp(text, TEST_RC4_CIPHERTEXT, len) != 0)
 	{
-		char* actual = NULL;
-		char* expected = NULL;
+		char* actual = nullptr;
+		char* expected = nullptr;
 
 		actual = winpr_BinToHexString(text, len, FALSE);
 		expected = winpr_BinToHexString(TEST_RC4_CIPHERTEXT, len, FALSE);
@@ -202,10 +202,10 @@ static BOOL test_crypto_cipher_key(void)
 	if (status != 32 || memcmp(key, TEST_CIPHER_KEY, 32) != 0 ||
 	    memcmp(iv, TEST_CIPHER_IV, 16) != 0)
 	{
-		char* akstr = NULL;
-		char* ekstr = NULL;
-		char* aivstr = NULL;
-		char* eivstr = NULL;
+		char* akstr = nullptr;
+		char* ekstr = nullptr;
+		char* aivstr = nullptr;
+		char* eivstr = nullptr;
 
 		akstr = winpr_BinToHexString(key, 32, 0);
 		ekstr = winpr_BinToHexString(TEST_CIPHER_KEY, 32, 0);

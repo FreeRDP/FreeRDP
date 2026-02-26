@@ -24,7 +24,7 @@ void* winpr_ObjectStringClone(const void* pvstr)
 {
 	const char* str = pvstr;
 	if (!str)
-		return NULL;
+		return nullptr;
 	return _strdup(str);
 }
 
@@ -32,7 +32,7 @@ void* winpr_ObjectWStringClone(const void* pvstr)
 {
 	const WCHAR* str = pvstr;
 	if (!str)
-		return NULL;
+		return nullptr;
 	return _wcsdup(str);
 }
 

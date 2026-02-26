@@ -67,7 +67,7 @@ static BOOL CALLBACK init_app_details(WINPR_ATTR_UNUSED PINIT_ONCE once,
 WINPR_ATTR_NODISCARD
 static BOOL initializeApplicationDetails(void)
 {
-	InitOnceExecuteOnce(&s_winpr_app_details_once, init_app_details, NULL, NULL);
+	InitOnceExecuteOnce(&s_winpr_app_details_once, init_app_details, nullptr, nullptr);
 	return TRUE;
 }
 
@@ -97,14 +97,14 @@ BOOL winpr_setApplicationDetails(const char* vendor, const char* product, SSIZE_
 const char* winpr_getApplicationDetailsVendor(void)
 {
 	if (!initializeApplicationDetails())
-		return NULL;
+		return nullptr;
 	return s_winpr_vendor_string;
 }
 
 const char* winpr_getApplicationDetailsProduct(void)
 {
 	if (!initializeApplicationDetails())
-		return NULL;
+		return nullptr;
 	return s_winpr_product_string;
 }
 
@@ -112,9 +112,9 @@ char* winpr_getApplicatonDetailsRegKey(const char* fmt)
 {
 	char* val = winpr_getApplicatonDetailsCombined('\\');
 	if (!val)
-		return NULL;
+		return nullptr;
 
-	char* str = NULL;
+	char* str = nullptr;
 	size_t slen = 0;
 	(void)winpr_asprintf(&str, &slen, fmt, val);
 	free(val);
@@ -128,7 +128,7 @@ char* winpr_getApplicatonDetailsCombined(char separator)
 	const char* product = winpr_getApplicationDetailsProduct();
 
 	size_t slen = 0;
-	char* str = NULL;
+	char* str = nullptr;
 	if (version < 0)
 	{
 		(void)winpr_asprintf(&str, &slen, "%s%c%s", vendor, separator, product);

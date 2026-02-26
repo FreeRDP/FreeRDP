@@ -35,7 +35,7 @@ static const DWORD allflags[] = {
 static BOOL test_SetFileAttributesA(void)
 {
 	BOOL rc = FALSE;
-	HANDLE handle = NULL;
+	HANDLE handle = nullptr;
 	const DWORD flags[] = { 0, FILE_ATTRIBUTE_READONLY };
 	char* name = GetKnownSubPath(KNOWN_PATH_TEMP, "afsklhjwe4oq5iu432oijrlkejadlkhjaklhfdkahfd");
 	if (!name)
@@ -44,7 +44,7 @@ static BOOL test_SetFileAttributesA(void)
 	for (size_t x = 0; x < ARRAYSIZE(allflags); x++)
 	{
 		const DWORD flag = allflags[x];
-		const BOOL brc = SetFileAttributesA(NULL, flag);
+		const BOOL brc = SetFileAttributesA(nullptr, flag);
 		if (brc)
 			goto fail;
 
@@ -53,8 +53,8 @@ static BOOL test_SetFileAttributesA(void)
 			goto fail;
 	}
 
-	handle = CreateFileA(name, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW,
-	                     FILE_ATTRIBUTE_NORMAL, NULL);
+	handle = CreateFileA(name, GENERIC_READ | GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+	                     FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (handle == INVALID_HANDLE_VALUE)
 		goto fail;
 	(void)CloseHandle(handle);
@@ -86,21 +86,21 @@ fail:
 static BOOL test_SetFileAttributesW(void)
 {
 	BOOL rc = FALSE;
-	WCHAR* name = NULL;
-	HANDLE handle = NULL;
+	WCHAR* name = nullptr;
+	HANDLE handle = nullptr;
 	const DWORD flags[] = { 0, FILE_ATTRIBUTE_READONLY };
 	char* base = GetKnownSubPath(KNOWN_PATH_TEMP, "afsklhjwe4oq5iu432oijrlkejadlkhjaklhfdkahfd");
 	if (!base)
 		goto fail;
 
-	name = ConvertUtf8ToWCharAlloc(base, NULL);
+	name = ConvertUtf8ToWCharAlloc(base, nullptr);
 	if (!name)
 		goto fail;
 
 	for (size_t x = 0; x < ARRAYSIZE(allflags); x++)
 	{
 		const DWORD flag = allflags[x];
-		const BOOL brc = SetFileAttributesW(NULL, flag);
+		const BOOL brc = SetFileAttributesW(nullptr, flag);
 		if (brc)
 			goto fail;
 
@@ -109,8 +109,8 @@ static BOOL test_SetFileAttributesW(void)
 			goto fail;
 	}
 
-	handle = CreateFileW(name, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW,
-	                     FILE_ATTRIBUTE_NORMAL, NULL);
+	handle = CreateFileW(name, GENERIC_READ | GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+	                     FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (handle == INVALID_HANDLE_VALUE)
 		goto fail;
 	(void)CloseHandle(handle);

@@ -12,13 +12,13 @@ int TestPipeCreatePipe(int argc, char* argv[])
 	BOOL status = 0;
 	DWORD dwRead = 0;
 	DWORD dwWrite = 0;
-	HANDLE hReadPipe = NULL;
-	HANDLE hWritePipe = NULL;
+	HANDLE hReadPipe = nullptr;
+	HANDLE hWritePipe = nullptr;
 	BYTE readBuffer[BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 	BYTE writeBuffer[BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	status = CreatePipe(&hReadPipe, &hWritePipe, NULL, BUFFER_SIZE * 2);
+	status = CreatePipe(&hReadPipe, &hWritePipe, nullptr, BUFFER_SIZE * 2);
 
 	if (!status)
 	{
@@ -27,7 +27,7 @@ int TestPipeCreatePipe(int argc, char* argv[])
 	}
 
 	FillMemory(writeBuffer, sizeof(writeBuffer), 0xAA);
-	status = WriteFile(hWritePipe, &writeBuffer, sizeof(writeBuffer), &dwWrite, NULL);
+	status = WriteFile(hWritePipe, &writeBuffer, sizeof(writeBuffer), &dwWrite, nullptr);
 
 	if (!status)
 	{
@@ -43,7 +43,7 @@ int TestPipeCreatePipe(int argc, char* argv[])
 		return -1;
 	}
 
-	status = ReadFile(hReadPipe, &readBuffer, sizeof(readBuffer), &dwRead, NULL);
+	status = ReadFile(hReadPipe, &readBuffer, sizeof(readBuffer), &dwRead, nullptr);
 
 	if (!status)
 	{

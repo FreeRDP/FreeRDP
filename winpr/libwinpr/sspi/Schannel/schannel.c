@@ -33,18 +33,18 @@ static char* SCHANNEL_PACKAGE_NAME = "Schannel";
 
 SCHANNEL_CONTEXT* schannel_ContextNew(void)
 {
-	SCHANNEL_CONTEXT* context = NULL;
+	SCHANNEL_CONTEXT* context = nullptr;
 	context = (SCHANNEL_CONTEXT*)calloc(1, sizeof(SCHANNEL_CONTEXT));
 
 	if (!context)
-		return NULL;
+		return nullptr;
 
 	context->openssl = schannel_openssl_new();
 
 	if (!context->openssl)
 	{
 		free(context);
-		return NULL;
+		return nullptr;
 	}
 
 	return context;
@@ -61,7 +61,7 @@ void schannel_ContextFree(SCHANNEL_CONTEXT* context)
 
 static SCHANNEL_CREDENTIALS* schannel_CredentialsNew(void)
 {
-	SCHANNEL_CREDENTIALS* credentials = NULL;
+	SCHANNEL_CREDENTIALS* credentials = nullptr;
 	credentials = (SCHANNEL_CREDENTIALS*)calloc(1, sizeof(SCHANNEL_CREDENTIALS));
 	return credentials;
 }
@@ -130,11 +130,11 @@ static SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleW(
     WINPR_ATTR_UNUSED SEC_GET_KEY_FN pGetKeyFn, WINPR_ATTR_UNUSED void* pvGetKeyArgument,
     PCredHandle phCredential, WINPR_ATTR_UNUSED PTimeStamp ptsExpiry)
 {
-	SCHANNEL_CREDENTIALS* credentials = NULL;
+	SCHANNEL_CREDENTIALS* credentials = nullptr;
 
 	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
 	{
-		SCHANNEL_CRED* cred = NULL;
+		SCHANNEL_CRED* cred = nullptr;
 		credentials = schannel_CredentialsNew();
 		credentials->fCredentialUse = fCredentialUse;
 		cred = (SCHANNEL_CRED*)pAuthData;
@@ -166,12 +166,12 @@ static SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(
     PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status = 0;
-	SEC_WCHAR* pszPrincipalW = NULL;
-	SEC_WCHAR* pszPackageW = NULL;
+	SEC_WCHAR* pszPrincipalW = nullptr;
+	SEC_WCHAR* pszPackageW = nullptr;
 	if (pszPrincipal)
-		pszPrincipalW = ConvertUtf8ToWCharAlloc(pszPrincipal, NULL);
+		pszPrincipalW = ConvertUtf8ToWCharAlloc(pszPrincipal, nullptr);
 	if (pszPackage)
-		pszPackageW = ConvertUtf8ToWCharAlloc(pszPackage, NULL);
+		pszPackageW = ConvertUtf8ToWCharAlloc(pszPackage, nullptr);
 
 	status = schannel_AcquireCredentialsHandleW(pszPrincipalW, pszPackageW, fCredentialUse,
 	                                            pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument,
@@ -183,7 +183,7 @@ static SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(
 
 static SECURITY_STATUS SEC_ENTRY schannel_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	SCHANNEL_CREDENTIALS* credentials = NULL;
+	SCHANNEL_CREDENTIALS* credentials = nullptr;
 
 	if (!phCredential)
 		return SEC_E_INVALID_HANDLE;
@@ -205,8 +205,8 @@ static SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextW(
     WINPR_ATTR_UNUSED PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status = 0;
-	SCHANNEL_CONTEXT* context = NULL;
-	SCHANNEL_CREDENTIALS* credentials = NULL;
+	SCHANNEL_CONTEXT* context = nullptr;
+	SCHANNEL_CREDENTIALS* credentials = nullptr;
 
 	/* behave like windows SSPIs that don't want empty context */
 	if (phContext && !phContext->dwLower && !phContext->dwUpper)
@@ -239,11 +239,11 @@ static SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextA(
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status = 0;
-	SEC_WCHAR* pszTargetNameW = NULL;
+	SEC_WCHAR* pszTargetNameW = nullptr;
 
-	if (pszTargetName != NULL)
+	if (pszTargetName != nullptr)
 	{
-		pszTargetNameW = ConvertUtf8ToWCharAlloc(pszTargetName, NULL);
+		pszTargetNameW = ConvertUtf8ToWCharAlloc(pszTargetName, nullptr);
 		if (!pszTargetNameW)
 			return SEC_E_INSUFFICIENT_MEMORY;
 	}
@@ -262,7 +262,7 @@ static SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(
     WINPR_ATTR_UNUSED PTimeStamp ptsTimeStamp)
 {
 	SECURITY_STATUS status = 0;
-	SCHANNEL_CONTEXT* context = NULL;
+	SCHANNEL_CONTEXT* context = nullptr;
 
 	/* behave like windows SSPIs that don't want empty context */
 	if (phContext && !phContext->dwLower && !phContext->dwUpper)
@@ -289,7 +289,7 @@ static SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(
 
 static SECURITY_STATUS SEC_ENTRY schannel_DeleteSecurityContext(PCtxtHandle phContext)
 {
-	SCHANNEL_CONTEXT* context = NULL;
+	SCHANNEL_CONTEXT* context = nullptr;
 	context = (SCHANNEL_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -354,7 +354,7 @@ static SECURITY_STATUS SEC_ENTRY schannel_EncryptMessage(WINPR_ATTR_UNUSED PCtxt
                                                          WINPR_ATTR_UNUSED ULONG MessageSeqNo)
 {
 	SECURITY_STATUS status = 0;
-	SCHANNEL_CONTEXT* context = NULL;
+	SCHANNEL_CONTEXT* context = nullptr;
 	context = (SCHANNEL_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -370,7 +370,7 @@ static SECURITY_STATUS SEC_ENTRY schannel_DecryptMessage(PCtxtHandle phContext,
                                                          WINPR_ATTR_UNUSED ULONG* pfQOP)
 {
 	SECURITY_STATUS status = 0;
-	SCHANNEL_CONTEXT* context = NULL;
+	SCHANNEL_CONTEXT* context = nullptr;
 	context = (SCHANNEL_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -382,66 +382,66 @@ static SECURITY_STATUS SEC_ENTRY schannel_DecryptMessage(PCtxtHandle phContext,
 
 const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA = {
 	3,                                    /* dwVersion */
-	NULL,                                 /* EnumerateSecurityPackages */
+	nullptr,                              /* EnumerateSecurityPackages */
 	schannel_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
 	schannel_AcquireCredentialsHandleA,   /* AcquireCredentialsHandle */
 	schannel_FreeCredentialsHandle,       /* FreeCredentialsHandle */
-	NULL,                                 /* Reserved2 */
+	nullptr,                              /* Reserved2 */
 	schannel_InitializeSecurityContextA,  /* InitializeSecurityContext */
 	schannel_AcceptSecurityContext,       /* AcceptSecurityContext */
-	NULL,                                 /* CompleteAuthToken */
+	nullptr,                              /* CompleteAuthToken */
 	schannel_DeleteSecurityContext,       /* DeleteSecurityContext */
-	NULL,                                 /* ApplyControlToken */
+	nullptr,                              /* ApplyControlToken */
 	schannel_QueryContextAttributes,      /* QueryContextAttributes */
-	NULL,                                 /* ImpersonateSecurityContext */
-	NULL,                                 /* RevertSecurityContext */
+	nullptr,                              /* ImpersonateSecurityContext */
+	nullptr,                              /* RevertSecurityContext */
 	schannel_MakeSignature,               /* MakeSignature */
 	schannel_VerifySignature,             /* VerifySignature */
-	NULL,                                 /* FreeContextBuffer */
-	NULL,                                 /* QuerySecurityPackageInfo */
-	NULL,                                 /* Reserved3 */
-	NULL,                                 /* Reserved4 */
-	NULL,                                 /* ExportSecurityContext */
-	NULL,                                 /* ImportSecurityContext */
-	NULL,                                 /* AddCredentials */
-	NULL,                                 /* Reserved8 */
-	NULL,                                 /* QuerySecurityContextToken */
+	nullptr,                              /* FreeContextBuffer */
+	nullptr,                              /* QuerySecurityPackageInfo */
+	nullptr,                              /* Reserved3 */
+	nullptr,                              /* Reserved4 */
+	nullptr,                              /* ExportSecurityContext */
+	nullptr,                              /* ImportSecurityContext */
+	nullptr,                              /* AddCredentials */
+	nullptr,                              /* Reserved8 */
+	nullptr,                              /* QuerySecurityContextToken */
 	schannel_EncryptMessage,              /* EncryptMessage */
 	schannel_DecryptMessage,              /* DecryptMessage */
-	NULL,                                 /* SetContextAttributes */
-	NULL,                                 /* SetCredentialsAttributes */
+	nullptr,                              /* SetContextAttributes */
+	nullptr,                              /* SetCredentialsAttributes */
 };
 
 const SecurityFunctionTableW SCHANNEL_SecurityFunctionTableW = {
 	3,                                    /* dwVersion */
-	NULL,                                 /* EnumerateSecurityPackages */
+	nullptr,                              /* EnumerateSecurityPackages */
 	schannel_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
 	schannel_AcquireCredentialsHandleW,   /* AcquireCredentialsHandle */
 	schannel_FreeCredentialsHandle,       /* FreeCredentialsHandle */
-	NULL,                                 /* Reserved2 */
+	nullptr,                              /* Reserved2 */
 	schannel_InitializeSecurityContextW,  /* InitializeSecurityContext */
 	schannel_AcceptSecurityContext,       /* AcceptSecurityContext */
-	NULL,                                 /* CompleteAuthToken */
+	nullptr,                              /* CompleteAuthToken */
 	schannel_DeleteSecurityContext,       /* DeleteSecurityContext */
-	NULL,                                 /* ApplyControlToken */
+	nullptr,                              /* ApplyControlToken */
 	schannel_QueryContextAttributes,      /* QueryContextAttributes */
-	NULL,                                 /* ImpersonateSecurityContext */
-	NULL,                                 /* RevertSecurityContext */
+	nullptr,                              /* ImpersonateSecurityContext */
+	nullptr,                              /* RevertSecurityContext */
 	schannel_MakeSignature,               /* MakeSignature */
 	schannel_VerifySignature,             /* VerifySignature */
-	NULL,                                 /* FreeContextBuffer */
-	NULL,                                 /* QuerySecurityPackageInfo */
-	NULL,                                 /* Reserved3 */
-	NULL,                                 /* Reserved4 */
-	NULL,                                 /* ExportSecurityContext */
-	NULL,                                 /* ImportSecurityContext */
-	NULL,                                 /* AddCredentials */
-	NULL,                                 /* Reserved8 */
-	NULL,                                 /* QuerySecurityContextToken */
+	nullptr,                              /* FreeContextBuffer */
+	nullptr,                              /* QuerySecurityPackageInfo */
+	nullptr,                              /* Reserved3 */
+	nullptr,                              /* Reserved4 */
+	nullptr,                              /* ExportSecurityContext */
+	nullptr,                              /* ImportSecurityContext */
+	nullptr,                              /* AddCredentials */
+	nullptr,                              /* Reserved8 */
+	nullptr,                              /* QuerySecurityContextToken */
 	schannel_EncryptMessage,              /* EncryptMessage */
 	schannel_DecryptMessage,              /* DecryptMessage */
-	NULL,                                 /* SetContextAttributes */
-	NULL,                                 /* SetCredentialsAttributes */
+	nullptr,                              /* SetContextAttributes */
+	nullptr,                              /* SetCredentialsAttributes */
 };
 
 const SecPkgInfoA SCHANNEL_SecPkgInfoA = {

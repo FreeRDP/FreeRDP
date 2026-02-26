@@ -27,9 +27,9 @@ static void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* con
 
 static BOOL test1(void)
 {
-	PTP_WORK work = NULL;
+	PTP_WORK work = nullptr;
 	printf("Global Thread Pool\n");
-	work = CreateThreadpoolWork(test_WorkCallback, "world", NULL);
+	work = CreateThreadpoolWork(test_WorkCallback, "world", nullptr);
 
 	if (!work)
 	{
@@ -54,13 +54,13 @@ static BOOL test1(void)
 static BOOL test2(void)
 {
 	BOOL rc = FALSE;
-	PTP_POOL pool = NULL;
-	PTP_WORK work = NULL;
-	PTP_CLEANUP_GROUP cleanupGroup = NULL;
+	PTP_POOL pool = nullptr;
+	PTP_WORK work = nullptr;
+	PTP_CLEANUP_GROUP cleanupGroup = nullptr;
 	TP_CALLBACK_ENVIRON environment;
 	printf("Private Thread Pool\n");
 
-	if (!(pool = CreateThreadpool(NULL)))
+	if (!(pool = CreateThreadpool(nullptr)))
 	{
 		printf("CreateThreadpool failure\n");
 		return FALSE;
@@ -83,7 +83,7 @@ static BOOL test2(void)
 		goto fail;
 	}
 
-	SetThreadpoolCallbackCleanupGroup(&environment, cleanupGroup, NULL);
+	SetThreadpoolCallbackCleanupGroup(&environment, cleanupGroup, nullptr);
 	work = CreateThreadpoolWork(test_WorkCallback, "world", &environment);
 
 	if (!work)
@@ -101,7 +101,7 @@ fail:
 
 	if (cleanupGroup)
 	{
-		CloseThreadpoolCleanupGroupMembers(cleanupGroup, TRUE, NULL);
+		CloseThreadpoolCleanupGroupMembers(cleanupGroup, TRUE, nullptr);
 		CloseThreadpoolCleanupGroup(cleanupGroup);
 		DestroyThreadpoolEnvironment(&environment);
 		/**

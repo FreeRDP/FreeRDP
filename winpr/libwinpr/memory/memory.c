@@ -86,10 +86,10 @@ HANDLE CreateFileMappingA(WINPR_ATTR_UNUSED HANDLE hFile,
 	WLog_ERR("TODO", "TODO: Implement");
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
-		return NULL; /* not yet implemented */
+		return nullptr; /* not yet implemented */
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 HANDLE CreateFileMappingW(WINPR_ATTR_UNUSED HANDLE hFile,
@@ -100,21 +100,21 @@ HANDLE CreateFileMappingW(WINPR_ATTR_UNUSED HANDLE hFile,
                           WINPR_ATTR_UNUSED LPCWSTR lpName)
 {
 	WLog_ERR("TODO", "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 HANDLE OpenFileMappingA(WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
                         WINPR_ATTR_UNUSED BOOL bInheritHandle, WINPR_ATTR_UNUSED LPCSTR lpName)
 {
 	WLog_ERR("TODO", "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 HANDLE OpenFileMappingW(WINPR_ATTR_UNUSED DWORD dwDesiredAccess,
                         WINPR_ATTR_UNUSED BOOL bInheritHandle, WINPR_ATTR_UNUSED LPCWSTR lpName)
 {
 	WLog_ERR("TODO", "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 LPVOID MapViewOfFile(WINPR_ATTR_UNUSED HANDLE hFileMappingObject,
@@ -124,7 +124,7 @@ LPVOID MapViewOfFile(WINPR_ATTR_UNUSED HANDLE hFileMappingObject,
                      WINPR_ATTR_UNUSED size_t dwNumberOfBytesToMap)
 {
 	WLog_ERR("TODO", "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 LPVOID MapViewOfFileEx(WINPR_ATTR_UNUSED HANDLE hFileMappingObject,
@@ -135,7 +135,7 @@ LPVOID MapViewOfFileEx(WINPR_ATTR_UNUSED HANDLE hFileMappingObject,
                        WINPR_ATTR_UNUSED LPVOID lpBaseAddress)
 {
 	WLog_ERR("TODO", "TODO: Implement");
-	return NULL;
+	return nullptr;
 }
 
 BOOL FlushViewOfFile(WINPR_ATTR_UNUSED LPCVOID lpBaseAddress,

@@ -119,7 +119,7 @@
  * cchWideChar *cannot* be assumed to be cbMultiByte since UTF-8 is variable-width!
  *
  * Instead, obtain the required cchWideChar output size like this:
- * cchWideChar = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) lpMultiByteStr, -1, NULL, 0);
+ * cchWideChar = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) lpMultiByteStr, -1, nullptr, 0);
  *
  * A value of -1 for cbMultiByte indicates that the input string is null-terminated,
  * and the null terminator *will* be processed. The size returned by MultiByteToWideChar
@@ -171,7 +171,8 @@ static
  * cbMultiByte *cannot* be assumed to be cchWideChar since UTF-8 is variable-width!
  *
  * Instead, obtain the required cbMultiByte output size like this:
- * cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) lpWideCharStr, -1, NULL, 0, NULL, NULL);
+ * cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) lpWideCharStr, -1, nullptr, 0, nullptr,
+ * nullptr);
  *
  * A value of -1 for cbMultiByte indicates that the input string is null-terminated,
  * and the null terminator *will* be processed. The size returned by WideCharToMultiByte
@@ -188,7 +189,7 @@ static
  * Finally, perform the conversion:
  *
  * cbMultiByte = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) lpWideCharStr, -1, lpMultiByteStr,
- * cbMultiByte, NULL, NULL);
+ * cbMultiByte, nullptr, nullptr);
  *
  * The value returned by WideCharToMultiByte corresponds to the number of bytes written
  * to the output buffer, and should match the value obtained on the first call to
@@ -213,7 +214,7 @@ static
 /**
  * ConvertToUnicode is a convenience wrapper for MultiByteToWideChar:
  *
- * If the lpWideCharStr parameter for the converted string points to NULL
+ * If the lpWideCharStr parameter for the converted string points to nullptr
  * or if the cchWideChar parameter is set to 0 this function will automatically
  * allocate the required memory which is guaranteed to be null-terminated
  * after the conversion, even if the source c string isn't.
@@ -245,7 +246,8 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cb
 
 	if (cchWideChar == 0)
 	{
-		cchWideChar = MultiByteToWideChar(CodePage, dwFlags, lpMultiByteStr, cbMultiByte, NULL, 0);
+		cchWideChar =
+		    MultiByteToWideChar(CodePage, dwFlags, lpMultiByteStr, cbMultiByte, nullptr, 0);
 		allocate = TRUE;
 	}
 	else if (!(*lpWideCharStr))
@@ -273,7 +275,7 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cb
 		if (allocate)
 		{
 			free(*lpWideCharStr);
-			*lpWideCharStr = NULL;
+			*lpWideCharStr = nullptr;
 			status = 0;
 		}
 	}
@@ -285,7 +287,7 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cb
 /**
  * ConvertFromUnicode is a convenience wrapper for WideCharToMultiByte:
  *
- * If the lpMultiByteStr parameter for the converted string points to NULL
+ * If the lpMultiByteStr parameter for the converted string points to nullptr
  * or if the cbMultiByte parameter is set to 0 this function will automatically
  * allocate the required memory which is guaranteed to be null-terminated
  * after the conversion, even if the source unicode string isn't.
@@ -313,8 +315,8 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 
 	if (cbMultiByte == 0)
 	{
-		cbMultiByte =
-		    WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar, NULL, 0, NULL, NULL);
+		cbMultiByte = WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar, nullptr, 0,
+		                                  nullptr, nullptr);
 		allocate = TRUE;
 	}
 	else if (!(*lpMultiByteStr))
@@ -345,7 +347,7 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 	if ((status <= 0) && allocate)
 	{
 		free(*lpMultiByteStr);
-		*lpMultiByteStr = NULL;
+		*lpMultiByteStr = nullptr;
 	}
 
 	return status;
@@ -398,7 +400,8 @@ SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t le
 		isNullTerminated = TRUE;
 		iwlen++;
 	}
-	const int rc = WideCharToMultiByte(CP_UTF8, 0, wstr, (int)iwlen, str, (int)len, NULL, NULL);
+	const int rc =
+	    WideCharToMultiByte(CP_UTF8, 0, wstr, (int)iwlen, str, (int)len, nullptr, nullptr);
 	if ((rc <= 0) || ((len > 0) && ((size_t)rc > len)))
 		return -1;
 	else if (!isNullTerminated)
@@ -429,7 +432,7 @@ SSIZE_T ConvertMszWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t
 	}
 
 	const int iwlen = (int)len;
-	const int rc = WideCharToMultiByte(CP_UTF8, 0, wstr, (int)wlen, str, iwlen, NULL, NULL);
+	const int rc = WideCharToMultiByte(CP_UTF8, 0, wstr, (int)wlen, str, iwlen, nullptr, nullptr);
 	if ((rc <= 0) || ((len > 0) && (rc > iwlen)))
 		return -1;
 
@@ -510,20 +513,20 @@ SSIZE_T ConvertMszUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t 
 
 char* ConvertWCharToUtf8Alloc(const WCHAR* wstr, size_t* pUtfCharLength)
 {
-	char* tmp = NULL;
-	const SSIZE_T rc = ConvertWCharToUtf8(wstr, NULL, 0);
+	char* tmp = nullptr;
+	const SSIZE_T rc = ConvertWCharToUtf8(wstr, nullptr, 0);
 	if (pUtfCharLength)
 		*pUtfCharLength = 0;
 	if (rc < 0)
-		return NULL;
+		return nullptr;
 	tmp = calloc((size_t)rc + 1ull, sizeof(char));
 	if (!tmp)
-		return NULL;
+		return nullptr;
 	const SSIZE_T rc2 = ConvertWCharToUtf8(wstr, tmp, (size_t)rc + 1ull);
 	if (rc2 < 0)
 	{
 		free(tmp);
-		return NULL;
+		return nullptr;
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pUtfCharLength)
@@ -533,21 +536,21 @@ char* ConvertWCharToUtf8Alloc(const WCHAR* wstr, size_t* pUtfCharLength)
 
 char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCharLength)
 {
-	char* tmp = NULL;
-	const SSIZE_T rc = ConvertWCharNToUtf8(wstr, wlen, NULL, 0);
+	char* tmp = nullptr;
+	const SSIZE_T rc = ConvertWCharNToUtf8(wstr, wlen, nullptr, 0);
 
 	if (pUtfCharLength)
 		*pUtfCharLength = 0;
 	if (rc < 0)
-		return NULL;
+		return nullptr;
 	tmp = calloc((size_t)rc + 1ull, sizeof(char));
 	if (!tmp)
-		return NULL;
+		return nullptr;
 	const SSIZE_T rc2 = ConvertWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 1ull);
 	if (rc2 < 0)
 	{
 		free(tmp);
-		return NULL;
+		return nullptr;
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pUtfCharLength)
@@ -557,21 +560,21 @@ char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCharL
 
 char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCharLength)
 {
-	char* tmp = NULL;
-	const SSIZE_T rc = ConvertMszWCharNToUtf8(wstr, wlen, NULL, 0);
+	char* tmp = nullptr;
+	const SSIZE_T rc = ConvertMszWCharNToUtf8(wstr, wlen, nullptr, 0);
 
 	if (pUtfCharLength)
 		*pUtfCharLength = 0;
 	if (rc < 0)
-		return NULL;
+		return nullptr;
 	tmp = calloc((size_t)rc + 1ull, sizeof(char));
 	if (!tmp)
-		return NULL;
+		return nullptr;
 	const SSIZE_T rc2 = ConvertMszWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 1ull);
 	if (rc2 < 0)
 	{
 		free(tmp);
-		return NULL;
+		return nullptr;
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pUtfCharLength)
@@ -581,20 +584,20 @@ char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCh
 
 WCHAR* ConvertUtf8ToWCharAlloc(const char* str, size_t* pSize)
 {
-	WCHAR* tmp = NULL;
-	const SSIZE_T rc = ConvertUtf8ToWChar(str, NULL, 0);
+	WCHAR* tmp = nullptr;
+	const SSIZE_T rc = ConvertUtf8ToWChar(str, nullptr, 0);
 	if (pSize)
 		*pSize = 0;
 	if (rc < 0)
-		return NULL;
+		return nullptr;
 	tmp = calloc((size_t)rc + 1ull, sizeof(WCHAR));
 	if (!tmp)
-		return NULL;
+		return nullptr;
 	const SSIZE_T rc2 = ConvertUtf8ToWChar(str, tmp, (size_t)rc + 1ull);
 	if (rc2 < 0)
 	{
 		free(tmp);
-		return NULL;
+		return nullptr;
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pSize)
@@ -604,20 +607,20 @@ WCHAR* ConvertUtf8ToWCharAlloc(const char* str, size_t* pSize)
 
 WCHAR* ConvertUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
 {
-	WCHAR* tmp = NULL;
-	const SSIZE_T rc = ConvertUtf8NToWChar(str, len, NULL, 0);
+	WCHAR* tmp = nullptr;
+	const SSIZE_T rc = ConvertUtf8NToWChar(str, len, nullptr, 0);
 	if (pSize)
 		*pSize = 0;
 	if (rc < 0)
-		return NULL;
+		return nullptr;
 	tmp = calloc((size_t)rc + 1ull, sizeof(WCHAR));
 	if (!tmp)
-		return NULL;
+		return nullptr;
 	const SSIZE_T rc2 = ConvertUtf8NToWChar(str, len, tmp, (size_t)rc + 1ull);
 	if (rc2 < 0)
 	{
 		free(tmp);
-		return NULL;
+		return nullptr;
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pSize)
@@ -627,20 +630,20 @@ WCHAR* ConvertUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
 
 WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
 {
-	WCHAR* tmp = NULL;
-	const SSIZE_T rc = ConvertMszUtf8NToWChar(str, len, NULL, 0);
+	WCHAR* tmp = nullptr;
+	const SSIZE_T rc = ConvertMszUtf8NToWChar(str, len, nullptr, 0);
 	if (pSize)
 		*pSize = 0;
 	if (rc < 0)
-		return NULL;
+		return nullptr;
 	tmp = calloc((size_t)rc + 1ull, sizeof(WCHAR));
 	if (!tmp)
-		return NULL;
+		return nullptr;
 	const SSIZE_T rc2 = ConvertMszUtf8NToWChar(str, len, tmp, (size_t)rc + 1ull);
 	if (rc2 < 0)
 	{
 		free(tmp);
-		return NULL;
+		return nullptr;
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pSize)

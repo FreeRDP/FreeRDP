@@ -33,14 +33,14 @@ int WINPR_JSON_version(char* buffer, size_t len)
 WINPR_JSON* WINPR_JSON_Parse(const char* value)
 {
 	WINPR_UNUSED(value);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_ParseWithLength(const char* value, size_t buffer_length)
 {
 	WINPR_UNUSED(value);
 	WINPR_UNUSED(buffer_length);
-	return NULL;
+	return nullptr;
 }
 
 void WINPR_JSON_Delete(WINPR_JSON* item)
@@ -52,7 +52,7 @@ WINPR_JSON* WINPR_JSON_GetArrayItem(const WINPR_JSON* array, size_t index)
 {
 	WINPR_UNUSED(array);
 	WINPR_UNUSED(index);
-	return NULL;
+	return nullptr;
 }
 
 size_t WINPR_JSON_GetArraySize(const WINPR_JSON* array)
@@ -65,14 +65,14 @@ WINPR_JSON* WINPR_JSON_GetObjectItem(const WINPR_JSON* object, const char* strin
 {
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(string);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_GetObjectItemCaseSensitive(const WINPR_JSON* object, const char* string)
 {
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(string);
-	return NULL;
+	return nullptr;
 }
 
 BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* object, const char* string)
@@ -84,13 +84,13 @@ BOOL WINPR_JSON_HasObjectItem(const WINPR_JSON* object, const char* string)
 
 const char* WINPR_JSON_GetErrorPtr(void)
 {
-	return NULL;
+	return nullptr;
 }
 
 const char* WINPR_JSON_GetStringValue(WINPR_JSON* item)
 {
 	WINPR_UNUSED(item);
-	return NULL;
+	return nullptr;
 }
 
 double WINPR_JSON_GetNumberValue(const WINPR_JSON* item)
@@ -155,66 +155,66 @@ BOOL WINPR_JSON_IsObject(const WINPR_JSON* item)
 
 WINPR_JSON* WINPR_JSON_CreateNull(void)
 {
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_CreateTrue(void)
 {
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_CreateFalse(void)
 {
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_CreateBool(BOOL boolean)
 {
 	WINPR_UNUSED(boolean);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_CreateNumber(double num)
 {
 	WINPR_UNUSED(num);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_CreateString(const char* string)
 {
 	WINPR_UNUSED(string);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_CreateArray(void)
 {
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_CreateObject(void)
 {
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_AddNullToObject(WINPR_JSON* object, const char* name)
 {
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(name);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_AddTrueToObject(WINPR_JSON* object, const char* name)
 {
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(name);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_AddFalseToObject(WINPR_JSON* object, const char* name)
 {
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(name);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_AddBoolToObject(WINPR_JSON* object, const char* name, BOOL boolean)
@@ -222,7 +222,7 @@ WINPR_JSON* WINPR_JSON_AddBoolToObject(WINPR_JSON* object, const char* name, BOO
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(name);
 	WINPR_UNUSED(boolean);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, double number)
@@ -230,7 +230,7 @@ WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, d
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(name);
 	WINPR_UNUSED(number);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name, const char* string)
@@ -238,14 +238,14 @@ WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name, c
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(name);
 	WINPR_UNUSED(string);
-	return NULL;
+	return nullptr;
 }
 
 WINPR_JSON* WINPR_JSON_AddObjectToObject(WINPR_JSON* object, const char* name)
 {
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(name);
-	return NULL;
+	return nullptr;
 }
 
 BOOL WINPR_JSON_AddItemToArray(WINPR_JSON* array, WINPR_JSON* item)
@@ -259,17 +259,17 @@ WINPR_JSON* WINPR_JSON_AddArrayToObject(WINPR_JSON* object, const char* name)
 {
 	WINPR_UNUSED(object);
 	WINPR_UNUSED(name);
-	return NULL;
+	return nullptr;
 }
 
 char* WINPR_JSON_Print(WINPR_JSON* item)
 {
 	WINPR_UNUSED(item);
-	return NULL;
+	return nullptr;
 }
 
 char* WINPR_JSON_PrintUnformatted(WINPR_JSON* item)
 {
 	WINPR_UNUSED(item);
-	return NULL;
+	return nullptr;
 }

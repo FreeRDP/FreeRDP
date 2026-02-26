@@ -27,14 +27,14 @@ int TestSmartCardStatus(int argc, char* argv[])
 	SCARDHANDLE hCard;
 	DWORD dwActiveProtocol;
 	char name[100];
-	char* aname = NULL;
-	char* aatr = NULL;
+	char* aname = nullptr;
+	char* aatr = nullptr;
 	DWORD len;
 	BYTE atr[32];
 	DWORD atrlen = 32;
 	DWORD status = 0;
 	DWORD protocol = 0;
-	err = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, &hContext);
+	err = SCardEstablishContext(SCARD_SCOPE_SYSTEM, nullptr, nullptr, &hContext);
 
 	if (err != SCARD_S_SUCCESS)
 	{
@@ -42,7 +42,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 		return -1;
 	}
 
-	err = SCardListReaders(hContext, "SCard$AllReaders", NULL, &cchReaders);
+	err = SCardListReaders(hContext, "SCard$AllReaders", nullptr, &cchReaders);
 
 	if (err != 0)
 	{
@@ -79,7 +79,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	free(mszReaders);
 
 	printf("# test 1 - get reader length\n");
-	err = SCardStatus(hCard, NULL, &len, NULL, NULL, NULL, NULL);
+	err = SCardStatus(hCard, nullptr, &len, nullptr, nullptr, nullptr, nullptr);
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
@@ -88,7 +88,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	printf("reader name length: %u\n", len);
 
 	printf("# test 2 - get reader name value\n");
-	err = SCardStatus(hCard, name, &len, NULL, NULL, NULL, NULL);
+	err = SCardStatus(hCard, name, &len, nullptr, nullptr, nullptr, nullptr);
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
@@ -124,7 +124,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 	SCardFreeMemory(hContext, aatr);
 
 	printf("# test 5 - get status and protocol only\n");
-	err = SCardStatus(hCard, NULL, NULL, &status, &protocol, NULL, NULL);
+	err = SCardStatus(hCard, nullptr, nullptr, &status, &protocol, nullptr, nullptr);
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
@@ -135,7 +135,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 
 	printf("# test 6 - get atr only auto allocated\n");
 	atrlen = SCARD_AUTOALLOCATE;
-	err = SCardStatus(hCard, NULL, NULL, NULL, NULL, (LPBYTE)&aatr, &atrlen);
+	err = SCardStatus(hCard, nullptr, nullptr, nullptr, nullptr, (LPBYTE)&aatr, &atrlen);
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);
@@ -146,7 +146,7 @@ int TestSmartCardStatus(int argc, char* argv[])
 
 	printf("# test 7 - get atr only pre allocated\n");
 	atrlen = 32;
-	err = SCardStatus(hCard, NULL, NULL, NULL, NULL, atr, &atrlen);
+	err = SCardStatus(hCard, nullptr, nullptr, nullptr, nullptr, atr, &atrlen);
 	if (err != SCARD_S_SUCCESS)
 	{
 		printf("SCardStatus: 0x%08x\n", err);

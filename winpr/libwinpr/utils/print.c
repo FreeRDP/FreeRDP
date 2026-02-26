@@ -57,7 +57,7 @@ void winpr_HexLogDump(wLog* log, UINT32 level, const void* data, size_t length)
 	                    WINPR_HEXDUMP_LINE_LENGTH + 1ULL;
 	size_t pos = 0;
 
-	char* buffer = NULL;
+	char* buffer = nullptr;
 
 	if (!WLog_IsLevelActive(log, level))
 		return;
@@ -249,13 +249,13 @@ char* winpr_BinToHexString(const BYTE* data, size_t length, BOOL space)
 	char* p = (char*)malloc(size);
 
 	if (!p)
-		return NULL;
+		return nullptr;
 
 	rc = winpr_BinToHexStringBuffer(data, length, p, size, space);
 	if (rc == 0)
 	{
 		free(p);
-		return NULL;
+		return nullptr;
 	}
 
 	return p;

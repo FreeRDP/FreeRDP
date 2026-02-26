@@ -36,7 +36,7 @@ SECURITY_STATUS checkNCryptHandle(NCRYPT_HANDLE handle, NCryptHandleType matchTy
 {
 	if (!handle)
 	{
-		WLog_VRB(TAG, "invalid handle 'NULL'");
+		WLog_VRB(TAG, "invalid handle 'nullptr'");
 		return ERROR_INVALID_PARAMETER;
 	}
 
@@ -81,7 +81,7 @@ void* ncrypt_new_handle(NCryptHandleType kind, size_t len, NCryptGetPropertyFn g
 {
 	NCryptBaseHandle* ret = calloc(1, len);
 	if (!ret)
-		return NULL;
+		return nullptr;
 
 	memcpy(ret->magic, NCRYPT_MAGIC, sizeof(ret->magic));
 	ret->type = kind;
@@ -97,7 +97,7 @@ SECURITY_STATUS winpr_NCryptDefault_dtor(NCRYPT_HANDLE handle)
 	{
 		memset(h->magic, 0, sizeof(h->magic));
 		h->type = WINPR_NCRYPT_INVALID;
-		h->releaseFn = NULL;
+		h->releaseFn = nullptr;
 		free(h);
 	}
 	return ERROR_SUCCESS;
@@ -107,16 +107,16 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
                                            NCryptProviderName** ppProviderList,
                                            WINPR_ATTR_UNUSED DWORD dwFlags)
 {
-	NCryptProviderName* ret = NULL;
+	NCryptProviderName* ret = nullptr;
 	size_t stringAllocSize = 0;
 #ifdef WITH_PKCS11
-	LPWSTR strPtr = NULL;
+	LPWSTR strPtr = nullptr;
 	static const WCHAR emptyComment[1] = WINPR_C_ARRAY_INIT;
 	size_t copyAmount = 0;
 #endif
 
 	*wProviderCount = 0;
-	*ppProviderList = NULL;
+	*ppProviderList = nullptr;
 
 #ifdef WITH_PKCS11
 	*wProviderCount += 1;
@@ -152,7 +152,7 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider, LPCWSTR pszProviderName,
                                           DWORD dwFlags)
 {
-	return winpr_NCryptOpenStorageProviderEx(phProvider, pszProviderName, dwFlags, NULL);
+	return winpr_NCryptOpenStorageProviderEx(phProvider, pszProviderName, dwFlags, nullptr);
 }
 
 SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
@@ -228,7 +228,7 @@ SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty, PB
                                   DWORD cbOutput, DWORD* pcbResult, DWORD dwFlags)
 {
 	NCryptKeyGetPropertyEnum property = NCRYPT_PROPERTY_UNKNOWN;
-	NCryptBaseHandle* base = NULL;
+	NCryptBaseHandle* base = nullptr;
 
 	if (!hObject)
 		return ERROR_INVALID_PARAMETER;
@@ -246,7 +246,7 @@ SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty, PB
 
 SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject)
 {
-	NCryptBaseHandle* base = NULL;
+	NCryptBaseHandle* base = nullptr;
 	SECURITY_STATUS ret = checkNCryptHandle(hObject, WINPR_NCRYPT_INVALID);
 	if (ret != ERROR_SUCCESS)
 		return ret;
@@ -358,6 +358,6 @@ const char* winpr_NCryptGetModulePath(NCRYPT_PROV_HANDLE phProvider)
 #if defined(WITH_PKCS11)
 	return NCryptGetModulePath(phProvider);
 #else
-	return NULL;
+	return nullptr;
 #endif
 }
