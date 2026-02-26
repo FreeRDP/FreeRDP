@@ -1189,29 +1189,24 @@ const char* freerdp_get_logon_error_info_type_ex(UINT32 type, char* buffer, size
 
 const char* freerdp_get_logon_error_info_type(UINT32 type)
 {
+#define CASE_ENTRY(x) \
+	case x:           \
+		return #x
 	switch (type)
 	{
-		case LOGON_MSG_DISCONNECT_REFUSED:
-			return "LOGON_MSG_DISCONNECT_REFUSED";
-
-		case LOGON_MSG_NO_PERMISSION:
-			return "LOGON_MSG_NO_PERMISSION";
-
-		case LOGON_MSG_BUMP_OPTIONS:
-			return "LOGON_MSG_BUMP_OPTIONS";
-
-		case LOGON_MSG_RECONNECT_OPTIONS:
-			return "LOGON_MSG_RECONNECT_OPTIONS";
-
-		case LOGON_MSG_SESSION_TERMINATE:
-			return "LOGON_MSG_SESSION_TERMINATE";
-
-		case LOGON_MSG_SESSION_CONTINUE:
-			return "LOGON_MSG_SESSION_CONTINUE";
+		CASE_ENTRY(LOGON_MSG_SESSION_BUSY_OPTIONS);
+		CASE_ENTRY(LOGON_MSG_DISCONNECT_REFUSED);
+		CASE_ENTRY(LOGON_MSG_NO_PERMISSION);
+		CASE_ENTRY(LOGON_MSG_BUMP_OPTIONS);
+		CASE_ENTRY(LOGON_MSG_RECONNECT_OPTIONS);
+		CASE_ENTRY(LOGON_MSG_SESSION_TERMINATE);
+		CASE_ENTRY(LOGON_MSG_SESSION_CONTINUE);
+		CASE_ENTRY(ERROR_CODE_ACCESS_DENIED);
 
 		default:
 			return "UNKNOWN";
 	}
+#undef CASE_ENTRY
 }
 
 const char* freerdp_get_logon_error_info_data(UINT32 data)
