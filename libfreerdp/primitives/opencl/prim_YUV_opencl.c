@@ -490,7 +490,7 @@ BOOL primitives_init_opencl(primitives_t* prims)
 	*prims = *p;
 
 	if (!primitives_init_opencl_context(&openclContext))
-		return FALSE;
+		return TRUE;
 
 	prims->YUV420ToRGB_8u_P3AC4R = opencl_YUV420ToRGB_8u_P3AC4R;
 	prims->YUV444ToRGB_8u_P3AC4R = opencl_YUV444ToRGB_8u_P3AC4R;
