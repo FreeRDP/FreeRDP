@@ -245,10 +245,18 @@ static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 		entry->Domain = nullptr;
 
 	if (LmHashLength == 32)
-		winpr_HexStringToBinBuffer(p[2], LmHashLength, entry->LmHash, sizeof(entry->LmHash));
+	{
+		if (winpr_HexStringToBinBuffer(p[2], LmHashLength, entry->LmHash, sizeof(entry->LmHash)) !=
+		    32)
+			return FALSE;
+	}
 
 	if (NtHashLength == 32)
-		winpr_HexStringToBinBuffer(p[3], NtHashLength, (BYTE*)entry->NtHash, sizeof(entry->NtHash));
+	{
+		if (winpr_HexStringToBinBuffer(p[3], NtHashLength, (BYTE*)entry->NtHash,
+		                               sizeof(entry->NtHash)) != 32)
+			return FALSE;
+	}
 
 	return TRUE;
 }
