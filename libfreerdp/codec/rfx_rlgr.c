@@ -172,7 +172,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 	wBitStream s_bs = WINPR_C_ARRAY_INIT;
 	const SSIZE_T DstSize = rDstSize;
 
-	InitOnceExecuteOnce(&rfx_rlgr_init_once, rfx_rlgr_init, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&rfx_rlgr_init_once, rfx_rlgr_init, nullptr, nullptr))
+		return -1;
 
 	k = 1;
 	kp = k << LSGR;

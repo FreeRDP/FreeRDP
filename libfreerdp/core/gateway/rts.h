@@ -77,7 +77,7 @@
 #define FDServer 0x00000002
 #define FDOutProxy 0x00000003
 
-FREERDP_LOCAL void rts_generate_cookie(BYTE* cookie);
+FREERDP_LOCAL BOOL rts_generate_cookie(BYTE* cookie);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_write_pdu_auth3(wStream* s, const rpcconn_rpc_auth_3_hdr_t* auth);

@@ -26,8 +26,9 @@
 static BOOL test_copy8u_func(void)
 {
 	primitives_t* prims = primitives_get();
-	BYTE ALIGN(data[COPY_TESTSIZE + 15]) = WINPR_C_ARRAY_INIT;
-	winpr_RAND(data, sizeof(data));
+	BYTE data[COPY_TESTSIZE + 15] = WINPR_C_ARRAY_INIT;
+	if (winpr_RAND(data, sizeof(data)) < 0)
+		return FALSE;
 
 	for (int soff = 0; soff < 16; ++soff)
 	{
@@ -35,7 +36,7 @@ static BOOL test_copy8u_func(void)
 		{
 			for (int length = 1; length <= COPY_TESTSIZE - doff; ++length)
 			{
-				BYTE ALIGN(dest[COPY_TESTSIZE + 15]) = WINPR_C_ARRAY_INIT;
+				BYTE dest[COPY_TESTSIZE + 15] = WINPR_C_ARRAY_INIT;
 
 				if (prims->copy_8u(data + soff, dest + doff, length) != PRIMITIVES_SUCCESS)
 					return FALSE;
@@ -60,8 +61,8 @@ static BOOL test_copy8u_func(void)
 /* ------------------------------------------------------------------------- */
 static BOOL test_copy8u_speed(void)
 {
-	BYTE ALIGN(src[MAX_TEST_SIZE + 4]);
-	BYTE ALIGN(dst[MAX_TEST_SIZE + 4]);
+	BYTE src[MAX_TEST_SIZE + 4] = WINPR_C_ARRAY_INIT;
+	BYTE dst[MAX_TEST_SIZE + 4] = WINPR_C_ARRAY_INIT;
 
 	if (!speed_test("copy_8u", "aligned", g_Iterations, (speed_test_fkt)generic->copy_8u,
 	                (speed_test_fkt)optimized->copy_8u, src, dst, MAX_TEST_SIZE))
@@ -81,7 +82,11 @@ static BYTE* rand_alloc(size_t w, size_t h, size_t bpp, size_t pad, BYTE** copy)
 	if (!ptr)
 		return nullptr;
 
-	winpr_RAND(ptr, s * h);
+	if (winpr_RAND(ptr, s * h) < 0)
+	{
+		free(ptr);
+		return nullptr;
+	}
 
 	if (copy)
 	{

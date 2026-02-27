@@ -1519,7 +1519,8 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	cardidEF = vgids_ef_new(ctx, VGIDS_EFID_CARDID);
 	if (!cardidEF)
 		goto init_failed;
-	winpr_RAND(cardid, sizeof(cardid));
+	if (winpr_RAND(cardid, sizeof(cardid)) < 0)
+		goto init_failed;
 	if (!vgids_ef_write_do(cardidEF, VGIDS_DO_CARDID, cardid, sizeof(cardid)))
 		goto init_failed;
 

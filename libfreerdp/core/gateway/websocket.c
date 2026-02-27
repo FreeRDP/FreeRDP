@@ -88,12 +88,13 @@ wStream* websocket_context_packet_new(size_t len, WEBSOCKET_OPCODE opcode, UINT3
 	else
 		fullLen = len + 14; /* 2 byte "mini header" + 8 byte length + 4 byte masking key */
 
+	UINT32 maskingKey = 0;
+	if (winpr_RAND(&maskingKey, sizeof(maskingKey)) < 0)
+		return nullptr;
+
 	wStream* sWS = Stream_New(nullptr, fullLen);
 	if (!sWS)
 		return nullptr;
-
-	UINT32 maskingKey = 0;
-	winpr_RAND(&maskingKey, sizeof(maskingKey));
 
 	Stream_Write_UINT8(sWS, (UINT8)(WEBSOCKET_FIN_BIT | opcode));
 	if (len < 126)

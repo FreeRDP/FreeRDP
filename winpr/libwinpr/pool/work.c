@@ -73,7 +73,8 @@ PTP_WORK winpr_CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLB
 {
 	PTP_WORK work = nullptr;
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return nullptr;
 
 	if (pCreateThreadpoolWork)
 		return pCreateThreadpoolWork(pfnwk, pv, pcbe);
@@ -106,7 +107,8 @@ PTP_WORK winpr_CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLB
 VOID winpr_CloseThreadpoolWork(PTP_WORK pwk)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return;
 
 	if (pCloseThreadpoolWork)
 	{
@@ -130,7 +132,8 @@ VOID winpr_SubmitThreadpoolWork(PTP_WORK pwk)
 	PTP_POOL pool = nullptr;
 	PTP_CALLBACK_INSTANCE callbackInstance = nullptr;
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return;
 
 	if (pSubmitThreadpoolWork)
 	{
@@ -160,7 +163,8 @@ BOOL winpr_TrySubmitThreadpoolCallback(WINPR_ATTR_UNUSED PTP_SIMPLE_CALLBACK pfn
                                        WINPR_ATTR_UNUSED PTP_CALLBACK_ENVIRON pcbe)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return FALSE;
 
 	if (pTrySubmitThreadpoolCallback)
 		return pTrySubmitThreadpoolCallback(pfns, pv, pcbe);
@@ -177,7 +181,8 @@ VOID winpr_WaitForThreadpoolWorkCallbacks(PTP_WORK pwk,
 	PTP_POOL pool = nullptr;
 
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return;
 
 	if (pWaitForThreadpoolWorkCallbacks)
 	{

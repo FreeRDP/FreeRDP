@@ -921,7 +921,8 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 			goto out_fail;
 	}
 
-	InitializeCriticalSectionAndSpinCount(&log->lock, 4000);
+	if (!InitializeCriticalSectionAndSpinCount(&log->lock, 4000))
+		goto out_fail;
 
 	return log;
 out_fail:

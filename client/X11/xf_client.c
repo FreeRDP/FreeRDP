@@ -1178,8 +1178,11 @@ static BOOL xf_pre_connect(freerdp* instance)
 		return FALSE;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMinorType, OSMINORTYPE_NATIVE_XSERVER))
 		return FALSE;
-	PubSub_SubscribeChannelConnected(context->pubSub, xf_OnChannelConnectedEventHandler);
-	PubSub_SubscribeChannelDisconnected(context->pubSub, xf_OnChannelDisconnectedEventHandler);
+	if (PubSub_SubscribeChannelConnected(context->pubSub, xf_OnChannelConnectedEventHandler) < 0)
+		return FALSE;
+	if (PubSub_SubscribeChannelDisconnected(context->pubSub, xf_OnChannelDisconnectedEventHandler) <
+	    0)
+		return FALSE;
 
 	if (!freerdp_settings_get_string(settings, FreeRDP_Username) &&
 	    !freerdp_settings_get_bool(settings, FreeRDP_CredentialsFromStdin) &&
@@ -2058,10 +2061,13 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostFinalDisconnect = xf_post_final_disconnect;
 	instance->LogonErrorInfo = xf_logon_error_info;
 	instance->GetAccessToken = client_cli_get_access_token;
-	PubSub_SubscribeTerminate(context->pubSub, xf_TerminateEventHandler);
+	if (PubSub_SubscribeTerminate(context->pubSub, xf_TerminateEventHandler) < 0)
+		return FALSE;
 #ifdef WITH_XRENDER
-	PubSub_SubscribeZoomingChange(context->pubSub, xf_ZoomingChangeEventHandler);
-	PubSub_SubscribePanningChange(context->pubSub, xf_PanningChangeEventHandler);
+	if (PubSub_SubscribeZoomingChange(context->pubSub, xf_ZoomingChangeEventHandler) < 0)
+		return FALSE;
+	if (PubSub_SubscribePanningChange(context->pubSub, xf_PanningChangeEventHandler) < 0)
+		return FALSE;
 #endif
 	xfc->log = WLog_Get(TAG);
 

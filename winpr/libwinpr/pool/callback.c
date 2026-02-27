@@ -44,7 +44,8 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 BOOL winpr_CallbackMayRunLong(WINPR_ATTR_UNUSED PTP_CALLBACK_INSTANCE pci)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return FALSE;
 	if (pCallbackMayRunLong)
 		return pCallbackMayRunLong(pci);
 #endif

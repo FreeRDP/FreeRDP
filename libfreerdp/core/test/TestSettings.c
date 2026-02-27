@@ -579,8 +579,10 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 			void* pv;
 		} val;
 
-		winpr_RAND(&intEntryType, sizeof(intEntryType));
-		winpr_RAND(&val.u64, sizeof(val.u64));
+		if (winpr_RAND(&intEntryType, sizeof(intEntryType)) < 0)
+			goto fail;
+		if (winpr_RAND(&val.u64, sizeof(val.u64)) < 0)
+			goto fail;
 
 		switch (key)
 		{
@@ -852,7 +854,8 @@ static BOOL test_write_offsets(rdpSettings* settings, size_t id, size_t elementS
 		const void* ptr = nullptr;
 		char buffer[8192] = WINPR_C_ARRAY_INIT;
 
-		winpr_RAND(buffer, sizeof(buffer));
+		if (winpr_RAND(buffer, sizeof(buffer)) < 0)
+			return FALSE;
 		if (!freerdp_settings_set_pointer_array(settings, id, x, buffer))
 			return FALSE;
 		ptr = freerdp_settings_get_pointer_array(settings, id, x);
@@ -1739,7 +1742,8 @@ static BOOL set_cert(rdpSettings* src, FreeRDP_Settings_Keys_Pointer key)
 static BOOL set_string_array(rdpSettings* src, FreeRDP_Settings_Keys_Pointer key, uint32_t max)
 {
 	uint32_t count = 0;
-	winpr_RAND(&count, sizeof(count));
+	if (winpr_RAND(&count, sizeof(count)) < 0)
+		return FALSE;
 	count = count % max;
 
 	if (!freerdp_settings_set_pointer_len(src, key, nullptr, count))
@@ -1815,7 +1819,8 @@ static BOOL test_serialize_pointer(DWORD flags)
 		goto fail;
 
 	void* ptr = nullptr;
-	winpr_RAND((void*)&ptr, sizeof(void*));
+	if (winpr_RAND((void*)&ptr, sizeof(void*)) < 0)
+		goto fail;
 	if (!freerdp_settings_set_pointer(src, FreeRDP_instance, ptr))
 		goto fail;
 
@@ -1844,7 +1849,8 @@ static BOOL test_serialize_pointer(DWORD flags)
 	for (size_t x = 0; x < ARRAYSIZE(addresses); x++)
 	{
 		uint32_t port = 0;
-		winpr_RAND(&port, sizeof(port));
+		if (winpr_RAND(&port, sizeof(port)) < 0)
+			goto fail;
 		if (!freerdp_settings_set_pointer_array(src, FreeRDP_TargetNetPorts, x, &port))
 			goto fail;
 	}
@@ -1856,14 +1862,16 @@ static BOOL test_serialize_pointer(DWORD flags)
 	void* caps = freerdp_settings_get_pointer_writable(src, FreeRDP_ReceivedCapabilities);
 	if (!caps)
 		goto fail;
-	winpr_RAND(caps, count);
+	if (winpr_RAND(caps, count) < 0)
+		goto fail;
 
 	for (uint32_t x = 0; x < count; x++)
 	{
 		uint8_t* buffer = calloc(64, sizeof(uint8_t));
 		if (!buffer)
 			goto fail;
-		winpr_RAND(buffer, sizeof(buffer));
+		if (winpr_RAND(buffer, sizeof(buffer)) < 0)
+			goto fail;
 		uint32_t blen = (buffer[0] % 52) + 13;
 
 		if (!freerdp_settings_set_pointer_array(src, FreeRDP_ReceivedCapabilityData, x, buffer))

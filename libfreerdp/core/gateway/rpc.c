@@ -518,7 +518,8 @@ static int rpc_channel_rpch_init(RpcClient* client, RpcChannel* channel, const c
 
 	settings = client->context->settings;
 	channel->auth = credssp_auth_new(client->context);
-	rts_generate_cookie((BYTE*)&channel->Cookie);
+	if (!rts_generate_cookie((BYTE*)&channel->Cookie))
+		return -1;
 	channel->client = client;
 
 	if (!channel->auth)
@@ -689,8 +690,10 @@ static RpcVirtualConnection* rpc_virtual_connection_new(rdpRpc* rpc)
 	if (!connection)
 		return nullptr;
 
-	rts_generate_cookie((BYTE*)&(connection->Cookie));
-	rts_generate_cookie((BYTE*)&(connection->AssociationGroupId));
+	if (!rts_generate_cookie((BYTE*)&(connection->Cookie)))
+		goto fail;
+	if (!rts_generate_cookie((BYTE*)&(connection->AssociationGroupId)))
+		goto fail;
 	connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
 
 	connection->DefaultInChannel = rpc_in_channel_new(rpc, &connection->Cookie);

@@ -58,7 +58,8 @@ PTP_CLEANUP_GROUP winpr_CreateThreadpoolCleanupGroup(void)
 {
 	PTP_CLEANUP_GROUP cleanupGroup = nullptr;
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return nullptr;
 
 	if (pCreateThreadpoolCleanupGroup)
 		return pCreateThreadpoolCleanupGroup();
@@ -97,7 +98,8 @@ VOID winpr_CloseThreadpoolCleanupGroupMembers(WINPR_ATTR_UNUSED PTP_CLEANUP_GROU
                                               WINPR_ATTR_UNUSED PVOID pvCleanupContext)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return;
 
 	if (pCloseThreadpoolCleanupGroupMembers)
 	{
@@ -119,7 +121,8 @@ VOID winpr_CloseThreadpoolCleanupGroupMembers(WINPR_ATTR_UNUSED PTP_CLEANUP_GROU
 VOID winpr_CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return;
 
 	if (pCloseThreadpoolCleanupGroup)
 	{

@@ -1576,10 +1576,10 @@ static BOOL rts_destination_command_write(wStream* s, UINT32 Destination)
 	return TRUE;
 }
 
-void rts_generate_cookie(BYTE* cookie)
+BOOL rts_generate_cookie(BYTE* cookie)
 {
 	WINPR_ASSERT(cookie);
-	winpr_RAND(cookie, 16);
+	return winpr_RAND(cookie, 16) >= 0;
 }
 
 #define rts_send_buffer(channel, s, frag_length) \

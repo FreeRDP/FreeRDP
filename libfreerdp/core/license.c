@@ -298,7 +298,7 @@ static const char* licencse_blob_type_string(UINT16 type)
 }
 static wStream* license_send_stream_init(rdpLicense* license, UINT16* sec_flags);
 
-static void license_generate_randoms(rdpLicense* license);
+static BOOL license_generate_randoms(rdpLicense* license);
 static BOOL license_generate_keys(rdpLicense* license);
 static BOOL license_generate_hwid(rdpLicense* license);
 static BOOL license_encrypt_premaster_secret(rdpLicense* license);
@@ -1027,23 +1027,28 @@ fail:
 	return rc;
 }
 
-void license_generate_randoms(rdpLicense* license)
+BOOL license_generate_randoms(rdpLicense* license)
 {
 	WINPR_ASSERT(license);
 
 #ifdef LICENSE_NULL_CLIENT_RANDOM
 	ZeroMemory(license->ClientRandom, sizeof(license->ClientRandom)); /* ClientRandom */
 #else
-	winpr_RAND(license->ClientRandom, sizeof(license->ClientRandom)); /* ClientRandom */
+	if (winpr_RAND(license->ClientRandom, sizeof(license->ClientRandom)) < 0) /* ClientRandom */
+		return FALSE;
 #endif
 
-	winpr_RAND(license->ServerRandom, sizeof(license->ServerRandom)); /* ServerRandom */
+	if (winpr_RAND(license->ServerRandom, sizeof(license->ServerRandom)) < 0) /* ServerRandom */
+		return FALSE;
 
 #ifdef LICENSE_NULL_PREMASTER_SECRET
 	ZeroMemory(license->PremasterSecret, sizeof(license->PremasterSecret)); /* PremasterSecret */
 #else
-	winpr_RAND(license->PremasterSecret, sizeof(license->PremasterSecret)); /* PremasterSecret */
+	if (winpr_RAND(license->PremasterSecret, sizeof(license->PremasterSecret)) <
+	    0) /* PremasterSecret */
+		return FALSE;
 #endif
+	return TRUE;
 }
 
 /**
@@ -2788,7 +2793,8 @@ rdpLicense* license_new(rdpRdp* rdp)
 	if (!(license->ScopeList = license_new_scope_list()))
 		goto out_error;
 
-	license_generate_randoms(license);
+	if (!license_generate_randoms(license))
+		goto out_error;
 
 	return license;
 

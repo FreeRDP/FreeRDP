@@ -333,19 +333,22 @@ static void xf_disp_OnWindowStateChange(void* context, const WindowStateChangeEv
 
 xfDispContext* xf_disp_new(xfContext* xfc)
 {
-	xfDispContext* ret = nullptr;
-	const rdpSettings* settings = nullptr;
-	wPubSub* pubSub = nullptr;
-
 	WINPR_ASSERT(xfc);
 
-	pubSub = xfc->common.context.pubSub;
+	wPubSub* pubSub = xfc->common.context.pubSub;
 	WINPR_ASSERT(pubSub);
 
-	settings = xfc->common.context.settings;
+	const rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	ret = calloc(1, sizeof(xfDispContext));
+	if (PubSub_SubscribeActivated(pubSub, xf_disp_OnActivated) < 0)
+		return nullptr;
+	if (PubSub_SubscribeGraphicsReset(pubSub, xf_disp_OnGraphicsReset) < 0)
+		return nullptr;
+	if (PubSub_SubscribeWindowStateChange(pubSub, xf_disp_OnWindowStateChange) < 0)
+		return nullptr;
+
+	xfDispContext* ret = calloc(1, sizeof(xfDispContext));
 
 	if (!ret)
 		return nullptr;
@@ -363,9 +366,6 @@ xfDispContext* xf_disp_new(xfContext* xfc)
 	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 	ret->lastSentHeight = ret->targetHeight =
 	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
-	PubSub_SubscribeActivated(pubSub, xf_disp_OnActivated);
-	PubSub_SubscribeGraphicsReset(pubSub, xf_disp_OnGraphicsReset);
-	PubSub_SubscribeWindowStateChange(pubSub, xf_disp_OnWindowStateChange);
 	return ret;
 }
 

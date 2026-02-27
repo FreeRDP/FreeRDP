@@ -172,11 +172,14 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	pMemBlock->cbData = cbData;
 	pMemBlock->dwFlags = dwFlags;
 
-	winpr_RAND(pMemBlock->salt, 8);
-	winpr_RAND(randomKey, sizeof(randomKey));
+	if (winpr_RAND(pMemBlock->salt, 8) < 0)
+		return FALSE;
+	if (winpr_RAND(randomKey, sizeof(randomKey)) < 0)
+		return FALSE;
 
-	winpr_Cipher_BytesToKey(WINPR_CIPHER_AES_256_CBC, WINPR_MD_SHA1, pMemBlock->salt, randomKey,
-	                        sizeof(randomKey), 4, pMemBlock->key, pMemBlock->iv);
+	if (winpr_Cipher_BytesToKey(WINPR_CIPHER_AES_256_CBC, WINPR_MD_SHA1, pMemBlock->salt, randomKey,
+	                            sizeof(randomKey), 4, pMemBlock->key, pMemBlock->iv) <= 0)
+		return FALSE;
 
 	SecureZeroMemory(randomKey, sizeof(randomKey));
 

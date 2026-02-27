@@ -1273,6 +1273,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext,
                                                     WINPR_ATTR_UNUSED ULONG fQOP,
                                                     PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	PSecBuffer data_buffer = nullptr;
 	PSecBuffer sig_buffer = nullptr;
 	UINT32 seq_no = 0;
@@ -1297,16 +1298,15 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext,
 	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
 
 	if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH))
-	{
-		winpr_HMAC_Free(hmac);
-		return SEC_E_INTERNAL_ERROR;
-	}
+		goto fail;
 
 	winpr_Data_Write_UINT32(&seq_no, MessageSeqNo);
-	winpr_HMAC_Update(hmac, (BYTE*)&seq_no, 4);
-	winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
-	winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
-	winpr_HMAC_Free(hmac);
+	if (!winpr_HMAC_Update(hmac, (BYTE*)&seq_no, 4))
+		goto fail;
+	if (!winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer))
+		goto fail;
+	if (!winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH))
+		goto fail;
 
 	winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum);
 
@@ -1316,13 +1316,18 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext,
 	winpr_Data_Write_UINT32(&signature[12], seq_no);
 	sig_buffer->cbBuffer = 16;
 
-	return SEC_E_OK;
+	status = SEC_E_OK;
+
+fail:
+	winpr_HMAC_Free(hmac);
+	return status;
 }
 
 static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
                                                       PSecBufferDesc pMessage, ULONG MessageSeqNo,
                                                       WINPR_ATTR_UNUSED PULONG pfQOP)
 {
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	PSecBuffer data_buffer = nullptr;
 	PSecBuffer sig_buffer = nullptr;
 	UINT32 seq_no = 0;
@@ -1354,10 +1359,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 	}
 
 	winpr_Data_Write_UINT32(&seq_no, MessageSeqNo);
-	winpr_HMAC_Update(hmac, (BYTE*)&seq_no, 4);
-	winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
-	winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
-	winpr_HMAC_Free(hmac);
+	if (!winpr_HMAC_Update(hmac, (BYTE*)&seq_no, 4))
+		goto fail;
+	if (!winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer))
+		goto fail;
+	if (!winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH))
+		goto fail;
 
 	winpr_RC4_Update(context->RecvRc4Seal, 8, digest, checksum);
 
@@ -1365,10 +1372,13 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 	CopyMemory(&signature[4], checksum, 8);
 	winpr_Data_Write_UINT32(&signature[12], seq_no);
 
+	status = SEC_E_OK;
 	if (memcmp(sig_buffer->pvBuffer, signature, 16) != 0)
-		return SEC_E_MESSAGE_ALTERED;
+		status = SEC_E_MESSAGE_ALTERED;
 
-	return SEC_E_OK;
+fail:
+	winpr_HMAC_Free(hmac);
+	return status;
 }
 
 const SecurityFunctionTableA NTLM_SecurityFunctionTableA = {

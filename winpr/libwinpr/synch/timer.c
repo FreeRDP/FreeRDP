@@ -260,7 +260,9 @@ static int InitializeWaitableTimer(WINPR_TIMER* timer)
 		return -1;
 #elif defined(TIMER_IMPL_POSIX)
 	struct sigevent sigev = WINPR_C_ARRAY_INIT;
-	InitOnceExecuteOnce(&TimerSignalHandler_InitOnce, InstallTimerSignalHandler, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&TimerSignalHandler_InitOnce, InstallTimerSignalHandler, nullptr,
+	                         nullptr))
+		return -1;
 	sigev.sigev_notify = SIGEV_SIGNAL;
 	sigev.sigev_signo = SIGALRM;
 	sigev.sigev_value.sival_ptr = (void*)timer;

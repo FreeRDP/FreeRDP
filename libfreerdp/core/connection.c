@@ -735,7 +735,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ClientRandom, nullptr,
 	                                      CLIENT_RANDOM_LENGTH))
 		return FALSE;
-	winpr_RAND(settings->ClientRandom, settings->ClientRandomLength);
+	if (winpr_RAND(settings->ClientRandom, settings->ClientRandomLength) < 0)
+		return FALSE;
 
 	const rdpCertInfo* info = freerdp_certificate_get_info(settings->RdpServerCertificate);
 	if (!info)

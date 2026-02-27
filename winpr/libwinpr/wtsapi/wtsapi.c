@@ -142,22 +142,25 @@ static BOOL WtsApi32_InitializeWtsApi(void)
 static BOOL CALLBACK InitializeWtsApiStubs(PINIT_ONCE once, PVOID param, PVOID* context);
 static INIT_ONCE wtsapiInitOnce = INIT_ONCE_STATIC_INIT;
 
-#define WTSAPI_STUB_CALL_VOID(_name, ...)                                          \
-	InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, nullptr, nullptr); \
-	if (!g_WtsApi || !g_WtsApi->p##_name)                                          \
-		return;                                                                    \
+#define WTSAPI_STUB_CALL_VOID(_name, ...)                                               \
+	if (!InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, nullptr, nullptr)) \
+		return;                                                                         \
+	if (!g_WtsApi || !g_WtsApi->p##_name)                                               \
+		return;                                                                         \
 	g_WtsApi->p##_name(__VA_ARGS__)
 
-#define WTSAPI_STUB_CALL_BOOL(_name, ...)                                          \
-	InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, nullptr, nullptr); \
-	if (!g_WtsApi || !g_WtsApi->p##_name)                                          \
-		return FALSE;                                                              \
+#define WTSAPI_STUB_CALL_BOOL(_name, ...)                                               \
+	if (!InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, nullptr, nullptr)) \
+		return FALSE;                                                                   \
+	if (!g_WtsApi || !g_WtsApi->p##_name)                                               \
+		return FALSE;                                                                   \
 	return g_WtsApi->p##_name(__VA_ARGS__)
 
-#define WTSAPI_STUB_CALL_HANDLE(_name, ...)                                        \
-	InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, nullptr, nullptr); \
-	if (!g_WtsApi || !g_WtsApi->p##_name)                                          \
-		return nullptr;                                                            \
+#define WTSAPI_STUB_CALL_HANDLE(_name, ...)                                             \
+	if (!InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, nullptr, nullptr)) \
+		return nullptr;                                                                 \
+	if (!g_WtsApi || !g_WtsApi->p##_name)                                               \
+		return nullptr;                                                                 \
 	return g_WtsApi->p##_name(__VA_ARGS__)
 
 BOOL WINAPI WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId,
@@ -566,10 +569,11 @@ BOOL CDECL WTSLogoffUser(HANDLE hServer)
 
 DWORD WINAPI WTSGetActiveConsoleSessionId(void)
 {
-	InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, nullptr, nullptr))
+		return UINT32_MAX;
 
 	if (!g_WtsApi || !g_WtsApi->pGetActiveConsoleSessionId)
-		return 0xFFFFFFFF;
+		return UINT32_MAX;
 
 	return g_WtsApi->pGetActiveConsoleSessionId();
 }
@@ -689,7 +693,8 @@ BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table)
 		void* pv;
 	} cnv;
 	cnv.cpv = table;
-	InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, cnv.pv, nullptr);
+	if (!InitOnceExecuteOnce(&wtsapiInitOnce, InitializeWtsApiStubs, cnv.pv, nullptr))
+		return FALSE;
 	return g_WtsApi != nullptr;
 }
 

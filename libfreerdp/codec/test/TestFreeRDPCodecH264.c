@@ -71,7 +71,11 @@ static void* allocRGB(uint32_t format, uint32_t width, uint32_t height, uint32_t
 
 	for (size_t x = 0; x < height; x++)
 	{
-		winpr_RAND(&rgb[x * stride], width * bpp);
+		if (winpr_RAND(&rgb[x * stride], width * bpp) < 0)
+		{
+			free(rgb);
+			return nullptr;
+		}
 	}
 	return rgb;
 }

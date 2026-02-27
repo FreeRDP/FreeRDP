@@ -495,7 +495,12 @@ static int bio_rdp_tls_new(BIO* bio)
 	if (!(tls = calloc(1, sizeof(BIO_RDP_TLS))))
 		return 0;
 
-	InitializeCriticalSectionAndSpinCount(&tls->lock, 4000);
+	if (!InitializeCriticalSectionAndSpinCount(&tls->lock, 4000))
+	{
+		free(tls);
+		return -1;
+	}
+
 	BIO_set_data(bio, (void*)tls);
 	return 1;
 }
@@ -829,7 +834,8 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 	if (settings->TlsSecretsFile)
 	{
 #if OPENSSL_VERSION_NUMBER >= 0x10101000L
-		InitOnceExecuteOnce(&secrets_file_idx_once, secrets_file_init_cb, nullptr, nullptr);
+		if (!InitOnceExecuteOnce(&secrets_file_idx_once, secrets_file_init_cb, nullptr, nullptr))
+			return FALSE;
 
 		if (secrets_file_idx != -1)
 		{

@@ -1274,8 +1274,7 @@ end:
 static BOOL load_layout_file(void)
 {
 	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
-	InitOnceExecuteOnce(&once, load_layouts, nullptr, nullptr);
-	return TRUE;
+	return InitOnceExecuteOnce(&once, load_layouts, nullptr, nullptr);
 }
 
 #endif

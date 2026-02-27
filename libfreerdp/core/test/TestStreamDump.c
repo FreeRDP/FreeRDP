@@ -24,7 +24,8 @@ static BOOL test_entry_read_write(void)
 	size_t entrysize = sizeof(UINT64) /* timestamp */ + sizeof(BYTE) /* direction */ +
 	                   sizeof(UINT32) /* CRC */ + sizeof(UINT64) /* size */;
 
-	winpr_RAND(tmp, sizeof(tmp));
+	if (winpr_RAND(tmp, sizeof(tmp)) < 0)
+		goto fail;
 
 	for (size_t x = 0; x < sizeof(tmp); x++)
 		(void)_snprintf(&tmp2[x * 2], sizeof(tmp2) - 2 * x, "%02" PRIx8, tmp[x]);
@@ -44,7 +45,8 @@ static BOOL test_entry_read_write(void)
 		goto fail;
 	}
 
-	winpr_RAND(Stream_Buffer(sw), Stream_Capacity(sw));
+	if (winpr_RAND(Stream_Buffer(sw), Stream_Capacity(sw)) < 0)
+		goto fail;
 	entrysize += Stream_Capacity(sw);
 	Stream_SetLength(sw, Stream_Capacity(sw));
 

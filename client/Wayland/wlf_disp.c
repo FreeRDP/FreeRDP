@@ -271,16 +271,18 @@ static void wlf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs
 
 wlfDispContext* wlf_disp_new(wlfContext* wlc)
 {
-	wlfDispContext* ret = nullptr;
-	wPubSub* pubSub = nullptr;
-	rdpSettings* settings = nullptr;
-
 	if (!wlc || !wlc->common.context.settings || !wlc->common.context.pubSub)
 		return nullptr;
 
-	settings = wlc->common.context.settings;
-	pubSub = wlc->common.context.pubSub;
-	ret = calloc(1, sizeof(wlfDispContext));
+	rdpSettings* settings = wlc->common.context.settings;
+	wPubSub* pubSub = wlc->common.context.pubSub;
+
+	if (PubSub_SubscribeActivated(pubSub, wlf_disp_OnActivated) < 0)
+		return nullptr;
+	if (PubSub_SubscribeGraphicsReset(pubSub, wlf_disp_OnGraphicsReset) < 0)
+		return nullptr;
+
+	wlfDispContext* ret = calloc(1, sizeof(wlfDispContext));
 
 	if (!ret)
 		return nullptr;
@@ -290,8 +292,6 @@ wlfDispContext* wlf_disp_new(wlfContext* wlc)
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
 	ret->lastSentHeight = ret->targetHeight =
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
-	PubSub_SubscribeActivated(pubSub, wlf_disp_OnActivated);
-	PubSub_SubscribeGraphicsReset(pubSub, wlf_disp_OnGraphicsReset);
 	return ret;
 }
 

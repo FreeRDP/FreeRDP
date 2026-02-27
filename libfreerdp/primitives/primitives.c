@@ -155,7 +155,8 @@ static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_be
 		if (!buf)
 			goto fail;
 
-		winpr_RAND(buf, 1ull * roi->width * roi->height);
+		if (winpr_RAND(buf, 1ull * roi->width * roi->height) < 0)
+			goto fail;
 		ret->steps[i] = roi->width;
 	}
 
@@ -359,14 +360,19 @@ void primitives_uninit(void)
 /* ------------------------------------------------------------------------- */
 static void setup(void)
 {
-	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, nullptr,
+	                         nullptr))
+		return;
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-	InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, nullptr, nullptr))
+		return;
 #endif
 #if defined(WITH_OPENCL)
-	InitOnceExecuteOnce(&gpu_primitives_InitOnce, primitives_init_gpu_cb, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&gpu_primitives_InitOnce, primitives_init_gpu_cb, nullptr, nullptr))
+		return;
 #endif
-	InitOnceExecuteOnce(&auto_primitives_InitOnce, primitives_auto_init_cb, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&auto_primitives_InitOnce, primitives_auto_init_cb, nullptr, nullptr))
+		return;
 }
 
 primitives_t* primitives_get(void)
@@ -377,13 +383,17 @@ primitives_t* primitives_get(void)
 
 primitives_t* primitives_get_generic(void)
 {
-	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, nullptr,
+	                         nullptr))
+		return nullptr;
 	return &pPrimitivesGeneric;
 }
 
 primitives_t* primitives_get_by_type(primitive_hints type)
 {
-	InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&generic_primitives_InitOnce, primitives_init_generic_cb, nullptr,
+	                         nullptr))
+		return nullptr;
 
 	switch (type)
 	{

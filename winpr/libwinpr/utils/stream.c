@@ -315,10 +315,10 @@ BOOL Stream_CheckAndLogRequiredCapacityEx(const char* tag, DWORD level, wStream*
 		va_list args = WINPR_C_ARRAY_INIT;
 
 		va_start(args, fmt);
-		Stream_CheckAndLogRequiredCapacityExVa(tag, level, s, nmemb, size, fmt, args);
+		const BOOL rc =
+		    Stream_CheckAndLogRequiredCapacityExVa(tag, level, s, nmemb, size, fmt, args);
 		va_end(args);
-
-		return FALSE;
+		return rc;
 	}
 	return TRUE;
 }
@@ -373,10 +373,10 @@ BOOL Stream_CheckAndLogRequiredCapacityWLogEx(wLog* log, DWORD level, wStream* s
 		va_list args = WINPR_C_ARRAY_INIT;
 
 		va_start(args, fmt);
-		Stream_CheckAndLogRequiredCapacityWLogExVa(log, level, s, nmemb, size, fmt, args);
+		const BOOL rc =
+		    Stream_CheckAndLogRequiredCapacityWLogExVa(log, level, s, nmemb, size, fmt, args);
 		va_end(args);
-
-		return FALSE;
+		return rc;
 	}
 	return TRUE;
 }
@@ -393,10 +393,9 @@ BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s
 		va_list args = WINPR_C_ARRAY_INIT;
 
 		va_start(args, fmt);
-		Stream_CheckAndLogRequiredLengthExVa(tag, level, s, nmemb, size, fmt, args);
+		const BOOL rc = Stream_CheckAndLogRequiredLengthExVa(tag, level, s, nmemb, size, fmt, args);
 		va_end(args);
-
-		return FALSE;
+		return rc;
 	}
 	return TRUE;
 }
@@ -424,10 +423,10 @@ BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s, 
 		va_list args = WINPR_C_ARRAY_INIT;
 
 		va_start(args, fmt);
-		Stream_CheckAndLogRequiredLengthWLogExVa(log, level, s, nmemb, size, fmt, args);
+		const BOOL rc =
+		    Stream_CheckAndLogRequiredLengthWLogExVa(log, level, s, nmemb, size, fmt, args);
 		va_end(args);
-
-		return FALSE;
+		return rc;
 	}
 	return TRUE;
 }

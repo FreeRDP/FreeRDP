@@ -287,7 +287,12 @@ static UINT32 prand(UINT32 max)
 	UINT32 tmp = 0;
 	if (max <= 1)
 		return 1;
-	winpr_RAND(&tmp, sizeof(tmp));
+	if (winpr_RAND(&tmp, sizeof(tmp)) < 0)
+	{
+		(void)fprintf(stderr, "winpr_RAND failed, retry...\n");
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
+		exit(-1);
+	}
 	return tmp % (max - 1) + 1;
 }
 

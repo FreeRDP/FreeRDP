@@ -22,11 +22,13 @@
 static BOOL test_lShift_16s_func(void)
 {
 	pstatus_t status = 0;
-	INT16 ALIGN(src[FUNC_TEST_SIZE + 3]);
-	INT16 ALIGN(d1[FUNC_TEST_SIZE + 3]);
+	INT16 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	INT16 d1[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 	UINT32 val = 0;
-	winpr_RAND(&val, sizeof(val));
-	winpr_RAND(src, sizeof(src));
+	if (winpr_RAND(&val, sizeof(val)) < 0)
+		return FALSE;
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 	val = val % 16;
 	/* Negative tests */
 	status = generic->lShiftC_16s(src + 1, 16, d1 + 1, FUNC_TEST_SIZE);
@@ -64,11 +66,13 @@ static BOOL test_lShift_16s_func(void)
 static BOOL test_lShift_16u_func(void)
 {
 	pstatus_t status = 0;
-	UINT16 ALIGN(src[FUNC_TEST_SIZE + 3]);
-	UINT16 ALIGN(d1[FUNC_TEST_SIZE + 3]);
+	UINT16 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT16 d1[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 	UINT32 val = 0;
-	winpr_RAND(&val, sizeof(val));
-	winpr_RAND(src, sizeof(src));
+	if (winpr_RAND(&val, sizeof(val)) < 0)
+		return FALSE;
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 	val = val % 16;
 
 	/* Negative tests */
@@ -107,11 +111,13 @@ static BOOL test_lShift_16u_func(void)
 static BOOL test_rShift_16s_func(void)
 {
 	pstatus_t status = 0;
-	INT16 ALIGN(src[FUNC_TEST_SIZE + 3]);
-	INT16 ALIGN(d1[FUNC_TEST_SIZE + 3]);
+	INT16 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	INT16 d1[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 	UINT32 val = 0;
-	winpr_RAND(&val, sizeof(val));
-	winpr_RAND(src, sizeof(src));
+	if (winpr_RAND(&val, sizeof(val)) < 0)
+		return FALSE;
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 	val = val % 16;
 
 	/* Negative Tests */
@@ -150,11 +156,13 @@ static BOOL test_rShift_16s_func(void)
 static BOOL test_rShift_16u_func(void)
 {
 	pstatus_t status = 0;
-	UINT16 ALIGN(src[FUNC_TEST_SIZE + 3]);
-	UINT16 ALIGN(d1[FUNC_TEST_SIZE + 3]);
+	UINT16 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT16 d1[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 	UINT32 val = 0;
-	winpr_RAND(&val, sizeof(val));
-	winpr_RAND(src, sizeof(src));
+	if (winpr_RAND(&val, sizeof(val)) < 0)
+		return FALSE;
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 	val = val % 16;
 	/* Negative tests */
 	status = generic->rShiftC_16u(src + 1, 16, d1 + 1, FUNC_TEST_SIZE);
@@ -192,11 +200,13 @@ static BOOL test_rShift_16u_func(void)
 static BOOL test_ShiftWrapper_16s_func(void)
 {
 	pstatus_t status = 0;
-	INT16 ALIGN(src[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	INT16 ALIGN(d1[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	INT16 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	INT16 d1[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 	UINT32 tmp = 0;
-	winpr_RAND(&tmp, sizeof(tmp));
-	winpr_RAND(src, sizeof(src));
+	if (winpr_RAND(&tmp, sizeof(tmp)) < 0)
+		return FALSE;
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 	INT32 val = WINPR_ASSERTING_INT_CAST(int32_t, tmp % 16);
 
 	/* Negative tests */
@@ -255,11 +265,13 @@ static BOOL test_ShiftWrapper_16s_func(void)
 static BOOL test_ShiftWrapper_16u_func(void)
 {
 	pstatus_t status = 0;
-	UINT16 ALIGN(src[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	UINT16 ALIGN(d1[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	UINT16 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT16 d1[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 	UINT32 tmp = 0;
-	winpr_RAND(&tmp, sizeof(tmp));
-	winpr_RAND(src, sizeof(src));
+	if (winpr_RAND(&tmp, sizeof(tmp)) < 0)
+		return FALSE;
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 	INT32 val = WINPR_ASSERTING_INT_CAST(int32_t, tmp % 16);
 
 	/* Negative */
@@ -318,10 +330,12 @@ static BOOL test_ShiftWrapper_16u_func(void)
 static BOOL test_lShift_16s_speed(void)
 {
 	UINT32 val = 0;
-	INT16 ALIGN(src[MAX_TEST_SIZE + 1]);
-	INT16 ALIGN(dst[MAX_TEST_SIZE + 1]);
-	winpr_RAND(src, sizeof(src));
-	winpr_RAND(&val, sizeof(val));
+	INT16 src[MAX_TEST_SIZE + 1] = WINPR_C_ARRAY_INIT;
+	INT16 dst[MAX_TEST_SIZE + 1] = WINPR_C_ARRAY_INIT;
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
+	if (winpr_RAND(&val, sizeof(val)))
+		return FALSE;
 
 	val = val % 16;
 	if (!speed_test("lShift_16s", "aligned", g_Iterations, (speed_test_fkt)generic->lShiftC_16s,
@@ -339,10 +353,12 @@ static BOOL test_lShift_16s_speed(void)
 static BOOL test_lShift_16u_speed(void)
 {
 	UINT32 val = 0;
-	UINT16 ALIGN(src[MAX_TEST_SIZE + 1]);
-	UINT16 ALIGN(dst[MAX_TEST_SIZE + 1]);
-	winpr_RAND(&val, sizeof(val));
-	winpr_RAND(src, sizeof(src));
+	UINT16 src[MAX_TEST_SIZE + 1] = WINPR_C_ARRAY_INIT;
+	UINT16 dst[MAX_TEST_SIZE + 1] = WINPR_C_ARRAY_INIT;
+	if (winpr_RAND(&val, sizeof(val)) < 0)
+		return FALSE;
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 
 	val = val % 16;
 	if (!speed_test("lShift_16u", "aligned", g_Iterations, (speed_test_fkt)generic->lShiftC_16u,
@@ -360,10 +376,12 @@ static BOOL test_lShift_16u_speed(void)
 static BOOL test_rShift_16s_speed(void)
 {
 	UINT32 val = 0;
-	INT16 ALIGN(src[MAX_TEST_SIZE + 1]);
-	INT16 ALIGN(dst[MAX_TEST_SIZE + 1]);
-	winpr_RAND(src, sizeof(src));
-	winpr_RAND(&val, sizeof(val));
+	INT16 src[MAX_TEST_SIZE + 1] = WINPR_C_ARRAY_INIT;
+	INT16 dst[MAX_TEST_SIZE + 1] = WINPR_C_ARRAY_INIT;
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
+	if (winpr_RAND(&val, sizeof(val)) < 0)
+		return FALSE;
 
 	val = val % 16;
 	if (!speed_test("rShift_16s", "aligned", g_Iterations, (speed_test_fkt)generic->rShiftC_16s,
@@ -381,10 +399,12 @@ static BOOL test_rShift_16s_speed(void)
 static BOOL test_rShift_16u_speed(void)
 {
 	UINT32 val = 0;
-	UINT16 ALIGN(src[MAX_TEST_SIZE + 1]);
-	UINT16 ALIGN(dst[MAX_TEST_SIZE + 1]);
-	winpr_RAND(&val, sizeof(val));
-	winpr_RAND(src, sizeof(src));
+	UINT16 src[MAX_TEST_SIZE + 1] = WINPR_C_ARRAY_INIT;
+	UINT16 dst[MAX_TEST_SIZE + 1] = WINPR_C_ARRAY_INIT;
+	if (winpr_RAND(&val, sizeof(val)) < 0)
+		return FALSE;
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 
 	val = val % 16;
 	if (!speed_test("rShift_16u", "aligned", g_Iterations, (speed_test_fkt)generic->rShiftC_16u,

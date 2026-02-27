@@ -68,7 +68,8 @@ static primitives_YUV_benchmark primitives_YUV_benchmark_init(void)
 	ret.rgbBuffer = calloc(ret.outputStride, ret.roi.height);
 	if (!ret.rgbBuffer)
 		goto fail;
-	winpr_RAND(ret.rgbBuffer, 1ULL * ret.outputStride * ret.roi.height);
+	if (winpr_RAND(ret.rgbBuffer, 1ULL * ret.outputStride * ret.roi.height) < 0)
+		goto fail;
 
 	for (size_t i = 0; i < 3; i++)
 	{
@@ -77,7 +78,8 @@ static primitives_YUV_benchmark primitives_YUV_benchmark_init(void)
 		if (!ret.channels[i] || !ret.outputChannels[i])
 			goto fail;
 
-		winpr_RAND(ret.channels[i], 1ull * ret.roi.width * ret.roi.height);
+		if (winpr_RAND(ret.channels[i], 1ull * ret.roi.width * ret.roi.height) < 0)
+			goto fail;
 		ret.steps[i] = ret.roi.width;
 	}
 

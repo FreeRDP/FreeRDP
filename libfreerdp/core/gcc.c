@@ -1792,8 +1792,7 @@ static BOOL gcc_update_server_random(rdpSettings* settings)
 	BYTE* data = freerdp_settings_get_pointer_writable(settings, FreeRDP_ServerRandom);
 	if (!data)
 		return FALSE;
-	winpr_RAND(data, length);
-	return TRUE;
+	return winpr_RAND(data, length) >= 0;
 }
 
 /* TODO: This function does manipulate data in rdpMcs

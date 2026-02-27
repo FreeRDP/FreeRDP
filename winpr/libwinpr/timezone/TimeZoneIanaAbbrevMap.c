@@ -244,7 +244,8 @@ size_t TimeZoneIanaAbbrevGet(const char* abbrev, const char** list, size_t lists
 {
 	static INIT_ONCE init_guard = INIT_ONCE_STATIC_INIT;
 
-	InitOnceExecuteOnce(&init_guard, TimeZoneIanaAbbrevInitialize, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_guard, TimeZoneIanaAbbrevInitialize, nullptr, nullptr))
+		return 0;
 
 	size_t rc = 0;
 	for (size_t x = 0; x < TimeZoneIanaAbbrevMapSize; x++)

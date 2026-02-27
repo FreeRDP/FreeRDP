@@ -48,10 +48,11 @@ static BOOL test_and_32u_impl(const char* name, fn_andC_32u_t fkt, const UINT32*
 
 static BOOL test_and_32u_func(void)
 {
-	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	UINT32 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT32 dst[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 
-	winpr_RAND(src, sizeof(src));
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 
 	if (!test_and_32u_impl("generic->andC_32u aligned", generic->andC_32u, src + 1, VALUE, dst + 1,
 	                       FUNC_TEST_SIZE))
@@ -72,10 +73,11 @@ static BOOL test_and_32u_func(void)
 /* ------------------------------------------------------------------------- */
 static BOOL test_and_32u_speed(void)
 {
-	UINT32 ALIGN(src[MAX_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	UINT32 ALIGN(dst[MAX_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	UINT32 src[MAX_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT32 dst[MAX_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 
-	winpr_RAND(src, sizeof(src));
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 
 	if (!speed_test("andC_32u", "aligned", g_Iterations, (speed_test_fkt)generic->andC_32u,
 	                (speed_test_fkt)optimized->andC_32u, src + 1, VALUE, dst + 1, MAX_TEST_SIZE))
@@ -107,10 +109,11 @@ static BOOL check(const UINT32* src, const UINT32* dst, UINT32 size, UINT32 valu
 static BOOL test_or_32u_func(void)
 {
 	pstatus_t status = 0;
-	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	UINT32 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT32 dst[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 
-	winpr_RAND(src, sizeof(src));
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 
 	status = generic->orC_32u(src + 1, VALUE, dst + 1, FUNC_TEST_SIZE);
 	if (status != PRIMITIVES_SUCCESS)
@@ -132,10 +135,11 @@ static BOOL test_or_32u_func(void)
 /* ------------------------------------------------------------------------- */
 static BOOL test_or_32u_speed(void)
 {
-	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	UINT32 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT32 dst[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 
-	winpr_RAND(src, sizeof(src));
+	if (winpr_RAND(src, sizeof(src)) < 0)
+		return FALSE;
 
 	return (speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->orC_32u,
 	                   (speed_test_fkt)optimized->orC_32u, src + 1, VALUE, dst + 1,

@@ -343,7 +343,8 @@ proxyData* proxy_data_new(void)
 	if (!(pdata->gfx_server_ready = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 		goto error;
 
-	winpr_RAND(&temp, 16);
+	if (winpr_RAND(&temp, 16) < 0)
+		goto error;
 	hex = winpr_BinToHexString(temp, 16, FALSE);
 	if (!hex)
 		goto error;

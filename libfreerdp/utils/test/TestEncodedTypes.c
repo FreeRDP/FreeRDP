@@ -103,7 +103,8 @@ static BOOL test_signed_integers(void)
 	for (size_t x = 0; x < 100000; x++)
 	{
 		INT32 val = 0;
-		winpr_RAND(&val, sizeof(val));
+		if (winpr_RAND(&val, sizeof(val)) < 0)
+			return FALSE;
 		val = MAX(val, 0);
 		val = MIN(val, FREERDP_FOUR_BYTE_SIGNED_INT_MAX);
 
@@ -172,7 +173,11 @@ static double get(void)
 	double val = NAN;
 	do
 	{
-		winpr_RAND(&val, sizeof(val));
+		if (winpr_RAND(&val, sizeof(val)) < 0)
+		{
+			// NOLINTNEXTLINE(concurrency-mt-unsafe)
+			exit(-1);
+		}
 	} while ((val < 0.0) || (val > FREERDP_FOUR_BYTE_FLOAT_MAX) || isnan(val) || isinf(val));
 	return val;
 }

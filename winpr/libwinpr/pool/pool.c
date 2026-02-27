@@ -173,7 +173,8 @@ PTP_POOL winpr_CreateThreadpool(PVOID reserved)
 {
 	PTP_POOL pool = nullptr;
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return nullptr;
 	if (pCreateThreadpool)
 		return pCreateThreadpool(reserved);
 #else
@@ -194,7 +195,8 @@ PTP_POOL winpr_CreateThreadpool(PVOID reserved)
 VOID winpr_CloseThreadpool(PTP_POOL ptpp)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return;
 	if (pCloseThreadpool)
 	{
 		pCloseThreadpool(ptpp);
@@ -221,7 +223,8 @@ BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 {
 	BOOL rc = FALSE;
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return FALSE;
 	if (pSetThreadpoolThreadMinimum)
 		return pSetThreadpoolThreadMinimum(ptpp, cthrdMic);
 #endif
@@ -251,7 +254,8 @@ fail:
 VOID winpr_SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost)
 {
 #ifdef _WIN32
-	InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&init_once_module, init_module, nullptr, nullptr))
+		return;
 	if (pSetThreadpoolThreadMaximum)
 	{
 		pSetThreadpoolThreadMaximum(ptpp, cthrdMost);

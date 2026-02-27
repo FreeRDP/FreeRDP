@@ -46,7 +46,8 @@ static bool run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 	if (!pSrcData || !pDstData || !tmp)
 		goto fail;
 
-	winpr_RAND(pSrcData, SrcSize);
+	if (winpr_RAND(pSrcData, SrcSize) < 0)
+		goto fail;
 
 	if (!bitmap_interleaved_context_reset(encoder) || !bitmap_interleaved_context_reset(decoder))
 		goto fail;

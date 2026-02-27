@@ -94,7 +94,8 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 	HANDLE hEvent1 = nullptr;
 
 #ifdef _WIN32
-	InitOnceExecuteOnce(&g_InitOnce, InitOnce_Barrier, nullptr, nullptr);
+	if (!InitOnceExecuteOnce(&g_InitOnce, InitOnce_Barrier, nullptr, nullptr))
+		return FALSE;
 
 	if (g_NativeBarrier)
 		return pfnInitializeSynchronizationBarrier(lpBarrier, lTotalThreads, lSpinCount);

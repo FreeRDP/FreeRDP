@@ -707,13 +707,15 @@ out:
 
 static char* create_temporary_file(void)
 {
-	BYTE buffer[32];
-	char* hex = nullptr;
+	BYTE buffer[32] = WINPR_C_ARRAY_INIT;
 	char* path = nullptr;
 
-	winpr_RAND(buffer, sizeof(buffer));
-	hex = winpr_BinToHexString(buffer, sizeof(buffer), FALSE);
-	path = GetKnownSubPath(KNOWN_PATH_TEMP, hex);
+	if (winpr_RAND(buffer, sizeof(buffer)) < 0)
+		return nullptr;
+
+	char* hex = winpr_BinToHexString(buffer, sizeof(buffer), FALSE);
+	if (hex)
+		path = GetKnownSubPath(KNOWN_PATH_TEMP, hex);
 	free(hex);
 	return path;
 }

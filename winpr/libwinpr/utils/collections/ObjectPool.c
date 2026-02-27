@@ -168,7 +168,13 @@ wObjectPool* ObjectPool_New(BOOL synchronized)
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)
-			InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
+		{
+			if (!InitializeCriticalSectionAndSpinCount(&pool->lock, 4000))
+			{
+				free(pool);
+				return nullptr;
+			}
+		}
 	}
 
 	return pool;
