@@ -478,6 +478,7 @@ fail:
 
 BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 {
+	BOOL rc = TRUE;
 	WINPR_ASSERT(rdp);
 
 	rdp->errorInfo = errorInfo;
@@ -498,7 +499,7 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 				ErrorInfoEventArgs e = WINPR_C_ARRAY_INIT;
 				EventArgsInit(&e, "freerdp");
 				e.code = rdp->errorInfo;
-				PubSub_OnErrorInfo(context->pubSub, context, &e);
+				rc = PubSub_OnErrorInfo(context->pubSub, context, &e) >= 0;
 			}
 		}
 		else
@@ -509,7 +510,7 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 		freerdp_set_last_error_log(rdp->context, FREERDP_ERROR_SUCCESS);
 	}
 
-	return TRUE;
+	return rc;
 }
 
 wStream* rdp_message_channel_pdu_init(rdpRdp* rdp, UINT16* sec_flags)
