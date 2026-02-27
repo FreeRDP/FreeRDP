@@ -38,20 +38,19 @@ BOOL ntlm_write_ntlm_v2_response(wStream* s, const NTLMv2_RESPONSE* response);
 void ntlm_output_target_name(NTLM_CONTEXT* context);
 void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
 
-void ntlm_current_time(BYTE* timestamp);
 void ntlm_generate_timestamp(NTLM_CONTEXT* context);
 
 SECURITY_STATUS ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
 SECURITY_STATUS ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
 
-void ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext);
-void ntlm_generate_client_challenge(NTLM_CONTEXT* context);
-void ntlm_generate_server_challenge(NTLM_CONTEXT* context);
-void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context);
-void ntlm_generate_random_session_key(NTLM_CONTEXT* context);
-void ntlm_generate_exported_session_key(NTLM_CONTEXT* context);
-void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context);
-void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context);
+BOOL ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext);
+BOOL ntlm_generate_client_challenge(NTLM_CONTEXT* context);
+BOOL ntlm_generate_server_challenge(NTLM_CONTEXT* context);
+BOOL ntlm_generate_key_exchange_key(NTLM_CONTEXT* context);
+BOOL ntlm_generate_random_session_key(NTLM_CONTEXT* context);
+BOOL ntlm_generate_exported_session_key(NTLM_CONTEXT* context);
+BOOL ntlm_encrypt_random_session_key(NTLM_CONTEXT* context);
+BOOL ntlm_decrypt_random_session_key(NTLM_CONTEXT* context);
 
 BOOL ntlm_generate_client_signing_key(NTLM_CONTEXT* context);
 BOOL ntlm_generate_server_signing_key(NTLM_CONTEXT* context);

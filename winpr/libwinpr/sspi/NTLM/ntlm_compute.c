@@ -449,9 +449,10 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 		return FALSE;
 	else if (memcmp(context->NtlmHash, NTLM_NULL_BUFFER, 16) != 0)
 	{
-		NTOWFv2FromHashW(context->NtlmHash, (LPWSTR)credentials->identity.User,
-		                 credentials->identity.UserLength * 2, (LPWSTR)credentials->identity.Domain,
-		                 credentials->identity.DomainLength * 2, hash);
+		return NTOWFv2FromHashW(context->NtlmHash, (LPWSTR)credentials->identity.User,
+		                        credentials->identity.UserLength * 2,
+		                        (LPWSTR)credentials->identity.Domain,
+		                        credentials->identity.DomainLength * 2, hash);
 	}
 	else if (credentials->identity.PasswordLength > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET)
 	{
@@ -459,16 +460,17 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 		if (ntlm_convert_password_hash(context, context->NtlmHash, sizeof(context->NtlmHash)) < 0)
 			return FALSE;
 
-		NTOWFv2FromHashW(context->NtlmHash, (LPWSTR)credentials->identity.User,
-		                 credentials->identity.UserLength * 2, (LPWSTR)credentials->identity.Domain,
-		                 credentials->identity.DomainLength * 2, hash);
+		return NTOWFv2FromHashW(context->NtlmHash, (LPWSTR)credentials->identity.User,
+		                        credentials->identity.UserLength * 2,
+		                        (LPWSTR)credentials->identity.Domain,
+		                        credentials->identity.DomainLength * 2, hash);
 	}
 	else if (credentials->identity.Password)
 	{
-		NTOWFv2W((LPWSTR)credentials->identity.Password, credentials->identity.PasswordLength * 2,
-		         (LPWSTR)credentials->identity.User, credentials->identity.UserLength * 2,
-		         (LPWSTR)credentials->identity.Domain, credentials->identity.DomainLength * 2,
-		         hash);
+		return NTOWFv2W(
+		    (LPWSTR)credentials->identity.Password, credentials->identity.PasswordLength * 2,
+		    (LPWSTR)credentials->identity.User, credentials->identity.UserLength * 2,
+		    (LPWSTR)credentials->identity.Domain, credentials->identity.DomainLength * 2, hash);
 	}
 	else if (context->HashCallback)
 	{
