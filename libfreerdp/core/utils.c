@@ -505,7 +505,9 @@ BOOL utils_reload_channels(rdpContext* context)
 	}
 
 	context->channels = freerdp_channels_new(context->instance);
-	WINPR_ASSERT(context->channels);
+	if (!context->channels)
+		return FALSE;
+
 	freerdp_channels_register_instance(context->channels, context->instance);
 
 	BOOL rc = TRUE;
