@@ -144,7 +144,11 @@ static wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 		return nullptr;
 	}
 
-	InitializeCriticalSectionAndSpinCount(&appender->lock, 4000);
+	if (!InitializeCriticalSectionAndSpinCount(&appender->lock, 4000))
+	{
+		WLog_Appender_Free(log, appender);
+		return nullptr;
+	}
 
 	return appender;
 }

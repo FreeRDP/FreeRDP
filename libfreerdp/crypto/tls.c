@@ -495,7 +495,12 @@ static int bio_rdp_tls_new(BIO* bio)
 	if (!(tls = calloc(1, sizeof(BIO_RDP_TLS))))
 		return 0;
 
-	InitializeCriticalSectionAndSpinCount(&tls->lock, 4000);
+	if (!InitializeCriticalSectionAndSpinCount(&tls->lock, 4000))
+	{
+		free(tls);
+		return -1;
+	}
+
 	BIO_set_data(bio, (void*)tls);
 	return 1;
 }

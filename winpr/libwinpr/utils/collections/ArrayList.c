@@ -591,7 +591,8 @@ wArrayList* ArrayList_New(BOOL synchronized)
 	if (!ArrayList_EnsureCapacity(arrayList, 32))
 		goto fail;
 
-	InitializeCriticalSectionAndSpinCount(&arrayList->lock, 4000);
+	if (!InitializeCriticalSectionAndSpinCount(&arrayList->lock, 4000))
+		goto fail;
 	return arrayList;
 fail:
 	WINPR_PRAGMA_DIAG_PUSH

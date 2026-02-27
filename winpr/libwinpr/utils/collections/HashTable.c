@@ -765,7 +765,8 @@ wHashTable* HashTable_New(BOOL synchronized)
 		goto fail;
 
 	table->synchronized = synchronized;
-	InitializeCriticalSectionAndSpinCount(&(table->lock), 4000);
+	if (!InitializeCriticalSectionAndSpinCount(&(table->lock), 4000))
+		goto fail;
 	table->numOfBuckets = 64;
 	table->numOfElements = 0;
 	table->bucketArray = (wKeyValuePair**)calloc(table->numOfBuckets, sizeof(wKeyValuePair*));

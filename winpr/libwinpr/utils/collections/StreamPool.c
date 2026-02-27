@@ -414,7 +414,8 @@ wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize)
 		if (!StreamPool_EnsureCapacity(pool, 32, TRUE))
 			goto fail;
 
-		InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
+		if (!InitializeCriticalSectionAndSpinCount(&pool->lock, 4000))
+			goto fail;
 	}
 
 	return pool;

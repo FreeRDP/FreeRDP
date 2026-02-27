@@ -152,9 +152,15 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 		DeleteCriticalSection(&critical);
 
 		if (dwSpinCount % 2 == 0)
-			InitializeCriticalSectionAndSpinCount(&critical, dwSpinCount);
+		{
+			if (!InitializeCriticalSectionAndSpinCount(&critical, dwSpinCount))
+				goto fail;
+		}
 		else
-			InitializeCriticalSectionEx(&critical, dwSpinCount, 0);
+		{
+			if (!InitializeCriticalSectionEx(&critical, dwSpinCount, 0))
+				goto fail;
+		}
 	}
 	DeleteCriticalSection(&critical);
 
@@ -229,7 +235,8 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 	for (int j = 0; j < TEST_SYNC_CRITICAL_TEST1_RUNS; j++)
 	{
 		dwSpinCount = j * 100;
-		InitializeCriticalSectionAndSpinCount(&critical, dwSpinCount);
+		if (!InitializeCriticalSectionAndSpinCount(&critical, dwSpinCount))
+			goto fail;
 
 		gTestValueVulnerable = 0;
 		gTestValueSerialized = 0;

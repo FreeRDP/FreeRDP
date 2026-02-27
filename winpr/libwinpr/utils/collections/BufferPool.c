@@ -523,7 +523,10 @@ wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignmen
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)
-			InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
+		{
+			if (!InitializeCriticalSectionAndSpinCount(&pool->lock, 4000))
+				goto out_error;
+		}
 
 		if (pool->fixedSize)
 		{
