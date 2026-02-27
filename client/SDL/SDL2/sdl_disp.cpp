@@ -462,8 +462,10 @@ sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
 	_lastSentHeight = _targetHeight =
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
-	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
-	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
+	if (PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated) < 0)
+		throw std::exception();
+	if (PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset) < 0)
+		throw std::exception();
 	addTimer();
 }
 

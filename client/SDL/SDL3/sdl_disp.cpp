@@ -470,8 +470,10 @@ sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 
 	auto pubSub = _sdl->context()->pubSub;
 
-	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
-	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
+	if (PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated) < 0)
+		throw std::exception();
+	if (PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset) < 0)
+		throw std::exception();
 	std::ignore = addTimer();
 }
 

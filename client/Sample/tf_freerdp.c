@@ -167,9 +167,12 @@ static BOOL tf_pre_connect(freerdp* instance)
 	 * callbacks or deactivate certain features. */
 	/* Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded. */
-	PubSub_SubscribeChannelConnected(instance->context->pubSub, tf_OnChannelConnectedEventHandler);
-	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-	                                    tf_OnChannelDisconnectedEventHandler);
+	if (PubSub_SubscribeChannelConnected(instance->context->pubSub,
+	                                     tf_OnChannelConnectedEventHandler) < 0)
+		return FALSE;
+	if (PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
+	                                        tf_OnChannelDisconnectedEventHandler) < 0)
+		return FALSE;
 
 	/* TODO: Any code your client requires */
 	return TRUE;

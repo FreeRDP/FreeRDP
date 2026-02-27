@@ -289,8 +289,10 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_AutoReconnectionEnabled, TRUE))
 		return FALSE;
 
-	PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info);
-	PubSub_SubscribeActivated(instance->context->pubSub, pf_client_on_activated);
+	if (PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info) < 0)
+		return FALSE;
+	if (PubSub_SubscribeActivated(instance->context->pubSub, pf_client_on_activated) < 0)
+		return FALSE;
 	if (!pf_client_use_peer_load_balance_info(pc))
 		return FALSE;
 

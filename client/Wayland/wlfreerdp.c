@@ -197,9 +197,12 @@ static BOOL wl_pre_connect(freerdp* instance)
 		return FALSE;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMinorType, OSMINORTYPE_NATIVE_WAYLAND))
 		return FALSE;
-	PubSub_SubscribeChannelConnected(instance->context->pubSub, wlf_OnChannelConnectedEventHandler);
-	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-	                                    wlf_OnChannelDisconnectedEventHandler);
+	if (PubSub_SubscribeChannelConnected(instance->context->pubSub,
+	                                     wlf_OnChannelConnectedEventHandler) < 0)
+		return FALSE;
+	if (PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
+	                                        wlf_OnChannelDisconnectedEventHandler) < 0)
+		return FALSE;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{

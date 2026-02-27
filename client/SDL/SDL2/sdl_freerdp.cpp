@@ -605,9 +605,12 @@ static BOOL sdl_pre_connect(freerdp* instance)
 	 * callbacks or deactivate certain features. */
 	/* Register the channel listeners.
 	 * They are required to set up / tear down channels if they are loaded. */
-	PubSub_SubscribeChannelConnected(instance->context->pubSub, sdl_OnChannelConnectedEventHandler);
-	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-	                                    sdl_OnChannelDisconnectedEventHandler);
+	if (PubSub_SubscribeChannelConnected(instance->context->pubSub,
+	                                     sdl_OnChannelConnectedEventHandler) < 0)
+		return FALSE;
+	if (PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
+	                                        sdl_OnChannelDisconnectedEventHandler) < 0)
+		return FALSE;
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{
