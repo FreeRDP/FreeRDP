@@ -26,12 +26,6 @@
 
 #include "measure.h"
 
-#ifdef _WIN32
-#define ALIGN(x) x
-#else
-#define ALIGN(x) x DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT)
-#endif
-
 #define ABS(_x_) ((_x_) < 0 ? (-(_x_)) : (_x_))
 #define MAX_TEST_SIZE 4096
 

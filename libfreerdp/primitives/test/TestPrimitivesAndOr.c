@@ -48,8 +48,8 @@ static BOOL test_and_32u_impl(const char* name, fn_andC_32u_t fkt, const UINT32*
 
 static BOOL test_and_32u_func(void)
 {
-	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	UINT32 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT32 dst[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 
 	if (winpr_RAND(src, sizeof(src)) < 0)
 		return FALSE;
@@ -73,8 +73,8 @@ static BOOL test_and_32u_func(void)
 /* ------------------------------------------------------------------------- */
 static BOOL test_and_32u_speed(void)
 {
-	UINT32 ALIGN(src[MAX_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	UINT32 ALIGN(dst[MAX_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	UINT32 src[MAX_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT32 dst[MAX_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 
 	if (winpr_RAND(src, sizeof(src)) < 0)
 		return FALSE;
@@ -109,8 +109,8 @@ static BOOL check(const UINT32* src, const UINT32* dst, UINT32 size, UINT32 valu
 static BOOL test_or_32u_func(void)
 {
 	pstatus_t status = 0;
-	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	UINT32 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT32 dst[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 
 	if (winpr_RAND(src, sizeof(src)) < 0)
 		return FALSE;
@@ -135,8 +135,8 @@ static BOOL test_or_32u_func(void)
 /* ------------------------------------------------------------------------- */
 static BOOL test_or_32u_speed(void)
 {
-	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	UINT32 src[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	UINT32 dst[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 
 	if (winpr_RAND(src, sizeof(src)) < 0)
 		return FALSE;

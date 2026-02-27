@@ -23,10 +23,10 @@ static BOOL test_add16s_func(void)
 {
 	pstatus_t status = 0;
 
-	INT16 ALIGN(src1[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	INT16 ALIGN(src2[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	INT16 ALIGN(d1[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	INT16 ALIGN(d2[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	INT16 src1[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	INT16 src2[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	INT16 d1[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	INT16 d2[FUNC_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 
 	if (winpr_RAND(src1, sizeof(src1)) < 0)
 		return FALSE;
@@ -44,9 +44,9 @@ static BOOL test_add16s_func(void)
 /* ------------------------------------------------------------------------- */
 static BOOL test_add16s_speed(void)
 {
-	BYTE ALIGN(src1[MAX_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	BYTE ALIGN(src2[MAX_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
-	BYTE ALIGN(dst[MAX_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	BYTE src1[MAX_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	BYTE src2[MAX_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
+	BYTE dst[MAX_TEST_SIZE + 3] = WINPR_C_ARRAY_INIT;
 
 	if (!g_TestPrimitivesPerformance)
 		return TRUE;
