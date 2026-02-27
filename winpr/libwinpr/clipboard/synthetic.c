@@ -967,42 +967,56 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 	 * CF_TEXT
 	 */
 	{
-		ClipboardRegisterSynthesizer(clipboard, CF_TEXT, CF_OEMTEXT,
-		                             clipboard_synthesize_cf_oemtext);
-		ClipboardRegisterSynthesizer(clipboard, CF_TEXT, CF_UNICODETEXT,
-		                             clipboard_synthesize_cf_unicodetext);
-		ClipboardRegisterSynthesizer(clipboard, CF_TEXT, CF_LOCALE, clipboard_synthesize_cf_locale);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_TEXT, CF_OEMTEXT,
+		                                  clipboard_synthesize_cf_oemtext))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_TEXT, CF_UNICODETEXT,
+		                                  clipboard_synthesize_cf_unicodetext))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_TEXT, CF_LOCALE,
+		                                  clipboard_synthesize_cf_locale))
+			return FALSE;
 
 		UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_plain);
-		ClipboardRegisterSynthesizer(clipboard, CF_TEXT, altFormatId,
-		                             clipboard_synthesize_utf8_string);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_TEXT, altFormatId,
+		                                  clipboard_synthesize_utf8_string))
+			return FALSE;
 	}
 	/**
 	 * CF_OEMTEXT
 	 */
 	{
-		ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, CF_TEXT, clipboard_synthesize_cf_text);
-		ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, CF_UNICODETEXT,
-		                             clipboard_synthesize_cf_unicodetext);
-		ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, CF_LOCALE,
-		                             clipboard_synthesize_cf_locale);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, CF_TEXT,
+		                                  clipboard_synthesize_cf_text))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, CF_UNICODETEXT,
+		                                  clipboard_synthesize_cf_unicodetext))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, CF_LOCALE,
+		                                  clipboard_synthesize_cf_locale))
+			return FALSE;
 		UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_plain);
-		ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, altFormatId,
-		                             clipboard_synthesize_utf8_string);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, altFormatId,
+		                                  clipboard_synthesize_utf8_string))
+			return FALSE;
 	}
 	/**
 	 * CF_UNICODETEXT
 	 */
 	{
-		ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, CF_TEXT,
-		                             clipboard_synthesize_cf_text);
-		ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, CF_OEMTEXT,
-		                             clipboard_synthesize_cf_oemtext);
-		ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, CF_LOCALE,
-		                             clipboard_synthesize_cf_locale);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, CF_TEXT,
+		                                  clipboard_synthesize_cf_text))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, CF_OEMTEXT,
+		                                  clipboard_synthesize_cf_oemtext))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, CF_LOCALE,
+		                                  clipboard_synthesize_cf_locale))
+			return FALSE;
 		UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_plain);
-		ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, altFormatId,
-		                             clipboard_synthesize_utf8_string);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, altFormatId,
+		                                  clipboard_synthesize_utf8_string))
+			return FALSE;
 	}
 	/**
 	 * UTF8_STRING
@@ -1012,14 +1026,18 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 
 		if (formatId)
 		{
-			ClipboardRegisterSynthesizer(clipboard, formatId, CF_TEXT,
-			                             clipboard_synthesize_cf_text);
-			ClipboardRegisterSynthesizer(clipboard, formatId, CF_OEMTEXT,
-			                             clipboard_synthesize_cf_oemtext);
-			ClipboardRegisterSynthesizer(clipboard, formatId, CF_UNICODETEXT,
-			                             clipboard_synthesize_cf_unicodetext);
-			ClipboardRegisterSynthesizer(clipboard, formatId, CF_LOCALE,
-			                             clipboard_synthesize_cf_locale);
+			if (!ClipboardRegisterSynthesizer(clipboard, formatId, CF_TEXT,
+			                                  clipboard_synthesize_cf_text))
+				return FALSE;
+			if (!ClipboardRegisterSynthesizer(clipboard, formatId, CF_OEMTEXT,
+			                                  clipboard_synthesize_cf_oemtext))
+				return FALSE;
+			if (!ClipboardRegisterSynthesizer(clipboard, formatId, CF_UNICODETEXT,
+			                                  clipboard_synthesize_cf_unicodetext))
+				return FALSE;
+			if (!ClipboardRegisterSynthesizer(clipboard, formatId, CF_LOCALE,
+			                                  clipboard_synthesize_cf_locale))
+				return FALSE;
 		}
 	}
 	/**
@@ -1030,14 +1048,18 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 
 		if (formatId)
 		{
-			ClipboardRegisterSynthesizer(clipboard, formatId, CF_TEXT,
-			                             clipboard_synthesize_cf_text);
-			ClipboardRegisterSynthesizer(clipboard, formatId, CF_OEMTEXT,
-			                             clipboard_synthesize_cf_oemtext);
-			ClipboardRegisterSynthesizer(clipboard, formatId, CF_UNICODETEXT,
-			                             clipboard_synthesize_cf_unicodetext);
-			ClipboardRegisterSynthesizer(clipboard, formatId, CF_LOCALE,
-			                             clipboard_synthesize_cf_locale);
+			if (!ClipboardRegisterSynthesizer(clipboard, formatId, CF_TEXT,
+			                                  clipboard_synthesize_cf_text))
+				return FALSE;
+			if (!ClipboardRegisterSynthesizer(clipboard, formatId, CF_OEMTEXT,
+			                                  clipboard_synthesize_cf_oemtext))
+				return FALSE;
+			if (!ClipboardRegisterSynthesizer(clipboard, formatId, CF_UNICODETEXT,
+			                                  clipboard_synthesize_cf_unicodetext))
+				return FALSE;
+			if (!ClipboardRegisterSynthesizer(clipboard, formatId, CF_LOCALE,
+			                                  clipboard_synthesize_cf_locale))
+				return FALSE;
 		}
 	}
 
@@ -1047,16 +1069,21 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 	/**
 	 * CF_TIFF
 	 */
-	ClipboardRegisterSynthesizer(clipboard, CF_TIFF, htmlFormat, clipboard_synthesize_image_html);
-	ClipboardRegisterSynthesizer(clipboard, tiffFormat, htmlFormat,
-	                             clipboard_synthesize_image_html);
+	if (!ClipboardRegisterSynthesizer(clipboard, CF_TIFF, htmlFormat,
+	                                  clipboard_synthesize_image_html))
+		return FALSE;
+	if (!ClipboardRegisterSynthesizer(clipboard, tiffFormat, htmlFormat,
+	                                  clipboard_synthesize_image_html))
+		return FALSE;
 
 	/**
 	 * CF_DIB
 	 */
 	{
 #if defined(WINPR_UTILS_IMAGE_DIBv5)
-		ClipboardRegisterSynthesizer(clipboard, CF_DIB, CF_DIBV5, clipboard_synthesize_cf_dibv5);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_DIB, CF_DIBV5,
+		                                  clipboard_synthesize_cf_dibv5))
+			return FALSE;
 #endif
 		for (size_t x = 0; x < ARRAYSIZE(mime_bitmap); x++)
 		{
@@ -1064,11 +1091,13 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 			const UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime);
 			if (altFormatId == 0)
 				continue;
-			ClipboardRegisterSynthesizer(clipboard, CF_DIB, altFormatId,
-			                             clipboard_synthesize_image_bmp);
+			if (!ClipboardRegisterSynthesizer(clipboard, CF_DIB, altFormatId,
+			                                  clipboard_synthesize_image_bmp))
+				return FALSE;
 		}
-		ClipboardRegisterSynthesizer(clipboard, CF_DIB, htmlFormat,
-		                             clipboard_synthesize_image_html);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_DIB, htmlFormat,
+		                                  clipboard_synthesize_image_html))
+			return FALSE;
 	}
 
 	/**
@@ -1076,7 +1105,8 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 	 */
 #if defined(WINPR_UTILS_IMAGE_DIBv5)
 	{
-		ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, CF_DIB, clipboard_synthesize_cf_dib);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, CF_DIB, clipboard_synthesize_cf_dib))
+			return FALSE;
 
 		for (size_t x = 0; x < ARRAYSIZE(mime_bitmap); x++)
 		{
@@ -1084,11 +1114,13 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 			const UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime);
 			if (altFormatId == 0)
 				continue;
-			ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, altFormatId,
-			                             clipboard_synthesize_image_bmp);
+			if (!ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, altFormatId,
+			                                  clipboard_synthesize_image_bmp))
+				return FALSE;
 		}
-		ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, htmlFormat,
-		                             clipboard_synthesize_image_html);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, htmlFormat,
+		                                  clipboard_synthesize_image_html))
+			return FALSE;
 	}
 #endif
 
@@ -1101,13 +1133,17 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 		const UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime);
 		if (altFormatId == 0)
 			continue;
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIB, clipboard_synthesize_cf_dib);
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIB,
+		                                  clipboard_synthesize_cf_dib))
+			return FALSE;
 #if defined(WINPR_UTILS_IMAGE_DIBv5)
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIBV5,
-		                             clipboard_synthesize_cf_dibv5);
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIBV5,
+		                                  clipboard_synthesize_cf_dibv5))
+			return FALSE;
 #endif
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, htmlFormat,
-		                             clipboard_synthesize_image_html);
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, htmlFormat,
+		                                  clipboard_synthesize_image_html))
+			return FALSE;
 	}
 
 	/**
@@ -1116,17 +1152,22 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 #if defined(WINPR_UTILS_IMAGE_PNG)
 	{
 		const UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_png);
-		ClipboardRegisterSynthesizer(clipboard, CF_DIB, altFormatId,
-		                             clipboard_synthesize_image_bmp_to_png);
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIB,
-		                             clipboard_synthesize_image_png_to_bmp);
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, htmlFormat,
-		                             clipboard_synthesize_image_html);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_DIB, altFormatId,
+		                                  clipboard_synthesize_image_bmp_to_png))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIB,
+		                                  clipboard_synthesize_image_png_to_bmp))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, htmlFormat,
+		                                  clipboard_synthesize_image_html))
+			return FALSE;
 #if defined(WINPR_UTILS_IMAGE_DIBv5)
-		ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, altFormatId,
-		                             clipboard_synthesize_image_bmp_to_png);
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIBV5,
-		                             clipboard_synthesize_image_png_to_bmp);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, altFormatId,
+		                                  clipboard_synthesize_image_bmp_to_png))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIBV5,
+		                                  clipboard_synthesize_image_png_to_bmp))
+			return FALSE;
 #endif
 	}
 #endif
@@ -1137,17 +1178,22 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 #if defined(WINPR_UTILS_IMAGE_WEBP)
 	{
 		const UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_webp);
-		ClipboardRegisterSynthesizer(clipboard, CF_DIB, altFormatId,
-		                             clipboard_synthesize_image_bmp_to_webp);
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIB,
-		                             clipboard_synthesize_image_webp_to_bmp);
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, htmlFormat,
-		                             clipboard_synthesize_image_html);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_DIB, altFormatId,
+		                                  clipboard_synthesize_image_bmp_to_webp))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIB,
+		                                  clipboard_synthesize_image_webp_to_bmp))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, htmlFormat,
+		                                  clipboard_synthesize_image_html))
+			return FALSE;
 #if defined(WINPR_UTILS_IMAGE_DIBv5)
-		ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, altFormatId,
-		                             clipboard_synthesize_image_bmp_to_webp);
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIBV5,
-		                             clipboard_synthesize_image_webp_to_bmp);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, altFormatId,
+		                                  clipboard_synthesize_image_bmp_to_webp))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIBV5,
+		                                  clipboard_synthesize_image_webp_to_bmp))
+			return FALSE;
 #endif
 	}
 #endif
@@ -1158,17 +1204,22 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 #if defined(WINPR_UTILS_IMAGE_JPEG)
 	{
 		const UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_jpeg);
-		ClipboardRegisterSynthesizer(clipboard, CF_DIB, altFormatId,
-		                             clipboard_synthesize_image_bmp_to_jpeg);
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIB,
-		                             clipboard_synthesize_image_jpeg_to_bmp);
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, htmlFormat,
-		                             clipboard_synthesize_image_html);
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_DIB, altFormatId,
+		                                  clipboard_synthesize_image_bmp_to_jpeg))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIB,
+		                                  clipboard_synthesize_image_jpeg_to_bmp))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, htmlFormat,
+		                                  clipboard_synthesize_image_html))
+			return FALSE;
 #if defined(WINPR_UTILS_IMAGE_DIBv5)
-		ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIBV5,
-		                             clipboard_synthesize_image_jpeg_to_bmp);
-		ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, altFormatId,
-		                             clipboard_synthesize_image_bmp_to_jpeg);
+		if (!ClipboardRegisterSynthesizer(clipboard, altFormatId, CF_DIBV5,
+		                                  clipboard_synthesize_image_jpeg_to_bmp))
+			return FALSE;
+		if (!ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, altFormatId,
+		                                  clipboard_synthesize_image_bmp_to_jpeg))
+			return FALSE;
 #endif
 	}
 #endif
@@ -1182,8 +1233,9 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 		if (formatId)
 		{
 			const UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_html);
-			ClipboardRegisterSynthesizer(clipboard, formatId, altFormatId,
-			                             clipboard_synthesize_text_html);
+			if (!ClipboardRegisterSynthesizer(clipboard, formatId, altFormatId,
+			                                  clipboard_synthesize_text_html))
+				return FALSE;
 		}
 	}
 
@@ -1196,8 +1248,9 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 		if (formatId)
 		{
 			const UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_ms_html);
-			ClipboardRegisterSynthesizer(clipboard, formatId, altFormatId,
-			                             clipboard_synthesize_html_format);
+			if (!ClipboardRegisterSynthesizer(clipboard, formatId, altFormatId,
+			                                  clipboard_synthesize_html_format))
+				return FALSE;
 		}
 	}
 
