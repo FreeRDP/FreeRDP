@@ -1105,7 +1105,7 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 	if (Stream_GetPosition(s) >= CLIPRDR_HEADER_LENGTH)
 	{
 		position = Stream_GetPosition(s);
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 		Stream_Read_UINT16(s, header.msgType);  /* msgType (2 bytes) */
 		Stream_Read_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
 		Stream_Read_UINT32(s, header.dataLen);  /* dataLen (4 bytes) */
@@ -1158,7 +1158,7 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 				return error;
 			}
 
-			Stream_SetPosition(s, 0);
+			Stream_ResetPosition(s);
 			/* check for trailing zero bytes */
 			status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
 
@@ -1190,7 +1190,7 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 				if (!header.msgType)
 				{
 					/* ignore trailing bytes */
-					Stream_SetPosition(s, 0);
+					Stream_ResetPosition(s);
 				}
 			}
 			else

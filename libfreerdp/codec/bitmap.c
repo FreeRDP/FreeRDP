@@ -171,7 +171,7 @@ static inline UINT16 out_copy_count_2(UINT16 in_count, wStream* WINPR_RESTRICT i
 		Stream_Write(in_s, Stream_Buffer(in_data), 2ULL * in_count);
 	}
 
-	Stream_SetPosition(in_data, 0);
+	Stream_ResetPosition(in_data);
 	return 0;
 }
 
@@ -202,7 +202,7 @@ static inline UINT16 out_copy_count_3(UINT16 in_count, wStream* WINPR_RESTRICT i
 		Stream_Write(in_s, Stream_Pointer(in_data), 3ULL * in_count);
 	}
 
-	Stream_SetPosition(in_data, 0);
+	Stream_ResetPosition(in_data);
 	return 0;
 }
 
@@ -696,7 +696,7 @@ static inline SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 		lines_sent++;
 	}
 
-	Stream_SetPosition(temp_s, 0);
+	Stream_ResetPosition(temp_s);
 
 	if (counts.fill_count > 3 && counts.fill_count >= counts.color_count &&
 	    counts.fill_count >= counts.bicolor_count && counts.fill_count >= counts.mix_count &&
@@ -1017,7 +1017,7 @@ static inline SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
 		lines_sent++;
 	}
 
-	Stream_SetPosition(temp_s, 0);
+	Stream_ResetPosition(temp_s);
 
 	if (counts.fill_count > 3 && counts.fill_count >= counts.color_count &&
 	    counts.fill_count >= counts.bicolor_count && counts.fill_count >= counts.mix_count &&
@@ -1096,7 +1096,7 @@ SSIZE_T freerdp_bitmap_compress(const void* WINPR_RESTRICT srcData, UINT32 width
                                 wStream* WINPR_RESTRICT s, UINT32 bpp, UINT32 byte_limit,
                                 UINT32 start_line, wStream* WINPR_RESTRICT temp_s, UINT32 e)
 {
-	Stream_SetPosition(temp_s, 0);
+	Stream_ResetPosition(temp_s);
 
 	switch (bpp)
 	{

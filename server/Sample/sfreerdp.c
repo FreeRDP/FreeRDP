@@ -172,7 +172,7 @@ static wStream* test_peer_stream_init(testPeerContext* context)
 	WINPR_ASSERT(context->s);
 
 	Stream_Clear(context->s);
-	Stream_SetPosition(context->s, 0);
+	Stream_ResetPosition(context->s);
 	return context->s;
 }
 
@@ -652,7 +652,7 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 				goto fail;
 		}
 
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 
 		if (WTSVirtualChannelRead(context->debug_channel, 0, Stream_BufferAs(s, char),
 		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
@@ -1108,7 +1108,7 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 			if (rc < 0)
 				goto fail;
 		}
-		Stream_SetPosition(ls, 0);
+		Stream_ResetPosition(ls);
 	}
 
 fail:

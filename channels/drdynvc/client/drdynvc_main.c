@@ -879,7 +879,7 @@ static UINT dvcman_receive_channel_data(DVCMAN_CHANNEL* channel, wStream* data,
 		if (Stream_GetPosition(channel->dvc_data) >= channel->dvc_data_length)
 		{
 			Stream_SealLength(channel->dvc_data);
-			Stream_SetPosition(channel->dvc_data, 0);
+			Stream_ResetPosition(channel->dvc_data);
 
 			status = dvcman_call_on_receive(channel, channel->dvc_data);
 			Stream_Release(channel->dvc_data);
@@ -1001,7 +1001,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 	}
 	else if (dataSize <= CHANNEL_CHUNK_LENGTH - pos)
 	{
-		Stream_SetPosition(data_out, 0);
+		Stream_ResetPosition(data_out);
 		Stream_Write_UINT8(data_out, (DATA_PDU << 4) | cbChId);
 		Stream_SetPosition(data_out, pos);
 		Stream_Write(data_out, data, dataSize);
@@ -1012,7 +1012,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 		/* Fragment the data */
 		cbLen = drdynvc_write_variable_uint(data_out, dataSize);
 		pos = Stream_GetPosition(data_out);
-		Stream_SetPosition(data_out, 0);
+		Stream_ResetPosition(data_out);
 
 		const INT32 pdu = (DATA_FIRST_PDU << 4) | cbChId | (cbLen << 2);
 		Stream_Write_UINT8(data_out, WINPR_ASSERTING_INT_CAST(UINT8, pdu));
@@ -1042,7 +1042,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 			Stream_SetPosition(data_out, 1);
 			cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 			pos = Stream_GetPosition(data_out);
-			Stream_SetPosition(data_out, 0);
+			Stream_ResetPosition(data_out);
 			Stream_Write_UINT8(data_out, (DATA_PDU << 4) | cbChId);
 			Stream_SetPosition(data_out, pos);
 
@@ -1576,7 +1576,7 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 
 		drdynvc->data_in = nullptr;
 		Stream_SealLength(data_in);
-		Stream_SetPosition(data_in, 0);
+		Stream_ResetPosition(data_in);
 
 		if (drdynvc->async)
 		{

@@ -354,7 +354,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 		return -1;
 
 	Stream_SealLength(s);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	rdpUpdate* update = fastpath->rdp->update;
 
@@ -478,7 +478,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 			break;
 	}
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	if (!rc)
 	{
 		WLog_ERR(TAG, "Fastpath update %s [%" PRIx8 "] failed, status %d",
@@ -1063,7 +1063,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 		if (sec_flags & SEC_SECURE_CHECKSUM)
 			eventHeader |= (FASTPATH_INPUT_SECURE_CHECKSUM << 6);
 
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 		Stream_Write_UINT8(s, eventHeader);
 		/* Write length later, RDP encryption might add a padding */
 		Stream_Seek(s, 2);
@@ -1199,7 +1199,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	}
 
 	size_t totalLength = Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	/* check if fast path output is possible */
 	if (!settings->FastPathOutput)
@@ -1308,7 +1308,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			return FALSE;
 
 		fpUpdatePduHeader.length = (UINT16)len;
-		Stream_SetPosition(fs, 0);
+		Stream_ResetPosition(fs);
 		if (!fastpath_write_update_pdu_header(fs, &fpUpdatePduHeader, rdp))
 			return FALSE;
 		if (!fastpath_write_update_header(fs, &fpUpdateHeader))

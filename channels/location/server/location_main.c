@@ -322,7 +322,7 @@ static UINT location_process_message(location_server* location)
 	wStream* s = location->buffer;
 	WINPR_ASSERT(s);
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	const BOOL rc =
 	    WTSVirtualChannelRead(location->location_channel, 0, nullptr, 0, &BytesReturned);
 	if (!rc)

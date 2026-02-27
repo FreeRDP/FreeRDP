@@ -70,7 +70,7 @@ static UINT rail_server_send_pdu(RailServerContext* context, wStream* s, UINT16 
 		return ERROR_INVALID_PARAMETER;
 
 	orderLength = (UINT16)Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	rail_write_pdu_header(s, orderType, orderLength);
 	Stream_SetPosition(s, orderLength);
 	WLog_DBG(TAG, "Sending %s PDU, length: %" PRIu16 "",

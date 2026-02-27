@@ -2017,7 +2017,7 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 		}
 
 		Stream_SealLength(data_in);
-		Stream_SetPosition(data_in, 0);
+		Stream_ResetPosition(data_in);
 
 		if (rdpdr->async)
 		{

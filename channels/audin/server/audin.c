@@ -376,7 +376,7 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 		if (status == WAIT_OBJECT_0)
 			break;
 
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 
 		if (!WTSVirtualChannelRead(audin->audin_channel, 0, nullptr, 0, &BytesReturned))
 		{

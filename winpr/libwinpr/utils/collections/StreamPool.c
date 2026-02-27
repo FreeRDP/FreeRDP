@@ -246,7 +246,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	}
 	else if (s)
 	{
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 		Stream_SetLength(s, Stream_Capacity(s));
 		StreamPool_ShiftAvailable(pool, foundIndex);
 	}

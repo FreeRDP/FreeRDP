@@ -640,7 +640,7 @@ static int nla_client_authenticate(rdpNla* nla)
 
 	while (nla_get_state(nla) < NLA_STATE_AUTH_INFO)
 	{
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 		const int status = transport_read_pdu(nla->transport, s);
 
 		if (status < 0)

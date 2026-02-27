@@ -334,7 +334,7 @@ static PfChannelResult DynvcTrackerPeekHandleByMode(ChannelStateTracker* tracker
 		trackerState->CurrentDataReceived = 0;
 
 		if (dynChannel->packetReassembly && trackerState->currentPacket)
-			Stream_SetPosition(trackerState->currentPacket, 0);
+			Stream_ResetPosition(trackerState->currentPacket);
 	}
 
 	return result;
@@ -551,7 +551,7 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 			if (dynChannel->packetReassembly)
 			{
 				if (trackerState->currentPacket)
-					Stream_SetPosition(trackerState->currentPacket, 0);
+					Stream_ResetPosition(trackerState->currentPacket);
 			}
 		}
 		break;

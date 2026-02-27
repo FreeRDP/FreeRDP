@@ -246,7 +246,7 @@ static UINT mouse_cursor_process_message(mouse_cursor_server* mouse_cursor)
 	s = mouse_cursor->buffer;
 	WINPR_ASSERT(s);
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	rc = WTSVirtualChannelRead(mouse_cursor->mouse_cursor_channel, 0, nullptr, 0, &BytesReturned);
 	if (!rc)
 		goto out;

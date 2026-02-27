@@ -1185,7 +1185,7 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 	}
 
 	Stream_SealLength(s);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	const size_t len = Stream_Length(s);
 	if (len > INT32_MAX)
 		return -1;
@@ -1224,7 +1224,7 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 	{
 		size_t length = Stream_GetPosition(s);
 		size_t writtenlength = length;
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 
 		if (length > 0)
 		{

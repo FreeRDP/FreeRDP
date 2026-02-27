@@ -261,9 +261,10 @@ BOOL rdpdr_write_iocompletion_header(wStream* out, UINT32 DeviceId, UINT32 Compl
                                      NTSTATUS ioStatus)
 {
 	WINPR_ASSERT(out);
-	Stream_SetPosition(out, 0);
+	Stream_ResetPosition(out);
 	if (!Stream_EnsureRemainingCapacity(out, 16))
 		return FALSE;
+
 	Stream_Write_UINT16(out, RDPDR_CTYP_CORE);                /* Component (2 bytes) */
 	Stream_Write_UINT16(out, PAKID_CORE_DEVICE_IOCOMPLETION); /* PacketId (2 bytes) */
 	Stream_Write_UINT32(out, DeviceId);                       /* DeviceId (4 bytes) */
@@ -284,7 +285,7 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 	UINT16 component = 0;
 	UINT16 packetid = 0;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (pos >= 2)
 		Stream_Read_UINT16(s, component);

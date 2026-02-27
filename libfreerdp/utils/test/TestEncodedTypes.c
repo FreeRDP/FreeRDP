@@ -46,12 +46,8 @@ static BOOL test_signed_integer_read_write_equal(INT32 value)
 		(void)fprintf(stderr, "[%s(%" PRId32 ")] failed to write to stream\n", __func__, value);
 		return FALSE;
 	}
-	if (!Stream_SetPosition(s, 0))
-	{
-		(void)fprintf(stderr, "[%s(%" PRId32 ")] failed to reset stream position\n", __func__,
-		              value);
-		return FALSE;
-	}
+	Stream_ResetPosition(s);
+
 	if (!freerdp_read_four_byte_signed_integer(s, &rvalue))
 	{
 		(void)fprintf(stderr, "[%s(%" PRId32 ")] failed to read from stream\n", __func__, value);
@@ -131,11 +127,8 @@ static BOOL test_float_read_write_equal(double value)
 		(void)fprintf(stderr, "[%s(%lf)] failed to write to stream\n", __func__, value);
 		return FALSE;
 	}
-	if (!Stream_SetPosition(s, 0))
-	{
-		(void)fprintf(stderr, "[%s(%lf)] failed to reset stream position\n", __func__, value);
-		return FALSE;
-	}
+	Stream_ResetPosition(s);
+
 	if (!freerdp_read_four_byte_float_exp(s, &rvalue, &exp))
 	{
 		(void)fprintf(stderr, "[%s(%lf)] failed to read from stream\n", __func__, value);

@@ -273,7 +273,7 @@ static UINT enumerator_process_message(enumerator_server* enumerator)
 	s = enumerator->buffer;
 	WINPR_ASSERT(s);
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	rc = WTSVirtualChannelRead(enumerator->enumerator_channel, 0, nullptr, 0, &BytesReturned);
 	if (!rc)
 		goto out;

@@ -269,7 +269,7 @@ BOOL freerdp_connect(freerdp* instance)
 			if (!pcap_get_next_record_content(update->pcap_rfx, &record))
 				break;
 			Stream_SetLength(s, record.length);
-			Stream_SetPosition(s, 0);
+			Stream_ResetPosition(s);
 
 			if (!update_begin_paint(&update->common))
 				status = FALSE;

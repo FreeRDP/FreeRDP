@@ -156,7 +156,7 @@ static UINT telemetry_process_message(telemetry_server* telemetry)
 	s = telemetry->buffer;
 	WINPR_ASSERT(s);
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	rc = WTSVirtualChannelRead(telemetry->telemetry_channel, 0, nullptr, 0, &BytesReturned);
 	if (!rc)
 		goto out;

@@ -199,8 +199,8 @@ static wStream* rdpdr_get_send_buffer(pf_channel_common_context* rdpdr, UINT16 c
 {
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(rdpdr->s);
-	if (!Stream_SetPosition(rdpdr->s, 0))
-		return nullptr;
+	Stream_ResetPosition(rdpdr->s);
+
 	if (!Stream_EnsureCapacity(rdpdr->s, capacity + 4))
 		return nullptr;
 	Stream_Write_UINT16(rdpdr->s, component);
@@ -1068,7 +1068,7 @@ static BOOL pf_channel_rdpdr_rewrite_device_list_to(wStream* s, UINT32 fromVersi
 		Stream_Copy(s, clone, cap);
 		Stream_SealLength(clone);
 
-		Stream_SetPosition(clone, 0);
+		Stream_ResetPosition(clone);
 		Stream_SetPosition(s, pos);
 	}
 
@@ -1148,7 +1148,7 @@ static BOOL pf_channel_rdpdr_rewrite_device_list(pf_channel_client_context* rdpd
 	const size_t pos = Stream_GetPosition(s);
 	UINT16 component = 0;
 	UINT16 packetid = 0;
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 4))
 		return FALSE;
@@ -1381,7 +1381,7 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 	}
 	s = rdpdr->common.buffer;
 	if (flags & CHANNEL_FLAG_FIRST)
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 	if (!Stream_EnsureRemainingCapacity(s, xsize))
 	{
 		CLIENT_RX_LOG(rdpdr->log, WLOG_ERROR,
@@ -1394,7 +1394,7 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 		return TRUE;
 
 	Stream_SealLength(s);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	if (Stream_Length(s) != totalSize)
 	{
 		CLIENT_RX_LOG(rdpdr->log, WLOG_WARN,
@@ -1919,7 +1919,7 @@ BOOL pf_channel_rdpdr_server_handle(pServerContext* ps, UINT16 channelId, const 
 	s = rdpdr->common.buffer;
 
 	if (flags & CHANNEL_FLAG_FIRST)
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, xsize))
 		return FALSE;
@@ -1929,7 +1929,7 @@ BOOL pf_channel_rdpdr_server_handle(pServerContext* ps, UINT16 channelId, const 
 		return TRUE;
 
 	Stream_SealLength(s);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (Stream_Length(s) != totalSize)
 	{

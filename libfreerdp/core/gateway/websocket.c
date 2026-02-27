@@ -42,7 +42,7 @@ BOOL websocket_context_mask_and_send(BIO* bio, wStream* sPacket, wStream* sDataP
                                      UINT32 maskingKey)
 {
 	const size_t len = Stream_Length(sDataPacket);
-	Stream_SetPosition(sDataPacket, 0);
+	Stream_ResetPosition(sDataPacket);
 
 	if (!Stream_EnsureRemainingCapacity(sPacket, len))
 		return FALSE;
@@ -308,7 +308,7 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 			if (encodingContext->payloadLength == 0)
 			{
 				websocket_reply_pong(bio, encodingContext, encodingContext->responseStreamBuffer);
-				Stream_SetPosition(encodingContext->responseStreamBuffer, 0);
+				Stream_ResetPosition(encodingContext->responseStreamBuffer);
 			}
 		}
 		break;
@@ -318,7 +318,7 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 			if (status < 0)
 				return status;
 			/* We don´t care about pong response data, discard. */
-			Stream_SetPosition(encodingContext->responseStreamBuffer, 0);
+			Stream_ResetPosition(encodingContext->responseStreamBuffer);
 		}
 		break;
 		case WebsocketCloseOpcode:
@@ -331,7 +331,7 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 			{
 				websocket_reply_close(bio, encodingContext, encodingContext->responseStreamBuffer);
 				encodingContext->closeSent = TRUE;
-				Stream_SetPosition(encodingContext->responseStreamBuffer, 0);
+				Stream_ResetPosition(encodingContext->responseStreamBuffer);
 			}
 		}
 		break;
@@ -341,7 +341,7 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 			status = websocket_read_wstream(bio, encodingContext);
 			if (status < 0)
 				return status;
-			Stream_SetPosition(encodingContext->responseStreamBuffer, 0);
+			Stream_ResetPosition(encodingContext->responseStreamBuffer);
 			break;
 	}
 	/* return how many bytes have been written to pBuffer.

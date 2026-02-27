@@ -1601,7 +1601,7 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 
 		for (size_t i = 0; i < numMessages; i++)
 		{
-			Stream_SetPosition(s, 0);
+			Stream_ResetPosition(s);
 
 			const RFX_MESSAGE* msg = rfx_message_list_get(messages, i);
 			if (!rfx_write_message(encoder->rfx, s, msg))
@@ -1642,7 +1642,7 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 		}
 
 		s = encoder->bs;
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 		pSrcData = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
 		if (!nsc_compose_message(encoder->nsc, s, pSrcData, nWidth, nHeight, nSrcStep))
 			return FALSE;

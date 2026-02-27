@@ -291,7 +291,7 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 	}
 
 	/* Consume channel event only after the disp dynamic channel is ready */
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (!WTSVirtualChannelRead(priv->disp_channel, 0, nullptr, 0, &BytesReturned))
 	{
@@ -323,7 +323,7 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 	}
 
 	Stream_SetLength(s, BytesReturned);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	while (Stream_GetPosition(s) < Stream_Length(s))
 	{

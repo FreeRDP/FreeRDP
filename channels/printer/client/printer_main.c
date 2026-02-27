@@ -380,7 +380,7 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	{
 	}
 
-	Stream_SetPosition(printer_dev->device.data, 0);
+	Stream_ResetPosition(printer_dev->device.data);
 
 	if (!Stream_EnsureRemainingCapacity(printer_dev->device.data, 24))
 		goto fail;

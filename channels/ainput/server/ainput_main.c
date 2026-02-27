@@ -165,7 +165,7 @@ static UINT ainput_server_send_version(ainput_server* ainput)
 	s = ainput->buffer;
 	WINPR_ASSERT(s);
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	if (!Stream_EnsureCapacity(s, 10))
 	{
 		WLog_WARN(TAG, "[%s] out of memory", AINPUT_DVC_CHANNEL_NAME);
@@ -446,7 +446,7 @@ static UINT ainput_process_message(ainput_server* ainput)
 	wStream* s = ainput->buffer;
 	WINPR_ASSERT(s);
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	const BOOL rc = WTSVirtualChannelRead(ainput->ainput_channel, 0, nullptr, 0, &BytesReturned);
 	if (!rc)
 		goto out;

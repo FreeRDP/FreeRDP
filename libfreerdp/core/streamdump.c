@@ -375,7 +375,7 @@ static int stream_dump_replay_transport_read(rdpTransport* transport, wStream* s
 	ctx->dump->replayTime = ts;
 
 	size = Stream_Length(s);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	WLog_Print(ctx->dump->log, WLOG_TRACE, "replay read %" PRIuz, size);
 
 	if (slp > 0)

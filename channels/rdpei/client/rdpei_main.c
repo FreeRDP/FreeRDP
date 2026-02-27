@@ -230,7 +230,7 @@ static UINT rdpei_send_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s, UINT1
 	if (!rdpei)
 		return ERROR_INTERNAL_ERROR;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	Stream_Write_UINT16(s, eventId);   /* eventId (2 bytes) */
 	Stream_Write_UINT32(s, (UINT32)pduLength); /* pduLength (4 bytes) */
 	Stream_SetPosition(s, Stream_Length(s));

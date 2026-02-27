@@ -339,11 +339,7 @@ static BOOL vgids_ef_write_do(vgidsEF* ef, UINT16 doID, const void* data, DWORD 
 static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataSize)
 {
 	/* Read the given DO from the file: 2-Byte ID, 1-Byte Len, Data */
-	if (!Stream_SetPosition(ef->data, 0))
-	{
-		WLog_ERR(TAG, "Failed to seek to front of file");
-		return FALSE;
-	}
+	Stream_ResetPosition(ef->data);
 
 	/* Look for the requested DO */
 	while (Stream_GetRemainingLength(ef->data) > 3)
@@ -844,7 +840,7 @@ static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 		goto handle_error;
 
 	/* set response data */
-	Stream_SetPosition(response, 0);
+	Stream_ResetPosition(response);
 	context->responseData = response;
 	response = nullptr;
 
@@ -1066,7 +1062,7 @@ static BOOL vgids_perform_digital_signature(vgidsContext* context)
 	vgids_reset_context_response(context);
 
 	/* for each digest info */
-	Stream_SetPosition(context->commandData, 0);
+	Stream_ResetPosition(context->commandData);
 	for (int i = 0; i < VGIDS_MAX_DIGEST_INFO; ++i)
 	{
 		/* have we found our digest? */

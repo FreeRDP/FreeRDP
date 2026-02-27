@@ -2554,7 +2554,7 @@ int progressive_compress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 		}
 	}
 	s = progressive->buffer;
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	progressive->rfx_context->mode = RLGR1;
 

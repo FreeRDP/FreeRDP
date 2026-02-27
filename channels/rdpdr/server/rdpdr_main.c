@@ -277,7 +277,7 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 	Stream_SealLength(s);
 	const size_t length = Stream_Length(s);
 	WINPR_ASSERT(length <= UINT32_MAX);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (length >= RDPDR_HEADER_LENGTH)
 	{
@@ -2249,7 +2249,7 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 
 		if (BytesReturned >= RDPDR_HEADER_LENGTH)
 		{
-			Stream_SetPosition(s, 0);
+			Stream_ResetPosition(s);
 			Stream_SetLength(s, BytesReturned);
 
 			while (Stream_GetRemainingLength(s) >= RDPDR_HEADER_LENGTH)

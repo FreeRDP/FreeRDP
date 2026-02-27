@@ -221,7 +221,7 @@ static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int
 	if (length > channel->dvc_total_length)
 		return FALSE;
 
-	Stream_SetPosition(channel->receiveData, 0);
+	Stream_ResetPosition(channel->receiveData);
 
 	if (!Stream_EnsureRemainingCapacity(channel->receiveData, channel->dvc_total_length))
 		return FALSE;
@@ -288,7 +288,7 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 	if ((length < 1) || (length > UINT32_MAX))
 		return FALSE;
 
-	Stream_SetPosition(channel->receiveData, 0);
+	Stream_ResetPosition(channel->receiveData);
 	const UINT8 value = Stream_Get_UINT8(channel->receiveData);
 	length--;
 	Cmd = (value & 0xf0) >> 4;
@@ -457,7 +457,7 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 
 	if (flags & CHANNEL_FLAG_FIRST)
 	{
-		Stream_SetPosition(channel->receiveData, 0);
+		Stream_ResetPosition(channel->receiveData);
 	}
 
 	if (!Stream_EnsureRemainingCapacity(channel->receiveData, size))
@@ -486,7 +486,7 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 				                             (UINT32)pos);
 		}
 
-		Stream_SetPosition(channel->receiveData, 0);
+		Stream_ResetPosition(channel->receiveData);
 	}
 
 	return ret;
