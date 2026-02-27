@@ -125,7 +125,8 @@ state_run_t multitransport_server_request(rdpMultitransport* multi, UINT16 reqPr
 	if (reqProto == INITIATE_REQUEST_PROTOCOL_UDPFECR)
 	{
 		multi->reliableReqId = reqId++;
-		winpr_RAND(multi->reliableCookie, sizeof(multi->reliableCookie));
+		if (winpr_RAND(multi->reliableCookie, sizeof(multi->reliableCookie)) < 0)
+			return STATE_RUN_FAILED;
 
 		return multitransport_request_send(multi, multi->reliableReqId, reqProto,
 		                                   multi->reliableCookie)

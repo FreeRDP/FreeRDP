@@ -850,7 +850,8 @@ int TestStream(int argc, char* argv[])
 	for (size_t x = 0; x < 10; x++)
 	{
 		UINT64 val = 0;
-		winpr_RAND(&val, sizeof(val));
+		if (winpr_RAND(&val, sizeof(val)) < 0)
+			return -1;
 		if (!TestStream_WriteAndRead(val))
 			return 14;
 	}

@@ -27,7 +27,8 @@ static BOOL test_copy8u_func(void)
 {
 	primitives_t* prims = primitives_get();
 	BYTE ALIGN(data[COPY_TESTSIZE + 15]) = WINPR_C_ARRAY_INIT;
-	winpr_RAND(data, sizeof(data));
+	if (winpr_RAND(data, sizeof(data)) < 0)
+		return FALSE;
 
 	for (int soff = 0; soff < 16; ++soff)
 	{
@@ -81,7 +82,11 @@ static BYTE* rand_alloc(size_t w, size_t h, size_t bpp, size_t pad, BYTE** copy)
 	if (!ptr)
 		return nullptr;
 
-	winpr_RAND(ptr, s * h);
+	if (winpr_RAND(ptr, s * h) < 0)
+	{
+		free(ptr);
+		return nullptr;
+	}
 
 	if (copy)
 	{

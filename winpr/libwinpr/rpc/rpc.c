@@ -820,13 +820,15 @@ static UUID UUID_NIL = {
 
 RPC_STATUS UuidCreate(UUID* Uuid)
 {
-	winpr_RAND_pseudo(Uuid, 16);
+	if (winpr_RAND_pseudo(Uuid, 16) < 0)
+		return RPC_S_OUT_OF_MEMORY;
 	return RPC_S_OK;
 }
 
 RPC_STATUS UuidCreateSequential(UUID* Uuid)
 {
-	winpr_RAND_pseudo(Uuid, 16);
+	if (winpr_RAND_pseudo(Uuid, 16) < 0)
+		return RPC_S_OUT_OF_MEMORY;
 	return RPC_S_OK;
 }
 

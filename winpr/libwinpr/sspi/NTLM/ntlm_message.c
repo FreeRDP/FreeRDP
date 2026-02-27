@@ -789,10 +789,14 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 		}
 	}
 
-	ntlm_generate_key_exchange_key(context);     /* KeyExchangeKey */
-	ntlm_generate_random_session_key(context);   /* RandomSessionKey */
-	ntlm_generate_exported_session_key(context); /* ExportedSessionKey */
-	ntlm_encrypt_random_session_key(context);    /* EncryptedRandomSessionKey */
+	if (!ntlm_generate_key_exchange_key(context)) /* KeyExchangeKey */
+		goto fail;
+	if (!ntlm_generate_random_session_key(context)) /* RandomSessionKey */
+		goto fail;
+	if (!ntlm_generate_exported_session_key(context)) /* ExportedSessionKey */
+		goto fail;
+	if (!ntlm_encrypt_random_session_key(context)) /* EncryptedRandomSessionKey */
+		goto fail;
 
 	/* Generate signing keys */
 	status = SEC_E_ENCRYPT_FAILURE;

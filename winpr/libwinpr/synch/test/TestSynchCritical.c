@@ -46,7 +46,8 @@ static UINT32 prand(UINT32 max)
 	UINT32 tmp = 0;
 	if (max <= 1)
 		return 1;
-	winpr_RAND(&tmp, sizeof(tmp));
+	if (winpr_RAND(&tmp, sizeof(tmp)) < 0)
+		return 0;
 	return tmp % (max - 1) + 1;
 }
 

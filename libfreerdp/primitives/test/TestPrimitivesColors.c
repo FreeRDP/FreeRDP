@@ -44,9 +44,12 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	if (!r || !g || !b || !out1 || !out2)
 		goto fail;
 
-	winpr_RAND(r, 1ULL * rgbStride * roi.height);
-	winpr_RAND(g, 1ULL * rgbStride * roi.height);
-	winpr_RAND(b, 1ULL * rgbStride * roi.height);
+	if (winpr_RAND(r, 1ULL * rgbStride * roi.height) < 0)
+		goto fail;
+	if (winpr_RAND(g, 1ULL * rgbStride * roi.height) < 0)
+		goto fail;
+	if (winpr_RAND(b, 1ULL * rgbStride * roi.height) < 0)
+		goto fail;
 	ptrs[0] = r;
 	ptrs[1] = g;
 	ptrs[2] = b;
@@ -108,14 +111,17 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 		INT16** pv;
 	} cnv;
 	const prim_size_t roi64x64 = { 64, 64 };
-	INT16 ALIGN(r[4096 + 1]);
-	INT16 ALIGN(g[4096 + 1]);
-	INT16 ALIGN(b[4096 + 1]);
-	UINT32 ALIGN(dst[4096 + 1]);
-	INT16* ptrs[3];
-	winpr_RAND(r, sizeof(r));
-	winpr_RAND(g, sizeof(g));
-	winpr_RAND(b, sizeof(b));
+	INT16 ALIGN(r[4096 + 1]) = WINPR_C_ARRAY_INIT;
+	INT16 ALIGN(g[4096 + 1]) = WINPR_C_ARRAY_INIT;
+	INT16 ALIGN(b[4096 + 1]) = WINPR_C_ARRAY_INIT;
+	UINT32 ALIGN(dst[4096 + 1]) = WINPR_C_ARRAY_INIT;
+	INT16* ptrs[3] = WINPR_C_ARRAY_INIT;
+	if (winpr_RAND(r, sizeof(r)) < 0)
+		return FALSE;
+	if (winpr_RAND(g, sizeof(g)) < 0)
+		return FALSE;
+	if (winpr_RAND(b, sizeof(b)) < 0)
+		return FALSE;
 
 	/* clear upper bytes */
 	for (int i = 0; i < 4096; ++i)
@@ -162,9 +168,12 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 	INT16* out1[3];
 	INT16* out2[3];
 	prim_size_t roi = { 64, 64 };
-	winpr_RAND(y, sizeof(y));
-	winpr_RAND(cb, sizeof(cb));
-	winpr_RAND(cr, sizeof(cr));
+	if (winpr_RAND(y, sizeof(y)) < 0)
+		return FALSE;
+	if (winpr_RAND(cb, sizeof(cb)) < 0)
+		return FALSE;
+	if (winpr_RAND(cr, sizeof(cr)) < 0)
+		return FALSE;
 
 	/* Normalize to 11.5 fixed radix */
 	for (int i = 0; i < 4096; ++i)
@@ -211,17 +220,20 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 {
 	prim_size_t roi = { 64, 64 };
-	INT16 ALIGN(y[4096]);
-	INT16 ALIGN(cb[4096]);
-	INT16 ALIGN(cr[4096]);
-	INT16 ALIGN(r[4096]);
-	INT16 ALIGN(g[4096]);
-	INT16 ALIGN(b[4096]);
-	const INT16* input[3];
-	INT16* output[3];
-	winpr_RAND(y, sizeof(y));
-	winpr_RAND(cb, sizeof(cb));
-	winpr_RAND(cr, sizeof(cr));
+	INT16 y[4096] = WINPR_C_ARRAY_INIT;
+	INT16 cb[4096] = WINPR_C_ARRAY_INIT;
+	INT16 cr[4096] = WINPR_C_ARRAY_INIT;
+	INT16 r[4096] = WINPR_C_ARRAY_INIT;
+	INT16 g[4096] = WINPR_C_ARRAY_INIT;
+	INT16 b[4096] = WINPR_C_ARRAY_INIT;
+	const INT16* input[3] = WINPR_C_ARRAY_INIT;
+	INT16* output[3] = WINPR_C_ARRAY_INIT;
+	if (winpr_RAND(y, sizeof(y)) < 0)
+		return FALSE;
+	if (winpr_RAND(cb, sizeof(cb)) < 0)
+		return FALSE;
+	if (winpr_RAND(cr, sizeof(cr)) < 0)
+		return FALSE;
 
 	/* Normalize to 11.5 fixed radix */
 	for (int i = 0; i < 4096; ++i)

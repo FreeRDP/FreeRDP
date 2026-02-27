@@ -243,7 +243,12 @@ fail:
 static DWORD get_random(DWORD offset)
 {
 	DWORD x = 0;
-	winpr_RAND(&x, sizeof(x));
+	if (winpr_RAND(&x, sizeof(x)) < 0)
+	{
+		(void)fprintf(stderr, "winpr_RAND failed, retry...\n");
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
+		exit(-1);
+	}
 	x = x % UINT32_MAX - offset;
 	x += offset;
 	return x;

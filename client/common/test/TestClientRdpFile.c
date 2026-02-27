@@ -558,7 +558,8 @@ int TestClientRdpFile(int argc, char* argv[])
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	winpr_RAND(&id, sizeof(id));
+	if (winpr_RAND(&id, sizeof(id)) < 0)
+		return -1;
 
 	/* UTF8 */
 #if defined(CHANNEL_URBDRC_CLIENT) && defined(CHANNEL_RDPECAM_CLIENT)

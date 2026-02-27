@@ -121,13 +121,16 @@ static BOOL similarRGB(size_t y, const BYTE* src, const BYTE* dst, size_t size, 
 	return rc;
 }
 
-static void get_size(BOOL large, UINT32* width, UINT32* height)
+static BOOL get_size(BOOL large, UINT32* width, UINT32* height)
 {
 	UINT32 shift = large ? 8 : 1;
-	winpr_RAND(width, sizeof(*width));
-	winpr_RAND(height, sizeof(*height));
+	if (winpr_RAND(width, sizeof(*width)) < 0)
+		return FALSE;
+	if (winpr_RAND(height, sizeof(*height)) < 0)
+		return FALSE;
 	*width = (*width % 64 + 1) << shift;
 	*height = (*height % 64 + 1);
+	return TRUE;
 }
 
 static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const char* buffer)
@@ -499,7 +502,8 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 	for (size_t y = 0; y < roi.height; y++)
 	{
 		BYTE* line = &rgb[y * stride];
-		winpr_RAND(line, stride);
+		if (winpr_RAND(line, stride) < 0)
+			goto fail;
 	}
 
 	yuv_step[0] = awidth;
@@ -732,7 +736,12 @@ static UINT32 prand(UINT32 max)
 	UINT32 tmp = 0;
 	if (max <= 1)
 		return 1;
-	winpr_RAND(&tmp, sizeof(tmp));
+	if (winpr_RAND(&tmp, sizeof(tmp)) < 0)
+	{
+		(void)fprintf(stderr, "winpr_RAND failed, retry...\n");
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
+		exit(-1);
+	}
 	return tmp % (max - 1) + 1;
 }
 
@@ -818,7 +827,8 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 	{
 		BYTE* line = &rgb[y * stride];
 
-		winpr_RAND(line, 4ULL * roi.width);
+		if (winpr_RAND(line, 4ULL * roi.width) < 0)
+			goto fail;
 	}
 
 	yuv_step[0] = awidth;
@@ -987,9 +997,12 @@ static BOOL allocate_yuv(BYTE* yuv[3], prim_size_t roi)
 		return FALSE;
 	}
 
-	winpr_RAND(yuv[0], 1ULL * roi.width * roi.height);
-	winpr_RAND(yuv[1], 1ULL * roi.width * roi.height);
-	winpr_RAND(yuv[2], 1ULL * roi.width * roi.height);
+	if (winpr_RAND(yuv[0], 1ULL * roi.width * roi.height) < 0)
+		return FALSE;
+	if (winpr_RAND(yuv[1], 1ULL * roi.width * roi.height) < 0)
+		return FALSE;
+	if (winpr_RAND(yuv[2], 1ULL * roi.width * roi.height) < 0)
+		return FALSE;
 	return TRUE;
 }
 
@@ -1343,7 +1356,8 @@ static BOOL compare_rgb_to_yuv420(prim_size_t roi, DWORD type)
 	if (!soft || !rgb || !rgbcopy)
 		goto fail;
 
-	winpr_RAND(rgb, roi.height * stride);
+	if (winpr_RAND(rgb, roi.height * stride) < 0)
+		goto fail;
 	memcpy(rgbcopy, rgb, roi.height * stride);
 
 	if (!allocate_yuv(yuv1, roi) || !allocate_yuv(yuv2, roi))

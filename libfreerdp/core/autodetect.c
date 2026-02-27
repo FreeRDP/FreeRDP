@@ -249,7 +249,11 @@ autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
 	Stream_Write_UINT16(s, RDP_BW_PAYLOAD_REQUEST_TYPE); /* requestType (2 bytes) */
 	Stream_Write_UINT16(s, payloadLength);               /* payloadLength (2 bytes) */
 	/* Random data (better measurement in case the line is compressed) */
-	winpr_RAND(Stream_Pointer(s), payloadLength);
+	if (winpr_RAND(Stream_Pointer(s), payloadLength) < 0)
+	{
+		Stream_Release(s);
+		return FALSE;
+	}
 	Stream_Seek(s, payloadLength);
 	return rdp_send_message_channel_pdu(autodetect->context->rdp, s,
 	                                    sec_flags | SEC_AUTODETECT_REQ);
@@ -304,7 +308,11 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpAutoDetect* autodetect,
 			}
 
 			/* Random data (better measurement in case the line is compressed) */
-			winpr_RAND(Stream_Pointer(s), payloadLength);
+			if (winpr_RAND(Stream_Pointer(s), payloadLength) < 0)
+			{
+				Stream_Release(s);
+				return FALSE;
+			}
 			Stream_Seek(s, payloadLength);
 		}
 	}

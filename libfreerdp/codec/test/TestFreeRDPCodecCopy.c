@@ -26,7 +26,8 @@ static BOOL TestFreeRDPImageCopy(UINT32 w, UINT32 h, UINT32 srcFormat, UINT32 ds
 
 	for (size_t x = 0; x < runs; x++)
 	{
-		winpr_RAND_pseudo(src, h * srcStep);
+		if (winpr_RAND_pseudo(src, h * srcStep) < 0)
+			goto fail;
 		const UINT64 start = winpr_GetUnixTimeNS();
 		rc = freerdp_image_copy(dst, dstFormat, dstStep, 0, 0, w, h, src, srcFormat, srcStep, 0, 0,
 		                        nullptr, 0);
@@ -64,7 +65,8 @@ static BOOL TestFreeRDPImageCopy_no_overlap(UINT32 w, UINT32 h, UINT32 srcFormat
 
 	for (size_t x = 0; x < runs; x++)
 	{
-		winpr_RAND_pseudo(src, h * srcStep);
+		if (winpr_RAND_pseudo(src, h * srcStep) < 0)
+			goto fail;
 		const UINT64 start = winpr_GetUnixTimeNS();
 		rc = freerdp_image_copy_no_overlap(dst, dstFormat, dstStep, 0, 0, w, h, src, srcFormat,
 		                                   srcStep, 0, 0, nullptr, 0);

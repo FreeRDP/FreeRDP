@@ -626,7 +626,7 @@ exit:
  * @param ciphertext cipher text
  */
 
-void ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext)
+BOOL ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext)
 {
 	WINPR_RC4_CTX* rc4 = winpr_RC4_New(key, 16);
 
@@ -635,6 +635,7 @@ void ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext)
 		winpr_RC4_Update(rc4, length, plaintext, ciphertext);
 		winpr_RC4_Free(rc4);
 	}
+	return TRUE;
 }
 
 /**
@@ -642,13 +643,15 @@ void ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext)
  * @param context A pointer to the NTLM context
  */
 
-void ntlm_generate_client_challenge(NTLM_CONTEXT* context)
+BOOL ntlm_generate_client_challenge(NTLM_CONTEXT* context)
 {
 	WINPR_ASSERT(context);
 
 	/* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-	if (memcmp(context->ClientChallenge, NTLM_NULL_BUFFER, sizeof(context->ClientChallenge)) == 0)
-		winpr_RAND(context->ClientChallenge, sizeof(context->ClientChallenge));
+	if (memcmp(context->ClientChallenge, NTLM_NULL_BUFFER, sizeof(context->ClientChallenge)) != 0)
+		return TRUE;
+
+	return winpr_RAND(context->ClientChallenge, sizeof(context->ClientChallenge)) >= 0;
 }
 
 /**
@@ -656,12 +659,14 @@ void ntlm_generate_client_challenge(NTLM_CONTEXT* context)
  * @param context A pointer to the NTLM context
  */
 
-void ntlm_generate_server_challenge(NTLM_CONTEXT* context)
+BOOL ntlm_generate_server_challenge(NTLM_CONTEXT* context)
 {
 	WINPR_ASSERT(context);
 
-	if (memcmp(context->ServerChallenge, NTLM_NULL_BUFFER, sizeof(context->ServerChallenge)) == 0)
-		winpr_RAND(context->ServerChallenge, sizeof(context->ServerChallenge));
+	if (memcmp(context->ServerChallenge, NTLM_NULL_BUFFER, sizeof(context->ServerChallenge)) != 0)
+		return TRUE;
+
+	return winpr_RAND(context->ServerChallenge, sizeof(context->ServerChallenge)) >= 0;
 }
 
 /**
@@ -669,13 +674,14 @@ void ntlm_generate_server_challenge(NTLM_CONTEXT* context)
  * @param context A pointer to the NTLM context
  */
 
-void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context)
+BOOL ntlm_generate_key_exchange_key(NTLM_CONTEXT* context)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(sizeof(context->KeyExchangeKey) == sizeof(context->SessionBaseKey));
 
 	/* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
 	CopyMemory(context->KeyExchangeKey, context->SessionBaseKey, sizeof(context->KeyExchangeKey));
+	return TRUE;
 }
 
 /**
@@ -683,10 +689,10 @@ void ntlm_generate_key_exchange_key(NTLM_CONTEXT* context)
  * @param context A pointer to the NTLM context
  */
 
-void ntlm_generate_random_session_key(NTLM_CONTEXT* context)
+BOOL ntlm_generate_random_session_key(NTLM_CONTEXT* context)
 {
 	WINPR_ASSERT(context);
-	winpr_RAND(context->RandomSessionKey, sizeof(context->RandomSessionKey));
+	return winpr_RAND(context->RandomSessionKey, sizeof(context->RandomSessionKey)) >= 0;
 }
 
 /**
@@ -694,12 +700,13 @@ void ntlm_generate_random_session_key(NTLM_CONTEXT* context)
  * @param context A pointer to the NTLM context
  */
 
-void ntlm_generate_exported_session_key(NTLM_CONTEXT* context)
+BOOL ntlm_generate_exported_session_key(NTLM_CONTEXT* context)
 {
 	WINPR_ASSERT(context);
 
 	CopyMemory(context->ExportedSessionKey, context->RandomSessionKey,
 	           sizeof(context->ExportedSessionKey));
+	return TRUE;
 }
 
 /**
@@ -707,13 +714,13 @@ void ntlm_generate_exported_session_key(NTLM_CONTEXT* context)
  * @param context A pointer to the NTLM context
  */
 
-void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context)
+BOOL ntlm_encrypt_random_session_key(NTLM_CONTEXT* context)
 {
 	/* In NTLMv2, EncryptedRandomSessionKey is the ExportedSessionKey RC4-encrypted with the
 	 * KeyExchangeKey */
 	WINPR_ASSERT(context);
-	ntlm_rc4k(context->KeyExchangeKey, 16, context->RandomSessionKey,
-	          context->EncryptedRandomSessionKey);
+	return ntlm_rc4k(context->KeyExchangeKey, 16, context->RandomSessionKey,
+	                 context->EncryptedRandomSessionKey);
 }
 
 /**
@@ -721,7 +728,7 @@ void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context)
  * @param context A pointer to the NTLM context
  */
 
-void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
+BOOL ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
 {
 	WINPR_ASSERT(context);
 
@@ -746,6 +753,7 @@ void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
 		CopyMemory(context->RandomSessionKey, context->KeyExchangeKey,
 		           sizeof(context->RandomSessionKey));
 	}
+	return TRUE;
 }
 
 /**

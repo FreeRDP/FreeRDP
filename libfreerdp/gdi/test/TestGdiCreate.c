@@ -328,7 +328,12 @@ fail:
 static BYTE prand(void)
 {
 	BYTE tmp = 0;
-	winpr_RAND(&tmp, sizeof(tmp));
+	if (winpr_RAND(&tmp, sizeof(tmp)) < 0)
+	{
+		(void)fprintf(stderr, "winpr_RAND faild,retry...\n");
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
+		exit(-1);
+	}
 	return tmp;
 }
 

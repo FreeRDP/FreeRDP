@@ -28,8 +28,10 @@ static BOOL test_add16s_func(void)
 	INT16 ALIGN(d1[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
 	INT16 ALIGN(d2[FUNC_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
 
-	winpr_RAND(src1, sizeof(src1));
-	winpr_RAND(src2, sizeof(src2));
+	if (winpr_RAND(src1, sizeof(src1)) < 0)
+		return FALSE;
+	if (winpr_RAND(src2, sizeof(src2)) < 0)
+		return FALSE;
 	status = generic->add_16s(src1 + 1, src2 + 1, d1 + 1, FUNC_TEST_SIZE);
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
@@ -42,15 +44,17 @@ static BOOL test_add16s_func(void)
 /* ------------------------------------------------------------------------- */
 static BOOL test_add16s_speed(void)
 {
-	BYTE ALIGN(src1[MAX_TEST_SIZE + 3]);
-	BYTE ALIGN(src2[MAX_TEST_SIZE + 3]);
-	BYTE ALIGN(dst[MAX_TEST_SIZE + 3]);
+	BYTE ALIGN(src1[MAX_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	BYTE ALIGN(src2[MAX_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
+	BYTE ALIGN(dst[MAX_TEST_SIZE + 3]) = WINPR_C_ARRAY_INIT;
 
 	if (!g_TestPrimitivesPerformance)
 		return TRUE;
 
-	winpr_RAND(src1, sizeof(src1));
-	winpr_RAND(src2, sizeof(src2));
+	if (winpr_RAND(src1, sizeof(src1)) < 0)
+		return FALSE;
+	if (winpr_RAND(src2, sizeof(src2)) < 0)
+		return FALSE;
 
 	return (speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->add_16s,
 	                   (speed_test_fkt)optimized->add_16s, src1, src2, dst, FUNC_TEST_SIZE));

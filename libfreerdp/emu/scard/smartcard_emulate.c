@@ -395,11 +395,13 @@ LONG WINAPI Emulate_SCardEstablishContext(SmartcardEmulationContext* smartcard, 
 	{
 		SCARDCONTEXT context = WINPR_C_ARRAY_INIT;
 
-		winpr_RAND(&context, sizeof(SCARDCONTEXT));
-		if (HashTable_Insert(smartcard->contexts, (const void*)context, ctx))
+		if (winpr_RAND(&context, sizeof(SCARDCONTEXT)) >= 0)
 		{
-			*phContext = context;
-			status = SCARD_S_SUCCESS;
+			if (HashTable_Insert(smartcard->contexts, (const void*)context, ctx))
+			{
+				*phContext = context;
+				status = SCARD_S_SUCCESS;
+			}
 		}
 	}
 
@@ -1253,7 +1255,10 @@ HANDLE WINAPI Emulate_SCardAccessStartedEvent(SmartcardEmulationContext* smartca
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardAccessStartedEvent {");
 
 	/* Not required, return random */
-	winpr_RAND((void*)&hEvent, sizeof(hEvent));
+	if (winpr_RAND((void*)&hEvent, sizeof(hEvent)) < 0)
+	{
+		(void)fprintf(stderr, "winpr_RAND failed.\n");
+	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardAccessStartedEvent } hEvent: %p",
 	           hEvent);
@@ -1598,7 +1603,11 @@ static SCardHandle* reader2handle(SmartcardEmulationContext* smartcard, SCARDCON
 	hdl = scard_handle_new(smartcard, hContext, szReader, unicode);
 	if (hdl)
 	{
-		winpr_RAND(&hdl->card, sizeof(hdl->card));
+		if (winpr_RAND(&hdl->card, sizeof(hdl->card)) < 0)
+		{
+			scard_handle_free(hdl);
+			return nullptr;
+		}
 		hdl->dwActiveProtocol = SCARD_PROTOCOL_T1;
 		hdl->dwShareMode = dwShareMode;
 

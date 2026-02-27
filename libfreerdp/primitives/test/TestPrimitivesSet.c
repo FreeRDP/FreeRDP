@@ -83,7 +83,8 @@ static BOOL test_set8u_speed(void)
 
 	for (UINT32 x = 0; x < 16; x++)
 	{
-		winpr_RAND(&value, sizeof(value));
+		if (winpr_RAND(&value, sizeof(value)) < 0)
+			return FALSE;
 
 		if (!speed_test("set_8u", "", g_Iterations, (speed_test_fkt)generic->set_8u,
 		                (speed_test_fkt)optimized->set_8u, value, dest + x, x))
@@ -215,7 +216,8 @@ static BOOL test_set32u_speed(void)
 
 	for (UINT32 x = 0; x < 16; x++)
 	{
-		winpr_RAND(&value, sizeof(value));
+		if (winpr_RAND(&value, sizeof(value)) < 0)
+			return FALSE;
 
 		if (!speed_test("set_32u", "", g_Iterations, (speed_test_fkt)generic->set_32u,
 		                (speed_test_fkt)optimized->set_32u, value, dest + x, x))
@@ -233,7 +235,8 @@ static BOOL test_set32s_speed(void)
 
 	for (UINT32 x = 0; x < 16; x++)
 	{
-		winpr_RAND(&value, sizeof(value));
+		if (winpr_RAND(&value, sizeof(value)) < 0)
+			return FALSE;
 
 		if (!speed_test("set_32s", "", g_Iterations, (speed_test_fkt)generic->set_32s,
 		                (speed_test_fkt)optimized->set_32s, value, dest + x, x))

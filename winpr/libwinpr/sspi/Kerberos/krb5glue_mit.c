@@ -39,7 +39,8 @@ static char* create_temporary_file(void)
 	char* hex = nullptr;
 	char* path = nullptr;
 
-	winpr_RAND(buffer, sizeof(buffer));
+	if (winpr_RAND(buffer, sizeof(buffer)) < 0)
+		return nullptr;
 	hex = winpr_BinToHexString(buffer, sizeof(buffer), FALSE);
 	path = GetKnownSubPath(KNOWN_PATH_TEMP, hex);
 	free(hex);
