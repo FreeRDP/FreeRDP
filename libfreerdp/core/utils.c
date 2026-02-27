@@ -497,9 +497,13 @@ BOOL utils_reload_channels(rdpContext* context)
 {
 	WINPR_ASSERT(context);
 
-	freerdp_channels_disconnect(context->channels, context->instance);
-	freerdp_channels_close(context->channels, context->instance);
-	freerdp_channels_free(context->channels);
+	if (context->channels)
+	{
+		freerdp_channels_disconnect(context->channels, context->instance);
+		freerdp_channels_close(context->channels, context->instance);
+		freerdp_channels_free(context->channels);
+	}
+
 	context->channels = freerdp_channels_new(context->instance);
 	WINPR_ASSERT(context->channels);
 	freerdp_channels_register_instance(context->channels, context->instance);
