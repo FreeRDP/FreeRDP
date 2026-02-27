@@ -611,7 +611,10 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* bu
 		message->NegotiateFlags |= NTLMSSP_NEGOTIATE_VERSION;
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
-		ntlm_get_version_info(&(message->Version));
+	{
+		if (!ntlm_get_version_info(&(message->Version)))
+			return SEC_E_INTERNAL_ERROR;
+	}
 
 	context->NegotiateFlags = message->NegotiateFlags;
 	/* Message Header (12 bytes) */
@@ -668,7 +671,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (!context || !buffer)
 		return SEC_E_INTERNAL_ERROR;
 
-	ntlm_generate_client_challenge(context);
+	if (!ntlm_generate_client_challenge(context))
+		return SEC_E_INTERNAL_ERROR;
 	message = &context->CHALLENGE_MESSAGE;
 	WINPR_ASSERT(message);
 
@@ -844,8 +848,10 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* bu
 	if (!s)
 		return SEC_E_INTERNAL_ERROR;
 
-	ntlm_get_version_info(&(message->Version)); /* Version */
-	ntlm_generate_server_challenge(context);    /* Server Challenge */
+	if (!ntlm_get_version_info(&(message->Version))) /* Version */
+		return SEC_E_INTERNAL_ERROR;
+	if (!ntlm_generate_server_challenge(context)) /* Server Challenge */
+		return SEC_E_INTERNAL_ERROR;
 	ntlm_generate_timestamp(context);           /* Timestamp */
 
 	if (!ntlm_construct_challenge_target_info(context)) /* TargetInfo */
@@ -1126,18 +1132,22 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	}
 
 	/* KeyExchangeKey */
-	ntlm_generate_key_exchange_key(context);
+	if (!ntlm_generate_key_exchange_key(context))
+		return SEC_E_INTERNAL_ERROR;
 	/* EncryptedRandomSessionKey */
-	ntlm_decrypt_random_session_key(context);
+	if (!ntlm_decrypt_random_session_key(context))
+		return SEC_E_INTERNAL_ERROR;
 	/* ExportedSessionKey */
-	ntlm_generate_exported_session_key(context);
+	if (!ntlm_generate_exported_session_key(context))
+		return SEC_E_INTERNAL_ERROR;
 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
 		BYTE messageIntegrityCheck[16] = WINPR_C_ARRAY_INIT;
 
-		ntlm_compute_message_integrity_check(context, messageIntegrityCheck,
-		                                     sizeof(messageIntegrityCheck));
+		if (!ntlm_compute_message_integrity_check(context, messageIntegrityCheck,
+		                                          sizeof(messageIntegrityCheck)))
+			return SEC_E_INTERNAL_ERROR;
 		CopyMemory(
 		    &((PBYTE)context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
 		    message->MessageIntegrityCheck, sizeof(message->MessageIntegrityCheck));
@@ -1277,7 +1287,10 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer*
 	message->NegotiateFlags |= NTLMSSP_NEGOTIATE_UNICODE;
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
-		ntlm_get_version_info(&(message->Version));
+	{
+		if (!ntlm_get_version_info(&(message->Version)))
+			return SEC_E_INTERNAL_ERROR;
+	}
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED)
 	{
@@ -1405,8 +1418,9 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer*
 	if (context->UseMIC)
 	{
 		/* Message Integrity Check */
-		ntlm_compute_message_integrity_check(context, message->MessageIntegrityCheck,
-		                                     sizeof(message->MessageIntegrityCheck));
+		if (!ntlm_compute_message_integrity_check(context, message->MessageIntegrityCheck,
+		                                          sizeof(message->MessageIntegrityCheck)))
+			return SEC_E_INTERNAL_ERROR;
 		if (!ntlm_write_message_integrity_check(
 		        s, context->MessageIntegrityCheckOffset, message->MessageIntegrityCheck,
 		        sizeof(message->MessageIntegrityCheck), "NTLM_AUTHENTICATE_MESSAGE"))
