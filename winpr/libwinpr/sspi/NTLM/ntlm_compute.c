@@ -246,11 +246,12 @@ BOOL ntlm_write_ntlm_v2_response(wStream* s, const NTLMv2_RESPONSE* response)
  * @param[out] timestamp 64-bit little-endian timestamp
  */
 
-void ntlm_current_time(BYTE* timestamp)
+static void ntlm_current_time(BYTE* timestamp, WINPR_ATTR_UNUSED size_t size)
 {
 	FILETIME ft = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(timestamp);
+	WINPR_ASSERT(size >= sizeof(ft));
 
 	GetSystemTimeAsFileTime(&ft);
 	CopyMemory(timestamp, &(ft), sizeof(ft));
@@ -269,7 +270,7 @@ void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 	if (memcmp(context->ChallengeTimestamp, NTLM_NULL_BUFFER, 8) != 0)
 		CopyMemory(context->Timestamp, context->ChallengeTimestamp, 8);
 	else
-		ntlm_current_time(context->Timestamp);
+		ntlm_current_time(context->Timestamp, sizeof(context->Timestamp));
 }
 
 static BOOL ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
@@ -630,12 +631,12 @@ BOOL ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext)
 {
 	WINPR_RC4_CTX* rc4 = winpr_RC4_New(key, 16);
 
-	if (rc4)
-	{
-		winpr_RC4_Update(rc4, length, plaintext, ciphertext);
-		winpr_RC4_Free(rc4);
-	}
-	return TRUE;
+	if (!rc4)
+		return FALSE;
+
+	const BOOL rc = winpr_RC4_Update(rc4, length, plaintext, ciphertext);
+	winpr_RC4_Free(rc4);
+	return rc;
 }
 
 /**
@@ -703,6 +704,7 @@ BOOL ntlm_generate_random_session_key(NTLM_CONTEXT* context)
 BOOL ntlm_generate_exported_session_key(NTLM_CONTEXT* context)
 {
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(sizeof(context->ExportedSessionKey) >= sizeof(context->RandomSessionKey));
 
 	CopyMemory(context->ExportedSessionKey, context->RandomSessionKey,
 	           sizeof(context->ExportedSessionKey));
@@ -744,8 +746,8 @@ BOOL ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
 	{
 		WINPR_ASSERT(sizeof(context->EncryptedRandomSessionKey) ==
 		             sizeof(context->RandomSessionKey));
-		ntlm_rc4k(context->KeyExchangeKey, sizeof(context->EncryptedRandomSessionKey),
-		          context->EncryptedRandomSessionKey, context->RandomSessionKey);
+		return ntlm_rc4k(context->KeyExchangeKey, sizeof(context->EncryptedRandomSessionKey),
+		                 context->EncryptedRandomSessionKey, context->RandomSessionKey);
 	}
 	else
 	{
@@ -918,33 +920,39 @@ BOOL ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT
 	if (!hmac)
 		return FALSE;
 
-	if (winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->ExportedSessionKey, WINPR_MD5_DIGEST_LENGTH))
+	if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->ExportedSessionKey, WINPR_MD5_DIGEST_LENGTH))
+		goto fail;
+
+	if (!winpr_HMAC_Update(hmac, (BYTE*)context->NegotiateMessage.pvBuffer,
+	                       context->NegotiateMessage.cbBuffer))
+		goto fail;
+	if (!winpr_HMAC_Update(hmac, (BYTE*)context->ChallengeMessage.pvBuffer,
+	                       context->ChallengeMessage.cbBuffer))
+		goto fail;
+
+	if (context->MessageIntegrityCheckOffset > 0)
 	{
-		winpr_HMAC_Update(hmac, (BYTE*)context->NegotiateMessage.pvBuffer,
-		                  context->NegotiateMessage.cbBuffer);
-		winpr_HMAC_Update(hmac, (BYTE*)context->ChallengeMessage.pvBuffer,
-		                  context->ChallengeMessage.cbBuffer);
+		const BYTE* auth = (BYTE*)context->AuthenticateMessage.pvBuffer;
+		const BYTE data[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+		const size_t rest = context->MessageIntegrityCheckOffset + sizeof(data);
 
-		if (context->MessageIntegrityCheckOffset > 0)
-		{
-			const BYTE* auth = (BYTE*)context->AuthenticateMessage.pvBuffer;
-			const BYTE data[WINPR_MD5_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
-			const size_t rest = context->MessageIntegrityCheckOffset + sizeof(data);
-
-			WINPR_ASSERT(rest <= context->AuthenticateMessage.cbBuffer);
-			winpr_HMAC_Update(hmac, &auth[0], context->MessageIntegrityCheckOffset);
-			winpr_HMAC_Update(hmac, data, sizeof(data));
-			winpr_HMAC_Update(hmac, &auth[rest], context->AuthenticateMessage.cbBuffer - rest);
-		}
-		else
-		{
-			winpr_HMAC_Update(hmac, (BYTE*)context->AuthenticateMessage.pvBuffer,
-			                  context->AuthenticateMessage.cbBuffer);
-		}
-		winpr_HMAC_Final(hmac, mic, WINPR_MD5_DIGEST_LENGTH);
-		rc = TRUE;
+		WINPR_ASSERT(rest <= context->AuthenticateMessage.cbBuffer);
+		if (!winpr_HMAC_Update(hmac, &auth[0], context->MessageIntegrityCheckOffset))
+			goto fail;
+		if (!winpr_HMAC_Update(hmac, data, sizeof(data)))
+			goto fail;
+		if (!winpr_HMAC_Update(hmac, &auth[rest], context->AuthenticateMessage.cbBuffer - rest))
+			goto fail;
 	}
+	else
+	{
+		if (!winpr_HMAC_Update(hmac, (BYTE*)context->AuthenticateMessage.pvBuffer,
+		                       context->AuthenticateMessage.cbBuffer))
+			goto fail;
+	}
+	rc = winpr_HMAC_Final(hmac, mic, WINPR_MD5_DIGEST_LENGTH);
 
+fail:
 	winpr_HMAC_Free(hmac);
 	return rc;
 }
