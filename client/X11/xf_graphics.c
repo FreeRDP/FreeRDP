@@ -251,12 +251,12 @@ static Window xf_Pointer_get_window(xfContext* xfc)
 	if (xfc->remote_app)
 	{
 		Window w = 0;
-		HashTable_Lock(xfc->railWindows);
+		xf_AppWindowsLock(xfc);
 		if (!xfc->appWindow)
 			WLog_WARN(TAG, "xf_Pointer: Invalid appWindow");
 		else
 			w = xfc->appWindow->handle;
-		HashTable_Unlock(xfc->railWindows);
+		xf_AppWindowsUnlock(xfc);
 		return w;
 	}
 	else

@@ -122,8 +122,17 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow, int maxWidth
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y);
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
 
-WINPR_ATTR_MALLOC(xf_rail_return_window, 1)
-xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
+#define xf_AppWindowFromX11Window(xfc, wnd) \
+	xf_AppWindowFromX11WindowFrom((xfc), (wnd), __FILE__, __func__, __LINE__)
+WINPR_ATTR_MALLOC(xf_rail_return_windowFrom, 1)
+xfAppWindow* xf_AppWindowFromX11WindowFrom(xfContext* xfc, Window wnd, const char* file,
+                                           const char* fkt, size_t line);
+
+#define xf_AppWindowsLock(xfc) xfAppWindowsLockFrom((xfc), __FILE__, __func__, __LINE__)
+void xfAppWindowsLockFrom(xfContext* xfc, const char* file, const char* fkt, size_t line);
+
+#define xf_AppWindowsUnlock(xfc) xfAppWindowsUnlockFrom((xfc), __FILE__, __func__, __LINE__)
+void xfAppWindowsUnlockFrom(xfContext* xfc, const char* file, const char* fkt, size_t line);
 
 const char* window_styles_to_string(UINT32 style, char* buffer, size_t length);
 const char* window_styles_ex_to_string(UINT32 styleEx, char* buffer, size_t length);

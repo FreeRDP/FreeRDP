@@ -410,9 +410,8 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 	{
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 		if (appWindow)
-		{
 			xf_UpdateWindowArea(xfc, appWindow, x, y, w, h);
-		}
+		xf_rail_return_window(appWindow);
 	}
 
 	return TRUE;

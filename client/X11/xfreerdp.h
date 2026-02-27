@@ -290,6 +290,10 @@ struct xf_context
 	wHashTable* railWindows;
 	xfRailIconCache* railIconCache;
 
+#if defined(WITH_VERBOSE_WINPR_ASSERT)
+	BOOL isRailWindowsLocked;
+#endif
+
 	BOOL xkbAvailable;
 	BOOL xrenderAvailable;
 

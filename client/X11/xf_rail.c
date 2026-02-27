@@ -159,9 +159,10 @@ BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 
 	WINPR_ASSERT(appWindow->windowId <= UINT32_MAX);
 	activate.windowId = (UINT32)appWindow->windowId;
+	xf_rail_return_window(appWindow);
+
 	activate.enabled = enabled;
 	const UINT rc = xfc->rail->ClientActivate(xfc->rail, &activate);
-	xf_rail_return_window(appWindow);
 	return rc == CHANNEL_RC_OK;
 }
 
@@ -381,6 +382,7 @@ static void window_state_log_style_int(wLog* log, const WINDOW_STATE_ORDER* wind
 static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                   const WINDOW_STATE_ORDER* windowState)
 {
+	BOOL rc = FALSE;
 	xfContext* xfc = (xfContext*)context;
 
 	WINPR_ASSERT(xfc);
@@ -440,7 +442,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		}
 
 		if (!appWindow->title)
-			return FALSE;
+			goto fail;
 
 		xf_AppWindowInit(xfc, appWindow);
 	}
@@ -518,14 +520,14 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			if (!(title = _strdup("")))
 			{
 				WLog_ERR(TAG, "failed to duplicate empty window title string");
-				return FALSE;
+				goto fail;
 			}
 		}
 		else if (!(title = ConvertWCharNToUtf8Alloc(
 		               cnv.wc, windowState->titleInfo.length / sizeof(WCHAR), nullptr)))
 		{
 			WLog_ERR(TAG, "failed to convert window title");
-			return FALSE;
+			goto fail;
 		}
 
 		free(appWindow->title);
@@ -566,7 +568,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			    (RECTANGLE_16*)calloc(appWindow->numWindowRects, sizeof(RECTANGLE_16));
 
 			if (!appWindow->windowRects)
-				return FALSE;
+				goto fail;
 
 			CopyMemory(appWindow->windowRects, windowState->windowRects,
 			           appWindow->numWindowRects * sizeof(RECTANGLE_16));
@@ -595,7 +597,7 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			    (RECTANGLE_16*)calloc(appWindow->numVisibilityRects, sizeof(RECTANGLE_16));
 
 			if (!appWindow->visibilityRects)
-				return FALSE;
+				goto fail;
 
 			CopyMemory(appWindow->visibilityRects, windowState->visibilityRects,
 			           appWindow->numVisibilityRects * sizeof(RECTANGLE_16));
@@ -675,7 +677,10 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	{
 	    xf_SetWindowRects(xfc, appWindow, appWindow->windowRects, appWindow->numWindowRects);
 	}*/
-	return TRUE;
+	rc = TRUE;
+fail:
+	xf_rail_return_window(appWindow);
+	return rc;
 }
 
 static BOOL xf_rail_window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
@@ -1186,14 +1191,14 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */
-			return CHANNEL_RC_OK;
+			break;
 
 		case RAIL_WMSZ_KEYSIZE:
 			direction = NET_WM_MOVERESIZE_SIZE_KEYBOARD;
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */
-			return CHANNEL_RC_OK;
+			break;
 		default:
 			break;
 	}
@@ -1375,13 +1380,16 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UIN
 	appWindow->width = WINPR_ASSERTING_INT_CAST(int, width);
 	appWindow->height = WINPR_ASSERTING_INT_CAST(int, height);
 
+	xf_AppWindowsLock(xfc);
 	if (!xf_AppWindowCreate(xfc, appWindow))
 		goto fail;
+
 	if (!HashTable_Insert(xfc->railWindows, &appWindow->windowId, (void*)appWindow))
 		goto fail;
 	return appWindow;
 fail:
 	rail_window_free(appWindow);
+	xf_AppWindowsUnlock(xfc);
 	return nullptr;
 }
 
@@ -1396,26 +1404,10 @@ BOOL xf_rail_del_window(xfContext* xfc, UINT64 id)
 	return HashTable_Remove(xfc->railWindows, &id);
 }
 
-xfAppWindow* xf_rail_get_window(xfContext* xfc, UINT64 id)
-{
-	if (!xfc)
-		return nullptr;
-
-	if (!xfc->railWindows)
-		return nullptr;
-
-	HashTable_Lock(xfc->railWindows);
-	xfAppWindow* window = HashTable_GetItemValue(xfc->railWindows, &id);
-	if (!window)
-		HashTable_Unlock(xfc->railWindows);
-
-	return window;
-}
-
-void xf_rail_return_window(xfAppWindow* window)
+void xf_rail_return_windowFrom(xfAppWindow* window, const char* file, const char* fkt, size_t line)
 {
 	if (!window)
 		return;
 
-	HashTable_Unlock(window->xfc->railWindows);
+	xfAppWindowsUnlockFrom(window->xfc, file, fkt, line);
 }
