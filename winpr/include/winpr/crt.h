@@ -52,6 +52,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #endif /* _strtoi64 */
 
 #ifndef _rotl
+WINPR_ATTR_NODISCARD
 static inline UINT32 _rotl(UINT32 value, int shift)
 {
 	return (value << shift) | (value >> (32 - shift));
@@ -59,6 +60,7 @@ static inline UINT32 _rotl(UINT32 value, int shift)
 #endif /* _rotl */
 
 #ifndef _rotl64
+WINPR_ATTR_NODISCARD
 static inline UINT64 _rotl64(UINT64 value, int shift)
 {
 	return (value << shift) | (value >> (64 - shift));
@@ -66,6 +68,7 @@ static inline UINT64 _rotl64(UINT64 value, int shift)
 #endif /* _rotl64 */
 
 #ifndef _rotr
+WINPR_ATTR_NODISCARD
 static inline UINT32 _rotr(UINT32 value, int shift)
 {
 	return (value >> shift) | (value << (32 - shift));
@@ -73,6 +76,7 @@ static inline UINT32 _rotr(UINT32 value, int shift)
 #endif /* _rotr */
 
 #ifndef _rotr64
+WINPR_ATTR_NODISCARD
 static inline UINT64 _rotr64(UINT64 value, int shift)
 {
 	return (value >> shift) | (value << (64 - shift));
@@ -86,13 +90,13 @@ static inline UINT64 _rotr64(UINT64 value, int shift)
 
 #else
 
-static inline UINT32 _byteswap_ulong(UINT32 _val)
+WINPR_ATTR_NODISCARD static inline UINT32 _byteswap_ulong(UINT32 _val)
 {
 	return (((_val) >> 24) | (((_val)&0x00FF0000) >> 8) | (((_val)&0x0000FF00) << 8) |
 	        ((_val) << 24));
 }
 
-static inline UINT64 _byteswap_uint64(UINT64 _val)
+WINPR_ATTR_NODISCARD static inline UINT64 _byteswap_uint64(UINT64 _val)
 {
 	return (((_val) << 56) | (((_val) << 40) & 0xFF000000000000) |
 	        (((_val) << 24) & 0xFF0000000000) | (((_val) << 8) & 0xFF00000000) |
@@ -108,6 +112,7 @@ static inline UINT64 _byteswap_uint64(UINT64 _val)
 
 #else
 
+WINPR_ATTR_NODISCARD
 static inline UINT16 _byteswap_ushort(UINT16 _val)
 {
 	return WINPR_CXX_COMPAT_CAST(UINT16, ((_val) >> 8U) | ((_val) << 8U));
@@ -154,11 +159,14 @@ extern "C"
 
 	/* Data Conversion */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix);
 
 	/* Buffer Manipulation */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API errno_t memmove_s(void* dest, size_t numberOfElements, const void* src, size_t count);
+	WINPR_ATTR_NODISCARD
 	WINPR_API errno_t wmemmove_s(WCHAR* dest, size_t numberOfElements, const WCHAR* src,
 	                             size_t count);
 #ifdef __cplusplus
@@ -192,36 +200,30 @@ extern "C"
 	WINPR_API void winpr_aligned_free(void* memblock);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_malloc(size_t size, size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_calloc(size_t count, size_t size, size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_realloc(void* memblock, size_t size, size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_recalloc(void* memblock, size_t num, size_t size,
 	                                       size_t alignment);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_offset_realloc(void* memblock, size_t size, size_t alignment,
 	                                             size_t offset);
 
 	WINPR_ATTR_MALLOC(winpr_aligned_free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size,
 	                                              size_t alignment, size_t offset);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API size_t winpr_aligned_msize(void* memblock, size_t alignment, size_t offset);
 
 #ifdef __cplusplus

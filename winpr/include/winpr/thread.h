@@ -105,6 +105,7 @@ extern "C"
 #define LOGON_NETCREDENTIALS_ONLY 0x00000002
 #define LOGON_ZERO_PASSWORD_BUFFER 0x80000000
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine,
 	                              LPSECURITY_ATTRIBUTES lpProcessAttributes,
 	                              LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
@@ -112,6 +113,7 @@ extern "C"
 	                              LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
 	                              LPPROCESS_INFORMATION lpProcessInformation);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	                              LPSECURITY_ATTRIBUTES lpProcessAttributes,
 	                              LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
@@ -119,6 +121,7 @@ extern "C"
 	                              LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
 	                              LPPROCESS_INFORMATION lpProcessInformation);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreateProcessAsUserA(HANDLE hToken, LPCSTR lpApplicationName,
 	                                    LPSTR lpCommandLine,
 	                                    LPSECURITY_ATTRIBUTES lpProcessAttributes,
@@ -128,6 +131,7 @@ extern "C"
 	                                    LPSTARTUPINFOA lpStartupInfo,
 	                                    LPPROCESS_INFORMATION lpProcessInformation);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreateProcessAsUserW(HANDLE hToken, LPCWSTR lpApplicationName,
 	                                    LPWSTR lpCommandLine,
 	                                    LPSECURITY_ATTRIBUTES lpProcessAttributes,
@@ -137,6 +141,7 @@ extern "C"
 	                                    LPSTARTUPINFOW lpStartupInfo,
 	                                    LPPROCESS_INFORMATION lpProcessInformation);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreateProcessWithLogonA(LPCSTR lpUsername, LPCSTR lpDomain, LPCSTR lpPassword,
 	                                       DWORD dwLogonFlags, LPCSTR lpApplicationName,
 	                                       LPSTR lpCommandLine, DWORD dwCreationFlags,
@@ -144,6 +149,7 @@ extern "C"
 	                                       LPSTARTUPINFOA lpStartupInfo,
 	                                       LPPROCESS_INFORMATION lpProcessInformation);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreateProcessWithLogonW(LPCWSTR lpUsername, LPCWSTR lpDomain, LPCWSTR lpPassword,
 	                                       DWORD dwLogonFlags, LPCWSTR lpApplicationName,
 	                                       LPWSTR lpCommandLine, DWORD dwCreationFlags,
@@ -151,12 +157,14 @@ extern "C"
 	                                       LPSTARTUPINFOW lpStartupInfo,
 	                                       LPPROCESS_INFORMATION lpProcessInformation);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreateProcessWithTokenA(HANDLE hToken, DWORD dwLogonFlags,
 	                                       LPCSTR lpApplicationName, LPSTR lpCommandLine,
 	                                       DWORD dwCreationFlags, LPVOID lpEnvironment,
 	                                       LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
 	                                       LPPROCESS_INFORMATION lpProcessInformation);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreateProcessWithTokenW(HANDLE hToken, DWORD dwLogonFlags,
 	                                       LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	                                       DWORD dwCreationFlags, LPVOID lpEnvironment,
@@ -176,22 +184,27 @@ extern "C"
 #endif
 
 	DECLSPEC_NORETURN WINPR_API VOID ExitProcess(UINT uExitCode);
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode);
 
 	WINPR_PRAGMA_DIAG_PUSH
 	WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 
 	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE _GetCurrentProcess(void);
 
 	WINPR_PRAGMA_DIAG_POP
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetCurrentProcessId(void);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode);
 
 	/* Process Argument Vector Parsing */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LPWSTR* CommandLineToArgvW(LPCWSTR lpCmdLine, int* pNumArgs);
 
 #ifdef UNICODE
@@ -226,6 +239,7 @@ extern "C"
 	 *  @return \b TRUE for success, \b FALSE otherwise
 	 *  @since version 3.6.0
 	 */
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL SetThreadPriority(HANDLE hThread, int nPriority);
 
 #define CREATE_SUSPENDED 0x00000004
@@ -245,36 +259,53 @@ extern "C"
 	                                    LPDWORD lpThreadId);
 
 	WINPR_API VOID ExitThread(DWORD dwExitCode);
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode);
 
 	WINPR_PRAGMA_DIAG_PUSH
 	WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 	// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE _GetCurrentThread(void);
 	WINPR_PRAGMA_DIAG_POP
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetCurrentThreadId(void);
 
 	typedef void (*PAPCFUNC)(ULONG_PTR Parameter);
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD ResumeThread(HANDLE hThread);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD SuspendThread(HANDLE hThread);
+
 	WINPR_API BOOL SwitchToThread(void);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode);
 
 	/* Processor */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetCurrentProcessorNumber(void);
 
 	/* Thread-Local Storage */
 
 #define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD TlsAlloc(void);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API LPVOID TlsGetValue(DWORD dwTlsIndex);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL TlsSetValue(DWORD dwTlsIndex, LPVOID lpTlsValue);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL TlsFree(DWORD dwTlsIndex);
 
 #else
@@ -294,7 +325,9 @@ WINPR_PRAGMA_DIAG_POP
 
 	/* CommandLineToArgvA is not present in the original Windows API, WinPR always exports it */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs);
+
 	WINPR_API VOID DumpThreadHandles(void);
 
 #ifdef __cplusplus

@@ -24,15 +24,23 @@
 
 #include "ntlm_av_pairs.h"
 
+WINPR_ATTR_NODISCARD
 BOOL ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_write_version_info(wStream* s, const NTLM_VERSION_INFO* versionInfo);
 
 #ifdef WITH_DEBUG_NTLM
 void ntlm_print_version_info(const NTLM_VERSION_INFO* versionInfo);
 #endif
 
+WINPR_ATTR_NODISCARD
 BOOL ntlm_read_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_write_ntlm_v2_response(wStream* s, const NTLMv2_RESPONSE* response);
 
 void ntlm_output_target_name(NTLM_CONTEXT* context);
@@ -40,24 +48,52 @@ void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
 
 void ntlm_generate_timestamp(NTLM_CONTEXT* context);
 
+WINPR_ATTR_NODISCARD
 SECURITY_STATUS ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 SECURITY_STATUS ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
 
+WINPR_ATTR_NODISCARD
 BOOL ntlm_rc4k(BYTE* key, size_t length, BYTE* plaintext, BYTE* ciphertext);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_generate_client_challenge(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_generate_server_challenge(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_generate_key_exchange_key(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_generate_random_session_key(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_generate_exported_session_key(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_encrypt_random_session_key(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_decrypt_random_session_key(NTLM_CONTEXT* context);
 
+WINPR_ATTR_NODISCARD
 BOOL ntlm_generate_client_signing_key(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_generate_server_signing_key(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_generate_client_sealing_key(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_generate_server_sealing_key(NTLM_CONTEXT* context);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_init_rc4_seal_states(NTLM_CONTEXT* context);
 
+WINPR_ATTR_NODISCARD
 BOOL ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT32 size);
 
 #endif /* WINPR_AUTH_NTLM_COMPUTE_H */

@@ -22,6 +22,7 @@
 
 /* YUV to RGB conversion is lossy, so consider every value only
  * differing by less than 2 abs equal. */
+WINPR_ATTR_NODISCARD
 static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 {
 	for (size_t x = 0; x < size; x++)
@@ -39,6 +40,7 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL similarRGB(size_t y, const BYTE* src, const BYTE* dst, size_t size, UINT32 format,
                        BOOL use444)
 {
@@ -121,6 +123,7 @@ static BOOL similarRGB(size_t y, const BYTE* src, const BYTE* dst, size_t size, 
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL get_size(BOOL large, UINT32* width, UINT32* height)
 {
 	UINT32 shift = large ? 8 : 1;
@@ -133,6 +136,7 @@ static BOOL get_size(BOOL large, UINT32* width, UINT32* height)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const char* buffer)
 {
 	BOOL rc = TRUE;

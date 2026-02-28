@@ -66,6 +66,7 @@ extern "C"
 	 * Unnamed pipe
 	 */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe,
 	                          LPSECURITY_ATTRIBUTES lpPipeAttributes, DWORD nSize);
 
@@ -74,42 +75,52 @@ extern "C"
 	 */
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode,
 	                                  DWORD nMaxInstances, DWORD nOutBufferSize,
 	                                  DWORD nInBufferSize, DWORD nDefaultTimeOut,
 	                                  LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode,
 	                                  DWORD nMaxInstances, DWORD nOutBufferSize,
 	                                  DWORD nInBufferSize, DWORD nDefaultTimeOut,
 	                                  LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL DisconnectNamedPipe(HANDLE hNamedPipe);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL PeekNamedPipe(HANDLE hNamedPipe, LPVOID lpBuffer, DWORD nBufferSize,
 	                             LPDWORD lpBytesRead, LPDWORD lpTotalBytesAvail,
 	                             LPDWORD lpBytesLeftThisMessage);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL TransactNamedPipe(HANDLE hNamedPipe, LPVOID lpInBuffer, DWORD nInBufferSize,
 	                                 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesRead,
 	                                 LPOVERLAPPED lpOverlapped);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode,
 	                                       LPDWORD lpMaxCollectionCount,
 	                                       LPDWORD lpCollectDataTimeout);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL ImpersonateNamedPipeClient(HANDLE hNamedPipe);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetNamedPipeClientComputerNameA(HANDLE Pipe, LPCSTR ClientComputerName,
 	                                               ULONG ClientComputerNameLength);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL GetNamedPipeClientComputerNameW(HANDLE Pipe, LPCWSTR ClientComputerName,
 	                                               ULONG ClientComputerNameLength);
 

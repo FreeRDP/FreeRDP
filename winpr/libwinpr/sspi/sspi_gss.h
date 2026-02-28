@@ -69,7 +69,8 @@ typedef struct
 
 #define GSS_CHECKSUM_TYPE 0x8003
 
-static inline BOOL sspi_gss_oid_compare(const WinPrAsn1_OID* oid1, const WinPrAsn1_OID* oid2)
+WINPR_ATTR_NODISCARD static inline BOOL sspi_gss_oid_compare(const WinPrAsn1_OID* oid1,
+                                                             const WinPrAsn1_OID* oid2)
 {
 	WINPR_ASSERT(oid1);
 	WINPR_ASSERT(oid2);

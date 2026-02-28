@@ -104,7 +104,7 @@ void HashTable_StringFree(void* str)
 	winpr_ObjectStringFree(str);
 }
 
-static inline BOOL HashTable_IsProbablePrime(size_t oddNumber)
+WINPR_ATTR_NODISCARD static inline BOOL HashTable_IsProbablePrime(size_t oddNumber)
 {
 	for (size_t i = 3; i < 51; i += 2)
 	{
@@ -117,7 +117,7 @@ static inline BOOL HashTable_IsProbablePrime(size_t oddNumber)
 	return TRUE; /* maybe */
 }
 
-static inline size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
+WINPR_ATTR_NODISCARD static inline size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 {
 	WINPR_ASSERT(table);
 
@@ -179,7 +179,8 @@ static inline void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 	table->numOfBuckets = numOfBuckets;
 }
 
-static inline BOOL HashTable_Equals(wHashTable* table, const wKeyValuePair* pair, const void* key)
+WINPR_ATTR_NODISCARD static inline BOOL HashTable_Equals(wHashTable* table,
+                                                         const wKeyValuePair* pair, const void* key)
 {
 	WINPR_ASSERT(table);
 	WINPR_ASSERT(pair);
@@ -187,7 +188,7 @@ static inline BOOL HashTable_Equals(wHashTable* table, const wKeyValuePair* pair
 	return table->key.fnObjectEquals(key, pair->key);
 }
 
-static inline wKeyValuePair* HashTable_Get(wHashTable* table, const void* key)
+WINPR_ATTR_NODISCARD static inline wKeyValuePair* HashTable_Get(wHashTable* table, const void* key)
 {
 	UINT32 hashValue = 0;
 	wKeyValuePair* pair = nullptr;
