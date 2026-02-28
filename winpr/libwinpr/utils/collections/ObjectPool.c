@@ -84,6 +84,26 @@ void* ObjectPool_Take(wObjectPool* pool)
 	return obj;
 }
 
+static BOOL ObjectPool_EnsureCapacity(wObjectPool* pool, size_t add)
+{
+	WINPR_ASSERT(pool->size < SIZE_MAX - add);
+
+	const size_t blocksize = 128ull;
+	const size_t required = pool->size + add;
+	if (required >= pool->capacity)
+	{
+		const size_t new_cap = required + blocksize - required % blocksize;
+
+		void** new_arr = (void**)realloc((void*)pool->array, sizeof(void*) * new_cap);
+		if (!new_arr)
+			return FALSE;
+
+		pool->array = new_arr;
+		pool->capacity = new_cap;
+	}
+	return TRUE;
+}
+
 /**
  * Returns an object to the pool.
  */
@@ -92,24 +112,8 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 {
 	ObjectPool_Lock(pool);
 
-	WINPR_ASSERT(pool->size < SIZE_MAX);
-	const size_t required = pool->size + 1ull;
-	if (required >= pool->capacity)
-	{
-		size_t new_cap = pool->capacity;
-		do
-		{
-			WINPR_ASSERT(new_cap <= SIZE_MAX - 128ull);
-			new_cap += 128ull;
-		} while (new_cap <= required);
-
-		void** new_arr = (void**)realloc((void*)pool->array, sizeof(void*) * new_cap);
-		if (!new_arr)
-			goto out;
-
-		pool->array = new_arr;
-		pool->capacity = new_cap;
-	}
+	if (!ObjectPool_EnsureCapacity(pool, 1))
+		goto out;
 
 	pool->array[(pool->size)++] = obj;
 
@@ -151,46 +155,40 @@ void ObjectPool_Clear(wObjectPool* pool)
 
 wObjectPool* ObjectPool_New(BOOL synchronized)
 {
-	wObjectPool* pool = nullptr;
+	wObjectPool* pool = (wObjectPool*)calloc(1, sizeof(wObjectPool));
 
-	pool = (wObjectPool*)calloc(1, sizeof(wObjectPool));
+	if (!pool)
+		goto fail;
 
-	if (pool)
+	pool->synchronized = synchronized;
+
+	if (pool->synchronized)
 	{
-		pool->capacity = 32;
-		pool->size = 0;
-		pool->array = (void**)calloc(pool->capacity, sizeof(void*));
-		if (!pool->array)
-		{
-			free(pool);
-			return nullptr;
-		}
-		pool->synchronized = synchronized;
-
-		if (pool->synchronized)
-		{
-			if (!InitializeCriticalSectionAndSpinCount(&pool->lock, 4000))
-			{
-				free(pool);
-				return nullptr;
-			}
-		}
+		if (!InitializeCriticalSectionAndSpinCount(&pool->lock, 4000))
+			goto fail;
 	}
 
+	if (!ObjectPool_EnsureCapacity(pool, 32))
+		goto fail;
+
 	return pool;
+
+fail:
+	ObjectPool_Free(pool);
+	return nullptr;
 }
 
 void ObjectPool_Free(wObjectPool* pool)
 {
-	if (pool)
-	{
-		ObjectPool_Clear(pool);
+	if (!pool)
+		return;
 
-		if (pool->synchronized)
-			DeleteCriticalSection(&pool->lock);
+	ObjectPool_Clear(pool);
 
-		free((void*)pool->array);
+	if (pool->synchronized)
+		DeleteCriticalSection(&pool->lock);
 
-		free(pool);
-	}
+	free((void*)pool->array);
+
+	free(pool);
 }
