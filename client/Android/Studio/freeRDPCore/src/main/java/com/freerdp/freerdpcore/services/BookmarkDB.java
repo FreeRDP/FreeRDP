@@ -38,6 +38,7 @@ public class BookmarkDB extends SQLiteOpenHelper
 	static final String DB_KEY_SCREEN_RESOLUTION = "resolution";
 	static final String DB_KEY_SCREEN_WIDTH = "width";
 	static final String DB_KEY_SCREEN_HEIGHT = "height";
+	static final String DB_KEY_SCREEN_SCALE = "scale";
 
 	static final String DB_KEY_SCREEN_SETTINGS = "screen_settings";
 	static final String DB_KEY_SCREEN_SETTINGS_3G = "screen_3g";
@@ -146,9 +147,13 @@ public class BookmarkDB extends SQLiteOpenHelper
 	private void createDB(SQLiteDatabase db)
 	{
 		final String sqlScreenSettings =
-		    "CREATE TABLE IF NOT EXISTS " + DB_TABLE_SCREEN + " (" + ID + " INTEGER PRIMARY KEY, " +
-		    DB_KEY_SCREEN_COLORS + " INTEGER DEFAULT 16, " + DB_KEY_SCREEN_RESOLUTION +
-		    " INTEGER DEFAULT 0, " + DB_KEY_SCREEN_WIDTH + ", " + DB_KEY_SCREEN_HEIGHT + ");";
+		    "CREATE TABLE IF NOT EXISTS " + DB_TABLE_SCREEN + " (" +
+		    ID + " INTEGER PRIMARY KEY, " +
+		    DB_KEY_SCREEN_COLORS + " INTEGER DEFAULT 16, " +
+	            DB_KEY_SCREEN_RESOLUTION + " INTEGER DEFAULT 0, " + 
+		    DB_KEY_SCREEN_WIDTH + ", " + 
+		    DB_KEY_SCREEN_HEIGHT + ", " + 
+		    DB_KEY_SCREEN_SCALE + ");";
 
 		db.execSQL(sqlScreenSettings);
 
