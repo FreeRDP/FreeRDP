@@ -63,6 +63,14 @@ static BOOL is_within_surface(const gdiGfxSurface* surface, const RDPGFX_SURFACE
 		         rect.left, rect.top, cmd->width, cmd->height, surface->width, surface->height);
 		return FALSE;
 	}
+	if (rect.left > surface->width)
+		return FALSE;
+	if (rect.right > surface->width)
+		return FALSE;
+	if (rect.top > surface->height)
+		return FALSE;
+	if (rect.bottom > surface->height)
+		return FALSE;
 
 	return TRUE;
 }
@@ -434,6 +442,9 @@ static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* contex
 		return ERROR_NOT_FOUND;
 	}
 
+	if (!is_within_surface(surface, cmd))
+		return ERROR_INVALID_DATA;
+
 	WINPR_ASSERT(surface->codecs);
 	rfx_context_set_pixel_format(surface->codecs->rfx, cmd->format);
 	region16_init(&invalidRegion);
@@ -491,6 +502,9 @@ static UINT gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi, RdpgfxClientContext* cont
 		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
 		return ERROR_NOT_FOUND;
 	}
+
+	if (!is_within_surface(surface, cmd))
+		return ERROR_INVALID_DATA;
 
 	WINPR_ASSERT(surface->codecs);
 	rc = clear_decompress(surface->codecs->clear, cmd->data, cmd->length, cmd->width, cmd->height,
@@ -621,6 +635,9 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 	if (!surface->h264)
 		return ERROR_NOT_SUPPORTED;
 
+	if (!is_within_surface(surface, cmd))
+		return ERROR_INVALID_DATA;
+
 	bs = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
 
 	if (!bs)
@@ -706,6 +723,9 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	if (!surface->h264)
 		return ERROR_NOT_SUPPORTED;
+
+	if (!is_within_surface(surface, cmd))
+		return ERROR_INVALID_DATA;
 
 	bs = (RDPGFX_AVC444_BITMAP_STREAM*)cmd->extra;
 
