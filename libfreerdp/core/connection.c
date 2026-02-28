@@ -302,14 +302,13 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 {
 	UINT32 SelectedProtocol = 0;
 	BOOL status = 0;
-	rdpSettings* settings = nullptr;
 	/* make sure SSL is initialize for earlier enough for crypto, by taking advantage of winpr SSL
 	 * FIPS flag for openssl initialization */
 	DWORD flags = WINPR_SSL_INIT_DEFAULT;
 
 	WINPR_ASSERT(rdp);
 
-	settings = rdp->settings;
+	rdpSettings* settings = rdp->settings;
 	WINPR_ASSERT(settings);
 
 	if (!rdp_client_reset_codecs(rdp->context))
@@ -318,7 +317,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if (settings->FIPSMode)
 		flags |= WINPR_SSL_INIT_ENABLE_FIPS;
 
-	winpr_InitializeSSL(flags);
+	if (!winpr_InitializeSSL(flags))
+		return FALSE;
+
 	rdp_log_build_warnings(rdp);
 
 	/* FIPS Mode forces the following and overrides the following(by happening later */
@@ -352,6 +353,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	const UINT32 port = settings->ServerPort;
 	WINPR_ASSERT(port <= UINT32_MAX);
+
+	if (!rdp->nego)
+		return FALSE;
 
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, hostname, (UINT16)port);
@@ -502,8 +506,11 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
 		return FALSE;
 
-	if (freerdp_channels_disconnect(context->channels, context->instance) != CHANNEL_RC_OK)
-		return FALSE;
+	if (context->channels)
+	{
+		if (freerdp_channels_disconnect(context->channels, context->instance) != CHANNEL_RC_OK)
+			return FALSE;
+	}
 
 	freerdp_client_codecs_free(context->codecs);
 	context->codecs = nullptr;

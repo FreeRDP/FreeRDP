@@ -643,7 +643,8 @@ BOOL freerdp_disconnect(freerdp* instance)
 		}
 	}
 
-	freerdp_channels_close(instance->context->channels, instance);
+	if (instance->context->channels)
+		freerdp_channels_close(instance->context->channels, instance);
 
 	IFCALL(instance->PostFinalDisconnect, instance);
 
