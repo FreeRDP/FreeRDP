@@ -155,6 +155,9 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	if (dwFlags != CRYPTPROTECTMEMORY_SAME_PROCESS)
 		return FALSE;
 
+	if (winpr_RAND(randomKey, sizeof(randomKey)) < 0)
+		return FALSE;
+
 	if (!g_ProtectedMemoryBlocks)
 	{
 		g_ProtectedMemoryBlocks = ListDictionary_New(TRUE);
@@ -173,13 +176,11 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	pMemBlock->dwFlags = dwFlags;
 
 	if (winpr_RAND(pMemBlock->salt, 8) < 0)
-		return FALSE;
-	if (winpr_RAND(randomKey, sizeof(randomKey)) < 0)
-		return FALSE;
+		goto out;
 
 	if (winpr_Cipher_BytesToKey(WINPR_CIPHER_AES_256_CBC, WINPR_MD_SHA1, pMemBlock->salt, randomKey,
 	                            sizeof(randomKey), 4, pMemBlock->key, pMemBlock->iv) <= 0)
-		return FALSE;
+		goto out;
 
 	SecureZeroMemory(randomKey, sizeof(randomKey));
 
