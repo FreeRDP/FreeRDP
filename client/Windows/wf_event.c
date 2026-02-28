@@ -120,20 +120,28 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				input = wfc->common.context.input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE)p->scanCode, p->flags & LLKHF_EXTENDED);
-				keystate = g_keystates[p->scanCode & 0xFF];
+				/* Fix: keystate tracking was using scan codes, but shortcut detection
+				   uses Virtual Key codes, preventing Ctrl+Alt+Enter from triggering.
+				   Syncing to Virtual Key codes ensures consistent shortcut detection. */
+				keystate = g_keystates[p->vkCode & 0xFF];
 
 				switch (wParam)
 				{
 					case WM_KEYDOWN:
 					case WM_SYSKEYDOWN:
-						g_keystates[p->scanCode & 0xFF] = TRUE;
+						/* Fix: set state by Virtual Key code to avoid scan code inconsistencies */
+						if (p->vkCode < 256)
+							g_keystates[p->vkCode] = TRUE;
 						break;
 					case WM_KEYUP:
 					case WM_SYSKEYUP:
 					default:
-						g_keystates[p->scanCode & 0xFF] = FALSE;
+						/* Fix: clear state by Virtual Key code */
+						if (p->vkCode < 256)
+							g_keystates[p->vkCode] = FALSE;
 						break;
 				}
+
 				DEBUG_KBD("keydown %d scanCode 0x%08lX flags 0x%08lX vkCode 0x%08lX",
 				          (wParam == WM_KEYDOWN), p->scanCode, p->flags, p->vkCode);
 
