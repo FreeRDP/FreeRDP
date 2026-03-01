@@ -24,6 +24,7 @@
 #include "sdl_window.hpp"
 #include "sdl_utils.hpp"
 
+#include <freerdp/channels/disp.h>
 #include <freerdp/utils/string.h>
 
 SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect& rect,
@@ -346,6 +347,32 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 	if (!SDL_GetWindowSizeInPixels(window, &rect.w, &rect.h))
 		return {};
 
+	// On wlroots compositors (Sway, river, etc.), windows that are hidden/unmapped
+	// don't get their actual display dimensions. The dummy window returns its creation size (64x64)
+	// instead of the display size. This causes validation errors since we require >= 200px.
+	// Workaround: If we got dimensions that are too small, query the display directly.
+	if (rect.w < DISPLAY_CONTROL_MIN_MONITOR_WIDTH || rect.h < DISPLAY_CONTROL_MIN_MONITOR_HEIGHT)
+	{
+		const auto displayID = SDL_GetDisplayForWindow(window);
+		SDL_Rect displayBounds = {};
+		if (SDL_GetDisplayBounds(displayID, &displayBounds))
+		{
+			if (forceAsPrimary)
+			{
+				rect.x = 0;
+				rect.y = 0;
+			}
+			rect.w = displayBounds.w;
+			rect.h = displayBounds.h;
+
+			const float contentScale = SDL_GetDisplayContentScale(displayID);
+			if (contentScale > 1.0f)
+			{
+				rect.w = static_cast<int>(std::roundf(rect.w * contentScale));
+				rect.h = static_cast<int>(std::roundf(rect.h * contentScale));
+			}
+		}
+	}
 	return rect;
 }
 
