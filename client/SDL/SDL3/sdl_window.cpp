@@ -61,15 +61,59 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
-    : _window(other._window), _displayID(other._displayID), _offset_x(other._offset_x),
-      _offset_y(other._offset_y), _monitor(other._monitor)
+    : _parent(other._parent), _window(other._window), _displayID(other._displayID),
+      _offset_x(other._offset_x), _offset_y(other._offset_y), _monitor(other._monitor)
 {
+	other._parent = nullptr;
 	other._window = nullptr;
 }
 
 SdlWindow::~SdlWindow()
 {
 	SDL_DestroyWindow(_window);
+}
+
+bool SdlWindow::setParent(Uint64 nativeWindowID)
+{
+	SDL_DestroyWindow(_parent);
+	_parent = nullptr;
+
+	auto props = SDL_CreateProperties();
+	if (props == 0)
+		return false;
+
+	auto success = false;
+	auto ptr = reinterpret_cast<void*>(nativeWindowID);
+	switch (sdl::utils::platform())
+	{
+		case sdl::utils::Mac:
+			success =
+			    SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_COCOA_WINDOW_POINTER, ptr);
+			break;
+
+		case sdl::utils::X11:
+			success = SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X11_WINDOW_NUMBER,
+			                                Sint64(nativeWindowID));
+			break;
+
+		case sdl::utils::Wayland:
+			success = SDL_SetPointerProperty(
+			    props, SDL_PROP_WINDOW_CREATE_WAYLAND_WL_SURFACE_POINTER, ptr);
+			break;
+
+		case sdl::utils::Windows:
+			success = SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, ptr);
+			break;
+		default:
+			break;
+	}
+
+	if (success)
+		_parent = SDL_CreateWindowWithProperties(props);
+	SDL_DestroyProperties(props);
+	if (!_parent)
+		return false;
+	return SDL_SetWindowParent(_window, _parent);
 }
 
 SDL_WindowID SdlWindow::id() const

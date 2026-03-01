@@ -40,6 +40,8 @@ class SdlWindow
 	SdlWindow& operator=(const SdlWindow& other) = delete;
 	SdlWindow& operator=(SdlWindow&& other) = delete;
 
+	[[nodiscard]] bool setParent(Uint64 nativeWindowID);
+
 	[[nodiscard]] SDL_WindowID id() const;
 	[[nodiscard]] SDL_DisplayID displayIndex() const;
 	[[nodiscard]] SDL_Rect rect() const;
@@ -102,6 +104,7 @@ class SdlWindow
 	[[nodiscard]] static enum HighDPIMode isHighDPIWindowsMode(SDL_Window* window);
 
   private:
+	SDL_Window* _parent = nullptr;
 	SDL_Window* _window = nullptr;
 	SDL_DisplayID _displayID = 0;
 	Sint32 _offset_x = 0;
