@@ -1319,6 +1319,19 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 	}
 	switch (ev.type)
 	{
+		case SDL_EVENT_RENDER_TARGETS_RESET:
+		case SDL_EVENT_RENDER_DEVICE_RESET:
+		case SDL_EVENT_WILL_ENTER_FOREGROUND:
+			return redraw();
+		default:
+			break;
+	}
+
+	if (!isConnected())
+		return true;
+
+	switch (ev.type)
+	{
 		case SDL_EVENT_FINGER_DOWN:
 		case SDL_EVENT_FINGER_UP:
 		case SDL_EVENT_FINGER_MOTION:
@@ -1327,6 +1340,7 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 			return handleEvent(cev);
 		}
 		case SDL_EVENT_MOUSE_MOTION:
+
 		{
 			const auto& cev = ev.motion;
 			return handleEvent(cev);
@@ -1353,10 +1367,6 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 			const auto& cev = ev.key;
 			return getInputChannelContext().handleEvent(cev);
 		}
-		case SDL_EVENT_RENDER_TARGETS_RESET:
-		case SDL_EVENT_RENDER_DEVICE_RESET:
-		case SDL_EVENT_WILL_ENTER_FOREGROUND:
-			return redraw();
 		default:
 			return true;
 	}
