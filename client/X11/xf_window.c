@@ -1371,8 +1371,6 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	if (ay + height > appWindow->windowOffsetY + appWindow->height)
 		height = (appWindow->windowOffsetY + appWindow->height - 1) - ay;
 
-	xf_lock_x11(xfc);
-
 	if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 	{
 		LogDynAndXPutImage(xfc->log, xfc->display, appWindow->pixmap, appWindow->gc, xfc->image, ax,
@@ -1384,7 +1382,6 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	                   x, y, WINPR_ASSERTING_INT_CAST(uint32_t, width),
 	                   WINPR_ASSERTING_INT_CAST(uint32_t, height), x, y);
 	LogDynAndXFlush(xfc->log, xfc->display);
-	xf_unlock_x11(xfc);
 }
 
 void xf_AppWindowDestroyImage(xfAppWindow* appWindow)
@@ -1441,8 +1438,8 @@ static xfAppWindow* get_windowUnlocked(xfContext* xfc, UINT64 id)
 	return HashTable_GetItemValue(xfc->railWindows, &id);
 }
 
-xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, const char* file, const char* fkt,
-                                    size_t line)
+xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, const char* file,
+                                    const char* fkt, size_t line)
 {
 	if (!xfc)
 		return nullptr;
@@ -1450,9 +1447,12 @@ xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, const char* file,
 	if (!xfc->railWindows)
 		return nullptr;
 
-	xfAppWindowsLockFrom(xfc, file, fkt, line);
+	if (!alreadyLocked)
+		xfAppWindowsLockFrom(xfc, file, fkt, line);
+
 	xfAppWindow* window = get_windowUnlocked(xfc, id);
-	if (!window)
+
+	if (!window && !alreadyLocked)
 		xfAppWindowsUnlockFrom(xfc, file, fkt, line);
 
 	return window;
@@ -1501,7 +1501,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(surface);
 
-	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId);
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId, FALSE);
 	if (!appWindow)
 	{
 		WLog_VRB(TAG, "Failed to find a window for id=0x%08" PRIx64, surface->windowId);
@@ -1512,7 +1512,6 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 	UINT32 nrects = 0;
 	const RECTANGLE_16* rects = region16_rects(&surface->invalidRegion, &nrects);
 
-	xf_lock_x11(xfc);
 	if (swGdi)
 	{
 		if (appWindow->surfaceId != surface->surfaceId)
@@ -1569,9 +1568,9 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 
 	rc = CHANNEL_RC_OK;
 fail:
-	xf_rail_return_window(appWindow);
+	xf_rail_return_window(appWindow, FALSE);
 	LogDynAndXFlush(xfc->log, xfc->display);
-	xf_unlock_x11(xfc);
+
 	return rc;
 }
 
@@ -1601,12 +1600,12 @@ void xf_XSetTransientForHint(xfContext* xfc, xfAppWindow* window)
 	if (window->ownerWindowId == 0)
 		return;
 
-	xfAppWindow* parent = xf_rail_get_window(xfc, window->ownerWindowId);
+	xfAppWindow* parent = xf_rail_get_window(xfc, window->ownerWindowId, TRUE);
 	if (!parent)
 		return;
 
 	(void)LogDynAndXSetTransientForHint(xfc->log, xfc->display, window->handle, parent->handle);
-	xf_rail_return_window(parent);
+	xf_rail_return_window(parent, TRUE);
 }
 
 void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
@@ -1620,6 +1619,7 @@ void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 		WLog_PrintTextMessage(xfc->log, level, line, file, fkt, "[rails] locking [%s]", fkt);
 #endif
 
+	xf_lock_x11(xfc);
 	HashTable_Lock(xfc->railWindows);
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
@@ -1643,4 +1643,5 @@ void xfAppWindowsUnlockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 #endif
 
 	HashTable_Unlock(xfc->railWindows);
+	xf_unlock_x11(xfc);
 }

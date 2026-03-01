@@ -345,7 +345,7 @@ void rdpei_server_context_reset(RdpeiServerContext* context)
 	priv->expectedBytes = RDPINPUT_HEADER_LENGTH;
 	priv->waitingHeaders = TRUE;
 	priv->automataState = STATE_INITIAL;
-	Stream_SetPosition(priv->inputStream, 0);
+	Stream_ResetPosition(priv->inputStream);
 }
 
 void rdpei_server_context_free(RdpeiServerContext* context)
@@ -709,7 +709,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 		return CHANNEL_RC_OK;
 
 	Stream_SealLength(s);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (priv->waitingHeaders)
 	{
@@ -726,7 +726,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 		}
 		priv->expectedBytes = pduLen - RDPINPUT_HEADER_LENGTH;
 		priv->waitingHeaders = FALSE;
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 		if (priv->expectedBytes)
 		{
 			if (!Stream_EnsureCapacity(s, priv->expectedBytes))
@@ -781,7 +781,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 			WLog_ERR(TAG, "unexpected message type 0x%" PRIx16 "", priv->currentMsgType);
 	}
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	priv->waitingHeaders = TRUE;
 	priv->expectedBytes = RDPINPUT_HEADER_LENGTH;
 	return error;
@@ -804,7 +804,7 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
 		return ERROR_INVALID_STATE;
 	}
 
-	Stream_SetPosition(priv->outputStream, 0);
+	Stream_ResetPosition(priv->outputStream);
 
 	if (version >= RDPINPUT_PROTOCOL_V300)
 		pduLen += 4;
@@ -857,7 +857,7 @@ UINT rdpei_server_suspend(RdpeiServerContext* context)
 			return ERROR_INVALID_STATE;
 	}
 
-	Stream_SetPosition(priv->outputStream, 0);
+	Stream_ResetPosition(priv->outputStream);
 	if (!Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH))
 	{
 		WLog_ERR(TAG, "Stream_EnsureCapacity failed!");
@@ -903,7 +903,7 @@ UINT rdpei_server_resume(RdpeiServerContext* context)
 			return ERROR_INVALID_STATE;
 	}
 
-	Stream_SetPosition(priv->outputStream, 0);
+	Stream_ResetPosition(priv->outputStream);
 	if (!Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH))
 	{
 		WLog_ERR(TAG, "Stream_EnsureCapacity failed!");

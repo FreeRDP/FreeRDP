@@ -256,7 +256,7 @@ static BOOL update_message_SurfaceCommand(rdpContext* context, wStream* s)
 		return FALSE;
 
 	Stream_Copy(s, wParam, Stream_GetRemainingLength(s));
-	Stream_SetPosition(wParam, 0);
+	Stream_ResetPosition(wParam);
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, SurfaceCommand),

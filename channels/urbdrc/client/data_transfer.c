@@ -111,7 +111,7 @@ static UINT urb_write_completion(WINPR_ATTR_UNUSED IUDEVICE* pdev,
 		return ERROR_INVALID_PARAMETER;
 	}
 
-	Stream_SetPosition(out, 0);
+	Stream_ResetPosition(out);
 
 	const UINT32 FunctionId = (OutputBufferSize != 0) ? URB_COMPLETION : URB_COMPLETION_NO_DATA;
 	if (!write_shared_message_header_with_functionid(out, InterfaceId, MessageId, FunctionId))
@@ -854,7 +854,7 @@ static void urb_isoch_transfer_cb(WINPR_ATTR_UNUSED IUDEVICE* pdev,
 	if (!noAck)
 	{
 		UINT32 packetSize = (status == 0) ? NumberOfPackets * 12 : 0;
-		Stream_SetPosition(out, 0);
+		Stream_ResetPosition(out);
 
 		const UINT32 FunctionId = (OutputBufferSize == 0) ? URB_COMPLETION_NO_DATA : URB_COMPLETION;
 		if (!write_shared_message_header_with_functionid(out, InterfaceId, MessageId, FunctionId))

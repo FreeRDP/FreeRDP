@@ -223,7 +223,7 @@ static UINT gfxredir_server_handle_messages(GfxRedirServerContext* context)
 	/* Consume channel event only after the dynamic channel is ready */
 	if (priv->isReady)
 	{
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 
 		DWORD BytesReturned = 0;
 		if (!WTSVirtualChannelRead(priv->gfxredir_channel, 0, nullptr, 0, &BytesReturned))
@@ -253,7 +253,7 @@ static UINT gfxredir_server_handle_messages(GfxRedirServerContext* context)
 		}
 
 		Stream_SetLength(s, BytesReturned);
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 
 		while (Stream_GetPosition(s) < Stream_Length(s))
 		{

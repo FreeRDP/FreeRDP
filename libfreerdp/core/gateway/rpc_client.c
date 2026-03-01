@@ -93,7 +93,7 @@ static void rpc_pdu_reset(RPC_PDU* pdu)
 	pdu->Type = 0;
 	pdu->Flags = 0;
 	pdu->CallId = 0;
-	Stream_SetPosition(pdu->s, 0);
+	Stream_ResetPosition(pdu->s);
 	Stream_SetLength(pdu->s, 0);
 }
 
@@ -346,7 +346,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 	WINPR_ASSERT(pdu);
 
 	Stream_SealLength(pdu->s);
-	Stream_SetPosition(pdu->s, 0);
+	Stream_ResetPosition(pdu->s);
 
 	const size_t before = Stream_GetRemainingLength(pdu->s);
 	WLog_Print(rpc->log, WLOG_TRACE, "RPC PDU parsing %" PRIuz " bytes", before);
@@ -381,7 +381,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 	WINPR_ASSERT(pdu);
 
 	Stream_SealLength(fragment);
-	Stream_SetPosition(fragment, 0);
+	Stream_ResetPosition(fragment);
 
 	if (!rts_read_pdu_header(fragment, &header))
 		goto fail;
@@ -689,7 +689,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 			}
 
 			pos = Stream_GetPosition(fragment);
-			Stream_SetPosition(fragment, 0);
+			Stream_ResetPosition(fragment);
 
 			/* Ignore errors, the PDU might not be complete. */
 			const rts_pdu_status_t rc = rts_read_common_pdu_header(fragment, &header, TRUE);
@@ -744,7 +744,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 					return 0;
 				}
 
-				Stream_SetPosition(fragment, 0);
+				Stream_ResetPosition(fragment);
 			}
 		}
 	}

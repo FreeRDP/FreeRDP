@@ -1134,7 +1134,7 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 	BOOL status = TRUE;
 	UINT16 type = 0;
 	UINT32 packetLength = 0;
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, 8))
 		return FALSE;
@@ -1901,7 +1901,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 			}
 		}
 
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 	}
 
 	switch (type)

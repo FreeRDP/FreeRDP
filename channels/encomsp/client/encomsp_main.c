@@ -975,7 +975,7 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 
 		encomsp->data_in = nullptr;
 		Stream_SealLength(data_in);
-		Stream_SetPosition(data_in, 0);
+		Stream_ResetPosition(data_in);
 
 		if (!MessageQueue_Post(encomsp->queue, nullptr, 0, (void*)data_in, nullptr))
 		{

@@ -166,7 +166,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		return TRUE;
 	}
 
-	Stream_SetPosition(context->common.channelmix, 0);
+	Stream_ResetPosition(context->common.channelmix);
 
 	/* Destination has more channels than source */
 	if (context->common.format.nChannels > srcFormat->nChannels)
@@ -600,7 +600,7 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 				return FALSE;
 			if (rc > 0)
 				Stream_Seek(out, (size_t)rc);
-			Stream_SetPosition(context->common.buffer, 0);
+			Stream_ResetPosition(context->common.buffer);
 		}
 	}
 
@@ -870,7 +870,7 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 		{
 			BYTE* bsrc = Stream_Buffer(context->common.buffer);
 			Stream_Write(out, bsrc, context->adpcm.ima.packet_size);
-			Stream_SetPosition(context->common.buffer, 0);
+			Stream_ResetPosition(context->common.buffer);
 		}
 	}
 
@@ -1499,7 +1499,7 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 		context->adpcm.ima.packet_size = nb_block_per_packet * context->common.format.nBlockAlign;
 		Stream_EnsureCapacity(context->common.buffer, context->adpcm.ima.packet_size);
-		Stream_SetPosition(context->common.buffer, 0);
+		Stream_ResetPosition(context->common.buffer);
 	}
 
 #if defined(WITH_OPUS)

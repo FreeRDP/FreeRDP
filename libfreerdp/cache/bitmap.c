@@ -373,7 +373,10 @@ rdpBitmapCache* bitmap_cache_new(rdpContext* context)
 	const UINT32 BitmapCacheV2NumCells =
 	    freerdp_settings_get_uint32(settings, FreeRDP_BitmapCacheV2NumCells);
 	bitmapCache->context = context;
-	bitmapCache->cells = (BITMAP_V2_CELL*)calloc(BitmapCacheV2NumCells, sizeof(BITMAP_V2_CELL));
+
+	/* overallocate by 1. older RDP servers do send a off by 1 cache index. */
+	bitmapCache->cells =
+	    (BITMAP_V2_CELL*)calloc(BitmapCacheV2NumCells + 1ull, sizeof(BITMAP_V2_CELL));
 
 	if (!bitmapCache->cells)
 		goto fail;

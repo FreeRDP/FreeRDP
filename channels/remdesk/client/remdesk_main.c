@@ -725,7 +725,7 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 
 		remdesk->data_in = nullptr;
 		Stream_SealLength(data_in);
-		Stream_SetPosition(data_in, 0);
+		Stream_ResetPosition(data_in);
 
 		if (!MessageQueue_Post(remdesk->queue, nullptr, 0, (void*)data_in, nullptr))
 		{

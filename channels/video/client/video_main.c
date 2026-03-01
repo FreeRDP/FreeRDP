@@ -661,7 +661,7 @@ static UINT video_control_send_client_notification(VideoClientContext* context,
 	}
 
 	Stream_SealLength(s);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	Stream_Write_UINT32(s, cbSize);
 	Stream_Free(s, FALSE);
 
@@ -846,7 +846,7 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		const RECTANGLE_16 rect = { 0, 0, WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedWidth),
 			                        WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedHeight) };
 		Stream_SealLength(presentation->currentSample);
-		Stream_SetPosition(presentation->currentSample, 0);
+		Stream_ResetPosition(presentation->currentSample);
 
 		const UINT64 timeAfterH264 = winpr_GetTickCount64NS();
 		if (data->SampleNumber == 1)

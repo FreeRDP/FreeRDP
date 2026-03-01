@@ -1163,7 +1163,7 @@ static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin, voi
 		if (!plugin->data_in)
 			plugin->data_in = StreamPool_Take(plugin->pool, totalLength);
 
-		Stream_SetPosition(plugin->data_in, 0);
+		Stream_ResetPosition(plugin->data_in);
 	}
 
 	if (!Stream_EnsureRemainingCapacity(plugin->data_in, dataLength))
@@ -1174,7 +1174,7 @@ static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin, voi
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
 		Stream_SealLength(plugin->data_in);
-		Stream_SetPosition(plugin->data_in, 0);
+		Stream_ResetPosition(plugin->data_in);
 
 		if (plugin->async)
 		{
@@ -1677,7 +1677,7 @@ static UINT rdpsnd_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 		return ERROR_OUTOFMEMORY;
 	Stream_Copy(data, copy, len);
 	Stream_SealLength(copy);
-	Stream_SetPosition(copy, 0);
+	Stream_ResetPosition(copy);
 
 	if (plugin->async)
 	{

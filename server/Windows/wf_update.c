@@ -113,7 +113,7 @@ void wf_update_encode(wfInfo* wfi)
 	SURFACE_BITS_COMMAND* cmd;
 	wf_info_find_invalid_region(wfi);
 	cmd = &wfi->cmd;
-	Stream_SetPosition(wfi->s, 0);
+	Stream_ResetPosition(wfi->s);
 	wf_info_getScreenData(wfi, &width, &height, &pDataBits, &stride);
 	rect.x = 0;
 	rect.y = 0;

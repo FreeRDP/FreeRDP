@@ -698,7 +698,7 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved
 	if (!s)
 		return FALSE;
 
-	Stream_SetPosition(interleaved->bts, 0);
+	Stream_ResetPosition(interleaved->bts);
 
 	status = (freerdp_bitmap_compress(interleaved->TempBuffer, nWidth, nHeight, s, bpp, maxSize,
 	                                  nHeight - 1, interleaved->bts, 0) >= 0);

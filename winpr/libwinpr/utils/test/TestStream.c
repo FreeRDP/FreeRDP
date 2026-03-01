@@ -97,13 +97,13 @@ static BOOL TestStream_Static(void)
 	/* Test creation of a static stream */
 	Stream_StaticInit(s, buffer, sizeof(buffer));
 	Stream_Write_UINT16(s, 0xcab1);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	Stream_Read_UINT16(s, v);
 
 	if (v != 0xcab1)
 		return FALSE;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	Stream_Write_UINT16(s, 1);
 
 	if (!Stream_EnsureRemainingCapacity(s, 10)) /* we can ask for 10 bytes */
@@ -114,7 +114,7 @@ static BOOL TestStream_Static(void)
 		return FALSE;
 
 	Stream_Write_UINT16(s, 2);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	Stream_Read_UINT16(s, v);
 
 	if (v != 1)
@@ -264,7 +264,7 @@ fail:
 		_t _a = 0;                                                    \
 		_t _b = 0;                                                    \
 		BYTE* _p = Stream_Buffer(_s);                                 \
-		Stream_SetPosition(_s, 0);                                    \
+		Stream_ResetPosition(_s);                                     \
 		Stream_Peek_##_t(_s, _a);                                     \
 		Stream_Read_##_t(_s, _b);                                     \
 		if (_a != _b)                                                 \
@@ -290,7 +290,7 @@ fail:
 			}                                                         \
 		}                                                             \
 		/* printf("a: 0x%016llX\n", a); */                            \
-		Stream_SetPosition(_s, 0);                                    \
+		Stream_ResetPosition(_s);                                     \
 		Stream_Peek_##_t##_BE(_s, _a);                                \
 		Stream_Read_##_t##_BE(_s, _b);                                \
 		if (_a != _b)                                                 \
@@ -505,7 +505,7 @@ static BOOL TestStream_Write(void)
 	if (s->pointer != s->buffer + sizeof(data))
 		goto out;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (s->pointer != s->buffer)
 		goto out;
@@ -515,7 +515,7 @@ static BOOL TestStream_Write(void)
 	if (s->pointer != s->buffer + 1)
 		goto out;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (s->pointer != s->buffer)
 		goto out;
@@ -530,7 +530,7 @@ static BOOL TestStream_Write(void)
 	if (s->pointer != s->buffer + 2)
 		goto out;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (s->pointer != s->buffer)
 		goto out;
@@ -545,7 +545,7 @@ static BOOL TestStream_Write(void)
 	if (s->pointer != s->buffer + 4)
 		goto out;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (s->pointer != s->buffer)
 		goto out;
@@ -560,7 +560,7 @@ static BOOL TestStream_Write(void)
 	if (s->pointer != s->buffer + 8)
 		goto out;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (s->pointer != s->buffer)
 		goto out;
@@ -678,7 +678,7 @@ static BOOL TestStream_Zero(void)
 	if (memcmp(Stream_Buffer(s), data, sizeof(data)) != 0)
 		goto out;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (s->pointer != s->buffer)
 		goto out;
@@ -691,7 +691,7 @@ static BOOL TestStream_Zero(void)
 	if (memcmp(Stream_ConstPointer(s), data + 5, sizeof(data) - 5) != 0)
 		goto out;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (s->pointer != s->buffer)
 		goto out;
@@ -726,7 +726,7 @@ static BOOL TestStream_Fill(void)
 	if (memcmp(Stream_Buffer(s), data, sizeof(data)) != 0)
 		goto out;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (s->pointer != s->buffer)
 		goto out;
@@ -739,7 +739,7 @@ static BOOL TestStream_Fill(void)
 	if (memcmp(Stream_ConstPointer(s), data + sizeof(fill), sizeof(data) - sizeof(fill)) != 0)
 		goto out;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (s->pointer != s->buffer)
 		goto out;
@@ -774,7 +774,7 @@ static BOOL TestStream_Copy(void)
 	if (s->pointer != s->buffer + sizeof(data))
 		goto out;
 
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 
 	if (s->pointer != s->buffer)
 		goto out;

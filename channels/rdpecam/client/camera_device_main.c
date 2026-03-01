@@ -105,7 +105,7 @@ static UINT ecam_dev_send_sample_response(CameraDevice* dev, size_t streamIndex,
 	CameraDeviceStream* stream = &dev->streams[streamIndex];
 	CAM_MSG_ID msg = CAM_MSG_ID_SampleResponse;
 
-	Stream_SetPosition(stream->sampleRespBuffer, 0);
+	Stream_ResetPosition(stream->sampleRespBuffer);
 
 	Stream_Write_UINT8(stream->sampleRespBuffer,
 	                   WINPR_ASSERTING_INT_CAST(uint8_t, dev->ecam->version));
@@ -229,7 +229,7 @@ static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, size_t streamIn
 		}
 	}
 
-	Stream_SetPosition(stream->pendingSample, 0);
+	Stream_ResetPosition(stream->pendingSample);
 	if (!Stream_EnsureRemainingCapacity(stream->pendingSample, size))
 		goto out;
 

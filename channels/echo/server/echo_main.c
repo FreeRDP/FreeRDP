@@ -238,7 +238,7 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 		if (status == WAIT_OBJECT_0)
 			break;
 
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 		if (!WTSVirtualChannelRead(echo->echo_channel, 0, nullptr, 0, &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");

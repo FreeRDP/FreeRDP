@@ -738,7 +738,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 		return TRUE;
 	}
 
-	Stream_SetPosition(context->common.channelmix, 0);
+	Stream_ResetPosition(context->common.channelmix);
 
 	/* Destination has more channels than source */
 	if (context->common.format.nChannels > srcFormat->nChannels)

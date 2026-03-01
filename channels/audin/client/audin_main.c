@@ -275,7 +275,7 @@ static UINT audin_process_formats(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* c
 	}
 
 	cbSizeFormatsPacket = (UINT32)Stream_GetPosition(out);
-	Stream_SetPosition(out, 0);
+	Stream_ResetPosition(out);
 	Stream_Write_UINT8(out, MSG_SNDIN_FORMATS);        /* Header (1 byte) */
 	Stream_Write_UINT32(out, callback->formats_count); /* NumFormats (4 bytes) */
 	Stream_Write_UINT32(out, cbSizeFormatsPacket);     /* cbSizeFormatsPacket (4 bytes) */
@@ -366,7 +366,7 @@ static UINT audin_receive_wave_data(const AUDIO_FORMAT* format, const BYTE* data
 	if (!audin->attached)
 		return CHANNEL_RC_OK;
 
-	Stream_SetPosition(audin->data, 0);
+	Stream_ResetPosition(audin->data);
 
 	if (!Stream_EnsureRemainingCapacity(audin->data, 1))
 		return CHANNEL_RC_NO_MEMORY;

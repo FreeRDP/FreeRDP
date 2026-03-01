@@ -51,7 +51,7 @@ UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 	}
 
 	orderLength = (UINT16)Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
+	Stream_ResetPosition(s);
 	rail_write_pdu_header(s, orderType, orderLength);
 	Stream_SetPosition(s, orderLength);
 	WLog_Print(rail->log, WLOG_DEBUG, "Sending %s PDU, length: %" PRIu16 "",

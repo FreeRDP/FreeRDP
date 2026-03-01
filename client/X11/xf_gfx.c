@@ -75,6 +75,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	if (!(rects = region16_rects(&surface->gdi.invalidRegion, &nbRects)))
 		return CHANNEL_RC_OK;
 
+	xf_lock_x11(xfc);
 	for (UINT32 x = 0; x < nbRects; x++)
 	{
 		const RECTANGLE_16* rect = &rects[x];
@@ -102,9 +103,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 			                   WINPR_ASSERTING_INT_CAST(int, nYSrc),
 			                   WINPR_ASSERTING_INT_CAST(int, nXDst),
 			                   WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
-			xf_lock_x11(xfc);
 			xf_rail_paint_surface(xfc, surface->gdi.windowId, rect);
-			xf_unlock_x11(xfc);
 		}
 		else
 #ifdef WITH_XRENDER
@@ -137,6 +136,7 @@ fail:
 	region16_clear(&surface->gdi.invalidRegion);
 	LogDynAndXSetClipMask(xfc->log, xfc->display, xfc->gc, None);
 	LogDynAndXSync(xfc->log, xfc->display, False);
+	xf_unlock_x11(xfc);
 	return rc;
 }
 
@@ -473,10 +473,10 @@ static UINT xf_UnmapWindowForSurface(RdpgfxClientContext* context, UINT64 window
 
 	if (freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
 	{
-		xfAppWindow* appWindow = xf_rail_get_window(xfc, windowID);
+		xfAppWindow* appWindow = xf_rail_get_window(xfc, windowID, FALSE);
 		if (appWindow)
 			xf_AppWindowDestroyImage(appWindow);
-		xf_rail_return_window(appWindow);
+		xf_rail_return_window(appWindow, FALSE);
 	}
 
 	WLog_WARN(TAG, "function not implemented");

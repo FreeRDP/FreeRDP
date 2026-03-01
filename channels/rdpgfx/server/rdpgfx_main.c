@@ -1839,7 +1839,7 @@ UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 	/* Consume channel event only after the gfx dynamic channel is ready */
 	if (priv->isReady)
 	{
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 
 		if (!WTSVirtualChannelRead(priv->rdpgfx_channel, 0, nullptr, 0, &BytesReturned))
 		{
@@ -1870,7 +1870,7 @@ UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 		}
 
 		Stream_SetLength(s, BytesReturned);
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 
 		while (Stream_GetPosition(s) < Stream_Length(s))
 		{

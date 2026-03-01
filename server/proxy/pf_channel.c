@@ -60,7 +60,7 @@ static BOOL channelTracker_resetCurrentPacket(ChannelStateTracker* tracker)
 		tracker->currentPacket = Stream_New(nullptr, 10ULL * 1024ULL);
 	if (!tracker->currentPacket)
 		return FALSE;
-	Stream_SetPosition(tracker->currentPacket, 0);
+	Stream_ResetPosition(tracker->currentPacket);
 	return TRUE;
 }
 

@@ -398,7 +398,7 @@ void urbdrc_dump_message(wLog* log, BOOL client, BOOL write, wStream* s)
 	if (write)
 	{
 		length = pos;
-		Stream_SetPosition(s, 0);
+		Stream_ResetPosition(s);
 	}
 	else
 		length = Stream_GetRemainingLength(s);

@@ -702,7 +702,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 
 		internals->data_in = nullptr;
 		Stream_SealLength(data_in);
-		Stream_SetPosition(data_in, 0);
+		Stream_ResetPosition(data_in);
 
 		if ((freerdp_settings_get_uint32(internals->ctx->settings, FreeRDP_ThreadingFlags) &
 		     THREADING_FLAGS_DISABLE_THREADS) != 0)

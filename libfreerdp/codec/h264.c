@@ -108,6 +108,36 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 	return yuv_ensure_buffer(h264, stride, width, height);
 }
 
+static BOOL isRectValid(UINT32 width, UINT32 height, const RECTANGLE_16* rect)
+{
+	WINPR_ASSERT(rect);
+	if (rect->left > width)
+		return FALSE;
+	if (rect->right > width)
+		return FALSE;
+	if (rect->left >= rect->right)
+		return FALSE;
+	if (rect->top > height)
+		return FALSE;
+	if (rect->bottom > height)
+		return FALSE;
+	if (rect->top >= rect->bottom)
+		return FALSE;
+	return TRUE;
+}
+
+static BOOL areRectsValid(UINT32 width, UINT32 height, const RECTANGLE_16* rects, UINT32 count)
+{
+	WINPR_ASSERT(rects || (count == 0));
+	for (size_t x = 0; x < count; x++)
+	{
+		const RECTANGLE_16* rect = &rects[x];
+		if (!isRectValid(width, height, rect))
+			return FALSE;
+	}
+	return TRUE;
+}
+
 INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
                         DWORD DstFormat, UINT32 nDstStep, WINPR_ATTR_UNUSED UINT32 nDstWidth,
                         WINPR_ATTR_UNUSED UINT32 nDstHeight, const RECTANGLE_16* regionRects,
@@ -118,6 +148,9 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 
 	if (!h264 || h264->Compressor)
 		return -1001;
+
+	if (!areRectsValid(nDstWidth, nDstHeight, regionRects, numRegionRects))
+		return -1013;
 
 	status = h264->subsystem->Decompress(h264, pSrcData, SrcSize);
 
@@ -566,6 +599,11 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 
 	if (!h264 || !regionRects || !pSrcData || !pDstData || h264->Compressor)
 		return -1001;
+
+	if (!areRectsValid(nDstWidth, nDstHeight, regionRects, numRegionRects))
+		return -1013;
+	if (!areRectsValid(nDstWidth, nDstHeight, auxRegionRects, numAuxRegionRect))
+		return -1014;
 
 	switch (op)
 	{

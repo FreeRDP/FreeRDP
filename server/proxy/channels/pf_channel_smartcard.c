@@ -84,7 +84,7 @@ static BOOL pf_channel_client_write_iostatus(wStream* out, const SMARTCARD_OPERA
 	WINPR_ASSERT(out);
 
 	pos = Stream_GetPosition(out);
-	Stream_SetPosition(out, 0);
+	Stream_ResetPosition(out);
 	if (!Stream_CheckAndLogRequiredLength(TAG, out, 16))
 		return FALSE;
 

@@ -239,7 +239,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 			if (header->Length >= Stream_GetPosition(s))
 			{
 				Stream_SealLength(s);
-				Stream_SetPosition(s, 0);
+				Stream_ResetPosition(s);
 
 				if ((error = encomsp_server_receive_pdu(context, s)))
 				{
@@ -248,7 +248,7 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 					break;
 				}
 
-				Stream_SetPosition(s, 0);
+				Stream_ResetPosition(s);
 			}
 		}
 	}

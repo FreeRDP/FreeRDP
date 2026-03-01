@@ -380,7 +380,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 		const size_t length = Stream_GetPosition(output);
 		if (length > UINT32_MAX)
 			goto out;
-		Stream_SetPosition(output, 0);
+		Stream_ResetPosition(output);
 		Stream_Write_UINT32(output, ifman.output_interface_id);
 		Stream_Write_UINT32(output, MessageId);
 		DEBUG_TSMF("response size %d", length);

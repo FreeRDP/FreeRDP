@@ -524,7 +524,7 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 				if (PduLength >= Stream_GetPosition(s))
 				{
 					Stream_SealLength(s);
-					Stream_SetPosition(s, 0);
+					Stream_ResetPosition(s);
 
 					error = remdesk_server_receive_pdu(context, s);
 					if (error)
@@ -534,7 +534,7 @@ static DWORD WINAPI remdesk_server_thread(LPVOID arg)
 						break;
 					}
 
-					Stream_SetPosition(s, 0);
+					Stream_ResetPosition(s);
 				}
 			}
 		}
