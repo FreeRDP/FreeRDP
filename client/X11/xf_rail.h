@@ -125,16 +125,17 @@ BOOL xf_rail_disable_remoteapp_mode(xfContext* xfc);
 xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UINT32 width,
                                 UINT32 height, UINT32 surfaceId);
 
-#define xf_rail_return_window(window) \
-	xf_rail_return_windowFrom((window), __FILE__, __func__, __LINE__)
-void xf_rail_return_windowFrom(xfAppWindow* window, const char* file, const char* fkt, size_t line);
+#define xf_rail_return_window(window, alreadyLocked) \
+	xf_rail_return_windowFrom((window), (alreadyLocked), __FILE__, __func__, __LINE__)
+void xf_rail_return_windowFrom(xfAppWindow* window, BOOL alreadyLocked, const char* file,
+                               const char* fkt, size_t line);
 
-#define xf_rail_get_window(xfc, id) \
-	xf_rail_get_windowFrom((xfc), (id), __FILE__, __func__, __LINE__)
+#define xf_rail_get_window(xfc, id, alreadyLocked) \
+	xf_rail_get_windowFrom((xfc), (id), (alreadyLocked), __FILE__, __func__, __LINE__)
 
 WINPR_ATTR_MALLOC(xf_rail_return_windowFrom, 1)
-xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, const char* file, const char* fkt,
-                                    size_t line);
+xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, const char* file,
+                                    const char* fkt, size_t line);
 
 BOOL xf_rail_del_window(xfContext* xfc, UINT64 id);
 
