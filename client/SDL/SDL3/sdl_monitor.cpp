@@ -198,11 +198,19 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 		}
 		return TRUE;
 	}
+
+	bool foundPrimary = false;
 	for (const auto& id : sdl->monitorIds())
 	{
 		const auto monitor = sdl->getDisplay(id);
+		foundPrimary |= monitor.is_primary != 0;
 		monitors.emplace_back(monitor);
 	}
+
+	if (!foundPrimary && !monitors.empty())
+		/* The user did not add the OS primary monitor, so set the first monitor as primary */
+		monitors.front().is_primary = TRUE;
+
 	return freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(),
 	                                                     monitors.size());
 }
