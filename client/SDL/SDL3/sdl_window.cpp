@@ -438,12 +438,23 @@ static SDL_Window* createDummy(SDL_DisplayID id)
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, h);
 
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
-	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, true);
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, false);
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, false);
 
 	auto window = SDL_CreateWindowWithProperties(props);
 	SDL_DestroyProperties(props);
+
+	/* Workaround: we need to properly position the window on the correct monitor
+	 * before going fullscreen. Otherwise we will get the primary monitor details.
+	 */
+	if (window)
+	{
+		SDL_Rect rect = {};
+		(void)SDL_GetDisplayBounds(id, &rect);
+		(void)SDL_SetWindowPosition(window, rect.x, rect.y);
+		(void)SDL_SetWindowFullscreen(window, true);
+	}
 	return window;
 }
 
