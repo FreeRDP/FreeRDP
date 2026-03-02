@@ -195,9 +195,10 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 		cnv.cpp[x] = msg;
 
 		if (rc == 0)
-			(void)_snprintf(msg, UNWIND_MAX_LINE_SIZE, "unresolvable, address=%p", info->pc.pv);
+			(void)_snprintf(msg, UNWIND_MAX_LINE_SIZE, "address=%p, unresolvable", info->pc.pv);
 		else
-			(void)_snprintf(msg, UNWIND_MAX_LINE_SIZE, "dli_fname=%s [%p], dli_sname=%s [%p]",
+			(void)_snprintf(msg, UNWIND_MAX_LINE_SIZE,
+			                "address=%p dli_fname=%s [%p], dli_sname=%s [%p]", info->pc.pv,
 			                dlinfo.dli_fname, dlinfo.dli_fbase, dlinfo.dli_sname, dlinfo.dli_saddr);
 	}
 
