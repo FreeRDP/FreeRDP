@@ -822,7 +822,6 @@ extern "C"
 	WINPR_API void MessagePipe_Free(wMessagePipe* pipe);
 
 	WINPR_ATTR_MALLOC(MessagePipe_Free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API wMessagePipe* MessagePipe_New(void);
 
 	/* Publisher/Subscriber Pattern */

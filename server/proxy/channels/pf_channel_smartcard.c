@@ -151,12 +151,15 @@ static BOOL start_irp_thread(pf_channel_client_context* scard,
 	work = CreateThreadpoolWork(irp_thread, arg, nullptr);
 	if (!work)
 		goto fail;
-	ArrayList_Append(scard->workObjects, work);
+	if (!ArrayList_Append(scard->workObjects, work))
+		goto fail;
 	SubmitThreadpoolWork(work);
 
 	return TRUE;
 
 fail:
+	if (work)
+		CloseThreadpoolWork(work);
 	if (arg)
 		queue_free(arg->e);
 	free(arg);

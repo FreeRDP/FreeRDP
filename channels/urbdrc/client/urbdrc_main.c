@@ -890,7 +890,8 @@ static UINT urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, const ADDIN_ARGV* a
 
 		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "dbg")
 		{
-			WLog_SetLogLevel(urbdrc->log, WLOG_TRACE);
+			if (!WLog_SetLogLevel(urbdrc->log, WLOG_TRACE))
+				return ERROR_INTERNAL_ERROR;
 		}
 		CommandLineSwitchCase(arg, "sys")
 		{

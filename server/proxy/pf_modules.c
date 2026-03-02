@@ -483,7 +483,7 @@ static BOOL pf_modules_print_ArrayList_ForEachFkt(void* data, size_t index, va_l
 	return TRUE;
 }
 
-void pf_modules_list_loaded_plugins(proxyModule* module)
+BOOL pf_modules_list_loaded_plugins(proxyModule* module)
 {
 	size_t count = 0;
 
@@ -495,7 +495,7 @@ void pf_modules_list_loaded_plugins(proxyModule* module)
 	if (count > 0)
 		WLog_INFO(TAG, "Loaded plugins:");
 
-	ArrayList_ForEach(module->plugins, pf_modules_print_ArrayList_ForEachFkt);
+	return ArrayList_ForEach(module->plugins, pf_modules_print_ArrayList_ForEachFkt);
 }
 
 WINPR_ATTR_NODISCARD

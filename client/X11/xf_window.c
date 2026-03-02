@@ -754,7 +754,11 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	LogDynAndXClearWindow(xfc->log, xfc->display, window->handle);
 	xf_SetWindowTitleText(xfc, window->handle, name);
 	LogDynAndXMapWindow(xfc->log, xfc->display, window->handle);
-	xf_input_init(xfc, window->handle);
+	if (!xf_input_init(xfc, window->handle))
+	{
+		xf_DestroyDesktopWindow(xfc, window);
+		return nullptr;
+	}
 
 	/*
 	 * NOTE: This must be done here to handle reparenting the window,

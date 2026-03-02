@@ -970,7 +970,9 @@ proxyServer* pf_server_new(const proxyConfig* config)
 		goto out;
 	}
 
-	pf_modules_list_loaded_plugins(server->module);
+	if (!pf_modules_list_loaded_plugins(server->module))
+		goto out;
+
 	if (!are_all_required_modules_loaded(server->module, server->config))
 		goto out;
 
