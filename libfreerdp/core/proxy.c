@@ -593,7 +593,8 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 	const UINT32 timeout =
 	    freerdp_settings_get_uint32(context->settings, FreeRDP_TcpConnectTimeout);
 
-	_itoa_s(port, port_str, sizeof(port_str), 10);
+	if (_itoa_s(port, port_str, sizeof(port_str), 10) < 0)
+		return FALSE;
 
 	hostLen = strlen(hostname);
 	portLen = strnlen(port_str, sizeof(port_str));

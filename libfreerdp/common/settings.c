@@ -81,13 +81,15 @@ BOOL freerdp_addin_argv_del_argument(ADDIN_ARGV* args, const char* argument)
 		if (strcmp(argument, arg) == 0)
 		{
 			free(arg);
-			memmove_s((void*)&args->argv[x],
-			          (WINPR_ASSERTING_INT_CAST(uint32_t, args->argc - x)) * sizeof(char*),
-			          (void*)&args->argv[x + 1],
-			          (WINPR_ASSERTING_INT_CAST(uint32_t, args->argc - x - 1)) * sizeof(char*));
+			const BOOL res =
+			    memmove_s((void*)&args->argv[x],
+			              (WINPR_ASSERTING_INT_CAST(uint32_t, args->argc - x)) * sizeof(char*),
+			              (void*)&args->argv[x + 1],
+			              (WINPR_ASSERTING_INT_CAST(uint32_t, args->argc - x - 1)) *
+			                  sizeof(char*)) >= 0;
 			args->argv[args->argc - 1] = nullptr;
 			args->argc--;
-			return TRUE;
+			return res;
 		}
 	}
 	return FALSE;
@@ -571,15 +573,17 @@ BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* na
 		{
 			if (strcmp(name, cur->argv[0]) == 0)
 			{
-				memmove_s((void*)&settings->StaticChannelArray[x],
-				          (count - x) * sizeof(ADDIN_ARGV*),
-				          (void*)&settings->StaticChannelArray[x + 1],
-				          (count - x - 1) * sizeof(ADDIN_ARGV*));
+				const BOOL success = memmove_s((void*)&settings->StaticChannelArray[x],
+				                               (count - x) * sizeof(ADDIN_ARGV*),
+				                               (void*)&settings->StaticChannelArray[x + 1],
+				                               (count - x - 1) * sizeof(ADDIN_ARGV*)) >= 0;
 				for (size_t y = count - 1; y < settings->StaticChannelArraySize; y++)
 					settings->StaticChannelArray[y] = nullptr;
 
 				freerdp_addin_argv_free(cur);
-				return freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelCount, count - 1);
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelCount, count - 1))
+					return FALSE;
+				return success;
 			}
 		}
 	}
@@ -677,16 +681,17 @@ BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings, const char* n
 		{
 			if (strcmp(name, cur->argv[0]) == 0)
 			{
-				memmove_s((void*)&settings->DynamicChannelArray[x],
-				          (count - x) * sizeof(ADDIN_ARGV*),
-				          (void*)&settings->DynamicChannelArray[x + 1],
-				          (count - x - 1) * sizeof(ADDIN_ARGV*));
+				const BOOL success = memmove_s((void*)&settings->DynamicChannelArray[x],
+				                               (count - x) * sizeof(ADDIN_ARGV*),
+				                               (void*)&settings->DynamicChannelArray[x + 1],
+				                               (count - x - 1) * sizeof(ADDIN_ARGV*)) >= 0;
 				for (size_t y = count - 1; y < settings->DynamicChannelArraySize; y++)
 					settings->DynamicChannelArray[y] = nullptr;
 
 				freerdp_addin_argv_free(cur);
-				return freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelCount,
-				                                   count - 1);
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_DynamicChannelCount, count - 1))
+					return FALSE;
+				return success;
 			}
 		}
 	}

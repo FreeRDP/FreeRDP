@@ -220,7 +220,6 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 		goto fail;
 
 	priv->log = WLog_Get("com.freerdp.codec.rfx");
-	WLog_OpenAppender(priv->log);
 	priv->TilePool = ObjectPool_New(TRUE);
 
 	if (!priv->TilePool)
