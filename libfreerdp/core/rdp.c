@@ -641,8 +641,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 		utils_abort_connect(rdp);
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
-		PubSub_OnTerminate(rdp->pubSub, context, &e);
-		return TRUE;
+		return PubSub_OnTerminate(rdp->pubSub, context, &e) >= 0;
 	}
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 5))

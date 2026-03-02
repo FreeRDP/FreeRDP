@@ -592,12 +592,14 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 			           error);
 	}
 
+	free(pdu.monitorDefArray);
+
 	/* some listeners may be interested (namely the display channel) */
 	EventArgsInit(&graphicsReset, "libfreerdp");
 	graphicsReset.width = pdu.width;
 	graphicsReset.height = pdu.height;
-	PubSub_OnGraphicsReset(gfx->rdpcontext->pubSub, gfx->rdpcontext, &graphicsReset);
-	free(pdu.monitorDefArray);
+	if (PubSub_OnGraphicsReset(gfx->rdpcontext->pubSub, gfx->rdpcontext, &graphicsReset) < 0)
+		return ERROR_INTERNAL_ERROR;
 	return error;
 }
 

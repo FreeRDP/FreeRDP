@@ -223,12 +223,21 @@ static UINT freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, 
 {
 	UINT status = CHANNEL_RC_OK;
 	ChannelConnectedEventArgs e = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(context);
+
 	rdpChannels* channels = (rdpChannels*)context->custom;
+	WINPR_ASSERT(channels);
+
 	freerdp* instance = channels->instance;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
 	EventArgsInit(&e, "freerdp");
 	e.name = name;
 	e.pInterface = pInterface;
-	PubSub_OnChannelConnected(instance->context->pubSub, instance->context, &e);
+	if (PubSub_OnChannelConnected(instance->context->pubSub, instance->context, &e) < 0)
+		return ERROR_INTERNAL_ERROR;
 	return status;
 }
 
@@ -242,12 +251,20 @@ static UINT freerdp_drdynvc_on_channel_disconnected(DrdynvcClientContext* contex
 {
 	UINT status = CHANNEL_RC_OK;
 	ChannelDisconnectedEventArgs e = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(context);
 	rdpChannels* channels = (rdpChannels*)context->custom;
+	WINPR_ASSERT(channels);
+
 	freerdp* instance = channels->instance;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
 	EventArgsInit(&e, "freerdp");
 	e.name = name;
 	e.pInterface = pInterface;
-	PubSub_OnChannelDisconnected(instance->context->pubSub, instance->context, &e);
+	if (PubSub_OnChannelDisconnected(instance->context->pubSub, instance->context, &e) < 0)
+		return ERROR_INTERNAL_ERROR;
 	return status;
 }
 
@@ -256,12 +273,20 @@ static UINT freerdp_drdynvc_on_channel_attached(DrdynvcClientContext* context, c
 {
 	UINT status = CHANNEL_RC_OK;
 	ChannelAttachedEventArgs e = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(context);
 	rdpChannels* channels = (rdpChannels*)context->custom;
+	WINPR_ASSERT(channels);
+
 	freerdp* instance = channels->instance;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
 	EventArgsInit(&e, "freerdp");
 	e.name = name;
 	e.pInterface = pInterface;
-	PubSub_OnChannelAttached(instance->context->pubSub, instance->context, &e);
+	if (PubSub_OnChannelAttached(instance->context->pubSub, instance->context, &e) < 0)
+		return ERROR_INTERNAL_ERROR;
 	return status;
 }
 
@@ -270,12 +295,20 @@ static UINT freerdp_drdynvc_on_channel_detached(DrdynvcClientContext* context, c
 {
 	UINT status = CHANNEL_RC_OK;
 	ChannelDetachedEventArgs e = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(context);
 	rdpChannels* channels = (rdpChannels*)context->custom;
+	WINPR_ASSERT(channels);
+
 	freerdp* instance = channels->instance;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
 	EventArgsInit(&e, "freerdp");
 	e.name = name;
 	e.pInterface = pInterface;
-	PubSub_OnChannelDetached(instance->context->pubSub, instance->context, &e);
+	if (PubSub_OnChannelDetached(instance->context->pubSub, instance->context, &e) < 0)
+		return ERROR_INTERNAL_ERROR;
 	return status;
 }
 
@@ -363,14 +396,19 @@ UINT freerdp_channels_attach(freerdp* instance)
 			    CHANNEL_EVENT_ATTACHED, cnv.pv, (UINT)hostnameLength);
 		}
 
-		if (getChannelError(instance->context) != CHANNEL_RC_OK)
+		error = getChannelError(instance->context);
+		if (error != CHANNEL_RC_OK)
 			goto fail;
 
 		pChannelOpenData = &channels->openDataList[index];
 		EventArgsInit(&e, "freerdp");
 		e.name = pChannelOpenData->name;
 		e.pInterface = pChannelOpenData->pInterface;
-		PubSub_OnChannelAttached(instance->context->pubSub, instance->context, &e);
+		if (PubSub_OnChannelAttached(instance->context->pubSub, instance->context, &e) < 0)
+		{
+			error = ERROR_INTERNAL_ERROR;
+			goto fail;
+		}
 	}
 
 fail:
@@ -426,14 +464,19 @@ UINT freerdp_channels_detach(freerdp* instance)
 			    CHANNEL_EVENT_DETACHED, cnv.pv, (UINT)hostnameLength);
 		}
 
-		if (getChannelError(context) != CHANNEL_RC_OK)
+		error = getChannelError(context);
+		if (error != CHANNEL_RC_OK)
 			goto fail;
 
 		pChannelOpenData = &channels->openDataList[index];
 		EventArgsInit(&e, "freerdp");
 		e.name = pChannelOpenData->name;
 		e.pInterface = pChannelOpenData->pInterface;
-		PubSub_OnChannelDetached(context->pubSub, context, &e);
+		if (PubSub_OnChannelDetached(context->pubSub, context, &e) < 0)
+		{
+			error = ERROR_INTERNAL_ERROR;
+			goto fail;
+		}
 	}
 
 fail:
@@ -495,7 +538,11 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 		EventArgsInit(&e, "freerdp");
 		e.name = pChannelOpenData->name;
 		e.pInterface = pChannelOpenData->pInterface;
-		PubSub_OnChannelConnected(instance->context->pubSub, instance->context, &e);
+		if (PubSub_OnChannelConnected(instance->context->pubSub, instance->context, &e) < 0)
+		{
+			error = ERROR_INTERNAL_ERROR;
+			goto fail;
+		}
 	}
 
 	channels->drdynvc = (DrdynvcClientContext*)freerdp_channels_get_static_channel_interface(
@@ -889,7 +936,8 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 		EventArgsInit(&e, "freerdp");
 		e.name = pChannelOpenData->name;
 		e.pInterface = pChannelOpenData->pInterface;
-		PubSub_OnChannelDisconnected(instance->context->pubSub, instance->context, &e);
+		if (PubSub_OnChannelDisconnected(instance->context->pubSub, instance->context, &e) < 0)
+			error = ERROR_INTERNAL_ERROR;
 	}
 
 	channels->connected = FALSE;

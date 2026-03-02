@@ -27,8 +27,13 @@
 #include <X11/extensions/XInput2.h>
 #endif
 
+WINPR_ATTR_NODISCARD
 int xf_input_init(xfContext* xfc, Window window);
+
+WINPR_ATTR_NODISCARD
 int xf_input_handle_event(xfContext* xfc, const XEvent* event);
+
+WINPR_ATTR_NODISCARD
 bool xf_use_rel_mouse(xfContext* xfc);
 
 #endif /* FREERDP_CLIENT_X11_INPUT_H */

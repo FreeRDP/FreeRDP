@@ -91,7 +91,9 @@ static CGContextRef mac_create_bitmap_context(rdpContext *context);
 	EventArgsInit(&e, "mfreerdp");
 	e.embed = TRUE;
 	e.handle = (void *)self;
-	PubSub_OnEmbedWindow(context->pubSub, context, &e);
+	if (PubSub_OnEmbedWindow(context->pubSub, context, &e) < 0)
+		return -1;
+
 	NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
 	NSRect screenFrame = [screen frame];
 
@@ -1495,7 +1497,8 @@ BOOL mac_desktop_resize(rdpContext *context)
 	EventArgsInit(&e, "mfreerdp");
 	e.width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 	e.height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
-	PubSub_OnResizeWindow(context->pubSub, context, &e);
+	if (PubSub_OnResizeWindow(context->pubSub, context, &e) < 0)
+		return FALSE;
 	return TRUE;
 }
 

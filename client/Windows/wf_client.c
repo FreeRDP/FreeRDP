@@ -477,7 +477,9 @@ static BOOL wf_post_connect(freerdp* instance)
 	EventArgsInit(&e, "wfreerdp");
 	e.embed = FALSE;
 	e.handle = (void*)wfc->hwnd;
-	PubSub_OnEmbedWindow(context->pubSub, context, &e);
+	if (PubSub_OnEmbedWindow(context->pubSub, context, &e) < 0)
+		return FALSE;
+
 #ifdef WITH_PROGRESS_BAR
 	if (wfc->taskBarList)
 	{
