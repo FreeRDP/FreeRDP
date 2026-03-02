@@ -1122,18 +1122,29 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
 
-	if (hmac &&
-	    winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH))
+	BOOL success = FALSE;
 	{
+		if (!hmac)
+			goto hmac_fail;
+		if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH))
+			goto hmac_fail;
+
 		winpr_Data_Write_UINT32(&value, SeqNo);
-		winpr_HMAC_Update(hmac, (void*)&value, 4);
-		winpr_HMAC_Update(hmac, data, length);
-		winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
-		winpr_HMAC_Free(hmac);
+
+		if (!winpr_HMAC_Update(hmac, (void*)&value, 4))
+			goto hmac_fail;
+		if (!winpr_HMAC_Update(hmac, data, length))
+			goto hmac_fail;
+		if (!winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH))
+			goto hmac_fail;
 	}
-	else
+
+	success = TRUE;
+
+hmac_fail:
+	winpr_HMAC_Free(hmac);
+	if (!success)
 	{
-		winpr_HMAC_Free(hmac);
 		free(data);
 		return SEC_E_INSUFFICIENT_MEMORY;
 	}
@@ -1142,8 +1153,14 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 	if ((data_buffer->BufferType & SECBUFFER_READONLY) == 0)
 	{
 		if (context->confidentiality)
-			winpr_RC4_Update(context->SendRc4Seal, length, (BYTE*)data,
-			                 (BYTE*)data_buffer->pvBuffer);
+		{
+			if (!winpr_RC4_Update(context->SendRc4Seal, length, (BYTE*)data,
+			                      (BYTE*)data_buffer->pvBuffer))
+			{
+				free(data);
+				return SEC_E_INSUFFICIENT_MEMORY;
+			}
+		}
 		else
 			CopyMemory(data_buffer->pvBuffer, data, length);
 	}
@@ -1156,7 +1173,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 #endif
 	free(data);
 	/* RC4-encrypt first 8 bytes of digest */
-	winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum);
+	if (!winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum))
+		return SEC_E_INSUFFICIENT_MEMORY;
 	if ((signature_buffer->BufferType & SECBUFFER_READONLY) == 0)
 	{
 		BYTE* signature = signature_buffer->pvBuffer;
@@ -1222,18 +1240,29 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
 	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
 
-	if (hmac &&
-	    winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->RecvSigningKey, WINPR_MD5_DIGEST_LENGTH))
+	BOOL success = FALSE;
 	{
+		if (!hmac)
+			goto hmac_fail;
+
+		if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->RecvSigningKey, WINPR_MD5_DIGEST_LENGTH))
+			goto hmac_fail;
+
 		winpr_Data_Write_UINT32(&value, SeqNo);
-		winpr_HMAC_Update(hmac, (void*)&value, 4);
-		winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
-		winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
-		winpr_HMAC_Free(hmac);
+
+		if (!winpr_HMAC_Update(hmac, (void*)&value, 4))
+			goto hmac_fail;
+		if (!winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer))
+			goto hmac_fail;
+		if (!winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH))
+			goto hmac_fail;
+
+		success = TRUE;
 	}
-	else
+hmac_fail:
+	winpr_HMAC_Free(hmac);
+	if (!success)
 	{
-		winpr_HMAC_Free(hmac);
 		free(data);
 		return SEC_E_INSUFFICIENT_MEMORY;
 	}
@@ -1246,7 +1275,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 #endif
 	free(data);
 	/* RC4-encrypt first 8 bytes of digest */
-	winpr_RC4_Update(context->RecvRc4Seal, 8, digest, checksum);
+	if (!winpr_RC4_Update(context->RecvRc4Seal, 8, digest, checksum))
+		return SEC_E_MESSAGE_ALTERED;
+
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	winpr_Data_Write_UINT32(expected_signature, version);
 	CopyMemory(&expected_signature[4], (void*)checksum, 8);
@@ -1308,7 +1339,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext,
 	if (!winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH))
 		goto fail;
 
-	winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum);
+	if (!winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum))
+		goto fail;
 
 	BYTE* signature = sig_buffer->pvBuffer;
 	winpr_Data_Write_UINT32(signature, 1L);

@@ -350,7 +350,7 @@ BOOL ArrayList_Insert(wArrayList* arrayList, size_t index, const void* obj)
 		}
 		else
 		{
-			ArrayList_SetItem(arrayList, index, obj);
+			ret = ArrayList_SetItem(arrayList, index, obj);
 		}
 	}
 

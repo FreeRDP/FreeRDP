@@ -727,7 +727,9 @@ HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 
 		if (IsCharAlpha(pszPath[4]) && (pszPath[5] == ':')) /* like C: */
 		{
-			memmove_s(pszPath, cchPath, &pszPath[4], cchPath - 4);
+			if (memmove_s(pszPath, cchPath, &pszPath[4], cchPath - 4) < 0)
+				return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+
 			/* since the passed pszPath must not necessarily be null terminated
 			 * and we always have enough space after the strip we can always
 			 * ensure the null termination of the stripped result
@@ -764,7 +766,8 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 
 		if (IsCharAlphaW(pszPath[4]) && (pszPath[5] == L':')) /* like C: */
 		{
-			wmemmove_s(pszPath, cchPath, &pszPath[4], cchPath - 4);
+			if (wmemmove_s(pszPath, cchPath, &pszPath[4], cchPath - 4) < 0)
+				return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
 			/* since the passed pszPath must not necessarily be null terminated
 			 * and we always have enough space after the strip we can always
 			 * ensure the null termination of the stripped result
