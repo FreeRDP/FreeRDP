@@ -188,6 +188,7 @@ BOOL Queue_Contains(wQueue* queue, const void* obj)
 
 static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
 {
+	BOOL res = TRUE;
 	const size_t blocksize = 32ull;
 	WINPR_ASSERT(queue);
 
@@ -239,8 +240,8 @@ static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
 			{
 				const size_t remain = queue->tail - batch;
 				const size_t movesize = remain * sizeof(uintptr_t);
-				memmove_s(queue->array, queue->tail * sizeof(uintptr_t), &queue->array[batch],
-				          movesize);
+				res = memmove_s(queue->array, queue->tail * sizeof(uintptr_t), &queue->array[batch],
+				                movesize) >= 0;
 
 				const size_t zerooffset = remain;
 				const size_t zerosize = (queue->tail - remain) * sizeof(uintptr_t);
@@ -249,7 +250,7 @@ static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
 			}
 		}
 	}
-	return TRUE;
+	return res;
 }
 
 /**

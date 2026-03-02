@@ -1663,7 +1663,8 @@ static BOOL filter_smartcard_device_list_announce(pf_channel_server_context* rdp
 			return TRUE;
 		if (DeviceType == RDPDR_DTYP_SMARTCARD)
 		{
-			ArrayList_Append(rdpdr->blockedDevices, (void*)(size_t)DeviceId);
+			if (!ArrayList_Append(rdpdr->blockedDevices, (void*)(size_t)DeviceId))
+				return FALSE;
 			if (count == 1)
 				return TRUE;
 

@@ -103,6 +103,7 @@ BOOL MessageQueue_Wait(wMessageQueue* queue)
 
 static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 {
+	BOOL res = TRUE;
 	const size_t increment = 128;
 	WINPR_ASSERT(queue);
 
@@ -147,8 +148,8 @@ static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 			{
 				const size_t remain = queue->tail - batch;
 				const size_t movesize = remain * sizeof(wMessage);
-				memmove_s(queue->array, queue->tail * sizeof(wMessage), &queue->array[batch],
-				          movesize);
+				res = memmove_s(queue->array, queue->tail * sizeof(wMessage), &queue->array[batch],
+				                movesize) >= 0;
 
 				const size_t zerooffset = remain;
 				const size_t zerosize = (queue->tail - remain) * sizeof(wMessage);
@@ -158,7 +159,7 @@ static BOOL MessageQueue_EnsureCapacity(wMessageQueue* queue, size_t count)
 		}
 	}
 
-	return TRUE;
+	return res;
 }
 
 BOOL MessageQueue_Dispatch(wMessageQueue* queue, const wMessage* message)

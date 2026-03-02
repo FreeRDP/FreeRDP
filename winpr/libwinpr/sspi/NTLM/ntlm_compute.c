@@ -530,8 +530,10 @@ SECURITY_STATUS ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 
 	response = (BYTE*)context->LmChallengeResponse.pvBuffer;
 	/* Compute the HMAC-MD5 hash of the resulting value using the NTLMv2 hash as the key */
-	winpr_HMAC(WINPR_MD_MD5, (void*)context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH, (BYTE*)value,
-	           WINPR_MD5_DIGEST_LENGTH, response, WINPR_MD5_DIGEST_LENGTH);
+	if (!winpr_HMAC(WINPR_MD_MD5, (void*)context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH, (BYTE*)value,
+	                WINPR_MD5_DIGEST_LENGTH, response, WINPR_MD5_DIGEST_LENGTH))
+		return SEC_E_ALGORITHM_MISMATCH;
+
 	/* Concatenate the resulting HMAC-MD5 hash and the client challenge, giving us the LMv2 response
 	 * (24 bytes) */
 	CopyMemory(&response[16], context->ClientChallenge, 8);
@@ -593,9 +595,10 @@ SECURITY_STATUS ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 		BYTE* blob = (BYTE*)ntlm_v2_temp_chal.pvBuffer;
 		CopyMemory(blob, context->ServerChallenge, 8);
 		CopyMemory(&blob[8], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
-		winpr_HMAC(WINPR_MD_MD5, (BYTE*)context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH,
-		           (BYTE*)ntlm_v2_temp_chal.pvBuffer, ntlm_v2_temp_chal.cbBuffer,
-		           context->NtProofString, WINPR_MD5_DIGEST_LENGTH);
+		if (!winpr_HMAC(WINPR_MD_MD5, (BYTE*)context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH,
+		                (BYTE*)ntlm_v2_temp_chal.pvBuffer, ntlm_v2_temp_chal.cbBuffer,
+		                context->NtProofString, WINPR_MD5_DIGEST_LENGTH))
+			goto exit;
 	}
 
 	/* NtChallengeResponse, Concatenate NTProofStr with temp */
@@ -609,9 +612,10 @@ SECURITY_STATUS ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 		CopyMemory(&blob[16], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 	}
 	/* Compute SessionBaseKey, the HMAC-MD5 hash of NTProofStr using the NTLMv2 hash as the key */
-	winpr_HMAC(WINPR_MD_MD5, (BYTE*)context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH,
-	           context->NtProofString, WINPR_MD5_DIGEST_LENGTH, context->SessionBaseKey,
-	           WINPR_MD5_DIGEST_LENGTH);
+	if (!winpr_HMAC(WINPR_MD_MD5, (BYTE*)context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH,
+	                context->NtProofString, WINPR_MD5_DIGEST_LENGTH, context->SessionBaseKey,
+	                WINPR_MD5_DIGEST_LENGTH))
+		goto exit;
 	ret = SEC_E_OK;
 exit:
 	sspi_SecBufferFree(&ntlm_v2_temp);

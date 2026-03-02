@@ -322,9 +322,10 @@ static char* arm_create_request_json(rdpArm* arm)
 	WINPR_JSON* json = WINPR_JSON_CreateObject();
 	if (!json)
 		goto arm_create_cleanup;
-	WINPR_JSON_AddStringToObject(
-	    json, "application",
-	    freerdp_settings_get_string(arm->context->settings, FreeRDP_RemoteApplicationProgram));
+	if (!WINPR_JSON_AddStringToObject(
+	        json, "application",
+	        freerdp_settings_get_string(arm->context->settings, FreeRDP_RemoteApplicationProgram)))
+		goto arm_create_cleanup;
 
 	lbi = calloc(
 	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength) + 1,
@@ -339,9 +340,12 @@ static char* arm_create_request_json(rdpArm* arm)
 		       len);
 	}
 
-	WINPR_JSON_AddStringToObject(json, "loadBalanceInfo", lbi);
-	WINPR_JSON_AddNullToObject(json, "LogonToken");
-	WINPR_JSON_AddNullToObject(json, "gatewayLoadBalancerToken");
+	if (!WINPR_JSON_AddStringToObject(json, "loadBalanceInfo", lbi))
+		goto arm_create_cleanup;
+	if (!WINPR_JSON_AddNullToObject(json, "LogonToken"))
+		goto arm_create_cleanup;
+	if (!WINPR_JSON_AddNullToObject(json, "gatewayLoadBalancerToken"))
+		goto arm_create_cleanup;
 
 	message = WINPR_JSON_PrintUnformatted(json);
 arm_create_cleanup:

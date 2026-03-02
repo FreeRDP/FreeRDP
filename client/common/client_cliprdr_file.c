@@ -433,14 +433,15 @@ static BOOL invalidate_inode(void* data, WINPR_ATTR_UNUSED size_t index, va_list
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(file_context->fuse_sess);
 
-	ArrayList_ForEach(fuse_file->children, notify_delete_child, file_context, fuse_file);
+	const BOOL res =
+	    ArrayList_ForEach(fuse_file->children, notify_delete_child, file_context, fuse_file);
 
 	DEBUG_CLIPRDR(file_context->log, "Invalidating inode %lu for file \"%s\"", fuse_file->ino,
 	              fuse_file->filename);
 	fuse_lowlevel_notify_inval_inode(file_context->fuse_sess, fuse_file->ino, 0, 0);
 	WLog_Print(file_context->log, WLOG_DEBUG, "Inode %lu invalidated", fuse_file->ino);
 
-	return TRUE;
+	return res;
 }
 
 static void clear_selection(CliprdrFileContext* file_context, BOOL all_selections,
@@ -2484,12 +2485,12 @@ BOOL cliprdr_file_context_clear(CliprdrFileContext* file)
 	WLog_Print(file->log, WLOG_DEBUG, "clear file clipboard...");
 
 	HashTable_Lock(file->local_streams);
-	HashTable_Foreach(file->local_streams, local_stream_discard, file);
+	const BOOL res = HashTable_Foreach(file->local_streams, local_stream_discard, file);
 	HashTable_Unlock(file->local_streams);
 
 	memset(file->server_data_hash, 0, sizeof(file->server_data_hash));
 	memset(file->client_data_hash, 0, sizeof(file->client_data_hash));
-	return TRUE;
+	return res;
 }
 
 BOOL cliprdr_file_context_update_client_data(CliprdrFileContext* file, const char* data,
