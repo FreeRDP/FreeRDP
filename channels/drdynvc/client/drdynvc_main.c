@@ -319,7 +319,9 @@ static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	if (!dvcman->channelsById)
 		goto fail;
 
-	HashTable_SetHashFunction(dvcman->channelsById, channelIdHash);
+	if (!HashTable_SetHashFunction(dvcman->channelsById, channelIdHash))
+		goto fail;
+
 	obj = HashTable_KeyObject(dvcman->channelsById);
 	WINPR_ASSERT(obj);
 	obj->fnObjectEquals = channelIdMatch;
@@ -335,7 +337,9 @@ static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	dvcman->listeners = HashTable_New(TRUE);
 	if (!dvcman->listeners)
 		goto fail;
-	HashTable_SetHashFunction(dvcman->listeners, HashTable_StringHash);
+
+	if (!HashTable_SetHashFunction(dvcman->listeners, HashTable_StringHash))
+		goto fail;
 
 	obj = HashTable_KeyObject(dvcman->listeners);
 	obj->fnObjectEquals = HashTable_StringCompare;

@@ -1480,7 +1480,9 @@ int main(int argc, char* argv[])
 			return usage(app, arg);
 	}
 
-	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
+	if (!WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi()))
+		return -1;
+
 	if (!winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT))
 		return -1;
 

@@ -171,20 +171,21 @@ BOOL wfreerdp_server_stop(wfServer* server)
 
 wfServer* wfreerdp_server_new()
 {
-	WSADATA wsaData;
+	WSADATA wsaData = WINPR_C_ARRAY_INIT;
 	wfServer* server;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 		return nullptr;
 
-	server = (wfServer*)calloc(1, sizeof(wfServer));
+	if (!WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi()))
+		return nullptr;
+
+	wfServer* server = (wfServer*)calloc(1, sizeof(wfServer));
 
 	if (server)
 	{
 		server->port = 3389;
 	}
-
-	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
 	cbEvent = nullptr;
 

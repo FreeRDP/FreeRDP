@@ -3707,7 +3707,8 @@ static RdpdrServerPrivate* rdpdr_server_private_new(void)
 	if (!priv->devicelist)
 		goto fail;
 
-	HashTable_SetHashFunction(priv->devicelist, rdpdr_deviceid_hash);
+	if (!HashTable_SetHashFunction(priv->devicelist, rdpdr_deviceid_hash))
+		goto fail;
 
 	{
 		wObject* obj = HashTable_ValueObject(priv->devicelist);

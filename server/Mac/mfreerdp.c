@@ -89,7 +89,8 @@ int main(int argc, char* argv[])
 
 	signal(SIGPIPE, SIG_IGN);
 
-	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
+	if (!WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi()))
+		return -1;
 
 	if (!(instance = freerdp_listener_new()))
 		return 1;
