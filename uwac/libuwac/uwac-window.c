@@ -717,10 +717,10 @@ static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 
 	for (int i = 0; i < nrects; i++, box++)
 	{
-		const int x = ((int)floor(box->x1 / scale)) - 1;
-		const int y = ((int)floor(box->y1 / scale)) - 1;
-		const int w = ((int)ceil((box->x2 - box->x1) / scale)) + 2;
-		const int h = ((int)ceil((box->y2 - box->y1) / scale)) + 2;
+		const int x = (int)floor(box->x1 / scale);
+		const int y = (int)floor(box->y1 / scale);
+		const int w = (int)ceil((box->x2 - box->x1) / scale);
+		const int h = (int)ceil((box->y2 - box->y1) / scale);
 		wl_surface_damage(window->surface, x, y, w, h);
 	}
 
@@ -739,10 +739,10 @@ static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 		const double dy = floor(1.0 * box->top / scale);
 		const double dw = ceil(1.0 * (box->right - box->left) / scale);
 		const double dh = ceil(1.0 * (box->bottom - box->top) / scale);
-		const int x = ((int)dx) - 1;
-		const int y = ((int)dy) - 1;
-		const int w = ((int)dw) + 2;
-		const int h = ((int)dh) + 2;
+		const int x = (int)dx;
+		const int y = (int)dy;
+		const int w = (int)dw;
+		const int h = (int)dh;
 		wl_surface_damage(window->surface, x, y, w, h);
 	}
 
