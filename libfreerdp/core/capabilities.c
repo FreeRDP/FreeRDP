@@ -2706,12 +2706,11 @@ static BOOL rdp_print_desktop_composition_capability_set(wLog* log, wStream* s)
 static BOOL rdp_apply_multifragment_update_capability_set(rdpSettings* settings,
                                                           const rdpSettings* src)
 {
-	UINT32 multifragMaxRequestSize = 0;
-
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
 
-	multifragMaxRequestSize = src->MultifragMaxRequestSize;
+	UINT32 multifragMaxRequestSize =
+	    freerdp_settings_get_uint32(src, FreeRDP_MultifragMaxRequestSize);
 
 	if (settings->ServerMode)
 	{
@@ -2733,14 +2732,17 @@ static BOOL rdp_apply_multifragment_update_capability_set(rdpSettings* settings,
 			 * than or equal to the value we've previously sent in the server to
 			 * client multi-fragment update capability set (MS-RDPRFX 1.5)
 			 */
-			if (multifragMaxRequestSize < settings->MultifragMaxRequestSize)
+			if (multifragMaxRequestSize <
+			    freerdp_settings_get_uint32(settings, FreeRDP_MultifragMaxRequestSize))
 			{
 				/*
 				 * If it happens to be smaller we honor the client's value but
 				 * have to disable RemoteFX
 				 */
 				settings->RemoteFxCodec = FALSE;
-				settings->MultifragMaxRequestSize = multifragMaxRequestSize;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+				                                 multifragMaxRequestSize))
+					return FALSE;
 			}
 			else
 			{
@@ -2749,7 +2751,9 @@ static BOOL rdp_apply_multifragment_update_capability_set(rdpSettings* settings,
 		}
 		else
 		{
-			settings->MultifragMaxRequestSize = multifragMaxRequestSize;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+			                                 multifragMaxRequestSize))
+				return FALSE;
 		}
 	}
 	else
@@ -2759,8 +2763,13 @@ static BOOL rdp_apply_multifragment_update_capability_set(rdpSettings* settings,
 		 * In RemoteFX mode we MUST do this but it might also be useful to
 		 * receive larger related bitmap updates.
 		 */
-		if (multifragMaxRequestSize > settings->MultifragMaxRequestSize)
-			settings->MultifragMaxRequestSize = multifragMaxRequestSize;
+		if (multifragMaxRequestSize >
+		    freerdp_settings_get_uint32(settings, FreeRDP_MultifragMaxRequestSize))
+		{
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+			                                 multifragMaxRequestSize))
+				return FALSE;
+		}
 	}
 	return TRUE;
 }
@@ -2773,16 +2782,13 @@ static BOOL rdp_apply_multifragment_update_capability_set(rdpSettings* settings,
 static BOOL rdp_read_multifragment_update_capability_set(wLog* log, wStream* s,
                                                          rdpSettings* settings)
 {
-	UINT32 multifragMaxRequestSize = 0;
-
 	WINPR_ASSERT(settings);
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 4))
 		return FALSE;
 
-	Stream_Read_UINT32(s, multifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
-	settings->MultifragMaxRequestSize = multifragMaxRequestSize;
-
-	return TRUE;
+	const UINT32 multifragMaxRequestSize = Stream_Get_UINT32(s); /* MaxRequestSize (4 bytes) */
+	return freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+	                                   multifragMaxRequestSize);
 }
 
 /*
@@ -2794,7 +2800,8 @@ static BOOL rdp_write_multifragment_update_capability_set(wLog* log, wStream* s,
                                                           rdpSettings* settings)
 {
 	WINPR_ASSERT(settings);
-	if (settings->ServerMode && settings->MultifragMaxRequestSize == 0)
+	if (settings->ServerMode &&
+	    (freerdp_settings_get_uint32(settings, FreeRDP_MultifragMaxRequestSize) == 0))
 	{
 		/*
 		 * In server mode we prefer to use the highest useful request size that
@@ -2807,11 +2814,19 @@ static BOOL rdp_write_multifragment_update_capability_set(wLog* log, wStream* s,
 		 * greater than or equal to the value we're sending here.
 		 * See [MS-RDPRFX 1.5 capability #2]
 		 */
-		UINT32 tileNumX = (settings->DesktopWidth + 63) / 64;
-		UINT32 tileNumY = (settings->DesktopHeight + 63) / 64;
-		settings->MultifragMaxRequestSize = tileNumX * tileNumY * 16384;
+		const UINT32 tileNumX = (settings->DesktopWidth + 63) / 64;
+		const UINT32 tileNumY = (settings->DesktopHeight + 63) / 64;
+
+		WINPR_ASSERT(tileNumX < UINT32_MAX / tileNumY);
+		WINPR_ASSERT(tileNumY < UINT32_MAX / tileNumX);
+		WINPR_ASSERT(tileNumX * tileNumY < UINT32_MAX / 16384u);
+
 		/* and add room for headers, regions, frame markers, etc. */
-		settings->MultifragMaxRequestSize += 16384;
+		const UINT32 MultifragMaxRequestSize = (tileNumX * tileNumY + 1u) * 16384u;
+
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+		                                 MultifragMaxRequestSize))
+			return FALSE;
 	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 32))
@@ -4791,7 +4806,9 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_MULTI_FRAGMENT_UPDATE])
 	{
 		/* client does not support multi fragment updates - make sure packages are not fragmented */
-		settings->MultifragMaxRequestSize = FASTPATH_FRAGMENT_SAFE_SIZE;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
+		                                 FASTPATH_FRAGMENT_SAFE_SIZE))
+			return FALSE;
 	}
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_LARGE_POINTER])
