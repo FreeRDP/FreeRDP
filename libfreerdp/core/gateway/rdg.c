@@ -514,7 +514,7 @@ static BOOL rdg_send_extauth_sspi(rdpRdg* rdg)
 static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 {
 	wStream* s = nullptr;
-	BOOL status = 0;
+	BOOL status = FALSE;
 	UINT32 packetSize = 16;
 	UINT16 fieldsPresent = 0;
 	WCHAR* PAACookie = nullptr;
@@ -529,10 +529,7 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 		    ConvertUtf8ToWCharAlloc(rdg->context->settings->GatewayAccessToken, &PAACookieLen);
 
 		if (!PAACookie || (PAACookieLen > UINT16_MAX / sizeof(WCHAR)))
-		{
-			free(PAACookie);
-			return FALSE;
-		}
+			goto fail;
 
 		PAACookieLen += 1; /* include \0 */
 		packetSize += 2 + (UINT32)(PAACookieLen) * sizeof(WCHAR);
@@ -542,10 +539,7 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 	s = Stream_New(nullptr, packetSize);
 
 	if (!s)
-	{
-		free(PAACookie);
-		return FALSE;
-	}
+		goto fail;
 
 	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_CREATE); /* Type (2 bytes) */
 	Stream_Write_UINT16(s, 0);                      /* Reserved (2 bytes) */
@@ -557,11 +551,14 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 	if (PAACookie)
 	{
 		Stream_Write_UINT16(s, (UINT16)PAACookieLen * sizeof(WCHAR)); /* PAA cookie string length */
-		Stream_Write_UTF16_String(s, PAACookie, PAACookieLen);
+		if (!Stream_Write_UTF16_String(s, PAACookie, PAACookieLen))
+			goto fail;
 	}
 
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
+
+fail:
 	Stream_Free(s, TRUE);
 	free(PAACookie);
 
@@ -576,7 +573,7 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 {
 	wStream* s = nullptr;
-	BOOL status = 0;
+	BOOL status = FALSE;
 	WINPR_ASSERT(rdg);
 	size_t clientNameLen = 0;
 	WCHAR* clientName = freerdp_settings_get_string_as_utf16(
@@ -586,34 +583,29 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 
 	const size_t packetSize = 12ull + clientNameLen * sizeof(WCHAR);
 	if (!clientName || (clientNameLen >= UINT16_MAX / sizeof(WCHAR)) || (packetSize > UINT32_MAX))
-	{
-		free(clientName);
-		return FALSE;
-	}
+		goto fail;
 
 	s = Stream_New(nullptr, packetSize);
 
 	if (!s)
-	{
-		free(clientName);
-		return FALSE;
-	}
+		goto fail;
 
 	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_AUTH);                  /* Type (2 bytes) */
 	Stream_Write_UINT16(s, 0);                                     /* Reserved (2 bytes) */
 	Stream_Write_UINT32(s, (UINT32)packetSize);                    /* PacketLength (4 bytes) */
 	Stream_Write_UINT16(s, 0);                                     /* FieldsPresent (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)clientNameLen * sizeof(WCHAR)); /* Client name string length */
-	Stream_Write_UTF16_String(s, clientName, clientNameLen);
+	if (!Stream_Write_UTF16_String(s, clientName, clientNameLen))
+		goto fail;
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
+
+fail:
 	Stream_Free(s, TRUE);
 	free(clientName);
 
 	if (status)
-	{
 		rdg->state = RDG_CLIENT_STATE_TUNNEL_AUTHORIZE;
-	}
 
 	return status;
 }
@@ -648,7 +640,9 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	                    (UINT16)rdg->context->settings->ServerPort); /* Resource port (2 bytes) */
 	Stream_Write_UINT16(s, 3);                                       /* Protocol number (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)serverNameLen * sizeof(WCHAR));
-	Stream_Write_UTF16_String(s, serverName, serverNameLen);
+	if (!Stream_Write_UTF16_String(s, serverName, serverNameLen))
+		goto fail;
+
 	Stream_SealLength(s);
 	status = rdg_write_packet(rdg, s);
 fail:

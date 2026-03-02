@@ -451,7 +451,8 @@ static BOOL tsg_ndr_write_string(WINPR_ATTR_UNUSED wLog* log, wStream* s, const 
 	Stream_Write_UINT32(s, (UINT32)length);    /* MaxCount (4 bytes) */
 	Stream_Write_UINT32(s, 0);                 /* Offset (4 bytes) */
 	Stream_Write_UINT32(s, (UINT32)length);    /* ActualCount (4 bytes) */
-	Stream_Write_UTF16_String(s, str, length); /* Array */
+	if (!Stream_Write_UTF16_String(s, str, length)) /* Array */
+		return FALSE;
 	Stream_Zero(s, pad);
 	return TRUE;
 }

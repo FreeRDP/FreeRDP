@@ -137,9 +137,8 @@ BOOL cliprdr_read_filedescriptor(wStream* s, FILEDESCRIPTORW* descriptor)
 	descriptor->ftLastWriteTime = uint64_to_filetime(tmp);
 	Stream_Read_UINT32(s, descriptor->nFileSizeHigh); /* fileSizeHigh (4 bytes) */
 	Stream_Read_UINT32(s, descriptor->nFileSizeLow);  /* fileSizeLow (4 bytes) */
-	Stream_Read_UTF16_String(s, descriptor->cFileName,
-	                         ARRAYSIZE(descriptor->cFileName)); /* cFileName (520 bytes) */
-	return TRUE;
+	return Stream_Read_UTF16_String(s, descriptor->cFileName,
+	                                ARRAYSIZE(descriptor->cFileName)); /* cFileName (520 bytes) */
 }
 
 BOOL cliprdr_write_filedescriptor(wStream* s, const FILEDESCRIPTORW* descriptor)
@@ -166,9 +165,8 @@ BOOL cliprdr_write_filedescriptor(wStream* s, const FILEDESCRIPTORW* descriptor)
 	    s, filetime_to_uint64(descriptor->ftLastWriteTime)); /* lastWriteTime (8 bytes) */
 	Stream_Write_UINT32(s, descriptor->nFileSizeHigh);       /* fileSizeHigh (4 bytes) */
 	Stream_Write_UINT32(s, descriptor->nFileSizeLow);        /* fileSizeLow (4 bytes) */
-	Stream_Write_UTF16_String(s, descriptor->cFileName,
-	                          ARRAYSIZE(descriptor->cFileName)); /* cFileName (520 bytes) */
-	return TRUE;
+	return Stream_Write_UTF16_String(s, descriptor->cFileName,
+	                                 ARRAYSIZE(descriptor->cFileName)); /* cFileName (520 bytes) */
 }
 
 /**
