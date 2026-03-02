@@ -2856,8 +2856,9 @@ static CACHE_GLYPH_ORDER* update_read_cache_glyph_order(rdpUpdate* update, wStre
 		                                            sizeof(WCHAR)))
 			goto fail;
 
-		Stream_Read_UTF16_String(s, cache_glyph_order->unicodeCharacters,
-		                         cache_glyph_order->cGlyphs);
+		if (!Stream_Read_UTF16_String(s, cache_glyph_order->unicodeCharacters,
+		                              cache_glyph_order->cGlyphs))
+			goto fail;
 	}
 
 	return cache_glyph_order;
@@ -2959,7 +2960,9 @@ static CACHE_GLYPH_V2_ORDER* update_read_cache_glyph_v2_order(rdpUpdate* update,
 		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, cache_glyph_v2->cGlyphs, sizeof(WCHAR)))
 			goto fail;
 
-		Stream_Read_UTF16_String(s, cache_glyph_v2->unicodeCharacters, cache_glyph_v2->cGlyphs);
+		if (!Stream_Read_UTF16_String(s, cache_glyph_v2->unicodeCharacters,
+		                              cache_glyph_v2->cGlyphs))
+			goto fail;
 	}
 
 	return cache_glyph_v2;

@@ -151,9 +151,10 @@ static UINT rail_read_server_get_appid_resp_order(wStream* s,
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, getAppidResp->windowId); /* windowId (4 bytes) */
-	Stream_Read_UTF16_String(
-	    s, getAppidResp->applicationId,
-	    ARRAYSIZE(getAppidResp->applicationId)); /* applicationId (260 UNICODE chars) */
+	if (!Stream_Read_UTF16_String(
+	        s, getAppidResp->applicationId,
+	        ARRAYSIZE(getAppidResp->applicationId))) /* applicationId (260 UNICODE chars) */
+		return ERROR_INVALID_DATA;
 	return CHANNEL_RC_OK;
 }
 

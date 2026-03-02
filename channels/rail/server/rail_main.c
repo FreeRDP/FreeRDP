@@ -235,9 +235,10 @@ static UINT rail_write_get_app_id_resp_order(wStream* s,
 		return ERROR_INVALID_PARAMETER;
 
 	Stream_Write_UINT32(s, getAppidResp->windowId); /* WindowId (4 bytes) */
-	Stream_Write_UTF16_String(
-	    s, getAppidResp->applicationId,
-	    ARRAYSIZE(getAppidResp->applicationId)); /* ApplicationId (512 bytes) */
+	if (!Stream_Write_UTF16_String(
+	        s, getAppidResp->applicationId,
+	        ARRAYSIZE(getAppidResp->applicationId))) /* ApplicationId (512 bytes) */
+		return ERROR_INVALID_DATA;
 	return ERROR_SUCCESS;
 }
 
@@ -253,13 +254,15 @@ static UINT rail_write_get_appid_resp_ex_order(wStream* s,
 		return ERROR_INVALID_PARAMETER;
 
 	Stream_Write_UINT32(s, getAppidRespEx->windowID); /* WindowId (4 bytes) */
-	Stream_Write_UTF16_String(
-	    s, getAppidRespEx->applicationID,
-	    ARRAYSIZE(getAppidRespEx->applicationID));     /* ApplicationId (520 bytes) */
+	if (!Stream_Write_UTF16_String(
+	        s, getAppidRespEx->applicationID,
+	        ARRAYSIZE(getAppidRespEx->applicationID))) /* ApplicationId (520 bytes) */
+		return ERROR_INVALID_DATA;
 	Stream_Write_UINT32(s, getAppidRespEx->processId); /* ProcessId (4 bytes) */
-	Stream_Write_UTF16_String(
-	    s, getAppidRespEx->processImageName,
-	    ARRAYSIZE(getAppidRespEx->processImageName)); /* ProcessImageName (520 bytes) */
+	if (!Stream_Write_UTF16_String(
+	        s, getAppidRespEx->processImageName,
+	        ARRAYSIZE(getAppidRespEx->processImageName))) /* ProcessImageName (520 bytes) */
+		return ERROR_INVALID_DATA;
 	return ERROR_SUCCESS;
 }
 
