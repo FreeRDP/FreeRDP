@@ -346,31 +346,43 @@ static const IWTSVirtualChannelCallback geometry_callbacks = { geometry_on_data_
 	                                                           nullptr, /* Open */
 	                                                           geometry_on_close, nullptr };
 
+static void geometry_plugin_free(GeometryClientContext* context)
+{
+	if (!context)
+		return;
+	HashTable_Free(context->geometries);
+	free(context);
+}
+static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
+{
+	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*)base;
+
+	if (!geometry)
+		return;
+
+	geometry_plugin_free(geometry->context);
+}
+
 static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, WINPR_ATTR_UNUSED rdpContext* rcontext,
                            rdpSettings* settings)
 {
-	GeometryClientContext* context = nullptr;
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*)base;
 
 	WINPR_ASSERT(base);
 	WINPR_UNUSED(settings);
 
-	context = (GeometryClientContext*)calloc(1, sizeof(GeometryClientContext));
+	GeometryClientContext* context =
+	    (GeometryClientContext*)calloc(1, sizeof(GeometryClientContext));
 	if (!context)
-	{
-		WLog_Print(base->log, WLOG_ERROR, "calloc failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
+		goto fail;
 
 	context->geometries = HashTable_New(FALSE);
 	if (!context->geometries)
-	{
-		WLog_Print(base->log, WLOG_ERROR, "unable to allocate geometries");
-		free(context);
-		return CHANNEL_RC_NO_MEMORY;
-	}
+		goto fail;
 
-	HashTable_SetHashFunction(context->geometries, mappedGeometryHash);
+	if (!HashTable_SetHashFunction(context->geometries, mappedGeometryHash))
+		goto fail;
+
 	{
 		wObject* obj = HashTable_KeyObject(context->geometries);
 		obj->fnObjectEquals = mappedGeometryKeyCompare;
@@ -385,15 +397,10 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, WINPR_ATTR_UNUSED rdpCont
 	geometry->base.iface.pInterface = (void*)context;
 
 	return CHANNEL_RC_OK;
-}
 
-static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
-{
-	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*)base;
-
-	if (geometry->context)
-		HashTable_Free(geometry->context->geometries);
-	free(geometry->context);
+fail:
+	geometry_plugin_free(context);
+	return CHANNEL_RC_NO_MEMORY;
 }
 
 /**
