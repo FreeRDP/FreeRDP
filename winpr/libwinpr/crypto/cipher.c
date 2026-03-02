@@ -153,9 +153,7 @@ BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const void* input, void
 		return FALSE;
 
 	WINPR_ASSERT(ctx);
-	if (EVP_CipherUpdate(ctx->ctx, output, &outputLength, input, (int)length) != 1)
-		return FALSE;
-	return TRUE;
+	return EVP_CipherUpdate(ctx->ctx, output, &outputLength, input, (int)length) == 1;
 #endif
 	return FALSE;
 }
