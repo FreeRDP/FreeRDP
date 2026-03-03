@@ -851,8 +851,8 @@ BOOL freerdp_client_channel_register(rdpChannels* channels, HANDLE handle,
 	if (!channels || (handle == INVALID_HANDLE_VALUE) || !fkt)
 	{
 		WLog_ERR(TAG, "Invalid function arguments (channels=%p, handle=%p, fkt=%p, userdata=%p",
-		         WINPR_CXX_COMPAT_CAST(const void*, channels), handle,
-		         WINPR_CXX_COMPAT_CAST(const void*, fkt), userdata);
+		         WINPR_FUNC_PTR_CAST(channels, const void*), handle,
+		         WINPR_FUNC_PTR_CAST(fkt, const void*), userdata);
 		return FALSE;
 	}
 
