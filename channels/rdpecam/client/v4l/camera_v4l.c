@@ -791,7 +791,7 @@ static CAM_ERROR_CODE cam_v4l_free(ICamHal* ihal)
 FREERDP_ENTRY_POINT(UINT VCAPITYPE v4l_freerdp_rdpecam_client_subsystem_entry(
     PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints))
 {
-	UINT ret = CHANNEL_RC_OK;
+	UINT ret = ERROR_INTERNAL_ERROR;
 	WINPR_ASSERT(pEntryPoints);
 
 	CamV4lHal* hal = (CamV4lHal*)calloc(1, sizeof(CamV4lHal));
@@ -809,18 +809,17 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE v4l_freerdp_rdpecam_client_subsystem_entry(
 
 	hal->streams = HashTable_New(FALSE);
 	if (!hal->streams)
-	{
-		ret = CHANNEL_RC_NO_MEMORY;
 		goto error;
-	}
 
-	HashTable_SetupForStringData(hal->streams, FALSE);
+	if (!HashTable_SetupForStringData(hal->streams, FALSE))
+		goto error;
 
 	wObject* obj = HashTable_ValueObject(hal->streams);
 	WINPR_ASSERT(obj);
 	obj->fnObjectFree = cam_v4l_stream_free;
 
-	if ((ret = pEntryPoints->pRegisterCameraHal(pEntryPoints->plugin, &hal->iHal)))
+	ret = pEntryPoints->pRegisterCameraHal(pEntryPoints->plugin, &hal->iHal);
+	if (ret != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "RegisterCameraHal failed with error %" PRIu32 "", ret);
 		goto error;
