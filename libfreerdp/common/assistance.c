@@ -1225,9 +1225,8 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* cb
 
 int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, const char* password)
 {
-	int status = 0;
+	int status = -1;
 	BYTE* buffer = nullptr;
-	FILE* fp = nullptr;
 	size_t readSize = 0;
 	union
 	{
@@ -1238,7 +1237,7 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 	if (!update_name(file, name))
 		return -1;
 
-	fp = winpr_fopen(name, "r");
+	FILE* fp = winpr_fopen(name, "r");
 
 	if (!fp)
 	{
@@ -1246,24 +1245,22 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 		return -1;
 	}
 
-	(void)_fseeki64(fp, 0, SEEK_END);
+	if (_fseeki64(fp, 0, SEEK_END) < 0)
+		goto fail;
 	fileSize.i64 = _ftelli64(fp);
-	(void)_fseeki64(fp, 0, SEEK_SET);
+	if (_fseeki64(fp, 0, SEEK_SET) < 0)
+		goto fail;
 
 	if (fileSize.i64 < 1)
 	{
 		WLog_ERR(TAG, "Failed to read ASSISTANCE file %s ", name);
-		(void)fclose(fp);
-		return -1;
+		goto fail;
 	}
 
 	buffer = (BYTE*)malloc(fileSize.s + 2);
 
 	if (!buffer)
-	{
-		(void)fclose(fp);
-		return -1;
-	}
+		goto fail;
 
 	readSize = fread(buffer, fileSize.s, 1, fp);
 
@@ -1273,19 +1270,18 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, con
 			readSize = fileSize.s;
 	}
 
-	(void)fclose(fp);
-
 	if (readSize < 1)
 	{
 		WLog_ERR(TAG, "Failed to read ASSISTANCE file %s ", name);
-		free(buffer);
-		buffer = nullptr;
-		return -1;
+		goto fail;
 	}
 
 	buffer[fileSize.s] = '\0';
 	buffer[fileSize.s + 1] = '\0';
 	status = freerdp_assistance_parse_file_buffer(file, (char*)buffer, fileSize.s, password);
+
+fail:
+	(void)fclose(fp);
 	free(buffer);
 	return status;
 }
