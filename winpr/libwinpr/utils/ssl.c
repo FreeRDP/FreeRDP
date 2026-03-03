@@ -411,7 +411,8 @@ BOOL winpr_CleanupSSL(DWORD flags)
 #endif
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
 	OSSL_LIB_CTX* ctx = OSSL_LIB_CTX_get0_global_default();
-	OSSL_PROVIDER_do_all(ctx, unload, nullptr);
+	if (ctx)
+		OSSL_PROVIDER_do_all(ctx, unload, nullptr);
 #endif
 
 	return TRUE;
