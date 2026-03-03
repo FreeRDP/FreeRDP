@@ -49,15 +49,28 @@
 #if defined(WITH_SMARTCARD_EMULATE)
 #include <freerdp/emulate/scard/smartcard_emulate.h>
 
-#define wrap(ctx, fkt, ...)                                             \
+#define wrap_raw(ctx, fkt, ...)                                         \
 	ctx->useEmulatedCard ? Emulate_##fkt(ctx->emulation, ##__VA_ARGS__) \
 	                     : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
-#define wrap_ptr(ctx, fkt, ...) wrap(ctx, fkt, ##__VA_ARGS__)
+#define wrap_ptr(ctx, fkt, ...) wrap_raw(ctx, fkt, ##__VA_ARGS__)
 #else
-#define wrap(ctx, fkt, ...) \
+#define wrap_raw(ctx, fkt, ...) \
 	ctx->useEmulatedCard ? SCARD_F_INTERNAL_ERROR : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
 #define wrap_ptr(ctx, fkt, ...) \
 	ctx->useEmulatedCard ? nullptr : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
+#endif
+
+#if defined(_WIN32)
+#define wrap(ctx, fkt, ...) wrap_raw(ctx, fkt, ##__VA_ARGS__)
+#else
+#define wrap(ctx, fkt, ...)                                               \
+	__extension__({                                                       \
+		LONG defstatus = wrap_raw(ctx, fkt, ##__VA_ARGS__);               \
+		if (defstatus != SCARD_S_SUCCESS)                                 \
+			WLog_Print(ctx->log, WLOG_TRACE, "[" #fkt "] failed with %s", \
+			           SCardGetErrorString(defstatus));                   \
+		defstatus;                                                        \
+	})
 #endif
 
 struct s_scard_call_context
@@ -1999,7 +2012,7 @@ void smartcard_call_context_free(scard_call_context* ctx)
 	if (ctx->StartedEvent)
 	{
 		WINPR_ASSERT(ctx->useEmulatedCard || ctx->pWinSCardApi);
-		wrap(ctx, SCardReleaseStartedEvent);
+		wrap_raw(ctx, SCardReleaseStartedEvent);
 	}
 
 	if (ctx->useEmulatedCard)
