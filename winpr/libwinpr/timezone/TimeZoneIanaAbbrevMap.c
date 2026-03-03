@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <winpr/atexit.h>
 #include <winpr/string.h>
 #include <winpr/synch.h>
 #include "timezone.h"
@@ -235,7 +236,7 @@ static BOOL CALLBACK TimeZoneIanaAbbrevInitialize(WINPR_ATTR_UNUSED PINIT_ONCE o
                                                   WINPR_ATTR_UNUSED PVOID* context)
 {
 	iterate_subdir_recursive(zonepath, nullptr, nullptr);
-	(void)atexit(TimeZoneIanaAbbrevCleanup);
+	(void)winpr_atexit(TimeZoneIanaAbbrevCleanup);
 
 	return TRUE;
 }

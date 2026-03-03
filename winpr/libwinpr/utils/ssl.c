@@ -20,6 +20,7 @@
 
 #include <winpr/config.h>
 
+#include <winpr/atexit.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/ssl.h>
@@ -338,7 +339,7 @@ static BOOL CALLBACK winpr_openssl_initialize(WINPR_ATTR_UNUSED PINIT_ONCE once,
 	}
 #endif
 
-	(void)atexit(winpr_openssl_cleanup);
+	(void)winpr_atexit(winpr_openssl_cleanup);
 	g_winpr_openssl_initialized_by_winpr = TRUE;
 	return TRUE;
 }

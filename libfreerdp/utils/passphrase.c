@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <winpr/atexit.h>
 #include <winpr/environment.h>
 
 #include <freerdp/config.h>
@@ -294,7 +295,7 @@ BOOL set_termianl_nonblock(int ifd, BOOL nonblock)
 	{
 		if (!registered)
 		{
-			(void)atexit(restore_terminal);
+			(void)winpr_atexit(restore_terminal);
 			registered = true;
 		}
 

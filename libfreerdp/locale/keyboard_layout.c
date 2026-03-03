@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/atexit.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/json.h>
@@ -1267,7 +1268,7 @@ static BOOL CALLBACK load_layouts(PINIT_ONCE once, PVOID param, PVOID* context)
 end:
 	free(filename);
 	WINPR_JSON_Delete(json);
-	(void)atexit(clear_layout_tables);
+	(void)winpr_atexit(clear_layout_tables);
 	return TRUE;
 }
 
