@@ -239,7 +239,7 @@ static UINT rdpei_send_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s, UINT1
 	                                             Stream_Buffer(s), nullptr);
 #ifdef WITH_DEBUG_RDPEI
 	WLog_Print(rdpei->base.log, WLOG_DEBUG,
-	           "rdpei_send_pdu: eventId: %" PRIu16 " (%s) length: %" PRIu32 " status: %" PRIu32 "",
+	           "rdpei_send_pdu: eventId: %" PRIu16 " (%s) length: %" PRIuz " status: %" PRIu32 "",
 	           eventId, rdpei_eventid_string(eventId), pduLength, status);
 #endif
 	return status;

@@ -175,7 +175,8 @@ void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 		size_t cbLen = 0;
 		ntlm_av_pair_get_len(pAvPair, cbAvPair, &cbLen);
 
-		WLog_VRB(TAG, "\t%s AvId: %" PRIu16 " AvLen: %" PRIu16 "", get_av_pair_string(pair), pair);
+		WLog_VRB(TAG, "\t%s AvId: %" PRIu16 " AvLen: %" PRIuz "", get_av_pair_string(pair), pair,
+		         cbLen);
 		winpr_HexDump(TAG, WLOG_TRACE, ntlm_av_pair_get_value_pointer(pAvPair), cbLen);
 
 		pAvPair = ntlm_av_pair_next(pAvPair, &cbAvPair);

@@ -57,7 +57,7 @@ static void dump_event(WINPR_EVENT* event, size_t index)
 	char** msg = nullptr;
 	size_t used = 0;
 
-	WLog_DBG(TAG, "Event handle created still not closed! [%" PRIuz ", %p]", index, event);
+	WLog_DBG(TAG, "Event handle created still not closed! [%" PRIuz ", %p]", index, (void*)event);
 	msg = winpr_backtrace_symbols(event->create_stack, &used);
 
 	for (size_t i = 2; i < used; i++)
@@ -545,7 +545,8 @@ void DumpEventHandles_(const char* fkt, const char* file, size_t line)
 			if (flags >= 0)
 				count++;
 		}
-		WLog_INFO(TAG, "------- limits [%d/%d] open files %" PRIuz, r.rlim_cur, r.rlim_max, count);
+		WLog_INFO(TAG, "------- limits [%lu/%lu] open files %" PRIuz, (unsigned long)r.rlim_cur,
+		          (unsigned long)r.rlim_max, count);
 	}
 	WLog_DBG(TAG, "--------- Start dump [%s %s:%" PRIuz "]", fkt, file, line);
 	if (global_event_list)

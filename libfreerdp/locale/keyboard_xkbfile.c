@@ -498,7 +498,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD* x11_keycode_to_
 
 			if (!found)
 			{
-				DEBUG_KBD("%4s: keycode: 0x%02X -> no RDP scancode found", xkb_keyname, i);
+				DEBUG_KBD("%4s: keycode: 0x%02" PRIxz " -> no RDP scancode found", xkb_keyname, i);
 			}
 			else
 				status = 0;
