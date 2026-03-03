@@ -145,7 +145,6 @@ extern "C"
 	FREERDP_API void rail_server_context_free(RailServerContext* context);
 
 	WINPR_ATTR_MALLOC(rail_server_context_free, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_API RailServerContext* rail_server_context_new(HANDLE vcm);
 
 	WINPR_ATTR_NODISCARD

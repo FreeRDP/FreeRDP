@@ -149,6 +149,9 @@ UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 
 void rail_write_handshake_order(wStream* s, const RAIL_HANDSHAKE_ORDER* handshake)
 {
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(handshake);
+	WINPR_ASSERT(Stream_EnsureRemainingCapacity(s, 4));
 	Stream_Write_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
 }
 
@@ -169,6 +172,10 @@ UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshake
 
 void rail_write_handshake_ex_order(wStream* s, const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(handshakeEx);
+	WINPR_ASSERT(Stream_EnsureRemainingCapacity(s, 8));
+
 	Stream_Write_UINT32(s, handshakeEx->buildNumber);        /* buildNumber (4 bytes) */
 	Stream_Write_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
 }
@@ -471,11 +478,6 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 	return error;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 err2or code
- */
 UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
                                BOOL extendedSpiSupported)
 {
