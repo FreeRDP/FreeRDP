@@ -352,7 +352,12 @@ static UINT ecam_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	HashTable_SetupForStringData(ecam->devices, FALSE);
+	if (!HashTable_SetupForStringData(ecam->devices, FALSE))
+	{
+		HashTable_Free(ecam->devices);
+		ecam->devices = nullptr;
+		return ERROR_INTERNAL_ERROR;
+	}
 
 	wObject* obj = HashTable_ValueObject(ecam->devices);
 	WINPR_ASSERT(obj);

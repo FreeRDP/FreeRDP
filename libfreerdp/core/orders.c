@@ -2354,6 +2354,8 @@ static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wSt
 				goto fail;
 
 			Stream_Read(s, bitmapComprHdr, 8); /* bitmapComprHdr (8 bytes) */
+			if (cache_bitmap->bitmapLength < 8)
+				goto fail;
 			cache_bitmap->bitmapLength -= 8;
 		}
 	}

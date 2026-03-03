@@ -303,7 +303,8 @@ BOOL freerdp_connect(freerdp* instance)
 freerdp_connect_finally:
 	EventArgsInit(&e, "freerdp");
 	e.result = status ? 0 : -1;
-	PubSub_OnConnectionResult(rdp->pubSub, instance->context, &e);
+	if (PubSub_OnConnectionResult(rdp->pubSub, instance->context, &e) < 0)
+		return FALSE;
 
 	if (!status)
 		freerdp_disconnect(instance);
@@ -373,7 +374,8 @@ BOOL freerdp_check_fds(freerdp* instance)
 		WLog_Print(context->log, WLOG_DEBUG, "rdp_check_fds() - %i", status);
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
-		PubSub_OnTerminate(rdp->pubSub, context, &e);
+		if (PubSub_OnTerminate(rdp->pubSub, context, &e) < 0)
+			return FALSE;
 		return FALSE;
 	}
 

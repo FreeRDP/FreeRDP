@@ -927,8 +927,7 @@ static BOOL wf_pub_mouse_event(wfContext* wfc, UINT16 flags, UINT16 x, UINT16 y)
 	eventArgs.flags = flags;
 	eventArgs.x = x;
 	eventArgs.y = y;
-	PubSub_OnMouseEvent(wfc->common.context.pubSub, &wfc->common.context, &eventArgs);
-	return TRUE;
+	return PubSub_OnMouseEvent(wfc->common.context.pubSub, &wfc->common.context, &eventArgs) >= 0;
 }
 
 static BOOL wf_scale_mouse_event(wfContext* wfc, UINT16 flags, INT32 x, INT32 y)

@@ -826,7 +826,10 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
 	EventArgsInit(&e, "xfreerdp");
 	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
-	PubSub_OnWindowStateChange(context->pubSub, context, &e);
+	if (PubSub_OnWindowStateChange(context->pubSub, context, &e) < 0)
+	{
+		WLog_Print(xfc->log, WLOG_ERROR, "PubSub_OnWindowStateChange failed");
+	}
 }
 
 void xf_minimize(xfContext* xfc)
@@ -845,7 +848,10 @@ void xf_minimize(xfContext* xfc)
 	xf_SetWindowMinimized(xfc, xfc->window);
 
 	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
-	PubSub_OnWindowStateChange(context->pubSub, context, &e);
+	if (PubSub_OnWindowStateChange(context->pubSub, context, &e) < 0)
+	{
+		WLog_Print(xfc->log, WLOG_ERROR, "PubSub_OnWindowStateChange failed");
+	}
 }
 
 void xf_lock_x11_(xfContext* xfc, WINPR_ATTR_UNUSED const char* fkt)
@@ -1471,8 +1477,7 @@ static BOOL xf_post_connect(freerdp* instance)
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
 	e.height =
 	    WINPR_ASSERTING_INT_CAST(int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
-	PubSub_OnResizeWindow(context->pubSub, xfc, &e);
-	return TRUE;
+	return PubSub_OnResizeWindow(context->pubSub, xfc, &e) >= 0;
 }
 
 static void xf_post_disconnect(freerdp* instance)

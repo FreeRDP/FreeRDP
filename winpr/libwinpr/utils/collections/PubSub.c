@@ -23,6 +23,9 @@
 
 #include <winpr/collections.h>
 
+#include "../log.h"
+#define TAG WINPR_TAG("pubsub")
+
 /**
  * Events (C# Programming Guide)
  * http://msdn.microsoft.com/en-us/library/awbftdfh.aspx
@@ -196,25 +199,23 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 
 int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, const wEventArgs* e)
 {
-	wEventType* event = nullptr;
-	int status = -1;
+	WINPR_ASSERT(pubSub);
+	WINPR_ASSERT(EventName);
+	WINPR_ASSERT(e);
 
 	if (!pubSub)
+	{
+		WLog_ERR(TAG, "pubSub(%s)=nullptr!", EventName);
 		return -1;
-	WINPR_ASSERT(e);
+	}
 
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
 
-	event = PubSub_FindEventType(pubSub, EventName);
-
-	if (pubSub->synchronized)
-		PubSub_Unlock(pubSub);
-
+	int status = 0;
+	wEventType* event = PubSub_FindEventType(pubSub, EventName);
 	if (event)
 	{
-		status = 0;
-
 		for (size_t index = 0; index < event->EventHandlerCount; index++)
 		{
 			if (event->EventHandlers[index])
@@ -224,6 +225,8 @@ int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, const 
 			}
 		}
 	}
+	if (pubSub->synchronized)
+		PubSub_Unlock(pubSub);
 
 	return status;
 }

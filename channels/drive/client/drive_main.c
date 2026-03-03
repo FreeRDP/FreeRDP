@@ -256,7 +256,7 @@ static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 	else
 	{
-		ListDictionary_Take(drive->files, key);
+		ListDictionary_Remove(drive->files, key);
 
 		if (drive_file_free(file))
 			irp->IoStatus = STATUS_SUCCESS;
@@ -470,8 +470,18 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(irp->input, FsInformationClass);
-	GetDiskFreeSpaceW(drive->path, &lpSectorsPerCluster, &lpBytesPerSector, &lpNumberOfFreeClusters,
-	                  &lpTotalNumberOfClusters);
+	if (!GetDiskFreeSpaceW(drive->path, &lpSectorsPerCluster, &lpBytesPerSector,
+	                       &lpNumberOfFreeClusters, &lpTotalNumberOfClusters))
+	{
+		const UINT32 err = GetLastError();
+		const HRESULT herr = HRESULT_FROM_WIN32(err);
+		WLog_WARN(TAG, "GetDiskFreeSpaceW failed: %s [%" PRId32 "], win32=%s [%" PRIu32 "]",
+		          NtStatus2Tag(herr), herr, Win32ErrorCode2Tag(err & 0xFFFF), err);
+		lpSectorsPerCluster = 0;
+		lpBytesPerSector = 0;
+		lpNumberOfFreeClusters = 0;
+		lpTotalNumberOfClusters = 0;
+	}
 
 	switch (FsInformationClass)
 	{
@@ -493,7 +503,18 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 				return CHANNEL_RC_NO_MEMORY;
 			}
 
-			GetFileAttributesExW(drive->path, GetFileExInfoStandard, &wfad);
+			if (!GetFileAttributesExW(drive->path, GetFileExInfoStandard, &wfad))
+			{
+				const UINT32 err = GetLastError();
+				const HRESULT herr = HRESULT_FROM_WIN32(err);
+				WLog_WARN(TAG,
+				          "GetFileAttributesExW failed: %s [%" PRId32 "], win32=%s [%" PRIu32 "]",
+				          NtStatus2Tag(herr), herr, Win32ErrorCode2Tag(err & 0xFFFF), err);
+
+				const WIN32_FILE_ATTRIBUTE_DATA empty = WINPR_C_ARRAY_INIT;
+				wfad = empty;
+			}
+
 			Stream_Write_UINT32(output, wfad.ftCreationTime.dwLowDateTime); /* VolumeCreationTime */
 			Stream_Write_UINT32(output,
 			                    wfad.ftCreationTime.dwHighDateTime);      /* VolumeCreationTime */

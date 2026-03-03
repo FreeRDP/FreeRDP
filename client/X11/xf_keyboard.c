@@ -1466,7 +1466,8 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 				EventArgsInit(&e, "xfreerdp");
 				e.dx = pdx;
 				e.dy = pdy;
-				PubSub_OnPanningChange(ctx->pubSub, xfc, &e);
+				if (PubSub_OnPanningChange(ctx->pubSub, xfc, &e)<0)
+                    return FALSE;
 				return TRUE;
 			}
 
@@ -1476,7 +1477,8 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 				EventArgsInit(&e, "xfreerdp");
 				e.dx = zdx;
 				e.dy = zdy;
-				PubSub_OnZoomingChange(ctx->pubSub, xfc, &e);
+				if (PubSub_OnZoomingChange(ctx->pubSub, xfc, &e)<0)
+                    return FALSE;
 				return TRUE;
 			}
 		}

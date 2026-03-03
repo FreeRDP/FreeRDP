@@ -55,7 +55,8 @@ int TestPubSub(int argc, char* argv[])
 		e.x = 64;
 		e.y = 128;
 
-		PubSub_OnMouseMotion(node, nullptr, &e);
+		if (PubSub_OnMouseMotion(node, nullptr, &e) < 0)
+			return -1;
 	}
 
 	{
@@ -66,7 +67,8 @@ int TestPubSub(int argc, char* argv[])
 		e.flags = 7;
 		e.button = 1;
 
-		PubSub_OnMouseButton(node, nullptr, &e);
+		if (PubSub_OnMouseButton(node, nullptr, &e) < 0)
+			return -1;
 	}
 
 	PubSub_Free(node);

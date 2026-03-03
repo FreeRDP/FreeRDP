@@ -690,7 +690,7 @@ static void video_timer(VideoClientContext* video, UINT64 now)
 	EnterCriticalSection(&priv->framesLock);
 	do
 	{
-		VideoFrame* peekFrame = (VideoFrame*)Queue_Peek(priv->frames);
+		const VideoFrame* peekFrame = (VideoFrame*)Queue_Peek(priv->frames);
 		if (!peekFrame)
 			break;
 
@@ -703,8 +703,7 @@ static void video_timer(VideoClientContext* video, UINT64 now)
 			priv->droppedFrames++;
 			VideoFrame_free(&frame);
 		}
-		frame = peekFrame;
-		Queue_Dequeue(priv->frames);
+		frame = Queue_Dequeue(priv->frames);
 	} while (1);
 	LeaveCriticalSection(&priv->framesLock);
 

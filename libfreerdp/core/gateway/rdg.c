@@ -2233,7 +2233,8 @@ rdpRdg* rdg_new(rdpContext* context)
 	if (rdg->context->settings->GatewayAccessToken)
 		rdg->extAuth = HTTP_EXTENDED_AUTH_PAA;
 
-	UuidCreate(&rdg->guid);
+	if (UuidCreate(&rdg->guid) != RPC_S_OK)
+		goto rdg_alloc_error;
 
 	rdg->tlsOut = freerdp_tls_new(rdg->context);
 

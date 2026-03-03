@@ -321,7 +321,8 @@ static void xf_input_save_last_event(xfContext* xfc, const XGenericEventCookie* 
 	xfc->lastEvent.event_y = event->event_y;
 }
 
-static void xf_input_detect_pan(xfContext* xfc)
+WINPR_ATTR_NODISCARD
+static BOOL xf_input_detect_pan(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
 	rdpContext* ctx = &xfc->common.context;
@@ -329,7 +330,7 @@ static void xf_input_detect_pan(xfContext* xfc)
 
 	if (xfc->active_contacts != 2)
 	{
-		return;
+		return TRUE;
 	}
 
 	const double dx[] = { xfc->contacts[0].pos_x - xfc->contacts[0].last_x,
@@ -352,7 +353,8 @@ static void xf_input_detect_pan(xfContext* xfc)
 				EventArgsInit(&e, "xfreerdp");
 				e.dx = 5;
 				e.dy = 0;
-				PubSub_OnPanningChange(ctx->pubSub, xfc, &e);
+				if (PubSub_OnPanningChange(ctx->pubSub, xfc, &e) < 0)
+					return FALSE;
 			}
 			xfc->px_vector = 0;
 			xfc->py_vector = 0;
@@ -365,7 +367,8 @@ static void xf_input_detect_pan(xfContext* xfc)
 				EventArgsInit(&e, "xfreerdp");
 				e.dx = -5;
 				e.dy = 0;
-				PubSub_OnPanningChange(ctx->pubSub, xfc, &e);
+				if (PubSub_OnPanningChange(ctx->pubSub, xfc, &e) < 0)
+					return FALSE;
 			}
 			xfc->px_vector = 0;
 			xfc->py_vector = 0;
@@ -382,7 +385,8 @@ static void xf_input_detect_pan(xfContext* xfc)
 				EventArgsInit(&e, "xfreerdp");
 				e.dx = 0;
 				e.dy = 5;
-				PubSub_OnPanningChange(ctx->pubSub, xfc, &e);
+				if (PubSub_OnPanningChange(ctx->pubSub, xfc, &e) < 0)
+					return FALSE;
 			}
 			xfc->py_vector = 0;
 			xfc->px_vector = 0;
@@ -395,16 +399,19 @@ static void xf_input_detect_pan(xfContext* xfc)
 				EventArgsInit(&e, "xfreerdp");
 				e.dx = 0;
 				e.dy = -5;
-				PubSub_OnPanningChange(ctx->pubSub, xfc, &e);
+				if (PubSub_OnPanningChange(ctx->pubSub, xfc, &e) < 0)
+					return FALSE;
 			}
 			xfc->py_vector = 0;
 			xfc->px_vector = 0;
 			xfc->z_vector = 0;
 		}
 	}
+	return TRUE;
 }
 
-static void xf_input_detect_pinch(xfContext* xfc)
+WINPR_ATTR_NODISCARD
+static BOOL xf_input_detect_pinch(xfContext* xfc)
 {
 	ZoomingChangeEventArgs e = WINPR_C_ARRAY_INIT;
 
@@ -415,7 +422,7 @@ static void xf_input_detect_pinch(xfContext* xfc)
 	if (xfc->active_contacts != 2)
 	{
 		xfc->firstDist = -1.0;
-		return;
+		return TRUE;
 	}
 
 	/* first calculate the distance */
@@ -449,7 +456,8 @@ static void xf_input_detect_pinch(xfContext* xfc)
 		{
 			EventArgsInit(&e, "xfreerdp");
 			e.dx = e.dy = -10;
-			PubSub_OnZoomingChange(ctx->pubSub, xfc, &e);
+			if (PubSub_OnZoomingChange(ctx->pubSub, xfc, &e) < 0)
+				return FALSE;
 			xfc->z_vector = 0;
 			xfc->px_vector = 0;
 			xfc->py_vector = 0;
@@ -459,12 +467,14 @@ static void xf_input_detect_pinch(xfContext* xfc)
 		{
 			EventArgsInit(&e, "xfreerdp");
 			e.dx = e.dy = 10;
-			PubSub_OnZoomingChange(ctx->pubSub, xfc, &e);
+			if (PubSub_OnZoomingChange(ctx->pubSub, xfc, &e) < 0)
+				return FALSE;
 			xfc->z_vector = 0;
 			xfc->px_vector = 0;
 			xfc->py_vector = 0;
 		}
 	}
+	return TRUE;
 }
 
 static void xf_input_touch_begin(xfContext* xfc, const XIDeviceEvent* event)
@@ -484,7 +494,8 @@ static void xf_input_touch_begin(xfContext* xfc, const XIDeviceEvent* event)
 	}
 }
 
-static void xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
+WINPR_ATTR_NODISCARD
+static BOOL xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
 {
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -498,11 +509,15 @@ static void xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
 			xfc->contacts[i].last_y = xfc->contacts[i].pos_y;
 			xfc->contacts[i].pos_x = event->event_x;
 			xfc->contacts[i].pos_y = event->event_y;
-			xf_input_detect_pinch(xfc);
-			xf_input_detect_pan(xfc);
+			if (!xf_input_detect_pinch(xfc))
+				return FALSE;
+			if (!xf_input_detect_pan(xfc))
+				return FALSE;
 			break;
 		}
 	}
+
+	return TRUE;
 }
 
 static void xf_input_touch_end(xfContext* xfc, const XIDeviceEvent* event)
@@ -543,7 +558,10 @@ static int xf_input_handle_event_local(xfContext* xfc, const XEvent* event)
 
 			case XI_TouchUpdate:
 				if (xf_input_is_duplicate(xfc, cookie.cc) == FALSE)
-					xf_input_touch_update(xfc, cookie.cc->data);
+				{
+					if (!xf_input_touch_update(xfc, cookie.cc->data))
+						return -1;
+				}
 
 				xf_input_save_last_event(xfc, cookie.cc);
 				break;
