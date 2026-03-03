@@ -1021,24 +1021,22 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 		return FALSE;
 	}
 
-	(void)_fseeki64(fp, 0, SEEK_END);
+	if (_fseeki64(fp, 0, SEEK_END) < 0)
+		goto fail;
 	file_size = _ftelli64(fp);
-	(void)_fseeki64(fp, 0, SEEK_SET);
+	if (_fseeki64(fp, 0, SEEK_SET) < 0)
+		goto fail;
 
 	if (file_size < 1)
 	{
 		WLog_ERR(TAG, "RDP file %s is empty", name);
-		(void)fclose(fp);
-		return FALSE;
+		goto fail;
 	}
 
 	buffer = (BYTE*)malloc((size_t)file_size + 2);
 
 	if (!buffer)
-	{
-		(void)fclose(fp);
-		return FALSE;
-	}
+		goto fail;
 
 	read_size = fread(buffer, (size_t)file_size, 1, fp);
 
@@ -1048,18 +1046,18 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 			read_size = (size_t)file_size;
 	}
 
-	(void)fclose(fp);
-
 	if (read_size < 1)
 	{
 		WLog_ERR(TAG, "Could not read from RDP file %s", name);
-		free(buffer);
-		return FALSE;
+		goto fail;
 	}
 
 	buffer[file_size] = '\0';
 	buffer[file_size + 1] = '\0';
 	status = freerdp_client_parse_rdp_file_buffer_ex(file, buffer, (size_t)file_size, parse);
+
+fail:
+	(void)fclose(fp);
 	free(buffer);
 	return status;
 }
