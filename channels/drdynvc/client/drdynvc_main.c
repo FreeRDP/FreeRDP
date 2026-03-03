@@ -456,9 +456,9 @@ static void check_open_close_receive(DVCMAN_CHANNEL* channel)
 	WINPR_ASSERT(cb);
 	if (!cb->OnOpen || !cb->OnClose || !cb->OnDataReceived)
 		WLog_VRB(TAG, "{%s:%" PRIu32 "} OnOpen=%p, OnClose=%p, OnDataReceived=%p", name, id,
-		         WINPR_CXX_COMPAT_CAST(const void*, cb->OnOpen),
-		         WINPR_CXX_COMPAT_CAST(const void*, cb->OnClose),
-		         WINPR_CXX_COMPAT_CAST(const void*, cb->OnDataReceived));
+		         WINPR_FUNC_PTR_CAST(cb->OnOpen, const void*),
+		         WINPR_FUNC_PTR_CAST(cb->OnClose, const void*),
+		         WINPR_FUNC_PTR_CAST(cb->OnDataReceived, const void*));
 }
 
 static UINT dvcman_call_on_receive(DVCMAN_CHANNEL* channel, wStream* data)

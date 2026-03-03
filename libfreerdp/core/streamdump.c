@@ -79,7 +79,10 @@ static
 		return FALSE;
 
 	if (pOffset)
-		(void)_fseeki64(fp, WINPR_ASSERTING_INT_CAST(int64_t, *pOffset), SEEK_SET);
+	{
+		if (_fseeki64(fp, WINPR_ASSERTING_INT_CAST(int64_t, *pOffset), SEEK_SET) < 0)
+			goto fail;
+	}
 
 	r = fread(&ts, 1, sizeof(ts), fp);
 	if (r != sizeof(ts))

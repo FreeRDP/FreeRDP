@@ -278,7 +278,10 @@ BOOL Queue_Enqueue(wQueue* queue, const void* obj)
 		queue->size++;
 
 		if (signalSet)
-			(void)SetEvent(queue->event);
+		{
+			if (!SetEvent(queue->event))
+				goto out;
+		}
 	}
 out:
 

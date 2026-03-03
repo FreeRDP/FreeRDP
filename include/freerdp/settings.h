@@ -239,9 +239,8 @@ extern "C"
 	FREERDP_API ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings,
 	                                                               const char* name);
 #if defined(WITH_FREERDP_DEPRECATED)
-	WINPR_DEPRECATED(
-	    WINPR_ATTR_NODISCARD FREERDP_API ADDIN_ARGV* WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
-	        WINPR_ATTR_NODISCARD freerdp_static_channel_clone(ADDIN_ARGV* channel));
+	WINPR_DEPRECATED(WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
+	                     FREERDP_API ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel));
 #endif
 
 	FREERDP_API void freerdp_static_channel_collection_free(rdpSettings* settings);
@@ -259,8 +258,8 @@ extern "C"
 
 #if defined(WITH_FREERDP_DEPRECATED)
 	WINPR_DEPRECATED(
-	    WINPR_ATTR_NODISCARD FREERDP_API ADDIN_ARGV* WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
-	        WINPR_ATTR_NODISCARD freerdp_dynamic_channel_clone(ADDIN_ARGV* channel));
+	    WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
+	        FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel));
 #endif
 
 	FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);

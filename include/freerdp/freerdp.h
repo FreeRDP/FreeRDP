@@ -220,11 +220,10 @@ extern "C"
 	 *          a certificate only for this session, 0 otherwise.
 	 */
 #if defined(WITH_FREERDP_DEPRECATED)
-	typedef WINPR_DEPRECATED_VAR(
-	    "Use pVerifyCertificateEx",
-	    DWORD (*pVerifyCertificate)(freerdp* instance, const char* common_name, const char* subject,
-	                                const char* issuer, const char* fingerprint,
-	                                BOOL host_mismatch));
+	WINPR_DEPRECATED_VAR("Use pVerifyCertificateEx",
+	                     typedef DWORD (*pVerifyCertificate)(
+	                         freerdp* instance, const char* common_name, const char* subject,
+	                         const char* issuer, const char* fingerprint, BOOL host_mismatch));
 #endif
 
 	/** @brief Callback used if user interaction is required to accept
@@ -262,12 +261,12 @@ extern "C"
 	 *          a certificate only for this session, 0 otherwise.
 	 */
 #if defined(WITH_FREERDP_DEPRECATED)
-	typedef WINPR_DEPRECATED_VAR(
-	    "Use pVerifyChangedCertificateEx",
-	    DWORD (*pVerifyChangedCertificate)(freerdp* instance, const char* common_name,
-	                                       const char* subject, const char* issuer,
-	                                       const char* new_fingerprint, const char* old_subject,
-	                                       const char* old_issuer, const char* old_fingerprint));
+	WINPR_DEPRECATED_VAR("Use pVerifyChangedCertificateEx",
+	                     typedef DWORD (*pVerifyChangedCertificate)(
+	                         freerdp* instance, const char* common_name, const char* subject,
+	                         const char* issuer, const char* new_fingerprint,
+	                         const char* old_subject, const char* old_issuer,
+	                         const char* old_fingerprint));
 #endif
 
 	/** @brief Callback used if user interaction is required to accept

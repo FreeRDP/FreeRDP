@@ -58,15 +58,16 @@ static void delete_file(char* path)
 			int rs = _fseeki64(fp, 0, SEEK_END);
 			if (rs == 0)
 				size = _ftelli64(fp);
-			(void)_fseeki64(fp, 0, SEEK_SET);
-
-			for (INT64 x = 0; x < size; x += sizeof(buffer))
+			if (_fseeki64(fp, 0, SEEK_SET) == 0)
 			{
-				const size_t dnmemb = (size_t)(size - x);
-				const size_t nmemb = MIN(sizeof(buffer), dnmemb);
-				const size_t count = fwrite(buffer, nmemb, 1, fp);
-				if (count != 1)
-					break;
+				for (INT64 x = 0; x < size; x += sizeof(buffer))
+				{
+					const size_t dnmemb = (size_t)(size - x);
+					const size_t nmemb = MIN(sizeof(buffer), dnmemb);
+					const size_t count = fwrite(buffer, nmemb, 1, fp);
+					if (count != 1)
+						break;
+				}
 			}
 
 			(void)fclose(fp);

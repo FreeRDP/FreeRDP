@@ -263,7 +263,10 @@ int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
 			queue->size--;
 
 			if (queue->size < 1)
-				(void)ResetEvent(queue->event);
+			{
+				if (ResetEvent(queue->event))
+					status = -1;
+			}
 		}
 	}
 
@@ -346,7 +349,8 @@ int MessageQueue_Clear(wMessageQueue* queue)
 		queue->head = (queue->head + 1) % queue->capacity;
 		queue->size--;
 	}
-	(void)ResetEvent(queue->event);
+	if (!ResetEvent(queue->event))
+		status = -1;
 	queue->closed = FALSE;
 
 	LeaveCriticalSection(&queue->lock);

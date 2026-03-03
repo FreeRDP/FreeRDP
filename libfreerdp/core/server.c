@@ -1656,8 +1656,10 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, WINPR_ATTR_UNUS
 
 	if (messageCtx->offset >= messageCtx->length)
 	{
-		(void)MessageQueue_Peek(channel->queue, &message, TRUE);
+		const int rc = MessageQueue_Peek(channel->queue, &message, TRUE);
 		peer_channel_queue_free_message(&message);
+		if (rc < 0)
+			return FALSE;
 	}
 
 	return TRUE;
