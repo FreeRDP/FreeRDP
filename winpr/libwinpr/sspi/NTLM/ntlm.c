@@ -391,8 +391,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 	{
 		UINT32 identityFlags = sspi_GetAuthIdentityFlags(pAuthData);
 
-		sspi_CopyAuthIdentity(&(credentials->identity),
-		                      (const SEC_WINNT_AUTH_IDENTITY_INFO*)pAuthData);
+		if (sspi_CopyAuthIdentity(&(credentials->identity),
+		                          (const SEC_WINNT_AUTH_IDENTITY_INFO*)pAuthData) < 0)
+		{
+			sspi_CredentialsFree(credentials);
+			return SEC_E_INVALID_PARAMETER;
+		}
 
 		if (identityFlags & SEC_WINNT_AUTH_IDENTITY_EXTENDED)
 			settings = (((SEC_WINNT_AUTH_IDENTITY_WINPR*)pAuthData)->ntlmSettings);
@@ -1233,7 +1237,14 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 	/* Decrypt message using with RC4, result overwrites original buffer */
 
 	if (context->confidentiality)
-		winpr_RC4_Update(context->RecvRc4Seal, length, (BYTE*)data, (BYTE*)data_buffer->pvBuffer);
+	{
+		if (!winpr_RC4_Update(context->RecvRc4Seal, length, (BYTE*)data,
+		                      (BYTE*)data_buffer->pvBuffer))
+		{
+			free(data);
+			return SEC_E_INSUFFICIENT_MEMORY;
+		}
+	}
 	else
 		CopyMemory(data_buffer->pvBuffer, data, length);
 
