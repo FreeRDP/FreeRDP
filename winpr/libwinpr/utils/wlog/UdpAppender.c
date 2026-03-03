@@ -95,14 +95,18 @@ static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender,
 	char prefix[WLOG_MAX_PREFIX_SIZE] = WINPR_C_ARRAY_INIT;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
-	(void)_sendto(udpAppender->sock, prefix, (int)strnlen(prefix, ARRAYSIZE(prefix)), 0,
-	              &udpAppender->targetAddr, udpAppender->targetAddrLen);
-	(void)_sendto(udpAppender->sock, cmessage->TextString,
-	              (int)strnlen(cmessage->TextString, INT_MAX), 0, &udpAppender->targetAddr,
-	              udpAppender->targetAddrLen);
-	(void)_sendto(udpAppender->sock, "\n", 1, 0, &udpAppender->targetAddr,
-	              udpAppender->targetAddrLen);
-	return TRUE;
+	BOOL res = TRUE;
+	if (_sendto(udpAppender->sock, prefix, (int)strnlen(prefix, ARRAYSIZE(prefix)), 0,
+	            &udpAppender->targetAddr, udpAppender->targetAddrLen) < 0)
+		res = FALSE;
+	if (_sendto(udpAppender->sock, cmessage->TextString,
+	            (int)strnlen(cmessage->TextString, INT_MAX), 0, &udpAppender->targetAddr,
+	            udpAppender->targetAddrLen) < 0)
+		res = FALSE;
+	if (_sendto(udpAppender->sock, "\n", 1, 0, &udpAppender->targetAddr,
+	            udpAppender->targetAddrLen) < 0)
+		res = FALSE;
+	return res;
 }
 
 static BOOL WLog_UdpAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
