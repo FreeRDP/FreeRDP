@@ -1785,7 +1785,7 @@ SCOPE_LIST* license_new_scope_list(void)
 	return list;
 }
 
-BOOL license_scope_list_resize(SCOPE_LIST* scopeList, UINT32 count)
+static void license_scope_list_free(SCOPE_LIST* scopeList, UINT32 count)
 {
 	WINPR_ASSERT(scopeList);
 	WINPR_ASSERT(scopeList->array || (scopeList->count == 0));
@@ -1796,6 +1796,16 @@ BOOL license_scope_list_resize(SCOPE_LIST* scopeList, UINT32 count)
 		scopeList->array[x] = nullptr;
 	}
 
+	if (count == 0)
+	{
+		free((void*)scopeList->array);
+		scopeList->array = nullptr;
+	}
+}
+
+BOOL license_scope_list_resize(SCOPE_LIST* scopeList, UINT32 count)
+{
+	license_scope_list_free(scopeList, count);
 	if (count > 0)
 	{
 		LICENSE_BLOB** tmp =
@@ -1803,11 +1813,6 @@ BOOL license_scope_list_resize(SCOPE_LIST* scopeList, UINT32 count)
 		if (!tmp)
 			return FALSE;
 		scopeList->array = tmp;
-	}
-	else
-	{
-		free((void*)scopeList->array);
-		scopeList->array = nullptr;
 	}
 
 	for (UINT32 x = scopeList->count; x < count; x++)
@@ -1836,7 +1841,7 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
 	if (!scopeList)
 		return;
 
-	(void)license_scope_list_resize(scopeList, 0);
+	license_scope_list_free(scopeList, 0);
 	free(scopeList);
 }
 
