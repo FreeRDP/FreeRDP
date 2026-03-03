@@ -1037,6 +1037,9 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 	if (!tsg_print(buffer, length, " "))
 		return FALSE;
 
+	if (UuidToStringA(&caps->nonce, &uuid) != RPC_S_OK)
+		return FALSE;
+
 	if (caps->certChainLen > 0)
 	{
 		if (caps->certChainLen > INT_MAX)
@@ -1047,7 +1050,6 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 	}
 
 	tsg_packet_versioncaps_to_string(&ptbuffer, &size, &caps->versionCaps);
-	UuidToStringA(&caps->nonce, &uuid);
 	if (strdata || (caps->certChainLen == 0))
 		rc =
 		    tsg_print(buffer, length,
