@@ -723,7 +723,8 @@ static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, const ADDIN_ARGV* 
 		const char* arg = args->argv[x];
 		if (strcmp(arg, "dbg") == 0)
 		{
-			WLog_SetLogLevel(WLog_Get(TAG), WLOG_TRACE);
+			if (!WLog_SetLogLevel(WLog_Get(TAG), WLOG_TRACE))
+				return ERROR_INTERNAL_ERROR;
 		}
 		else if (_strnicmp(arg, "device:", 7) == 0)
 		{

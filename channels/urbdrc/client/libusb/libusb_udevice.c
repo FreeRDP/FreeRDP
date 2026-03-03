@@ -267,7 +267,7 @@ static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 			BYTE* dataStart = Stream_Pointer(user_data->data);
 			if (!Stream_SetPosition(user_data->data,
 			                        40)) /* TS_URB_ISOCH_TRANSFER_RESULT IsoPacket offset */
-				return;
+				break;
 
 			for (uint32_t i = 0; i < WINPR_ASSERTING_INT_CAST(uint32_t, transfer->num_iso_packets);
 			     i++)

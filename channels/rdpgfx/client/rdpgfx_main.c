@@ -70,7 +70,8 @@ static BOOL delete_surface(const void* key, void* value, void* arg)
 
 static void free_surfaces(RdpgfxClientContext* context, wHashTable* SurfaceTable)
 {
-	HashTable_Foreach(SurfaceTable, delete_surface, context);
+	if (!HashTable_Foreach(SurfaceTable, delete_surface, context))
+		WLog_WARN(TAG, "delete_surface failed");
 }
 
 static UINT evict_cache_slots(RdpgfxClientContext* context, UINT16 MaxCacheSlots, void** CacheSlots)

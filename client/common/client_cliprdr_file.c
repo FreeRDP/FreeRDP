@@ -549,15 +549,20 @@ static BOOL clear_clip_data_entries(WINPR_ATTR_UNUSED const void* key, void* val
 	return TRUE;
 }
 
-static void clear_cdi_entries(CliprdrFileContext* file_context)
+WINPR_ATTR_NODISCARD
+static UINT clear_cdi_entries(CliprdrFileContext* file_context)
 {
+	UINT res = CHANNEL_RC_OK;
 	WINPR_ASSERT(file_context);
 
 	HashTable_Lock(file_context->inode_table);
-	HashTable_Foreach(file_context->clip_data_table, clear_clip_data_entries, nullptr);
+	if (!HashTable_Foreach(file_context->clip_data_table, clear_clip_data_entries, nullptr))
+		res = ERROR_INTERNAL_ERROR;
 
 	HashTable_Clear(file_context->clip_data_table);
 	HashTable_Unlock(file_context->inode_table);
+
+	return res;
 }
 
 static UINT prepare_clip_data_entry_with_id(CliprdrFileContext* file_context)
@@ -616,7 +621,7 @@ UINT cliprdr_file_context_notify_new_server_format_list(CliprdrFileContext* file
 #if defined(WITH_FUSE)
 	clear_no_cdi_entry(file_context);
 	/* TODO: assign timeouts to old locks instead */
-	clear_cdi_entries(file_context);
+	rc = clear_cdi_entries(file_context);
 
 	if (does_server_support_clipdata_locking(file_context))
 		rc = prepare_clip_data_entry_with_id(file_context);
@@ -634,7 +639,7 @@ UINT cliprdr_file_context_notify_new_client_format_list(CliprdrFileContext* file
 #if defined(WITH_FUSE)
 	clear_no_cdi_entry(file_context);
 	/* TODO: assign timeouts to old locks instead */
-	clear_cdi_entries(file_context);
+	return clear_cdi_entries(file_context);
 #endif
 
 	return CHANNEL_RC_OK;

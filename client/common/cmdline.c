@@ -5606,7 +5606,6 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 	if (!isArgsFrom)
 		warn_credential_args(largs);
 
-	CommandLineFindArgumentA(largs, "v");
 	arg = largs;
 	errno = 0;
 

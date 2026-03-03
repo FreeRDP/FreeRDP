@@ -1952,6 +1952,9 @@ static inline RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* WINPR_RESTRICT context
 	WINPR_ASSERT(message);
 	WINPR_ASSERT(numMessages);
 
+	if (maxDataSize <= 1024)
+		return nullptr;
+
 	maxDataSize -= 1024; /* reserve enough space for headers */
 	*numMessages = ((message->tilesDataSize + maxDataSize) / maxDataSize) * 4ull;
 

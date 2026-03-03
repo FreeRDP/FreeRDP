@@ -90,7 +90,7 @@ extern "C"
 
 	WINPR_ATTR_NODISCARD BOOL pf_modules_is_plugin_loaded(proxyModule* module,
 	                                                      const char* plugin_name);
-	void pf_modules_list_loaded_plugins(proxyModule* module);
+	WINPR_ATTR_NODISCARD BOOL pf_modules_list_loaded_plugins(proxyModule* module);
 
 	WINPR_ATTR_NODISCARD BOOL pf_modules_run_filter(proxyModule* module, PF_FILTER_TYPE type,
 	                                                proxyData* pdata, void* param);

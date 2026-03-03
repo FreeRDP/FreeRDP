@@ -18,6 +18,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
@@ -34,6 +35,7 @@
 
 void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode)
 {
+	WINPR_ASSERT(pipe);
 	MessageQueue_PostQuit(pipe->In, nExitCode);
 	MessageQueue_PostQuit(pipe->Out, nExitCode);
 }
@@ -44,27 +46,23 @@ void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode)
 
 wMessagePipe* MessagePipe_New(void)
 {
-	wMessagePipe* pipe = nullptr;
-
-	pipe = (wMessagePipe*)malloc(sizeof(wMessagePipe));
+	wMessagePipe* pipe = (wMessagePipe*)calloc(1, sizeof(wMessagePipe));
 
 	if (!pipe)
 		return nullptr;
 
 	pipe->In = MessageQueue_New(nullptr);
 	if (!pipe->In)
-		goto error_in;
+		goto fail;
 
 	pipe->Out = MessageQueue_New(nullptr);
 	if (!pipe->Out)
-		goto error_out;
+		goto fail;
 
 	return pipe;
 
-error_out:
-	MessageQueue_Free(pipe->In);
-error_in:
-	free(pipe);
+fail:
+	MessagePipe_Free(pipe);
 	return nullptr;
 }
 

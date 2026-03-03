@@ -663,9 +663,10 @@ static BOOL vgids_read_do_fkt(void* data, size_t index, va_list ap)
 	return TRUE;
 }
 
-static void vgids_read_do(vgidsContext* context, UINT16 efID, UINT16 doID)
+WINPR_ATTR_NODISCARD
+static BOOL vgids_read_do(vgidsContext* context, UINT16 efID, UINT16 doID)
 {
-	ArrayList_ForEach(context->files, vgids_read_do_fkt, context, efID, doID);
+	return ArrayList_ForEach(context->files, vgids_read_do_fkt, context, efID, doID);
 }
 
 static void vgids_reset_context_response(vgidsContext* context)
@@ -897,7 +898,8 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 			}
 
 			Stream_Read_UINT16_BE(s, doId);
-			vgids_read_do(context, fileId, doId);
+			if (!vgids_read_do(context, fileId, doId))
+				return FALSE;
 			break;
 		}
 		case 0xA:

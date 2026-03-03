@@ -104,7 +104,8 @@ static struct synthetic_file* make_synthetic_file(const WCHAR* local_name, const
 
 	{
 		const size_t len = _wcslen(file->remote_name);
-		PathCchConvertStyleW(file->remote_name, len, PATH_STYLE_WINDOWS);
+		if (S_OK != PathCchConvertStyleW(file->remote_name, len, PATH_STYLE_WINDOWS))
+			goto fail;
 	}
 
 	file->dwFileAttributes = fd.dwFileAttributes;

@@ -574,10 +574,13 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		WINPR_ASSERT(context);
 		WINPR_ASSERT(context->settings);
 
-		if (totalSize > context->settings->MultifragMaxRequestSize)
+		if (totalSize >
+		    freerdp_settings_get_uint32(context->settings, FreeRDP_MultifragMaxRequestSize))
 		{
-			WLog_ERR(TAG, "Total size (%" PRIuz ") exceeds MultifragMaxRequestSize (%" PRIu32 ")",
-			         totalSize, context->settings->MultifragMaxRequestSize);
+			WLog_ERR(
+			    TAG, "Total size (%" PRIuz ") exceeds MultifragMaxRequestSize (%" PRIu32 ")",
+			    totalSize,
+			    freerdp_settings_get_uint32(context->settings, FreeRDP_MultifragMaxRequestSize));
 			goto out_fail;
 		}
 
@@ -1211,12 +1214,13 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	}
 
 	/* check if the client's fast path pdu buffer is large enough */
-	if (totalLength > settings->MultifragMaxRequestSize)
+	if (totalLength > freerdp_settings_get_uint32(settings, FreeRDP_MultifragMaxRequestSize))
 	{
 		WLog_ERR(TAG,
 		         "fast path update size (%" PRIuz
 		         ") exceeds the client's maximum request size (%" PRIu32 ")",
-		         totalLength, settings->MultifragMaxRequestSize);
+		         totalLength,
+		         freerdp_settings_get_uint32(settings, FreeRDP_MultifragMaxRequestSize));
 		return FALSE;
 	}
 
