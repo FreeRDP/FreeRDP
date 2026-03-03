@@ -444,9 +444,11 @@ static BOOL invalidate_inode(void* data, WINPR_ATTR_UNUSED size_t index, va_list
 	return res;
 }
 
-static void clear_selection(CliprdrFileContext* file_context, BOOL all_selections,
+WINPR_ATTR_NODISCARD
+static bool clear_selection(CliprdrFileContext* file_context, BOOL all_selections,
                             CliprdrFuseClipDataEntry* clip_data_entry)
 {
+	bool res = true;
 	FuseFileClearContext clear_context = WINPR_C_ARRAY_INIT;
 	CliprdrFuseFile* clip_data_dir = nullptr;
 
@@ -483,8 +485,10 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
 		WLog_Print(file_context->log, WLOG_DEBUG, "Clearing selection%s",
 		           all_selections ? "s" : "");
 
-	HashTable_Foreach(file_context->request_table, maybe_clear_fuse_request, &clear_context);
-	HashTable_Foreach(file_context->inode_table, maybe_steal_inode, &clear_context);
+	if (!HashTable_Foreach(file_context->request_table, maybe_clear_fuse_request, &clear_context))
+		res = false;
+	if (!HashTable_Foreach(file_context->inode_table, maybe_steal_inode, &clear_context))
+		res = false;
 	HashTable_Unlock(file_context->inode_table);
 
 	if (file_context->fuse_sess)
@@ -497,7 +501,8 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
 		 * So, to avoid a deadlock here, unlock the mutex and reply all incoming
 		 * operations with -ENOENT until the invalidation process is complete.
 		 */
-		ArrayList_ForEach(clear_context.fuse_files, invalidate_inode, file_context);
+		if (!ArrayList_ForEach(clear_context.fuse_files, invalidate_inode, file_context))
+			res = false;
 		CliprdrFuseFile* root_dir = get_fuse_file_by_ino(file_context, FUSE_ROOT_ID);
 		if (clip_data_dir && root_dir)
 		{
@@ -513,40 +518,44 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
 		           clip_data_entry->clip_data_id);
 	else
 		WLog_Print(file_context->log, WLOG_DEBUG, "Selection%s cleared", all_selections ? "s" : "");
+	return res;
 }
 
-static void clear_entry_selection(CliprdrFuseClipDataEntry* clip_data_entry)
+WINPR_ATTR_NODISCARD
+static bool clear_entry_selection(CliprdrFuseClipDataEntry* clip_data_entry)
 {
 	WINPR_ASSERT(clip_data_entry);
 
 	if (!clip_data_entry->clip_data_dir)
-		return;
+		return true;
 
-	clear_selection(clip_data_entry->file_context, FALSE, clip_data_entry);
+	return clear_selection(clip_data_entry->file_context, FALSE, clip_data_entry);
 }
 
-static void clear_no_cdi_entry(CliprdrFileContext* file_context)
+WINPR_ATTR_NODISCARD
+static bool clear_no_cdi_entry(CliprdrFileContext* file_context)
 {
+	BOOL res = true;
 	WINPR_ASSERT(file_context);
 
 	WINPR_ASSERT(file_context->inode_table);
 	HashTable_Lock(file_context->inode_table);
 	if (file_context->clip_data_entry_without_id)
 	{
-		clear_entry_selection(file_context->clip_data_entry_without_id);
+		res = clear_entry_selection(file_context->clip_data_entry_without_id);
 
 		clip_data_entry_free(file_context->clip_data_entry_without_id);
 		file_context->clip_data_entry_without_id = nullptr;
 	}
 	HashTable_Unlock(file_context->inode_table);
+	return res;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL clear_clip_data_entries(WINPR_ATTR_UNUSED const void* key, void* value,
                                     WINPR_ATTR_UNUSED void* arg)
 {
-	clear_entry_selection(value);
-
-	return TRUE;
+	return clear_entry_selection(value);
 }
 
 WINPR_ATTR_NODISCARD
@@ -619,7 +628,8 @@ UINT cliprdr_file_context_notify_new_server_format_list(CliprdrFileContext* file
 	WINPR_ASSERT(file_context->context);
 
 #if defined(WITH_FUSE)
-	clear_no_cdi_entry(file_context);
+	if (!clear_no_cdi_entry(file_context))
+		return ERROR_INTERNAL_ERROR;
 	/* TODO: assign timeouts to old locks instead */
 	rc = clear_cdi_entries(file_context);
 
@@ -637,7 +647,8 @@ UINT cliprdr_file_context_notify_new_client_format_list(CliprdrFileContext* file
 	WINPR_ASSERT(file_context->context);
 
 #if defined(WITH_FUSE)
-	clear_no_cdi_entry(file_context);
+	if (!clear_no_cdi_entry(file_context))
+		return ERROR_INTERNAL_ERROR;
 	/* TODO: assign timeouts to old locks instead */
 	return clear_cdi_entries(file_context);
 #endif
@@ -1396,7 +1407,7 @@ static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 
 	{
 		writelog(file->log, WLOG_WARN, __FILE__, __func__, __LINE__,
 		         "missing entry for lockID %" PRIu32 ", index %" PRIu32, lockId, listIndex);
-		HashTable_Foreach(file->local_streams, dump_streams, file);
+		(void)HashTable_Foreach(file->local_streams, dump_streams, file);
 	}
 
 	return nullptr;
@@ -1651,16 +1662,18 @@ BOOL cliprdr_file_context_init(CliprdrFileContext* file, CliprdrClientContext* c
 }
 
 #if defined(WITH_FUSE)
-static void clear_all_selections(CliprdrFileContext* file_context)
+WINPR_ATTR_NODISCARD
+static bool clear_all_selections(CliprdrFileContext* file_context)
 {
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(file_context->inode_table);
 
 	HashTable_Lock(file_context->inode_table);
-	clear_selection(file_context, TRUE, nullptr);
+	const bool rc = clear_selection(file_context, TRUE, nullptr);
 
 	HashTable_Clear(file_context->clip_data_table);
 	HashTable_Unlock(file_context->inode_table);
+	return rc;
 }
 #endif
 
@@ -1674,8 +1687,10 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 #if defined(WITH_FUSE)
 	if (file->inode_table)
 	{
-		clear_no_cdi_entry(file);
-		clear_all_selections(file);
+		if (!clear_no_cdi_entry(file))
+			return FALSE;
+		if (!clear_all_selections(file))
+			return FALSE;
 	}
 #endif
 
@@ -1930,8 +1945,7 @@ end:
 	if (!crc)
 	{
 		fuse_file_free(fuse_file);
-		clear_entry_selection(clip_data_entry);
-		return FALSE;
+		return clear_entry_selection(clip_data_entry);
 	}
 	return TRUE;
 }
@@ -2025,7 +2039,8 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 
 	WINPR_ASSERT(clip_data_entry);
 
-	clear_entry_selection(clip_data_entry);
+	if (!clear_entry_selection(clip_data_entry))
+		goto fail;
 	WINPR_ASSERT(!clip_data_entry->clip_data_dir);
 
 	clip_data_entry->clip_data_dir =

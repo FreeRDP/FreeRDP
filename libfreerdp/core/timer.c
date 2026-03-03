@@ -170,7 +170,7 @@ static uint64_t expire_and_reschedule(FreeRDPTimer* timer)
 	uint64_t now = winpr_GetTickCount64NS();
 
 	ArrayList_Lock(timer->entries);
-	ArrayList_ForEach(timer->entries, runExpiredTimer, &now, &mainloop);
+	(void)ArrayList_ForEach(timer->entries, runExpiredTimer, &now, &mainloop);
 	if (mainloop)
 		(void)SetEvent(timer->mainevent);
 
@@ -339,10 +339,10 @@ bool freerdp_timer_poll(FreeRDPTimer* timer)
 	ArrayList_Lock(timer->entries);
 	(void)ResetEvent(timer->mainevent);
 	uint64_t now = winpr_GetTickCount64NS();
-	ArrayList_ForEach(timer->entries, runExpiredTimerOnMainloop, &now);
+	bool rc = ArrayList_ForEach(timer->entries, runExpiredTimerOnMainloop, &now);
 	(void)SetEvent(timer->event); // Trigger a wakeup of timer thread to reschedule
 	ArrayList_Unlock(timer->entries);
-	return true;
+	return rc;
 }
 
 HANDLE freerdp_timer_get_event(FreeRDPTimer* timer)
