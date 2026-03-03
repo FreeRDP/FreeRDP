@@ -176,10 +176,13 @@ void WinPrAsn1Encoder_Reset(WinPrAsn1Encoder* enc)
 
 void WinPrAsn1Encoder_Free(WinPrAsn1Encoder** penc)
 {
-	WinPrAsn1Encoder* enc = nullptr;
-
 	WINPR_ASSERT(penc);
-	enc = *penc;
+	WinPrAsn1Encoder_FreeNoNull(*penc);
+	*penc = nullptr;
+}
+
+void WinPrAsn1Encoder_FreeNoNull(WinPrAsn1Encoder* enc)
+{
 	if (enc)
 	{
 		if (enc->containers != &enc->staticContainers[0])
@@ -191,7 +194,6 @@ void WinPrAsn1Encoder_Free(WinPrAsn1Encoder** penc)
 		Stream_Free(enc->pool, TRUE);
 		free(enc);
 	}
-	*penc = nullptr;
 }
 
 static Asn1Chunk* asn1enc_get_free_chunk(WinPrAsn1Encoder* enc, size_t chunkSz, BOOL commit,
