@@ -50,13 +50,13 @@ struct s_wListDictionary
  * Internal implementation uses a singly-linked list
  */
 
-WINPR_API wObject* ListDictionary_KeyObject(wListDictionary* listDictionary)
+WINPR_API WINPR_ATTR_NODISCARD wObject* ListDictionary_KeyObject(wListDictionary* listDictionary)
 {
 	WINPR_ASSERT(listDictionary);
 	return &listDictionary->objectKey;
 }
 
-WINPR_API wObject* ListDictionary_ValueObject(wListDictionary* listDictionary)
+WINPR_API WINPR_ATTR_NODISCARD wObject* ListDictionary_ValueObject(wListDictionary* listDictionary)
 {
 	WINPR_ASSERT(listDictionary);
 	return &listDictionary->objectValue;

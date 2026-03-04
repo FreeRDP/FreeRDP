@@ -218,7 +218,7 @@ static krb5_error_code krb5_prompter(krb5_context context, void* data,
 	return 0;
 }
 
-static inline krb5glue_key get_key(struct krb5glue_keyset* keyset)
+WINPR_ATTR_NODISCARD static inline krb5glue_key get_key(struct krb5glue_keyset* keyset)
 {
 	return keyset->acceptor_key    ? keyset->acceptor_key
 	       : keyset->initiator_key ? keyset->initiator_key
