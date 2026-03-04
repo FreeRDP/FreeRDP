@@ -467,8 +467,7 @@ error_spinlock:
 
 static void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
 {
-	PCSC_SCARDCONTEXT* pContext = nullptr;
-	pContext = PCSC_GetCardContextData(hContext);
+	PCSC_SCARDCONTEXT* pContext = PCSC_GetCardContextData(hContext);
 
 	if (!pContext)
 	{
@@ -770,9 +769,7 @@ static LONG WINAPI PCSC_SCardReleaseContext(SCARDCONTEXT hContext)
 	LONG status = SCARD_S_SUCCESS;
 
 	status = PCSC_SCardReleaseContext_Internal(hContext);
-
-	if (status != SCARD_S_SUCCESS)
-		PCSC_ReleaseCardContext(hContext);
+	PCSC_ReleaseCardContext(hContext);
 
 	return status;
 }

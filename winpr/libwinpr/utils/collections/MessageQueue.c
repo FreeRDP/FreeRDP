@@ -264,7 +264,7 @@ int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
 
 			if (queue->size < 1)
 			{
-				if (ResetEvent(queue->event))
+				if (!ResetEvent(queue->event))
 					status = -1;
 			}
 		}
