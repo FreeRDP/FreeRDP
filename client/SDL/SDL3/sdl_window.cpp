@@ -346,6 +346,35 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 	if (!SDL_GetWindowSizeInPixels(window, &rect.w, &rect.h))
 		return {};
 
+	if (tryFallback())
+	{
+		/* On wlroots compositors (Sway, river, etc.), windows that are hidden/unmapped
+		 * don't get their actual display dimensions. The dummy window returns its creation size
+		 * (64x64) instead of the display size. This causes validation errors since we require >=
+		 * 200px. Workaround: If we got dimensions that are too small, query the display directly.
+		 */
+
+		const auto displayID = SDL_GetDisplayForWindow(window);
+		SDL_Rect displayBounds = {};
+		if (SDL_GetDisplayBounds(displayID, &displayBounds))
+		{
+			if (forceAsPrimary)
+			{
+				rect.x = 0;
+				rect.y = 0;
+			}
+			rect.w = displayBounds.w;
+			rect.h = displayBounds.h;
+
+			const float contentScale = SDL_GetDisplayContentScale(displayID);
+			if (contentScale > 1.0f)
+			{
+				rect.w = static_cast<int>(std::roundf(rect.w * contentScale));
+				rect.h = static_cast<int>(std::roundf(rect.h * contentScale));
+			}
+		}
+	}
+
 	return rect;
 }
 
@@ -483,4 +512,52 @@ SDL_Rect SdlWindow::rect(SDL_DisplayID id, bool forceAsPrimary)
 		;
 
 	return rect(window.get(), forceAsPrimary);
+}
+
+bool SdlWindow::tryFallback()
+{
+	const auto platform = SDL_GetPlatform();
+	if ((platform == nullptr) || (strcmp(platform, "Linux") != 0))
+		return false;
+
+	const auto driver = SDL_GetCurrentVideoDriver();
+	if ((driver == nullptr) || (strcmp(driver, "wayland") != 0))
+		return false;
+
+	/* If we define a custom env variable to use the wlroots hack
+	 * then enable/disable according to this setting only.
+	 */
+	const auto wlroots_hack = SDL_getenv("FREERDP_WLROOTS_HACK");
+	if (wlroots_hack != nullptr)
+		return strcmp(wlroots_hack, "0") != 0;
+
+	/* check XDG_SESSION_DESKTOP
+	 *
+	 * if set and the value is
+	 * - sway
+	 *
+	 * then we need the hack.
+	 */
+	const auto xdg_session = SDL_getenv("XDG_SESSION_DESKTOP");
+	if (xdg_session != nullptr)
+	{
+		if (strcmp(xdg_session, "sway") == 0)
+			return true;
+	}
+
+	/* check XDG_CURRENT_DESKTOP
+	 *
+	 * if set and the value is
+	 * - sway:wlroots
+	 *
+	 * then we need the hack.
+	 */
+	const auto xdg_desktop = SDL_getenv("XDG_CURRENT_DESKTOP");
+	if (xdg_desktop != nullptr)
+	{
+		if (strcmp(xdg_desktop, "sway:wlroots") == 0)
+			return true;
+	}
+
+	return false;
 }
