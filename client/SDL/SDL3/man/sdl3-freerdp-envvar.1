@@ -1,0 +1,12 @@
+.PP
+FREERDP_WLROOTS_HACK
+.RS 4
+If defined 0 disables multimonitor detection hack entirely. Set to 1 to force enabled.
+.br
+By default fall back to detection of sway or other wlroots based compositors by evaluating \fIXDG_SESSION_DESKTOP\fR and \fIXDG_CURRENT_DESKTOP\fR.
+.br
+.br
+Rationale: wlroots based compositors do not expose display information to invisible windows so we have no proper way to query the current monitor layout.
+.br
+With this hack enabled we fall back and try to determine the resolutions by querying less reliable display resolution and scaling details.
+.RE
