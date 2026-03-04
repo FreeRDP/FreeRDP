@@ -682,6 +682,8 @@ BOOL xf_create_window(xfContext* xfc)
 #endif
 		xfc->window = xf_CreateDesktopWindow(xfc, windowTitle, width, height);
 		free(windowTitle);
+		if (!xfc->window)
+			return FALSE;
 
 		if (xfc->fullscreen)
 			xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
