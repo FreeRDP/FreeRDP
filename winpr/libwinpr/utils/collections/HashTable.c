@@ -181,6 +181,7 @@ static inline void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 	table->numOfBuckets = numOfBuckets;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL HashTable_Equals(wHashTable* table, const wKeyValuePair* pair, const void* key)
 {
 	WINPR_ASSERT(table);
@@ -189,6 +190,7 @@ static inline BOOL HashTable_Equals(wHashTable* table, const wKeyValuePair* pair
 	return table->key.fnObjectEquals(key, pair->key);
 }
 
+WINPR_ATTR_NODISCARD
 static inline wKeyValuePair* HashTable_Get(wHashTable* table, const void* key)
 {
 	UINT32 hashValue = 0;
