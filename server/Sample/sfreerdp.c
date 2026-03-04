@@ -311,8 +311,8 @@ static BOOL test_peer_draw_background(freerdp_peer* client, const RFX_RECT* rect
 	cmd.bmp.flags = 0;
 	cmd.bmp.width = rect->width;
 	cmd.bmp.height = rect->height;
-	WINPR_ASSERT(Stream_GetPosition(s) <= UINT32_MAX);
-	cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
+
+	cmd.bmp.bitmapDataLength = WINPR_ASSERTING_INT_CAST(UINT32, Stream_GetPosition(s));
 	cmd.bmp.bitmapData = Stream_Buffer(s);
 
 	ret = update->SurfaceBits(update->context, &cmd);
