@@ -391,16 +391,16 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 			break;
 
-		WINPR_ASSERT(Stream_Capacity(s) <= UINT32_MAX);
-		if (WTSVirtualChannelRead(audin->audin_channel, 0, Stream_BufferAs(s, char),
-		                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
+		const ULONG len = WINPR_ASSERTING_INT_CAST(ULONG, Stream_Capacity(s));
+		if (WTSVirtualChannelRead(audin->audin_channel, 0, Stream_BufferAs(s, char), len,
+		                          &BytesReturned) == FALSE)
 		{
 			WLog_Print(audin->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
 			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
 
-		if (!Stream_SetLength(s, BytesReturned))
+		if (!Stream_SafeSeek(s, BytesReturned))
 		{
 			error = ERROR_INTERNAL_ERROR;
 			break;

@@ -113,9 +113,10 @@ static UINT audin_channel_write_and_free(AUDIN_CHANNEL_CALLBACK* callback, wStre
 		return ERROR_INTERNAL_ERROR;
 
 	Stream_SealLength(out);
-	WINPR_ASSERT(Stream_Length(out) <= UINT32_MAX);
-	const UINT error = callback->channel->Write(callback->channel, (ULONG)Stream_Length(out),
-	                                            Stream_Buffer(out), nullptr);
+
+	const ULONG len = WINPR_ASSERTING_INT_CAST(ULONG, Stream_Length(out));
+	const UINT error =
+	    callback->channel->Write(callback->channel, len, Stream_Buffer(out), nullptr);
 
 	if (freeStream)
 		Stream_Free(out, TRUE);
