@@ -44,40 +44,40 @@ static const SCardApiFunctionTable* g_SCardApi = nullptr;
 #define xstr(s) str(s)
 #define str(s) #s
 
-#define SCARDAPI_STUB_CALL_LONG(_name, ...)                                                        \
-	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr))           \
-		return SCARD_E_NO_SERVICE;                                                                 \
-	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                    \
-	{                                                                                              \
-		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",           \
-		         WINPR_FUNC_PTR_CAST(g_SCardApi, const void*),                                     \
-		         WINPR_FUNC_PTR_CAST(g_SCardApi ? g_SCardApi->pfn##_name : nullptr, const void*)); \
-		return SCARD_E_NO_SERVICE;                                                                 \
-	}                                                                                              \
+#define SCARDAPI_STUB_CALL_LONG(_name, ...)                                                  \
+	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr))     \
+		return SCARD_E_NO_SERVICE;                                                           \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                              \
+	{                                                                                        \
+		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",     \
+		         WINPR_FUNC_PTR_CAST(g_SCardApi, void*),                                     \
+		         WINPR_FUNC_PTR_CAST(g_SCardApi ? g_SCardApi->pfn##_name : nullptr, void*)); \
+		return SCARD_E_NO_SERVICE;                                                           \
+	}                                                                                        \
 	return g_SCardApi->pfn##_name(__VA_ARGS__)
 
-#define SCARDAPI_STUB_CALL_HANDLE(_name)                                                           \
-	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr))           \
-		return nullptr;                                                                            \
-	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                    \
-	{                                                                                              \
-		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",           \
-		         WINPR_FUNC_PTR_CAST(g_SCardApi, const void*),                                     \
-		         WINPR_FUNC_PTR_CAST(g_SCardApi ? g_SCardApi->pfn##_name : nullptr, const void*)); \
-		return nullptr;                                                                            \
-	}                                                                                              \
+#define SCARDAPI_STUB_CALL_HANDLE(_name)                                                     \
+	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr))     \
+		return nullptr;                                                                      \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                              \
+	{                                                                                        \
+		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",     \
+		         WINPR_FUNC_PTR_CAST(g_SCardApi, void*),                                     \
+		         WINPR_FUNC_PTR_CAST(g_SCardApi ? g_SCardApi->pfn##_name : nullptr, void*)); \
+		return nullptr;                                                                      \
+	}                                                                                        \
 	return g_SCardApi->pfn##_name()
 
-#define SCARDAPI_STUB_CALL_VOID(_name)                                                             \
-	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr))           \
-		return;                                                                                    \
-	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                                    \
-	{                                                                                              \
-		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",           \
-		         WINPR_FUNC_PTR_CAST(g_SCardApi, const void*),                                     \
-		         WINPR_FUNC_PTR_CAST(g_SCardApi ? g_SCardApi->pfn##_name : nullptr, const void*)); \
-		return;                                                                                    \
-	}                                                                                              \
+#define SCARDAPI_STUB_CALL_VOID(_name)                                                       \
+	if (!InitOnceExecuteOnce(&g_Initialized, InitializeSCardApiStubs, nullptr, nullptr))     \
+		return;                                                                              \
+	if (!g_SCardApi || !g_SCardApi->pfn##_name)                                              \
+	{                                                                                        \
+		WLog_DBG(TAG, "Missing function pointer g_SCardApi=%p->" xstr(pfn##_name) "=%p",     \
+		         WINPR_FUNC_PTR_CAST(g_SCardApi, void*),                                     \
+		         WINPR_FUNC_PTR_CAST(g_SCardApi ? g_SCardApi->pfn##_name : nullptr, void*)); \
+		return;                                                                              \
+	}                                                                                        \
 	g_SCardApi->pfn##_name()
 
 /**
