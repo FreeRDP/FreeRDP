@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include <winpr/atexit.h>
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -1014,7 +1015,7 @@ static BOOL CALLBACK initializeHandles(WINPR_ATTR_UNUSED PINIT_ONCE once,
 {
 	WINPR_ASSERT(g_ServerHandles == nullptr);
 	g_ServerHandles = HashTable_New(TRUE);
-	(void)atexit(clearHandles);
+	(void)winpr_atexit(clearHandles);
 	return g_ServerHandles != nullptr;
 }
 

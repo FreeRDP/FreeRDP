@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/atexit.h>
 #include <winpr/assert.h>
 #include <winpr/print.h>
 #include <winpr/debug.h>
@@ -165,7 +166,7 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 	if (!WLog_ParseFilters(g_RootLog))
 		goto fail;
 
-	(void)atexit(WLog_Uninit_);
+	(void)winpr_atexit(WLog_Uninit_);
 
 	return TRUE;
 fail:

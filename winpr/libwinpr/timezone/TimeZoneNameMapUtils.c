@@ -18,6 +18,8 @@
  * limitations under the License.
  */
 #include <winpr/config.h>
+
+#include <winpr/atexit.h>
 #include <winpr/assert.h>
 #include <winpr/string.h>
 #include <winpr/synch.h>
@@ -240,7 +242,7 @@ static BOOL CALLBACK load_timezones(PINIT_ONCE once, PVOID param, PVOID* pvconte
 	}
 #endif
 
-	(void)atexit(tz_context_free);
+	(void)winpr_atexit(tz_context_free);
 	return TRUE;
 }
 

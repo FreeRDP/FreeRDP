@@ -342,7 +342,7 @@ BOOL ArrayList_Insert(wArrayList* arrayList, size_t index, const void* obj)
 	WINPR_ASSERT(arrayList);
 	ArrayList_Lock_Conditional(arrayList);
 
-	if (index < arrayList->size)
+	if (index <= arrayList->size)
 	{
 		if (!ArrayList_Shift(arrayList, index, 1))
 		{

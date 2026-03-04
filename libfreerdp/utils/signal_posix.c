@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <termios.h>
 
+#include <winpr/atexit.h>
 #include <winpr/wlog.h>
 #include <winpr/debug.h>
 
@@ -152,7 +153,7 @@ int freerdp_handle_signals(void)
 
 	WLog_DBG(TAG, "Registering signal hook...");
 
-	(void)atexit(unregister_all_handlers);
+	(void)winpr_atexit(unregister_all_handlers);
 	if (!register_handlers(fatal_signals, ARRAYSIZE(fatal_signals), fatal_handler))
 		goto fail;
 	if (!register_handlers(term_signals, ARRAYSIZE(term_signals), fsig_term_handler))

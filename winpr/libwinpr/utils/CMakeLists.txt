@@ -139,6 +139,7 @@ set(WLOG_SRCS
 set(ASN1_SRCS asn1/asn1.c)
 
 set(SRCS
+    atexit.c
     ini.c
     sam.c
     ntlm.c
