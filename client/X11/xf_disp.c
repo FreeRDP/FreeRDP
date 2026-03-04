@@ -41,7 +41,7 @@
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11disp")
-#define RESIZE_MIN_DELAY_NS 200000000UL /* minimum delay in ms between two resizes */
+#define RESIZE_MIN_DELAY_NS 500000000UL /* minimum delay in ms between two resizes */
 
 struct s_xfDispContext
 {
@@ -153,13 +153,13 @@ static BOOL update_timer(xfDispContext* xfDisp, uint64_t intervalNS)
 {
 	WINPR_ASSERT(xfDisp);
 
-	if (xfDisp->timerID == 0)
-	{
-		rdpContext* context = &xfDisp->xfc->common.context;
+	rdpContext* context = &xfDisp->xfc->common.context;
 
-		xfDisp->timerID = freerdp_timer_add(context, intervalNS, xf_disp_OnTimer, nullptr, true);
-	}
-	return TRUE;
+	if (xfDisp->timerID != 0)
+		freerdp_timer_remove(context, xfDisp->timerID);
+
+	xfDisp->timerID = freerdp_timer_add(context, intervalNS, xf_disp_OnTimer, nullptr, true);
+	return xfDisp->timerID != 0;
 }
 
 BOOL xf_disp_sendResize(xfDispContext* xfDisp, BOOL fromTimer)

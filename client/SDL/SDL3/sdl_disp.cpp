@@ -32,7 +32,7 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("sdl.disp")
 
-static constexpr UINT64 RESIZE_MIN_DELAY = 200; /* minimum delay in ms between two resizes */
+static constexpr UINT64 RESIZE_MIN_DELAY = 500; /* minimum delay in ms between two resizes */
 static constexpr unsigned MAX_RETRIES = 5;
 
 static auto operator==(const DISPLAY_CONTROL_MONITOR_LAYOUT& a,

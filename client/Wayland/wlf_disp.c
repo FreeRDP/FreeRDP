@@ -27,7 +27,7 @@
 
 #define TAG CLIENT_TAG("wayland.disp")
 
-#define RESIZE_MIN_DELAY_NS 200000000UL /* minimum delay in ns between two resizes */
+#define RESIZE_MIN_DELAY_NS 500000000UL /* minimum delay in ns between two resizes */
 
 struct s_wlfDispContext
 {
@@ -133,13 +133,11 @@ static BOOL update_timer(wlfDispContext* wlfDisp, uint64_t intervalNS)
 {
 	WINPR_ASSERT(wlfDisp);
 
-	if (wlfDisp->timerID == 0)
-	{
-		rdpContext* context = &wlfDisp->wlc->common.context;
-
-		wlfDisp->timerID = freerdp_timer_add(context, intervalNS, wlf_disp_OnTimer, nullptr, true);
-	}
-	return TRUE;
+	rdpContext* context = &wlfDisp->wlc->common.context;
+	if (wlfDisp->timerID != 0)
+		freerdp_timer_remove(context, wlfDisp->timerID);
+	wlfDisp->timerID = freerdp_timer_add(context, intervalNS, wlf_disp_OnTimer, nullptr, true);
+	return wlfDisp->timerID != 0;
 }
 
 BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp, BOOL fromTimer)
