@@ -1043,10 +1043,10 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 	if (caps->certChainLen > 0)
 	{
 		if (caps->certChainLen > INT_MAX)
-			return FALSE;
+			goto fail;
 		strdata = ConvertWCharNToUtf8Alloc(caps->certChainData, caps->certChainLen, nullptr);
 		if (!strdata)
-			return FALSE;
+			goto fail;
 	}
 
 	tsg_packet_versioncaps_to_string(&ptbuffer, &size, &caps->versionCaps);
@@ -1055,6 +1055,8 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 		    tsg_print(buffer, length,
 		              " flags=0x%08" PRIx32 ", certChain[%" PRIu32 "]=%s, nonce=%s, versionCaps=%s",
 		              caps->flags, caps->certChainLen, strdata, uuid, tbuffer);
+
+fail:
 	free(strdata);
 	RpcStringFreeA(&uuid);
 	if (!rc)
