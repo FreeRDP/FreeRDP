@@ -104,10 +104,12 @@ extern "C"
 #define DsMakeSpn DsMakeSpnA
 #endif
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName,
 	                           USHORT InstancePort, LPCWSTR Referrer, DWORD* pcSpnLength,
 	                           LPWSTR pszSpn);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName,
 	                           USHORT InstancePort, LPCSTR Referrer, DWORD* pcSpnLength,
 	                           LPSTR pszSpn);

@@ -136,8 +136,11 @@ extern "C"
 	} CRED_PROTECTION_TYPE,
 	    *PCRED_PROTECTION_TYPE;
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CredMarshalCredentialA(CRED_MARSHAL_TYPE CredType, PVOID Credential,
 	                                      LPSTR* MarshaledCredential);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CredMarshalCredentialW(CRED_MARSHAL_TYPE CredType, PVOID Credential,
 	                                      LPWSTR* MarshaledCredential);
 
@@ -147,11 +150,13 @@ extern "C"
 #define CredMarshalCredential CredMarshalCredentialA
 #endif
 
-WINPR_API BOOL CredUnmarshalCredentialW(LPCWSTR cred, PCRED_MARSHAL_TYPE CredType,
-                                        PVOID* Credential);
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL CredUnmarshalCredentialW(LPCWSTR cred, PCRED_MARSHAL_TYPE CredType,
+	                                        PVOID* Credential);
 
-WINPR_API BOOL CredUnmarshalCredentialA(LPCSTR cred, PCRED_MARSHAL_TYPE CredType,
-                                        PVOID* Credential);
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL CredUnmarshalCredentialA(LPCSTR cred, PCRED_MARSHAL_TYPE CredType,
+	                                        PVOID* Credential);
 
 #ifdef UNICODE
 #define CredUnmarshalCredential CredUnmarshalCredentialW
@@ -159,9 +164,12 @@ WINPR_API BOOL CredUnmarshalCredentialA(LPCSTR cred, PCRED_MARSHAL_TYPE CredType
 #define CredUnmarshalCredential CredUnmarshalCredentialA
 #endif
 
-WINPR_API BOOL CredIsMarshaledCredentialA(LPCSTR MarshaledCredential);
-WINPR_API BOOL CredIsMarshaledCredentialW(LPCWSTR MarshaledCredential);
-WINPR_API VOID CredFree(PVOID Buffer);
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL CredIsMarshaledCredentialA(LPCSTR MarshaledCredential);
+
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL CredIsMarshaledCredentialW(LPCWSTR MarshaledCredential);
+	WINPR_API VOID CredFree(PVOID Buffer);
 
 #ifdef __cplusplus
 }

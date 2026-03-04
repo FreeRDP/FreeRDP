@@ -51,19 +51,25 @@ struct s_wClipboardDelegate
 	void* custom;
 	char* basePath;
 
-	UINT (*ClientRequestFileSize)(wClipboardDelegate*, const wClipboardFileSizeRequest*);
-	UINT(*ClipboardFileSizeSuccess)
-	(wClipboardDelegate*, const wClipboardFileSizeRequest*, UINT64 fileSize);
-	UINT(*ClipboardFileSizeFailure)
-	(wClipboardDelegate*, const wClipboardFileSizeRequest*, UINT errorCode);
+	WINPR_ATTR_NODISCARD UINT (*ClientRequestFileSize)(wClipboardDelegate*,
+	                                                   const wClipboardFileSizeRequest*);
+	WINPR_ATTR_NODISCARD UINT (*ClipboardFileSizeSuccess)(wClipboardDelegate*,
+	                                                      const wClipboardFileSizeRequest*,
+	                                                      UINT64 fileSize);
+	WINPR_ATTR_NODISCARD UINT (*ClipboardFileSizeFailure)(wClipboardDelegate*,
+	                                                      const wClipboardFileSizeRequest*,
+	                                                      UINT errorCode);
 
-	UINT (*ClientRequestFileRange)(wClipboardDelegate*, const wClipboardFileRangeRequest*);
-	UINT(*ClipboardFileRangeSuccess)
-	(wClipboardDelegate*, const wClipboardFileRangeRequest*, const BYTE* data, UINT32 size);
-	UINT(*ClipboardFileRangeFailure)
-	(wClipboardDelegate*, const wClipboardFileRangeRequest*, UINT errorCode);
+	WINPR_ATTR_NODISCARD UINT (*ClientRequestFileRange)(wClipboardDelegate*,
+	                                                    const wClipboardFileRangeRequest*);
+	WINPR_ATTR_NODISCARD UINT (*ClipboardFileRangeSuccess)(wClipboardDelegate*,
+	                                                       const wClipboardFileRangeRequest*,
+	                                                       const BYTE* data, UINT32 size);
+	WINPR_ATTR_NODISCARD UINT (*ClipboardFileRangeFailure)(wClipboardDelegate*,
+	                                                       const wClipboardFileRangeRequest*,
+	                                                       UINT errorCode);
 
-	BOOL (*IsFileNameComponentValid)(LPCWSTR lpFileName);
+	WINPR_ATTR_NODISCARD BOOL (*IsFileNameComponentValid)(LPCWSTR lpFileName);
 };
 
 #ifdef __cplusplus
@@ -75,31 +81,53 @@ extern "C"
 	WINPR_API void ClipboardUnlock(wClipboard* clipboard);
 
 	WINPR_API BOOL ClipboardEmpty(wClipboard* clipboard);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API UINT32 ClipboardCountFormats(wClipboard* clipboard);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API UINT32 ClipboardGetFormatIds(wClipboard* clipboard, UINT32** ppFormatIds);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API UINT32 ClipboardCountRegisteredFormats(wClipboard* clipboard);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard, UINT32** ppFormatIds);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
 	                                            UINT32 syntheticId,
 	                                            CLIPBOARD_SYNTHESIZE_FN pfnSynthesize);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API UINT32 ClipboardGetFormatId(wClipboard* clipboard, const char* name);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API const char* ClipboardGetFormatName(wClipboard* clipboard, UINT32 formatId);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data,
 	                                UINT32 size);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API UINT64 ClipboardGetOwner(wClipboard* clipboard);
 	WINPR_API void ClipboardSetOwner(wClipboard* clipboard, UINT64 ownerId);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API wClipboardDelegate* ClipboardGetDelegate(wClipboard* clipboard);
 
-	WINPR_API wClipboard* ClipboardCreate(void);
 	WINPR_API void ClipboardDestroy(wClipboard* clipboard);
 
+	WINPR_ATTR_MALLOC(ClipboardDestroy, 1)
+	WINPR_API wClipboard* ClipboardCreate(void);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API const char* ClipboardGetFormatIdString(UINT32 formatId);
 
 #ifdef __cplusplus

@@ -883,12 +883,20 @@ extern "C"
 	 * Functions
 	 */
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API const char* GetVirtualKeyName(DWORD vkcode);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetVirtualKeyCodeFromName(const char* vkname);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetVirtualKeyCodeFromXkbKeyName(const char* xkbname);
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode,
 	                                                     DWORD /* WINPR_KBD_TYPE */ dwKeyboardType);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode,
 	                                                     DWORD /* WINPR_KBD_TYPE */ dwKeyboardType);
 
@@ -900,7 +908,10 @@ extern "C"
 		WINPR_KEYCODE_TYPE_XKB = 0x00000003
 	} WINPR_KEYCODE_TYPE;
 
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, WINPR_KEYCODE_TYPE type);
+
+	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetKeycodeFromVirtualKeyCode(DWORD keycode, WINPR_KEYCODE_TYPE type);
 
 #ifdef __cplusplus

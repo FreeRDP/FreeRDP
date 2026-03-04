@@ -35,27 +35,27 @@ extern "C"
 {
 #endif
 
-	static inline UINT8 winpr_Data_Get_UINT8(const void* d)
+	WINPR_ATTR_NODISCARD static inline UINT8 winpr_Data_Get_UINT8(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const UINT8* ptr = WINPR_ENDIAN_CAST(const UINT8*, d);
 		return *ptr;
 	}
 
-	static inline INT8 winpr_Data_Get_INT8(const void* d)
+	WINPR_ATTR_NODISCARD static inline INT8 winpr_Data_Get_INT8(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const INT8* ptr = WINPR_ENDIAN_CAST(const INT8*, d);
 		return *ptr;
 	}
 
-	static inline UINT16 winpr_Data_Get_UINT16_NE(const void* d)
+	WINPR_ATTR_NODISCARD static inline UINT16 winpr_Data_Get_UINT16_NE(const void* d)
 	{
 		const UINT16* ptr = WINPR_ENDIAN_CAST(const UINT16*, d);
 		return *ptr;
 	}
 
-	static inline UINT16 winpr_Data_Get_UINT16(const void* d)
+	WINPR_ATTR_NODISCARD static inline UINT16 winpr_Data_Get_UINT16(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const UINT8* ptr = WINPR_ENDIAN_CAST(const UINT8*, d);
@@ -69,7 +69,7 @@ extern "C"
 		return v;
 	}
 
-	static inline UINT16 winpr_Data_Get_UINT16_BE(const void* d)
+	WINPR_ATTR_NODISCARD static inline UINT16 winpr_Data_Get_UINT16_BE(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const UINT8* ptr = WINPR_ENDIAN_CAST(const UINT8*, d);
@@ -83,33 +83,33 @@ extern "C"
 		return v;
 	}
 
-	static inline INT16 winpr_Data_Get_INT16_NE(const void* d)
+	WINPR_ATTR_NODISCARD static inline INT16 winpr_Data_Get_INT16_NE(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const INT16* ptr = WINPR_ENDIAN_CAST(const INT16*, d);
 		return *ptr;
 	}
 
-	static inline INT16 winpr_Data_Get_INT16(const void* d)
+	WINPR_ATTR_NODISCARD static inline INT16 winpr_Data_Get_INT16(const void* d)
 	{
 		const UINT16 u16 = winpr_Data_Get_UINT16(d);
 		return WINPR_ENDIAN_CAST(INT16, u16);
 	}
 
-	static inline INT16 winpr_Data_Get_INT16_BE(const void* d)
+	WINPR_ATTR_NODISCARD static inline INT16 winpr_Data_Get_INT16_BE(const void* d)
 	{
 		const UINT16 u16 = winpr_Data_Get_UINT16_BE(d);
 		return WINPR_ENDIAN_CAST(INT16, u16);
 	}
 
-	static inline UINT32 winpr_Data_Get_UINT32_NE(const void* d)
+	WINPR_ATTR_NODISCARD static inline UINT32 winpr_Data_Get_UINT32_NE(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const UINT32* ptr = WINPR_ENDIAN_CAST(const UINT32*, d);
 		return *ptr;
 	}
 
-	static inline UINT32 winpr_Data_Get_UINT32(const void* d)
+	WINPR_ATTR_NODISCARD static inline UINT32 winpr_Data_Get_UINT32(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const UINT8* ptr = WINPR_ENDIAN_CAST(const UINT8*, d);
@@ -123,7 +123,7 @@ extern "C"
 		return v;
 	}
 
-	static inline UINT32 winpr_Data_Get_UINT32_BE(const void* d)
+	WINPR_ATTR_NODISCARD static inline UINT32 winpr_Data_Get_UINT32_BE(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const UINT8* ptr = WINPR_ENDIAN_CAST(const UINT8*, d);
@@ -137,33 +137,33 @@ extern "C"
 		return v;
 	}
 
-	static inline INT32 winpr_Data_Get_INT32_NE(const void* d)
+	WINPR_ATTR_NODISCARD static inline INT32 winpr_Data_Get_INT32_NE(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const INT32* ptr = WINPR_ENDIAN_CAST(const INT32*, d);
 		return *ptr;
 	}
 
-	static inline INT32 winpr_Data_Get_INT32(const void* d)
+	WINPR_ATTR_NODISCARD static inline INT32 winpr_Data_Get_INT32(const void* d)
 	{
 		const UINT32 u32 = winpr_Data_Get_UINT32(d);
 		return WINPR_ENDIAN_CAST(INT32, u32);
 	}
 
-	static inline INT32 winpr_Data_Get_INT32_BE(const void* d)
+	WINPR_ATTR_NODISCARD static inline INT32 winpr_Data_Get_INT32_BE(const void* d)
 	{
 		const UINT32 u32 = winpr_Data_Get_UINT32_BE(d);
 		return WINPR_ENDIAN_CAST(INT32, u32);
 	}
 
-	static inline UINT64 winpr_Data_Get_UINT64_NE(const void* d)
+	WINPR_ATTR_NODISCARD static inline UINT64 winpr_Data_Get_UINT64_NE(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const UINT64* ptr = WINPR_ENDIAN_CAST(const UINT64*, d);
 		return *ptr;
 	}
 
-	static inline UINT64 winpr_Data_Get_UINT64(const void* d)
+	WINPR_ATTR_NODISCARD static inline UINT64 winpr_Data_Get_UINT64(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const UINT8* ptr = WINPR_ENDIAN_CAST(const UINT8*, d);
@@ -177,7 +177,7 @@ extern "C"
 		return v;
 	}
 
-	static inline UINT64 winpr_Data_Get_UINT64_BE(const void* d)
+	WINPR_ATTR_NODISCARD static inline UINT64 winpr_Data_Get_UINT64_BE(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const UINT8* ptr = WINPR_ENDIAN_CAST(const UINT8*, d);
@@ -191,20 +191,20 @@ extern "C"
 		return v;
 	}
 
-	static inline INT64 winpr_Data_Get_INT64_NE(const void* d)
+	WINPR_ATTR_NODISCARD static inline INT64 winpr_Data_Get_INT64_NE(const void* d)
 	{
 		WINPR_ASSERT(d);
 		const INT64* b = WINPR_ENDIAN_CAST(const INT64*, d);
 		return *b;
 	}
 
-	static inline INT64 winpr_Data_Get_INT64(const void* d)
+	WINPR_ATTR_NODISCARD static inline INT64 winpr_Data_Get_INT64(const void* d)
 	{
 		const UINT64 u64 = winpr_Data_Get_UINT64(d);
 		return WINPR_ENDIAN_CAST(INT64, u64);
 	}
 
-	static inline INT64 winpr_Data_Get_INT64_BE(const void* d)
+	WINPR_ATTR_NODISCARD static inline INT64 winpr_Data_Get_INT64_BE(const void* d)
 	{
 		const UINT64 u64 = winpr_Data_Get_UINT64_BE(d);
 		return WINPR_ENDIAN_CAST(INT64, u64);
