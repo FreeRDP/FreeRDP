@@ -258,8 +258,9 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 			char buffer[2048] = WINPR_C_ARRAY_INIT;
 			while (fgets(buffer, sizeof(buffer), keyScript) != nullptr)
 			{
-				char* context = nullptr;
-				(void)strtok_s(buffer, "\n", &context);
+				char* end = strchr(buffer, '\n');
+				if (end)
+					*end = '\0';
 
 				if (fkt)
 				{

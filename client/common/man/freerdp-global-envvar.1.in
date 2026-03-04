@@ -13,5 +13,5 @@ have precedence over the environment variables\&.
 .PP
 FREERDP_ASKPASS
 .RS 4
-\fISet a program to ask for passwords similar to SSH_ASKPASS\fR
+Set a program to ask for passwords similar to \fISSH_ASKPASS\fR
 .RE

@@ -158,11 +158,10 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 static UINT ainput_server_send_version(ainput_server* ainput)
 {
 	ULONG written = 0;
-	wStream* s = nullptr;
 
 	WINPR_ASSERT(ainput);
 
-	s = ainput->buffer;
+	wStream* s = ainput->buffer;
 	WINPR_ASSERT(s);
 
 	Stream_ResetPosition(s);
@@ -176,9 +175,8 @@ static UINT ainput_server_send_version(ainput_server* ainput)
 	Stream_Write_UINT32(s, AINPUT_VERSION_MAJOR); /* Version (4 bytes) */
 	Stream_Write_UINT32(s, AINPUT_VERSION_MINOR); /* Version (4 bytes) */
 
-	WINPR_ASSERT(Stream_GetPosition(s) <= UINT32_MAX);
-	if (!WTSVirtualChannelWrite(ainput->ainput_channel, Stream_BufferAs(s, char),
-	                            (ULONG)Stream_GetPosition(s), &written))
+	const ULONG len = WINPR_ASSERTING_INT_CAST(ULONG, Stream_GetPosition(s));
+	if (!WTSVirtualChannelWrite(ainput->ainput_channel, Stream_BufferAs(s, char), len, &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		return ERROR_INTERNAL_ERROR;

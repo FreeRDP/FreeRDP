@@ -688,7 +688,7 @@ fail:
 
 BOOL PathFileExistsA(LPCSTR pszPath)
 {
-	struct stat stat_info;
+	struct stat stat_info = WINPR_C_ARRAY_INIT;
 
 	return (stat(pszPath, &stat_info) == 0);
 }

@@ -85,13 +85,14 @@ UINT ecam_channel_write(WINPR_ATTR_UNUSED CameraPlugin* ecam, GENERIC_CHANNEL_CA
 		return ERROR_INVALID_PARAMETER;
 
 	Stream_SealLength(out);
-	WINPR_ASSERT(Stream_Length(out) <= UINT32_MAX);
 
-	WLog_DBG(TAG, "ChannelId=%" PRIu32 ", MessageId=0x%02" PRIx8 ", Length=%" PRIuz,
-	         hchannel->channel_mgr->GetChannelId(hchannel->channel), msg, Stream_Length(out));
+	const ULONG len = WINPR_ASSERTING_INT_CAST(ULONG, Stream_Length(out));
 
-	const UINT error = hchannel->channel->Write(hchannel->channel, (ULONG)Stream_Length(out),
-	                                            Stream_Buffer(out), nullptr);
+	WLog_DBG(TAG, "ChannelId=%" PRIu32 ", MessageId=0x%02" PRIx8 ", Length=%" PRIu32,
+	         hchannel->channel_mgr->GetChannelId(hchannel->channel), msg, len);
+
+	const UINT error =
+	    hchannel->channel->Write(hchannel->channel, len, Stream_Buffer(out), nullptr);
 
 	if (freeStream)
 		Stream_Free(out, TRUE);

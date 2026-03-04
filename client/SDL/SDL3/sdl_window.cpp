@@ -369,8 +369,10 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 			const float contentScale = SDL_GetDisplayContentScale(displayID);
 			if (contentScale > 1.0f)
 			{
-				rect.w = static_cast<int>(std::roundf(rect.w * contentScale));
-				rect.h = static_cast<int>(std::roundf(rect.h * contentScale));
+				const auto fw = static_cast<float>(rect.w);
+				const auto fh = static_cast<float>(rect.h);
+				rect.w = static_cast<int>(std::roundf(fw * contentScale));
+				rect.h = static_cast<int>(std::roundf(fh * contentScale));
 			}
 		}
 	}

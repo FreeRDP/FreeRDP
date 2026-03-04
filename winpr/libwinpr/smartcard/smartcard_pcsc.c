@@ -757,7 +757,7 @@ static LONG WINAPI PCSC_SCardReleaseContext_Internal(SCARDCONTEXT hContext)
 	if (!hContext)
 	{
 		WLog_ERR(TAG, "SCardReleaseContext: null hContext");
-		return PCSC_MapErrorCodeToWinSCard(status);
+		return PCSC_MapErrorCodeToWinSCard(SCARD_E_INVALID_HANDLE);
 	}
 
 	status = g_PCSC.pfnSCardReleaseContext(hContext);
