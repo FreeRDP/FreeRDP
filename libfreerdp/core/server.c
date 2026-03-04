@@ -1023,7 +1023,15 @@ static void wtsCloseVCM(WTSVirtualChannelManager* vcm, bool closeDrdynvc)
 	WINPR_ASSERT(vcm);
 
 	HashTable_Lock(g_ServerHandles);
-	if (vcm && (vcm != INVALID_HANDLE_VALUE))
+
+/* clang analyzer does not like the check for INVALID_HANDLE_VALUE and considers the path not taken,
+ * leading to false positives on memory leaks. */
+#ifdef __clang_analyzer__
+	const BOOL valid = vcm != nullptr;
+#else
+	const BOOL valid = (vcm != nullptr) && (vcm != INVALID_HANDLE_VALUE);
+#endif
+	if (valid)
 	{
 		HashTable_Remove(g_ServerHandles, (void*)(UINT_PTR)vcm->SessionId);
 
