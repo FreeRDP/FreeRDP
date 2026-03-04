@@ -1788,10 +1788,6 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
                                                          int argc, char** argv,
                                                          const COMMAND_LINE_ARGUMENT_A* custom)
 {
-	const COMMAND_LINE_ARGUMENT_A* arg = nullptr;
-	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)];
-	memcpy(largs, global_cmd_args, sizeof(global_cmd_args));
-
 	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
 		freerdp_client_print_version();
@@ -1806,9 +1802,20 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{
-		(void)CommandLineParseArgumentsA(argc, argv, largs, 0x112, nullptr, nullptr, nullptr);
+		const DWORD flags =
+		    COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS | COMMAND_LINE_SIGIL_SLASH;
+		COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)] = WINPR_C_ARRAY_INIT;
+		memcpy(largs, global_cmd_args, sizeof(global_cmd_args));
 
-		arg = CommandLineFindArgumentA(largs, "list");
+		const int rc =
+		    CommandLineParseArgumentsA(argc, argv, largs, flags, nullptr, nullptr, nullptr);
+		if (rc != COMMAND_LINE_STATUS_PRINT)
+		{
+			freerdp_client_print_command_line_help_ex(argc, argv, custom);
+			return rc;
+		}
+
+		const COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(largs, "list");
 		WINPR_ASSERT(arg);
 
 		if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
