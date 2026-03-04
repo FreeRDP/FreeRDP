@@ -456,10 +456,8 @@ static void udevman_set_next_device_id(IUDEVMAN* idevman, UINT32 _t)
 	udevman->next_device_id = _t;
 }
 
-static void udevman_free(IUDEVMAN* idevman)
+static void udevman_free(UDEVMAN* udevman)
 {
-	UDEVMAN* udevman = (UDEVMAN*)idevman;
-
 	if (!udevman)
 		return;
 
@@ -470,7 +468,7 @@ static void udevman_free(IUDEVMAN* idevman)
 		(void)CloseHandle(udevman->thread);
 	}
 
-	udevman_unregister_all_udevices(idevman);
+	udevman_unregister_all_udevices(&udevman->iface);
 
 	if (udevman->devman_loading)
 		(void)CloseHandle(udevman->devman_loading);
@@ -479,6 +477,12 @@ static void udevman_free(IUDEVMAN* idevman)
 
 	ArrayList_Free(udevman->hotplug_vid_pids);
 	free(udevman);
+}
+
+static void idevman_free(IUDEVMAN* idevman)
+{
+	UDEVMAN* udevman = (UDEVMAN*)idevman;
+	udevman_free(udevman);
 }
 
 static BOOL filter_by_class(uint8_t bDeviceClass, uint8_t bDeviceSubClass)
@@ -805,7 +809,7 @@ static UINT udevman_listener_created_callback(IUDEVMAN* iudevman)
 static void udevman_load_interface(UDEVMAN* udevman)
 {
 	/* standard */
-	udevman->iface.free = udevman_free;
+	udevman->iface.free = idevman_free;
 	/* manage devices */
 	udevman->iface.rewind = udevman_rewind;
 	udevman->iface.get_next = udevman_get_next;
@@ -898,9 +902,8 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE libusb_freerdp_urbdrc_client_subsystem_entry(
 {
 	wObject* obj = nullptr;
 	UINT status = 0;
-	UDEVMAN* udevman = nullptr;
 	const ADDIN_ARGV* args = pEntryPoints->args;
-	udevman = (PUDEVMAN)calloc(1, sizeof(UDEVMAN));
+	UDEVMAN* udevman = (PUDEVMAN)calloc(1, sizeof(UDEVMAN));
 
 	if (!udevman)
 		goto fail;
@@ -965,6 +968,6 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE libusb_freerdp_urbdrc_client_subsystem_entry(
 	WLog_DBG(TAG, "UDEVMAN device registered.");
 	return 0;
 fail:
-	udevman_free(&udevman->iface);
+	udevman_free(udevman);
 	return ERROR_INTERNAL_ERROR;
 }
