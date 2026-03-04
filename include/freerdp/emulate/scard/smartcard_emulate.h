@@ -213,7 +213,6 @@ extern "C"
 	FREERDP_API LONG WINAPI Emulate_SCardForgetCardTypeW(SmartcardEmulationContext* smartcard,
 	                                                     SCARDCONTEXT hContext, LPCWSTR szCardName);
 
-	WINPR_ATTR_NODISCARD
 	FREERDP_API LONG WINAPI Emulate_SCardFreeMemory(SmartcardEmulationContext* smartcard,
 	                                                SCARDCONTEXT hContext, LPVOID pvMem);
 
@@ -260,7 +259,6 @@ extern "C"
 	                                                      LPSCARD_READERSTATEW rgReaderStates,
 	                                                      DWORD cReaders);
 
-	WINPR_ATTR_NODISCARD
 	FREERDP_API LONG WINAPI Emulate_SCardCancel(SmartcardEmulationContext* smartcard,
 	                                            SCARDCONTEXT hContext);
 
