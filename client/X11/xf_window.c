@@ -839,6 +839,8 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int hei
 
 void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window)
 {
+	WINPR_ASSERT(xfc);
+
 	if (!window)
 		return;
 
@@ -857,7 +859,7 @@ void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window)
 	}
 
 	if (window->xfwin)
-		munmap(nullptr, sizeof(*window->xfwin));
+		munmap(window->xfwin, sizeof(*window->xfwin));
 
 	if (window->shmid >= 0)
 		close(window->shmid);
