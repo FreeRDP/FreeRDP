@@ -65,7 +65,7 @@ typedef struct
 
 static const DWORD g_err_oom = WINPR_CXX_COMPAT_CAST(DWORD, E_OUTOFMEMORY);
 
-static DWORD g_SessionId = 0;
+static DWORD g_SessionId = 1;
 static wHashTable* g_ServerHandles = nullptr;
 static INIT_ONCE g_HandleInitializer = INIT_ONCE_STATIC_INIT;
 
@@ -1014,7 +1014,6 @@ static BOOL CALLBACK initializeHandles(WINPR_ATTR_UNUSED PINIT_ONCE once,
 {
 	WINPR_ASSERT(g_ServerHandles == nullptr);
 	g_ServerHandles = HashTable_New(TRUE);
-	g_SessionId = 1;
 	(void)atexit(clearHandles);
 	return g_ServerHandles != nullptr;
 }
