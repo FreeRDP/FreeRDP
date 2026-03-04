@@ -104,6 +104,7 @@ void HashTable_StringFree(void* str)
 	winpr_ObjectStringFree(str);
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL HashTable_IsProbablePrime(size_t oddNumber)
 {
 	for (size_t i = 3; i < 51; i += 2)
@@ -117,6 +118,7 @@ static inline BOOL HashTable_IsProbablePrime(size_t oddNumber)
 	return TRUE; /* maybe */
 }
 
+WINPR_ATTR_NODISCARD
 static inline size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 {
 	WINPR_ASSERT(table);

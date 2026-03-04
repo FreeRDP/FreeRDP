@@ -43,7 +43,8 @@ static const char mime_tiff[] = "image/tiff";
 static const BYTE enc_base64url[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-static inline char* b64_encode(const BYTE* WINPR_RESTRICT data, size_t length, size_t* plen)
+WINPR_ATTR_NODISCARD static inline char* b64_encode(const BYTE* WINPR_RESTRICT data, size_t length,
+                                                    size_t* plen)
 {
 	WINPR_ASSERT(plen);
 	const BYTE* WINPR_RESTRICT alphabet = enc_base64url;

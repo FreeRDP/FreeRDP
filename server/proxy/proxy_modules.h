@@ -77,7 +77,6 @@ extern "C"
 	void pf_modules_free(proxyModule* module);
 
 	WINPR_ATTR_MALLOC(pf_modules_free, 1)
-	WINPR_ATTR_NODISCARD
 	proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t count);
 
 	/**
@@ -95,7 +94,6 @@ extern "C"
 	WINPR_ATTR_NODISCARD BOOL pf_modules_run_filter(proxyModule* module, PF_FILTER_TYPE type,
 	                                                proxyData* pdata, void* param);
 
-	WINPR_ATTR_NODISCARD
 	BOOL pf_modules_run_hook(proxyModule* module, PF_HOOK_TYPE type, proxyData* pdata,
 	                         void* custom);
 
