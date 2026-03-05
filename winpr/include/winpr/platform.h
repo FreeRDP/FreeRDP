@@ -100,9 +100,6 @@
 #else
 #define WINPR_ATTR_NODISCARD
 #endif
-#else
-#define WINPR_ATTR_NODISCARD
-#endif
 
 /* GCC does not like [[nodiscard]] on function pointers.
  * it does not complain when using attribute syntax thoug...
@@ -110,6 +107,10 @@
 #if defined(__GNUC__) && !defined(__clang__)
 #undef WINPR_ATTR_NODISCARD
 #define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
+#endif
+
+#else
+#define WINPR_ATTR_NODISCARD
 #endif
 
 #if defined(__clang__)
