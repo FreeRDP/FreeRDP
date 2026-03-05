@@ -323,6 +323,9 @@ struct xf_context
 	DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256];
 	bool isCursorHidden;
 	bool isActionScriptAllowed;
+	bool exposeRequested;
+	GDI_RGN exposedArea;
+	Window exposedWindow;
 };
 
 BOOL xf_create_window(xfContext* xfc);

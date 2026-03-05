@@ -993,8 +993,9 @@ static BOOL input_skip(const rdpInput* input, WINPR_FORMAT_ARG const char* fmt, 
 
 	const BOOL suspended = freerdp_settings_get_bool(context->settings, FreeRDP_SuspendInput);
 	const BOOL connected = freerdp_is_active_state(context);
+	const DWORD loglevel = WLOG_DEBUG;
 
-	if (WLog_IsLevelActive(in->log, WLOG_DEBUG))
+	if (WLog_IsLevelActive(in->log, loglevel))
 	{
 		char buffer[128] = WINPR_C_ARRAY_INIT;
 
@@ -1003,7 +1004,7 @@ static BOOL input_skip(const rdpInput* input, WINPR_FORMAT_ARG const char* fmt, 
 		(void)vsnprintf(buffer, sizeof(buffer), fmt, args);
 		va_end(args);
 
-		WLog_Print(in->log, WLOG_DEBUG, "[connected=%s, suspended=%s] %s", boolstr(connected),
+		WLog_Print(in->log, loglevel, "[connected=%s, suspended=%s] %s", boolstr(connected),
 		           boolstr(suspended), buffer);
 	}
 
@@ -1136,11 +1137,7 @@ BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input)
 	if (!input || !input->context)
 		return FALSE;
 
-	rdp_input_internal* in = input_cast(input);
-	const BOOL suspended =
-	    freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput);
-	WLog_Print(in->log, WLOG_DEBUG, "Keyboard {Pause, suspend: %s}", suspended ? "true" : "false");
-	if (suspended)
+	if (input_skip(input, "Keyboard {Pause}"))
 		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->KeyboardPauseEvent, input);

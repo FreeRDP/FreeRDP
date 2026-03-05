@@ -365,54 +365,32 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 
 static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 {
-	int x = 0;
-	int y = 0;
-	int w = 0;
-	int h = 0;
-	rdpSettings* settings = nullptr;
-
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 
-	settings = xfc->common.context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
 	if (!app && (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
 	             freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures)))
 	{
-		x = 0;
-		y = 0;
-		w = WINPR_ASSERTING_INT_CAST(int,
-		                             freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
-		h = WINPR_ASSERTING_INT_CAST(int,
-		                             freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+		xfc->exposedArea.x = 0;
+		xfc->exposedArea.y = 0;
+		xfc->exposedArea.w = WINPR_ASSERTING_INT_CAST(
+		    int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+		xfc->exposedArea.h = WINPR_ASSERTING_INT_CAST(
+		    int, freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	}
 	else
 	{
-		x = event->x;
-		y = event->y;
-		w = event->width;
-		h = event->height;
+		xfc->exposedArea.x = event->x;
+		xfc->exposedArea.y = event->y;
+		xfc->exposedArea.w = event->width;
+		xfc->exposedArea.h = event->height;
 	}
 
-	if (!app)
-	{
-		if (xfc->common.context.gdi->gfx)
-		{
-			xf_OutputExpose(
-			    xfc, WINPR_ASSERTING_INT_CAST(uint32_t, x), WINPR_ASSERTING_INT_CAST(uint32_t, y),
-			    WINPR_ASSERTING_INT_CAST(uint32_t, w), WINPR_ASSERTING_INT_CAST(uint32_t, h));
-			return TRUE;
-		}
-		xf_draw_screen(xfc, x, y, w, h);
-	}
-	else
-	{
-		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
-		if (appWindow)
-			xf_UpdateWindowArea(xfc, appWindow, x, y, w, h);
-		xf_rail_return_window(appWindow, FALSE);
-	}
+	xfc->exposedWindow = event->window;
+	xfc->exposeRequested = true;
 
 	return TRUE;
 }
@@ -1432,5 +1410,43 @@ BOOL xf_generic_RawButtonEvent_(xfContext* xfc, int button, BOOL app, BOOL down,
 		}
 	}
 
+	return TRUE;
+}
+
+BOOL xf_event_update_screen(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+
+	xfContext* xfc = (xfContext*)instance->context;
+	WINPR_ASSERT(xfc);
+
+	rdpSettings* settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	if (!xfc->exposeRequested)
+		return TRUE;
+	xfc->exposeRequested = false;
+
+	if (!xfc->remote_app)
+	{
+		if (xfc->common.context.gdi->gfx)
+		{
+			xf_OutputExpose(xfc, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->exposedArea.x),
+			                WINPR_ASSERTING_INT_CAST(uint32_t, xfc->exposedArea.y),
+			                WINPR_ASSERTING_INT_CAST(uint32_t, xfc->exposedArea.w),
+			                WINPR_ASSERTING_INT_CAST(uint32_t, xfc->exposedArea.h));
+			return TRUE;
+		}
+		xf_draw_screen(xfc, xfc->exposedArea.x, xfc->exposedArea.y, xfc->exposedArea.w,
+		               xfc->exposedArea.h);
+	}
+	else
+	{
+		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xfc->exposedWindow);
+		if (appWindow)
+			xf_UpdateWindowArea(xfc, appWindow, xfc->exposedArea.x, xfc->exposedArea.y,
+			                    xfc->exposedArea.w, xfc->exposedArea.h);
+		xf_rail_return_window(appWindow, FALSE);
+	}
 	return TRUE;
 }
