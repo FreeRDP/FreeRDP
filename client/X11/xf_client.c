@@ -552,6 +552,9 @@ static BOOL xf_process_x_events(freerdp* instance)
 		xf_unlock_x11(xfc);
 		if (!status)
 			break;
+		status = xf_event_update_screen(instance);
+		if (!status)
+			break;
 	}
 
 	return status;
