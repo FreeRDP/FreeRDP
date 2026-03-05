@@ -224,19 +224,19 @@ extern "C"
 		WLog_Print(_log_cached_ptr, _log_level, __VA_ARGS__); \
 	} while (0)
 
-#define WLog_PrintVA_unchecked(_log, _log_level, _args)                                 \
-	do                                                                                  \
-	{                                                                                   \
-		WLog_PrintTextMessageVA(_log, _log_level, __LINE__, __FILE__, __func__, _args); \
+#define WLog_PrintVA_unchecked(_log, _log_level, _fmt, _args)                                 \
+	do                                                                                        \
+	{                                                                                         \
+		WLog_PrintTextMessageVA(_log, _log_level, __LINE__, __FILE__, __func__, _fmt, _args); \
 	} while (0)
 
-#define WLog_PrintVA(_log, _log_level, _args)                \
-	do                                                       \
-	{                                                        \
-		if (WLog_IsLevelActive(_log, _log_level))            \
-		{                                                    \
-			WLog_PrintVA_unchecked(_log, _log_level, _args); \
-		}                                                    \
+#define WLog_PrintVA(_log, _log_level, _fmt, _args)                \
+	do                                                             \
+	{                                                              \
+		if (WLog_IsLevelActive(_log, _log_level))                  \
+		{                                                          \
+			WLog_PrintVA_unchecked(_log, _log_level, _fmt, _args); \
+		}                                                          \
 	} while (0)
 
 #define WLog_Data(_log, _log_level, ...)                                                         \
