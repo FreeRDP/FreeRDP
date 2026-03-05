@@ -248,7 +248,8 @@ void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int n
 		xevent.xclient.data.l[i] = va_arg(argp, int);
 	}
 
-	DEBUG_X11("Send ClientMessage Event: wnd=0x%04lX", (unsigned long)xevent.xclient.window);
+	WLog_Print(xfc->log, WLOG_TRACE, "Send ClientMessage Event: wnd=0x%04lX",
+	           (unsigned long)xevent.xclient.window);
 	LogDynAndXSendEvent(xfc->log, xfc->display, RootWindowOfScreen(xfc->screen), False,
 	                    SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
 	LogDynAndXSync(xfc->log, xfc->display, False);
@@ -278,7 +279,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	window->decorations = xfc->decorations;
 	/* show/hide decorations (e.g. title bar) as guided by xfc->decorations */
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
-	DEBUG_X11("X window decoration set to %d", (int)window->decorations);
+	WLog_Print(xfc->log, WLOG_TRACE, "X window decoration set to %d", (int)window->decorations);
 	xf_floatbar_toggle_fullscreen(xfc->window->floatbar, fullscreen);
 
 	if (fullscreen)
@@ -435,8 +436,9 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 			width = xfc->vscreen.area.right - xfc->vscreen.area.left + 1;
 			height = xfc->vscreen.area.bottom - xfc->vscreen.area.top + 1;
-			DEBUG_X11("X window move and resize %dx%d@%" PRIu32 "x%" PRIu32 "", startX, startY,
-			          width, height);
+			WLog_Print(xfc->log, WLOG_TRACE,
+			           "X window move and resize %dx%d@%" PRIu32 "x%" PRIu32 "", startX, startY,
+			           width, height);
 			xf_ResizeDesktopWindow(xfc, window, WINPR_ASSERTING_INT_CAST(int, width),
 			                       WINPR_ASSERTING_INT_CAST(int, height));
 			LogDynAndXMoveWindow(xfc->log, xfc->display, window->handle, startX, startY);
@@ -683,18 +685,17 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 
 	if (window->shmid < 0)
 	{
-		DEBUG_X11("xf_CreateDesktopWindow: failed to get access to shared memory - shmget()\n");
+		WLog_Print(xfc->log, WLOG_TRACE,
+		           "xf_CreateDesktopWindow: failed to get access to shared memory - shmget()\n");
 	}
 	else
 	{
 		int rc = ftruncate(window->shmid, sizeof(window->handle));
 		if (rc != 0)
 		{
-#ifdef WITH_DEBUG_X11
 			char ebuffer[256] = WINPR_C_ARRAY_INIT;
-			DEBUG_X11("ftruncate failed with %s [%d]", winpr_strerror(rc, ebuffer, sizeof(ebuffer)),
-			          rc);
-#endif
+			WLog_Print(xfc->log, WLOG_TRACE, "ftruncate failed with %s [%d]",
+			           winpr_strerror(rc, ebuffer, sizeof(ebuffer)), rc);
 		}
 		else
 		{
@@ -703,7 +704,8 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 
 			if (mem == MAP_FAILED)
 			{
-				DEBUG_X11(
+				WLog_Print(
+				    xfc->log, WLOG_TRACE,
 				    "xf_CreateDesktopWindow: failed to assign pointer to the memory address - "
 				    "shmat()\n");
 			}

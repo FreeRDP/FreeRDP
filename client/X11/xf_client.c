@@ -926,7 +926,7 @@ static int xf_error_handler_ex(Display* d, XErrorEvent* ev)
 	 * another window. This make xf_error_handler() a potential
 	 * debugger breakpoint.
 	 */
-#if defined(WITH_DEBUG_X11)
+#if !defined(NDEBUG)
 	XUngrabKeyboard(d, CurrentTime);
 	XUngrabPointer(d, CurrentTime);
 #endif

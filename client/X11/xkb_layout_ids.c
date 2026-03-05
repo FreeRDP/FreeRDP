@@ -852,12 +852,12 @@ static UINT32 find_keyboard_layout_variant(const XKB_LAYOUT* layout, const char*
 	return convert(layout->keyboardLayoutID);
 }
 
-UINT32 xf_find_keyboard_layout_in_xorg_rules(const char* layout, const char* variant)
+UINT32 xf_find_keyboard_layout_in_xorg_rules(wLog* log, const char* layout, const char* variant)
 {
 	if ((layout == nullptr) || (variant == nullptr))
 		return 0;
 
-	DEBUG_X11("xkbLayout: %s\txkbVariant: %s", layout, variant);
+	WLog_Print(log, WLOG_TRACE, "xkbLayout: %s\txkbVariant: %s", layout, variant);
 
 	for (size_t i = 0; i < ARRAYSIZE(xkbLayouts); i++)
 	{
