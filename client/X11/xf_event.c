@@ -1420,9 +1420,6 @@ BOOL xf_event_update_screen(freerdp* instance)
 	xfContext* xfc = (xfContext*)instance->context;
 	WINPR_ASSERT(xfc);
 
-	rdpSettings* settings = xfc->common.context.settings;
-	WINPR_ASSERT(settings);
-
 	if (!xfc->exposeRequested)
 		return TRUE;
 	xfc->exposeRequested = false;
