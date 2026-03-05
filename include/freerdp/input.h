@@ -141,6 +141,34 @@ extern "C"
 	FREERDP_API const char* freerdp_input_keyboard_flags_string(uint32_t flags, char* buffer,
 	                                                            size_t len);
 
+	/** @brief stringify \b KBD_FLAGS_* constants
+	 *
+	 *  @param flags The flags to stringify
+	 *  @param buffer A buffer to store the resulting string
+	 *  @param len The length of the buffer in bytes
+	 *
+	 *  @return A pointer to \ref buffer or \b nullptr in case of failure
+	 *  @since version 3.24.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_input_keypress_flags_string(uint32_t flags, char* buffer,
+	                                                            size_t len);
+
+	/** @brief stringify \b PTR_XFLAGS_* or \b PTR_FLAGS_* constants
+	 *
+	 *  @param flags The flags to stringify
+	 *  @param extended if \b false assume \ref flags contains \b PTR_FLAGS_* constants, if \b true
+	 * assume \b PTR_XFLAGS_* constants.
+	 *  @param buffer A buffer to store the resulting string
+	 *  @param len The length of the buffer in bytes
+	 *
+	 *  @return A pointer to \ref buffer or \b nullptr in case of failure
+	 *  @since version 3.24.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_input_mouse_flags_string(uint32_t flags, bool extended,
+	                                                         char* buffer, size_t len);
+
 #ifdef __cplusplus
 }
 #endif
