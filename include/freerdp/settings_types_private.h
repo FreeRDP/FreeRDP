@@ -545,7 +545,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteApplicationSupportLevel);     /* 2126 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteApplicationSupportMask);      /* 2127 */
 	SETTINGS_DEPRECATED(ALIGN64 char* RemoteApplicationWorkingDir);        /* 2128 */
-	UINT64 padding2176[2176 - 2129];                                       /* 2129 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL RailDeferRemoteApp);                  /* 2129 */
+	UINT64 padding2176[2176 - 2130];                                       /* 2130 */
 	UINT64 padding2240[2240 - 2176];                                       /* 2176 */
 
 	/**
