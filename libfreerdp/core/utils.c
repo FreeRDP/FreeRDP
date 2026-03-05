@@ -88,7 +88,11 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 		prompt = TRUE;
 
 	if (!prompt)
+	{
+		if (!utils_sync_credentials(settings, FALSE))
+			return AUTH_FAILED;
 		return AUTH_SKIP;
+	}
 
 	if (!instance->GatewayAuthenticate && !instance->AuthenticateEx)
 		return AUTH_NO_CREDENTIALS;
