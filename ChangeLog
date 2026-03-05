@@ -1,3 +1,89 @@
+# 2026-03-13 Version 3.24.0
+
+A new release with bugfixes and many improvements for users and developers alike.
+* Completed the [[nodiscard]] marking of the API to warn about problematic
+  unchecked use of functions
+* Added full C23 support (default stays at C11) to allow new compilers
+  to do stricter checking
+* Improved X11 and SDL3 clients
+* Improved smartcard support
+* proxy now supports RFX graphics mode
+
+## Security Advisories
+* CVE-2026-29774
+* CVE-2026-29775
+* CVE-2026-29776
+* CVE-2026-31806
+* CVE-2026-31883
+* CVE-2026-31884
+* CVE-2026-31885
+* CVE-2026-31897
+
+## What's Changed
+* Attribute nodiscard related chanes (#12325, #12360, #12395, #12406,
+  #12421, #12426, #12177, #12403, #12405, #12407, #12409, #12408,
+  #12412, #12413)
+* c23 related improvements (#12368, #12371, #12379, #12381, #12383,
+  #12385, #12386, #12387, #12384)
+* Generic code cleanups (#12382, #12439, #12455, #12462, #12399, #12473)
+* [core,utils] ignore NULL values in remove_rdpdr_type (#12372)
+* [codec,fdk] revert use of WinPR types (#12373)
+* [core,gateway] ignore incomplete rpc header (#12375, #12376)
+* [warnings] make function declaration names consistent (#12377)
+* [libfreerdp] Add new define for logon error info (#12380)
+* [client,x11] improve rails window locking (#12392)
+* Reload fix missing null checks (#12396)
+* Bounds checks (#12400)
+* [server,proxy] check for nullptr before using scard_call_context (#12404)
+* [uwac] fix rectangular glitch around surface damage regions (#12410)
+* Address various error handling inconsistencies (#12411)
+* [core,server] Improve WTS API locking (#12414)
+* Address some GCC compile issues (#12415, #12420)
+* Winpr atexit (#12416)
+* [winpr,smartcard] fix function pointer casts (#12422)
+* Xf timer fix (#12423)
+* [client,sdl] workaround for wlroots compositors (#12425)
+* [client,sdl] fix SdlWindow::query (#12378)
+* [winpr,smartcard] fix PCSC_ReleaseCardContext (#12427)
+* [client,x11] eliminate obsolete compile flags (#12428)
+* [client,common] skip sending input events when not connected (#12429)
+* Input connected checks (#12430)
+* Floatbar and display channel improvements (#12431)
+* [winpr,platform] fix WINPR_ATTR_NODISCARD definition (#12432)
+* [client] Fix writing of gatewayusagemethod to .rdp files (#12433)
+* Nodiscard finetune (#12435)
+* [core] fix missing gateway credential sync (#12436)
+* [client,sdl3] limit FREERDP_WLROOTS_HACK (#12441)
+* [core,settings] Allow FreeRDP_instance in setter (#12442)
+* [codec,h264] make log message trace (#12444)
+* X11 rails improve (#12440)
+* [codec,nsc] limit copy area in nsc_process_message (#12448)
+* Proxy support RFX and NSC settings (#12449)
+* [client,common] display a shortened help on parsing issues (#12450)
+* [winpr,smartcard] refine locking for pcsc layer (#12451)
+* [codec,swscale] allow runtime loading of swscale (#12452)
+* Swscale fallback (#12454)
+* Sdl multi scaling support (#12456)
+* [packaging,flatpak] update runtime and dependencies (#12457)
+* [codec,video] add doxygen version details (#12458)
+* [github,templates] update templates (#12460)
+* [client,sdl] allow FREERDP_WLROOTS_HACK for all sessions (#12461)
+* [warnings,nodiscard] add log messages for failures (#12463)
+* [gdi,gdi] ignore empty rectangles (#12467)
+* Smartcard fix smartcard-login, pass rdpContext for abort (#12466)
+* [winpr,smartcard] fix compiler warnings (#12469)
+* [winpr,timezone] fix search for transition dates (#12468)
+* [client,common] improve /p help (#12471)
+* Scard logging refactored (#12472)
+* [emu,scard] fix smartcard emulation (#12475)
+* Sdl null cursor (#12474)
+
+## New Contributors
+* @larsch made their first contribution in #12410
+
+For a complete and detailed change log since the last release run:
+git log 3.24.0...3.23.0
+
 # 2026-02-25 Version 3.23.0
 
 A new release and again a lot of changes:
