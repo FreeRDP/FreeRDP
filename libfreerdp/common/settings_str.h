@@ -182,6 +182,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_PreferIPv6OverIPv4, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_PreferIPv6OverIPv4" },
 	{ FreeRDP_PrintReconnectCookie, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_PrintReconnectCookie" },
 	{ FreeRDP_PromptForCredentials, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_PromptForCredentials" },
+	{ FreeRDP_RailDeferRemoteApp, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RailDeferRemoteApp" },
 	{ FreeRDP_RdpSecurity, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RdpSecurity" },
 	{ FreeRDP_RdstlsSecurity, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RdstlsSecurity" },
 	{ FreeRDP_RedirectClipboard, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RedirectClipboard" },

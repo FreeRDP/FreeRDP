@@ -427,6 +427,9 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_PromptForCredentials:
 			return settings->PromptForCredentials;
 
+		case FreeRDP_RailDeferRemoteApp:
+			return settings->RailDeferRemoteApp;
+
 		case FreeRDP_RdpSecurity:
 			return settings->RdpSecurity;
 
@@ -1157,6 +1160,10 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_PromptForCredentials:
 			settings->PromptForCredentials = cnv.c;
+			break;
+
+		case FreeRDP_RailDeferRemoteApp:
+			settings->RailDeferRemoteApp = cnv.c;
 			break;
 
 		case FreeRDP_RdpSecurity:

@@ -126,6 +126,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_PreferIPv6OverIPv4,
 	FreeRDP_PrintReconnectCookie,
 	FreeRDP_PromptForCredentials,
+	FreeRDP_RailDeferRemoteApp,
 	FreeRDP_RdpSecurity,
 	FreeRDP_RdstlsSecurity,
 	FreeRDP_RedirectClipboard,
