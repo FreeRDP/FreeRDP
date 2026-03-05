@@ -152,7 +152,11 @@ BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 	xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xwindow);
 
 	if (!appWindow)
-		return FALSE;
+	{
+		WLog_Print(xfc->log, WLOG_DEBUG, "xf_rail_send_activate: ignoring unknown window 0x%08lx",
+		           xwindow);
+		return TRUE;
+	}
 
 	if (enabled)
 		xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
