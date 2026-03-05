@@ -2181,6 +2181,9 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wSt
 	if (deactivate_reactivate || resolution_change)
 	{
 		BOOL status = TRUE;
+		WLog_DBG(TAG, "new size %" PRIu32 "x%" PRIu32, rdp->settings->DesktopWidth,
+		         rdp->settings->DesktopHeight);
+
 		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
 
 		if (!status)
