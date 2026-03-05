@@ -1646,6 +1646,10 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 
 	WINPR_ASSERT(cctx);
 
+	const CONNECTION_STATE state = freerdp_get_state(&cctx->context);
+	if (state != CONNECTION_STATE_ACTIVE)
+		return TRUE;
+
 #if defined(CHANNEL_AINPUT_CLIENT)
 	if (cctx->ainput)
 	{
@@ -1682,7 +1686,7 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 #endif
 
 	if (!handled)
-		freerdp_input_send_mouse_event(cctx->context.input, mflags, 0, 0);
+		return freerdp_input_send_mouse_event(cctx->context.input, mflags, 0, 0);
 
 	return TRUE;
 }
@@ -1720,6 +1724,9 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 	BOOL handled = FALSE;
 
 	WINPR_ASSERT(cctx);
+	const CONNECTION_STATE state = freerdp_get_state(&cctx->context);
+	if (state != CONNECTION_STATE_ACTIVE)
+		return TRUE;
 
 	if (mflags & PTR_FLAGS_BUTTON1)
 		cctx->pressed_buttons[0] = mflags & PTR_FLAGS_DOWN;
@@ -1793,6 +1800,10 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 {
 	BOOL handled = FALSE;
 	WINPR_ASSERT(cctx);
+
+	const CONNECTION_STATE state = freerdp_get_state(&cctx->context);
+	if (state != CONNECTION_STATE_ACTIVE)
+		return TRUE;
 
 	if (mflags & PTR_XFLAGS_BUTTON1)
 		cctx->pressed_buttons[3] = mflags & PTR_XFLAGS_DOWN;
@@ -2102,6 +2113,10 @@ BOOL freerdp_client_handle_touch(rdpClientContext* cctx, UINT32 flags, INT32 fin
 	    FREERDP_TOUCH_DOWN | FREERDP_TOUCH_UP | FREERDP_TOUCH_MOTION | FREERDP_TOUCH_CANCEL;
 	WINPR_ASSERT(cctx);
 
+	const CONNECTION_STATE state = freerdp_get_state(&cctx->context);
+	if (state != CONNECTION_STATE_ACTIVE)
+		return TRUE;
+
 	FreeRDP_TouchContact contact = WINPR_C_ARRAY_INIT;
 
 	if (!freerdp_client_touch_update(cctx, flags, finger, pressure, x, y, &contact))
@@ -2200,6 +2215,10 @@ static BOOL freerdp_client_register_pen(rdpClientContext* cctx, UINT32 flags, IN
 
 BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 deviceid, ...)
 {
+	const CONNECTION_STATE state = freerdp_get_state(&cctx->context);
+	if (state != CONNECTION_STATE_ACTIVE)
+		return TRUE;
+
 #if defined(CHANNEL_RDPEI_CLIENT)
 	if ((flags & FREERDP_PEN_REGISTER) != 0)
 	{
@@ -2362,6 +2381,10 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 BOOL freerdp_client_pen_cancel_all(rdpClientContext* cctx)
 {
 	WINPR_ASSERT(cctx);
+
+	const CONNECTION_STATE state = freerdp_get_state(&cctx->context);
+	if (state != CONNECTION_STATE_ACTIVE)
+		return TRUE;
 
 #if defined(CHANNEL_RDPEI_CLIENT)
 	RdpeiClientContext* rdpei = cctx->rdpei;
