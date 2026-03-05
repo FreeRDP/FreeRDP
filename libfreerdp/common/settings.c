@@ -1156,6 +1156,18 @@ BOOL freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsage
 	return TRUE;
 }
 
+UINT32 freerdp_get_gateway_usage_method(rdpSettings* settings)
+{
+	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled))
+	{
+		if (freerdp_settings_get_bool(settings, FreeRDP_GatewayBypassLocal))
+			return TSC_PROXY_MODE_DETECT;
+		return TSC_PROXY_MODE_DIRECT;
+	}
+
+	return freerdp_settings_get_uint32(settings, FreeRDP_GatewayUsageMethod);
+}
+
 void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEnabled,
                                          UINT32 GatewayBypassLocal)
 {
