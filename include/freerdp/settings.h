@@ -285,6 +285,8 @@ extern "C"
 
 	FREERDP_API BOOL freerdp_set_gateway_usage_method(rdpSettings* settings,
 	                                                  UINT32 GatewayUsageMethod);
+	WINPR_ATTR_NODISCARD
+	FREERDP_API UINT32 freerdp_get_gateway_usage_method(rdpSettings* settings);
 	FREERDP_API void freerdp_update_gateway_usage_method(rdpSettings* settings,
 	                                                     UINT32 GatewayEnabled,
 	                                                     UINT32 GatewayBypassLocal);

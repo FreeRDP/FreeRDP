@@ -1241,7 +1241,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->Compression = WINPR_ASSERTING_INT_CAST(
 	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_CompressionEnabled));
 	file->AuthenticationLevel = freerdp_settings_get_uint32(settings, FreeRDP_AuthenticationLevel);
-	file->GatewayUsageMethod = freerdp_settings_get_uint32(settings, FreeRDP_GatewayUsageMethod);
+	file->GatewayUsageMethod = freerdp_get_gateway_usage_method(settings);
 	file->GatewayCredentialsSource =
 	    freerdp_settings_get_uint32(settings, FreeRDP_GatewayCredentialsSource);
 	file->PromptCredentialOnce = WINPR_ASSERTING_INT_CAST(
