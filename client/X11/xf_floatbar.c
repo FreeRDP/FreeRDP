@@ -86,6 +86,7 @@ struct xf_floatbar
 	Window root_window;
 	char* title;
 	XFontSet fontSet;
+	BOOL entered;
 };
 
 static xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type);
@@ -857,6 +858,8 @@ BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event)
 			break;
 
 		case EnterNotify:
+			floatbar->entered = TRUE;
+			WINPR_FALLTHROUGH
 		case FocusIn:
 			if (event->xany.window != floatbar->handle)
 				xf_floatbar_button_event_focusin(floatbar, &event->xany);
@@ -864,6 +867,8 @@ BOOL xf_floatbar_event_process(xfFloatbar* floatbar, const XEvent* event)
 			break;
 
 		case LeaveNotify:
+			floatbar->entered = FALSE;
+			WINPR_FALLTHROUGH
 		case FocusOut:
 			if (event->xany.window == floatbar->handle)
 				xf_floatbar_event_focusout(floatbar);
@@ -948,7 +953,9 @@ BOOL xf_floatbar_is_window(xfFloatbar* floatbar, Window window)
 {
 	if (!floatbar)
 		return FALSE;
-	return floatbar->handle == window;
+	if (floatbar->handle == window)
+		return TRUE;
+	return floatbar->entered;
 }
 
 BOOL xfc_is_floatbar_window(xfContext* xfc, Window window)
