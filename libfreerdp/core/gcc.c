@@ -1778,8 +1778,14 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	}
 	return TRUE;
 fail:
-	freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, nullptr, 0);
-	freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, nullptr, 0);
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, nullptr, 0))
+		WLog_Print(
+		    mcs->log, WLOG_ERROR,
+		    "freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, nullptr, 0) failed");
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, nullptr, 0))
+		WLog_Print(mcs->log, WLOG_ERROR,
+		           "freerdp_settings_set_pointer_len(settings, FreeRDP_ServerCertificate, nullptr, "
+		           "0) failed");
 	return FALSE;
 }
 

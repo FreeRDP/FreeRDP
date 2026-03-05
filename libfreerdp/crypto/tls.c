@@ -1400,8 +1400,11 @@ static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 			return TRUE;
 	}
 
-	freerdp_settings_set_string(settings, keyAccepted, nullptr);
-	freerdp_settings_set_uint32(settings, keyLength, 0);
+	if (!freerdp_settings_set_string(settings, keyAccepted, nullptr))
+		WLog_WARN(TAG, "freerdp_settings_set_string(settings, keyAccepted=%d, nullptr) failde",
+		          keyAccepted);
+	if (!freerdp_settings_set_uint32(settings, keyLength, 0))
+		WLog_WARN(TAG, "freerdp_settings_set_uint32(settings, keyLength=%d, 0) failed", keyLength);
 
 	return FALSE;
 }
