@@ -114,8 +114,8 @@ static DWORD kbd_layout_id_from_x_property(wLog* log, Display* display, Window r
 
 	parse_xkb_rule_names(rule, items, &layout, &variant);
 
-	DEBUG_X11("%s layout: %s, variant: %s", property_name, layout, variant);
-	layout_id = xf_find_keyboard_layout_in_xorg_rules(layout, variant);
+	WLog_Print(log, WLOG_TRACE, "%s layout: %s, variant: %s", property_name, layout, variant);
+	layout_id = xf_find_keyboard_layout_in_xorg_rules(log, layout, variant);
 
 	XFree(rule);
 

@@ -24,12 +24,3 @@
 #include <freerdp/log.h>
 
 #define DBG_TAG CLIENT_TAG("x11")
-
-#ifdef WITH_DEBUG_X11
-#define DEBUG_X11(...) WLog_DBG(DBG_TAG, __VA_ARGS__)
-#else
-#define DEBUG_X11(...) \
-	do                 \
-	{                  \
-	} while (0)
-#endif

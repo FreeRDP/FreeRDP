@@ -779,7 +779,7 @@ static BOOL xf_event_ClientMessage(xfContext* xfc, const XClientMessageEvent* ev
 		}
 		else
 		{
-			DEBUG_X11("Main window closed");
+			WLog_Print(xfc->log, WLOG_TRACE, "Main window closed");
 			return FALSE;
 		}
 	}
@@ -1272,8 +1272,8 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 
 	if (event->type != MotionNotify)
 	{
-		DEBUG_X11("%s Event(%d): wnd=0x%08lX", x11_event_string(event->type), event->type,
-		          (unsigned long)event->xany.window);
+		WLog_Print(xfc->log, WLOG_TRACE, "%s Event(%d): wnd=0x%08lX", x11_event_string(event->type),
+		           event->type, (unsigned long)event->xany.window);
 	}
 
 	switch (event->type)
