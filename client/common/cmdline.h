@@ -39,7 +39,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "desktop composition" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED,
 	  "program:[<path>|<||alias>],cmd:<command>,file:<filename>,guid:<guid>,icon:<filename>,name:<"
-	  "name>,workdir:<directory>,hidef:[on|off]",
+	  "name>,workdir:<directory>,hidef:[on|off],raildefer:[on|off]",
 	  nullptr, nullptr, -1, nullptr, "Remote application program" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "app-cmd", COMMAND_LINE_VALUE_REQUIRED, "<parameters>", nullptr, nullptr, -1, nullptr,

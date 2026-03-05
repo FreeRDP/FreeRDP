@@ -3835,7 +3835,8 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			{ "cmd:", FreeRDP_RemoteApplicationCmdLine, nullptr },
 			{ "file:", FreeRDP_RemoteApplicationFile, nullptr },
 			{ "guid:", FreeRDP_RemoteApplicationGuid, nullptr },
-			{ "hidef:", FreeRDP_HiDefRemoteApp, nullptr }
+			{ "hidef:", FreeRDP_HiDefRemoteApp, nullptr },
+			{ "raildefer:", FreeRDP_RailDeferRemoteApp, nullptr }
 		};
 		for (size_t x = 0; x < count; x++)
 		{
