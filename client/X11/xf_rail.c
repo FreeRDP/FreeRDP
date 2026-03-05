@@ -119,6 +119,13 @@ BOOL xf_rail_enable_remoteapp_mode(xfContext* xfc)
 		xf_DestroyDesktopWindow(xfc, xfc->window);
 		xfc->window = nullptr;
 
+		/* Reset XI2 event flags so standard X11 events are processed for RAIL
+		 * windows. The per-window XI2 registrations were on the now-destroyed
+		 * desktop window and will no longer fire. */
+		xfc->xi_event = false;
+		xfc->xi_rawevent = false;
+		xfc->common.mouse_grabbed = FALSE;
+
 		gdi->suppressOutput = old;
 	}
 	return TRUE;
@@ -152,7 +159,11 @@ BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 	xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xwindow);
 
 	if (!appWindow)
-		return FALSE;
+	{
+		WLog_Print(xfc->log, WLOG_DEBUG, "xf_rail_send_activate: ignoring unknown window 0x%08lx",
+		           xwindow);
+		return TRUE;
+	}
 
 	if (enabled)
 		xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
