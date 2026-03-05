@@ -97,27 +97,24 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
 	UINT16 count = 0;
-	UINT32 DesktopWidth = 0;
-	UINT32 DesktopHeight = 0;
 	UINT16* pSurfaceIds = nullptr;
-	rdpGdi* gdi = nullptr;
-	rdpUpdate* update = nullptr;
-	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(resetGraphics);
 
-	gdi = (rdpGdi*)context->custom;
+	rdpGdi* gdi = (rdpGdi*)context->custom;
 	WINPR_ASSERT(gdi);
 
-	update = gdi->context->update;
+	rdpUpdate* update = gdi->context->update;
 	WINPR_ASSERT(update);
 
-	settings = gdi->context->settings;
+	rdpSettings* settings = gdi->context->settings;
 	WINPR_ASSERT(settings);
 	EnterCriticalSection(&context->mux);
-	DesktopWidth = resetGraphics->width;
-	DesktopHeight = resetGraphics->height;
+	const UINT32 DesktopWidth = resetGraphics->width;
+	const UINT32 DesktopHeight = resetGraphics->height;
+
+	WLog_DBG(TAG, "new size: %" PRIu32 "x%" PRIu32, DesktopWidth, DesktopHeight);
 
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, DesktopWidth))
 		goto fail;
