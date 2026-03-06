@@ -89,7 +89,7 @@ static inline UINT16 out_color_count_2(UINT16 in_count, wStream* WINPR_RESTRICT 
 	{
 		if (in_count < 32)
 		{
-			const BYTE temp = ((0x3 << 5) | in_count) & 0xFF;
+			const BYTE temp = ((0x3u << 5) | in_count) & 0xFF;
 			Stream_Write_UINT8(in_s, temp);
 		}
 		else if (in_count < 256 + 32)
@@ -119,7 +119,7 @@ static inline UINT16 out_color_count_3(UINT16 in_count, wStream* WINPR_RESTRICT 
 	{
 		if (in_count < 32)
 		{
-			const BYTE temp = ((0x3 << 5) | in_count) & 0xFF;
+			const BYTE temp = ((0x3u << 5) | in_count) & 0xFF;
 			Stream_Write_UINT8(in_s, temp);
 		}
 		else if (in_count < 256 + 32)
@@ -153,7 +153,7 @@ static inline UINT16 out_copy_count_2(UINT16 in_count, wStream* WINPR_RESTRICT i
 	{
 		if (in_count < 32)
 		{
-			const BYTE temp = ((0x4 << 5) | in_count) & 0xFF;
+			const BYTE temp = ((0x4u << 5) | in_count) & 0xFF;
 			Stream_Write_UINT8(in_s, temp);
 		}
 		else if (in_count < 256 + 32)
@@ -184,7 +184,7 @@ static inline UINT16 out_copy_count_3(UINT16 in_count, wStream* WINPR_RESTRICT i
 	{
 		if (in_count < 32)
 		{
-			const BYTE temp = ((0x4 << 5) | in_count) & 0xFF;
+			const BYTE temp = ((0x4u << 5) | in_count) & 0xFF;
 			Stream_Write_UINT8(in_s, temp);
 		}
 		else if (in_count < 256 + 32)
@@ -332,7 +332,7 @@ static inline UINT16 out_counts_mix_count_2(UINT16 in_count, wStream* WINPR_REST
 	{
 		if (in_count < 32)
 		{
-			const BYTE temp = ((0x1 << 5) | in_count) & 0xFF;
+			const BYTE temp = ((0x1u << 5) | in_count) & 0xFF;
 			Stream_Write_UINT8(in_s, temp);
 		}
 		else if (in_count < 256 + 32)
@@ -359,7 +359,7 @@ static inline UINT16 out_counts_mix_count_3(UINT16 in_count, wStream* WINPR_REST
 	{
 		if (in_count < 32)
 		{
-			const BYTE temp = ((0x1 << 5) | in_count) & 0xFF;
+			const BYTE temp = ((0x1u << 5) | in_count) & 0xFF;
 			Stream_Write_UINT8(in_s, temp);
 		}
 		else if (in_count < 256 + 32)
@@ -387,7 +387,7 @@ static inline UINT16 out_from_count_2(UINT16 in_count, wStream* WINPR_RESTRICT i
 	{
 		if ((in_count % 8) == 0 && in_count < 249)
 		{
-			const BYTE temp = ((0x2 << 5) | (in_count / 8)) & 0xFF;
+			const BYTE temp = ((0x2u << 5) | (in_count / 8)) & 0xFF;
 			Stream_Write_UINT8(in_s, temp);
 		}
 		else if (in_count < 256)
@@ -417,7 +417,7 @@ static inline UINT16 out_from_count_3(UINT16 in_count, wStream* WINPR_RESTRICT i
 	{
 		if ((in_count % 8) == 0 && in_count < 249)
 		{
-			const BYTE temp = ((0x2 << 5) | (in_count / 8)) & 0xFF;
+			const BYTE temp = ((0x2u << 5) | (in_count / 8)) & 0xFF;
 			Stream_Write_UINT8(in_s, temp);
 		}
 		else if (in_count < 256)
@@ -623,7 +623,7 @@ static inline SSIZE_T freerdp_bitmap_compress_24(const void* WINPR_RESTRICT srcD
 
 				if (pixel == (ypixel ^ mix))
 				{
-					const uint8_t tmp = (1 << (counts.fom_count % 8)) & 0xFF;
+					const uint8_t tmp = (1u << (counts.fom_count % 8)) & 0xFF;
 					const uint8_t val = fom_mask[counts.fom_mask_len - 1] | tmp;
 					fom_mask[counts.fom_mask_len - 1] = val;
 				}
@@ -946,7 +946,7 @@ static inline SSIZE_T freerdp_bitmap_compress_16(const void* WINPR_RESTRICT srcD
 
 				if (pixel == (ypixel ^ mix))
 				{
-					const uint8_t tmp = (1 << (counts.fom_count % 8)) & 0xFF;
+					const uint8_t tmp = (1u << (counts.fom_count % 8)) & 0xFF;
 					const uint8_t val = fom_mask[counts.fom_mask_len - 1] | tmp;
 					fom_mask[counts.fom_mask_len - 1] = val;
 				}
