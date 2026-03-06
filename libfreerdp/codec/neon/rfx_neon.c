@@ -468,7 +468,7 @@ static inline size_t prfx_get_band_h_count(size_t level)
 	if (level == 1)
 		return (64 >> 1) - 1;
 	else
-		return (64 + (1 << (level - 1))) >> level;
+		return (64 + (1u << (level - 1))) >> level;
 }
 
 static inline void rfx_dwt_2d_decode_extrapolate_block_neon(INT16* buffer, INT16* temp,
