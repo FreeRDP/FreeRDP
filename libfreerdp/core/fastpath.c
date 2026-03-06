@@ -1051,7 +1051,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	{
 		size_t length = Stream_GetPosition(s);
 
-		if (length >= (2 << 14))
+		if (length >= (2u << 14))
 		{
 			WLog_ERR(TAG, "Maximum FastPath PDU length is 32767");
 			goto fail;

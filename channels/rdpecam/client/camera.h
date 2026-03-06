@@ -42,6 +42,7 @@
 #include <freerdp/channels/log.h>
 #include <freerdp/channels/rdpecam.h>
 #include <freerdp/codecs.h>
+#include <freerdp/codec/video.h>
 #include <freerdp/primitives.h>
 
 #define ECAM_PROTO_VERSION 0x02
@@ -60,12 +61,6 @@
  * will fit in, even with highest resolution.
  */
 #define ECAM_SAMPLE_RESPONSE_BUFFER_SIZE (1024ULL * 4050ULL)
-
-/* Special format addition for CAM_MEDIA_FORMAT enum formats
- * used to support H264 stream muxed in MJPG container stream.
- * The value picked not to overlap with enum values
- */
-#define CAM_MEDIA_FORMAT_MJPG_H264 0x0401
 
 typedef struct s_ICamHal ICamHal;
 
@@ -107,24 +102,7 @@ typedef struct
 	volatile BOOL haveSample;
 	wStream* sampleRespBuffer;
 
-	H264_CONTEXT* h264;
-
-#if defined(WITH_INPUT_FORMAT_MJPG)
-	AVCodecContext* avContext;
-	AVPacket* avInputPkt;
-	AVFrame* avOutFrame;
-#endif
-
-#if defined(WITH_INPUT_FORMAT_H264)
-	size_t h264FrameMaxSize;
-	BYTE* h264Frame;
-#endif
-
-	/* sws_scale */
-	uint32_t swsWidth;
-	uint32_t swsHeight;
-	struct SwsContext* sws;
-
+	FREERDP_VIDEO_CONTEXT* video;
 } CameraDeviceStream;
 
 WINPR_ATTR_NODISCARD
@@ -288,8 +266,11 @@ FREERDP_LOCAL BOOL ecam_encoder_context_free(CameraDeviceStream* stream);
 
 WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL ecam_encoder_compress(CameraDeviceStream* stream,
                                                               const BYTE* srcData, size_t srcSize,
-                                                              BYTE** ppDstData, size_t* pDstSize);
+                                                              wStream* output);
 
 WINPR_ATTR_NODISCARD FREERDP_LOCAL UINT32 h264_get_max_bitrate(UINT32 height);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL FREERDP_VIDEO_FORMAT ecamToVideoFormat(CAM_MEDIA_FORMAT ecamFormat);
 
 #endif /* FREERDP_CLIENT_CAMERA_H */

@@ -29,9 +29,9 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 
-#define PLANAR_FORMAT_HEADER_CS (1 << 3)
-#define PLANAR_FORMAT_HEADER_RLE (1 << 4)
-#define PLANAR_FORMAT_HEADER_NA (1 << 5)
+#define PLANAR_FORMAT_HEADER_CS (1u << 3)
+#define PLANAR_FORMAT_HEADER_RLE (1u << 4)
+#define PLANAR_FORMAT_HEADER_NA (1u << 5)
 #define PLANAR_FORMAT_HEADER_CLL_MASK 0x07
 
 #ifdef __cplusplus

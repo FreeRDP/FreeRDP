@@ -529,6 +529,13 @@ SDL_Rect SdlWindow::rect(SDL_DisplayID id, bool forceAsPrimary)
 
 bool SdlWindow::tryFallback()
 {
+	/* If we define a custom env variable to use the wlroots hack
+	 * then enable/disable according to this setting only.
+	 */
+	const auto wlroots_hack = SDL_getenv("FREERDP_WLROOTS_HACK");
+	if (wlroots_hack != nullptr)
+		return strcmp(wlroots_hack, "0") != 0;
+
 	const auto platform = SDL_GetPlatform();
 	if ((platform == nullptr) || (strcmp(platform, "Linux") != 0))
 		return false;
@@ -536,13 +543,6 @@ bool SdlWindow::tryFallback()
 	const auto driver = SDL_GetCurrentVideoDriver();
 	if ((driver == nullptr) || (strcmp(driver, "wayland") != 0))
 		return false;
-
-	/* If we define a custom env variable to use the wlroots hack
-	 * then enable/disable according to this setting only.
-	 */
-	const auto wlroots_hack = SDL_getenv("FREERDP_WLROOTS_HACK");
-	if (wlroots_hack != nullptr)
-		return strcmp(wlroots_hack, "0") != 0;
 
 	/* check XDG_SESSION_DESKTOP
 	 *

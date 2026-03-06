@@ -142,7 +142,7 @@ const char* window_styles_to_string(UINT32 style, char* buffer, size_t length)
 	const char* sep = "";
 	for (size_t x = 0; x < 32; x++)
 	{
-		const UINT32 val = 1 << x;
+		const UINT32 val = 1u << x;
 		if ((style & val) != 0)
 		{
 			const char* str = window_style_to_string(val);

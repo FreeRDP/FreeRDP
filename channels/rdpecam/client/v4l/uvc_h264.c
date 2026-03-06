@@ -212,8 +212,9 @@ BOOL set_h264_muxed_format(CamV4lStream* stream, const CAM_MEDIA_TYPE_DESCRIPTIO
 	config_probe_req.wHeight = WINPR_ASSERTING_INT_CAST(uint16_t, mediaType->Height);
 
 	/* set frame rate in 100ns units */
-	uint32_t frame_interval =
-	    (mediaType->FrameRateDenominator * 1000000000LL / mediaType->FrameRateNumerator) / 100;
+	uint32_t frame_interval = (uint32_t)((mediaType->FrameRateDenominator * 1000000000LL /
+	                                      mediaType->FrameRateNumerator) /
+	                                     100);
 	config_probe_req.dwFrameInterval = frame_interval;
 
 	/* quality settings */

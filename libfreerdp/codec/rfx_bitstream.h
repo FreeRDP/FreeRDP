@@ -61,7 +61,7 @@ extern "C"
 				b = bs->bits_left;
 			if (n)
 				n <<= b;
-			n |= (bs->buffer[bs->byte_pos] >> (bs->bits_left - b)) & ((1 << b) - 1);
+			n |= (bs->buffer[bs->byte_pos] >> (bs->bits_left - b)) & ((1u << b) - 1);
 			bs->bits_left -= b;
 			nbits -= b;
 			if (bs->bits_left == 0)
@@ -83,7 +83,7 @@ extern "C"
 			uint32_t b = nbits;
 			if (b > bs->bits_left)
 				b = bs->bits_left;
-			bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1))
+			bs->buffer[bs->byte_pos] |= ((bits >> (nbits - b)) & ((1u << b) - 1))
 			                            << (bs->bits_left - b);
 			bs->bits_left -= b;
 			nbits -= b;

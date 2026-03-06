@@ -133,7 +133,7 @@ static void ntlm_print_negotiate_flags(UINT32 flags)
 	{
 		if ((flags >> i) & 1)
 		{
-			const char* str = ntlm_get_negotiate_string(1 << i);
+			const char* str = ntlm_get_negotiate_string(1u << i);
 			WLog_VRB(TAG, "\t%s (%d),", str, (31 - i));
 		}
 	}

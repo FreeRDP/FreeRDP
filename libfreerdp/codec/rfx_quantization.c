@@ -79,7 +79,7 @@ static inline void rfx_quantization_encode_block(INT16* WINPR_RESTRICT buffer, s
 	if (factor == 0)
 		return;
 
-	const INT16 half = WINPR_ASSERTING_INT_CAST(INT16, 1 << (factor - 1));
+	const INT16 half = WINPR_ASSERTING_INT_CAST(INT16, 1u << (factor - 1));
 	/* Could probably use prims->rShiftC_16s(dst+half, factor, dst, buffer_size); */
 	for (INT16* dst = buffer; buffer_size > 0; dst++, buffer_size--)
 	{

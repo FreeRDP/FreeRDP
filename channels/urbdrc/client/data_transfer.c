@@ -1810,37 +1810,37 @@ static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALL
 
 		case TS_URB_VENDOR_DEVICE: /** 0x0017 */
 			error = urb_control_vendor_or_class_request(pdev, callback, s, RequestId, MessageId,
-			                                            udevman, (0x02 << 5), /* vendor type */
+			                                            udevman, (0x02u << 5), /* vendor type */
 			                                            0x00, transferDir);
 			break;
 
 		case TS_URB_VENDOR_INTERFACE: /** 0x0018 */
 			error = urb_control_vendor_or_class_request(pdev, callback, s, RequestId, MessageId,
-			                                            udevman, (0x02 << 5), /* vendor type */
+			                                            udevman, (0x02u << 5), /* vendor type */
 			                                            0x01, transferDir);
 			break;
 
 		case TS_URB_VENDOR_ENDPOINT: /** 0x0019 */
 			error = urb_control_vendor_or_class_request(pdev, callback, s, RequestId, MessageId,
-			                                            udevman, (0x02 << 5), /* vendor type */
+			                                            udevman, (0x02u << 5), /* vendor type */
 			                                            0x02, transferDir);
 			break;
 
 		case TS_URB_CLASS_DEVICE: /** 0x001A */
 			error = urb_control_vendor_or_class_request(pdev, callback, s, RequestId, MessageId,
-			                                            udevman, (0x01 << 5), /* class type */
+			                                            udevman, (0x01u << 5), /* class type */
 			                                            0x00, transferDir);
 			break;
 
 		case TS_URB_CLASS_INTERFACE: /** 0x001B */
 			error = urb_control_vendor_or_class_request(pdev, callback, s, RequestId, MessageId,
-			                                            udevman, (0x01 << 5), /* class type */
+			                                            udevman, (0x01u << 5), /* class type */
 			                                            0x01, transferDir);
 			break;
 
 		case TS_URB_CLASS_ENDPOINT: /** 0x001C */
 			error = urb_control_vendor_or_class_request(pdev, callback, s, RequestId, MessageId,
-			                                            udevman, (0x01 << 5), /* class type */
+			                                            udevman, (0x01u << 5), /* class type */
 			                                            0x02, transferDir);
 			break;
 
@@ -1854,13 +1854,13 @@ static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALL
 
 		case TS_URB_CLASS_OTHER: /** 0x001F */
 			error = urb_control_vendor_or_class_request(pdev, callback, s, RequestId, MessageId,
-			                                            udevman, (0x01 << 5), /* class type */
+			                                            udevman, (0x01u << 5), /* class type */
 			                                            0x03, transferDir);
 			break;
 
 		case TS_URB_VENDOR_OTHER: /** 0x0020 */
 			error = urb_control_vendor_or_class_request(pdev, callback, s, RequestId, MessageId,
-			                                            udevman, (0x02 << 5), /* vendor type */
+			                                            udevman, (0x02u << 5), /* vendor type */
 			                                            0x03, transferDir);
 			break;
 
