@@ -849,6 +849,13 @@ void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window)
 	if (xfc->window == window)
 		xfc->window = nullptr;
 
+	/* Reset XI2 event flags so standard X11 events are processed for RAIL
+	 * windows. The per-window XI2 registrations were on the now-destroyed
+	 * desktop window and will no longer fire. */
+	xfc->xi_event = false;
+	xfc->xi_rawevent = false;
+	xf_ungrab(xfc);
+
 	xf_floatbar_free(window->floatbar);
 
 	if (window->gc)

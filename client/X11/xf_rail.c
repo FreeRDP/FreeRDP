@@ -152,7 +152,11 @@ BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 	xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xwindow);
 
 	if (!appWindow)
-		return FALSE;
+	{
+		WLog_Print(xfc->log, WLOG_DEBUG, "xf_rail_send_activate: ignoring unknown window 0x%08lx",
+		           xwindow);
+		return TRUE;
+	}
 
 	if (enabled)
 		xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
@@ -981,7 +985,16 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED)
 	{
 		WLog_DBG(TAG, "WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED -> switch to RAILS mode");
-		xf_rail_enable_remoteapp_mode(xfc);
+		if (!xf_rail_enable_remoteapp_mode(xfc))
+			return FALSE;
+
+		const char* app =
+		    freerdp_settings_get_string(context->settings, FreeRDP_RemoteApplicationProgram);
+		if ((app != nullptr) && (strnlen(app, 1) > 0))
+		{
+			if (client_rail_server_start_cmd(xfc->rail) != CHANNEL_RC_OK)
+				return FALSE;
+		}
 	}
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
 	{
@@ -1021,8 +1034,7 @@ static BOOL xf_rail_non_monitored_desktop(rdpContext* context,
 		WLog_Print(xfc->log, WLOG_WARN, "unknown flags 0x%08" PRIx32 "!", orderInfo->fieldFlags);
 	}
 
-	xf_rail_disable_remoteapp_mode(xfc);
-	return TRUE;
+	return xf_rail_disable_remoteapp_mode(xfc);
 }
 
 static void xf_rail_register_update_callbacks(rdpUpdate* update)
@@ -1082,29 +1094,6 @@ static UINT xf_rail_server_system_param(WINPR_ATTR_UNUSED RailClientContext* con
 	// TODO: Actually apply param
 	WLog_ERR("TODO", "TODO: implement");
 	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT xf_rail_server_handshake(RailClientContext* context,
-                                     WINPR_ATTR_UNUSED const RAIL_HANDSHAKE_ORDER* handshake)
-{
-	return client_rail_server_start_cmd(context);
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT
-xf_rail_server_handshake_ex(RailClientContext* context,
-                            WINPR_ATTR_UNUSED const RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
-{
-	return client_rail_server_start_cmd(context);
 }
 
 /**
@@ -1303,8 +1292,6 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	rail->custom = (void*)xfc;
 	rail->ServerExecuteResult = xf_rail_server_execute_result;
 	rail->ServerSystemParam = xf_rail_server_system_param;
-	rail->ServerHandshake = xf_rail_server_handshake;
-	rail->ServerHandshakeEx = xf_rail_server_handshake_ex;
 	rail->ServerLocalMoveSize = xf_rail_server_local_move_size;
 	rail->ServerMinMaxInfo = xf_rail_server_min_max_info;
 	rail->ServerLanguageBarInfo = xf_rail_server_language_bar_info;

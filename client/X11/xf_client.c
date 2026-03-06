@@ -1410,9 +1410,6 @@ static BOOL xf_post_connect(freerdp* instance)
 	rdpUpdate* update = context->update;
 	WINPR_ASSERT(update);
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
-		xfc->remote_app = TRUE;
-
 	if (!xf_create_window(xfc))
 		return FALSE;
 
