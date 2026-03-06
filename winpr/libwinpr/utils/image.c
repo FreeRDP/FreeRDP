@@ -161,7 +161,7 @@ BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poff
 			{
 				DWORD used = bi->biClrUsed;
 				if (used == 0)
-					used = (1 << bi->biBitCount) / 8;
+					used = (1u << bi->biBitCount) / 8;
 				offset += sizeof(RGBQUAD) * used;
 			}
 			if (bi->biSizeImage == 0)
@@ -240,7 +240,7 @@ BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 			{
 				DWORD used = bi.biClrUsed;
 				if (used == 0)
-					used = (1 << bi.biBitCount) / 8;
+					used = (1u << bi.biBitCount) / 8;
 				offset += sizeof(RGBQUAD) * used;
 			}
 			break;
