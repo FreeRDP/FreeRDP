@@ -215,18 +215,7 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* devi
 	size_t formatIndex = 0;
 	for (; formatIndex < nSupportedFormats; formatIndex++)
 	{
-		UINT32 pixelFormat = 0;
-		if (supportedFormats[formatIndex].inputFormat == CAM_MEDIA_FORMAT_MJPG_H264)
-		{
-			if (stream->h264UnitId > 0)
-				pixelFormat = V4L2_PIX_FMT_MJPEG;
-			else
-				continue; /* not supported */
-		}
-		else
-		{
-			pixelFormat = ecamToV4L2PixFormat(supportedFormats[formatIndex].inputFormat);
-		}
+		const UINT32 pixelFormat = ecamToV4L2PixFormat(supportedFormats[formatIndex].inputFormat);
 
 		WINPR_ASSERT(pixelFormat != 0);
 		struct v4l2_frmsizeenum frmsize = WINPR_C_ARRAY_INIT;
@@ -620,27 +609,9 @@ static CAM_ERROR_CODE cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, siz
 	struct v4l2_format video_fmt = WINPR_C_ARRAY_INIT;
 	video_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-	UINT32 pixelFormat = 0;
-	if (mediaType->Format == CAM_MEDIA_FORMAT_MJPG_H264)
-	{
-		if (!set_h264_muxed_format(stream, mediaType))
-		{
-			WLog_ERR(TAG, "Failure to set H264 muxed format");
-			cam_v4l_stream_close_device(stream);
-			return CAM_ERROR_CODE_UnexpectedError;
-		}
-		/* setup container stream format */
-		pixelFormat = V4L2_PIX_FMT_MJPEG;
-		/* limit container stream resolution to save USB bandwidth - required */
-		video_fmt.fmt.pix.width = 640;
-		video_fmt.fmt.pix.height = 480;
-	}
-	else
-	{
-		pixelFormat = ecamToV4L2PixFormat(mediaType->Format);
-		video_fmt.fmt.pix.width = mediaType->Width;
-		video_fmt.fmt.pix.height = mediaType->Height;
-	}
+	const UINT32 pixelFormat = ecamToV4L2PixFormat(mediaType->Format);
+	video_fmt.fmt.pix.width = mediaType->Width;
+	video_fmt.fmt.pix.height = mediaType->Height;
 
 	if (pixelFormat == 0)
 	{
@@ -716,10 +687,7 @@ static CAM_ERROR_CODE cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, siz
 	}
 
 	char fourccstr[16] = WINPR_C_ARRAY_INIT;
-	if (mediaType->Format == CAM_MEDIA_FORMAT_MJPG_H264)
-		strncpy(fourccstr, "H264 muxed", ARRAYSIZE(fourccstr) - 1);
-	else
-		cam_v4l_get_fourcc_str(pixelFormat, fourccstr, ARRAYSIZE(fourccstr));
+	cam_v4l_get_fourcc_str(pixelFormat, fourccstr, ARRAYSIZE(fourccstr));
 
 	WLog_INFO(TAG, "Camera format: %s, width: %u, height: %u, fps: %u/%u", fourccstr,
 	          mediaType->Width, mediaType->Height, mediaType->FrameRateNumerator,
