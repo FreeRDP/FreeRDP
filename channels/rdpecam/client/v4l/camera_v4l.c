@@ -45,20 +45,20 @@ typedef struct
 
 } CamV4lHal;
 
-static CamV4lStream* cam_v4l_stream_create(const char* deviceId, int streamIndex);
+static CamV4lStream* cam_v4l_stream_create(const char* deviceId, size_t streamIndex);
 static void cam_v4l_stream_free(void* obj);
 static void cam_v4l_stream_close_device(CamV4lStream* stream);
-static UINT cam_v4l_stream_stop(CamV4lStream* stream);
+static CAM_ERROR_CODE cam_v4l_stream_stop(CamV4lStream* stream);
 
 /**
  * Function description
  *
- * @return NULL-terminated fourcc string
+ * @return \0-terminated fourcc string
  */
 static const char* cam_v4l_get_fourcc_str(unsigned int fourcc, char* buffer, size_t size)
 {
 	if (size < 5)
-		return NULL;
+		return nullptr;
 
 	buffer[0] = (char)(fourcc & 0xFF);
 	buffer[1] = (char)((fourcc >> 8) & 0xFF);
@@ -92,7 +92,7 @@ static UINT32 ecamToV4L2PixFormat(CAM_MEDIA_FORMAT ecamFormat)
 		case CAM_MEDIA_FORMAT_RGB32:
 			return V4L2_PIX_FMT_RGB32;
 		default:
-			WLog_ERR(TAG, "Unsupported CAM_MEDIA_FORMAT %d", ecamFormat);
+			WLog_ERR(TAG, "Unsupported CAM_MEDIA_FORMAT %u", ecamFormat);
 			return 0;
 	}
 }
@@ -104,7 +104,7 @@ static UINT32 ecamToV4L2PixFormat(CAM_MEDIA_FORMAT ecamFormat)
  */
 static BOOL cam_v4l_format_supported(int fd, UINT32 format)
 {
-	struct v4l2_fmtdesc fmtdesc = { 0 };
+	struct v4l2_fmtdesc fmtdesc = WINPR_C_ARRAY_INIT;
 	fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
 	for (fmtdesc.index = 0; ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0; fmtdesc.index++)
@@ -122,9 +122,9 @@ static BOOL cam_v4l_format_supported(int fd, UINT32 format)
  */
 static int cam_v4l_open_device(const char* deviceId, int flags)
 {
-	char device[20] = { 0 };
+	char device[20] = WINPR_C_ARRAY_INIT;
 	int fd = -1;
-	struct v4l2_capability cap = { 0 };
+	struct v4l2_capability cap = WINPR_C_ARRAY_INIT;
 
 	if (!deviceId)
 		return -1;
@@ -154,21 +154,21 @@ static int cam_v4l_open_device(const char* deviceId, int flags)
 	return fd;
 }
 
-static BOOL cam_v4l_activate(ICamHal* ihal, const char* deviceId, UINT32* errorCode)
+static BOOL cam_v4l_activate(ICamHal* ihal, const char* deviceId, CAM_ERROR_CODE* errorCode)
 {
 	WINPR_UNUSED(ihal);
 	WINPR_UNUSED(deviceId);
 
-	*errorCode = 0;
+	*errorCode = CAM_ERROR_CODE_None;
 	return TRUE;
 }
 
-static BOOL cam_v4l_deactivate(ICamHal* ihal, const char* deviceId, UINT32* errorCode)
+static BOOL cam_v4l_deactivate(ICamHal* ihal, const char* deviceId, CAM_ERROR_CODE* errorCode)
 {
 	WINPR_UNUSED(ihal);
 	WINPR_UNUSED(deviceId);
 
-	*errorCode = 0;
+	*errorCode = CAM_ERROR_CODE_None;
 	return TRUE;
 }
 
@@ -179,7 +179,7 @@ static BOOL cam_v4l_deactivate(ICamHal* ihal, const char* deviceId, UINT32* erro
  * in
  */
 static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* deviceId,
-                                                 int streamIndex,
+                                                 size_t streamIndex,
                                                  const CAM_MEDIA_FORMAT_INFO* supportedFormats,
                                                  size_t nSupportedFormats,
                                                  CAM_MEDIA_TYPE_DESCRIPTION* mediaTypes,
@@ -215,21 +215,10 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* devi
 	size_t formatIndex = 0;
 	for (; formatIndex < nSupportedFormats; formatIndex++)
 	{
-		UINT32 pixelFormat = 0;
-		if (supportedFormats[formatIndex].inputFormat == CAM_MEDIA_FORMAT_MJPG_H264)
-		{
-			if (stream->h264UnitId > 0)
-				pixelFormat = V4L2_PIX_FMT_MJPEG;
-			else
-				continue; /* not supported */
-		}
-		else
-		{
-			pixelFormat = ecamToV4L2PixFormat(supportedFormats[formatIndex].inputFormat);
-		}
+		const UINT32 pixelFormat = ecamToV4L2PixFormat(supportedFormats[formatIndex].inputFormat);
 
 		WINPR_ASSERT(pixelFormat != 0);
-		struct v4l2_frmsizeenum frmsize = { 0 };
+		struct v4l2_frmsizeenum frmsize = WINPR_C_ARRAY_INIT;
 
 		if (!cam_v4l_format_supported(fd, pixelFormat))
 			continue;
@@ -237,7 +226,7 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* devi
 		frmsize.pixel_format = pixelFormat;
 		for (frmsize.index = 0; ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) == 0; frmsize.index++)
 		{
-			struct v4l2_frmivalenum frmival = { 0 };
+			struct v4l2_frmivalenum frmival = WINPR_C_ARRAY_INIT;
 
 			if (frmsize.type != V4L2_FRMSIZE_TYPE_DISCRETE)
 				break; /* don't support size types other than discrete */
@@ -268,7 +257,7 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* devi
 
 			mediaTypes->PixelAspectRatioNumerator = mediaTypes->PixelAspectRatioDenominator = 1;
 
-			char fourccstr[5] = { 0 };
+			char fourccstr[5] = WINPR_C_ARRAY_INIT;
 			WLog_DBG(TAG, "Camera format: %s, width: %u, height: %u, fps: %u/%u",
 			         cam_v4l_get_fourcc_str(pixelFormat, fourccstr, ARRAYSIZE(fourccstr)),
 			         mediaTypes->Width, mediaTypes->Height, mediaTypes->FrameRateNumerator,
@@ -279,7 +268,7 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* ihal, const char* devi
 
 			if (nTypes == maxMediaTypes)
 			{
-				WLog_ERR(TAG, "Media types reached buffer maximum %" PRIu32 "", maxMediaTypes);
+				WLog_ERR(TAG, "Media types reached buffer maximum %" PRIuz "", maxMediaTypes);
 				goto error;
 			}
 		}
@@ -312,8 +301,8 @@ static UINT cam_v4l_enumerate(WINPR_ATTR_UNUSED ICamHal* ihal, ICamHalEnumCallba
 
 	for (UINT n = 0; n < 64; n++)
 	{
-		char device[20] = { 0 };
-		struct v4l2_capability cap = { 0 };
+		char device[20] = WINPR_C_ARRAY_INIT;
+		struct v4l2_capability cap = WINPR_C_ARRAY_INIT;
 		(void)_snprintf(device, sizeof(device), "/dev/video%" PRIu32, n);
 		int fd = open(device, O_RDONLY);
 		if (fd == -1)
@@ -355,7 +344,7 @@ static void cam_v4l_stream_free_buffers(CamV4lStream* stream)
 	}
 
 	free(stream->buffers);
-	stream->buffers = NULL;
+	stream->buffers = nullptr;
 	stream->nBuffers = 0;
 }
 
@@ -366,7 +355,7 @@ static void cam_v4l_stream_free_buffers(CamV4lStream* stream)
  */
 static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
 {
-	struct v4l2_requestbuffers rbuffer = { 0 };
+	struct v4l2_requestbuffers rbuffer = WINPR_C_ARRAY_INIT;
 
 	rbuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	rbuffer.memory = V4L2_MEMORY_MMAP;
@@ -374,8 +363,8 @@ static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
 
 	if (ioctl(stream->fd, VIDIOC_REQBUFS, &rbuffer) < 0 || rbuffer.count == 0)
 	{
-		char buffer[64] = { 0 };
-		WLog_ERR(TAG, "Failure in VIDIOC_REQBUFS, errno  %s [%d], count %d",
+		char buffer[64] = WINPR_C_ARRAY_INIT;
+		WLog_ERR(TAG, "Failure in VIDIOC_REQBUFS, errno  %s [%d], count %u",
 		         winpr_strerror(errno, buffer, sizeof(buffer)), errno, rbuffer.count);
 		return 0;
 	}
@@ -392,26 +381,26 @@ static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
 
 	for (unsigned int i = 0; i < rbuffer.count; i++)
 	{
-		struct v4l2_buffer vbuffer = { 0 };
+		struct v4l2_buffer vbuffer = WINPR_C_ARRAY_INIT;
 		vbuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		vbuffer.memory = V4L2_MEMORY_MMAP;
 		vbuffer.index = i;
 
 		if (ioctl(stream->fd, VIDIOC_QUERYBUF, &vbuffer) < 0)
 		{
-			char buffer[64] = { 0 };
+			char buffer[64] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "Failure in VIDIOC_QUERYBUF, errno %s [%d]",
 			         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			cam_v4l_stream_free_buffers(stream);
 			return 0;
 		}
 
-		stream->buffers[i].start = mmap(NULL, vbuffer.length, PROT_READ | PROT_WRITE, MAP_SHARED,
+		stream->buffers[i].start = mmap(nullptr, vbuffer.length, PROT_READ | PROT_WRITE, MAP_SHARED,
 		                                stream->fd, vbuffer.m.offset);
 
 		if (MAP_FAILED == stream->buffers[i].start)
 		{
-			char buffer[64] = { 0 };
+			char buffer[64] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "Failure in mmap, errno %s [%d]",
 			         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			cam_v4l_stream_free_buffers(stream);
@@ -420,11 +409,11 @@ static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
 
 		stream->buffers[i].length = vbuffer.length;
 
-		WLog_DBG(TAG, "Buffer %d mapped, size: %d", i, vbuffer.length);
+		WLog_DBG(TAG, "Buffer %u mapped, size: %u", i, vbuffer.length);
 
 		if (ioctl(stream->fd, VIDIOC_QBUF, &vbuffer) < 0)
 		{
-			char buffer[64] = { 0 };
+			char buffer[64] = WINPR_C_ARRAY_INIT;
 			WLog_ERR(TAG, "Failure in VIDIOC_QBUF, errno %s [%d]",
 			         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			cam_v4l_stream_free_buffers(stream);
@@ -440,16 +429,17 @@ static size_t cam_v4l_stream_alloc_buffers(CamV4lStream* stream)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cam_v4l_stream_capture_thread(void* param)
+static DWORD WINAPI cam_v4l_stream_capture_thread(LPVOID param)
 {
 	CamV4lStream* stream = (CamV4lStream*)param;
+	WINPR_ASSERT(stream);
 
 	int fd = stream->fd;
 
 	do
 	{
 		int retVal = 0;
-		struct pollfd pfd = { 0 };
+		struct pollfd pfd = WINPR_C_ARRAY_INIT;
 
 		pfd.fd = fd;
 		pfd.events = POLLIN;
@@ -463,7 +453,7 @@ static UINT cam_v4l_stream_capture_thread(void* param)
 		}
 		else if (retVal < 0)
 		{
-			char buffer[64] = { 0 };
+			char buffer[64] = WINPR_C_ARRAY_INIT;
 			WLog_DBG(TAG, "Failure in poll, errno %s [%d]",
 			         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 			Sleep(CAM_V4L2_CAPTURE_THREAD_SLEEP_MS); /* trying to recover */
@@ -479,20 +469,23 @@ static UINT cam_v4l_stream_capture_thread(void* param)
 		EnterCriticalSection(&stream->lock);
 		if (stream->streaming)
 		{
-			struct v4l2_buffer buf = { 0 };
+			struct v4l2_buffer buf = WINPR_C_ARRAY_INIT;
 			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 			buf.memory = V4L2_MEMORY_MMAP;
 
 			/* dequeue buffers until empty */
 			while (ioctl(fd, VIDIOC_DQBUF, &buf) != -1)
 			{
-				stream->sampleCallback(stream->dev, stream->streamIndex,
-				                       stream->buffers[buf.index].start, buf.bytesused);
+				const UINT error =
+				    stream->sampleCallback(stream->dev, stream->streamIndex,
+				                           stream->buffers[buf.index].start, buf.bytesused);
+				if (error != CHANNEL_RC_OK)
+					WLog_ERR(TAG, "Failure in sampleCallback: %" PRIu32, error);
 
 				/* enqueue buffer back */
 				if (ioctl(fd, VIDIOC_QBUF, &buf) == -1)
 				{
-					char buffer[64] = { 0 };
+					char buffer[64] = WINPR_C_ARRAY_INIT;
 					WLog_ERR(TAG, "Failure in VIDIOC_QBUF, errno %s [%d]",
 					         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 				}
@@ -519,14 +512,15 @@ void cam_v4l_stream_close_device(CamV4lStream* stream)
  *
  * @return Null on failure, otherwise pointer to new CamV4lStream
  */
-static CamV4lStream* cam_v4l_stream_create(const char* deviceId, int streamIndex)
+WINPR_ATTR_MALLOC(cam_v4l_stream_free, 1)
+CamV4lStream* cam_v4l_stream_create(const char* deviceId, size_t streamIndex)
 {
 	CamV4lStream* stream = calloc(1, sizeof(CamV4lStream));
 
 	if (!stream)
 	{
 		WLog_ERR(TAG, "Failure in calloc");
-		return NULL;
+		return nullptr;
 	}
 	stream->streamIndex = streamIndex;
 	stream->fd = -1;
@@ -536,7 +530,7 @@ static CamV4lStream* cam_v4l_stream_create(const char* deviceId, int streamIndex
 	{
 		WLog_ERR(TAG, "Failure in calloc");
 		free(stream);
-		return NULL;
+		return nullptr;
 	}
 
 	return stream;
@@ -547,10 +541,10 @@ static CamV4lStream* cam_v4l_stream_create(const char* deviceId, int streamIndex
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT cam_v4l_stream_stop(CamV4lStream* stream)
+CAM_ERROR_CODE cam_v4l_stream_stop(CamV4lStream* stream)
 {
 	if (!stream || !stream->streaming)
-		return CHANNEL_RC_OK;
+		return CAM_ERROR_CODE_None;
 
 	stream->streaming = FALSE; /* this will terminate capture thread */
 
@@ -558,7 +552,7 @@ UINT cam_v4l_stream_stop(CamV4lStream* stream)
 	{
 		(void)WaitForSingleObject(stream->captureThread, INFINITE);
 		(void)CloseHandle(stream->captureThread);
-		stream->captureThread = NULL;
+		stream->captureThread = nullptr;
 	}
 
 	EnterCriticalSection(&stream->lock);
@@ -567,7 +561,7 @@ UINT cam_v4l_stream_stop(CamV4lStream* stream)
 	enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (ioctl(stream->fd, VIDIOC_STREAMOFF, &type) < 0)
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "Failure in VIDIOC_STREAMOFF, errno %s [%d]",
 		         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 	}
@@ -577,33 +571,29 @@ UINT cam_v4l_stream_stop(CamV4lStream* stream)
 
 	LeaveCriticalSection(&stream->lock);
 
-	return CHANNEL_RC_OK;
+	return CAM_ERROR_CODE_None;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise CAM_ERROR_CODE
- */
-static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamIndex,
-                                 const CAM_MEDIA_TYPE_DESCRIPTION* mediaType,
-                                 ICamHalSampleCapturedCallback callback)
+static CAM_ERROR_CODE cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, size_t streamIndex,
+                                           const CAM_MEDIA_TYPE_DESCRIPTION* mediaType,
+                                           ICamHalSampleCapturedCallback callback)
 {
 	CamV4lHal* hal = (CamV4lHal*)ihal;
+	WINPR_ASSERT(hal);
 
 	CamV4lStream* stream = (CamV4lStream*)HashTable_GetItemValue(hal->streams, dev->deviceId);
 
 	if (!stream)
 	{
-		WLog_ERR(TAG, "Unable to find stream, device %s, streamIndex %d", dev->deviceId,
+		WLog_ERR(TAG, "Unable to find stream, device %s, streamIndex %" PRIuz, dev->deviceId,
 		         streamIndex);
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
 
 	if (stream->streaming)
 	{
-		WLog_ERR(TAG, "Streaming already in progress, device %s, streamIndex %d", dev->deviceId,
-		         streamIndex);
+		WLog_ERR(TAG, "Streaming already in progress, device %s, streamIndex %" PRIuz,
+		         dev->deviceId, streamIndex);
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
 
@@ -616,30 +606,12 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
 
-	struct v4l2_format video_fmt = { 0 };
+	struct v4l2_format video_fmt = WINPR_C_ARRAY_INIT;
 	video_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-	UINT32 pixelFormat = 0;
-	if (mediaType->Format == CAM_MEDIA_FORMAT_MJPG_H264)
-	{
-		if (!set_h264_muxed_format(stream, mediaType))
-		{
-			WLog_ERR(TAG, "Failure to set H264 muxed format");
-			cam_v4l_stream_close_device(stream);
-			return CAM_ERROR_CODE_UnexpectedError;
-		}
-		/* setup container stream format */
-		pixelFormat = V4L2_PIX_FMT_MJPEG;
-		/* limit container stream resolution to save USB bandwidth - required */
-		video_fmt.fmt.pix.width = 640;
-		video_fmt.fmt.pix.height = 480;
-	}
-	else
-	{
-		pixelFormat = ecamToV4L2PixFormat(mediaType->Format);
-		video_fmt.fmt.pix.width = mediaType->Width;
-		video_fmt.fmt.pix.height = mediaType->Height;
-	}
+	const UINT32 pixelFormat = ecamToV4L2PixFormat(mediaType->Format);
+	video_fmt.fmt.pix.width = mediaType->Width;
+	video_fmt.fmt.pix.height = mediaType->Height;
 
 	if (pixelFormat == 0)
 	{
@@ -652,7 +624,7 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 	/* set format and frame size */
 	if (ioctl(stream->fd, VIDIOC_S_FMT, &video_fmt) < 0)
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "Failure in VIDIOC_S_FMT, errno %s [%d]",
 		         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 		cam_v4l_stream_close_device(stream);
@@ -660,8 +632,8 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 	}
 
 	/* trying to set frame rate, if driver supports it */
-	struct v4l2_streamparm sp1 = { 0 };
-	struct v4l2_streamparm sp2 = { 0 };
+	struct v4l2_streamparm sp1 = WINPR_C_ARRAY_INIT;
+	struct v4l2_streamparm sp2 = WINPR_C_ARRAY_INIT;
 	sp1.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (ioctl(stream->fd, VIDIOC_G_PARM, &sp1) < 0 ||
 	    !(sp1.parm.capture.capability & V4L2_CAP_TIMEPERFRAME))
@@ -678,7 +650,7 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 
 		if (ioctl(stream->fd, VIDIOC_S_PARM, &sp2) < 0)
 		{
-			char buffer[64] = { 0 };
+			char buffer[64] = WINPR_C_ARRAY_INIT;
 			WLog_INFO(TAG, "Failed to set the framerate, errno %s [%d]",
 			          winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 		}
@@ -698,14 +670,15 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 	enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (ioctl(stream->fd, VIDIOC_STREAMON, &type) < 0)
 	{
-		char buffer[64] = { 0 };
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		WLog_ERR(TAG, "Failure in VIDIOC_STREAMON, errno %s [%d]",
 		         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 		cam_v4l_stream_stop(stream);
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
 
-	stream->captureThread = CreateThread(NULL, 0, cam_v4l_stream_capture_thread, stream, 0, NULL);
+	stream->captureThread =
+	    CreateThread(nullptr, 0, cam_v4l_stream_capture_thread, stream, 0, nullptr);
 	if (!stream->captureThread)
 	{
 		WLog_ERR(TAG, "CreateThread failure");
@@ -713,17 +686,14 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 		return CAM_ERROR_CODE_OutOfMemory;
 	}
 
-	char fourccstr[16] = { 0 };
-	if (mediaType->Format == CAM_MEDIA_FORMAT_MJPG_H264)
-		strncpy(fourccstr, "H264 muxed", ARRAYSIZE(fourccstr) - 1);
-	else
-		cam_v4l_get_fourcc_str(pixelFormat, fourccstr, ARRAYSIZE(fourccstr));
+	char fourccstr[16] = WINPR_C_ARRAY_INIT;
+	cam_v4l_get_fourcc_str(pixelFormat, fourccstr, ARRAYSIZE(fourccstr));
 
 	WLog_INFO(TAG, "Camera format: %s, width: %u, height: %u, fps: %u/%u", fourccstr,
 	          mediaType->Width, mediaType->Height, mediaType->FrameRateNumerator,
 	          mediaType->FrameRateDenominator);
 
-	return CHANNEL_RC_OK;
+	return CAM_ERROR_CODE_None;
 }
 
 /**
@@ -731,15 +701,15 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cam_v4l_stream_stop_by_device_id(ICamHal* ihal, const char* deviceId,
-                                             WINPR_ATTR_UNUSED int streamIndex)
+static CAM_ERROR_CODE cam_v4l_stream_stop_by_device_id(ICamHal* ihal, const char* deviceId,
+                                                       WINPR_ATTR_UNUSED size_t streamIndex)
 {
 	CamV4lHal* hal = (CamV4lHal*)ihal;
 
 	CamV4lStream* stream = (CamV4lStream*)HashTable_GetItemValue(hal->streams, deviceId);
 
 	if (!stream)
-		return CHANNEL_RC_OK;
+		return CAM_ERROR_CODE_NotInitialized;
 
 	return cam_v4l_stream_stop(stream);
 }
@@ -767,18 +737,18 @@ void cam_v4l_stream_free(void* obj)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cam_v4l_free(ICamHal* ihal)
+static CAM_ERROR_CODE cam_v4l_free(ICamHal* ihal)
 {
 	CamV4lHal* hal = (CamV4lHal*)ihal;
 
-	if (hal == NULL)
-		return ERROR_INVALID_PARAMETER;
+	if (hal == nullptr)
+		return CAM_ERROR_CODE_NotInitialized;
 
 	HashTable_Free(hal->streams);
 
 	free(hal);
 
-	return CHANNEL_RC_OK;
+	return CAM_ERROR_CODE_None;
 }
 
 /**
@@ -789,12 +759,12 @@ static UINT cam_v4l_free(ICamHal* ihal)
 FREERDP_ENTRY_POINT(UINT VCAPITYPE v4l_freerdp_rdpecam_client_subsystem_entry(
     PFREERDP_CAMERA_HAL_ENTRY_POINTS pEntryPoints))
 {
-	UINT ret = CHANNEL_RC_OK;
+	UINT ret = ERROR_INTERNAL_ERROR;
 	WINPR_ASSERT(pEntryPoints);
 
 	CamV4lHal* hal = (CamV4lHal*)calloc(1, sizeof(CamV4lHal));
 
-	if (hal == NULL)
+	if (hal == nullptr)
 		return CHANNEL_RC_NO_MEMORY;
 
 	hal->iHal.Enumerate = cam_v4l_enumerate;
@@ -807,18 +777,17 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE v4l_freerdp_rdpecam_client_subsystem_entry(
 
 	hal->streams = HashTable_New(FALSE);
 	if (!hal->streams)
-	{
-		ret = CHANNEL_RC_NO_MEMORY;
 		goto error;
-	}
 
-	HashTable_SetupForStringData(hal->streams, FALSE);
+	if (!HashTable_SetupForStringData(hal->streams, FALSE))
+		goto error;
 
 	wObject* obj = HashTable_ValueObject(hal->streams);
 	WINPR_ASSERT(obj);
 	obj->fnObjectFree = cam_v4l_stream_free;
 
-	if ((ret = pEntryPoints->pRegisterCameraHal(pEntryPoints->plugin, &hal->iHal)))
+	ret = pEntryPoints->pRegisterCameraHal(pEntryPoints->plugin, &hal->iHal);
+	if (ret != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "RegisterCameraHal failed with error %" PRIu32 "", ret);
 		goto error;

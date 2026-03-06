@@ -29,6 +29,7 @@
 #cmakedefine WITH_AAD
 #cmakedefine WITH_CAIRO
 #cmakedefine WITH_SWSCALE
+#cmakedefine WITH_SWSCALE_LOADING
 #cmakedefine WITH_RDPSND_DSOUND
 
 #cmakedefine WITH_WINMM
@@ -216,9 +217,6 @@
 #cmakedefine WITH_DEBUG_URBDRC
 #cmakedefine WITH_DEBUG_TRANSPORT
 #cmakedefine WITH_DEBUG_WND
-#cmakedefine WITH_DEBUG_X11
-#cmakedefine WITH_DEBUG_X11_LOCAL_MOVESIZE
-#cmakedefine WITH_DEBUG_XV
 #cmakedefine WITH_DEBUG_RINGBUFFER
 
 /* Proxy */
