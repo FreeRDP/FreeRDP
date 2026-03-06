@@ -32,11 +32,11 @@ extern "C"
 {
 #endif
 
-#define WINPR_FD_READ_BIT 0
-#define WINPR_FD_READ (1 << WINPR_FD_READ_BIT)
+#define WINPR_FD_READ_BIT 0u
+#define WINPR_FD_READ (1u << WINPR_FD_READ_BIT)
 
-#define WINPR_FD_WRITE_BIT 1
-#define WINPR_FD_WRITE (1 << WINPR_FD_WRITE_BIT)
+#define WINPR_FD_WRITE_BIT 1u
+#define WINPR_FD_WRITE (1u << WINPR_FD_WRITE_BIT)
 
 #ifndef _WIN32
 

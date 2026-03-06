@@ -1516,7 +1516,7 @@ char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags)
 
 	for (int x = 0; x < 31; x++)
 	{
-		const UINT32 mask = 1 << x;
+		const UINT32 mask = 1u << x;
 		size_t len = strnlen(buffer, size);
 		if (flags & mask)
 		{

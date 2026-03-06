@@ -241,11 +241,11 @@ static void keyboard_handle_keymap(void* data, struct wl_keyboard* keyboard, uin
 	input->xkb.keymap = keymap;
 	input->xkb.state = state;
 
-	input->xkb.control_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Control");
-	input->xkb.alt_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Mod1");
-	input->xkb.shift_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Shift");
-	input->xkb.caps_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Lock");
-	input->xkb.num_mask = 1 << xkb_keymap_mod_get_index(input->xkb.keymap, "Mod2");
+	input->xkb.control_mask = 1u << xkb_keymap_mod_get_index(input->xkb.keymap, "Control");
+	input->xkb.alt_mask = 1u << xkb_keymap_mod_get_index(input->xkb.keymap, "Mod1");
+	input->xkb.shift_mask = 1u << xkb_keymap_mod_get_index(input->xkb.keymap, "Shift");
+	input->xkb.caps_mask = 1u << xkb_keymap_mod_get_index(input->xkb.keymap, "Lock");
+	input->xkb.num_mask = 1u << xkb_keymap_mod_get_index(input->xkb.keymap, "Mod2");
 }
 
 static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32_t serial,

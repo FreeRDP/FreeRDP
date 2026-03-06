@@ -184,7 +184,7 @@ static BOOL rdpgfx_is_capability_filtered(RDPGFX_PLUGIN* gfx, UINT32 caps)
 	for (size_t x = 0; x < ARRAYSIZE(capList); x++)
 	{
 		if (caps == capList[x])
-			return (filter & (1 << x)) != 0;
+			return (filter & (1u << x)) != 0;
 	}
 
 	return TRUE;

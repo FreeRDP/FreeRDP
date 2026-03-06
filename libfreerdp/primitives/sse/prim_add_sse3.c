@@ -45,7 +45,7 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 	if (ulen < 16) /* pointless if too small */
 		return generic->add_16s_inplace(pSrcDst1, pSrcDst2, ulen);
 
-	UINT32 offBeatMask = (1 << (shifts - 1)) - 1;
+	UINT32 offBeatMask = (1u << (shifts - 1)) - 1;
 	if ((ULONG_PTR)pSrcDst1 & offBeatMask)
 	{
 		/* Incrementing the pointer skips over 16-byte boundary. */

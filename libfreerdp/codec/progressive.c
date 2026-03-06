@@ -688,7 +688,7 @@ static inline size_t progressive_rfx_get_band_h_count(size_t level)
 	if (level == 1)
 		return (64 >> 1) - 1;
 	else
-		return (64 + (1 << (level - 1))) >> level;
+		return (64 + (1u << (level - 1))) >> level;
 }
 
 static inline void progressive_rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer,
@@ -1048,7 +1048,7 @@ static inline INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* WINP
 
 			if (k)
 			{
-				bs->mask = ((1 << k) - 1);
+				bs->mask = ((1u << k) - 1);
 				state->nz =
 				    WINPR_ASSERTING_INT_CAST(int16_t, ((bs->accumulator >> (32u - k)) & bs->mask));
 				BitStream_Shift(bs, k);
@@ -1077,7 +1077,7 @@ static inline INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* WINP
 		return sign ? -1 : 1;
 
 	UINT32 mag = 1;
-	const UINT32 max = (1 << numBits) - 1;
+	const UINT32 max = (1u << numBits) - 1;
 
 	while (mag < max)
 	{
@@ -1128,7 +1128,7 @@ static inline int16_t rawShift(wBitStream* raw, UINT32 numBits)
 	WINPR_ASSERT(raw);
 	WINPR_ASSERT(numBits > 0);
 
-	raw->mask = ((1 << numBits) - 1);
+	raw->mask = ((1u << numBits) - 1);
 	const int16_t input = (int16_t)((raw->accumulator >> (32 - numBits)) & raw->mask);
 	BitStream_Shift(raw, numBits);
 	return input;

@@ -154,7 +154,7 @@ extern "C"
 		else
 		{
 			_bs->offset -= 32;
-			_bs->mask = ((1 << (_nbits - _bs->offset)) - 1);
+			_bs->mask = ((1u << (_nbits - _bs->offset)) - 1);
 			_bs->accumulator |= ((_bits >> _bs->offset) & _bs->mask);
 			BitStream_Flush(_bs);
 			_bs->accumulator = 0;

@@ -134,7 +134,7 @@ static inline BOOL zgfx_GetBits(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, UINT32 nbits)
 	zgfx->cBitsRemaining -= nbits;
 	zgfx->cBitsCurrent -= nbits;
 	zgfx->bits = zgfx->BitsCurrent >> zgfx->cBitsCurrent;
-	zgfx->BitsCurrent &= ((1 << zgfx->cBitsCurrent) - 1);
+	zgfx->BitsCurrent &= ((1u << zgfx->cBitsCurrent) - 1);
 	return TRUE;
 }
 

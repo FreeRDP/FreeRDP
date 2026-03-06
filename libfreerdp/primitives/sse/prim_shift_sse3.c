@@ -54,7 +54,7 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 	if (len < 16) /* pointless if too small */
 		return generic->lShiftC_16s_inplace(pSrcDst, val, ulen);
 
-	UINT32 offBeatMask = (1 << (shifts - 1)) - 1;
+	UINT32 offBeatMask = (1u << (shifts - 1)) - 1;
 	if ((ULONG_PTR)pSrcDst & offBeatMask)
 	{
 		/* Incrementing the pointer skips over 16-byte boundary. */

@@ -1238,7 +1238,7 @@ const char* freerdp_input_mouse_flags_string(uint32_t flags, bool extended, char
 	/* Strip initial symbol so we do not get duplicate separators */
 	for (size_t x = 0; x < 32; x++)
 	{
-		const uint32_t flag = 1 << x;
+		const uint32_t flag = 1u << x;
 		if (flags & flag)
 		{
 			char ibuffer[64] = WINPR_C_ARRAY_INIT;
@@ -1283,7 +1283,7 @@ const char* freerdp_input_keypress_flags_string(uint32_t flags, char* buffer, si
 	/* Strip initial symbol so we do not get duplicate separators */
 	for (size_t x = 0; x < 32; x++)
 	{
-		const uint32_t flag = 1 << x;
+		const uint32_t flag = 1u << x;
 		if (flags & flag)
 		{
 			char ibuffer[64] = WINPR_C_ARRAY_INIT;
