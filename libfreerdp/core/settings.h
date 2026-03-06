@@ -59,6 +59,7 @@ FREERDP_LOCAL BOOL freerdp_settings_set_string_(rdpSettings* settings,
                                                 FreeRDP_Settings_Keys_String id, const char* val,
                                                 size_t len);
 
+WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_settings_set_string_copy_(rdpSettings* settings,
                                                      FreeRDP_Settings_Keys_String id,
                                                      const char* val, size_t len, BOOL cleanup);

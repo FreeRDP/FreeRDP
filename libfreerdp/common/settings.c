@@ -1499,6 +1499,14 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 
 	switch (id)
 	{
+		case FreeRDP_instance:
+			if ((len != 0) && (len != sizeof(void*)))
+			{
+				WLog_ERR(TAG, "FreeRDP_instance::len must be 0 or %" PRIuz, sizeof(void*));
+				return FALSE;
+			}
+			settings->instance = cnv.v;
+			return TRUE;
 		case FreeRDP_RdpServerCertificate:
 			freerdp_certificate_free(settings->RdpServerCertificate);
 
