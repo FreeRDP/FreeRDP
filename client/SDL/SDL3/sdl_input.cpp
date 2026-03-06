@@ -406,7 +406,7 @@ BOOL sdlInput::keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 	std::string str = "<";
 	for (uint32_t x = 0; x < 32; x++)
 	{
-		uint32_t cmask = 1 << x;
+		uint32_t cmask = 1u << x;
 		if ((mask & cmask) != 0)
 		{
 			auto s = modbyvalue(cmask);
