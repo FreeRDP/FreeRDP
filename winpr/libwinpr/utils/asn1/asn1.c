@@ -291,11 +291,11 @@ static size_t lenBytes(size_t len)
 {
 	if (len < 128)
 		return 1;
-	if (len < (1 << 8))
+	if (len < (1u << 8))
 		return 2;
-	if (len < (1 << 16))
+	if (len < (1u << 16))
 		return 3;
-	if (len < (1 << 24))
+	if (len < (1u << 24))
 		return 4;
 
 	return 5;
@@ -307,17 +307,17 @@ static void asn1WriteLen(wStream* s, size_t len)
 	{
 		Stream_Write_UINT8(s, (UINT8)len);
 	}
-	else if (len < (1 << 8))
+	else if (len < (1u << 8))
 	{
 		Stream_Write_UINT8(s, 0x81);
 		Stream_Write_UINT8(s, (UINT8)len);
 	}
-	else if (len < (1 << 16))
+	else if (len < (1u << 16))
 	{
 		Stream_Write_UINT8(s, 0x82);
 		Stream_Write_UINT16_BE(s, (UINT16)len);
 	}
-	else if (len < (1 << 24))
+	else if (len < (1u << 24))
 	{
 		Stream_Write_UINT8(s, 0x83);
 		Stream_Write_UINT24_BE(s, (UINT32)len);
