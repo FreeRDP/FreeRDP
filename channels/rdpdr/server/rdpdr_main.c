@@ -1009,7 +1009,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 
 		for (UINT16 x = 0; x < 16; x++)
 		{
-			const UINT16 mask = (UINT16)(1 << x);
+			const UINT16 mask = (UINT16)(1u << x);
 			if (((caps & mask) != 0) && ((context->supported & mask) == 0))
 			{
 				WLog_Print(context->priv->log, WLOG_WARN,
