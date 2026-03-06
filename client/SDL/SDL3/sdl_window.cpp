@@ -346,7 +346,10 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 	if (!SDL_GetWindowSizeInPixels(window, &rect.w, &rect.h))
 		return {};
 
-	if (tryFallback())
+	const auto flags = SDL_GetWindowFlags(window);
+	const auto mask = SDL_WINDOW_FULLSCREEN;
+	const auto fs = (flags & mask) == mask;
+	if (fs && tryFallback())
 	{
 		/* On wlroots compositors (Sway, river, etc.), windows that are hidden/unmapped
 		 * don't get their actual display dimensions. The dummy window returns its creation size
