@@ -2778,7 +2778,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 					return -1009;
 
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, CodeLEC, BitLength);
-				UINT16 Mask = WINPR_ASSERTING_INT_CAST(UINT16, (1 << CopyOffsetBits) - 1);
+				UINT16 Mask = WINPR_ASSERTING_INT_CAST(UINT16, (1u << CopyOffsetBits) - 1);
 				MaskedBits = CopyOffset & Mask;
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, MaskedBits, CopyOffsetBits);
 
@@ -2798,7 +2798,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 				if (IndexCO >= ARRAYSIZE(HuffCodeLOM))
 					return -1;
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, HuffCodeLOM[IndexCO], BitLength);
-				Mask = WINPR_ASSERTING_INT_CAST(UINT16, (1 << IndexLOM) - 1);
+				Mask = WINPR_ASSERTING_INT_CAST(UINT16, (1u << IndexLOM) - 1);
 				MaskedBits = (MatchLength - 2) & Mask;
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, MaskedBits, IndexLOM);
 
@@ -2840,7 +2840,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 				if (IndexCO >= ARRAYSIZE(HuffCodeLOM))
 					return -1;
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, HuffCodeLOM[IndexCO], BitLength);
-				const UINT16 Mask = WINPR_ASSERTING_INT_CAST(UINT16, (1 << IndexLOM) - 1);
+				const UINT16 Mask = WINPR_ASSERTING_INT_CAST(UINT16, (1u << IndexLOM) - 1);
 				MaskedBits = (MatchLength - 2) & Mask;
 				NCrushWriteBits(&DstPtr, &accumulator, &offset, MaskedBits, IndexLOM);
 
@@ -2957,7 +2957,7 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 		if (i >= ARRAYSIZE(LOMBaseLUT))
 			return -1;
 
-		if (((((1 << LOMBitsLUT[i]) - 1) & (k - 2)) + LOMBaseLUT[i]) != k)
+		if (((((1u << LOMBitsLUT[i]) - 1) & (k - 2)) + LOMBaseLUT[i]) != k)
 			return -1;
 	}
 
