@@ -441,7 +441,7 @@ INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 		*op = 2;
 	else
 	{
-		WLog_INFO(TAG, "no changes detected for luma or chroma frame");
+		WLog_Print(h264->log, WLOG_TRACE, "no changes detected for luma or chroma frame");
 		rc = 0;
 		goto fail;
 	}
