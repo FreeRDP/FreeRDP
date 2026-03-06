@@ -335,15 +335,23 @@ void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup)
 		switch (cur->type)
 		{
 			case FREERDP_SETTINGS_TYPE_STRING: /* strings */
-				freerdp_settings_set_string_copy_(dst, (FreeRDP_Settings_Keys_String)cur->id,
-				                                  nullptr, 0, cleanup);
+				if (!freerdp_settings_set_string_copy_(dst, (FreeRDP_Settings_Keys_String)cur->id,
+				                                       nullptr, 0, cleanup))
+				{
+					WLog_WARN(TAG,
+					          "freerdp_settings_set_string_copy_(dst, %" PRIdz
+					          ", nullptr, 0, %s) failed",
+					          cur->id, cleanup ? "true" : "false");
+				}
 				break;
 			case FREERDP_SETTINGS_TYPE_POINTER: /* pointer */
 				if (!freerdp_settings_set_pointer_len(dst, (FreeRDP_Settings_Keys_Pointer)cur->id,
 				                                      nullptr, 0))
+				{
 					WLog_WARN(
 					    TAG, "freerdp_settings_set_pointer_len(dst, %" PRIdz ", nullptr, 0) failed",
 					    cur->id);
+				}
 				break;
 			default:
 				break;
