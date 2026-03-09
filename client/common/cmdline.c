@@ -613,6 +613,20 @@ static COMMAND_LINE_ARGUMENT_A* create_merged_args(const COMMAND_LINE_ARGUMENT_A
 	return largs;
 }
 
+static void freerdp_client_print_command_line_usage(int argc, char** argv)
+{
+	WINPR_ASSERT(argv || (argc < 1));
+
+	const char* name = freerdp_getApplicationDetailsString();
+	if (argc > 0)
+		name = argv[0];
+	printf("\n");
+	printf("%s - A Free Remote Desktop Protocol Implementation\n", name);
+	printf("To show full command line help type\n");
+	printf("%s /?\n", name);
+	printf("\n");
+}
+
 BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
                                                const COMMAND_LINE_ARGUMENT_A* custom)
 {
@@ -1784,116 +1798,96 @@ static void freerdp_client_print_tune_list(const rdpSettings* settings)
 	}
 }
 
-int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, int status,
-                                                         int argc, char** argv,
-                                                         const COMMAND_LINE_ARGUMENT_A* custom)
+static int evaluate_result(int argc, char* argv[], int rc, rdpSettings* settings,
+                           const COMMAND_LINE_ARGUMENT_A* largs)
 {
-	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(largs);
+
+	if (rc != COMMAND_LINE_STATUS_PRINT)
 	{
-		freerdp_client_print_version();
-		goto out;
+		freerdp_client_print_command_line_usage(argc, argv);
+		return rc;
 	}
 
-	if (status == COMMAND_LINE_STATUS_PRINT_BUILDCONFIG)
-	{
-		freerdp_client_print_version_ex(argc, argv);
-		freerdp_client_print_buildconfig_ex(argc, argv);
-		goto out;
-	}
-	else if (status == COMMAND_LINE_STATUS_PRINT)
-	{
-		const DWORD flags =
-		    COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS | COMMAND_LINE_SIGIL_SLASH;
-		COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)] = WINPR_C_ARRAY_INIT;
-		memcpy(largs, global_cmd_args, sizeof(global_cmd_args));
+	const COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(largs, "list");
+	WINPR_ASSERT(arg);
 
-		const int rc =
-		    CommandLineParseArgumentsA(argc, argv, largs, flags, nullptr, nullptr, nullptr);
-		if (rc != COMMAND_LINE_STATUS_PRINT)
+	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	{
+		if (option_equals("timezones", arg->Value))
+			freerdp_client_print_timezone_list();
+		else if (option_equals("tune", arg->Value))
+			freerdp_client_print_tune_list(settings);
+		else if (option_equals("kbd", arg->Value))
+			freerdp_client_print_keyboard_list();
+		else if (option_starts_with("kbd-lang", arg->Value))
 		{
-			freerdp_client_print_command_line_help_ex(argc, argv, custom);
-			return rc;
+			const char* val = nullptr;
+			if (option_starts_with("kbd-lang:", arg->Value))
+				val = &arg->Value[9];
+			else if (!option_equals("kbd-lang", arg->Value))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+			if (val && strchr(val, ','))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			freerdp_client_print_codepages(val);
 		}
-
-		const COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(largs, "list");
-		WINPR_ASSERT(arg);
-
-		if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+		else if (option_equals("kbd-scancode", arg->Value))
+			freerdp_client_print_scancodes();
+		else if (option_equals("monitor", arg->Value))
 		{
-			if (option_equals("timezones", arg->Value))
-				freerdp_client_print_timezone_list();
-			else if (option_equals("tune", arg->Value))
-				freerdp_client_print_tune_list(settings);
-			else if (option_equals("kbd", arg->Value))
-				freerdp_client_print_keyboard_list();
-			else if (option_starts_with("kbd-lang", arg->Value))
-			{
-				const char* val = nullptr;
-				if (option_starts_with("kbd-lang:", arg->Value))
-					val = &arg->Value[9];
-				else if (!option_equals("kbd-lang", arg->Value))
-					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_ListMonitors, TRUE))
+				return COMMAND_LINE_ERROR;
+		}
+		else if (option_starts_with("smartcard", arg->Value))
+		{
+			BOOL opts = FALSE;
+			if (option_starts_with("smartcard:", arg->Value))
+				opts = TRUE;
+			else if (!option_equals("smartcard", arg->Value))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-				if (val && strchr(val, ','))
-					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-				freerdp_client_print_codepages(val);
-			}
-			else if (option_equals("kbd-scancode", arg->Value))
-				freerdp_client_print_scancodes();
-			else if (option_equals("monitor", arg->Value))
+			if (opts)
 			{
-				if (!freerdp_settings_set_bool(settings, FreeRDP_ListMonitors, TRUE))
-					return COMMAND_LINE_ERROR;
-			}
-			else if (option_starts_with("smartcard", arg->Value))
-			{
-				BOOL opts = FALSE;
-				if (option_starts_with("smartcard:", arg->Value))
-					opts = TRUE;
-				else if (!option_equals("smartcard", arg->Value))
-					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				const char* sub = strchr(arg->Value, ':') + 1;
+				const CmdLineSubOptions options[] = {
+					{ "pkinit-anchors:", FreeRDP_PkinitAnchors, CMDLINE_SUBOPTION_STRING, nullptr },
+					{ "pkcs11-module:", FreeRDP_Pkcs11Module, CMDLINE_SUBOPTION_STRING, nullptr }
+				};
 
-				if (opts)
+				size_t count = 0;
+
+				char** ptr = CommandLineParseCommaSeparatedValuesEx("smartcard", sub, &count);
+				if (!ptr)
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				if (count < 2)
 				{
-					const char* sub = strchr(arg->Value, ':') + 1;
-					const CmdLineSubOptions options[] = { { "pkinit-anchors:",
-						                                    FreeRDP_PkinitAnchors,
-						                                    CMDLINE_SUBOPTION_STRING, nullptr },
-						                                  { "pkcs11-module:", FreeRDP_Pkcs11Module,
-						                                    CMDLINE_SUBOPTION_STRING, nullptr } };
+					CommandLineParserFree(ptr);
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
 
-					size_t count = 0;
-
-					char** ptr = CommandLineParseCommaSeparatedValuesEx("smartcard", sub, &count);
-					if (!ptr)
-						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					if (count < 2)
+				for (size_t x = 1; x < count; x++)
+				{
+					const char* cur = ptr[x];
+					if (!parseSubOptions(settings, options, ARRAYSIZE(options), cur))
 					{
 						CommandLineParserFree(ptr);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
-
-					for (size_t x = 1; x < count; x++)
-					{
-						const char* cur = ptr[x];
-						if (!parseSubOptions(settings, options, ARRAYSIZE(options), cur))
-						{
-							CommandLineParserFree(ptr);
-							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-						}
-					}
-
-					CommandLineParserFree(ptr);
 				}
 
-				freerdp_smartcard_list(settings);
+				CommandLineParserFree(ptr);
 			}
-			else
-			{
-				freerdp_client_print_command_line_help_ex(argc, argv, custom);
-				return COMMAND_LINE_ERROR;
-			}
+
+			freerdp_smartcard_list(settings);
 		}
+		else
+		{
+			freerdp_client_print_command_line_usage(argc, argv);
+			return COMMAND_LINE_ERROR;
+		}
+	}
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		arg = CommandLineFindArgumentA(largs, "tune-list");
 		WINPR_ASSERT(arg);
@@ -1949,14 +1943,74 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 			WLog_WARN(TAG,
 			          "Option /kbd-scancode-list is deprecated, use /list:kbd-scancode instead");
 			freerdp_client_print_scancodes();
-			goto out;
-		}
+		    return COMMAND_LINE_STATUS_PRINT;
+	    }
 #endif
+	    return COMMAND_LINE_STATUS_PRINT;
+}
+
+int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, int status,
+                                                         int argc, char** argv,
+                                                         const COMMAND_LINE_ARGUMENT_A* custom)
+{
+	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
+	{
+		freerdp_client_print_version();
+		goto out;
+	}
+
+	if (status == COMMAND_LINE_STATUS_PRINT_BUILDCONFIG)
+	{
+		freerdp_client_print_version_ex(argc, argv);
+		freerdp_client_print_buildconfig_ex(argc, argv);
+		goto out;
+	}
+	else if (status == COMMAND_LINE_STATUS_PRINT)
+	{
+		const DWORD flags =
+		    COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS | COMMAND_LINE_SIGIL_SLASH;
+
+		size_t customcount = 0;
+		{
+			const COMMAND_LINE_ARGUMENT_A* cur = custom;
+			while (cur && cur->Name)
+			{
+				customcount++;
+				cur++;
+			}
+		}
+		size_t globalcount = 0;
+		{
+			const COMMAND_LINE_ARGUMENT_A* cur = global_cmd_args;
+			while (cur && cur->Name)
+			{
+				globalcount++;
+				cur++;
+			}
+		}
+
+		COMMAND_LINE_ARGUMENT_A* largs =
+		    calloc(1ull + customcount + globalcount, sizeof(COMMAND_LINE_ARGUMENT_A));
+		if (!largs)
+			goto out;
+		memcpy(largs, global_cmd_args, globalcount * sizeof(COMMAND_LINE_ARGUMENT_A));
+		if (custom)
+			memcpy(&largs[globalcount], custom, customcount * sizeof(COMMAND_LINE_ARGUMENT_A));
+
+		const int rc =
+		    CommandLineParseArgumentsA(argc, argv, largs, flags, nullptr, nullptr, nullptr);
+		status = evaluate_result(argc, argv, rc, settings, largs);
+		free(largs);
+		goto out;
+	}
+	else if (status == COMMAND_LINE_STATUS_PRINT_HELP)
+	{
+		freerdp_client_print_command_line_help_ex(argc, argv, custom);
 		goto out;
 	}
 	else if (status < 0)
 	{
-		freerdp_client_print_command_line_help_ex(argc, argv, custom);
+		freerdp_client_print_command_line_usage(argc, argv);
 		goto out;
 	}
 
