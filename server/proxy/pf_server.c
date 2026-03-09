@@ -561,6 +561,12 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	                                 0xFFFFFF)) /* FIXME */
 		return FALSE;
 
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, config->RFX))
+		return FALSE;
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, config->NSC))
+		return FALSE;
+
 	peer->PostConnect = pf_server_post_connect;
 	peer->Activate = pf_server_activate;
 	peer->Logon = pf_server_logon;
