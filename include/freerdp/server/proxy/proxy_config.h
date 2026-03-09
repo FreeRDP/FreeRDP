@@ -119,6 +119,10 @@ extern "C"
 
 		/* target continued */
 		UINT32 TargetTlsSecLevel; /** @since version 3.2.0 */
+
+		/* codecs */
+		BOOL RFX; /** @since version 3.24.0 */
+		BOOL NSC; /** @since version 3.24.0 */
 	};
 
 	/**
