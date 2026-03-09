@@ -595,8 +595,9 @@ int main(int argc, char* argv[])
 				case COMMAND_LINE_STATUS_PRINT_BUILDCONFIG:
 					break;
 				case COMMAND_LINE_STATUS_PRINT_HELP:
-				default:
 					SdlPref::print_config_file_help(3);
+					break;
+				default:
 					break;
 			}
 		}

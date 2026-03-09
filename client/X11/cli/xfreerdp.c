@@ -91,8 +91,9 @@ int main(int argc, char* argv[])
 				case COMMAND_LINE_STATUS_PRINT_BUILDCONFIG:
 					break;
 				case COMMAND_LINE_STATUS_PRINT_HELP:
-				default:
 					xfreerdp_print_help();
+					break;
+				default:
 					break;
 			}
 		}
