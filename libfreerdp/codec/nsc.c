@@ -527,7 +527,15 @@ BOOL nsc_process_message(NSC_CONTEXT* WINPR_RESTRICT context, UINT16 bpp, UINT32
 			return FALSE;
 	}
 
-	return (freerdp_image_copy_no_overlap(pDstData, DstFormat, nDstStride, nXDst, nYDst, width,
-	                                      height, context->BitmapData, PIXEL_FORMAT_BGRA32, 0, 0, 0,
-	                                      nullptr, flip));
+	uint32_t cwidth = width;
+	if (1ull * nXDst + width > nWidth)
+		cwidth = nWidth - nXDst;
+
+	uint32_t cheight = height;
+	if (1ull * nYDst + height > nHeight)
+		cheight = nHeight - nYDst;
+
+	return (freerdp_image_copy_no_overlap(pDstData, DstFormat, nDstStride, nXDst, nYDst, cwidth,
+	                                      cheight, context->BitmapData, PIXEL_FORMAT_BGRA32, 0, 0,
+	                                      0, nullptr, flip));
 }
