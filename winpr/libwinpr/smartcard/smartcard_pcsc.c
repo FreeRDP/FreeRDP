@@ -880,13 +880,17 @@ static LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext, LPWSTR msz
 		size_t size = 0;
 		WCHAR* str = ConvertMszUtf8NToWCharAlloc(*pMszGroupsA, *pcchGroups, &size);
 		if (!str)
-			return SCARD_E_NO_MEMORY;
+		{
+			status = SCARD_E_NO_MEMORY;
+			goto fail;
+		}
 		*(WCHAR**)mszGroups = str;
 		*pcchGroups = (DWORD)size;
 		PCSC_AddMemoryBlock(hContext, str);
 		PCSC_SCardFreeMemory_Internal(hContext, *pMszGroupsA);
 	}
 
+fail:
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
 
@@ -972,13 +976,12 @@ static LONG WINAPI PCSC_SCardListReadersA(SCARDCONTEXT hContext, LPCSTR mszGroup
 
 	status = PCSC_SCardListReaders_Internal(hContext, mszGroups, mszReaders, pcchReaders);
 
+	if (nullCardContext)
+		status = PCSC_SCardReleaseContext(hContext);
+
+fail:
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
-
-	if (nullCardContext)
-	{
-		status = PCSC_SCardReleaseContext(hContext);
-	}
 
 	return status;
 }
@@ -1000,6 +1003,7 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 		status = PCSC_SCardEstablishContext(SCARD_SCOPE_SYSTEM, nullptr, nullptr, &hContext);
 
 		if (status != SCARD_S_SUCCESS)
+
 			return status;
 
 		nullCardContext = TRUE;
@@ -1012,7 +1016,10 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 	{
 		mszGroupsA = ConvertWCharToUtf8Alloc(mszGroups, nullptr);
 		if (!mszGroupsA)
-			return SCARD_E_NO_MEMORY;
+		{
+			status = SCARD_E_NO_MEMORY;
+			goto fail;
+		}
 	}
 
 	union
@@ -1030,20 +1037,22 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 		WCHAR* str = ConvertMszUtf8NToWCharAlloc(mszReadersA, *pcchReaders, &size);
 		PCSC_SCardFreeMemory_Internal(hContext, mszReadersA);
 		if (!str || (size > UINT32_MAX))
-			return SCARD_E_NO_MEMORY;
+		{
+			status = SCARD_E_NO_MEMORY;
+			goto fail;
+		}
 
 		*(LPWSTR*)mszReaders = str;
 		*pcchReaders = (DWORD)size;
 		PCSC_AddMemoryBlock(hContext, str);
 	}
 
+	if (nullCardContext)
+		status = PCSC_SCardReleaseContext(hContext);
+
+fail:
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
-
-	if (nullCardContext)
-	{
-		status = PCSC_SCardReleaseContext(hContext);
-	}
 
 	return status;
 }
@@ -1840,13 +1849,17 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext
 	{
 		szReaderA = ConvertWCharToUtf8Alloc(szReader, nullptr);
 		if (!szReaderA)
-			return SCARD_E_INSUFFICIENT_BUFFER;
+		{
+			status = SCARD_E_INSUFFICIENT_BUFFER;
+			goto fail;
+		}
 	}
 
 	status = PCSC_SCardConnect_Internal(hContext, szReaderA, dwShareMode, dwPreferredProtocols,
 	                                    phCard, pdwActiveProtocol);
 	free(szReaderA);
 
+fail:
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
 
@@ -1858,7 +1871,6 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard, D
                                                             DWORD dwInitialization,
                                                             LPDWORD pdwActiveProtocol)
 {
-	BOOL shared = 0;
 	PCSC_LONG status = SCARD_S_SUCCESS;
 	PCSC_DWORD pcsc_dwShareMode = (PCSC_DWORD)dwShareMode;
 	PCSC_DWORD pcsc_dwPreferredProtocols = 0;
@@ -1868,7 +1880,7 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard, D
 	if (!g_PCSC.pfnSCardReconnect)
 		return PCSC_SCard_LogError("g_PCSC.pfnSCardReconnect");
 
-	shared = (dwShareMode == SCARD_SHARE_DIRECT) != 0;
+	const BOOL shared = (dwShareMode == SCARD_SHARE_DIRECT) != 0;
 	PCSC_WaitForCardAccess(0, hCard, shared);
 	pcsc_dwPreferredProtocols = (PCSC_DWORD)PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
 	status = g_PCSC.pfnSCardReconnect(hCard, pcsc_dwShareMode, pcsc_dwPreferredProtocols,
