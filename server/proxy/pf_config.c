@@ -81,6 +81,10 @@ static const char* section_plugins = "Plugins";
 static const char* key_plugins_modules = "Modules";
 static const char* key_plugins_required = "Required";
 
+static const char* section_codecs = "Codecs";
+static const char* key_codecs_rfx = "RFX";
+static const char* key_codecs_nsc = "NSC";
+
 static const char* section_channels = "Channels";
 static const char* key_channels_gfx = "GFX";
 static const char* key_channels_disp = "DisplayControl";
@@ -300,6 +304,15 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 			return FALSE;
 	}
 
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL pf_config_load_codecs(wIniFile* ini, proxyConfig* config)
+{
+	WINPR_ASSERT(config);
+	config->RFX = pf_config_get_bool(ini, section_codecs, key_codecs_rfx, TRUE);
+	config->NSC = pf_config_get_bool(ini, section_codecs, key_codecs_nsc, TRUE);
 	return TRUE;
 }
 
@@ -578,6 +591,9 @@ proxyConfig* server_config_load_ini(wIniFile* ini)
 		if (!pf_config_load_target(ini, config))
 			goto out;
 
+		if (!pf_config_load_codecs(ini, config))
+			goto out;
+
 		if (!pf_config_load_channels(ini, config))
 			goto out;
 
@@ -627,6 +643,12 @@ BOOL pf_server_config_dump(const char* file)
 	if (IniFile_SetKeyValueString(ini, section_target, key_target_fixed, bool_str_true) < 0)
 		goto fail;
 	if (IniFile_SetKeyValueInt(ini, section_target, key_target_tls_seclevel, 1) < 0)
+		goto fail;
+
+	/* Codec configuration */
+	if (IniFile_SetKeyValueString(ini, section_codecs, key_codecs_rfx, bool_str_true) < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_codecs, key_codecs_nsc, bool_str_true) < 0)
 		goto fail;
 
 	/* Channel configuration */
@@ -812,6 +834,10 @@ void pf_server_config_print(const proxyConfig* config)
 	CONFIG_PRINT_BOOL(config, ClientTlsSecurity);
 	CONFIG_PRINT_BOOL(config, ClientRdpSecurity);
 	CONFIG_PRINT_BOOL(config, ClientAllowFallbackToTls);
+
+	CONFIG_PRINT_SECTION(section_codecs);
+	CONFIG_PRINT_BOOL(config, RFX);
+	CONFIG_PRINT_BOOL(config, NSC);
 
 	CONFIG_PRINT_SECTION(section_channels);
 	CONFIG_PRINT_BOOL(config, GFX);
