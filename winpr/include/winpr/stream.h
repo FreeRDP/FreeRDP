@@ -1359,7 +1359,6 @@ extern "C"
 		_s->pointer = _s->buffer;
 	}
 
-	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL Stream_SetPosition(wStream* _s, size_t _p);
 
 	WINPR_API void Stream_SealLength(wStream* _s);
