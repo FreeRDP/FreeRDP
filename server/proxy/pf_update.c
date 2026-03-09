@@ -39,11 +39,15 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_server_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
 	pServerContext* ps = (pServerContext*)context;
-	rdpContext* pc = nullptr;
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->pdata);
-	pc = (rdpContext*)ps->pdata->pc;
+
+	rdpContext* pc = (rdpContext*)ps->pdata->pc;
 	WINPR_ASSERT(pc);
+
+	if (!freerdp_is_active_state(pc))
+		return TRUE;
+
 	WINPR_ASSERT(pc->update);
 	WINPR_ASSERT(pc->update->RefreshRect);
 	return pc->update->RefreshRect(pc, count, areas);
@@ -53,11 +57,15 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_server_suppress_output(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
 	pServerContext* ps = (pServerContext*)context;
-	rdpContext* pc = nullptr;
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->pdata);
-	pc = (rdpContext*)ps->pdata->pc;
+
+	rdpContext* pc = (rdpContext*)ps->pdata->pc;
 	WINPR_ASSERT(pc);
+
+	if (!freerdp_is_active_state(pc))
+		return TRUE;
+
 	WINPR_ASSERT(pc->update);
 	WINPR_ASSERT(pc->update->SuppressOutput);
 	return pc->update->SuppressOutput(pc, allow, area);

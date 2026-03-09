@@ -62,7 +62,9 @@ static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 	pc->input_state = flags;
 	pc->input_state_sync_pending = TRUE;
 
-	return pf_server_check_and_sync_input_state(pc);
+	if (!pf_server_check_and_sync_input_state(pc))
+		return TRUE;
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD

@@ -111,12 +111,6 @@ static void pf_client_on_activated(void* ctx, WINPR_ATTR_UNUSED const ActivatedE
 	peer = ps->context.peer;
 	WINPR_ASSERT(peer);
 	WINPR_ASSERT(peer->context);
-
-	PROXY_LOG_INFO(TAG, pc, "client activated, registering server input callbacks");
-
-	/* Register server input/update callbacks only after proxy client is fully activated */
-	pf_server_register_input_callbacks(peer->context->input);
-	pf_server_register_update_callbacks(peer->context->update);
 }
 
 WINPR_ATTR_NODISCARD

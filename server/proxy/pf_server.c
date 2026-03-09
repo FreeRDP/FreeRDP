@@ -45,6 +45,7 @@
 #include <freerdp/server/proxy/proxy_log.h>
 
 #include "pf_server.h"
+#include "pf_input.h"
 #include "pf_channel.h"
 #include <freerdp/server/proxy/proxy_config.h>
 #include "pf_client.h"
@@ -575,6 +576,10 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	/* virtual channels receive data hook */
 	pdata->server_receive_channel_data_original = peer->ReceiveChannelData;
 	peer->ReceiveChannelData = pf_server_receive_channel_data_hook;
+
+	/* Register server input/update callbacks only after proxy client is fully activated */
+	pf_server_register_input_callbacks(peer->context->input);
+	pf_server_register_update_callbacks(peer->context->update);
 
 	return (stream_dump_register_handlers(peer->context, CONNECTION_STATE_NEGO, TRUE));
 }
