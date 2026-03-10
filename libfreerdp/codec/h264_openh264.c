@@ -48,7 +48,7 @@ typedef struct
 	HMODULE lib;
 	OpenH264Version version;
 #endif
-	WINPR_ATTR_NODISCARD pWelsGetCodecVersionEx WelsGetCodecVersionEx;
+	pWelsGetCodecVersionEx WelsGetCodecVersionEx;
 	WINPR_ATTR_NODISCARD pWelsCreateDecoder WelsCreateDecoder;
 	pWelsDestroyDecoder WelsDestroyDecoder;
 	WINPR_ATTR_NODISCARD pWelsCreateSVCEncoder WelsCreateSVCEncoder;
@@ -564,8 +564,12 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 		if (h264->Compressor)
 		{
-			sysContexts->WelsCreateSVCEncoder(&sys->pEncoder);
-
+			const int rc = sysContexts->WelsCreateSVCEncoder(&sys->pEncoder);
+			if (rc != 0)
+			{
+				WLog_Print(h264->log, WLOG_ERROR, "Failed to create OpenH264 encoder: %d", rc);
+				goto EXCEPTION;
+			}
 			if (!sys->pEncoder)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "Failed to create OpenH264 encoder");
@@ -574,8 +578,12 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 		}
 		else
 		{
-			sysContexts->WelsCreateDecoder(&sys->pDecoder);
-
+			const long rc = sysContexts->WelsCreateDecoder(&sys->pDecoder);
+			if (rc != 0)
+			{
+				WLog_Print(h264->log, WLOG_ERROR, "Failed to create OpenH264 decoder: %d", rc);
+				goto EXCEPTION;
+			}
 			if (!sys->pDecoder)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "Failed to create OpenH264 decoder");
