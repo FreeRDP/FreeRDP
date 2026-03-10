@@ -699,48 +699,51 @@ BOOL freerdp_video_available(void)
 	return FALSE;
 }
 
-FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(UINT32 width, UINT32 height)
+FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(WINPR_ATTR_UNUSED UINT32 width,
+                                                 WINPR_ATTR_UNUSED UINT32 height)
 {
 	WINPR_UNUSED(width);
 	WINPR_UNUSED(height);
-	return nullptr;
+	return calloc(1, sizeof(char));
 }
 
 void freerdp_video_context_free(FREERDP_VIDEO_CONTEXT* context)
 {
-	WINPR_UNUSED(context);
+	free(context);
 }
 
 BOOL freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT srcFormat,
                                         FREERDP_VIDEO_FORMAT dstFormat)
 {
-	WINPR_UNUSED(srcFormat);
-	WINPR_UNUSED(dstFormat);
+	if (srcFormat == dstFormat)
+		return TRUE;
 	return FALSE;
 }
 
-BOOL freerdp_video_context_reconfigure(FREERDP_VIDEO_CONTEXT* context, UINT32 width, UINT32 height,
-                                       UINT32 framerate, UINT32 bitrate, UINT32 usageType)
+BOOL freerdp_video_context_reconfigure(WINPR_ATTR_UNUSED FREERDP_VIDEO_CONTEXT* context,
+                                       WINPR_ATTR_UNUSED UINT32 width,
+                                       WINPR_ATTR_UNUSED UINT32 height,
+                                       WINPR_ATTR_UNUSED UINT32 framerate,
+                                       WINPR_ATTR_UNUSED UINT32 bitrate,
+                                       WINPR_ATTR_UNUSED UINT32 usageType)
 {
-	WINPR_UNUSED(context);
-	WINPR_UNUSED(width);
-	WINPR_UNUSED(height);
-	WINPR_UNUSED(framerate);
-	WINPR_UNUSED(bitrate);
-	WINPR_UNUSED(usageType);
-	return FALSE;
+	return TRUE;
 }
 
-BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_FORMAT srcFormat,
-                                  const void* srcSampleData, size_t srcSampleLength,
-                                  FREERDP_VIDEO_FORMAT dstFormat, wStream* output)
+BOOL freerdp_video_sample_convert(WINPR_ATTR_UNUSED FREERDP_VIDEO_CONTEXT* context,
+                                  FREERDP_VIDEO_FORMAT srcFormat, const void* srcSampleData,
+                                  size_t srcSampleLength, FREERDP_VIDEO_FORMAT dstFormat,
+                                  wStream* output)
 {
-	WINPR_UNUSED(context);
-	WINPR_UNUSED(srcFormat);
-	WINPR_UNUSED(srcSampleData);
-	WINPR_UNUSED(srcSampleLength);
-	WINPR_UNUSED(dstFormat);
-	WINPR_UNUSED(output);
+	if (srcFormat == dstFormat)
+	{
+		if (!Stream_EnsureRemainingCapacity(output, srcSampleLength))
+			return FALSE;
+
+		Stream_Write(output, srcSampleData, srcSampleLength);
+		return TRUE;
+	}
+
 	return FALSE;
 }
 
