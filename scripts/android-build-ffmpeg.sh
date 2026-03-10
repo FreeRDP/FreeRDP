@@ -1,8 +1,8 @@
 #!/bin/bash
 
 SCM_URL=https://github.com/FFmpeg/FFmpeg/archive
-SCM_TAG=n7.1.1
-SCM_HASH=f117507dc501f2a6c11f9241d8d0c3213846cfad91764361af37befd6b6c523d
+SCM_TAG=n8.0.1
+SCM_HASH=679aa13a19415d5ddab91e580084e3ab20c963c8240001e5cbb955a97bdd81b1
 OLD_PATH=$PATH
 
 source $(dirname "${BASH_SOURCE[0]}")/android-build-common.sh

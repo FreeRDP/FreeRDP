@@ -17,9 +17,9 @@
 	"name": "sso-mib",
 	"sources": [
 		{
-			"sha256": "48c39c76e251ff844e7b8d4c2f1a7cea02fef55dfedd5d87ccf777b6d159db25",
+			"sha256": "95c7072b5adaf40575a25e41d0e6a96e23580df624715cfc2a910c0832e07eb6",
 			"type": "archive",
-			"url": "https://github.com/siemens/sso-mib/archive/refs/tags/v0.5.0.tar.gz",
+			"url": "https://github.com/siemens/sso-mib/archive/refs/tags/v0.6.0.tar.gz",
 			"x-checker-data": {
 				"project-id": 378306,
 				"stable-only": true,
