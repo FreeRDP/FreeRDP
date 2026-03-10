@@ -26,26 +26,51 @@
 
 #define TAG CHANNELS_TAG("rdpecam-device.client")
 
-/* supported formats in preference order:
- * H264, MJPG, I420 (used as input for H264 encoder), other YUV based, RGB based
+/**
+ * @brief Get supported format list based on available codecs
+ *
+ * Returns supported formats in preference order:
+ * H264, MJPG (if decoder available), I420, other YUV based, RGB based
+ *
+ * @param pCount Output parameter for number of formats
+ * @return Pointer to format array
  */
-static const CAM_MEDIA_FORMAT_INFO supportedFormats[] = {
-/* inputFormat, outputFormat */
-#if defined(WITH_INPUT_FORMAT_H264)
-	{ CAM_MEDIA_FORMAT_H264, CAM_MEDIA_FORMAT_H264 }, /* passthrough */
-	{ CAM_MEDIA_FORMAT_MJPG_H264, CAM_MEDIA_FORMAT_H264 },
-#endif
-#if defined(WITH_INPUT_FORMAT_MJPG)
-	{ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_MJPG, CAM_MEDIA_FORMAT_MJPG },
-#endif
-	{ CAM_MEDIA_FORMAT_I420, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_YUY2, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_NV12, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_RGB24, CAM_MEDIA_FORMAT_H264 },
-	{ CAM_MEDIA_FORMAT_RGB32, CAM_MEDIA_FORMAT_H264 },
-};
-static const size_t nSupportedFormats = ARRAYSIZE(supportedFormats);
+static const CAM_MEDIA_FORMAT_INFO* getSupportedFormats(size_t* pCount)
+{
+	WINPR_ASSERT(pCount);
+
+	const CAM_MEDIA_FORMAT available[] = { CAM_MEDIA_FORMAT_H264, CAM_MEDIA_FORMAT_MJPG,
+		                                   CAM_MEDIA_FORMAT_YUY2, CAM_MEDIA_FORMAT_NV12,
+		                                   CAM_MEDIA_FORMAT_I420, CAM_MEDIA_FORMAT_RGB24,
+		                                   CAM_MEDIA_FORMAT_RGB32 };
+
+	static CAM_MEDIA_FORMAT_INFO
+	    formats[ARRAYSIZE(available) * ARRAYSIZE(available)]; /* Max possible formats */
+	static size_t count = 0;
+	static BOOL initialized = FALSE;
+
+	if (!initialized)
+	{
+		for (size_t dst = 0; dst < ARRAYSIZE(available); dst++)
+		{
+			const CAM_MEDIA_FORMAT dstFormat = available[dst];
+
+			for (size_t src = 0; src < ARRAYSIZE(available); src++)
+			{
+				const CAM_MEDIA_FORMAT srcFormat = available[src];
+				if (freerdp_video_conversion_supported(ecamToVideoFormat(srcFormat),
+				                                       ecamToVideoFormat(dstFormat)))
+				{
+					formats[count++] = (CAM_MEDIA_FORMAT_INFO){ srcFormat, dstFormat };
+				}
+			}
+		}
+		initialized = TRUE;
+	}
+
+	*pCount = count;
+	return formats;
+}
 
 static void ecam_dev_write_media_type(wStream* s, CAM_MEDIA_TYPE_DESCRIPTION* mediaType)
 {
@@ -93,12 +118,12 @@ static void ecam_dev_print_media_type(CAM_MEDIA_TYPE_DESCRIPTION* mediaType)
 }
 
 /**
- * Function description
+ * @brief Prepare a sample response stream with header fields
  *
- * @return 0 on success, otherwise a Win32 error code
+ * @return wStream with header written, or nullptr on failure
  */
-static UINT ecam_dev_send_sample_response(CameraDevice* dev, size_t streamIndex, const BYTE* sample,
-                                          size_t size)
+WINPR_ATTR_NODISCARD
+static wStream* ecam_dev_prepare_sample_response(CameraDevice* dev, size_t streamIndex)
 {
 	WINPR_ASSERT(dev);
 
@@ -106,17 +131,15 @@ static UINT ecam_dev_send_sample_response(CameraDevice* dev, size_t streamIndex,
 	CAM_MSG_ID msg = CAM_MSG_ID_SampleResponse;
 
 	Stream_ResetPosition(stream->sampleRespBuffer);
+	if (!Stream_EnsureRemainingCapacity(stream->sampleRespBuffer, 3))
+		return nullptr;
 
 	Stream_Write_UINT8(stream->sampleRespBuffer,
 	                   WINPR_ASSERTING_INT_CAST(uint8_t, dev->ecam->version));
 	Stream_Write_UINT8(stream->sampleRespBuffer, WINPR_ASSERTING_INT_CAST(uint8_t, msg));
 	Stream_Write_UINT8(stream->sampleRespBuffer, WINPR_ASSERTING_INT_CAST(uint8_t, streamIndex));
 
-	Stream_Write(stream->sampleRespBuffer, sample, size);
-
-	/* channel write is protected by critical section in dvcman_write_channel */
-	return ecam_channel_write(dev->ecam, stream->hSampleReqChannel, msg, stream->sampleRespBuffer,
-	                          FALSE /* don't free stream */);
+	return stream->sampleRespBuffer;
 }
 
 static BOOL mediaSupportDrops(CAM_MEDIA_FORMAT format)
@@ -147,29 +170,31 @@ static UINT ecam_dev_send_pending(CameraDevice* dev, size_t streamIndex, CameraD
 		return CHANNEL_RC_OK;
 	}
 
-	BYTE* encodedSample = Stream_Buffer(stream->pendingSample);
-	size_t encodedSize = Stream_Length(stream->pendingSample);
-	if (streamInputFormat(stream) != streamOutputFormat(stream))
-	{
-		if (!ecam_encoder_compress(stream, encodedSample, encodedSize, &encodedSample,
-		                           &encodedSize))
-		{
-			WLog_DBG(TAG, "Frame dropped: error in ecam_encoder_compress");
-			stream->haveSample = FALSE;
-			return CHANNEL_RC_OK;
-		}
+	wStream* output = ecam_dev_prepare_sample_response(dev, streamIndex);
+	if (!output)
+		return CHANNEL_RC_OK;
 
-		if (!stream->streaming)
-		{
-			WLog_DBG(TAG, "Frame delayed/dropped: stream stopped");
-			return CHANNEL_RC_OK;
-		}
+	const BYTE* encodedSample = Stream_Buffer(stream->pendingSample);
+	const size_t encodedSize = Stream_Length(stream->pendingSample);
+	if (!ecam_encoder_compress(stream, encodedSample, encodedSize, output))
+	{
+		WLog_DBG(TAG, "Frame dropped: error in ecam_encoder_compress");
+		stream->haveSample = FALSE;
+		return CHANNEL_RC_OK;
+	}
+
+	if (!stream->streaming)
+	{
+		WLog_DBG(TAG, "Frame delayed/dropped: stream stopped");
+		return CHANNEL_RC_OK;
 	}
 
 	stream->samplesRequested--;
 	stream->haveSample = FALSE;
 
-	return ecam_dev_send_sample_response(dev, streamIndex, encodedSample, encodedSize);
+	/* channel write is protected by critical section in dvcman_write_channel */
+	return ecam_channel_write(dev->ecam, stream->hSampleReqChannel, CAM_MSG_ID_SampleResponse,
+	                          output, FALSE /* don't free stream */);
 }
 
 static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, size_t streamIndex,
@@ -325,7 +350,7 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
 
 	if (stream->streaming)
 	{
-		WLog_ERR(TAG, "Streaming already in progress, device %s, streamIndex %d", dev->deviceId,
+		WLog_ERR(TAG, "Streaming already in progress, device %s, streamIndex %u", dev->deviceId,
 		         streamIndex);
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
@@ -335,9 +360,7 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
 	 */
 	stream->currMediaType = mediaType;
 
-	/* initialize encoder, if input and output formats differ */
-	if (streamInputFormat(stream) != streamOutputFormat(stream) &&
-	    !ecam_encoder_context_init(stream))
+	if (!ecam_encoder_context_init(stream))
 	{
 		WLog_ERR(TAG, "stream_ecam_encoder_init failed");
 		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_UnexpectedError);
@@ -452,7 +475,7 @@ static UINT ecam_dev_process_sample_request(CameraDevice* dev, GENERIC_CHANNEL_C
 
 	if (streamIndex >= ECAM_DEVICE_MAX_STREAMS)
 	{
-		WLog_ERR(TAG, "Incorrect streamIndex %d", streamIndex);
+		WLog_ERR(TAG, "Incorrect streamIndex %u", streamIndex);
 		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_InvalidStreamNumber);
 		return ERROR_INVALID_INDEX;
 	}
@@ -492,7 +515,7 @@ static UINT ecam_dev_process_current_media_type_request(CameraDevice* dev,
 
 	if (streamIndex >= ECAM_DEVICE_MAX_STREAMS)
 	{
-		WLog_ERR(TAG, "Incorrect streamIndex %d", streamIndex);
+		WLog_ERR(TAG, "Incorrect streamIndex %u", streamIndex);
 		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_InvalidStreamNumber);
 		return ERROR_INVALID_INDEX;
 	}
@@ -501,7 +524,7 @@ static UINT ecam_dev_process_current_media_type_request(CameraDevice* dev,
 
 	if (stream->currMediaType.Format == 0)
 	{
-		WLog_ERR(TAG, "Current media type unknown for streamIndex %d", streamIndex);
+		WLog_ERR(TAG, "Current media type unknown for streamIndex %u", streamIndex);
 		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_NotInitialized);
 		return ERROR_DEVICE_REINITIALIZATION_NEEDED;
 	}
@@ -564,7 +587,7 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 
 	if (streamIndex >= ECAM_DEVICE_MAX_STREAMS)
 	{
-		WLog_ERR(TAG, "Incorrect streamIndex %d", streamIndex);
+		WLog_ERR(TAG, "Incorrect streamIndex %u", streamIndex);
 		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_InvalidStreamNumber);
 		return ERROR_INVALID_INDEX;
 	}
@@ -578,6 +601,9 @@ static UINT ecam_dev_process_media_type_list_request(CameraDevice* dev,
 		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_OutOfMemory);
 		return CHANNEL_RC_NO_MEMORY;
 	}
+
+	size_t nSupportedFormats = 0;
+	const CAM_MEDIA_FORMAT_INFO* supportedFormats = getSupportedFormats(&nSupportedFormats);
 
 	INT16 formatIndex =
 	    dev->ihal->GetMediaTypeDescriptions(dev->ihal, dev->deviceId, streamIndex, supportedFormats,

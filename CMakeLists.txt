@@ -413,9 +413,13 @@ if(WITH_OPENCL)
   find_package(OpenCL REQUIRED)
 endif()
 
-if(WITH_OPENH264 AND NOT WITH_OPENH264_LOADING)
+if(WITH_OPENH264)
   option(WITH_OPENH264_LOADING "Use LoadLibrary to load openh264 at runtime" OFF)
-endif(WITH_OPENH264 AND NOT WITH_OPENH264_LOADING)
+endif()
+
+if(WITH_SWSCALE)
+  option(WITH_SWSCALE_LOADING "Use LoadLibrary to load swscale at runtime" OFF)
+endif()
 
 # Version check, if we have detected FFMPEG but the version is too old
 # deactivate it as sound backend.
