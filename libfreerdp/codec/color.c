@@ -36,7 +36,7 @@
 #endif
 
 #if defined(WITH_SWSCALE)
-#include <libswscale/swscale.h>
+#include "image_ffmpeg.h"
 #endif
 
 #include "color.h"
@@ -1268,17 +1268,29 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 		if ((srcFormat == AV_PIX_FMT_NONE) || (dstFormat == AV_PIX_FMT_NONE))
 			return FALSE;
 
-		resize =
-		    sws_getContext((int)nSrcWidth, (int)nSrcHeight, srcFormat, (int)nDstWidth,
-		                   (int)nDstHeight, dstFormat, SWS_BILINEAR, nullptr, nullptr, nullptr);
+		if (!freerdp_swscale_available())
+		{
+			WLog_WARN(TAG, "swscale not available");
+			return FALSE;
+		}
+
+		resize = freerdp_sws_getContext((int)nSrcWidth, (int)nSrcHeight, srcFormat, (int)nDstWidth,
+		                                (int)nDstHeight, dstFormat, SWS_BILINEAR, nullptr, nullptr,
+		                                nullptr);
 
 		if (!resize)
 			goto fail;
 
-		res = sws_scale(resize, &src, srcStep, 0, (int)nSrcHeight, &dst, dstStep);
+		/* sws_scale expects arrays of pointers, not pointer-to-pointer */
+		const BYTE* srcSlice[4] = { src, nullptr, nullptr, nullptr };
+		BYTE* dstSlice[4] = { dst, nullptr, nullptr, nullptr };
+		const int srcSteps[4] = { srcStep[0], 0, 0, 0 };
+		const int dstSteps[4] = { dstStep[0], 0, 0, 0 };
+
+		res = freerdp_sws_scale(resize, srcSlice, srcSteps, 0, (int)nSrcHeight, dstSlice, dstSteps);
 		rc = (res == ((int)nDstHeight));
 	fail:
-		sws_freeContext(resize);
+		freerdp_sws_freeContext(resize);
 	}
 
 #elif defined(WITH_CAIRO)
