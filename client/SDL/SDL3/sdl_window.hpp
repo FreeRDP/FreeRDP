@@ -66,6 +66,7 @@ class SdlWindow
 	void fullscreen(bool enter, bool forceOriginalDisplay);
 	void minimize();
 
+	[[nodiscard]] bool resizeToPixelSize(const SDL_Point& size);
 	[[nodiscard]] bool resize(const SDL_Point& size);
 
 	[[nodiscard]] bool drawRect(SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect);

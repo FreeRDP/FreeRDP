@@ -49,11 +49,7 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 	_window = SDL_CreateWindowWithProperties(props);
 	SDL_DestroyProperties(props);
 
-	auto sc = scale();
-	const int iscale = static_cast<int>(sc * 100.0f);
-	auto w = 100 * rect.w / iscale;
-	auto h = 100 * rect.h / iscale;
-	std::ignore = resize({ w, h });
+	std::ignore = resizeToPixelSize({ rect.w, rect.h });
 	SDL_SetHint(SDL_HINT_APP_NAME, "");
 	std::ignore = SDL_SyncWindow(_window);
 
@@ -211,6 +207,15 @@ void SdlWindow::minimize()
 {
 	SDL_MinimizeWindow(_window);
 	std::ignore = SDL_SyncWindow(_window);
+}
+
+bool SdlWindow::resizeToPixelSize(const SDL_Point& size)
+{
+	auto sc = scale();
+	const int iscale = static_cast<int>(sc * 100.0f);
+	auto w = 100 * size.x / iscale;
+	auto h = 100 * size.y / iscale;
+	return resize({ w, h });
 }
 
 bool SdlWindow::resize(const SDL_Point& size)

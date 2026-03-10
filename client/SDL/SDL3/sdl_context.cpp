@@ -876,7 +876,8 @@ bool SdlContext::drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& re
 
 	std::unique_lock lock(_critical);
 	auto surface = _primary.get();
-	if (freerdp_settings_get_bool(context()->settings, FreeRDP_SmartSizing))
+
+	if (useLocalScale())
 	{
 		window.setOffsetX(0);
 		window.setOffsetY(0);
@@ -1246,7 +1247,7 @@ bool SdlContext::eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev)
 
 SDL_FPoint SdlContext::applyLocalScaling(const SDL_FPoint& val) const
 {
-	if (!freerdp_settings_get_bool(context()->settings, FreeRDP_SmartSizing))
+	if (!useLocalScale())
 		return val;
 
 	auto rval = val;
@@ -1257,7 +1258,7 @@ SDL_FPoint SdlContext::applyLocalScaling(const SDL_FPoint& val) const
 
 void SdlContext::removeLocalScaling(float& x, float& y) const
 {
-	if (!freerdp_settings_get_bool(context()->settings, FreeRDP_SmartSizing))
+	if (!useLocalScale())
 		return;
 	x /= _localScale.x;
 	y /= _localScale.y;
@@ -1370,6 +1371,18 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 		default:
 			return true;
 	}
+}
+
+bool SdlContext::useLocalScale() const
+{
+	const auto ssize = freerdp_settings_get_bool(context()->settings, FreeRDP_SmartSizing);
+	if (ssize)
+		return true;
+	const auto dynResize =
+	    freerdp_settings_get_bool(context()->settings, FreeRDP_DynamicResolutionUpdate);
+	const auto fs = freerdp_settings_get_bool(context()->settings, FreeRDP_Fullscreen);
+	const auto multimon = freerdp_settings_get_bool(context()->settings, FreeRDP_UseMultimon);
+	return !dynResize && !fs && !multimon;
 }
 
 bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)
