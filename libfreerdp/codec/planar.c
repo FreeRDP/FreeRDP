@@ -738,9 +738,9 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 
 	const BYTE* srcp = pSrcData;
 
-	if (!pSrcData)
+	if (!pSrcData || (SrcSize < 1))
 	{
-		WLog_ERR(TAG, "Invalid argument pSrcData=nullptr");
+		WLog_ERR(TAG, "Invalid argument pSrcData=%p [size=%" PRIu32 "]", pSrcData, SrcSize);
 		return FALSE;
 	}
 
