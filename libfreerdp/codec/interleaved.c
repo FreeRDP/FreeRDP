@@ -537,7 +537,6 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleav
 {
 	UINT32 scanline = 0;
 	UINT32 SrcFormat = 0;
-	UINT32 BufferSize = 0;
 
 	if (!interleaved || !pSrcData || !pDstData)
 	{
@@ -548,19 +547,30 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleav
 		return FALSE;
 	}
 
+	if ((nSrcWidth == 0) || (nSrcHeight == 0))
+		return FALSE;
+	if ((nDstWidth == 0) || (nDstHeight == 0))
+		return FALSE;
+
 	switch (bpp)
 	{
 		case 24:
+			if (nSrcWidth > UINT32_MAX / 3)
+				return FALSE;
 			scanline = nSrcWidth * 3;
 			SrcFormat = PIXEL_FORMAT_BGR24;
 			break;
 
 		case 16:
+			if (nSrcWidth > UINT32_MAX / 2)
+				return FALSE;
 			scanline = nSrcWidth * 2;
 			SrcFormat = PIXEL_FORMAT_RGB16;
 			break;
 
 		case 15:
+			if (nSrcWidth > UINT32_MAX / 2)
+				return FALSE;
 			scanline = nSrcWidth * 2;
 			SrcFormat = PIXEL_FORMAT_RGB15;
 			break;
@@ -575,7 +585,10 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleav
 			return FALSE;
 	}
 
-	BufferSize = scanline * nSrcHeight;
+	if (scanline > UINT32_MAX / nSrcHeight)
+		return FALSE;
+
+	const UINT32 BufferSize = scanline * nSrcHeight;
 
 	if (BufferSize > interleaved->TempSize)
 	{
