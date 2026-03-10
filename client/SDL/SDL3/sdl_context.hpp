@@ -144,6 +144,8 @@ class SdlContext
 	[[nodiscard]] bool handleEvent(const SDL_Event& ev);
 
   private:
+	[[nodiscard]] bool useLocalScale() const;
+
 	[[nodiscard]] static BOOL preConnect(freerdp* instance);
 	[[nodiscard]] static BOOL postConnect(freerdp* instance);
 	static void postDisconnect(freerdp* instance);
