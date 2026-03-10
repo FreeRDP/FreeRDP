@@ -17,10 +17,10 @@
 	"name": "SDL3_image",
 	"sources": [
 		{
-			"sha256": "a725bd6d04261fdda0dd8d950659e1dc15a8065d025275ef460d32ae7dcfc182",
+			"sha256": "2ceb75eab4235c2c7e93dafc3ef3268ad368ca5de40892bf8cffdd510f29d9d8",
 			"type": "archive",
 			"url":
-			    "https://github.com/libsdl-org/SDL_image/releases/download/release-3.2.4/SDL3_image-3.2.4.tar.gz",
+			    "https://github.com/libsdl-org/SDL_image/releases/download/release-3.4.0/SDL3_image-3.4.0.tar.gz",
 			"x-checker-data": {
 				"project-id": 4781,
 				"stable-only": true,

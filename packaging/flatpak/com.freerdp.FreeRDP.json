@@ -1,16 +1,4 @@
 {
-	"add-build-extensions": {
-		"org.freedesktop.Platform.ffmpeg-full": {
-			"add-ld-path": ".",
-			"directory": "lib/ffmpeg",
-			"version": "24.08"
-		},
-		"org.freedesktop.Platform.openh264": {
-			"add-ld-path": ".",
-			"directory": "lib/openh264",
-			"version": "2.5.1"
-		}
-	},
 	"app-id": "com.freerdp.FreeRDP",
 	"build-options": {
 		"cflags": "-O3",
@@ -101,9 +89,7 @@
 		},
 		{
 			"build-commands": [
-				"install -D legacy-openssl.cnf $FLATPAK_DEST/share/legacy-openssl.cnf",
-				"mkdir -p /app/lib/ffmpeg",
-				"mkdir -p /app/lib/openh264"
+				"install -D legacy-openssl.cnf $FLATPAK_DEST/share/legacy-openssl.cnf"
 			],
 			"buildsystem": "simple",
 			"name": "wrapper",
@@ -116,6 +102,6 @@
 		}
 	],
 	"runtime": "org.freedesktop.Platform",
-	"runtime-version": "24.08",
+	"runtime-version": "25.08",
 	"sdk": "org.freedesktop.Sdk"
 }
