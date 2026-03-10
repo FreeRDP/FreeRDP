@@ -35,6 +35,8 @@ extern "C"
 	 * @brief Video format enumeration
 	 *
 	 * Abstract video format identifiers independent of underlying codec implementation.
+	 *
+	 * @since version 3.24.0
 	 */
 	typedef enum
 	{
@@ -60,6 +62,7 @@ extern "C"
 	 * @brief Free a video processing context
 	 *
 	 * @param context Context to free
+	 * @since version 3.24.0
 	 */
 	FREERDP_API void freerdp_video_context_free(FREERDP_VIDEO_CONTEXT* context);
 
@@ -69,6 +72,7 @@ extern "C"
 	 * @param width Video frame width
 	 * @param height Video frame height
 	 * @return New context or nullptr on failure
+	 * @since version 3.24.0
 	 */
 	WINPR_ATTR_MALLOC(freerdp_video_context_free, 1)
 	FREERDP_API FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(UINT32 width, UINT32 height);
@@ -77,6 +81,7 @@ extern "C"
 	 * @brief Check if video processing is available
 	 *
 	 * @return TRUE if video codecs are available (FFmpeg loaded)
+	 * @since version 3.24.0
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_video_available(void);
@@ -87,6 +92,7 @@ extern "C"
 	 * @param srcFormat Source video format
 	 * @param dstFormat Destination video format
 	 * @return TRUE if conversion is supported, FALSE otherwise
+	 * @since version 3.24.0
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT srcFormat,
@@ -110,6 +116,7 @@ extern "C"
 	 * FREERDP_VIDEO_CONTEXT* ctx = freerdp_video_context_new(1920, 1080);
 	 * freerdp_video_context_reconfigure(ctx, 1920, 1080, 30, 0,
 	 *                                      H264_CAMERA_VIDEO_REAL_TIME);
+	 * @since version 3.24.0
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_video_context_reconfigure(FREERDP_VIDEO_CONTEXT* context, UINT32 width,
@@ -154,6 +161,7 @@ extern "C"
 	 *
 	 * // Cleanup
 	 * freerdp_video_context_free(ctx);
+	 * @since version 3.24.0
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context,
