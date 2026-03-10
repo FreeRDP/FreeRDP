@@ -78,52 +78,18 @@ static enum AVPixelFormat video_format_to_av(FREERDP_VIDEO_FORMAT format)
 		/* Planar YUV formats */
 		case FREERDP_VIDEO_FORMAT_YUV420P:
 			return AV_PIX_FMT_YUV420P;
-		case FREERDP_VIDEO_FORMAT_YUV422P:
-			return AV_PIX_FMT_YUV422P;
-		case FREERDP_VIDEO_FORMAT_YUV444P:
-			return AV_PIX_FMT_YUV444P;
-		case FREERDP_VIDEO_FORMAT_YUV411P:
-			return AV_PIX_FMT_YUV411P;
-		case FREERDP_VIDEO_FORMAT_YUV440P:
-			return AV_PIX_FMT_YUV440P;
 		case FREERDP_VIDEO_FORMAT_NV12:
 			return AV_PIX_FMT_NV12;
-		case FREERDP_VIDEO_FORMAT_NV21:
-			return AV_PIX_FMT_NV21;
 
 		/* Packed YUV formats */
 		case FREERDP_VIDEO_FORMAT_YUYV422:
 			return AV_PIX_FMT_YUYV422;
-		case FREERDP_VIDEO_FORMAT_UYVY422:
-			return AV_PIX_FMT_UYVY422;
 
 		/* RGB formats */
 		case FREERDP_VIDEO_FORMAT_RGB24:
 			return AV_PIX_FMT_RGB24;
-		case FREERDP_VIDEO_FORMAT_BGR24:
-			return AV_PIX_FMT_BGR24;
-		case FREERDP_VIDEO_FORMAT_RGBA:
-			return AV_PIX_FMT_RGBA;
-		case FREERDP_VIDEO_FORMAT_BGRA:
-			return AV_PIX_FMT_BGRA;
-		case FREERDP_VIDEO_FORMAT_ARGB:
-			return AV_PIX_FMT_ARGB;
-		case FREERDP_VIDEO_FORMAT_ABGR:
-			return AV_PIX_FMT_ABGR;
 		case FREERDP_VIDEO_FORMAT_RGB32:
 			return AV_PIX_FMT_RGB32;
-
-		/* JPEG full-range YUV formats */
-		case FREERDP_VIDEO_FORMAT_YUVJ420P:
-			return AV_PIX_FMT_YUVJ420P;
-		case FREERDP_VIDEO_FORMAT_YUVJ422P:
-			return AV_PIX_FMT_YUVJ422P;
-		case FREERDP_VIDEO_FORMAT_YUVJ444P:
-			return AV_PIX_FMT_YUVJ444P;
-		case FREERDP_VIDEO_FORMAT_YUVJ440P:
-			return AV_PIX_FMT_YUVJ440P;
-		case FREERDP_VIDEO_FORMAT_YUVJ411P:
-			return AV_PIX_FMT_YUVJ411P;
 
 		case FREERDP_VIDEO_FORMAT_NONE:
 		default:
@@ -142,50 +108,20 @@ static FREERDP_VIDEO_FORMAT av_format_to_video(enum AVPixelFormat format)
 		/* Planar YUV formats */
 		case AV_PIX_FMT_YUV420P:
 			return FREERDP_VIDEO_FORMAT_YUV420P;
-		case AV_PIX_FMT_YUV422P:
-			return FREERDP_VIDEO_FORMAT_YUV422P;
-		case AV_PIX_FMT_YUV444P:
-			return FREERDP_VIDEO_FORMAT_YUV444P;
-		case AV_PIX_FMT_YUV411P:
-			return FREERDP_VIDEO_FORMAT_YUV411P;
-		case AV_PIX_FMT_YUV440P:
-			return FREERDP_VIDEO_FORMAT_YUV440P;
+
 		case AV_PIX_FMT_NV12:
 			return FREERDP_VIDEO_FORMAT_NV12;
-		case AV_PIX_FMT_NV21:
-			return FREERDP_VIDEO_FORMAT_NV21;
 
 		/* Packed YUV formats */
 		case AV_PIX_FMT_YUYV422:
 			return FREERDP_VIDEO_FORMAT_YUYV422;
-		case AV_PIX_FMT_UYVY422:
-			return FREERDP_VIDEO_FORMAT_UYVY422;
 
 		/* RGB formats */
 		case AV_PIX_FMT_RGB24:
 			return FREERDP_VIDEO_FORMAT_RGB24;
-		case AV_PIX_FMT_BGR24:
-			return FREERDP_VIDEO_FORMAT_BGR24;
-		case AV_PIX_FMT_RGBA:
-			return FREERDP_VIDEO_FORMAT_RGBA;
-		case AV_PIX_FMT_BGRA:
-			return FREERDP_VIDEO_FORMAT_BGRA;
-		case AV_PIX_FMT_ARGB:
-			return FREERDP_VIDEO_FORMAT_ARGB;
-		case AV_PIX_FMT_ABGR:
-			return FREERDP_VIDEO_FORMAT_ABGR;
 
-		/* JPEG full-range YUV formats */
-		case AV_PIX_FMT_YUVJ420P:
-			return FREERDP_VIDEO_FORMAT_YUVJ420P;
-		case AV_PIX_FMT_YUVJ422P:
-			return FREERDP_VIDEO_FORMAT_YUVJ422P;
-		case AV_PIX_FMT_YUVJ444P:
-			return FREERDP_VIDEO_FORMAT_YUVJ444P;
-		case AV_PIX_FMT_YUVJ440P:
-			return FREERDP_VIDEO_FORMAT_YUVJ440P;
-		case AV_PIX_FMT_YUVJ411P:
-			return FREERDP_VIDEO_FORMAT_YUVJ411P;
+		case AV_PIX_FMT_RGB32:
+			return FREERDP_VIDEO_FORMAT_RGB32;
 
 		default:
 			return FREERDP_VIDEO_FORMAT_NONE;
@@ -763,48 +699,51 @@ BOOL freerdp_video_available(void)
 	return FALSE;
 }
 
-FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(UINT32 width, UINT32 height)
+FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(WINPR_ATTR_UNUSED UINT32 width,
+                                                 WINPR_ATTR_UNUSED UINT32 height)
 {
 	WINPR_UNUSED(width);
 	WINPR_UNUSED(height);
-	return nullptr;
+	return calloc(1, sizeof(char));
 }
 
 void freerdp_video_context_free(FREERDP_VIDEO_CONTEXT* context)
 {
-	WINPR_UNUSED(context);
+	free(context);
 }
 
 BOOL freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT srcFormat,
                                         FREERDP_VIDEO_FORMAT dstFormat)
 {
-	WINPR_UNUSED(srcFormat);
-	WINPR_UNUSED(dstFormat);
+	if (srcFormat == dstFormat)
+		return TRUE;
 	return FALSE;
 }
 
-BOOL freerdp_video_context_reconfigure(FREERDP_VIDEO_CONTEXT* context, UINT32 width, UINT32 height,
-                                       UINT32 framerate, UINT32 bitrate, UINT32 usageType)
+BOOL freerdp_video_context_reconfigure(WINPR_ATTR_UNUSED FREERDP_VIDEO_CONTEXT* context,
+                                       WINPR_ATTR_UNUSED UINT32 width,
+                                       WINPR_ATTR_UNUSED UINT32 height,
+                                       WINPR_ATTR_UNUSED UINT32 framerate,
+                                       WINPR_ATTR_UNUSED UINT32 bitrate,
+                                       WINPR_ATTR_UNUSED UINT32 usageType)
 {
-	WINPR_UNUSED(context);
-	WINPR_UNUSED(width);
-	WINPR_UNUSED(height);
-	WINPR_UNUSED(framerate);
-	WINPR_UNUSED(bitrate);
-	WINPR_UNUSED(usageType);
-	return FALSE;
+	return TRUE;
 }
 
-BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_FORMAT srcFormat,
-                                  const void* srcSampleData, size_t srcSampleLength,
-                                  FREERDP_VIDEO_FORMAT dstFormat, wStream* output)
+BOOL freerdp_video_sample_convert(WINPR_ATTR_UNUSED FREERDP_VIDEO_CONTEXT* context,
+                                  FREERDP_VIDEO_FORMAT srcFormat, const void* srcSampleData,
+                                  size_t srcSampleLength, FREERDP_VIDEO_FORMAT dstFormat,
+                                  wStream* output)
 {
-	WINPR_UNUSED(context);
-	WINPR_UNUSED(srcFormat);
-	WINPR_UNUSED(srcSampleData);
-	WINPR_UNUSED(srcSampleLength);
-	WINPR_UNUSED(dstFormat);
-	WINPR_UNUSED(output);
+	if (srcFormat == dstFormat)
+	{
+		if (!Stream_EnsureRemainingCapacity(output, srcSampleLength))
+			return FALSE;
+
+		Stream_Write(output, srcSampleData, srcSampleLength);
+		return TRUE;
+	}
+
 	return FALSE;
 }
 

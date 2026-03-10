@@ -20,13 +20,13 @@
 #ifndef FREERDP_LIB_CODEC_IMAGE_FFMPEG_H
 #define FREERDP_LIB_CODEC_IMAGE_FFMPEG_H
 
+#include <winpr/wtypes.h>
 #include <freerdp/config.h>
 
 #if defined(WITH_SWSCALE)
 
 #if defined(WITH_SWSCALE_LOADING)
 
-#include <winpr/wtypes.h>
 #include <stdint.h>
 
 /* Forward declarations to avoid requiring swscale headers at compile time */
