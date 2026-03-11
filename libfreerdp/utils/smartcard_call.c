@@ -1932,19 +1932,23 @@ void context_free(void* arg)
 
 scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 {
-	wObject* obj = nullptr;
-	scard_call_context* ctx = nullptr;
+	const freerdp* inst = freerdp_settings_get_pointer(settings, FreeRDP_instance);
+	if (!inst || !inst->context)
+		return nullptr;
+	return smartcard_call_context_new_with_context(inst->context);
+}
 
-	WINPR_ASSERT(settings);
-	ctx = calloc(1, sizeof(scard_call_context));
+scard_call_context* smartcard_call_context_new_with_context(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	scard_call_context* ctx = calloc(1, sizeof(scard_call_context));
 	if (!ctx)
 		goto fail;
 
-	freerdp* instance = settings->instance;
-	WINPR_ASSERT(instance);
+	ctx->context = context;
 
-	ctx->context = instance->context;
-	WINPR_ASSERT(ctx->context);
+	const rdpSettings* settings = context->settings;
+	WINPR_ASSERT(settings);
 
 	ctx->log = WLog_Get(SCARD_TAG);
 	WINPR_ASSERT(ctx->log);
@@ -2006,9 +2010,11 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 	if (!ctx->rgSCardContextList)
 		goto fail;
 
-	obj = HashTable_ValueObject(ctx->rgSCardContextList);
-	WINPR_ASSERT(obj);
-	obj->fnObjectFree = context_free;
+	{
+		wObject* obj = HashTable_ValueObject(ctx->rgSCardContextList);
+		WINPR_ASSERT(obj);
+		obj->fnObjectFree = context_free;
+	}
 
 	return ctx;
 fail:

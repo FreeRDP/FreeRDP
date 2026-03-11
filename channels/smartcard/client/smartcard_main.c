@@ -678,7 +678,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POIN
 		goto fail;
 	}
 
-	smartcard->callctx = smartcard_call_context_new(smartcard->rdpcontext->settings);
+	smartcard->callctx = smartcard_call_context_new_with_context(smartcard->rdpcontext);
 	if (!smartcard->callctx)
 		goto fail;
 
