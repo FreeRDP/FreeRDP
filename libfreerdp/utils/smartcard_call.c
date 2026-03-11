@@ -2093,7 +2093,6 @@ BOOL smartcard_call_cancel_all_context(scard_call_context* ctx)
 	if (!ctx)
 		return FALSE;
 
-	smartcard_call_context_signal_stop(ctx, FALSE);
 	HashTable_Clear(ctx->rgSCardContextList);
 	return TRUE;
 }
