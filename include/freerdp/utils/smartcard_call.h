@@ -40,9 +40,13 @@ extern "C"
 
 	FREERDP_API void smartcard_call_context_free(scard_call_context* ctx);
 
+	WINPR_DEPRECATED_VAR("[since 3.24.0] use smartcard_call_context_new_with_context instead",
+	                     WINPR_ATTR_MALLOC(smartcard_call_context_free, 1)
+	                         FREERDP_API scard_call_context* smartcard_call_context_new(
+	                             const rdpSettings* settings));
+
 	WINPR_ATTR_MALLOC(smartcard_call_context_free, 1)
-	WINPR_ATTR_NODISCARD
-	FREERDP_API scard_call_context* smartcard_call_context_new(const rdpSettings* settings);
+	FREERDP_API scard_call_context* smartcard_call_context_new_with_context(rdpContext* context);
 
 	/** @brief send a stop signal (or reset it if \b reset is \b TRUE) to a \ref scard_call_context
 	 *
