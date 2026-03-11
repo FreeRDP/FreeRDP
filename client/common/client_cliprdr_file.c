@@ -1407,7 +1407,9 @@ static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 
 	{
 		writelog(file->log, WLOG_WARN, __FILE__, __func__, __LINE__,
 		         "missing entry for lockID %" PRIu32 ", index %" PRIu32, lockId, listIndex);
-		(void)HashTable_Foreach(file->local_streams, dump_streams, file);
+		if (!HashTable_Foreach(file->local_streams, dump_streams, file))
+			writelog(file->log, WLOG_WARN, __FILE__, __func__, __LINE__,
+			         "HashTable_Foreach failed");
 	}
 
 	return nullptr;
@@ -2095,7 +2097,8 @@ void cliprdr_file_session_terminate(CliprdrFileContext* file, BOOL stop_thread)
 #if defined(WITH_FUSE)
 	WLog_Print(file->log, WLOG_DEBUG, "Forcing FUSE to check exit flag");
 #endif
-	(void)winpr_PathFileExists(file->path);
+	if (winpr_PathFileExists(file->path))
+		WLog_Print(file->log, WLOG_WARN, "winpr_PathFileExists(%s) failed", file->path);
 }
 
 void cliprdr_file_context_free(CliprdrFileContext* file)

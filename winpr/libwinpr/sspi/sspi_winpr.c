@@ -992,7 +992,8 @@ void sspi_GlobalInit(void)
 {
 	static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
 	DWORD flags = 0;
-	(void)InitOnceExecuteOnce(&once, sspi_init, &flags, nullptr);
+	if (!InitOnceExecuteOnce(&once, sspi_init, &flags, nullptr))
+		WLog_ERR(TAG, "InitOnceExecuteOnce failed");
 }
 
 void sspi_GlobalFinish(void)

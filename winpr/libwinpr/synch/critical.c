@@ -46,7 +46,8 @@
 
 VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	(void)InitializeCriticalSectionEx(lpCriticalSection, 0, 0);
+	if (!InitializeCriticalSectionEx(lpCriticalSection, 0, 0))
+		WLog_ERR(TAG, "InitializeCriticalSectionEx failed");
 }
 
 BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount,

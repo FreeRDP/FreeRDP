@@ -2667,8 +2667,7 @@ static BOOL add_string_or_null(WINPR_JSON* json, const char* key, const char* va
 	if (value)
 		return WINPR_JSON_AddStringToObject(json, key, value) != nullptr;
 
-	(void)WINPR_JSON_AddNullToObject(json, key);
-	return TRUE;
+	return WINPR_JSON_AddNullToObject(json, key) != nullptr;
 }
 
 static WINPR_JSON* json_from_device_item(const RDPDR_DEVICE* val)
@@ -3868,7 +3867,8 @@ char* freerdp_settings_serialize(const rdpSettings* settings, BOOL pretty, size_
 				}
 				else
 				{
-					(void)WINPR_JSON_AddNullToObject(jstring, name);
+					if (!WINPR_JSON_AddNullToObject(jstring, name))
+						goto fail;
 				}
 			}
 			break;
