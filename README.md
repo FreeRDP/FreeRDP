@@ -36,7 +36,6 @@ FAQ: https://github.com/FreeRDP/FreeRDP/wiki/FAQ
 ### Contact
 
 * Matrix room : `#FreeRDP:matrix.org` (main)
-  * ~~XMPP channel: `#FreeRDP#matrix.org@matrix.org` (bridged)~~ no longer available
   * IRC channel : `#freerdp @ irc.oftc.net` (bridged)
 * Mailing list: https://lists.sourceforge.net/lists/listinfo/freerdp-devel
 
