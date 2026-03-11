@@ -91,6 +91,7 @@ struct s_scard_call_context
 	void* (*fn_new)(void*, SCARDCONTEXT);
 	void (*fn_free)(void*);
 	wLog* log;
+	rdpContext* context;
 };
 
 struct s_scard_context_element
@@ -933,6 +934,17 @@ static LONG smartcard_GetDeviceTypeId_Call(scard_call_context* smartcard, wStrea
 	return ret.ReturnCode;
 }
 
+static BOOL smartcard_context_was_aborted(scard_call_context* smartcard)
+{
+	WINPR_ASSERT(smartcard);
+
+	HANDLE handles[] = { smartcard->stopEvent, freerdp_abort_event(smartcard->context) };
+	const DWORD rc = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, 0);
+	if ((rc >= WAIT_OBJECT_0) && (rc <= WAIT_OBJECT_0 + ARRAYSIZE(handles)))
+		return TRUE;
+	return FALSE;
+}
+
 static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStream* out,
                                             SMARTCARD_OPERATION* operation)
 {
@@ -968,7 +980,7 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 		                      MIN(dwTimeOut, dwTimeStep), rgReaderStates, call->cReaders);
 		if (ret.ReturnCode != SCARD_E_TIMEOUT)
 			break;
-		if (WaitForSingleObject(smartcard->stopEvent, 0) == WAIT_OBJECT_0)
+		if (smartcard_context_was_aborted(smartcard))
 			break;
 		if (dwTimeOut != INFINITE)
 			x += dwTimeStep;
@@ -1031,7 +1043,7 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 		}
 		if (ret.ReturnCode != SCARD_E_TIMEOUT)
 			break;
-		if (WaitForSingleObject(smartcard->stopEvent, 0) == WAIT_OBJECT_0)
+		if (smartcard_context_was_aborted(smartcard))
 			break;
 		if (dwTimeOut != INFINITE)
 			x += dwTimeStep;
@@ -1927,6 +1939,12 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 	ctx = calloc(1, sizeof(scard_call_context));
 	if (!ctx)
 		goto fail;
+
+	freerdp* instance = settings->instance;
+	WINPR_ASSERT(instance);
+
+	ctx->context = instance->context;
+	WINPR_ASSERT(ctx->context);
 
 	ctx->log = WLog_Get(SCARD_TAG);
 	WINPR_ASSERT(ctx->log);
