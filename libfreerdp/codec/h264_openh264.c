@@ -581,7 +581,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 			const long rc = sysContexts->WelsCreateDecoder(&sys->pDecoder);
 			if (rc != 0)
 			{
-				WLog_Print(h264->log, WLOG_ERROR, "Failed to create OpenH264 decoder: %d", rc);
+				WLog_Print(h264->log, WLOG_ERROR, "Failed to create OpenH264 decoder: %ld", rc);
 				goto EXCEPTION;
 			}
 			if (!sys->pDecoder)
