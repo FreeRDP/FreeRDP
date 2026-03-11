@@ -979,7 +979,6 @@ static LONG WINAPI PCSC_SCardListReadersA(SCARDCONTEXT hContext, LPCSTR mszGroup
 	if (nullCardContext)
 		status = PCSC_SCardReleaseContext(hContext);
 
-fail:
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
 
