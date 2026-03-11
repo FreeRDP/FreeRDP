@@ -92,7 +92,7 @@ class SdlWindow
 	[[nodiscard]] static SDL_Rect rect(SDL_Window* window, bool forceAsPrimary = false);
 	[[nodiscard]] static SDL_Rect rect(SDL_DisplayID id, bool forceAsPrimary = false);
 
-	[[nodiscard]] static bool tryFallback();
+	[[nodiscard]] static bool tryFallback(bool isFullscreen);
 
 	enum HighDPIMode
 	{

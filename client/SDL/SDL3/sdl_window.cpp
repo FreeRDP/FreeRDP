@@ -354,7 +354,7 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 	const auto flags = SDL_GetWindowFlags(window);
 	const auto mask = SDL_WINDOW_FULLSCREEN;
 	const auto fs = (flags & mask) == mask;
-	if (fs && tryFallback())
+	if (tryFallback(fs))
 	{
 		/* On wlroots compositors (Sway, river, etc.), windows that are hidden/unmapped
 		 * don't get their actual display dimensions. The dummy window returns its creation size
@@ -535,14 +535,19 @@ SDL_Rect SdlWindow::rect(SDL_DisplayID id, bool forceAsPrimary)
 	return rect(window.get(), forceAsPrimary);
 }
 
-bool SdlWindow::tryFallback()
+bool SdlWindow::tryFallback(bool isFullscreen)
 {
 	/* If we define a custom env variable to use the wlroots hack
 	 * then enable/disable according to this setting only.
 	 */
 	const auto wlroots_hack = SDL_getenv("FREERDP_WLROOTS_HACK");
 	if (wlroots_hack != nullptr)
-		return strcmp(wlroots_hack, "0") != 0;
+	{
+		const auto enabled = strcmp(wlroots_hack, "0") != 0;
+		if (strcmp(wlroots_hack, "force") == 0)
+			isFullscreen = true;
+		return enabled && isFullscreen;
+	}
 
 	const auto platform = SDL_GetPlatform();
 	if ((platform == nullptr) || (strcmp(platform, "Linux") != 0))
@@ -563,7 +568,7 @@ bool SdlWindow::tryFallback()
 	if (xdg_session != nullptr)
 	{
 		if (strcmp(xdg_session, "sway") == 0)
-			return true;
+			return isFullscreen;
 	}
 
 	/* check XDG_CURRENT_DESKTOP
@@ -577,7 +582,7 @@ bool SdlWindow::tryFallback()
 	if (xdg_desktop != nullptr)
 	{
 		if (strcmp(xdg_desktop, "sway:wlroots") == 0)
-			return true;
+			return isFullscreen;
 	}
 
 	return false;
