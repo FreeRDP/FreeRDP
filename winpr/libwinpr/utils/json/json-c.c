@@ -227,7 +227,9 @@ WINPR_JSON* WINPR_JSON_AddNullToObject(WINPR_JSON* object, const char* name)
 		json_object_put(obj);
 		return nullptr;
 	}
-	return obj;
+	/* Be consistent with other cJSON and jansson implementations and return a value != nullptr for
+	 * success. */
+	return object;
 }
 
 WINPR_JSON* WINPR_JSON_AddTrueToObject(WINPR_JSON* object, const char* name)
