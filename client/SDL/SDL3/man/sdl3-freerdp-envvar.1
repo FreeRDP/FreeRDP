@@ -1,7 +1,9 @@
 .PP
 FREERDP_WLROOTS_HACK
 .RS 4
-If defined 0 disables multimonitor detection hack entirely. Set to 1 to force enabled.
+If defined \fI0\fR disables multimonitor detection hack entirely. Set to \fI1\fR to enable it for fullscreen sessions. Set to \fIforce\fR to enable it for all sessions.
+.br
+\fIWARNING:\fR Setting \fIforce\fR only works for fullscreen or multimonitor sessions, windowed sessions will start to misbehave!
 .br
 By default fall back to detection of sway or other wlroots based compositors by evaluating \fIXDG_SESSION_DESKTOP\fR and \fIXDG_CURRENT_DESKTOP\fR.
 .br
