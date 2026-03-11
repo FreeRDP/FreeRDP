@@ -328,7 +328,7 @@ static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, unsigned 
 
 	const INT16 offset = adpcm->ima.last_step[channel];
 	WINPR_ASSERT(offset >= 0);
-	WINPR_ASSERT(offset < ARRAYSIZE(ima_step_size_table));
+	WINPR_ASSERT(WINPR_CXX_COMPAT_CAST(size_t, offset) < ARRAYSIZE(ima_step_size_table));
 
 	const INT32 ss = ima_step_size_table[offset];
 	INT32 d = (ss >> 3);
@@ -801,7 +801,7 @@ static BYTE dsp_encode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, size_t chan
 
 	const INT16 offset = adpcm->ima.last_step[channel];
 	WINPR_ASSERT(offset >= 0);
-	WINPR_ASSERT(offset < ARRAYSIZE(ima_step_size_table));
+	WINPR_ASSERT(WINPR_CXX_COMPAT_CAST(size_t, offset) < ARRAYSIZE(ima_step_size_table));
 
 	INT32 ss = ima_step_size_table[offset];
 	INT32 e = sample - adpcm->ima.last_sample[channel];

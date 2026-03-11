@@ -1043,7 +1043,6 @@ static inline BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, c
 {
 	UINT32 number = *nr;
 	BYTE flags = 0;
-	BYTE* zeroBits = nullptr;
 	UINT32 zeroBitsSize = 0;
 
 	if (number > 45)
@@ -1057,7 +1056,7 @@ static inline BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, c
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, zeroBitsSize))
 		return FALSE;
 
-	Stream_GetPointer(s, zeroBits);
+	BYTE* zeroBits = Stream_PointerAs(s, BYTE);
 	Stream_Seek(s, zeroBitsSize);
 	ZeroMemory(rectangles, sizeof(DELTA_RECT) * number);
 
@@ -1108,7 +1107,6 @@ static inline BOOL update_read_delta_points(wStream* s, DELTA_POINT** points, UI
                                             WINPR_ATTR_UNUSED INT16 x, WINPR_ATTR_UNUSED INT16 y)
 {
 	BYTE flags = 0;
-	BYTE* zeroBits = nullptr;
 	UINT32 zeroBitsSize = ((number + 3) / 4);
 
 	WINPR_ASSERT(points);
@@ -1121,7 +1119,7 @@ static inline BOOL update_read_delta_points(wStream* s, DELTA_POINT** points, UI
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, zeroBitsSize))
 		return FALSE;
 
-	Stream_GetPointer(s, zeroBits);
+	BYTE* zeroBits = Stream_PointerAs(s, BYTE);
 	Stream_Seek(s, zeroBitsSize);
 	ZeroMemory(*points, sizeof(DELTA_POINT) * number);
 
