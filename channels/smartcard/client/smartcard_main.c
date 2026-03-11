@@ -317,6 +317,7 @@ static UINT smartcard_init(DEVICE* device)
 	if (!smartcard)
 		return ERROR_INVALID_PARAMETER;
 
+	smartcard_call_cancel_all_context(smartcard->callctx);
 	return CHANNEL_RC_OK;
 }
 
