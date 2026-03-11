@@ -4,11 +4,11 @@ about: Create a report to help us improve
 
 ---
 
-**Found a bug? - We would like to help you and smash the bug away.**
+# **Found a bug? - We would like to help you and smash the bug away.**
+
 1. __Please don't "report" questions as bugs. For these (questions/build instructions/...) please use one of the following means of contact:__
    * We are reachable via:
     * Matrix room : #FreeRDP:matrix.org (main)
-    * XMPP channel: #FreeRDP#matrix.org@matrix.org (bridged)
     * IRC channel : #freerdp @ irc.oftc.net (bridged)
    * We are reachable via mailing list <freerdp-devel@lists.sourceforge.net>
    * Try our mailing list for discussions/questions
@@ -17,23 +17,28 @@ about: Create a report to help us improve
 1. For more details see https://github.com/FreeRDP/FreeRDP/wiki/BugReporting
 
 
-**Describe the bug**
+# **Describe the bug**
+
 A clear and concise description of what the bug is.
 
-**To Reproduce**
+# **To Reproduce**
+
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
-**Expected behavior**
+# **Expected behavior**
+
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
+# **Screenshots**
+
 If applicable, add screenshots to help explain your problem.
 
-**Application details**
+# **Application details**
+
 * FreeRDP version (`xfreerdp /version`)
 * Command line used
 * Output of `xfreerdp /buildconfig`
@@ -42,14 +47,25 @@ If applicable, add screenshots to help explain your problem.
 * If you built it yourself add some notes which tag/commit/branch you have used, also your cmake parameters and
   compiler can help
 
-**Environment (please complete the following information):**
+# **Environment (please complete the following information):**
+
  - OS: [e.g. Linux/Windows/Android/..]
  - Version/Distribution: [e.g. Debian 10, Windows 2008, Android 10]
  - Architecture: [amd64, arm]:
 
-**Additional context**
-Add any other context about the problem here.
+# **Additional context**
 
-** Please remove this text before submitting your issue!
+Add any other context about the problem here.
+if you append huge texts put them in a details block (that is an expandable section that does not fill pages when scrolling through)
+
+```
+<details><summary>sometitle</summary>
+
+long text here
+
+</details>
+```
+
+# <ins>**_Please remove this text before submitting your issue!_**</ins>
 
 _Thank you for reporting a bug!_

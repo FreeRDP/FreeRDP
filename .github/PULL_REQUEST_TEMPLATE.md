@@ -7,9 +7,11 @@
 * Try to clean up your commit history, group changes to commits
 * Check your formatting! A _clang-format_ script can be found at ```.clang-format```
   * The cmake target ```clangformat``` reformats the whole codebase
+  * if available on your system `git clang-format -f origin/master` will do the same
 * Optional (but higly recommended)
   * Run a clang scanbuild before and after your changes to avoid introducing new bugs
   * Run your compiler at pedantic level to check for new warnings
+  * run clang-tidy and check issues pointed out (not all are bugs, but most are)
 
 ## To ease accepting your contribution
 * Give the pull request a proper name so people looking at it have an basic idea what it is for
@@ -21,7 +23,6 @@
 * fix issues found during the review phase
 * Joining our chat to talk to other developers or help them test your pull might accelerate acceptance
   * Matrix room : #FreeRDP:matrix.org (main)
-  * XMPP channel: #FreeRDP#matrix.org@matrix.org (bridged)
   * IRC channel : #freerdp @ irc.oftc.net (bridged)
 * Joining our mailing list <freerdp-devel@lists.sourceforge.net> may be helpful too.
 * Check the pull request builder at https://ci.freerdp.com/job/code-quality-checker/ and fix all warnings affecting your code
