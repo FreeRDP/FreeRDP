@@ -29,9 +29,8 @@
 
 #if !defined(EMSCRIPTEN)
 #define FREERDP_TIMER_SUPPORTED
-#else
-#define TAG FREERDP_TAG("timer")
 #endif
+#define TAG FREERDP_TAG("timer")
 
 typedef struct ALIGN64
 {
@@ -170,7 +169,8 @@ static uint64_t expire_and_reschedule(FreeRDPTimer* timer)
 	uint64_t now = winpr_GetTickCount64NS();
 
 	ArrayList_Lock(timer->entries);
-	(void)ArrayList_ForEach(timer->entries, runExpiredTimer, &now, &mainloop);
+	if (!ArrayList_ForEach(timer->entries, runExpiredTimer, &now, &mainloop))
+		WLog_ERR(TAG, "ArrayList_ForEach failed");
 	if (mainloop)
 		(void)SetEvent(timer->mainevent);
 
