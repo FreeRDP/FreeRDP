@@ -728,6 +728,9 @@ static BOOL gdi_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER* opaque
 	if (!gdi || !gdi->drawing)
 		return FALSE;
 
+	/* older windows servers tend to send empty rectangles.
+	 * ignore these
+	 */
 	if (!gdi_CRgnToRect(x, y, w, h, &rect))
 		return TRUE;
 
@@ -772,9 +775,12 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 		const INT32 w = rectangle->width;
 		const INT32 h = rectangle->height;
 
-		ret = FALSE;
+		/* older windows servers tend to send empty rectangles.
+		 * ignore these
+		 */
 		if (!gdi_CRgnToRect(x, y, w, h, &rect))
-			break;
+			continue;
+
 		ret = gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
 
 		if (!ret)
