@@ -239,7 +239,7 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 
 	Stream_SealLength(s);
 
-	Stream_GetBuffer(s, *format_data);
+	*format_data = Stream_Buffer(s);
 	Stream_GetLength(s, len);
 	if (len > UINT32_MAX)
 		goto error;

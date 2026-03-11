@@ -1031,19 +1031,19 @@ static inline BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 			Stream_Read_UINT16(sub, tile->YLen);  /* YLen (2 bytes) */
 			Stream_Read_UINT16(sub, tile->CbLen); /* CbLen (2 bytes) */
 			Stream_Read_UINT16(sub, tile->CrLen); /* CrLen (2 bytes) */
-			Stream_GetPointer(sub, tile->YData);
+			tile->YData = Stream_PointerAs(sub, BYTE);
 			if (!Stream_SafeSeek(sub, tile->YLen))
 			{
 				rc = FALSE;
 				break;
 			}
-			Stream_GetPointer(sub, tile->CbData);
+			tile->CbData = Stream_PointerAs(sub, BYTE);
 			if (!Stream_SafeSeek(sub, tile->CbLen))
 			{
 				rc = FALSE;
 				break;
 			}
-			Stream_GetPointer(sub, tile->CrData);
+			tile->CrData = Stream_PointerAs(sub, BYTE);
 			if (!Stream_SafeSeek(sub, tile->CrLen))
 			{
 				rc = FALSE;

@@ -418,14 +418,11 @@ static int wts_write_variable_uint(wStream* s, UINT32 val)
 
 static void wts_write_drdynvc_header(wStream* s, BYTE Cmd, UINT32 ChannelId)
 {
-	BYTE* bm = nullptr;
-	int cbChId = 0;
-
 	WINPR_ASSERT(s);
 
-	Stream_GetPointer(s, bm);
+	BYTE* bm = Stream_PointerAs(s, BYTE);
 	Stream_Seek_UINT8(s);
-	cbChId = wts_write_variable_uint(s, ChannelId);
+	const int cbChId = wts_write_variable_uint(s, ChannelId);
 	*bm = (((Cmd & 0x0F) << 4) | cbChId) & 0xFF;
 }
 
