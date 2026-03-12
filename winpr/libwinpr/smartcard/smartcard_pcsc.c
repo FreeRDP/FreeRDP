@@ -280,6 +280,12 @@ static void cardContextFree(PCSC_SCARDCONTEXT* pContext)
 	free(pContext);
 }
 
+static void cardContextFreeVoid(void* obj)
+{
+	PCSC_SCARDCONTEXT* pContext = obj;
+	cardContextFree(pContext);
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL initializeHandles(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
                               WINPR_ATTR_UNUSED PVOID Parameter, WINPR_ATTR_UNUSED PVOID* Context)
@@ -291,6 +297,13 @@ static BOOL initializeHandles(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
 	g_CardContexts = ListDictionary_New(TRUE);
 	if (!g_CardContexts)
 		return FALSE;
+	{
+		wObject* obj = ListDictionary_ValueObject(g_CardContexts);
+		if (!obj)
+			return FALSE;
+		obj->fnObjectFree = cardContextFreeVoid;
+	}
+
 	g_MemoryBlocks = setupWithValueObjectFree();
 	return g_MemoryBlocks != nullptr;
 }
