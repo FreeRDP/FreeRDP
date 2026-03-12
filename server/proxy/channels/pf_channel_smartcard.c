@@ -355,7 +355,7 @@ BOOL pf_channel_smartcard_client_new(pClientContext* pc)
 	if (!scard)
 		return FALSE;
 	scard->base.free = pf_channel_scard_client_context_free;
-	scard->callctx = smartcard_call_context_new(pc->context.settings);
+	scard->callctx = smartcard_call_context_new_with_context(&pc->context);
 	if (!scard->callctx)
 		goto fail;
 
