@@ -60,8 +60,12 @@ extern "C"
 	 *
 	 *  @return The \ref status logged
 	 *  @since version 3.16.0
+	 *  @important Parameter \ref what changed to a format string and variadic arguments were added
+	 * with 3.24.0
 	 */
-	FREERDP_API LONG scard_log_status_error_wlog(wLog* log, const char* what, LONG status);
+	WINPR_ATTR_FORMAT_ARG(2, 4)
+	FREERDP_API LONG scard_log_status_error_wlog(wLog* log, WINPR_FORMAT_ARG const char* what,
+	                                             LONG status, ...);
 	FREERDP_API WINPR_ATTR_NODISCARD const char* scard_get_ioctl_string(UINT32 ioControlCode,
 	                                                                    BOOL funcName);
 

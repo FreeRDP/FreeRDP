@@ -31,16 +31,20 @@
 LONG scard_log_status_error(const char* tag, const char* what, LONG status)
 {
 	wLog* log = WLog_Get(tag);
-	return scard_log_status_error_wlog(log, what, status);
+	return scard_log_status_error_wlog(log, "%s", status, what);
 }
 
-LONG scard_log_status_error_wlog(wLog* log, const char* what, LONG status)
+LONG scard_log_status_error_wlog(wLog* log, const char* what, LONG status, ...)
 {
 	if (status != SCARD_S_SUCCESS)
 	{
 		DWORD level = WLOG_ERROR;
 		switch (status)
 		{
+			case SCARD_W_RESET_CARD:
+			case SCARD_E_NOT_TRANSACTED:
+			case SCARD_E_CANCELLED:
+			case SCARD_E_UNSUPPORTED_FEATURE:
 			case SCARD_E_TIMEOUT:
 				level = WLOG_DEBUG;
 				break;
@@ -50,8 +54,16 @@ LONG scard_log_status_error_wlog(wLog* log, const char* what, LONG status)
 			default:
 				break;
 		}
-		WLog_Print(log, level, "%s failed with error %s [%" PRId32 "]", what,
+
+		char* str = nullptr;
+		size_t slen = 0;
+		va_list ap = WINPR_C_ARRAY_INIT;
+		va_start(ap, status);
+		winpr_vasprintf(&str, &slen, what, ap);
+		va_end(ap);
+		WLog_Print(log, level, "%s failed with error %s [%" PRId32 "]", str,
 		           SCardGetErrorString(status), status);
+		free(str);
 	}
 	return status;
 }
