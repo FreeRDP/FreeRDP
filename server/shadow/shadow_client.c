@@ -2227,10 +2227,10 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 
 			if (client->activated)
 			{
-				if (!IFCALLRESULT(TRUE, update->pointer->PointerNew, context, &pointerNew))
-					return -1;
 				if (client->server->ShowMouseCursor)
 				{
+					if (!IFCALLRESULT(TRUE, update->pointer->PointerNew, context, &pointerNew))
+						return -1;
 					if (!IFCALLRESULT(TRUE, update->pointer->PointerCached, context,
 					                  &pointerCached))
 						return -1;
@@ -2238,7 +2238,7 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 				else
 				{
 					POINTER_SYSTEM_UPDATE pointer_system = WINPR_C_ARRAY_INIT;
-					pointer_system.type = SYSPTR_NULL;
+					pointer_system.type = SYSPTR_DEFAULT;
 					if (!IFCALLRESULT(TRUE, update->pointer->PointerSystem, context,
 					                  &pointer_system))
 						return -1;

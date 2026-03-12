@@ -28,14 +28,38 @@
 
 #include <SDL3/SDL_mouse.h>
 
-typedef struct
+struct sdlPointer
 {
-	rdpPointer pointer;
-	SDL_Cursor* cursor;
-	SDL_Surface* image;
-	size_t size;
-	void* data;
-} sdlPointer;
+	rdpPointer pointer{};
+	SDL_Cursor* cursor = nullptr;
+	SDL_Surface* image = nullptr;
+	size_t size = 0;
+	BYTE* data = nullptr;
+
+	sdlPointer(const sdlPointer& other) = delete;
+	sdlPointer(sdlPointer&& other) = delete;
+	auto operator=(const sdlPointer& other) = delete;
+	auto operator=(sdlPointer&& other) = delete;
+	~sdlPointer() = delete;
+
+	bool update(rdpContext* context)
+	{
+		assert(context);
+		assert(context->gdi);
+
+		size = 4ull * pointer.width * pointer.height;
+		winpr_aligned_free(data);
+		data = static_cast<BYTE*>(winpr_aligned_malloc(size, 16));
+
+		if (!data)
+			return false;
+
+		return freerdp_image_copy_from_pointer_data(
+		    data, context->gdi->dstFormat, 0, 0, 0, pointer.width, pointer.height,
+		    pointer.xorMaskData, pointer.lengthXorMask, pointer.andMaskData, pointer.lengthAndMask,
+		    pointer.xorBpp, &context->gdi->palette);
+	}
+};
 
 [[nodiscard]] static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
@@ -45,27 +69,7 @@ typedef struct
 	if (!ptr)
 		return FALSE;
 
-	rdpGdi* gdi = context->gdi;
-	WINPR_ASSERT(gdi);
-
-	ptr->size = 4ull * pointer->width * pointer->height;
-	ptr->data = winpr_aligned_malloc(ptr->size, 16);
-
-	if (!ptr->data)
-		return FALSE;
-
-	auto data = static_cast<BYTE*>(ptr->data);
-	if (!freerdp_image_copy_from_pointer_data(
-	        data, gdi->dstFormat, 0, 0, 0, pointer->width, pointer->height, pointer->xorMaskData,
-	        pointer->lengthXorMask, pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp,
-	        &context->gdi->palette))
-	{
-		winpr_aligned_free(ptr->data);
-		ptr->data = nullptr;
-		return FALSE;
-	}
-
-	return TRUE;
+	return ptr->update(context);
 }
 
 static void sdl_Pointer_Clear(sdlPointer* ptr)
@@ -142,23 +146,26 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 		return false;
 	}
 
-	if (!SDL_LockSurface(ptr->image))
-	{
-		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_LockSurface failed");
-		return false;
-	}
-
-	auto pixels = static_cast<BYTE*>(ptr->image->pixels);
 	auto data = static_cast<const BYTE*>(ptr->data);
-	const BOOL rc = freerdp_image_scale(
-	    pixels, gdi->dstFormat, static_cast<UINT32>(ptr->image->pitch), 0, 0,
-	    static_cast<UINT32>(ptr->image->w), static_cast<UINT32>(ptr->image->h), data,
-	    gdi->dstFormat, 0, 0, 0, static_cast<UINT32>(isw), static_cast<UINT32>(ish));
-	SDL_UnlockSurface(ptr->image);
-	if (!rc)
+	if (data)
 	{
-		WLog_Print(sdl->getWLog(), WLOG_ERROR, "freerdp_image_scale failed");
-		return false;
+		if (!SDL_LockSurface(ptr->image))
+		{
+			WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_LockSurface failed");
+			return false;
+		}
+
+		auto pixels = static_cast<BYTE*>(ptr->image->pixels);
+		const BOOL rc = freerdp_image_scale(
+		    pixels, gdi->dstFormat, static_cast<UINT32>(ptr->image->pitch), 0, 0,
+		    static_cast<UINT32>(ptr->image->w), static_cast<UINT32>(ptr->image->h), data,
+		    gdi->dstFormat, 0, 0, 0, static_cast<UINT32>(isw), static_cast<UINT32>(ish));
+		SDL_UnlockSurface(ptr->image);
+		if (!rc)
+		{
+			WLog_Print(sdl->getWLog(), WLOG_ERROR, "freerdp_image_scale failed");
+			return false;
+		}
 	}
 
 	// create a cursor image in 100% display scale to trick SDL into creating the cursor with the
