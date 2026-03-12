@@ -381,6 +381,16 @@ static LONG get_gmtoff_min(const struct tm* t)
 	return -(LONG)(t->tm_gmtoff / 60l);
 }
 
+static struct tm update_tm(const struct tm* start)
+{
+	WINPR_ASSERT(start);
+	struct tm cur = *start;
+	const time_t t = mktime(&cur);
+	struct tm next = WINPR_C_ARRAY_INIT;
+	(void)localtime_r(&t, &next);
+	return next;
+}
+
 static struct tm next_day(const struct tm* start)
 {
 	struct tm cur = *start;
@@ -389,9 +399,7 @@ static struct tm next_day(const struct tm* start)
 	cur.tm_sec = 0;
 	cur.tm_isdst = -1;
 	cur.tm_mday++;
-	const time_t t = mktime(&cur);
-	(void)localtime_r(&t, &cur);
-	return cur;
+	return update_tm(&cur);
 }
 
 static struct tm adjust_time(const struct tm* start, int hour, int minute)
@@ -401,9 +409,7 @@ static struct tm adjust_time(const struct tm* start, int hour, int minute)
 	cur.tm_min = minute;
 	cur.tm_sec = 0;
 	cur.tm_isdst = -1;
-	const time_t t = mktime(&cur);
-	(void)localtime_r(&t, &cur);
-	return cur;
+	return update_tm(&cur);
 }
 
 /* [MS-RDPBCGR] 2.2.1.11.1.1.1.1.1  System Time (TS_SYSTEMTIME) */
@@ -476,19 +482,20 @@ static SYSTEMTIME get_transition_time(const struct tm* start, BOOL toDst)
 	return tm2transitiontime(start);
 }
 
-static BOOL get_transition_date(const struct tm* start, BOOL toDst, SYSTEMTIME* pdate)
+static BOOL get_transition_date(const struct tm* pstart, BOOL toDst, SYSTEMTIME* pdate)
 {
-	WINPR_ASSERT(start);
+	WINPR_ASSERT(pstart);
 	WINPR_ASSERT(pdate);
 
 	*pdate = tm2transitiontime(nullptr);
 
-	if (start->tm_isdst < 0)
+	struct tm start = update_tm(pstart);
+	if (start.tm_isdst < 0)
 		return FALSE;
 
-	BOOL val = start->tm_isdst > 0; // the year starts with DST or not
+	BOOL val = start.tm_isdst > 0; // the year starts with DST or not
 	BOOL toggled = FALSE;
-	struct tm cur = *start;
+	struct tm cur = start;
 	struct tm last = cur;
 	for (int day = 1; day <= 365; day++)
 	{
@@ -736,12 +743,34 @@ static int dynamic_time_zone_from_localtime(const struct tm* local_time,
 		/* DST bias is the difference between standard time and DST in minutes */
 		const LONG d = get_bias(local_time, TRUE);
 		tz->DaylightBias = -1 * (tz->Bias - d);
-		if (!get_transition_date(local_time, FALSE, &tz->StandardDate))
+		struct tm newyear = *local_time;
+		newyear.tm_mday = 0;
+		newyear.tm_yday = 0;
+		newyear.tm_wday = 0;
+		newyear.tm_min = 0;
+		newyear.tm_sec = 0;
+		newyear.tm_mon = 0;
+
+		/* Searching for transition dates.
+		 *
+		 * For the current DST setting, search from the local_time, for the other one
+		 * search from beginning of the year.
+		 * We want the dates in the same year, so searching both from local_time might lead to
+		 * issues.
+		 */
+		const struct tm* stdtransition = local_time;
+		const struct tm* dsttransition = &newyear;
+		if (local_time->tm_isdst == 0)
+		{
+			stdtransition = &newyear;
+			dsttransition = local_time;
+		}
+		if (!get_transition_date(stdtransition, FALSE, &tz->StandardDate))
 		{
 			rc |= HAVE_NO_STANDARD_TRANSITION_DATE;
 			tz->StandardBias = 0;
 		}
-		if (!get_transition_date(local_time, TRUE, &tz->DaylightDate))
+		if (!get_transition_date(dsttransition, TRUE, &tz->DaylightDate))
 		{
 			rc |= HAVE_NO_DAYLIGHT_TRANSITION_DATE;
 			tz->DaylightBias = 0;
