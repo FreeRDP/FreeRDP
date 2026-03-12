@@ -369,7 +369,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Orientation of display in degrees" },
 	{ "old-license", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 	  "Use the old license workflow (no CAL and hwId set to 0)" },
-	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", nullptr, nullptr, -1, nullptr, "Password" },
+	{ "p", COMMAND_LINE_VALUE_OPTIONAL, "<password>", nullptr, nullptr, -1, nullptr,
+	  "Password. Pass /p without arguments to silences interactive password prompts if no "
+	  "credentials are required for the connection." },
 #if defined(CHANNEL_PARALLEL_CLIENT)
 	{ "parallel", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<path>]", nullptr, nullptr, -1, nullptr,
 	  "Redirect parallel device" },

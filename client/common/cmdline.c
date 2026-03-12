@@ -670,7 +670,12 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Use a external socket:");
 	printf("    %s /v:|:1234\n", name);
 	printf("\n");
-	printf("Clipboard Redirection: +clipboard\n");
+	printf("Connect to a system with TLS security and open the greeter:");
+	printf("NOTE: Needs a server configured to not require NLA or it will fail!");
+	printf("\n");
+	printf("    %s /sec:tls /p /v:rdp.contoso.com\n", name);
+	printf("\n");
+	printf("Disable clipboard redirection: -clipboard\n");
 	printf("\n");
 	printf("Drive Redirection: /drive:home,/home/user\n");
 	printf("Smartcard Redirection: /smartcard:<device>\n");
@@ -4969,7 +4974,13 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "p")
 		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_Password, arg->Value))
+			/* In case of an optional password set that, if none provided set to empty string.
+			 * this way we know later on that we intentionally left the password blank. */
+			const char* val = arg->Value;
+			if (!val)
+				val = "";
+
+			if (!freerdp_settings_set_string(settings, FreeRDP_Password, val))
 				return fail_at(arg, COMMAND_LINE_ERROR_MEMORY);
 		}
 		CommandLineSwitchCase(arg, "gateway")
