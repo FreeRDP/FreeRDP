@@ -60,7 +60,7 @@ extern "C"
 	 *
 	 *  @return The \ref status logged
 	 *  @since version 3.16.0
-	 *  @important Parameter \ref what changed to a format string and variadic arguments were added
+	 *  @note Parameter \ref what changed to a format string and variadic arguments were added
 	 * with 3.24.0
 	 */
 	WINPR_ATTR_FORMAT_ARG(2, 4)
