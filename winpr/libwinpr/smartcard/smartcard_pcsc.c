@@ -470,10 +470,7 @@ static void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
 	PCSC_SCARDCONTEXT* pContext = PCSC_GetCardContextData(hContext);
 
 	if (!pContext)
-	{
-		WLog_ERR(TAG, "PCSC_ReleaseCardContext: null pContext!");
 		return;
-	}
 
 	DeleteCriticalSection(&(pContext->lock));
 	HashTable_Free(pContext->cache);
