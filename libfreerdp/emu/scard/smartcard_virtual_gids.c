@@ -663,7 +663,6 @@ static BOOL vgids_read_do_fkt(void* data, size_t index, va_list ap)
 	return TRUE;
 }
 
-WINPR_ATTR_NODISCARD
 static BOOL vgids_read_do(vgidsContext* context, UINT16 efID, UINT16 doID)
 {
 	return ArrayList_ForEach(context->files, vgids_read_do_fkt, context, efID, doID);
@@ -898,8 +897,10 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 			}
 
 			Stream_Read_UINT16_BE(s, doId);
-			if (!vgids_read_do(context, fileId, doId))
-				return FALSE;
+
+			/* the function only returns if the ID was found in the list and iteration aborted early
+			 * or not. we can ignore this here. */
+			(void)vgids_read_do(context, fileId, doId);
 			break;
 		}
 		case 0xA:
