@@ -290,3 +290,6 @@ name = msusb_msinterface_write
 change_kind = deleted-function
 name = msusb_mspipes_replace
 
+[suppress_function]
+change_kind = function-subtype-change
+name = scard_log_status_error_wlog

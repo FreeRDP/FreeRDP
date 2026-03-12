@@ -1859,10 +1859,8 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 	    (result != SCARD_E_NO_READERS_AVAILABLE) && (result != SCARD_E_NO_SERVICE) &&
 	    (result != SCARD_W_CACHE_ITEM_NOT_FOUND) && (result != SCARD_W_CACHE_ITEM_STALE))
 	{
-		WLog_Print(ctx->log, WLOG_WARN,
-		           "IRP failure: %s (0x%08" PRIX32 "), status: %s (0x%08" PRIX32 ")",
-		           scard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
-		           SCardGetErrorString(result), WINPR_CXX_COMPAT_CAST(UINT32, result));
+		scard_log_status_error_wlog(ctx->log, "IRP failure: %s (0x%08" PRIX32 ")", result,
+		                            scard_get_ioctl_string(ioControlCode, TRUE), ioControlCode);
 	}
 
 	*pIoStatus = STATUS_SUCCESS;
@@ -1871,10 +1869,9 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 	{
 		/* NTSTATUS error */
 		*pIoStatus = result;
-		WLog_Print(ctx->log, WLOG_WARN,
-		           "IRP failure: %s (0x%08" PRIX32 "), ntstatus: 0x%08" PRIX32 "",
-		           scard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
-		           WINPR_CXX_COMPAT_CAST(UINT32, result));
+
+		scard_log_status_error_wlog(ctx->log, "IRP failure: %s (0x%08" PRIX32 ")", result,
+		                            scard_get_ioctl_string(ioControlCode, TRUE), ioControlCode);
 	}
 
 	Stream_SealLength(out);
