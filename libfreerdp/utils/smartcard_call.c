@@ -105,11 +105,10 @@ static void context_free(void* arg);
 static LONG smartcard_EstablishContext_Call(scard_call_context* smartcard, wStream* out,
                                             SMARTCARD_OPERATION* operation)
 {
-	LONG status = 0;
 	SCARDCONTEXT hContext = WINPR_C_ARRAY_INIT;
 	EstablishContext_Return ret = WINPR_C_ARRAY_INIT;
 	EstablishContext_Call* call = &operation->call.establishContext;
-	status = ret.ReturnCode =
+	LONG status = ret.ReturnCode =
 	    wrap(smartcard, SCardEstablishContext, call->dwScope, nullptr, nullptr, &hContext);
 
 	if (ret.ReturnCode == SCARD_S_SUCCESS)
@@ -1927,6 +1926,7 @@ void context_free(void* arg)
 	free(element);
 }
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 {
 	const freerdp* inst = freerdp_settings_get_pointer(settings, FreeRDP_instance);
@@ -1934,6 +1934,7 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 		return nullptr;
 	return smartcard_call_context_new_with_context(inst->context);
 }
+#endif
 
 scard_call_context* smartcard_call_context_new_with_context(rdpContext* context)
 {
