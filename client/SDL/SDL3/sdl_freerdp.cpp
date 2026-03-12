@@ -23,9 +23,19 @@
 
 #include <freerdp/config.h>
 
+#if defined(__has_include)
+#if __has_include(<version>)
+#include <version>
+#endif
+#endif
+
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+
+#if defined(__cpp_lib_source_location) && (__cpp_lib_source_location >= 201907L)
+#include <source_location>
+#endif
 
 #include <freerdp/constants.h>
 #include <freerdp/freerdp.h>
@@ -74,7 +84,21 @@ class ErrorMsg : public std::exception
 {
   public:
 	ErrorMsg(int rc, Uint32 type, const std::string& msg,
-	         const std::string& sdlError = SDL_GetError());
+	         const std::string& sdlError = SDL_GetError()
+#if defined(__cpp_lib_source_location) && (__cpp_lib_source_location >= 201907L)
+	             ,
+	         std::source_location loc = std::source_location::current()
+#elif defined(__GNUC__)
+	             ,
+	         const std::string& file = __builtin_FILE(),
+	         const std::string& fkt = __builtin_FUNCTION(), size_t line = __builtin_LINE(),
+#if defined(__clang__)
+	         size_t column = __builtin_COLUMN()
+#else
+	         size_t column = 0
+#endif
+#endif
+	);
 
 	[[nodiscard]] int rc() const;
 	[[nodiscard]] const char* what() const noexcept override;
@@ -85,6 +109,11 @@ class ErrorMsg : public std::exception
 	std::string _msg;
 	std::string _sdlError;
 	std::string _buffer;
+
+	std::string _file;
+	std::string _fkt;
+	size_t _line = 0;
+	size_t _column = 0;
 };
 const char* ErrorMsg::what() const noexcept
 {
@@ -96,11 +125,27 @@ int ErrorMsg::rc() const
 	return _rc;
 }
 
-ErrorMsg::ErrorMsg(int rc, Uint32 type, const std::string& msg, const std::string& sdlError)
+ErrorMsg::ErrorMsg(int rc, Uint32 type, const std::string& msg, const std::string& sdlError
+#if defined(__cpp_lib_source_location) && (__cpp_lib_source_location >= 201907L)
+                   ,
+                   std::source_location loc
+#elif defined(__GNUC__)
+                   ,
+                   const std::string& file, const std::string& fkt, size_t line, size_t column
+#endif
+                   )
     : _rc(rc), _type(type), _msg(msg), _sdlError(sdlError)
+#if defined(__cpp_lib_source_location) && (__cpp_lib_source_location >= 201907L)
+      ,
+      _file(loc.file_name()), _fkt(loc.function_name()), _line(loc.line()), _column(loc.column())
+#elif defined(__GNUC__)
+      ,
+      _file(file), _fkt(fkt), _line(line), _column(column)
+#endif
 {
 	std::stringstream ss;
 	ss << _msg << " {" << sdl::utils::toString(_type) << "}{SDL:" << sdlError << "}";
+	ss << "{" << _fkt << " [" << _file << ":" << _line << "-" << _column << "]}";
 	_buffer = ss.str();
 }
 
