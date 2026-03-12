@@ -256,14 +256,43 @@ static void clearHandles(void)
 }
 
 WINPR_ATTR_NODISCARD
+static wListDictionary* setupWithValueObjectFree(void)
+{
+	wListDictionary* list = ListDictionary_New(TRUE);
+	if (!list)
+		return nullptr;
+
+	{
+		wObject* obj = ListDictionary_ValueObject(list);
+		WINPR_ASSERT(obj);
+		obj->fnObjectFree = free;
+	}
+	return list;
+}
+
+static void cardContextFree(PCSC_SCARDCONTEXT* pContext)
+{
+	if (!pContext)
+		return;
+
+	DeleteCriticalSection(&(pContext->lock));
+	HashTable_Free(pContext->cache);
+	free(pContext);
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL initializeHandles(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
                               WINPR_ATTR_UNUSED PVOID Parameter, WINPR_ATTR_UNUSED PVOID* Context)
 {
-	g_CardHandles = ListDictionary_New(TRUE);
-	g_CardContexts = ListDictionary_New(TRUE);
-	g_MemoryBlocks = ListDictionary_New(TRUE);
 	(void)atexit(clearHandles);
-	return g_CardHandles && g_CardContexts && g_MemoryBlocks;
+	g_CardHandles = setupWithValueObjectFree();
+	if (!g_CardHandles)
+		return FALSE;
+	g_CardContexts = ListDictionary_New(TRUE);
+	if (!g_CardContexts)
+		return FALSE;
+	g_MemoryBlocks = setupWithValueObjectFree();
+	return g_MemoryBlocks != nullptr;
 }
 
 WINPR_ATTR_NODISCARD
@@ -441,7 +470,7 @@ static PCSC_SCARDCONTEXT* PCSC_EstablishCardContext(SCARDCONTEXT hContext)
 	pContext->hContext = hContext;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(pContext->lock), 4000))
-		goto error_spinlock;
+		goto errors;
 
 	pContext->cache = HashTable_New(FALSE);
 	if (!pContext->cache)
@@ -458,26 +487,17 @@ static PCSC_SCARDCONTEXT* PCSC_EstablishCardContext(SCARDCONTEXT hContext)
 
 	return pContext;
 errors:
-	HashTable_Free(pContext->cache);
-	DeleteCriticalSection(&(pContext->lock));
-error_spinlock:
-	free(pContext);
+	cardContextFree(pContext);
 	return nullptr;
 }
 
 static void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
 {
-	PCSC_SCARDCONTEXT* pContext = PCSC_GetCardContextData(hContext);
-
-	if (!pContext)
-		return;
-
-	DeleteCriticalSection(&(pContext->lock));
-	HashTable_Free(pContext->cache);
-	free(pContext);
-
 	if (init())
-		ListDictionary_Remove(g_CardContexts, (void*)hContext);
+	{
+		PCSC_SCARDCONTEXT* pContext = ListDictionary_Take(g_CardContexts, (void*)hContext);
+		cardContextFree(pContext);
+	}
 }
 
 WINPR_ATTR_NODISCARD
@@ -649,7 +669,6 @@ static void PCSC_DisconnectCardHandle(PCSC_SCARDHANDLE* pCard)
 	PCSC_SCARDCONTEXT* pContext = PCSC_GetCardContextData(pCard->hSharedContext);
 	if (init())
 		ListDictionary_Remove(g_CardHandles, (void*)pCard);
-	free(pCard);
 
 	if (!pContext)
 	{
