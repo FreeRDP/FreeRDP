@@ -131,7 +131,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 	{
 		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		const char* err = dlerror();
-		WLog_ERR(TAG, "failed with %s", err);
+		WLog_VRB(TAG, "failed with %s", err);
 		return nullptr;
 	}
 

@@ -3628,7 +3628,9 @@ static BOOL rdp_write_jpeg_client_capability_container(wStream* s, const rdpSett
 		return FALSE;
 
 	Stream_Write_UINT16(s, 1); /* codecPropertiesLength */
-	Stream_Write_UINT8(s, settings->JpegQuality);
+
+	const UINT32 q = freerdp_settings_get_uint32(settings, FreeRDP_JpegQuality);
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, q));
 	return TRUE;
 }
 #endif

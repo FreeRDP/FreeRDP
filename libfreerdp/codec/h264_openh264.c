@@ -338,7 +338,8 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 
 				if ((uint32_t)sys->EncParamExt.fMaxFrameRate != h264->FrameRate)
 				{
-					sys->EncParamExt.fMaxFrameRate = WINPR_ASSERTING_INT_CAST(int, h264->FrameRate);
+					sys->EncParamExt.fMaxFrameRate =
+					    WINPR_ASSERTING_INT_CAST(float, h264->FrameRate);
 
 					WINPR_ASSERT((*sys->pEncoder)->SetOption);
 					status = (*sys->pEncoder)
@@ -492,7 +493,7 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 	}
 
 	sysContexts->WelsGetCodecVersionEx(&sysContexts->version);
-	WLog_Print(h264->log, WLOG_INFO, "loaded %s %d.%d.%d", name, sysContexts->version.uMajor,
+	WLog_Print(h264->log, WLOG_DEBUG, "loaded %s %u.%u.%u", name, sysContexts->version.uMajor,
 	           sysContexts->version.uMinor, sysContexts->version.uRevision);
 
 	if ((sysContexts->version.uMajor < 1) ||
@@ -500,7 +501,7 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 	{
 		WLog_Print(
 		    h264->log, WLOG_ERROR,
-		    "OpenH264 %s %d.%d.%d is too old, need at least version 1.6.0 for dynamic loading",
+		    "OpenH264 %s %u.%u.%u is too old, need at least version 1.6.0 for dynamic loading",
 		    name, sysContexts->version.uMajor, sysContexts->version.uMinor,
 		    sysContexts->version.uRevision);
 		FreeLibrary(sysContexts->lib);
