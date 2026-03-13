@@ -35,15 +35,23 @@ BOOL jpeg_decompress(const BYTE* input, BYTE* output, int width, int height, int
 
 	if (bpp != 24)
 		return FALSE;
+	if (width <= 0)
+		return FALSE;
+	if (height <= 0)
+		return FALSE;
+	if (size <= 0)
+		return FALSE;
 
 	wImage* image = winpr_image_new();
 	if (!image)
 		goto fail;
 
-	if (winpr_image_read_buffer(image, input, size) <= 0)
+	if (winpr_image_read_buffer(image, input, WINPR_ASSERTING_INT_CAST(size_t, size)) <= 0)
 		goto fail;
 
-	if ((image->width != width) || (image->height != height) || (image->bitsPerPixel != bpp))
+	if ((image->width != WINPR_ASSERTING_INT_CAST(size_t, width)) ||
+	    (image->height != WINPR_ASSERTING_INT_CAST(size_t, height)) ||
+	    (image->bitsPerPixel != WINPR_ASSERTING_INT_CAST(size_t, bpp)))
 		goto fail;
 
 	memcpy(output, image->data, 1ull * image->scanline * image->height);

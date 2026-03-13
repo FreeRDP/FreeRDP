@@ -223,7 +223,7 @@ static void log_enc_info(const AACENC_InfoStruct* info, fdk_log_fkt_t log)
 
 	for (size_t x = 0; x < 64; x++)
 	{
-		rc = snprintf(&confBuf[offset], remain - offset, "0x%02x%s", (int)info->confBuf[x],
+		rc = snprintf(&confBuf[offset], remain - offset, "0x%02x%s", (unsigned)info->confBuf[x],
 		              (x > 0) ? ", " : "");
 		if (rc <= 0)
 			return;
@@ -507,8 +507,8 @@ ssize_t fdk_aac_dsp_impl_decode_fill(void* handle, const void* data, size_t size
 {
 	assert(handle);
 	assert(log);
-
-	UINT leftBytes = size;
+	assert(size <= UINT_MAX);
+	UINT leftBytes = (UINT)size;
 	HANDLE_AACDECODER self = (HANDLE_AACDECODER)handle;
 
 	union
@@ -518,7 +518,7 @@ ssize_t fdk_aac_dsp_impl_decode_fill(void* handle, const void* data, size_t size
 	} cnv;
 	cnv.cpv = data;
 	UCHAR* pBuffer[] = { cnv.puc };
-	const UINT bufferSize[] = { size };
+	const UINT bufferSize[] = { leftBytes };
 
 	assert(handle);
 	assert(data || (size == 0));
@@ -558,8 +558,11 @@ ssize_t fdk_aac_dsp_impl_stream_info(void* handle, int encoder, fdk_log_fkt_t lo
 			log(WLOG_ERROR, "aacDecoder_GetStreamInfo failed");
 			return -1;
 		}
-
-		const size_t rsize = sizeof(INT_PCM) * info->numChannels * info->frameSize;
+		if (info->numChannels <= 0)
+			return -1;
+		if (info->frameSize <= 0)
+			return -1;
+		const size_t rsize = sizeof(INT_PCM) * (size_t)info->numChannels * (size_t)info->frameSize;
 		return (ssize_t)rsize;
 	}
 }
