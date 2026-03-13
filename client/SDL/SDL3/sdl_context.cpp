@@ -416,6 +416,13 @@ bool SdlContext::createWindows()
 		auto did = WINPR_ASSERTING_INT_CAST(SDL_DisplayID, id);
 		auto window = SdlWindow::create(did, title, flags, w, h);
 
+		const auto parent = freerdp_settings_get_uint64(settings, FreeRDP_ParentWindowId);
+		if (parent != 0)
+		{
+			if (!window.setParent(parent))
+				return false;
+			window.setBordered(false);
+		}
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
 			window.setOffsetX(originX - monitor->x);
