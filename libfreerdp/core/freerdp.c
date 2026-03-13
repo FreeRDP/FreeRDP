@@ -1007,6 +1007,9 @@ void freerdp_context_free(freerdp* instance)
 	free(ctx->errorDescription);
 	ctx->errorDescription = nullptr;
 
+	free(ctx->errorDetail);
+	ctx->errorDetail = nullptr;
+
 	freerdp_channels_free(ctx->channels);
 	ctx->channels = nullptr;
 
@@ -1170,6 +1173,7 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
 
 	if (lastError == FREERDP_ERROR_SUCCESS)
 	{
+		freerdp_clear_error_detail_ex(context, fkt, file, line);
 		if (WLog_IsLevelActive(context->log, WLOG_DEBUG))
 			WLog_PrintTextMessage(context->log, WLOG_DEBUG, (size_t)line, file, fkt,
 			                      "resetting error state");
@@ -1185,6 +1189,102 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
 		}
 	}
 	context->LastError = lastError;
+}
+
+void freerdp_set_error_detail_ex(rdpContext* context, FREERDP_ERROR_SUBSYSTEM subsystem,
+                                 INT64 nativeError, const char* nativeErrorName,
+                                 const char* detail, const char* fkt, const char* file, int line)
+{
+	WINPR_ASSERT(context);
+
+	if (!context->errorDetail)
+	{
+		context->errorDetail = calloc(1, sizeof(rdpErrorDetail));
+		if (!context->errorDetail)
+		{
+			WLog_Print(context->log, WLOG_ERROR, "Failed to allocate rdpErrorDetail");
+			return;
+		}
+	}
+
+	context->errorDetail->subsystem = subsystem;
+	context->errorDetail->nativeError = nativeError;
+
+	if (nativeErrorName)
+		(void)_snprintf(context->errorDetail->nativeErrorName,
+		                sizeof(context->errorDetail->nativeErrorName), "%s", nativeErrorName);
+	else
+		context->errorDetail->nativeErrorName[0] = '\0';
+
+	if (detail)
+		(void)_snprintf(context->errorDetail->detail, sizeof(context->errorDetail->detail), "%s",
+		                detail);
+	else
+		context->errorDetail->detail[0] = '\0';
+
+	if (WLog_IsLevelActive(context->log, WLOG_DEBUG))
+	{
+		WLog_PrintTextMessage(
+		    context->log, WLOG_DEBUG, (size_t)line, file, fkt,
+		    "[%s] %s (0x%" PRIx64 "): %s", freerdp_error_subsystem_name(subsystem),
+		    context->errorDetail->nativeErrorName, (uint64_t)nativeError,
+		    context->errorDetail->detail);
+	}
+}
+
+void freerdp_clear_error_detail_ex(rdpContext* context, const char* fkt, const char* file,
+                                   int line)
+{
+	WINPR_ASSERT(context);
+	(void)fkt;
+	(void)file;
+	(void)line;
+
+	if (context->errorDetail)
+		memset(context->errorDetail, 0, sizeof(rdpErrorDetail));
+}
+
+const rdpErrorDetail* freerdp_get_error_detail(const rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	return context->errorDetail;
+}
+
+const char* freerdp_error_subsystem_name(FREERDP_ERROR_SUBSYSTEM subsystem)
+{
+	switch (subsystem)
+	{
+		case FREERDP_ERROR_SUBSYSTEM_NONE:
+			return "NONE";
+		case FREERDP_ERROR_SUBSYSTEM_NLA:
+			return "NLA";
+		case FREERDP_ERROR_SUBSYSTEM_KERBEROS:
+			return "KERBEROS";
+		case FREERDP_ERROR_SUBSYSTEM_NTLM:
+			return "NTLM";
+		case FREERDP_ERROR_SUBSYSTEM_NEGOTIATE:
+			return "NEGOTIATE";
+		case FREERDP_ERROR_SUBSYSTEM_TLS:
+			return "TLS";
+		case FREERDP_ERROR_SUBSYSTEM_GATEWAY_RPC:
+			return "GATEWAY_RPC";
+		case FREERDP_ERROR_SUBSYSTEM_GATEWAY_HTTP:
+			return "GATEWAY_HTTP";
+		case FREERDP_ERROR_SUBSYSTEM_RDSTLS:
+			return "RDSTLS";
+		case FREERDP_ERROR_SUBSYSTEM_AAD:
+			return "AAD";
+		case FREERDP_ERROR_SUBSYSTEM_SMARTCARD:
+			return "SMARTCARD";
+		case FREERDP_ERROR_SUBSYSTEM_MCS:
+			return "MCS";
+		case FREERDP_ERROR_SUBSYSTEM_LICENSE:
+			return "LICENSE";
+		case FREERDP_ERROR_SUBSYSTEM_TRANSPORT:
+			return "TRANSPORT";
+		default:
+			return "UNKNOWN";
+	}
 }
 
 const char* freerdp_get_logon_error_info_type_ex(UINT32 type, char* buffer, size_t size)
