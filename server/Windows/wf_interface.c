@@ -180,7 +180,7 @@ wfServer* wfreerdp_server_new()
 	if (!WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi()))
 		return nullptr;
 
-	wfServer* server = (wfServer*)calloc(1, sizeof(wfServer));
+	server = (wfServer*)calloc(1, sizeof(wfServer));
 
 	if (server)
 	{
