@@ -649,8 +649,16 @@ WINPR_PRAGMA_DIAG_POP
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define WINPR_ATTR_FORMAT_ARG(pos, args) [[gnu::format(printf, pos, args)]]
+#define WINPR_FORMAT_ARG /**/
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define WINPR_ATTR_FORMAT_ARG(pos, args) [[gnu::format(printf, pos, args)]]
+#define WINPR_FORMAT_ARG /**/
+#else
 #define WINPR_ATTR_FORMAT_ARG(pos, args) __attribute__((__format__(__printf__, pos, args)))
 #define WINPR_FORMAT_ARG /**/
+#endif
 #elif defined(_MSC_VER)
 #define WINPR_ATTR_FORMAT_ARG(pos, args)
 #define WINPR_FORMAT_ARG _Printf_format_string_
