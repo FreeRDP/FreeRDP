@@ -20,6 +20,7 @@ set(${MODULE_PREFIX}_TESTS
     TestListDictionary.c
     TestCmdLine.c
     TestASN1.c
+    TestSAM.c
     TestWLog.c
     TestWLogCallback.c
     TestHashTable.c
