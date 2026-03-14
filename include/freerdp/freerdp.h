@@ -344,7 +344,9 @@ extern "C"
 
 		ALIGN64 UINT32 LastError; /* 3 */
 
-		UINT64 paddingA[16 - 4]; /* 4 */
+		ALIGN64 rdpErrorDetail* errorDetail; /* 4 */
+
+		UINT64 paddingA[16 - 5]; /* 5 */
 
 		ALIGN64 int argc;    /**< (offset 16)
 		                Number of arguments given to the program at launch time.
@@ -754,6 +756,39 @@ owned by rdpRdp */
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_last_error_category(UINT32 code);
+
+	/** @brief Retrieve the current subsystem error detail, or NULL if none set.
+	 *  @since version 3.x.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const rdpErrorDetail* freerdp_get_error_detail(const rdpContext* context);
+
+	/** @brief Return the subsystem enum name as a string (e.g. "KERBEROS").
+	 *  @since version 3.x.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_error_subsystem_name(FREERDP_ERROR_SUBSYSTEM subsystem);
+
+	/** Set subsystem error detail.  Overwrites any previously set detail
+	 *  (last error wins — in Negotiate fallback, NTLM error replaces Kerberos error).
+	 */
+#define freerdp_set_error_detail(context, subsys, native, name, msg) \
+	freerdp_set_error_detail_ex((context), (subsys), (native), (name), (msg), \
+	                            __func__, __FILE__, __LINE__)
+
+	/** Force-clear error detail (call between connection attempts). */
+#define freerdp_clear_error_detail(context) \
+	freerdp_clear_error_detail_ex((context), __func__, __FILE__, __LINE__)
+
+	FREERDP_API void freerdp_set_error_detail_ex(rdpContext* context,
+	                                             FREERDP_ERROR_SUBSYSTEM subsystem,
+	                                             INT64 nativeError,
+	                                             const char* nativeErrorName,
+	                                             const char* detail,
+	                                             const char* fkt, const char* file, int line);
+
+	FREERDP_API void freerdp_clear_error_detail_ex(rdpContext* context,
+	                                               const char* fkt, const char* file, int line);
 
 #define freerdp_set_last_error(context, lastError) \
 	freerdp_set_last_error_ex((context), (lastError), __func__, __FILE__, __LINE__)
