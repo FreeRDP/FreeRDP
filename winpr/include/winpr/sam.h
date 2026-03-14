@@ -41,20 +41,21 @@ extern "C"
 {
 #endif
 
-	WINPR_ATTR_NODISCARD
+	WINPR_API void SamFreeEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry);
+
+	WINPR_ATTR_MALLOC(SamFreeEntry, 2)
 	WINPR_API WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPCSTR User, UINT32 UserLength,
 	                                          LPCSTR Domain, UINT32 DomainLength);
-	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_MALLOC(SamFreeEntry, 2)
 	WINPR_API WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPCWSTR User, UINT32 UserLength,
 	                                          LPCWSTR Domain, UINT32 DomainLength);
 
 	WINPR_API void SamResetEntry(WINPR_SAM_ENTRY* entry);
-	WINPR_API void SamFreeEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API WINPR_SAM* SamOpen(const char* filename, BOOL readOnly);
 
 	WINPR_API void SamClose(WINPR_SAM* sam);
+
+	WINPR_ATTR_MALLOC(SamClose, 1)
+	WINPR_API WINPR_SAM* SamOpen(const char* filename, BOOL readOnly);
 
 #ifdef __cplusplus
 }
