@@ -101,12 +101,10 @@ static const BYTE APDU_PIV_GET_CHUID[] = { 0x00, 0xCB, 0x3F, 0xFF, 0x05, 0x5C,
 
 static CK_OBJECT_CLASS object_class_public_key = CKO_PUBLIC_KEY;
 static CK_BBOOL object_verify = CK_TRUE;
-static CK_KEY_TYPE object_ktype_rsa = CKK_RSA;
 
 static CK_ATTRIBUTE public_key_filter[] = {
 	{ CKA_CLASS, &object_class_public_key, sizeof(object_class_public_key) },
 	{ CKA_VERIFY, &object_verify, sizeof(object_verify) },
-	{ CKA_KEY_TYPE, &object_ktype_rsa, sizeof(object_ktype_rsa) }
 };
 
 static const char* CK_RV_error_string(CK_RV rv);
