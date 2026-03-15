@@ -763,7 +763,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, info,
 	                              crypt_client_random, info->ModulusLength) < 0)
-		return FALSE;
+		goto end;
 	/* send crypt client random to server */
 	const size_t length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4ULL +
 	                      info->ModulusLength + 8ULL;
