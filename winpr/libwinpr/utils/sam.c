@@ -246,15 +246,17 @@ static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 
 	if (LmHashLength == 32)
 	{
-		if (winpr_HexStringToBinBuffer(p[2], LmHashLength, entry->LmHash, sizeof(entry->LmHash)) !=
-		    32)
+		const size_t rc =
+		    winpr_HexStringToBinBuffer(p[2], LmHashLength, entry->LmHash, sizeof(entry->LmHash));
+		if (rc != 16)
 			return FALSE;
 	}
 
 	if (NtHashLength == 32)
 	{
-		if (winpr_HexStringToBinBuffer(p[3], NtHashLength, (BYTE*)entry->NtHash,
-		                               sizeof(entry->NtHash)) != 32)
+		const size_t rc = winpr_HexStringToBinBuffer(p[3], NtHashLength, (BYTE*)entry->NtHash,
+		                                             sizeof(entry->NtHash));
+		if (rc != 16)
 			return FALSE;
 	}
 
@@ -263,16 +265,8 @@ static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 
 void SamFreeEntry(WINPR_ATTR_UNUSED WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
-	if (entry)
-	{
-		if (entry->UserLength > 0)
-			free(entry->User);
-
-		if (entry->DomainLength > 0)
-			free(entry->Domain);
-
-		free(entry);
-	}
+	SamResetEntry(entry);
+	free(entry);
 }
 
 void SamResetEntry(WINPR_SAM_ENTRY* entry)
@@ -368,6 +362,19 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPCWSTR User, UINT32 UserLength,
 			goto fail;
 	}
 	entry = SamLookupUserA(sam, utfUser, (UINT32)userCharLen, utfDomain, (UINT32)domainCharLen);
+	if (entry)
+	{
+		free(entry->User);
+		free(entry->Domain);
+		entry->User = nullptr;
+		entry->Domain = nullptr;
+		if (User)
+			entry->User = (char*)_wcsdup(User);
+		entry->UserLength = UserLength;
+		if (Domain)
+			entry->Domain = (char*)_wcsdup(Domain);
+		entry->DomainLength = DomainLength;
+	}
 fail:
 	free(utfUser);
 	free(utfDomain);
