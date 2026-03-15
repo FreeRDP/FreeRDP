@@ -1040,7 +1040,11 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 	}
 
 	if (!PCSC_LockCardContext(hContext))
+	{
+		if (nullCardContext)
+            PCSC_SCardReleaseContext(hContext);
 		return SCARD_E_INVALID_HANDLE;
+	}
 
 	if (mszGroups)
 	{
@@ -1084,6 +1088,9 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 fail:
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
+	
+	if (nullCardContext)
+		PCSC_SCardReleaseContext(hContext);
 
 	return status;
 }
