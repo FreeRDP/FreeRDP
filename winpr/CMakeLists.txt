@@ -49,6 +49,30 @@ if(NOT FREERDP_UNIFIED_BUILD)
 
   # MSVC compatibility with system headers
   add_compile_definitions(NONAMELESSUNION)
+
+  set(OPENSSL_FEATURE_TYPE "RECOMMENDED")
+  set(OPENSSL_FEATURE_PURPOSE "cryptography")
+  set(OPENSSL_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
+
+  set(MBEDTLS_FEATURE_TYPE "OPTIONAL")
+  set(MBEDTLS_FEATURE_PURPOSE "cryptography")
+  set(MBEDTLS_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
+
+  option(WITH_LIBRESSL "build with LibreSSL" OFF)
+  if(WITH_LIBRESSL)
+    find_package(LibreSSL REQUIRED)
+    set(OPENSSL_INCLUDE_DIR ${LIBRESSL_INCLUDE_DIR})
+    set(OPENSSL_LIBRARIES ${LIBRESSL_LIBRARIES})
+    set(OPENSSL_CRYPTO_LIBRARIES ${LIBRESSL_LIBRARIES})
+    set(WITH_OPENSSL ON)
+    set(OPENSSL_FOUND ON)
+    add_compile_definitions("WITH_LIBRESSL")
+    add_compile_definitions("WITH_OPENSSL")
+  else()
+    find_feature(OpenSSL ${OPENSSL_FEATURE_TYPE} ${OPENSSL_FEATURE_PURPOSE} ${OPENSSL_FEATURE_DESCRIPTION})
+    find_feature(MbedTLS ${MBEDTLS_FEATURE_TYPE} ${MBEDTLS_FEATURE_PURPOSE} ${MBEDTLS_FEATURE_DESCRIPTION})
+  endif()
+
 endif()
 
 set(WINPR_PC_REQUIRES_PRIVATE "" CACHE INTERNAL "dependencies")
@@ -271,29 +295,6 @@ if(NOT WIN32 AND NOT IOS)
         OR WINPR_HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIBS
   )
   list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES pthread)
-endif()
-
-set(OPENSSL_FEATURE_TYPE "RECOMMENDED")
-set(OPENSSL_FEATURE_PURPOSE "cryptography")
-set(OPENSSL_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
-
-set(MBEDTLS_FEATURE_TYPE "OPTIONAL")
-set(MBEDTLS_FEATURE_PURPOSE "cryptography")
-set(MBEDTLS_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
-
-option(WITH_LIBRESSL "build with LibreSSL" OFF)
-if(WITH_LIBRESSL)
-  find_package(LibreSSL REQUIRED)
-  set(OPENSSL_INCLUDE_DIR ${LIBRESSL_INCLUDE_DIR})
-  set(OPENSSL_LIBRARIES ${LIBRESSL_LIBRARIES})
-  set(OPENSSL_CRYPTO_LIBRARIES ${LIBRESSL_LIBRARIES})
-  set(WITH_OPENSSL ON)
-  set(OPENSSL_FOUND ON)
-  add_compile_definitions("WITH_LIBRESSL")
-  add_compile_definitions("WITH_OPENSSL")
-else()
-  find_feature(OpenSSL ${OPENSSL_FEATURE_TYPE} ${OPENSSL_FEATURE_PURPOSE} ${OPENSSL_FEATURE_DESCRIPTION})
-  find_feature(MbedTLS ${MBEDTLS_FEATURE_TYPE} ${MBEDTLS_FEATURE_PURPOSE} ${MBEDTLS_FEATURE_DESCRIPTION})
 endif()
 
 if(NOT OPENSSL_FOUND AND NOT MBEDTLS_FOUND AND NOT LibreSSL_FOUND)
