@@ -1423,10 +1423,10 @@ static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 		return error;
 	}
 
-#ifdef WITH_DEBUG_RDPGFX
-	WLog_DBG(TAG, "cmdId: %s (0x%04" PRIX16 ") flags: 0x%04" PRIX16 " pduLength: %" PRIu32 "",
-	         rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId, header.flags, header.pduLength);
-#endif
+	WLog_Print(context->priv->log, WLOG_TRACE,
+	           "cmdId: %s (0x%04" PRIX16 ") flags: 0x%04" PRIX16 " pduLength: %" PRIu32 "",
+	           rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId, header.flags,
+	           header.pduLength);
 
 	switch (header.cmdId)
 	{
