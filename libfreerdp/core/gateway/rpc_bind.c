@@ -153,9 +153,11 @@ static int rpc_bind_setup(rdpRpc* rpc)
 	                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 		return -1;
 
-	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : nullptr);
-	if (!credssp_auth_setup_client(rpc->auth, nullptr, settings->GatewayHostname, identityArg,
-	                               nullptr))
+	const char* GatewayHostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+	const char* GatewayUsername = freerdp_settings_get_string(settings, FreeRDP_GatewayUsername);
+
+	SEC_WINNT_AUTH_IDENTITY* identityArg = (GatewayUsername ? &identity : nullptr);
+	if (!credssp_auth_setup_client(rpc->auth, nullptr, GatewayHostname, identityArg, nullptr))
 	{
 		sspi_FreeAuthIdentity(&identity);
 		return -1;

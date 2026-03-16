@@ -306,11 +306,13 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 
 		if (currentlen > 0)
 		{
-			WLog_DBG(TAG, "%s => %s (%" PRIuz ")", settings->ServerHostname, current, currentlen);
+			const char* ServerHostname =
+			    freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
+			WLog_DBG(TAG, "%s => %s (%" PRIuz ")", ServerHostname, current, currentlen);
 
-			if (no_proxy_match_host(current, settings->ServerHostname))
+			if (no_proxy_match_host(current, ServerHostname))
 				result = TRUE;
-			else if (no_proxy_match_ip(current, settings->ServerHostname))
+			else if (no_proxy_match_ip(current, ServerHostname))
 				result = TRUE;
 		}
 

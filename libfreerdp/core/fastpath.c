@@ -175,7 +175,8 @@ static BOOL fastpath_write_update_pdu_header(wStream* s,
 	if (fpUpdatePduHeader->secFlags)
 	{
 		WINPR_ASSERT(rdp->settings);
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+		    ENCRYPTION_METHOD_FIPS)
 		{
 			if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 4))
 				return FALSE;
@@ -205,7 +206,8 @@ static UINT32 fastpath_get_update_pdu_header_size(FASTPATH_UPDATE_PDU_HEADER* fp
 		size += 8; /* dataSignature */
 
 		WINPR_ASSERT(rdp->settings);
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+		    ENCRYPTION_METHOD_FIPS)
 			size += 4; /* fipsInformation */
 	}
 
@@ -966,7 +968,8 @@ static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 	{
 		sec_bytes = 8;
 
-		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+		    ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
 
@@ -1084,7 +1087,8 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 			const UINT16 fpInputEvents_length = (UINT16)(length - 3 - sec_bytes);
 
 			WINPR_ASSERT(rdp->settings);
-			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+			    ENCRYPTION_METHOD_FIPS)
 			{
 				BYTE pad = 0;
 
@@ -1196,7 +1200,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 	UINT16 maxLength = FASTPATH_MAX_PACKET_SIZE - 20;
 
-	if (settings->CompressionEnabled && !skipCompression)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_CompressionEnabled) && !skipCompression)
 	{
 		const UINT16 CompressionMaxSize = bulk_compression_max_size(rdp->bulk);
 		maxLength = (maxLength < CompressionMaxSize) ? maxLength : CompressionMaxSize;
@@ -1207,7 +1211,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	Stream_ResetPosition(s);
 
 	/* check if fast path output is possible */
-	if (!settings->FastPathOutput)
+	if (!freerdp_settings_get_bool(rdp->settings, FreeRDP_FastPathOutput))
 	{
 		WLog_ERR(TAG, "client does not support fast path output");
 		return FALSE;
@@ -1255,7 +1259,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		if (sec_flags & SEC_SECURE_CHECKSUM)
 			fpUpdatePduHeader.secFlags |= FASTPATH_OUTPUT_SECURE_CHECKSUM;
 
-		if (settings->CompressionEnabled && !skipCompression)
+		if (freerdp_settings_get_bool(settings, FreeRDP_CompressionEnabled) && !skipCompression)
 		{
 			if (bulk_compress(rdp->bulk, pSrcData, SrcSize, &pDstData, &DstSize,
 			                  &compressionFlags) >= 0)
@@ -1295,7 +1299,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		{
 			pSignature = Stream_Buffer(fs) + 3;
 
-			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+			    ENCRYPTION_METHOD_FIPS)
 			{
 				pSignature += 4;
 
@@ -1336,7 +1341,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			UINT32 dataSize = fpUpdateHeaderSize + DstSize + pad;
 			BYTE* data = Stream_PointerAs(fs, BYTE) - dataSize;
 
-			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			if (freerdp_settings_get_uint32(rdp->settings, FreeRDP_EncryptionMethods) ==
+			    ENCRYPTION_METHOD_FIPS)
 			{
 				// TODO: Ensure stream capacity
 				if (!security_hmac_signature(data, dataSize - pad, pSignature, 8, rdp))

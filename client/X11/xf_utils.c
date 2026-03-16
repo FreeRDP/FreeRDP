@@ -245,6 +245,8 @@ BOOL run_action_script(xfContext* xfc, const char* what, const char* arg, fn_act
 	{
 		char command[2048] = WINPR_C_ARRAY_INIT;
 		(void)sprintf_s(command, sizeof(command), "%s %s", ActionScript, what);
+
+		// NOLINTNEXTLINE(bugprone-command-processor)
 		keyScript = popen(command, "r");
 
 		if (!keyScript)

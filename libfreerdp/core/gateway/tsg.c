@@ -2923,13 +2923,20 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 	tsg->Port = port;
 	tsg->transport = transport;
 
-	if (!settings->GatewayPort)
-		settings->GatewayPort = 443;
+	{
+		const UINT32 GatewayPort = freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
+		if (GatewayPort == 0)
+		{
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_GatewayPort, 443))
+				return FALSE;
+		}
+	}
 
 	if (!tsg_set_hostname(tsg, hostname))
 		return FALSE;
 
-	if (!tsg_set_machine_name(tsg, settings->ComputerName))
+	const char* ComputerName = freerdp_settings_get_string(settings, FreeRDP_ComputerName);
+	if (!tsg_set_machine_name(tsg, ComputerName))
 		return FALSE;
 
 	if (!rpc_connect(rpc, timeout))

@@ -367,6 +367,7 @@ BOOL sdlInput::keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 
 	// TODO: KBD_SYNC_KANA_LOCK
 
+	// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
 	SDL_SetModState(static_cast<SDL_Keymod>(state));
 
 	return TRUE;

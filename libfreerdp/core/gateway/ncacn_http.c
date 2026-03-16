@@ -181,9 +181,10 @@ BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 	                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 		return FALSE;
 
-	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : nullptr);
-	const BOOL res =
-	    credssp_auth_setup_client(auth, "HTTP", settings->GatewayHostname, identityArg, nullptr);
+	const char* GatewayHostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+	const char* GatewayUsername = freerdp_settings_get_string(settings, FreeRDP_GatewayUsername);
+	SEC_WINNT_AUTH_IDENTITY* identityArg = (GatewayUsername ? &identity : nullptr);
+	const BOOL res = credssp_auth_setup_client(auth, "HTTP", GatewayHostname, identityArg, nullptr);
 
 	sspi_FreeAuthIdentity(&identity);
 

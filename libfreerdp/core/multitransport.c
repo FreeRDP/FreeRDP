@@ -53,7 +53,7 @@ state_run_t multitransport_recv_request(rdpMultitransport* multi, wStream* s)
 	WINPR_ASSERT(multi);
 	rdpSettings* settings = multi->rdp->settings;
 
-	if (settings->ServerMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
 		WLog_ERR(TAG, "not expecting a multi-transport request in server mode");
 		return STATE_RUN_FAILED;
@@ -171,7 +171,7 @@ state_run_t multitransport_recv_response(rdpMultitransport* multi, wStream* s)
 	rdpSettings* settings = multi->rdp->settings;
 	WINPR_ASSERT(settings);
 
-	if (!settings->ServerMode)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
 		WLog_ERR(TAG, "client is not expecting a multi-transport resp packet");
 		return STATE_RUN_FAILED;
@@ -222,7 +222,7 @@ rdpMultitransport* multitransport_new(rdpRdp* rdp, WINPR_ATTR_UNUSED UINT16 prot
 	if (!multi)
 		return nullptr;
 
-	if (settings->ServerMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
 		multi->MtResponse = multitransport_server_handle_response;
 	}

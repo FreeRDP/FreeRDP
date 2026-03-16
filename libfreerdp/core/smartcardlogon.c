@@ -261,7 +261,7 @@ static BOOL build_pkinit_args(NCRYPT_PROV_HANDLE provider, SmartcardCertInfo* sc
 	 * and pass it as certid= so that MIT krb5's PKINIT module can select the
 	 * correct certificate when multiple certificates are present on the token.
 	 */
-	const char* certId = NULL;
+	const char* certId = nullptr;
 	if (scCert->keyName)
 	{
 		const char* secondBackslash = strchr(scCert->keyName + 1, '\\');
