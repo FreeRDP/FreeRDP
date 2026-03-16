@@ -446,9 +446,12 @@ static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, 
 		return;
 
 	xkb_state_update_mask(input->xkb.state, mods_depressed, mods_latched, mods_locked, 0, 0, group);
-	mask = xkb_state_serialize_mods(input->xkb.state, XKB_STATE_MODS_DEPRESSED |
-	                                                      XKB_STATE_MODS_LATCHED |
-	                                                      XKB_STATE_MODS_LOCKED);
+
+	// NOLINTBEGIN(clang-analyzer-optin.core.EnumCastOutOfRange)
+	enum xkb_state_component components =
+	    XKB_STATE_MODS_DEPRESSED | XKB_STATE_MODS_LATCHED | XKB_STATE_MODS_LOCKED;
+	// NOLINTEND(clang-analyzer-optin.core.EnumCastOutOfRange)
+	mask = xkb_state_serialize_mods(input->xkb.state, components);
 	input->modifiers = 0;
 	if (mask & input->xkb.control_mask)
 		input->modifiers |= UWAC_MOD_CONTROL_MASK;
