@@ -940,9 +940,7 @@ static BOOL smartcard_context_was_aborted(scard_call_context* smartcard)
 
 	HANDLE handles[] = { smartcard->stopEvent, freerdp_abort_event(smartcard->context) };
 	const DWORD rc = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, 0);
-	if ((rc >= WAIT_OBJECT_0) && (rc <= WAIT_OBJECT_0 + ARRAYSIZE(handles)))
-		return TRUE;
-	return FALSE;
+	return (rc >= WAIT_OBJECT_0) && (rc <= WAIT_OBJECT_0 + ARRAYSIZE(handles));
 }
 
 static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStream* out,
