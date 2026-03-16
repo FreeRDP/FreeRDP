@@ -239,14 +239,16 @@ BOOL freerdp_connect(freerdp* instance)
 		goto freerdp_connect_finally;
 	}
 
-	if (rdp->settings->PlayRemoteFx)
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_PlayRemoteFx))
 	{
 		wStream* s = nullptr;
 		rdp_update_internal* update = update_cast(instance->context->update);
 		pcap_record record = WINPR_C_ARRAY_INIT;
 
 		WINPR_ASSERT(update);
-		update->pcap_rfx = pcap_open(rdp->settings->PlayRemoteFxFile, FALSE);
+		const char* PlayRemoteFxFile =
+		    freerdp_settings_get_string(rdp->settings, FreeRDP_PlayRemoteFxFile);
+		update->pcap_rfx = pcap_open(PlayRemoteFxFile, FALSE);
 		status = FALSE;
 
 		if (!update->pcap_rfx)
