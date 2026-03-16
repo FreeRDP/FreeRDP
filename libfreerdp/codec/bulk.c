@@ -80,9 +80,10 @@ static UINT32 bulk_compression_level(rdpBulk* WINPR_RESTRICT bulk)
 	WINPR_ASSERT(bulk->context);
 	const rdpSettings* settings = bulk->context->settings;
 	WINPR_ASSERT(settings);
-	bulk->CompressionLevel = (settings->CompressionLevel >= PACKET_COMPR_TYPE_RDP61)
-	                             ? PACKET_COMPR_TYPE_RDP61
-	                             : settings->CompressionLevel;
+
+	const UINT32 CompressionLevel = freerdp_settings_get_uint32(settings, FreeRDP_CompressionLevel);
+	bulk->CompressionLevel =
+	    (CompressionLevel >= PACKET_COMPR_TYPE_RDP61) ? PACKET_COMPR_TYPE_RDP61 : CompressionLevel;
 	WINPR_ASSERT(bulk->CompressionLevel <= UINT16_MAX);
 	return bulk->CompressionLevel;
 }
@@ -365,7 +366,8 @@ rdpBulk* bulk_new(rdpContext* context)
 	bulk->xcrushSend = xcrush_context_new(TRUE);
 	if (!bulk->xcrushSend)
 		goto fail;
-	bulk->CompressionLevel = context->settings->CompressionLevel;
+	bulk->CompressionLevel =
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_CompressionLevel);
 
 	return bulk;
 fail:
