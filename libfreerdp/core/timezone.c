@@ -189,15 +189,14 @@ BOOL rdp_write_system_time(wStream* s, const SYSTEMTIME* system_time)
 
 BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 {
-	LPTIME_ZONE_INFORMATION tz = WINPR_C_ARRAY_INIT;
-
 	if (!s || !settings)
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 172))
 		return FALSE;
 
-	tz = settings->ClientTimeZone;
+	TIME_ZONE_INFORMATION* tz =
+	    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_ClientTimeZone, 0);
 
 	if (!tz)
 		return FALSE;
@@ -229,7 +228,8 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 {
 	WINPR_ASSERT(settings);
-	const LPTIME_ZONE_INFORMATION tz = settings->ClientTimeZone;
+	const TIME_ZONE_INFORMATION* tz =
+	    freerdp_settings_get_pointer_array(settings, FreeRDP_ClientTimeZone, 0);
 
 	if (!tz)
 		return FALSE;
