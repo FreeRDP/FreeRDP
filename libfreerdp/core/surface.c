@@ -111,14 +111,16 @@ static BOOL update_recv_surfcmd_is_rect_valid(const rdpContext* context,
 	}
 
 	/* The rectangle needs to fit into our session size */
-	if ((cmd->destRight > context->settings->DesktopWidth) ||
-	    (cmd->destBottom > context->settings->DesktopHeight))
+	const DWORD DesktopWidth = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
+	const DWORD DesktopHeight =
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopHeight);
+	if ((cmd->destRight > DesktopWidth) || (cmd->destBottom > DesktopHeight))
 	{
 		WLog_WARN(TAG,
 		          "Invalid surface bits command rectangle: %" PRIu16 "x%" PRIu16 "-%" PRIu16
 		          "x%" PRIu16 " does not fit %" PRIu32 "x%" PRIu32,
-		          cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
-		          context->settings->DesktopWidth, context->settings->DesktopHeight);
+		          cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom, DesktopWidth,
+		          DesktopHeight);
 		return FALSE;
 	}
 
