@@ -518,15 +518,15 @@ static BOOL window_order_supported(const rdpSettings* settings, UINT32 fieldFlag
 {
 	const UINT32 mask = (WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE | WINDOW_ORDER_FIELD_RP_CONTENT |
 	                     WINDOW_ORDER_FIELD_ROOT_PARENT);
-	BOOL dresult = 0;
 
 	if (!settings)
 		return FALSE;
 
 	/* See [MS-RDPERP] 2.2.1.1.2 Window List Capability Set */
-	dresult = settings->AllowUnanouncedOrdersFromServer;
+	const BOOL dresult =
+	    freerdp_settings_get_bool(settings, FreeRDP_AllowUnanouncedOrdersFromServer);
 
-	switch (settings->RemoteWndSupportLevel)
+	switch (freerdp_settings_get_uint32(settings, FreeRDP_RemoteWndSupportLevel))
 	{
 		case WINDOW_LEVEL_SUPPORTED_EX:
 			return TRUE;
