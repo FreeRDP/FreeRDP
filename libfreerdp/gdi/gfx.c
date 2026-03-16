@@ -204,8 +204,12 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	const double sx = surface->outputTargetWidth / (double)surface->mappedWidth;
 	const double sy = surface->outputTargetHeight / (double)surface->mappedHeight;
 
-	if (!(rects = region16_rects(&surface->invalidRegion, &nbRects)) || !nbRects)
-		return CHANNEL_RC_OK;
+	rects = region16_rects(&surface->invalidRegion, &nbRects);
+	if (!rects || (nbRects == 0))
+	{
+		rc = CHANNEL_RC_OK;
+		goto fail;
+	}
 
 	if (!update_begin_paint(update))
 		goto fail;
@@ -226,20 +230,21 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 		                         nXSrc, nYSrc, swidth, sheight))
 		{
 			rc = CHANNEL_RC_NULL_DATA;
-			goto fail;
+			goto clear;
 		}
 
 		if (!gdi_InvalidateRegion(gdi->primary->hdc, (INT32)nXDst, (INT32)nYDst, (INT32)dwidth,
 		                          (INT32)dheight))
-			goto fail;
+			goto clear;
 	}
 
 	rc = CHANNEL_RC_OK;
-fail:
+clear:
 
 	if (!update_end_paint(update))
 		rc = ERROR_INTERNAL_ERROR;
 
+fail:
 	region16_clear(&(surface->invalidRegion));
 	return rc;
 }
