@@ -66,6 +66,7 @@ static INIT_ONCE g_WLogInitialized = INIT_ONCE_STATIC_INIT;
 static DWORD g_FilterCount = 0;
 static wLogFilter* g_Filters = nullptr;
 static wLog* g_RootLog = nullptr;
+static char* g_GlobalPrefix = nullptr;
 
 static wLog* WLog_New(LPCSTR name, wLog* rootLogger);
 static void WLog_Free(wLog* log);
@@ -91,6 +92,8 @@ static void WLog_Uninit_(void)
 
 	WLog_Free(root);
 	g_RootLog = nullptr;
+	free(g_GlobalPrefix);
+	g_GlobalPrefix = nullptr;
 }
 
 static void WLog_Lock(wLog* log)
@@ -1096,4 +1099,22 @@ BOOL WLog_SetContext(wLog* log, const char* (*fkt)(void*), void* context)
 	log->custom = fkt;
 	log->context = context;
 	return TRUE;
+}
+
+BOOL WLog_SetGlobalContext(const char* globalprefix)
+{
+	free(g_GlobalPrefix);
+	g_GlobalPrefix = nullptr;
+
+	if (globalprefix)
+	{
+		g_GlobalPrefix = _strdup(globalprefix);
+		return g_GlobalPrefix != nullptr;
+	}
+	return TRUE;
+}
+
+const char* WLog_GetGlobalPrefix(void)
+{
+	return g_GlobalPrefix;
 }

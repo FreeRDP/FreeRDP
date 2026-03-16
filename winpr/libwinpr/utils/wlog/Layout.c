@@ -185,6 +185,14 @@ static BOOL replace_format_string(const char* FormatString, struct format_option
 	WINPR_ASSERT(recurse);
 
 	size_t index = 0;
+	const char* prefix = WLog_GetGlobalPrefix();
+	if (prefix)
+	{
+		const int res = _snprintf(format, formatlen, "{%s}", prefix);
+		if (res < 0)
+			return FALSE;
+		index = (size_t)res;
+	}
 
 	while (*FormatString)
 	{
