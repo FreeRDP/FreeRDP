@@ -1221,6 +1221,7 @@ static BOOL action_script_run(xfContext* xfc, const char* buffer, size_t size, v
 		*pstatus = 0;
 	else if (winpr_PathFileExists(buffer))
 	{
+		// NOLINTNEXTLINE(bugprone-command-processor)
 		FILE* fp = popen(buffer, "w");
 		if (!fp)
 		{

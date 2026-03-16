@@ -247,6 +247,7 @@ static BOOL action_script_run(xfContext* xfc, const char* buffer, size_t size, v
 		if (!cmd)
 			return FALSE;
 
+		// NOLINTNEXTLINE(bugprone-command-processor)
 		FILE* fp = popen(cmd, "w");
 		free(cmd);
 		if (!fp)
