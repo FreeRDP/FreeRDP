@@ -257,6 +257,23 @@ static BOOL build_pkinit_args(NCRYPT_PROV_HANDLE provider, SmartcardCertInfo* sc
 	const char* pkModule = winpr_NCryptGetModulePath(provider);
 	size_t size = 0;
 
+	/* Extract the PKCS#11 CKA_ID from keyName (format: \<slotIdHex>\<certIdHex>)
+	 * and pass it as certid= so that MIT krb5's PKINIT module can select the
+	 * correct certificate when multiple certificates are present on the token.
+	 */
+	const char* certId = NULL;
+	if (scCert->keyName)
+	{
+		const char* secondBackslash = strchr(scCert->keyName + 1, '\\');
+		if (secondBackslash)
+			certId = secondBackslash + 1;
+	}
+
+	if (certId && *certId)
+		return (winpr_asprintf(&scCert->pkinitArgs, &size,
+		                       "PKCS11:module_name=%s:slotid=%" PRIu16 ":certid=%s", pkModule,
+		                       (UINT16)scCert->slotId, certId) > 0);
+
 	return (winpr_asprintf(&scCert->pkinitArgs, &size, "PKCS11:module_name=%s:slotid=%" PRIu16,
 	                       pkModule, (UINT16)scCert->slotId) > 0);
 }
