@@ -158,9 +158,7 @@ BOOL wfreerdp_server_start(wfServer* server)
 
 BOOL wfreerdp_server_stop(wfServer* server)
 {
-	wfInfo* wfi;
-
-	wfi = wf_info_get_instance();
+	wfInfo* wfi = wf_info_get_instance();
 	if (!wfi)
 		return FALSE;
 	WLog_INFO(TAG, "Stopping server");
@@ -172,7 +170,6 @@ BOOL wfreerdp_server_stop(wfServer* server)
 wfServer* wfreerdp_server_new()
 {
 	WSADATA wsaData = WINPR_C_ARRAY_INIT;
-	wfServer* server;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 		return nullptr;

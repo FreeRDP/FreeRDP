@@ -49,6 +49,7 @@ typedef struct
 	eTelemetryChannelState state;
 
 	wStream* buffer;
+	wLog* log;
 } telemetry_server;
 
 static UINT telemetry_server_initialize(TelemetryServerContext* context, BOOL externalThread)
@@ -60,8 +61,9 @@ static UINT telemetry_server_initialize(TelemetryServerContext* context, BOOL ex
 
 	if (telemetry->isOpened)
 	{
-		WLog_WARN(TAG, "Application error: TELEMETRY channel already initialized, "
-		               "calling in this state is not possible!");
+		WLog_Print(telemetry->log, WLOG_WARN,
+		           "Application error: TELEMETRY channel already initialized, "
+		           "calling in this state is not possible!");
 		return ERROR_INVALID_STATE;
 	}
 
@@ -72,12 +74,12 @@ static UINT telemetry_server_initialize(TelemetryServerContext* context, BOOL ex
 
 static UINT telemetry_server_open_channel(telemetry_server* telemetry)
 {
+	WINPR_ASSERT(telemetry);
+
 	TelemetryServerContext* context = &telemetry->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent = nullptr;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = nullptr;
-	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(telemetry);
@@ -85,18 +87,20 @@ static UINT telemetry_server_open_channel(telemetry_server* telemetry)
 	if (WTSQuerySessionInformationA(telemetry->context.vcm, WTS_CURRENT_SESSION, WTSSessionId,
 	                                (LPSTR*)&pSessionId, &BytesReturned) == FALSE)
 	{
-		WLog_ERR(TAG, "WTSQuerySessionInformationA failed!");
+		WLog_Print(telemetry->log, WLOG_ERROR, "WTSQuerySessionInformationA failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
 	telemetry->SessionId = (DWORD)*pSessionId;
 	WTSFreeMemory(pSessionId);
-	hEvent = WTSVirtualChannelManagerGetEventHandle(telemetry->context.vcm);
+
+	HANDLE hEvent = WTSVirtualChannelManagerGetEventHandle(telemetry->context.vcm);
 
 	if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
 	{
 		Error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", Error);
+		WLog_Print(telemetry->log, WLOG_ERROR, "WaitForSingleObject failed with error %" PRIu32 "!",
+		           Error);
 		return Error;
 	}
 
@@ -105,16 +109,17 @@ static UINT telemetry_server_open_channel(telemetry_server* telemetry)
 	if (!telemetry->telemetry_channel)
 	{
 		Error = GetLastError();
-		WLog_ERR(TAG, "WTSVirtualChannelOpenEx failed with error %" PRIu32 "!", Error);
+		WLog_Print(telemetry->log, WLOG_ERROR,
+		           "WTSVirtualChannelOpenEx failed with error %" PRIu32 "!", Error);
 		return Error;
 	}
 
-	channelId = WTSChannelGetIdByHandle(telemetry->telemetry_channel);
+	const UINT32 channelId = WTSChannelGetIdByHandle(telemetry->telemetry_channel);
 
 	IFCALLRET(context->ChannelIdAssigned, status, context, channelId);
 	if (!status)
 	{
-		WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
+		WLog_Print(telemetry->log, WLOG_ERROR, "context->ChannelIdAssigned failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -123,10 +128,13 @@ static UINT telemetry_server_open_channel(telemetry_server* telemetry)
 
 static UINT telemetry_server_recv_rdp_telemetry_pdu(TelemetryServerContext* context, wStream* s)
 {
-	TELEMETRY_RDP_TELEMETRY_PDU pdu;
+	TELEMETRY_RDP_TELEMETRY_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
+	telemetry_server* telemetry = (telemetry_server*)context;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
+	WINPR_ASSERT(telemetry);
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(telemetry->log, s, 16))
 		return ERROR_NO_DATA;
 
 	Stream_Read_UINT32(s, pdu.PromptForCredentialsMillis);
@@ -136,28 +144,28 @@ static UINT telemetry_server_recv_rdp_telemetry_pdu(TelemetryServerContext* cont
 
 	IFCALLRET(context->RdpTelemetry, error, context, &pdu);
 	if (error)
-		WLog_ERR(TAG, "context->RdpTelemetry failed with error %" PRIu32 "", error);
+		WLog_Print(telemetry->log, WLOG_ERROR,
+		           "context->RdpTelemetry failed with error %" PRIu32 "", error);
 
 	return error;
 }
 
 static UINT telemetry_process_message(telemetry_server* telemetry)
 {
-	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
 	ULONG BytesReturned = 0;
 	BYTE MessageId = 0;
 	BYTE Length = 0;
-	wStream* s = nullptr;
 
 	WINPR_ASSERT(telemetry);
 	WINPR_ASSERT(telemetry->telemetry_channel);
 
-	s = telemetry->buffer;
+	wStream* s = telemetry->buffer;
 	WINPR_ASSERT(s);
 
 	Stream_ResetPosition(s);
-	rc = WTSVirtualChannelRead(telemetry->telemetry_channel, 0, nullptr, 0, &BytesReturned);
+	const BOOL rc =
+	    WTSVirtualChannelRead(telemetry->telemetry_channel, 0, nullptr, 0, &BytesReturned);
 	if (!rc)
 		goto out;
 
@@ -169,7 +177,7 @@ static UINT telemetry_process_message(telemetry_server* telemetry)
 
 	if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 	{
-		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+		WLog_Print(telemetry->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
 		error = CHANNEL_RC_NO_MEMORY;
 		goto out;
 	}
@@ -177,19 +185,19 @@ static UINT telemetry_process_message(telemetry_server* telemetry)
 	if (WTSVirtualChannelRead(telemetry->telemetry_channel, 0, Stream_BufferAs(s, char),
 	                          (ULONG)Stream_Capacity(s), &BytesReturned) == FALSE)
 	{
-		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
+		WLog_Print(telemetry->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
 		goto out;
 	}
 
 	if (!Stream_SetLength(s, BytesReturned))
 		goto out;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(telemetry->log, s, 2))
 		return ERROR_NO_DATA;
 
 	Stream_Read_UINT8(s, MessageId);
 	Stream_Read_UINT8(s, Length);
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, Length))
+	if (!Stream_CheckAndLogRequiredLengthWLog(telemetry->log, s, Length))
 		return ERROR_NO_DATA;
 
 	switch (MessageId)
@@ -198,13 +206,14 @@ static UINT telemetry_process_message(telemetry_server* telemetry)
 			error = telemetry_server_recv_rdp_telemetry_pdu(&telemetry->context, s);
 			break;
 		default:
-			WLog_ERR(TAG, "telemetry_process_message: unknown MessageId %" PRIu8 "", MessageId);
+			WLog_Print(telemetry->log, WLOG_ERROR,
+			           "telemetry_process_message: unknown MessageId %" PRIu8 "", MessageId);
 			break;
 	}
 
 out:
 	if (error)
-		WLog_ERR(TAG, "Response failed with error %" PRIu32 "!", error);
+		WLog_Print(telemetry->log, WLOG_ERROR, "Response failed with error %" PRIu32 "!", error);
 
 	return error;
 }
@@ -221,8 +230,8 @@ static UINT telemetry_server_context_poll_int(TelemetryServerContext* context)
 		case TELEMETRY_INITIAL:
 			error = telemetry_server_open_channel(telemetry);
 			if (error)
-				WLog_ERR(TAG, "telemetry_server_open_channel failed with error %" PRIu32 "!",
-				         error);
+				WLog_Print(telemetry->log, WLOG_ERROR,
+				           "telemetry_server_open_channel failed with error %" PRIu32 "!", error);
 			else
 				telemetry->state = TELEMETRY_OPENED;
 			break;
@@ -325,7 +334,7 @@ static UINT telemetry_server_open(TelemetryServerContext* context)
 		telemetry->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 		if (!telemetry->stopEvent)
 		{
-			WLog_ERR(TAG, "CreateEvent failed!");
+			WLog_Print(telemetry->log, WLOG_ERROR, "CreateEvent failed!");
 			return ERROR_INTERNAL_ERROR;
 		}
 
@@ -333,7 +342,7 @@ static UINT telemetry_server_open(TelemetryServerContext* context)
 		    CreateThread(nullptr, 0, telemetry_server_thread_func, telemetry, 0, nullptr);
 		if (!telemetry->thread)
 		{
-			WLog_ERR(TAG, "CreateThread failed!");
+			WLog_Print(telemetry->log, WLOG_ERROR, "CreateThread failed!");
 			(void)CloseHandle(telemetry->stopEvent);
 			telemetry->stopEvent = nullptr;
 			return ERROR_INTERNAL_ERROR;
@@ -346,7 +355,6 @@ static UINT telemetry_server_open(TelemetryServerContext* context)
 
 static UINT telemetry_server_close(TelemetryServerContext* context)
 {
-	UINT error = CHANNEL_RC_OK;
 	telemetry_server* telemetry = (telemetry_server*)context;
 
 	WINPR_ASSERT(telemetry);
@@ -357,8 +365,10 @@ static UINT telemetry_server_close(TelemetryServerContext* context)
 
 		if (WaitForSingleObject(telemetry->thread, INFINITE) == WAIT_FAILED)
 		{
-			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
+			const UINT error = GetLastError();
+			if (telemetry->log)
+				WLog_Print(telemetry->log, WLOG_ERROR,
+				           "WaitForSingleObject failed with error %" PRIu32 "", error);
 			return error;
 		}
 
@@ -378,7 +388,7 @@ static UINT telemetry_server_close(TelemetryServerContext* context)
 	}
 	telemetry->isOpened = FALSE;
 
-	return error;
+	return CHANNEL_RC_OK;
 }
 
 static UINT telemetry_server_context_poll(TelemetryServerContext* context)
@@ -416,7 +426,9 @@ TelemetryServerContext* telemetry_server_context_new(HANDLE vcm)
 
 	if (!telemetry)
 		return nullptr;
-
+	telemetry->log = WLog_Get(TAG);
+	if (!telemetry->log)
+		goto fail;
 	telemetry->context.vcm = vcm;
 	telemetry->context.Initialize = telemetry_server_initialize;
 	telemetry->context.Open = telemetry_server_open;
