@@ -116,7 +116,8 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 	                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 		return FALSE;
 
-	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : nullptr);
+	const char* GatewayUsername = freerdp_settings_get_string(settings, FreeRDP_GatewayUsername);
+	SEC_WINNT_AUTH_IDENTITY* identityArg = (GatewayUsername ? &identity : nullptr);
 	if (!credssp_auth_setup_client(wst->auth, "HTTP", wst->gwhostname, identityArg, nullptr))
 	{
 		sspi_FreeAuthIdentity(&identity);
@@ -858,7 +859,8 @@ rdpWst* wst_new(rdpContext* context)
 	wst->gwport = 443;
 	wst->gwpath = nullptr;
 
-	if (!wst_parse_url(wst, context->settings->GatewayUrl))
+	const char* GatewayUrl = freerdp_settings_get_string(context->settings, FreeRDP_GatewayUrl);
+	if (!wst_parse_url(wst, GatewayUrl))
 		goto wst_alloc_error;
 
 	wst->tls = freerdp_tls_new(wst->context);
