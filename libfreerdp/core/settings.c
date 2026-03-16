@@ -1426,7 +1426,10 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* dst, const rdpSettings
 		if (!cert)
 			goto out_fail;
 		if (!freerdp_settings_set_pointer_len(dst, FreeRDP_RdpServerCertificate, cert, 1))
+		{
+			freerdp_certificate_free(cert);
 			goto out_fail;
+		}
 	}
 	else
 	{
@@ -1440,7 +1443,10 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* dst, const rdpSettings
 		if (!key)
 			goto out_fail;
 		if (!freerdp_settings_set_pointer_len(dst, FreeRDP_RdpServerRsaKey, key, 1))
+		{
+			freerdp_key_free(key);
 			goto out_fail;
+		}
 	}
 	else
 	{
