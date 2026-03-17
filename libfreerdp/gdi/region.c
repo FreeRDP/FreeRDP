@@ -612,10 +612,8 @@ inline BOOL gdi_PtInRect(const GDI_RECT* rc, INT32 x, INT32 y)
 
 inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h)
 {
-	GDI_RECT inv;
-	GDI_RECT rgn;
-	GDI_RGN* invalid = nullptr;
-	GDI_RGN* cinvalid = nullptr;
+	GDI_RECT inv = WINPR_C_ARRAY_INIT;
+	GDI_RECT rgn = WINPR_C_ARRAY_INIT;
 
 	if (!hdc->hwnd)
 		return TRUE;
@@ -626,7 +624,7 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 	if (w == 0 || h == 0)
 		return TRUE;
 
-	cinvalid = hdc->hwnd->cinvalid;
+	GDI_RGN* cinvalid = hdc->hwnd->cinvalid;
 
 	if ((hdc->hwnd->ninvalid + 1) > (INT64)hdc->hwnd->count)
 	{
@@ -645,7 +643,7 @@ inline BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 	}
 
 	hdc->hwnd->cinvalid = cinvalid;
-	invalid = hdc->hwnd->invalid;
+	GDI_RGN* invalid = hdc->hwnd->invalid;
 
 	if (!gdi_SetRgn(&cinvalid[hdc->hwnd->ninvalid++], x, y, w, h))
 		return FALSE;
