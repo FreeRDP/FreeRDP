@@ -36,8 +36,8 @@
 #include "cliprdr_format.h"
 #include "../cliprdr_common.h"
 
-CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, const UINT32 mask,
-                                               const UINT32 checkMask)
+CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, UINT32 mask,
+                                               UINT32 checkMask)
 {
 	const UINT32 maskData =
 	    checkMask & (CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_REMOTE_TO_LOCAL);
