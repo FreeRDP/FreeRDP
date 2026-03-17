@@ -281,7 +281,7 @@ BOOL freerdp_connect(freerdp* instance)
 				status = FALSE;
 			else
 			{
-				if (update_recv_surfcmds(&update->common, s) < 0)
+				if (!update_recv_surfcmds(&update->common, s))
 					status = FALSE;
 
 				if (!update_end_paint(&update->common))

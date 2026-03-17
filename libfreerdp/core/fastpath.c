@@ -243,18 +243,15 @@ BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16* length)
 	return TRUE;
 }
 
-static BOOL fastpath_recv_orders(rdpFastPath* fastpath, wStream* s)
+static BOOL fastpath_recv_orders(rdpUpdate* update, wStream* s)
 {
-	rdpUpdate* update = nullptr;
 	UINT16 numberOrders = 0;
 
-	if (!fastpath || !fastpath->rdp || !s)
+	if (!s)
 	{
 		WLog_ERR(TAG, "Invalid arguments");
 		return FALSE;
 	}
-
-	update = fastpath->rdp->update;
 
 	if (!update)
 	{
@@ -278,23 +275,19 @@ static BOOL fastpath_recv_orders(rdpFastPath* fastpath, wStream* s)
 	return TRUE;
 }
 
-static BOOL fastpath_recv_update_common(rdpFastPath* fastpath, wStream* s)
+static BOOL fastpath_recv_update_common(rdpUpdate* update, wStream* s)
 {
 	BOOL rc = FALSE;
 	UINT16 updateType = 0;
-	rdpUpdate* update = nullptr;
-	rdpContext* context = nullptr;
 	BOOL defaultReturn = 0;
 
-	if (!fastpath || !s || !fastpath->rdp)
+	if (!s)
 		return FALSE;
-
-	update = fastpath->rdp->update;
 
 	if (!update || !update->context)
 		return FALSE;
 
-	context = update->context;
+	rdpContext* context = update->context;
 
 	defaultReturn = freerdp_settings_get_bool(context->settings, FreeRDP_DeactivateClientDecoding);
 
@@ -347,6 +340,19 @@ static BOOL fastpath_recv_update_synchronize(WINPR_ATTR_UNUSED rdpFastPath* fast
 	return Stream_SafeSeek(s, skip); /* size (2 bytes), MUST be set to zero */
 }
 
+static BOOL fastpath_recv_update_paint_block(rdpUpdate* update, wStream* s,
+                                             BOOL (*fkt)(rdpUpdate*, wStream*))
+{
+	WINPR_ASSERT(fkt);
+	if (!update_begin_paint(update))
+		return FALSE;
+
+	BOOL res = fkt(update, s);
+	if (!update_end_paint(update))
+		return FALSE;
+	return res;
+}
+
 static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream* s)
 {
 	BOOL rc = FALSE;
@@ -379,12 +385,12 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 	switch (updateCode)
 	{
 		case FASTPATH_UPDATETYPE_ORDERS:
-			rc = fastpath_recv_orders(fastpath, s);
+			rc = fastpath_recv_update_paint_block(update, s, fastpath_recv_orders);
 			break;
 
 		case FASTPATH_UPDATETYPE_BITMAP:
 		case FASTPATH_UPDATETYPE_PALETTE:
-			rc = fastpath_recv_update_common(fastpath, s);
+			rc = fastpath_recv_update_paint_block(update, s, fastpath_recv_update_common);
 			break;
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
@@ -396,7 +402,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
-			status = update_recv_surfcmds(update, s);
+			status = fastpath_recv_update_paint_block(update, s, update_recv_surfcmds);
 			rc = (status >= 0);
 			break;
 
@@ -590,7 +596,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		{
 			if (fastpath->fragmentation != -1)
 			{
-				WLog_ERR(TAG, "fastpath_recv_update_data: Unexpected FASTPATH_FRAGMENT_FIRST");
+				WLog_ERR(TAG, "Unexpected FASTPATH_FRAGMENT_FIRST");
 				goto out_fail;
 			}
 
@@ -601,7 +607,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			if ((fastpath->fragmentation != FASTPATH_FRAGMENT_FIRST) &&
 			    (fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
 			{
-				WLog_ERR(TAG, "fastpath_recv_update_data: Unexpected FASTPATH_FRAGMENT_NEXT");
+				WLog_ERR(TAG, "Unexpected FASTPATH_FRAGMENT_NEXT");
 				goto out_fail;
 			}
 
@@ -612,7 +618,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			if ((fastpath->fragmentation != FASTPATH_FRAGMENT_FIRST) &&
 			    (fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
 			{
-				WLog_ERR(TAG, "fastpath_recv_update_data: Unexpected FASTPATH_FRAGMENT_LAST");
+				WLog_ERR(TAG, "Unexpected FASTPATH_FRAGMENT_LAST");
 				goto out_fail;
 			}
 
@@ -621,7 +627,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (status < 0)
 			{
-				WLog_ERR(TAG, "fastpath_recv_update_data: fastpath_recv_update() - %i", status);
+				WLog_ERR(TAG, "fastpath_recv_update() - %i", status);
 				goto out_fail;
 			}
 		}
@@ -640,12 +646,6 @@ state_run_t fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
 	WINPR_ASSERT(fastpath);
 	WINPR_ASSERT(fastpath->rdp);
 
-	rdpUpdate* update = fastpath->rdp->update;
-	WINPR_ASSERT(update);
-
-	if (!update_begin_paint(update))
-		goto fail;
-
 	while (Stream_GetRemainingLength(s) >= 3)
 	{
 		if (fastpath_recv_update_data(fastpath, s) < 0)
@@ -658,9 +658,6 @@ state_run_t fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
 
 	rc = STATE_RUN_SUCCESS;
 fail:
-
-	if (!update_end_paint(update))
-		return STATE_RUN_FAILED;
 
 	return rc;
 }
