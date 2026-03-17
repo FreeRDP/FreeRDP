@@ -99,7 +99,6 @@ option(WITH_DEBUG_CAPABILITIES "Print capability negotiation debug messages." ${
 option(WITH_DEBUG_CHANNELS "Print channel manager debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_CLIPRDR "Print clipboard redirection debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_CODECS "Print codec debug messages" ${DEFAULT_DEBUG_OPTION})
-option(WITH_DEBUG_RDPGFX "Print RDPGFX debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_DVC "Print dynamic virtual channel debug messages." ${DEFAULT_DEBUG_OPTION})
 cmake_dependent_option(
   WITH_DEBUG_TSMF "Print TSMF virtual channel debug messages." ${DEFAULT_DEBUG_OPTION} "CHANNEL_TSMF" OFF

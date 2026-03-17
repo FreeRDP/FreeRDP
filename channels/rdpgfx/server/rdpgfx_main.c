@@ -40,12 +40,14 @@
 #include "rdpgfx_main.h"
 
 #define TAG CHANNELS_TAG("rdpgfx.server")
-#define RDPGFX_RESET_GRAPHICS_PDU_SIZE 340
+
+static BOOL rdpgfx_server_close(RdpgfxServerContext* context);
 
 #define checkCapsAreExchanged(context) \
 	checkCapsAreExchangedInt(context, __FILE__, __func__, __LINE__)
-static BOOL checkCapsAreExchangedInt(RdpgfxServerContext* context, const char* file,
-                                     const char* fkt, size_t line)
+WINPR_ATTR_NODISCARD static BOOL checkCapsAreExchangedInt(RdpgfxServerContext* context,
+                                                          const char* file, const char* fkt,
+                                                          size_t line)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -70,17 +72,15 @@ static BOOL checkCapsAreExchangedInt(RdpgfxServerContext* context, const char* f
  *
  * @return new stream
  */
-static inline UINT32 rdpgfx_pdu_length(UINT32 dataLen)
+WINPR_ATTR_NODISCARD static inline UINT32 rdpgfx_pdu_length(UINT32 dataLen)
 {
 	return RDPGFX_HEADER_SIZE + dataLen;
 }
 
-static inline UINT rdpgfx_server_packet_init_header(wStream* s, UINT16 cmdId, UINT32 pduLength)
+WINPR_ATTR_NODISCARD static inline UINT rdpgfx_server_packet_init_header(wStream* s, UINT16 cmdId,
+                                                                         UINT32 pduLength)
 {
-	RDPGFX_HEADER header;
-	header.flags = 0;
-	header.cmdId = cmdId;
-	header.pduLength = pduLength;
+	const RDPGFX_HEADER header = { .flags = 0, .cmdId = cmdId, .pduLength = pduLength };
 	/* Write header. Note that actual length might be changed
 	 * after the entire packet has been constructed. */
 	return rdpgfx_write_header(s, &header);
@@ -93,7 +93,8 @@ static inline UINT rdpgfx_server_packet_init_header(wStream* s, UINT16 cmdId, UI
  * @param s stream
  * @param start saved start pos of the packet in the stream
  */
-static inline BOOL rdpgfx_server_packet_complete_header(wStream* s, size_t start)
+WINPR_ATTR_NODISCARD static inline BOOL rdpgfx_server_packet_complete_header(wStream* s,
+                                                                             size_t start)
 {
 	const size_t current = Stream_GetPosition(s);
 	const size_t cap = Stream_Capacity(s);
@@ -115,7 +116,7 @@ static inline BOOL rdpgfx_server_packet_complete_header(wStream* s, size_t start
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
 {
 	UINT error = 0;
 	UINT32 flags = 0;
@@ -125,11 +126,13 @@ static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
 	if (SrcSize > UINT32_MAX)
 		return ERROR_INTERNAL_ERROR;
 
-	wStream* fs = nullptr;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+
 	/* Allocate new stream with enough capacity. Additional overhead is
 	 * descriptor (1 bytes) + segmentCount (2 bytes) + uncompressedSize (4 bytes)
 	 * + segmentCount * size (4 bytes) */
-	fs = Stream_New(nullptr, SrcSize + 7 + (SrcSize / ZGFX_SEGMENTED_MAXSIZE + 1) * 4);
+	wStream* fs = Stream_New(nullptr, SrcSize + 7 + (SrcSize / ZGFX_SEGMENTED_MAXSIZE + 1) * 4);
 
 	if (!fs)
 	{
@@ -183,12 +186,12 @@ out:
  *
  * @return new stream
  */
+WINPR_ATTR_MALLOC(Stream_Free, 1)
 static wStream* rdpgfx_server_single_packet_new(wLog* log, UINT16 cmdId, UINT32 dataLen)
 {
 	UINT error = 0;
-	wStream* s = nullptr;
 	UINT32 pduLength = rdpgfx_pdu_length(dataLen);
-	s = Stream_New(nullptr, pduLength);
+	wStream* s = Stream_New(nullptr, pduLength);
 
 	if (!s)
 	{
@@ -216,10 +219,12 @@ error:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static inline UINT rdpgfx_server_single_packet_send(RdpgfxServerContext* context, wStream* s)
+WINPR_ATTR_NODISCARD static inline UINT
+rdpgfx_server_single_packet_send(RdpgfxServerContext* context, wStream* s)
 {
 	/* Fill actual length */
-	rdpgfx_server_packet_complete_header(s, 0);
+	if (!rdpgfx_server_packet_complete_header(s, 0))
+		return ERROR_INTERNAL_ERROR;
 	return rdpgfx_server_packet_send(context, s);
 }
 
@@ -228,20 +233,19 @@ static inline UINT rdpgfx_server_single_packet_send(RdpgfxServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
-                                         const RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
+                             const RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
 {
-	wStream* s = nullptr;
-	RDPGFX_CAPSET* capsSet = nullptr;
-
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(capsConfirm);
 
-	capsSet = capsConfirm->capsSet;
+	RDPGFX_CAPSET* capsSet = capsConfirm->capsSet;
 	WINPR_ASSERT(capsSet);
 
-	s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_CAPSCONFIRM,
-	                                    RDPGFX_CAPSET_BASE_SIZE + capsSet->length);
+	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_CAPSCONFIRM,
+	                                             RDPGFX_CAPSET_BASE_SIZE + capsSet->length);
 
 	if (!s)
 	{
@@ -249,8 +253,9 @@ static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	WLog_DBG(TAG, "CAPS version=0x%04" PRIx32 ", flags=0x%04" PRIx32 ", length=%" PRIu32,
-	         capsSet->version, capsSet->flags, capsSet->length);
+	WLog_Print(context->priv->log, WLOG_DEBUG,
+	           "CAPS version=0x%04" PRIx32 ", flags=0x%04" PRIx32 ", length=%" PRIu32,
+	           capsSet->version, capsSet->flags, capsSet->length);
 	Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
 	Stream_Write_UINT32(s, capsSet->length);  /* capsDataLength (4 bytes) */
 
@@ -271,13 +276,16 @@ static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
-                                           const RDPGFX_RESET_GRAPHICS_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context, const RDPGFX_RESET_GRAPHICS_PDU* pdu)
 {
+	const size_t RDPGFX_RESET_GRAPHICS_PDU_SIZE = 340;
+
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 
-	wStream* s = nullptr;
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
 
 	/* Check monitorCount. This ensures total size within 340 bytes) */
 	if (pdu->monitorCount >= 16)
@@ -288,7 +296,8 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 		return ERROR_INVALID_DATA;
 	}
 
-	s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_RESETGRAPHICS,
+	wStream* s =
+	    rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_RESETGRAPHICS,
 	                                    RDPGFX_RESET_GRAPHICS_PDU_SIZE - RDPGFX_HEADER_SIZE);
 
 	if (!s)
@@ -312,7 +321,13 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 	}
 
 	/* pad (total size must be 340 bytes) */
-	if (!Stream_SetPosition(s, RDPGFX_RESET_GRAPHICS_PDU_SIZE))
+	const size_t pos = Stream_GetPosition(s);
+	if (pos > RDPGFX_RESET_GRAPHICS_PDU_SIZE)
+	{
+		Stream_Free(s, TRUE);
+		return ERROR_INVALID_DATA;
+	}
+	if (!Stream_SafeSeek(s, RDPGFX_RESET_GRAPHICS_PDU_SIZE - pos))
 	{
 		Stream_Free(s, TRUE);
 		return ERROR_INVALID_DATA;
@@ -325,11 +340,15 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_evict_cache_entry_pdu(RdpgfxServerContext* context,
-                                              const RDPGFX_EVICT_CACHE_ENTRY_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_evict_cache_entry_pdu(RdpgfxServerContext* context,
+                                  const RDPGFX_EVICT_CACHE_ENTRY_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
 	wStream* s =
 	    rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_EVICTCACHEENTRY, 2);
 
@@ -348,15 +367,18 @@ static UINT rdpgfx_send_evict_cache_entry_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_cache_import_reply_pdu(RdpgfxServerContext* context,
-                                               const RDPGFX_CACHE_IMPORT_REPLY_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_cache_import_reply_pdu(RdpgfxServerContext* context,
+                                   const RDPGFX_CACHE_IMPORT_REPLY_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(pdu);
 
-	WLog_DBG(TAG, "reply with %" PRIu16 " entries", pdu->importedEntriesCount);
+	WLog_Print(context->priv->log, WLOG_DEBUG, "reply with %" PRIu16 " entries",
+	           pdu->importedEntriesCount);
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_CACHEIMPORTREPLY,
 	                                             2 + 2 * pdu->importedEntriesCount);
 
@@ -377,18 +399,20 @@ static UINT rdpgfx_send_cache_import_reply_pdu(RdpgfxServerContext* context,
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
-static UINT
+WINPR_ATTR_NODISCARD static UINT
 rdpgfx_process_cache_import_offer_pdu(RdpgfxServerContext* context,
                                       const RDPGFX_CACHE_IMPORT_OFFER_PDU* cacheImportOffer)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(cacheImportOffer);
 
 	RDPGFX_CACHE_IMPORT_REPLY_PDU reply = WINPR_C_ARRAY_INIT;
-	WLog_DBG(TAG, "received %" PRIu16 " entries, reply with %" PRIu16 " entries",
-	         cacheImportOffer->cacheEntriesCount, reply.importedEntriesCount);
+	WLog_Print(context->priv->log, WLOG_DEBUG,
+	           "received %" PRIu16 " entries, reply with %" PRIu16 " entries",
+	           cacheImportOffer->cacheEntriesCount, reply.importedEntriesCount);
 	return IFCALLRESULT(CHANNEL_RC_OK, context->CacheImportReply, context, &reply);
 }
 
@@ -397,11 +421,13 @@ rdpgfx_process_cache_import_offer_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context,
-                                           const RDPGFX_CREATE_SURFACE_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context, const RDPGFX_CREATE_SURFACE_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(context->priv);
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_CREATESURFACE, 7);
 
 	WINPR_ASSERT(context);
@@ -427,11 +453,14 @@ static UINT rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_delete_surface_pdu(RdpgfxServerContext* context,
-                                           const RDPGFX_DELETE_SURFACE_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_delete_surface_pdu(RdpgfxServerContext* context, const RDPGFX_DELETE_SURFACE_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_DELETESURFACE, 2);
 
 	if (!s)
@@ -444,19 +473,24 @@ static UINT rdpgfx_send_delete_surface_pdu(RdpgfxServerContext* context,
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
-static inline BOOL rdpgfx_write_start_frame_pdu(wStream* s, const RDPGFX_START_FRAME_PDU* pdu)
+WINPR_ATTR_NODISCARD static inline BOOL
+rdpgfx_write_start_frame_pdu(wStream* s, const RDPGFX_START_FRAME_PDU* pdu)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 8))
 		return FALSE;
+
+	WINPR_ASSERT(pdu);
 	Stream_Write_UINT32(s, pdu->timestamp); /* timestamp (4 bytes) */
 	Stream_Write_UINT32(s, pdu->frameId);   /* frameId (4 bytes) */
 	return TRUE;
 }
 
-static inline BOOL rdpgfx_write_end_frame_pdu(wStream* s, const RDPGFX_END_FRAME_PDU* pdu)
+WINPR_ATTR_NODISCARD static inline BOOL rdpgfx_write_end_frame_pdu(wStream* s,
+                                                                   const RDPGFX_END_FRAME_PDU* pdu)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 4))
 		return FALSE;
+	WINPR_ASSERT(pdu);
 	Stream_Write_UINT32(s, pdu->frameId); /* frameId (4 bytes) */
 	return TRUE;
 }
@@ -466,11 +500,14 @@ static inline BOOL rdpgfx_write_end_frame_pdu(wStream* s, const RDPGFX_END_FRAME
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_start_frame_pdu(RdpgfxServerContext* context,
-                                        const RDPGFX_START_FRAME_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_send_start_frame_pdu(RdpgfxServerContext* context,
+                                                             const RDPGFX_START_FRAME_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_STARTFRAME,
 	                                             RDPGFX_START_FRAME_PDU_SIZE);
 
@@ -480,7 +517,11 @@ static UINT rdpgfx_send_start_frame_pdu(RdpgfxServerContext* context,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rdpgfx_write_start_frame_pdu(s, pdu);
+	if (!rdpgfx_write_start_frame_pdu(s, pdu))
+	{
+		Stream_Free(s, TRUE);
+		return ERROR_INTERNAL_ERROR;
+	}
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
@@ -489,10 +530,14 @@ static UINT rdpgfx_send_start_frame_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_end_frame_pdu(RdpgfxServerContext* context, const RDPGFX_END_FRAME_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_send_end_frame_pdu(RdpgfxServerContext* context,
+                                                           const RDPGFX_END_FRAME_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_ENDFRAME,
 	                                             RDPGFX_END_FRAME_PDU_SIZE);
 
@@ -502,7 +547,11 @@ static UINT rdpgfx_send_end_frame_pdu(RdpgfxServerContext* context, const RDPGFX
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rdpgfx_write_end_frame_pdu(s, pdu);
+	if (!rdpgfx_write_end_frame_pdu(s, pdu))
+	{
+		Stream_Free(s, TRUE);
+		return ERROR_INTERNAL_ERROR;
+	}
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
@@ -512,8 +561,10 @@ static UINT rdpgfx_send_end_frame_pdu(RdpgfxServerContext* context, const RDPGFX
  *
  * @return estimated size
  */
-static inline UINT32 rdpgfx_estimate_h264_avc420(const RDPGFX_AVC420_BITMAP_STREAM* havc420)
+WINPR_ATTR_NODISCARD static inline UINT32
+rdpgfx_estimate_h264_avc420(const RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
+	WINPR_ASSERT(havc420);
 	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
 	return sizeof(UINT32) /* numRegionRects */
 	       + 10ULL        /* regionRects + quantQualityVals */
@@ -527,11 +578,14 @@ static inline UINT32 rdpgfx_estimate_h264_avc420(const RDPGFX_AVC420_BITMAP_STRE
  *
  * @return estimated size
  */
-static inline UINT32 rdpgfx_estimate_surface_command(const RDPGFX_SURFACE_COMMAND* cmd)
+WINPR_ATTR_NODISCARD static inline UINT32
+rdpgfx_estimate_surface_command(const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	RDPGFX_AVC420_BITMAP_STREAM* havc420 = nullptr;
 	RDPGFX_AVC444_BITMAP_STREAM* havc444 = nullptr;
 	UINT32 h264Size = 0;
+
+	WINPR_ASSERT(cmd);
 
 	/* Estimate stream size according to codec. */
 	switch (cmd->codecId)
@@ -573,8 +627,11 @@ static inline UINT32 rdpgfx_estimate_surface_command(const RDPGFX_SURFACE_COMMAN
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static inline UINT16 rdpgfx_surface_command_cmdid(const RDPGFX_SURFACE_COMMAND* cmd)
+WINPR_ATTR_NODISCARD static inline UINT16
+rdpgfx_surface_command_cmdid(const RDPGFX_SURFACE_COMMAND* cmd)
 {
+	WINPR_ASSERT(cmd);
+
 	if (cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE ||
 	    cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE_V2)
 	{
@@ -589,12 +646,14 @@ static inline UINT16 rdpgfx_surface_command_cmdid(const RDPGFX_SURFACE_COMMAND* 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_write_h264_metablock(wLog* log, wStream* s, const RDPGFX_H264_METABLOCK* meta)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_write_h264_metablock(wLog* log, wStream* s,
+                                                             const RDPGFX_H264_METABLOCK* meta)
 {
 	RECTANGLE_16* regionRect = nullptr;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal = nullptr;
 	UINT error = CHANNEL_RC_OK;
 
+	WINPR_ASSERT(meta);
 	if (!Stream_EnsureRemainingCapacity(s, 4 + meta->numRegionRects * 10))
 		return ERROR_OUTOFMEMORY;
 
@@ -631,12 +690,13 @@ static UINT rdpgfx_write_h264_metablock(wLog* log, wStream* s, const RDPGFX_H264
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static inline UINT rdpgfx_write_h264_avc420(wLog* log, wStream* s,
-                                            RDPGFX_AVC420_BITMAP_STREAM* havc420)
+WINPR_ATTR_NODISCARD static inline UINT
+rdpgfx_write_h264_avc420(wLog* log, wStream* s, RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
-	UINT error = CHANNEL_RC_OK;
+	WINPR_ASSERT(havc420);
+	const UINT error = rdpgfx_write_h264_metablock(log, s, &(havc420->meta));
 
-	if ((error = rdpgfx_write_h264_metablock(log, s, &(havc420->meta))))
+	if (error != CHANNEL_RC_OK)
 	{
 		WLog_Print(log, WLOG_ERROR, "rdpgfx_write_h264_metablock failed with error %" PRIu32 "!",
 		           error);
@@ -657,13 +717,15 @@ static inline UINT rdpgfx_write_h264_avc420(wLog* log, wStream* s,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_write_surface_command(wLog* log, wStream* s, const RDPGFX_SURFACE_COMMAND* cmd)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_write_surface_command(wLog* log, wStream* s,
+                                                              const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_AVC420_BITMAP_STREAM* havc420 = nullptr;
 	RDPGFX_AVC444_BITMAP_STREAM* havc444 = nullptr;
 	UINT8 pixelFormat = 0;
 
+	WINPR_ASSERT(cmd);
 	switch (cmd->format)
 	{
 		case PIXEL_FORMAT_BGRX32:
@@ -787,14 +849,19 @@ static UINT rdpgfx_write_surface_command(wLog* log, wStream* s, const RDPGFX_SUR
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_surface_command(RdpgfxServerContext* context,
-                                        const RDPGFX_SURFACE_COMMAND* cmd)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_send_surface_command(RdpgfxServerContext* context,
+                                                             const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	UINT error = CHANNEL_RC_OK;
-	wStream* s = nullptr;
-	s = rdpgfx_server_single_packet_new(context->priv->log, rdpgfx_surface_command_cmdid(cmd),
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(cmd);
+
+	wStream* s =
+	    rdpgfx_server_single_packet_new(context->priv->log, rdpgfx_surface_command_cmdid(cmd),
 	                                    rdpgfx_estimate_surface_command(cmd));
 
 	if (!s)
@@ -825,14 +892,20 @@ error:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
-                                              const RDPGFX_SURFACE_COMMAND* cmd,
-                                              const RDPGFX_START_FRAME_PDU* startFrame,
-                                              const RDPGFX_END_FRAME_PDU* endFrame)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_surface_frame_command(RdpgfxServerContext* context, const RDPGFX_SURFACE_COMMAND* cmd,
+                                  const RDPGFX_START_FRAME_PDU* startFrame,
+                                  const RDPGFX_END_FRAME_PDU* endFrame)
 
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(cmd);
+	WINPR_ASSERT(startFrame);
+	WINPR_ASSERT(endFrame);
+
 	UINT error = CHANNEL_RC_OK;
 	UINT32 size = rdpgfx_pdu_length(rdpgfx_estimate_surface_command(cmd));
 
@@ -926,11 +999,15 @@ error:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_delete_encoding_context_pdu(RdpgfxServerContext* context,
-                                                    const RDPGFX_DELETE_ENCODING_CONTEXT_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_delete_encoding_context_pdu(RdpgfxServerContext* context,
+                                        const RDPGFX_DELETE_ENCODING_CONTEXT_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(pdu);
 	wStream* s =
 	    rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_DELETEENCODINGCONTEXT, 6);
 
@@ -950,11 +1027,15 @@ static UINT rdpgfx_send_delete_encoding_context_pdu(RdpgfxServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_solid_fill_pdu(RdpgfxServerContext* context,
-                                       const RDPGFX_SOLID_FILL_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_send_solid_fill_pdu(RdpgfxServerContext* context,
+                                                            const RDPGFX_SOLID_FILL_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(pdu);
+
 	UINT error = CHANNEL_RC_OK;
 	RECTANGLE_16* fillRect = nullptr;
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_SOLIDFILL,
@@ -1001,11 +1082,16 @@ error:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_surface_to_surface_pdu(RdpgfxServerContext* context,
-                                               const RDPGFX_SURFACE_TO_SURFACE_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_surface_to_surface_pdu(RdpgfxServerContext* context,
+                                   const RDPGFX_SURFACE_TO_SURFACE_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
+
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_POINT16* destPt = nullptr;
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_SURFACETOSURFACE,
@@ -1053,11 +1139,16 @@ error:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_surface_to_cache_pdu(RdpgfxServerContext* context,
-                                             const RDPGFX_SURFACE_TO_CACHE_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_surface_to_cache_pdu(RdpgfxServerContext* context,
+                                 const RDPGFX_SURFACE_TO_CACHE_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
+
 	UINT error = CHANNEL_RC_OK;
 	wStream* s =
 	    rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_SURFACETOCACHE, 20);
@@ -1091,11 +1182,16 @@ error:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_cache_to_surface_pdu(RdpgfxServerContext* context,
-                                             const RDPGFX_CACHE_TO_SURFACE_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_cache_to_surface_pdu(RdpgfxServerContext* context,
+                                 const RDPGFX_CACHE_TO_SURFACE_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
+
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_POINT16* destPt = nullptr;
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_CACHETOSURFACE,
@@ -1134,11 +1230,15 @@ error:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_map_surface_to_output_pdu(RdpgfxServerContext* context,
-                                                  const RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_map_surface_to_output_pdu(RdpgfxServerContext* context,
+                                      const RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
 	wStream* s =
 	    rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_MAPSURFACETOOUTPUT, 12);
 
@@ -1160,11 +1260,16 @@ static UINT rdpgfx_send_map_surface_to_output_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_map_surface_to_window_pdu(RdpgfxServerContext* context,
-                                                  const RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* pdu)
+WINPR_ATTR_NODISCARD static UINT
+rdpgfx_send_map_surface_to_window_pdu(RdpgfxServerContext* context,
+                                      const RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
+
 	wStream* s =
 	    rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_MAPSURFACETOWINDOW, 18);
 
@@ -1181,12 +1286,15 @@ static UINT rdpgfx_send_map_surface_to_window_pdu(RdpgfxServerContext* context,
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
-static UINT
+WINPR_ATTR_NODISCARD static UINT
 rdpgfx_send_map_surface_to_scaled_window_pdu(RdpgfxServerContext* context,
                                              const RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log,
 	                                             RDPGFX_CMDID_MAPSURFACETOSCALEDWINDOW, 26);
 
@@ -1210,14 +1318,18 @@ rdpgfx_send_map_surface_to_scaled_window_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context, wStream* s)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context,
+                                                                   wStream* s)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
-	RDPGFX_FRAME_ACKNOWLEDGE_PDU pdu;
+
+	WINPR_ASSERT(context->priv);
+
+	RDPGFX_FRAME_ACKNOWLEDGE_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
+	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 12))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, pdu.queueDepth);         /* queueDepth (4 bytes) */
@@ -1241,16 +1353,19 @@ static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context, wStr
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wStream* s)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context,
+                                                                    wStream* s)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(context->priv);
 
 	RDPGFX_CACHE_IMPORT_OFFER_PDU pdu = WINPR_C_ARRAY_INIT;
 	RDPGFX_CACHE_ENTRY_METADATA* cacheEntry = nullptr;
 	UINT error = CHANNEL_RC_OK;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 2))
 		return ERROR_INVALID_DATA;
 
 	/* cacheEntriesCount (2 bytes) */
@@ -1264,7 +1379,8 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 		return ERROR_INVALID_DATA;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, pdu.cacheEntriesCount, 12ull))
+	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(context->priv->log, s, pdu.cacheEntriesCount,
+	                                                12ull))
 		return ERROR_INVALID_DATA;
 
 	for (UINT16 index = 0; index < pdu.cacheEntriesCount; index++)
@@ -1291,7 +1407,8 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream* s)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
+                                                                wStream* s)
 {
 	RDPGFX_CAPSET* capsSets = nullptr;
 	RDPGFX_CAPS_ADVERTISE_PDU pdu = WINPR_C_ARRAY_INIT;
@@ -1300,7 +1417,8 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream
 	if (!context)
 		return ERROR_BAD_ARGUMENTS;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	WINPR_ASSERT(context->priv);
+	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, pdu.capsSetCount); /* capsSetCount (2 bytes) */
@@ -1317,7 +1435,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream
 	{
 		RDPGFX_CAPSET* capsSet = &(pdu.capsSets[index]);
 
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+		if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 8))
 			goto fail;
 
 		Stream_Read_UINT32(s, capsSet->version); /* version (4 bytes) */
@@ -1325,7 +1443,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream
 
 		if (capsSet->length >= 4)
 		{
-			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+			if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
 				goto fail;
 
 			Stream_Peek_UINT32(s, capsSet->flags); /* capsData (4 bytes) */
@@ -1352,14 +1470,17 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_recv_qoe_frame_acknowledge_pdu(RdpgfxServerContext* context, wStream* s)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_qoe_frame_acknowledge_pdu(RdpgfxServerContext* context,
+                                                                       wStream* s)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
-	RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU pdu;
+	RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
+	WINPR_ASSERT(context->priv);
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 12))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, pdu.frameId);     /* frameId (4 bytes) */
@@ -1379,12 +1500,15 @@ static UINT rdpgfx_recv_qoe_frame_acknowledge_pdu(RdpgfxServerContext* context, 
 	return error;
 }
 
-static UINT
+WINPR_ATTR_NODISCARD static UINT
 rdpgfx_send_map_surface_to_scaled_output_pdu(RdpgfxServerContext* context,
                                              const RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU* pdu)
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context->priv);
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log,
 	                                             RDPGFX_CMDID_MAPSURFACETOSCALEDOUTPUT, 20);
 
@@ -1408,13 +1532,15 @@ rdpgfx_send_map_surface_to_scaled_output_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
+WINPR_ATTR_NODISCARD static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 {
-	size_t beg = 0;
 	size_t end = 0;
-	RDPGFX_HEADER header;
+	RDPGFX_HEADER header = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
-	beg = Stream_GetPosition(s);
+	size_t beg = Stream_GetPosition(s);
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
 
 	if ((error = rdpgfx_read_header(s, &header)))
 	{
@@ -1423,10 +1549,10 @@ static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 		return error;
 	}
 
-#ifdef WITH_DEBUG_RDPGFX
-	WLog_DBG(TAG, "cmdId: %s (0x%04" PRIX16 ") flags: 0x%04" PRIX16 " pduLength: %" PRIu32 "",
-	         rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId, header.flags, header.pduLength);
-#endif
+	WLog_Print(context->priv->log, WLOG_TRACE,
+	           "cmdId: %s (0x%04" PRIX16 ") flags: 0x%04" PRIX16 " pduLength: %" PRIu32 "",
+	           rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId, header.flags,
+	           header.pduLength);
 
 	switch (header.cmdId)
 	{
@@ -1493,9 +1619,7 @@ static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 	return error;
 }
 
-static BOOL rdpgfx_server_close(RdpgfxServerContext* context);
-
-static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
+WINPR_ATTR_NODISCARD static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 {
 	RdpgfxServerContext* context = (RdpgfxServerContext*)arg;
 	WINPR_ASSERT(context);
@@ -1549,7 +1673,7 @@ static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 	return error;
 }
 
-static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
+WINPR_ATTR_NODISCARD static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 {
 	WINPR_ASSERT(context);
 	RdpgfxServerPrivate* priv = context->priv;
@@ -1643,7 +1767,7 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 	WLog_Print(context->priv->log, WLOG_ERROR, "RDPGFX channel is already opened!");
 	return FALSE;
 fail:
-	rdpgfx_server_close(context);
+	(void)rdpgfx_server_close(context);
 	return FALSE;
 }
 
@@ -1660,7 +1784,8 @@ BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 
 		if (WaitForSingleObject(priv->thread, INFINITE) == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", GetLastError());
+			WLog_Print(context->priv->log, WLOG_ERROR,
+			           "WaitForSingleObject failed with error %" PRIu32 "", GetLastError());
 			return FALSE;
 		}
 
@@ -1687,7 +1812,8 @@ BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 	return TRUE;
 }
 
-static BOOL rdpgfx_server_initialize(RdpgfxServerContext* context, BOOL externalThread)
+WINPR_ATTR_NODISCARD static BOOL rdpgfx_server_initialize(RdpgfxServerContext* context,
+                                                          BOOL externalThread)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -1709,10 +1835,7 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	RdpgfxServerContext* context = (RdpgfxServerContext*)calloc(1, sizeof(RdpgfxServerContext));
 
 	if (!context)
-	{
-		WLog_ERR(TAG, "calloc failed!");
 		return nullptr;
-	}
 
 	context->vcm = vcm;
 	context->Initialize = rdpgfx_server_initialize;
@@ -1745,10 +1868,7 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	    (RdpgfxServerPrivate*)calloc(1, sizeof(RdpgfxServerPrivate));
 
 	if (!priv)
-	{
-		WLog_ERR(TAG, "calloc failed!");
 		goto fail;
-	}
 
 	priv->log = WLog_Get(TAG);
 	if (!priv->log)
@@ -1786,7 +1906,7 @@ void rdpgfx_server_context_free(RdpgfxServerContext* context)
 	if (!context)
 		return;
 
-	rdpgfx_server_close(context);
+	(void)rdpgfx_server_close(context);
 
 	if (context->priv)
 		Stream_Free(context->priv->input_stream, TRUE);
