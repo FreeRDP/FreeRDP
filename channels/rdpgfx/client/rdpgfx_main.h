@@ -53,7 +53,6 @@ typedef struct
 
 	rdpContext* rdpcontext;
 
-	wLog* log;
 	RDPGFX_CAPSET ConnectionCaps;
 	RdpgfxClientContext* context;
 } RDPGFX_PLUGIN;
