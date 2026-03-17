@@ -713,14 +713,17 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 	FSEventStreamStart(fsev);
 	WLog_Print(rdpdr->log, WLOG_DEBUG, "Started hotplug watcher");
 	HANDLE handles[] = { rdpdr->stopEvent, freerdp_abort_event(rdpdr->rdpcontext) };
-	WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
+	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
 	WLog_Print(rdpdr->log, WLOG_DEBUG, "Stopped hotplug watcher");
 	FSEventStreamStop(fsev);
 	FSEventStreamRelease(fsev);
 	dispatch_release(queue);
-out:
-	ExitThread(CHANNEL_RC_OK);
-	return CHANNEL_RC_OK;
+
+	UINT error = CHANNEL_RC_OK;
+	if (status > WAIT_OBJECT_0 + ARRAYSIZE(handles))
+		error = ERROR_INTERNAL_ERROR;
+	ExitThread(error);
+	return error;
 }
 
 #else
