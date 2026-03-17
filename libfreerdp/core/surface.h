@@ -29,7 +29,7 @@
 #define SURFCMD_FRAME_MARKER_LENGTH 8
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL int update_recv_surfcmds(rdpUpdate* update, wStream* s);
+FREERDP_LOCAL BOOL update_recv_surfcmds(rdpUpdate* update, wStream* s);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* cmd);
