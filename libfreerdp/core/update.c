@@ -355,7 +355,7 @@ BOOL update_recv_play_sound(rdpUpdate* update, wStream* s)
 	if (!update_read_play_sound(s, &play_sound))
 		return FALSE;
 
-	return IFCALLRESULT(FALSE, update->PlaySound, update->context, &play_sound);
+	return IFCALLRESULT(TRUE, update->PlaySound, update->context, &play_sound);
 }
 
 POINTER_POSITION_UPDATE* update_read_pointer_position(rdpUpdate* update, wStream* s)
