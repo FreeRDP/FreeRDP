@@ -72,15 +72,17 @@ WINPR_ATTR_NODISCARD static BOOL checkCapsAreExchangedInt(RdpgfxServerContext* c
  *
  * @return new stream
  */
-WINPR_ATTR_NODISCARD static inline UINT32 rdpgfx_pdu_length(UINT32 dataLen)
+WINPR_ATTR_NODISCARD static inline size_t rdpgfx_pdu_length(size_t dataLen)
 {
 	return RDPGFX_HEADER_SIZE + dataLen;
 }
 
 WINPR_ATTR_NODISCARD static inline UINT rdpgfx_server_packet_init_header(wStream* s, UINT16 cmdId,
-                                                                         UINT32 pduLength)
+                                                                         size_t pduLength)
 {
-	const RDPGFX_HEADER header = { .flags = 0, .cmdId = cmdId, .pduLength = pduLength };
+	const RDPGFX_HEADER header = { .flags = 0,
+		                           .cmdId = cmdId,
+		                           .pduLength = WINPR_ASSERTING_INT_CAST(UINT32, pduLength) };
 	/* Write header. Note that actual length might be changed
 	 * after the entire packet has been constructed. */
 	return rdpgfx_write_header(s, &header);
@@ -187,10 +189,10 @@ out:
  * @return new stream
  */
 WINPR_ATTR_MALLOC(Stream_Free, 1)
-static wStream* rdpgfx_server_single_packet_new(wLog* log, UINT16 cmdId, UINT32 dataLen)
+static wStream* rdpgfx_server_single_packet_new(wLog* log, UINT16 cmdId, size_t dataLen)
 {
 	UINT error = 0;
-	UINT32 pduLength = rdpgfx_pdu_length(dataLen);
+	const size_t pduLength = rdpgfx_pdu_length(dataLen);
 	wStream* s = Stream_New(nullptr, pduLength);
 
 	if (!s)
@@ -907,7 +909,7 @@ rdpgfx_send_surface_frame_command(RdpgfxServerContext* context, const RDPGFX_SUR
 	WINPR_ASSERT(endFrame);
 
 	UINT error = CHANNEL_RC_OK;
-	UINT32 size = rdpgfx_pdu_length(rdpgfx_estimate_surface_command(cmd));
+	size_t size = rdpgfx_pdu_length(rdpgfx_estimate_surface_command(cmd));
 
 	if (startFrame)
 	{
@@ -1927,7 +1929,7 @@ HANDLE rdpgfx_server_get_event_handle(RdpgfxServerContext* context)
 /*
  * Handle rpdgfx messages - server side
  *
- * @param Server side context
+ * @param context side context
  *
  * @return 0 on success
  *         ERROR_NO_DATA if no data could be read this time
