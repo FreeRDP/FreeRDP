@@ -1542,7 +1542,7 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if ((error = rdpgfx_read_header(s, &header)))
+	if ((error = rdpgfx_read_header(context->priv->log, s, &header)))
 	{
 		WLog_Print(context->priv->log, WLOG_ERROR,
 		           "rdpgfx_read_header failed with error %" PRIu32 "!", error);
