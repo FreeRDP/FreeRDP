@@ -565,6 +565,18 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 		if (h264->Compressor)
 		{
+#if defined(WITH_OPENH264_LOADING)
+			if (sysContexts->version.uMajor != OPENH264_MAJOR ||
+			    sysContexts->version.uMinor != OPENH264_MINOR)
+			{
+				WLog_Print(h264->log, WLOG_WARN,
+				           "OpenH264 encoder ABI mismatch: runtime %d.%d.%d vs compiled %d.%d.%d",
+				           sysContexts->version.uMajor, sysContexts->version.uMinor,
+				           sysContexts->version.uRevision, OPENH264_MAJOR, OPENH264_MINOR,
+				           OPENH264_REVISION);
+				goto EXCEPTION;
+			}
+#endif
 			const int rc = sysContexts->WelsCreateSVCEncoder(&sys->pEncoder);
 			if (rc != 0)
 			{
