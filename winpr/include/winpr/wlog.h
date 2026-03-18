@@ -200,6 +200,21 @@ extern "C"
 	 */
 	WINPR_API BOOL WLog_SetContext(wLog* log, const char* (*fkt)(void*), void* context);
 
+	/** @brief Set a application wide global logger prefix.
+	 *  This can be used to distinguish WLog entries from different applicatiions like
+	 * freerpd-shadow-cli and xfreerdp. It also allows setting a dynamic prefix depending on command
+	 * line arguments to separate different xfreerdp instances.
+	 *
+	 * @warning This function should only be called directly after \b main before any threads start
+	 * up. Thread safety is undefined!
+	 *
+	 *  @param globalprefix Set a global prefix string prepended to all logger entries. Use \b
+	 * nullptr to disable prefix.
+	 *  @return \b TRUE for success, \b FALSE otherwise.
+	 *  @version since 3.25.0
+	 */
+	WINPR_API BOOL WLog_SetGlobalContext(const char* globalprefix);
+
 #define WLog_Print_unchecked(_log, _log_level, ...)                                         \
 	do                                                                                      \
 	{                                                                                       \

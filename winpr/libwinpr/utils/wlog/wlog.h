@@ -84,6 +84,9 @@ WINPR_LOCAL BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout,
                                               const wLogMessage* message, char* prefix,
                                               size_t prefixlen);
 
+WINPR_ATTR_NODISCARD
+WINPR_LOCAL const char* WLog_GetGlobalPrefix(void);
+
 #include "Layout.h"
 #include "Appender.h"
 
