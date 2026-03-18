@@ -332,12 +332,11 @@ static void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context)
 // puts a buffer of size samples to the device
 int android_AudioOut(OPENSL_STREAM* p, const short* buffer, int size)
 {
-	HANDLE ev;
 	WINPR_ASSERT(p);
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(size > 0);
 
-	ev = Queue_Event(p->queue);
+	HANDLE ev = Queue_Event(p->queue);
 	/* Assure, that the queue is not full. */
 	if (p->queuesize <= Queue_Count(p->queue) && WaitForSingleObject(ev, INFINITE) == WAIT_FAILED)
 	{
@@ -354,7 +353,11 @@ int android_AudioOut(OPENSL_STREAM* p, const short* buffer, int size)
 	}
 
 	memcpy(data, buffer, size * sizeof(short));
-	Queue_Enqueue(p->queue, data);
+	if (!Queue_Enqueue(p->queue, data))
+	{
+		free(data);
+		return -1;
+	}
 	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue, data, sizeof(short) * size);
 	return size;
 }
