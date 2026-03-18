@@ -994,7 +994,7 @@ static UINT video_control_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	if (pChannelCallback)
 	{
-		GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pChannelCallback;
+		GENERIC_CHANNEL_CALLBACK* listener_callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 		VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)listener_callback->plugin;
 		if (video && video->control_callback)
 		{
@@ -1010,7 +1010,7 @@ static UINT video_data_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	if (pChannelCallback)
 	{
-		GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pChannelCallback;
+		GENERIC_CHANNEL_CALLBACK* listener_callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 		VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)listener_callback->plugin;
 		if (video && video->data_callback)
 		{
