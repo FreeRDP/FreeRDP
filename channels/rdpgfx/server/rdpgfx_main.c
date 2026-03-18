@@ -1323,6 +1323,8 @@ rdpgfx_send_map_surface_to_scaled_window_pdu(RdpgfxServerContext* context,
 WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context,
                                                                    wStream* s)
 {
+	WINPR_ASSERT(context);
+
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 
@@ -1338,14 +1340,11 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerC
 	Stream_Read_UINT32(s, pdu.frameId);            /* frameId (4 bytes) */
 	Stream_Read_UINT32(s, pdu.totalFramesDecoded); /* totalFramesDecoded (4 bytes) */
 
-	if (context)
-	{
-		IFCALLRET(context->FrameAcknowledge, error, context, &pdu);
+	IFCALLRET(context->FrameAcknowledge, error, context, &pdu);
 
-		if (error)
-			WLog_Print(context->priv->log, WLOG_ERROR,
-			           "context->FrameAcknowledge failed with error %" PRIu32 "", error);
-	}
+	if (error)
+		WLog_Print(context->priv->log, WLOG_ERROR,
+		           "context->FrameAcknowledge failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1358,6 +1357,7 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerC
 WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context,
                                                                     wStream* s)
 {
+	WINPR_ASSERT(context);
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 
@@ -1392,14 +1392,11 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServer
 		Stream_Read_UINT32(s, cacheEntry->bitmapLength); /* bitmapLength (4 bytes) */
 	}
 
-	if (context)
-	{
-		IFCALLRET(context->CacheImportOffer, error, context, &pdu);
+	IFCALLRET(context->CacheImportOffer, error, context, &pdu);
 
-		if (error)
-			WLog_Print(context->priv->log, WLOG_ERROR,
-			           "context->CacheImportOffer failed with error %" PRIu32 "", error);
-	}
+	if (error)
+		WLog_Print(context->priv->log, WLOG_ERROR,
+		           "context->CacheImportOffer failed with error %" PRIu32 "", error);
 
 	return error;
 }
@@ -1475,8 +1472,11 @@ fail:
 WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_qoe_frame_acknowledge_pdu(RdpgfxServerContext* context,
                                                                        wStream* s)
 {
+	WINPR_ASSERT(context);
+
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
+
 	RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = CHANNEL_RC_OK;
 
@@ -1490,14 +1490,11 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_recv_qoe_frame_acknowledge_pdu(RdpgfxSer
 	Stream_Read_UINT16(s, pdu.timeDiffSE);  /* timeDiffSE (2 bytes) */
 	Stream_Read_UINT16(s, pdu.timeDiffEDR); /* timeDiffEDR (2 bytes) */
 
-	if (context)
-	{
-		IFCALLRET(context->QoeFrameAcknowledge, error, context, &pdu);
+	IFCALLRET(context->QoeFrameAcknowledge, error, context, &pdu);
 
-		if (error)
-			WLog_Print(context->priv->log, WLOG_ERROR,
-			           "context->QoeFrameAcknowledge failed with error %" PRIu32 "", error);
-	}
+	if (error)
+		WLog_Print(context->priv->log, WLOG_ERROR,
+		           "context->QoeFrameAcknowledge failed with error %" PRIu32 "", error);
 
 	return error;
 }

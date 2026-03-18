@@ -30,7 +30,6 @@ Url:            http://www.freerdp.com
 Group:          Productivity/Networking/Other
 Source0:        %{name}-%{version}.tar.bz2
 Source1:        source_version
-Source2:        webview.tar.bz2
 BuildRequires: clang
 BuildRequires: cmake >= 3.13.0
 BuildRequires: libxkbfile-devel
@@ -132,7 +131,6 @@ based on freerdp and winpr.
 mkdir -p %{_builddir}
 cd %{_builddir}
 cp %{_sourcedir}/source_version freerdp-nightly-%{version}/.source_version
-tar xf %{_sourcedir}/webview.tar.bz2 -C freerdp-nightly-%{version}/external/
 
 %build
 
@@ -175,12 +173,9 @@ tar xf %{_sourcedir}/webview.tar.bz2 -C freerdp-nightly-%{version}/external/
 %if 0%{?rhel} <= 8
     -DALLOW_IN_SOURCE_BUILD=ON \
 %endif
-%if 0%{?rhel} >= 8 || 0%{defined suse_version}
     -DWITH_WEBVIEW=OFF \
-%endif
-%if 0%{?fedora} >= 41
+%if 0%{?fedora} == 41
     -DWITH_CLIENT_SDL3=OFF \
-    -DWITH_WEBVIEW=ON \
 %endif
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ \
