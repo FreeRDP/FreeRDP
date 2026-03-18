@@ -1,3 +1,31 @@
+# 2026-03-18 Version 3.24.1
+
+Minor bugfix release addression two regressions found in previous 3.24.0 release
+
+## What's Changed
+* [warnings] fix various sign and cast warnings (#12480)
+* [client,x11] start with xfc->remote_app = TRUE; (#12491)
+* Sam file read regression fix (#12484)
+* [ncrypt,smartcardlogon] support ECC keys in PKCS#11 smartcard enumeration (#12490)
+* Fix: memory leak in rdp_client_establish_keys() in libfreerdp/core/co… (#12494)
+* Fix memory leak in `freerdp_settings_int_buffer_copy()` on error paths (`libfreerdp/core/settings.c`) (#12486)
+* Code Cleanups (#12493)
+* Fix: memory leak in PCSC_SCardListReadersW() in winpr/libwinpr/smartc… (#12495)
+* [channels,telemetry] use dynamic logging (#12496)
+* [channel,gfx] use generic plugin log (@12498, #12499)
+* [channels,audin] set error when audio_format_read fails (#12500)
+* [channels,video] unify error handling (#12502)
+* Fastpath fine grained lock (#12503)
+* [core,update] make the PlaySound callback non-mandatory (#12504)
+* Refinements: RPM build updates, FIPS improvements (#12506)
+
+## New Contributors
+* @dko-strd made their first contribution in #12490
+* @huanghuihui0904 made their first contribution in #12486
+
+For a complete and detailed change log since the last release run:
+git log 3.24.1...3.24.0
+
 # 2026-03-13 Version 3.24.0
 
 A new release with bugfixes and many improvements for users and developers alike.
