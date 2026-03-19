@@ -81,17 +81,21 @@ static void sdl_Pointer_Clear(sdlPointer* ptr)
 	ptr->image = nullptr;
 }
 
-static void sdl_Pointer_Free(rdpContext* context, rdpPointer* pointer)
+static void sdl_Pointer_Free(WINPR_ATTR_UNUSED rdpContext* context, rdpPointer* pointer)
+{
+	sdl_Pointer_FreeCopy(pointer);
+}
+
+void sdl_Pointer_FreeCopy(rdpPointer* pointer)
 {
 	auto ptr = reinterpret_cast<sdlPointer*>(pointer);
-	WINPR_UNUSED(context);
 
-	if (ptr)
-	{
-		sdl_Pointer_Clear(ptr);
-		winpr_aligned_free(ptr->data);
-		ptr->data = nullptr;
-	}
+	if (!ptr)
+		return;
+
+	sdl_Pointer_Clear(ptr);
+	winpr_aligned_free(ptr->data);
+	ptr->data = nullptr;
 }
 
 [[nodiscard]] static BOOL sdl_Pointer_SetDefault(rdpContext* context)
@@ -258,4 +262,33 @@ bool sdl_register_pointer(rdpGraphics* graphics)
 		                         {} };
 	graphics_register_pointer(graphics, &pointer);
 	return true;
+}
+
+rdpPointer* sdl_Pointer_Copy(const rdpPointer* pointer)
+{
+	auto ptr = reinterpret_cast<const sdlPointer*>(pointer);
+	if (!pointer)
+		return nullptr;
+
+	auto copy = static_cast<sdlPointer*>(calloc(1, sizeof(sdlPointer)));
+	if (!copy)
+		return nullptr;
+
+	copy->pointer.xPos = pointer->xPos;
+	copy->pointer.yPos = pointer->yPos;
+	copy->pointer.width = pointer->width;
+	copy->pointer.height = pointer->height;
+	copy->pointer.xorBpp = pointer->xorBpp;
+	if (ptr->size > 0)
+	{
+		copy->data = static_cast<BYTE*>(winpr_aligned_malloc(ptr->size, 32));
+		if (!copy)
+		{
+			free(copy);
+			return nullptr;
+		}
+		copy->size = ptr->size;
+		memcpy(copy->data, ptr->data, copy->size);
+	}
+	return &copy->pointer;
 }
