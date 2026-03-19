@@ -160,7 +160,7 @@ static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
 		if (new_capacity > SIZE_MAX / sizeof(BYTE*))
 			return FALSE;
 
-		uintptr_t* newArray = (uintptr_t*)realloc(queue->array, sizeof(uintptr_t) * new_capacity);
+		void **newArray = (void**)realloc(queue->array, sizeof(void*) * new_capacity);
 
 		if (!newArray)
 			return FALSE;
