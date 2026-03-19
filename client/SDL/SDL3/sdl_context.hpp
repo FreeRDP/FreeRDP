@@ -86,7 +86,7 @@ class SdlContext
 	[[nodiscard]] rdpClientContext* common() const;
 
 	[[nodiscard]] bool setCursor(CursorType type);
-	[[nodiscard]] bool setCursor(rdpPointer* cursor);
+	[[nodiscard]] bool setCursor(const rdpPointer* cursor);
 	[[nodiscard]] rdpPointer* cursor() const;
 	[[nodiscard]] bool restoreCursor();
 
@@ -193,7 +193,7 @@ class SdlContext
 
 	std::atomic<bool> _connected = false;
 	bool _cursor_visible = true;
-	rdpPointer* _cursor = nullptr;
+	std::unique_ptr<rdpPointer, void (*)(rdpPointer*)> _cursor;
 	CursorType _cursorType = CURSOR_NULL;
 	std::vector<SDL_DisplayID> _monitorIds;
 	std::mutex _queue_mux;

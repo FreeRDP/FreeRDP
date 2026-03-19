@@ -36,8 +36,9 @@
 #endif
 
 SdlContext::SdlContext(rdpContext* context)
-    : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _rdpThreadRunning(false),
-      _primary(nullptr, SDL_DestroySurface), _disp(this), _input(this), _clip(this), _dialog(_log)
+    : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _cursor(nullptr, sdl_Pointer_FreeCopy),
+      _rdpThreadRunning(false), _primary(nullptr, SDL_DestroySurface), _disp(this), _input(this),
+      _clip(this), _dialog(_log)
 {
 	WINPR_ASSERT(context);
 	setMetadata();
@@ -1483,15 +1484,15 @@ bool SdlContext::setCursor(CursorType type)
 	return restoreCursor();
 }
 
-bool SdlContext::setCursor(rdpPointer* cursor)
+bool SdlContext::setCursor(const rdpPointer* cursor)
 {
-	_cursor = cursor;
+	_cursor = { sdl_Pointer_Copy(cursor), sdl_Pointer_FreeCopy };
 	return setCursor(CURSOR_IMAGE);
 }
 
 rdpPointer* SdlContext::cursor() const
 {
-	return _cursor;
+	return _cursor.get();
 }
 
 bool SdlContext::restoreCursor()
