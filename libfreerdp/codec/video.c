@@ -96,41 +96,11 @@ static enum AVPixelFormat video_format_to_av(FREERDP_VIDEO_FORMAT format)
 
 		case FREERDP_VIDEO_FORMAT_NONE:
 		default:
+			WLog_WARN(TAG, "Could not map FREERDP_VIDEO_FORMAT %s [0x%08" PRIx32 "]",
+			          freerdp_video_format_string(format), format);
 			return AV_PIX_FMT_NONE;
 	}
 }
-
-#if defined(WITH_MJPEG_DECODER)
-/**
- * @brief Map AVPixelFormat to FREERDP_VIDEO_FORMAT
- */
-static FREERDP_VIDEO_FORMAT av_format_to_video(enum AVPixelFormat format)
-{
-	switch (format)
-	{
-		/* Planar YUV formats */
-		case AV_PIX_FMT_YUV420P:
-			return FREERDP_VIDEO_FORMAT_YUV420P;
-
-		case AV_PIX_FMT_NV12:
-			return FREERDP_VIDEO_FORMAT_NV12;
-
-		/* Packed YUV formats */
-		case AV_PIX_FMT_YUYV422:
-			return FREERDP_VIDEO_FORMAT_YUYV422;
-
-		/* RGB formats */
-		case AV_PIX_FMT_RGB24:
-			return FREERDP_VIDEO_FORMAT_RGB24;
-
-		case AV_PIX_FMT_RGB32:
-			return FREERDP_VIDEO_FORMAT_RGB32;
-
-		default:
-			return FREERDP_VIDEO_FORMAT_NONE;
-	}
-}
-#endif
 
 BOOL freerdp_video_available(void)
 {
@@ -338,10 +308,10 @@ fail:
 
 static BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcData,
                                        size_t srcSize, BYTE* dstData[4], int dstLineSize[4],
-                                       FREERDP_VIDEO_FORMAT* dstFormat);
+                                       enum AVPixelFormat* dstFormat);
 
 static BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcData[4],
-                                         const int srcLineSize[4], FREERDP_VIDEO_FORMAT srcFormat,
+                                         const int srcLineSize[4], enum AVPixelFormat srcFormat,
                                          BYTE* dstData[3], const int dstLineSize[3],
                                          FREERDP_VIDEO_FORMAT dstFormat, UINT32 width,
                                          UINT32 height);
@@ -387,7 +357,7 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 
 	BYTE* intermediate_data[4] = WINPR_C_ARRAY_INIT;
 	int intermediate_linesize[4] = WINPR_C_ARRAY_INIT;
-	FREERDP_VIDEO_FORMAT intermediate_format = FREERDP_VIDEO_FORMAT_NONE;
+	enum AVPixelFormat intermediate_format = AV_PIX_FMT_NONE;
 
 	if (srcCompressed)
 	{
@@ -409,7 +379,7 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 	}
 	else
 	{
-		intermediate_format = srcFormat;
+		intermediate_format = video_format_to_av(srcFormat);
 	}
 
 	if (dstFormat == FREERDP_VIDEO_FORMAT_H264)
@@ -461,9 +431,9 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 			}
 
 			const BYTE* cSrcPlanes[4] = { srcPlanes[0], srcPlanes[1], srcPlanes[2], srcPlanes[3] };
-			if (!freerdp_video_convert_to_yuv(context, cSrcPlanes, srcStrides, srcFormat, yuvData,
-			                                  yuvLineSizes, yuvFormat, context->width,
-			                                  context->height))
+			if (!freerdp_video_convert_to_yuv(context, cSrcPlanes, srcStrides,
+			                                  video_format_to_av(srcFormat), yuvData, yuvLineSizes,
+			                                  yuvFormat, context->width, context->height))
 			{
 				WLog_ERR(TAG, "YUV conversion failed");
 				return FALSE;
@@ -500,7 +470,7 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 
 static BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcData,
                                        size_t srcSize, BYTE* dstData[4], int dstLineSize[4],
-                                       FREERDP_VIDEO_FORMAT* dstFormat)
+                                       enum AVPixelFormat* dstFormat)
 {
 #if defined(WITH_MJPEG_DECODER)
 	WINPR_ASSERT(context);
@@ -539,7 +509,7 @@ static BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYT
 	}
 
 	/* Convert pixel format */
-	*dstFormat = av_format_to_video(context->mjpegDecoder->pix_fmt);
+	*dstFormat = context->mjpegDecoder->pix_fmt;
 
 	return TRUE;
 #else
@@ -555,7 +525,7 @@ static BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYT
 }
 
 static BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context, const BYTE* srcData[4],
-                                         const int srcLineSize[4], FREERDP_VIDEO_FORMAT srcFormat,
+                                         const int srcLineSize[4], enum AVPixelFormat srcFormat,
                                          BYTE* dstData[3], const int dstLineSize[3],
                                          FREERDP_VIDEO_FORMAT dstFormat, UINT32 width,
                                          UINT32 height)
@@ -571,7 +541,7 @@ static BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context, const B
 		return FALSE;
 	}
 
-	enum AVPixelFormat srcPixFmt = video_format_to_av(srcFormat);
+	enum AVPixelFormat srcPixFmt = srcFormat;
 	enum AVPixelFormat dstPixFmt = video_format_to_av(dstFormat);
 
 	if (srcPixFmt == AV_PIX_FMT_NONE || dstPixFmt == AV_PIX_FMT_NONE)
