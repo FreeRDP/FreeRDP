@@ -58,6 +58,14 @@ extern "C"
 		FREERDP_VIDEO_FORMAT_RGB32, /* Platform-specific BGRA/ARGB */
 	} FREERDP_VIDEO_FORMAT;
 
+	/** @brief Convert a \ref FREERDP_VIDEO_FORMAT to a string representation.
+	 *
+	 *  @return A string representation of the format or \b FREERDP_VIDEO_FORMAT_UNKNOWN
+	 *  @since version 3.25.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_video_format_string(UINT32 format);
+
 	/**
 	 * @brief Free a video processing context
 	 *
