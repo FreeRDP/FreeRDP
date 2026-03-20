@@ -15,9 +15,17 @@
 #define TAG FREERDP_TAG("utils.signal.posix")
 
 static CRITICAL_SECTION signal_lock;
+static INIT_ONCE signal_lock_init = INIT_ONCE_STATIC_INIT;
+
+static BOOL CALLBACK init_signal_lock(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
+{
+	InitializeCriticalSection(&signal_lock);
+	return TRUE;
+}
 
 void fsig_lock(void)
 {
+	InitOnceExecuteOnce(&signal_lock_init, init_signal_lock, NULL, NULL);
 	EnterCriticalSection(&signal_lock);
 }
 
@@ -98,8 +106,6 @@ static void unregister_all_handlers(void)
 int freerdp_handle_signals(void)
 {
 	int rc = -1;
-	InitializeCriticalSection(&signal_lock);
-
 	fsig_lock();
 
 	WLog_DBG(TAG, "Registering signal hook...");
