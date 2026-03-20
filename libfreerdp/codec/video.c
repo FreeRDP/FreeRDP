@@ -27,7 +27,7 @@
 #include <freerdp/codec/video.h>
 #include <freerdp/codec/h264.h>
 
-#define TAG FREERDP_TAG("codec.video")
+#define VTAG FREERDP_TAG("codec.video")
 
 WINPR_ATTR_NODISCARD
 static const char* freerdp_video_format_string(UINT32 format);
@@ -35,7 +35,7 @@ static const char* freerdp_video_format_string(UINT32 format);
 #if defined(WITH_SWSCALE)
 
 /* Forward declarations for static functions */
-static BOOL freerdp_video_fill_plane_info(BYTE* data[4], int lineSize[4],
+static BOOL freerdp_video_fill_plane_info(wLog* log, BYTE* data[4], int lineSize[4],
                                           FREERDP_VIDEO_FORMAT format, UINT32 width, UINT32 height,
                                           const BYTE* buffer);
 
@@ -64,12 +64,13 @@ struct s_FREERDP_VIDEO_CONTEXT
 	UINT32 h264Framerate;
 	UINT32 h264Bitrate;
 	UINT32 h264UsageType;
+	wLog* log;
 };
 
 /**
  * @brief Map FREERDP_VIDEO_FORMAT to AVPixelFormat
  */
-static enum AVPixelFormat video_format_to_av(FREERDP_VIDEO_FORMAT format)
+static enum AVPixelFormat video_format_to_av(wLog* log, FREERDP_VIDEO_FORMAT format)
 {
 	switch (format)
 	{
@@ -96,8 +97,8 @@ static enum AVPixelFormat video_format_to_av(FREERDP_VIDEO_FORMAT format)
 
 		case FREERDP_VIDEO_FORMAT_NONE:
 		default:
-			WLog_WARN(TAG, "Could not map FREERDP_VIDEO_FORMAT %s [0x%08" PRIx32 "]",
-			          freerdp_video_format_string(format), format);
+			WLog_Print(log, WLOG_WARN, "Could not map FREERDP_VIDEO_FORMAT %s [0x%08" PRIx32 "]",
+			           freerdp_video_format_string(format), format);
 			return AV_PIX_FMT_NONE;
 	}
 }
@@ -111,9 +112,10 @@ FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(UINT32 width, UINT32 height)
 {
 	FREERDP_VIDEO_CONTEXT* context = nullptr;
 
+	wLog* log = WLog_Get(VTAG);
 	if (!freerdp_video_available())
 	{
-		WLog_ERR(TAG, "Video codecs not available - FFmpeg not loaded");
+		WLog_Print(log, WLOG_ERROR, "Video codecs not available - FFmpeg not loaded");
 		return nullptr;
 	}
 
@@ -121,6 +123,7 @@ FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(UINT32 width, UINT32 height)
 	if (!context)
 		return nullptr;
 
+	context->log = log;
 	context->width = width;
 	context->height = height;
 
@@ -129,14 +132,14 @@ FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(UINT32 width, UINT32 height)
 	const AVCodec* codec = avcodec_find_decoder(AV_CODEC_ID_MJPEG);
 	if (!codec)
 	{
-		WLog_ERR(TAG, "avcodec_find_decoder failed to find MJPEG codec");
+		WLog_Print(context->log, WLOG_ERROR, "avcodec_find_decoder failed to find MJPEG codec");
 		goto fail;
 	}
 
 	context->mjpegDecoder = avcodec_alloc_context3(codec);
 	if (!context->mjpegDecoder)
 	{
-		WLog_ERR(TAG, "avcodec_alloc_context3 failed");
+		WLog_Print(context->log, WLOG_ERROR, "avcodec_alloc_context3 failed");
 		goto fail;
 	}
 
@@ -147,21 +150,21 @@ FREERDP_VIDEO_CONTEXT* freerdp_video_context_new(UINT32 width, UINT32 height)
 
 	if (avcodec_open2(context->mjpegDecoder, codec, nullptr) < 0)
 	{
-		WLog_ERR(TAG, "avcodec_open2 failed");
+		WLog_Print(context->log, WLOG_ERROR, "avcodec_open2 failed");
 		goto fail;
 	}
 
 	context->mjpegPacket = av_packet_alloc();
 	if (!context->mjpegPacket)
 	{
-		WLog_ERR(TAG, "av_packet_alloc failed");
+		WLog_Print(context->log, WLOG_ERROR, "av_packet_alloc failed");
 		goto fail;
 	}
 
 	context->mjpegFrame = av_frame_alloc();
 	if (!context->mjpegFrame)
 	{
-		WLog_ERR(TAG, "av_frame_alloc failed");
+		WLog_Print(context->log, WLOG_ERROR, "av_frame_alloc failed");
 		goto fail;
 	}
 #endif
@@ -210,7 +213,7 @@ void freerdp_video_context_free(FREERDP_VIDEO_CONTEXT* context)
 	free(context);
 }
 
-static UINT32 video_get_h264_bitrate(UINT32 height)
+static UINT32 video_get_h264_bitrate(wLog* log, UINT32 height)
 {
 	static struct
 	{
@@ -227,7 +230,7 @@ static UINT32 video_get_h264_bitrate(UINT32 height)
 		if (height >= bitrates[i].height)
 		{
 			UINT32 bitrate = bitrates[i].bitrate;
-			WLog_DBG(TAG, "Auto-calculated H.264 bitrate: %u kbps", bitrate);
+			WLog_Print(log, WLOG_DEBUG, "Auto-calculated H.264 bitrate: %u kbps", bitrate);
 			return bitrate * 1000;
 		}
 	}
@@ -243,19 +246,19 @@ BOOL freerdp_video_context_reconfigure(FREERDP_VIDEO_CONTEXT* context, UINT32 wi
 
 	if (width == 0 || height == 0)
 	{
-		WLog_ERR(TAG, "Invalid dimensions: %ux%u", width, height);
+		WLog_Print(context->log, WLOG_ERROR, "Invalid dimensions: %ux%u", width, height);
 		return FALSE;
 	}
 
 	if (bitrate == 0)
-		bitrate = video_get_h264_bitrate(height);
+		bitrate = video_get_h264_bitrate(context->log, height);
 
 	if (!context->h264)
 	{
 		context->h264 = h264_context_new(TRUE);
 		if (!context->h264)
 		{
-			WLog_ERR(TAG, "h264_context_new failed");
+			WLog_Print(context->log, WLOG_ERROR, "h264_context_new failed");
 			return FALSE;
 		}
 	}
@@ -283,7 +286,7 @@ BOOL freerdp_video_context_reconfigure(FREERDP_VIDEO_CONTEXT* context, UINT32 wi
 	{
 		if (!h264_context_reset(context->h264, width, height))
 		{
-			WLog_ERR(TAG, "h264_context_reset failed");
+			WLog_Print(context->log, WLOG_ERROR, "h264_context_reset failed");
 			goto fail;
 		}
 	}
@@ -334,19 +337,20 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 
 	if (!freerdp_video_available())
 	{
-		WLog_ERR(TAG, "Video codecs not available");
+		WLog_Print(context->log, WLOG_ERROR, "Video codecs not available");
 		return FALSE;
 	}
 
 	if (srcSampleLength == 0)
 	{
-		WLog_ERR(TAG, "Invalid source sample length: 0");
+		WLog_Print(context->log, WLOG_ERROR, "Invalid source sample length: 0");
 		return FALSE;
 	}
 
 	if (!freerdp_video_conversion_supported(srcFormat, dstFormat))
 	{
-		WLog_ERR(TAG, "Conversion from format %u to %u not supported", srcFormat, dstFormat);
+		WLog_Print(context->log, WLOG_ERROR, "Conversion from format %u to %u not supported",
+		           srcFormat, dstFormat);
 		return FALSE;
 	}
 
@@ -367,26 +371,26 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 			                                intermediate_data, intermediate_linesize,
 			                                &intermediate_format))
 			{
-				WLog_ERR(TAG, "MJPEG decoding failed");
+				WLog_Print(context->log, WLOG_ERROR, "MJPEG decoding failed");
 				return FALSE;
 			}
 		}
 		else if (srcFormat == FREERDP_VIDEO_FORMAT_H264)
 		{
-			WLog_ERR(TAG, "H264 decoding not supported");
+			WLog_Print(context->log, WLOG_ERROR, "H264 decoding not supported");
 			return FALSE;
 		}
 	}
 	else
 	{
-		intermediate_format = video_format_to_av(srcFormat);
+		intermediate_format = video_format_to_av(context->log, srcFormat);
 	}
 
 	if (dstFormat == FREERDP_VIDEO_FORMAT_H264)
 	{
 		if (!context->h264Configured)
 		{
-			WLog_ERR(TAG, "H264 encoder not configured");
+			WLog_Print(context->log, WLOG_ERROR, "H264 encoder not configured");
 			return FALSE;
 		}
 
@@ -400,7 +404,7 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 		if (h264_get_yuv_buffer(context->h264, 0, context->width, context->height, yuvData,
 		                        yuvStrides) < 0)
 		{
-			WLog_ERR(TAG, "h264_get_yuv_buffer failed");
+			WLog_Print(context->log, WLOG_ERROR, "h264_get_yuv_buffer failed");
 			return FALSE;
 		}
 
@@ -414,7 +418,7 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 			                                  intermediate_format, yuvData, yuvLineSizes, yuvFormat,
 			                                  context->width, context->height))
 			{
-				WLog_ERR(TAG, "YUV conversion failed");
+				WLog_Print(context->log, WLOG_ERROR, "YUV conversion failed");
 				return FALSE;
 			}
 		}
@@ -423,19 +427,20 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 			BYTE* srcPlanes[4] = WINPR_C_ARRAY_INIT;
 			int srcStrides[4] = WINPR_C_ARRAY_INIT;
 
-			if (!freerdp_video_fill_plane_info(srcPlanes, srcStrides, srcFormat, context->width,
-			                                   context->height, (const BYTE*)srcSampleData))
+			if (!freerdp_video_fill_plane_info(context->log, srcPlanes, srcStrides, srcFormat,
+			                                   context->width, context->height,
+			                                   (const BYTE*)srcSampleData))
 			{
-				WLog_ERR(TAG, "Failed to fill plane info");
+				WLog_Print(context->log, WLOG_ERROR, "Failed to fill plane info");
 				return FALSE;
 			}
 
 			const BYTE* cSrcPlanes[4] = { srcPlanes[0], srcPlanes[1], srcPlanes[2], srcPlanes[3] };
-			if (!freerdp_video_convert_to_yuv(context, cSrcPlanes, srcStrides,
-			                                  video_format_to_av(srcFormat), yuvData, yuvLineSizes,
-			                                  yuvFormat, context->width, context->height))
+			if (!freerdp_video_convert_to_yuv(
+			        context, cSrcPlanes, srcStrides, video_format_to_av(context->log, srcFormat),
+			        yuvData, yuvLineSizes, yuvFormat, context->width, context->height))
 			{
-				WLog_ERR(TAG, "YUV conversion failed");
+				WLog_Print(context->log, WLOG_ERROR, "YUV conversion failed");
 				return FALSE;
 			}
 		}
@@ -445,13 +450,13 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 
 		if (h264_compress(context->h264, &h264Data, &h264Size) < 0)
 		{
-			WLog_ERR(TAG, "H264 compression failed");
+			WLog_Print(context->log, WLOG_ERROR, "H264 compression failed");
 			return FALSE;
 		}
 
 		if (!Stream_EnsureRemainingCapacity(output, h264Size))
 		{
-			WLog_ERR(TAG, "Failed to ensure stream capacity");
+			WLog_Print(context->log, WLOG_ERROR, "Failed to ensure stream capacity");
 			return FALSE;
 		}
 
@@ -460,11 +465,11 @@ BOOL freerdp_video_sample_convert(FREERDP_VIDEO_CONTEXT* context, FREERDP_VIDEO_
 	}
 	else if (dstCompressed)
 	{
-		WLog_ERR(TAG, "Only H264 encoding is supported");
+		WLog_Print(context->log, WLOG_ERROR, "Only H264 encoding is supported");
 		return FALSE;
 	}
 
-	WLog_ERR(TAG, "Raw format output not yet implemented");
+	WLog_Print(context->log, WLOG_ERROR, "Raw format output not yet implemented");
 	return FALSE;
 }
 
@@ -481,7 +486,7 @@ static BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYT
 
 	if (!context->mjpegDecoder)
 	{
-		WLog_ERR(TAG, "MJPEG decoder not initialized");
+		WLog_Print(context->log, WLOG_ERROR, "MJPEG decoder not initialized");
 		return FALSE;
 	}
 
@@ -491,13 +496,13 @@ static BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYT
 
 	if (avcodec_send_packet(context->mjpegDecoder, context->mjpegPacket) < 0)
 	{
-		WLog_ERR(TAG, "avcodec_send_packet failed");
+		WLog_Print(context->log, WLOG_ERROR, "avcodec_send_packet failed");
 		return FALSE;
 	}
 
 	if (avcodec_receive_frame(context->mjpegDecoder, context->mjpegFrame) < 0)
 	{
-		WLog_ERR(TAG, "avcodec_receive_frame failed");
+		WLog_Print(context->log, WLOG_ERROR, "avcodec_receive_frame failed");
 		return FALSE;
 	}
 
@@ -519,7 +524,8 @@ static BOOL freerdp_video_decode_mjpeg(FREERDP_VIDEO_CONTEXT* context, const BYT
 	WINPR_UNUSED(dstData);
 	WINPR_UNUSED(dstLineSize);
 	WINPR_UNUSED(dstFormat);
-	WLog_ERR(TAG, "MJPEG decoder not available (requires direct FFmpeg linking)");
+	WLog_Print(context->log, WLOG_ERROR,
+	           "MJPEG decoder not available (requires direct FFmpeg linking)");
 	return FALSE;
 #endif
 }
@@ -537,16 +543,17 @@ static BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context, const B
 
 	if (!freerdp_swscale_available())
 	{
-		WLog_ERR(TAG, "swscale not available - install FFmpeg to enable video processing");
+		WLog_Print(context->log, WLOG_ERROR,
+		           "swscale not available - install FFmpeg to enable video processing");
 		return FALSE;
 	}
 
 	enum AVPixelFormat srcPixFmt = srcFormat;
-	enum AVPixelFormat dstPixFmt = video_format_to_av(dstFormat);
+	enum AVPixelFormat dstPixFmt = video_format_to_av(context->log, dstFormat);
 
 	if (srcPixFmt == AV_PIX_FMT_NONE || dstPixFmt == AV_PIX_FMT_NONE)
 	{
-		WLog_ERR(TAG, "Unsupported pixel format");
+		WLog_Print(context->log, WLOG_ERROR, "Unsupported pixel format");
 		return FALSE;
 	}
 
@@ -564,7 +571,7 @@ static BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context, const B
 		                             dstPixFmt, 0, nullptr, nullptr, nullptr);
 		if (!sws)
 		{
-			WLog_ERR(TAG, "sws_getContext failed");
+			WLog_Print(context->log, WLOG_ERROR, "sws_getContext failed");
 			return FALSE;
 		}
 
@@ -592,36 +599,36 @@ static BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context, const B
 	return (result > 0);
 }
 
-static BOOL freerdp_video_fill_plane_info(BYTE* data[4], int lineSize[4],
+static BOOL freerdp_video_fill_plane_info(wLog* log, BYTE* data[4], int lineSize[4],
                                           FREERDP_VIDEO_FORMAT format, UINT32 width, UINT32 height,
                                           const BYTE* buffer)
 {
 	WINPR_ASSERT(data);
 	WINPR_ASSERT(lineSize);
 
-	enum AVPixelFormat pixFmt = video_format_to_av(format);
+	enum AVPixelFormat pixFmt = video_format_to_av(log, format);
 	if (pixFmt == AV_PIX_FMT_NONE)
 	{
-		WLog_ERR(TAG, "Unsupported pixel format");
+		WLog_Print(log, WLOG_ERROR, "Unsupported pixel format");
 		return FALSE;
 	}
 
 	if (!freerdp_avutil_available())
 	{
-		WLog_ERR(TAG, "avutil not available");
+		WLog_Print(log, WLOG_ERROR, "avutil not available");
 		return FALSE;
 	}
 
 	if (freerdp_av_image_fill_linesizes(lineSize, pixFmt, (int)width) < 0)
 	{
-		WLog_ERR(TAG, "av_image_fill_linesizes failed");
+		WLog_Print(log, WLOG_ERROR, "av_image_fill_linesizes failed");
 		return FALSE;
 	}
 
 	if (freerdp_av_image_fill_pointers(data, pixFmt, (int)height,
 	                                   WINPR_CAST_CONST_PTR_AWAY(buffer, BYTE*), lineSize) < 0)
 	{
-		WLog_ERR(TAG, "av_image_fill_pointers failed");
+		WLog_Print(log, WLOG_ERROR, "av_image_fill_pointers failed");
 		return FALSE;
 	}
 
