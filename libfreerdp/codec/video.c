@@ -29,6 +29,9 @@
 
 #define TAG FREERDP_TAG("codec.video")
 
+WINPR_ATTR_NODISCARD
+static const char* freerdp_video_format_string(UINT32 format);
+
 #if defined(WITH_SWSCALE)
 
 /* Forward declarations for static functions */
@@ -748,3 +751,25 @@ BOOL freerdp_video_sample_convert(WINPR_ATTR_UNUSED FREERDP_VIDEO_CONTEXT* conte
 }
 
 #endif /* WITH_SWSCALE */
+
+const char* freerdp_video_format_string(UINT32 format)
+{
+#define EVCASE(x) \
+	case x:       \
+		return #x
+
+	switch (format)
+	{
+		EVCASE(FREERDP_VIDEO_FORMAT_NONE);
+		EVCASE(FREERDP_VIDEO_FORMAT_MJPEG);
+		EVCASE(FREERDP_VIDEO_FORMAT_H264);
+		EVCASE(FREERDP_VIDEO_FORMAT_YUV420P);
+		EVCASE(FREERDP_VIDEO_FORMAT_NV12);
+		EVCASE(FREERDP_VIDEO_FORMAT_YUYV422);
+		EVCASE(FREERDP_VIDEO_FORMAT_RGB24);
+		EVCASE(FREERDP_VIDEO_FORMAT_RGB32);
+		default:
+			return "FREERDP_VIDEO_FORMAT_UNKNOWN";
+	}
+#undef EVCASE
+}
