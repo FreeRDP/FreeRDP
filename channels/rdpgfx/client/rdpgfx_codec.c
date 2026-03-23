@@ -118,6 +118,43 @@ error_out:
 	return error;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL checkSurfaceCommand(const RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_COMMAND* cmd)
+{
+	switch (cmd->codecId)
+	{
+		case RDPGFX_CODECID_UNCOMPRESSED:
+		case RDPGFX_CODECID_CAVIDEO:
+		case RDPGFX_CODECID_CLEARCODEC:
+		case RDPGFX_CODECID_PLANAR:
+		case RDPGFX_CODECID_AVC420:
+		case RDPGFX_CODECID_ALPHA:
+		case RDPGFX_CODECID_AVC444:
+		case RDPGFX_CODECID_AVC444v2:
+		case RDPGFX_CODECID_CAPROGRESSIVE:
+		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
+			return TRUE;
+#if defined(WITH_GFX_AV1)
+		case RDPGFX_CODECID_AV1:
+			if (gfx->ConnectionCaps.version != RDPGFX_CAPVERSION_FRDP_1)
+			{
+				WLog_Print(gfx->base.log, WLOG_ERROR,
+				           "RDPGFX_SURFACE_COMMAND::codecId %" PRIu32
+				           " only supported with %s but connection uses %s [0x%08" PRIx32 "]",
+				           cmd->codecId, rdpgfx_caps_version_str(RDPGFX_CAPVERSION_FRDP_1),
+				           rdpgfx_caps_version_str(gfx->ConnectionCaps.version),
+				           gfx->ConnectionCaps.version);
+				return FALSE;
+			}
+			return TRUE;
+#endif
+		default:
+			WLog_Print(gfx->base.log, WLOG_ERROR,
+			           "Unknown RDPGFX_SURFACE_COMMAND::codecId %" PRIu32, cmd->codecId);
+			return FALSE;
+	}
+}
+
 static UINT logSurfaceCommand(RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	WINPR_ASSERT(gfx);
@@ -128,6 +165,9 @@ static UINT logSurfaceCommand(RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_COMMAND* 
 	RdpgfxClientContext* context = gfx->context;
 	if (!context)
 		return CHANNEL_RC_OK;
+
+	if (!checkSurfaceCommand(gfx, cmd))
+		return CHANNEL_RC_NULL_DATA;
 
 	const UINT error = IFCALLRESULT(CHANNEL_RC_OK, context->SurfaceCommand, context, cmd);
 
