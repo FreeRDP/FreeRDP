@@ -551,7 +551,14 @@ static DWORD ProcessCleanupHandle(HANDLE handle)
 	if (process->fd > 0)
 	{
 		if (waitpid(process->pid, &process->status, WNOHANG) == process->pid)
-			process->dwExitCode = (DWORD)process->status;
+		{
+			if (WIFEXITED(process->status))
+				process->dwExitCode = (DWORD)WEXITSTATUS(process->status);
+			else if (WIFSIGNALED(process->status))
+				process->dwExitCode = (DWORD)(128 + WTERMSIG(process->status));
+			else
+				process->dwExitCode = (DWORD)process->status;
+		}
 	}
 	return WAIT_OBJECT_0;
 }
