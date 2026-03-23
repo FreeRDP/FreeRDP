@@ -36,5 +36,5 @@ void sdl_Pointer_FreeCopy(rdpPointer* pointer);
  *  The copy only contains the relevant data (coordinates, bitmap data) required for the SDL client
  * to display the cursor. Callbacks and xor/and mask data are not copied.
  */
-WINPR_ATTR_MALLOC(sdl_Pointer_FreeCopy, 2)
+WINPR_ATTR_MALLOC(sdl_Pointer_FreeCopy, 1)
 rdpPointer* sdl_Pointer_Copy(const rdpPointer* pointer);
