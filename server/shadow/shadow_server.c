@@ -514,6 +514,59 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, arg->Value != nullptr))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+#if defined(WITH_GFX_AV1)
+		CommandLineSwitchCase(arg, "gfx-av1")
+		{
+			BOOL parseFailed = FALSE;
+			BOOL enabled = TRUE;
+			UINT32 profile = freerdp_settings_get_uint32(settings, FreeRDP_GfxCodecAV1Profile);
+			if (arg->Value)
+			{
+				size_t count = 0;
+				char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
+				WINPR_ASSERT(args || (count == 0));
+				for (size_t x = 0; x < count; x++)
+				{
+					const char* cur = args[x];
+					if (strncmp("profile:", cur, 8) == 0)
+					{
+						const char* val = &cur[8];
+						if (strcmp("high", val) == 0)
+							profile = 1;
+						else if (strcmp("low", val) == 0)
+							profile = 0;
+						else
+						{
+							const unsigned long v = strtoul(val, nullptr, 0);
+							if ((errno != 0) || (v >= UINT32_MAX))
+							{
+								parseFailed = TRUE;
+								break;
+							}
+							else
+								profile = WINPR_ASSERTING_INT_CAST(UINT32, v);
+						}
+					}
+					else if (strcmp("off", cur) == 0)
+					{
+						enabled = FALSE;
+					}
+					else
+					{
+						parseFailed = TRUE;
+						break;
+					}
+				}
+				CommandLineParserFree(args);
+			}
+			if (parseFailed)
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV1, enabled))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV1Profile, profile))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
+#endif
 		CommandLineSwitchCase(arg, "gfx-rfx")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, arg->Value != nullptr))
@@ -1085,6 +1138,10 @@ rdpShadowServer* shadow_server_new(void)
 	server->h264FrameRate = 30;
 	server->h264QP = 0;
 	server->authentication = TRUE;
+#if defined(WITH_GFX_AV1)
+	server->AV1BitRate = 500;
+	server->AV1RateControlMode = FREERDP_AV1_VBR;
+#endif
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
 	return server;
 }

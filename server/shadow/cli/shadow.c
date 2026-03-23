@@ -95,6 +95,10 @@ int main(int argc, char** argv)
 		  "Allow RFX surface bits" },
 		{ "gfx", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "Allow GFX pipeline" },
+#if defined(WITH_GFX_AV1)
+		{ "gfx-av1", COMMAND_LINE_VALUE_OPTIONAL, "[:profile:[low|high|0|1]|off]", BoolValueTrue,
+		  nullptr, -1, nullptr, "Allow GFX pipeline AV1 codec extension" },
+#endif
 		{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "Allow GFX progressive codec" },
 		{ "gfx-rfx", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,

@@ -274,6 +274,45 @@ fail:
 	return -1;
 }
 
+#if defined(WITH_GFX_AV1)
+WINPR_ATTR_NODISCARD
+static int shadow_encoder_init_av1(rdpShadowEncoder* encoder, UINT32 codecs)
+{
+	WINPR_ASSERT(encoder);
+
+	UINT32 profile = 0;
+	if ((codecs & FREERDP_CODEC_AV1_I444) != 0)
+		profile = 1;
+
+	if (!encoder->av1)
+		encoder->av1 = freerdp_av1_context_new(TRUE);
+
+	if (!encoder->av1)
+		goto fail;
+
+	if (!freerdp_av1_context_reset(encoder->av1, encoder->width, encoder->height))
+		goto fail;
+
+	if (!freerdp_av1_context_set_option(encoder->av1, FREERDP_AV1_CONTEXT_OPTION_PROFILE, profile))
+		goto fail;
+
+	if (!freerdp_av1_context_set_option(encoder->av1, FREERDP_AV1_CONTEXT_OPTION_RATECONTROL,
+	                                    encoder->server->AV1RateControlMode))
+		goto fail;
+	if (!freerdp_av1_context_set_option(encoder->av1, FREERDP_AV1_CONTEXT_OPTION_BITRATE,
+	                                    encoder->server->AV1BitRate))
+		goto fail;
+
+	encoder->codecs &= ~(FREERDP_CODEC_AV1_I420 | FREERDP_CODEC_AV1_I444);
+	encoder->codecs |= codecs;
+	return 1;
+fail:
+	freerdp_av1_context_free(encoder->av1);
+	encoder->av1 = nullptr;
+	return -1;
+}
+#endif
+
 WINPR_ATTR_NODISCARD
 static int shadow_encoder_init_progressive(rdpShadowEncoder* encoder)
 {
@@ -373,6 +412,19 @@ static int shadow_encoder_uninit_h264(rdpShadowEncoder* encoder)
 	return 1;
 }
 
+#if defined(WITH_GFX_AV1)
+static int shadow_encoder_uninit_av1(rdpShadowEncoder* encoder)
+{
+	WINPR_ASSERT(encoder);
+
+	freerdp_av1_context_free(encoder->av1);
+	encoder->av1 = nullptr;
+
+	encoder->codecs &= (UINT32) ~(FREERDP_CODEC_AV1_I420 | FREERDP_CODEC_AV1_I444);
+	return 1;
+}
+#endif
+
 static int shadow_encoder_uninit_progressive(rdpShadowEncoder* encoder)
 {
 	WINPR_ASSERT(encoder);
@@ -404,6 +456,9 @@ static int shadow_encoder_uninit(rdpShadowEncoder* encoder)
 
 	shadow_encoder_uninit_interleaved(encoder);
 	shadow_encoder_uninit_h264(encoder);
+#if defined(WITH_GFX_AV1)
+	shadow_encoder_uninit_av1(encoder);
+#endif
 
 	shadow_encoder_uninit_progressive(encoder);
 
@@ -497,6 +552,19 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 		if (status < 0)
 			return -1;
 	}
+
+#if defined(WITH_GFX_AV1)
+	const UINT32 cmask = codecs & (FREERDP_CODEC_AV1_I420 | FREERDP_CODEC_AV1_I444);
+	const UINT32 emask = encoder->codecs & (FREERDP_CODEC_AV1_I420 | FREERDP_CODEC_AV1_I444);
+	if (cmask != emask)
+	{
+		WLog_DBG(TAG, "initializing AV1 encoder");
+		status = shadow_encoder_init_av1(encoder, codecs);
+
+		if (status < 0)
+			return -1;
+	}
+#endif
 
 	return 1;
 }
