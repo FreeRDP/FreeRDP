@@ -40,13 +40,15 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 	if (!lobby)
 		return FALSE;
 
+	EnterCriticalSection(&lobby->lock);
+
 #if defined(WITH_RDTK)
+	rdtkSurface* surface = nullptr;
 	rdtkEngine* engine = rdtk_engine_new();
 	if (!engine)
-		return FALSE;
+		goto fail;
 
-	EnterCriticalSection(&lobby->lock);
-	rdtkSurface* surface =
+	surface =
 	    rdtk_surface_new(engine, lobby->data, WINPR_ASSERTING_INT_CAST(uint16_t, lobby->width),
 	                     WINPR_ASSERTING_INT_CAST(uint16_t, lobby->height), lobby->scanline);
 	if (!surface)
