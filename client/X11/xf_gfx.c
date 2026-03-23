@@ -443,6 +443,9 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 #ifdef WITH_GFX_H264
 		h264_context_free(surface->gdi.h264);
 #endif
+#if defined(WITH_GFX_AV1)
+		freerdp_av1_context_free(surface->gdi.av1);
+#endif
 		surface->image->data = nullptr;
 		XDestroyImage(surface->image);
 		winpr_aligned_free(surface->gdi.data);
