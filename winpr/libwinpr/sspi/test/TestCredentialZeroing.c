@@ -4,6 +4,7 @@
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 #include <winpr/sspi.h>
+#include <winpr/string.h>
 
 /**
  * Verify that public credential cleanup functions zero sensitive fields
@@ -17,24 +18,21 @@ static BOOL test_FreeAuthIdentity_zeroes_fields(void)
 	const char* testUser = "testuser";
 	const char* testDomain = "TESTDOMAIN";
 
-	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
-	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+	SEC_WINNT_AUTH_IDENTITY identity = WINPR_C_ARRAY_INIT;
+	identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-	identity.UserLength = (UINT32)strlen(testUser);
-	identity.User = (UINT16*)strdup(testUser);
+	identity.User = ConvertUtf8ToWCharAlloc(testUser, &identity.UserLength);
 	if (!identity.User)
 		return FALSE;
 
-	identity.DomainLength = (UINT32)strlen(testDomain);
-	identity.Domain = (UINT16*)strdup(testDomain);
+	identity.Domain = ConvertUtf8ToWCharAlloc(testDomain, &identity.DomainLength);
 	if (!identity.Domain)
 	{
 		free(identity.User);
 		return FALSE;
 	}
 
-	identity.PasswordLength = (UINT32)strlen(testPassword);
-	identity.Password = (UINT16*)strdup(testPassword);
+	identity.Password = ConvertUtf8ToWCharAlloc(testPassword, &identity.PasswordLength);
 	if (!identity.Password)
 	{
 		free(identity.User);
@@ -44,19 +42,19 @@ static BOOL test_FreeAuthIdentity_zeroes_fields(void)
 
 	sspi_FreeAuthIdentity(&identity);
 
-	if (identity.User != NULL)
+	if (identity.User != nullptr)
 	{
-		printf("FAIL: identity.User not NULL after FreeAuthIdentity\n");
+		printf("FAIL: identity.User not nullptr after FreeAuthIdentity\n");
 		return FALSE;
 	}
-	if (identity.Domain != NULL)
+	if (identity.Domain != nullptr)
 	{
-		printf("FAIL: identity.Domain not NULL after FreeAuthIdentity\n");
+		printf("FAIL: identity.Domain not nullptr after FreeAuthIdentity\n");
 		return FALSE;
 	}
-	if (identity.Password != NULL)
+	if (identity.Password != nullptr)
 	{
-		printf("FAIL: identity.Password not NULL after FreeAuthIdentity\n");
+		printf("FAIL: identity.Password not nullptr after FreeAuthIdentity\n");
 		return FALSE;
 	}
 	if (identity.UserLength != 0 || identity.DomainLength != 0 || identity.PasswordLength != 0)
@@ -72,7 +70,7 @@ static BOOL test_FreeAuthIdentity_zeroes_fields(void)
 static BOOL test_SecBufferFree_zeroes_buffer(void)
 {
 	const char* testData = "sensitive-credential-data";
-	SecBuffer buffer = { 0 };
+	SecBuffer buffer = WINPR_C_ARRAY_INIT;
 
 	buffer.cbBuffer = (ULONG)strlen(testData);
 	buffer.pvBuffer = strdup(testData);
@@ -81,9 +79,9 @@ static BOOL test_SecBufferFree_zeroes_buffer(void)
 
 	sspi_SecBufferFree(&buffer);
 
-	if (buffer.pvBuffer != NULL)
+	if (buffer.pvBuffer != nullptr)
 	{
-		printf("FAIL: pvBuffer not NULL after SecBufferFree\n");
+		printf("FAIL: pvBuffer not nullptr after SecBufferFree\n");
 		return FALSE;
 	}
 	if (buffer.cbBuffer != 0)
@@ -95,19 +93,19 @@ static BOOL test_SecBufferFree_zeroes_buffer(void)
 	return TRUE;
 }
 
-/* Test NULL and empty input handling */
+/* Test nullptr and empty input handling */
 static BOOL test_null_handling(void)
 {
-	/* NULL should not crash */
-	sspi_FreeAuthIdentity(NULL);
-	sspi_SecBufferFree(NULL);
+	/* nullptr should not crash */
+	sspi_FreeAuthIdentity(nullptr);
+	sspi_SecBufferFree(nullptr);
 
 	/* Empty identity should not crash */
-	SEC_WINNT_AUTH_IDENTITY empty = { 0 };
+	SEC_WINNT_AUTH_IDENTITY empty = WINPR_C_ARRAY_INIT;
 	sspi_FreeAuthIdentity(&empty);
 
 	/* Empty buffer should not crash */
-	SecBuffer emptyBuf = { 0 };
+	SecBuffer emptyBuf = WINPR_C_ARRAY_INIT;
 	sspi_SecBufferFree(&emptyBuf);
 
 	return TRUE;
