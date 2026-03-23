@@ -1221,6 +1221,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxPlanar, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, FALSE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV1, TRUE) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV1Profile, 1) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxSendQoeAck, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, TRUE))
 		goto out_fail;
