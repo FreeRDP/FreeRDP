@@ -1662,6 +1662,8 @@ static BOOL nla_encode_ts_smartcard_credentials(rdpNla* nla, WinPrAsn1Encoder* e
 	    (BYTE*)freerdp_settings_get_string_as_utf16(settings, FreeRDP_Password, &ss);
 	octet_string.len = ss * sizeof(WCHAR);
 	BOOL res = WinPrAsn1EncContextualOctetString(enc, 0, &octet_string) > 0;
+	if (octet_string.data)
+		memset(octet_string.data, 0, octet_string.len);
 	free(octet_string.data);
 	if (!res)
 		return FALSE;
@@ -1688,6 +1690,8 @@ static BOOL nla_encode_ts_smartcard_credentials(rdpNla* nla, WinPrAsn1Encoder* e
 		{
 			const BOOL res2 =
 			    WinPrAsn1EncContextualOctetString(enc, cspData_fields[i].tag, &octet_string) > 0;
+			if (octet_string.data)
+				memset(octet_string.data, 0, octet_string.len);
 			free(octet_string.data);
 			if (!res2)
 				return FALSE;
@@ -1705,6 +1709,8 @@ static BOOL nla_encode_ts_smartcard_credentials(rdpNla* nla, WinPrAsn1Encoder* e
 		    (BYTE*)freerdp_settings_get_string_as_utf16(settings, FreeRDP_Username, &ss);
 		octet_string.len = ss * sizeof(WCHAR);
 		res = WinPrAsn1EncContextualOctetString(enc, 2, &octet_string) > 0;
+		if (octet_string.data)
+			memset(octet_string.data, 0, octet_string.len);
 		free(octet_string.data);
 		if (!res)
 			return FALSE;
@@ -1717,6 +1723,8 @@ static BOOL nla_encode_ts_smartcard_credentials(rdpNla* nla, WinPrAsn1Encoder* e
 		    (BYTE*)freerdp_settings_get_string_as_utf16(settings, FreeRDP_Domain, &ss);
 		octet_string.len = ss * sizeof(WCHAR);
 		res = WinPrAsn1EncContextualOctetString(enc, 3, &octet_string) > 0;
+		if (octet_string.data)
+			memset(octet_string.data, 0, octet_string.len);
 		free(octet_string.data);
 		if (!res)
 			return FALSE;
