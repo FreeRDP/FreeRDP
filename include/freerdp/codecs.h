@@ -22,9 +22,13 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/config.h>
 
 #include <freerdp/codec/color.h>
 
+#if defined(WITH_GFX_AV1)
+#include <freerdp/codec/av1.h>
+#endif
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/h264.h>
@@ -35,16 +39,20 @@
 
 typedef enum
 {
-	FREERDP_CODEC_INTERLEAVED = 0x00000001,
-	FREERDP_CODEC_PLANAR = 0x00000002,
-	FREERDP_CODEC_NSCODEC = 0x00000004,
-	FREERDP_CODEC_REMOTEFX = 0x00000008,
-	FREERDP_CODEC_CLEARCODEC = 0x00000010,
-	FREERDP_CODEC_ALPHACODEC = 0x00000020,
-	FREERDP_CODEC_PROGRESSIVE = 0x00000040,
-	FREERDP_CODEC_AVC420 = 0x00000080,
-	FREERDP_CODEC_AVC444 = 0x00000100,
-	FREERDP_CODEC_ALL = 0x7FFFFFFF /* C enum types are restricted to int */
+	FREERDP_CODEC_INTERLEAVED = 0x00000001u,
+	FREERDP_CODEC_PLANAR = 0x00000002u,
+	FREERDP_CODEC_NSCODEC = 0x00000004u,
+	FREERDP_CODEC_REMOTEFX = 0x00000008u,
+	FREERDP_CODEC_CLEARCODEC = 0x00000010u,
+	FREERDP_CODEC_ALPHACODEC = 0x00000020u,
+	FREERDP_CODEC_PROGRESSIVE = 0x00000040u,
+	FREERDP_CODEC_AVC420 = 0x00000080u,
+	FREERDP_CODEC_AVC444 = 0x00000100u,
+#if defined(WITH_GFX_AV1)
+	FREERDP_CODEC_AV1_I420 = 0x00000200u,
+	FREERDP_CODEC_AV1_I444 = 0x00000400u,
+#endif
+	FREERDP_CODEC_ALL = 0x7FFFFFFFu /* C enum types are restricted to int */
 } FreeRDP_CodecFlags;
 
 #ifdef __cplusplus
@@ -87,7 +95,6 @@ extern "C"
 	 *  @since version 3.6.0
 	 */
 	WINPR_ATTR_MALLOC(freerdp_client_codecs_free, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpCodecs* freerdp_client_codecs_new(UINT32 ThreadingFlags);
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)

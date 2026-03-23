@@ -23,6 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
+#include <freerdp/config.h>
 
 /** The command line name of the channel
  *
@@ -96,6 +97,9 @@ typedef struct
 /**
  * Capability Sets [MS-RDPEGFX] 2.2.3
  */
+#if defined(WITH_GFX_AV1)
+#define RDPGFX_CAPVERSION_FRDP_1 0x00010000 /* Custom capversion for FreeRDP extensions */
+#endif
 
 #define RDPGFX_CAPVERSION_8 0x00080004   /** [MS-RDPEGFX] 2.2.3.1 */
 #define RDPGFX_CAPVERSION_81 0x00080105  /** [MS-RDPEGFX] 2.2.3.2 */
@@ -114,7 +118,6 @@ typedef struct
 #define RDPGFX_CAPVERSION_106_ERR 0x000A0601
 #define RDPGFX_CAPVERSION_107 0x000A0701 /** [MS-RDPEGFX] 2.2.3.10 */
 
-#define RDPGFX_NUMBER_CAPSETS 11
 #define RDPGFX_CAPSET_BASE_SIZE 8
 
 typedef struct
@@ -131,6 +134,14 @@ typedef struct
 #define RDPGFX_CAPS_FLAG_AVC_THINCLIENT 0x00000040U    /* 10.3+ */
 #define RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE 0x00000080U /* 10.7+ */
 
+#if defined(WITH_GFX_AV1)
+#define RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED                                 \
+0x10000000U /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1 is \
+	                               used */
+#define RDPGFX_CAPS_FLAG_AV1_I444_DISABLED                                       \
+0x20000000U /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1 is used \
+	         */
+#endif
 typedef struct
 {
 	UINT32 version;
@@ -157,6 +168,10 @@ typedef struct
  */
 
 #define RDPGFX_CODECID_UNCOMPRESSED 0x0000
+#if defined(WITH_GFX_AV1)
+#define RDPGFX_CODECID_AV1 \
+0x0001 /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1 is used */
+#endif
 #define RDPGFX_CODECID_CAVIDEO 0x0003
 #define RDPGFX_CODECID_CLEARCODEC 0x0008
 #define RDPGFX_CODECID_PLANAR 0x000A

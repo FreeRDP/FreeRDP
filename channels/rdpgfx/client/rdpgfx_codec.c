@@ -283,6 +283,9 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 
 	switch (cmd->codecId)
 	{
+#if defined(WITH_GFX_AV1)
+		case RDPGFX_CODECID_AV1:
+#endif
 		case RDPGFX_CODECID_AVC420:
 			if ((error = rdpgfx_decode_AVC420(gfx, cmd)))
 				WLog_Print(gfx->base.log, WLOG_ERROR,

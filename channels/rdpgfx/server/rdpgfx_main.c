@@ -778,39 +778,14 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_write_surface_command(wLog* log, wStream
 		Stream_Write_UINT32(s, cmd->length); /* bitmapDataLength (4 bytes) */
 		const size_t bitmapDataStart = Stream_GetPosition(s);
 
-		if (cmd->codecId == RDPGFX_CODECID_AVC420)
+		switch (cmd->codecId)
 		{
-			havc420 = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
-			error = rdpgfx_write_h264_avc420(log, s, havc420);
-
-			if (error != CHANNEL_RC_OK)
+#if defined(WITH_GFX_AV1)
+			case RDPGFX_CODECID_AV1:
+#endif
+			case RDPGFX_CODECID_AVC420:
 			{
-				WLog_Print(log, WLOG_ERROR, "rdpgfx_write_h264_avc420 failed!");
-				return error;
-			}
-		}
-		else if ((cmd->codecId == RDPGFX_CODECID_AVC444) ||
-		         (cmd->codecId == RDPGFX_CODECID_AVC444v2))
-		{
-			havc444 = (RDPGFX_AVC444_BITMAP_STREAM*)cmd->extra;
-			havc420 = &(havc444->bitstream[0]); /* avc420EncodedBitstreamInfo (4 bytes) */
-			if (!Stream_EnsureRemainingCapacity(s, 4))
-				return ERROR_INTERNAL_ERROR;
-			Stream_Write_UINT32(s, havc444->cbAvc420EncodedBitstream1 |
-			                           ((uint32_t)havc444->LC << 30UL));
-			/* avc420EncodedBitstream1 */
-			error = rdpgfx_write_h264_avc420(log, s, havc420);
-
-			if (error != CHANNEL_RC_OK)
-			{
-				WLog_Print(log, WLOG_ERROR, "rdpgfx_write_h264_avc420 failed!");
-				return error;
-			}
-
-			/* avc420EncodedBitstream2 */
-			if (havc444->LC == 0)
-			{
-				havc420 = &(havc444->bitstream[1]);
+				havc420 = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
 				error = rdpgfx_write_h264_avc420(log, s, havc420);
 
 				if (error != CHANNEL_RC_OK)
@@ -819,12 +794,45 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_write_surface_command(wLog* log, wStream
 					return error;
 				}
 			}
-		}
-		else
-		{
-			if (!Stream_EnsureRemainingCapacity(s, cmd->length))
-				return ERROR_INTERNAL_ERROR;
-			Stream_Write(s, cmd->data, cmd->length);
+			break;
+
+			case RDPGFX_CODECID_AVC444:
+			case RDPGFX_CODECID_AVC444v2:
+			{
+				havc444 = (RDPGFX_AVC444_BITMAP_STREAM*)cmd->extra;
+				havc420 = &(havc444->bitstream[0]); /* avc420EncodedBitstreamInfo (4 bytes) */
+				if (!Stream_EnsureRemainingCapacity(s, 4))
+					return ERROR_INTERNAL_ERROR;
+				Stream_Write_UINT32(s, havc444->cbAvc420EncodedBitstream1 |
+				                           ((uint32_t)havc444->LC << 30UL));
+				/* avc420EncodedBitstream1 */
+				error = rdpgfx_write_h264_avc420(log, s, havc420);
+
+				if (error != CHANNEL_RC_OK)
+				{
+					WLog_Print(log, WLOG_ERROR, "rdpgfx_write_h264_avc420 failed!");
+					return error;
+				}
+
+				/* avc420EncodedBitstream2 */
+				if (havc444->LC == 0)
+				{
+					havc420 = &(havc444->bitstream[1]);
+					error = rdpgfx_write_h264_avc420(log, s, havc420);
+
+					if (error != CHANNEL_RC_OK)
+					{
+						WLog_Print(log, WLOG_ERROR, "rdpgfx_write_h264_avc420 failed!");
+						return error;
+					}
+				}
+			}
+			break;
+			default:
+				if (!Stream_EnsureRemainingCapacity(s, cmd->length))
+					return ERROR_INTERNAL_ERROR;
+				Stream_Write(s, cmd->data, cmd->length);
+				break;
 		}
 
 		/* Fill actual bitmap data length */
