@@ -936,6 +936,59 @@ static int pf_client_verify_X509_certificate(freerdp* instance, const BYTE* data
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL pf_client_choose_smartcard(WINPR_ATTR_UNUSED freerdp* instance,
+                                       WINPR_ATTR_UNUSED SmartcardCertInfo** cert_list,
+                                       WINPR_ATTR_UNUSED DWORD count, DWORD* choice,
+                                       WINPR_ATTR_UNUSED BOOL gateway)
+{
+	if (count < 1)
+		return FALSE;
+	*choice = 0;
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL pf_client_authenticate_ex(WINPR_ATTR_UNUSED freerdp* instance,
+                                      WINPR_ATTR_UNUSED char** username,
+                                      WINPR_ATTR_UNUSED char** password,
+                                      WINPR_ATTR_UNUSED char** domain, rdp_auth_reason reason)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(username);
+	WINPR_ASSERT(password);
+	WINPR_ASSERT(domain);
+
+	/* Here just return success, if the remote does require some non empty credentials
+	 * then it will fail, otherwise a login prompt will be shown. */
+	switch (reason)
+	{
+		case AUTH_RDSTLS:
+		case AUTH_NLA:
+		case AUTH_TLS:
+		case AUTH_RDP:
+		case AUTH_SMARTCARD_PIN: /* in this case password is pin code */
+		case GW_AUTH_HTTP:
+		case GW_AUTH_RDG:
+		case GW_AUTH_RPC:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL pf_client_present_gateway_message(WINPR_ATTR_UNUSED freerdp* instance,
+                                              WINPR_ATTR_UNUSED UINT32 type,
+                                              WINPR_ATTR_UNUSED BOOL isDisplayMandatory,
+                                              WINPR_ATTR_UNUSED BOOL isConsentMandatory,
+                                              WINPR_ATTR_UNUSED size_t length,
+                                              WINPR_ATTR_UNUSED const WCHAR* message)
+{
+	WLog_WARN(TAG, "TODO: Implement gateway message forwarding");
+	return TRUE;
+}
+
 void channel_data_free(void* obj)
 {
 	union
@@ -1008,7 +1061,14 @@ static BOOL pf_client_client_new(freerdp* instance, rdpContext* context)
 	instance->PostDisconnect = pf_client_post_disconnect;
 	instance->Redirect = pf_client_redirect;
 	instance->LogonErrorInfo = pf_logon_error_info;
+	instance->GetAccessToken = nullptr;
+	instance->RetryDialog = nullptr;
+	instance->VerifyCertificateEx = nullptr;
+	instance->VerifyChangedCertificateEx = nullptr;
 	instance->VerifyX509Certificate = pf_client_verify_X509_certificate;
+	instance->AuthenticateEx = pf_client_authenticate_ex;
+	instance->ChooseSmartcard = pf_client_choose_smartcard;
+	instance->PresentGatewayMessage = pf_client_present_gateway_message;
 
 	pc->remote_pem = Stream_New(nullptr, 4096);
 	if (!pc->remote_pem)
