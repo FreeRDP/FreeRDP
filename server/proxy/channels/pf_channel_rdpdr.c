@@ -1304,12 +1304,19 @@ BOOL pf_channel_send_client_queue(pClientContext* pc, pf_channel_client_context*
 	WINPR_ASSERT(rdpdr);
 
 	if (rdpdr->state != STATE_CLIENT_CHANNEL_RUNNING)
-		return FALSE;
+	{
+		CLIENT_TX_LOG(rdpdr->log, WLOG_WARN, "Client RDPDR channel not ready, dropping packet!");
+		return TRUE;
+	}
 
 	const UINT16 channelId =
 	    freerdp_channels_get_id_by_name(pc->context.instance, RDPDR_SVC_CHANNEL_NAME);
 	if ((channelId == 0) || (channelId == UINT16_MAX))
+	{
+		CLIENT_TX_LOG(rdpdr->log, WLOG_WARN,
+		              "Client RDPDR channel not available, dropping packet!");
 		return TRUE;
+	}
 
 	Queue_Lock(rdpdr->queue);
 	while (Queue_Count(rdpdr->queue) > 0)
