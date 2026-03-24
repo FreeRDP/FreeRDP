@@ -133,7 +133,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 
 	WINPR_ASSERT(ctx);
 
-	rv = krb5_get_init_creds_opt_alloc(ctx, &gic_opt);
+	rv = krb_log_exec(krb5_get_init_creds_opt_alloc, ctx, &gic_opt);
 	if (rv)
 		goto cleanup;
 
@@ -150,28 +150,28 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 			krb5_get_init_creds_opt_set_renew_life(gic_opt, krb_settings->renewLifeTime);
 		if (krb_settings->withPac)
 		{
-			rv = krb5_get_init_creds_opt_set_pac_request(ctx, gic_opt, TRUE);
+			rv = krb_log_exec(krb5_get_init_creds_opt_set_pac_request, ctx, gic_opt, TRUE);
 			if (rv)
 				goto cleanup;
 		}
 		if (krb_settings->armorCache)
 		{
-			rv = krb5_get_init_creds_opt_set_fast_ccache_name(ctx, gic_opt,
-			                                                  krb_settings->armorCache);
+			rv = krb_log_exec(krb5_get_init_creds_opt_set_fast_ccache_name, ctx, gic_opt,
+			                  krb_settings->armorCache);
 			if (rv)
 				goto cleanup;
 		}
 		if (krb_settings->pkinitX509Identity)
 		{
-			rv = krb5_get_init_creds_opt_set_pa(ctx, gic_opt, "X509_user_identity",
-			                                    krb_settings->pkinitX509Identity);
+			rv = krb_log_exec(krb5_get_init_creds_opt_set_pa, ctx, gic_opt, "X509_user_identity",
+			                  krb_settings->pkinitX509Identity);
 			if (rv)
 				goto cleanup;
 		}
 		if (krb_settings->pkinitX509Anchors)
 		{
-			rv = krb5_get_init_creds_opt_set_pa(ctx, gic_opt, "X509_anchors",
-			                                    krb_settings->pkinitX509Anchors);
+			rv = krb_log_exec(krb5_get_init_creds_opt_set_pa, ctx, gic_opt, "X509_anchors",
+			                  krb_settings->pkinitX509Anchors);
 			if (rv)
 				goto cleanup;
 		}
@@ -182,7 +182,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 			char* kdc_url = nullptr;
 			size_t size = 0;
 
-			if ((rv = krb5_get_profile(ctx, &profile)))
+			if ((rv = krb_log_exec(krb5_get_profile, ctx, &profile)))
 				goto cleanup;
 
 			rv = ENOMEM;
@@ -231,17 +231,19 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 		}
 	}
 
-	if ((rv = krb5_get_init_creds_opt_set_in_ccache(ctx, gic_opt, ccache)))
+	if ((rv = krb_log_exec(krb5_get_init_creds_opt_set_in_ccache, ctx, gic_opt, ccache)))
 		goto cleanup;
 
-	if ((rv = krb5_get_init_creds_opt_set_out_ccache(ctx, gic_opt, ccache)))
+	if ((rv = krb_log_exec(krb5_get_init_creds_opt_set_out_ccache, ctx, gic_opt, ccache)))
 		goto cleanup;
 
-	if ((rv =
-	         krb5_init_creds_init(ctx, princ, prompter, password, start_time, gic_opt, &creds_ctx)))
+	if ((rv = krb_log_exec(krb5_init_creds_init, ctx, princ, prompter, password, start_time,
+	                       gic_opt, &creds_ctx)))
 		goto cleanup;
 
-	if ((rv = krb5_init_creds_get(ctx, creds_ctx)))
+	krb_log_context_encryption(ctx, princ);
+
+	if ((rv = krb_log_exec(krb5_init_creds_get, ctx, creds_ctx)))
 		goto cleanup;
 
 cleanup:
