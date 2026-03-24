@@ -342,15 +342,23 @@ static BOOL android_authenticate_int(freerdp* instance, char** username, char** 
 	return ((res == JNI_TRUE) ? TRUE : FALSE);
 }
 
-static BOOL android_authenticate(freerdp* instance, char** username, char** password, char** domain)
+static BOOL android_authenticate_ex(freerdp* instance, char** username, char** password,
+                                    char** domain, rdp_auth_reason reason)
 {
-	return android_authenticate_int(instance, username, password, domain, "OnAuthenticate");
-}
-
-static BOOL android_gw_authenticate(freerdp* instance, char** username, char** password,
-                                    char** domain)
-{
-	return android_authenticate_int(instance, username, password, domain, "OnGatewayAuthenticate");
+	switch (reason)
+	{
+		case AUTH_NLA:
+		case AUTH_TLS:
+		case AUTH_RDP:
+			return android_authenticate_int(instance, username, password, domain, "OnAuthenticate");
+		case GW_AUTH_HTTP:
+		case GW_AUTH_RDG:
+		case GW_AUTH_RPC:
+			return android_authenticate_int(instance, username, password, domain,
+			                                "OnGatewayAuthenticate");
+		default:
+			return FALSE;
+	}
 }
 
 static DWORD android_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
@@ -532,8 +540,7 @@ static BOOL android_client_new(freerdp* instance, rdpContext* context)
 	instance->PreConnect = android_pre_connect;
 	instance->PostConnect = android_post_connect;
 	instance->PostDisconnect = android_post_disconnect;
-	instance->Authenticate = android_authenticate;
-	instance->GatewayAuthenticate = android_gw_authenticate;
+	instance->AuthenticateEx = android_authenticate_ex;
 	instance->VerifyCertificateEx = android_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = android_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = nullptr;
