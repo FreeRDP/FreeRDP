@@ -361,6 +361,16 @@ static void ntlm_ContextFree(NTLM_CONTEXT* context)
 	sspi_SecBufferFree(&context->LmChallengeResponse);
 	free(context->ServicePrincipalName.Buffer);
 	free(context->Workstation.Buffer);
+
+	/* Zero sensitive key material before freeing the context */
+	memset(context->NtlmHash, 0, sizeof(context->NtlmHash));
+	memset(context->NtlmV2Hash, 0, sizeof(context->NtlmV2Hash));
+	memset(context->SessionBaseKey, 0, sizeof(context->SessionBaseKey));
+	memset(context->KeyExchangeKey, 0, sizeof(context->KeyExchangeKey));
+	memset(context->RandomSessionKey, 0, sizeof(context->RandomSessionKey));
+	memset(context->ExportedSessionKey, 0, sizeof(context->ExportedSessionKey));
+	memset(context->EncryptedRandomSessionKey, 0, sizeof(context->EncryptedRandomSessionKey));
+	memset(context->NtProofString, 0, sizeof(context->NtProofString));
 	free(context);
 }
 

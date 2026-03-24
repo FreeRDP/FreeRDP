@@ -84,6 +84,10 @@ void WinPrAsn1FreeOID(WinPrAsn1_OID* poid)
 
 void WinPrAsn1FreeOctetString(WinPrAsn1_OctetString* octets)
 {
+	WINPR_ASSERT(octets);
+	/* Zero sensitive data (e.g. credential UTF-16 copies) before freeing */
+	if (octets->data && octets->len > 0)
+		memset(octets->data, 0, octets->len);
 	WinPrAsn1FreeOID(octets);
 }
 
