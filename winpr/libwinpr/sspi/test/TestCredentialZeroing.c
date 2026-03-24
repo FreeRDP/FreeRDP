@@ -21,18 +21,22 @@ static BOOL test_FreeAuthIdentity_zeroes_fields(void)
 	SEC_WINNT_AUTH_IDENTITY identity = WINPR_C_ARRAY_INIT;
 	identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-	identity.User = ConvertUtf8ToWCharAlloc(testUser, &identity.UserLength);
+	size_t len = 0;
+	identity.User = ConvertUtf8ToWCharAlloc(testUser, &len);
+	identity.UserLength = WINPR_ASSERTING_INT_CAST(UINT32, len);
 	if (!identity.User)
 		return FALSE;
 
-	identity.Domain = ConvertUtf8ToWCharAlloc(testDomain, &identity.DomainLength);
+	identity.Domain = ConvertUtf8ToWCharAlloc(testDomain, &len);
+	identity.DomainLength = WINPR_ASSERTING_INT_CAST(UINT32, len);
 	if (!identity.Domain)
 	{
 		free(identity.User);
 		return FALSE;
 	}
 
-	identity.Password = ConvertUtf8ToWCharAlloc(testPassword, &identity.PasswordLength);
+	identity.Password = ConvertUtf8ToWCharAlloc(testPassword, &len);
+	identity.PasswordLength = WINPR_ASSERTING_INT_CAST(UINT32, len);
 	if (!identity.Password)
 	{
 		free(identity.User);
