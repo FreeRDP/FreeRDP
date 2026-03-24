@@ -423,7 +423,7 @@ static bool test_data(const char* json, const void* data, size_t len, bool unche
 		goto fail;
 #endif
 	wLog* log = WLog_Get(__func__);
-	WLog_Print(log, WLOG_INFO, "Test cast '%s'", json);
+	WLog_Print(log, WLOG_INFO, "Test case '%s'", json);
 	if (freerdp_settings_print_diff(log, WLOG_ERROR, expect, settings))
 		goto fail;
 	rc = true;
@@ -775,18 +775,22 @@ int TestClientRdpFile(int argc, char* argv[])
 	if (iValue != 456)
 		return -1;
 
-	const char microsoft[] = "microsoft";
-	sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
-	if (strncmp(sValue, microsoft, sizeof(microsoft)) != 0)
+	{
+		const char microsoft[] = "microsoft";
+		sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
+		if (strncmp(sValue, microsoft, sizeof(microsoft)) != 0)
+			goto fail;
+	}
+	{
+		const char apple[] = "apple";
+		if (freerdp_client_rdp_file_set_string_option(file, "vendor string", "apple") == 0)
+			goto fail;
+		sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
+		if (strncmp(sValue, apple, sizeof(apple)) != 0)
+			goto fail;
+	}
+	if (freerdp_client_rdp_file_set_string_option(file, "fruits", "banana,oranges") == 0)
 		goto fail;
-
-	const char apple[] = "apple";
-	freerdp_client_rdp_file_set_string_option(file, "vendor string", "apple");
-	sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
-	if (strncmp(sValue, apple, sizeof(apple)) != 0)
-		goto fail;
-
-	freerdp_client_rdp_file_set_string_option(file, "fruits", "banana,oranges");
 
 	if (freerdp_client_rdp_file_set_integer_option(file, "numbers", 123456789) == -1)
 	{
