@@ -94,10 +94,15 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 		return AUTH_SKIP;
 	}
 
+#if !defined(WITH_FREERDP_DEPRECATED)
+	if (!instance->AuthenticateEx)
+		return AUTH_NO_CREDENTIALS;
+#else
 	if (!instance->GatewayAuthenticate && !instance->AuthenticateEx)
 		return AUTH_NO_CREDENTIALS;
 
 	if (!instance->GatewayAuthenticate)
+#endif
 	{
 		proceed =
 		    instance->AuthenticateEx(instance, &settings->GatewayUsername,
@@ -105,6 +110,7 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 		if (!proceed)
 			return AUTH_CANCELLED;
 	}
+#if defined(WITH_FREERDP_DEPRECATED)
 	else
 	{
 		proceed =
@@ -113,6 +119,7 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 		if (!proceed)
 			return AUTH_CANCELLED;
 	}
+#endif
 
 	if (utils_str_is_empty(settings->GatewayUsername) ||
 	    utils_str_is_empty(settings->GatewayPassword))
@@ -191,16 +198,21 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 	}
 
 	/* If no callback is specified still continue connection */
+#if !defined(WITH_FREERDP_DEPRECATED)
+	if (!instance->AuthenticateEx)
+		return AUTH_NO_CREDENTIALS;
+#else
 	if (!instance->Authenticate && !instance->AuthenticateEx)
 		return AUTH_NO_CREDENTIALS;
-
 	if (!instance->Authenticate)
+#endif
 	{
 		proceed = instance->AuthenticateEx(instance, &settings->Username, &settings->Password,
 		                                   &settings->Domain, reason);
 		if (!proceed)
 			return AUTH_CANCELLED;
 	}
+#if defined(WITH_FREERDP_DEPRECATED)
 	else
 	{
 		proceed = instance->Authenticate(instance, &settings->Username, &settings->Password,
@@ -208,6 +220,7 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 		if (!proceed)
 			return AUTH_NO_CREDENTIALS;
 	}
+#endif
 
 	if (utils_str_is_empty(settings->Username) || utils_str_is_empty(settings->Password))
 		return AUTH_NO_CREDENTIALS;

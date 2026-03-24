@@ -503,11 +503,14 @@ owned by rdpRdp */
 		              Can be set before calling freerdp_connect() to have it executed after the
 		              actual connection has succeeded. Must be set to nullptr if not needed. */
 
-		WINPR_ATTR_NODISCARD ALIGN64 pAuthenticate Authenticate; /**< (offset 50)
-		                                 Callback for authentication.
-		                                 It is used to get the username/password when it was not
-		                                 provided at connection time. */
 #if defined(WITH_FREERDP_DEPRECATED)
+		WINPR_DEPRECATED_VAR("[since 3.25.0] Use AuthenticateEx instead",
+		                     WINPR_ATTR_NODISCARD ALIGN64 pAuthenticate
+		                         Authenticate); /**< (offset 50)
+  Callback for authentication.
+  It is used to get the username/password when it was not
+  provided at connection time. */
+
 		WINPR_DEPRECATED_VAR("Use VerifyCertificateEx or VerifyX509Certificate  instead",
 		                     WINPR_ATTR_NODISCARD ALIGN64 pVerifyCertificate
 		                         VerifyCertificate;) /**< (offset 51) */
@@ -515,7 +518,7 @@ owned by rdpRdp */
 		                     WINPR_ATTR_NODISCARD ALIGN64 pVerifyChangedCertificate
 		                         VerifyChangedCertificate;) /**< (offset 52) */
 #else
-	ALIGN64 UINT64 reserved[2];
+	    ALIGN64 UINT64 reserved50[3];
 #endif
 		WINPR_ATTR_NODISCARD ALIGN64 pVerifyX509Certificate
 		    VerifyX509Certificate; /**< (offset 53)  Callback for X509 certificate verification
@@ -533,12 +536,16 @@ owned by rdpRdp */
 		                       This will be called before disconnecting and cleaning up the
 		                       channels.
  */
-
-		WINPR_ATTR_NODISCARD ALIGN64 pAuthenticate GatewayAuthenticate; /**< (offset 56)
-		                                 Callback for gateway authentication.
-		                                 It is used to get the username/password when it was not
-		                                 provided at connection time. */
-
+#if defined(WITH_FREERDP_DEPRECATED)
+		WINPR_DEPRECATED_VAR("[since 3.25.0] Use AuthenticateEx instead",
+		                     WINPR_ATTR_NODISCARD ALIGN64 pAuthenticate
+		                         GatewayAuthenticate); /**< (offset 56)
+  Callback for gateway authentication.
+  It is used to get the username/password when it was not
+  provided at connection time. */
+#else
+	    ALIGN64 UINT64 reserved56[1];
+#endif
 		WINPR_ATTR_NODISCARD ALIGN64 pPresentGatewayMessage PresentGatewayMessage; /**< (offset 57)
 		                                  Callback for gateway consent messages.
 		                                  It is used to present consent messages to the user. */
