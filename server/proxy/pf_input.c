@@ -48,16 +48,14 @@ static BOOL pf_server_check_and_sync_input_state(pClientContext* pc)
 WINPR_ATTR_NODISCARD
 static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	pServerContext* ps = nullptr;
-	pClientContext* pc = nullptr;
-
 	WINPR_ASSERT(input);
-	ps = (pServerContext*)input->context;
+	pServerContext* ps = (pServerContext*)input->context;
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->pdata);
 
-	pc = ps->pdata->pc;
-	WINPR_ASSERT(pc);
+	pClientContext* pc = ps->pdata->pc;
+	if (!pc)
+		return TRUE;
 
 	pc->input_state = flags;
 	pc->input_state_sync_pending = TRUE;
@@ -70,20 +68,18 @@ static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 WINPR_ATTR_NODISCARD
 static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
-	const proxyConfig* config = nullptr;
 	proxyKeyboardEventInfo event = WINPR_C_ARRAY_INIT;
-	pServerContext* ps = nullptr;
-	pClientContext* pc = nullptr;
 
 	WINPR_ASSERT(input);
-	ps = (pServerContext*)input->context;
+	pServerContext* ps = (pServerContext*)input->context;
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->pdata);
 
-	pc = ps->pdata->pc;
-	WINPR_ASSERT(pc);
+	pClientContext* pc = ps->pdata->pc;
+	if (!pc)
+		return TRUE;
 
-	config = ps->pdata->config;
+	const proxyConfig* config = ps->pdata->config;
 	WINPR_ASSERT(config);
 
 	if (!pf_server_check_and_sync_input_state(pc))
@@ -104,20 +100,18 @@ static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 WINPR_ATTR_NODISCARD
 static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	const proxyConfig* config = nullptr;
 	proxyUnicodeEventInfo event = WINPR_C_ARRAY_INIT;
-	pServerContext* ps = nullptr;
-	pClientContext* pc = nullptr;
 
 	WINPR_ASSERT(input);
-	ps = (pServerContext*)input->context;
+	pServerContext* ps = (pServerContext*)input->context;
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->pdata);
 
-	pc = ps->pdata->pc;
-	WINPR_ASSERT(pc);
+	pClientContext* pc = ps->pdata->pc;
+	if (!pc)
+		return TRUE;
 
-	config = ps->pdata->config;
+	const proxyConfig* config = ps->pdata->config;
 	WINPR_ASSERT(config);
 
 	if (!pf_server_check_and_sync_input_state(pc))
@@ -137,19 +131,17 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	proxyMouseEventInfo event = WINPR_C_ARRAY_INIT;
-	const proxyConfig* config = nullptr;
-	pServerContext* ps = nullptr;
-	pClientContext* pc = nullptr;
 
 	WINPR_ASSERT(input);
-	ps = (pServerContext*)input->context;
+	pServerContext* ps = (pServerContext*)input->context;
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->pdata);
 
-	pc = ps->pdata->pc;
-	WINPR_ASSERT(pc);
+	pClientContext* pc = ps->pdata->pc;
+	if (!pc)
+		return TRUE;
 
-	config = ps->pdata->config;
+	const proxyConfig* config = ps->pdata->config;
 	WINPR_ASSERT(config);
 
 	if (!pf_server_check_and_sync_input_state(pc))
@@ -171,20 +163,19 @@ static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 WINPR_ATTR_NODISCARD
 static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	const proxyConfig* config = nullptr;
 	proxyMouseExEventInfo event = WINPR_C_ARRAY_INIT;
-	pServerContext* ps = nullptr;
-	pClientContext* pc = nullptr;
 
 	WINPR_ASSERT(input);
-	ps = (pServerContext*)input->context;
+
+	pServerContext* ps = (pServerContext*)input->context;
 	WINPR_ASSERT(ps);
 	WINPR_ASSERT(ps->pdata);
 
-	pc = ps->pdata->pc;
-	WINPR_ASSERT(pc);
+	pClientContext* pc = ps->pdata->pc;
+	if (!pc)
+		return TRUE;
 
-	config = ps->pdata->config;
+	const proxyConfig* config = ps->pdata->config;
 	WINPR_ASSERT(config);
 
 	if (!pf_server_check_and_sync_input_state(pc))
