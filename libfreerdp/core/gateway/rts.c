@@ -255,6 +255,15 @@ rts_pdu_status_t rts_read_common_pdu_header(wStream* s, rpcconn_common_hdr_t* he
 			          header->frag_length, sizeof(rpcconn_common_hdr_t));
 		return RTS_PDU_FAIL;
 	}
+	if (header->auth_length > header->frag_length - 8ull)
+	{
+		if (!ignoreErrors)
+			WLog_WARN(TAG,
+			          "Invalid header->auth_length(%" PRIu16 ") > header->frag_length(%" PRIu16
+			          ") - 8ull",
+			          header->frag_length, header->auth_length);
+		return RTS_PDU_FAIL;
+	}
 
 	if (!ignoreErrors)
 	{
