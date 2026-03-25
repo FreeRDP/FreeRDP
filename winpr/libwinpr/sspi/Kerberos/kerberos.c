@@ -1596,6 +1596,7 @@ cleanup:
 				break;
 			default:
 				kerberos_ContextFree(context, TRUE);
+				sspi_SecureHandleInvalidate(phNewContext);
 				break;
 		}
 	}
