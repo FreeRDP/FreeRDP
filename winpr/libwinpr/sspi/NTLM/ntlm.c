@@ -472,7 +472,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle phCreden
 
 	SSPI_CREDENTIALS* credentials =
 	    (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
-
+	sspi_SecureHandleInvalidate(phCredential);
 	if (!credentials)
 		return SEC_E_INVALID_HANDLE;
 
@@ -783,6 +783,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(
 static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
 {
 	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	sspi_SecureHandleInvalidate(phContext);
 	ntlm_ContextFree(context);
 	return SEC_E_OK;
 }

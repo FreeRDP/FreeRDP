@@ -595,12 +595,12 @@ static SECURITY_STATUS
 {
 #ifdef WITH_KRB5
 	KRB_CREDENTIALS* credentials = sspi_SecureHandleGetLowerPointer(phCredential);
+	sspi_SecureHandleInvalidate(phCredential);
 	if (!credentials)
 		return SEC_E_INVALID_HANDLE;
 
 	credentials_unref(credentials);
 
-	sspi_SecureHandleInvalidate(phCredential);
 	return SEC_E_OK;
 #else
 	return SEC_E_UNSUPPORTED_FUNCTION;
@@ -1276,6 +1276,7 @@ cleanup:
 				break;
 			default:
 				kerberos_ContextFree(context, TRUE);
+				sspi_SecureHandleInvalidate(phNewContext);
 				break;
 		}
 	}
@@ -1647,6 +1648,7 @@ static SECURITY_STATUS
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
+	sspi_SecureHandleInvalidate(phContext);
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 

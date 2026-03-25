@@ -183,13 +183,12 @@ static SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(
 
 static SECURITY_STATUS SEC_ENTRY schannel_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	SCHANNEL_CREDENTIALS* credentials = nullptr;
-
 	if (!phCredential)
 		return SEC_E_INVALID_HANDLE;
 
-	credentials = (SCHANNEL_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
-
+	SCHANNEL_CREDENTIALS* credentials =
+	    (SCHANNEL_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
+	sspi_SecureHandleInvalidate(phCredential);
 	if (!credentials)
 		return SEC_E_INVALID_HANDLE;
 
@@ -289,8 +288,8 @@ static SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(
 
 static SECURITY_STATUS SEC_ENTRY schannel_DeleteSecurityContext(PCtxtHandle phContext)
 {
-	SCHANNEL_CONTEXT* context = nullptr;
-	context = (SCHANNEL_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	SCHANNEL_CONTEXT* context = (SCHANNEL_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	sspi_SecureHandleInvalidate(phContext);
 
 	if (!context)
 		return SEC_E_INVALID_HANDLE;

@@ -194,13 +194,12 @@ static SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesA(
 
 static SECURITY_STATUS SEC_ENTRY credssp_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	SSPI_CREDENTIALS* credentials = nullptr;
-
 	if (!phCredential)
 		return SEC_E_INVALID_HANDLE;
 
-	credentials = (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
-
+	SSPI_CREDENTIALS* credentials =
+	    (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
+	sspi_SecureHandleInvalidate(phCredential);
 	if (!credentials)
 		return SEC_E_INVALID_HANDLE;
 
