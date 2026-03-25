@@ -320,6 +320,17 @@ static const INT16 ima_step_size_table[] = {
 	12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
 };
 
+static inline void dsp_ima_clamp_step(ADPCM* WINPR_RESTRICT adpcm, unsigned int channel)
+{
+	WINPR_ASSERT(adpcm);
+	if (adpcm->ima.last_step[channel] < 0)
+		adpcm->ima.last_step[channel] = 0;
+
+	const size_t size = ARRAYSIZE(ima_step_size_table);
+	if (adpcm->ima.last_step[channel] > size)
+		adpcm->ima.last_step[channel] = size;
+}
+
 static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, unsigned int channel,
                                           BYTE sample)
 {
@@ -357,10 +368,7 @@ static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, unsigned 
 	WINPR_ASSERT(sample < ARRAYSIZE(ima_step_index_table));
 	adpcm->ima.last_step[channel] = adpcm->ima.last_step[channel] + ima_step_index_table[sample];
 
-	if (adpcm->ima.last_step[channel] < 0)
-		adpcm->ima.last_step[channel] = 0;
-	else if (adpcm->ima.last_step[channel] > 88)
-		adpcm->ima.last_step[channel] = 88;
+	dsp_ima_clamp_step(adpcm, channel);
 
 	return (UINT16)d;
 }
@@ -403,6 +411,9 @@ static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 			context->adpcm.ima.last_sample[0] =
 			    (INT16)(((UINT16)(*src)) | (((UINT16)(*(src + 1))) << 8));
 			context->adpcm.ima.last_step[0] = (INT16)(*(src + 2));
+
+			dsp_ima_clamp_step(&context->adpcm, 0);
+
 			src += 4;
 			size -= 4;
 			out_size -= 16;
@@ -414,6 +425,8 @@ static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 				context->adpcm.ima.last_sample[1] =
 				    (INT16)(((UINT16)(*src)) | (((UINT16)(*(src + 1))) << 8));
 				context->adpcm.ima.last_step[1] = (INT16)(*(src + 2));
+
+				dsp_ima_clamp_step(&context->adpcm, 1);
 				src += 4;
 				size -= 4;
 				out_size -= 16;
@@ -854,10 +867,7 @@ static BYTE dsp_encode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, size_t chan
 	WINPR_ASSERT(enc < ARRAYSIZE(ima_step_index_table));
 	adpcm->ima.last_step[channel] = adpcm->ima.last_step[channel] + ima_step_index_table[enc];
 
-	if (adpcm->ima.last_step[channel] < 0)
-		adpcm->ima.last_step[channel] = 0;
-	else if (adpcm->ima.last_step[channel] > 88)
-		adpcm->ima.last_step[channel] = 88;
+	dsp_ima_clamp_step(adpcm, channel);
 
 	return enc;
 }

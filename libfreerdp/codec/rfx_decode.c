@@ -35,11 +35,13 @@
 
 #include "rfx_decode.h"
 
-static inline void rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
+WINPR_ATTR_NODISCARD
+static inline BOOL rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
                                         const UINT32* WINPR_RESTRICT quantization_values,
-                                        const BYTE* WINPR_RESTRICT data, size_t size,
-                                        INT16* WINPR_RESTRICT buffer)
+                                        size_t nrQuantValues, const BYTE* WINPR_RESTRICT data,
+                                        size_t size, INT16* WINPR_RESTRICT buffer)
 {
+	BOOL res = FALSE;
 	INT16* dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
 	WINPR_ASSERT(dwt_buffer);
 
@@ -50,7 +52,10 @@ static inline void rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
 	{
 		const int rc = context->rlgr_decode(context->mode, data, (UINT32)size, buffer, 4096);
 		if (rc < 0)
+		{
 			WLog_Print(context->priv->log, WLOG_ERROR, "context->rlgr_decode failed: %d", rc);
+			goto fail;
+		}
 	}
 
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_decode)
@@ -58,13 +63,18 @@ static inline void rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
 	rfx_differential_decode(buffer + 4032, 64);
 	PROFILER_EXIT(context->priv->prof_rfx_differential_decode)
 	PROFILER_ENTER(context->priv->prof_rfx_quantization_decode)
-	context->quantization_decode(buffer, quantization_values);
+	if (!context->quantization_decode(buffer, quantization_values, nrQuantValues))
+		goto fail;
 	PROFILER_EXIT(context->priv->prof_rfx_quantization_decode)
 	PROFILER_ENTER(context->priv->prof_rfx_dwt_2d_decode)
 	context->dwt_2d_decode(buffer, dwt_buffer);
 	PROFILER_EXIT(context->priv->prof_rfx_dwt_2d_decode)
 	PROFILER_EXIT(context->priv->prof_rfx_decode_component)
+
+	res = TRUE;
+fail:
 	BufferPool_Return(context->priv->BufferPool, dwt_buffer);
+	return res;
 }
 
 /* rfx_decode_ycbcr_to_rgb code now resides in the primitives library. */
@@ -78,7 +88,7 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, const RFX_TILE* WINPR_R
 		const INT16** cpv;
 		INT16** pv;
 	} cnv;
-	BOOL rc = TRUE;
+	BOOL rc = FALSE;
 	BYTE* pBuffer = nullptr;
 	INT16* pSrcDst[3];
 	UINT32* y_quants = nullptr;
@@ -87,25 +97,34 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, const RFX_TILE* WINPR_R
 	static const prim_size_t roi_64x64 = { 64, 64 };
 	const primitives_t* prims = primitives_get();
 	PROFILER_ENTER(context->priv->prof_rfx_decode_rgb)
-	y_quants = context->quants + (10ULL * tile->quantIdxY);
-	cb_quants = context->quants + (10ULL * tile->quantIdxCb);
-	cr_quants = context->quants + (10ULL * tile->quantIdxCr);
+	y_quants = context->quants + (NR_QUANT_VALUES * tile->quantIdxY);
+	cb_quants = context->quants + (NR_QUANT_VALUES * tile->quantIdxCb);
+	cr_quants = context->quants + (NR_QUANT_VALUES * tile->quantIdxCr);
 	pBuffer = (BYTE*)BufferPool_Take(context->priv->BufferPool, -1);
 	pSrcDst[0] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 0ULL) + 16ULL]));        /* y_r_buffer */
 	pSrcDst[1] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 1ULL) + 16ULL]));        /* cb_g_buffer */
 	pSrcDst[2] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 2ULL) + 16ULL]));        /* cr_b_buffer */
-	rfx_decode_component(context, y_quants, tile->YData, tile->YLen, pSrcDst[0]); /* YData */
-	rfx_decode_component(context, cb_quants, tile->CbData, tile->CbLen, pSrcDst[1]); /* CbData */
-	rfx_decode_component(context, cr_quants, tile->CrData, tile->CrLen, pSrcDst[2]); /* CrData */
+	if (!rfx_decode_component(context, y_quants, NR_QUANT_VALUES, tile->YData, tile->YLen,
+	                          pSrcDst[0])) /* YData */
+		goto fail;
+	if (!rfx_decode_component(context, cb_quants, NR_QUANT_VALUES, tile->CbData, tile->CbLen,
+	                          pSrcDst[1])) /* CbData */
+		goto fail;
+	if (!rfx_decode_component(context, cr_quants, NR_QUANT_VALUES, tile->CrData, tile->CrLen,
+	                          pSrcDst[2])) /* CrData */
+		goto fail;
 	PROFILER_ENTER(context->priv->prof_rfx_ycbcr_to_rgb)
 
 	cnv.pv = pSrcDst;
 	if (prims->yCbCrToRGB_16s8u_P3AC4R(cnv.cpv, 64 * sizeof(INT16), rgb_buffer, stride,
 	                                   context->pixel_format, &roi_64x64) != PRIMITIVES_SUCCESS)
-		rc = FALSE;
+		goto fail;
 
 	PROFILER_EXIT(context->priv->prof_rfx_ycbcr_to_rgb)
 	PROFILER_EXIT(context->priv->prof_rfx_decode_rgb)
+
+	rc = TRUE;
+fail:
 	BufferPool_Return(context->priv->BufferPool, pBuffer);
 	return rc;
 }

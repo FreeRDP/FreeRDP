@@ -94,34 +94,97 @@ static inline void progressive_rfx_quant_add(const RFX_COMPONENT_CODEC_QUANT* WI
 	dst->LL3 = q1->LL3 + q2->LL3; /* LL3 */
 }
 
-static inline void progressive_rfx_quant_lsub(RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT q, int val)
+WINPR_ATTR_NODISCARD
+static inline BOOL progressive_rfx_quant_lsub(RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT q, int val)
 {
+	if (q->HL1 < val)
+		return FALSE;
 	q->HL1 -= val; /* HL1 */
+
+	if (q->LH1 < val)
+		return FALSE;
 	q->LH1 -= val; /* LH1 */
+
+	if (q->HH1 < val)
+		return FALSE;
 	q->HH1 -= val; /* HH1 */
+
+	if (q->HL2 < val)
+		return FALSE;
 	q->HL2 -= val; /* HL2 */
+
+	if (q->LH2 < val)
+		return FALSE;
 	q->LH2 -= val; /* LH2 */
+
+	if (q->HH2 < val)
+		return FALSE;
 	q->HH2 -= val; /* HH2 */
+
+	if (q->HL3 < val)
+		return FALSE;
 	q->HL3 -= val; /* HL3 */
+
+	if (q->LH3 < val)
+		return FALSE;
 	q->LH3 -= val; /* LH3 */
+
+	if (q->HH3 < val)
+		return FALSE;
 	q->HH3 -= val; /* HH3 */
+
+	if (q->LL3 < val)
+		return FALSE;
 	q->LL3 -= val; /* LL3 */
+	return TRUE;
 }
 
-static inline void progressive_rfx_quant_sub(const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT q1,
+WINPR_ATTR_NODISCARD
+static inline BOOL progressive_rfx_quant_sub(const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT q1,
                                              const RFX_COMPONENT_CODEC_QUANT* WINPR_RESTRICT q2,
                                              RFX_COMPONENT_CODEC_QUANT* dst)
 {
+	if (q1->HH1 < q2->HL1)
+		return FALSE;
 	dst->HL1 = q1->HL1 - q2->HL1; /* HL1 */
+
+	if (q1->LH1 < q2->LH1)
+		return FALSE;
 	dst->LH1 = q1->LH1 - q2->LH1; /* LH1 */
+
+	if (q1->HH1 < q2->HH1)
+		return FALSE;
 	dst->HH1 = q1->HH1 - q2->HH1; /* HH1 */
+
+	if (q1->HL2 < q2->HL2)
+		return FALSE;
 	dst->HL2 = q1->HL2 - q2->HL2; /* HL2 */
+
+	if (q1->LH2 < q2->LH2)
+		return FALSE;
 	dst->LH2 = q1->LH2 - q2->LH2; /* LH2 */
+
+	if (q1->HH2 < q2->HH2)
+		return FALSE;
 	dst->HH2 = q1->HH2 - q2->HH2; /* HH2 */
+
+	if (q1->HL3 < q2->HL3)
+		return FALSE;
 	dst->HL3 = q1->HL3 - q2->HL3; /* HL3 */
+
+	if (q1->LH3 < q2->LH3)
+		return FALSE;
 	dst->LH3 = q1->LH3 - q2->LH3; /* LH3 */
+
+	if (q1->HH3 < q2->HH3)
+		return FALSE;
 	dst->HH3 = q1->HH3 - q2->HH3; /* HH3 */
+
+	if (q1->LL3 < q2->LL3)
+		return FALSE;
 	dst->LL3 = q1->LL3 - q2->LL3; /* LL3 */
+
+	return TRUE;
 }
 
 static inline BOOL
@@ -962,11 +1025,14 @@ progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressiv
 	progressive_rfx_quant_add(quantCb, quantProgCb, &(tile->cbBitPos));
 	progressive_rfx_quant_add(quantCr, quantProgCr, &(tile->crBitPos));
 	progressive_rfx_quant_add(quantY, quantProgY, &shiftY);
-	progressive_rfx_quant_lsub(&shiftY, 1); /* -6 + 5 = -1 */
+	if (!progressive_rfx_quant_lsub(&shiftY, 1)) /* -6 + 5 = -1 */
+		goto fail;
 	progressive_rfx_quant_add(quantCb, quantProgCb, &shiftCb);
-	progressive_rfx_quant_lsub(&shiftCb, 1); /* -6 + 5 = -1 */
+	if (!progressive_rfx_quant_lsub(&shiftCb, 1)) /* -6 + 5 = -1 */
+		goto fail;
 	progressive_rfx_quant_add(quantCr, quantProgCr, &shiftCr);
-	progressive_rfx_quant_lsub(&shiftCr, 1); /* -6 + 5 = -1 */
+	if (!progressive_rfx_quant_lsub(&shiftCr, 1)) /* -6 + 5 = -1 */
+		goto fail;
 
 	pSign[0] = (INT16*)((&tile->sign[((8192 + 32) * 0) + 16])); /* Y/R buffer */
 	pSign[1] = (INT16*)((&tile->sign[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
@@ -1398,15 +1464,21 @@ progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progress
 	progressive_rfx_quant_add(quantY, quantProgY, &yBitPos);
 	progressive_rfx_quant_add(quantCb, quantProgCb, &cbBitPos);
 	progressive_rfx_quant_add(quantCr, quantProgCr, &crBitPos);
-	progressive_rfx_quant_sub(&(tile->yBitPos), &yBitPos, &yNumBits);
-	progressive_rfx_quant_sub(&(tile->cbBitPos), &cbBitPos, &cbNumBits);
-	progressive_rfx_quant_sub(&(tile->crBitPos), &crBitPos, &crNumBits);
+	if (!progressive_rfx_quant_sub(&(tile->yBitPos), &yBitPos, &yNumBits))
+		goto fail;
+	if (!progressive_rfx_quant_sub(&(tile->cbBitPos), &cbBitPos, &cbNumBits))
+		goto fail;
+	if (!progressive_rfx_quant_sub(&(tile->crBitPos), &crBitPos, &crNumBits))
+		goto fail;
 	progressive_rfx_quant_add(quantY, quantProgY, &shiftY);
-	progressive_rfx_quant_lsub(&shiftY, 1); /* -6 + 5 = -1 */
+	if (!progressive_rfx_quant_lsub(&shiftY, 1)) /* -6 + 5 = -1 */
+		goto fail;
 	progressive_rfx_quant_add(quantCb, quantProgCb, &shiftCb);
-	progressive_rfx_quant_lsub(&shiftCb, 1); /* -6 + 5 = -1 */
+	if (!progressive_rfx_quant_lsub(&shiftCb, 1)) /* -6 + 5 = -1 */
+		goto fail;
 	progressive_rfx_quant_add(quantCr, quantProgCr, &shiftCr);
-	progressive_rfx_quant_lsub(&shiftCr, 1); /* -6 + 5 = -1 */
+	if (!progressive_rfx_quant_lsub(&shiftCr, 1)) /* -6 + 5 = -1 */
+		goto fail;
 
 	tile->yBitPos = yBitPos;
 	tile->cbBitPos = cbBitPos;

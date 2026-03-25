@@ -22,6 +22,7 @@
 #include <freerdp/log.h>
 
 #include "../rfx_types.h"
+#include "../rfx_quantization.h"
 #include "rfx_neon.h"
 
 #include "../../core/simd.h"
@@ -52,10 +53,20 @@ rfx_quantization_decode_block_NEON(INT16* buffer, const size_t buffer_size, cons
 	} while (buf < buf_end);
 }
 
-static void rfx_quantization_decode_NEON(INT16* buffer, const UINT32* WINPR_RESTRICT quantVals)
+WINPR_ATTR_NODISCARD
+static BOOL rfx_quantization_decode_NEON(INT16* buffer, const UINT32* WINPR_RESTRICT quantVals,
+                                         size_t nrQuantVals)
 {
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(quantVals);
+	WINPR_ASSERT(nrQuantVals == NR_QUANT_VALUES);
+
+	for (size_t x = 0; x < nrQuantVals; x++)
+	{
+		const UINT32 val = quantVals[x];
+		if (val < 1)
+			return FALSE;
+	}
 
 	rfx_quantization_decode_block_NEON(&buffer[0], 1024, quantVals[8] - 1);    /* HL1 */
 	rfx_quantization_decode_block_NEON(&buffer[1024], 1024, quantVals[7] - 1); /* LH1 */
@@ -67,6 +78,7 @@ static void rfx_quantization_decode_NEON(INT16* buffer, const UINT32* WINPR_REST
 	rfx_quantization_decode_block_NEON(&buffer[3904], 64, quantVals[1] - 1);   /* LH3 */
 	rfx_quantization_decode_block_NEON(&buffer[3968], 64, quantVals[3] - 1);   /* HH3 */
 	rfx_quantization_decode_block_NEON(&buffer[4032], 64, quantVals[0] - 1);   /* LL3 */
+	return TRUE;
 }
 
 static inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))

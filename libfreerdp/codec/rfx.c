@@ -870,8 +870,8 @@ static inline BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 
 	Stream_Read_UINT32(s, tilesDataSize); /* tilesDataSize (4 bytes) */
 
-	if (!(pmem =
-	          winpr_aligned_recalloc(context->quants, context->numQuant, 10 * sizeof(UINT32), 32)))
+	if (!(pmem = winpr_aligned_recalloc(context->quants, context->numQuant,
+	                                    NR_QUANT_VALUES * sizeof(UINT32), 32)))
 		return FALSE;
 
 	quants = context->quants = (UINT32*)pmem;
@@ -898,14 +898,15 @@ static inline BOOL rfx_process_message_tileset(RFX_CONTEXT* WINPR_RESTRICT conte
 		Stream_Read_UINT8(s, quant);
 		*quants++ = (quant & 0x0F);
 		*quants++ = (quant >> 4);
-		WLog_Print(context->priv->log, WLOG_DEBUG,
-		           "quant %" PRIuz " (%" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32
-		           " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 ").",
-		           i, context->quants[i * 10], context->quants[i * 10 + 1],
-		           context->quants[i * 10 + 2], context->quants[i * 10 + 3],
-		           context->quants[i * 10 + 4], context->quants[i * 10 + 5],
-		           context->quants[i * 10 + 6], context->quants[i * 10 + 7],
-		           context->quants[i * 10 + 8], context->quants[i * 10 + 9]);
+		WLog_Print(
+		    context->priv->log, WLOG_DEBUG,
+		    "quant %" PRIuz " (%" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32
+		    " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 ").",
+		    i, context->quants[i * NR_QUANT_VALUES], context->quants[i * NR_QUANT_VALUES + 1],
+		    context->quants[i * NR_QUANT_VALUES + 2], context->quants[i * NR_QUANT_VALUES + 3],
+		    context->quants[i * NR_QUANT_VALUES + 4], context->quants[i * NR_QUANT_VALUES + 5],
+		    context->quants[i * NR_QUANT_VALUES + 6], context->quants[i * NR_QUANT_VALUES + 7],
+		    context->quants[i * NR_QUANT_VALUES + 8], context->quants[i * NR_QUANT_VALUES + 9]);
 	}
 
 	for (size_t i = 0; i < message->numTiles; i++)
@@ -1693,6 +1694,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 	if (!context->numQuant)
 	{
 		WINPR_ASSERT(context->quants == nullptr);
+		WINPR_ASSERT(NR_QUANT_VALUES == ARRAYSIZE(rfx_default_quantization_values));
 		if (!(context->quants =
 		          (UINT32*)winpr_aligned_malloc(sizeof(rfx_default_quantization_values), 32)))
 			goto skip_encoding_loop;

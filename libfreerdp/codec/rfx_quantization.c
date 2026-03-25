@@ -54,12 +54,21 @@ static inline BOOL rfx_quantization_decode_block(const primitives_t* WINPR_RESTR
 	return prims->lShiftC_16s_inplace(buffer, factor, buffer_size) == PRIMITIVES_SUCCESS;
 }
 
-void rfx_quantization_decode(INT16* WINPR_RESTRICT buffer,
-                             const UINT32* WINPR_RESTRICT quantization_values)
+BOOL rfx_quantization_decode(INT16* WINPR_RESTRICT buffer,
+                             const UINT32* WINPR_RESTRICT quantization_values, size_t nrQuantValues)
 {
 	const primitives_t* prims = primitives_get();
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(quantization_values);
+	WINPR_ASSERT(NR_QUANT_VALUES == nrQuantValues);
+
+	for (size_t x = 0; x < nrQuantValues; x++)
+	{
+		const UINT32 val = quantization_values[x];
+
+		if (val < 1)
+			return FALSE;
+	}
 
 	rfx_quantization_decode_block(prims, &buffer[0], 1024, quantization_values[8] - 1);    /* HL1 */
 	rfx_quantization_decode_block(prims, &buffer[1024], 1024, quantization_values[7] - 1); /* LH1 */
@@ -71,6 +80,7 @@ void rfx_quantization_decode(INT16* WINPR_RESTRICT buffer,
 	rfx_quantization_decode_block(prims, &buffer[3904], 64, quantization_values[1] - 1);   /* LH3 */
 	rfx_quantization_decode_block(prims, &buffer[3968], 64, quantization_values[3] - 1);   /* HH3 */
 	rfx_quantization_decode_block(prims, &buffer[4032], 64, quantization_values[0] - 1);   /* LL3 */
+	return TRUE;
 }
 
 static inline void rfx_quantization_encode_block(INT16* WINPR_RESTRICT buffer, size_t buffer_size,
@@ -87,11 +97,20 @@ static inline void rfx_quantization_encode_block(INT16* WINPR_RESTRICT buffer, s
 	}
 }
 
-void rfx_quantization_encode(INT16* WINPR_RESTRICT buffer,
-                             const UINT32* WINPR_RESTRICT quantization_values)
+WINPR_ATTR_NODISCARD
+BOOL rfx_quantization_encode(INT16* WINPR_RESTRICT buffer,
+                             const UINT32* WINPR_RESTRICT quantization_values, size_t nrQuantValues)
 {
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(quantization_values);
+	WINPR_ASSERT(nrQuantValues == NR_QUANT_VALUES);
+
+	for (size_t x = 0; x < nrQuantValues; x++)
+	{
+		const UINT32 val = quantization_values[x];
+		if (val < 6)
+			return FALSE;
+	}
 
 	rfx_quantization_encode_block(buffer, 1024, quantization_values[8] - 6);        /* HL1 */
 	rfx_quantization_encode_block(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
@@ -106,4 +125,5 @@ void rfx_quantization_encode(INT16* WINPR_RESTRICT buffer,
 
 	/* The coefficients are scaled by << 5 at RGB->YCbCr phase, so we round it back here */
 	rfx_quantization_encode_block(buffer, 4096, 5);
+	return TRUE;
 }
