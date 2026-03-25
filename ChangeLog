@@ -1,3 +1,42 @@
+# 2026-03-25 Version 3.24.1
+
+Bug and security fix release
+
+## CVE fixes
+
+We got 4 High and 2 Moderate security reports from
+* Calvin Young - eWalker Consulting
+* Enoch Chow - Isomorph Cyber
+
+and 2 Modreate reports from
+* [Sebastian Alba Vives] ***@***.***) Sebastián Alba
+
+and 1 Moderate report from
+* @prahal
+
+CVE have been requested but not assigned yet. They will be published once assigned at
+https://github.com/FreeRDP/FreeRDP/security
+
+## What's Changed
+* [channels,video] fix wrong cast (#12511)
+* [codec,openh264] reject encoder ABI mismatch on runtime-loaded library (#12510)
+* [client,sdl] create a copy of rdpPointer (#12512)
+* [codec,video] properly pass intermediate format (#12518)
+* [utils, signal] lazily initialize Windows CRITICAL_SECTION to match POSIX static mutex behavior (#12520)
+* winpr: improve libunwind backtraces (#12530)
+* [server,shadow] remember selected caps (#12528)
+* Zero credential data before free in NLA and NTLM context (#12532)
+* [server,proxy] ignore missing client in input channel (#12536)
+* [server,proxy] ignore rdpdr messages (#12537)
+* [winpr,sspi] improve kerberos logging (#12538)
+* Codec fixes (#12542)
+
+## New Contributors
+* @Kotivskyi made their first contribution in #12532
+
+For a complete and detailed change log since the last release run:
+git log 3.24.2...3.24.1
+
 # 2026-03-18 Version 3.24.1
 
 Minor bugfix release addression two regressions found in previous 3.24.0 release
