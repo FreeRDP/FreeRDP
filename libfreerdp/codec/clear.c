@@ -567,7 +567,6 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 		const UINT32 oldPos = vBarEntry->size * bpp;
 		const UINT32 diffSize = (vBarEntry->count - vBarEntry->size) * bpp;
 
-		vBarEntry->size = vBarEntry->count;
 		BYTE* tmp =
 		    (BYTE*)winpr_aligned_recalloc(vBarEntry->pixels, vBarEntry->count, 1ull * bpp, 32);
 
@@ -580,6 +579,7 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 
 		memset(&tmp[oldPos], 0, diffSize);
 		vBarEntry->pixels = tmp;
+		vBarEntry->size = vBarEntry->count;
 	}
 
 	if (!vBarEntry->pixels && vBarEntry->size)
