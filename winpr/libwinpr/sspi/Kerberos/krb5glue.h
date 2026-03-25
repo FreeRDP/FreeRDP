@@ -105,4 +105,13 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
                                         krb5_prompter_fct prompter, char* password,
                                         SEC_WINPR_KERBEROS_SETTINGS* krb_settings);
 
+void krb_log_context_encryption(krb5_context ctx, krb5_principal princ);
+
+#define krb_log_exec(fkt, ctx, ...) \
+	kerberos_log_msg(ctx, fkt(ctx, ##__VA_ARGS__), #fkt, __FILE__, __func__, __LINE__)
+#define krb_log_exec_ptr(fkt, ctx, ...) \
+	kerberos_log_msg(*ctx, fkt(ctx, ##__VA_ARGS__), #fkt, __FILE__, __func__, __LINE__)
+krb5_error_code kerberos_log_msg(krb5_context ctx, krb5_error_code code, const char* what,
+                                 const char* file, const char* fkt, size_t line);
+
 #endif /* WINPR_SSPI_KERBEROS_GLUE_PRIVATE_H */

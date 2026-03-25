@@ -126,13 +126,8 @@ struct s_KRB_CONTEXT
 static const WinPrAsn1_OID kerberos_OID = { 9, (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
 static const WinPrAsn1_OID kerberos_u2u_OID = { 10,
 	                                            (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02\x03" };
-
-#define krb_log_exec(fkt, ctx, ...) \
-	kerberos_log_msg(ctx, fkt(ctx, ##__VA_ARGS__), #fkt, __FILE__, __func__, __LINE__)
-#define krb_log_exec_ptr(fkt, ctx, ...) \
-	kerberos_log_msg(*ctx, fkt(ctx, ##__VA_ARGS__), #fkt, __FILE__, __func__, __LINE__)
-static krb5_error_code kerberos_log_msg(krb5_context ctx, krb5_error_code code, const char* what,
-                                        const char* file, const char* fkt, size_t line)
+krb5_error_code kerberos_log_msg(krb5_context ctx, krb5_error_code code, const char* what,
+                                 const char* file, const char* fkt, size_t line)
 {
 	switch (code)
 	{
@@ -154,6 +149,22 @@ static krb5_error_code kerberos_log_msg(krb5_context ctx, krb5_error_code code, 
 		break;
 	}
 	return code;
+}
+
+void krb_log_context_encryption(krb5_context ctx, krb5_principal princ)
+{
+	krb5_get_init_creds_opt opt = WINPR_C_ARRAY_INIT;
+	krb5_enctype enctype = 0;
+	krb5_data salt = WINPR_C_ARRAY_INIT;
+	krb5_data s2kparam = WINPR_C_ARRAY_INIT;
+	char buffer[128] = WINPR_C_ARRAY_INIT;
+
+	krb5_error_code rv =
+	    krb_log_exec(krb5_get_etype_info, ctx, princ, &opt, &enctype, &salt, &s2kparam);
+	krb5_enctype_to_string(enctype, buffer, sizeof(buffer));
+	const char* msg = krb5_get_error_message(ctx, rv);
+	WLog_DBG(TAG, "[%s] enctype=%s, salt[%u]=%s, s2kparam[%u]=%s", msg, buffer, salt.length,
+	         salt.data, s2kparam.length, s2kparam.data);
 }
 
 static void credentials_unref(KRB_CREDENTIALS* credentials);
