@@ -981,20 +981,30 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 	{
 		const UINT32 bpp = FreeRDPGetBytesPerPixel(clear->format);
 		CLEAR_GLYPH_ENTRY* glyphEntry = &(clear->GlyphCache[glyphIndex]);
-		glyphEntry->count = nWidth * nHeight;
-
-		if (glyphEntry->count > glyphEntry->size)
+		const size_t count = 1ull * nWidth * nHeight;
+		const size_t hlimit = SIZE_MAX / ((nWidth > 0) ? nWidth : 1);
+		if ((nWidth == 0) || (nHeight == 0) || (hlimit < nHeight))
 		{
-			BYTE* tmp =
-			    winpr_aligned_recalloc(glyphEntry->pixels, glyphEntry->count, 1ull * bpp, 32);
+			const char* exceeded = (hlimit < nHeight) ? "within" : "outside";
+			WLog_ERR(TAG,
+			         "CLEARCODEC_FLAG_GLYPH_INDEX: nWidth=%" PRIu32 ", nHeight=%" PRIu32
+			         ", nWidth * nHeight is %s allowed range",
+			         nWidth, nHeight, exceeded);
+			return FALSE;
+		}
+
+		if (count > glyphEntry->size)
+		{
+			BYTE* tmp = winpr_aligned_recalloc(glyphEntry->pixels, count, 1ull * bpp, 32);
 
 			if (!tmp)
 			{
-				WLog_ERR(TAG, "glyphEntry->pixels winpr_aligned_recalloc %" PRIu32 " failed!",
-				         glyphEntry->count * bpp);
+				WLog_ERR(TAG, "glyphEntry->pixels winpr_aligned_recalloc %" PRIuz " failed!",
+				         count * bpp);
 				return FALSE;
 			}
 
+			glyphEntry->count = WINPR_ASSERTING_INT_CAST(UINT32, count);
 			glyphEntry->size = glyphEntry->count;
 			glyphEntry->pixels = (UINT32*)tmp;
 		}
