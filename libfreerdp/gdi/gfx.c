@@ -745,7 +745,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	if (rc < 0)
 	{
-		WLog_WARN(TAG, "avc444_decompress failure: %" PRIu32 ", ignoring update.", status);
+		WLog_WARN(TAG, "avc444_decompress failure: %" PRId32 ", ignoring update.", rc);
 		return CHANNEL_RC_OK;
 	}
 
