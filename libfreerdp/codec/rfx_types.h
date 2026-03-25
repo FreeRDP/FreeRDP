@@ -159,10 +159,16 @@ struct S_RFX_CONTEXT
 	struct S_RFX_MESSAGE currentMessage;
 
 	/* routines */
-	void (*quantization_decode)(INT16* WINPR_RESTRICT buffer,
-	                            const UINT32* WINPR_RESTRICT quantization_values);
-	void (*quantization_encode)(INT16* WINPR_RESTRICT buffer,
-	                            const UINT32* WINPR_RESTRICT quantization_values);
+	WINPR_ATTR_NODISCARD
+	BOOL (*quantization_decode)(INT16* WINPR_RESTRICT buffer,
+	                            const UINT32* WINPR_RESTRICT quantization_values,
+	                            size_t nrQuantValues);
+
+	WINPR_ATTR_NODISCARD
+	BOOL (*quantization_encode)(INT16* WINPR_RESTRICT buffer,
+	                            const UINT32* WINPR_RESTRICT quantization_values,
+	                            size_t nrQuantValues);
+
 	void (*dwt_2d_decode)(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_buffer);
 	void (*dwt_2d_extrapolate_decode)(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTRICT temp);
 	void (*dwt_2d_encode)(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_buffer);

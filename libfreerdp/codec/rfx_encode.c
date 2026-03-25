@@ -228,35 +228,50 @@ static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, uint32_t 
 }
 
 /* rfx_encode_rgb_to_ycbcr code now resides in the primitives library. */
-
-static void rfx_encode_component(RFX_CONTEXT* WINPR_RESTRICT context,
+WINPR_ATTR_NODISCARD
+static BOOL rfx_encode_component(RFX_CONTEXT* WINPR_RESTRICT context,
                                  const UINT32* WINPR_RESTRICT quantization_values,
-                                 INT16* WINPR_RESTRICT data, BYTE* WINPR_RESTRICT buffer,
-                                 uint32_t buffer_size, uint32_t* WINPR_RESTRICT size)
+                                 size_t nrQuantValues, INT16* WINPR_RESTRICT data,
+                                 BYTE* WINPR_RESTRICT buffer, uint32_t buffer_size,
+                                 uint32_t* WINPR_RESTRICT size)
 {
+	BOOL res = FALSE;
+	int rc = -1;
 	INT16* dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
+	if (!dwt_buffer)
+		return FALSE;
+
 	PROFILER_ENTER(context->priv->prof_rfx_encode_component)
 	PROFILER_ENTER(context->priv->prof_rfx_dwt_2d_encode)
 	context->dwt_2d_encode(data, dwt_buffer);
 	PROFILER_EXIT(context->priv->prof_rfx_dwt_2d_encode)
 	PROFILER_ENTER(context->priv->prof_rfx_quantization_encode)
-	context->quantization_encode(data, quantization_values);
+	if (!context->quantization_encode(data, quantization_values, nrQuantValues))
+		goto fail;
 	PROFILER_EXIT(context->priv->prof_rfx_quantization_encode)
 	PROFILER_ENTER(context->priv->prof_rfx_differential_encode)
 	rfx_differential_encode(data + 4032, 64);
 	PROFILER_EXIT(context->priv->prof_rfx_differential_encode)
 	PROFILER_ENTER(context->priv->prof_rfx_rlgr_encode)
-	const int rc = context->rlgr_encode(context->mode, data, 4096, buffer, buffer_size);
+	rc = context->rlgr_encode(context->mode, data, 4096, buffer, buffer_size);
+	if (rc < 0)
+		goto fail;
+
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_encode)
 	PROFILER_EXIT(context->priv->prof_rfx_encode_component)
+
+	res = TRUE;
+
+fail:
 	BufferPool_Return(context->priv->BufferPool, dwt_buffer);
 
 	*size = WINPR_ASSERTING_INT_CAST(uint32_t, rc);
+	return res;
 }
 
 BOOL rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRICT tile)
 {
-	BOOL rc = TRUE;
+	BOOL rc = FALSE;
 	union
 	{
 		const INT16** cpv;
@@ -273,9 +288,9 @@ BOOL rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 		return FALSE;
 
 	uint32_t YLen = CbLen = CrLen = 0;
-	UINT32* YQuant = context->quants + (10ULL * tile->quantIdxY);
-	UINT32* CbQuant = context->quants + (10ULL * tile->quantIdxCb);
-	UINT32* CrQuant = context->quants + (10ULL * tile->quantIdxCr);
+	UINT32* YQuant = context->quants + (NR_QUANT_VALUES * tile->quantIdxY);
+	UINT32* CbQuant = context->quants + (NR_QUANT_VALUES * tile->quantIdxCb);
+	UINT32* CrQuant = context->quants + (NR_QUANT_VALUES * tile->quantIdxCr);
 	pSrcDst[0] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 0ULL) + 16ULL])); /* y_r_buffer */
 	pSrcDst[1] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 1ULL) + 16ULL])); /* cb_g_buffer */
 	pSrcDst[2] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 2ULL) + 16ULL])); /* cr_b_buffer */
@@ -290,7 +305,8 @@ BOOL rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 	cnv.pv = pSrcDst;
 	if (prims->RGBToYCbCr_16s16s_P3P3(cnv.cpv, 64 * sizeof(INT16), pSrcDst, 64 * sizeof(INT16),
 	                                  &roi_64x64) != PRIMITIVES_SUCCESS)
-		rc = FALSE;
+		goto fail;
+
 	PROFILER_EXIT(context->priv->prof_rfx_rgb_to_ycbcr)
 	/**
 	 * We need to clear the buffers as the RLGR encoder expects it to be initialized to zero.
@@ -299,12 +315,22 @@ BOOL rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 	ZeroMemory(tile->YData, 4096);
 	ZeroMemory(tile->CbData, 4096);
 	ZeroMemory(tile->CrData, 4096);
-	rfx_encode_component(context, YQuant, pSrcDst[0], tile->YData, 4096, &YLen);
-	rfx_encode_component(context, CbQuant, pSrcDst[1], tile->CbData, 4096, &CbLen);
-	rfx_encode_component(context, CrQuant, pSrcDst[2], tile->CrData, 4096, &CrLen);
+	if (!rfx_encode_component(context, YQuant, NR_QUANT_VALUES, pSrcDst[0], tile->YData, 4096,
+	                          &YLen))
+		goto fail;
+	if (!rfx_encode_component(context, CbQuant, NR_QUANT_VALUES, pSrcDst[1], tile->CbData, 4096,
+	                          &CbLen))
+		goto fail;
+	if (!rfx_encode_component(context, CrQuant, NR_QUANT_VALUES, pSrcDst[2], tile->CrData, 4096,
+	                          &CrLen))
+		goto fail;
 	tile->YLen = WINPR_ASSERTING_INT_CAST(UINT16, YLen);
 	tile->CbLen = WINPR_ASSERTING_INT_CAST(UINT16, CbLen);
 	tile->CrLen = WINPR_ASSERTING_INT_CAST(UINT16, CrLen);
+
+	rc = TRUE;
+
+fail:
 	PROFILER_EXIT(context->priv->prof_rfx_encode_rgb)
 	if (!BufferPool_Return(context->priv->BufferPool, pBuffer))
 		return FALSE;
