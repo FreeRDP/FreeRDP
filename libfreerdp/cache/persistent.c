@@ -36,7 +36,7 @@ struct rdp_persistent_cache
 	int count;
 	char* filename;
 	BYTE* bmpData;
-	UINT32 bmpSize;
+	size_t bmpSize;
 };
 
 static const char sig_str[] = "RDP8bmp";
@@ -149,12 +149,11 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 	const UINT64 size = 4ull * entry3.width * entry3.height;
 	if (size > UINT32_MAX)
 		return -1;
-	entry->size = (UINT32)size;
 	entry->flags = 0;
 
-	if (entry->size > persistent->bmpSize)
+	if (size > persistent->bmpSize)
 	{
-		persistent->bmpSize = entry->size;
+		persistent->bmpSize = size;
 		BYTE* bmpData = (BYTE*)winpr_aligned_recalloc(persistent->bmpData, persistent->bmpSize,
 		                                              sizeof(BYTE), 32);
 
@@ -163,6 +162,7 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 
 		persistent->bmpData = bmpData;
 	}
+	entry->size = WINPR_ASSERTING_INT_CAST(UINT32, size);
 
 	entry->data = persistent->bmpData;
 
