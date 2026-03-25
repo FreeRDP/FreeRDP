@@ -83,9 +83,6 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 			h264->iStride[2] = (stride + 1) / 2;
 		}
 
-		h264->width = width;
-		h264->height = height;
-
 		for (size_t x = 0; x < nPlanes; x++)
 		{
 			BYTE* tmp1 = winpr_aligned_recalloc(h264->pYUVData[x], h264->iStride[x], pheight, 16);
@@ -98,6 +95,8 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 			if (!tmp1 || !tmp2)
 				return FALSE;
 		}
+		h264->width = width;
+		h264->height = height;
 	}
 
 	return TRUE;
