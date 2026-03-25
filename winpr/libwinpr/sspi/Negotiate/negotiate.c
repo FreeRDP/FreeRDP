@@ -1282,9 +1282,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_CompleteAuthToken(PCtxtHandle phConte
 
 static SECURITY_STATUS SEC_ENTRY negotiate_DeleteSecurityContext(PCtxtHandle phContext)
 {
-	NEGOTIATE_CONTEXT* context = nullptr;
 	SECURITY_STATUS status = SEC_E_OK;
-	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	NEGOTIATE_CONTEXT* context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	sspi_SecureHandleInvalidate(phContext);
 	const SecPkg* pkg = nullptr;
 
 	if (!context)
@@ -1569,6 +1569,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesA(
 static SECURITY_STATUS SEC_ENTRY negotiate_FreeCredentialsHandle(PCredHandle phCredential)
 {
 	MechCred* creds = sspi_SecureHandleGetLowerPointer(phCredential);
+	sspi_SecureHandleInvalidate(phCredential);
 	if (!creds)
 		return SEC_E_INVALID_HANDLE;
 
