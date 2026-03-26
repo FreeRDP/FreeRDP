@@ -139,7 +139,8 @@ class SdlContext
 	[[nodiscard]] SDL_FPoint screenToPixel(SDL_WindowID id, const SDL_FPoint& pos);
 
 	[[nodiscard]] SDL_FPoint pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos);
-	[[nodiscard]] SDL_FRect pixelToScreen(SDL_WindowID id, const SDL_FRect& pos);
+	[[nodiscard]] SDL_FRect pixelToScreen(SDL_WindowID id, const SDL_FRect& pos,
+	                                      bool round = false);
 
 	[[nodiscard]] bool handleEvent(const SDL_Event& ev);
 

@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <cmath>
 
 #include "sdl_context.hpp"
 #include "sdl_config.hpp"
@@ -1300,11 +1301,19 @@ SDL_FPoint SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos)
 	return applyLocalScaling(rpos);
 }
 
-SDL_FRect SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FRect& pos)
+SDL_FRect SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FRect& pos, bool round)
 {
 	const auto fpos = pixelToScreen(id, SDL_FPoint{ pos.x, pos.y });
 	const auto size = pixelToScreen(id, SDL_FPoint{ pos.w, pos.h });
-	return { fpos.x, fpos.y, size.x, size.y };
+	SDL_FRect r{ fpos.x, fpos.y, size.x, size.y };
+	if (round)
+	{
+		r.w = std::ceil(r.w);
+		r.h = std::ceil(r.h);
+		r.x = std::floor(r.x);
+		r.y = std::floor(r.y);
+	}
+	return r;
 }
 
 bool SdlContext::handleEvent(const SDL_Event& ev)

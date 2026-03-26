@@ -659,6 +659,9 @@ int main(int argc, char* argv[])
 	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 	SDL_SetHint(SDL_HINT_PEN_TOUCH_EVENTS, "1");
 	SDL_SetHint(SDL_HINT_TRACKPAD_IS_TOUCH_ONLY, "1");
+#if SDL_VERSION_ATLEAST(3, 4, 0)
+	SDL_SetHint(SDL_HINT_MOUSE_DPI_SCALE_CURSORS, "1");
+#endif
 
 	/* Redirect SDL log messages to wLog */
 	SDL_SetLogOutputFunction(winpr_LogOutputFunction, sdl);

@@ -136,7 +136,7 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 	const Uint32 id = SDL_GetWindowID(window);
 
 	const SDL_FRect orig{ ix, iy, isw, ish };
-	auto pos = sdl->pixelToScreen(id, orig);
+	const auto pos = sdl->pixelToScreen(id, orig, true);
 	WLog_Print(sdl->getWLog(), WLOG_DEBUG, "cursor scale: pixel:%s, display:%s",
 	           sdl::utils::toString(orig).c_str(), sdl::utils::toString(pos).c_str());
 
@@ -181,13 +181,10 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 		return false;
 	}
 
-	const auto hidpi_scale =
-	    sdl->pixelToScreen(fw->id(), SDL_FPoint{ static_cast<float>(ptr->image->w),
-	                                             static_cast<float>(ptr->image->h) });
+	const auto w = static_cast<int>(pos.w);
+	const auto h = static_cast<int>(pos.h);
 	std::unique_ptr<SDL_Surface, void (*)(SDL_Surface*)> normal{
-		SDL_CreateSurface(static_cast<int>(hidpi_scale.x), static_cast<int>(hidpi_scale.y),
-		                  ptr->image->format),
-		SDL_DestroySurface
+		SDL_CreateSurface(w, h, ptr->image->format), SDL_DestroySurface
 	};
 	assert(normal);
 	if (!SDL_BlitSurfaceScaled(ptr->image, nullptr, normal.get(), nullptr,
@@ -202,8 +199,14 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 		return false;
 	}
 
-	ptr->cursor =
-	    SDL_CreateColorCursor(normal.get(), static_cast<int>(pos.x), static_cast<int>(pos.y));
+	auto x = static_cast<int>(pos.x);
+	auto y = static_cast<int>(pos.y);
+	if (x >= w)
+		x = w - 1;
+	if (y >= h)
+		y = h - 1;
+
+	ptr->cursor = SDL_CreateColorCursor(normal.get(), x, y);
 	if (!ptr->cursor)
 	{
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_CreateColorCursor(display:%s, pixel:%s} failed",
