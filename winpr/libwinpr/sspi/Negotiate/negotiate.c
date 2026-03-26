@@ -120,7 +120,7 @@ static const Mech MechTable[] = {
 };
 #endif
 
-static const size_t MECH_COUNT = sizeof(MechTable) / sizeof(Mech);
+static const size_t MECH_COUNT = ARRAYSIZE(MechTable);
 
 enum NegState
 {
@@ -1392,11 +1392,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle
                                                                      ULONG ulAttribute,
                                                                      void* pBuffer, ULONG cbBuffer)
 {
-	MechCred* creds = nullptr;
 	BOOL success = FALSE;
-	SECURITY_STATUS secStatus = 0;
-
-	creds = sspi_SecureHandleGetLowerPointer(phCredential);
+	MechCred* creds = sspi_SecureHandleGetLowerPointer(phCredential);
 
 	if (!creds)
 		return SEC_E_INVALID_HANDLE;
@@ -1409,13 +1406,14 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle
 		WINPR_ASSERT(cred->mech->pkg);
 		WINPR_ASSERT(cred->mech->pkg->table);
 		WINPR_ASSERT(cred->mech->pkg->table_w->SetCredentialsAttributesW);
-		secStatus = cred->mech->pkg->table_w->SetCredentialsAttributesW(&cred->cred, ulAttribute,
-		                                                                pBuffer, cbBuffer);
+		const SECURITY_STATUS secStatus = cred->mech->pkg->table_w->SetCredentialsAttributesW(
+		    &cred->cred, ulAttribute, pBuffer, cbBuffer);
 
 		if (secStatus == SEC_E_OK)
-		{
 			success = TRUE;
-		}
+		else
+			WLog_WARN(TAG, "SetCredentialsAttributesW returned %s",
+			          GetSecurityStatusString(secStatus));
 	}
 
 	// return success if at least one submodule accepts the credential attribute
@@ -1426,11 +1424,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle
                                                                      ULONG ulAttribute,
                                                                      void* pBuffer, ULONG cbBuffer)
 {
-	MechCred* creds = nullptr;
 	BOOL success = FALSE;
-	SECURITY_STATUS secStatus = 0;
 
-	creds = sspi_SecureHandleGetLowerPointer(phCredential);
+	MechCred* creds = sspi_SecureHandleGetLowerPointer(phCredential);
 
 	if (!creds)
 		return SEC_E_INVALID_HANDLE;
@@ -1446,13 +1442,16 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle
 		WINPR_ASSERT(cred->mech->pkg);
 		WINPR_ASSERT(cred->mech->pkg->table);
 		WINPR_ASSERT(cred->mech->pkg->table->SetCredentialsAttributesA);
-		secStatus = cred->mech->pkg->table->SetCredentialsAttributesA(&cred->cred, ulAttribute,
-		                                                              pBuffer, cbBuffer);
+		const SECURITY_STATUS secStatus = cred->mech->pkg->table->SetCredentialsAttributesA(
+		    &cred->cred, ulAttribute, pBuffer, cbBuffer);
 
 		if (secStatus == SEC_E_OK)
 		{
 			success = TRUE;
 		}
+		else
+			WLog_WARN(TAG, "SetCredentialsAttributesA returned %s",
+			          GetSecurityStatusString(secStatus));
 	}
 
 	// return success if at least one submodule accepts the credential attribute
@@ -1603,7 +1602,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_FreeCredentialsHandle(PCredHandle phC
 		WINPR_ASSERT(cred->mech->pkg);
 		WINPR_ASSERT(cred->mech->pkg->table);
 		WINPR_ASSERT(cred->mech->pkg->table->FreeCredentialsHandle);
-		cred->mech->pkg->table->FreeCredentialsHandle(&cred->cred);
+		const SECURITY_STATUS rc = cred->mech->pkg->table->FreeCredentialsHandle(&cred->cred);
+		if (rc != SEC_E_OK)
+			WLog_WARN(TAG, "FreeCredentialsHandle returned %s", GetSecurityStatusString(rc));
 	}
 	free(creds);
 
