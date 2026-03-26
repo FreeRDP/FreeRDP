@@ -733,9 +733,23 @@ BOOL pf_server_config_dump(const char* file)
 	                              "<Contents of some private key file in PEM format>") < 0)
 		goto fail;
 
-	/* store configuration */
-	if (IniFile_WriteFile(ini, file) < 0)
-		goto fail;
+	if ((strcmp("stdout", file) == 0) || (strcmp("stderr", file) == 0))
+	{
+		char* buffer = IniFile_WriteBuffer(ini);
+		if (!buffer)
+			goto fail;
+		FILE* fp = stderr;
+		if (strcmp("stdout", file) == 0)
+			fp = stdout;
+		(void)fprintf(fp, "%s", buffer);
+		free(buffer);
+	}
+	else
+	{
+		/* store configuration */
+		if (IniFile_WriteFile(ini, file) < 0)
+			goto fail;
+	}
 
 	rc = TRUE;
 

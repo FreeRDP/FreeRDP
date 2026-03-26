@@ -74,13 +74,16 @@ static void pf_server_register_signal_handlers(void)
 static int usage(const char* app)
 {
 	printf("Usage:\n");
-	printf("%s -h                               Display this help text.\n", app);
-	printf("%s --help                           Display this help text.\n", app);
-	printf("%s --buildconfig                    Print the build configuration.\n", app);
-	printf("%s <config ini file>                Start the proxy with <config.ini>\n", app);
-	printf("%s --dump-config <config ini file>  Create a template <config.ini>\n", app);
-	printf("%s -v                               Print out binary version.\n", app);
-	printf("%s --version                        Print out binary version.\n", app);
+	printf("%s -h                                  Display this help text.\n", app);
+	printf("%s --help                              Display this help text.\n", app);
+	printf("%s --buildconfig                       Print the build configuration.\n", app);
+	printf("%s <config ini file>                   Start the proxy with <config.ini>\n", app);
+	printf("%s --dump-config [<config ini file>|stdout|stderr] Create a template <config.ini> or "
+	       "print to "
+	       "stdout/stderr.\n",
+	       app);
+	printf("%s -v                                  Print out binary version.\n", app);
+	printf("%s --version                           Print out binary version.\n", app);
 	return 0;
 }
 
