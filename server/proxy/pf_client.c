@@ -744,16 +744,15 @@ static BOOL pf_client_connect(freerdp* instance)
 	settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
-	PROXY_LOG_INFO(TAG, pc, "connecting using client info: Username: %s, Domain: %s",
-	               freerdp_settings_get_string(settings, FreeRDP_Username),
-	               freerdp_settings_get_string(settings, FreeRDP_Domain));
-
 	if (!pf_client_set_security_settings(pc))
 		return FALSE;
 
 	if (pf_client_should_retry_without_nla(pc))
 		retry = pc->allow_next_conn_failure = TRUE;
 
+	PROXY_LOG_INFO(TAG, pc, "connecting using client info: Username: %s, Domain: %s",
+	               freerdp_settings_get_string(settings, FreeRDP_Username),
+	               freerdp_settings_get_string(settings, FreeRDP_Domain));
 	PROXY_LOG_INFO(TAG, pc, "connecting using security settings: rdp=%d, tls=%d, nla=%d",
 	               freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity),
 	               freerdp_settings_get_bool(settings, FreeRDP_TlsSecurity),
