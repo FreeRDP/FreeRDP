@@ -56,7 +56,7 @@ extern "C"
 	 *
 	 *  @return A newly allocated string, use \b free after use. \b nullptr in case of failure
 	 */
-	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* IniFile_WriteBuffer(wIniFile* ini);
 
 	/** @brief write an ini instance to a file
@@ -76,7 +76,7 @@ extern "C"
 	 *
 	 *  @return A newly allocated array of strings (size \b count). Use \b free after use
 	 */
-	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char** IniFile_GetSectionNames(wIniFile* ini, size_t* count);
 
 	/** @brief Get the number and names of keys of a section in the ini instance
@@ -87,7 +87,7 @@ extern "C"
 	 *
 	 *  @return A newly allocated array of strings (size \b count). Use \b free after use
 	 */
-	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, size_t* count);
 
 	/** @brief Get an ini [section/key] value of type string

@@ -179,6 +179,28 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 					return FALSE;
 			}
 
+			if (!freerdp_settings_set_bool(settings, FreeRDP_SmartcardLogon,
+			                               config->TargetSmartcardAuth))
+				return COMMAND_LINE_ERROR;
+
+			if (config->TargetSmartcardCert)
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_SmartcardEmulation, TRUE))
+					return FALSE;
+				if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardCertificate,
+				                                 config->TargetSmartcardCert))
+					return FALSE;
+			}
+
+			if (config->TargetSmartcardKey)
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_SmartcardEmulation, TRUE))
+					return FALSE;
+				if (!freerdp_settings_set_string(settings, FreeRDP_SmartcardPrivateKey,
+				                                 config->TargetSmartcardKey))
+					return FALSE;
+			}
+
 			return TRUE;
 		}
 		case PROXY_FETCH_TARGET_USE_CUSTOM_ADDR:
@@ -504,6 +526,12 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
 		return FALSE;
+
+	if (config->SamFile)
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_NtlmSamFile, config->SamFile))
+			return FALSE;
+	}
 
 	/* currently not supporting GDI orders */
 	{

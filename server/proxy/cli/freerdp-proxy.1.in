@@ -32,16 +32,29 @@ Display a help text explaining usage.
 Print the build configuration of the proxy and exit.
 .IP -v,--version
 Print the version of the proxy and exit.
-.IP --dump-config \fB<config-ini-file>\fP
-Dump a template configuration to \fB<config-ini-file>\fP
+.IP --dump-config \fB[<config-ini-file>|stdout|stderr]\fP
+Dump a template configuration to \fB<config-ini-file>\fP or to \fBstdout\fP or \fBstderr\fP
 .IP \fB<config-ini-file>\fP
 Start the proxy with settings read from \fB<config-ini-file>\fP
 
 .SH WARNING
 The proxy does not support authentication out of the box but acts simply as intermediary.
-Only \fBRDP\fP and \fBTLS\fP security modes are supported, \fBNLA\fP will fail for connections to the proxy.
-To implement authentication a \fBproxy-module\fP can be implemented that can authenticate against some backend
+Only \fBRDP\fP and \fBTLS\fP security modes are supported for pass through connections.
+User and password are transmitted in plain text from client to the proxy in these modes.
+With \fBNLA\fP the credentials never leave the connecting client and only the \fBNTLM\fP hashes are compared.
+
+To implement proper authentication a \fBproxy-module\fP can be implemented that may authenticate against some backend
 and map connecting users and credentials to target server users and credentials.
+
+.SH TEST SETUP
+
+A simple test setup of @MANPAGE_NAME@ might look like this:
+.IP SAM file configured in configuration for authentication of connecting clients
+.IP User/Domain/Password hard coded in configuration to authenticate to a target machine
+.IP Alternatively a Smartcard key and certificate to authenticate to a target machine
+
+This setup is designed for testing purposes only and does not do any authentication mapping of connecting users to
+target machine users, so any allowed connecting user will use the same credentials on the target.
 
 .SH EXAMPLES
 @MANPAGE_NAME@ /some/config/file
