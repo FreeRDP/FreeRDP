@@ -120,7 +120,7 @@ static const Mech MechTable[] = {
 };
 #endif
 
-static const size_t MECH_COUNT = sizeof(MechTable) / sizeof(Mech);
+static const size_t MECH_COUNT = ARRAYSIZE(MechTable);
 
 enum NegState
 {
@@ -1392,11 +1392,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle
                                                                      ULONG ulAttribute,
                                                                      void* pBuffer, ULONG cbBuffer)
 {
-	MechCred* creds = nullptr;
 	BOOL success = FALSE;
-	SECURITY_STATUS secStatus = 0;
-
-	creds = sspi_SecureHandleGetLowerPointer(phCredential);
+	MechCred* creds = sspi_SecureHandleGetLowerPointer(phCredential);
 
 	if (!creds)
 		return SEC_E_INVALID_HANDLE;
@@ -1409,13 +1406,14 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle
 		WINPR_ASSERT(cred->mech->pkg);
 		WINPR_ASSERT(cred->mech->pkg->table);
 		WINPR_ASSERT(cred->mech->pkg->table_w->SetCredentialsAttributesW);
-		secStatus = cred->mech->pkg->table_w->SetCredentialsAttributesW(&cred->cred, ulAttribute,
-		                                                                pBuffer, cbBuffer);
+		const SECURITY_STATUS secStatus = cred->mech->pkg->table_w->SetCredentialsAttributesW(
+		    &cred->cred, ulAttribute, pBuffer, cbBuffer);
 
 		if (secStatus == SEC_E_OK)
-		{
 			success = TRUE;
-		}
+		else
+			WLog_WARN(TAG, "SetCredentialsAttributesW returned %s",
+			          GetSecurityStatusString(secStatus));
 	}
 
 	// return success if at least one submodule accepts the credential attribute
@@ -1426,11 +1424,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle
                                                                      ULONG ulAttribute,
                                                                      void* pBuffer, ULONG cbBuffer)
 {
-	MechCred* creds = nullptr;
 	BOOL success = FALSE;
-	SECURITY_STATUS secStatus = 0;
 
-	creds = sspi_SecureHandleGetLowerPointer(phCredential);
+	MechCred* creds = sspi_SecureHandleGetLowerPointer(phCredential);
 
 	if (!creds)
 		return SEC_E_INVALID_HANDLE;
@@ -1446,17 +1442,56 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle
 		WINPR_ASSERT(cred->mech->pkg);
 		WINPR_ASSERT(cred->mech->pkg->table);
 		WINPR_ASSERT(cred->mech->pkg->table->SetCredentialsAttributesA);
-		secStatus = cred->mech->pkg->table->SetCredentialsAttributesA(&cred->cred, ulAttribute,
-		                                                              pBuffer, cbBuffer);
+		const SECURITY_STATUS secStatus = cred->mech->pkg->table->SetCredentialsAttributesA(
+		    &cred->cred, ulAttribute, pBuffer, cbBuffer);
 
 		if (secStatus == SEC_E_OK)
 		{
 			success = TRUE;
 		}
+		else
+			WLog_WARN(TAG, "SetCredentialsAttributesA returned %s",
+			          GetSecurityStatusString(secStatus));
 	}
 
 	// return success if at least one submodule accepts the credential attribute
 	return (success ? SEC_E_OK : SEC_E_UNSUPPORTED_FUNCTION);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL checkMechCredValid(void* pAuthData, MechCred* cred)
+{
+	WINPR_ASSERT(cred);
+	WINPR_ASSERT(cred->mech);
+	WINPR_ASSERT(cred->mech->pkg);
+
+	BOOL kerberos = FALSE;
+	BOOL ntlm = FALSE;
+	BOOL u2u = FALSE;
+	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm, &u2u))
+	{
+		WLog_DBG(TAG, "Failed to get negotiate configuration");
+		return FALSE;
+	}
+
+	if (!kerberos && sspi_gss_oid_compare(cred->mech->oid, &kerberos_OID))
+	{
+		WLog_DBG(TAG, "Kerberos disabled, skipping");
+		return FALSE;
+	}
+
+	if (!u2u && sspi_gss_oid_compare(cred->mech->oid, &kerberos_u2u_OID))
+	{
+		WLog_DBG(TAG, "Kerberos U2U disabled, skipping");
+		return FALSE;
+	}
+
+	if (!ntlm && _tcsncmp(cred->mech->pkg->name, NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0)
+	{
+		WLog_DBG(TAG, "NTLM disabled, skipping");
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
@@ -1464,13 +1499,6 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	BOOL kerberos = FALSE;
-	BOOL ntlm = FALSE;
-	BOOL u2u = FALSE;
-
-	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm, &u2u))
-		return SEC_E_INTERNAL_ERROR;
-
 	MechCred* creds = calloc(MECH_COUNT, sizeof(MechCred));
 
 	if (!creds)
@@ -1482,19 +1510,19 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
 		const SecPkg* pkg = MechTable[i].pkg;
 		cred->mech = &MechTable[i];
 
-		if (!kerberos && sspi_gss_oid_compare(MechTable[i].oid, &kerberos_OID))
-			continue;
-		if (!u2u && sspi_gss_oid_compare(MechTable[i].oid, &kerberos_u2u_OID))
-			continue;
-		if (!ntlm && _tcsncmp(SecPkgTable[i].name, NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0)
+		if (!checkMechCredValid(pAuthData, cred))
 			continue;
 
 		WINPR_ASSERT(pkg->table_w);
 		WINPR_ASSERT(pkg->table_w->AcquireCredentialsHandleW);
-		if (pkg->table_w->AcquireCredentialsHandleW(
-		        pszPrincipal, pszPackage, fCredentialUse, pvLogonID, pAuthData, pGetKeyFn,
-		        pvGetKeyArgument, &cred->cred, ptsExpiry) != SEC_E_OK)
+		const SECURITY_STATUS rc = pkg->table_w->AcquireCredentialsHandleW(
+		    pszPrincipal, pszPackage, fCredentialUse, pvLogonID, pAuthData, pGetKeyFn,
+		    pvGetKeyArgument, &cred->cred, ptsExpiry);
+		if (rc != SEC_E_OK)
+		{
+			WLog_DBG(TAG, "AcquireCredentialsHandleW returned %s", GetSecurityStatusString(rc));
 			continue;
+		}
 
 		cred->valid = TRUE;
 	}
@@ -1509,13 +1537,6 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	BOOL kerberos = FALSE;
-	BOOL ntlm = FALSE;
-	BOOL u2u = FALSE;
-
-	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm, &u2u))
-		return SEC_E_INTERNAL_ERROR;
-
 	MechCred* creds = calloc(MECH_COUNT, sizeof(MechCred));
 
 	if (!creds)
@@ -1528,19 +1549,19 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
 
 		cred->mech = &MechTable[i];
 
-		if (!kerberos && sspi_gss_oid_compare(MechTable[i].oid, &kerberos_OID))
-			continue;
-		if (!u2u && sspi_gss_oid_compare(MechTable[i].oid, &kerberos_u2u_OID))
-			continue;
-		if (!ntlm && _tcsncmp(SecPkgTable[i].name, NTLM_SSP_NAME, ARRAYSIZE(NTLM_SSP_NAME)) == 0)
+		if (!checkMechCredValid(pAuthData, cred))
 			continue;
 
 		WINPR_ASSERT(pkg->table);
 		WINPR_ASSERT(pkg->table->AcquireCredentialsHandleA);
-		if (pkg->table->AcquireCredentialsHandleA(pszPrincipal, pszPackage, fCredentialUse,
-		                                          pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument,
-		                                          &cred->cred, ptsExpiry) != SEC_E_OK)
+		const SECURITY_STATUS rc = pkg->table->AcquireCredentialsHandleA(
+		    pszPrincipal, pszPackage, fCredentialUse, pvLogonID, pAuthData, pGetKeyFn,
+		    pvGetKeyArgument, &cred->cred, ptsExpiry);
+		if (rc != SEC_E_OK)
+		{
+			WLog_DBG(TAG, "AcquireCredentialsHandleA returned %s", GetSecurityStatusString(rc));
 			continue;
+		}
 
 		cred->valid = TRUE;
 	}
@@ -1581,7 +1602,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_FreeCredentialsHandle(PCredHandle phC
 		WINPR_ASSERT(cred->mech->pkg);
 		WINPR_ASSERT(cred->mech->pkg->table);
 		WINPR_ASSERT(cred->mech->pkg->table->FreeCredentialsHandle);
-		cred->mech->pkg->table->FreeCredentialsHandle(&cred->cred);
+		const SECURITY_STATUS rc = cred->mech->pkg->table->FreeCredentialsHandle(&cred->cred);
+		if (rc != SEC_E_OK)
+			WLog_WARN(TAG, "FreeCredentialsHandle returned %s", GetSecurityStatusString(rc));
 	}
 	free(creds);
 
