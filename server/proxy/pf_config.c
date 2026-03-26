@@ -288,8 +288,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 			return FALSE;
 
 		free(config->TargetHost);
-		config->TargetHost = _strdup(target_value);
-		if (!config->TargetHost)
+		if (!pf_config_copy_string(&config->TargetHost, target_value))
 			return FALSE;
 	}
 
@@ -297,8 +296,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	if (target_value)
 	{
 		free(config->TargetUser);
-		config->TargetUser = _strdup(target_value);
-		if (!config->TargetUser)
+		if (!pf_config_copy_string(&config->TargetUser, target_value))
 			return FALSE;
 	}
 
@@ -306,8 +304,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	if (target_value)
 	{
 		free(config->TargetPassword);
-		config->TargetPassword = _strdup(target_value);
-		if (!config->TargetPassword)
+		if (!pf_config_copy_string(&config->TargetPassword, target_value))
 			return FALSE;
 	}
 
@@ -650,7 +647,8 @@ BOOL pf_server_config_dump(const char* file)
 		goto fail;
 	if (IniFile_SetKeyValueInt(ini, section_server, key_port, 3389) < 0)
 		goto fail;
-	if (IniFile_SetKeyValueString(ini, section_server, key_sam_file, "path/some/file.sam") < 0)
+	if (IniFile_SetKeyValueString(ini, section_server, key_sam_file,
+	                              "optional/path/some/file.sam") < 0)
 		goto fail;
 
 	/* Target configuration */
@@ -662,7 +660,14 @@ BOOL pf_server_config_dump(const char* file)
 		goto fail;
 	if (IniFile_SetKeyValueInt(ini, section_target, key_target_tls_seclevel, 1) < 0)
 		goto fail;
-
+	if (IniFile_SetKeyValueString(ini, section_target, key_target_user, "optionaltargetuser") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_target, key_target_domain, "optionaltargetdomain") <
+	    0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_target, key_target_pwd, "optionaltargetpassword") <
+	    0)
+		goto fail;
 	/* Codec configuration */
 	if (IniFile_SetKeyValueString(ini, section_codecs, key_codecs_rfx, bool_str_true) < 0)
 		goto fail;
@@ -848,10 +853,9 @@ void pf_server_config_print(const proxyConfig* config)
 		CONFIG_PRINT_UINT16(config, TargetPort);
 		CONFIG_PRINT_UINT32(config, TargetTlsSecLevel);
 
-		if (config->TargetUser)
-			CONFIG_PRINT_STR(config, TargetUser);
-		if (config->TargetDomain)
-			CONFIG_PRINT_STR(config, TargetDomain);
+		CONFIG_PRINT_STR(config, TargetUser);
+		CONFIG_PRINT_STR(config, TargetDomain);
+		CONFIG_PRINT_STR(config, TargetPassword);
 	}
 
 	CONFIG_PRINT_SECTION(section_input);
