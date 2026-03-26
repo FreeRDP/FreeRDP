@@ -126,6 +126,11 @@ extern "C"
 
 		/* server SamFile */
 		char* SamFile; /** @since version 3.25.0 */
+
+		/* target smartcard */
+		BOOL TargetSmartcardAuth;  /** @since version 3.25.0 */
+		char* TargetSmartcardCert; /** @since version 3.25.0 */
+		char* TargetSmartcardKey;  /** @since version 3.25.0 */
 	};
 
 	/**
