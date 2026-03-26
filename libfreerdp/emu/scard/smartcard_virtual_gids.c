@@ -656,6 +656,8 @@ static BOOL vgids_read_do_fkt(void* data, size_t index, va_list ap)
 		if (vgids_ef_read_do(file, doID, &response, &responseSize))
 		{
 			context->responseData = Stream_New(response, (size_t)responseSize);
+			if (!context->responseData)
+				free(response);
 			return FALSE;
 		}
 	}
