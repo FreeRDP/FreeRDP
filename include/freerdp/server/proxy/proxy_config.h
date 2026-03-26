@@ -123,6 +123,9 @@ extern "C"
 		/* codecs */
 		BOOL RFX; /** @since version 3.24.0 */
 		BOOL NSC; /** @since version 3.24.0 */
+
+		/* server SamFile */
+		char* SamFile; /** @since version 3.25.0 */
 	};
 
 	/**

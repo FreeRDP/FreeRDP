@@ -69,6 +69,7 @@ static const char* boolstr(BOOL rc)
 static const char* section_server = "Server";
 static const char* key_host = "Host";
 static const char* key_port = "Port";
+static const char* key_sam_file = "SamFile";
 
 static const char* section_target = "Target";
 static const char* key_target_fixed = "FixedTarget";
@@ -229,22 +230,37 @@ static const char* pf_config_get_str(wIniFile* ini, const char* section, const c
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL pf_config_copy_string(char** dst, const char* src)
+{
+	*dst = nullptr;
+	if (src)
+		*dst = _strdup(src);
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
 {
 	WINPR_ASSERT(config);
 	const char* host = pf_config_get_str(ini, section_server, key_host, FALSE);
 
-	if (!host)
-		return TRUE;
-
-	free(config->Host);
-	config->Host = _strdup(host);
-
-	if (!config->Host)
-		return FALSE;
+	if (host)
+	{
+		free(config->Host);
+		if (!pf_config_copy_string(&config->Host, host))
+			return FALSE;
+	}
 
 	if (!pf_config_get_uint16(ini, section_server, key_port, &config->Port, TRUE))
 		return FALSE;
+
+	const char* sam = pf_config_get_str(ini, section_server, key_sam_file, FALSE);
+	if (sam)
+	{
+		free(config->SamFile);
+		if (!pf_config_copy_string(&config->SamFile, sam))
+			return FALSE;
+	}
 
 	return TRUE;
 }
@@ -634,6 +650,8 @@ BOOL pf_server_config_dump(const char* file)
 		goto fail;
 	if (IniFile_SetKeyValueInt(ini, section_server, key_port, 3389) < 0)
 		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_server, key_sam_file, "path/some/file.sam") < 0)
+		goto fail;
 
 	/* Target configuration */
 	if (IniFile_SetKeyValueString(ini, section_target, key_host, "somehost.example.com") < 0)
@@ -820,6 +838,7 @@ void pf_server_config_print(const proxyConfig* config)
 
 	CONFIG_PRINT_SECTION(section_server);
 	CONFIG_PRINT_STR(config, Host);
+	CONFIG_PRINT_STR(config, SamFile);
 	CONFIG_PRINT_UINT16(config, Port);
 
 	if (config->FixedTarget)
@@ -917,6 +936,7 @@ void pf_server_config_free(proxyConfig* config)
 		return;
 
 	free(config->Host);
+	free(config->SamFile);
 	free(config->TargetHost);
 	free(config->TargetUser);
 	free(config->TargetDomain);
@@ -973,15 +993,6 @@ const char** pf_config_modules(const proxyConfig* config)
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL pf_config_copy_string(char** dst, const char* src)
-{
-	*dst = nullptr;
-	if (src)
-		*dst = _strdup(src);
-	return TRUE;
-}
-
-WINPR_ATTR_NODISCARD
 static BOOL pf_config_copy_string_n(char** dst, const char* src, size_t size)
 {
 	*dst = nullptr;
@@ -1033,6 +1044,8 @@ BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config)
 	*tmp = *config;
 
 	if (!pf_config_copy_string(&tmp->Host, config->Host))
+		goto fail;
+	if (!pf_config_copy_string(&tmp->SamFile, config->SamFile))
 		goto fail;
 	if (!pf_config_copy_string(&tmp->TargetHost, config->TargetHost))
 		goto fail;

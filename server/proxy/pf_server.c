@@ -505,6 +505,12 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
 		return FALSE;
 
+	if (config->SamFile)
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_NtlmSamFile, config->SamFile))
+			return FALSE;
+	}
+
 	/* currently not supporting GDI orders */
 	{
 		void* OrderSupport = freerdp_settings_get_pointer_writable(settings, FreeRDP_OrderSupport);
