@@ -68,6 +68,8 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 	}
 
 	bitmap = gdi_CreateBitmap(nWidth, nHeight, gdi->dstFormat, pDstData);
+	if (!bitmap)
+		winpr_aligned_free(pDstData);
 	return bitmap;
 }
 
