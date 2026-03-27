@@ -1,6 +1,7 @@
 {
 	"FREERDP_SETTINGS_TYPE_BOOL": {
 		"FreeRDP_ServerMode": false,
+		"FreeRDP_GfxCodecAV1": true,
 		"FreeRDP_WaitForOutputBufferFlush": true,
 		"FreeRDP_NetworkAutoDetect": true,
 		"FreeRDP_SupportAsymetricKeys": false,
@@ -214,6 +215,7 @@
 	"FREERDP_SETTINGS_TYPE_INT16": {},
 	"FREERDP_SETTINGS_TYPE_UINT32": {
 		"FreeRDP_ShareId": 0.0,
+		"FreeRDP_GfxCodecAV1Profile": 1.0,
 		"FreeRDP_PduSource": 0.0,
 		"FreeRDP_ServerPort": 3389.0,
 		"FreeRDP_AcceptedCertLength": 0.0,

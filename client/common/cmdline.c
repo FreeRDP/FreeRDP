@@ -2438,6 +2438,40 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 					                                    bval == PARSE_OFF))
 						rc = COMMAND_LINE_ERROR;
 				}
+#if defined(WITH_GFX_AV1)
+				else if (option_starts_with("AV1", val))
+				{
+					uint32_t profile = 1;
+					BOOL enabled = FALSE;
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+					{
+						if (_stricmp("av1:i420", val) == 0)
+						{
+							enabled = TRUE;
+							profile = 0;
+						}
+						else if (_stricmp("av1:i444", val) == 0)
+						{
+							enabled = TRUE;
+							profile = 1;
+						}
+						else
+							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					else
+						enabled = bval == PARSE_ON;
+
+					if (enabled || (bval != PARSE_FAIL))
+					{
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GfxCodecAV1, enabled))
+							rc = COMMAND_LINE_ERROR;
+						else if (!freerdp_settings_set_uint32(settings, FreeRDP_GfxCodecAV1Profile,
+						                                      profile))
+							rc = COMMAND_LINE_ERROR;
+					}
+				}
+#endif
 				else
 					rc = COMMAND_LINE_ERROR;
 			}

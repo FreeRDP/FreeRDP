@@ -281,6 +281,9 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_GfxAVC444v2:
 			return settings->GfxAVC444v2;
 
+		case FreeRDP_GfxCodecAV1:
+			return settings->GfxCodecAV1;
+
 		case FreeRDP_GfxH264:
 			return settings->GfxH264;
 
@@ -961,6 +964,10 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_GfxAVC444v2:
 			settings->GfxAVC444v2 = cnv.c;
+			break;
+
+		case FreeRDP_GfxCodecAV1:
+			settings->GfxCodecAV1 = cnv.c;
 			break;
 
 		case FreeRDP_GfxH264:
@@ -1776,6 +1783,9 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 		case FreeRDP_GfxCapsFilter:
 			return settings->GfxCapsFilter;
 
+		case FreeRDP_GfxCodecAV1Profile:
+			return settings->GfxCodecAV1Profile;
+
 		case FreeRDP_GlyphSupportLevel:
 			return settings->GlyphSupportLevel;
 
@@ -2227,6 +2237,10 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_GfxCapsFilter:
 			settings->GfxCapsFilter = cnv.c;
+			break;
+
+		case FreeRDP_GfxCodecAV1Profile:
+			settings->GfxCodecAV1Profile = cnv.c;
 			break;
 
 		case FreeRDP_GlyphSupportLevel:

@@ -60,6 +60,11 @@ const char* rdpgfx_get_codec_id_string(UINT16 codecId)
 {
 	switch (codecId)
 	{
+#if defined(WITH_GFX_AV1)
+		case RDPGFX_CODECID_AV1:
+			return "RDPGFX_CODECID_AV1";
+#endif
+
 		case RDPGFX_CODECID_UNCOMPRESSED:
 			return "RDPGFX_CODECID_UNCOMPRESSED";
 

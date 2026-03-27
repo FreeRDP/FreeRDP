@@ -892,6 +892,73 @@ static pstatus_t general_RGBToYUV444_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc, 
 	}
 }
 
+static inline void fillI444_single(size_t offset, const BYTE* WINPR_RESTRICT pRGB, UINT32 SrcFormat,
+                                   BYTE* WINPR_RESTRICT pY, BYTE* WINPR_RESTRICT pU,
+                                   BYTE* WINPR_RESTRICT pV)
+{
+	WINPR_ASSERT(pRGB);
+	WINPR_ASSERT(pY);
+	WINPR_ASSERT(pU);
+	WINPR_ASSERT(pV);
+
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
+
+	BYTE B = 0;
+	BYTE G = 0;
+	BYTE R = 0;
+	const UINT32 color = FreeRDPReadColor(&pRGB[offset * bpp], SrcFormat);
+	FreeRDPSplitColor(color, SrcFormat, &R, &G, &B, nullptr, nullptr);
+	const BYTE y = RGB2Y(R, G, B);
+	const BYTE u = RGB2U(R, G, B);
+	const BYTE v = RGB2V(R, G, B);
+	pY[offset] = y;
+	pU[offset] = u;
+	pV[offset] = v;
+}
+
+static inline void general_RGBToI444_SINGLE_ROW(const BYTE* WINPR_RESTRICT pRGB, UINT32 SrcFormat,
+                                                BYTE* WINPR_RESTRICT pY, BYTE* WINPR_RESTRICT pU,
+                                                BYTE* WINPR_RESTRICT pV, UINT32 nWidth)
+{
+	for (size_t x = 0; x < nWidth; x++)
+	{
+		fillI444_single(x, pRGB, SrcFormat, pY, pU, pV);
+	}
+}
+
+static inline pstatus_t general_RGBToI444_8u_RGB(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
+                                                 const UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
+                                                 const UINT32 dstStep[3],
+                                                 const prim_size_t* WINPR_RESTRICT roi)
+{
+	const UINT32 nWidth = roi->width;
+	const UINT32 nHeight = roi->height;
+
+	for (size_t y = 0; y < nHeight; y++)
+	{
+		const BYTE* pRGB = pSrc + y * srcStep;
+		BYTE* pY = &pDst[0][y * dstStep[0]];
+		BYTE* pU = &pDst[1][y * dstStep[1]];
+		BYTE* pV = &pDst[2][y * dstStep[2]];
+
+		general_RGBToI444_SINGLE_ROW(pRGB, SrcFormat, pY, pU, pV, nWidth);
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_RGBToI444_8u(const BYTE* WINPR_RESTRICT pSrc, UINT32 SrcFormat,
+                                      const UINT32 srcStep, BYTE* WINPR_RESTRICT pDst[3],
+                                      const UINT32 dstStep[3],
+                                      const prim_size_t* WINPR_RESTRICT roi)
+{
+	switch (SrcFormat)
+	{
+		default:
+			return general_RGBToI444_8u_RGB(pSrc, SrcFormat, srcStep, pDst, dstStep, roi);
+	}
+}
+
 static inline pstatus_t general_RGBToYUV420_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT32 srcStep,
                                                  BYTE* WINPR_RESTRICT pDst[3],
                                                  const UINT32 dstStep[3],
@@ -2309,6 +2376,7 @@ void primitives_init_YUV(primitives_t* WINPR_RESTRICT prims)
 	prims->YUV444ToRGB_8u_P3AC4R = general_YUV444ToRGB_8u_P3AC4R;
 	prims->RGBToYUV420_8u_P3AC4R = general_RGBToYUV420_8u_P3AC4R;
 	prims->RGBToYUV444_8u_P3AC4R = general_RGBToYUV444_8u_P3AC4R;
+	prims->RGBToI444_8u = general_RGBToI444_8u;
 	prims->YUV420CombineToYUV444 = general_YUV420CombineToYUV444;
 	prims->YUV444SplitToYUV420 = general_YUV444SplitToYUV420;
 	prims->RGBToAVC444YUV = general_RGBToAVC444YUV;

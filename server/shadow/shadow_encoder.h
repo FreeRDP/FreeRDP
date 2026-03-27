@@ -51,7 +51,9 @@ struct rdp_shadow_encoder
 	BITMAP_INTERLEAVED_CONTEXT* interleaved;
 	H264_CONTEXT* h264;
 	PROGRESSIVE_CONTEXT* progressive;
-
+#if defined(WITH_GFX_AV1)
+	FREERDP_AV1_CONTEXT* av1;
+#endif
 	UINT32 fps;
 	UINT32 maxFps;
 	BOOL frameAck;

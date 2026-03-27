@@ -211,7 +211,11 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[[progressive[:on|off]|RFX[:on|off]|AVC420[:on|off]AVC444[:on|off]],mask:<value>,small-"
 	  "cache[:on|off],thin-client[:on|off],progressive[:on|"
-	  "off],frame-ack[:on|off]]",
+	  "off],frame-ack[:on|off]"
+#if defined(WITH_GFX_AV1)
+	  ",AV1[:on|off|i444|i420]]"
+#endif
+	  ,
 	  nullptr, nullptr, -1, nullptr, "RDP8 graphics pipeline" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL, "[[AVC420|AVC444],mask:<value>]", nullptr, nullptr,

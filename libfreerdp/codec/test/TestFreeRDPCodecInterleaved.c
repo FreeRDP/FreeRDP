@@ -287,7 +287,7 @@ fail:
 	return rc;
 }
 
-/* The encoder expects a JSON that describes a test cast:
+/* The encoder expects a JSON that describes a test case:
  *
  * [
  * {

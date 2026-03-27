@@ -48,6 +48,10 @@ set(CODEC_SRCS
     video.c
 )
 
+if(WITH_GFX_AV1)
+  list(APPEND CODEC_SRCS av1.c)
+endif()
+
 set(CODEC_SSE3_SRCS sse/rfx_sse2.c sse/rfx_sse2.h sse/nsc_sse2.c sse/nsc_sse2.h)
 
 set(CODEC_NEON_SRCS neon/rfx_neon.c neon/rfx_neon.h neon/nsc_neon.c neon/nsc_neon.h)
@@ -105,6 +109,20 @@ if(FAAC_FOUND)
   list(APPEND CODEC_LIBS ${FAAC_LIBRARIES})
   include_directories(SYSTEM ${FAAC_INCLUDE_DIRS})
   freerdp_pc_add_requires_private("faac")
+endif()
+
+if(WITH_AOM AND AOM_FOUND)
+  add_compile_definitions(WITH_LIBAOM)
+  list(APPEND CODEC_LIBS ${AOM_LIBRARIES})
+  include_directories(SYSTEM ${AOM_INCLUDE_DIRS})
+  freerdp_pc_add_requires_private("aom")
+endif()
+
+if(WITH_YUV AND YUV_FOUND)
+  add_compile_definitions(WITH_LIBYUV)
+  list(APPEND CODEC_LIBS ${YUV_LIBRARIES})
+  include_directories(SYSTEM ${YUV_INCLUDE_DIRS})
+  freerdp_pc_add_requires_private("yuv")
 endif()
 
 if(WITH_OPENH264)

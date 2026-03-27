@@ -49,6 +49,11 @@ extern "C"
 		UINT32 outputTargetHeight;
 		BOOL windowMapped;
 		BOOL handleInUpdateSurfaceArea;
+#if defined(WITH_GFX_AV1)
+		FREERDP_AV1_CONTEXT* av1; /** @since version 3.25.0 */
+#else
+	    void* reservedAV1;
+#endif
 	};
 	typedef struct gdi_gfx_surface gdiGfxSurface;
 
