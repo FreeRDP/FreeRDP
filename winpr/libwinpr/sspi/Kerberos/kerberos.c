@@ -153,18 +153,28 @@ krb5_error_code kerberos_log_msg(krb5_context ctx, krb5_error_code code, const c
 
 void krb_log_context_encryption(krb5_context ctx, krb5_principal princ)
 {
+#if defined(WITH_KRB5_HEIMDAL)
+	WLog_WARN(TAG, "TODO: Implement encryption info message for Heimdal");
+#elif defined(WITH_KRB5_MIT)
 	krb5_get_init_creds_opt opt = WINPR_C_ARRAY_INIT;
 	krb5_enctype enctype = 0;
 	krb5_data salt = WINPR_C_ARRAY_INIT;
 	krb5_data s2kparam = WINPR_C_ARRAY_INIT;
 	char buffer[128] = WINPR_C_ARRAY_INIT;
-
 	krb5_error_code rv =
 	    krb_log_exec(krb5_get_etype_info, ctx, princ, &opt, &enctype, &salt, &s2kparam);
 	krb5_enctype_to_string(enctype, buffer, sizeof(buffer));
 	const char* msg = krb5_get_error_message(ctx, rv);
+
 	WLog_DBG(TAG, "[%s] enctype=%s, salt[%u]=%s, s2kparam[%u]=%s", msg, buffer, salt.length,
 	         salt.data, s2kparam.length, s2kparam.data);
+
+	krb5_free_data_contents(ctx, &salt);
+	krb5_free_data_contents(ctx, &s2kparam);
+	krb5_free_error_message(ctx, msg);
+#else
+#error "Missing implementation for unknown kerberos type"
+#endif
 }
 
 static void credentials_unref(KRB_CREDENTIALS* credentials);

@@ -49,6 +49,8 @@ set(CODEC_SRCS
 )
 
 if(WITH_GFX_AV1)
+  include(WarnExperimental)
+  warn_experimental("AV1 codec support for GFX channel" "-DWITH_GFX_AV1=OFF")
   list(APPEND CODEC_SRCS av1.c)
 endif()
 
@@ -142,7 +144,17 @@ if(WITH_SWSCALE)
   endif(WITH_SWSCALE_LOADING)
 endif()
 
+if(WITH_DSP_EXPERIMENTAL)
+  include(WarnExperimental)
+  warn_experimental("Experimental encoders/decoders for audio channels" "-DWITH_DSP_EXPERIMENTAL=OFF")
+endif()
+
 if(WITH_VIDEO_FFMPEG)
+  if(WITH_VAAPI)
+    include(WarnExperimental)
+    warn_experimental("VAAPI encoder/decoder support for FFMPEG" "-DWITH_VAAPI=OFF")
+  endif()
+
   set(CODEC_SRCS ${CODEC_SRCS} h264_ffmpeg.c)
   include_directories(SYSTEM ${FFMPEG_INCLUDE_DIRS})
   list(APPEND CODEC_LIBS ${FFMPEG_LIBRARIES})
@@ -150,10 +162,14 @@ if(WITH_VIDEO_FFMPEG)
 endif()
 
 if(WIN32 AND WITH_MEDIA_FOUNDATION)
+  include(WarnExperimental)
+  warn_experimental("Experimental encoders/decoders for H264" "-DWITH_MEDIA_FOUNDATION=OFF")
   set(CODEC_SRCS ${CODEC_SRCS} h264_mf.c)
 endif()
 
 if(ANDROID AND WITH_MEDIACODEC)
+  include(WarnExperimental)
+  warn_experimental("Experimental encoders/decoders for H264" "-DWITH_MEDIACODEC=OFF")
   list(APPEND CODEC_SRCS h264_mediacodec.c)
 
   find_library(MEDIACODEC mediandk REQUIRED)
