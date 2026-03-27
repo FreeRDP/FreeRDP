@@ -2863,7 +2863,9 @@ static BOOL option_is_runtime_checks(WINPR_ATTR_UNUSED wLog* log, const char* to
 
 static BOOL option_is_experimental(WINPR_ATTR_UNUSED wLog* log, const char* tok)
 {
-	const char* experimental[] = { STR(WITH_DSP_EXPERIMENTAL), STR(WITH_VAAPI) };
+	const char* experimental[] = { STR(WITH_DSP_EXPERIMENTAL), STR(WITH_VAAPI),
+		                           STR(WITH_GFX_AV1),          STR(WITH_VAAPI_H264_ENCODING),
+		                           STR(WITH_MEDIACODEC),       STR(WITH_DSP_EXPERIMENTAL) };
 	for (size_t x = 0; x < ARRAYSIZE(experimental); x++)
 	{
 		const char* opt = experimental[x];
