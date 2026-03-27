@@ -152,14 +152,17 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 		 * 		If not (on other platforms) we do a waitpid */
 		WINPR_PROCESS* process = (WINPR_PROCESS*)Object;
 
-		do
+		while (TRUE)
 		{
-			DWORD status = 0;
-			DWORD waitDelay = 0;
 			int ret = waitpid(process->pid, &(process->status), WNOHANG);
 			if (ret == process->pid)
 			{
-				process->dwExitCode = (DWORD)process->status;
+				if (WIFEXITED(process->status))
+					process->dwExitCode = (DWORD)WEXITSTATUS(process->status);
+				else if (WIFSIGNALED(process->status))
+					process->dwExitCode = (DWORD)(128 + WTERMSIG(process->status));
+				else
+					process->dwExitCode = (DWORD)process->status;
 				return WAIT_OBJECT_0;
 			}
 			else if (ret < 0)
@@ -171,18 +174,22 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 				return WAIT_FAILED;
 			}
 
-			/* sleep by slices of 50ms */
-			waitDelay = (dwMilliseconds < 50) ? dwMilliseconds : 50;
+			if (dwMilliseconds == 0)
+				return WAIT_TIMEOUT;
 
-			status = SleepEx(waitDelay, bAlertable);
+			/* sleep by slices of 50ms */
+			DWORD waitDelay = 50;
+			if (dwMilliseconds != INFINITE)
+			{
+				if (dwMilliseconds < 50)
+					waitDelay = dwMilliseconds;
+				dwMilliseconds -= waitDelay;
+			}
+
+			DWORD status = SleepEx(waitDelay, bAlertable);
 			if (status != 0)
 				return status;
-
-			dwMilliseconds -= waitDelay;
-
-		} while (dwMilliseconds > 50);
-
-		return WAIT_TIMEOUT;
+		}
 	}
 
 	if (Type == HANDLE_TYPE_MUTEX)
