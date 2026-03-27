@@ -76,6 +76,8 @@ if(WITH_CLANG_FORMAT)
   include(ClangFormat)
 endif()
 
+include(WarnExperimental)
+include(WarnUnmaintained)
 include(CompilerFlags)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
@@ -386,6 +388,7 @@ endif()
 
 option(WITH_LIBRESSL "[experimental] build with LibreSSL" OFF)
 if(WITH_LIBRESSL)
+  warn_experimental("LibReSSL" "-DWITH_LIBRESSL=OFF")
   message(WARNING "-DWITH_LIBRESSL=ON: LibreSSL enabled. Expect incompatibilities.")
   message(WARNING "Only OpenSSL is tested on each release, other implementations depend on external contributions")
 
@@ -455,6 +458,8 @@ if(OPENSSL_FOUND)
 endif()
 
 if(MBEDTLS_FOUND)
+  warn_experimental("Mbed-TLS" "-DWITH_MBEDTLS=OFF")
+
   message(WARNING "-DWITH_MBEDTLS=ON: Mbed-TLS enabled. Expect incompatibilities")
   message(WARNING "Only OpenSSL is tested on each release, other implementations depend on external contributions")
   add_compile_definitions("WITH_MBEDTLS")
@@ -615,3 +620,6 @@ message(STATUS "Intrinsic path configuration:")
 #ShowCMakeVars("^CMAKE_INSTALL_LIBDIR")
 showcmakevars("^FREERDP_INSTALL_PREFIX|^FREERDP_LIBRARY_PATH|^FREERDP_PLUGIN_PATH")
 showcmakevars("^FREERDP_ADDIN_PATH|^FREERDP_EXTENSION_PATH|^FREERDP_PROXY_PLUGINDIR")
+
+warn_experimental_print()
+warn_unmaintained_print()

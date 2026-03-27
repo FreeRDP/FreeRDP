@@ -60,6 +60,9 @@ if(NOT FREERDP_UNIFIED_BUILD)
 
   option(WITH_LIBRESSL "build with LibreSSL" OFF)
   if(WITH_LIBRESSL)
+    include(WarnExperimental)
+    warn_experimental("LibReSSL" "-DWITH_LIBRESSL=OFF")
+
     find_package(LibreSSL REQUIRED)
     set(OPENSSL_INCLUDE_DIR ${LIBRESSL_INCLUDE_DIR})
     set(OPENSSL_LIBRARIES ${LIBRESSL_LIBRARIES})

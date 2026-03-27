@@ -149,6 +149,9 @@ cmake_dependent_option(
   WITH_VAAPI_H264_ENCODING "[experimental] Use FFMPEG VAAPI hardware H264 encoding" ON "WITH_VIDEO_FFMPEG" OFF
 )
 if(WITH_VAAPI_H264_ENCODING)
+  include(WarnExperimental)
+  warn_experimental("VAAPI H264 encoding" "-DWITH_VAAPI_H264_ENCODING=OFF")
+
   add_definitions("-DWITH_VAAPI_H264_ENCODING")
 endif()
 

@@ -52,6 +52,9 @@ if(WITH_OPENCL)
   include(WarnUnmaintained)
   warn_unmaintained("OpenCL support for primitives" "-DWITH_OPENCL=OFF")
 
+  include(WarnExperimental)
+  warn_experimental("OpenCL support for primitives" "-DWITH_OPENCL=OFF")
+
   set(FILENAME "opencl/primitives.cl")
   set_source_files_properties(${FILENAME} PROPERTIES HEADER_FILE_ONLY ON)
   list(APPEND PRIMITIVES_OPENCL_SRCS ${FILENAME})
