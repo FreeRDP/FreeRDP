@@ -145,6 +145,95 @@ static BOOL nla_decrypt_public_key_hash(rdpNla* nla);
 static BOOL nla_encrypt_ts_credentials(rdpNla* nla);
 static BOOL nla_decrypt_ts_credentials(rdpNla* nla);
 
+static const char* nla_sspi_status_name(INT32 status)
+{
+#define CASE_SSPI(x) \
+	case (INT32)(x): \
+		return #x
+	switch (status)
+	{
+		CASE_SSPI(SEC_E_OK);
+		CASE_SSPI(SEC_E_INSUFFICIENT_MEMORY);
+		CASE_SSPI(SEC_E_INVALID_HANDLE);
+		CASE_SSPI(SEC_E_UNSUPPORTED_FUNCTION);
+		CASE_SSPI(SEC_E_TARGET_UNKNOWN);
+		CASE_SSPI(SEC_E_INTERNAL_ERROR);
+		CASE_SSPI(SEC_E_SECPKG_NOT_FOUND);
+		CASE_SSPI(SEC_E_NOT_OWNER);
+		CASE_SSPI(SEC_E_CANNOT_INSTALL);
+		CASE_SSPI(SEC_E_INVALID_TOKEN);
+		CASE_SSPI(SEC_E_CANNOT_PACK);
+		CASE_SSPI(SEC_E_QOP_NOT_SUPPORTED);
+		CASE_SSPI(SEC_E_NO_IMPERSONATION);
+		CASE_SSPI(SEC_E_LOGON_DENIED);
+		CASE_SSPI(SEC_E_UNKNOWN_CREDENTIALS);
+		CASE_SSPI(SEC_E_NO_CREDENTIALS);
+		CASE_SSPI(SEC_E_MESSAGE_ALTERED);
+		CASE_SSPI(SEC_E_OUT_OF_SEQUENCE);
+		CASE_SSPI(SEC_E_NO_AUTHENTICATING_AUTHORITY);
+		CASE_SSPI(SEC_E_CONTEXT_EXPIRED);
+		CASE_SSPI(SEC_E_INCOMPLETE_MESSAGE);
+		CASE_SSPI(SEC_E_INCOMPLETE_CREDENTIALS);
+		CASE_SSPI(SEC_E_BUFFER_TOO_SMALL);
+		CASE_SSPI(SEC_E_WRONG_PRINCIPAL);
+		CASE_SSPI(SEC_E_TIME_SKEW);
+		CASE_SSPI(SEC_E_UNTRUSTED_ROOT);
+		CASE_SSPI(SEC_E_ILLEGAL_MESSAGE);
+		CASE_SSPI(SEC_E_CERT_UNKNOWN);
+		CASE_SSPI(SEC_E_CERT_EXPIRED);
+		CASE_SSPI(SEC_E_ENCRYPT_FAILURE);
+		CASE_SSPI(SEC_E_DECRYPT_FAILURE);
+		CASE_SSPI(SEC_E_ALGORITHM_MISMATCH);
+		CASE_SSPI(SEC_E_SECURITY_QOS_FAILED);
+		CASE_SSPI(SEC_E_NO_TGT_REPLY);
+		CASE_SSPI(SEC_E_NO_IP_ADDRESSES);
+		CASE_SSPI(SEC_E_WRONG_CREDENTIAL_HANDLE);
+		CASE_SSPI(SEC_E_CRYPTO_SYSTEM_INVALID);
+		CASE_SSPI(SEC_E_MAX_REFERRALS_EXCEEDED);
+		CASE_SSPI(SEC_E_MUST_BE_KDC);
+		CASE_SSPI(SEC_E_STRONG_CRYPTO_NOT_SUPPORTED);
+		CASE_SSPI(SEC_E_TOO_MANY_PRINCIPALS);
+		CASE_SSPI(SEC_E_NO_PA_DATA);
+		CASE_SSPI(SEC_E_PKINIT_NAME_MISMATCH);
+		CASE_SSPI(SEC_E_SMARTCARD_LOGON_REQUIRED);
+		CASE_SSPI(SEC_E_KDC_INVALID_REQUEST);
+		CASE_SSPI(SEC_E_KDC_UNABLE_TO_REFER);
+		CASE_SSPI(SEC_E_KDC_UNKNOWN_ETYPE);
+		CASE_SSPI(SEC_E_UNSUPPORTED_PREAUTH);
+		CASE_SSPI(SEC_E_DELEGATION_REQUIRED);
+		CASE_SSPI(SEC_E_BAD_BINDINGS);
+		CASE_SSPI(SEC_E_MULTIPLE_ACCOUNTS);
+		CASE_SSPI(SEC_E_NO_KERB_KEY);
+		CASE_SSPI(SEC_E_CERT_WRONG_USAGE);
+		CASE_SSPI(SEC_E_DOWNGRADE_DETECTED);
+		CASE_SSPI(SEC_E_SMARTCARD_CERT_REVOKED);
+		CASE_SSPI(SEC_E_ISSUING_CA_UNTRUSTED);
+		CASE_SSPI(SEC_E_REVOCATION_OFFLINE_C);
+		CASE_SSPI(SEC_E_PKINIT_CLIENT_FAILURE);
+		CASE_SSPI(SEC_E_SMARTCARD_CERT_EXPIRED);
+		CASE_SSPI(SEC_E_KDC_CERT_EXPIRED);
+		CASE_SSPI(SEC_E_KDC_CERT_REVOKED);
+		CASE_SSPI(SEC_E_MUTUAL_AUTH_FAILED);
+		default:
+			return "UNKNOWN";
+	}
+#undef CASE_SSPI
+}
+
+static FREERDP_ERROR_SUBSYSTEM nla_get_subsystem(const rdpNla* nla)
+{
+	const char* pkg = credssp_auth_pkg_name(nla->auth);
+
+	if (_stricmp(pkg, CREDSSP_AUTH_PKG_KERBEROS) == 0)
+		return FREERDP_ERROR_SUBSYSTEM_KERBEROS;
+	if (_stricmp(pkg, CREDSSP_AUTH_PKG_NTLM) == 0)
+		return FREERDP_ERROR_SUBSYSTEM_NTLM;
+	if (_stricmp(pkg, CREDSSP_AUTH_PKG_SPNEGO) == 0)
+		return FREERDP_ERROR_SUBSYSTEM_NEGOTIATE;
+
+	return FREERDP_ERROR_SUBSYSTEM_NLA;
+}
+
 void nla_set_early_user_auth(rdpNla* nla, BOOL earlyUserAuth)
 {
 	WINPR_ASSERT(nla);
@@ -502,7 +591,12 @@ int nla_client_begin(rdpNla* nla)
 			nla_set_state(nla, NLA_STATE_FINAL);
 			break;
 		default:
-			switch (credssp_auth_sspi_error(nla->auth))
+		{
+			const INT32 sspi_error = credssp_auth_sspi_error(nla->auth);
+			freerdp_set_error_detail(nla->rdpcontext, nla_get_subsystem(nla), (INT64)sspi_error,
+			                         nla_sspi_status_name(sspi_error), NULL);
+
+			switch (sspi_error)
 			{
 				case SEC_E_LOGON_DENIED:
 				case SEC_E_NO_CREDENTIALS:
@@ -513,6 +607,7 @@ int nla_client_begin(rdpNla* nla)
 					break;
 			}
 			return -1;
+		}
 	}
 
 	return 1;
@@ -548,7 +643,12 @@ static int nla_client_recv_nego_token(rdpNla* nla)
 		break;
 
 		default:
+		{
+			const INT32 sspi_error = credssp_auth_sspi_error(nla->auth);
+			freerdp_set_error_detail(nla->rdpcontext, nla_get_subsystem(nla), (INT64)sspi_error,
+			                         nla_sspi_status_name(sspi_error), NULL);
 			return -1;
+		}
 	}
 
 	return 1;
@@ -2198,6 +2298,8 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 		if (nla->errorCode)
 		{
 			UINT32 code = 0;
+			const INT32 sspi_error = credssp_auth_sspi_error(nla->auth);
+			char detailBuf[256] = { 0 };
 
 			switch (nla->errorCode)
 			{
@@ -2248,6 +2350,12 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 					code = FREERDP_ERROR_AUTHENTICATION_FAILED;
 					break;
 			}
+
+			(void)_snprintf(detailBuf, sizeof(detailBuf), "NTSTATUS: %s (0x%08" PRIx32 ")",
+			                NtStatus2Tag(nla->errorCode),
+			                WINPR_CXX_COMPAT_CAST(uint32_t, nla->errorCode));
+			freerdp_set_error_detail(nla->rdpcontext, nla_get_subsystem(nla), (INT64)sspi_error,
+			                         nla_sspi_status_name(sspi_error), detailBuf);
 
 			freerdp_set_last_error_log(nla->rdpcontext, code);
 			return -1;

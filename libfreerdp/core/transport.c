@@ -154,6 +154,9 @@ static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 				{
 					WLog_Print(transport->log, WLOG_ERROR, "where=%s ACCESS DENIED",
 					           where2str(where, buffer, sizeof(buffer)));
+					freerdp_set_error_detail(transport_get_context(transport),
+					                         FREERDP_ERROR_SUBSYSTEM_TLS, (INT64)ret,
+					                         "SSL_AD_ACCESS_DENIED", "TLS access denied alert");
 					freerdp_set_last_error_log(transport_get_context(transport),
 					                           FREERDP_ERROR_AUTHENTICATION_FAILED);
 				}
@@ -175,6 +178,10 @@ static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 							kret = nla_get_error(transport->nla);
 						if (kret == 0)
 							kret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
+						freerdp_set_error_detail(
+						    transport_get_context(transport), FREERDP_ERROR_SUBSYSTEM_TLS,
+						    (INT64)ret, "SSL_AD_INTERNAL_ERROR",
+						    SSL_alert_desc_string_long(ret));
 						freerdp_set_last_error_log(transport_get_context(transport), kret);
 					}
 				}
@@ -192,6 +199,10 @@ static void transport_ssl_cb(const SSL* ssl, int where, int ret)
 				           "Unhandled SSL error (where=%s, ret=%d [%s, %s])",
 				           where2str(where, buffer, sizeof(buffer)), ret,
 				           SSL_alert_type_string_long(ret), SSL_alert_desc_string_long(ret));
+				freerdp_set_error_detail(transport_get_context(transport),
+				                         FREERDP_ERROR_SUBSYSTEM_TLS, (INT64)ret,
+				                         SSL_alert_type_string_long(ret),
+				                         SSL_alert_desc_string_long(ret));
 				break;
 		}
 	}
@@ -513,6 +524,8 @@ BOOL transport_connect_aad(rdpTransport* transport)
 	{
 		WLog_Print(transport->log, WLOG_ERROR, "AAD begin failed");
 
+		freerdp_set_error_detail(context, FREERDP_ERROR_SUBSYSTEM_AAD, 0, NULL,
+		                         "AAD authentication begin failed");
 		freerdp_set_last_error_if_not(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 
 		transport_set_aad_mode(transport, FALSE);
