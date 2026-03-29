@@ -1439,7 +1439,7 @@ static BOOL sdl_client_global_init()
 	}
 #endif
 
-	return freerdp_handle_signals() != 0;
+	return freerdp_handle_signals() == 0;
 }
 
 /* Optional global tear down */
