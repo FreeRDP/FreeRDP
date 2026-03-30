@@ -612,7 +612,7 @@ static BOOL rdpear_kerb_CreateApReqAuthenticator(RDPEAR_PLUGIN* rdpear, NdrConte
 	*pstatus = 0;
 
 out:
-	resp->Authenticator.Pdu = 6;
+	resp->Authenticator.Pdu = 7;
 	resp->KerbProtocolError = rv;
 	krb5_free_principal_contents(rdpear->krbContext, &client);
 	krb5_free_data(rdpear->krbContext, der);
