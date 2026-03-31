@@ -119,6 +119,22 @@ fail:
 }
 #endif
 
+static int pem_pwd_cb(char* buf, int size, int rwflag, void* userdata)
+{
+	const char* pwd = userdata;
+	if (!pwd || (size < 0))
+		return -1;
+	if (size == 0)
+		return 0;
+
+	size_t len = strlen(pwd);
+	if (len >= WINPR_ASSERTING_INT_CAST(size_t, size))
+		len = WINPR_ASSERTING_INT_CAST(size_t, size) - 1;
+	memcpy(buf, pwd, len);
+	buf[len] = '\0';
+	return WINPR_ASSERTING_INT_CAST(int, len);
+}
+
 static EVP_PKEY* evp_pkey_utils_from_pem(const char* data, size_t len, BOOL fromFile,
                                          const char* password)
 {
@@ -139,8 +155,8 @@ static EVP_PKEY* evp_pkey_utils_from_pem(const char* data, size_t len, BOOL from
 		return nullptr;
 	}
 
-	evp =
-	    PEM_read_bio_PrivateKey(bio, nullptr, nullptr, WINPR_CAST_CONST_PTR_AWAY(password, void*));
+	evp = PEM_read_bio_PrivateKey(bio, nullptr, pem_pwd_cb,
+	                              WINPR_CAST_CONST_PTR_AWAY(password, void*));
 	BIO_free_all(bio);
 	if (!evp)
 		WLog_ERR(TAG, "PEM_read_bio_PrivateKey returned nullptr [input length %" PRIuz "]", len);
@@ -238,6 +254,7 @@ rdpPrivateKey* freerdp_key_new_from_pem_enc(const char* pem, const char* passwor
 	rdpPrivateKey* key = freerdp_key_new();
 	if (!key || !pem)
 		goto fail;
+
 	key->evp = evp_pkey_utils_from_pem(pem, strlen(pem), FALSE, password);
 	if (!key->evp)
 		goto fail;
