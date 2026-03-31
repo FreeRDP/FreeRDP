@@ -821,8 +821,14 @@ static int nla_server_authenticate(rdpNla* nla)
 					break;
 
 				default:
-					nla->errorCode = NTSTATUS_FROM_WIN32(GetLastError());
-					break;
+				{
+					nla->errorCode = STATUS_LOGON_FAILURE;
+					const INT32 sspi = credssp_auth_sspi_error(nla->auth);
+					if (sspi != SEC_E_OK)
+						WLog_DBG(TAG, "[sspi][%s] failed with %s", credssp_auth_pkg_name(nla->auth),
+						         GetSecurityStatusString(sspi));
+				}
+				break;
 			}
 
 			(void)nla_send(nla);
