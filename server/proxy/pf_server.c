@@ -181,7 +181,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 
 			if (!freerdp_settings_set_bool(settings, FreeRDP_SmartcardLogon,
 			                               config->TargetSmartcardAuth))
-				return COMMAND_LINE_ERROR;
+				return FALSE;
 
 			if (config->TargetSmartcardCert)
 			{
