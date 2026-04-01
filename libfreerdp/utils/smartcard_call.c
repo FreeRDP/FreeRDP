@@ -1874,6 +1874,8 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 
 	Stream_SealLength(out);
 	size_t outputBufferLength = Stream_Length(out);
+	size_t dataEndPos = outputBufferLength;
+
 	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH + 4U);
 	outputBufferLength -= (RDPDR_DEVICE_IO_RESPONSE_LENGTH + 4U);
 	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH);
@@ -1892,15 +1894,20 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 	 */
 	if (outputBufferLength > operation->outputBufferLength)
 	{
-		WLog_Print(ctx->log, WLOG_WARN,
-		           "IRP warn: expected outputBufferLength %" PRIu32 ", but current limit %" PRIuz
-		           ", respond with STATUS_BUFFER_TOO_SMALL",
-		           operation->outputBufferLength, outputBufferLength);
+		WLog_Print(ctx->log, WLOG_DEBUG,
+		           "IRP  warn: expected outputBufferLength %" PRIuz ", but current limit %" PRIu32
+		           ", respond with STATUS_BUFFER_TOO_SMALL for retransmit with larger buffer",
+		           outputBufferLength, operation->outputBufferLength);
 
 		*pIoStatus = STATUS_BUFFER_TOO_SMALL;
 		result = *pIoStatus;
 		outputBufferLength = 0;
 		objectBufferLength = 0;
+	}
+	else
+	{
+		WLog_Print(ctx->log, WLOG_TRACE, "IRP trace: outputBufferLength %" PRIuz ", limit %" PRIu32,
+		           outputBufferLength, operation->outputBufferLength);
 	}
 
 	/* Device Control Response */
@@ -1909,7 +1916,9 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 	smartcard_pack_private_type_header(
 	    out, (UINT32)objectBufferLength); /* PrivateTypeHeader (8 bytes) */
 	Stream_Write_INT32(out, result);      /* Result (4 bytes) */
-	if (!Stream_SetPosition(out, Stream_Length(out)))
+	if (result == STATUS_BUFFER_TOO_SMALL)
+		Stream_SealLength(out);
+	else if (!Stream_SetPosition(out, dataEndPos))
 		return SCARD_E_BAD_SEEK;
 	return SCARD_S_SUCCESS;
 }
