@@ -3022,7 +3022,12 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardReadCacheA(SCARDCONTEXT hConte
 		*(BYTE**)Data = mem;
 	}
 	else
+	{
+		if (data->len > *DataLen)
+			return SCARD_E_INSUFFICIENT_BUFFER;
 		memcpy(Data, data->data, data->len);
+	}
+
 	*DataLen = data->len;
 	return SCARD_S_SUCCESS;
 }
@@ -3071,7 +3076,11 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardReadCacheW(SCARDCONTEXT hConte
 		*(BYTE**)Data = mem;
 	}
 	else
+	{
+		if (data->len > *DataLen)
+			return SCARD_E_INSUFFICIENT_BUFFER;
 		memcpy(Data, data->data, data->len);
+	}
 	*DataLen = data->len;
 	return SCARD_S_SUCCESS;
 }

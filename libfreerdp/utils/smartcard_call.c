@@ -755,6 +755,10 @@ static LONG smartcard_ReadCacheA_Call(scard_call_context* smartcard, wStream* ou
 		ret.ReturnCode =
 		    wrap(smartcard, SCardReadCacheA, operation->hContext, call->Common.CardIdentifier,
 		         call->Common.FreshnessCounter, call->szLookupName, ret.pbData, &ret.cbDataLen);
+
+	WLog_Print(smartcard->log, WLOG_TRACE, "key=%s, length=%" PRIu32, call->szLookupName,
+	           ret.cbDataLen);
+
 	if ((ret.ReturnCode != SCARD_W_CACHE_ITEM_NOT_FOUND) &&
 	    (ret.ReturnCode != SCARD_W_CACHE_ITEM_STALE))
 	{
@@ -792,6 +796,12 @@ static LONG smartcard_ReadCacheW_Call(scard_call_context* smartcard, wStream* ou
 	    wrap(smartcard, SCardReadCacheW, operation->hContext, call->Common.CardIdentifier,
 	         call->Common.FreshnessCounter, call->szLookupName, (BYTE*)&ret.pbData, &ret.cbDataLen);
 
+	if (WLog_IsLevelActive(smartcard->log, WLOG_TRACE))
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		(void)ConvertWCharToUtf8(call->szLookupName, buffer, sizeof(buffer));
+		WLog_Print(smartcard->log, WLOG_TRACE, "key=%s, length=%" PRIu32, buffer, ret.cbDataLen);
+	}
 	if ((ret.ReturnCode != SCARD_W_CACHE_ITEM_NOT_FOUND) &&
 	    (ret.ReturnCode != SCARD_W_CACHE_ITEM_STALE))
 	{
@@ -826,6 +836,8 @@ static LONG smartcard_WriteCacheA_Call(scard_call_context* smartcard,
 	                      call->szLookupName, call->Common.pbData, call->Common.cbDataLen);
 	scard_log_status_error_wlog(smartcard->log, "SCardWriteCacheA", ret.ReturnCode);
 	smartcard_trace_long_return_int(smartcard->log, &ret, "SCardWriteCacheA");
+	WLog_Print(smartcard->log, WLOG_TRACE, "key=%s, length=%" PRIu32, call->szLookupName,
+	           call->Common.cbDataLen);
 	return ret.ReturnCode;
 }
 
@@ -847,6 +859,14 @@ static LONG smartcard_WriteCacheW_Call(scard_call_context* smartcard,
 	                      call->szLookupName, call->Common.pbData, call->Common.cbDataLen);
 	scard_log_status_error_wlog(smartcard->log, "SCardWriteCacheW", ret.ReturnCode);
 	smartcard_trace_long_return_int(smartcard->log, &ret, "SCardWriteCacheW");
+
+	if (WLog_IsLevelActive(smartcard->log, WLOG_TRACE))
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		(void)ConvertWCharToUtf8(call->szLookupName, buffer, sizeof(buffer));
+		WLog_Print(smartcard->log, WLOG_TRACE, "key=%s, length=%" PRIu32, buffer,
+		           call->Common.cbDataLen);
+	}
 	return ret.ReturnCode;
 }
 
@@ -1874,6 +1894,8 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 
 	Stream_SealLength(out);
 	size_t outputBufferLength = Stream_Length(out);
+	size_t dataEndPos = outputBufferLength;
+
 	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH + 4U);
 	outputBufferLength -= (RDPDR_DEVICE_IO_RESPONSE_LENGTH + 4U);
 	WINPR_ASSERT(outputBufferLength >= RDPDR_DEVICE_IO_RESPONSE_LENGTH);
@@ -1892,15 +1914,20 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 	 */
 	if (outputBufferLength > operation->outputBufferLength)
 	{
-		WLog_Print(ctx->log, WLOG_WARN,
-		           "IRP warn: expected outputBufferLength %" PRIu32 ", but current limit %" PRIuz
-		           ", respond with STATUS_BUFFER_TOO_SMALL",
-		           operation->outputBufferLength, outputBufferLength);
+		WLog_Print(ctx->log, WLOG_DEBUG,
+		           "IRP  warn: expected outputBufferLength %" PRIuz ", but current limit %" PRIu32
+		           ", respond with STATUS_BUFFER_TOO_SMALL for retransmit with larger buffer",
+		           outputBufferLength, operation->outputBufferLength);
 
 		*pIoStatus = STATUS_BUFFER_TOO_SMALL;
 		result = *pIoStatus;
 		outputBufferLength = 0;
 		objectBufferLength = 0;
+	}
+	else
+	{
+		WLog_Print(ctx->log, WLOG_TRACE, "IRP trace: outputBufferLength %" PRIuz ", limit %" PRIu32,
+		           outputBufferLength, operation->outputBufferLength);
 	}
 
 	/* Device Control Response */
@@ -1909,7 +1936,9 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 	smartcard_pack_private_type_header(
 	    out, (UINT32)objectBufferLength); /* PrivateTypeHeader (8 bytes) */
 	Stream_Write_INT32(out, result);      /* Result (4 bytes) */
-	if (!Stream_SetPosition(out, Stream_Length(out)))
+	if (result == STATUS_BUFFER_TOO_SMALL)
+		Stream_SealLength(out);
+	else if (!Stream_SetPosition(out, dataEndPos))
 		return SCARD_E_BAD_SEEK;
 	return SCARD_S_SUCCESS;
 }
