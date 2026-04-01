@@ -755,6 +755,10 @@ static LONG smartcard_ReadCacheA_Call(scard_call_context* smartcard, wStream* ou
 		ret.ReturnCode =
 		    wrap(smartcard, SCardReadCacheA, operation->hContext, call->Common.CardIdentifier,
 		         call->Common.FreshnessCounter, call->szLookupName, ret.pbData, &ret.cbDataLen);
+
+	WLog_Print(smartcard->log, WLOG_TRACE, "key=%s, length=%" PRIu32, call->szLookupName,
+	           ret.cbDataLen);
+
 	if ((ret.ReturnCode != SCARD_W_CACHE_ITEM_NOT_FOUND) &&
 	    (ret.ReturnCode != SCARD_W_CACHE_ITEM_STALE))
 	{
@@ -792,6 +796,12 @@ static LONG smartcard_ReadCacheW_Call(scard_call_context* smartcard, wStream* ou
 	    wrap(smartcard, SCardReadCacheW, operation->hContext, call->Common.CardIdentifier,
 	         call->Common.FreshnessCounter, call->szLookupName, (BYTE*)&ret.pbData, &ret.cbDataLen);
 
+	if (WLog_IsLevelActive(smartcard->log, WLOG_TRACE))
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		(void)ConvertWCharToUtf8(call->szLookupName, buffer, sizeof(buffer));
+		WLog_Print(smartcard->log, WLOG_TRACE, "key=%s, length=%" PRIu32, buffer, ret.cbDataLen);
+	}
 	if ((ret.ReturnCode != SCARD_W_CACHE_ITEM_NOT_FOUND) &&
 	    (ret.ReturnCode != SCARD_W_CACHE_ITEM_STALE))
 	{
@@ -826,6 +836,8 @@ static LONG smartcard_WriteCacheA_Call(scard_call_context* smartcard,
 	                      call->szLookupName, call->Common.pbData, call->Common.cbDataLen);
 	scard_log_status_error_wlog(smartcard->log, "SCardWriteCacheA", ret.ReturnCode);
 	smartcard_trace_long_return_int(smartcard->log, &ret, "SCardWriteCacheA");
+	WLog_Print(smartcard->log, WLOG_TRACE, "key=%s, length=%" PRIu32, call->szLookupName,
+	           call->Common.cbDataLen);
 	return ret.ReturnCode;
 }
 
@@ -847,6 +859,14 @@ static LONG smartcard_WriteCacheW_Call(scard_call_context* smartcard,
 	                      call->szLookupName, call->Common.pbData, call->Common.cbDataLen);
 	scard_log_status_error_wlog(smartcard->log, "SCardWriteCacheW", ret.ReturnCode);
 	smartcard_trace_long_return_int(smartcard->log, &ret, "SCardWriteCacheW");
+
+	if (WLog_IsLevelActive(smartcard->log, WLOG_TRACE))
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		(void)ConvertWCharToUtf8(call->szLookupName, buffer, sizeof(buffer));
+		WLog_Print(smartcard->log, WLOG_TRACE, "key=%s, length=%" PRIu32, buffer,
+		           call->Common.cbDataLen);
+	}
 	return ret.ReturnCode;
 }
 
