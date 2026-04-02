@@ -291,8 +291,6 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 	/* deal with the smartcard / smartcard logon stuff */
 	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon))
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
-			goto out_error;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards, TRUE))
 			goto out_error;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
