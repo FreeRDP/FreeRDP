@@ -140,6 +140,9 @@
 #cmakedefine CHANNEL_RDPEAR
 #cmakedefine CHANNEL_RDPEAR_CLIENT
 #cmakedefine CHANNEL_RDPEAR_SERVER
+#cmakedefine CHANNEL_RDPEWA
+#cmakedefine CHANNEL_RDPEWA_CLIENT
+#cmakedefine CHANNEL_RDPEWA_SERVER
 #cmakedefine CHANNEL_RDPEI
 #cmakedefine CHANNEL_RDPEI_CLIENT
 #cmakedefine CHANNEL_RDPEI_SERVER
