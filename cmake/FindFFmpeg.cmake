@@ -101,7 +101,8 @@ macro(find_component _component _pkgconfig _library _header)
   )
 
   find_library(
-    ${_component}_LIBRARIES NAMES ${_library} HINTS ${PC_${_component}_LIBDIR} ${PC_${_component}_LIBRARY_DIRS}
+    ${_component}_LIBRARIES NAMES ${_library} lib${_library} HINTS ${PC_${_component}_LIBDIR}
+                                                                   ${PC_${_component}_LIBRARY_DIRS}
   )
 
   set(${_component}_DEFINITIONS ${PC_${_component}_CFLAGS_OTHER} CACHE STRING "The ${_component} CFLAGS.")
