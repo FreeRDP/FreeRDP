@@ -404,7 +404,17 @@ static DWORD WINAPI audin_server_thread_func(LPVOID arg)
 			break;
 		}
 
-		if (!Stream_SafeSeek(s, BytesReturned))
+		if (BytesReturned > len)
+		{
+			WLog_Print(audin->log, WLOG_ERROR,
+			           "WTSVirtualChannelRead returned an invalid length, got %" PRIu32
+			           ", but limit is %" PRIu32,
+			           BytesReturned, len);
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+
+		if (!Stream_SetLength(s, BytesReturned))
 		{
 			error = ERROR_INTERNAL_ERROR;
 			break;
