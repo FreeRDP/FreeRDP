@@ -64,6 +64,8 @@ Build-Depends:
  libjpeg-dev,
  opensc-pkcs11,
  libv4l-dev,
+ libcbor-dev,
+ libfido2-dev,
  ocl-icd-dev,
  ocl-icd-opencl-dev,
  opencl-headers,
