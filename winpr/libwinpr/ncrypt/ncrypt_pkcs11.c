@@ -1036,8 +1036,8 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 				if (cbOutput < *pcbResult)
 					return NTE_NO_MEMORY;
 
-				if (ConvertUtf8ToWChar((char*)slotInfo.slotDescription, cnv.wc,
-				                       cbOutput / sizeof(WCHAR)) < 0)
+				if (ConvertUtf8NToWChar((char*)slotInfo.slotDescription, SLOT_DESC_SZ, cnv.wc,
+				                        cbOutput / sizeof(WCHAR)) < 0)
 					return NTE_NO_MEMORY;
 			}
 			return ERROR_SUCCESS;
