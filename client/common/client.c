@@ -519,6 +519,14 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 			pwdAuth = "Smartcard-Pin:   ";
 			pinOnly = TRUE;
 			break;
+		case AUTH_FIDO_PIN:
+			pwdAuth = "FIDO2 PIN:       ";
+			pinOnly = TRUE;
+			break;
+		case AUTH_FIDO_TOUCH:
+			pwdAuth = "Touch your security key, then press Enter: ";
+			pinOnly = TRUE;
+			break;
 		case AUTH_RDSTLS:
 			queryAll = TRUE;
 			break;
@@ -610,8 +618,11 @@ BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** passw
 		case AUTH_TLS:
 		case AUTH_RDP:
 		case AUTH_SMARTCARD_PIN: /* in this case password is pin code */
+		case AUTH_FIDO_PIN:
 			if ((*username) && (*password))
 				return TRUE;
+			break;
+		case AUTH_FIDO_TOUCH:
 			break;
 		case GW_AUTH_HTTP:
 		case GW_AUTH_RDG:

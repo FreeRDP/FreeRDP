@@ -188,8 +188,10 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 				if (sdl->getDialog().handleEvent(windowEvent))
 					continue;
 
+				/* handleEvent returns false for events on unknown/destroyed windows
+				 * (e.g. after dialog closure). This is not fatal. */
 				if (!sdl->handleEvent(windowEvent))
-					throw ErrorMsg{ -1, windowEvent.type, "sdl->handleEvent" };
+					continue;
 
 				switch (windowEvent.type)
 				{

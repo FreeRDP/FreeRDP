@@ -1,0 +1,20 @@
+set(OPTION_DEFAULT OFF)
+set(OPTION_CLIENT_DEFAULT ON)
+set(OPTION_SERVER_DEFAULT OFF)
+
+define_channel_options(
+  NAME
+  "rdpewa"
+  TYPE
+  "dynamic"
+  DESCRIPTION
+  "WebAuthn Virtual Channel Extension"
+  SPECIFICATIONS
+  "[MS-RDPEWA]"
+  DEFAULT
+  ${OPTION_DEFAULT}
+  CLIENT_DEFAULT
+  ${OPTION_CLIENT_DEFAULT}
+  SERVER_DEFAULT
+  ${OPTION_SERVER_DEFAULT}
+)

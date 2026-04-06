@@ -43,6 +43,7 @@
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/channels/encomsp.h>
 #include <freerdp/channels/rdpear.h>
+#include <freerdp/channels/rdpewa.h>
 #include <freerdp/channels/rdp2tcp.h>
 #include <freerdp/channels/remdesk.h>
 #include <freerdp/channels/rdpsnd.h>
@@ -6122,6 +6123,9 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 #endif
 #ifdef CHANNEL_RDPEAR_CLIENT
 		{ FreeRDP_RemoteCredentialGuard, RDPEAR_CHANNEL_NAME, nullptr },
+#endif
+#ifdef CHANNEL_RDPEWA_CLIENT
+		{ FreeRDP_RedirectWebAuthN, RDPEWA_CHANNEL_NAME, nullptr },
 #endif
 	};
 
