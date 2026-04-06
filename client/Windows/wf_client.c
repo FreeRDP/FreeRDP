@@ -73,13 +73,17 @@ static BOOL wf_has_console(void)
 #ifdef WITH_WIN_CONSOLE
 	int file = _fileno(stdin);
 	int tty = _isatty(file);
+	DWORD processes[2] = { 0 };
+	const DWORD count = GetConsoleProcessList(processes, ARRAYSIZE(processes));
+	const BOOL inherited = (count > 1);
 #else
 	int file = -1;
 	int tty = 0;
+	BOOL inherited = FALSE;
 #endif
 
-	WLog_INFO(TAG, "Detected stdin=%d -> %s mode", file, tty ? "console" : "gui");
-	return tty;
+	WLog_INFO(TAG, "Detected stdin=%d -> %s mode", file, (tty && inherited) ? "console" : "gui");
+	return tty && inherited;
 }
 
 static BOOL wf_end_paint(rdpContext* context)
@@ -1385,6 +1389,16 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	// AttachConsole and stdin do not work well.
 	// Use GUI input dialogs instead of command line ones.
 	wfc->isConsole = wf_has_console();
+
+#ifdef WITH_WIN_CONSOLE
+	if (!wfc->isConsole)
+	{
+		HWND hwndConsole = GetConsoleWindow();
+		if (hwndConsole)
+			ShowWindow(hwndConsole, SW_HIDE);
+		(void)FreeConsole();
+	}
+#endif
 
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
