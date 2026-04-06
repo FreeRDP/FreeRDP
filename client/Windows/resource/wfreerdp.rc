@@ -12,3 +12,7 @@ IDB_CLOSE              BITMAP                  "close.bmp"
 IDB_CLOSE_ACT          BITMAP                  "close_active.bmp"
 IDB_RESTORE            BITMAP                  "restore.bmp"
 IDB_RESTORE_ACT        BITMAP                  "restore_active.bmp"
+
+#ifdef WITH_WIN_CONSOLE
+1 24 "wfreerdp.manifest"
+#endif
