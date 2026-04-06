@@ -97,7 +97,48 @@ static const BYTE APDU_PIV_SELECT_AID[] = { 0x00, 0xA4, 0x04, 0x00, 0x09, 0xA0, 
 	                                        0x03, 0x08, 0x00, 0x00, 0x10, 0x00, 0x00 };
 static const BYTE APDU_PIV_GET_CHUID[] = { 0x00, 0xCB, 0x3F, 0xFF, 0x05, 0x5C,
 	                                       0x03, 0x5F, 0xC1, 0x02, 0x00 };
+static const BYTE APDU_PIV_GET_MSCMAP[] = { 0x00, 0xCB, 0x3F, 0xFF, 0x05, 0x5C,
+	                                        0x03, 0x5F, 0xFF, 0x10, 0x00 };
+static const BYTE APDU_GET_RESPONSE[] = { 0x00, 0xC0, 0x00, 0x00, 0x00 };
+
 #define PIV_CONTAINER_NAME_LEN 36
+#define MAX_CONTAINER_NAME_LEN 39
+#define MSCMAP_RECORD_SIZE 107
+#define MSCMAP_SLOT_OFFSET 80
+
+/* PIV certificate tag to PIV slot byte mapping */
+typedef struct
+{
+	BYTE tag[3];
+	BYTE slot;
+} piv_tag_to_slot_t;
+
+static const piv_tag_to_slot_t piv_tag_to_slot[] = {
+	{ { 0x5F, 0xC1, 0x05 }, 0x9A }, /* PIV Auth */
+	{ { 0x5F, 0xC1, 0x0A }, 0x9C }, /* Digital Sig */
+	{ { 0x5F, 0xC1, 0x0B }, 0x9D }, /* Key Mgmt */
+	{ { 0x5F, 0xC1, 0x01 }, 0x9E }, /* Card Auth */
+	{ { 0x5F, 0xC1, 0x0D }, 0x82 }, /* Retired KM 1 */
+	{ { 0x5F, 0xC1, 0x0E }, 0x83 }, /* Retired KM 2 */
+	{ { 0x5F, 0xC1, 0x0F }, 0x84 }, /* Retired KM 3 */
+	{ { 0x5F, 0xC1, 0x10 }, 0x85 }, /* Retired KM 4 */
+	{ { 0x5F, 0xC1, 0x11 }, 0x86 }, /* Retired KM 5 */
+	{ { 0x5F, 0xC1, 0x12 }, 0x87 }, /* Retired KM 6 */
+	{ { 0x5F, 0xC1, 0x13 }, 0x88 }, /* Retired KM 7 */
+	{ { 0x5F, 0xC1, 0x14 }, 0x89 }, /* Retired KM 8 */
+	{ { 0x5F, 0xC1, 0x15 }, 0x8A }, /* Retired KM 9 */
+	{ { 0x5F, 0xC1, 0x16 }, 0x8B }, /* Retired KM 10 */
+	{ { 0x5F, 0xC1, 0x17 }, 0x8C }, /* Retired KM 11 */
+	{ { 0x5F, 0xC1, 0x18 }, 0x8D }, /* Retired KM 12 */
+	{ { 0x5F, 0xC1, 0x19 }, 0x8E }, /* Retired KM 13 */
+	{ { 0x5F, 0xC1, 0x1A }, 0x8F }, /* Retired KM 14 */
+	{ { 0x5F, 0xC1, 0x1B }, 0x90 }, /* Retired KM 15 */
+	{ { 0x5F, 0xC1, 0x1C }, 0x91 }, /* Retired KM 16 */
+	{ { 0x5F, 0xC1, 0x1D }, 0x92 }, /* Retired KM 17 */
+	{ { 0x5F, 0xC1, 0x1E }, 0x93 }, /* Retired KM 18 */
+	{ { 0x5F, 0xC1, 0x1F }, 0x94 }, /* Retired KM 19 */
+	{ { 0x5F, 0xC1, 0x20 }, 0x95 }, /* Retired KM 20 */
+};
 
 static CK_OBJECT_CLASS object_class_public_key = CKO_PUBLIC_KEY;
 static CK_BBOOL object_verify = CK_TRUE;
@@ -858,6 +899,163 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 	return NTE_NO_MORE_ITEMS;
 }
 
+static BOOL piv_check_sw(DWORD buf_len, const BYTE* buf, BYTE expected_sw1)
+{
+	return (buf_len >= 2) && (buf[buf_len - 2] == expected_sw1);
+}
+
+static BOOL piv_check_sw_success(DWORD buf_len, const BYTE* buf)
+{
+	return (buf_len >= 2) && (buf[buf_len - 2] == 0x90) && (buf[buf_len - 1] == 0x00);
+}
+
+static SECURITY_STATUS get_piv_container_name_from_mscmap(SCARDHANDLE card,
+                                                          const SCARD_IO_REQUEST* pci,
+                                                          const BYTE* piv_tag, BYTE* output,
+                                                          size_t output_len)
+{
+	BYTE buf[258] = WINPR_C_ARRAY_INIT;
+	BYTE mscmap_buf[2148] = WINPR_C_ARRAY_INIT;
+	DWORD buf_len = sizeof(buf);
+	DWORD mscmap_total = 0;
+
+	if (SCardTransmit(card, pci, APDU_PIV_GET_MSCMAP, sizeof(APDU_PIV_GET_MSCMAP), nullptr, buf,
+	                  &buf_len) != SCARD_S_SUCCESS)
+		return NTE_NOT_FOUND;
+
+	if (piv_check_sw_success(buf_len, buf))
+	{
+		mscmap_total = buf_len - 2;
+		if (mscmap_total > sizeof(mscmap_buf))
+			return NTE_NOT_FOUND;
+		memcpy(mscmap_buf, buf, mscmap_total);
+	}
+	else if (piv_check_sw(buf_len, buf, 0x61))
+	{
+		mscmap_total = buf_len - 2;
+		if (mscmap_total <= sizeof(mscmap_buf))
+			memcpy(mscmap_buf, buf, mscmap_total);
+
+		while (piv_check_sw(buf_len, buf, 0x61) && mscmap_total < sizeof(mscmap_buf))
+		{
+			BYTE get_resp[5] = { 0x00, 0xC0, 0x00, 0x00, 0x00 };
+			get_resp[4] = buf[buf_len - 1];
+			buf_len = sizeof(buf);
+			if (SCardTransmit(card, pci, get_resp, sizeof(get_resp), nullptr, buf, &buf_len) !=
+			    SCARD_S_SUCCESS)
+				break;
+			DWORD chunk = piv_check_sw_success(buf_len, buf) ? (buf_len - 2)
+			              : piv_check_sw(buf_len, buf, 0x61) ? (buf_len - 2)
+			                                                 : 0;
+			if (chunk == 0 || mscmap_total + chunk > sizeof(mscmap_buf))
+				break;
+			memcpy(mscmap_buf + mscmap_total, buf, chunk);
+			mscmap_total += chunk;
+		}
+		if (!piv_check_sw_success(buf_len, buf))
+			return NTE_NOT_FOUND;
+	}
+	else
+		return NTE_NOT_FOUND;
+
+	/* Strip TLV wrappers: outer tag 0x53, inner tag 0x81 */
+	const BYTE* mscmap_data = mscmap_buf;
+	DWORD mscmap_data_len = mscmap_total;
+
+	for (int tlv_pass = 0; tlv_pass < 2; tlv_pass++)
+	{
+		if (mscmap_data_len < 2)
+			break;
+		BYTE tlv_tag = mscmap_data[0];
+		if (tlv_tag != 0x53 && tlv_tag != 0x81)
+			break;
+		size_t hdr = 2;
+		if (mscmap_data[1] == 0x82 && mscmap_data_len > 4)
+			hdr = 4;
+		else if (mscmap_data[1] == 0x81 && mscmap_data_len > 3)
+			hdr = 3;
+		mscmap_data += hdr;
+		mscmap_data_len -= (DWORD)hdr;
+	}
+
+	/* Map PIV tag to slot byte */
+	BYTE target_slot = 0;
+	for (size_t i = 0; i < ARRAYSIZE(piv_tag_to_slot); i++)
+	{
+		if (memcmp(piv_tag, piv_tag_to_slot[i].tag, 3) == 0)
+		{
+			target_slot = piv_tag_to_slot[i].slot;
+			break;
+		}
+	}
+	if (target_slot == 0)
+		return NTE_NOT_FOUND;
+
+	/* Search MSCMAP records (107 bytes each) for matching slot */
+	size_t num_records = mscmap_data_len / MSCMAP_RECORD_SIZE;
+	for (size_t i = 0; i < num_records; i++)
+	{
+		const BYTE* record = mscmap_data + (i * MSCMAP_RECORD_SIZE);
+		if (record[MSCMAP_SLOT_OFFSET] == target_slot)
+		{
+			size_t copy_len = (MAX_CONTAINER_NAME_LEN + 1) * sizeof(WCHAR);
+			if (copy_len > output_len)
+				copy_len = output_len;
+			memcpy(output, record, copy_len);
+			return ERROR_SUCCESS;
+		}
+	}
+	return NTE_NOT_FOUND;
+}
+
+static SECURITY_STATUS get_piv_container_name_from_chuid(SCARDHANDLE card,
+                                                         const SCARD_IO_REQUEST* pci,
+                                                         const BYTE* piv_tag, BYTE* output,
+                                                         size_t output_len)
+{
+	BYTE buf[258] = WINPR_C_ARRAY_INIT;
+	DWORD buf_len = sizeof(buf);
+	char container_name[PIV_CONTAINER_NAME_LEN + 1] = WINPR_C_ARRAY_INIT;
+
+	if (SCardTransmit(card, pci, APDU_PIV_GET_CHUID, sizeof(APDU_PIV_GET_CHUID), nullptr, buf,
+	                  &buf_len) != SCARD_S_SUCCESS)
+		return NTE_BAD_KEY;
+	if (!piv_check_sw_success(buf_len, buf) && !piv_check_sw(buf_len, buf, 0x61))
+		return NTE_BAD_KEY;
+
+	WinPrAsn1Decoder dec = WinPrAsn1Decoder_init();
+	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
+	size_t len = 0;
+	BYTE tag = 0;
+
+	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_BER, buf, buf_len);
+	if (!WinPrAsn1DecReadTagAndLen(&dec, &tag, &len) || tag != 0x53)
+		return NTE_BAD_KEY;
+	while (WinPrAsn1DecReadTagLenValue(&dec, &tag, &len, &dec2) && tag != 0x34)
+		;
+	if (tag != 0x34 || len != 16)
+		return NTE_BAD_KEY;
+
+	wStream s = WinPrAsn1DecGetStream(&dec2);
+	BYTE* p = Stream_Buffer(&s);
+
+	(void)snprintf(container_name, PIV_CONTAINER_NAME_LEN + 1,
+	               "%.2x%.2x%.2x%.2x-%.2x%.2x-%.2x%.2x-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x", p[3],
+	               p[2], p[1], p[0], p[5], p[4], p[7], p[6], p[8], p[9], p[10], p[11], p[12],
+	               piv_tag[0], piv_tag[1], piv_tag[2]);
+
+	union
+	{
+		WCHAR* wc;
+		BYTE* b;
+	} cnv;
+	cnv.b = output;
+	if (ConvertUtf8NToWChar(container_name, ARRAYSIZE(container_name), cnv.wc,
+	                        output_len / sizeof(WCHAR)) > 0)
+		return ERROR_SUCCESS;
+	return NTE_BAD_KEY;
+}
+
 static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, const BYTE* piv_tag,
                                               BYTE* output, size_t output_len)
 {
@@ -869,15 +1067,8 @@ static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, const BYT
 	DWORD proto = 0;
 	const SCARD_IO_REQUEST* pci = nullptr;
 	BYTE buf[258] = WINPR_C_ARRAY_INIT;
-	char container_name[PIV_CONTAINER_NAME_LEN + 1] = WINPR_C_ARRAY_INIT;
 	DWORD buf_len = 0;
 	SECURITY_STATUS ret = NTE_BAD_KEY;
-	WinPrAsn1Decoder dec = WinPrAsn1Decoder_init();
-	WinPrAsn1Decoder dec2 = WinPrAsn1Decoder_init();
-	size_t len = 0;
-	BYTE tag = 0;
-	BYTE* p = nullptr;
-	wStream s = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(key);
 	WINPR_ASSERT(piv_tag);
@@ -886,7 +1077,6 @@ static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, const BYT
 	p11 = key->provider->p11;
 	WINPR_ASSERT(p11);
 
-	/* Get the reader the card is in */
 	WINPR_ASSERT(p11->C_GetSlotInfo);
 	if (p11->C_GetSlotInfo(key->slotId, &slot_info) != CKR_OK)
 		return NTE_BAD_KEY;
@@ -911,44 +1101,13 @@ static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, const BYT
 	if (SCardTransmit(card, pci, APDU_PIV_SELECT_AID, sizeof(APDU_PIV_SELECT_AID), nullptr, buf,
 	                  &buf_len) != SCARD_S_SUCCESS)
 		goto out;
-	if ((buf[buf_len - 2] != 0x90 || buf[buf_len - 1] != 0) && buf[buf_len - 2] != 0x61)
+	if (!piv_check_sw_success(buf_len, buf) && !piv_check_sw(buf_len, buf, 0x61))
 		goto out;
 
-	buf_len = sizeof(buf);
-	if (SCardTransmit(card, pci, APDU_PIV_GET_CHUID, sizeof(APDU_PIV_GET_CHUID), nullptr, buf,
-	                  &buf_len) != SCARD_S_SUCCESS)
-		goto out;
-	if ((buf[buf_len - 2] != 0x90 || buf[buf_len - 1] != 0) && buf[buf_len - 2] != 0x61)
-		goto out;
-
-	/* Find the GUID field in the CHUID data object */
-	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_BER, buf, buf_len);
-	if (!WinPrAsn1DecReadTagAndLen(&dec, &tag, &len) || tag != 0x53)
-		goto out;
-	while (WinPrAsn1DecReadTagLenValue(&dec, &tag, &len, &dec2) && tag != 0x34)
-		;
-	if (tag != 0x34 || len != 16)
-		goto out;
-
-	s = WinPrAsn1DecGetStream(&dec2);
-	p = Stream_Buffer(&s);
-
-	/* Construct the value Windows would use for a PIV key's container name */
-	(void)snprintf(container_name, PIV_CONTAINER_NAME_LEN + 1,
-	               "%.2x%.2x%.2x%.2x-%.2x%.2x-%.2x%.2x-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x", p[3],
-	               p[2], p[1], p[0], p[5], p[4], p[7], p[6], p[8], p[9], p[10], p[11], p[12],
-	               piv_tag[0], piv_tag[1], piv_tag[2]);
-
-	/* And convert it to UTF-16 */
-	union
-	{
-		WCHAR* wc;
-		BYTE* b;
-	} cnv;
-	cnv.b = output;
-	if (ConvertUtf8NToWChar(container_name, ARRAYSIZE(container_name), cnv.wc,
-	                        output_len / sizeof(WCHAR)) > 0)
-		ret = ERROR_SUCCESS;
+	/* Try MSCMAP first, fall back to CHUID */
+	ret = get_piv_container_name_from_mscmap(card, pci, piv_tag, output, output_len);
+	if (ret != ERROR_SUCCESS)
+		ret = get_piv_container_name_from_chuid(card, pci, piv_tag, output, output_len);
 
 out:
 	free(reader);
@@ -968,10 +1127,10 @@ static SECURITY_STATUS check_for_piv_container_name(NCryptP11KeyHandle* key, BYT
 		const piv_cert_tags_t* cur = &piv_cert_tags[i];
 		if (strncmp(label, cur->label, label_len) == 0)
 		{
-			*pcbResult = (PIV_CONTAINER_NAME_LEN + 1) * sizeof(WCHAR);
+			*pcbResult = (MAX_CONTAINER_NAME_LEN + 1) * sizeof(WCHAR);
 			if (!pbOutput)
 				return ERROR_SUCCESS;
-			else if (cbOutput < (PIV_CONTAINER_NAME_LEN + 1) * sizeof(WCHAR))
+			else if (cbOutput < (MAX_CONTAINER_NAME_LEN + 1) * sizeof(WCHAR))
 				return NTE_NO_MEMORY;
 			else
 				return get_piv_container_name(key, cur->tag, pbOutput, cbOutput);

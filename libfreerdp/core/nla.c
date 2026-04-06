@@ -234,14 +234,10 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 
 	if (!settings->CspName)
 	{
-		if (nla->smartcardCert->csp && !freerdp_settings_set_string_from_utf16(
-		                                   settings, FreeRDP_CspName, nla->smartcardCert->csp))
-		{
-			WLog_ERR(TAG, "unable to set CSP name");
-			goto out;
-		}
-		if (!settings->CspName &&
-		    !freerdp_settings_set_string(settings, FreeRDP_CspName, MS_SCARD_PROV_A))
+		/* Use KSP instead of legacy CSP — the CSP does not support ECC keys,
+		 * which are common on modern PIV smartcards. The KSP supports both RSA and ECC. */
+		if (!freerdp_settings_set_string(settings, FreeRDP_CspName,
+		                                 "Microsoft Smart Card Key Storage Provider"))
 		{
 			WLog_ERR(TAG, "unable to set CSP name");
 			goto out;
@@ -267,6 +263,19 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 			goto out;
 		}
 	}
+
+	/* KSP uses KeySpec=0 for CNG keys; AT_KEYEXCHANGE is only valid for legacy CSP RSA */
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_KeySpec, 0))
+	{
+		WLog_ERR(TAG, "unable to set KeySpec");
+		goto out;
+	}
+
+	WLog_DBG(TAG, "Smartcard logon: Provider='%s' Reader='%s' Container='%s' KeySpec=%" PRIu32,
+	         freerdp_settings_get_string(settings, FreeRDP_CspName),
+	         freerdp_settings_get_string(settings, FreeRDP_ReaderName),
+	         freerdp_settings_get_string(settings, FreeRDP_ContainerName),
+	         freerdp_settings_get_uint32(settings, FreeRDP_KeySpec));
 
 	memcpy(nla->certSha1, nla->smartcardCert->sha1Hash, sizeof(nla->certSha1));
 
