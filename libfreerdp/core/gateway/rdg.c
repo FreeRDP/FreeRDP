@@ -823,7 +823,9 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 	if (FAILED((HRESULT)errorCode))
 	{
 		WLog_Print(rdg->log, WLOG_ERROR, "Handshake error %s", error);
-		freerdp_set_last_error_log(rdg->context, errorCode);
+		freerdp_set_error_detail(rdg->context, FREERDP_ERROR_SUBSYSTEM_GATEWAY_HTTP,
+		                         (INT64)errorCode, error, "Handshake error");
+		freerdp_set_last_error_log(rdg->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 		return FALSE;
 	}
 
@@ -924,7 +926,9 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 	if (FAILED((HRESULT)errorCode))
 	{
 		WLog_Print(rdg->log, WLOG_ERROR, "Tunnel creation error %s", error);
-		freerdp_set_last_error_log(rdg->context, errorCode);
+		freerdp_set_error_detail(rdg->context, FREERDP_ERROR_SUBSYSTEM_GATEWAY_HTTP,
+		                         (INT64)errorCode, error, "Tunnel creation error");
+		freerdp_set_last_error_log(rdg->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 		return FALSE;
 	}
 
@@ -960,7 +964,9 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	if (errorCode != S_OK && errorCode != E_PROXY_QUARANTINE_ACCESSDENIED)
 	{
 		WLog_Print(rdg->log, WLOG_ERROR, "Tunnel authorization error %s", error);
-		freerdp_set_last_error_log(rdg->context, errorCode);
+		freerdp_set_error_detail(rdg->context, FREERDP_ERROR_SUBSYSTEM_GATEWAY_HTTP,
+		                         (INT64)errorCode, error, "Tunnel authorization error");
+		freerdp_set_last_error_log(rdg->context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
 		return FALSE;
 	}
 
@@ -1108,7 +1114,9 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 	{
 		WLog_Print(rdg->log, WLOG_ERROR, "channel response errorCode=%s, fieldsPresent=%s", error,
 		           channel_response_fields_present_to_string(fieldsPresent));
-		freerdp_set_last_error_log(rdg->context, errorCode);
+		freerdp_set_error_detail(rdg->context, FREERDP_ERROR_SUBSYSTEM_GATEWAY_HTTP,
+		                         (INT64)errorCode, error, "Channel response error");
+		freerdp_set_last_error_log(rdg->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 		return FALSE;
 	}
 
