@@ -57,9 +57,10 @@ typedef struct
 
 static void zfree(char* str)
 {
-	if (str)
-		while (*str != '\0')
-			*str++ = '\0';
+	if (!str)
+		return;
+
+	memset(str, 0, strlen(str));
 	free(str);
 }
 
