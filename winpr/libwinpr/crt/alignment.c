@@ -225,8 +225,9 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 	pNewMem = WINPR_ALIGNED_MEM_STRUCT_FROM_PTR(newMemblock);
 	{
 		const size_t csize = cMIN(pMem->size, pNewMem->size);
+		const size_t zsize = pNewMem->size - cMIN(pNewMem->size, csize);
 		memcpy(newMemblock, memblock, csize);
-		ZeroMemory(newMemblock + csize, pNewMem->size - csize);
+		ZeroMemory(newMemblock + csize, zsize);
 	}
 fail:
 	winpr_aligned_free(memblock);
