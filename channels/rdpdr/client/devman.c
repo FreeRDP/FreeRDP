@@ -48,6 +48,8 @@ static void devman_device_free(void* obj)
 	if (!device)
 		return;
 
+	fprintf(stderr, "[devman] devman_device_free: device_id=%u type=%u name='%s'\n",
+	        device->id, device->type, device->name ? device->name : "(null)");
 	IFCALL(device->Free, device);
 }
 
@@ -83,6 +85,7 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 
 void devman_free(DEVMAN* devman)
 {
+	fprintf(stderr, "[devman] devman_free: destroying all devices\n");
 	ListDictionary_Free(devman->devices);
 	free(devman);
 }
@@ -94,6 +97,7 @@ void devman_unregister_device(DEVMAN* devman, void* key)
 	if (!devman || !key)
 		return;
 
+	fprintf(stderr, "[devman] devman_unregister_device: key=%lu\n", (unsigned long)(size_t)key);
 	device = (DEVICE*)ListDictionary_Take(devman->devices, key);
 
 	if (device)

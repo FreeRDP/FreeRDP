@@ -34,6 +34,7 @@ set(${MODULE_PREFIX}_SRCS
     rdpdr_main.h
     rdpdr_capabilities.c
     rdpdr_capabilities.h
+    drive_virtual.c
 )
 
 set(${MODULE_PREFIX}_LIBS winpr freerdp)

@@ -117,5 +117,6 @@ typedef struct
 
 BOOL rdpdr_state_advance(rdpdrPlugin* rdpdr, enum RDPDR_CHANNEL_STATE next);
 UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
+UINT rdpdr_try_send_device_list_announce_request(rdpdrPlugin* rdpdr);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H */

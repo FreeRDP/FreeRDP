@@ -131,6 +131,55 @@ FREERDP_API BOOL rdpdr_is_ready(void);
 /** Human-readable RDPDR FSM state for logging (never NULL). */
 FREERDP_API const char* rdpdr_debug_channel_state_name(void);
 
+/**
+ * Called from rdpdr_main.c when the RDPDR channel FSM reaches READY.
+ * Registers and announces the virtual drive if a request is pending.
+ */
+FREERDP_API void rdpdr_virtual_on_ready(void);
+
+/**
+ * Called from the FreeRDP event loop (rdp_iteration) to check if the Go side
+ * has requested a drive announcement while the channel was already READY.
+ * Must be called from the FreeRDP event loop thread only.
+ */
+FREERDP_API void rdpdr_virtual_check_pending(void);
+
+/**
+ * Register the virtual drive in devman (if not already registered) and send
+ * a separate PAKID_CORE_DEVICELIST_ANNOUNCE hotplug packet.
+ *
+ * This mirrors the rdp-rs approach: the drive is NOT announced in the initial
+ * handshake — it is announced here, as a hotplug event, so that Windows
+ * properly acknowledges it with a DEVICE_REPLY.
+ *
+ * Must be called after rdpdr_is_ready() returns TRUE (i.e. after the initial
+ * handshake has completed and the smartcard DEVICE_REPLY has been received).
+ *
+ * @param cb        IRP callback fired for every Windows IRP on this drive.
+ * @param userdata  Opaque pointer forwarded to cb (Go CGO handle).
+ * @return The RDPDR device ID of the virtual drive, or 0 on failure.
+ */
+FREERDP_API UINT32 rdpdr_announce_virtual_drive(VirtualDriveIrpCallback cb,
+                                                 void* userdata);
+
+/**
+ * Store the IRP callback + userdata for the auto-registered drive.
+ * Must be called before the RDPDR channel connects (before freerdp_connect).
+ */
+FREERDP_API void rdpdr_virtual_set_auto_drive(VirtualDriveIrpCallback cb,
+                                               void* userdata);
+
+/**
+ * Create the default "Ambient" virtual drive in devman using the callback
+ * previously registered. Called as needed; idempotent.
+ */
+FREERDP_API void rdpdr_virtual_register_auto_drive(void);
+
+/**
+ * Return the device ID of the auto-registered drive, or 0 if not yet created.
+ */
+FREERDP_API UINT32 rdpdr_virtual_get_auto_drive_id(void);
+
 #ifdef __cplusplus
 }
 #endif

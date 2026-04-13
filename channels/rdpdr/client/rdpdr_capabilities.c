@@ -279,6 +279,9 @@ UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 	const BOOL parallel = cparallel && rdpdr->capabilities[CAP_PORT_TYPE];
 	const BOOL smart = csmart && rdpdr->capabilities[CAP_SMARTCARD_TYPE];
 	const BOOL printer = cprinter && rdpdr->capabilities[CAP_PRINTER_TYPE];
+	fprintf(stderr, "[rdpdr] capability_response: drives=%d (cdrives=%p cap=%d) smart=%d\n",
+	        (int)drives, (const void*)cdrives,
+	        (int)rdpdr->capabilities[CAP_DRIVE_TYPE], (int)smart);
 	UINT16 count = 1;
 	if (drives)
 		count++;

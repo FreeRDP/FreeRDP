@@ -69,6 +69,11 @@
 
 #include "rdpdr_main.h"
 
+/* Forward declaration: drive_virtual.c maintains a global rdpdrPlugin* singleton */
+void rdpdr_virtual_set_plugin(rdpdrPlugin* rdpdr);
+void rdpdr_virtual_on_ready(void);
+void rdpdr_virtual_register_auto_drive(void);
+
 #define TAG CHANNELS_TAG("rdpdr.client")
 
 /* IMPORTANT: Keep in sync with DRIVE_DEVICE */
@@ -202,7 +207,6 @@ static BOOL device_foreach(rdpdrPlugin* rdpdr, BOOL abortOnFail,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpdr_try_send_device_list_announce_request(rdpdrPlugin* rdpdr);
 
 static BOOL rdpdr_load_drive(rdpdrPlugin* rdpdr, const char* name, const char* path, BOOL automount)
 {
@@ -1135,6 +1139,9 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
+	/* Expose the plugin singleton for drive_virtual.c */
+	rdpdr_virtual_set_plugin(rdpdr);
+
 	WINPR_ASSERT(rdpdr->rdpcontext);
 
 	rdpSettings* settings = rdpdr->rdpcontext->settings;
@@ -1407,11 +1414,22 @@ static BOOL device_announce(ULONG_PTR key, void* element, void* data)
 			Stream_Write(arg->s, Stream_Buffer(device->data), data_len);
 
 		arg->count++;
+		fprintf(stderr, "[rdpdr] device_announce: count=%u type=%u id=%u name='%.8s' data_len=%zu userLoggedOn=%d\n",
+		        arg->count, device->type, device->id,
+		        device->name ? device->name : "(null)", data_len, (int)arg->userLoggedOn);
 		WLog_Print(rdpdr->log, WLOG_INFO,
 		           "registered [%09s] device #%" PRIu32 ": %05s (type=%2" PRIu32 " id=%2" PRIu32
 		           ")",
 		           rdpdr_device_type_string(device->type), arg->count, device->name, device->type,
 		           device->id);
+	}
+	else
+	{
+		fprintf(stderr, "[rdpdr] device_announce: SKIPPED type=%u id=%u name='%.8s' "
+		        "userLoggedOn=%d versionMinor=0x%04x\n",
+		        device->type, device->id,
+		        device->name ? device->name : "(null)",
+		        (int)arg->userLoggedOn, rdpdr->clientVersionMinor);
 	}
 	return TRUE;
 }
@@ -1450,6 +1468,8 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	if (!device_foreach(rdpdr, TRUE, device_announce, &arg))
 		return ERROR_INVALID_DATA;
 
+	fprintf(stderr, "[rdpdr] device_list_announce: total devices=%u userLoggedOn=%d\n",
+	        arg.count, (int)userLoggedOn);
 	if (arg.count == 0)
 	{
 		Stream_Release(s);
@@ -1604,8 +1624,26 @@ static UINT rdpdr_process_init(rdpdrPlugin* rdpdr)
 	WINPR_ASSERT(rdpdr->devman);
 
 	rdpdr->userLoggedOn = FALSE; /* reset possible received state */
+
+	/* Skip device_init during re-handshake — the smartcard device's Init
+	 * callback hangs when called a second time (it tries to re-acquire a
+	 * resource already held).  IronRDP's RDPDR implementation does NOT call
+	 * device_init on re-handshake at all; it simply re-announces devices
+	 * after the handshake completes.  Follow that pattern here. */
+	if (rdpdr->sequenceId > 1)
+	{
+		fprintf(stderr, "[rdpdr] rdpdr_process_init: re-handshake (seq=%u), "
+		        "skipping device_init (IronRDP pattern)\n", rdpdr->sequenceId);
+		return CHANNEL_RC_OK;
+	}
+
+	fprintf(stderr, "[rdpdr] rdpdr_process_init: first handshake, calling device_init\n");
 	if (!device_foreach(rdpdr, TRUE, device_init, rdpdr->log))
+	{
+		fprintf(stderr, "[rdpdr] rdpdr_process_init: device_foreach(device_init) FAILED\n");
 		return ERROR_INTERNAL_ERROR;
+	}
+	fprintf(stderr, "[rdpdr] rdpdr_process_init: all devices initialized OK\n");
 	return CHANNEL_RC_OK;
 }
 
@@ -1704,9 +1742,11 @@ static BOOL rdpdr_check_channel_state(rdpdrPlugin* rdpdr, UINT16 packetid)
 
 static BOOL tryAdvance(rdpdrPlugin* rdpdr)
 {
+	fprintf(stderr, "[rdpdr] tryAdvance: haveClientId=%d haveServerCaps=%d state=%d\n",
+	        rdpdr->haveClientId, rdpdr->haveServerCaps, (int)rdpdr->state);
 	if (rdpdr->haveClientId && rdpdr->haveServerCaps)
 	{
-		const UINT error = rdpdr_send_device_list_announce_request(rdpdr, FALSE);
+		const UINT error = rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 		if (error)
 		{
 			WLog_Print(rdpdr->log, WLOG_ERROR,
@@ -1716,6 +1756,9 @@ static BOOL tryAdvance(rdpdrPlugin* rdpdr)
 		}
 		if (!rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_READY))
 			return FALSE;
+
+		fprintf(stderr, "[rdpdr] tryAdvance: reached READY, notifying virtual drive layer\n");
+		rdpdr_virtual_on_ready();
 	}
 	return TRUE;
 }
@@ -1742,6 +1785,10 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 		Stream_Read_UINT16(s, component); /* Component (2 bytes) */
 		Stream_Read_UINT16(s, packetId);  /* PacketId (2 bytes) */
 
+		fprintf(stderr, "[rdpdr] process_receive: component=0x%04x packetId=0x%04x state=%d "
+		        "remaining=%zu\n", component, packetId, (int)rdpdr->state,
+		        Stream_GetRemainingLength(s));
+
 		if (component == RDPDR_CTYP_CORE)
 		{
 			if (!rdpdr_check_channel_state(rdpdr, packetId))
@@ -1749,31 +1796,33 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 
 			switch (packetId)
 			{
-				case PAKID_CORE_SERVER_ANNOUNCE:
-					rdpdr->haveClientId = FALSE;
-					rdpdr->haveServerCaps = FALSE;
-					if ((error = rdpdr_process_server_announce_request(rdpdr, s)))
-					{
-					}
-					else if ((error = rdpdr_send_client_announce_reply(rdpdr)))
-					{
-						WLog_Print(rdpdr->log, WLOG_ERROR,
-						           "rdpdr_send_client_announce_reply failed with error %" PRIu32 "",
-						           error);
-					}
-					else if ((error = rdpdr_send_client_name_request(rdpdr)))
-					{
-						WLog_Print(rdpdr->log, WLOG_ERROR,
-						           "rdpdr_send_client_name_request failed with error %" PRIu32 "",
-						           error);
-					}
-					else if ((error = rdpdr_process_init(rdpdr)))
-					{
-						WLog_Print(rdpdr->log, WLOG_ERROR,
-						           "rdpdr_process_init failed with error %" PRIu32 "", error);
-					}
+			case PAKID_CORE_SERVER_ANNOUNCE:
+				rdpdr->haveClientId = FALSE;
+				rdpdr->haveServerCaps = FALSE;
+				fprintf(stderr, "[rdpdr] re-handshake SERVER_ANNOUNCE received\n");
+				if ((error = rdpdr_process_server_announce_request(rdpdr, s)))
+				{
+					fprintf(stderr, "[rdpdr] re-handshake: process_server_announce FAILED error=%u\n", error);
+				}
+				else if ((error = rdpdr_send_client_announce_reply(rdpdr)))
+				{
+					fprintf(stderr, "[rdpdr] re-handshake: send_client_announce_reply FAILED error=%u\n", error);
+				}
+				else if ((error = rdpdr_send_client_name_request(rdpdr)))
+				{
+					fprintf(stderr, "[rdpdr] re-handshake: send_client_name_request FAILED error=%u\n", error);
+				}
+				else if ((error = rdpdr_process_init(rdpdr)))
+				{
+					fprintf(stderr, "[rdpdr] re-handshake: process_init FAILED error=%u\n", error);
+				}
+				else
+				{
+					fprintf(stderr, "[rdpdr] re-handshake: SERVER_ANNOUNCE processed OK, state=%d\n",
+					        (int)rdpdr->state);
+				}
 
-					break;
+				break;
 
 				case PAKID_CORE_SERVER_CAPABILITY:
 					if ((error = rdpdr_process_capability_request(rdpdr, s)))
@@ -1837,8 +1886,14 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 						Stream_Read_UINT32(s, deviceId);
 						Stream_Read_UINT32(s, status);
 
+						fprintf(stderr, "[rdpdr] DEVICE_REPLY: deviceId=%u status=0x%08x\n",
+						        deviceId, status);
 						if (status != 0)
+						{
+							fprintf(stderr, "[rdpdr] DEVICE_REPLY: REJECTING device %u "
+							        "(status=0x%08x), unregistering\n", deviceId, status);
 							devman_unregister_device(rdpdr->devman, (void*)((size_t)deviceId));
+						}
 						error = CHANNEL_RC_OK;
 					}
 
@@ -1943,6 +1998,9 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(pData || (dataLength == 0));
+
+	fprintf(stderr, "[rdpdr] data_received: dataLength=%u totalLength=%u dataFlags=0x%x\n",
+	        dataLength, totalLength, dataFlags);
 
 	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
 	{
@@ -2106,14 +2164,12 @@ static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
 				Stream_Release(data);
 				if (error)
 				{
-					WLog_Print(rdpdr->log, WLOG_ERROR,
-					           "rdpdr_process_receive failed with error %" PRIu32 "!", error);
-
-					if (rdpdr->rdpcontext)
-						setChannelError(rdpdr->rdpcontext, error,
-						                "rdpdr_virtual_channel_client_thread reported an error");
-
-					goto fail;
+					fprintf(stderr, "[rdpdr] ASYNC THREAD: process_receive returned error %u "
+					        "(non-fatal, continuing)\n", error);
+					WLog_Print(rdpdr->log, WLOG_WARN,
+					           "rdpdr_process_receive returned error %" PRIu32
+					           " (non-fatal, continuing)", error);
+					error = 0;
 				}
 			}
 		}
@@ -2252,6 +2308,9 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 {
 	WINPR_ASSERT(rdpdr);
+
+	/* Clear the global singleton */
+	rdpdr_virtual_set_plugin(NULL);
 #if !defined(_WIN32)
 	if (rdpdr->stopEvent)
 	{
