@@ -137,10 +137,6 @@ static UINT virtual_drive_irp_request(DEVICE* device, IRP* irp)
 	size_t         input_len = Stream_GetRemainingLength(irp->input);
 	const uint8_t* input     = Stream_Pointer(irp->input);
 
-	fprintf(stderr, "[vdrive] IRP device_id=%u completion_id=%u major=0x%x minor=0x%x "
-	        "file_id=%u input_len=%zu\n",
-	        device->id, irp->CompletionId, irp->MajorFunction, irp->MinorFunction,
-	        irp->FileId, input_len);
 
 	/* Fire the Go callback — must return quickly (called from the FreeRDP event thread) */
 	if (vd->irp_cb)
@@ -355,14 +351,11 @@ void virtual_drive_complete_irp(DEVMAN* devman, UINT32 device_id, UINT32 complet
 	IRP* irp  = ListDictionary_Take(vd->pending_irps, key);
 	if (!irp)
 	{
-		fprintf(stderr, "[vdrive] complete_irp: completion_id=%u not found in pending_irps "
-		        "(device_id=%u)\n", completion_id, device_id);
+	fprintf(stderr, "[vdrive] complete_irp: completion_id=%u not found in pending_irps "
+	        "(device_id=%u)\n", completion_id, device_id);
 		return;
 	}
 
-	fprintf(stderr, "[vdrive] completing IRP device_id=%u completion_id=%u "
-	        "ntstatus=0x%08x output_len=%u\n",
-	        device_id, completion_id, ntstatus, output_len);
 
 	/* Append the response payload after the pre-written IoCompletion header */
 	if (output && output_len > 0)

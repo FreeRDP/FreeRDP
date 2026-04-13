@@ -1785,10 +1785,6 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 		Stream_Read_UINT16(s, component); /* Component (2 bytes) */
 		Stream_Read_UINT16(s, packetId);  /* PacketId (2 bytes) */
 
-		fprintf(stderr, "[rdpdr] process_receive: component=0x%04x packetId=0x%04x state=%d "
-		        "remaining=%zu\n", component, packetId, (int)rdpdr->state,
-		        Stream_GetRemainingLength(s));
-
 		if (component == RDPDR_CTYP_CORE)
 		{
 			if (!rdpdr_check_channel_state(rdpdr, packetId))
@@ -1998,9 +1994,6 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(pData || (dataLength == 0));
-
-	fprintf(stderr, "[rdpdr] data_received: dataLength=%u totalLength=%u dataFlags=0x%x\n",
-	        dataLength, totalLength, dataFlags);
 
 	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
 	{
