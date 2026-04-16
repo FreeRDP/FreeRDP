@@ -2575,6 +2575,7 @@ BOOL freerdp_settings_set_monitor_def_array_sorted(rdpSettings* settings,
 		rdpMonitor m = monitors[x];
 		m.x -= offsetX;
 		m.y -= offsetY;
+		m.is_primary = FALSE;
 		sorted[sortpos++] = m;
 	}
 
