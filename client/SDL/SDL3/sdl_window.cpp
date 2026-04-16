@@ -599,40 +599,61 @@ static SDL_Window* createDummy(SDL_DisplayID id)
 
 rdpMonitor SdlWindow::query(SDL_DisplayID id, bool forceAsPrimary)
 {
-	std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(createDummy(id), SDL_DestroyWindow);
-	if (!window)
+	/* Per-display monitor query without a dummy window.
+	 * SDL_GetDisplayBounds returns the logical size/position and
+	 * SDL_GetDesktopDisplayMode gives the per-display pixel_density
+	 * (scale factor). This avoids the class of "hidden window lands
+	 * on the wrong display" bugs on wlroots compositors, where a
+	 * dummy window positioned with SDL_WINDOWPOS_CENTERED_DISPLAY
+	 * actually ends up on the focused display, returning that
+	 * display's scale instead of the target's.
+	 */
+	SDL_Rect bounds = {};
+	if (!SDL_GetDisplayBounds(id, &bounds))
 		return {};
 
-	std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer*)> renderer(
-	    SDL_CreateRenderer(window.get(), nullptr), SDL_DestroyRenderer);
-
-	if (!SDL_SyncWindow(window.get()))
+	const SDL_DisplayMode* mode = SDL_GetDesktopDisplayMode(id);
+	if (!mode)
 		return {};
 
-	SDL_Event event{};
-	while (SDL_PollEvent(&event))
-		;
+	const float scale = (mode->pixel_density > 0.0f) ? mode->pixel_density : 1.0f;
+	const int physW = static_cast<int>(std::roundf(static_cast<float>(bounds.w) * scale));
+	const int physH = static_cast<int>(std::roundf(static_cast<float>(bounds.h) * scale));
 
-	return query(window.get(), id, forceAsPrimary);
+	const auto primary = SDL_GetPrimaryDisplay();
+	const auto orientation = SDL_GetCurrentDisplayOrientation(id);
+
+	rdpMonitor monitor{};
+	monitor.orig_screen = id;
+	monitor.x = forceAsPrimary ? 0 : bounds.x;
+	monitor.y = forceAsPrimary ? 0 : bounds.y;
+	monitor.width = physW;
+	monitor.height = physH;
+	monitor.is_primary = forceAsPrimary || (id == primary);
+	monitor.attributes.desktopScaleFactor = static_cast<UINT32>(std::roundf(scale * 100.0f));
+	monitor.attributes.deviceScaleFactor = 100;
+	monitor.attributes.orientation = sdl::utils::orientaion_to_rdp(orientation);
+	monitor.attributes.physicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, physW);
+	monitor.attributes.physicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, physH);
+	return monitor;
 }
 
 SDL_Rect SdlWindow::rect(SDL_DisplayID id, bool forceAsPrimary)
 {
-	std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(createDummy(id), SDL_DestroyWindow);
-	if (!window)
+	SDL_Rect bounds = {};
+	if (!SDL_GetDisplayBounds(id, &bounds))
 		return {};
 
-	std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer*)> renderer(
-	    SDL_CreateRenderer(window.get(), nullptr), SDL_DestroyRenderer);
+	const SDL_DisplayMode* mode = SDL_GetDesktopDisplayMode(id);
+	const float scale =
+	    (mode && mode->pixel_density > 0.0f) ? mode->pixel_density : 1.0f;
 
-	if (!SDL_SyncWindow(window.get()))
-		return {};
-
-	SDL_Event event{};
-	while (SDL_PollEvent(&event))
-		;
-
-	return rect(window.get(), forceAsPrimary);
+	SDL_Rect r = {};
+	r.x = forceAsPrimary ? 0 : bounds.x;
+	r.y = forceAsPrimary ? 0 : bounds.y;
+	r.w = static_cast<int>(std::roundf(static_cast<float>(bounds.w) * scale));
+	r.h = static_cast<int>(std::roundf(static_cast<float>(bounds.h) * scale));
+	return r;
 }
 
 bool SdlWindow::tryFallback(bool isFullscreen)
