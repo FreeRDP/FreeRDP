@@ -193,10 +193,20 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_BlitSurfaceScaled failed");
 		return false;
 	}
-	if (!SDL_AddSurfaceAlternateImage(normal.get(), ptr->image))
+	// When the server pre-scales the cursor (desktopScaleFactor > 100),
+	// the original image is already at 2x (or more) size. Adding it as an
+	// alternate image would cause SDL to double-scale on HiDPI displays —
+	// the cursor ends up at 2x the correct physical size. Skip the alt
+	// image in that case and let SDL upscale the logical-size surface.
+	const UINT32 desktopScale =
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopScaleFactor);
+	if (desktopScale <= 100)
 	{
-		WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_AddSurfaceAlternateImage failed");
-		return false;
+		if (!SDL_AddSurfaceAlternateImage(normal.get(), ptr->image))
+		{
+			WLog_Print(sdl->getWLog(), WLOG_ERROR, "SDL_AddSurfaceAlternateImage failed");
+			return false;
+		}
 	}
 
 	auto x = static_cast<int>(pos.x);
