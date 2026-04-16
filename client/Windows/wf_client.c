@@ -225,6 +225,9 @@ static BOOL wf_desktop_resize(rdpContext* context)
 		InvalidateRect(wfc->hwnd, &rect, TRUE);
 	}
 
+	if (wfc->floatbar)
+		wf_floatbar_reset_position(wfc->floatbar);
+
 	return TRUE;
 }
 
@@ -515,6 +518,25 @@ static void wf_post_disconnect(freerdp* instance)
 
 	wfc = (wfContext*)instance->context;
 	free(wfc->window_title);
+	wfc->window_title = NULL;
+
+	if (wfc->floatbar)
+	{
+		wf_floatbar_free(wfc->floatbar);
+		wfc->floatbar = NULL;
+	}
+
+	if (instance->context->gdi)
+	{
+		gdi_free(instance);
+	}
+
+	if (wfc->primary)
+	{
+		wf_image_free(wfc->primary);
+		wfc->primary = NULL;
+		wfc->drawing = NULL;
+	}
 }
 
 static CREDUI_INFOW wfUiInfo = { sizeof(CREDUI_INFOW), nullptr, L"Enter your credentials",
@@ -663,34 +685,33 @@ static BOOL wf_authenticate_ex(freerdp* instance, char** username, char** passwo
 
 static WCHAR* wf_format_text(const WCHAR* fmt, ...)
 {
-	int rc;
-	size_t size = 0;
-	WCHAR* buffer = nullptr;
+	int required;
+	size_t size;
+	WCHAR* buffer = NULL;
+	va_list ap;
 
-	do
+	va_start(ap, fmt);
+	required = _vscwprintf(fmt, ap);
+	va_end(ap);
+
+	if (required < 0)
+		return NULL;
+
+	size = (size_t)required + 1;
+	buffer = (WCHAR*)calloc(size, sizeof(WCHAR));
+
+	if (!buffer)
+		return NULL;
+
+	va_start(ap, fmt);
+	if (_vsnwprintf(buffer, size, fmt, ap) < 0)
 	{
-		WCHAR* tmp = nullptr;
-		va_list ap = WINPR_C_ARRAY_INIT;
-		va_start(ap, fmt);
-		rc = _vsnwprintf(buffer, size, fmt, ap);
 		va_end(ap);
-		if (rc <= 0)
-			goto fail;
-
-		if ((size_t)rc < size)
-			return buffer;
-
-		size = (size_t)rc + 1;
-		tmp = realloc(buffer, size * sizeof(WCHAR));
-		if (!tmp)
-			goto fail;
-
-		buffer = tmp;
-	} while (TRUE);
-
-fail:
-	free(buffer);
-	return nullptr;
+		free(buffer);
+		return NULL;
+	}
+	va_end(ap);
+	return buffer;
 }
 
 #ifdef WITH_WINDOWS_CERT_STORE
@@ -1054,6 +1075,13 @@ static BOOL wf_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDi
 	return TRUE;
 }
 
+static DWORD WINAPI wf_disconnect_thread(LPVOID lpParam)
+{
+	freerdp* instance = (freerdp*)lpParam;
+	freerdp_disconnect(instance);
+	return 0;
+}
+
 static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg = WINPR_C_ARRAY_INIT;
@@ -1151,6 +1179,8 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 					width = LOWORD(msg.lParam);
 					height = HIWORD(msg.lParam);
 					SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, width, height, SWP_FRAMECHANGED);
+					if (wfc->floatbar)
+						wf_floatbar_reset_position(wfc->floatbar);
 					break;
 				}
 				case WM_FREERDP_SHOWWINDOW:
@@ -1181,7 +1211,30 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	}
 
 	/* cleanup */
-	freerdp_disconnect(instance);
+	{
+		HANDLE disconnect_thread;
+		DWORD wait_result;
+
+		/* Start disconnection in a separate thread to prevent hang on laggy networks */
+		disconnect_thread = CreateThread(NULL, 0, wf_disconnect_thread, instance, 0, NULL);
+		if (disconnect_thread)
+		{
+			/* Wait for 2 seconds, if timeout, give up and exit */
+			wait_result = WaitForSingleObject(disconnect_thread, 2000);
+			if (wait_result == WAIT_TIMEOUT)
+			{
+				WLog_WARN(TAG, "Disconnection timed out (2s), abandoning connection");
+				TerminateThread(disconnect_thread, 1);
+			}
+			CloseHandle(disconnect_thread);
+		}
+		else
+		{
+			/* Fallback to sync disconnect if thread creation fails */
+			WLog_WARN(TAG, "Failed to create disconnect thread, using sync disconnect");
+			freerdp_disconnect(instance);
+		}
+	}
 
 end:
 	error = freerdp_get_last_error(instance->context);
@@ -1407,6 +1460,8 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
 
+	wf_event_init();
+
 	WINPR_ASSERT(instance);
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
@@ -1443,6 +1498,8 @@ static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 #ifdef WITH_PROGRESS_BAR
 	CoUninitialize();
 #endif
+
+	wf_event_uninit();
 }
 
 static int wfreerdp_client_start(rdpContext* context)
@@ -1537,10 +1594,16 @@ static int wfreerdp_client_stop(rdpContext* context)
 
 	if (wfc->keyboardThread)
 	{
+		DWORD wait_result;
 		PostThreadMessage(wfc->keyboardThreadId, WM_QUIT, 0, 0);
-		(void)WaitForSingleObject(wfc->keyboardThread, INFINITE);
+		wait_result = WaitForSingleObject(wfc->keyboardThread, 1000);
+		if (wait_result == WAIT_TIMEOUT)
+		{
+			WLog_ERR(TAG, "Keyboard thread cleanup timeout, terminating");
+			TerminateThread(wfc->keyboardThread, 1);
+		}
 		(void)CloseHandle(wfc->keyboardThread);
-		wfc->keyboardThread = nullptr;
+		wfc->keyboardThread = NULL;
 		wfc->keyboardThreadId = 0;
 	}
 

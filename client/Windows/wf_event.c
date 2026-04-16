@@ -39,6 +39,17 @@
 static HWND g_focus_hWnd = nullptr;
 static HWND g_main_hWnd = nullptr;
 static HWND g_parent_hWnd = nullptr;
+static CRITICAL_SECTION g_event_cs;
+
+void wf_event_init(void)
+{
+	InitializeCriticalSection(&g_event_cs);
+}
+
+void wf_event_uninit(void)
+{
+	DeleteCriticalSection(&g_event_cs);
+}
 
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
@@ -57,13 +68,24 @@ static BOOL g_keystates[256] = WINPR_C_ARRAY_INIT;
 
 static BOOL ctrl_down(void)
 {
-	return g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	BOOL down;
+	EnterCriticalSection(&g_event_cs);
+	down = g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	LeaveCriticalSection(&g_event_cs);
+	return down;
 }
 
 static BOOL alt_ctrl_down(void)
 {
-	const BOOL altDown = g_keystates[VK_MENU] || g_keystates[VK_LMENU] || g_keystates[VK_RMENU];
-	return altDown && ctrl_down();
+	BOOL altDown;
+	BOOL ctrlDown;
+
+	EnterCriticalSection(&g_event_cs);
+	altDown = g_keystates[VK_MENU] || g_keystates[VK_LMENU] || g_keystates[VK_RMENU];
+	ctrlDown = g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+	LeaveCriticalSection(&g_event_cs);
+
+	return altDown && ctrlDown;
 }
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -88,7 +110,21 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 	if (g_parent_hWnd && g_main_hWnd)
 	{
+		if (!IsWindow(g_main_hWnd))
+		{
+			g_main_hWnd = NULL;
+			g_focus_hWnd = NULL;
+			return CallNextHookEx(NULL, nCode, wParam, lParam);
+		}
+
 		wfc = (wfContext*)GetWindowLongPtr(g_main_hWnd, GWLP_USERDATA);
+
+		if (!wfc || !wfc->common.context.instance ||
+		    freerdp_shall_disconnect_context(&wfc->common.context))
+		{
+			return CallNextHookEx(NULL, nCode, wParam, lParam);
+		}
+
 		GUITHREADINFO gui_thread_info;
 		gui_thread_info.cbSize = sizeof(GUITHREADINFO);
 		HWND fg_win_hwnd = GetForegroundWindow();
@@ -118,22 +154,32 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				if (!wfc || !p)
 					return 1;
 
+				if (!wfc->common.context.instance ||
+				    freerdp_shall_disconnect_context(&wfc->common.context))
+				{
+					return CallNextHookEx(NULL, nCode, wParam, lParam);
+				}
+
 				input = wfc->common.context.input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE)p->scanCode, p->flags & LLKHF_EXTENDED);
-				keystate = g_keystates[p->scanCode & 0xFF];
+				EnterCriticalSection(&g_event_cs);
+				keystate = (p->vkCode < ARRAYSIZE(g_keystates)) ? g_keystates[p->vkCode] : FALSE;
 
 				switch (wParam)
 				{
 					case WM_KEYDOWN:
 					case WM_SYSKEYDOWN:
-						g_keystates[p->scanCode & 0xFF] = TRUE;
+						if (p->vkCode < ARRAYSIZE(g_keystates))
+							g_keystates[p->vkCode] = TRUE;
 						break;
 					case WM_KEYUP:
 					case WM_SYSKEYUP:
 					default:
-						g_keystates[p->scanCode & 0xFF] = FALSE;
+						if (p->vkCode < ARRAYSIZE(g_keystates))
+							g_keystates[p->vkCode] = FALSE;
 						break;
 				}
+				LeaveCriticalSection(&g_event_cs);
 				DEBUG_KBD("keydown %d scanCode 0x%08lX flags 0x%08lX vkCode 0x%08lX",
 				          (wParam == WM_KEYDOWN), p->scanCode, p->flags, p->vkCode);
 
@@ -256,21 +302,37 @@ static BOOL wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, 
 	WINPR_ASSERT(input);
 
 	DefWindowProc(hWnd, Msg, wParam, lParam);
-	delta = ((signed short)HIWORD(wParam)); /* GET_WHEEL_DELTA_WPARAM(wParam); */
+	delta = ((signed short)HIWORD(wParam));
 
 	if (horizontal)
 		flags |= PTR_FLAGS_HWHEEL;
 	else
 		flags |= PTR_FLAGS_WHEEL;
 
+	BOOL negative = FALSE;
 	if (delta < 0)
 	{
+		negative = TRUE;
 		flags |= PTR_FLAGS_WHEEL_NEGATIVE;
-		/* 9bit twos complement, delta already negative */
-		delta = 0x100 + delta;
+		delta = -delta;
 	}
 
-	flags |= delta;
+	{
+		unsigned int cval = (unsigned int)delta;
+
+		if (cval == 0)
+			cval = 1;
+
+		if (cval > 0xFF)
+			cval = 0xFF;
+
+		UINT16 val = (UINT16)cval;
+
+		if (negative)
+			val = (UINT16)(0x100 - val);
+
+		flags |= (val & 0xFF);
+	}
 	return wf_scale_mouse_event(wfc, flags, x, y);
 }
 
@@ -404,6 +466,9 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					wfc->client_y = y;
 				}
 
+				if (wfc->floatbar)
+					wf_floatbar_reset_position(wfc->floatbar);
+
 				break;
 
 			case WM_GETMINMAXINFO:
@@ -480,11 +545,16 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					}
 				}
 
+				if (wfc->floatbar)
+					wf_floatbar_reset_position(wfc->floatbar);
+
 				break;
 
 			case WM_EXITSIZEMOVE:
 				wf_size_scrollbars(wfc, wfc->client_width, wfc->client_height);
 				wf_send_resize(wfc);
+				if (wfc->floatbar)
+					wf_floatbar_reset_position(wfc->floatbar);
 				break;
 
 			case WM_ERASEBKGND:
@@ -775,6 +845,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 	switch (Msg)
 	{
+		case WM_CLOSE:
+			DestroyWindow(hWnd);
+			break;
+
 		case WM_DESTROY:
 			PostQuitMessage(WM_QUIT);
 			break;
