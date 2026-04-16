@@ -112,9 +112,9 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	{
 		if (!IsWindow(g_main_hWnd))
 		{
-			g_main_hWnd = NULL;
-			g_focus_hWnd = NULL;
-			return CallNextHookEx(NULL, nCode, wParam, lParam);
+			g_main_hWnd = nullptr;
+			g_focus_hWnd = nullptr;
+			return CallNextHookEx(nullptr, nCode, wParam, lParam);
 		}
 
 		wfc = (wfContext*)GetWindowLongPtr(g_main_hWnd, GWLP_USERDATA);
@@ -122,7 +122,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 		if (!wfc || !wfc->common.context.instance ||
 		    freerdp_shall_disconnect_context(&wfc->common.context))
 		{
-			return CallNextHookEx(NULL, nCode, wParam, lParam);
+			return CallNextHookEx(nullptr, nCode, wParam, lParam);
 		}
 
 		GUITHREADINFO gui_thread_info;
@@ -157,7 +157,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				if (!wfc->common.context.instance ||
 				    freerdp_shall_disconnect_context(&wfc->common.context))
 				{
-					return CallNextHookEx(NULL, nCode, wParam, lParam);
+					return CallNextHookEx(nullptr, nCode, wParam, lParam);
 				}
 
 				input = wfc->common.context.input;

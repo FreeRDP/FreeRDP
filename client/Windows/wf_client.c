@@ -1216,7 +1216,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		DWORD wait_result;
 
 		/* Start disconnection in a separate thread to prevent hang on laggy networks */
-		disconnect_thread = CreateThread(NULL, 0, wf_disconnect_thread, instance, 0, NULL);
+		disconnect_thread = CreateThread(nullptr, 0, wf_disconnect_thread, instance, 0, nullptr);
 		if (disconnect_thread)
 		{
 			/* Wait for 2 seconds, if timeout, give up and exit */
@@ -1603,7 +1603,7 @@ static int wfreerdp_client_stop(rdpContext* context)
 			TerminateThread(wfc->keyboardThread, 1);
 		}
 		(void)CloseHandle(wfc->keyboardThread);
-		wfc->keyboardThread = NULL;
+		wfc->keyboardThread = nullptr;
 		wfc->keyboardThreadId = 0;
 	}
 
