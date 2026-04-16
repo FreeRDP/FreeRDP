@@ -2540,8 +2540,14 @@ BOOL freerdp_settings_set_monitor_def_array_sorted(rdpSettings* settings,
 
 	if (!primary)
 	{
-		WLog_ERR(TAG, "Could not find primary monitor, aborting");
-		return FALSE;
+		/* No monitor in the supplied array is marked primary, and none
+		 * is at origin (0,0). This happens when callers select a subset
+		 * of monitors via /monitors: that excludes the originally-primary
+		 * one. Promote the first entry rather than aborting so such
+		 * selections still work.
+		 */
+		WLog_WARN(TAG, "No primary monitor found in supplied array, using first entry as primary");
+		primary = &monitors[0];
 	}
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorDefArray, nullptr, count))
