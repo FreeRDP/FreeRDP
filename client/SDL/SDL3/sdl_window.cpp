@@ -53,18 +53,38 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 	SDL_SetHint(SDL_HINT_APP_NAME, "");
 	std::ignore = SDL_SyncWindow(_window);
 
+	_renderer = SDL_CreateRenderer(_window, nullptr);
+	if (_renderer)
+	{
+		_renderTarget = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_BGRA32,
+		                                  SDL_TEXTUREACCESS_TARGET, rect.w, rect.h);
+	}
+
 	_monitor = query(_window, id, true);
 }
 
 SdlWindow::SdlWindow(SdlWindow&& other) noexcept
-    : _window(other._window), _displayID(other._displayID), _offset_x(other._offset_x),
-      _offset_y(other._offset_y), _monitor(other._monitor)
+    : _window(other._window), _renderer(other._renderer), _renderTarget(other._renderTarget),
+      _gdiTexture(other._gdiTexture), _gdiTextureW(other._gdiTextureW),
+      _gdiTextureH(other._gdiTextureH), _displayID(other._displayID),
+      _offset_x(other._offset_x), _offset_y(other._offset_y), _monitor(other._monitor)
 {
 	other._window = nullptr;
+	other._renderer = nullptr;
+	other._renderTarget = nullptr;
+	other._gdiTexture = nullptr;
+	other._gdiTextureW = 0;
+	other._gdiTextureH = 0;
 }
 
 SdlWindow::~SdlWindow()
 {
+	if (_gdiTexture)
+		SDL_DestroyTexture(_gdiTexture);
+	if (_renderTarget)
+		SDL_DestroyTexture(_renderTarget);
+	if (_renderer)
+		SDL_DestroyRenderer(_renderer);
 	SDL_DestroyWindow(_window);
 }
 
@@ -273,6 +293,12 @@ bool SdlWindow::drawScaledRects(SDL_Surface* surface, const SDL_FPoint& scale,
 
 bool SdlWindow::fill(Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
+	if (_renderer)
+	{
+		SDL_SetRenderTarget(_renderer, _renderTarget);
+		SDL_SetRenderDrawColor(_renderer, r, g, b, a);
+		return SDL_RenderClear(_renderer);
+	}
 	return fill(_window, r, g, b, a);
 }
 
@@ -362,7 +388,34 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 		 * 200px. Workaround: If we got dimensions that are too small, query the display directly.
 		 */
 
-		const auto displayID = SDL_GetDisplayForWindow(window);
+		/* On wlroots compositors, SDL_GetDisplayForWindow may return the wrong
+		 * display for unmapped windows. Fall back to matching the window's
+		 * position against display bounds if the initial query gives a
+		 * display whose bounds are too small.
+		 */
+		auto displayID = SDL_GetDisplayForWindow(window);
+		SDL_Rect checkBounds = {};
+		if (!SDL_GetDisplayBounds(displayID, &checkBounds) ||
+		    (checkBounds.w < 200 || checkBounds.h < 200))
+		{
+			/* Wrong display — find the correct one by matching position */
+			int wx = 0, wy = 0;
+			SDL_GetWindowPosition(window, &wx, &wy);
+			int count = 0;
+			auto* displays = SDL_GetDisplays(&count);
+			for (int i = 0; i < count; i++)
+			{
+				SDL_Rect db = {};
+				if (SDL_GetDisplayBounds(displays[i], &db) &&
+				    wx >= db.x && wx < db.x + db.w &&
+				    wy >= db.y && wy < db.y + db.h)
+				{
+					displayID = displays[i];
+					break;
+				}
+			}
+			SDL_free(displays);
+		}
 		SDL_Rect displayBounds = {};
 		if (SDL_GetDisplayBounds(displayID, &displayBounds))
 		{
@@ -415,16 +468,49 @@ SdlWindow::HighDPIMode SdlWindow::isHighDPIWindowsMode(SDL_Window* window)
 
 bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& dstRect)
 {
-	auto screen = SDL_GetWindowSurface(_window);
-	if (!screen || !surface)
+	if (!_renderer || !surface)
 		return false;
-	if (!SDL_SetSurfaceClipRect(surface, &srcRect))
-		return true;
-	if (!SDL_SetSurfaceClipRect(screen, &dstRect))
-		return true;
-	if (!SDL_BlitSurfaceScaled(surface, &srcRect, screen, &dstRect, SDL_SCALEMODE_LINEAR))
+
+	/* Lazily create or recreate the persistent GDI texture */
+	if (!_gdiTexture || _gdiTextureW != surface->w || _gdiTextureH != surface->h)
 	{
-		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_BlitScaled: %s", SDL_GetError());
+		if (_gdiTexture)
+			SDL_DestroyTexture(_gdiTexture);
+		_gdiTexture = SDL_CreateTexture(_renderer, surface->format,
+		                                SDL_TEXTUREACCESS_STREAMING,
+		                                surface->w, surface->h);
+		if (!_gdiTexture)
+		{
+			SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_CreateTexture: %s", SDL_GetError());
+			return false;
+		}
+		_gdiTextureW = surface->w;
+		_gdiTextureH = surface->h;
+
+		/* Upload the full surface on first creation */
+		SDL_UpdateTexture(_gdiTexture, nullptr, surface->pixels, surface->pitch);
+	}
+	else
+	{
+		/* Upload only the dirty region */
+		const auto* details = SDL_GetPixelFormatDetails(surface->format);
+		const int bpp = details ? details->bytes_per_pixel : 4;
+		const auto* pixels = static_cast<const uint8_t*>(surface->pixels) +
+		                     srcRect.y * surface->pitch +
+		                     srcRect.x * bpp;
+		SDL_UpdateTexture(_gdiTexture, &srcRect, pixels, surface->pitch);
+	}
+
+	/* Render onto persistent render target to accumulate dirty rects */
+	SDL_SetRenderTarget(_renderer, _renderTarget);
+
+	SDL_FRect fsrc = { static_cast<float>(srcRect.x), static_cast<float>(srcRect.y),
+	                   static_cast<float>(srcRect.w), static_cast<float>(srcRect.h) };
+	SDL_FRect fdst = { static_cast<float>(dstRect.x), static_cast<float>(dstRect.y),
+	                   static_cast<float>(dstRect.w), static_cast<float>(dstRect.h) };
+	if (!SDL_RenderTexture(_renderer, _gdiTexture, &fsrc, &fdst))
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_RenderTexture: %s", SDL_GetError());
 		return false;
 	}
 	return true;
@@ -432,7 +518,13 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 
 void SdlWindow::updateSurface()
 {
-	SDL_UpdateWindowSurface(_window);
+	if (!_renderer)
+		return;
+
+	/* Copy accumulated render target to screen and present */
+	SDL_SetRenderTarget(_renderer, nullptr);
+	SDL_RenderTexture(_renderer, _renderTarget, nullptr, nullptr);
+	SDL_RenderPresent(_renderer);
 }
 
 SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 flags, Uint32 width,
@@ -545,7 +637,7 @@ bool SdlWindow::tryFallback(bool isFullscreen)
 	{
 		const auto enabled = strcmp(wlroots_hack, "0") != 0;
 		if (strcmp(wlroots_hack, "force") == 0)
-			isFullscreen = true;
+			return enabled; /* force: always use display bounds, even for borderless/multimon */
 		return enabled && isFullscreen;
 	}
 
@@ -557,33 +649,28 @@ bool SdlWindow::tryFallback(bool isFullscreen)
 	if ((driver == nullptr) || (strcmp(driver, "wayland") != 0))
 		return false;
 
-	/* check XDG_SESSION_DESKTOP
-	 *
-	 * if set and the value is
-	 * - sway
-	 *
-	 * then we need the hack.
+	/* check XDG_SESSION_DESKTOP and XDG_CURRENT_DESKTOP for wlroots-based
+	 * compositors (Sway, Hyprland, river, etc.) where hidden/unmapped windows
+	 * return their creation size (64x64) instead of the display size.
 	 */
-	const auto xdg_session = SDL_getenv("XDG_SESSION_DESKTOP");
-	if (xdg_session != nullptr)
-	{
-		if (strcmp(xdg_session, "sway") == 0)
-			return isFullscreen;
-	}
+	auto needsHack = [](const char* value) -> bool {
+		if (!value)
+			return false;
+		/* Match known wlroots compositors */
+		if (strstr(value, "sway") || strstr(value, "Hyprland") ||
+		    strstr(value, "hyprland") || strstr(value, "river") ||
+		    strstr(value, "wlroots"))
+			return true;
+		return false;
+	};
 
-	/* check XDG_CURRENT_DESKTOP
-	 *
-	 * if set and the value is
-	 * - sway:wlroots
-	 *
-	 * then we need the hack.
-	 */
+	const auto xdg_session = SDL_getenv("XDG_SESSION_DESKTOP");
+	if (needsHack(xdg_session))
+		return true; /* always fallback on wlroots, not just fullscreen */
+
 	const auto xdg_desktop = SDL_getenv("XDG_CURRENT_DESKTOP");
-	if (xdg_desktop != nullptr)
-	{
-		if (strcmp(xdg_desktop, "sway:wlroots") == 0)
-			return isFullscreen;
-	}
+	if (needsHack(xdg_desktop))
+		return true;
 
 	return false;
 }
