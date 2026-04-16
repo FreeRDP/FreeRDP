@@ -23,3 +23,7 @@ set(${MODULE_PREFIX}_SRCS cliprdr_format.c cliprdr_format.h cliprdr_main.c clipr
 
 set(${MODULE_PREFIX}_LIBS winpr freerdp)
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")
+
+if(BUILD_FUZZERS)
+  add_subdirectory(test)
+endif()

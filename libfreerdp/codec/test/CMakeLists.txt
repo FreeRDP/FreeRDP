@@ -82,7 +82,7 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Test")
 add_executable(img2bgra img2bgra.c)
 target_link_libraries(img2bgra winpr)
 
-set(FUZZERS TestFuzzCodecs.c)
+set(FUZZERS TestFuzzCodecs.c TestFuzzNSCodec.c)
 
 include(AddFuzzerTest)
 add_fuzzer_test("${FUZZERS}" "freerdp winpr")

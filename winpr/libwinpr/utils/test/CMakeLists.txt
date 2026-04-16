@@ -36,12 +36,17 @@ endif()
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODULE_PREFIX}_TESTS})
 
+set(FUZZERS TestFuzzCredSSP_Asn1.c)
+
 add_compile_definitions(TEST_SOURCE_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
 add_compile_definitions(TEST_BINARY_PATH="${CMAKE_CURRENT_BINARY_DIR}")
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 target_link_libraries(${MODULE_NAME} winpr)
+
+include(AddFuzzerTest)
+add_fuzzer_test("${FUZZERS}" "winpr")
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
