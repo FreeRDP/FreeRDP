@@ -345,15 +345,8 @@ bool SdlWindow::fill(SDL_Window* window, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	return SDL_FillSurfaceRect(surface, &rect, color);
 }
 
-rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPrimary)
+static rdpMonitor buildMonitor(SDL_DisplayID id, bool forceAsPrimary, const SDL_Rect& r, float dpi)
 {
-	if (!window)
-		return {};
-
-	const auto& r = rect(window, forceAsPrimary);
-	const float factor = SDL_GetWindowDisplayScale(window);
-	const float dpi = std::roundf(factor * 100.0f);
-
 	WINPR_ASSERT(r.w > 0);
 	WINPR_ASSERT(r.h > 0);
 
@@ -363,8 +356,8 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 
 	rdpMonitor monitor{};
 	monitor.orig_screen = id;
-	monitor.x = r.x;
-	monitor.y = r.y;
+	monitor.x = forceAsPrimary ? 0 : r.x;
+	monitor.y = forceAsPrimary ? 0 : r.y;
 	monitor.width = r.w;
 	monitor.height = r.h;
 	monitor.is_primary = forceAsPrimary || (id == primary);
@@ -373,6 +366,18 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 	monitor.attributes.orientation = rdp_orientation;
 	monitor.attributes.physicalWidth = WINPR_ASSERTING_INT_CAST(uint32_t, r.w);
 	monitor.attributes.physicalHeight = WINPR_ASSERTING_INT_CAST(uint32_t, r.h);
+	return monitor;
+}
+
+rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPrimary)
+{
+	if (!window)
+		return {};
+
+	const auto& r = rect(window, forceAsPrimary);
+	const float factor = SDL_GetWindowDisplayScale(window);
+	const float dpi = std::roundf(factor * 100.0f);
+	auto monitor = buildMonitor(id, forceAsPrimary, r, dpi);
 
 	const auto cat = SDL_LOG_CATEGORY_APPLICATION;
 	SDL_LogDebug(cat, "monitor.orig_screen                   %" PRIu32, monitor.orig_screen);
@@ -391,6 +396,7 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 	             monitor.attributes.physicalWidth);
 	SDL_LogDebug(cat, "monitor.attributes.physicalHeight     %" PRIu32,
 	             monitor.attributes.physicalHeight);
+
 	return monitor;
 }
 
@@ -562,19 +568,41 @@ SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 f
 
 static SDL_Window* createDummy(SDL_DisplayID id)
 {
-	const auto x = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
-	const auto y = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
-	const int w = 64;
-	const int h = 64;
+	SDL_Rect displayRect = {};
+	std::ignore = SDL_GetDisplayBounds(id, &displayRect);
 
 	auto props = SDL_CreateProperties();
 	std::stringstream ss;
 	ss << "SdlWindow::query(" << id << ")";
 	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, ss.str().c_str());
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, x);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, y);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, w);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, h);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, displayRect.x);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, displayRect.y);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, 64);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, 64);
+
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, false);
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, false);
+
+	auto window = SDL_CreateWindowWithProperties(props);
+	SDL_DestroyProperties(props);
+	return window;
+}
+
+static SDL_Window* createDummyFullscreen(SDL_DisplayID id)
+{
+	/* Fallback probe for wlroots */
+	auto props = SDL_CreateProperties();
+	std::stringstream ss;
+	ss << "SdlWindow::query(" << id << ")";
+	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, ss.str().c_str());
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER,
+	                      SDL_WINDOWPOS_CENTERED_DISPLAY(id));
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER,
+	                      SDL_WINDOWPOS_CENTERED_DISPLAY(id));
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, 64);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, 64);
 
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, true);
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, false);
@@ -584,9 +612,6 @@ static SDL_Window* createDummy(SDL_DisplayID id)
 	auto window = SDL_CreateWindowWithProperties(props);
 	SDL_DestroyProperties(props);
 
-	/* Workaround: we need to properly position the window on the correct monitor
-	 * before going fullscreen. Otherwise we will get the primary monitor details.
-	 */
 	if (window)
 	{
 		SDL_Rect rect = {};
@@ -613,7 +638,39 @@ rdpMonitor SdlWindow::query(SDL_DisplayID id, bool forceAsPrimary)
 	while (SDL_PollEvent(&event))
 		;
 
-	return query(window.get(), id, forceAsPrimary);
+	if (SDL_GetDisplayForWindow(window.get()) != id)
+	{
+		renderer.reset();
+		window.reset();
+		window.reset(createDummyFullscreen(id));
+		if (!window)
+			return {};
+		renderer.reset(SDL_CreateRenderer(window.get(), nullptr));
+		if (!SDL_SyncWindow(window.get()))
+			return {};
+		while (SDL_PollEvent(&event))
+			;
+	}
+
+	const float pd = SDL_GetWindowPixelDensity(window.get());
+	const float dpi = std::roundf(pd * 100.0f);
+
+	SDL_Rect r = {};
+	if (!SDL_GetDisplayBounds(id, &r))
+		return {};
+
+	/* SDL_GetDisplayBounds returns logical points on macOS and Wayland,
+	 * fix it to physical pixels. */
+	const char* drv = SDL_GetCurrentVideoDriver();
+	const bool returnsLogical =
+	    drv && (SDL_strcmp(drv, "wayland") == 0 || SDL_strcmp(drv, "cocoa") == 0);
+	if (returnsLogical && pd > 1.0f)
+	{
+		r.w = static_cast<int>(std::roundf(static_cast<float>(r.w) * pd));
+		r.h = static_cast<int>(std::roundf(static_cast<float>(r.h) * pd));
+	}
+
+	return buildMonitor(id, forceAsPrimary, r, dpi);
 }
 
 SDL_Rect SdlWindow::rect(SDL_DisplayID id, bool forceAsPrimary)
