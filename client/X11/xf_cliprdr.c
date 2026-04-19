@@ -78,6 +78,13 @@ typedef struct
 	char* formatName;
 } RequestedFormat;
 
+typedef struct
+{
+	XSelectionEvent* expectedResponse;
+	RequestedFormat* requestedFormat;
+	BOOL data_raw_format;
+} SelectionResponse;
+
 struct xf_clipboard
 {
 	xfContext* xfc;
@@ -110,11 +117,8 @@ struct xf_clipboard
 	wHashTable* cachedData;
 	wHashTable* cachedRawData;
 
-	BOOL data_raw_format;
-
-	RequestedFormat* requestedFormat;
-
-	XSelectionEvent* respond;
+	wArrayList* pending_responses;
+	wQueue* queued_responses;
 
 	Window owner;
 	BOOL sync;
@@ -195,6 +199,17 @@ static BOOL requested_format_replace(RequestedFormat** ppRequestedFormat, UINT32
 
 	*ppRequestedFormat = requested;
 	return TRUE;
+}
+
+static void selection_response_free(void* ptr)
+{
+	SelectionResponse* selection_response = (SelectionResponse*)ptr;
+	if (!selection_response)
+		return;
+
+	free(selection_response->expectedResponse);
+	requested_format_free(&selection_response->requestedFormat);
+	free(selection_response);
 }
 
 static void xf_cached_data_free(void* ptr)
@@ -1495,6 +1510,43 @@ static xfCachedData* convert_data_from_existing_raw_data(xfClipboard* clipboard,
 	return cached_data;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL xf_cliprdr_pending_responses_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
+{
+	UINT32 formatId = 0;
+	SelectionResponse* pendingResponse = (SelectionResponse*)data;
+	UINT32 currentFormatId = va_arg(ap, UINT32);
+	BOOL* res = va_arg(ap, BOOL*);
+
+	WINPR_UNUSED(index);
+	WINPR_UNUSED(ap);
+	WINPR_ASSERT(res);
+
+	formatId = pendingResponse->requestedFormat->formatToRequest;
+
+	if (formatId != currentFormatId)
+		*res = TRUE;
+	return TRUE;
+}
+
+static void xf_cliprdr_provide_selection(xfClipboard* clipboard, const XSelectionEvent* respond)
+{
+	WINPR_ASSERT(clipboard);
+
+	xfContext* xfc = clipboard->xfc;
+	WINPR_ASSERT(xfc);
+
+	union
+	{
+		XEvent* ev;
+		XSelectionEvent* sev;
+	} conv;
+
+	conv.sev = respond;
+	LogDynAndXSendEvent(xfc->log, xfc->display, respond->requestor, 0, 0, conv.ev);
+	LogDynAndXFlush(xfc->log, xfc->display);
+}
+
 static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
                                                  const XSelectionRequestEvent* xevent)
 {
@@ -1584,11 +1636,11 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				table = clipboard->cachedRawData;
 
 			HashTable_Lock(table);
-
 			if (!rawTransfer)
 				cached_data = HashTable_GetItemValue(table, format_to_cache_slot(dstFormatId));
 			else
 				cached_data = HashTable_GetItemValue(table, format_to_cache_slot(formatId));
+			HashTable_Unlock(table);
 
 			DEBUG_CLIPRDR("hasCachedData: %u, rawTransfer: %d", cached_data ? 1u : 0u, rawTransfer);
 
@@ -1600,8 +1652,11 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 
 				get_src_format_info_for_local_request(clipboard, cformat, &srcFormatId,
 				                                      &nullTerminated);
+
+				HashTable_Lock(clipboard->cachedRawData);
 				cached_raw_data =
 				    HashTable_GetItemValue(clipboard->cachedRawData, (void*)(UINT_PTR)srcFormatId);
+				HashTable_Unlock(clipboard->cachedRawData);
 
 				DEBUG_CLIPRDR("hasCachedRawData: %u, rawDataLength: %u", cached_raw_data ? 1u : 0u,
 				              cached_raw_data ? cached_raw_data->data_length : 0);
@@ -1622,41 +1677,81 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				xf_cliprdr_provide_data(clipboard, respond, cached_data->data,
 				                        cached_data->data_length);
 			}
-			else if (clipboard->respond)
-			{
-				/* duplicate request */
-			}
 			else
 			{
+				SelectionResponse* selection_response = nullptr;
 				WINPR_ASSERT(cformat);
 
-				/**
-				 * Send clipboard data request to the server.
-				 * Response will be postponed after receiving the data
-				 */
+				if (!(selection_response =
+				          (SelectionResponse*)calloc(1, sizeof(SelectionResponse))))
+				{
+					respond->property = None;
+					goto out;
+				}
 				respond->property = xevent->property;
-				clipboard->respond = respond;
-				requested_format_replace(&clipboard->requestedFormat, formatId, dstFormatId,
-				                         cformat->formatName);
-				clipboard->data_raw_format = rawTransfer;
+
+				selection_response->expectedResponse = respond;
+				requested_format_replace(&selection_response->requestedFormat, formatId,
+				                         dstFormatId, cformat->formatName);
+				selection_response->data_raw_format = rawTransfer;
+
+				ArrayList_Lock(clipboard->pending_responses);
+				Queue_Lock(clipboard->queued_responses);
+				if (ArrayList_Count(clipboard->pending_responses) > 0)
+				{
+					BOOL shouldQueued = FALSE;
+					BOOL success = FALSE;
+					success = ArrayList_ForEach(clipboard->pending_responses,
+					                            xf_cliprdr_pending_responses_ArrayList_ForEachFkt,
+					                            formatId, &shouldQueued);
+					if (!success || shouldQueued)
+					{
+						if (!Queue_Enqueue(clipboard->queued_responses, selection_response))
+						{
+							requested_format_free(&selection_response->requestedFormat);
+							free(selection_response);
+							respond->property = None;
+							goto out2;
+						}
+					}
+					else
+					{
+						if (!ArrayList_Append(clipboard->pending_responses, selection_response))
+						{
+							requested_format_free(&selection_response->requestedFormat);
+							free(selection_response);
+							respond->property = None;
+							goto out2;
+						}
+					}
+				}
+				else
+				{
+					if (!ArrayList_Append(clipboard->pending_responses, selection_response))
+					{
+						requested_format_free(&selection_response->requestedFormat);
+						free(selection_response);
+						respond->property = None;
+						goto out2;
+					}
+					/**
+					 * Send clipboard data request to the server.
+					 * Response will be postponed after receiving the data
+					 */
+					xf_cliprdr_send_data_request(clipboard, formatId, cformat);
+				}
 				delayRespond = TRUE;
-				xf_cliprdr_send_data_request(clipboard, formatId, cformat);
+			out2:
+				Queue_Unlock(clipboard->queued_responses);
+				ArrayList_Unlock(clipboard->pending_responses);
 			}
-			HashTable_Unlock(table);
 		}
 	}
 
+out:
 	if (!delayRespond)
 	{
-		union
-		{
-			XEvent* ev;
-			XSelectionEvent* sev;
-		} conv;
-
-		conv.sev = respond;
-		LogDynAndXSendEvent(xfc->log, xfc->display, xevent->requestor, 0, 0, conv.ev);
-		LogDynAndXFlush(xfc->log, xfc->display);
+		xf_cliprdr_provide_selection(clipboard, respond);
 		free(respond);
 	}
 
@@ -2007,12 +2102,11 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 	xf_lock_x11(xfc);
 
 	/* Clear the active SelectionRequest, as it is now invalid */
-	free(clipboard->respond);
-	clipboard->respond = nullptr;
+	ArrayList_Clear(clipboard->pending_responses);
+	Queue_Clear(clipboard->queued_responses);
 
 	xf_clipboard_formats_free(clipboard);
 	xf_cliprdr_clear_cached_data(clipboard);
-	requested_format_free(&clipboard->requestedFormat);
 
 	xf_clipboard_free_server_formats(clipboard);
 
@@ -2172,14 +2266,8 @@ static UINT
 xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
                                        const CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
-	BOOL bSuccess = 0;
-	BYTE* pDstData = nullptr;
-	UINT32 DstSize = 0;
-	UINT32 SrcSize = 0;
-	UINT32 srcFormatId = 0;
-	UINT32 dstFormatId = 0;
-	BOOL nullTerminated = FALSE;
-	xfCachedData* cached_data = nullptr;
+	BOOL bSuccess = FALSE;
+	BOOL bRawCached = FALSE;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatDataResponse);
@@ -2193,198 +2281,303 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	const UINT32 size = formatDataResponse->common.dataLen;
 	const BYTE* data = formatDataResponse->requestedFormatData;
 
+	// Keep the same lock order as process_selection_request to prevent deadlock
+	xf_lock_x11(xfc);
+	ArrayList_Lock(clipboard->pending_responses);
+	Queue_Lock(clipboard->queued_responses);
 	if (formatDataResponse->common.msgFlags == CB_RESPONSE_FAIL)
 	{
 		WLog_WARN(TAG, "Format Data Response PDU msgFlags is CB_RESPONSE_FAIL");
-		free(clipboard->respond);
-		clipboard->respond = nullptr;
-		return CHANNEL_RC_OK;
-	}
-
-	if (!clipboard->respond)
-		return CHANNEL_RC_OK;
-
-	const RequestedFormat* format = clipboard->requestedFormat;
-	if (clipboard->data_raw_format)
-	{
-		srcFormatId = CF_RAW;
-		dstFormatId = CF_RAW;
-	}
-	else if (!format)
-		return ERROR_INTERNAL_ERROR;
-	else if (format->formatName)
-	{
-		dstFormatId = format->localFormat;
-
-		ClipboardLock(clipboard->system);
-		if (strcmp(format->formatName, type_HtmlFormat) == 0)
+		while (ArrayList_Count(clipboard->pending_responses) > 0)
 		{
-			srcFormatId = ClipboardGetFormatId(clipboard->system, type_HtmlFormat);
-			dstFormatId = ClipboardGetFormatId(clipboard->system, mime_html);
-			nullTerminated = TRUE;
+			SelectionResponse* pending = ArrayList_GetItem(clipboard->pending_responses, 0);
+
+			pending->expectedResponse->property = None;
+			xf_cliprdr_provide_selection(clipboard, pending->expectedResponse);
+
+			ArrayList_Remove(clipboard->pending_responses, pending);
 		}
+		WINPR_ASSERT(ArrayList_Count(clipboard->pending_responses) == 0);
+	}
 
-		if (strcmp(format->formatName, type_FileGroupDescriptorW) == 0)
+	while (ArrayList_Count(clipboard->pending_responses) > 0)
+	{
+		BYTE* pDstData = nullptr;
+		UINT32 DstSize = 0;
+		UINT32 SrcSize = 0;
+		UINT32 srcFormatId = 0;
+		UINT32 dstFormatId = 0;
+		BOOL nullTerminated = FALSE;
+		xfCachedData* cached_data = nullptr;
+		xfCachedData* hit_cached_data = nullptr;
+
+		SelectionResponse* pending = ArrayList_GetItem(clipboard->pending_responses, 0);
+		const RequestedFormat* format = pending->requestedFormat;
+		if (pending->data_raw_format)
 		{
-			if (!cliprdr_file_context_update_server_data(clipboard->file, clipboard->system, data,
-			                                             size))
-				WLog_WARN(TAG, "failed to update file descriptors");
+			srcFormatId = CF_RAW;
+			dstFormatId = CF_RAW;
+		}
+		else if (!format)
+		{
+			pending->expectedResponse->property = None;
+			goto out;
+		}
+		else if (format->formatName)
+		{
+			dstFormatId = format->localFormat;
 
-			srcFormatId = ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
-			const xfCliprdrFormat* dstTargetFormat =
-			    xf_cliprdr_get_client_format_by_atom(clipboard, clipboard->respond->target);
-			if (!dstTargetFormat)
+			ClipboardLock(clipboard->system);
+			if (strcmp(format->formatName, type_HtmlFormat) == 0)
 			{
-				dstFormatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
+				srcFormatId = ClipboardGetFormatId(clipboard->system, type_HtmlFormat);
+				dstFormatId = ClipboardGetFormatId(clipboard->system, mime_html);
+				nullTerminated = TRUE;
 			}
-			else
+
+			if (strcmp(format->formatName, type_FileGroupDescriptorW) == 0)
 			{
-				dstFormatId = dstTargetFormat->localFormat;
+				if (!cliprdr_file_context_update_server_data(clipboard->file, clipboard->system,
+				                                             data, size))
+					WLog_WARN(TAG, "failed to update file descriptors");
+
+				srcFormatId = ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
+				const xfCliprdrFormat* dstTargetFormat = xf_cliprdr_get_client_format_by_atom(
+				    clipboard, pending->expectedResponse->target);
+				if (!dstTargetFormat)
+				{
+					dstFormatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
+				}
+				else
+				{
+					dstFormatId = dstTargetFormat->localFormat;
+				}
+
+				nullTerminated = TRUE;
 			}
-
-			nullTerminated = TRUE;
+			ClipboardUnlock(clipboard->system);
 		}
-		ClipboardUnlock(clipboard->system);
-	}
-	else
-	{
-		srcFormatId = format->formatToRequest;
-		dstFormatId = format->localFormat;
-		switch (format->formatToRequest)
+		else
 		{
-			case CF_TEXT:
-				nullTerminated = TRUE;
-				break;
+			srcFormatId = format->formatToRequest;
+			dstFormatId = format->localFormat;
+			switch (format->formatToRequest)
+			{
+				case CF_TEXT:
+					nullTerminated = TRUE;
+					break;
 
-			case CF_OEMTEXT:
-				nullTerminated = TRUE;
-				break;
+				case CF_OEMTEXT:
+					nullTerminated = TRUE;
+					break;
 
-			case CF_UNICODETEXT:
-				nullTerminated = TRUE;
-				break;
+				case CF_UNICODETEXT:
+					nullTerminated = TRUE;
+					break;
 
-			case CF_DIB:
-				srcFormatId = CF_DIB;
-				break;
+				case CF_DIB:
+					srcFormatId = CF_DIB;
+					break;
 
-			case CF_TIFF:
-				srcFormatId = CF_TIFF;
-				break;
+				case CF_TIFF:
+					srcFormatId = CF_TIFF;
+					break;
 
-			default:
-				break;
+				default:
+					break;
+			}
 		}
-	}
 
-	DEBUG_CLIPRDR("requested format 0x%08" PRIx32 " [%s] {local 0x%08" PRIx32 " [%s]} [%s]",
-	              format->formatToRequest, ClipboardGetFormatIdString(format->formatToRequest),
-	              format->localFormat,
-	              ClipboardGetFormatName(clipboard->system, format->localFormat),
-	              format->formatName);
-	SrcSize = size;
+		DEBUG_CLIPRDR("requested format 0x%08" PRIx32 " [%s] {local 0x%08" PRIx32 " [%s]} [%s]",
+		              format->formatToRequest, ClipboardGetFormatIdString(format->formatToRequest),
+		              format->localFormat,
+		              ClipboardGetFormatName(clipboard->system, format->localFormat),
+		              format->formatName);
+		SrcSize = size;
 
-	DEBUG_CLIPRDR("srcFormatId: 0x%08" PRIx32 ", dstFormatId: 0x%08" PRIx32 "", srcFormatId,
-	              dstFormatId);
+		DEBUG_CLIPRDR("srcFormatId: 0x%08" PRIx32 ", dstFormatId: 0x%08" PRIx32 "", srcFormatId,
+		              dstFormatId);
 
-	ClipboardLock(clipboard->system);
-	bSuccess = ClipboardSetData(clipboard->system, srcFormatId, data, SrcSize);
+		if (SrcSize != 0 && !bRawCached)
+		{
+			/* We have to copy the original data again, as pSrcData is now owned
+			 * by clipboard->system. Memory allocation failure is not fatal here
+			 * as this is only a cached value. */
+			{
+				// clipboard->cachedData owns cached_data
+				// NOLINTNEXTLINE(clang-analyzer-unix.Malloc
+				xfCachedData* cached_raw_data = xf_cached_data_new_copy(data, size);
+				if (!cached_raw_data)
+					WLog_WARN(TAG, "Failed to allocate cache entry");
+				else
+				{
+					if (!(bRawCached =
+					          HashTable_Insert(clipboard->cachedRawData,
+					                           (void*)(UINT_PTR)srcFormatId, cached_raw_data)))
+					{
+						WLog_WARN(TAG, "Failed to cache clipboard data");
+						xf_cached_data_free(cached_raw_data);
+					}
+				}
+			}
+		}
 
-	BOOL willQuit = FALSE;
-	if (bSuccess)
-	{
 		if (SrcSize == 0)
 		{
 			WLog_DBG(TAG, "skipping, empty data detected!");
-			free(clipboard->respond);
-			clipboard->respond = nullptr;
-			willQuit = TRUE;
+			goto out;
+		}
+
+		if (!bSuccess)
+		{
+			ClipboardLock(clipboard->system);
+			bSuccess = ClipboardSetData(clipboard->system, srcFormatId, data, SrcSize);
+			ClipboardUnlock(clipboard->system);
+		}
+
+		if (!bSuccess)
+		{
+			WLog_DBG(TAG, "skipping, ClipboardSetData failed!");
+			goto out;
+		}
+
+		wHashTable* table = clipboard->cachedData;
+		if (pending->data_raw_format)
+			table = clipboard->cachedRawData;
+
+		HashTable_Lock(table);
+
+		if (!pending->data_raw_format)
+			hit_cached_data = HashTable_GetItemValue(table, format_to_cache_slot(dstFormatId));
+		else
+			hit_cached_data = HashTable_GetItemValue(table, format_to_cache_slot(srcFormatId));
+
+		HashTable_Unlock(table);
+
+		DEBUG_CLIPRDR("hasCachedData: %u, pending->data_raw_format: %d", hit_cached_data ? 1u : 0u,
+		              pending->data_raw_format);
+
+		ClipboardLock(clipboard->system);
+		if (hit_cached_data)
+		{
+			pDstData = hit_cached_data->data;
+			DstSize = hit_cached_data->data_length;
 		}
 		else
 		{
 			pDstData = (BYTE*)ClipboardGetData(clipboard->system, dstFormatId, &DstSize);
+		}
 
-			if (!pDstData)
+		if (!pDstData)
+		{
+			WLog_WARN(TAG, "failed to get clipboard data in format %s [source format %s]",
+			          ClipboardGetFormatName(clipboard->system, dstFormatId),
+			          ClipboardGetFormatName(clipboard->system, srcFormatId));
+		}
+		ClipboardUnlock(clipboard->system);
+
+		if (!pDstData)
+		{
+			pending->expectedResponse->property = None;
+			goto out;
+		}
+
+		if (nullTerminated && pDstData)
+		{
+			BYTE* nullTerminator = memchr(pDstData, '\0', DstSize);
+			if (nullTerminator)
 			{
-				WLog_WARN(TAG, "failed to get clipboard data in format %s [source format %s]",
-				          ClipboardGetFormatName(clipboard->system, dstFormatId),
-				          ClipboardGetFormatName(clipboard->system, srcFormatId));
+				const intptr_t diff = nullTerminator - pDstData;
+				WINPR_ASSERT(diff >= 0);
+				WINPR_ASSERT(diff <= UINT32_MAX);
+				DstSize = (UINT32)diff;
 			}
+		}
 
-			if (nullTerminated && pDstData)
+		// clipboard->cachedRawData owns cached_raw_data
+		// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
+		xf_cliprdr_provide_data(clipboard, pending->expectedResponse, pDstData, DstSize);
+
+		if (!hit_cached_data && pDstData)
+		{
+			cached_data = xf_cached_data_new(pDstData, DstSize);
+			if (!cached_data)
 			{
-				BYTE* nullTerminator = memchr(pDstData, '\0', DstSize);
-				if (nullTerminator)
+
+				free(pDstData);
+				WLog_WARN(TAG, "Failed to allocate cache entry");
+			}
+			else
+			{
+				HashTable_Lock(clipboard->cachedData);
+				if (!HashTable_Insert(clipboard->cachedData, format_to_cache_slot(dstFormatId),
+				                      cached_data))
 				{
-					const intptr_t diff = nullTerminator - pDstData;
-					WINPR_ASSERT(diff >= 0);
-					WINPR_ASSERT(diff <= UINT32_MAX);
-					DstSize = (UINT32)diff;
+					WLog_WARN(TAG, "Failed to cache clipboard data");
+					xf_cached_data_free(cached_data);
+				}
+				HashTable_Unlock(clipboard->cachedData);
+			}
+		}
+
+	out:
+		xf_cliprdr_provide_selection(clipboard, pending->expectedResponse);
+
+		ArrayList_Remove(clipboard->pending_responses, pending);
+	}
+
+	// Processing data request for next formatId
+	WINPR_ASSERT(ArrayList_Count(clipboard->pending_responses) == 0);
+
+	SelectionResponse* next = Queue_Peek(clipboard->queued_responses);
+	if (next)
+	{
+		UINT32 nextFormatId = next->requestedFormat->formatToRequest;
+		const xfCliprdrFormat* cformat =
+		    xf_cliprdr_get_client_format_by_atom(clipboard, next->expectedResponse->target);
+
+		wQueue* backlog = Queue_New(FALSE, -1, -1);
+		if (!backlog)
+		{
+			goto out2;
+		}
+		while ((next = Queue_Dequeue(clipboard->queued_responses)) != nullptr)
+		{
+			if (next->requestedFormat->formatToRequest == nextFormatId)
+			{
+				if (!ArrayList_Append(clipboard->pending_responses, next))
+				{
+					selection_response_free(next);
+				}
+			}
+			else
+			{
+				if (!Queue_Enqueue(backlog, next))
+				{
+					selection_response_free(next);
 				}
 			}
 		}
-	}
-	ClipboardUnlock(clipboard->system);
-	if (willQuit)
-		return CHANNEL_RC_OK;
+		WINPR_ASSERT(Queue_Count(clipboard->queued_responses) == 0);
 
-	/* Cache converted and original data to avoid doing a possibly costly
-	 * conversion again on subsequent requests */
-	if (pDstData)
-	{
-		cached_data = xf_cached_data_new(pDstData, DstSize);
-		if (!cached_data)
+		SelectionResponse* tmp = nullptr;
+		while (Queue_Count(backlog) > 0)
 		{
-			WLog_WARN(TAG, "Failed to allocate cache entry");
-			free(pDstData);
-			return CHANNEL_RC_OK;
-		}
-		if (!HashTable_Insert(clipboard->cachedData, format_to_cache_slot(dstFormatId),
-		                      cached_data))
-		{
-			WLog_WARN(TAG, "Failed to cache clipboard data");
-			xf_cached_data_free(cached_data);
-			return CHANNEL_RC_OK;
-		}
-	}
-
-	/* We have to copy the original data again, as pSrcData is now owned
-	 * by clipboard->system. Memory allocation failure is not fatal here
-	 * as this is only a cached value. */
-	{
-		// clipboard->cachedData owns cached_data
-		// NOLINTNEXTLINE(clang-analyzer-unix.Malloc
-		xfCachedData* cached_raw_data = xf_cached_data_new_copy(data, size);
-		if (!cached_raw_data)
-			WLog_WARN(TAG, "Failed to allocate cache entry");
-		else
-		{
-			if (!HashTable_Insert(clipboard->cachedRawData, (void*)(UINT_PTR)srcFormatId,
-			                      cached_raw_data))
+			if (!(tmp = Queue_Dequeue(backlog)))
 			{
-				WLog_WARN(TAG, "Failed to cache clipboard data");
-				xf_cached_data_free(cached_raw_data);
+				Queue_Enqueue(clipboard->queued_responses, tmp);
 			}
 		}
+		WINPR_ASSERT(Queue_Count(backlog) == 0);
+		Queue_Free(backlog);
+	out2:
+		xf_cliprdr_send_data_request(clipboard, nextFormatId, cformat);
 	}
 
-	// clipboard->cachedRawData owns cached_raw_data
-	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
-	xf_cliprdr_provide_data(clipboard, clipboard->respond, pDstData, DstSize);
-	{
-		union
-		{
-			XEvent* ev;
-			XSelectionEvent* sev;
-		} conv;
+	Queue_Unlock(clipboard->queued_responses);
+	ArrayList_Unlock(clipboard->pending_responses);
+	xf_unlock_x11(xfc);
 
-		conv.sev = clipboard->respond;
-
-		LogDynAndXSendEvent(xfc->log, xfc->display, clipboard->respond->requestor, 0, 0, conv.ev);
-		LogDynAndXFlush(xfc->log, xfc->display);
-	}
-	free(clipboard->respond);
-	clipboard->respond = nullptr;
 	return CHANNEL_RC_OK;
 }
 
@@ -2645,6 +2838,18 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	obj = HashTable_ValueObject(clipboard->cachedRawData);
 	obj->fnObjectFree = xf_cached_data_free;
 
+	clipboard->pending_responses = ArrayList_New(TRUE);
+	if (!clipboard->pending_responses)
+		goto fail;
+	obj = ArrayList_Object(clipboard->pending_responses);
+	obj->fnObjectFree = selection_response_free;
+
+	clipboard->queued_responses = Queue_New(TRUE, -1, -1);
+	if (!clipboard->queued_responses)
+		goto fail;
+	obj = Queue_Object(clipboard->queued_responses);
+	obj->fnObjectFree = selection_response_free;
+
 	return clipboard;
 
 fail:
@@ -2677,8 +2882,8 @@ void xf_clipboard_free(xfClipboard* clipboard)
 	xf_clipboard_formats_free(clipboard);
 	HashTable_Free(clipboard->cachedRawData);
 	HashTable_Free(clipboard->cachedData);
-	requested_format_free(&clipboard->requestedFormat);
-	free(clipboard->respond);
+	ArrayList_Free(clipboard->pending_responses);
+	Queue_Free(clipboard->queued_responses);
 	free(clipboard->incr_data);
 	free(clipboard);
 }
