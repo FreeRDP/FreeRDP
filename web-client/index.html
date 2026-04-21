@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreeRDP Web Client</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .connection-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        input, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input[type="text"] {
+            flex: 1;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #005aa3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        canvas {
+            display: block;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+            background: #000;
+            max-width: 100%;
+            height: auto;
+        }
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .stats {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>FreeRDP Web Remote Desktop</h1>
+            <p>Connect to your Windows PC remotely with low latency streaming</p>
+        </div>
+
+        <div class="connection-form">
+            <input type="text" id="serverInput" placeholder="Server address (e.g., your-pc.local:8080)" value="localhost:8080">
+            <button id="connectBtn">Connect</button>
+            <button id="disconnectBtn" disabled>Disconnect</button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <canvas id="desktopCanvas" width="1920" height="1080" style="display: none;"></canvas>
+
+        <div class="controls" style="display: none;">
+            <button id="fullscreenBtn">Fullscreen</button>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        class FreeRDPWebClient {
+            constructor() {
+                this.ws = null;
+                this.canvas = document.getElementById('desktopCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.isConnected = false;
+                this.stats = {
+                    frames: 0,
+                    startTime: 0,
+                    lastFrameTime: 0
+                };
+
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                document.getElementById('connectBtn').addEventListener('click', () => this.connect());
+                document.getElementById('disconnectBtn').addEventListener('click', () => this.disconnect());
+                document.getElementById('fullscreenBtn').addEventListener('click', () => this.toggleFullscreen());
+
+                // Mouse events
+                this.canvas.addEventListener('mousedown', (e) => this.handleMouse(e, 'down'));
+                this.canvas.addEventListener('mouseup', (e) => this.handleMouse(e, 'up'));
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouse(e, 'move'));
+
+                // Keyboard events
+                document.addEventListener('keydown', (e) => this.handleKey(e, 'down'));
+                document.addEventListener('keyup', (e) => this.handleKey(e, 'up'));
+            }
+
+            connect() {
+                const serverAddress = document.getElementById('serverInput').value;
+                if (!serverAddress) {
+                    this.showStatus('Please enter a server address', 'disconnected');
+                    return;
+                }
+
+                this.showStatus('Connecting...', 'connecting');
+                this.ws = new WebSocket(`ws://${serverAddress}/rdp`);
+
+                this.ws.onopen = () => {
+                    this.isConnected = true;
+                    this.showStatus('Connected to remote desktop', 'connected');
+                    document.getElementById('connectBtn').disabled = true;
+                    document.getElementById('disconnectBtn').disabled = false;
+                    document.querySelector('.controls').style.display = 'block';
+                    this.canvas.style.display = 'block';
+                    this.stats.startTime = Date.now();
+                    this.stats.frames = 0;
+                };
+
+                this.ws.onmessage = (event) => {
+                    this.handleMessage(event.data);
+                };
+
+                this.ws.onclose = () => {
+                    this.disconnect();
+                };
+
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.showStatus('Connection failed', 'disconnected');
+                };
+            }
+
+            disconnect() {
+                if (this.ws) {
+                    this.ws.close();
+                    this.ws = null;
+                }
+                this.isConnected = false;
+                this.showStatus('Disconnected', 'disconnected');
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+                document.querySelector('.controls').style.display = 'none';
+                this.canvas.style.display = 'none';
+            }
+
+            handleMessage(data) {
+                if (typeof data === 'string') {
+                    // Handle text messages (control/info)
+                    const msg = JSON.parse(data);
+                    if (msg.type === 'screen_update') {
+                        this.updateScreen(msg);
+                    }
+                } else {
+                    // Handle binary data (screen updates)
+                    this.processFrame(data);
+                }
+            }
+
+            processFrame(data) {
+                // For now, assume JPEG frames
+                const img = new Image();
+                img.onload = () => {
+                    this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+                    this.updateStats();
+                };
+                img.src = URL.createObjectURL(new Blob([data], { type: 'image/jpeg' }));
+            }
+
+            updateScreen(msg) {
+                if (msg.width && msg.height) {
+                    this.canvas.width = msg.width;
+                    this.canvas.height = msg.height;
+                }
+            }
+
+            handleMouse(event, type) {
+                if (!this.isConnected) return;
+
+                const rect = this.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                const msg = {
+                    type: 'mouse',
+                    event: type,
+                    x: Math.round(x),
+                    y: Math.round(y),
+                    button: event.button
+                };
+
+                this.ws.send(JSON.stringify(msg));
+            }
+
+            handleKey(event, type) {
+                if (!this.isConnected) return;
+
+                // Prevent default for certain keys to avoid browser shortcuts
+                if (event.ctrlKey || event.altKey || event.metaKey) {
+                    event.preventDefault();
+                }
+
+                const msg = {
+                    type: 'keyboard',
+                    event: type,
+                    keyCode: event.keyCode,
+                    charCode: event.charCode,
+                    ctrlKey: event.ctrlKey,
+                    altKey: event.altKey,
+                    shiftKey: event.shiftKey
+                };
+
+                this.ws.send(JSON.stringify(msg));
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    this.canvas.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+
+            updateStats() {
+                this.stats.frames++;
+                const now = Date.now();
+                const elapsed = (now - this.stats.startTime) / 1000;
+                const fps = this.stats.frames / elapsed;
+
+                document.getElementById('stats').textContent =
+                    `FPS: ${fps.toFixed(1)} | Frames: ${this.stats.frames} | Resolution: ${this.canvas.width}x${this.canvas.height}`;
+            }
+
+            showStatus(message, type) {
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = message;
+                statusEl.className = `status ${type}`;
+                statusEl.style.display = 'block';
+            }
+        }
+
+        // Initialize the client when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new FreeRDPWebClient();
+        });
+    </script>
+</body>
+</html>

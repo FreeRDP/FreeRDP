@@ -1,0 +1,20 @@
+{
+  "name": "freerdp-web-proxy",
+  "version": "1.0.0",
+  "description": "WebSocket proxy for FreeRDP web client",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js --port=3000",
+    "build": "echo 'Static files ready for deployment'",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.2",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1"
+  },
+  "keywords": ["freerdp", "websocket", "remote-desktop", "proxy"],
+  "author": "FreeRDP",
+  "license": "Apache-2.0"
+}
