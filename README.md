@@ -33,6 +33,20 @@ Security policy: https://github.com/FreeRDP/FreeRDP/security/policy
 
 FAQ: https://github.com/FreeRDP/FreeRDP/wiki/FAQ
 
+## Web Remote Desktop
+
+FreeRDP now includes a web-based remote desktop client that enables streaming Windows desktops to web browsers with low latency and high performance.
+
+**🌐 Try it now**: [https://freerdp.github.io/FreeRDP/](https://freerdp.github.io/FreeRDP/)
+
+The web client supports:
+- 60fps streaming at 1080p resolution
+- Low-latency WebSocket communication
+- Cross-platform browser support
+- Easy setup with FreeRDP shadow server
+
+See the [web client documentation](web-client/README.md) for setup instructions.
+
 ### Contact
 
 * Matrix room : `#FreeRDP:matrix.org` (main)
