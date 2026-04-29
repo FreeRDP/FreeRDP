@@ -1,7 +1,6 @@
 import pasteboard from '@ohos.pasteboard';
 import window from '@ohos.window';
 import common from '@ohos.app.ability.common';
-import abilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl';
 import { SessionWindow } from '../components/SessionWindow';
 import { sessionManager, SessionRecord } from '../service/SessionManager';
 import { sessionWindowManager } from '../service/SessionWindowManager';
@@ -9,7 +8,6 @@ import { SessionEvent, SessionStage, SessionSnapshot } from '../model/SessionMod
 import { AuthDialog } from '../components/AuthDialog';
 import { CertDialog } from '../components/CertDialog';
 import { SessionLaunchParams, DEFAULT_SESSION_LAUNCH_PARAMS } from '../entryability/SessionAbility';
-import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
 
 interface WindowLike {
   setWindowTitle?: (t: string) => void;
@@ -36,20 +34,12 @@ struct Session {
   };
   @State authEvent: SessionEvent | null = null;
   @State certEvent: SessionEvent | null = null;
-  @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
-  @State colors: ThemeColors = LightColors;
 
   private systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard();
   private applyingRemoteClipboard: boolean = false;
   private lastClipboardText: string = '';
-  private pasteboardUpdateCallback: () => void = () => {};
   private refreshTimer: number = -1;
   private unsubSessionChanged: (() => void) | null = null;
-  private hasReadPasteboardPermission: boolean = false;
-
-  onThemeChanged(): void {
-    this.colors = this.isDark ? DarkColors : LightColors;
-  }
 
   authDialogController: CustomDialogController = new CustomDialogController({
     builder: AuthDialog({
@@ -151,51 +141,6 @@ struct Session {
     });
   }
 
-  private onLocalClipboardChanged(): void {
-    if (!this.hasReadPasteboardPermission) {
-      return;
-    }
-    if (this.applyingRemoteClipboard) {
-      return;
-    }
-    if (this.sessionId <= 0 || this.sessionStage !== SessionStage.Connected) {
-      return;
-    }
-    this.systemPasteboard.getData().then((data: pasteboard.PasteData) => {
-      if (this.applyingRemoteClipboard) {
-        return;
-      }
-      const text: string = data.getPrimaryText();
-      if (text.length === 0 || text === this.lastClipboardText) {
-        return;
-      }
-      this.lastClipboardText = text;
-      void sessionManager.setClipboardText(this.sessionId, text);
-    }).catch(() => {});
-  }
-
-  private async requestReadPasteboardPermission(): Promise<void> {
-    try {
-      const context = this.getUIContext()?.getHostContext?.() as common.UIAbilityContext | undefined;
-      if (context === undefined) {
-        return;
-      }
-      const atManager = abilityAccessCtrl.createAtManager();
-      const permission: Permissions = 'ohos.permission.READ_PASTEBOARD';
-      const grantStatus = await atManager.checkAccessToken(context.applicationInfo.accessTokenId, permission);
-      if (grantStatus === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
-        this.hasReadPasteboardPermission = true;
-        return;
-      }
-      const requestResult = await atManager.requestPermissionsFromUser(context, [permission]);
-      if (requestResult.authResults.length > 0 && requestResult.authResults[0] === 0) {
-        this.hasReadPasteboardPermission = true;
-      }
-    } catch (_e) {
-      this.hasReadPasteboardPermission = false;
-    }
-  }
-
   aboutToAppear(): void {
     this.sessionId = this.readActiveSessionId();
     if (this.sessionId <= 0) {
@@ -219,27 +164,13 @@ struct Session {
         }
       }
     }, 120);
-
-    this.requestReadPasteboardPermission().then(() => {
-      if (this.hasReadPasteboardPermission) {
-        this.pasteboardUpdateCallback = () => {
-          this.onLocalClipboardChanged();
-        };
-        this.systemPasteboard.on('update', this.pasteboardUpdateCallback);
-      }
-    });
   }
 
   onPageShow(): void {
     this.updateWindowTitle();
-    this.onLocalClipboardChanged();
   }
 
   aboutToDisappear(): void {
-    try {
-      this.systemPasteboard.off('update', this.pasteboardUpdateCallback);
-    } catch (_e) {
-    }
     if (this.unsubSessionChanged !== null) {
       this.unsubSessionChanged();
       this.unsubSessionChanged = null;
@@ -258,7 +189,6 @@ struct Session {
         subtitle: this.sessionHost,
         stage: this.sessionStage,
         snapshot: this.sessionSnapshot,
-        isDark: this.isDark,
         getFrameBuffer: (): ArrayBuffer => {
           if (this.sessionId <= 0) {
             return new ArrayBuffer(0);
@@ -299,7 +229,6 @@ struct Session {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.colors.background)
-    .animation({ duration: 300, curve: Curve.EaseIn })
+    .backgroundColor('#0C1416')
   }
 }

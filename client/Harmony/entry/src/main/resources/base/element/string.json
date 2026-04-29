@@ -2,27 +2,23 @@
   "string": [
     {
       "name": "app_name",
-      "value": "hFreeRDP"
+      "value": "碧虎远程桌面"
     },
     {
       "name": "module_desc",
-      "value": "hFreeRDP HarmonyOS Client"
+      "value": "FreeRDP Harmony client shell"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "hFreeRDP Remote Desktop"
+      "value": "Entry ability for FreeRDP Harmony"
     },
     {
       "name": "SessionAbility_desc",
-      "value": "Remote Desktop Session"
+      "value": "远程桌面会话窗口"
     },
     {
       "name": "session_ability_label",
-      "value": "hFreeRDP Session"
-    },
-    {
-      "name": "read_pasteboard_reason",
-      "value": "Used to synchronize local clipboard content to the remote desktop"
+      "value": "远程桌面"
     }
   ]
 }
