@@ -1194,7 +1194,7 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 
 		if (currentAttempt + 1 < maxRetries)
 		{
-			WLog_INFO(TAG, "Waiting 5 seconds before next attempt...");
+			WLog_INFO(TAG, "Waiting 3 seconds before next attempt...");
 			Sleep(3000);
 		}
 	}
