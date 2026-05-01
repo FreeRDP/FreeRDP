@@ -69,6 +69,7 @@ struct AINPUT_PLUGIN_
 	UINT32 MajorVersion;
 	UINT32 MinorVersion;
 	BOOL initialized;
+	CRITICAL_SECTION lock;
 };
 
 /**
@@ -113,6 +114,7 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 	AINPUT_CHANNEL_CALLBACK* callback;
 	BYTE buffer[32] = { 0 };
 	UINT64 time;
+	UINT rc;
 	wStream sbuffer = { 0 };
 	wStream* s = &sbuffer;
 
@@ -132,8 +134,6 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 		          ainput->MajorVersion, ainput->MinorVersion);
 		return CHANNEL_RC_UNSUPPORTED_VERSION;
 	}
-	callback = ainput->listener_callback->channel_callback;
-	WINPR_ASSERT(callback);
 
 	{
 		char buffer[128] = { 0 };
@@ -152,10 +152,15 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 	Stream_SealLength(s);
 
 	/* ainput back what we have received. AINPUT does not have any message IDs. */
+	EnterCriticalSection(&ainput->lock);
+	callback = ainput->listener_callback->channel_callback;
+	WINPR_ASSERT(callback);
 	WINPR_ASSERT(callback->channel);
 	WINPR_ASSERT(callback->channel->Write);
-	return callback->channel->Write(callback->channel, (ULONG)Stream_Length(s), Stream_Buffer(s),
-	                                NULL);
+	rc = callback->channel->Write(callback->channel, (ULONG)Stream_Length(s), Stream_Buffer(s),
+	                              NULL);
+	LeaveCriticalSection(&ainput->lock);
+	return rc;
 }
 
 /**
@@ -167,8 +172,16 @@ static UINT ainput_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	AINPUT_CHANNEL_CALLBACK* callback = (AINPUT_CHANNEL_CALLBACK*)pChannelCallback;
 
-	free(callback);
+	if (callback)
+	{
+		AINPUT_PLUGIN* ainput = (AINPUT_PLUGIN*)callback->plugin;
+		WINPR_ASSERT(ainput);
 
+		/* Lock here to ensure that no ainput_send_input_event is in progress. */
+		EnterCriticalSection(&ainput->lock);
+		free(callback);
+		LeaveCriticalSection(&ainput->lock);
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -263,6 +276,7 @@ static UINT ainput_plugin_terminated(IWTSPlugin* pPlugin)
 	}
 	if (ainput)
 	{
+		DeleteCriticalSection(&ainput->lock);
 		free(ainput->listener_callback);
 		free(ainput->iface.pInterface);
 	}
@@ -303,6 +317,8 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 		ainput->iface.Initialize = ainput_plugin_initialize;
 		ainput->iface.Terminated = ainput_plugin_terminated;
+
+		InitializeCriticalSection(&ainput->lock);
 
 		context->handle = (void*)ainput;
 		context->AInputSendInputEvent = ainput_send_input_event;
