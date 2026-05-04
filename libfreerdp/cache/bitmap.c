@@ -281,8 +281,9 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 	bitmapCache->settings = settings;
 	bitmapCache->update = ((freerdp*)settings->instance)->update;
 	bitmapCache->context = bitmapCache->update->context;
-	bitmapCache->cells =
-	    (BITMAP_V2_CELL*)calloc(settings->BitmapCacheV2NumCells, sizeof(BITMAP_V2_CELL));
+	/* overallocate by 1. older RDP servers do send a off by 1 cache index. */
+	bitmapCache->cells = (BITMAP_V2_CELL*)calloc(
+	    (size_t)settings->BitmapCacheV2NumCells + 1ull, sizeof(BITMAP_V2_CELL));
 
 	if (!bitmapCache->cells)
 		goto fail;
