@@ -29,99 +29,72 @@ export interface ThemeColors {
   chromeOverlayShadow: string;
   dotActive: string;
   dotInactive: string;
-  shadowSm: string;
-  shadowMd: string;
-  shadowLg: string;
-  shadowXl: string;
-  overlayScrim: string;
-  gradientStart: string;
-  gradientEnd: string;
-  surfaceElevated: string;
-  surfaceElevatedBorder: string;
 }
 
 export const LightColors: ThemeColors = {
-  background: '#fafaf8',
+  background: '#fdfbf7',
   foreground: '#1c1917',
-  primary: '#2c5f63',
+  primary: '#2c4f54',
   primaryForeground: '#ffffff',
-  border: '#e2e0dc',
-  muted: '#f3f1ed',
+  border: '#e7e5e4',
+  muted: '#f5f2ed',
   mutedForeground: '#6b6560',
   card: '#ffffff',
   cardForeground: '#1c1917',
-  cardBorder: '#e8e6e1',
+  cardBorder: '#e7e5e4',
   destructive: '#b91c1c',
   destructiveForeground: '#ffffff',
-  accent: '#eef4f3',
-  accentForeground: '#2c5f63',
-  tagBackground: '#e8f0ee',
-  tagText: '#2c5f63',
-  inputBackground: '#fafaf8',
-  inputBorder: '#d9d7d2',
-  connectedGreen: '#22a06b',
+  accent: '#f5f2ed',
+  accentForeground: '#2c4f54',
+  tagBackground: '#eef2ee',
+  tagText: '#2c4f54',
+  inputBackground: '#fdfbf7',
+  inputBorder: '#e7e5e4',
+  connectedGreen: '#339966',
   connectingAmber: '#b0882c',
-  errorRed: '#dc2626',
-  disconnectedGray: '#78716c',
+  errorRed: '#b91c1c',
+  disconnectedGray: '#6b6560',
   hintOrange: '#b0882c',
-  hintOrangeBg: '#fef8ec',
-  chromeOverlay: 'rgba(250,250,248,0.88)',
+  hintOrangeBg: '#fbf5e8',
+  chromeOverlay: 'rgba(253,251,247,0.82)',
   chromeOverlayText: '#1c1917',
-  chromeOverlayBorder: 'rgba(44,95,99,0.12)',
-  chromeOverlayShadow: 'rgba(28,25,23,0.08)',
+  chromeOverlayBorder: 'rgba(44,79,84,0.12)',
+  chromeOverlayShadow: 'rgba(0,0,0,0.06)',
   dotActive: 'rgba(28,25,23,0.9)',
-  dotInactive: 'rgba(28,25,23,0.35)',
-  shadowSm: 'rgba(28,25,23,0.04)',
-  shadowMd: 'rgba(28,25,23,0.07)',
-  shadowLg: 'rgba(28,25,23,0.10)',
-  shadowXl: 'rgba(28,25,23,0.14)',
-  overlayScrim: 'rgba(28,25,23,0.45)',
-  gradientStart: '#e8f4f2',
-  gradientEnd: '#f0f7f6',
-  surfaceElevated: '#ffffff',
-  surfaceElevatedBorder: '#e2e0dc'
+  dotInactive: 'rgba(28,25,23,0.38)'
 };
 
 export const DarkColors: ThemeColors = {
-  background: '#0a1214',
-  foreground: '#eceae6',
-  primary: '#5fb8b8',
-  primaryForeground: '#0a1214',
-  border: '#1c2a2e',
-  muted: '#131e21',
+  background: '#0c1416',
+  foreground: '#e7e5e4',
+  primary: '#6d9ea6',
+  primaryForeground: '#0c1416',
+  border: '#1e293b',
+  muted: '#162024',
   mutedForeground: '#8899a0',
-  card: '#101a1d',
-  cardForeground: '#eceae6',
-  cardBorder: '#1c2a2e',
+  card: '#111b1e',
+  cardForeground: '#e7e5e4',
+  cardBorder: '#1e293b',
   destructive: '#ef4444',
   destructiveForeground: '#ffffff',
-  accent: '#152427',
-  accentForeground: '#5fb8b8',
-  tagBackground: 'rgba(95,184,184,0.13)',
-  tagText: '#5fb8b8',
-  inputBackground: '#0d1619',
-  inputBorder: '#1c2a2e',
-  connectedGreen: '#34d399',
+  accent: '#162024',
+  accentForeground: '#6d9ea6',
+  tagBackground: 'rgba(109,158,166,0.16)',
+  tagText: '#6d9ea6',
+  inputBackground: '#0f181a',
+  inputBorder: '#1e293b',
+  connectedGreen: '#4ade80',
   connectingAmber: '#fbbf24',
   errorRed: '#f87171',
   disconnectedGray: '#8899a0',
   hintOrange: '#fbbf24',
-  hintOrangeBg: 'rgba(251,191,36,0.10)',
-  chromeOverlay: 'rgba(10,18,20,0.85)',
-  chromeOverlayText: '#eceae6',
-  chromeOverlayBorder: 'rgba(95,184,184,0.16)',
-  chromeOverlayShadow: 'rgba(0,0,0,0.30)',
-  dotActive: 'rgba(236,234,230,0.90)',
-  dotInactive: 'rgba(236,234,230,0.35)',
-  shadowSm: 'rgba(0,0,0,0.15)',
-  shadowMd: 'rgba(0,0,0,0.24)',
-  shadowLg: 'rgba(0,0,0,0.32)',
-  shadowXl: 'rgba(0,0,0,0.42)',
-  overlayScrim: 'rgba(10,18,20,0.60)',
-  gradientStart: 'rgba(95,184,184,0.06)',
-  gradientEnd: 'transparent',
-  surfaceElevated: '#141f22',
-  surfaceElevatedBorder: '#1f2f33'
+  hintOrangeBg: 'rgba(251,191,36,0.12)',
+  chromeOverlay: 'rgba(12,20,22,0.82)',
+  chromeOverlayText: '#e7e5e4',
+  chromeOverlayBorder: 'rgba(109,158,166,0.18)',
+  chromeOverlayShadow: 'rgba(0,0,0,0.22)',
+  dotActive: 'rgba(231,229,228,0.9)',
+  dotInactive: 'rgba(231,229,228,0.42)'
 };
 
 const THEME_KEY: string = '__app_theme_mode__';
@@ -144,4 +117,8 @@ export function getStoredThemeMode(): ThemeMode {
   } catch (_e) {
   }
   return ThemeMode.Light;
+}
+
+export function persistThemeMode(mode: ThemeMode): void {
+  AppStorage.setOrCreate(THEME_KEY, mode);
 }

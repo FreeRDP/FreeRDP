@@ -8,6 +8,7 @@ import { SessionEvent, SessionStage, SessionSnapshot } from '../model/SessionMod
 import { AuthDialog } from '../components/AuthDialog';
 import { CertDialog } from '../components/CertDialog';
 import { SessionLaunchParams, DEFAULT_SESSION_LAUNCH_PARAMS } from '../entryability/SessionAbility';
+import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
 
 interface WindowLike {
   setWindowTitle?: (t: string) => void;
@@ -34,12 +35,18 @@ struct Session {
   };
   @State authEvent: SessionEvent | null = null;
   @State certEvent: SessionEvent | null = null;
+  @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
+  @State colors: ThemeColors = LightColors;
 
   private systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard();
   private applyingRemoteClipboard: boolean = false;
   private lastClipboardText: string = '';
   private refreshTimer: number = -1;
   private unsubSessionChanged: (() => void) | null = null;
+
+  onThemeChanged(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
+  }
 
   authDialogController: CustomDialogController = new CustomDialogController({
     builder: AuthDialog({
@@ -189,6 +196,7 @@ struct Session {
         subtitle: this.sessionHost,
         stage: this.sessionStage,
         snapshot: this.sessionSnapshot,
+        isDark: this.isDark,
         getFrameBuffer: (): ArrayBuffer => {
           if (this.sessionId <= 0) {
             return new ArrayBuffer(0);
@@ -229,6 +237,7 @@ struct Session {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#0C1416')
+    .backgroundColor(this.colors.background)
+    .animation({ duration: 300, curve: Curve.EaseIn })
   }
 }

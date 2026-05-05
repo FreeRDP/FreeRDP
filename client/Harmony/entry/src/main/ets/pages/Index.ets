@@ -1,11 +1,13 @@
 import { ConnectionForm } from '../components/ConnectionForm';
 import { BookmarkList } from '../components/BookmarkList';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { HomeViewModel } from '../viewmodel/HomeViewModel';
 import { SessionRecord } from '../service/SessionManager';
 import { sessionManager } from '../service/SessionManager';
 import { sessionWindowManager } from '../service/SessionWindowManager';
 import { SessionStage } from '../model/SessionModels';
 import { common } from '@kit.AbilityKit';
+import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
 
 @Entry
 @Component
@@ -14,9 +16,15 @@ struct Index {
   @State pageWidth: number = 1280;
   @State activeSessions: SessionRecord[] = [];
   @State isConnecting: boolean = false;
+  @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
+  @State colors: ThemeColors = LightColors;
   private unsubSessionChanged: (() => void) | null = null;
   private unsubWindowClosed: (() => void) | null = null;
   private refreshTimer: number = -1;
+
+  onThemeChanged(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
+  }
 
   private isPhoneLayout(): boolean {
     return this.pageWidth < 840;
@@ -146,15 +154,15 @@ struct Index {
 
   private stageColor(stage: SessionStage): string {
     if (stage === SessionStage.Connected) {
-      return '#16A34A';
+      return this.colors.connectedGreen;
     }
     if (stage === SessionStage.Connecting) {
-      return '#F59E0B';
+      return this.colors.connectingAmber;
     }
     if (stage === SessionStage.Error) {
-      return '#DC2626';
+      return this.colors.errorRed;
     }
-    return '#6B7280';
+    return this.colors.disconnectedGray;
   }
 
   build() {
@@ -163,20 +171,31 @@ struct Index {
         Column() {
           Column({ space: this.layoutSpacing() }) {
             Row() {
-              Column() {
-                Text('hFreeRDP')
+              Column({ space: 4 }) {
+                Text('碧虎远程桌面')
                   .fontSize(this.isPhoneLayout() ? 26 : 36)
                   .fontWeight(FontWeight.Bold)
+                  .fontColor(this.colors.foreground)
+                  .animation({ duration: 200, curve: Curve.EaseIn })
+
+                Text('安全的远程访问，克制的技术实践')
+                  .fontSize(13)
+                  .fontColor(this.colors.mutedForeground)
+                  .animation({ duration: 200, curve: Curve.EaseIn })
               }
               .alignItems(HorizontalAlign.Start)
               .layoutWeight(1)
 
-              Text('HarmonyOS')
-                .fontSize(12)
-                .fontColor('#1D4ED8')
-                .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-                .backgroundColor('#DBEAFE')
-                .borderRadius(999)
+              Row({ space: 10 }) {
+                ThemeToggle()
+
+                Text('HarmonyOS')
+                  .fontSize(11)
+                  .fontColor(this.colors.tagText)
+                  .padding({ left: 10, right: 10, top: 6, bottom: 6 })
+                  .backgroundColor(this.colors.tagBackground)
+                  .borderRadius(999)
+              }
             }
             .alignItems(VerticalAlign.Top)
 
@@ -184,14 +203,14 @@ struct Index {
               Column({ space: 12 }) {
                 Row() {
                   Text('活跃会话')
-                    .fontSize(20)
+                    .fontSize(18)
                     .fontWeight(FontWeight.Medium)
-                    .fontColor('#111827')
+                    .fontColor(this.colors.foreground)
                     .layoutWeight(1)
 
                   Text(`${this.activeSessions.length} 个连接`)
-                    .fontSize(13)
-                    .fontColor('#6B7280')
+                    .fontSize(12)
+                    .fontColor(this.colors.mutedForeground)
                 }
                 .width('100%')
 
@@ -201,13 +220,13 @@ struct Index {
                       Text(record.state.title)
                         .fontSize(15)
                         .fontWeight(FontWeight.Medium)
-                        .fontColor('#111827')
+                        .fontColor(this.colors.cardForeground)
                         .maxLines(1)
                         .textOverflow({ overflow: TextOverflow.Ellipsis })
 
                       Text(record.state.message)
                         .fontSize(12)
-                        .fontColor('#6B7280')
+                        .fontColor(this.colors.mutedForeground)
                         .maxLines(1)
                         .textOverflow({ overflow: TextOverflow.Ellipsis })
                     }
@@ -215,43 +234,43 @@ struct Index {
                     .alignItems(HorizontalAlign.Start)
 
                     Text(this.stageLabel(record.state.stage))
-                      .fontSize(12)
+                      .fontSize(11)
                       .fontColor(this.stageColor(record.state.stage))
-                      .padding({ left: 10, right: 10, top: 6, bottom: 6 })
-                      .backgroundColor('#F3F4F6')
+                      .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+                      .backgroundColor(this.colors.muted)
                       .borderRadius(999)
 
                     Row({ space: 8 }) {
                       Button('切换')
                         .type(ButtonType.Normal)
-                        .fontSize(13)
+                        .fontSize(12)
                         .height(32)
-                        .backgroundColor('#EBF5FF')
-                        .fontColor('#2E6BE6')
+                        .backgroundColor(this.colors.accent)
+                        .fontColor(this.colors.accentForeground)
                         .borderRadius(8)
                         .onClick(() => this.focusSession(record.sessionId))
 
                       Button('断开')
                         .type(ButtonType.Normal)
-                        .fontSize(13)
+                        .fontSize(12)
                         .height(32)
-                        .backgroundColor('#FEE2E2')
-                        .fontColor('#DC2626')
+                        .backgroundColor('rgba(185,28,28,0.08)')
+                        .fontColor(this.colors.destructive)
                         .borderRadius(8)
                         .onClick(() => this.disconnectSession(record.sessionId))
                     }
                   }
                   .width('100%')
                   .padding(16)
-                  .backgroundColor('#FFFFFF')
-                  .border({ width: 1, color: '#E5E7EB' })
-                  .borderRadius(12)
+                  .backgroundColor(this.colors.card)
+                  .border({ width: 1, color: this.colors.cardBorder })
+                  .borderRadius(14)
                 }, (record: SessionRecord) => `${record.sessionId}`)
               }
               .padding(24)
-              .backgroundColor('#FFFFFF')
+              .backgroundColor(this.colors.card)
               .borderRadius(24)
-              .shadow({ radius: 32, color: 'rgba(0,0,0,0.04)', offsetX: 0, offsetY: 8 })
+              .border({ width: 1, color: this.colors.cardBorder })
             }
 
             Column({ space: 16 }) {
@@ -259,18 +278,19 @@ struct Index {
                 Text('连接工作台')
                   .fontSize(20)
                   .fontWeight(FontWeight.Medium)
-                  .fontColor('#111827')
+                  .fontColor(this.colors.foreground)
                   .alignSelf(ItemAlign.Start)
               }
               .padding(24)
-              .backgroundColor('#FFFFFF')
+              .backgroundColor(this.colors.card)
+              .border({ width: 1, color: this.colors.cardBorder })
               .borderRadius(24)
-              .shadow({ radius: 32, color: 'rgba(0,0,0,0.04)', offsetX: 0, offsetY: 8 })
 
               Column({ space: 16 }) {
                 ConnectionForm({
                   profile: this.homeViewModel.profile,
                   rememberPassword: this.homeViewModel.profile.rememberPassword,
+                  isDark: this.isDark,
                   onNameChange: (value: string) => this.homeViewModel.updateName(value),
                   onHostChange: (value: string) => this.homeViewModel.updateHost(value),
                   onPortChange: (value: string) => this.homeViewModel.updatePort(value),
@@ -292,6 +312,7 @@ struct Index {
 
                 BookmarkList({
                   items: this.homeViewModel.bookmarks,
+                  isDark: this.isDark,
                   onSelect: (profile) => {
                     this.homeViewModel.applyBookmark(profile);
                   },
@@ -305,12 +326,13 @@ struct Index {
                 })
               }
               .padding(20)
-              .backgroundColor('#FFFFFF')
+              .backgroundColor(this.colors.card)
+              .border({ width: 1, color: this.colors.cardBorder })
               .borderRadius(24)
 
               Text(this.homeViewModel.lastMessage)
                 .fontSize(12)
-                .fontColor('#6B7280')
+                .fontColor(this.colors.mutedForeground)
                 .alignSelf(ItemAlign.Start)
             }
             .width('100%')
@@ -329,7 +351,8 @@ struct Index {
       }
       .width('100%')
       .height('100%')
-      .backgroundColor('#F9FAFB')
+      .backgroundColor(this.colors.background)
+      .animation({ duration: 300, curve: Curve.EaseIn })
       .onAreaChange((_, newValue) => {
         this.pageWidth = Number(newValue.width);
       })
@@ -337,5 +360,6 @@ struct Index {
     .hideTitleBar(true)
     .navBarWidth(this.isPhoneLayout() ? '100%' : '30%')
     .mode(NavigationMode.Stack)
+    .backgroundColor(this.colors.background)
   }
 }

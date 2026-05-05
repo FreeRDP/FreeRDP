@@ -1,4 +1,4 @@
-import { ThemeMode, LightColors, DarkColors, getStoredThemeMode } from '../utils/ThemeConstants';
+import { ThemeMode, LightColors, DarkColors, getStoredThemeMode, persistThemeMode } from '../utils/ThemeConstants';
 
 @Component
 export struct ThemeToggle {
@@ -11,18 +11,19 @@ export struct ThemeToggle {
 
   private toggleTheme(): void {
     this.isDark = !this.isDark;
+    persistThemeMode(this.isDark ? ThemeMode.Dark : ThemeMode.Light);
   }
 
   build() {
     Button() {
-      Text(this.isDark ? '☀' : '◐')
-        .fontSize(16)
-        .fontColor(this.isDark ? '#fbbf24' : '#2c5f63')
+      Text(this.isDark ? '☀' : '🌙')
+        .fontSize(18)
+        .fontColor(this.isDark ? '#fbbf24' : '#2c4f54')
     }
     .type(ButtonType.Circle)
     .width(36)
     .height(36)
-    .backgroundColor(this.isDark ? 'rgba(95,184,184,0.12)' : 'rgba(44,95,99,0.08)')
+    .backgroundColor(this.isDark ? 'rgba(109,158,166,0.12)' : 'rgba(44,79,84,0.08)')
     .onClick(() => this.toggleTheme())
   }
 }

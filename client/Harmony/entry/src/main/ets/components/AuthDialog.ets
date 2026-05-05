@@ -22,87 +22,72 @@ export struct AuthDialog {
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.colors.foreground)
-        .margin({ bottom: 4 })
+        .margin({ bottom: 6 })
 
-      Text('远程桌面服务器需要您的凭据')
+      Text('远程桌面服务器需要您的凭据。')
         .fontSize(14)
         .fontColor(this.colors.mutedForeground)
-        .margin({ bottom: 24 })
+        .margin({ bottom: 20 })
 
       TextInput({ placeholder: '用户名', text: this.username })
         .backgroundColor(this.colors.inputBackground)
         .border({ width: 1, color: this.colors.inputBorder })
-        .borderRadius(12)
-        .fontSize(14)
-        .padding({ left: 14, right: 14, top: 10, bottom: 10 })
-        .placeholderColor(this.colors.mutedForeground)
-        .fontColor(this.colors.foreground)
+        .borderRadius(10)
+        .padding({ left: 12, right: 12, top: 10, bottom: 10 })
         .onChange((value: string) => {
           this.username = value;
         })
-        .margin({ bottom: 12 })
+        .margin({ bottom: 10 })
 
       TextInput({ placeholder: '密码', text: this.password })
         .type(InputType.Password)
         .backgroundColor(this.colors.inputBackground)
         .border({ width: 1, color: this.colors.inputBorder })
-        .borderRadius(12)
-        .fontSize(14)
-        .padding({ left: 14, right: 14, top: 10, bottom: 10 })
-        .placeholderColor(this.colors.mutedForeground)
-        .fontColor(this.colors.foreground)
+        .borderRadius(10)
+        .padding({ left: 12, right: 12, top: 10, bottom: 10 })
         .onChange((value: string) => {
           this.password = value;
         })
-        .margin({ bottom: 12 })
+        .margin({ bottom: 10 })
 
-      TextInput({ placeholder: '域（可选）', text: this.domain })
+      TextInput({ placeholder: '域 (可选)', text: this.domain })
         .backgroundColor(this.colors.inputBackground)
         .border({ width: 1, color: this.colors.inputBorder })
-        .borderRadius(12)
-        .fontSize(14)
-        .padding({ left: 14, right: 14, top: 10, bottom: 10 })
-        .placeholderColor(this.colors.mutedForeground)
-        .fontColor(this.colors.foreground)
+        .borderRadius(10)
+        .padding({ left: 12, right: 12, top: 10, bottom: 10 })
         .onChange((value: string) => {
           this.domain = value;
         })
-        .margin({ bottom: 24 })
+        .margin({ bottom: 20 })
 
-      Row({ space: 12 }) {
+      Row() {
         Button('取消')
-          .layoutWeight(1)
-          .height(44)
-          .fontSize(14)
-          .fontWeight(FontWeight.Medium)
           .backgroundColor(this.colors.muted)
-          .fontColor(this.colors.foreground)
-          .borderRadius(12)
+          .fontColor(this.colors.mutedForeground)
+          .borderRadius(10)
           .onClick(() => {
             this.onConfirm('', '', '');
             this.controller.close();
           })
+          .margin({ right: 10 })
+          .layoutWeight(1)
 
         Button('确定')
-          .layoutWeight(1)
-          .height(44)
-          .fontSize(14)
-          .fontWeight(FontWeight.Medium)
           .backgroundColor(this.colors.primary)
           .fontColor(this.colors.primaryForeground)
-          .borderRadius(12)
+          .borderRadius(10)
           .onClick(() => {
             this.onConfirm(this.username, this.password, this.domain);
             this.controller.close();
           })
+          .layoutWeight(1)
       }
       .width('100%')
     }
-    .padding(24)
+    .padding(20)
     .width('90%')
     .backgroundColor(this.colors.card)
     .border({ width: 1, color: this.colors.cardBorder })
-    .borderRadius(20)
-    .shadow({ radius: 24, color: this.colors.shadowLg, offsetX: 0, offsetY: 8 })
+    .borderRadius(18)
   }
 }

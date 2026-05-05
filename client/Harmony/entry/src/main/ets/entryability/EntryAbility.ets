@@ -1,10 +1,13 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { sessionWindowManager } from '../service/SessionWindowManager';
+import { ThemeMode, getStoredThemeMode } from '../utils/ThemeConstants';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-    AppStorage.setOrCreate('appName', 'FreeRDP Harmony');
+    const storedTheme: ThemeMode = getStoredThemeMode();
+    AppStorage.setOrCreate('__app_is_dark_mode__', storedTheme === ThemeMode.Dark);
+    AppStorage.setOrCreate('appName', '碧虎远程桌面');
     AppStorage.setOrCreate('preferredInputMode', 'touchpad');
     AppStorage.setOrCreate('showBookmarksFirst', true);
     AppStorage.setOrCreate('bookmarkPayload', '');
