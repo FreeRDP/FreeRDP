@@ -19,6 +19,10 @@
     {
       "name": "session_ability_label",
       "value": "远程桌面"
+    },
+    {
+      "name": "read_pasteboard_reason",
+      "value": "用于将本地剪贴板内容同步到远程桌面"
     }
   ]
 }
