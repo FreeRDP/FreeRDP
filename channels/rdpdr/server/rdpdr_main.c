@@ -904,6 +904,24 @@ out:
 	return error;
 }
 
+static UINT16 rdpdr_cap_type_to_dtyp(UINT16 capabilityType)
+{
+	switch (capabilityType)
+	{
+		case CAP_PRINTER_TYPE:
+			return RDPDR_DTYP_PRINT;
+		case CAP_PORT_TYPE:
+			return RDPDR_DTYP_SERIAL | RDPDR_DTYP_PARALLEL;
+		case CAP_DRIVE_TYPE:
+			return RDPDR_DTYP_FILESYSTEM;
+		case CAP_SMARTCARD_TYPE:
+			return RDPDR_DTYP_SMARTCARD;
+		case CAP_GENERAL_TYPE:
+		default:
+			return 0;
+	}
+}
+
 /**
  * Function description
  *
@@ -943,7 +961,6 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 		if (status != CHANNEL_RC_OK)
 			return status;
 
-		caps |= capabilityHeader.CapabilityType;
 		switch (capabilityHeader.CapabilityType)
 		{
 			case CAP_GENERAL_TYPE:
@@ -1007,21 +1024,14 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				return ERROR_INVALID_DATA;
 		}
 
-		for (UINT16 x = 0; x < 16; x++)
+		const UINT16 client_dtyp = rdpdr_cap_type_to_dtyp(capabilityHeader.CapabilityType);
+		if ((client_dtyp != 0) && ((client_dtyp & context->supported) == 0))
 		{
-			const UINT16 mask = (UINT16)(1u << x);
-			if (((caps & mask) != 0) && ((context->supported & mask) == 0))
-			{
-				WLog_Print(context->priv->log, WLOG_WARN,
-				           "client sent capability %s we did not announce!",
-				           freerdp_rdpdr_dtyp_string(mask));
-			}
-
-			/* we assume the server supports the capability. so only deactivate what the client did
-			 * not respond with */
-			if ((caps & mask) == 0)
-				context->supported &= ~mask;
+			WLog_Print(context->priv->log, WLOG_WARN,
+			           "client sent capability %s we did not announce!",
+			           rdpdr_cap_type_string(capabilityHeader.CapabilityType));
 		}
+		caps |= client_dtyp;
 
 		const size_t end = Stream_GetPosition(s);
 		const size_t diff = end - start;
@@ -1034,6 +1044,9 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 			           capabilityHeader.CapabilityType, diff, capabilityHeader.CapabilityLength);
 		}
 	}
+
+	/* Only deactivate what the client did not respond with */
+	context->supported &= caps;
 
 	return CHANNEL_RC_OK;
 }
