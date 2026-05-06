@@ -27,7 +27,30 @@ function customBuildInfoPlugin(): HvigorPlugin {
   }
 }
 
+function syncAgreementDocsPlugin(): HvigorPlugin {
+  return {
+    pluginId: 'syncAgreementDocsPlugin',
+    apply(node: HvigorNode) {
+      node.registerTask({
+        name: 'syncAgreementDocs',
+        run: () => {
+          try {
+            const syncScriptPath = path.resolve(__dirname, '../scripts/sync_agreements.py');
+            const targetDir = path.join(__dirname, 'src/main/resources/rawfile');
+            childProcess.execFileSync('python3', [syncScriptPath, targetDir], { stdio: 'inherit' });
+          } catch (e) {
+            console.warn('[syncAgreementDocsPlugin] Failed to sync agreement docs:', e);
+            throw e;
+          }
+        },
+        dependencies: [],
+        postDependencies: ['default@PreBuild']
+      });
+    }
+  }
+}
+
 export default {
   system: hapTasks,
-  plugins: [customBuildInfoPlugin()]
+  plugins: [customBuildInfoPlugin(), syncAgreementDocsPlugin()]
 };
