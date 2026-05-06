@@ -27,15 +27,12 @@ read_local_property() {
 }
 
 resolve_sdk_dir() {
-  local sdk_dir="${DEVECO_SDK_HOME:-}"
+  local properties_file="${PROJECT_DIR}/local.properties"
+  local sdk_dir=""
 
+  sdk_dir="$(read_local_property "${properties_file}" "hwsdk.dir")"
   if [[ -z "${sdk_dir}" ]]; then
-    local properties_file="${PROJECT_DIR}/local.properties"
-
-    sdk_dir="$(read_local_property "${properties_file}" "hwsdk.dir")"
-    if [[ -z "${sdk_dir}" ]]; then
-      sdk_dir="$(read_local_property "${properties_file}" "sdk.dir")"
-    fi
+    sdk_dir="$(read_local_property "${properties_file}" "sdk.dir")"
   fi
   if [[ -z "${sdk_dir}" ]]; then
     sdk_dir="/Applications/DevEco-Studio.app/Contents/sdk"
@@ -76,7 +73,7 @@ detect_native_changes() {
   fi
 
   local repo_root
-  repo_root="$(cd "${PROJECT_DIR}/../.." && pwd)"
+  repo_root="$(cd "${PROJECT_DIR}/../../.." && pwd)"
 
   if ! git -C "${repo_root}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     return 0
@@ -86,11 +83,9 @@ detect_native_changes() {
   changes="$(
     {
       git -C "${repo_root}" diff --name-only HEAD -- \
-        client/Harmony/cmake \
         client/Harmony/native \
         client/Harmony/entry/src/main/cpp 2>/dev/null || true
       git -C "${repo_root}" ls-files --others --exclude-standard -- \
-        client/Harmony/cmake \
         client/Harmony/native \
         client/Harmony/entry/src/main/cpp 2>/dev/null || true
     } | awk 'NF && !seen[$0]++'
@@ -153,11 +148,11 @@ build() {
   fi
 
   local app_build_dir="${PROJECT_DIR}/build/outputs/default"
-  if compgen -G "${app_build_dir}/*-default-signed.app" >/dev/null 2>&1; then
-    cp "${app_build_dir}/"*-default-signed.app "${out_dir}/"
+  if [[ -f "${app_build_dir}/ohos_app-default-signed.app" ]]; then
+    cp "${app_build_dir}/ohos_app-default-signed.app" "${out_dir}/"
   fi
-  if compgen -G "${app_build_dir}/*-default-unsigned.app" >/dev/null 2>&1; then
-    cp "${app_build_dir}/"*-default-unsigned.app "${out_dir}/"
+  if [[ -f "${app_build_dir}/ohos_app-default-unsigned.app" ]]; then
+    cp "${app_build_dir}/ohos_app-default-unsigned.app" "${out_dir}/"
   fi
 
   log "Artifacts saved to: ${out_dir}"
