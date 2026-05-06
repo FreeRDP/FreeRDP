@@ -3,7 +3,7 @@ import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
 
 @Component
 export struct BookmarkList {
-  @Prop items: ConnectionProfile[];
+  @Prop items: ConnectionProfile[] = [];
   @Prop @Watch('onThemeChanged') isDark: boolean = false;
   @State colors: ThemeColors = LightColors;
   onSelect: (profile: ConnectionProfile) => void = (_profile: ConnectionProfile): void => {};
@@ -16,71 +16,101 @@ export struct BookmarkList {
 
   build() {
     Column({ space: 12 }) {
-      Text('已保存的连接')
-        .fontSize(16)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(this.colors.foreground)
-        .alignSelf(ItemAlign.Start)
-        .padding({ bottom: 4 })
-
       if (this.items.length === 0) {
-        Text('暂无保存的连接，请在上方填写信息并保存。')
-          .fontSize(13)
-          .fontColor(this.colors.mutedForeground)
-          .padding({ top: 20, bottom: 20 })
+        Column({ space: 12 }) {
+          Text('—')
+            .fontSize(32)
+            .fontColor(this.colors.mutedForeground)
+          Text('暂无保存的连接')
+            .fontSize(16)
+            .fontColor(this.colors.mutedForeground)
+          Text('在「新建」标签页填写配置并保存')
+            .fontSize(14)
+            .fontColor(this.colors.muted)
+        }
+        .width('100%')
+        .padding(48)
       } else {
         ForEach(this.items, (item: ConnectionProfile) => {
-          Row() {
-            Column({ space: 4 }) {
-              Text(item.name || item.host)
-                .fontSize(15)
-                .fontWeight(FontWeight.Medium)
-                .fontColor(this.colors.foreground)
-                .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
-              Text(`${item.username ? item.username + '@' : ''}${item.host}:${item.port}`)
-                .fontSize(12)
-                .fontColor(this.colors.mutedForeground)
-                .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Column({ space: 0 }) {
+            Row() {
+              Column({ space: 8 }) {
+                Row({ space: 10 }) {
+                  Column({ space: 3 }) {
+                    Text(item.name || item.host)
+                      .fontSize(17)
+                      .fontWeight(FontWeight.Medium)
+                      .fontColor(this.colors.foreground)
+                      .maxLines(1)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  }
+
+                  if (item.securityMode && item.securityMode !== 'auto') {
+                    Text(item.securityMode.toUpperCase())
+                      .fontSize(12)
+                      .fontWeight(FontWeight.Medium)
+                      .fontColor(this.colors.tagText)
+                      .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+                      .backgroundColor(this.colors.tagBackground)
+                      .borderRadius(4)
+                  }
+                }
+                .alignItems(VerticalAlign.Center)
+
+                Text(`${item.username ? item.username + '@' : ''}${item.host}:${item.port}`)
+                  .fontSize(14)
+                  .fontColor(this.colors.mutedForeground)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+              }
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Start)
+
+              Button() {
+                Text('→')
+                  .fontSize(18)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(this.colors.primaryForeground)
+              }
+              .type(ButtonType.Circle)
+              .width(44)
+              .height(44)
+              .backgroundColor(this.colors.primary)
+              .onClick(() => this.onQuickConnect(item))
             }
-            .layoutWeight(1)
-            .alignItems(HorizontalAlign.Start)
+            .width('100%')
+            .padding({ left: 20, right: 16, top: 18, bottom: 18 })
+            .alignItems(VerticalAlign.Center)
 
-            Row({ space: 8 }) {
-              Button('连接')
+            Row({ space: 0 }) {
+              Button('载入配置')
                 .type(ButtonType.Normal)
-                .fontSize(12)
-                .height(32)
-                .backgroundColor(this.colors.primary)
-                .fontColor(this.colors.primaryForeground)
-                .borderRadius(8)
-                .onClick(() => this.onQuickConnect(item))
-
-              Button('载入')
-                .type(ButtonType.Normal)
-                .fontSize(12)
-                .height(32)
-                .backgroundColor(this.colors.accent)
+                .flexGrow(1)
+                .height(44)
+                .fontSize(15)
+                .backgroundColor(Color.Transparent)
                 .fontColor(this.colors.accentForeground)
-                .borderRadius(8)
+                .borderRadius(0)
+                .border({ width: { right: 1 }, color: this.colors.surfaceElevatedBorder })
                 .onClick(() => this.onSelect(item))
 
               Button('删除')
                 .type(ButtonType.Normal)
-                .fontSize(12)
-                .height(32)
-                .backgroundColor('rgba(185,28,28,0.08)')
+                .flexGrow(1)
+                .height(44)
+                .fontSize(15)
+                .backgroundColor(Color.Transparent)
                 .fontColor(this.colors.destructive)
-                .borderRadius(8)
+                .borderRadius(0)
                 .onClick(() => this.onDelete(item.id))
             }
+            .width('100%')
           }
           .width('100%')
-          .padding(16)
-          .backgroundColor(this.colors.muted)
-          .border({ width: 1, color: this.colors.border })
-          .borderRadius(14)
+          .backgroundColor(this.colors.surfaceElevated)
+          .border({ width: 1, color: this.colors.surfaceElevatedBorder })
+          .borderRadius(16)
+          .clip(true)
         }, (item: ConnectionProfile) => item.id)
       }
     }

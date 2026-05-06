@@ -236,7 +236,10 @@ struct Session {
   }
 
   aboutToDisappear(): void {
-    this.systemPasteboard.off('update', this.pasteboardUpdateCallback);
+    try {
+      this.systemPasteboard.off('update', this.pasteboardUpdateCallback);
+    } catch (_e) {
+    }
     if (this.unsubSessionChanged !== null) {
       this.unsubSessionChanged();
       this.unsubSessionChanged = null;
