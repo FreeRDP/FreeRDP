@@ -169,6 +169,39 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 	return 1;
 }
 
+INT32 avc420_decompress_to_vaapi(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
+                                 UINT32 nDstWidth, UINT32 nDstHeight,
+                                 const RECTANGLE_16* regionRects, UINT32 numRegionRects)
+{
+	int status = 0;
+	H264_VAAPI_SURFACE surface = WINPR_C_ARRAY_INIT;
+
+	if (!h264 || h264->Compressor)
+		return -1001;
+
+	if (!areRectsValid(nDstWidth, nDstHeight, regionRects, numRegionRects))
+		return -1013;
+
+	if (!h264->hwOutputAvailable || !h264->subsystem || !h264->subsystem->Decompress ||
+	    !h264->subsystem->GetVaapiSurface)
+		return -1003;
+
+	h264->skipHwDownload = TRUE;
+	status = h264->subsystem->Decompress(h264, pSrcData, SrcSize);
+	h264->skipHwDownload = FALSE;
+
+	if (status == 0)
+		return 1;
+
+	if (status < 0)
+		return status;
+
+	if (!h264->subsystem->GetVaapiSurface(h264, &surface))
+		return -1003;
+
+	return 1;
+}
+
 static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
                                     RDPGFX_H264_METABLOCK* meta, size_t count)
 {
@@ -879,6 +912,23 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 	}
 }
 
+BOOL h264_context_set_vaapi_display(H264_CONTEXT* h264, void* display)
+{
+	if (!h264 || h264->Compressor)
+		return FALSE;
+
+	h264->vaapiDisplay = display;
+	return TRUE;
+}
+
+BOOL h264_context_get_vaapi_surface(H264_CONTEXT* h264, H264_VAAPI_SURFACE* surface)
+{
+	if (!h264 || !surface || !h264->subsystem || !h264->subsystem->GetVaapiSurface)
+		return FALSE;
+
+	return h264->subsystem->GetVaapiSurface(h264, surface);
+}
+
 UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
 {
 	WINPR_ASSERT(h264);
@@ -895,7 +945,7 @@ UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
 		case H264_CONTEXT_OPTION_USAGETYPE:
 			return h264->UsageType;
 		case H264_CONTEXT_OPTION_HW_ACCEL:
-			return h264->hwAccel;
+			return h264->hwAccel || h264->hwOutputAvailable;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);

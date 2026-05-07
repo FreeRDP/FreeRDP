@@ -684,4 +684,5 @@ EXCEPTION:
 }
 
 const H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264 = { "OpenH264", openh264_init, openh264_uninit,
-	                                                  openh264_decompress, openh264_compress };
+	                                                  openh264_decompress, openh264_compress,
+	                                                  nullptr };

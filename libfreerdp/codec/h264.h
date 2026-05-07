@@ -40,6 +40,8 @@ extern "C"
 	                                        const UINT32* WINPR_RESTRICT pStride,
 	                                        BYTE** WINPR_RESTRICT ppDstData,
 	                                        UINT32* WINPR_RESTRICT pDstSize);
+	typedef BOOL (*pfnH264SubsystemGetVaapiSurface)(H264_CONTEXT* WINPR_RESTRICT h264,
+	                                                H264_VAAPI_SURFACE* surface);
 
 	struct S_H264_CONTEXT_SUBSYSTEM
 	{
@@ -48,6 +50,7 @@ extern "C"
 		pfnH264SubsystemUninit Uninit;
 		WINPR_ATTR_NODISCARD pfnH264SubsystemDecompress Decompress;
 		WINPR_ATTR_NODISCARD pfnH264SubsystemCompress Compress;
+		WINPR_ATTR_NODISCARD pfnH264SubsystemGetVaapiSurface GetVaapiSurface;
 	};
 
 	struct S_H264_CONTEXT
@@ -63,6 +66,8 @@ extern "C"
 		UINT32 QP;
 		UINT32 UsageType;
 		UINT32 hwAccel;
+		BOOL hwOutputAvailable;
+		BOOL skipHwDownload;
 		UINT32 NumberOfThreads;
 
 		UINT32 iStride[3];
@@ -84,6 +89,7 @@ extern "C"
 		BOOL firstChromaFrameDone;
 
 		void* lumaData;
+		void* vaapiDisplay;
 		wLog* log;
 	};
 

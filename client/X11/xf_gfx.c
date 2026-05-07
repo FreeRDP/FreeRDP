@@ -22,6 +22,7 @@
 #include <freerdp/config.h>
 
 #include <math.h>
+#include <string.h>
 
 #include <winpr/assert.h>
 #include <winpr/cast.h>
@@ -34,7 +35,576 @@
 
 #include <X11/Xutil.h>
 
+#if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
+#include <va/va.h>
+#include <va/va_x11.h>
+#endif
+
 #define TAG CLIENT_TAG("x11")
+
+#if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
+#define XF_VAAPI_FALLBACK UINT32_MAX
+
+
+#define XF_VA_FOURCC(a, b, c, d) \
+	((UINT32)(a) | ((UINT32)(b) << 8) | ((UINT32)(c) << 16) | ((UINT32)(d) << 24))
+
+static BOOL xf_vaapi_find_image_format(VADisplay dpy, UINT32 fourcc, VAImageFormat* out)
+{
+	WINPR_ASSERT(out);
+
+	const int maxFormats = vaMaxNumImageFormats(dpy);
+	if (maxFormats <= 0)
+		return FALSE;
+
+	VAImageFormat* formats = calloc((size_t)maxFormats, sizeof(VAImageFormat));
+	if (!formats)
+		return FALSE;
+
+	int numFormats = 0;
+	const VAStatus status = vaQueryImageFormats(dpy, formats, &numFormats);
+	if (status != VA_STATUS_SUCCESS)
+	{
+		WLog_WARN(TAG, "VAAPI direct: vaQueryImageFormats failed status=%d (%s)", status,
+		          vaErrorStr(status));
+		free(formats);
+		return FALSE;
+	}
+
+	for (int i = 0; i < numFormats; i++)
+	{
+		if (formats[i].fourcc == fourcc)
+		{
+			*out = formats[i];
+			free(formats);
+			return TRUE;
+		}
+	}
+
+	free(formats);
+	return FALSE;
+}
+
+
+
+static BOOL xf_vaapi_getimage_bgrx_to_gdi(xfGfxSurface* surface,
+                                          const H264_VAAPI_SURFACE* vaSurface)
+{
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(vaSurface);
+
+	VADisplay dpy = (VADisplay)vaSurface->display;
+	VASurfaceID vaId = (VASurfaceID)vaSurface->surface;
+	if (!dpy || !surface->gdi.data || (vaSurface->width == 0) || (vaSurface->height == 0))
+		return FALSE;
+
+	static VADisplay cachedFmtDpy = NULL;
+	static BOOL cachedFmtValid = FALSE;
+	static VAImageFormat cachedFmt = WINPR_C_ARRAY_INIT;
+
+	static VADisplay cachedImageDpy = NULL;
+	static BOOL cachedImageValid = FALSE;
+	static VAImage cachedImage = WINPR_C_ARRAY_INIT;
+	static UINT32 cachedImageWidth = 0;
+	static UINT32 cachedImageHeight = 0;
+
+	const UINT32 selectedFourcc = XF_VA_FOURCC('B', 'G', 'R', 'X');
+	if (!cachedFmtValid || (cachedFmtDpy != dpy))
+	{
+		if (!xf_vaapi_find_image_format(dpy, selectedFourcc, &cachedFmt))
+		{
+			WLog_WARN(TAG, "VAAPI getimage: BGRX VAImage format unavailable");
+			return FALSE;
+		}
+
+		cachedFmtDpy = dpy;
+		cachedFmtValid = TRUE;
+	}
+
+	const UINT32 width = MIN(vaSurface->width, surface->gdi.mappedWidth);
+	const UINT32 height = MIN(vaSurface->height, surface->gdi.mappedHeight);
+	if ((width == 0) || (height == 0))
+		return FALSE;
+
+	if (cachedImageValid && ((cachedImageDpy != dpy) || (cachedImageWidth != width) ||
+	                       (cachedImageHeight != height)))
+	{
+		vaDestroyImage(cachedImageDpy, cachedImage.image_id);
+		cachedImage = (VAImage)WINPR_C_ARRAY_INIT;
+		cachedImageValid = FALSE;
+		cachedImageDpy = NULL;
+		cachedImageWidth = 0;
+		cachedImageHeight = 0;
+	}
+
+	if (!cachedImageValid)
+	{
+		VAStatus status = vaCreateImage(dpy, &cachedFmt, width, height, &cachedImage);
+		if (status != VA_STATUS_SUCCESS)
+		{
+			WLog_WARN(TAG, "VAAPI getimage: vaCreateImage(BGRX) failed status=%d (%s)", status,
+			          vaErrorStr(status));
+			return FALSE;
+		}
+
+		cachedImageDpy = dpy;
+		cachedImageWidth = width;
+		cachedImageHeight = height;
+		cachedImageValid = TRUE;
+	}
+
+	VAStatus status = vaSyncSurface(dpy, vaId);
+	if (status != VA_STATUS_SUCCESS)
+	{
+		WLog_WARN(TAG, "VAAPI getimage: vaSyncSurface failed status=%d (%s)", status,
+		          vaErrorStr(status));
+		return FALSE;
+	}
+
+	status = vaGetImage(dpy, vaId, 0, 0, width, height, cachedImage.image_id);
+	if (status != VA_STATUS_SUCCESS)
+	{
+		WLog_WARN(TAG, "VAAPI getimage: vaGetImage(BGRX) failed status=%d (%s)", status,
+		          vaErrorStr(status));
+		return FALSE;
+	}
+
+	void* mapped = NULL;
+	status = vaMapBuffer(dpy, cachedImage.buf, &mapped);
+	if (status != VA_STATUS_SUCCESS || !mapped)
+	{
+		WLog_WARN(TAG, "VAAPI getimage: vaMapBuffer failed status=%d (%s) mapped=%p", status,
+		          vaErrorStr(status), mapped);
+		return FALSE;
+	}
+
+	const UINT32 bytesPerPixel = 4;
+	const UINT32 copyBytes = width * bytesPerPixel;
+	if ((cachedImage.pitches[0] < copyBytes) || (surface->gdi.scanline < copyBytes))
+	{
+		WLog_WARN(TAG, "VAAPI getimage: invalid pitch imagePitch=%u dstScanline=%u copyBytes=%u",
+		          cachedImage.pitches[0], surface->gdi.scanline, copyBytes);
+		vaUnmapBuffer(dpy, cachedImage.buf);
+		return FALSE;
+	}
+
+	const BYTE* src = (const BYTE*)mapped + cachedImage.offsets[0];
+	BYTE* dst = surface->gdi.data;
+
+	for (UINT32 y = 0; y < height; y++)
+	{
+		const BYTE* srcRow = src + y * cachedImage.pitches[0];
+		BYTE* dstRow = dst + y * surface->gdi.scanline;
+		memcpy(dstRow, srcRow, copyBytes);
+	}
+
+	vaUnmapBuffer(dpy, cachedImage.buf);
+	return TRUE;
+}
+
+static BOOL xf_vaapi_avc420_full_surface(const xfGfxSurface* surface,
+                                         const RDPGFX_H264_METABLOCK* meta)
+{
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(meta);
+
+	if (meta->numRegionRects != 1)
+		return FALSE;
+
+	const RECTANGLE_16* rect = &meta->regionRects[0];
+	return (rect->left == 0) && (rect->top == 0) &&
+	       (rect->right >= surface->gdi.mappedWidth) &&
+	       (rect->bottom >= surface->gdi.mappedHeight);
+}
+
+
+static BOOL xf_vaapi_render_allowed(const xfContext* xfc, const xfGfxSurface* surface)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(surface);
+
+	if (xfc->remote_app || !xfc->drawable)
+		return FALSE;
+
+	if (!surface->gdi.outputMapped || surface->gdi.windowMapped)
+		return FALSE;
+
+	if (surface->vaapiDirectDisabled)
+		return FALSE;
+
+	const rdpSettings* settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
+	    freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
+		return FALSE;
+
+	return TRUE;
+}
+
+static void xf_vaapi_disable_direct(xfGfxSurface* surface)
+{
+	WINPR_ASSERT(surface);
+
+	surface->vaapiDirectDisabled = TRUE;
+	surface->vaapiDirectReady = FALSE;
+}
+
+static BOOL xf_vaapi_bgrx_output_available(xfGfxSurface* surface)
+{
+	WINPR_ASSERT(surface);
+
+	const UINT32 width = surface->gdi.mappedWidth;
+	const UINT32 height = surface->gdi.mappedHeight;
+	if (!surface->vaDisplay || (width == 0) || (height == 0))
+		return FALSE;
+
+	VAImageFormat format = WINPR_C_ARRAY_INIT;
+	if (!xf_vaapi_find_image_format((VADisplay)surface->vaDisplay, XF_VA_FOURCC('B', 'G', 'R', 'X'),
+	                                &format))
+	{
+		WLog_WARN(TAG, "VAAPI direct: BGRX VAImage format unavailable, disabling direct path");
+		return FALSE;
+	}
+
+	VAImage image = WINPR_C_ARRAY_INIT;
+	const VAStatus status = vaCreateImage((VADisplay)surface->vaDisplay, &format, width, height,
+	                                      &image);
+	if (status != VA_STATUS_SUCCESS)
+	{
+		WLog_WARN(TAG,
+		          "VAAPI direct: BGRX VAImage preflight failed status=%d (%s), disabling direct path",
+		          status, vaErrorStr(status));
+		return FALSE;
+	}
+
+	vaDestroyImage((VADisplay)surface->vaDisplay, image.image_id);
+	return TRUE;
+}
+
+static BOOL xf_vaapi_ensure_h264(xfContext* xfc, xfGfxSurface* surface)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(surface);
+
+	if (surface->vaapiDirectDisabled)
+		return FALSE;
+
+	if (surface->vaapiH264)
+		return surface->vaapiDirectReady;
+
+	if (!surface->vaDisplay)
+		surface->vaDisplay = vaGetDisplay(xfc->display);
+
+	if (!surface->vaDisplay)
+	{
+		WLog_WARN(TAG, "VAAPI direct: ensure_h264 failed, vaGetDisplay returned NULL");
+		xf_vaapi_disable_direct(surface);
+		return FALSE;
+	}
+
+	int major = 0;
+	int minor = 0;
+	const VAStatus vaStatus = vaInitialize((VADisplay)surface->vaDisplay, &major, &minor);
+	if (vaStatus != VA_STATUS_SUCCESS)
+	{
+		WLog_WARN(TAG, "VAAPI direct: vaInitialize failed status=%d", vaStatus);
+		xf_vaapi_disable_direct(surface);
+		return FALSE;
+	}
+
+	if (!xf_vaapi_bgrx_output_available(surface))
+	{
+		xf_vaapi_disable_direct(surface);
+		return FALSE;
+	}
+
+	surface->vaapiH264 = h264_context_new(FALSE);
+	if (!surface->vaapiH264)
+	{
+		WLog_WARN(TAG, "VAAPI direct: ensure_h264 failed at h264_context_new");
+		xf_vaapi_disable_direct(surface);
+		return FALSE;
+	}
+
+	if (!h264_context_set_vaapi_display(surface->vaapiH264, surface->vaDisplay))
+	{
+		WLog_WARN(TAG, "VAAPI direct: ensure_h264 failed at set_vaapi_display");
+		goto fail;
+	}
+
+	if (!h264_context_reset(surface->vaapiH264, surface->gdi.width, surface->gdi.height))
+	{
+		WLog_WARN(TAG, "VAAPI direct: ensure_h264 failed at h264_context_reset size=%ux%u",
+		          surface->gdi.width, surface->gdi.height);
+		goto fail;
+	}
+
+	if (!h264_context_get_option(surface->vaapiH264, H264_CONTEXT_OPTION_HW_ACCEL))
+	{
+		WLog_WARN(TAG, "VAAPI direct: ensure_h264 failed at HW_ACCEL option");
+		goto fail;
+	}
+
+	surface->vaapiDirectReady = TRUE;
+	return TRUE;
+
+fail:
+	h264_context_free(surface->vaapiH264);
+	surface->vaapiH264 = NULL;
+	xf_vaapi_disable_direct(surface);
+	WLog_WARN(TAG, "VAAPI direct: ensure_h264 failed, disabling direct path");
+	return FALSE;
+}
+
+static UINT xf_OutputUpdateVAAPI(xfContext* xfc, xfGfxSurface* surface, BOOL* handled)
+{
+	UINT rc = CHANNEL_RC_OK;
+	UINT32 nbRects = 0;
+	const RECTANGLE_16* rects = nullptr;
+	RECTANGLE_16 surfaceRect = WINPR_C_ARRAY_INIT;
+	H264_VAAPI_SURFACE vaSurface = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(handled);
+
+	*handled = FALSE;
+
+	if (!surface->vaapiFramePending)
+		return CHANNEL_RC_OK;
+
+	/* Consume the pending VAAPI frame marker. This function does not present with
+	 * vaPutSurface anymore. It converts the VAAPI surface to BGRX/BGRA with
+	 * vaGetImage(), copies it into the normal GDI buffer, marks the GDI region
+	 * dirty and then lets the existing XPutImage path draw it. */
+	surface->vaapiFramePending = FALSE;
+
+	if (!xf_vaapi_render_allowed(xfc, surface))
+		goto clear;
+
+	if (!h264_context_get_vaapi_surface(surface->vaapiH264, &vaSurface))
+	{
+		WLog_WARN(TAG, "VAAPI direct: no VAAPI surface available for vaGetImage output");
+		goto clear;
+	}
+
+	surfaceRect.left = 0;
+	surfaceRect.top = 0;
+	surfaceRect.right = WINPR_ASSERTING_INT_CAST(UINT16, surface->gdi.mappedWidth);
+	surfaceRect.bottom = WINPR_ASSERTING_INT_CAST(UINT16, surface->gdi.mappedHeight);
+
+	if (!region16_intersect_rect(&surface->vaapiInvalidRegion, &surface->vaapiInvalidRegion,
+	                             &surfaceRect))
+	{
+		WLog_WARN(TAG, "VAAPI direct: invalid region intersect failed");
+		goto clear;
+	}
+
+	rects = region16_rects(&surface->vaapiInvalidRegion, &nbRects);
+	if (!rects || (nbRects == 0))
+	{
+		goto clear;
+	}
+
+	if (!xf_vaapi_getimage_bgrx_to_gdi(surface, &vaSurface))
+	{
+		WLog_WARN(TAG, "VAAPI direct: vaGetImage BGRX/BGRA copy failed, leaving normal path unhandled");
+		goto clear;
+	}
+
+	/* The normal xf_OutputUpdate() path consumes surface->gdi.invalidRegion.
+	 * We copied the full current decoded VAAPI frame into surface->gdi.data, so
+	 * transfer the pending VAAPI invalid rects to the GDI invalid region. */
+	region16_clear(&surface->gdi.invalidRegion);
+	for (UINT32 x = 0; x < nbRects; x++)
+	{
+		if (!region16_union_rect(&surface->gdi.invalidRegion, &surface->gdi.invalidRegion,
+		                         &rects[x]))
+		{
+			WLog_WARN(TAG, "VAAPI direct: failed to mark GDI invalid rect after vaGetImage");
+			rc = ERROR_INTERNAL_ERROR;
+			goto clear;
+		}
+	}
+
+
+	/* Do not set *handled=TRUE here. The existing X11/GDI output path must still
+	 * run so that XPutImage draws the GDI buffer we just filled. */
+	*handled = FALSE;
+
+clear:
+	region16_clear(&surface->vaapiInvalidRegion);
+	return rc;
+}
+
+
+static UINT xf_SurfaceCommand_AVC420_VAAPI(RdpgfxClientContext* context,
+                                           const RDPGFX_SURFACE_COMMAND* cmd)
+{
+	UINT status = CHANNEL_RC_OK;
+	rdpGdi* gdi = nullptr;
+	xfContext* xfc = nullptr;
+	xfGfxSurface* surface = nullptr;
+	RDPGFX_AVC420_BITMAP_STREAM* bs = nullptr;
+	RDPGFX_H264_METABLOCK* meta = nullptr;
+	RECTANGLE_16 invalidRect = WINPR_C_ARRAY_INIT;
+	BOOL updateNow = FALSE;
+
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(cmd);
+
+	gdi = (rdpGdi*)context->custom;
+	WINPR_ASSERT(gdi);
+	xfc = (xfContext*)gdi->context;
+	WINPR_ASSERT(xfc);
+
+	EnterCriticalSection(&context->mux);
+
+	surface =
+	    (xfGfxSurface*)context->GetSurfaceData(context, (UINT16)MIN(UINT16_MAX, cmd->surfaceId));
+	if (!surface)
+	{
+		status = ERROR_NOT_FOUND;
+		goto fail;
+	}
+
+	bs = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
+	if (!bs)
+	{
+		status = ERROR_INTERNAL_ERROR;
+		goto fail;
+	}
+
+	meta = &bs->meta;
+
+
+	const BOOL allowed = xf_vaapi_render_allowed(xfc, surface);
+	if (!allowed)
+	{
+		status = XF_VAAPI_FALLBACK;
+		goto fail;
+	}
+
+	if (!surface->vaapiDirectReady)
+	{
+		if (!xf_vaapi_avc420_full_surface(surface, meta))
+		{
+			status = XF_VAAPI_FALLBACK;
+			goto fail;
+		}
+
+		if (!xf_vaapi_ensure_h264(xfc, surface))
+		{
+			status = XF_VAAPI_FALLBACK;
+			goto fail;
+		}
+	}
+/* #DATISCUM
+	if (!xf_vaapi_render_allowed(xfc, surface) || !xf_vaapi_avc420_full_surface(surface, meta) ||
+	    !xf_vaapi_ensure_h264(xfc, surface))
+	{
+		status = XF_VAAPI_FALLBACK;
+		goto fail;
+	}
+*/
+	const INT32 rc = avc420_decompress_to_vaapi(
+//            surface->gdi.h264, bs->data, bs->length, surface->gdi.width, surface->gdi.height,
+	    surface->vaapiH264, bs->data, bs->length, surface->gdi.width, surface->gdi.height,
+	    meta->regionRects, meta->numRegionRects);
+	if (rc < 0)
+	{
+		/*
+		 * The normal FreeRDP AVC420 path also sees transient decode failures
+		 * during stream start/resync. Do not fall back to the CPU GDI path here,
+		 * otherwise one bad initial update permanently ruins the direct-output
+		 * performance test.
+		 */
+		WLog_WARN(TAG,
+		          "VAAPI direct: AVC420 decode failed rc=%" PRId32
+		          ", dropping update without fallback",
+		          rc);
+		status = CHANNEL_RC_OK;
+		goto fail;
+	}
+
+	if (rc == 0)
+	{
+		status = CHANNEL_RC_OK;
+		goto fail;
+	}
+
+	invalidRect.left = 0;
+	invalidRect.top = 0;
+	invalidRect.right = WINPR_ASSERTING_INT_CAST(UINT16, surface->gdi.mappedWidth);
+	invalidRect.bottom = WINPR_ASSERTING_INT_CAST(UINT16, surface->gdi.mappedHeight);
+
+	region16_clear(&surface->gdi.invalidRegion);
+	region16_clear(&surface->vaapiInvalidRegion);
+	if (!region16_union_rect(&surface->vaapiInvalidRegion, &surface->vaapiInvalidRegion,
+	                         &invalidRect))
+	{
+		status = ERROR_INTERNAL_ERROR;
+		goto fail;
+	}
+
+	surface->vaapiFramePending = TRUE;
+	updateNow = !gdi->inGfxFrame;
+
+fail:
+	LeaveCriticalSection(&context->mux);
+
+	if ((status == CHANNEL_RC_OK) && updateNow)
+		status = IFCALLRESULT(CHANNEL_RC_OK, context->UpdateSurfaces, context);
+
+	return status;
+}
+
+static UINT xf_SurfaceCommand(RdpgfxClientContext* context, const RDPGFX_SURFACE_COMMAND* cmd)
+{
+	UINT status = XF_VAAPI_FALLBACK;
+	rdpGdi* gdi = nullptr;
+	xfContext* xfc = nullptr;
+
+	if (!context || !cmd)
+		return ERROR_INVALID_PARAMETER;
+	gdi = (rdpGdi*)context->custom;
+	if (!gdi)
+		return ERROR_INVALID_PARAMETER;
+
+	xfc = (xfContext*)gdi->context;
+	if (!xfc)
+		return ERROR_INTERNAL_ERROR;
+
+/*	if (cmd->codecId == RDPGFX_CODECID_AVC420)
+		status = xf_SurfaceCommand_AVC420_VAAPI(context, cmd);
+
+	if (status == XF_VAAPI_FALLBACK)
+		status = xfc->gfxSurfaceCommand(context, cmd);
+#DATISCUM  */
+	if (cmd->codecId == RDPGFX_CODECID_AVC420)
+	{
+		status = xf_SurfaceCommand_AVC420_VAAPI(context, cmd);
+	}
+
+	if (status == XF_VAAPI_FALLBACK)
+	{
+		if (xfc->gfxSurfaceCommand)
+		{
+			status = xfc->gfxSurfaceCommand(context, cmd);
+		}
+		else
+		{
+			WLog_WARN(TAG, "VAAPI direct: fallback requested but original SurfaceCommand is NULL");
+			status = CHANNEL_RC_OK;
+		}
+	}
+
+
+	return status;
+}
+#endif
 
 static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 {
@@ -47,6 +617,19 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(surface);
+
+#if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
+	BOOL vaapiHandled = FALSE;
+
+	rc = xf_OutputUpdateVAAPI(xfc, surface, &vaapiHandled);
+	if (rc != CHANNEL_RC_OK)
+		return rc;
+
+	if (vaapiHandled)
+	{
+		return CHANNEL_RC_OK;
+	}
+#endif
 
 	rdpGdi* gdi = xfc->common.context.gdi;
 	WINPR_ASSERT(gdi);
@@ -247,6 +830,21 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 			intersection.top -= surfaceRect.top;
 			intersection.right -= surfaceRect.left;
 			intersection.bottom -= surfaceRect.top;
+#if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
+			if (surface->vaapiDirectReady && xf_vaapi_render_allowed(xfc, surface))
+			{
+				if (!region16_union_rect(&surface->vaapiInvalidRegion,
+				                         &surface->vaapiInvalidRegion, &intersection))
+				{
+					free(pSurfaceIds);
+					LeaveCriticalSection(&context->mux);
+
+					goto fail;
+				}
+				surface->vaapiFramePending = TRUE;
+				continue;
+			}
+#endif
 			if (!region16_union_rect(&surface->gdi.invalidRegion, &surface->gdi.invalidRegion,
 			                         &intersection))
 			{
@@ -395,6 +993,9 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	surface->image->bitmap_bit_order = LSBFirst;
 
 	region16_init(&surface->gdi.invalidRegion);
+#if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
+	region16_init(&surface->vaapiInvalidRegion);
+#endif
 
 	if (context->SetSurfaceData(context, surface->gdi.surfaceId, (void*)surface) != CHANNEL_RC_OK)
 	{
@@ -404,6 +1005,10 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	return CHANNEL_RC_OK;
 error_set_surface_data:
+#if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
+	region16_uninit(&surface->vaapiInvalidRegion);
+#endif
+	region16_uninit(&surface->gdi.invalidRegion);
 	surface->image->data = nullptr;
 	XDestroyImage(surface->image);
 error_surface_image:
@@ -445,6 +1050,11 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 #endif
 #if defined(WITH_GFX_AV1)
 		freerdp_av1_context_free(surface->gdi.av1);
+#endif
+#if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
+		h264_context_free(surface->vaapiH264);
+		surface->vaapiH264 = NULL;
+		region16_uninit(&surface->vaapiInvalidRegion);
 #endif
 		surface->image->data = nullptr;
 		XDestroyImage(surface->image);
@@ -523,6 +1133,11 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 		gfx->UpdateSurfaces = xf_UpdateSurfaces;
 		gfx->CreateSurface = xf_CreateSurface;
 		gfx->DeleteSurface = xf_DeleteSurface;
+
+#if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
+		xfc->gfxSurfaceCommand = gfx->SurfaceCommand;
+		gfx->SurfaceCommand = xf_SurfaceCommand;
+#endif
 	}
 
 	gfx->UpdateWindowFromSurface = xf_UpdateWindowFromSurface;

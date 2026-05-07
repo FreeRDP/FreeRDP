@@ -33,6 +33,14 @@ struct xf_gfx_surface
 	BYTE* stage;
 	UINT32 stageScanline;
 	XImage* image;
+#if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
+	void* vaDisplay;
+	H264_CONTEXT* vaapiH264;
+	REGION16 vaapiInvalidRegion;
+	BOOL vaapiDirectReady;
+	BOOL vaapiDirectDisabled;
+	BOOL vaapiFramePending;
+#endif
 };
 typedef struct xf_gfx_surface xfGfxSurface;
 

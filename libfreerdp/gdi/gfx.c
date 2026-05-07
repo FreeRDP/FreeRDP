@@ -450,7 +450,7 @@ static UINT gdi_SurfaceCommand_AV1(rdpGdi* gdi, RdpgfxClientContext* context,
 			return ERROR_NOT_ENOUGH_MEMORY;
 		}
 
-		if (!freerdp_av1_context_reset(surface->av1, surface->width, surface->height))
+		if (!freerdp_av1_context_reset(surface->av1, surface->mappedWidth, surface->mappedHeight))
 			return ERROR_INTERNAL_ERROR;
 	}
 
@@ -467,7 +467,7 @@ static UINT gdi_SurfaceCommand_AV1(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	meta = &(bs->meta);
 	rc = freerdp_av1_decompress(surface->av1, bs->data, bs->length, surface->data, surface->format,
-	                            surface->scanline, surface->width, surface->height,
+	                            surface->scanline, surface->mappedWidth, surface->mappedHeight,
 	                            meta->regionRects, meta->numRegionRects);
 
 	if (rc < 0)
