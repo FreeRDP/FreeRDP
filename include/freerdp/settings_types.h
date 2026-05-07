@@ -354,6 +354,21 @@ extern "C"
 #define FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE (1u << 1) /** @since version 3.15.0 */
 #define FREERDP_MONITOR_OVERRIDE_DEVICE_SCALE (1u << 2)  /** @since version 3.15.0 */
 
+	/** @brief convenience names for
+	 * https://docs.openssl.org/3.0/man3/SSL_CTX_set_security_level/#default-callback-behaviour
+	 *
+	 *  @since version 3.26.1
+	 */
+	typedef enum
+	{
+		FREERDP_TLS_SECLEVEL_0 = 0,
+		FREERDP_TLS_SECLEVEL_80BIT = 1,
+		FREERDP_TLS_SECLEVEL_112BIT = 2,
+		FREERDP_TLS_SECLEVEL_128BIT = 3,
+		FREERDP_TLS_SECLEVEL_192BIT = 4,
+		FREERDP_TLS_SECLEVEL_256BIT = 5
+	} FreeRDP_TLS_SecLevel;
+
 	/* ARC_CS_PRIVATE_PACKET */
 	typedef struct
 	{

@@ -1304,11 +1304,11 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SmartcardLogon, FALSE))
 		goto out_fail;
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_TlsSecLevel, 1))
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_TlsSecLevel, FREERDP_TLS_SECLEVEL_112BIT))
 		goto out_fail;
 	settings->OrderSupport = calloc(1, 32);
 
-	if (!freerdp_settings_set_uint16(settings, FreeRDP_TLSMinVersion, TLS1_VERSION))
+	if (!freerdp_settings_set_uint16(settings, FreeRDP_TLSMinVersion, TLS1_2_VERSION))
 		goto out_fail;
 	if (!freerdp_settings_set_uint16(settings, FreeRDP_TLSMaxVersion, 0))
 		goto out_fail;
