@@ -86,11 +86,42 @@ extern "C"
 		UINT32 outputBufferLength; /** @since version 3.13.0 */
 	} SMARTCARD_OPERATION;
 
+	/** @brief Alias for \ref smartcard_irp_device_control_decode_request.
+	 *
+	 *  Kept for backward compatibility; new code should use the _request variant.
+	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId,
 	                                                     UINT32 FileId,
 	                                                     SMARTCARD_OPERATION* operation);
 
+	/** @brief Decode a smartcard IOCTL request received from the client.
+	 *
+	 *  Parses the Device Control Request fields (OutputBufferLength, InputBufferLength,
+	 *  IoControlCode, Padding), then unpacks the Common Type Header, Private Type Header,
+	 *  and the IOCTL-specific call payload into \p operation->call.
+	 *
+	 *  @param s        Stream positioned at OutputBufferLength, after the DeviceIoRequest header.
+	 *  @param CompletionId  The CompletionId from the DeviceIoRequest header.
+	 *  @param FileId   The FileId from the DeviceIoRequest header.
+	 *  @param operation [out] The decoded ioControlCode, call union, and context handles.
+	 *  @return \b SCARD_S_SUCCESS on success, a smartcard error code on failure.
+	 *
+	 *  @since version 3.28.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API LONG smartcard_irp_device_control_decode_request(wStream* s, UINT32 CompletionId,
+	                                                             UINT32 FileId,
+	                                                             SMARTCARD_OPERATION* operation);
+
+	/** @brief Free resources held by a SMARTCARD_OPERATION.
+	 *
+	 *  Releases any memory allocated inside the call and ret unions (e.g., reader name
+	 *  strings, reader state arrays, receive buffers).
+	 *
+	 *  @param op        The operation to clean up. May be NULL (no-op).
+	 *  @param allocated If TRUE, also frees the SMARTCARD_OPERATION struct itself.
+	 */
 	FREERDP_API void smartcard_operation_free(SMARTCARD_OPERATION* op, BOOL allocated);
 
 #ifdef __cplusplus

@@ -55,7 +55,7 @@ static LONG smartcard_call_to_operation_handle(SMARTCARD_OPERATION* operation)
 	return SCARD_S_SUCCESS;
 }
 
-static LONG smartcard_EstablishContext_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_EstablishContext_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -71,7 +71,7 @@ static LONG smartcard_EstablishContext_Decode(wStream* s, SMARTCARD_OPERATION* o
 	return SCARD_S_SUCCESS;
 }
 
-static LONG smartcard_ReleaseContext_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ReleaseContext_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -85,7 +85,7 @@ static LONG smartcard_ReleaseContext_Decode(wStream* s, SMARTCARD_OPERATION* ope
 	return status;
 }
 
-static LONG smartcard_IsValidContext_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_IsValidContext_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -97,7 +97,7 @@ static LONG smartcard_IsValidContext_Decode(wStream* s, SMARTCARD_OPERATION* ope
 	return status;
 }
 
-static LONG smartcard_ListReaderGroupsA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ListReaderGroupsA_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -109,7 +109,7 @@ static LONG smartcard_ListReaderGroupsA_Decode(wStream* s, SMARTCARD_OPERATION* 
 	return status;
 }
 
-static LONG smartcard_ListReaderGroupsW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ListReaderGroupsW_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -121,7 +121,7 @@ static LONG smartcard_ListReaderGroupsW_Decode(wStream* s, SMARTCARD_OPERATION* 
 	return status;
 }
 
-static LONG smartcard_ListReadersA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ListReadersA_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -133,7 +133,7 @@ static LONG smartcard_ListReadersA_Decode(wStream* s, SMARTCARD_OPERATION* opera
 	return status;
 }
 
-static LONG smartcard_ListReadersW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ListReadersW_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -145,7 +145,8 @@ static LONG smartcard_ListReadersW_Decode(wStream* s, SMARTCARD_OPERATION* opera
 	return status;
 }
 
-static LONG smartcard_context_and_two_strings_a_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ContextAndTwoStringA_decode_request(wStream* s,
+                                                          SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -158,7 +159,8 @@ static LONG smartcard_context_and_two_strings_a_Decode(wStream* s, SMARTCARD_OPE
 	return status;
 }
 
-static LONG smartcard_context_and_two_strings_w_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ContextAndTwoStringW_decode_request(wStream* s,
+                                                          SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -171,7 +173,7 @@ static LONG smartcard_context_and_two_strings_w_Decode(wStream* s, SMARTCARD_OPE
 	return status;
 }
 
-static LONG smartcard_context_and_string_a_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ContextAndStringA_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -183,7 +185,7 @@ static LONG smartcard_context_and_string_a_Decode(wStream* s, SMARTCARD_OPERATIO
 	return status;
 }
 
-static LONG smartcard_context_and_string_w_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ContextAndStringW_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -195,7 +197,7 @@ static LONG smartcard_context_and_string_w_Decode(wStream* s, SMARTCARD_OPERATIO
 	return status;
 }
 
-static LONG smartcard_LocateCardsA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_LocateCardsA_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -207,7 +209,7 @@ static LONG smartcard_LocateCardsA_Decode(wStream* s, SMARTCARD_OPERATION* opera
 	return status;
 }
 
-static LONG smartcard_LocateCardsW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_LocateCardsW_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -219,7 +221,7 @@ static LONG smartcard_LocateCardsW_Decode(wStream* s, SMARTCARD_OPERATION* opera
 	return status;
 }
 
-static LONG smartcard_GetStatusChangeA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_GetStatusChangeA_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(operation);
@@ -227,7 +229,7 @@ static LONG smartcard_GetStatusChangeA_Decode(wStream* s, SMARTCARD_OPERATION* o
 	return smartcard_unpack_get_status_change_a_call(s, &operation->call.getStatusChangeA);
 }
 
-static LONG smartcard_GetStatusChangeW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_GetStatusChangeW_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(operation);
@@ -235,7 +237,7 @@ static LONG smartcard_GetStatusChangeW_Decode(wStream* s, SMARTCARD_OPERATION* o
 	return smartcard_unpack_get_status_change_w_call(s, &operation->call.getStatusChangeW);
 }
 
-static LONG smartcard_Cancel_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_Cancel_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -247,7 +249,7 @@ static LONG smartcard_Cancel_Decode(wStream* s, SMARTCARD_OPERATION* operation)
 	return status;
 }
 
-static LONG smartcard_ConnectA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ConnectA_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -259,7 +261,7 @@ static LONG smartcard_ConnectA_Decode(wStream* s, SMARTCARD_OPERATION* operation
 	return status;
 }
 
-static LONG smartcard_ConnectW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ConnectW_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -271,7 +273,7 @@ static LONG smartcard_ConnectW_Decode(wStream* s, SMARTCARD_OPERATION* operation
 	return status;
 }
 
-static LONG smartcard_Reconnect_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_Reconnect_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -283,7 +285,7 @@ static LONG smartcard_Reconnect_Decode(wStream* s, SMARTCARD_OPERATION* operatio
 	return status;
 }
 
-static LONG smartcard_Disconnect_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_Disconnect_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -296,7 +298,7 @@ static LONG smartcard_Disconnect_Decode(wStream* s, SMARTCARD_OPERATION* operati
 	return status;
 }
 
-static LONG smartcard_BeginTransaction_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_BeginTransaction_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -309,7 +311,7 @@ static LONG smartcard_BeginTransaction_Decode(wStream* s, SMARTCARD_OPERATION* o
 	return status;
 }
 
-static LONG smartcard_EndTransaction_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_EndTransaction_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -322,7 +324,7 @@ static LONG smartcard_EndTransaction_Decode(wStream* s, SMARTCARD_OPERATION* ope
 	return status;
 }
 
-static LONG smartcard_State_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_State_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -334,7 +336,7 @@ static LONG smartcard_State_Decode(wStream* s, SMARTCARD_OPERATION* operation)
 	return status;
 }
 
-static LONG smartcard_StatusA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_StatusA_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -346,7 +348,7 @@ static LONG smartcard_StatusA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
 	return status;
 }
 
-static LONG smartcard_StatusW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_StatusW_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -358,7 +360,7 @@ static LONG smartcard_StatusW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
 	return status;
 }
 
-static LONG smartcard_Transmit_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_Transmit_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -370,7 +372,7 @@ static LONG smartcard_Transmit_Decode(wStream* s, SMARTCARD_OPERATION* operation
 	return status;
 }
 
-static LONG smartcard_Control_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_Control_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -382,7 +384,7 @@ static LONG smartcard_Control_Decode(wStream* s, SMARTCARD_OPERATION* operation)
 	return status;
 }
 
-static LONG smartcard_GetAttrib_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_GetAttrib_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -394,7 +396,7 @@ static LONG smartcard_GetAttrib_Decode(wStream* s, SMARTCARD_OPERATION* operatio
 	return status;
 }
 
-static LONG smartcard_SetAttrib_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_SetAttrib_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -406,7 +408,7 @@ static LONG smartcard_SetAttrib_Decode(wStream* s, SMARTCARD_OPERATION* operatio
 	return status;
 }
 
-static LONG smartcard_AccessStartedEvent_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_AccessStartedEvent_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(operation);
@@ -419,7 +421,7 @@ static LONG smartcard_AccessStartedEvent_Decode(wStream* s, SMARTCARD_OPERATION*
 	return SCARD_S_SUCCESS;
 }
 
-static LONG smartcard_LocateCardsByATRA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_LocateCardsByATRA_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -431,7 +433,7 @@ static LONG smartcard_LocateCardsByATRA_Decode(wStream* s, SMARTCARD_OPERATION* 
 	return status;
 }
 
-static LONG smartcard_LocateCardsByATRW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_LocateCardsByATRW_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -443,7 +445,7 @@ static LONG smartcard_LocateCardsByATRW_Decode(wStream* s, SMARTCARD_OPERATION* 
 	return status;
 }
 
-static LONG smartcard_ReadCacheA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ReadCacheA_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -455,7 +457,7 @@ static LONG smartcard_ReadCacheA_Decode(wStream* s, SMARTCARD_OPERATION* operati
 	return status;
 }
 
-static LONG smartcard_ReadCacheW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ReadCacheW_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -467,7 +469,7 @@ static LONG smartcard_ReadCacheW_Decode(wStream* s, SMARTCARD_OPERATION* operati
 	return status;
 }
 
-static LONG smartcard_WriteCacheA_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_WriteCacheA_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -479,7 +481,7 @@ static LONG smartcard_WriteCacheA_Decode(wStream* s, SMARTCARD_OPERATION* operat
 	return status;
 }
 
-static LONG smartcard_WriteCacheW_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_WriteCacheW_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -491,7 +493,7 @@ static LONG smartcard_WriteCacheW_Decode(wStream* s, SMARTCARD_OPERATION* operat
 	return status;
 }
 
-static LONG smartcard_GetTransmitCount_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_GetTransmitCount_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -503,7 +505,7 @@ static LONG smartcard_GetTransmitCount_Decode(wStream* s, SMARTCARD_OPERATION* o
 	return status;
 }
 
-static LONG smartcard_ReleaseStartedEvent_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_ReleaseStartedEvent_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	WINPR_UNUSED(s);
 	WINPR_UNUSED(operation);
@@ -512,7 +514,7 @@ static LONG smartcard_ReleaseStartedEvent_Decode(wStream* s, SMARTCARD_OPERATION
 	return SCARD_E_UNSUPPORTED_FEATURE;
 }
 
-static LONG smartcard_GetReaderIcon_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_GetReaderIcon_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -524,7 +526,7 @@ static LONG smartcard_GetReaderIcon_Decode(wStream* s, SMARTCARD_OPERATION* oper
 	return status;
 }
 
-static LONG smartcard_GetDeviceTypeId_Decode(wStream* s, SMARTCARD_OPERATION* operation)
+static LONG smartcard_GetDeviceTypeId_decode_request(wStream* s, SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 
@@ -538,6 +540,12 @@ static LONG smartcard_GetDeviceTypeId_Decode(wStream* s, SMARTCARD_OPERATION* op
 
 LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32 FileId,
                                          SMARTCARD_OPERATION* operation)
+{
+	return smartcard_irp_device_control_decode_request(s, CompletionId, FileId, operation);
+}
+
+LONG smartcard_irp_device_control_decode_request(wStream* s, UINT32 CompletionId, UINT32 FileId,
+                                                 SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
 	UINT32 offset = 0;
@@ -584,195 +592,195 @@ LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32
 	switch (ioControlCode)
 	{
 		case SCARD_IOCTL_ESTABLISHCONTEXT:
-			status = smartcard_EstablishContext_Decode(s, operation);
+			status = smartcard_EstablishContext_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_RELEASECONTEXT:
-			status = smartcard_ReleaseContext_Decode(s, operation);
+			status = smartcard_ReleaseContext_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_ISVALIDCONTEXT:
-			status = smartcard_IsValidContext_Decode(s, operation);
+			status = smartcard_IsValidContext_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_LISTREADERGROUPSA:
-			status = smartcard_ListReaderGroupsA_Decode(s, operation);
+			status = smartcard_ListReaderGroupsA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_LISTREADERGROUPSW:
-			status = smartcard_ListReaderGroupsW_Decode(s, operation);
+			status = smartcard_ListReaderGroupsW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_LISTREADERSA:
-			status = smartcard_ListReadersA_Decode(s, operation);
+			status = smartcard_ListReadersA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_LISTREADERSW:
-			status = smartcard_ListReadersW_Decode(s, operation);
+			status = smartcard_ListReadersW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERGROUPA:
-			status = smartcard_context_and_string_a_Decode(s, operation);
+			status = smartcard_ContextAndStringA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERGROUPW:
-			status = smartcard_context_and_string_w_Decode(s, operation);
+			status = smartcard_ContextAndStringW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_FORGETREADERGROUPA:
-			status = smartcard_context_and_string_a_Decode(s, operation);
+			status = smartcard_ContextAndStringA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_FORGETREADERGROUPW:
-			status = smartcard_context_and_string_w_Decode(s, operation);
+			status = smartcard_ContextAndStringW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERA:
-			status = smartcard_context_and_two_strings_a_Decode(s, operation);
+			status = smartcard_ContextAndTwoStringA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERW:
-			status = smartcard_context_and_two_strings_w_Decode(s, operation);
+			status = smartcard_ContextAndTwoStringW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_FORGETREADERA:
-			status = smartcard_context_and_string_a_Decode(s, operation);
+			status = smartcard_ContextAndStringA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_FORGETREADERW:
-			status = smartcard_context_and_string_w_Decode(s, operation);
+			status = smartcard_ContextAndStringW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_ADDREADERTOGROUPA:
-			status = smartcard_context_and_two_strings_a_Decode(s, operation);
+			status = smartcard_ContextAndTwoStringA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_ADDREADERTOGROUPW:
-			status = smartcard_context_and_two_strings_w_Decode(s, operation);
+			status = smartcard_ContextAndTwoStringW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_REMOVEREADERFROMGROUPA:
-			status = smartcard_context_and_two_strings_a_Decode(s, operation);
+			status = smartcard_ContextAndTwoStringA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_REMOVEREADERFROMGROUPW:
-			status = smartcard_context_and_two_strings_w_Decode(s, operation);
+			status = smartcard_ContextAndTwoStringW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSA:
-			status = smartcard_LocateCardsA_Decode(s, operation);
+			status = smartcard_LocateCardsA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSW:
-			status = smartcard_LocateCardsW_Decode(s, operation);
+			status = smartcard_LocateCardsW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_GETSTATUSCHANGEA:
-			status = smartcard_GetStatusChangeA_Decode(s, operation);
+			status = smartcard_GetStatusChangeA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_GETSTATUSCHANGEW:
-			status = smartcard_GetStatusChangeW_Decode(s, operation);
+			status = smartcard_GetStatusChangeW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_CANCEL:
-			status = smartcard_Cancel_Decode(s, operation);
+			status = smartcard_Cancel_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_CONNECTA:
-			status = smartcard_ConnectA_Decode(s, operation);
+			status = smartcard_ConnectA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_CONNECTW:
-			status = smartcard_ConnectW_Decode(s, operation);
+			status = smartcard_ConnectW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_RECONNECT:
-			status = smartcard_Reconnect_Decode(s, operation);
+			status = smartcard_Reconnect_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_DISCONNECT:
-			status = smartcard_Disconnect_Decode(s, operation);
+			status = smartcard_Disconnect_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_BEGINTRANSACTION:
-			status = smartcard_BeginTransaction_Decode(s, operation);
+			status = smartcard_BeginTransaction_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_ENDTRANSACTION:
-			status = smartcard_EndTransaction_Decode(s, operation);
+			status = smartcard_EndTransaction_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_STATE:
-			status = smartcard_State_Decode(s, operation);
+			status = smartcard_State_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_STATUSA:
-			status = smartcard_StatusA_Decode(s, operation);
+			status = smartcard_StatusA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_STATUSW:
-			status = smartcard_StatusW_Decode(s, operation);
+			status = smartcard_StatusW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_TRANSMIT:
-			status = smartcard_Transmit_Decode(s, operation);
+			status = smartcard_Transmit_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_CONTROL:
-			status = smartcard_Control_Decode(s, operation);
+			status = smartcard_Control_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_GETATTRIB:
-			status = smartcard_GetAttrib_Decode(s, operation);
+			status = smartcard_GetAttrib_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_SETATTRIB:
-			status = smartcard_SetAttrib_Decode(s, operation);
+			status = smartcard_SetAttrib_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_ACCESSSTARTEDEVENT:
-			status = smartcard_AccessStartedEvent_Decode(s, operation);
+			status = smartcard_AccessStartedEvent_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSBYATRA:
-			status = smartcard_LocateCardsByATRA_Decode(s, operation);
+			status = smartcard_LocateCardsByATRA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSBYATRW:
-			status = smartcard_LocateCardsByATRW_Decode(s, operation);
+			status = smartcard_LocateCardsByATRW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_READCACHEA:
-			status = smartcard_ReadCacheA_Decode(s, operation);
+			status = smartcard_ReadCacheA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_READCACHEW:
-			status = smartcard_ReadCacheW_Decode(s, operation);
+			status = smartcard_ReadCacheW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_WRITECACHEA:
-			status = smartcard_WriteCacheA_Decode(s, operation);
+			status = smartcard_WriteCacheA_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_WRITECACHEW:
-			status = smartcard_WriteCacheW_Decode(s, operation);
+			status = smartcard_WriteCacheW_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_GETTRANSMITCOUNT:
-			status = smartcard_GetTransmitCount_Decode(s, operation);
+			status = smartcard_GetTransmitCount_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_RELEASETARTEDEVENT:
-			status = smartcard_ReleaseStartedEvent_Decode(s, operation);
+			status = smartcard_ReleaseStartedEvent_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_GETREADERICON:
-			status = smartcard_GetReaderIcon_Decode(s, operation);
+			status = smartcard_GetReaderIcon_decode_request(s, operation);
 			break;
 
 		case SCARD_IOCTL_GETDEVICETYPEID:
-			status = smartcard_GetDeviceTypeId_Decode(s, operation);
+			status = smartcard_GetDeviceTypeId_decode_request(s, operation);
 			break;
 
 		default:

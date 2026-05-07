@@ -378,8 +378,8 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 		element->irp = irp;
 		element->operation.completionID = irp->CompletionId;
 
-		status = smartcard_irp_device_control_decode(irp->input, irp->CompletionId, irp->FileId,
-		                                             &element->operation);
+		status = smartcard_irp_device_control_decode_request(irp->input, irp->CompletionId,
+		                                                     irp->FileId, &element->operation);
 
 		if (status != SCARD_S_SUCCESS)
 		{
