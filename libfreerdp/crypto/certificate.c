@@ -1556,7 +1556,8 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 		ERR_clear_error();
 
 		const int status = BIO_read(bio, &pem[offset], (int)(length - offset));
-		if (status < 0)
+		const int should_retry = BIO_should_retry(bio);
+		if (status < 0 && should_retry <= 0)
 		{
 			WLog_ERR(TAG, "failed to read certificate");
 			goto fail;
