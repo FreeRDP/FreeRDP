@@ -35,12 +35,336 @@
 
 #include <X11/Xutil.h>
 
+#ifdef WITH_XSHM
+#include <X11/extensions/XShm.h>
+#include <X11/extensions/shm.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#endif
+
 #if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
 #include <va/va.h>
 #include <va/va_x11.h>
 #endif
 
 #define TAG CLIENT_TAG("x11")
+
+#ifdef WITH_XSHM
+typedef struct xf_shm_surface_entry
+{
+	const xfGfxSurface* surface;
+	XShmSegmentInfo* shminfo;
+	struct xf_shm_surface_entry* next;
+} xfShmSurfaceEntry;
+
+static xfShmSurfaceEntry* g_xf_shm_surfaces = NULL;
+
+static xfShmSurfaceEntry* xf_shm_find_surface(const xfGfxSurface* surface)
+{
+	for (xfShmSurfaceEntry* cur = g_xf_shm_surfaces; cur; cur = cur->next)
+	{
+		if (cur->surface == surface)
+			return cur;
+	}
+
+	return NULL;
+}
+
+static BOOL xf_shm_register_surface(const xfGfxSurface* surface, XShmSegmentInfo* shminfo)
+{
+	xfShmSurfaceEntry* entry = (xfShmSurfaceEntry*)calloc(1, sizeof(xfShmSurfaceEntry));
+	if (!entry)
+		return FALSE;
+
+	entry->surface = surface;
+	entry->shminfo = shminfo;
+	entry->next = g_xf_shm_surfaces;
+	g_xf_shm_surfaces = entry;
+	return TRUE;
+}
+
+static XShmSegmentInfo* xf_shm_unregister_surface(const xfGfxSurface* surface)
+{
+	xfShmSurfaceEntry** cur = &g_xf_shm_surfaces;
+
+	while (*cur)
+	{
+		xfShmSurfaceEntry* entry = *cur;
+		if (entry->surface == surface)
+		{
+			XShmSegmentInfo* shminfo = entry->shminfo;
+			*cur = entry->next;
+			free(entry);
+			return shminfo;
+		}
+		cur = &entry->next;
+	}
+
+	return NULL;
+}
+
+
+static int g_xf_shm_error_base = -1;
+static int g_xf_shm_last_error = 0;
+static BOOL g_xf_shm_runtime_disabled = FALSE;
+static int (*g_xf_shm_old_error_handler)(Display*, XErrorEvent*) = NULL;
+
+static int xf_shm_temp_error_handler(Display* display, XErrorEvent* event)
+{
+	WINPR_UNUSED(display);
+
+	if ((g_xf_shm_error_base >= 0) && (event->error_code == (g_xf_shm_error_base + BadShmSeg)))
+	{
+		g_xf_shm_last_error = event->error_code;
+		return 0;
+	}
+
+	if (g_xf_shm_old_error_handler)
+		return g_xf_shm_old_error_handler(display, event);
+
+	return 0;
+}
+
+static BOOL xf_shm_attach_checked(Display* display, XShmSegmentInfo* shminfo)
+{
+	int majorOpcode = 0;
+	int eventBase = 0;
+	int errorBase = 0;
+
+	WINPR_ASSERT(display);
+	WINPR_ASSERT(shminfo);
+
+	if (!XQueryExtension(display, "MIT-SHM", &majorOpcode, &eventBase, &errorBase))
+		return FALSE;
+
+	g_xf_shm_error_base = errorBase;
+	g_xf_shm_last_error = 0;
+	g_xf_shm_old_error_handler = XSetErrorHandler(xf_shm_temp_error_handler);
+
+	const Bool attached = XShmAttach(display, shminfo);
+	XSync(display, False);
+
+	XSetErrorHandler(g_xf_shm_old_error_handler);
+	g_xf_shm_old_error_handler = NULL;
+	g_xf_shm_error_base = -1;
+
+	return attached && (g_xf_shm_last_error == 0);
+}
+
+static BOOL xf_shm_call_checked(Display* display, void (*fn)(Display*, void*), void* arg)
+{
+	int majorOpcode = 0;
+	int eventBase = 0;
+	int errorBase = 0;
+
+	WINPR_ASSERT(display);
+	WINPR_ASSERT(fn);
+
+	if (!XQueryExtension(display, "MIT-SHM", &majorOpcode, &eventBase, &errorBase))
+		return FALSE;
+
+	g_xf_shm_error_base = errorBase;
+	g_xf_shm_last_error = 0;
+	g_xf_shm_old_error_handler = XSetErrorHandler(xf_shm_temp_error_handler);
+
+	fn(display, arg);
+	XSync(display, False);
+
+	XSetErrorHandler(g_xf_shm_old_error_handler);
+	g_xf_shm_old_error_handler = NULL;
+	g_xf_shm_error_base = -1;
+
+	return g_xf_shm_last_error == 0;
+}
+
+typedef struct
+{
+	XShmSegmentInfo* shminfo;
+} xfShmDetachArg;
+
+static void xf_shm_detach_call(Display* display, void* arg)
+{
+	xfShmDetachArg* detach = (xfShmDetachArg*)arg;
+	WINPR_ASSERT(detach);
+	WINPR_ASSERT(detach->shminfo);
+	XShmDetach(display, detach->shminfo);
+}
+
+typedef struct
+{
+	Drawable drawable;
+	GC gc;
+	XImage* image;
+	int srcX;
+	int srcY;
+	int dstX;
+	int dstY;
+	unsigned int width;
+	unsigned int height;
+} xfShmPutArg;
+
+static void xf_shm_put_call(Display* display, void* arg)
+{
+	xfShmPutArg* put = (xfShmPutArg*)arg;
+	WINPR_ASSERT(put);
+	WINPR_ASSERT(put->image);
+	XShmPutImage(display, put->drawable, put->gc, put->image, put->srcX, put->srcY,
+	             put->dstX, put->dstY, put->width, put->height, False);
+}
+
+static BOOL xf_shm_create_surface_image(xfContext* xfc, xfGfxSurface* surface)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(surface);
+
+	if (g_xf_shm_runtime_disabled)
+		return FALSE;
+
+	if (!XShmQueryExtension(xfc->display))
+		return FALSE;
+
+	/* Xlib stores the XShmSegmentInfo pointer in XImage->obdata.
+	 * Therefore this structure must outlive XShmCreateImage() and must
+	 * be the exact pointer later used by XShmPutImage()/XShmDetach().
+	 */
+	XShmSegmentInfo* shminfo = (XShmSegmentInfo*)calloc(1, sizeof(XShmSegmentInfo));
+	if (!shminfo)
+		return FALSE;
+
+	XImage* image = XShmCreateImage(xfc->display, xfc->visual,
+	                                WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth), ZPixmap,
+	                                NULL, shminfo, surface->gdi.mappedWidth,
+	                                surface->gdi.mappedHeight);
+	if (!image)
+	{
+		free(shminfo);
+		return FALSE;
+	}
+
+	const size_t size = (size_t)image->bytes_per_line * (size_t)image->height;
+	shminfo->shmid = shmget(IPC_PRIVATE, size, IPC_CREAT | 0600);
+	if (shminfo->shmid < 0)
+	{
+		image->data = NULL;
+		XDestroyImage(image);
+		free(shminfo);
+		return FALSE;
+	}
+
+	shminfo->shmaddr = (char*)shmat(shminfo->shmid, NULL, 0);
+	if (shminfo->shmaddr == (char*)-1)
+	{
+		shmctl(shminfo->shmid, IPC_RMID, NULL);
+		image->data = NULL;
+		XDestroyImage(image);
+		free(shminfo);
+		return FALSE;
+	}
+
+	shminfo->readOnly = False;
+	image->data = shminfo->shmaddr;
+
+	if (!xf_shm_attach_checked(xfc->display, shminfo))
+	{
+		shmdt(shminfo->shmaddr);
+		shmctl(shminfo->shmid, IPC_RMID, NULL);
+		image->data = NULL;
+		XDestroyImage(image);
+		free(shminfo);
+		return FALSE;
+	}
+
+	if (!xf_shm_register_surface(surface, shminfo))
+	{
+		xfShmDetachArg detach = { .shminfo = shminfo };
+		(void)xf_shm_call_checked(xfc->display, xf_shm_detach_call, &detach);
+		shmdt(shminfo->shmaddr);
+		shmctl(shminfo->shmid, IPC_RMID, NULL);
+		image->data = NULL;
+		XDestroyImage(image);
+		free(shminfo);
+		return FALSE;
+	}
+
+	surface->image = image;
+	surface->gdi.data = (BYTE*)image->data;
+	surface->gdi.scanline = WINPR_ASSERTING_INT_CAST(UINT32, image->bytes_per_line);
+	ZeroMemory(surface->gdi.data, size);
+	return TRUE;
+}
+
+static BOOL xf_shm_destroy_surface_image(xfContext* xfc, xfGfxSurface* surface)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(surface);
+
+	XShmSegmentInfo* shminfo = xf_shm_unregister_surface(surface);
+	if (!shminfo)
+		return FALSE;
+
+	xfShmDetachArg detach = { .shminfo = shminfo };
+	(void)xf_shm_call_checked(xfc->display, xf_shm_detach_call, &detach);
+
+	if (surface->image)
+	{
+		/* XDestroyImage frees the XImage object but not the SysV SHM segment. */
+		XDestroyImage(surface->image);
+		surface->image = NULL;
+	}
+
+	if (shminfo->shmaddr && (shminfo->shmaddr != (char*)-1))
+		shmdt(shminfo->shmaddr);
+
+	if (shminfo->shmid >= 0)
+		shmctl(shminfo->shmid, IPC_RMID, NULL);
+
+	free(shminfo);
+	surface->gdi.data = NULL;
+	return TRUE;
+}
+
+static void xf_surface_put_image(xfContext* xfc, xfGfxSurface* surface, Drawable drawable,
+                                 int srcX, int srcY, int dstX, int dstY, unsigned int width,
+                                 unsigned int height)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(surface);
+
+	if (xf_shm_find_surface(surface) && !g_xf_shm_runtime_disabled)
+	{
+		xfShmPutArg put = { .drawable = drawable,
+		                    .gc = xfc->gc,
+		                    .image = surface->image,
+		                    .srcX = srcX,
+		                    .srcY = srcY,
+		                    .dstX = dstX,
+		                    .dstY = dstY,
+		                    .width = width,
+		                    .height = height };
+
+		if (xf_shm_call_checked(xfc->display, xf_shm_put_call, &put))
+			return;
+
+		/* XShmPutImage can fail asynchronously with BadShmSeg on some X setups.
+		 * Disable XShm for the remaining lifetime of this process and fall back
+		 * to plain XPutImage using the same local image buffer. */
+		g_xf_shm_runtime_disabled = TRUE;
+	}
+
+	LogDynAndXPutImage(xfc->log, xfc->display, drawable, xfc->gc, surface->image, srcX, srcY,
+	                  dstX, dstY, width, height);
+}
+#else
+static void xf_surface_put_image(xfContext* xfc, xfGfxSurface* surface, Drawable drawable,
+                                 int srcX, int srcY, int dstX, int dstY, unsigned int width,
+                                 unsigned int height)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(surface);
+	LogDynAndXPutImage(xfc->log, xfc->display, drawable, xfc->gc, surface->image, srcX, srcY,
+	                  dstX, dstY, width, height);
+}
+#endif
 
 #if defined(WITH_VAAPI) && defined(WITH_X11_VAAPI)
 #define XF_VAAPI_FALLBACK UINT32_MAX
@@ -681,11 +1005,9 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 
 		if (xfc->remote_app)
 		{
-			LogDynAndXPutImage(xfc->log, xfc->display, xfc->primary, xfc->gc, surface->image,
-			                   WINPR_ASSERTING_INT_CAST(int, nXSrc),
-			                   WINPR_ASSERTING_INT_CAST(int, nYSrc),
-			                   WINPR_ASSERTING_INT_CAST(int, nXDst),
-			                   WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
+			xf_surface_put_image(xfc, surface, xfc->primary, WINPR_ASSERTING_INT_CAST(int, nXSrc),
+				             WINPR_ASSERTING_INT_CAST(int, nYSrc), WINPR_ASSERTING_INT_CAST(int, nXDst),
+				             WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
 			xf_rail_paint_surface(xfc, surface->gdi.windowId, rect);
 		}
 		else
@@ -693,11 +1015,9 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		    if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
 		        freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
 		{
-			LogDynAndXPutImage(xfc->log, xfc->display, xfc->primary, xfc->gc, surface->image,
-			                   WINPR_ASSERTING_INT_CAST(int, nXSrc),
-			                   WINPR_ASSERTING_INT_CAST(int, nYSrc),
-			                   WINPR_ASSERTING_INT_CAST(int, nXDst),
-			                   WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
+			xf_surface_put_image(xfc, surface, xfc->primary, WINPR_ASSERTING_INT_CAST(int, nXSrc),
+				             WINPR_ASSERTING_INT_CAST(int, nYSrc), WINPR_ASSERTING_INT_CAST(int, nXDst),
+				             WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
 			xf_draw_screen(xfc, WINPR_ASSERTING_INT_CAST(int32_t, nXDst),
 			               WINPR_ASSERTING_INT_CAST(int32_t, nYDst),
 			               WINPR_ASSERTING_INT_CAST(int32_t, dwidth),
@@ -706,11 +1026,9 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		else
 #endif
 		{
-			LogDynAndXPutImage(xfc->log, xfc->display, xfc->drawable, xfc->gc, surface->image,
-			                   WINPR_ASSERTING_INT_CAST(int, nXSrc),
-			                   WINPR_ASSERTING_INT_CAST(int, nYSrc),
-			                   WINPR_ASSERTING_INT_CAST(int, nXDst),
-			                   WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
+			xf_surface_put_image(xfc, surface, xfc->drawable, WINPR_ASSERTING_INT_CAST(int, nXSrc),
+				             WINPR_ASSERTING_INT_CAST(int, nYSrc), WINPR_ASSERTING_INT_CAST(int, nXDst),
+				             WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
 		}
 	}
 
@@ -953,11 +1271,22 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	if (FreeRDPAreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
 	{
 		WINPR_ASSERT(xfc->depth != 0);
-		surface->image = LogDynAndXCreateImage(
-		    xfc->log, xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth),
-		    ZPixmap, 0, (char*)surface->gdi.data, surface->gdi.mappedWidth,
-		    surface->gdi.mappedHeight, xfc->scanline_pad,
-		    WINPR_ASSERTING_INT_CAST(int, surface->gdi.scanline));
+#ifdef WITH_XSHM
+		BYTE* oldGdiData = surface->gdi.data;
+		const BOOL useShm = xf_shm_create_surface_image(xfc, surface);
+		if (useShm)
+		{
+			winpr_aligned_free(oldGdiData);
+		}
+		else
+#endif
+		{
+			surface->image = LogDynAndXCreateImage(
+			    xfc->log, xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth),
+			    ZPixmap, 0, (char*)surface->gdi.data, surface->gdi.mappedWidth,
+			    surface->gdi.mappedHeight, xfc->scanline_pad,
+			    WINPR_ASSERTING_INT_CAST(int, surface->gdi.scanline));
+		}
 	}
 	else
 	{
@@ -1009,12 +1338,20 @@ error_set_surface_data:
 	region16_uninit(&surface->vaapiInvalidRegion);
 #endif
 	region16_uninit(&surface->gdi.invalidRegion);
-	surface->image->data = nullptr;
-	XDestroyImage(surface->image);
+#ifdef WITH_XSHM
+	if (!xf_shm_destroy_surface_image(xfc, surface))
+#endif
+	{
+		surface->image->data = nullptr;
+		XDestroyImage(surface->image);
+	}
 error_surface_image:
 	winpr_aligned_free(surface->stage);
 out_free_gdidata:
-	winpr_aligned_free(surface->gdi.data);
+#ifdef WITH_XSHM
+	if (!xf_shm_find_surface(surface))
+#endif
+		winpr_aligned_free(surface->gdi.data);
 out_free:
 	free(surface);
 	return ret;
@@ -1029,6 +1366,8 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
                              const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
 	rdpCodecs* codecs = nullptr;
+	rdpGdi* gdi = (rdpGdi*)context->custom;
+	xfContext* xfc = gdi ? (xfContext*)gdi->context : NULL;
 
 	UINT status = 0;
 	EnterCriticalSection(&context->mux);
@@ -1056,9 +1395,14 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 		surface->vaapiH264 = NULL;
 		region16_uninit(&surface->vaapiInvalidRegion);
 #endif
-		surface->image->data = nullptr;
-		XDestroyImage(surface->image);
-		winpr_aligned_free(surface->gdi.data);
+#ifdef WITH_XSHM
+		if (!xfc || !xf_shm_destroy_surface_image(xfc, surface))
+#endif
+		{
+			surface->image->data = nullptr;
+			XDestroyImage(surface->image);
+			winpr_aligned_free(surface->gdi.data);
+		}
 		winpr_aligned_free(surface->stage);
 		region16_uninit(&surface->gdi.invalidRegion);
 		codecs = surface->gdi.codecs;
