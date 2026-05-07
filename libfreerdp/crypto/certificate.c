@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <sys/select.h>
 #include <winpr/assert.h>
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
@@ -1556,9 +1557,27 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 		ERR_clear_error();
 
 		const int status = BIO_read(bio, &pem[offset], (int)(length - offset));
-		const int should_retry = BIO_should_retry(bio);
-		if (status < 0 && should_retry <= 0)
+		if (status < 0)
 		{
+			const int should_retry = BIO_should_retry(bio);
+			if (should_retry > 0)
+			{
+				// get socket file descriptor and add it to a file descriptor set
+				int fd = 0;
+				BIO_get_fd(bio, &fd);
+				fd_set readfds;
+				FD_ZERO(&readfds);
+				FD_SET(fd, &readfds);
+				// initialize timeout, 5 seconds
+				struct timeval timeout = {.tv_sec = 5};
+				// wait for socket to be ready in specified timeout
+				const int is_sock_ready = select(fd+1, &readfds, NULL, NULL, &timeout);
+				// if the socket has become ready in the specified timeout, it means there's data waiting to be read,
+				// otherwise it's the end of the stream
+				if (is_sock_ready > 0 && FD_ISSET(fd, &readfds))
+					continue;
+				else break;
+			}
 			WLog_ERR(TAG, "failed to read certificate");
 			goto fail;
 		}
