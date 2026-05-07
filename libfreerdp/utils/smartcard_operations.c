@@ -547,7 +547,7 @@ LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32
 
 	/* Device Control Request */
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, RDPDR_DEVICE_IO_CONTROL_REQ_HDR_LENGTH))
 		return SCARD_F_INTERNAL_ERROR;
 
 	const UINT32 outputBufferLength = Stream_Get_UINT32(s); /* OutputBufferLength (4 bytes) */
