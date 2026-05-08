@@ -6,70 +6,76 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(FREERDP_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+set(FREERDP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/freerdp-root-build)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "OHOS")
-  list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
+  #
+  # OpenSSL for HarmonyOS is cross-compiled from source by:
+  #   scripts/harmony-build-openssl.sh --ndk <OHOS_NDK_HOME>
+  #
+  # Run it once before the first build.  It produces:
+  #   third_party/openssl-prebuilt/<arch>/include/openssl/*.h
+  #   third_party/openssl-prebuilt/<arch>/libssl.a
+  #   third_party/openssl-prebuilt/<arch>/libcrypto.a
+  #
+  set(OPENSSL_PREBUILT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openssl-prebuilt/${OHOS_ARCH})
+  set(OPENSSL_ROOT_DIR ${OPENSSL_PREBUILT_PATH} CACHE PATH "" FORCE)
+  set(OPENSSL_INCLUDE_DIR ${OPENSSL_PREBUILT_PATH}/include CACHE PATH "" FORCE)
+  set(OPENSSL_SSL_LIBRARY ${OPENSSL_PREBUILT_PATH}/libssl.a CACHE FILEPATH "" FORCE)
+  set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_PREBUILT_PATH}/libcrypto.a CACHE FILEPATH "" FORCE)
+endif()
 
-  set(FREERDP_SOURCE_DIR ${FREERDP_ROOT_DIR})
-  include(ExternalOpenSSL)
-  include(ExternalFreeRDP)
+set(WITH_CLIENT_HARMONY OFF CACHE BOOL "" FORCE)
+set(WITH_CLIENT ON CACHE BOOL "" FORCE)
+set(WITH_CLIENT_COMMON ON CACHE BOOL "" FORCE)
+set(WITH_CLIENT_CHANNELS ON CACHE BOOL "" FORCE)
+set(WITH_SERVER OFF CACHE BOOL "" FORCE)
+set(WITH_SAMPLE OFF CACHE BOOL "" FORCE)
+set(WITH_CLIENT_SDL OFF CACHE BOOL "" FORCE)
+set(WITH_X11 OFF CACHE BOOL "" FORCE)
+set(WITH_WAYLAND OFF CACHE BOOL "" FORCE)
+set(WITH_MANPAGES OFF CACHE BOOL "" FORCE)
+set(WITH_PULSE OFF CACHE BOOL "" FORCE)
+set(WITH_CUPS OFF CACHE BOOL "" FORCE)
+set(WITH_FFMPEG OFF CACHE BOOL "" FORCE)
+set(WITH_DSP_FFMPEG OFF CACHE BOOL "" FORCE)
+set(WITH_VIDEO_FFMPEG OFF CACHE BOOL "" FORCE)
+set(WITH_SWSCALE OFF CACHE BOOL "" FORCE)
+set(WITH_KRB5 OFF CACHE BOOL "" FORCE)
+set(WITH_UNICODE_BUILTIN ON CACHE BOOL "" FORCE)
+set(WITH_FUSE OFF CACHE BOOL "" FORCE)
+set(CHANNEL_URBDRC OFF CACHE BOOL "" FORCE)
+set(CHANNEL_URBDRC_CLIENT OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 
-  add_library(freerdp_harmony_bridge SHARED freerdp_adapter.cpp freerdp_session.cpp napi_export.cpp)
+add_subdirectory(${FREERDP_ROOT_DIR} ${FREERDP_BINARY_DIR} EXCLUDE_FROM_ALL)
 
-  target_include_directories(
-    freerdp_harmony_bridge
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${FREERDP_SOURCE_DIR}/include ${FREERDP_SOURCE_DIR}/winpr/include
-            ${FREERDP_INSTALL_DIR}/include ${FREERDP_INSTALL_DIR}/include/freerdp3
-            ${FREERDP_INSTALL_DIR}/include/winpr3
+add_library(freerdp_harmony_bridge SHARED
+  freerdp_adapter.cpp
+  freerdp_session.cpp
+  napi_export.cpp
+)
+
+target_include_directories(freerdp_harmony_bridge PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${FREERDP_ROOT_DIR}/include
+  ${FREERDP_ROOT_DIR}/winpr/include
+  ${FREERDP_BINARY_DIR}
+  ${FREERDP_BINARY_DIR}/include
+  ${FREERDP_BINARY_DIR}/winpr/include
+)
+
+target_link_libraries(freerdp_harmony_bridge PRIVATE
+  freerdp-client
+  freerdp
+  winpr
+)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "OHOS")
+  target_link_libraries(freerdp_harmony_bridge PRIVATE
+    libace_napi.z.so
+    libhilog_ndk.z.so
+    libnative_window.so
+    libnative_buffer.so
   )
-
-  target_link_libraries(
-    freerdp_harmony_bridge PRIVATE openssl-lib libace_napi.z.so libhilog_ndk.z.so libnative_window.so
-                                   libnative_buffer.so z
-  )
-
-  target_link_options(
-    freerdp_harmony_bridge PRIVATE "-Wl,--whole-archive" "SHELL:@${FREERDP_INSTALL_DIR}/lib/freerdp_archives.rsp"
-    "-Wl,--no-whole-archive"
-  )
-
-  add_dependencies(freerdp_harmony_bridge freerdp)
-
-else()
-  set(FREERDP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/freerdp-root-build)
-
-  set(WITH_CLIENT_HARMONY OFF CACHE BOOL "" FORCE)
-  set(WITH_CLIENT ON CACHE BOOL "" FORCE)
-  set(WITH_CLIENT_COMMON ON CACHE BOOL "" FORCE)
-  set(WITH_CLIENT_CHANNELS ON CACHE BOOL "" FORCE)
-  set(WITH_SERVER OFF CACHE BOOL "" FORCE)
-  set(WITH_SAMPLE OFF CACHE BOOL "" FORCE)
-  set(WITH_CLIENT_SDL OFF CACHE BOOL "" FORCE)
-  set(WITH_X11 OFF CACHE BOOL "" FORCE)
-  set(WITH_WAYLAND OFF CACHE BOOL "" FORCE)
-  set(WITH_MANPAGES OFF CACHE BOOL "" FORCE)
-  set(WITH_PULSE OFF CACHE BOOL "" FORCE)
-  set(WITH_CUPS OFF CACHE BOOL "" FORCE)
-  set(WITH_FFMPEG OFF CACHE BOOL "" FORCE)
-  set(WITH_DSP_FFMPEG OFF CACHE BOOL "" FORCE)
-  set(WITH_VIDEO_FFMPEG OFF CACHE BOOL "" FORCE)
-  set(WITH_SWSCALE OFF CACHE BOOL "" FORCE)
-  set(WITH_KRB5 OFF CACHE BOOL "" FORCE)
-  set(WITH_UNICODE_BUILTIN ON CACHE BOOL "" FORCE)
-  set(WITH_FUSE OFF CACHE BOOL "" FORCE)
-  set(CHANNEL_URBDRC OFF CACHE BOOL "" FORCE)
-  set(CHANNEL_URBDRC_CLIENT OFF CACHE BOOL "" FORCE)
-  set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-
-  add_subdirectory(${FREERDP_ROOT_DIR} ${FREERDP_BINARY_DIR} EXCLUDE_FROM_ALL)
-
-  add_library(freerdp_harmony_bridge SHARED freerdp_adapter.cpp freerdp_session.cpp napi_export.cpp)
-
-  target_include_directories(
-    freerdp_harmony_bridge
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${FREERDP_ROOT_DIR}/include ${FREERDP_ROOT_DIR}/winpr/include
-            ${FREERDP_BINARY_DIR} ${FREERDP_BINARY_DIR}/include ${FREERDP_BINARY_DIR}/winpr/include
-  )
-
-  target_link_libraries(freerdp_harmony_bridge PRIVATE freerdp-client freerdp winpr)
 endif()
