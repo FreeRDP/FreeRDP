@@ -21,3 +21,9 @@ client/Harmony/.hvigor/
 client/Harmony/.appanalyzer/
 client/Harmony/oh_modules/
 client/Harmony/entry/oh_modules/
+
+# Harmony OpenSSL
+client/Harmony/native/third_party/ohos-openssl/
+client/Harmony/native/third_party/openssl-prebuilt/
+/build-harmony-openssl/
+/cache/
