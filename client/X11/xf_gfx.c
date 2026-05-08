@@ -59,6 +59,8 @@ typedef struct xf_shm_surface_entry
 
 static xfShmSurfaceEntry* g_xf_shm_surfaces = NULL;
 
+static BOOL loggedCopyLayout = FALSE;
+
 static xfShmSurfaceEntry* xf_shm_find_surface(const xfGfxSurface* surface)
 {
 	for (xfShmSurfaceEntry* cur = g_xf_shm_surfaces; cur; cur = cur->next)
@@ -502,12 +504,15 @@ static BOOL xf_vaapi_getimage_bgrx_to_gdi(xfGfxSurface* surface,
 		return FALSE;
 	}
 
-	const UINT32 bytesPerPixel = 4;
-	const UINT32 copyBytes = width * bytesPerPixel;
-	if ((cachedImage.pitches[0] < copyBytes) || (surface->gdi.scanline < copyBytes))
+	const size_t bytesPerPixel = 4;
+	const size_t rowBytes = (size_t)width * bytesPerPixel;
+	const size_t srcPitch = (size_t)cachedImage.pitches[0];
+	const size_t dstPitch = (size_t)surface->gdi.scanline;
+	if ((srcPitch < rowBytes) || (dstPitch < rowBytes))
 	{
-		WLog_WARN(TAG, "VAAPI getimage: invalid pitch imagePitch=%u dstScanline=%u copyBytes=%u",
-		          cachedImage.pitches[0], surface->gdi.scanline, copyBytes);
+		WLog_WARN(TAG,
+		          "VAAPI getimage: invalid pitch imagePitch=%zu dstScanline=%zu rowBytes=%zu",
+		          srcPitch, dstPitch, rowBytes);
 		vaUnmapBuffer(dpy, cachedImage.buf);
 		return FALSE;
 	}
@@ -515,11 +520,32 @@ static BOOL xf_vaapi_getimage_bgrx_to_gdi(xfGfxSurface* surface,
 	const BYTE* src = (const BYTE*)mapped + cachedImage.offsets[0];
 	BYTE* dst = surface->gdi.data;
 
-	for (UINT32 y = 0; y < height; y++)
+// #DATISCUM folgenden Log wieder raus nehmen oder nur für DEBUG Build
+if (!loggedCopyLayout)
+{
+	WLog_WARN(TAG,
+	          "VAAPI BGRX copy layout: width=%u height=%u rowBytes=%zu srcPitch=%zu dstPitch=%zu mode=%s",
+	          width,
+	          height,
+	          rowBytes,
+	          srcPitch,
+	          dstPitch,
+	          (srcPitch == dstPitch) ? "block" : "row");
+	loggedCopyLayout = TRUE;
+}
+
+	if (srcPitch == dstPitch)
 	{
-		const BYTE* srcRow = src + y * cachedImage.pitches[0];
-		BYTE* dstRow = dst + y * surface->gdi.scanline;
-		memcpy(dstRow, srcRow, copyBytes);
+		memcpy(dst, src, srcPitch * (size_t)height);
+	}
+	else
+	{
+		for (UINT32 y = 0; y < height; y++)
+		{
+			const BYTE* srcRow = src + (size_t)y * srcPitch;
+			BYTE* dstRow = dst + (size_t)y * dstPitch;
+			memcpy(dstRow, srcRow, rowBytes);
+		}
 	}
 
 	vaUnmapBuffer(dpy, cachedImage.buf);
