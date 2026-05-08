@@ -73,7 +73,7 @@ detect_native_changes() {
   fi
 
   local repo_root
-  repo_root="$(cd "${PROJECT_DIR}/../../.." && pwd)"
+  repo_root="$(cd "${PROJECT_DIR}/../.." && pwd)"
 
   if ! git -C "${repo_root}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     return 0
@@ -98,7 +98,7 @@ detect_native_changes() {
 
 check_openssl_prebuilt() {
   local repo_root
-  repo_root="$(cd "${PROJECT_DIR}/../../.." && pwd)"
+  repo_root="$(cd "${PROJECT_DIR}/../.." && pwd)"
 
   local arch="arm64-v8a"
   local prebuilt_dir="${repo_root}/client/Harmony/native/third_party/openssl-prebuilt/${arch}"
