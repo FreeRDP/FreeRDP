@@ -17,9 +17,11 @@ if(WITH_VERBOSE_WINPR_ASSERT)
   add_compile_definitions(WITH_VERBOSE_WINPR_ASSERT)
 endif()
 
-# known issue on android, thus disabled until we support newer CMake
-# https://github.com/android/ndk/issues/1444
-if(NOT ANDROID OR ("${CMAKE_VERSION}" GREATER_EQUAL "3.20.0"))
+# HarmonyOS toolchains currently fail the IPO try_compile bootstrap because the
+# nested probe loses the parent toolchain path. Keep LTO disabled there.
+if(CMAKE_SYSTEM_NAME STREQUAL "OHOS")
+  option(CMAKE_INTERPROCEDURAL_OPTIMIZATION "build with link time optimization" OFF)
+elseif(NOT ANDROID OR ("${CMAKE_VERSION}" GREATER_EQUAL "3.20.0"))
   if(POLICY CMP0138)
     cmake_policy(SET CMP0138 NEW)
   endif()

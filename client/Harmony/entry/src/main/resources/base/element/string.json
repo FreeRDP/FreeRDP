@@ -1,0 +1,28 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "hFreeRDP"
+    },
+    {
+      "name": "module_desc",
+      "value": "hFreeRDP HarmonyOS Client"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "hFreeRDP Remote Desktop"
+    },
+    {
+      "name": "SessionAbility_desc",
+      "value": "Remote Desktop Session"
+    },
+    {
+      "name": "session_ability_label",
+      "value": "hFreeRDP Session"
+    },
+    {
+      "name": "read_pasteboard_reason",
+      "value": "Used to synchronize local clipboard content to the remote desktop"
+    }
+  ]
+}
