@@ -84,6 +84,19 @@ extern "C"
 		SCARDHANDLE hCard;
 		const char* ioControlCodeName;
 		UINT32 outputBufferLength; /** @since version 3.13.0 */
+		union
+		{
+			EstablishContext_Return establishContext;
+			ListReaders_Return listReaders;
+			GetStatusChange_Return getStatusChange;
+			Connect_Return connect;
+			Control_Return control;
+			Transmit_Return transmit;
+			GetAttrib_Return getAttrib;
+			Reconnect_Return reconnect;
+			Status_Return status;
+		} ret;           /** @since version 3.28.0 */
+		LONG returnCode; /** @since version 3.28.0 */
 	} SMARTCARD_OPERATION;
 
 	/** @brief Alias for \ref smartcard_irp_device_control_decode_request.
@@ -113,6 +126,39 @@ extern "C"
 	FREERDP_API LONG smartcard_irp_device_control_decode_request(wStream* s, UINT32 CompletionId,
 	                                                             UINT32 FileId,
 	                                                             SMARTCARD_OPERATION* operation);
+
+	/** @brief Decode a smartcard IOCTL response received from the client.
+	 *
+	 *  Parses the OutputBufferLength, Common Type Header, Private Type Header, and the
+	 *  ReturnCode, then unpacks the IOCTL-specific return payload into \p operation->ret.
+	 *
+	 *  @param s              Stream positioned at OutputBufferLength, after the DeviceIoReply
+	 * header.
+	 *  @param ioControlCode  The SCARD_IOCTL_* code identifying the response type.
+	 *  @param operation [out] The decoded returnCode and ret union.
+	 *  @return \b SCARD_S_SUCCESS on success, a smartcard error code on failure.
+	 *
+	 *  @since version 3.28.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API LONG smartcard_irp_device_control_decode_response(wStream* s, UINT32 ioControlCode,
+	                                                              SMARTCARD_OPERATION* operation);
+
+	/** @brief Encode a smartcard IOCTL request to send to the client.
+	 *
+	 *  Writes the Common Type Header, Private Type Header, and the IOCTL-specific
+	 *  call payload from \p operation->call into the stream. The ioControlCode field
+	 *  in \p operation selects which pack_call function is dispatched.
+	 *
+	 *  @param s         Stream to write into, positioned where the type headers should start.
+	 *  @param operation with the populated call union and ioControlCode to encode.
+	 *  @return \b SCARD_S_SUCCESS on success, a smartcard error code on failure.
+	 *
+	 *  @since version 3.28.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API LONG
+	smartcard_irp_device_control_encode_request(wStream* s, const SMARTCARD_OPERATION* operation);
 
 	/** @brief Free resources held by a SMARTCARD_OPERATION.
 	 *
