@@ -1,13 +1,14 @@
 import { ConnectionProfile, createEmptyProfile, cloneProfile } from '../model/ConnectionProfile';
 import { BookmarkService } from '../service/BookmarkService';
 import { IdGenerator } from '../utils/IdGenerator';
+import { i18n } from '../utils/I18n';
 import common from '@ohos.app.ability.common';
 
 @Observed
 export class HomeViewModel {
   profile: ConnectionProfile;
   bookmarks: ConnectionProfile[] = [];
-  lastMessage: string = '等待连接';
+  lastMessage: string = i18n.get(i18n.currentLocale(), 'waiting_connect');
 
   private bookmarkService: BookmarkService = new BookmarkService();
   private context: common.UIAbilityContext | null = null;
@@ -142,7 +143,7 @@ export class HomeViewModel {
   applyBookmark(profile: ConnectionProfile): void {
     this.profile = this.copyProfile(profile);
     this.persistDraft();
-    this.lastMessage = `已载入 ${profile.name}`;
+    this.lastMessage = `${i18n.get(i18n.currentLocale(), 'loaded_profile_prefix')} ${profile.name}`;
   }
 
   get canConnect(): boolean {
@@ -152,7 +153,7 @@ export class HomeViewModel {
   async saveCurrentProfile(): Promise<void> {
     const context = this.context;
     if (context === null) {
-      this.lastMessage = '书签服务尚未初始化';
+      this.lastMessage = i18n.get(i18n.currentLocale(), 'bookmark_service_not_initialized');
       return;
     }
     const saved: ConnectionProfile = this.copyProfile(this.profile);
@@ -162,6 +163,6 @@ export class HomeViewModel {
     this.bookmarks = await this.bookmarkService.list(context);
     this.profile = this.copyProfile(saved);
     this.persistDraft();
-    this.lastMessage = '书签已保存';
+    this.lastMessage = i18n.get(i18n.currentLocale(), 'bookmark_saved');
   }
 }

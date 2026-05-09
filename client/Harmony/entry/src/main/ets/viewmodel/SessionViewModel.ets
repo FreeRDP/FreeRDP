@@ -1,6 +1,7 @@
 import { ConnectionProfile, cloneProfile } from '../model/ConnectionProfile';
 import { SessionEvent, SessionEventType, SessionSnapshot, SessionStage, SessionState } from '../model/SessionModels';
 import { sessionBridge } from '../service/SessionNativeBridge';
+import { i18n } from '../utils/I18n';
 
 @Observed
 export class SessionViewModel {
@@ -26,7 +27,7 @@ export class SessionViewModel {
       sessionId: 0,
       stage: SessionStage.Idle,
       title: profile.name.length > 0 ? profile.name : profile.host,
-      message: '尚未连接',
+      message: i18n.get(i18n.currentLocale(), 'not_connected'),
       profile: profile
     };
   }
@@ -46,7 +47,7 @@ export class SessionViewModel {
     const connectingState: SessionState = this.copyState(this.state);
     connectingState.sessionId = sessionId;
     connectingState.stage = SessionStage.Connecting;
-    connectingState.message = '正在连接远程桌面...';
+    connectingState.message = i18n.get(i18n.currentLocale(), 'connecting_msg');
     this.state = connectingState;
 
     const connected: SessionState = await sessionBridge.connect(sessionId);
@@ -66,7 +67,7 @@ export class SessionViewModel {
     await sessionBridge.disconnect(this.state.sessionId);
     const disconnectedState: SessionState = this.copyState(this.state);
     disconnectedState.stage = SessionStage.Disconnected;
-    disconnectedState.message = '连接已断开';
+    disconnectedState.message = i18n.get(i18n.currentLocale(), 'disconnected_msg');
     this.state = disconnectedState;
   }
 
@@ -183,21 +184,21 @@ export class SessionViewModel {
   async sendCtrlAltDel(): Promise<void> {
     await sessionBridge.sendCtrlAltDel(this.state.sessionId);
     const nextState: SessionState = this.copyState(this.state);
-    nextState.message = '已发送 Ctrl+Alt+Del';
+    nextState.message = i18n.get(i18n.currentLocale(), 'sent_ctrl_alt_del');
     this.state = nextState;
   }
 
   async sendWindowsKey(): Promise<void> {
     await sessionBridge.sendWindowsKey(this.state.sessionId);
     const nextState: SessionState = this.copyState(this.state);
-    nextState.message = '已发送 Windows 键';
+    nextState.message = i18n.get(i18n.currentLocale(), 'sent_windows_key');
     this.state = nextState;
   }
 
   async sendEscape(): Promise<void> {
     await sessionBridge.sendEscape(this.state.sessionId);
     const nextState: SessionState = this.copyState(this.state);
-    nextState.message = '已发送 Escape';
+    nextState.message = i18n.get(i18n.currentLocale(), 'sent_escape');
     this.state = nextState;
   }
 }

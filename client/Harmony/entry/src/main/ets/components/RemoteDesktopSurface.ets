@@ -3,6 +3,7 @@ import { inputMethod } from '@kit.IMEKit';
 import { SessionSnapshot, SessionStage } from '../model/SessionModels';
 import { KeyboardMapper } from '../utils/KeyboardMapper';
 import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
+import { i18n } from '../utils/I18n';
 
 const PTR_FLAGS_BUTTON1: number = 0x1000;
 const PTR_FLAGS_BUTTON2: number = 0x2000;
@@ -34,6 +35,7 @@ export struct RemoteDesktopSurface {
   @Prop isFullscreen: boolean = false;
   @Prop @Watch('onThemeChanged') isDark: boolean = false;
   @State colors: ThemeColors = LightColors;
+  @StorageLink('__app_language__') appLanguage: string = 'system';
   getFrameBuffer: () => ArrayBuffer = (): ArrayBuffer => new ArrayBuffer(0);
   setSurfaceId: (surfaceId: string) => Promise<void> = async (_surfaceId: string): Promise<void> => {};
   onMouseMove: (x: number, y: number) => void = (_x: number, _y: number): void => {};
@@ -392,16 +394,16 @@ export struct RemoteDesktopSurface {
         Column({ space: 12 }) {
           LoadingProgress()
             .color(this.colors.primary)
-          Text('正在建立会话并等待首帧...')
+          Text(i18n.get(this.appLanguage, 'connecting_first_frame'))
             .fontColor(this.colors.mutedForeground)
             .fontSize(14)
         }
       } else if (this.stage === SessionStage.Connected) {
-        Text('已连接，正在等待首帧...')
+        Text(i18n.get(this.appLanguage, 'waiting_first_frame'))
           .fontColor(this.colors.mutedForeground)
           .fontSize(14)
       } else {
-        Text('连接后将在这里展示远程桌面画面')
+        Text(i18n.get(this.appLanguage, 'connect_to_show_desktop'))
           .fontColor(this.colors.mutedForeground)
           .fontSize(14)
       }

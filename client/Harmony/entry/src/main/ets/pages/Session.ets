@@ -10,6 +10,7 @@ import { AuthDialog } from '../components/AuthDialog';
 import { CertDialog } from '../components/CertDialog';
 import { SessionLaunchParams, DEFAULT_SESSION_LAUNCH_PARAMS } from '../entryability/SessionAbility';
 import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
+import { i18n } from '../utils/I18n';
 
 interface WindowLike {
   setWindowTitle?: (t: string) => void;
@@ -37,6 +38,7 @@ struct Session {
   @State authEvent: SessionEvent | null = null;
   @State certEvent: SessionEvent | null = null;
   @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
+  @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
 
   private systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard();
@@ -50,6 +52,7 @@ struct Session {
   onThemeChanged(): void {
     this.colors = this.isDark ? DarkColors : LightColors;
   }
+
 
   authDialogController: CustomDialogController = new CustomDialogController({
     builder: AuthDialog({
@@ -91,13 +94,13 @@ struct Session {
   private getSessionWindowTitle(): string {
     const bridge: SessionLaunchParams = AppStorage.get<SessionLaunchParams>('__session_launch_bridge__')
       ?? DEFAULT_SESSION_LAUNCH_PARAMS;
-    if (bridge.title.length > 0 && bridge.title !== '远程桌面') {
+    if (bridge.title.length > 0 && bridge.title !== i18n.get(this.appLanguage, 'app_desktop')) {
       return bridge.title;
     }
     if (this.sessionTitle.length > 0) {
       return this.sessionTitle;
     }
-    return '远程桌面';
+    return i18n.get(this.appLanguage, 'app_desktop');
   }
 
   private updateWindowTitle(): void {
@@ -200,7 +203,7 @@ struct Session {
     this.sessionId = this.readActiveSessionId();
     if (this.sessionId <= 0) {
       this.sessionStage = SessionStage.Error;
-      this.sessionSubtitle = '未找到会话标识';
+      this.sessionSubtitle = i18n.get(this.appLanguage, 'no_session_id');
       return;
     }
 

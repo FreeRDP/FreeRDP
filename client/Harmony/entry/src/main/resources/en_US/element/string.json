@@ -2,79 +2,79 @@
   "string": [
     {
       "name": "app_name",
-      "value": "hFreeRDP"
+      "value": "GreenTiger RDP Client"
     },
     {
       "name": "module_desc",
-      "value": "横渠天地碧虎远程桌面"
+      "value": "HengQu GreenTiger RDP Client"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "横渠天地 · 碧虎远程桌面"
+      "value": "HengQu · GreenTiger RDP Client"
     },
     {
       "name": "SessionAbility_desc",
-      "value": "远程桌面会话窗口"
+      "value": "RDP Client Session Window"
     },
     {
       "name": "session_ability_label",
-      "value": "远程桌面"
+      "value": "RDP Client"
     },
     {
       "name": "read_pasteboard_reason",
-      "value": "用于将本地剪贴板内容同步到远程桌面"
+      "value": "Used to sync local clipboard content to RDP client"
     },
     {
       "name": "app_brand",
-      "value": "碧虎"
+      "value": "GreenTiger"
     },
     {
       "name": "app_desktop",
-      "value": "远程桌面"
+      "value": "RDP Client"
     },
     {
       "name": "app_subtitle",
-      "value": "便利的远程访问"
+      "value": "Convenient Remote Access"
     },
     {
       "name": "about",
-      "value": "关于"
+      "value": "About"
     },
     {
       "name": "connection_settings",
-      "value": "连接设置"
+      "value": "Connection Settings"
     },
     {
       "name": "connect_desktop",
-      "value": "连接桌面"
+      "value": "Connect"
     },
     {
       "name": "save_config",
-      "value": "保存配置"
+      "value": "Save Config"
     },
     {
       "name": "cancel",
-      "value": "取消"
+      "value": "Cancel"
     },
     {
       "name": "confirm",
-      "value": "确定"
+      "value": "Confirm"
     },
     {
       "name": "delete",
-      "value": "删除"
+      "value": "Delete"
     },
     {
       "name": "disconnect",
-      "value": "断开"
+      "value": "Disconnect"
     },
     {
       "name": "username_placeholder",
-      "value": "用户名"
+      "value": "Username"
     },
     {
       "name": "password_placeholder",
-      "value": "密码"
+      "value": "Password"
     }
   ]
 }

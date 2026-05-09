@@ -1,11 +1,13 @@
 import { SessionStage } from '../model/SessionModels';
 import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
+import { i18n } from '../utils/I18n';
 
 @Component
 export struct SessionToolbar {
   @Prop stage: SessionStage;
   @Prop isFullscreen: boolean = false;
   @Prop @Watch('onThemeChanged') isDark: boolean = false;
+  @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
   onSendCtrlAltDel: () => void = (): void => {};
   onSendWindowsKey: () => void = (): void => {};
@@ -22,15 +24,15 @@ export struct SessionToolbar {
     Row({ space: 6 }) {
       Scroll() {
         Row({ space: 6 }) {
-          this.buildToolbarBtn(this.isFullscreen ? '退出全屏' : '全屏', () => this.onToggleFullscreen());
-          this.buildToolbarBtn('键盘', () => this.onShowKeyboard());
+          this.buildToolbarBtn(this.isFullscreen ? i18n.get(this.appLanguage, 'exit_fullscreen') : i18n.get(this.appLanguage, 'fullscreen'), () => this.onToggleFullscreen());
+          this.buildToolbarBtn(i18n.get(this.appLanguage, 'keyboard'), () => this.onShowKeyboard());
           this.buildToolbarBtn('Ctrl+Alt+Del', () => this.onSendCtrlAltDel());
           this.buildToolbarBtn('Win', () => this.onSendWindowsKey());
           this.buildToolbarBtn('Esc', () => this.onSendEscape());
 
           Blank().width(8);
 
-          Button('断开')
+          Button(i18n.get(this.appLanguage, 'disconnect'))
             .type(ButtonType.Capsule)
             .height(32)
             .fontSize(12)

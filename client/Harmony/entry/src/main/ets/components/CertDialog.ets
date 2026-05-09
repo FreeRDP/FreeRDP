@@ -1,11 +1,13 @@
 import { SessionEvent } from '../model/SessionModels';
 import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
+import { i18n } from '../utils/I18n';
 
 @CustomDialog
 export struct CertDialog {
   controller: CustomDialogController;
   event: SessionEvent | null = null;
   @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
+  @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
   onConfirm: (accept: boolean) => void = () => {};
 
@@ -17,11 +19,11 @@ export struct CertDialog {
     Column() {
       Row() {
         Column({ space: 4 }) {
-          Text('证书验证')
+          Text(i18n.get(this.appLanguage, 'cert_verify'))
             .fontSize(18)
             .fontWeight(FontWeight.Bold)
             .fontColor(this.colors.foreground);
-          Text('无法验证此远程计算机的身份，是否仍要连接？')
+          Text(i18n.get(this.appLanguage, 'cert_unable_verify'))
             .fontSize(13)
             .fontColor(this.colors.mutedForeground)
             .lineHeight(19);
@@ -50,10 +52,10 @@ export struct CertDialog {
 
       if (this.event) {
         Column({ space: 8 }) {
-          this.buildCertRow('主机名', this.event.certHost);
-          this.buildCertRow('主题', this.event.certSubject);
-          this.buildCertRow('颁发者', this.event.certIssuer);
-          this.buildCertRow('指纹', this.event.certFingerprint);
+          this.buildCertRow(i18n.get(this.appLanguage, 'cert_hostname'), this.event.certHost);
+          this.buildCertRow(i18n.get(this.appLanguage, 'cert_subject'), this.event.certSubject);
+          this.buildCertRow(i18n.get(this.appLanguage, 'cert_issuer'), this.event.certIssuer);
+          this.buildCertRow(i18n.get(this.appLanguage, 'cert_fingerprint'), this.event.certFingerprint);
         }
         .alignItems(HorizontalAlign.Start)
         .width('100%')
@@ -64,7 +66,7 @@ export struct CertDialog {
       }
 
       Row({ space: 12 }) {
-        Button('拒绝连接')
+        Button(i18n.get(this.appLanguage, 'cert_reject'))
           .layoutWeight(1)
           .height(44)
           .fontSize(14)
@@ -77,7 +79,7 @@ export struct CertDialog {
             this.controller.close();
           })
 
-        Button('接受并连接')
+        Button(i18n.get(this.appLanguage, 'cert_accept'))
           .layoutWeight(1)
           .height(44)
           .fontSize(14)

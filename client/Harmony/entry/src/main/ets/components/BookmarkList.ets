@@ -1,10 +1,12 @@
 import { ConnectionProfile } from '../model/ConnectionProfile';
 import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
+import { i18n } from '../utils/I18n';
 
 @Component
 export struct BookmarkList {
   @Prop items: ConnectionProfile[] = [];
   @Prop @Watch('onThemeChanged') isDark: boolean = false;
+  @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
   onSelect: (profile: ConnectionProfile) => void = (_profile: ConnectionProfile): void => {};
   onDelete: (profileId: string) => void = (_profileId: string): void => {};
@@ -21,10 +23,10 @@ export struct BookmarkList {
           Text('—')
             .fontSize(32)
             .fontColor(this.colors.mutedForeground)
-          Text('暂无保存的连接')
+          Text(i18n.get(this.appLanguage, 'bookmarks_empty_title'))
             .fontSize(16)
             .fontColor(this.colors.mutedForeground)
-          Text('在「新建」标签页填写配置并保存')
+          Text(i18n.get(this.appLanguage, 'bookmarks_empty_subtitle'))
             .fontSize(14)
             .fontColor(this.colors.muted)
         }
@@ -83,7 +85,7 @@ export struct BookmarkList {
             .alignItems(VerticalAlign.Center)
 
             Row({ space: 0 }) {
-              Button('载入配置')
+              Button(i18n.get(this.appLanguage, 'load_config'))
                 .type(ButtonType.Normal)
                 .flexGrow(1)
                 .height(44)
@@ -94,7 +96,7 @@ export struct BookmarkList {
                 .border({ width: { right: 1 }, color: this.colors.surfaceElevatedBorder })
                 .onClick(() => this.onSelect(item))
 
-              Button('删除')
+              Button(i18n.get(this.appLanguage, 'delete'))
                 .type(ButtonType.Normal)
                 .flexGrow(1)
                 .height(44)

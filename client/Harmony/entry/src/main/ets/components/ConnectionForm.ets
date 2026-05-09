@@ -1,5 +1,6 @@
 import { ConnectionProfile } from '../model/ConnectionProfile';
 import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
+import { i18n } from '../utils/I18n';
 
 @Component
 export struct ConnectionForm {
@@ -7,6 +8,7 @@ export struct ConnectionForm {
   @Prop canConnect: boolean;
   @Prop rememberPassword: boolean;
   @Prop @Watch('onThemeChanged') isDark: boolean = false;
+  @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
   @State gatewayExpanded: boolean = false;
   onNameChange: (value: string) => void = (_value: string): void => {};
@@ -38,13 +40,13 @@ export struct ConnectionForm {
   build() {
     Column({ space: 18 }) {
       Row() {
-        Text('连接设置')
+        Text(i18n.get(this.appLanguage, 'connection_settings'))
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
           .fontColor(this.colors.foreground)
           .layoutWeight(1)
 
-        Button('新建')
+        Button(i18n.get(this.appLanguage, 'new_connection'))
           .type(ButtonType.Normal)
           .fontSize(14)
           .height(38)
@@ -57,7 +59,7 @@ export struct ConnectionForm {
       .width('100%')
 
       Column({ space: 14 }) {
-        TextInput({ placeholder: '连接名称', text: this.profile.name })
+        TextInput({ placeholder: i18n.get(this.appLanguage, 'connection_name_placeholder'), text: this.profile.name })
           .backgroundColor(this.colors.inputBackground)
           .borderRadius(12)
           .border({ width: 1, color: this.colors.inputBorder })
@@ -68,7 +70,7 @@ export struct ConnectionForm {
           .fontColor(this.colors.foreground)
           .onChange((v) => this.onNameChange(v));
 
-        TextInput({ placeholder: '服务器地址', text: this.profile.host })
+        TextInput({ placeholder: i18n.get(this.appLanguage, 'server_address_placeholder'), text: this.profile.host })
           .backgroundColor(this.colors.inputBackground)
           .borderRadius(12)
           .border({ width: 1, color: this.colors.inputBorder })
@@ -80,7 +82,7 @@ export struct ConnectionForm {
           .onChange((v) => this.onHostChange(v));
 
         Row({ space: 12 }) {
-          TextInput({ placeholder: '端口', text: `${this.profile.port}` })
+          TextInput({ placeholder: i18n.get(this.appLanguage, 'port_placeholder'), text: `${this.profile.port}` })
             .type(InputType.Number)
             .backgroundColor(this.colors.inputBackground)
             .borderRadius(12)
@@ -94,7 +96,7 @@ export struct ConnectionForm {
             .onChange((v) => this.onPortChange(v));
         }
 
-        TextInput({ placeholder: '用户名', text: this.profile.username })
+        TextInput({ placeholder: i18n.get(this.appLanguage, 'username_placeholder'), text: this.profile.username })
           .backgroundColor(this.colors.inputBackground)
           .borderRadius(12)
           .border({ width: 1, color: this.colors.inputBorder })
@@ -105,7 +107,7 @@ export struct ConnectionForm {
           .fontColor(this.colors.foreground)
           .onChange((v) => this.onUserChange(v));
 
-        TextInput({ placeholder: '域（可选）', text: this.profile.domain })
+        TextInput({ placeholder: i18n.get(this.appLanguage, 'domain_optional_placeholder'), text: this.profile.domain })
           .backgroundColor(this.colors.inputBackground)
           .borderRadius(12)
           .border({ width: 1, color: this.colors.inputBorder })
@@ -116,7 +118,7 @@ export struct ConnectionForm {
           .fontColor(this.colors.foreground)
           .onChange((v) => this.onDomainChange(v));
 
-        TextInput({ placeholder: '密码', text: this.profile.password })
+        TextInput({ placeholder: i18n.get(this.appLanguage, 'password_placeholder'), text: this.profile.password })
           .type(InputType.Password)
           .backgroundColor(this.colors.inputBackground)
           .borderRadius(12)
@@ -139,7 +141,7 @@ export struct ConnectionForm {
               .textAlign(TextAlign.Center)
               .backgroundColor(this.colors.hintOrangeBg)
               .borderRadius(11)
-            Text('不填写凭据时，将显示远端系统登录界面，可直接在远端输入。')
+            Text(i18n.get(this.appLanguage, 'empty_credentials_hint'))
               .fontSize(14)
               .fontColor(this.colors.hintOrange)
               .lineHeight(20)
@@ -152,7 +154,7 @@ export struct ConnectionForm {
         }
 
         Row() {
-          Text('记住密码')
+          Text(i18n.get(this.appLanguage, 'remember_password'))
             .fontSize(16)
             .fontColor(this.colors.foreground)
             .layoutWeight(1)
@@ -169,7 +171,7 @@ export struct ConnectionForm {
             Text(this.gatewayExpanded ? '▾' : '▸')
               .fontSize(14)
               .fontColor(this.colors.primary);
-            Text('网关设置')
+            Text(i18n.get(this.appLanguage, 'gateway_settings'))
               .fontSize(16)
               .fontWeight(FontWeight.Medium)
               .fontColor(this.colors.foreground);
@@ -179,7 +181,7 @@ export struct ConnectionForm {
           Blank()
 
           if (this.hasGatewayConfig()) {
-            Text('已配置')
+            Text(i18n.get(this.appLanguage, 'gateway_configured'))
               .fontSize(13)
               .fontColor(this.colors.connectedGreen)
               .padding({ left: 10, right: 10, top: 4, bottom: 4 })
@@ -193,7 +195,7 @@ export struct ConnectionForm {
 
         if (this.gatewayExpanded) {
           Column({ space: 14 }) {
-            TextInput({ placeholder: '网关地址（host 或 host:port）', text: this.profile.gateway })
+            TextInput({ placeholder: i18n.get(this.appLanguage, 'gateway_address_placeholder'), text: this.profile.gateway })
               .backgroundColor(this.colors.inputBackground)
               .borderRadius(12)
               .border({ width: 1, color: this.colors.inputBorder })
@@ -203,7 +205,7 @@ export struct ConnectionForm {
               .placeholderColor(this.colors.mutedForeground)
               .fontColor(this.colors.foreground)
               .onChange((v) => this.onGatewayChange(v));
-            TextInput({ placeholder: '网关用户名', text: this.profile.gatewayUsername })
+            TextInput({ placeholder: i18n.get(this.appLanguage, 'gateway_username_placeholder'), text: this.profile.gatewayUsername })
               .backgroundColor(this.colors.inputBackground)
               .borderRadius(12)
               .border({ width: 1, color: this.colors.inputBorder })
@@ -213,7 +215,7 @@ export struct ConnectionForm {
               .placeholderColor(this.colors.mutedForeground)
               .fontColor(this.colors.foreground)
               .onChange((v) => this.onGatewayUserChange(v));
-            TextInput({ placeholder: '网关域', text: this.profile.gatewayDomain })
+            TextInput({ placeholder: i18n.get(this.appLanguage, 'gateway_domain_placeholder'), text: this.profile.gatewayDomain })
               .backgroundColor(this.colors.inputBackground)
               .borderRadius(12)
               .border({ width: 1, color: this.colors.inputBorder })
@@ -223,7 +225,7 @@ export struct ConnectionForm {
               .placeholderColor(this.colors.mutedForeground)
               .fontColor(this.colors.foreground)
               .onChange((v) => this.onGatewayDomainChange(v));
-            TextInput({ placeholder: '网关密码', text: this.profile.gatewayPassword })
+            TextInput({ placeholder: i18n.get(this.appLanguage, 'gateway_password_placeholder'), text: this.profile.gatewayPassword })
               .type(InputType.Password)
               .backgroundColor(this.colors.inputBackground)
               .borderRadius(12)
@@ -246,13 +248,13 @@ export struct ConnectionForm {
       .borderRadius(16)
 
       Column({ space: 14 }) {
-        Text('安全模式')
+        Text(i18n.get(this.appLanguage, 'security_mode'))
           .fontSize(16)
           .fontColor(this.colors.foreground)
           .alignSelf(ItemAlign.Start)
 
         Row({ space: 10 }) {
-          Button('自动')
+          Button(i18n.get(this.appLanguage, 'security_auto'))
             .type(ButtonType.Capsule)
             .fontSize(15)
             .height(40)
@@ -293,7 +295,7 @@ export struct ConnectionForm {
       .borderRadius(16)
 
       Row() {
-        Text('双向剪贴板')
+        Text(i18n.get(this.appLanguage, 'clipboard_bidirectional'))
           .fontSize(16)
           .fontColor(this.colors.foreground)
           .layoutWeight(1)
@@ -304,7 +306,7 @@ export struct ConnectionForm {
       .padding({ left: 4, right: 4, top: 8, bottom: 8 })
 
       Row({ space: 14 }) {
-        Button('保存配置')
+        Button(i18n.get(this.appLanguage, 'save_config'))
           .layoutWeight(1)
           .type(ButtonType.Normal)
           .height(52)
@@ -315,7 +317,7 @@ export struct ConnectionForm {
           .borderRadius(14)
           .onClick(() => this.onSave())
 
-        Button('连接桌面')
+        Button(i18n.get(this.appLanguage, 'connect_desktop'))
           .layoutWeight(2)
           .type(ButtonType.Normal)
           .height(52)

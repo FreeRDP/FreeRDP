@@ -1,5 +1,6 @@
 import { SessionEvent } from '../model/SessionModels';
 import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
+import { i18n } from '../utils/I18n';
 
 @CustomDialog
 export struct AuthDialog {
@@ -9,6 +10,7 @@ export struct AuthDialog {
   password: string = '';
   domain: string = '';
   @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
+  @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
   onConfirm: (username: string, password: string, domain: string) => void = () => {};
 
@@ -18,18 +20,18 @@ export struct AuthDialog {
 
   build() {
     Column() {
-      Text('需要身份验证')
+      Text(i18n.get(this.appLanguage, 'auth_required'))
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.colors.foreground)
         .margin({ bottom: 4 })
 
-      Text('远程桌面服务器需要您的凭据')
+      Text(i18n.get(this.appLanguage, 'auth_credentials_prompt'))
         .fontSize(14)
         .fontColor(this.colors.mutedForeground)
         .margin({ bottom: 24 })
 
-      TextInput({ placeholder: '用户名', text: this.username })
+      TextInput({ placeholder: i18n.get(this.appLanguage, 'username_placeholder'), text: this.username })
         .backgroundColor(this.colors.inputBackground)
         .border({ width: 1, color: this.colors.inputBorder })
         .borderRadius(12)
@@ -42,7 +44,7 @@ export struct AuthDialog {
         })
         .margin({ bottom: 12 })
 
-      TextInput({ placeholder: '密码', text: this.password })
+      TextInput({ placeholder: i18n.get(this.appLanguage, 'password_placeholder'), text: this.password })
         .type(InputType.Password)
         .backgroundColor(this.colors.inputBackground)
         .border({ width: 1, color: this.colors.inputBorder })
@@ -56,7 +58,7 @@ export struct AuthDialog {
         })
         .margin({ bottom: 12 })
 
-      TextInput({ placeholder: '域（可选）', text: this.domain })
+      TextInput({ placeholder: i18n.get(this.appLanguage, 'domain_optional_placeholder'), text: this.domain })
         .backgroundColor(this.colors.inputBackground)
         .border({ width: 1, color: this.colors.inputBorder })
         .borderRadius(12)
@@ -70,7 +72,7 @@ export struct AuthDialog {
         .margin({ bottom: 24 })
 
       Row({ space: 12 }) {
-        Button('取消')
+        Button(i18n.get(this.appLanguage, 'cancel'))
           .layoutWeight(1)
           .height(44)
           .fontSize(14)
@@ -83,7 +85,7 @@ export struct AuthDialog {
             this.controller.close();
           })
 
-        Button('确定')
+        Button(i18n.get(this.appLanguage, 'confirm'))
           .layoutWeight(1)
           .height(44)
           .fontSize(14)

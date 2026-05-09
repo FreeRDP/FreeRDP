@@ -1,6 +1,7 @@
 import { ConnectionForm } from '../components/ConnectionForm';
 import { BookmarkList } from '../components/BookmarkList';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { LanguageToggle } from '../components/LanguageToggle';
 import { HomeViewModel } from '../viewmodel/HomeViewModel';
 import { SessionRecord } from '../service/SessionManager';
 import { sessionManager } from '../service/SessionManager';
@@ -10,6 +11,7 @@ import { ConnectionProfile } from '../model/ConnectionProfile';
 import { common } from '@kit.AbilityKit';
 import { ThemeColors, LightColors, DarkColors } from '../utils/ThemeConstants';
 import { BUILD_VERSION } from '../utils/BuildInfo';
+import { i18n } from '../utils/I18n';
 import dataPreferences from '@ohos.data.preferences';
 import { util } from '@kit.ArkTS';
 
@@ -43,6 +45,7 @@ struct Index {
   @State activeSessions: SessionRecord[] = [];
   @State isConnecting: boolean = false;
   @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
+  @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
   @State aboutOpen: boolean = false;
   @State agreementDialogMode: number = AGREEMENT_DIALOG_NONE;
@@ -128,7 +131,7 @@ struct Index {
   }
 
   private createFallbackAgreementText(title: string): string {
-    return `# ${title}\n\n协议内容加载失败，请稍后重试。`;
+    return `# ${title}\n\n${i18n.get(this.appLanguage, 'agreement_load_failed')}`;
   }
 
   private stripInlineMarkdown(value: string): string {
@@ -215,8 +218,8 @@ struct Index {
   }
 
   private async loadAgreements(): Promise<void> {
-    const privacyText = this.loadAgreementText(PRIVACY_POLICY_RAWFILE, '隐私协议');
-    const userText = this.loadAgreementText(USER_AGREEMENT_RAWFILE, '用户协议');
+    const privacyText = this.loadAgreementText(PRIVACY_POLICY_RAWFILE, i18n.get(this.appLanguage, 'privacy_policy'));
+    const userText = this.loadAgreementText(USER_AGREEMENT_RAWFILE, i18n.get(this.appLanguage, 'user_agreement'));
 
     this.privacyPolicyBlocks = this.parseMarkdownBlocks(privacyText);
     this.userAgreementBlocks = this.parseMarkdownBlocks(userText);
@@ -294,12 +297,12 @@ struct Index {
 
   private getAgreementDialogTitle(): string {
     if (this.agreementDialogMode === AGREEMENT_DIALOG_PRIVACY) {
-      return '隐私协议';
+      return i18n.get(this.appLanguage, 'privacy_policy');
     }
     if (this.agreementDialogMode === AGREEMENT_DIALOG_USER) {
-      return '用户协议';
+      return i18n.get(this.appLanguage, 'user_agreement');
     }
-    return '协议阅读与确认';
+    return i18n.get(this.appLanguage, 'agreements_title');
   }
 
   private getMarkdownHeadingFontSize(level: number): number {
@@ -330,31 +333,31 @@ struct Index {
 
     const profile = this.homeViewModel.profile;
     if (!this.homeViewModel.canConnect) {
-      this.homeViewModel.lastMessage = '请填写服务器地址和用户名';
+      this.homeViewModel.lastMessage = i18n.get(this.appLanguage, 'please_fill_host_and_user');
       return;
     }
 
     this.isConnecting = true;
-    this.homeViewModel.lastMessage = '正在连接远程桌面...';
+    this.homeViewModel.lastMessage = i18n.get(this.appLanguage, 'connecting_msg');
 
     try {
       const sessionId: number = await sessionManager.createAndConnect(profile);
       if (sessionId <= 0) {
-        this.homeViewModel.lastMessage = '创建会话失败';
+        this.homeViewModel.lastMessage = i18n.get(this.appLanguage, 'create_session_failed');
         this.isConnecting = false;
         return;
       }
 
       const opened: boolean = await sessionWindowManager.openSessionWindow(sessionId, profile);
       if (!opened) {
-        this.homeViewModel.lastMessage = '打开远程桌面窗口失败';
+        this.homeViewModel.lastMessage = i18n.get(this.appLanguage, 'open_window_failed');
         await sessionManager.disconnect(sessionId);
         sessionManager.removeSession(sessionId);
       } else {
-        this.homeViewModel.lastMessage = `已连接到 ${profile.host}，远程桌面窗口已打开`;
+        this.homeViewModel.lastMessage = `${i18n.get(this.appLanguage, 'connected_to')} ${profile.host}${i18n.get(this.appLanguage, 'remote_window_opened')}`;
       }
     } catch (e) {
-      this.homeViewModel.lastMessage = '连接失败: ' + (e as Error).message;
+      this.homeViewModel.lastMessage = i18n.get(this.appLanguage, 'connect_failed_prefix') + (e as Error).message;
     }
 
     this.isConnecting = false;
@@ -372,18 +375,18 @@ struct Index {
 
   private stageLabel(stage: SessionStage): string {
     if (stage === SessionStage.Connected) {
-      return '已连接';
+      return i18n.get(this.appLanguage, 'stage_connected');
     }
     if (stage === SessionStage.Connecting) {
-      return '连接中';
+      return i18n.get(this.appLanguage, 'stage_connecting');
     }
     if (stage === SessionStage.Disconnected) {
-      return '已断开';
+      return i18n.get(this.appLanguage, 'stage_disconnected');
     }
     if (stage === SessionStage.Error) {
-      return '错误';
+      return i18n.get(this.appLanguage, 'stage_error');
     }
-    return '空闲';
+    return i18n.get(this.appLanguage, 'stage_idle');
   }
 
   private stageColor(stage: SessionStage): string {
@@ -425,15 +428,7 @@ struct Index {
   }
 
   private formatLastUsed(ts: number | undefined): string {
-    if (!ts) return '从未使用';
-    const now = Date.now();
-    const diff = now - ts;
-    if (diff < 60000) return '刚刚';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
-    if (diff < 604800000) return `${Math.floor(diff / 86400000)} 天前`;
-    const d = new Date(ts);
-    return `${d.getMonth() + 1}/${d.getDate()}`;
+    return i18n.getFormattedRelativeTime(this.appLanguage, ts);
   }
 
   build() {
@@ -458,12 +453,12 @@ struct Index {
         Column({ space: this.isPhoneLayout() ? 2 : 6 }) {
           Row({ space: this.isPhoneLayout() ? 8 : 12 }) {
             Column({ space: 0 }) {
-              Text('碧虎')
+              Text(i18n.get(this.appLanguage, 'app_brand'))
                 .fontSize(this.isPhoneLayout() ? 20 : 24)
                 .fontWeight(FontWeight.Bold)
                 .fontColor(this.colors.primary)
                 .letterSpacing(1)
-              Text('远程桌面')
+              Text(i18n.get(this.appLanguage, 'app_desktop'))
                 .fontSize(this.isPhoneLayout() ? 20 : 24)
                 .fontWeight(FontWeight.Lighter)
                 .fontColor(this.colors.foreground)
@@ -471,7 +466,7 @@ struct Index {
             }
           }
           if (!this.isPhoneLayout()) {
-            Text('安全的远程访问')
+            Text(i18n.get(this.appLanguage, 'app_subtitle'))
               .fontSize(13)
               .fontColor(this.colors.mutedForeground)
           }
@@ -480,6 +475,7 @@ struct Index {
         .layoutWeight(1)
 
         Row({ space: this.isPhoneLayout() ? 6 : 10 }) {
+          LanguageToggle()
           ThemeToggle()
 
           if (!this.isPhoneLayout()) {
@@ -488,7 +484,7 @@ struct Index {
               .fontColor(this.colors.mutedForeground)
           }
 
-          Button('关于')
+          Button(i18n.get(this.appLanguage, 'about'))
             .height(this.isPhoneLayout() ? 30 : 32)
             .fontSize(this.isPhoneLayout() ? 12 : 13)
             .fontColor(this.colors.accentForeground)
@@ -510,12 +506,12 @@ struct Index {
       if (this.activeSessions.length > 0) {
         Column({ space: this.isPhoneLayout() ? 8 : 10 }) {
           Row() {
-            Text('活跃会话')
+            Text(i18n.get(this.appLanguage, 'active_sessions'))
               .fontSize(this.isPhoneLayout() ? 15 : 16)
               .fontWeight(FontWeight.Medium)
               .fontColor(this.colors.foreground)
               .layoutWeight(1)
-            Text(`${this.activeSessions.length} 个`)
+            Text(i18n.getSessionCountLabel(this.appLanguage, this.activeSessions.length))
               .fontSize(13)
               .fontColor(this.colors.mutedForeground)
           }
@@ -548,7 +544,7 @@ struct Index {
 
               if (!this.isPhoneLayout()) {
                 Row({ space: 8 }) {
-                  Button('切换')
+                  Button(i18n.get(this.appLanguage, 'switch_session'))
                     .type(ButtonType.Normal)
                     .fontSize(13)
                     .height(34)
@@ -556,7 +552,7 @@ struct Index {
                     .fontColor(this.colors.accentForeground)
                     .borderRadius(10)
                     .onClick(() => this.focusSession(record.sessionId))
-                  Button('断开')
+                  Button(i18n.get(this.appLanguage, 'disconnect_session'))
                     .type(ButtonType.Normal)
                     .fontSize(13)
                     .height(34)
@@ -567,7 +563,7 @@ struct Index {
                 }
               } else {
                 Row({ space: 6 }) {
-                  Button('切')
+                  Button(i18n.get(this.appLanguage, 'switch_session_short'))
                     .type(ButtonType.Normal)
                     .fontSize(12)
                     .height(32)
@@ -576,7 +572,7 @@ struct Index {
                     .borderRadius(8)
                     .padding({ left: 10, right: 10 })
                     .onClick(() => this.focusSession(record.sessionId))
-                  Button('断')
+                  Button(i18n.get(this.appLanguage, 'disconnect_session_short'))
                     .type(ButtonType.Normal)
                     .fontSize(12)
                     .height(32)
@@ -605,7 +601,7 @@ struct Index {
       }
 
       Row() {
-        TextInput({ text: this.keyword, placeholder: '搜索：名称 / 地址 / 账号' })
+        TextInput({ text: this.keyword, placeholder: i18n.get(this.appLanguage, 'search_placeholder') })
           .onChange((v: string) => this.keyword = v)
           .height(this.isPhoneLayout() ? 42 : 44)
           .fontSize(this.isPhoneLayout() ? 14 : 15)
@@ -615,7 +611,7 @@ struct Index {
           .padding({ left: 14, right: 14 })
           .layoutWeight(1)
         if ((this.keyword ?? '').trim()) {
-          Button('清除')
+          Button(i18n.get(this.appLanguage, 'clear'))
             .height(this.isPhoneLayout() ? 34 : 36)
             .fontSize(13)
             .margin({ left: 8 })
@@ -657,11 +653,11 @@ struct Index {
                 .fontSize(this.isPhoneLayout() ? 48 : 56)
                 .margin({ bottom: this.isPhoneLayout() ? 4 : 8 })
             }
-            Text(this.homeViewModel.bookmarks.length === 0 ? '暂无连接配置' : '未找到匹配的连接')
+            Text(this.homeViewModel.bookmarks.length === 0 ? i18n.get(this.appLanguage, 'no_bookmarks') : i18n.get(this.appLanguage, 'no_search_results'))
               .fontSize(this.isPhoneLayout() ? 16 : 17)
               .fontWeight(FontWeight.Medium)
               .fontColor(this.colors.foreground)
-            Text(this.homeViewModel.bookmarks.length === 0 ? '点击下方按钮创建你的第一个远程桌面连接' : '尝试其他关键词搜索')
+            Text(this.homeViewModel.bookmarks.length === 0 ? i18n.get(this.appLanguage, 'bookmarks_empty_hint') : i18n.get(this.appLanguage, 'search_no_match_hint'))
               .fontSize(this.isPhoneLayout() ? 13 : 14)
               .fontColor(this.colors.mutedForeground)
               .textAlign(TextAlign.Center)
@@ -677,7 +673,7 @@ struct Index {
                     .fontSize(this.isPhoneLayout() ? 17 : 18)
                     .fontWeight(FontWeight.Bold)
                     .fontColor(this.colors.primaryForeground)
-                  Text('新增连接')
+                  Text(i18n.get(this.appLanguage, 'new_connection_btn'))
                     .fontColor(this.colors.primaryForeground)
                     .fontSize(this.isPhoneLayout() ? 15 : 16)
                     .fontWeight(FontWeight.Medium)
@@ -752,7 +748,7 @@ struct Index {
                     .textOverflow({ overflow: TextOverflow.Ellipsis })
                     .margin({ top: 3 })
                   if (c.gateway) {
-                    Text(`网关：${c.gateway}`)
+                    Text(i18n.get(this.appLanguage, 'gateway_label_prefix') + c.gateway)
                       .fontSize(11)
                       .fontColor(this.colors.mutedForeground)
                       .maxLines(1)
@@ -861,7 +857,7 @@ struct Index {
         .borderRadius(10)
         .onClick(() => { this.showDetail = false; })
 
-        Text(this.selectedConnId ? '编辑连接' : '新建连接')
+        Text(this.selectedConnId ? i18n.get(this.appLanguage, 'edit_connection') : i18n.get(this.appLanguage, 'new_connection_btn'))
           .fontSize(this.isPhoneLayout() ? 17 : 18)
           .fontWeight(FontWeight.Medium)
           .fontColor(this.colors.foreground)
@@ -869,7 +865,7 @@ struct Index {
           .margin({ left: this.isPhoneLayout() ? 12 : 0 })
 
         if (this.selectedConnId) {
-          Button('删除')
+          Button(i18n.get(this.appLanguage, 'delete'))
             .height(this.isPhoneLayout() ? 34 : 36)
             .fontSize(this.isPhoneLayout() ? 13 : 14)
             .fontColor(this.colors.destructive)
@@ -941,19 +937,19 @@ struct Index {
 
         Column({ space: 20 }) {
           Column({ space: 12 }) {
-            Text('确认删除')
+            Text(i18n.get(this.appLanguage, 'confirm_delete'))
               .fontSize(18)
               .fontWeight(FontWeight.Medium)
               .fontColor(this.colors.foreground)
 
-            Text('确定要删除此连接配置吗？此操作无法撤销。')
+            Text(i18n.get(this.appLanguage, 'confirm_delete_msg'))
               .fontSize(14)
               .fontColor(this.colors.mutedForeground)
               .textAlign(TextAlign.Center)
           }
 
           Row({ space: 12 }) {
-            Button('取消')
+            Button(i18n.get(this.appLanguage, 'cancel'))
               .width(100)
               .height(40)
               .fontSize(15)
@@ -962,7 +958,7 @@ struct Index {
               .borderRadius(10)
               .onClick(() => { this.showDeleteConfirm = false; })
 
-            Button('删除')
+            Button(i18n.get(this.appLanguage, 'delete'))
               .width(100)
               .height(40)
               .fontSize(15)
@@ -1002,12 +998,12 @@ struct Index {
             Row() {
               Column({ space: 4 }) {
                 Row({ space: 10 }) {
-                  Text('碧虎')
+                  Text(i18n.get(this.appLanguage, 'app_brand'))
                     .fontSize(24)
                     .fontWeight(FontWeight.Bold)
                     .fontColor(this.colors.primaryForeground)
                     .letterSpacing(1)
-                  Text('远程桌面')
+                  Text(i18n.get(this.appLanguage, 'app_desktop'))
                     .fontSize(24)
                     .fontWeight(FontWeight.Lighter)
                     .fontColor(this.colors.primaryForeground)
@@ -1044,18 +1040,18 @@ struct Index {
           Scroll() {
             Column({ space: 16 }) {
               Column({ space: 14 }) {
-                Text('公司信息')
+                Text(i18n.get(this.appLanguage, 'company_info'))
                   .fontSize(14)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(this.colors.mutedForeground)
                   .letterSpacing(0.5);
 
                 Column({ space: 12 }) {
-                  this.buildAboutInfoRow('开发团队', '横渠天地（北京）科技有限公司');
+                  this.buildAboutInfoRow(i18n.get(this.appLanguage, 'dev_team'), i18n.get(this.appLanguage, 'dev_team_value'));
                   Blank().height(2);
-                  this.buildAboutLinkRow('商务合作', PROJECT_CONTACT_EMAIL, `mailto:${PROJECT_CONTACT_EMAIL}`);
+                  this.buildAboutLinkRow(i18n.get(this.appLanguage, 'business_cooperation'), PROJECT_CONTACT_EMAIL, `mailto:${PROJECT_CONTACT_EMAIL}`);
                   Blank().height(2);
-                  this.buildAboutLinkRow('官方网站', PROJECT_HOMEPAGE_URL, PROJECT_HOMEPAGE_URL);
+                  this.buildAboutLinkRow(i18n.get(this.appLanguage, 'official_website'), PROJECT_HOMEPAGE_URL, PROJECT_HOMEPAGE_URL);
                 }
               }
               .width('100%')
@@ -1065,16 +1061,16 @@ struct Index {
               .borderRadius(18);
 
               Column({ space: 14 }) {
-                Text('协议与隐私')
+                Text(i18n.get(this.appLanguage, 'agreements_privacy'))
                   .fontSize(14)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(this.colors.mutedForeground)
                   .letterSpacing(0.5);
 
                 Column({ space: 10 }) {
-                  this.buildAboutTapRow('隐私协议', '查看完整内容', () => this.openAgreementDialog(AGREEMENT_DIALOG_PRIVACY));
+                  this.buildAboutTapRow(i18n.get(this.appLanguage, 'privacy_policy'), i18n.get(this.appLanguage, 'view_full_content'), () => this.openAgreementDialog(AGREEMENT_DIALOG_PRIVACY));
                   Blank().height(1).color(this.colors.cardBorder).width('100%');
-                  this.buildAboutTapRow('用户协议', '查看完整内容', () => this.openAgreementDialog(AGREEMENT_DIALOG_USER));
+                  this.buildAboutTapRow(i18n.get(this.appLanguage, 'user_agreement'), i18n.get(this.appLanguage, 'view_full_content'), () => this.openAgreementDialog(AGREEMENT_DIALOG_USER));
                 }
               }
               .width('100%')
@@ -1084,20 +1080,20 @@ struct Index {
               .borderRadius(18);
 
               Column({ space: 14 }) {
-                Text('开源许可')
+                Text(i18n.get(this.appLanguage, 'open_source_license'))
                   .fontSize(14)
                   .fontWeight(FontWeight.Medium)
                   .fontColor(this.colors.mutedForeground)
                   .letterSpacing(0.5);
 
                 Column({ space: 12 }) {
-                  this.buildAboutInfoRowMulti('许可声明', '本应用采用 Apache-2.0 许可发布，基于 FreeRDP 开源项目。');
+                  this.buildAboutInfoRowMulti(i18n.get(this.appLanguage, 'license_statement'), i18n.get(this.appLanguage, 'license_statement_value'));
                   Blank().height(2);
-                  this.buildAboutLinkRow('源码仓库', PROJECT_SOURCE_URL, PROJECT_SOURCE_URL);
+                  this.buildAboutLinkRow(i18n.get(this.appLanguage, 'source_repo'), PROJECT_SOURCE_URL, PROJECT_SOURCE_URL);
                   Blank().height(2);
-                  this.buildAboutInfoRowMulti('第三方组件', 'FreeRDP (Apache-2.0) · OpenSSL (Apache-2.0)');
+                  this.buildAboutInfoRowMulti(i18n.get(this.appLanguage, 'third_party_components'), i18n.get(this.appLanguage, 'third_party_value'));
                   Blank().height(2);
-                  this.buildAboutInfoRowMulti('免责声明', '本软件按"现状"提供，不附带任何明示或暗示担保。');
+                  this.buildAboutInfoRowMulti(i18n.get(this.appLanguage, 'disclaimer'), i18n.get(this.appLanguage, 'disclaimer_value'));
                 }
               }
               .width('100%')
@@ -1176,14 +1172,14 @@ struct Index {
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .onClick(() => this.openExternalUrl(uri));
         Row({ space: 12 }) {
-          Text('访问链接')
+          Text(i18n.get(this.appLanguage, 'visit_link'))
             .fontSize(11)
             .fontColor(this.colors.primary)
             .onClick(() => this.openExternalUrl(uri));
-          Text('复制文本')
+          Text(i18n.get(this.appLanguage, 'copy_text'))
             .fontSize(11)
             .fontColor(this.colors.mutedForeground)
-            .onClick(() => this.copyText(value, '已复制'));
+            .onClick(() => this.copyText(value, i18n.get(this.appLanguage, 'copied_to_clipboard')));
         }
       }
       .layoutWeight(1)
@@ -1242,8 +1238,8 @@ struct Index {
                 .fontWeight(FontWeight.Bold)
                 .fontColor(this.colors.foreground);
               Text(this.isLaunchAgreementDialog()
-                ? '首次使用前，请完整阅读并确认《碧虎远程桌面隐私协议》与《碧虎远程桌面用户协议》，同意后方可继续使用应用。'
-                : '以下内容与首启展示保持一致，支持在应用内随时查看完整文本。')
+                ? i18n.get(this.appLanguage, 'agreement_launch_prompt')
+                : i18n.get(this.appLanguage, 'agreement_review_hint'))
                 .fontSize(13)
                 .lineHeight(20)
                 .fontColor(this.colors.mutedForeground)
@@ -1278,13 +1274,13 @@ struct Index {
           Scroll() {
             Column({ space: 20 }) {
               if (this.agreementDialogMode === AGREEMENT_DIALOG_LAUNCH) {
-                this.buildAgreementSection('隐私协议', this.privacyPolicyBlocks);
+                this.buildAgreementSection(i18n.get(this.appLanguage, 'privacy_policy'), this.privacyPolicyBlocks);
                 Blank().height(1).color(this.colors.cardBorder).width('100%');
-                this.buildAgreementSection('用户协议', this.userAgreementBlocks);
+                this.buildAgreementSection(i18n.get(this.appLanguage, 'user_agreement'), this.userAgreementBlocks);
               } else if (this.agreementDialogMode === AGREEMENT_DIALOG_PRIVACY) {
-                this.buildAgreementSection('隐私协议', this.privacyPolicyBlocks);
+                this.buildAgreementSection(i18n.get(this.appLanguage, 'privacy_policy'), this.privacyPolicyBlocks);
               } else {
-                this.buildAgreementSection('用户协议', this.userAgreementBlocks);
+                this.buildAgreementSection(i18n.get(this.appLanguage, 'user_agreement'), this.userAgreementBlocks);
               }
             }
             .width('100%')
@@ -1302,7 +1298,7 @@ struct Index {
 
           Row() {
             if (this.isLaunchAgreementDialog()) {
-              Button('退出应用')
+              Button(i18n.get(this.appLanguage, 'exit_app'))
                 .layoutWeight(1)
                 .height(44)
                 .fontSize(15)
@@ -1317,7 +1313,7 @@ struct Index {
 
               Blank().width(12);
 
-              Button('同意并继续')
+              Button(i18n.get(this.appLanguage, 'agree_continue'))
                 .layoutWeight(1)
                 .height(44)
                 .fontSize(15)
@@ -1329,7 +1325,7 @@ struct Index {
                   void this.acceptLaunchAgreements();
                 });
             } else {
-              Button('关闭')
+              Button(i18n.get(this.appLanguage, 'close'))
                 .width('100%')
                 .height(44)
                 .fontSize(15)
@@ -1409,7 +1405,7 @@ struct Index {
   private buildAgreementMarkdown(blocks: MarkdownBlock[]): void {
     Column({ space: 12 }) {
       if (blocks.length === 0) {
-        Text('协议内容加载中...')
+        Text(i18n.get(this.appLanguage, 'agreement_loading'))
           .width('100%')
           .fontSize(14)
           .lineHeight(22)
