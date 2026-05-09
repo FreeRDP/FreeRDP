@@ -1,16 +1,12 @@
-import { ThemeMode, LightColors, DarkColors, getStoredThemeMode } from '../utils/ThemeConstants';
+import { ThemeMode, LightColors, DarkColors } from '../utils/ThemeConstants';
 
 @Component
 export struct ThemeToggle {
   @StorageLink('__app_is_dark_mode__') isDark: boolean = false;
 
-  aboutToAppear(): void {
-    const stored: ThemeMode = getStoredThemeMode();
-    this.isDark = stored === ThemeMode.Dark;
-  }
-
   private toggleTheme(): void {
     this.isDark = !this.isDark;
+    AppStorage.setOrCreate('__app_theme_mode__', this.isDark ? 'dark' : 'light');
   }
 
   build() {

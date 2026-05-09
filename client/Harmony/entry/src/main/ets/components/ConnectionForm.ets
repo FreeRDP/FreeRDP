@@ -7,7 +7,7 @@ export struct ConnectionForm {
   @Prop profile: ConnectionProfile;
   @Prop canConnect: boolean;
   @Prop rememberPassword: boolean;
-  @Prop @Watch('onThemeChanged') isDark: boolean = false;
+  @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
   @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
   @State gatewayExpanded: boolean = false;
@@ -29,6 +29,10 @@ export struct ConnectionForm {
   onConnect: () => void = (): void => {};
 
   onThemeChanged(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
+  }
+
+  aboutToAppear(): void {
     this.colors = this.isDark ? DarkColors : LightColors;
   }
 

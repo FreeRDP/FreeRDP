@@ -5,7 +5,7 @@ import { i18n } from '../utils/I18n';
 @Component
 export struct BookmarkList {
   @Prop items: ConnectionProfile[] = [];
-  @Prop @Watch('onThemeChanged') isDark: boolean = false;
+  @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
   @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
   onSelect: (profile: ConnectionProfile) => void = (_profile: ConnectionProfile): void => {};
@@ -13,6 +13,10 @@ export struct BookmarkList {
   onQuickConnect: (profile: ConnectionProfile) => void = (_profile: ConnectionProfile): void => {};
 
   onThemeChanged(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
+  }
+
+  aboutToAppear(): void {
     this.colors = this.isDark ? DarkColors : LightColors;
   }
 

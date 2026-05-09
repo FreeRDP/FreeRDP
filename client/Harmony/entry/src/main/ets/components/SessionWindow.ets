@@ -58,6 +58,7 @@ export struct SessionWindow {
   }
 
   aboutToAppear(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
     this.scheduleChromeAutoHide();
   }
 
@@ -140,7 +141,6 @@ export struct SessionWindow {
           SessionToolbar({
             stage: this.stage,
             isFullscreen: this.isFullscreen,
-            isDark: this.isDark,
             onSendCtrlAltDel: this.onSendCtrlAltDel,
             onSendWindowsKey: this.onSendWindowsKey,
             onSendEscape: this.onSendEscape,

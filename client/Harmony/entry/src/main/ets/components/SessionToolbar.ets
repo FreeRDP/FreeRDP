@@ -6,7 +6,7 @@ import { i18n } from '../utils/I18n';
 export struct SessionToolbar {
   @Prop stage: SessionStage;
   @Prop isFullscreen: boolean = false;
-  @Prop @Watch('onThemeChanged') isDark: boolean = false;
+  @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
   @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
   onSendCtrlAltDel: () => void = (): void => {};
@@ -17,6 +17,10 @@ export struct SessionToolbar {
   onDisconnect: () => void = (): void => {};
 
   onThemeChanged(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
+  }
+
+  aboutToAppear(): void {
     this.colors = this.isDark ? DarkColors : LightColors;
   }
 

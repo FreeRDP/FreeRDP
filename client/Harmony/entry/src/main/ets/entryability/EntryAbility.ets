@@ -17,6 +17,7 @@ export default class EntryAbility extends UIAbility {
   private mainWindow: Object | null = null;
 
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    PersistentStorage.persistProp('__app_theme_mode__', 'light');
     const storedTheme: ThemeMode = getStoredThemeMode();
     AppStorage.setOrCreate('__app_is_dark_mode__', storedTheme === ThemeMode.Dark);
 

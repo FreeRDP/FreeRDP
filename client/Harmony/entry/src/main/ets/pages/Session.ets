@@ -200,6 +200,7 @@ struct Session {
   }
 
   aboutToAppear(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
     this.sessionId = this.readActiveSessionId();
     if (this.sessionId <= 0) {
       this.sessionStage = SessionStage.Error;

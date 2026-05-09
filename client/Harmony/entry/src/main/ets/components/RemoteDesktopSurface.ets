@@ -365,6 +365,7 @@ export struct RemoteDesktopSurface {
   }
 
   aboutToAppear(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
     this.setSurfaceId('');
     setTimeout(() => {
       this.requestInputFocus();

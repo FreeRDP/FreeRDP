@@ -18,6 +18,10 @@ export struct AuthDialog {
     this.colors = this.isDark ? DarkColors : LightColors;
   }
 
+  aboutToAppear(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
+  }
+
   build() {
     Column() {
       Text(i18n.get(this.appLanguage, 'auth_required'))

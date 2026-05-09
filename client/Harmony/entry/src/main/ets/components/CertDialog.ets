@@ -15,6 +15,10 @@ export struct CertDialog {
     this.colors = this.isDark ? DarkColors : LightColors;
   }
 
+  aboutToAppear(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
+  }
+
   build() {
     Column() {
       Row() {

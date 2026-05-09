@@ -95,6 +95,7 @@ struct Index {
   }
 
   aboutToAppear(): void {
+    this.colors = this.isDark ? DarkColors : LightColors;
     const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
     void this.homeViewModel.initialize(context);
 
@@ -595,10 +596,12 @@ struct Index {
           .onChange((v: string) => this.keyword = v)
           .height(this.isPhoneLayout() ? 42 : 44)
           .fontSize(this.isPhoneLayout() ? 14 : 15)
-          .backgroundColor(this.colors.inputBackground)
+          .backgroundColor(this.colors.surfaceElevated)
           .border({ width: 1, color: this.colors.inputBorder })
           .borderRadius(12)
           .padding({ left: 14, right: 14 })
+          .placeholderColor(this.colors.mutedForeground)
+          .fontColor(this.colors.foreground)
           .layoutWeight(1)
         if ((this.keyword ?? '').trim()) {
           Button(i18n.get(this.appLanguage, 'clear'))
@@ -881,7 +884,6 @@ struct Index {
           ConnectionForm({
             profile: this.homeViewModel.profile,
             rememberPassword: this.homeViewModel.profile.rememberPassword,
-            isDark: this.isDark,
             onNameChange: (value: string) => this.homeViewModel.updateName(value),
             onHostChange: (value: string) => this.homeViewModel.updateHost(value),
             onPortChange: (value: string) => this.homeViewModel.updatePort(value),
@@ -909,6 +911,7 @@ struct Index {
       }
       .layoutWeight(1)
       .scrollBar(BarState.Auto)
+      .backgroundColor(Color.Transparent)
     }
     .width('100%')
     .height('100%')
