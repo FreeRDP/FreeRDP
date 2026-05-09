@@ -451,20 +451,10 @@ struct Index {
     Column() {
       Row() {
         Column({ space: this.isPhoneLayout() ? 2 : 6 }) {
-          Row({ space: this.isPhoneLayout() ? 8 : 12 }) {
-            Column({ space: 0 }) {
-              Text(i18n.get(this.appLanguage, 'app_brand'))
-                .fontSize(this.isPhoneLayout() ? 20 : 24)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(this.colors.primary)
-                .letterSpacing(1)
-              Text(i18n.get(this.appLanguage, 'app_desktop'))
-                .fontSize(this.isPhoneLayout() ? 20 : 24)
-                .fontWeight(FontWeight.Lighter)
-                .fontColor(this.colors.foreground)
-                .letterSpacing(this.isPhoneLayout() ? 1 : 2)
-            }
-          }
+          Text(i18n.get(this.appLanguage, 'app_title'))
+            .fontSize(this.isPhoneLayout() ? 20 : 24)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.colors.primary)
           if (!this.isPhoneLayout()) {
             Text(i18n.get(this.appLanguage, 'app_subtitle'))
               .fontSize(13)
@@ -997,17 +987,10 @@ struct Index {
           Column() {
             Row() {
               Column({ space: 4 }) {
-                Row({ space: 10 }) {
-                  Text(i18n.get(this.appLanguage, 'app_brand'))
-                    .fontSize(24)
-                    .fontWeight(FontWeight.Bold)
-                    .fontColor(this.colors.primaryForeground)
-                    .letterSpacing(1)
-                  Text(i18n.get(this.appLanguage, 'app_desktop'))
-                    .fontSize(24)
-                    .fontWeight(FontWeight.Lighter)
-                    .fontColor(this.colors.primaryForeground)
-                }
+                Text(i18n.get(this.appLanguage, 'app_title'))
+                  .fontSize(24)
+                  .fontWeight(FontWeight.Medium)
+                  .fontColor(this.colors.primaryForeground)
                 Text(`v${BUILD_VERSION}`)
                   .fontSize(12)
                   .fontColor('rgba(255,255,255,0.70)')

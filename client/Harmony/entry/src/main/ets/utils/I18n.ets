@@ -59,7 +59,7 @@ class I18nManager {
 
   setLanguage(code: string): void {
     AppStorage.setOrCreate(LANGUAGE_PREFERENCE_KEY, code);
-    AppStorage.setOrCreate('appName', this.get(code, 'app_brand') + ' ' + this.get(code, 'app_desktop'));
+    AppStorage.setOrCreate('appName', this.get(code, 'app_title'));
     this.saveToPreferences(code);
     for (const listener of this.changeListeners) {
       listener(code);
@@ -196,6 +196,7 @@ class I18nManager {
     const s: Record<string, string> = {};
     s['app_brand'] = '碧虎';
     s['app_desktop'] = '远程桌面';
+    s['app_title'] = '碧虎远程桌面';
     s['app_subtitle'] = '便利的远程访问';
     s['connection_settings'] = '连接设置';
     s['new_connection'] = '新建';

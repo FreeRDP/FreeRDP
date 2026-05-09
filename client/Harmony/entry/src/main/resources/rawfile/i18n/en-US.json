@@ -5,6 +5,7 @@
   "strings": {
     "app_brand": "GreenTiger",
     "app_desktop": "RDP Client",
+    "app_title": "GreenTiger RDP Client",
     "app_subtitle": "Convenient Remote Access",
     "connection_settings": "Connection Settings",
     "new_connection": "New",

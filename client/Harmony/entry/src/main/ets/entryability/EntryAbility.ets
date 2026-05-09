@@ -22,7 +22,7 @@ export default class EntryAbility extends UIAbility {
 
     AppStorage.setOrCreate('__app_context__', this.context);
     i18n.init(this.context);
-    AppStorage.setOrCreate('appName', i18n.get(i18n.currentLocale(), 'app_brand') + i18n.get(i18n.currentLocale(), 'app_desktop'));
+    AppStorage.setOrCreate('appName', i18n.get(i18n.currentLocale(), 'app_title'));
     AppStorage.setOrCreate('preferredInputMode', 'touchpad');
     AppStorage.setOrCreate('showBookmarksFirst', true);
     AppStorage.setOrCreate('bookmarkPayload', '');
