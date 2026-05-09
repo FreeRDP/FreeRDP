@@ -1013,6 +1013,7 @@ struct Index {
                   .fontColor('rgba(255,255,255,0.70)')
               }
               .alignItems(HorizontalAlign.Start)
+              .layoutWeight(1)
 
               Button() {
                 Text('×')
