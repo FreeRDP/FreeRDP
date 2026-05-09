@@ -4,6 +4,13 @@ find_dependency(FreeRDP @FREERDP_VERSION@)
 if("@WITH_SMARTCARD_EMULATE@")
 	find_dependency(ZLIB)
 endif()
+if(@WITH_SSO_MIB@)
+  find_dependency(PkgConfig)
+  pkg_check_modules(PC_SSO_MIB sso-mib IMPORTED_TARGET)
+  if(NOT TARGET sso-mib)
+    add_library(sso-mib ALIAS PkgConfig::PC_SSO_MIB)
+  endif()
+endif()
 
 @PACKAGE_INIT@
 
