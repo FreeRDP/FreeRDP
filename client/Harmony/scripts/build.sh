@@ -83,9 +83,11 @@ detect_native_changes() {
   changes="$(
     {
       git -C "${repo_root}" diff --name-only HEAD -- \
+        client/Harmony/cmake \
         client/Harmony/native \
         client/Harmony/entry/src/main/cpp 2>/dev/null || true
       git -C "${repo_root}" ls-files --others --exclude-standard -- \
+        client/Harmony/cmake \
         client/Harmony/native \
         client/Harmony/entry/src/main/cpp 2>/dev/null || true
     } | awk 'NF && !seen[$0]++'
@@ -94,53 +96,6 @@ detect_native_changes() {
   if [[ -n "${changes}" ]]; then
     printf '%s\n' "${changes}"
   fi
-}
-
-check_openssl_prebuilt() {
-  local repo_root
-  repo_root="$(cd "${PROJECT_DIR}/../.." && pwd)"
-
-  local arch="arm64-v8a"
-  local prebuilt_dir="${repo_root}/client/Harmony/native/third_party/openssl-prebuilt/${arch}"
-
-  if [[ -f "${prebuilt_dir}/libssl.a" && -f "${prebuilt_dir}/libcrypto.a" && -d "${prebuilt_dir}/include/openssl" ]]; then
-    return 0
-  fi
-
-  log "OpenSSL prebuilt not found at ${prebuilt_dir}"
-  log ""
-  log "Run the following command first to cross-compile OpenSSL for HarmonyOS:"
-  log ""
-  log "  scripts/harmony-build-openssl.sh --ndk <OHOS_NDK_HOME>"
-  log ""
-  log "The NDK is typically located at:"
-  log "  <DevEco-Studio.app>/sdk/default/openharmony"
-  log ""
-
-  if [[ -t 0 ]]; then
-    local sdk_dir
-    sdk_dir="$(resolve_sdk_dir)"
-
-    local ndk_home="${sdk_dir}/default/openharmony"
-    if [[ ! -d "${ndk_home}/native/llvm/bin" ]]; then
-      ndk_home="${sdk_dir}/openharmony"
-    fi
-
-    if [[ -d "${ndk_home}/native/llvm/bin" ]]; then
-      printf 'NDK detected at: %s\n' "${ndk_home}" >&2
-      printf 'Build OpenSSL now? [Y/n] ' >&2
-      read -r reply
-      if [[ "${reply}" != "n" && "${reply}" != "N" ]]; then
-        local build_script="${repo_root}/scripts/harmony-build-openssl.sh"
-        log "Running ${build_script} --ndk ${ndk_home} --arch ${arch} ..."
-        "${build_script}" --ndk "${ndk_home}" --arch "${arch}"
-        return 0
-      fi
-    fi
-  fi
-
-  log "ERROR: OpenSSL prebuilt required. Aborting."
-  exit 1
 }
 
 build() {
@@ -155,8 +110,6 @@ build() {
   log "SDK: ${sdk_dir}"
   log "hvigorw: ${hvigor_bin}"
   log "Build mode: ${mode}"
-
-  check_openssl_prebuilt
 
   local mode_file="${PROJECT_DIR}/.build-signing-mode"
   echo "${mode}" > "${mode_file}"

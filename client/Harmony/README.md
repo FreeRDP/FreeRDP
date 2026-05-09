@@ -20,13 +20,8 @@ A HarmonyOS client shell for FreeRDP.
 - DevEco Studio with HarmonyOS SDK
 - HarmonyOS NDK (bundled with the SDK)
 
-### Cross-compile OpenSSL
-
-```bash
-scripts/harmony-build-openssl.sh --ndk <OHOS_NDK_HOME> --arch arm64-v8a
-```
-
-The NDK is typically at `<DevEco-Studio.app>/Contents/sdk/default/openharmony`.
+OpenSSL is downloaded and cross-compiled automatically by CMake (via `ExternalProject`)
+during the native build step — no manual steps are required.
 
 ### Build the App
 
