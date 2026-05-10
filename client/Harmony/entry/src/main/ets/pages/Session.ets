@@ -130,6 +130,10 @@ struct Session {
     }
     const record: SessionRecord | undefined = sessionManager.getSession(this.sessionId);
     if (record === undefined) {
+      const ctx = this.getUIContext()?.getHostContext?.() as common.UIAbilityContext | undefined;
+      if (ctx) {
+        void ctx.terminateSelf();
+      }
       return;
     }
     this.sessionTitle = record.state.title;

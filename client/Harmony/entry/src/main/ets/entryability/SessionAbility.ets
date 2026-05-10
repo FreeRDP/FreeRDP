@@ -2,7 +2,7 @@ import UIAbility from '@ohos.app.ability.UIAbility';
 import AbilityConstant from '@ohos.app.ability.AbilityConstant';
 import Want from '@ohos.app.ability.Want';
 import window from '@ohos.window';
-import { sessionManager } from '../service/SessionManager';
+import { SessionRecord, sessionManager } from '../service/SessionManager';
 
 interface WantLike {
   parameters?: Record<string, Object>;
@@ -87,8 +87,11 @@ export default class SessionAbility extends UIAbility {
   onDestroy(): void {
     try {
       if (this.sessionId > 0) {
-        void sessionManager.disconnect(this.sessionId);
-        sessionManager.removeSession(this.sessionId);
+        const record: SessionRecord | undefined = sessionManager.getSession(this.sessionId);
+        if (record !== undefined) {
+          void sessionManager.disconnect(this.sessionId);
+          sessionManager.removeSession(this.sessionId);
+        }
       }
     } catch (e) {}
   }

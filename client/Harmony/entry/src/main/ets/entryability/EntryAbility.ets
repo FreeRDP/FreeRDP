@@ -69,6 +69,5 @@ export default class EntryAbility extends UIAbility {
   }
 
   onDestroy(): void {
-    void sessionWindowManager.closeAllWindows();
   }
 }

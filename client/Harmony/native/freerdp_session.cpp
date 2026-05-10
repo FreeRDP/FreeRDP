@@ -28,7 +28,6 @@ extern "C" {
 #include <freerdp/input.h>
 #include <freerdp/log.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/signal.h>
 #include <winpr/crt.h>
 #include <winpr/input.h>
 #include <winpr/synch.h>
@@ -625,7 +624,7 @@ static BOOL HarmonyClientGlobalInit() {
     }
     WLog_OpenAppender(root);
   }
-  return freerdp_handle_signals() == 0;
+  return TRUE;
 }
 
 static void HarmonyClientGlobalUninit() {}
@@ -775,6 +774,9 @@ bool FreeRDPHarmonySession::Disconnect() {
 
   {
     std::lock_guard<std::mutex> lock(mutex_);
+    if (!started_ || stopRequested_) {
+      return true;
+    }
     stopRequested_ = true;
     context = static_cast<rdpContext*>(context_);
     worker = std::move(worker_);
@@ -787,9 +789,6 @@ bool FreeRDPHarmonySession::Disconnect() {
 
   if (context != nullptr) {
     freerdp_abort_connect_context(context);
-    if (context->instance != nullptr) {
-      freerdp_disconnect(context->instance);
-    }
   }
 
   if (worker.joinable()) {
@@ -808,7 +807,6 @@ bool FreeRDPHarmonySession::Disconnect() {
   stateChanged_.notify_all();
 
   if (context != nullptr) {
-    freerdp_client_stop(context);
     freerdp_client_context_free(context);
 
     std::lock_guard<std::mutex> lock(mutex_);
