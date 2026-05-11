@@ -393,6 +393,8 @@ static const size_t string_list_indices[] = {
 	FreeRDP_DynamicDSTTimeZoneKeyName,
 	FreeRDP_GatewayAcceptedCert,
 	FreeRDP_GatewayAccessToken,
+	FreeRDP_GatewayAadHostRefreshToken,
+	FreeRDP_GatewayAadHostRefreshClientId,
 	FreeRDP_GatewayAvdAadtenantid,
 	FreeRDP_GatewayAvdAccessAadFormat,
 	FreeRDP_GatewayAvdAccessTokenFormat,

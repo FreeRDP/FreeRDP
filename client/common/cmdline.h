@@ -29,7 +29,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Addin" },
 	{ "azure", COMMAND_LINE_VALUE_REQUIRED,
 	  "[tenantid:<id>],[use-tenantid[:[on|off]],[ad:<url>]"
-	  "[avd-access:<format string>],[avd-token:<format string>],[avd-scope:<format string>]",
+	  "[avd-access:<format string>],[avd-token:<format string>],[avd-scope:<format string>],"
+	  "[host-refresh-token:<oauth2-refresh-token>],"
+	  "[host-refresh-client-id:<oauth2-client-id>]",
 	  nullptr, nullptr, -1, nullptr, "AzureAD options" },
 	{ "action-script", COMMAND_LINE_VALUE_REQUIRED, "<file-name>", "~/.config/freerdp/action.sh",
 	  nullptr, -1, nullptr, "Action script" },

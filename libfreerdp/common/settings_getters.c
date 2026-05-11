@@ -2879,6 +2879,12 @@ const char* freerdp_settings_get_string(WINPR_ATTR_UNUSED const rdpSettings* set
 		case FreeRDP_GatewayHttpMsUserAgent:
 			return settings->GatewayHttpMsUserAgent;
 
+		case FreeRDP_GatewayAadHostRefreshToken:
+			return settings->GatewayAadHostRefreshToken;
+
+		case FreeRDP_GatewayAadHostRefreshClientId:
+			return settings->GatewayAadHostRefreshClientId;
+
 		case FreeRDP_GatewayHttpReferer:
 			return settings->GatewayHttpReferer;
 
@@ -3210,6 +3216,12 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 
 		case FreeRDP_GatewayHttpMsUserAgent:
 			return settings->GatewayHttpMsUserAgent;
+
+		case FreeRDP_GatewayAadHostRefreshToken:
+			return settings->GatewayAadHostRefreshToken;
+
+		case FreeRDP_GatewayAadHostRefreshClientId:
+			return settings->GatewayAadHostRefreshClientId;
 
 		case FreeRDP_GatewayHttpReferer:
 			return settings->GatewayHttpReferer;
@@ -3553,6 +3565,12 @@ BOOL freerdp_settings_set_string_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_GatewayHttpMsUserAgent:
 			return update_string_(&settings->GatewayHttpMsUserAgent, cnv.c, len);
+
+		case FreeRDP_GatewayAadHostRefreshToken:
+			return update_string_(&settings->GatewayAadHostRefreshToken, cnv.c, len);
+
+		case FreeRDP_GatewayAadHostRefreshClientId:
+			return update_string_(&settings->GatewayAadHostRefreshClientId, cnv.c, len);
 
 		case FreeRDP_GatewayHttpReferer:
 			return update_string_(&settings->GatewayHttpReferer, cnv.c, len);
@@ -3916,6 +3934,13 @@ BOOL freerdp_settings_set_string_copy_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_GatewayHttpMsUserAgent:
 			return update_string_copy_(&settings->GatewayHttpMsUserAgent, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAadHostRefreshToken:
+			return update_string_copy_(&settings->GatewayAadHostRefreshToken, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAadHostRefreshClientId:
+			return update_string_copy_(&settings->GatewayAadHostRefreshClientId, cnv.cc, len,
+			                           cleanup);
 
 		case FreeRDP_GatewayHttpReferer:
 			return update_string_copy_(&settings->GatewayHttpReferer, cnv.cc, len, cleanup);

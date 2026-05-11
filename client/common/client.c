@@ -68,6 +68,7 @@
 #ifdef WITH_AAD
 #include <freerdp/utils/http.h>
 #include <freerdp/utils/aad.h>
+#include <winpr/string.h>
 #endif
 
 #ifdef WITH_SSO_MIB
@@ -1114,6 +1115,20 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 
 	BOOL rc = FALSE;
 	*token = nullptr;
+
+	const char* refresh =
+	    freerdp_settings_get_string(instance->context->settings, FreeRDP_GatewayAadHostRefreshToken);
+	if (refresh && refresh[0] != '\0')
+	{
+		token_request = freerdp_client_get_aad_url((rdpClientContext*)instance->context,
+		                                           FREERDP_CLIENT_AAD_REFRESH_TOKEN_REQUEST, scope,
+		                                           req_cnf);
+		if (!token_request)
+			return FALSE;
+		rc = client_common_get_access_token(instance, token_request, token);
+		free(token_request);
+		return rc && (*token != nullptr);
+	}
 
 	char* request = freerdp_client_get_aad_url((rdpClientContext*)instance->context,
 	                                           FREERDP_CLIENT_AAD_AUTH_REQUEST, scope);
@@ -2615,6 +2630,43 @@ static char* aad_token_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list
 	free(redirect_uri);
 	return url;
 }
+
+static char* aad_refresh_token_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list ap)
+{
+	/* Default Entra public client used for WVD / RDS device-style token exchange when unset. */
+	static const char default_host_refresh_client_id[] =
+	    "4fb5cc57-dbbc-4cdc-9595-748adff5f414";
+
+	const rdpSettings* settings = cctx->context.settings;
+	const char* explicit_cid =
+	    freerdp_settings_get_string(settings, FreeRDP_GatewayAadHostRefreshClientId);
+	const char* client_id = (explicit_cid && explicit_cid[0] != '\0') ? explicit_cid
+	                                                                 : default_host_refresh_client_id;
+	const char* refresh_in = freerdp_settings_get_string(settings, FreeRDP_GatewayAadHostRefreshToken);
+	const char* scope = va_arg(ap, const char*);
+	const char* req_cnf = va_arg(ap, const char*);
+
+	if (!refresh_in || !scope || !req_cnf)
+		return nullptr;
+
+	char* enc_refresh = winpr_str_url_encode(refresh_in, strlen(refresh_in) + 1);
+	if (!enc_refresh)
+		return nullptr;
+
+	char* url = nullptr;
+	size_t urllen = 0;
+	const int alen = winpr_asprintf(&url, &urllen,
+	                                "grant_type=refresh_token&refresh_token=%s&client_id=%s&scope=%"
+	                                "s&req_cnf=%s",
+	                                enc_refresh, client_id, scope, req_cnf);
+	free(enc_refresh);
+	if (alen < 0)
+	{
+		free(url);
+		return nullptr;
+	}
+	return url;
+}
 #endif
 
 char* freerdp_client_get_aad_url(rdpClientContext* cctx, freerdp_client_aad_type type, ...)
@@ -2632,6 +2684,9 @@ char* freerdp_client_get_aad_url(rdpClientContext* cctx, freerdp_client_aad_type
 			break;
 		case FREERDP_CLIENT_AAD_TOKEN_REQUEST:
 			str = aad_token_request(cctx, ap);
+			break;
+		case FREERDP_CLIENT_AAD_REFRESH_TOKEN_REQUEST:
+			str = aad_refresh_token_request(cctx, ap);
 			break;
 		case FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST:
 			str = avd_auth_request(cctx, ap);

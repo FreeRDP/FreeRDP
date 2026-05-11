@@ -522,9 +522,20 @@ struct rdp_settings
 		                                                             * @since version 3.18.0
 		                                                             */
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayHttpMsUserAgent);      /** 2026
-		                                                             * @since version 3.18.0
-		                                                             */
-	UINT64 padding2112[2112 - 2027];                                /* 2027 */
+	                                                             * @since version 3.18.0
+	                                                             */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAadHostRefreshToken); /** 2027
+	                                                             * OAuth2 refresh token for
+	                                                             * Entra-bound host (RDS AAD) access
+	                                                             * token via refresh_token + req_cnf.
+	                                                             * @since version 3.20.0
+	                                                             */
+	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAadHostRefreshClientId); /** 2028
+	                                                             * OAuth2 client_id for host
+	                                                             * refresh_token grant; optional.
+	                                                             * @since version 3.20.0
+	                                                             */
+	UINT64 padding2112[2112 - 2029];                                /* 2029 */
 
 	/**
 	 * RemoteApp
