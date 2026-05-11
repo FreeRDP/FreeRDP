@@ -27,12 +27,15 @@ read_local_property() {
 }
 
 resolve_sdk_dir() {
-  local properties_file="${PROJECT_DIR}/local.properties"
-  local sdk_dir=""
+  local sdk_dir="${DEVECO_SDK_HOME:-}"
 
-  sdk_dir="$(read_local_property "${properties_file}" "hwsdk.dir")"
   if [[ -z "${sdk_dir}" ]]; then
-    sdk_dir="$(read_local_property "${properties_file}" "sdk.dir")"
+    local properties_file="${PROJECT_DIR}/local.properties"
+
+    sdk_dir="$(read_local_property "${properties_file}" "hwsdk.dir")"
+    if [[ -z "${sdk_dir}" ]]; then
+      sdk_dir="$(read_local_property "${properties_file}" "sdk.dir")"
+    fi
   fi
   if [[ -z "${sdk_dir}" ]]; then
     sdk_dir="/Applications/DevEco-Studio.app/Contents/sdk"

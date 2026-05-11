@@ -66,6 +66,16 @@ int harmony_session_submit_cert(int sessionId, uint8_t accept) {
   return Adapter().SubmitCert(sessionId, accept != 0) ? 0 : -1;
 }
 
+std::string BuildLastErrorString(int sessionId) {
+  const HarmonySessionInfo info = Adapter().GetInfo(sessionId);
+  if (info.lastError == 0) {
+    return std::string();
+  }
+
+  const char* lastError = freerdp_get_last_error_string(info.lastError);
+  return (lastError != nullptr) ? std::string(lastError) : std::string();
+}
+
 #if FREERDP_HARMONY_HAS_NAPI
 
 constexpr napi_property_attributes kDefaultPropertyAttributes = napi_default;
@@ -296,16 +306,6 @@ napi_value BuildSnapshotObject(napi_env env, int sessionId) {
   SetNamedUint32(env, result, "frameStride", harmony_session_get_frame_stride(sessionId));
   SetNamedUint64(env, result, "frameSequence", harmony_session_get_frame_sequence(sessionId));
   return result;
-}
-
-std::string BuildLastErrorString(int sessionId) {
-  const HarmonySessionInfo info = Adapter().GetInfo(sessionId);
-  if (info.lastError == 0) {
-    return std::string();
-  }
-
-  const char* lastError = freerdp_get_last_error_string(info.lastError);
-  return (lastError != nullptr) ? std::string(lastError) : std::string();
 }
 
 napi_value BuildSessionEventsArray(napi_env env, int sessionId) {
