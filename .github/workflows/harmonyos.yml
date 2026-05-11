@@ -1,19 +1,8 @@
 name: HarmonyOS client build
 
 on:
-  push:
-    branches: [master, stable*]
-    paths:
-      - client/Harmony/**
-      - include/**
-      - libfreerdp/**
-      - winpr/**
-      - client/common/**
-      - CMakeLists.txt
-      - cmake/**
-      - .github/workflows/harmonyos.yml
   pull_request:
-    branches: [master, stable*]
+    branches: [master]
     paths:
       - client/Harmony/**
       - include/**
