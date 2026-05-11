@@ -997,9 +997,13 @@ void FreeRDPHarmonySession::FillAuthentication(char** username, char** password,
 
   {
     std::lock_guard<std::mutex> lockEvent(mutex_);
+    info_.stage = HarmonySessionStage::kAuthRequired;
+    info_.message = "请输入登录凭据";
     pendingSessionEvents_.push_back(HarmonySessionEvent{
         HarmonySessionEventType::kAuthRequired, info_.stage, info_.lastError, info_.connected,
-        frameSequence_, "请输入登录凭据", ""});
+        frameSequence_, "请输入登录凭据", "",
+        "", "", "", "",
+        config_.username, config_.domain});
   }
   stateChanged_.notify_all();
 
@@ -1032,6 +1036,8 @@ bool FreeRDPHarmonySession::VerifyCertificate(const char* host, std::uint16_t po
 
   {
     std::lock_guard<std::mutex> lockEvent(mutex_);
+    info_.stage = HarmonySessionStage::kCertRequired;
+    info_.message = "需要校验新证书";
     pendingSessionEvents_.push_back(HarmonySessionEvent{
         HarmonySessionEventType::kCertRequired, info_.stage, info_.lastError, info_.connected,
         frameSequence_, "需要校验新证书", "",
@@ -1061,6 +1067,8 @@ bool FreeRDPHarmonySession::VerifyChangedCertificate(const char* host, std::uint
 
   {
     std::lock_guard<std::mutex> lockEvent(mutex_);
+    info_.stage = HarmonySessionStage::kCertRequired;
+    info_.message = "证书已更改，需要校验";
     pendingSessionEvents_.push_back(HarmonySessionEvent{
         HarmonySessionEventType::kCertRequired, info_.stage, info_.lastError, info_.connected,
         frameSequence_, "证书已更改，需要校验", "",

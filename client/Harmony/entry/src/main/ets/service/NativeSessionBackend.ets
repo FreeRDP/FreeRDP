@@ -34,6 +34,9 @@ const NATIVE_STAGE_IDLE: number = 0;
 const NATIVE_STAGE_CONNECTING: number = 1;
 const NATIVE_STAGE_CONNECTED: number = 2;
 const NATIVE_STAGE_DISCONNECTED: number = 3;
+const NATIVE_STAGE_FAILED: number = 4;
+const NATIVE_STAGE_AUTH_REQUIRED: number = 5;
+const NATIVE_STAGE_CERT_REQUIRED: number = 6;
 
 export interface SessionBackend {
   createSession(profile: ConnectionProfile): number;
@@ -113,6 +116,12 @@ class NativeSessionBackendImpl implements SessionBackend {
     }
     if (nativeStage === NATIVE_STAGE_DISCONNECTED) {
       return SessionStage.Disconnected;
+    }
+    if (nativeStage === NATIVE_STAGE_AUTH_REQUIRED) {
+      return SessionStage.AuthRequired;
+    }
+    if (nativeStage === NATIVE_STAGE_CERT_REQUIRED) {
+      return SessionStage.CertRequired;
     }
     return SessionStage.Error;
   }
@@ -279,7 +288,9 @@ class NativeSessionBackendImpl implements SessionBackend {
         certHost: events[index].certHost,
         certSubject: events[index].certSubject,
         certIssuer: events[index].certIssuer,
-        certFingerprint: events[index].certFingerprint
+        certFingerprint: events[index].certFingerprint,
+        authUsername: events[index].authUsername,
+        authDomain: events[index].authDomain
       });
       index += 1;
     }

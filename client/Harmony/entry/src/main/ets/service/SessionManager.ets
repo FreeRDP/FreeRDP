@@ -8,6 +8,8 @@ export interface SessionRecord {
   state: SessionState;
   snapshot: SessionSnapshot;
   remoteClipboardText: string;
+  authUsername: string;
+  authDomain: string;
 }
 
 type SessionChangedCallback = () => void;
@@ -65,7 +67,9 @@ class SessionManagerImpl {
       profile: cloneProfile(profile),
       state: this.buildInitialSessionState(sessionId, profile),
       snapshot: this.buildInitialSnapshot(),
-      remoteClipboardText: ''
+      remoteClipboardText: '',
+      authUsername: '',
+      authDomain: ''
     };
     this.sessions.set(sessionId, record);
 
@@ -279,6 +283,8 @@ class SessionManagerImpl {
       } else if (event.type === SessionEventType.RemoteClipboardChanged) {
         record.remoteClipboardText = event.clipboardText;
       } else if (event.type === SessionEventType.AuthRequired) {
+        record.authUsername = event.authUsername;
+        record.authDomain = event.authDomain;
         shouldRefreshState = true;
       } else if (event.type === SessionEventType.CertRequired) {
         shouldRefreshState = true;

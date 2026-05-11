@@ -50,6 +50,8 @@ export interface NativeSessionEvent {
   certSubject: string;
   certIssuer: string;
   certFingerprint: string;
+  authUsername: string;
+  authDomain: string;
 }
 
 export const createSession: (config: NativeSessionConfig) => number;

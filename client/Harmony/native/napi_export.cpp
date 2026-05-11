@@ -327,6 +327,8 @@ napi_value BuildSessionEventsArray(napi_env env, int sessionId) {
     SetNamedString(env, eventObject, "certSubject", events[index].certSubject);
     SetNamedString(env, eventObject, "certIssuer", events[index].certIssuer);
     SetNamedString(env, eventObject, "certFingerprint", events[index].certFingerprint);
+    SetNamedString(env, eventObject, "authUsername", events[index].authUsername);
+    SetNamedString(env, eventObject, "authDomain", events[index].authDomain);
     napi_set_element(env, result, static_cast<uint32_t>(index), eventObject);
   }
 

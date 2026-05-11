@@ -37,6 +37,8 @@ struct Session {
   };
   @State authEvent: SessionEvent | null = null;
   @State certEvent: SessionEvent | null = null;
+  @State authPrefillUsername: string = '';
+  @State authPrefillDomain: string = '';
   @StorageLink('__app_is_dark_mode__') @Watch('onThemeChanged') isDark: boolean = false;
   @StorageLink('__app_language__') appLanguage: string = 'system';
   @State colors: ThemeColors = LightColors;
@@ -48,6 +50,8 @@ struct Session {
   private refreshTimer: number = -1;
   private unsubSessionChanged: (() => void) | null = null;
   private hasReadPasteboardPermission: boolean = false;
+  private authDialogShown: boolean = false;
+  private certDialogShown: boolean = false;
 
   onThemeChanged(): void {
     this.colors = this.isDark ? DarkColors : LightColors;
@@ -57,9 +61,9 @@ struct Session {
   authDialogController: CustomDialogController = new CustomDialogController({
     builder: AuthDialog({
       event: this.authEvent,
-      username: '',
+      username: this.authPrefillUsername,
       password: '',
-      domain: '',
+      domain: this.authPrefillDomain,
       onConfirm: (username: string, pass: string, domain: string) => {
         if (this.sessionId > 0) {
           void sessionManager.submitAuth(this.sessionId, username, pass, domain);
@@ -143,6 +147,23 @@ struct Session {
     this.sessionSubtitle = record.state.message;
     this.sessionStage = record.state.stage;
     this.sessionSnapshot = record.snapshot;
+
+    if (this.sessionStage === SessionStage.AuthRequired && !this.authDialogShown) {
+      this.authDialogShown = true;
+      this.authPrefillUsername = record.authUsername;
+      this.authPrefillDomain = record.authDomain;
+      this.authDialogController.open();
+    }
+    if (this.sessionStage === SessionStage.CertRequired && !this.certDialogShown) {
+      this.certDialogShown = true;
+      this.certDialogController.open();
+    }
+    if (this.sessionStage !== SessionStage.AuthRequired) {
+      this.authDialogShown = false;
+    }
+    if (this.sessionStage !== SessionStage.CertRequired) {
+      this.certDialogShown = false;
+    }
   }
 
   private applyRemoteClipboard(text: string): void {

@@ -5,7 +5,9 @@ export enum SessionStage {
   Connecting = 'connecting',
   Connected = 'connected',
   Disconnected = 'disconnected',
-  Error = 'error'
+  Error = 'error',
+  AuthRequired = 'auth_required',
+  CertRequired = 'cert_required'
 }
 
 export interface SessionState {
@@ -47,4 +49,6 @@ export interface SessionEvent {
   certSubject: string;
   certIssuer: string;
   certFingerprint: string;
+  authUsername: string;
+  authDomain: string;
 }

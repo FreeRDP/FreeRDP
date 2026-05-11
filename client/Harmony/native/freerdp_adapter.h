@@ -46,7 +46,9 @@ enum class HarmonySessionStage : std::uint32_t {
   kConnecting = 1,
   kConnected = 2,
   kDisconnected = 3,
-  kFailed = 4
+  kFailed = 4,
+  kAuthRequired = 5,
+  kCertRequired = 6
 };
 
 struct HarmonySessionInfo {
@@ -76,6 +78,8 @@ struct HarmonySessionEvent {
   std::string certSubject;
   std::string certIssuer;
   std::string certFingerprint;
+  std::string authUsername;
+  std::string authDomain;
 };
 
 class FreeRDPHarmonyAdapter {
