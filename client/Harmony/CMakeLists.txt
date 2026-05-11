@@ -10,7 +10,10 @@ if(NOT FREERDP_DEFAULT_PROJECT_VERSION)
   set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
 endif()
 
-project(freerdp-harmony-bridge LANGUAGES C CXX VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
+project(
+  freerdp-harmony-bridge
+  LANGUAGES C CXX
+  VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
 
 add_subdirectory(native)
 
