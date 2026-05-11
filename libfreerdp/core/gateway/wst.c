@@ -71,6 +71,19 @@ struct rdp_wst
 
 static const char arm_query_param[] = "%s%cClmTk=Bearer%%20%s";
 
+/** True if @p uri carries the ARM/Azure bearer token in the query (do not duplicate in headers). */
+static BOOL wst_uri_has_clmtk_bearer(const char* uri)
+{
+	if (!uri)
+		return FALSE;
+	for (const char* p = uri; *p; p++)
+	{
+		if (_strnicmp(p, "ClmTk=", 6) == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
 static BOOL wst_get_gateway_credentials(wLog* log, rdpContext* context, rdp_auth_reason reason)
 {
 	WINPR_ASSERT(context);
@@ -310,12 +323,17 @@ static wStream* wst_build_http_request(rdpWst* wst)
 	}
 	else if (freerdp_settings_get_string(wst->context->settings, FreeRDP_GatewayHttpExtAuthBearer))
 	{
-		if (!http_request_set_auth_scheme(request, "Bearer"))
-			goto out;
-		if (!http_request_set_auth_param(
-		        request, freerdp_settings_get_string(wst->context->settings,
-		                                             FreeRDP_GatewayHttpExtAuthBearer)))
-			goto out;
+		/* After ARRAffinity retry the token is appended as ClmTk=Bearer%20... on the URI; keeping
+		 * Authorization: Bearer would duplicate a large JWT and exceed Azure header limits. */
+		if (!wst_uri_has_clmtk_bearer(uri))
+		{
+			if (!http_request_set_auth_scheme(request, "Bearer"))
+				goto out;
+			if (!http_request_set_auth_param(
+			        request, freerdp_settings_get_string(wst->context->settings,
+			                                             FreeRDP_GatewayHttpExtAuthBearer)))
+				goto out;
+		}
 	}
 
 	s = http_request_write(wst->http, request);
@@ -391,24 +409,14 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 			char firstParam = (strchr(wst->gwpath, '?') != nullptr) ? '&' : '?';
 			const char* bearer = freerdp_settings_get_string(wst->context->settings,
 			                                                 FreeRDP_GatewayHttpExtAuthBearer);
-			const char* ua =
-			    freerdp_settings_get_string(wst->context->settings, FreeRDP_GatewayHttpMsUserAgent);
-			winpr_asprintf(&urlWithAuth, &urlLen, arm_query_param, wst->gwpath, firstParam, bearer,
-			               ua);
-			if (!urlWithAuth)
+			if (winpr_asprintf(&urlWithAuth, &urlLen, arm_query_param, wst->gwpath, firstParam,
+			                   bearer) < 0 ||
+			    !urlWithAuth)
 				return FALSE;
 			free(wst->gwpath);
 			wst->gwpath = urlWithAuth;
-			if (!utils_str_is_empty(ua))
-			{
-				size_t ualen = 0;
-				char* uastr = nullptr;
-				winpr_asprintf(&uastr, &ualen, "%s&X-MS-User-Agent=%s", wst->gwpath, ua);
-				if (!uastr)
-					return FALSE;
-				free(wst->gwpath);
-				wst->gwpath = uastr;
-			}
+			/* X-MS-User-Agent is already sent as a header (http_context_set_x_ms_user_agent); omit
+			 * from the query string to keep the request line within gateway limits. */
 			if (!http_context_set_uri(wst->http, wst->gwpath))
 				return FALSE;
 			if (!http_context_enable_websocket_upgrade(wst->http, TRUE))
