@@ -67,9 +67,15 @@ file(MAKE_DIRECTORY ${FREERDP_INSTALL_DIR}/include/winpr3)
 file(MAKE_DIRECTORY ${FREERDP_INSTALL_DIR}/lib)
 
 set(FREERDP_ARCHIVES_RSP "${FREERDP_INSTALL_DIR}/lib/freerdp_archives.rsp")
-file(WRITE ${FREERDP_ARCHIVES_RSP}
-     "${FREERDP_INSTALL_DIR}/lib/libfreerdp3.a
+file(GLOB_RECURSE FREERDP_ARCHIVES "${FREERDP_INSTALL_DIR}/lib/*.a")
+if(FREERDP_ARCHIVES)
+  string(REPLACE ";" "\n" FREERDP_ARCHIVES_LIST "${FREERDP_ARCHIVES}")
+  file(WRITE ${FREERDP_ARCHIVES_RSP} "${FREERDP_ARCHIVES_LIST}\n")
+else()
+  file(WRITE ${FREERDP_ARCHIVES_RSP}
+       "${FREERDP_INSTALL_DIR}/lib/libfreerdp3.a
 ${FREERDP_INSTALL_DIR}/lib/libfreerdp-client3.a
 ${FREERDP_INSTALL_DIR}/lib/libwinpr3.a
 "
-)
+  )
+endif()
