@@ -7,8 +7,12 @@ function getGitVersionName(): string {
   try {
     return childProcess.execSync('git describe --tags --always --dirty', { encoding: 'utf-8' }).trim();
   } catch (e) {
-    return '1.0.0';
+    return '';
   }
+}
+
+function isValidSemver(version: string): boolean {
+  return /^\d+\.\d+\.\d+/.test(version.replace(/^v/, ''));
 }
 
 function getGitVersionCode(versionName: string): number {
@@ -27,14 +31,43 @@ function getGitVersionCode(versionName: string): number {
       }
     }
 
-    return major * 1000000 + minor * 100000 + patch * 10000 + commitCount;
+    let versionCode = major * 1000000 + minor * 100000 + patch * 10000 + commitCount;
+    if (versionCode > 2147483647) {
+      versionCode = major * 1000000 + minor * 100000 + patch * 10000;
+    }
+    return versionCode;
   } catch (e) {
     return 1000000;
   }
 }
 
-const gitVersionName = getGitVersionName();
-const gitVersionCode = getGitVersionCode(gitVersionName);
+function readAppJson5(): { versionName: string; versionCode: number } {
+  try {
+    const appJson5Path = path.resolve(__dirname, 'AppScope', 'app.json5');
+    const content = fs.readFileSync(appJson5Path, 'utf-8');
+    const vnMatch = content.match(/"versionName"\s*:\s*"([^"]+)"/);
+    const vcMatch = content.match(/"versionCode"\s*:\s*(\d+)/);
+    return {
+      versionName: vnMatch ? vnMatch[1] : '1.0.0',
+      versionCode: vcMatch ? parseInt(vcMatch[1], 10) : 1000000
+    };
+  } catch (e) {
+    return { versionName: '1.0.0', versionCode: 1000000 };
+  }
+}
+
+const appConfig = readAppJson5();
+let gitVersionName = getGitVersionName();
+let gitVersionCode: number;
+
+if (gitVersionName && isValidSemver(gitVersionName)) {
+  gitVersionCode = getGitVersionCode(gitVersionName);
+} else {
+  console.log(`[Build] Git version "${gitVersionName || 'unavailable'}" not a valid semver, using app.json5 fallback`);
+  gitVersionName = appConfig.versionName;
+  gitVersionCode = appConfig.versionCode;
+}
+
 console.log(`[Build] Dynamic App Version: ${gitVersionName} (${gitVersionCode})`);
 
 function getSigningConfig() {
