@@ -13,7 +13,8 @@ endif()
 project(
   freerdp-harmony-bridge
   LANGUAGES C CXX
-  VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
+  VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
+)
 
 add_subdirectory(native)
 
