@@ -6,10 +6,7 @@ get_filename_component(OHOS_NATIVE_DIR "${OHOS_LLVM_DIR}" DIRECTORY)
 set(OHOS_TOOLCHAIN_FILE "${OHOS_NATIVE_DIR}/build/cmake/ohos.toolchain.cmake")
 
 if(NOT EXISTS "${OHOS_TOOLCHAIN_FILE}")
-  message(
-    FATAL_ERROR
-      "ExternalFreeRDP: ohos.toolchain.cmake not found at ${OHOS_TOOLCHAIN_FILE}"
-  )
+  message(FATAL_ERROR "ExternalFreeRDP: ohos.toolchain.cmake not found at ${OHOS_TOOLCHAIN_FILE}")
 endif()
 
 set(FREERDP_INSTALL_DIR "${CMAKE_BINARY_DIR}/deps/freerdp")
@@ -52,31 +49,27 @@ set(FREERDP_CMAKE_ARGS
     -DBUILD_TESTING:BOOL=OFF
     -DWITH_INTERNAL_RC4:BOOL=ON
     -DWITH_INTERNAL_MD4:BOOL=ON
-    -DWITH_INTERNAL_MD5:BOOL=ON)
+    -DWITH_INTERNAL_MD5:BOOL=ON
+)
 
 ExternalProject_Add(
-  freerdp
-  SOURCE_DIR ${FREERDP_SOURCE_DIR}
-  CMAKE_COMMAND ${CMAKE_COMMAND}
-  CMAKE_ARGS ${FREERDP_CMAKE_ARGS}
-  DEPENDS openssl
-  BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR>
-  INSTALL_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --target install
+  freerdp SOURCE_DIR ${FREERDP_SOURCE_DIR} CMAKE_COMMAND ${CMAKE_COMMAND} CMAKE_ARGS ${FREERDP_CMAKE_ARGS}
+  DEPENDS openssl BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> INSTALL_COMMAND ${CMAKE_COMMAND} --build
+                                                                                      <BINARY_DIR> --target install
   COMMAND ${CMAKE_COMMAND} -DFREERDP_LIB_DIR=${FREERDP_INSTALL_DIR}/lib -P
           ${CMAKE_CURRENT_LIST_DIR}/CollectArchives.cmake
-  BUILD_BYPRODUCTS
-    ${FREERDP_INSTALL_DIR}/lib/libfreerdp3.a
-    ${FREERDP_INSTALL_DIR}/lib/libfreerdp-client3.a
-    ${FREERDP_INSTALL_DIR}/lib/libwinpr3.a)
+  BUILD_BYPRODUCTS ${FREERDP_INSTALL_DIR}/lib/libfreerdp3.a ${FREERDP_INSTALL_DIR}/lib/libfreerdp-client3.a
+                   ${FREERDP_INSTALL_DIR}/lib/libwinpr3.a
+)
 
 file(MAKE_DIRECTORY ${FREERDP_INSTALL_DIR}/include/freerdp3)
 file(MAKE_DIRECTORY ${FREERDP_INSTALL_DIR}/include/winpr3)
 file(MAKE_DIRECTORY ${FREERDP_INSTALL_DIR}/lib)
 
 set(FREERDP_ARCHIVES_RSP "${FREERDP_INSTALL_DIR}/lib/freerdp_archives.rsp")
-file(
-  WRITE ${FREERDP_ARCHIVES_RSP}
-  "${FREERDP_INSTALL_DIR}/lib/libfreerdp3.a
+file(WRITE ${FREERDP_ARCHIVES_RSP}
+     "${FREERDP_INSTALL_DIR}/lib/libfreerdp3.a
 ${FREERDP_INSTALL_DIR}/lib/libfreerdp-client3.a
 ${FREERDP_INSTALL_DIR}/lib/libwinpr3.a
-")
+"
+)
