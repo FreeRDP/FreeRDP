@@ -85,7 +85,7 @@ import androidx.room.PrimaryKey;
 
 	@ColumnInfo(name = "async_update") public boolean asyncUpdate = false;
 
-	@ColumnInfo(name = "tlsSecLevel") public int tlsSecLevel = -1;
+	@ColumnInfo(name = "tlsSecLevel", defaultValue = "-1") public int tlsSecLevel = -1;
 
-	@ColumnInfo(name = "tlsMinLevel") public int tlsMinLevel = -1;
+	@ColumnInfo(name = "tlsMinLevel", defaultValue = "-1") public int tlsMinLevel = -1;
 }

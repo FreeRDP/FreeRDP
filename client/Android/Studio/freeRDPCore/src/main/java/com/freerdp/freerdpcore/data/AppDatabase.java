@@ -167,10 +167,8 @@ public abstract class AppDatabase extends RoomDatabase
 	private static final Migration MIGRATION_11_12 = new Migration(11, 12) {
 		@Override public void migrate(@NonNull SupportSQLiteDatabase db)
 		{
-			db.execSQL("ALTER TABLE 'bookmarks' ADD 'tlsSecLevel' CONSTRAINT chk_tlsSecLevel "
-			           + "CHECK (tlsSecLevel >= -1 AND tlsSecLevel <= 5) INTEGER DEFAULT -1;");
-			db.execSQL("ALTER TABLE 'bookmarks' ADD 'tlsMinLevel' CONSTRAINT chk_tlsMinLevel "
-			           + "CHECK (tlsSecLevel >= -1) INTEGER DEFAULT -1;");
+			db.execSQL("ALTER TABLE 'bookmarks' ADD 'tlsSecLevel' INTEGER NOT NULL DEFAULT -1");
+			db.execSQL("ALTER TABLE 'bookmarks' ADD 'tlsMinLevel' INTEGER NOT NULL DEFAULT -1");
 			final String list[] = { "screen_3g_colors",
 				                    "screen_3g_resolution",
 				                    "screen_3g_width",

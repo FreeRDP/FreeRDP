@@ -374,7 +374,7 @@ public class LibFreeRDP
 		}
 
 		String info = advanced.getLoadBalanceInfo();
-		if (!info.isEmpty())
+		if (info != null && !info.isEmpty())
 		{
 			args.add("/load-balance-info:" + info);
 		}
