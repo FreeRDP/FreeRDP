@@ -15,8 +15,6 @@
 #include <native_buffer/native_buffer.h>
 #include <native_buffer/buffer_common.h>
 #include <unistd.h>
-
-extern "C" {
 #include <freerdp/client.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/cliprdr.h>
@@ -32,7 +30,6 @@ extern "C" {
 #include <winpr/input.h>
 #include <winpr/synch.h>
 #include <winpr/wlog.h>
-}
 
 #define TAG CLIENT_TAG("harmony.native")
 

@@ -5,10 +5,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
-
-extern "C" {
 #include <freerdp/freerdp.h>
-}
 
 #include "freerdp_adapter.h"
 
