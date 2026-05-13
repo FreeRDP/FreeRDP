@@ -164,7 +164,7 @@ struct Index {
           Column({ space: this.layoutSpacing() }) {
             Row() {
               Column() {
-                Text('碧虎远程桌面')
+                Text('hFreeRDP')
                   .fontSize(this.isPhoneLayout() ? 26 : 36)
                   .fontWeight(FontWeight.Bold)
               }
