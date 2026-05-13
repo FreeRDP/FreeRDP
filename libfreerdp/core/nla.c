@@ -412,12 +412,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 				                                FreeRDP_Domain, FreeRDP_PasswordHash))
 					return FALSE;
 
-				/**
-				 * Increase password hash length by LB_PASSWORD_MAX_LENGTH to obtain a
-				 * length exceeding the maximum (LB_PASSWORD_MAX_LENGTH) and use it this for
-				 * hash identification in WinPR.
-				 */
-				nla->identity->PasswordLength += LB_PASSWORD_MAX_LENGTH;
+				nla->identity->Flags |= SEC_WINPR_AUTH_IDENTITY_PASSWORD_HASH;
 				usePassword = FALSE;
 			}
 		}

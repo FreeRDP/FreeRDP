@@ -975,15 +975,7 @@ void sspi_FreeAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity)
 	const BOOL wc = (identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE) != 0;
 	zfree(identity->User, identity->UserLength, wc);
 	zfree(identity->Domain, identity->DomainLength, wc);
-
-	/* identity->PasswordLength does have a dual use. In Pass The Hash (PTH) mode the maximum
-	 * password length (512) is added to the real length to mark this as a hash. when we free up
-	 * this field without removing these additional bytes we would corrupt the stack.
-	 */
-	size_t len = identity->PasswordLength;
-	if (len > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET)
-		len -= SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
-	zfree(identity->Password, len, wc);
+	zfree(identity->Password, identity->PasswordLength, wc);
 
 	const SEC_WINNT_AUTH_IDENTITY empty = WINPR_C_ARRAY_INIT;
 	*identity = empty;
