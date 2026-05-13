@@ -61,7 +61,7 @@ export default class EntryAbility extends UIAbility {
 
   private applyWindowTitle(): void {
     try {
-      const title = AppStorage.get<string>('appName') ?? '碧虎远程桌面';
+      const title = AppStorage.get<string>('appName') ?? 'hFreeRDP';
       const w = this.mainWindow as WindowLike;
       w?.setWindowTitle?.(title);
     } catch (_e) {

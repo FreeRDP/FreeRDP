@@ -2,15 +2,15 @@
   "string": [
     {
       "name": "app_name",
-      "value": "GreenTiger RDP Client"
+      "value": "hFreeRDP"
     },
     {
       "name": "module_desc",
-      "value": "HengQu GreenTiger RDP Client"
+      "value": "hFreeRDP"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "HengQu · GreenTiger RDP Client"
+      "value": "hFreeRDP Remote Desktop"
     },
     {
       "name": "SessionAbility_desc",
@@ -26,7 +26,7 @@
     },
     {
       "name": "app_brand",
-      "value": "GreenTiger"
+      "value": "hFreeRDP"
     },
     {
       "name": "app_desktop",

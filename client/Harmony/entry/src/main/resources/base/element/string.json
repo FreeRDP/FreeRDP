@@ -6,11 +6,11 @@
     },
     {
       "name": "module_desc",
-      "value": "横渠天地碧虎远程桌面"
+      "value": "hFreeRDP"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "横渠天地 · 碧虎远程桌面"
+      "value": "hFreeRDP Remote Desktop"
     },
     {
       "name": "SessionAbility_desc",
@@ -26,7 +26,7 @@
     },
     {
       "name": "app_brand",
-      "value": "碧虎"
+      "value": "hFreeRDP"
     },
     {
       "name": "app_desktop",

@@ -194,9 +194,9 @@ class I18nManager {
 
   private buildFallbackZhStrings(): Record<string, string> {
     const s: Record<string, string> = {};
-    s['app_brand'] = '碧虎';
+    s['app_brand'] = 'hFreeRDP';
     s['app_desktop'] = '远程桌面';
-    s['app_title'] = '碧虎远程桌面';
+    s['app_title'] = 'hFreeRDP';
     s['app_subtitle'] = '便利的远程访问';
     s['connection_settings'] = '连接设置';
     s['new_connection'] = '新建';
@@ -277,7 +277,7 @@ class I18nManager {
     s['days_ago'] = ' 天前';
     s['company_info'] = '公司信息';
     s['dev_team'] = '开发团队';
-    s['dev_team_value'] = '横渠天地（北京）科技有限公司';
+    s['dev_team_value'] = 'hFreeRDP Project';
     s['business_cooperation'] = '商务合作';
     s['official_website'] = '官方网站';
     s['agreements_privacy'] = '协议与隐私';
@@ -314,7 +314,7 @@ class I18nManager {
     s['exit_app'] = '退出应用';
     s['close'] = '关闭';
     s['agreement_load_failed'] = '协议内容加载失败，请稍后重试。';
-    s['agreement_launch_prompt'] = '首次使用前，请完整阅读并确认《碧虎远程桌面隐私协议》与《碧虎远程桌面用户协议》，同意后方可继续使用应用。';
+    s['agreement_launch_prompt'] = '首次使用前，请完整阅读并确认《hFreeRDP 隐私协议》与《hFreeRDP 用户协议》，同意后方可继续使用应用。';
     s['agreement_review_hint'] = '以下内容与首启展示保持一致，支持在应用内随时查看完整文本。';
     s['copied_to_clipboard'] = '已复制';
     s['select_language'] = '选择语言';

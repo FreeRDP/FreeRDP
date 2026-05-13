@@ -17,7 +17,7 @@ AGREEMENTS = {
     "bihu-user-agreement.md": "https://www.hengqu.world/api/agreements/bihu-user-agreement",
 }
 
-FALLBACK_TEMPLATE = """# 碧虎远程桌面{title_suffix}
+FALLBACK_TEMPLATE = """# hFreeRDP{title_suffix}
 
 > 无法在构建时获取协议原文。
 >
