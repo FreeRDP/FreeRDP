@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Fetch agreement documents from the official website at build time.
+"""Sync agreement documents to the target directory.
 
-Agreement texts are authoritative only at https://www.hengqu.world/agreements/.
-This script downloads them during the build so the app can display them offline.
+When official agreement URLs are configured, this script downloads them so the app
+can display them offline. Otherwise it uses local placeholder files.
 """
 
 from __future__ import annotations
@@ -13,23 +13,20 @@ from urllib.request import urlopen, Request
 from urllib.error import URLError
 
 AGREEMENTS = {
-    "bihu-privacy-policy.md": "https://www.hengqu.world/api/agreements/bihu-privacy-policy",
-    "bihu-user-agreement.md": "https://www.hengqu.world/api/agreements/bihu-user-agreement",
+    "bihu-privacy-policy.md": "",
+    "bihu-user-agreement.md": "",
 }
 
 FALLBACK_TEMPLATE = """# hFreeRDP{title_suffix}
 
-> 无法在构建时获取协议原文。
->
-> 正式版本请访问官方网站：{url}
-
----
-
-请访问 [{url}]({url}) 阅读完整协议。
+This document is a placeholder. The official version will be provided in a future update.
 """
 
 
+
 def fetch_agreement(url: str, timeout: int = 30) -> str | None:
+    if not url:
+        return None
     req = Request(url, headers={"User-Agent": "freerdp-harmony-build/1.0"})
     try:
         with urlopen(req, timeout=timeout) as resp:
@@ -52,11 +49,7 @@ def sync_agreements(target_dir: Path) -> None:
             status = "fetched"
         else:
             slug = filename.replace(".md", "")
-            title_suffix = "隐私协议" if "privacy" in slug else "用户协议"
-            content = FALLBACK_TEMPLATE.format(
-                title_suffix=title_suffix,
-                url=url.replace("/api/agreements/", "/agreements/"),
-            )
+            content = FALLBACK_TEMPLATE.format(title_suffix="")
             status = "fallback"
 
         target = target_dir / filename

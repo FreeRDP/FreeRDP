@@ -33,9 +33,7 @@ const AGREEMENT_DIALOG_LAUNCH = 3;
 const LAUNCH_AGREEMENTS_ACCEPTED_KEY = 'bihu_launch_agreements_v1';
 const PRIVACY_POLICY_RAWFILE = 'bihu-privacy-policy.md';
 const USER_AGREEMENT_RAWFILE = 'bihu-user-agreement.md';
-const PROJECT_CONTACT_EMAIL = 'contact@hengqu.world';
-const PROJECT_HOMEPAGE_URL = 'https://www.hengqu.world';
-const PROJECT_SOURCE_URL = 'https://github.com/hengquworld/freerdp-harmony';
+const PROJECT_SOURCE_URL = 'https://github.com/FreeRDP/FreeRDP';
 
 @Entry
 @Component
@@ -1035,10 +1033,6 @@ struct Index {
 
                 Column({ space: 12 }) {
                   this.buildAboutInfoRow(i18n.get(this.appLanguage, 'dev_team'), i18n.get(this.appLanguage, 'dev_team_value'));
-                  Blank().height(2);
-                  this.buildAboutLinkRow(i18n.get(this.appLanguage, 'business_cooperation'), PROJECT_CONTACT_EMAIL, `mailto:${PROJECT_CONTACT_EMAIL}`);
-                  Blank().height(2);
-                  this.buildAboutLinkRow(i18n.get(this.appLanguage, 'official_website'), PROJECT_HOMEPAGE_URL, PROJECT_HOMEPAGE_URL);
                 }
               }
               .width('100%')
