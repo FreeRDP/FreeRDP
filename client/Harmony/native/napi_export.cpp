@@ -269,7 +269,7 @@ napi_value BuildInfoObject(napi_env env, int sessionId) {
     SetNamedUint32(env, result, "stage", static_cast<std::uint32_t>(HarmonySessionStage::kFailed));
     SetNamedUint32(env, result, "lastError", 1);
     SetNamedBool(env, result, "connected", false);
-    SetNamedString(env, result, "message", "unable to query session info");
+    SetNamedString(env, result, "message", "error.query_info");
     return result;
   }
 

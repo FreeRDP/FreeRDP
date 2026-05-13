@@ -26,6 +26,7 @@ import {
 } from 'libfreerdp_harmony_bridge.so';
 import { ConnectionProfile, cloneProfile, createEmptyProfile } from '../model/ConnectionProfile';
 import { SessionEvent, SessionEventType, SessionSnapshot, SessionStage, SessionState } from '../model/SessionModels';
+import { i18n } from '../utils/I18n';
 
 const DEFAULT_DESKTOP_WIDTH: number = 1280;
 const DEFAULT_DESKTOP_HEIGHT: number = 720;
@@ -145,20 +146,46 @@ class NativeSessionBackendImpl implements SessionBackend {
     return SessionEventType.StateChanged;
   }
 
+  private translateNativeMessage(rawMessage: string): string {
+    if (rawMessage.length === 0) {
+      return rawMessage;
+    }
+
+    const separatorIndex: number = rawMessage.indexOf('|||');
+    let key: string = rawMessage;
+    let detail: string = '';
+    if (separatorIndex >= 0) {
+      key = rawMessage.substring(0, separatorIndex);
+      detail = rawMessage.substring(separatorIndex + 3);
+    }
+
+    if (key.startsWith('session.') || key.startsWith('error.')) {
+      const translated: string = i18n.get(i18n.currentLocale(), key);
+      if (translated !== key) {
+        if (detail.length > 0) {
+          return `${translated}: ${detail}`;
+        }
+        return translated;
+      }
+    }
+
+    return rawMessage;
+  }
+
   private defaultMessage(stage: SessionStage): string {
     if (stage === SessionStage.Connected) {
-      return '已连接到远程桌面';
+      return i18n.get(i18n.currentLocale(), 'session.connected');
     }
     if (stage === SessionStage.Connecting) {
-      return '正在连接远程桌面...';
+      return i18n.get(i18n.currentLocale(), 'session.connecting');
     }
     if (stage === SessionStage.Disconnected) {
-      return '连接已断开';
+      return i18n.get(i18n.currentLocale(), 'session.disconnected');
     }
     if (stage === SessionStage.Error) {
-      return '远程桌面连接失败';
+      return i18n.get(i18n.currentLocale(), 'session.connect_failed');
     }
-    return '尚未连接';
+    return i18n.get(i18n.currentLocale(), 'session.not_connected');
   }
 
   private enrichMessage(sessionId: number, stage: SessionStage, nativeInfo: NativeSessionInfo,
@@ -183,7 +210,7 @@ class NativeSessionBackendImpl implements SessionBackend {
       ? profile.name
       : (profile.host.length > 0 ? profile.host : `Session ${sessionId}`);
     const baseMessage: string = nativeInfo.message.length > 0
-      ? nativeInfo.message
+      ? this.translateNativeMessage(nativeInfo.message)
       : this.defaultMessage(stage);
     const message: string = this.enrichMessage(sessionId, stage, nativeInfo, baseMessage);
 
@@ -242,7 +269,7 @@ class NativeSessionBackendImpl implements SessionBackend {
         stage: NATIVE_STAGE_DISCONNECTED,
         lastError: 1,
         connected: false,
-        message: 'session not found'
+        message: i18n.get(i18n.currentLocale(), 'error.session_not_found')
       };
       return this.buildState(sessionId, missingInfo, createEmptyProfile('missing'));
     }
@@ -283,7 +310,7 @@ class NativeSessionBackendImpl implements SessionBackend {
         lastError: events[index].lastError,
         connected: events[index].connected,
         frameSequence: events[index].frameSequence,
-        message: events[index].message,
+        message: this.translateNativeMessage(events[index].message),
         clipboardText: events[index].clipboardText,
         certHost: events[index].certHost,
         certSubject: events[index].certSubject,

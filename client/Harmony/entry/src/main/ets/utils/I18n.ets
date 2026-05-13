@@ -319,6 +319,30 @@ class I18nManager {
     s['copied_to_clipboard'] = '已复制';
     s['select_language'] = '选择语言';
     s['follow_system'] = '跟随系统';
+    s['session.connected'] = '已连接到远程桌面';
+    s['session.disconnected'] = '连接已断开';
+    s['session.not_connected'] = '尚未连接';
+    s['session.connecting'] = '正在连接远程桌面...';
+    s['session.login_failed'] = '远端登录失败';
+    s['session.auth_required_msg'] = '请输入登录凭据';
+    s['session.cert_verify_new'] = '需要校验新证书';
+    s['session.cert_verify_changed'] = '证书已更改，需要校验';
+    s['session.connection_cancelled'] = '连接已取消';
+    s['session.connect_failed'] = '连接远程桌面失败';
+    s['error.create_input_queue'] = '创建输入事件队列失败';
+    s['error.set_home'] = '设置 HOME 失败';
+    s['error.init_client'] = '初始化 FreeRDP 客户端失败';
+    s['error.create_context'] = '创建 FreeRDP 上下文失败';
+    s['error.apply_params'] = '应用 RDP 参数失败';
+    s['error.rdp_context_unavailable'] = 'RDP 上下文不可用';
+    s['error.start_client'] = '启动 FreeRDP 客户端失败';
+    s['error.connect_failed'] = '连接远程桌面失败';
+    s['error.get_event_handles'] = '获取远端事件句柄失败';
+    s['error.wait_events'] = '等待远端事件失败';
+    s['error.process_events'] = '处理远端事件失败';
+    s['error.process_input'] = '处理本地输入事件失败';
+    s['error.query_info'] = '无法查询会话信息';
+    s['error.session_not_found'] = '未找到会话';
     return s;
   }
 }

@@ -85,18 +85,6 @@ static void ReplaceCString(char** target, const std::string& value) {
   }
 }
 
-static std::string BuildErrorMessage(const char* prefix, std::uint32_t lastError) {
-  std::ostringstream stream;
-  stream << prefix;
-  if (lastError != 0U) {
-    stream << " (0x" << std::hex << lastError << ")";
-    const char* lastErrorString = freerdp_get_last_error_string(lastError);
-    if ((lastErrorString != nullptr) && (lastErrorString[0] != '\0')) {
-      stream << ": " << lastErrorString;
-    }
-  }
-  return stream.str();
-}
 
 static bool IsSecurityModeEnabled(const std::string& mode, const char* expected) {
   return !mode.empty() && (mode == expected);
@@ -493,7 +481,7 @@ static BOOL HarmonyPostConnect(freerdp* instance) {
         freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
     const std::uint32_t height =
         freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopHeight);
-    session->UpdateStage(HarmonySessionStage::kConnected, 0, "已连接到远程桌面");
+    session->UpdateStage(HarmonySessionStage::kConnected, 0, "session.connected");
     session->UpdateSnapshot(width, height, 0, 0, width, height);
     if ((context->gdi != nullptr) && (context->gdi->primary_buffer != nullptr)) {
       const std::size_t bufferSize =
@@ -514,7 +502,7 @@ static void HarmonyPostDisconnect(freerdp* instance) {
   FreeRDPHarmonySession* session = SessionFromContext(instance->context);
   const std::uint32_t lastError = freerdp_get_last_error(instance->context);
   if (session != nullptr) {
-    session->UpdateStage(HarmonySessionStage::kDisconnected, lastError, "连接已断开");
+    session->UpdateStage(HarmonySessionStage::kDisconnected, lastError, "session.disconnected");
   }
 
   PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
@@ -589,7 +577,7 @@ static int HarmonyLogonErrorInfo(freerdp* instance, UINT32 data, UINT32 type) {
 
   const char* description = freerdp_get_logon_error_info_data(data);
   session->UpdateStage(HarmonySessionStage::kFailed, data,
-                       description != nullptr ? description : "远端登录失败");
+                       description != nullptr ? description : "session.login_failed");
   return 1;
 }
 
@@ -691,7 +679,7 @@ static int HarmonyRdpClientEntry(RDP_CLIENT_ENTRY_POINTS* entryPoints) {
 FreeRDPHarmonySession::FreeRDPHarmonySession(HarmonySessionConfig config)
     : config_(std::move(config)),
       snapshot_{ 0, 0, 0, 0, 0, 0 },
-      info_{ HarmonySessionStage::kIdle, 0, false, "尚未连接" },
+      info_{ HarmonySessionStage::kIdle, 0, false, "session.not_connected" },
       context_(nullptr),
       frameStride_(0),
       frameSequence_(0),
@@ -760,7 +748,7 @@ bool FreeRDPHarmonySession::Connect() {
     info_.stage = HarmonySessionStage::kConnecting;
     info_.lastError = 0;
     info_.connected = false;
-    info_.message = "正在连接远程桌面...";
+    info_.message = "session.connecting";
   }
   stateChanged_.notify_all();
 
@@ -801,7 +789,7 @@ bool FreeRDPHarmonySession::Disconnect() {
     if (info_.stage != HarmonySessionStage::kFailed) {
       info_.stage = HarmonySessionStage::kDisconnected;
       info_.connected = false;
-      info_.message = "连接已断开";
+      info_.message = "session.disconnected";
     }
   }
   stateChanged_.notify_all();
@@ -998,10 +986,10 @@ void FreeRDPHarmonySession::FillAuthentication(char** username, char** password,
   {
     std::lock_guard<std::mutex> lockEvent(mutex_);
     info_.stage = HarmonySessionStage::kAuthRequired;
-    info_.message = "请输入登录凭据";
+    info_.message = "session.auth_required_msg";
     pendingSessionEvents_.push_back(HarmonySessionEvent{
         HarmonySessionEventType::kAuthRequired, info_.stage, info_.lastError, info_.connected,
-        frameSequence_, "请输入登录凭据", "",
+        frameSequence_, "session.auth_required_msg", "",
         "", "", "", "",
         config_.username, config_.domain});
   }
@@ -1037,10 +1025,10 @@ bool FreeRDPHarmonySession::VerifyCertificate(const char* host, std::uint16_t po
   {
     std::lock_guard<std::mutex> lockEvent(mutex_);
     info_.stage = HarmonySessionStage::kCertRequired;
-    info_.message = "需要校验新证书";
+    info_.message = "session.cert_verify_new";
     pendingSessionEvents_.push_back(HarmonySessionEvent{
         HarmonySessionEventType::kCertRequired, info_.stage, info_.lastError, info_.connected,
-        frameSequence_, "需要校验新证书", "",
+        frameSequence_, "session.cert_verify_new", "",
         host != nullptr ? host : "",
         subject != nullptr ? subject : "",
         issuer != nullptr ? issuer : "",
@@ -1068,10 +1056,10 @@ bool FreeRDPHarmonySession::VerifyChangedCertificate(const char* host, std::uint
   {
     std::lock_guard<std::mutex> lockEvent(mutex_);
     info_.stage = HarmonySessionStage::kCertRequired;
-    info_.message = "证书已更改，需要校验";
+    info_.message = "session.cert_verify_changed";
     pendingSessionEvents_.push_back(HarmonySessionEvent{
         HarmonySessionEventType::kCertRequired, info_.stage, info_.lastError, info_.connected,
-        frameSequence_, "证书已更改，需要校验", "",
+        frameSequence_, "session.cert_verify_changed", "",
         host != nullptr ? host : "",
         subject != nullptr ? subject : "",
         issuer != nullptr ? issuer : "",
@@ -1393,14 +1381,14 @@ bool FreeRDPHarmonySession::EnsureContext() {
     info_.stage = HarmonySessionStage::kFailed;
     info_.lastError = 1;
     info_.connected = false;
-    info_.message = "创建输入事件队列失败";
+    info_.message = "error.create_input_queue";
     return false;
   }
 
   if (!config_.appDataDir.empty()) {
     if (setenv("HOME", config_.appDataDir.c_str(), 1) != 0) {
       std::ostringstream stream;
-      stream << "设置 HOME 失败 errno=" << errno;
+      stream << "error.set_home|||errno=" << errno;
       info_.stage = HarmonySessionStage::kFailed;
       info_.lastError = 1;
       info_.connected = false;
@@ -1414,7 +1402,7 @@ bool FreeRDPHarmonySession::EnsureContext() {
     info_.stage = HarmonySessionStage::kFailed;
     info_.lastError = 1;
     info_.connected = false;
-    info_.message = "初始化 Harmony FreeRDP 客户端失败";
+    info_.message = "error.init_client";
     return false;
   }
 
@@ -1423,7 +1411,7 @@ bool FreeRDPHarmonySession::EnsureContext() {
     info_.stage = HarmonySessionStage::kFailed;
     info_.lastError = 1;
     info_.connected = false;
-    info_.message = "创建 FreeRDP 上下文失败";
+    info_.message = "error.create_context";
     return false;
   }
 
@@ -1436,7 +1424,7 @@ bool FreeRDPHarmonySession::EnsureContext() {
     info_.stage = HarmonySessionStage::kFailed;
     info_.lastError = 1;
     info_.connected = false;
-    info_.message = "应用 RDP 参数失败: " + applyError;
+    info_.message = "error.apply_params|||" + applyError;
     return false;
   }
 
@@ -1595,7 +1583,7 @@ void FreeRDPHarmonySession::ThreadMain() {
   }
 
   if ((context == nullptr) || (context->instance == nullptr)) {
-    UpdateStage(HarmonySessionStage::kFailed, 1, "RDP 上下文不可用");
+    UpdateStage(HarmonySessionStage::kFailed, 1, "error.rdp_context_unavailable");
     std::lock_guard<std::mutex> lock(mutex_);
     started_ = false;
     stateChanged_.notify_all();
@@ -1608,7 +1596,7 @@ void FreeRDPHarmonySession::ThreadMain() {
             " security=" + config_.securityMode + " gateway=" + config_.gateway);
 
   if (freerdp_client_start(context) != 0) {
-    UpdateStage(HarmonySessionStage::kFailed, 1, "启动 FreeRDP 客户端失败");
+    UpdateStage(HarmonySessionStage::kFailed, 1, "error.start_client");
     std::lock_guard<std::mutex> lock(mutex_);
     started_ = false;
     stateChanged_.notify_all();
@@ -1642,8 +1630,8 @@ void FreeRDPHarmonySession::ThreadMain() {
 
     UpdateStage(stopRequested ? HarmonySessionStage::kDisconnected : HarmonySessionStage::kFailed,
                 lastError,
-                stopRequested ? "连接已取消"
-                              : BuildErrorMessage("连接远程桌面失败", lastError));
+                stopRequested ? "session.connection_cancelled"
+                              : "error.connect_failed");
 
     const bool supportSkipChannelJoinAfterFail =
         freerdp_settings_get_bool(context->settings, FreeRDP_SupportSkipChannelJoin);
@@ -1679,7 +1667,7 @@ void FreeRDPHarmonySession::ThreadMain() {
     if (remoteHandleCount == 0) {
       const std::uint32_t lastError = freerdp_get_last_error(context);
       UpdateStage(HarmonySessionStage::kFailed, lastError,
-                  BuildErrorMessage("获取远端事件句柄失败", lastError));
+                  "error.get_event_handles");
       break;
     }
     count += remoteHandleCount;
@@ -1689,7 +1677,7 @@ void FreeRDPHarmonySession::ThreadMain() {
     if (status == WAIT_FAILED) {
       const std::uint32_t lastError = freerdp_get_last_error(context);
       UpdateStage(HarmonySessionStage::kFailed, lastError,
-                  BuildErrorMessage("等待远端事件失败", lastError));
+                  "error.wait_events");
       break;
     }
 
@@ -1703,7 +1691,7 @@ void FreeRDPHarmonySession::ThreadMain() {
       if (!stopping) {
         const std::uint32_t lastError = freerdp_get_last_error(context);
         UpdateStage(HarmonySessionStage::kFailed, lastError,
-                    BuildErrorMessage("处理远端事件失败", lastError));
+                    "error.process_events");
       }
       break;
     }
@@ -1718,7 +1706,7 @@ void FreeRDPHarmonySession::ThreadMain() {
       if (!stopping) {
         const std::uint32_t lastError = freerdp_get_last_error(context);
         UpdateStage(HarmonySessionStage::kFailed, lastError,
-                    BuildErrorMessage("处理本地输入事件失败", lastError));
+                    "error.process_input");
       }
       break;
     }
