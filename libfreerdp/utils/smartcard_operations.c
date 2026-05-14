@@ -1166,6 +1166,335 @@ LONG smartcard_irp_device_control_decode_response(wStream* s, UINT32 ioControlCo
 	return status;
 }
 
+static LONG smartcard_EstablishContext_encode_request(wStream* s,
+                                                      const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_establish_context_call(s, &operation->call.establishContext);
+}
+
+static LONG smartcard_ReleaseContext_encode_request(wStream* s,
+                                                    const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_context_call(s, &operation->call.context, "ReleaseContext");
+}
+
+static LONG smartcard_IsValidContext_encode_request(wStream* s,
+                                                    const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_context_call(s, &operation->call.context, "IsValidContext");
+}
+
+static LONG smartcard_ListReaderGroupsA_encode_request(wStream* s,
+                                                       const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_list_reader_groups_call(s, &operation->call.listReaderGroups, FALSE);
+}
+
+static LONG smartcard_ListReaderGroupsW_encode_request(wStream* s,
+                                                       const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_list_reader_groups_call(s, &operation->call.listReaderGroups, TRUE);
+}
+
+static LONG smartcard_ListReadersA_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_list_readers_call(s, &operation->call.listReaders, FALSE);
+}
+
+static LONG smartcard_ListReadersW_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_list_readers_call(s, &operation->call.listReaders, TRUE);
+}
+
+static LONG smartcard_GetStatusChangeA_encode_request(wStream* s,
+                                                      const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_get_status_change_a_call(s, &operation->call.getStatusChangeA);
+}
+
+static LONG smartcard_GetStatusChangeW_encode_request(wStream* s,
+                                                      const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_get_status_change_w_call(s, &operation->call.getStatusChangeW);
+}
+
+static LONG smartcard_Cancel_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_context_call(s, &operation->call.context, "Cancel");
+}
+
+static LONG smartcard_ConnectA_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_connect_a_call(s, &operation->call.connectA);
+}
+
+static LONG smartcard_ConnectW_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_connect_w_call(s, &operation->call.connectW);
+}
+
+static LONG smartcard_Reconnect_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_reconnect_call(s, &operation->call.reconnect);
+}
+
+static LONG smartcard_Disconnect_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_hcard_and_disposition_call(s, &operation->call.hCardAndDisposition,
+	                                                 "Disconnect");
+}
+
+static LONG smartcard_BeginTransaction_encode_request(wStream* s,
+                                                      const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_hcard_and_disposition_call(s, &operation->call.hCardAndDisposition,
+	                                                 "BeginTransaction");
+}
+
+static LONG smartcard_EndTransaction_encode_request(wStream* s,
+                                                    const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_hcard_and_disposition_call(s, &operation->call.hCardAndDisposition,
+	                                                 "EndTransaction");
+}
+
+static LONG smartcard_StatusA_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_status_call(s, &operation->call.status, FALSE);
+}
+
+static LONG smartcard_StatusW_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_status_call(s, &operation->call.status, TRUE);
+}
+
+static LONG smartcard_Transmit_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_transmit_call(s, &operation->call.transmit);
+}
+
+static LONG smartcard_Control_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_control_call(s, &operation->call.control);
+}
+
+static LONG smartcard_GetAttrib_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_get_attrib_call(s, &operation->call.getAttrib);
+}
+
+static LONG smartcard_SetAttrib_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	return smartcard_pack_set_attrib_call(s, &operation->call.setAttrib);
+}
+
+LONG smartcard_irp_device_control_encode_request(wStream* s, const SMARTCARD_OPERATION* operation)
+{
+	LONG status = SCARD_S_SUCCESS;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(operation);
+
+	const UINT32 ioControlCode = operation->ioControlCode;
+
+	const size_t headerPos = Stream_GetPosition(s);
+	Stream_Zero(s, SMARTCARD_COMMON_TYPE_HEADER_LENGTH);  /* CommonTypeHeader (8 bytes) */
+	Stream_Zero(s, SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH); /* PrivateTypeHeader (8 bytes) */
+
+	switch (ioControlCode)
+	{
+		case SCARD_IOCTL_ESTABLISHCONTEXT:
+			status = smartcard_EstablishContext_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_RELEASECONTEXT:
+			status = smartcard_ReleaseContext_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_ISVALIDCONTEXT:
+			status = smartcard_IsValidContext_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_LISTREADERGROUPSA:
+			status = smartcard_ListReaderGroupsA_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_LISTREADERGROUPSW:
+			status = smartcard_ListReaderGroupsW_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_LISTREADERSA:
+			status = smartcard_ListReadersA_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_LISTREADERSW:
+			status = smartcard_ListReadersW_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_GETSTATUSCHANGEA:
+			status = smartcard_GetStatusChangeA_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_GETSTATUSCHANGEW:
+			status = smartcard_GetStatusChangeW_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_CANCEL:
+			status = smartcard_Cancel_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_CONNECTA:
+			status = smartcard_ConnectA_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_CONNECTW:
+			status = smartcard_ConnectW_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_RECONNECT:
+			status = smartcard_Reconnect_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_DISCONNECT:
+			status = smartcard_Disconnect_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_BEGINTRANSACTION:
+			status = smartcard_BeginTransaction_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_ENDTRANSACTION:
+			status = smartcard_EndTransaction_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_STATUSA:
+			status = smartcard_StatusA_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_STATUSW:
+			status = smartcard_StatusW_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_TRANSMIT:
+			status = smartcard_Transmit_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_CONTROL:
+			status = smartcard_Control_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_GETATTRIB:
+			status = smartcard_GetAttrib_encode_request(s, operation);
+			break;
+
+		case SCARD_IOCTL_SETATTRIB:
+			status = smartcard_SetAttrib_encode_request(s, operation);
+			break;
+
+		default:
+			WLog_WARN(TAG, "unsupported request for %s (0x%08" PRIX32 ")",
+			          scard_get_ioctl_string(ioControlCode, TRUE), ioControlCode);
+			return SCARD_E_UNSUPPORTED_FEATURE;
+	}
+
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
+	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
+	    (ioControlCode != SCARD_IOCTL_RELEASETARTEDEVENT))
+	{
+		const LONG rc = smartcard_pack_write_size_align(s, Stream_GetPosition(s), 8);
+		if (rc != SCARD_S_SUCCESS)
+			return rc;
+	}
+
+	const size_t dataEndPos = Stream_GetPosition(s);
+	const size_t payloadSize = dataEndPos - headerPos;
+	const size_t objectBufferLength =
+	    payloadSize - SMARTCARD_COMMON_TYPE_HEADER_LENGTH - SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH;
+
+	status = smartcard_pack_write_size_align(s, payloadSize, 8);
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
+	const size_t endPos = Stream_GetPosition(s);
+	if (!Stream_SetPosition(s, headerPos))
+		return SCARD_E_BAD_SEEK;
+	smartcard_pack_common_type_header(s);
+	smartcard_pack_private_type_header(s, (UINT32)objectBufferLength);
+	if (!Stream_SetPosition(s, endPos))
+		return SCARD_E_BAD_SEEK;
+	Stream_SealLength(s);
+
+	return status;
+}
+
 static void free_reader_states_a(LPSCARD_READERSTATEA rgReaderStates, UINT32 cReaders)
 {
 	for (UINT32 x = 0; x < cReaders; x++)
