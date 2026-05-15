@@ -5,10 +5,46 @@
 #
 # Bugs and comments https://github.com/FreeRDP/FreeRDP/issues
 
+%if 0%{?rhel} && 0%{?rhel} <= 8
+%global __cmake_builddir .
+%else
 %global __cmake_builddir 1
+%endif
 
 %define _build_id_links none
 %define   INSTALL_PREFIX /opt/freerdp-nightly/
+
+# this block is for turning on certain features based on the distribution and version
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} > 9
+%bcond_without av1
+%else
+%bcond_with av1
+%endif
+
+%if 0%{?fedora}
+%bcond_without webview
+%else
+%bcond_with webview
+%endif
+
+%if 0%{?fedora} || 0%{?rhel} > 8
+%bcond_without openh264
+%else
+%bcond_with openh264
+%endif
+
+%if 0%{?fedora} || 0%{?suse_version} >= 1600 || 0%{?rhel} > 9
+%bcond_without rdpewa
+%else
+%bcond_with rdpewa
+%endif
+
+# RHEL 10 EPEL doesn't have libyuv for some reason
+%if 0%{?fedora} || 0%{?suse_version} || (0%{?rhel} && 0%{?rhel} < 10)
+%bcond_without yuv
+%else
+%bcond_with yuv
+%endif
 
 # do not add provides for libs provided by this package
 # or it could possibly mess with system provided packages
@@ -56,18 +92,53 @@ BuildRequires: fuse3-devel
 BuildRequires: pam-devel
 BuildRequires: libicu-devel
 BuildRequires: libv4l-devel
-BuildRequires: libcbor-devel
-BuildRequires: libfido2-devel
+BuildRequires: pkgconfig(soxr)
+BuildRequires: pkgconfig(gstreamer-1.0)
+BuildRequires: pkgconfig(gstreamer-base-1.0)
+BuildRequires: pkgconfig(gstreamer-video-1.0)
+BuildRequires: pkgconfig(gstreamer-app-1.0)
+
+%if %{with yuv}
+%if %{defined suse_version}
+BuildRequires: pkgconfig(libyuv)
+%else
+BuildRequires: libyuv-devel
+%endif
+%endif
+
+%if %{with av1}
+BuildRequires: pkgconfig(aom) >= 2.0
+%endif
+
+%if %{with rdpewa}
+BuildRequires: libcbor-devel >= 0.10.2
+BuildRequires: libfido2-devel >= 1.14.0
+%endif
+
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} > 8
+BuildRequires: ocl-icd-devel
+BuildRequires: opencl-headers
+%endif
+
+%if %{with webview}
+BuildRequires: (webkitgtk6.0-devel or webkit2gtk4.1-devel or webkit2gtk4.0-devel)
+%endif
 
 # (Open)Suse
 %if %{defined suse_version}
+BuildRequires: pkg-config
 BuildRequires: libswscale-devel
 BuildRequires: cJSON-devel
 BuildRequires: uuid-devel
-BuildRequires: libSDL2-devel
-BuildRequires: libSDL2_ttf-devel
-BuildRequires: libSDL2_image-devel
-BuildRequires: pkg-config
+%if 0%{?suse_version} >= 1600
+BuildRequires: SDL3-devel
+BuildRequires: SDL3_ttf-devel
+BuildRequires: SDL3_image-devel
+%else
+BuildRequires: SDL2-devel
+BuildRequires: SDL2_ttf-devel
+BuildRequires: SDL2_image-devel
+%endif
 BuildRequires: libopenssl-devel
 BuildRequires: alsa-devel
 BuildRequires: libpulse-devel
@@ -83,13 +154,12 @@ BuildRequires: libopus-devel
 BuildRequires: libjpeg62-devel
 %endif
 
-# fedora 21+
-%if 0%{?fedora} >= 37 || 0%{defined rhel}
+# fedora and rhel
+%if 0%{?fedora} || 0%{defined rhel}
+BuildRequires: pkgconfig
 BuildRequires: cjson-devel
 BuildRequires: uuid-devel
 BuildRequires: opus-devel
-BuildRequires: ((SDL3-devel and SDL3_ttf-devel and SDL3_image-devel) or (SDL2-devel and SDL2_ttf-devel and SDL2_image-devel))
-BuildRequires: pkgconfig
 BuildRequires: openssl-devel
 BuildRequires: alsa-lib-devel
 BuildRequires: pulseaudio-libs-devel
@@ -99,18 +169,21 @@ BuildRequires: dbus-glib-devel
 BuildRequires: libjpeg-turbo-devel
 BuildRequires: libasan
 BuildRequires: compiler-rt
-BuildRequires: (webkitgtk6.0-devel or webkit2gtk4.1-devel or webkit2gtk4.0-devel)
 BuildRequires: libjpeg-turbo-devel
 BuildRequires: wayland-devel
 %endif
 
-%if 0%{?fedora} || 0%{?rhel} > 8
-BuildRequires: (fdk-aac-devel or fdk-aac-free-devel)
-BuildRequires: (noopenh264-devel or openh264-devel)
+%if 0%{?fedora} || 0%{?rhel} >= 9
+BuildRequires: (ffmpeg-free-devel or ffmpeg-devel)
 %endif
 
-%if 0%{?fedora} >= 36 || 0%{?rhel} >= 8
-BuildRequires: (ffmpeg-free-devel or ffmpeg-devel)
+# RHEL 8 does not have SDL 2 or 3
+%if 0%{?fedora} || 0%{?rhel} > 8
+BuildRequires: ((SDL3-devel and SDL3_ttf-devel and SDL3_image-devel) or (SDL2-devel and SDL2_ttf-devel and SDL2_image-devel))
+BuildRequires: (fdk-aac-devel or fdk-aac-free-devel)
+%if %{with openh264}
+BuildRequires: (noopenh264-devel or openh264-devel)
+%endif
 %endif
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -141,14 +214,24 @@ cp %{_sourcedir}/source_version freerdp-nightly-%{version}/.source_version
     -DCMAKE_SKIP_RPATH=FALSE \
     -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
     -DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON \
+    -DWITH_ALSA=ON \
     -DWITH_PULSE=ON \
     -DWITH_CHANNELS=ON \
+    -DWITH_AAD=ON \
     -DWITH_CUPS=ON \
     -DWITH_PCSC=ON \
     -DWITH_JPEG=ON \
+%if %{with yuv}
+    -DWITH_YUV=ON \
+%endif
     -DWITH_OPUS=ON \
+%if %{with openh264}
     -DWITH_OPENH264=ON \
     -DWITH_OPENH264_LOADING=ON \
+%endif
+%if %{with av1}
+    -DWITH_GFX_AV1=ON \
+%endif
     -DWITH_INTERNAL_RC4=ON \
     -DWITH_INTERNAL_MD4=ON \
     -DWITH_INTERNAL_MD5=ON \
@@ -168,33 +251,65 @@ cp %{_sourcedir}/source_version freerdp-nightly-%{version}/.source_version
 %if 0%{?fedora} || 0%{?rhel} > 8
     -DWITH_FDK_AAC=ON \
 %endif
-%if 0%{?fedora} >= 36 || 0%{?rhel} >= 9 || 0%{?suse_version}
+%if 0%{?fedora} || 0%{?rhel} >= 9 || 0%{?suse_version}
     -DWITH_FFMPEG=ON \
+    -DWITH_VIDEO_FFMPEG=ON \
     -DWITH_DSP_FFMPEG=ON \
+    -DWITH_SWSCALE=ON \
+    -DWITH_VAAPI=ON \
+    -DWITH_SOXR=ON \
+    -DWITH_GSTREAMER_1_0=ON \
+%else
+    -DWITH_FFMPEG=OFF \
+    -DWITH_VIDEO_FFMPEG=OFF \
+    -DWITH_DSP_FFMPEG=OFF \
+    -DWITH_SWSCALE=OFF \
+    -DWITH_VAAPI=OFF \
 %endif
-%if 0%{?rhel} <= 8
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} > 8
+    -DWITH_OPENCL=ON \
+%endif
+%if 0%{?rhel} && 0%{?rhel} <= 8
     -DALLOW_IN_SOURCE_BUILD=ON \
 %endif
+%if %{with webview}
+    -DWITH_WEBVIEW=ON \
+%else
     -DWITH_WEBVIEW=OFF \
-%if 0%{?fedora} == 41
+%endif
+%if 0%{?fedora} == 41 || (0%{?suse_version} && 0%{?suse_version} < 1600)
     -DWITH_CLIENT_SDL3=OFF \
+%endif
+%if 0%{?fedora} > 41 || 0%{?suse_version} >= 1600 || 0%{?rhel} > 9
+    -DWITH_CLIENT_SDL2=OFF \
 %endif
     -DCMAKE_C_COMPILER=clang \
     -DCMAKE_CXX_COMPILER=clang++ \
     -DWITH_SANITIZE_ADDRESS=ON \
     -DWITH_KRB5=ON \
+    -DWITH_CLIENT_INTERFACE=ON \
+    -DCLIENT_INTERFACE_SHARED=ON \
+    -DWITH_SMARTCARD_INSPECT=ON \
+    -DWITH_WINPR_TOOLS=ON \
+    -DWITH_SAMPLE=ON \
     -DCHANNEL_URBDRC=ON \
     -DCHANNEL_URBDRC_CLIENT=ON \
+    -DCHANNEL_GFXREDIR=ON \
+    -DCHANNEL_GFXREDIR_SERVER=ON \
     -DCHANNEL_RDP2TCP=ON \
     -DCHANNEL_RDP2TCP_CLIENT=ON \
     -DCHANNEL_RDPECAM=ON \
     -DCHANNEL_RDPECAM_CLIENT=ON \
     -DCHANNEL_RDPEAR=ON \
     -DCHANNEL_RDPEAR_CLIENT=ON \
+%if %{with rdpewa}
     -DCHANNEL_RDPEWA=ON \
     -DCHANNEL_RDPEWA_CLIENT=ON \
+%endif
     -DCHANNEL_SSHAGENT=ON \
     -DCHANNEL_SSHAGENT_CLIENT=ON \
+    -DCHANNEL_TSMF=ON \
+    -DCHANNEL_TSMF_CLIENT=ON \
     -DWITH_SERVER=ON \
     -DWITH_CAIRO=ON \
     -DBUILD_TESTING=ON \

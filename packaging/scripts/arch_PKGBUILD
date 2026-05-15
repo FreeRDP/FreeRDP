@@ -1,0 +1,238 @@
+# Maintainer:
+# Contributor: Nathan Loewen <loewen.nathan@gmail.com>
+# Contributor: Christian Hesse <mail@eworm.de>
+
+: ${_use_sodeps:=false}
+
+_pkgname="freerdp"
+pkgname="$_pkgname-git"
+pkgver=3.26.0.4f6c35c5
+pkgrel=3
+pkgdesc="Free implementation of the Remote Desktop Protocol (RDP)"
+url="https://github.com/FreeRDP/FreeRDP"
+license=('Apache-2.0')
+arch=('x86_64')
+
+depends=(
+  'alsa-lib'
+  'aom>=2.0'
+  'cairo'
+  'cjson'
+  'dbus-glib'
+  'faac'
+  'faad2'
+  'ffmpeg'
+  'fuse3'
+  'gst-plugins-base-libs'
+  'gstreamer'
+  'gsm'
+  'icu'
+  'jansson'
+  'lame'
+  'libcbor'
+  'libcups'
+  'libfido2'
+  'libjpeg-turbo'
+  'libpng'
+  'libpulse'
+  'libsoxr'
+  'libusb'
+  'libva'
+  'libwebp'
+  'libx11'
+  'libxcursor'
+  'libxdamage'
+  'libxext'
+  'libxfixes'
+  'libxi'
+  'libxinerama'
+  'libxkbcommon'
+  'libxkbfile'
+  'libxrandr'
+  'libxrender'
+  'libxtst'
+  'libxv'
+  'libyuv'
+  'ocl-icd'
+  'openh264'
+  'openssl'
+  'opus'
+  'pam'
+  'pcsclite'
+  'sdl3'
+  'sdl3_image'
+  'sdl3_ttf'
+  'systemd-libs'
+  'uriparser'
+  'v4l-utils'
+  'wayland'
+  'webkitgtk-6.0'
+  'zlib'
+)
+makedepends=(
+  'clang'
+  'cmake'
+  'git'
+  'ninja'
+  'opencl-headers'
+  'pkgconf'
+)
+
+_libver=${pkgver%%.*}
+provides=(
+  "$_pkgname=2:${pkgver%.r*}"
+  "libfreerdp$_libver.so"
+  "libfreerdp-client$_libver.so"
+  "libfreerdp-server$_libver.so"
+  "libfreerdp-server-proxy$_libver.so"
+  "libfreerdp-shadow$_libver.so"
+  "libfreerdp-shadow-subsystem$_libver.so"
+  "libwinpr$_libver.so"
+  "libwinpr-tools$_libver.so"
+)
+conflicts=("$_pkgname")
+
+_pkgsrc="$_pkgname"
+if [[ -n ${FREERDP_SOURCE_ARCHIVE:-} ]]; then
+  source=("$_pkgsrc.tar.gz"::"file://${FREERDP_SOURCE_ARCHIVE}")
+else
+  source=("$_pkgsrc"::"git+$url.git")
+fi
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$_pkgsrc"
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git describe --long --tags --abbrev=7 --exclude='*[a-zA-Z][a-zA-Z]*' \
+      | sed -E 's/^[^0-9]*//;s/([^-]*-g)/r\1/;s/-/./g'
+  else
+    printf '%s\n' "${FREERDP_PACKAGE_VERSION:-$pkgver}"
+  fi
+}
+
+prepare() {
+  # allow None build type
+  sed -E -e '/SUPPORTED_BUILD_TYPES/s/Debug/None/' -i "$_pkgsrc/cmake/CommonConfigOptions.cmake"
+
+  # fix check_ipo_supported
+  sed -E -e '/check_ipo_supported/s/\)/ LANGUAGES C)/' -i "$_pkgsrc/cmake/CommonConfigOptions.cmake"
+}
+
+build() {
+  local _cmake_options=(
+    -B build
+    -S "$_pkgsrc"
+    -G Ninja
+    -DCMAKE_BUILD_TYPE=None
+    -DCMAKE_INSTALL_PREFIX='/usr'
+    -DCMAKE_INSTALL_LIBDIR='lib'
+    -DCMAKE_SKIP_INSTALL_RPATH=ON
+    -DCHANNEL_GFXREDIR=ON
+    -DCHANNEL_GFXREDIR_SERVER=ON
+    -DCHANNEL_RDP2TCP=ON
+    -DCHANNEL_RDP2TCP_CLIENT=ON
+    -DCHANNEL_RDPECAM_CLIENT=ON
+    -DCHANNEL_RDPEAR=ON
+    -DCHANNEL_RDPEAR_CLIENT=ON
+    -DCHANNEL_RDPEWA=ON
+    -DCHANNEL_RDPEWA_CLIENT=ON
+    -DCHANNEL_SSHAGENT=ON
+    -DCHANNEL_SSHAGENT_CLIENT=ON
+    -DCHANNEL_TSMF=ON
+    -DCHANNEL_TSMF_CLIENT=ON
+    -DCHANNEL_URBDRC=ON
+    -DCHANNEL_URBDRC_CLIENT=ON
+    -DCLIENT_INTERFACE_SHARED=ON
+    -DPROXY_PLUGINDIR="/usr/lib/$_pkgname/server/proxy/plugins"
+    -DRDTK_FORCE_STATIC_BUILD=ON # prevent file conflicts with freerdp2
+    -DSAMPLE_USE_VENDOR_PRODUCT_CONFIG_DIR=ON
+    -DSDL_USE_COMPILED_RESOURCES=OFF
+    -DSDL_USE_VENDOR_PRODUCT_CONFIG_DIR=ON
+    -DUWAC_FORCE_STATIC_BUILD=ON # prevent file conflicts with freerdp2
+    -DFREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR=ON
+    -DWINPR_USE_LEGACY_RESOURCE_DIR=OFF
+    -DWINPR_USE_VENDOR_PRODUCT_CONFIG_DIR=ON
+    -DWINPR_UTILS_IMAGE_JPEG=ON
+    -DWINPR_UTILS_IMAGE_PNG=ON
+    -DWINPR_UTILS_IMAGE_WEBP=ON
+    -DWITH_AAD=ON
+    -DWITH_ALSA=ON
+    -DWITH_BINARY_VERSIONING=ON # prevent file conflicts with freerdp2
+    -DWITH_CAIRO=ON
+    -DWITH_CHANNELS=ON
+    -DWITH_CLIENT_INTERFACE=ON
+    -DWITH_CLIENT_CHANNELS=ON
+    -DWITH_CLIENT_SDL2=OFF
+    -DWITH_CLIENT_SDL3=ON
+    -DWITH_CUPS=ON
+    -DWITH_DSP_FFMPEG=ON
+    -DWITH_FAAC=ON
+    -DWITH_FAAD2=ON
+    -DWITH_FFMPEG=ON
+    -DWITH_FUSE=ON
+    -DWITH_GFX_AV1=ON
+    -DWITH_GSM=ON
+    -DWITH_GSTREAMER_1_0=ON
+    -DWITH_ICU=ON
+    -DWITH_INTERNAL_MD4=ON
+    -DWITH_INTERNAL_MD5=ON
+    -DWITH_INTERNAL_RC4=ON
+    -DWITH_JPEG=ON
+    -DWITH_KEYBOARD_LAYOUT_FROM_FILE=ON
+    -DWITH_KRB5=ON
+    -DWITH_LAME=ON
+    -DWITH_OPENCL=ON
+    -DWITH_OPENH264=ON
+    -DWITH_OPENH264_LOADING=ON
+    -DWITH_OPUS=ON
+    -DWITH_PCSC=ON
+    -DWITH_PULSE=ON
+    -DWITH_RESOURCE_VERSIONING=ON
+    -DWITH_RDTK=ON
+    -DWITH_SAMPLE=ON
+    -DWITH_SERVER=ON
+    -DWITH_SERVER_CHANNELS=ON
+    -DWITH_SDL_IMAGE_DIALOGS=ON
+    -DWITH_SMARTCARD_INSPECT=ON
+    -DWITH_SOXR=ON
+    -DWITH_SWSCALE=ON
+    -DWITH_SYSTEMD=ON
+    -DWITH_TIMEZONE_FROM_FILE=ON
+    -DWITH_VAAPI=ON
+    -DWITH_VIDEO_FFMPEG=ON
+    -DWITH_VERBOSE_WINPR_ASSERT=OFF
+    -DWITH_WAYLAND=ON
+    -DWITH_WEBVIEW=ON
+    -DWITH_WINPR_TOOLS=ON
+    -DWITH_X11=ON
+    -DWITH_YUV=ON
+    -DBUILD_TESTING=ON
+    -DBUILD_TESTING_NO_H264=ON
+    -Wno-dev
+  )
+
+  cmake "${_cmake_options[@]}"
+  cmake --build build
+}
+
+check() {
+  ctest --test-dir build --output-on-failure || true
+}
+
+package() {
+  if [[ "${_use_sodeps::1}" == "t" ]]; then
+    eval "depends+=(
+      'libavcodec.so' # ffmpeg
+      'libavutil.so' # ffmpeg
+      'libaom.so' # aom
+      'libcrypto.so' # openssl
+      'libicuuc.so' # icu
+      'libssl.so' # openssl
+      'libswresample.so' # ffmpeg
+      'libswscale.so' # ffmpeg
+    )"
+  fi
+
+  DESTDIR="$pkgdir" cmake --install build
+}
+

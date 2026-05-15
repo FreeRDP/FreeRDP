@@ -30,10 +30,10 @@ DEB_CMAKE_EXTRA_FLAGS := \
 						  $(NULL)
 
 %:
-	dh $@ --parallel
+	dh $@ --parallel --buildsystem=cmake+ninja
 
 override_dh_auto_configure:
-	dh_auto_configure -- -DCMAKE_MODULE_PATH=$(PWD)/cmake -GNinja -C $(PWD)/packaging/deb/freerdp-nightly/cmake-preload.cmake $(DEB_CMAKE_EXTRA_FLAGS)
+	dh_auto_configure --buildsystem=cmake+ninja -- -DCMAKE_MODULE_PATH=$(PWD)/cmake -DCMAKE_PROJECT_FreeRDP_INCLUDE=$(PWD)/packaging/deb/freerdp-nightly/cmake-preload.cmake $(DEB_CMAKE_EXTRA_FLAGS)
 
 override_dh_shlibdeps:
 	dh_shlibdeps -l /opt/freerdp-nightly/lib/
