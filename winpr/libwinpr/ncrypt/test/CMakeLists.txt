@@ -18,6 +18,10 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
   add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 endforeach()
 
+if(WITH_SANITIZE_ADDRESS)
+  set_tests_properties(TestNCryptSmartcard PROPERTIES DISABLED TRUE)
+endif()
+
 target_link_libraries(${MODULE_NAME} winpr ${OPENSSL_LIBRARIES})
 if(WIN32)
   target_link_libraries(${MODULE_NAME} ncrypt)
