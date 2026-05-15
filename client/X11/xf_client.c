@@ -1717,7 +1717,7 @@ end:
 	return exit_code;
 }
 
-int xf_exit_code_from_disconnect_reason(DWORD reason)
+FREERDP_API int xf_exit_code_from_disconnect_reason(DWORD reason)
 {
 	if ((reason == 0) || ((reason >= XF_EXIT_PARSE_ARGUMENTS) && (reason <= XF_EXIT_CODE_LAST)))
 		return WINPR_ASSERTING_INT_CAST(int, reason);
