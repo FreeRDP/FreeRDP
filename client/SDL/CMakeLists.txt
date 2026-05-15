@@ -33,6 +33,7 @@ include(ProjectCXXStandard)
 include(CommonConfigOptions)
 
 include(ConfigureFreeRDP)
+include(CXXFilesystem)
 include(CXXCompilerFlags)
 
 option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events"

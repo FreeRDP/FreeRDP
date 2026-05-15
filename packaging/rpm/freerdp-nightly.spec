@@ -323,6 +323,10 @@ cp %{_sourcedir}/source_version freerdp-nightly-%{version}/.source_version
 
 %cmake_build
 
+%if 0%{?suse_version}
+cd ..
+%endif
+
 %ctest
 
 %cmake_install

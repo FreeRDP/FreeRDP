@@ -35,12 +35,14 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/)
 include(CommonConfigOptions)
 include(CXXCompilerFlags)
 include(ProjectCXXStandard)
+include(CXXFilesystem)
 
 set(SRCS dyn-channel-dump.cpp)
 addtargetwithresourcefile(${PROJECT_NAME} FALSE "${PROJECT_VERSION}" SRCS FALSE)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<BOOL:${BUILD_SHARED_LIBS}>:BUILD_SHARED_LIBS>)
 target_link_libraries(${PROJECT_NAME} PRIVATE winpr freerdp freerdp-client freerdp-server freerdp-server-proxy)
+freerdp_link_cxx_filesystem(${PROJECT_NAME} PRIVATE)
 
 installwithrpath(TARGETS ${PROJECT_NAME} DESTINATION ${FREERDP_PROXY_PLUGINDIR})
 

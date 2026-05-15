@@ -104,5 +104,6 @@ else()
 endif()
 
 add_library(sdl-common-client-res STATIC ${RES_FILES} ${SRCS} ${FACTORY_HDR} ${FACTORY_SRCS})
+freerdp_link_cxx_filesystem(sdl-common-client-res PUBLIC)
 set_property(TARGET sdl-common-client-res PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET sdl-common-client-res PROPERTY FOLDER "Client/Common")

@@ -21,11 +21,12 @@ add_library(sdl3_client_res STATIC ${SRCS})
 set_property(TARGET sdl3_client_res PROPERTY FOLDER "Client/SDL")
 
 if(NOT WITH_SDL_LINK_SHARED)
-  target_link_libraries(sdl3_client_res ${SDL3_STATIC_LIBRARIES})
+  target_link_libraries(sdl3_client_res PUBLIC ${SDL3_STATIC_LIBRARIES})
 else()
-  target_link_libraries(sdl3_client_res ${SDL3_LIBRARIES})
+  target_link_libraries(sdl3_client_res PUBLIC ${SDL3_LIBRARIES})
 endif()
 
-target_link_libraries(sdl3_client_res sdl-common-client-res)
+target_link_libraries(sdl3_client_res PUBLIC sdl-common-client-res)
+freerdp_link_cxx_filesystem(sdl3_client_res PUBLIC)
 
 set_target_properties(sdl3_client_res PROPERTIES POSITION_INDEPENDENT_CODE ON INTERPROCEDURAL_OPTIMIZATION OFF)
