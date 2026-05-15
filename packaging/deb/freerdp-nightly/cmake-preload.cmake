@@ -20,6 +20,7 @@ if(PkgConfig_FOUND)
 
   if(FREERDP_NIGHTLY_AOM_FOUND)
     set(WITH_GFX_AV1 ON CACHE BOOL "preload")
+    set(WITH_AOM ON CACHE BOOL "preload")
   endif()
   if(FREERDP_NIGHTLY_OPENH264_FOUND)
     set(WITH_OPENH264 ON CACHE BOOL "preload")

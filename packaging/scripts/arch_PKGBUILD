@@ -1,8 +1,9 @@
 # Maintainer:
 # Contributor: Nathan Loewen <loewen.nathan@gmail.com>
 # Contributor: Christian Hesse <mail@eworm.de>
+# shellcheck shell=bash disable=SC2034,SC2154
 
-: ${_use_sodeps:=false}
+: "${_use_sodeps:=false}"
 
 _pkgname="freerdp"
 pkgname="$_pkgname-git"
@@ -94,14 +95,14 @@ conflicts=("$_pkgname")
 
 _pkgsrc="$_pkgname"
 if [[ -n ${FREERDP_SOURCE_ARCHIVE:-} ]]; then
-  source=("$_pkgsrc.tar.gz"::"file://${FREERDP_SOURCE_ARCHIVE}")
+  source=("${_pkgsrc}.tar.gz::file://${FREERDP_SOURCE_ARCHIVE}")
 else
-  source=("$_pkgsrc"::"git+$url.git")
+  source=("${_pkgsrc}::git+${url}.git")
 fi
 sha256sums=('SKIP')
 
 pkgver() {
-  cd "$_pkgsrc"
+  cd "$_pkgsrc" || return
   if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     git describe --long --tags --abbrev=7 --exclude='*[a-zA-Z][a-zA-Z]*' \
       | sed -E 's/^[^0-9]*//;s/([^-]*-g)/r\1/;s/-/./g'
@@ -171,6 +172,7 @@ build() {
     -DWITH_FFMPEG=ON
     -DWITH_FUSE=ON
     -DWITH_GFX_AV1=ON
+    -DWITH_AOM=ON
     -DWITH_GSM=ON
     -DWITH_GSTREAMER_1_0=ON
     -DWITH_ICU=ON
@@ -235,4 +237,3 @@ package() {
 
   DESTDIR="$pkgdir" cmake --install build
 }
-

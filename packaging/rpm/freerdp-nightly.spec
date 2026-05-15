@@ -231,6 +231,7 @@ cp %{_sourcedir}/source_version freerdp-nightly-%{version}/.source_version
 %endif
 %if %{with av1}
     -DWITH_GFX_AV1=ON \
+    -DWITH_AOM=ON \
 %endif
     -DWITH_INTERNAL_RC4=ON \
     -DWITH_INTERNAL_MD4=ON \

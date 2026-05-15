@@ -1007,9 +1007,9 @@ static BOOL tsmf_gstreamer_update_rendering_area(ITSMFDecoder* decoder, UINT32 n
 		}
 
 		const int status = tsmf_window_resize(
-			mdecoder, WINPR_ASSERTING_INT_CAST(int, newX), WINPR_ASSERTING_INT_CAST(int, newY),
-			WINPR_ASSERTING_INT_CAST(int, newWidth), WINPR_ASSERTING_INT_CAST(int, newHeight),
-			WINPR_ASSERTING_INT_CAST(int, numRectangles), rdpRectangles);
+		    mdecoder, WINPR_ASSERTING_INT_CAST(int, newX), WINPR_ASSERTING_INT_CAST(int, newY),
+		    WINPR_ASSERTING_INT_CAST(int, newWidth), WINPR_ASSERTING_INT_CAST(int, newHeight),
+		    WINPR_ASSERTING_INT_CAST(int, numRectangles), rdpRectangles);
 		free(rdpRectangles);
 		return status == 0;
 	}
