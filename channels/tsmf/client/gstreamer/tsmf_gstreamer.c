@@ -24,6 +24,7 @@
 #include <winpr/assert.h>
 
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -975,17 +976,42 @@ static UINT64 tsmf_gstreamer_get_running_time(ITSMFDecoder* decoder)
 	return (UINT64)(pos / 100 + mdecoder->seek_offset);
 }
 
-static BOOL tsmf_gstreamer_update_rendering_area(ITSMFDecoder* decoder, int newX, int newY,
-                                                 int newWidth, int newHeight, int numRectangles,
-                                                 RDP_RECT* rectangles)
+static BOOL tsmf_gstreamer_update_rendering_area(ITSMFDecoder* decoder, UINT32 newX, UINT32 newY,
+                                                 UINT32 newWidth, UINT32 newHeight,
+                                                 UINT32 numRectangles,
+                                                 const RECTANGLE_32* rectangles)
 {
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder*)decoder;
-	DEBUG_TSMF("x=%d, y=%d, w=%d, h=%d, rect=%d", newX, newY, newWidth, newHeight, numRectangles);
+	RDP_RECT* rdpRectangles = nullptr;
+	DEBUG_TSMF("x=%" PRIu32 ", y=%" PRIu32 ", w=%" PRIu32 ", h=%" PRIu32 ", rect=%" PRIu32, newX,
+	           newY, newWidth, newHeight, numRectangles);
 
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
 	{
-		return tsmf_window_resize(mdecoder, newX, newY, newWidth, newHeight, numRectangles,
-		                          rectangles) == 0;
+		if (numRectangles > 0)
+		{
+			if (!rectangles)
+				return FALSE;
+
+			rdpRectangles = calloc(numRectangles, sizeof(RDP_RECT));
+			if (!rdpRectangles)
+				return FALSE;
+
+			for (UINT32 x = 0; x < numRectangles; x++)
+			{
+				rdpRectangles[x].x = WINPR_ASSERTING_INT_CAST(INT16, rectangles[x].left);
+				rdpRectangles[x].y = WINPR_ASSERTING_INT_CAST(INT16, rectangles[x].top);
+				rdpRectangles[x].width = WINPR_ASSERTING_INT_CAST(INT16, rectangles[x].width);
+				rdpRectangles[x].height = WINPR_ASSERTING_INT_CAST(INT16, rectangles[x].height);
+			}
+		}
+
+		const int status = tsmf_window_resize(
+			mdecoder, WINPR_ASSERTING_INT_CAST(int, newX), WINPR_ASSERTING_INT_CAST(int, newY),
+			WINPR_ASSERTING_INT_CAST(int, newWidth), WINPR_ASSERTING_INT_CAST(int, newHeight),
+			WINPR_ASSERTING_INT_CAST(int, numRectangles), rdpRectangles);
+		free(rdpRectangles);
+		return status == 0;
 	}
 
 	return TRUE;
