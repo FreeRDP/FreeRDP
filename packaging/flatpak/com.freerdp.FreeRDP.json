@@ -40,6 +40,7 @@
 		"modules/SDL3_image.json",
 		"modules/SDL3_ttf.json",
 		"modules/sso-mib.json",
+		"modules/aom.json",
 		{
 			"builddir": true,
 			"buildsystem": "cmake-ninja",
@@ -70,6 +71,8 @@
 				"-DWITH_OPUS:BOOL=ON",
 				"-DWITH_FUSE:BOOL=OFF",
 				"-DWITH_FFMPEG:BOOL=ON",
+				"-DWITH_GFX_AV1:BOOL=ON",
+				"-DWITH_AOM:BOOL=ON",
 				"-DWINPR_UTILS_IMAGE_PNG:BOOL=ON",
 				"-DWINPR_UTILS_IMAGE_WEBP:BOOL=ON",
 				"-DWINPR_UTILS_IMAGE_JPEG:BOOL=ON",

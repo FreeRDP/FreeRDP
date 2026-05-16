@@ -1,0 +1,30 @@
+{
+	"builddir": true,
+	"buildsystem": "cmake-ninja",
+	"cleanup": [
+		"/include",
+		"/lib/cmake",
+		"/lib/pkgconfig"
+	],
+	"config-opts": [
+		"-DCMAKE_VERBOSE_MAKEFILE=ON",
+		"-DCMAKE_BUILD_TYPE:STRING=Release",
+		"-DCMAKE_INSTALL_LIBDIR:PATH=lib",
+		"-DBUILD_SHARED_LIBS:BOOL=ON",
+		"-DENABLE_DOCS:BOOL=OFF",
+		"-DENABLE_EXAMPLES:BOOL=OFF",
+		"-DENABLE_NASM:BOOL=ON",
+		"-DENABLE_TESTDATA:BOOL=OFF",
+		"-DENABLE_TESTS:BOOL=OFF",
+		"-DENABLE_TOOLS:BOOL=OFF"
+	],
+	"name": "aom",
+	"sources": [
+		{
+			"commit": "047d8cf6168feafe1300eb6902000dd1a03d5549",
+			"tag": "v3.14.0",
+			"type": "git",
+			"url": "https://aomedia.googlesource.com/aom"
+		}
+	]
+}
