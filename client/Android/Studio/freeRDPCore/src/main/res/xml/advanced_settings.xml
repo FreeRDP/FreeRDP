@@ -73,4 +73,18 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/settings_cat_hyperv">
+
+        <SwitchPreferenceCompat
+            android:key="bookmark.vmconnect_mode"
+            android:title="@string/settings_vmconnect_mode" />
+
+        <EditTextPreference
+            android:key="bookmark.vmconnect_guid"
+            android:singleLine="true"
+            android:title="@string/settings_vmconnect_guid"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

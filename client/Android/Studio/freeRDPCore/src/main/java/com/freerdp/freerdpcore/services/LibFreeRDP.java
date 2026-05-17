@@ -320,6 +320,15 @@ public class LibFreeRDP
 			args.add("/admin");
 		}
 
+		if (advanced.getVmConnectMode())
+		{
+			String guid = advanced.getVmConnectGuid();
+			if (!guid.isEmpty())
+				args.add("/vmconnect:" + guid);
+			else
+				args.add("/vmconnect");
+		}
+
 		switch (advanced.getSecurity())
 		{
 			case 3: // NLA

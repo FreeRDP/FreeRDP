@@ -369,6 +369,8 @@ public class BookmarkActivity
 			// Apply initial enabled states based on saved checkbox values.
 			setEnabled("bookmark.gateway_settings",
 			           prefs.getBoolean("bookmark.enable_gateway_settings", false));
+			setEnabled("bookmark.vmconnect_guid",
+			           prefs.getBoolean("bookmark.vmconnect_mode", false));
 
 			// Hide gateway section for non-manual bookmarks.
 			BookmarkViewModel vm =
@@ -391,6 +393,15 @@ public class BookmarkActivity
 			{
 				gwCheck.setOnPreferenceChangeListener((pref, newValue) -> {
 					setEnabled("bookmark.gateway_settings", (Boolean)newValue);
+					return true;
+				});
+			}
+
+			Preference vmCheck = findPreference("bookmark.vmconnect_mode");
+			if (vmCheck != null)
+			{
+				vmCheck.setOnPreferenceChangeListener((pref, newValue) -> {
+					setEnabled("bookmark.vmconnect_guid", (Boolean)newValue);
 					return true;
 				});
 			}

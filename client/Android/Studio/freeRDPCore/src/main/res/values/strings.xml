@@ -216,6 +216,9 @@
     <string name="settings_async_channel">Async channel</string>
     <string name="settings_async_update">Async update</string>
     <string name="settings_console_mode">Console Mode</string>
+    <string name="settings_cat_hyperv">Hyper-V</string>
+    <string name="settings_vmconnect_mode">Hyper-V Console (vmconnect)</string>
+    <string name="settings_vmconnect_guid">VM ID (GUID)</string>
     <!-- App settings strings -->
     <string name="settings_password_present">*******</string>
     <string name="settings_password_empty">not set</string>

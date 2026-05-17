@@ -54,6 +54,8 @@ public class BookmarkBase implements Parcelable, Cloneable
 	private static final String keyRemoteApp = "bookmark.remote_program";
 	private static final String keyWorkDir = "bookmark.work_dir";
 	private static final String keyConsoleMode = "bookmark.console_mode";
+	private static final String keyVmConnectMode = "bookmark.vmconnect_mode";
+	private static final String keyVmConnectGuid = "bookmark.vmconnect_guid";
 
 	private static final String keyAsyncChannel = "bookmark.async_channel";
 	private static final String keyAsyncUpdate = "bookmark.async_update";
@@ -340,6 +342,8 @@ public class BookmarkBase implements Parcelable, Cloneable
 		editor.putString(keyRemoteApp, advancedSettings.getRemoteProgram());
 		editor.putString(keyWorkDir, advancedSettings.getWorkDir());
 		editor.putBoolean(keyConsoleMode, advancedSettings.getConsoleMode());
+		editor.putBoolean(keyVmConnectMode, advancedSettings.getVmConnectMode());
+		editor.putString(keyVmConnectGuid, advancedSettings.getVmConnectGuid());
 
 		editor.putBoolean(keyAsyncChannel, debugSettings.getAsyncChannel());
 		editor.putBoolean(keyAsyncUpdate, debugSettings.getAsyncUpdate());
@@ -394,6 +398,8 @@ public class BookmarkBase implements Parcelable, Cloneable
 		advancedSettings.setRemoteProgram(sharedPrefs.getString(keyRemoteApp, ""));
 		advancedSettings.setWorkDir(sharedPrefs.getString(keyWorkDir, ""));
 		advancedSettings.setConsoleMode(sharedPrefs.getBoolean(keyConsoleMode, false));
+		advancedSettings.setVmConnectMode(sharedPrefs.getBoolean(keyVmConnectMode, false));
+		advancedSettings.setVmConnectGuid(sharedPrefs.getString(keyVmConnectGuid, ""));
 
 		debugSettings.setAsyncChannel(sharedPrefs.getBoolean(keyAsyncChannel, true));
 		debugSettings.setAsyncUpdate(sharedPrefs.getBoolean(keyAsyncUpdate, true));
@@ -921,6 +927,8 @@ public class BookmarkBase implements Parcelable, Cloneable
 		private boolean redirectMicrophone = false;
 		private int security = 0;
 		private boolean consoleMode = false;
+		private boolean vmConnectMode = false;
+		@NonNull private String vmConnectGuid = "";
 
 		@NonNull private String remoteProgram = "";
 
@@ -940,6 +948,8 @@ public class BookmarkBase implements Parcelable, Cloneable
 			redirectMicrophone = parcel.readBoolean();
 			security = parcel.readInt();
 			consoleMode = parcel.readBoolean();
+			vmConnectMode = parcel.readBoolean();
+			vmConnectGuid = Objects.requireNonNull(parcel.readString());
 			remoteProgram = Objects.requireNonNull(parcel.readString());
 			workDir = Objects.requireNonNull(parcel.readString());
 			tlsSecLevel = parcel.readInt();
@@ -1073,6 +1083,26 @@ public class BookmarkBase implements Parcelable, Cloneable
 			this.workDir = workDir;
 		}
 
+		public boolean getVmConnectMode()
+		{
+			return vmConnectMode;
+		}
+
+		public void setVmConnectMode(boolean vmConnectMode)
+		{
+			this.vmConnectMode = vmConnectMode;
+		}
+
+		@NonNull public String getVmConnectGuid()
+		{
+			return vmConnectGuid;
+		}
+
+		public void setVmConnectGuid(@NonNull String vmConnectGuid)
+		{
+			this.vmConnectGuid = vmConnectGuid;
+		}
+
 		@Override public int describeContents()
 		{
 			return 0;
@@ -1086,6 +1116,8 @@ public class BookmarkBase implements Parcelable, Cloneable
 			out.writeBoolean(redirectMicrophone);
 			out.writeInt(security);
 			out.writeBoolean(consoleMode);
+			out.writeBoolean(vmConnectMode);
+			out.writeString(vmConnectGuid);
 			out.writeString(remoteProgram);
 			out.writeString(workDir);
 			out.writeInt(tlsSecLevel);
