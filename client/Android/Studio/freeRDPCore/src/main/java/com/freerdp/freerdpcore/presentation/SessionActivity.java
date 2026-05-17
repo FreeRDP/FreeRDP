@@ -505,22 +505,10 @@ public class SessionActivity extends AppCompatActivity
 		Log.v(TAG, "Screen Resolution: " + screenSettings.getResolutionString());
 		if (screenSettings.isAutomatic())
 		{
-			if ((getResources().getConfiguration().screenLayout &
-			     Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE)
-			{
-				// large screen device i.e. tablet: simply use screen info
-				screenSettings.setHeight(screen_height);
-				screenSettings.setWidth(screen_width);
-			}
-			else
-			{
-				// small screen device i.e. phone:
-				// Automatic uses the largest side length of the screen and
-				// makes a 16:10 resolution setting out of it
-				int screenMax = Math.max(screen_width, screen_height);
-				screenSettings.setHeight(screenMax);
-				screenSettings.setWidth((int)((float)screenMax * 1.6f));
-			}
+			// Instead of enforcing obsolete ratios based on screen categories,
+			// directly map to actual device metrics without arbitrary multi-scaling.
+			screenSettings.setHeight(screen_height);
+			screenSettings.setWidth(screen_width);
 		}
 		if (screenSettings.isFitScreen())
 		{
