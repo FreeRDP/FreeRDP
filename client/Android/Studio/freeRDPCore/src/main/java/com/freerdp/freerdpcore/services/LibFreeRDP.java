@@ -153,6 +153,8 @@ public class LibFreeRDP
 
 	private static native boolean freerdp_send_clipboard_data(long inst, String data);
 
+	private static native boolean freerdp_send_monitor_layout(long inst, int width, int height);
+
 	private static native String freerdp_get_last_error_string(long inst);
 
 	public static void setEventListener(EventListener l)
@@ -379,6 +381,7 @@ public class LibFreeRDP
 			args.add("/load-balance-info:" + info);
 		}
 		args.add("/clipboard");
+		args.add("/disp");
 
 		// Gateway enabled?
 		if (bookmark.getType() == BookmarkBase.TYPE_MANUAL && bookmark.getEnableGatewaySettings())
@@ -519,6 +522,11 @@ public class LibFreeRDP
 	public static boolean sendClipboardData(long inst, String data)
 	{
 		return freerdp_send_clipboard_data(inst, data);
+	}
+
+	public static boolean sendMonitorLayout(long inst, int width, int height)
+	{
+		return freerdp_send_monitor_layout(inst, width, height);
 	}
 
 	private static void OnConnectionSuccess(long inst)

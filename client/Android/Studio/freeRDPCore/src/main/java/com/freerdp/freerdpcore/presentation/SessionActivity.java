@@ -223,8 +223,10 @@ public class SessionActivity extends AppCompatActivity
 		    new OnGlobalLayoutListener() {
 			    @Override public void onGlobalLayout()
 			    {
-				    screen_width = activityRootView.getWidth();
-				    screen_height = activityRootView.getHeight();
+				    screen_width = scrollView.getWidth() - scrollView.getPaddingLeft() -
+				                   scrollView.getPaddingRight();
+				    screen_height = scrollView.getHeight() - scrollView.getPaddingTop() -
+				                    scrollView.getPaddingBottom();
 
 				    // start session
 				    if (!sessionRunning && getIntent() != null)
@@ -371,6 +373,17 @@ public class SessionActivity extends AppCompatActivity
 		inputManager.reloadKeyboards();
 
 		hideSystemBars();
+
+		// screen_width/screen_height will be updated by the next onGlobalLayout callback;
+		if (session != null && session.getBookmark() != null &&
+		    session.getBookmark().getActiveScreenSettings().isFitScreen())
+		{
+			scrollView.post(() -> {
+				if (screen_width > 0 && screen_height > 0)
+					LibFreeRDP.sendMonitorLayout(session.getInstance(), screen_width,
+					                             screen_height);
+			});
+		}
 	}
 
 	private WindowInsetsCompat onWindowInsetsChanged(View rootView, WindowInsetsCompat windowInsets)

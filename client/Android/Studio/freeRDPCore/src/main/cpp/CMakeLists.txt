@@ -117,6 +117,8 @@ include(ExternalFreeRDP)
 set(${MODULE_PREFIX}_SRCS
     android_cliprdr.c
     android_cliprdr.h
+    android_disp.c
+    android_disp.h
     android_event.c
     android_event.h
     android_freerdp.c
