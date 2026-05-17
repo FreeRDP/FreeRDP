@@ -41,4 +41,26 @@
             freerdp:bounds_min="480"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/settings_cat_scale">
+        <ListPreference
+            android:entries="@array/scale_mode_array"
+            android:entryValues="@array/scale_mode_values_array"
+            android:key="bookmark.scale_mode"
+            android:title="@string/settings_scale"
+            app:useSimpleSummaryProvider="true" />
+        <com.freerdp.freerdpcore.utils.IntEditTextPreference
+            android:key="bookmark.scale_desktop"
+            android:title="@string/settings_scale_desktop"
+            android:singleLine="true"
+            freerdp:bounds_default="100"
+            freerdp:bounds_max="500"
+            freerdp:bounds_min="100"
+            app:useSimpleSummaryProvider="true" />
+        <com.freerdp.freerdpcore.utils.IntListPreference
+            android:entries="@array/scale_device_array"
+            android:entryValues="@array/scale_device_values_array"
+            android:key="bookmark.scale_device"
+            android:title="@string/settings_scale_device"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
 </PreferenceScreen>

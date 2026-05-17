@@ -29,6 +29,9 @@ public class BookmarkBase implements Parcelable, Cloneable
 	private static final String keyColors = "bookmark.colors";
 	private static final String keyResolution = "bookmark.resolution";
 	private static final String keyWidth = "bookmark.width";
+	private static final String keyScaleMode = "bookmark.scale_mode";
+	private static final String keyScaleDesktop = "bookmark.scale_desktop";
+	private static final String keyScaleDevice = "bookmark.scale_device";
 	private static final String keyHeight = "bookmark.height";
 
 	private static final String keyRFX = "bookmark.perf_remotefx";
@@ -312,6 +315,9 @@ public class BookmarkBase implements Parcelable, Cloneable
 		editor.putString(keyResolution, screenSettings.getResolutionString().toLowerCase(locale));
 		editor.putInt(keyWidth, screenSettings.getWidth());
 		editor.putInt(keyHeight, screenSettings.getHeight());
+		editor.putString(keyScaleMode, screenSettings.getScaleMode());
+		editor.putInt(keyScaleDesktop, screenSettings.getScaleDesktop());
+		editor.putInt(keyScaleDevice, screenSettings.getScaleDevice());
 
 		editor.putBoolean(keyRFX, performanceFlags.getRemoteFX());
 		editor.putBoolean(keyGFX, performanceFlags.getGfx());
@@ -363,6 +369,9 @@ public class BookmarkBase implements Parcelable, Cloneable
 		screenSettings.setResolution(sharedPrefs.getString(keyResolution, "automatic"),
 		                             sharedPrefs.getInt(keyWidth, 800),
 		                             sharedPrefs.getInt(keyHeight, 600));
+		screenSettings.setScale(sharedPrefs.getString(keyScaleMode, "100"),
+		                        sharedPrefs.getInt(keyScaleDesktop, 100),
+		                        sharedPrefs.getInt(keyScaleDevice, 100));
 
 		performanceFlags.setRemoteFX(sharedPrefs.getBoolean(keyRFX, false));
 		performanceFlags.setGfx(sharedPrefs.getBoolean(keyGFX, true));
@@ -579,6 +588,9 @@ public class BookmarkBase implements Parcelable, Cloneable
 		private int colors = 32;
 		private int width = 0;
 		private int height = 0;
+		private String scaleMode = "100";
+		private int scaleDesktop = 100;
+		private int scaleDevice = 100;
 
 		public ScreenSettings()
 		{
@@ -590,6 +602,9 @@ public class BookmarkBase implements Parcelable, Cloneable
 			colors = parcel.readInt();
 			width = parcel.readInt();
 			height = parcel.readInt();
+			scaleMode = parcel.readString();
+			scaleDesktop = parcel.readInt();
+			scaleDevice = parcel.readInt();
 		}
 
 		private void validate()
@@ -738,6 +753,42 @@ public class BookmarkBase implements Parcelable, Cloneable
 			this.colors = colors;
 		}
 
+		public void setScale(@NonNull String mode, int desktop, int device)
+		{
+			scaleMode = "custom".equalsIgnoreCase(mode) ? "custom" : mode;
+			scaleDesktop = desktop;
+			scaleDevice = device;
+		}
+
+		public boolean isCustomScale()
+		{
+			return "custom".equalsIgnoreCase(scaleMode);
+		}
+
+		@NonNull public String getScaleMode()
+		{
+			return scaleMode;
+		}
+
+		public int getScalePreset()
+		{
+			if ("140".equals(scaleMode))
+				return 140;
+			if ("180".equals(scaleMode))
+				return 180;
+			return 100;
+		}
+
+		public int getScaleDesktop()
+		{
+			return scaleDesktop;
+		}
+
+		public int getScaleDevice()
+		{
+			return scaleDevice;
+		}
+
 		@Override public int describeContents()
 		{
 			return 0;
@@ -749,6 +800,9 @@ public class BookmarkBase implements Parcelable, Cloneable
 			out.writeInt(colors);
 			out.writeInt(width);
 			out.writeInt(height);
+			out.writeString(scaleMode);
+			out.writeInt(scaleDesktop);
+			out.writeInt(scaleDevice);
 		}
 	}
 

@@ -259,7 +259,7 @@ public class BookmarkActivity
 			getPreferenceManager().setSharedPreferencesName(PREFS_NAME);
 			getPreferenceManager().setSharedPreferencesMode(MODE_PRIVATE);
 			setPreferencesFromResource(R.xml.screen_settings, rootKey);
-			applyInitialResolutionState();
+			applyInitialScreenState();
 			setIntSummaryProvider();
 		}
 
@@ -276,14 +276,28 @@ public class BookmarkActivity
 					return true;
 				});
 			}
+			Preference scale = findPreference("bookmark.scale_mode");
+			if (scale != null)
+			{
+				scale.setOnPreferenceChangeListener((pref, newValue) -> {
+					boolean custom = "custom".equalsIgnoreCase((String)newValue);
+					setEnabled("bookmark.scale_desktop", custom);
+					setEnabled("bookmark.scale_device", custom);
+					return true;
+				});
+			}
 		}
 
-		private void applyInitialResolutionState()
+		private void applyInitialScreenState()
 		{
 			SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
 			boolean custom = "custom".equalsIgnoreCase(prefs.getString("bookmark.resolution", ""));
 			setEnabled("bookmark.width", custom);
 			setEnabled("bookmark.height", custom);
+
+			custom = "custom".equalsIgnoreCase(prefs.getString("bookmark.scale_mode", ""));
+			setEnabled("bookmark.scale_desktop", custom);
+			setEnabled("bookmark.scale_device", custom);
 		}
 
 		private void setEnabled(String key, boolean enabled)
@@ -308,6 +322,15 @@ public class BookmarkActivity
 					if ("fitscreen".equals(res))
 						return getString(R.string.resolution_fit);
 					return res;
+				});
+			}
+
+			Preference scaleDesktopPref = findPreference("bookmark.scale_desktop");
+			if (scaleDesktopPref != null)
+			{
+				scaleDesktopPref.setSummaryProvider(preference -> {
+					SharedPreferences sp = getPreferenceManager().getSharedPreferences();
+					return sp.getInt("bookmark.scale_desktop", 100) + "%";
 				});
 			}
 		}

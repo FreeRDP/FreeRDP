@@ -48,6 +48,8 @@ BOOL android_disp_send_monitor_layout(androidContext* afc, UINT32 width, UINT32 
 		return FALSE;
 	}
 
+	rdpSettings* settings = afc->common.context.settings;
+
 	DISPLAY_CONTROL_MONITOR_LAYOUT layout = WINPR_C_ARRAY_INIT;
 	layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
 	layout.Top = layout.Left = 0;
@@ -55,9 +57,9 @@ BOOL android_disp_send_monitor_layout(androidContext* afc, UINT32 width, UINT32 
 	layout.Height = height;
 	layout.PhysicalWidth = 0;
 	layout.PhysicalHeight = 0;
-	layout.Orientation = ORIENTATION_LANDSCAPE;
-	layout.DesktopScaleFactor = 100;
-	layout.DeviceScaleFactor = 100;
+	layout.Orientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
+	layout.DesktopScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+	layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 
 	UINT rc = disp->SendMonitorLayout(disp, 1, &layout);
 	if (rc != CHANNEL_RC_OK)
