@@ -491,7 +491,7 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (cbClientAddress > 0)
 	{
-		cbClientAddress = (UINT16)(cbClientAddress + 1) * sizeof(WCHAR);
+		cbClientAddress = (cbClientAddress + 1) * sizeof(WCHAR);
 		if (cbClientAddress > cbClientAddressMax)
 		{
 			WLog_WARN(TAG,
@@ -513,7 +513,7 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (cbClientDir > 0)
 	{
-		cbClientDir = (UINT16)(cbClientDir + 1) * sizeof(WCHAR);
+		cbClientDir = (cbClientDir + 1) * sizeof(WCHAR);
 		if (cbClientDir > cbClientDirMax)
 		{
 			WLog_WARN(TAG,

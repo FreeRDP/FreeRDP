@@ -1916,7 +1916,7 @@ static inline BOOL rfx_clone_rects(RFX_MESSAGE* WINPR_RESTRICT dst,
 	if (src->numRects == 0)
 		return TRUE;
 
-	dst->rects = winpr_aligned_calloc(src->numRects, sizeof(RECTANGLE_16), 32);
+	dst->rects = winpr_aligned_calloc(src->numRects, sizeof(RFX_RECT), 32);
 	if (!dst->rects)
 		return FALSE;
 	dst->numRects = src->numRects;

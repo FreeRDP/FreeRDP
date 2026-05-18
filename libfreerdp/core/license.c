@@ -275,7 +275,7 @@ static const char* license_request_type_string(UINT32 type)
 }
 
 WINPR_ATTR_NODISCARD
-static const char* licencse_blob_type_string(UINT16 type)
+static const char* license_blob_type_string(UINT16 type)
 {
 	switch (type)
 	{
@@ -1567,7 +1567,7 @@ BOOL license_read_binary_blob_data(wLog* log, LICENSE_BLOB* blob, UINT16 wBlobTy
 	if ((blob->type != wBlobType) && (blob->type != BB_ANY_BLOB))
 	{
 		WLog_Print(log, WLOG_ERROR, "license binary blob::type expected %s, got %s",
-		           licencse_blob_type_string(wBlobType), licencse_blob_type_string(blob->type));
+		           license_blob_type_string(wBlobType), license_blob_type_string(blob->type));
 	}
 
 	/*
@@ -1577,7 +1577,7 @@ BOOL license_read_binary_blob_data(wLog* log, LICENSE_BLOB* blob, UINT16 wBlobTy
 	if ((blob->type != BB_ANY_BLOB) && (blob->length == 0))
 	{
 		WLog_Print(log, WLOG_DEBUG, "license binary blob::type %s, length=0, skipping.",
-		           licencse_blob_type_string(blob->type));
+		           license_blob_type_string(blob->type));
 		return TRUE;
 	}
 
