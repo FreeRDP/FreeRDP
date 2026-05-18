@@ -334,4 +334,8 @@
 
     <string name="preference_key_h264" translatable="false">bookmark.perf_gfx_h264</string>
     <string name="settings_loadBalanceInfo">LoadBalanceInfo</string>
+
+    <!-- External display -->
+    <string name="select_display_title">Select Display</string>
+    <string name="display_main_screen">Main Screen</string>
 </resources>
