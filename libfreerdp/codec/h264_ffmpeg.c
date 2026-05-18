@@ -76,7 +76,21 @@ static inline char* error_string(char* errbuf, size_t errbuf_size, int errnum)
 #endif
 
 #if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING)
-#define VAAPI_DEVICE "/dev/dri/renderD128"
+static const char* get_vaapi_device(void)
+{
+	static char device[MAX_PATH] = WINPR_C_ARRAY_INIT;
+	static bool initialized = false;
+	if (!initialized)
+	{
+		initialized = true;
+		const char* env = getenv("FREERDP_VAAPI_DEVICE");
+		if (env)
+			(void)_snprintf(device, sizeof(device), "%s", env);
+		else
+			(void)_snprintf(device, sizeof(device), "/dev/dri/renderD128");
+	}
+	return device;
+}
 #endif
 
 typedef struct
@@ -676,10 +690,9 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 
 static BOOL libavcodec_init(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_LIBAVCODEC* sys = nullptr;
-
 	WINPR_ASSERT(h264);
-	sys = (H264_CONTEXT_LIBAVCODEC*)calloc(1, sizeof(H264_CONTEXT_LIBAVCODEC));
+	H264_CONTEXT_LIBAVCODEC* sys =
+	    (H264_CONTEXT_LIBAVCODEC*)calloc(1, sizeof(H264_CONTEXT_LIBAVCODEC));
 
 	if (!sys)
 	{
@@ -721,8 +734,8 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 		if (!sys->hwctx)
 		{
-			int ret = av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE,
-			                                 nullptr, 0);
+			int ret = av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI,
+			                                 get_vaapi_device(), nullptr, 0);
 
 			if (ret < 0)
 			{
@@ -794,7 +807,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "H264 VAAPI encoder not found");
 			}
-			else if (av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE,
+			else if (av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, get_vaapi_device(),
 			                                nullptr, 0) < 0)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "av_hwdevice_ctx_create failed");
