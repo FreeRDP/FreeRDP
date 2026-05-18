@@ -200,9 +200,6 @@ void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 	domainLength = credentials->identity.DomainLength;
 	passwordLength = credentials->identity.PasswordLength;
 
-	if (passwordLength > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET) /* [pth] */
-		passwordLength -= SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
-
 	if (credentials->identity.Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE)
 	{
 		userLength *= 2;
@@ -923,9 +920,6 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 
 	identity->PasswordLength = PasswordLength;
 
-	if (identity->PasswordLength > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET)
-		identity->PasswordLength -= SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
-
 	if (PasswordW)
 	{
 		identity->Password = (UINT16*)calloc((identity->PasswordLength + 1), sizeof(WCHAR));
@@ -937,7 +931,6 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 		identity->Password[identity->PasswordLength] = 0;
 	}
 
-	identity->PasswordLength = PasswordLength;
 	/* End of login/password authentication */
 	return 1;
 }

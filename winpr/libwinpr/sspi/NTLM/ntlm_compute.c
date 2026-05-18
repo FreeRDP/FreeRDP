@@ -372,10 +372,7 @@ static int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash, size_t 
 	WINPR_ASSERT(hash);
 
 	SSPI_CREDENTIALS* credentials = context->credentials;
-	/* Password contains a password hash of length (PasswordLength -
-	 * SSPI_CREDENTIALS_HASH_LENGTH_OFFSET) */
-	const ULONG PasswordHashLength = credentials->identity.PasswordLength -
-	                                 /* Macro [globalScope] */ SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
+	const ULONG PasswordHashLength = credentials->identity.PasswordLength;
 
 	if (PasswordHashLength != required_len)
 	{
@@ -448,7 +445,7 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 		                        (LPWSTR)credentials->identity.Domain,
 		                        credentials->identity.DomainLength * 2, hash);
 	}
-	else if (credentials->identity.PasswordLength > SSPI_CREDENTIALS_HASH_LENGTH_OFFSET)
+	else if (credentials->identity.Flags & SEC_WINPR_AUTH_IDENTITY_PASSWORD_HASH)
 	{
 		/* Special case for WinPR: password hash */
 		if (ntlm_convert_password_hash(context, context->NtlmHash, sizeof(context->NtlmHash)) < 0)
