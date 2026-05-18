@@ -384,6 +384,8 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	{
 		size_t len = 0;
 		char* pem = crypto_read_pem(target_value, &len);
+		if (!pem)
+			return FALSE;
 		znfree(config->TargetSmartcardKey, config->TargetSmartcardKeyLength);
 		config->TargetSmartcardKey = pem;
 		config->TargetSmartcardKeyLength = len;
@@ -428,8 +430,8 @@ static BOOL pf_config_load_channels(wIniFile* ini, proxyConfig* config)
 	config->GFX = pf_config_get_bool(ini, section_channels, key_channels_gfx, TRUE);
 	config->DisplayControl = pf_config_get_bool(ini, section_channels, key_channels_disp, TRUE);
 	config->Clipboard = pf_config_get_bool(ini, section_channels, key_channels_clip, FALSE);
-	config->AudioOutput = pf_config_get_bool(ini, section_channels, key_channels_mic, TRUE);
-	config->AudioInput = pf_config_get_bool(ini, section_channels, key_channels_sound, TRUE);
+	config->AudioOutput = pf_config_get_bool(ini, section_channels, key_channels_sound, TRUE);
+	config->AudioInput = pf_config_get_bool(ini, section_channels, key_channels_mic, TRUE);
 	config->DeviceRedirection = pf_config_get_bool(ini, section_channels, key_channels_rdpdr, TRUE);
 	config->VideoRedirection = pf_config_get_bool(ini, section_channels, key_channels_video, TRUE);
 	config->CameraRedirection =

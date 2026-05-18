@@ -187,7 +187,7 @@ static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16
 	event.flags = flags;
 	event.x = x;
 	event.y = y;
-	if (pf_modules_run_filter(pc->pdata->module, FILTER_TYPE_MOUSE, pc->pdata, &event))
+	if (pf_modules_run_filter(pc->pdata->module, FILTER_TYPE_MOUSE_EX, pc->pdata, &event))
 		return freerdp_input_send_extended_mouse_event(pc->context.input, flags, x, y);
 	return TRUE;
 }

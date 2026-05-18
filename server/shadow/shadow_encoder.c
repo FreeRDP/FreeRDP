@@ -153,6 +153,7 @@ static int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 	return 1;
 fail:
 	rfx_context_free(encoder->rfx);
+	encoder->rfx = nullptr;
 	return -1;
 }
 
