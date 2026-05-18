@@ -1340,6 +1340,11 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportSkipChannelJoin, TRUE))
 		goto out_fail;
 
+	UUID* corrId = calloc(1, sizeof(*corrId));
+	if (!corrId || winpr_RAND(corrId, sizeof(*corrId)) < 0)
+		goto out_fail;
+	settings->CorrelationId = corrId;
+
 	return settings;
 out_fail:
 	WINPR_PRAGMA_DIAG_PUSH

@@ -78,7 +78,10 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* AadServerHostname);       /** 30
 		                                                         * @since version 3.1.0
 		                                                         */
-	UINT64 padding0064[64 - 31];                                /* 31 */
+	SETTINGS_DEPRECATED(ALIGN64 UUID* CorrelationId);           /** 31
+		                                                         * @since version 3.27.0
+		                                                         */
+	UINT64 padding0064[64 - 32];                                /* 32 */
 	/* resource management related options */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 ThreadingFlags); /* 64 */
 
