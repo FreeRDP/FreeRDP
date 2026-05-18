@@ -54,6 +54,7 @@
     <string name="settings_cat_settings">Settings</string>
     <string name="settings_screen">Screen</string>
     <string name="settings_cat_screen">Screen Settings</string>
+    <string name="settings_cat_scale">Scale Settings</string>
     <string name="settings_colors">Colors</string>
     <string-array name="colors_array">
         <item>Palette (8 Bit)</item>
@@ -105,6 +106,31 @@
     </string-array>
     <string name="settings_width">Width</string>
     <string name="settings_height">Height</string>
+    <string name="settings_scale">Scale</string>
+    <string name="settings_scale_desktop">Desktop Scale</string>
+    <string name="settings_scale_device">Device Scale</string>
+    <string-array name="scale_mode_array">
+        <item>100%</item>
+        <item>140%</item>
+        <item>180%</item>
+        <item>Custom</item>
+    </string-array>
+    <string-array name="scale_mode_values_array" translatable="false">
+        <item>100</item>
+        <item>140</item>
+        <item>180</item>
+        <item>custom</item>
+    </string-array>
+    <string-array name="scale_device_array">
+        <item>100%</item>
+        <item>140%</item>
+        <item>180%</item>
+    </string-array>
+    <string-array name="scale_device_values_array" translatable="false">
+        <item>100</item>
+        <item>140</item>
+        <item>180</item>
+    </string-array>
     <string name="settings_performance">Performance</string>
     <string name="settings_cat_performance">Performance Settings</string>
     <string name="settings_perf_remotefx">RemoteFX</string>
@@ -190,6 +216,11 @@
     <string name="settings_async_channel">Async channel</string>
     <string name="settings_async_update">Async update</string>
     <string name="settings_console_mode">Console Mode</string>
+    <string name="settings_cat_hyperv">Hyper-V</string>
+    <string name="settings_cat_redirection">Redirection</string>
+    <string name="settings_cat_session">Session</string>
+    <string name="settings_vmconnect_mode">Hyper-V Console (vmconnect)</string>
+    <string name="settings_vmconnect_guid">VM ID (GUID)</string>
     <!-- App settings strings -->
     <string name="settings_password_present">*******</string>
     <string name="settings_password_empty">not set</string>

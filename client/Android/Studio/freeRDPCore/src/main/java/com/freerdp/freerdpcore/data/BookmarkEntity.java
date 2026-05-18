@@ -32,6 +32,12 @@ import androidx.room.PrimaryKey;
 
 	@ColumnInfo(name = "height", defaultValue = "0") public int height = 0;
 
+	@NonNull @ColumnInfo(name = "scale_mode", defaultValue = "100") public String scaleMode = "100";
+
+	@ColumnInfo(name = "scale_desktop", defaultValue = "100") public int scaleDesktop = 100;
+
+	@ColumnInfo(name = "scale_device", defaultValue = "100") public int scaleDevice = 100;
+
 	@ColumnInfo(name = "perf_remotefx", defaultValue = "true") public boolean perfRemoteFx = true;
 
 	@ColumnInfo(name = "perf_gfx", defaultValue = "true") public boolean perfGfx = true;
@@ -110,4 +116,11 @@ import androidx.room.PrimaryKey;
 	@ColumnInfo(name = "tlsSecLevel", defaultValue = "-1") public int tlsSecLevel = -1;
 
 	@ColumnInfo(name = "tlsMinLevel", defaultValue = "-1") public int tlsMinLevel = -1;
+
+	@ColumnInfo(name = "vmconnect_mode", defaultValue = "false")
+	public boolean vmConnectMode = false;
+
+	@NonNull
+	@ColumnInfo(name = "vmconnect_guid", defaultValue = "")
+	public String vmConnectGuid = "";
 }

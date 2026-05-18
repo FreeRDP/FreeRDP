@@ -155,6 +155,8 @@ public class LibFreeRDP
 
 	private static native boolean freerdp_send_clipboard_data(long inst, String data);
 
+	private static native boolean freerdp_send_monitor_layout(long inst, int width, int height);
+
 	private static native String freerdp_get_last_error_string(long inst);
 
 	public static void setEventListener(EventListener l)
@@ -305,9 +307,28 @@ public class LibFreeRDP
 		    String.format("/size:%dx%d", screenSettings.getWidth(), screenSettings.getHeight()));
 		args.add("/bpp:" + screenSettings.getColors());
 
+		if (screenSettings.isCustomScale())
+		{
+			args.add("/scale-desktop:" + screenSettings.getScaleDesktop());
+			args.add("/scale-device:" + screenSettings.getScaleDevice());
+		}
+		else
+		{
+			args.add("/scale:" + screenSettings.getScalePreset());
+		}
+
 		if (advanced.getConsoleMode())
 		{
 			args.add("/admin");
+		}
+
+		if (advanced.getVmConnectMode())
+		{
+			String guid = advanced.getVmConnectGuid();
+			if (!guid.isEmpty())
+				args.add("/vmconnect:" + guid);
+			else
+				args.add("/vmconnect");
 		}
 
 		switch (advanced.getSecurity())
@@ -381,6 +402,7 @@ public class LibFreeRDP
 			args.add("/load-balance-info:" + info);
 		}
 		args.add("/clipboard");
+		args.add("/disp");
 
 		// Gateway enabled?
 		if (bookmark.getType() == BookmarkBase.TYPE_MANUAL && bookmark.getEnableGatewaySettings())
@@ -526,6 +548,11 @@ public class LibFreeRDP
 	public static boolean sendClipboardData(long inst, String data)
 	{
 		return freerdp_send_clipboard_data(inst, data);
+	}
+
+	public static boolean sendMonitorLayout(long inst, int width, int height)
+	{
+		return freerdp_send_monitor_layout(inst, width, height);
 	}
 
 	private static void OnConnectionSuccess(long inst)

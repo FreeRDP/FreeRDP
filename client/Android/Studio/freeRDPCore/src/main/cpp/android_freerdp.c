@@ -47,6 +47,7 @@
 #include "android_jni_callback.h"
 #include "android_jni_utils.h"
 #include "android_cliprdr.h"
+#include "android_disp.h"
 #include "android_freerdp_jni.h"
 
 #if defined(WITH_GPROF)
@@ -79,6 +80,10 @@ static void android_OnChannelConnectedEventHandler(void* context,
 	{
 		android_cliprdr_init(afc, (CliprdrClientContext*)e->pInterface);
 	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		android_disp_init(afc, (DispClientContext*)e->pInterface);
+	}
 	else
 		freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
@@ -101,6 +106,10 @@ static void android_OnChannelDisconnectedEventHandler(void* context,
 	if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
 		android_cliprdr_uninit(afc, (CliprdrClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
+	{
+		android_disp_uninit(afc, (DispClientContext*)e->pInterface);
 	}
 	else
 		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
@@ -176,9 +185,13 @@ static BOOL android_desktop_resize(rdpContext* context)
 	WINPR_ASSERT(context->settings);
 	WINPR_ASSERT(context->instance);
 
-	freerdp_callback("OnGraphicsResize", "(JIII)V", (jlong)context->instance,
-	                 freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth),
-	                 freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopHeight),
+	const UINT32 width = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
+	const UINT32 height = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopHeight);
+
+	if (context->gdi && !gdi_resize(context->gdi, width, height))
+		return FALSE;
+
+	freerdp_callback("OnGraphicsResize", "(JIII)V", (jlong)context->instance, width, height,
 	                 freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth));
 	return TRUE;
 }
@@ -1034,6 +1047,22 @@ out_fail:
 		(*env)->ReleaseStringUTFChars(env, jdata, data);
 
 	return ret;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1monitor_1layout(
+    JNIEnv* env, jclass cls, jlong instance, jint width, jint height)
+{
+	WINPR_UNUSED(env);
+	WINPR_UNUSED(cls);
+	freerdp* inst = (freerdp*)instance;
+
+	if (!inst || !inst->context)
+		return JNI_FALSE;
+
+	androidContext* afc = (androidContext*)inst->context;
+	return android_disp_send_monitor_layout(afc, (UINT32)width, (UINT32)height) ? JNI_TRUE
+	                                                                            : JNI_FALSE;
 }
 
 JNIEXPORT jstring JNICALL

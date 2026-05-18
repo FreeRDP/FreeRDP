@@ -27,6 +27,7 @@ public final class BookmarkConverter
 		screen.setResolution(e.resolution);
 		screen.setWidth(e.width);
 		screen.setHeight(e.height);
+		screen.setScale(e.scaleMode, e.scaleDesktop, e.scaleDevice);
 
 		BookmarkBase.PerformanceFlags perf = bm.getPerformanceFlags();
 		perf.setRemoteFX(e.perfRemoteFx);
@@ -50,6 +51,8 @@ public final class BookmarkConverter
 		adv.setConsoleMode(e.consoleMode);
 		adv.setTlsSecLevel(e.tlsSecLevel);
 		adv.setTlsMinLevel(e.tlsMinLevel);
+		adv.setVmConnectMode(e.vmConnectMode);
+		adv.setVmConnectGuid(e.vmConnectGuid);
 
 		bm.setEnableGatewaySettings(e.enableGatewaySettings);
 		BookmarkBase.GatewaySettings gw = bm.getGatewaySettings();
@@ -86,6 +89,9 @@ public final class BookmarkConverter
 		e.resolution = screen.getResolution();
 		e.width = screen.getWidth();
 		e.height = screen.getHeight();
+		e.scaleMode = screen.getScaleMode();
+		e.scaleDesktop = screen.getScaleDesktop();
+		e.scaleDevice = screen.getScaleDevice();
 
 		BookmarkBase.PerformanceFlags perf = bm.getPerformanceFlags();
 		e.perfRemoteFx = perf.getRemoteFX();
@@ -109,6 +115,8 @@ public final class BookmarkConverter
 		e.consoleMode = adv.getConsoleMode();
 		e.tlsSecLevel = adv.getTlsSecLevel();
 		e.tlsMinLevel = adv.getTlsMinLevel();
+		e.vmConnectMode = adv.getVmConnectMode();
+		e.vmConnectGuid = adv.getVmConnectGuid();
 
 		e.enableGatewaySettings = bm.getEnableGatewaySettings();
 		BookmarkBase.GatewaySettings gw = bm.getGatewaySettings();

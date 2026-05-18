@@ -18,6 +18,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/client/cliprdr.h>
+#include <freerdp/client/disp.h>
 
 #include "android_event.h"
 
@@ -38,6 +39,8 @@ typedef struct
 	CLIPRDR_FORMAT* serverFormats;
 	CliprdrClientContext* cliprdr;
 	UINT32 clipboardCapabilities;
+
+	DispClientContext* disp;
 } androidContext;
 
 #endif /* FREERDP_CLIENT_ANDROID_FREERDP_H */
