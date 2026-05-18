@@ -244,16 +244,15 @@ static BOOL transport_default_attach(rdpTransport* transport, int sockfd)
 
 	if (socketBio)
 	{
-		bufferedBio = BIO_push(bufferedBio, socketBio);
-		if (!bufferedBio)
-			goto fail;
-
 		/* Attach the socket only when this function can no longer fail.
 		 * This ensures solid ownership:
 		 * - if this function fails, the caller is responsible to clean up
 		 * - if this function is successful, the caller MUST NOT close the socket any more.
 		 */
 		BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
+		bufferedBio = BIO_push(bufferedBio, socketBio);
+		if (!bufferedBio)
+			goto fail;
 	}
 	EnterCriticalSection(&(transport->ReadLock));
 	EnterCriticalSection(&(transport->WriteLock));

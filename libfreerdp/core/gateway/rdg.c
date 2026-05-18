@@ -1686,7 +1686,7 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 	wStream* sWS =
 	    websocket_context_packet_new(payloadSize, WebsocketBinaryOpcode, &maskingKey.u32);
 	if (!sWS)
-		return FALSE;
+		return -1;
 
 	Stream_Write_UINT16(
 	    sWS, WINPR_ASSERTING_INT_CAST(

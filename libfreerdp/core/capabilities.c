@@ -3004,7 +3004,7 @@ static bool sUuidEqual(const UUID* Uuid1, const UUID* Uuid2)
 		return false;
 
 	if (!Uuid1 && Uuid2)
-		return true;
+		return false;
 
 	if (Uuid1->Data1 != Uuid2->Data1)
 		return false;
