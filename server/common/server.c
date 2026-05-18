@@ -50,7 +50,6 @@ size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats)
 		{ WAVE_FORMAT_AAC_MS, 2, 44100, 20000, 4, 16, 0, nullptr },
 		{ WAVE_FORMAT_AAC_MS, 2, 44100, 16000, 4, 16, 0, nullptr },
 		{ WAVE_FORMAT_AAC_MS, 2, 44100, 12000, 4, 16, 0, nullptr },
-		{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, nullptr },
 		{ WAVE_FORMAT_ADPCM, 2, 44100, 44359, 2048, 4, 32, adpcm_data_7 },
 		{ WAVE_FORMAT_DVI_ADPCM, 2, 44100, 44251, 2048, 4, 2, adpcm_dvi_data_7 },
 		{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, nullptr },

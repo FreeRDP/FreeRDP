@@ -267,7 +267,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	{
 		const size_t bitstreamLen = 1ULL * h264.cbAvc420EncodedBitstream1 - pos2 + pos1;
 
-		if ((bitstreamLen > UINT32_MAX) ||
+		if ((bitstreamLen > UINT32_MAX) || (h264.cbAvc420EncodedBitstream1 < pos2 - pos1) ||
 		    !Stream_CheckAndLogRequiredLengthWLog(gfx->base.log, s, bitstreamLen))
 		{
 			error = ERROR_INVALID_DATA;

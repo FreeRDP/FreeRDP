@@ -72,11 +72,11 @@ static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_le
 
 	modulus_reverse = input_reverse + key_length;
 	exponent_reverse = modulus_reverse + key_length;
-	memcpy(modulus_reverse, modulus, key_length);
+	memmove(modulus_reverse, modulus, key_length);
 	crypto_reverse(modulus_reverse, key_length);
-	memcpy(exponent_reverse, exponent, exponent_size);
+	memmove(exponent_reverse, exponent, exponent_size);
 	crypto_reverse(exponent_reverse, exponent_size);
-	memcpy(input_reverse, input, length);
+	memmove(input_reverse, input, length);
 	crypto_reverse(input_reverse, length);
 
 	if (!(ctx = BN_CTX_new()))

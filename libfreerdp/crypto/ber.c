@@ -32,15 +32,14 @@
 
 BOOL ber_read_length(wStream* s, size_t* length)
 {
-	BYTE byte = 0;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(length);
 
+	*length = 0;
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 
-	Stream_Read_UINT8(s, byte);
+	BYTE byte = Stream_Get_UINT8(s);
 
 	if (byte & 0x80)
 	{

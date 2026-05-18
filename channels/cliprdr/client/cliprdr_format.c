@@ -48,7 +48,15 @@ CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, 
 	CLIPRDR_FORMAT_LIST filtered = WINPR_C_ARRAY_INIT;
 	filtered.common.msgType = CB_FORMAT_LIST;
 	filtered.numFormats = list->numFormats;
-	filtered.formats = calloc(filtered.numFormats, sizeof(CLIPRDR_FORMAT));
+	if (filtered.numFormats > 0)
+	{
+		filtered.formats = calloc(filtered.numFormats, sizeof(CLIPRDR_FORMAT));
+		if (!filtered.formats)
+		{
+			const CLIPRDR_FORMAT_LIST empty = WINPR_C_ARRAY_INIT;
+			return empty;
+		}
+	}
 
 	size_t wpos = 0;
 	if ((mask & checkMask) == checkMask)

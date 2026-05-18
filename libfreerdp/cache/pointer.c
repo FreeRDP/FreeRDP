@@ -101,9 +101,9 @@ static BOOL update_pointer_system(rdpContext* context, const POINTER_SYSTEM_UPDA
 	return TRUE;
 }
 
-static BOOL upate_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskData,
-                                      size_t lengthAndMask, const BYTE* xorMaskData,
-                                      size_t lengthXorMask)
+static BOOL update_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskData,
+                                       size_t lengthAndMask, const BYTE* xorMaskData,
+                                       size_t lengthXorMask)
 {
 	WINPR_ASSERT(pointer);
 
@@ -156,9 +156,9 @@ static BOOL update_pointer_color(rdpContext* context, const POINTER_COLOR_UPDATE
 	pointer->width = pointer_color->width;
 	pointer->height = pointer_color->height;
 
-	if (!upate_pointer_copy_andxor(pointer, pointer_color->andMaskData,
-	                               pointer_color->lengthAndMask, pointer_color->xorMaskData,
-	                               pointer_color->lengthXorMask))
+	if (!update_pointer_copy_andxor(pointer, pointer_color->andMaskData,
+	                                pointer_color->lengthAndMask, pointer_color->xorMaskData,
+	                                pointer_color->lengthXorMask))
 		goto out_fail;
 
 	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
@@ -194,9 +194,9 @@ static BOOL update_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE
 	pointer->width = pointer_large->width;
 	pointer->height = pointer_large->height;
 
-	if (!upate_pointer_copy_andxor(pointer, pointer_large->andMaskData,
-	                               pointer_large->lengthAndMask, pointer_large->xorMaskData,
-	                               pointer_large->lengthXorMask))
+	if (!update_pointer_copy_andxor(pointer, pointer_large->andMaskData,
+	                                pointer_large->lengthAndMask, pointer_large->xorMaskData,
+	                                pointer_large->lengthXorMask))
 		goto out_fail;
 
 	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
@@ -228,7 +228,7 @@ static BOOL update_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* po
 	pointer->yPos = pointer_new->colorPtrAttr.hotSpotY;
 	pointer->width = pointer_new->colorPtrAttr.width;
 	pointer->height = pointer_new->colorPtrAttr.height;
-	if (!upate_pointer_copy_andxor(
+	if (!update_pointer_copy_andxor(
 	        pointer, pointer_new->colorPtrAttr.andMaskData, pointer_new->colorPtrAttr.lengthAndMask,
 	        pointer_new->colorPtrAttr.xorMaskData, pointer_new->colorPtrAttr.lengthXorMask))
 		goto out_fail;

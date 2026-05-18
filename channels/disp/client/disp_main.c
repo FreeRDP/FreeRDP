@@ -207,7 +207,7 @@ static UINT disp_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 		return error;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(s, header.length))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, header.length))
 	{
 		WLog_Print(disp->base.log, WLOG_ERROR, "not enough remaining data");
 		return ERROR_INVALID_DATA;

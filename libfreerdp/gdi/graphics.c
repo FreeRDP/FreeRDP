@@ -188,10 +188,6 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 				WLog_ERR(TAG, "nsc_process_message failed");
 				return FALSE;
 			}
-
-			return freerdp_image_copy_no_overlap(bitmap->data, bitmap->format, 0, 0, 0, DstWidth,
-			                                     DstHeight, pSrcData, PIXEL_FORMAT_XRGB32, 0, 0, 0,
-			                                     &gdi->palette, FREERDP_FLIP_VERTICAL);
 		}
 		else if (bpp < 32)
 		{

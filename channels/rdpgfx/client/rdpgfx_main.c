@@ -165,6 +165,8 @@ static UINT rdpgfx_send_caps_advertise_pdu(RdpgfxClientContext* context,
 		Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
 		Stream_Write_UINT32(s, capsSet->length);  /* capsDataLength (4 bytes) */
 		Stream_Write_UINT32(s, capsSet->flags);   /* capsData (4 bytes) */
+		if (capsSet->length < 4)
+			goto fail;
 		Stream_Zero(s, capsSet->length - 4);
 	}
 
@@ -1079,7 +1081,7 @@ static UINT rdpgfx_recv_create_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 		const UINT drc = IFCALLRESULT(CHANNEL_RC_OK, context->DeleteSurface, context, &deletePdu);
 		if (drc != CHANNEL_RC_OK)
 			WLog_Print(gfx->base.log, WLOG_WARN,
-			           "context->DeleteSurface failed with error %" PRIu32 ", ignoring", error);
+			           "context->DeleteSurface failed with error %" PRIu32 ", ignoring", drc);
 
 		IFCALLRET(context->CreateSurface, error, context, &pdu);
 

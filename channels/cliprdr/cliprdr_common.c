@@ -374,6 +374,8 @@ UINT cliprdr_read_file_contents_response(wStream* s, CLIPRDR_FILE_CONTENTS_RESPO
 	response->requestedData = Stream_ConstPointer(s); /* requestedFileContentsData */
 
 	WINPR_ASSERT(response->common.dataLen >= 4);
+	if (response->common.dataLen < 4)
+		return ERROR_INVALID_DATA;
 	response->cbRequested = response->common.dataLen - 4;
 	return CHANNEL_RC_OK;
 }

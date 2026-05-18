@@ -451,7 +451,13 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int arg
 		const char* key = strstr(argv[x], "assistance:");
 
 		if (key)
-			password = strchr(key, ':') + 1;
+		{
+			char* sep = strchr(key, ':');
+			if (!sep)
+				return -1;
+
+			password = sep + 1;
+		}
 	}
 
 	file = freerdp_assistance_file_new();
@@ -1223,19 +1229,22 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 				         "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
 				         ", aborting",
 				         count);
-				return FALSE;
 			}
-			else if (count > 2)
-				WLog_WARN(TAG,
-				          "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
-				          ", ignoring",
-				          count);
-			va_list ap = WINPR_C_ARRAY_INIT;
-			va_start(ap, count);
-			const char* scope = va_arg(ap, const char*);
-			const char* req_cnf = va_arg(ap, const char*);
-			rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
-			va_end(ap);
+			else
+			{
+				if (count > 2)
+					WLog_WARN(
+					    TAG,
+					    "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
+					    ", ignoring",
+					    count);
+				va_list ap = WINPR_C_ARRAY_INIT;
+				va_start(ap, count);
+				const char* scope = va_arg(ap, const char*);
+				const char* req_cnf = va_arg(ap, const char*);
+				rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
+				va_end(ap);
+			}
 		}
 		break;
 		case ACCESS_TOKEN_TYPE_AVD:

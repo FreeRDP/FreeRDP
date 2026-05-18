@@ -794,7 +794,7 @@ static INT64 get_layout_from_locale(const SYSTEM_LOCALE* locale)
 		if (current->locale == locale->code)
 		{
 			/* Locale found in list of default keyboard layouts */
-			for (size_t j = 0; j < 5; j++)
+			for (size_t j = 0; j < ARRAYSIZE(current->keyboardLayouts); j++)
 			{
 				if (current->keyboardLayouts[j] == ENGLISH_UNITED_STATES)
 				{

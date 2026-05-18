@@ -182,7 +182,12 @@ static UINT32 scard_copy_strings(SCardContext* ctx, void* dst, size_t dstSize, c
 
 	if (dstSize == SCARD_AUTOALLOCATE)
 	{
+		if (srcSize == 0)
+			return 0;
+
 		void* tmp = malloc(srcSize);
+		if (!tmp)
+			return 0;
 		memcpy(tmp, src, srcSize);
 		ArrayList_Append(ctx->strings, tmp);
 		*((void**)dst) = tmp;

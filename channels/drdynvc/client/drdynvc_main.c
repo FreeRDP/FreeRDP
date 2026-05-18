@@ -1149,7 +1149,7 @@ static UINT drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 
 	if (!s)
 	{
-		WLog_Print(drdynvc->log, WLOG_ERROR, "Stream_Ndrdynvc_write_variable_uintew failed!");
+		WLog_Print(drdynvc->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 

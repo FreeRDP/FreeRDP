@@ -223,8 +223,6 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	    !freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, config->AudioOutput) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection,
 	                               config->DeviceRedirection) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl,
-	                               config->DisplayControl) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_MultiTouchInput, config->Multitouch))
 		return FALSE;
 

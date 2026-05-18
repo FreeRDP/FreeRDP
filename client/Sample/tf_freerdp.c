@@ -262,7 +262,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 	{
 		result = freerdp_get_last_error(instance->context);
 		WLog_ERR(TAG, "connection failure 0x%08" PRIx32, result);
-		return result;
+		goto disconnect;
 	}
 
 	while (!freerdp_shall_disconnect_context(instance->context))

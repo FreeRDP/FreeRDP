@@ -860,8 +860,6 @@ static BOOL trim_strings(rdpFile* file)
 		return FALSE;
 	if (!trim(&file->DevicesToRedirect))
 		return FALSE;
-	if (!trim(&file->DevicesToRedirect))
-		return FALSE;
 	if (!trim(&file->WinPosStr))
 		return FALSE;
 	if (!trim(&file->PreconnectionBlob))
@@ -1391,6 +1389,8 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 	if (size == 0)
 		return FALSE;
 	char* buffer = calloc(size + 1ULL, sizeof(char));
+	if (!buffer)
+		return FALSE;
 
 	if (freerdp_client_write_rdp_file_buffer(file, buffer, size + 1) != size)
 	{
