@@ -956,7 +956,6 @@ state_run_t fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s)
 static UINT32 fastpath_get_sec_bytes(rdpRdp* rdp)
 {
 	UINT32 sec_bytes = 0;
-	sec_bytes = 0;
 
 	if (!rdp)
 		return 0;
