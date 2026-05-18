@@ -456,7 +456,7 @@ static UINT rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 B
 	WINPR_ASSERT(rdpsnd);
 	WINPR_ASSERT(s);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12) || (BodySize < 8))
 		return ERROR_BAD_LENGTH;
 
 	rdpsnd->wArrivalTime = GetTickCount64();
@@ -700,7 +700,7 @@ static UINT rdpsnd_recv_wave2_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodyS
 	AUDIO_FORMAT* format = nullptr;
 	UINT32 dwAudioTimeStamp = 0;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12) || (BodySize < 12))
 		return ERROR_BAD_LENGTH;
 
 	Stream_Read_UINT16(s, rdpsnd->wTimeStamp);

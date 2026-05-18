@@ -817,11 +817,11 @@ static BOOL drive_file_set_rename_information(DRIVE_FILE* file, UINT32 Length, w
 	/* http://msdn.microsoft.com/en-us/library/cc232085.aspx */
 	const uint8_t ReplaceIfExists = Stream_Get_UINT8(input);
 	Stream_Seek_UINT8(input); /* RootDirectory */
-	const uint32_t FileNameLength = Stream_Get_UINT32(input);
+	const uint64_t FileNameLength = Stream_Get_UINT32(input);
 
 	if (Length != expect + FileNameLength)
 	{
-		WLog_WARN(TAG, "Unexpected Length=%" PRIu32 ", expected %" PRIu32, Length,
+		WLog_WARN(TAG, "Unexpected Length=%" PRIu32 ", expected %" PRIu64, Length,
 		          expect + FileNameLength);
 		return FALSE;
 	}

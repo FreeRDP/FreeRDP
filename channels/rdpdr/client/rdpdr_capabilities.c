@@ -123,7 +123,8 @@ static UINT rdpdr_process_printer_capset(WINPR_ATTR_UNUSED rdpdrPlugin* rdpdr, w
                                          const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(header);
-	Stream_Seek(s, header->CapabilityLength);
+	if (!Stream_SafeSeek(s, header->CapabilityLength))
+		return ERROR_BAD_LENGTH;
 	return CHANNEL_RC_OK;
 }
 
