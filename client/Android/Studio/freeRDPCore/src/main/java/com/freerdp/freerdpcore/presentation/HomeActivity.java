@@ -81,6 +81,8 @@ public class HomeActivity extends AppCompatActivity
 
 					Intent sessionIntent = new Intent(HomeActivity.this, SessionActivity.class);
 					sessionIntent.putExtras(bundle);
+					sessionIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+					                       Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
 					startActivity(sessionIntent);
 
 					if (searchView != null)
