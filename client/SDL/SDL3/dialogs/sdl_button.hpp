@@ -9,7 +9,7 @@ class SdlButton : public SdlSelectableWidget
 {
   public:
 	SdlButton(std::shared_ptr<SDL_Renderer>& renderer, const std::string& label, int id,
-	          const SDL_FRect& rect);
+	          SDL_FRect rect);
 	SdlButton(SdlButton&& other) noexcept;
 	SdlButton(const SdlButton& other) = delete;
 	~SdlButton() override;

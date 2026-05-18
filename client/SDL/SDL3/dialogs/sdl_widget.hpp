@@ -48,9 +48,9 @@ typedef SSIZE_T ssize_t;
 class SdlWidget
 {
   public:
-	SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect);
+	SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect);
 #if defined(WITH_SDL_IMAGE_DIALOGS)
-	SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect, SDL_IOStream* ops);
+	SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect, SDL_IOStream* ops);
 #endif
 	SdlWidget(const SdlWidget& other) = delete;
 	SdlWidget(SdlWidget&& other) noexcept;
@@ -65,7 +65,7 @@ class SdlWidget
 
 	[[nodiscard]] bool wrap() const;
 	[[nodiscard]] bool set_wrap(bool wrap = true, size_t width = 0);
-	[[nodiscard]] const SDL_FRect& rect() const;
+	[[nodiscard]] SDL_FRect rect() const;
 
 	[[nodiscard]] bool update();
 
@@ -83,7 +83,7 @@ class SdlWidget
 	virtual bool updateInternal();
 
   private:
-	[[nodiscard]] bool draw_rect(const SDL_FRect& rect, SDL_Color color) const;
+	[[nodiscard]] bool draw_rect(SDL_FRect rect, SDL_Color color) const;
 	[[nodiscard]] std::shared_ptr<SDL_Texture>
 	render_text(const std::string& text, SDL_Color fgcolor, SDL_FRect& src, SDL_FRect& dst) const;
 	[[nodiscard]] std::shared_ptr<SDL_Texture> render_text_wrapped(const std::string& text,

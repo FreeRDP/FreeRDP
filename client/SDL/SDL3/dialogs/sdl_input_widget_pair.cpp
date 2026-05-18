@@ -90,7 +90,7 @@ bool SdlInputWidgetPair::append_str(const std::string& text)
 	return update_input_text(itext);
 }
 
-const SDL_FRect& SdlInputWidgetPair::input_rect() const
+SDL_FRect SdlInputWidgetPair::input_rect() const
 {
 	return _input.rect();
 }

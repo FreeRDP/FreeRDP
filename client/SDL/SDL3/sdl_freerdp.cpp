@@ -86,6 +86,11 @@
 class ErrorMsg : public std::exception
 {
   public:
+	ErrorMsg(const ErrorMsg& other) = delete;
+	ErrorMsg(ErrorMsg&& other) = delete;
+	auto operator=(const ErrorMsg& other) = delete;
+	auto operator=(ErrorMsg&& other) = delete;
+
 	ErrorMsg(int rc, Uint32 type, const std::string& msg,
 	         const std::string& sdlError = SDL_GetError()
 #if defined(__cpp_lib_source_location) && (__cpp_lib_source_location >= 201907L)

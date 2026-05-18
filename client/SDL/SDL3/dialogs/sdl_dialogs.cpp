@@ -162,6 +162,8 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 
 	std::vector<std::string> strlist;
 	std::vector<const char*> list;
+	list.reserve(count);
+	strlist.reserve(count);
 	for (DWORD i = 0; i < count; i++)
 	{
 		const SmartcardCertInfo* cert = cert_list[i];

@@ -41,7 +41,7 @@
 
 static const Uint32 hpadding = 10;
 
-SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect)
+SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect)
     : _renderer(renderer),
       _engine(TTF_CreateRendererTextEngine(renderer.get()), TTF_DestroyRendererTextEngine),
       _rect(rect)
@@ -61,8 +61,7 @@ SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& r
 }
 
 #if defined(WITH_SDL_IMAGE_DIALOGS)
-SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect,
-                     SDL_IOStream* ops)
+SdlWidget::SdlWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect, SDL_IOStream* ops)
     : _renderer(renderer),
       _engine(TTF_CreateRendererTextEngine(renderer.get()), TTF_DestroySurfaceTextEngine),
       _rect(rect)
@@ -222,7 +221,7 @@ bool SdlWidget::updateInternal()
 	return update_text(_text);
 }
 
-bool SdlWidget::draw_rect(const SDL_FRect& rect, SDL_Color color) const
+bool SdlWidget::draw_rect(SDL_FRect rect, SDL_Color color) const
 {
 	const auto drc = SDL_SetRenderDrawColor(_renderer.get(), color.r, color.g, color.b, color.a);
 	if (widget_log_error(drc, "SDL_SetRenderDrawColor"))
@@ -266,7 +265,7 @@ bool SdlWidget::set_wrap(bool wrap, size_t width)
 	return _wrap;
 }
 
-const SDL_FRect& SdlWidget::rect() const
+SDL_FRect SdlWidget::rect() const
 {
 	return _rect;
 }

@@ -23,7 +23,6 @@
 #include <mutex>
 #include <sstream>
 #include <vector>
-#include <mutex>
 #include <queue>
 #include <thread>
 #include <atomic>
@@ -135,13 +134,12 @@ class SdlContext
 
 	[[nodiscard]] wLog* getWLog();
 
-	[[nodiscard]] bool moveMouseTo(const SDL_FPoint& pos);
+	[[nodiscard]] bool moveMouseTo(SDL_FPoint pos);
 
-	[[nodiscard]] SDL_FPoint screenToPixel(SDL_WindowID id, const SDL_FPoint& pos);
+	[[nodiscard]] SDL_FPoint screenToPixel(SDL_WindowID id, SDL_FPoint pos);
 
-	[[nodiscard]] SDL_FPoint pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos);
-	[[nodiscard]] SDL_FRect pixelToScreen(SDL_WindowID id, const SDL_FRect& pos,
-	                                      bool round = false);
+	[[nodiscard]] SDL_FPoint pixelToScreen(SDL_WindowID id, SDL_FPoint pos);
+	[[nodiscard]] SDL_FRect pixelToScreen(SDL_WindowID id, SDL_FRect pos, bool round = false);
 
 	[[nodiscard]] bool handleEvent(const SDL_Event& ev);
 
@@ -171,7 +169,7 @@ class SdlContext
 
 	[[nodiscard]] bool eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev);
 
-	[[nodiscard]] SDL_FPoint applyLocalScaling(const SDL_FPoint& val) const;
+	[[nodiscard]] SDL_FPoint applyLocalScaling(SDL_FPoint val) const;
 	void removeLocalScaling(float& x, float& y) const;
 
 	[[nodiscard]] bool handleEvent(const SDL_WindowEvent& ev);

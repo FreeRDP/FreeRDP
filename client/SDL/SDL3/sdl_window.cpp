@@ -26,7 +26,7 @@
 
 #include <freerdp/utils/string.h>
 
-SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect& rect,
+SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, SDL_Rect rect,
                      [[maybe_unused]] Uint32 flags)
     : _initialW(rect.w), _initialH(rect.h), _displayID(id)
 {
@@ -157,7 +157,7 @@ rdpMonitor SdlWindow::monitor(bool isPrimary) const
 	return m;
 }
 
-void SdlWindow::setMonitor(rdpMonitor monitor)
+void SdlWindow::setMonitor(const rdpMonitor& monitor)
 {
 	_monitor = monitor;
 }
@@ -255,7 +255,7 @@ bool SdlWindow::resizeToScale()
 	return resize({ targetW, targetH });
 }
 
-bool SdlWindow::resize(const SDL_Point& size)
+bool SdlWindow::resize(SDL_Point size)
 {
 	return SDL_SetWindowSize(_window, size.x, size.y);
 }
@@ -290,7 +290,7 @@ void SdlWindow::ensureRenderTarget()
 		             SDL_GetError());
 }
 
-bool SdlWindow::drawRect(SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect)
+bool SdlWindow::drawRect(SDL_Surface* surface, SDL_Point offset, SDL_Rect srcRect)
 {
 	WINPR_ASSERT(surface);
 	SDL_Rect dstRect = { offset.x + srcRect.x, offset.y + srcRect.y, srcRect.w, srcRect.h };
@@ -312,8 +312,7 @@ bool SdlWindow::drawRects(SDL_Surface* surface, SDL_Point offset,
 	return true;
 }
 
-bool SdlWindow::drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
-                               const SDL_Rect& srcRect)
+bool SdlWindow::drawScaledRect(SDL_Surface* surface, SDL_FPoint scale, SDL_Rect srcRect)
 {
 	SDL_Rect dstRect = srcRect;
 	dstRect.x = static_cast<Sint32>(static_cast<float>(dstRect.x) * scale.x);
@@ -323,7 +322,7 @@ bool SdlWindow::drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
 	return blit(surface, srcRect, dstRect);
 }
 
-bool SdlWindow::drawScaledRects(SDL_Surface* surface, const SDL_FPoint& scale,
+bool SdlWindow::drawScaledRects(SDL_Surface* surface, SDL_FPoint scale,
                                 const std::vector<SDL_Rect>& rects)
 {
 	if (rects.empty())
@@ -489,7 +488,7 @@ SdlWindow::HighDPIMode SdlWindow::isHighDPIWindowsMode(SDL_Window* window)
 	return MODE_WINDOWS;
 }
 
-bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& dstRect)
+bool SdlWindow::blit(SDL_Surface* surface, SDL_Rect srcRect, SDL_Rect& dstRect)
 {
 	if (!_renderer || !surface)
 		return false;

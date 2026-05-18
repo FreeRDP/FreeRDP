@@ -29,7 +29,7 @@ class SdlSelectWidget : public SdlSelectableWidget
 {
   public:
 	SdlSelectWidget(std::shared_ptr<SDL_Renderer>& renderer, const std::string& label,
-	                const SDL_FRect& rect);
+	                SDL_FRect rect);
 	SdlSelectWidget(SdlSelectWidget&& other) noexcept;
 	SdlSelectWidget(const SdlSelectWidget& other) = delete;
 	~SdlSelectWidget() override;

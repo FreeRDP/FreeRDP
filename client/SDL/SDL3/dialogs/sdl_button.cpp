@@ -24,7 +24,7 @@
 #include "sdl_button.hpp"
 
 SdlButton::SdlButton(std::shared_ptr<SDL_Renderer>& renderer, const std::string& label, int id,
-                     const SDL_FRect& rect)
+                     SDL_FRect rect)
     : SdlSelectableWidget(renderer, rect), _id(id)
 {
 	_backgroundcolor = { 0x69, 0x66, 0x63, 0xff };

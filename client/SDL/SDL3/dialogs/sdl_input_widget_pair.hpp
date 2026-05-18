@@ -52,7 +52,7 @@ class SdlInputWidgetPair
 	[[nodiscard]] bool remove_str(size_t count);
 	[[nodiscard]] bool append_str(const std::string& text);
 
-	[[nodiscard]] const SDL_FRect& input_rect() const;
+	[[nodiscard]] SDL_FRect input_rect() const;
 	[[nodiscard]] std::string value() const;
 
 	[[nodiscard]] bool readonly() const;

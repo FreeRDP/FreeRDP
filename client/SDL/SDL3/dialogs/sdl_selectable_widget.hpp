@@ -24,10 +24,9 @@
 class SdlSelectableWidget : public SdlWidget
 {
   public:
-	SdlSelectableWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect);
+	SdlSelectableWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect);
 #if defined(WITH_SDL_IMAGE_DIALOGS)
-	SdlSelectableWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect,
-	                    SDL_IOStream* ops);
+	SdlSelectableWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect, SDL_IOStream* ops);
 #endif
 	SdlSelectableWidget(SdlSelectableWidget&& other) noexcept;
 	SdlSelectableWidget(const SdlSelectableWidget& other) = delete;

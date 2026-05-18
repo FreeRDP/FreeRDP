@@ -24,9 +24,8 @@
 class SdlInputWidget : public SdlSelectableWidget
 {
   public:
-	SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect);
-	SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect,
-	               SDL_IOStream* ops);
+	SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect);
+	SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect, SDL_IOStream* ops);
 
 	SdlInputWidget(SdlInputWidget&& other) noexcept;
 	SdlInputWidget(const SdlInputWidget& other) = delete;

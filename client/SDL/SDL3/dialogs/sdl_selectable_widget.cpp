@@ -20,15 +20,14 @@
 #include "sdl_selectable_widget.hpp"
 #include "sdl_blend_mode_guard.hpp"
 
-SdlSelectableWidget::SdlSelectableWidget(std::shared_ptr<SDL_Renderer>& renderer,
-                                         const SDL_FRect& rect)
+SdlSelectableWidget::SdlSelectableWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect)
     : SdlWidget(renderer, rect)
 {
 }
 
 #if defined(WITH_SDL_IMAGE_DIALOGS)
-SdlSelectableWidget::SdlSelectableWidget(std::shared_ptr<SDL_Renderer>& renderer,
-                                         const SDL_FRect& rect, SDL_IOStream* ops)
+SdlSelectableWidget::SdlSelectableWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect,
+                                         SDL_IOStream* ops)
     : SdlWidget(renderer, rect, ops)
 {
 }

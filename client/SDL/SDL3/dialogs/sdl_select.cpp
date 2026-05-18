@@ -32,7 +32,7 @@
 #include "sdl_input_widget_pair_list.hpp"
 
 SdlSelectWidget::SdlSelectWidget(std::shared_ptr<SDL_Renderer>& renderer, const std::string& label,
-                                 const SDL_FRect& rect)
+                                 SDL_FRect rect)
     : SdlSelectableWidget(renderer, rect)
 {
 	_backgroundcolor = { 0x69, 0x66, 0x63, 0xff };

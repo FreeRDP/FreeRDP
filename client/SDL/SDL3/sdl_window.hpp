@@ -54,7 +54,7 @@ class SdlWindow
 	[[nodiscard]] Sint32 offsetY() const;
 
 	[[nodiscard]] rdpMonitor monitor(bool isPrimary) const;
-	void setMonitor(rdpMonitor monitor);
+	void setMonitor(const rdpMonitor& monitor);
 
 	[[nodiscard]] float scale() const;
 	[[nodiscard]] SDL_DisplayOrientation orientation() const;
@@ -68,23 +68,22 @@ class SdlWindow
 	void minimize();
 
 	[[nodiscard]] bool resizeToScale();
-	[[nodiscard]] bool resize(const SDL_Point& size);
+	[[nodiscard]] bool resize(SDL_Point size);
 
-	[[nodiscard]] bool drawRect(SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect);
+	[[nodiscard]] bool drawRect(SDL_Surface* surface, SDL_Point offset, SDL_Rect srcRect);
 	[[nodiscard]] bool drawRects(SDL_Surface* surface, SDL_Point offset,
 	                             const std::vector<SDL_Rect>& rects = {});
-	[[nodiscard]] bool drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
-	                                  const SDL_Rect& srcRect);
+	[[nodiscard]] bool drawScaledRect(SDL_Surface* surface, SDL_FPoint scale, SDL_Rect srcRect);
 
-	[[nodiscard]] bool drawScaledRects(SDL_Surface* surface, const SDL_FPoint& scale,
+	[[nodiscard]] bool drawScaledRects(SDL_Surface* surface, SDL_FPoint scale,
 	                                   const std::vector<SDL_Rect>& rects = {});
 
 	[[nodiscard]] bool fill(Uint8 r = 0x00, Uint8 g = 0x00, Uint8 b = 0x00, Uint8 a = 0xff);
-	[[nodiscard]] bool blit(SDL_Surface* surface, const SDL_Rect& src, SDL_Rect& dst);
+	[[nodiscard]] bool blit(SDL_Surface* surface, SDL_Rect src, SDL_Rect& dst);
 	void updateSurface();
 
   protected:
-	SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect& rect, Uint32 flags);
+	SdlWindow(SDL_DisplayID id, const std::string& title, SDL_Rect rect, Uint32 flags);
 
 	[[nodiscard]] static bool fill(SDL_Window* window, Uint8 r = 0x00, Uint8 g = 0x00,
 	                               Uint8 b = 0x00, Uint8 a = 0xff);

@@ -118,12 +118,12 @@ class ClipboardLockGuard
 	wClipboard* _clipboard;
 };
 
-static bool operator<(const CLIPRDR_FORMAT& lhs, const CLIPRDR_FORMAT& rhs)
+static bool operator<(const CLIPRDR_FORMAT lhs, const CLIPRDR_FORMAT rhs)
 {
 	return (lhs.formatId < rhs.formatId);
 }
 
-static bool operator==(const CLIPRDR_FORMAT& lhs, const CLIPRDR_FORMAT& rhs)
+static bool operator==(const CLIPRDR_FORMAT lhs, const CLIPRDR_FORMAT rhs)
 {
 	return (lhs.formatId == rhs.formatId);
 }
@@ -235,6 +235,8 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 	bool imgPushed = false;
 	bool filePushed = false;
 
+	clientFormats.reserve(nformats * 2);
+	clientFormatNames.reserve(nformats * 2);
 	for (size_t i = 0; i < nformats; i++)
 	{
 		std::string local_mime = clipboard_mime_formats[i];

@@ -820,7 +820,7 @@ void SdlContext::applyMonitorOffset(SDL_WindowID window, float& x, float& y) con
 	y -= static_cast<float>(w->offsetY());
 }
 
-static bool alignX(const SDL_Rect& a, const SDL_Rect& b)
+static bool alignX(SDL_Rect a, SDL_Rect b)
 {
 	if (a.x + a.w == b.x)
 		return true;
@@ -829,7 +829,7 @@ static bool alignX(const SDL_Rect& a, const SDL_Rect& b)
 	return false;
 }
 
-static bool alignY(const SDL_Rect& a, const SDL_Rect& b)
+static bool alignY(SDL_Rect a, SDL_Rect b)
 {
 	if (a.y + a.h == b.y)
 		return true;
@@ -1052,7 +1052,7 @@ wLog* SdlContext::getWLog()
 	return _log;
 }
 
-bool SdlContext::moveMouseTo(const SDL_FPoint& pos)
+bool SdlContext::moveMouseTo(SDL_FPoint pos)
 {
 	auto window = SDL_GetMouseFocus();
 	if (!window)
@@ -1285,7 +1285,7 @@ bool SdlContext::eventToPixelCoordinates(SDL_WindowID id, SDL_Event& ev)
 	return SDL_ConvertEventToRenderCoordinates(renderer, &ev);
 }
 
-SDL_FPoint SdlContext::applyLocalScaling(const SDL_FPoint& val) const
+SDL_FPoint SdlContext::applyLocalScaling(SDL_FPoint val) const
 {
 	if (!useLocalScale())
 		return val;
@@ -1304,7 +1304,7 @@ void SdlContext::removeLocalScaling(float& x, float& y) const
 	y /= _localScale.y;
 }
 
-SDL_FPoint SdlContext::screenToPixel(SDL_WindowID id, const SDL_FPoint& pos)
+SDL_FPoint SdlContext::screenToPixel(SDL_WindowID id, SDL_FPoint pos)
 {
 	auto w = getWindowForId(id);
 	if (!w)
@@ -1322,7 +1322,7 @@ SDL_FPoint SdlContext::screenToPixel(SDL_WindowID id, const SDL_FPoint& pos)
 	return rpos;
 }
 
-SDL_FPoint SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos)
+SDL_FPoint SdlContext::pixelToScreen(SDL_WindowID id, SDL_FPoint pos)
 {
 	auto w = getWindowForId(id);
 	if (!w)
@@ -1339,7 +1339,7 @@ SDL_FPoint SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos)
 	return applyLocalScaling(rpos);
 }
 
-SDL_FRect SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FRect& pos, bool round)
+SDL_FRect SdlContext::pixelToScreen(SDL_WindowID id, SDL_FRect pos, bool round)
 {
 	const auto fpos = pixelToScreen(id, SDL_FPoint{ pos.x, pos.y });
 	const auto size = pixelToScreen(id, SDL_FPoint{ pos.w, pos.h });

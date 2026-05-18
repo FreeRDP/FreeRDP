@@ -19,7 +19,7 @@
  */
 #include "sdl_input_widget.hpp"
 
-SdlInputWidget::SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect)
+SdlInputWidget::SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect)
     : SdlSelectableWidget(renderer, rect)
 {
 	init();
@@ -41,7 +41,7 @@ void SdlInputWidget::init()
 }
 
 #if defined(WITH_SDL_IMAGE_DIALOGS)
-SdlInputWidget::SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, const SDL_FRect& rect,
+SdlInputWidget::SdlInputWidget(std::shared_ptr<SDL_Renderer>& renderer, SDL_FRect rect,
                                SDL_IOStream* ops)
     : SdlSelectableWidget(renderer, rect, ops)
 {
