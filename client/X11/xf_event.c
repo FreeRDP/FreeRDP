@@ -173,7 +173,7 @@ static BOOL xf_action_script_append(xfContext* xfc, const char* buffer, size_t s
 	WINPR_UNUSED(what);
 	WINPR_UNUSED(arg);
 
-	if (buffer || (size == 0))
+	if (!buffer || (size == 0))
 		return TRUE;
 
 	if (!ArrayList_Append(xfc->xevents, buffer))
