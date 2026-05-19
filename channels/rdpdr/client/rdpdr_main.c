@@ -1743,17 +1743,20 @@ static BOOL rdpdr_check_channel_state(rdpdrPlugin* rdpdr, UINT16 packetid)
 	}
 }
 
-static BOOL tryAdvance(rdpdrPlugin* rdpdr)
+static BOOL tryAdvance(rdpdrPlugin* rdpdr, BOOL announce)
 {
 	if (rdpdr->haveClientId && rdpdr->haveServerCaps)
 	{
-		const UINT error = rdpdr_send_device_list_announce_request(rdpdr, FALSE);
-		if (error)
+		if (announce)
 		{
-			WLog_Print(rdpdr->log, WLOG_ERROR,
-			           "rdpdr_send_device_list_announce_request failed with error %" PRIu32 "",
-			           error);
-			return FALSE;
+			const UINT error = rdpdr_send_device_list_announce_request(rdpdr, FALSE);
+			if (error)
+			{
+				WLog_Print(rdpdr->log, WLOG_ERROR,
+				           "rdpdr_send_device_list_announce_request failed with error %" PRIu32 "",
+				           error);
+				return FALSE;
+			}
 		}
 		if (!rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_READY))
 			return FALSE;
@@ -1829,7 +1832,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 					else
 					{
 						rdpdr->haveServerCaps = TRUE;
-						if (!tryAdvance(rdpdr))
+						if (!tryAdvance(rdpdr, TRUE))
 							error = ERROR_INTERNAL_ERROR;
 					}
 
@@ -1842,7 +1845,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 					else
 					{
 						rdpdr->haveClientId = TRUE;
-						if (!tryAdvance(rdpdr))
+						if (!tryAdvance(rdpdr, TRUE))
 							error = ERROR_INTERNAL_ERROR;
 					}
 					break;
@@ -1863,7 +1866,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 						    "rdpdr_send_device_list_announce_request failed with error %" PRIu32 "",
 						    error);
 					}
-					else if (!tryAdvance(rdpdr))
+					else if (!tryAdvance(rdpdr, FALSE))
 					{
 						error = ERROR_INTERNAL_ERROR;
 					}
