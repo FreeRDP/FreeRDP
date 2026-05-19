@@ -1474,7 +1474,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	Stream_Seek_UINT32(s); /* deviceCount */
 
 	arg.rdpdr = rdpdr;
-	arg.userLoggedOn = userLoggedOn;
+	arg.userLoggedOn = userLoggedOn || rdpdr->userLoggedOn;
 	arg.s = s;
 	if (!device_foreach(rdpdr, TRUE, device_announce, &arg))
 		return ERROR_INVALID_DATA;
