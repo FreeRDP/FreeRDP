@@ -33,3 +33,10 @@ jobs:
       - name: "Run mingw [static] build..."
         run: |
           ./scripts/mingw.sh -c -s --clean-first
+
+      - name: "Upload built exe(s)"
+        uses: actions/upload-artifact@v4
+        with:
+          name: mingw-exes
+          path: '**/*.exe'
+        
