@@ -1154,6 +1154,9 @@ FREERDP_ENTRY_POINT(
 		goto fail;
 	}
 
+	if (driver->SetDeviceContext)
+		driver->SetDeviceContext(driver, device);
+
 	if (name && name[0])
 	{
 		WINPR_ASSERT(driver->GetPrinter);

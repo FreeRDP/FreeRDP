@@ -320,6 +320,18 @@ RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* const ar
 {
 	WINPR_ASSERT(args || (count == 0));
 
+	switch (Type)
+	{
+		case RDPDR_DTYP_PRINT:
+		case RDPDR_DTYP_SERIAL:
+		case RDPDR_DTYP_PARALLEL:
+		case RDPDR_DTYP_SMARTCARD:
+		case RDPDR_DTYP_FILESYSTEM:
+			break;
+		default:
+			return nullptr;
+	}
+
 	const size_t size = sizeof(struct RDPDR_DEVICE_EX);
 	struct RDPDR_DEVICE_EX* device = calloc(1, size);
 	if (!device)
@@ -4052,13 +4064,12 @@ static BOOL addin_argv_from_json(rdpSettings* settings, const WINPR_JSON* json,
 	return TRUE;
 }
 
-static char* get_string(const WINPR_JSON* json, const char* key)
+static const char* get_string(const WINPR_JSON* json, const char* key)
 {
 	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(json, key);
 	if (!item || !WINPR_JSON_IsString(item))
 		return nullptr;
-	const char* str = WINPR_JSON_GetStringValue(item);
-	return WINPR_CAST_CONST_PTR_AWAY(str, char*);
+	return WINPR_JSON_GetStringValue(item);
 }
 
 static BOOL get_bool(const WINPR_JSON* json, const char* key)
@@ -4075,51 +4086,73 @@ static BOOL device_from_json_item(rdpSettings* settings, FreeRDP_Settings_Keys_P
 	if (!val || !WINPR_JSON_IsObject(val))
 		return FALSE;
 
-	union
-	{
-		RDPDR_DEVICE base;
-		RDPDR_PARALLEL parallel;
-		RDPDR_SERIAL serial;
-		RDPDR_SMARTCARD smartcard;
-		RDPDR_PRINTER printer;
-		RDPDR_DRIVE drive;
-		RDPDR_DEVICE device;
-	} device;
-
-	memset(&device, 0, sizeof(device));
-
 	errno = 0;
-	device.base.Id = (uint32_t)uint_from_json(val, "Id", UINT32_MAX);
-	device.base.Type = (uint32_t)uint_from_json(val, "Type", UINT32_MAX);
-	if (errno != 0)
-		return FALSE;
-	device.base.Name = get_string(val, "Name");
-	if (!device.base.Name)
+
+	const uint64_t type = uint_from_json(val, "Type", UINT32_MAX);
+	const char* name = get_string(val, "Name");
+	if (!name)
 		return FALSE;
 
-	switch (device.base.Type)
+	const char* args[6] = WINPR_C_ARRAY_INIT;
+	size_t count = 0;
+	args[count++] = name;
+	switch (type)
 	{
 		case RDPDR_DTYP_SERIAL:
-			device.serial.Path = get_string(val, "Path");
-			device.serial.Driver = get_string(val, "Driver");
-			device.serial.Permissive = get_string(val, "Permissive");
+			args[count] = get_string(val, "Path");
+			if (args[count])
+			{
+				count++;
+				args[count] = get_string(val, "Driver");
+				if (args[count])
+				{
+					count++;
+					args[count] = get_string(val, "Permissive");
+					if (args[count])
+						count++;
+				}
+			}
 			break;
 		case RDPDR_DTYP_PARALLEL:
-			device.parallel.Path = get_string(val, "Path");
+			args[count] = get_string(val, "Path");
+			if (args[count])
+				count++;
 			break;
 		case RDPDR_DTYP_PRINT:
-			device.printer.DriverName = get_string(val, "DriverName");
-			device.printer.IsDefault = get_bool(val, "IsDefault");
+			args[count] = get_string(val, "DriverName");
+			if (args[count])
+			{
+				count++;
+				if (get_bool(val, "IsDefault"))
+					args[count++] = "default";
+			}
 			break;
 		case RDPDR_DTYP_FILESYSTEM:
-			device.drive.Path = get_string(val, "Path");
-			device.drive.automount = get_bool(val, "automount");
+			args[count] = get_string(val, "Path");
+			if (args[count])
+			{
+				count++;
+				if (get_bool(val, "automount"))
+					args[count++] = "automount";
+			}
 			break;
 		case RDPDR_DTYP_SMARTCARD:
 		default:
 			break;
 	}
-	return freerdp_settings_set_pointer_array(settings, key, offset, &device);
+
+	RDPDR_DEVICE* device = freerdp_device_new(type, count, args);
+	if (!device)
+		return FALSE;
+
+	errno = 0;
+	device->Id = (uint32_t)uint_from_json(val, "Id", UINT32_MAX);
+	if (errno != 0)
+		return FALSE;
+
+	const BOOL rc = freerdp_settings_set_pointer_array(settings, key, offset, device);
+	freerdp_device_free(device);
+	return rc;
 }
 
 static BOOL device_array_from_json(rdpSettings* settings, const WINPR_JSON* json,
