@@ -116,6 +116,7 @@ typedef struct
 	BOOL haveServerCaps;
 
 	RdpdrClientContext context;
+	BOOL clearing;
 } rdpdrPlugin;
 
 WINPR_ATTR_NODISCARD

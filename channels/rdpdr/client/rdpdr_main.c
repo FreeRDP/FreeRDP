@@ -1643,7 +1643,16 @@ static UINT rdpdr_process_init(rdpdrPlugin* rdpdr)
 	WINPR_ASSERT(rdpdr->devman);
 
 	rdpdr->userLoggedOn = FALSE; /* reset possible received state */
-	if (!device_foreach(rdpdr, TRUE, device_init, rdpdr->log))
+
+	/* windows servers tend to trail off if pending IRP are completed after a
+	 * PAKID_CORE_SERVER_ANNOUNCE message was received.
+	 * So, set rdpdr->clearing and discard all response messages triggered by
+	 * cancelling the pending requests.
+	 */
+	rdpdr->clearing = TRUE;
+	BOOL rc = device_foreach(rdpdr, TRUE, device_init, rdpdr->log);
+	rdpdr->clearing = FALSE;
+	if (!rc)
 		return ERROR_INTERNAL_ERROR;
 	return CHANNEL_RC_OK;
 }
@@ -1943,6 +1952,11 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 {
 	rdpdrPlugin* plugin = rdpdr;
 
+	if (rdpdr->clearing)
+	{
+		WLog_ERR(TAG, "trying to send message while reinitializing channel, aborting");
+		return ERROR_INTERNAL_ERROR;
+	}
 	if (!s)
 	{
 		Stream_Release(s);

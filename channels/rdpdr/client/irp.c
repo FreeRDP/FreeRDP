@@ -68,6 +68,9 @@ static UINT irp_complete(IRP* irp)
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*)irp->devman->plugin;
 	WINPR_ASSERT(rdpdr);
 
+	if (rdpdr->clearing)
+		return irp->Discard(irp);
+
 	UINT error = ERROR_INVALID_DATA;
 
 	const size_t pos = Stream_GetPosition(irp->output);
