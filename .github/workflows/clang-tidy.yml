@@ -11,7 +11,7 @@ jobs:
     - uses: actions/checkout@v4
 
     # Run clang-tidy
-    - uses: akallabeth/clang-tidy-review@master
+    - uses: ZedThree/clang-tidy-review@v0.23.1
       id: review
       with:
         split_workflow: true
