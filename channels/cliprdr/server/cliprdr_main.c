@@ -1236,7 +1236,17 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 				Stream_Read_UINT16(s, header.msgType);  /* msgType (2 bytes) */
 				Stream_Read_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
 
-				if (!header.msgType)
+				/* These 4 bytes are either padding (zeros, per
+				 * MS-RDPECLIP 2.2.1) or the start of the next PDU
+				 * header. If msgType isn't a valid CLIPRDR type
+				 * (1..CB_UNLOCK_CLIPDATA), treat them as leftover
+				 * bytes from the previous PDU's payload and discard
+				 * — keeping them would desync the stream by 4 bytes
+				 * on the next PDU's header read (the actual next
+				 * msgType+msgFlags would then be parsed as dataLen).
+				 * Observed in the wild with mstsc FILECONTENTS
+				 * responses for files inside folders. */
+				if (!header.msgType || header.msgType > CB_UNLOCK_CLIPDATA)
 				{
 					/* ignore trailing bytes */
 					Stream_ResetPosition(s);
