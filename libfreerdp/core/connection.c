@@ -324,10 +324,16 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	/* FIPS Mode forces the following and overrides the following(by happening later
 	 * in the command line processing):
-	 * 1. Forces the only supported RDP encryption method to be FIPS. */
+	 * 1. Forces the only supported RDP encryption method to be FIPS.
+	 * 2. Disables NTLM authentication (not FIPS compliant due to MD4/RC4). */
 	if (settings->FIPSMode || winpr_FIPSMode())
 	{
 		settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
+		if (!settings->AuthenticationPackageList)
+		{
+			if (!freerdp_settings_set_string(settings, FreeRDP_AuthenticationPackageList, "!ntlm"))
+				return FALSE;
+		}
 	}
 
 	UINT32 TcpConnectTimeout = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
