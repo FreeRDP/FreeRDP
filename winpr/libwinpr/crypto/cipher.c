@@ -90,7 +90,6 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	if (!ctx->ictx)
 		goto fail;
 #elif defined(WITH_OPENSSL)
-	const EVP_CIPHER* evp = nullptr;
 
 	if (keylen > INT_MAX)
 		goto fail;
@@ -99,7 +98,11 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	if (!ctx->ctx)
 		goto fail;
 
-	evp = EVP_rc4();
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	EVP_CIPHER* evp = EVP_CIPHER_fetch(NULL, "RC4", override_fips ? "fips=no" : NULL);
+#else
+	const EVP_CIPHER* evp = EVP_rc4();
+#endif
 
 	if (!evp)
 		goto fail;
@@ -108,12 +111,16 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	if (EVP_EncryptInit_ex(ctx->ctx, evp, nullptr, nullptr, nullptr) != 1)
 		goto fail;
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	EVP_CIPHER_free(evp);
+
 	/* EVP_CIPH_FLAG_NON_FIPS_ALLOW does not exist before openssl 1.0.1 */
 #if !(OPENSSL_VERSION_NUMBER < 0x10001000L)
 
 	if (override_fips == TRUE)
 		EVP_CIPHER_CTX_set_flags(ctx->ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
 
+#endif
 #endif
 	EVP_CIPHER_CTX_set_key_length(ctx->ctx, (int)keylen);
 	if (EVP_EncryptInit_ex(ctx->ctx, nullptr, nullptr, key, nullptr) != 1)
