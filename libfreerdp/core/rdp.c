@@ -28,6 +28,7 @@
 #include <winpr/assert.h>
 #include <winpr/cast.h>
 #include <winpr/json.h>
+#include <winpr/ssl.h>
 
 #include "rdp.h"
 
@@ -3043,7 +3044,7 @@ static void print_last_line(wLog* log, const log_line_t* firstLine)
 }
 
 static void log_build_warn_cipher(rdpRdp* rdp, log_line_t* firstLine, WINPR_CIPHER_TYPE md,
-                                  const char* what)
+                                  const char* what, BOOL allowFIPS)
 {
 	BOOL haveCipher = FALSE;
 
@@ -3054,7 +3055,11 @@ static void log_build_warn_cipher(rdpRdp* rdp, log_line_t* firstLine, WINPR_CIPH
 	 * winpr_Cipher_* does not support that. */
 	if (md == WINPR_CIPHER_ARC4_128)
 	{
-		WINPR_RC4_CTX* enc = winpr_RC4_New(key, sizeof(key));
+		WINPR_RC4_CTX* enc = nullptr;
+		if (allowFIPS)
+			enc = winpr_RC4_New_Allow_FIPS(key, sizeof(key));
+		else
+			enc = winpr_RC4_New(key, sizeof(key));
 		haveCipher = enc != nullptr;
 		winpr_RC4_Free(enc);
 	}
@@ -3101,13 +3106,17 @@ static void log_build_warn_hmac(rdpRdp* rdp, log_line_t* firstLine, WINPR_MD_TYP
 }
 
 static void log_build_warn_hash(rdpRdp* rdp, log_line_t* firstLine, WINPR_MD_TYPE md,
-                                const char* what)
+                                const char* what, BOOL allowFIPS)
 {
 	BOOL haveDigestX = FALSE;
-
 	WINPR_DIGEST_CTX* digest = winpr_Digest_New();
 	if (digest)
-		haveDigestX = winpr_Digest_Init(digest, md);
+	{
+		if (allowFIPS)
+			haveDigestX = winpr_Digest_Init_Allow_FIPS(digest, md);
+		else
+			haveDigestX = winpr_Digest_Init(digest, md);
+	}
 	winpr_Digest_Free(digest);
 
 	if (!haveDigestX)
@@ -3121,37 +3130,65 @@ static void log_build_warn_ssl(rdpRdp* rdp)
 {
 	WINPR_ASSERT(rdp);
 
+	const BOOL fips = winpr_FIPSMode();
+
+	if (fips)
+	{
+		WLog_Print(rdp->log, WLOG_INFO,
+		           "FIPS mode active: non-approved algorithms are unavailable "
+		           "as expected. NTLM, autoreconnect cookies, assistance files "
+		           "with encrypted passwords and RDP security will not work.");
+	}
+
 	log_line_t firstHashLine = WINPR_C_ARRAY_INIT;
-	log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_MD4, "NTLM support not available");
+	if (!fips)
+	{
+		log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_MD4, "NTLM support not available", FALSE);
+		log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_MD5,
+		                    "NTLM, assistance files with encrypted passwords "
+		                    " and autoreconnect cookies will not work",
+		                    FALSE);
+	}
 	log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_MD5,
-	                    "NTLM, assistance files with encrypted passwords, autoreconnect cookies, "
-	                    "licensing and RDP security will not work");
+	                    "RDP licensing and RDP security will not work", TRUE);
 	log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_SHA1,
 	                    "assistance files with encrypted passwords, Kerberos, Smartcard Logon, RDP "
-	                    "security support not available");
-	log_build_warn_hash(
-	    rdp, &firstHashLine, WINPR_MD_SHA256,
-	    "file clipboard, AAD gateway, NLA security and certificates might not work");
+	                    "security support not available",
+	                    FALSE);
+	log_build_warn_hash(rdp, &firstHashLine, WINPR_MD_SHA256,
+	                    "file clipboard, AAD gateway, NLA security and certificates might not work",
+	                    FALSE);
 	print_last_line(rdp->log, &firstHashLine);
 
-	log_line_t firstHmacLine = WINPR_C_ARRAY_INIT;
-	log_build_warn_hmac(rdp, &firstHmacLine, WINPR_MD_MD5, "Autoreconnect cookie not supported");
-	log_build_warn_hmac(rdp, &firstHmacLine, WINPR_MD_SHA1, "RDP security not supported");
-	print_last_line(rdp->log, &firstHmacLine);
+	if (!fips)
+	{
+		log_line_t firstHmacLine = WINPR_C_ARRAY_INIT;
+		log_build_warn_hmac(rdp, &firstHmacLine, WINPR_MD_MD5,
+		                    "Autoreconnect cookie not supported");
+		log_build_warn_hmac(rdp, &firstHmacLine, WINPR_MD_SHA1, "RDP security not supported");
+		print_last_line(rdp->log, &firstHmacLine);
+	}
 
 	log_line_t firstCipherLine = WINPR_C_ARRAY_INIT;
+	if (!fips)
+	{
+		log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_ARC4_128,
+		                      "assistance files with encrypted passwords, NTLM "
+		                      "and autoreconnect cookies will not work",
+		                      FALSE);
+	}
 	log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_ARC4_128,
-	                      "assistance files with encrypted passwords, NTLM, RDP licensing and RDP "
-	                      "security will not work");
-	log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_DES_EDE3_CBC,
-	                      "RDP security FIPS mode will not work");
+	                      "RDP licensing and RDP security will not work", TRUE);
+	if (!fips)
+		log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_DES_EDE3_CBC,
+		                      "RDP security will not work", TRUE);
 	log_build_warn_cipher(
 	    rdp, &firstCipherLine, WINPR_CIPHER_AES_128_CBC,
-	    "assistance file encrypted LHTicket will not work and ARM gateway might not");
+	    "assistance file encrypted LHTicket will not work and ARM gateway might not", FALSE);
 	log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_AES_192_CBC,
-	                      "ARM gateway might not work");
+	                      "ARM gateway might not work", FALSE);
 	log_build_warn_cipher(rdp, &firstCipherLine, WINPR_CIPHER_AES_256_CBC,
-	                      "ARM gateway might not work");
+	                      "ARM gateway might not work", FALSE);
 	print_last_line(rdp->log, &firstCipherLine);
 }
 
