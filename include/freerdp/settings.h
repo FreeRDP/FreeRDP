@@ -221,6 +221,15 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* other);
 
+	/** @brief return the arguments passed to the device channel.
+	 *
+	 *  @param device The device to get the arguments for
+	 *  @return A pointer to the device arguments. Might be nullptr if not supported.
+	 *  @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const ADDIN_ARGV* freerdp_device_get_args(const RDPDR_DEVICE* device);
+
 	FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 
 	WINPR_ATTR_NODISCARD

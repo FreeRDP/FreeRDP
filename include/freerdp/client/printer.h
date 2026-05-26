@@ -34,6 +34,8 @@ extern "C"
 	typedef struct rdp_printer rdpPrinter;
 	typedef struct rdp_print_job rdpPrintJob;
 
+	typedef void (*pcSetDeviceForPrinterDriver)(rdpPrinterDriver* driver,
+	                                            const RDPDR_PRINTER* device);
 	typedef void (*pcReferencePrinterDriver)(rdpPrinterDriver* driver);
 	typedef rdpPrinter** (*pcEnumPrinters)(rdpPrinterDriver* driver);
 	typedef void (*pcReleaseEnumPrinters)(rdpPrinter** printers);
@@ -44,12 +46,19 @@ extern "C"
 
 	struct rdp_printer_driver
 	{
-		WINPR_ATTR_NODISCARD pcEnumPrinters EnumPrinters;
-		pcReleaseEnumPrinters ReleaseEnumPrinters;
-		WINPR_ATTR_NODISCARD pcGetPrinter GetPrinter;
+		ALIGN64 WINPR_ATTR_NODISCARD pcEnumPrinters EnumPrinters;
+		ALIGN64 pcReleaseEnumPrinters ReleaseEnumPrinters;
+		ALIGN64 WINPR_ATTR_NODISCARD pcGetPrinter GetPrinter;
 
-		pcReferencePrinterDriver AddRef;
-		pcReferencePrinterDriver ReleaseRef;
+		ALIGN64 pcReferencePrinterDriver AddRef;
+		ALIGN64 pcReferencePrinterDriver ReleaseRef;
+
+		/** @brief Function allowing to set a context for a backend.
+		 *  @since version 3.27.0
+		 */
+		ALIGN64 pcSetDeviceForPrinterDriver SetDeviceContext;
+
+		UINT64 reserved[58];
 	};
 
 	typedef rdpPrintJob* (*pcCreatePrintJob)(rdpPrinter* printer, UINT32 id);
@@ -57,17 +66,18 @@ extern "C"
 
 	struct rdp_printer
 	{
-		size_t id;
-		char* name;
-		char* driver;
-		BOOL is_default;
+		ALIGN64 size_t id;
+		ALIGN64 char* name;
+		ALIGN64 char* driver;
+		ALIGN64 BOOL is_default;
 
-		size_t references;
-		rdpPrinterDriver* backend;
-		WINPR_ATTR_NODISCARD pcCreatePrintJob CreatePrintJob;
-		WINPR_ATTR_NODISCARD pcFindPrintJob FindPrintJob;
-		pcReferencePrinter AddRef;
-		pcReferencePrinter ReleaseRef;
+		ALIGN64 size_t references;
+		ALIGN64 rdpPrinterDriver* backend;
+		ALIGN64 WINPR_ATTR_NODISCARD pcCreatePrintJob CreatePrintJob;
+		ALIGN64 WINPR_ATTR_NODISCARD pcFindPrintJob FindPrintJob;
+		ALIGN64 pcReferencePrinter AddRef;
+		ALIGN64 pcReferencePrinter ReleaseRef;
+		UINT64 reserved[54];
 	};
 
 	typedef UINT (*pcWritePrintJob)(rdpPrintJob* printjob, const BYTE* data, size_t size);
@@ -75,11 +85,13 @@ extern "C"
 
 	struct rdp_print_job
 	{
-		UINT32 id;
-		rdpPrinter* printer;
+		ALIGN64 UINT32 id;
+		ALIGN64 rdpPrinter* printer;
 
-		WINPR_ATTR_NODISCARD pcWritePrintJob Write;
-		pcClosePrintJob Close;
+		ALIGN64 WINPR_ATTR_NODISCARD pcWritePrintJob Write;
+		ALIGN64 pcClosePrintJob Close;
+
+		UINT64 reserved[60];
 	};
 
 #ifdef __cplusplus
