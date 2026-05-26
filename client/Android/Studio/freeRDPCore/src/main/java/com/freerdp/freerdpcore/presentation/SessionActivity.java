@@ -56,8 +56,6 @@ import com.freerdp.freerdpcore.domain.ConnectionReference;
 import com.freerdp.freerdpcore.services.LibFreeRDP;
 import com.freerdp.freerdpcore.utils.ClipboardManagerProxy;
 
-import java.util.Collection;
-
 public class SessionActivity extends AppCompatActivity
     implements LibFreeRDP.UIEventListener, ClipboardManagerProxy.OnClipboardChangedListener
 {
@@ -348,9 +346,8 @@ public class SessionActivity extends AppCompatActivity
 		// Cancel running disconnect timers.
 		GlobalApp.cancelDisconnectTimer();
 
-		// Disconnect all remaining sessions.
-		Collection<SessionState> sessions = GlobalApp.getSessions();
-		for (SessionState session : sessions)
+		// Disconnect only this activity's session.
+		if (session != null)
 			LibFreeRDP.disconnect(session.getInstance());
 
 		// unregister freerdp session listener
@@ -599,6 +596,7 @@ public class SessionActivity extends AppCompatActivity
 		}
 		if (System.currentTimeMillis() - backPressedTime < 2000)
 		{
+			connectCancelledByUser = true;
 			LibFreeRDP.disconnect(session.getInstance());
 		}
 		else

@@ -70,7 +70,10 @@
             android:name=".presentation.SessionActivity"
             android:theme="@style/Theme.Main"
             android:configChanges="orientation|keyboard|keyboardHidden|screenSize|smallestScreenSize|density|screenLayout|navigation"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+            android:taskAffinity="com.freerdp.session"
+            android:documentLaunchMode="always"
+            android:autoRemoveFromRecents="true">
             <!--android:configChanges="orientation|keyboardHidden|screenSize|keyboard"-->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

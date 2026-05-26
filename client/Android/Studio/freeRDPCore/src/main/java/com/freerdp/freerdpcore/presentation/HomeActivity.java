@@ -41,11 +41,15 @@ public class HomeActivity extends AppCompatActivity
 	private MenuItem searchMenuItem;
 	private SearchView searchView;
 
+	private ExternalDisplayManager externalDisplayManager;
+
 	@Override public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		binding = HomeBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
+
+		externalDisplayManager = new ExternalDisplayManager(this);
 
 		long heapSize = Runtime.getRuntime().maxMemory();
 		Log.i(TAG, "Max HeapSize: " + heapSize);
@@ -76,12 +80,7 @@ public class HomeActivity extends AppCompatActivity
 				if (ConnectionReference.isBookmarkReference(refStr) ||
 				    ConnectionReference.isHostnameReference(refStr))
 				{
-					Bundle bundle = new Bundle();
-					bundle.putString(SessionActivity.PARAM_CONNECTION_REFERENCE, refStr);
-
-					Intent sessionIntent = new Intent(HomeActivity.this, SessionActivity.class);
-					sessionIntent.putExtras(bundle);
-					startActivity(sessionIntent);
+					externalDisplayManager.launchSessionWithDisplayPicker(refStr);
 
 					if (searchView != null)
 					{
