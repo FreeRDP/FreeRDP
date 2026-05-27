@@ -14,7 +14,9 @@ import androidx.appcompat.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,8 +29,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.freerdp.freerdpcore.R;
 import com.freerdp.freerdpcore.databinding.HomeBinding;
+import com.freerdp.freerdpcore.domain.BookmarkBase;
 import com.freerdp.freerdpcore.domain.ConnectionReference;
 import com.freerdp.freerdpcore.utils.BookmarkListAdapter;
+import com.freerdp.freerdpcore.utils.RDPFileHelper;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class HomeActivity extends AppCompatActivity
 {
@@ -61,7 +70,7 @@ public class HomeActivity extends AppCompatActivity
 
 		if (Intent.ACTION_VIEW.equals(caller.getAction()) && callParameter != null)
 		{
-			String refStr = ConnectionReference.getFileReference(callParameter.getPath());
+			String refStr = ConnectionReference.getFileReference(callParameter.toString());
 			Bundle bundle = new Bundle();
 			bundle.putString(BookmarkActivity.PARAM_CONNECTION_REFERENCE, refStr);
 
@@ -98,6 +107,11 @@ public class HomeActivity extends AppCompatActivity
 			@Override public void onDelete(long id)
 			{
 				viewModel.deleteBookmark(id);
+			}
+
+			@Override public void onExport(BookmarkBase bookmark)
+			{
+				shareRdpFile(bookmark);
 			}
 		});
 
@@ -185,6 +199,28 @@ public class HomeActivity extends AppCompatActivity
 		}
 
 		return true;
+	}
+
+	private void shareRdpFile(BookmarkBase bookmark)
+	{
+		String filename = bookmark.getLabel().replaceAll("[^\\w. -]", "_") + ".rdp";
+		File file = new File(getCacheDir(), filename);
+		try (FileOutputStream out = new FileOutputStream(file))
+		{
+			out.write(RDPFileHelper.toRdpString(bookmark).getBytes(StandardCharsets.UTF_8));
+		}
+		catch (IOException e)
+		{
+			Log.e(TAG, "Failed to write RDP file for sharing", e);
+			Toast.makeText(this, R.string.export_failed, Toast.LENGTH_SHORT).show();
+			return;
+		}
+		Uri uri = FileProvider.getUriForFile(this, "com.freerdp.afreerdp.fileprovider", file);
+		Intent share = new Intent(Intent.ACTION_SEND);
+		share.setType("application/x-rdp");
+		share.putExtra(Intent.EXTRA_STREAM, uri);
+		share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		startActivity(Intent.createChooser(share, bookmark.getLabel()));
 	}
 
 	private void setupSearchView(Menu menu)

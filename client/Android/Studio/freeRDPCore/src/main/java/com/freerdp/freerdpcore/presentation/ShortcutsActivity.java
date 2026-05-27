@@ -65,6 +65,10 @@ public class ShortcutsActivity extends AppCompatActivity
 			@Override public void onDelete(long id)
 			{
 			}
+
+			@Override public void onExport(BookmarkBase bookmark)
+			{
+			}
 		});
 
 		binding.recyclerViewShortcuts.setLayoutManager(new LinearLayoutManager(this));

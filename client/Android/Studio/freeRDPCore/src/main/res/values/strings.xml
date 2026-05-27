@@ -20,6 +20,8 @@
     <string name="menu_connect">Connect</string>
     <string name="menu_edit">Edit</string>
     <string name="menu_delete">Delete</string>
+    <string name="bookmark_export">Share</string>
+    <string name="export_failed">Failed to share bookmark</string>
     <!-- Session menu items -->
     <string name="menu_sys_keyboard">Keyboard</string>
     <string name="menu_ext_keyboard">Function Keys</string>
