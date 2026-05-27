@@ -6,15 +6,12 @@
     <string name="cancel">Cancelar</string>
     <string name="cont">Continuar</string>
     <string name="login">Ingresar</string>
-    <string name="logout">Salir</string>
     <!-- Home menu items -->
-    <string name="menu_exit">Salida</string>
     <string name="menu_about">Sobre</string>
     <string name="menu_help">Ayuda</string>
     <string name="menu_new_bookmark">Nueva conexión</string>
     <string name="menu_app_settings">Configuracion</string>
     <!-- Bookmark menu items -->
-    <string name="menu_title_bookmark">Conexión</string>
     <string name="menu_connect">Conectar</string>
     <string name="menu_edit">Editar</string>
     <string name="menu_delete">Borrar</string>
@@ -22,22 +19,9 @@
     <string name="menu_sys_keyboard">Teclado</string>
     <string name="menu_ext_keyboard">Funcion teclado</string>
     <string name="menu_touch_pointer">Puntero Tactil</string>
-    <string name="menu_home">Inicio</string>
-    <string name="menu_disconnect">Desconectart</string>
     <!-- List section headers -->
-    <string name="section_bookmarks">Conexión Manual</string>
-    <string name="section_active_sessions">Sesiones Activas</string>
     <!-- Search strings -->
-    <string name="search_hint">Connect to Computer</string>
     <!-- List placeholder labels -->
-    <string name="list_placeholder_login">Login</string>
-    <string name="list_placeholder_no_servers">No hay escritorios virtuales</string>
-    <string name="list_placeholder_connecting">Conectando ...</string>
-    <string name="list_placeholder_disconnecting">Desconectando ...</string>
-    <string name="list_placeholder_connection_error">Conexión perdida</string>
-    <string name="list_placeholder_wrong_password">Contraseña equivocada</string>
-    <string name="list_placeholder_invalid_username">Usuario Invalido</string>
-    <string name="list_placeholder_add_bookmark">Add Connection</string>
     <!-- Bookmark settings strings -->
     <string name="settings_cat_host">Host</string>
     <string name="settings_label">Su nombre</string>
@@ -89,7 +73,6 @@
     <string name="settings_perf_menu_animation">Animacion del menu</string>
     <string name="settings_perf_theming">Estilo visual</string>
     <string name="settings_advanced">Avanzado</string>
-    <string name="settings_cat_advanced">Configuracion Avanzada</string>
     <string name="settings_cat_gateway">Gateway</string>
     <string name="settings_enable_gateway_settings">Enable Gateway</string>
     <string name="settings_gateway_settings">Gateway Settings</string>
@@ -118,8 +101,6 @@
     <string name="settings_password_empty">no configurado</string>
     <string name="settings_cat_ui">Interfaze Usuario</string>
     <string name="settings_ui_hide_status_bar">Ocultar barra de estado</string>
-    <string name="settings_ui_hide_action_bar">\"Ocultar barra de acción\"</string>
-    <string name="settings_ui_hide_zoom_controls">Ocultar controles de zoom</string>
     <string name="settings_ui_swap_mouse_buttons">Intercambiar botones del mouse</string>
     <string name="settings_ui_invert_scrolling">invertir desplazamiento</string>
     <string name="settings_ui_auto_scroll_touchpointer">Puntero táctil de desplazamiento automático</string>
@@ -130,12 +111,9 @@
     <string name="settings_cat_security">Seguridad</string>
     <string name="settings_security_accept_certificates">Aceptar todos los certificados</string>
     <string name="settings_security_clear_certificate_cache">Borrar el Cache de los certificados</string>
-    <string name="settings_description_after_minutes">Despues %1$d Minutos</string>
-    <string name="settings_description_disabled">Desabilitado</string>
     <!-- Activity titles -->
     <string name="title_bookmark_settings">Configuración de la conexión</string>
     <string name="title_application_settings">Configuración</string>
-    <string name="title_home">aFreeRDP - aFreeRDP para Android</string>
     <string name="title_create_shortcut">Conexiones RDP</string>
     <string name="title_help">Ayuda</string>
     <string name="title_about">Sobre</string>
@@ -154,20 +132,14 @@
     <string name="dlg_title_create_shortcut">Crear acceso directo</string>
     <string name="dlg_msg_create_shortcut">Nombre corto:</string>
     <string name="dlg_msg_connecting">Conectando ...</string>
-    <string name="dlg_msg_logging_in">Ingresando a ...</string>
-    <string name="dlg_title_about">Sobre aFreeRDP</string>
-    <string name="dlg_title_create_bookmark_after_qc">Guardar configuración de conexión?</string>
-    <string name="dlg_msg_create_bookmark_after_qc">La configuración de conexión no se han guardado! ¿Quieres guardarlos?</string>
     <string name="dlg_title_save_bookmark">Guardar Conexión</string>
     <string name="dlg_save_bookmark">¿Desea guardar los cambios realizados en la configuración de conexión?</string>
-    <string name="dlg_dont_show_again">No volver a preguntar</string>
     <string name="dlg_title_exit">Salir del programa?</string>
     <string name="dlg_msg_exit">Esta seguro que desea salir del programa?</string>
     <string name="dlg_title_clear_cert_cache">Borrar Certificados?</string>
     <string name="dlg_msg_clear_cert_cache">Esta seguro que desea borrar todos los certificados?</string>
     <string name="debug_level">Debug Level</string>
     <string name="settings_debug">Debug Settings</string>
-    <string name="preference_title_client">Cliente</string>
     <string name="settings_cat_client">Cliente</string>
     <string name="preference_title_client_name">Identificador del cliente</string>
 </resources>

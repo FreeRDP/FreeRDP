@@ -6,15 +6,12 @@
     <string name="cancel">Abbrechen</string>
     <string name="cont">Fortfahren</string>
     <string name="login">Login</string>
-    <string name="logout">Logout</string>
     <!-- Home menu items -->
-    <string name="menu_exit">Beenden</string>
     <string name="menu_about">Impressum</string>
     <string name="menu_help">Hilfe</string>
     <string name="menu_new_bookmark">Neue Verbindung</string>
     <string name="menu_app_settings">Einstellungen</string>
     <!-- Bookmark menu items -->
-    <string name="menu_title_bookmark">Verbindung</string>
     <string name="menu_connect">Verbinden</string>
     <string name="menu_edit">Bearbeiten</string>
     <string name="menu_delete">Löschen</string>
@@ -22,22 +19,9 @@
     <string name="menu_sys_keyboard">Tastatur</string>
     <string name="menu_ext_keyboard">Funktionstasten</string>
     <string name="menu_touch_pointer">Touch Pointer</string>
-    <string name="menu_home">home</string>
-    <string name="menu_disconnect">Verbindung trennen</string>
     <!-- List section headers -->
-    <string name="section_bookmarks">Manuelle Verbindungen</string>
-    <string name="section_active_sessions">Aktive Sitzungen</string>
     <!-- Search strings -->
-    <string name="search_hint">Mit Computer verbinden</string>
     <!-- List placeholder labels -->
-    <string name="list_placeholder_login">Login</string>
-    <string name="list_placeholder_no_servers">Keine Server</string>
-    <string name="list_placeholder_connecting">Verbinde &#8230;</string>
-    <string name="list_placeholder_disconnecting">Trenne Verbundung &#8230;</string>
-    <string name="list_placeholder_connection_error">Verbindung unterbrochen</string>
-    <string name="list_placeholder_wrong_password">Falsches Passwort</string>
-    <string name="list_placeholder_invalid_username">Ungültiger Benutzername</string>
-    <string name="list_placeholder_add_bookmark">Verbindung hinzufügen</string>
     <!-- Bookmark settings strings -->
     <string name="settings_cat_host">Host</string>
     <string name="settings_label">Label</string>
@@ -88,7 +72,6 @@
     <string name="settings_perf_menu_animation">Menü Animation</string>
     <string name="settings_perf_theming">Visuelle Stile</string>
     <string name="settings_advanced">Erweitert</string>
-    <string name="settings_cat_advanced">Erweiterte Einstellungen</string>
     <string name="settings_cat_gateway">Gateway</string>
     <string name="settings_enable_gateway_settings">Aktiviere Gateway</string>
     <string name="settings_gateway_settings">Gateway Einstellungen</string>
@@ -117,8 +100,6 @@
     <string name="settings_password_empty">nicht gesetzt</string>
     <string name="settings_cat_ui">Benutzeroberfläche</string>
     <string name="settings_ui_hide_status_bar">verstecke Statusleiste</string>
-    <string name="settings_ui_hide_action_bar">Aktionsleiste ausblenden</string>
-    <string name="settings_ui_hide_zoom_controls">verstecke Zoom Tasten</string>
     <string name="settings_ui_swap_mouse_buttons">Vertausche Maustasten</string>
     <string name="settings_ui_invert_scrolling">Invertiere Bildlauf</string>
     <string name="settings_ui_auto_scroll_touchpointer">Touch Zeiger automatischer Bildlauf</string>
@@ -129,12 +110,9 @@
     <string name="settings_cat_security">Sicherheit</string>
     <string name="settings_security_accept_certificates">Akzeptiere alle Zertifikate</string>
     <string name="settings_security_clear_certificate_cache">Lösche Zertifikat Cache</string>
-    <string name="settings_description_after_minutes">Nach %1$d Minuten</string>
-    <string name="settings_description_disabled">Deaktiviert</string>
     <!-- Activity titles -->
     <string name="title_bookmark_settings">Verbindungseinstellungen</string>
     <string name="title_application_settings">Einstellungen</string>
-    <string name="title_home">aFreeRDP - FreeRDP für Android</string>
     <string name="title_create_shortcut">RDP Verbindungen</string>
     <string name="title_help">Hilfe</string>
     <string name="title_about">Impressum</string>
@@ -153,20 +131,14 @@
     <string name="dlg_title_create_shortcut">Verknüpfung erzeugen</string>
     <string name="dlg_msg_create_shortcut">Verknüpfungsname:</string>
     <string name="dlg_msg_connecting">Verbinden &#8230;</string>
-    <string name="dlg_msg_logging_in">Einloggen &#8230;</string>
-    <string name="dlg_title_about">Über aFreeRDP</string>
-    <string name="dlg_title_create_bookmark_after_qc">Verbindungseinstellungen speichern?</string>
-    <string name="dlg_msg_create_bookmark_after_qc">Die Verbindungseinstellungen wurden nicht gespeichert! Jetzt speichern?</string>
     <string name="dlg_title_save_bookmark">Verbindung speichern?</string>
     <string name="dlg_save_bookmark">Wollen sie alle Änderungen der Verbindungseinstelleungen speichern?</string>
-    <string name="dlg_dont_show_again">Nicht noch einmal nachfragen</string>
     <string name="dlg_title_exit">Anwendung beenden?</string>
     <string name="dlg_msg_exit">Wollen sie die Anwendung wirklich beenden?</string>
     <string name="dlg_title_clear_cert_cache">Lösche Zertifikate?</string>
     <string name="dlg_msg_clear_cert_cache">Wollen sie wirklich alle gespeicherten Zertifikate löschen?</string>
     <string name="debug_level">Debug Stufe</string>
     <string name="settings_debug">Debug Einstellungen</string>
-    <string name="preference_title_client">Client</string>
     <string name="preference_title_client_name">Client Name</string>
     <string name="settings_cat_client">Client</string>
 </resources>

@@ -6,15 +6,12 @@
     <string name="cancel">취소</string>
     <string name="cont">계속</string>
     <string name="login">로그인</string>
-    <string name="logout">로그아웃</string>
     <!-- Home menu items -->
-    <string name="menu_exit">종료</string>
     <string name="menu_about">정보</string>
     <string name="menu_help">도움</string>
     <string name="menu_new_bookmark">새 연결</string>
     <string name="menu_app_settings">설정</string>
     <!-- Bookmark menu items -->
-    <string name="menu_title_bookmark">연결</string>
     <string name="menu_connect">연결하기</string>
     <string name="menu_edit">수정</string>
     <string name="menu_delete">삭제</string>
@@ -22,22 +19,9 @@
     <string name="menu_sys_keyboard">키보드</string>
     <string name="menu_ext_keyboard">기능 키</string>
     <string name="menu_touch_pointer">터치 포인터</string>
-    <string name="menu_home">홈</string>
-    <string name="menu_disconnect">연결종료</string>
     <!-- List section headers -->
-    <string name="section_bookmarks">수동 연결</string>
-    <string name="section_active_sessions">연결 중인 세션</string>
     <!-- Search strings -->
-    <string name="search_hint">컴퓨터에 연결하기</string>
     <!-- List placeholder labels -->
-    <string name="list_placeholder_login">로그인</string>
-    <string name="list_placeholder_no_servers">서버가 없습니다</string>
-    <string name="list_placeholder_connecting">연결중 &#8230;</string>
-    <string name="list_placeholder_disconnecting">연결종료중 &#8230;</string>
-    <string name="list_placeholder_connection_error">연결이 끊겼습니다</string>
-    <string name="list_placeholder_wrong_password">비밀번호가 다릅니다</string>
-    <string name="list_placeholder_invalid_username">사용자 이름이 다릅니다</string>
-    <string name="list_placeholder_add_bookmark">연결 추가</string>
     <!-- Bookmark settings strings -->
     <string name="settings_cat_host">호스트</string>
     <string name="settings_label">이름</string>
@@ -88,7 +72,6 @@
     <string name="settings_perf_menu_animation">메뉴 에니메이션</string>
     <string name="settings_perf_theming">테마 스타일</string>
     <string name="settings_advanced">고급</string>
-    <string name="settings_cat_advanced">고급 설정</string>
     <string name="settings_cat_gateway">게이트웨이</string>
     <string name="settings_enable_gateway_settings">게이트웨이 사용</string>
     <string name="settings_gateway_settings">게이트웨이 설정</string>
@@ -117,8 +100,6 @@
     <string name="settings_password_empty">비밀번호를 입력하세요</string>
     <string name="settings_cat_ui">사용자 화면</string>
     <string name="settings_ui_hide_status_bar">상태바 숨기기</string>
-    <string name="settings_ui_hide_action_bar">액션바 숨기기</string>
-    <string name="settings_ui_hide_zoom_controls">줌 컨트롤 숨기기</string>
     <string name="settings_ui_swap_mouse_buttons">마우스 버튼 바꾸기</string>
     <string name="settings_ui_invert_scrolling">스크롤 뒤집기</string>
     <string name="settings_ui_auto_scroll_touchpointer">터치 포인터 자동 스크롤</string>
@@ -130,12 +111,9 @@
     <string name="settings_cat_security">보안</string>
     <string name="settings_security_accept_certificates">모든 인증서 허용</string>
     <string name="settings_security_clear_certificate_cache">인증서 캐시 삭제</string>
-    <string name="settings_description_after_minutes">%1$d 분 뒤</string>
-    <string name="settings_description_disabled">사용안함</string>
     <!-- Activity titles -->
     <string name="title_bookmark_settings">연결 설정</string>
     <string name="title_application_settings">설정</string>
-    <string name="title_home">aFreeRDP - FreeRDP for Android</string>
     <string name="title_create_shortcut">RDP 연결</string>
     <string name="title_help">도움</string>
     <string name="title_about">정보</string>
@@ -154,19 +132,13 @@
     <string name="dlg_title_create_shortcut">바로가기 만들기</string>
     <string name="dlg_msg_create_shortcut">바로가기 이름:</string>
     <string name="dlg_msg_connecting">연결중 &#8230;</string>
-    <string name="dlg_msg_logging_in">로그인중 &#8230;</string>
-    <string name="dlg_title_about">aFreeRDP 정보</string>
-    <string name="dlg_title_create_bookmark_after_qc">연결 설정 저장하기?</string>
-    <string name="dlg_msg_create_bookmark_after_qc">저장하지 않은 연결 설정을 저장하시겠습니까?</string>
     <string name="dlg_title_save_bookmark">연결 저장?</string>
     <string name="dlg_save_bookmark">연결 설정을 저장하시겠습니까?</string>
-    <string name="dlg_dont_show_again">다시 물어보지 않기</string>
     <string name="dlg_title_exit">앱 종료?</string>
     <string name="dlg_msg_exit">앱을 종료하시겠습니까?</string>
     <string name="dlg_title_clear_cert_cache">인증서 삭제?</string>
     <string name="dlg_msg_clear_cert_cache">캐시된 모든 인증서를 삭제하시겠습니까?</string>
     <string name="debug_level">디버그 레벨</string>
     <string name="settings_debug">디버그 설정</string>
-    <string name="preference_title_client">클라이언트</string>
     <string name="preference_title_client_name">클라이언트 이름</string>
 </resources>
