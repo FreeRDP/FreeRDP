@@ -460,7 +460,6 @@ void freerdp_device_free(RDPDR_DEVICE* device)
 RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 {
 	const struct RDPDR_DEVICE_EX* src = (const struct RDPDR_DEVICE_EX*)device;
-	size_t count = 0;
 	const char* args[4] = WINPR_C_ARRAY_INIT;
 
 	if (!src)
@@ -471,10 +470,13 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 	if (src->args)
 	{
 		argc = src->args->argc;
+		if (argc < 0)
+			return nullptr;
 		argv = (const char* const*)src->args->argv;
 	}
 
-	RDPDR_DEVICE* copy = freerdp_device_new(device->Type, argc, argv);
+	RDPDR_DEVICE* copy =
+	    freerdp_device_new(device->Type, WINPR_ASSERTING_INT_CAST(size_t, argc), argv);
 	if (!copy)
 		return nullptr;
 	copy->Id = device->Id;
@@ -4089,6 +4091,9 @@ static BOOL device_from_json_item(rdpSettings* settings, FreeRDP_Settings_Keys_P
 	errno = 0;
 
 	const uint64_t type = uint_from_json(val, "Type", UINT32_MAX);
+	if (type > UINT32_MAX)
+		return FALSE;
+
 	const char* name = get_string(val, "Name");
 	if (!name)
 		return FALSE;
@@ -4141,14 +4146,17 @@ static BOOL device_from_json_item(rdpSettings* settings, FreeRDP_Settings_Keys_P
 			break;
 	}
 
-	RDPDR_DEVICE* device = freerdp_device_new(type, count, args);
+	RDPDR_DEVICE* device = freerdp_device_new(WINPR_ASSERTING_INT_CAST(UINT32, type), count, args);
 	if (!device)
 		return FALSE;
 
 	errno = 0;
 	device->Id = (uint32_t)uint_from_json(val, "Id", UINT32_MAX);
 	if (errno != 0)
+	{
+		freerdp_device_free(device);
 		return FALSE;
+	}
 
 	const BOOL rc = freerdp_settings_set_pointer_array(settings, key, offset, device);
 	freerdp_device_free(device);
