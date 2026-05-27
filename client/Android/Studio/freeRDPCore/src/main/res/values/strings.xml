@@ -198,6 +198,7 @@
         <item>0</item>
     </string-array>
     <string name="settings_redirect_microphone">Redirect Microphone</string>
+    <string name="settings_redirect_printer">Redirect Printer</string>
     <string name="settings_security">Security</string>
     <string-array name="security_array">
         <item>Automatic</item>

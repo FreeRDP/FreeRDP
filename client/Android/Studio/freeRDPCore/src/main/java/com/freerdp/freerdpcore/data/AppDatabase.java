@@ -27,7 +27,7 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory;
           exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase
 {
-	static final int DB_VERSION = 15;
+	static final int DB_VERSION = 16;
 	private static final String DB_NAME = "bookmarks.db";
 
 	static
@@ -58,6 +58,7 @@ public abstract class AppDatabase extends RoomDatabase
 					               .addMigrations(MIGRATION_12_13)
 					               .addMigrations(MIGRATION_13_14)
 					               .addMigrations(MIGRATION_14_15)
+					               .addMigrations(MIGRATION_15_16)
 					               .build();
 				}
 			}
@@ -163,6 +164,14 @@ public abstract class AppDatabase extends RoomDatabase
 			sb.append(String.format(java.util.Locale.US, "%02x", b));
 		return sb.toString();
 	}
+
+	private static final Migration MIGRATION_15_16 = new Migration(15, 16) {
+		@Override public void migrate(@NonNull SupportSQLiteDatabase db)
+		{
+			db.execSQL(
+			    "ALTER TABLE 'bookmarks' ADD 'redirect_printer' INTEGER NOT NULL DEFAULT false;");
+		}
+	};
 
 	private static final Migration MIGRATION_14_15 = new Migration(14, 15) {
 		@Override public void migrate(@NonNull SupportSQLiteDatabase db)

@@ -404,7 +404,8 @@ public class LibFreeRDP
 		args.add("/clipboard");
 		args.add("/disp");
 
-		args.add("/printer:aFreeRDP Print,Microsoft Print to PDF,default");
+		if (advanced.getRedirectPrinter())
+			args.add("/printer:aFreeRDP Print,Microsoft Print to PDF,default");
 
 		// Gateway enabled?
 		if (bookmark.getType() == BookmarkBase.TYPE_MANUAL && bookmark.getEnableGatewaySettings())
