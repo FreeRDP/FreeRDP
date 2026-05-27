@@ -16,4 +16,9 @@
         android:showAsAction="ifRoom"
         android:title="@string/menu_delete" />
 
+    <item
+        android:id="@+id/bookmark_export"
+        android:showAsAction="ifRoom"
+        android:title="@string/bookmark_export" />
+
 </menu>

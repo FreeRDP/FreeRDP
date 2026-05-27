@@ -11,8 +11,8 @@
 package com.freerdp.freerdpcore.utils;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -26,23 +26,12 @@ public class RDPFileParser
 
 	public RDPFileParser()
 	{
-		init();
-	}
-
-	public RDPFileParser(String filename) throws IOException
-	{
-		init();
-		parse(filename);
-	}
-
-	private void init()
-	{
 		options = new HashMap<>();
 	}
 
-	public void parse(String filename) throws IOException
+	public void parse(Reader reader) throws IOException
 	{
-		BufferedReader br = new BufferedReader(new FileReader(filename));
+		BufferedReader br = new BufferedReader(reader);
 		String line = null;
 
 		int errors = 0;

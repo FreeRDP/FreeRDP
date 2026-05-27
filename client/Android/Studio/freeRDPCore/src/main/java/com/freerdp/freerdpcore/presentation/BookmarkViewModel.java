@@ -7,6 +7,7 @@ package com.freerdp.freerdpcore.presentation;
 
 import android.app.Application;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -21,7 +22,7 @@ import com.freerdp.freerdpcore.domain.BookmarkBase;
 import com.freerdp.freerdpcore.domain.ConnectionReference;
 import com.freerdp.freerdpcore.services.ManualBookmarkGateway;
 import com.freerdp.freerdpcore.services.QuickConnectHistoryGateway;
-import com.freerdp.freerdpcore.utils.RDPFileParser;
+import com.freerdp.freerdpcore.utils.RDPFileHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -121,20 +122,26 @@ public class BookmarkViewModel extends AndroidViewModel
 				}
 				else if (ConnectionReference.isFileReference(refStr))
 				{
-					String file = ConnectionReference.getFile(refStr);
+					String fileRef = ConnectionReference.getFile(refStr);
 					bookmark = new BookmarkBase();
-					bookmark.setLabel(file);
+					String name = Uri.decode(new File(fileRef).getName());
+					String lower = name.toLowerCase(java.util.Locale.ROOT);
+					if (lower.endsWith(".rdp"))
+						name = name.substring(0, name.length() - 4);
+					else if (lower.endsWith(".rdpw"))
+						name = name.substring(0, name.length() - 5);
+					bookmark.setLabel(name);
 					try
 					{
-						RDPFileParser rdpFile = new RDPFileParser(file);
-						updateBookmarkFromFile(bookmark, rdpFile);
-						bookmark.setLabel(new File(file).getName());
-						isNew = true;
+						Uri uri = Uri.parse(fileRef);
+						RDPFileHelper.importFrom(
+						    getApplication().getContentResolver().openInputStream(uri), bookmark);
 					}
 					catch (IOException e)
 					{
 						Log.e(TAG, "Failed reading RDP file", e);
 					}
+					isNew = true;
 				}
 			}
 
@@ -181,48 +188,6 @@ public class BookmarkViewModel extends AndroidViewModel
 			// Notify Activity to close
 			saveCompleteEvent.postValue(true);
 		});
-	}
-
-	private void updateBookmarkFromFile(BookmarkBase bookmark, RDPFileParser rdpFile)
-	{
-		String s;
-		Integer i;
-
-		s = rdpFile.getString("full address");
-		if (s != null)
-		{
-			if (s.lastIndexOf(":") > s.lastIndexOf("]"))
-			{
-				try
-				{
-					bookmark.setPort(Integer.parseInt(s.substring(s.lastIndexOf(":") + 1)));
-				}
-				catch (NumberFormatException e)
-				{
-					Log.e(TAG, "Malformed address");
-				}
-				s = s.substring(0, s.lastIndexOf(":"));
-			}
-			if (s.startsWith("[") && s.endsWith("]"))
-				s = s.substring(1, s.length() - 1);
-			bookmark.setHostname(s);
-		}
-
-		i = rdpFile.getInteger("server port");
-		if (i != null)
-			bookmark.setPort(i);
-
-		s = rdpFile.getString("username");
-		if (s != null)
-			bookmark.setUsername(s);
-
-		s = rdpFile.getString("domain");
-		if (s != null)
-			bookmark.setDomain(s);
-
-		i = rdpFile.getInteger("connect to console");
-		if (i != null)
-			bookmark.getAdvancedSettings().setConsoleMode(i == 1);
 	}
 
 	@Override protected void onCleared()
