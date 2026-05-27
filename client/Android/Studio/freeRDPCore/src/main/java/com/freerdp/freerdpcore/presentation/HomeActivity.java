@@ -11,8 +11,11 @@
 package com.freerdp.freerdpcore.presentation;
 
 import androidx.appcompat.app.AlertDialog;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -57,6 +60,13 @@ public class HomeActivity extends AppCompatActivity
 		super.onCreate(savedInstanceState);
 		binding = HomeBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+		    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+		        PackageManager.PERMISSION_GRANTED)
+		{
+			requestPermissions(new String[] { Manifest.permission.POST_NOTIFICATIONS }, 0);
+		}
 
 		externalDisplayManager = new ExternalDisplayManager(this);
 

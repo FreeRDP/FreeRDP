@@ -340,4 +340,10 @@
     <!-- External display -->
     <string name="select_display_title">Select Display</string>
     <string name="display_main_screen">Main Screen</string>
+
+    <!-- Print notifications -->
+    <string name="print_notif_channel">Print Jobs</string>
+    <string name="print_notif_title">Print job received</string>
+    <string name="print_notif_open">Open</string>
+    <string name="print_notif_print">Print</string>
 </resources>
