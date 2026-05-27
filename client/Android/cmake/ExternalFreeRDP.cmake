@@ -35,6 +35,8 @@ set(FREERDP_EXTRA_CMAKE_ARGS
     -DWITH_OPUS:BOOL=${WITH_OPUS}
     # JSON
     -DWITH_CJSON_REQUIRED:BOOL=${WITH_CJSON}
+    # Printer channel
+    -DCHANNEL_PRINTER_CLIENT:BOOL=ON
 )
 
 # libwebp 1.3+ splits SharpYuv into its own library; pkg-config does not pull it in.
