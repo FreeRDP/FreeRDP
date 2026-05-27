@@ -173,6 +173,13 @@ public final class RDPFileHelper
 		if (i != null)
 			bookmark.setEnableGatewaySettings(i == 1 || i == 2);
 
+		i = p.getInteger("redirectprinters");
+		if (i != null)
+			advanced.setRedirectPrinter(i == 1);
+		i = p.getInteger("disableprinterredirection");
+		if (i != null)
+			advanced.setRedirectPrinter(i == 0);
+
 		s = p.getString("pcb");
 		if (s != null && !s.isEmpty())
 		{
@@ -247,6 +254,9 @@ public final class RDPFileHelper
 
 		if (adv.getVmConnectMode())
 			writeString(sb, "pcb", adv.getVmConnectGuid());
+
+		if (adv.getRedirectPrinter())
+			writeInt(sb, "redirectprinters", 1);
 
 		return sb.toString();
 	}
