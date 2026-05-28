@@ -83,6 +83,7 @@ static const char* get_vaapi_device(void)
 	if (!initialized)
 	{
 		initialized = true;
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		const char* env = getenv("FREERDP_VAAPI_DEVICE");
 		if (env)
 			(void)_snprintf(device, sizeof(device), "%s", env);
