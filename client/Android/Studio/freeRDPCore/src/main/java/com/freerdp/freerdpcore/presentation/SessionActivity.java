@@ -62,6 +62,7 @@ public class SessionActivity extends AppCompatActivity
 	public static final String PARAM_CONNECTION_REFERENCE = "conRef";
 	public static final String PARAM_INSTANCE = "instance";
 	private static final String TAG = "FreeRDP.SessionActivity";
+	static volatile SessionActivity activeSession;
 	private Bitmap bitmap;
 	private SessionState session;
 	private SessionView sessionView;
@@ -319,13 +320,15 @@ public class SessionActivity extends AppCompatActivity
 	{
 		super.onResume();
 		Log.v(TAG, "Session.onResume");
+		activeSession = this;
 	}
 
 	@Override protected void onPause()
 	{
 		super.onPause();
 		Log.v(TAG, "Session.onPause");
-
+		if (activeSession == this)
+			activeSession = null;
 		// hide any visible keyboards
 		inputManager.hideKeyboards();
 	}
@@ -613,6 +616,11 @@ public class SessionActivity extends AppCompatActivity
 		if (inputManager.onAndroidKeyLongPress(keyCode))
 			return true;
 		return super.onKeyLongPress(keyCode, event);
+	}
+
+	boolean handleKeyEvent(KeyEvent event)
+	{
+		return inputManager != null && inputManager.onAndroidKeyEvent(event);
 	}
 
 	// android keyboard input handling

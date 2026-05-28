@@ -317,4 +317,8 @@
     <string name="print_notif_title">Print job received</string>
     <string name="print_notif_open">Open</string>
     <string name="print_notif_print">Print</string>
+    <string name="accessibility_keyboard_label">aFreeRDP Physical Keyboard</string>
+    <string name="accessibility_keyboard_description">Sends physical keyboard shortcuts (e.g. Win key) to the remote desktop.</string>
+    <string name="pref_title_keyboard_accessibility">Physical Keyboard Shortcuts</string>
+    <string name="pref_summary_keyboard_accessibility">Send Win key and system shortcuts to the remote desktop. Requires accessibility permission.</string>
 </resources>

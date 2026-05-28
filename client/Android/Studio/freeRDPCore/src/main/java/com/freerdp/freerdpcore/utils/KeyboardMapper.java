@@ -227,6 +227,8 @@ public class KeyboardMapper
 	private boolean isCtrlLocked = false;
 	private boolean isAltLocked = false;
 	private boolean isWinLocked = false;
+	private boolean isWinKeyDown = false;
+	private boolean isWinComboUsed = false;
 
 	public void init(Context context)
 	{
@@ -446,6 +448,8 @@ public class KeyboardMapper
 		ctrlPressed = false;
 		altPressed = false;
 		winPressed = false;
+		isWinKeyDown = false;
+		isWinComboUsed = false;
 		setKeyProcessingListener(listener);
 	}
 
@@ -461,11 +465,37 @@ public class KeyboardMapper
 			// we only process down events
 			case KeyEvent.ACTION_UP:
 			{
+				if (event.getKeyCode() == KeyEvent.KEYCODE_META_LEFT ||
+				    event.getKeyCode() == KeyEvent.KEYCODE_META_RIGHT)
+				{
+					if (!isWinKeyDown)
+						return false;
+					isWinKeyDown = false;
+					if (!isWinComboUsed)
+					{
+						listener.processVirtualKey(VK_LWIN | VK_EXT_KEY, true);
+						listener.processVirtualKey(VK_LWIN | VK_EXT_KEY, false);
+					}
+					isWinComboUsed = false;
+					return true;
+				}
 				return false;
 			}
 
 			case KeyEvent.ACTION_DOWN:
 			{
+				/* Physical Win key: buffer until release to distinguish tap vs combo. */
+				if (event.getKeyCode() == KeyEvent.KEYCODE_META_LEFT ||
+				    event.getKeyCode() == KeyEvent.KEYCODE_META_RIGHT)
+				{
+					isWinKeyDown = true;
+					isWinComboUsed = false;
+					return true;
+				}
+
+				if (isWinKeyDown)
+					isWinComboUsed = true;
+
 				boolean modifierActive = isModifierPressed();
 				// if a modifier is pressed we will send a VK event (if possible) so that key
 				// combinations will be recognized correctly. Otherwise we will send the unicode
@@ -475,43 +505,33 @@ public class KeyboardMapper
 					listener.processUnicodeKey(vkcode & (~KEY_FLAG_UNICODE));
 				// if we got a valid vkcode send it - except for letters/numbers if a modifier is
 				// active
-				else if (vkcode > 0 && (event.getMetaState() &
-				                        (KeyEvent.META_ALT_ON | KeyEvent.META_SHIFT_ON |
-				                         KeyEvent.META_SYM_ON | KeyEvent.META_CTRL_ON)) == 0)
+				else if (vkcode > 0 && !event.isSymPressed())
 				{
+					boolean sendCtrl = !ctrlPressed && event.isCtrlPressed();
+					boolean sendAlt = !altPressed && event.isAltPressed();
+					boolean sendWin = !winPressed && isWinKeyDown;
+					boolean sendShift = !shiftPressed && event.isShiftPressed();
+
+					if (sendCtrl)
+						listener.processVirtualKey(VK_LCONTROL, true);
+					if (sendAlt)
+						listener.processVirtualKey(VK_LMENU, true);
+					if (sendWin)
+						listener.processVirtualKey(VK_LWIN | VK_EXT_KEY, true);
+					if (sendShift)
+						listener.processVirtualKey(VK_LSHIFT, true);
+
 					listener.processVirtualKey(vkcode, true);
 					listener.processVirtualKey(vkcode, false);
-				}
-				else if (vkcode > 0 && !ctrlPressed &&
-				         (event.getMetaState() & KeyEvent.META_CTRL_ON) != 0)
-				{
-					listener.processVirtualKey(VK_LCONTROL, true);
-					listener.processVirtualKey(vkcode, true);
-					listener.processVirtualKey(vkcode, false);
-					listener.processVirtualKey(VK_LCONTROL, false);
-				}
-				else if (vkcode > 0 && !altPressed &&
-				         (event.getMetaState() & KeyEvent.META_ALT_ON) != 0)
-				{
-					listener.processVirtualKey(VK_LMENU, true);
-					listener.processVirtualKey(vkcode, true);
-					listener.processVirtualKey(vkcode, false);
-					listener.processVirtualKey(VK_LMENU, false);
-				}
-				else if (vkcode > 0 && !winPressed &&
-				         (event.getMetaState() & KeyEvent.META_META_ON) != 0)
-				{
-					listener.processVirtualKey(VK_LWIN | VK_EXT_KEY, true);
-					listener.processVirtualKey(vkcode, true);
-					listener.processVirtualKey(vkcode, false);
-					listener.processVirtualKey(VK_LWIN | VK_EXT_KEY, false);
-				}
-				else if (event.isShiftPressed() && vkcode != 0)
-				{
-					listener.processVirtualKey(VK_LSHIFT, true);
-					listener.processVirtualKey(vkcode, true);
-					listener.processVirtualKey(vkcode, false);
-					listener.processVirtualKey(VK_LSHIFT, false);
+
+					if (sendShift)
+						listener.processVirtualKey(VK_LSHIFT, false);
+					if (sendWin)
+						listener.processVirtualKey(VK_LWIN | VK_EXT_KEY, false);
+					if (sendAlt)
+						listener.processVirtualKey(VK_LMENU, false);
+					if (sendCtrl)
+						listener.processVirtualKey(VK_LCONTROL, false);
 				}
 				else if (event.getUnicodeChar() != 0)
 					listener.processUnicodeKey(event.getUnicodeChar());
@@ -527,8 +547,11 @@ public class KeyboardMapper
 			case KeyEvent.ACTION_MULTIPLE:
 			{
 				String str = event.getCharacters();
-				for (int i = 0; i < str.length(); i++)
-					listener.processUnicodeKey(str.charAt(i));
+				if (str != null)
+				{
+					for (int i = 0; i < str.length(); i++)
+						listener.processUnicodeKey(str.charAt(i));
+				}
 				return true;
 			}
 
