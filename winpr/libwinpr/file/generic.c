@@ -1299,6 +1299,7 @@ BOOL MoveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags)
 {
 	return winpr_MoveFileEx(lpExistingFileName, lpNewFileName, dwFlags);
 }
+#endif
 
 BOOL MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlags)
 {
@@ -1322,6 +1323,7 @@ fail:
 	return ret;
 }
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 BOOL MoveFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
 {
 	return winpr_MoveFileEx(lpExistingFileName, lpNewFileName, 0);

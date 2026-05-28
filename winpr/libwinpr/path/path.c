@@ -1179,7 +1179,7 @@ BOOL winpr_RemoveDirectory_RecursiveA(LPCSTR lpPathName)
 			{
 				WINPR_PRAGMA_DIAG_PUSH
 				WINPR_PRAGMA_DIAG_IGNORED_DEPRECATED_DECL
-				ret = DeleteFileA(fullpath);
+				ret = winpr_DeleteFile(fullpath);
 				WINPR_PRAGMA_DIAG_POP
 			}
 
@@ -1192,11 +1192,8 @@ BOOL winpr_RemoveDirectory_RecursiveA(LPCSTR lpPathName)
 
 	if (ret)
 	{
-		WINPR_PRAGMA_DIAG_PUSH
-		WINPR_PRAGMA_DIAG_IGNORED_DEPRECATED_DECL
-		if (!RemoveDirectoryA(lpPathName))
+		if (!winpr_RemoveDirectory(lpPathName))
 			ret = FALSE;
-		WINPR_PRAGMA_DIAG_POP
 	}
 
 fail:

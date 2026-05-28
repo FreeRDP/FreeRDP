@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/windows.h>
 
 static const char* get_dir(char* filename, size_t len)
@@ -47,8 +48,8 @@ static BOOL test_write(const char* filename, const char* data, size_t datalen)
 	WINPR_ASSERT(data);
 	WINPR_ASSERT(datalen > 0);
 
-	HANDLE hdl = CreateFileA(filename, GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
-	                         nullptr);
+	HANDLE hdl = winpr_CreateFile(filename, GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+	                              FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (!hdl || (hdl == INVALID_HANDLE_VALUE))
 		goto fail;
 
@@ -76,8 +77,8 @@ static BOOL test_read(const char* filename, const char* data, size_t datalen)
 	WINPR_ASSERT(datalen > 0);
 
 	char* cmp = calloc(datalen + 1, sizeof(char));
-	HANDLE hdl = CreateFileA(filename, GENERIC_READ, 0, nullptr, OPEN_EXISTING,
-	                         FILE_ATTRIBUTE_NORMAL, nullptr);
+	HANDLE hdl = winpr_CreateFile(filename, GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+	                              FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (!hdl || (hdl == INVALID_HANDLE_VALUE) || !cmp)
 		goto fail;
 
@@ -115,13 +116,13 @@ int TestFileWriteFile(int argc, char* argv[])
 
 	rc = 0;
 fail:
-	if (!DeleteFile(filename))
+	if (!winpr_DeleteFile(filename))
 		rc = -2;
 
 	const char* d = get_dir(filename, sizeof(filename));
 	if (d)
 	{
-		if (!RemoveDirectory(d))
+		if (!winpr_RemoveDirectory(d))
 			rc = -3;
 	}
 	return rc;
