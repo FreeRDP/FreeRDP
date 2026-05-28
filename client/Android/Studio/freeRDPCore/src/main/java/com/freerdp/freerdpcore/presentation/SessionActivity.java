@@ -748,6 +748,12 @@ public class SessionActivity extends AppCompatActivity
 		mClipboardManager.setClipboardData(data);
 	}
 
+	@Override public void OnRemoteClipboardImageChanged(byte[] data)
+	{
+		Log.v(TAG, "OnRemoteClipboardImageChanged: " + data.length + " bytes");
+		mClipboardManager.setClipboardImage(data);
+	}
+
 	@Override public void OnPointerSet(int[] pixels, int width, int height, int hotX, int hotY)
 	{
 		Bundle data = new Bundle();
@@ -788,6 +794,12 @@ public class SessionActivity extends AppCompatActivity
 		Log.v(TAG, "onClipboardChanged: " + data);
 		if (session != null)
 			LibFreeRDP.sendClipboardData(session.getInstance(), data);
+	}
+
+	@Override public void onClipboardImageChanged(byte[] data, String mimeType)
+	{
+		if (session != null && data != null)
+			LibFreeRDP.sendClipboardImageData(session.getInstance(), data, mimeType);
 	}
 
 	private void onConnectionStateChanged(SessionViewModel.ConnectionState state)

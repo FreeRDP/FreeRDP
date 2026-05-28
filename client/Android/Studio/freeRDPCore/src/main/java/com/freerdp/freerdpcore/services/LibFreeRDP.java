@@ -155,6 +155,9 @@ public class LibFreeRDP
 
 	private static native boolean freerdp_send_clipboard_data(long inst, String data);
 
+	private static native boolean freerdp_send_clipboard_image_data(long inst, byte[] data,
+	                                                                String mimeType);
+
 	private static native boolean freerdp_send_monitor_layout(long inst, int width, int height);
 
 	private static native String freerdp_get_last_error_string(long inst);
@@ -553,6 +556,11 @@ public class LibFreeRDP
 		return freerdp_send_clipboard_data(inst, data);
 	}
 
+	public static boolean sendClipboardImageData(long inst, byte[] data, String mimeType)
+	{
+		return freerdp_send_clipboard_image_data(inst, data, mimeType);
+	}
+
 	public static boolean sendMonitorLayout(long inst, int width, int height)
 	{
 		return freerdp_send_monitor_layout(inst, width, height);
@@ -698,6 +706,16 @@ public class LibFreeRDP
 			uiEventListener.OnRemoteClipboardChanged(data);
 	}
 
+	private static void OnRemoteClipboardImageChanged(long inst, byte[] data)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnRemoteClipboardImageChanged(data);
+	}
+
 	private static void OnPointerSet(long inst, int[] pixels, int width, int height, int hotX,
 	                                 int hotY)
 	{
@@ -769,6 +787,8 @@ public class LibFreeRDP
 		void OnGraphicsResize(int width, int height, int bpp);
 
 		void OnRemoteClipboardChanged(String data);
+
+		void OnRemoteClipboardImageChanged(byte[] data);
 
 		void OnPointerSet(int[] pixels, int width, int height, int hotX, int hotY);
 
