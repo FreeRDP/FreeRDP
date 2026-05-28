@@ -2,6 +2,7 @@
    Android Session Activity
 
    Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
 
    This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
    If a copy of the MPL was not distributed with this file, You can obtain one at
@@ -41,7 +42,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.RoundedCorner;
 import android.view.WindowInsets;

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/floating_toolbar_container"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -14,7 +15,7 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:background="?android:attr/selectableItemBackground"
-        android:tint="#FFFFFF"
+        app:tint="#FFFFFF"
         android:src="@drawable/ic_drag_indicator" />
 
     <LinearLayout
@@ -30,7 +31,7 @@
             android:layout_height="32dp"
             android:background="?android:attr/selectableItemBackground"
             android:contentDescription="@string/menu_touch_pointer"
-            android:tint="#FFFFFF"
+            app:tint="#FFFFFF"
             android:src="@drawable/ic_touch_pointer" />
 
         <ImageButton
@@ -39,7 +40,7 @@
             android:layout_height="32dp"
             android:background="?android:attr/selectableItemBackground"
             android:contentDescription="@string/menu_sys_keyboard"
-            android:tint="#FFFFFF"
+            app:tint="#FFFFFF"
             android:src="@drawable/ic_keyboard" />
 
         <ImageButton
@@ -48,7 +49,7 @@
             android:layout_height="32dp"
             android:background="?android:attr/selectableItemBackground"
             android:contentDescription="@string/menu_ext_keyboard"
-            android:tint="#FFFFFF"
+            app:tint="#FFFFFF"
             android:src="@drawable/ic_fn_keyboard" />
 
     </LinearLayout>

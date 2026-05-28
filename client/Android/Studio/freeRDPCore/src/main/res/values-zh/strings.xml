@@ -6,15 +6,12 @@
     <string name="cancel">取消</string>
     <string name="cont">继续</string>
     <string name="login">登录</string>
-    <string name="logout">注销</string>
     <!-- Home menu items -->
-    <string name="menu_exit">退出</string>
     <string name="menu_about">关于</string>
     <string name="menu_help">帮助</string>
     <string name="menu_new_bookmark">新连接</string>
     <string name="menu_app_settings">设置</string>
     <!-- Bookmark menu items -->
-    <string name="menu_title_bookmark">连接</string>
     <string name="menu_connect">连接</string>
     <string name="menu_edit">编辑</string>
     <string name="menu_delete">删除</string>
@@ -22,22 +19,9 @@
     <string name="menu_sys_keyboard">键盘</string>
     <string name="menu_ext_keyboard">功能键</string>
     <string name="menu_touch_pointer">触摸指针</string>
-    <string name="menu_home">主页</string>
-    <string name="menu_disconnect">断开连接</string>
     <!-- List section headers -->
-    <string name="section_bookmarks">手动连接</string>
-    <string name="section_active_sessions">活跃会话</string>
     <!-- Search strings -->
-    <string name="search_hint">连接到计算机</string>
     <!-- List placeholder labels -->
-    <string name="list_placeholder_login">登录</string>
-    <string name="list_placeholder_no_servers">无服务器</string>
-    <string name="list_placeholder_connecting">正在连接 &#8230;</string>
-    <string name="list_placeholder_disconnecting">正断开连接 &#8230;</string>
-    <string name="list_placeholder_connection_error">连接丢失</string>
-    <string name="list_placeholder_wrong_password">错误的密码</string>
-    <string name="list_placeholder_invalid_username">无效用户名</string>
-    <string name="list_placeholder_add_bookmark">添加连接</string>
     <!-- Bookmark settings strings -->
     <string name="settings_cat_host">主机</string>
     <string name="settings_label">标签</string>
@@ -90,7 +74,6 @@
     <string name="settings_perf_menu_animation">菜单动画</string>
     <string name="settings_perf_theming">视觉样式</string>
     <string name="settings_advanced">高级</string>
-    <string name="settings_cat_advanced">高级设置</string>
     <string name="settings_cat_gateway">网关</string>
     <string name="settings_enable_gateway_settings">启用网关</string>
     <string name="settings_gateway_settings">网关设置</string>
@@ -121,8 +104,6 @@
     <string name="settings_password_empty">未设置</string>
     <string name="settings_cat_ui">用户界面</string>
     <string name="settings_ui_hide_status_bar">隐藏状态栏</string>
-    <string name="settings_ui_hide_action_bar">隐藏操作栏</string>
-    <string name="settings_ui_hide_zoom_controls">隐藏缩放控件</string>
     <string name="settings_ui_swap_mouse_buttons">交换鼠标按钮</string>
     <string name="settings_ui_invert_scrolling">逆向滚动</string>
     <string name="settings_ui_auto_scroll_touchpointer">触控指针自动滚动</string>
@@ -134,12 +115,9 @@
     <string name="settings_cat_security">安全性</string>
     <string name="settings_security_accept_certificates">接受所有证书</string>
     <string name="settings_security_clear_certificate_cache">清除证书缓存</string>
-    <string name="settings_description_after_minutes">在 %1$d 分钟后</string>
-    <string name="settings_description_disabled">已禁用</string>
     <!-- Activity titles -->
     <string name="title_bookmark_settings">连接设置</string>
     <string name="title_application_settings">设置</string>
-    <string name="title_home">aFreeRDP - FreeRDP for Android</string>
     <string name="title_create_shortcut">RDP 连接</string>
     <string name="title_help">帮助</string>
     <string name="title_about">关于</string>
@@ -158,18 +136,12 @@
     <string name="dlg_title_create_shortcut">创建快捷方式</string>
     <string name="dlg_msg_create_shortcut">快捷方式名：</string>
     <string name="dlg_msg_connecting">正在连接 &#8230;</string>
-    <string name="dlg_msg_logging_in">正在登录 &#8230;</string>
-    <string name="dlg_title_about">关于 aFreeRDP</string>
-    <string name="dlg_title_create_bookmark_after_qc">保存连接设置吗？</string>
-    <string name="dlg_msg_create_bookmark_after_qc">你是否想保存未保存的连接设置？</string>
     <string name="dlg_title_save_bookmark">保存连接吗？</string>
     <string name="dlg_save_bookmark">你想保存对连接设置所做的任何更改吗？</string>
-    <string name="dlg_dont_show_again">不再询问</string>
     <string name="dlg_title_exit">退出应用吗？</string>
     <string name="dlg_msg_exit">你确定你想退出应用吗？</string>
     <string name="dlg_title_clear_cert_cache">删除证书吗？</string>
     <string name="dlg_msg_clear_cert_cache">你确定想删除所有你的缓存的证书吗？</string>
     <string name="debug_level">调试级别</string>
     <string name="settings_debug">调试设置</string>
-    <string name="preference_title_client">客户端</string>
 </resources>

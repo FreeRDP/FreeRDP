@@ -18,12 +18,10 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Build;
 import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.InputDevice;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.PointerIcon;
 import android.view.ScaleGestureDetector;
@@ -37,7 +35,6 @@ import androidx.annotation.NonNull;
 import com.freerdp.freerdpcore.application.SessionState;
 import com.freerdp.freerdpcore.utils.DoubleGestureDetector;
 import com.freerdp.freerdpcore.utils.GestureDetector;
-import com.freerdp.freerdpcore.utils.Mouse;
 
 import java.util.Stack;
 

@@ -4,6 +4,12 @@
    A random 256-bit database key is generated once, wrapped with the
    Keystore-resident master key, and stored in SharedPreferences as
    Base64( IV[12] || ciphertext ).
+
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+   If a copy of the MPL was not distributed with this file, You can obtain one at
+   http://mozilla.org/MPL/2.0/.
 */
 
 package com.freerdp.freerdpcore.security;

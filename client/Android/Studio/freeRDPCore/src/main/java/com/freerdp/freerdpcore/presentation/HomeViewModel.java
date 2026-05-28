@@ -1,6 +1,11 @@
 /*
    HomeViewModel for HomeActivity
 
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+   If a copy of the MPL was not distributed with this file, You can obtain one at
+   http://mozilla.org/MPL/2.0/.
 */
 
 package com.freerdp.freerdpcore.presentation;
@@ -12,7 +17,6 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.freerdp.freerdpcore.R;
 import com.freerdp.freerdpcore.data.AppDatabase;
 import com.freerdp.freerdpcore.data.HistoryDatabase;
 import com.freerdp.freerdpcore.domain.BookmarkBase;

@@ -1,7 +1,16 @@
+/*
+   Floating toolbar for RDP session controls
+
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+   If a copy of the MPL was not distributed with this file, You can obtain one at
+   http://mozilla.org/MPL/2.0/.
+*/
+
 package com.freerdp.freerdpcore.presentation;
 
 import android.app.Activity;
-import android.os.Build;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -159,8 +168,7 @@ public class FloatingToolbar
 
 	private static void setTooltip(View v)
 	{
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-			v.setTooltipText(v.getContentDescription());
+		v.setTooltipText(v.getContentDescription());
 	}
 
 	private View.OnTouchListener buildDragListener(Activity activity,

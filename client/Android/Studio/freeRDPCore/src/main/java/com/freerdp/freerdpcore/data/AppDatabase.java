@@ -1,4 +1,12 @@
-/* Room database for bookmark storage */
+/*
+   Room database for bookmark storage
+
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+   If a copy of the MPL was not distributed with this file, You can obtain one at
+   http://mozilla.org/MPL/2.0/.
+*/
 
 package com.freerdp.freerdpcore.data;
 
@@ -10,9 +18,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import androidx.room.ColumnInfo;
 import androidx.room.Database;
-import androidx.room.PrimaryKey;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
@@ -284,7 +290,7 @@ public abstract class AppDatabase extends RoomDatabase
 			db.execSQL("ALTER TABLE 'bookmarks' ADD 'tlsMinLevel' INTEGER NOT NULL CONSTRAINT "
 			           + "chk_tlsMinLevel "
 			           + "CHECK (tlsMinLevel >= -1) DEFAULT -1;");
-			final String list[] = { "screen_3g_colors",
+			final String[] list = { "screen_3g_colors",
 				                    "screen_3g_resolution",
 				                    "screen_3g_width",
 				                    "screen_3g_height",

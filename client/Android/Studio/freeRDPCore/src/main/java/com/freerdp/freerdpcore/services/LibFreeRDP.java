@@ -303,8 +303,8 @@ public class LibFreeRDP
 			args.add("/p:" + arg);
 		}
 
-		args.add(
-		    String.format("/size:%dx%d", screenSettings.getWidth(), screenSettings.getHeight()));
+		args.add(String.format(java.util.Locale.US, "/size:%dx%d", screenSettings.getWidth(),
+		                       screenSettings.getHeight()));
 		args.add("/bpp:" + screenSettings.getColors());
 
 		if (screenSettings.isCustomScale())
@@ -413,8 +413,8 @@ public class LibFreeRDP
 			BookmarkBase.GatewaySettings gateway = bookmark.getGatewaySettings();
 
 			StringBuilder carg = new StringBuilder();
-			carg.append(
-			    String.format("/gateway:g:%s:%d", gateway.getHostname(), gateway.getPort()));
+			carg.append(String.format(java.util.Locale.US, "/gateway:g:%s:%d",
+			                          gateway.getHostname(), gateway.getPort()));
 
 			arg = gateway.getUsername();
 			if (!arg.isEmpty())
