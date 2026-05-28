@@ -23,6 +23,8 @@ import android.util.Log;
 
 import com.freerdp.freerdpcore.domain.BookmarkBase;
 import com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity;
+import com.freerdp.freerdpcore.presentation.PrintJobMonitor;
+import com.freerdp.freerdpcore.presentation.PrintNotificationHelper;
 import com.freerdp.freerdpcore.services.LibFreeRDP;
 
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener
 	private static final String TAG = "GlobalApp";
 	public static boolean IsMeteredNetwork = false;
 	private static Map<Long, SessionState> sessionMap;
+	private PrintJobMonitor printJobMonitor;
 
 	/** Per-session connection event listener. Callbacks are invoked on the main thread. */
 	public interface SessionEventListener
@@ -143,6 +146,9 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener
 		sessionMap = Collections.synchronizedMap(new HashMap<Long, SessionState>());
 
 		LibFreeRDP.setEventListener(this);
+
+		printJobMonitor = new PrintJobMonitor(file -> PrintNotificationHelper.notify(this, file));
+		printJobMonitor.startWatching();
 
 		IsMeteredNetwork = NetworkStateReceiver.isMeteredNetwork(this);
 		NetworkStateReceiver.registerNetworkCallback(this);
