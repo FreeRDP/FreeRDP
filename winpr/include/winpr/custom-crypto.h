@@ -20,6 +20,7 @@
 #ifndef WINPR_CUSTOM_CRYPTO_H
 #define WINPR_CUSTOM_CRYPTO_H
 
+#include <winpr/config.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
@@ -296,14 +297,14 @@ extern "C"
 
 	WINPR_API void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx);
 
-#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("[since 3.10.0] use winpr_Cipher_NewEx",
 	                     WINPR_ATTR_MALLOC(winpr_Cipher_Free, 1)
 	                         WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_New(WINPR_CIPHER_TYPE cipher,
 	                                                                      WINPR_CRYPTO_OPERATION op,
 	                                                                      const void* key,
 	                                                                      const void* iv));
-#endif
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 	/** @brief Create a new \b WINPR_CIPHER_CTX
 	 *

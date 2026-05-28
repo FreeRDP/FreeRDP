@@ -56,7 +56,7 @@ typedef struct
 
 	rdpPrinter* printer;
 
-	WINPR_PSLIST_HEADER pIrpList;
+	wQueue* pIrpList;
 
 	HANDLE event;
 	HANDLE stopEvent;
@@ -659,7 +659,6 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 
 static DWORD WINAPI printer_thread_func(LPVOID arg)
 {
-	IRP* irp = nullptr;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)arg;
 	UINT error = CHANNEL_RC_OK;
 
@@ -683,7 +682,7 @@ static DWORD WINAPI printer_thread_func(LPVOID arg)
 			continue;
 
 		(void)ResetEvent(printer_dev->event);
-		irp = (IRP*)InterlockedPopEntrySList(printer_dev->pIrpList);
+		IRP* irp = (IRP*)Queue_Dequeue(printer_dev->pIrpList);
 
 		if (irp == nullptr)
 		{
@@ -720,7 +719,9 @@ static UINT printer_irp_request(DEVICE* device, IRP* irp)
 
 	if (printer_dev->async)
 	{
-		InterlockedPushEntrySList(printer_dev->pIrpList, &(irp->ItemEntry));
+		if (!Queue_Enqueue(printer_dev->pIrpList, irp))
+			return ERROR_INTERNAL_ERROR;
+
 		(void)SetEvent(printer_dev->event);
 	}
 	else
@@ -931,7 +932,6 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
  */
 static UINT printer_free(DEVICE* device)
 {
-	IRP* irp = nullptr;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)device;
 	UINT error = 0;
 
@@ -954,8 +954,10 @@ static UINT printer_free(DEVICE* device)
 #endif
 		}
 
-		while ((irp = (IRP*)InterlockedPopEntrySList(printer_dev->pIrpList)) != nullptr)
+		while (Queue_Count(printer_dev->pIrpList) > 0)
 		{
+			IRP* irp = Queue_Dequeue(printer_dev->pIrpList);
+			WINPR_ASSERT(irp);
 			WINPR_ASSERT(irp->Discard);
 			irp->Discard(irp);
 		}
@@ -963,7 +965,7 @@ static UINT printer_free(DEVICE* device)
 		(void)CloseHandle(printer_dev->thread);
 		(void)CloseHandle(printer_dev->stopEvent);
 		(void)CloseHandle(printer_dev->event);
-		winpr_aligned_free(printer_dev->pIrpList);
+		Queue_Free(printer_dev->pIrpList);
 	}
 
 	if (printer_dev->printer)
@@ -1021,17 +1023,13 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 
 	if (printer_dev->async)
 	{
-		printer_dev->pIrpList = (WINPR_PSLIST_HEADER)winpr_aligned_malloc(
-		    sizeof(WINPR_SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+		printer_dev->pIrpList = Queue_New(TRUE, -1, -1);
 
 		if (!printer_dev->pIrpList)
 		{
-			WLog_ERR(TAG, "_aligned_malloc failed!");
 			error = CHANNEL_RC_NO_MEMORY;
 			goto error_out;
 		}
-
-		InitializeSListHead(printer_dev->pIrpList);
 
 		printer_dev->event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 		if (!printer_dev->event)

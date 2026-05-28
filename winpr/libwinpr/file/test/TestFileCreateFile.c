@@ -38,8 +38,8 @@ int TestFileCreateFile(int argc, char* argv[])
 	if (FAILED(hr))
 		rc = -1;
 
-	handle = CreateFileA(name, GENERIC_READ | GENERIC_WRITE, 0, nullptr, CREATE_NEW,
-	                     FILE_ATTRIBUTE_NORMAL, nullptr);
+	handle = winpr_CreateFile(name, GENERIC_READ | GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+	                          FILE_ATTRIBUTE_NORMAL, nullptr);
 
 	if (!handle)
 	{

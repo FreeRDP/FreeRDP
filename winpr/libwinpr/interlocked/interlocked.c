@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 VOID InitializeSListHead(WINPR_PSLIST_HEADER ListHead)
 {
 	WINPR_ASSERT(ListHead);
@@ -233,6 +234,8 @@ USHORT QueryDepthSList(WINPR_PSLIST_HEADER ListHead)
 #endif
 }
 
+#endif
+
 LONG InterlockedIncrement(LONG volatile* Addend)
 {
 	WINPR_ASSERT(Addend);
@@ -408,6 +411,7 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile* Destination, LONGLONG E
 
 #endif
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 /* Doubly-Linked List */
 
 /**
@@ -537,3 +541,4 @@ WINPR_PSINGLE_LIST_ENTRY PopEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead)
 
 	return FirstEntry;
 }
+#endif

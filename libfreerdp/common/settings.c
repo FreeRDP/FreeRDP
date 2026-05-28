@@ -460,7 +460,6 @@ void freerdp_device_free(RDPDR_DEVICE* device)
 RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 {
 	const struct RDPDR_DEVICE_EX* src = (const struct RDPDR_DEVICE_EX*)device;
-	const char* args[4] = WINPR_C_ARRAY_INIT;
 
 	if (!src)
 		return nullptr;

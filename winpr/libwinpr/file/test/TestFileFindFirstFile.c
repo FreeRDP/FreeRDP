@@ -12,8 +12,8 @@ static const CHAR testFile1A[] = "TestFile1A";
 
 static BOOL create_fileA(const char* FilePath)
 {
-	HANDLE hdl = CreateFileA(FilePath, GENERIC_ALL, 0, nullptr, CREATE_ALWAYS,
-	                         FILE_ATTRIBUTE_NORMAL, nullptr);
+	HANDLE hdl = winpr_CreateFile(FilePath, GENERIC_ALL, 0, nullptr, CREATE_ALWAYS,
+	                              FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hdl == INVALID_HANDLE_VALUE)
 		return FALSE;
 	(void)CloseHandle(hdl);

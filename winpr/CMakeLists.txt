@@ -108,6 +108,7 @@ endif()
 
 option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ${TOOLS_DEFAULT})
 option(WITH_WINPR_DEPRECATED "Build WinPR deprecated symbols" OFF)
+option(WITHOUT_WINPR_3x_DEPRECATED "Build without symbols deprecated during 3.x version" OFF)
 option(WITH_DEBUG_THREADS "Print thread debug messages, enables handle dump" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_EVENTS "Print event debug messages, enables handle dump" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_SYMBOLS "Pack debug symbols to installer" OFF)
@@ -142,6 +143,10 @@ endif()
 
 if(WITH_WINPR_DEPRECATED)
   add_compile_definitions(WITH_WINPR_DEPRECATED)
+endif()
+
+if(WITHOUT_WINPR_3x_DEPRECATED)
+  add_compile_definitions(WITHOUT_WINPR_3x_DEPRECATED)
 endif()
 
 # Include cmake modules
