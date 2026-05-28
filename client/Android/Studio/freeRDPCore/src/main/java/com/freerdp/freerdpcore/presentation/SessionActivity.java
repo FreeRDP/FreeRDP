@@ -297,8 +297,10 @@ public class SessionActivity extends AppCompatActivity
 	{
 		super.onWindowFocusChanged(hasFocus);
 		if (hasFocus)
+		{
 			hideSystemBars();
-		mClipboardManager.getPrimaryClipManually();
+			mClipboardManager.getPrimaryClipManually();
+		}
 	}
 
 	@Override protected void onStart()
