@@ -20,6 +20,7 @@
 #ifndef WINPR_INTERLOCKED_H
 #define WINPR_INTERLOCKED_H
 
+#include <winpr/config.h>
 #include <winpr/spec.h>
 #include <winpr/platform.h>
 #include <winpr/winpr.h>
@@ -32,10 +33,12 @@ extern "C"
 
 #ifndef _WIN32
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
+
 #ifndef CONTAINING_RECORD
 #define CONTAINING_RECORD(address, type, field) \
 	((type*)(((ULONG_PTR)address) - (ULONG_PTR)(&(((type*)0)->field))))
-#endif
+#endif /* CONTAINING_RECORD */
 
 	WINPR_DEPRECATED_VAR("[since 3.27.0]", typedef struct S_WINPR_LIST_ENTRY WINPR_LIST_ENTRY);
 
@@ -165,6 +168,7 @@ extern "C"
 
 	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_ATTR_NODISCARD WINPR_API USHORT
 	                                           QueryDepthSList(WINPR_PSLIST_HEADER ListHead));
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 	WINPR_API LONG InterlockedIncrement(LONG volatile* Addend);
 
@@ -212,6 +216,7 @@ extern "C"
 
 #endif
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	/* Doubly-Linked List */
 	WINPR_DEPRECATED_VAR("[since 3.27.0]",
 	                     WINPR_API VOID InitializeListHead(WINPR_PLIST_ENTRY ListHead));
@@ -244,6 +249,7 @@ extern "C"
 
 	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_ATTR_NODISCARD WINPR_API WINPR_PSINGLE_LIST_ENTRY
 	                                           PopEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead));
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 #ifdef __cplusplus
 }
