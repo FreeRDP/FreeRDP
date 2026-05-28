@@ -18,9 +18,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import androidx.room.ColumnInfo;
 import androidx.room.Database;
-import androidx.room.PrimaryKey;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
@@ -292,7 +290,7 @@ public abstract class AppDatabase extends RoomDatabase
 			db.execSQL("ALTER TABLE 'bookmarks' ADD 'tlsMinLevel' INTEGER NOT NULL CONSTRAINT "
 			           + "chk_tlsMinLevel "
 			           + "CHECK (tlsMinLevel >= -1) DEFAULT -1;");
-			final String list[] = { "screen_3g_colors",
+			final String[] list = { "screen_3g_colors",
 				                    "screen_3g_resolution",
 				                    "screen_3g_width",
 				                    "screen_3g_height",

@@ -19,7 +19,6 @@
 package com.freerdp.freerdpcore.utils;
 
 import android.content.Context;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.util.DisplayMetrics;
@@ -95,9 +94,7 @@ public class GestureDetector
 	 */
 	public GestureDetector(Context context, OnGestureListener listener, Handler handler)
 	{
-		this(context, listener, handler,
-		     context != null &&
-		         context.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.FROYO);
+		this(context, listener, handler, context != null);
 	}
 
 	/**

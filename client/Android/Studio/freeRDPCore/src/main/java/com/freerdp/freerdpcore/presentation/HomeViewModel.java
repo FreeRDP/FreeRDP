@@ -17,7 +17,6 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.freerdp.freerdpcore.R;
 import com.freerdp.freerdpcore.data.AppDatabase;
 import com.freerdp.freerdpcore.data.HistoryDatabase;
 import com.freerdp.freerdpcore.domain.BookmarkBase;

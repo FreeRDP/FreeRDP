@@ -1,21 +1,14 @@
 package com.freerdp.freerdpcore.utils;
 
-import android.annotation.TargetApi;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
 
 public abstract class ClipboardManagerProxy
 {
-
 	public static ClipboardManagerProxy getClipboardManager(Context ctx)
 	{
-		if (VERSION.SDK_INT < VERSION_CODES.HONEYCOMB)
-			return new PreHCClipboardManager(ctx);
-		else
-			return new HCClipboardManager(ctx);
+		return new HCClipboardManager(ctx);
 	}
 
 	public abstract void setClipboardData(String data);
@@ -31,32 +24,6 @@ public abstract class ClipboardManagerProxy
 		void onClipboardChanged(String data);
 	}
 
-	private static class PreHCClipboardManager extends ClipboardManagerProxy
-	{
-
-		public PreHCClipboardManager(Context ctx)
-		{
-		}
-
-		@Override public void setClipboardData(String data)
-		{
-		}
-
-		@Override public void addClipboardChangedListener(OnClipboardChangedListener listener)
-		{
-		}
-
-		@Override
-		public void removeClipboardboardChangedListener(OnClipboardChangedListener listener)
-		{
-		}
-
-		@Override public void getPrimaryClipManually()
-		{
-		}
-	}
-
-	@TargetApi(11)
 	private static class HCClipboardManager
 	    extends ClipboardManagerProxy implements ClipboardManager.OnPrimaryClipChangedListener
 	{
