@@ -23,6 +23,7 @@
 #include <errno.h>
 
 #include <winpr/assert.h>
+#include <winpr/image.h>
 
 #include <freerdp/graphics.h>
 #include <freerdp/codec/rfx.h>
@@ -1017,35 +1018,68 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1cursor_1event(
 	return JNI_TRUE;
 }
 
+static jboolean android_push_clipboard_event(freerdp* inst, const void* data, size_t data_length,
+                                             const char* mimeType)
+{
+	ANDROID_EVENT* event = (ANDROID_EVENT*)android_event_clipboard_new(data, data_length, mimeType);
+	if (!event)
+		return JNI_FALSE;
+	if (!android_push_event(inst, event))
+	{
+		android_event_free(event);
+		return JNI_FALSE;
+	}
+	return JNI_TRUE;
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1data(JNIEnv* env,
                                                                                 jclass cls,
                                                                                 jlong instance,
                                                                                 jstring jdata)
 {
-	ANDROID_EVENT* event;
+	WINPR_UNUSED(cls);
 	freerdp* inst = (freerdp*)instance;
 	const char* data = jdata != nullptr ? (*env)->GetStringUTFChars(env, jdata, nullptr) : nullptr;
 	const size_t data_length = data ? (*env)->GetStringUTFLength(env, jdata) : 0;
-	jboolean ret = JNI_FALSE;
-	event = (ANDROID_EVENT*)android_event_clipboard_new((void*)data, data_length);
-
-	if (!event)
-		goto out_fail;
-
-	if (!android_push_event(inst, event))
-	{
-		android_event_free(event);
-		goto out_fail;
-	}
-
+	jboolean ret = android_push_clipboard_event(inst, data, data_length, "text/plain");
 	WLog_DBG(TAG, "send_clipboard_data: (%s)", data);
-	ret = JNI_TRUE;
-out_fail:
 
 	if (data)
 		(*env)->ReleaseStringUTFChars(env, jdata, data);
 
+	return ret;
+}
+
+static BOOL android_is_image_mime_supported(const char* mimeType)
+{
+	if (!mimeType)
+		return FALSE;
+	if (strcmp(mimeType, "image/png") == 0)
+		return winpr_image_format_is_supported(WINPR_IMAGE_PNG);
+	if (strcmp(mimeType, "image/jpeg") == 0 || strcmp(mimeType, "image/jpg") == 0)
+		return winpr_image_format_is_supported(WINPR_IMAGE_JPEG);
+	if (strcmp(mimeType, "image/webp") == 0)
+		return winpr_image_format_is_supported(WINPR_IMAGE_WEBP);
+	return FALSE;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1image_1data(
+    JNIEnv* env, jclass cls, jlong instance, jbyteArray jdata, jstring jmimeType)
+{
+	WINPR_UNUSED(cls);
+	freerdp* inst = (freerdp*)instance;
+	jsize data_length = (*env)->GetArrayLength(env, jdata);
+	jbyte* data = (*env)->GetByteArrayElements(env, jdata, nullptr);
+	const char* mimeType = jmimeType ? (*env)->GetStringUTFChars(env, jmimeType, nullptr) : nullptr;
+	jboolean ret = JNI_FALSE;
+	if (android_is_image_mime_supported(mimeType))
+		ret = android_push_clipboard_event(inst, data, (size_t)data_length, mimeType);
+
+	if (mimeType)
+		(*env)->ReleaseStringUTFChars(env, jmimeType, mimeType);
+	(*env)->ReleaseByteArrayElements(env, jdata, data, JNI_ABORT);
 	return ret;
 }
 

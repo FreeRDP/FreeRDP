@@ -106,6 +106,12 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:excludeFromRecents="true" />
 
+        <provider
+            android:name=".utils.ClipboardImageProvider"
+            android:authorities="com.freerdp.freerdpcore.clipboard"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
     </application>
 
 </manifest>
