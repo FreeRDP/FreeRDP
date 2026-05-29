@@ -52,21 +52,21 @@ endif()
 
 ExternalProject_Add(
   ffmpeg
+  INSTALL_DIR ${DEPS_INSTALL_DIR}
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/ffmpeg
+  BINARY_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
   URL https://github.com/FFmpeg/FFmpeg/archive/refs/tags/${FFMPEG_VERSION}.tar.gz
   URL_HASH SHA256=dd308201bb1239a1b73185f80c6b4121f4efdfa424a009ce544fd00bf736bb2e
-  DEPENDS openh264 opus
+  DEPENDS openh264 opus openssl
   CONFIGURE_COMMAND
-    ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}" "PKG_CONFIG_LIBDIR=${DEPS_INSTALL_DIR}/lib/pkgconfig"
-    ${FFMPEG_BIGENDIAN_ENV} <SOURCE_DIR>/configure --cross-prefix=${NDK_TOOLCHAIN_BIN}/llvm- --cc=${FFMPEG_CC}
-    --cxx=${FFMPEG_CXX} --pkg-config=${PKG_CONFIG_EXECUTABLE} --sysroot=${NDK_SYSROOT} --arch=${FFMPEG_ARCH}
-    --cpu=${FFMPEG_CPU} --extra-ldflags=${FFMPEG_LDFLAGS} --enable-libopus --enable-libopenh264 --target-os=android
-    --enable-cross-compile --enable-pic --enable-lto --enable-jni --enable-mediacodec --enable-shared --disable-static
-    --disable-vulkan --disable-stripping --disable-programs --disable-doc --disable-avdevice --disable-avfilter
-    --disable-avformat --disable-everything ${FFMPEG_ASM_FLAGS}
-    --enable-encoder=aac,libopenh264,libopus,pcm_alaw,pcm_mulaw,pcm_s16le,pcm_u16le,h264_mediacodec,h264
-    --enable-decoder=aac,aac_mediacodec,adpcm_g722,adpcm_g726,adpcm_g726le,gsm,gsm_ms,mp3,mp3_mediacodec,h264,h264_mediacodec,libopus,pcm_alaw,pcm_mulaw,pcm_s16le,pcm_u16le
-    --prefix=${DEPS_INSTALL_DIR}
+    ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}"
+    "PKG_CONFIG_PATH=${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/pkgconfig" ${FFMPEG_BIGENDIAN_ENV}
+    <SOURCE_DIR>/configure --cross-prefix=${NDK_TOOLCHAIN_BIN}/llvm- --cc=${FFMPEG_CC} --cxx=${FFMPEG_CXX}
+    --pkg-config=${PKG_CONFIG_EXECUTABLE} --sysroot=${NDK_SYSROOT} --arch=${FFMPEG_ARCH} --cpu=${FFMPEG_CPU}
+    --extra-ldflags=${FFMPEG_LDFLAGS} --enable-libopus --enable-libopenh264 --target-os=android --enable-cross-compile
+    --enable-pic --enable-lto --enable-jni --enable-mediacodec --enable-shared --disable-static --disable-programs
+    --disable-doc --prefix=${DEPS_INSTALL_DIR} --libdir=${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR} ${FFMPEG_ASM_FLAGS}
   BUILD_COMMAND ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}" make -j
-  INSTALL_COMMAND ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}" make install
+  INSTALL_COMMAND ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}" make -j install
 )

@@ -32,8 +32,11 @@ set(MODULE_PREFIX "FREERDP_CLIENT_ANDROID")
 
 get_filename_component(FREERDP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../.." ABSOLUTE)
 
+include(GNUInstallDirs)
+set(CMAKE_INSTALL_LIBDIR ".")
+
 # FREERDP_EXTERNAL_PATH points here; FreeRDP appends /${ANDROID_ABI}/ internally
-set(DEPS_EXTERNAL_ROOT "${CMAKE_BINARY_DIR}/deps")
+set(DEPS_EXTERNAL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs")
 # All external deps install into this ABI-scoped prefix
 set(DEPS_INSTALL_DIR "${DEPS_EXTERNAL_ROOT}/${CMAKE_ANDROID_ARCH_ABI}")
 

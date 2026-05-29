@@ -3,17 +3,11 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion = rootProject.ext.compileApi
     buildToolsVersion = rootProject.ext.toolsVersion
-    packagingOptions {
-        jniLibs {
-            pickFirsts += ['lib/arm64-v8a/libfreerdp3.so', 'lib/armeabi-v7a/libfreerdp3.so', 'lib/x86/libfreerdp3.so', 'lib/x86_64/libfreerdp3.so', 'lib/arm64-v8a/libfreerdp-client3.so', 'lib/armeabi-v7a/libfreerdp-client3.so', 'lib/x86/libfreerdp-client3.so', 'lib/x86_64/libfreerdp-client3.so', 'lib/arm64-v8a/libwinpr3.so', 'lib/armeabi-v7a/libwinpr3.so', 'lib/x86/libwinpr3.so', 'lib/x86_64/libwinpr3.so']
-        }
-    }
-
 
     defaultConfig {
         minSdkVersion rootProject.ext.minApi
         targetSdkVersion rootProject.ext.targetApi
-	    ndkVersion = "29.0.13113456"
+        ndkVersion = "29.0.13113456"
 
         ndk {
             //noinspection ChromeOsAbiSupport
@@ -26,6 +20,15 @@ android {
                         "-DWITH_JPEG=ON",   "-DWITH_PNG=ON",
                         "-DWITH_CJSON=ON",  "-DWITH_OPENSSL=ON"
             }
+        }
+    }
+
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            universalApk true
         }
     }
 
@@ -57,8 +60,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     buildFeatures {
         viewBinding true
@@ -66,6 +69,7 @@ android {
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
+            version '4.1.2'
         }
     }
 }
