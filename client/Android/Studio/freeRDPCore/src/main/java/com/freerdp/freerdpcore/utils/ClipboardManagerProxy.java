@@ -3,7 +3,7 @@
 
    Copyright 2013 Thincast Technologies GmbH
    Copyright 2013 Martin Fleisz <martin.fleisz@thincast.com>
-   Copyright 2026 Ibrahim Sevinc <svncibrahim@gmail.com>
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
 
    This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
    If a copy of the MPL was not distributed with this file, You can obtain one at
