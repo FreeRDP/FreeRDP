@@ -3,7 +3,7 @@ plugins {
 }
 
 androidGitVersion {
-    abis = ['armeabi':1, 'armeabi-v7a':2, 'arm64-v8a':3, 'mips':5, 'mips64':6, 'x86':8, 'x86_64':9 ]
+    abis = ['armeabi':1, 'armeabi-v7a':2, 'arm64-v8a':3, "riscv64":4, 'mips':5, 'mips64':6, 'x86':8, 'x86_64':9 ]
     prefix ''
 }
 
@@ -23,6 +23,15 @@ android {
         versionCode = androidGitVersion.code()
     }
 
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            universalApk true
+        }
+    }
+    
     signingConfigs {
         release {
             storeFile file(RELEASE_STORE_FILE)
@@ -41,6 +50,21 @@ android {
         }
         debug {
             jniDebuggable true
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    applicationVariants.configureEach { variant ->
+        variant.outputs.each { output ->
+            def baseAbiVersionCode = project.androidGitVersion.abis.get(output.getFilter(com.android.build.OutputFile.ABI))
+            if (baseAbiVersionCode != null) {
+                output.versionCodeOverride = (10 * project.android.defaultConfig.versionCode) + baseAbiVersionCode
+            } else {
+                output.versionCodeOverride = 10 * project.android.defaultConfig.versionCode
+            }
         }
     }
 }

@@ -1147,7 +1147,7 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 	if (noHeader || (spos < cliprdr->totalExpectedBytes))
 	{
 		DWORD BytesReturned = 0;
-		const DWORD BytesToRead =
+		const size_t BytesToRead =
 		    (noHeader ? sizeof(CLIPRDR_HEADER) : cliprdr->totalExpectedBytes) - spos;
 		const DWORD status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
 
@@ -1162,8 +1162,8 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 		if (status == WAIT_TIMEOUT)
 			return CHANNEL_RC_OK;
 
-		if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0, Stream_Pointer(s), BytesToRead,
-		                           &BytesReturned))
+		if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0, Stream_Pointer(s),
+		                           WINPR_ASSERTING_INT_CAST(DWORD, BytesToRead), &BytesReturned))
 		{
 			WLog_Print(cliprdr->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
 			return ERROR_INTERNAL_ERROR;

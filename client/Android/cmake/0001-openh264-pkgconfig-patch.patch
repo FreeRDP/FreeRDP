@@ -1,0 +1,29 @@
+From 1d55f86f980ec049c5ce2f1d642564085db9aa53 Mon Sep 17 00:00:00 2001
+From: akallabeth <akallabeth@posteo.net>
+Date: Thu, 28 May 2026 18:06:43 +0200
+Subject: [PATCH] openh264-pkgconfig-patch
+
+---
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 290d4b27..019db48e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -298,10 +298,10 @@ endif
+ endif
+ 
+ $(PROJECT_NAME).pc: $(PROJECT_NAME).pc.in
+-	@sed -e 's;@prefix@;$(PREFIX);' -e 's;@libdir@;$(PREFIX)/lib;' -e 's;@VERSION@;$(FULL_VERSION);' -e 's;@LIBS@;;' -e 's;@LIBS_PRIVATE@;$(STATIC_LDFLAGS);' < $< > $@
++	@sed -e 's;@prefix@;$(PREFIX);' -e 's;@libdir@;$(PREFIX)/$(LIBDIR_NAME);' -e 's;@VERSION@;$(FULL_VERSION);' -e 's;@LIBS@;;' -e 's;@LIBS_PRIVATE@;$(STATIC_LDFLAGS);' < $< > $@
+ 
+ $(PROJECT_NAME)-static.pc: $(PROJECT_NAME).pc.in
+-	@sed -e 's;@prefix@;$(PREFIX);' -e 's;@libdir@;$(PREFIX)/lib;' -e 's;@VERSION@;$(FULL_VERSION);' -e 's;@LIBS@;$(STATIC_LDFLAGS);' -e 's;@LIBS_PRIVATE@;;' < $< > $@
++	@sed -e 's;@prefix@;$(PREFIX);' -e 's;@libdir@;$(SHAREDLIB_DIR);' -e 's;@VERSION@;$(FULL_VERSION);' -e 's;@LIBS@;$(STATIC_LDFLAGS);' -e 's;@LIBS_PRIVATE@;;' < $< > $@
+ 
+ install-headers:
+ 	mkdir -p $(DESTDIR)$(PREFIX)/include/wels
+-- 
+2.47.3
+
