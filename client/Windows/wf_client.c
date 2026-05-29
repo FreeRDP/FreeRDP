@@ -52,6 +52,7 @@
 #include <freerdp/locale/locale.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/client.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
@@ -542,6 +543,12 @@ static BOOL wf_authenticate_ex(freerdp* instance, char** username, char** passwo
 	WINPR_ASSERT(username);
 	WINPR_ASSERT(domain);
 	WINPR_ASSERT(password);
+
+	/* /from-stdin: delegate to the common CLI handler instead of prompting via GUI.
+	 * Settings are fully parsed by the time auth callbacks fire, so this branch
+	 * reliably observes the user's choice. */
+	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_CredentialsFromStdin))
+		return client_cli_authenticate_ex(instance, username, password, domain, reason);
 
 	const WCHAR auth[] = L"Target credentials requested";
 	const WCHAR authPin[] = L"PIN requested";
