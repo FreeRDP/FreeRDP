@@ -1,0 +1,77 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 22, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "server-minimal",
+      "displayName": "Minimal static server library",
+      "description": "Builds only the server-side libraries (libfreerdp, libwinpr, rdpgfx/cliprdr/rdpsnd channels) as static archives with no client, proxy, shadow, or media-codec dependencies. Suitable for embedding in a lightweight RDP server without requiring FFmpeg, Cairo, Opus, X11, or Wayland.",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE":           "MinSizeRel",
+        "BUILD_SHARED_LIBS":          "OFF",
+        "BUILD_TESTING":              "OFF",
+        "WITH_SERVER":                "ON",
+        "WITH_CLIENT":                "OFF",
+        "WITH_CLIENT_COMMON":         "OFF",
+        "WITH_PROXY":                 "OFF",
+        "WITH_SHADOW":                "OFF",
+        "WITH_SAMPLE":                "OFF",
+        "WITH_WINPR_TOOLS":           "OFF",
+        "WITH_CHANNELS":              "ON",
+        "WITH_RDPGFX":                "ON",
+        "WITH_CLIPRDR":               "ON",
+        "WITH_RDPSND":                "ON",
+        "WITH_RDPEI":                 "OFF",
+        "WITH_RDPDR":                 "OFF",
+        "WITH_PRINTER":               "OFF",
+        "WITH_SMARTCARD":             "OFF",
+        "WITH_SERIAL":                "OFF",
+        "WITH_PARALLEL":              "OFF",
+        "WITH_URBDRC":                "OFF",
+        "WITH_FFMPEG":                "OFF",
+        "WITH_SWSCALE":               "OFF",
+        "WITH_DSP_FFMPEG":            "OFF",
+        "WITH_VIDEO_ENCODER":         "OFF",
+        "WITH_CAIRO":                 "OFF",
+        "WITH_RDTK":                  "OFF",
+        "WITH_OPUS":                  "OFF",
+        "WITH_JPEG":                  "OFF",
+        "WITH_WEBP":                  "OFF",
+        "WITH_WAYLAND":               "OFF",
+        "WITH_X11":                   "OFF",
+        "WITH_CUPS":                  "OFF",
+        "WITH_PCSC":                  "OFF",
+        "WITH_OSS":                   "OFF",
+        "WITH_ALSA":                  "OFF",
+        "WITH_PULSE":                 "OFF",
+        "WITH_NEON":                  "OFF",
+        "OPENSSL_USE_STATIC_LIBS":    "TRUE"
+      }
+    },
+    {
+      "name": "server-minimal-debug",
+      "displayName": "Minimal static server library (Debug)",
+      "description": "Same as server-minimal but with debug symbols and sanitizers.",
+      "inherits": "server-minimal",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS":    "-fsanitize=address,undefined",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "server-minimal",       "configurePreset": "server-minimal" },
+    { "name": "server-minimal-debug", "configurePreset": "server-minimal-debug" }
+  ]
+}
