@@ -131,14 +131,18 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_server_packet_send(RdpgfxServerContext* 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	/* Allocate new stream with enough capacity. Additional overhead is
-	 * descriptor (1 bytes) + segmentCount (2 bytes) + uncompressedSize (4 bytes)
-	 * + segmentCount * size (4 bytes) */
-	wStream* fs = Stream_New(nullptr, SrcSize + 7 + (SrcSize / ZGFX_SEGMENTED_MAXSIZE + 1) * 4);
+	/* Reuse the pre-allocated send buffer instead of allocating per call.
+	 * Stream_EnsureCapacity grows the buffer if needed (rare: only for
+	 * frames larger than the initial 1 MiB allocation).
+	 * Additional overhead: descriptor(1) + segmentCount(2) + uncompressedSize(4)
+	 * + segmentCount * segSize(4) */
+	const size_t fsCapacity = SrcSize + 7 + (SrcSize / ZGFX_SEGMENTED_MAXSIZE + 1) * 4;
+	wStream* fs = context->priv->send_stream;
+	Stream_SetPosition(fs, 0);
 
-	if (!fs)
+	if (!Stream_EnsureCapacity(fs, fsCapacity))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_EnsureCapacity failed!");
 		error = CHANNEL_RC_NO_MEMORY;
 		goto out;
 	}
@@ -171,7 +175,7 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_server_packet_send(RdpgfxServerContext* 
 
 	error = CHANNEL_RC_OK;
 out:
-	Stream_Free(fs, TRUE);
+	/* send_stream is owned by the context — do not free it here. */
 	Stream_Free(s, TRUE);
 	return error;
 }
@@ -1890,6 +1894,18 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 		goto fail;
 	}
 
+	/* Pre-allocate the send buffer used by rdpgfx_server_packet_send.
+	 * 1 MiB covers a typical H.264 I-frame at 1080p; Stream_EnsureCapacity
+	 * grows it transparently if a frame is larger. Reusing this buffer
+	 * eliminates one malloc+free per outgoing packet (60+ per second at 60fps). */
+	priv->send_stream = Stream_New(nullptr, 1024 * 1024);
+
+	if (!priv->send_stream)
+	{
+		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New (send_stream) failed!");
+		goto fail;
+	}
+
 	priv->isOpened = FALSE;
 	priv->isReady = FALSE;
 	priv->ownThread = TRUE;
@@ -1916,7 +1932,10 @@ void rdpgfx_server_context_free(RdpgfxServerContext* context)
 	(void)rdpgfx_server_close(context);
 
 	if (context->priv)
+	{
 		Stream_Free(context->priv->input_stream, TRUE);
+		Stream_Free(context->priv->send_stream, TRUE);
+	}
 
 	free(context->priv);
 	free(context);

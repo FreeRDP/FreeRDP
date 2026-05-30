@@ -33,6 +33,14 @@ struct s_rdpgfx_server_private
 	void* rdpgfx_channel;
 	DWORD SessionId;
 	wStream* input_stream;
+	/**
+	 * Pre-allocated send buffer reused across every outgoing packet.
+	 * Eliminates per-packet malloc/free for the ZGFX compressed output.
+	 * Must only be accessed from the thread that calls send functions
+	 * (application thread); never touched by the channel's own thread.
+	 * Initial capacity: 1 MiB (typical H.264 I-frame at 1080p).
+	 */
+	wStream* send_stream;
 	BOOL isOpened;
 	BOOL isReady;
 	wLog* log;
