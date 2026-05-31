@@ -241,6 +241,18 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 		Stream_Read_UINT16(s, format->wBitsPerSample);
 		Stream_Read_UINT16(s, format->cbSize);
 
+		/* nChannels and nBlockAlign are used as divisors when sending audio
+		 * (rdpsnd_server_align_wave_pdu: size % nBlockAlign; ADPCM frame sizing
+		 * divides by nChannels). A malicious client can advertise a format with
+		 * either field set to 0, causing a division by zero. No valid
+		 * WAVEFORMATEX has zero channels or zero block alignment. */
+		if ((format->nChannels == 0) || (format->nBlockAlign == 0))
+		{
+			WLog_ERR(TAG, "invalid client audio format: nChannels or nBlockAlign is 0");
+			error = ERROR_INVALID_DATA;
+			goto out_free;
+		}
+
 		if (format->cbSize > 0)
 		{
 			if (!Stream_SafeSeek(s, format->cbSize))
