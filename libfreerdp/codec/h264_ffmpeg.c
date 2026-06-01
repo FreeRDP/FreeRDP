@@ -331,7 +331,8 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		goto fail;
 	}
 
-	gotFrame = (status == 0);
+	if (status == 0)
+		gotFrame = 1;
 #else
 #if defined(WITH_VAAPI) || defined(WITH_VIDEOTOOLBOX)
 	status =
@@ -361,15 +362,14 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		{
 			status = av_frame_copy(sys->videoFrame, sys->hwVideoFrame);
 		}
-	}
+		gotFrame = (status == 0);
 
-	gotFrame = (status == 0);
-
-	if (status < 0)
-	{
-		WLog_Print(h264->log, WLOG_ERROR, "Failed to transfer video frame (status=%d) (%s)", status,
-		           av_err2str(status));
-		goto fail;
+		if (status < 0)
+		{
+			WLog_Print(h264->log, WLOG_ERROR, "Failed to transfer video frame (status=%d) (%s)",
+			           status, av_err2str(status));
+			goto fail;
+		}
 	}
 
 #endif
