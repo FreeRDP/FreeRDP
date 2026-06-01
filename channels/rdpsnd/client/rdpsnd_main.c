@@ -40,6 +40,7 @@
 #include <winpr/stream.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
+#include <winpr/thread.h>
 #include <winpr/collections.h>
 
 #include <freerdp/types.h>
@@ -50,6 +51,15 @@
 
 #include "rdpsnd_common.h"
 #include "rdpsnd_main.h"
+
+#define RDPSND_LOCAL_JITTER_BUFFER_MS 100U
+#define RDPSND_KEEP_BACKLOG_MS 200U
+#define RDPSND_SOFT_DROP_BACKLOG_MS 400U
+#define RDPSND_QUIET_8BIT_PEAK 4U
+#define RDPSND_QUIET_8BIT_AVG 1U
+#define RDPSND_QUIET_16BIT_PEAK 1024U
+#define RDPSND_QUIET_16BIT_AVG 256U
+#define RDPSND_AUDIO_GAP_LOG_THROTTLE_MS 1000ULL
 
 struct rdpsnd_plugin
 {
@@ -94,6 +104,11 @@ struct rdpsnd_plugin
 
 	UINT32 startPlayTime;
 	size_t totalPlaySize;
+	UINT64 lastWaveArrivalTime;
+	UINT64 lastWaveGapLogTime;
+	UINT64 lastBufferProblemLogTime;
+	AUDIO_FORMAT deviceFormat;
+	BOOL deviceFormatValid;
 
 	char* subsystem;
 	char* device_name;
@@ -446,9 +461,76 @@ static BOOL rdpsnd_ensure_device_is_open(rdpsndPlugin* rdpsnd, UINT16 wFormatNo,
 		rdpsnd->wCurrentFormatNo = wFormatNo;
 		rdpsnd->startPlayTime = 0;
 		rdpsnd->totalPlaySize = 0;
+		rdpsnd->lastWaveArrivalTime = 0;
+		rdpsnd->lastWaveGapLogTime = 0;
+		rdpsnd->lastBufferProblemLogTime = 0;
+		rdpsnd->deviceFormat = deviceFormat;
+		rdpsnd->deviceFormatValid = TRUE;
 	}
 
 	return rdpsnd_apply_volume(rdpsnd);
+}
+
+static UINT32 rdpsnd_effective_latency_ms(const rdpsndPlugin* rdpsnd)
+{
+	WINPR_ASSERT(rdpsnd);
+
+	if (rdpsnd->latency > RDPSND_LOCAL_JITTER_BUFFER_MS)
+		return rdpsnd->latency;
+
+	return RDPSND_LOCAL_JITTER_BUFFER_MS;
+}
+
+static UINT32 rdpsnd_audio_problem_threshold_ms(const rdpsndPlugin* rdpsnd)
+{
+	const UINT32 latency = rdpsnd_effective_latency_ms(rdpsnd);
+
+	return (latency > RDPSND_KEEP_BACKLOG_MS) ? latency : RDPSND_KEEP_BACKLOG_MS;
+}
+
+static void rdpsnd_log_wave_gap_if_needed(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* format,
+                                          size_t size)
+{
+	WINPR_ASSERT(rdpsnd);
+	WINPR_ASSERT(format);
+
+	if (rdpsnd->lastWaveArrivalTime != 0)
+	{
+		const UINT64 gap = rdpsnd->wArrivalTime - rdpsnd->lastWaveArrivalTime;
+		const UINT32 threshold = rdpsnd_audio_problem_threshold_ms(rdpsnd);
+		if (gap > threshold)
+		{
+			const UINT64 now = GetTickCount64();
+			if ((rdpsnd->lastWaveGapLogTime == 0) ||
+			    ((now - rdpsnd->lastWaveGapLogTime) >= RDPSND_AUDIO_GAP_LOG_THROTTLE_MS))
+			{
+				WLog_Print(rdpsnd->log, WLOG_WARN,
+				           "%s Audio PDU gap %" PRIu64
+				           " ms exceeds buffer target %" PRIu32
+				           " ms cBlockNo=%" PRIu8 " format=%s size=%" PRIuz,
+				           rdpsnd_is_dyn_str(rdpsnd->dynamic), gap, threshold,
+				           rdpsnd->cBlockNo, audio_format_get_tag_string(format->wFormatTag),
+				           size);
+				rdpsnd->lastWaveGapLogTime = now;
+			}
+		}
+	}
+
+	rdpsnd->lastWaveArrivalTime = rdpsnd->wArrivalTime;
+}
+
+static BOOL rdpsnd_audio_buffer_problem_log_allowed(rdpsndPlugin* rdpsnd)
+{
+	const UINT64 now = GetTickCount64();
+
+	WINPR_ASSERT(rdpsnd);
+
+	if ((rdpsnd->lastBufferProblemLogTime != 0) &&
+	    ((now - rdpsnd->lastBufferProblemLogTime) < RDPSND_AUDIO_GAP_LOG_THROTTLE_MS))
+		return FALSE;
+
+	rdpsnd->lastBufferProblemLogTime = now;
+	return TRUE;
 }
 
 /**
@@ -517,35 +599,13 @@ static UINT rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp
 	return rdpsnd_virtual_channel_write(rdpsnd, pdu);
 }
 
-static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* format, size_t size)
+static BOOL rdpsnd_audio_bytes_per_second(const AUDIO_FORMAT* format, UINT32* bytesPerSecond)
 {
-	UINT32 bpf = 0;
-	UINT32 now = 0;
-	UINT32 duration = 0;
-	UINT32 totalDuration = 0;
-	UINT32 remainingDuration = 0;
-	UINT32 maxDuration = 0;
+	WINPR_ASSERT(bytesPerSecond);
 
-	if (!rdpsnd || !format)
+	if (!format)
 		return FALSE;
 
-	/* Older windows RDP servers do not limit the send buffer, which can
-	 * cause quite a large amount of sound data buffered client side.
-	 * If e.g. sound is paused server side the client will keep playing
-	 * for a long time instead of pausing playback.
-	 *
-	 * To avoid this we check:
-	 *
-	 * 1. Is the sound sample received from a known format these servers
-	 *    support
-	 * 2. If it is calculate the size of the client side sound buffer
-	 * 3. If the buffer is too large silently drop the sample which will
-	 *    trigger a retransmit later on.
-	 *
-	 * This check must only be applied to these known formats, because
-	 * with newer and other formats the sample size can not be calculated
-	 * without decompressing the sample first.
-	 */
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_PCM:
@@ -554,20 +614,120 @@ static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* form
 		case WAVE_FORMAT_ALAW:
 		case WAVE_FORMAT_MULAW:
 			break;
-		case WAVE_FORMAT_MSG723:
-		case WAVE_FORMAT_GSM610:
-		case WAVE_FORMAT_AAC_MS:
 		default:
 			return FALSE;
 	}
 
-	audio_format_print(WLog_Get(TAG), WLOG_DEBUG, format);
-	bpf = format->nChannels * format->wBitsPerSample * format->nSamplesPerSec / 8;
-	if (bpf == 0)
+	if (format->nAvgBytesPerSec > 0)
+	{
+		*bytesPerSecond = format->nAvgBytesPerSec;
+		return TRUE;
+	}
+
+	if ((format->nChannels == 0) || (format->wBitsPerSample == 0) ||
+	    (format->nSamplesPerSec == 0))
 		return FALSE;
 
-	duration = (UINT32)(1000 * size / bpf);
-	totalDuration = (UINT32)(1000 * rdpsnd->totalPlaySize / bpf);
+	*bytesPerSecond = format->nChannels * format->wBitsPerSample *
+	                  format->nSamplesPerSec / 8;
+	return *bytesPerSecond > 0;
+}
+
+static BOOL rdpsnd_audio_duration_ms(const AUDIO_FORMAT* format, size_t size, UINT32* duration)
+{
+	UINT32 bytesPerSecond = 0;
+	UINT64 ms = 0;
+
+	WINPR_ASSERT(duration);
+
+	if (!rdpsnd_audio_bytes_per_second(format, &bytesPerSecond))
+		return FALSE;
+
+	ms = (1000ULL * size) / bytesPerSecond;
+	if (ms > (UINT64)UINT32_MAX)
+		return FALSE;
+
+	*duration = (UINT32)ms;
+	return TRUE;
+}
+
+static BOOL rdpsnd_pcm_block_is_quiet(const AUDIO_FORMAT* format, const BYTE* data, size_t size)
+{
+	UINT32 peak = 0;
+	UINT64 sum = 0;
+	size_t samples = 0;
+	UINT32 peakThreshold = 0;
+	UINT32 avgThreshold = 0;
+
+	if (!format || !data || (size == 0) || (format->wFormatTag != WAVE_FORMAT_PCM))
+		return FALSE;
+
+	switch (format->wBitsPerSample)
+	{
+		case 8:
+			peakThreshold = RDPSND_QUIET_8BIT_PEAK;
+			avgThreshold = RDPSND_QUIET_8BIT_AVG;
+			samples = size;
+			for (size_t x = 0; x < size; x++)
+			{
+				const int value = (int)data[x] - 128;
+				const UINT32 level = (value < 0) ? (UINT32)-value : (UINT32)value;
+				if (level > peak)
+					peak = level;
+				sum += level;
+			}
+			break;
+
+		case 16:
+			peakThreshold = RDPSND_QUIET_16BIT_PEAK;
+			avgThreshold = RDPSND_QUIET_16BIT_AVG;
+			samples = size / 2;
+			if (samples == 0)
+				return FALSE;
+
+			for (size_t x = 0; x < samples; x++)
+			{
+				const size_t offset = x * 2;
+				const UINT16 raw = (UINT16)data[offset] | ((UINT16)data[offset + 1] << 8);
+				const INT16 sample = (INT16)raw;
+				const int value = sample;
+				const UINT32 level = (value < 0) ? (UINT32)-value : (UINT32)value;
+				if (level > peak)
+					peak = level;
+				sum += level;
+			}
+			break;
+
+		default:
+			return FALSE;
+	}
+
+	if (samples == 0)
+		return FALSE;
+
+	return (peak <= peakThreshold) && ((sum / samples) <= avgThreshold);
+}
+
+static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* format,
+                                  const BYTE* data, size_t size)
+{
+	UINT32 now = 0;
+	UINT32 duration = 0;
+	UINT32 totalDuration = 0;
+	UINT32 remainingDuration = 0;
+	UINT32 projectedDuration = 0;
+	BOOL quiet = FALSE;
+
+	if (!rdpsnd || !format)
+		return FALSE;
+
+	audio_format_print(WLog_Get(TAG), WLOG_DEBUG, format);
+	if (!rdpsnd_audio_duration_ms(format, size, &duration))
+		return FALSE;
+
+	if (!rdpsnd_audio_duration_ms(format, rdpsnd->totalPlaySize, &totalDuration))
+		totalDuration = 0;
+
 	now = GetTickCountPrecise();
 	if (rdpsnd->startPlayTime == 0)
 	{
@@ -578,9 +738,12 @@ static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* form
 	else if (now - rdpsnd->startPlayTime > totalDuration + 10)
 	{
 		/* Buffer underrun */
-		WLog_Print(rdpsnd->log, WLOG_DEBUG, "%s Buffer underrun by %u ms",
-		           rdpsnd_is_dyn_str(rdpsnd->dynamic),
-		           (UINT)(now - rdpsnd->startPlayTime - totalDuration));
+		if (rdpsnd_audio_buffer_problem_log_allowed(rdpsnd))
+		{
+			WLog_Print(rdpsnd->log, WLOG_WARN, "%s Audio buffer underrun by %u ms",
+			           rdpsnd_is_dyn_str(rdpsnd->dynamic),
+			           (UINT)(now - rdpsnd->startPlayTime - totalDuration));
+		}
 		rdpsnd->startPlayTime = now;
 		rdpsnd->totalPlaySize = size;
 		return FALSE;
@@ -589,15 +752,34 @@ static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* form
 	{
 		/* Calculate remaining duration to be played */
 		remainingDuration = totalDuration - (now - rdpsnd->startPlayTime);
+		projectedDuration = remainingDuration + duration;
 
-		/* Maximum allow duration calculation */
-		maxDuration = duration * 2 + rdpsnd->latency;
-
-		if (remainingDuration + duration > maxDuration)
+		if (projectedDuration > RDPSND_SOFT_DROP_BACKLOG_MS)
 		{
-			WLog_Print(rdpsnd->log, WLOG_DEBUG, "%s Buffer overrun pending %u ms dropping %u ms",
-			           rdpsnd_is_dyn_str(rdpsnd->dynamic), remainingDuration, duration);
+			if (rdpsnd_audio_buffer_problem_log_allowed(rdpsnd))
+			{
+				WLog_Print(rdpsnd->log, WLOG_WARN,
+				           "%s Audio buffer hard-drop pending %u ms, dropping %u ms",
+				           rdpsnd_is_dyn_str(rdpsnd->dynamic), projectedDuration, duration);
+			}
 			return TRUE;
+		}
+
+		if (projectedDuration > RDPSND_KEEP_BACKLOG_MS)
+		{
+			quiet = rdpsnd_pcm_block_is_quiet(format, data, size);
+			if (quiet)
+			{
+				if (rdpsnd_audio_buffer_problem_log_allowed(rdpsnd))
+				{
+					WLog_Print(rdpsnd->log, WLOG_WARN,
+					           "%s Audio buffer soft-drop quiet block pending %u ms,"
+					           " dropping %u ms",
+					           rdpsnd_is_dyn_str(rdpsnd->dynamic), projectedDuration,
+					           duration);
+				}
+				return TRUE;
+			}
 		}
 
 		rdpsnd->totalPlaySize += size;
@@ -631,32 +813,42 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 
 	const BYTE* data = Stream_ConstPointer(s);
 	format = &rdpsnd->ClientFormats[rdpsnd->wCurrentFormatNo];
+	rdpsnd_log_wave_gap_if_needed(rdpsnd, format, size);
 	WLog_Print(rdpsnd->log, WLOG_DEBUG,
 	           "%s Wave: cBlockNo: %" PRIu8 " wTimeStamp: %" PRIu16 ", size: %" PRIuz,
 	           rdpsnd_is_dyn_str(rdpsnd->dynamic), rdpsnd->cBlockNo, rdpsnd->wTimeStamp, size);
 
-	if (rdpsnd->device && rdpsnd->attached && !rdpsnd_detect_overrun(rdpsnd, format, size))
+	if (rdpsnd->device && rdpsnd->attached)
 	{
 		UINT status = CHANNEL_RC_OK;
 		wStream* pcmData = StreamPool_Take(rdpsnd->pool, 4096);
 
 		if (rdpsnd->device->FormatSupported(rdpsnd->device, format))
 		{
-			if (rdpsnd->device->PlayEx)
-				latency = rdpsnd->device->PlayEx(rdpsnd->device, format, data, size);
-			else
-				latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device, data, size);
+			if (!rdpsnd_detect_overrun(rdpsnd, format, data, size))
+			{
+				if (rdpsnd->device->PlayEx)
+					latency = rdpsnd->device->PlayEx(rdpsnd->device, format, data, size);
+				else
+					latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device,
+					                       data, size);
+			}
 		}
 		else if (freerdp_dsp_decode(rdpsnd->dsp_context, format, data, size, pcmData))
 		{
 			Stream_SealLength(pcmData);
 
-			if (rdpsnd->device->PlayEx)
-				latency = rdpsnd->device->PlayEx(rdpsnd->device, format, Stream_Buffer(pcmData),
-				                                 Stream_Length(pcmData));
-			else
-				latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device,
-				                       Stream_Buffer(pcmData), Stream_Length(pcmData));
+			if (!rdpsnd->deviceFormatValid ||
+			    !rdpsnd_detect_overrun(rdpsnd, &rdpsnd->deviceFormat, Stream_Buffer(pcmData),
+			                           Stream_Length(pcmData)))
+			{
+				if (rdpsnd->device->PlayEx)
+					latency = rdpsnd->device->PlayEx(rdpsnd->device, &rdpsnd->deviceFormat,
+					                                 Stream_Buffer(pcmData), Stream_Length(pcmData));
+				else
+					latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device,
+					                       Stream_Buffer(pcmData), Stream_Length(pcmData));
+			}
 		}
 		else
 			status = ERROR_INTERNAL_ERROR;
@@ -1432,6 +1624,11 @@ static BOOL allocate_internals(rdpsndPlugin* rdpsnd)
 			rdpsnd->thread = CreateThread(nullptr, 0, play_thread, rdpsnd, 0, nullptr);
 			if (!rdpsnd->thread)
 				return CHANNEL_RC_INITIALIZATION_ERROR;
+
+			if (!SetThreadPriority(rdpsnd->thread, THREAD_PRIORITY_HIGHEST))
+				WLog_Print(rdpsnd->log, WLOG_WARN,
+				           "%s SetThreadPriority failed for rdpsnd playback thread, ignoring.",
+				           rdpsnd_is_dyn_str(rdpsnd->dynamic));
 		}
 	}
 
