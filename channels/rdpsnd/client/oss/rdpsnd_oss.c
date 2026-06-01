@@ -207,16 +207,24 @@ static void rdpsnd_oss_open_mixer(rdpsndOssPlugin* oss)
 	}
 }
 
+/* Build the OSS PCM device path (/dev/dsp or /dev/dsp<unit>). */
+static void rdpsnd_oss_pcm_device_name(const rdpsndOssPlugin* oss, char* dev_name, size_t size)
+{
+	if (oss->dev_unit != -1)
+		(void)sprintf_s(dev_name, size, "/dev/dsp%i", oss->dev_unit);
+	else
+		(void)sprintf_s(dev_name, size, "/dev/dsp");
+}
+
 static BOOL rdpsnd_oss_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency)
 {
-	char dev_name[PATH_MAX] = "/dev/dsp";
+	char dev_name[PATH_MAX] = { 0 };
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == nullptr || oss->pcm_handle != -1)
 		return TRUE;
 
-	if (oss->dev_unit != -1)
-		(void)sprintf_s(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
+	rdpsnd_oss_pcm_device_name(oss, dev_name, sizeof(dev_name));
 
 	WLog_INFO(TAG, "open: %s", dev_name);
 
@@ -439,6 +447,25 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE oss_freerdp_rdpsnd_client_subsystem_entry(
 		free(oss);
 		return ERROR_INVALID_PARAMETER;
 	}
+
+	/* Only register the backend if the OSS device actually exists and is
+	 * writable. On systems without OSS (no /dev/dsp) this leaves rdpsnd->device
+	 * unset so subsystem selection falls through to the next available backend.
+	 * Otherwise oss gets selected and the first audio the server streams fails
+	 * to open the device, which aborts the whole RDP connection. */
+	{
+		char dev_name[PATH_MAX] = { 0 };
+		rdpsnd_oss_pcm_device_name(oss, dev_name, sizeof(dev_name));
+
+		if (access(dev_name, W_OK) != 0)
+		{
+			WLog_WARN(TAG, "OSS device %s not available (errno %d), skipping oss backend", dev_name,
+			          errno);
+			free(oss);
+			return CHANNEL_RC_INITIALIZATION_ERROR;
+		}
+	}
+
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)oss);
 	return CHANNEL_RC_OK;
 }
