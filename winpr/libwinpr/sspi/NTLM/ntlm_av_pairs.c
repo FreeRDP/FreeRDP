@@ -335,30 +335,6 @@ static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList
 	                        ntlm_av_pair_get_value_pointer(pAvPair, cbAvPair), (UINT16)avLen);
 }
 
-static char* get_name(COMPUTER_NAME_FORMAT type)
-{
-	DWORD nSize = 0;
-
-	if (GetComputerNameExA(type, nullptr, &nSize))
-		return nullptr;
-
-	if (GetLastError() != ERROR_MORE_DATA)
-		return nullptr;
-
-	char* computerName = calloc(1, nSize);
-
-	if (!computerName)
-		return nullptr;
-
-	if (!GetComputerNameExA(type, computerName, &nSize))
-	{
-		free(computerName);
-		return nullptr;
-	}
-
-	return computerName;
-}
-
 static int ntlm_get_target_computer_name(PUNICODE_STRING pName,
                                          WINPR_ATTR_UNUSED COMPUTER_NAME_FORMAT type)
 {
@@ -366,7 +342,7 @@ static int ntlm_get_target_computer_name(PUNICODE_STRING pName,
 
 	WINPR_ASSERT(pName);
 
-	char* name = get_name(ComputerNameNetBIOS);
+	char* name = get_computer_name(ComputerNameNetBIOS, nullptr);
 	if (!name)
 		return -1;
 

@@ -104,9 +104,12 @@ static BOOL check_context_(NTLM_CONTEXT* context, const char* file, const char* 
 	return rc;
 }
 
-static char* get_name(COMPUTER_NAME_FORMAT type)
+char* get_computer_name(COMPUTER_NAME_FORMAT type, size_t* pSize)
 {
 	DWORD nSize = 0;
+
+	if (pSize)
+		*pSize = 0;
 
 	if (GetComputerNameExA(type, nullptr, &nSize))
 		return nullptr;
@@ -125,6 +128,8 @@ static char* get_name(COMPUTER_NAME_FORMAT type)
 		return nullptr;
 	}
 
+	if (pSize)
+		*pSize = nSize;
 	return computerName;
 }
 
@@ -137,7 +142,7 @@ static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 
 	if (!Workstation)
 	{
-		computerName = get_name(ComputerNameNetBIOS);
+		computerName = get_computer_name(ComputerNameNetBIOS, nullptr);
 		if (!computerName)
 			return -1;
 		ws = computerName;
@@ -180,27 +185,15 @@ static int ntlm_SetContextServicePrincipalNameW(NTLM_CONTEXT* context, LPWSTR Se
 static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
 	char* name = TargetName;
-	DWORD nSize = 0;
-	CHAR* computerName = nullptr;
-
 	WINPR_ASSERT(context);
 
 	if (!name)
 	{
-		if (GetComputerNameExA(ComputerNameNetBIOS, nullptr, &nSize) ||
-		    GetLastError() != ERROR_MORE_DATA)
-			return -1;
-
-		computerName = calloc(nSize, sizeof(CHAR));
+		size_t nSize = 0;
+		char* computerName = get_computer_name(ComputerNameNetBIOS, &nSize);
 
 		if (!computerName)
 			return -1;
-
-		if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
-		{
-			free(computerName);
-			return -1;
-		}
 
 		if (nSize > MAX_COMPUTERNAME_LENGTH)
 			computerName[MAX_COMPUTERNAME_LENGTH] = '\0';
