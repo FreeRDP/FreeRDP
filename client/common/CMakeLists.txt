@@ -54,12 +54,11 @@ option(WITH_FUSE "Build clipboard with FUSE file copy support" ${OPT_FUSE_DEFAUL
 if(WITH_FUSE)
   find_package(PkgConfig REQUIRED)
 
-  pkg_check_modules(FUSE3 REQUIRED fuse3)
+  pkg_check_modules(FUSE3 REQUIRED IMPORTED_TARGET GLOBAL fuse3)
   freerdp_client_pc_add_requires_private("fuse3")
 
-  include_directories(SYSTEM ${FUSE3_INCLUDE_DIRS})
   add_compile_definitions(WITH_FUSE)
-  list(APPEND PRIV_LIBS ${FUSE3_LIBRARIES})
+  list(APPEND PRIV_LIBS PkgConfig::FUSE3)
 
   add_compile_definitions(_FILE_OFFSET_BITS=64)
 endif()
