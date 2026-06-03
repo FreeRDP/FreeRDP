@@ -662,7 +662,7 @@
 #define KBD7_T6D VK_F22
 #define KBD7_T6E VK_F23
 #define KBD7_T6F VK_OEM_PA3
-#define KBD7_T70 VK_NONE
+#define KBD7_T70 VK_CONVERT
 #define KBD7_T71 VK_OEM_RESET
 #define KBD7_T72 VK_NONE
 #define KBD7_T73 VK_ABNT_C1
@@ -671,11 +671,11 @@
 #define KBD7_T76 VK_F24
 #define KBD7_T77 VK_NONE
 #define KBD7_T78 VK_NONE
-#define KBD7_T79 VK_NONE
+#define KBD7_T79 VK_HKTG
 #define KBD7_T7A VK_NONE
 #define KBD7_T7B VK_OEM_PA1
 #define KBD7_T7C VK_TAB
-#define KBD7_T7D VK_NONE
+#define KBD7_T7D VK_OEM_8
 #define KBD7_T7E VK_ABNT_C2
 #define KBD7_T7F VK_OEM_PA2
 
@@ -899,6 +899,23 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode,
 	                                                     DWORD /* WINPR_KBD_TYPE */ dwKeyboardType);
+
+	/** @brief Returns all scancodes mapped to a virtual keycode
+	 *
+	 *  @param vkcode The keycode to reverse map
+	 *  @param dwKeyboardType The keyboard type to use for mapping
+	 *  @param pdwScanCodeBuffer A pointer to an array holding the resulting scancodes
+	 *  @param ScanCodeBufferSize The size in scancode count (sizeof(DWORD)) of \ref
+	 * pdwScanCodeBuffer
+	 *
+	 *  @return The number of scancodes mapped to the keycode.
+	 *  @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API DWORD GetVirtualScanCodesFromVirtualKeyCode(DWORD vkcode,
+	                                                      DWORD /* WINPR_KBD_TYPE */ dwKeyboardType,
+	                                                      DWORD* pdwScanCodeBuffer,
+	                                                      size_t ScanCodeBufferSize);
 
 	typedef enum
 	{
