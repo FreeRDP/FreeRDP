@@ -928,6 +928,17 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, WINPR_KEYCODE_TYPE type);
 
+	/** @brief Returns all keycodes for a virtual keycode
+	 *
+	 *  @param
+	 *  @return
+	 *  @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API DWORD GetKeycodesFromVirtualKeyCode(DWORD keycode, WINPR_KEYCODE_TYPE type,
+	                                              DWORD* pdwKeyCodeBuffer,
+	                                              size_t KeyCodeBufferSize);
+
 	WINPR_ATTR_NODISCARD
 	WINPR_API DWORD GetKeycodeFromVirtualKeyCode(DWORD keycode, WINPR_KEYCODE_TYPE type);
 
