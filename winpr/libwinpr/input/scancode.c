@@ -533,21 +533,63 @@ DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 	}
 }
 
-static DWORD get_scancode(DWORD vkcode, const DWORD* array, size_t arraysize, DWORD flag)
+static DWORD get_scancode(size_t offset, DWORD vkcode, const DWORD* array, size_t arraysize,
+                          DWORD flag)
 {
 	WINPR_ASSERT(array);
-	for (size_t x = 0; x < arraysize; x++)
+	for (size_t x = offset; x < arraysize; x++)
 	{
 		const DWORD cur = array[x];
 		if (cur == vkcode)
-			return WINPR_ASSERTING_INT_CAST(DWORD, x) | flag;
+		{
+			const DWORD sc = WINPR_ASSERTING_INT_CAST(DWORD, x);
+			if (sc == 0)
+				return 0;
+			return sc | flag;
+		}
 	}
-	return VK_NONE;
+	return 0;
+}
+
+static DWORD get_scancodes(DWORD vkcode, const DWORD* array, size_t arraysize, DWORD flag,
+                           DWORD* pdwScanCodeBuffer, size_t ScanCodeBufferSize)
+{
+	WINPR_ASSERT(array);
+	size_t offset = 0;
+	DWORD count = 0;
+
+	DWORD sc = 0;
+	do
+	{
+		sc = get_scancode(offset, vkcode, array, arraysize, flag);
+		if (sc != 0)
+		{
+			if (count < ScanCodeBufferSize)
+				pdwScanCodeBuffer[count] = sc;
+			count++;
+			offset = (sc & ~flag) + 1;
+		}
+	} while ((sc != 0) && (count < ScanCodeBufferSize));
+
+	return count;
 }
 
 DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 {
+	DWORD scancodes[1] = WINPR_C_ARRAY_INIT;
+	const DWORD count = GetVirtualScanCodesFromVirtualKeyCode(vkcode, dwKeyboardType, scancodes,
+	                                                          ARRAYSIZE(scancodes));
+	if (count == 0)
+		return 0;
+	return scancodes[0];
+}
+
+DWORD GetVirtualScanCodesFromVirtualKeyCode(DWORD vkcode, DWORD /* WINPR_KBD_TYPE */ dwKeyboardType,
+                                            DWORD* pdwScanCodeBuffer, size_t ScanCodeBufferSize)
+{
 	DWORD codeIndex = vkcode & 0xFF;
+	if (codeIndex == VK_NONE)
+		return 0;
 
 	switch (dwKeyboardType)
 	{
@@ -556,26 +598,35 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 		case WINPR_KBD_TYPE_IBM_PC_AT:
 		case WINPR_KBD_TYPE_IBM_ENHANCED:
 			if (vkcode & KBDMULTIVK)
-				return get_scancode(codeIndex, KBD4X_1, ARRAYSIZE(KBD4X_1), KBDMULTIVK);
+				return get_scancodes(codeIndex, KBD4X_1, ARRAYSIZE(KBD4X_1), KBDMULTIVK,
+				                     pdwScanCodeBuffer, ScanCodeBufferSize);
 			if (vkcode & KBDEXT)
-				return get_scancode(codeIndex, KBD4X, ARRAYSIZE(KBD4X), KBDEXT);
+				return get_scancodes(codeIndex, KBD4X, ARRAYSIZE(KBD4X), KBDEXT, pdwScanCodeBuffer,
+				                     ScanCodeBufferSize);
 			else
-				return get_scancode(codeIndex, KBD4T, ARRAYSIZE(KBD4T), 0);
+				return get_scancodes(codeIndex, KBD4T, ARRAYSIZE(KBD4T), 0, pdwScanCodeBuffer,
+				                     ScanCodeBufferSize);
 
 		case WINPR_KBD_TYPE_JAPANESE:
 			if (vkcode & KBDMULTIVK)
-				return get_scancode(codeIndex, KBD7X_1, ARRAYSIZE(KBD7X_1), KBDMULTIVK);
+				return get_scancodes(codeIndex, KBD7X_1, ARRAYSIZE(KBD7X_1), KBDMULTIVK,
+				                     pdwScanCodeBuffer, ScanCodeBufferSize);
 			if (vkcode & KBDEXT)
-				return get_scancode(codeIndex, KBD7X, ARRAYSIZE(KBD7X), KBDEXT);
+				return get_scancodes(codeIndex, KBD7X, ARRAYSIZE(KBD7X), KBDEXT, pdwScanCodeBuffer,
+				                     ScanCodeBufferSize);
 			else
-				return get_scancode(codeIndex, KBD7T, ARRAYSIZE(KBD7T), 0);
+				return get_scancodes(codeIndex, KBD7T, ARRAYSIZE(KBD7T), 0, pdwScanCodeBuffer,
+				                     ScanCodeBufferSize);
 		case WINPR_KBD_TYPE_KOREAN:
 			if (vkcode & KBDMULTIVK)
-				return get_scancode(codeIndex, KBD8X_1, ARRAYSIZE(KBD8X_1), KBDMULTIVK);
+				return get_scancodes(codeIndex, KBD8X_1, ARRAYSIZE(KBD8X_1), KBDMULTIVK,
+				                     pdwScanCodeBuffer, ScanCodeBufferSize);
 			if (vkcode & KBDEXT)
-				return get_scancode(codeIndex, KBD8X, ARRAYSIZE(KBD8X), KBDEXT);
+				return get_scancodes(codeIndex, KBD8X, ARRAYSIZE(KBD8X), KBDEXT, pdwScanCodeBuffer,
+				                     ScanCodeBufferSize);
 			else
-				return get_scancode(codeIndex, KBD8T, ARRAYSIZE(KBD8T), 0);
+				return get_scancodes(codeIndex, KBD8T, ARRAYSIZE(KBD8T), 0, pdwScanCodeBuffer,
+				                     ScanCodeBufferSize);
 		case WINPR_KBD_TYPE_NOKIA_1050:
 		case WINPR_KBD_TYPE_NOKIA_9140:
 		default:

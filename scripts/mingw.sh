@@ -139,7 +139,7 @@ mkdir -p "$BUILD_BASE"
 cd "$SRC_BASE"
 if [ $CLONE -ne 0 ]; then
   do_clone v1.3.1 https://github.com/madler/zlib.git zlib
-  do_clone uriparser-1.0.0 https://github.com/uriparser/uriparser.git uriparser
+  do_clone uriparser-1.0.2 https://github.com/uriparser/uriparser.git uriparser
   do_clone json-c-0.18-20240915 https://github.com/json-c/json-c.git json-c
   do_clone release-3.2.28 https://github.com/libsdl-org/SDL.git SDL
   if [ $FFMPEG -ne 0 ]; then
