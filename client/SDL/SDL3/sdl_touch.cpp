@@ -187,7 +187,7 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseButtonEvent& ev)
 	else if ((xflags & (~PTR_XFLAGS_DOWN)) != 0)
 		return freerdp_client_send_extended_button_event(sdl->common(), relative, xflags, x, y);
 	else
-		return FALSE;
+		return TRUE;
 }
 
 bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_TouchFingerEvent& ev)
