@@ -51,6 +51,7 @@
 #define BUTTON_WIDTH 23
 #define BUTTON_HEIGHT 21
 #define BUTTON_SPACING 1
+#define RESTORE_DRAG_BAR_MULTIPLIER 2
 
 #define LOCK_X (BACKGROUND_H + BUTTON_OFFSET)
 #define CLOSE_X ((BACKGROUND_W - (BACKGROUND_H + BUTTON_OFFSET)) - BUTTON_WIDTH)
@@ -399,6 +400,7 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 	static int dragging = FALSE;
 	static int lbtn_dwn = FALSE;
 	static int btn_dwn_x = 0;
+	static int btn_dwn_y = 0;
 	static wfFloatBar* floatbar;
 	static TRACKMOUSEEVENT tme;
 	PAINTSTRUCT ps;
@@ -442,15 +444,16 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 			break;
 
 		case WM_LBUTTONDOWN:
-			pos_x = lParam & 0xffff;
-			pos_y = (lParam >> 16) & 0xffff;
+			pos_x = LOWORD(lParam);
+			pos_y = HIWORD(lParam);
 			button = floatbar_get_button(floatbar, pos_x, pos_y);
 
 			if (!button)
 			{
 				SetCapture(hWnd);
 				dragging = TRUE;
-				btn_dwn_x = lParam & 0xffff;
+				btn_dwn_x = pos_x;
+				btn_dwn_y = pos_y;
 			}
 			else
 				lbtn_dwn = TRUE;
@@ -458,8 +461,8 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 			break;
 
 		case WM_LBUTTONUP:
-			pos_x = lParam & 0xffff;
-			pos_y = (lParam >> 16) & 0xffff;
+			pos_x = LOWORD(lParam);
+			pos_y = HIWORD(lParam);
 			ReleaseCapture();
 			dragging = FALSE;
 
@@ -474,17 +477,38 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 			}
 
 			break;
+		
+		case WM_LBUTTONDBLCLK:
+			pos_x = LOWORD(lParam);
+			pos_y = HIWORD(lParam);
+			
+			if (!floatbar_get_button(floatbar, pos_x, pos_y) && floatbar->wfc->fullscreen_toggle &&
+			    floatbar->wfc->fullscreen)
+				wf_toggle_fullscreen(floatbar->wfc);
+			break;
 
 		case WM_MOUSEMOVE:
-			pos_x = lParam & 0xffff;
-			pos_y = (lParam >> 16) & 0xffff;
+			pos_x = LOWORD(lParam);
+			pos_y = HIWORD(lParam);
 
 			if (!floatbar->locked)
 				floatbar_animation(floatbar, TRUE);
 
 			if (dragging)
 			{
-				floatbar->rect.left = floatbar->rect.left + (lParam & 0xffff) - btn_dwn_x;
+				const int dy = pos_y - btn_dwn_y;
+				const int dy_threshold = floatbar->height * RESTORE_DRAG_BAR_MULTIPLIER;
+
+				if (dy > dy_threshold && floatbar->wfc->fullscreen_toggle &&
+				    floatbar->wfc->fullscreen)
+				{
+					ReleaseCapture();
+					dragging = FALSE;
+					wf_toggle_fullscreen(floatbar->wfc);
+					break;
+				}
+
+				floatbar->rect.left = floatbar->rect.left + pos_x - btn_dwn_x;
 
 				if (floatbar->rect.left < 0)
 					floatbar->rect.left = 0;
@@ -492,6 +516,7 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 					floatbar->rect.left = xScreen - floatbar->width;
 
 				MoveWindow(hWnd, floatbar->rect.left, 0, floatbar->width, floatbar->height, TRUE);
+				break;
 			}
 			else
 			{
@@ -601,7 +626,7 @@ static BOOL floatbar_window_create(wfFloatBar* floatbar)
 
 	x = (rect.right - rect.left - BACKGROUND_W) / 2;
 	wnd_cls.cbSize = sizeof(WNDCLASSEX);
-	wnd_cls.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	wnd_cls.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS;
 	wnd_cls.lpfnWndProc = floatbar_proc;
 	wnd_cls.cbClsExtra = 0;
 	wnd_cls.cbWndExtra = 0;
