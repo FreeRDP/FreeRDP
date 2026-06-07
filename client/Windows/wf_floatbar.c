@@ -52,12 +52,20 @@
 #define BUTTON_HEIGHT 21
 #define BUTTON_SPACING 1
 #define RESTORE_DRAG_BAR_MULTIPLIER 2
+#define RESIZE_GRIP_WIDTH 8
+#define MIN_LABEL_WIDTH 260
 
 #define LOCK_X (BACKGROUND_H + BUTTON_OFFSET)
 #define CLOSE_X ((BACKGROUND_W - (BACKGROUND_H + BUTTON_OFFSET)) - BUTTON_WIDTH)
 #define RESTORE_X (CLOSE_X - (BUTTON_WIDTH + BUTTON_SPACING))
 #define MINIMIZE_X (RESTORE_X - (BUTTON_WIDTH + BUTTON_SPACING))
 #define TEXT_X (BACKGROUND_H + ((BUTTON_WIDTH + BUTTON_SPACING) * 3) + 5)
+#define MIN_FLOATBAR_WIDTH ((TEXT_X * 2) + MIN_LABEL_WIDTH)
+
+#define DRAG_NONE 0
+#define DRAG_MOVE 1
+#define DRAG_RESIZE_LEFT 2
+#define DRAG_RESIZE_RIGHT 3
 
 typedef struct
 {
@@ -339,10 +347,184 @@ static Button* floatbar_get_button(const wfFloatBar* const floatbar, const int x
 	return nullptr;
 }
 
+static Button* floatbar_get_button_by_type(const wfFloatBar* const floatbar, const int type)
+{
+	if (!floatbar)
+		return nullptr;
+
+	for (int i = 0; i < BTN_MAX; i++)
+	{
+		Button* button = floatbar->buttons[i];
+
+		if (button && (button->type == type))
+			return button;
+	}
+
+	return nullptr;
+}
+
+static LONG floatbar_parent_width(const wfFloatBar* const floatbar)
+{
+	RECT rect = WINPR_C_ARRAY_INIT;
+
+	if (!floatbar || !floatbar->parent || !GetWindowRect(floatbar->parent, &rect))
+		return GetSystemMetrics(SM_CXSCREEN);
+
+	return rect.right - rect.left;
+}
+
+static BOOL floatbar_update_layout(wfFloatBar* floatbar)
+{
+	Button* close;
+	Button* minimize;
+	Button* restore;
+
+	if (!floatbar)
+		return FALSE;
+
+	close = floatbar_get_button_by_type(floatbar, BUTTON_CLOSE);
+	restore = floatbar_get_button_by_type(floatbar, BUTTON_RESTORE);
+	minimize = floatbar_get_button_by_type(floatbar, BUTTON_MINIMIZE);
+
+	if (close)
+		close->x = (floatbar->width - (BACKGROUND_H + BUTTON_OFFSET)) - BUTTON_WIDTH;
+
+	if (restore && close)
+		restore->x = close->x - (BUTTON_WIDTH + BUTTON_SPACING);
+
+	if (minimize && restore)
+		minimize->x = restore->x - (BUTTON_WIDTH + BUTTON_SPACING);
+
+	SetRect(&floatbar->textRect, TEXT_X, 0, floatbar->width - TEXT_X, floatbar->height);
+	return TRUE;
+}
+
+static BOOL floatbar_update_region(wfFloatBar* floatbar)
+{
+	HRGN hRgn;
+
+	if (!floatbar || !floatbar->hwnd)
+		return FALSE;
+
+	hRgn = CreateRectRgn(0, 0, floatbar->width, floatbar->height);
+	if (!hRgn)
+		return FALSE;
+
+	if (!SetWindowRgn(floatbar->hwnd, hRgn, TRUE))
+	{
+		DeleteObject(hRgn);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL floatbar_resize(wfFloatBar* floatbar, LONG left, LONG width)
+{
+	LONG parentWidth;
+
+	if (!floatbar)
+		return FALSE;
+
+	parentWidth = floatbar_parent_width(floatbar);
+
+	if (width < MIN_FLOATBAR_WIDTH)
+		width = MIN_FLOATBAR_WIDTH;
+
+	if (width > parentWidth)
+		width = parentWidth;
+
+	if (left < 0)
+	{
+		width += left;
+		left = 0;
+	}
+
+	if (left + width > parentWidth)
+		width = parentWidth - left;
+
+	if (width < MIN_FLOATBAR_WIDTH)
+	{
+		width = MIN_FLOATBAR_WIDTH;
+		left = parentWidth - width;
+
+		if (left < 0)
+			left = 0;
+	}
+
+	floatbar->rect.left = left;
+	floatbar->width = width;
+
+	if (!floatbar_update_layout(floatbar))
+		return FALSE;
+
+	if (!MoveWindow(floatbar->hwnd, floatbar->rect.left,
+	                -WINPR_ASSERTING_INT_CAST(int, floatbar->offset), floatbar->width,
+	                floatbar->height, TRUE))
+	{
+		DWORD err = GetLastError();
+		WLog_ERR(TAG, "MoveWindow failed with %08" PRIx32, err);
+		return FALSE;
+	}
+
+	if (!floatbar_update_region(floatbar))
+		return FALSE;
+
+	InvalidateRect(floatbar->hwnd, nullptr, FALSE);
+	return TRUE;
+}
+
+static int floatbar_get_resize_mode(const wfFloatBar* const floatbar, const int x, const int y)
+{
+	if (!floatbar || (y < 0) || (y > floatbar->height))
+		return DRAG_NONE;
+
+	if (floatbar_get_button(floatbar, x, y))
+		return DRAG_NONE;
+
+	if (x <= RESIZE_GRIP_WIDTH)
+		return DRAG_RESIZE_LEFT;
+
+	if (x >= floatbar->width - RESIZE_GRIP_WIDTH)
+		return DRAG_RESIZE_RIGHT;
+
+	return DRAG_NONE;
+}
+
+static BOOL floatbar_update_hover(wfFloatBar* floatbar, const Button* activeButton)
+{
+	BOOL changed = FALSE;
+
+	if (!floatbar)
+		return FALSE;
+
+	for (int i = 0; i < BTN_MAX; i++)
+	{
+		Button* button = floatbar->buttons[i];
+		const int active = (button == activeButton) ? TRUE : FALSE;
+
+		if (button && (button->active != active))
+		{
+			button->active = active;
+			changed = TRUE;
+		}
+	}
+
+	if (changed)
+	{
+		InvalidateRect(floatbar->hwnd, nullptr, FALSE);
+		UpdateWindow(floatbar->hwnd);
+	}
+
+	return TRUE;
+}
+
 static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 {
 	HPEN hpen;
 	HGDIOBJECT orig;
+	HRGN clipRgn;
+	POINT pt[4];
 	/* paint background */
 	GRADIENT_RECT gradientRect = { 0, 1 };
 	COLORREF rgbTop = RGB(117, 154, 198);
@@ -350,15 +532,40 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 	const int top = 0;
 	int left = 0;
 	int bottom = BACKGROUND_H - 1;
-	int right = BACKGROUND_W - 1;
+	int right = 0;
 	const int angleOffset = BACKGROUND_H - 1;
-	TRIVERTEX triVertext[2] = { { left, top, GetRValue(rgbTop) << 8, GetGValue(rgbTop) << 8,
-		                          GetBValue(rgbTop) << 8, 0x0000 },
-		                        { right, bottom, GetRValue(rgbBottom) << 8,
-		                          GetGValue(rgbBottom) << 8, GetBValue(rgbBottom) << 8, 0x0000 } };
+	TRIVERTEX triVertext[2];
 
 	if (!floatbar)
 		return FALSE;
+
+	right = floatbar->width - 1;
+	pt[0].x = 0;
+	pt[0].y = 0;
+	pt[1].x = floatbar->width;
+	pt[1].y = 0;
+	pt[2].x = floatbar->width - BACKGROUND_H;
+	pt[2].y = BACKGROUND_H;
+	pt[3].x = BACKGROUND_H;
+	pt[3].y = BACKGROUND_H;
+	clipRgn = CreatePolygonRgn(pt, 4, ALTERNATE);
+	if (!clipRgn)
+		return FALSE;
+
+	SelectClipRgn(hdc, clipRgn);
+
+	triVertext[0].x = left;
+	triVertext[0].y = top;
+	triVertext[0].Red = GetRValue(rgbTop) << 8;
+	triVertext[0].Green = GetGValue(rgbTop) << 8;
+	triVertext[0].Blue = GetBValue(rgbTop) << 8;
+	triVertext[0].Alpha = 0x0000;
+	triVertext[1].x = right;
+	triVertext[1].y = bottom;
+	triVertext[1].Red = GetRValue(rgbBottom) << 8;
+	triVertext[1].Green = GetGValue(rgbBottom) << 8;
+	triVertext[1].Blue = GetBValue(rgbBottom) << 8;
+	triVertext[1].Alpha = 0x0000;
 
 	GradientFill(hdc, triVertext, 2, &gradientRect, 1, GRADIENT_FILL_RECT_V);
 	/* paint shadow */
@@ -391,25 +598,32 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 	for (int i = 0; i < BTN_MAX; i++)
 		button_paint(floatbar->buttons[i], hdc);
 
+	SelectClipRgn(hdc, nullptr);
+	DeleteObject(clipRgn);
 	return TRUE;
 }
 
 static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPARAM wParam,
                                       const LPARAM lParam)
 {
-	static int dragging = FALSE;
+	static int drag_mode = DRAG_NONE;
 	static int lbtn_dwn = FALSE;
 	static int btn_dwn_x = 0;
 	static int btn_dwn_y = 0;
+	static int btn_dwn_screen_x = 0;
+	static LONG drag_start_left = 0;
+	static LONG drag_start_width = 0;
 	static wfFloatBar* floatbar;
 	static TRACKMOUSEEVENT tme;
 	PAINTSTRUCT ps;
+	POINT pt;
 	Button* button;
 	HDC hdc;
 	int pos_x;
 	int pos_y;
 	NONCLIENTMETRICS ncm;
-	int xScreen = GetSystemMetrics(SM_CXSCREEN);
+	BOOL was_dragging;
+	int xScreen;
 
 	switch (Msg)
 	{
@@ -419,6 +633,7 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 			GetWindowRect(floatbar->hwnd, &floatbar->rect);
 			floatbar->width = floatbar->rect.right - floatbar->rect.left;
 			floatbar->height = floatbar->rect.bottom - floatbar->rect.top;
+			floatbar_update_layout(floatbar);
 			hdc = GetDC(hWnd);
 			floatbar->hdcmem = CreateCompatibleDC(hdc);
 			ReleaseDC(hWnd, hdc);
@@ -427,8 +642,6 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 			tme.hwndTrack = hWnd;
 			tme.dwHoverTime = HOVER_DEFAULT;
 			// Use caption font, white, draw transparent
-			GetClientRect(hWnd, &floatbar->textRect);
-			InflateRect(&floatbar->textRect, -TEXT_X, 0);
 			SetBkMode(hdc, TRANSPARENT);
 			SetTextColor(hdc, RGB(255, 255, 255));
 			ncm.cbSize = sizeof(NONCLIENTMETRICS);
@@ -443,6 +656,9 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 			EndPaint(hWnd, &ps);
 			break;
 
+		case WM_ERASEBKGND:
+			return TRUE;
+
 		case WM_LBUTTONDOWN:
 			pos_x = LOWORD(lParam);
 			pos_y = HIWORD(lParam);
@@ -450,10 +666,21 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 
 			if (!button)
 			{
+				pt.x = pos_x;
+				pt.y = pos_y;
+				ClientToScreen(hWnd, &pt);
 				SetCapture(hWnd);
-				dragging = TRUE;
+				floatbar_kill_timers(floatbar);
+				drag_mode = floatbar_get_resize_mode(floatbar, pos_x, pos_y);
+				if (drag_mode == DRAG_NONE)
+					drag_mode = DRAG_MOVE;
+				else
+					SetCursor(LoadCursor(nullptr, IDC_SIZEWE));
 				btn_dwn_x = pos_x;
 				btn_dwn_y = pos_y;
+				btn_dwn_screen_x = pt.x;
+				drag_start_left = floatbar->rect.left;
+				drag_start_width = floatbar->width;
 			}
 			else
 				lbtn_dwn = TRUE;
@@ -463,8 +690,11 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 		case WM_LBUTTONUP:
 			pos_x = LOWORD(lParam);
 			pos_y = HIWORD(lParam);
+			was_dragging = drag_mode != DRAG_NONE;
+			drag_mode = DRAG_NONE;
 			ReleaseCapture();
-			dragging = FALSE;
+			if (was_dragging)
+				floatbar_trigger_hide(floatbar);
 
 			if (lbtn_dwn)
 			{
@@ -477,11 +707,11 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 			}
 
 			break;
-		
+
 		case WM_LBUTTONDBLCLK:
 			pos_x = LOWORD(lParam);
 			pos_y = HIWORD(lParam);
-			
+
 			if (!floatbar_get_button(floatbar, pos_x, pos_y) && floatbar->wfc->fullscreen_toggle &&
 			    floatbar->wfc->fullscreen)
 				wf_toggle_fullscreen(floatbar->wfc);
@@ -494,68 +724,100 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 			if (!floatbar->locked)
 				floatbar_animation(floatbar, TRUE);
 
-			if (dragging)
+			if (drag_mode != DRAG_NONE)
 			{
-				const int dy = pos_y - btn_dwn_y;
-				const int dy_threshold = floatbar->height * RESTORE_DRAG_BAR_MULTIPLIER;
+				// Use screen pos during left-side resize to sync new position and avoid jittering.
+				pt.x = pos_x;
+				pt.y = pos_y;
+				ClientToScreen(hWnd, &pt);
 
-				if (dy > dy_threshold && floatbar->wfc->fullscreen_toggle &&
-				    floatbar->wfc->fullscreen)
+				if (drag_mode == DRAG_MOVE)
 				{
-					ReleaseCapture();
-					dragging = FALSE;
-					wf_toggle_fullscreen(floatbar->wfc);
-					break;
+					const int dy = pos_y - btn_dwn_y;
+					const int dy_threshold = floatbar->height * RESTORE_DRAG_BAR_MULTIPLIER;
+
+					if (dy > dy_threshold && floatbar->wfc->fullscreen_toggle &&
+					    floatbar->wfc->fullscreen)
+					{
+						drag_mode = DRAG_NONE;
+						ReleaseCapture();
+						wf_toggle_fullscreen(floatbar->wfc);
+						break;
+					}
+
+					xScreen = floatbar_parent_width(floatbar);
+					floatbar->rect.left = floatbar->rect.left + pos_x - btn_dwn_x;
+
+					if (floatbar->rect.left < 0)
+						floatbar->rect.left = 0;
+					else if (floatbar->rect.left > xScreen - floatbar->width)
+						floatbar->rect.left = xScreen - floatbar->width;
+
+					MoveWindow(hWnd, floatbar->rect.left, 0, floatbar->width, floatbar->height,
+					           TRUE);
 				}
+				else
+				{
+					const int dx = pt.x - btn_dwn_screen_x;
+					LONG left = drag_start_left;
+					LONG width = drag_start_width;
 
-				floatbar->rect.left = floatbar->rect.left + pos_x - btn_dwn_x;
+					if (drag_mode == DRAG_RESIZE_LEFT)
+					{
+						left = drag_start_left + dx;
+						width = drag_start_width - dx;
 
-				if (floatbar->rect.left < 0)
-					floatbar->rect.left = 0;
-				else if (floatbar->rect.left > xScreen - floatbar->width)
-					floatbar->rect.left = xScreen - floatbar->width;
+						if (width < MIN_FLOATBAR_WIDTH)
+						{
+							width = MIN_FLOATBAR_WIDTH;
+							left = drag_start_left + drag_start_width - width;
+						}
+					}
+					else if (drag_mode == DRAG_RESIZE_RIGHT)
+					{
+						width = drag_start_width + dx;
+					}
 
-				MoveWindow(hWnd, floatbar->rect.left, 0, floatbar->width, floatbar->height, TRUE);
+					floatbar_resize(floatbar, left, width);
+				}
 				break;
 			}
 			else
 			{
-				for (int i = 0; i < BTN_MAX; i++)
-				{
-					if (floatbar->buttons[i] != nullptr)
-					{
-						floatbar->buttons[i]->active = FALSE;
-					}
-				}
-
 				button = floatbar_get_button(floatbar, pos_x, pos_y);
-
-				if (button)
-					button->active = TRUE;
-
-				InvalidateRect(hWnd, nullptr, FALSE);
-				UpdateWindow(hWnd);
+				floatbar_update_hover(floatbar, button);
 			}
 
 			TrackMouseEvent(&tme);
 			break;
 
 		case WM_CAPTURECHANGED:
-			dragging = FALSE;
+			if (drag_mode != DRAG_NONE)
+				floatbar_trigger_hide(floatbar);
+
+			drag_mode = DRAG_NONE;
 			break;
+
+		case WM_SETCURSOR:
+			if (LOWORD(lParam) == HTCLIENT)
+			{
+				GetCursorPos(&pt);
+				ScreenToClient(hWnd, &pt);
+
+				if ((drag_mode == DRAG_RESIZE_LEFT) || (drag_mode == DRAG_RESIZE_RIGHT) ||
+				    (floatbar_get_resize_mode(floatbar, pt.x, pt.y) != DRAG_NONE))
+					SetCursor(LoadCursor(nullptr, IDC_SIZEWE));
+				else
+					SetCursor(LoadCursor(nullptr, IDC_ARROW));
+
+				return TRUE;
+			}
+
+			return DefWindowProc(hWnd, Msg, wParam, lParam);
 
 		case WM_MOUSELEAVE:
 		{
-			for (int i = 0; i < BTN_MAX; i++)
-			{
-				if (floatbar->buttons[i] != nullptr)
-				{
-					floatbar->buttons[i]->active = FALSE;
-				}
-			}
-
-			InvalidateRect(hWnd, nullptr, FALSE);
-			UpdateWindow(hWnd);
+			floatbar_update_hover(floatbar, nullptr);
 			floatbar_trigger_hide(floatbar);
 			break;
 		}
@@ -613,8 +875,6 @@ static BOOL floatbar_window_create(wfFloatBar* floatbar)
 {
 	WNDCLASSEX wnd_cls;
 	HWND barWnd;
-	HRGN hRgn;
-	POINT pt[4];
 	RECT rect;
 	LONG x;
 
@@ -645,17 +905,7 @@ static BOOL floatbar_window_create(wfFloatBar* floatbar)
 	if (barWnd == nullptr)
 		return FALSE;
 
-	pt[0].x = 0;
-	pt[0].y = 0;
-	pt[1].x = BACKGROUND_W;
-	pt[1].y = 0;
-	pt[2].x = BACKGROUND_W - BACKGROUND_H;
-	pt[2].y = BACKGROUND_H;
-	pt[3].x = BACKGROUND_H;
-	pt[3].y = BACKGROUND_H;
-	hRgn = CreatePolygonRgn(pt, 4, ALTERNATE);
-	SetWindowRgn(barWnd, hRgn, TRUE);
-	return TRUE;
+	return floatbar_update_region(floatbar);
 }
 
 void wf_floatbar_free(wfFloatBar* floatbar)
