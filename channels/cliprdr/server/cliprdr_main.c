@@ -1216,6 +1216,10 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 			return ERROR_INVALID_DATA;
 
 		const UINT error = cliprdr_server_receive_pdu(context, s, &cliprdr->header);
+		Stream_ResetPosition(s);
+		if (!Stream_SetLength(s, Stream_Capacity(s)))
+			return ERROR_INTERNAL_ERROR;
+
 		cliprdr->totalExpectedBytes = 0;
 
 		const CLIPRDR_HEADER empty = WINPR_C_ARRAY_INIT;
