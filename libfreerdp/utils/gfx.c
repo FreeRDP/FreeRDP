@@ -22,38 +22,42 @@
 #include <freerdp/utils/gfx.h>
 #include <freerdp/channels/rdpgfx.h>
 
-static const char* RDPGFX_CMDID_STRINGS[] = { "RDPGFX_CMDID_UNUSED_0000",
-	                                          "RDPGFX_CMDID_WIRETOSURFACE_1",
-	                                          "RDPGFX_CMDID_WIRETOSURFACE_2",
-	                                          "RDPGFX_CMDID_DELETEENCODINGCONTEXT",
-	                                          "RDPGFX_CMDID_SOLIDFILL",
-	                                          "RDPGFX_CMDID_SURFACETOSURFACE",
-	                                          "RDPGFX_CMDID_SURFACETOCACHE",
-	                                          "RDPGFX_CMDID_CACHETOSURFACE",
-	                                          "RDPGFX_CMDID_EVICTCACHEENTRY",
-	                                          "RDPGFX_CMDID_CREATESURFACE",
-	                                          "RDPGFX_CMDID_DELETESURFACE",
-	                                          "RDPGFX_CMDID_STARTFRAME",
-	                                          "RDPGFX_CMDID_ENDFRAME",
-	                                          "RDPGFX_CMDID_FRAMEACKNOWLEDGE",
-	                                          "RDPGFX_CMDID_RESETGRAPHICS",
-	                                          "RDPGFX_CMDID_MAPSURFACETOOUTPUT",
-	                                          "RDPGFX_CMDID_CACHEIMPORTOFFER",
-	                                          "RDPGFX_CMDID_CACHEIMPORTREPLY",
-	                                          "RDPGFX_CMDID_CAPSADVERTISE",
-	                                          "RDPGFX_CMDID_CAPSCONFIRM",
-	                                          "RDPGFX_CMDID_UNUSED_0014",
-	                                          "RDPGFX_CMDID_MAPSURFACETOWINDOW",
-	                                          "RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE",
-	                                          "RDPGFX_CMDID_MAPSURFACETOSCALEDOUTPUT",
-	                                          "RDPGFX_CMDID_MAPSURFACETOSCALEDWINDOW" };
-
 const char* rdpgfx_get_cmd_id_string(UINT16 cmdId)
 {
-	if (cmdId <= RDPGFX_CMDID_MAPSURFACETOSCALEDWINDOW)
-		return RDPGFX_CMDID_STRINGS[cmdId];
-	else
-		return "RDPGFX_CMDID_UNKNOWN";
+#define EVCASE(x) \
+	case x:       \
+		return #x
+	switch (cmdId)
+	{
+		EVCASE(RDPGFX_CMDID_UNUSED_0000);
+		EVCASE(RDPGFX_CMDID_WIRETOSURFACE_1);
+		EVCASE(RDPGFX_CMDID_WIRETOSURFACE_2);
+		EVCASE(RDPGFX_CMDID_DELETEENCODINGCONTEXT);
+		EVCASE(RDPGFX_CMDID_SOLIDFILL);
+		EVCASE(RDPGFX_CMDID_SURFACETOSURFACE);
+		EVCASE(RDPGFX_CMDID_SURFACETOCACHE);
+		EVCASE(RDPGFX_CMDID_CACHETOSURFACE);
+		EVCASE(RDPGFX_CMDID_EVICTCACHEENTRY);
+		EVCASE(RDPGFX_CMDID_CREATESURFACE);
+		EVCASE(RDPGFX_CMDID_DELETESURFACE);
+		EVCASE(RDPGFX_CMDID_STARTFRAME);
+		EVCASE(RDPGFX_CMDID_ENDFRAME);
+		EVCASE(RDPGFX_CMDID_FRAMEACKNOWLEDGE);
+		EVCASE(RDPGFX_CMDID_RESETGRAPHICS);
+		EVCASE(RDPGFX_CMDID_MAPSURFACETOOUTPUT);
+		EVCASE(RDPGFX_CMDID_CACHEIMPORTOFFER);
+		EVCASE(RDPGFX_CMDID_CACHEIMPORTREPLY);
+		EVCASE(RDPGFX_CMDID_CAPSADVERTISE);
+		EVCASE(RDPGFX_CMDID_CAPSCONFIRM);
+		EVCASE(RDPGFX_CMDID_UNUSED_0014);
+		EVCASE(RDPGFX_CMDID_MAPSURFACETOWINDOW);
+		EVCASE(RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE);
+		EVCASE(RDPGFX_CMDID_MAPSURFACETOSCALEDOUTPUT);
+		EVCASE(RDPGFX_CMDID_MAPSURFACETOSCALEDWINDOW);
+		default:
+			return "RDPGFX_CMDID_UNKNOWN";
+	}
+#undef EVCASE
 }
 
 const char* rdpgfx_get_codec_id_string(UINT16 codecId)
