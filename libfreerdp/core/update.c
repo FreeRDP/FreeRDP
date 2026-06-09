@@ -48,6 +48,99 @@
 
 #define FORCE_ASYNC_UPDATE_OFF
 
+#define RDP_STATS_COUNT sizeof(rdp_stats) / sizeof(uint64_t)
+#define bufferlen 64
+
+static INIT_ONCE stats_names_once = INIT_ONCE_STATIC_INIT;
+static char stats_names[RDP_STATS_COUNT][bufferlen];
+
+static BOOL stats_names_generate(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
+                                 WINPR_ATTR_UNUSED PVOID Parameter,
+                                 WINPR_ATTR_UNUSED PVOID* Context)
+{
+
+	for (size_t index = 0; index < RDP_STATS_COUNT; index++)
+	{
+		char* buffer = stats_names[index];
+
+		const rdp_stats stats = WINPR_C_ARRAY_INIT;
+		size_t limit = ARRAYSIZE(stats.primary);
+		size_t offset = 0;
+		if (index < limit)
+		{
+			(void)primary_order_string(WINPR_ASSERTING_INT_CAST(UINT32, index), buffer, bufferlen);
+			WINPR_ASSERT(strnlen(buffer, 2) > 0);
+			continue;
+		}
+
+		offset = limit;
+		limit += ARRAYSIZE(stats.secondary);
+		if (index < limit)
+		{
+			(void)secondary_order_string(WINPR_ASSERTING_INT_CAST(UINT32, index - offset), buffer,
+			                             bufferlen);
+			WINPR_ASSERT(strnlen(buffer, 2) > 0);
+			continue;
+		}
+
+		offset = limit;
+		limit += ARRAYSIZE(stats.altsec);
+		if (index < limit)
+		{
+			(void)altsec_order_string(WINPR_ASSERTING_INT_CAST(BYTE, index - offset), buffer,
+			                          bufferlen);
+			WINPR_ASSERT(strnlen(buffer, 2) > 0);
+			continue;
+		}
+
+		offset = limit;
+		limit += ARRAYSIZE(stats.base);
+		if (index < limit)
+		{
+#define EVCASE(x)                                     \
+	case x:                                           \
+		(void)_snprintf(buffer, bufferlen, "%s", #x); \
+		break
+
+			switch (index - offset)
+			{
+				EVCASE(RDP_STATS_SURFACE_BITS);
+				EVCASE(RDP_STATS_SURFACE_BITS_NSC);
+				EVCASE(RDP_STATS_SURFACE_BITS_RFX);
+				EVCASE(RDP_STATS_SURFACE_BITS_RFX_IMAGE);
+				EVCASE(RDP_STATS_SURFACE_BITS_NONE);
+				EVCASE(RDP_STATS_SURFACE_BITS_UNKNOWN);
+				EVCASE(RDP_STATS_BEGIN_PAINT);
+				EVCASE(RDP_STATS_END_PAINT);
+				EVCASE(RDP_STATS_SET_BOUNDS);
+				EVCASE(RDP_STATS_SYNC);
+				EVCASE(RDP_STATS_RESIZE);
+				EVCASE(RDP_STATS_BITMAP_UPDATE);
+				EVCASE(RDP_STATS_PALETTE);
+				EVCASE(RDP_STATS_REFRESH_RECT);
+				EVCASE(RDP_STATS_SUPPRESS_OUTPUT);
+				EVCASE(RDP_STATS_SURFACE_COMMAND);
+				EVCASE(RDP_STATS_SURFACE_FRAME_MARKER);
+				EVCASE(RDP_STATS_SURFACE_FRAME_ACK);
+				EVCASE(RDP_STATS_POINTER_SYSTEM);
+				EVCASE(RDP_STATS_POINTER_DEFAULT);
+				EVCASE(RDP_STATS_POINTER_POSITION);
+				EVCASE(RDP_STATS_POINTER_COLOR);
+				EVCASE(RDP_STATS_POINTER_CACHED);
+				EVCASE(RDP_STATS_POINTER_NEW);
+				EVCASE(RDP_STATS_POINTER_LARGE);
+				default:
+					(void)_snprintf(buffer, bufferlen, "RDP_STATS_UNUSED");
+					break;
+			}
+#undef EVCASE
+		}
+		else
+			(void)_snprintf(buffer, bufferlen, "RDP_STATS_UNUSED");
+	}
+
+	return TRUE;
+}
 static const char* const UPDATE_TYPE_STRINGS[] = { "Orders", "Bitmap", "Palette", "Synchronize" };
 
 static const char* update_type_to_string(UINT16 updateType)
@@ -870,6 +963,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 				goto fail;
 			}
 
+			up->stats.base[RDP_STATS_BITMAP_UPDATE]++;
 			rc = IFCALLRESULT(FALSE, update->BitmapUpdate, context, bitmap_update);
 			free_bitmap_update(context, bitmap_update);
 		}
@@ -885,6 +979,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 				goto fail;
 			}
 
+			up->stats.base[RDP_STATS_PALETTE]++;
 			rc = IFCALLRESULT(FALSE, update->Palette, context, palette_update);
 			free_palette_update(context, palette_update);
 		}
@@ -893,6 +988,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 		case UPDATE_TYPE_SYNCHRONIZE:
 			if (!update_read_synchronize(update, s))
 				goto fail;
+			up->stats.base[RDP_STATS_SYNC]++;
 			rc = IFCALLRESULT(TRUE, update->Synchronize, context);
 			break;
 
@@ -3476,6 +3572,7 @@ BOOL update_begin_paint(rdpUpdate* update)
 
 	WINPR_ASSERT(update->context);
 
+	up->stats.base[RDP_STATS_BEGIN_PAINT]++;
 	BOOL rc = IFCALLRESULT(TRUE, update->BeginPaint, update->context);
 	if (!rc)
 		WLog_WARN(TAG, "BeginPaint call failed");
@@ -3500,14 +3597,15 @@ BOOL update_begin_paint(rdpUpdate* update)
 
 BOOL update_end_paint(rdpUpdate* update)
 {
+	rdp_update_internal* up = update_cast(update);
 	BOOL rc = TRUE;
 
 	WINPR_ASSERT(update);
+	up->stats.base[RDP_STATS_END_PAINT]++;
+
 	IFCALLRET(update->EndPaint, rc, update->context);
 	if (!rc)
 		WLog_WARN(TAG, "EndPaint call failed");
-
-	rdp_update_internal* up = update_cast(update);
 
 	if (!up->withinBeginEndPaint)
 		return rc;
@@ -3515,4 +3613,66 @@ BOOL update_end_paint(rdpUpdate* update)
 
 	rdp_update_unlock(update);
 	return rc;
+}
+
+uint64_t rdp_stats_value_for_index(rdpUpdate* context, size_t index)
+{
+	rdp_update_internal* up = update_cast(context);
+	WINPR_ASSERT(up);
+
+	size_t limit = ARRAYSIZE(up->stats.primary);
+	size_t offset = 0;
+	if (index < limit)
+		return up->stats.primary[index];
+
+	offset = limit;
+	limit += ARRAYSIZE(up->stats.secondary);
+	if (index < limit)
+		return up->stats.secondary[index - offset];
+
+	offset = limit;
+	limit += ARRAYSIZE(up->stats.altsec);
+	if (index < limit)
+		return up->stats.altsec[index - offset];
+
+	offset = limit;
+	limit += ARRAYSIZE(up->stats.base);
+	if (index < limit)
+		return up->stats.base[index - offset];
+
+	return 0;
+}
+
+const char* rdp_stats_name_for_index(size_t index)
+{
+	if (!InitOnceExecuteOnce(&stats_names_once, stats_names_generate, nullptr, nullptr))
+		return "RDP_STATS_UNUSED";
+	if (index < rdp_stats_max_index())
+		return stats_names[index];
+	return "RDP_STATS_UNUSED";
+}
+
+size_t rdp_stats_max_index(void)
+{
+	return RDP_STATS_COUNT;
+}
+
+void update_dump_stats(rdpUpdate* update)
+{
+	rdp_update_internal* up = update_cast(update);
+	WINPR_ASSERT(up);
+
+	wLog* log = up->log;
+	const DWORD level = WLOG_TRACE;
+	if (!WLog_IsLevelActive(log, level))
+		return;
+
+	WLog_Print(log, level, "RdpCodecStats");
+	for (size_t x = 0; x < rdp_stats_max_index(); x++)
+	{
+		const char* name = rdp_stats_name_for_index(x);
+		const uint64_t val = rdp_stats_value_for_index(update, x);
+		WINPR_ASSERT(name && strnlen(name, 2) > 0);
+		WLog_Print(log, level, "%s: %" PRIu64, name, val);
+	}
 }

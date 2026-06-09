@@ -243,6 +243,33 @@ extern "C"
 	FREERDP_API void rdp_update_lock(rdpUpdate* update);
 	FREERDP_API void rdp_update_unlock(rdpUpdate* update);
 
+	/** @brief Get the number of RDP codec stats indices in use.
+	 *
+	 *  @return The number of RDP codec stats indices that will return a value
+	 *  @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API size_t rdp_stats_max_index(void);
+
+	/** @brief Get the name of a RDP codec stats index.
+	 *
+	 *  @param index The index to query
+	 *  @return The name of the stats index or RDP_STATS_UNUSED if an invalid index is used
+	 *  @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* rdp_stats_name_for_index(size_t index);
+
+	/** @brief Get the value of a RDP codec stats index.
+	 *
+	 *  @param context The RDP codec context to query. Must not be nullptr.
+	 *  @param index The index to query
+	 *  @return The value of a RDP codec stats index
+	 *  @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API uint64_t rdp_stats_value_for_index(rdpUpdate* context, size_t index);
+
 #ifdef __cplusplus
 }
 #endif

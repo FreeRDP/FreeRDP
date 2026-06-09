@@ -129,8 +129,11 @@ static BOOL update_recv_surfcmd_is_rect_valid(const rdpContext* context,
 
 static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT16 cmdType)
 {
+	rdp_update_internal* up = update_cast(update);
 	BOOL rc = FALSE;
 	SURFACE_BITS_COMMAND cmd = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(up);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		goto fail;
@@ -146,6 +149,26 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT
 
 	if (!update_recv_surfcmd_bitmap_ex(s, &cmd.bmp))
 		goto fail;
+
+	up->stats.base[RDP_STATS_SURFACE_BITS]++;
+	switch (cmd.bmp.codecID)
+	{
+		case RDP_CODEC_ID_REMOTEFX:
+			up->stats.base[RDP_STATS_SURFACE_BITS_RFX]++;
+			break;
+		case RDP_CODEC_ID_IMAGE_REMOTEFX:
+			up->stats.base[RDP_STATS_SURFACE_BITS_RFX_IMAGE]++;
+			break;
+		case RDP_CODEC_ID_NSCODEC:
+			up->stats.base[RDP_STATS_SURFACE_BITS_NSC]++;
+			break;
+		case RDP_CODEC_ID_NONE:
+			up->stats.base[RDP_STATS_SURFACE_BITS_NONE]++;
+			break;
+		default:
+			up->stats.base[RDP_STATS_SURFACE_BITS_UNKNOWN]++;
+			break;
+	}
 
 	if (!IFCALLRESULT(TRUE, update->SurfaceBits, update->context, &cmd))
 	{
@@ -218,10 +241,10 @@ BOOL update_recv_surfcmds(rdpUpdate* update, wStream* s)
 			case CMDTYPE_STREAM_SURFACE_BITS:
 				if (!update_recv_surfcmd_surface_bits(update, s, cmdType))
 					return FALSE;
-
 				break;
 
 			case CMDTYPE_FRAME_MARKER:
+				up->stats.base[RDP_STATS_SURFACE_FRAME_MARKER]++;
 				if (!update_recv_surfcmd_frame_marker(update, s))
 					return FALSE;
 

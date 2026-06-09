@@ -2218,6 +2218,8 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wSt
 		WLog_DBG(TAG, "new size %" PRIu32 "x%" PRIu32, rdp->settings->DesktopWidth,
 		         rdp->settings->DesktopHeight);
 
+		rdp_update_internal* up = update_cast(rdp->update);
+		up->stats.base[RDP_STATS_RESIZE]++;
 		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
 
 		if (!status)
