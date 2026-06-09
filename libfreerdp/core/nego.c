@@ -902,7 +902,7 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	if (remain < 15)
 		return TRUE;
 
-	if (memcmp(Stream_ConstPointer(s), "Cookie: mstshash=", 17) != 0)
+	if ((remain < 17) || (memcmp(Stream_ConstPointer(s), "Cookie: mstshash=", 17) != 0))
 	{
 		if (memcmp(Stream_ConstPointer(s), "Cookie: msts=", 13) != 0)
 		{
