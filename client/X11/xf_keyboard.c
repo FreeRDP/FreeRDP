@@ -1340,6 +1340,7 @@ static int xk_keyboard_get_modifier_keys(xfContext* xfc, XF_MODIFIER_KEYS* mod)
 BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 {
 	XF_MODIFIER_KEYS mod = WINPR_C_ARRAY_INIT;
+	xk_keyboard_update_modifier_keys(xfc);
 	xk_keyboard_get_modifier_keys(xfc, &mod);
 
 	// remember state of RightCtrl to ungrab keyboard if next action is release of RightCtrl
