@@ -559,17 +559,21 @@ static DWORD get_scancodes(DWORD vkcode, const DWORD* array, size_t arraysize, D
 	DWORD count = 0;
 
 	DWORD sc = 0;
+	const BOOL nobuffer = ScanCodeBufferSize == 0;
 	do
 	{
 		sc = get_scancode(offset, vkcode, array, arraysize, flag);
 		if (sc != 0)
 		{
-			if (count < ScanCodeBufferSize)
-				pdwScanCodeBuffer[count] = sc;
+			if (!nobuffer)
+			{
+				if (count < ScanCodeBufferSize)
+					pdwScanCodeBuffer[count] = sc;
+			}
 			count++;
 			offset = (sc & ~flag) + 1;
 		}
-	} while ((sc != 0) && (count < ScanCodeBufferSize));
+	} while ((sc != 0) && ((count < ScanCodeBufferSize) || nobuffer));
 
 	return count;
 }
