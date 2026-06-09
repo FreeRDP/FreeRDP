@@ -145,6 +145,15 @@ extern "C"
 	                                    \ref messageID */
 	DEFINE_EVENT_END(UserNotification)
 
+	DEFINE_EVENT_BEGIN(StateChanged)
+	CONNECTION_STATE oldState; /** @brief Old CONNECTION_STATE value
+	                            * @since version 3.27.0
+	                            */
+	CONNECTION_STATE newState; /** @brief Current CONNECTION_STATE value
+	                            * @since version 3.27.0
+	                            */
+	DEFINE_EVENT_END(StateChanged)
+
 #ifdef __cplusplus
 }
 #endif
