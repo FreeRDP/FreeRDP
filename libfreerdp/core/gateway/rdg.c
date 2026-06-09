@@ -1011,6 +1011,9 @@ static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
 
 	WINPR_ASSERT(rdg);
 
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, 6))
+		return FALSE;
+
 	Stream_Read_INT32(s, errorCode);
 	Stream_Read_UINT16(s, authBlobLen);
 
@@ -1031,6 +1034,9 @@ static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
 		}
 		return FALSE;
 	}
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, authBlobLen))
+		return FALSE;
 
 	authTokenData = malloc(authBlobLen);
 	if (authTokenData == nullptr)
