@@ -908,7 +908,9 @@ extern "C"
 	 *  @param ScanCodeBufferSize The size in scancode count (sizeof(DWORD)) of \ref
 	 * pdwScanCodeBuffer
 	 *
-	 *  @return The number of scancodes mapped to the keycode.
+	 *  @return The number of scancodes mapped to the keycode. Limited to \ref ScanCodeBufferSize.
+	 * Set \ref pdwScanCodeBuffer to nullptr and \ref ScanCodeBufferSize to 0 to get the actual
+	 * amount.
 	 *  @since version 3.27.0
 	 */
 	WINPR_ATTR_NODISCARD
@@ -930,8 +932,15 @@ extern "C"
 
 	/** @brief Returns all keycodes for a virtual keycode
 	 *
-	 *  @param
-	 *  @return
+	 *  @param keycode The virtual keycode to map to a keycode
+	 *  @param type The type of keycode table to look up
+	 *  @param pdwKeyCodeBuffer A pointer to a buffer that can hold the result
+	 *  @param KeyCodeBufferSize The number of elements in \ref pdwKeyCodeBuffer
+	 *
+	 *  @return The number of keycodes mapped to the virtual keycode. This will be at most \ref
+	 * KeyCodeBufferSize. Set \ref pdwKeyCodeBuffer to nullptr and \ref KeyCodeBufferSize to 0 to
+	 * get the actual amount.
+	 *
 	 *  @since version 3.27.0
 	 */
 	WINPR_ATTR_NODISCARD

@@ -923,17 +923,25 @@ WINPR_API DWORD GetKeycodesFromVirtualKeyCode(DWORD keycode, WINPR_KEYCODE_TYPE 
 	DWORD count = 0;
 	DWORD kc = 0;
 	DWORD offset = 0;
+
+	WINPR_ASSERT(pdwKeyCodeBuffer || (KeyCodeBufferSize == 0));
+
+	const BOOL nobuffer = (KeyCodeBufferSize == 0);
 	do
 	{
 		kc = GetKeycodeFromVirtualKeyCodeWithOffset(offset, keycode, type);
 		if (kc != 0)
 		{
-			if (count < KeyCodeBufferSize)
+			if (!nobuffer)
 			{
-				pdwKeyCodeBuffer[count++] = kc;
-				offset = kc + 1;
+				if (count < KeyCodeBufferSize)
+					pdwKeyCodeBuffer[count++] = kc;
 			}
+			else
+				count++;
+
+			offset = kc + 1;
 		}
-	} while ((kc != 0) && (count < KeyCodeBufferSize));
+	} while ((kc != 0) && ((count < KeyCodeBufferSize) || nobuffer));
 	return count;
 }
