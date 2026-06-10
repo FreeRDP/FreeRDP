@@ -91,14 +91,14 @@ uint64_t rdpgfx_stats_value_for_index(RdpgfxClientContext* context, size_t index
 	return 0;
 }
 
-static void rdpgfx_stats_event(RdpgfxClientContext* context, uint32_t index)
+static void rdpgfx_codecid_event(RdpgfxClientContext* context, uint32_t index)
 {
 	if (!context)
 		return;
 	RdpgfxClientContextInt* intCtx = (RdpgfxClientContextInt*)context;
 	WINPR_ASSERT(intCtx);
-	if (index < RDPGFX_CMDID_MAX)
-		intCtx->stats.cntGfxCommandID[index]++;
+	if (index < RDPGFX_CODECID_MAX)
+		intCtx->stats.cntGfxCodecID[index]++;
 	else
 	{
 		RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)context->handle;
@@ -1492,7 +1492,7 @@ UINT logSurfaceCommand(RDPGFX_PLUGIN* gfx, const RDPGFX_SURFACE_COMMAND* cmd)
 		WLog_Print(gfx->base.log, WLOG_ERROR,
 		           "context->SurfaceCommand failed with error %" PRIu32 "", error);
 
-	rdpgfx_stats_cmdid_event(context, cmd->codecId);
+	rdpgfx_codecid_event(context, cmd->codecId);
 	return error;
 }
 
@@ -1509,8 +1509,6 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(GENERIC_CHANNEL_CALLBACK* callback
 	WINPR_ASSERT(callback);
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	WINPR_ASSERT(gfx);
-
-	UINT error = CHANNEL_RC_OK;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(gfx->base.log, s, RDPGFX_WIRE_TO_SURFACE_PDU_2_SIZE))
 		return ERROR_INVALID_DATA;
