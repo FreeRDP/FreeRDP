@@ -946,9 +946,12 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 			const DWORD rdp_scancode =
 			    get_rdp_scancode_from_x11_keycode(xfc, WINPR_ASSERTING_INT_CAST(UINT32, keycode));
 
-			// release tab before releasing the windows key.
-			// this stops the start menu from opening on unfocus event.
-			if (rdp_scancode == RDP_SCANCODE_LWIN)
+			// release tab before releasing modifier keys (Win, Alt).
+			// this stops the start menu from opening or menu bar from
+			// activating on unfocus event.
+			if (rdp_scancode == RDP_SCANCODE_LWIN ||
+			    rdp_scancode == RDP_SCANCODE_LMENU ||
+			    rdp_scancode == RDP_SCANCODE_RMENU)
 				freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE, FALSE,
 				                                     RDP_SCANCODE_TAB);
 
