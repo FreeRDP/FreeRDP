@@ -934,7 +934,22 @@ static DWORD get_rdp_scancode_from_x11_keycode(xfContext* xfc, DWORD keycode)
 	return scancode;
 }
 
-void xf_keyboard_release_all_keypress(xfContext* xfc)
+static BOOL isModifier(DWORD scancode)
+{
+	const DWORD modifiers[] = { RDP_SCANCODE_LWIN,  RDP_SCANCODE_RWIN,     RDP_SCANCODE_LMENU,
+		                        RDP_SCANCODE_RMENU, RDP_SCANCODE_LCONTROL, RDP_SCANCODE_RCONTROL,
+		                        RDP_SCANCODE_APPS };
+
+	for (size_t x = 0; x < ARRAYSIZE(modifiers); x++)
+	{
+		if (modifiers[x] == scancode)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+static void release_keys(xfContext* xfc, BOOL modifiers)
 {
 	WINPR_ASSERT(xfc);
 
@@ -946,17 +961,22 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 			const DWORD rdp_scancode =
 			    get_rdp_scancode_from_x11_keycode(xfc, WINPR_ASSERTING_INT_CAST(UINT32, keycode));
 
-			// release tab before releasing the windows key.
-			// this stops the start menu from opening on unfocus event.
-			if (rdp_scancode == RDP_SCANCODE_LWIN)
-				freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE, FALSE,
-				                                     RDP_SCANCODE_TAB);
-
-			freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE, FALSE,
-			                                     rdp_scancode);
-			xfc->KeyboardState[keycode] = FALSE;
+			if (isModifier(rdp_scancode) == modifiers)
+			{
+				(void)freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE, FALSE,
+				                                           rdp_scancode);
+				xfc->KeyboardState[keycode] = FALSE;
+			}
 		}
 	}
+}
+
+void xf_keyboard_release_all_keypress(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+
+	release_keys(xfc, FALSE);
+	release_keys(xfc, TRUE);
 	xf_sync_kbd_state(xfc);
 }
 
