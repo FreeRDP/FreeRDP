@@ -3680,6 +3680,10 @@ void update_dump_stats(rdpUpdate* update)
 		const char* name = rdp_stats_name_for_index(x);
 		const uint64_t val = rdp_stats_value_for_index(update, x);
 		WINPR_ASSERT(name && strnlen(name, 2) > 0);
-		WLog_Print(log, level, "%s: %" PRIu64, name, val);
+		const bool unknown = strstr(name, " UNKNOWN") != nullptr;
+		const bool unused = strstr(name, "UNUSED") != nullptr;
+		const bool sunused = strcmp("RDP_STATS_UNUSED", name) == 0;
+		if ((val != 0) || (!unknown && !sunused && !unused))
+			WLog_Print(log, level, "%s: %" PRIu64, name, val);
 	}
 }
