@@ -147,6 +147,7 @@ cp %{_sourcedir}/source_version freerdp-nightly-%{version}/.source_version
     -DWITH_PCSC=ON \
     -DWITH_JPEG=ON \
     -DWITH_OPUS=ON \
+    -DWITH_GFX_AZURE=ON \
     -DWITH_OPENH264=ON \
     -DWITH_OPENH264_LOADING=ON \
     -DWITH_INTERNAL_RC4=ON \
