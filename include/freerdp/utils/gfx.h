@@ -45,6 +45,27 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* rdpgfx_get_codec_id_string(UINT16 codecId);
 
+	/**
+	 * @brief Convert a (single) flag of type \ref RDPGFX_CAPS_FLAG to a string
+	 * @note To convert a mask of \ref RDPGFX_CAPS_FLAG values use \ref rdpgfx_caps_flags_str
+	 * @param flag A \ref RDPGFX_CAPS_FLAG value to convert
+	 * @return The string representation of \ref RDPGFX_CAPS_FLAG or \b RDPGFX_CAPS_FLAG_UNKNOWN
+	 * @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* rdpgfx_caps_flag_str(UINT32 flag);
+
+	/**
+	 * @brief Convert a mask of \ref RDPGFX_CAPS_FLAG values to a string
+	 * @param flags The value to convert
+	 * @param buffer A string buffer to write the result to
+	 * @param length The length in bytes of \ref buffer
+	 * @return A pointer to \ref buffer containing the string representation
+	 * @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* rdpgfx_caps_flags_str(UINT32 flags, char* buffer, size_t length);
+
 #ifdef __cplusplus
 }
 #endif
