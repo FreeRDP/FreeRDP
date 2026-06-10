@@ -347,7 +347,7 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 		return FALSE;
 	}
 
-	client_settings = pc->context.settings;
+	client_settings = pc->cctx.context.settings;
 
 	/* keep both sides of the connection in pdata */
 	proxy_data_set_client_context(pdata, pc);
@@ -446,7 +446,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	proxyData* pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 
-	pClientContext* pc = pdata->pc;
+	pClientContext* pc = proxy_data_get_client_context(ps->pdata);
 
 	/*
 	 * client side is not initialized yet, call original callback.
