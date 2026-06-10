@@ -68,7 +68,10 @@ static BOOL stats_names_generate(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
 		size_t offset = 0;
 		if (index < limit)
 		{
-			(void)primary_order_string(WINPR_ASSERTING_INT_CAST(UINT32, index), buffer, bufferlen);
+			const char* str =
+			    primary_order_string(WINPR_ASSERTING_INT_CAST(UINT32, index), buffer, bufferlen);
+			if (!str)
+				return FALSE;
 			WINPR_ASSERT(strnlen(buffer, 2) > 0);
 			continue;
 		}
@@ -77,8 +80,10 @@ static BOOL stats_names_generate(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
 		limit += ARRAYSIZE(stats.secondary);
 		if (index < limit)
 		{
-			(void)secondary_order_string(WINPR_ASSERTING_INT_CAST(UINT32, index - offset), buffer,
-			                             bufferlen);
+			const char* str = secondary_order_string(
+			    WINPR_ASSERTING_INT_CAST(UINT32, index - offset), buffer, bufferlen);
+			if (!str)
+				return FALSE;
 			WINPR_ASSERT(strnlen(buffer, 2) > 0);
 			continue;
 		}
@@ -87,8 +92,10 @@ static BOOL stats_names_generate(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
 		limit += ARRAYSIZE(stats.altsec);
 		if (index < limit)
 		{
-			(void)altsec_order_string(WINPR_ASSERTING_INT_CAST(BYTE, index - offset), buffer,
-			                          bufferlen);
+			const char* str = altsec_order_string(WINPR_ASSERTING_INT_CAST(BYTE, index - offset),
+			                                      buffer, bufferlen);
+			if (!str)
+				return FALSE;
 			WINPR_ASSERT(strnlen(buffer, 2) > 0);
 			continue;
 		}
