@@ -120,7 +120,26 @@ extern "C"
 	WINPR_ATTR_MALLOC(proxy_data_free, 1)
 	FREERDP_API proxyData* proxy_data_new(void);
 	FREERDP_API void proxy_data_set_client_context(proxyData* pdata, pClientContext* context);
+
+	/**
+	 * @brief getter for proxy RDP client context
+	 * @param pdata Pointer to the proxy data structure, must not be nullptr
+	 * @return A pointer to the client context structure or nullptr in case of failure
+	 * @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API pClientContext* proxy_data_get_client_context(proxyData* pdata);
+
 	FREERDP_API void proxy_data_set_server_context(proxyData* pdata, pServerContext* context);
+
+	/**
+	 * @brief getter for proxy RDP server context
+	 * @param pdata Pointer to the proxy data structure, must not be nullptr
+	 * @return A pointer to the server context structure or nullptr in case of failure
+	 * @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API pServerContext* proxy_data_get_server_context(proxyData* pdata);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL proxy_data_shall_disconnect(proxyData* pdata);

@@ -32,7 +32,7 @@
 
 struct p_client_context
 {
-	rdpContext context;
+	rdpClientContext cctx;
 
 	proxyData* pdata;
 

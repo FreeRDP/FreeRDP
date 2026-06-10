@@ -209,15 +209,14 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 		ev.flags = flags;
 		ev.total_size = currentPacketSize;
 
-		pClientContext* pc = pdata->pc;
+		pClientContext* pc = proxy_data_get_client_context(pdata);
 		if (!pc->sendChannelData)
 			return PF_CHANNEL_RESULT_ERROR;
 
-		return pc->sendChannelData(pdata->pc, &ev) ? PF_CHANNEL_RESULT_DROP
-		                                           : PF_CHANNEL_RESULT_ERROR;
+		return pc->sendChannelData(pc, &ev) ? PF_CHANNEL_RESULT_DROP : PF_CHANNEL_RESULT_ERROR;
 	}
 
-	pServerContext* ps = pdata->ps;
+	pServerContext* ps = proxy_data_get_server_context(pdata);
 	r = ps->context.peer->SendChannelPacket(
 	    ps->context.peer, WINPR_ASSERTING_INT_CAST(UINT16, channel->front_channel_id),
 	    currentPacketSize, flags, Stream_Buffer(currentPacket), Stream_GetPosition(currentPacket));

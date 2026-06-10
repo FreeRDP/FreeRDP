@@ -310,7 +310,8 @@ static PfChannelResult DynvcTrackerPeekHandleByMode(ChannelStateTracker* tracker
 		case PF_UTILS_CHANNEL_INTERCEPT:
 			if (trackerState->dataCallback)
 			{
-				result = trackerState->dataCallback(pdata->ps, dynChannel, isBackData, tracker,
+				pServerContext* ps = proxy_data_get_server_context(pdata);
+				result = trackerState->dataCallback(ps, dynChannel, isBackData, tracker,
 				                                    firstPacket, lastPacket);
 			}
 			else
@@ -414,8 +415,8 @@ static PfChannelResult DynvcTrackerHandleCreateBack(ChannelStateTracker* tracker
 	                           pdata, &dev))
 		return PF_CHANNEL_RESULT_DROP; /* Silently drop */
 
-	dynChannel =
-	    DynamicChannelContext_new(dynChannelContext->log, pdata->ps, name, (UINT32)dynChannelId);
+	pServerContext* ps = proxy_data_get_server_context(pdata);
+	dynChannel = DynamicChannelContext_new(dynChannelContext->log, ps, name, (UINT32)dynChannelId);
 	if (!dynChannel)
 	{
 		DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd, isBackData,

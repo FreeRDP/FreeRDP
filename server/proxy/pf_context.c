@@ -375,8 +375,14 @@ void proxy_data_set_client_context(proxyData* pdata, pClientContext* context)
 {
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(context);
-	pdata->pc = context;
+	pdata->pc = (rdpContext*)context;
 	context->pdata = pdata;
+}
+
+pClientContext* proxy_data_get_client_context(proxyData* pdata)
+{
+	WINPR_ASSERT(pdata);
+	return (pClientContext*)pdata->pc;
 }
 
 /* updates circular pointers between proxyData and pServerContext instances */
@@ -384,8 +390,14 @@ void proxy_data_set_server_context(proxyData* pdata, pServerContext* context)
 {
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(context);
-	pdata->ps = context;
+	pdata->ps = (rdpContext*)context;
 	context->pdata = pdata;
+}
+
+pServerContext* proxy_data_get_server_context(proxyData* pdata)
+{
+	WINPR_ASSERT(pdata);
+	return (pServerContext*)pdata->ps;
 }
 
 void proxy_data_free(proxyData* pdata)
@@ -416,8 +428,10 @@ void proxy_data_abort_connect(proxyData* pdata)
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(pdata->abort_event);
 	(void)SetEvent(pdata->abort_event);
-	if (pdata->pc)
-		freerdp_abort_connect_context(pdata->pc);
+
+	pClientContext* pc = proxy_data_get_client_context(pdata);
+	if (pc)
+		freerdp_abort_connect_context(&pc->cctx.context);
 }
 
 BOOL proxy_data_shall_disconnect(proxyData* pdata)
