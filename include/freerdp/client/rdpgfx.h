@@ -180,8 +180,34 @@ extern "C"
 	FREERDP_API void rdpgfx_client_context_free(RdpgfxClientContext* context);
 
 	WINPR_ATTR_MALLOC(rdpgfx_client_context_free, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_API RdpgfxClientContext* rdpgfx_client_context_new(rdpContext* context);
+
+	/** @brief Get the number of GFX stats indices in use.
+	 *
+	 *  @return The number of GFX stats indices that will return a value
+	 *  @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API size_t rdpgfx_stats_max_index(void);
+
+	/** @brief Get the name of a GFX stats index.
+	 *
+	 *  @param index The index to query
+	 *  @return The name of the stats index or RDPGFX_STATS_UNUSED if an invalid index is used
+	 *  @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* rdpgfx_stats_name_for_index(size_t index);
+
+	/** @brief Get the value of a GFX stats index.
+	 *
+	 *  @param context The GFX context to query. Must not be nullptr.
+	 *  @param index The index to query
+	 *  @return The value of a GFX stats index
+	 *  @since version 3.27.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API uint64_t rdpgfx_stats_value_for_index(RdpgfxClientContext* context, size_t index);
 
 #ifdef __cplusplus
 }

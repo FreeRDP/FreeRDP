@@ -643,6 +643,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 	if (up)
 	{
+		update_dump_stats(rdp->update);
 		if (up->pcap_rfx)
 		{
 			up->dump_rfx = FALSE;

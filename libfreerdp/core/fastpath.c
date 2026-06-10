@@ -281,6 +281,7 @@ static BOOL fastpath_recv_update_common(rdpUpdate* update, wStream* s)
 	UINT16 updateType = 0;
 	BOOL defaultReturn = 0;
 
+	rdp_update_internal* up = update_cast(update);
 	if (!s)
 		return FALSE;
 
@@ -304,6 +305,7 @@ static BOOL fastpath_recv_update_common(rdpUpdate* update, wStream* s)
 			if (!bitmap_update)
 				return FALSE;
 
+			up->stats.base[RDP_STATS_BITMAP_UPDATE]++;
 			rc = IFCALLRESULT(defaultReturn, update->BitmapUpdate, context, bitmap_update);
 			free_bitmap_update(context, bitmap_update);
 		}
@@ -316,6 +318,7 @@ static BOOL fastpath_recv_update_common(rdpUpdate* update, wStream* s)
 			if (!palette_update)
 				return FALSE;
 
+			up->stats.base[RDP_STATS_PALETTE]++;
 			rc = IFCALLRESULT(defaultReturn, update->Palette, context, palette_update);
 			free_palette_update(context, palette_update);
 		}
@@ -369,6 +372,8 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 	if (!update || !update->pointer || !update->context)
 		return -1;
 
+	rdp_update_internal* up = update_cast(update);
+
 	rdpContext* context = update->context;
 	WINPR_ASSERT(context);
 
@@ -397,7 +402,10 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 			if (!fastpath_recv_update_synchronize(fastpath, s))
 				WLog_ERR(TAG, "fastpath_recv_update_synchronize failure but we continue");
 			else
+			{
+				up->stats.base[RDP_STATS_SYNC]++;
 				rc = IFCALLRESULT(TRUE, update->Synchronize, context);
+			}
 
 			break;
 
@@ -410,6 +418,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 		{
 			POINTER_SYSTEM_UPDATE pointer_system = WINPR_C_ARRAY_INIT;
 			pointer_system.type = SYSPTR_NULL;
+			up->stats.base[RDP_STATS_POINTER_SYSTEM]++;
 			rc = IFCALLRESULT(defaultReturn, pointer->PointerSystem, context, &pointer_system);
 		}
 		break;
@@ -418,6 +427,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 		{
 			POINTER_SYSTEM_UPDATE pointer_system = WINPR_C_ARRAY_INIT;
 			pointer_system.type = SYSPTR_DEFAULT;
+			up->stats.base[RDP_STATS_POINTER_DEFAULT]++;
 			rc = IFCALLRESULT(defaultReturn, pointer->PointerSystem, context, &pointer_system);
 		}
 		break;
@@ -428,6 +438,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 			if (pointer_position)
 			{
+				up->stats.base[RDP_STATS_POINTER_POSITION]++;
 				rc = IFCALLRESULT(defaultReturn, pointer->PointerPosition, context,
 				                  pointer_position);
 				free_pointer_position_update(context, pointer_position);
@@ -441,6 +452,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 			if (pointer_color)
 			{
+				up->stats.base[RDP_STATS_POINTER_COLOR]++;
 				rc = IFCALLRESULT(defaultReturn, pointer->PointerColor, context, pointer_color);
 				free_pointer_color_update(context, pointer_color);
 			}
@@ -453,6 +465,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 			if (pointer_cached)
 			{
+				up->stats.base[RDP_STATS_POINTER_CACHED]++;
 				rc = IFCALLRESULT(defaultReturn, pointer->PointerCached, context, pointer_cached);
 				free_pointer_cached_update(context, pointer_cached);
 			}
@@ -465,6 +478,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 			if (pointer_new)
 			{
+				up->stats.base[RDP_STATS_POINTER_NEW]++;
 				rc = IFCALLRESULT(defaultReturn, pointer->PointerNew, context, pointer_new);
 				free_pointer_new_update(context, pointer_new);
 			}
@@ -477,6 +491,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 			if (pointer_large)
 			{
+				up->stats.base[RDP_STATS_POINTER_LARGE]++;
 				rc = IFCALLRESULT(defaultReturn, pointer->PointerLarge, context, pointer_large);
 				free_pointer_large_update(context, pointer_large);
 			}

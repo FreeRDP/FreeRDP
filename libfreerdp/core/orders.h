@@ -335,4 +335,13 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_write_switch_surface_order(wStream* s,
                                                      const SWITCH_SURFACE_ORDER* switch_surface);
 
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL const char* primary_order_string(UINT32 orderType, char* buffer, size_t len);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL const char* secondary_order_string(UINT32 orderType, char* buffer, size_t len);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL const char* altsec_order_string(BYTE orderType, char* buffer, size_t len);
+
 #endif /* FREERDP_LIB_CORE_ORDERS_H */

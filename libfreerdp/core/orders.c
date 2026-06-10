@@ -513,7 +513,7 @@ static BOOL check_primary_order_supported(wLog* log, const rdpSettings* settings
 
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_FORMAT_NONLITERAL
-static const char* primary_order_string(UINT32 orderType)
+const char* primary_order_string(UINT32 orderType, char* buffer, size_t len)
 {
 	const char* orders[] = { "[0x%02" PRIx8 "] DstBlt",
 		                     "[0x%02" PRIx8 "] PatBlt",
@@ -544,15 +544,15 @@ static const char* primary_order_string(UINT32 orderType)
 		                     "[0x%02" PRIx8 "] EllipseCB",
 		                     "[0x%02" PRIx8 "] GlyphIndex" };
 	const char* fmt = "[0x%02" PRIx8 "] UNKNOWN";
-	static char buffer[64] = WINPR_C_ARRAY_INIT;
 
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
 
-	(void)sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	(void)sprintf_s(buffer, len, fmt, orderType);
 	return buffer;
 }
-static const char* secondary_order_string(UINT32 orderType)
+
+const char* secondary_order_string(UINT32 orderType, char* buffer, size_t len)
 {
 	const char* orders[] = { "[0x%02" PRIx8 "] Cache Bitmap",
 		                     "[0x%02" PRIx8 "] Cache Color Table",
@@ -564,15 +564,15 @@ static const char* secondary_order_string(UINT32 orderType)
 		                     "[0x%02" PRIx8 "] Cache Brush",
 		                     "[0x%02" PRIx8 "] Cache Bitmap V3" };
 	const char* fmt = "[0x%02" PRIx8 "] UNKNOWN";
-	static char buffer[64] = WINPR_C_ARRAY_INIT;
 
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
 
-	(void)sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	(void)sprintf_s(buffer, len, fmt, orderType);
 	return buffer;
 }
-static const char* altsec_order_string(BYTE orderType)
+
+const char* altsec_order_string(BYTE orderType, char* buffer, size_t len)
 {
 	const char* orders[] = {
 		"[0x%02" PRIx8 "] Switch Surface",         "[0x%02" PRIx8 "] Create Offscreen Bitmap",
@@ -584,12 +584,11 @@ static const char* altsec_order_string(BYTE orderType)
 		"[0x%02" PRIx8 "] Desktop Composition",    "[0x%02" PRIx8 "] Frame Marker"
 	};
 	const char* fmt = "[0x%02" PRIx8 "] UNKNOWN";
-	static char buffer[64] = WINPR_C_ARRAY_INIT;
 
 	if (orderType < ARRAYSIZE(orders))
 		fmt = orders[orderType];
 
-	(void)sprintf_s(buffer, ARRAYSIZE(buffer), fmt, orderType);
+	(void)sprintf_s(buffer, len, fmt, orderType);
 	return buffer;
 }
 WINPR_PRAGMA_DIAG_POP
@@ -3818,7 +3817,9 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 		Stream_Read_UINT8(s, orderInfo->orderType); /* orderType (1 byte) */
 	}
 
-	const char* orderName = primary_order_string(orderInfo->orderType);
+	up->stats.primary[orderInfo->orderType]++;
+	char buffer[64] = WINPR_C_ARRAY_INIT;
+	const char* orderName = primary_order_string(orderInfo->orderType, buffer, sizeof(buffer));
 	WLog_Print(up->log, WLOG_DEBUG, "%s %s", primary_order_str, orderName);
 
 	if (!check_primary_order_supported(up->log, settings, orderInfo->orderType, orderName))
@@ -4097,8 +4098,12 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, WINPR_ATT
 	Stream_Read_UINT8(s, orderType);   /* orderType (1 byte) */
 
 	start = Stream_GetPosition(s);
-	name = secondary_order_string(orderType);
+
+	char buffer[64] = WINPR_C_ARRAY_INIT;
+	name = secondary_order_string(orderType, buffer, sizeof(buffer));
 	WLog_Print(up->log, WLOG_DEBUG, "%s %s", secondary_order_str, name);
+
+	up->stats.secondary[orderType]++;
 	rc = IFCALLRESULT(TRUE, secondary->CacheOrderInfo, context, orderLength, extraFlags, orderType,
 	                  name);
 	if (!rc)
@@ -4333,8 +4338,9 @@ static BOOL read_altsec_order(wLog* log, wStream* s, BYTE orderType, rdpAltSecUp
 
 	if (!rc)
 	{
+		char buffer[64] = WINPR_C_ARRAY_INIT;
 		WLog_Print(log, WLOG_ERROR, "Read %s %s failed", alt_sec_order_str,
-		           altsec_order_string(orderType));
+		           altsec_order_string(orderType, buffer, sizeof(buffer)));
 	}
 
 	return rc;
@@ -4348,13 +4354,17 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 	rdpContext* context = update->context;
 	rdpSettings* settings = context->settings;
 	rdp_altsec_update_internal* altsec = altsec_update_cast(update->altsec);
-	const char* orderName = altsec_order_string(orderType);
+
+	char buffer[64] = WINPR_C_ARRAY_INIT;
+	const char* orderName = altsec_order_string(orderType, buffer, sizeof(buffer));
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(settings);
 
 	WLog_Print(up->log, WLOG_DEBUG, "%s %s", alt_sec_order_str, orderName);
+
+	up->stats.altsec[orderType]++;
 
 	rc = IFCALLRESULT(TRUE, altsec->common.DrawOrderInfo, context, orderType, orderName);
 	if (!rc)
