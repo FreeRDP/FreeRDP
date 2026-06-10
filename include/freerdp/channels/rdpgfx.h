@@ -101,26 +101,33 @@ typedef struct
 /**
  * Capability Sets [MS-RDPEGFX] 2.2.3
  */
+typedef enum
+{
 #if defined(WITH_GFX_AV1)
-#define RDPGFX_CAPVERSION_FRDP_1 0x00010000 /* Custom capversion for FreeRDP extensions */
+	RDPGFX_CAPVERSION_FRDP_1 = 0x00010000u, /**< Custom capversion for FreeRDP extensions */
 #endif
-
-#define RDPGFX_CAPVERSION_8 0x00080004   /** [MS-RDPEGFX] 2.2.3.1 */
-#define RDPGFX_CAPVERSION_81 0x00080105  /** [MS-RDPEGFX] 2.2.3.2 */
-#define RDPGFX_CAPVERSION_10 0x000A0002  /** [MS-RDPEGFX] 2.2.3.3 */
-#define RDPGFX_CAPVERSION_101 0x000A0100 /** [MS-RDPEGFX] 2.2.3.4 */
-#define RDPGFX_CAPVERSION_102 0x000A0200 /** [MS-RDPEGFX] 2.2.3.5 */
-#define RDPGFX_CAPVERSION_103 0x000A0301 /** [MS-RDPEGFX] 2.2.3.6 */
-#define RDPGFX_CAPVERSION_104 0x000A0400 /** [MS-RDPEGFX] 2.2.3.7 */
-#define RDPGFX_CAPVERSION_105 0x000A0502 /** [MS-RDPEGFX] 2.2.3.8 */
-#define RDPGFX_CAPVERSION_106                                               \
-	0x000A0600 /** [MS-RDPEGFX] 2.2.3.9 (the value in the doc is wrong, see \
-	            * [MS-RDPEGFX]-180912-errata]                               \
-	            * Since this is/was documented for a long time, also define \
-	            * the incorrect value in case some server actually uses it. \
-	            */
-#define RDPGFX_CAPVERSION_106_ERR 0x000A0601
-#define RDPGFX_CAPVERSION_107 0x000A0701 /** [MS-RDPEGFX] 2.2.3.10 */
+	RDPGFX_CAPVERSION_8 = 0x00080004u,   /**< [MS-RDPEGFX] 2.2.3.1 */
+	RDPGFX_CAPVERSION_81 = 0x00080105u,  /**< [MS-RDPEGFX] 2.2.3.2 */
+	RDPGFX_CAPVERSION_10 = 0x000A0002u,  /**< [MS-RDPEGFX] 2.2.3.3 */
+	RDPGFX_CAPVERSION_101 = 0x000A0100u, /**< [MS-RDPEGFX] 2.2.3.4 */
+	RDPGFX_CAPVERSION_102 = 0x000A0200u, /**< [MS-RDPEGFX] 2.2.3.5 */
+	RDPGFX_CAPVERSION_103 = 0x000A0301u, /**< [MS-RDPEGFX] 2.2.3.6 */
+	RDPGFX_CAPVERSION_104 = 0x000A0400u, /**< [MS-RDPEGFX] 2.2.3.7 */
+	RDPGFX_CAPVERSION_105 = 0x000A0502u, /**< [MS-RDPEGFX] 2.2.3.8 */
+	RDPGFX_CAPVERSION_106 =
+		0x000A0600u, /**< [MS-RDPEGFX] 2.2.3.9 (the value in the doc is wrong, see
+		              * [MS-RDPEGFX]-180912-errata]
+		              * Since this is/was documented for a long time, also define
+		              * the incorrect value in case some server actually uses it.
+		              */
+	RDPGFX_CAPVERSION_106_ERR = 0x000A0601u,
+	RDPGFX_CAPVERSION_107 = 0x000A0701u, /**< [MS-RDPEGFX] 2.2.3.10 */
+#if defined(WITH_GFX_AZURE)
+	RDPGFX_CAPVERSION_111 = 0x000b0101u, /**< Undocumented versions used by Azure */
+	RDPGFX_CAPVERSION_112 = 0x000b0200u, /**< Undocumented versions used by Azure */
+	RDPGFX_CAPVERSION_113 = 0x000b0300u  /**< Undocumented versions used by Azure */
+#endif
+} RDPGFX_CAPVERSION;
 
 #define RDPGFX_CAPSET_BASE_SIZE 8
 
