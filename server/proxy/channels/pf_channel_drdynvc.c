@@ -26,6 +26,7 @@
 #include "../pf_channel.h"
 #include "../proxy_modules.h"
 #include "../pf_utils.h"
+#include "../pf_server.h"
 
 #define DTAG PROXY_TAG("drdynvc")
 

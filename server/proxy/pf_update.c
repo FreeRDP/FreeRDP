@@ -30,6 +30,8 @@
 #include <freerdp/server/proxy/proxy_log.h>
 
 #include "pf_update.h"
+#include "pf_client.h"
+#include "pf_server.h"
 #include <freerdp/server/proxy/proxy_context.h>
 #include "proxy_modules.h"
 

@@ -23,6 +23,8 @@
 
 #include "proxy_modules.h"
 #include "pf_channel.h"
+#include "pf_client.h"
+#include "pf_server.h"
 
 #define TAG PROXY_TAG("channel")
 
@@ -177,9 +179,6 @@ void channelTracker_free(ChannelStateTracker* t)
 PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, BOOL last,
                                             BOOL toBack)
 {
-	proxyData* pdata = nullptr;
-	pServerContext* ps = nullptr;
-	pServerStaticChannelContext* channel = nullptr;
 	UINT32 flags = CHANNEL_FLAG_FIRST;
 	BOOL r = 0;
 	const char* direction = toBack ? "F->B" : "B->F";
@@ -194,8 +193,8 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 	if (first)
 		return PF_CHANNEL_RESULT_PASS;
 
-	pdata = t->pdata;
-	channel = t->channel;
+	proxyData* pdata = t->pdata;
+	pServerStaticChannelContext* channel = t->channel;
 	if (last)
 		flags |= CHANNEL_FLAG_LAST;
 
@@ -210,14 +209,15 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 		ev.flags = flags;
 		ev.total_size = currentPacketSize;
 
-		if (!pdata->pc->sendChannelData)
+		pClientContext* pc = pdata->pc;
+		if (!pc->sendChannelData)
 			return PF_CHANNEL_RESULT_ERROR;
 
-		return pdata->pc->sendChannelData(pdata->pc, &ev) ? PF_CHANNEL_RESULT_DROP
-		                                                  : PF_CHANNEL_RESULT_ERROR;
+		return pc->sendChannelData(pdata->pc, &ev) ? PF_CHANNEL_RESULT_DROP
+		                                           : PF_CHANNEL_RESULT_ERROR;
 	}
 
-	ps = pdata->ps;
+	pServerContext* ps = pdata->ps;
 	r = ps->context.peer->SendChannelPacket(
 	    ps->context.peer, WINPR_ASSERTING_INT_CAST(UINT16, channel->front_channel_id),
 	    currentPacketSize, flags, Stream_Buffer(currentPacket), Stream_GetPosition(currentPacket));

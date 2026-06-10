@@ -39,6 +39,7 @@
 #include <freerdp/channels/channels.h>
 
 #include "pf_client.h"
+#include "pf_server.h"
 #include "pf_channel.h"
 #include <freerdp/server/proxy/proxy_context.h>
 #include "pf_update.h"

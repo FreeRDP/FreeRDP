@@ -28,6 +28,7 @@
 #include <freerdp/listener.h>
 
 #include <freerdp/server/proxy/proxy_config.h>
+#include <freerdp/server/proxy/proxy_context.h>
 #include "proxy_modules.h"
 
 struct proxy_server
@@ -38,6 +39,20 @@ struct proxy_server
 	freerdp_listener* listener;
 	HANDLE stopEvent; /* an event used to signal the main thread to stop */
 	wArrayList* peer_list;
+};
+
+struct p_server_context
+{
+	rdpContext context;
+
+	proxyData* pdata;
+
+	HANDLE vcm;
+	HANDLE dynvcReady;
+
+	wHashTable* interceptContextMap;
+	wHashTable* channelsByFrontId;
+	wHashTable* channelsByBackId;
 };
 
 #endif /* INT_FREERDP_SERVER_PROXY_SERVER_H */

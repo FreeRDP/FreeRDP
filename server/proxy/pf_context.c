@@ -29,6 +29,7 @@
 #include <freerdp/channels/drdynvc.h>
 
 #include "pf_client.h"
+#include "pf_server.h"
 #include "pf_utils.h"
 #include "proxy_modules.h"
 
@@ -405,7 +406,7 @@ void proxy_data_free(proxyData* pdata)
 		HashTable_Free(pdata->modules_info);
 
 	if (pdata->pc)
-		freerdp_client_context_free(&pdata->pc->context);
+		freerdp_client_context_free(pdata->pc);
 
 	free(pdata);
 }
@@ -416,7 +417,7 @@ void proxy_data_abort_connect(proxyData* pdata)
 	WINPR_ASSERT(pdata->abort_event);
 	(void)SetEvent(pdata->abort_event);
 	if (pdata->pc)
-		freerdp_abort_connect_context(&pdata->pc->context);
+		freerdp_abort_connect_context(pdata->pc);
 }
 
 BOOL proxy_data_shall_disconnect(proxyData* pdata)

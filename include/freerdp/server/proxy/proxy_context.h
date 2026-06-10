@@ -75,19 +75,6 @@ extern "C"
 	/**
 	 * Wraps rdpContext and holds the state for the proxy's server.
 	 */
-	struct p_server_context
-	{
-		rdpContext context;
-
-		proxyData* pdata;
-
-		HANDLE vcm;
-		HANDLE dynvcReady;
-
-		wHashTable* interceptContextMap;
-		wHashTable* channelsByFrontId;
-		wHashTable* channelsByBackId;
-	};
 	typedef struct p_server_context pServerContext;
 
 	WINPR_ATTR_MALLOC(StaticChannelContext_free, 1)
@@ -95,54 +82,7 @@ extern "C"
 	pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const char* name,
 	                                                      UINT32 id);
 
-	/**
-	 * Wraps rdpContext and holds the state for the proxy's client.
-	 */
 	typedef struct p_client_context pClientContext;
-
-	struct p_client_context
-	{
-		rdpContext context;
-
-		proxyData* pdata;
-
-		/*
-		 * In a case when freerdp_connect fails,
-		 * Used for NLA fallback feature, to check if the server should close the connection.
-		 * When it is set to TRUE, proxy's client knows it shouldn't signal the server thread to
-		 * closed the connection when pf_client_post_disconnect is called, because it is trying to
-		 * connect reconnect without NLA. It must be set to TRUE before the first try, and to FALSE
-		 * after the connection fully established, to ensure graceful shutdown of the connection
-		 * when it will be closed.
-		 */
-		BOOL allow_next_conn_failure;
-
-		BOOL connected; /* Set after client post_connect. */
-
-		pReceiveChannelData client_receive_channel_data_original;
-		wQueue* cached_server_channel_data;
-		WINPR_ATTR_NODISCARD BOOL (*sendChannelData)(pClientContext* pc,
-		                                             const proxyChannelDataEventInfo* ev);
-
-		/* X509 specific */
-		char* remote_hostname;
-		wStream* remote_pem;
-		UINT16 remote_port;
-		UINT32 remote_flags;
-
-		BOOL input_state_sync_pending;
-		UINT32 input_state;
-
-		wHashTable* interceptContextMap;
-		UINT32 computerNameLen;
-		BOOL computerNameUnicode;
-		union
-		{
-			WCHAR* wc;
-			char* c;
-			void* v;
-		} computerName;
-	};
 
 	/**
 	 * Holds data common to both sides of a proxy's session.
@@ -152,8 +92,8 @@ extern "C"
 		proxyModule* module;
 		const proxyConfig* config;
 
-		pServerContext* ps;
-		pClientContext* pc;
+		rdpContext* ps; /* actual type is pServerContext */
+		rdpContext* pc; /* actual type is pClientContext */
 
 		HANDLE abort_event;
 		HANDLE client_thread;

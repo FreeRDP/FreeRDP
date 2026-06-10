@@ -25,6 +25,8 @@
 #include <winpr/string.h>
 #include <winpr/print.h>
 
+#include "../pf_client.h"
+#include "../pf_server.h"
 #include "pf_channel_rdpdr.h"
 #include "pf_channel_smartcard.h"
 

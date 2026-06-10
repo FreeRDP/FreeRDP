@@ -129,7 +129,7 @@ class DynChannelState
 	WINPR_ASSERT(pdata->pc);
 	WINPR_ASSERT(custom);
 
-	auto settings = pdata->pc->context.settings;
+	auto settings = pdata->pc->settings;
 
 	/* We do not want persistent bitmap cache to be used with proxy */
 	return freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled, FALSE);

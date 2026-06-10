@@ -24,8 +24,9 @@
 #include <winpr/assert.h>
 
 #include "pf_input.h"
+#include "pf_client.h"
+#include "pf_server.h"
 #include <freerdp/server/proxy/proxy_config.h>
-#include <freerdp/server/proxy/proxy_context.h>
 
 #include "proxy_modules.h"
 
