@@ -201,7 +201,7 @@ void winpr_MD4_Update(WINPR_MD4_CTX* ctx, const void* data, size_t size)
 	winpr_MD4_u32plus saved_lo = ctx->lo;
 	if ((ctx->lo = (saved_lo + size) & 0x1fffffff) < saved_lo)
 		ctx->hi++;
-	ctx->hi += size >> 29;
+	ctx->hi += (winpr_MD4_u32plus)((size >> 29) & 0xffffffff);
 
 	size_t used = saved_lo & 0x3f;
 
