@@ -138,3 +138,68 @@ const char* rdpgfx_caps_version_str(UINT32 capsVersion)
 
 #undef EVCASE
 }
+
+static const char* rdpgfx_caps_flag_str_int(UINT32 flag)
+{
+#define EVCASE(x) \
+	case x:       \
+		return #x
+
+	switch (flag)
+	{
+		EVCASE(RDPGFX_CAPS_FLAG_THINCLIENT);
+		EVCASE(RDPGFX_CAPS_FLAG_SMALL_CACHE);
+		EVCASE(RDPGFX_CAPS_FLAG_AVC420_ENABLED);
+		EVCASE(RDPGFX_CAPS_FLAG_AVC_DISABLED);
+		EVCASE(RDPGFX_CAPS_FLAG_AVC_THINCLIENT);
+		EVCASE(RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE);
+#if defined(WITH_GFX_AZURE)
+		EVCASE(RDPGFX_CAPS_FLAG_SCP_DISABLE);
+#endif
+#if defined(WITH_GFX_AV1)
+		EVCASE(RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED);
+		EVCASE(RDPGFX_CAPS_FLAG_AV1_I444_DISABLED);
+#endif
+		default:
+			return "RDPGFX_CAPS_FLAG_UNKNOWN";
+	}
+
+#undef EVCASE
+}
+
+const char* rdpgfx_caps_flag_str(UINT32 flag)
+{
+	const char* val = rdpgfx_caps_flag_str_int(flag);
+	if (!val)
+		return nullptr;
+
+	const char prefix[17] = "RDPGFX_CAPS_FLAG_";
+	if (strncmp(val, prefix, sizeof(prefix)) != 0)
+		return val;
+	return &val[sizeof(prefix)];
+}
+
+const char* rdpgfx_caps_flags_str(UINT32 flags, char* buffer, size_t length)
+{
+	if (length < 1)
+		return buffer;
+
+	WINPR_ASSERT(buffer);
+
+	buffer[0] = '{';
+	for (uint32_t x = 0; x < 32; x++)
+	{
+		uint32_t val = 1 << x;
+		if ((flags & val) != 0)
+		{
+			const char* flag = rdpgfx_caps_flag_str(val);
+			winpr_str_append(flag, &buffer[1], length - 1, "|");
+		}
+	}
+
+	char number[16] = WINPR_C_ARRAY_INIT;
+	(void)_snprintf(number, sizeof(number), "[0x%08" PRIx32 "]", flags);
+	winpr_str_append(number, buffer, length, "}");
+
+	return buffer;
+}

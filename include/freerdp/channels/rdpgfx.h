@@ -138,21 +138,28 @@ typedef struct
 	UINT32 flags;
 } RDPGFX_CAPSET;
 
-#define RDPGFX_CAPS_FLAG_THINCLIENT 0x00000001U        /* 8.0+ */
-#define RDPGFX_CAPS_FLAG_SMALL_CACHE 0x00000002U       /* 8.0+ */
-#define RDPGFX_CAPS_FLAG_AVC420_ENABLED 0x00000010U    /* 8.1+ */
-#define RDPGFX_CAPS_FLAG_AVC_DISABLED 0x00000020U      /* 10.0+ */
-#define RDPGFX_CAPS_FLAG_AVC_THINCLIENT 0x00000040U    /* 10.3+ */
-#define RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE 0x00000080U /* 10.7+ */
-
-#if defined(WITH_GFX_AV1)
-#define RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED                                 \
-0x10000000U /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1 is \
-	                               used */
-#define RDPGFX_CAPS_FLAG_AV1_I444_DISABLED                                       \
-0x20000000U /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1 is used \
-	         */
+typedef enum
+{
+	RDPGFX_CAPS_FLAG_THINCLIENT = 0x00000001U,       /* 8.0+ */
+	RDPGFX_CAPS_FLAG_SMALL_CACHE = 0x00000002U,      /* 8.0+ */
+	RDPGFX_CAPS_FLAG_AVC420_ENABLED = 0x00000010U,   /* 8.1+ */
+	RDPGFX_CAPS_FLAG_AVC_DISABLED = 0x00000020U,     /* 10.0+ */
+	RDPGFX_CAPS_FLAG_AVC_THINCLIENT = 0x00000040U,   /* 10.3+ */
+	RDPGFX_CAPS_FLAG_SCALEDMAP_DISABLE = 0x00000080U /* 10.7+ */
+#if defined(WITH_GFX_AZURE)
+	,
+	RDPGFX_CAPS_FLAG_SCP_DISABLE = 0x00000100 /* 11.0+, undocumented, Azure only */
 #endif
+#if defined(WITH_GFX_AV1)
+	,
+	RDPGFX_CAPS_FLAG_AV1_I444_SUPPORTED = 0x10000000U, /** Custom Extension: Only valid if
+		                                                  RDPGFX_CAPVERSION_FRDP_1 is used */
+	RDPGFX_CAPS_FLAG_AV1_I444_DISABLED =
+		0x20000000U /** Custom Extension: Only valid if RDPGFX_CAPVERSION_FRDP_1 is used
+		             */
+#endif
+} RDPGFX_CAPS_FLAG;
+
 typedef struct
 {
 	UINT32 version;

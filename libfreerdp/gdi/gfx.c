@@ -2077,4 +2077,3 @@ void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx)
 	PROFILER_PRINT_FOOTER
 	PROFILER_FREE(gfx->SurfaceProfiler)
 }
-
