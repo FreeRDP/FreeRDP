@@ -342,6 +342,17 @@ BOOL rpc_recv_bind_ack_pdu(rdpRpc* rpc, wStream* s)
 	WLog_DBG(TAG, header.common.ptype == PTYPE_BIND_ACK ? "Receiving BindAck PDU"
 	                                                    : "Receiving AlterContextResp PDU");
 
+	const UINT16 MAX_VALID_FRAG = 0x0FF8;
+	if ((header.bind_ack.max_xmit_frag > MAX_VALID_FRAG) ||
+	    (header.bind_ack.max_recv_frag > MAX_VALID_FRAG))
+	{
+		WLog_ERR(TAG,
+		         "bind_ack: invalid fragment size: max_xmit_frag=%" PRIu16
+		         ", max_recv_frag=%" PRIu16 ", maximum=%" PRIu16,
+		         header.bind_ack.max_xmit_frag, header.bind_ack.max_recv_frag, MAX_VALID_FRAG);
+		goto fail;
+	}
+
 	rpc->max_recv_frag = header.bind_ack.max_xmit_frag;
 	rpc->max_xmit_frag = header.bind_ack.max_recv_frag;
 

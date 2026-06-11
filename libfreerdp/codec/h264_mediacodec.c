@@ -360,6 +360,11 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 				pYUVData[1] = outputBuffer + iStride[0] * sys->outputHeight;
 				pYUVData[2] = outputBuffer + iStride[0] * sys->outputHeight +
 				              iStride[1] * ((sys->outputHeight + 1) / 2);
+
+				if (sys->outputWidth < h264->width)
+					goto fail;
+				if (sys->outputHeigth < h264->height)
+					goto fail;
 				break;
 			}
 			else if (outputBufferId == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED)

@@ -466,6 +466,9 @@ SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length)
 	if (!channel || (length > INT32_MAX))
 		return -1;
 
+	if (!Stream_EnsureRemainingCapacity(s, length))
+		return -1;
+
 	ERR_clear_error();
 	status = BIO_read(channel->tls->bio, Stream_Pointer(s), (INT32)length);
 
