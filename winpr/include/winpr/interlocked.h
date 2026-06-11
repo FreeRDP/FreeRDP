@@ -20,6 +20,7 @@
 #ifndef WINPR_INTERLOCKED_H
 #define WINPR_INTERLOCKED_H
 
+#include <winpr/config.h>
 #include <winpr/spec.h>
 #include <winpr/platform.h>
 #include <winpr/winpr.h>
@@ -32,12 +33,15 @@ extern "C"
 
 #ifndef _WIN32
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
+
 #ifndef CONTAINING_RECORD
 #define CONTAINING_RECORD(address, type, field) \
 	((type*)(((ULONG_PTR)address) - (ULONG_PTR)(&(((type*)0)->field))))
-#endif
+#endif /* CONTAINING_RECORD */
 
-	typedef struct S_WINPR_LIST_ENTRY WINPR_LIST_ENTRY;
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", typedef struct S_WINPR_LIST_ENTRY WINPR_LIST_ENTRY);
+
 	typedef struct S_WINPR_LIST_ENTRY* WINPR_PLIST_ENTRY;
 
 	struct S_WINPR_LIST_ENTRY
@@ -46,7 +50,9 @@ extern "C"
 		WINPR_PLIST_ENTRY Blink;
 	};
 
-	typedef struct S_WINPR_SINGLE_LIST_ENTRY WINPR_SINGLE_LIST_ENTRY;
+	WINPR_DEPRECATED_VAR("[since 3.27.0]",
+	                     typedef struct S_WINPR_SINGLE_LIST_ENTRY WINPR_SINGLE_LIST_ENTRY);
+
 	typedef struct S_WINPR_SINGLE_LIST_ENTRY* WINPR_PSINGLE_LIST_ENTRY;
 
 	struct S_WINPR_SINGLE_LIST_ENTRY
@@ -54,27 +60,29 @@ extern "C"
 		WINPR_PSINGLE_LIST_ENTRY Next;
 	};
 
-	typedef struct WINPR_LIST_ENTRY32
-	{
-		DWORD Flink;
-		DWORD Blink;
-	} WINPR_LIST_ENTRY32;
-	typedef WINPR_LIST_ENTRY32* WINPR_PLIST_ENTRY32;
+	WINPR_DEPRECATED_VAR(
+	    "[since 3.27.0]", typedef struct WINPR_LIST_ENTRY32 {
+		    DWORD Flink;
+		    DWORD Blink;
+	    } WINPR_LIST_ENTRY32);
 
-	typedef struct WINPR_LIST_ENTRY64
-	{
-		ULONGLONG Flink;
-		ULONGLONG Blink;
-	} WINPR_LIST_ENTRY64;
-	typedef WINPR_LIST_ENTRY64* WINPR_PLIST_ENTRY64;
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", typedef WINPR_LIST_ENTRY32* WINPR_PLIST_ENTRY32);
+
+	WINPR_DEPRECATED_VAR(
+	    "[since 3.27.0]", typedef struct WINPR_LIST_ENTRY64 {
+		    ULONGLONG Flink;
+		    ULONGLONG Blink;
+	    } WINPR_LIST_ENTRY64);
+
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", typedef WINPR_LIST_ENTRY64* WINPR_PLIST_ENTRY64);
 
 #ifdef _WIN64
 
-	typedef struct S_WINPR_SLIST_ENTRY* WINPR_PSLIST_ENTRY;
-	typedef struct DECLSPEC_ALIGN(16) S_WINPR_SLIST_ENTRY
-	{
-		WINPR_PSLIST_ENTRY Next;
-	} WINPR_SLIST_ENTRY;
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", typedef struct S_WINPR_SLIST_ENTRY* WINPR_PSLIST_ENTRY);
+
+	WINPR_DEPRECATED_VAR(
+	    "[since 3.27.0]", typedef struct DECLSPEC_ALIGN(16)
+	                          S_WINPR_SLIST_ENTRY { WINPR_PSLIST_ENTRY Next; } WINPR_SLIST_ENTRY);
 
 #else /* _WIN64 */
 
@@ -91,72 +99,76 @@ extern "C"
 #endif /* _WIN64 */
 
 #ifdef _WIN64
+	WINPR_DEPRECATED_VAR(
+	    "[since 3.27.0]", typedef union DECLSPEC_ALIGN(16) {
+		    struct
+		    {
+			    ULONGLONG Alignment;
+			    ULONGLONG Region;
+		    } DUMMYSTRUCTNAME;
 
-	typedef union DECLSPEC_ALIGN(16)
-	{
-		struct
-		{
-			ULONGLONG Alignment;
-			ULONGLONG Region;
-		} DUMMYSTRUCTNAME;
+		    struct
+		    {
+			    ULONGLONG Depth : 16;
+			    ULONGLONG Sequence : 9;
+			    ULONGLONG NextEntry : 39;
+			    ULONGLONG HeaderType : 1;
+			    ULONGLONG Init : 1;
+			    ULONGLONG Reserved : 59;
+			    ULONGLONG Region : 3;
+		    } Header8;
 
-		struct
-		{
-			ULONGLONG Depth : 16;
-			ULONGLONG Sequence : 9;
-			ULONGLONG NextEntry : 39;
-			ULONGLONG HeaderType : 1;
-			ULONGLONG Init : 1;
-			ULONGLONG Reserved : 59;
-			ULONGLONG Region : 3;
-		} Header8;
-
-		struct
-		{
-			ULONGLONG Depth : 16;
-			ULONGLONG Sequence : 48;
-			ULONGLONG HeaderType : 1;
-			ULONGLONG Reserved : 3;
-			ULONGLONG NextEntry : 60;
-		} HeaderX64;
-	} WINPR_SLIST_HEADER, *WINPR_PSLIST_HEADER;
+		    struct
+		    {
+			    ULONGLONG Depth : 16;
+			    ULONGLONG Sequence : 48;
+			    ULONGLONG HeaderType : 1;
+			    ULONGLONG Reserved : 3;
+			    ULONGLONG NextEntry : 60;
+		    } HeaderX64;
+	    } WINPR_SLIST_HEADER);
 
 #else /* _WIN64 */
 
-	typedef union
-	{
-		ULONGLONG Alignment;
+	WINPR_DEPRECATED_VAR(
+	    "[since 3.27.0]", typedef union {
+		    ULONGLONG Alignment;
 
-		struct
-		{
-			WINPR_SLIST_ENTRY Next;
-			WORD Depth;
-			WORD Sequence;
-		} DUMMYSTRUCTNAME;
-	} WINPR_SLIST_HEADER, *WINPR_PSLIST_HEADER;
-
+		    struct
+		    {
+			    WINPR_SLIST_ENTRY Next;
+			    WORD Depth;
+			    WORD Sequence;
+		    } DUMMYSTRUCTNAME;
+	    } WINPR_SLIST_HEADER);
 #endif /* _WIN64 */
+
+	typedef WINPR_SLIST_HEADER* WINPR_PSLIST_HEADER;
 
 	/* Singly-Linked List */
 
-	WINPR_API VOID InitializeSListHead(WINPR_PSLIST_HEADER ListHead);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]",
+	                     WINPR_API VOID InitializeSListHead(WINPR_PSLIST_HEADER ListHead));
 
-	WINPR_API WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead,
-	                                                       WINPR_PSLIST_ENTRY ListEntry);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]",
+	                     WINPR_API WINPR_PSLIST_ENTRY InterlockedPushEntrySList(
+	                         WINPR_PSLIST_HEADER ListHead, WINPR_PSLIST_ENTRY ListEntry));
 
-	WINPR_API WINPR_PSLIST_ENTRY InterlockedPushListSListEx(WINPR_PSLIST_HEADER ListHead,
-	                                                        WINPR_PSLIST_ENTRY List,
-	                                                        WINPR_PSLIST_ENTRY ListEnd,
-	                                                        ULONG Count);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]",
+	                     WINPR_API WINPR_PSLIST_ENTRY InterlockedPushListSListEx(
+	                         WINPR_PSLIST_HEADER ListHead, WINPR_PSLIST_ENTRY List,
+	                         WINPR_PSLIST_ENTRY ListEnd, ULONG Count));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]",
+	                     WINPR_ATTR_NODISCARD WINPR_API WINPR_PSLIST_ENTRY
+	                         InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_ATTR_NODISCARD WINPR_API WINPR_PSLIST_ENTRY
+	                                           InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API USHORT QueryDepthSList(WINPR_PSLIST_HEADER ListHead);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_ATTR_NODISCARD WINPR_API USHORT
+	                                           QueryDepthSList(WINPR_PSLIST_HEADER ListHead));
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 	WINPR_API LONG InterlockedIncrement(LONG volatile* Addend);
 
@@ -204,32 +216,40 @@ extern "C"
 
 #endif
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	/* Doubly-Linked List */
+	WINPR_DEPRECATED_VAR("[since 3.27.0]",
+	                     WINPR_API VOID InitializeListHead(WINPR_PLIST_ENTRY ListHead));
 
-	WINPR_API VOID InitializeListHead(WINPR_PLIST_ENTRY ListHead);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_ATTR_NODISCARD WINPR_API BOOL
+	                                           IsListEmpty(const WINPR_LIST_ENTRY* ListHead));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL IsListEmpty(const WINPR_LIST_ENTRY* ListHead);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_ATTR_NODISCARD WINPR_API BOOL
+	                                           RemoveEntryList(WINPR_PLIST_ENTRY Entry));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL RemoveEntryList(WINPR_PLIST_ENTRY Entry);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_API VOID InsertHeadList(WINPR_PLIST_ENTRY ListHead,
+	                                                                     WINPR_PLIST_ENTRY Entry));
 
-	WINPR_API VOID InsertHeadList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_ATTR_NODISCARD WINPR_API WINPR_PLIST_ENTRY
+	                                           RemoveHeadList(WINPR_PLIST_ENTRY ListHead));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API WINPR_PLIST_ENTRY RemoveHeadList(WINPR_PLIST_ENTRY ListHead);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_API VOID InsertTailList(WINPR_PLIST_ENTRY ListHead,
+	                                                                     WINPR_PLIST_ENTRY Entry));
 
-	WINPR_API VOID InsertTailList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_ATTR_NODISCARD WINPR_API WINPR_PLIST_ENTRY
+	                                           RemoveTailList(WINPR_PLIST_ENTRY ListHead));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API WINPR_PLIST_ENTRY RemoveTailList(WINPR_PLIST_ENTRY ListHead);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]",
+	                     WINPR_API VOID AppendTailList(WINPR_PLIST_ENTRY ListHead,
+	                                                   WINPR_PLIST_ENTRY ListToAppend));
 
-	WINPR_API VOID AppendTailList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY ListToAppend);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]",
+	                     WINPR_API VOID PushEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead,
+	                                                  WINPR_PSINGLE_LIST_ENTRY Entry));
 
-	WINPR_API VOID PushEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead, WINPR_PSINGLE_LIST_ENTRY Entry);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API WINPR_PSINGLE_LIST_ENTRY PopEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead);
+	WINPR_DEPRECATED_VAR("[since 3.27.0]", WINPR_ATTR_NODISCARD WINPR_API WINPR_PSINGLE_LIST_ENTRY
+	                                           PopEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead));
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 #ifdef __cplusplus
 }

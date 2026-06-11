@@ -22,7 +22,7 @@ public class RDPFileParser
 	private static final int MAX_ERRORS = 20;
 	private static final int MAX_LINES = 500;
 
-	private HashMap<String, Object> options;
+	private final HashMap<String, Object> options;
 
 	public RDPFileParser()
 	{

@@ -1,4 +1,12 @@
-/* Room database for bookmark storage */
+/*
+   Room database for bookmark storage
+
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+   If a copy of the MPL was not distributed with this file, You can obtain one at
+   http://mozilla.org/MPL/2.0/.
+*/
 
 package com.freerdp.freerdpcore.data;
 
@@ -10,9 +18,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import androidx.room.ColumnInfo;
 import androidx.room.Database;
-import androidx.room.PrimaryKey;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
@@ -27,7 +33,7 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory;
           exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase
 {
-	static final int DB_VERSION = 15;
+	static final int DB_VERSION = 16;
 	private static final String DB_NAME = "bookmarks.db";
 
 	static
@@ -58,6 +64,7 @@ public abstract class AppDatabase extends RoomDatabase
 					               .addMigrations(MIGRATION_12_13)
 					               .addMigrations(MIGRATION_13_14)
 					               .addMigrations(MIGRATION_14_15)
+					               .addMigrations(MIGRATION_15_16)
 					               .build();
 				}
 			}
@@ -163,6 +170,14 @@ public abstract class AppDatabase extends RoomDatabase
 			sb.append(String.format(java.util.Locale.US, "%02x", b));
 		return sb.toString();
 	}
+
+	private static final Migration MIGRATION_15_16 = new Migration(15, 16) {
+		@Override public void migrate(@NonNull SupportSQLiteDatabase db)
+		{
+			db.execSQL(
+			    "ALTER TABLE 'bookmarks' ADD 'redirect_printer' INTEGER NOT NULL DEFAULT false;");
+		}
+	};
 
 	private static final Migration MIGRATION_14_15 = new Migration(14, 15) {
 		@Override public void migrate(@NonNull SupportSQLiteDatabase db)
@@ -275,7 +290,7 @@ public abstract class AppDatabase extends RoomDatabase
 			db.execSQL("ALTER TABLE 'bookmarks' ADD 'tlsMinLevel' INTEGER NOT NULL CONSTRAINT "
 			           + "chk_tlsMinLevel "
 			           + "CHECK (tlsMinLevel >= -1) DEFAULT -1;");
-			final String list[] = { "screen_3g_colors",
+			final String[] list = { "screen_3g_colors",
 				                    "screen_3g_resolution",
 				                    "screen_3g_width",
 				                    "screen_3g_height",

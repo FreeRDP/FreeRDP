@@ -334,9 +334,12 @@ UINT cliprdr_read_format_data_response(wStream* s, CLIPRDR_FORMAT_DATA_RESPONSE*
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, response->common.dataLen))
 		return ERROR_INVALID_DATA;
 
-	if (response->common.dataLen)
+	if (response->common.dataLen > 0)
+	{
 		response->requestedFormatData = Stream_ConstPointer(s);
-
+		if (!Stream_SafeSeek(s, response->common.dataLen))
+			return ERROR_INVALID_DATA;
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -373,9 +376,11 @@ UINT cliprdr_read_file_contents_response(wStream* s, CLIPRDR_FILE_CONTENTS_RESPO
 	Stream_Read_UINT32(s, response->streamId);   /* streamId (4 bytes) */
 	response->requestedData = Stream_ConstPointer(s); /* requestedFileContentsData */
 
-	WINPR_ASSERT(response->common.dataLen >= 4);
 	if (response->common.dataLen < 4)
+	{
+		WLog_WARN(TAG, "dataLen=%" PRIu32 " but expected >= 4", response->common.dataLen);
 		return ERROR_INVALID_DATA;
+	}
 	response->cbRequested = response->common.dataLen - 4;
 	return CHANNEL_RC_OK;
 }

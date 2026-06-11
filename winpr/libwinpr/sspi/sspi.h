@@ -22,6 +22,13 @@
 
 #include <winpr/sspi.h>
 
+/* Macro converting a ANSII character to a little endian WCHAR */
+#if defined(__BIG_ENDIAN__)
+#define W(c) (((WCHAR)(char)c) << 8)
+#else
+#define W(c) (((WCHAR)(char)c))
+#endif
+
 #define SCHANNEL_CB_MAX_TOKEN 0x00006000
 
 typedef struct

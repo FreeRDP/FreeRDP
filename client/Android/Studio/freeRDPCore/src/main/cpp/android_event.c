@@ -129,7 +129,8 @@ static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 			case EVENT_TYPE_CLIPBOARD:
 			{
 				ANDROID_EVENT_CLIPBOARD* clipboard_event = (ANDROID_EVENT_CLIPBOARD*)event;
-				UINT32 formatId = ClipboardRegisterFormat(afc->clipboard, "text/plain");
+				const char* mimeType = clipboard_event->mimeType;
+				UINT32 formatId = ClipboardRegisterFormat(afc->clipboard, mimeType);
 				UINT32 size = clipboard_event->data_length;
 
 				if (size)
@@ -268,7 +269,8 @@ static void android_event_disconnect_free(ANDROID_EVENT* event)
 	free(event);
 }
 
-ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(const void* data, size_t data_length)
+ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(const void* data, size_t data_length,
+                                                     const char* mimeType)
 {
 	ANDROID_EVENT_CLIPBOARD* event;
 	event = (ANDROID_EVENT_CLIPBOARD*)calloc(1, sizeof(ANDROID_EVENT_CLIPBOARD));
@@ -277,19 +279,29 @@ ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(const void* data, size_t da
 		return nullptr;
 
 	event->type = EVENT_TYPE_CLIPBOARD;
+	event->mimeType = mimeType ? _strdup(mimeType) : nullptr;
 
-	if (data)
+	if (mimeType && !event->mimeType)
 	{
-		event->data = calloc(data_length + 1, sizeof(char));
+		free(event);
+		return nullptr;
+	}
+
+	if (data && data_length > 0)
+	{
+		const BOOL isText = !mimeType || strcmp(mimeType, "text/plain") == 0;
+		/* Text data needs a null terminator; image data is stored as-is. */
+		event->data = isText ? calloc(data_length + 1, sizeof(char)) : malloc(data_length);
 
 		if (!event->data)
 		{
+			free(event->mimeType);
 			free(event);
 			return nullptr;
 		}
 
 		memcpy(event->data, data, data_length);
-		event->data_length = data_length + 1;
+		event->data_length = isText ? data_length + 1 : data_length;
 	}
 
 	return event;
@@ -300,6 +312,7 @@ static void android_event_clipboard_free(ANDROID_EVENT_CLIPBOARD* event)
 	if (event)
 	{
 		free(event->data);
+		free(event->mimeType);
 		free(event);
 	}
 }

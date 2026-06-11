@@ -53,8 +53,8 @@ static BOOL test_SetFileAttributesA(void)
 			goto fail;
 	}
 
-	handle = CreateFileA(name, GENERIC_READ | GENERIC_WRITE, 0, nullptr, CREATE_NEW,
-	                     FILE_ATTRIBUTE_NORMAL, nullptr);
+	handle = winpr_CreateFile(name, GENERIC_READ | GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+	                          FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (handle == INVALID_HANDLE_VALUE)
 		goto fail;
 	(void)CloseHandle(handle);

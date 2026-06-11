@@ -643,6 +643,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 	if (up)
 	{
+		update_dump_stats(rdp->update);
 		if (up->pcap_rfx)
 		{
 			up->dump_rfx = FALSE;
@@ -791,7 +792,8 @@ static wEventType FreeRDP_Events[] = {
 	DEFINE_EVENT_ENTRY(ChannelDisconnected), DEFINE_EVENT_ENTRY(MouseEvent),
 	DEFINE_EVENT_ENTRY(Activated),           DEFINE_EVENT_ENTRY(Timer),
 	DEFINE_EVENT_ENTRY(GraphicsReset),       DEFINE_EVENT_ENTRY(UserNotification),
-	DEFINE_EVENT_ENTRY(ChannelInitialized),  DEFINE_EVENT_ENTRY(ChannelTerminated)
+	DEFINE_EVENT_ENTRY(ChannelInitialized),  DEFINE_EVENT_ENTRY(ChannelTerminated),
+	DEFINE_EVENT_ENTRY(StateChanged)
 };
 
 /** Allocator function for a rdp context.

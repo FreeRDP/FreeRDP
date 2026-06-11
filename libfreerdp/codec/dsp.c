@@ -320,7 +320,7 @@ static const INT16 ima_step_size_table[] = {
 	12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
 };
 
-static inline void dsp_ima_clamp_step(ADPCM* WINPR_RESTRICT adpcm, unsigned int channel)
+static inline void dsp_ima_clamp_step(ADPCM* WINPR_RESTRICT adpcm, size_t channel)
 {
 	WINPR_ASSERT(adpcm);
 	if (adpcm->ima.last_step[channel] < 0)
@@ -413,7 +413,7 @@ static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 			    (INT16)(((UINT16)(*src)) | (((UINT16)(*(src + 1))) << 8));
 			context->adpcm.ima.last_step[0] = (INT16)(*(src + 2));
 
-			dsp_ima_clamp_step(&context->adpcm, 0);
+			dsp_ima_clamp_step(&context->adpcm, 0u);
 
 			src += 4;
 			size -= 4;
@@ -427,7 +427,7 @@ static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 				    (INT16)(((UINT16)(*src)) | (((UINT16)(*(src + 1))) << 8));
 				context->adpcm.ima.last_step[1] = (INT16)(*(src + 2));
 
-				dsp_ima_clamp_step(&context->adpcm, 1);
+				dsp_ima_clamp_step(&context->adpcm, 1u);
 				src += 4;
 				size -= 4;
 				out_size -= 16;

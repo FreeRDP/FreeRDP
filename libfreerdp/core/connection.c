@@ -2127,6 +2127,21 @@ CONNECTION_STATE rdp_get_state(const rdpRdp* rdp)
 BOOL rdp_set_state(rdpRdp* rdp, CONNECTION_STATE state)
 {
 	WINPR_ASSERT(rdp);
+
+	rdpContext* context = rdp->context;
+	WINPR_ASSERT(context);
+
+	if (context->pubSub)
+	{
+		StateChangedEventArgs e = WINPR_C_ARRAY_INIT;
+		EventArgsInit(&e, "freerdp");
+		e.oldState = rdp->state;
+		e.newState = state;
+
+		const int rc = PubSub_OnStateChanged(context->pubSub, context, &e);
+		if (rc < 0)
+			WLog_WARN(TAG, "PubSub_OnStateChanged() failed");
+	}
 	rdp->state = state;
 	return TRUE;
 }
@@ -2203,6 +2218,8 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wSt
 		WLog_DBG(TAG, "new size %" PRIu32 "x%" PRIu32, rdp->settings->DesktopWidth,
 		         rdp->settings->DesktopHeight);
 
+		rdp_update_internal* up = update_cast(rdp->update);
+		up->stats.base[RDP_STATS_RESIZE]++;
 		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
 
 		if (!status)

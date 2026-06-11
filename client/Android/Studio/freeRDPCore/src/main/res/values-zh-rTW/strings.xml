@@ -6,15 +6,12 @@
     <string name="cancel">取消</string>
     <string name="cont">繼續</string>
     <string name="login">登入</string>
-    <string name="logout">登出</string>
     <!-- Home menu items -->
-    <string name="menu_exit">結束</string>
     <string name="menu_about">關於</string>
     <string name="menu_help">說明</string>
     <string name="menu_new_bookmark">新連線</string>
     <string name="menu_app_settings">設定</string>
     <!-- Bookmark menu items -->
-    <string name="menu_title_bookmark">連線</string>
     <string name="menu_connect">連線</string>
     <string name="menu_edit">編輯</string>
     <string name="menu_delete">刪除</string>
@@ -22,22 +19,9 @@
     <string name="menu_sys_keyboard">鍵盤</string>
     <string name="menu_ext_keyboard">功能鍵</string>
     <string name="menu_touch_pointer">觸控指標</string>
-    <string name="menu_home">首頁</string>
-    <string name="menu_disconnect">中斷連線</string>
     <!-- List section headers -->
-    <string name="section_bookmarks">手動連線</string>
-    <string name="section_active_sessions">使用中的連線</string>
     <!-- Search strings -->
-    <string name="search_hint">連線到電腦</string>
     <!-- List placeholder labels -->
-    <string name="list_placeholder_login">登入</string>
-    <string name="list_placeholder_no_servers">無遠端電腦</string>
-    <string name="list_placeholder_connecting">連線中 &#8230;</string>
-    <string name="list_placeholder_disconnecting">正在中斷連線 &#8230;</string>
-    <string name="list_placeholder_connection_error">連線失敗</string>
-    <string name="list_placeholder_wrong_password">密碼錯誤</string>
-    <string name="list_placeholder_invalid_username">無效的使用者名稱</string>
-    <string name="list_placeholder_add_bookmark">新增連線</string>
     <!-- Bookmark settings strings -->
     <string name="settings_cat_host">主機</string>
     <string name="settings_label">標籤</string>
@@ -88,7 +72,6 @@
     <string name="settings_perf_menu_animation">功能表及視窗動畫</string>
     <string name="settings_perf_theming">視覺樣式</string>
     <string name="settings_advanced">進階</string>
-    <string name="settings_cat_advanced">進階設定</string>
     <string name="settings_cat_gateway">閘道</string>
     <string name="settings_enable_gateway_settings">啟用閘道伺服器</string>
     <string name="settings_gateway_settings">閘道設定</string>
@@ -117,8 +100,6 @@
     <string name="settings_password_empty">未設定密碼</string>
     <string name="settings_cat_ui">使用者介面</string>
     <string name="settings_ui_hide_status_bar">隱藏狀態列</string>
-    <string name="settings_ui_hide_action_bar">隱藏動作列</string>
-    <string name="settings_ui_hide_zoom_controls">隱藏縮放控制</string>
     <string name="settings_ui_swap_mouse_buttons">滑鼠按鈕互換</string>
     <string name="settings_ui_invert_scrolling">反向滾動</string>
     <string name="settings_ui_auto_scroll_touchpointer">觸控指標自動滾動</string>
@@ -130,12 +111,9 @@
     <string name="settings_cat_security">安全性</string>
     <string name="settings_security_accept_certificates">接受所有憑證</string>
     <string name="settings_security_clear_certificate_cache">清除憑證快取</string>
-    <string name="settings_description_after_minutes">在 %1$d 分鐘後</string>
-    <string name="settings_description_disabled">已停用</string>
     <!-- Activity titles -->
     <string name="title_bookmark_settings">連線設定</string>
     <string name="title_application_settings">設定</string>
-    <string name="title_home">aFreeRDP - Android 的 FreeRDP</string>
     <string name="title_create_shortcut">RDP 連線</string>
     <string name="title_help">說明</string>
     <string name="title_about">關於</string>
@@ -154,19 +132,13 @@
     <string name="dlg_title_create_shortcut">建立捷徑</string>
     <string name="dlg_msg_create_shortcut">捷徑名稱：</string>
     <string name="dlg_msg_connecting">連線中 &#8230;</string>
-    <string name="dlg_msg_logging_in">登入中 &#8230;</string>
-    <string name="dlg_title_about">關於 aFreeRDP</string>
-    <string name="dlg_title_create_bookmark_after_qc">儲存連線設定？</string>
-    <string name="dlg_msg_create_bookmark_after_qc">您要儲存未儲存的連線設定嗎？</string>
     <string name="dlg_title_save_bookmark">儲存連線？</string>
     <string name="dlg_save_bookmark">您要儲存對連線設定所做的任何更改嗎？</string>
-    <string name="dlg_dont_show_again">不再詢問</string>
     <string name="dlg_title_exit">結束應用程式？</string>
     <string name="dlg_msg_exit">您確定要結束應用程式嗎？</string>
     <string name="dlg_title_clear_cert_cache">刪除憑證？</string>
     <string name="dlg_msg_clear_cert_cache">您確定要刪除所有快取的憑證嗎？</string>
     <string name="debug_level">偵錯等級</string>
     <string name="settings_debug">偵錯設定</string>
-    <string name="preference_title_client">用戶端</string>
     <string name="preference_title_client_name">用戶端名稱</string>
 </resources>

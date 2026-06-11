@@ -155,6 +155,9 @@ public class LibFreeRDP
 
 	private static native boolean freerdp_send_clipboard_data(long inst, String data);
 
+	private static native boolean freerdp_send_clipboard_image_data(long inst, byte[] data,
+	                                                                String mimeType);
+
 	private static native boolean freerdp_send_monitor_layout(long inst, int width, int height);
 
 	private static native String freerdp_get_last_error_string(long inst);
@@ -303,8 +306,8 @@ public class LibFreeRDP
 			args.add("/p:" + arg);
 		}
 
-		args.add(
-		    String.format("/size:%dx%d", screenSettings.getWidth(), screenSettings.getHeight()));
+		args.add(String.format(java.util.Locale.US, "/size:%dx%d", screenSettings.getWidth(),
+		                       screenSettings.getHeight()));
 		args.add("/bpp:" + screenSettings.getColors());
 
 		if (screenSettings.isCustomScale())
@@ -404,14 +407,17 @@ public class LibFreeRDP
 		args.add("/clipboard");
 		args.add("/disp");
 
+		if (advanced.getRedirectPrinter())
+			args.add("/printer:aFreeRDP Print,Microsoft Print to PDF,default");
+
 		// Gateway enabled?
 		if (bookmark.getType() == BookmarkBase.TYPE_MANUAL && bookmark.getEnableGatewaySettings())
 		{
 			BookmarkBase.GatewaySettings gateway = bookmark.getGatewaySettings();
 
 			StringBuilder carg = new StringBuilder();
-			carg.append(
-			    String.format("/gateway:g:%s:%d", gateway.getHostname(), gateway.getPort()));
+			carg.append(String.format(java.util.Locale.US, "/gateway:g:%s:%d",
+			                          gateway.getHostname(), gateway.getPort()));
 
 			arg = gateway.getUsername();
 			if (!arg.isEmpty())
@@ -548,6 +554,11 @@ public class LibFreeRDP
 	public static boolean sendClipboardData(long inst, String data)
 	{
 		return freerdp_send_clipboard_data(inst, data);
+	}
+
+	public static boolean sendClipboardImageData(long inst, byte[] data, String mimeType)
+	{
+		return freerdp_send_clipboard_image_data(inst, data, mimeType);
 	}
 
 	public static boolean sendMonitorLayout(long inst, int width, int height)
@@ -695,6 +706,16 @@ public class LibFreeRDP
 			uiEventListener.OnRemoteClipboardChanged(data);
 	}
 
+	private static void OnRemoteClipboardImageChanged(long inst, byte[] data)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnRemoteClipboardImageChanged(data);
+	}
+
 	private static void OnPointerSet(long inst, int[] pixels, int width, int height, int hotX,
 	                                 int hotY)
 	{
@@ -766,6 +787,8 @@ public class LibFreeRDP
 		void OnGraphicsResize(int width, int height, int bpp);
 
 		void OnRemoteClipboardChanged(String data);
+
+		void OnRemoteClipboardImageChanged(byte[] data);
 
 		void OnPointerSet(int[] pixels, int width, int height, int hotX, int hotY);
 

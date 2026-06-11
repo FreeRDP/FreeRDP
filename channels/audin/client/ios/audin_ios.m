@@ -181,7 +181,10 @@ static UINT audin_ios_close(IAudinDevice *device)
 	AudinIosDevice *ios = (AudinIosDevice *)device;
 
 	if (device == nullptr)
+	{
+		WLog_ERR(TAG, "device == nullptr");
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (ios->isOpen)
 	{
@@ -274,7 +277,7 @@ static UINT audin_ios_open(IAudinDevice *device, AudinReceive receive, void *use
 	ios->isOpen = true;
 	return CHANNEL_RC_OK;
 err_out:
-	audin_ios_close(device);
+	(void)audin_ios_close(device);
 	return CHANNEL_RC_INITIALIZATION_ERROR;
 }
 
@@ -286,10 +289,7 @@ static UINT audin_ios_free(IAudinDevice *device)
 	if (device == nullptr)
 		return ERROR_INVALID_PARAMETER;
 
-	if ((error = audin_ios_close(device)))
-	{
-		WLog_ERR(TAG, "audin_oss_close failed with error code %d!", error);
-	}
+	(void)audin_ios_close(device);
 
 	free(ios);
 	return CHANNEL_RC_OK;

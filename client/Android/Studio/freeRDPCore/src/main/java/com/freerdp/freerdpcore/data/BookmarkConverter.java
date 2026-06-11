@@ -1,4 +1,12 @@
-/* Bookmark entity/domain model converter */
+/*
+   Bookmark entity/domain model converter
+
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+   If a copy of the MPL was not distributed with this file, You can obtain one at
+   http://mozilla.org/MPL/2.0/.
+*/
 
 package com.freerdp.freerdpcore.data;
 
@@ -45,6 +53,7 @@ public final class BookmarkConverter
 		adv.setRedirectSDCard(e.redirectSdcard);
 		adv.setRedirectSound(e.redirectSound);
 		adv.setRedirectMicrophone(e.redirectMicrophone);
+		adv.setRedirectPrinter(e.redirectPrinter);
 		adv.setSecurity(e.security);
 		adv.setRemoteProgram(e.remoteProgram);
 		adv.setWorkDir(e.workDir);
@@ -109,6 +118,7 @@ public final class BookmarkConverter
 		e.redirectSdcard = adv.getRedirectSDCard();
 		e.redirectSound = adv.getRedirectSound();
 		e.redirectMicrophone = adv.getRedirectMicrophone();
+		e.redirectPrinter = adv.getRedirectPrinter();
 		e.security = adv.getSecurity();
 		e.remoteProgram = adv.getRemoteProgram();
 		e.workDir = adv.getWorkDir();

@@ -753,6 +753,12 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				{
 					freerdp_client_encomsp_set_control(wfc->common.encomsp, TRUE);
 				}
+				else if (((wParam & 0xfff0) == SC_MAXIMIZE) && wfc->fullscreen_toggle &&
+				         freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
+				         !wfc->fullscreen)
+				{
+					wf_toggle_fullscreen(wfc);
+				}
 				else
 				{
 					processed = FALSE;

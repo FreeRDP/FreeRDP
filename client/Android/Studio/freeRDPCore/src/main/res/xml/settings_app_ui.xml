@@ -32,4 +32,9 @@
     <CheckBoxPreference
         android:key="@string/preference_key_ui_use_back_as_altf4"
         android:title="@string/settings_ui_use_back_as_altf4" />
+    <Preference
+        android:title="@string/pref_title_keyboard_accessibility"
+        android:summary="@string/pref_summary_keyboard_accessibility">
+        <intent android:action="android.settings.ACCESSIBILITY_SETTINGS" />
+    </Preference>
 </PreferenceScreen>

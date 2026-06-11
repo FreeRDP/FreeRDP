@@ -29,6 +29,7 @@
 #ifdef _WIN32
 
 #include <stdio.h>
+#include <string.h>
 #include <io.h>
 #include <conio.h>
 #include <wincred.h>
@@ -52,6 +53,52 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf,
                                     size_t bufsiz, int from_stdin)
 {
+	if (bufsiz == 0)
+	{
+		errno = EINVAL;
+		return nullptr;
+	}
+
+	/* When /from-stdin is requested, read the password from stdin. The Unix
+	 * counterpart (freerdp_passphrase_read_tty) does the same, suppressing
+	 * terminal echo via tcsetattr; suppress console echo here via SetConsoleMode
+	 * when stdin is an interactive console. On a pipe the echo bit is moot. */
+	if (from_stdin)
+	{
+		HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+		const BOOL isTty = _isatty(_fileno(stdin)) != 0;
+		DWORD origMode = 0;
+		BOOL echoSuppressed = FALSE;
+
+		if (isTty && hStdin && hStdin != INVALID_HANDLE_VALUE && GetConsoleMode(hStdin, &origMode))
+		{
+			if (SetConsoleMode(hStdin, origMode & ~(DWORD)ENABLE_ECHO_INPUT))
+				echoSuppressed = TRUE;
+		}
+
+		if (prompt)
+		{
+			(void)fputs(prompt, stdout);
+			(void)fflush(stdout);
+		}
+
+		WINPR_ASSERT(bufsiz <= INT32_MAX);
+		const char* rc = fgets(buf, (int)bufsiz, stdin);
+
+		if (echoSuppressed)
+		{
+			(void)SetConsoleMode(hStdin, origMode);
+			(void)fputc('\n', stdout);
+			(void)fflush(stdout);
+		}
+
+		if (!rc)
+			return nullptr;
+
+		buf[strcspn(buf, "\r\n")] = '\0';
+		return buf;
+	}
+
 	WCHAR UserNameW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 'p', 'r', 'e', 'f', 'i',
 		                                                'l', 'l', 'e', 'd', '\0' };
 	WCHAR PasswordW[CREDUI_MAX_PASSWORD_LENGTH + 1] = WINPR_C_ARRAY_INIT;

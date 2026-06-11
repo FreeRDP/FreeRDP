@@ -135,7 +135,7 @@ if [ ! -d $SRC ]; then
   cd $SRC
   git clone --depth 1 -b openssl-3.6.0 https://github.com/openssl/openssl.git
   git clone --depth 1 -b v1.3.1.2 https://github.com/madler/zlib.git
-  git clone --depth 1 -b uriparser-1.0.0 https://github.com/uriparser/uriparser.git
+  git clone --depth 1 -b uriparser-1.0.2 https://github.com/uriparser/uriparser.git
   git clone --depth 1 -b json-c-0.18-20240915 https://github.com/json-c/json-c.git
   git clone --depth 1 -b release-3.2.28 https://github.com/libsdl-org/SDL.git
   git clone --depth 1 --shallow-submodules --recurse-submodules -b release-3.2.2 https://github.com/libsdl-org/SDL_ttf.git

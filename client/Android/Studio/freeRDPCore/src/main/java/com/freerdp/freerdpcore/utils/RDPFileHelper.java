@@ -1,3 +1,13 @@
+/*
+   RDP file import/export helper
+
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+   If a copy of the MPL was not distributed with this file, You can obtain one at
+   http://mozilla.org/MPL/2.0/.
+*/
+
 package com.freerdp.freerdpcore.utils;
 
 import android.util.Log;
@@ -173,6 +183,13 @@ public final class RDPFileHelper
 		if (i != null)
 			bookmark.setEnableGatewaySettings(i == 1 || i == 2);
 
+		i = p.getInteger("redirectprinters");
+		if (i != null)
+			advanced.setRedirectPrinter(i == 1);
+		i = p.getInteger("disableprinterredirection");
+		if (i != null)
+			advanced.setRedirectPrinter(i == 0);
+
 		s = p.getString("pcb");
 		if (s != null && !s.isEmpty())
 		{
@@ -247,6 +264,9 @@ public final class RDPFileHelper
 
 		if (adv.getVmConnectMode())
 			writeString(sb, "pcb", adv.getVmConnectGuid());
+
+		if (adv.getRedirectPrinter())
+			writeInt(sb, "redirectprinters", 1);
 
 		return sb.toString();
 	}

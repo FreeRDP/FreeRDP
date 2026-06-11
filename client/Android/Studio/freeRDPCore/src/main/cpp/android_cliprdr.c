@@ -249,6 +249,8 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
 		}
 	}
 
+	/* Text formats take priority over image formats. Request the best available text format
+	 * first; if none is found, fall back to image. */
 	for (UINT32 index = 0; index < afc->numServerFormats; index++)
 	{
 		format = &(afc->serverFormats[index]);
@@ -259,11 +261,26 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
 			    CHANNEL_RC_OK)
 				return rc;
 
-			break;
+			return CHANNEL_RC_OK;
 		}
 		else if (format->formatId == CF_TEXT)
 		{
 			if ((rc = android_cliprdr_send_client_format_data_request(cliprdr, CF_TEXT)) !=
+			    CHANNEL_RC_OK)
+				return rc;
+
+			return CHANNEL_RC_OK;
+		}
+	}
+
+	/* No text format found — request the first available image format. */
+	for (UINT32 index = 0; index < afc->numServerFormats; index++)
+	{
+		format = &(afc->serverFormats[index]);
+
+		if (format->formatId == CF_DIB || format->formatId == CF_DIBV5)
+		{
+			if ((rc = android_cliprdr_send_client_format_data_request(cliprdr, format->formatId)) !=
 			    CHANNEL_RC_OK)
 				return rc;
 
@@ -407,20 +424,58 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 
 	(void)SetEvent(afc->clipboardRequestEvent);
 
-	if ((formatId == CF_TEXT) || (formatId == CF_UNICODETEXT))
+	switch (formatId)
 	{
-		JNIEnv* env = nullptr;
-		formatId = ClipboardRegisterFormat(afc->clipboard, "text/plain");
-		char* data = (char*)ClipboardGetData(afc->clipboard, formatId, &size);
-		jboolean attached = jni_attach_thread(&env);
-		size = strnlen(data, size);
-		jstring jdata = jniNewStringUTF(env, data, size);
-		freerdp_callback("OnRemoteClipboardChanged", "(JLjava/lang/String;)V", (jlong)instance,
-		                 jdata);
-		(*env)->DeleteLocalRef(env, jdata);
+		case CF_TEXT:
+		case CF_UNICODETEXT:
+		{
+			JNIEnv* env = nullptr;
+			UINT32 plainFormatId = ClipboardRegisterFormat(afc->clipboard, "text/plain");
+			char* data = (char*)ClipboardGetData(afc->clipboard, plainFormatId, &size);
+			if (!data)
+				break;
+			jboolean attached = jni_attach_thread(&env);
+			size = strnlen(data, size);
+			jstring jdata = jniNewStringUTF(env, data, size);
+			freerdp_callback("OnRemoteClipboardChanged", "(JLjava/lang/String;)V", (jlong)instance,
+			                 jdata);
+			(*env)->DeleteLocalRef(env, jdata);
+			free(data);
 
-		if (attached == JNI_TRUE)
-			jni_detach_thread();
+			if (attached == JNI_TRUE)
+				jni_detach_thread();
+		}
+		break;
+		case CF_DIB:
+		case CF_DIBV5:
+		{
+			UINT32 pngFormatId = ClipboardRegisterFormat(afc->clipboard, "image/png");
+			BYTE* pngData = (BYTE*)ClipboardGetData(afc->clipboard, pngFormatId, &size);
+
+			if (pngData)
+			{
+				JNIEnv* env = nullptr;
+				jboolean attached = jni_attach_thread(&env);
+				jbyteArray jpngData = (*env)->NewByteArray(env, (jsize)size);
+
+				if (jpngData)
+				{
+					(*env)->SetByteArrayRegion(env, jpngData, 0, (jsize)size,
+					                           (const jbyte*)pngData);
+					freerdp_callback("OnRemoteClipboardImageChanged", "(J[B)V", (jlong)instance,
+					                 jpngData);
+					(*env)->DeleteLocalRef(env, jpngData);
+				}
+
+				free(pngData);
+
+				if (attached == JNI_TRUE)
+					jni_detach_thread();
+			}
+		}
+		break;
+		default:
+			break;
 	}
 
 	return CHANNEL_RC_OK;

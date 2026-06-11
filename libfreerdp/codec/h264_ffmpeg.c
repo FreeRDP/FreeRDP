@@ -83,6 +83,7 @@ static const char* get_vaapi_device(void)
 	if (!initialized)
 	{
 		initialized = true;
+		// NOLINTNEXTLINE(concurrency-mt-unsafe)
 		const char* env = getenv("FREERDP_VAAPI_DEVICE");
 		if (env)
 			(void)_snprintf(device, sizeof(device), "%s", env);
@@ -330,7 +331,8 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		goto fail;
 	}
 
-	gotFrame = (status == 0);
+	if (status == 0)
+		gotFrame = 1;
 #else
 #if defined(WITH_VAAPI) || defined(WITH_VIDEOTOOLBOX)
 	status =
@@ -360,15 +362,14 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		{
 			status = av_frame_copy(sys->videoFrame, sys->hwVideoFrame);
 		}
-	}
+		gotFrame = (status == 0);
 
-	gotFrame = (status == 0);
-
-	if (status < 0)
-	{
-		WLog_Print(h264->log, WLOG_ERROR, "Failed to transfer video frame (status=%d) (%s)", status,
-		           av_err2str(status));
-		goto fail;
+		if (status < 0)
+		{
+			WLog_Print(h264->log, WLOG_ERROR, "Failed to transfer video frame (status=%d) (%s)",
+			           status, av_err2str(status));
+			goto fail;
+		}
 	}
 
 #endif
@@ -383,6 +384,11 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		iStride[0] = (UINT32)MAX(0, sys->videoFrame->linesize[0]);
 		iStride[1] = (UINT32)MAX(0, sys->videoFrame->linesize[1]);
 		iStride[2] = (UINT32)MAX(0, sys->videoFrame->linesize[2]);
+
+		if (sys->videoFrame->width < WINPR_ASSERTING_INT_CAST(int64_t, h264->width))
+			goto fail;
+		if (sys->videoFrame->height < WINPR_ASSERTING_INT_CAST(int64_t, h264->height))
+			goto fail;
 		rc = 1;
 	}
 	else

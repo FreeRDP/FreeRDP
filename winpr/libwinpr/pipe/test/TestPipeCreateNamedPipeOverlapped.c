@@ -21,7 +21,7 @@ static BOOL bServerSuccess = FALSE;
 
 static HANDLE serverReadyEvent = nullptr;
 
-static LPTSTR lpszPipeName = _T("\\\\.\\pipe\\winpr_test_pipe_overlapped");
+static const char lpszPipeName[] = "\\\\.\\pipe\\winpr_test_pipe_overlapped";
 
 static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 {
@@ -54,8 +54,8 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 
 	/* 2: connect to server named pipe */
 
-	hNamedPipe = CreateFile(lpszPipeName, GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
-	                        FILE_FLAG_OVERLAPPED, nullptr);
+	hNamedPipe = winpr_CreateFile(lpszPipeName, GENERIC_READ | GENERIC_WRITE, 0, nullptr,
+	                              OPEN_EXISTING, FILE_FLAG_OVERLAPPED, nullptr);
 
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
@@ -179,11 +179,16 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 
 	/* 2: create named pipe and set ready event */
 
+#if defined(UNICODE)
+	WCHAR* str = ConvertUtf8ToWCharAlloc(lpszPipeName, nullptr);
+#else
+	char* str = _strdup(lpszPipeName);
+#endif
 	hNamedPipe =
-	    CreateNamedPipe(lpszPipeName, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+	    CreateNamedPipe(str, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
 	                    PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
 	                    PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0, nullptr);
-
+	free(str);
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
 		printf("server: CreateNamedPipe failure: %" PRIu32 "\n", GetLastError());

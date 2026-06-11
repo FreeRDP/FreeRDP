@@ -233,7 +233,7 @@ int TestSAM(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])
 fail:
 	SamClose(sam);
 	if (tmp)
-		DeleteFile(tmp);
+		winpr_DeleteFile(tmp);
 	free(tmp);
 	return res;
 }

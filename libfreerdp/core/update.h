@@ -42,6 +42,43 @@
 #define BITMAP_COMPRESSION 0x0001
 #define NO_BITMAP_COMPRESSION_HDR 0x0400
 
+typedef enum
+{
+	RDP_STATS_SURFACE_BITS = 0,
+	RDP_STATS_SURFACE_BITS_RFX,
+	RDP_STATS_SURFACE_BITS_RFX_IMAGE,
+	RDP_STATS_SURFACE_BITS_NSC,
+	RDP_STATS_SURFACE_BITS_NONE,
+	RDP_STATS_SURFACE_BITS_UNKNOWN,
+	RDP_STATS_BEGIN_PAINT,
+	RDP_STATS_END_PAINT,
+	RDP_STATS_SET_BOUNDS,
+	RDP_STATS_SYNC,
+	RDP_STATS_RESIZE,
+	RDP_STATS_BITMAP_UPDATE,
+	RDP_STATS_PALETTE,
+	RDP_STATS_REFRESH_RECT,
+	RDP_STATS_SUPPRESS_OUTPUT,
+	RDP_STATS_SURFACE_COMMAND,
+	RDP_STATS_SURFACE_FRAME_MARKER,
+	RDP_STATS_SURFACE_FRAME_ACK,
+	RDP_STATS_POINTER_SYSTEM,
+	RDP_STATS_POINTER_DEFAULT,
+	RDP_STATS_POINTER_POSITION,
+	RDP_STATS_POINTER_COLOR,
+	RDP_STATS_POINTER_CACHED,
+	RDP_STATS_POINTER_NEW,
+	RDP_STATS_POINTER_LARGE
+} rdp_codec_stats;
+
+typedef struct
+{
+	uint64_t primary[0x100];
+	uint64_t secondary[0x100];
+	uint64_t altsec[0x100];
+	uint64_t base[0x40];
+} rdp_stats;
+
 typedef struct
 {
 	rdpUpdate common;
@@ -65,6 +102,8 @@ typedef struct
 	rdpBounds previousBounds;
 	CRITICAL_SECTION mux;
 	BOOL withinBeginEndPaint;
+
+	rdp_stats stats;
 } rdp_update_internal;
 
 typedef struct
@@ -239,5 +278,7 @@ FREERDP_LOCAL BOOL update_begin_paint(rdpUpdate* update);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL update_end_paint(rdpUpdate* update);
+
+FREERDP_LOCAL void update_dump_stats(rdpUpdate* update);
 
 #endif /* FREERDP_LIB_CORE_UPDATE_H */

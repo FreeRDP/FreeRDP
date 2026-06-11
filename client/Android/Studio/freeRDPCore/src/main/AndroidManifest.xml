@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <supports-screens
         android:anyDensity="true"
@@ -63,7 +64,7 @@
             android:exported="true"
             android:name=".presentation.ApplicationSettingsActivity"
             android:label="@string/title_application_settings"
-            android:theme="@style/Theme.Main" />
+            android:theme="@style/Theme.Main"
             android:windowSoftInputMode="stateHidden" />
         <activity
             android:exported="true"
@@ -98,6 +99,32 @@
             android:label="@string/title_help"
             android:theme="@style/Theme.Main"
             android:configChanges="orientation|keyboardHidden|screenSize" />
+
+        <activity
+            android:exported="false"
+            android:name=".presentation.PrintProxyActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true" />
+
+        <provider
+            android:name=".utils.ClipboardImageProvider"
+            android:authorities="com.freerdp.freerdpcore.clipboard"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
+        <service
+            android:name=".presentation.KeyboardAccessibilityService"
+            android:label="@string/accessibility_keyboard_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/keyboard_accessibility_service" />
+        </service>
 
     </application>
 

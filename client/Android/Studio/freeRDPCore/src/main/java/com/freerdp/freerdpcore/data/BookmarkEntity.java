@@ -1,4 +1,12 @@
-/* Bookmark entity */
+/*
+   Bookmark entity
+
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+   If a copy of the MPL was not distributed with this file, You can obtain one at
+   http://mozilla.org/MPL/2.0/.
+*/
 
 package com.freerdp.freerdpcore.data;
 
@@ -93,6 +101,9 @@ import androidx.room.PrimaryKey;
 
 	@ColumnInfo(name = "redirect_microphone", defaultValue = "false")
 	public boolean redirectMicrophone = false;
+
+	@ColumnInfo(name = "redirect_printer", defaultValue = "false")
+	public boolean redirectPrinter = false;
 
 	/** 0=auto, 1=rdp, 2=tls, 3=nla */
 	@ColumnInfo(name = "security", defaultValue = "0") public int security = 0;

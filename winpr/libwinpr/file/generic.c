@@ -231,6 +231,7 @@ int InstallAioSignalHandler()
 
 #endif /* WINPR_HAVE_AIO_H */
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
@@ -238,6 +239,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	return winpr_CreateFile(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
 	                        dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
+#endif
 
 HANDLE winpr_CreateFile(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                         LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
@@ -300,10 +302,12 @@ fail:
 	return hdl;
 }
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 BOOL DeleteFileA(LPCSTR lpFileName)
 {
 	return winpr_DeleteFile(lpFileName);
 }
+#endif
 
 BOOL DeleteFileW(LPCWSTR lpFileName)
 {
@@ -1264,10 +1268,12 @@ fail:
 	return ret;
 }
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 BOOL RemoveDirectoryA(LPCSTR lpPathName)
 {
 	return winpr_RemoveDirectory(lpPathName);
 }
+#endif
 
 BOOL RemoveDirectoryW(LPCWSTR lpPathName)
 {
@@ -1288,10 +1294,12 @@ fail:
 	return ret;
 }
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 BOOL MoveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags)
 {
 	return winpr_MoveFileEx(lpExistingFileName, lpNewFileName, dwFlags);
 }
+#endif
 
 BOOL MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlags)
 {
@@ -1315,10 +1323,12 @@ fail:
 	return ret;
 }
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 BOOL MoveFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
 {
 	return winpr_MoveFileEx(lpExistingFileName, lpNewFileName, 0);
 }
+#endif
 
 BOOL MoveFileW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName)
 {

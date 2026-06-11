@@ -23,6 +23,8 @@ import android.util.Log;
 
 import com.freerdp.freerdpcore.domain.BookmarkBase;
 import com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity;
+import com.freerdp.freerdpcore.presentation.PrintJobMonitor;
+import com.freerdp.freerdpcore.presentation.PrintNotificationHelper;
 import com.freerdp.freerdpcore.services.LibFreeRDP;
 
 import java.util.ArrayList;
@@ -38,8 +40,8 @@ import java.util.function.Consumer;
 public class GlobalApp extends Application implements LibFreeRDP.EventListener
 {
 	private static final String TAG = "GlobalApp";
-	public static boolean IsMeteredNetwork = false;
 	private static Map<Long, SessionState> sessionMap;
+	private PrintJobMonitor printJobMonitor;
 
 	/** Per-session connection event listener. Callbacks are invoked on the main thread. */
 	public interface SessionEventListener
@@ -144,8 +146,8 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener
 
 		LibFreeRDP.setEventListener(this);
 
-		IsMeteredNetwork = NetworkStateReceiver.isMeteredNetwork(this);
-		NetworkStateReceiver.registerNetworkCallback(this);
+		printJobMonitor = new PrintJobMonitor(file -> PrintNotificationHelper.notify(this, file));
+		printJobMonitor.startWatching();
 
 		// init screen receiver here (this can't be declared in AndroidManifest - refer to:
 		// http://thinkandroid.wordpress.com/2010/01/24/handling-screen-off-and-screen-on-intents/

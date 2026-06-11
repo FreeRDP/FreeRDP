@@ -2,6 +2,7 @@
    Android Session Activity
 
    Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
 
    This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
    If a copy of the MPL was not distributed with this file, You can obtain one at
@@ -41,7 +42,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.RoundedCorner;
 import android.view.WindowInsets;
@@ -62,6 +62,7 @@ public class SessionActivity extends AppCompatActivity
 	public static final String PARAM_CONNECTION_REFERENCE = "conRef";
 	public static final String PARAM_INSTANCE = "instance";
 	private static final String TAG = "FreeRDP.SessionActivity";
+	static volatile SessionActivity activeSession;
 	private Bitmap bitmap;
 	private SessionState session;
 	private SessionView sessionView;
@@ -297,8 +298,10 @@ public class SessionActivity extends AppCompatActivity
 	{
 		super.onWindowFocusChanged(hasFocus);
 		if (hasFocus)
+		{
 			hideSystemBars();
-		mClipboardManager.getPrimaryClipManually();
+			mClipboardManager.getPrimaryClipManually();
+		}
 	}
 
 	@Override protected void onStart()
@@ -317,13 +320,15 @@ public class SessionActivity extends AppCompatActivity
 	{
 		super.onResume();
 		Log.v(TAG, "Session.onResume");
+		activeSession = this;
 	}
 
 	@Override protected void onPause()
 	{
 		super.onPause();
 		Log.v(TAG, "Session.onPause");
-
+		if (activeSession == this)
+			activeSession = null;
 		// hide any visible keyboards
 		inputManager.hideKeyboards();
 	}
@@ -613,6 +618,11 @@ public class SessionActivity extends AppCompatActivity
 		return super.onKeyLongPress(keyCode, event);
 	}
 
+	boolean handleKeyEvent(KeyEvent event)
+	{
+		return inputManager != null && inputManager.onAndroidKeyEvent(event);
+	}
+
 	// android keyboard input handling
 	// We always use the unicode value to process input from the android
 	// keyboard except if key modifiers
@@ -748,6 +758,12 @@ public class SessionActivity extends AppCompatActivity
 		mClipboardManager.setClipboardData(data);
 	}
 
+	@Override public void OnRemoteClipboardImageChanged(byte[] data)
+	{
+		Log.v(TAG, "OnRemoteClipboardImageChanged: " + data.length + " bytes");
+		mClipboardManager.setClipboardImage(data);
+	}
+
 	@Override public void OnPointerSet(int[] pixels, int width, int height, int hotX, int hotY)
 	{
 		Bundle data = new Bundle();
@@ -788,6 +804,12 @@ public class SessionActivity extends AppCompatActivity
 		Log.v(TAG, "onClipboardChanged: " + data);
 		if (session != null)
 			LibFreeRDP.sendClipboardData(session.getInstance(), data);
+	}
+
+	@Override public void onClipboardImageChanged(byte[] data, String mimeType)
+	{
+		if (session != null && data != null)
+			LibFreeRDP.sendClipboardImageData(session.getInstance(), data, mimeType);
 	}
 
 	private void onConnectionStateChanged(SessionViewModel.ConnectionState state)

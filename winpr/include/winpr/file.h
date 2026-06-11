@@ -21,6 +21,7 @@
 #ifndef WINPR_FILE_H
 #define WINPR_FILE_H
 
+#include <winpr/config.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
@@ -263,12 +264,14 @@ extern "C"
 {
 #endif
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("since 3.16.0, Use winpr_CreateFile",
 	                     WINPR_ATTR_MALLOC(CloseHandle, 1) WINPR_API HANDLE CreateFileA(
 	                         LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	                         LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 	                         DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
 	                         HANDLE hTemplateFile));
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 	WINPR_ATTR_MALLOC(CloseHandle, 1)
 	WINPR_API HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
@@ -276,8 +279,10 @@ extern "C"
 	                             DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
 	                             HANDLE hTemplateFile);
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("since 3.16.0, Use winpr_DeleteFile",
 	                     WINPR_ATTR_NODISCARD WINPR_API BOOL DeleteFileA(LPCSTR lpFileName));
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL DeleteFileW(LPCWSTR lpFileName);
@@ -417,8 +422,10 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("since 3.16.0, Use winpr_RemoveDirectory",
 	                     WINPR_ATTR_NODISCARD WINPR_API BOOL RemoveDirectoryA(LPCSTR lpPathName));
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL RemoveDirectoryW(LPCWSTR lpPathName);
@@ -442,17 +449,21 @@ extern "C"
 	                                 LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters,
 	                                 LPDWORD lpTotalNumberOfClusters);
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("since 3.16.0, Use winpr_MoveFileEx",
 	                     WINPR_ATTR_NODISCARD WINPR_API BOOL MoveFileExA(LPCSTR lpExistingFileName,
 	                                                                     LPCSTR lpNewFileName,
 	                                                                     DWORD dwFlags));
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlags);
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	WINPR_DEPRECATED_VAR("since 3.16.0, Use winpr_MoveFile",
 	                     WINPR_ATTR_NODISCARD WINPR_API BOOL MoveFileA(LPCSTR lpExistingFileName,
 	                                                                   LPCSTR lpNewFileName));
+#endif /* WITHOUT_WINPR_3x_DEPRECATED */
 
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL MoveFileW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName);
