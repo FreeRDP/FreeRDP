@@ -2078,6 +2078,7 @@ static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 		           error);
 		return error;
 	}
+	const size_t start = Stream_GetPosition(s);
 
 	WLog_Print(gfx->base.log, WLOG_TRACE,
 	           "cmdId: %s (0x%04" PRIX16 ") flags: 0x%04" PRIX16 " pduLength: %" PRIu32 "",
@@ -2238,6 +2239,14 @@ static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 
 			break;
 
+		case RDPGFX_CMDID_PROTECT_SURFACE:
+		case RDPGFX_CMDID_WATERMARK:
+			WLog_Print(gfx->base.log, WLOG_WARN,
+			           "Command %s not implemented, skipping %" PRIu32 " bytes",
+			           rdpgfx_get_cmd_id_string(header.cmdId), header.pduLength);
+			if (!Stream_SafeSeek(s, header.pduLength - start))
+				error = ERROR_INVALID_DATA;
+			break;
 		default:
 			error = CHANNEL_RC_BAD_PROC;
 			break;
