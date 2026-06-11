@@ -1826,9 +1826,9 @@ fail:
 	return krb5_error_to_SECURITY_STATUS(rv);
 }
 
-static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO(WINPR_ATTR_UNUSED KRB_CONTEXT* context,
-                                                  WINPR_ATTR_UNUSED KRB_CREDENTIALS* credentials,
-                                                  SecPkgContext_PackageInfo* PackageInfo)
+static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO_A(WINPR_ATTR_UNUSED KRB_CONTEXT* context,
+                                                    WINPR_ATTR_UNUSED KRB_CREDENTIALS* credentials,
+                                                    SecPkgContext_PackageInfoA* PackageInfo)
 {
 	size_t size = sizeof(SecPkgInfoA);
 	SecPkgInfoA* pPackageInfo =
@@ -1843,6 +1843,33 @@ static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO(WINPR_ATTR_UNUSED KRB_CONTEXT*
 	pPackageInfo->cbMaxToken = KERBEROS_SecPkgInfoA.cbMaxToken;
 	pPackageInfo->Name = _strdup(KERBEROS_SecPkgInfoA.Name);
 	pPackageInfo->Comment = _strdup(KERBEROS_SecPkgInfoA.Comment);
+
+	if (!pPackageInfo->Name || !pPackageInfo->Comment)
+	{
+		sspi_ContextBufferFree(pPackageInfo);
+		return SEC_E_INSUFFICIENT_MEMORY;
+	}
+	PackageInfo->PackageInfo = pPackageInfo;
+	return SEC_E_OK;
+}
+
+static SECURITY_STATUS kerberos_ATTR_PACKAGE_INFO_W(WINPR_ATTR_UNUSED KRB_CONTEXT* context,
+                                                    WINPR_ATTR_UNUSED KRB_CREDENTIALS* credentials,
+                                                    SecPkgContext_PackageInfoW* PackageInfo)
+{
+	size_t size = sizeof(SecPkgInfoW);
+	SecPkgInfoW* pPackageInfo =
+	    (SecPkgInfoW*)sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
+
+	if (!pPackageInfo)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	pPackageInfo->fCapabilities = KERBEROS_SecPkgInfoW.fCapabilities;
+	pPackageInfo->wVersion = KERBEROS_SecPkgInfoW.wVersion;
+	pPackageInfo->wRPCID = KERBEROS_SecPkgInfoW.wRPCID;
+	pPackageInfo->cbMaxToken = KERBEROS_SecPkgInfoW.cbMaxToken;
+	pPackageInfo->Name = _wcsdup(KERBEROS_SecPkgInfoW.Name);
+	pPackageInfo->Comment = _wcsdup(KERBEROS_SecPkgInfoW.Comment);
 
 	if (!pPackageInfo->Name || !pPackageInfo->Comment)
 	{
@@ -1930,9 +1957,9 @@ out:
 
 #endif /* WITH_KRB5 */
 
-static SECURITY_STATUS
-    SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext,
-                                               WINPR_ATTR_UNUSED ULONG ulAttribute, void* pBuffer)
+WINPR_ATTR_NODISCARD
+static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesCommon(
+    PCtxtHandle phContext, WINPR_ATTR_UNUSED ULONG ulAttribute, void* pBuffer)
 {
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
@@ -1956,10 +1983,6 @@ static SECURITY_STATUS
 			return kerberos_ATTR_AUTH_IDENTITY(context, credentials,
 			                                   (SecPkgContext_AuthIdentity*)pBuffer);
 
-		case SECPKG_ATTR_PACKAGE_INFO:
-			return kerberos_ATTR_PACKAGE_INFO(context, credentials,
-			                                  (SecPkgContext_PackageInfo*)pBuffer);
-
 		case SECPKG_CRED_ATTR_TICKET_LOGON:
 			return kerberos_ATTR_TICKET_LOGON(context, credentials, (KERB_TICKET_LOGON*)pBuffer);
 
@@ -1973,10 +1996,60 @@ static SECURITY_STATUS
 #endif
 }
 
+static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(
+    PCtxtHandle phContext, WINPR_ATTR_UNUSED ULONG ulAttribute, void* pBuffer)
+{
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INVALID_PARAMETER;
+
+#ifdef WITH_KRB5
+	KRB_CONTEXT* context = get_context(phContext);
+	if (!context)
+		return SEC_E_INVALID_PARAMETER;
+
+	KRB_CREDENTIALS* credentials = context->credentials;
+
+	switch (ulAttribute)
+	{
+		case SECPKG_ATTR_PACKAGE_INFO:
+			return kerberos_ATTR_PACKAGE_INFO_A(context, credentials,
+			                                    (SecPkgContext_PackageInfoA*)pBuffer);
+		default:
+			break;
+	}
+#endif
+	return kerberos_QueryContextAttributesCommon(phContext, ulAttribute, pBuffer);
+}
+
 static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesW(PCtxtHandle phContext,
                                                                   ULONG ulAttribute, void* pBuffer)
 {
-	return kerberos_QueryContextAttributesA(phContext, ulAttribute, pBuffer);
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INVALID_PARAMETER;
+
+#ifdef WITH_KRB5
+	KRB_CONTEXT* context = get_context(phContext);
+	if (!context)
+		return SEC_E_INVALID_PARAMETER;
+
+	KRB_CREDENTIALS* credentials = context->credentials;
+
+	switch (ulAttribute)
+	{
+		case SECPKG_ATTR_PACKAGE_INFO:
+			return kerberos_ATTR_PACKAGE_INFO_W(context, credentials,
+			                                    (SecPkgContext_PackageInfoW*)pBuffer);
+		default:
+			break;
+	}
+#endif
+	return kerberos_QueryContextAttributesCommon(phContext, ulAttribute, pBuffer);
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_SetContextAttributesW(

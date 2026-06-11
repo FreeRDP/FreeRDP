@@ -25,6 +25,7 @@
 
 #include <winpr/nt.h>
 #include <winpr/crypto.h>
+#include <winpr/sysinfo.h>
 
 #include "../sspi.h"
 
@@ -297,5 +298,8 @@ SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue);
 #endif
 
 BOOL NTLM_init(void);
+
+WINPR_ATTR_MALLOC(free, 1)
+char* get_computer_name(COMPUTER_NAME_FORMAT type, size_t* pSize);
 
 #endif /* WINPR_SSPI_NTLM_PRIVATE_H */

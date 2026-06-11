@@ -396,14 +396,37 @@ typedef struct
 
 typedef struct
 {
-	SecPkgInfo* PackageInfo;
+	SecPkgInfoA* PackageInfo;
 	UINT32 NegotiationState;
-} SecPkgContext_NegotiationInfo;
+} SecPkgContext_NegotiationInfoA;
 
 typedef struct
 {
-	SecPkgInfo* PackageInfo;
-} SecPkgContext_PackageInfo;
+	SecPkgInfoW* PackageInfo;
+	UINT32 NegotiationState;
+} SecPkgContext_NegotiationInfoW;
+
+#ifdef UNICODE
+#define SecPkgContext_NegotiationInfo SecPkgContext_NegotiationInfoW
+#else
+#define SecPkgContext_NegotiationInfo SecPkgContext_NegotiationInfoA
+#endif /* UNICODE */
+
+typedef struct
+{
+	SecPkgInfoA* PackageInfo;
+} SecPkgContext_PackageInfoA;
+
+typedef struct
+{
+	SecPkgInfoW* PackageInfo;
+} SecPkgContext_PackageInfoW;
+
+#ifdef UNICODE
+#define SecPkgContext_PackageInfo SecPkgContext_PackageInfoW
+#else
+#define SecPkgContext_PackageInfo SecPkgContext_PackageInfoA
+#endif /* UNICODE */
 
 typedef struct
 {

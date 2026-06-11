@@ -41,6 +41,10 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.NTLM")
 
+#ifndef MIN
+#define MIN(a, b) ((a) < (b)) ? (a) : (b)
+#endif
+
 #define WINPR_KEY "Software\\%s\\WinPR\\NTLM"
 
 static char* NTLM_PACKAGE_NAME = "NTLM";
@@ -104,9 +108,12 @@ static BOOL check_context_(NTLM_CONTEXT* context, const char* file, const char* 
 	return rc;
 }
 
-static char* get_name(COMPUTER_NAME_FORMAT type)
+char* get_computer_name(COMPUTER_NAME_FORMAT type, size_t* pSize)
 {
 	DWORD nSize = 0;
+
+	if (pSize)
+		*pSize = 0;
 
 	if (GetComputerNameExA(type, nullptr, &nSize))
 		return nullptr;
@@ -125,6 +132,8 @@ static char* get_name(COMPUTER_NAME_FORMAT type)
 		return nullptr;
 	}
 
+	if (pSize)
+		*pSize = nSize;
 	return computerName;
 }
 
@@ -137,7 +146,7 @@ static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 
 	if (!Workstation)
 	{
-		computerName = get_name(ComputerNameNetBIOS);
+		computerName = get_computer_name(ComputerNameNetBIOS, nullptr);
 		if (!computerName)
 			return -1;
 		ws = computerName;
@@ -180,27 +189,15 @@ static int ntlm_SetContextServicePrincipalNameW(NTLM_CONTEXT* context, LPWSTR Se
 static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
 	char* name = TargetName;
-	DWORD nSize = 0;
-	CHAR* computerName = nullptr;
-
 	WINPR_ASSERT(context);
 
 	if (!name)
 	{
-		if (GetComputerNameExA(ComputerNameNetBIOS, nullptr, &nSize) ||
-		    GetLastError() != ERROR_MORE_DATA)
-			return -1;
-
-		computerName = calloc(nSize, sizeof(CHAR));
+		size_t nSize = 0;
+		char* computerName = get_computer_name(ComputerNameNetBIOS, &nSize);
 
 		if (!computerName)
 			return -1;
-
-		if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
-		{
-			free(computerName);
-			return -1;
-		}
 
 		if (nSize > MAX_COMPUTERNAME_LENGTH)
 			computerName[MAX_COMPUTERNAME_LENGTH] = '\0';
@@ -839,10 +836,58 @@ SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue)
 	return SEC_E_OK;
 }
 
-/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa379337/ */
+WINPR_ATTR_NODISCARD
+static bool identityToAuthIdentity(const SEC_WINNT_AUTH_IDENTITY* identity,
+                                   SecPkgContext_AuthIdentity* pAuthIdentity)
+{
+	WINPR_ASSERT(identity);
 
-static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
-                                                              ULONG ulAttribute, void* pBuffer)
+	if (!pAuthIdentity)
+		return false;
+
+	const SecPkgContext_AuthIdentity empty = WINPR_C_ARRAY_INIT;
+	*pAuthIdentity = empty;
+
+	if ((identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE) != 0)
+	{
+		if (identity->UserLength > 0)
+		{
+			if (ConvertWCharNToUtf8(identity->User, identity->UserLength, pAuthIdentity->User,
+			                        ARRAYSIZE(pAuthIdentity->User)) <= 0)
+				return false;
+		}
+
+		if (identity->DomainLength > 0)
+		{
+			if (ConvertWCharNToUtf8(identity->Domain, identity->DomainLength, pAuthIdentity->Domain,
+			                        ARRAYSIZE(pAuthIdentity->Domain)) <= 0)
+				return false;
+		}
+	}
+	else if ((identity->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI) != 0)
+	{
+		if (identity->UserLength > 0)
+		{
+			const size_t len = MIN(ARRAYSIZE(pAuthIdentity->User) - 1, identity->UserLength);
+			strncpy(pAuthIdentity->User, (char*)identity->User, len);
+			pAuthIdentity->User[len] = '\0';
+		}
+
+		if (identity->DomainLength > 0)
+		{
+			const size_t len = MIN(ARRAYSIZE(pAuthIdentity->Domain) - 1, identity->DomainLength);
+			strncpy(pAuthIdentity->Domain, (char*)identity->Domain, len);
+			pAuthIdentity->Domain[len] = '\0';
+		}
+	}
+	else
+		return false;
+	return true;
+}
+
+WINPR_ATTR_NODISCARD
+static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesCommon(PCtxtHandle phContext,
+                                                                   ULONG ulAttribute, void* pBuffer)
 {
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
@@ -854,7 +899,18 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 	if (!check_context(context))
 		return SEC_E_INVALID_HANDLE;
 
-	if (ulAttribute == SECPKG_ATTR_SIZES)
+	if (ulAttribute == SECPKG_ATTR_AUTH_IDENTITY)
+	{
+		SecPkgContext_AuthIdentity* AuthIdentity = (SecPkgContext_AuthIdentity*)pBuffer;
+		SSPI_CREDENTIALS* credentials = context->credentials;
+		if (!credentials)
+			return SEC_E_INTERNAL_ERROR;
+		if (!identityToAuthIdentity(&credentials->identity, AuthIdentity))
+			return SEC_E_INTERNAL_ERROR;
+		context->UseSamFileDatabase = FALSE;
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_SIZES)
 	{
 		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*)pBuffer;
 		ContextSizes->cbMaxToken = 2010;
@@ -862,34 +918,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 		ContextSizes->cbBlockSize = 0;        /* no padding */
 		ContextSizes->cbSecurityTrailer = 16; /* no security trailer appended in NTLM
 		                            contrary to Kerberos */
-		return SEC_E_OK;
-	}
-	else if (ulAttribute == SECPKG_ATTR_AUTH_IDENTITY)
-	{
-		const SecPkgContext_AuthIdentity empty = WINPR_C_ARRAY_INIT;
-		SecPkgContext_AuthIdentity* AuthIdentity = (SecPkgContext_AuthIdentity*)pBuffer;
-
-		WINPR_ASSERT(AuthIdentity);
-		*AuthIdentity = empty;
-
-		context->UseSamFileDatabase = FALSE;
-		SSPI_CREDENTIALS* credentials = context->credentials;
-
-		if (credentials->identity.UserLength > 0)
-		{
-			if (ConvertWCharNToUtf8(credentials->identity.User, credentials->identity.UserLength,
-			                        AuthIdentity->User, ARRAYSIZE(AuthIdentity->User)) <= 0)
-				return SEC_E_INTERNAL_ERROR;
-		}
-
-		if (credentials->identity.DomainLength > 0)
-		{
-			if (ConvertWCharNToUtf8(credentials->identity.Domain,
-			                        credentials->identity.DomainLength, AuthIdentity->Domain,
-			                        ARRAYSIZE(AuthIdentity->Domain)) <= 0)
-				return SEC_E_INTERNAL_ERROR;
-		}
-
 		return SEC_E_OK;
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_NTPROOF_VALUE)
@@ -922,9 +950,71 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 	{
 		return ntlm_computeMicValue(context, (SecBuffer*)pBuffer);
 	}
-	else if (ulAttribute == SECPKG_ATTR_PACKAGE_INFO)
+
+	WLog_ERR(TAG, "TODO: Implement ulAttribute=0x%08" PRIx32, ulAttribute);
+	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa379337/ */
+
+static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
+                                                              ULONG ulAttribute, void* pBuffer)
+{
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	if (!check_context(context))
+		return SEC_E_INVALID_HANDLE;
+
+	if (ulAttribute == SECPKG_ATTR_PACKAGE_INFO)
 	{
-		SecPkgContext_PackageInfo* PackageInfo = (SecPkgContext_PackageInfo*)pBuffer;
+		SecPkgContext_PackageInfoW* PackageInfo = (SecPkgContext_PackageInfoW*)pBuffer;
+		size_t size = sizeof(SecPkgInfoW);
+		SecPkgInfoW* pPackageInfo =
+		    (SecPkgInfoW*)sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
+
+		if (!pPackageInfo)
+			return SEC_E_INSUFFICIENT_MEMORY;
+
+		pPackageInfo->fCapabilities = NTLM_SecPkgInfoW.fCapabilities;
+		pPackageInfo->wVersion = NTLM_SecPkgInfoW.wVersion;
+		pPackageInfo->wRPCID = NTLM_SecPkgInfoW.wRPCID;
+		pPackageInfo->cbMaxToken = NTLM_SecPkgInfoW.cbMaxToken;
+		pPackageInfo->Name = _wcsdup(NTLM_SecPkgInfoW.Name);
+		pPackageInfo->Comment = _wcsdup(NTLM_SecPkgInfoW.Comment);
+
+		if (!pPackageInfo->Name || !pPackageInfo->Comment)
+		{
+			sspi_ContextBufferFree(pPackageInfo);
+			return SEC_E_INSUFFICIENT_MEMORY;
+		}
+		PackageInfo->PackageInfo = pPackageInfo;
+		return SEC_E_OK;
+	}
+	else
+		return ntlm_QueryContextAttributesCommon(phContext, ulAttribute, pBuffer);
+}
+
+static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phContext,
+                                                              ULONG ulAttribute, void* pBuffer)
+{
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	if (!check_context(context))
+		return SEC_E_INVALID_HANDLE;
+
+	if (ulAttribute == SECPKG_ATTR_PACKAGE_INFO)
+	{
+		SecPkgContext_PackageInfoA* PackageInfo = (SecPkgContext_PackageInfoA*)pBuffer;
 		size_t size = sizeof(SecPkgInfoA);
 		SecPkgInfoA* pPackageInfo =
 		    (SecPkgInfoA*)sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
@@ -947,15 +1037,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 		PackageInfo->PackageInfo = pPackageInfo;
 		return SEC_E_OK;
 	}
-
-	WLog_ERR(TAG, "TODO: Implement ulAttribute=0x%08" PRIx32, ulAttribute);
-	return SEC_E_UNSUPPORTED_FUNCTION;
-}
-
-static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phContext,
-                                                              ULONG ulAttribute, void* pBuffer)
-{
-	return ntlm_QueryContextAttributesW(phContext, ulAttribute, pBuffer);
+	else
+		return ntlm_QueryContextAttributesCommon(phContext, ulAttribute, pBuffer);
 }
 
 static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContext,
