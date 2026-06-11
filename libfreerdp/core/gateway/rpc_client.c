@@ -709,7 +709,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 			if (!Stream_SetPosition(fragment, pos))
 				return -1;
 
-			if (header.frag_length > rpc->max_recv_frag)
+			if (header.frag_length >= rpc->max_recv_frag)
 			{
 				WLog_ERR(TAG,
 				         "rpc_client_recv: invalid fragment size: %" PRIu16 " (max: %" PRIu16 ")",
