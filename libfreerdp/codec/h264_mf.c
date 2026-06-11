@@ -373,6 +373,10 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		}
 
 		outputBuffer->lpVtbl->Release(outputBuffer);
+		if (sys->frameWidth < h264->width)
+			goto error;
+		if (sys->frameHeigth < h264->height)
+			goto error;
 	}
 
 	inputSample->lpVtbl->Release(inputSample);
