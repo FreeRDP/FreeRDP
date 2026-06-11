@@ -495,14 +495,24 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
 	if (pad != 0)
 		padDstHeight += 16 - pad;
 
-	if ((piMainStride[0] != piDstStride[0]) ||
-	    (piDstSize[0] != 1ull * piMainStride[0] * padDstHeight))
+	if ((piMainStride[0] == 0) || (padDstHeight == 0))
+		return FALSE;
+
+	const uint64_t dstsize = 1ull * piMainStride[0] * padDstHeight;
+	if (dstsize > UINT32_MAX)
+		return FALSE;
+
+	if ((piMainStride[0] != piDstStride[0]) || (piDstSize[0] != dstsize))
 	{
 		for (UINT32 x = 0; x < 3; x++)
 		{
 			piDstStride[x] = piMainStride[0];
-			piDstSize[x] = piDstStride[x] * padDstHeight;
 
+			const uint64_t dstride = 1ull * piDstStride[x] * padDstHeight;
+			if (dstride > UINT32_MAX)
+				return FALSE;
+
+			piDstSize[x] = WINPR_ASSERTING_INT_CAST(UINT32, dstride);
 			if (piDstSize[x] == 0)
 				return FALSE;
 
