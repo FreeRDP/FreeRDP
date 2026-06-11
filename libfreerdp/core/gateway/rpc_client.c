@@ -372,7 +372,6 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 {
 	int rc = -1;
-	RPC_PDU* pdu = nullptr;
 	size_t StubOffset = 0;
 	size_t StubLength = 0;
 	RpcClientCall* call = nullptr;
@@ -382,7 +381,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 	WINPR_ASSERT(rpc->client);
 	WINPR_ASSERT(fragment);
 
-	pdu = rpc->client->pdu;
+	RPC_PDU* pdu = rpc->client->pdu;
 	WINPR_ASSERT(pdu);
 
 	Stream_SealLength(fragment);
@@ -464,7 +463,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 		{
 			const rpcconn_response_hdr_t* response =
 			    (const rpcconn_response_hdr_t*)&header.response;
-			if (!Stream_EnsureCapacity(pdu->s, response->alloc_hint))
+			if (!Stream_EnsureRemainingCapacity(pdu->s, StubLength))
 				goto fail;
 
 			if (Stream_Length(fragment) < StubOffset + StubLength)
@@ -472,6 +471,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 
 			if (!Stream_SetPosition(fragment, StubOffset))
 				goto fail;
+
 			Stream_Write(pdu->s, Stream_ConstPointer(fragment), StubLength);
 			rpc->StubFragCount++;
 
