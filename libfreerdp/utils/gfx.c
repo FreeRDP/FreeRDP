@@ -175,8 +175,8 @@ const char* rdpgfx_caps_flag_str(UINT32 flag)
 	if (!val)
 		return nullptr;
 
-	const char prefix[17] = "RDPGFX_CAPS_FLAG_";
-	if (strncmp(val, prefix, sizeof(prefix)) != 0)
+	const char prefix[] = "RDPGFX_CAPS_FLAG_";
+	if (strncmp(val, prefix, sizeof(prefix) - 1) != 0)
 		return val;
 	return &val[sizeof(prefix)];
 }
