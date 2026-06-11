@@ -1,3 +1,105 @@
+# 2026-06-15 Version 3.27.0
+
+A major feature / bugfix / cleanup release
+What did change:
+ * Password hash now uses a custom SSPI attribute on non windows systems
+ * TLS seclevel now defaults to 2 and a minimum of TLS 1.2 is required.
+   Client side the /tls:seclevel:<number> and /tls:enforce:<version> allow to override these.
+   Server implementations can manually set these with rdpSettings::FreeRDP_TLSMinVersion and
+   rdpSettings::FreeRDP_TlsSecLevel
+   (See https://docs.openssl.org/3.0/man3/SSL_CTX_set_security_level/ for more details)
+ * The RDP proxy got a fix which removed (unstable) structs from public headers. There are no
+   known users of that (internal) API, but if you happen to be one please ping us.
+ * Android client got some huge updates again (thank @svncibrahim)
+ * Enhancements with Azure/Entra support: some (known but not officially documented) extensions
+   have been added to make these connections more stable.
+ * keyboard mapping
+ * Allow RDPDR channel to pass additional arguments to the channel. Does not break existing behaviour
+   but allows a channel supporting this to query the additional arguments for further use.
+ * Fix some WinPR deprecation handling, add WITHOUT_WINPR_3x_DEPRECATED that allows building
+   without any symbol deprecated during the stable 3 series
+ * Some client side statistics logging API was added. By default prints a (trace) log at the
+   end of a session, but it can be queried at any time for some connection details.
+
+## CVE (Reported by SecBuddyF, Tencent Keen Lab)
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-9gxm-3mf5-f5cx
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-7rp4-66mc-j9vx
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-3mmf-qh4f-frm6
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-vx73-w5q6-7jqr
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-5c5v-f78v-h2f6 (Reported by @f9j2n6nd8k-eng)
+
+## What's Changed
+* Call winpr_InitializeSSL in TestWinPRUtils/TestNTLM (#12746)
+* [core,codec] Fix invalid overlap check (#12753)
+* Improve clipboard massive files copying performance (#12743)
+* [crypto,certificate] Honor BIO_should_retry (#12755)
+* Unify PEM read routines (#12758)
+* Build updates (#12772)
+* Fix sdl3 clipboard for files (#12759)
+* url: replace http://www.freerdp.com (#12781)
+* Fuzz/analyzer fixes (#12791)
+* [winpr,sspi] replace password-length heuristic with explicit hash (#12782)
+* Claude suggestions (#12792)
+* Disp check fix (#12795)
+* [core,settings] Raise default security level (#12752)
+* [clang,tidy] use workflow from ZedThree (#12806)
+* Improve FIPS mode support (#12811)
+* Lots of android specific improvements (#12773, #12777, #12783, #12784, #12785,
+  #12786, #12787, #12788, #12807, #12812, #12815, #12818, #12819, #12820, #12822,
+  #12748, #12750)
+* [channels,audin] fix opensles error handling (#12751)
+* [channels,audin] fix iOS and mac backends (#12864)
+* [channels,cliprdr] refactor server channel (#12810)
+* [channels,cliprdr] reset stream after use (#12855)
+* [channels,drdynvc] add new PubSub events (#12760)
+* [channels,rail] fix client handshake response (#12780)
+* [channels,rdpdr] various enhancements (#12800, #12797, #12803)
+* [channels,rdpgfx] fix server frame command returning success on write failure (#12828)
+* [channels,rdpsnd] reject client audio formats with zero nChannels/nBlockAlign (server-side DoS) (#12829)
+* [channels,rdpsnd] skip unusable playback backend during selection (#12830)
+* Refactor printer queue (#12817)
+* [ci,freebsd] update ci (#12823, #12824, #12825)
+* [cmake,simd] guard CMAKE_OSX_ARCHITECTURES (#12802)
+* [cmake] replace find_package(GLOBAL) (#12837)
+* [cmake] fix use of pkg_check_module (#12838)
+* [winpr,input] complete japanese keyboard mapping (#12836)
+* winpr/input: Fix numpad mapping for japanese keyboards (#12845)
+* [core,gateway] validate auth blob length in rdg_process_extauth_sspi (#12856)
+* Restore fullscreen when maximizing a toggled fullscreen window (#12849)
+* Fix(wfreerdp): Refresh Windows frame after fullscreen restore (#12848)
+* Fix copying multiple items of the same type between xfreerdp sessions (#12834)
+* [core,event] add StateChanged event (#12858)
+* [core,nego] bound cookie tag check to remaining length (#12862)
+* codec stats (#12860)
+* Various warning fixes (#12749, #12813, #12866, #12831)
+* [core,client] add PubSub events (#12757)
+* [core,client] use correct interface pointer (#12766)
+* [client,rdpewa] filter UserNotify events (#12767)
+* [client,windows] honor /from-stdin in wfreerdp (#12821)
+* [client,x11] release normal keys before modifiers (#12868)
+* fix(client/SDL): do not treat an unrecognized mouse button as fatal (#12847)
+* Proxy client context (#12865)
+* [core,update] filter out unused/unknown (#12870)
+* Azure/Entra undocumented stuff and request compaction (#12872, #12871, #12770)
+* Various bounds checks (#12873, #12857)
+* Sspi separate ansi unicode (#12874)
+* Ci update qa (#12875)
+* [channels,gfx] extract remaining header length (#12876)
+* [cache,glyph] bound offset read to buffer length (#12881)
+* Expose the correlationId in settings (#12879)
+* [winpr,wtypes] fix WINPR_C23_ENUM_TYPE (#12882)
+* [server,proxy] pass ntlm hostname (#12877)
+
+## New Contributors
+* @ramnes made their first contribution in (#12782)
+* @grioghar made their first contribution in (#12829)
+* @scottgeigel2 made their first contribution in (#12821)
+* @metsw24-max made their first contribution in (#12856)
+* @zorjen122 made their first contribution in (#12849)
+
+For a complete and detailed change log since the last release run:
+git log 3.27.0...3.26.0
+
 # 2026-05-06 Version 3.26.0
 
 Mostly a bugfix and maintenance release with a few nice additions:

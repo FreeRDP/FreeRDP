@@ -357,7 +357,7 @@ extern "C"
 	/** @brief convenience names for
 	 * https://docs.openssl.org/3.0/man3/SSL_CTX_set_security_level/#default-callback-behaviour
 	 *
-	 *  @since version 3.26.1
+	 *  @since version 3.27.0
 	 */
 	typedef enum
 	{
