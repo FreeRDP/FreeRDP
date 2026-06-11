@@ -605,7 +605,7 @@ BOOL sspi_CopyAuthIdentityFieldsA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, 
 
 	UINT32 identityFlags = sspi_GetAuthIdentityFlags(identity);
 
-	if (identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+	if ((identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI) != 0)
 	{
 		if (!sspi_GetAuthIdentityUserDomainA(identity, &UserA, &UserLength, &DomainA,
 		                                     &DomainLength))
@@ -640,7 +640,7 @@ BOOL sspi_CopyAuthIdentityFieldsA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, 
 
 		success = TRUE;
 	}
-	else
+	else if ((identityFlags & SEC_WINNT_AUTH_IDENTITY_UNICODE) != 0)
 	{
 		if (!sspi_GetAuthIdentityUserDomainW(identity, &UserW, &UserLength, &DomainW,
 		                                     &DomainLength))
@@ -698,7 +698,7 @@ BOOL sspi_CopyAuthIdentityFieldsW(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, 
 
 	UINT32 identityFlags = sspi_GetAuthIdentityFlags(identity);
 
-	if (identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+	if ((identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI) != 0)
 	{
 		if (!sspi_GetAuthIdentityUserDomainA(identity, &UserA, &UserLength, &DomainA,
 		                                     &DomainLength))
@@ -735,7 +735,7 @@ BOOL sspi_CopyAuthIdentityFieldsW(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, 
 
 		success = TRUE;
 	}
-	else
+	else if ((identityFlags & SEC_WINNT_AUTH_IDENTITY_UNICODE) != 0)
 	{
 		if (!sspi_GetAuthIdentityUserDomainW(identity, &UserW, &UserLength, &DomainW,
 		                                     &DomainLength))
@@ -792,7 +792,7 @@ BOOL sspi_CopyAuthPackageListA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, cha
 	version = sspi_GetAuthIdentityVersion(pAuthData);
 	identityFlags = sspi_GetAuthIdentityFlags(pAuthData);
 
-	if (identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+	if ((identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI) != 0)
 	{
 		if (version == SEC_WINNT_AUTH_IDENTITY_VERSION)
 		{
@@ -806,7 +806,7 @@ BOOL sspi_CopyAuthPackageListA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, cha
 			PackageList = _strdup(PackageListA);
 		}
 	}
-	else
+	else if ((identityFlags & SEC_WINNT_AUTH_IDENTITY_UNICODE) != 0)
 	{
 		if (version == SEC_WINNT_AUTH_IDENTITY_VERSION)
 		{
@@ -856,7 +856,7 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 
 	identity->Flags = identityFlags;
 
-	if (identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+	if ((identityFlags & SEC_WINNT_AUTH_IDENTITY_ANSI) != 0)
 	{
 		if (!sspi_GetAuthIdentityUserDomainA(srcIdentity, &UserA, &UserLength, &DomainA,
 		                                     &DomainLength))

@@ -287,15 +287,33 @@ static BOOL ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	if (!sam)
 		goto fail;
 
-	entry = SamLookupUserW(
-	    sam, (LPWSTR)credentials->identity.User, credentials->identity.UserLength * sizeof(WCHAR),
-	    (LPWSTR)credentials->identity.Domain, credentials->identity.DomainLength * sizeof(WCHAR));
-
-	if (!entry)
+	if ((credentials->identity.Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE) != 0)
 	{
 		entry = SamLookupUserW(sam, (LPWSTR)credentials->identity.User,
-		                       credentials->identity.UserLength * sizeof(WCHAR), nullptr, 0);
+		                       credentials->identity.UserLength * sizeof(WCHAR),
+		                       (LPWSTR)credentials->identity.Domain,
+		                       credentials->identity.DomainLength * sizeof(WCHAR));
+
+		if (!entry)
+		{
+			entry = SamLookupUserW(sam, (LPWSTR)credentials->identity.User,
+			                       credentials->identity.UserLength * sizeof(WCHAR), nullptr, 0);
+		}
 	}
+	else if ((credentials->identity.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI) != 0)
+	{
+		entry = SamLookupUserA(
+		    sam, (char*)credentials->identity.User, credentials->identity.UserLength * sizeof(CHAR),
+		    (char*)credentials->identity.Domain, credentials->identity.DomainLength * sizeof(CHAR));
+
+		if (!entry)
+		{
+			entry = SamLookupUserA(sam, (char*)credentials->identity.User,
+			                       credentials->identity.UserLength * sizeof(CHAR), nullptr, 0);
+		}
+	}
+	else
+		goto fail;
 
 	if (!entry)
 		goto fail;
@@ -440,10 +458,22 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 		return FALSE;
 	else if (memcmp(context->NtlmHash, NTLM_NULL_BUFFER, 16) != 0)
 	{
-		return NTOWFv2FromHashW(context->NtlmHash, (LPWSTR)credentials->identity.User,
-		                        credentials->identity.UserLength * 2,
-		                        (LPWSTR)credentials->identity.Domain,
-		                        credentials->identity.DomainLength * 2, hash);
+		if ((credentials->identity.Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE) != 0)
+		{
+			return NTOWFv2FromHashW(context->NtlmHash, (LPWSTR)credentials->identity.User,
+			                        credentials->identity.UserLength * 2,
+			                        (LPWSTR)credentials->identity.Domain,
+			                        credentials->identity.DomainLength * 2, hash);
+		}
+		else if ((credentials->identity.Flags & SEC_WINNT_AUTH_IDENTITY_ANSI) != 0)
+		{
+			return NTOWFv2FromHashA(context->NtlmHash, (char*)credentials->identity.User,
+			                        credentials->identity.UserLength,
+			                        (char*)credentials->identity.Domain,
+			                        credentials->identity.DomainLength, hash);
+		}
+		else
+			return FALSE;
 	}
 	else if (credentials->identity.Flags & SEC_WINPR_AUTH_IDENTITY_PASSWORD_HASH)
 	{
