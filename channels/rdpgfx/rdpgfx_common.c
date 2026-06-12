@@ -32,10 +32,13 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_read_header(wLog* log, wStream* s, RDPGFX_HEADER* header)
+UINT rdpgfx_read_header(wLog* log, wStream* s, RDPGFX_HEADER* header, size_t* pPacketLength)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
+
+	if (pPacketLength)
+		*pPacketLength = 0;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 8))
 		return ERROR_INVALID_DATA;
@@ -49,8 +52,12 @@ UINT rdpgfx_read_header(wLog* log, wStream* s, RDPGFX_HEADER* header)
 		WLog_Print(log, WLOG_ERROR, "header->pduLength %u less than 8!", header->pduLength);
 		return ERROR_INVALID_DATA;
 	}
-	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, (header->pduLength - 8)))
+
+	const size_t size = (header->pduLength - 8ull);
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, size))
 		return ERROR_INVALID_DATA;
+	if (pPacketLength)
+		*pPacketLength = size;
 
 	return CHANNEL_RC_OK;
 }

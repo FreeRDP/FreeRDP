@@ -31,7 +31,8 @@
 #include <freerdp/utils/gfx.h>
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL UINT rdpgfx_read_header(wLog* log, wStream* s, RDPGFX_HEADER* header);
+FREERDP_LOCAL UINT rdpgfx_read_header(wLog* log, wStream* s, RDPGFX_HEADER* header,
+                                      size_t* pRemainingHeaderLength);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_write_header(wStream* s, const RDPGFX_HEADER* header);

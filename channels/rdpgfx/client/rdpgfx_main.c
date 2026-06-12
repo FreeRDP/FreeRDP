@@ -2071,14 +2071,14 @@ static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 
 	WINPR_ASSERT(gfx);
 
-	UINT error = rdpgfx_read_header(gfx->base.log, s, &header);
+	size_t packetlen = 0;
+	UINT error = rdpgfx_read_header(gfx->base.log, s, &header, &packetlen);
 	if (error != CHANNEL_RC_OK)
 	{
 		WLog_Print(gfx->base.log, WLOG_ERROR, "rdpgfx_read_header failed with error %" PRIu32 "!",
 		           error);
 		return error;
 	}
-	const size_t start = Stream_GetPosition(s);
 
 	WLog_Print(gfx->base.log, WLOG_TRACE,
 	           "cmdId: %s (0x%04" PRIX16 ") flags: 0x%04" PRIX16 " pduLength: %" PRIu32 "",
@@ -2244,7 +2244,7 @@ static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 			WLog_Print(gfx->base.log, WLOG_WARN,
 			           "Command %s not implemented, skipping %" PRIu32 " bytes",
 			           rdpgfx_get_cmd_id_string(header.cmdId), header.pduLength);
-			if (!Stream_SafeSeek(s, header.pduLength - start))
+			if (!Stream_SafeSeek(s, packetlen))
 				error = ERROR_INVALID_DATA;
 			break;
 		default:
