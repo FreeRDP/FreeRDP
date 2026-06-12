@@ -1022,6 +1022,10 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	                                     &(message->NtChallengeResponse))) /* NtChallengeResponse */
 		goto fail;
 
+	if (ntlm_SetContextWorkstationX(context, TRUE, message->Workstation.Buffer,
+	                                message->Workstation.Len) != SEC_E_OK)
+		goto fail;
+
 	if (message->NtChallengeResponse.Len > 0)
 	{
 		size_t cbAvFlags = 0;
