@@ -166,6 +166,7 @@ static SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleX(
 	return SEC_E_OK;
 }
 
+// NOLINTBEGIN(readability-non-const-parameter)
 static SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(
     SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
@@ -183,6 +184,7 @@ static SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleW(
     ULONG fCredentialUse, WINPR_ATTR_UNUSED void* pvLogonID, void* pAuthData,
     WINPR_ATTR_UNUSED SEC_GET_KEY_FN pGetKeyFn, WINPR_ATTR_UNUSED void* pvGetKeyArgument,
     PCredHandle phCredential, WINPR_ATTR_UNUSED PTimeStamp ptsExpiry)
+// NOLINTEND(readability-non-const-parameter)
 {
 	WINPR_UNUSED(pszPrincipal);
 	WINPR_UNUSED(pszPackage);
