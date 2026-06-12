@@ -41,6 +41,15 @@
 
 #include <limits.h>
 
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#define WINPR_C11_ENUM_TYPE(x) : x /** 
+                               * @brief For C11 and up defines the type of the enum to the enclosed integer type
+                               * @since version 3.27.0
+*/
+#else
+#define WINPR_C11_ENUM_TYPE(x)
+#endif
+
 #if defined(_WIN32) || defined(__MINGW32__)
 #include <wtypes.h>
 

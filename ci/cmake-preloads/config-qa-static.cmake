@@ -1,6 +1,7 @@
 message("PRELOADING cache")
 set(CMAKE_C_STANDARD 23 CACHE STRING "preload")
-set(CMAKE_C_FLAGS "-Wno-pre-c23-compat" CACHE STRING "preload")
+set(CMAKE_C_FLAGS "-Wno-pre-c23-compat -Wno-nrvo" CACHE STRING "preload")
+set(CMAKE_CXX_FLAGS "-Wno-nrvo" CACHE STRING "preload")
 set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "preload")
 set(WITH_SERVER ON CACHE BOOL "qa default")
 set(WITH_SAMPLE ON CACHE BOOL "qa default")
