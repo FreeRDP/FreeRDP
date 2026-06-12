@@ -286,7 +286,7 @@ static LONG smartcard_ndr_write(wStream* s, const BYTE* data, UINT32 size, UINT3
 		Stream_Write(s, data, dataLen);
 	else
 		Stream_Zero(s, dataLen);
-	return smartcard_pack_write_size_align(s, len, 4);
+	return smartcard_pack_write_size_align(s, dataLen, 4);
 }
 
 static LONG smartcard_ndr_write_state(wStream* s, const ReaderState_Return* data, UINT32 size,
