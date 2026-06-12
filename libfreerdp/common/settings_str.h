@@ -590,6 +590,7 @@ static const struct settings_str_entry settings_map[] = {
 	  "FreeRDP_ShellWorkingDirectory" },
 	{ FreeRDP_SmartcardCertificate, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_SmartcardCertificate" },
 	{ FreeRDP_SmartcardPrivateKey, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_SmartcardPrivateKey" },
+	{ FreeRDP_SspiClientHostname, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_SspiClientHostname" },
 	{ FreeRDP_SspiModule, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_SspiModule" },
 	{ FreeRDP_TargetNetAddress, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_TargetNetAddress" },
 	{ FreeRDP_TerminalDescriptor, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_TerminalDescriptor" },

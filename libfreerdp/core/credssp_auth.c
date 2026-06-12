@@ -413,6 +413,22 @@ void credssp_auth_set_flags(rdpCredsspAuth* auth, ULONG flags)
  *                                           --------------
  */
 
+#define query_logged(auth, ulAttribute, pBuffer) \
+	query_logged_((auth), (ulAttribute), (pBuffer), __FILE__, __func__, __LINE__)
+static SECURITY_STATUS query_logged_(rdpCredsspAuth* auth, ULONG ulAttribute, void* pBuffer,
+                                     const char* file, const char* fkt, size_t line)
+{
+	WINPR_ASSERT(auth);
+	WINPR_ASSERT(auth->table);
+	WINPR_ASSERT(auth->table->QueryContextAttributes);
+
+	SECURITY_STATUS status =
+	    auth->table->QueryContextAttributes(&auth->context, ulAttribute, pBuffer);
+	(void)log_status_(status, WLOG_DEBUG, file, fkt, line,
+	                  "QueryContextAttributes(0x%08" PRIx32 ")", ulAttribute);
+	return status;
+}
+
 int credssp_auth_authenticate(rdpCredsspAuth* auth)
 {
 	SECURITY_STATUS status = ERROR_INTERNAL_ERROR;
@@ -474,6 +490,20 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 		status = auth->table->InitializeSecurityContext(
 		    &auth->credentials, context, auth->spn, auth->flags, 0, SECURITY_NATIVE_DREP,
 		    &input_buffer_desc, 0, &auth->context, &output_buffer_desc, &auth->flags, nullptr);
+
+#if !defined(_WIN32)
+		const rdpSettings* settings = auth->rdp_ctx->settings;
+		WINPR_ASSERT(settings);
+		const char* name = freerdp_settings_get_string(settings, FreeRDP_SspiClientHostname);
+		if (name)
+		{
+			const SECURITY_STATUS sca = auth->table->SetContextAttributesA(
+			    &auth->context, SECPKG_ATTR_AUTH_NTLM_HOSTNAME,
+			    WINPR_CAST_CONST_PTR_AWAY(name, char*), strlen(name));
+			(void)log_status(status, WLOG_DEBUG, "SetContextAttributesA(0x%08" PRIx32 ")",
+			                 SECPKG_ATTR_AUTH_NTLM_HOSTNAME);
+		}
+#endif
 	}
 
 	if (status == SEC_E_OK)
@@ -484,13 +514,37 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 
 		/* Not terrible if this fails, although encryption functions may run into issues down the
 		 * line, still, authentication succeeded */
-		WINPR_ASSERT(auth->table->QueryContextAttributes);
-		status =
-		    auth->table->QueryContextAttributes(&auth->context, SECPKG_ATTR_SIZES, &auth->sizes);
-		(void)log_status(status, WLOG_DEBUG, "QueryContextAttributes");
+		status = query_logged(auth, SECPKG_ATTR_SIZES, &auth->sizes);
 		WLog_DBG(TAG, "Context sizes: cbMaxSignature=%" PRIu32 ", cbSecurityTrailer=%" PRIu32 "",
 		         auth->sizes.cbMaxSignature, auth->sizes.cbSecurityTrailer);
 
+#if !defined(_WIN32)
+		rdpSettings* settings = auth->rdp_ctx->settings;
+		freerdp_settings_set_string(settings, FreeRDP_SspiClientHostname, nullptr);
+
+		ULONG len = 0;
+		SECURITY_STATUS qstatus = query_logged(auth, SECPKG_ATTR_AUTH_NTLM_HOSTNAME_LEN, &len);
+
+		if ((qstatus == SEC_E_OK) && (len > 0))
+		{
+			void* WorkstationName = calloc(len + 1, sizeof(WCHAR));
+			if (!WorkstationName)
+				return -1;
+
+			qstatus = query_logged(auth, SECPKG_ATTR_AUTH_NTLM_HOSTNAME, WorkstationName);
+			if (qstatus == SEC_E_OK)
+			{
+#if defined(UNICODE)
+				freerdp_settings_set_string_from_utf16N(settings, FreeRDP_SspiClientHostname,
+				                                        WorkstationName, len);
+#else
+				freerdp_settings_set_string_len(settings, FreeRDP_SspiClientHostname,
+				                                WorkstationName, len);
+#endif
+			}
+			free(WorkstationName);
+		}
+#endif
 		return 1;
 	}
 	else if (status == SEC_I_CONTINUE_NEEDED)
