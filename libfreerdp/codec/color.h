@@ -38,6 +38,7 @@ static inline DWORD FreeRDPAreColorFormatsEqualNoAlpha_int(DWORD first, DWORD se
 WINPR_ATTR_NODISCARD
 static inline BOOL FreeRDPWriteColor_int(BYTE* WINPR_RESTRICT dst, UINT32 format, UINT32 color)
 {
+	WINPR_ASSERT(dst);
 	switch (FreeRDPGetBitsPerPixel(format))
 	{
 		case 32:
@@ -82,6 +83,7 @@ WINPR_ATTR_NODISCARD
 static inline BOOL FreeRDPWriteColorIgnoreAlpha_int(BYTE* WINPR_RESTRICT dst, UINT32 format,
                                                     UINT32 color)
 {
+	WINPR_ASSERT(dst);
 	switch (format)
 	{
 		case PIXEL_FORMAT_XBGR32:
@@ -109,6 +111,8 @@ WINPR_ATTR_NODISCARD
 static inline UINT32 FreeRDPReadColor_int(const BYTE* WINPR_RESTRICT src, UINT32 format)
 {
 	UINT32 color = 0;
+
+	WINPR_ASSERT(src);
 
 	switch (FreeRDPGetBitsPerPixel(format))
 	{

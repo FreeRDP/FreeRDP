@@ -352,13 +352,17 @@ FREERDP_API DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD first, DWORD second);
 
 	/***
 	 *
-	 * @param pDstData      destination buffer
+	 * @param pDstData      destination buffer. Must be able to hold \ref nWidth * nHeight pixels at
+	 * \ref nXDst x \ref nYDst offset
 	 * @param DstFormat     destination buffer format
-	 * @param nDstStep      destination buffer stride (line in bytes) 0 for default
-	 * @param nXDst         destination buffer offset x
-	 * @param nYDst         destination buffer offset y
-	 * @param nWidth        width to copy in pixels
-	 * @param nHeight       height to copy in pixels
+	 * @param nDstStep      destination buffer stride (line in bytes) 0 for default, otherwise must
+	 * be large enough to hold a full line with current \ref DstFormat
+	 * @param nXDst         destination buffer offset x. Must be within \ref pDstData
+	 * @param nYDst         destination buffer offset y. Must be within \ref pDstData
+	 * @param nWidth        width to copy in pixels. Must be within \ref pDstData at offseet \ref
+	 * nXDst
+	 * @param nHeight       height to copy in pixels. Must be within \ref pDstData at offset \ref
+	 * nYDst
 	 * @param bitsColor     icon's image data buffer
 	 * @param cbBitsColor   length of the image data buffer in bytes
 	 * @param bitsMask      icon's 1bpp image mask buffer
@@ -378,13 +382,17 @@ FREERDP_API DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD first, DWORD second);
 
 	/***
 	 *
-	 * @param pDstData      destination buffer
+	 * @param pDstData      destination buffer. Must be able to hold \ref nWidth * nHeight pixels at
+	 * \ref nXDst x \ref nYDst offset
 	 * @param DstFormat     destination buffer format
-	 * @param nDstStep      destination buffer stride (line in bytes) 0 for default
-	 * @param nXDst         destination buffer offset x
-	 * @param nYDst         destination buffer offset y
-	 * @param nWidth        width to copy in pixels
-	 * @param nHeight       height to copy in pixels
+	 * @param nDstStep      destination buffer stride (line in bytes) 0 for default, otherwise must
+	 * be large enough to hold a full line with current \ref DstFormat
+	 * @param nXDst         destination buffer offset x. Must be within \ref pDstData
+	 * @param nYDst         destination buffer offset y. Must be within \ref pDstData
+	 * @param nWidth        width to copy in pixels. Must be within \ref pDstData at offseet \ref
+	 * nXDst
+	 * @param nHeight       height to copy in pixels. Must be within \ref pDstData at offset \ref
+	 * nYDst
 	 * @param xorMask       XOR mask buffer
 	 * @param xorMaskLength XOR mask length in bytes
 	 * @param andMask       AND mask buffer
@@ -404,13 +412,17 @@ FREERDP_API DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD first, DWORD second);
 	/*** Copies an image from source to destination, converting if necessary.
 	 * Source and destination may overlap.
 	 *
-	 * @param pDstData  destination buffer
-	 * @param DstFormat destination buffer format
-	 * @param nDstStep  destination buffer stride (line in bytes) 0 for default
-	 * @param nXDst     destination buffer offset x
-	 * @param nYDst     destination buffer offset y
-	 * @param nWidth    width to copy in pixels
-	 * @param nHeight   height to copy in pixels
+	 * @param pDstData      destination buffer. Must be able to hold \ref nWidth * nHeight pixels at
+	 * \ref nXDst x \ref nYDst offset
+	 * @param DstFormat     destination buffer format
+	 * @param nDstStep      destination buffer stride (line in bytes) 0 for default, otherwise must
+	 * be large enough to hold a full line with current \ref DstFormat
+	 * @param nXDst         destination buffer offset x. Must be within \ref pDstData
+	 * @param nYDst         destination buffer offset y. Must be within \ref pDstData
+	 * @param nWidth        width to copy in pixels. Must be within \ref pDstData at offseet \ref
+	 * nXDst
+	 * @param nHeight       height to copy in pixels. Must be within \ref pDstData at offset \ref
+	 * nYDst
 	 * @param pSrcData  source buffer
 	 * @param SrcFormat source buffer format
 	 * @param nSrcStep  source buffer stride (line in bytes) 0 for default
