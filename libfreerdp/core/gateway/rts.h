@@ -78,9 +78,6 @@
 #define FDOutProxy 0x00000003
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL rts_generate_cookie(BYTE* cookie);
-
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rts_write_pdu_auth3(wStream* s, const rpcconn_rpc_auth_3_hdr_t* auth);
 
 WINPR_ATTR_NODISCARD

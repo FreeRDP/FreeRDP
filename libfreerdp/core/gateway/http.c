@@ -322,22 +322,6 @@ BOOL http_context_append_pragma(HttpContext* context, const char* Pragma, ...)
 	return list_append(context, Pragma, ap);
 }
 
-static char* guid2str(const GUID* guid, char* buffer, size_t len)
-{
-	if (!guid)
-		return nullptr;
-	RPC_CSTR strguid = nullptr;
-
-	RPC_STATUS rpcStatus = UuidToStringA(guid, &strguid);
-
-	if (rpcStatus != RPC_S_OK)
-		return nullptr;
-
-	(void)sprintf_s(buffer, len, "{%s}", strguid);
-	RpcStringFreeA(&strguid);
-	return buffer;
-}
-
 BOOL http_context_set_rdg_connection_id(HttpContext* context, const GUID* RdgConnectionId)
 {
 	if (!context || !RdgConnectionId)

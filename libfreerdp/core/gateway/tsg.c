@@ -1022,7 +1022,6 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 {
 	BOOL rc = FALSE;
 	char* strdata = nullptr;
-	RPC_CSTR uuid = nullptr;
 	char tbuffer[8192] = WINPR_C_ARRAY_INIT;
 	size_t size = ARRAYSIZE(tbuffer);
 	char* ptbuffer = tbuffer;
@@ -1037,8 +1036,8 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 	if (!tsg_print(buffer, length, " "))
 		return FALSE;
 
-	if (UuidToStringA(&caps->nonce, &uuid) != RPC_S_OK)
-		return FALSE;
+	char uuid[64] = WINPR_C_ARRAY_INIT;
+	guid2str(&caps->nonce, uuid, sizeof(uuid));
 
 	if (caps->certChainLen > 0)
 	{
@@ -1058,7 +1057,6 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 
 fail:
 	free(strdata);
-	RpcStringFreeA(&uuid);
 	if (!rc)
 		return FALSE;
 

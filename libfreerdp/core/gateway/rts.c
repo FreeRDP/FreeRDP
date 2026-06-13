@@ -1586,12 +1586,6 @@ static BOOL rts_destination_command_write(wStream* s, UINT32 Destination)
 	return TRUE;
 }
 
-BOOL rts_generate_cookie(BYTE* cookie)
-{
-	WINPR_ASSERT(cookie);
-	return winpr_RAND(cookie, 16) >= 0;
-}
-
 #define rts_send_buffer(channel, s, frag_length) \
 	rts_send_buffer_int((channel), (s), (frag_length), __FILE__, __LINE__, __func__)
 static BOOL rts_send_buffer_int(RpcChannel* channel, wStream* s, size_t frag_length,
@@ -2293,11 +2287,10 @@ static int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, wStream* buffer)
 {
 	int status = 0;
 	UINT32 Destination = 0;
-	RpcVirtualConnection* connection = nullptr;
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
-	connection = rpc->VirtualConnection;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	WINPR_ASSERT(connection);
 
 	WLog_DBG(TAG, "Receiving OUT R1/A2 RTS PDU");

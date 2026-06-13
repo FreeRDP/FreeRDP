@@ -2252,6 +2252,10 @@ rdpRdg* rdg_new(rdpContext* context)
 	if (!rdg->http)
 		goto rdg_alloc_error;
 
+	GUID guid = WINPR_C_ARRAY_INIT;
+	if (UuidFromStringA(settings->CorrelationId, &guid) != RPC_S_OK)
+		goto rdg_alloc_error;
+
 	if (!http_context_set_uri(rdg->http, "/remoteDesktopGateway/") ||
 	    !http_context_set_accept(rdg->http, "*/*") ||
 	    !http_context_set_cache_control(rdg->http, "no-cache") ||
@@ -2259,8 +2263,8 @@ rdpRdg* rdg_new(rdpContext* context)
 	    !http_context_set_connection(rdg->http, "Keep-Alive") ||
 	    !http_context_set_user_agent(rdg->http, "MS-RDGateway/1.0") ||
 	    !http_context_set_host(rdg->http, rdg->context->settings->GatewayHostname) ||
-	    !http_context_set_rdg_connection_id(rdg->http, settings->CorrelationId) ||
-	    !http_context_set_rdg_correlation_id(rdg->http, settings->CorrelationId) ||
+	    !http_context_set_rdg_connection_id(rdg->http, &guid) ||
+	    !http_context_set_rdg_correlation_id(rdg->http, &guid) ||
 	    !http_context_enable_websocket_upgrade(
 	        rdg->http,
 	        freerdp_settings_get_bool(rdg->context->settings, FreeRDP_GatewayHttpUseWebsockets)))
