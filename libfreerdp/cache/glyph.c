@@ -572,7 +572,7 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index)
 	}
 
 	GLYPH_CACHE* cache = &glyphCache->glyphCache[id];
-	if (index > cache->number)
+	if (index >= cache->number)
 	{
 		WLog_ERR(TAG, "index %" PRIu32 " out of range for cache id: %" PRIu32 "", index, id);
 		return nullptr;
