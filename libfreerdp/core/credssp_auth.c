@@ -518,9 +518,11 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 		WLog_DBG(TAG, "Context sizes: cbMaxSignature=%" PRIu32 ", cbSecurityTrailer=%" PRIu32 "",
 		         auth->sizes.cbMaxSignature, auth->sizes.cbSecurityTrailer);
 
+		int rc = 1;
 #if !defined(_WIN32)
 		rdpSettings* settings = auth->rdp_ctx->settings;
-		freerdp_settings_set_string(settings, FreeRDP_SspiClientHostname, nullptr);
+		if (!freerdp_settings_set_string(settings, FreeRDP_SspiClientHostname, nullptr))
+			return -1;
 
 		ULONG len = 0;
 		SECURITY_STATUS qstatus = query_logged(auth, SECPKG_ATTR_AUTH_NTLM_HOSTNAME_LEN, &len);
@@ -535,17 +537,19 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 			if (qstatus == SEC_E_OK)
 			{
 #if defined(UNICODE)
-				freerdp_settings_set_string_from_utf16N(settings, FreeRDP_SspiClientHostname,
-				                                        WorkstationName, len);
+				if (!freerdp_settings_set_string_from_utf16N(settings, FreeRDP_SspiClientHostname,
+				                                             WorkstationName, len))
+					rc = -1;
 #else
-				freerdp_settings_set_string_len(settings, FreeRDP_SspiClientHostname,
-				                                WorkstationName, len);
+				if (!freerdp_settings_set_string_len(settings, FreeRDP_SspiClientHostname,
+				                                     WorkstationName, len))
+					rc = -1;
 #endif
 			}
 			free(WorkstationName);
 		}
+		return rc;
 #endif
-		return 1;
 	}
 	else if (status == SEC_I_CONTINUE_NEEDED)
 	{
