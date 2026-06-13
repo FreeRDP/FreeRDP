@@ -103,7 +103,7 @@ typedef struct
 /**
  * Capability Sets [MS-RDPEGFX] 2.2.3
  */
-typedef enum WINPR_C11_ENUM_TYPE(uint32_t)
+typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 {
 #if defined(WITH_GFX_AV1)
 	RDPGFX_CAPVERSION_FRDP_1 = 0x00010000u, /**< Custom capversion for FreeRDP extensions */
@@ -140,7 +140,7 @@ typedef struct
 	UINT32 flags;
 } RDPGFX_CAPSET;
 
-typedef enum WINPR_C11_ENUM_TYPE(uint32_t)
+typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 {
 	RDPGFX_CAPS_FLAG_THINCLIENT = 0x00000001U,       /* 8.0+ */
 	RDPGFX_CAPS_FLAG_SMALL_CACHE = 0x00000002U,      /* 8.0+ */
@@ -186,7 +186,7 @@ typedef struct
 /**
  * Graphics Messages
  */
-typedef enum WINPR_C11_ENUM_TYPE(uint16_t)
+typedef enum WINPR_C23_ENUM_TYPE(uint16_t)
 {
 	RDPGFX_CODECID_UNCOMPRESSED = 0x0000u,
 #if defined(WITH_GFX_AV1)
