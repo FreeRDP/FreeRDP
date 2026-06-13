@@ -551,3 +551,19 @@ BOOL utils_reload_channels(rdpContext* context)
 		return freerdp_channels_pre_connect(context->channels, context->instance) == CHANNEL_RC_OK;
 	return rc;
 }
+
+const char* guid2str(const GUID* guid, char* buffer, size_t len)
+{
+	if (!guid)
+		return nullptr;
+	RPC_CSTR strguid = nullptr;
+
+	RPC_STATUS rpcStatus = UuidToStringA(guid, &strguid);
+
+	if (rpcStatus != RPC_S_OK)
+		return nullptr;
+
+	(void)sprintf_s(buffer, len, "{%s}", strguid);
+	RpcStringFreeA(&strguid);
+	return buffer;
+}

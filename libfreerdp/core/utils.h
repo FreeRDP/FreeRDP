@@ -113,4 +113,6 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL
 BOOL freerdp_areApplicationDetailsCustomized(void);
 
+FREERDP_LOCAL const char* guid2str(const GUID* guid, char* buffer, size_t len);
+
 #endif /* FREERDP_LIB_CORE_UTILS_H */
