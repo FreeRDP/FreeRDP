@@ -164,7 +164,7 @@ SECURITY_STATUS ntlm_SetContextWorkstationX(NTLM_CONTEXT* context, BOOL unicode,
 		if (!context->Workstation.Buffer)
 			return SEC_E_INSUFFICIENT_MEMORY;
 		memcpy(context->Workstation.Buffer, data, length);
-		context->Workstation.Length = length;
+		context->Workstation.Length = WINPR_ASSERTING_INT_CAST(USHORT, length);
 	}
 	else
 	{
