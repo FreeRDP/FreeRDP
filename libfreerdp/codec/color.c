@@ -451,7 +451,7 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 	}
 
 	/* Ensure we have enough source data bytes for image copy. */
-	if (cbBitsColor < nWidth * nHeight * FreeRDPGetBytesPerPixel(format))
+	if (cbBitsColor / nHeight < FreeRDPGetBytesPerPixel(format) * nWidth)
 	{
 		WLog_ERR(TAG,
 		         "cbBitsColor{%" PRIu32 "} < nWidth{%" PRIu32 "} * nHeight{%" PRIu32
