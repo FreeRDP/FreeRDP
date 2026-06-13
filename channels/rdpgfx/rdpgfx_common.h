@@ -32,7 +32,7 @@
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_read_header(wLog* log, wStream* s, RDPGFX_HEADER* header,
-                                      size_t* pRemainingHeaderLength);
+                                      size_t* pPacketLength);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL UINT rdpgfx_write_header(wStream* s, const RDPGFX_HEADER* header);

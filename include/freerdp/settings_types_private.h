@@ -121,7 +121,12 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT64 MonitorOverrideFlags);  /** 154
 		                                                        * @since version 3.15.0
 		                                                        */
-	UINT64 padding0192[192 - 155];                             /* 155 */
+	SETTINGS_DEPRECATED(ALIGN64 char* SspiClientHostname);     /** 155
+		                                                        * @brief The client name sent during
+		                                                        * SSPI authentication if available
+		                                                        * @since version 3.27.0
+		                                                        */
+	UINT64 padding0192[192 - 156];                             /* 156 */
 
 	/* Client/Server Security Data */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL UseRdpSecurityLayer);                /* 192 */

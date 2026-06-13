@@ -35,7 +35,6 @@ typedef struct rdp_credssp_auth rdpCredsspAuth;
 FREERDP_LOCAL void credssp_auth_free(rdpCredsspAuth* auth);
 
 WINPR_ATTR_MALLOC(credssp_auth_free, 1)
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpCredsspAuth* credssp_auth_new(const rdpContext* context);
 
 WINPR_ATTR_NODISCARD
