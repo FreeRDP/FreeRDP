@@ -497,11 +497,17 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 		const char* name = freerdp_settings_get_string(settings, FreeRDP_SspiClientHostname);
 		if (name)
 		{
-			const SECURITY_STATUS sca = auth->table->SetContextAttributesA(
-			    &auth->context, SECPKG_ATTR_AUTH_NTLM_HOSTNAME,
-			    WINPR_CAST_CONST_PTR_AWAY(name, char*), strlen(name));
-			(void)log_status(status, WLOG_DEBUG, "SetContextAttributesA(0x%08" PRIx32 ")",
-			                 SECPKG_ATTR_AUTH_NTLM_HOSTNAME);
+			const size_t len = strlen(name);
+			if (len > ULONG_MAX)
+				status = SEC_E_INVALID_PARAMETER;
+			else
+			{
+				const SECURITY_STATUS sca = auth->table->SetContextAttributesA(
+				    &auth->context, SECPKG_ATTR_AUTH_NTLM_HOSTNAME,
+				    WINPR_CAST_CONST_PTR_AWAY(name, char*), WINPR_ASSERTING_INT_CAST(ULONG, len));
+				(void)log_status(sca, WLOG_DEBUG, "SetContextAttributesA(0x%08" PRIx32 ")",
+				                 SECPKG_ATTR_AUTH_NTLM_HOSTNAME);
+			}
 		}
 #endif
 	}
@@ -514,7 +520,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 
 		/* Not terrible if this fails, although encryption functions may run into issues down the
 		 * line, still, authentication succeeded */
-		status = query_logged(auth, SECPKG_ATTR_SIZES, &auth->sizes);
+		(void)query_logged(auth, SECPKG_ATTR_SIZES, &auth->sizes);
 		WLog_DBG(TAG, "Context sizes: cbMaxSignature=%" PRIu32 ", cbSecurityTrailer=%" PRIu32 "",
 		         auth->sizes.cbMaxSignature, auth->sizes.cbSecurityTrailer);
 
