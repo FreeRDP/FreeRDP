@@ -1604,7 +1604,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_FreeCredentialsHandle(PCredHandle phC
 		WINPR_ASSERT(cred->mech->pkg->table->FreeCredentialsHandle);
 		const SECURITY_STATUS rc = cred->mech->pkg->table->FreeCredentialsHandle(&cred->cred);
 		if (rc != SEC_E_OK)
-			WLog_WARN(TAG, "FreeCredentialsHandle returned %s", GetSecurityStatusString(rc));
+			WLog_DBG(TAG, "FreeCredentialsHandle returned %s", GetSecurityStatusString(rc));
 	}
 	free(creds);
 
