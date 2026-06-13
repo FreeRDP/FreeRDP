@@ -477,11 +477,11 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 		 * a multiple of 4 bytes.
 		 */
 		const size_t stride = round_up(div_ceil(nWidth, 8), 4);
-		if (cbBitsMask < stride * (nHeight - 1ULL))
+		const size_t maskSize = stride * (nHeight - 1ULL) + div_ceil(nWidth, 8);
+		if (cbBitsMask < maskSize)
 		{
-			WLog_ERR(TAG,
-			         "cbBitsMask{%" PRIu32 "} < stride{%" PRIuz "} * (nHeight{%" PRIu32 "} - 1)",
-			         cbBitsMask, stride, nHeight);
+			WLog_ERR(TAG, "cbBitsMask{%" PRIu32 "} < required mask size{%" PRIuz "}", cbBitsMask,
+			         maskSize);
 			return FALSE;
 		}
 
