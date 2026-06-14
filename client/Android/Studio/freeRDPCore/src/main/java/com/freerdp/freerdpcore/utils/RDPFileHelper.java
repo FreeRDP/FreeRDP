@@ -247,7 +247,10 @@ public final class RDPFileHelper
 
 		String remoteApp = adv.getRemoteProgram();
 		if (!remoteApp.isEmpty())
+		{
 			writeString(sb, "remoteapplicationprogram", remoteApp);
+			writeInt(sb, "remoteapplicationmode", 1);
+		}
 
 		String workDir = adv.getWorkDir();
 		if (!workDir.isEmpty())

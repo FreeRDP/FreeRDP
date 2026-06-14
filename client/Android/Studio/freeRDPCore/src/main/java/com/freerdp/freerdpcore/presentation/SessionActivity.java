@@ -73,6 +73,8 @@ public class SessionActivity extends AppCompatActivity
 	private static final int GRAPHICS_CHANGED = 6;
 	private static final int POINTER_SET = 7;
 
+	private RailWindowManager railManager;
+
 	private final Handler uiHandler = new Handler(Looper.getMainLooper()) {
 		@Override public void handleMessage(Message msg)
 		{
@@ -263,6 +265,8 @@ public class SessionActivity extends AppCompatActivity
 		KeyboardView modifiersKeyboardView = findViewById(R.id.extended_keyboard_header);
 
 		scrollView = findViewById(R.id.sessionScrollView);
+		scrollView.setScrollViewListener(null);
+		railManager = new RailWindowManager(this, findViewById(R.id.railContainer), sessionView);
 		sessionViewModel = new ViewModelProvider(this).get(SessionViewModel.class);
 		sessionViewModel.getState().observe(this, this::onConnectionStateChanged);
 
@@ -787,6 +791,36 @@ public class SessionActivity extends AppCompatActivity
 		sessionView.setDefaultCursor();
 	}
 
+	@Override public void OnRailWindowUpdate(long windowId, int width, int height, int[] pixels)
+	{
+		railManager.onWindowUpdate(windowId, width, height, pixels);
+	}
+
+	@Override public void OnRailWindowMove(long windowId, int x, int y, int w, int h)
+	{
+		railManager.onWindowMove(windowId, x, y, w, h);
+	}
+
+	@Override public void OnRailWindowHide(long windowId)
+	{
+		railManager.onWindowHide(windowId);
+	}
+
+	@Override public void OnRailWindowDestroy(long windowId)
+	{
+		railManager.onWindowDestroy(windowId);
+	}
+
+	@Override public void OnRailSessionEnd()
+	{
+		railManager.onSessionEnd();
+	}
+
+	@Override public void OnRailMonitoredDesktop(long[] windowIds, long activeWindowId)
+	{
+		railManager.onMonitoredDesktop(windowIds, activeWindowId);
+	}
+
 	// ****************************************************************************
 	// SessionView.SessionViewListener and TouchPointerView.TouchPointerListener
 	// — delegated to SessionInputManager
@@ -904,6 +938,8 @@ public class SessionActivity extends AppCompatActivity
 		}
 
 		dialogs.dismissProgress();
+
+		railManager.clear();
 
 		session.setUIEventListener(null);
 		closeSessionActivity(RESULT_OK);

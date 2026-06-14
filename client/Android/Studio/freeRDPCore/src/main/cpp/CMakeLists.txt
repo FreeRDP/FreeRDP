@@ -130,6 +130,8 @@ set(${MODULE_PREFIX}_SRCS
     android_jni_utils.h
     android_jni_callback.c
     android_jni_callback.h
+    android_rail.c
+    android_rail.h
 )
 
 add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
