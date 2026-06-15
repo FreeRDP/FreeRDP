@@ -19,11 +19,12 @@ set(NDK_TOOLCHAIN_BIN "${NDK_ROOT}/toolchains/llvm/prebuilt/${NDK_HOST_PLATFORM}
 
 ExternalProject_Add(
   openssl
-  DOWNLOAD_EXTRACT_TIMESTAMP OFF
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/openssl
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/openssl
-  URL https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz
-  URL_HASH SHA256=aaf51a1fe064384f811daeaeb4ec4dce7340ec8bd893027eee676af31e83a04f
+  GIT_REPOSITORY https://github.com/openssl/openssl.git
+  GIT_TAG ${OPENSSL_VERSION}
+  GIT_SHALLOW TRUE
+  UPDATE_DISCONNECTED ON
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH} ANDROID_NDK=${NDK_ROOT} ANDROID_NDK_ROOT=${NDK_ROOT}
     ANDROID_NDK_HOME=${NDK_ROOT} CC=clang perl <SOURCE_DIR>/Configure ${OSSL_ARCH} shared no-tests no-apps no-docs

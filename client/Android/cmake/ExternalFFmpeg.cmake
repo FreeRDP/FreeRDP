@@ -53,11 +53,12 @@ endif()
 ExternalProject_Add(
   ffmpeg
   INSTALL_DIR ${DEPS_INSTALL_DIR}
-  DOWNLOAD_EXTRACT_TIMESTAMP OFF
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/ffmpeg
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
-  URL https://github.com/FFmpeg/FFmpeg/archive/refs/tags/${FFMPEG_VERSION}.tar.gz
-  URL_HASH SHA256=dd308201bb1239a1b73185f80c6b4121f4efdfa424a009ce544fd00bf736bb2e
+  GIT_REPOSITORY https://github.com/FFmpeg/FFmpeg.git
+  GIT_TAG ${FFMPEG_VERSION}
+  GIT_SHALLOW TRUE
+  UPDATE_DISCONNECTED ON
   DEPENDS openh264 opus openssl
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}"

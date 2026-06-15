@@ -17,14 +17,12 @@ endif()
 
 ExternalProject_Add(
   openh264
-  DOWNLOAD_EXTRACT_TIMESTAMP OFF
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/openh264
-  BINARY_DIR ${CMAKE_BINARY_DIR}/external/openh264
   GIT_REPOSITORY https://github.com/cisco/openh264.git
   GIT_TAG ${OPENH264_VERSION}
   GIT_SHALLOW TRUE
-  PATCH_COMMAND git reset --hard ${OPENH264_VERSION} && git apply
-                ${CMAKE_CURRENT_LIST_DIR}/0001-openh264-pkgconfig-patch.patch
+  UPDATE_DISCONNECTED ON
+  PATCH_COMMAND git am --3way ${CMAKE_CURRENT_LIST_DIR}/0001-openh264-pkgconfig-patch.patch
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env "PATH=${NDK_ROOT}:$ENV{PATH}" make -C <SOURCE_DIR> ENABLEPIC=Yes LDFLAGS=-static-libstdc++
     OS=android NDKROOT=${NDK_ROOT} NDK_TOOLCHAIN_VERSION=clang TARGET=android-${NDK_API_LEVEL} NDKLEVEL=${NDK_API_LEVEL}
