@@ -33,6 +33,7 @@
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/codec/h264.h>
+#include <freerdp/codec/video.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/cmdline.h>
@@ -1200,6 +1201,16 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1has_1h264(JNIEnv* env,
 		return JNI_FALSE;
 	h264_context_free(ctx);
 	return JNI_TRUE;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1has_1camera_1redirection(JNIEnv* env,
+                                                                                   jclass cls)
+{
+	return freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT_NV12,
+	                                          FREERDP_VIDEO_FORMAT_YUV420P)
+	           ? JNI_TRUE
+	           : JNI_FALSE;
 }
 
 JNIEXPORT jstring JNICALL

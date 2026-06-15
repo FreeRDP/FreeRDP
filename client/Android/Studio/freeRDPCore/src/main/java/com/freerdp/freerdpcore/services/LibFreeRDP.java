@@ -33,6 +33,7 @@ public class LibFreeRDP
 	private static final String TAG = "LibFreeRDP";
 	private static EventListener listener;
 	private static boolean mHasH264 = false;
+	private static boolean mHasCameraRedirection = false;
 
 	private static final LongSparseArray<Boolean> mInstanceState = new LongSparseArray<>();
 
@@ -110,8 +111,10 @@ public class LibFreeRDP
 			else
 				throw new RuntimeException("APK broken: native library version " + version +
 				                           " does not meet requirements!");
+			mHasCameraRedirection = freerdp_has_camera_redirection();
 			Log.i(TAG, "Successfully loaded native library. H264 is " +
-			               (mHasH264 ? "supported" : "not available"));
+			               (mHasH264 ? "supported" : "not available") + ", camera redirection is " +
+			               (mHasCameraRedirection ? "supported" : "not available"));
 		}
 		catch (UnsatisfiedLinkError e)
 		{
@@ -125,7 +128,14 @@ public class LibFreeRDP
 		return mHasH264;
 	}
 
+	public static boolean hasCameraRedirectionSupport()
+	{
+		return mHasCameraRedirection;
+	}
+
 	private static native boolean freerdp_has_h264();
+
+	private static native boolean freerdp_has_camera_redirection();
 
 	private static native String freerdp_get_jni_version();
 
@@ -459,7 +469,7 @@ public class LibFreeRDP
 			args.add("/microphone");
 		}
 
-		if (advanced.getRedirectCamera())
+		if (advanced.getRedirectCamera() && mHasCameraRedirection)
 		{
 			args.add("/dvc:rdpecam");
 		}
