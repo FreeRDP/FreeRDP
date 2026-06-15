@@ -48,17 +48,11 @@ static state_run_t peer_recv_pdu(freerdp_peer* client, wStream* s);
 static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char* name,
                                                 UINT32 flags)
 {
-	UINT32 index = 0;
-	BOOL joined = FALSE;
-	rdpMcsChannel* mcsChannel = nullptr;
-	rdpPeerChannel* peerChannel = nullptr;
-	rdpMcs* mcs = nullptr;
-
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(client->context->rdp);
 	WINPR_ASSERT(name);
-	mcs = client->context->rdp->mcs;
+	rdpMcs* mcs = client->context->rdp->mcs;
 	WINPR_ASSERT(mcs);
 
 	if (flags & WTS_CHANNEL_OPTION_DYNAMIC)
@@ -69,6 +63,9 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 	if (length > 8)
 		return nullptr; /* SVC maximum name length is 8 */
 
+	BOOL joined = FALSE;
+	UINT32 index = 0;
+	rdpMcsChannel* mcsChannel = nullptr;
 	for (; index < mcs->channelCount; index++)
 	{
 		mcsChannel = &(mcs->channels[index]);
@@ -86,7 +83,7 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 	if (!joined)
 		return nullptr; /* channel is not joined */
 
-	peerChannel = (rdpPeerChannel*)mcsChannel->handle;
+	rdpPeerChannel* peerChannel = (rdpPeerChannel*)mcsChannel->handle;
 
 	if (peerChannel)
 	{
@@ -1473,33 +1470,30 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		(void)freerdp_tcp_set_nodelay(WLog_Get(TAG), WLOG_DEBUG, sockfd);
 	}
 
-	if (client)
-	{
-		client->sockfd = sockfd;
-		client->ContextSize = sizeof(rdpContext);
-		client->Initialize = freerdp_peer_initialize;
+	client->sockfd = sockfd;
+	client->ContextSize = sizeof(rdpContext);
+	client->Initialize = freerdp_peer_initialize;
 #if defined(WITH_FREERDP_DEPRECATED)
-		client->GetFileDescriptor = freerdp_peer_get_fds;
+	client->GetFileDescriptor = freerdp_peer_get_fds;
 #endif
-		client->GetEventHandle = freerdp_peer_get_event_handle;
-		client->GetEventHandles = freerdp_peer_get_event_handles;
-		client->CheckFileDescriptor = freerdp_peer_check_fds;
-		client->Close = freerdp_peer_close;
-		client->Disconnect = freerdp_peer_disconnect;
-		client->SendChannelData = freerdp_peer_send_channel_data;
-		client->SendChannelPacket = freerdp_peer_send_channel_packet;
-		client->SendServerRedirection = freerdp_peer_send_server_redirection_pdu;
-		client->IsWriteBlocked = freerdp_peer_is_write_blocked;
-		client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
-		client->HasMoreToRead = freerdp_peer_has_more_to_read;
-		client->VirtualChannelOpen = freerdp_peer_virtual_channel_open;
-		client->VirtualChannelClose = freerdp_peer_virtual_channel_close;
-		client->VirtualChannelWrite = freerdp_peer_virtual_channel_write;
-		client->VirtualChannelRead = nullptr; /* must be defined by server application */
-		client->VirtualChannelGetData = freerdp_peer_virtual_channel_get_data;
-		client->VirtualChannelSetData = freerdp_peer_virtual_channel_set_data;
-		client->SetState = freerdp_peer_set_state;
-	}
+	client->GetEventHandle = freerdp_peer_get_event_handle;
+	client->GetEventHandles = freerdp_peer_get_event_handles;
+	client->CheckFileDescriptor = freerdp_peer_check_fds;
+	client->Close = freerdp_peer_close;
+	client->Disconnect = freerdp_peer_disconnect;
+	client->SendChannelData = freerdp_peer_send_channel_data;
+	client->SendChannelPacket = freerdp_peer_send_channel_packet;
+	client->SendServerRedirection = freerdp_peer_send_server_redirection_pdu;
+	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
+	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
+	client->HasMoreToRead = freerdp_peer_has_more_to_read;
+	client->VirtualChannelOpen = freerdp_peer_virtual_channel_open;
+	client->VirtualChannelClose = freerdp_peer_virtual_channel_close;
+	client->VirtualChannelWrite = freerdp_peer_virtual_channel_write;
+	client->VirtualChannelRead = nullptr; /* must be defined by server application */
+	client->VirtualChannelGetData = freerdp_peer_virtual_channel_get_data;
+	client->VirtualChannelSetData = freerdp_peer_virtual_channel_set_data;
+	client->SetState = freerdp_peer_set_state;
 
 	return client;
 }
