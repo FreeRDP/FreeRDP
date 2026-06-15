@@ -53,6 +53,7 @@ public final class BookmarkConverter
 		adv.setRedirectSDCard(e.redirectSdcard);
 		adv.setRedirectSound(e.redirectSound);
 		adv.setRedirectMicrophone(e.redirectMicrophone);
+		adv.setRedirectCamera(e.redirectCamera);
 		adv.setRedirectPrinter(e.redirectPrinter);
 		adv.setSecurity(e.security);
 		adv.setRemoteProgram(e.remoteProgram);
@@ -119,6 +120,7 @@ public final class BookmarkConverter
 		e.redirectSdcard = adv.getRedirectSDCard();
 		e.redirectSound = adv.getRedirectSound();
 		e.redirectMicrophone = adv.getRedirectMicrophone();
+		e.redirectCamera = adv.getRedirectCamera();
 		e.redirectPrinter = adv.getRedirectPrinter();
 		e.security = adv.getSecurity();
 		e.remoteProgram = adv.getRemoteProgram();

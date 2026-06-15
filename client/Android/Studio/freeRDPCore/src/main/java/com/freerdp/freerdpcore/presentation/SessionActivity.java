@@ -526,15 +526,14 @@ public class SessionActivity extends AppCompatActivity
 			screenSettings.setWidth(screen_width);
 		}
 
-		// Collect dangerous permissions we still need before opening the session.
-		// RECORD_AUDIO: only if microphone redirect is enabled.
-		// CAMERA: always — camera redirect is server-initiated, no client-side toggle.
+		// RECORD_AUDIO / CAMERA: only if the matching redirect is enabled.
 		java.util.ArrayList<String> needed = new java.util.ArrayList<>();
 		if (bookmark.getAdvancedSettings().getRedirectMicrophone() &&
 		    checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
 		        PackageManager.PERMISSION_GRANTED)
 			needed.add(Manifest.permission.RECORD_AUDIO);
-		if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+		if (bookmark.getAdvancedSettings().getRedirectCamera() &&
+		    checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
 			needed.add(Manifest.permission.CAMERA);
 
 		if (!needed.isEmpty())

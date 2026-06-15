@@ -458,7 +458,10 @@ public class LibFreeRDP
 			args.add("/microphone");
 		}
 
-		args.add("/dvc:rdpecam");
+		if (advanced.getRedirectCamera())
+		{
+			args.add("/dvc:rdpecam");
+		}
 
 		args.add("/kbd:unicode:on");
 		args.add("/cert:ignore");
