@@ -23,8 +23,7 @@ ExternalProject_Add(
   GIT_REPOSITORY https://github.com/cisco/openh264.git
   GIT_TAG ${OPENH264_VERSION}
   GIT_SHALLOW TRUE
-  PATCH_COMMAND git reset --hard ${OPENH264_VERSION} && git apply
-                ${CMAKE_CURRENT_LIST_DIR}/0001-openh264-pkgconfig-patch.patch
+  PATCH_COMMAND git am --3way ${CMAKE_CURRENT_LIST_DIR}/0001-openh264-pkgconfig-patch.patch
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env "PATH=${NDK_ROOT}:$ENV{PATH}" make -C <SOURCE_DIR> ENABLEPIC=Yes LDFLAGS=-static-libstdc++
     OS=android NDKROOT=${NDK_ROOT} NDK_TOOLCHAIN_VERSION=clang TARGET=android-${NDK_API_LEVEL} NDKLEVEL=${NDK_API_LEVEL}
