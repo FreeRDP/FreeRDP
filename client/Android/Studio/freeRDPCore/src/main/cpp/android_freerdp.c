@@ -425,6 +425,7 @@ static BOOL android_register_pointer(rdpGraphics* graphics)
 
 /* Keep in sync with LibFreeRDP.EXPERIMENTAL_*. */
 #define ANDROID_EXPERIMENTAL_REMOTEAPP 0
+#define ANDROID_EXPERIMENTAL_CAMERA 1
 
 static BOOL android_post_connect(freerdp* instance)
 {
@@ -443,6 +444,11 @@ static BOOL android_post_connect(freerdp* instance)
 	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode) &&
 	    !freerdp_callback_bool_result("OnExperimentalFeature", "(JI)Z", (jlong)instance,
 	                                  ANDROID_EXPERIMENTAL_REMOTEAPP))
+		return FALSE;
+
+	if (freerdp_dynamic_channel_collection_find(settings, "rdpecam") &&
+	    !freerdp_callback_bool_result("OnExperimentalFeature", "(JI)Z", (jlong)instance,
+	                                  ANDROID_EXPERIMENTAL_CAMERA))
 		return FALSE;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_RGBX32))

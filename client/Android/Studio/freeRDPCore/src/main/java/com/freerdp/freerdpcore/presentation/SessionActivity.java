@@ -800,6 +800,10 @@ public class SessionActivity extends AppCompatActivity
 				featureKey = "remoteapp";
 				displayName = getString(R.string.experimental_feature_remoteapp);
 				break;
+			case LibFreeRDP.EXPERIMENTAL_CAMERA:
+				featureKey = "camera";
+				displayName = getString(R.string.experimental_feature_camera);
+				break;
 			default:
 				return true;
 		}

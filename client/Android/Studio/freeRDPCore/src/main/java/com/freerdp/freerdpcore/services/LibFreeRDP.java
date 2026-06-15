@@ -47,6 +47,7 @@ public class LibFreeRDP
 
 	// Keep in sync with android_freerdp.c.
 	public static final int EXPERIMENTAL_REMOTEAPP = 0;
+	public static final int EXPERIMENTAL_CAMERA = 1;
 
 	private static boolean tryLoad(String[] libraries)
 	{

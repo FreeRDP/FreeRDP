@@ -27,7 +27,7 @@
         app:fragment="com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity$SecurityFragment" />
 
     <Preference
-        android:icon="@drawable/ic_tune"
+        android:icon="@drawable/ic_experiment"
         android:key="settings.experimental"
         android:title="@string/settings_cat_experimental"
         app:fragment="com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity$ExperimentalFragment" />
