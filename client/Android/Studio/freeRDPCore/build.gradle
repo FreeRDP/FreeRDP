@@ -47,6 +47,10 @@ android {
             externalNativeBuild {
                 cmake {
                     abiFilters "arm64-v8a", "armeabi-v7a", "x86_64", "x86"
+                    arguments "-DWITH_FFMPEG=OFF", "-DWITH_OPENH264=ON",
+                            "-DWITH_OPUS=OFF",   "-DWITH_WEBP=OFF",
+                            "-DWITH_JPEG=OFF",   "-DWITH_PNG=OFF",
+                            "-DWITH_CJSON=OFF",  "-DWITH_OPENSSL=ON"
                 }
             }
         }
