@@ -36,6 +36,8 @@ set(FREERDP_EXTRA_CMAKE_ARGS
     -DWITH_CJSON_REQUIRED:BOOL=${WITH_CJSON}
     # Printer channel
     -DCHANNEL_PRINTER_CLIENT:BOOL=ON
+    # Camera redirection (Android NDK Camera2 HAL)
+    -DCHANNEL_RDPECAM_CLIENT:BOOL=ON
 )
 
 ExternalProject_Add(

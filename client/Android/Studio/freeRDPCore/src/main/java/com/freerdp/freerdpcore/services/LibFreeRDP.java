@@ -458,6 +458,8 @@ public class LibFreeRDP
 			args.add("/microphone");
 		}
 
+		args.add("/dvc:rdpecam");
+
 		args.add("/kbd:unicode:on");
 		args.add("/cert:ignore");
 		args.add("/log-level:" + debug.getDebugLevel());
