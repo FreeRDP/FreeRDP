@@ -386,9 +386,12 @@ public class LibFreeRDP
 			if (!advanced.getWorkDir().isEmpty())
 				args.add("/app:workdir:" + advanced.getWorkDir());
 		}
-		else if (!advanced.getWorkDir().isEmpty())
+		else
 		{
-			args.add("/shell-dir:" + advanced.getWorkDir());
+			if (!advanced.getAlternateShell().isEmpty())
+				args.add("/shell:" + advanced.getAlternateShell());
+			if (!advanced.getWorkDir().isEmpty())
+				args.add("/shell-dir:" + advanced.getWorkDir());
 		}
 
 		args.add(addFlag("async-channels", debug.getAsyncChannel()));

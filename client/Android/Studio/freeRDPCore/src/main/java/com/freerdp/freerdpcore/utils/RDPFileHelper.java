@@ -148,10 +148,12 @@ public final class RDPFileHelper
 			advanced.setLoadBalanceInfo(s);
 
 		s = p.getString("remoteapplicationprogram");
-		if (s == null || s.isEmpty())
-			s = p.getString("alternate shell");
 		if (s != null && !s.isEmpty())
 			advanced.setRemoteProgram(s);
+
+		s = p.getString("alternate shell");
+		if (s != null && !s.isEmpty())
+			advanced.setAlternateShell(s);
 
 		s = p.getString("shell working directory");
 		if (s != null && !s.isEmpty())
@@ -251,6 +253,10 @@ public final class RDPFileHelper
 			writeString(sb, "remoteapplicationprogram", remoteApp);
 			writeInt(sb, "remoteapplicationmode", 1);
 		}
+
+		String alternateShell = adv.getAlternateShell();
+		if (!alternateShell.isEmpty())
+			writeString(sb, "alternate shell", alternateShell);
 
 		String workDir = adv.getWorkDir();
 		if (!workDir.isEmpty())

@@ -198,6 +198,7 @@
         <item>3</item>
     </string-array>
     <string name="settings_remote_program">Remote Program</string>
+    <string name="settings_alternate_shell">Alternate Shell</string>
     <string name="settings_work_dir">Working Directory</string>
     <string name="settings_async_channel">Async channel</string>
     <string name="settings_async_update">Async update</string>

@@ -56,6 +56,7 @@ public final class BookmarkConverter
 		adv.setRedirectPrinter(e.redirectPrinter);
 		adv.setSecurity(e.security);
 		adv.setRemoteProgram(e.remoteProgram);
+		adv.setAlternateShell(e.alternateShell);
 		adv.setWorkDir(e.workDir);
 		adv.setConsoleMode(e.consoleMode);
 		adv.setTlsSecLevel(e.tlsSecLevel);
@@ -121,6 +122,7 @@ public final class BookmarkConverter
 		e.redirectPrinter = adv.getRedirectPrinter();
 		e.security = adv.getSecurity();
 		e.remoteProgram = adv.getRemoteProgram();
+		e.alternateShell = adv.getAlternateShell();
 		e.workDir = adv.getWorkDir();
 		e.consoleMode = adv.getConsoleMode();
 		e.tlsSecLevel = adv.getTlsSecLevel();
