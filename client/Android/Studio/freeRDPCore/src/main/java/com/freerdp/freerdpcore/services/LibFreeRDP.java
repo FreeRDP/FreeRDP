@@ -45,6 +45,9 @@ public class LibFreeRDP
 	public static final long VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1 = 0x100;
 	public static final long VERIFY_CERT_FLAG_FP_IS_PEM = 0x200;
 
+	// Keep in sync with android_freerdp.c.
+	public static final int EXPERIMENTAL_REMOTEAPP = 0;
+
 	private static boolean tryLoad(String[] libraries)
 	{
 		boolean success = false;
@@ -680,6 +683,17 @@ public class LibFreeRDP
 		return 0;
 	}
 
+	private static boolean OnExperimentalFeature(long inst, int feature)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return true;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener == null)
+			return true;
+		return uiEventListener.OnExperimentalFeature(feature);
+	}
+
 	private static void OnGraphicsUpdate(long inst, int x, int y, int width, int height)
 	{
 		SessionState s = GlobalApp.getSession(inst);
@@ -846,6 +860,8 @@ public class LibFreeRDP
 		int OnVerifyChangedCertificateEx(String host, long port, String commonName, String subject, String issuer,
 		                               String fingerprint, String oldSubject, String oldIssuer,
 		                               String oldFingerprint, long flags);
+
+		boolean OnExperimentalFeature(int feature);
 
 		void OnGraphicsUpdate(int x, int y, int width, int height);
 

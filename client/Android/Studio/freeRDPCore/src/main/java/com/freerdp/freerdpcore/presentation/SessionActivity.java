@@ -756,6 +756,27 @@ public class SessionActivity extends AppCompatActivity
 		return dialogs.verifyChangedCertificate(host, port, subject, issuer, fingerprint, flags);
 	}
 
+	@Override public boolean OnExperimentalFeature(int feature)
+	{
+		final String featureKey;
+		final String displayName;
+		switch (feature)
+		{
+			case LibFreeRDP.EXPERIMENTAL_REMOTEAPP:
+				featureKey = "remoteapp";
+				displayName = getString(R.string.experimental_feature_remoteapp);
+				break;
+			default:
+				return true;
+		}
+		if (ApplicationSettingsActivity.isExperimentalEnabled(this, featureKey))
+			return true;
+		// suppress the generic failure toast; the dialog explains the abort
+		connectCancelledByUser = true;
+		dialogs.showExperimentalBlocked(displayName);
+		return false;
+	}
+
 	@Override public void OnRemoteClipboardChanged(String data)
 	{
 		Log.v(TAG, "OnRemoteClipboardChanged: " + data);

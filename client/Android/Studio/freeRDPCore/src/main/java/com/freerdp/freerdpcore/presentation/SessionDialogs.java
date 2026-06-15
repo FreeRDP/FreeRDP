@@ -13,6 +13,7 @@ package com.freerdp.freerdpcore.presentation;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.TypedValue;
@@ -53,6 +54,7 @@ public class SessionDialogs
 
 	private final AlertDialog dlgVerifyCertificate;
 	private final AlertDialog dlgUserCredentials;
+	private final AlertDialog dlgExperimental;
 	private final View userCredView;
 
 	private AlertDialog progressDialog;
@@ -109,6 +111,27 @@ public class SessionDialogs
 		                                            })
 		                         .setCancelable(false)
 		                         .create();
+
+		dlgExperimental = new AlertDialog.Builder(activity)
+		                      .setTitle(R.string.dlg_title_experimental_feature)
+		                      .setPositiveButton(R.string.menu_app_settings,
+		                                         (dialog, which) -> {
+			                                         openExperimentalSettings();
+			                                         synchronized (dialog)
+			                                         {
+				                                         dialog.notify();
+			                                         }
+		                                         })
+		                      .setNegativeButton(android.R.string.cancel,
+		                                         (dialog, which) -> {
+			                                         notifyCancel();
+			                                         synchronized (dialog)
+			                                         {
+				                                         dialog.notify();
+			                                         }
+		                                         })
+		                      .setCancelable(false)
+		                      .create();
 	}
 
 	/**
@@ -182,6 +205,31 @@ public class SessionDialogs
 		// The "changed" variant currently shows the same information as the
 		// regular verify dialog (matches prior behaviour).
 		return verifyCertificate(host, port, subject, issuer, fingerprint, flags);
+	}
+
+	/** Shows an "experimental feature" notice and blocks the calling thread until dismissed. */
+	public void showExperimentalBlocked(String featureName)
+	{
+		dlgExperimental.setMessage(
+		    activity.getString(R.string.dlg_msg_experimental_feature, featureName));
+
+		showOnUiThread(dlgExperimental);
+
+		try
+		{
+			synchronized (dlgExperimental)
+			{
+				dlgExperimental.wait();
+			}
+		}
+		catch (InterruptedException e)
+		{
+		}
+	}
+
+	private void openExperimentalSettings()
+	{
+		activity.startActivity(new Intent(activity, ApplicationSettingsActivity.class));
 	}
 
 	private int showVerifyDialog(String msg)
