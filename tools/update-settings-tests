@@ -2,6 +2,29 @@
 import os
 import sys
 
+MAX_PER_LINE = 100
+
+def formatCallOrPrototype(content: str, indent: int, lineWidth: int):
+    idx = content.find('(')
+    shiftStr = ' ' * (idx + 1)
+    idx2 = content.find(')', idx+1)
+    extraLen = len(content[idx2:])
+
+    ret = []
+    currentLine = content[0:idx+1]
+    for arg in content[idx + 1 : idx2].split(','):
+        arg = arg.strip()
+        #newLen = indent * 4 + len(currentLine) + len(arg)
+        if indent * 4 + len(currentLine) + len(arg) + extraLen > lineWidth:
+            ret.append('\t' * indent + currentLine[0:-1])
+            currentLine = shiftStr
+        currentLine += arg + ', '
+
+    if len(currentLine) > len(shiftStr):
+        ret.append('\t' * indent + currentLine[0:-2] + content[idx2:])
+
+    return '\n'.join(ret)
+
 def get_values(entry_dict, entry_type):
     values = []
     if '*' == entry_type:
@@ -37,20 +60,35 @@ def write_entry(f, entry_dict, entry_type, entry_name):
         return
 
     f.write('#define have_' + entry_name.lower() + '_list_indices\n')
-    f.write('static const size_t ' + entry_name.lower() + '_list_indices[] =\n')
-    f.write('{\n')
+    f.write('static const size_t ' + entry_name.lower() + '_list_indices[] = {\n')
 
     for val in values:
         f.write('\tFreeRDP_' + val + ',\n')
 
     f.write('};\n\n')
 
+def formatArrayEntry(content: list[str], ident: int, maxPerLine: int):
+    ret = []
+    currentLine = '{ '
+    for arg in content:
+        newLen = ident * 4 + len(currentLine) + len(arg) + 2
+        if newLen >= maxPerLine:
+            ret.append('\t' * ident + currentLine[0:-1])
+            currentLine = '  '
+        currentLine += arg + ', '
+
+    if len(currentLine) > ident * 4 + 2:
+        ret.append('\t' * ident + currentLine[0:-2])
+
+    return "\n".join(ret) + " }"
+
 def write_str_case(f, entry_idx, val):
     entry_types = ['BOOL', 'UINT16', 'INT16', 'UINT32', 'INT32', 'UINT64', 'INT64', 'STRING', 'POINTER']
-    f.write('\t\t{FreeRDP_' + val + ', FREERDP_SETTINGS_TYPE_' + str(entry_types[entry_idx]) + ', "FreeRDP_' + val + '"},\n')
+
+    f.write(formatArrayEntry([ f'FreeRDP_{val}', f'FREERDP_SETTINGS_TYPE_{entry_types[entry_idx]}', f'"FreeRDP_{val}"'], 1, MAX_PER_LINE) + ',\n')
 
 def write_str(f, entry_dict):
-    f.write('typedef enum {\n')
+    f.write('typedef enum\n{\n')
     f.write('\tFREERDP_SETTINGS_TYPE_BOOL,\n')
     f.write('\tFREERDP_SETTINGS_TYPE_UINT16,\n')
     f.write('\tFREERDP_SETTINGS_TYPE_INT16,\n')
@@ -62,13 +100,13 @@ def write_str(f, entry_dict):
     f.write('\tFREERDP_SETTINGS_TYPE_POINTER\n')
     f.write('} FREERDP_SETTINGS_TYPE;\n')
     f.write('\n')
-    f.write('struct settings_str_entry {\n')
+    f.write('struct settings_str_entry\n{\n')
     f.write('\tSSIZE_T id;\n')
     f.write('\tSSIZE_T type;\n')
     f.write('\tconst char* str;\n')
     f.write('};\n')
-    f.write('static const struct settings_str_entry settings_map[] =\n')
-    f.write('{\n')
+    f.write('static const struct settings_str_entry settings_map[] = {\n')
+    #f.write('{\n')
 
     entry_types = ['BOOL', 'UINT16', 'INT16', 'UINT32', 'INT32', 'UINT64', 'INT64', 'char*', '*']
     for entry_type in entry_types:
@@ -78,7 +116,7 @@ def write_str(f, entry_dict):
                 write_str_case(f, entry_types.index(entry_type), val)
     f.write('};\n\n')
     f.write('\n')
-    
+
 def write_getter_case(f, val, cast, typestr):
     f.write('\t\tcase ')
     if typestr:
@@ -109,7 +147,7 @@ def write_getter_body(f, values, ret, keys, isPointer, compat_values, typestr, e
             write_getter_case(f, val, cast, typestr)
         f.write('#endif\n')
     f.write('\t\tdefault:\n')
-    f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
+    f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),\n\t\t\t         freerdp_settings_get_type_name_for_key(id));\n')
     f.write('\t\t\tWINPR_ASSERT(FALSE);\n')
     f.write('\t\t\treturn ' + ret + ';\n')
     f.write('\t}\n')
@@ -126,17 +164,20 @@ def write_getter(f, entry_dict, entry_type, entry_name, postfix, compat_dict):
     typestr = 'FreeRDP_Settings_Keys_' + entry_name.capitalize()
     typestr = typestr.replace('_Uint', '_UInt')
 
+    protoLine = ''
     if isPointer:
-        f.write('void*')
+        protoLine += 'void*'
     elif isString:
-        f.write('const ' + entry_type)
+        protoLine += 'const ' + entry_type
     else:
-        f.write(entry_type)
+        protoLine += entry_type
 
     if isPointer:
-        f.write(' freerdp_settings_get_pointer_writable(rdpSettings* settings, ' + typestr + ' id)\n')
+        protoLine += ' freerdp_settings_get_pointer_writable(rdpSettings* settings, ' + typestr + ' id)'
     else:
-        f.write(' freerdp_settings_get_' + entry_name.lower() + '(WINPR_ATTR_UNUSED const rdpSettings* settings, WINPR_ATTR_UNUSED ' + typestr + ' id)\n')
+        protoLine += ' freerdp_settings_get_' + entry_name.lower() + '(WINPR_ATTR_UNUSED const rdpSettings* settings, WINPR_ATTR_UNUSED ' + typestr + ' id)'
+    f.write(formatCallOrPrototype(protoLine, 0, MAX_PER_LINE) + '\n')
+
     if isString or isPointer:
         ret = 'nullptr';
     elif 'bool' in entry_name:
@@ -153,15 +194,15 @@ def write_getter(f, entry_dict, entry_type, entry_name, postfix, compat_dict):
 def write_setter_case(f, val, postfix, isPointer, cast):
     f.write('\t\tcase FreeRDP_' + val + ':\n')
     if isPointer:
-        f.write('\t\t\tsettings->' + val + ' = ' + cast + ' cnv.v;\n')
+        f.write('\t\t\tsettings->' + val + ' = ' + cast + 'cnv.v;\n')
         f.write('\t\t\tbreak;\n\n')
     elif not postfix:
-        f.write('\t\t\tsettings->' + val + ' = ' + cast + ' cnv.c;\n')
+        f.write('\t\t\tsettings->' + val + ' = ' + cast + 'cnv.c;\n')
         f.write('\t\t\tbreak;\n\n')
     elif len(postfix) <= 1:
-        f.write('\t\t\treturn update_string' + postfix + '(&settings->' + val + ', cnv.c, len);\n\n')
+        f.write(formatCallOrPrototype('return update_string' + postfix + '(&settings->' + val + ', cnv.c, len);\n', 3, MAX_PER_LINE) + '\n')
     else:
-        f.write('\t\t\treturn update_string' + postfix + '(&settings->' + val + ', cnv.cc, len, cleanup);\n\n')
+        f.write(formatCallOrPrototype('return update_string' + postfix + '(&settings->' + val + ', cnv.cc, len, cleanup);\n', 3, MAX_PER_LINE) + '\n')
 
 def write_setter(f, entry_dict, entry_type, entry_name, postfix, compat_dict):
     isString = 'string' in entry_name
@@ -173,30 +214,32 @@ def write_setter(f, entry_dict, entry_type, entry_name, postfix, compat_dict):
 
     typestr = 'FreeRDP_Settings_Keys_' + entry_name.capitalize()
     typestr = typestr.replace('_Uint', '_UInt')
-    f.write('BOOL freerdp_settings_set_' + entry_name.lower())
-    f.write(postfix)
-    f.write('(WINPR_ATTR_UNUSED rdpSettings* settings, WINPR_ATTR_UNUSED ' + typestr + ' id, ')
+
+    protoLine = 'BOOL freerdp_settings_set_' + entry_name.lower() + postfix + '(WINPR_ATTR_UNUSED rdpSettings* settings, WINPR_ATTR_UNUSED ' + typestr + ' id, '
     if isString or isPointer:
-        f.write('const ')
+        protoLine += 'const '
     if not isPointer:
-        f.write(entry_type + ' val')
+        protoLine += entry_type + ' val'
     else:
-        f.write('void* val')
+        protoLine += 'void* val'
+
     if isString and len(postfix) <= 1:
-        f.write(', size_t len)\n')
+        protoLine += ', size_t len)\n'
     elif isString:
-        f.write(', size_t len, BOOL cleanup)\n')
+        protoLine += ', size_t len, BOOL cleanup)'
     else:
-        f.write(')\n')
+        protoLine += ')'
+    f.write(formatCallOrPrototype(protoLine, 0, MAX_PER_LINE) + '\n')
+
     f.write('{\n')
     f.write('\tunion\n')
     f.write('\t{\n')
     f.write('\t\tvoid* v;\n')
     f.write('\t\tconst void* cv;\n')
     if not isPointer:
-        f.write('    ' + entry_type + ' c;\n')
-        f.write('    const ' + entry_type + ' cc;\n')
-    f.write('} cnv;\n')
+        f.write('\t\t' + entry_type + ' c;\n')
+        f.write('\t\tconst ' + entry_type + ' cc;\n')
+    f.write('\t} cnv;\n')
 
     f.write('\tWINPR_ASSERT(settings);\n\n')
     if isPointer:
@@ -226,23 +269,26 @@ def write_setter(f, entry_dict, entry_type, entry_name, postfix, compat_dict):
             write_setter_case(f, val, postfix, isPointer, cast)
         f.write('#endif\n')
     f.write('\t\tdefault:\n')
-    f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
+    f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %d [%s|%s]", id, freerdp_settings_get_name_for_key(id),\n\t\t\t         freerdp_settings_get_type_name_for_key(id));\n')
     f.write('\t\t\treturn FALSE;\n')
     f.write('\t}\n')
     f.write('\treturn TRUE;\n')
-    f.write('}\n\n')
+    f.write('}\n')
     f.write('\n')
     if isString and len(postfix) <= 1:
-        f.write('BOOL freerdp_settings_set_string_len(rdpSettings* settings, FreeRDP_Settings_Keys_String id, const char* val, size_t len)\n')
+        f.write('BOOL freerdp_settings_set_string_len(rdpSettings* settings, FreeRDP_Settings_Keys_String id,\n')
+        f.write('                                     const char* val, size_t len)\n')
         f.write('{\n')
         f.write('\treturn freerdp_settings_set_string_copy_(settings, id, val, len, TRUE);\n')
         f.write('}\n')
         f.write('\n')
 
-        f.write('BOOL freerdp_settings_set_string(rdpSettings* settings, FreeRDP_Settings_Keys_String id, const char* val)\n')
+        f.write('BOOL freerdp_settings_set_string(rdpSettings* settings, FreeRDP_Settings_Keys_String id,\n')
+        f.write('                                 const char* val)\n')
         f.write('{\n')
         f.write('\tsize_t len = 0;\n')
-        f.write('\tif (val) len = strlen(val);\n')
+        f.write('\tif (val)\n')
+        f.write('\t\tlen = strlen(val);\n')
         f.write('\treturn freerdp_settings_set_string_copy_(settings, id, val, len, TRUE);\n')
         f.write('}\n')
         f.write('\n')
