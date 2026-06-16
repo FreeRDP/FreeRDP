@@ -961,7 +961,15 @@ static void release_keys(xfContext* xfc, BOOL modifiers)
 			const DWORD rdp_scancode =
 			    get_rdp_scancode_from_x11_keycode(xfc, WINPR_ASSERTING_INT_CAST(UINT32, keycode));
 
-			if (isModifier(rdp_scancode) == modifiers)
+			BOOL bIsModifier = isModifier(rdp_scancode);
+			if (bIsModifier)
+			{
+				// release a not pressed (invalid) key before releasing the modifier key.
+				// this stops the modifier key from taking effect on unfocus event.
+				(void)freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE, FALSE,
+				                                           RDP_SCANCODE_UNKNOWN);
+			}
+			if (bIsModifier == modifiers)
 			{
 				(void)freerdp_input_send_keyboard_event_ex(xfc->common.context.input, FALSE, FALSE,
 				                                           rdp_scancode);
