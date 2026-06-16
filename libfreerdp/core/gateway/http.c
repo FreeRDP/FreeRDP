@@ -328,7 +328,7 @@ BOOL http_context_set_rdg_connection_id(HttpContext* context, const GUID* RdgCon
 		return FALSE;
 
 	char buffer[64] = WINPR_C_ARRAY_INIT;
-	return http_context_set_header(context, "RDG-Connection-Id", "%s",
+	return http_context_set_header(context, "RDG-Connection-Id", "{%s}",
 	                               guid2str(RdgConnectionId, buffer, sizeof(buffer)));
 }
 
@@ -338,7 +338,7 @@ BOOL http_context_set_rdg_correlation_id(HttpContext* context, const GUID* RdgCo
 		return FALSE;
 
 	char buffer[64] = WINPR_C_ARRAY_INIT;
-	return http_context_set_header(context, "RDG-Correlation-Id", "%s",
+	return http_context_set_header(context, "RDG-Correlation-Id", "{%s}",
 	                               guid2str(RdgCorrelationId, buffer, sizeof(buffer)));
 }
 

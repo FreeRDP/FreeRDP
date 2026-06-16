@@ -563,7 +563,7 @@ const char* guid2str(const GUID* guid, char* buffer, size_t len)
 	if (rpcStatus != RPC_S_OK)
 		return nullptr;
 
-	(void)sprintf_s(buffer, len, "{%s}", strguid);
+	(void)sprintf_s(buffer, len, "%s", strguid);
 	RpcStringFreeA(&strguid);
 	return buffer;
 }
