@@ -25,7 +25,8 @@ typedef struct
 {
 	wLogAppender common;
 
-	wLogCallbacks* callbacks;
+	wLogCallbacks callbacks;
+	wLogCallbacksEx callbacksEx;
 } wLogCallbackAppender;
 
 static BOOL WLog_CallbackAppender_Open(WINPR_ATTR_UNUSED wLog* log,
@@ -52,11 +53,11 @@ static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender
 
 	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
 
-	if (callbackAppender->callbacks && callbackAppender->callbacks->message)
+	if (callbackAppender->callbacks.message)
 	{
 		wLogMessage message = *cmessage;
 		message.PrefixString = prefix;
-		return callbackAppender->callbacks->message(&message);
+		return callbackAppender->callbacks.message(&message);
 	}
 	else
 		return FALSE;
@@ -72,11 +73,11 @@ static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appe
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
 	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
-	if (callbackAppender->callbacks && callbackAppender->callbacks->data)
+	if (callbackAppender->callbacks.data)
 	{
 		wLogMessage message = *cmessage;
 		message.PrefixString = prefix;
-		return callbackAppender->callbacks->data(&message);
+		return callbackAppender->callbacks.data(&message);
 	}
 	else
 		return FALSE;
@@ -93,11 +94,11 @@ static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* app
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
 	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
-	if (callbackAppender->callbacks && callbackAppender->callbacks->image)
+	if (callbackAppender->callbacks.image)
 	{
 		wLogMessage message = *cmessage;
 		message.PrefixString = prefix;
-		return callbackAppender->callbacks->image(&message);
+		return callbackAppender->callbacks.image(&message);
 	}
 	else
 		return FALSE;
@@ -114,11 +115,11 @@ static BOOL WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogAppender* ap
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
 	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
-	if (callbackAppender->callbacks && callbackAppender->callbacks->package)
+	if (callbackAppender->callbacks.package)
 	{
 		wLogMessage message = *cmessage;
 		message.PrefixString = prefix;
-		return callbackAppender->callbacks->package(&message);
+		return callbackAppender->callbacks.package(&message);
 	}
 	else
 		return FALSE;
@@ -131,26 +132,12 @@ static BOOL WLog_CallbackAppender_Set(wLogAppender* appender, const char* settin
 	if (!value || (strcmp(setting, "callbacks") != 0))
 		return FALSE;
 
-	if (!(callbackAppender->callbacks = calloc(1, sizeof(wLogCallbacks))))
-	{
-		return FALSE;
-	}
-
-	callbackAppender->callbacks = memcpy(callbackAppender->callbacks, value, sizeof(wLogCallbacks));
+	callbackAppender->callbacks = *callbackAppender->callbacks, value, sizeof(wLogCallbacks));
 	return TRUE;
 }
 
 static void WLog_CallbackAppender_Free(wLogAppender* appender)
 {
-	wLogCallbackAppender* callbackAppender = nullptr;
-	if (!appender)
-	{
-		return;
-	}
-
-	callbackAppender = (wLogCallbackAppender*)appender;
-
-	free(callbackAppender->callbacks);
 	free(appender);
 }
 
