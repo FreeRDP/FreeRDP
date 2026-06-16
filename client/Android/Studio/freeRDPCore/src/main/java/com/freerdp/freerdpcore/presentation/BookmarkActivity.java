@@ -364,6 +364,9 @@ public class BookmarkActivity
 			getPreferenceManager().setSharedPreferencesMode(MODE_PRIVATE);
 			setPreferencesFromResource(R.xml.advanced_settings, rootKey);
 
+			if (!LibFreeRDP.hasCameraRedirectionSupport())
+				setEnabled("bookmark.redirect_camera", false);
+
 			SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
 
 			// Apply initial enabled states based on saved checkbox values.

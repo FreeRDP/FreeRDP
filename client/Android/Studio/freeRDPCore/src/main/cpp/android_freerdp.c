@@ -33,6 +33,7 @@
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/codec/h264.h>
+#include <freerdp/codec/video.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/cmdline.h>
@@ -425,6 +426,7 @@ static BOOL android_register_pointer(rdpGraphics* graphics)
 
 /* Keep in sync with LibFreeRDP.EXPERIMENTAL_*. */
 #define ANDROID_EXPERIMENTAL_REMOTEAPP 0
+#define ANDROID_EXPERIMENTAL_CAMERA 1
 
 static BOOL android_post_connect(freerdp* instance)
 {
@@ -443,6 +445,11 @@ static BOOL android_post_connect(freerdp* instance)
 	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode) &&
 	    !freerdp_callback_bool_result("OnExperimentalFeature", "(JI)Z", (jlong)instance,
 	                                  ANDROID_EXPERIMENTAL_REMOTEAPP))
+		return FALSE;
+
+	if (freerdp_dynamic_channel_collection_find(settings, "rdpecam") &&
+	    !freerdp_callback_bool_result("OnExperimentalFeature", "(JI)Z", (jlong)instance,
+	                                  ANDROID_EXPERIMENTAL_CAMERA))
 		return FALSE;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_RGBX32))
@@ -1194,6 +1201,16 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1has_1h264(JNIEnv* env,
 		return JNI_FALSE;
 	h264_context_free(ctx);
 	return JNI_TRUE;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1has_1camera_1redirection(JNIEnv* env,
+                                                                                   jclass cls)
+{
+	return freerdp_video_conversion_supported(FREERDP_VIDEO_FORMAT_NV12,
+	                                          FREERDP_VIDEO_FORMAT_YUV420P)
+	           ? JNI_TRUE
+	           : JNI_FALSE;
 }
 
 JNIEXPORT jstring JNICALL

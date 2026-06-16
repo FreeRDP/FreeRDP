@@ -50,6 +50,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 	private static final String keyRedirectSDCard = "bookmark.redirect_sdcard";
 	private static final String keySound = "bookmark.redirect_sound";
 	private static final String keyMicrophone = "bookmark.redirect_microphone";
+	private static final String keyCamera = "bookmark.redirect_camera";
 	private static final String keyPrinter = "bookmark.redirect_printer";
 	private static final String keySecurity = "bookmark.security";
 	private static final String keyRemoteApp = "bookmark.remote_program";
@@ -340,6 +341,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		editor.putBoolean(keyRedirectSDCard, advancedSettings.getRedirectSDCard());
 		editor.putInt(keySound, advancedSettings.getRedirectSound());
 		editor.putBoolean(keyMicrophone, advancedSettings.getRedirectMicrophone());
+		editor.putBoolean(keyCamera, advancedSettings.getRedirectCamera());
 		editor.putBoolean(keyPrinter, advancedSettings.getRedirectPrinter());
 		editor.putInt(keySecurity, advancedSettings.getSecurity());
 		editor.putString(keyRemoteApp, advancedSettings.getRemoteProgram());
@@ -398,6 +400,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		advancedSettings.setRedirectSDCard(sharedPrefs.getBoolean(keyRedirectSDCard, false));
 		advancedSettings.setRedirectSound(sharedPrefs.getInt(keySound, 0));
 		advancedSettings.setRedirectMicrophone(sharedPrefs.getBoolean(keyMicrophone, false));
+		advancedSettings.setRedirectCamera(sharedPrefs.getBoolean(keyCamera, false));
 		advancedSettings.setRedirectPrinter(sharedPrefs.getBoolean(keyPrinter, false));
 		advancedSettings.setSecurity(sharedPrefs.getInt(keySecurity, 0));
 		advancedSettings.setRemoteProgram(sharedPrefs.getString(keyRemoteApp, ""));
@@ -931,6 +934,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		private boolean redirectSDCard = false;
 		private int redirectSound = 0;
 		private boolean redirectMicrophone = false;
+		private boolean redirectCamera = false;
 		private boolean redirectPrinter = false;
 		private int security = 0;
 		private boolean consoleMode = false;
@@ -955,6 +959,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			redirectSDCard = parcel.readBoolean();
 			redirectSound = parcel.readInt();
 			redirectMicrophone = parcel.readBoolean();
+			redirectCamera = parcel.readBoolean();
 			redirectPrinter = parcel.readBoolean();
 			security = parcel.readInt();
 			consoleMode = parcel.readBoolean();
@@ -1063,6 +1068,16 @@ public class BookmarkBase implements Parcelable, Cloneable
 			this.redirectMicrophone = redirect;
 		}
 
+		public boolean getRedirectCamera()
+		{
+			return redirectCamera;
+		}
+
+		public void setRedirectCamera(boolean redirect)
+		{
+			this.redirectCamera = redirect;
+		}
+
 		public int getSecurity()
 		{
 			validate();
@@ -1145,6 +1160,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			out.writeBoolean(redirectSDCard);
 			out.writeInt(redirectSound);
 			out.writeBoolean(redirectMicrophone);
+			out.writeBoolean(redirectCamera);
 			out.writeBoolean(redirectPrinter);
 			out.writeInt(security);
 			out.writeBoolean(consoleMode);

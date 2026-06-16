@@ -5,4 +5,9 @@
         android:key="@string/preference_key_experimental_remoteapp"
         android:summary="@string/settings_experimental_remoteapp_summary"
         android:title="@string/settings_experimental_remoteapp" />
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="@string/preference_key_experimental_camera"
+        android:summary="@string/settings_experimental_camera_summary"
+        android:title="@string/settings_experimental_camera" />
 </PreferenceScreen>

@@ -181,6 +181,7 @@
         <item>0</item>
     </string-array>
     <string name="settings_redirect_microphone">Redirect Microphone</string>
+    <string name="settings_redirect_camera">Redirect Camera</string>
     <string name="settings_redirect_printer">Redirect Printer</string>
     <string name="settings_security">Security</string>
     <string-array name="security_array">
@@ -261,9 +262,13 @@
     <string name="settings_experimental_remoteapp">RemoteApp windows</string>
     <string name="settings_experimental_remoteapp_summary">Show remote programs as separate windows instead of a full desktop. Experimental, may be unstable.</string>
     <string name="experimental_feature_remoteapp">RemoteApp</string>
+    <string name="settings_experimental_camera">Camera redirection</string>
+    <string name="settings_experimental_camera_summary">Share a local camera with the remote session. Experimental, may be unstable.</string>
+    <string name="experimental_feature_camera">Camera redirection</string>
     <string name="dlg_title_experimental_feature">Experimental feature</string>
     <string name="dlg_msg_experimental_feature">%1$s is experimental. Enable it in the Experimental settings to use it.</string>
     <string name="preference_key_experimental_remoteapp" translatable="false">experimental.remoteapp</string>
+    <string name="preference_key_experimental_camera" translatable="false">experimental.camera</string>
     <string name="preference_key_client_name" translatable="false">preference_key_client_name</string>
     <string name="preference_title_client_name">Client Name</string>
     <string name="preference_default_client_name" translatable="false">aFreeRDP</string>

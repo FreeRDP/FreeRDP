@@ -73,6 +73,10 @@
             android:title="@string/settings_redirect_microphone" />
 
         <CheckBoxPreference
+            android:key="bookmark.redirect_camera"
+            android:title="@string/settings_redirect_camera" />
+
+        <CheckBoxPreference
             android:key="bookmark.redirect_printer"
             android:title="@string/settings_redirect_printer" />
 

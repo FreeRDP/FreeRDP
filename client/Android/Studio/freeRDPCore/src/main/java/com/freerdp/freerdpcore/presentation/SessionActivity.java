@@ -11,8 +11,10 @@
 
 package com.freerdp.freerdpcore.presentation;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -72,6 +74,7 @@ public class SessionActivity extends AppCompatActivity
 	private static final int DISPLAY_TOAST = 2;
 	private static final int GRAPHICS_CHANGED = 6;
 	private static final int POINTER_SET = 7;
+	private static final int REQUEST_MEDIA_PERMISSIONS = 100;
 
 	private RailWindowManager railManager;
 
@@ -123,6 +126,7 @@ public class SessionActivity extends AppCompatActivity
 	private int screen_width;
 	private int screen_height;
 
+	private BookmarkBase pendingConnectBookmark = null;
 	private boolean connectCancelledByUser = false;
 	private boolean sessionRunning = false;
 	private long backPressedTime = 0;
@@ -522,7 +526,37 @@ public class SessionActivity extends AppCompatActivity
 			screenSettings.setWidth(screen_width);
 		}
 
+		// RECORD_AUDIO / CAMERA: only if the matching redirect is enabled.
+		java.util.ArrayList<String> needed = new java.util.ArrayList<>();
+		if (bookmark.getAdvancedSettings().getRedirectMicrophone() &&
+		    checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
+		        PackageManager.PERMISSION_GRANTED)
+			needed.add(Manifest.permission.RECORD_AUDIO);
+		if (bookmark.getAdvancedSettings().getRedirectCamera() &&
+		    checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+			needed.add(Manifest.permission.CAMERA);
+
+		if (!needed.isEmpty())
+		{
+			pendingConnectBookmark = bookmark;
+			requestPermissions(needed.toArray(new String[0]), REQUEST_MEDIA_PERMISSIONS);
+			return;
+		}
+
 		connectWithTitle(bookmark.getLabel());
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+	                                       @NonNull int[] grantResults)
+	{
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		if (requestCode == REQUEST_MEDIA_PERMISSIONS && pendingConnectBookmark != null)
+		{
+			BookmarkBase bookmark = pendingConnectBookmark;
+			pendingConnectBookmark = null;
+			connectWithTitle(bookmark.getLabel());
+		}
 	}
 
 	private void connect(Uri openUri)
@@ -765,6 +799,10 @@ public class SessionActivity extends AppCompatActivity
 			case LibFreeRDP.EXPERIMENTAL_REMOTEAPP:
 				featureKey = "remoteapp";
 				displayName = getString(R.string.experimental_feature_remoteapp);
+				break;
+			case LibFreeRDP.EXPERIMENTAL_CAMERA:
+				featureKey = "camera";
+				displayName = getString(R.string.experimental_feature_camera);
 				break;
 			default:
 				return true;

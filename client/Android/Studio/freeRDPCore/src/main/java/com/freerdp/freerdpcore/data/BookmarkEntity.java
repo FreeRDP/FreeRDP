@@ -102,6 +102,9 @@ import androidx.room.PrimaryKey;
 	@ColumnInfo(name = "redirect_microphone", defaultValue = "false")
 	public boolean redirectMicrophone = false;
 
+	@ColumnInfo(name = "redirect_camera", defaultValue = "false")
+	public boolean redirectCamera = false;
+
 	@ColumnInfo(name = "redirect_printer", defaultValue = "false")
 	public boolean redirectPrinter = false;
 
