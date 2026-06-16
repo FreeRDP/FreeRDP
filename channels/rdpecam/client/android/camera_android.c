@@ -68,6 +68,8 @@ typedef struct
 
 static const char* cam_android_extract_camera_id(const char* deviceId)
 {
+	WINPR_ASSERT(deviceId);
+
 	if (strncmp(deviceId, ANDROID_CAMERA_PREFIX, ANDROID_CAMERA_PREFIX_LEN) != 0)
 		return NULL;
 	return deviceId + ANDROID_CAMERA_PREFIX_LEN;
@@ -76,6 +78,8 @@ static const char* cam_android_extract_camera_id(const char* deviceId)
 /* Tear down the capture session and its request objects. The ImageReader and device are kept. */
 static void cam_android_close_session(CamAndroidStream* stream)
 {
+	WINPR_ASSERT(stream);
+
 	if (stream->session)
 	{
 		ACameraCaptureSession_stopRepeating(stream->session);
@@ -112,6 +116,11 @@ static void cam_android_yuv420_888_to_nv12(BYTE* dst, int width, int height, con
                                            int uPixelStride, const uint8_t* vData, int vRowStride,
                                            int vPixelStride)
 {
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(yData);
+	WINPR_ASSERT(uData);
+	WINPR_ASSERT(vData);
+
 	const size_t ySize = (size_t)width * height;
 
 	/* Y plane */
@@ -179,6 +188,9 @@ static void cam_android_yuv420_888_to_nv12(BYTE* dst, int width, int height, con
 
 static void cam_android_deliver_frame(CamAndroidStream* stream, AImage* image)
 {
+	WINPR_ASSERT(stream);
+	WINPR_ASSERT(image);
+
 	int32_t width = 0;
 	int32_t height = 0;
 	if (AImage_getWidth(image, &width) != AMEDIA_OK ||
@@ -227,6 +239,8 @@ static void cam_android_deliver_frame(CamAndroidStream* stream, AImage* image)
 static void cam_android_on_image_available(void* context, AImageReader* reader)
 {
 	CamAndroidStream* stream = (CamAndroidStream*)context;
+	WINPR_ASSERT(stream);
+	WINPR_ASSERT(reader);
 
 	EnterCriticalSection(&stream->lock);
 	const BOOL streaming = stream->streaming;
@@ -293,6 +307,8 @@ static void cam_android_session_ready(void* context, ACameraCaptureSession* sess
  * configure a normal YUV session, so they must not be offered to the server. */
 static BOOL cam_android_is_backward_compatible(ACameraMetadata* characteristics)
 {
+	WINPR_ASSERT(characteristics);
+
 	ACameraMetadata_const_entry caps;
 	if (ACameraMetadata_getConstEntry(characteristics, ACAMERA_REQUEST_AVAILABLE_CAPABILITIES,
 	                                  &caps) != ACAMERA_OK)
@@ -310,6 +326,8 @@ static UINT cam_android_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, C
                                   GENERIC_CHANNEL_CALLBACK* hchannel)
 {
 	CamAndroidHal* hal = (CamAndroidHal*)ihal;
+	WINPR_ASSERT(hal);
+
 	UINT count = 0;
 
 	/* NV12 capture needs FFmpeg/swscale to be encoded; without it, offer no cameras. */
@@ -327,7 +345,7 @@ static UINT cam_android_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, C
 	/* Offer only the primary camera per facing direction: auxiliary back cameras (ultrawide/tele/
 	 * macro/depth) advertise resolutions but fail to configure a YUV session and freeze the
 	 * channel. Indexed by ACAMERA_LENS_FACING_* (FRONT=0, BACK=1, EXTERNAL=2). */
-	BOOL seenFacing[ACAMERA_LENS_FACING_EXTERNAL + 1] = { 0 };
+	BOOL seenFacing[ACAMERA_LENS_FACING_EXTERNAL + 1] = WINPR_C_ARRAY_INIT;
 
 	for (int i = 0; i < idList->numCameras; i++)
 	{
@@ -396,6 +414,8 @@ static UINT cam_android_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, C
  * the ImageReader, or the camera service fails to unconfigure and leaves the device running. */
 static void cam_android_close_device(CamAndroidStream* stream)
 {
+	WINPR_ASSERT(stream);
+
 	EnterCriticalSection(&stream->lock);
 	stream->streaming = FALSE;
 	LeaveCriticalSection(&stream->lock);
@@ -427,6 +447,9 @@ static void cam_android_close_device(CamAndroidStream* stream)
  * one open makes the next openCamera fail with CAMERA_DISCONNECTED and freeze the channel. */
 static void cam_android_close_other_devices(CamAndroidHal* hal, const char* keepDeviceId)
 {
+	WINPR_ASSERT(hal);
+	WINPR_ASSERT(keepDeviceId);
+
 	ULONG_PTR* keys = NULL;
 	const size_t count = HashTable_GetKeys(hal->streams, &keys);
 	for (size_t i = 0; i < count; i++)
@@ -448,6 +471,10 @@ static void cam_android_close_other_devices(CamAndroidHal* hal, const char* keep
 static CamAndroidStream* cam_android_get_or_create_stream(CamAndroidHal* hal, const char* deviceId,
                                                           CAM_ERROR_CODE* errorCode)
 {
+	WINPR_ASSERT(hal);
+	WINPR_ASSERT(deviceId);
+	WINPR_ASSERT(errorCode);
+
 	CamAndroidStream* stream = (CamAndroidStream*)HashTable_GetItemValue(hal->streams, deviceId);
 	if (stream)
 		return stream;
@@ -480,6 +507,12 @@ static BOOL cam_android_open_device(CamAndroidHal* hal, CamAndroidStream* stream
                                     const char* deviceId, const char* cameraId,
                                     CAM_ERROR_CODE* errorCode)
 {
+	WINPR_ASSERT(hal);
+	WINPR_ASSERT(stream);
+	WINPR_ASSERT(deviceId);
+	WINPR_ASSERT(cameraId);
+	WINPR_ASSERT(errorCode);
+
 	/* Reopen a device left broken by a previous error. */
 	EnterCriticalSection(&stream->lock);
 	const BOOL hadError = stream->deviceError;
@@ -514,6 +547,10 @@ static BOOL cam_android_open_device(CamAndroidHal* hal, CamAndroidStream* stream
 static BOOL cam_android_activate(ICamHal* ihal, const char* deviceId, CAM_ERROR_CODE* errorCode)
 {
 	CamAndroidHal* hal = (CamAndroidHal*)ihal;
+	WINPR_ASSERT(hal);
+	WINPR_ASSERT(deviceId);
+	WINPR_ASSERT(errorCode);
+
 	*errorCode = CAM_ERROR_CODE_None;
 
 	const char* cameraId = cam_android_extract_camera_id(deviceId);
@@ -530,6 +567,10 @@ static BOOL cam_android_activate(ICamHal* ihal, const char* deviceId, CAM_ERROR_
 static BOOL cam_android_deactivate(ICamHal* ihal, const char* deviceId, CAM_ERROR_CODE* errorCode)
 {
 	CamAndroidHal* hal = (CamAndroidHal*)ihal;
+	WINPR_ASSERT(hal);
+	WINPR_ASSERT(deviceId);
+	WINPR_ASSERT(errorCode);
+
 	*errorCode = CAM_ERROR_CODE_None;
 
 	CamAndroidStream* stream = (CamAndroidStream*)HashTable_GetItemValue(hal->streams, deviceId);
@@ -549,6 +590,12 @@ static INT16 cam_android_get_media_type_descriptions(ICamHal* ihal, const char* 
 {
 	WINPR_UNUSED(streamIndex);
 	CamAndroidHal* hal = (CamAndroidHal*)ihal;
+	WINPR_ASSERT(hal);
+	WINPR_ASSERT(deviceId);
+	WINPR_ASSERT(supportedFormats || (nSupportedFormats == 0));
+	WINPR_ASSERT(mediaTypes);
+	WINPR_ASSERT(nMediaTypes);
+
 	size_t maxMediaTypes = *nMediaTypes;
 	*nMediaTypes = 0;
 
@@ -633,6 +680,11 @@ static CAM_ERROR_CODE cam_android_start_stream(ICamHal* ihal, CameraDevice* dev,
                                                ICamHalSampleCapturedCallback callback)
 {
 	CamAndroidHal* hal = (CamAndroidHal*)ihal;
+	WINPR_ASSERT(hal);
+	WINPR_ASSERT(dev);
+	WINPR_ASSERT(mediaType);
+	WINPR_ASSERT(callback);
+
 	const char* deviceId = dev->deviceId;
 
 	const char* cameraId = cam_android_extract_camera_id(deviceId);
@@ -718,6 +770,8 @@ static CAM_ERROR_CODE cam_android_stop_stream(ICamHal* ihal, const char* deviceI
 {
 	WINPR_UNUSED(streamIndex);
 	CamAndroidHal* hal = (CamAndroidHal*)ihal;
+	WINPR_ASSERT(hal);
+	WINPR_ASSERT(deviceId);
 
 	CamAndroidStream* stream = (CamAndroidStream*)HashTable_GetItemValue(hal->streams, deviceId);
 	if (!stream)
