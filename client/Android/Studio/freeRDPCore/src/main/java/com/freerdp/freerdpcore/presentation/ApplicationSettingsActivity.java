@@ -200,6 +200,20 @@ public class ApplicationSettingsActivity
 		}
 	}
 
+	public static class ExperimentalFragment extends PreferenceFragmentCompat
+	{
+		@Override public void onCreatePreferences(Bundle savedInstanceState, String rootKey)
+		{
+			setPreferencesFromResource(R.xml.settings_app_experimental, rootKey);
+		}
+	}
+
+	// Preference key convention: "experimental.<feature>".
+	public static boolean isExperimentalEnabled(Context context, String feature)
+	{
+		return get(context).getBoolean("experimental." + feature, false);
+	}
+
 	public static SharedPreferences get(Context context)
 	{
 		Context appContext = context.getApplicationContext();
@@ -207,6 +221,7 @@ public class ApplicationSettingsActivity
 		PreferenceManager.setDefaultValues(appContext, R.xml.settings_app_power, false);
 		PreferenceManager.setDefaultValues(appContext, R.xml.settings_app_security, false);
 		PreferenceManager.setDefaultValues(appContext, R.xml.settings_app_ui, false);
+		PreferenceManager.setDefaultValues(appContext, R.xml.settings_app_experimental, false);
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(appContext);
 
 		final String key = context.getString(R.string.preference_key_client_name);

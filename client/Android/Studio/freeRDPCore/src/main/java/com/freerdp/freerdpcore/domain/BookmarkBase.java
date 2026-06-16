@@ -53,6 +53,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 	private static final String keyPrinter = "bookmark.redirect_printer";
 	private static final String keySecurity = "bookmark.security";
 	private static final String keyRemoteApp = "bookmark.remote_program";
+	private static final String keyAlternateShell = "bookmark.alternate_shell";
 	private static final String keyWorkDir = "bookmark.work_dir";
 	private static final String keyConsoleMode = "bookmark.console_mode";
 	private static final String keyVmConnectMode = "bookmark.vmconnect_mode";
@@ -342,6 +343,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		editor.putBoolean(keyPrinter, advancedSettings.getRedirectPrinter());
 		editor.putInt(keySecurity, advancedSettings.getSecurity());
 		editor.putString(keyRemoteApp, advancedSettings.getRemoteProgram());
+		editor.putString(keyAlternateShell, advancedSettings.getAlternateShell());
 		editor.putString(keyWorkDir, advancedSettings.getWorkDir());
 		editor.putBoolean(keyConsoleMode, advancedSettings.getConsoleMode());
 		editor.putBoolean(keyVmConnectMode, advancedSettings.getVmConnectMode());
@@ -399,6 +401,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		advancedSettings.setRedirectPrinter(sharedPrefs.getBoolean(keyPrinter, false));
 		advancedSettings.setSecurity(sharedPrefs.getInt(keySecurity, 0));
 		advancedSettings.setRemoteProgram(sharedPrefs.getString(keyRemoteApp, ""));
+		advancedSettings.setAlternateShell(sharedPrefs.getString(keyAlternateShell, ""));
 		advancedSettings.setWorkDir(sharedPrefs.getString(keyWorkDir, ""));
 		advancedSettings.setConsoleMode(sharedPrefs.getBoolean(keyConsoleMode, false));
 		advancedSettings.setVmConnectMode(sharedPrefs.getBoolean(keyVmConnectMode, false));
@@ -936,6 +939,8 @@ public class BookmarkBase implements Parcelable, Cloneable
 
 		@NonNull private String remoteProgram = "";
 
+		@NonNull private String alternateShell = "";
+
 		@NonNull private String workDir = "";
 		private int tlsSecLevel = -1;
 		private int tlsMinLevel = -1;
@@ -956,6 +961,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			vmConnectMode = parcel.readBoolean();
 			vmConnectGuid = Objects.requireNonNull(parcel.readString());
 			remoteProgram = Objects.requireNonNull(parcel.readString());
+			alternateShell = Objects.requireNonNull(parcel.readString());
 			workDir = Objects.requireNonNull(parcel.readString());
 			tlsSecLevel = parcel.readInt();
 			tlsMinLevel = parcel.readInt();
@@ -1088,6 +1094,16 @@ public class BookmarkBase implements Parcelable, Cloneable
 			this.remoteProgram = remoteProgram;
 		}
 
+		@NonNull public String getAlternateShell()
+		{
+			return alternateShell;
+		}
+
+		public void setAlternateShell(@NonNull String alternateShell)
+		{
+			this.alternateShell = alternateShell;
+		}
+
 		@NonNull public String getWorkDir()
 		{
 			return workDir;
@@ -1135,6 +1151,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			out.writeBoolean(vmConnectMode);
 			out.writeString(vmConnectGuid);
 			out.writeString(remoteProgram);
+			out.writeString(alternateShell);
 			out.writeString(workDir);
 			out.writeInt(tlsSecLevel);
 			out.writeInt(tlsMinLevel);

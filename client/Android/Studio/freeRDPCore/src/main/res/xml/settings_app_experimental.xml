@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="@string/preference_key_experimental_remoteapp"
+        android:summary="@string/settings_experimental_remoteapp_summary"
+        android:title="@string/settings_experimental_remoteapp" />
+</PreferenceScreen>

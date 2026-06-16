@@ -33,13 +33,20 @@
         android:isScrollContainer="true"
         android:scrollbars="horizontal|vertical">
 
-        <com.freerdp.freerdpcore.presentation.SessionView
-            android:id="@+id/sessionView"
+        <FrameLayout
+            android:id="@+id/railContainer"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawingCacheQuality="low"
-            android:focusable="true"
-            android:focusableInTouchMode="true" />
+            android:layout_height="wrap_content">
+
+            <com.freerdp.freerdpcore.presentation.SessionView
+                android:id="@+id/sessionView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawingCacheQuality="low"
+                android:focusable="true"
+                android:focusableInTouchMode="true" />
+
+        </FrameLayout>
 
     </com.freerdp.freerdpcore.presentation.ScrollView2D>
 

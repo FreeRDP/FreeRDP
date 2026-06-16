@@ -198,6 +198,7 @@
         <item>3</item>
     </string-array>
     <string name="settings_remote_program">Remote Program</string>
+    <string name="settings_alternate_shell">Alternate Shell</string>
     <string name="settings_work_dir">Working Directory</string>
     <string name="settings_async_channel">Async channel</string>
     <string name="settings_async_update">Async update</string>
@@ -256,6 +257,13 @@
     <string name="dlg_msg_clear_cert_cache">Are you sure you want to delete all your cached certificates?</string>
     <string name="debug_level">Debug Level</string>
     <string name="settings_debug">Debug Settings</string>
+    <string name="settings_cat_experimental">Experimental</string>
+    <string name="settings_experimental_remoteapp">RemoteApp windows</string>
+    <string name="settings_experimental_remoteapp_summary">Show remote programs as separate windows instead of a full desktop. Experimental, may be unstable.</string>
+    <string name="experimental_feature_remoteapp">RemoteApp</string>
+    <string name="dlg_title_experimental_feature">Experimental feature</string>
+    <string name="dlg_msg_experimental_feature">%1$s is experimental. Enable it in the Experimental settings to use it.</string>
+    <string name="preference_key_experimental_remoteapp" translatable="false">experimental.remoteapp</string>
     <string name="preference_key_client_name" translatable="false">preference_key_client_name</string>
     <string name="preference_title_client_name">Client Name</string>
     <string name="preference_default_client_name" translatable="false">aFreeRDP</string>

@@ -45,6 +45,9 @@ public class LibFreeRDP
 	public static final long VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1 = 0x100;
 	public static final long VERIFY_CERT_FLAG_FP_IS_PEM = 0x200;
 
+	// Keep in sync with android_freerdp.c.
+	public static final int EXPERIMENTAL_REMOTEAPP = 0;
+
 	private static boolean tryLoad(String[] libraries)
 	{
 		boolean success = false;
@@ -382,12 +385,16 @@ public class LibFreeRDP
 
 		if (!advanced.getRemoteProgram().isEmpty())
 		{
-			args.add("/shell:" + advanced.getRemoteProgram());
+			args.add("/app:program:" + advanced.getRemoteProgram());
+			if (!advanced.getWorkDir().isEmpty())
+				args.add("/app:workdir:" + advanced.getWorkDir());
 		}
-
-		if (!advanced.getWorkDir().isEmpty())
+		else
 		{
-			args.add("/shell-dir:" + advanced.getWorkDir());
+			if (!advanced.getAlternateShell().isEmpty())
+				args.add("/shell:" + advanced.getAlternateShell());
+			if (!advanced.getWorkDir().isEmpty())
+				args.add("/shell-dir:" + advanced.getWorkDir());
 		}
 
 		args.add(addFlag("async-channels", debug.getAsyncChannel()));
@@ -676,6 +683,17 @@ public class LibFreeRDP
 		return 0;
 	}
 
+	private static boolean OnExperimentalFeature(long inst, int feature)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return true;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener == null)
+			return true;
+		return uiEventListener.OnExperimentalFeature(feature);
+	}
+
 	private static void OnGraphicsUpdate(long inst, int x, int y, int width, int height)
 	{
 		SessionState s = GlobalApp.getSession(inst);
@@ -747,6 +765,67 @@ public class LibFreeRDP
 			uiEventListener.OnPointerSetDefault();
 	}
 
+	private static void OnRailWindowUpdate(long inst, long windowId, int width, int height,
+	                                       int[] pixels)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnRailWindowUpdate(windowId, width, height, pixels);
+	}
+
+	private static void OnRailWindowMove(long inst, long windowId, int x, int y, int w, int h)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnRailWindowMove(windowId, x, y, w, h);
+	}
+
+	private static void OnRailWindowHide(long inst, long windowId)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnRailWindowHide(windowId);
+	}
+
+	private static void OnRailWindowDestroy(long inst, long windowId)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnRailWindowDestroy(windowId);
+	}
+
+	private static void OnRailSessionEnd(long inst)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnRailSessionEnd();
+	}
+
+	private static void OnRailMonitoredDesktop(long inst, long[] windowIds, long activeWindowId)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnRailMonitoredDesktop(windowIds, activeWindowId);
+	}
+
 	public static String getVersion()
 	{
 		return freerdp_get_version();
@@ -782,6 +861,8 @@ public class LibFreeRDP
 		                               String fingerprint, String oldSubject, String oldIssuer,
 		                               String oldFingerprint, long flags);
 
+		boolean OnExperimentalFeature(int feature);
+
 		void OnGraphicsUpdate(int x, int y, int width, int height);
 
 		void OnGraphicsResize(int width, int height, int bpp);
@@ -795,5 +876,17 @@ public class LibFreeRDP
 		void OnPointerSetNull();
 
 		void OnPointerSetDefault();
+
+		void OnRailWindowUpdate(long windowId, int width, int height, int[] pixels);
+
+		void OnRailWindowMove(long windowId, int x, int y, int w, int h);
+
+		void OnRailWindowHide(long windowId);
+
+		void OnRailWindowDestroy(long windowId);
+
+		void OnRailSessionEnd();
+
+		void OnRailMonitoredDesktop(long[] windowIds, long activeWindowId);
 	}
 }

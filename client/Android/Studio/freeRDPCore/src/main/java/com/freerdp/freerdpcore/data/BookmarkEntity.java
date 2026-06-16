@@ -112,6 +112,10 @@ import androidx.room.PrimaryKey;
 	@ColumnInfo(name = "remote_program", defaultValue = "")
 	public String remoteProgram = "";
 
+	@NonNull
+	@ColumnInfo(name = "alternate_shell", defaultValue = "")
+	public String alternateShell = "";
+
 	@NonNull @ColumnInfo(name = "work_dir", defaultValue = "") public String workDir = "";
 
 	@ColumnInfo(name = "console_mode", defaultValue = "false") public boolean consoleMode = false;

@@ -52,6 +52,8 @@ public class SessionView extends View
 	private int touchPointerPaddingWidth = 0;
 	private int touchPointerPaddingHeight = 0;
 	private SessionViewListener sessionViewListener = null;
+	private OnZoomChangedListener zoomChangedListener = null;
+	private boolean railMode = false;
 	// helpers for scaling gesture handling
 	private float scaleFactor = 1.0f;
 	private Matrix scaleMatrix;
@@ -166,6 +168,24 @@ public class SessionView extends View
 		return scaleFactor;
 	}
 
+	public void setRailMode(boolean rail)
+	{
+		if (railMode == rail)
+			return;
+		railMode = rail;
+		invalidate();
+	}
+
+	public interface OnZoomChangedListener
+	{
+		void onZoomChanged(float zoom);
+	}
+
+	public void setOnZoomChangedListener(OnZoomChangedListener l)
+	{
+		zoomChangedListener = l;
+	}
+
 	public void setZoom(float factor)
 	{
 		scaleFactor = factor;
@@ -174,6 +194,9 @@ public class SessionView extends View
 
 		if (cursorPixels != null)
 			applyScaledCursor();
+
+		if (zoomChangedListener != null)
+			zoomChangedListener.onZoomChanged(scaleFactor);
 
 		requestLayout();
 	}
@@ -245,7 +268,7 @@ public class SessionView extends View
 		canvas.save();
 		canvas.concat(scaleMatrix);
 		canvas.drawColor(Color.BLACK);
-		if (surface != null)
+		if (!railMode && surface != null)
 		{
 			surface.draw(canvas);
 		}

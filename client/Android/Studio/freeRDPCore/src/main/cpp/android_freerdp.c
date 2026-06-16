@@ -49,6 +49,7 @@
 #include "android_jni_utils.h"
 #include "android_cliprdr.h"
 #include "android_disp.h"
+#include "android_rail.h"
 #include "android_freerdp_jni.h"
 
 #if defined(WITH_GPROF)
@@ -62,6 +63,10 @@
 
 static jclass gJavaActivityClass;
 static jmethodID gOnPointerSetMethod;
+static jmethodID gOnRailWindowUpdateMethod;
+
+static UINT android_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurface* surface);
+
 static void android_OnChannelConnectedEventHandler(void* context,
                                                    const ChannelConnectedEventArgs* e)
 {
@@ -84,6 +89,17 @@ static void android_OnChannelConnectedEventHandler(void* context,
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		android_disp_init(afc, (DispClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		android_rail_init(afc, (RailClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		freerdp_client_OnChannelConnectedEventHandler(context, e);
+		RdpgfxClientContext* gfx = (RdpgfxClientContext*)e->pInterface;
+		if (gfx)
+			gfx->UpdateWindowFromSurface = android_UpdateWindowFromSurface;
 	}
 	else
 		freerdp_client_OnChannelConnectedEventHandler(context, e);
@@ -111,6 +127,10 @@ static void android_OnChannelDisconnectedEventHandler(void* context,
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		android_disp_uninit(afc, (DispClientContext*)e->pInterface);
+	}
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		android_rail_uninit(afc, (RailClientContext*)e->pInterface);
 	}
 	else
 		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
@@ -332,6 +352,59 @@ static BOOL android_Pointer_SetDefault(rdpContext* context)
 	return TRUE;
 }
 
+static UINT android_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurface* surface)
+{
+	if (!context || !surface)
+		return CHANNEL_RC_OK;
+
+	rdpGdi* gdi = (rdpGdi*)context->custom;
+	if (!gdi || !gdi->context)
+		return CHANNEL_RC_OK;
+
+	const UINT32 width = surface->mappedWidth ? surface->mappedWidth : surface->width;
+	const UINT32 height = surface->mappedHeight ? surface->mappedHeight : surface->height;
+	if (width == 0 || height == 0)
+		return CHANNEL_RC_OK;
+
+	JNIEnv* env = NULL;
+	jboolean attached = jni_attach_thread(&env);
+	if (!gJavaActivityClass || !gOnRailWindowUpdateMethod)
+		goto done;
+
+	const jsize nPixels = (jsize)(width * height);
+	jintArray pixels = (*env)->NewIntArray(env, nPixels);
+	if (!pixels)
+		goto done;
+
+	jint* dst = (*env)->GetIntArrayElements(env, pixels, NULL);
+	if (dst)
+	{
+		freerdp_image_copy((BYTE*)dst, surface->format, width * 4, 0, 0, width, height,
+		                   surface->data, surface->format, surface->scanline, 0, 0, NULL,
+		                   FREERDP_FLIP_NONE);
+
+		/* Force coloured pixels opaque (ARGB_8888 would otherwise blend the active window's
+		 * frame away), but keep transparent black so menu corners/shadows stay see-through. */
+		const size_t total = (size_t)width * height;
+		for (size_t i = 0; i < total; i++)
+		{
+			const UINT32 px = (UINT32)dst[i];
+			if ((px & 0x00FFFFFFu) != 0)
+				dst[i] = (jint)(px | 0xFF000000u);
+		}
+		(*env)->ReleaseIntArrayElements(env, pixels, dst, 0);
+	}
+
+	freerdp* inst = gdi->context->instance;
+	(*env)->CallStaticVoidMethod(env, gJavaActivityClass, gOnRailWindowUpdateMethod, (jlong)inst,
+	                             (jlong)surface->windowId, (jint)width, (jint)height, pixels);
+	(*env)->DeleteLocalRef(env, pixels);
+done:
+	if (attached)
+		jni_detach_thread();
+	return CHANNEL_RC_OK;
+}
+
 static BOOL android_register_pointer(rdpGraphics* graphics)
 {
 	rdpPointer pointer = WINPR_C_ARRAY_INIT;
@@ -350,6 +423,9 @@ static BOOL android_register_pointer(rdpGraphics* graphics)
 	return TRUE;
 }
 
+/* Keep in sync with LibFreeRDP.EXPERIMENTAL_*. */
+#define ANDROID_EXPERIMENTAL_REMOTEAPP 0
+
 static BOOL android_post_connect(freerdp* instance)
 {
 	rdpSettings* settings;
@@ -363,6 +439,11 @@ static BOOL android_post_connect(freerdp* instance)
 
 	settings = instance->context->settings;
 	WINPR_ASSERT(settings);
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode) &&
+	    !freerdp_callback_bool_result("OnExperimentalFeature", "(JI)Z", (jlong)instance,
+	                                  ANDROID_EXPERIMENTAL_REMOTEAPP))
+		return FALSE;
 
 	if (!gdi_init(instance, PIXEL_FORMAT_RGBX32))
 		return FALSE;
@@ -1167,6 +1248,13 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 	gJavaActivityClass = (*env)->NewGlobalRef(env, activityClass);
 	gOnPointerSetMethod =
 	    (*env)->GetStaticMethodID(env, gJavaActivityClass, "OnPointerSet", "(J[IIIII)V");
+	gOnRailWindowUpdateMethod =
+	    (*env)->GetStaticMethodID(env, gJavaActivityClass, "OnRailWindowUpdate", "(JJII[I)V");
+	if (!gOnRailWindowUpdateMethod)
+	{
+		(*env)->ExceptionClear(env);
+		WLog_WARN(TAG, "OnRailWindowUpdate method not found, RAIL window display disabled");
+	}
 	g_JavaVm = vm;
 	return init_callback_environment(vm, env);
 }

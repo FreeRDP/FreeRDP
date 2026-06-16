@@ -19,6 +19,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/disp.h>
+#include <freerdp/client/rail.h>
 
 #include "android_event.h"
 
@@ -41,6 +42,8 @@ typedef struct
 	UINT32 clipboardCapabilities;
 
 	DispClientContext* disp;
+	RailClientContext* rail;
+	BOOL railExecSent;
 } androidContext;
 
 #endif /* FREERDP_CLIENT_ANDROID_FREERDP_H */
