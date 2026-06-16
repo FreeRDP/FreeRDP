@@ -53,7 +53,13 @@ static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender
 
 	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
 
-	if (callbackAppender->callbacks.message)
+	if (callbackAppender->callbacksEx.message)
+	{
+		wLogMessage message = *cmessage;
+		message.PrefixString = prefix;
+		return callbackAppender->callbacksEx.message(appender, &message);
+	}
+	else if (callbackAppender->callbacks.message)
 	{
 		wLogMessage message = *cmessage;
 		message.PrefixString = prefix;
@@ -73,7 +79,13 @@ static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appe
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
 	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
-	if (callbackAppender->callbacks.data)
+	if (callbackAppender->callbacksEx.data)
+	{
+		wLogMessage message = *cmessage;
+		message.PrefixString = prefix;
+		return callbackAppender->callbacksEx.data(appender, &message);
+	}
+	else if (callbackAppender->callbacks.data)
 	{
 		wLogMessage message = *cmessage;
 		message.PrefixString = prefix;
@@ -94,7 +106,13 @@ static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* app
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
 	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
-	if (callbackAppender->callbacks.image)
+	if (callbackAppender->callbacksEx.image)
+	{
+		wLogMessage message = *cmessage;
+		message.PrefixString = prefix;
+		return callbackAppender->callbacksEx.image(appender, &message);
+	}
+	else if (callbackAppender->callbacks.image)
 	{
 		wLogMessage message = *cmessage;
 		message.PrefixString = prefix;
@@ -115,7 +133,13 @@ static BOOL WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogAppender* ap
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, cmessage, prefix, sizeof(prefix));
 
 	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
-	if (callbackAppender->callbacks.package)
+	if (callbackAppender->callbacksEx.package)
+	{
+		wLogMessage message = *cmessage;
+		message.PrefixString = prefix;
+		return callbackAppender->callbacksEx.package(appender, &message);
+	}
+	else if (callbackAppender->callbacks.package)
 	{
 		wLogMessage message = *cmessage;
 		message.PrefixString = prefix;
@@ -129,11 +153,21 @@ static BOOL WLog_CallbackAppender_Set(wLogAppender* appender, const char* settin
 {
 	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
 
-	if (!value || (strcmp(setting, "callbacks") != 0))
+	if (!value)
 		return FALSE;
 
-	callbackAppender->callbacks = *callbackAppender->callbacks, value, sizeof(wLogCallbacks));
-	return TRUE;
+	if (strcmp(setting, "callbacks") == 0)
+	{
+		callbackAppender->callbacks = *(wLogCallbacks*)value;
+		return TRUE;
+	}
+
+	if (strcmp(setting, "callbacksEx") == 0)
+	{
+		callbackAppender->callbacksEx = *(wLogCallbacksEx*)value;
+		return TRUE;
+	}
+	return FALSE;
 }
 
 static void WLog_CallbackAppender_Free(wLogAppender* appender)

@@ -427,6 +427,22 @@ typedef struct
 		WINPR_ATTR_NODISCARD wLogCallbackPackage_t package;
 	} wLogCallbacks;
 
+	/** @brief extended callback type with context
+	 *  @since version 3.28.0
+	 */
+	typedef BOOL (*wLogCallbackMessageEx_t)(wLogAppender* appender, const wLogMessage* msg);
+
+	/** @brief extended callback type with context
+	 *  @since version 3.28.0
+	 */
+	typedef struct
+	{
+		WINPR_ATTR_NODISCARD wLogCallbackMessageEx_t data;
+		WINPR_ATTR_NODISCARD wLogCallbackMessageEx_t image;
+		WINPR_ATTR_NODISCARD wLogCallbackMessageEx_t message;
+		WINPR_ATTR_NODISCARD wLogCallbackMessageEx_t package;
+	} wLogCallbacksEx;
+
 #ifdef __cplusplus
 }
 #endif
