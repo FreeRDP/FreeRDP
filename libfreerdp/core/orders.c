@@ -2308,7 +2308,6 @@ static BOOL update_read_ellipse_cb_order(const char* orderName, wStream* s,
 
 /* Secondary Drawing Orders */
 WINPR_ATTR_MALLOC(free_cache_bitmap_order, 2)
-WINPR_ATTR_NODISCARD
 static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wStream* s,
                                                           BOOL compressed, UINT16 flags)
 {
@@ -2447,7 +2446,7 @@ static CACHE_BITMAP_V2_ORDER* update_read_cache_bitmap_v2_order(rdpUpdate* updat
 	if (!cache_bitmap_v2)
 		goto fail;
 
-	cache_bitmap_v2->cacheId = flags & 0x0003;
+	cache_bitmap_v2->cacheId = flags & 0x0007;
 	cache_bitmap_v2->flags = (flags & 0xFF80) >> 7;
 	bitsPerPixelId = (flags & 0x0078) >> 3;
 	cache_bitmap_v2->bitmapBpp = get_cbr2_bpp(bitsPerPixelId, &rc);
@@ -2617,32 +2616,47 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache
 }
 
 WINPR_ATTR_MALLOC(free_cache_bitmap_v3_order, 2)
-WINPR_ATTR_NODISCARD
 static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* update, wStream* s,
                                                                 UINT16 flags)
 {
 	BOOL rc = 0;
-	BYTE bitsPerPixelId = 0;
-	BITMAP_DATA_EX* bitmapData = nullptr;
 	UINT32 new_len = 0;
 	BYTE* new_data = nullptr;
-	CACHE_BITMAP_V3_ORDER* cache_bitmap_v3 = nullptr;
 	rdp_update_internal* up = update_cast(update);
 
 	if (!update || !s)
 		return nullptr;
 
-	cache_bitmap_v3 = calloc(1, sizeof(CACHE_BITMAP_V3_ORDER));
+	WINPR_ASSERT(update->context);
+
+	const rdpSettings* settings = update->context->settings;
+	WINPR_ASSERT(settings);
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_BitmapCacheV3Enabled))
+	{
+		WLog_Print(up->log, WLOG_ERROR, "BitmapCacheV3 not enabled for this connection, aborting");
+		return nullptr;
+	}
+
+	CACHE_BITMAP_V3_ORDER* cache_bitmap_v3 = calloc(1, sizeof(CACHE_BITMAP_V3_ORDER));
 
 	if (!cache_bitmap_v3)
 		goto fail;
 
-	cache_bitmap_v3->cacheId = flags & 0x00000003;
-	cache_bitmap_v3->flags = (flags & 0x0000FF80) >> 7;
-	bitsPerPixelId = (flags & 0x00000078) >> 3;
-	cache_bitmap_v3->bpp = get_cbr2_bpp(bitsPerPixelId, &rc);
-	if (!rc)
+	cache_bitmap_v3->cacheId = flags & 0x00000007;
+	const UINT32 NumCellCaches =
+	    freerdp_settings_get_uint32(settings, FreeRDP_BitmapCacheV2NumCells);
+	if (cache_bitmap_v3->cacheId >= NumCellCaches)
+	{
+		WLog_Print(up->log, WLOG_ERROR,
+		           "BitmapCacheV3::cacheId %" PRIu32 " > NumCellCaches %" PRIu32,
+		           cache_bitmap_v3->cacheId, NumCellCaches);
 		goto fail;
+	}
+	cache_bitmap_v3->flags = (flags >> 7) & 0x000001FF;
+
+	const BYTE bitsPerPixelId = (flags >> 3) & 0x000000F;
+	cache_bitmap_v3->bpp = get_cbr2_bpp(bitsPerPixelId, &rc);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 21))
 		goto fail;
@@ -2650,7 +2664,20 @@ static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* updat
 	Stream_Read_UINT16(s, cache_bitmap_v3->cacheIndex); /* cacheIndex (2 bytes) */
 	Stream_Read_UINT32(s, cache_bitmap_v3->key1);       /* key1 (4 bytes) */
 	Stream_Read_UINT32(s, cache_bitmap_v3->key2);       /* key2 (4 bytes) */
-	bitmapData = &cache_bitmap_v3->bitmapData;
+
+	if ((cache_bitmap_v3->flags & CBR3_DO_NOT_CACHE) != 0)
+	{
+		rdpCache* cache = update->context->cache;
+		WINPR_ASSERT(cache);
+
+		if (cache_bitmap_v3->cacheId >= cache->bitmap->maxCells)
+			goto fail;
+
+		BITMAP_V2_CELL* cell = &cache->bitmap->cells[cache_bitmap_v3->cacheId];
+		cache_bitmap_v3->cacheIndex = cell->number;
+	}
+
+	BITMAP_DATA_EX* bitmapData = &cache_bitmap_v3->bitmapData;
 	Stream_Read_UINT8(s, bitmapData->bpp);
 
 	if ((bitmapData->bpp < 1) || (bitmapData->bpp > 32))
@@ -2659,12 +2686,53 @@ static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* updat
 		goto fail;
 	}
 
+	/* [MS-RDPEGDI] 2.2.2.2.1.2.8 Cache Bitmap - Revision 3 (CACHE_BITMAP_REV3_ORDER)
+	 * tells this should not be 0, but it is for some windows versions.
+	 * fall back to setting color depth from bitmapData
+	 */
+	if (!rc)
+		cache_bitmap_v3->bpp = bitmapData->bpp;
+
 	Stream_Seek_UINT8(s);                      /* reserved1 (1 byte) */
 	Stream_Seek_UINT8(s);                      /* reserved2 (1 byte) */
 	Stream_Read_UINT8(s, bitmapData->codecID); /* codecID (1 byte) */
 	Stream_Read_UINT16(s, bitmapData->width);  /* width (2 bytes) */
 	Stream_Read_UINT16(s, bitmapData->height); /* height (2 bytes) */
 	Stream_Read_UINT32(s, new_len);            /* length (4 bytes) */
+
+	switch (bitmapData->codecID)
+	{
+		case RDP_CODEC_ID_IMAGE_REMOTEFX:
+			if (!freerdp_settings_get_bool(settings, FreeRDP_RemoteFxImageCodec))
+			{
+				WLog_Print(up->log, WLOG_ERROR,
+				           "codecID RDP_CODEC_ID_IMAGE_REMOTEFX not enabled for this "
+				           "connection, aborting");
+				goto fail;
+			}
+			break;
+		case RDP_CODEC_ID_REMOTEFX:
+			if (!freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec))
+			{
+				WLog_ERR(TAG,
+				         "codecID RDP_CODEC_ID_REMOTEFX not enabled for this connection, aborting");
+				goto fail;
+			}
+			break;
+		case RDP_CODEC_ID_NSCODEC:
+			if (!freerdp_settings_get_bool(settings, FreeRDP_NSCodec))
+			{
+				WLog_ERR(TAG,
+				         "codecID RDP_CODEC_ID_NSCODEC not enabled for this connection, aborting");
+				goto fail;
+			}
+			break;
+		case RDP_CODEC_ID_NONE:
+			break;
+		default:
+			WLog_ERR(TAG, "Unsupported codecID 0x%08" PRIx32, bitmapData->codecID);
+			goto fail;
+	}
 
 	if ((new_len == 0) || (!Stream_CheckAndLogRequiredLength(TAG, s, new_len)))
 		goto fail;
@@ -2708,7 +2776,7 @@ BOOL update_write_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache
 	bitsPerPixelId = get_bpp_bmf(cache_bitmap_v3->bpp, &rc);
 	if (!rc)
 		return FALSE;
-	*flags = (cache_bitmap_v3->cacheId & 0x00000003) |
+	*flags = (cache_bitmap_v3->cacheId & 0x00000007) |
 	         ((cache_bitmap_v3->flags << 7) & 0x0000FF80) | ((bitsPerPixelId << 3) & 0x00000078);
 	Stream_Write_UINT16(s,
 	                    get_checked_uint16(cache_bitmap_v3->cacheIndex)); /* cacheIndex (2 bytes) */
