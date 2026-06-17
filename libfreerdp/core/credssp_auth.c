@@ -554,8 +554,8 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 			}
 			free(WorkstationName);
 		}
-		return rc;
 #endif
+		return rc;
 	}
 	else if (status == SEC_I_CONTINUE_NEEDED)
 	{

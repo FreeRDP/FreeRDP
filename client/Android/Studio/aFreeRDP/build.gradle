@@ -5,6 +5,7 @@ plugins {
 androidGitVersion {
     abis = ['armeabi':1, 'armeabi-v7a':2, 'arm64-v8a':3, "riscv64":4, 'mips':5, 'mips64':6, 'x86':8, 'x86_64':9 ]
     prefix ''
+    codeFormat 'MMNNPPRA'
 }
 
 println 'Version Name: ' + androidGitVersion.name()
@@ -49,6 +50,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
         debug {
+            jniDebuggable true
+        }
+        qa {
             jniDebuggable true
         }
     }
