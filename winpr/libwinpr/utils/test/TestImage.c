@@ -190,6 +190,76 @@ fail:
 	return rc;
 }
 
+static void put_u16(BYTE* p, UINT16 v)
+{
+	p[0] = (BYTE)(v & 0xff);
+	p[1] = (BYTE)((v >> 8) & 0xff);
+}
+
+static void put_u32(BYTE* p, UINT32 v)
+{
+	p[0] = (BYTE)(v & 0xff);
+	p[1] = (BYTE)((v >> 8) & 0xff);
+	p[2] = (BYTE)((v >> 16) & 0xff);
+	p[3] = (BYTE)((v >> 24) & 0xff);
+}
+
+/* A 24bpp BMP whose biSizeImage carries the unaligned image size
+ * (width * bytesPerPixel * height) selects the unaligned read path. The decoder
+ * must not consume more than biSizeImage bytes from the input buffer. The buffer
+ * here is allocated to the exact BMP size, so any over-read is detectable. */
+static BOOL test_unaligned_no_overread(void)
+{
+	BOOL rc = FALSE;
+	const UINT32 width = 1;
+	const UINT32 height = 10;
+	const UINT32 bpp = 3;
+	const UINT32 uscanline = width * bpp;          /* 3, not a multiple of 4 */
+	const UINT32 biSizeImage = uscanline * height; /* 30 */
+	const size_t offBits = 54;                     /* 14 + 40 */
+	const size_t size = offBits + biSizeImage;     /* 84 */
+
+	wImage* image = winpr_image_new();
+	BYTE* bmp = (BYTE*)calloc(1, size);
+	if (!image || !bmp)
+		goto fail;
+
+	bmp[0] = 'B';
+	bmp[1] = 'M';
+	put_u32(&bmp[2], (UINT32)size);              /* bfSize */
+	put_u32(&bmp[10], (UINT32)offBits);          /* bfOffBits */
+	put_u32(&bmp[14], 40);                       /* biSize */
+	put_u32(&bmp[18], width);                    /* biWidth */
+	put_u32(&bmp[22], (UINT32)(-(INT32)height)); /* biHeight, top-down */
+	put_u16(&bmp[26], 1);                        /* biPlanes */
+	put_u16(&bmp[28], 24);                       /* biBitCount */
+	put_u32(&bmp[30], 0);                        /* biCompression BI_RGB */
+	put_u32(&bmp[34], biSizeImage);              /* biSizeImage */
+	for (UINT32 i = 0; i < biSizeImage; i++)
+		bmp[offBits + i] = (BYTE)i;
+
+	if (winpr_image_read_buffer(image, bmp, size) <= 0)
+		goto fail;
+
+	if ((image->width != width) || (image->height != height))
+		goto fail;
+
+	for (UINT32 row = 0; row < height; row++)
+	{
+		for (UINT32 b = 0; b < uscanline; b++)
+		{
+			if (image->data[1ULL * row * image->scanline + b] != (BYTE)(row * uscanline + b))
+				goto fail;
+		}
+	}
+
+	rc = TRUE;
+fail:
+	free(bmp);
+	winpr_image_free(image, TRUE);
+	return rc;
+}
+
 static BOOL test_load(void)
 {
 	const char* names[] = {
@@ -227,6 +297,9 @@ int TestImage(int argc, char* argv[])
 
 	if (!test_load())
 		rc -= 4;
+
+	if (!test_unaligned_no_overread())
+		rc -= 8;
 
 	return rc;
 }
