@@ -22,7 +22,10 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	const rdpSettings* settings = rail->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
+	clientStatus.flags = 0;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteAppLocalMoveSize))
+		clientStatus.flags |= TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled))
 		clientStatus.flags |= TS_RAIL_CLIENTSTATUS_AUTORECONNECT;

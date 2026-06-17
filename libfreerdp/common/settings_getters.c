@@ -473,6 +473,9 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_RemoteAppLanguageBarSupported:
 			return settings->RemoteAppLanguageBarSupported;
 
+		case FreeRDP_RemoteAppLocalMoveSize:
+			return settings->RemoteAppLocalMoveSize;
+
 		case FreeRDP_RemoteApplicationMode:
 			return settings->RemoteApplicationMode;
 
@@ -1223,6 +1226,10 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_RemoteAppLanguageBarSupported:
 			settings->RemoteAppLanguageBarSupported = cnv.c;
+			break;
+
+		case FreeRDP_RemoteAppLocalMoveSize:
+			settings->RemoteAppLocalMoveSize = cnv.c;
 			break;
 
 		case FreeRDP_RemoteApplicationMode:

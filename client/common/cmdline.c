@@ -5534,6 +5534,11 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			if (rc != 0)
 				return fail_at(arg, rc);
 		}
+		CommandLineSwitchCase(arg, "rail-local-move-size")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteAppLocalMoveSize, enable))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
 		CommandLineSwitchCase(arg, "print-reconnect-cookie")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_PrintReconnectCookie, enable))

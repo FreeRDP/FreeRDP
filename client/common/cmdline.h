@@ -406,6 +406,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Pass the hash (restricted admin mode)" },
 	{ "pwidth", COMMAND_LINE_VALUE_REQUIRED, "<width>", nullptr, nullptr, -1, nullptr,
 	  "Physical width of display (in millimeters)" },
+	{ "rail-local-move-size", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
+	  "Advertise RAIL local move/size support to the server. Disable to force server-side "
+	  "move/resize (workaround for window managers that mishandle _NET_WM_MOVERESIZE, e.g. KWin)" },
 	{ "rdp2tcp", COMMAND_LINE_VALUE_REQUIRED, "<executable path[:arg...]>", nullptr, nullptr, -1,
 	  nullptr, "TCP redirection" },
 	{ "reconnect-cookie", COMMAND_LINE_VALUE_REQUIRED, "<base64-cookie>", nullptr, nullptr, -1,

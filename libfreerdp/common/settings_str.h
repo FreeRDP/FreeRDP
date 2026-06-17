@@ -197,6 +197,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_RemdeskVirtualChannel, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemdeskVirtualChannel" },
 	{ FreeRDP_RemoteAppLanguageBarSupported, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_RemoteAppLanguageBarSupported" },
+	{ FreeRDP_RemoteAppLocalMoveSize, FREERDP_SETTINGS_TYPE_BOOL,
+	  "FreeRDP_RemoteAppLocalMoveSize" },
 	{ FreeRDP_RemoteApplicationMode, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemoteApplicationMode" },
 	{ FreeRDP_RemoteAssistanceMode, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemoteAssistanceMode" },
 	{ FreeRDP_RemoteAssistanceRequestControl, FREERDP_SETTINGS_TYPE_BOOL,
