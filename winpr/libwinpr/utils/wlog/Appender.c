@@ -179,3 +179,44 @@ BOOL WLog_ConfigureAppender(wLogAppender* appender, const char* setting, void* v
 	else
 		return FALSE;
 }
+
+BOOL WLog_SetAppenderContext(wLogAppender* appender, wLogMessageType type, void* context)
+{
+	if (!appender)
+		return FALSE;
+	switch (type)
+	{
+		case WLOG_MESSAGE_TEXT:
+			appender->TextMessageContext = context;
+			return TRUE;
+		case WLOG_MESSAGE_DATA:
+			appender->DataMessageContext = context;
+			return TRUE;
+		case WLOG_MESSAGE_IMAGE:
+			appender->ImageMessageContext = context;
+			return TRUE;
+		case WLOG_MESSAGE_PACKET:
+			appender->PacketMessageContext = context;
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
+void* WLog_GetAppenderContext(wLogAppender* appender, wLogMessageType type)
+{
+	WINPR_ASSERT(appender);
+	switch (type)
+	{
+		case WLOG_MESSAGE_TEXT:
+			return appender->TextMessageContext;
+		case WLOG_MESSAGE_DATA:
+			return appender->DataMessageContext;
+		case WLOG_MESSAGE_IMAGE:
+			return appender->ImageMessageContext;
+		case WLOG_MESSAGE_PACKET:
+			return appender->PacketMessageContext;
+		default:
+			return nullptr;
+	}
+}

@@ -39,22 +39,29 @@ extern "C"
 /**
  * Log Levels
  */
-#define WLOG_TRACE 0
-#define WLOG_DEBUG 1
-#define WLOG_INFO 2
-#define WLOG_WARN 3
-#define WLOG_ERROR 4
-#define WLOG_FATAL 5
-#define WLOG_OFF 6
-#define WLOG_LEVEL_INHERIT 0xFFFF
+typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
+{
+	WLOG_TRACE = 0,
+	WLOG_DEBUG = 1,
+	WLOG_INFO = 2,
+	WLOG_WARN = 3,
+	WLOG_ERROR = 4,
+	WLOG_FATAL = 5,
+	WLOG_OFF = 6,
+	WLOG_LEVEL_INHERIT = 0xFFFF
+} wLogLevel;
 
 /** @defgroup LogMessageTypes Log Message
  *  @{
  */
-#define WLOG_MESSAGE_TEXT 0
-#define WLOG_MESSAGE_DATA 1
-#define WLOG_MESSAGE_IMAGE 2
-#define WLOG_MESSAGE_PACKET 3
+typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
+{
+	WLOG_MESSAGE_TEXT = 0,
+	WLOG_MESSAGE_DATA = 1,
+	WLOG_MESSAGE_IMAGE = 2,
+	WLOG_MESSAGE_PACKET = 3
+} wLogMessageType;
+
 /**
  * @}
  */
@@ -62,47 +69,50 @@ extern "C"
 /**
  * Log Appenders
  */
-#define WLOG_APPENDER_CONSOLE 0
-#define WLOG_APPENDER_FILE 1
-#define WLOG_APPENDER_BINARY 2
-#define WLOG_APPENDER_CALLBACK 3
-#define WLOG_APPENDER_SYSLOG 4
-#define WLOG_APPENDER_JOURNALD 5
-#define WLOG_APPENDER_UDP 6
+typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
+{
+	WLOG_APPENDER_CONSOLE = 0,
+	WLOG_APPENDER_FILE = 1,
+	WLOG_APPENDER_BINARY = 2,
+	WLOG_APPENDER_CALLBACK = 3,
+	WLOG_APPENDER_SYSLOG = 4,
+	WLOG_APPENDER_JOURNALD = 5,
+	WLOG_APPENDER_UDP = 6
+} wLogAppenderType;
 
-	typedef struct
-	{
-		DWORD Type;
+typedef struct
+{
+	DWORD Type;
 
-		DWORD Level;
+	DWORD Level;
 
-		LPSTR PrefixString;
+	LPSTR PrefixString;
 
-		LPCSTR FormatString;
-		LPCSTR TextString;
+	LPCSTR FormatString;
+	LPCSTR TextString;
 
-		size_t LineNumber;   /* __LINE__ */
-		LPCSTR FileName;     /* __FILE__ */
-		LPCSTR FunctionName; /* __func__ */
+	size_t LineNumber;   /* __LINE__ */
+	LPCSTR FileName;     /* __FILE__ */
+	LPCSTR FunctionName; /* __func__ */
 
-		/* Data Message */
+	/* Data Message */
 
-		void* Data;
-		size_t Length;
+	void* Data;
+	size_t Length;
 
-		/* Image Message */
+	/* Image Message */
 
-		void* ImageData;
-		size_t ImageWidth;
-		size_t ImageHeight;
-		size_t ImageBpp;
+	void* ImageData;
+	size_t ImageWidth;
+	size_t ImageHeight;
+	size_t ImageBpp;
 
-		/* Packet Message */
+	/* Packet Message */
 
-		void* PacketData;
-		size_t PacketLength;
-		DWORD PacketFlags;
-	} wLogMessage;
+	void* PacketData;
+	size_t PacketLength;
+	DWORD PacketFlags;
+} wLogMessage;
 	typedef struct s_wLogLayout wLogLayout;
 	typedef struct s_wLogAppender wLogAppender;
 	typedef struct s_wLog wLog;
@@ -363,6 +373,33 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL WLog_ConfigureAppender(wLogAppender* appender, const char* setting, void* value);
 
+	/** @brief Set a custom context for an appender type
+	 *
+	 *  @note The context must stay valid until wLog is terminated!
+	 *
+	 *  @param appender The appender to configure, must not be nullptr
+	 *  @param type The logmessage type to set the context for
+	 *  @param context The custom context to pass to the logger
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *
+	 *  @since version 3.28.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL WLog_SetAppenderContext(wLogAppender* appender, wLogMessageType type,
+	                                       void* context);
+
+	/** @brief Get a custom context for an appender
+	 *
+	 *  @param appender The appender to configure, must not be nullptr
+	 *  @param type The logmessage type to get the context for
+	 *
+	 *  @return the context set for the logmessage type, might be nullptr
+	 *  @since version 3.28.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API void* WLog_GetAppenderContext(wLogAppender* appender, wLogMessageType type);
+
 	WINPR_ATTR_NODISCARD
 	WINPR_API wLogLayout* WLog_GetLogLayout(wLog* log);
 
@@ -389,6 +426,22 @@ extern "C"
 		WINPR_ATTR_NODISCARD wLogCallbackMessage_t message;
 		WINPR_ATTR_NODISCARD wLogCallbackPackage_t package;
 	} wLogCallbacks;
+
+	/** @brief extended callback type with context
+	 *  @since version 3.28.0
+	 */
+	typedef BOOL (*wLogCallbackMessageEx_t)(wLogAppender* appender, const wLogMessage* msg);
+
+	/** @brief extended callback type with context
+	 *  @since version 3.28.0
+	 */
+	typedef struct
+	{
+		WINPR_ATTR_NODISCARD wLogCallbackMessageEx_t data;
+		WINPR_ATTR_NODISCARD wLogCallbackMessageEx_t image;
+		WINPR_ATTR_NODISCARD wLogCallbackMessageEx_t message;
+		WINPR_ATTR_NODISCARD wLogCallbackMessageEx_t package;
+	} wLogCallbacksEx;
 
 #ifdef __cplusplus
 }
