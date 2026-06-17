@@ -519,8 +519,7 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 					for (size_t index = 0; index < image->height; index++)
 					{
 						Stream_Read(s, pDstData, scanline);
-						Stream_Seek(s, image->scanline - scanline);
-						pDstData += scanline;
+						pDstData += image->scanline;
 					}
 				}
 				else
@@ -530,8 +529,7 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 					for (size_t index = 0; index < image->height; index++)
 					{
 						Stream_Read(s, pDstData, scanline);
-						Stream_Seek(s, image->scanline - scanline);
-						pDstData -= scanline;
+						pDstData -= image->scanline;
 					}
 				}
 			}
