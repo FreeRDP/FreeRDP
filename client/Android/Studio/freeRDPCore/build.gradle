@@ -36,11 +36,6 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-            externalNativeBuild {
-                cmake {
-                    abiFilters "arm64-v8a", "armeabi-v7a", "x86_64", "x86"
-                }
-            }
         }
         debug {
             jniDebuggable true
