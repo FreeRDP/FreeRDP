@@ -794,9 +794,15 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 						srcFormatId =
 						    ClipboardGetFormatId(clipboard->_system, s_type_FileGroupDescriptorW);
 
-						if (!cliprdr_file_context_update_server_data(
-						        clipboard->_file, clipboard->_system, data, size))
-							return ERROR_INTERNAL_ERROR;
+						if (cliprdr_file_context_has_local_support(clipboard->_file))
+						{
+							if (!cliprdr_file_context_update_server_data(
+							        clipboard->_file, clipboard->_system, data, size))
+							{
+								WLog_Print(clipboard->_log, WLOG_WARN,
+								           "File clipboard failed to update");
+							}
+						}
 					}
 					else if (name == s_type_HtmlFormat)
 					{
