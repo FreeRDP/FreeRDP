@@ -1,3 +1,24 @@
+# 2026-06-17 Version 3.27.1
+
+Bugfix/regression fix and android feature release
+What did change:
+* Fixed a regression with gateway connections
+* Android client RDPECAM support
+* Android client RAILS support
+
+## CVE
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-c495-h83v-3prp
+
+## What's Changed
+* [core,utils] fix guid2str (#12898)
+* [client,android] Add RAIL/RemoteApp window support (#12887)
+* Bitmap decode (#12899)
+* [client,rdpecam,android] Add camera redirection support (#12894)
+* [tools] make the generator create more clang-format friendly code (#12900)
+
+For a complete and detailed change log since the last release run:
+git log 3.27.1...3.27.0
+
 # 2026-06-15 Version 3.27.0
 
 A major feature / bugfix / cleanup release
