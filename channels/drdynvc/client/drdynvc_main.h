@@ -80,6 +80,16 @@ typedef enum
 
 typedef struct
 {
+	uint64_t bytesIn;
+	uint64_t bytesOut;
+	uint64_t fragmentsIn;
+	uint64_t fragmentsOut;
+	uint64_t packetsIn;
+	uint64_t packetsOut;
+} DVCMAN_CHANNEL_STATS;
+
+typedef struct
+{
 	IWTSVirtualChannel iface;
 
 	volatile LONG refCounter;
@@ -94,6 +104,7 @@ typedef struct
 	UINT32 dvc_data_length;
 	ZGFX_CONTEXT* decompressor;
 	CRITICAL_SECTION lock;
+	DVCMAN_CHANNEL_STATS stats;
 } DVCMAN_CHANNEL;
 
 typedef enum

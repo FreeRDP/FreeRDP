@@ -23,6 +23,9 @@
 #define FREERDP_CHANNEL_DRDYNVC_CLIENT_DRDYNVC_H
 
 #include <winpr/wtypes.h>
+#include <freerdp/api.h>
+
+#include <freerdp/channels/drdynvc.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -35,6 +38,22 @@ extern "C"
 
 	typedef struct s_drdynvc_client_context DrdynvcClientContext;
 
+	/** @brief Dynamic channel stats struct. Contains statistic information for a single dynamic
+	 * channel
+	 *  @since version 3.28.0
+	 */
+	typedef struct
+	{
+		char channelName[256];
+		uint32_t channelId;
+		uint64_t bytesIn;
+		uint64_t bytesOut;
+		uint64_t fragmentsIn;
+		uint64_t fragmentsOut;
+		uint64_t packetsIn;
+		uint64_t packetsOut;
+	} DrdynvcClientChannelStat;
+
 	typedef int (*pcDrdynvcGetVersion)(DrdynvcClientContext* context);
 	typedef UINT (*pcDrdynvcOnChannelConnected)(DrdynvcClientContext* context, const char* name,
 	                                            void* pInterface);
@@ -45,16 +64,33 @@ extern "C"
 	typedef UINT (*pcDrdynvcOnChannelDetached)(DrdynvcClientContext* context, const char* name,
 	                                           void* pInterface);
 
+	/** @brief Function pointer type for dynamic channel statistics
+	 *
+	 *  @param context The dynamic channel context to query
+	 *  @param pCount A pointer to a size_t that will be set to the amount of elements in the
+	 * returned array. Must not be nullptr
+	 *  @return An allocated array of \ref DrdynvcClientChannelStat of size \ref pCount. Use \ref
+	 * free to free it.
+	 *
+	 *  @since version 3.28.0
+	 */
+	typedef DrdynvcClientChannelStat* (*pcDrdynvcGetChannelStats)(DrdynvcClientContext* context,
+	                                                              size_t* pCount);
+
 	struct s_drdynvc_client_context
 	{
-		void* handle;
-		void* custom;
-
-		WINPR_ATTR_NODISCARD pcDrdynvcGetVersion GetVersion;
-		WINPR_ATTR_NODISCARD pcDrdynvcOnChannelConnected OnChannelConnected;
-		WINPR_ATTR_NODISCARD pcDrdynvcOnChannelDisconnected OnChannelDisconnected;
-		WINPR_ATTR_NODISCARD pcDrdynvcOnChannelAttached OnChannelAttached;
-		WINPR_ATTR_NODISCARD pcDrdynvcOnChannelDetached OnChannelDetached;
+		ALIGN64 void* handle;
+		ALIGN64 void* custom;
+		ALIGN64 WINPR_ATTR_NODISCARD pcDrdynvcGetVersion GetVersion;
+		ALIGN64 WINPR_ATTR_NODISCARD pcDrdynvcOnChannelConnected OnChannelConnected;
+		ALIGN64 WINPR_ATTR_NODISCARD pcDrdynvcOnChannelDisconnected OnChannelDisconnected;
+		ALIGN64 WINPR_ATTR_NODISCARD pcDrdynvcOnChannelAttached OnChannelAttached;
+		ALIGN64 WINPR_ATTR_NODISCARD pcDrdynvcOnChannelDetached OnChannelDetached;
+		ALIGN64 WINPR_ATTR_NODISCARD pcDrdynvcGetChannelStats
+		    GetChannelStats; /**< Function returning the dynamic channel statistics.
+		                      * @since version 3.28.0
+		                      */
+		ALIGN64 UINT64 reserved[56];
 	};
 
 #ifdef __cplusplus
