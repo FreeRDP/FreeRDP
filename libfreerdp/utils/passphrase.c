@@ -114,6 +114,23 @@ const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, cha
 	return buf;
 }
 
+const char* freerdp_passphrase_from_env(WINPR_ATTR_UNUSED rdpContext* context,
+                                        WINPR_ATTR_UNUSED const char* prompt,
+                                        WINPR_ATTR_UNUSED char* buf,
+                                        WINPR_ATTR_UNUSED size_t bufsiz)
+{
+	return nullptr;
+}
+
+const char* freerdp_passphrase_read_tty(WINPR_ATTR_UNUSED rdpContext* context,
+                                        WINPR_ATTR_UNUSED const char* prompt,
+                                        WINPR_ATTR_UNUSED char* buf,
+                                        WINPR_ATTR_UNUSED size_t bufsiz,
+                                        WINPR_ATTR_UNUSED int from_stdin)
+{
+	return nullptr;
+}
+
 #elif !defined(ANDROID)
 
 #include <fcntl.h>
@@ -180,8 +197,8 @@ static void replace_char(char* buffer, WINPR_ATTR_UNUSED size_t buffer_len, cons
 	}
 }
 
-static const char* freerdp_passphrase_read_tty(rdpContext* context, const char* prompt, char* buf,
-                                               size_t bufsiz, int from_stdin)
+const char* freerdp_passphrase_read_tty(rdpContext* context, const char* prompt, char* buf,
+                                        size_t bufsiz, int from_stdin)
 {
 	BOOL terminal_needs_reset = FALSE;
 	char term_name[L_ctermid] = WINPR_C_ARRAY_INIT;
@@ -306,16 +323,24 @@ static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf
 	return buf;
 }
 
-const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf,
-                                    size_t bufsiz, int from_stdin)
+const char* freerdp_passphrase_from_env(rdpContext* context, const char* prompt, char* buf,
+                                        size_t bufsiz)
 {
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	const char* askpass_env = getenv("FREERDP_ASKPASS");
+	if (!askpass_env)
+		return nullptr;
+	return freerdp_passphrase_read_askpass(prompt, buf, bufsiz, askpass_env);
+}
 
+const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf,
+                                    size_t bufsiz, int from_stdin)
+{
+	const char* askpass_env = freerdp_passphrase_from_env(context, prompt, buf, bufsiz);
 	if (askpass_env)
-		return freerdp_passphrase_read_askpass(prompt, buf, bufsiz, askpass_env);
-	else
-		return freerdp_passphrase_read_tty(context, prompt, buf, bufsiz, from_stdin);
+		return askpass_env;
+
+	return freerdp_passphrase_read_tty(context, prompt, buf, bufsiz, from_stdin);
 }
 
 static BOOL set_termianl_nonblock(int ifd, BOOL nonblock);
@@ -441,6 +466,23 @@ const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, cha
 int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 {
 	return EOF;
+}
+
+const char* freerdp_passphrase_from_env(WINPR_ATTR_UNUSED rdpContext* context,
+                                        WINPR_ATTR_UNUSED const char* prompt,
+                                        WINPR_ATTR_UNUSED char* buf,
+                                        WINPR_ATTR_UNUSED size_t bufsiz)
+{
+	return nullptr;
+}
+
+const char* freerdp_passphrase_read_tty(WINPR_ATTR_UNUSED rdpContext* context,
+                                        WINPR_ATTR_UNUSED const char* prompt,
+                                        WINPR_ATTR_UNUSED char* buf,
+                                        WINPR_ATTR_UNUSED size_t bufsiz,
+                                        WINPR_ATTR_UNUSED int from_stdin)
+{
+	return nullptr;
 }
 #endif
 
