@@ -414,8 +414,9 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* planar, const BYTE* srcBitmap,
 	if (!decompressedBitmap)
 		goto fail;
 
-	if (!planar_decompress(planar, compressedBitmap, dstSize, width, height, decompressedBitmap,
-	                       dstFormat, 0, 0, 0, width, height, FALSE))
+	if (!freerdp_bitmap_decompress_planar(planar, compressedBitmap, dstSize, width, height,
+	                                      decompressedBitmap, dstFormat, 0, 0, 0, width, height,
+	                                      FALSE))
 	{
 		goto fail;
 	}
