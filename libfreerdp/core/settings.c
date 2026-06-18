@@ -931,6 +931,15 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	                                     RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT))
 		goto out_fail;
 
+	const UINT32 railflags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE |
+	                         TS_RAIL_CLIENTSTATUS_ZORDER_SYNC |
+	                         TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED |
+	                         TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED |
+	                         TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED |
+	                         TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteAppFeatureFlags, railflags))
+		goto out_fail;
+
 	if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_HasHorizontalWheel, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_HasExtendedMouseEvent, TRUE) ||

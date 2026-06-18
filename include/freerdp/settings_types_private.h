@@ -215,7 +215,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL ForceEncryptedCsPdu);    /* 719 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL HiDefRemoteApp);         /* 720 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 CompressionLevel);     /* 721 */
-	UINT64 padding0768[768 - 722];                            /* 722 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 RemoteAppFeatureFlags); /* 722 */
+	UINT64 padding0768[768 - 723];                             /* 723 */
 
 	/* Client Info (Extra) */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL IPv6Enabled);       /* 768 */
