@@ -1,6 +1,5 @@
 include(ExternalProject)
-
-set(OPENH264_VERSION "v2.6.0")
+include(DepVersions)
 
 # Map Android ABI to OpenH264 architecture names
 if(ANDROID_ABI STREQUAL "arm64-v8a")
@@ -22,10 +21,10 @@ ExternalProject_Add(
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/openh264
   GIT_REPOSITORY https://github.com/cisco/openh264.git
-  GIT_TAG ${OPENH264_VERSION}
+  GIT_TAG ${OPENH264_TAG}
   GIT_SHALLOW TRUE
-  PATCH_COMMAND
-    git am --3way ${CMAKE_CURRENT_LIST_DIR}/0001-riscv64-support.patch ${CMAKE_CURRENT_LIST_DIR}/0002-openh264-pkgconfig-patch.patch
+  PATCH_COMMAND git am --3way ${CMAKE_CURRENT_LIST_DIR}/0001-riscv64-support.patch
+                ${CMAKE_CURRENT_LIST_DIR}/0002-openh264-pkgconfig-patch.patch
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different <SOURCE_DIR> <BINARY_DIR>
   BUILD_COMMAND
     ${CMAKE_COMMAND} -E env "PATH=${NDK_ROOT}:$ENV{PATH}" make ENABLEPIC=Yes LDFLAGS=-static-libstdc++ OS=android

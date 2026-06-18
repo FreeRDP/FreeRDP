@@ -1,0 +1,25 @@
+From 4e27502c5326c4b66c2066d273d35b0bcfe5f72b Mon Sep 17 00:00:00 2001
+From: akallabeth <akallabeth@posteo.net>
+Date: Thu, 18 Jun 2026 20:32:22 +0200
+Subject: [PATCH] riscv64 support
+
+---
+ build/platform-android.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/build/platform-android.mk b/build/platform-android.mk
+index 88e41d9e..e6df9eb0 100644
+--- a/build/platform-android.mk
++++ b/build/platform-android.mk
+@@ -59,6 +59,8 @@ ifeq ($(NDK_TOOLCHAIN_VERSION), clang)
+     TARGET_NAME = i686-linux-android
+   else ifeq ($(ARCH), x86_64)
+     TARGET_NAME = x86_64-linux-android
++  else ifeq ($(ARCH), riscv64)
++    TARGET_NAME = riscv64-linux-android
+   else
+     $(error "does not support this arch now!")
+   endif
+-- 
+2.47.3
+

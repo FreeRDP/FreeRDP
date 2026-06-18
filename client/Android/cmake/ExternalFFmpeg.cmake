@@ -1,9 +1,8 @@
 include(ExternalProject)
-
-set(FFMPEG_VERSION "n8.1")
+include(DepVersions)
 
 # Map Android ABI to FFmpeg cross-compile names
-set (FFMPEG_EXTRA_ARGS "")
+set(FFMPEG_EXTRA_ARGS "")
 if(ANDROID_ABI STREQUAL "arm64-v8a")
   set(FFMPEG_ARCH "aarch64")
   list(APPEND FFMPEG_EXTRA_ARGS "--cpu=armv8-a;--enable-neon;--enable-asm;--enable-inline-asm")
@@ -52,11 +51,11 @@ else()
   set(FFMPEG_BIGENDIAN_ENV "")
 endif()
 
-if ("openh264" IN_LIST ANDROID_NATIVE_DEPS)
-    list(APPEND FFMPEG_EXTRA_ARGS --enable-libopenh264)
+if("openh264" IN_LIST ANDROID_NATIVE_DEPS)
+  list(APPEND FFMPEG_EXTRA_ARGS --enable-libopenh264)
 endif()
-if ("opus" IN_LIST ANDROID_NATIVE_DEPS)
-    list(APPEND FFMPEG_EXTRA_ARGS --enable-libopus)
+if("opus" IN_LIST ANDROID_NATIVE_DEPS)
+  list(APPEND FFMPEG_EXTRA_ARGS --enable-libopus)
 endif()
 
 ExternalProject_Add(
@@ -66,16 +65,16 @@ ExternalProject_Add(
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/ffmpeg
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
   URL https://github.com/FFmpeg/FFmpeg/archive/refs/tags/${FFMPEG_VERSION}.tar.gz
-  URL_HASH SHA256=dd308201bb1239a1b73185f80c6b4121f4efdfa424a009ce544fd00bf736bb2e
+  URL_HASH ${FFMPEG_HASH}
   DEPENDS ${ANDROID_NATIVE_DEPS}
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}"
     "PKG_CONFIG_PATH=${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/pkgconfig" ${FFMPEG_BIGENDIAN_ENV}
     <SOURCE_DIR>/configure --cross-prefix=${NDK_TOOLCHAIN_BIN}/llvm- --cc=${FFMPEG_CC} --cxx=${FFMPEG_CXX}
     --pkg-config=${PKG_CONFIG_EXECUTABLE} --sysroot=${NDK_SYSROOT} --arch=${FFMPEG_ARCH} ${FFMPEG_CPU}
-    --extra-ldflags="${FFMPEG_LDFLAGS}" ${FFMPEG_EXTRA_ARGS} --target-os=android --enable-cross-compile
-    --enable-pic --enable-lto --enable-jni --enable-mediacodec --enable-shared --disable-static --disable-programs
-    --disable-doc --prefix=${DEPS_INSTALL_DIR} --libdir=${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}
+    --extra-ldflags="${FFMPEG_LDFLAGS}" ${FFMPEG_EXTRA_ARGS} --target-os=android --enable-cross-compile --enable-pic
+    --enable-lto --enable-jni --enable-mediacodec --enable-shared --disable-static --disable-programs --disable-doc
+    --prefix=${DEPS_INSTALL_DIR} --libdir=${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}
   BUILD_COMMAND ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}" make -j
   INSTALL_COMMAND ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}" make -j install
 )

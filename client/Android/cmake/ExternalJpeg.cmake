@@ -1,4 +1,5 @@
 include(ExternalProject)
+include(DepVersions)
 
 if(ANDROID_ABI STREQUAL "riscv64")
   set(TURBO_ARGS "-DWITH_SIMD=OFF")
@@ -7,10 +8,9 @@ endif()
 ExternalProject_Add(
   jpeg
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/jpeg
-  GIT_REPOSITORY https://github.com/libjpeg-turbo/libjpeg-turbo.git
+  URL https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/${JPEG_VERSION}/libjpeg-turbo-${JPEG_VERSION}.tar.gz
+  URL_HASH ${JPEG_HASH}
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
-  GIT_TAG 3.1.4
-  GIT_SHALLOW TRUE
   CMAKE_ARGS ${ANDROID_CMAKE_ARGS}
              -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
              -DCMAKE_INSTALL_LIBDIR:STRING=${CMAKE_INSTALL_LIBDIR}

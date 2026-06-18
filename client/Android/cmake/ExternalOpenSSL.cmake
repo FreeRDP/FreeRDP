@@ -1,6 +1,5 @@
 include(ExternalProject)
-
-set(OPENSSL_VERSION "openssl-4.0.1")
+include(DepVersions)
 
 # Map ANDROID_ABI to OpenSSL architecture names
 if(ANDROID_ABI STREQUAL "arm64-v8a")
@@ -25,7 +24,7 @@ ExternalProject_Add(
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/openssl
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/openssl
   URL https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz
-  URL_HASH SHA256=2db3f3a0d6ea4b59e1f094ace2c8cd536dffb87cdc39084c5afa1e6f7f37dd09
+  URL_HASH ${OPENSSL_HASH}
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH} ANDROID_NDK=${NDK_ROOT} ANDROID_NDK_ROOT=${NDK_ROOT}
     ANDROID_NDK_HOME=${NDK_ROOT} CC=clang perl <SOURCE_DIR>/Configure ${OSSL_ARCH} shared no-tests no-apps no-docs
