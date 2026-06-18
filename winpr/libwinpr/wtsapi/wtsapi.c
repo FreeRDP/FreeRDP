@@ -50,7 +50,7 @@ static const WtsApiFunctionTable* g_WtsApi = nullptr;
 static HMODULE g_WtsApi32Module = nullptr;
 static WtsApiFunctionTable WtsApi32_WtsApiFunctionTable = WINPR_C_ARRAY_INIT;
 
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || defined(_MSC_VER)
 #define WTSAPI32_LOAD_PROC(NAME, TYPE) \
 	WtsApi32_WtsApiFunctionTable.p##NAME = GetProcAddressAs(g_WtsApi32Module, "WTS" #NAME, TYPE);
 #else

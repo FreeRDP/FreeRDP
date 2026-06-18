@@ -64,7 +64,7 @@ function(detect_package name)
 
     if(${name}_FOUND)
       # Create imported target cjson
-      add_library(${arg_CMAKE} SHARED IMPORTED)
+      add_library(${arg_CMAKE} UNKNOWN IMPORTED)
       set_property(TARGET ${arg_CMAKE} APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
       set_target_properties(
         ${arg_CMAKE}
