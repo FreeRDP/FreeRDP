@@ -54,8 +54,8 @@ static void dvcman_channel_free(DVCMAN_CHANNEL* channel);
 static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL fromHashTableFn);
 static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr);
 static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const BYTE* data,
-                               UINT32 dataSize, BOOL* close);
-static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s);
+                               UINT32 dataSize, BOOL* close, DVCMAN_CHANNEL_STATS* stats);
+static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s, DVCMAN_CHANNEL_STATS* stats);
 
 static void dvcman_wtslistener_free(DVCMAN_LISTENER* listener)
 {
@@ -462,7 +462,7 @@ static UINT dvcchannel_send_close(DVCMAN_CHANNEL* channel)
 
 	Stream_Write_UINT8(s, (CLOSE_REQUEST_PDU << 4) | 0x02);
 	Stream_Write_UINT32(s, channel->channel_id);
-	return drdynvc_send(drdynvc, s);
+	return drdynvc_send(drdynvc, s, &channel->stats);
 }
 
 static void check_open_close_receive(DVCMAN_CHANNEL* channel)
@@ -485,6 +485,8 @@ static UINT dvcman_call_on_receive(DVCMAN_CHANNEL* channel, wStream* data)
 {
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(data);
+
+	channel->stats.packetsIn++;
 
 	IWTSVirtualChannelCallback* cb = channel->channel_callback;
 	WINPR_ASSERT(cb);
@@ -622,6 +624,7 @@ static void dvcman_clear(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pCha
 	ArrayList_Clear(dvcman->plugin_names);
 	HashTable_Clear(dvcman->listeners);
 }
+
 static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr)
 {
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
@@ -685,8 +688,8 @@ static UINT dvcman_write_channel(IWTSVirtualChannel* pChannel, ULONG cbSize, con
 		return CHANNEL_RC_BAD_CHANNEL;
 
 	EnterCriticalSection(&(channel->lock));
-	status =
-	    drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize, &close);
+	status = drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize,
+	                            &close, &channel->stats);
 	LeaveCriticalSection(&(channel->lock));
 	/* Close delayed, it removes the channel struct */
 	if (close)
@@ -709,6 +712,81 @@ static UINT dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 
 	WLog_DBG(TAG, "close_channel_iface: id=%" PRIu32 "", channel->channel_id);
 	return dvcman_channel_close(channel, FALSE, FALSE);
+}
+
+struct stats_collector_argument
+{
+	DrdynvcClientChannelStat* stats;
+	size_t count;
+	size_t used;
+};
+
+static BOOL stats_collector(const void* key, void* value, void* arg)
+{
+	struct stats_collector_argument* args = arg;
+	WINPR_ASSERT(args);
+
+	DVCMAN_CHANNEL* channel = value;
+	WINPR_ASSERT(channel);
+	if (args->used >= args->count)
+		return FALSE;
+
+	DrdynvcClientChannelStat* stat = &args->stats[args->used++];
+
+	if (channel->channel_name)
+	{
+		const size_t len = strnlen(channel->channel_name, ARRAYSIZE(stat->channelName) - 1);
+		strncpy(stat->channelName, channel->channel_name, len);
+	}
+	else
+		memset(stat->channelName, 0, sizeof(stat->channelName));
+	stat->channelId = channel->channel_id;
+	stat->bytesIn = channel->stats.bytesIn;
+	stat->bytesIn = channel->stats.bytesOut;
+	stat->fragmentsIn = channel->stats.fragmentsIn;
+	stat->fragmentsOut = channel->stats.fragmentsOut;
+	stat->packetsIn = channel->stats.packetsIn;
+	stat->packetsOut = channel->stats.packetsOut;
+	return TRUE;
+}
+
+WINPR_ATTR_MALLOC(free, 1)
+static DrdynvcClientChannelStat* drdynvc_get_channel_stats(DrdynvcClientContext* context,
+                                                           size_t* pCount)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(pCount);
+
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*)context->handle;
+	WINPR_ASSERT(drdynvc);
+
+	DVCMAN* dvcman = (DVCMAN*)drdynvc->channel_mgr;
+	*pCount = 0;
+	if (!dvcman)
+		return nullptr;
+
+	struct stats_collector_argument args = { .stats = nullptr, .count = 0 };
+
+	HashTable_Lock(dvcman->channelsById);
+	const size_t count = HashTable_Count(dvcman->channelsById);
+	if (count > 0)
+	{
+		args.stats = calloc(count, sizeof(DrdynvcClientChannelStat));
+		if (args.stats)
+		{
+			args.count = count;
+			const BOOL rc = HashTable_Foreach(dvcman->channelsById, stats_collector, &args);
+			if (!rc)
+			{
+				HashTable_Unlock(dvcman->channelsById);
+				free(args.stats);
+				return nullptr;
+			}
+		}
+	}
+	HashTable_Unlock(dvcman->channelsById);
+	*pCount = args.used;
+	return args.stats;
 }
 
 /**
@@ -898,6 +976,8 @@ static UINT dvcman_receive_channel_data(DVCMAN_CHANNEL* channel, wStream* data,
 
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(channel->dvcman);
+
+	channel->stats.bytesIn += Stream_Length(data);
 	if (channel->dvc_data)
 	{
 		drdynvcPlugin* drdynvc = channel->dvcman->drdynvc;
@@ -913,6 +993,7 @@ static UINT dvcman_receive_channel_data(DVCMAN_CHANNEL* channel, wStream* data,
 		}
 
 		Stream_Copy(data, channel->dvc_data, dataSize);
+		channel->stats.fragmentsIn++;
 
 		if (Stream_GetPosition(channel->dvc_data) >= channel->dvc_data_length)
 		{
@@ -959,7 +1040,7 @@ static UINT8 drdynvc_write_variable_uint(wStream* s, UINT32 val)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
+static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s, DVCMAN_CHANNEL_STATS* stats)
 {
 	UINT status = 0;
 
@@ -967,10 +1048,14 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 		status = CHANNEL_RC_BAD_CHANNEL_HANDLE;
 	else
 	{
+		const size_t len = Stream_GetPosition(s);
+
+		if (stats)
+			stats->bytesOut += len;
+
 		WINPR_ASSERT(drdynvc->channelEntryPoints.pVirtualChannelWriteEx);
 		status = drdynvc->channelEntryPoints.pVirtualChannelWriteEx(
-		    drdynvc->InitHandle, drdynvc->OpenHandle, Stream_Buffer(s),
-		    (UINT32)Stream_GetPosition(s), s);
+		    drdynvc->InitHandle, drdynvc->OpenHandle, Stream_Buffer(s), (UINT32)len, s);
 	}
 
 	switch (status)
@@ -1002,7 +1087,7 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const BYTE* data,
-                               UINT32 dataSize, BOOL* close)
+                               UINT32 dataSize, BOOL* close, DVCMAN_CHANNEL_STATS* stats)
 {
 	size_t pos = 0;
 	UINT8 cbChId = 0;
@@ -1050,7 +1135,8 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 			return ERROR_INVALID_DATA;
 		}
 		Stream_Write(data_out, data, dataSize);
-		status = drdynvc_send(drdynvc, data_out);
+		stats->packetsOut++;
+		status = drdynvc_send(drdynvc, data_out, stats);
 	}
 	else
 	{
@@ -1076,7 +1162,10 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 			data += chunkLength;
 			dataSize -= chunkLength;
 		}
-		status = drdynvc_send(drdynvc, data_out);
+		if (dataSize > 0)
+			stats->fragmentsOut++;
+
+		status = drdynvc_send(drdynvc, data_out, stats);
 
 		while (status == CHANNEL_RC_OK && dataSize > 0)
 		{
@@ -1107,13 +1196,20 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 			uint32_t chunkLength = dataSize;
 
 			WINPR_ASSERT(pos <= CHANNEL_CHUNK_LENGTH);
-			if (chunkLength > CHANNEL_CHUNK_LENGTH - pos)
-				chunkLength = CHANNEL_CHUNK_LENGTH - WINPR_ASSERTING_INT_CAST(uint32_t, pos);
+			const size_t clen = CHANNEL_CHUNK_LENGTH - WINPR_ASSERTING_INT_CAST(uint32_t, pos);
+			if (chunkLength > clen)
+			{
+				stats->fragmentsOut++;
+				chunkLength = clen;
+			}
+			else
+				stats->packetsOut++;
 
 			Stream_Write(data_out, data, chunkLength);
 			data += chunkLength;
 			dataSize -= chunkLength;
-			status = drdynvc_send(drdynvc, data_out);
+
+			status = drdynvc_send(drdynvc, data_out, stats);
 		}
 	}
 
@@ -1155,7 +1251,7 @@ static UINT drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 
 	Stream_Write_UINT16(s, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
 	Stream_Write_UINT16(s, drdynvc->version);
-	status = drdynvc_send(drdynvc, s);
+	status = drdynvc_send(drdynvc, s, nullptr);
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -1331,7 +1427,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, UINT8 Sp, UIN
 	}
 	Stream_Write_INT32(data_out, retStatus);
 
-	status = drdynvc_send(drdynvc, data_out);
+	status = drdynvc_send(drdynvc, data_out, nullptr);
 	if (status != CHANNEL_RC_OK)
 	{
 		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08" PRIX32 "]",
@@ -2175,6 +2271,7 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
 		context->custom = nullptr;
 		drdynvc->context = context;
 		context->GetVersion = drdynvc_get_version;
+		context->GetChannelStats = drdynvc_get_channel_stats;
 		drdynvc->rdpcontext = pEntryPointsEx->context;
 		if (!freerdp_settings_get_bool(drdynvc->rdpcontext->settings,
 		                               FreeRDP_TransportDumpReplay) &&

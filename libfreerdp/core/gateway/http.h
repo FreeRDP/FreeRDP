@@ -99,8 +99,7 @@ FREERDP_LOCAL BOOL http_context_set_cookie(HttpContext* context, const char* Coo
                                            const char* CookieValue);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL http_context_set_rdg_connection_id(HttpContext* context,
-                                                      const GUID* RdgConnectionId);
+FREERDP_LOCAL BOOL http_context_set_rdg_connection_id(HttpContext* context);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL http_context_set_rdg_correlation_id(HttpContext* context,

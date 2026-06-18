@@ -555,7 +555,7 @@ static int rpc_channel_rpch_init(RpcClient* client, RpcChannel* channel, const c
 		}
 
 		if (!http_context_set_rdg_correlation_id(http, guid) ||
-		    !http_context_set_rdg_connection_id(http, guid))
+		    !http_context_set_rdg_connection_id(http))
 			return -1;
 	}
 

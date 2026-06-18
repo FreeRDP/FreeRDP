@@ -2263,7 +2263,7 @@ rdpRdg* rdg_new(rdpContext* context)
 	    !http_context_set_connection(rdg->http, "Keep-Alive") ||
 	    !http_context_set_user_agent(rdg->http, "MS-RDGateway/1.0") ||
 	    !http_context_set_host(rdg->http, rdg->context->settings->GatewayHostname) ||
-	    !http_context_set_rdg_connection_id(rdg->http, &guid) ||
+	    !http_context_set_rdg_connection_id(rdg->http) ||
 	    !http_context_set_rdg_correlation_id(rdg->http, &guid) ||
 	    !http_context_enable_websocket_upgrade(
 	        rdg->http,
