@@ -381,7 +381,7 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 									{
 										if (device_ext->automount)
 										{
-											const uint32_t ids[] = { keys[j] };
+											const uint32_t ids[] = { (uint32_t)keys[j] };
 											WINPR_ASSERT(rdpdr->context.RdpdrUnregisterDevice);
 											error = rdpdr->context.RdpdrUnregisterDevice(
 											    &rdpdr->context, ARRAYSIZE(ids), ids);
@@ -523,7 +523,6 @@ static UINT handle_hotplug(WINPR_ATTR_UNUSED RdpdrClientContext* context,
 	ULONG_PTR* keys = nullptr;
 	int size = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	UINT32 ids[1];
 
 	DIR* pDir = opendir(szdir);
 
@@ -602,7 +601,7 @@ static UINT handle_hotplug(WINPR_ATTR_UNUSED RdpdrClientContext* context,
 
 		if (!dev_found)
 		{
-			const uint32_t ids[] = { keys[j] };
+			const uint32_t ids[] = { (uint32_t)keys[j] };
 			WINPR_ASSERT(rdpdr->context.RdpdrUnregisterDevice);
 			error = rdpdr->context.RdpdrUnregisterDevice(&rdpdr->context, ARRAYSIZE(ids), ids);
 			if (error)
