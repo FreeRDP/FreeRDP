@@ -704,14 +704,26 @@ static void video_timer(VideoClientContext* video, UINT64 now)
 	{
 		if (presentation && (presentation->PresentationId == frame->PresentationId))
 		{
-			priv->publishedFrames++;
-			memcpy(presentation->surface->data, frame->surfaceData,
-			       1ull * frame->scanline * frame->h);
+			VideoSurface* surface = presentation->surface;
+			const size_t frameSize = 1ull * frame->scanline * frame->h;
+			const size_t surfaceSize = 1ull * surface->scanline * surface->alignedHeight;
 
-			WINPR_ASSERT(video->showSurface);
-			if (!video->showSurface(video, presentation->surface, presentation->ScaledWidth,
-			                        presentation->ScaledHeight))
-				WLog_WARN(TAG, "showSurface failed");
+			/* the presentation id is reused by the server across presentations of different
+			 * sizes, so a frame queued for a previous, larger presentation can outlive it in
+			 * the queue. copying it would write past the smaller surface->data buffer. */
+			if (frameSize > surfaceSize)
+				WLog_WARN(TAG, "dropping stale frame of %" PRIuz " bytes, surface holds %" PRIuz,
+				          frameSize, surfaceSize);
+			else
+			{
+				priv->publishedFrames++;
+				memcpy(surface->data, frame->surfaceData, frameSize);
+
+				WINPR_ASSERT(video->showSurface);
+				if (!video->showSurface(video, surface, presentation->ScaledWidth,
+				                        presentation->ScaledHeight))
+					WLog_WARN(TAG, "showSurface failed");
+			}
 		}
 		VideoFrame_free(priv, frame);
 	}
