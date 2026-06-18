@@ -154,6 +154,9 @@ class SdlContext
 	[[nodiscard]] std::vector<rdpPointer*>& pointers();
 	[[nodiscard]] bool contains(const rdpPointer* ptr) const;
 
+	[[nodiscard]] bool credentialsRead() const;
+	void setCredentialsRead();
+
   private:
 	[[nodiscard]] bool resizeToScale(SdlWindow* window);
 	[[nodiscard]] bool useLocalScale() const;
@@ -242,4 +245,5 @@ class SdlContext
 	std::thread _thread;
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
 	std::vector<rdpPointer*> _valid_pointers;
+	bool _credentialsRead = false;
 };
