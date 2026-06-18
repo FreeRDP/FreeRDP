@@ -60,17 +60,6 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-
-    applicationVariants.configureEach { variant ->
-        variant.outputs.each { output ->
-            def baseAbiVersionCode = project.androidGitVersion.abis.get(output.getFilter(com.android.build.OutputFile.ABI))
-            if (baseAbiVersionCode != null) {
-                output.versionCodeOverride = (10 * project.android.defaultConfig.versionCode) + baseAbiVersionCode
-            } else {
-                output.versionCodeOverride = 10 * project.android.defaultConfig.versionCode
-            }
-        }
-    }
 }
 
 dependencies {

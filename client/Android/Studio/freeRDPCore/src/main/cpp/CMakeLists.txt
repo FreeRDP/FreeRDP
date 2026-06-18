@@ -90,11 +90,6 @@ if(WITH_OPUS)
   list(APPEND ANDROID_NATIVE_DEPS opus)
 endif()
 
-if(WITH_FFMPEG)
-  include(ExternalFFmpeg)
-  list(APPEND ANDROID_NATIVE_DEPS ffmpeg)
-endif()
-
 if(WITH_PNG)
   include(ExternalLibPNG)
   list(APPEND ANDROID_NATIVE_DEPS libpng)
@@ -108,6 +103,11 @@ endif()
 if(WITH_JPEG)
   include(ExternalJpeg)
   list(APPEND ANDROID_NATIVE_DEPS jpeg)
+endif()
+
+if(WITH_FFMPEG)
+  include(ExternalFFmpeg)
+  list(APPEND ANDROID_NATIVE_DEPS ffmpeg)
 endif()
 
 include(ExternalUriparser)
