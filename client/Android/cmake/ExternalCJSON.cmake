@@ -1,13 +1,12 @@
 include(ExternalProject)
-
-set(CJSON_VERSION "v1.7.19")
+include(DepVersions)
 
 ExternalProject_Add(
   cjson
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/cjson
   URL https://github.com/DaveGamble/cJSON/archive/refs/tags/${CJSON_VERSION}.tar.gz
-  URL_HASH SHA256=7fa616e3046edfa7a28a32d5f9eacfd23f92900fe1f8ccd988c1662f30454562
+  URL_HASH ${CJSON_HASH}
   CMAKE_ARGS ${ANDROID_CMAKE_ARGS}
              -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
              -DCMAKE_INSTALL_LIBDIR:STRING=${CMAKE_INSTALL_LIBDIR}
