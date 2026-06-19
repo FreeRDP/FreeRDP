@@ -148,15 +148,10 @@ static UINT enumerator_server_recv_device_added_notification(CamDevEnumServerCon
                                                              wStream* s,
                                                              const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_DEVICE_ADDED_NOTIFICATION pdu;
 	UINT error = CHANNEL_RC_OK;
-	size_t remaining_length = 0;
-	WCHAR* channel_name_start = nullptr;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(header);
-
-	pdu.Header = *header;
 
 	/*
 	 * RequiredLength 4:
@@ -168,43 +163,40 @@ static UINT enumerator_server_recv_device_added_notification(CamDevEnumServerCon
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_NO_DATA;
 
-	pdu.DeviceName = Stream_Pointer(s);
+	CAM_DEVICE_ADDED_NOTIFICATION pdu = { .Header = *header,
+		                                  .DeviceName = Stream_Pointer(s),
+		                                  .VirtualChannelName = nullptr };
 
-	remaining_length = Stream_GetRemainingLength(s);
-	channel_name_start = Stream_Pointer(s);
-
-	/* Search for null terminator of DeviceName */
-	size_t i = 0;
-	for (; i < remaining_length; i += sizeof(WCHAR), ++channel_name_start)
+	/* DeviceName: Read until either no bytes left or a unicode '\0' was found */
+	bool unicodeNull = false;
+	while (Stream_GetRemainingLength(s) >= sizeof(WCHAR))
 	{
-		if (*channel_name_start == L'\0')
+		const WCHAR wc = Stream_Get_UINT16(s);
+		if (wc == '\0')
+		{
+			unicodeNull = true;
 			break;
+		}
 	}
-
-	if (*channel_name_start != L'\0')
+	if (!unicodeNull)
 	{
 		WLog_ERR(TAG, "enumerator_server_recv_device_added_notification: Invalid DeviceName!");
 		return ERROR_INVALID_DATA;
 	}
 
-	pdu.VirtualChannelName = (char*)++channel_name_start;
-	++i;
-
-	if (i >= remaining_length || *pdu.VirtualChannelName == '\0')
+	/* VirtualChannelName: Read until either no bytes left or a ANSI '\0' was found */
+	pdu.VirtualChannelName = Stream_PointerAs(s, char);
+	bool ansiNull = false;
+	while (Stream_GetRemainingLength(s) >= sizeof(CHAR))
 	{
-		WLog_ERR(TAG,
-		         "enumerator_server_recv_device_added_notification: Invalid VirtualChannelName!");
-		return ERROR_INVALID_DATA;
-	}
-
-	char* tmp = pdu.VirtualChannelName;
-	for (; i < remaining_length; ++i, ++tmp)
-	{
-		if (*tmp == '\0')
+		const CHAR wc = Stream_Get_INT8(s);
+		if (wc == '\0')
+		{
+			ansiNull = true;
 			break;
+		}
 	}
-
-	if (*tmp != '\0')
+	if (!ansiNull)
 	{
 		WLog_ERR(TAG,
 		         "enumerator_server_recv_device_added_notification: Invalid VirtualChannelName!");
