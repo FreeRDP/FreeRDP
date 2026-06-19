@@ -245,6 +245,7 @@ BOOL SdlContext::preConnect(freerdp* instance)
 	if (!sdl->getInputChannelContext().initialize())
 		return FALSE;
 
+	sdl->_credentialsRead = false;
 	/* TODO: Any code your client requires */
 	return TRUE;
 }
@@ -1476,6 +1477,16 @@ bool SdlContext::contains(const rdpPointer* ptr) const
 			return true;
 	}
 	return false;
+}
+
+bool SdlContext::credentialsRead() const
+{
+	return _credentialsRead;
+}
+
+void SdlContext::setCredentialsRead()
+{
+	_credentialsRead = true;
 }
 
 bool SdlContext::resizeToScale(SdlWindow* window)

@@ -22,6 +22,7 @@
 #include <cassert>
 
 #include <freerdp/log.h>
+#include <freerdp/utils/passphrase.h>
 #include <freerdp/utils/smartcardlogon.h>
 
 #include <SDL3/SDL.h>
@@ -130,6 +131,31 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 	u = *username;
 	d = *domain;
 	p = *password;
+
+	auto sdl = get_context(instance);
+	if (!p && !sdl->credentialsRead())
+	{
+		std::string line;
+		line.reserve(1024);
+
+		const BOOL fromStdin =
+		    freerdp_settings_get_bool(instance->context->settings, FreeRDP_CredentialsFromStdin);
+		auto env =
+		    freerdp_passphrase_from_env(instance->context, title, line.data(), line.capacity());
+		if (!env && fromStdin)
+			env = freerdp_passphrase_read(instance->context, title, line.data(), line.capacity(),
+			                              fromStdin);
+		if (env)
+			p = _strdup(env);
+
+		*password = p;
+		if (p)
+		{
+			sdl->setCredentialsRead();
+			if (u)
+				return TRUE;
+		}
+	}
 
 	if (!sdl_push_user_event(SDL_EVENT_USER_AUTH_DIALOG, title, u, d, p, reason))
 		return res;
