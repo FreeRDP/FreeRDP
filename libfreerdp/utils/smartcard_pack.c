@@ -312,7 +312,27 @@ static LONG smartcard_ndr_read_atrmask(wLog* log, wStream* s, LocateCards_ATRMas
 		BYTE** ppv;
 	} u;
 	u.ppc = data;
-	return smartcard_ndr_read(log, s, u.ppv, min, sizeof(LocateCards_ATRMask), type);
+	const LONG status = smartcard_ndr_read(log, s, u.ppv, min, sizeof(LocateCards_ATRMask), type);
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
+	/* [MS-RDPESC] 2.2.1.5: cbAtr is range(0..36), the number of valid bytes in the fixed
+	 * rgbAtr/rgbMask arrays. A larger value walks past them when the mask is compared byte
+	 * by byte, so reject it here rather than trusting the wire value. */
+	const LocateCards_ATRMask* masks = *data;
+	for (size_t x = 0; x < min; x++)
+	{
+		if (masks[x].cbAtr > ARRAYSIZE(masks[x].rgbAtr))
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "LocateCards_ATRMask[%" PRIuz "]::cbAtr %" PRIu32 " exceeds %" PRIuz, x,
+			           masks[x].cbAtr, (size_t)ARRAYSIZE(masks[x].rgbAtr));
+			free(*data);
+			*data = nullptr;
+			return STATUS_DATA_ERROR;
+		}
+	}
+	return SCARD_S_SUCCESS;
 }
 
 static LONG smartcard_ndr_read_fixed_string_a(wLog* log, wStream* s, CHAR** data, size_t min,
@@ -2454,6 +2474,13 @@ static LONG smartcard_unpack_reader_state_a(wLog* log, wStream* s, LPSCARD_READE
 		Stream_Read_UINT32(s, readerState->dwCurrentState); /* dwCurrentState (4 bytes) */
 		Stream_Read_UINT32(s, readerState->dwEventState);   /* dwEventState (4 bytes) */
 		Stream_Read_UINT32(s, readerState->cbAtr);          /* cbAtr (4 bytes) */
+		if (readerState->cbAtr > ARRAYSIZE(readerState->rgbAtr))
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "SCARD_READERSTATEA[%" PRIu32 "]::cbAtr %" PRIu32 " exceeds %" PRIuz, index,
+			           readerState->cbAtr, (size_t)ARRAYSIZE(readerState->rgbAtr));
+			goto fail;
+		}
 		Stream_Read(s, readerState->rgbAtr, 36);            /* rgbAtr [0..36] (36 bytes) */
 	}
 
@@ -2528,6 +2555,13 @@ static LONG smartcard_unpack_reader_state_w(wLog* log, wStream* s, LPSCARD_READE
 		Stream_Read_UINT32(s, readerState->dwCurrentState); /* dwCurrentState (4 bytes) */
 		Stream_Read_UINT32(s, readerState->dwEventState);   /* dwEventState (4 bytes) */
 		Stream_Read_UINT32(s, readerState->cbAtr);          /* cbAtr (4 bytes) */
+		if (readerState->cbAtr > ARRAYSIZE(readerState->rgbAtr))
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "SCARD_READERSTATEW[%" PRIu32 "]::cbAtr %" PRIu32 " exceeds %" PRIuz, index,
+			           readerState->cbAtr, (size_t)ARRAYSIZE(readerState->rgbAtr));
+			goto fail;
+		}
 		Stream_Read(s, readerState->rgbAtr, 36);            /* rgbAtr [0..36] (36 bytes) */
 	}
 
