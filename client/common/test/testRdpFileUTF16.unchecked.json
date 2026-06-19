@@ -267,6 +267,7 @@
 		"FreeRDP_LoadBalanceInfoLength": 0.0,
 		"FreeRDP_RedirectionPasswordLength": 0.0,
 		"FreeRDP_RedirectionTsvUrlLength": 0.0,
+		"FreeRDP_RemoteAppFeatureFlags": 23.0,
 		"FreeRDP_TargetNetAddressCount": 0.0,
 		"FreeRDP_RedirectionAcceptedCertLength": 0.0,
 		"FreeRDP_RedirectionPreferType": 0.0,

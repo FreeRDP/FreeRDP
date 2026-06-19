@@ -977,7 +977,6 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 
 	release_keys(xfc, FALSE);
 	release_keys(xfc, TRUE);
-	xf_sync_kbd_state(xfc);
 }
 
 static BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)

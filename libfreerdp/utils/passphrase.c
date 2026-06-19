@@ -323,8 +323,8 @@ static const char* freerdp_passphrase_read_askpass(const char* prompt, char* buf
 	return buf;
 }
 
-const char* freerdp_passphrase_from_env(rdpContext* context, const char* prompt, char* buf,
-                                        size_t bufsiz)
+const char* freerdp_passphrase_from_env(WINPR_ATTR_UNUSED rdpContext* context, const char* prompt,
+                                        char* buf, size_t bufsiz)
 {
 	// NOLINTNEXTLINE(concurrency-mt-unsafe)
 	const char* askpass_env = getenv("FREERDP_ASKPASS");

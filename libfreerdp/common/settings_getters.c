@@ -1922,6 +1922,9 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 		case FreeRDP_RedirectionTsvUrlLength:
 			return settings->RedirectionTsvUrlLength;
 
+		case FreeRDP_RemoteAppFeatureFlags:
+			return settings->RemoteAppFeatureFlags;
+
 		case FreeRDP_RemoteAppNumIconCacheEntries:
 			return settings->RemoteAppNumIconCacheEntries;
 
@@ -2420,6 +2423,10 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_RedirectionTsvUrlLength:
 			settings->RedirectionTsvUrlLength = cnv.c;
+			break;
+
+		case FreeRDP_RemoteAppFeatureFlags:
+			settings->RemoteAppFeatureFlags = cnv.c;
 			break;
 
 		case FreeRDP_RemoteAppNumIconCacheEntries:
@@ -3417,6 +3424,7 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 BOOL freerdp_settings_set_string_(WINPR_ATTR_UNUSED rdpSettings* settings,
                                   WINPR_ATTR_UNUSED FreeRDP_Settings_Keys_String id,
                                   const char* val, size_t len)
+
 {
 	union
 	{

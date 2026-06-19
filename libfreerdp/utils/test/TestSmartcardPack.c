@@ -25,9 +25,9 @@
  * LocateCards_ATRMask whose cbAtr is set to the requested value. */
 static wStream* build_locate_cards_by_atr_a(UINT32 cbAtr)
 {
-	wStream* s = Stream_New(NULL, 24 + 8 + sizeof(LocateCards_ATRMask));
+	wStream* s = Stream_New(nullptr, 24 + 8 + sizeof(LocateCards_ATRMask));
 	if (!s)
-		return NULL;
+		return nullptr;
 
 	Stream_Write_UINT32(s, 0);          /* cbContext = 0 */
 	Stream_Write_UINT32(s, 0);          /* pbContextNdrPtr = 0 */
@@ -44,7 +44,7 @@ static wStream* build_locate_cards_by_atr_a(UINT32 cbAtr)
 	if (!Stream_SetPosition(s, 0))
 	{
 		Stream_Free(s, TRUE);
-		return NULL;
+		return nullptr;
 	}
 	return s;
 }
@@ -59,7 +59,7 @@ static BOOL run_case(UINT32 cbAtr, BOOL expectAccept)
 	const LONG status = smartcard_unpack_locate_cards_by_atr_a_call(s, &call);
 	Stream_Free(s, TRUE);
 
-	const BOOL accepted = (status == SCARD_S_SUCCESS) ? TRUE : FALSE;
+	const BOOL accepted = status == SCARD_S_SUCCESS;
 	if (accepted != expectAccept)
 	{
 		printf("cbAtr=%" PRIu32 ": expected %s, unpack returned 0x%08" PRIX32 "\n", cbAtr,

@@ -405,6 +405,8 @@ static const struct settings_str_entry settings_map[] = {
 	  "FreeRDP_RedirectionPreferType" },
 	{ FreeRDP_RedirectionTsvUrlLength, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_RedirectionTsvUrlLength" },
+	{ FreeRDP_RemoteAppFeatureFlags, FREERDP_SETTINGS_TYPE_UINT32,
+	  "FreeRDP_RemoteAppFeatureFlags" },
 	{ FreeRDP_RemoteAppNumIconCacheEntries, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_RemoteAppNumIconCacheEntries" },
 	{ FreeRDP_RemoteAppNumIconCaches, FREERDP_SETTINGS_TYPE_UINT32,
