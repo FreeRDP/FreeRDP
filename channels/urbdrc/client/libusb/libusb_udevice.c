@@ -835,7 +835,6 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 	BYTE bus_number = 0;
 	BYTE device_address = 0;
 	int ret = 0;
-	size_t len = 0;
 	URBDRC_PLUGIN* urbdrc = nullptr;
 	WCHAR* text = (WCHAR*)Buffer;
 	BYTE slen = 0;
@@ -875,47 +874,61 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 				           "%s [%d], iProduct: %" PRIu8 "!",
 				           msg, ret, devDescriptor->iProduct);
 
-				len = MIN(sizeof(strDesc), inSize);
+				size_t len = MIN(sizeof(strDesc), inSize);
 				for (size_t i = 0; i < len; i++)
 					text[i] = (WCHAR)strDesc[i];
 
-				*BufferSize = (BYTE)(len * 2);
+				*BufferSize = (BYTE)(len * sizeof(WCHAR));
 			}
 			else
 			{
-				/* ret and slen should be equals, but you never know creativity
-				 * of device manufacturers...
-				 * So also check the string length returned as server side does
-				 * not honor strings with multi '\0' characters well.
-				 */
-				const size_t rchar = _wcsnlen((WCHAR*)&data[2], sizeof(data) / sizeof(WCHAR));
-				len = MIN((BYTE)ret - 2, slen);
-				len = MIN(len, inSize);
-				len = MIN(len, rchar * sizeof(WCHAR) + sizeof(WCHAR));
-				memcpy(Buffer, &data[2], len);
+				size_t maxlen = inSize;
+				size_t len = 0;
+				if (inSize > sizeof(WCHAR))
+				{
+					maxlen -= sizeof(WCHAR);
 
-				/* Just as above, the returned WCHAR string should be '\0'
-				 * terminated, but never trust hardware to conform to specs... */
-				Buffer[len - 2] = '\0';
-				Buffer[len - 1] = '\0';
+					/* ret and slen should be equals, but you never know creativity
+					 * of device manufacturers...
+					 * So also check the string length returned as server side does
+					 * not honor strings with multi '\0' characters well.
+					 */
+					const size_t rchar =
+					    _wcsnlen((WCHAR*)&data[2], (sizeof(data) / sizeof(WCHAR)) - 1);
+					len = MIN((BYTE)ret - 2, slen);
+					len = MIN(len, rchar * sizeof(WCHAR));
+					len = MIN(len, maxlen);
+
+					memcpy(Buffer, &data[2], len);
+
+					/* Just as above, the returned WCHAR string should be '\0'
+					 * terminated, but never trust hardware to conform to specs... */
+					if (Buffer[len] != '\0')
+					{
+						Buffer[len++] = '\0';
+						Buffer[len++] = '\0';
+					}
+				}
 				*BufferSize = (BYTE)len;
 			}
 		}
 		break;
 
 		case DeviceTextLocationInformation:
+		{
 			bus_number = libusb_get_bus_number(pdev->libusb_dev);
 			device_address = libusb_get_device_address(pdev->libusb_dev);
 			(void)sprintf_s(deviceLocation, sizeof(deviceLocation),
 			                "Port_#%04" PRIu8 ".Hub_#%04" PRIu8 "", device_address, bus_number);
 
-			len = strnlen(deviceLocation,
-			              MIN(sizeof(deviceLocation), (inSize > 0) ? inSize - 1U : 0));
+			size_t len = strnlen(deviceLocation,
+			                     MIN(sizeof(deviceLocation), (inSize > 0) ? inSize - 1U : 0));
 			for (size_t i = 0; i < len; i++)
 				text[i] = (WCHAR)deviceLocation[i];
 			text[len++] = '\0';
 			*BufferSize = (UINT8)(len * sizeof(WCHAR));
-			break;
+		}
+		break;
 
 		default:
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "Query Text: unknown TextType %" PRIu32 "",
