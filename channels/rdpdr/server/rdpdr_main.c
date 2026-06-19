@@ -3721,6 +3721,8 @@ static RdpdrServerPrivate* rdpdr_server_private_new(void)
 	if (!priv->IrpList)
 		goto fail;
 
+	ListDictionary_ValueObject(priv->IrpList)->fnObjectFree = (OBJECT_FREE_FN)rdpdr_server_irp_free;
+
 	priv->devicelist = HashTable_New(FALSE);
 	if (!priv->devicelist)
 		goto fail;
