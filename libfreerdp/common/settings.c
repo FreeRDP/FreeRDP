@@ -4322,11 +4322,214 @@ static BOOL deserialize_pointer(const WINPR_JSON* json, rdpSettings* settings,
 	}
 }
 
+static WINPR_JSON* settings_json_get(wLog* log, WINPR_JSON* jbool, const char* name)
+{
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(jbool, name);
+	if (!item)
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s not found", name);
+	}
+	return item;
+}
+
+static BOOL settings_json_get_uint(wLog* log, WINPR_JSON* jval, const char* name, UINT64 max,
+                                   UINT64* pval)
+{
+	WINPR_ASSERT(jval);
+	WINPR_ASSERT(name);
+	WINPR_ASSERT(pval);
+
+	WINPR_JSON* item = settings_json_get(log, jval, name);
+	if (!item)
+		return FALSE;
+
+	if (!WINPR_JSON_IsNumber(item))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s not of type NUMBER", name);
+		return FALSE;
+	}
+
+	const uint64_t val = uint_from_json_item(item, max);
+	if (errno != 0)
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_Print(log, WLOG_ERROR, "settings entry %s invalid NUMBER '%s'", name,
+		           winpr_strerror(errno, buffer, sizeof(buffer)));
+		return FALSE;
+	}
+	*pval = val;
+	return TRUE;
+}
+
+static BOOL settings_json_get_int(wLog* log, WINPR_JSON* jval, const char* name, INT64 min,
+                                  INT64 max, INT64* pval)
+{
+	WINPR_ASSERT(jval);
+	WINPR_ASSERT(name);
+	WINPR_ASSERT(pval);
+
+	WINPR_JSON* item = settings_json_get(log, jval, name);
+	if (!item)
+		return FALSE;
+
+	if (!WINPR_JSON_IsNumber(item))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s not of type NUMBER", name);
+		return FALSE;
+	}
+
+	const int64_t val = int_from_json_item(item, min, max);
+	if (errno != 0)
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_Print(log, WLOG_ERROR, "settings entry %s invalid NUMBER '%s'", name,
+		           winpr_strerror(errno, buffer, sizeof(buffer)));
+		return FALSE;
+	}
+	*pval = val;
+	return TRUE;
+}
+
+static BOOL settings_json_bool(wLog* log, rdpSettings* settings, FreeRDP_Settings_Keys_Bool key,
+                               WINPR_JSON* jbool, const char* name)
+{
+	WINPR_JSON* item = settings_json_get(log, jbool, name);
+	if (!item)
+		return FALSE;
+	if (!WINPR_JSON_IsBool(item))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s not of type BOOL", name);
+		return FALSE;
+	}
+	const BOOL val = WINPR_JSON_IsTrue(item);
+	if (!freerdp_settings_set_bool(settings, key, val))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s: failed to update rdpSettings", name);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL settings_json_uint16(wLog* log, rdpSettings* settings, FreeRDP_Settings_Keys_UInt16 key,
+                                 WINPR_JSON* jbool, const char* name)
+{
+	UINT64 val = 0;
+	if (!settings_json_get_uint(log, jbool, name, UINT16_MAX, &val))
+		return FALSE;
+	if (!freerdp_settings_set_uint16(settings, key, WINPR_ASSERTING_INT_CAST(uint16_t, val)))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s: failed to update rdpSettings", name);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL settings_json_int16(wLog* log, rdpSettings* settings, FreeRDP_Settings_Keys_Int16 key,
+                                WINPR_JSON* jbool, const char* name)
+{
+	INT64 val = 0;
+	if (!settings_json_get_int(log, jbool, name, INT16_MIN, INT16_MAX, &val))
+		return FALSE;
+	if (!freerdp_settings_set_int16(settings, key, WINPR_ASSERTING_INT_CAST(int16_t, val)))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s: failed to update rdpSettings", name);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL settings_json_uint32(wLog* log, rdpSettings* settings, FreeRDP_Settings_Keys_UInt32 key,
+                                 WINPR_JSON* jbool, const char* name)
+{
+	UINT64 val = 0;
+	if (!settings_json_get_uint(log, jbool, name, UINT32_MAX, &val))
+		return FALSE;
+	if (!freerdp_settings_set_uint32(settings, key, WINPR_ASSERTING_INT_CAST(uint32_t, val)))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s: failed to update rdpSettings", name);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL settings_json_int32(wLog* log, rdpSettings* settings, FreeRDP_Settings_Keys_Int32 key,
+                                WINPR_JSON* jbool, const char* name)
+{
+	INT64 val = 0;
+	if (!settings_json_get_int(log, jbool, name, INT32_MIN, INT32_MAX, &val))
+		return FALSE;
+	if (!freerdp_settings_set_int32(settings, key, WINPR_ASSERTING_INT_CAST(int32_t, val)))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s: failed to update rdpSettings", name);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL settings_json_uint64(wLog* log, rdpSettings* settings, FreeRDP_Settings_Keys_UInt64 key,
+                                 WINPR_JSON* jbool, const char* name)
+{
+	UINT64 val = 0;
+	if (!settings_json_get_uint(log, jbool, name, UINT64_MAX, &val))
+		return FALSE;
+	if (!freerdp_settings_set_uint64(settings, key, val))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s: failed to update rdpSettings", name);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL settings_json_int64(wLog* log, rdpSettings* settings, FreeRDP_Settings_Keys_Int64 key,
+                                WINPR_JSON* jbool, const char* name)
+{
+	INT64 val = 0;
+	if (!settings_json_get_int(log, jbool, name, INT64_MIN, INT64_MAX, &val))
+		return FALSE;
+	if (!freerdp_settings_set_int64(settings, key, val))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s: failed to update rdpSettings", name);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL settings_json_string(wLog* log, rdpSettings* settings, FreeRDP_Settings_Keys_String key,
+                                 WINPR_JSON* jstring, const char* name)
+{
+	const char* val = nullptr;
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(jstring, name);
+	if (item && !WINPR_JSON_IsNull(item))
+	{
+		if (!WINPR_JSON_IsString(item))
+		{
+			WLog_Print(log, WLOG_ERROR, "settings entry %s not of type STRING", name);
+			return FALSE;
+		}
+		val = WINPR_JSON_GetStringValue(item);
+		if (!val)
+		{
+			WLog_Print(log, WLOG_ERROR, "settings entry %s: NULL value", name);
+			return FALSE;
+		}
+	}
+	if (!freerdp_settings_set_string(settings, key, val))
+	{
+		WLog_Print(log, WLOG_ERROR, "settings entry %s: failed to update rdpSettings", name);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 {
+	wLog* log = WLog_Get(TAG);
 	WINPR_JSON* json = WINPR_JSON_ParseWithLength(jstr, length);
 	if (!json)
+	{
+		WLog_Print(log, WLOG_ERROR, "JSON parsing failed");
 		return nullptr;
+	}
 
 	WINPR_JSON* jbool = WINPR_JSON_GetObjectItemCaseSensitive(
 	    json, freerdp_settings_get_type_name_for_type(RDP_SETTINGS_TYPE_BOOL));
@@ -4349,7 +4552,10 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 
 	rdpSettings* settings = freerdp_settings_new(0);
 	if (!settings)
+	{
+		WLog_Print(log, WLOG_ERROR, "freerdp_settings_new failed");
 		goto fail;
+	}
 	if (!jbool || !juint16 || !jint16 || !juint32 || !jint32 || !juint64 || !jint64 || !jstring ||
 	    !jpointer)
 		goto fail;
@@ -4407,91 +4613,37 @@ rdpSettings* freerdp_settings_deserialize(const char* jstr, size_t length)
 		switch (type)
 		{
 			case RDP_SETTINGS_TYPE_BOOL:
-			{
-				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(jbool, name);
-				if (!item)
+				if (!settings_json_bool(log, settings, iter.b, jbool, name))
 					goto fail;
-				if (!WINPR_JSON_IsBool(item))
-					goto fail;
-				const BOOL val = WINPR_JSON_IsTrue(item);
-				if (!freerdp_settings_set_bool(settings, iter.b, val))
-					goto fail;
-			}
-			break;
+				break;
 			case RDP_SETTINGS_TYPE_UINT16:
-			{
-				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(juint16, name);
-				const uint16_t val = (uint16_t)uint_from_json_item(item, UINT16_MAX);
-				if (errno != 0)
+				if (!settings_json_uint16(log, settings, iter.u16, juint16, name))
 					goto fail;
-				if (!freerdp_settings_set_uint16(settings, iter.u16, val))
-					goto fail;
-			}
-			break;
+				break;
 			case RDP_SETTINGS_TYPE_INT16:
-			{
-				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(jint16, name);
-				const int16_t val = (int16_t)int_from_json_item(item, INT16_MIN, INT16_MAX);
-				if (errno != 0)
+				if (!settings_json_int16(log, settings, iter.i16, jint16, name))
 					goto fail;
-				if (!freerdp_settings_set_int16(settings, iter.i16, val))
-					goto fail;
-			}
-			break;
+				break;
 			case RDP_SETTINGS_TYPE_UINT32:
-			{
-				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(juint32, name);
-				const uint32_t val = (uint32_t)uint_from_json_item(item, UINT32_MAX);
-				if (errno != 0)
+				if (!settings_json_uint32(log, settings, iter.u32, juint32, name))
 					goto fail;
-				if (!freerdp_settings_set_uint32(settings, iter.u32, val))
-					goto fail;
-			}
-			break;
+				break;
 			case RDP_SETTINGS_TYPE_INT32:
-			{
-				const int64_t val = int_from_json(jint32, name, INT32_MIN, INT32_MAX);
-				if (errno != 0)
+				if (!settings_json_int32(log, settings, iter.i32, jint32, name))
 					goto fail;
-				if (!freerdp_settings_set_int32(settings, iter.i32, (int32_t)val))
-					goto fail;
-			}
-			break;
+				break;
 			case RDP_SETTINGS_TYPE_UINT64:
-			{
-				const uint64_t val = uint_from_json(juint64, name, UINT64_MAX);
-				if (errno != 0)
+				if (!settings_json_uint64(log, settings, iter.u64, juint64, name))
 					goto fail;
-				if (!freerdp_settings_set_uint64(settings, iter.u64, val))
-					goto fail;
-			}
-			break;
+				break;
 			case RDP_SETTINGS_TYPE_INT64:
-			{
-				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(jint64, name);
-				const int64_t val = int_from_json_item(item, INT64_MIN, INT64_MAX);
-				if (errno != 0)
+				if (!settings_json_int64(log, settings, iter.i64, jint64, name))
 					goto fail;
-				if (!freerdp_settings_set_int64(settings, iter.i64, val))
-					goto fail;
-			}
-			break;
+				break;
 			case RDP_SETTINGS_TYPE_STRING:
-			{
-				const char* val = nullptr;
-				WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(jstring, name);
-				if (item && !WINPR_JSON_IsNull(item))
-				{
-					if (!WINPR_JSON_IsString(item))
-						goto fail;
-					val = WINPR_JSON_GetStringValue(item);
-					if (!val)
-						goto fail;
-				}
-				if (!freerdp_settings_set_string(settings, iter.str, val))
+				if (!settings_json_string(log, settings, iter.str, jstring, name))
 					goto fail;
-			}
-			break;
+				break;
 			case RDP_SETTINGS_TYPE_POINTER:
 			default:
 				break;
