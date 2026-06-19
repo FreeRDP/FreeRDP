@@ -203,6 +203,10 @@ static UINT enumerator_server_recv_device_added_notification(CamDevEnumServerCon
 		return ERROR_INVALID_DATA;
 	}
 
+	const size_t rem = Stream_GetRemainingLength(s);
+	if (rem > 0)
+		WLog_WARN(TAG, "Unparsed data: %" PRIuz " bytes remain", rem);
+
 	IFCALLRET(context->DeviceAddedNotification, error, context, &pdu);
 	if (error)
 		WLog_ERR(TAG, "context->DeviceAddedNotification failed with error %" PRIu32 "", error);
