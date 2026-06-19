@@ -7,8 +7,13 @@ android {
         applicationId "com.freerdp.afreerdp"
         minSdkVersion rootProject.ext.minApi
         targetSdkVersion rootProject.ext.targetApi
-        versionName = androidGitVersion.name()
-        versionCode = androidGitVersion.code()
+        versionName = rootProject.ext.versionName
+        if (versionName.isEmpty())
+          versionName = androidGitVersion.name()
+
+        versionCode = rootProject.ext.versionCode
+        if (versionCode <= 0)
+          versionCode = androidGitVersion.code()
 
         println 'VERSION_NAME:        ' + versionName
         println 'VERSION_CODE:        ' + versionCode
