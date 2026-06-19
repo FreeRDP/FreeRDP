@@ -714,7 +714,7 @@ static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
 
 			/* Check if we select MS GIDS App (only one we know) */
 			Stream_Read(s, aid, lc);
-			if (memcmp(aid, g_MsGidsAID, lc) != 0)
+			if ((lc > sizeof(g_MsGidsAID)) || (memcmp(aid, g_MsGidsAID, lc) != 0))
 			{
 				status = ISO_STATUS_FILENOTFOUND;
 				break;
