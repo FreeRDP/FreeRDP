@@ -411,10 +411,15 @@ static bool test_data(const char* json, const void* data, size_t len, bool unche
 {
 	bool rc = false;
 
+	wLog* log = WLog_Get(__func__);
 	rdpSettings* settings = load_from(data, len, unchecked);
 	rdpSettings* expect = read_json(json);
 	if (!settings || !expect)
+	{
+		WLog_Print(log, WLOG_ERROR, "Test case '%s': settings=%p, expect=%p", json, settings,
+		           expect);
 		goto fail;
+	}
 
 #ifndef WITH_GFX_H264
 	if (!freerdp_settings_set_bool(expect, FreeRDP_GfxH264, FALSE) ||
@@ -422,7 +427,6 @@ static bool test_data(const char* json, const void* data, size_t len, bool unche
 	    !freerdp_settings_set_bool(expect, FreeRDP_GfxAVC444v2, FALSE))
 		goto fail;
 #endif
-	wLog* log = WLog_Get(__func__);
 	WLog_Print(log, WLOG_INFO, "Test case '%s'", json);
 	if (freerdp_settings_print_diff(log, WLOG_ERROR, expect, settings))
 		goto fail;
