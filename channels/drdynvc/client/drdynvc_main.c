@@ -721,7 +721,7 @@ struct stats_collector_argument
 	size_t used;
 };
 
-static BOOL stats_collector(const void* key, void* value, void* arg)
+static BOOL stats_collector(WINPR_ATTR_UNUSED const void* key, void* value, void* arg)
 {
 	struct stats_collector_argument* args = arg;
 	WINPR_ASSERT(args);
@@ -1196,7 +1196,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, const B
 			uint32_t chunkLength = dataSize;
 
 			WINPR_ASSERT(pos <= CHANNEL_CHUNK_LENGTH);
-			const size_t clen = CHANNEL_CHUNK_LENGTH - WINPR_ASSERTING_INT_CAST(uint32_t, pos);
+			const uint32_t clen = CHANNEL_CHUNK_LENGTH - WINPR_ASSERTING_INT_CAST(uint32_t, pos);
 			if (chunkLength > clen)
 			{
 				stats->fragmentsOut++;
