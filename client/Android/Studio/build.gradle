@@ -1,3 +1,26 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+        maven {
+            url 'https://maven.google.com'
+        }
+    }
+    dependencies {
+       classpath 'com.android.tools.build:gradle:8.13.0'
+    }
+}
+
+plugins {
+    id 'com.gladed.androidgitversion' version '0.4.14'
+}
+
+androidGitVersion {
+    abis = ['armeabi':1, 'armeabi-v7a':2, 'arm64-v8a':3, "riscv64":4, 'mips':5, 'mips64':6, 'x86':8, 'x86_64':9 ]
+    prefix ''
+    codeFormat 'MMNNPPRA'
+}
+
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 Properties releaseProperties = new Properties()
 File file = new File('release.properties')
@@ -22,28 +45,29 @@ ext {
     targetApi = releaseProperties.get('TARGET_API', 36)
     minApi = releaseProperties.get('MIN_API', 29)
     toolsVersion = releaseProperties.get('TOOLS_VERSION', '36.0.0')
+    universal = releaseProperties.get('BUILD_UNIVERSAL', true).toBoolean()
+    splitArchs = releaseProperties.get('SPLIT_ARCHITECTURES', 'x86;x86_64;riscv64;armeabi-v7a;arm64-v8a').split(';')
+    splitEnabled = releaseProperties.get('SPLIT_ENABLED', true).toBoolean()
+    ndkVersion = releaseProperties.get('NDK_VERSION', '29.0.13113456')
+    abiFilters = releaseProperties.get('ABI_FILTERS', 'x86;x86_64;riscv64;armeabi-v7a;arm64-v8a').split(';')
+    cmakeArguments = releaseProperties.get('CMAKE_ARGUMENTS', '-DWITH_FFMPEG=ON;-DWITH_OPENH264=ON;-DWITH_OPUS=ON;-DWITH_WEBP=ON;-DWITH_JPEG=ON;-DWITH_PNG=ON;-DWITH_CJSON=ON;-DWITH_OPENSSL=ON').split(';')
+    cmakeVersion = releaseProperties.get('CMAKE_VERSION', '4.1.2')
 
     println '----------------- Project configuration -------------------'
-    println 'RELEASE_STORE_FILE: ' + RELEASE_STORE_FILE
-    println 'RELEASE_KEY_ALIAS:  ' + RELEASE_KEY_ALIAS
-    println 'compile API:        ' + compileApi
-    println 'target API:         ' + targetApi
-    println 'min API:            ' + minApi
-    println 'tools version:      ' + toolsVersion
+    println 'RELEASE_STORE_FILE:  ' + RELEASE_STORE_FILE
+    println 'RELEASE_KEY_ALIAS:   ' + RELEASE_KEY_ALIAS
+    println 'COMPILE_API:         ' + compileApi
+    println 'TARGET_API:          ' + targetApi
+    println 'MIN_API:             ' + minApi
+    println 'TOOLS_VERSION:       ' + toolsVersion
+    println 'NDK_VERSION:         ' + ndkVersion
+    println 'SPLIT_ENABLED:       ' + splitEnabled
+    println 'BUILD_UNIVERSAL:     ' + universal
+    println 'SPLIT_ARCHITECTURES: ' + splitArchs
+    println 'ABI_FILTERS:         ' + abiFilters
+    println 'CMAKE_VERSION:       ' + cmakeVersion
+    println 'CMAKE_ARGUMENTS:     ' + cmakeArguments
     println '-----------------------------------------------------------'
-}
-
-buildscript {
-    repositories {
-        mavenCentral()
-        google()
-        maven {
-            url 'https://maven.google.com'
-        }
-    }
-    dependencies {
-       classpath 'com.android.tools.build:gradle:8.13.0'
-    }
 }
 
 allprojects {
