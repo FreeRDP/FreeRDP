@@ -7,11 +7,11 @@ android {
     defaultConfig {
         minSdkVersion rootProject.ext.minApi
         targetSdkVersion rootProject.ext.targetApi
-        ndkVersion = "29.0.13113456"
+        ndkVersion = rootProject.ext.ndkVersion
 
         ndk {
             //noinspection ChromeOsAbiSupport
-            abiFilters "arm64-v8a", "armeabi-v7a", "x86_64", "x86", "riscv64"
+            abiFilters rootProject.ext.abiFilters
         }
         externalNativeBuild {
             cmake {
@@ -25,10 +25,10 @@ android {
 
     splits {
         abi {
-            enable true
+            enable rootProject.ext.splitEnabled
             reset()
-            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a', 'riscv64'
-            universalApk true
+            include rootProject.ext.splitArchs
+            universalApk rootProject.ext.universal
         }
     }
 
@@ -36,6 +36,11 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            externalNativeBuild {
+                cmake {
+                    arguments rootProject.ext.cmakeArguments
+                }
+            }
         }
         debug {
             jniDebuggable true
@@ -71,7 +76,7 @@ android {
     externalNativeBuild {
         cmake {
             path file('src/main/cpp/CMakeLists.txt')
-            version '4.1.2'
+            version rootProject.ext.cmakeVersion
         }
     }
 }

@@ -1,16 +1,3 @@
-plugins {
-    id 'com.gladed.androidgitversion' version '0.4.14'
-}
-
-androidGitVersion {
-    abis = ['armeabi':1, 'armeabi-v7a':2, 'arm64-v8a':3, "riscv64":4, 'mips':5, 'mips64':6, 'x86':8, 'x86_64':9 ]
-    prefix ''
-    codeFormat 'MMNNPPRA'
-}
-
-println 'Version Name: ' + androidGitVersion.name()
-println 'Version Code: ' + androidGitVersion.code()
-
 apply plugin: 'com.android.application'
 android {
     compileSdkVersion = rootProject.ext.compileApi
@@ -22,14 +9,17 @@ android {
         targetSdkVersion rootProject.ext.targetApi
         versionName = androidGitVersion.name()
         versionCode = androidGitVersion.code()
+
+        println 'VERSION_NAME:        ' + versionName
+        println 'VERSION_CODE:        ' + versionCode
     }
 
     splits {
         abi {
-            enable true
+            enable rootProject.ext.splitEnabled
             reset()
-            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a', 'riscv64'
-            universalApk true
+            include rootProject.ext.splitArchs
+            universalApk rootProject.ext.universal
         }
     }
     
