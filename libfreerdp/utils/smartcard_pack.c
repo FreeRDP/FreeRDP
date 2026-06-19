@@ -319,14 +319,15 @@ static LONG smartcard_ndr_read_atrmask(wLog* log, wStream* s, LocateCards_ATRMas
 	/* [MS-RDPESC] 2.2.1.5: cbAtr is range(0..36), the number of valid bytes in the fixed
 	 * rgbAtr/rgbMask arrays. A larger value walks past them when the mask is compared byte
 	 * by byte, so reject it here rather than trusting the wire value. */
-	const LocateCards_ATRMask* masks = *data;
+	LocateCards_ATRMask* masks = *data;
 	for (size_t x = 0; x < min; x++)
 	{
-		if (masks[x].cbAtr > ARRAYSIZE(masks[x].rgbAtr))
+		const UINT32 val = winpr_Data_Get_UINT32(&masks[x].cbAtr);
+		if (val > ARRAYSIZE(masks[x].rgbAtr))
 		{
 			WLog_Print(log, WLOG_ERROR,
-			           "LocateCards_ATRMask[%" PRIuz "]::cbAtr %" PRIu32 " exceeds %" PRIuz, x,
-			           masks[x].cbAtr, (size_t)ARRAYSIZE(masks[x].rgbAtr));
+			           "LocateCards_ATRMask[%" PRIuz "]::cbAtr %" PRIu32 " exceeds %" PRIuz, x, val,
+			           (size_t)ARRAYSIZE(masks[x].rgbAtr));
 			free(*data);
 			*data = nullptr;
 			return STATUS_DATA_ERROR;
