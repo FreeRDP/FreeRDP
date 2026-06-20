@@ -421,11 +421,11 @@ public class SessionInputManager
 		handler.removeMessages(MSG_SCROLLING_REQUESTED);
 	}
 
-	@Override public void onTouchPointerScroll(boolean down)
+	@Override public void onTouchPointerScroll(int amount)
 	{
 		if (instance == 0)
 			return;
-		LibFreeRDP.sendCursorEvent(instance, 0, 0, Mouse.getScrollEvent(context, down));
+		LibFreeRDP.sendCursorEvent(instance, 0, 0, Mouse.getScrollEvent(context, amount));
 	}
 
 	@Override public void onTouchPointerToggleKeyboard()

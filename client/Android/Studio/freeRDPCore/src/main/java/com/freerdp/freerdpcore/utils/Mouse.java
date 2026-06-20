@@ -27,6 +27,7 @@ public class Mouse
 	private final static int PTRFLAGS_WHEEL = 0x0200;
 	private final static int PTRFLAGS_WHEEL_NEGATIVE = 0x0100;
 	private final static int PTRFLAGS_HWHEEL = 0x0400;
+	public final static int WHEEL_DELTA = 0x0078; // 120 rotation units = one notch
 
 	public static int getLeftButtonEvent(Context context, boolean down)
 	{
@@ -56,30 +57,30 @@ public class Mouse
 
 	public static int getScrollEvent(Context context, boolean down)
 	{
-		int flags = PTRFLAGS_WHEEL;
+		return getScrollEvent(context, down ? -WHEEL_DELTA : WHEEL_DELTA);
+	}
 
-		// invert scrolling?
+	// amount: signed wheel rotation units (positive = scroll up, negative = scroll down)
+	public static int getScrollEvent(Context context, int amount)
+	{
 		if (ApplicationSettingsActivity.getInvertScrolling(context))
-			down = !down;
-
-		if (down)
-			flags |= (PTRFLAGS_WHEEL_NEGATIVE | 0x0088);
-		else
-			flags |= 0x0078;
-		return flags;
+			amount = -amount;
+		return wheelEvent(PTRFLAGS_WHEEL, amount);
 	}
 
 	public static int getHScrollEvent(Context context, boolean right)
 	{
-		int flags = PTRFLAGS_HWHEEL;
-
+		int amount = right ? WHEEL_DELTA : -WHEEL_DELTA;
 		if (ApplicationSettingsActivity.getInvertScrolling(context))
-			right = !right;
+			amount = -amount;
+		return wheelEvent(PTRFLAGS_HWHEEL, amount);
+	}
 
-		if (right)
-			flags |= 0x0078;
-		else
-			flags |= (PTRFLAGS_WHEEL_NEGATIVE | 0x0088);
-		return flags;
+	private static int wheelEvent(int wheelFlag, int amount)
+	{
+		int flags = wheelFlag;
+		if (amount < 0)
+			flags |= PTRFLAGS_WHEEL_NEGATIVE;
+		return flags | (amount & 0xFF);
 	}
 }
