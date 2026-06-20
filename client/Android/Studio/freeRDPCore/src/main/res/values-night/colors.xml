@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="tp_button_bg">#FF3C4043</color>
+    <color name="tp_icon">#FFE8EAED</color>
+    <color name="tp_on_accent">#FF202124</color>
+    <color name="tp_accent">#FF8AB4F8</color>
+    <color name="tp_shadow">#55000000</color>
+    <color name="tp_leader">#55E8EAED</color>
+    <color name="tp_close">#FFF28B82</color>
+</resources>

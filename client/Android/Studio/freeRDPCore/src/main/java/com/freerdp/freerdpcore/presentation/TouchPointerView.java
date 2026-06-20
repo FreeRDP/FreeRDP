@@ -2,6 +2,7 @@
    Android Touch Pointer view
 
    Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
+   Copyright 2026 Ibrahim Sevinc <ibrahim.sevinc.mail@gmail.com>
 
    This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
    If a copy of the MPL was not distributed with this file, You can obtain one at
@@ -10,68 +11,74 @@
 
 package com.freerdp.freerdpcore.presentation;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
-import android.graphics.Matrix;
-import android.graphics.RectF;
+import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
+import androidx.core.content.ContextCompat;
+import androidx.core.widget.ImageViewCompat;
+
 import com.freerdp.freerdpcore.R;
-import com.freerdp.freerdpcore.utils.GestureDetector;
 
-public class TouchPointerView extends ImageView
+// Full-screen overlay hosting a draggable touch-pointer button cluster.
+public class TouchPointerView extends FrameLayout
 {
-
-	private static final int POINTER_ACTION_CURSOR = 0;
-	private static final int POINTER_ACTION_CLOSE = 3;
-
-	// the touch pointer consists of 9 quadrants with the following functionality:
-	//
-	// -------------
-	// | 0 | 1 | 2 |
-	// -------------
-	// | 3 | 4 | 5 |
-	// -------------
-	// | 6 | 7 | 8 |
-	// -------------
-	//
-	// 0 ... contains the actual pointer (the tip must be centered in the quadrant)
-	// 1 ... is left empty
-	// 2, 3, 5, 6, 7, 8 ... function quadrants that issue a callback
-	// 4 ... pointer center used for left clicks and to drag the pointer
-	private static final int POINTER_ACTION_RCLICK = 2;
-	private static final int POINTER_ACTION_LCLICK = 4;
-	private static final int POINTER_ACTION_MOVE = 4;
-	private static final int POINTER_ACTION_SCROLL = 5;
-	private static final int POINTER_ACTION_RESET = 6;
-	private static final int POINTER_ACTION_KEYBOARD = 7;
-	private static final int POINTER_ACTION_EXTKEYBOARD = 8;
 	private static final float SCROLL_DELTA = 10.0f;
-	private static final int DEFAULT_TOUCH_POINTER_RESTORE_DELAY = 150;
-	private RectF pointerRect;
-	private final RectF[] pointerAreaRects = new RectF[9];
-	private Matrix translationMatrix;
-	private boolean pointerMoving = false;
-	private boolean pointerScrolling = false;
+	private static final int LONG_PRESS_MS = 500;
+
+	private View cluster;
+	private ImageView cursor;
+	private ImageButton scrollButton;
+
 	private TouchPointerListener listener = null;
+
+	private float density;
+	private int touchSlop;
+	private boolean placed = false;
+
+	// puck drag state
+	private float downRawX, downRawY, startTransX, startTransY;
+	private boolean dragging = false;
+	private boolean holdDragging = false;
+
+	// scroll state
+	private float scrollLastRawY;
+	private float scrollBaseHeight;
+	private ValueAnimator pillAnimator;
+
+	private int cursorTint;
+
 	private final Handler uiHandler = new Handler(Looper.getMainLooper());
-	private final Runnable restorePointerImage =
-	    () -> setPointerImage(R.drawable.touch_pointer_default);
-	// gesture detection
-	private GestureDetector gestureDetector;
+	private final Runnable longPress = () ->
+	{
+		if (!dragging && !holdDragging)
+		{
+			holdDragging = true;
+			sendLeft(true);
+		}
+	};
+
 	public TouchPointerView(Context context)
 	{
-		super(context);
-		initTouchPointer(context);
+		this(context, null);
 	}
 
 	public TouchPointerView(Context context, AttributeSet attrs)
 	{
-		super(context, attrs);
-		initTouchPointer(context);
+		this(context, attrs, 0);
 	}
 
 	public TouchPointerView(Context context, AttributeSet attrs, int defStyle)
@@ -82,29 +89,43 @@ public class TouchPointerView extends ImageView
 
 	private void initTouchPointer(Context context)
 	{
-		gestureDetector =
-		    new GestureDetector(context, new TouchPointerGestureListener(), null, true);
-		gestureDetector.setLongPressTimeout(500);
-		translationMatrix = new Matrix();
-		setScaleType(ScaleType.MATRIX);
-		setImageMatrix(translationMatrix);
+		density = getResources().getDisplayMetrics().density;
+		touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+		cursorTint = ContextCompat.getColor(context, R.color.tp_icon);
+		setClipChildren(false);
 
-		// init rects
-		final float rectSizeWidth = (float)getDrawable().getIntrinsicWidth() / 3.0f;
-		final float rectSizeHeight = (float)getDrawable().getIntrinsicWidth() / 3.0f;
-		for (int i = 0; i < 3; i++)
-		{
-			for (int j = 0; j < 3; j++)
+		LayoutInflater.from(context).inflate(R.layout.touch_pointer, this, true);
+		cluster = findViewById(R.id.tp_cluster);
+		cursor = findViewById(R.id.tp_cursor);
+		scrollButton = findViewById(R.id.tp_scroll);
+
+		findViewById(R.id.tp_puck).setOnTouchListener((v, e) -> onPuckTouch(e));
+		scrollButton.setOnTouchListener((v, e) -> onScrollTouch(e));
+
+		findViewById(R.id.tp_close).setOnClickListener(v -> {
+			if (listener != null)
+				listener.onTouchPointerClose();
+		});
+		findViewById(R.id.tp_rclick).setOnClickListener(v -> {
+			int[] h = hotspot();
+			if (listener != null)
 			{
-				int left = (int)(j * rectSizeWidth);
-				int top = (int)(i * rectSizeHeight);
-				int right = left + (int)rectSizeWidth;
-				int bottom = top + (int)rectSizeHeight;
-				pointerAreaRects[i * 3 + j] = new RectF(left, top, right, bottom);
+				listener.onTouchPointerRightClick(h[0], h[1], true);
+				listener.onTouchPointerRightClick(h[0], h[1], false);
 			}
-		}
-		pointerRect =
-		    new RectF(0, 0, getDrawable().getIntrinsicWidth(), getDrawable().getIntrinsicHeight());
+		});
+		findViewById(R.id.tp_reset).setOnClickListener(v -> {
+			if (listener != null)
+				listener.onTouchPointerResetScrollZoom();
+		});
+		findViewById(R.id.tp_keyboard).setOnClickListener(v -> {
+			if (listener != null)
+				listener.onTouchPointerToggleKeyboard();
+		});
+		findViewById(R.id.tp_ext_keyboard).setOnClickListener(v -> {
+			if (listener != null)
+				listener.onTouchPointerToggleExtKeyboard();
+		});
 	}
 
 	public void setTouchPointerListener(TouchPointerListener listener)
@@ -114,96 +135,225 @@ public class TouchPointerView extends ImageView
 
 	public int getPointerWidth()
 	{
-		return getDrawable().getIntrinsicWidth();
+		return cluster.getWidth() > 0
+		    ? cluster.getWidth()
+		    : getResources().getDimensionPixelSize(R.dimen.tp_cluster_size);
 	}
 
 	public int getPointerHeight()
 	{
-		return getDrawable().getIntrinsicHeight();
+		return cluster.getHeight() > 0
+		    ? cluster.getHeight()
+		    : getResources().getDimensionPixelSize(R.dimen.tp_cluster_size);
 	}
 
 	public float[] getPointerPosition()
 	{
-		float[] curPos = new float[2];
-		translationMatrix.mapPoints(curPos);
-		return curPos;
+		return new float[] { cluster.getX(), cluster.getY() };
 	}
 
-	private void movePointer(float deltaX, float deltaY)
+	// click hotspot == cursor tip == cluster top-left corner, in overlay coords
+	private int[] hotspot()
 	{
-		translationMatrix.postTranslate(deltaX, deltaY);
-		setImageMatrix(translationMatrix);
+		return new int[] { (int)cluster.getX(), (int)cluster.getY() };
 	}
 
-	private void ensureVisibility(int screen_width, int screen_height)
+	private void sendLeft(boolean down)
 	{
-		float[] curPos = new float[2];
-		translationMatrix.mapPoints(curPos);
-
-		if (curPos[0] > (screen_width - pointerRect.width()))
-			curPos[0] = screen_width - pointerRect.width();
-		if (curPos[0] < 0)
-			curPos[0] = 0;
-		if (curPos[1] > (screen_height - pointerRect.height()))
-			curPos[1] = screen_height - pointerRect.height();
-		if (curPos[1] < 0)
-			curPos[1] = 0;
-
-		translationMatrix.setTranslate(curPos[0], curPos[1]);
-		setImageMatrix(translationMatrix);
+		int[] h = hotspot();
+		if (listener != null)
+			listener.onTouchPointerLeftClick(h[0], h[1], down);
 	}
 
-	private void displayPointerImageAction(int resId)
+	private void sendMove()
 	{
-		setPointerImage(resId);
-		uiHandler.removeCallbacks(restorePointerImage);
-		uiHandler.postDelayed(restorePointerImage, DEFAULT_TOUCH_POINTER_RESTORE_DELAY);
+		int[] h = hotspot();
+		if (listener != null)
+			listener.onTouchPointerMove(h[0], h[1]);
 	}
 
-	private void setPointerImage(int resId)
+	private void setClusterTranslation(float tx, float ty)
 	{
-		setImageResource(resId);
+		float maxX = getWidth() - cluster.getWidth();
+		float maxY = getHeight() - cluster.getHeight();
+		if (tx < 0)
+			tx = 0;
+		if (ty < 0)
+			ty = 0;
+		if (maxX > 0 && tx > maxX)
+			tx = maxX;
+		if (maxY > 0 && ty > maxY)
+			ty = maxY;
+		cluster.setTranslationX(tx);
+		cluster.setTranslationY(ty);
 	}
 
-	// returns the pointer area with the current translation matrix applied
-	private RectF getCurrentPointerArea(int area)
+	@Override protected void onLayout(boolean changed, int l, int t, int r, int b)
 	{
-		RectF transRect = new RectF(pointerAreaRects[area]);
-		translationMatrix.mapRect(transRect);
-		return transRect;
+		super.onLayout(changed, l, t, r, b);
+		if (!placed && getWidth() > 0 && cluster.getWidth() > 0)
+		{
+			placed = true;
+			setClusterTranslation((getWidth() - cluster.getWidth()) / 2.0f,
+			                      (getHeight() - cluster.getHeight()) / 2.0f);
+		}
+		else
+		{
+			setClusterTranslation(cluster.getTranslationX(), cluster.getTranslationY());
+		}
 	}
 
-	private boolean pointerAreaTouched(MotionEvent event, int area)
+	private boolean onPuckTouch(MotionEvent e)
 	{
-		RectF transRect = new RectF(pointerAreaRects[area]);
-		translationMatrix.mapRect(transRect);
-		return transRect.contains(event.getX(), event.getY());
+		switch (e.getActionMasked())
+		{
+			case MotionEvent.ACTION_DOWN:
+				downRawX = e.getRawX();
+				downRawY = e.getRawY();
+				startTransX = cluster.getTranslationX();
+				startTransY = cluster.getTranslationY();
+				dragging = false;
+				holdDragging = false;
+				uiHandler.postDelayed(longPress, LONG_PRESS_MS);
+				return true;
+			case MotionEvent.ACTION_MOVE:
+			{
+				float dx = e.getRawX() - downRawX;
+				float dy = e.getRawY() - downRawY;
+				if (!dragging && Math.hypot(dx, dy) > touchSlop)
+				{
+					dragging = true;
+					if (!holdDragging)
+						uiHandler.removeCallbacks(longPress);
+				}
+				if (dragging || holdDragging)
+				{
+					setClusterTranslation(startTransX + dx, startTransY + dy);
+					sendMove();
+				}
+				return true;
+			}
+			case MotionEvent.ACTION_UP:
+				uiHandler.removeCallbacks(longPress);
+				if (holdDragging)
+				{
+					sendLeft(false);
+					holdDragging = false;
+				}
+				else if (!dragging)
+				{
+					// tap -> left click (two quick taps register as a double-click)
+					sendLeft(true);
+					sendLeft(false);
+				}
+				return true;
+			case MotionEvent.ACTION_CANCEL:
+				uiHandler.removeCallbacks(longPress);
+				if (holdDragging)
+				{
+					sendLeft(false);
+					holdDragging = false;
+				}
+				return true;
+		}
+		return false;
 	}
 
-	private boolean pointerTouched(MotionEvent event)
+	private boolean onScrollTouch(MotionEvent e)
 	{
-		RectF transRect = new RectF(pointerRect);
-		translationMatrix.mapRect(transRect);
-		return transRect.contains(event.getX(), event.getY());
+		switch (e.getActionMasked())
+		{
+			case MotionEvent.ACTION_DOWN:
+				scrollLastRawY = e.getRawY();
+				scrollButton.setActivated(true);
+				scrollButton.bringToFront();
+				morphScroll(true);
+				return true;
+			case MotionEvent.ACTION_MOVE:
+			{
+				float dy = e.getRawY() - scrollLastRawY;
+				if (dy > SCROLL_DELTA)
+				{
+					if (listener != null)
+						listener.onTouchPointerScroll(true);
+					scrollLastRawY = e.getRawY();
+				}
+				else if (dy < -SCROLL_DELTA)
+				{
+					if (listener != null)
+						listener.onTouchPointerScroll(false);
+					scrollLastRawY = e.getRawY();
+				}
+				return true;
+			}
+			case MotionEvent.ACTION_UP:
+			case MotionEvent.ACTION_CANCEL:
+				scrollButton.setActivated(false);
+				morphScroll(false);
+				return true;
+		}
+		return false;
 	}
 
-	@Override public boolean onTouchEvent(MotionEvent event)
+	// grow the scroll button into a tall pill (covering its neighbours) and back
+	private void morphScroll(boolean expand)
 	{
-		// check if pointer is being moved or if we are in scroll mode or if the pointer is touched
-		if (!pointerMoving && !pointerScrolling && !pointerTouched(event))
-			return false;
-		return gestureDetector.onTouchEvent(event);
+		if (scrollBaseHeight == 0)
+			scrollBaseHeight = scrollButton.getHeight();
+		float target = expand ? getResources().getDimensionPixelSize(R.dimen.tp_cluster_size)
+		                      : scrollBaseHeight;
+		if (pillAnimator != null)
+			pillAnimator.cancel();
+		pillAnimator = ValueAnimator.ofFloat(scrollButton.getHeight(), target);
+		pillAnimator.setDuration(140);
+		pillAnimator.addUpdateListener(a -> {
+			float h = (float)a.getAnimatedValue();
+			ViewGroup.LayoutParams lp = scrollButton.getLayoutParams();
+			lp.height = Math.round(h);
+			scrollButton.setLayoutParams(lp);
+			scrollButton.setTranslationY(-(h - scrollBaseHeight) / 2.0f);
+		});
+		pillAnimator.start();
 	}
 
-	@Override protected void onLayout(boolean changed, int left, int top, int right, int bottom)
+	// Set the real remote cursor bitmap (null clears to the fallback); never recycled.
+	public void setRemoteCursor(int[] pixels, int width, int height, int hotX, int hotY)
 	{
-		// ensure touch pointer is visible
-		if (changed)
-			ensureVisibility(right - left, bottom - top);
+		ViewGroup.LayoutParams lp = cursor.getLayoutParams();
+		if (pixels == null || width <= 0 || height <= 0)
+		{
+			cursor.setImageResource(R.drawable.ic_cursor);
+			ImageViewCompat.setImageTintList(cursor, ColorStateList.valueOf(cursorTint));
+			int s = getResources().getDimensionPixelSize(R.dimen.tp_cursor_size);
+			lp.width = s;
+			lp.height = s;
+			cursor.setLayoutParams(lp);
+			cursor.setTranslationX(0);
+			cursor.setTranslationY(0);
+			return;
+		}
+		Bitmap bmp = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
+		float scale = 40 * density / height;
+		if (scale < 1.2f)
+			scale = 1.2f;
+		if (scale > 3.0f)
+			scale = 3.0f;
+		ImageViewCompat.setImageTintList(cursor, null);
+		// filterBitmap=false -> nearest-neighbour scaling keeps the small cursor crisp
+		BitmapDrawable bd = new BitmapDrawable(getResources(), bmp);
+		bd.setFilterBitmap(false);
+		cursor.setImageDrawable(bd);
+		lp.width = Math.round(width * scale);
+		lp.height = Math.round(height * scale);
+		cursor.setLayoutParams(lp);
+		// place the bitmap hotspot pixel on the cluster's top-left corner (0,0)
+		cursor.setTranslationX(-hotX * scale);
+		cursor.setTranslationY(-hotY * scale);
 	}
 
-	// touch pointer listener - is triggered if an action field is
-	public interface TouchPointerListener {
+	// touch pointer listener - triggered when an action field is hit
+	public interface TouchPointerListener
+	{
 		void onTouchPointerClose();
 
 		void onTouchPointerLeftClick(int x, int y, boolean down);
@@ -219,152 +369,5 @@ public class TouchPointerView extends ImageView
 		void onTouchPointerToggleExtKeyboard();
 
 		void onTouchPointerResetScrollZoom();
-	}
-
-	private class TouchPointerGestureListener extends GestureDetector.SimpleOnGestureListener
-	{
-
-		private MotionEvent prevEvent = null;
-
-		public boolean onDown(MotionEvent e)
-		{
-			if (pointerAreaTouched(e, POINTER_ACTION_MOVE))
-			{
-				prevEvent = MotionEvent.obtain(e);
-				pointerMoving = true;
-			}
-			else if (pointerAreaTouched(e, POINTER_ACTION_SCROLL))
-			{
-				prevEvent = MotionEvent.obtain(e);
-				pointerScrolling = true;
-				setPointerImage(R.drawable.touch_pointer_scroll);
-			}
-
-			return true;
-		}
-
-		public boolean onUp(MotionEvent e)
-		{
-			if (prevEvent != null)
-			{
-				prevEvent.recycle();
-				prevEvent = null;
-			}
-
-			if (pointerScrolling)
-				setPointerImage(R.drawable.touch_pointer_default);
-
-			pointerMoving = false;
-			pointerScrolling = false;
-			return true;
-		}
-
-		public void onLongPress(MotionEvent e)
-		{
-			if (pointerAreaTouched(e, POINTER_ACTION_LCLICK))
-			{
-				setPointerImage(R.drawable.touch_pointer_active);
-				pointerMoving = true;
-				RectF rect = getCurrentPointerArea(POINTER_ACTION_CURSOR);
-				listener.onTouchPointerLeftClick((int)rect.centerX(), (int)rect.centerY(), true);
-			}
-		}
-
-		public void onLongPressUp(MotionEvent e)
-		{
-			if (pointerMoving)
-			{
-				setPointerImage(R.drawable.touch_pointer_default);
-				pointerMoving = false;
-				RectF rect = getCurrentPointerArea(POINTER_ACTION_CURSOR);
-				listener.onTouchPointerLeftClick((int)rect.centerX(), (int)rect.centerY(), false);
-			}
-		}
-
-		public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
-		{
-			if (pointerMoving)
-			{
-				// move pointer graphics
-				movePointer((int)(e2.getX() - prevEvent.getX()),
-				            (int)(e2.getY() - prevEvent.getY()));
-				prevEvent.recycle();
-				prevEvent = MotionEvent.obtain(e2);
-
-				// send move notification
-				RectF rect = getCurrentPointerArea(POINTER_ACTION_CURSOR);
-				listener.onTouchPointerMove((int)rect.centerX(), (int)rect.centerY());
-				return true;
-			}
-			else if (pointerScrolling)
-			{
-				// calc if user scrolled up or down (or if any scrolling happened at all)
-				float deltaY = e2.getY() - prevEvent.getY();
-				if (deltaY > SCROLL_DELTA)
-				{
-					listener.onTouchPointerScroll(true);
-					prevEvent.recycle();
-					prevEvent = MotionEvent.obtain(e2);
-				}
-				else if (deltaY < -SCROLL_DELTA)
-				{
-					listener.onTouchPointerScroll(false);
-					prevEvent.recycle();
-					prevEvent = MotionEvent.obtain(e2);
-				}
-				return true;
-			}
-			return false;
-		}
-
-		public boolean onSingleTapUp(MotionEvent e)
-		{
-			// look what area got touched and fire actions accordingly
-			if (pointerAreaTouched(e, POINTER_ACTION_CLOSE))
-				listener.onTouchPointerClose();
-			else if (pointerAreaTouched(e, POINTER_ACTION_LCLICK))
-			{
-				displayPointerImageAction(R.drawable.touch_pointer_lclick);
-				RectF rect = getCurrentPointerArea(POINTER_ACTION_CURSOR);
-				listener.onTouchPointerLeftClick((int)rect.centerX(), (int)rect.centerY(), true);
-				listener.onTouchPointerLeftClick((int)rect.centerX(), (int)rect.centerY(), false);
-			}
-			else if (pointerAreaTouched(e, POINTER_ACTION_RCLICK))
-			{
-				displayPointerImageAction(R.drawable.touch_pointer_rclick);
-				RectF rect = getCurrentPointerArea(POINTER_ACTION_CURSOR);
-				listener.onTouchPointerRightClick((int)rect.centerX(), (int)rect.centerY(), true);
-				listener.onTouchPointerRightClick((int)rect.centerX(), (int)rect.centerY(), false);
-			}
-			else if (pointerAreaTouched(e, POINTER_ACTION_KEYBOARD))
-			{
-				displayPointerImageAction(R.drawable.touch_pointer_keyboard);
-				listener.onTouchPointerToggleKeyboard();
-			}
-			else if (pointerAreaTouched(e, POINTER_ACTION_EXTKEYBOARD))
-			{
-				displayPointerImageAction(R.drawable.touch_pointer_extkeyboard);
-				listener.onTouchPointerToggleExtKeyboard();
-			}
-			else if (pointerAreaTouched(e, POINTER_ACTION_RESET))
-			{
-				displayPointerImageAction(R.drawable.touch_pointer_reset);
-				listener.onTouchPointerResetScrollZoom();
-			}
-
-			return true;
-		}
-
-		public boolean onDoubleTap(MotionEvent e)
-		{
-			// issue a double click notification if performed in center quadrant
-			if (pointerAreaTouched(e, POINTER_ACTION_LCLICK))
-			{
-				RectF rect = getCurrentPointerArea(POINTER_ACTION_CURSOR);
-				listener.onTouchPointerLeftClick((int)rect.centerX(), (int)rect.centerY(), true);
-				listener.onTouchPointerLeftClick((int)rect.centerX(), (int)rect.centerY(), false);
-			}
-			return true;
-		}
 	}
 }
