@@ -246,6 +246,8 @@ public class TouchPointerView extends FrameLayout
 					sendLeft(true);
 					sendLeft(false);
 				}
+				if (listener != null)
+					listener.onTouchPointerMoveEnd();
 				return true;
 			case MotionEvent.ACTION_CANCEL:
 				uiHandler.removeCallbacks(longPress);
@@ -254,6 +256,8 @@ public class TouchPointerView extends FrameLayout
 					sendLeft(false);
 					holdDragging = false;
 				}
+				if (listener != null)
+					listener.onTouchPointerMoveEnd();
 				return true;
 		}
 		return false;
@@ -361,6 +365,8 @@ public class TouchPointerView extends FrameLayout
 		void onTouchPointerRightClick(int x, int y, boolean down);
 
 		void onTouchPointerMove(int x, int y);
+
+		void onTouchPointerMoveEnd();
 
 		void onTouchPointerScroll(boolean down);
 
