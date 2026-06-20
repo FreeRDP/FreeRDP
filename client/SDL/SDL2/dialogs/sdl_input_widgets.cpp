@@ -146,13 +146,13 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 		while (running)
 		{
 			if (!clear_window(_renderer))
-				throw;
+				throw std::exception();
 
 			if (!update(_renderer))
-				throw;
+				throw std::exception();
 
 			if (!_buttons.update(_renderer))
-				throw;
+				throw std::exception();
 
 			SDL_Event event = {};
 			SDL_WaitEvent(&event);
@@ -171,7 +171,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 							if (cur)
 							{
 								if (!cur->remove_str(_renderer, 1))
-									throw;
+									throw std::exception();
 							}
 						}
 						break;
@@ -216,7 +216,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 					if (cur)
 					{
 						if (!cur->append_str(_renderer, event.text.text))
-							throw;
+							throw std::exception();
 					}
 				}
 				break;
@@ -226,13 +226,13 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 					for (auto& cur : _list)
 					{
 						if (!cur.set_mouseover(_renderer, false))
-							throw;
+							throw std::exception();
 					}
 					if (TextInputIndex >= 0)
 					{
 						auto& cur = _list.at(static_cast<size_t>(TextInputIndex));
 						if (!cur.set_mouseover(_renderer, true))
-							throw;
+							throw std::exception();
 					}
 
 					_buttons.set_mouseover(event.button.x, event.button.y);
@@ -275,13 +275,13 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 			for (auto& cur : _list)
 			{
 				if (!cur.set_highlight(_renderer, false))
-					throw;
+					throw std::exception();
 			}
 			auto cur = get(CurrentActiveTextInput);
 			if (cur)
 			{
 				if (!cur->set_highlight(_renderer, true))
-					throw;
+					throw std::exception();
 			}
 
 			SDL_RenderPresent(_renderer);
