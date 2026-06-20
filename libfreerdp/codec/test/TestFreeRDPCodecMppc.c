@@ -1063,10 +1063,44 @@ fail:
 	return rc;
 }
 
+/*
+ * A CopyOffset that points before the start of the decompressed history must be
+ * rejected. The encoded token below (CopyOffset=1, LengthOfMatch=3) is decoded
+ * right after a PACKET_AT_FRONT reset, when no history has been produced yet, so
+ * the back-reference wraps to the tail of the 64k history buffer and the forward
+ * match copy used to read past its end.
+ */
+static int test_MppcDecompressOffsetBeforeHistory(void)
+{
+	const BYTE pSrcData[] = { 0xF8, 0x20 };
+	const BYTE* pDstData = nullptr;
+	UINT32 DstSize = 0;
+	const UINT32 Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
+	MPPC_CONTEXT* mppc = mppc_context_new(1, FALSE);
+
+	if (!mppc)
+		return -1;
+
+	const int status =
+	    mppc_decompress(mppc, pSrcData, sizeof(pSrcData), &pDstData, &DstSize, Flags);
+	mppc_context_free(mppc);
+
+	if (status >= 0)
+	{
+		printf("MppcDecompressOffsetBeforeHistory: out-of-range CopyOffset was not rejected\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 int TestFreeRDPCodecMppc(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
+	if (test_MppcDecompressOffsetBeforeHistory() < 0)
+		return -1;
 
 	if (test_MppcCompressIslandRdp5() < 0)
 		return -1;

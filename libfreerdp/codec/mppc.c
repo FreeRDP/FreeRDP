@@ -417,6 +417,16 @@ int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
 			return -1005;
 		}
 
+		/* CopyOffset points back into the data already decompressed since the last
+		 * reset. A value larger than that references bytes before the start of the
+		 * history; the masking below would wrap it to the tail of the buffer and the
+		 * forward copy would then read past HistoryBufferEnd. Reject such offsets. */
+		if (CopyOffset > (UINT32)(HistoryPtr - HistoryBuffer))
+		{
+			WLog_ERR(TAG, "invalid CopyOffset, references data before history start");
+			return -1006;
+		}
+
 		SrcPtr = &HistoryBuffer[(HistoryPtr - HistoryBuffer - CopyOffset) &
 		                        (CompressionLevel ? 0xFFFF : 0x1FFF)];
 
