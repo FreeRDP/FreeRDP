@@ -11,7 +11,6 @@
 #import "AppDelegate.h"
 
 #import "AboutController.h"
-#import "HelpController.h"
 #import "BookmarkListController.h"
 #import "AppSettingsController.h"
 #import "MainTabBarController.h"
@@ -35,39 +34,6 @@
 	    [[NSUserDefaults standardUserDefaults] boolForKey:@"ui.swap_mouse_buttons"]);
 	SetInvertScrollingFlag(
 	    [[NSUserDefaults standardUserDefaults] boolForKey:@"ui.invert_scrolling"]);
-
-	// create bookmark view and navigation controller
-	BookmarkListController *bookmarkListController =
-	    [[[BookmarkListController alloc] initWithNibName:@"BookmarkListView"
-	                                              bundle:nil] autorelease];
-	UINavigationController *bookmarkNavigationController = [[[UINavigationController alloc]
-	    initWithRootViewController:bookmarkListController] autorelease];
-
-	// create app settings view and navigation controller
-	AppSettingsController *appSettingsController =
-	    [[[AppSettingsController alloc] initWithStyle:UITableViewStyleGrouped] autorelease];
-	UINavigationController *appSettingsNavigationController = [[[UINavigationController alloc]
-	    initWithRootViewController:appSettingsController] autorelease];
-
-	// create help view controller
-	HelpController *helpViewController = [[[HelpController alloc] initWithNibName:nil
-	                                                                       bundle:nil] autorelease];
-
-	// create about view controller
-	AboutController *aboutViewController =
-	    [[[AboutController alloc] initWithNibName:nil bundle:nil] autorelease];
-
-	// add tab-bar controller to the main window and display everything
-	NSArray *tabItems =
-	    [NSArray arrayWithObjects:bookmarkNavigationController, appSettingsNavigationController,
-	                              helpViewController, aboutViewController, nil];
-	[_tabBarController setViewControllers:tabItems];
-	if ([_window respondsToSelector:@selector(setRootViewController:)])
-		[_window setRootViewController:_tabBarController];
-	else
-		[_window addSubview:[_tabBarController view]];
-	[_window makeKeyAndVisible];
-
 	return YES;
 }
 

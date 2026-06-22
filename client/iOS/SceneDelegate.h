@@ -1,5 +1,5 @@
 /*
- Application help controller
+ Scene delegate (UIScene life cycle)
 
  Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
 
@@ -10,8 +10,8 @@
 
 #import <UIKit/UIKit.h>
 
-@interface HelpController : UIViewController <UIWebViewDelegate>
-{
-	UIWebView *webView;
-}
+@interface SceneDelegate : UIResponder <UIWindowSceneDelegate>
+
+@property(nonatomic, retain) UIWindow *window;
+
 @end

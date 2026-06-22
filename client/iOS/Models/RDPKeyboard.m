@@ -12,7 +12,7 @@
 #include <freerdp/locale/keyboard.h>
 
 @interface RDPKeyboard (Private)
-- (void)sendVirtualKey:(int)vKey up:(BOOL)up;
+- (void)sendUnicodeKey:(int)character up:(BOOL)up;
 - (void)handleSpecialKey:(int)character;
 - (void)handleAlphaNumChar:(int)character;
 - (void)notifyDelegateModifiersChanged;
@@ -30,7 +30,7 @@
 		[self initWithSession:nil delegate:nil];
 
 		memset(_virtual_key_map, 0, sizeof(_virtual_key_map));
-		memset(_unicode_map, 0, sizeof(_unicode_map));
+		memset(_virtual_key_shift_map, 0, sizeof(_virtual_key_shift_map));
 
 		// init vkey map - used for alpha-num characters
 		_virtual_key_map['0'] = VK_KEY_0;
@@ -71,40 +71,35 @@
 		_virtual_key_map['y'] = VK_KEY_Y;
 		_virtual_key_map['z'] = VK_KEY_Z;
 
-		// init scancode map - used for special characters
-		_unicode_map['-'] = 45;
-		_unicode_map['/'] = 47;
-		_unicode_map[':'] = 58;
-		_unicode_map[';'] = 59;
-		_unicode_map['('] = 40;
-		_unicode_map[')'] = 41;
-		_unicode_map['&'] = 38;
-		_unicode_map['@'] = 64;
-		_unicode_map['.'] = 46;
-		_unicode_map[','] = 44;
-		_unicode_map['?'] = 63;
-		_unicode_map['!'] = 33;
-		_unicode_map['\''] = 39;
-		_unicode_map['\"'] = 34;
+		// some server does not accept unicode key event
+		// so, send physical key combinations
+		_virtual_key_map[' '] = VK_SPACE;
+		_virtual_key_map['`'] = _virtual_key_map['~'] = VK_OEM_3;
+		_virtual_key_map['-'] = _virtual_key_map['_'] = VK_OEM_MINUS;
+		_virtual_key_map['='] = _virtual_key_map['+'] = VK_OEM_PLUS;
+		_virtual_key_map['['] = _virtual_key_map['{'] = VK_OEM_4;
+		_virtual_key_map[']'] = _virtual_key_map['}'] = VK_OEM_6;
+		_virtual_key_map['\\'] = _virtual_key_map['|'] = VK_OEM_5;
+		_virtual_key_map[';'] = _virtual_key_map[':'] = VK_OEM_1;
+		_virtual_key_map['\''] = _virtual_key_map['\"'] = VK_OEM_7;
+		_virtual_key_map[','] = _virtual_key_map['<'] = VK_OEM_COMMA;
+		_virtual_key_map['.'] = _virtual_key_map['>'] = VK_OEM_PERIOD;
+		_virtual_key_map['/'] = _virtual_key_map['?'] = VK_OEM_2;
 
-		_unicode_map['['] = 91;
-		_unicode_map[']'] = 93;
-		_unicode_map['{'] = 123;
-		_unicode_map['}'] = 125;
-		_unicode_map['#'] = 35;
-		_unicode_map['%'] = 37;
-		_unicode_map['^'] = 94;
-		_unicode_map['*'] = 42;
-		_unicode_map['+'] = 43;
-		_unicode_map['='] = 61;
+		const char *shifted = "~_+{}|:\"<>?!@#$%^&*()";
+		for (const char *p = shifted; *p != '\0'; p++)
+			_virtual_key_shift_map[(unsigned char)*p] = YES;
 
-		_unicode_map['_'] = 95;
-		_unicode_map['\\'] = 92;
-		_unicode_map['|'] = 124;
-		_unicode_map['~'] = 126;
-		_unicode_map['<'] = 60;
-		_unicode_map['>'] = 62;
-		_unicode_map['$'] = 36;
+		_virtual_key_map['!'] = VK_KEY_1;
+		_virtual_key_map['@'] = VK_KEY_2;
+		_virtual_key_map['#'] = VK_KEY_3;
+		_virtual_key_map['$'] = VK_KEY_4;
+		_virtual_key_map['%'] = VK_KEY_5;
+		_virtual_key_map['^'] = VK_KEY_6;
+		_virtual_key_map['&'] = VK_KEY_7;
+		_virtual_key_map['*'] = VK_KEY_8;
+		_virtual_key_map['('] = VK_KEY_9;
+		_virtual_key_map[')'] = VK_KEY_0;
 	}
 	return self;
 }
@@ -163,7 +158,7 @@
 // performs all conversions etc.
 - (void)sendUnicode:(int)character
 {
-	if (isalnum(character))
+	if ((character >= 0) && (character < 256) && isalnum((unsigned char)character))
 		[self handleAlphaNumChar:character];
 	else
 		[self handleSpecialKey:character];
@@ -260,27 +255,37 @@
 
 - (void)handleSpecialKey:(int)character
 {
-	NSDictionary *eventDescriptor = nil;
-	if (character < 256)
+	if ((character >= 0) && (character < 256) && (_virtual_key_map[character] != 0))
 	{
-		// convert the character to a unicode character
-		int code = _unicode_map[character];
-		if (code != 0)
-			eventDescriptor = [NSDictionary
-			    dictionaryWithObjectsAndKeys:@"keyboard", @"type", @"unicode", @"subtype",
-			                                 [NSNumber numberWithUnsignedShort:0], @"flags",
-			                                 [NSNumber numberWithUnsignedShort:code],
-			                                 @"unicode_char", nil];
+		BOOL shift_was_sent = NO;
+		if (_virtual_key_shift_map[character] && !_shift_pressed)
+		{
+			[self sendVirtualKey:VK_LSHIFT up:NO];
+			shift_was_sent = YES;
+		}
+
+		[self sendVirtualKey:_virtual_key_map[character] up:NO];
+		[self sendVirtualKey:_virtual_key_map[character] up:YES];
+
+		if (shift_was_sent)
+			[self sendVirtualKey:VK_LSHIFT up:YES];
+		return;
 	}
 
-	if (eventDescriptor == nil)
-		eventDescriptor = [NSDictionary
-		    dictionaryWithObjectsAndKeys:@"keyboard", @"type", @"unicode", @"subtype",
-		                                 [NSNumber numberWithUnsignedShort:0], @"flags",
-		                                 [NSNumber numberWithUnsignedShort:character],
-		                                 @"unicode_char", nil];
+	// Fall back for characters that have no US keyboard scancode representation.
+	[self sendUnicodeKey:character up:NO];
+	[self sendUnicodeKey:character up:YES];
+}
 
-	[_session sendInputEvent:eventDescriptor];
+- (void)sendUnicodeKey:(int)character up:(BOOL)up
+{
+	[_session
+	    sendInputEvent:[NSDictionary
+	                       dictionaryWithObjectsAndKeys:
+	                           @"keyboard", @"type", @"unicode", @"subtype",
+	                           [NSNumber numberWithUnsignedShort:(up ? KBD_FLAGS_RELEASE : 0)],
+	                           @"flags", [NSNumber numberWithUnsignedShort:character],
+	                           @"unicode_char", nil]];
 }
 
 // sends the vk code to the session

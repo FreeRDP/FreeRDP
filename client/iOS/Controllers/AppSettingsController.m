@@ -81,7 +81,7 @@
 	switch (section)
 	{
 		case SECTION_UI_SETTINGS: // UI settings
-			return 5;
+			return 4;
 		case SECTION_CERTIFICATE_HANDLING_SETTINGS: // certificate handling settings
 			return 2;
 		default:
@@ -124,7 +124,6 @@
 				case 1:
 				case 2:
 				case 3:
-				case 4:
 					cellIdentifier = TableCellIdentifierYesNo;
 					break;
 			}
@@ -222,19 +221,6 @@
 			[[flagCell toggle] setTag:GET_TAG_FROM_PATH(indexPath)];
 			[[flagCell toggle]
 			    setOn:[[NSUserDefaults standardUserDefaults] boolForKey:@"ui.invert_scrolling"]];
-			[[flagCell toggle] addTarget:self
-			                      action:@selector(toggleSettingValue:)
-			            forControlEvents:UIControlEventValueChanged];
-			break;
-		}
-		case 4:
-		{
-			EditFlagTableViewCell *flagCell = (EditFlagTableViewCell *)cell;
-			[[flagCell label] setText:NSLocalizedString(@"Touch Pointer Auto Scroll",
-			                                            "Touch Pointer Auto Scroll UI setting")];
-			[[flagCell toggle] setTag:GET_TAG_FROM_PATH(indexPath)];
-			[[flagCell toggle] setOn:[[NSUserDefaults standardUserDefaults]
-			                             boolForKey:@"ui.auto_scroll_touchpointer"]];
 			[[flagCell toggle] addTarget:self
 			                      action:@selector(toggleSettingValue:)
 			            forControlEvents:UIControlEventValueChanged];
@@ -338,12 +324,6 @@
 		case GET_TAG(SECTION_UI_SETTINGS, 3):
 			[[NSUserDefaults standardUserDefaults] setBool:[valueSwitch isOn]
 			                                        forKey:@"ui.invert_scrolling"];
-			SetInvertScrollingFlag([valueSwitch isOn]);
-			break;
-
-		case GET_TAG(SECTION_UI_SETTINGS, 4):
-			[[NSUserDefaults standardUserDefaults] setBool:[valueSwitch isOn]
-			                                        forKey:@"ui.auto_scroll_touchpointer"];
 			SetInvertScrollingFlag([valueSwitch isOn]);
 			break;
 

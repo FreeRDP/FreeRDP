@@ -101,10 +101,6 @@
 /* Custom Screen Height */
 "Height" = "Height";
 
-/* Help Controller title
-   Tabbar item help */
-"Help" = "Help";
-
 /* Button title 'Hide' */
 "Hide" = "Hide";
 
@@ -271,4 +267,3 @@
 
 /* Save connection settings message */
 "Your connection settings have not been saved. Do you want to save them to a new bookmark?" = "Your connection settings have not been saved. Do you want to save them to a new bookmark?";
-

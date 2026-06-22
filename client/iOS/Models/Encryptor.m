@@ -18,6 +18,10 @@
 #import <openssl/evp.h> // For PBKDF2 on < 5.0
 #include <fcntl.h>
 
+#ifndef nullptr
+#define nullptr NULL
+#endif
+
 #pragma mark -
 
 @interface Encryptor (Private)

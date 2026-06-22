@@ -15,7 +15,7 @@
 		<key>height</key>
 		<integer>0</integer>
 		<key>colors</key>
-		<integer>16</integer>
+		<integer>32</integer>
 		<key>perf_font_smoothing</key>
 		<false/>
 		<key>perf_menu_animation</key>
@@ -29,9 +29,9 @@
 		<key>perf_remotefx</key>
 		<false/>
 		<key>perf_gfx</key>
-		<false/>
+		<true/>
 		<key>perf_h264</key>
-		<false/>
+		<true/>
 		<key>perf_desktop_composition</key>
 		<false/>
 		<key>enable_3g_settings</key>
@@ -86,7 +86,5 @@
 		<key>tsg_domain</key>
 		<string></string>
 	</dict>
-	<key>ui.auto_scroll_touchpointer</key>
-	<true/>
 </dict>
 </plist>

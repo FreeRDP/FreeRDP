@@ -9,11 +9,13 @@
  */
 
 #import <UIKit/UIKit.h>
+#import <WebKit/WebKit.h>
 
-@interface AboutController : UIViewController <UIWebViewDelegate>
+// UIWebView (deprecated) --> WKWebView
+@interface AboutController : UIViewController <WKNavigationDelegate>
 {
 	NSString *last_link_clicked;
-	UIWebView *webView;
+	WKWebView *webView;
 }
 
 @end

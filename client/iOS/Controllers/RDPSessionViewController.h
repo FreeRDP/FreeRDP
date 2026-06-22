@@ -12,23 +12,19 @@
 #import "RDPSession.h"
 #import "RDPKeyboard.h"
 #import "RDPSessionView.h"
-#import "TouchPointerView.h"
+#import "RDPCursor.h"
 #import "AdvancedKeyboardView.h"
 
 @interface RDPSessionViewController
-    : UIViewController <RDPSessionDelegate, TouchPointerDelegate, AdvancedKeyboardDelegate,
-                        RDPKeyboardDelegate, UIScrollViewDelegate, UITextFieldDelegate>
+    : UIViewController <RDPSessionDelegate, AdvancedKeyboardDelegate, RDPKeyboardDelegate,
+                        UIScrollViewDelegate, UITextFieldDelegate, UIGestureRecognizerDelegate,
+                        UIPointerInteractionDelegate>
 {
 	// scrollview that hosts the rdp session view
 	IBOutlet UIScrollView *_session_scrollview;
 
 	// rdp session view
 	IBOutlet RDPSessionView *_session_view;
-
-	// touch pointer view
-	IBOutlet TouchPointerView *_touchpointer_view;
-	BOOL _autoscroll_with_touchpointer;
-	BOOL _is_autoscrolling;
 
 	// rdp session toolbar
 	IBOutlet UIToolbar *_session_toolbar;
@@ -53,19 +49,21 @@
 	// flag that indicates whether the keyboard is visible or not
 	BOOL _keyboard_visible;
 
-	// flag to switch between left/right mouse button mode
-	BOOL _toggle_mouse_button;
-
 	// keyboard extension view
 	AdvancedKeyboardView *_advanced_keyboard_view;
 	BOOL _advanced_keyboard_visible;
 	BOOL _requesting_advanced_keyboard;
-	CGFloat _keyboard_last_height;
+	CGSize _last_session_viewport_size;
 
-	// delayed mouse move event sending
-	NSTimer *_mouse_move_event_timer;
-	int _mouse_move_events_skipped;
 	CGPoint _prev_long_press_position;
+	CGPoint _cursor_view_position;
+	CGPoint _last_mouse_pan_location;
+	BOOL _has_cursor_view_position;
+	BOOL _has_user_moved_cursor;
+	BOOL _mouse_pan_active;
+	BOOL _long_press_active;
+	BOOL _mouse_drag_active;
+	BOOL _pointer_is_indirect;
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil

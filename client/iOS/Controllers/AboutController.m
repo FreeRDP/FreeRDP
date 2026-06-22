@@ -45,12 +45,13 @@
 // Implement loadView to create a view hierarchy programmatically, without using a nib.
 - (void)loadView
 {
-	webView = [[[UIWebView alloc] initWithFrame:CGRectZero] autorelease];
+	WKWebViewConfiguration *config = [[[WKWebViewConfiguration alloc] init] autorelease];
+	[config setDataDetectorTypes:WKDataDetectorTypeNone];
+	webView = [[[WKWebView alloc] initWithFrame:CGRectZero configuration:config] autorelease];
 	[webView
 	    setAutoresizingMask:(UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight)];
 	[webView setAutoresizesSubviews:YES];
-	[webView setDelegate:self];
-	[webView setDataDetectorTypes:UIDataDetectorTypeNone];
+	[webView setNavigationDelegate:self];
 	[self setView:webView];
 }
 
@@ -83,15 +84,20 @@
 }
 
 #pragma mark -
-#pragma mark UIWebView callbacks
-- (BOOL)webView:(UIWebView *)webView
-    shouldStartLoadWithRequest:(NSURLRequest *)request
-                navigationType:(UIWebViewNavigationType)navigationType
+#pragma mark WKWebView callbacks
+- (void)webView:(WKWebView *)wv
+    decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction
+                    decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
 {
-	if ([[request URL] isFileURL])
-		return YES;
+	NSURLRequest *request = [navigationAction request];
 
-	if (navigationType == UIWebViewNavigationTypeLinkClicked)
+	if ([[request URL] isFileURL])
+	{
+		decisionHandler(WKNavigationActionPolicyAllow);
+		return;
+	}
+
+	if ([navigationAction navigationType] == WKNavigationTypeLinkActivated)
 	{
 		[last_link_clicked release];
 		last_link_clicked = [[[request URL] absoluteString] retain];
@@ -107,14 +113,18 @@
 		[alert addButtonWithTitle:NSLocalizedString(@"OK", @"OK Button")
 		                    block:^{
 			                    [[UIApplication sharedApplication]
-			                        openURL:[NSURL URLWithString:last_link_clicked]];
+			                                  openURL:[NSURL URLWithString:last_link_clicked]
+			                                  options:@{}
+			                        completionHandler:nil];
 		                    }];
 
 		[alert show];
 
-		return NO;
+		decisionHandler(WKNavigationActionPolicyCancel);
+		return;
 	}
-	return YES;
+
+	decisionHandler(WKNavigationActionPolicyAllow);
 }
 
 @end

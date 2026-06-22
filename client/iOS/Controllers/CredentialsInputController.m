@@ -10,7 +10,13 @@
 
 #import "CredentialsInputController.h"
 #import "RDPSession.h"
-#import "Utils.h"
+
+@interface CredentialsInputController ()
+- (void)updateScrollViewContentSize;
+
+- (UIView *)activeCredentialField;
+- (void)setKeyboardOverlap:(CGFloat)overlap notification:(NSNotification *)notification;
+@end
 
 @implementation CredentialsInputController
 
@@ -26,20 +32,14 @@
 		_params = params;
 		[self setModalPresentationStyle:UIModalPresentationFormSheet];
 
-		// on iphone we have the problem that the buttons are hidden by the keyboard
-		// we solve this issue by registering keyboard notification handlers and adjusting the
-		// scrollview accordingly
-		if (IsPhone())
-		{
-			[[NSNotificationCenter defaultCenter] addObserver:self
-			                                         selector:@selector(keyboardWillShow:)
-			                                             name:UIKeyboardWillShowNotification
-			                                           object:nil];
-			[[NSNotificationCenter defaultCenter] addObserver:self
-			                                         selector:@selector(keyboardWillHide:)
-			                                             name:UIKeyboardWillHideNotification
-			                                           object:nil];
-		}
+		[[NSNotificationCenter defaultCenter] addObserver:self
+		                                         selector:@selector(keyboardWillShow:)
+		                                             name:UIKeyboardWillShowNotification
+		                                           object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self
+		                                         selector:@selector(keyboardWillHide:)
+		                                             name:UIKeyboardWillHideNotification
+		                                           object:nil];
 	}
 	return self;
 }
@@ -64,13 +64,19 @@
 	[_btn_cancel setTitle:NSLocalizedString(@"Cancel", @"Cancel Button")
 	             forState:UIControlStateNormal];
 
-	// init scrollview content size
-	[_scroll_view setContentSize:[_scroll_view frame].size];
+	[_scroll_view setKeyboardDismissMode:UIScrollViewKeyboardDismissModeInteractive];
+	[self updateScrollViewContentSize];
 
 	// set params in the view
 	[_textfield_username setText:[_params valueForKey:@"username"]];
 	[_textfield_password setText:[_params valueForKey:@"password"]];
 	[_textfield_domain setText:[_params valueForKey:@"domain"]];
+}
+
+- (void)viewDidLayoutSubviews
+{
+	[super viewDidLayoutSubviews];
+	[self updateScrollViewContentSize];
 }
 
 - (void)viewDidUnload
@@ -92,8 +98,8 @@
 
 - (void)dealloc
 {
-	[super dealloc];
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	[super dealloc];
 }
 
 #pragma mark -
@@ -101,38 +107,69 @@
 
 - (void)keyboardWillShow:(NSNotification *)notification
 {
-	CGRect keyboardEndFrame =
+	CGRect keyboardScreenFrame =
 	    [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
-	CGRect keyboardFrame = [[self view] convertRect:keyboardEndFrame toView:nil];
-
-	[UIView beginAnimations:nil context:NULL];
-	[UIView setAnimationCurve:[[[notification userInfo]
-	                              objectForKey:UIKeyboardAnimationCurveUserInfoKey] intValue]];
-	[UIView
-	    setAnimationDuration:[[[notification userInfo]
-	                             objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue]];
-	CGRect frame = [_scroll_view frame];
-	frame.size.height -= keyboardFrame.size.height;
-	[_scroll_view setFrame:frame];
-	[UIView commitAnimations];
+	CGRect keyboardViewFrame = [[self view] convertRect:keyboardScreenFrame fromView:nil];
+	CGRect overlapRect = CGRectIntersection([[self view] bounds], keyboardViewFrame);
+	CGFloat overlap = CGRectIsNull(overlapRect) ? 0.0f : CGRectGetHeight(overlapRect);
+	[self setKeyboardOverlap:overlap notification:notification];
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification
 {
-	CGRect keyboardEndFrame =
-	    [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
-	CGRect keyboardFrame = [[self view] convertRect:keyboardEndFrame toView:nil];
+	[self setKeyboardOverlap:0.0f notification:notification];
+}
 
-	[UIView beginAnimations:nil context:NULL];
-	[UIView setAnimationCurve:[[[notification userInfo]
-	                              objectForKey:UIKeyboardAnimationCurveUserInfoKey] intValue]];
-	[UIView
-	    setAnimationDuration:[[[notification userInfo]
-	                             objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue]];
-	CGRect frame = [_scroll_view frame];
-	frame.size.height += keyboardFrame.size.height;
-	[_scroll_view setFrame:frame];
-	[UIView commitAnimations];
+- (void)updateScrollViewContentSize
+{
+	CGFloat contentBottom = 0.0f;
+	for (UIView *subview in [_scroll_view subviews])
+		contentBottom = MAX(contentBottom, CGRectGetMaxY([subview frame]));
+
+	CGSize contentSize = [_scroll_view bounds].size;
+	contentSize.height = MAX(contentSize.height, contentBottom + 20.0f);
+	[_scroll_view setContentSize:contentSize];
+}
+
+- (UIView *)activeCredentialField
+{
+	if ([_textfield_username isFirstResponder])
+		return _textfield_username;
+	if ([_textfield_password isFirstResponder])
+		return _textfield_password;
+	if ([_textfield_domain isFirstResponder])
+		return _textfield_domain;
+	return nil;
+}
+
+- (void)setKeyboardOverlap:(CGFloat)overlap notification:(NSNotification *)notification
+{
+	NSTimeInterval duration =
+	    [[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+	UIViewAnimationCurve curve = (UIViewAnimationCurve)[
+	    [[notification userInfo] objectForKey:UIKeyboardAnimationCurveUserInfoKey] integerValue];
+	UIViewAnimationOptions options =
+	    UIViewAnimationOptionBeginFromCurrentState | (UIViewAnimationOptions)(curve << 16);
+
+	[UIView animateWithDuration:duration
+	                      delay:0.0
+	                    options:options
+	                 animations:^{
+		                 UIEdgeInsets insets = [_scroll_view contentInset];
+		                 insets.bottom = overlap;
+		                 [_scroll_view setContentInset:insets];
+		                 [_scroll_view setScrollIndicatorInsets:insets];
+
+		                 UIView *activeField = [self activeCredentialField];
+		                 if (activeField)
+		                 {
+			                 CGRect visibleRect = [activeField convertRect:[activeField bounds]
+			                                                        toView:_scroll_view];
+			                 visibleRect = CGRectInset(visibleRect, -12.0f, -16.0f);
+			                 [_scroll_view scrollRectToVisible:visibleRect animated:NO];
+		                 }
+	                 }
+	                 completion:nil];
 }
 
 #pragma mark - Action handlers

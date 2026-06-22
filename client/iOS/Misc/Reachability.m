@@ -58,6 +58,10 @@
 
 #define kShouldPrintReachabilityFlags 1
 
+#ifndef nullptr
+#define nullptr NULL
+#endif
+
 static void PrintReachabilityFlags(SCNetworkReachabilityFlags flags, const char *comment)
 {
 #if kShouldPrintReachabilityFlags

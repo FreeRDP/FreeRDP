@@ -122,6 +122,28 @@
 	[_tableView reloadData];
 }
 
+// recalc safe area for modern device
+- (void)viewSafeAreaInsetsDidChange
+{
+	[super viewSafeAreaInsetsDidChange];
+	[[self view] setNeedsLayout];
+}
+
+- (void)viewDidLayoutSubviews
+{
+	[super viewDidLayoutSubviews];
+
+	const CGRect bounds = [[self view] bounds];
+	const UIEdgeInsets safe = [[self view] safeAreaInsets];
+	const CGFloat x = safe.left;
+	const CGFloat w = bounds.size.width - safe.left - safe.right;
+	CGFloat searchH = CGRectGetHeight([_searchBar frame]);
+
+	[_searchBar setFrame:CGRectMake(x, safe.top, w, searchH)];
+	[_tableView
+	    setFrame:CGRectMake(x, safe.top + searchH, w, bounds.size.height - safe.top - searchH)];
+}
+
 - (void)viewWillDisappear:(BOOL)animated
 {
 	[super viewWillDisappear:animated];
@@ -563,7 +585,6 @@
 			}
 
 			// set reachability status
-			WakeUpWWAN();
 			[bookmark
 			    setConntectedViaWLAN:[[Reachability
 			                             reachabilityWithHostName:[[bookmark params]
@@ -909,8 +930,6 @@
 	if (_manual_bookmarks == nil)
 	{
 		_manual_bookmarks = [[NSMutableArray alloc] init];
-		[_manual_bookmarks
-		    addObject:[[[GlobalDefaults sharedGlobalDefaults] newTestServerBookmark] autorelease]];
 	}
 }
 

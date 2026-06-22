@@ -30,6 +30,10 @@
 #import "SFHFKeychainUtils.h"
 #import <Security/Security.h>
 
+#ifndef nullptr
+#define nullptr NULL
+#endif
+
 static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < 30000 && TARGET_IPHONE_SIMULATOR
