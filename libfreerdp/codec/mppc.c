@@ -89,7 +89,6 @@ int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
                     const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	BYTE Literal = 0;
-	BYTE* SrcPtr = nullptr;
 	UINT32 CopyOffset = 0;
 	UINT32 LengthOfMatch = 0;
 	UINT32 accumulator = 0;
@@ -417,8 +416,13 @@ int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
 			return -1005;
 		}
 
-		SrcPtr = &HistoryBuffer[(HistoryPtr - HistoryBuffer - CopyOffset) &
-		                        (CompressionLevel ? 0xFFFF : 0x1FFF)];
+		const BYTE* SrcPtr = &HistoryBuffer[(HistoryPtr - HistoryBuffer - CopyOffset) &
+		                                    (CompressionLevel ? 0xFFFF : 0x1FFF)];
+		if ((SrcPtr < HistoryBuffer) || (SrcPtr + LengthOfMatch > HistoryBufferEnd))
+		{
+			WLog_ERR(TAG, "CopyOffset %" PRIu32 " target is out of bounds", CopyOffset);
+			return -1006;
+		}
 
 		do
 		{
