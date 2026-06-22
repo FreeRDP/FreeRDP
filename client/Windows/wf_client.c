@@ -1282,6 +1282,7 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 		SCROLLINFO si;
 		BOOL horiz = wfc->xScrollVisible;
 		BOOL vert = wfc->yScrollVisible;
+		BOOL redraw = FALSE;
 
 		if (!horiz && client_width < freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth))
 		{
@@ -1348,6 +1349,14 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 			si.nPos = wfc->xCurrentScroll;
 			SetScrollInfo(wfc->hwnd, SB_HORZ, &si, TRUE);
 		}
+		else
+		{
+			if (wfc->xCurrentScroll != 0)
+			{
+				wfc->xCurrentScroll = 0;
+				redraw = TRUE;
+			}
+		}
 
 		if (vert)
 		{
@@ -1364,6 +1373,20 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 			si.nPage = client_height;
 			si.nPos = wfc->yCurrentScroll;
 			SetScrollInfo(wfc->hwnd, SB_VERT, &si, TRUE);
+		}
+		else
+		{
+			if (wfc->yCurrentScroll != 0)
+			{
+				wfc->yCurrentScroll = 0;
+				redraw = TRUE;
+			}
+		}
+
+		if (redraw)
+		{
+			InvalidateRect(wfc->hwnd, nullptr, FALSE);
+			UpdateWindow(wfc->hwnd);
 		}
 	}
 
