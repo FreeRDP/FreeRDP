@@ -218,30 +218,29 @@ static UINT enumerator_server_recv_device_removed_notification(CamDevEnumServerC
                                                                wStream* s,
                                                                const CAM_SHARED_MSG_HEADER* header)
 {
-	CAM_DEVICE_REMOVED_NOTIFICATION pdu;
 	UINT error = CHANNEL_RC_OK;
-	size_t remaining_length = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(header);
 
-	pdu.Header = *header;
-
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_NO_DATA;
 
-	pdu.VirtualChannelName = Stream_Pointer(s);
+	CAM_DEVICE_REMOVED_NOTIFICATION pdu = { .Header = *header,
+		                                    .VirtualChannelName = Stream_PointerAs(s, char) };
 
-	remaining_length = Stream_GetRemainingLength(s);
-	char* tmp = pdu.VirtualChannelName + 1;
-
-	for (size_t i = 1; i < remaining_length; ++i, ++tmp)
+	/* VirtualChannelName: Read until either no bytes left or a ANSI '\0' was found */
+	bool ansiNull = false;
+	while (Stream_GetRemainingLength(s) >= sizeof(CHAR))
 	{
-		if (*tmp == '\0')
+		const CHAR c = Stream_Get_INT8(s);
+		if (c == '\0')
+		{
+			ansiNull = true;
 			break;
+		}
 	}
-
-	if (*tmp != '\0')
+	if (!ansiNull)
 	{
 		WLog_ERR(TAG,
 		         "enumerator_server_recv_device_removed_notification: Invalid VirtualChannelName!");
