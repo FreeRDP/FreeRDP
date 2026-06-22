@@ -1108,7 +1108,7 @@ static inline BOOL update_read_delta_points(wStream* s, DELTA_POINT** points, UI
 	BYTE flags = 0;
 	UINT32 zeroBitsSize = ((number + 3) / 4);
 
-	if (SIZE_MAX / number > sizeof(DELTA_POINT))
+	if (SIZE_MAX / number <= sizeof(DELTA_POINT))
 		return FALSE;
 
 	WINPR_ASSERT(points);
