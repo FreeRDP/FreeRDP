@@ -808,7 +808,7 @@ static BOOL freerdp_tcp_is_hostname_resolvable(rdpContext* context, const char* 
 }
 
 static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct sockaddr* addr,
-                                        size_t addrlen, UINT32 timeout)
+                                        size_t addrlen, UINT32 timeout, INT32* connectError)
 {
 	BOOL rc = FALSE;
 	HANDLE handles[2] = WINPR_C_ARRAY_INIT;
@@ -868,6 +868,8 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 			char ebuffer[256] = WINPR_C_ARRAY_INIT;
 			WLog_DBG(TAG, "connect failed with error: %s [%" PRId32 "]",
 			         winpr_strerror(optval, ebuffer, sizeof(ebuffer)), optval);
+			if (connectError)
+				*connectError = optval;
 			goto fail;
 		}
 	}
@@ -1230,6 +1232,7 @@ static void log_connection_address(const char* hostname, struct addrinfo* addr)
 static int freerdp_host_connect(rdpContext* context, const char* hostname, int port, DWORD timeout)
 {
 	int sockfd = -1;
+	INT32 connectError = 0;
 	struct addrinfo* addr = nullptr;
 	struct addrinfo* result = freerdp_tcp_resolve_host(hostname, port, 0);
 
@@ -1258,7 +1261,7 @@ static int freerdp_host_connect(rdpContext* context, const char* hostname, int p
 			log_connection_address(hostname, addr);
 
 			if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr, addr->ai_addrlen,
-			                                 timeout))
+			                                 timeout, &connectError))
 			{
 				close(sockfd);
 				sockfd = -1;
@@ -1275,6 +1278,12 @@ static int freerdp_host_connect(rdpContext* context, const char* hostname, int p
 	} while (sockfd < 0);
 
 fail:
+	if ((sockfd < 0) && (connectError != 0))
+	{
+		char ebuffer[256] = WINPR_C_ARRAY_INIT;
+		WLog_ERR(TAG, "unable to connect to %s: %s [%" PRId32 "]", hostname,
+		         winpr_strerror(connectError, ebuffer, sizeof(ebuffer)), connectError);
+	}
 	freeaddrinfo(result);
 	return sockfd;
 }
