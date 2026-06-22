@@ -28,6 +28,7 @@
 #include <freerdp/types.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/scard.h>
 #include <freerdp/utils/rdpdr_utils.h>
 
 #ifdef __cplusplus
@@ -133,6 +134,117 @@ extern "C"
 	typedef UINT (*psRdpdrOnDeviceCreate)(RdpdrServerContext* context, const RdpdrDevice* device);
 	typedef UINT (*psRdpdrOnDeviceDelete)(RdpdrServerContext* context, UINT32 deviceId);
 
+	typedef UINT (*psRdpdrSmartcardEstablishContext)(RdpdrServerContext* context,
+	                                                 void* callbackData, UINT32 dwScope,
+	                                                 UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardReleaseContext)(RdpdrServerContext* context, void* callbackData,
+	                                               const REDIR_SCARDCONTEXT* hContext,
+	                                               UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardIsValidContext)(RdpdrServerContext* context, void* callbackData,
+	                                               const REDIR_SCARDCONTEXT* hContext,
+	                                               UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardListReaderGroups)(RdpdrServerContext* context,
+	                                                 void* callbackData,
+	                                                 const ListReaderGroups_Call* call,
+	                                                 UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardListReaders)(RdpdrServerContext* context, void* callbackData,
+	                                            const ListReaders_Call* call, UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardGetStatusChangeA)(RdpdrServerContext* context,
+	                                                 void* callbackData,
+	                                                 const GetStatusChangeA_Call* call,
+	                                                 UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardGetStatusChangeW)(RdpdrServerContext* context,
+	                                                 void* callbackData,
+	                                                 const GetStatusChangeW_Call* call,
+	                                                 UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardCancel)(RdpdrServerContext* context, void* callbackData,
+	                                       const REDIR_SCARDCONTEXT* hContext,
+	                                       UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardConnectA)(RdpdrServerContext* context, void* callbackData,
+	                                         const ConnectA_Call* call, UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardConnectW)(RdpdrServerContext* context, void* callbackData,
+	                                         const ConnectW_Call* call, UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardReconnect)(RdpdrServerContext* context, void* callbackData,
+	                                          const Reconnect_Call* call, UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardDisconnect)(RdpdrServerContext* context, void* callbackData,
+	                                           const HCardAndDisposition_Call* call,
+	                                           UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardBeginTransaction)(RdpdrServerContext* context,
+	                                                 void* callbackData,
+	                                                 const HCardAndDisposition_Call* call,
+	                                                 UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardEndTransaction)(RdpdrServerContext* context, void* callbackData,
+	                                               const HCardAndDisposition_Call* call,
+	                                               UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardStatus)(RdpdrServerContext* context, void* callbackData,
+	                                       const Status_Call* call, UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardTransmit)(RdpdrServerContext* context, void* callbackData,
+	                                         const Transmit_Call* call, UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardControl)(RdpdrServerContext* context, void* callbackData,
+	                                        const Control_Call* call, UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardGetAttrib)(RdpdrServerContext* context, void* callbackData,
+	                                          const GetAttrib_Call* call, UINT32* completionId);
+	typedef UINT (*psRdpdrSmartcardSetAttrib)(RdpdrServerContext* context, void* callbackData,
+	                                          const SetAttrib_Call* call, UINT32* completionId);
+
+	typedef void (*psRdpdrOnSmartcardEstablishContextComplete)(RdpdrServerContext* context,
+	                                                           void* callbackData, UINT32 ioStatus,
+	                                                           LONG returnCode,
+	                                                           const EstablishContext_Return* ret);
+	typedef void (*psRdpdrOnSmartcardReleaseContextComplete)(RdpdrServerContext* context,
+	                                                         void* callbackData, UINT32 ioStatus,
+	                                                         LONG returnCode);
+	typedef void (*psRdpdrOnSmartcardIsValidContextComplete)(RdpdrServerContext* context,
+	                                                         void* callbackData, UINT32 ioStatus,
+	                                                         LONG returnCode);
+	typedef void (*psRdpdrOnSmartcardListReaderGroupsComplete)(RdpdrServerContext* context,
+	                                                           void* callbackData, UINT32 ioStatus,
+	                                                           LONG returnCode,
+	                                                           const ListReaderGroups_Return* ret);
+	typedef void (*psRdpdrOnSmartcardListReadersComplete)(RdpdrServerContext* context,
+	                                                      void* callbackData, UINT32 ioStatus,
+	                                                      LONG returnCode,
+	                                                      const ListReaders_Return* ret);
+	typedef void (*psRdpdrOnSmartcardGetStatusChangeComplete)(RdpdrServerContext* context,
+	                                                          void* callbackData, UINT32 ioStatus,
+	                                                          LONG returnCode,
+	                                                          const GetStatusChange_Return* ret);
+	typedef void (*psRdpdrOnSmartcardCancelComplete)(RdpdrServerContext* context,
+	                                                 void* callbackData, UINT32 ioStatus,
+	                                                 LONG returnCode);
+	typedef void (*psRdpdrOnSmartcardConnectComplete)(RdpdrServerContext* context,
+	                                                  void* callbackData, UINT32 ioStatus,
+	                                                  LONG returnCode, const Connect_Return* ret);
+	typedef void (*psRdpdrOnSmartcardReconnectComplete)(RdpdrServerContext* context,
+	                                                    void* callbackData, UINT32 ioStatus,
+	                                                    LONG returnCode,
+	                                                    const Reconnect_Return* ret);
+	typedef void (*psRdpdrOnSmartcardDisconnectComplete)(RdpdrServerContext* context,
+	                                                     void* callbackData, UINT32 ioStatus,
+	                                                     LONG returnCode);
+	typedef void (*psRdpdrOnSmartcardBeginTransactionComplete)(RdpdrServerContext* context,
+	                                                           void* callbackData, UINT32 ioStatus,
+	                                                           LONG returnCode);
+	typedef void (*psRdpdrOnSmartcardEndTransactionComplete)(RdpdrServerContext* context,
+	                                                         void* callbackData, UINT32 ioStatus,
+	                                                         LONG returnCode);
+	typedef void (*psRdpdrOnSmartcardStatusComplete)(RdpdrServerContext* context,
+	                                                 void* callbackData, UINT32 ioStatus,
+	                                                 LONG returnCode, const Status_Return* ret);
+	typedef void (*psRdpdrOnSmartcardTransmitComplete)(RdpdrServerContext* context,
+	                                                   void* callbackData, UINT32 ioStatus,
+	                                                   LONG returnCode, const Transmit_Return* ret);
+	typedef void (*psRdpdrOnSmartcardControlComplete)(RdpdrServerContext* context,
+	                                                  void* callbackData, UINT32 ioStatus,
+	                                                  LONG returnCode, const Control_Return* ret);
+	typedef void (*psRdpdrOnSmartcardGetAttribComplete)(RdpdrServerContext* context,
+	                                                    void* callbackData, UINT32 ioStatus,
+	                                                    LONG returnCode,
+	                                                    const GetAttrib_Return* ret);
+	typedef void (*psRdpdrOnSmartcardSetAttribComplete)(RdpdrServerContext* context,
+	                                                    void* callbackData, UINT32 ioStatus,
+	                                                    LONG returnCode);
+
 	struct s_rdpdr_server_context
 	{
 		HANDLE vcm;
@@ -233,6 +345,107 @@ extern "C"
 		     RDPDR_DTYP_SMARTCARD after \b ReceiveDeviceRemove */
 
 		rdpContext* rdpcontext;
+
+		/*** New Smartcard APIs called by the server. ***/
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardEstablishContext
+		    SmartcardEstablishContext; /**< Send SCardEstablishContext to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardReleaseContext
+		    SmartcardReleaseContext; /**< Send SCardReleaseContext to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardIsValidContext
+		    SmartcardIsValidContext; /**< Send SCardIsValidContext to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardListReaderGroups
+		    SmartcardListReaderGroupsA; /**< Send SCardListReaderGroupsA to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardListReaderGroups
+		    SmartcardListReaderGroupsW; /**< Send SCardListReaderGroupsW to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardListReaders
+		    SmartcardListReadersA; /**< Send SCardListReadersA to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardListReaders
+		    SmartcardListReadersW; /**< Send SCardListReadersW to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardGetStatusChangeA
+		    SmartcardGetStatusChangeA; /**< Send SCardGetStatusChangeA to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardGetStatusChangeW
+		    SmartcardGetStatusChangeW; /**< Send SCardGetStatusChangeW to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardCancel
+		    SmartcardCancel; /**< Send SCardCancel to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardConnectA
+		    SmartcardConnectA; /**< Send SCardConnectA to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardConnectW
+		    SmartcardConnectW; /**< Send SCardConnectW to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardReconnect
+		    SmartcardReconnect; /**< Send SCardReconnect to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardDisconnect
+		    SmartcardDisconnect; /**< Send SCardDisconnect to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardBeginTransaction
+		    SmartcardBeginTransaction; /**< Send SCardBeginTransaction to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardEndTransaction
+		    SmartcardEndTransaction; /**< Send SCardEndTransaction to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardStatus
+		    SmartcardStatusA; /**< Send SCardStatusA to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardStatus
+		    SmartcardStatusW; /**< Send SCardStatusW to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardTransmit
+		    SmartcardTransmit; /**< Send SCardTransmit to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardControl
+		    SmartcardControl; /**< Send SCardControl to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardGetAttrib
+		    SmartcardGetAttrib; /**< Send SCardGetAttrib to the client. */
+		WINPR_ATTR_NODISCARD psRdpdrSmartcardSetAttrib
+		    SmartcardSetAttrib; /**< Send SCardSetAttrib to the client. */
+
+		/*** New Smartcard callbacks registered by the server. ***/
+		/* clang-format off */
+		psRdpdrOnSmartcardEstablishContextComplete
+		    OnSmartcardEstablishContextComplete; /**< Completion callback for
+		                                             SmartcardEstablishContext. */
+		psRdpdrOnSmartcardReleaseContextComplete
+		    OnSmartcardReleaseContextComplete; /**< Completion callback for
+		                                           SmartcardReleaseContext. */
+		psRdpdrOnSmartcardIsValidContextComplete
+		    OnSmartcardIsValidContextComplete; /**< Completion callback for
+		                                           SmartcardIsValidContext. */
+		psRdpdrOnSmartcardListReaderGroupsComplete
+		    OnSmartcardListReaderGroupsComplete; /**< Completion callback for
+		                                             SmartcardListReaderGroups. */
+		psRdpdrOnSmartcardListReadersComplete
+		    OnSmartcardListReadersComplete; /**< Completion callback for
+		                                        SmartcardListReaders. */
+		psRdpdrOnSmartcardGetStatusChangeComplete
+		    OnSmartcardGetStatusChangeComplete; /**< Completion callback for
+		                                            SmartcardGetStatusChange. */
+		psRdpdrOnSmartcardCancelComplete
+		    OnSmartcardCancelComplete; /**< Completion callback for
+		                                   SmartcardCancel. */
+		psRdpdrOnSmartcardConnectComplete
+		    OnSmartcardConnectComplete; /**< Completion callback for
+		                                    SmartcardConnect. */
+		psRdpdrOnSmartcardReconnectComplete
+		    OnSmartcardReconnectComplete; /**< Completion callback for
+		                                      SmartcardReconnect. */
+		psRdpdrOnSmartcardDisconnectComplete
+		    OnSmartcardDisconnectComplete; /**< Completion callback for
+		                                       SmartcardDisconnect. */
+		psRdpdrOnSmartcardBeginTransactionComplete
+		    OnSmartcardBeginTransactionComplete; /**< Completion callback for
+		                                             SmartcardBeginTransaction. */
+		psRdpdrOnSmartcardEndTransactionComplete
+		    OnSmartcardEndTransactionComplete; /**< Completion callback for
+		                                           SmartcardEndTransaction. */
+		psRdpdrOnSmartcardStatusComplete
+		    OnSmartcardStatusComplete; /**< Completion callback for
+		                                   SmartcardStatus. */
+		psRdpdrOnSmartcardTransmitComplete
+		    OnSmartcardTransmitComplete; /**< Completion callback for
+		                                     SmartcardTransmit. */
+		psRdpdrOnSmartcardControlComplete
+		    OnSmartcardControlComplete; /**< Completion callback for
+		                                    SmartcardControl. */
+		psRdpdrOnSmartcardGetAttribComplete
+		    OnSmartcardGetAttribComplete; /**< Completion callback for
+		                                      SmartcardGetAttrib. */
+		psRdpdrOnSmartcardSetAttribComplete
+		    OnSmartcardSetAttribComplete; /**< Completion callback for
+		                                      SmartcardSetAttrib. */
+		/* clang-format on */
 	};
 
 	FREERDP_API void rdpdr_server_context_free(RdpdrServerContext* context);
@@ -241,6 +454,13 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm);
 
+	/**
+	 * @brief Remove and free a pending IRP request from the context.
+	 * @param context The RDPDR server context.
+	 * @param completionId The completion ID of the IRP to discard.
+	 * @since version 3.28
+	 */
+	FREERDP_API void rdpdr_server_discard_request(RdpdrServerContext* context, UINT32 completionId);
 #ifdef __cplusplus
 }
 #endif
