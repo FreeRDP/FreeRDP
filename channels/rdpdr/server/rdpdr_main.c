@@ -281,9 +281,10 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 
 	if (length >= RDPDR_HEADER_LENGTH)
 	{
-		RDPDR_HEADER header = WINPR_C_ARRAY_INIT;
-		Stream_Read_UINT16(s, header.Component);
-		Stream_Read_UINT16(s, header.PacketId);
+		const RDPDR_HEADER header = {
+			.Component = Stream_Get_UINT16(s),
+			.PacketId = Stream_Get_UINT16(s),
+		};
 
 		WLog_Print(priv->log, WLOG_DEBUG,
 		           "sending message {Component %s[%04" PRIx16 "], PacketId %s[%04" PRIx16 "]",
@@ -294,7 +295,7 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 	ULONG written = 0;
 	BOOL status = WTSVirtualChannelWrite(priv->ChannelHandle, Stream_BufferAs(s, char),
 	                                     (ULONG)length, &written);
-	Stream_Free(s, TRUE);
+	Stream_Release(s);
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
@@ -351,12 +352,9 @@ static UINT rdpdr_server_receive_announce_response(RdpdrServerContext* context, 
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 8))
 		return ERROR_INVALID_DATA;
 
-	UINT16 VersionMajor = 0;
-	UINT16 VersionMinor = 0;
-	UINT32 ClientId = 0;
-	Stream_Read_UINT16(s, VersionMajor); /* VersionMajor (2 bytes) */
-	Stream_Read_UINT16(s, VersionMinor); /* VersionMinor (2 bytes) */
-	Stream_Read_UINT32(s, ClientId);     /* ClientId (4 bytes) */
+	const UINT16 VersionMajor = Stream_Get_UINT16(s); /* VersionMajor (2 bytes) */
+	const UINT16 VersionMinor = Stream_Get_UINT16(s); /* VersionMinor (2 bytes) */
+	const UINT32 ClientId = Stream_Get_UINT32(s);     /* ClientId (4 bytes) */
 	WLog_Print(priv->log, WLOG_DEBUG,
 	           "Client Announce Response: VersionMajor: 0x%08" PRIX16 " VersionMinor: 0x%04" PRIX16
 	           " ClientId: 0x%08" PRIX32 "",
@@ -386,12 +384,9 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 12))
 		return ERROR_INVALID_DATA;
 
-	UINT32 UnicodeFlag = 0;
-	UINT32 CodePage = 0;
-	UINT32 ComputerNameLen = 0;
-	Stream_Read_UINT32(s, UnicodeFlag);     /* UnicodeFlag (4 bytes) */
-	Stream_Read_UINT32(s, CodePage);        /* CodePage (4 bytes), MUST be set to zero */
-	Stream_Read_UINT32(s, ComputerNameLen); /* ComputerNameLen (4 bytes) */
+	UINT32 UnicodeFlag = Stream_Get_UINT32(s);           /* UnicodeFlag (4 bytes) */
+	const UINT32 CodePage = Stream_Get_UINT32(s);        /* CodePage (4 bytes) */
+	const UINT32 ComputerNameLen = Stream_Get_UINT32(s); /* ComputerNameLen (4 bytes) */
 	/* UnicodeFlag is either 0 or 1, the other 31 bits must be ignored.
 	 */
 	UnicodeFlag = UnicodeFlag & 0x00000001;
@@ -502,18 +497,19 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	const UINT32 OsType = Stream_Get_UINT32(s); /* osType (4 bytes), ignored on receipt */
-	const UINT32 OsVersion =
-	    Stream_Get_UINT32(s); /* osVersion (4 bytes), unused and must be set to zero */
+	const UINT32 OsType = Stream_Get_UINT32(s);       /* osType (4 bytes),
+	                             ignored on receipt */
+	const UINT32 OsVersion = Stream_Get_UINT32(s);    /* osVersion (4 bytes),
+	                             unused and must be set to zero */
 	const UINT32 VersionMajor = Stream_Get_UINT16(s); /* protocolMajorVersion (2 bytes) */
 	const UINT32 VersionMinor = Stream_Get_UINT16(s); /* protocolMinorVersion (2 bytes) */
 	const UINT32 IoCode1 = Stream_Get_UINT32(s);      /* ioCode1 (4 bytes) */
-	const UINT32 IoCode2 =
-	    Stream_Get_UINT32(s); /* ioCode2 (4 bytes), must be set to zero, reserved for future use */
+	const UINT32 IoCode2 = Stream_Get_UINT32(s);      /* ioCode2 (4 bytes),
+	                             must be set to zero, reserved for future use */
 	const UINT32 ExtendedPdu = Stream_Get_UINT32(s); /* extendedPdu (4 bytes) */
 	const UINT32 ExtraFlags1 = Stream_Get_UINT32(s); /* extraFlags1 (4 bytes) */
-	const UINT32 ExtraFlags2 = Stream_Get_UINT32(
-	    s); /* extraFlags2 (4 bytes), must be set to zero, reserved for future use */
+	const UINT32 ExtraFlags2 = Stream_Get_UINT32(s); /* extraFlags2 (4 bytes),
+	                            must be set to zero, reserved for future use */
 
 	{
 		char buffer[1024] = WINPR_C_ARRAY_INIT;
@@ -901,7 +897,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 
 	return rdpdr_seal_send_free_request(context, s);
 out:
-	Stream_Free(s, TRUE);
+	Stream_Release(s);
 	return error;
 }
 
@@ -941,9 +937,8 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
-	UINT16 numCapabilities = 0;
-	Stream_Read_UINT16(s, numCapabilities); /* numCapabilities (2 bytes) */
-	Stream_Seek_UINT16(s);                  /* Padding (2 bytes) */
+	const UINT16 numCapabilities = Stream_Get_UINT16(s); /* numCapabilities (2 bytes) */
+	Stream_Seek_UINT16(s);                               /* Padding (2 bytes) */
 
 	UINT16 caps = 0;
 	for (UINT16 i = 0; i < numCapabilities; i++)
@@ -1096,8 +1091,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
-	UINT32 DeviceCount = 0;
-	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
+	const UINT32 DeviceCount = Stream_Get_UINT32(s); /* DeviceCount (4 bytes) */
 	WLog_Print(priv->log, WLOG_DEBUG, "DeviceCount: %" PRIu32 "", DeviceCount);
 
 	for (UINT32 i = 0; i < DeviceCount; i++)
@@ -1106,11 +1100,11 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 			return ERROR_INVALID_DATA;
 
 		RdpdrDevice device = WINPR_C_ARRAY_INIT;
-		Stream_Read_UINT32(s, device.DeviceType);       /* DeviceType (4 bytes) */
-		Stream_Read_UINT32(s, device.DeviceId);         /* DeviceId (4 bytes) */
+		device.DeviceType = Stream_Get_UINT32(s);       /* DeviceType (4 bytes) */
+		device.DeviceId = Stream_Get_UINT32(s);         /* DeviceId (4 bytes) */
 		Stream_Read(s, device.PreferredDosName, 8);     /* PreferredDosName (8 bytes) */
-		Stream_Read_UINT32(s, device.DeviceDataLength); /* DeviceDataLength (4 bytes) */
-		device.DeviceData = Stream_Pointer(s);
+		device.DeviceDataLength = Stream_Get_UINT32(s); /* DeviceDataLength (4 bytes) */
+		device.DeviceData = Stream_PointerAs(s, BYTE);
 
 		if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, device.DeviceDataLength))
 			return ERROR_INVALID_DATA;
@@ -1210,8 +1204,7 @@ static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
-	UINT32 DeviceCount = 0;
-	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
+	const UINT32 DeviceCount = Stream_Get_UINT32(s); /* DeviceCount (4 bytes) */
 	WLog_Print(priv->log, WLOG_DEBUG, "DeviceCount: %" PRIu32 "", DeviceCount);
 
 	for (UINT32 i = 0; i < DeviceCount; i++)
@@ -1222,8 +1215,7 @@ static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 		if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 			return ERROR_INVALID_DATA;
 
-		UINT32 DeviceId = 0;
-		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
+		const UINT32 DeviceId = Stream_Get_UINT32(s); /* DeviceId (4 bytes) */
 		device = rdpdr_get_device_by_id(context->priv, DeviceId);
 		WLog_Print(priv->log, WLOG_DEBUG, "Device %" PRIu32 " Id: 0x%08" PRIX32 "", i, DeviceId);
 		UINT32 DeviceType = 0;
@@ -1291,20 +1283,13 @@ static UINT rdpdr_server_receive_io_create_request(RdpdrServerContext* context, 
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	UINT32 DesiredAccess = 0;
-	UINT32 AllocationSize = 0;
-	UINT32 FileAttributes = 0;
-	UINT32 SharedAccess = 0;
-	UINT32 CreateDisposition = 0;
-	UINT32 CreateOptions = 0;
-	UINT32 PathLength = 0;
-	Stream_Read_UINT32(s, DesiredAccess);
-	Stream_Read_UINT32(s, AllocationSize);
-	Stream_Read_UINT32(s, FileAttributes);
-	Stream_Read_UINT32(s, SharedAccess);
-	Stream_Read_UINT32(s, CreateDisposition);
-	Stream_Read_UINT32(s, CreateOptions);
-	Stream_Read_UINT32(s, PathLength);
+	WINPR_ATTR_UNUSED const UINT32 DesiredAccess = Stream_Get_UINT32(s);
+	WINPR_ATTR_UNUSED const UINT32 AllocationSize = Stream_Get_UINT32(s);
+	WINPR_ATTR_UNUSED const UINT32 FileAttributes = Stream_Get_UINT32(s);
+	WINPR_ATTR_UNUSED const UINT32 SharedAccess = Stream_Get_UINT32(s);
+	WINPR_ATTR_UNUSED const UINT32 CreateDisposition = Stream_Get_UINT32(s);
+	WINPR_ATTR_UNUSED const UINT32 CreateOptions = Stream_Get_UINT32(s);
+	const UINT32 PathLength = Stream_Get_UINT32(s);
 
 	const WCHAR* path = rdpdr_read_ustring(priv->log, s, PathLength);
 	if (!path && (PathLength > 0))
@@ -1351,10 +1336,8 @@ static UINT rdpdr_server_receive_io_read_request(RdpdrServerContext* context, wS
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	UINT32 Length = 0;
-	UINT64 Offset = 0;
-	Stream_Read_UINT32(s, Length);
-	Stream_Read_UINT64(s, Offset);
+	const UINT32 Length = Stream_Get_UINT32(s);
+	const UINT64 Offset = Stream_Get_UINT64(s);
 	Stream_Seek(s, 20); /* Padding */
 
 	WLog_Print(priv->log, WLOG_DEBUG, "Got Offset [0x%016" PRIx64 "], Length %" PRIu32, Offset,
@@ -1380,10 +1363,8 @@ static UINT rdpdr_server_receive_io_write_request(RdpdrServerContext* context, w
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	UINT32 Length = 0;
-	UINT64 Offset = 0;
-	Stream_Read_UINT32(s, Length);
-	Stream_Read_UINT64(s, Offset);
+	const UINT32 Length = Stream_Get_UINT32(s);
+	const UINT64 Offset = Stream_Get_UINT64(s);
 	Stream_Seek(s, 20); /* Padding */
 
 	WLog_Print(priv->log, WLOG_DEBUG, "Got Offset [0x%016" PRIx64 "], Length %" PRIu32, Offset,
@@ -1414,12 +1395,9 @@ static UINT rdpdr_server_receive_io_device_control_request(RdpdrServerContext* c
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	UINT32 OutputBufferLength = 0;
-	UINT32 InputBufferLength = 0;
-	UINT32 IoControlCode = 0;
-	Stream_Read_UINT32(s, OutputBufferLength);
-	Stream_Read_UINT32(s, InputBufferLength);
-	Stream_Read_UINT32(s, IoControlCode);
+	WINPR_ATTR_UNUSED const UINT32 OutputBufferLength = Stream_Get_UINT32(s);
+	WINPR_ATTR_UNUSED const UINT32 InputBufferLength = Stream_Get_UINT32(s);
+	WINPR_ATTR_UNUSED const UINT32 IoControlCode = Stream_Get_UINT32(s);
 	Stream_Seek(s, 20); /* Padding */
 
 	const BYTE* InputBuffer = Stream_ConstPointer(s);
@@ -1445,10 +1423,8 @@ static UINT rdpdr_server_receive_io_query_volume_information_request(
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	UINT32 FsInformationClass = 0;
-	UINT32 Length = 0;
-	Stream_Read_UINT32(s, FsInformationClass);
-	Stream_Read_UINT32(s, Length);
+	const UINT32 FsInformationClass = Stream_Get_UINT32(s);
+	const UINT32 Length = Stream_Get_UINT32(s);
 	Stream_Seek(s, 24); /* Padding */
 
 	WLog_Print(priv->log, WLOG_DEBUG,
@@ -1480,10 +1456,8 @@ static UINT rdpdr_server_receive_io_set_volume_information_request(
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	UINT32 FsInformationClass = 0;
-	UINT32 Length = 0;
-	Stream_Read_UINT32(s, FsInformationClass);
-	Stream_Read_UINT32(s, Length);
+	const UINT32 FsInformationClass = Stream_Get_UINT32(s);
+	const UINT32 Length = Stream_Get_UINT32(s);
 	Stream_Seek(s, 24); /* Padding */
 
 	WLog_Print(priv->log, WLOG_DEBUG,
@@ -1517,10 +1491,8 @@ static UINT rdpdr_server_receive_io_query_information_request(RdpdrServerContext
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	UINT32 FsInformationClass = 0;
-	UINT32 Length = 0;
-	Stream_Read_UINT32(s, FsInformationClass);
-	Stream_Read_UINT32(s, Length);
+	const UINT32 FsInformationClass = Stream_Get_UINT32(s);
+	const UINT32 Length = Stream_Get_UINT32(s);
 	Stream_Seek(s, 24); /* Padding */
 
 	WLog_Print(priv->log, WLOG_DEBUG,
@@ -1553,10 +1525,8 @@ static UINT rdpdr_server_receive_io_set_information_request(RdpdrServerContext* 
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	UINT32 FsInformationClass = 0;
-	UINT32 Length = 0;
-	Stream_Read_UINT32(s, FsInformationClass);
-	Stream_Read_UINT32(s, Length);
+	const UINT32 FsInformationClass = Stream_Get_UINT32(s);
+	const UINT32 Length = Stream_Get_UINT32(s);
 	Stream_Seek(s, 24); /* Padding */
 
 	WLog_Print(priv->log, WLOG_DEBUG,
@@ -1589,12 +1559,9 @@ static UINT rdpdr_server_receive_io_query_directory_request(RdpdrServerContext* 
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	UINT32 FsInformationClass = 0;
-	BYTE InitialQuery = 0;
-	UINT32 PathLength = 0;
-	Stream_Read_UINT32(s, FsInformationClass);
-	Stream_Read_UINT8(s, InitialQuery);
-	Stream_Read_UINT32(s, PathLength);
+	const UINT32 FsInformationClass = Stream_Get_UINT32(s);
+	const BYTE InitialQuery = Stream_Get_UINT8(s);
+	const UINT32 PathLength = Stream_Get_UINT32(s);
 	Stream_Seek(s, 23); /* Padding */
 
 	const WCHAR* wPath = rdpdr_read_ustring(priv->log, s, PathLength);
@@ -1631,10 +1598,8 @@ static UINT rdpdr_server_receive_io_change_directory_request(RdpdrServerContext*
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
-	BYTE WatchTree = 0;
-	UINT32 CompletionFilter = 0;
-	Stream_Read_UINT8(s, WatchTree);
-	Stream_Read_UINT32(s, CompletionFilter);
+	WINPR_ATTR_UNUSED const BYTE WatchTree = Stream_Get_UINT8(s);
+	WINPR_ATTR_UNUSED const UINT32 CompletionFilter = Stream_Get_UINT32(s);
 	Stream_Seek(s, 27); /* Padding */
 
 	WLog_Print(priv->log, WLOG_WARN,
@@ -1697,14 +1662,11 @@ static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* con
 
 	for (UINT32 x = 0; x < NumLocks; x++)
 	{
-		UINT64 Length = 0;
-		UINT64 Offset = 0;
-
 		if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 16))
 			return ERROR_INVALID_DATA;
 
-		Stream_Read_UINT64(s, Length);
-		Stream_Read_UINT64(s, Offset);
+		const UINT64 Length = Stream_Get_UINT64(s);
+		const UINT64 Offset = Stream_Get_UINT64(s);
 
 		WLog_Print(priv->log, WLOG_DEBUG, "Locking at Offset=0x%08" PRIx64 " [Length %" PRIu64 "]",
 		           Offset, Length);
@@ -1732,16 +1694,11 @@ static UINT rdpdr_server_receive_device_io_request(RdpdrServerContext* context, 
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 20))
 		return ERROR_INVALID_DATA;
 
-	UINT32 DeviceId = 0;
-	UINT32 FileId = 0;
-	UINT32 CompletionId = 0;
-	UINT32 MajorFunction = 0;
-	UINT32 MinorFunction = 0;
-	Stream_Read_UINT32(s, DeviceId);
-	Stream_Read_UINT32(s, FileId);
-	Stream_Read_UINT32(s, CompletionId);
-	Stream_Read_UINT32(s, MajorFunction);
-	Stream_Read_UINT32(s, MinorFunction);
+	const UINT32 DeviceId = Stream_Get_UINT32(s);
+	const UINT32 FileId = Stream_Get_UINT32(s);
+	const UINT32 CompletionId = Stream_Get_UINT32(s);
+	const UINT32 MajorFunction = Stream_Get_UINT32(s);
+	const UINT32 MinorFunction = Stream_Get_UINT32(s);
 	if ((MinorFunction != 0) && (MajorFunction != IRP_MJ_DIRECTORY_CONTROL))
 		WLog_Print(priv->log, WLOG_WARN,
 		           "[MS-RDPEFS] 2.2.1.4 Device I/O Request (DR_DEVICE_IOREQUEST) MajorFunction=%s, "
@@ -1816,12 +1773,9 @@ static UINT rdpdr_server_receive_device_io_completion(RdpdrServerContext* contex
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 12))
 		return ERROR_INVALID_DATA;
 
-	UINT32 deviceId = 0;
-	UINT32 completionId = 0;
-	UINT32 ioStatus = 0;
-	Stream_Read_UINT32(s, deviceId);
-	Stream_Read_UINT32(s, completionId);
-	Stream_Read_UINT32(s, ioStatus);
+	const UINT32 deviceId = Stream_Get_UINT32(s);
+	const UINT32 completionId = Stream_Get_UINT32(s);
+	const UINT32 ioStatus = Stream_Get_UINT32(s);
 	WLog_Print(priv->log, WLOG_DEBUG,
 	           "deviceId=%" PRIu32 ", completionId=0x%" PRIx32 ", ioStatus=0x%" PRIx32 "", deviceId,
 	           completionId, ioStatus);
@@ -1882,15 +1836,11 @@ static UINT rdpdr_server_receive_prn_cache_add_printer(RdpdrServerContext* conte
 		return ERROR_INVALID_DATA;
 
 	char PortDosName[9] = WINPR_C_ARRAY_INIT;
-	UINT32 PnPNameLen = 0;
-	UINT32 DriverNameLen = 0;
-	UINT32 PrinterNameLen = 0;
-	UINT32 CachedFieldsLen = 0;
 	Stream_Read(s, PortDosName, 8);
-	Stream_Read_UINT32(s, PnPNameLen);
-	Stream_Read_UINT32(s, DriverNameLen);
-	Stream_Read_UINT32(s, PrinterNameLen);
-	Stream_Read_UINT32(s, CachedFieldsLen);
+	const UINT32 PnPNameLen = Stream_Get_UINT32(s);
+	const UINT32 DriverNameLen = Stream_Get_UINT32(s);
+	const UINT32 PrinterNameLen = Stream_Get_UINT32(s);
+	const UINT32 CachedFieldsLen = Stream_Get_UINT32(s);
 
 	const WCHAR* PnPName = rdpdr_read_ustring(priv->log, s, PnPNameLen);
 	if (!PnPName && (PnPNameLen > 0))
@@ -1921,10 +1871,8 @@ static UINT rdpdr_server_receive_prn_cache_update_printer(RdpdrServerContext* co
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 8))
 		return ERROR_INVALID_DATA;
 
-	UINT32 PrinterNameLen = 0;
-	UINT32 CachedFieldsLen = 0;
-	Stream_Read_UINT32(s, PrinterNameLen);
-	Stream_Read_UINT32(s, CachedFieldsLen);
+	const UINT32 PrinterNameLen = Stream_Get_UINT32(s);
+	const UINT32 CachedFieldsLen = Stream_Get_UINT32(s);
 
 	const WCHAR* PrinterName = rdpdr_read_ustring(priv->log, s, PrinterNameLen);
 	if (!PrinterName && (PrinterNameLen > 0))
@@ -1952,8 +1900,7 @@ static UINT rdpdr_server_receive_prn_cache_delete_printer(RdpdrServerContext* co
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
-	UINT32 PrinterNameLen = 0;
-	Stream_Read_UINT32(s, PrinterNameLen);
+	const UINT32 PrinterNameLen = Stream_Get_UINT32(s);
 
 	const WCHAR* PrinterName = rdpdr_read_ustring(priv->log, s, PrinterNameLen);
 	if (!PrinterName && (PrinterNameLen > 0))
@@ -1976,10 +1923,8 @@ static UINT rdpdr_server_receive_prn_cache_rename_cachedata(RdpdrServerContext* 
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 8))
 		return ERROR_INVALID_DATA;
 
-	UINT32 OldPrinterNameLen = 0;
-	UINT32 NewPrinterNameLen = 0;
-	Stream_Read_UINT32(s, OldPrinterNameLen);
-	Stream_Read_UINT32(s, NewPrinterNameLen);
+	const UINT32 OldPrinterNameLen = Stream_Get_UINT32(s);
+	const UINT32 NewPrinterNameLen = Stream_Get_UINT32(s);
 
 	const WCHAR* OldPrinterName = rdpdr_read_ustring(priv->log, s, OldPrinterNameLen);
 	if (!OldPrinterName && (OldPrinterNameLen > 0))
@@ -2007,8 +1952,7 @@ rdpdr_server_receive_prn_cache_data_request(RdpdrServerContext* context, wStream
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
-	UINT32 EventId = 0;
-	Stream_Read_UINT32(s, EventId);
+	const UINT32 EventId = Stream_Get_UINT32(s);
 	switch (EventId)
 	{
 		case RDPDR_ADD_PRINTER_EVENT:
@@ -2038,10 +1982,8 @@ static UINT rdpdr_server_receive_prn_using_xps_request(RdpdrServerContext* conte
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 8))
 		return ERROR_INVALID_DATA;
 
-	UINT32 PrinterId = 0;
-	UINT32 Flags = 0;
-	Stream_Read_UINT32(s, PrinterId);
-	Stream_Read_UINT32(s, Flags);
+	const UINT32 PrinterId = Stream_Get_UINT32(s);
+	const UINT32 Flags = Stream_Get_UINT32(s);
 
 	WLog_Print(
 	    priv->log, WLOG_WARN,
@@ -2279,10 +2221,10 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 
 			while (Stream_GetRemainingLength(s) >= RDPDR_HEADER_LENGTH)
 			{
-				RDPDR_HEADER header = WINPR_C_ARRAY_INIT;
-
-				Stream_Read_UINT16(s, header.Component); /* Component (2 bytes) */
-				Stream_Read_UINT16(s, header.PacketId);  /* PacketId (2 bytes) */
+				const RDPDR_HEADER header = {
+					.Component = Stream_Get_UINT16(s), /* Component (2 bytes) */
+					.PacketId = Stream_Get_UINT16(s),  /* PacketId (2 bytes) */
+				};
 
 				if ((error = rdpdr_server_receive_pdu(context, s, &header)))
 				{
@@ -2295,7 +2237,7 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 	}
 
 out_stream:
-	Stream_Free(s, TRUE);
+	Stream_Release(s);
 out:
 
 	if (error && context->rdpcontext)
@@ -2406,17 +2348,16 @@ static UINT rdpdr_server_read_file_directory_information(wLog* log, wStream* s,
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 64))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(s, fdi->NextEntryOffset);        /* NextEntryOffset (4 bytes) */
-	Stream_Read_UINT32(s, fdi->FileIndex);              /* FileIndex (4 bytes) */
-	Stream_Read_INT64(s, fdi->CreationTime.QuadPart);   /* CreationTime (8 bytes) */
-	Stream_Read_INT64(s, fdi->LastAccessTime.QuadPart); /* LastAccessTime (8 bytes) */
-	Stream_Read_INT64(s, fdi->LastWriteTime.QuadPart);  /* LastWriteTime (8 bytes) */
-	Stream_Read_INT64(s, fdi->ChangeTime.QuadPart);     /* ChangeTime (8 bytes) */
-	Stream_Read_INT64(s, fdi->EndOfFile.QuadPart);      /* EndOfFile (8 bytes) */
-	Stream_Read_INT64(s, fdi->AllocationSize.QuadPart); /* AllocationSize (8 bytes) */
-	Stream_Read_UINT32(s, fdi->FileAttributes);         /* FileAttributes (4 bytes) */
-	UINT32 fileNameLength = 0;
-	Stream_Read_UINT32(s, fileNameLength);              /* FileNameLength (4 bytes) */
+	fdi->NextEntryOffset = Stream_Get_UINT32(s);        /* NextEntryOffset (4 bytes) */
+	fdi->FileIndex = Stream_Get_UINT32(s);              /* FileIndex (4 bytes) */
+	fdi->CreationTime.QuadPart = Stream_Get_INT64(s);   /* CreationTime (8 bytes) */
+	fdi->LastAccessTime.QuadPart = Stream_Get_INT64(s); /* LastAccessTime (8 bytes) */
+	fdi->LastWriteTime.QuadPart = Stream_Get_INT64(s);  /* LastWriteTime (8 bytes) */
+	fdi->ChangeTime.QuadPart = Stream_Get_INT64(s);     /* ChangeTime (8 bytes) */
+	fdi->EndOfFile.QuadPart = Stream_Get_INT64(s);      /* EndOfFile (8 bytes) */
+	fdi->AllocationSize.QuadPart = Stream_Get_INT64(s); /* AllocationSize (8 bytes) */
+	fdi->FileAttributes = Stream_Get_UINT32(s);         /* FileAttributes (4 bytes) */
+	const UINT32 fileNameLength = Stream_Get_UINT32(s); /* FileNameLength (4 bytes) */
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, fileNameLength))
 		return ERROR_INVALID_DATA;
@@ -2479,7 +2420,7 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 	if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path,
 	                                        pathLength / sizeof(WCHAR), TRUE) < 0)
 	{
-		Stream_Free(s, TRUE);
+		Stream_Release(s);
 		return ERROR_INTERNAL_ERROR;
 	}
 	return rdpdr_seal_send_free_request(context, s);
@@ -2625,7 +2566,7 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 		if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path,
 		                                        pathLength / sizeof(WCHAR), TRUE) < 0)
 		{
-			Stream_Free(s, TRUE);
+			Stream_Release(s);
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
@@ -2678,7 +2619,7 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 		if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path,
 		                                        pathLength / sizeof(WCHAR), TRUE) < 0)
 		{
-			Stream_Free(s, TRUE);
+			Stream_Release(s);
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
@@ -2973,8 +2914,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
-	UINT32 length = 0;
-	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
+	const UINT32 length = Stream_Get_UINT32(s); /* Length (4 bytes) */
 
 	FILE_DIRECTORY_INFORMATION fdi = WINPR_C_ARRAY_INIT;
 	if (length > 0)
@@ -3224,16 +3164,14 @@ static UINT rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, w
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
-	UINT32 length = 0;
-	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
-
+	const UINT32 length = Stream_Get_UINT32(s); /* Length (4 bytes) */
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, length))
 		return ERROR_INVALID_DATA;
 
 	char* buffer = nullptr;
 	if (length > 0)
 	{
-		buffer = Stream_Pointer(s);
+		buffer = Stream_PointerAs(s, char);
 		Stream_Seek(s, length);
 	}
 
@@ -3310,9 +3248,8 @@ static UINT rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, 
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
-	UINT32 length = 0;
-	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
-	Stream_Seek(s, 1);             /* Padding (1 byte) */
+	const UINT32 length = Stream_Get_UINT32(s); /* Length (4 bytes) */
+	Stream_Seek(s, 1);                          /* Padding (1 byte) */
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, length))
 		return ERROR_INVALID_DATA;
@@ -3614,9 +3551,9 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
-	UINT32 length = 0;
-	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
-	Stream_Seek(s, 1);             /* Padding (1 byte) */
+	WINPR_ATTR_UNUSED const UINT32 length = Stream_Get_UINT32(s); /* Length (4 bytes) */
+	Stream_Seek(s, 1);                                            /* Padding (1 byte) */
+
 	/* Invoke the rename file completion routine. */
 	context->OnDriveRenameFileComplete(context, irp->CallbackData, ioStatus);
 	/* Setup the IRP. */
