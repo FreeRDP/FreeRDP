@@ -508,6 +508,8 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	Stream_Read_UINT32(ifman->input, Top);
 	if (!Stream_SetPosition(ifman->input, pos + numGeometryInfo))
 		return ERROR_INVALID_DATA;
+	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, 4))
+		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(ifman->input, cbVisibleRect);
 	const UINT32 num_rects = cbVisibleRect / 16;
 	DEBUG_TSMF("numGeometryInfo %" PRIu32 " Width %" PRIu32 " Height %" PRIu32 " Left %" PRIu32
@@ -516,7 +518,12 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 
 	if (num_rects > 0)
 	{
+		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, ifman->input, num_rects, 16ull))
+			return ERROR_INVALID_DATA;
+
 		rects = (RECTANGLE_32*)calloc(num_rects, sizeof(RECTANGLE_32));
+		if (!rects)
+			return ERROR_OUTOFMEMORY;
 
 		for (size_t i = 0; i < num_rects; i++)
 		{
