@@ -105,9 +105,31 @@ void sdl_OnUserNotificationEventHandler(void* context, const UserNotificationEve
 	if (e->cancelPreviousNotification)
 		return;
 
-	WINPR_ASSERT(e->message);
-	auto parent = SDL_GetMouseFocus();
-	if (!parent)
-		parent = SDL_GetKeyboardFocus();
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, e->e.Sender, e->message, parent);
+	struct userdata
+	{
+		std::string sender;
+		std::string message;
+		uint32_t timeoutMS;
+	};
+
+	auto ud = new struct userdata;
+	if (e->message)
+		ud->message = e->message;
+	if (e->e.Sender)
+		ud->sender = e->e.Sender;
+	ud->timeoutMS = e->timeoutMS;
+
+	SDL_RunOnMainThread(
+	    [](void* userdata)
+	    {
+		    auto e = static_cast<struct userdata*>(userdata);
+		    WINPR_ASSERT(e);
+		    auto parent = SDL_GetMouseFocus();
+		    if (!parent)
+			    parent = SDL_GetKeyboardFocus();
+		    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, e->sender.c_str(),
+		                             e->message.c_str(), parent);
+		    delete e;
+	    },
+	    ud, false);
 }
