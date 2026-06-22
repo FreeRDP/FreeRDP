@@ -44,3 +44,10 @@ typedef struct
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(ctx);
 	return sdl->sdl;
 }
+
+[[nodiscard]] static inline SdlContext* get_context(freerdp* instance)
+{
+	if (!instance)
+		return nullptr;
+	return get_context(instance->context);
+}
