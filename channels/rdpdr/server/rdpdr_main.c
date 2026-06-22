@@ -64,6 +64,8 @@ struct s_rdpdr_server_private
 	UINT32 SpecialDeviceTypeCap;
 	UINT32 IoCode1;
 	UINT32 ExtendedPDU;
+	BOOL haveSmartcardDevice;
+	UINT32 smartcardDeviceId;
 };
 
 static const char* fileInformation2str(uint8_t val)
@@ -1156,16 +1158,13 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 				break;
 
 			case RDPDR_DTYP_SMARTCARD:
-				if (device.DeviceDataLength != 0)
+				if ((context->supported & RDPDR_DTYP_SMARTCARD) != 0)
 				{
-					WLog_Print(priv->log, WLOG_WARN,
-					           "[rdpdr] RDPDR_DTYP_SMARTCARD::DeviceDataLength != 0 [%" PRIu32 "]",
-					           device.DeviceDataLength);
-					error = ERROR_INVALID_DATA;
-				}
-				else if ((context->supported & RDPDR_DTYP_SMARTCARD) != 0)
+					priv->smartcardDeviceId = device.DeviceId;
+					priv->haveSmartcardDevice = TRUE;
 					error =
-					    IFCALLRESULT(CHANNEL_RC_OK, context->OnSmartcardCreate, context, &device);
+					    IFCALLRESULT(STATUS_SUCCESS, context->OnSmartcardCreate, context, &device);
+				}
 				break;
 
 			default:
@@ -1254,6 +1253,11 @@ static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 				break;
 
 			case RDPDR_DTYP_SMARTCARD:
+				if (priv->haveSmartcardDevice)
+				{
+					priv->haveSmartcardDevice = FALSE;
+					priv->smartcardDeviceId = 0;
+				}
 				if ((context->supported & RDPDR_DTYP_SMARTCARD) != 0)
 					error =
 					    IFCALLRESULT(CHANNEL_RC_OK, context->OnSmartcardDelete, context, DeviceId);
@@ -3678,6 +3682,8 @@ static RdpdrServerPrivate* rdpdr_server_private_new(void)
 	priv->ClientId = g_ClientId++;
 	priv->UserLoggedOnPdu = TRUE;
 	priv->NextCompletionId = 1;
+	priv->haveSmartcardDevice = FALSE;
+	priv->smartcardDeviceId = 0;
 	priv->IrpList = ListDictionary_New(TRUE);
 
 	if (!priv->IrpList)
