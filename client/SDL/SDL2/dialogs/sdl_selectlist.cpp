@@ -64,13 +64,13 @@ int SdlSelectList::run()
 		while (running)
 		{
 			if (!clear_window(_renderer))
-				throw;
+				throw std::exception();
 
 			if (!update_text())
-				throw;
+				throw std::exception();
 
 			if (!_buttons.update(_renderer))
-				throw;
+				throw std::exception();
 
 			SDL_Event event = {};
 			SDL_WaitEvent(&event);
@@ -125,7 +125,7 @@ int SdlSelectList::run()
 					{
 						auto& cur = _list.at(WINPR_ASSERTING_INT_CAST(size_t, TextInputIndex));
 						if (!cur.set_mouseover(_renderer, true))
-							throw;
+							throw std::exception();
 					}
 
 					_buttons.set_mouseover(event.button.x, event.button.y);
@@ -161,7 +161,7 @@ int SdlSelectList::run()
 			{
 				auto& cur = _list.at(WINPR_ASSERTING_INT_CAST(size_t, CurrentActiveTextInput));
 				if (!cur.set_highlight(_renderer, true))
-					throw;
+					throw std::exception();
 			}
 
 			SDL_RenderPresent(_renderer);

@@ -162,7 +162,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 		while (running)
 		{
 			if (!update())
-				throw;
+				throw std::exception();
 
 			SDL_Event event = {};
 			if (!SDL_WaitEventTimeout(&event, 30))
@@ -183,12 +183,12 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 									if ((event.key.mod & SDL_KMOD_CTRL) != 0)
 									{
 										if (!cur->set_str(""))
-											throw;
+											throw std::exception();
 									}
 									else
 									{
 										if (!cur->remove_str(1))
-											throw;
+											throw std::exception();
 									}
 								}
 							}
@@ -214,7 +214,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 									{
 										auto text = SDL_GetClipboardText();
 										if (!cur->set_str(text))
-											throw;
+											throw std::exception();
 									}
 								}
 								break;
@@ -229,7 +229,7 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 						if (cur)
 						{
 							if (!cur->append_str(event.text.text))
-								throw;
+								throw std::exception();
 						}
 					}
 					break;
@@ -288,13 +288,13 @@ int SdlInputWidgetPairList::run(std::vector<std::string>& result)
 			for (auto& cur : m_list)
 			{
 				if (!cur->set_highlight(false))
-					throw;
+					throw std::exception();
 			}
 			auto cur = get(m_currentActiveTextInput);
 			if (cur)
 			{
 				if (!cur->set_highlight(true))
-					throw;
+					throw std::exception();
 			}
 
 			auto rc = SDL_RenderPresent(_renderer.get());
