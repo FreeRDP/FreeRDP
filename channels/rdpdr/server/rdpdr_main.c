@@ -250,8 +250,10 @@ static BOOL rdpdr_server_enqueue_irp(RdpdrServerContext* context, RDPDR_IRP* irp
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+
+	RdpdrServerPrivate* priv = context->priv;
 	const uintptr_t key = irp->CompletionId + 1ull;
-	return ListDictionary_Add(context->priv->IrpList, (void*)key, irp);
+	return ListDictionary_Add(priv->IrpList, (void*)key, irp);
 }
 
 static RDPDR_IRP* rdpdr_server_dequeue_irp(RdpdrServerContext* context, UINT32 completionId)
@@ -260,8 +262,9 @@ static RDPDR_IRP* rdpdr_server_dequeue_irp(RdpdrServerContext* context, UINT32 c
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
+	RdpdrServerPrivate* priv = context->priv;
 	const uintptr_t key = completionId + 1ull;
-	irp = (RDPDR_IRP*)ListDictionary_Take(context->priv->IrpList, (void*)key);
+	irp = (RDPDR_IRP*)ListDictionary_Take(priv->IrpList, (void*)key);
 	return irp;
 }
 
@@ -274,6 +277,7 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(s);
 
+	RdpdrServerPrivate* priv = context->priv;
 	Stream_SealLength(s);
 	const size_t length = Stream_Length(s);
 	WINPR_ASSERT(length <= UINT32_MAX);
@@ -285,14 +289,14 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 		Stream_Read_UINT16(s, header.Component);
 		Stream_Read_UINT16(s, header.PacketId);
 
-		WLog_Print(context->priv->log, WLOG_DEBUG,
+		WLog_Print(priv->log, WLOG_DEBUG,
 		           "sending message {Component %s[%04" PRIx16 "], PacketId %s[%04" PRIx16 "]",
 		           rdpdr_component_string(header.Component), header.Component,
 		           rdpdr_packetid_string(header.PacketId), header.PacketId);
 	}
-	winpr_HexLogDump(context->priv->log, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_BufferAs(s, char),
-	                                (ULONG)length, &written);
+	winpr_HexLogDump(priv->log, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
+	status = WTSVirtualChannelWrite(priv->ChannelHandle, Stream_BufferAs(s, char), (ULONG)length,
+	                                &written);
 	Stream_Free(s, TRUE);
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
@@ -318,19 +322,20 @@ static UINT rdpdr_server_send_announce_request(RdpdrServerContext* context)
 	if (error != CHANNEL_RC_OK)
 		return error;
 
+	RdpdrServerPrivate* priv = context->priv;
 	s = Stream_New(nullptr, RDPDR_HEADER_LENGTH + 8);
 
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
 	Stream_Write_UINT16(s, header.Component);            /* Component (2 bytes) */
 	Stream_Write_UINT16(s, header.PacketId);             /* PacketId (2 bytes) */
-	Stream_Write_UINT16(s, context->priv->VersionMajor); /* VersionMajor (2 bytes) */
-	Stream_Write_UINT16(s, context->priv->VersionMinor); /* VersionMinor (2 bytes) */
-	Stream_Write_UINT32(s, context->priv->ClientId);     /* ClientId (4 bytes) */
+	Stream_Write_UINT16(s, priv->VersionMajor);          /* VersionMajor (2 bytes) */
+	Stream_Write_UINT16(s, priv->VersionMinor);          /* VersionMinor (2 bytes) */
+	Stream_Write_UINT32(s, priv->ClientId);              /* ClientId (4 bytes) */
 	return rdpdr_seal_send_free_request(context, s);
 }
 
@@ -349,19 +354,21 @@ static UINT rdpdr_server_receive_announce_response(RdpdrServerContext* context, 
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(header);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	WINPR_UNUSED(header);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 8))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, VersionMajor); /* VersionMajor (2 bytes) */
 	Stream_Read_UINT16(s, VersionMinor); /* VersionMinor (2 bytes) */
 	Stream_Read_UINT32(s, ClientId);     /* ClientId (4 bytes) */
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "Client Announce Response: VersionMajor: 0x%08" PRIX16 " VersionMinor: 0x%04" PRIX16
 	           " ClientId: 0x%08" PRIX32 "",
 	           VersionMajor, VersionMinor, ClientId);
-	context->priv->ClientId = ClientId;
+	priv->ClientId = ClientId;
 
 	return IFCALLRESULT(CHANNEL_RC_OK, context->ReceiveAnnounceResponse, context, VersionMajor,
 	                    VersionMinor, ClientId);
@@ -385,7 +392,9 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	WINPR_ASSERT(header);
 	WINPR_UNUSED(header);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 12))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 12))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, UnicodeFlag);     /* UnicodeFlag (4 bytes) */
@@ -396,7 +405,7 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	UnicodeFlag = UnicodeFlag & 0x00000001;
 
 	if (CodePage != 0)
-		WLog_Print(context->priv->log, WLOG_WARN,
+		WLog_Print(priv->log, WLOG_WARN,
 		           "[MS-RDPEFS] 2.2.2.4 Client Name Request (DR_CORE_CLIENT_NAME_REQ)::CodePage "
 		           "must be 0, but is 0x%08" PRIx32,
 		           CodePage);
@@ -410,8 +419,8 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	{
 		if ((ComputerNameLen % 2) || ComputerNameLen > 512 || ComputerNameLen < 2)
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR,
-			           "invalid unicode computer name length: %" PRIu32 "", ComputerNameLen);
+			WLog_Print(priv->log, WLOG_ERROR, "invalid unicode computer name length: %" PRIu32 "",
+			           ComputerNameLen);
 			return ERROR_INVALID_DATA;
 		}
 	}
@@ -419,56 +428,55 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	{
 		if (ComputerNameLen > 256 || ComputerNameLen < 1)
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR,
-			           "invalid ascii computer name length: %" PRIu32 "", ComputerNameLen);
+			WLog_Print(priv->log, WLOG_ERROR, "invalid ascii computer name length: %" PRIu32 "",
+			           ComputerNameLen);
 			return ERROR_INVALID_DATA;
 		}
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, ComputerNameLen))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, ComputerNameLen))
 		return ERROR_INVALID_DATA;
 
 	/* ComputerName must be null terminated, check if it really is */
 	const char* computerName = Stream_ConstPointer(s);
 	if (computerName[ComputerNameLen - 1] || (UnicodeFlag && computerName[ComputerNameLen - 2]))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "computer name must be null terminated");
+		WLog_Print(priv->log, WLOG_ERROR, "computer name must be null terminated");
 		return ERROR_INVALID_DATA;
 	}
 
-	if (context->priv->ClientComputerName)
+	if (priv->ClientComputerName)
 	{
-		free(context->priv->ClientComputerName);
-		context->priv->ClientComputerName = nullptr;
+		free(priv->ClientComputerName);
+		priv->ClientComputerName = nullptr;
 	}
 
 	if (UnicodeFlag)
 	{
-		context->priv->ClientComputerName =
+		priv->ClientComputerName =
 		    Stream_Read_UTF16_String_As_UTF8(s, ComputerNameLen / sizeof(WCHAR), nullptr);
-		if (!context->priv->ClientComputerName)
+		if (!priv->ClientComputerName)
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR, "failed to convert client computer name");
+			WLog_Print(priv->log, WLOG_ERROR, "failed to convert client computer name");
 			return ERROR_INVALID_DATA;
 		}
 	}
 	else
 	{
 		const char* name = Stream_ConstPointer(s);
-		context->priv->ClientComputerName = _strdup(name);
+		priv->ClientComputerName = _strdup(name);
 		Stream_Seek(s, ComputerNameLen);
 
-		if (!context->priv->ClientComputerName)
+		if (!priv->ClientComputerName)
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR, "failed to duplicate client computer name");
+			WLog_Print(priv->log, WLOG_ERROR, "failed to duplicate client computer name");
 			return CHANNEL_RC_NO_MEMORY;
 		}
 	}
 
-	WLog_Print(context->priv->log, WLOG_DEBUG, "ClientComputerName: %s",
-	           context->priv->ClientComputerName);
+	WLog_Print(priv->log, WLOG_DEBUG, "ClientComputerName: %s", priv->ClientComputerName);
 	return IFCALLRESULT(CHANNEL_RC_OK, context->ReceiveClientNameRequest, context, ComputerNameLen,
-	                    context->priv->ClientComputerName);
+	                    priv->ClientComputerName);
 }
 
 static UINT rdpdr_server_write_capability_set_header_cb(RdpdrServerContext* context, wStream* s,
@@ -476,7 +484,9 @@ static UINT rdpdr_server_write_capability_set_header_cb(RdpdrServerContext* cont
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	UINT error = rdpdr_write_capset_header(context->priv->log, s, header);
+
+	RdpdrServerPrivate* priv = context->priv;
+	UINT error = rdpdr_write_capset_header(priv->log, s, header);
 	if (error != CHANNEL_RC_OK)
 		return error;
 
@@ -495,7 +505,9 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(header);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	const UINT32 OsType = Stream_Get_UINT32(s); /* osType (4 bytes), ignored on receipt */
@@ -513,7 +525,7 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 
 	{
 		char buffer[1024] = WINPR_C_ARRAY_INIT;
-		WLog_Print(context->priv->log, WLOG_TRACE,
+		WLog_Print(priv->log, WLOG_TRACE,
 		           "OsType=%" PRIu32 ", OsVersion=%" PRIu32 ", VersionMajor=%" PRIu32
 		           ", VersionMinor=%" PRIu32 ", IoCode1=%s, IoCode2=%" PRIu32
 		           ", ExtendedPdu=%" PRIu32 ", ExtraFlags1=%" PRIu32 ", ExtraFlags2=%" PRIu32,
@@ -524,7 +536,7 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 
 	if (VersionMajor != RDPDR_MAJOR_RDP_VERSION)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "unsupported RDPDR version %" PRIu16 ".%" PRIu16,
+		WLog_Print(priv->log, WLOG_ERROR, "unsupported RDPDR version %" PRIu16 ".%" PRIu16,
 		           VersionMajor, VersionMinor);
 		return ERROR_INVALID_DATA;
 	}
@@ -538,21 +550,20 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 		case RDPDR_MINOR_RDP_VERSION_5_0:
 			break;
 		default:
-			WLog_Print(context->priv->log, WLOG_WARN,
-			           "unsupported RDPDR minor version %" PRIu16 ".%" PRIu16, VersionMajor,
-			           VersionMinor);
+			WLog_Print(priv->log, WLOG_WARN, "unsupported RDPDR minor version %" PRIu16 ".%" PRIu16,
+			           VersionMajor, VersionMinor);
 			break;
 	}
 
 	UINT32 SpecialTypeDeviceCap = 0;
 	if (header->Version == GENERAL_CAPABILITY_VERSION_02)
 	{
-		if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
+		if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 			return ERROR_INVALID_DATA;
 
 		SpecialTypeDeviceCap = Stream_Get_UINT32(s); /* SpecialTypeDeviceCap (4 bytes) */
 	}
-	context->priv->SpecialDeviceTypeCap = SpecialTypeDeviceCap;
+	priv->SpecialDeviceTypeCap = SpecialTypeDeviceCap;
 
 	const UINT32 mask =
 	    RDPDR_IRP_MJ_CREATE | RDPDR_IRP_MJ_CLEANUP | RDPDR_IRP_MJ_CLOSE | RDPDR_IRP_MJ_READ |
@@ -564,15 +575,15 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	if ((IoCode1 & mask) == 0)
 	{
 		char buffer[1024] = WINPR_C_ARRAY_INIT;
-		WLog_Print(context->priv->log, WLOG_ERROR, "Missing IRP mask values %s",
+		WLog_Print(priv->log, WLOG_ERROR, "Missing IRP mask values %s",
 		           rdpdr_irp_mask2str(IoCode1 & mask, buffer, sizeof(buffer)));
 		return ERROR_INVALID_DATA;
 	}
-	context->priv->IoCode1 = IoCode1;
+	priv->IoCode1 = IoCode1;
 
 	if (IoCode2 != 0)
 	{
-		WLog_Print(context->priv->log, WLOG_WARN,
+		WLog_Print(priv->log, WLOG_WARN,
 		           "[MS-RDPEFS] 2.2.2.7.1 General Capability Set (GENERAL_CAPS_SET) ioCode2 is "
 		           "reserved for future use, expected value 0 got %" PRIu32,
 		           IoCode2);
@@ -580,17 +591,17 @@ static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 
 	if ((ExtendedPdu & RDPDR_CLIENT_DISPLAY_NAME_PDU) == 0)
 	{
-		WLog_Print(context->priv->log, WLOG_WARN,
+		WLog_Print(priv->log, WLOG_WARN,
 		           "[MS-RDPEFS] 2.2.2.7.1 General Capability Set (GENERAL_CAPS_SET) extendedPDU "
 		           "should always set RDPDR_CLIENT_DISPLAY_NAME_PDU[0x00000002]");
 	}
 
-	context->priv->ExtendedPDU = ExtendedPdu;
-	context->priv->UserLoggedOnPdu = (ExtendedPdu & RDPDR_USER_LOGGEDON_PDU) != 0;
+	priv->ExtendedPDU = ExtendedPdu;
+	priv->UserLoggedOnPdu = (ExtendedPdu & RDPDR_USER_LOGGEDON_PDU) != 0;
 
 	if (ExtraFlags2 != 0)
 	{
-		WLog_Print(context->priv->log, WLOG_WARN,
+		WLog_Print(priv->log, WLOG_WARN,
 		           "[MS-RDPEFS] 2.2.2.7.1 General Capability Set (GENERAL_CAPS_SET) ExtraFlags2 is "
 		           "reserved for future use, expected value 0 got %" PRIu32,
 		           ExtraFlags2);
@@ -637,14 +648,15 @@ static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
 	extendedPdu |= RDPDR_CLIENT_DISPLAY_NAME_PDU; /* always set */
 	extendedPdu |= RDPDR_DEVICE_REMOVE_PDUS;      /* optional */
 
-	if (context->priv->UserLoggedOnPdu)
+	RdpdrServerPrivate* priv = context->priv;
+	if (priv->UserLoggedOnPdu)
 		extendedPdu |= RDPDR_USER_LOGGEDON_PDU; /* optional */
 
 	extraFlags1 = 0;
 	extraFlags1 |= ENABLE_ASYNCIO; /* optional */
 	SpecialTypeDeviceCap = 0;
 
-	UINT error = rdpdr_write_capset_header(context->priv->log, s, &header);
+	UINT error = rdpdr_write_capset_header(priv->log, s, &header);
 	if (error != CHANNEL_RC_OK)
 		return error;
 
@@ -652,8 +664,8 @@ static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
 	const size_t start = Stream_GetPosition(s);
 	Stream_Write_UINT32(s, 0); /* osType (4 bytes), ignored on receipt */
 	Stream_Write_UINT32(s, 0); /* osVersion (4 bytes), unused and must be set to zero */
-	Stream_Write_UINT16(s, context->priv->VersionMajor); /* protocolMajorVersion (2 bytes) */
-	Stream_Write_UINT16(s, context->priv->VersionMinor); /* protocolMinorVersion (2 bytes) */
+	Stream_Write_UINT16(s, priv->VersionMajor);          /* protocolMajorVersion (2 bytes) */
+	Stream_Write_UINT16(s, priv->VersionMinor);          /* protocolMinorVersion (2 bytes) */
 	Stream_Write_UINT32(s, ioCode1);                     /* ioCode1 (4 bytes) */
 	Stream_Write_UINT32(s, 0); /* ioCode2 (4 bytes), must be set to zero, reserved for future use */
 	Stream_Write_UINT32(s, extendedPdu); /* extendedPdu (4 bytes) */
@@ -832,11 +844,12 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 	if ((context->supported & RDPDR_DTYP_SMARTCARD) != 0)
 		numCapabilities++;
 
+	RdpdrServerPrivate* priv = context->priv;
 	s = Stream_New(nullptr, RDPDR_HEADER_LENGTH + 512);
 
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -847,7 +860,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 
 	if ((error = rdpdr_server_write_general_capability_set(context, s)))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR,
+		WLog_Print(priv->log, WLOG_ERROR,
 		           "rdpdr_server_write_general_capability_set failed with error %" PRIu32 "!",
 		           error);
 		goto out;
@@ -857,7 +870,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 	{
 		if ((error = rdpdr_server_write_drive_capability_set(context, s)))
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR,
+			WLog_Print(priv->log, WLOG_ERROR,
 			           "rdpdr_server_write_drive_capability_set failed with error %" PRIu32 "!",
 			           error);
 			goto out;
@@ -869,7 +882,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 	{
 		if ((error = rdpdr_server_write_port_capability_set(context, s)))
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR,
+			WLog_Print(priv->log, WLOG_ERROR,
 			           "rdpdr_server_write_port_capability_set failed with error %" PRIu32 "!",
 			           error);
 			goto out;
@@ -880,7 +893,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 	{
 		if ((error = rdpdr_server_write_printer_capability_set(context, s)))
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR,
+			WLog_Print(priv->log, WLOG_ERROR,
 			           "rdpdr_server_write_printer_capability_set failed with error %" PRIu32 "!",
 			           error);
 			goto out;
@@ -891,7 +904,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 	{
 		if ((error = rdpdr_server_write_smartcard_capability_set(context, s)))
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR,
+			WLog_Print(priv->log, WLOG_ERROR,
 			           "rdpdr_server_write_printer_capability_set failed with error %" PRIu32 "!",
 			           error);
 			goto out;
@@ -936,9 +949,11 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	WINPR_UNUSED(header);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, numCapabilities); /* numCapabilities (2 bytes) */
@@ -950,9 +965,9 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 		RDPDR_CAPABILITY_HEADER capabilityHeader = WINPR_C_ARRAY_INIT;
 		const size_t start = Stream_GetPosition(s);
 
-		if ((status = rdpdr_read_capset_header(context->priv->log, s, &capabilityHeader)))
+		if ((status = rdpdr_read_capset_header(priv->log, s, &capabilityHeader)))
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!", status);
+			WLog_Print(priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!", status);
 			return status;
 		}
 
@@ -967,8 +982,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				if ((status =
 				         rdpdr_server_read_general_capability_set(context, s, &capabilityHeader)))
 				{
-					WLog_Print(context->priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!",
-					           status);
+					WLog_Print(priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!", status);
 					return status;
 				}
 
@@ -978,8 +992,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				if ((status =
 				         rdpdr_server_read_printer_capability_set(context, s, &capabilityHeader)))
 				{
-					WLog_Print(context->priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!",
-					           status);
+					WLog_Print(priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!", status);
 					return status;
 				}
 
@@ -988,8 +1001,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 			case CAP_PORT_TYPE:
 				if ((status = rdpdr_server_read_port_capability_set(context, s, &capabilityHeader)))
 				{
-					WLog_Print(context->priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!",
-					           status);
+					WLog_Print(priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!", status);
 					return status;
 				}
 
@@ -999,8 +1011,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				if ((status =
 				         rdpdr_server_read_drive_capability_set(context, s, &capabilityHeader)))
 				{
-					WLog_Print(context->priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!",
-					           status);
+					WLog_Print(priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!", status);
 					return status;
 				}
 
@@ -1010,15 +1021,14 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				if ((status =
 				         rdpdr_server_read_smartcard_capability_set(context, s, &capabilityHeader)))
 				{
-					WLog_Print(context->priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!",
-					           status);
+					WLog_Print(priv->log, WLOG_ERROR, "failed with error %" PRIu32 "!", status);
 					return status;
 				}
 
 				break;
 
 			default:
-				WLog_Print(context->priv->log, WLOG_WARN, "Unknown capabilityType %" PRIu16 "",
+				WLog_Print(priv->log, WLOG_WARN, "Unknown capabilityType %" PRIu16 "",
 				           capabilityHeader.CapabilityType);
 				Stream_Seek(s, capabilityHeader.CapabilityLength);
 				return ERROR_INVALID_DATA;
@@ -1027,8 +1037,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 		const UINT16 client_dtyp = rdpdr_cap_type_to_dtyp(capabilityHeader.CapabilityType);
 		if ((client_dtyp != 0) && ((client_dtyp & context->supported) == 0))
 		{
-			WLog_Print(context->priv->log, WLOG_WARN,
-			           "client sent capability %s we did not announce!",
+			WLog_Print(priv->log, WLOG_WARN, "client sent capability %s we did not announce!",
 			           rdpdr_cap_type_string(capabilityHeader.CapabilityType));
 		}
 		caps |= client_dtyp;
@@ -1037,7 +1046,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 		const size_t diff = end - start;
 		if (diff != capabilityHeader.CapabilityLength + RDPDR_CAPABILITY_HEADER_LENGTH)
 		{
-			WLog_Print(context->priv->log, WLOG_WARN,
+			WLog_Print(priv->log, WLOG_WARN,
 			           "{capability %s[0x%04" PRIx16 "]} processed %" PRIuz
 			           " bytes, but expected to be %" PRIu16,
 			           rdpdr_cap_type_string(capabilityHeader.CapabilityType),
@@ -1066,19 +1075,21 @@ static UINT rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 
 	header.Component = RDPDR_CTYP_CORE;
 	header.PacketId = PAKID_CORE_CLIENTID_CONFIRM;
+
+	RdpdrServerPrivate* priv = context->priv;
 	s = Stream_New(nullptr, RDPDR_HEADER_LENGTH + 8);
 
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
 	Stream_Write_UINT16(s, header.Component);            /* Component (2 bytes) */
 	Stream_Write_UINT16(s, header.PacketId);             /* PacketId (2 bytes) */
-	Stream_Write_UINT16(s, context->priv->VersionMajor); /* VersionMajor (2 bytes) */
-	Stream_Write_UINT16(s, context->priv->VersionMinor); /* VersionMinor (2 bytes) */
-	Stream_Write_UINT32(s, context->priv->ClientId);     /* ClientId (4 bytes) */
+	Stream_Write_UINT16(s, priv->VersionMajor);          /* VersionMajor (2 bytes) */
+	Stream_Write_UINT16(s, priv->VersionMinor);          /* VersionMinor (2 bytes) */
+	Stream_Write_UINT32(s, priv->ClientId);              /* ClientId (4 bytes) */
 	return rdpdr_seal_send_free_request(context, s);
 }
 
@@ -1096,20 +1107,22 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	WINPR_UNUSED(header);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
-	WLog_Print(context->priv->log, WLOG_DEBUG, "DeviceCount: %" PRIu32 "", DeviceCount);
+	WLog_Print(priv->log, WLOG_DEBUG, "DeviceCount: %" PRIu32 "", DeviceCount);
 
 	for (UINT32 i = 0; i < DeviceCount; i++)
 	{
 		UINT error = 0;
 		RdpdrDevice device = WINPR_C_ARRAY_INIT;
 
-		if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 20))
+		if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 20))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT32(s, device.DeviceType);       /* DeviceType (4 bytes) */
@@ -1118,7 +1131,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 		Stream_Read_UINT32(s, device.DeviceDataLength); /* DeviceDataLength (4 bytes) */
 		device.DeviceData = Stream_Pointer(s);
 
-		if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, device.DeviceDataLength))
+		if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, device.DeviceDataLength))
 			return ERROR_INVALID_DATA;
 
 		if (!rdpdr_add_device(context->priv, &device))
@@ -1143,7 +1156,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 			case RDPDR_DTYP_SERIAL:
 				if (device.DeviceDataLength != 0)
 				{
-					WLog_Print(context->priv->log, WLOG_WARN,
+					WLog_Print(priv->log, WLOG_WARN,
 					           "[rdpdr] RDPDR_DTYP_SERIAL::DeviceDataLength != 0 [%" PRIu32 "]",
 					           device.DeviceDataLength);
 					error = ERROR_INVALID_DATA;
@@ -1156,7 +1169,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 			case RDPDR_DTYP_PARALLEL:
 				if (device.DeviceDataLength != 0)
 				{
-					WLog_Print(context->priv->log, WLOG_WARN,
+					WLog_Print(priv->log, WLOG_WARN,
 					           "[rdpdr] RDPDR_DTYP_PARALLEL::DeviceDataLength != 0 [%" PRIu32 "]",
 					           device.DeviceDataLength);
 					error = ERROR_INVALID_DATA;
@@ -1169,7 +1182,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 			case RDPDR_DTYP_SMARTCARD:
 				if (device.DeviceDataLength != 0)
 				{
-					WLog_Print(context->priv->log, WLOG_WARN,
+					WLog_Print(priv->log, WLOG_WARN,
 					           "[rdpdr] RDPDR_DTYP_SMARTCARD::DeviceDataLength != 0 [%" PRIu32 "]",
 					           device.DeviceDataLength);
 					error = ERROR_INVALID_DATA;
@@ -1180,7 +1193,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 				break;
 
 			default:
-				WLog_Print(context->priv->log, WLOG_WARN,
+				WLog_Print(priv->log, WLOG_WARN,
 				           "[MS-RDPEFS] 2.2.2.9 Client Device List Announce Request "
 				           "(DR_CORE_DEVICELIST_ANNOUNCE_REQ) unknown device type %04" PRIx16
 				           " at position %" PRIu32,
@@ -1212,26 +1225,27 @@ static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	WINPR_UNUSED(header);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
-	WLog_Print(context->priv->log, WLOG_DEBUG, "DeviceCount: %" PRIu32 "", DeviceCount);
+	WLog_Print(priv->log, WLOG_DEBUG, "DeviceCount: %" PRIu32 "", DeviceCount);
 
 	for (UINT32 i = 0; i < DeviceCount; i++)
 	{
 		UINT error = 0;
 		const RdpdrDevice* device = nullptr;
 
-		if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
+		if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
 		device = rdpdr_get_device_by_id(context->priv, DeviceId);
-		WLog_Print(context->priv->log, WLOG_DEBUG, "Device %" PRIu32 " Id: 0x%08" PRIX32 "", i,
-		           DeviceId);
+		WLog_Print(priv->log, WLOG_DEBUG, "Device %" PRIu32 " Id: 0x%08" PRIX32 "", i, DeviceId);
 		DeviceType = 0;
 		if (device)
 			DeviceType = device->DeviceType;
@@ -1301,7 +1315,9 @@ static UINT rdpdr_server_receive_io_create_request(RdpdrServerContext* context, 
 	UINT32 PathLength = 0;
 
 	WINPR_ASSERT(context);
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+
+	RdpdrServerPrivate* priv = context->priv;
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, DesiredAccess);
@@ -1312,13 +1328,13 @@ static UINT rdpdr_server_receive_io_create_request(RdpdrServerContext* context, 
 	Stream_Read_UINT32(s, CreateOptions);
 	Stream_Read_UINT32(s, PathLength);
 
-	path = rdpdr_read_ustring(context->priv->log, s, PathLength);
+	path = rdpdr_read_ustring(priv->log, s, PathLength);
 	if (!path && (PathLength > 0))
 		return ERROR_INVALID_DATA;
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.1.4.1 Device Create Request (DR_CREATE_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
+	WLog_Print(priv->log, WLOG_WARN, "TODO");
 
 	return CHANNEL_RC_OK;
 }
@@ -1331,14 +1347,16 @@ static UINT rdpdr_server_receive_io_close_request(RdpdrServerContext* context, w
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, 32); /* Padding */
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.1.4.2 Device Close Request (DR_CLOSE_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
+	WLog_Print(priv->log, WLOG_WARN, "TODO");
 
 	return CHANNEL_RC_OK;
 }
@@ -1353,19 +1371,21 @@ static UINT rdpdr_server_receive_io_read_request(RdpdrServerContext* context, wS
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+
+	RdpdrServerPrivate* priv = context->priv;
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, Length);
 	Stream_Read_UINT64(s, Offset);
 	Stream_Seek(s, 20); /* Padding */
 
-	WLog_Print(context->priv->log, WLOG_DEBUG, "Got Offset [0x%016" PRIx64 "], Length %" PRIu32,
-	           Offset, Length);
+	WLog_Print(priv->log, WLOG_DEBUG, "Got Offset [0x%016" PRIx64 "], Length %" PRIu32, Offset,
+	           Length);
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.1.4.3 Device Read Request (DR_READ_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
+	WLog_Print(priv->log, WLOG_WARN, "TODO");
 
 	return CHANNEL_RC_OK;
 }
@@ -1381,24 +1401,26 @@ static UINT rdpdr_server_receive_io_write_request(RdpdrServerContext* context, w
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, Length);
 	Stream_Read_UINT64(s, Offset);
 	Stream_Seek(s, 20); /* Padding */
 
-	WLog_Print(context->priv->log, WLOG_DEBUG, "Got Offset [0x%016" PRIx64 "], Length %" PRIu32,
-	           Offset, Length);
+	WLog_Print(priv->log, WLOG_DEBUG, "Got Offset [0x%016" PRIx64 "], Length %" PRIu32, Offset,
+	           Length);
 
 	const BYTE* data = Stream_ConstPointer(s);
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, Length))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, Length);
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.1.4.4 Device Write Request (DR_WRITE_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)data);
+	WLog_Print(priv->log, WLOG_WARN, "TODO: parse %p", (const void*)data);
 
 	return CHANNEL_RC_OK;
 }
@@ -1415,7 +1437,9 @@ static UINT rdpdr_server_receive_io_device_control_request(RdpdrServerContext* c
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, OutputBufferLength);
@@ -1424,14 +1448,13 @@ static UINT rdpdr_server_receive_io_device_control_request(RdpdrServerContext* c
 	Stream_Seek(s, 20); /* Padding */
 
 	const BYTE* InputBuffer = Stream_ConstPointer(s);
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, InputBufferLength))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, InputBufferLength))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, InputBufferLength);
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.1.4.5 Device Control Request (DR_CONTROL_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN,
-	           "TODO: parse %p [%" PRIu32 "], OutputBufferLength=%" PRIu32,
+	WLog_Print(priv->log, WLOG_WARN, "TODO: parse %p [%" PRIu32 "], OutputBufferLength=%" PRIu32,
 	           (const void*)InputBuffer, InputBufferLength, OutputBufferLength);
 
 	return CHANNEL_RC_OK;
@@ -1445,26 +1468,28 @@ static UINT rdpdr_server_receive_io_query_volume_information_request(
 	UINT32 Length = 0;
 
 	WINPR_ASSERT(context);
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+
+	RdpdrServerPrivate* priv = context->priv;
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, FsInformationClass);
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "Got FSInformationClass %s [0x%08" PRIx32 "], Length %" PRIu32,
 	           FSInformationClass2Tag(FsInformationClass), FsInformationClass, Length);
 
 	const BYTE* QueryVolumeBuffer = Stream_ConstPointer(s);
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, Length))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, Length);
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.6 Server Drive Query Volume Information Request "
 	           "(DR_DRIVE_QUERY_VOLUME_INFORMATION_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)QueryVolumeBuffer);
+	WLog_Print(priv->log, WLOG_WARN, "TODO: parse %p", (const void*)QueryVolumeBuffer);
 
 	return CHANNEL_RC_OK;
 }
@@ -1479,26 +1504,28 @@ static UINT rdpdr_server_receive_io_set_volume_information_request(
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, FsInformationClass);
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "Got FSInformationClass %s [0x%08" PRIx32 "], Length %" PRIu32,
 	           FSInformationClass2Tag(FsInformationClass), FsInformationClass, Length);
 
 	const BYTE* SetVolumeBuffer = Stream_ConstPointer(s);
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, Length))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, Length);
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.7 Server Drive Set Volume Information Request "
 	           "(DR_DRIVE_SET_VOLUME_INFORMATION_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)SetVolumeBuffer);
+	WLog_Print(priv->log, WLOG_WARN, "TODO: parse %p", (const void*)SetVolumeBuffer);
 
 	return CHANNEL_RC_OK;
 }
@@ -1515,26 +1542,28 @@ static UINT rdpdr_server_receive_io_query_information_request(RdpdrServerContext
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, FsInformationClass);
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "Got FSInformationClass %s [0x%08" PRIx32 "], Length %" PRIu32,
 	           FSInformationClass2Tag(FsInformationClass), FsInformationClass, Length);
 
 	const BYTE* QueryBuffer = Stream_ConstPointer(s);
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, Length))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, Length);
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.8 Server Drive Query Information Request "
 	           "(DR_DRIVE_QUERY_INFORMATION_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)QueryBuffer);
+	WLog_Print(priv->log, WLOG_WARN, "TODO: parse %p", (const void*)QueryBuffer);
 
 	return CHANNEL_RC_OK;
 }
@@ -1550,26 +1579,28 @@ static UINT rdpdr_server_receive_io_set_information_request(RdpdrServerContext* 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, FsInformationClass);
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "Got FSInformationClass %s [0x%08" PRIx32 "], Length %" PRIu32,
 	           FSInformationClass2Tag(FsInformationClass), FsInformationClass, Length);
 
 	const BYTE* SetBuffer = Stream_ConstPointer(s);
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, Length))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, Length);
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.9 Server Drive Set Information Request "
 	           "(DR_DRIVE_SET_INFORMATION_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)SetBuffer);
+	WLog_Print(priv->log, WLOG_WARN, "TODO: parse %p", (const void*)SetBuffer);
 
 	return CHANNEL_RC_OK;
 }
@@ -1586,7 +1617,9 @@ static UINT rdpdr_server_receive_io_query_directory_request(RdpdrServerContext* 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, FsInformationClass);
@@ -1594,22 +1627,22 @@ static UINT rdpdr_server_receive_io_query_directory_request(RdpdrServerContext* 
 	Stream_Read_UINT32(s, PathLength);
 	Stream_Seek(s, 23); /* Padding */
 
-	const WCHAR* wPath = rdpdr_read_ustring(context->priv->log, s, PathLength);
+	const WCHAR* wPath = rdpdr_read_ustring(priv->log, s, PathLength);
 	if (!wPath && (PathLength > 0))
 		return ERROR_INVALID_DATA;
 
 	char* Path = ConvertWCharNToUtf8Alloc(wPath, PathLength / sizeof(WCHAR), nullptr);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "Got FSInformationClass %s [0x%08" PRIx32 "], InitialQuery [%" PRIu8
 	           "] Path[%" PRIu32 "] %s",
 	           FSInformationClass2Tag(FsInformationClass), FsInformationClass, InitialQuery,
 	           PathLength, Path);
 	free(Path);
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.10 Server Drive Query Directory Request "
 	           "(DR_DRIVE_QUERY_DIRECTORY_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
+	WLog_Print(priv->log, WLOG_WARN, "TODO");
 
 	return CHANNEL_RC_OK;
 }
@@ -1626,17 +1659,19 @@ static UINT rdpdr_server_receive_io_change_directory_request(RdpdrServerContext*
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT8(s, WatchTree);
 	Stream_Read_UINT32(s, CompletionFilter);
 	Stream_Seek(s, 27); /* Padding */
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.11 Server Drive NotifyChange Directory Request "
 	           "(DR_DRIVE_NOTIFY_CHANGE_DIRECTORY_REQ) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
+	WLog_Print(priv->log, WLOG_WARN, "TODO");
 
 	return CHANNEL_RC_OK;
 }
@@ -1649,6 +1684,7 @@ static UINT rdpdr_server_receive_io_directory_control_request(RdpdrServerContext
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
+	RdpdrServerPrivate* priv = context->priv;
 	switch (MinorFunction)
 	{
 		case IRP_MN_QUERY_DIRECTORY:
@@ -1658,7 +1694,7 @@ static UINT rdpdr_server_receive_io_directory_control_request(RdpdrServerContext
 			return rdpdr_server_receive_io_change_directory_request(context, s, DeviceId, FileId,
 			                                                        CompletionId);
 		default:
-			WLog_Print(context->priv->log, WLOG_WARN,
+			WLog_Print(priv->log, WLOG_WARN,
 			           "[MS-RDPEFS] 2.2.1.4 Device I/O Request (DR_DEVICE_IOREQUEST) "
 			           "MajorFunction=%s, MinorFunction=%08" PRIx32 " is not supported",
 			           rdpdr_irp_string(IRP_MJ_DIRECTORY_CONTROL), MinorFunction);
@@ -1674,7 +1710,9 @@ static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* con
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 32))
 		return ERROR_INVALID_DATA;
 
 	const uint32_t Operation = Stream_Get_UINT32(s);
@@ -1682,7 +1720,7 @@ static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* con
 	const uint32_t NumLocks = Stream_Get_UINT32(s);
 	Stream_Seek(s, 20); /* Padding */
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "IRP_MJ_LOCK_CONTROL, Operation=%s, Lock=0x%08" PRIx32 ", NumLocks=%" PRIu32,
 	           DR_DRIVE_LOCK_REQ2str(Operation), Lock, NumLocks);
 
@@ -1693,22 +1731,22 @@ static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* con
 		UINT64 Length = 0;
 		UINT64 Offset = 0;
 
-		if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 16))
+		if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 16))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT64(s, Length);
 		Stream_Read_UINT64(s, Offset);
 
-		WLog_Print(context->priv->log, WLOG_DEBUG,
-		           "Locking at Offset=0x%08" PRIx64 " [Length %" PRIu64 "]", Offset, Length);
+		WLog_Print(priv->log, WLOG_DEBUG, "Locking at Offset=0x%08" PRIx64 " [Length %" PRIu64 "]",
+		           Offset, Length);
 	}
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEFS] 2.2.3.3.12 Server Drive Lock Control Request (DR_DRIVE_LOCK_REQ) "
 	           "[Lock=0x%08" PRIx32 "]"
 	           "not implemented",
 	           Lock);
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
+	WLog_Print(priv->log, WLOG_WARN, "TODO");
 
 	return CHANNEL_RC_OK;
 }
@@ -1726,7 +1764,9 @@ static UINT rdpdr_server_receive_device_io_request(RdpdrServerContext* context, 
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(header);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 20))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 20))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, DeviceId);
@@ -1735,7 +1775,7 @@ static UINT rdpdr_server_receive_device_io_request(RdpdrServerContext* context, 
 	Stream_Read_UINT32(s, MajorFunction);
 	Stream_Read_UINT32(s, MinorFunction);
 	if ((MinorFunction != 0) && (MajorFunction != IRP_MJ_DIRECTORY_CONTROL))
-		WLog_Print(context->priv->log, WLOG_WARN,
+		WLog_Print(priv->log, WLOG_WARN,
 		           "[MS-RDPEFS] 2.2.1.4 Device I/O Request (DR_DEVICE_IOREQUEST) MajorFunction=%s, "
 		           "MinorFunction=0x%08" PRIx32 " != 0",
 		           rdpdr_irp_string(MajorFunction), MinorFunction);
@@ -1777,9 +1817,9 @@ static UINT rdpdr_server_receive_device_io_request(RdpdrServerContext* context, 
 
 		default:
 			WLog_Print(
-			    context->priv->log, WLOG_WARN,
+			    priv->log, WLOG_WARN,
 			    "[MS-RDPEFS] 2.2.1.4 Device I/O Request (DR_DEVICE_IOREQUEST) not implemented");
-			WLog_Print(context->priv->log, WLOG_WARN,
+			WLog_Print(priv->log, WLOG_WARN,
 			           "got DeviceId=0x%08" PRIx32 ", FileId=0x%08" PRIx32
 			           ", CompletionId=0x%08" PRIx32 ", MajorFunction=0x%08" PRIx32
 			           ", MinorFunction=0x%08" PRIx32,
@@ -1806,22 +1846,24 @@ static UINT rdpdr_server_receive_device_io_completion(RdpdrServerContext* contex
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	WINPR_UNUSED(header);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 12))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 12))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, deviceId);
 	Stream_Read_UINT32(s, completionId);
 	Stream_Read_UINT32(s, ioStatus);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "deviceId=%" PRIu32 ", completionId=0x%" PRIx32 ", ioStatus=0x%" PRIx32 "", deviceId,
 	           completionId, ioStatus);
 	irp = rdpdr_server_dequeue_irp(context, completionId);
 
 	if (!irp)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "IRP not found for completionId=0x%" PRIx32 "",
+		WLog_Print(priv->log, WLOG_ERROR, "IRP not found for completionId=0x%" PRIx32 "",
 		           completionId);
 		return CHANNEL_RC_OK;
 	}
@@ -1850,11 +1892,13 @@ static UINT rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 
 	header.Component = RDPDR_CTYP_CORE;
 	header.PacketId = PAKID_CORE_USER_LOGGEDON;
+
+	RdpdrServerPrivate* priv = context->priv;
 	s = Stream_New(nullptr, RDPDR_HEADER_LENGTH);
 
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -1877,7 +1921,9 @@ static UINT rdpdr_server_receive_prn_cache_add_printer(RdpdrServerContext* conte
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 24))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 24))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read(s, PortDosName, 8);
@@ -1886,23 +1932,23 @@ static UINT rdpdr_server_receive_prn_cache_add_printer(RdpdrServerContext* conte
 	Stream_Read_UINT32(s, PrinterNameLen);
 	Stream_Read_UINT32(s, CachedFieldsLen);
 
-	PnPName = rdpdr_read_ustring(context->priv->log, s, PnPNameLen);
+	PnPName = rdpdr_read_ustring(priv->log, s, PnPNameLen);
 	if (!PnPName && (PnPNameLen > 0))
 		return ERROR_INVALID_DATA;
-	DriverName = rdpdr_read_ustring(context->priv->log, s, DriverNameLen);
+	DriverName = rdpdr_read_ustring(priv->log, s, DriverNameLen);
 	if (!DriverName && (DriverNameLen > 0))
 		return ERROR_INVALID_DATA;
-	PrinterName = rdpdr_read_ustring(context->priv->log, s, PrinterNameLen);
+	PrinterName = rdpdr_read_ustring(priv->log, s, PrinterNameLen);
 	if (!PrinterName && (PrinterNameLen > 0))
 		return ERROR_INVALID_DATA;
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, CachedFieldsLen))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, CachedFieldsLen))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, CachedFieldsLen);
 
-	WLog_Print(context->priv->log, WLOG_WARN,
+	WLog_Print(priv->log, WLOG_WARN,
 	           "[MS-RDPEPC] 2.2.2.3 Add Printer Cachedata (DR_PRN_ADD_CACHEDATA) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
+	WLog_Print(priv->log, WLOG_WARN, "TODO");
 	return CHANNEL_RC_OK;
 }
 
@@ -1914,25 +1960,27 @@ static UINT rdpdr_server_receive_prn_cache_update_printer(RdpdrServerContext* co
 
 	WINPR_ASSERT(context);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 8))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, PrinterNameLen);
 	Stream_Read_UINT32(s, CachedFieldsLen);
 
-	PrinterName = rdpdr_read_ustring(context->priv->log, s, PrinterNameLen);
+	PrinterName = rdpdr_read_ustring(priv->log, s, PrinterNameLen);
 	if (!PrinterName && (PrinterNameLen > 0))
 		return ERROR_INVALID_DATA;
 
 	const BYTE* config = Stream_ConstPointer(s);
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, CachedFieldsLen))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, CachedFieldsLen))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, CachedFieldsLen);
 
 	WLog_Print(
-	    context->priv->log, WLOG_WARN,
+	    priv->log, WLOG_WARN,
 	    "[MS-RDPEPC] 2.2.2.4 Update Printer Cachedata (DR_PRN_UPDATE_CACHEDATA) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO: parse %p", (const void*)config);
+	WLog_Print(priv->log, WLOG_WARN, "TODO: parse %p", (const void*)config);
 	return CHANNEL_RC_OK;
 }
 
@@ -1944,19 +1992,21 @@ static UINT rdpdr_server_receive_prn_cache_delete_printer(RdpdrServerContext* co
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, PrinterNameLen);
 
-	PrinterName = rdpdr_read_ustring(context->priv->log, s, PrinterNameLen);
+	PrinterName = rdpdr_read_ustring(priv->log, s, PrinterNameLen);
 	if (!PrinterName && (PrinterNameLen > 0))
 		return ERROR_INVALID_DATA;
 
 	WLog_Print(
-	    context->priv->log, WLOG_WARN,
+	    priv->log, WLOG_WARN,
 	    "[MS-RDPEPC] 2.2.2.5 Delete Printer Cachedata (DR_PRN_DELETE_CACHEDATA) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
+	WLog_Print(priv->log, WLOG_WARN, "TODO");
 	return CHANNEL_RC_OK;
 }
 
@@ -1970,23 +2020,25 @@ static UINT rdpdr_server_receive_prn_cache_rename_cachedata(RdpdrServerContext* 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 8))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, OldPrinterNameLen);
 	Stream_Read_UINT32(s, NewPrinterNameLen);
 
-	OldPrinterName = rdpdr_read_ustring(context->priv->log, s, OldPrinterNameLen);
+	OldPrinterName = rdpdr_read_ustring(priv->log, s, OldPrinterNameLen);
 	if (!OldPrinterName && (OldPrinterNameLen > 0))
 		return ERROR_INVALID_DATA;
-	NewPrinterName = rdpdr_read_ustring(context->priv->log, s, NewPrinterNameLen);
+	NewPrinterName = rdpdr_read_ustring(priv->log, s, NewPrinterNameLen);
 	if (!NewPrinterName && (NewPrinterNameLen > 0))
 		return ERROR_INVALID_DATA;
 
 	WLog_Print(
-	    context->priv->log, WLOG_WARN,
+	    priv->log, WLOG_WARN,
 	    "[MS-RDPEPC] 2.2.2.6 Rename Printer Cachedata (DR_PRN_RENAME_CACHEDATA) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "TODO");
+	WLog_Print(priv->log, WLOG_WARN, "TODO");
 	return CHANNEL_RC_OK;
 }
 
@@ -2000,7 +2052,8 @@ rdpdr_server_receive_prn_cache_data_request(RdpdrServerContext* context, wStream
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(header);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
+	RdpdrServerPrivate* priv = context->priv;
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, EventId);
@@ -2015,7 +2068,7 @@ rdpdr_server_receive_prn_cache_data_request(RdpdrServerContext* context, wStream
 		case RDPDR_RENAME_PRINTER_EVENT:
 			return rdpdr_server_receive_prn_cache_rename_cachedata(context, s);
 		default:
-			WLog_Print(context->priv->log, WLOG_WARN,
+			WLog_Print(priv->log, WLOG_WARN,
 			           "[MS-RDPEPC] PAKID_PRN_CACHE_DATA unknown EventId=0x%08" PRIx32, EventId);
 			return ERROR_INVALID_DATA;
 	}
@@ -2031,17 +2084,19 @@ static UINT rdpdr_server_receive_prn_using_xps_request(RdpdrServerContext* conte
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(header);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 8))
+	RdpdrServerPrivate* priv = context->priv;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 8))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, PrinterId);
 	Stream_Read_UINT32(s, Flags);
 
 	WLog_Print(
-	    context->priv->log, WLOG_WARN,
+	    priv->log, WLOG_WARN,
 	    "[MS-RDPEPC] 2.2.2.2 Server Printer Set XPS Mode (DR_PRN_USING_XPS) not implemented");
-	WLog_Print(context->priv->log, WLOG_WARN, "PrinterId=0x%08" PRIx32 ", Flags=0x%08" PRIx32,
-	           PrinterId, Flags);
+	WLog_Print(priv->log, WLOG_WARN, "PrinterId=0x%08" PRIx32 ", Flags=0x%08" PRIx32, PrinterId,
+	           Flags);
 	return CHANNEL_RC_OK;
 }
 
@@ -2059,7 +2114,8 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "receiving message {Component %s[%04" PRIx16 "], PacketId %s[%04" PRIx16 "]",
 	           rdpdr_component_string(header->Component), header->Component,
 	           rdpdr_packetid_string(header->PacketId), header->PacketId);
@@ -2069,7 +2125,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 		switch (header->PacketId)
 		{
 			case PAKID_CORE_SERVER_ANNOUNCE:
-				WLog_Print(context->priv->log, WLOG_ERROR,
+				WLog_Print(priv->log, WLOG_ERROR,
 				           "[MS-RDPEFS] 2.2.2.2 Server Announce Request "
 				           "(DR_CORE_SERVER_ANNOUNCE_REQ) must not be sent by a client!");
 				break;
@@ -2087,13 +2143,13 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				break;
 
 			case PAKID_CORE_USER_LOGGEDON:
-				WLog_Print(context->priv->log, WLOG_ERROR,
+				WLog_Print(priv->log, WLOG_ERROR,
 				           "[MS-RDPEFS] 2.2.2.5 Server User Logged On (DR_CORE_USER_LOGGEDON) "
 				           "must not be sent by a client!");
 				break;
 
 			case PAKID_CORE_SERVER_CAPABILITY:
-				WLog_Print(context->priv->log, WLOG_ERROR,
+				WLog_Print(priv->log, WLOG_ERROR,
 				           "[MS-RDPEFS] 2.2.2.7 Server Core Capability Request "
 				           "(DR_CORE_CAPABILITY_REQ) must not be sent by a client!");
 				break;
@@ -2102,7 +2158,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				error = rdpdr_server_receive_core_capability_response(context, s, header);
 				if (error == CHANNEL_RC_OK)
 				{
-					if (context->priv->UserLoggedOnPdu)
+					if (priv->UserLoggedOnPdu)
 						error = rdpdr_server_send_user_logged_on(context);
 				}
 
@@ -2117,7 +2173,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				break;
 
 			case PAKID_CORE_DEVICE_REPLY:
-				WLog_Print(context->priv->log, WLOG_ERROR,
+				WLog_Print(priv->log, WLOG_ERROR,
 				           "[MS-RDPEFS] 2.2.2.1 Server Device Announce Response "
 				           "(DR_CORE_DEVICE_ANNOUNCE_RSP) must not be sent by a client!");
 				break;
@@ -2131,7 +2187,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				break;
 
 			default:
-				WLog_Print(context->priv->log, WLOG_WARN,
+				WLog_Print(priv->log, WLOG_WARN,
 				           "Unknown RDPDR_HEADER.Component: %s [0x%04" PRIx16 "], PacketId: %s",
 				           rdpdr_component_string(header->Component), header->Component,
 				           rdpdr_packetid_string(header->PacketId));
@@ -2151,7 +2207,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				break;
 
 			default:
-				WLog_Print(context->priv->log, WLOG_WARN,
+				WLog_Print(priv->log, WLOG_WARN,
 				           "Unknown RDPDR_HEADER.Component: %s [0x%04" PRIx16 "], PacketId: %s",
 				           rdpdr_component_string(header->Component), header->Component,
 				           rdpdr_packetid_string(header->PacketId));
@@ -2160,7 +2216,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 	}
 	else
 	{
-		WLog_Print(context->priv->log, WLOG_WARN,
+		WLog_Print(priv->log, WLOG_WARN,
 		           "Unknown RDPDR_HEADER.Component: %s [0x%04" PRIx16 "], PacketId: %s",
 		           rdpdr_component_string(header->Component), header->Component,
 		           rdpdr_packetid_string(header->PacketId));
@@ -2184,14 +2240,16 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		error = CHANNEL_RC_NO_MEMORY;
 		goto out;
 	}
 
-	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer,
+	if (WTSVirtualChannelQuery(priv->ChannelHandle, WTSVirtualEventHandle, &buffer,
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
@@ -2202,11 +2260,11 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 
 	nCount = 0;
 	events[nCount++] = ChannelEvent;
-	events[nCount++] = context->priv->StopEvent;
+	events[nCount++] = priv->StopEvent;
 
 	if ((error = rdpdr_server_send_announce_request(context)))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR,
+		WLog_Print(priv->log, WLOG_ERROR,
 		           "rdpdr_server_send_announce_request failed with error %" PRIu32 "!", error);
 		goto out_stream;
 	}
@@ -2220,42 +2278,42 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_Print(context->priv->log, WLOG_ERROR,
+			WLog_Print(priv->log, WLOG_ERROR,
 			           "WaitForMultipleObjects failed with error %" PRIu32 "!", error);
 			goto out_stream;
 		}
 
-		status = WaitForSingleObject(context->priv->StopEvent, 0);
+		status = WaitForSingleObject(priv->StopEvent, 0);
 
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_Print(context->priv->log, WLOG_ERROR,
-			           "WaitForSingleObject failed with error %" PRIu32 "!", error);
+			WLog_Print(priv->log, WLOG_ERROR, "WaitForSingleObject failed with error %" PRIu32 "!",
+			           error);
 			goto out_stream;
 		}
 
 		if (status == WAIT_OBJECT_0)
 			break;
 
-		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, nullptr, 0, &BytesReturned))
+		if (!WTSVirtualChannelRead(priv->ChannelHandle, 0, nullptr, 0, &BytesReturned))
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
+			WLog_Print(priv->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
 			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
+			WLog_Print(priv->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
 			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
 
 		capacity = MIN(Stream_Capacity(s), UINT32_MAX);
-		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, Stream_BufferAs(s, char),
+		if (!WTSVirtualChannelRead(priv->ChannelHandle, 0, Stream_BufferAs(s, char),
 		                           (ULONG)capacity, &BytesReturned))
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
+			WLog_Print(priv->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
 			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
@@ -2278,7 +2336,7 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 
 				if ((error = rdpdr_server_receive_pdu(context, s, &header)))
 				{
-					WLog_Print(context->priv->log, WLOG_ERROR,
+					WLog_Print(priv->log, WLOG_ERROR,
 					           "rdpdr_server_receive_pdu failed with error %" PRIu32 "!", error);
 					goto out_stream;
 				}
@@ -2306,27 +2364,28 @@ static UINT rdpdr_server_start(RdpdrServerContext* context)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	context->priv->ChannelHandle =
+
+	RdpdrServerPrivate* priv = context->priv;
+	priv->ChannelHandle =
 	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, RDPDR_SVC_CHANNEL_NAME);
 
-	if (!context->priv->ChannelHandle)
+	if (!priv->ChannelHandle)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "WTSVirtualChannelOpen failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "WTSVirtualChannelOpen failed!");
 		return CHANNEL_RC_BAD_CHANNEL;
 	}
 
-	if (!(context->priv->StopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
+	if (!(priv->StopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr)))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "CreateEvent failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "CreateEvent failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (!(context->priv->Thread =
-	          CreateThread(nullptr, 0, rdpdr_server_thread, (void*)context, 0, nullptr)))
+	if (!(priv->Thread = CreateThread(nullptr, 0, rdpdr_server_thread, (void*)context, 0, nullptr)))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "CreateThread failed!");
-		(void)CloseHandle(context->priv->StopEvent);
-		context->priv->StopEvent = nullptr;
+		WLog_Print(priv->log, WLOG_ERROR, "CreateThread failed!");
+		(void)CloseHandle(priv->StopEvent);
+		priv->StopEvent = nullptr;
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -2344,28 +2403,30 @@ static UINT rdpdr_server_stop(RdpdrServerContext* context)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (context->priv->StopEvent)
-	{
-		(void)SetEvent(context->priv->StopEvent);
+	RdpdrServerPrivate* priv = context->priv;
 
-		if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
+	if (priv->StopEvent)
+	{
+		(void)SetEvent(priv->StopEvent);
+
+		if (WaitForSingleObject(priv->Thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_Print(context->priv->log, WLOG_ERROR,
-			           "WaitForSingleObject failed with error %" PRIu32 "!", error);
+			WLog_Print(priv->log, WLOG_ERROR, "WaitForSingleObject failed with error %" PRIu32 "!",
+			           error);
 			return error;
 		}
 
-		(void)CloseHandle(context->priv->Thread);
-		context->priv->Thread = nullptr;
-		(void)CloseHandle(context->priv->StopEvent);
-		context->priv->StopEvent = nullptr;
+		(void)CloseHandle(priv->Thread);
+		priv->Thread = nullptr;
+		(void)CloseHandle(priv->StopEvent);
+		priv->StopEvent = nullptr;
 	}
 
-	if (context->priv->ChannelHandle)
+	if (priv->ChannelHandle)
 	{
-		(void)WTSVirtualChannelClose(context->priv->ChannelHandle);
-		context->priv->ChannelHandle = nullptr;
+		(void)WTSVirtualChannelClose(priv->ChannelHandle);
+		priv->ChannelHandle = nullptr;
 	}
 	return CHANNEL_RC_OK;
 }
@@ -2441,7 +2502,9 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceCreateRequest: deviceId=%" PRIu32
 	           ", path=%s, desiredAccess=0x%" PRIx32 " createOptions=0x%" PRIx32
 	           " createDisposition=0x%" PRIx32 "",
@@ -2452,7 +2515,7 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2488,14 +2551,16 @@ static UINT rdpdr_server_send_device_close_request(RdpdrServerContext* context, 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceCloseRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32 "",
 	           deviceId, fileId);
 	s = Stream_New(nullptr, 128);
 
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2517,7 +2582,9 @@ static UINT rdpdr_server_send_device_read_request(RdpdrServerContext* context, U
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceReadRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32
 	           ", length=%" PRIu32 ", offset=%" PRIu32 "",
 	           deviceId, fileId, length, offset);
@@ -2525,7 +2592,7 @@ static UINT rdpdr_server_send_device_read_request(RdpdrServerContext* context, U
 
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2550,7 +2617,9 @@ static UINT rdpdr_server_send_device_write_request(RdpdrServerContext* context, 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceWriteRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32
 	           ", length=%" PRIu32 ", offset=%" PRIu32 "",
 	           deviceId, fileId, length, offset);
@@ -2558,7 +2627,7 @@ static UINT rdpdr_server_send_device_write_request(RdpdrServerContext* context, 
 
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2585,7 +2654,9 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceQueryDirectoryRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32
 	           ", path=%s",
 	           deviceId, fileId, path);
@@ -2595,7 +2666,7 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2635,7 +2706,9 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerSendDeviceFileNameRequest: deviceId=%" PRIu32 ", fileId=%" PRIu32
 	           ", path=%s",
 	           deviceId, fileId, path);
@@ -2645,7 +2718,7 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 
 	if (!s)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_New failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2704,7 +2777,8 @@ static UINT rdpdr_server_drive_create_directory_callback2(RdpdrServerContext* co
 	WINPR_ASSERT(irp);
 	WINPR_UNUSED(s);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveCreateDirectoryCallback2: deviceId=%" PRIu32
 	           ", completionId=%" PRIu32 ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
@@ -2728,7 +2802,9 @@ static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(irp);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveCreateDirectoryCallback1: deviceId=%" PRIu32
 	           ", completionId=%" PRIu32 ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
@@ -2742,23 +2818,23 @@ static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 		return CHANNEL_RC_OK;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
 	const uint32_t fileId = Stream_Get_UINT32(s);    /* FileId (4 bytes) */
 	const uint8_t information = Stream_Get_UINT8(s); /* Information (1 byte) */
-	WLog_Print(context->priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
+	WLog_Print(priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
 	           fileInformation2str(information));
 
 	/* Setup the IRP. */
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_create_directory_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -2780,15 +2856,17 @@ static UINT rdpdr_server_drive_create_directory(RdpdrServerContext* context, voi
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(callbackData);
 	WINPR_ASSERT(path);
+
+	RdpdrServerPrivate* priv = context->priv;
 	irp = rdpdr_server_irp_new();
 
 	if (!irp)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_create_directory_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
@@ -2797,7 +2875,7 @@ static UINT rdpdr_server_drive_create_directory(RdpdrServerContext* context, voi
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -2826,7 +2904,8 @@ static UINT rdpdr_server_drive_delete_directory_callback2(RdpdrServerContext* co
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveDeleteDirectoryCallback2: deviceId=%" PRIu32
 	           ", completionId=%" PRIu32 ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
@@ -2849,7 +2928,9 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveDeleteDirectoryCallback1: deviceId=%" PRIu32
 	           ", completionId=%" PRIu32 ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
@@ -2863,23 +2944,23 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 		return CHANNEL_RC_OK;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
 	const uint32_t fileId = Stream_Get_UINT32(s);    /* FileId (4 bytes) */
 	const uint8_t information = Stream_Get_UINT8(s); /* Information (1 byte) */
-	WLog_Print(context->priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
+	WLog_Print(priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
 	           fileInformation2str(information));
 
 	/* Setup the IRP. */
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_delete_directory_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -2901,13 +2982,15 @@ static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, voi
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	if (!irp)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_delete_directory_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
@@ -2916,7 +2999,7 @@ static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, voi
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -2947,21 +3030,23 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveQueryDirectoryCallback2: deviceId=%" PRIu32
 	           ", completionId=%" PRIu32 ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
 	if (length > 0)
 	{
-		if ((error = rdpdr_server_read_file_directory_information(context->priv->log, s, &fdi)))
+		if ((error = rdpdr_server_read_file_directory_information(priv->log, s, &fdi)))
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR,
+			WLog_Print(priv->log, WLOG_ERROR,
 			           "rdpdr_server_read_file_directory_information failed with error %" PRIu32
 			           "!",
 			           error);
@@ -2970,7 +3055,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 	}
 	else
 	{
-		if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 1))
+		if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 1))
 			return ERROR_INVALID_DATA;
 
 		Stream_Seek(s, 1); /* Padding (1 byte) */
@@ -2982,12 +3067,12 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 		context->OnDriveQueryDirectoryComplete(context, irp->CallbackData, ioStatus,
 		                                       length > 0 ? &fdi : nullptr);
 		/* Setup the IRP. */
-		irp->CompletionId = context->priv->NextCompletionId++;
+		irp->CompletionId = priv->NextCompletionId++;
 		irp->Callback = rdpdr_server_drive_query_directory_callback2;
 
 		if (!rdpdr_server_enqueue_irp(context, irp))
 		{
-			WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+			WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 			rdpdr_server_irp_free(irp);
 			return ERROR_INTERNAL_ERROR;
 		}
@@ -3019,7 +3104,9 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveQueryDirectoryCallback1: deviceId=%" PRIu32
 	           ", completionId=%" PRIu32 ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
@@ -3033,12 +3120,12 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 		return CHANNEL_RC_OK;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	const uint32_t fileId = Stream_Get_UINT32(s);
 	/* Setup the IRP. */
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_query_directory_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
@@ -3046,7 +3133,7 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -3069,13 +3156,15 @@ static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context, void
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	if (!irp)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_query_directory_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
@@ -3084,7 +3173,7 @@ static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context, void
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -3111,17 +3200,19 @@ static UINT rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, w
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveOpenFileCallback: deviceId=%" PRIu32 ", completionId=%" PRIu32
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
 	const uint32_t fileId = Stream_Get_UINT32(s);    /* FileId (4 bytes) */
 	const uint8_t information = Stream_Get_UINT8(s); /* Information (1 byte) */
-	WLog_Print(context->priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
+	WLog_Print(priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
 	           fileInformation2str(information));
 
 	/* Invoke the open file completion routine. */
@@ -3145,13 +3236,15 @@ static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context, void* call
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	if (!irp)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_open_file_callback;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
@@ -3160,7 +3253,7 @@ static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context, void* call
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -3189,17 +3282,19 @@ static UINT rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, w
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveReadFileCallback: deviceId=%" PRIu32 ", completionId=%" PRIu32
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, length))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, length))
 		return ERROR_INVALID_DATA;
 
 	if (length > 0)
@@ -3229,13 +3324,15 @@ static UINT rdpdr_server_drive_read_file(RdpdrServerContext* context, void* call
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	if (!irp)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_read_file_callback;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
@@ -3243,7 +3340,7 @@ static UINT rdpdr_server_drive_read_file(RdpdrServerContext* context, void* call
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -3271,18 +3368,20 @@ static UINT rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveWriteFileCallback: deviceId=%" PRIu32 ", completionId=%" PRIu32
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 	Stream_Seek(s, 1);             /* Padding (1 byte) */
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, length))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, length))
 		return ERROR_INVALID_DATA;
 
 	/* Invoke the write file completion routine. */
@@ -3306,13 +3405,15 @@ static UINT rdpdr_server_drive_write_file(RdpdrServerContext* context, void* cal
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	if (!irp)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_write_file_callback;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
@@ -3320,7 +3421,7 @@ static UINT rdpdr_server_drive_write_file(RdpdrServerContext* context, void* cal
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -3349,13 +3450,15 @@ static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveCloseFileCallback: deviceId=%" PRIu32 ", completionId=%" PRIu32
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
 	// padding 5 bytes
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, 5);
@@ -3380,13 +3483,15 @@ static UINT rdpdr_server_drive_close_file(RdpdrServerContext* context, void* cal
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	if (!irp)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_close_file_callback;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
@@ -3394,7 +3499,7 @@ static UINT rdpdr_server_drive_close_file(RdpdrServerContext* context, void* cal
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -3422,7 +3527,8 @@ static UINT rdpdr_server_drive_delete_file_callback2(RdpdrServerContext* context
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveDeleteFileCallback2: deviceId=%" PRIu32 ", completionId=%" PRIu32
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
@@ -3445,7 +3551,9 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveDeleteFileCallback1: deviceId=%" PRIu32 ", completionId=%" PRIu32
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
@@ -3459,23 +3567,23 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 		return CHANNEL_RC_OK;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
 	const uint32_t fileId = Stream_Get_UINT32(s);    /* FileId (4 bytes) */
 	const uint8_t information = Stream_Get_UINT8(s); /* Information (1 byte) */
 
-	WLog_Print(context->priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
+	WLog_Print(priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
 	           fileInformation2str(information));
 	/* Setup the IRP. */
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_delete_file_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -3497,13 +3605,15 @@ static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* ca
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
+	RdpdrServerPrivate* priv = context->priv;
+
 	if (!irp)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_delete_file_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
@@ -3512,7 +3622,7 @@ static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* ca
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -3542,7 +3652,8 @@ static UINT rdpdr_server_drive_rename_file_callback3(RdpdrServerContext* context
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
 
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveRenameFileCallback3: deviceId=%" PRIu32 ", completionId=%" PRIu32
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
@@ -3564,12 +3675,14 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveRenameFileCallback2: deviceId=%" PRIu32 ", completionId=%" PRIu32
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
@@ -3577,13 +3690,13 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	/* Invoke the rename file completion routine. */
 	context->OnDriveRenameFileComplete(context, irp->CallbackData, ioStatus);
 	/* Setup the IRP. */
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_rename_file_callback3;
 	irp->DeviceId = deviceId;
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -3605,7 +3718,9 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
-	WLog_Print(context->priv->log, WLOG_DEBUG,
+
+	RdpdrServerPrivate* priv = context->priv;
+	WLog_Print(priv->log, WLOG_DEBUG,
 	           "RdpdrServerDriveRenameFileCallback1: deviceId=%" PRIu32 ", completionId=%" PRIu32
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
@@ -3619,23 +3734,23 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 		return CHANNEL_RC_OK;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
 	const uint32_t fileId = Stream_Get_UINT32(s);    /* FileId (4 bytes) */
 	const uint8_t information = Stream_Get_UINT8(s); /* Information (1 byte) */
-	WLog_Print(context->priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
+	WLog_Print(priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
 	           fileInformation2str(information));
 
 	/* Setup the IRP. */
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_rename_file_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
@@ -3656,15 +3771,17 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
+
+	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = rdpdr_server_irp_new();
 
 	if (!irp)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	irp->CompletionId = context->priv->NextCompletionId++;
+	irp->CompletionId = priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_rename_file_callback1;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
@@ -3675,7 +3792,7 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
 		return ERROR_INTERNAL_ERROR;
 	}
