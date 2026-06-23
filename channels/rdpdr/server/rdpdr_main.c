@@ -1080,6 +1080,36 @@ static UINT rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+static UINT rdpdr_server_send_device_reply(RdpdrServerContext* context, UINT32 deviceId,
+                                           UINT32 resultCode)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+
+	RdpdrServerPrivate* priv = context->priv;
+	wStream* s = Stream_New(nullptr, RDPDR_HEADER_LENGTH + 8);
+	if (!s)
+	{
+		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	const RDPDR_HEADER header = {
+		.Component = RDPDR_CTYP_CORE,
+		.PacketId = PAKID_CORE_DEVICE_REPLY,
+	};
+	Stream_Write_UINT16(s, header.Component); /* Component (2 bytes) */
+	Stream_Write_UINT16(s, header.PacketId);  /* PacketId (2 bytes) */
+	Stream_Write_UINT32(s, deviceId);         /* DeviceId (4 bytes) */
+	Stream_Write_UINT32(s, resultCode);       /* ResultCode (4 bytes) */
+	return rdpdr_seal_send_free_request(context, s);
+}
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
 static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext* context,
                                                               wStream* s,
                                                               const RDPDR_HEADER* header)
@@ -1119,6 +1149,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 		if (error != CHANNEL_RC_OK)
 			return error;
 
+		error = STATUS_NOT_SUPPORTED;
 		switch (device.DeviceType)
 		{
 			case RDPDR_DTYP_FILESYSTEM:
@@ -1177,10 +1208,11 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 				break;
 		}
 
+		Stream_Seek(s, device.DeviceDataLength);
+
+		error = rdpdr_server_send_device_reply(context, device.DeviceId, error);
 		if (error != CHANNEL_RC_OK)
 			return error;
-
-		Stream_Seek(s, device.DeviceDataLength);
 	}
 
 	return CHANNEL_RC_OK;
