@@ -33,6 +33,7 @@
 
 #include <freerdp/channels/log.h>
 #include "rdpdr_main.h"
+#include <freerdp/utils/channel_pdu_tracker.h>
 
 #define RDPDR_ADD_PRINTER_EVENT 0x00000001
 #define RDPDR_UPDATE_PRINTER_EVENT 0x00000002
@@ -2126,101 +2127,62 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 	WINPR_ASSERT(context->priv);
 
 	UINT error = 0;
+	wStream* s = nullptr;
 	RdpdrServerPrivate* priv = context->priv;
-	DWORD nCount = 0;
+	ChannelPduTracker* tracker = ChannelPduTracker_new(priv->ChannelHandle);
+	if (!tracker)
+		goto out;
+
 	void* buffer = nullptr;
-	HANDLE events[8] = WINPR_C_ARRAY_INIT;
 	HANDLE ChannelEvent = nullptr;
 	DWORD BytesReturned = 0;
-	wStream* s = Stream_New(nullptr, 4096);
-
-	if (!s)
+	if (!WTSVirtualChannelQuery(priv->ChannelHandle, WTSVirtualEventHandle, &buffer,
+	                            &BytesReturned))
 	{
-		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
-		error = CHANNEL_RC_NO_MEMORY;
+		WLog_Print(priv->log, WLOG_ERROR, "error retrieving WTSVirtualEventHandle");
 		goto out;
 	}
 
-	if (WTSVirtualChannelQuery(priv->ChannelHandle, WTSVirtualEventHandle, &buffer,
-	                           &BytesReturned) == TRUE)
+	if (BytesReturned != sizeof(HANDLE))
 	{
-		if (BytesReturned == sizeof(HANDLE))
-			ChannelEvent = *(HANDLE*)buffer;
-
+		WLog_Print(priv->log, WLOG_ERROR, "invalid size for WTSVirtualEventHandle");
 		WTSFreeMemory(buffer);
+		goto out;
 	}
 
-	nCount = 0;
-	events[nCount++] = ChannelEvent;
-	events[nCount++] = priv->StopEvent;
+	ChannelEvent = *(HANDLE*)buffer;
+	WTSFreeMemory(buffer);
 
 	if ((error = rdpdr_server_send_announce_request(context)))
 	{
 		WLog_Print(priv->log, WLOG_ERROR,
 		           "rdpdr_server_send_announce_request failed with error %" PRIu32 "!", error);
-		goto out_stream;
+		goto out;
 	}
+
+	HANDLE events[2] = { priv->StopEvent, ChannelEvent };
 
 	while (1)
 	{
-		size_t capacity = 0;
-		BytesReturned = 0;
-		DWORD status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		DWORD status = WaitForMultipleObjects(2, events, FALSE, INFINITE);
 
-		if (status == WAIT_FAILED)
+		switch (status)
 		{
-			error = GetLastError();
-			WLog_Print(priv->log, WLOG_ERROR,
-			           "WaitForMultipleObjects failed with error %" PRIu32 "!", error);
-			goto out_stream;
-		}
-
-		status = WaitForSingleObject(priv->StopEvent, 0);
-
-		if (status == WAIT_FAILED)
-		{
-			error = GetLastError();
-			WLog_Print(priv->log, WLOG_ERROR, "WaitForSingleObject failed with error %" PRIu32 "!",
-			           error);
-			goto out_stream;
-		}
-
-		if (status == WAIT_OBJECT_0)
-			break;
-
-		if (!WTSVirtualChannelRead(priv->ChannelHandle, 0, nullptr, 0, &BytesReturned))
-		{
-			WLog_Print(priv->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
-			error = ERROR_INTERNAL_ERROR;
-			break;
-		}
-		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
-		{
-			WLog_Print(priv->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
-			error = ERROR_INTERNAL_ERROR;
-			break;
-		}
-
-		capacity = MIN(Stream_Capacity(s), UINT32_MAX);
-		if (!WTSVirtualChannelRead(priv->ChannelHandle, 0, Stream_BufferAs(s, char),
-		                           (ULONG)capacity, &BytesReturned))
-		{
-			WLog_Print(priv->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
-			error = ERROR_INTERNAL_ERROR;
-			break;
-		}
-
-		if (BytesReturned >= RDPDR_HEADER_LENGTH)
-		{
-			Stream_ResetPosition(s);
-			if (!Stream_SetLength(s, BytesReturned))
+			case WAIT_OBJECT_0:
+				/* StopEvent */
+				goto out;
+			case WAIT_OBJECT_0 + 1:
 			{
-				error = ERROR_INTERNAL_ERROR;
-				goto out_stream;
-			}
+				s = ChannelPduTracker_poll(tracker);
+				if (!s)
+					break;
 
-			while (Stream_GetRemainingLength(s) >= RDPDR_HEADER_LENGTH)
-			{
+				if (Stream_GetRemainingLength(s) < RDPDR_HEADER_LENGTH)
+				{
+					error = ERROR_INTERNAL_ERROR;
+					goto out;
+				}
+
 				const RDPDR_HEADER header = {
 					.Component = Stream_Get_UINT16(s), /* Component (2 bytes) */
 					.PacketId = Stream_Get_UINT16(s),  /* PacketId (2 bytes) */
@@ -2230,15 +2192,26 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 				{
 					WLog_Print(priv->log, WLOG_ERROR,
 					           "rdpdr_server_receive_pdu failed with error %" PRIu32 "!", error);
-					goto out_stream;
+					goto out;
 				}
+				Stream_Release(s);
+				s = nullptr;
+				break;
 			}
+			case WAIT_FAILED:
+			default:
+				error = GetLastError();
+				WLog_Print(priv->log, WLOG_ERROR,
+				           "WaitForMultipleObjects failed with error %" PRIu32 "!", error);
+				goto out;
 		}
 	}
 
-out_stream:
-	Stream_Release(s);
 out:
+	ChannelPduTracker_free(tracker);
+
+	if (s)
+		Stream_Release(s);
 
 	if (error && context->rdpcontext)
 		setChannelError(context->rdpcontext, error, "rdpdr_server_thread reported an error");
@@ -2257,9 +2230,19 @@ static UINT rdpdr_server_start(RdpdrServerContext* context)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
+	PULONG pSessionId = nullptr;
+	DWORD BytesReturned = 0;
+
+	if (!WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
+	                                 (LPSTR*)&pSessionId, &BytesReturned))
+		return CHANNEL_RC_BAD_CHANNEL;
+
+	DWORD SessionId = (DWORD)*pSessionId;
+	WTSFreeMemory(pSessionId);
+
 	RdpdrServerPrivate* priv = context->priv;
 	priv->ChannelHandle =
-	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, RDPDR_SVC_CHANNEL_NAME);
+	    WTSVirtualChannelOpenEx(SessionId, RDPDR_SVC_CHANNEL_NAME, CHANNEL_OPTION_SHOW_PROTOCOL);
 
 	if (!priv->ChannelHandle)
 	{
