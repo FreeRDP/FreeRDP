@@ -171,17 +171,23 @@ static UINT remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* co
 	size_t cchStringW = 0;
 	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = 0;
-	UINT32 msgLength = header->DataLength - 4;
+
+	if (header->DataLength < 4)
+		return ERROR_INVALID_DATA;
+
+	size_t cchMax = header->DataLength - 4;
+	const size_t remaining = Stream_GetRemainingLength(s);
+	if (cchMax > remaining)
+		cchMax = remaining;
+	cchMax /= sizeof(WCHAR);
+
 	const WCHAR* pStringW = Stream_ConstPointer(s);
 	const WCHAR* raConnectionStringW = pStringW;
 
-	while ((msgLength > 0) && pStringW[cchStringW])
-	{
-		msgLength -= 2;
+	while ((cchStringW < cchMax) && pStringW[cchStringW])
 		cchStringW++;
-	}
 
-	if (pStringW[cchStringW] || !cchStringW)
+	if ((cchStringW >= cchMax) || !cchStringW)
 		return ERROR_INVALID_DATA;
 
 	cchStringW++;
@@ -211,32 +217,36 @@ static UINT remdesk_recv_ctl_authenticate_pdu(WINPR_ATTR_UNUSED RemdeskServerCon
 	size_t cchTmpStringW = 0;
 	const WCHAR* expertBlobW = nullptr;
 	REMDESK_CTL_AUTHENTICATE_PDU pdu = WINPR_C_ARRAY_INIT;
-	UINT32 msgLength = header->DataLength - 4;
+
+	if (header->DataLength < 4)
+		return ERROR_INVALID_DATA;
+
+	size_t cchRemaining = header->DataLength - 4;
+	const size_t remaining = Stream_GetRemainingLength(s);
+	if (cchRemaining > remaining)
+		cchRemaining = remaining;
+	cchRemaining /= sizeof(WCHAR);
+
 	const WCHAR* pStringW = Stream_ConstPointer(s);
 	const WCHAR* raConnectionStringW = pStringW;
 
-	while ((msgLength > 0) && pStringW[cchTmpStringW])
-	{
-		msgLength -= 2;
+	while ((cchTmpStringW < cchRemaining) && pStringW[cchTmpStringW])
 		cchTmpStringW++;
-	}
 
-	if (pStringW[cchTmpStringW] || !cchTmpStringW)
+	if ((cchTmpStringW >= cchRemaining) || !cchTmpStringW)
 		return ERROR_INVALID_DATA;
 
 	cchTmpStringW++;
 	const size_t cbRaConnectionStringW = cchTmpStringW * sizeof(WCHAR);
 	pStringW += cchTmpStringW;
 	expertBlobW = pStringW;
+	cchRemaining -= cchTmpStringW;
 
 	size_t cchStringW = 0;
-	while ((msgLength > 0) && pStringW[cchStringW])
-	{
-		msgLength -= 2;
+	while ((cchStringW < cchRemaining) && pStringW[cchStringW])
 		cchStringW++;
-	}
 
-	if (pStringW[cchStringW] || !cchStringW)
+	if ((cchStringW >= cchRemaining) || !cchStringW)
 		return ERROR_INVALID_DATA;
 
 	cchStringW++;
@@ -276,7 +286,10 @@ static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, 
 	if (header->DataLength < 4)
 		return ERROR_INVALID_PARAMETER;
 
-	const size_t cbExpertBlobW = header->DataLength - 4;
+	size_t cbExpertBlobW = header->DataLength - 4;
+	const size_t remaining = Stream_GetRemainingLength(s);
+	if (cbExpertBlobW > remaining)
+		cbExpertBlobW = remaining;
 
 	pdu.expertBlob = ConvertWCharNToUtf8Alloc(expertBlobW, cbExpertBlobW / sizeof(WCHAR), nullptr);
 	if (!pdu.expertBlob)
