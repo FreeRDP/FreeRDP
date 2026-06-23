@@ -596,7 +596,10 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 	    freerdp_settings_get_uint32(context->settings, FreeRDP_TcpConnectTimeout);
 
 	if (_itoa_s(port, port_str, sizeof(port_str), 10) < 0)
+	{
+		WLog_ERR(TAG, "itoa %s failed", port_str);
 		return FALSE;
+	}
 
 	hostLen = strlen(hostname);
 	portLen = strnlen(port_str, sizeof(port_str));
@@ -736,6 +739,7 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 
 	rc = TRUE;
 fail:
+	WLog_ERR(TAG, "Failed to connect to proxy");
 	Stream_Free(s, TRUE);
 	return rc;
 }
@@ -960,7 +964,10 @@ static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const cha
 		}
 
 		if (offset > sizeof(buf) - 2)
+		{
+			WLog_ERR(TAG, "Invalid offset %" PRIuz, offset);
 			return FALSE;
+		}
 
 		/* follows DST.PORT in netw. format */
 		buf[offset++] = (port >> 8) & 0xff;
