@@ -15,49 +15,8 @@ The following prerequisites are required in order to build the iOS port:
 - latest Xcode installed (>= 26.0)
 - installed Provisioning Profile and iOS Developer Certificate for code signing
 	(not required for simulator builds)
-- pre-build static OpenSSL libraries (see below)
-- pre-build FFmpeg libraries for H.264 support (see below)
-
-FreeRDP requires OpenSSL libraries for building but they are not part of the iOS SDK and therefore they need to be pre-build manually.
-There are various versions and builds of static OpenSSL libraries floating around like iOSPorts.
-At the time of writing we have tested and used a small script (OpenSSL-DownloadAndBuild.command) that downloads and builds arm64, arm64s and x86_64s versions of the OpenSSL 3.4.0 libraries.
-
-If you don't care about modifying the OpenSSL build you can run the following command in the FreeRDP root directory:
-
-./scripts/OpenSSL-DownloadAndBuild.command 
-
-The output of the script will be found in build/ios.openssl.build/. In case you want a
-different install/build directory you specify it as first parameter:
-
-./scripts/OpenSSL-DownloadAndBuild.command  /tmp/
-
-In the example above the output can then be found in /tmp/openssl.
-
-The script uses oldest iOS/iPhoneSimulator SDK found on the build machine per default. If it is required to build against a specific SDK version
-the variable SDK_VERSION can be used to specify it. The minimum SDK version that should be used can be set with MIN_SDK_VERSION within the script.
-
-When the script is finished you will find libcrypto.a and libssl.at, both universal libraries containing all openssl/lib 
-subfolder in the specified
-install directory (build per default)
-
-When the script finishes you will find libcrypto.a and libssl.a, both universal
-binary libraries containing arm and i386 targets in order to compile FreeRDP for
-iOS devices and the simulator, in the lib subfolder of your installation
-directory.
-
-If you build OpenSSL yourself or with an install directory specified you need to set FREERDP_IOS_EXTERNAL_SSL_PATH when running cmake.
-
-FFmpeg is used for the H.264/AVC (/gfx:AVC420) GFX pipeline together with the
-platform VideoToolbox hardware decoder. A small script (FFmpeg-DownloadAndBuild.command)
-is provided that downloads and builds FFmpeg 7.1.1 (LGPL, no GPL) as a dynamic
-FFmpeg.framework.
-
-./scripts/FFmpeg-DownloadAndBuild.command
-
-The output is found in build/ios.ffmpeg.build/FFmpeg.framework (arm64 device) and
-build/ios-sim.ffmpeg.build/FFmpeg.framework (arm64 + x86_64 simulator).
-
-Additional (optional) libraries that are required:
+- pre-build static OpenSSL libraries
+- pre-build FFmpeg libraries for H.264 support
 
 * cJSON for Azure logon support
 * MIT or Heimdal kerberos for kerberos support
@@ -67,44 +26,32 @@ Building
 
 Run the following commands in the top level FreeRDP directory:
 
-For real ios device
+For a real iOS device (pass your signing team):
 
-cmake -GXcode -B build/ios.client.build -DCMAKE_TOOLCHAIN_FILE=cmake/ios.toolchain.cmake \
-      -DPLATFORM=OS64 -DDEPLOYMENT_TARGET=15.0 -DIOS_TARGET_SDK=15.0 \
-      -DFREERDP_IOS_EXTERNAL_SSL_PATH=build/ios.openssl.build \
-      -DWITH_FFMPEG=ON -DWITH_VIDEO_FFMPEG=ON -DWITH_DSP_FFMPEG=OFF \
-      -DWITH_SWSCALE=OFF -DWITH_VIDEOTOOLBOX=ON -DWITH_MANPAGES=OFF \
-      -DWITH_INTERNAL_MD4=ON -DWITH_INTERNAL_RC4=ON \
-      -DAVCODEC_INCLUDE_DIRS="$PWD/build/ios.ffmpeg.build/FFmpeg.framework/Headers" \
-      -DAVUTIL_INCLUDE_DIRS="$PWD/build/ios.ffmpeg.build/FFmpeg.framework/Headers" \
-      -DAVCODEC_LIBRARIES="$PWD/build/ios.ffmpeg.build/FFmpeg.framework/FFmpeg" \
-      -DAVUTIL_LIBRARIES="$PWD/build/ios.ffmpeg.build/FFmpeg.framework/FFmpeg"
+cmake -S client/iOS/cmake -B build/ios.client.build \
+      -DCMAKE_TOOLCHAIN_FILE="$PWD/cmake/ios.toolchain.cmake" \
+      -DPLATFORM=OS64 -DDEPLOYMENT_TARGET=15.0 \
+      -DFREERDP_IOS_DEVELOPMENT_TEAM=XXXXXXXXXX
+cmake --build build/ios.client.build
 
-For simulator
+For the simulator (no signing team required):
 
-cmake -GXcode -B build/ios-sim.client.build -DCMAKE_TOOLCHAIN_FILE=cmake/ios.toolchain.cmake \
-      -DPLATFORM=SIMULATORARM64 -DDEPLOYMENT_TARGET=15.0 -DIOS_TARGET_SDK=15.0 \
-      -DFREERDP_IOS_EXTERNAL_SSL_PATH=build/ios-sim.openssl.build \
-      -DWITH_FFMPEG=ON -DWITH_VIDEO_FFMPEG=ON -DWITH_DSP_FFMPEG=OFF \
-      -DWITH_SWSCALE=OFF -DWITH_VIDEOTOOLBOX=ON -DWITH_MANPAGES=OFF \
-      -DWITH_INTERNAL_MD4=ON -DWITH_INTERNAL_RC4=ON \
-      -DAVCODEC_INCLUDE_DIRS="$PWD/build/ios-sim.ffmpeg.build/FFmpeg.framework/Headers" \
-      -DAVUTIL_INCLUDE_DIRS="$PWD/build/ios-sim.ffmpeg.build/FFmpeg.framework/Headers" \
-      -DAVCODEC_LIBRARIES="$PWD/build/ios-sim.ffmpeg.build/FFmpeg.framework/FFmpeg" \
-      -DAVUTIL_LIBRARIES="$PWD/build/ios-sim.ffmpeg.build/FFmpeg.framework/FFmpeg"
+cmake -S client/iOS/cmake -B build/ios-sim.client.build \
+      -DCMAKE_TOOLCHAIN_FILE="$PWD/cmake/ios.toolchain.cmake" \
+      -DPLATFORM=SIMULATORARM64 -DDEPLOYMENT_TARGET=15.0
+cmake --build build/ios-sim.client.build
 
-This creates build/ios.client.build/FreeRDP.xcodeproj (or build/ios-sim.client.build/FreeRDP.xcodeproj).
-
-For a real ios device pass your signing team,
--DFREERDP_IOS_DEVELOPMENT_TEAM=XXXXXXXXXX -DFREERDP_IOS_CODE_SIGN_STYLE=Automatic,
-or set the team in Xcode under Signing & Capabilities.
+The Xcode project is generated under the build directory, e.g.
+build/ios.client.build/freerdp/src/freerdp-build/FreeRDP.xcodeproj - open it to
+build, sign or run the app from Xcode (set the Team under Signing & Capabilities
+if you did not pass FREERDP_IOS_DEVELOPMENT_TEAM).
 
 Notes: 
      
 * XCode, by default will build the application into its derived data location (usually in ~/Library/Developer/...).
 If you want to specify an output directory add CONFIGURATION_BUILD_DIR=<output-path-here> to the end of above command line.
 
-* If using XCode select the generated project, e.g. "open build/ios.client.build/FreeRDP.xcodeproj".
+* If using XCode select the generated project, e.g. "open build/ios.client.build/freerdp/src/freerdp-build/FreeRDP.xcodeproj".
 
 * Use a separate build directory per platform (build/ios.client.build, build/ios-sim.client.build as shown
   above). That keeps the device and simulator CMake caches apart, so there is no

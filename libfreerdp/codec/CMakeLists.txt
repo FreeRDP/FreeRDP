@@ -167,11 +167,7 @@ if(WITH_VIDEO_FFMPEG)
 
   set(CODEC_SRCS ${CODEC_SRCS} h264_ffmpeg.c)
   include_directories(SYSTEM ${FFMPEG_INCLUDE_DIRS})
-  if(APPLE AND AVCODEC_LIBRARIES MATCHES "\\.a$")
-    list(APPEND CODEC_LIBS "-Wl,-force_load,${AVCODEC_LIBRARIES}" ${AVUTIL_LIBRARIES})
-  else()
-    list(APPEND CODEC_LIBS ${FFMPEG_LIBRARIES})
-  endif()
+  list(APPEND CODEC_LIBS ${FFMPEG_LIBRARIES})
   freerdp_pc_add_requires_private("libavfilter;libavformat;libavcodec;libavutil")
 endif()
 
