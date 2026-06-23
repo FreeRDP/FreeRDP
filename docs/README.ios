@@ -74,6 +74,7 @@ cmake -GXcode -B build/ios.client.build -DCMAKE_TOOLCHAIN_FILE=cmake/ios.toolcha
       -DFREERDP_IOS_EXTERNAL_SSL_PATH=build/ios.openssl.build \
       -DWITH_FFMPEG=ON -DWITH_VIDEO_FFMPEG=ON -DWITH_DSP_FFMPEG=OFF \
       -DWITH_SWSCALE=OFF -DWITH_VIDEOTOOLBOX=ON -DWITH_MANPAGES=OFF \
+      -DWITH_INTERNAL_MD4=ON -DWITH_INTERNAL_RC4=ON \
       -DAVCODEC_INCLUDE_DIRS="$PWD/build/ios.ffmpeg.build/FFmpeg.framework/Headers" \
       -DAVUTIL_INCLUDE_DIRS="$PWD/build/ios.ffmpeg.build/FFmpeg.framework/Headers" \
       -DAVCODEC_LIBRARIES="$PWD/build/ios.ffmpeg.build/FFmpeg.framework/FFmpeg" \
@@ -86,6 +87,7 @@ cmake -GXcode -B build/ios-sim.client.build -DCMAKE_TOOLCHAIN_FILE=cmake/ios.too
       -DFREERDP_IOS_EXTERNAL_SSL_PATH=build/ios-sim.openssl.build \
       -DWITH_FFMPEG=ON -DWITH_VIDEO_FFMPEG=ON -DWITH_DSP_FFMPEG=OFF \
       -DWITH_SWSCALE=OFF -DWITH_VIDEOTOOLBOX=ON -DWITH_MANPAGES=OFF \
+      -DWITH_INTERNAL_MD4=ON -DWITH_INTERNAL_RC4=ON \
       -DAVCODEC_INCLUDE_DIRS="$PWD/build/ios-sim.ffmpeg.build/FFmpeg.framework/Headers" \
       -DAVUTIL_INCLUDE_DIRS="$PWD/build/ios-sim.ffmpeg.build/FFmpeg.framework/Headers" \
       -DAVCODEC_LIBRARIES="$PWD/build/ios-sim.ffmpeg.build/FFmpeg.framework/FFmpeg" \
