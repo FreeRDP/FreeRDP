@@ -264,14 +264,15 @@ static inline INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 
 		for (UINT32 x = 0; x < nWidth;)
 		{
-			BYTE controlByte = *srcp;
-			srcp++;
-
-			if ((srcp - pSrcData) > SrcSize * 1ll)
+			const size_t cur = (srcp - pSrcData);
+			if (cur + 1 > SrcSize * 1ll)
 			{
 				WLog_ERR(TAG, "error reading input buffer");
 				return -1;
 			}
+
+			BYTE controlByte = *srcp;
+			srcp++;
 
 			UINT32 nRunLength = PLANAR_CONTROL_BYTE_RUN_LENGTH(controlByte);
 			UINT32 cRawBytes = PLANAR_CONTROL_BYTE_RAW_BYTES(controlByte);
