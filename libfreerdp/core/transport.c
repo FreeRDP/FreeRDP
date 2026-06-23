@@ -535,17 +535,15 @@ static BOOL transport_can_retry(const rdpContext* context, BOOL status)
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, DWORD timeout)
 {
 	BOOL status = FALSE;
-	rdpSettings* settings = nullptr;
 	rdpContext* context = transport_get_context(transport);
-	BOOL rpcFallback = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(hostname);
 
-	settings = context->settings;
+	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	rpcFallback = !settings->GatewayHttpTransport;
+	BOOL rpcFallback = !settings->GatewayHttpTransport;
 
 	if (transport->GatewayEnabled)
 	{
@@ -555,7 +553,10 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			transport->wst = wst_new(context);
 
 			if (!transport->wst)
+			{
+				WLog_Print(transport->log, WLOG_ERROR, "wst_new failed");
 				return FALSE;
+			}
 
 			status = wst_connect(transport->wst, timeout);
 
@@ -579,7 +580,10 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			transport->rdg = rdg_new(context);
 
 			if (!transport->rdg)
+			{
+				WLog_Print(transport->log, WLOG_ERROR, "rdg_new failed");
 				return FALSE;
+			}
 
 			status = rdg_connect(transport->rdg, timeout, &rpcFallback);
 
@@ -1570,7 +1574,12 @@ rdpTransportLayer* transport_connect_layer(rdpTransport* transport, const char* 
 {
 	WINPR_ASSERT(transport);
 
-	return IFCALLRESULT(nullptr, transport->io.ConnectLayer, transport, hostname, port, timeout);
+	rdpTransportLayer* rc =
+	    IFCALLRESULT(nullptr, transport->io.ConnectLayer, transport, hostname, port, timeout);
+	if (!rc)
+		WLog_Print(transport->log, WLOG_ERROR, "ConnectLayer %s:%d [%" PRIu32 "ms] failed",
+		           hostname, port, timeout);
+	return rc;
 }
 
 static rdpTransportLayer* transport_default_connect_layer(rdpTransport* transport,
@@ -1588,7 +1597,10 @@ BOOL transport_attach_layer(rdpTransport* transport, rdpTransportLayer* layer)
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(layer);
 
-	return IFCALLRESULT(FALSE, transport->io.AttachLayer, transport, layer);
+	const BOOL rc = IFCALLRESULT(FALSE, transport->io.AttachLayer, transport, layer);
+	if (!rc)
+		WLog_Print(transport->log, WLOG_ERROR, "AttachLayer failed");
+	return rc;
 }
 
 static BOOL transport_default_attach_layer(rdpTransport* transport, rdpTransportLayer* layer)

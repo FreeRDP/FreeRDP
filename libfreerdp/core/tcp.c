@@ -769,13 +769,13 @@ static int freerdp_uds_connect(const char* path)
 struct addrinfo* freerdp_tcp_resolve_host(const char* hostname, int port, int ai_flags)
 {
 	char* service = nullptr;
-	char port_str[16];
+	char port_str[16] = WINPR_C_ARRAY_INIT;
 	int status = 0;
-	struct addrinfo hints = WINPR_C_ARRAY_INIT;
+
 	struct addrinfo* result = nullptr;
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = ai_flags;
+	struct addrinfo hints = { .ai_family = AF_UNSPEC,
+		                      .ai_socktype = SOCK_STREAM,
+		                      .ai_flags = ai_flags };
 
 	if (port >= 0)
 	{
@@ -786,7 +786,10 @@ struct addrinfo* freerdp_tcp_resolve_host(const char* hostname, int port, int ai
 	status = getaddrinfo(hostname, service, &hints, &result);
 
 	if (status)
+	{
+		WLog_WARN(TAG, "getaddrinfo(%s) failed with %s", hostname, gai_strerror(status));
 		return nullptr;
+	}
 
 	return result;
 }
@@ -858,21 +861,6 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 	}
 
 	{
-		INT32 optval = 0;
-		socklen_t optlen = sizeof(optval);
-		if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0)
-			goto fail;
-
-		if (optval != 0)
-		{
-			char ebuffer[256] = WINPR_C_ARRAY_INIT;
-			WLog_DBG(TAG, "connect failed with error: %s [%" PRId32 "]",
-			         winpr_strerror(optval, ebuffer, sizeof(ebuffer)), optval);
-			goto fail;
-		}
-	}
-
-	{
 		const int status = WSAEventSelect((SOCKET)sockfd, handles[0], 0);
 		if (status < 0)
 		{
@@ -886,6 +874,26 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd, struct 
 
 	rc = TRUE;
 fail:
+{
+	INT32 optval = 0;
+	socklen_t optlen = sizeof(optval);
+	if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) >= 0)
+	{
+		if (optval != 0)
+		{
+			char ebuffer[256] = WINPR_C_ARRAY_INIT;
+			char hostname[512] = WINPR_C_ARRAY_INIT;
+			char serv[512] = WINPR_C_ARRAY_INIT;
+
+			getnameinfo(addr, addrlen, hostname, sizeof(hostname), serv, sizeof(serv),
+			            NI_NUMERICSERV);
+			WLog_WARN(TAG, "connect to %s:%s failed with error: %s [%" PRId32 "]", hostname, serv,
+			          winpr_strerror(optval, ebuffer, sizeof(ebuffer)), optval);
+			rc = FALSE;
+		}
+	}
+}
+
 	(void)CloseHandle(handles[0]);
 	return rc;
 }
