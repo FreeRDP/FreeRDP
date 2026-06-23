@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tp_cluster"
+    android:layout_width="@dimen/tp_cluster_size"
+    android:layout_height="@dimen/tp_cluster_size"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <ImageButton
+        android:id="@+id/tp_rclick"
+        android:layout_width="@dimen/tp_button_size"
+        android:layout_height="@dimen/tp_button_size"
+        android:layout_marginStart="120dp"
+        android:layout_marginTop="0dp"
+        android:background="@drawable/bg_tp_circle"
+        android:elevation="@dimen/tp_elevation"
+        android:padding="@dimen/tp_button_icon_padding"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_mouse_right"
+        android:tint="@color/tp_icon" />
+
+    <ImageButton
+        android:id="@+id/tp_close"
+        android:layout_width="@dimen/tp_close_size"
+        android:layout_height="@dimen/tp_close_size"
+        android:layout_marginStart="6dp"
+        android:layout_marginTop="66dp"
+        android:background="@drawable/bg_tp_circle"
+        android:elevation="@dimen/tp_elevation"
+        android:padding="@dimen/tp_close_icon_padding"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_close"
+        android:tint="@color/tp_close" />
+
+    <ImageButton
+        android:id="@+id/tp_scroll"
+        android:layout_width="@dimen/tp_button_size"
+        android:layout_height="@dimen/tp_button_size"
+        android:layout_marginStart="120dp"
+        android:layout_marginTop="60dp"
+        android:background="@drawable/bg_tp_scroll"
+        android:elevation="@dimen/tp_elevation"
+        android:padding="@dimen/tp_button_icon_padding"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_unfold_more"
+        android:tint="@color/tp_icon" />
+
+    <ImageButton
+        android:id="@+id/tp_reset"
+        android:layout_width="@dimen/tp_button_size"
+        android:layout_height="@dimen/tp_button_size"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="120dp"
+        android:background="@drawable/bg_tp_circle"
+        android:elevation="@dimen/tp_elevation"
+        android:padding="@dimen/tp_button_icon_padding"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_resize"
+        android:tint="@color/tp_icon" />
+
+    <ImageButton
+        android:id="@+id/tp_keyboard"
+        android:layout_width="@dimen/tp_button_size"
+        android:layout_height="@dimen/tp_button_size"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="120dp"
+        android:background="@drawable/bg_tp_circle"
+        android:contentDescription="@string/menu_sys_keyboard"
+        android:elevation="@dimen/tp_elevation"
+        android:padding="@dimen/tp_button_icon_padding"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_keyboard"
+        android:tint="@color/tp_icon" />
+
+    <ImageButton
+        android:id="@+id/tp_ext_keyboard"
+        android:layout_width="@dimen/tp_button_size"
+        android:layout_height="@dimen/tp_button_size"
+        android:layout_marginStart="120dp"
+        android:layout_marginTop="120dp"
+        android:background="@drawable/bg_tp_circle"
+        android:contentDescription="@string/menu_ext_keyboard"
+        android:elevation="@dimen/tp_elevation"
+        android:padding="@dimen/tp_button_icon_padding"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_fn_keyboard"
+        android:tint="@color/tp_icon" />
+
+    <ImageButton
+        android:id="@+id/tp_puck"
+        android:layout_width="@dimen/tp_puck_size"
+        android:layout_height="@dimen/tp_puck_size"
+        android:layout_marginStart="56dp"
+        android:layout_marginTop="56dp"
+        android:background="@drawable/bg_tp_circle"
+        android:backgroundTint="@color/tp_accent"
+        android:elevation="@dimen/tp_elevation"
+        android:padding="@dimen/tp_puck_icon_padding"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_mouse_left"
+        android:tint="@color/tp_on_accent" />
+
+    <ImageView
+        android:id="@+id/tp_cursor"
+        android:layout_width="@dimen/tp_cursor_size"
+        android:layout_height="@dimen/tp_cursor_size"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="0dp"
+        android:elevation="@dimen/tp_elevation"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_cursor"
+        android:tint="@color/tp_icon" />
+
+</FrameLayout>

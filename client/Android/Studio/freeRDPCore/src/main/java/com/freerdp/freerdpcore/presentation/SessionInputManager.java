@@ -38,8 +38,9 @@ public class SessionInputManager
 {
 	private static final String TAG = "FreeRDP.SessionInputManager";
 
-	private static final int SCROLLING_TIMEOUT = 50;
-	private static final int SCROLLING_DISTANCE = 20;
+	private static final int SCROLLING_TIMEOUT = 16;
+	private static final int SCROLLING_DISTANCE = 12;
+	private static final int SCROLLING_EDGE_MARGIN = 16;
 	private static final int MAX_DISCARDED_MOVE_EVENTS = 3;
 	private static final int SEND_MOVE_EVENT_TIMEOUT = 150;
 
@@ -480,9 +481,13 @@ public class SessionInputManager
 		if (ApplicationSettingsActivity.getAutoScrollTouchPointer(context) &&
 		    !handler.hasMessages(MSG_SCROLLING_REQUESTED))
 		{
-			Log.v(TAG, "Starting auto-scroll");
 			handler.sendEmptyMessageDelayed(MSG_SCROLLING_REQUESTED, SCROLLING_TIMEOUT);
 		}
+	}
+
+	@Override public void onTouchPointerMoveEnd()
+	{
+		handler.removeMessages(MSG_SCROLLING_REQUESTED);
 	}
 
 	@Override public void onTouchPointerScroll(boolean down)
@@ -618,31 +623,34 @@ public class SessionInputManager
 					int scrollX = 0;
 					int scrollY = 0;
 					float[] pointerPos = touchPointerView.getPointerPosition();
+					final int ow = touchPointerView.getWidth();
+					final int oh = touchPointerView.getHeight();
+					final int pw = touchPointerView.getPointerWidth();
+					final int ph = touchPointerView.getPointerHeight();
 
-					if (pointerPos[0] > (screenWidth - touchPointerView.getPointerWidth()))
+					if (pointerPos[0] >= ow - pw - SCROLLING_EDGE_MARGIN)
 						scrollX = SCROLLING_DISTANCE;
-					else if (pointerPos[0] < 0)
+					else if (pointerPos[0] <= SCROLLING_EDGE_MARGIN)
 						scrollX = -SCROLLING_DISTANCE;
 
-					if (pointerPos[1] > (screenHeight - touchPointerView.getPointerHeight()))
+					if (pointerPos[1] >= oh - ph - SCROLLING_EDGE_MARGIN)
 						scrollY = SCROLLING_DISTANCE;
-					else if (pointerPos[1] < 0)
+					else if (pointerPos[1] <= SCROLLING_EDGE_MARGIN)
 						scrollY = -SCROLLING_DISTANCE;
 
 					scrollView.scrollBy(scrollX, scrollY);
 
-					if (scrollView.getScrollX() == 0 ||
-					    scrollView.getScrollX() == (sessionView.getWidth() - scrollView.getWidth()))
+					final int maxX = sessionView.getWidth() - scrollView.getWidth();
+					final int maxY = sessionView.getHeight() - scrollView.getHeight();
+					if ((scrollX < 0 && scrollView.getScrollX() <= 0) ||
+					    (scrollX > 0 && scrollView.getScrollX() >= maxX))
 						scrollX = 0;
-					if (scrollView.getScrollY() == 0 ||
-					    scrollView.getScrollY() ==
-					        (sessionView.getHeight() - scrollView.getHeight()))
+					if ((scrollY < 0 && scrollView.getScrollY() <= 0) ||
+					    (scrollY > 0 && scrollView.getScrollY() >= maxY))
 						scrollY = 0;
 
 					if (scrollX != 0 || scrollY != 0)
 						handler.sendEmptyMessageDelayed(MSG_SCROLLING_REQUESTED, SCROLLING_TIMEOUT);
-					else
-						Log.v(TAG, "Stopping auto-scroll");
 					break;
 				}
 			}

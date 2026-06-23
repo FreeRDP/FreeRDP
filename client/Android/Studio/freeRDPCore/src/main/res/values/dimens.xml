@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="key_height">50dip</dimen>
+
+    <dimen name="tp_button_radius">26dp</dimen>
+    <dimen name="tp_puck_radius">30dp</dimen>
+    <dimen name="tp_icon_radius">10dp</dimen>
+    <dimen name="tp_puck_icon_radius">12dp</dimen>
+    <dimen name="tp_cell_step">60dp</dimen>
+
+    <dimen name="tp_button_size">52dp</dimen>
+    <dimen name="tp_close_size">40dp</dimen>
+    <dimen name="tp_puck_size">60dp</dimen>
+    <dimen name="tp_cluster_size">172dp</dimen>
+    <dimen name="tp_cursor_size">28dp</dimen>
+    <dimen name="tp_button_icon_padding">14dp</dimen>
+    <dimen name="tp_close_icon_padding">13dp</dimen>
+    <dimen name="tp_puck_icon_padding">16dp</dimen>
+    <dimen name="tp_elevation">3dp</dimen>
 </resources>

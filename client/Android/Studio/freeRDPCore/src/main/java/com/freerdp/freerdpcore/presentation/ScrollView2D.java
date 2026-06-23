@@ -35,6 +35,8 @@ import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Scroller;
+
+import com.freerdp.freerdpcore.R;
 import android.widget.TextView;
 
 import java.util.List;
@@ -1100,6 +1102,9 @@ public class ScrollView2D extends FrameLayout
 		super.requestLayout();
 	}
 
+	private int lastCenterContentH = -1;
+	private int lastCenterTop = 0;
+
 	@Override protected void onLayout(boolean changed, int l, int t, int r, int b)
 	{
 		super.onLayout(changed, l, t, r, b);
@@ -1116,18 +1121,26 @@ public class ScrollView2D extends FrameLayout
 		if (getChildCount() > 0)
 		{
 			View child = getChildAt(0);
-			int ptw = 0, pth = 0;
-			if (child instanceof SessionView)
-			{
-				ptw = ((SessionView)child).getTouchPointerPaddingWidth();
-				pth = ((SessionView)child).getTouchPointerPaddingHeight();
-			}
+			SessionView sv = findViewById(R.id.sessionView);
+			int ptw = sv != null ? sv.getTouchPointerPaddingWidth() : 0;
+			int pth = sv != null ? sv.getTouchPointerPaddingHeight() : 0;
 			int contentW = child.getMeasuredWidth() - ptw;
 			int contentH = child.getMeasuredHeight() - pth;
 			int usableW = getWidth() - getPaddingLeft() - getPaddingRight();
 			int usableH = getHeight() - getPaddingTop() - getPaddingBottom();
 			int left = getPaddingLeft() + Math.max(0, (usableW - contentW) / 2);
-			int top = getPaddingTop() + Math.max(0, (usableH - contentH) / 2);
+			int top;
+			if (contentH == lastCenterContentH)
+			{
+				// viewport-only change (e.g. keyboard): keep position, don't re-center
+				top = lastCenterTop;
+			}
+			else
+			{
+				top = getPaddingTop() + Math.max(0, (usableH - contentH) / 2);
+				lastCenterContentH = contentH;
+				lastCenterTop = top;
+			}
 			child.layout(left, top, left + child.getMeasuredWidth(),
 			             top + child.getMeasuredHeight());
 		}

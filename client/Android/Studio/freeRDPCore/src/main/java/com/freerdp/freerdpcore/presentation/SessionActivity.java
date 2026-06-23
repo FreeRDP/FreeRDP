@@ -112,10 +112,14 @@ public class SessionActivity extends AppCompatActivity
 						int hotX = data.getInt("hotX");
 						int hotY = data.getInt("hotY");
 						sessionView.setRemoteCursor(pixels, width, height, hotX, hotY);
+						if (touchPointerView != null)
+							touchPointerView.setRemoteCursor(pixels, width, height, hotX, hotY);
 					}
 					else
 					{
 						sessionView.setRemoteCursor(null, 0, 0, 0, 0);
+						if (touchPointerView != null)
+							touchPointerView.setRemoteCursor(null, 0, 0, 0, 0);
 					}
 					break;
 				}
