@@ -109,7 +109,7 @@ void sdl_OnUserNotificationEventHandler(void* context, const UserNotificationEve
 	{
 		std::string sender;
 		std::string message;
-		uint32_t timeoutMS;
+		uint32_t timeoutMS = 0;
 	};
 
 	auto ud = new struct userdata;
@@ -122,14 +122,14 @@ void sdl_OnUserNotificationEventHandler(void* context, const UserNotificationEve
 	SDL_RunOnMainThread(
 	    [](void* userdata)
 	    {
-		    auto e = static_cast<struct userdata*>(userdata);
-		    WINPR_ASSERT(e);
+		    auto ed = static_cast<struct userdata*>(userdata);
+		    assert(ed);
 		    auto parent = SDL_GetMouseFocus();
 		    if (!parent)
 			    parent = SDL_GetKeyboardFocus();
-		    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, e->sender.c_str(),
-		                             e->message.c_str(), parent);
-		    delete e;
+		    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, ed->sender.c_str(),
+		                             ed->message.c_str(), parent);
+		    delete ed;
 	    },
 	    ud, false);
 }
