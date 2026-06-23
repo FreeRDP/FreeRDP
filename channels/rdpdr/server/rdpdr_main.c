@@ -2395,6 +2395,66 @@ static UINT rdpdr_server_read_file_directory_information(wLog* log, wStream* s,
 	return CHANNEL_RC_OK;
 }
 
+static UINT prepare_irp(RdpdrServerContext* context, UINT32 deviceId, RDPDR_IRP_Callback callback,
+                        void* callbackData, RDPDR_IRP** outIrp)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(callbackData);
+	WINPR_ASSERT(outIrp);
+
+	RdpdrServerPrivate* priv = context->priv;
+
+	RDPDR_IRP* irp = rdpdr_server_irp_new();
+	if (!irp)
+	{
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	irp->CompletionId = priv->NextCompletionId++;
+	irp->Callback = callback;
+	irp->CallbackData = callbackData;
+	irp->DeviceId = deviceId;
+
+	if (!rdpdr_server_enqueue_irp(context, irp))
+	{
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
+		rdpdr_server_irp_free(irp);
+		return ERROR_INTERNAL_ERROR;
+	}
+
+	*outIrp = irp;
+	return CHANNEL_RC_OK;
+}
+
+static UINT prepare_smartcard_irp(RdpdrServerContext* context, UINT32 ioControlCode,
+                                  RDPDR_IRP_Callback callback, void* callbackData,
+                                  RDPDR_IRP** outIrp)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+	WINPR_ASSERT(callbackData);
+
+	const char* cmd = scard_get_ioctl_string(ioControlCode, FALSE);
+
+	RdpdrServerPrivate* priv = context->priv;
+	if (!priv->haveSmartcardDevice)
+	{
+		WLog_Print(priv->log, WLOG_ERROR, "%s - no smartcard device registered", cmd);
+		return ERROR_BAD_DEVICE;
+	}
+
+	RDPDR_IRP* irp = nullptr;
+	UINT error = prepare_irp(context, priv->smartcardDeviceId, callback, callbackData, &irp);
+	if (error != CHANNEL_RC_OK)
+		return error;
+
+	irp->IoControlCode = ioControlCode;
+	*outIrp = irp;
+	return CHANNEL_RC_OK;
+}
+
 /**
  * Function description
  *
@@ -2755,32 +2815,18 @@ static UINT rdpdr_server_drive_create_directory(RdpdrServerContext* context, voi
 	WINPR_ASSERT(callbackData);
 	WINPR_ASSERT(path);
 
-	RdpdrServerPrivate* priv = context->priv;
-	RDPDR_IRP* irp = rdpdr_server_irp_new();
+	RDPDR_IRP* irp = nullptr;
+	UINT ret = prepare_irp(context, deviceId, rdpdr_server_drive_create_directory_callback1,
+	                       callbackData, &irp);
+	if (ret != CHANNEL_RC_OK)
+		return ret;
 
-	if (!irp)
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	irp->CompletionId = priv->NextCompletionId++;
-	irp->Callback = rdpdr_server_drive_create_directory_callback1;
-	irp->CallbackData = callbackData;
-	irp->DeviceId = deviceId;
 	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to open the file. */
 	return rdpdr_server_send_device_create_request(
-	    context, deviceId, irp->CompletionId, irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
+	    context, irp->DeviceId, irp->CompletionId, irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
 	    FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_CREATE);
 }
 
@@ -2878,32 +2924,18 @@ static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, voi
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	RdpdrServerPrivate* priv = context->priv;
-	RDPDR_IRP* irp = rdpdr_server_irp_new();
+	RDPDR_IRP* irp = nullptr;
+	UINT ret = prepare_irp(context, deviceId, rdpdr_server_drive_delete_directory_callback1,
+	                       callbackData, &irp);
+	if (ret != CHANNEL_RC_OK)
+		return ret;
 
-	if (!irp)
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	irp->CompletionId = priv->NextCompletionId++;
-	irp->Callback = rdpdr_server_drive_delete_directory_callback1;
-	irp->CallbackData = callbackData;
-	irp->DeviceId = deviceId;
 	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to open the file. */
 	return rdpdr_server_send_device_create_request(
-	    context, deviceId, irp->CompletionId, irp->PathName, DELETE | SYNCHRONIZE,
+	    context, irp->DeviceId, irp->CompletionId, irp->PathName, DELETE | SYNCHRONIZE,
 	    FILE_DIRECTORY_FILE | FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
@@ -3049,32 +3081,18 @@ static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context, void
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	RdpdrServerPrivate* priv = context->priv;
-	RDPDR_IRP* irp = rdpdr_server_irp_new();
+	RDPDR_IRP* irp = nullptr;
+	UINT ret = prepare_irp(context, deviceId, rdpdr_server_drive_query_directory_callback1,
+	                       callbackData, &irp);
+	if (ret != CHANNEL_RC_OK)
+		return ret;
 
-	if (!irp)
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	irp->CompletionId = priv->NextCompletionId++;
-	irp->Callback = rdpdr_server_drive_query_directory_callback1;
-	irp->CallbackData = callbackData;
-	irp->DeviceId = deviceId;
 	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to open the directory. */
 	return rdpdr_server_send_device_create_request(
-	    context, deviceId, irp->CompletionId, irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
+	    context, irp->DeviceId, irp->CompletionId, irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
 	    FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
@@ -3128,31 +3146,17 @@ static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context, void* call
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	RdpdrServerPrivate* priv = context->priv;
-	RDPDR_IRP* irp = rdpdr_server_irp_new();
+	RDPDR_IRP* irp = nullptr;
+	UINT ret =
+	    prepare_irp(context, deviceId, rdpdr_server_drive_open_file_callback, callbackData, &irp);
+	if (ret != CHANNEL_RC_OK)
+		return ret;
 
-	if (!irp)
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	irp->CompletionId = priv->NextCompletionId++;
-	irp->Callback = rdpdr_server_drive_open_file_callback;
-	irp->CallbackData = callbackData;
-	irp->DeviceId = deviceId;
 	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to open the file. */
-	return rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId,
+	return rdpdr_server_send_device_create_request(context, irp->DeviceId, irp->CompletionId,
 	                                               irp->PathName, desiredAccess | SYNCHRONIZE,
 	                                               FILE_SYNCHRONOUS_IO_NONALERT, createDisposition);
 }
@@ -3213,32 +3217,17 @@ static UINT rdpdr_server_drive_read_file(RdpdrServerContext* context, void* call
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	RdpdrServerPrivate* priv = context->priv;
-	RDPDR_IRP* irp = rdpdr_server_irp_new();
+	RDPDR_IRP* irp = nullptr;
+	UINT ret =
+	    prepare_irp(context, deviceId, rdpdr_server_drive_read_file_callback, callbackData, &irp);
+	if (ret != CHANNEL_RC_OK)
+		return ret;
 
-	if (!irp)
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	irp->CompletionId = priv->NextCompletionId++;
-	irp->Callback = rdpdr_server_drive_read_file_callback;
-	irp->CallbackData = callbackData;
-	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to open the directory. */
-	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): rdpdr_server_enqueue_irp owns irp
-	return rdpdr_server_send_device_read_request(context, deviceId, fileId, irp->CompletionId,
-	                                             length, offset);
+	return rdpdr_server_send_device_read_request(context, irp->DeviceId, irp->FileId,
+	                                             irp->CompletionId, length, offset);
 }
 
 /*************************************************
@@ -3292,32 +3281,17 @@ static UINT rdpdr_server_drive_write_file(RdpdrServerContext* context, void* cal
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	RdpdrServerPrivate* priv = context->priv;
-	RDPDR_IRP* irp = rdpdr_server_irp_new();
+	RDPDR_IRP* irp = nullptr;
+	UINT ret =
+	    prepare_irp(context, deviceId, rdpdr_server_drive_write_file_callback, callbackData, &irp);
+	if (ret != CHANNEL_RC_OK)
+		return ret;
 
-	if (!irp)
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	irp->CompletionId = priv->NextCompletionId++;
-	irp->Callback = rdpdr_server_drive_write_file_callback;
-	irp->CallbackData = callbackData;
-	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to open the directory. */
-	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): rdpdr_server_enqueue_irp owns irp
-	return rdpdr_server_send_device_write_request(context, deviceId, fileId, irp->CompletionId,
-	                                              buffer, length, offset);
+	return rdpdr_server_send_device_write_request(context, irp->DeviceId, irp->FileId,
+	                                              irp->CompletionId, buffer, length, offset);
 }
 
 /*************************************************
@@ -3369,31 +3343,17 @@ static UINT rdpdr_server_drive_close_file(RdpdrServerContext* context, void* cal
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	RdpdrServerPrivate* priv = context->priv;
-	RDPDR_IRP* irp = rdpdr_server_irp_new();
+	RDPDR_IRP* irp = nullptr;
+	UINT ret =
+	    prepare_irp(context, deviceId, rdpdr_server_drive_close_file_callback, callbackData, &irp);
+	if (ret != CHANNEL_RC_OK)
+		return ret;
 
-	if (!irp)
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	irp->CompletionId = priv->NextCompletionId++;
-	irp->Callback = rdpdr_server_drive_close_file_callback;
-	irp->CallbackData = callbackData;
-	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to open the directory. */
-	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): rdpdr_server_enqueue_irp owns irp
-	return rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+	return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
+	                                              irp->CompletionId);
 }
 
 /*************************************************
@@ -3476,7 +3436,8 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 	}
 
 	/* Send a request to close the file */
-	return rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+	return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
+	                                              irp->CompletionId);
 }
 
 /**
@@ -3490,32 +3451,18 @@ static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* ca
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	RdpdrServerPrivate* priv = context->priv;
-	RDPDR_IRP* irp = rdpdr_server_irp_new();
+	RDPDR_IRP* irp = nullptr;
+	UINT ret = prepare_irp(context, deviceId, rdpdr_server_drive_delete_file_callback1,
+	                       callbackData, &irp);
+	if (ret != CHANNEL_RC_OK)
+		return ret;
 
-	if (!irp)
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	irp->CompletionId = priv->NextCompletionId++;
-	irp->Callback = rdpdr_server_drive_delete_file_callback1;
-	irp->CallbackData = callbackData;
-	irp->DeviceId = deviceId;
 	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to open the file. */
 	return rdpdr_server_send_device_create_request(
-	    context, deviceId, irp->CompletionId, irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
+	    context, irp->DeviceId, irp->CompletionId, irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
 	    FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
@@ -3588,7 +3535,7 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	}
 
 	/* Send a request to close the file */
-	return rdpdr_server_send_device_close_request(context, deviceId, irp->FileId,
+	return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
 	                                              irp->CompletionId);
 }
 
@@ -3642,7 +3589,7 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 	}
 
 	/* Send a request to rename the file */
-	return rdpdr_server_send_device_file_rename_request(context, deviceId, fileId,
+	return rdpdr_server_send_device_file_rename_request(context, irp->DeviceId, irp->FileId,
 	                                                    irp->CompletionId, irp->ExtraBuffer);
 }
 
@@ -3658,34 +3605,19 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	RdpdrServerPrivate* priv = context->priv;
-	RDPDR_IRP* irp = rdpdr_server_irp_new();
+	RDPDR_IRP* irp = nullptr;
+	UINT ret = prepare_irp(context, deviceId, rdpdr_server_drive_rename_file_callback1,
+	                       callbackData, &irp);
+	if (ret != CHANNEL_RC_OK)
+		return ret;
 
-	if (!irp)
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_irp_new failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	irp->CompletionId = priv->NextCompletionId++;
-	irp->Callback = rdpdr_server_drive_rename_file_callback1;
-	irp->CallbackData = callbackData;
-	irp->DeviceId = deviceId;
 	strncpy(irp->PathName, oldPath, sizeof(irp->PathName) - 1);
 	strncpy(irp->ExtraBuffer, newPath, sizeof(irp->ExtraBuffer) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 	rdpdr_server_convert_slashes(irp->ExtraBuffer, sizeof(irp->ExtraBuffer));
 
-	if (!rdpdr_server_enqueue_irp(context, irp))
-	{
-		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
-		rdpdr_server_irp_free(irp);
-		return ERROR_INTERNAL_ERROR;
-	}
-
 	/* Send a request to open the file. */
-	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): rdpdr_server_enqueue_irp owns irp
-	return rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId,
+	return rdpdr_server_send_device_create_request(context, irp->DeviceId, irp->CompletionId,
 	                                               irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
 	                                               FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }

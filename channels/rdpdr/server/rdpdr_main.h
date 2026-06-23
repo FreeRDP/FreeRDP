@@ -40,6 +40,7 @@ struct S_RDPDR_IRP
 	UINT32 CompletionId;
 	UINT32 DeviceId;
 	UINT32 FileId;
+	UINT32 IoControlCode;
 	char PathName[256];
 	char ExtraBuffer[256];
 	void* CallbackData;
