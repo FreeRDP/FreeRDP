@@ -172,9 +172,6 @@ static UINT remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* co
 	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu = WINPR_C_ARRAY_INIT;
 	UINT error = 0;
 
-	if (header->DataLength < 4)
-		return ERROR_INVALID_DATA;
-
 	size_t cchMax = header->DataLength - 4;
 	const size_t remaining = Stream_GetRemainingLength(s);
 	if (cchMax > remaining)
@@ -217,9 +214,6 @@ static UINT remdesk_recv_ctl_authenticate_pdu(WINPR_ATTR_UNUSED RemdeskServerCon
 	size_t cchTmpStringW = 0;
 	const WCHAR* expertBlobW = nullptr;
 	REMDESK_CTL_AUTHENTICATE_PDU pdu = WINPR_C_ARRAY_INIT;
-
-	if (header->DataLength < 4)
-		return ERROR_INVALID_DATA;
 
 	size_t cchRemaining = header->DataLength - 4;
 	const size_t remaining = Stream_GetRemainingLength(s);
@@ -283,8 +277,6 @@ static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, 
 		return ERROR_INVALID_DATA;
 
 	const WCHAR* expertBlobW = Stream_ConstPointer(s);
-	if (header->DataLength < 4)
-		return ERROR_INVALID_PARAMETER;
 
 	size_t cbExpertBlobW = header->DataLength - 4;
 	const size_t remaining = Stream_GetRemainingLength(s);
@@ -315,6 +307,9 @@ static UINT remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s,
 	UINT32 msgType = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return ERROR_INVALID_DATA;
+
+	if (header->DataLength < 4)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, msgType); /* msgType (4 bytes) */
