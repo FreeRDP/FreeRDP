@@ -38,3 +38,8 @@ foreach(test ${TESTS})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
+
+set(FUZZERS TestFuzzWinPRClipboard.c)
+
+include(AddFuzzerTest)
+add_fuzzer_test("${FUZZERS}" "winpr")
