@@ -223,38 +223,18 @@ if(IOS)
     COMMENT "Embedding FreeRDP iOS runtime libraries"
   )
 
-  if(AVCODEC_LIBRARIES)
-    set(_ios_ffmpeg_framework_dir "")
-    if(IS_DIRECTORY "${AVCODEC_LIBRARIES}" AND AVCODEC_LIBRARIES MATCHES "\\.framework$")
-      set(_ios_ffmpeg_framework_dir "${AVCODEC_LIBRARIES}")
-    else()
-      get_filename_component(_ios_ffmpeg_framework_dir "${AVCODEC_LIBRARIES}" DIRECTORY)
-      if(NOT _ios_ffmpeg_framework_dir MATCHES "\\.framework$")
-        set(_ios_ffmpeg_framework_dir "")
-      endif()
-    endif()
-
-    if(_ios_ffmpeg_framework_dir)
-      add_custom_command(
-        TARGET ${MODULE_NAME}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory "${_ios_ffmpeg_framework_dir}"
-                "${_ios_bundle_frameworks_dir}/FFmpeg.framework"
-        COMMENT "Embedding FFmpeg.framework"
-      )
-    endif()
+  # Embed + code-sign the dynamic FFmpeg framework with Xcode's native "Embed
+  # Frameworks" build phase (no custom codesign script). The FreeRDP runtime
+  # dylibs copied above are signed by their own Xcode targets (the
+  # XCODE_ATTRIBUTE_DEVELOPMENT_TEAM set on them above).
+  if(AVCODEC_LIBRARIES MATCHES "\\.framework/")
+    get_filename_component(_ios_ffmpeg_framework "${AVCODEC_LIBRARIES}" DIRECTORY)
+    set_target_properties(
+      ${MODULE_NAME}
+      PROPERTIES XCODE_EMBED_FRAMEWORKS "${_ios_ffmpeg_framework}"
+                 XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON
+    )
   endif()
-
-  add_custom_command(
-    TARGET ${MODULE_NAME}
-    POST_BUILD
-    COMMAND "${IOS_CLIENT_DIR}/../../scripts/Sign-iOS-bundle-frameworks.sh" "${_ios_bundle_frameworks_dir}"
-            "$<TARGET_FILE_NAME:winpr>" "$<TARGET_FILE_NAME:freerdp>" "$<TARGET_FILE_NAME:freerdp-client>"
-            "$<TARGET_SONAME_FILE_NAME:winpr>" "$<TARGET_SONAME_FILE_NAME:freerdp>"
-            "$<TARGET_SONAME_FILE_NAME:freerdp-client>"
-            "FFmpeg.framework"
-    COMMENT "Code signing embedded iOS runtime libraries when signing is enabled"
-  )
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/iOS")
