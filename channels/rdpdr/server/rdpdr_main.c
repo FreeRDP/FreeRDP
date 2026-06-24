@@ -222,7 +222,7 @@ static UINT32 g_ClientId = 0;
 
 static const WCHAR* rdpdr_read_ustring(wLog* log, wStream* s, size_t bytelen)
 {
-	const size_t charlen = (bytelen + 1) / sizeof(WCHAR);
+	const size_t charlen = bytelen / sizeof(WCHAR);
 	const WCHAR* str = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, bytelen))
 		return nullptr;
