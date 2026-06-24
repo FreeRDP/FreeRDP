@@ -15,8 +15,6 @@
 #include "../rail_main.h"
 #include "../rail_orders.h"
 
-static railPlugin* g_rail = nullptr;
-
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
 	if (size < 2)
@@ -24,30 +22,36 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 	if (size > (1u << 20))
 		return 0;
 
+	int rc = -1;
+	railPlugin* g_rail = (railPlugin*)calloc(1, sizeof(railPlugin));
 	if (!g_rail)
-	{
-		g_rail = (railPlugin*)calloc(1, sizeof(railPlugin));
-		if (!g_rail)
-			return 0;
+		goto fail;
 
-		g_rail->log = WLog_Get("fuzz.rail");
+	g_rail->log = WLog_Get("fuzz.rail");
 
-		/* A context is required (handlers bail on NULL); NULL callbacks skip dispatch. */
-		RailClientContext* context = (RailClientContext*)calloc(1, sizeof(RailClientContext));
-		g_rail->context = context;
-		g_rail->channelEntryPoints.pInterface = context;
-	}
+	/* A context is required (handlers bail on NULL); NULL callbacks skip dispatch. */
+	RailClientContext* context = (RailClientContext*)calloc(1, sizeof(RailClientContext));
+	g_rail->context = context;
+	g_rail->channelEntryPoints.pInterface = context;
 
 	/* rail_order_recv owns and frees the stream (Stream_Free(s, TRUE)); give it an owned copy. */
 	wStream* s = Stream_New(NULL, size);
 	if (!s)
-		return 0;
+		goto fail;
 
 	Stream_Write(s, data, size);
 	Stream_SealLength(s);
-	Stream_SetPosition(s, 0);
+	if (!Stream_SetPosition(s, 0))
+		goto fail;
 
 	(void)rail_order_recv(g_rail, s);
+	s = nullptr; // Freed up by rail_order_recv
 
-	return 0;
+	rc = 0;
+
+fail:
+	Stream_Free(s, TRUE);
+	free(context);
+	free(g_rail);
+	return rc;
 }
