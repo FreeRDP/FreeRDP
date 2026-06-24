@@ -285,21 +285,23 @@ static void rdpsnd_mac_start(rdpsndDevicePlugin *device)
 	{
 		rdpsndMacPlugin *mac = (rdpsndMacPlugin *)device;
 
+		if (!mac->engine.isRunning)
+		{
+			NSError *error;
+			[mac->engine connect:mac->player to:mac->engine.mainMixerNode format:nil];
+			[mac->engine prepare];
+			if (![mac->engine startAndReturnError:&error])
+			{
+				device->Close(device);
+				WLog_ERR(TAG, "Failed to start audio player %s",
+				         [error.localizedDescription UTF8String]);
+				return;
+			}
+			mac->isPlaying = FALSE; /* force [player play] below */
+		}
+
 		if (!mac->isPlaying)
 		{
-			if (!mac->engine.isRunning)
-			{
-				NSError *error;
-
-				if (![mac->engine startAndReturnError:&error])
-				{
-					device->Close(device);
-					WLog_ERR(TAG, "Failed to start audio player %s",
-					         [error.localizedDescription UTF8String]);
-					return;
-				}
-			}
-
 			[mac->player play];
 
 			mac->isPlaying = TRUE;
