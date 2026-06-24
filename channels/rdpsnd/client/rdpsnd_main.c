@@ -202,7 +202,7 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 {
 	wStream* pdu = nullptr;
-	UINT16 length = 0;
+	size_t length = 0;
 	UINT32 dwVolume = 0;
 	UINT16 wNumberOfFormats = 0;
 	WINPR_ASSERT(rdpsnd);
@@ -217,6 +217,13 @@ static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	for (UINT16 index = 0; index < wNumberOfFormats; index++)
 		length += (18 + rdpsnd->ClientFormats[index].cbSize);
 
+	/* BodySize is a UINT16 field, so the whole PDU must fit in UINT16_MAX. A server can inflate
+	 * the client format list through large per-format cbSize values; without this bound the
+	 * accumulator wrapped and Stream_New() below was undersized. Mirrors the server side check in
+	 * rdpsnd_server_send_formats(). */
+	if (length > UINT16_MAX)
+		return ERROR_INVALID_DATA;
+
 	pdu = Stream_New(nullptr, length);
 
 	if (!pdu)
@@ -227,7 +234,7 @@ static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 
 	Stream_Write_UINT8(pdu, SNDC_FORMATS);                        /* msgType */
 	Stream_Write_UINT8(pdu, 0);                                   /* bPad */
-	Stream_Write_UINT16(pdu, length - 4);                         /* BodySize */
+	Stream_Write_UINT16(pdu, (UINT16)(length - 4));               /* BodySize */
 	Stream_Write_UINT32(pdu, TSSNDCAPS_ALIVE | TSSNDCAPS_VOLUME); /* dwFlags */
 	Stream_Write_UINT32(pdu, dwVolume);                           /* dwVolume */
 	Stream_Write_UINT32(pdu, 0);                                  /* dwPitch */
