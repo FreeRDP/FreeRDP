@@ -122,9 +122,8 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseWheelEvent& ev)
 {
 	WINPR_ASSERT(sdl);
 
-	const BOOL flipped = (ev.direction == SDL_MOUSEWHEEL_FLIPPED);
-	const auto x = static_cast<INT32>(ev.x * (flipped ? -1.0f : 1.0f) * 120.0f);
-	const auto y = static_cast<INT32>(ev.y * (flipped ? -1.0f : 1.0f) * 120.0f);
+	const auto x = static_cast<INT32>(ev.x * 120.0f);
+	const auto y = static_cast<INT32>(ev.y * 120.0f);
 	UINT16 flags = 0;
 
 	if (y != 0)
