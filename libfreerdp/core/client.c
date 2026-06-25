@@ -1464,12 +1464,12 @@ StaticClientChannelStat* freerdp_channels_client_stats(rdpChannels* channels, si
 	if (channels->openDataCount <= 0)
 		return nullptr;
 
-	StaticClientChannelStat* stats =
-	    calloc(channels->openDataCount, sizeof(StaticClientChannelStat));
+	const size_t odc = WINPR_ASSERTING_INT_CAST(size_t, channels->openDataCount);
+	StaticClientChannelStat* stats = calloc(odc, sizeof(StaticClientChannelStat));
 	if (!stats)
 		return nullptr;
 
-	*pCount = channels->openDataCount;
+	*pCount = odc;
 	for (int i = 0; i < channels->openDataCount; i++)
 	{
 		const CHANNEL_OPEN_DATA* pChannelClientData = &channels->openDataList[i];

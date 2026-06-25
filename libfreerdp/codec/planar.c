@@ -264,7 +264,7 @@ static inline INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 
 		for (UINT32 x = 0; x < nWidth;)
 		{
-			const size_t cur = (srcp - pSrcData);
+			const size_t cur = WINPR_ASSERTING_INT_CAST(size_t, (srcp - pSrcData));
 			if (cur + 1 > SrcSize * 1ll)
 			{
 				WLog_ERR(TAG, "error reading input buffer");
@@ -398,7 +398,7 @@ static inline INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcD
 
 		for (INT32 x = 0; x < (INT32)nWidth;)
 		{
-			const size_t cur = (srcp - pSrcData);
+			const size_t cur = WINPR_ASSERTING_INT_CAST(size_t, (srcp - pSrcData));
 			if (cur + 1 > SrcSize * 1ll)
 			{
 				WLog_ERR(TAG, "error reading input buffer");
