@@ -1450,26 +1450,25 @@ static BOOL freerdp_channels_is_loaded_ex(rdpChannels* channels, PVIRTUALCHANNEL
 	return FALSE;
 }
 
-void freerdp_static_client_channel_stat_free(StaticClientChannelStat* stats,
-                                             WINPR_ATTR_UNUSED size_t count)
+void freerdp_channel_client_stats_free(StaticClientChannelStats* stats)
 {
+	if (stats)
+		free(stats->stats);
 	free(stats);
 }
 
-StaticClientChannelStat* freerdp_channels_client_stats(rdpChannels* channels, size_t* pCount)
+StaticClientChannelStats* freerdp_channels_client_stats(rdpChannels* channels)
 {
 	WINPR_ASSERT(channels);
-	WINPR_ASSERT(pCount);
-	*pCount = 0;
+
 	if (channels->openDataCount <= 0)
 		return nullptr;
 
-	StaticClientChannelStat* stats =
-	    calloc(channels->openDataCount, sizeof(StaticClientChannelStat));
+	const size_t odc = WINPR_ASSERTING_INT_CAST(size_t, channels->openDataCount);
+	StaticClientChannelStat* stats = calloc(odc, sizeof(StaticClientChannelStat));
 	if (!stats)
 		return nullptr;
 
-	*pCount = channels->openDataCount;
 	for (int i = 0; i < channels->openDataCount; i++)
 	{
 		const CHANNEL_OPEN_DATA* pChannelClientData = &channels->openDataList[i];
@@ -1477,7 +1476,16 @@ StaticClientChannelStat* freerdp_channels_client_stats(rdpChannels* channels, si
 
 		*stat = pChannelClientData->stats;
 	}
-	return stats;
+
+	StaticClientChannelStats* statsw = calloc(1, sizeof(StaticClientChannelStats));
+	if (!statsw)
+	{
+		free(stats);
+		return nullptr;
+	}
+	statsw->count = odc;
+	statsw->stats = stats;
+	return statsw;
 }
 
 int freerdp_channels_client_load(rdpChannels* channels, WINPR_ATTR_UNUSED rdpSettings* settings,
