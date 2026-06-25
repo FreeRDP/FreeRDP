@@ -182,46 +182,48 @@ endif()
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(IOS)
-  foreach(_ios_runtime_target freerdp-client freerdp winpr)
-    if(TARGET ${_ios_runtime_target})
-      set_target_properties(
-        ${_ios_runtime_target}
-        PROPERTIES BUILD_WITH_INSTALL_NAME_DIR YES INSTALL_NAME_DIR "@rpath"
-      )
-      if(FREERDP_IOS_DEVELOPMENT_TEAM)
+  if(BUILD_SHARED_LIBS)
+    foreach(_ios_runtime_target freerdp-client freerdp winpr)
+      if(TARGET ${_ios_runtime_target})
         set_target_properties(
           ${_ios_runtime_target}
-          PROPERTIES XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${FREERDP_IOS_DEVELOPMENT_TEAM}"
+          PROPERTIES BUILD_WITH_INSTALL_NAME_DIR YES INSTALL_NAME_DIR "@rpath"
         )
+        if(FREERDP_IOS_DEVELOPMENT_TEAM)
+          set_target_properties(
+            ${_ios_runtime_target}
+            PROPERTIES XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${FREERDP_IOS_DEVELOPMENT_TEAM}"
+          )
+        endif()
+        if(FREERDP_IOS_CODE_SIGN_STYLE)
+          set_target_properties(
+            ${_ios_runtime_target}
+            PROPERTIES XCODE_ATTRIBUTE_CODE_SIGN_STYLE "${FREERDP_IOS_CODE_SIGN_STYLE}"
+          )
+        endif()
       endif()
-      if(FREERDP_IOS_CODE_SIGN_STYLE)
-        set_target_properties(
-          ${_ios_runtime_target}
-          PROPERTIES XCODE_ATTRIBUTE_CODE_SIGN_STYLE "${FREERDP_IOS_CODE_SIGN_STYLE}"
-        )
-      endif()
-    endif()
-  endforeach()
-
-  set(_ios_bundle_frameworks_dir "$<TARGET_BUNDLE_CONTENT_DIR:${MODULE_NAME}>/Frameworks")
-  add_custom_command(
-    TARGET ${MODULE_NAME}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${_ios_bundle_frameworks_dir}"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp-client>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:freerdp-client>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp-client>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:freerdp-client>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:freerdp>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:freerdp>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:winpr>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:winpr>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:winpr>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:winpr>"
-    COMMENT "Embedding FreeRDP iOS runtime libraries"
-  )
+    endforeach()
+  
+    set(_ios_bundle_frameworks_dir "$<TARGET_BUNDLE_CONTENT_DIR:${MODULE_NAME}>/Frameworks")
+    add_custom_command(
+      TARGET ${MODULE_NAME}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${_ios_bundle_frameworks_dir}"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp-client>"
+              "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:freerdp-client>"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp-client>"
+              "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:freerdp-client>"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp>"
+              "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:freerdp>"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp>"
+              "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:freerdp>"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:winpr>"
+              "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:winpr>"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:winpr>"
+              "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:winpr>"
+      COMMENT "Embedding FreeRDP iOS runtime libraries"
+    )
+  endif()
 
   # Embed + code-sign the dynamic FFmpeg framework with Xcode's native "Embed
   # Frameworks" build phase (no custom codesign script). The FreeRDP runtime
