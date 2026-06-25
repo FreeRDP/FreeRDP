@@ -21,6 +21,7 @@
 
 #include "sdl_touch.hpp"
 #include "sdl_context.hpp"
+#include "sdl_prefs.hpp"
 
 #include <winpr/wtypes.h>
 #include <winpr/assert.h>
@@ -122,7 +123,8 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseWheelEvent& ev)
 {
 	WINPR_ASSERT(sdl);
 
-	const BOOL flipped = (ev.direction == SDL_MOUSEWHEEL_FLIPPED);
+	const bool flipped = (ev.direction == SDL_MOUSEWHEEL_FLIPPED) &&
+	                     !SdlPref::instance()->get_bool("UseLocalMouseScrollDirection");
 	const auto x = static_cast<INT32>(ev.x * (flipped ? -1.0f : 1.0f) * 120.0f);
 	const auto y = static_cast<INT32>(ev.y * (flipped ? -1.0f : 1.0f) * 120.0f);
 	UINT16 flags = 0;
