@@ -742,7 +742,7 @@ static BOOL stats_collector(WINPR_ATTR_UNUSED const void* key, void* value, void
 		memset(stat->channelName, 0, sizeof(stat->channelName));
 	stat->channelId = channel->channel_id;
 	stat->bytesIn = channel->stats.bytesIn;
-	stat->bytesIn = channel->stats.bytesOut;
+	stat->bytesOut = channel->stats.bytesOut;
 	stat->fragmentsIn = channel->stats.fragmentsIn;
 	stat->fragmentsOut = channel->stats.fragmentsOut;
 	stat->packetsIn = channel->stats.packetsIn;
