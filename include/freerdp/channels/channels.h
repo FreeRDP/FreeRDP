@@ -52,6 +52,16 @@ extern "C"
 	/** @since version 3.9.0 */
 	typedef BOOL (*freerdp_channel_handle_fkt_t)(rdpContext* context, void* userdata);
 
+	/** @brief free function for StaticClientChannelStat
+	 *
+	 *  @param stats A pointer to an array of \ref StaticClientChannelStat allocated by \ref
+	 * freerdp_channels_client_stats
+	 *  @param count The number of stats allocated
+	 *  @since version 3.28.0
+	 */
+	FREERDP_API void freerdp_static_client_channel_stat_free(StaticClientChannelStat* stats,
+	                                                         size_t count);
+
 	/** @brief return statistics for all static channels used
 	 *
 	 * @note must be called from RDP thread
@@ -63,7 +73,7 @@ extern "C"
 	 * @return An allocated list of \ref StaticClientChannelStat or nullptr in case of failure
 	 * @since version 3.28.0
 	 */
-	WINPR_ATTR_MALLOC(free, 1)
+	WINPR_ATTR_MALLOC(freerdp_static_client_channel_stat_free, 1)
 	FREERDP_API StaticClientChannelStat* freerdp_channels_client_stats(rdpChannels* channels,
 	                                                                   size_t* pCount);
 
