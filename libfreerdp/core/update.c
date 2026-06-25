@@ -58,7 +58,6 @@ static BOOL stats_names_generate(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
                                  WINPR_ATTR_UNUSED PVOID Parameter,
                                  WINPR_ATTR_UNUSED PVOID* Context)
 {
-
 	for (size_t index = 0; index < RDP_STATS_COUNT; index++)
 	{
 		char* buffer = stats_names[index];
@@ -68,10 +67,12 @@ static BOOL stats_names_generate(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
 		size_t offset = 0;
 		if (index < limit)
 		{
-			const char* str =
-			    primary_order_string(WINPR_ASSERTING_INT_CAST(UINT32, index), buffer, bufferlen);
+			char obuffer[64] = WINPR_C_ARRAY_INIT;
+			const char* str = primary_order_string(WINPR_ASSERTING_INT_CAST(UINT32, index), obuffer,
+			                                       sizeof(obuffer));
 			if (!str)
 				return FALSE;
+			(void)_snprintf(buffer, bufferlen, "RDP_STATS_ORDER_PRIMARY %s", str);
 			WINPR_ASSERT(strnlen(buffer, 2) > 0);
 			continue;
 		}
@@ -80,10 +81,12 @@ static BOOL stats_names_generate(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
 		limit += ARRAYSIZE(stats.secondary);
 		if (index < limit)
 		{
+			char obuffer[64] = WINPR_C_ARRAY_INIT;
 			const char* str = secondary_order_string(
-			    WINPR_ASSERTING_INT_CAST(UINT32, index - offset), buffer, bufferlen);
+			    WINPR_ASSERTING_INT_CAST(UINT32, index - offset), obuffer, sizeof(obuffer));
 			if (!str)
 				return FALSE;
+			(void)_snprintf(buffer, bufferlen, "RDP_STATS_ORDER_SECONDARY %s", str);
 			WINPR_ASSERT(strnlen(buffer, 2) > 0);
 			continue;
 		}
@@ -92,10 +95,12 @@ static BOOL stats_names_generate(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
 		limit += ARRAYSIZE(stats.altsec);
 		if (index < limit)
 		{
+			char obuffer[64] = WINPR_C_ARRAY_INIT;
 			const char* str = altsec_order_string(WINPR_ASSERTING_INT_CAST(BYTE, index - offset),
-			                                      buffer, bufferlen);
+			                                      obuffer, sizeof(obuffer));
 			if (!str)
 				return FALSE;
+			(void)_snprintf(buffer, bufferlen, "RDP_STATS_ORDER_ALTSEC %s", str);
 			WINPR_ASSERT(strnlen(buffer, 2) > 0);
 			continue;
 		}

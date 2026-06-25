@@ -52,8 +52,7 @@ typedef struct
 
 typedef struct
 {
-	char name[CHANNEL_NAME_LEN + 1];
-	uint32_t OpenHandle;
+	StaticClientChannelStat stats;
 	ULONG options;
 	int flags;
 	void* pInterface;
@@ -114,7 +113,6 @@ struct rdp_channels
 FREERDP_LOCAL void freerdp_channels_free(rdpChannels* channels);
 
 WINPR_ATTR_MALLOC(freerdp_channels_free, 1)
-WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpChannels* freerdp_channels_new(freerdp* instance);
 
 FREERDP_LOCAL UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance);
