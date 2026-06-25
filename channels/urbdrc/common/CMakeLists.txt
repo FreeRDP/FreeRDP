@@ -23,3 +23,7 @@ set_property(TARGET urbdrc-common PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Comm
 
 freerdp_client_pc_add_library_private(urbdrc-common)
 channel_install(urbdrc-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
+
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+  add_subdirectory(test)
+endif()
