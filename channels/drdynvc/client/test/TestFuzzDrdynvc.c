@@ -111,7 +111,8 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 	if ((size == 0) || (size > (1u << 20)))
 		return 0;
 
-	wStream* s = Stream_New((BYTE*)data, size);
+	wStream buffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&buffer, data, size);
 	if (!s)
 		return 0;
 
@@ -123,6 +124,5 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 			break;
 	}
 
-	Stream_Free(s, FALSE);
 	return 0;
 }

@@ -80,7 +80,9 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 
 	BOOL longNames = (data[1] & 0x1) != 0;
 	const uint8_t* body = data + 2;
-	wStream* s = Stream_New((BYTE*)body, size - 2);
+
+	wStream buffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&buffer, body, size - 2);
 	if (!s)
 		return 0;
 
@@ -108,6 +110,5 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 			break;
 	}
 
-	Stream_Free(s, FALSE);
 	return 0;
 }

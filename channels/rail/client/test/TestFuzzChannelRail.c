@@ -24,20 +24,19 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 
 	int rc = -1;
 	railPlugin* g_rail = (railPlugin*)calloc(1, sizeof(railPlugin));
-	if (!g_rail)
+	RailClientContext* context = (RailClientContext*)calloc(1, sizeof(RailClientContext));
+	wStream* s = Stream_New(NULL, size);
+	if (!g_rail || !context || !s)
 		goto fail;
 
 	g_rail->log = WLog_Get("fuzz.rail");
 
 	/* A context is required (handlers bail on NULL); NULL callbacks skip dispatch. */
-	RailClientContext* context = (RailClientContext*)calloc(1, sizeof(RailClientContext));
+
 	g_rail->context = context;
 	g_rail->channelEntryPoints.pInterface = context;
 
 	/* rail_order_recv owns and frees the stream (Stream_Free(s, TRUE)); give it an owned copy. */
-	wStream* s = Stream_New(NULL, size);
-	if (!s)
-		goto fail;
 
 	Stream_Write(s, data, size);
 	Stream_SealLength(s);
