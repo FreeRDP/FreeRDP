@@ -178,5 +178,19 @@ int TestFilePatternMatch(int argc, char* argv[])
 		return -1;
 	}
 
+	/* '?' must not match past the end of the file name.
+	 * The file name "X" is one character; the byte after its terminator
+	 * is set to 'Y' so that an out-of-bounds read in the X?Y branch would
+	 * wrongly report a match. */
+	{
+		const char shortName[] = { 'X', '\0', 'Y', '\0' };
+
+		if (FilePatternMatchA(shortName, "X?Y"))
+		{
+			printf("FilePatternMatchA error: FileName: %s Pattern: %s\n", "X", "X?Y");
+			return -1;
+		}
+	}
+
 	return 0;
 }

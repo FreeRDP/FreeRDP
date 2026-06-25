@@ -146,8 +146,13 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
 
 		/*
 		 * State 0: match 'X'
+		 *
+		 * '?' consumes exactly one character at position cchX, so the file
+		 * name must hold at least cchX + 1 characters. Without this the
+		 * cchY != 0 branch below reads &lpFileName[cchX + 1], one past the
+		 * terminator, when cchFileName == cchX.
 		 */
-		if (cchFileName < cchX)
+		if (cchFileName < cchX + 1)
 			return FALSE;
 
 		if (_strnicmp(lpFileName, lpX, cchX) != 0)
@@ -174,9 +179,6 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
 		}
 		else
 		{
-			if ((cchX + 1) > cchFileName)
-				return FALSE;
-
 			lpMatch = &lpFileName[cchX + 1];
 		}
 
