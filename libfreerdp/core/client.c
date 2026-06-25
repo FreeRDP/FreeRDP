@@ -1450,6 +1450,12 @@ static BOOL freerdp_channels_is_loaded_ex(rdpChannels* channels, PVIRTUALCHANNEL
 	return FALSE;
 }
 
+void freerdp_static_client_channel_stat_free(StaticClientChannelStat* stats,
+                                             WINPR_ATTR_UNUSED size_t count)
+{
+	free(stats);
+}
+
 StaticClientChannelStat* freerdp_channels_client_stats(rdpChannels* channels, size_t* pCount)
 {
 	WINPR_ASSERT(channels);
