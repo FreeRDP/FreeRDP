@@ -123,8 +123,8 @@ bool SdlTouch::handleEvent(SdlContext* sdl, const SDL_MouseWheelEvent& ev)
 {
 	WINPR_ASSERT(sdl);
 
-	const bool flipped = 
-		(ev.direction == SDL_MOUSEWHEEL_FLIPPED) && !SdlPref::instance()->get_bool("UseLocalMouseScrollDirection");
+	const bool flipped = (ev.direction == SDL_MOUSEWHEEL_FLIPPED) &&
+	                     !SdlPref::instance()->get_bool("UseLocalMouseScrollDirection");
 	const auto x = static_cast<INT32>(ev.x * (flipped ? -1.0f : 1.0f) * 120.0f);
 	const auto y = static_cast<INT32>(ev.y * (flipped ? -1.0f : 1.0f) * 120.0f);
 	UINT16 flags = 0;
