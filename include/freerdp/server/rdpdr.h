@@ -43,28 +43,30 @@ extern "C"
 	typedef struct s_rdpdr_server_context RdpdrServerContext;
 	typedef struct s_rdpdr_server_private RdpdrServerPrivate;
 
+	/** RDPDR protocol header */
 	typedef struct
 	{
-		UINT16 Component;
-		UINT16 PacketId;
+		UINT16 Component; /**< Component identifier */
+		UINT16 PacketId;  /**< Packet identifier */
 	} RDPDR_HEADER;
 
 #ifndef __MINGW32__
+	/** File directory information structure */
 	typedef struct
 	{
-		UINT32 NextEntryOffset;
-		UINT32 FileIndex;
-		LARGE_INTEGER CreationTime;
-		LARGE_INTEGER LastAccessTime;
-		LARGE_INTEGER LastWriteTime;
-		LARGE_INTEGER ChangeTime;
-		LARGE_INTEGER EndOfFile;
-		LARGE_INTEGER AllocationSize;
-		UINT32 FileAttributes;
+		UINT32 NextEntryOffset;       /**< Offset to next entry */
+		UINT32 FileIndex;             /**< File index */
+		LARGE_INTEGER CreationTime;   /**< File creation time */
+		LARGE_INTEGER LastAccessTime; /**< Last access time */
+		LARGE_INTEGER LastWriteTime;  /**< Last write time */
+		LARGE_INTEGER ChangeTime;     /**< Last change time */
+		LARGE_INTEGER EndOfFile;      /**< End of file position */
+		LARGE_INTEGER AllocationSize; /**< Allocated size */
+		UINT32 FileAttributes;        /**< File attributes */
 #if defined(WITH_WCHAR_FILE_DIRECTORY_INFORMATION)
-		WCHAR FileName[512];
+		WCHAR FileName[512]; /**< File name (wide char) */
 #else
-		char FileName[512];
+		char FileName[512]; /**< File name */
 #endif
 	} FILE_DIRECTORY_INFORMATION;
 #endif
@@ -247,12 +249,12 @@ extern "C"
 
 	struct s_rdpdr_server_context
 	{
-		HANDLE vcm;
+		HANDLE vcm; /**< Virtual channel manager handle */
 
-		WINPR_ATTR_NODISCARD psRdpdrStart Start;
-		psRdpdrStop Stop;
+		WINPR_ATTR_NODISCARD psRdpdrStart Start; /**< Start the RDPDR server */
+		psRdpdrStop Stop;                        /**< Stop the RDPDR server */
 
-		RdpdrServerPrivate* priv;
+		RdpdrServerPrivate* priv; /**< Private server context data */
 
 		/* Server self-defined pointer. */
 		void* data;
@@ -280,22 +282,24 @@ extern "C"
 		WINPR_ATTR_NODISCARD psRdpdrReceiveClientNameRequest
 		    ReceiveClientNameRequest; /**< Called after a client name request is received */
 		WINPR_ATTR_NODISCARD psRdpdrReceiveDeviceAnnounce
-		    ReceiveDeviceAnnounce; /** < Called after a new device request was received but before
+		    ReceiveDeviceAnnounce; /**< Called after a new device request was received but before
 		                              the device is added */
 		WINPR_ATTR_NODISCARD psRdpdrReceiveDeviceRemove
 		    ReceiveDeviceRemove; /**< Called after a new device request was
 		       received, but before it is removed */
 
 		/*** Drive APIs called by the server. ***/
-		WINPR_ATTR_NODISCARD psRdpdrDriveCreateDirectory DriveCreateDirectory;
-		WINPR_ATTR_NODISCARD psRdpdrDriveDeleteDirectory DriveDeleteDirectory;
-		WINPR_ATTR_NODISCARD psRdpdrDriveQueryDirectory DriveQueryDirectory;
-		WINPR_ATTR_NODISCARD psRdpdrDriveOpenFile DriveOpenFile;
-		WINPR_ATTR_NODISCARD psRdpdrDriveReadFile DriveReadFile;
-		WINPR_ATTR_NODISCARD psRdpdrDriveWriteFile DriveWriteFile;
-		WINPR_ATTR_NODISCARD psRdpdrDriveCloseFile DriveCloseFile;
-		WINPR_ATTR_NODISCARD psRdpdrDriveDeleteFile DriveDeleteFile;
-		WINPR_ATTR_NODISCARD psRdpdrDriveRenameFile DriveRenameFile;
+		WINPR_ATTR_NODISCARD psRdpdrDriveCreateDirectory
+		    DriveCreateDirectory; /**< Create directory */
+		WINPR_ATTR_NODISCARD psRdpdrDriveDeleteDirectory
+		    DriveDeleteDirectory; /**< Delete directory */
+		WINPR_ATTR_NODISCARD psRdpdrDriveQueryDirectory DriveQueryDirectory; /**< Query directory */
+		WINPR_ATTR_NODISCARD psRdpdrDriveOpenFile DriveOpenFile;             /**< Open file */
+		WINPR_ATTR_NODISCARD psRdpdrDriveReadFile DriveReadFile;             /**< Read file */
+		WINPR_ATTR_NODISCARD psRdpdrDriveWriteFile DriveWriteFile;           /**< Write file */
+		WINPR_ATTR_NODISCARD psRdpdrDriveCloseFile DriveCloseFile;           /**< Close file */
+		WINPR_ATTR_NODISCARD psRdpdrDriveDeleteFile DriveDeleteFile;         /**< Delete file */
+		WINPR_ATTR_NODISCARD psRdpdrDriveRenameFile DriveRenameFile;         /**< Rename file */
 
 		/*** Drive callbacks registered by the server. ***/
 		WINPR_ATTR_NODISCARD psRdpdrOnDeviceCreate
@@ -304,15 +308,24 @@ extern "C"
 		WINPR_ATTR_NODISCARD psRdpdrOnDeviceDelete
 		    OnDriveDelete; /**< Called for devices of type \b
 		 RDPDR_DTYP_FILESYSTEM after \b ReceiveDeviceRemove */
-		psRdpdrOnDriveCreateDirectoryComplete OnDriveCreateDirectoryComplete;
-		psRdpdrOnDriveDeleteDirectoryComplete OnDriveDeleteDirectoryComplete;
-		psRdpdrOnDriveQueryDirectoryComplete OnDriveQueryDirectoryComplete;
-		psRdpdrOnDriveOpenFileComplete OnDriveOpenFileComplete;
-		psRdpdrOnDriveReadFileComplete OnDriveReadFileComplete;
-		psRdpdrOnDriveWriteFileComplete OnDriveWriteFileComplete;
-		psRdpdrOnDriveCloseFileComplete OnDriveCloseFileComplete;
-		psRdpdrOnDriveDeleteFileComplete OnDriveDeleteFileComplete;
-		psRdpdrOnDriveRenameFileComplete OnDriveRenameFileComplete;
+		psRdpdrOnDriveCreateDirectoryComplete
+		    OnDriveCreateDirectoryComplete; /**< DriveCreateDirectory completion callback */
+		psRdpdrOnDriveDeleteDirectoryComplete
+		    OnDriveDeleteDirectoryComplete; /**< DriveDeleteDirectory completion callback */
+		psRdpdrOnDriveQueryDirectoryComplete
+		    OnDriveQueryDirectoryComplete; /**< DriveQueryDirectory completion callback */
+		psRdpdrOnDriveOpenFileComplete
+		    OnDriveOpenFileComplete; /**< DriveOpenFile completion callback */
+		psRdpdrOnDriveReadFileComplete
+		    OnDriveReadFileComplete; /**< DriveReadFile completion callback */
+		psRdpdrOnDriveWriteFileComplete
+		    OnDriveWriteFileComplete; /**< DriveWriteFile completion callback */
+		psRdpdrOnDriveCloseFileComplete
+		    OnDriveCloseFileComplete; /**< DriveCloseFile completion callback */
+		psRdpdrOnDriveDeleteFileComplete
+		    OnDriveDeleteFileComplete; /**< DriveDeleteFile completion callback */
+		psRdpdrOnDriveRenameFileComplete
+		    OnDriveRenameFileComplete; /**< DriveRenameFile completion callback */
 
 		/*** Serial Port callbacks registered by the server. ***/
 		WINPR_ATTR_NODISCARD psRdpdrOnDeviceCreate
@@ -344,7 +357,7 @@ extern "C"
 		    OnSmartcardDelete; /**< Called for devices of type
 		     RDPDR_DTYP_SMARTCARD after \b ReceiveDeviceRemove */
 
-		rdpContext* rdpcontext;
+		rdpContext* rdpcontext; /**< RDP context */
 
 		/*** New Smartcard APIs called by the server. ***/
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardEstablishContext
@@ -448,10 +461,18 @@ extern "C"
 		/* clang-format on */
 	};
 
+	/**
+	 * @brief Free an RDPDR server context.
+	 * @param context The RDPDR server context to free.
+	 */
 	FREERDP_API void rdpdr_server_context_free(RdpdrServerContext* context);
 
+	/**
+	 * @brief Create a new RDPDR server context.
+	 * @param vcm Virtual channel manager handle.
+	 * @return Newly allocated RDPDR server context, or NULL on failure.
+	 */
 	WINPR_ATTR_MALLOC(rdpdr_server_context_free, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_API RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm);
 
 	/**
