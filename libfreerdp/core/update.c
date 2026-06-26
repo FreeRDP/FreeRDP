@@ -54,9 +54,9 @@
 static INIT_ONCE stats_names_once = INIT_ONCE_STATIC_INIT;
 static char stats_names[RDP_STATS_COUNT][bufferlen];
 
-static BOOL stats_names_generate(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
-                                 WINPR_ATTR_UNUSED PVOID Parameter,
-                                 WINPR_ATTR_UNUSED PVOID* Context)
+static BOOL CALLBACK stats_names_generate(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
+                                          WINPR_ATTR_UNUSED PVOID Parameter,
+                                          WINPR_ATTR_UNUSED PVOID* Context)
 {
 	for (size_t index = 0; index < RDP_STATS_COUNT; index++)
 	{
