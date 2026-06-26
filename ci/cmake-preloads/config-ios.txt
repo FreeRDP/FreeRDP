@@ -6,6 +6,7 @@ set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/cmake/ios.toolchain.cmake" CACHE P
 set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "build type")
 set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "iOS platform to build")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "iOS minimum target")
+set(DEPLOYMENT_TARGET "15.0" CACHE STRING "iOS toolchain minimum target")
 set(ENABLE_BITCODE OFF CACHE BOOL "iOS default")
 set(BUILD_TESTING ON CACHE BOOL "iOS default")
 set(WITH_SANITIZE_ADDRESS ON CACHE BOOL "build with address sanitizer")
