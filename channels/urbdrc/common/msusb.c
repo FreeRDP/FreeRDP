@@ -60,7 +60,7 @@ static MSUSB_PIPE_DESCRIPTOR** msusb_mspipes_read(wStream* s, UINT32 NumberOfPip
 {
 	MSUSB_PIPE_DESCRIPTOR** MsPipes = nullptr;
 
-	if (!Stream_CheckAndLogRequiredCapacityOfSize(TAG, (s), NumberOfPipes, 12ull))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, (s), NumberOfPipes, 12ull))
 		return nullptr;
 
 	MsPipes = (MSUSB_PIPE_DESCRIPTOR**)calloc(NumberOfPipes, sizeof(MSUSB_PIPE_DESCRIPTOR*));
@@ -144,7 +144,7 @@ BOOL msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR* MsConfig, BYTE Interface
 
 MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* s)
 {
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 12))
+	if (!Stream_CheckAndLogRequiredLength(TAG, (s), 12))
 		return nullptr;
 
 	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = msusb_msinterface_new();
@@ -307,7 +307,7 @@ MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces)
 	BYTE lenConfiguration = 0;
 	BYTE typeConfiguration = 0;
 
-	if (!Stream_CheckAndLogRequiredCapacityOfSize(TAG, (s), 3ULL + NumInterfaces, 2ULL))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, (s), 3ULL + NumInterfaces, 2ULL))
 		return nullptr;
 
 	MsConfig = msusb_msconfig_new();
@@ -318,6 +318,12 @@ MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces)
 	MsConfig->MsInterfaces = msusb_msinterface_read_list(s, NumInterfaces);
 
 	if (!MsConfig->MsInterfaces)
+		goto fail;
+
+	/* Record the count now so the cleanup path frees every interface descriptor. */
+	MsConfig->NumInterfaces = NumInterfaces;
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, (s), 6))
 		goto fail;
 
 	Stream_Read_UINT8(s, lenConfiguration);
@@ -333,7 +339,6 @@ MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces)
 	Stream_Read_UINT16(s, MsConfig->wTotalLength);
 	Stream_Seek(s, 1);
 	Stream_Read_UINT8(s, MsConfig->bConfigurationValue);
-	MsConfig->NumInterfaces = NumInterfaces;
 	return MsConfig;
 fail:
 	msusb_msconfig_free(MsConfig);
