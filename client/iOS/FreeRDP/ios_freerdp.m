@@ -508,7 +508,14 @@ void ios_send_clipboard_data(void *context, const void *data, UINT32 size)
 	ClipboardLock(afc->clipboard);
 	UINT32 formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
 	if (size)
-		ClipboardSetData(afc->clipboard, formatId, data, size);
+	{
+		if (!ClipboardSetData(afc->clipboard, formatId, data, size))
+		{
+			ClipboardUnlock(afc->clipboard);
+			WLog_ERR(TAG, "ClipboardSetData failed");
+			return;
+		}
+	}
 	else
 		ClipboardEmpty(afc->clipboard);
 	ClipboardUnlock(afc->clipboard);

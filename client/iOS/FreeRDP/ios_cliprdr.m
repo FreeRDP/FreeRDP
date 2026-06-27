@@ -415,7 +415,11 @@ ios_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 		size = (UINT32)strnlen(data, size);
 		if (afc->ServerCutText != nullptr)
 		{
-			afc->ServerCutText((rdpContext *)afc, (uint8_t *)data, size);
+			if (!afc->ServerCutText((rdpContext *)afc, (uint8_t *)data, size))
+			{
+				ClipboardUnlock(afc->clipboard);
+				return ERROR_INTERNAL_ERROR;
+			}
 		}
 	}
 	ClipboardUnlock(afc->clipboard);
