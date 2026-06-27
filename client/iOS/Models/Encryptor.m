@@ -45,8 +45,6 @@
 	    kCCPBKDF2, plaintext_password_data, strlen(plaintext_password_data) - 1,
 	    (const uint8_t *)TSXEncryptorPBKDF2Salt, TSXEncryptorPBKDF2SaltLen, kCCPRFHmacAlgSHA1,
 	    TSXEncryptorPBKDF2Rounds, derived_key, TSXEncryptorPBKDF2KeySize);
-	// NSLog(@"CCKeyDerivationPBKDF ret = %d; key: %@", ret, [NSData
-	// dataWithBytesNoCopy:derived_key length:TWEncryptorPBKDF2KeySize freeWhenDone:NO]);
 
 	if (ret)
 	{

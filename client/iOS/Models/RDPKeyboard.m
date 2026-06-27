@@ -173,6 +173,24 @@
 	[self sendVirtualKey:keyCode up:YES];
 }
 
+// sends the vk code to the session
+- (void)sendVirtualKey:(int)vKey up:(BOOL)up
+{
+	DWORD scancode = GetVirtualScanCodeFromVirtualKeyCode(vKey, 4);
+	int flags = (up ? KBD_FLAGS_RELEASE : KBD_FLAGS_DOWN);
+	flags |= ((scancode & KBDEXT) ? KBD_FLAGS_EXTENDED : 0);
+	[_session
+	    sendInputEvent:[NSDictionary
+	                       dictionaryWithObjectsAndKeys:@"keyboard", @"type", @"scancode",
+	                                                    @"subtype",
+	                                                    [NSNumber numberWithUnsignedShort:flags],
+	                                                    @"flags",
+	                                                    [NSNumber
+	                                                        numberWithUnsignedShort:(scancode &
+	                                                                                 0xFF)],
+	                                                    @"scancode", nil]];
+}
+
 #pragma mark modifier key handling
 // toggle ctrl key, returns true if pressed, otherwise false
 - (void)toggleCtrlKey
@@ -286,24 +304,6 @@
 	                           [NSNumber numberWithUnsignedShort:(up ? KBD_FLAGS_RELEASE : 0)],
 	                           @"flags", [NSNumber numberWithUnsignedShort:character],
 	                           @"unicode_char", nil]];
-}
-
-// sends the vk code to the session
-- (void)sendVirtualKey:(int)vKey up:(BOOL)up
-{
-	DWORD scancode = GetVirtualScanCodeFromVirtualKeyCode(vKey, 4);
-	int flags = (up ? KBD_FLAGS_RELEASE : KBD_FLAGS_DOWN);
-	flags |= ((scancode & KBDEXT) ? KBD_FLAGS_EXTENDED : 0);
-	[_session
-	    sendInputEvent:[NSDictionary
-	                       dictionaryWithObjectsAndKeys:@"keyboard", @"type", @"scancode",
-	                                                    @"subtype",
-	                                                    [NSNumber numberWithUnsignedShort:flags],
-	                                                    @"flags",
-	                                                    [NSNumber
-	                                                        numberWithUnsignedShort:(scancode &
-	                                                                                 0xFF)],
-	                                                    @"scancode", nil]];
 }
 
 - (void)notifyDelegateModifiersChanged

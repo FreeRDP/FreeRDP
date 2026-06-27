@@ -261,7 +261,7 @@
 
 - (void)scrollViewDidEndZooming:(UIScrollView *)scrollView
                        withView:(UIView *)view
-                        atScale:(float)scale
+                        atScale:(CGFloat)scale
 {
 	NSLog(@"New zoom scale: %f", scale);
 	[self centerSessionViewInViewport];
