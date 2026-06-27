@@ -144,7 +144,7 @@ static BOOL ios_pre_connect(freerdp *instance)
 
 	if (rc != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "Could not subscribe to connect event handler [%l08X]", rc);
+		WLog_ERR(TAG, "Could not subscribe to connect event handler [0x%08X]", (unsigned)rc);
 		return FALSE;
 	}
 
@@ -153,13 +153,13 @@ static BOOL ios_pre_connect(freerdp *instance)
 
 	if (rc != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "Could not subscribe to disconnect event handler [%l08X]", rc);
+		WLog_ERR(TAG, "Could not subscribe to disconnect event handler [0x%08X]", (unsigned)rc);
 		return FALSE;
 	}
 
 	if (!freerdp_client_load_addins(instance->context->channels, settings))
 	{
-		WLog_ERR(TAG, "Failed to load addins [%l08X]", GetLastError());
+		WLog_ERR(TAG, "Failed to load addins [0x%08X]", (unsigned)GetLastError());
 		return FALSE;
 	}
 
