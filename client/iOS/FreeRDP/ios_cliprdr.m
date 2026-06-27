@@ -412,7 +412,7 @@ ios_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 	{
 		formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
 		data = (BYTE *)ClipboardGetData(afc->clipboard, formatId, &size);
-		size = (UINT32)strnlen(data, size);
+		size = (UINT32)strnlen((const char *)data, size);
 		if (afc->ServerCutText != nullptr)
 		{
 			if (!afc->ServerCutText((rdpContext *)afc, (uint8_t *)data, size))

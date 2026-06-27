@@ -49,19 +49,25 @@ NSString *DescriptionForObject(NSObject *object, id locale, NSUInteger indent)
 
 @implementation OrderedDictionary
 
+- (void)initStorageWithCapacity:(NSUInteger)capacity
+{
+	dictionary = [[NSMutableDictionary alloc] initWithCapacity:capacity];
+	array = [[NSMutableArray alloc] initWithCapacity:capacity];
+}
+
 - (id)init
 {
-	return [self initWithCapacity:0];
+	self = [super init];
+	if (self != nil)
+		[self initStorageWithCapacity:0];
+	return self;
 }
 
 - (id)initWithCapacity:(NSUInteger)capacity
 {
 	self = [super init];
 	if (self != nil)
-	{
-		dictionary = [[NSMutableDictionary alloc] initWithCapacity:capacity];
-		array = [[NSMutableArray alloc] initWithCapacity:capacity];
-	}
+		[self initStorageWithCapacity:capacity];
 	return self;
 }
 
