@@ -66,7 +66,8 @@ static BOOL ios_events_handle_event(mfInfo *mfi, NSDictionary *event_description
 
 	if ([event_type isEqualToString:@"mouse"])
 	{
-		if (!input->MouseEvent(input, [[event_description objectForKey:@"flags"] unsignedShortValue],
+		if (!input->MouseEvent(input,
+		                       [[event_description objectForKey:@"flags"] unsignedShortValue],
 		                       [[event_description objectForKey:@"coord_x"] unsignedShortValue],
 		                       [[event_description objectForKey:@"coord_y"] unsignedShortValue]))
 		{
