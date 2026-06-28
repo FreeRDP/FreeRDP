@@ -17,7 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 cmake_minimum_required(VERSION 3.13)
 
 project("ifreerdp" LANGUAGES C)
@@ -68,13 +67,10 @@ set(FREERDP_CMAKE_ARGS
 )
 
 if(WITH_FFMPEG)
-  list(
-    APPEND
-    FREERDP_CMAKE_ARGS
-    -DAVCODEC_INCLUDE_DIRS:PATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/Headers
-    -DAVUTIL_INCLUDE_DIRS:PATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/Headers
-    -DAVCODEC_LIBRARIES:FILEPATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/FFmpeg
-    -DAVUTIL_LIBRARIES:FILEPATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/FFmpeg
+  list(APPEND FREERDP_CMAKE_ARGS -DAVCODEC_INCLUDE_DIRS:PATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/Headers
+       -DAVUTIL_INCLUDE_DIRS:PATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/Headers
+       -DAVCODEC_LIBRARIES:FILEPATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/FFmpeg
+       -DAVUTIL_LIBRARIES:FILEPATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/FFmpeg
   )
 endif()
 
@@ -83,11 +79,6 @@ if(FREERDP_IOS_DEVELOPMENT_TEAM)
 endif()
 
 ExternalProject_Add(
-  freerdp
-  PREFIX ${CMAKE_BINARY_DIR}/freerdp
-  SOURCE_DIR ${FREERDP_SOURCE_DIR}
-  CMAKE_GENERATOR "Xcode"
-  CMAKE_ARGS ${FREERDP_CMAKE_ARGS}
-  DEPENDS ${IFREERDP_DEPS}
-  INSTALL_COMMAND ""
+  freerdp PREFIX ${CMAKE_BINARY_DIR}/freerdp SOURCE_DIR ${FREERDP_SOURCE_DIR} CMAKE_GENERATOR "Xcode"
+  CMAKE_ARGS ${FREERDP_CMAKE_ARGS} DEPENDS ${IFREERDP_DEPS} INSTALL_COMMAND ""
 )
