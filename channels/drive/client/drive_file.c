@@ -110,7 +110,7 @@ static BOOL contains_dotdot(const WCHAR* path, size_t base_length, size_t path_l
 		{
 			if (tst + 2 < path + path_length)
 			{
-				if ((tst[2] == '/') || (tst[2] == '\\'))
+				if ((tst[2] == '/') || (tst[2] == '\\') || (tst[2] == '\0'))
 					return TRUE;
 			}
 			else
