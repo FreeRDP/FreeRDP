@@ -63,6 +63,32 @@ static BOOL utils_copy_smartcard_settings(const rdpSettings* settings, rdpSettin
 	return TRUE;
 }
 
+static BOOL utils_auth_skip(freerdp* instance, rdp_auth_reason reason, BOOL gateway)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	const char* password = freerdp_settings_get_string(
+	    instance->context->settings, gateway ? FreeRDP_GatewayPassword : FreeRDP_Password);
+	const char* username = freerdp_settings_get_string(
+	    instance->context->settings, gateway ? FreeRDP_GatewayUsername : FreeRDP_Username);
+
+	switch (reason)
+	{
+		case AUTH_TLS:
+		case AUTH_RDP:
+		case AUTH_SMARTCARD_PIN: /* in this case password is pin code */
+		case AUTH_FIDO_PIN:
+			if ((*username) && (*password))
+				return TRUE;
+			break;
+		default:
+			break;
+	}
+
+	return FALSE;
+}
+
 auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason)
 {
 	rdpSettings* settings = nullptr;
@@ -93,6 +119,9 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 			return AUTH_FAILED;
 		return AUTH_SKIP;
 	}
+	const BOOL skip = utils_auth_skip(instance, reason, TRUE);
+	if (skip)
+		return AUTH_SKIP;
 
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	WINPR_PRAGMA_DIAG_PUSH
@@ -180,7 +209,8 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 	    (settings->Password == nullptr && settings->RedirectionPassword == nullptr))
 		prompt = TRUE;
 
-	if (!prompt)
+	const BOOL skip = utils_auth_skip(instance, reason, FALSE);
+	if (!prompt || skip)
 		return AUTH_SKIP;
 
 	switch (reason)
