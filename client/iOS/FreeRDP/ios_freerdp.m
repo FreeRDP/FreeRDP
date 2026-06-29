@@ -426,8 +426,7 @@ static BOOL ios_client_new(freerdp *instance, rdpContext *context)
 	instance->PreConnect = ios_pre_connect;
 	instance->PostConnect = ios_post_connect;
 	instance->PostDisconnect = ios_post_disconnect;
-	instance->Authenticate = ios_ui_authenticate;
-	instance->GatewayAuthenticate = ios_ui_gw_authenticate;
+	instance->AuthenticateEx = ios_ui_authenticate_ex;
 	instance->VerifyCertificateEx = ios_ui_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = ios_ui_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = nullptr;
