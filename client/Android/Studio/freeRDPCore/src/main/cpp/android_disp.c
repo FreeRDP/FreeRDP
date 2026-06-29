@@ -46,7 +46,7 @@ BOOL android_disp_uninit(androidContext* afc, DispClientContext* disp)
 	WINPR_ASSERT(afc);
 	WINPR_UNUSED(disp);
 
-	afc->disp = NULL;
+	afc->disp = nullptr;
 	WLog_DBG(TAG, "disp channel disconnected");
 	return TRUE;
 }

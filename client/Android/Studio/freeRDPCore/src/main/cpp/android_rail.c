@@ -52,25 +52,26 @@ static BOOL android_rail_monitored_desktop(rdpContext* context, const WINDOW_ORD
 		}
 	}
 
-	/* Forward z-order and active window together (windowIds NULL / activeWindowId 0 if absent). */
+	/* Forward z-order and active window together (windowIds nullptr / activeWindowId 0 if absent).
+	 */
 	const BOOL hasZOrder = (flags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER) && monitoredDesktop &&
 	                       monitoredDesktop->numWindowIds > 0 && monitoredDesktop->windowIds;
 	const BOOL hasActive = (flags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND) && monitoredDesktop;
 
 	if (hasZOrder || hasActive)
 	{
-		JNIEnv* env = NULL;
+		JNIEnv* env = nullptr;
 		jboolean attached = jni_attach_thread(&env);
 		if (env)
 		{
-			jlongArray arr = NULL;
+			jlongArray arr = nullptr;
 			if (hasZOrder)
 			{
 				const jsize n = (jsize)monitoredDesktop->numWindowIds;
 				arr = (*env)->NewLongArray(env, n);
 				if (arr)
 				{
-					jlong* tmp = (*env)->GetLongArrayElements(env, arr, NULL);
+					jlong* tmp = (*env)->GetLongArrayElements(env, arr, nullptr);
 					if (tmp)
 					{
 						for (jsize i = 0; i < n; i++)
@@ -283,8 +284,8 @@ BOOL android_rail_uninit(androidContext* afc, RailClientContext* rail)
 	if (!afc || !rail)
 		return FALSE;
 
-	rail->custom = NULL;
-	afc->rail = NULL;
+	rail->custom = nullptr;
+	afc->rail = nullptr;
 	afc->railExecSent = FALSE;
 	return TRUE;
 }
