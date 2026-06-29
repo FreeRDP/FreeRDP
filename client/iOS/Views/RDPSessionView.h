@@ -11,11 +11,22 @@
 #import <UIKit/UIKit.h>
 #import "RDPSession.h"
 
+@class RDPCursor;
+
 @interface RDPSessionView : UIView
 {
 	RDPSession *_session;
 }
 
+@property(nonatomic, assign) BOOL hardwareKeyboardActive;
+
 - (void)setSession:(RDPSession *)session;
+- (void)prepareForBitmapContextChange;
+- (void)setNeedsDisplayInRemoteRect:(CGRect)rect;
+- (void)setRemoteCursor:(RDPCursor *)cursor;
+- (void)setRemoteCursorPosition:(CGPoint)position;
+- (void)showRemoteCursor;
+- (void)hideRemoteCursor;
+- (void)setDefaultRemoteCursor;
 
 @end

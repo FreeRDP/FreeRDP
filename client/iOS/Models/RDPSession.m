@@ -13,6 +13,7 @@
 #import "ios_freerdp_events.h"
 
 #import "RDPSession.h"
+#import "RDPCursor.h"
 #import "TSXTypes.h"
 #import "Bookmark.h"
 #import "ConnectionParams.h"
@@ -104,6 +105,8 @@ static void freeArguments(int argc, char **argv)
 	if (!addArgument(&argc, &argv, "/gdi:sw"))
 		goto out_free;
 
+	if (!addArgument(&argc, &argv, "/relax-order-checks"))
+		goto out_free;
 	// Screen Size is set on connect (we need a valid delegate in case the user choose an automatic
 	// screen size)
 
@@ -166,7 +169,7 @@ static void freeArguments(int argc, char **argv)
 			goto out_free;
 
 	if ([_params boolForKey:@"perf_h264" with3GEnabled:connected_via_3g])
-		if (!addArgument(&argc, &argv, "/gfx-h264"))
+		if (!addArgument(&argc, &argv, "/gfx:AVC444"))
 			goto out_free;
 
 	if (![_params boolForKey:@"perf_remotefx" with3GEnabled:connected_via_3g] &&
@@ -175,7 +178,7 @@ static void freeArguments(int argc, char **argv)
 		if (!addArgument(&argc, &argv, "/nsc"))
 			goto out_free;
 
-	if (!addFlag(&argc, &argv, "bitmap-cache", TRUE))
+	if (!addArgument(&argc, &argv, "/cache:bitmap:on,glyph:on"))
 		goto out_free;
 
 	if (!addFlag(&argc, &argv, "wallpaper",
@@ -238,24 +241,17 @@ static void freeArguments(int argc, char **argv)
 	// ts gateway settings
 	if ([_params boolForKey:@"enable_tsg_settings"])
 	{
-		if (!addArgument(&argc, &argv, "/g:%s", [_params UTF8StringForKey:@"tsg_hostname"]))
-			goto out_free;
-
-		if (!addArgument(&argc, &argv, "/gp:%d", [_params intForKey:@"tsg_port"]))
-			goto out_free;
-
-		if (!addArgument(&argc, &argv, "/gu:%s", [_params intForKey:@"tsg_username"]))
-			goto out_free;
-
-		if (!addArgument(&argc, &argv, "/gp:%s", [_params intForKey:@"tsg_password"]))
-			goto out_free;
-
-		if (!addArgument(&argc, &argv, "/gd:%s", [_params intForKey:@"tsg_domain"]))
+		if (!addArgument(&argc, &argv, "/gateway:g:%s:%d,u:%s,d:%s,p:%s",
+		                 [_params UTF8StringForKey:@"tsg_hostname"],
+		                 [_params intForKey:@"tsg_port"],
+		                 [_params UTF8StringForKey:@"tsg_username"],
+		                 [_params UTF8StringForKey:@"tsg_domain"],
+		                 [_params UTF8StringForKey:@"tsg_password"]))
 			goto out_free;
 	}
 
 	// Remote keyboard layout
-	if (!addArgument(&argc, &argv, "/kbd:%d", 0x409))
+	if (!addArgument(&argc, &argv, "/kbd:layout:%d", 0x409))
 		goto out_free;
 
 	status =
@@ -393,6 +389,30 @@ out_free:
 {
 	if ([[self delegate] respondsToSelector:@selector(session:needsRedrawInRect:)])
 		[[self delegate] session:self needsRedrawInRect:[rect_value CGRectValue]];
+}
+
+- (void)setRemoteCursor:(RDPCursor *)cursor
+{
+	if ([[self delegate] respondsToSelector:@selector(session:didSetRemoteCursor:)])
+		[[self delegate] session:self didSetRemoteCursor:cursor];
+}
+
+- (void)setRemoteCursorPositionValue:(NSValue *)positionValue
+{
+	if ([[self delegate] respondsToSelector:@selector(session:didMoveRemoteCursor:)])
+		[[self delegate] session:self didMoveRemoteCursor:[positionValue CGPointValue]];
+}
+
+- (void)hideRemoteCursor
+{
+	if ([[self delegate] respondsToSelector:@selector(sessionDidHideRemoteCursor:)])
+		[[self delegate] sessionDidHideRemoteCursor:self];
+}
+
+- (void)setDefaultRemoteCursor
+{
+	if ([[self delegate] respondsToSelector:@selector(sessionDidSetDefaultRemoteCursor:)])
+		[[self delegate] sessionDidSetDefaultRemoteCursor:self];
 }
 
 #pragma mark -

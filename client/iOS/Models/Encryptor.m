@@ -8,14 +8,10 @@
  http://mozilla.org/MPL/2.0/.
  */
 
-/* We try to use CommonCrypto as much as possible. PBKDF2 was added to CommonCrypto in iOS 5, so use
- * OpenSSL only as a fallback to do PBKDF2 on pre iOS 5 systems. */
-
 #import "Encryptor.h"
 #import <CommonCrypto/CommonKeyDerivation.h>
 #import <CommonCrypto/CommonCryptor.h>
 #import <CommonCrypto/CommonDigest.h>
-#import <openssl/evp.h> // For PBKDF2 on < 5.0
 #include <fcntl.h>
 
 #pragma mark -
@@ -45,42 +41,18 @@
 
 	uint8_t *derived_key = calloc(1, TSXEncryptorPBKDF2KeySize);
 
-	if (CCKeyDerivationPBKDF != nullptr)
-	{
-		int ret = CCKeyDerivationPBKDF(
-		    kCCPBKDF2, plaintext_password_data, strlen(plaintext_password_data) - 1,
-		    (const uint8_t *)TSXEncryptorPBKDF2Salt, TSXEncryptorPBKDF2SaltLen, kCCPRFHmacAlgSHA1,
-		    TSXEncryptorPBKDF2Rounds, derived_key, TSXEncryptorPBKDF2KeySize);
-		// NSLog(@"CCKeyDerivationPBKDF ret = %d; key: %@", ret, [NSData
-		// dataWithBytesNoCopy:derived_key length:TWEncryptorPBKDF2KeySize freeWhenDone:NO]);
+	int ret = CCKeyDerivationPBKDF(
+	    kCCPBKDF2, plaintext_password_data, strlen(plaintext_password_data) - 1,
+	    (const uint8_t *)TSXEncryptorPBKDF2Salt, TSXEncryptorPBKDF2SaltLen, kCCPRFHmacAlgSHA1,
+	    TSXEncryptorPBKDF2Rounds, derived_key, TSXEncryptorPBKDF2KeySize);
 
-		if (ret)
-		{
-			NSLog(@"%s: CCKeyDerivationPBKDF ret == %d, indicating some sort of failure.", __func__,
-			      ret);
-			free(derived_key);
-			[self autorelease];
-			return nil;
-		}
-	}
-	else
+	if (ret)
 	{
-		// iOS 4.x or earlier -- use OpenSSL
-		unsigned long ret = PKCS5_PBKDF2_HMAC_SHA1(
-		    plaintext_password_data, (int)strlen(plaintext_password_data) - 1,
-		    (const unsigned char *)TSXEncryptorPBKDF2Salt, TSXEncryptorPBKDF2SaltLen,
-		    TSXEncryptorPBKDF2Rounds, TSXEncryptorPBKDF2KeySize, derived_key);
-		// NSLog(@"PKCS5_PBKDF2_HMAC_SHA1 ret = %lu; key: %@", ret, [NSData
-		// dataWithBytesNoCopy:derived_key length:TWEncryptorPBKDF2KeySize freeWhenDone:NO]);
-
-		if (ret != 1)
-		{
-			NSLog(@"%s: PKCS5_PBKDF2_HMAC_SHA1 ret == %lu, indicating some sort of failure.",
-			      __func__, ret);
-			free(derived_key);
-			[self release];
-			return nil;
-		}
+		NSLog(@"%s: CCKeyDerivationPBKDF ret == %d, indicating some sort of failure.", __func__,
+		      ret);
+		free(derived_key);
+		[self autorelease];
+		return nil;
 	}
 
 	_encryption_key = [[NSData alloc] initWithBytesNoCopy:derived_key

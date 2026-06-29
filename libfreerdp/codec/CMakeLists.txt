@@ -158,6 +158,11 @@ if(WITH_VIDEO_FFMPEG)
   if(WITH_VIDEOTOOLBOX)
     include(WarnExperimental)
     warn_experimental("VideoToolbox H264 decoding support for FFMPEG" "-DWITH_VIDEOTOOLBOX=OFF")
+
+    find_library(VIDEOTOOLBOX_FRAMEWORK VideoToolbox REQUIRED)
+    find_library(COREMEDIA_FRAMEWORK CoreMedia REQUIRED)
+    find_library(COREVIDEO_FRAMEWORK CoreVideo REQUIRED)
+    list(APPEND CODEC_LIBS ${VIDEOTOOLBOX_FRAMEWORK} ${COREMEDIA_FRAMEWORK} ${COREVIDEO_FRAMEWORK})
   endif()
 
   set(CODEC_SRCS ${CODEC_SRCS} h264_ffmpeg.c)

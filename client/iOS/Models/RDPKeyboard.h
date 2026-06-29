@@ -24,8 +24,7 @@
 	RDPSession *_session;
 
 	int _virtual_key_map[256];
-	int _unicode_map[256];
-	NSDictionary *_special_keys;
+	BOOL _virtual_key_shift_map[256];
 
 	NSObject<RDPKeyboardDelegate> *_delegate;
 
@@ -55,6 +54,9 @@
 
 // send a key stroke event using the given virtual key code
 - (void)sendVirtualKeyCode:(int)keyCode;
+
+// send a single key down or up event for the given virtual key code
+- (void)sendVirtualKey:(int)vKey up:(BOOL)up;
 
 // toggle ctrl key, returns true if pressed, otherwise false
 - (void)toggleCtrlKey;

@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 {
 	freerdp_client_warn_deprecated(argc, argv);
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-	int retVal = UIApplicationMain(argc, argv, nil, nil);
+	int retVal = UIApplicationMain(argc, argv, nil, @"AppDelegate");
 	[pool release];
 	return retVal;
 }

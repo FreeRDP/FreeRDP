@@ -259,7 +259,6 @@
 						<string key="_session_scrollview">UIScrollView</string>
 						<string key="_session_toolbar">UIToolbar</string>
 						<string key="_session_view">RDPSessionView</string>
-						<string key="_touchpointer_view">TouchPointerView</string>
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
 						<object class="IBToOneOutletInfo" key="_cancel_connect_button">
@@ -294,33 +293,10 @@
 							<string key="name">_session_view</string>
 							<string key="candidateClassName">RDPSessionView</string>
 						</object>
-						<object class="IBToOneOutletInfo" key="_touchpointer_view">
-							<string key="name">_touchpointer_view</string>
-							<string key="candidateClassName">TouchPointerView</string>
-						</object>
 					</dictionary>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
 						<string key="majorKey">IBProjectSource</string>
 						<string key="minorKey">./Classes/RDPSessionViewController.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">TouchPointerView</string>
-					<string key="superclassName">UIView</string>
-					<object class="NSMutableDictionary" key="outlets">
-						<string key="NS.key.0">delegate</string>
-						<string key="NS.object.0">NSObject</string>
-					</object>
-					<object class="NSMutableDictionary" key="toOneOutletInfosByName">
-						<string key="NS.key.0">delegate</string>
-						<object class="IBToOneOutletInfo" key="NS.object.0">
-							<string key="name">delegate</string>
-							<string key="candidateClassName">NSObject</string>
-						</object>
-					</object>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/TouchPointerView.h</string>
 					</object>
 				</object>
 			</array>

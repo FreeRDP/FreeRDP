@@ -2,7 +2,7 @@ Overview
 ========
 
 The FreeRDP iOS port allows users to enjoy FreeRDP features on Apple iOS devices.
-The application was written to be compatible with devices running iOS 4.3 or higher. 
+The application was written to be compatible with devices running iOS 15.0 or higher. 
 
 More documentation might be found at https://github.com/FreeRDP/FreeRDP/wiki/Compilation
 
@@ -12,41 +12,11 @@ Build requirements
 The following prerequisites are required in order to build the iOS port:
 
 - cmake version >= 3.13
-- latest Xcode installed (>= 4.6)
+- latest Xcode installed (>= 26.0)
 - installed Provisioning Profile and iOS Developer Certificate for code signing
 	(not required for simulator builds)
-- pre-build static OpenSSL libraries (see below)
-
-FreeRDP requires OpenSSL libraries for building but they are not part of the iOS SDK and therefore they need to be pre-build manually.
-There are various versions and builds of static OpenSSL libraries floating around like iOSPorts.
-At the time of writing we have tested and used a small script (OpenSSL-DownloadAndBuild.command) that downloads and builds armv7, armv7s and i386 versions of the OpenSSL 1.0.0e libraries.
-
-If you don't care about modifying the OpenSSL build you can run the following command in the FreeRDP root directory:
-
-./scripts/OpenSSL-DownloadAndBuild.command 
-
-The output of the script will be found in external/openssl/. In case you want a
-different install/build directory you specify it as first parameter:
-
-./scripts/OpenSSL-DownloadAndBuild.command  /tmp/
-
-In the example above the output can then be found in /tmp/openssl.
-
-The script uses oldest iOS/iPhoneSimulator SDK found on the build machine per default. If it is required to build against a specific SDK version
-the variable SDK_VERSION can be used to specify it. The minimum SDK version that should be used can be set with MIN_SDK_VERSION within the script.
-
-When the script is finished you will find libcrypto.a and libssl.at, both universal libraries containing all openssl/lib 
-subfolder in the specified
-install directory (external per default)
-
-When the script finishes you will find libcrypto.a and libssl.a, both universal
-binary libraries containing arm and i386 targets in order to compile FreeRDP for
-iOS devices and the simulator, in the lib subfolder of your installation
-directory.
-
-If you build OpenSSL yourself or with an install directory specified you need to set FREERDP_IOS_EXTERNAL_SSL_PATH when running cmake.
-
-Additional (optional) libraries that are required:
+- pre-build static OpenSSL libraries
+- pre-build FFmpeg libraries for H.264 support
 
 * cJSON for Azure logon support
 * MIT or Heimdal kerberos for kerberos support
@@ -56,32 +26,36 @@ Building
 
 Run the following commands in the top level FreeRDP directory:
 
-cmake -DCMAKE_TOOLCHAIN_FILE=cmake/ios.toolchain.cmake -GXcode
+For a real iOS device (pass your signing team):
 
-This command will create a XCode project in the FreeRDP root folder called FreeRDP.xcodeproj.
-Open the project in XCode and modify, build or run the app. 
+cmake -S client/iOS/cmake -B build/ios.client.build \
+      -DCMAKE_TOOLCHAIN_FILE="$PWD/cmake/ios.toolchain.cmake" \
+      -DPLATFORM=OS64 -DDEPLOYMENT_TARGET=15.0 \
+      -DFREERDP_IOS_DEVELOPMENT_TEAM=XXXXXXXXXX
+cmake --build build/ios.client.build
 
-Alternatively you can also build the project from the command line using xcodebuild:
+For the simulator (no signing team required):
 
-xcodebuild -project FreeRDP.xcodeproj -configuration Debug -sdk iphoneos6.1
+cmake -S client/iOS/cmake -B build/ios-sim.client.build \
+      -DCMAKE_TOOLCHAIN_FILE="$PWD/cmake/ios.toolchain.cmake" \
+      -DPLATFORM=SIMULATORARM64 -DDEPLOYMENT_TARGET=15.0
+cmake --build build/ios-sim.client.build
 
-or with cmake --build . in your build directory.
+The Xcode project is generated under the build directory, e.g.
+build/ios.client.build/freerdp/src/freerdp-build/FreeRDP.xcodeproj - open it to
+build, sign or run the app from Xcode (set the Team under Signing & Capabilities
+if you did not pass FREERDP_IOS_DEVELOPMENT_TEAM).
 
 Notes: 
      
 * XCode, by default will build the application into its derived data location (usually in ~/Library/Developer/...).
 If you want to specify an output directory add CONFIGURATION_BUILD_DIR=<output-path-here> to the end of above command line.
 
-* If using XCode choose "Open Other" from the welcome screen, browse to the FreeRDP root directory and select FreeRDP.xcodeproj. Alternatively you can
-  also start it with "open FreeRDP.xcodeproj".
+* If using XCode select the generated project, e.g. "open build/ios.client.build/freerdp/src/freerdp-build/FreeRDP.xcodeproj".
 
-* If you switch between platforms (OS and SIMULATOR) please remove CMakeCache.txt and CMakeFiles/ before calling cmake again.
-  Otherwise build errors might occur (this seems to be a bug with cmake or the cmake scripts). To switch between platforms do:
-
-  rm CMakeCache.txt
-  rm -rf CMakeFiles/
-
-  before you run a new cmake command with the desired platform.
+* Use a separate build directory per platform (build/ios.client.build, build/ios-sim.client.build as shown
+  above). That keeps the device and simulator CMake caches apart, so there is no
+  need to delete CMakeCache.txt / CMakeFiles when switching platforms.
 
 
 cmake variables
@@ -90,17 +64,23 @@ cmake variables
 CMAKE_TOOLCHAIN_FILE
 * the toolchain file to use must be cmake/ios.toolchain.cmake
 
-IOS_PLATFORM (OS (default), SIMULATOR)
-* the platform for which to build iFreeRDP. OS compiles for iOS devices (using armv7 and armv7s ABIs) and SIMULATOR compiles for the iOS Simulator (i386)
+PLATFORM (used by the toolchain file, default "OS64")
+* the platform for which to build iFreeRDP. OS64 builds for arm64 iOS devices,
+  SIMULATOR64 for the x86_64 iOS Simulator and SIMULATORARM64 for the arm64
+  Simulator.
 
-CMAKE_IOS_DEVELOPER_ROOT (used by toolchain file)
-* absolute path to the iOS developer platform (i.e. /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer) the toolchain file will usually auto-detect the correct Developer platform depending on IOS_PLATFORM
-
-CMAKE_IOS_SDK_ROOT (used by toolchain file)
-* absolute path to the iOS SDK (i.e. /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.1.sdk) the toolchain file will usually auto-detect the correct SDK, depending on IOS_PLATFORM 
+DEPLOYMENT_TARGET / IOS_TARGET_SDK
+* minimum iOS version to build for (15.0 in the examples above)
 
 FREERDP_IOS_EXTERNAL_SSL_PATH (used by FindOpenSSL)
 * absolute root path to the pre-built static OpenSSL libraries
 
-CODE_SIGN_IDENTITY
-* specify the identity to sign the code with
+WITH_FFMPEG / WITH_VIDEO_FFMPEG / WITH_VIDEOTOOLBOX
+* enable the FFmpeg H.264/AVC GFX
+
+AVCODEC_LIBRARIES / AVUTIL_LIBRARIES / AVCODEC_INCLUDE_DIRS / AVUTIL_INCLUDE_DIRS
+* absolute paths into the pre-built FFmpeg.framework (binary and Headers); set
+  these to bypass FindFFmpeg and use the framework built by the script above
+
+FREERDP_IOS_DEVELOPMENT_TEAM / FREERDP_IOS_CODE_SIGN_STYLE / CODE_SIGN_IDENTITY
+* code signing team / style / identity for device builds

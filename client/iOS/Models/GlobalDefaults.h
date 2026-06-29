@@ -25,6 +25,5 @@
 
 - (ConnectionParams *)newParams;
 - (ComputerBookmark *)newBookmark;
-- (ComputerBookmark *)newTestServerBookmark;
 
 @end

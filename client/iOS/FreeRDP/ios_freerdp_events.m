@@ -66,9 +66,14 @@ static BOOL ios_events_handle_event(mfInfo *mfi, NSDictionary *event_description
 
 	if ([event_type isEqualToString:@"mouse"])
 	{
-		input->MouseEvent(input, [[event_description objectForKey:@"flags"] unsignedShortValue],
-		                  [[event_description objectForKey:@"coord_x"] unsignedShortValue],
-		                  [[event_description objectForKey:@"coord_y"] unsignedShortValue]);
+		if (!input->MouseEvent(input,
+		                       [[event_description objectForKey:@"flags"] unsignedShortValue],
+		                       [[event_description objectForKey:@"coord_x"] unsignedShortValue],
+		                       [[event_description objectForKey:@"coord_y"] unsignedShortValue]))
+		{
+			// Returning an error here can terminate the connection.
+			NSLog(@"%s: MouseEvent failed.", __func__);
+		}
 	}
 	else if ([event_type isEqualToString:@"keyboard"])
 	{

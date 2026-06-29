@@ -57,9 +57,9 @@ static BlockBackground *_sharedInstance = nil;
 	return self;
 }
 
-- (unsigned)retainCount
+- (NSUInteger)retainCount
 {
-	return UINT_MAX;
+	return NSUIntegerMax;
 }
 
 - (oneway void)release

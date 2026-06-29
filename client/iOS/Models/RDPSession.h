@@ -15,6 +15,7 @@
 
 // forward declaration
 @class RDPSession;
+@class RDPCursor;
 @class ComputerBookmark;
 @class ConnectionParams;
 
@@ -33,6 +34,10 @@ extern NSString *TSXSessionDidFailToConnectNotification;
 - (void)sessionBitmapContextWillChange:(RDPSession *)session;
 - (void)sessionBitmapContextDidChange:(RDPSession *)session;
 - (void)session:(RDPSession *)session needsRedrawInRect:(CGRect)rect;
+- (void)session:(RDPSession *)session didSetRemoteCursor:(RDPCursor *)cursor;
+- (void)session:(RDPSession *)session didMoveRemoteCursor:(CGPoint)position;
+- (void)sessionDidHideRemoteCursor:(RDPSession *)session;
+- (void)sessionDidSetDefaultRemoteCursor:(RDPSession *)session;
 - (CGSize)sizeForFitScreenForSession:(RDPSession *)session;
 
 - (void)session:(RDPSession *)session
@@ -96,6 +101,12 @@ extern NSString *TSXSessionDidFailToConnectNotification;
 
 // session needs a refresh of its view
 - (void)setNeedsDisplayInRectAsValue:(NSValue *)rect_value;
+
+// handle cursor updated event
+- (void)setRemoteCursor:(RDPCursor *)cursor;
+- (void)setRemoteCursorPositionValue:(NSValue *)positionValue;
+- (void)hideRemoteCursor;
+- (void)setDefaultRemoteCursor;
 
 // get a small session screenshot
 - (UIImage *)getScreenshotWithSize:(CGSize)size;

@@ -326,15 +326,6 @@ CGFloat GetScrollGestureDelta()
 	return 10.0f;
 }
 
-// this hack activates the iphone's WWAN interface in case it is offline
-void WakeUpWWAN()
-{
-	NSURL *url = [[[NSURL alloc] initWithString:@"http://www.nonexistingdummyurl.com"] autorelease];
-	// NSData * data =
-	[NSData dataWithContentsOfURL:url]; // we don't need data but assigning one causes a "data not
-	                                    // used" compiler warning
-}
-
 #pragma mark System Info functions
 
 NSString *TSXGetPrimaryMACAddress(NSString *sep)
