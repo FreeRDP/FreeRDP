@@ -254,6 +254,11 @@ static void rdpdr_server_irp_free(RDPDR_IRP* irp)
 	free(irp);
 }
 
+static void rdpdr_server_list_free(void* ptr)
+{
+	RDPDR_IRP* irp = ptr;
+	rdpdr_server_irp_free(irp);
+}
 static BOOL rdpdr_server_enqueue_irp(RdpdrServerContext* context, RDPDR_IRP* irp)
 {
 	WINPR_ASSERT(context);
@@ -1154,7 +1159,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 		if (error != CHANNEL_RC_OK)
 			return error;
 
-		error = STATUS_NOT_SUPPORTED;
+		error = ERROR_NOT_SUPPORTED;
 		switch (device.DeviceType)
 		{
 			case RDPDR_DTYP_FILESYSTEM:
@@ -2214,7 +2219,10 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 				goto out;
 			case WAIT_OBJECT_0 + 1:
 			{
-				s = ChannelPduTracker_poll(tracker);
+				BOOL ok = FALSE;
+				s = ChannelPduTracker_poll(tracker, &ok);
+				if (!s && ok)
+					continue;
 				if (!s)
 					break;
 
@@ -3707,7 +3715,7 @@ static RdpdrServerPrivate* rdpdr_server_private_new(void)
 	if (!priv->IrpList)
 		goto fail;
 
-	ListDictionary_ValueObject(priv->IrpList)->fnObjectFree = (OBJECT_FREE_FN)rdpdr_server_irp_free;
+	ListDictionary_ValueObject(priv->IrpList)->fnObjectFree = rdpdr_server_list_free;
 
 	priv->devicelist = HashTable_New(FALSE);
 	if (!priv->devicelist)
@@ -3763,8 +3771,8 @@ static UINT rdpdr_server_smartcard_establish_context_callback(RdpdrServerContext
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -3825,8 +3833,8 @@ static UINT rdpdr_server_smartcard_establish_context(RdpdrServerContext* context
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -3871,8 +3879,8 @@ static UINT rdpdr_server_smartcard_release_context_callback(RdpdrServerContext* 
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -3923,8 +3931,8 @@ static UINT rdpdr_server_smartcard_release_context(RdpdrServerContext* context, 
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -3970,8 +3978,8 @@ static UINT rdpdr_server_smartcard_is_valid_context_callback(RdpdrServerContext*
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -4022,8 +4030,8 @@ static UINT rdpdr_server_smartcard_is_valid_context(RdpdrServerContext* context,
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -4069,8 +4077,8 @@ static UINT rdpdr_server_smartcard_list_reader_groups_callback(RdpdrServerContex
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -4128,8 +4136,8 @@ static UINT rdpdr_server_smartcard_list_reader_groups(RdpdrServerContext* contex
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -4192,8 +4200,8 @@ static UINT rdpdr_server_smartcard_list_readers_callback(RdpdrServerContext* con
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -4251,8 +4259,8 @@ static UINT rdpdr_server_smartcard_list_readers(RdpdrServerContext* context, voi
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -4312,8 +4320,8 @@ static UINT rdpdr_server_smartcard_get_status_change_callback(RdpdrServerContext
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -4376,8 +4384,8 @@ static UINT rdpdr_server_smartcard_get_status_change(RdpdrServerContext* context
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -4440,8 +4448,8 @@ static UINT rdpdr_server_smartcard_cancel_callback(RdpdrServerContext* context, 
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -4489,8 +4497,8 @@ static UINT rdpdr_server_smartcard_cancel(RdpdrServerContext* context, void* cal
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -4535,8 +4543,8 @@ static UINT rdpdr_server_smartcard_connect_callback(RdpdrServerContext* context,
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -4597,8 +4605,8 @@ static UINT rdpdr_server_smartcard_connect(RdpdrServerContext* context, void* ca
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -4657,8 +4665,8 @@ static UINT rdpdr_server_smartcard_reconnect_callback(RdpdrServerContext* contex
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -4715,8 +4723,8 @@ static UINT rdpdr_server_smartcard_reconnect(RdpdrServerContext* context, void* 
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -4761,8 +4769,8 @@ static UINT rdpdr_server_smartcard_disconnect_callback(RdpdrServerContext* conte
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -4817,8 +4825,8 @@ static UINT rdpdr_server_smartcard_disconnect(RdpdrServerContext* context, void*
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -4864,8 +4872,8 @@ static UINT rdpdr_server_smartcard_begin_transaction_callback(RdpdrServerContext
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -4923,8 +4931,8 @@ static UINT rdpdr_server_smartcard_begin_transaction(RdpdrServerContext* context
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -4969,8 +4977,8 @@ static UINT rdpdr_server_smartcard_end_transaction_callback(RdpdrServerContext* 
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -5027,8 +5035,8 @@ static UINT rdpdr_server_smartcard_end_transaction(RdpdrServerContext* context, 
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -5073,8 +5081,8 @@ static UINT rdpdr_server_smartcard_status_callback(RdpdrServerContext* context, 
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -5132,8 +5140,8 @@ static UINT rdpdr_server_smartcard_status(RdpdrServerContext* context, void* cal
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -5192,8 +5200,8 @@ static UINT rdpdr_server_smartcard_transmit_callback(RdpdrServerContext* context
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -5244,8 +5252,8 @@ static UINT rdpdr_server_smartcard_transmit(RdpdrServerContext* context, void* c
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -5290,8 +5298,8 @@ static UINT rdpdr_server_smartcard_control_callback(RdpdrServerContext* context,
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -5350,8 +5358,8 @@ static UINT rdpdr_server_smartcard_control(RdpdrServerContext* context, void* ca
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
@@ -5396,8 +5404,8 @@ static UINT rdpdr_server_smartcard_get_attrib_callback(RdpdrServerContext* conte
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -5413,8 +5421,8 @@ out:
 	return result;
 }
 
-UINT rdpdr_server_smartcard_get_attrib(RdpdrServerContext* context, void* callbackData,
-                                       const GetAttrib_Call* call, UINT32* completionId)
+static UINT rdpdr_server_smartcard_get_attrib(RdpdrServerContext* context, void* callbackData,
+                                              const GetAttrib_Call* call, UINT32* completionId)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -5488,8 +5496,8 @@ static UINT rdpdr_server_smartcard_set_attrib_callback(RdpdrServerContext* conte
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_decode_response(s, irp->IoControlCode, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INVALID_DATA;
 		goto out;
@@ -5545,8 +5553,8 @@ static UINT rdpdr_server_smartcard_set_attrib(RdpdrServerContext* context, void*
 		goto out;
 	}
 
-	result = smartcard_irp_device_control_encode_request(s, &op);
-	if (result != SCARD_S_SUCCESS)
+	const LONG rc = smartcard_irp_device_control_encode_request(s, &op);
+	if (rc != SCARD_S_SUCCESS)
 	{
 		result = ERROR_INTERNAL_ERROR;
 		goto out;
