@@ -375,16 +375,12 @@ static LONG floatbar_parent_width(const wfFloatBar* const floatbar)
 
 static BOOL floatbar_update_layout(wfFloatBar* floatbar)
 {
-	Button* close;
-	Button* minimize;
-	Button* restore;
-
 	if (!floatbar)
 		return FALSE;
 
-	close = floatbar_get_button_by_type(floatbar, BUTTON_CLOSE);
-	restore = floatbar_get_button_by_type(floatbar, BUTTON_RESTORE);
-	minimize = floatbar_get_button_by_type(floatbar, BUTTON_MINIMIZE);
+	Button* close = floatbar_get_button_by_type(floatbar, BUTTON_CLOSE);
+	Button* restore = floatbar_get_button_by_type(floatbar, BUTTON_RESTORE);
+	Button* minimize = floatbar_get_button_by_type(floatbar, BUTTON_MINIMIZE);
 
 	if (close)
 		close->x = (floatbar->width - (BACKGROUND_H + BUTTON_OFFSET)) - BUTTON_WIDTH;
@@ -401,12 +397,10 @@ static BOOL floatbar_update_layout(wfFloatBar* floatbar)
 
 static BOOL floatbar_update_region(wfFloatBar* floatbar)
 {
-	HRGN hRgn;
-
 	if (!floatbar || !floatbar->hwnd)
 		return FALSE;
 
-	hRgn = CreateRectRgn(0, 0, floatbar->width, floatbar->height);
+	HRGN hRgn = CreateRectRgn(0, 0, floatbar->width, floatbar->height);
 	if (!hRgn)
 		return FALSE;
 
@@ -421,12 +415,10 @@ static BOOL floatbar_update_region(wfFloatBar* floatbar)
 
 static BOOL floatbar_resize(wfFloatBar* floatbar, LONG left, LONG width)
 {
-	LONG parentWidth;
-
 	if (!floatbar)
 		return FALSE;
 
-	parentWidth = floatbar_parent_width(floatbar);
+	LONG parentWidth = floatbar_parent_width(floatbar);
 
 	if (width < MIN_FLOATBAR_WIDTH)
 		width = MIN_FLOATBAR_WIDTH;
@@ -521,25 +513,20 @@ static BOOL floatbar_update_hover(wfFloatBar* floatbar, const Button* activeButt
 
 static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 {
-	HPEN hpen;
-	HGDIOBJECT orig;
-	HRGN clipRgn;
-	POINT pt[4];
+	if (!floatbar)
+		return FALSE;
+
 	/* paint background */
 	GRADIENT_RECT gradientRect = { 0, 1 };
 	COLORREF rgbTop = RGB(117, 154, 198);
 	COLORREF rgbBottom = RGB(6, 55, 120);
 	const int top = 0;
-	int left = 0;
 	int bottom = BACKGROUND_H - 1;
-	int right = 0;
+	int left = 0;
 	const int angleOffset = BACKGROUND_H - 1;
-	TRIVERTEX triVertext[2];
 
-	if (!floatbar)
-		return FALSE;
-
-	right = floatbar->width - 1;
+	int right = floatbar->width - 1;
+	POINT pt[4];
 	pt[0].x = 0;
 	pt[0].y = 0;
 	pt[1].x = floatbar->width;
@@ -548,12 +535,13 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 	pt[2].y = BACKGROUND_H;
 	pt[3].x = BACKGROUND_H;
 	pt[3].y = BACKGROUND_H;
-	clipRgn = CreatePolygonRgn(pt, 4, ALTERNATE);
+	HRGN clipRgn = CreatePolygonRgn(pt, 4, ALTERNATE);
 	if (!clipRgn)
 		return FALSE;
 
 	SelectClipRgn(hdc, clipRgn);
 
+	TRIVERTEX triVertext[2];
 	triVertext[0].x = left;
 	triVertext[0].y = top;
 	triVertext[0].Red = GetRValue(rgbTop) << 8;
@@ -569,8 +557,8 @@ static BOOL floatbar_paint(wfFloatBar* const floatbar, const HDC hdc)
 
 	GradientFill(hdc, triVertext, 2, &gradientRect, 1, GRADIENT_FILL_RECT_V);
 	/* paint shadow */
-	hpen = CreatePen(PS_SOLID, 1, RGB(71, 71, 71));
-	orig = SelectObject(hdc, hpen);
+	HPEN hpen = CreatePen(PS_SOLID, 1, RGB(71, 71, 71));
+	HGDIOBJECT orig = SelectObject(hdc, hpen);
 	MoveToEx(hdc, left, top, nullptr);
 	LineTo(hdc, left + angleOffset, bottom);
 	LineTo(hdc, right - angleOffset, bottom);
@@ -613,17 +601,15 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 	static int btn_dwn_screen_x = 0;
 	static LONG drag_start_left = 0;
 	static LONG drag_start_width = 0;
-	static wfFloatBar* floatbar;
-	static TRACKMOUSEEVENT tme;
-	PAINTSTRUCT ps;
-	POINT pt;
-	Button* button;
-	HDC hdc;
-	int pos_x;
-	int pos_y;
-	NONCLIENTMETRICS ncm;
-	BOOL was_dragging;
-	int xScreen;
+	static wfFloatBar* floatbar = nullptr;
+	static TRACKMOUSEEVENT tme = WINPR_C_ARRAY_INIT;
+	PAINTSTRUCT ps = WINPR_C_ARRAY_INIT;
+	POINT pt = WINPR_C_ARRAY_INIT;
+	Button* button = nullptr;
+	HDC hdc = nullptr;
+	int pos_x = 0;
+	int pos_y = 0;
+	NONCLIENTMETRICS ncm = WINPR_C_ARRAY_INIT;
 
 	switch (Msg)
 	{
@@ -690,7 +676,7 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 		case WM_LBUTTONUP:
 			pos_x = LOWORD(lParam);
 			pos_y = HIWORD(lParam);
-			was_dragging = drag_mode != DRAG_NONE;
+			const BOOL was_dragging = drag_mode != DRAG_NONE;
 			drag_mode = DRAG_NONE;
 			ReleaseCapture();
 			if (was_dragging)
@@ -745,7 +731,7 @@ static LRESULT CALLBACK floatbar_proc(const HWND hWnd, const UINT Msg, const WPA
 						break;
 					}
 
-					xScreen = floatbar_parent_width(floatbar);
+					const int xScreen = floatbar_parent_width(floatbar);
 					floatbar->rect.left = floatbar->rect.left + pos_x - btn_dwn_x;
 
 					if (floatbar->rect.left < 0)
