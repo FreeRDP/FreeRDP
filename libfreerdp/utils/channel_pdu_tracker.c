@@ -21,15 +21,17 @@
 
 #include <winpr/wtsapi.h>
 
+#include <freerdp/log.h>
+#define TTAG FREERDP_TAG("utils.ChannelPduTracker")
+
 struct ChannelPduTracker
 {
 	HANDLE vc;
 	wStream* currentPacket;
-	BYTE buffer[CHANNEL_PDU_LENGTH];
-	BYTE* writePtr;
+	char buffer[CHANNEL_PDU_LENGTH];
+	size_t offset;
+	wLog* log;
 };
-
-#define TAG "ChannelPduTracker"
 
 wStream* ChannelPduTracker_poll(ChannelPduTracker* tracker, BOOL* ok)
 {
@@ -38,58 +40,70 @@ wStream* ChannelPduTracker_poll(ChannelPduTracker* tracker, BOOL* ok)
 
 	ULONG sz = 0;
 	*ok = FALSE;
-	const ULONG readSz =
-	    WINPR_ASSERTING_INT_CAST(ULONG, CHANNEL_PDU_LENGTH - (tracker->writePtr - tracker->buffer));
-	if (!WTSVirtualChannelRead(tracker->vc, INFINITE, (char*)tracker->writePtr, readSz, &sz))
+
+	WINPR_ASSERT(tracker->offset <= CHANNEL_PDU_LENGTH);
+	const ULONG readSz = WINPR_ASSERTING_INT_CAST(ULONG, CHANNEL_PDU_LENGTH - tracker->offset);
+	if (!WTSVirtualChannelRead(tracker->vc, INFINITE, &tracker->buffer[tracker->offset], readSz,
+	                           &sz))
 		return nullptr;
 
-	tracker->writePtr += sz;
-	const size_t recvSz = (tracker->writePtr - tracker->buffer);
+	tracker->offset += sz;
+	WINPR_ASSERT(tracker->offset <= CHANNEL_PDU_LENGTH);
+
+	const size_t recvSz = tracker->offset;
 	if (recvSz < sizeof(CHANNEL_PDU_HEADER))
 	{
 		*ok = TRUE;
 		return nullptr;
 	}
 
-	CHANNEL_PDU_HEADER* header = (CHANNEL_PDU_HEADER*)tracker->buffer;
+	const CHANNEL_PDU_HEADER* header = (const CHANNEL_PDU_HEADER*)tracker->buffer;
 	if (header->length > CHANNEL_CHUNK_LENGTH)
 	{
-		WLog_ERR(TAG, "chunk size %" PRIu32 " is too big", header->length);
+		WLog_Print(tracker->log, WLOG_ERROR, "chunk size %" PRIu32 " is too big", header->length);
 		return nullptr;
 	}
 
-	if (recvSz - sizeof(CHANNEL_PDU_HEADER) < header->length)
+	const size_t actual = recvSz - sizeof(CHANNEL_PDU_HEADER);
+	if (actual != header->length)
 	{
-		WLog_ERR(TAG, "chunk size %" PRIu32 " is too big", header->length);
+		WLog_Print(tracker->log, WLOG_ERROR,
+		           "Expected chunk size %" PRIu32 " does not match received data size %" PRIuz,
+		           header->length, actual);
 		return nullptr;
 	}
 
-	tracker->writePtr = tracker->buffer;
-	if (header->flags & CHANNEL_FLAG_FIRST)
+	tracker->offset = 0;
+	if ((header->flags & CHANNEL_FLAG_FIRST) != 0)
 		Stream_ResetPosition(tracker->currentPacket);
 
-	if (!Stream_EnsureRemainingCapacity(tracker->currentPacket, header->length))
+	if (!Stream_CheckAndLogRequiredCapacityWLog(tracker->log, tracker->currentPacket,
+	                                            header->length))
 		return nullptr;
 
-	Stream_Write(tracker->currentPacket, header + 1, header->length);
+	Stream_Write(tracker->currentPacket, &tracker->buffer[sizeof(CHANNEL_PDU_HEADER)],
+	             header->length);
 
-	if (header->flags & CHANNEL_FLAG_LAST)
+	if ((header->flags & CHANNEL_FLAG_LAST) == 0)
 	{
-		Stream_SealLength(tracker->currentPacket);
-		Stream_ResetPosition(tracker->currentPacket);
-		wStream* ret = tracker->currentPacket;
+		*ok = TRUE;
+		return nullptr;
+	}
 
-		tracker->currentPacket = Stream_New(nullptr, 4096);
-		if (!tracker->currentPacket)
-		{
-			Stream_Release(ret);
-			WLog_ERR(TAG, "error allocating new currentPacket");
-			return nullptr;
-		}
+	Stream_SealLength(tracker->currentPacket);
+	Stream_ResetPosition(tracker->currentPacket);
+	wStream* ret = tracker->currentPacket;
+
+	tracker->currentPacket = Stream_New(nullptr, 4096);
+	if (!tracker->currentPacket)
+	{
+		Stream_Release(ret);
+		WLog_Print(tracker->log, WLOG_ERROR, "error allocating new currentPacket");
+		return nullptr;
 	}
 
 	*ok = TRUE;
-	return nullptr;
+	return ret;
 }
 
 void ChannelPduTracker_free(ChannelPduTracker* tracker)
@@ -109,11 +123,14 @@ ChannelPduTracker* ChannelPduTracker_new(HANDLE vc)
 
 	ret->currentPacket = Stream_New(nullptr, 4096);
 	if (!ret->currentPacket)
-	{
-		free(ret);
-		return nullptr;
-	}
+		goto fail;
+
 	ret->vc = vc;
-	ret->writePtr = ret->buffer;
+	ret->log = WLog_Get(TTAG);
+	if (!ret->log)
+		goto fail;
 	return ret;
+fail:
+	ChannelPduTracker_free(ret);
+	return nullptr;
 }
