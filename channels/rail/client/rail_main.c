@@ -157,18 +157,15 @@ static UINT rail_client_activate(RailClientContext* context, const RAIL_ACTIVATE
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_send_client_sysparam(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
+static UINT rail_send_client_sysparam(RailClientContext* context,
+                                      const RAIL_SYSPARAM_ORDER* sysparam)
 {
-	wStream* s = nullptr;
 	size_t length = RAIL_SYSPARAM_ORDER_LENGTH;
-	railPlugin* rail = nullptr;
-	UINT error = 0;
-	BOOL extendedSpiSupported = 0;
 
 	if (!context || !sysparam)
 		return ERROR_INVALID_PARAMETER;
 
-	rail = (railPlugin*)context->handle;
+	railPlugin* rail = (railPlugin*)context->handle;
 
 	switch (sysparam->param)
 	{
@@ -203,7 +200,7 @@ static UINT rail_send_client_sysparam(RailClientContext* context, RAIL_SYSPARAM_
 			return ERROR_BAD_ARGUMENTS;
 	}
 
-	s = rail_pdu_init(length);
+	wStream* s = rail_pdu_init(length);
 
 	if (!s)
 	{
@@ -211,8 +208,9 @@ static UINT rail_send_client_sysparam(RailClientContext* context, RAIL_SYSPARAM_
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	extendedSpiSupported = rail_is_extended_spi_supported(rail->channelFlags);
-	if ((error = rail_write_sysparam_order(s, sysparam, extendedSpiSupported)))
+	const BOOL extendedSpiSupported = rail_is_extended_spi_supported(rail->channelFlags);
+	const UINT error = rail_write_sysparam_order(s, sysparam, extendedSpiSupported);
+	if (error)
 	{
 		WLog_ERR(TAG, "rail_write_client_sysparam_order failed with error %" PRIu32 "!", error);
 		Stream_Free(s, TRUE);
@@ -231,12 +229,11 @@ static UINT rail_client_system_param(RailClientContext* context,
                                      const RAIL_SYSPARAM_ORDER* sysInParam)
 {
 	UINT error = CHANNEL_RC_OK;
-	RAIL_SYSPARAM_ORDER sysparam;
 
 	if (!context || !sysInParam)
 		return ERROR_INVALID_PARAMETER;
 
-	sysparam = *sysInParam;
+	RAIL_SYSPARAM_ORDER sysparam = *sysInParam;
 
 	if (sysparam.params & SPI_MASK_SET_HIGH_CONTRAST)
 	{

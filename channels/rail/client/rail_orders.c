@@ -528,17 +528,17 @@ fail:
 static UINT rail_recv_server_sysparam_order(railPlugin* rail, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	RAIL_SYSPARAM_ORDER sysparam = WINPR_C_ARRAY_INIT;
-	UINT error = 0;
 
 	if (!context || !s)
 		return ERROR_INVALID_PARAMETER;
 
 	const BOOL extendedSpiSupported = rail_is_extended_spi_supported(rail->channelFlags);
-	if ((error = rail_read_sysparam_order(s, &sysparam, extendedSpiSupported)))
+	RAIL_SYSPARAM_ORDER sysparam = WINPR_C_ARRAY_INIT;
+	UINT error = rail_read_sysparam_order(s, &sysparam, extendedSpiSupported);
+	if (error)
 	{
 		WLog_ERR(TAG, "rail_read_sysparam_order failed with error %" PRIu32 "!", error);
-		return error;
+		goto fail;
 	}
 
 	if (context->custom)
@@ -548,6 +548,8 @@ static UINT rail_recv_server_sysparam_order(railPlugin* rail, wStream* s)
 		if (error)
 			WLog_ERR(TAG, "context.ServerSystemParam failed with error %" PRIu32 "", error);
 	}
+fail:
+	free(sysparam.highContrast.colorScheme.string);
 
 	return error;
 }
