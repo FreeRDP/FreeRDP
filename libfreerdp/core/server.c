@@ -87,16 +87,17 @@ static BOOL wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* Buffer1,
 		return FALSE;
 
 	WINPR_ASSERT(channel->channelId <= UINT16_MAX);
-	messageCtx->channelId = (UINT16)channel->channelId;
+	messageCtx->channelId = WINPR_ASSERTING_INT_CAST(UINT16, channel->channelId);
 	messageCtx->length = Length1 + Length2;
 	messageCtx->offset = 0;
-	BYTE* buffer = (BYTE*)(messageCtx + 1);
+	BYTE* buffer = (BYTE*)(&messageCtx[1]);
 	CopyMemory(buffer, Buffer1, Length1);
-	if (Length2 && Buffer2)
-	{
-		buffer += Length1;
+
+	WINPR_ASSERT(Buffer2 || (Length2 == 0));
+	buffer += Length1;
+	if (Buffer2)
 		CopyMemory(buffer, Buffer2, Length2);
-	}
+
 	return MessageQueue_Post(channel->queue, messageCtx, 0, nullptr, nullptr);
 }
 
@@ -461,15 +462,15 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 	if (channel->channelFlags & CHANNEL_OPTION_SHOW_PROTOCOL)
 	{
 		const CHANNEL_PDU_HEADER header = {
-			.length = (UINT32)size,
+			.length = WINPR_ASSERTING_INT_CAST(UINT32, size),
 			.flags = flags,
 		};
 
 		return wts_queue_receive_data(channel, (const BYTE*)&header, sizeof(header), data,
-		                              (UINT32)size);
+		                              header.length);
 	}
 
-	if (flags & CHANNEL_FLAG_FIRST)
+	if ((flags & CHANNEL_FLAG_FIRST) != 0)
 	{
 		Stream_ResetPosition(channel->receiveData);
 	}
@@ -479,7 +480,7 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 
 	Stream_Write(channel->receiveData, data, size);
 
-	if (flags & CHANNEL_FLAG_LAST)
+	if ((flags & CHANNEL_FLAG_LAST) != 0)
 	{
 		if (Stream_GetPosition(channel->receiveData) != totalSize)
 		{
@@ -497,7 +498,7 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 				ret = FALSE;
 			else
 				ret = wts_queue_receive_data(channel, Stream_Buffer(channel->receiveData),
-				                             (UINT32)pos, nullptr, 0);
+				                             WINPR_ASSERTING_INT_CAST(UINT32, pos), nullptr, 0);
 		}
 
 		Stream_ResetPosition(channel->receiveData);
@@ -1394,8 +1395,9 @@ fail:
 	return nullptr;
 }
 
-HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenStatic(HANDLE hServer, WINPR_ATTR_UNUSED DWORD SessionId,
-                                                  LPSTR pVirtualName, UINT32 Flags)
+static HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenStatic(HANDLE hServer,
+                                                         WINPR_ATTR_UNUSED DWORD SessionId,
+                                                         LPSTR pVirtualName, UINT32 Flags)
 {
 	WTSVirtualChannelManager* vcm = (WTSVirtualChannelManager*)hServer;
 	if (!vcm)
