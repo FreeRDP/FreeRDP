@@ -169,7 +169,7 @@ static void freeArguments(int argc, char **argv)
 			goto out_free;
 
 	if ([_params boolForKey:@"perf_h264" with3GEnabled:connected_via_3g])
-		if (!addArgument(&argc, &argv, "/gfx:AVC444,AVC420"))
+		if (!addArgument(&argc, &argv, "/gfx:AVC444"))
 			goto out_free;
 
 	if (![_params boolForKey:@"perf_remotefx" with3GEnabled:connected_via_3g] &&
