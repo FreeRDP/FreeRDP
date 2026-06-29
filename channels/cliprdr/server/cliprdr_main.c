@@ -1136,108 +1136,42 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
-	wStream* s = cliprdr->s;
+	BOOL ok = FALSE;
+	wStream* s = ChannelPduTracker_poll(cliprdr->channelPduTracker, &ok);
 
-	const size_t spos = Stream_GetPosition(s);
-	WINPR_STATIC_ASSERT(CLIPRDR_HEADER_LENGTH == sizeof(CLIPRDR_HEADER));
+	if (!ok)
+		return ERROR_INVALID_DATA;
 
-	/* Read data.
-	 * first the header, then the data expected from header supplied length */
-	const BOOL noHeader = spos < sizeof(CLIPRDR_HEADER);
-	if (noHeader || (spos < cliprdr->totalExpectedBytes))
-	{
-		DWORD BytesReturned = 0;
-		const size_t BytesToRead =
-		    (noHeader ? sizeof(CLIPRDR_HEADER) : cliprdr->totalExpectedBytes) - spos;
-		const DWORD status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
-
-		if (status == WAIT_FAILED)
-		{
-			const UINT error = GetLastError();
-			WLog_Print(cliprdr->log, WLOG_ERROR,
-			           "WaitForSingleObject failed with error %" PRIu32 "", error);
-			return error;
-		}
-
-		if (status == WAIT_TIMEOUT)
-			return CHANNEL_RC_OK;
-
-		if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0, Stream_Pointer(s),
-		                           WINPR_ASSERTING_INT_CAST(DWORD, BytesToRead), &BytesReturned))
-		{
-			WLog_Print(cliprdr->log, WLOG_ERROR, "WTSVirtualChannelRead failed!");
-			return ERROR_INTERNAL_ERROR;
-		}
-
-		if (!Stream_SafeSeek(s, BytesReturned))
-			return ERROR_INTERNAL_ERROR;
-	}
-
-	/* Abort early if the packet is not fully available */
-	const size_t epos = Stream_GetPosition(s);
-	if ((epos < sizeof(CLIPRDR_HEADER)) || (epos < cliprdr->totalExpectedBytes))
+	if (!s)
 		return CHANNEL_RC_OK;
 
-	// Got enough bytes to extract header, do so.
-	if (cliprdr->totalExpectedBytes == 0)
+	UINT ret = ERROR_INVALID_DATA;
+	if (!Stream_CheckAndLogRequiredLengthWLog(cliprdr->log, s, 8))
+		goto out;
+
+	const CLIPRDR_HEADER header = {
+		.msgType = Stream_Get_UINT16(s),  /* msgType (2 bytes) */
+		.msgFlags = Stream_Get_UINT16(s), /* msgFlags (2 bytes) */
+		.dataLen = Stream_Get_UINT32(s)   /* dataLen (4 bytes) */
+	};
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(cliprdr->log, s, header.dataLen))
+		goto out;
+
+	ret = cliprdr_server_receive_pdu(context, s, &header);
+	if (ret != CHANNEL_RC_OK)
 	{
-		const size_t position = Stream_GetPosition(s);
-		Stream_ResetPosition(s);
-		Stream_Read_UINT16(s, cliprdr->header.msgType);  /* msgType (2 bytes) */
-		Stream_Read_UINT16(s, cliprdr->header.msgFlags); /* msgFlags (2 bytes) */
-		Stream_Read_UINT32(s, cliprdr->header.dataLen);  /* dataLen (4 bytes) */
-
-		if (!Stream_EnsureRemainingCapacity(s, cliprdr->header.dataLen))
-		{
-			WLog_Print(cliprdr->log, WLOG_ERROR, "Stream_EnsureCapacity failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		if (!Stream_SetPosition(s, position))
-			return ERROR_INVALID_DATA;
-
-		cliprdr->totalExpectedBytes = cliprdr->header.dataLen + CLIPRDR_HEADER_LENGTH;
-	}
-	/* Read completed, process the data */
-	else
-	{
-		if (epos > cliprdr->totalExpectedBytes)
-		{
-			char buffer1[128] = WINPR_C_ARRAY_INIT;
-			char buffer2[128] = WINPR_C_ARRAY_INIT;
-			WLog_Print(cliprdr->log, WLOG_WARN,
-			           "Received excess bytes for [%s|%s]: Expected %" PRIuz ", but got %" PRIuz,
-			           CB_MSG_TYPE_STRING(cliprdr->header.msgType, buffer1, sizeof(buffer1)),
-			           CB_MSG_FLAGS_STRING(cliprdr->header.msgFlags, buffer2, sizeof(buffer2)),
-			           cliprdr->totalExpectedBytes, epos);
-		}
-		Stream_SealLength(s);
-		if (!Stream_SetPosition(s, CLIPRDR_HEADER_LENGTH))
-			return ERROR_INVALID_DATA;
-
-		const UINT error = cliprdr_server_receive_pdu(context, s, &cliprdr->header);
-		Stream_ResetPosition(s);
-		if (!Stream_SetLength(s, Stream_Capacity(s)))
-			return ERROR_INTERNAL_ERROR;
-
-		cliprdr->totalExpectedBytes = 0;
-
-		const CLIPRDR_HEADER empty = WINPR_C_ARRAY_INIT;
-		cliprdr->header = empty;
-		if (error)
-		{
-			char buffer1[128] = WINPR_C_ARRAY_INIT;
-			char buffer2[128] = WINPR_C_ARRAY_INIT;
-			WLog_Print(cliprdr->log, WLOG_ERROR,
-			           "cliprdr_server_receive_pdu [%s|%s] failed with error code %" PRIu32 "!",
-			           CB_MSG_TYPE_STRING(cliprdr->header.msgType, buffer1, sizeof(buffer1)),
-			           CB_MSG_FLAGS_STRING(cliprdr->header.msgFlags, buffer2, sizeof(buffer2)),
-			           error);
-			return error;
-		}
+		char buffer1[128] = WINPR_C_ARRAY_INIT;
+		char buffer2[128] = WINPR_C_ARRAY_INIT;
+		WLog_Print(cliprdr->log, WLOG_ERROR,
+		           "cliprdr_server_receive_pdu [%s|%s] failed with error code %" PRIu32 "!",
+		           CB_MSG_TYPE_STRING(header.msgType, buffer1, sizeof(buffer1)),
+		           CB_MSG_FLAGS_STRING(header.msgFlags, buffer2, sizeof(buffer2)), ret);
 	}
 
-	return CHANNEL_RC_OK;
+out:
+	Stream_Release(s);
+	return ret;
 }
 
 static DWORD WINAPI cliprdr_server_thread(LPVOID arg)
@@ -1330,24 +1264,39 @@ out:
  */
 static UINT cliprdr_server_open(CliprdrServerContext* context)
 {
-	void* buffer = nullptr;
-	DWORD BytesReturned = 0;
-
 	WINPR_ASSERT(context);
 
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
-	cliprdr->ChannelHandle =
-	    WTSVirtualChannelOpen(cliprdr->vcm, WTS_CURRENT_SESSION, CLIPRDR_SVC_CHANNEL_NAME);
+	PULONG pSessionId = nullptr;
+	DWORD BytesReturned = 0;
 
+	if (!WTSQuerySessionInformationA(cliprdr->vcm, WTS_CURRENT_SESSION, WTSSessionId,
+	                                 (LPSTR*)&pSessionId, &BytesReturned))
+		return CHANNEL_RC_BAD_CHANNEL;
+
+	DWORD SessionId = (DWORD)*pSessionId;
+	WTSFreeMemory(pSessionId);
+
+	cliprdr->ChannelHandle =
+	    WTSVirtualChannelOpenEx(SessionId, CLIPRDR_SVC_CHANNEL_NAME, CHANNEL_OPTION_SHOW_PROTOCOL);
 	if (!cliprdr->ChannelHandle)
 	{
 		WLog_Print(cliprdr->log, WLOG_ERROR, "WTSVirtualChannelOpen for cliprdr failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
+	cliprdr->channelPduTracker = ChannelPduTracker_new(cliprdr->ChannelHandle);
+	if (!cliprdr->channelPduTracker)
+	{
+		WLog_Print(cliprdr->log, WLOG_ERROR, "ChannelPduTracker_new for cliprdr failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+
 	cliprdr->ChannelEvent = nullptr;
+
+	void* buffer = nullptr;
 
 	if (WTSVirtualChannelQuery(cliprdr->ChannelHandle, WTSVirtualEventHandle, &buffer,
 	                           &BytesReturned))
@@ -1522,10 +1471,6 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 
 	cliprdr->log = WLog_Get(TAG);
 	cliprdr->vcm = vcm;
-	cliprdr->s = Stream_New(nullptr, 4096);
-
-	if (!cliprdr->s)
-		goto fail;
 
 	return context;
 
@@ -1542,7 +1487,9 @@ void cliprdr_server_context_free(CliprdrServerContext* context)
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*)context->handle;
 
 	if (cliprdr)
-		Stream_Free(cliprdr->s, TRUE);
+	{
+		ChannelPduTracker_free(cliprdr->channelPduTracker);
+	}
 
 	free(context->handle);
 	free(context);

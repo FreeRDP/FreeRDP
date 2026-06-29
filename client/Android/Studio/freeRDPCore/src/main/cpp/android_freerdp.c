@@ -308,7 +308,7 @@ static BOOL android_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 
 	const jsize nPixels = (jsize)(pointer->width * pointer->height);
 
-	JNIEnv* env = NULL;
+	JNIEnv* env = nullptr;
 	jboolean attached = jni_attach_thread(&env);
 
 	if (!gJavaActivityClass || !gOnPointerSetMethod)
@@ -367,7 +367,7 @@ static UINT android_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfx
 	if (width == 0 || height == 0)
 		return CHANNEL_RC_OK;
 
-	JNIEnv* env = NULL;
+	JNIEnv* env = nullptr;
 	jboolean attached = jni_attach_thread(&env);
 	if (!gJavaActivityClass || !gOnRailWindowUpdateMethod)
 		goto done;
@@ -377,11 +377,11 @@ static UINT android_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfx
 	if (!pixels)
 		goto done;
 
-	jint* dst = (*env)->GetIntArrayElements(env, pixels, NULL);
+	jint* dst = (*env)->GetIntArrayElements(env, pixels, nullptr);
 	if (dst)
 	{
 		freerdp_image_copy((BYTE*)dst, surface->format, width * 4, 0, 0, width, height,
-		                   surface->data, surface->format, surface->scanline, 0, 0, NULL,
+		                   surface->data, surface->format, surface->scanline, 0, 0, nullptr,
 		                   FREERDP_FLIP_NONE);
 
 		/* Force coloured pixels opaque (ARGB_8888 would otherwise blend the active window's

@@ -102,7 +102,7 @@ static rdpPrintJob* printer_android_create_printjob(rdpPrinter* printer, UINT32 
 	aj->printjob.Write = printer_android_write_printjob;
 	aj->printjob.Close = printer_android_close_printjob;
 
-	time_t t = time(NULL);
+	time_t t = time(nullptr);
 	snprintf(aj->path, sizeof(aj->path), PRINT_OUTPUT_DIR PRINT_OUTPUT_PREFIX "%lld.pdf",
 	         (long long)t);
 
@@ -111,7 +111,7 @@ static rdpPrintJob* printer_android_create_printjob(rdpPrinter* printer, UINT32 
 	{
 		WLog_ERR(TAG, "Failed to open dump file %s", aj->path);
 		free(aj);
-		return NULL;
+		return nullptr;
 	}
 
 	ap->printjob = aj;
@@ -124,10 +124,10 @@ static rdpPrintJob* printer_android_find_printjob(rdpPrinter* printer, UINT32 id
 
 	WINPR_ASSERT(ap);
 
-	if (ap->printjob == NULL)
-		return NULL;
+	if (ap->printjob == nullptr)
+		return nullptr;
 	if (ap->printjob->printjob.id != id)
-		return NULL;
+		return nullptr;
 
 	return &ap->printjob->printjob;
 }
@@ -176,7 +176,7 @@ static rdpPrinter* printer_android_new_printer(rdpAndroidPrinterDriver* drv, con
 {
 	rdpAndroidPrinter* ap = calloc(1, sizeof(*ap));
 	if (!ap)
-		return NULL;
+		return nullptr;
 
 	ap->printer.backend = &drv->driver;
 	ap->printer.id = drv->id_sequence++;
@@ -204,7 +204,7 @@ static rdpPrinter* printer_android_new_printer(rdpAndroidPrinterDriver* drv, con
 
 fail:
 	printer_android_free_printer(&ap->printer);
-	return NULL;
+	return nullptr;
 }
 
 static rdpPrinter** printer_android_enum_printers(rdpPrinterDriver* driver)
@@ -212,10 +212,10 @@ static rdpPrinter** printer_android_enum_printers(rdpPrinterDriver* driver)
 	rdpAndroidPrinterDriver* ad = (rdpAndroidPrinterDriver*)driver;
 	rdpPrinter** list = calloc(2, sizeof(rdpPrinter*));
 	if (!list)
-		return NULL;
+		return nullptr;
 
 	list[0] = printer_android_new_printer(ad, ANDROID_PRINTER_NAME, ANDROID_PRINTER_DRIVER, TRUE);
-	list[1] = NULL;
+	list[1] = nullptr;
 	return list;
 }
 

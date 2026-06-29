@@ -23,7 +23,7 @@ static const BYTE config_one_iface[] = {
 
 static int test_full_config(void)
 {
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, config_one_iface, sizeof(config_one_iface));
 
 	MSUSB_CONFIG_DESCRIPTOR* cfg = msusb_msconfig_read(s, 1);
@@ -49,7 +49,7 @@ static int test_full_config(void)
  * the received data. */
 static int test_truncated_trailer(void)
 {
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, config_one_iface, 12);
 
 	MSUSB_CONFIG_DESCRIPTOR* cfg = msusb_msconfig_read(s, 1);
@@ -66,10 +66,10 @@ static int test_truncated_trailer(void)
  * unused tail of the (recycled) buffer. */
 static int test_capacity_exceeds_length(void)
 {
-	BYTE buffer[64] = { 0 };
+	BYTE buffer[64] = WINPR_C_ARRAY_INIT;
 	CopyMemory(buffer, config_one_iface, sizeof(config_one_iface));
 
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	if (!Stream_SetLength(s, 12))
 		return -1;
@@ -95,7 +95,7 @@ static int test_interface_truncated_pipes(void)
 		0x00, 0x00,            /* padding */
 		0x04, 0x00, 0x00, 0x00 /* NumberOfPipes = 4, but no pipe data follows */
 	};
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, iface, sizeof(iface));
 
 	MSUSB_INTERFACE_DESCRIPTOR* desc = msusb_msinterface_read(s);

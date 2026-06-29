@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/wtypes.h>
+
 #include <camera/NdkCameraDevice.h>
 #include <camera/NdkCameraManager.h>
 #include <camera/NdkCameraMetadata.h>
@@ -71,7 +73,7 @@ static const char* cam_android_extract_camera_id(const char* deviceId)
 	WINPR_ASSERT(deviceId);
 
 	if (strncmp(deviceId, ANDROID_CAMERA_PREFIX, ANDROID_CAMERA_PREFIX_LEN) != 0)
-		return NULL;
+		return nullptr;
 	return deviceId + ANDROID_CAMERA_PREFIX_LEN;
 }
 
@@ -84,29 +86,29 @@ static void cam_android_close_session(CamAndroidStream* stream)
 	{
 		ACameraCaptureSession_stopRepeating(stream->session);
 		ACameraCaptureSession_close(stream->session);
-		stream->session = NULL;
+		stream->session = nullptr;
 	}
 	if (stream->captureRequest)
 	{
 		if (stream->outputTarget)
 			ACaptureRequest_removeTarget(stream->captureRequest, stream->outputTarget);
 		ACaptureRequest_free(stream->captureRequest);
-		stream->captureRequest = NULL;
+		stream->captureRequest = nullptr;
 	}
 	if (stream->outputTarget)
 	{
 		ACameraOutputTarget_free(stream->outputTarget);
-		stream->outputTarget = NULL;
+		stream->outputTarget = nullptr;
 	}
 	if (stream->outputContainer)
 	{
 		ACaptureSessionOutputContainer_free(stream->outputContainer);
-		stream->outputContainer = NULL;
+		stream->outputContainer = nullptr;
 	}
 	if (stream->sessionOutput)
 	{
 		ACaptureSessionOutput_free(stream->sessionOutput);
-		stream->sessionOutput = NULL;
+		stream->sessionOutput = nullptr;
 	}
 }
 
@@ -211,9 +213,9 @@ static void cam_android_deliver_frame(CamAndroidStream* stream, AImage* image)
 
 	/* Fetch the planes; the length out-param is required but unused. */
 	int dataLength = 0;
-	uint8_t* yData = NULL;
-	uint8_t* uData = NULL;
-	uint8_t* vData = NULL;
+	uint8_t* yData = nullptr;
+	uint8_t* uData = nullptr;
+	uint8_t* vData = nullptr;
 	if (AImage_getPlaneData(image, 0, &yData, &dataLength) != AMEDIA_OK ||
 	    AImage_getPlaneData(image, 1, &uData, &dataLength) != AMEDIA_OK ||
 	    AImage_getPlaneData(image, 2, &vData, &dataLength) != AMEDIA_OK)
@@ -249,7 +251,7 @@ static void cam_android_on_image_available(void* context, AImageReader* reader)
 	if (!streaming)
 		return;
 
-	AImage* image = NULL;
+	AImage* image = nullptr;
 	if (AImageReader_acquireLatestImage(reader, &image) == AMEDIA_OK && image)
 	{
 		cam_android_deliver_frame(stream, image);
@@ -338,7 +340,7 @@ static UINT cam_android_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, C
 		return 0;
 	}
 
-	ACameraIdList* idList = NULL;
+	ACameraIdList* idList = nullptr;
 	if (ACameraManager_getCameraIdList(hal->manager, &idList) != ACAMERA_OK || !idList)
 		return 0;
 
@@ -351,7 +353,7 @@ static UINT cam_android_enumerate(ICamHal* ihal, ICamHalEnumCallback callback, C
 	{
 		const char* cameraId = idList->cameraIds[i];
 
-		ACameraMetadata* characteristics = NULL;
+		ACameraMetadata* characteristics = nullptr;
 		if (ACameraManager_getCameraCharacteristics(hal->manager, cameraId, &characteristics) !=
 		    ACAMERA_OK)
 			continue;
@@ -421,24 +423,24 @@ static void cam_android_close_device(CamAndroidStream* stream)
 	LeaveCriticalSection(&stream->lock);
 
 	if (stream->imageReader)
-		AImageReader_setImageListener(stream->imageReader, NULL);
+		AImageReader_setImageListener(stream->imageReader, nullptr);
 
 	cam_android_close_session(stream);
 
 	if (stream->device)
 	{
 		ACameraDevice_close(stream->device);
-		stream->device = NULL;
+		stream->device = nullptr;
 	}
 
 	if (stream->imageReader)
 	{
 		AImageReader_delete(stream->imageReader);
-		stream->imageReader = NULL;
-		stream->window = NULL;
+		stream->imageReader = nullptr;
+		stream->window = nullptr;
 	}
 	free(stream->nv12Buffer);
-	stream->nv12Buffer = NULL;
+	stream->nv12Buffer = nullptr;
 	stream->nv12BufferSize = 0;
 	stream->deviceError = FALSE;
 }
@@ -450,7 +452,7 @@ static void cam_android_close_other_devices(CamAndroidHal* hal, const char* keep
 	WINPR_ASSERT(hal);
 	WINPR_ASSERT(keepDeviceId);
 
-	ULONG_PTR* keys = NULL;
+	ULONG_PTR* keys = nullptr;
 	const size_t count = HashTable_GetKeys(hal->streams, &keys);
 	for (size_t i = 0; i < count; i++)
 	{
@@ -483,20 +485,20 @@ static CamAndroidStream* cam_android_get_or_create_stream(CamAndroidHal* hal, co
 	if (!stream)
 	{
 		*errorCode = CAM_ERROR_CODE_OutOfMemory;
-		return NULL;
+		return nullptr;
 	}
 	if (!InitializeCriticalSectionEx(&stream->lock, 0, 0))
 	{
 		free(stream);
 		*errorCode = CAM_ERROR_CODE_UnexpectedError;
-		return NULL;
+		return nullptr;
 	}
 	if (!HashTable_Insert(hal->streams, deviceId, stream))
 	{
 		DeleteCriticalSection(&stream->lock);
 		free(stream);
 		*errorCode = CAM_ERROR_CODE_UnexpectedError;
-		return NULL;
+		return nullptr;
 	}
 	return stream;
 }
@@ -561,7 +563,7 @@ static BOOL cam_android_activate(ICamHal* ihal, const char* deviceId, CAM_ERROR_
 	}
 
 	/* Hardware is opened lazily in StartStream, not here. */
-	return cam_android_get_or_create_stream(hal, deviceId, errorCode) != NULL;
+	return cam_android_get_or_create_stream(hal, deviceId, errorCode) != nullptr;
 }
 
 static BOOL cam_android_deactivate(ICamHal* ihal, const char* deviceId, CAM_ERROR_CODE* errorCode)
@@ -619,7 +621,7 @@ static INT16 cam_android_get_media_type_descriptions(ICamHal* ihal, const char* 
 		return -1;
 	}
 
-	ACameraMetadata* characteristics = NULL;
+	ACameraMetadata* characteristics = nullptr;
 	if (ACameraManager_getCameraCharacteristics(hal->manager, cameraId, &characteristics) !=
 	    ACAMERA_OK)
 		return -1;
@@ -746,8 +748,8 @@ static CAM_ERROR_CODE cam_android_start_stream(ICamHal* ihal, CameraDevice* dev,
 		goto error;
 	}
 
-	if (ACameraCaptureSession_setRepeatingRequest(stream->session, NULL, 1, &stream->captureRequest,
-	                                              NULL) != ACAMERA_OK)
+	if (ACameraCaptureSession_setRepeatingRequest(stream->session, nullptr, 1,
+	                                              &stream->captureRequest, nullptr) != ACAMERA_OK)
 	{
 		WLog_ERR(TAG, "ACameraCaptureSession_setRepeatingRequest failed");
 		goto error;
