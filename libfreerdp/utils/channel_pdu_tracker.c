@@ -77,8 +77,7 @@ wStream* ChannelPduTracker_poll(ChannelPduTracker* tracker, BOOL* ok)
 	if ((header->flags & CHANNEL_FLAG_FIRST) != 0)
 		Stream_ResetPosition(tracker->currentPacket);
 
-	if (!Stream_CheckAndLogRequiredCapacityWLog(tracker->log, tracker->currentPacket,
-	                                            header->length))
+	if (!Stream_EnsureRemainingCapacity(tracker->currentPacket, header->length))
 		return nullptr;
 
 	Stream_Write(tracker->currentPacket, &tracker->buffer[sizeof(CHANNEL_PDU_HEADER)],
