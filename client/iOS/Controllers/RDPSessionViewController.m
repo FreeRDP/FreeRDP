@@ -430,10 +430,13 @@
 	// (refer to RDPSEssion.m for more details)
 	ConnectionParams *orig_params = [session params];
 	rdpSettings *sess_params = [session getSessionParams];
-	if (([orig_params intForKey:@"width"] != sess_params->DesktopWidth &&
-	     [orig_params intForKey:@"width"] != (sess_params->DesktopWidth + 1)) ||
-	    [orig_params intForKey:@"height"] != sess_params->DesktopHeight ||
-	    [orig_params intForKey:@"colors"] != sess_params->ColorDepth)
+	const UINT32 width = freerdp_settings_get_uint32(sess_params, FreeRDP_DesktopWidth);
+	const UINT32 height = freerdp_settings_get_uint32(sess_params, FreeRDP_DesktopHeight);
+	const UINT32 depth = freerdp_settings_get_uint32(sess_params, FreeRDP_ColorDepth);
+
+	if (([orig_params intForKey:@"width"] != width &&
+	     [orig_params intForKey:@"width"] != (width + 1ul)) ||
+	    [orig_params intForKey:@"height"] != height || [orig_params intForKey:@"colors"] != depth)
 	{
 		// display notification that the session params have been changed by the server
 		NSString *message =
@@ -441,8 +444,7 @@
 		                                   @"The server changed the screen settings to %dx%dx%d",
 		                                   @"Screen settings not supported message with width, "
 		                                   @"height and colors parameter"),
-		                               sess_params->DesktopWidth, sess_params->DesktopHeight,
-		                               sess_params->ColorDepth];
+		                               width, height, depth];
 		[[self view] makeToast:message duration:ToastDurationNormal position:@"bottom"];
 	}
 }
@@ -463,7 +465,9 @@
 
 	// calc new view frame
 	rdpSettings *sess_params = [session getSessionParams];
-	CGRect view_rect = CGRectMake(0, 0, sess_params->DesktopWidth, sess_params->DesktopHeight);
+	CGRect view_rect =
+	    CGRectMake(0, 0, freerdp_settings_get_uint32(sess_params, FreeRDP_DesktopWidth),
+	               freerdp_settings_get_uint32(sess_params, FreeRDP_DesktopHeight));
 
 	// set session view to its native (remote) size and update content size
 	[_session_scrollview setZoomScale:1.0];
