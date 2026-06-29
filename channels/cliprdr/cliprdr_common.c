@@ -381,7 +381,11 @@ UINT cliprdr_read_file_contents_response(wStream* s, CLIPRDR_FILE_CONTENTS_RESPO
 		WLog_WARN(TAG, "dataLen=%" PRIu32 " but expected >= 4", response->common.dataLen);
 		return ERROR_INVALID_DATA;
 	}
+
 	response->cbRequested = response->common.dataLen - 4;
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, response->cbRequested))
+		return ERROR_INVALID_DATA;
+	Stream_Seek(s, response->cbRequested);
 	return CHANNEL_RC_OK;
 }
 
