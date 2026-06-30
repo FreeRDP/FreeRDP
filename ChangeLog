@@ -1,3 +1,125 @@
+# 2026-07-06 Version 3.28.0
+
+Feature and bugfix release.
+* iOS client has been revived by @bho3538
+* Android client build updates by @svncibrahim
+* Windows client did get some updates by @zorjen122
+* Server side smartcard API by @joantolo
+* Improved client statistics interface, now also supports static channels
+* Improved fuzzer and unit tests
+* CMake preset support making it easier to create a working build configuration,
+  see https://github.com/FreeRDP/FreeRDP/wiki/Compilation#presets
+
+## CVE
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-pjqx-v446-x7fc
+  CVE-XXXX-XXXXX by Claude and Ada Logics
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-9g22-w2gr-vcmp
+  CVE-XXXX-XXXXX by Claude and Ada Logics
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-f27x-frr8-j9hc
+  CVE-XXXX-XXXXX by Claude and Ada Logics
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-72j9-356v-88xq
+  CVE-XXXX-XXXXX by Claude and Ada Logics
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-v64m-xxfw-hrv6
+  CVE-XXXX-XXXXX by @rahulhoysala
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-mp3f-59pg-c5pp
+  CVE-2026-57158 by @hextheshadow
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-47fr-jw86-c3fj
+  CVE-2026-57157 by Owais Lone (Owais Lone)
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-v5wf-j8j4-77h7
+  CVE-2026-57156 by @HEXER365
+
+## Security
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-rq8f-9xjh-pr3m
+
+## What's Changed
+* feat(client): Modernize iOS client. (iFreeRDP) (#12949)
+* [client,ios] remove some deprecation warnings (#12981)
+* Ios cmake (#12997)
+* [client,ios] add openh264 build (#13003)
+* [client,android] riscv64 support (#12923)
+* [client,android] make release configurable (#12929)
+* [client,android] allow overriding version name and code (#12931)
+* [client,android] redesign touch pointer (#12946)
+* [client,android] move external deps to own CMake file (#12992)
+* Android build (#12917)
+* [client,sdl] guard file clipboard (#12911)
+* [client,sdl] Askpass (#12925)
+* [client,sdl] throw a real exception instead of invalid bare throw (#12936)
+* [client,sdl] run sdl_OnUserNotificationEventHandler on SDL thread (#12941)
+* [client,sdl] fix mouse and touchpad natural scroll setting being ignored (#12967)
+* fix(client/win) Reset scroll offset when hiding scrollbars (#7536) (#12939)
+* feat(client/win): improve wfreerdp fullscreen floatbar controls (#12851)
+* Channel stats (#12964)
+* Statistics interface (#12968)
+* [core,channels] add freerdp_static_client_channel_stat_free (#12966)
+* Support RDPDR Device Control Responses (#12756)
+* Wlog appender context (#12907)
+* [winpr,image] bound unaligned bitmap read to declared image size (#12910)
+* [codec,color] add empty checks for copy (#12912)
+* Win credssp (#12913)
+* Adjustments for building on Windows with MSVC (#12916)
+* channel statistics and random gateway connection id (#12922)
+* [channels,video] bound frame copy to current surface size (#12919)
+* OSS-Fuzz: Add new fuzzers targets channels rail client (#12924)
+* [utils,smartcard] validate cbAtr against rgbAtr size on unpack (#12928)
+* [channels,rdpecam] fix device added notification parsing (#12930)
+* [emu,scard] bound select-by-AID compare to GIDS AID length (#12933)
+* Rails feature setting, xfreerdp kbd sync (#12927)
+* [core,orders] fix inverted overflow guard in update_read_delta_points (#12938)
+* [codec,mppc] add missing out of bounds check (#12942)
+* [channels,tsmf] bound visible rect read in update_geometry_info (#12943)
+* [channels,rdpecam] bound channel name read in device removed pdu (#12945)
+* [core,tcp] improve connection failure logging (#12950)
+* Warn fixes (#12951)
+* [codec,planar] fix range check, abort early (#12952)
+* [channels,rdpsnd,mac] recover audio after AVAudioEngine config change (#12958)
+* [codec,planar] range-check before control byte read in plane rle (#12956)
+* [channel,rail] fix tests and uninitialized variables (#12960)
+* [channels,rdpdr] fix off-by-one scan length in rdpdr_read_ustring (#12961)
+* [channels,remdesk] validate ctl pdu DataLength against received stream (#12955)
+* [channels,rdpsnd] bound client format pdu length to UINT16 (#12962)
+* Winpr harden parser checks (#12965)
+* [winpr,file] bound '?' wildcard match to file name length (#12969)
+* [channels,urbdrc] bound msusb descriptor reads to received length (#12971)
+* [core,update] fix the calling convention for Windows x86 (#12973)
+* [channels,drive] reject trailing '..' in contains_dotdot (#12974)
+* OSS-Fuzz: Add new fuzzer targeets WinPRClipboard processing (#12976)
+* Pr/12970 (#12975)
+* Cliprdr and rdpsnd fixes (#12980)
+* [channels,rail] fix order read/cleanup (#12979)
+* [core,utils] skip AuthenticateEx for RDP/TSL/SMARTCARD_PIN/FIDO_PIN (#12978)
+* replace NULL with nullptr (#12982)
+* [channels,cliprdr] fix pdu-tracker leak (#12983)
+* Fuzz fixes bmp (#12986)
+* [core,gateway] fix const warning (#12987)
+* [channels] bound dynamic channel message header to received length (#12988)
+* cmake: add minimal preset for lightweight builds (#12989)
+* Cleanup all (#12991)
+* Range checks (#12993)
+* Deprecations (#12994)
+* [winpr,string] fix winpr_strnstr needle length (gateway SIGSEGV) (#12995)
+* Bmp cache (#12999)
+* [codec,dsp] ensure out capacity in opus encode (#13001)
+* [winpr,string] match winpr_strnstr fallback to native strnstr (#13002)
+* Smartcard fixes (#13009)
+* [client,common] /smartcard-logon pass PEM directly (#13011)
+* Correct UTF-8 to UTF-16 length (#13012)
+
+## New Contributors
+* @sldr made their first contribution in (#12916)
+* @arthurscchan made their first contribution in (#12924)
+* @TBX3D made their first contribution in (#12936)
+* @rohitkuma1313 made their first contribution in (#12958)
+* @kunimart made their first contribution in (#12967)
+* @apocelipes made their first contribution in (#12973)
+* @bho3538 made their first contribution in (#12949)
+* @insaf021 made their first contribution in (#12988)
+* @insaf021 made their first contribution in (#12988)
+* @kapott made their first contribution in (#12995)
+
+For a complete and detailed change log since the last release run:
+git log 3.28.0...3.27.1
+
 # 2026-06-17 Version 3.27.1
 
 Bugfix/regression fix and android feature release
