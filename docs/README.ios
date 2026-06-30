@@ -42,7 +42,7 @@ cmake -S client/iOS/cmake -B build/ios-sim.client.build \
 cmake --build build/ios-sim.client.build
 
 The Xcode project is generated under the build directory, e.g.
-build/ios.client.build/freerdp/src/freerdp-build/FreeRDP.xcodeproj - open it to
+build/ios.client.build/ifreerdp/src/ifreerdp-build/iFreeRDP.xcodeproj - open it to
 build, sign or run the app from Xcode (set the Team under Signing & Capabilities
 if you did not pass FREERDP_IOS_DEVELOPMENT_TEAM).
 
@@ -51,7 +51,7 @@ Notes:
 * XCode, by default will build the application into its derived data location (usually in ~/Library/Developer/...).
 If you want to specify an output directory add CONFIGURATION_BUILD_DIR=<output-path-here> to the end of above command line.
 
-* If using XCode select the generated project, e.g. "open build/ios.client.build/freerdp/src/freerdp-build/FreeRDP.xcodeproj".
+* If using XCode select the generated project, e.g. "open build/ios.client.build/ifreerdp/src/ifreerdp-build/iFreeRDP.xcodeproj".
 
 * Use a separate build directory per platform (build/ios.client.build, build/ios-sim.client.build as shown
   above). That keeps the device and simulator CMake caches apart, so there is no

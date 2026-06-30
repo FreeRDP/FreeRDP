@@ -41,18 +41,34 @@ if(WITH_FFMPEG)
   list(APPEND IFREERDP_DEPS ffmpeg)
 endif()
 
-# Build FreeRDP + the iFreeRDP client against the dependencies above.
 get_filename_component(_toolchain_abs "${CMAKE_TOOLCHAIN_FILE}" ABSOLUTE BASE_DIR "${CMAKE_BINARY_DIR}")
 
+# arguments shared by the FreeRDP library build and the iFreeRDP app build
+set(_ios_common_cmake_args
+    -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${_toolchain_abs} -DPLATFORM:STRING=${PLATFORM}
+    -DDEPLOYMENT_TARGET:STRING=${DEPLOYMENT_TARGET} -DIOS_TARGET_SDK:STRING=${DEPLOYMENT_TARGET}
+    -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} -DCMAKE_C_STANDARD:STRING=23
+)
+
+set(_ios_ffmpeg_args "")
+if(WITH_FFMPEG)
+  set(_ios_ffmpeg_args
+      -DAVCODEC_INCLUDE_DIRS:PATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/Headers
+      -DAVUTIL_INCLUDE_DIRS:PATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/Headers
+      -DAVCODEC_LIBRARIES:FILEPATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/FFmpeg
+      -DAVUTIL_LIBRARIES:FILEPATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/FFmpeg
+  )
+endif()
+
+# FreeRDP itself - DEPENDS on everything above.
+# Builds and installs the FreeRDP libraries (install name @rpath) so the app
+# below can consume them with find_package().
 set(FREERDP_CMAKE_ARGS
-    -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${_toolchain_abs}
-    -DPLATFORM:STRING=${PLATFORM}
-    -DDEPLOYMENT_TARGET:STRING=${DEPLOYMENT_TARGET}
-    -DIOS_TARGET_SDK:STRING=${DEPLOYMENT_TARGET}
-    -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-    -DCMAKE_C_STANDARD:STRING="23"
+    ${_ios_common_cmake_args}
+    -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
+    -DCMAKE_INSTALL_NAME_DIR:STRING=@rpath
     -DWITH_CLIENT:BOOL=ON
-    -DWITH_CLIENT_IOS:BOOL=ON
+    -DWITH_CLIENT_IOS:BOOL=OFF
     -DWITH_CLIENT_SDL:BOOL=OFF
     -DWITH_SERVER:BOOL=OFF
     -DWITH_SAMPLE:BOOL=OFF
@@ -65,21 +81,25 @@ set(FREERDP_CMAKE_ARGS
     -DWITH_VIDEO_FFMPEG:BOOL=${WITH_FFMPEG}
     -DWITH_DSP_FFMPEG:BOOL=OFF
     -DWITH_SWSCALE:BOOL=OFF
+    ${_ios_ffmpeg_args}
 )
 
-if(WITH_FFMPEG)
-  list(APPEND FREERDP_CMAKE_ARGS -DAVCODEC_INCLUDE_DIRS:PATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/Headers
-       -DAVUTIL_INCLUDE_DIRS:PATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/Headers
-       -DAVCODEC_LIBRARIES:FILEPATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/FFmpeg
-       -DAVUTIL_LIBRARIES:FILEPATH=${DEPS_INSTALL_DIR}/FFmpeg.framework/FFmpeg
-  )
-endif()
+ExternalProject_Add(
+  freerdp PREFIX ${CMAKE_BINARY_DIR}/freerdp SOURCE_DIR ${FREERDP_SOURCE_DIR} CMAKE_ARGS ${FREERDP_CMAKE_ARGS}
+  DEPENDS ${IFREERDP_DEPS}
+)
+
+# iFreeRDP application - DEPENDS on the FreeRDP libraries built above and
+# links against them with find_package() at the app's configure time.
+set(IFREERDP_APP_CMAKE_ARGS ${_ios_common_cmake_args} -DCMAKE_PREFIX_PATH:PATH=${DEPS_INSTALL_DIR}
+                            -DFREERDP_IOS_EXTERNAL_SSL_PATH:PATH=${DEPS_INSTALL_DIR} ${_ios_ffmpeg_args}
+)
 
 if(FREERDP_IOS_DEVELOPMENT_TEAM)
-  list(APPEND FREERDP_CMAKE_ARGS -DFREERDP_IOS_DEVELOPMENT_TEAM:STRING=${FREERDP_IOS_DEVELOPMENT_TEAM})
+  list(APPEND IFREERDP_APP_CMAKE_ARGS -DFREERDP_IOS_DEVELOPMENT_TEAM:STRING=${FREERDP_IOS_DEVELOPMENT_TEAM})
 endif()
 
 ExternalProject_Add(
-  freerdp PREFIX ${CMAKE_BINARY_DIR}/freerdp SOURCE_DIR ${FREERDP_SOURCE_DIR} CMAKE_GENERATOR "Xcode"
-  CMAKE_ARGS ${FREERDP_CMAKE_ARGS} DEPENDS ${IFREERDP_DEPS} INSTALL_COMMAND ""
+  ifreerdp PREFIX ${CMAKE_BINARY_DIR}/ifreerdp SOURCE_DIR ${FREERDP_SOURCE_DIR}/client/iOS CMAKE_GENERATOR "Xcode"
+  CMAKE_ARGS ${IFREERDP_APP_CMAKE_ARGS} DEPENDS freerdp ${IFREERDP_DEPS} BUILD_ALWAYS 1 INSTALL_COMMAND ""
 )
