@@ -22,6 +22,7 @@
 #cmakedefine WINPR_HAVE_GETLOGIN_R
 #cmakedefine WINPR_HAVE_GETPWUID_R
 #cmakedefine WINPR_HAVE_STRNDUP
+#cmakedefine WINPR_HAVE_STRNSTR
 #cmakedefine WINPR_HAVE_UNWIND_H
 #cmakedefine WINPR_HAVE_SSIZE_T
 #cmakedefine WINPR_HAVE_WIN_SSIZE_T

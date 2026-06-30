@@ -37,6 +37,19 @@ extern "C"
 {
 #endif
 
+	/** @brief implementation of strnstr for all platforms
+	 *
+	 * @param haystack the string to search in
+	 * @param needle the string to search for, must not be \b nullptr
+	 * @param hlen the string length of haystack
+	 *
+	 * @return A pointer into \ref haystack if found, nullptr otherwise
+	 *
+	 * @since version 3.28.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API char* winpr_strnstr(char* haystack, const char* needle, size_t hlen);
+
 	WINPR_API WINPR_ATTR_MALLOC(free, 1) char* winpr_str_url_encode(const char* str, size_t len);
 	WINPR_API WINPR_ATTR_MALLOC(free, 1) char* winpr_str_url_decode(const char* str, size_t len);
 

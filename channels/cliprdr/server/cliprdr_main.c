@@ -1287,6 +1287,7 @@ static UINT cliprdr_server_open(CliprdrServerContext* context)
 		return ERROR_INTERNAL_ERROR;
 	}
 
+	WINPR_ASSERT(cliprdr->channelPduTracker == nullptr);
 	cliprdr->channelPduTracker = ChannelPduTracker_new(cliprdr->ChannelHandle);
 	if (!cliprdr->channelPduTracker)
 	{
