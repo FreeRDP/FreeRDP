@@ -4117,16 +4117,12 @@ static UINT rdpdr_server_smartcard_list_reader_groups(RdpdrServerContext* contex
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = ioControlCode,
-		.call.listReaderGroups = {
-			.handles.hContext = call->handles.hContext,
-			.fmszGroupsIsNULL = call->fmszGroupsIsNULL,
-			.cchGroups = call->cchGroups,
-		}
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = ioControlCode,
+		                             .call.listReaderGroups = {
+		                                 .handles.hContext = call->handles.hContext,
+		                                 .fmszGroupsIsNULL = call->fmszGroupsIsNULL,
+		                                 .cchGroups = call->cchGroups,
+		                             } };
 
 	s = Stream_New(nullptr, 32);
 	if (!s)
@@ -4238,18 +4234,14 @@ static UINT rdpdr_server_smartcard_list_readers(RdpdrServerContext* context, voi
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = ioControlCode,
-		.call.listReaders = {
-			.handles.hContext = call->handles.hContext,
-			.cBytes = call->cBytes,
-			.mszGroups = call->mszGroups,
-			.fmszReadersIsNULL = call->fmszReadersIsNULL,
-			.cchReaders = call->cchReaders,
-		}
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = ioControlCode,
+		                             .call.listReaders = {
+		                                 .handles.hContext = call->handles.hContext,
+		                                 .cBytes = call->cBytes,
+		                                 .mszGroups = call->mszGroups,
+		                                 .fmszReadersIsNULL = call->fmszReadersIsNULL,
+		                                 .cchReaders = call->cchReaders,
+		                             } };
 
 	s = Stream_New(nullptr, 256);
 	if (!s)
@@ -4702,18 +4694,14 @@ static UINT rdpdr_server_smartcard_reconnect(RdpdrServerContext* context, void* 
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = SCARD_IOCTL_RECONNECT,
-		.call.reconnect = {
-			.handles.hContext = call->handles.hContext,
-			.handles.hCard = call->handles.hCard,
-			.dwShareMode = call->dwShareMode,
-			.dwPreferredProtocols = call->dwPreferredProtocols,
-			.dwInitialization = call->dwInitialization,
-		}
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_RECONNECT,
+		                             .call.reconnect = {
+		                                 .handles.hContext = call->handles.hContext,
+		                                 .handles.hCard = call->handles.hCard,
+		                                 .dwShareMode = call->dwShareMode,
+		                                 .dwPreferredProtocols = call->dwPreferredProtocols,
+		                                 .dwInitialization = call->dwInitialization,
+		                             } };
 
 	s = Stream_New(nullptr, 128);
 	if (!s)
@@ -4806,16 +4794,12 @@ static UINT rdpdr_server_smartcard_disconnect(RdpdrServerContext* context, void*
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = SCARD_IOCTL_DISCONNECT,
-		.call.hCardAndDisposition = {
-			.handles.hContext = call->handles.hContext,
-			.handles.hCard = call->handles.hCard,
-			.dwDisposition = call->dwDisposition,
-		}
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_DISCONNECT,
+		                             .call.hCardAndDisposition = {
+		                                 .handles.hContext = call->handles.hContext,
+		                                 .handles.hCard = call->handles.hCard,
+		                                 .dwDisposition = call->dwDisposition,
+		                             } };
 
 	s = Stream_New(nullptr, 128);
 	if (!s)
@@ -4912,16 +4896,12 @@ static UINT rdpdr_server_smartcard_begin_transaction(RdpdrServerContext* context
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = SCARD_IOCTL_BEGINTRANSACTION,
-		.call.hCardAndDisposition = {
-			.handles.hContext = call->handles.hContext,
-			.handles.hCard = call->handles.hCard,
-			.dwDisposition = SCARD_LEAVE_CARD,
-		}
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_BEGINTRANSACTION,
+		                             .call.hCardAndDisposition = {
+		                                 .handles.hContext = call->handles.hContext,
+		                                 .handles.hCard = call->handles.hCard,
+		                                 .dwDisposition = SCARD_LEAVE_CARD,
+		                             } };
 
 	s = Stream_New(nullptr, 128);
 	if (!s)
@@ -5016,16 +4996,12 @@ static UINT rdpdr_server_smartcard_end_transaction(RdpdrServerContext* context, 
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = SCARD_IOCTL_ENDTRANSACTION,
-		.call.hCardAndDisposition = {
-			.handles.hContext = call->handles.hContext,
-			.handles.hCard = call->handles.hCard,
-			.dwDisposition = call->dwDisposition,
-		}
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_ENDTRANSACTION,
+		                             .call.hCardAndDisposition = {
+		                                 .handles.hContext = call->handles.hContext,
+		                                 .handles.hCard = call->handles.hCard,
+		                                 .dwDisposition = call->dwDisposition,
+		                             } };
 
 	s = Stream_New(nullptr, 128);
 	if (!s)
@@ -5119,18 +5095,14 @@ static UINT rdpdr_server_smartcard_status(RdpdrServerContext* context, void* cal
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = ioControlCode,
-		.call.status = {
-			.handles.hContext = call->handles.hContext,
-			.handles.hCard = call->handles.hCard,
-			.fmszReaderNamesIsNULL = call->fmszReaderNamesIsNULL,
-			.cchReaderLen = call->cchReaderLen,
-			.cbAtrLen = call->cbAtrLen,
-		}
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = ioControlCode,
+		                             .call.status = {
+		                                 .handles.hContext = call->handles.hContext,
+		                                 .handles.hCard = call->handles.hCard,
+		                                 .fmszReaderNamesIsNULL = call->fmszReaderNamesIsNULL,
+		                                 .cchReaderLen = call->cchReaderLen,
+		                                 .cbAtrLen = call->cbAtrLen,
+		                             } };
 
 	s = Stream_New(nullptr, 128);
 	if (!s)
@@ -5237,12 +5209,8 @@ static UINT rdpdr_server_smartcard_transmit(RdpdrServerContext* context, void* c
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = SCARD_IOCTL_TRANSMIT,
-		.call.transmit = *call
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_TRANSMIT,
+		                             .call.transmit = *call };
 
 	s = Stream_New(nullptr, 512 + call->cbSendLength);
 	if (!s)
@@ -5335,20 +5303,16 @@ static UINT rdpdr_server_smartcard_control(RdpdrServerContext* context, void* ca
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = SCARD_IOCTL_CONTROL,
-		.call.control = {
-			.handles.hContext = call->handles.hContext,
-			.handles.hCard = call->handles.hCard,
-			.dwControlCode = call->dwControlCode,
-			.cbInBufferSize = call->cbInBufferSize,
-			.pvInBuffer = call->pvInBuffer,
-			.fpvOutBufferIsNULL = call->fpvOutBufferIsNULL,
-			.cbOutBufferSize = call->cbOutBufferSize,
-		}
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_CONTROL,
+		                             .call.control = {
+		                                 .handles.hContext = call->handles.hContext,
+		                                 .handles.hCard = call->handles.hCard,
+		                                 .dwControlCode = call->dwControlCode,
+		                                 .cbInBufferSize = call->cbInBufferSize,
+		                                 .pvInBuffer = call->pvInBuffer,
+		                                 .fpvOutBufferIsNULL = call->fpvOutBufferIsNULL,
+		                                 .cbOutBufferSize = call->cbOutBufferSize,
+		                             } };
 
 	s = Stream_New(nullptr, 512 + call->cbOutBufferSize);
 	if (!s)
@@ -5440,12 +5404,8 @@ static UINT rdpdr_server_smartcard_get_attrib(RdpdrServerContext* context, void*
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = SCARD_IOCTL_GETATTRIB,
-		.call.getAttrib = *call
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_GETATTRIB,
+		                             .call.getAttrib = *call };
 
 	wStream* s = Stream_New(nullptr, 64);
 	if (!s)
@@ -5532,18 +5492,14 @@ static UINT rdpdr_server_smartcard_set_attrib(RdpdrServerContext* context, void*
 
 	*completionId = irp->CompletionId;
 
-	/* clang-format off */
-	const SMARTCARD_OPERATION op = {
-		.ioControlCode = SCARD_IOCTL_SETATTRIB,
-		.call.setAttrib = {
-			.handles.hContext = call->handles.hContext,
-			.handles.hCard = call->handles.hCard,
-			.dwAttrId = call->dwAttrId,
-			.cbAttrLen = call->cbAttrLen,
-			.pbAttr = call->pbAttr,
-		}
-	};
-	/* clang-format on */
+	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_SETATTRIB,
+		                             .call.setAttrib = {
+		                                 .handles.hContext = call->handles.hContext,
+		                                 .handles.hCard = call->handles.hCard,
+		                                 .dwAttrId = call->dwAttrId,
+		                                 .cbAttrLen = call->cbAttrLen,
+		                                 .pbAttr = call->pbAttr,
+		                             } };
 
 	s = Stream_New(nullptr, 64 + call->cbAttrLen);
 	if (!s)
