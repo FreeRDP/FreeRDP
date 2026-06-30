@@ -783,7 +783,7 @@ static wStream* build_device_control_response(UINT32 ioControlCode, const SMARTC
 {
 	const char* name = scard_get_ioctl_string(ioControlCode, TRUE);
 
-	wStream* payload = Stream_New(NULL, 4096);
+	wStream* payload = Stream_New(nullptr, 4096);
 	if (!payload)
 	{
 		(void)fprintf(stderr, "%s: Stream_New for payload failed\n", name);
@@ -800,7 +800,7 @@ static wStream* build_device_control_response(UINT32 ioControlCode, const SMARTC
 	}
 	Stream_SealLength(payload);
 
-	wStream* s = Stream_New(NULL, 256 + Stream_Length(payload));
+	wStream* s = Stream_New(nullptr, 256 + Stream_Length(payload));
 	if (!s)
 	{
 		(void)fprintf(stderr, "%s: Stream_New for response failed\n", name);
