@@ -1321,10 +1321,11 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 
 	for (int i = 0; i < nrects; i++)
 	{
-		xrects[i].x = WINPR_ASSERTING_INT_CAST(short, rects[i].left);
-		xrects[i].y = WINPR_ASSERTING_INT_CAST(short, rects[i].top);
-		xrects[i].width = WINPR_ASSERTING_INT_CAST(unsigned short, rects[i].right - rects[i].left);
-		xrects[i].height = WINPR_ASSERTING_INT_CAST(unsigned short, rects[i].bottom - rects[i].top);
+		/* Coords may be negative (INT16 in UINT16 fields); cast modularly, no assert. */
+		xrects[i].x = WINPR_CXX_COMPAT_CAST(short, rects[i].left);
+		xrects[i].y = WINPR_CXX_COMPAT_CAST(short, rects[i].top);
+		xrects[i].width = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].right - rects[i].left);
+		xrects[i].height = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].bottom - rects[i].top);
 	}
 
 	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects, nrects,
@@ -1346,10 +1347,11 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 
 	for (int i = 0; i < nrects; i++)
 	{
-		xrects[i].x = WINPR_ASSERTING_INT_CAST(short, rects[i].left);
-		xrects[i].y = WINPR_ASSERTING_INT_CAST(short, rects[i].top);
-		xrects[i].width = WINPR_ASSERTING_INT_CAST(unsigned short, rects[i].right - rects[i].left);
-		xrects[i].height = WINPR_ASSERTING_INT_CAST(unsigned short, rects[i].bottom - rects[i].top);
+		/* Coords may be negative (INT16 in UINT16 fields); cast modularly, no assert. */
+		xrects[i].x = WINPR_CXX_COMPAT_CAST(short, rects[i].left);
+		xrects[i].y = WINPR_CXX_COMPAT_CAST(short, rects[i].top);
+		xrects[i].width = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].right - rects[i].left);
+		xrects[i].height = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].bottom - rects[i].top);
 	}
 
 	XShapeCombineRectangles(
