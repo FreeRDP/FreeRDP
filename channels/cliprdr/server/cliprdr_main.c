@@ -1332,6 +1332,9 @@ static UINT cliprdr_server_close(CliprdrServerContext* context)
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
+	ChannelPduTracker_free(cliprdr->channelPduTracker);
+	cliprdr->channelPduTracker = nullptr;
+
 	if (cliprdr->ChannelHandle)
 	{
 		(void)WTSVirtualChannelClose(cliprdr->ChannelHandle);
@@ -1483,13 +1486,6 @@ void cliprdr_server_context_free(CliprdrServerContext* context)
 {
 	if (!context)
 		return;
-
-	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*)context->handle;
-
-	if (cliprdr)
-	{
-		ChannelPduTracker_free(cliprdr->channelPduTracker);
-	}
 
 	free(context->handle);
 	free(context);
