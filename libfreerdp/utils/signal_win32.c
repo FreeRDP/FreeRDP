@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <signal.h>
 
+#include <winpr/wtypes.h>
 #include <winpr/atexit.h>
 #include <winpr/wlog.h>
 #include <winpr/debug.h>
@@ -25,7 +26,7 @@ static BOOL CALLBACK init_signal_lock(PINIT_ONCE InitOnce, PVOID Parameter, PVOI
 
 void fsig_lock(void)
 {
-	InitOnceExecuteOnce(&signal_lock_init, init_signal_lock, NULL, NULL);
+	InitOnceExecuteOnce(&signal_lock_init, init_signal_lock, nullptr, nullptr);
 	EnterCriticalSection(&signal_lock);
 }
 

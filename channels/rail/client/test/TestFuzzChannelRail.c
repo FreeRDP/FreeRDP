@@ -25,13 +25,13 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 	int rc = -1;
 	railPlugin* g_rail = (railPlugin*)calloc(1, sizeof(railPlugin));
 	RailClientContext* context = (RailClientContext*)calloc(1, sizeof(RailClientContext));
-	wStream* s = Stream_New(NULL, size);
+	wStream* s = Stream_New(nullptr, size);
 	if (!g_rail || !context || !s)
 		goto fail;
 
 	g_rail->log = WLog_Get("fuzz.rail");
 
-	/* A context is required (handlers bail on NULL); NULL callbacks skip dispatch. */
+	/* A context is required (handlers bail on nullptr); nullptr callbacks skip dispatch. */
 
 	g_rail->context = context;
 	g_rail->channelEntryPoints.pInterface = context;

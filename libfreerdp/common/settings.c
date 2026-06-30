@@ -4509,7 +4509,7 @@ static BOOL settings_json_string(wLog* log, rdpSettings* settings, FreeRDP_Setti
 		val = WINPR_JSON_GetStringValue(item);
 		if (!val)
 		{
-			WLog_Print(log, WLOG_ERROR, "settings entry %s: NULL value", name);
+			WLog_Print(log, WLOG_ERROR, "settings entry %s: nullptr value", name);
 			return FALSE;
 		}
 	}
