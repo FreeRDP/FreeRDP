@@ -4672,7 +4672,7 @@ LONG smartcard_pack_transmit_call(wStream* s, const Transmit_Call* call)
 		return status;
 
 	UINT32 cbExtraBytes = 0;
-	const BYTE* pbExtraBytes = NULL;
+	const BYTE* pbExtraBytes = nullptr;
 	if (call->pioSendPci)
 	{
 		cbExtraBytes = (UINT32)(call->pioSendPci->cbPciLength - sizeof(SCARD_IO_REQUEST));
@@ -4825,7 +4825,7 @@ LONG smartcard_unpack_get_status_change_return(wStream* s, GetStatusChange_Retur
 			return status;
 	}
 	else
-		ret->rgReaderStates = NULL;
+		ret->rgReaderStates = nullptr;
 
 	smartcard_trace_get_status_change_return(log, ret, unicode);
 	return SCARD_S_SUCCESS;

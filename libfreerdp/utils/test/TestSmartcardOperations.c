@@ -44,12 +44,12 @@ static wStream* build_device_control_request(UINT32 ioControlCode, const void* i
 	const char* name = scard_get_ioctl_string(ioControlCode, TRUE);
 	const size_t totalLength = RDPDR_DEVICE_IO_CONTROL_REQ_HDR_LENGTH + inputBufferLength;
 
-	wStream* s = Stream_New(NULL, totalLength);
+	wStream* s = Stream_New(nullptr, totalLength);
 	if (!s)
 	{
 		(void)fprintf(stderr, "build_device_control_request(%s): Stream_New(%" PRIuz ") failed\n",
 		              name, totalLength);
-		return NULL;
+		return nullptr;
 	}
 
 	UINT32 inputLength = WINPR_ASSERTING_INT_CAST(UINT32, inputBufferLength);
@@ -67,7 +67,7 @@ static wStream* build_device_control_request(UINT32 ioControlCode, const void* i
 		(void)fprintf(stderr, "build_device_control_request(%s): Stream_SetPosition failed\n",
 		              name);
 		Stream_Release(s);
-		return NULL;
+		return nullptr;
 	}
 
 	return s;
@@ -78,7 +78,7 @@ static BOOL test_request_roundtrip(const SMARTCARD_OPERATION* opIn, SMARTCARD_OP
 	const UINT32 ioControlCode = opIn->ioControlCode;
 	const char* name = scard_get_ioctl_string(ioControlCode, TRUE);
 
-	wStream* sEnc = Stream_New(NULL, 4096);
+	wStream* sEnc = Stream_New(nullptr, 4096);
 	if (!sEnc)
 	{
 		(void)fprintf(stderr, "%s: Stream_New for encode failed\n", name);
@@ -361,7 +361,7 @@ static BOOL test_connect_w_encode_decode_request(void)
 	fill_redir_context(&opIn.call.connectW.Common.handles.hContext, 0x1234);
 	opIn.call.connectW.Common.dwShareMode = SCARD_SHARE_SHARED;
 	opIn.call.connectW.Common.dwPreferredProtocols = SCARD_PROTOCOL_T0;
-	opIn.call.connectW.szReader = ConvertUtf8ToWCharAlloc("TestReader", NULL);
+	opIn.call.connectW.szReader = ConvertUtf8ToWCharAlloc("TestReader", nullptr);
 
 	if (!test_request_roundtrip(&opIn, &opOut))
 		goto out;
@@ -559,8 +559,8 @@ static BOOL test_transmit_encode_decode_request(void)
 
 	success = TRUE;
 out:
-	opIn.call.transmit.pioSendPci = NULL;
-	opIn.call.transmit.pbSendBuffer = NULL;
+	opIn.call.transmit.pioSendPci = nullptr;
+	opIn.call.transmit.pbSendBuffer = nullptr;
 	smartcard_operation_free(&opIn, FALSE);
 	smartcard_operation_free(&opOut, FALSE);
 	return success;
@@ -604,7 +604,7 @@ static BOOL test_control_encode_decode_request(void)
 
 	success = TRUE;
 out:
-	opIn.call.control.pvInBuffer = NULL;
+	opIn.call.control.pvInBuffer = nullptr;
 	smartcard_operation_free(&opIn, FALSE);
 	smartcard_operation_free(&opOut, FALSE);
 	return success;
@@ -677,7 +677,7 @@ static BOOL test_set_attrib_encode_decode_request(void)
 
 	success = TRUE;
 out:
-	opIn.call.setAttrib.pbAttr = NULL;
+	opIn.call.setAttrib.pbAttr = nullptr;
 	smartcard_operation_free(&opIn, FALSE);
 	smartcard_operation_free(&opOut, FALSE);
 	return success;
@@ -787,7 +787,7 @@ static wStream* build_device_control_response(UINT32 ioControlCode, const SMARTC
 	if (!payload)
 	{
 		(void)fprintf(stderr, "%s: Stream_New for payload failed\n", name);
-		return NULL;
+		return nullptr;
 	}
 
 	LONG rc = encode_response_payload(payload, ioControlCode, opIn);
@@ -796,7 +796,7 @@ static wStream* build_device_control_response(UINT32 ioControlCode, const SMARTC
 		(void)fprintf(stderr, "%s: encode_response_payload failed with 0x%08" PRIX32 "\n", name,
 		              (UINT32)rc);
 		Stream_Release(payload);
-		return NULL;
+		return nullptr;
 	}
 	Stream_SealLength(payload);
 
@@ -805,7 +805,7 @@ static wStream* build_device_control_response(UINT32 ioControlCode, const SMARTC
 	{
 		(void)fprintf(stderr, "%s: Stream_New for response failed\n", name);
 		Stream_Release(payload);
-		return NULL;
+		return nullptr;
 	}
 
 	Stream_Seek(s, 4); /* Placeholder for outputBufferLength */
@@ -838,7 +838,7 @@ static wStream* build_device_control_response(UINT32 ioControlCode, const SMARTC
 	{
 		(void)fprintf(stderr, "%s: Stream_SetPosition failed\n", name);
 		Stream_Release(s);
-		return NULL;
+		return nullptr;
 	}
 	return s;
 }
@@ -957,7 +957,7 @@ static BOOL test_list_reader_groups_decode_response_impl(UINT32 ioControlCode)
 
 	success = TRUE;
 out:
-	opIn.ret.listReaders.msz = NULL;
+	opIn.ret.listReaders.msz = nullptr;
 	smartcard_operation_free(&opIn, FALSE);
 	smartcard_operation_free(&opOut, FALSE);
 	return success;
@@ -997,7 +997,7 @@ static BOOL test_list_readers_decode_response_impl(UINT32 ioControlCode)
 
 	success = TRUE;
 out:
-	opIn.ret.listReaders.msz = NULL;
+	opIn.ret.listReaders.msz = nullptr;
 	smartcard_operation_free(&opIn, FALSE);
 	smartcard_operation_free(&opOut, FALSE);
 	return success;
@@ -1051,7 +1051,7 @@ static BOOL test_get_status_change_decode_response_impl(UINT32 ioControlCode)
 
 	success = TRUE;
 out:
-	opIn.ret.getStatusChange.rgReaderStates = NULL;
+	opIn.ret.getStatusChange.rgReaderStates = nullptr;
 	smartcard_operation_free(&opIn, FALSE);
 	smartcard_operation_free(&opOut, FALSE);
 	return success;
@@ -1251,7 +1251,7 @@ static BOOL test_status_decode_response_impl(UINT32 ioControlCode)
 
 	success = TRUE;
 out:
-	opIn.ret.status.mszReaderNames = NULL;
+	opIn.ret.status.mszReaderNames = nullptr;
 	smartcard_operation_free(&opIn, FALSE);
 	smartcard_operation_free(&opOut, FALSE);
 	return success;
@@ -1277,7 +1277,7 @@ static BOOL test_transmit_decode_response(void)
 	BYTE recvBuf[] = { 0x90, 0x00 };
 	opIn.ret.transmit.cbRecvLength = sizeof(recvBuf);
 	opIn.ret.transmit.pbRecvBuffer = recvBuf;
-	opIn.ret.transmit.pioRecvPci = NULL;
+	opIn.ret.transmit.pioRecvPci = nullptr;
 
 	if (!test_response_roundtrip(&opIn, &opOut))
 		goto out;
@@ -1292,7 +1292,7 @@ static BOOL test_transmit_decode_response(void)
 
 	success = TRUE;
 out:
-	opIn.ret.transmit.pbRecvBuffer = NULL;
+	opIn.ret.transmit.pbRecvBuffer = nullptr;
 	smartcard_operation_free(&opIn, FALSE);
 	smartcard_operation_free(&opOut, FALSE);
 	return success;
@@ -1322,7 +1322,7 @@ static BOOL test_control_decode_response(void)
 
 	success = TRUE;
 out:
-	opIn.ret.control.pvOutBuffer = NULL;
+	opIn.ret.control.pvOutBuffer = nullptr;
 	smartcard_operation_free(&opIn, FALSE);
 	smartcard_operation_free(&opOut, FALSE);
 	return success;
@@ -1352,7 +1352,7 @@ static BOOL test_get_attrib_decode_response(void)
 
 	success = TRUE;
 out:
-	opIn.ret.getAttrib.pbAttr = NULL;
+	opIn.ret.getAttrib.pbAttr = nullptr;
 	smartcard_operation_free(&opIn, FALSE);
 	smartcard_operation_free(&opOut, FALSE);
 	return success;
