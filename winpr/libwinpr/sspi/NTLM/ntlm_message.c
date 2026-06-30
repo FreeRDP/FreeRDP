@@ -398,17 +398,16 @@ static BOOL ntlm_write_message_fields_buffer(wStream* s, const NTLM_MESSAGE_FIEL
 
 void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 {
-	if (fields)
-	{
-		if (fields->Buffer)
-		{
-			free(fields->Buffer);
-			fields->Len = 0;
-			fields->MaxLen = 0;
-			fields->Buffer = nullptr;
-			fields->BufferOffset = 0;
-		}
-	}
+	if (!fields)
+		return;
+	if (!fields->Buffer)
+		return;
+
+	free(fields->Buffer);
+	fields->Len = 0;
+	fields->MaxLen = 0;
+	fields->Buffer = nullptr;
+	fields->BufferOffset = 0;
 }
 
 static BOOL ntlm_read_negotiate_flags(wStream* s, UINT32* flags, UINT32 required, const char* name)
