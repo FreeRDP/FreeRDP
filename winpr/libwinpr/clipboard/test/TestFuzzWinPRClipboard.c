@@ -60,7 +60,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 		/* Store the remaining bytes as the (attacker) payload for srcName. */
 		(void)ClipboardSetData(clipboard, srcId, data + 1, (UINT32)(size - 1));
 
-		UINT32* formatIds = NULL;
+		UINT32* formatIds = nullptr;
 		UINT32 numFormats = ClipboardGetFormatIds(clipboard, &formatIds);
 
 		for (UINT32 i = 0; i < numFormats; i++)

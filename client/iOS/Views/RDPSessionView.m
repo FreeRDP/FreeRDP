@@ -11,6 +11,8 @@
 #import "RDPSessionView.h"
 #import "RDPCursor.h"
 #import "RDPKeyboard.h"
+
+#include <winpr/wtypes.h>
 #include <freerdp/locale/keyboard.h>
 
 #import <Metal/Metal.h>
@@ -314,7 +316,7 @@
 	}
 
 	CGContextRef bitmapContext = (_session != nil) ? [_session bitmapContext] : nil;
-	BYTE *source = bitmapContext ? CGBitmapContextGetData(bitmapContext) : NULL;
+	BYTE *source = bitmapContext ? CGBitmapContextGetData(bitmapContext) : nullptr;
 	if (!source)
 	{
 		[_displayLink setPaused:YES];
