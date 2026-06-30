@@ -1733,6 +1733,18 @@ void smartcard_operation_free(SMARTCARD_OPERATION* op, BOOL allocated)
 			free(ret->pioRecvPci);
 		}
 		break;
+		case SCARD_IOCTL_CONTROL:
+		{
+			Control_Return* call = &op->ret.control;
+			free(call->pvOutBuffer);
+		}
+		break;
+		case SCARD_IOCTL_GETATTRIB:
+		{
+			GetAttrib_Return* ret = &op->ret.getAttrib;
+			free(ret->pbAttr);
+		}
+		break;
 		default:
 			break;
 	}
