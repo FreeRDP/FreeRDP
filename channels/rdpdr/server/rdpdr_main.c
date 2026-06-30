@@ -3845,8 +3845,10 @@ static UINT rdpdr_server_smartcard_establish_context(RdpdrServerContext* context
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -3943,8 +3945,10 @@ static UINT rdpdr_server_smartcard_release_context(RdpdrServerContext* context, 
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4042,8 +4046,10 @@ static UINT rdpdr_server_smartcard_is_valid_context(RdpdrServerContext* context,
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4144,8 +4150,10 @@ static UINT rdpdr_server_smartcard_list_reader_groups(RdpdrServerContext* contex
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4263,8 +4271,10 @@ static UINT rdpdr_server_smartcard_list_readers(RdpdrServerContext* context, voi
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4388,8 +4398,10 @@ static UINT rdpdr_server_smartcard_get_status_change(RdpdrServerContext* context
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4501,8 +4513,10 @@ static UINT rdpdr_server_smartcard_cancel(RdpdrServerContext* context, void* cal
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4609,8 +4623,10 @@ static UINT rdpdr_server_smartcard_connect(RdpdrServerContext* context, void* ca
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4723,8 +4739,10 @@ static UINT rdpdr_server_smartcard_reconnect(RdpdrServerContext* context, void* 
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4821,8 +4839,10 @@ static UINT rdpdr_server_smartcard_disconnect(RdpdrServerContext* context, void*
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -4923,8 +4943,10 @@ static UINT rdpdr_server_smartcard_begin_transaction(RdpdrServerContext* context
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5023,8 +5045,10 @@ static UINT rdpdr_server_smartcard_end_transaction(RdpdrServerContext* context, 
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5124,8 +5148,10 @@ static UINT rdpdr_server_smartcard_status(RdpdrServerContext* context, void* cal
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5232,8 +5258,10 @@ static UINT rdpdr_server_smartcard_transmit(RdpdrServerContext* context, void* c
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5334,8 +5362,10 @@ static UINT rdpdr_server_smartcard_control(RdpdrServerContext* context, void* ca
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
@@ -5483,7 +5513,6 @@ static UINT rdpdr_server_smartcard_set_attrib(RdpdrServerContext* context, void*
 	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
 	result = prepare_smartcard_irp(context, SCARD_IOCTL_SETATTRIB,
 	                               rdpdr_server_smartcard_set_attrib_callback, callbackData, &irp);
@@ -5501,7 +5530,7 @@ static UINT rdpdr_server_smartcard_set_attrib(RdpdrServerContext* context, void*
 		                                 .pbAttr = call->pbAttr,
 		                             } };
 
-	s = Stream_New(nullptr, 64 + call->cbAttrLen);
+	wStream* s = Stream_New(nullptr, 64 + call->cbAttrLen);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -5521,8 +5550,10 @@ static UINT rdpdr_server_smartcard_set_attrib(RdpdrServerContext* context, void*
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
 out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (result != CHANNEL_RC_OK && irp)
 		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
 		Stream_Release(s);
 	return result;
