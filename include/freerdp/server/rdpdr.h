@@ -359,106 +359,179 @@ extern "C"
 
 		rdpContext* rdpcontext; /**< RDP context */
 
-		/*** New Smartcard APIs called by the server. ***/
+		/*** New Smartcard APIs called by the server.
+		 * @since version 3.28.0
+		 */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardEstablishContext
-		    SmartcardEstablishContext; /**< Send SCardEstablishContext to the client. */
+		    SmartcardEstablishContext; /**< Send SCardEstablishContext to the client.
+		                                * @since version 3.28.0
+		                                */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardReleaseContext
-		    SmartcardReleaseContext; /**< Send SCardReleaseContext to the client. */
+		    SmartcardReleaseContext; /**< Send SCardReleaseContext to the client.
+		                              * @since version 3.28.0
+		                              */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardIsValidContext
-		    SmartcardIsValidContext; /**< Send SCardIsValidContext to the client. */
+		    SmartcardIsValidContext; /**< Send SCardIsValidContext to the client.
+		                              * @since version 3.28.0
+		                              */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardListReaderGroups
-		    SmartcardListReaderGroupsA; /**< Send SCardListReaderGroupsA to the client. */
+		    SmartcardListReaderGroupsA; /**< Send SCardListReaderGroupsA to the client.
+		                                 * @since version 3.28.0
+		                                 */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardListReaderGroups
-		    SmartcardListReaderGroupsW; /**< Send SCardListReaderGroupsW to the client. */
+		    SmartcardListReaderGroupsW; /**< Send SCardListReaderGroupsW to the client.
+		                                 * @since version 3.28.0
+		                                 */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardListReaders
-		    SmartcardListReadersA; /**< Send SCardListReadersA to the client. */
+		    SmartcardListReadersA; /**< Send SCardListReadersA to the client.
+		                            * @since version 3.28.0
+		                            */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardListReaders
-		    SmartcardListReadersW; /**< Send SCardListReadersW to the client. */
+		    SmartcardListReadersW; /**< Send SCardListReadersW to the client.
+		                            * @since version 3.28.0
+		                            */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardGetStatusChangeA
-		    SmartcardGetStatusChangeA; /**< Send SCardGetStatusChangeA to the client. */
+		    SmartcardGetStatusChangeA; /**< Send SCardGetStatusChangeA to the client.
+		                                * @since version 3.28.0
+		                                */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardGetStatusChangeW
-		    SmartcardGetStatusChangeW; /**< Send SCardGetStatusChangeW to the client. */
+		    SmartcardGetStatusChangeW; /**< Send SCardGetStatusChangeW to the client.
+		                                * @since version 3.28.0
+		                                */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardCancel
-		    SmartcardCancel; /**< Send SCardCancel to the client. */
+		    SmartcardCancel; /**< Send SCardCancel to the client.
+		                      * @since version 3.28.0
+		                      */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardConnectA
-		    SmartcardConnectA; /**< Send SCardConnectA to the client. */
+		    SmartcardConnectA; /**< Send SCardConnectA to the client.
+		                        * @since version 3.28.0
+		                        */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardConnectW
-		    SmartcardConnectW; /**< Send SCardConnectW to the client. */
+		    SmartcardConnectW; /**< Send SCardConnectW to the client.
+		                        * @since version 3.28.0
+		                        */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardReconnect
-		    SmartcardReconnect; /**< Send SCardReconnect to the client. */
+		    SmartcardReconnect; /**< Send SCardReconnect to the client.
+		                         * @since version 3.28.0
+		                         */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardDisconnect
-		    SmartcardDisconnect; /**< Send SCardDisconnect to the client. */
+		    SmartcardDisconnect; /**< Send SCardDisconnect to the client.
+		                          * @since version 3.28.0
+		                          */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardBeginTransaction
-		    SmartcardBeginTransaction; /**< Send SCardBeginTransaction to the client. */
+		    SmartcardBeginTransaction; /**< Send SCardBeginTransaction to the client.
+		                                * @since version 3.28.0
+		                                */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardEndTransaction
-		    SmartcardEndTransaction; /**< Send SCardEndTransaction to the client. */
+		    SmartcardEndTransaction; /**< Send SCardEndTransaction to the client.
+		                              * @since version 3.28.0
+		                              */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardStatus
-		    SmartcardStatusA; /**< Send SCardStatusA to the client. */
+		    SmartcardStatusA; /**< Send SCardStatusA to the client.
+		                       * @since version 3.28.0
+		                       */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardStatus
-		    SmartcardStatusW; /**< Send SCardStatusW to the client. */
+		    SmartcardStatusW; /**< Send SCardStatusW to the client.
+		                       * @since version 3.28.0
+		                       */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardTransmit
-		    SmartcardTransmit; /**< Send SCardTransmit to the client. */
+		    SmartcardTransmit; /**< Send SCardTransmit to the client.
+		                        * @since version 3.28.0
+		                        */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardControl
-		    SmartcardControl; /**< Send SCardControl to the client. */
+		    SmartcardControl; /**< Send SCardControl to the client.
+		                       * @since version 3.28.0
+		                       */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardGetAttrib
-		    SmartcardGetAttrib; /**< Send SCardGetAttrib to the client. */
+		    SmartcardGetAttrib; /**< Send SCardGetAttrib to the client.
+		                         * @since version 3.28.0
+		                         */
 		WINPR_ATTR_NODISCARD psRdpdrSmartcardSetAttrib
-		    SmartcardSetAttrib; /**< Send SCardSetAttrib to the client. */
+		    SmartcardSetAttrib; /**< Send SCardSetAttrib to the client.
+		                         * @since version 3.28.0
+		                         */
 
 		/*** New Smartcard callbacks registered by the server. ***/
-		/* clang-format off */
 		psRdpdrOnSmartcardEstablishContextComplete
-		    OnSmartcardEstablishContextComplete; /**< Completion callback for
-		                                             SmartcardEstablishContext. */
+		    OnSmartcardEstablishContextComplete; /**<
+		                                          * Completion callback for
+		                                          * SmartcardEstablishContext.
+		                                          * @since version 3.28.0
+		                                          */
 		psRdpdrOnSmartcardReleaseContextComplete
-		    OnSmartcardReleaseContextComplete; /**< Completion callback for
-		                                           SmartcardReleaseContext. */
+		    OnSmartcardReleaseContextComplete; /**< Completion
+		                                        * callback for SmartcardReleaseContext.
+		                                        * @since version 3.28.0
+		                                        */
 		psRdpdrOnSmartcardIsValidContextComplete
-		    OnSmartcardIsValidContextComplete; /**< Completion callback for
-		                                           SmartcardIsValidContext. */
+		    OnSmartcardIsValidContextComplete; /**< Completion
+		                                        * callback for SmartcardIsValidContext.
+		                                        * @since version 3.28.0
+		                                        */
 		psRdpdrOnSmartcardListReaderGroupsComplete
-		    OnSmartcardListReaderGroupsComplete; /**< Completion callback for
-		                                             SmartcardListReaderGroups. */
+		    OnSmartcardListReaderGroupsComplete; /**<
+		                                          * Completion callback for
+		                                          * SmartcardListReaderGroups.
+		                                          * @since version 3.28.0
+		                                          */
 		psRdpdrOnSmartcardListReadersComplete
-		    OnSmartcardListReadersComplete; /**< Completion callback for
-		                                        SmartcardListReaders. */
+		    OnSmartcardListReadersComplete; /**< Completion
+		                                     * callback for SmartcardListReaders.
+		                                     * @since version 3.28.0
+		                                     */
 		psRdpdrOnSmartcardGetStatusChangeComplete
-		    OnSmartcardGetStatusChangeComplete; /**< Completion callback for
-		                                            SmartcardGetStatusChange. */
-		psRdpdrOnSmartcardCancelComplete
-		    OnSmartcardCancelComplete; /**< Completion callback for
-		                                   SmartcardCancel. */
-		psRdpdrOnSmartcardConnectComplete
-		    OnSmartcardConnectComplete; /**< Completion callback for
-		                                    SmartcardConnect. */
-		psRdpdrOnSmartcardReconnectComplete
-		    OnSmartcardReconnectComplete; /**< Completion callback for
-		                                      SmartcardReconnect. */
+		    OnSmartcardGetStatusChangeComplete;                       /**<
+		                                                               * Completion callback for SmartcardGetStatusChange.
+		                                                               * @since version 3.28.0
+		                                                               */
+		psRdpdrOnSmartcardCancelComplete OnSmartcardCancelComplete;   /**< Completion callback for
+		                                                               * SmartcardCancel.
+		                                                               * @since version 3.28.0
+		                                                               */
+		psRdpdrOnSmartcardConnectComplete OnSmartcardConnectComplete; /**< Completion callback for
+		                                                               * SmartcardConnect.
+		                                                               * @since version 3.28.0
+		                                                               */
+		psRdpdrOnSmartcardReconnectComplete OnSmartcardReconnectComplete; /**< Completion callback
+		                                                                   * for SmartcardReconnect.
+		                                                                   * @since version 3.28.0
+		                                                                   */
 		psRdpdrOnSmartcardDisconnectComplete
-		    OnSmartcardDisconnectComplete; /**< Completion callback for
-		                                       SmartcardDisconnect. */
+		    OnSmartcardDisconnectComplete; /**< Completion callback
+		                                    * for SmartcardDisconnect.
+		                                    * @since version 3.28.0
+		                                    */
 		psRdpdrOnSmartcardBeginTransactionComplete
-		    OnSmartcardBeginTransactionComplete; /**< Completion callback for
-		                                             SmartcardBeginTransaction. */
+		    OnSmartcardBeginTransactionComplete; /**<
+		                                          * Completion callback for
+		                                          * SmartcardBeginTransaction.
+		                                          * @since version 3.28.0
+		                                          */
 		psRdpdrOnSmartcardEndTransactionComplete
-		    OnSmartcardEndTransactionComplete; /**< Completion callback for
-		                                           SmartcardEndTransaction. */
-		psRdpdrOnSmartcardStatusComplete
-		    OnSmartcardStatusComplete; /**< Completion callback for
-		                                   SmartcardStatus. */
-		psRdpdrOnSmartcardTransmitComplete
-		    OnSmartcardTransmitComplete; /**< Completion callback for
-		                                     SmartcardTransmit. */
-		psRdpdrOnSmartcardControlComplete
-		    OnSmartcardControlComplete; /**< Completion callback for
-		                                    SmartcardControl. */
-		psRdpdrOnSmartcardGetAttribComplete
-		    OnSmartcardGetAttribComplete; /**< Completion callback for
-		                                      SmartcardGetAttrib. */
-		psRdpdrOnSmartcardSetAttribComplete
-		    OnSmartcardSetAttribComplete; /**< Completion callback for
-		                                      SmartcardSetAttrib. */
-		/* clang-format on */
+		    OnSmartcardEndTransactionComplete;                          /**< Completion
+		                                                                 * callback for SmartcardEndTransaction.
+		                                                                 * @since version 3.28.0
+		                                                                 */
+		psRdpdrOnSmartcardStatusComplete OnSmartcardStatusComplete;     /**< Completion callback for
+		                                                                 * SmartcardStatus.
+		                                                                 * @since version 3.28.0
+		                                                                 */
+		psRdpdrOnSmartcardTransmitComplete OnSmartcardTransmitComplete; /**< Completion callback for
+		                                                                 * SmartcardTransmit.
+		                                                                 * @since version 3.28.0
+		                                                                 */
+		psRdpdrOnSmartcardControlComplete OnSmartcardControlComplete;   /**< Completion callback for
+		                                                                 * SmartcardControl.
+		                                                                 * @since version 3.28.0
+		                                                                 */
+		psRdpdrOnSmartcardGetAttribComplete OnSmartcardGetAttribComplete; /**< Completion callback
+		                                                                   * for SmartcardGetAttrib.
+		                                                                   * @since version 3.28.0
+		                                                                   */
+		psRdpdrOnSmartcardSetAttribComplete OnSmartcardSetAttribComplete; /**< Completion callback
+		                                                                   * for SmartcardSetAttrib.
+		                                                                   * @since version 3.28.0
+		                                                                   */
 	};
 
 	/**
