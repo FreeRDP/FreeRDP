@@ -1321,7 +1321,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 	{
 		size_t count = 0;
 		char* buffer = Stream_BufferAs(response->data, char);
-		const char* line = Stream_BufferAs(response->data, char);
+		char* line = Stream_BufferAs(response->data, char);
 		char* context = nullptr;
 
 		while ((line = winpr_strnstr(line, "\r\n",
