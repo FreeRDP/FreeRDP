@@ -25,11 +25,15 @@ project(iFreeRDP VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_CURRENT_SOURCE_DIR}/../../cmake/)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/)
 include(CommonConfigOptions)
 
 include(WarnUnmaintained)
 warn_unmaintained(${PROJECT_NAME} "-DWITH_CLIENT_IOS=OFF")
+
+# Consume the already-built FreeRDP libraries and OpenSSL as packages.
+find_package(FreeRDP-Client CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 set(MODULE_NAME "iFreeRDP")
 set(MODULE_PREFIX "IFREERDP_CLIENT")
@@ -199,54 +203,29 @@ endif()
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(IOS)
-  if(BUILD_SHARED_LIBS)
-    foreach(_ios_runtime_target freerdp-client freerdp winpr)
-      if(TARGET ${_ios_runtime_target})
-        set_target_properties(
-          ${_ios_runtime_target} PROPERTIES BUILD_WITH_INSTALL_NAME_DIR YES INSTALL_NAME_DIR "@rpath"
-        )
-        if(FREERDP_IOS_DEVELOPMENT_TEAM)
-          set_target_properties(
-            ${_ios_runtime_target} PROPERTIES XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${FREERDP_IOS_DEVELOPMENT_TEAM}"
-          )
-        endif()
-        if(FREERDP_IOS_CODE_SIGN_STYLE)
-          set_target_properties(
-            ${_ios_runtime_target} PROPERTIES XCODE_ATTRIBUTE_CODE_SIGN_STYLE "${FREERDP_IOS_CODE_SIGN_STYLE}"
-          )
-        endif()
-      endif()
-    endforeach()
-
-    set(_ios_bundle_frameworks_dir "$<TARGET_BUNDLE_CONTENT_DIR:${MODULE_NAME}>/Frameworks")
-    add_custom_command(
-      TARGET ${MODULE_NAME}
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E make_directory "${_ios_bundle_frameworks_dir}"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp-client>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:freerdp-client>"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp-client>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:freerdp-client>"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:freerdp>"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:freerdp>"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:winpr>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:winpr>"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:winpr>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:winpr>"
-      COMMENT "Embedding FreeRDP iOS runtime libraries"
-    )
-  endif()
+  set(_ios_embed_frameworks "")
+  foreach(_ios_runtime_target freerdp-client freerdp winpr)
+    if(TARGET ${_ios_runtime_target})
+      get_target_property(_ios_runtime_configs ${_ios_runtime_target} IMPORTED_CONFIGURATIONS)
+      list(GET _ios_runtime_configs 0 _ios_runtime_config)
+      get_target_property(_ios_runtime_location ${_ios_runtime_target} "IMPORTED_LOCATION_${_ios_runtime_config}")
+      get_target_property(_ios_runtime_soname ${_ios_runtime_target} "IMPORTED_SONAME_${_ios_runtime_config}")
+      get_filename_component(_ios_runtime_dir "${_ios_runtime_location}" DIRECTORY)
+      get_filename_component(_ios_runtime_soname_name "${_ios_runtime_soname}" NAME)
+      list(APPEND _ios_embed_frameworks "${_ios_runtime_dir}/${_ios_runtime_soname_name}")
+    endif()
+  endforeach()
 
   # Embed + code-sign the dynamic FFmpeg framework with Xcode's native "Embed
-  # Frameworks" build phase (no custom codesign script). The FreeRDP runtime
-  # dylibs copied above are signed by their own Xcode targets (the
-  # XCODE_ATTRIBUTE_DEVELOPMENT_TEAM set on them above).
+  # Frameworks" build phase (no custom codesign script).
   if(AVCODEC_LIBRARIES MATCHES "\\.framework/")
     get_filename_component(_ios_ffmpeg_framework "${AVCODEC_LIBRARIES}" DIRECTORY)
+    list(APPEND _ios_embed_frameworks "${_ios_ffmpeg_framework}")
+  endif()
+
+  if(_ios_embed_frameworks)
     set_target_properties(
-      ${MODULE_NAME} PROPERTIES XCODE_EMBED_FRAMEWORKS "${_ios_ffmpeg_framework}"
+      ${MODULE_NAME} PROPERTIES XCODE_EMBED_FRAMEWORKS "${_ios_embed_frameworks}"
                                 XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON
     )
   endif()
