@@ -3352,8 +3352,10 @@ static UINT rdpdr_server_drive_write_file(RdpdrServerContext* context, void* cal
 	irp->FileId = fileId;
 
 	/* Send a request to open the directory. */
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	return rdpdr_server_send_device_write_request(context, irp->DeviceId, irp->FileId,
 	                                              irp->CompletionId, buffer, length, offset);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 }
 
 /*************************************************
@@ -3414,8 +3416,10 @@ static UINT rdpdr_server_drive_close_file(RdpdrServerContext* context, void* cal
 	irp->FileId = fileId;
 
 	/* Send a request to open the directory. */
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
 	                                              irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 }
 
 /*************************************************
@@ -5426,7 +5430,7 @@ static UINT rdpdr_server_smartcard_get_attrib(RdpdrServerContext* context, void*
 	RdpdrServerPrivate* priv = context->priv;
 
 	RDPDR_IRP* irp = nullptr;
-	UINT ret =
+	const UINT ret =
 	    prepare_smartcard_irp(context, SCARD_IOCTL_GETATTRIB,
 	                          rdpdr_server_smartcard_get_attrib_callback, callbackData, &irp);
 	if (ret != CHANNEL_RC_OK)
@@ -5437,25 +5441,32 @@ static UINT rdpdr_server_smartcard_get_attrib(RdpdrServerContext* context, void*
 	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_GETATTRIB,
 		                             .call.getAttrib = *call };
 
+	UINT error = CHANNEL_RC_NO_MEMORY;
 	wStream* s = Stream_New(nullptr, 64);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
-		return CHANNEL_RC_NO_MEMORY;
+		goto out;
 	}
 
 	LONG status = smartcard_irp_device_control_encode_request(s, &op);
 	if (status != SCARD_S_SUCCESS)
 	{
-		Stream_Release(s);
-		return ERROR_INTERNAL_ERROR;
+		error = ERROR_INTERNAL_ERROR;
+		goto out;
 	}
 
-	const UINT error = rdpdr_server_send_device_control_request(
+	error = rdpdr_server_send_device_control_request(
 	    context, irp->DeviceId, irp->CompletionId, irp->IoControlCode,
 	    SCARD_IOCTL_MAX_OUTPUT_BUFFER_LENGTH, Stream_Buffer(s), Stream_Length(s));
 
-	Stream_Release(s);
+out:
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	if (error != CHANNEL_RC_OK && irp)
+		rdpdr_server_discard_request(context, irp->CompletionId);
+	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
+	if (s)
+		Stream_Release(s);
 	return error;
 }
 
