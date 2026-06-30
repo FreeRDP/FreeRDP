@@ -664,11 +664,12 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		 */
 		if (appWindow->rail_state != WINDOW_SHOW_MINIMIZED)
 		{
-			/* Redraw window area if already in the correct position */
-			if (appWindow->x == (INT64)appWindow->windowOffsetX &&
-			    appWindow->y == (INT64)appWindow->windowOffsetY &&
-			    appWindow->width == (INT64)appWindow->windowWidth &&
-			    appWindow->height == (INT64)appWindow->windowHeight)
+			const BOOL maximized = (appWindow->dwStyle & WS_MAXIMIZE) != 0;
+			/* Leave maximized windows to the WM, which honors the work area. */
+			if (maximized || (appWindow->x == (INT64)appWindow->windowOffsetX &&
+			                  appWindow->y == (INT64)appWindow->windowOffsetY &&
+			                  appWindow->width == (INT64)appWindow->windowWidth &&
+			                  appWindow->height == (INT64)appWindow->windowHeight))
 			{
 				xf_UpdateWindowArea(xfc, appWindow, 0, 0,
 				                    WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
@@ -681,11 +682,15 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 				              WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight));
 			}
 
-			xf_SetWindowVisibilityRects(
-			    xfc, appWindow, WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetX),
-			    WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetY),
-			    appWindow->visibilityRects,
-			    WINPR_ASSERTING_INT_CAST(int, appWindow->numVisibilityRects));
+			/* Show a maximized window fully; its frame-inset visibility rects would clip it. */
+			if (maximized)
+				xf_ClearWindowVisibilityRects(xfc, appWindow);
+			else
+				xf_SetWindowVisibilityRects(
+				    xfc, appWindow, WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetX),
+				    WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetY),
+				    appWindow->visibilityRects,
+				    WINPR_ASSERTING_INT_CAST(int, appWindow->numVisibilityRects));
 		}
 
 		if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
