@@ -214,7 +214,7 @@ BOOL pf_channel_smartcard_client_handle(wLog* log, pClientContext* pc, wStream* 
 			return FALSE;
 	}
 
-	status = smartcard_irp_device_control_decode(s, CompletionId, FileId, &e.op);
+	status = smartcard_irp_device_control_decode_request(s, CompletionId, FileId, &e.op);
 	if (status != 0)
 		goto fail;
 

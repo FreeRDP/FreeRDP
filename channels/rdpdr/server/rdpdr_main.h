@@ -31,17 +31,21 @@
 #include <freerdp/settings.h>
 #include <freerdp/server/rdpdr.h>
 
-typedef struct S_RDPDR_IRP
+typedef struct S_RDPDR_IRP RDPDR_IRP;
+typedef UINT (*RDPDR_IRP_Callback)(RdpdrServerContext* context, wStream* s, struct S_RDPDR_IRP* irp,
+                                   UINT32 deviceId, UINT32 completionId, UINT32 ioStatus);
+
+/** IRP request structure */
+struct S_RDPDR_IRP
 {
-	UINT32 CompletionId;
-	UINT32 DeviceId;
-	UINT32 FileId;
-	char PathName[256];
-	char ExtraBuffer[256];
-	void* CallbackData;
-	UINT(*Callback)
-	(RdpdrServerContext* context, wStream* s, struct S_RDPDR_IRP* irp, UINT32 deviceId,
-	 UINT32 completionId, UINT32 ioStatus);
-} RDPDR_IRP;
+	UINT32 CompletionId;         /**< IRP completion identifier */
+	UINT32 DeviceId;             /**< Target device identifier */
+	UINT32 FileId;               /**< File handle identifier */
+	UINT32 IoControlCode;        /**< I/O control code */
+	char PathName[256];          /**< File path name */
+	char ExtraBuffer[256];       /**< Data buffer */
+	void* CallbackData;          /**< User callback data */
+	RDPDR_IRP_Callback Callback; /**< Completion callback function */
+};
 
 #endif /* FREERDP_CHANNEL_RDPDR_SERVER_MAIN_H */
