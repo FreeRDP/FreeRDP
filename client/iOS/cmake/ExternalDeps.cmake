@@ -1,28 +1,17 @@
 include(GNUInstallDirs)
 
-set(DEPS_EXTERNAL_ROOT "${CMAKE_CURRENT_LIST_DIR}/../Studio/freeRDPCore/src/main/jniLibs")
-
-# All external deps install into this ABI-scoped prefix
-set(DEPS_INSTALL_DIR "${DEPS_EXTERNAL_ROOT}/${CMAKE_IOS_ARCH_ABI}")
+set(DEPS_INSTALL_DIR "${CMAKE_BINARY_DIR}/deps")
+file(MAKE_DIRECTORY ${DEPS_INSTALL_DIR})
 
 option(WITH_OPENSSL "Build and enable OpenSSL" ON)
 option(WITH_FFMPEG "Build and enable FFmpeg codec support" ON)
-option(WITH_OPENH264 "Build and enable OpenH264 codec support" ON)
-option(WITH_CJSON "Build cJSON for Azure AD (AAD) support" ON)
-option(WITH_MEDIACODEC "Enable Android MediaCodec API" OFF)
-option(WITH_OPUS "Build Opus audio codec" ON)
-option(WITH_PNG "Build libpng image support" ON)
-option(WITH_WEBP "Build libwebp image support" ON)
-option(WITH_JPEG "Build libjpeg-turbo image support" ON)
+
+get_filename_component(_toolchain_abs "${CMAKE_TOOLCHAIN_FILE}" ABSOLUTE BASE_DIR "${CMAKE_BINARY_DIR}")
 
 set(IOS_CMAKE_ARGS
-    -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE}
-    -DIOS_ABI:STRING=${CMAKE_IOS_ARCH_ABI}
-    -DIOS_PLATFORM:STRING=android-${NDK_API_LEVEL}
-    -DIOS_STL:STRING=c++_shared
-    -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-    -DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}
-    -DBUILD_SHARED_LIBS:BOOL=ON
+    -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${_toolchain_abs} -DPLATFORM:STRING=${PLATFORM}
+    -DDEPLOYMENT_TARGET:STRING=${DEPLOYMENT_TARGET} -DIOS_TARGET_SDK:STRING=${DEPLOYMENT_TARGET}
+    -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS:BOOL=ON
 )
 
 set(IOS_NATIVE_DEPS "")
@@ -30,46 +19,25 @@ set(IOS_NATIVE_DEPS "")
 if(WITH_OPENSSL)
   include(ExternalOpenSSL)
   list(APPEND IOS_NATIVE_DEPS openssl)
+  set(OPENSSL_INCLUDE_DIR ${DEPS_INSTALL_DIR}/include)
+  set(OPENSSL_SSL_LIBRARY ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libssl.a)
+  set(OPENSSL_CRYPTO_LIBRARY ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libcrypto.a)
+  set(OPENSSL_LIBRARIES ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
+  set(OPENSSL_FOUND ON)
 endif()
 
-if(WITH_CJSON)
-  include(ExternalCJSON)
-  list(APPEND IOS_NATIVE_DEPS cjson)
-endif()
-
-if(WITH_OPENH264)
-  include(ExternalOpenH264)
-  list(APPEND IOS_NATIVE_DEPS openh264)
-endif()
-
-if(WITH_OPUS)
-  include(ExternalOpus)
-  list(APPEND IOS_NATIVE_DEPS opus)
-endif()
-
-if(WITH_PNG)
-  include(ExternalLibPNG)
-  list(APPEND IOS_NATIVE_DEPS libpng)
-endif()
-
-if(WITH_WEBP)
-  include(ExternalWebP)
-  list(APPEND IOS_NATIVE_DEPS webp)
-endif()
-
-if(WITH_JPEG)
-  include(ExternalJpeg)
-  list(APPEND IOS_NATIVE_DEPS jpeg)
-endif()
-
+set(IOS_FFMPEG_ARGS "")
 if(WITH_FFMPEG)
   include(ExternalFFmpeg)
   list(APPEND IOS_NATIVE_DEPS ffmpeg)
+  set(AVCODEC_INCLUDE_DIRS ${DEPS_INSTALL_DIR}/FFmpeg.framework/Headers)
+  set(AVUTIL_INCLUDE_DIRS ${DEPS_INSTALL_DIR}/FFmpeg.framework/Headers)
+  set(AVCODEC_LIBRARIES ${DEPS_INSTALL_DIR}/FFmpeg.framework/FFmpeg)
+  set(AVUTIL_LIBRARIES ${DEPS_INSTALL_DIR}/FFmpeg.framework/FFmpeg)
+  set(IOS_FFMPEG_ARGS
+      -DAVCODEC_INCLUDE_DIRS:PATH=${AVCODEC_INCLUDE_DIRS} -DAVUTIL_INCLUDE_DIRS:PATH=${AVUTIL_INCLUDE_DIRS}
+      -DAVCODEC_LIBRARIES:FILEPATH=${AVCODEC_LIBRARIES} -DAVUTIL_LIBRARIES:FILEPATH=${AVUTIL_LIBRARIES}
+  )
 endif()
 
-include(ExternalUriparser)
-list(APPEND IOS_NATIVE_DEPS uriparser)
-
-# FreeRDP itself — DEPENDS on everything above.
-# Also defines IMPORTED targets: freerdp3-lib, freerdp-client3-lib, winpr3-lib
 include(ExternalFreeRDP)

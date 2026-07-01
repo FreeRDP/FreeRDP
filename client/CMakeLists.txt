@@ -50,7 +50,7 @@ if(FREERDP_VENDOR AND WITH_CLIENT)
 
   if(APPLE)
     if(IOS)
-        message(STATUS "iOS client module is built directly from subproject")
+      message(STATUS "iOS client module is built directly from subproject")
     else()
       option(WITH_CLIENT_MAC "Build native mac client" OFF)
       if(WITH_CLIENT_MAC)

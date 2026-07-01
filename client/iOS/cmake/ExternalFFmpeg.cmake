@@ -1,80 +1,71 @@
 include(ExternalProject)
 include(DepVersions)
 
-# Map Android ABI to FFmpeg cross-compile names
-set(FFMPEG_EXTRA_ARGS "")
-if(ANDROID_ABI STREQUAL "arm64-v8a")
-  set(FFMPEG_ARCH "aarch64")
-  list(APPEND FFMPEG_EXTRA_ARGS "--cpu=armv8-a;--enable-neon;--enable-asm;--enable-inline-asm")
-  set(FFMPEG_LDFLAGS "-march=armv8-a")
-  set(FFMPEG_BIGENDIAN "no")
-  set(FFMPEG_CLANG_TARGET "aarch64-linux-android${NDK_API_LEVEL}")
-elseif(ANDROID_ABI STREQUAL "armeabi-v7a")
-  set(FFMPEG_ARCH "arm")
-  list(APPEND FFMPEG_EXTRA_ARGS "--cpu=armv7-a;--enable-neon;--enable-asm;--enable-inline-asm")
-  set(FFMPEG_LDFLAGS "-march=armv7-a -mfpu=neon -mfloat-abi=softfp -Wl,--fix-cortex-a8")
-  set(FFMPEG_BIGENDIAN "")
-  set(FFMPEG_CLANG_TARGET "armv7a-linux-androideabi${NDK_API_LEVEL}")
-elseif(ANDROID_ABI STREQUAL "x86_64")
-  set(FFMPEG_ARCH "x86_64")
-  list(APPEND FFMPEG_EXTRA_ARGS "--cpu=x86-64;--disable-neon;--enable-asm;--enable-inline-asm") # x86_64
-  set(FFMPEG_LDFLAGS "-march=x86-64")
-  set(FFMPEG_BIGENDIAN "")
-  set(FFMPEG_CLANG_TARGET "x86_64-linux-android${NDK_API_LEVEL}")
-elseif(ANDROID_ABI STREQUAL "x86")
-  set(FFMPEG_ARCH "x86")
-  list(APPEND FFMPEG_EXTRA_ARGS "--cpu=i686;--disable-neon;--disable-asm;--disable-inline-asm") # FFmpeg issue #4928
-  set(FFMPEG_LDFLAGS "-march=i686")
-  set(FFMPEG_BIGENDIAN "")
-  set(FFMPEG_CLANG_TARGET "i686-linux-android${NDK_API_LEVEL}")
-elseif(ANDROID_ABI STREQUAL "riscv64")
-  set(FFMPEG_ARCH "riscv64")
-  list(APPEND FFMPEG_EXTRA_ARGS "--disable-neon;--disable-asm;--disable-inline-asm") # FFmpeg issue #4928
-  set(FFMPEG_BIGENDIAN "")
-  set(FFMPEG_CLANG_TARGET "riscv64-linux-android${NDK_API_LEVEL}")
+set(_ff_arch "arm64")
+
+if(PLATFORM MATCHES "SIMULATOR")
+  set(_ff_sdk "iphonesimulator")
+  set(_ff_min "-mios-simulator-version-min=${DEPLOYMENT_TARGET}")
+  set(_ff_triple "-target ${_ff_arch}-apple-ios${DEPLOYMENT_TARGET}-simulator")
+  set(_ff_platform "iPhoneSimulator")
 else()
-  message(FATAL_ERROR "ExternalFFmpeg: unsupported ABI '${ANDROID_ABI}'")
+  set(_ff_sdk "iphoneos")
+  set(_ff_min "-miphoneos-version-min=${DEPLOYMENT_TARGET}")
+  set(_ff_triple "")
+  set(_ff_platform "iPhoneOS")
 endif()
 
-set(NDK_TOOLCHAIN_BIN "${NDK_ROOT}/toolchains/llvm/prebuilt/${NDK_HOST_PLATFORM}/bin")
-set(NDK_SYSROOT "${NDK_ROOT}/toolchains/llvm/prebuilt/${NDK_HOST_PLATFORM}/sysroot")
+execute_process(
+  COMMAND xcrun --sdk ${_ff_sdk} --show-sdk-path OUTPUT_VARIABLE _ff_sysroot OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
-set(FFMPEG_CC "${NDK_TOOLCHAIN_BIN}/${FFMPEG_CLANG_TARGET}-clang")
-set(FFMPEG_CXX "${NDK_TOOLCHAIN_BIN}/${FFMPEG_CLANG_TARGET}-clang++")
+set(_ff_flags "-arch ${_ff_arch} ${_ff_min} -isysroot ${_ff_sysroot} ${_ff_triple}")
 
-find_package(PkgConfig REQUIRED)
+set(_ff_fw ${DEPS_INSTALL_DIR}/FFmpeg.framework)
 
-# Conditionally add ac_cv_c_bigendian env var (arm64 only)
-if(FFMPEG_BIGENDIAN STREQUAL "no")
-  set(FFMPEG_BIGENDIAN_ENV "ac_cv_c_bigendian=no")
-else()
-  set(FFMPEG_BIGENDIAN_ENV "")
-endif()
-
-if("openh264" IN_LIST ANDROID_NATIVE_DEPS)
-  list(APPEND FFMPEG_EXTRA_ARGS --enable-libopenh264)
-endif()
-if("opus" IN_LIST ANDROID_NATIVE_DEPS)
-  list(APPEND FFMPEG_EXTRA_ARGS --enable-libopus)
-endif()
+file(
+  WRITE ${CMAKE_BINARY_DIR}/FFmpeg-Info.plist
+  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
+<plist version=\"1.0\"><dict>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>CFBundleExecutable</key><string>FFmpeg</string>
+  <key>CFBundleIdentifier</key><string>org.ffmpeg.FFmpeg</string>
+  <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+  <key>CFBundleName</key><string>FFmpeg</string>
+  <key>CFBundlePackageType</key><string>FMWK</string>
+  <key>CFBundleShortVersionString</key><string>${FFMPEG_VERSION}</string>
+  <key>CFBundleVersion</key><string>${FFMPEG_VERSION}</string>
+  <key>MinimumOSVersion</key><string>${DEPLOYMENT_TARGET}</string>
+  <key>CFBundleSupportedPlatforms</key><array><string>${_ff_platform}</string></array>
+</dict></plist>
+"
+)
 
 ExternalProject_Add(
   ffmpeg
-  INSTALL_DIR ${DEPS_INSTALL_DIR}
+  PREFIX ${CMAKE_BINARY_DIR}/ffmpeg
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
-  SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/ffmpeg
+  SOURCE_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
   URL https://github.com/FFmpeg/FFmpeg/archive/refs/tags/${FFMPEG_VERSION}.tar.gz
   URL_HASH ${FFMPEG_HASH}
-  DEPENDS ${ANDROID_NATIVE_DEPS}
   CONFIGURE_COMMAND
-    ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}"
-    "PKG_CONFIG_PATH=${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/pkgconfig" ${FFMPEG_BIGENDIAN_ENV}
-    <SOURCE_DIR>/configure --cross-prefix=${NDK_TOOLCHAIN_BIN}/llvm- --cc=${FFMPEG_CC} --cxx=${FFMPEG_CXX}
-    --pkg-config=${PKG_CONFIG_EXECUTABLE} --sysroot=${NDK_SYSROOT} --arch=${FFMPEG_ARCH} ${FFMPEG_CPU}
-    --extra-ldflags="${FFMPEG_LDFLAGS}" ${FFMPEG_EXTRA_ARGS} --target-os=android --enable-cross-compile --enable-pic
-    --enable-lto --enable-jni --enable-mediacodec --enable-shared --disable-static --disable-programs --disable-doc
-    --prefix=${DEPS_INSTALL_DIR} --libdir=${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}
-  BUILD_COMMAND ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}" make -j
-  INSTALL_COMMAND ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}" make -j install
+    <SOURCE_DIR>/configure --prefix=${DEPS_INSTALL_DIR} --enable-cross-compile --target-os=darwin --arch=${_ff_arch}
+    --cc=clang --sysroot=${_ff_sysroot} "--extra-cflags=${_ff_flags}" "--extra-ldflags=${_ff_flags}" --disable-gpl
+    --enable-static --disable-shared --enable-pic --disable-x86asm --disable-programs --disable-doc --disable-debug
+    --disable-network --disable-autodetect --disable-everything --disable-avdevice --disable-avformat --disable-avfilter
+    --disable-swscale --disable-swresample --enable-avcodec --enable-avutil --enable-decoder=h264 --enable-parser=h264
+    --enable-decoder=hevc --enable-parser=hevc --enable-videotoolbox --enable-hwaccel=h264_videotoolbox
+    --enable-hwaccel=hevc_videotoolbox
+  BUILD_COMMAND make -j
+  INSTALL_COMMAND make -j install
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${_ff_fw}/Headers
+  COMMAND
+    sh -c
+    "clang -dynamiclib -arch ${_ff_arch} -isysroot ${_ff_sysroot} ${_ff_min} ${_ff_triple} -install_name @rpath/FFmpeg.framework/FFmpeg -Wl,-force_load,${DEPS_INSTALL_DIR}/lib/libavcodec.a -Wl,-force_load,${DEPS_INSTALL_DIR}/lib/libavutil.a -framework VideoToolbox -framework CoreMedia -framework CoreVideo -framework CoreFoundation -o ${_ff_fw}/FFmpeg"
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_INSTALL_DIR}/include/libavcodec ${_ff_fw}/Headers/libavcodec
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_INSTALL_DIR}/include/libavutil ${_ff_fw}/Headers/libavutil
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/FFmpeg-Info.plist ${_ff_fw}/Info.plist
+  BUILD_BYPRODUCTS ${_ff_fw}/FFmpeg
 )
