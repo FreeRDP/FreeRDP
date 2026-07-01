@@ -29,6 +29,45 @@ extern "C"
 {
 #endif
 
+	/** @brief Identifies which subsystem generated a native error.
+	 *  @since version 3.x.0
+	 */
+	typedef enum
+	{
+		FREERDP_ERROR_SUBSYSTEM_NONE = 0,
+		FREERDP_ERROR_SUBSYSTEM_NLA,
+		FREERDP_ERROR_SUBSYSTEM_KERBEROS,
+		FREERDP_ERROR_SUBSYSTEM_NTLM,
+		FREERDP_ERROR_SUBSYSTEM_NEGOTIATE,
+		FREERDP_ERROR_SUBSYSTEM_TLS,
+		FREERDP_ERROR_SUBSYSTEM_GATEWAY_RPC,
+		FREERDP_ERROR_SUBSYSTEM_GATEWAY_HTTP,
+		FREERDP_ERROR_SUBSYSTEM_RDSTLS,
+		FREERDP_ERROR_SUBSYSTEM_AAD,
+		FREERDP_ERROR_SUBSYSTEM_SMARTCARD,
+		FREERDP_ERROR_SUBSYSTEM_MCS,
+		FREERDP_ERROR_SUBSYSTEM_LICENSE,
+		FREERDP_ERROR_SUBSYSTEM_TRANSPORT
+	} FREERDP_ERROR_SUBSYSTEM;
+
+	/** @brief Holds native error detail from a specific subsystem.
+	 *
+	 *  Populated via freerdp_set_error_detail() alongside the existing
+	 *  freerdp_set_last_error() call.  Clients retrieve it after a connection
+	 *  failure with freerdp_get_error_detail().
+	 *
+	 *  @since version 3.x.0
+	 */
+	typedef struct
+	{
+		FREERDP_ERROR_SUBSYSTEM subsystem; /**< which subsystem generated this error */
+		INT64 nativeError;                 /**< raw error code (SECURITY_STATUS, HRESULT,
+		                                        SSL error, SCARD_*, etc.) */
+		char nativeErrorName[128];         /**< machine-readable name, e.g.
+		                                        "SEC_E_KDC_INVALID_REQUEST" */
+		char detail[256];                  /**< human-readable detail message */
+	} rdpErrorDetail;
+
 /* Error categories */
 #define CAT_NONE "success"
 #define CAT_USE "use"

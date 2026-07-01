@@ -633,6 +633,9 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 				break;
 		}
 
+		freerdp_set_error_detail(rdstls->context, FREERDP_ERROR_SUBSYSTEM_RDSTLS,
+		                         (INT64)resultCode, rdstls_result_code_str(resultCode),
+		                         "RDSTLS authentication response failure");
 		freerdp_set_last_error_if_not(rdstls->context, error);
 		return FALSE;
 	}

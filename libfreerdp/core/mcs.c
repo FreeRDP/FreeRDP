@@ -1461,6 +1461,8 @@ BOOL mcs_client_begin(rdpMcs* mcs)
 	/* First transition state, we need this to trigger session recording */
 	if (!mcs_send_connect_initial(mcs))
 	{
+		freerdp_set_error_detail(mcs->context, FREERDP_ERROR_SUBSYSTEM_MCS, 0, NULL,
+		                         "MCS Connect Initial failed");
 		freerdp_set_last_error_if_not(mcs->context, FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR);
 
 		WLog_Print(mcs->log, WLOG_ERROR, "Error: unable to send MCS Connect Initial");
