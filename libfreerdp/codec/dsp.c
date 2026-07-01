@@ -681,7 +681,7 @@ static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 	/* Max packet duration is 120ms (5760 at 48KHz) */
 	const size_t max_size = OPUS_MAX_FRAMES * context->common.format.nChannels * sizeof(int16_t);
-	if (!Stream_EnsureRemainingCapacity(context->common.buffer, max_size))
+	if (!Stream_EnsureRemainingCapacity(out, max_size))
 		return FALSE;
 
 	const opus_int32 frames =
