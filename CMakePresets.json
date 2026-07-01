@@ -1,0 +1,272 @@
+{
+	"version": 3,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 22,
+		"patch": 0
+	},
+	"configurePresets": [
+		{
+			"name": "base",
+			"hidden": true,
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"cacheVariables": {
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+				"CMAKE_C_STANDARD": "23",
+				"ENABLE_WARNING_VERBOSE": "ON",
+				"WITHOUT_WINPR_3x_DEPRECATED": "ON",
+				"WITHOUT_FREERDP_3x_DEPRECATED": "ON",
+				"WINPR_USE_LEGACY_RESOURCE_DIR": "OFF",
+				"WINPR_USE_VENDOR_PRODUCT_CONFIG_DIR": "ON",
+				"FREERDP_USE_VENDOR_PRODUCT_CONFIG_DIR": "ON",
+				"WITH_FULL_CONFIG_PATH": "ON",
+				"WITH_RESOURCE_VERSIONING": "ON",
+				"WITH_BINARY_VERSIONING": "ON",
+				"WITH_SMARTCARD_EMULATE": "ON",
+				"CHANNEL_RDP2TCP": "ON",
+				"CHANNEL_RDPECAM_CLIENT": "ON",
+				"CHANNEL_SSHAGENT": "ON",
+				"CHANNEL_PRINTER": "ON",
+				"CHANNEL_PRINTER_CLIENT": "ON",
+				"WITH_CLIENT_COMMON": "ON",
+				"WITH_INTERNAL_MD4": "ON",
+				"WITH_INTERNAL_MD5": "ON",
+				"WITH_INTERNAL_RC4": "ON",
+				"WITH_VERBOSE_WINPR_ASSERT": "OFF",
+				"WITH_UWAC": "OFF",
+				"WITH_RDTK": "OFF",
+				"WITH_WAYLAND": "OFF"
+			}
+		},
+		{
+			"name": "minimal",
+			"hidden": true,
+			"inherits": "base",
+			"cacheVariables": {
+				"CHANNEL_RDPEWA": "OFF",
+				"CHANNEL_RDPEAR": "OFF",
+				"CHANNEL_URBDRC": "OFF",
+				"WITH_JSON_DISABLED": "ON",
+				"WITH_FFMPEG": "OFF",
+				"WITH_SWSCALE": "OFF",
+				"WITH_DSP_FFMPEG": "OFF",
+				"WITH_VIDEO_ENCODER": "OFF",
+				"WITH_CAIRO": "OFF",
+				"WITH_FAAC": "OFF",
+				"WITH_FAAD2": "OFF",
+				"WITH_FDK_AAC": "OFF",
+				"WITH_FUSE": "OFF",
+				"WITH_GSM": "OFF",
+				"WITH_OPUS": "OFF",
+				"WITH_JPEG": "OFF",
+				"WINPR_UTILS_IMAGE_JPEG": "OFF",
+				"WINPR_UTILS_IMAGE_PNG": "OFF",
+				"WINPR_UTILS_IMAGE_WEBP": "OFF",
+				"WITH_KRB5": "OFF",
+				"WITH_LAME": "OFF",
+				"WITH_OPENH264": "OFF",
+				"WITH_WEBP": "OFF",
+				"WITH_PKCS11": "OFF",
+				"WITH_AOM": "OFF",
+				"WITH_CUPS": "OFF",
+				"WITH_PCSC": "OFF",
+				"WITH_OSS": "OFF",
+				"WITH_ALSA": "OFF",
+				"WITH_PULSE": "OFF",
+				"WITH_SOXR": "OFF",
+				"WITH_SYSTEMD": "OFF",
+				"WITH_URIPARSER": "OFF",
+				"WITH_UNICODE_BUILTIN": "ON",
+				"WITH_SSO_MIB": "OFF"
+			}
+		},
+		{
+			"name": "full",
+			"hidden": true,
+			"inherits": "base",
+			"cacheVariables": {
+				"CHANNEL_RDPEWA": "ON",
+				"CHANNEL_RDPEAR": "ON",
+				"CHANNEL_URBDRC": "ON",
+				"WITH_FFMPEG": "ON",
+				"WITH_SWSCALE": "ON",
+				"WITH_DSP_FFMPEG": "ON",
+				"WITH_VIDEO_ENCODER": "ON",
+				"WITH_CAIRO": "ON",
+				"WITH_FAAC": "ON",
+				"WITH_FAAD2": "ON",
+				"WITH_FDK_AAC": "ON",
+				"WITH_FUSE": "ON",
+				"WITH_GSM": "ON",
+				"WITH_OPUS": "ON",
+				"WITH_JPEG": "ON",
+				"WINPR_UTILS_IMAGE_JPEG": "ON",
+				"WINPR_UTILS_IMAGE_PNG": "ON",
+				"WINPR_UTILS_IMAGE_WEBP": "ON",
+				"WITH_KRB5": "ON",
+				"WITH_LAME": "ON",
+				"WITH_OPENH264": "ON",
+				"WITH_WEBP": "ON",
+				"WITH_PKCS11": "ON",
+				"WITH_AOM": "ON",
+				"WITH_CUPS": "ON",
+				"WITH_PCSC": "ON",
+				"WITH_OSS": "ON",
+				"WITH_ALSA": "ON",
+				"WITH_PULSE": "ON",
+				"WITH_SOXR": "ON",
+				"WITH_SYSTEMD": "ON",
+				"WITH_URIPARSER": "ON",
+				"WITH_UNICODE_BUILTIN": "OFF",
+				"WITH_SSO_MIB": "ON"
+			}
+		},
+		{
+			"name": "minimal-library",
+			"displayName":
+			    "FreeRDP library, based on minimal preset. Minimal set of external dependencies",
+			"description": "",
+			"inherits": "minimal",
+			"cacheVariables": {
+				"WITH_PROXY_APP": "OFF",
+				"WITH_X11": "OFF",
+				"WITH_SAMPLE": "OFF",
+				"WITH_WINPR_TOOLS_CLI": "OFF",
+				"WITH_PLATFORM_SERVER": "OFF",
+				"WITH_SHADOW_SUBSYSTEM": "OFF",
+				"WITH_SERVER_SHADOW_CLI": "OFF",
+				"WITH_CLIENT": "OFF"
+			}
+		},
+		{
+			"name": "minimal-server",
+			"displayName":
+			    "FreeRDP library and server binaries, based on minimal preset. Minimal set of external dependencies",
+			"description": "",
+			"inherits": "minimal",
+			"cacheVariables": {
+				"WITH_PROXY_APP": "ON",
+				"WITH_X11": "ON",
+				"WITH_PLATFORM_SERVER": "ON",
+				"WITH_SHADOW_SUBSYSTEM": "ON",
+				"WITH_SERVER_SHADOW_CLI": "ON"
+			}
+		},
+		{
+			"name": "minimal-client",
+			"displayName":
+			    "FreeRDP library and client binaries, based on minimal preset. Minimal set of external dependencies",
+			"description": "",
+			"inherits": "minimal",
+			"cacheVariables": {
+				"WITH_CLIENT": "ON",
+				"WITH_X11": "ON"
+			}
+		},
+		{
+			"name": "minimal-binaries",
+			"displayName":
+			    "FreeRDP library and binaries, based on minimal preset. Minimal set of external dependencies",
+			"description": "",
+			"inherits": [
+				"minimal-server",
+				"minimal-client"
+			],
+			"cacheVariables": {
+				"WITH_SAMPLE": "ON",
+				"WITH_WINPR_TOOLS_CLI": "ON"
+			}
+		},
+		{
+			"name": "full-library",
+			"displayName":
+			    "FreeRDP library, based on full preset. Full set of external dependencies",
+			"description": "",
+			"inherits": "full",
+			"cacheVariables": {
+				"WITH_PROXY_APP": "OFF",
+				"WITH_X11": "OFF",
+				"WITH_SAMPLE": "OFF",
+				"WITH_WINPR_TOOLS_CLI": "OFF",
+				"WITH_PLATFORM_SERVER": "OFF",
+				"WITH_SHADOW_SUBSYSTEM": "OFF",
+				"WITH_SERVER_SHADOW_CLI": "OFF",
+				"WITH_CLIENT": "OFF"
+			}
+		},
+		{
+			"name": "full-server",
+			"displayName":
+			    "FreeRDP library and server binaries, based on full preset. Full set of external dependencies",
+			"description": "",
+			"inherits": "full",
+			"cacheVariables": {
+				"WITH_PROXY_APP": "ON",
+				"WITH_X11": "ON",
+				"WITH_PLATFORM_SERVER": "ON",
+				"WITH_SHADOW_SUBSYSTEM": "ON",
+				"WITH_SERVER_SHADOW_CLI": "ON"
+			}
+		},
+		{
+			"name": "full-client",
+			"displayName":
+			    "FreeRDP library and client binaries, based on full preset. Full set of external dependencies",
+			"description": "",
+			"inherits": "full",
+			"cacheVariables": {
+				"WITH_CLIENT": "ON",
+				"WITH_X11": "ON"
+			}
+		},
+		{
+			"name": "full-binaries",
+			"displayName":
+			    "FreeRDP library and binaries, based on full preset. Full set of external dependencies",
+			"description": "",
+			"inherits": [
+				"full-server",
+				"full-client"
+			],
+			"cacheVariables": {
+				"WITH_SAMPLE": "ON",
+				"WITH_WINPR_TOOLS_CLI": "ON"
+			}
+		}
+
+	],
+	"buildPresets": [
+		{
+			"name": "minimal-library",
+			"configurePreset": "minimal-library"
+		},
+		{
+			"name": "minimal-server",
+			"configurePreset": "minimal-server"
+		},
+		{
+			"name": "minimal-client",
+			"configurePreset": "minimal-client"
+		},
+		{
+			"name": "minimal-binaries",
+			"configurePreset": "minimal-binaries"
+		},
+		{
+			"name": "full-library",
+			"configurePreset": "full-library"
+		},
+		{
+			"name": "full-server",
+			"configurePreset": "full-server"
+		},
+		{
+			"name": "full-client",
+			"configurePreset": "full-client"
+		},
+		{
+			"name": "full-binaries",
+			"configurePreset": "full-binaries"
+		}
+	]
+}
