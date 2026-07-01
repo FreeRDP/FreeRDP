@@ -550,8 +550,11 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 	const size_t utdiff = WINPR_ASSERTING_INT_CAST(size_t, tdiff);
 	WINPR_ASSERT(utdiff <= ilen);
 	const size_t tlen = ilen - utdiff;
+	const size_t texpect = strnlen(bkey, sizeof(bkey));
+	if (tlen <= texpect)
+		return nullptr;
 
-	char* data = tag + strnlen(bkey, sizeof(bkey));
+	char* data = tag + texpect;
 
 	/* Ensure there is a valid delimiter following our token */
 	switch (data[0])
