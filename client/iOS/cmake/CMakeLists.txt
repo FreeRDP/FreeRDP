@@ -61,33 +61,7 @@ if(WITH_FFMPEG)
 endif()
 
 # FreeRDP itself - DEPENDS on everything above.
-# Builds and installs the FreeRDP libraries (install name @rpath) so the app
-# below can consume them with find_package().
-set(FREERDP_CMAKE_ARGS
-    ${_ios_common_cmake_args}
-    -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
-    -DCMAKE_INSTALL_NAME_DIR:STRING=@rpath
-    -DWITH_CLIENT:BOOL=ON
-    -DWITH_CLIENT_IOS:BOOL=OFF
-    -DWITH_CLIENT_SDL:BOOL=OFF
-    -DWITH_SERVER:BOOL=OFF
-    -DWITH_SAMPLE:BOOL=OFF
-    -DWITH_MANPAGES:BOOL=OFF
-    -DFREERDP_IOS_EXTERNAL_SSL_PATH:PATH=${DEPS_INSTALL_DIR}
-    -DWITH_INTERNAL_MD4:BOOL=ON
-    -DWITH_INTERNAL_RC4:BOOL=ON
-    -DWITH_VIDEOTOOLBOX:BOOL=ON
-    -DWITH_FFMPEG:BOOL=${WITH_FFMPEG}
-    -DWITH_VIDEO_FFMPEG:BOOL=${WITH_FFMPEG}
-    -DWITH_DSP_FFMPEG:BOOL=OFF
-    -DWITH_SWSCALE:BOOL=OFF
-    ${_ios_ffmpeg_args}
-)
-
-ExternalProject_Add(
-  freerdp PREFIX ${CMAKE_BINARY_DIR}/freerdp SOURCE_DIR ${FREERDP_SOURCE_DIR} CMAKE_ARGS ${FREERDP_CMAKE_ARGS}
-  DEPENDS ${IFREERDP_DEPS}
-)
+include(ExternalFreeRDP)
 
 # iFreeRDP application - DEPENDS on the FreeRDP libraries built above and
 # links against them with find_package() at the app's configure time.
