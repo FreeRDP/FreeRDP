@@ -76,9 +76,6 @@ PLATFORM (used by the toolchain file, default "OS64")
 DEPLOYMENT_TARGET / IOS_TARGET_SDK
 * minimum iOS version to build for (15.0 in the examples above)
 
-FREERDP_IOS_EXTERNAL_SSL_PATH (used by FindOpenSSL)
-* absolute root path to the pre-built static OpenSSL libraries
-
 WITH_FFMPEG / WITH_VIDEO_FFMPEG / WITH_VIDEOTOOLBOX
 * enable the FFmpeg H.264/AVC GFX
 

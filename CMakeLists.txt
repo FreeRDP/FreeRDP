@@ -239,17 +239,6 @@ add_compile_definitions(FREERDP_EXPORTS)
 
 # Mac OS X
 if(APPLE)
-  if(IOS)
-    if(NOT FREERDP_IOS_EXTERNAL_SSL_PATH)
-      message(
-        STATUS
-          "FREERDP_IOS_EXTERNAL_SSL_PATH not set! Required if openssl is not found in the iOS SDK (which usually isn't"
-      )
-    endif()
-    set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_IOS_EXTERNAL_SSL_PATH})
-    set_property(GLOBAL PROPERTY XCODE_ATTRIBUTE_SKIP_INSTALL YES)
-  endif(IOS)
-
   # Temporarily disabled, causes the cmake script to be reexecuted, causing the compilation to fail.
   # Workaround: specify the parameter in the command-line
   #	if(WITH_CLANG)

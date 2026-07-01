@@ -37,18 +37,34 @@ include(CommonConfigOptions)
 include(ProjectCStandard)
 include(ProjectCXXStandard)
 
-set(CMAKE_C_STANDARD 23 CACHE STRING "project default" FORCE)
-set(CMAKE_C_STANDARD_REQUIRED ON CACHE BOOL "project default" FORCE)
-set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0" CACHE STRING "project default")
+# Cross compilation settings:
+#
+# * Set CMAKE_SYSROOT as main search base
+# * Disable looking for includes/libraries/packages in host system directories
+set(CMAKE_SYSROOT ${CMAKE_OSX_SYSROOT})
+#set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+#set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+#set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+set(CMAKE_IGNORE_PREFIX_PATH "/opt/local;/usr/local;/opt/homebrew;/Library;~/Library")
+
+include(GNUInstallDirs)
+set(CMAKE_INSTALL_LIBDIR Frameworks)
+set(CMAKE_INSTALL_BINDIR MacOS)
+
+set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "project default")
+
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++" CACHE STRING "project default")
-set(CMAKE_XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC NO CACHE BOOL "project default")
 set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES "NO" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_SKIP_INSTALL NO CACHE BOOL "project default")
-set(CMAKE_XCODE_ATTRIBUTE_INSTALL_PATH "/Applications" CACHE STRING "project default")
+set(CMAKE_INSTALL_PATH "/Applications" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES CACHE BOOL "project default")
 set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.freerdp.ifreerdp" CACHE STRING "project default")
+
+message("sysroot:    ${CMAKE_SYSROOT}")
+message("target:     ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+message("C standard: ${CMAKE_C_STANDARD}")
 
 set(IOS_CLIENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(IOS_CLIENT_ADDITIONS_DIR ${IOS_CLIENT_DIR}/Additions)
@@ -69,8 +85,6 @@ include_directories(SYSTEM ${IOS_CLIENT_VIEWS_DIR})
 
 # Dependencies
 include(ExternalDeps)
-
-include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 # Add sources
 set(SRCS
@@ -270,6 +284,7 @@ find_library(METAL_FRAMEWORK Metal REQUIRED)
 find_library(QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
 find_library(WEBKIT_FRAMEWORK WebKit REQUIRED)
 find_library(GAMECONTROLLER_FRAMEWORK GameController REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 set(EXTRA_LIBS
     ${FOUNDATION_FRAMEWORK}
@@ -281,6 +296,8 @@ set(EXTRA_LIBS
     ${SYSTEMCONFIGURATION_FRAMEWORK}
     ${WEBKIT_FRAMEWORK}
     ${GAMECONTROLLER_FRAMEWORK}
+    OpenSSL::Crypto
+    OpenSSL::SSL
 )
 
 set(RESOURCES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_RESOURCES_DIR}/about_page
@@ -316,10 +333,6 @@ set_target_properties(
 target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
 
 target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS} freerdp3-lib freerdp-client3-lib winpr3-lib)
-
-if(OPENSSL_FOUND)
-  target_link_libraries(${PROJECT_NAME} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
-endif()
 
 set(_ios_embed_frameworks "")
 if(TARGET freerdp3-lib)
