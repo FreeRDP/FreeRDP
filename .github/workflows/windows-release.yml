@@ -1,0 +1,132 @@
+name: windows-release
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        include:
+          - arch: x64
+            platform: x64
+            triplet: x64-windows-static
+            msvc_arch: x64
+          - arch: x86
+            platform: Win32
+            triplet: x86-windows-static
+            msvc_arch: amd64_x86
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.msvc_arch }}
+
+      - name: Set up vcpkg
+        id: vcpkg
+        uses: johnwason/vcpkg-action@v7
+        with:
+          pkgs: >-
+            cjson
+            openssl
+            opus
+            sdl3
+            sdl3-image
+            sdl3-ttf
+            uriparser
+            zlib
+          triplet: ${{ matrix.triplet }}
+          cache-key: windows-release-${{ matrix.arch }}
+          token: ${{ github.token }}
+
+      - name: Configure CMake
+        run: |
+          $root = (Get-Location).Path
+          $buildDir = Join-Path $root 'build'
+          $installDir = Join-Path $buildDir 'install'
+          $toolchain = Join-Path $root 'vcpkg\scripts\buildsystems\vcpkg.cmake'
+
+          cmake --fresh -S $root -B $buildDir `
+            -G "Visual Studio 17 2022" `
+            -A "${{ matrix.platform }}" `
+            -C (Join-Path $root 'packaging\windows\preload.cmake') `
+            "-DCMAKE_TOOLCHAIN_FILE=$toolchain" `
+            "-DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}" `
+            -DVCPKG_MANIFEST_MODE=OFF `
+            "-DCMAKE_INSTALL_PREFIX=$installDir" `
+            -DWITH_SAMPLE=ON `
+            -DWITH_CLIENT_SDL3=ON `
+            -DWITH_WINPR_TOOLS=ON `
+            -DWITH_WINPR_TOOLS_CLI=ON `
+            -DWITH_JSON_DISABLED=OFF `
+            -DWITH_CJSON_REQUIRED=ON `
+            -DWITH_JSONC_REQUIRED=OFF `
+            -DWITH_JANSSON_REQUIRED=OFF `
+            -DWITH_AAD=ON `
+            -DWITH_WEBVIEW=ON `
+            -DWITH_OPUS=ON `
+            -DWITH_URIPARSER=ON `
+            -DWITH_KEYBOARD_LAYOUT_FROM_FILE=OFF `
+            -DWITH_TIMEZONE_FROM_FILE=OFF
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Install
+        run: cmake --install build --config Release
+
+      - name: Package binaries
+        id: package
+        run: |
+          $root = (Get-Location).Path
+          $distRoot = Join-Path $root 'dist'
+          $stageDir = Join-Path $distRoot "freerdp-windows-${{ matrix.arch }}"
+          $archiveName = "freerdp-windows-${{ matrix.arch }}.zip"
+          $archivePath = Join-Path $distRoot $archiveName
+          $binDir = Join-Path $root 'build\install\bin'
+
+          New-Item -ItemType Directory -Force $distRoot | Out-Null
+          New-Item -ItemType Directory -Force $stageDir | Out-Null
+
+          Copy-Item -Force (Join-Path $binDir '*.exe') $stageDir
+          Compress-Archive -Path (Join-Path $stageDir '*') -DestinationPath $archivePath
+
+          "archive_name=$archiveName" >> $env:GITHUB_OUTPUT
+          "archive_path=dist/$archiveName" >> $env:GITHUB_OUTPUT
+          "archive_sha_path=dist/$archiveName.sha256" >> $env:GITHUB_OUTPUT
+
+      - name: Generate SHA256 file
+        shell: bash
+        run: |
+          cd dist
+          sha256sum "${{ steps.package.outputs.archive_name }}" > "${{ steps.package.outputs.archive_name }}.sha256"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: freerdp-windows-${{ matrix.arch }}
+          path: |
+            ${{ steps.package.outputs.archive_path }}
+            ${{ steps.package.outputs.archive_sha_path }}
+          if-no-files-found: error
+
+      - name: Upload release asset
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            ${{ steps.package.outputs.archive_path }}
+            ${{ steps.package.outputs.archive_sha_path }}
+          fail_on_unmatched_files: true
+          overwrite_files: true
