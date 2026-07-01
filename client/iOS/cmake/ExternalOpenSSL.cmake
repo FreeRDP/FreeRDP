@@ -32,6 +32,7 @@ ExternalProject_Add(
   openssl
   PREFIX ${CMAKE_BINARY_DIR}/openssl
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  # Keep sources in the build tree; ExternalProject must not write into client/iOS.
   SOURCE_DIR ${CMAKE_BINARY_DIR}/external/openssl
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/openssl-build
   URL https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz

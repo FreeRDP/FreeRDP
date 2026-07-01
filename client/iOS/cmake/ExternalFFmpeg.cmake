@@ -46,6 +46,7 @@ ExternalProject_Add(
   ffmpeg
   PREFIX ${CMAKE_BINARY_DIR}/ffmpeg
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  # Keep sources in the build tree; ExternalProject must not write into client/iOS.
   SOURCE_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
   URL https://github.com/FFmpeg/FFmpeg/archive/refs/tags/${FFMPEG_VERSION}.tar.gz
