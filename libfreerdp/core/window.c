@@ -33,33 +33,36 @@
 
 static void update_free_window_icon_info(ICON_INFO* iconInfo);
 
+static void free_unicode_string(RAIL_UNICODE_STRING* unicode_string)
+{
+	WINPR_ASSERT(unicode_string);
+	free(unicode_string->string);
+	unicode_string->string = nullptr;
+	unicode_string->length = 0;
+}
+
 BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
-	UINT16 new_len = 0;
-	BYTE* new_str = nullptr;
+	WINPR_ASSERT(unicode_string);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
 
-	Stream_Read_UINT16(s, new_len); /* cbString (2 bytes) */
+	const UINT16 new_len = Stream_Get_UINT16(s); /* cbString (2 bytes) */
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, new_len))
 		return FALSE;
 
-	if (!new_len)
+	if (new_len == 0)
 	{
-		free(unicode_string->string);
-		unicode_string->string = nullptr;
-		unicode_string->length = 0;
+		free_unicode_string(unicode_string);
 		return TRUE;
 	}
 
-	new_str = (BYTE*)realloc(unicode_string->string, new_len);
-
+	BYTE* new_str = (BYTE*)realloc(unicode_string->string, new_len);
 	if (!new_str)
 	{
-		free(unicode_string->string);
-		unicode_string->string = nullptr;
+		free_unicode_string(unicode_string);
 		return FALSE;
 	}
 
