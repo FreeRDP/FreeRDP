@@ -8,13 +8,13 @@ if(PLATFORM MATCHES "SIMULATOR")
   set(_ossl_platform "iPhoneSimulator")
   set(_ossl_config_args "iphoneos-cross" "no-asm")
   set(_ossl_cc_extra
-      "-target ${_ossl_arch}-apple-ios${DEPLOYMENT_TARGET}-simulator -mios-simulator-version-min=${DEPLOYMENT_TARGET}"
+      "-target ${_ossl_arch}-apple-ios${CMAKE_OSX_DEPLOYMENT_TARGET}-simulator -mios-simulator-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}"
   )
 else()
   set(_ossl_sdk "iphoneos")
   set(_ossl_platform "iPhoneOS")
   set(_ossl_config_args "iphoneos-cross")
-  set(_ossl_cc_extra "-miphoneos-version-min=${DEPLOYMENT_TARGET}")
+  set(_ossl_cc_extra "-miphoneos-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
 execute_process(COMMAND xcode-select -print-path OUTPUT_VARIABLE _xcode_dev OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -33,7 +33,6 @@ ExternalProject_Add(
   PREFIX ${CMAKE_BINARY_DIR}/openssl
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
   # Keep sources in the build tree; ExternalProject must not write into client/iOS.
-  SOURCE_DIR ${CMAKE_BINARY_DIR}/external/openssl
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/openssl-build
   URL https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz
   URL_HASH ${OPENSSL_HASH}

@@ -5,12 +5,12 @@ set(_ff_arch "arm64")
 
 if(PLATFORM MATCHES "SIMULATOR")
   set(_ff_sdk "iphonesimulator")
-  set(_ff_min "-mios-simulator-version-min=${DEPLOYMENT_TARGET}")
-  set(_ff_triple "-target ${_ff_arch}-apple-ios${DEPLOYMENT_TARGET}-simulator")
+  set(_ff_min "-mios-simulator-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  set(_ff_triple "-target ${_ff_arch}-apple-ios${CMAKE_OSX_DEPLOYMENT_TARGET}-simulator")
   set(_ff_platform "iPhoneSimulator")
 else()
   set(_ff_sdk "iphoneos")
-  set(_ff_min "-miphoneos-version-min=${DEPLOYMENT_TARGET}")
+  set(_ff_min "-miphoneos-version-min=${CMAKE_OSX_DEPLOYMENT_TARGET}")
   set(_ff_triple "")
   set(_ff_platform "iPhoneOS")
 endif()
@@ -36,7 +36,7 @@ file(
   <key>CFBundlePackageType</key><string>FMWK</string>
   <key>CFBundleShortVersionString</key><string>${FFMPEG_VERSION}</string>
   <key>CFBundleVersion</key><string>${FFMPEG_VERSION}</string>
-  <key>MinimumOSVersion</key><string>${DEPLOYMENT_TARGET}</string>
+  <key>MinimumOSVersion</key><string>${CMAKE_OSX_DEPLOYMENT_TARGET}</string>
   <key>CFBundleSupportedPlatforms</key><array><string>${_ff_platform}</string></array>
 </dict></plist>
 "
@@ -47,7 +47,6 @@ ExternalProject_Add(
   PREFIX ${CMAKE_BINARY_DIR}/ffmpeg
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
   # Keep sources in the build tree; ExternalProject must not write into client/iOS.
-  SOURCE_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
   URL https://github.com/FFmpeg/FFmpeg/archive/refs/tags/${FFMPEG_VERSION}.tar.gz
   URL_HASH ${FFMPEG_HASH}

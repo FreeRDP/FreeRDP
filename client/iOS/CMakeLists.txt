@@ -37,15 +37,27 @@ include(CommonConfigOptions)
 include(ProjectCStandard)
 include(ProjectCXXStandard)
 
-set(CMAKE_C_STANDARD 23 CACHE STRING "project default" FORCE)
-set(CMAKE_C_STANDARD_REQUIRED ON CACHE BOOL "project default" FORCE)
-set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0" CACHE STRING "project default")
+# Cross compilation settings:
+#
+# * Set CMAKE_SYSROOT as main search base
+# * Disable looking for includes/libraries/packages in host system directories
+set(CMAKE_SYSROOT ${CMAKE_OSX_SYSROOT})
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+message("sysroot: ${CMAKE_SYSROOT}")
+
+include(GNUInstallDirs)
+#set(CMAKE_INSTALL_LIBDIR Frameworks)
+#set(CMAKE_INSTALL_BINDIR MacOS)
+
+set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "project default")
+
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++" CACHE STRING "project default")
-set(CMAKE_XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC NO CACHE BOOL "project default")
 set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES "NO" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_SKIP_INSTALL NO CACHE BOOL "project default")
-set(CMAKE_XCODE_ATTRIBUTE_INSTALL_PATH "/Applications" CACHE STRING "project default")
+set(CMAKE_INSTALL_PATH "/Applications" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES CACHE BOOL "project default")
 set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.freerdp.ifreerdp" CACHE STRING "project default")
