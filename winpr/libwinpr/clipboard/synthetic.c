@@ -662,8 +662,8 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 			/* Check if we have WCHAR, convert to UTF-8 */
 			if ((pSrcData.cpb[0] == 0xFF) && (pSrcData.cpb[1] == 0xFE))
 			{
-				char* utfString =
-				    ConvertWCharNToUtf8Alloc(&pSrcData.pv[1], SrcSize / sizeof(WCHAR), nullptr);
+				char* utfString = ConvertWCharNToUtf8Alloc(&pSrcData.pv[1],
+				                                           (SrcSize / sizeof(WCHAR)) - 1, nullptr);
 				free(pSrcData.pv);
 				pSrcData.cpc = utfString;
 				if (!utfString)

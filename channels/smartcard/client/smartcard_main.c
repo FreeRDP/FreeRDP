@@ -378,8 +378,8 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 		element->irp = irp;
 		element->operation.completionID = irp->CompletionId;
 
-		status = smartcard_irp_device_control_decode(irp->input, irp->CompletionId, irp->FileId,
-		                                             &element->operation);
+		status = smartcard_irp_device_control_decode_request(irp->input, irp->CompletionId,
+		                                                     irp->FileId, &element->operation);
 
 		if (status != SCARD_S_SUCCESS)
 		{
@@ -632,7 +632,6 @@ static void smartcard_free_irp(void* obj)
  */
 FREERDP_ENTRY_POINT(UINT VCAPITYPE DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-	size_t length = 0;
 	UINT error = CHANNEL_RC_NO_MEMORY;
 
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*)calloc(1, sizeof(SMARTCARD_DEVICE));
@@ -649,16 +648,6 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POIN
 	smartcard->device.Init = smartcard_init;
 	smartcard->device.Free = smartcard_free;
 	smartcard->rdpcontext = pEntryPoints->rdpcontext;
-	length = strlen(smartcard->device.name);
-	smartcard->device.data = Stream_New(nullptr, length + 1);
-
-	if (!smartcard->device.data)
-	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		goto fail;
-	}
-
-	Stream_Write(smartcard->device.data, "SCARD", 6);
 	smartcard->IrpQueue = MessageQueue_New(nullptr);
 
 	if (!smartcard->IrpQueue)

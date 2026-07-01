@@ -20,6 +20,7 @@
 #include <winpr/config.h>
 #include <winpr/assert.h>
 
+#include <string.h>
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -840,4 +841,31 @@ WCHAR* wcsndup(const WCHAR* s, size_t n)
 		return nullptr;
 	memcpy(copy, s, n * sizeof(WCHAR));
 	return copy;
+}
+
+char* winpr_strnstr(char* haystack, const char* needle, size_t hlen)
+{
+	WINPR_ASSERT(haystack || (hlen == 0));
+	WINPR_ASSERT(needle);
+
+#if defined(WINPR_HAVE_STRNSTR)
+	return strnstr(haystack, needle, hlen);
+#else
+	const size_t needle_len = strnlen(needle, hlen);
+
+	if (0 == needle_len)
+		return haystack;
+
+	if (hlen < needle_len)
+		return nullptr;
+
+	for (size_t i = 0; i <= hlen - needle_len; i++)
+	{
+		if ((haystack[0] == needle[0]) && (0 == strncmp(haystack, needle, needle_len)))
+			return haystack;
+
+		haystack++;
+	}
+	return nullptr;
+#endif
 }

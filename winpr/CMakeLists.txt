@@ -209,6 +209,7 @@ check_type_size(SSIZE_T WIN_SSIZE_T)
 set(WINPR_HAVE_SSIZE_T ${HAVE_SSIZE_T})
 set(WINPR_HAVE_WIN_SSIZE_T ${HAVE_WIN_SSIZE_T})
 
+check_symbol_exists(strnstr string.h WINPR_HAVE_STRNSTR)
 check_symbol_exists(strndup string.h WINPR_HAVE_STRNDUP)
 check_include_files(unistd.h WINPR_HAVE_UNISTD_H)
 check_include_files(execinfo.h WINPR_HAVE_EXECINFO_HEADER)

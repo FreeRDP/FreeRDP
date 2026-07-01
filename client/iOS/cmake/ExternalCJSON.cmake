@@ -1,0 +1,17 @@
+include(ExternalProject)
+include(DepVersions)
+
+ExternalProject_Add(
+  cjson
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/cjson
+  URL https://github.com/DaveGamble/cJSON/archive/refs/tags/${CJSON_VERSION}.tar.gz
+  URL_HASH ${CJSON_HASH}
+  CMAKE_ARGS ${IOS_CMAKE_ARGS}
+             -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
+             -DCMAKE_INSTALL_LIBDIR:STRING=${CMAKE_INSTALL_LIBDIR}
+             -DENABLE_CJSON_TEST:BOOL=OFF
+             -DENABLE_HIDDEN_SYMBOLS:BOOL=OFF
+             -DENABLE_CJSON_UNINSTALL:BOOL=OFF
+             -DCMAKE_POLICY_VERSION_MINIMUM:STRING=3.5
+)

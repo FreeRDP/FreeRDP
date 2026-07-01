@@ -541,9 +541,15 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 	if ((rc < 0) || ((size_t)rc >= sizeof(bkey)))
 		return nullptr;
 
-	char* tag = strstr(input, bkey);
-	if (!tag || (tag > input + ilen))
+	char* tag = winpr_strnstr(input, bkey, ilen);
+	if (!tag)
 		return nullptr;
+
+	const intptr_t tdiff = (tag - input);
+	WINPR_ASSERT(tdiff >= 0);
+	const size_t utdiff = WINPR_ASSERTING_INT_CAST(size_t, tdiff);
+	WINPR_ASSERT(utdiff <= ilen);
+	const size_t tlen = ilen - utdiff;
 
 	char* data = tag + strnlen(bkey, sizeof(bkey));
 
@@ -563,7 +569,7 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 			return nullptr;
 	}
 
-	char* start = strstr(tag, ">");
+	const char* start = winpr_strnstr(tag, ">", tlen);
 
 	if (!start || (start > input + ilen))
 	{
@@ -609,8 +615,9 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
  *
  * This function can not find multiple elements on the same level as the input string is changed!
  */
-static BOOL freerdp_assistance_consume_input_and_get_element(char* input, const char* key,
-                                                             char** element, size_t* elen)
+static BOOL freerdp_assistance_consume_input_and_get_element(char* input, size_t ilen,
+                                                             const char* key, char** element,
+                                                             size_t* elen)
 {
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(key);
@@ -620,7 +627,7 @@ static BOOL freerdp_assistance_consume_input_and_get_element(char* input, const 
 	size_t len = 0;
 	size_t dlen = 0;
 	char* data = nullptr;
-	char* tag = freerdp_assistance_contains_element(input, strlen(input), key, &len, &data, &dlen);
+	char* tag = freerdp_assistance_contains_element(input, ilen, key, &len, &data, &dlen);
 	if (!tag)
 		return FALSE;
 
@@ -752,11 +759,12 @@ static BOOL freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 	char* str = _strdup(file->ConnectionString2);
 	if (!str)
 		goto out_fail;
+	const size_t slen = strlen(str);
 
 	{
 		char* e = nullptr;
 		size_t elen = 0;
-		if (!freerdp_assistance_consume_input_and_get_element(str, "E", &e, &elen))
+		if (!freerdp_assistance_consume_input_and_get_element(str, slen, "E", &e, &elen))
 			goto out_fail;
 
 		if (!e || (elen == 0))
@@ -1050,7 +1058,8 @@ static int freerdp_assistance_parse_uploadinfo(rdpAssistanceFile* file, char* up
 	if (!uploadinfo || (uploadinfosize == 0))
 		return -1;
 
-	if (strnlen(uploadinfo, uploadinfosize) == uploadinfosize)
+	const size_t ulen = strnlen(uploadinfo, uploadinfosize);
+	if (ulen == uploadinfosize)
 	{
 		WLog_WARN(TAG, "UPLOADINFOR string is not '\\0' terminated");
 		return -1;
@@ -1070,8 +1079,8 @@ static int freerdp_assistance_parse_uploadinfo(rdpAssistanceFile* file, char* up
 
 	char* uploaddata = nullptr;
 	size_t uploaddatasize = 0;
-	if (!freerdp_assistance_consume_input_and_get_element(uploadinfo, "UPLOADDATA", &uploaddata,
-	                                                      &uploaddatasize))
+	if (!freerdp_assistance_consume_input_and_get_element(uploadinfo, ulen, "UPLOADDATA",
+	                                                      &uploaddata, &uploaddatasize))
 		return -1;
 
 	/* Parse USERNAME */
@@ -1173,7 +1182,7 @@ static int freerdp_assistance_parse_file_buffer_int(rdpAssistanceFile* file, cha
 
 	char* uploadinfo = nullptr;
 	size_t uploadinfosize = 0;
-	if (freerdp_assistance_consume_input_and_get_element(buffer, "UPLOADINFO", &uploadinfo,
+	if (freerdp_assistance_consume_input_and_get_element(buffer, size, "UPLOADINFO", &uploadinfo,
 	                                                     &uploadinfosize))
 		return freerdp_assistance_parse_uploadinfo(file, uploadinfo, uploadinfosize);
 

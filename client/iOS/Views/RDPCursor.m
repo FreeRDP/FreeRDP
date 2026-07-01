@@ -7,6 +7,8 @@
 
 #import "RDPCursor.h"
 
+#include <winpr/wtypes.h>
+
 @implementation RDPCursor
 
 @synthesize image = _image;
@@ -32,7 +34,7 @@
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 	CGImageRef imageRef = CGImageCreate(width, height, 8, 32, width * 4, colorSpace,
 	                                    kCGBitmapByteOrderDefault | kCGImageAlphaLast, provider,
-	                                    NULL, NO, kCGRenderingIntentDefault);
+	                                    nullptr, NO, kCGRenderingIntentDefault);
 
 	CGColorSpaceRelease(colorSpace);
 	CGDataProviderRelease(provider);

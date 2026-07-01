@@ -99,7 +99,7 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 		goto fail;
 
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-	EVP_CIPHER* evp = EVP_CIPHER_fetch(NULL, "RC4", override_fips ? "fips=no" : NULL);
+	EVP_CIPHER* evp = EVP_CIPHER_fetch(nullptr, "RC4", override_fips ? "fips=no" : nullptr);
 #else
 	const EVP_CIPHER* evp = EVP_rc4();
 #endif
