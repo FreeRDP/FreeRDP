@@ -1009,6 +1009,7 @@ UINT rail_order_recv(LPVOID userdata, wStream* s)
 	if ((error = rail_read_pdu_header(s, &orderType, &orderLength)))
 	{
 		WLog_ERR(TAG, "rail_read_pdu_header failed with error %" PRIu32 "!", error);
+		error = ERROR_INVALID_DATA;
 		goto fail;
 	}
 
