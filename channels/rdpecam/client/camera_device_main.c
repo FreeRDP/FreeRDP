@@ -741,7 +741,7 @@ static UINT ecam_dev_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 	if (!dev)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, data, CAM_HEADER_SIZE))
+	if (!Stream_CheckAndLogRequiredLength(TAG, data, CAM_HEADER_SIZE))
 		return ERROR_NO_DATA;
 
 	Stream_Read_UINT8(data, version);
