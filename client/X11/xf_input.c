@@ -50,8 +50,7 @@
 
 #define MIN_FINGER_DIST 5
 
-static int xf_input_event(xfContext* xfc, WINPR_ATTR_UNUSED const XEvent* xevent,
-                          XIDeviceEvent* event, int evtype);
+static int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype);
 
 #ifdef DEBUG_XINPUT
 static const char* xf_input_get_class_string(int class)
@@ -748,8 +747,7 @@ bool xf_use_rel_mouse(xfContext* xfc)
 	return true;
 }
 
-int xf_input_event(xfContext* xfc, WINPR_ATTR_UNUSED const XEvent* xevent, XIDeviceEvent* event,
-                   int evtype)
+int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype)
 {
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xevent);
@@ -758,6 +756,10 @@ int xf_input_event(xfContext* xfc, WINPR_ATTR_UNUSED const XEvent* xevent, XIDev
 	xfWindow* window = xfc->window;
 	if (window)
 	{
+		/* Ignore events for other windows */
+		if (xevent->xany.window != window->handle && !xfc->remote_app)
+			return 0;
+
 		if (xf_floatbar_is_locked(window->floatbar))
 			return 0;
 	}
