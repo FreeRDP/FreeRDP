@@ -17,6 +17,10 @@
 
 cmake_minimum_required(VERSION 3.13)
 
+if(POLICY CMP0114)
+  cmake_policy(SET CMP0114 NEW)
+endif()
+
 if(NOT FREERDP_DEFAULT_PROJECT_VERSION)
   set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
 endif()
@@ -25,12 +29,16 @@ project(iFreeRDP VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_CURRENT_SOURCE_DIR}/../../cmake/)
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_CURRENT_SOURCE_DIR}/cmake/)
+get_filename_component(FREERDP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+
+list(APPEND CMAKE_MODULE_PATH ${FREERDP_SOURCE_DIR}/cmake/)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
 include(CommonConfigOptions)
 include(ProjectCStandard)
 include(ProjectCXXStandard)
 
+set(CMAKE_C_STANDARD 23 CACHE STRING "project default" FORCE)
+set(CMAKE_C_STANDARD_REQUIRED ON CACHE BOOL "project default" FORCE)
 set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC NO CACHE BOOL "project default")
@@ -58,10 +66,11 @@ include_directories(SYSTEM ${IOS_CLIENT_FREERDP_DIR})
 include_directories(SYSTEM ${IOS_CLIENT_MISC_DIR})
 include_directories(SYSTEM ${IOS_CLIENT_MODELS_DIR})
 include_directories(SYSTEM ${IOS_CLIENT_VIEWS_DIR})
-include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 # Dependencies
 include(ExternalDeps)
+
+include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 # Add sources
 set(SRCS
@@ -306,44 +315,34 @@ set_target_properties(
 # for Ninja build (CI Server) (turn off ARC)
 target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
 
-target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS} freerdp3-lib freerdp-client3-lib winpr3-lib)
 
-if(BUILD_SHARED_LIBS)
-  foreach(_ios_runtime_target freerdp-client freerdp winpr)
-    if(TARGET ${_ios_runtime_target})
-      set_target_properties(${_ios_runtime_target} PROPERTIES BUILD_WITH_INSTALL_NAME_DIR YES INSTALL_NAME_DIR "@rpath")
-    endif()
-  endforeach()
-
-  set(_ios_bundle_frameworks_dir "$<TARGET_BUNDLE_CONTENT_DIR:${PROJECT_NAME}>/Frameworks")
-  add_custom_command(
-    TARGET ${PROJECT_NAME}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${_ios_bundle_frameworks_dir}"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp-client>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:freerdp-client>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp-client>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:freerdp-client>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:freerdp>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:freerdp>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:winpr>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:winpr>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:winpr>"
-            "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:winpr>"
-    COMMENT "Embedding FreeRDP iOS runtime libraries"
-  )
+if(OPENSSL_FOUND)
+  target_link_libraries(${PROJECT_NAME} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
 endif()
 
-# Embed + code-sign the dynamic FFmpeg framework with Xcode's native "Embed
-# Frameworks" build phase (no custom codesign script). The FreeRDP runtime
-# dylibs copied above are signed by their own Xcode targets (the
-# XCODE_ATTRIBUTE_DEVELOPMENT_TEAM set on them above).
+set(_ios_embed_frameworks "")
+if(TARGET freerdp3-lib)
+  get_target_property(_ios_freerdp_runtime_location freerdp3-lib IMPORTED_LOCATION)
+  list(APPEND _ios_embed_frameworks "${_ios_freerdp_runtime_location}")
+endif()
+if(TARGET freerdp-client3-lib)
+  get_target_property(_ios_freerdp_client_runtime_location freerdp-client3-lib IMPORTED_LOCATION)
+  list(APPEND _ios_embed_frameworks "${_ios_freerdp_client_runtime_location}")
+endif()
+if(TARGET winpr3-lib)
+  get_target_property(_ios_winpr_runtime_location winpr3-lib IMPORTED_LOCATION)
+  list(APPEND _ios_embed_frameworks "${_ios_winpr_runtime_location}")
+endif()
+
 if(AVCODEC_LIBRARIES MATCHES "\\.framework/")
   get_filename_component(_ios_ffmpeg_framework "${AVCODEC_LIBRARIES}" DIRECTORY)
+  list(APPEND _ios_embed_frameworks "${_ios_ffmpeg_framework}")
+endif()
+
+if(_ios_embed_frameworks)
   set_target_properties(
-    ${PROJECT_NAME} PROPERTIES XCODE_EMBED_FRAMEWORKS "${_ios_ffmpeg_framework}"
+    ${PROJECT_NAME} PROPERTIES XCODE_EMBED_FRAMEWORKS "${_ios_embed_frameworks}"
                                XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON
   )
 endif()
