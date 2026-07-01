@@ -14,6 +14,7 @@ option(WITH_OPUS "Build Opus audio codec" ON)
 option(WITH_PNG "Build libpng image support" ON)
 option(WITH_WEBP "Build libwebp image support" ON)
 option(WITH_JPEG "Build libjpeg-turbo image support" ON)
+option(WITH_URIPARSER "Build uriparser support" OFF)
 
 get_filename_component(_toolchain_abs "${CMAKE_TOOLCHAIN_FILE}" ABSOLUTE BASE_DIR "${CMAKE_BINARY_DIR}")
 
@@ -30,6 +31,8 @@ set(IOS_CMAKE_ARGS
     -DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}
     -DDEPLOYMENT_TARGET=${DEPLOYMENT_TARGET}
     -DPLATFORM=${PLATFORM}
+    -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
+    -DCMAKE_INSTALL_NAME_DIR:STRING=@rpath
     -DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}
     -DCMAKE_SYSROOT=${CMAKE_SYSROOT}
     -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=${CMAKE_OSX_DEPLOYMENT_TARGET}
@@ -76,14 +79,14 @@ if(WITH_PNG)
   list(APPEND IOS_NATIVE_DEPS libpng)
 endif()
 
-if(WITH_WEBP)
-  include(ExternalWebP)
-  list(APPEND IOS_NATIVE_DEPS webp)
-endif()
-
 if(WITH_JPEG)
   include(ExternalJpeg)
   list(APPEND IOS_NATIVE_DEPS jpeg)
+endif()
+
+if(WITH_WEBP)
+  include(ExternalWebP)
+  list(APPEND IOS_NATIVE_DEPS webp)
 endif()
 
 set(IOS_FFMPEG_ARGS "")
@@ -92,7 +95,9 @@ if(WITH_FFMPEG)
   list(APPEND IOS_NATIVE_DEPS ffmpeg)
 endif()
 
-include(ExternalUriparser)
-list(APPEND IOS_NATIVE_DEPS uriparser)
+if(WITH_URIPARSER)
+  include(ExternalUriparser)
+  list(APPEND IOS_NATIVE_DEPS uriparser)
+endif()
 
 include(ExternalFreeRDP)

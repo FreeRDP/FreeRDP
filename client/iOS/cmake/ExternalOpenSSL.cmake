@@ -28,17 +28,24 @@ set(_ossl_cc "${_xcode_dev}/usr/bin/gcc -arch ${_ossl_arch} ${_ossl_cc_extra}")
 
 set(_ossl_env "CROSS_TOP=${_ossl_cross_top}" "CROSS_SDK=${_ossl_cross_sdk}" "CC=${_ossl_cc}")
 
+if(BUILD_SHARED_LIBS)
+  set(ARGS shared)
+else()
+  set(ARGS no-shared)
+endif()
+
 ExternalProject_Add(
   openssl
   PREFIX ${CMAKE_BINARY_DIR}/openssl
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
   # Keep sources in the build tree; ExternalProject must not write into client/iOS.
+  SOURCE_DIR ${CMAKE_BINARY_DIR}/external/openssl
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/openssl-build
   URL https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz
   URL_HASH ${OPENSSL_HASH}
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env ${_ossl_env} perl <SOURCE_DIR>/Configure ${_ossl_config_args} no-shared
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env ${_ossl_env} perl <SOURCE_DIR>/Configure ${_ossl_config_args} ${ARGS}
                     no-tests no-apps no-docs --prefix=${DEPS_INSTALL_DIR} --libdir=lib
-  BUILD_COMMAND ${CMAKE_COMMAND} -E env ${_ossl_env} make -j build_libs
-  INSTALL_COMMAND ${CMAKE_COMMAND} -E env ${_ossl_env} make install_dev
+  BUILD_COMMAND ${CMAKE_COMMAND} -E env ${_ossl_env} make -j build_sw
+  INSTALL_COMMAND ${CMAKE_COMMAND} -E env ${_ossl_env} make install_sw
   BUILD_BYPRODUCTS ${DEPS_INSTALL_DIR}/lib/libssl.a ${DEPS_INSTALL_DIR}/lib/libcrypto.a
 )

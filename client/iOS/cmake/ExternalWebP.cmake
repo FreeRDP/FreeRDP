@@ -15,3 +15,10 @@ ExternalProject_Add(
              -DWEBP_BUILD_WEBPINFO:BOOL=OFF
              -DWEBP_BUILD_WEBPMUX:BOOL=OFF
 )
+
+if(WITH_JPEG)
+  add_dependencies(webp jpeg)
+endif()
+if(WITH_PNG)
+  add_dependencies(webp libpng)
+endif()
