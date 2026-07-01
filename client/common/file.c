@@ -2533,7 +2533,6 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			if ((val >= UINT32_MAX) && (errno != 0))
 			{
 				CommandLineParserFree(ptr);
-				free(list);
 				return FALSE;
 			}
 			list[x] = (UINT32)val;
