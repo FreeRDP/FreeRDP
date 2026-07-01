@@ -1933,6 +1933,7 @@ LONG smartcard_unpack_redir_scard_context_ref(wLog* log, wStream* s,
 	UINT32 length = 0;
 
 	WINPR_ASSERT(context);
+
 	if (context->cbContext == 0)
 		return SCARD_S_SUCCESS;
 
@@ -1968,12 +1969,12 @@ LONG smartcard_pack_redir_scard_context_ref(WINPR_ATTR_UNUSED wLog* log, wStream
                                             const REDIR_SCARDCONTEXT* context)
 {
 	WINPR_ASSERT(context);
-	Stream_Write_UINT32(s, context->cbContext); /* Length (4 bytes) */
 
-	if (context->cbContext)
-	{
-		Stream_Write(s, &(context->pbContext), context->cbContext);
-	}
+	if (context->cbContext == 0)
+		return SCARD_S_SUCCESS;
+
+	Stream_Write_UINT32(s, context->cbContext); /* Length (4 bytes) */
+	Stream_Write(s, &(context->pbContext), context->cbContext);
 
 	return SCARD_S_SUCCESS;
 }
@@ -2021,6 +2022,10 @@ LONG smartcard_unpack_redir_scard_handle_ref(wLog* log, wStream* s, REDIR_SCARDH
 	UINT32 length = 0;
 
 	WINPR_ASSERT(handle);
+
+	if (handle->cbHandle == 0)
+		return SCARD_S_SUCCESS;
+
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 4))
 		return STATUS_BUFFER_TOO_SMALL;
 
@@ -2054,10 +2059,12 @@ LONG smartcard_pack_redir_scard_handle_ref(WINPR_ATTR_UNUSED wLog* log, wStream*
                                            const REDIR_SCARDHANDLE* handle)
 {
 	WINPR_ASSERT(handle);
-	Stream_Write_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
 
-	if (handle->cbHandle)
-		Stream_Write(s, &(handle->pbHandle), handle->cbHandle);
+	if (handle->cbHandle == 0)
+		return SCARD_S_SUCCESS;
+
+	Stream_Write_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
+	Stream_Write(s, &(handle->pbHandle), handle->cbHandle);
 
 	return SCARD_S_SUCCESS;
 }
