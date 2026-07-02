@@ -47,6 +47,4 @@ ExternalProject_Add(
                     no-tests no-apps no-docs --prefix=${DEPS_INSTALL_DIR} --libdir=${CMAKE_INSTALL_LIBDIR}
   BUILD_COMMAND ${CMAKE_COMMAND} -E env ${_ossl_env} make -j build_sw
   INSTALL_COMMAND ${CMAKE_COMMAND} -E env ${_ossl_env} make install_sw
-  BUILD_BYPRODUCTS ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libssl.a
-                   ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libcrypto.a
 )
