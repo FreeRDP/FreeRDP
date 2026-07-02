@@ -98,6 +98,17 @@ void SdlRailWindow::setVisibilityRects(std::vector<SDL_Rect> rects)
 	_visRects = std::move(rects);
 }
 
+void SdlRailWindow::setMinMaxSize(SDL_Point minSize, SDL_Point maxSize)
+{
+	std::unique_lock lock(_gfxLock);
+	_minSize = { std::max(0, minSize.x), std::max(0, minSize.y) };
+	_maxSize = { std::max(0, maxSize.x), std::max(0, maxSize.y) };
+	_minMaxDirty = true;
+	/* Re-apply geometry: a size the WM clamped to the OLD min (a shrink below it) must be re-sent
+	 * now that the new min is looser, or the window stays stuck at the clamped size. */
+	_geometryDirty = true;
+}
+
 void SdlRailWindow::setResizeMargins(int left, int top, int right, int bottom)
 {
 	std::unique_lock lock(_gfxLock);
@@ -243,7 +254,39 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		if (!_isPopup && !_layered)
 			_win->raise(); /* new app windows come to the front; popups are above by design */
 	}
-	else if (_geometryDirty)
+
+	/* Min/max BEFORE geometry: the WM clamps SDL_SetWindowSize to the current min. The server's
+	 * min-track-size only constrains USER resizing - the app itself drives its window below it
+	 * (Windows lets SetWindowPos ignore the track min), so honouring it verbatim would block the
+	 * server's authoritative geometry.
+	 * Observed: the server sometimes sends a min that is inconsistent with the geometry it also
+	 * sends. Opening PowerPoint's Options shrinks the main window to 339px, but ~1 in 5-6 times the
+	 * server reports that window's min as 500x400 (a stale, pre-transform GetMinMaxInfo) instead of
+	 * the small value it usually sends - Windows does not always give us the right min. Enforced
+	 * verbatim, that min pins the window at 500 with a transparent gap + a stale band ring.
+	 * So clamp the enforced min to the target outer size: server geometry is never blocked, and the
+	 * min re-widens on its own once the server grows the window back. Re-run on a geometry change
+	 * too, since a shrink needs the min re-clamped first. */
+	if (_win && _minMaxDirty)
+	{
+		SDL_SetWindowMinimumSize(_win->window(), std::max(0, _minSize.x), std::max(0, _minSize.y));
+		int maxW = (_maxSize.x > 0) ? std::max(1, _maxSize.x) : 0;
+		int maxH = (_maxSize.y > 0) ? std::max(1, _maxSize.y) : 0;
+		/* Wayland: cap to the usable area - an oversized window cannot be dragged into reach. */
+		SDL_Rect usable{};
+		if (!railPlatformCaps().positionsReadable &&
+		    SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &usable))
+		{
+			if ((maxW == 0) || (maxW > usable.w))
+				maxW = usable.w;
+			if ((maxH == 0) || (maxH > usable.h))
+				maxH = usable.h;
+		}
+		SDL_SetWindowMaximumSize(_win->window(), maxW, maxH);
+		_minMaxDirty = false;
+	}
+
+	if (_win && _geometryDirty)
 	{
 		/* Popup coordinates are relative to the parent window origin. */
 		if (_isPopup && parent)
