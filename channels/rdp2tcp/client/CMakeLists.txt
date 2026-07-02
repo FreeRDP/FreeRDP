@@ -17,6 +17,9 @@
 
 define_channel_client("rdp2tcp")
 
+include(WarnUnmaintained)
+warn_unmaintained("rdp2tcp client channel" "-DCHANNEL_RDP2TCP_CLIENT=OFF")
+
 set(${MODULE_PREFIX}_SRCS rdp2tcp_main.c)
 
 set(${MODULE_PREFIX}_LIBS freerdp)
