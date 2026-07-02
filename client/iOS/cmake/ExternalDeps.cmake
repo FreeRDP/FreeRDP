@@ -7,13 +7,13 @@ list(APPEND CMAKE_PREFIX_PATH ${DEPS_INSTALL_DIR})
 
 option(WITH_OPENSSL "Build and enable OpenSSL" ON)
 option(WITH_FFMPEG "Build and enable FFmpeg codec support" ON)
-option(WITH_OPENH264 "Build and enable OpenH264 codec support" ON)
-option(WITH_CJSON "Build cJSON for Azure AD (AAD) support" ON)
+option(WITH_OPENH264 "Build and enable OpenH264 codec support" OFF)
+option(WITH_CJSON "Build cJSON for Azure AD (AAD) support" OFF)
 option(WITH_MEDIACODEC "Enable Android MediaCodec API" OFF)
-option(WITH_OPUS "Build Opus audio codec" ON)
-option(WITH_PNG "Build libpng image support" ON)
-option(WITH_WEBP "Build libwebp image support" ON)
-option(WITH_JPEG "Build libjpeg-turbo image support" ON)
+option(WITH_OPUS "Build Opus audio codec" OFF)
+option(WITH_PNG "Build libpng image support" OFF)
+option(WITH_WEBP "Build libwebp image support" OFF)
+option(WITH_JPEG "Build libjpeg-turbo image support" OFF)
 option(WITH_URIPARSER "Build uriparser support" OFF)
 
 get_filename_component(_toolchain_abs "${CMAKE_TOOLCHAIN_FILE}" ABSOLUTE BASE_DIR "${CMAKE_BINARY_DIR}")
@@ -24,6 +24,8 @@ set(IOS_CMAKE_ARGS
     -DPLATFORM:STRING=${PLATFORM}
     -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+    # Search the deps prefix in sub-builds; find root mode is ONLY (toolchain adds the sysroot).
+    -DCMAKE_FIND_ROOT_PATH=${DEPS_INSTALL_DIR}
     -DCMAKE_INSTALL_LIBDIR:STRING=${CMAKE_INSTALL_LIBDIR}
     -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=${CMAKE_FIND_ROOT_PATH_MODE_INCLUDE}
     -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=${CMAKE_FIND_ROOT_PATH_MODE_LIBRARY}
@@ -89,7 +91,6 @@ if(WITH_WEBP)
   list(APPEND IOS_NATIVE_DEPS webp)
 endif()
 
-set(IOS_FFMPEG_ARGS "")
 if(WITH_FFMPEG)
   include(ExternalFFmpeg)
   list(APPEND IOS_NATIVE_DEPS ffmpeg)
@@ -99,5 +100,8 @@ if(WITH_URIPARSER)
   include(ExternalUriparser)
   list(APPEND IOS_NATIVE_DEPS uriparser)
 endif()
+
+include_directories(SYSTEM ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR})
+link_directories(${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR})
 
 include(ExternalFreeRDP)

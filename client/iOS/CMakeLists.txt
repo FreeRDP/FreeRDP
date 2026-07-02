@@ -37,6 +37,8 @@ include(CommonConfigOptions)
 include(ProjectCStandard)
 include(ProjectCXXStandard)
 
+set(CMAKE_C_STANDARD 23 CACHE STRING "project default" FORCE)
+
 # Cross compilation settings:
 #
 # * Set CMAKE_SYSROOT as main search base
@@ -82,8 +84,6 @@ include_directories(SYSTEM ${IOS_CLIENT_VIEWS_DIR})
 
 # Dependencies
 include(ExternalDeps)
-
-include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 # Add sources
 set(SRCS
@@ -330,8 +330,9 @@ target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
 
 target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS} freerdp3-lib freerdp-client3-lib winpr3-lib)
 
-if(OPENSSL_FOUND)
-  target_link_libraries(${PROJECT_NAME} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
+# Link by name; found via the deps search path from ExternalDeps.cmake.
+if(WITH_OPENSSL)
+  target_link_libraries(${PROJECT_NAME} ssl crypto)
 endif()
 
 set(_ios_embed_frameworks "")
