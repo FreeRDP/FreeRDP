@@ -34,17 +34,19 @@ get_filename_component(FREERDP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." AB
 list(APPEND CMAKE_MODULE_PATH ${FREERDP_SOURCE_DIR}/cmake/)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
 include(CommonConfigOptions)
-include(ProjectCStandard)
-include(ProjectCXXStandard)
+
+set(CMAKE_C_STANDARD 23 CACHE STRING "project default")
+set(CMAKE_C_STANDARD_REQUIRED ON CACHE BOOL "project default")
+set(CMAKE_C_EXTENSIONS ON CACHE BOOL "project default")
 
 # Cross compilation settings:
 #
 # * Set CMAKE_SYSROOT as main search base
 # * Disable looking for includes/libraries/packages in host system directories
-set(CMAKE_SYSROOT ${CMAKE_OSX_SYSROOT})
-#set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-#set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-#set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+#set(CMAKE_SYSROOT ${CMAKE_OSX_SYSROOT})
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 set(CMAKE_IGNORE_PREFIX_PATH "/opt/local;/usr/local;/opt/homebrew;/Library;~/Library")
 
 include(GNUInstallDirs)
@@ -53,6 +55,7 @@ set(CMAKE_INSTALL_BINDIR MacOS)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "project default")
 
+set(CMAKE_XCODE_ATTRIBUTE_CLANG_C_LANGUAGE_STANDARD "gnu2x" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES "NO" CACHE STRING "project default")
@@ -284,7 +287,6 @@ find_library(METAL_FRAMEWORK Metal REQUIRED)
 find_library(QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
 find_library(WEBKIT_FRAMEWORK WebKit REQUIRED)
 find_library(GAMECONTROLLER_FRAMEWORK GameController REQUIRED)
-find_package(OpenSSL REQUIRED)
 
 set(EXTRA_LIBS
     ${FOUNDATION_FRAMEWORK}
@@ -296,8 +298,6 @@ set(EXTRA_LIBS
     ${SYSTEMCONFIGURATION_FRAMEWORK}
     ${WEBKIT_FRAMEWORK}
     ${GAMECONTROLLER_FRAMEWORK}
-    OpenSSL::Crypto
-    OpenSSL::SSL
 )
 
 set(RESOURCES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_RESOURCES_DIR}/about_page
@@ -329,10 +329,9 @@ set_target_properties(
                              RESOURCE "${RESOURCES}"
 )
 
-# for Ninja build (CI Server) (turn off ARC)
-target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
-
 target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS} freerdp3-lib freerdp-client3-lib winpr3-lib)
+
+target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
 
 set(_ios_embed_frameworks "")
 if(TARGET freerdp3-lib)
