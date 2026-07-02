@@ -1,0 +1,70 @@
+name: HarmonyOS client build
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - client/Harmony/**
+      - include/**
+      - libfreerdp/**
+      - winpr/**
+      - client/common/**
+      - CMakeLists.txt
+      - cmake/**
+      - .github/workflows/harmonyos.yml
+  workflow_dispatch:
+
+jobs:
+  build-hap:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/niuhuan/harmony-next-flutter-pipeline-docker/image:latest
+      options: --memory=8g
+    name: Build HarmonyOS HAP
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fix git safe.directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq make
+
+      - name: Install ohpm dependencies
+        run: |
+          cd client/Harmony
+          ohpm install --all
+
+      - name: Build HAP (debug)
+        run: |
+          cd client/Harmony
+          hvigorw clean --no-daemon || true
+          hvigorw assembleApp -p product=default -p buildMode=debug --no-daemon
+
+      - name: Collect build artifacts
+        if: always()
+        run: |
+          cd client/Harmony
+          mkdir -p ci-artifacts
+          if [ -f entry/build/default/outputs/default/entry-default-unsigned.hap ]; then
+            cp entry/build/default/outputs/default/entry-default-unsigned.hap ci-artifacts/
+          fi
+          if compgen -G "entry/build/default/outputs/default/entry-default-signed.hap" >/dev/null 2>&1; then
+            cp entry/build/default/outputs/default/entry-default-signed.hap ci-artifacts/
+          fi
+
+      - name: Upload HAP artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harmonyos-hap
+          path: client/Harmony/ci-artifacts/
+          retention-days: 7

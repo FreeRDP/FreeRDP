@@ -48,6 +48,11 @@ if(FREERDP_VENDOR AND WITH_CLIENT)
     add_subdirectory(Wayland)
   endif()
 
+  option(WITH_CLIENT_HARMONY "Build Harmony native bridge" OFF)
+  if(WITH_CLIENT_HARMONY)
+    add_subdirectory(Harmony)
+  endif()
+
   if(APPLE)
     if(IOS)
       option(WITH_CLIENT_IOS "Build native iOS client" ON)
