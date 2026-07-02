@@ -47,6 +47,10 @@ set(SRCS
     sdl_clip.cpp
     sdl_context.hpp
     sdl_context.cpp
+    sdl_rail.hpp
+    sdl_rail.cpp
+    sdl_rail_window.hpp
+    sdl_rail_window.cpp
 )
 
 add_win_console_manifest(SRCS)

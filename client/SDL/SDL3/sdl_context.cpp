@@ -41,7 +41,7 @@ static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _cursor(nullptr, sdl_Pointer_FreeCopy),
       _rdpThreadRunning(false), _primary(nullptr, SDL_DestroySurface), _disp(this), _input(this),
-      _clip(this), _dialog(_log)
+      _clip(this), _rail(this), _dialog(_log)
 {
 	WINPR_ASSERT(context);
 	setMetadata();
@@ -1037,6 +1037,11 @@ sdlClip& SdlContext::getClipboardChannelContext()
 	return _clip;
 }
 
+SdlRail& SdlContext::getRailChannelContext()
+{
+	return _rail;
+}
+
 SdlConnectionDialogWrapper& SdlContext::getDialog()
 {
 	return _dialog;
@@ -1061,10 +1066,13 @@ bool SdlContext::moveMouseTo(const SDL_FPoint& pos)
 
 bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 {
-	if (!getWindowForId(ev.windowID))
-		return true; /* Event for an untracked window (e.g. closed dialog) */
 	SDL_Event copy{};
 	copy.motion = ev;
+	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.motion.x, copy.motion.y))
+		return SdlTouch::handleEvent(this, copy.motion);
+
+	if (!getWindowForId(ev.windowID))
+		return true; /* Event for an untracked window (e.g. closed dialog) */
 	if (!eventToPixelCoordinates(ev.windowID, copy))
 		return true;
 	removeLocalScaling(copy.motion.x, copy.motion.y);
@@ -1076,10 +1084,14 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 
 bool SdlContext::handleEvent(const SDL_MouseWheelEvent& ev)
 {
-	if (!getWindowForId(ev.windowID))
-		return true;
 	SDL_Event copy{};
 	copy.wheel = ev;
+	if (_rail.enabled() &&
+	    _rail.translateToServer(ev.windowID, copy.wheel.mouse_x, copy.wheel.mouse_y))
+		return SdlTouch::handleEvent(this, copy.wheel);
+
+	if (!getWindowForId(ev.windowID))
+		return true;
 	if (!eventToPixelCoordinates(ev.windowID, copy))
 		return true;
 	removeLocalScaling(copy.wheel.mouse_x, copy.wheel.mouse_y);
@@ -1093,7 +1105,27 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 
 	auto window = getWindowForId(ev.windowID);
 	if (!window)
+	{
+		/* RAIL windows aren't in _windows; handle their events here. */
+		if (_rail.enabled() && _rail.ownsWindow(ev.windowID))
+		{
+			switch (ev.type)
+			{
+				case SDL_EVENT_WINDOW_MOUSE_ENTER:
+					/* Restore the cursor or the pointer stays hidden over RemoteApp windows. */
+					return restoreCursor();
+				case SDL_EVENT_WINDOW_FOCUS_GAINED:
+					_rail.handleFocus(ev.windowID, true);
+					return true;
+				case SDL_EVENT_WINDOW_FOCUS_LOST:
+					_rail.handleFocus(ev.windowID, false);
+					return true;
+				default:
+					break;
+			}
+		}
 		return true;
+	}
 
 	{
 		const auto& r = window->rect();
@@ -1189,10 +1221,13 @@ bool SdlContext::handleEvent(const SDL_DisplayEvent& ev)
 
 bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 {
-	if (!getWindowForId(ev.windowID))
-		return true;
 	SDL_Event copy = {};
 	copy.button = ev;
+	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.button.x, copy.button.y))
+		return SdlTouch::handleEvent(this, copy.button);
+
+	if (!getWindowForId(ev.windowID))
+		return true;
 	if (!eventToPixelCoordinates(ev.windowID, copy))
 		return true;
 	removeLocalScaling(copy.button.x, copy.button.y);
@@ -1303,7 +1338,12 @@ SDL_FPoint SdlContext::screenToPixel(SDL_WindowID id, const SDL_FPoint& pos)
 {
 	auto w = getWindowForId(id);
 	if (!w)
+	{
+		/* RAIL windows are server-authoritative 1:1 (no local scaling) and not in _windows. */
+		if (_rail.enabled() && _rail.ownsWindow(id))
+			return pos;
 		return {};
+	}
 
 	/* Ignore errors here, sometimes SDL has no renderer */
 	auto renderer = w->renderer();
@@ -1321,7 +1361,11 @@ SDL_FPoint SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos)
 {
 	auto w = getWindowForId(id);
 	if (!w)
+	{
+		if (_rail.enabled() && _rail.ownsWindow(id))
+			return pos;
 		return {};
+	}
 
 	/* Ignore errors here, sometimes SDL has no renderer */
 	auto renderer = w->renderer();
@@ -1508,6 +1552,17 @@ bool SdlContext::useLocalScale() const
 
 bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)
 {
+	/* RAIL damage is per-window (_gfxDamage), not in the rects queue: repaint every tick. */
+	if (_rail.enabled())
+	{
+		for (auto& window : _windows)
+			SDL_HideWindow(window.second.window());
+
+		std::unique_lock lock(_critical);
+		_rail.paint(_primary.get(), pixelFormat(), rects);
+		return TRUE;
+	}
+
 	if (rects.empty())
 		return true;
 
@@ -1573,6 +1628,10 @@ BOOL SdlContext::beginPaint(rdpContext* context)
 bool SdlContext::redraw(bool suppress) const
 {
 	if (!_connected)
+		return true;
+
+	/* In RAIL mode, hiding the desktop window must not suppress server output. */
+	if (suppress && _rail.enabled())
 		return true;
 
 	auto gdi = context()->gdi;
