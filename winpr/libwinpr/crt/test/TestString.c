@@ -104,6 +104,55 @@ fail:
 	return rc;
 }
 
+static BOOL test_winpr_strnstr(void)
+{
+	struct strnstr_test
+	{
+		const char* haystack;
+		const char* needle;
+		size_t hlen;
+		int expected; /* offset of the match, or -1 when NULL is expected */
+	};
+	const struct strnstr_test tests[] = {
+		/* regression: a needle longer than hlen must never match on a prefix.
+		 * winpr_strnstr used to clamp the needle length to hlen, so these
+		 * returned the haystack instead of NULL (see gateway http_response_recv
+		 * SIGSEGV). */
+		{ "ab", "\r\n", 0, -1 },
+		{ "x!", "xy", 1, -1 },
+		{ "abc", "abc", 2, -1 },
+		/* an empty needle returns the haystack */
+		{ "abc", "", 5, 0 },
+		/* basic matches */
+		{ "a\r\nb", "\r\n", 4, 1 },
+		{ "xxab", "ab", 4, 2 },
+		{ "xxxx", "ab", 4, -1 },
+		{ "abc", "abc", 3, 0 },
+		/* hlen == 0 finds nothing */
+		{ "abc", "a", 0, -1 },
+		/* hlen == SIZE_MAX is rejected instead of scanning out of bounds */
+		{ "abc", "a", SIZE_MAX, -1 },
+	};
+
+	for (size_t i = 0; i < ARRAYSIZE(tests); i++)
+	{
+		const struct strnstr_test* t = &tests[i];
+		char haystack[32] = { 0 };
+		strncpy(haystack, t->haystack, sizeof(haystack) - 1);
+
+		char* res = winpr_strnstr(haystack, t->needle, t->hlen);
+		char* exp = (t->expected < 0) ? nullptr : haystack + t->expected;
+		if (res != exp)
+		{
+			printf("winpr_strnstr error: case %" PRIuz " (\"%s\", \"%s\", %" PRIuz "): "
+			       "actual %p, expected %p\n",
+			       i, t->haystack, t->needle, t->hlen, (void*)res, (void*)exp);
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 int TestString(int argc, char* argv[])
 {
 	const WCHAR* p = nullptr;
@@ -118,6 +167,9 @@ int TestString(int argc, char* argv[])
 		return -1;
 
 	if (!test_url_escape())
+		return -1;
+
+	if (!test_winpr_strnstr())
 		return -1;
 
 	/* _wcslen */
