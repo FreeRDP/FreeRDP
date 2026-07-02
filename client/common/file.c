@@ -774,16 +774,6 @@ static SSIZE_T freerdp_client_rdp_file_add_line(rdpFile* file)
 	return index;
 }
 
-static BOOL freerdp_client_parse_rdp_file_string(rdpFile* file, char* name, char* value)
-{
-	return freerdp_client_rdp_file_set_string(file, name, value);
-}
-
-static BOOL freerdp_client_parse_rdp_file_option(rdpFile* file, const char* option)
-{
-	return freerdp_client_add_option(file, option);
-}
-
 BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, size_t size)
 {
 	return freerdp_client_parse_rdp_file_buffer_ex(file, buffer, size, nullptr);
@@ -882,19 +872,67 @@ static BOOL trim_strings(rdpFile* file)
 	return TRUE;
 }
 
+static BOOL parse_line(rdpFile* file, char* line, size_t length, rdp_file_fkt_parse parse)
+{
+	if (length <= 1)
+		return TRUE;
+
+	const char* beg = line;
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
+	if (beg[0] == '/')
+	{
+		if (!freerdp_client_add_option(file, line))
+			return FALSE;
+
+		return TRUE; /* FreeRDP option */
+	}
+#endif
+
+	char* d1 = strchr(line, ':');
+
+	if (!d1)
+		return TRUE; /* not first delimiter */
+
+	const char* type = &d1[1];
+	char* d2 = strchr(type, ':');
+
+	if (!d2)
+		return TRUE; /* no second delimiter */
+
+	if ((d2 - d1) != 2)
+		return TRUE; /* improper type length */
+
+	*d1 = 0;
+	*d2 = 0;
+	const char* name = beg;
+	const char* value = &d2[1];
+
+	if (parse && parse(file->context, name, *type, value))
+		return TRUE;
+
+	if (*type == 'i')
+	{
+		/* integer type */
+		return freerdp_client_parse_rdp_file_integer(file, name, value);
+	}
+	if (*type == 's')
+	{
+		/* string type */
+		return freerdp_client_rdp_file_set_string(file, name, value);
+	}
+	if (*type == 'b')
+	{
+		/* binary type */
+		WLog_ERR(TAG, "Unsupported RDP file binary option %s [value=%s]", name, value);
+	}
+
+	return TRUE;
+}
+
 BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, size_t size,
                                              rdp_file_fkt_parse parse)
 {
 	BOOL rc = FALSE;
-	size_t length = 0;
-	char* line = nullptr;
-	char* type = nullptr;
-	char* context = nullptr;
-	char* d1 = nullptr;
-	char* d2 = nullptr;
-	char* beg = nullptr;
-	char* name = nullptr;
-	char* value = nullptr;
 	char* copy = nullptr;
 
 	if (!file)
@@ -905,9 +943,8 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 	if ((buffer[0] == BOM_UTF16_LE[0]) && (buffer[1] == BOM_UTF16_LE[1]))
 	{
 		LPCWSTR uc = (LPCWSTR)(&buffer[2]);
-		size = size / sizeof(WCHAR) - 1;
-
-		copy = ConvertWCharNToUtf8Alloc(uc, size, nullptr);
+		const size_t charlen = size / sizeof(WCHAR) - 1;
+		copy = ConvertWCharNToUtf8Alloc(uc, charlen, &size);
 		if (!copy)
 		{
 			WLog_ERR(TAG, "Failed to convert RDP file from UCS2 to UTF8");
@@ -924,65 +961,16 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 		memcpy(copy, buffer, size);
 	}
 
-	line = strtok_s(copy, "\r\n", &context);
+	char* context = nullptr;
+	char* line = strtok_s(copy, "\r\n", &context);
 
 	while (line)
 	{
-		length = strnlen(line, size);
+		const size_t length = strnlen(line, size);
 
-		if (length > 1)
-		{
-			beg = line;
-			if (beg[0] == '/')
-			{
-				if (!freerdp_client_parse_rdp_file_option(file, line))
-					goto fail;
+		if (!parse_line(file, line, length, parse))
+			goto fail;
 
-				goto next_line; /* FreeRDP option */
-			}
-
-			d1 = strchr(line, ':');
-
-			if (!d1)
-				goto next_line; /* not first delimiter */
-
-			type = &d1[1];
-			d2 = strchr(type, ':');
-
-			if (!d2)
-				goto next_line; /* no second delimiter */
-
-			if ((d2 - d1) != 2)
-				goto next_line; /* improper type length */
-
-			*d1 = 0;
-			*d2 = 0;
-			name = beg;
-			value = &d2[1];
-
-			if (parse && parse(file->context, name, *type, value))
-			{
-			}
-			else if (*type == 'i')
-			{
-				/* integer type */
-				if (!freerdp_client_parse_rdp_file_integer(file, name, value))
-					goto fail;
-			}
-			else if (*type == 's')
-			{
-				/* string type */
-				if (!freerdp_client_parse_rdp_file_string(file, name, value))
-					goto fail;
-			}
-			else if (*type == 'b')
-			{
-				/* binary type */
-				WLog_ERR(TAG, "Unsupported RDP file binary option %s [value=%s]", name, value);
-			}
-		}
-
-	next_line:
 		line = strtok_s(nullptr, "\r\n", &context);
 	}
 
