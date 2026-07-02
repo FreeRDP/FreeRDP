@@ -37,6 +37,7 @@ set(CMAKE_INSTALL_LIBDIR ".")
 
 # Module path for our cmake helpers
 list(APPEND CMAKE_MODULE_PATH "${FREERDP_SOURCE_DIR}/client/Android/cmake")
+list(APPEND CMAKE_MODULE_PATH "${FREERDP_SOURCE_DIR}/cmake")
 
 include(AndroidHelpers)
 detect_ndk_root(NDK_ROOT)
