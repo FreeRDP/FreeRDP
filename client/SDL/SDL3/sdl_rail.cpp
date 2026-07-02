@@ -250,6 +250,7 @@ bool SdlRail::init(RailClientContext* rail)
 	rail->ServerExecuteResult = SdlRail::server_execute_result;
 	/* ServerSystemParam: TODO apply the workarea (SPI_SET_WORK_AREA) to maximize bounds. */
 	rail->ServerLocalMoveSize = SdlRail::server_local_move_size;
+	rail->ServerMinMaxInfo = SdlRail::server_min_max_info;
 	/* Keep default ServerHandshake. */
 
 	WLog_INFO(TAG, "RAIL channel initialized");
@@ -476,6 +477,29 @@ void SdlRail::completeLocalMoveIfPending()
 	move.bottom = WINPR_ASSERTING_INT_CAST(INT16, y + h + m.h);
 	if (_rail && _rail->ClientWindowMove)
 		(void)_rail->ClientWindowMove(_rail, &move);
+}
+
+UINT SdlRail::server_min_max_info(RailClientContext* context,
+                                  const RAIL_MINMAXINFO_ORDER* minMaxInfo)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(minMaxInfo);
+	auto rail = static_cast<SdlRail*>(context->custom);
+	WINPR_ASSERT(rail);
+
+	std::unique_lock lock(rail->_windowsLock);
+	auto appWindow = rail->getWindow(minMaxInfo->windowId);
+	if (appWindow)
+	{
+		WLog_VRB(TAG, "server minmax id=0x%08" PRIx32 " min=%dx%d max=%dx%d", minMaxInfo->windowId,
+		         minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight, minMaxInfo->maxTrackWidth,
+		         minMaxInfo->maxTrackHeight);
+		appWindow->setMinMaxSize({ minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight },
+		                         { minMaxInfo->maxTrackWidth, minMaxInfo->maxTrackHeight });
+		lock.unlock();
+		(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
+	}
+	return CHANNEL_RC_OK;
 }
 
 /* --- window order callbacks --- */

@@ -99,6 +99,8 @@ class SdlRail
 	                                  const RAIL_EXEC_RESULT_ORDER* execResult);
 	static UINT server_local_move_size(RailClientContext* context,
 	                                   const RAIL_LOCALMOVESIZE_ORDER* localMoveSize);
+	static UINT server_min_max_info(RailClientContext* context,
+	                                const RAIL_MINMAXINFO_ORDER* minMaxInfo);
 
 	/* --- window order callbacks (registered on rdpUpdate::window) --- */
 	void registerUpdateCallbacks(rdpUpdate* update);

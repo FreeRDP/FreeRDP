@@ -64,6 +64,9 @@ class SdlRailWindow
 	/* Visible sub-rects (window-relative); only these are painted so windows on top don't bleed. */
 	void setVisibilityRects(std::vector<SDL_Rect> rects);
 
+	/* Server min/max tracking size (RAIL MinMaxInfo); applied in reconcile. */
+	void setMinMaxSize(SDL_Point minSize, SDL_Point maxSize);
+
 	/* Server's outside resize band: ClientWindowMove reports the outer rect to prevent shrinking. */
 	void setResizeMargins(int left, int top, int right, int bottom);
 	[[nodiscard]] SDL_Rect resizeMargins() const; /* x=left y=top w=right h=bottom */
@@ -104,6 +107,9 @@ class SdlRailWindow
 	uint32_t _style = 0;
 	uint64_t _ownerId = 0;
 	SDL_Rect _resizeMargins = { 0, 0, 0, 0 }; /* x=left y=top w=right h=bottom */
+	SDL_Point _minSize = { 0, 0 };
+	SDL_Point _maxSize = { 0, 0 };
+	bool _minMaxDirty = false;
 	bool _isPopup = false;
 	bool _layered = false;         /* WS_EX_LAYERED shadow/glass decoration: never rendered */
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */
