@@ -51,7 +51,47 @@ set(SRCS
     sdl_rail.cpp
     sdl_rail_window.hpp
     sdl_rail_window.cpp
+    sdl_wayland.hpp
+    sdl_wayland.cpp
+    sdl_x11.hpp
+    sdl_x11.cpp
 )
+
+# Native X11 helpers for RAIL (_NET_WM_MOVERESIZE, compositor detection); no-op stubs without libX11.
+set(SDL_X11_NATIVE OFF)
+if(NOT WIN32 AND NOT APPLE)
+  find_package(X11 QUIET)
+  if(X11_FOUND)
+    set(SDL_X11_NATIVE ON)
+  endif()
+endif()
+
+# Native Wayland helpers for RAIL (xdg_toplevel.move/resize); no-op stubs without wayland-client.
+set(SDL_WAYLAND_NATIVE OFF)
+if(NOT WIN32 AND NOT APPLE)
+  find_package(PkgConfig QUIET)
+  if(PkgConfig_FOUND)
+    pkg_check_modules(WAYLAND_CLIENT QUIET wayland-client)
+  endif()
+  find_program(WAYLAND_SCANNER_BIN wayland-scanner)
+  set(XDG_SHELL_XML ${CMAKE_SOURCE_DIR}/uwac/protocols/xdg-shell.xml)
+  if(WAYLAND_CLIENT_FOUND AND WAYLAND_SCANNER_BIN AND EXISTS ${XDG_SHELL_XML})
+    set(SDL_WAYLAND_NATIVE ON)
+    add_custom_command(
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-client-protocol.h
+      COMMAND ${WAYLAND_SCANNER_BIN} client-header ${XDG_SHELL_XML}
+              ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-client-protocol.h DEPENDS ${XDG_SHELL_XML}
+    )
+    add_custom_command(
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-protocol.c
+      COMMAND ${WAYLAND_SCANNER_BIN} private-code ${XDG_SHELL_XML} ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-protocol.c
+      DEPENDS ${XDG_SHELL_XML}
+    )
+    list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-client-protocol.h
+         ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-protocol.c
+    )
+  endif()
+endif()
 
 add_win_console_manifest(SRCS)
 
@@ -78,6 +118,18 @@ set_target_properties(SDL3::Headers PROPERTIES SYSTEM TRUE)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 addtargetwithresourcefile(${MODULE_NAME} "${WIN32_GUI_FLAG}" "${PROJECT_VERSION}" SRCS)
+
+if(SDL_WAYLAND_NATIVE)
+  target_compile_definitions(${MODULE_NAME} PRIVATE WITH_SDL_WAYLAND_NATIVE)
+  target_include_directories(${MODULE_NAME} PRIVATE ${WAYLAND_CLIENT_INCLUDE_DIRS})
+  list(APPEND LIBS ${WAYLAND_CLIENT_LIBRARIES})
+endif()
+
+if(SDL_X11_NATIVE)
+  target_compile_definitions(${MODULE_NAME} PRIVATE WITH_SDL_X11_NATIVE)
+  target_include_directories(${MODULE_NAME} PRIVATE ${X11_INCLUDE_DIR})
+  list(APPEND LIBS ${X11_LIBRARIES})
+endif()
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 

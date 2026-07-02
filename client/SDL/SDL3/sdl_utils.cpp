@@ -136,6 +136,11 @@ bool sdl_push_user_event(Uint32 type, ...)
 			event->data1 = va_arg(ap, void*);
 			event->code = va_arg(ap, int);
 			break;
+		case SDL_EVENT_USER_RAIL_MOVE:
+			event->data1 = reinterpret_cast<void*>(static_cast<uintptr_t>(va_arg(ap, UINT32)));
+			event->data2 = reinterpret_cast<void*>(static_cast<uintptr_t>(va_arg(ap, UINT32)));
+			event->code = va_arg(ap, int); /* RAIL_WMSZ_* move/resize type */
+			break;
 		case SDL_EVENT_USER_WINDOW_MINIMIZE:
 		case SDL_EVENT_USER_QUIT:
 		case SDL_EVENT_USER_POINTER_NULL:
@@ -447,6 +452,22 @@ namespace sdl::utils
 				return SCALE_MODE_WAYLAND;
 		}
 		return SCALE_MODE_INVALID;
+	}
+
+	static bool isVideoDriver(const char* name)
+	{
+		const auto driver = SDL_GetCurrentVideoDriver();
+		return driver && name && (strcmp(driver, name) == 0);
+	}
+
+	bool isWaylandDriver()
+	{
+		return isVideoDriver("wayland");
+	}
+
+	bool isX11Driver()
+	{
+		return isVideoDriver("x11");
 	}
 
 	std::string windowTitle(const rdpSettings* settings)
