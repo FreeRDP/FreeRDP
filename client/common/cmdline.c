@@ -5596,11 +5596,13 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			if (!freerdp_settings_set_string(settings, FreeRDP_ActionScript, arg->Value))
 				return fail_at(arg, COMMAND_LINE_ERROR_MEMORY);
 		}
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		CommandLineSwitchCase(arg, RDP2TCP_DVC_CHANNEL_NAME)
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_RDP2TCPArgs, arg->Value))
 				return fail_at(arg, COMMAND_LINE_ERROR_MEMORY);
 		}
+#endif
 		CommandLineSwitchCase(arg, "fipsmode")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_FIPSMode, enable))
@@ -6427,6 +6429,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		}
 	}
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	{
 		char* RDP2TCPArgs = freerdp_settings_get_string_writable(settings, FreeRDP_RDP2TCPArgs);
 		if (RDP2TCPArgs)
@@ -6436,6 +6439,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 				return FALSE;
 		}
 	}
+#endif
 
 	/* step 4: do the static channels loading and init */
 	for (UINT32 i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount); i++)
