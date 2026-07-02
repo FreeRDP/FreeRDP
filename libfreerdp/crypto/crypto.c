@@ -103,10 +103,13 @@ static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_le
 		goto fail;
 	if (BN_mod_exp(y, x, exp, mod, ctx) != 1)
 		goto fail;
-	output_length = BN_bn2bin(y, output);
+	{
+		const int len = BN_num_bytes(y);
+		if ((len < 0) || (WINPR_ASSERTING_INT_CAST(size_t, len) > out_length))
+			goto fail;
+		output_length = BN_bn2bin(y, output);
+	}
 	if (output_length < 0)
-		goto fail;
-	if (WINPR_ASSERTING_INT_CAST(size_t, output_length) > out_length)
 		goto fail;
 	crypto_reverse(output, WINPR_ASSERTING_INT_CAST(size_t, output_length));
 
