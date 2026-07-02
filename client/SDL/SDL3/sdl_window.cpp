@@ -47,6 +47,9 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 	if (flags & SDL_WINDOW_BORDERLESS)
 		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
 
+	if (flags & SDL_WINDOW_TRANSPARENT)
+		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_TRANSPARENT_BOOLEAN, true);
+
 	_window = SDL_CreateWindowWithProperties(props);
 	SDL_DestroyProperties(props);
 	SDL_SetHint(SDL_HINT_APP_NAME, "");
@@ -286,8 +289,20 @@ void SdlWindow::ensureRenderTarget()
 	_renderTarget =
 	    SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_TARGET, w, h);
 	if (!_renderTarget)
+	{
 		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_CreateTexture (render target): %s",
 		             SDL_GetError());
+		return;
+	}
+
+	/* Clear once: black, or transparent for per-pixel-alpha windows. */
+	if (SDL_SetRenderTarget(_renderer, _renderTarget))
+	{
+		const bool transparent = (SDL_GetWindowFlags(_window) & SDL_WINDOW_TRANSPARENT) != 0;
+		std::ignore =
+		    SDL_SetRenderDrawColor(_renderer, 0x00, 0x00, 0x00, transparent ? 0x00 : 0xff);
+		std::ignore = SDL_RenderClear(_renderer);
+	}
 }
 
 bool SdlWindow::drawRect(SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect)
@@ -494,6 +509,8 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 	if (!_renderer || !surface)
 		return false;
 
+	ensureRenderTarget();
+
 	/* Lazily create or recreate the persistent GDI texture */
 	if (!_gdiTexture || _gdiTextureW != surface->w || _gdiTextureH != surface->h)
 	{
@@ -576,6 +593,41 @@ SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 f
 	}
 
 	return window;
+}
+
+SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 flags,
+                            const SDL_Rect& rect)
+{
+	return SdlWindow{ id, title, rect, flags };
+}
+
+/* Popup constructor: positioned relative to the parent origin. */
+SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect)
+    : _initialW(rect.w), _initialH(rect.h)
+{
+	auto props = SDL_CreateProperties();
+	SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_PARENT_POINTER, parent);
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_MENU_BOOLEAN, true);
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN, false);
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, rect.x);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, rect.y);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, rect.w);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, rect.h);
+
+	_window = SDL_CreateWindowWithProperties(props);
+	SDL_DestroyProperties(props);
+	if (_window)
+	{
+		std::ignore = SDL_SyncWindow(_window);
+		_renderer = SDL_CreateRenderer(_window, nullptr);
+		_displayID = SDL_GetDisplayForWindow(_window);
+	}
+}
+
+SdlWindow SdlWindow::createPopup(SDL_Window* parent, const SDL_Rect& rect)
+{
+	return SdlWindow{ parent, rect };
 }
 
 static SDL_Window* createDummy(SDL_DisplayID id)

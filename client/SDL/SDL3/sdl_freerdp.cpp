@@ -674,7 +674,6 @@ int main(int argc, char* argv[])
 	if (!SDL_SetHint(SDL_HINT_MOUSE_DPI_SCALE_CURSORS, "1"))
 		return -1;
 #endif
-
 	/* Basic SDL initialization */
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
 		return -1;
