@@ -3,7 +3,6 @@ include(DepVersions)
 
 set(_ff_arch "arm64")
 
-# for simulator
 if(PLATFORM MATCHES "SIMULATOR")
   set(_ff_sdk "iphonesimulator")
   set(_ff_min "-mios-simulator-version-min=${DEPLOYMENT_TARGET}")
@@ -24,7 +23,6 @@ set(_ff_flags "-arch ${_ff_arch} ${_ff_min} -isysroot ${_ff_sysroot} ${_ff_tripl
 
 set(_ff_fw ${DEPS_INSTALL_DIR}/FFmpeg.framework)
 
-# Framework Info.plist
 file(
   WRITE ${CMAKE_BINARY_DIR}/FFmpeg-Info.plist
   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -48,18 +46,19 @@ ExternalProject_Add(
   ffmpeg
   PREFIX ${CMAKE_BINARY_DIR}/ffmpeg
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  # Keep sources in the build tree; ExternalProject must not write into client/iOS.
   SOURCE_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
-  URL https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz
+  URL https://github.com/FFmpeg/FFmpeg/archive/refs/tags/${FFMPEG_VERSION}.tar.gz
   URL_HASH ${FFMPEG_HASH}
   CONFIGURE_COMMAND
     <SOURCE_DIR>/configure --prefix=${DEPS_INSTALL_DIR} --enable-cross-compile --target-os=darwin --arch=${_ff_arch}
     --cc=clang --sysroot=${_ff_sysroot} "--extra-cflags=${_ff_flags}" "--extra-ldflags=${_ff_flags}" --disable-gpl
     --enable-static --disable-shared --enable-pic --disable-x86asm --disable-programs --disable-doc --disable-debug
     --disable-network --disable-autodetect --disable-everything --disable-avdevice --disable-avformat --disable-avfilter
-    --disable-swscale --disable-swresample --disable-postproc --enable-avcodec --enable-avutil --enable-decoder=h264
-    --enable-parser=h264 --enable-decoder=hevc --enable-parser=hevc --enable-videotoolbox
-    --enable-hwaccel=h264_videotoolbox --enable-hwaccel=hevc_videotoolbox
+    --disable-swscale --disable-swresample --enable-avcodec --enable-avutil --enable-decoder=h264 --enable-parser=h264
+    --enable-decoder=hevc --enable-parser=hevc --enable-videotoolbox --enable-hwaccel=h264_videotoolbox
+    --enable-hwaccel=hevc_videotoolbox
   BUILD_COMMAND make -j
   INSTALL_COMMAND make -j install
   COMMAND ${CMAKE_COMMAND} -E make_directory ${_ff_fw}/Headers

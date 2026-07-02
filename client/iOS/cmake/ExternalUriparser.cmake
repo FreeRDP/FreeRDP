@@ -1,0 +1,13 @@
+include(ExternalProject)
+include(DepVersions)
+
+ExternalProject_Add(
+  uriparser
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF
+  SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/uriparser
+  URL https://github.com/uriparser/uriparser/releases/download/uriparser-${URIPARSER_VERSION}/uriparser-${URIPARSER_VERSION}.tar.xz
+  URL_HASH ${URIPARSER_HASH}
+  CMAKE_ARGS ${IOS_CMAKE_ARGS} -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
+             -DCMAKE_INSTALL_LIBDIR:STRING=${CMAKE_INSTALL_LIBDIR} -DURIPARSER_BUILD_DOCS:BOOL=OFF
+             -DURIPARSER_BUILD_TESTS:BOOL=OFF -DURIPARSER_BUILD_TOOLS:BOOL=OFF
+)

@@ -28,21 +28,25 @@ Run the following commands in the top level FreeRDP directory:
 
 For a real iOS device (pass your signing team):
 
-cmake -S client/iOS/cmake -B build/ios.client.build \
-      -DCMAKE_TOOLCHAIN_FILE="$PWD/cmake/ios.toolchain.cmake" \
-      -DPLATFORM=OS64 -DDEPLOYMENT_TARGET=15.0 \
-      -DFREERDP_IOS_DEVELOPMENT_TEAM=XXXXXXXXXX
+cmake -S client/iOS -B build/ios.client.build \
+  -DCMAKE_TOOLCHAIN_FILE="$PWD/cmake/ios.toolchain.cmake" \
+  -DPLATFORM=OS64 \
+  -DDEPLOYMENT_TARGET=15.0 \
+  -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=XXXXXXXXXX \
+  -G Xcode
 cmake --build build/ios.client.build
 
 For the simulator (no signing team required):
 
-cmake -S client/iOS/cmake -B build/ios-sim.client.build \
+cmake -S client/iOS-B build/ios-sim.client.build \
       -DCMAKE_TOOLCHAIN_FILE="$PWD/cmake/ios.toolchain.cmake" \
-      -DPLATFORM=SIMULATORARM64 -DDEPLOYMENT_TARGET=15.0
+      -DPLATFORM=SIMULATORARM64 \
+      -DDEPLOYMENT_TARGET=15.0 \
+      -G Xcode
 cmake --build build/ios-sim.client.build
 
 The Xcode project is generated under the build directory, e.g.
-build/ios.client.build/freerdp/src/freerdp-build/FreeRDP.xcodeproj - open it to
+build/ios.client.build/ifreerdp/src/ifreerdp-build/iFreeRDP.xcodeproj - open it to
 build, sign or run the app from Xcode (set the Team under Signing & Capabilities
 if you did not pass FREERDP_IOS_DEVELOPMENT_TEAM).
 
@@ -51,7 +55,7 @@ Notes:
 * XCode, by default will build the application into its derived data location (usually in ~/Library/Developer/...).
 If you want to specify an output directory add CONFIGURATION_BUILD_DIR=<output-path-here> to the end of above command line.
 
-* If using XCode select the generated project, e.g. "open build/ios.client.build/freerdp/src/freerdp-build/FreeRDP.xcodeproj".
+* If using XCode select the generated project, e.g. "open build/ios.client.build/ifreerdp/src/ifreerdp-build/iFreeRDP.xcodeproj".
 
 * Use a separate build directory per platform (build/ios.client.build, build/ios-sim.client.build as shown
   above). That keeps the device and simulator CMake caches apart, so there is no
