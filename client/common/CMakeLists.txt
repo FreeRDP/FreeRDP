@@ -50,6 +50,11 @@ else()
   set(OPT_FUSE_DEFAULT OFF)
 endif()
 
+option(WITH_EMBEDDED_CLI_IN_RDP_FILES "[dangrous] allow embedded cli arguments in rdp files" OFF)
+if(WITH_EMBEDDED_CLI_IN_RDP_FILES)
+  add_compile_definitions(WITH_EMBEDDED_CLI_IN_RDP_FILES)
+endif()
+
 option(WITH_FUSE "Build clipboard with FUSE file copy support" ${OPT_FUSE_DEFAULT})
 if(WITH_FUSE)
   find_package(PkgConfig REQUIRED)

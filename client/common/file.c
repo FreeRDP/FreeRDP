@@ -27,6 +27,8 @@
 #include <winpr/file.h>
 #include <winpr/cast.h>
 
+#include <freerdp/utils/warnings.h>
+
 #include <freerdp/client.h>
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
@@ -879,13 +881,17 @@ static BOOL parse_line(rdpFile* file, char* line, size_t length, rdp_file_fkt_pa
 
 	const char* beg = line;
 #if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
+#if defined(WITH_EMBEDDED_CLI_IN_RDP_FILES)
 	if (beg[0] == '/')
 	{
+		freerdp_warn_deprecated(WLog_Get(TAG), "Parsing CLI options within an RDP file",
+		                        "Will be removed in FreeRDP 4.0");
 		if (!freerdp_client_add_option(file, line))
 			return FALSE;
 
 		return TRUE; /* FreeRDP option */
 	}
+#endif
 #endif
 
 	char* d1 = strchr(line, ':');
