@@ -62,7 +62,8 @@ extern "C"
 	 *  @return The native SCARDCONTEXT value.
 	 */
 	WINPR_ATTR_NODISCARD
-	FREERDP_API SCARDCONTEXT smartcard_scard_context_native_from_redir(REDIR_SCARDCONTEXT* context);
+	FREERDP_API SCARDCONTEXT
+	smartcard_scard_context_native_from_redir(const REDIR_SCARDCONTEXT* context);
 
 	/** @brief Convert a native SCARDCONTEXT to a REDIR_SCARDCONTEXT.
 	 *  @param context  [out] The redirected context to populate.
@@ -76,7 +77,8 @@ extern "C"
 	 *  @return The native SCARDHANDLE value.
 	 */
 	WINPR_ATTR_NODISCARD
-	FREERDP_API SCARDHANDLE smartcard_scard_handle_native_from_redir(REDIR_SCARDHANDLE* handle);
+	FREERDP_API SCARDHANDLE
+	smartcard_scard_handle_native_from_redir(const REDIR_SCARDHANDLE* handle);
 
 	/** @brief Convert a native SCARDHANDLE to a REDIR_SCARDHANDLE.
 	 *  @param handle [out] The redirected handle to populate.
