@@ -123,7 +123,9 @@ static BOOL update_gdi_cache_bitmap(rdpContext* context, const CACHE_BITMAP_ORDE
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex);
 	Bitmap_Free(context, prevBitmap);
-	return bitmap_cache_put(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex, bitmap);
+	if (!bitmap_cache_put(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex, bitmap))
+		goto fail;
+	return TRUE;
 
 fail:
 	Bitmap_Free(context, bitmap);
@@ -166,8 +168,9 @@ static BOOL update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDE
 		goto fail;
 
 	Bitmap_Free(context, prevBitmap);
-	return bitmap_cache_put(cache->bitmap, cacheBitmapV2->cacheId, cacheBitmapV2->cacheIndex,
-	                        bitmap);
+	if (!bitmap_cache_put(cache->bitmap, cacheBitmapV2->cacheId, cacheBitmapV2->cacheIndex, bitmap))
+		goto fail;
+	return TRUE;
 
 fail:
 	Bitmap_Free(context, bitmap);
@@ -209,8 +212,9 @@ static BOOL update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDE
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmapV3->cacheId, cacheBitmapV3->cacheIndex);
 	Bitmap_Free(context, prevBitmap);
-	return bitmap_cache_put(cache->bitmap, cacheBitmapV3->cacheId, cacheBitmapV3->cacheIndex,
-	                        bitmap);
+	if (!bitmap_cache_put(cache->bitmap, cacheBitmapV3->cacheId, cacheBitmapV3->cacheIndex, bitmap))
+		goto fail;
+	return TRUE;
 
 fail:
 	Bitmap_Free(context, bitmap);
@@ -243,6 +247,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index
 
 BOOL bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index, rdpBitmap* bitmap)
 {
+	WINPR_ASSERT(bitmapCache);
 	if (id > bitmapCache->maxCells)
 	{
 		WLog_ERR(TAG, "put invalid bitmap cell id: %" PRIu32 "", id);
