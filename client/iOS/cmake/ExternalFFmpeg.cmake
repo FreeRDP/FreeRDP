@@ -47,9 +47,4 @@ ExternalProject_Add(
     --enable-hwaccel=hevc_videotoolbox --libdir=${CMAKE_INSTALL_LIBDIR}
   BUILD_COMMAND make -j
   INSTALL_COMMAND make -j install
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${_ff_fw}/Headers
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_INSTALL_DIR}/include/libavcodec ${_ff_fw}/Headers/libavcodec
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPS_INSTALL_DIR}/include/libavutil ${_ff_fw}/Headers/libavutil
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/FFmpeg-Info.plist ${_ff_fw}/Info.plist
-  BUILD_BYPRODUCTS ${_ff_fw}/FFmpeg
 )
