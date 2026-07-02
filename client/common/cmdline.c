@@ -57,6 +57,8 @@
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/locale/locale.h>
 
+#include <freerdp/utils/warnings.h>
+
 #if defined(CHANNEL_AINPUT_CLIENT)
 #include <freerdp/channels/ainput.h>
 #endif
@@ -5596,11 +5598,13 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			if (!freerdp_settings_set_string(settings, FreeRDP_ActionScript, arg->Value))
 				return fail_at(arg, COMMAND_LINE_ERROR_MEMORY);
 		}
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		CommandLineSwitchCase(arg, RDP2TCP_DVC_CHANNEL_NAME)
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_RDP2TCPArgs, arg->Value))
 				return fail_at(arg, COMMAND_LINE_ERROR_MEMORY);
 		}
+#endif
 		CommandLineSwitchCase(arg, "fipsmode")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_FIPSMode, enable))
@@ -6427,6 +6431,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		}
 	}
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	{
 		char* RDP2TCPArgs = freerdp_settings_get_string_writable(settings, FreeRDP_RDP2TCPArgs);
 		if (RDP2TCPArgs)
@@ -6436,6 +6441,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 				return FALSE;
 		}
 	}
+#endif
 
 	/* step 4: do the static channels loading and init */
 	for (UINT32 i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount); i++)
@@ -6466,71 +6472,27 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 void freerdp_client_warn_unmaintained(int argc, char* argv[])
 {
 	const char* app = (argc > 0) ? argv[0] : "INVALID_ARGV";
-	const DWORD log_level = WLOG_WARN;
 	wLog* log = WLog_Get(TAG);
 	WINPR_ASSERT(log);
 
-	if (!WLog_IsLevelActive(log, log_level))
-		return;
-
-	WLog_Print_unchecked(log, log_level, "[unmaintained] %s client is currently unmaintained!",
-	                     app);
-	WLog_Print_unchecked(
-	    log, log_level,
-	    " If problems occur please check https://github.com/FreeRDP/FreeRDP/issues for "
-	    "known issues!");
-	WLog_Print_unchecked(
-	    log, log_level,
-	    "Be prepared to fix issues yourself though as nobody is actively working on this.");
-	WLog_Print_unchecked(
-	    log, log_level,
-	    " Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
-	    "- don't hesitate to ask some questions. (replies might take some time depending "
-	    "on your timezone) - if you intend using this component write us a message");
+	freerdp_warn_unmaintained(log, "%s client", app);
 }
 
 void freerdp_client_warn_experimental(int argc, char* argv[])
 {
 	const char* app = (argc > 0) ? argv[0] : "INVALID_ARGV";
-	const DWORD log_level = WLOG_WARN;
 	wLog* log = WLog_Get(TAG);
 	WINPR_ASSERT(log);
 
-	if (!WLog_IsLevelActive(log, log_level))
-		return;
-
-	WLog_Print_unchecked(log, log_level, "[experimental] %s client is currently experimental!",
-	                     app);
-	WLog_Print_unchecked(
-	    log, log_level,
-	    " If problems occur please check https://github.com/FreeRDP/FreeRDP/issues for "
-	    "known issues or create a new one!");
-	WLog_Print_unchecked(
-	    log, log_level,
-	    " Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
-	    "- don't hesitate to ask some questions. (replies might take some time depending "
-	    "on your timezone)");
+	freerdp_warn_experimental(log, "%s client", app);
 }
 
 void freerdp_client_warn_deprecated(int argc, char* argv[])
 {
 	const char* app = (argc > 0) ? argv[0] : "INVALID_ARGV";
-	const DWORD log_level = WLOG_WARN;
 	wLog* log = WLog_Get(TAG);
 	WINPR_ASSERT(log);
 
-	if (!WLog_IsLevelActive(log, log_level))
-		return;
-
-	WLog_Print_unchecked(log, log_level, "[deprecated] %s client has been deprecated", app);
-	WLog_Print_unchecked(log, log_level, "As replacement there is a SDL3 based client available.");
-	WLog_Print_unchecked(
-	    log, log_level,
-	    "If you are interested in keeping %s alive get in touch with the developers", app);
-	WLog_Print_unchecked(
-	    log, log_level,
-	    "The project is hosted at https://github.com/freerdp/freerdp and "
-	    " developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
-	    "- don't hesitate to ask some questions. (replies might take some time depending "
-	    "on your timezone)");
+	freerdp_warn_deprecated(log, "%s client",
+	                        "As replacement there is a SDL3 based client available.", app);
 }
