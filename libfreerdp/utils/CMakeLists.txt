@@ -27,6 +27,7 @@ set(${MODULE_PREFIX}_SRCS
     rdpdr_utils.c
     pcap.c
     profiler.c
+    warnings.c
     ringbuffer.c
     platform_signal.h
     signal.c
