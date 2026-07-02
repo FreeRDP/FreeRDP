@@ -1060,6 +1060,11 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 
 	xf_FixWindowCoordinates(xfc, &appWindow->x, &appWindow->y, &appWindow->width,
 	                        &appWindow->height);
+
+	/* Translate RDP virtual desktop coordinates to X11 root coordinates */
+	appWindow->x += freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftX);
+	appWindow->y += freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftY);
+
 	appWindow->shmid = -1;
 	appWindow->decorations = FALSE;
 	appWindow->fullscreen = FALSE;
@@ -1219,8 +1224,14 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 	if (appWindow->local_move.state == LMS_STARTING || appWindow->local_move.state == LMS_ACTIVE)
 		return;
 
-	appWindow->x = x;
-	appWindow->y = y;
+	/* The caller passes RDP virtual desktop coordinates (primary at 0,0).
+	 * Translate to X11 root coordinates by adding MonitorLocalShift. */
+	const rdpSettings* settings = xfc->common.context.settings;
+	const int sx = x + freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftX);
+	const int sy = y + freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftY);
+
+	appWindow->x = sx;
+	appWindow->y = sy;
 	appWindow->width = width;
 	appWindow->height = height;
 
@@ -1229,12 +1240,12 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 		if (!xf_AppWindowResize(xfc, appWindow))
 			return;
 
-		LogDynAndXMoveResizeWindow(xfc->log, xfc->display, appWindow->handle, x, y,
+		LogDynAndXMoveResizeWindow(xfc->log, xfc->display, appWindow->handle, sx, sy,
 		                           WINPR_ASSERTING_INT_CAST(uint32_t, width),
 		                           WINPR_ASSERTING_INT_CAST(uint32_t, height));
 	}
 	else
-		LogDynAndXMoveWindow(xfc->log, xfc->display, appWindow->handle, x, y);
+		LogDynAndXMoveWindow(xfc->log, xfc->display, appWindow->handle, sx, sy);
 
 	xf_UpdateWindowArea(xfc, appWindow, 0, 0, width, height);
 }
