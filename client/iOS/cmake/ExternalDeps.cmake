@@ -13,7 +13,7 @@ option(WITH_OPUS "Build Opus audio codec" ON)
 option(WITH_PNG "Build libpng image support" ON)
 option(WITH_WEBP "Build libwebp image support" ON)
 option(WITH_JPEG "Build libjpeg-turbo image support" ON)
-option(WITH_URIPARSER "Build uriparser support" OFF)
+option(WITH_URIPARSER "Build uriparser support" ON)
 
 get_filename_component(_toolchain_abs "${CMAKE_TOOLCHAIN_FILE}" ABSOLUTE BASE_DIR "${CMAKE_BINARY_DIR}")
 
