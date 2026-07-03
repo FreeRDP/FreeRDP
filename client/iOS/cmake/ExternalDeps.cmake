@@ -7,7 +7,7 @@ list(APPEND CMAKE_PREFIX_PATH ${DEPS_INSTALL_DIR})
 
 option(WITH_OPENSSL "Build and enable OpenSSL" ON)
 option(WITH_FFMPEG "Build and enable FFmpeg codec support" ON)
-option(WITH_OPENH264 "Build and enable OpenH264 codec support" OFF)
+option(WITH_OPENH264 "Build and enable OpenH264 codec support" ON)
 option(WITH_CJSON "Build cJSON for Azure AD (AAD) support" ON)
 option(WITH_OPUS "Build Opus audio codec" ON)
 option(WITH_PNG "Build libpng image support" ON)
