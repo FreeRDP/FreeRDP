@@ -198,8 +198,17 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE)
 		return FALSE;
 
+	/* Convert X11 root coordinates back to RDP virtual desktop coordinates
+	 * by subtracting MonitorLocalShift before comparing/sending to server */
+	const rdpSettings* settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+	const INT32 rdpX =
+	    appWindow->x - freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftX);
+	const INT32 rdpY =
+	    appWindow->y - freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftY);
+
 	/* If current window position disagrees with RDP window position, send update to RDP server */
-	if (appWindow->x != appWindow->windowOffsetX || appWindow->y != appWindow->windowOffsetY ||
+	if (rdpX != appWindow->windowOffsetX || rdpY != appWindow->windowOffsetY ||
 	    appWindow->width != (INT64)appWindow->windowWidth ||
 	    appWindow->height != (INT64)appWindow->windowHeight)
 	{
@@ -213,11 +222,10 @@ BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		const INT16 right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginRight);
 		const INT16 top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginTop);
 		const INT16 bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginBottom);
-		windowMove.left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x - left);
-		windowMove.top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y - top);
-		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + appWindow->width + right);
-		windowMove.bottom =
-		    WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + appWindow->height + bottom);
+		windowMove.left = WINPR_ASSERTING_INT_CAST(INT16, rdpX - left);
+		windowMove.top = WINPR_ASSERTING_INT_CAST(INT16, rdpY - top);
+		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, rdpX + appWindow->width + right);
+		windowMove.bottom = WINPR_ASSERTING_INT_CAST(INT16, rdpY + appWindow->height + bottom);
 		const UINT rc = xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
 		return rc == CHANNEL_RC_OK;
 	}
@@ -236,6 +244,9 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
+
+	const rdpSettings* settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 
 	if ((appWindow->local_move.direction == NET_WM_MOVERESIZE_MOVE_KEYBOARD) ||
 	    (appWindow->local_move.direction == NET_WM_MOVERESIZE_SIZE_KEYBOARD))
@@ -258,11 +269,16 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 		const INT16 bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->resizeMarginBottom);
 		const INT16 w = WINPR_ASSERTING_INT_CAST(INT16, appWindow->width + right);
 		const INT16 h = WINPR_ASSERTING_INT_CAST(INT16, appWindow->height + bottom);
-		windowMove.left = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x - left);
-		windowMove.top = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y - top);
-		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, appWindow->x + w); /* In the update to
+		/* Convert X11 root coordinates to RDP virtual desktop coordinates */
+		const INT32 rdpX =
+		    appWindow->x - freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftX);
+		const INT32 rdpY =
+		    appWindow->y - freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftY);
+		windowMove.left = WINPR_ASSERTING_INT_CAST(INT16, rdpX - left);
+		windowMove.top = WINPR_ASSERTING_INT_CAST(INT16, rdpY - top);
+		windowMove.right = WINPR_ASSERTING_INT_CAST(INT16, rdpX + w); /* In the update to
 		           RDP the position is one past the window */
-		windowMove.bottom = WINPR_ASSERTING_INT_CAST(INT16, appWindow->y + h);
+		windowMove.bottom = WINPR_ASSERTING_INT_CAST(INT16, rdpY + h);
 		const UINT rc = xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
 		if (rc != CHANNEL_RC_OK)
 			return FALSE;
@@ -287,8 +303,11 @@ BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 * we can start to receive GDI orders for the new window dimensions before we
 	 * receive the RAIL ORDER for the new window size.  This avoids that race condition.
 	 */
-	appWindow->windowOffsetX = appWindow->x;
-	appWindow->windowOffsetY = appWindow->y;
+	/* Convert X11 root coordinates back to RDP before storing as windowOffset */
+	appWindow->windowOffsetX =
+	    appWindow->x - freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftX);
+	appWindow->windowOffsetY =
+	    appWindow->y - freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftY);
 	appWindow->windowWidth = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width);
 	appWindow->windowHeight = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->height);
 	appWindow->local_move.state = LMS_TERMINATING;
@@ -304,11 +323,14 @@ BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* 
 	if (!appWindow)
 		return FALSE;
 
+	/* Use RDP virtual desktop coordinates for GDI framebuffer intersection */
 	const RECTANGLE_16 windowRect = {
-		.left = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->x, 0)),
-		.top = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->y, 0)),
-		.right = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->x + appWindow->width, 0)),
-		.bottom = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->y + appWindow->height, 0))
+		.left = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->windowOffsetX, 0)),
+		.top = WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->windowOffsetY, 0)),
+		.right =
+		    WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->windowOffsetX + appWindow->width, 0)),
+		.bottom =
+		    WINPR_ASSERTING_INT_CAST(UINT16, MAX(appWindow->windowOffsetY + appWindow->height, 0))
 	};
 
 	REGION16 windowInvalidRegion = WINPR_C_ARRAY_INIT;
@@ -323,10 +345,10 @@ BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* 
 		const RECTANGLE_16* extents = region16_extents(&windowInvalidRegion);
 
 		const RECTANGLE_16 updateRect = {
-			.left = WINPR_ASSERTING_INT_CAST(UINT16, extents->left - appWindow->x),
-			.top = WINPR_ASSERTING_INT_CAST(UINT16, extents->top - appWindow->y),
-			.right = WINPR_ASSERTING_INT_CAST(UINT16, extents->right - appWindow->x),
-			.bottom = WINPR_ASSERTING_INT_CAST(UINT16, extents->bottom - appWindow->y)
+			.left = WINPR_ASSERTING_INT_CAST(UINT16, extents->left - appWindow->windowOffsetX),
+			.top = WINPR_ASSERTING_INT_CAST(UINT16, extents->top - appWindow->windowOffsetY),
+			.right = WINPR_ASSERTING_INT_CAST(UINT16, extents->right - appWindow->windowOffsetX),
+			.bottom = WINPR_ASSERTING_INT_CAST(UINT16, extents->bottom - appWindow->windowOffsetY)
 		};
 
 		xf_UpdateWindowArea(xfc, appWindow, updateRect.left, updateRect.top,
@@ -641,9 +663,14 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		 */
 		if (appWindow->rail_state != WINDOW_SHOW_MINIMIZED)
 		{
+			/* Compare X11 position with RDP position + MonitorLocalShift */
+			const rdpSettings* s = xfc->common.context.settings;
+			const INT64 expectedX = (INT64)appWindow->windowOffsetX +
+			                        freerdp_settings_get_int32(s, FreeRDP_MonitorLocalShiftX);
+			const INT64 expectedY = (INT64)appWindow->windowOffsetY +
+			                        freerdp_settings_get_int32(s, FreeRDP_MonitorLocalShiftY);
 			/* Redraw window area if already in the correct position */
-			if (appWindow->x == (INT64)appWindow->windowOffsetX &&
-			    appWindow->y == (INT64)appWindow->windowOffsetY &&
+			if (appWindow->x == expectedX && appWindow->y == expectedY &&
 			    appWindow->width == (INT64)appWindow->windowWidth &&
 			    appWindow->height == (INT64)appWindow->windowHeight)
 			{
