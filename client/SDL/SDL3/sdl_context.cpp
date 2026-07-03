@@ -1133,6 +1133,21 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					if (!_rail.suppressServerInput(ev.windowID))
 						_rail.invalidateWindow(ev.windowID);
 					return true;
+				case SDL_EVENT_WINDOW_MAXIMIZED:
+					/* Maximize must complete move first. */
+					_rail.completeLocalMoveIfPending();
+					_rail.handleMaximized(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_MINIMIZED:
+					_rail.handleMinimized(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_RESTORED:
+					_rail.handleRestored(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+					/* Send SC_CLOSE, don't abort the session. */
+					_rail.handleClose(ev.windowID);
+					return true;
 				case SDL_EVENT_WINDOW_FOCUS_GAINED:
 					_rail.handleFocus(ev.windowID, true);
 					return true;

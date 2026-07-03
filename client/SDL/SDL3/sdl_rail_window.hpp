@@ -101,6 +101,29 @@ class SdlRailWindow
 	/* Mark the whole window dirty for re-blit (e.g. on expose). */
 	void invalidateAll();
 
+	/* Maximize/minimize sync: local state (rail) vs server-reported state (RDP thread). */
+	[[nodiscard]] bool railMaximized() const
+	{
+		return _maxState.rail;
+	}
+	void setRailMaximized(bool m)
+	{
+		_maxState.rail = m;
+	}
+	void setServerMaximized(bool m);
+	[[nodiscard]] bool railMinimized() const
+	{
+		return _minState.rail;
+	}
+	void setRailMinimized(bool m)
+	{
+		std::unique_lock lock(_gfxLock);
+		_minState.rail = m;
+	}
+	void setServerMinimized(bool m);
+	/* Local or live-WM maximized (railMaximized may lag the SDL flag during a snap). */
+	[[nodiscard]] bool effectivelyMaximized() const;
+
 	/* Create/move/show the local SDL window to match pending state; popups use parent+rect. */
 	bool reconcile(SDL_Window* parent, const SDL_Rect& parentRect);
 	/* Render: GFX surface if mapped, else the shared desktop region. `damage` = updated rects. */
@@ -108,6 +131,16 @@ class SdlRailWindow
 	           const std::vector<SDL_Rect>& damage, SDL_Window* parent, const SDL_Rect& parentRect);
 
   private:
+	/* One maximize/minimize state pair: local (sent to server), server-reported, pending apply. */
+	struct StateSync
+	{
+		bool rail = false;
+		bool server = false;
+		bool dirty = false;
+	};
+	void setServerState(StateSync& s, bool m);
+	/* Caller holds _gfxLock and checked _win. */
+	void applyServerState(StateSync& s, const char* what, bool (*enter)(SDL_Window*));
 	[[nodiscard]] bool styleResizable() const; /* caller holds _gfxLock */
 	bool create(SDL_Window* parent, const SDL_Rect& parentRect);
 	bool paintGfx(SDL_PixelFormat format);
@@ -126,6 +159,8 @@ class SdlRailWindow
 	bool _layered = false;         /* WS_EX_LAYERED shadow/glass decoration: never rendered */
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */
 	bool _parentApplied = false;   /* transient-for owner set once (owned non-popup dialogs) */
+	StateSync _maxState;           /* maximize sync */
+	StateSync _minState;           /* minimize sync */
 	std::string _title = "RdpRailWindow";
 	bool _visible = false;
 	bool _geometryDirty = true;

@@ -92,6 +92,82 @@ void SdlRail::invalidateWindow(SDL_WindowID id)
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
 
+/* Caller holds _windowsLock. */
+void SdlRail::sendSystemCommand(SdlRailWindow* appWindow, uint16_t command)
+{
+	if (!_rail || !_rail->ClientSystemCommand)
+		return;
+	RAIL_SYSCOMMAND_ORDER syscommand = {};
+	syscommand.windowId = static_cast<UINT32>(appWindow->id());
+	syscommand.command = command;
+	std::ignore = _rail->ClientSystemCommand(_rail, &syscommand);
+}
+
+void SdlRail::handleMaximized(SDL_WindowID id)
+{
+	std::unique_lock lock(_windowsLock);
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || appWindow->isPopup() || !appWindow->window())
+		return;
+	/* Skip the echo of reconcile's own SDL_MaximizeWindow (railMaximized already set). */
+	if (appWindow->railMaximized())
+		return;
+	appWindow->setRailMaximized(true);
+	WLog_DBG(TAG, "local maximize id=0x%08" PRIx32 " -> SC_MAXIMIZE",
+	         static_cast<UINT32>(appWindow->id()));
+	/* Force full repaint (skips dirty-rect). */
+	appWindow->invalidateAll();
+	sendSystemCommand(appWindow, SC_MAXIMIZE);
+	lock.unlock();
+	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
+}
+
+void SdlRail::handleMinimized(SDL_WindowID id)
+{
+	std::unique_lock lock(_windowsLock);
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || appWindow->isPopup() || !appWindow->window())
+		return;
+	if (appWindow->railMinimized())
+		return; /* echo of reconcile's own SDL_MinimizeWindow */
+	appWindow->setRailMinimized(true);
+	WLog_DBG(TAG, "local minimize id=0x%08" PRIx32 " -> SC_MINIMIZE",
+	         static_cast<UINT32>(appWindow->id()));
+	sendSystemCommand(appWindow, SC_MINIMIZE);
+}
+
+void SdlRail::handleClose(SDL_WindowID id)
+{
+	std::unique_lock lock(_windowsLock);
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || !appWindow->window())
+		return;
+	WLog_DBG(TAG, "local close id=0x%08" PRIx32 " -> SC_CLOSE",
+	         static_cast<UINT32>(appWindow->id()));
+	sendSystemCommand(appWindow, SC_CLOSE);
+}
+
+void SdlRail::handleRestored(SDL_WindowID id)
+{
+	std::unique_lock lock(_windowsLock);
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || appWindow->isPopup() || !appWindow->window())
+		return;
+	/* Resolve which state a RESTORED event ends; both clear = echo of our own restore, skip. */
+	if (appWindow->railMinimized())
+		appWindow->setRailMinimized(false);
+	else if (appWindow->railMaximized())
+		appWindow->setRailMaximized(false);
+	else
+		return;
+	WLog_DBG(TAG, "local restore id=0x%08" PRIx32 " -> SC_RESTORE",
+	         static_cast<UINT32>(appWindow->id()));
+	appWindow->invalidateAll();
+	sendSystemCommand(appWindow, SC_RESTORE);
+	lock.unlock();
+	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
+}
+
 void SdlRail::handleFocus(SDL_WindowID id, bool gained)
 {
 	std::unique_lock lock(_windowsLock);
@@ -134,6 +210,17 @@ bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
 
 SdlRailWindow* SdlRail::addWindow(uint64_t id, const SDL_Rect& rect)
 {
+	/* An id recreated before paint could erase its deleted entry would otherwise inherit that
+	 * entry's _deleted flag (emplace is a no-op on a live key) and vanish on the next drain. Move
+	 * the stale entry aside (node transfer keeps the non-movable object in place) so the fresh
+	 * window owns the id; the stale SDL window/band are freed on the main thread in paint. */
+	auto it = _windows.find(id);
+	if ((it != _windows.end()) && it->second.isDeleted())
+	{
+		WLog_DBG(TAG, "window recreate id=0x%08" PRIx32 " reused a deleted entry",
+		         static_cast<uint32_t>(id));
+		_deadWindows.insert(_windows.extract(it));
+	}
 	/* emplace is a no-op if the id already exists; either way first->second is the window. */
 	auto res = _windows.emplace(std::piecewise_construct, std::forward_as_tuple(id),
 	                            std::forward_as_tuple(id, rect));
@@ -161,6 +248,8 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 		else
 			++it;
 	}
+	/* Windows displaced by a same-id recreate (addWindow) also die here, on the main thread. */
+	_deadWindows.clear();
 
 	/* App windows first so popup parents exist before their popups. */
 	for (auto& it : _windows)
@@ -330,6 +419,7 @@ bool SdlRail::uninit(RailClientContext* /*rail*/)
 	std::unique_lock lock(_windowsLock);
 	WLog_DBG(TAG, "RAIL channel uninit, destroying %zu windows", _windows.size());
 	_windows.clear();
+	_deadWindows.clear();
 	_rail = nullptr;
 	return true;
 }
@@ -552,9 +642,8 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, SDL_Point pos, uint16_
 /* Caller holds _windowsLock. Report the final rect to the server and adopt it locally. */
 void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int h)
 {
-	/* Always report, even if barely changed: the server may have diverged before input suppression
-	 * engaged, and a no-op report is harmless. Add back the invisible resize margins (matches
-	 * xf_rail_end_local_move). */
+	/* Report outer frame to server (inflate by margins). */
+	const bool maximized = appWindow->effectivelyMaximized();
 	const SDL_Rect m = appWindow->resizeMargins();
 	RAIL_WINDOW_MOVE_ORDER move = {};
 	move.windowId = static_cast<UINT32>(appWindow->id());
@@ -562,12 +651,15 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 	move.top = WINPR_ASSERTING_INT_CAST(INT16, y - m.y);
 	move.right = WINPR_ASSERTING_INT_CAST(INT16, x + w + m.w);
 	move.bottom = WINPR_ASSERTING_INT_CAST(INT16, y + h + m.h);
-	if (_rail && _rail->ClientWindowMove &&
+	if (!maximized && _rail && _rail->ClientWindowMove &&
 	    (_rail->ClientWindowMove(_rail, &move) != CHANNEL_RC_OK))
 		WLog_WARN(TAG, "ClientWindowMove failed for RAIL window 0x%08" PRIx32, move.windowId);
 
 	/* Adopt WM final geometry and resume input routing. */
-	appWindow->adoptLocalGeometry({ x, y, w, h });
+	if (maximized)
+		appWindow->setLocalMoveActive(false); /* geometry is WM/server-owned while maximized */
+	else
+		appWindow->adoptLocalGeometry({ x, y, w, h });
 	/* Repaint now: the last presented frame may still be the resize placeholder. */
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
@@ -748,7 +840,28 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 		                    windowState->titleInfo.length);
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
+	{
+		WLog_DBG(TAG, "server showState id=0x%08" PRIx32 " state=0x%02" PRIx32, orderInfo->windowId,
+		         windowState->showState);
 		appWindow->setVisible(windowState->showState != WINDOW_HIDE);
+		/* Mirror server show-state locally. */
+		switch (windowState->showState)
+		{
+			case WINDOW_SHOW_MAXIMIZED:
+				appWindow->setServerMaximized(true);
+				appWindow->setServerMinimized(false);
+				break;
+			case WINDOW_SHOW_MINIMIZED:
+				appWindow->setServerMinimized(true);
+				break;
+			case WINDOW_SHOW:
+				appWindow->setServerMaximized(false);
+				appWindow->setServerMinimized(false);
+				break;
+			default:
+				break;
+		}
+	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{

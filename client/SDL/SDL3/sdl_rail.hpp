@@ -76,6 +76,12 @@ class SdlRail
 	[[nodiscard]] bool ownsWindow(SDL_WindowID id);
 	/* Mark a RAIL window fully dirty and request a repaint (e.g. on expose). */
 	void invalidateWindow(SDL_WindowID id);
+	/* Local maximize/minimize/restore (WM snap, taskbar): tell the server via ClientSystemCommand
+	 * so the window takes the real state. One RESTORED event ends either state. */
+	void handleMaximized(SDL_WindowID id);
+	void handleMinimized(SDL_WindowID id);
+	void handleRestored(SDL_WindowID id);
+	void handleClose(SDL_WindowID id);
 	/* Local focus change: send ClientActivate, like xf FocusIn/FocusOut. */
 	void handleFocus(SDL_WindowID id, bool gained);
 	/* Rewrite window-local (x,y) to server-absolute; false if id is not a RAIL window. */
@@ -109,6 +115,8 @@ class SdlRail
 	[[nodiscard]] SdlRailWindow* resolveParent(uint64_t ownerId);
 
 	void enableRemoteAppMode(bool enable);
+	/* Send a RAIL_SYSCOMMAND_ORDER for the window. Caller holds _windowsLock. */
+	void sendSystemCommand(SdlRailWindow* appWindow, uint16_t command);
 
 	/* --- RAIL server callbacks (static, dispatched to the instance) --- */
 	static UINT server_execute_result(RailClientContext* context,
@@ -142,6 +150,11 @@ class SdlRail
 	 * Erased on the main thread only, so SDL windows are destroyed there. */
 	mutable std::mutex _windowsLock;
 	std::map<uint64_t, SdlRailWindow> _windows;
+	/* Windows deleted on the RDP thread but recreated under the same id before the next paint could
+	 * erase them: the stale entry is moved here (node transfer, no move-construction - SdlRailWindow
+	 * is non-movable) so the fresh window takes the id, and its SDL window/band die on the main
+	 * thread when paint drains this. Multimap: an id can collide more than once before a drain. */
+	std::multimap<uint64_t, SdlRailWindow> _deadWindows;
 	/* WM move/resize in progress; report the final rect when it ends. Wayland tracks size only. */
 	uint32_t _localMoveId = 0;
 	bool _localMoveWayland = false;
