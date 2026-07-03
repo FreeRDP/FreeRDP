@@ -104,6 +104,9 @@ class SdlRail
 	[[nodiscard]] SdlRailWindow* getWindow(uint64_t id);
 	[[nodiscard]] SdlRailWindow* getWindowBySdlId(SDL_WindowID id);
 	SdlRailWindow* addWindow(uint64_t id, const SDL_Rect& rect);
+	/* The window `ownerId` names, if it is a live non-popup app window (a valid popup/dialog
+	 * parent); else nullptr. Caller holds _windowsLock. */
+	[[nodiscard]] SdlRailWindow* resolveParent(uint64_t ownerId);
 
 	void enableRemoteAppMode(bool enable);
 
@@ -147,4 +150,7 @@ class SdlRail
 	/* Wayland: a WINDOW_RESIZED has arrived since the grab started, so the pending op really
 	 * resized (guards against a bare pointer re-enter finalizing a no-op click). Main thread. */
 	bool _localMoveSawResize = false;
+	/* Last focused app window; parent for a right-click popup when ownerWindowId doesn't resolve to
+	 * a non-popup window (avoids mis-parenting with several apps open). */
+	uint64_t _focusedAppId = 0;
 };

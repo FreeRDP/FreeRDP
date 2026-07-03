@@ -29,6 +29,7 @@
 
 #include "sdl_rail.hpp"
 #include "sdl_context.hpp"
+#include "sdl_rail_platform.hpp"
 #include "sdl_types.hpp"
 #include "sdl_utils.hpp"
 #include "sdl_wayland.hpp"
@@ -66,6 +67,14 @@ SdlRailWindow* SdlRail::getWindowBySdlId(SDL_WindowID id)
 	return nullptr;
 }
 
+SdlRailWindow* SdlRail::resolveParent(uint64_t ownerId)
+{
+	auto* owner = getWindow(ownerId);
+	if (owner && !owner->isPopup() && owner->window())
+		return owner;
+	return nullptr;
+}
+
 bool SdlRail::ownsWindow(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
@@ -90,10 +99,11 @@ void SdlRail::handleFocus(SDL_WindowID id, bool gained)
 	if (!appWindow || appWindow->isPopup() || !appWindow->window())
 		return;
 
-	/* Send ClientActivate only, like xf's FocusIn/FocusOut. Do NOT SDL_RaiseWindow here: raising on
-	 * every focus-gain restacks under some WMs (xfwm4), which shifts focus to another window, which
-	 * we raise, ... - an endless focus/raise loop cycling through all windows. The WM already
-	 * raises a window when the user clicks it. */
+	/* Fallback parent for orphaned popups. */
+	if (gained)
+		_focusedAppId = appWindow->id();
+
+	/* ClientActivate only. Do NOT SDL_RaiseWindow to avoid WM focus loops. */
 	if (!_rail || !_rail->ClientActivate)
 		return;
 	WLog_VRB(TAG, "activate id=0x%08" PRIx32 " gained=%d", static_cast<UINT32>(appWindow->id()),
@@ -155,8 +165,19 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 	/* App windows first so popup parents exist before their popups. */
 	for (auto& it : _windows)
 	{
-		if (!it.second.isPopup())
-			it.second.paint(primary, fallbackFormat, damage);
+		auto& win = it.second;
+		if (win.isPopup())
+			continue;
+		/* Parent owned dialogs to owner. */
+		SDL_Window* parent = nullptr;
+		SDL_Rect parentRect{};
+		auto* owner = resolveParent(win.owner());
+		if (owner && (owner != &win))
+		{
+			parent = owner->window();
+			parentRect = owner->windowRect();
+		}
+		win.paint(primary, fallbackFormat, damage, parent, parentRect);
 	}
 
 	/* Request full repaint after first window is realized (fixes reconnect blank windows). */
@@ -186,27 +207,50 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 		if (!popup.isPopup())
 			continue;
 
-		/* Position relative to the owner; fall back to any live app window. */
-		SDL_Window* parent = nullptr;
-		SDL_Rect parentRect{};
-		auto owner = getWindow(popup.owner());
-		if (owner && !owner->isPopup() && owner->window())
+		/* Pick popup parent: ownerWindowId -> geometric match -> focused -> any app. */
+		SdlRailWindow* chosen = resolveParent(popup.owner());
+		if (!chosen && railPlatformCaps().positionsReadable)
 		{
-			parent = owner->window();
-			parentRect = owner->windowRect();
-		}
-		else
-		{
+			const SDL_Rect pr = popup.windowRect();
+			const SDL_Point origin = { pr.x, pr.y };
 			for (auto& other : _windows)
 			{
-				if (!other.second.isPopup() && other.second.window())
+				auto& w = other.second;
+				if (w.isPopup() || !w.window())
+					continue;
+				const SDL_Rect wr = w.windowRect();
+				if (SDL_PointInRect(&origin, &wr))
 				{
-					parent = other.second.window();
-					parentRect = other.second.windowRect();
+					chosen = &w;
 					break;
 				}
 			}
 		}
+		if (!chosen)
+			chosen = resolveParent(_focusedAppId);
+		if (!chosen)
+		{
+			for (auto& other : _windows)
+			{
+				auto& w = other.second;
+				if (!w.isPopup() && w.window())
+				{
+					chosen = &w;
+					break;
+				}
+			}
+		}
+
+		SDL_Window* parent = nullptr;
+		SDL_Rect parentRect{};
+		if (chosen)
+		{
+			parent = chosen->window();
+			parentRect = chosen->windowRect();
+		}
+		else
+			WLog_WARN(TAG, "popup id=0x%08" PRIx32 " has no parent app window",
+			          static_cast<UINT32>(popup.id()));
 		popup.paint(primary, fallbackFormat, damage, parent, parentRect);
 	}
 	return true;
@@ -271,7 +315,11 @@ bool SdlRail::init(RailClientContext* rail)
 	rail->ServerMinMaxInfo = SdlRail::server_min_max_info;
 	/* Keep default ServerHandshake. */
 
-	WLog_INFO(TAG, "RAIL channel initialized");
+	const RailPlatformCaps& caps = railPlatformCaps();
+	WLog_INFO(TAG, "RAIL channel initialized: driver=%s positionsReadable=%d transparentWindows=%d",
+	          sdl::utils::isWaylandDriver() ? "wayland"
+	                                        : (sdl::utils::isX11Driver() ? "x11" : "other"),
+	          caps.positionsReadable ? 1 : 0, caps.supportsTransparentWindows ? 1 : 0);
 	return true;
 }
 

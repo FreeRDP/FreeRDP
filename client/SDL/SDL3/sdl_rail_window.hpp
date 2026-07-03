@@ -105,8 +105,7 @@ class SdlRailWindow
 	bool reconcile(SDL_Window* parent, const SDL_Rect& parentRect);
 	/* Render: GFX surface if mapped, else the shared desktop region. `damage` = updated rects. */
 	bool paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
-	           const std::vector<SDL_Rect>& damage, SDL_Window* parent = nullptr,
-	           const SDL_Rect& parentRect = {});
+	           const std::vector<SDL_Rect>& damage, SDL_Window* parent, const SDL_Rect& parentRect);
 
   private:
 	[[nodiscard]] bool styleResizable() const; /* caller holds _gfxLock */
@@ -126,6 +125,7 @@ class SdlRailWindow
 	bool _isPopup = false;
 	bool _layered = false;         /* WS_EX_LAYERED shadow/glass decoration: never rendered */
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */
+	bool _parentApplied = false;   /* transient-for owner set once (owned non-popup dialogs) */
 	std::string _title = "RdpRailWindow";
 	bool _visible = false;
 	bool _geometryDirty = true;
