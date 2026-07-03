@@ -17,6 +17,10 @@
 
 cmake_minimum_required(VERSION 3.13)
 
+if(POLICY CMP0114)
+  cmake_policy(SET CMP0114 NEW)
+endif()
+
 if(NOT FREERDP_DEFAULT_PROJECT_VERSION)
   set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
 endif()
@@ -25,18 +29,45 @@ project(iFreeRDP VERSION ${FREERDP_DEFAULT_PROJECT_VERSION})
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_CURRENT_SOURCE_DIR}/../../cmake/)
+get_filename_component(FREERDP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+
+list(APPEND CMAKE_MODULE_PATH ${FREERDP_SOURCE_DIR}/cmake/)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
 include(CommonConfigOptions)
 
-include(WarnUnmaintained)
-warn_unmaintained(${PROJECT_NAME} "-DWITH_CLIENT_IOS=OFF")
+set(CMAKE_C_STANDARD 23 CACHE STRING "project default")
+set(CMAKE_C_STANDARD_REQUIRED ON CACHE BOOL "project default")
+set(CMAKE_C_EXTENSIONS ON CACHE BOOL "project default")
 
-set(MODULE_NAME "iFreeRDP")
-set(MODULE_PREFIX "IFREERDP_CLIENT")
-set(APP_TYPE MACOSX_BUNDLE)
-set(FREERDP_IOS_BUNDLE_IDENTIFIER "com.freerdp.ifreerdp" CACHE STRING "iFreeRDP iOS bundle identifier")
-set(FREERDP_IOS_DEVELOPMENT_TEAM "" CACHE STRING "iFreeRDP iOS development team identifier")
-set(FREERDP_IOS_CODE_SIGN_STYLE "" CACHE STRING "iFreeRDP iOS code signing style")
+# Cross compilation settings:
+#
+# * Set CMAKE_SYSROOT as main search base
+# * Disable looking for includes/libraries/packages in host system directories
+#set(CMAKE_SYSROOT ${CMAKE_OSX_SYSROOT})
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+set(CMAKE_IGNORE_PREFIX_PATH "/opt/local;/usr/local;/opt/homebrew;/Library;~/Library")
+
+include(GNUInstallDirs)
+set(CMAKE_INSTALL_LIBDIR Frameworks)
+set(CMAKE_INSTALL_BINDIR MacOS)
+
+set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "project default")
+
+set(CMAKE_XCODE_ATTRIBUTE_CLANG_C_LANGUAGE_STANDARD "gnu2x" CACHE STRING "project default")
+set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++" CACHE STRING "project default")
+set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" CACHE STRING "project default")
+set(CMAKE_XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES "NO" CACHE STRING "project default")
+set(CMAKE_XCODE_ATTRIBUTE_SKIP_INSTALL NO CACHE BOOL "project default")
+set(CMAKE_INSTALL_PATH "/Applications" CACHE STRING "project default")
+set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES CACHE BOOL "project default")
+set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks" CACHE STRING "project default")
+set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.freerdp.ifreerdp" CACHE STRING "project default")
+
+message("sysroot:    ${CMAKE_SYSROOT}")
+message("target:     ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+message("C standard: ${CMAKE_C_STANDARD}")
 
 set(IOS_CLIENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(IOS_CLIENT_ADDITIONS_DIR ${IOS_CLIENT_DIR}/Additions)
@@ -54,32 +85,185 @@ include_directories(SYSTEM ${IOS_CLIENT_FREERDP_DIR})
 include_directories(SYSTEM ${IOS_CLIENT_MISC_DIR})
 include_directories(SYSTEM ${IOS_CLIENT_MODELS_DIR})
 include_directories(SYSTEM ${IOS_CLIENT_VIEWS_DIR})
-include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+
+# Dependencies
+include(ExternalDeps)
 
 # Add sources
-set(${MODULE_PREFIX}_SRCS AppDelegate.m AppDelegate.h SceneDelegate.m SceneDelegate.h main.m)
-
-file(GLOB IOS_CLIENT_ADDITIONS_SRCS ${IOS_CLIENT_ADDITIONS_DIR}/*.m)
-file(GLOB IOS_CLIENT_ADDITIONS_HDRS ${IOS_CLIENT_ADDITIONS_DIR}/*.h)
-
-file(GLOB IOS_CLIENT_CONTROLLERS_SRCS ${IOS_CLIENT_CONTROLLERS_DIR}/*.m)
-file(GLOB IOS_CLIENT_CONTROLLERS_HDRS ${IOS_CLIENT_CONTROLLERS_DIR}/*.h)
-
-file(GLOB IOS_CLIENT_FREERDP_SRCS ${IOS_CLIENT_FREERDP_DIR}/*.m)
-file(GLOB IOS_CLIENT_FREERDP_HDRS ${IOS_CLIENT_FREERDP_DIR}/*.h)
-
-file(GLOB IOS_CLIENT_MISC_SRCS ${IOS_CLIENT_MISC_DIR}/*.m)
-file(GLOB IOS_CLIENT_MISC_HDRS ${IOS_CLIENT_MISC_DIR}/*.h)
-
-file(GLOB IOS_CLIENT_MODELS_SRCS ${IOS_CLIENT_MODELS_DIR}/*.m)
-file(GLOB IOS_CLIENT_MODELS_HDRS ${IOS_CLIENT_MODELS_DIR}/*.h)
-
-file(GLOB IOS_CLIENT_VIEWS_SRCS CONFIGURE_DEPENDS ${IOS_CLIENT_VIEWS_DIR}/*.m)
-file(GLOB IOS_CLIENT_VIEWS_HDRS CONFIGURE_DEPENDS ${IOS_CLIENT_VIEWS_DIR}/*.h)
+set(SRCS
+    Additions/OrderedDictionary.h
+    Additions/OrderedDictionary.m
+    Additions/Toast+UIView.h
+    Additions/Toast+UIView.m
+    Additions/TSXAdditions.h
+    Additions/TSXAdditions.m
+    AppDelegate.h
+    AppDelegate.m
+    Controllers/AboutController.h
+    Controllers/AboutController.m
+    Controllers/AdvancedBookmarkEditorController.h
+    Controllers/AdvancedBookmarkEditorController.m
+    Controllers/AppSettingsController.h
+    Controllers/AppSettingsController.m
+    Controllers/BookmarkEditorController.h
+    Controllers/BookmarkEditorController.m
+    Controllers/BookmarkGatewaySettingsController.h
+    Controllers/BookmarkGatewaySettingsController.m
+    Controllers/BookmarkListController.h
+    Controllers/BookmarkListController.m
+    Controllers/CredentialsEditorController.h
+    Controllers/CredentialsEditorController.m
+    Controllers/CredentialsInputController.h
+    Controllers/CredentialsInputController.m
+    Controllers/EditorBaseController.h
+    Controllers/EditorBaseController.m
+    Controllers/EditorSelectionController.h
+    Controllers/EditorSelectionController.m
+    Controllers/EncryptionController.h
+    Controllers/EncryptionController.m
+    Controllers/MainTabBarController.h
+    Controllers/MainTabBarController.m
+    Controllers/PerformanceEditorController.h
+    Controllers/PerformanceEditorController.m
+    Controllers/RDPSessionViewController.h
+    Controllers/RDPSessionViewController.m
+    Controllers/ScreenSelectionController.h
+    Controllers/ScreenSelectionController.m
+    Controllers/VerifyCertificateController.h
+    Controllers/VerifyCertificateController.m
+    FreeRDP/ios_cliprdr.h
+    FreeRDP/ios_cliprdr.m
+    FreeRDP/ios_freerdp_events.h
+    FreeRDP/ios_freerdp_events.m
+    FreeRDP/ios_freerdp.h
+    FreeRDP/ios_freerdp.m
+    FreeRDP/ios_freerdp_ui.h
+    FreeRDP/ios_freerdp_ui.m
+    main.m
+    Misc/Reachability.h
+    Misc/Reachability.m
+    Misc/SFHFKeychainUtils.h
+    Misc/SFHFKeychainUtils.m
+    Misc/TSXTypes.h
+    Misc/Utils.h
+    Misc/Utils.m
+    Models/Bookmark.h
+    Models/Bookmark.m
+    Models/ConnectionParams.h
+    Models/ConnectionParams.m
+    Models/Encryptor.h
+    Models/Encryptor.m
+    Models/GlobalDefaults.h
+    Models/GlobalDefaults.m
+    Models/RDPKeyboard.h
+    Models/RDPKeyboard.m
+    Models/RDPSession.h
+    Models/RDPSession.m
+    SceneDelegate.h
+    SceneDelegate.m
+    Views/AdvancedKeyboardView.h
+    Views/AdvancedKeyboardView.m
+    Views/BlockAlertView.h
+    Views/BlockAlertView.m
+    Views/BlockBackground.h
+    Views/BlockBackground.m
+    Views/BlockUI.h
+    Views/BookmarkTableCell.h
+    Views/BookmarkTableCell.m
+    Views/EditButtonTableViewCell.h
+    Views/EditButtonTableViewCell.m
+    Views/EditFlagTableViewCell.h
+    Views/EditFlagTableViewCell.m
+    Views/EditSecretTextTableViewCell.h
+    Views/EditSecretTextTableViewCell.m
+    Views/EditSelectionTableViewCell.h
+    Views/EditSelectionTableViewCell.m
+    Views/EditSubEditTableViewCell.h
+    Views/EditSubEditTableViewCell.m
+    Views/EditTextTableViewCell.h
+    Views/EditTextTableViewCell.m
+    Views/RDPCursor.h
+    Views/RDPCursor.m
+    Views/RDPSessionToolbar.h
+    Views/RDPSessionToolbar.m
+    Views/RDPSessionView.h
+    Views/RDPSessionView.m
+    Views/SessionTableCell.h
+    Views/SessionTableCell.m
+)
 
 # add resources
-file(GLOB IOS_CLIENT_RESOURCES_XIBS ${IOS_CLIENT_RESOURCES_DIR}/*.xib)
-file(GLOB IOS_CLIENT_RESOURCES_PNGS ${IOS_CLIENT_RESOURCES_DIR}/*.png)
+set(IOS_CLIENT_RESOURCES_XIBS
+    Resources/BookmarkListView.xib
+    Resources/BookmarkTableViewCell.xib
+    Resources/CredentialsInputView.xib
+    Resources/EditButtonTableViewCell.xib
+    Resources/EditFlagTableViewCell.xib
+    Resources/EditSecretTextTableViewCell.xib
+    Resources/EditSelectionTableViewCell.xib
+    Resources/EditSubEditTableViewCell.xib
+    Resources/EditTextTableViewCell.xib
+    Resources/MainWindow.xib
+    Resources/RDPConnectingView.xib
+    Resources/RDPSessionView.xib
+    Resources/SessionTableViewCell.xib
+    Resources/VerifyCertificateView.xib
+)
+
+set(IOS_CLIENT_RESOURCES_PNGS
+    Resources/about_page/background_transparent.png
+    Resources/about_page/FreeRDP_Logo.png
+    Resources/alert-black-button@2x.png
+    Resources/alert-black-button.png
+    Resources/alert-gray-button@2x.png
+    Resources/alert-gray-button.png
+    Resources/alert-red-button@2x.png
+    Resources/alert-red-button.png
+    Resources/alert-window@2x.png
+    Resources/alert-window-landscape@2x.png
+    Resources/alert-window-landscape.png
+    Resources/alert-window.png
+    Resources/cancel_button_background.png
+    Resources/Default@2x.png
+    Resources/Default-568h@2x.png
+    Resources/Default-Landscape@2x~ipad.png
+    Resources/Default-Landscape~ipad.png
+    Resources/Default.png
+    Resources/Default-Portrait@2x~ipad.png
+    Resources/Default-Portrait~ipad.png
+    Resources/Icon@2x.png
+    Resources/Icon-72@2x.png
+    Resources/Icon-72.png
+    Resources/icon_accessory_star_off.png
+    Resources/icon_accessory_star_on.png
+    Resources/icon_key_arrow_down.png
+    Resources/icon_key_arrow_left.png
+    Resources/icon_key_arrow_right.png
+    Resources/icon_key_arrows.png
+    Resources/icon_key_arrow_up.png
+    Resources/icon_key_backspace.png
+    Resources/icon_key_menu.png
+    Resources/icon_key_return.png
+    Resources/icon_key_win.png
+    Resources/Icon.png
+    Resources/keyboard_button_background.png
+    Resources/tabbar_icon_about.png
+    Resources/tabbar_icon_settings.png
+    Resources/toolbar_icon_disconnect.png
+    Resources/toolbar_icon_extkeyboad.png
+    Resources/toolbar_icon_home.png
+    Resources/toolbar_icon_keyboard.png
+    Resources/toolbar_icon_touchpointer.png
+    Resources/toolbar_icon_win.png
+    Resources/touch_pointer_active.png
+    Resources/touch_pointer_default.png
+    Resources/touch_pointer_extkeyboard.png
+    Resources/touch_pointer_keyboard.png
+    Resources/touch_pointer_lclick.png
+    Resources/touch_pointer_rclick.png
+    Resources/touch_pointer_reset.png
+    Resources/touch_pointer_scroll.png
+)
 
 # Specify source grouping
 source_group(Additions FILES ${IOS_CLIENT_ADDITIONS_SRCS} ${IOS_CLIENT_ADDITIONS_HDRS})
@@ -94,27 +278,16 @@ source_group(
 )
 
 # import libraries
-find_library(FOUNDATION_FRAMEWORK Foundation)
-find_library(COREGRAPHICS_FRAMEWORK CoreGraphics)
-find_library(SECURITY_FRAMEWORK Security)
-find_library(UIKIT_FRAMEWORK UIKit)
-find_library(SYSTEMCONFIGURATION_FRAMEWORK SystemConfiguration)
-find_library(METAL_FRAMEWORK Metal)
-find_library(QUARTZCORE_FRAMEWORK QuartzCore)
-find_library(WEBKIT_FRAMEWORK WebKit)
-find_library(GAMECONTROLLER_FRAMEWORK GameController)
+find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+find_library(COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
+find_library(SECURITY_FRAMEWORK Security REQUIRED)
+find_library(UIKIT_FRAMEWORK UIKit REQUIRED)
+find_library(SYSTEMCONFIGURATION_FRAMEWORK SystemConfiguration REQUIRED)
+find_library(METAL_FRAMEWORK Metal REQUIRED)
+find_library(QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
+find_library(WEBKIT_FRAMEWORK WebKit REQUIRED)
+find_library(GAMECONTROLLER_FRAMEWORK GameController REQUIRED)
 
-mark_as_advanced(
-  FOUNDATION_FRAMEWORK
-  COREGRAPHICS_FRAMEWORK
-  METAL_FRAMEWORK
-  QUARTZCORE_FRAMEWORK
-  SECURITY_FRAMEWORK
-  UIKIT_FRAMEWORK
-  SYSTEMCONFIGURATION_FRAMEWORK
-  WEBKIT_FRAMEWORK
-  GAMECONTROLLER_FRAMEWORK
-)
 set(EXTRA_LIBS
     ${FOUNDATION_FRAMEWORK}
     ${COREGRAPHICS_FRAMEWORK}
@@ -127,17 +300,13 @@ set(EXTRA_LIBS
     ${GAMECONTROLLER_FRAMEWORK}
 )
 
-set(${MODULE_NAME}_RESOURCES ${IOS_CLIENT_RESOURCES_XIBS})
-set(${MODULE_NAME}_RESOURCES ${${MODULE_NAME}_RESOURCES} ${IOS_CLIENT_RESOURCES_PNGS})
-set(${MODULE_NAME}_RESOURCES ${${MODULE_NAME}_RESOURCES} ${IOS_CLIENT_RESOURCES_DIR}/about_page
-                             ${IOS_CLIENT_RESOURCES_DIR}/en.lproj
+set(RESOURCES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_RESOURCES_DIR}/about_page
+              ${IOS_CLIENT_RESOURCES_DIR}/en.lproj ${IOS_CLIENT_DIR}/Defaults.plist
 )
-set(${MODULE_NAME}_RESOURCES ${${MODULE_NAME}_RESOURCES} ${IOS_CLIENT_DIR}/Defaults.plist)
 
 add_executable(
-  ${MODULE_NAME}
-  ${APP_TYPE}
-  ${${MODULE_PREFIX}_SRCS}
+  ${PROJECT_NAME} MACOSX_BUNDLE
+  ${SRCS}
   ${IOS_CLIENT_ADDITIONS_SRCS}
   ${IOS_CLIENT_ADDITIONS_HDRS}
   ${IOS_CLIENT_CONTROLLERS_SRCS}
@@ -150,106 +319,42 @@ add_executable(
   ${IOS_CLIENT_MODELS_HDRS}
   ${IOS_CLIENT_VIEWS_SRCS}
   ${IOS_CLIENT_VIEWS_HDRS}
-  ${${MODULE_NAME}_RESOURCES}
+  ${RESOURCES}
 )
 
-if(WITH_BINARY_VERSIONING)
-  set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${PROJECT_VERSION_MAJOR}")
-endif()
-set_target_properties(${MODULE_NAME} PROPERTIES RESOURCE "${${MODULE_NAME}_RESOURCES}")
+add_dependencies(${PROJECT_NAME} freerdp)
 
-set(EXECUTABLE_NAME "\${EXECUTABLE_NAME}")
-
-set_target_properties(${MODULE_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${IOS_CLIENT_DIR}/iFreeRDP.plist)
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "${IOS_TARGET_SDK}")
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "gnu++0x")
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC NO)
-# for Ninja build (CI Server) (turn off ARC)
-target_compile_options(${MODULE_NAME} PRIVATE -fno-objc-arc)
 set_target_properties(
-  ${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${FREERDP_IOS_BUNDLE_IDENTIFIER}"
+  ${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${IOS_CLIENT_DIR}/iFreeRDP.plist FOLDER "Client/iOS"
+                             RESOURCE "${RESOURCES}"
 )
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2")
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES "NO")
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_SKIP_INSTALL NO)
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_INSTALL_PATH "/Applications")
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES)
-set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks")
-if(FREERDP_IOS_DEVELOPMENT_TEAM)
-  set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${FREERDP_IOS_DEVELOPMENT_TEAM}")
+
+target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS} freerdp3-lib freerdp-client3-lib winpr3-lib)
+
+target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
+
+set(_ios_embed_frameworks "")
+if(TARGET freerdp3-lib)
+  get_target_property(_ios_freerdp_runtime_location freerdp3-lib IMPORTED_LOCATION)
+  list(APPEND _ios_embed_frameworks "${_ios_freerdp_runtime_location}")
 endif()
-if(FREERDP_IOS_CODE_SIGN_STYLE)
-  set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_CODE_SIGN_STYLE "${FREERDP_IOS_CODE_SIGN_STYLE}")
+if(TARGET freerdp-client3-lib)
+  get_target_property(_ios_freerdp_client_runtime_location freerdp-client3-lib IMPORTED_LOCATION)
+  list(APPEND _ios_embed_frameworks "${_ios_freerdp_client_runtime_location}")
 endif()
-if(CODE_SIGN_IDENTITY)
-  set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${CODE_SIGN_IDENTITY}")
-endif()
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${EXTRA_LIBS})
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
-
-if(OPENSSL_FOUND)
-  set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
+if(TARGET winpr3-lib)
+  get_target_property(_ios_winpr_runtime_location winpr3-lib IMPORTED_LOCATION)
+  list(APPEND _ios_embed_frameworks "${_ios_winpr_runtime_location}")
 endif()
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-if(IOS)
-  if(BUILD_SHARED_LIBS)
-    foreach(_ios_runtime_target freerdp-client freerdp winpr)
-      if(TARGET ${_ios_runtime_target})
-        set_target_properties(
-          ${_ios_runtime_target} PROPERTIES BUILD_WITH_INSTALL_NAME_DIR YES INSTALL_NAME_DIR "@rpath"
-        )
-        if(FREERDP_IOS_DEVELOPMENT_TEAM)
-          set_target_properties(
-            ${_ios_runtime_target} PROPERTIES XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${FREERDP_IOS_DEVELOPMENT_TEAM}"
-          )
-        endif()
-        if(FREERDP_IOS_CODE_SIGN_STYLE)
-          set_target_properties(
-            ${_ios_runtime_target} PROPERTIES XCODE_ATTRIBUTE_CODE_SIGN_STYLE "${FREERDP_IOS_CODE_SIGN_STYLE}"
-          )
-        endif()
-      endif()
-    endforeach()
-
-    set(_ios_bundle_frameworks_dir "$<TARGET_BUNDLE_CONTENT_DIR:${MODULE_NAME}>/Frameworks")
-    add_custom_command(
-      TARGET ${MODULE_NAME}
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E make_directory "${_ios_bundle_frameworks_dir}"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp-client>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:freerdp-client>"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp-client>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:freerdp-client>"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:freerdp>"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:freerdp>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:freerdp>"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:winpr>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_FILE_NAME:winpr>"
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:winpr>"
-              "${_ios_bundle_frameworks_dir}/$<TARGET_SONAME_FILE_NAME:winpr>"
-      COMMENT "Embedding FreeRDP iOS runtime libraries"
-    )
-  endif()
-
-  # Embed + code-sign the dynamic FFmpeg framework with Xcode's native "Embed
-  # Frameworks" build phase (no custom codesign script). The FreeRDP runtime
-  # dylibs copied above are signed by their own Xcode targets (the
-  # XCODE_ATTRIBUTE_DEVELOPMENT_TEAM set on them above).
-  if(AVCODEC_LIBRARIES MATCHES "\\.framework/")
-    get_filename_component(_ios_ffmpeg_framework "${AVCODEC_LIBRARIES}" DIRECTORY)
-    set_target_properties(
-      ${MODULE_NAME} PROPERTIES XCODE_EMBED_FRAMEWORKS "${_ios_ffmpeg_framework}"
-                                XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON
-    )
-  endif()
+if(AVCODEC_LIBRARIES MATCHES "\\.framework/")
+  get_filename_component(_ios_ffmpeg_framework "${AVCODEC_LIBRARIES}" DIRECTORY)
+  list(APPEND _ios_embed_frameworks "${_ios_ffmpeg_framework}")
 endif()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/iOS")
+if(_ios_embed_frameworks)
+  set_target_properties(
+    ${PROJECT_NAME} PROPERTIES XCODE_EMBED_FRAMEWORKS "${_ios_embed_frameworks}"
+                               XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON
+  )
+endif()

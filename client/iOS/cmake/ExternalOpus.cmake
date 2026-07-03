@@ -1,0 +1,9 @@
+include(ExternalProject)
+include(DepVersions)
+
+ExternalProject_Add(
+  opus URL https://github.com/xiph/opus/archive/refs/tags/${OPUS_VERSION}.tar.gz URL_HASH ${OPUS_HASH} LIST_SEPARATOR |
+  DOWNLOAD_EXTRACT_TIMESTAMP OFF CMAKE_CACHE_ARGS ${IOS_CMAKE_CACHE_ARGS}
+  CMAKE_ARGS ${IOS_CMAKE_ARGS} -DOPUS_BUILD_PROGRAMS:BOOL=OFF -DOPUS_BUILD_TESTING:BOOL=OFF
+             -DOPUS_BUILD_SHARED_LIBRARY:BOOL=ON
+)
