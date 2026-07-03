@@ -1054,10 +1054,9 @@ LONG smartcard_irp_device_control_decode_response(wStream* s, UINT32 ioControlCo
 
 	if (operation->returnCode != SCARD_S_SUCCESS)
 	{
-		WLog_WARN(TAG, "%s failed with ReturnCode %s [0x%08" PRIX32 "]",
-		          scard_get_ioctl_string(ioControlCode, TRUE),
-		          SCardGetErrorString(operation->returnCode), (UINT32)operation->returnCode);
-		return SCARD_S_SUCCESS;
+		WLog_DBG(TAG, "%s failed with ReturnCode %s [0x%08" PRIX32 "]",
+		         scard_get_ioctl_string(ioControlCode, TRUE),
+		         SCardGetErrorString(operation->returnCode), (UINT32)operation->returnCode);
 	}
 
 	switch (ioControlCode)

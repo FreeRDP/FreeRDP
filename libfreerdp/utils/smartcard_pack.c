@@ -2878,7 +2878,7 @@ LONG smartcard_pack_get_status_change_return(wStream* s, const GetStatusChange_R
 	UINT32 index = 0;
 
 	smartcard_trace_get_status_change_return(log, ret, unicode);
-	if (ret->ReturnCode != SCARD_S_SUCCESS)
+	if ((ret->ReturnCode != SCARD_S_SUCCESS) && (ret->ReturnCode != SCARD_E_TIMEOUT))
 		cReaders = 0;
 	if (cReaders == SCARD_AUTOALLOCATE)
 		cReaders = 0;
