@@ -130,8 +130,8 @@ static BOOL test_winpr_strnstr(void)
 		{ "abc", "abc", 3, 0 },
 		/* hlen == 0 finds nothing */
 		{ "abc", "a", 0, -1 },
-		/* hlen == SIZE_MAX is rejected instead of scanning out of bounds */
-		{ "abc", "a", SIZE_MAX, -1 },
+		/* an hlen larger than the string just searches the whole string */
+		{ "abc", "a", SIZE_MAX, 0 },
 	};
 
 	for (size_t i = 0; i < ARRAYSIZE(tests); i++)
@@ -150,6 +150,16 @@ static BOOL test_winpr_strnstr(void)
 			return FALSE;
 		}
 	}
+
+	/* An embedded NUL terminates the search, matching native strnstr: "cd" sits
+	 * past the NUL, so it must not be found even though hlen spans it. */
+	char embedded[8] = { 'a', 'b', '\0', 'c', 'd', '\0', '\0', '\0' };
+	if (winpr_strnstr(embedded, "cd", 5) != nullptr)
+	{
+		printf("winpr_strnstr error: matched past an embedded NUL terminator\n");
+		return FALSE;
+	}
+
 	return TRUE;
 }
 

@@ -848,33 +848,20 @@ char* winpr_strnstr(char* haystack, const char* needle, size_t hlen)
 	WINPR_ASSERT(haystack || (hlen == 0));
 	WINPR_ASSERT(needle);
 
-	/* Keep the contract identical on the native and fallback paths: nothing to
-	 * find in an empty window, and SIZE_MAX would overflow the hlen + 1 bound
-	 * below. */
-	if (hlen == 0)
-		return nullptr;
-	if (hlen == SIZE_MAX)
-		return nullptr;
-
 #if defined(WINPR_HAVE_STRNSTR)
 	return strnstr(haystack, needle, hlen);
 #else
-	/* Bound the needle scan to the haystack: needle_len becomes hlen + 1 when
-	 * the needle is longer than hlen, which the check below rejects. */
-	const size_t needle_len = strnlen(needle, hlen + 1);
+	/* Match native strnstr semantics: search at most hlen characters and stop at
+	 * the haystack NUL terminator, whichever comes first. */
+	const size_t needle_len = strlen(needle);
 
 	if (0 == needle_len)
 		return haystack;
 
-	if (hlen < needle_len)
-		return nullptr;
-
-	for (size_t i = 0; i <= hlen - needle_len; i++)
+	for (; (*haystack != '\0') && (hlen >= needle_len); haystack++, hlen--)
 	{
 		if ((haystack[0] == needle[0]) && (0 == strncmp(haystack, needle, needle_len)))
 			return haystack;
-
-		haystack++;
 	}
 	return nullptr;
 #endif
