@@ -75,7 +75,9 @@ void SdlRailWindow::updateWindowRect(const SDL_Rect& rect)
 	if ((rect.w != _windowRect.w) || (rect.h != _windowRect.h))
 		_painted = false;
 	_windowRect = rect;
-	_geometryDirty = true;
+	/* Skip geometry apply while maximized. */
+	if (!_maxState.rail)
+		_geometryDirty = true;
 }
 
 void SdlRailWindow::setLocalMoveActive(bool active)
@@ -299,6 +301,12 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 			_win->raise(); /* new app windows come to the front; popups are above by design */
 	}
 
+	/* Apply state before geometry. */
+	if (_win)
+	{
+		applyServerState(_maxState, "maximize", SDL_MaximizeWindow);
+		applyServerState(_minState, "minimize", SDL_MinimizeWindow);
+	}
 
 	/* Min/max BEFORE geometry: the WM clamps SDL_SetWindowSize to the current min. The server's
 	 * min-track-size only constrains USER resizing - the app itself drives its window below it
@@ -331,7 +339,8 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		_minMaxDirty = false;
 	}
 
-	if (_win && _geometryDirty)
+	/* Maximized: WM owns geometry; a server update stays pending until restored. */
+	if (_win && _geometryDirty && !_maxState.rail)
 	{
 		/* Popup coordinates are relative to the parent window origin. */
 		if (_isPopup && parent)
@@ -356,7 +365,9 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 			SDL_SetWindowTitle(_win->window(), _title.c_str());
 		_titleDirty = false;
 	}
-	SDL_ShowWindow(_win->window());
+	/* Not while minimized: on X11 SDL_ShowWindow maps the window, which de-iconifies it. */
+	if (!_minState.rail)
+		SDL_ShowWindow(_win->window());
 	return true;
 }
 
@@ -424,6 +435,51 @@ void SdlRailWindow::invalidateAll()
 	std::unique_lock lock(_gfxLock);
 	if (_hasGfx)
 		_gfxDamage.assign(1, SDL_Rect{ 0, 0, static_cast<int>(_gfxW), static_cast<int>(_gfxH) });
+}
+
+void SdlRailWindow::setServerState(StateSync& s, bool m)
+{
+	std::unique_lock lock(_gfxLock);
+	if (m != s.server)
+	{
+		s.server = m;
+		s.dirty = true;
+	}
+}
+
+void SdlRailWindow::setServerMaximized(bool m)
+{
+	setServerState(_maxState, m);
+}
+
+void SdlRailWindow::setServerMinimized(bool m)
+{
+	setServerState(_minState, m);
+}
+
+void SdlRailWindow::applyServerState(StateSync& s, const char* what, bool (*enter)(SDL_Window*))
+{
+	if (!s.dirty)
+		return;
+	if (s.server && !s.rail)
+	{
+		s.rail = true;
+		WLog_DBG(TAG, "%s id=0x%08x", what, static_cast<unsigned>(_id));
+		enter(_win->window());
+	}
+	else if (!s.server && s.rail)
+	{
+		s.rail = false;
+		WLog_DBG(TAG, "restore id=0x%08x (%s)", static_cast<unsigned>(_id), what);
+		SDL_RestoreWindow(_win->window());
+	}
+	s.dirty = false;
+}
+
+bool SdlRailWindow::effectivelyMaximized() const
+{
+	return _maxState.rail ||
+	       (_win && (SDL_GetWindowFlags(_win->window()) & SDL_WINDOW_MAXIMIZED) != 0);
 }
 
 bool SdlRailWindow::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
