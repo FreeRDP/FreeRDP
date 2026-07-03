@@ -342,6 +342,14 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		SDL_SetWindowSize(_win->window(), _windowRect.w, _windowRect.h);
 		_geometryDirty = false;
 	}
+	/* Owned dialog (About/Open): make it transient-for its owner so the WM keeps it above, instead
+	 * of letting a click on the owner raise the owner over it. Set once, when the owner window
+	 * exists. */
+	if (!_isPopup && parent && !_parentApplied)
+	{
+		if (SDL_SetWindowParent(_win->window(), parent))
+			_parentApplied = true;
+	}
 	if (_titleDirty)
 	{
 		if (!_isPopup)
