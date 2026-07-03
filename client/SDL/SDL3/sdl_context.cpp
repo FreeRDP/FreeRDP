@@ -1068,6 +1068,13 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 {
 	SDL_Event copy{};
 	copy.motion = ev;
+	/* WM owns the drag (#12447); backstop: button released but button-up swallowed by grab. */
+	if (_rail.enabled() && _rail.suppressServerInput(ev.windowID))
+	{
+		if (!(SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK))
+			_rail.completeLocalMoveIfPending();
+		return true;
+	}
 	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.motion.x, copy.motion.y))
 		return SdlTouch::handleEvent(this, copy.motion);
 
@@ -1115,8 +1122,17 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					/* Re-enter fires on move-grab end. */
 					if (!(SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK))
 						_rail.completeLocalMoveIfPending(); /* X11 */
+					_rail.completeWaylandResize();          /* Wayland: compositor grab ended */
 					/* Restore the cursor or the pointer stays hidden over RemoteApp windows. */
 					return restoreCursor();
+				case SDL_EVENT_WINDOW_EXPOSED:
+					/* Force a repaint: we skip undamaged RAIL windows, so a re-exposed one is
+					 * stale. Not during a local drag: X exposes every resize step and the drag
+					 * path already repaints per configure - a second present per step just feeds
+					 * the compositor stale frames. */
+					if (!_rail.suppressServerInput(ev.windowID))
+						_rail.invalidateWindow(ev.windowID);
+					return true;
 				case SDL_EVENT_WINDOW_FOCUS_GAINED:
 					_rail.handleFocus(ev.windowID, true);
 					return true;
@@ -1124,6 +1140,15 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					_rail.handleFocus(ev.windowID, false);
 					return true;
 				case SDL_EVENT_WINDOW_MOVED:
+					return true;
+				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+					/* WM resize in progress: the server sends no frame during the drag, so repaint
+					 * synchronously (not a coalesced USER_UPDATE) on every configure step -
+					 * paintGfx re-anchors the stale frame and draws the placeholder over the
+					 * revealed area. PIXEL_SIZE_CHANGED only; RESIZED duplicates it for every size
+					 * change. */
+					_rail.noteWaylandResize();
+					std::ignore = drawToWindows({});
 					return true;
 				default:
 					break;
@@ -1228,11 +1253,20 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 {
 	SDL_Event copy = {};
 	copy.button = ev;
-	/* A WM move ends on button release; report the final geometry then, not mid-grab. */
-	if (_rail.enabled() && (ev.type == SDL_EVENT_MOUSE_BUTTON_UP))
-		_rail.completeLocalMoveIfPending();
-	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.button.x, copy.button.y))
-		return SdlTouch::handleEvent(this, copy.button);
+	if (_rail.enabled())
+	{
+		/* Suppress X11 raw button during WM op. */
+		const bool suppress = _rail.suppressServerInput(ev.windowID);
+		if (ev.type == SDL_EVENT_MOUSE_BUTTON_UP)
+			_rail.completeLocalMoveIfPending();
+		/* Backstop for a Wayland resize whose MOUSE_ENTER completion never arrived. */
+		if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+			_rail.completeWaylandResize();
+		if (suppress)
+			return true;
+		if (_rail.translateToServer(ev.windowID, copy.button.x, copy.button.y))
+			return SdlTouch::handleEvent(this, copy.button);
+	}
 
 	if (!getWindowForId(ev.windowID))
 		return true;

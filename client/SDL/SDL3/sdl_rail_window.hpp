@@ -57,6 +57,17 @@ class SdlRailWindow
 	void updateWindowRect(const SDL_Rect& rect);
 	[[nodiscard]] SDL_Rect windowRect() const;
 
+	/* The window's server rect: what the GFX surface spans and the local window shows. The
+	 * invisible resize margins live outside it. */
+	/* Local (WM) move/resize in progress: server geometry and input are ignored while set.
+	 * adoptLocalGeometry() takes the WM's final geometry and clears the flag. */
+	void setLocalMoveActive(bool active);
+	[[nodiscard]] bool localMoveActive() const;
+	void adoptLocalGeometry(const SDL_Rect& rect);
+	/* Which corner the stale frame anchors to during a local resize, so old content stays
+	 * pinned to the fixed (opposite) edge instead of sliding with the moving one. */
+	void setResizeAnchor(bool right, bool bottom);
+
 	/* Deferred destroy: mark here (RDP thread), erased on the main thread in SdlRail::paint. */
 	void markDeleted();
 	[[nodiscard]] bool isDeleted() const;
@@ -84,9 +95,11 @@ class SdlRailWindow
 
 	/* --- main thread only (SDL window ops) --- */
 
-	/* Window-mapped GFX surface (RDP thread): references the gdi pixels, rendered in paint(). */
-	void updateGfxSurface(const void* data, uint32_t stride, uint32_t width, uint32_t height);
-	[[nodiscard]] bool hasGfx();
+	/* Window-mapped GFX surface (RDP thread): deep-copies the damaged gdi pixels for paint(). */
+	void updateGfxSurface(const void* data, uint32_t stride, uint32_t width, uint32_t height,
+	                      const RECTANGLE_16* damage, uint32_t nbDamage);
+	/* Mark the whole window dirty for re-blit (e.g. on expose). */
+	void invalidateAll();
 
 	/* Create/move/show the local SDL window to match pending state; popups use parent+rect. */
 	bool reconcile(SDL_Window* parent, const SDL_Rect& parentRect);
@@ -118,15 +131,22 @@ class SdlRailWindow
 	bool _geometryDirty = true;
 	bool _titleDirty = false;
 	bool _painted = false;    /* full copy done; afterwards only damage regions are re-copied */
+	bool _localMoveActive = false; /* WM move/resize in progress: ignore server geometry + input */
+	bool _localMoveIsResize = false;          /* local move is a resize vs a move */
+	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */
+	bool _resizeAnchorBottom = false; /* anchor stale frame to the bottom edge (top-side resize) */
 
 	/* Guards all state shared between the RDP thread (setters) and the main thread
 	 * (reconcile/paint): geometry, title, visibility, flags, vis rects and the gfx snapshot. */
 	mutable std::mutex _gfxLock;
 	std::vector<SDL_Rect> _visRects;
 	bool _deleted = false;
-	const void* _gfxData = nullptr;
+	std::vector<uint8_t> _gfxBuffer; /* owned deep-copy of the gdi surface (avoids UAF) */
 	uint32_t _gfxStride = 0;
 	uint32_t _gfxW = 0;
 	uint32_t _gfxH = 0;
 	bool _hasGfx = false;
+	/* Regions changed since the last paint (server damage, surface coords); only these are copied
+	 * and uploaded. Empty = nothing to repaint (skip the window). Guarded by _gfxLock. */
+	std::vector<SDL_Rect> _gfxDamage;
 };
