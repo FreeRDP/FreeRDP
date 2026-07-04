@@ -1119,11 +1119,11 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 			switch (ev.type)
 			{
 				case SDL_EVENT_WINDOW_MOUSE_ENTER:
+
 					/* Re-enter fires on move-grab end. */
 					if (!(SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK))
 						_rail.completeLocalMoveIfPending(); /* X11 */
 					_rail.completeWaylandResize();          /* Wayland: compositor grab ended */
-					/* Restore the cursor or the pointer stays hidden over RemoteApp windows. */
 					return restoreCursor();
 				case SDL_EVENT_WINDOW_EXPOSED:
 					/* Force a repaint: we skip undamaged RAIL windows, so a re-exposed one is
@@ -1157,8 +1157,8 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 				case SDL_EVENT_WINDOW_MOVED:
 					return true;
 				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-					/* No server frame during the drag: repaint synchronously each configure step;
-					 * also report the new size to catch a compositor snap/tile. */
+					/* No server frame during the drag: repaint synchronously each configure step.
+					 * Also report the new size to catch a compositor snap/tile. */
 					_rail.handleWaylandResize(ev.windowID);
 					std::ignore = drawToWindows({});
 					return true;

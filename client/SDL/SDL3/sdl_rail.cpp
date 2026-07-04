@@ -986,6 +986,13 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 		}
 	}
 
+	if (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
+	{
+		WLog_DBG(TAG, "visoff id=0x%08" PRIx32 " %d,%d", orderInfo->windowId,
+		         windowState->visibleOffsetX, windowState->visibleOffsetY);
+		appWindow->setVisibleOffset({ static_cast<int>(windowState->visibleOffsetX),
+		                              static_cast<int>(windowState->visibleOffsetY) });
+	}
 	if (fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
 		std::vector<SDL_Rect> rects;
@@ -995,6 +1002,12 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 			const RECTANGLE_16& r = windowState->visibilityRects[i];
 			rects.push_back({ r.left, r.top, r.right - r.left, r.bottom - r.top });
 		}
+		if (rects.empty())
+			WLog_INFO(TAG, "visrects id=0x%08" PRIx32 " n=0", orderInfo->windowId);
+		else
+			WLog_INFO(TAG, "visrects id=0x%08" PRIx32 " n=%zu first=%dx%d+%d+%d",
+			          orderInfo->windowId, rects.size(), rects[0].w, rects[0].h, rects[0].x,
+			          rects[0].y);
 		appWindow->setVisibilityRects(std::move(rects));
 	}
 
