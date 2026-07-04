@@ -23,6 +23,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
 
 #include <SDL3/SDL.h>
 
@@ -133,6 +134,10 @@ class SdlRail
 	void registerUpdateCallbacks(rdpUpdate* update);
 	static BOOL window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
 	                          const WINDOW_STATE_ORDER* windowState);
+	static BOOL window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                        const WINDOW_ICON_ORDER* windowIcon);
+	static BOOL window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                               const WINDOW_CACHED_ICON_ORDER* windowCachedIcon);
 	static BOOL window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
 	static BOOL monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
 	                              const MONITORED_DESKTOP_ORDER* monitoredDesktop);
@@ -143,6 +148,10 @@ class SdlRail
 	/* Shared finalize tail (caller holds _windowsLock): report the final rect to the server and
 	 * adopt it locally. Both the X11 and Wayland completion paths funnel here. */
 	void reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int h);
+
+	/* MS-RDPERP icon cache slot for cacheId:cacheEntry; nullptr if out of range. cacheId 0xFF =
+	 * "do not cache" scratch slot (the spec says 0xFFFF but the field is one byte). */
+	[[nodiscard]] SdlRailIcon* iconCacheLookup(uint32_t cacheId, uint32_t cacheEntry);
 
   private:
 	SdlContext* _context;
@@ -175,4 +184,8 @@ class SdlRail
 	std::vector<uint32_t> _appliedZOrder;
 	uint32_t _activeWindowId = 0;
 	bool _zOrderDirty = false;
+	/* Icon cache (RDP thread): index = cacheId * entries + cacheEntry, sized from settings. */
+	std::vector<SdlRailIcon> _iconCache;
+	SdlRailIcon _iconScratch;
+	uint32_t _iconCacheEntries = 0;
 };

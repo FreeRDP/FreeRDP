@@ -24,6 +24,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/log.h>
+#include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/client/rail.h>
 
@@ -441,6 +442,12 @@ bool SdlRail::init(RailClientContext* rail)
 	{
 		std::unique_lock lock(_windowsLock);
 		_windows.clear();
+		auto* settings = _context->context()->settings;
+		const uint32_t caches =
+		    freerdp_settings_get_uint32(settings, FreeRDP_RemoteAppNumIconCaches);
+		_iconCacheEntries =
+		    freerdp_settings_get_uint32(settings, FreeRDP_RemoteAppNumIconCacheEntries);
+		_iconCache.assign(static_cast<size_t>(caches) * _iconCacheEntries, {});
 	}
 
 	rail->custom = this;
@@ -478,6 +485,8 @@ void SdlRail::registerUpdateCallbacks(rdpUpdate* update)
 
 	window->WindowCreate = SdlRail::window_common;
 	window->WindowUpdate = SdlRail::window_common;
+	window->WindowIcon = SdlRail::window_icon;
+	window->WindowCachedIcon = SdlRail::window_cached_icon;
 	window->WindowDelete = SdlRail::window_delete;
 	window->MonitoredDesktop = SdlRail::monitored_desktop;
 	window->NonMonitoredDesktop = SdlRail::non_monitored_desktop;
@@ -922,6 +931,90 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 	}
 
 	/* Wake the main thread to create/move/show/paint the SDL window(s). */
+	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
+	return TRUE;
+}
+
+SdlRailIcon* SdlRail::iconCacheLookup(uint32_t cacheId, uint32_t cacheEntry)
+{
+	if (cacheId == 0xFF)
+		return &_iconScratch;
+	const size_t idx = static_cast<size_t>(cacheId) * _iconCacheEntries + cacheEntry;
+	if ((_iconCacheEntries == 0) || (cacheEntry >= _iconCacheEntries) || (idx >= _iconCache.size()))
+		return nullptr;
+	return &_iconCache[idx];
+}
+
+/* ICON_INFO (1/4/8/16/24/32 bpp + AND mask) -> BGRA32, like xf convert_rail_icon. */
+static bool convertRailIcon(const ICON_INFO* info, SdlRailIcon& icon)
+{
+	icon.w = info->width;
+	icon.h = info->height;
+	icon.bgra.assign(4ULL * info->width * info->height, 0);
+	return freerdp_image_copy_from_icon_data(
+	           icon.bgra.data(), PIXEL_FORMAT_BGRA32, 0, 0, 0,
+	           WINPR_ASSERTING_INT_CAST(UINT16, info->width),
+	           WINPR_ASSERTING_INT_CAST(UINT16, info->height), info->bitsColor,
+	           WINPR_ASSERTING_INT_CAST(UINT16, info->cbBitsColor), info->bitsMask,
+	           WINPR_ASSERTING_INT_CAST(UINT16, info->cbBitsMask), info->colorTable,
+	           WINPR_ASSERTING_INT_CAST(UINT16, info->cbColorTable), info->bpp) == TRUE;
+}
+
+BOOL SdlRail::window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                          const WINDOW_ICON_ORDER* windowIcon)
+{
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(windowIcon);
+	WINPR_ASSERT(windowIcon->iconInfo);
+	auto rail = SdlRail::get(context);
+	if (!rail)
+		return FALSE;
+
+	std::unique_lock lock(rail->_windowsLock);
+	auto appWindow = rail->getWindow(orderInfo->windowId);
+	if (!appWindow)
+		return TRUE;
+
+	/* Decode into the cache slot so a later WindowCachedIcon can reference it. */
+	const ICON_INFO* info = windowIcon->iconInfo;
+	auto* icon = rail->iconCacheLookup(info->cacheId, info->cacheEntry);
+	if (!icon || !convertRailIcon(info, *icon))
+	{
+		WLog_WARN(TAG, "failed to decode icon %02" PRIX32 ":%04" PRIX32 " for window 0x%08" PRIx32,
+		          info->cacheId, info->cacheEntry, orderInfo->windowId);
+		return TRUE;
+	}
+	appWindow->setIcon(*icon);
+	lock.unlock();
+	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
+	return TRUE;
+}
+
+BOOL SdlRail::window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+                                 const WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
+{
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(windowCachedIcon);
+	auto rail = SdlRail::get(context);
+	if (!rail)
+		return FALSE;
+
+	std::unique_lock lock(rail->_windowsLock);
+	auto appWindow = rail->getWindow(orderInfo->windowId);
+	if (!appWindow)
+		return TRUE;
+
+	const CACHED_ICON_INFO& cached = windowCachedIcon->cachedIcon;
+	auto* icon = rail->iconCacheLookup(cached.cacheId, cached.cacheEntry);
+	if (!icon || icon->bgra.empty())
+	{
+		WLog_WARN(TAG,
+		          "cached icon %02" PRIX32 ":%04" PRIX32 " not in cache (window 0x%08" PRIx32 ")",
+		          cached.cacheId, cached.cacheEntry, orderInfo->windowId);
+		return TRUE;
+	}
+	appWindow->setIcon(*icon);
+	lock.unlock();
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	return TRUE;
 }

@@ -30,6 +30,14 @@
 
 class SdlWindow;
 
+/* A decoded RAIL window icon (BGRA32 pixels). */
+struct SdlRailIcon
+{
+	uint32_t w = 0;
+	uint32_t h = 0;
+	std::vector<uint8_t> bgra;
+};
+
 /**
  * A single RemoteApp window, backed by a borderless SDL window.
  *
@@ -92,6 +100,8 @@ class SdlRailWindow
 	void setTitle(const std::string& title);
 	void setTitle(const char16_t* str, size_t lenBytes);
 	void setVisible(bool visible);
+	/* Window icon (WindowIcon/WindowCachedIcon orders); applied in reconcile. */
+	void setIcon(const SdlRailIcon& icon);
 
 	/* --- main thread only (SDL window ops) --- */
 
@@ -162,6 +172,8 @@ class SdlRailWindow
 	StateSync _maxState;           /* maximize sync */
 	StateSync _minState;           /* minimize sync */
 	std::string _title = "RdpRailWindow";
+	SdlRailIcon _icon;
+	bool _iconDirty = false;
 	bool _visible = false;
 	bool _geometryDirty = true;
 	bool _titleDirty = false;
