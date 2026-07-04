@@ -213,6 +213,13 @@ void SdlRailWindow::setVisible(bool visible)
 	_visible = visible;
 }
 
+void SdlRailWindow::setIcon(const SdlRailIcon& icon)
+{
+	std::unique_lock lock(_gfxLock);
+	_icon = icon;
+	_iconDirty = true;
+}
+
 void SdlRailWindow::setTitle(const char16_t* str, size_t lenBytes)
 {
 	const size_t chars = lenBytes / sizeof(char16_t);
@@ -364,6 +371,25 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		if (!_isPopup)
 			SDL_SetWindowTitle(_win->window(), _title.c_str());
 		_titleDirty = false;
+	}
+	if (_iconDirty)
+	{
+		/* Apply window icon. */
+		if (!_isPopup && !_icon.bgra.empty())
+		{
+			SDL_Surface* s = SDL_CreateSurfaceFrom(
+			    static_cast<int>(_icon.w), static_cast<int>(_icon.h), SDL_PIXELFORMAT_BGRA32,
+			    _icon.bgra.data(), static_cast<int>(_icon.w * 4));
+			if (s)
+			{
+				if (!SDL_SetWindowIcon(_win->window(), s))
+					SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+					            "SDL_SetWindowIcon failed for window 0x%08x: %s",
+					            static_cast<unsigned>(_id), SDL_GetError());
+				SDL_DestroySurface(s);
+			}
+		}
+		_iconDirty = false;
 	}
 	/* Not while minimized: on X11 SDL_ShowWindow maps the window, which de-iconifies it. */
 	if (!_minState.rail)
