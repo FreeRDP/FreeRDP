@@ -104,6 +104,24 @@ void SdlRail::sendSystemCommand(SdlRailWindow* appWindow, uint16_t command)
 	std::ignore = _rail->ClientSystemCommand(_rail, &syscommand);
 }
 
+void SdlRail::sendWorkArea(const SDL_Rect& area)
+{
+	if (!_rail || !_rail->ClientSystemParam || (area.w <= 0) || (area.h <= 0))
+		return;
+	if (SDL_RectsEqual(&area, &_sentWorkArea))
+		return;
+
+	RAIL_SYSPARAM_ORDER param = {};
+	/* ClientSystemParam dispatches on the params mask, not .param. */
+	param.params = SPI_MASK_SET_WORK_AREA;
+	param.workArea.left = WINPR_ASSERTING_INT_CAST(UINT16, area.x);
+	param.workArea.top = WINPR_ASSERTING_INT_CAST(UINT16, area.y);
+	param.workArea.right = WINPR_ASSERTING_INT_CAST(UINT16, area.x + area.w);
+	param.workArea.bottom = WINPR_ASSERTING_INT_CAST(UINT16, area.y + area.h);
+	if (_rail->ClientSystemParam(_rail, &param) == CHANNEL_RC_OK)
+		_sentWorkArea = area;
+}
+
 void SdlRail::handleMaximized(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
@@ -203,7 +221,7 @@ bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
 	if (auto* renderer = appWindow->renderer())
 		(void)SDL_RenderCoordinatesFromWindow(renderer, x, y, &rpos.x, &rpos.y);
 
-	const auto& rect = appWindow->windowRect();
+	const SDL_Rect rect = appWindow->windowRect();
 	x = rpos.x + static_cast<float>(rect.x);
 	y = rpos.y + static_cast<float>(rect.y);
 	return true;
@@ -238,6 +256,14 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 {
 	if (!_enabled)
 		return true;
+
+	/* Report workarea once (avoids maximizing under local panels). */
+	if (_sentWorkArea.w == 0)
+	{
+		SDL_Rect usable{};
+		if (SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &usable))
+			sendWorkArea(usable);
+	}
 
 	std::unique_lock lock(_windowsLock);
 
@@ -700,12 +726,15 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 	/* Report outer frame to server (inflate by margins). */
 	const bool maximized = appWindow->effectivelyMaximized();
 	const SDL_Rect m = appWindow->resizeMargins();
+	const SDL_Rect full = { x - m.x, y - m.y, w + m.x + m.w, h + m.y + m.h };
 	RAIL_WINDOW_MOVE_ORDER move = {};
 	move.windowId = static_cast<UINT32>(appWindow->id());
-	move.left = WINPR_ASSERTING_INT_CAST(INT16, x - m.x);
-	move.top = WINPR_ASSERTING_INT_CAST(INT16, y - m.y);
-	move.right = WINPR_ASSERTING_INT_CAST(INT16, x + w + m.w);
-	move.bottom = WINPR_ASSERTING_INT_CAST(INT16, y + h + m.h);
+	move.left = WINPR_ASSERTING_INT_CAST(INT16, full.x);
+	move.top = WINPR_ASSERTING_INT_CAST(INT16, full.y);
+	move.right = WINPR_ASSERTING_INT_CAST(INT16, full.x + full.w);
+	move.bottom = WINPR_ASSERTING_INT_CAST(INT16, full.y + full.h);
+	WLog_DBG(TAG, "move complete id=0x%08" PRIx32 " rect=%d,%d %dx%d maximized=%d", move.windowId,
+	         x, y, w, h, maximized ? 1 : 0);
 	if (!maximized && _rail && _rail->ClientWindowMove &&
 	    (_rail->ClientWindowMove(_rail, &move) != CHANNEL_RC_OK))
 		WLog_WARN(TAG, "ClientWindowMove failed for RAIL window 0x%08" PRIx32, move.windowId);
@@ -719,11 +748,54 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
 
-void SdlRail::noteWaylandResize()
+void SdlRail::clampIntoDesktop(int& x, int& y, int w, int h) const
 {
+	auto* settings = _context->context()->settings;
+	const int dw = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+	const int dh = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+	x = std::clamp(x, 0, std::max(0, dw - w));
+	y = std::clamp(y, 0, std::max(0, dh - h));
+}
+
+void SdlRail::handleWaylandResize(SDL_WindowID id)
+{
+	if (!sdl::utils::isWaylandDriver())
+		return;
 	std::unique_lock lock(_windowsLock);
-	if (_localMoveId && _localMoveWayland)
-		_localMoveSawResize = true;
+	if (_localMoveId != 0)
+	{
+		/* Guard: drag actually resized. */
+		if (_localMoveWayland)
+			_localMoveSawResize = true;
+		return;
+	}
+
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || appWindow->isPopup() || !appWindow->window())
+		return;
+
+	int w = 0;
+	int h = 0;
+	SDL_GetWindowSize(appWindow->window(), &w, &h);
+	if ((w <= 0) || (h <= 0))
+		return;
+
+	/* Report work area on maximize. */
+	if (appWindow->effectivelyMaximized())
+	{
+		sendWorkArea({ 0, 0, w, h });
+		return;
+	}
+
+	const SDL_Rect vis = appWindow->windowRect();
+	if ((w == vis.w) && (h == vis.h))
+		return; /* echo of a size we already reported/applied - nothing new */
+
+	/* Report snap/tile size at last-known origin. */
+	int x = vis.x;
+	int y = vis.y;
+	clampIntoDesktop(x, y, w, h);
+	reportAndAdopt(appWindow, x, y, w, h);
 }
 
 void SdlRail::completeWaylandResize()
@@ -748,13 +820,9 @@ void SdlRail::completeWaylandResize()
 	/* Derive Wayland origin from anchor edge. */
 	const SDL_Rect start = appWindow->windowRect();
 	const RailEdges e = railEdges(_localMoveType);
-	auto* settings = _context->context()->settings;
-	const int dw = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
-	const int dh = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	int x = e.left ? (start.x + start.w - w) : start.x;
 	int y = e.top ? (start.y + start.h - h) : start.y;
-	x = std::clamp(x, 0, std::max(0, dw - w));
-	y = std::clamp(y, 0, std::max(0, dh - h));
+	clampIntoDesktop(x, y, w, h);
 	reportAndAdopt(appWindow, x, y, w, h);
 }
 
