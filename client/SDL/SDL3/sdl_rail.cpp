@@ -342,7 +342,53 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			          static_cast<UINT32>(popup.id()));
 		popup.paint(primary, fallbackFormat, damage, parent, parentRect);
 	}
+
+	/* All live windows now have real X11 handles: realize the server's z-order. */
+	applyZOrder();
 	return true;
+}
+
+/* Caller holds _windowsLock (main thread). */
+void SdlRail::applyZOrder()
+{
+	if (!_zOrderDirty)
+		return;
+	/* X11 only: Wayland/Win/macOS have no reparenting-safe, focus-neutral restack path here. */
+	if (!sdl::utils::isX11Driver())
+	{
+		_zOrderDirty = false;
+		return;
+	}
+	/* Never restack the window the WM is actively dragging; keep dirty and retry after the move. */
+	if (_localMoveId != 0)
+	{
+		WLog_VRB(TAG, "zorder apply deferred: local move 0x%08" PRIx32 " active", _localMoveId);
+		return;
+	}
+	if (_zOrder == _appliedZOrder) /* drop identical server resends */
+	{
+		_zOrderDirty = false;
+		return;
+	}
+
+	/* Restack top-level windows (skip popups and hidden windows). */
+	std::vector<SDL_Window*> stack;
+	stack.reserve(_zOrder.size());
+	for (uint32_t id : _zOrder)
+	{
+		auto* w = getWindow(id);
+		if (w && !w->isPopup() && w->window() &&
+		    ((SDL_GetWindowFlags(w->window()) & SDL_WINDOW_HIDDEN) == 0))
+			stack.push_back(w->window());
+	}
+	if (stack.size() >= 2)
+	{
+		WLog_VRB(TAG, "zorder apply: restacking %zu of %zu windows", stack.size(), _zOrder.size());
+		std::ignore = sdl_x11_restack_windows(stack);
+	}
+
+	_appliedZOrder = _zOrder;
+	_zOrderDirty = false;
 }
 
 UINT SdlRail::updateWindowFromSurface(gdiGfxSurface* surface)
@@ -924,6 +970,28 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 				WLog_ERR(TAG, "client_rail_server_start_cmd failed for '%s'", app);
 				return FALSE;
 			}
+		}
+	}
+
+	/* Authoritative top-level z-order (windowIds[0] topmost); capture it, paint() realizes it. */
+	if (orderInfo->fieldFlags &
+	    (WINDOW_ORDER_FIELD_DESKTOP_ZORDER | WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND))
+	{
+		std::unique_lock lock(rail->_windowsLock);
+		if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
+			rail->_activeWindowId = monitoredDesktop->activeWindowId;
+		if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
+		{
+			if (monitoredDesktop->windowIds && (monitoredDesktop->numWindowIds > 0))
+				rail->_zOrder.assign(monitoredDesktop->windowIds,
+				                     monitoredDesktop->windowIds + monitoredDesktop->numWindowIds);
+			else
+				rail->_zOrder.clear();
+			rail->_zOrderDirty = true;
+			WLog_VRB(TAG, "server zorder n=%zu active=0x%08" PRIx32, rail->_zOrder.size(),
+			         rail->_activeWindowId);
+			lock.unlock();
+			(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE); /* wake the main thread to restack */
 		}
 	}
 	return TRUE;

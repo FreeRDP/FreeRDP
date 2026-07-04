@@ -117,6 +117,9 @@ class SdlRail
 	void enableRemoteAppMode(bool enable);
 	/* Send a RAIL_SYSCOMMAND_ORDER for the window. Caller holds _windowsLock. */
 	void sendSystemCommand(SdlRailWindow* appWindow, uint16_t command);
+	/* Realize the server's top-level z-order (X11 only, focus-neutral). Caller holds _windowsLock.
+	 */
+	void applyZOrder();
 
 	/* --- RAIL server callbacks (static, dispatched to the instance) --- */
 	static UINT server_execute_result(RailClientContext* context,
@@ -166,4 +169,10 @@ class SdlRail
 	/* Last focused app window; parent for a right-click popup when ownerWindowId doesn't resolve to
 	 * a non-popup window (avoids mis-parenting with several apps open). */
 	uint64_t _focusedAppId = 0;
+	/* Server-driven top-level z-order (MS-RDPERP), windowIds[0] = topmost. RDP thread writes under
+	 * _windowsLock; main thread realizes it, records _appliedZOrder to skip identical resends. */
+	std::vector<uint32_t> _zOrder;
+	std::vector<uint32_t> _appliedZOrder;
+	uint32_t _activeWindowId = 0;
+	bool _zOrderDirty = false;
 };

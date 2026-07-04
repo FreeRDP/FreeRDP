@@ -20,6 +20,8 @@
 
 #include <SDL3/SDL.h>
 
+#include <vector>
+
 /* Native X11 helpers for the RAIL client (compiled only WITH_SDL_X11). Main thread only; each
  * function is a safe no-op off the X11 backend. */
 
@@ -32,3 +34,8 @@
  * ops overhang the screen where app-initiated ones get clamped). `netDirection` is
  * _NET_WM_MOVERESIZE (0..7 = edges, 8 = move). */
 bool sdl_x11_begin_move_size(SDL_Window* window, int netDirection);
+
+/* Restack top-level windows to the given top-to-bottom order via _NET_RESTACK_WINDOW (WM-mediated,
+ * so reparenting-safe; unlike raising, it does NOT change input focus). No-op off X11 or with fewer
+ * than two windows. Returns true if the restack messages were sent. */
+bool sdl_x11_restack_windows(const std::vector<SDL_Window*>& topToBottom);
