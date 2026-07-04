@@ -63,10 +63,10 @@ class SdlRailWindow
 
 	/* Server-driven geometry (from WINDOW_ORDER). */
 	void updateWindowRect(const SDL_Rect& rect);
-	[[nodiscard]] SDL_Rect windowRect() const;
-
 	/* The window's server rect: what the GFX surface spans and the local window shows. The
 	 * invisible resize margins live outside it. */
+	[[nodiscard]] SDL_Rect windowRect() const;
+
 	/* Local (WM) move/resize in progress: server geometry and input are ignored while set.
 	 * adoptLocalGeometry() takes the WM's final geometry and clears the flag. */
 	void setLocalMoveActive(bool active);
@@ -177,6 +177,7 @@ class SdlRailWindow
 	bool _visible = false;
 	bool _geometryDirty = true;
 	bool _titleDirty = false;
+	bool _styleDirty = false; /* resizability needs re-applying (style change) */
 	bool _painted = false;    /* full copy done; afterwards only damage regions are re-copied */
 	bool _localMoveActive = false; /* WM move/resize in progress: ignore server geometry + input */
 	bool _localMoveIsResize = false;          /* local move is a resize vs a move */
@@ -196,4 +197,8 @@ class SdlRailWindow
 	/* Regions changed since the last paint (server damage, surface coords); only these are copied
 	 * and uploaded. Empty = nothing to repaint (skip the window). Guarded by _gfxLock. */
 	std::vector<SDL_Rect> _gfxDamage;
+	/* Window pixel size at the last GFX present. A server-driven resize changes it before the
+	 * next frame arrives; paintGfx repaints once so the revealed area isn't a white flash. */
+	int _lastWinW = 0;
+	int _lastWinH = 0;
 };

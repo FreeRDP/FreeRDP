@@ -98,13 +98,13 @@ class SdlRail
 	 * Wayland uses completeWaylandResize instead (compositor grab hides the real button-up). */
 	void completeLocalMoveIfPending();
 
-	/* Wayland: a size-change event arrived for the active resize (main thread); marks that the drag
-	 * actually resized, so a bare pointer re-enter can't finalize a no-op click. */
-	void noteWaylandResize();
-	/* Wayland (main thread): finalize the resize. Called when the compositor grab ends (pointer
-	 * re-enters, SDL_EVENT_WINDOW_MOUSE_ENTER) or as a backstop on the next button-down. No-op
-	 * unless a Wayland resize that actually resized is pending. */
+	/* Wayland (main thread): finalize the resize when the compositor grab ends (pointer re-enter)
+	 * or as a backstop on the next button-down. No-op unless a real Wayland resize is pending. */
 	void completeWaylandResize();
+	/* Wayland (main thread): a compositor-driven resize (snap/tile) with no server move request.
+	 * Report the new size (keep server's last origin, clamped). No-op if move/maximized/unchanged.
+	 */
+	void handleWaylandResize(SDL_WindowID id);
 
   private:
 	/* _windows helpers: callers must hold _windowsLock. */
@@ -116,6 +116,11 @@ class SdlRail
 	[[nodiscard]] SdlRailWindow* resolveParent(uint64_t ownerId);
 
 	void enableRemoteAppMode(bool enable);
+	/* Report a work area to the server (SPI_SET_WORK_AREA, server coords). Main thread. No-op if it
+	 * matches the last one sent. */
+	void sendWorkArea(const SDL_Rect& area);
+	/* Clamp a window origin (x,y) so a w x h window stays inside the server desktop. */
+	void clampIntoDesktop(int& x, int& y, int w, int h) const;
 	/* Send a RAIL_SYSCOMMAND_ORDER for the window. Caller holds _windowsLock. */
 	void sendSystemCommand(SdlRailWindow* appWindow, uint16_t command);
 	/* Realize the server's top-level z-order (X11 only, focus-neutral). Caller holds _windowsLock.
@@ -158,6 +163,9 @@ class SdlRail
 	RailClientContext* _rail = nullptr;
 	bool _enabled = false;
 	bool _refreshSent = false; /* one full RefreshRect per connection, at first window realize */
+	/* Last work area reported to the server (server coords). On Wayland it's unknown up front, so a
+	 * maximize corrects it from the actual maximized window size. */
+	SDL_Rect _sentWorkArea = { 0, 0, 0, 0 };
 	/* Guards _windows (RDP thread mutates, main thread paints/iterates, GFX thread looks up).
 	 * Erased on the main thread only, so SDL windows are destroyed there. */
 	mutable std::mutex _windowsLock;
