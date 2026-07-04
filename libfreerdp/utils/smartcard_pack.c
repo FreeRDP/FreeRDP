@@ -4968,6 +4968,15 @@ LONG smartcard_unpack_transmit_return(wStream* s, Transmit_Return* ret)
 			if (smartcard_unpack_read_size_align(s, cbExtraBytes, 4) < 0)
 				return STATUS_INVALID_PARAMETER;
 		}
+		else
+		{
+			ret->pioRecvPci = (LPSCARD_IO_REQUEST)malloc(sizeof(SCARD_IO_REQUEST));
+			if (!ret->pioRecvPci)
+				return SCARD_E_NO_MEMORY;
+
+			ret->pioRecvPci->dwProtocol = dwProtocol;
+			ret->pioRecvPci->cbPciLength = sizeof(SCARD_IO_REQUEST);
+		}
 	}
 
 	if (recvBufferNdrPtr && ret->cbRecvLength > 0)
