@@ -435,7 +435,15 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_enable_tls(rdp->nego, settings->TlsSecurity);
 	nego_enable_nla(rdp->nego, settings->NlaSecurity);
 	nego_enable_ext(rdp->nego, settings->ExtSecurity);
-	nego_enable_rdstls(rdp->nego, settings->RdstlsSecurity);
+	/* An endpoint FedAuth token is delivered via RDSTLS. Enable the protocol
+	 * implicitly so the token can be used without an additional /sec flag. */
+	{
+		const char* fedAuthToken =
+		    freerdp_settings_get_string(settings, FreeRDP_EndpointFedAuthToken);
+		const BOOL enableRdstls =
+		    settings->RdstlsSecurity || (fedAuthToken && (*fedAuthToken != '\0'));
+		nego_enable_rdstls(rdp->nego, enableRdstls);
+	}
 	nego_enable_aad(rdp->nego, settings->AadSecurity);
 
 	if (settings->MstscCookieMode)

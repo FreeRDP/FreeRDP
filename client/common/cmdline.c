@@ -5298,6 +5298,11 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			if (!freerdp_settings_set_bool(settings, FreeRDP_NegotiateSecurityLayer, enable))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+		CommandLineSwitchCase(arg, "endpointfedauth")
+		{
+			if (!freerdp_settings_set_string(settings, FreeRDP_EndpointFedAuthToken, arg->Value))
+				return fail_at(arg, COMMAND_LINE_ERROR_MEMORY);
+		}
 		CommandLineSwitchCase(arg, "pcb")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_SendPreconnectionPdu, TRUE))

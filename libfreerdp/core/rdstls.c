@@ -34,6 +34,7 @@
 #include "utils.h"
 
 #define RDSTLS_VERSION_1 0x01
+#define RDSTLS_VERSION_2 0x02
 
 #define RDSTLS_TYPE_CAPABILITIES 0x01
 #define RDSTLS_TYPE_AUTHREQ 0x02
@@ -42,6 +43,7 @@
 #define RDSTLS_DATA_CAPABILITIES 0x01
 #define RDSTLS_DATA_PASSWORD_CREDS 0x01
 #define RDSTLS_DATA_AUTORECONNECT_COOKIE 0x02
+#define RDSTLS_DATA_FEDAUTH_TOKEN 0x03
 #define RDSTLS_DATA_RESULT_CODE 0x01
 
 typedef enum
@@ -350,6 +352,84 @@ static BOOL rdstls_write_authentication_request_with_cookie(WINPR_ATTR_UNUSED rd
 	return (rdstls_write_cookie(s, settings->ServerAutoReconnectCookie));
 }
 
+/*
+ * Warn if the endpoint FedAuth token targets a different virtual machine
+ * than the VM identifier passed via the .rdp `pcb` field / /pcb command
+ * line switch. The token payload starts with "VMID=<guid>&..."; a
+ * mismatch would be silently rejected by the server later on. This is a
+ * best-effort local sanity check.
+ */
+static void rdstls_check_fedauth_vmid(rdpRdstls* rdstls, const char* token, const char* selectedVm)
+{
+	WINPR_ASSERT(rdstls);
+	WINPR_ASSERT(token);
+
+	if (!selectedVm || !*selectedVm)
+		return;
+
+	const char* vmidField = strstr(token, "VMID=");
+	if (!vmidField)
+		return;
+	vmidField += 5;
+
+	const size_t vmLen = strlen(selectedVm);
+	const BOOL matches =
+	    (_strnicmp(vmidField, selectedVm, vmLen) == 0) &&
+	    (vmidField[vmLen] == '\0' || vmidField[vmLen] == '&');
+	if (!matches)
+	{
+		WLog_Print(rdstls->log, WLOG_WARN,
+		           "endpoint FedAuth token is issued for a different virtual machine "
+		           "than the one selected for connection");
+	}
+}
+
+static BOOL rdstls_write_authentication_request_with_fedauth_token(rdpRdstls* rdstls, wStream* s)
+{
+	WINPR_ASSERT(rdstls);
+	WINPR_ASSERT(rdstls->context);
+
+	WLog_Print(rdstls->log, WLOG_DEBUG, "Writing RDSTLS FedAuth token authentication message");
+
+	const rdpSettings* settings = rdstls->context->settings;
+	WINPR_ASSERT(settings);
+
+	const char* token = freerdp_settings_get_string(settings, FreeRDP_EndpointFedAuthToken);
+	if (!token || !*token)
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR, "EndpointFedAuthToken not set");
+		return FALSE;
+	}
+
+	rdstls_check_fedauth_vmid(
+	    rdstls, token, freerdp_settings_get_string(settings, FreeRDP_PreconnectionBlob));
+
+	const size_t utf8Length = strlen(token);
+	/* The wire length prefix is a UINT16 counting the token in UTF-16LE
+	 * including a terminating NUL character. */
+	if (utf8Length + 1 > UINT16_MAX / sizeof(WCHAR))
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR,
+		           "EndpointFedAuthToken length %" PRIuz " exceeds RDSTLS wire limit", utf8Length);
+		return FALSE;
+	}
+
+	const size_t wideLength = utf8Length + 1;
+	const size_t wideBytes = wideLength * sizeof(WCHAR);
+
+	if (!Stream_EnsureRemainingCapacity(s, 6 + wideBytes))
+		return FALSE;
+
+	Stream_Write_UINT16(s, RDSTLS_TYPE_AUTHREQ);
+	Stream_Write_UINT16(s, RDSTLS_DATA_FEDAUTH_TOKEN);
+	Stream_Write_UINT16(s, (UINT16)wideBytes);
+
+	if (Stream_Write_UTF16_String_From_UTF8(s, wideLength, token, utf8Length, TRUE) < 0)
+		return FALSE;
+
+	return TRUE;
+}
+
 static BOOL rdstls_write_authentication_response(rdpRdstls* rdstls, wStream* s)
 {
 	WINPR_ASSERT(rdstls);
@@ -655,9 +735,13 @@ static BOOL rdstls_send(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, v
 	if (!Stream_EnsureRemainingCapacity(s, 2))
 		return FALSE;
 
-	Stream_Write_UINT16(s, RDSTLS_VERSION_1);
-
 	const RDSTLS_STATE state = rdstls_get_state(rdstls);
+	const char* fedAuthToken = freerdp_settings_get_string(settings, FreeRDP_EndpointFedAuthToken);
+	const BOOL useFedAuth =
+	    (state == RDSTLS_STATE_AUTH_REQ) && fedAuthToken && (*fedAuthToken != '\0');
+
+	Stream_Write_UINT16(s, useFedAuth ? RDSTLS_VERSION_2 : RDSTLS_VERSION_1);
+
 	switch (state)
 	{
 		case RDSTLS_STATE_CAPABILITIES:
@@ -665,7 +749,12 @@ static BOOL rdstls_send(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, v
 				return FALSE;
 			break;
 		case RDSTLS_STATE_AUTH_REQ:
-			if (settings->RedirectionFlags & LB_PASSWORD_IS_PK_ENCRYPTED)
+			if (useFedAuth)
+			{
+				if (!rdstls_write_authentication_request_with_fedauth_token(rdstls, s))
+					return FALSE;
+			}
+			else if (settings->RedirectionFlags & LB_PASSWORD_IS_PK_ENCRYPTED)
 			{
 				if (!rdstls_write_authentication_request_with_password(rdstls, s))
 					return FALSE;
@@ -678,7 +767,8 @@ static BOOL rdstls_send(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, v
 			else
 			{
 				WLog_Print(rdstls->log, WLOG_ERROR,
-				           "cannot authenticate with password or auto-reconnect cookie");
+				           "cannot authenticate with FedAuth token, password or "
+				           "auto-reconnect cookie");
 				return FALSE;
 			}
 			break;

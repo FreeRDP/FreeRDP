@@ -393,6 +393,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_DrivesToRedirect,
 	FreeRDP_DumpRemoteFxFile,
 	FreeRDP_DynamicDSTTimeZoneKeyName,
+	FreeRDP_EndpointFedAuthToken,
 	FreeRDP_GatewayAcceptedCert,
 	FreeRDP_GatewayAccessToken,
 	FreeRDP_GatewayAvdAadtenantid,
