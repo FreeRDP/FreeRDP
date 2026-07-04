@@ -96,7 +96,7 @@ bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
 	if (!appWindow)
 		return false;
 
-	/* Window-local -> server-absolute (add the window's server offset). */
+	/* Window-local -> server-absolute (add the window's visible on-screen origin). */
 	SDL_FPoint rpos = { x, y };
 	if (auto* renderer = appWindow->renderer())
 		(void)SDL_RenderCoordinatesFromWindow(renderer, x, y, &rpos.x, &rpos.y);
