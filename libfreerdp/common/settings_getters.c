@@ -2835,6 +2835,9 @@ const char* freerdp_settings_get_string(WINPR_ATTR_UNUSED const rdpSettings* set
 		case FreeRDP_DynamicDSTTimeZoneKeyName:
 			return settings->DynamicDSTTimeZoneKeyName;
 
+		case FreeRDP_EndpointFedAuthToken:
+			return settings->EndpointFedAuthToken;
+
 		case FreeRDP_GatewayAcceptedCert:
 			return settings->GatewayAcceptedCert;
 
@@ -3172,6 +3175,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 
 		case FreeRDP_DynamicDSTTimeZoneKeyName:
 			return settings->DynamicDSTTimeZoneKeyName;
+
+		case FreeRDP_EndpointFedAuthToken:
+			return settings->EndpointFedAuthToken;
 
 		case FreeRDP_GatewayAcceptedCert:
 			return settings->GatewayAcceptedCert;
@@ -3522,6 +3528,9 @@ BOOL freerdp_settings_set_string_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_DynamicDSTTimeZoneKeyName:
 			return update_string_(&settings->DynamicDSTTimeZoneKeyName, cnv.c, len);
+
+		case FreeRDP_EndpointFedAuthToken:
+			return update_string_(&settings->EndpointFedAuthToken, cnv.c, len);
 
 		case FreeRDP_GatewayAcceptedCert:
 			return update_string_(&settings->GatewayAcceptedCert, cnv.c, len);
@@ -3887,6 +3896,9 @@ BOOL freerdp_settings_set_string_copy_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_DynamicDSTTimeZoneKeyName:
 			return update_string_copy_(&settings->DynamicDSTTimeZoneKeyName, cnv.cc, len, cleanup);
+
+		case FreeRDP_EndpointFedAuthToken:
+			return update_string_copy_(&settings->EndpointFedAuthToken, cnv.cc, len, cleanup);
 
 		case FreeRDP_GatewayAcceptedCert:
 			return update_string_copy_(&settings->GatewayAcceptedCert, cnv.cc, len, cleanup);

@@ -207,6 +207,8 @@ struct rdp_file
 
 	LPSTR GatewayAccessToken; /* gatewayaccesstoken */
 
+	LPSTR EndpointFedAuthToken; /* endpointfedauth */
+
 	LPSTR DrivesToRedirect;  /* drivestoredirect */
 	LPSTR DevicesToRedirect; /* devicestoredirect */
 	LPSTR WinPosStr;         /* winposstr */
@@ -246,6 +248,7 @@ static const char key_str_alternate_shell[] = "alternate shell";
 static const char key_str_shell_working_directory[] = "shell working directory";
 static const char key_str_gatewayhostname[] = "gatewayhostname";
 static const char key_str_gatewayaccesstoken[] = "gatewayaccesstoken";
+static const char key_str_endpointfedauth[] = "endpointfedauth";
 static const char key_str_resourceprovider[] = "resourceprovider";
 static const char str_resourceprovider_arm[] = "arm";
 static const char key_str_kdcproxyname[] = "kdcproxyname";
@@ -585,6 +588,8 @@ static BOOL freerdp_client_rdp_file_find_string_entry(rdpFile* file, const char*
 		*outValue = &file->activityhint;
 	else if (_stricmp(name, key_str_gatewayaccesstoken) == 0)
 		*outValue = &file->GatewayAccessToken;
+	else if (_stricmp(name, key_str_endpointfedauth) == 0)
+		*outValue = &file->EndpointFedAuthToken;
 	else if (_stricmp(name, key_str_kdcproxyname) == 0)
 		*outValue = &file->KdcProxyName;
 	else if (_stricmp(name, key_str_drivestoredirect) == 0)
@@ -831,6 +836,8 @@ static BOOL trim_strings(rdpFile* file)
 	if (!trim(&file->GatewayHostname))
 		return FALSE;
 	if (!trim(&file->GatewayAccessToken))
+		return FALSE;
+	if (!trim(&file->EndpointFedAuthToken))
 		return FALSE;
 	if (!trim(&file->RemoteApplicationName))
 		return FALSE;
@@ -1243,6 +1250,8 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->RemoteApplicationMode = WINPR_ASSERTING_INT_CAST(
 	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode));
 	if (!FILE_POPULATE_STRING(&file->GatewayAccessToken, settings, FreeRDP_GatewayAccessToken) ||
+	    !FILE_POPULATE_STRING(&file->EndpointFedAuthToken, settings,
+	                          FreeRDP_EndpointFedAuthToken) ||
 	    !FILE_POPULATE_STRING(&file->RemoteApplicationProgram, settings,
 	                          FreeRDP_RemoteApplicationProgram) ||
 	    !FILE_POPULATE_STRING(&file->RemoteApplicationName, settings,
@@ -1621,6 +1630,7 @@ static SSIZE_T write_string_parameters(const rdpFile* file, char* buffer, size_t
 		{ key_str_hubdiscoverygeourl, file->hubdiscoverygeourl },
 		{ key_str_activityhint, file->activityhint },
 		{ key_str_gatewayaccesstoken, file->GatewayAccessToken },
+		{ key_str_endpointfedauth, file->EndpointFedAuthToken },
 		{ key_str_kdcproxyname, file->KdcProxyName },
 		{ key_str_drivestoredirect, file->DrivesToRedirect },
 		{ key_str_devicestoredirect, file->DevicesToRedirect },
@@ -2168,6 +2178,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAccessToken,
 		                                 file->GatewayAccessToken))
+			return FALSE;
+	}
+
+	if (~((size_t)file->EndpointFedAuthToken))
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_EndpointFedAuthToken,
+		                                 file->EndpointFedAuthToken))
 			return FALSE;
 	}
 

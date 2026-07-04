@@ -494,6 +494,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_DumpRemoteFxFile, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_DumpRemoteFxFile" },
 	{ FreeRDP_DynamicDSTTimeZoneKeyName, FREERDP_SETTINGS_TYPE_STRING,
 	  "FreeRDP_DynamicDSTTimeZoneKeyName" },
+	{ FreeRDP_EndpointFedAuthToken, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_EndpointFedAuthToken" },
 	{ FreeRDP_GatewayAcceptedCert, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_GatewayAcceptedCert" },
 	{ FreeRDP_GatewayAccessToken, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_GatewayAccessToken" },
 	{ FreeRDP_GatewayAvdAadtenantid, FREERDP_SETTINGS_TYPE_STRING,
