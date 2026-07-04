@@ -49,6 +49,8 @@ set(SRCS
     sdl_context.cpp
     sdl_rail.hpp
     sdl_rail.cpp
+    sdl_rail_platform.hpp
+    sdl_rail_platform.cpp
     sdl_rail_window.hpp
     sdl_rail_window.cpp
     sdl_wayland.hpp
