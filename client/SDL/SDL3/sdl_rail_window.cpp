@@ -24,7 +24,9 @@
 #include <freerdp/log.h>
 #include <freerdp/window.h>
 
+#include "sdl_rail_platform.hpp"
 #include "sdl_rail_window.hpp"
+#include "sdl_wayland.hpp"
 #include "sdl_window.hpp"
 
 #define TAG CLIENT_TAG("sdl.rail.window")
@@ -96,6 +98,18 @@ void SdlRailWindow::setVisibilityRects(std::vector<SDL_Rect> rects)
 	_visRects = std::move(rects);
 }
 
+void SdlRailWindow::setResizeMargins(int left, int top, int right, int bottom)
+{
+	std::unique_lock lock(_gfxLock);
+	_resizeMargins = { left, top, right, bottom };
+}
+
+SDL_Rect SdlRailWindow::resizeMargins() const
+{
+	std::unique_lock lock(_gfxLock);
+	return _resizeMargins;
+}
+
 void SdlRailWindow::setOwner(uint64_t ownerId)
 {
 	std::unique_lock lock(_gfxLock);
@@ -112,6 +126,12 @@ bool SdlRailWindow::isPopup() const
 {
 	std::unique_lock lock(_gfxLock);
 	return _isPopup;
+}
+
+bool SdlRailWindow::styleResizable() const
+{
+	/* Resizable only with a sizing border (WS_THICKFRAME), or the WM refuses resize requests. */
+	return (_style & WS_THICKFRAME) != 0;
 }
 
 void SdlRailWindow::setStyle(uint32_t style, uint32_t exStyle)
@@ -159,8 +179,7 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	if (_win)
 		return true;
 
-	const char* driver = SDL_GetCurrentVideoDriver();
-	const bool wayland = driver && (strcmp(driver, "wayland") == 0);
+	const RailPlatformCaps& caps = railPlatformCaps();
 
 	if (_isPopup && parent)
 	{
@@ -170,9 +189,10 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 			                   _windowRect.w, _windowRect.h };
 		_win = std::make_unique<SdlWindow>(SdlWindow::createPopup(parent, rel));
 	}
-	else if (_isPopup && wayland)
+	else if (_isPopup && !caps.positionsReadable)
 	{
 		/* No owner yet: a Wayland popup needs a parent; retry once an app window exists. */
+		WLog_VRB(TAG, "popup create deferred id=0x%08x: no parent yet", static_cast<unsigned>(_id));
 		return false;
 	}
 	else
@@ -188,6 +208,11 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 		          railRole(_isPopup, _layered));
 		return false;
 	}
+	_win->resizeable(styleResizable());
+
+	/* Bind seat/pointer on Wayland. */
+	if (!_isPopup && !caps.positionsReadable)
+		sdl_wayland_move_prepare(_win->window());
 	return true;
 }
 

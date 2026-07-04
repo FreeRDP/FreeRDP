@@ -64,6 +64,10 @@ class SdlRailWindow
 	/* Visible sub-rects (window-relative); only these are painted so windows on top don't bleed. */
 	void setVisibilityRects(std::vector<SDL_Rect> rects);
 
+	/* Server's outside resize band: ClientWindowMove reports the outer rect to prevent shrinking. */
+	void setResizeMargins(int left, int top, int right, int bottom);
+	[[nodiscard]] SDL_Rect resizeMargins() const; /* x=left y=top w=right h=bottom */
+
 	/* Owning window id (WINDOW_ORDER_FIELD_OWNER); popups position relative to it. */
 	void setOwner(uint64_t ownerId);
 	[[nodiscard]] uint64_t owner() const;
@@ -89,6 +93,7 @@ class SdlRailWindow
 	           const SDL_Rect& parentRect = {});
 
   private:
+	[[nodiscard]] bool styleResizable() const; /* caller holds _gfxLock */
 	bool create(SDL_Window* parent, const SDL_Rect& parentRect);
 	bool paintGfx(SDL_PixelFormat format);
 	bool paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect>& damage);
@@ -98,6 +103,7 @@ class SdlRailWindow
 	SDL_Rect _windowRect;            /* server offset/size */
 	uint32_t _style = 0;
 	uint64_t _ownerId = 0;
+	SDL_Rect _resizeMargins = { 0, 0, 0, 0 }; /* x=left y=top w=right h=bottom */
 	bool _isPopup = false;
 	bool _layered = false;         /* WS_EX_LAYERED shadow/glass decoration: never rendered */
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */

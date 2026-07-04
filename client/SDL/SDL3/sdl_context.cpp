@@ -1112,6 +1112,9 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 			switch (ev.type)
 			{
 				case SDL_EVENT_WINDOW_MOUSE_ENTER:
+					/* Re-enter fires on move-grab end. */
+					if (!(SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK))
+						_rail.completeLocalMoveIfPending(); /* X11 */
 					/* Restore the cursor or the pointer stays hidden over RemoteApp windows. */
 					return restoreCursor();
 				case SDL_EVENT_WINDOW_FOCUS_GAINED:
@@ -1119,6 +1122,8 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					return true;
 				case SDL_EVENT_WINDOW_FOCUS_LOST:
 					_rail.handleFocus(ev.windowID, false);
+					return true;
+				case SDL_EVENT_WINDOW_MOVED:
 					return true;
 				default:
 					break;
@@ -1223,6 +1228,9 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 {
 	SDL_Event copy = {};
 	copy.button = ev;
+	/* A WM move ends on button release; report the final geometry then, not mid-grab. */
+	if (_rail.enabled() && (ev.type == SDL_EVENT_MOUSE_BUTTON_UP))
+		_rail.completeLocalMoveIfPending();
 	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.button.x, copy.button.y))
 		return SdlTouch::handleEvent(this, copy.button);
 
