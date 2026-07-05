@@ -88,11 +88,16 @@ class SdlWindow
 	                                   const std::vector<SDL_Rect>& rects = {});
 
 	[[nodiscard]] bool fill(Uint8 r = 0x00, Uint8 g = 0x00, Uint8 b = 0x00, Uint8 a = 0xff);
+
 	[[nodiscard]] bool blit(SDL_Surface* surface, const SDL_Rect& src, SDL_Rect& dst);
 	/* Interactive-resize transient: translucent fill in the revealed area + old frame at `off` +
 	 * dashed border, then present. Translucency needs a transparent window + a compositor.
-	 * `contentChanged` = re-upload the frame pixels (else the cached texture is reused). */
-	bool paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged);
+	 * `contentChanged` = re-upload the frame pixels (else the cached texture is reused).
+	 * `inset` = edges outside the visible frame (resize band) left fully transparent.
+	 * `dashedBorder` = draw the "awaiting content" dashes; off for a WM move that merely changed
+	 * the size (snap/untile restore), where they would read as a resize. */
+	bool paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged,
+	                      const SDL_Rect& inset = { 0, 0, 0, 0 }, bool dashedBorder = true);
 	void updateSurface();
 
   protected:

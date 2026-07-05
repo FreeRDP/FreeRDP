@@ -110,6 +110,10 @@ class SdlRail
 	/* _windows helpers: callers must hold _windowsLock. */
 	[[nodiscard]] SdlRailWindow* getWindow(uint64_t id);
 	[[nodiscard]] SdlRailWindow* getWindowBySdlId(SDL_WindowID id);
+	/* Start a client-driven compositor resize (grip or band press); caller holds _windowsLock. */
+	bool beginClientEdgeResize(SdlRailWindow* appWindow, uint16_t edge, SDL_Point grabPos);
+	/* The app window eligible for a client edge-resize, or null; caller holds _windowsLock. */
+	[[nodiscard]] SdlRailWindow* edgeResizeTarget(SDL_WindowID id);
 	SdlRailWindow* addWindow(uint64_t id, const SDL_Rect& rect);
 	/* The window `ownerId` names, if it is a live non-popup app window (a valid popup/dialog
 	 * parent); else nullptr. Caller holds _windowsLock. */
@@ -126,6 +130,10 @@ class SdlRail
 	/* Realize the server's top-level z-order (X11 only, focus-neutral). Caller holds _windowsLock.
 	 */
 	void applyZOrder();
+	/* Session-wide resize margins (Windows' invisible border is per-DPI, not per-window): seeds
+	 * windows announced without margin fields (initial sync of pre-existing windows only sends
+	 * them on activation). Guarded by _windowsLock. */
+	SDL_Rect _sessionMargins = { 0, 0, 0, 0 };
 
 	/* --- RAIL server callbacks (static, dispatched to the instance) --- */
 	static UINT server_execute_result(RailClientContext* context,
@@ -178,6 +186,9 @@ class SdlRail
 	/* WM move/resize in progress; report the final rect when it ends. Wayland tracks size only. */
 	uint32_t _localMoveId = 0;
 	bool _localMoveWayland = false;
+	/* Resize started by the client grip, not a server ServerLocalMoveSize: no modal loop to close,
+	 * so completion skips the synthetic button-up. */
+	bool _localMoveHitTest = false;
 	SDL_Point _localMoveGrabPos = { 0, 0 }; /* server-absolute grab point; close the loop here */
 	uint16_t _localMoveType = 0;            /* RAIL_WMSZ_* of the active local move */
 	/* Wayland: a WINDOW_RESIZED has arrived since the grab started, so the pending op really

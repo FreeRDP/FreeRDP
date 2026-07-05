@@ -177,7 +177,13 @@ void SdlRailWindow::setMinMaxSize(SDL_Point minSize, SDL_Point maxSize)
 void SdlRailWindow::setResizeMargins(int left, int top, int right, int bottom)
 {
 	std::unique_lock lock(_gfxLock);
-	_resizeMargins = { left, top, right, bottom };
+	const SDL_Rect m = { left, top, right, bottom };
+	if (SDL_RectsEqual(&m, &_resizeMargins))
+		return;
+	_resizeMargins = m;
+	/* Margins usually arrive after the first frame; the window must regrow to cover them. */
+	if (!_maxState.rail)
+		_geometryDirty = true;
 }
 
 SDL_Rect SdlRailWindow::resizeMargins() const
@@ -218,17 +224,73 @@ bool SdlRailWindow::isPopup() const
 
 bool SdlRailWindow::styleResizable() const
 {
-	/* Sizing border or maximize box: WMs refuse to maximize non-resizable windows. */
-	return (_style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0;
+	/* Sizing border or maximize box: WMs refuse to maximize non-resizable windows. Latched: apps
+	 * (PowerPoint's Options dialog) drop WS_THICKFRAME on every activation change and re-add it a
+	 * beat later. Honouring each flap toggles SDL's resizable flag, which makes the WM re-frame and
+	 * shift the window by the band inset - an endless move/resize oscillation. Resizability is a
+	 * stable window property, so once a window is seen resizable it stays so for the band. */
+	return _everResizable || ((_style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0);
+}
+
+/* Inflate window by resize margins for hit-testing. */
+/* Check band eligibility. */
+SDL_Rect SdlRailWindow::bandMargins() const
+{
+	if (!_visible || _isPopup || _layered || !styleResizable() || effectivelyMaximized())
+		return { 0, 0, 0, 0 };
+	return _resizeMargins;
+}
+
+SDL_Rect SdlRailWindow::bandInsets() const
+{
+	/* X11-only transparent resize ring. */
+	const auto& caps = railPlatformCaps();
+	if (!caps.positionsReadable || !caps.supportsTransparentWindows)
+		return { 0, 0, 0, 0 };
+	return bandMargins();
+}
+
+/* Server rect inflated by the band insets; caller holds _gfxLock. */
+SDL_Rect SdlRailWindow::targetOuterRect() const
+{
+	const SDL_Rect i = bandInsets();
+	return { _windowRect.x - i.x, _windowRect.y - i.y, _windowRect.w + i.x + i.w,
+		     _windowRect.h + i.y + i.h };
+}
+
+/* The insets baked into the window ON SCREEN (not the freshly recomputed target). */
+SDL_Rect SdlRailWindow::insets() const
+{
+	std::unique_lock lock(_gfxLock);
+	return _appliedInsets;
+}
+
+/* On-screen outer geometry: _windowRect inflated by the applied insets. */
+SDL_Rect SdlRailWindow::outerRect() const
+{
+	std::unique_lock lock(_gfxLock);
+	const SDL_Rect& i = _appliedInsets;
+	return { _windowRect.x - i.x, _windowRect.y - i.y, _windowRect.w + i.x + i.w,
+		     _windowRect.h + i.y + i.h };
+}
+
+SDL_Rect SdlRailWindow::serverRect(const SDL_Rect& outer) const
+{
+	const SDL_Rect i = insets();
+	return { outer.x + i.x, outer.y + i.y, outer.w - i.x - i.w, outer.h - i.y - i.h };
 }
 
 void SdlRailWindow::setStyle(uint32_t style, uint32_t exStyle)
 {
 	std::unique_lock lock(_gfxLock);
-	/* Track resizability changes. */
-	if ((style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != (_style & (WS_THICKFRAME | WS_MAXIMIZEBOX)))
-		_styleDirty = true;
+	const bool wasResizable = styleResizable();
 	_style = style;
+	if ((style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0)
+		_everResizable = true;
+	/* Re-apply to SDL only on a real (latched) resizability change - not on the per-activation
+	 * WS_THICKFRAME flapping, which styleResizable() now absorbs. */
+	if (styleResizable() != wasResizable)
+		_styleDirty = true;
 	/* Classify popup once. */
 	if (!_popupClassified)
 	{
@@ -282,7 +344,9 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 
 	const RailPlatformCaps& caps = railPlatformCaps();
 
-	const SDL_Rect vis = _windowRect;
+	/* Local window = server rect + band insets (the outside resize band is part of our window). */
+	const SDL_Rect vis = targetOuterRect();
+	_appliedInsets = bandInsets(); /* the insets baked into the window we are about to create */
 	if (_isPopup && parent)
 	{
 		/* Create SDL popup relative to owner. */
@@ -298,9 +362,7 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	}
 	else
 	{
-		/* Borderless + TRANSPARENT so the resize placeholder / drop shadow shows desktop through.
-		 * Server GFX alpha that would then leak as black is neutralised via an opaque BGRX read in
-		 * paintGfx. */
+		/* Make band insets transparent. */
 		Uint32 flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_HIDDEN;
 		if (caps.supportsTransparentWindows)
 			flags |= SDL_WINDOW_TRANSPARENT;
@@ -320,9 +382,12 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	if (!_isPopup && !caps.positionsReadable)
 		sdl_wayland_move_prepare(_win->window());
 
-	WLog_DBG(TAG, "create id=0x%08x sdl=%u %s vis=%dx%d+%d+%d transparent=%d",
+	WLog_DBG(TAG,
+	         "create id=0x%08x sdl=%u %s vis=%dx%d+%d+%d margins=L%d,T%d,R%d,B%d "
+	         "transparent=%d",
 	         static_cast<unsigned>(_id), static_cast<unsigned>(_win->id()),
-	         railRole(_isPopup, _layered), vis.w, vis.h, vis.x, vis.y,
+	         railRole(_isPopup, _layered), vis.w, vis.h, vis.x, vis.y, _resizeMargins.x,
+	         _resizeMargins.y, _resizeMargins.w, _resizeMargins.h,
 	         caps.supportsTransparentWindows ? 1 : 0);
 	return true;
 }
@@ -359,6 +424,11 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	{
 		_win->resizeable(styleResizable());
 		_styleDirty = false;
+		/* Deliberately NOT re-arming _geometryDirty here: apps toggle the resizable style on every
+		 * activation change (click behind a modal Office dialog), and resizing the window to add or
+		 * drop the band on each toggle makes it flicker. The band tracks _appliedInsets, which only
+		 * refreshes on a real geometry order - so it stays put across the noise and self-corrects
+		 * the next time the server actually moves/sizes the window. */
 	}
 
 	/* Apply state before geometry. */
@@ -366,6 +436,30 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	{
 		applyServerState(_maxState, "maximize", SDL_MaximizeWindow);
 		applyServerState(_minState, "minimize", SDL_MinimizeWindow);
+	}
+
+	/* Maximizing (server- OR WM-driven) drops the band ring, but the geometry apply below - the
+	 * only place that refreshes the baked insets - is gated off while maximized, so refresh them on
+	 * the become-maximized edge or they stay stale, painting a phantom band and skewing the
+	 * server-coord round-trip (outerRect/insets). Edge-triggered on effectivelyMaximized() (catches
+	 * a WM maximize that never touches _maxState); restore, which the lagging SDL flag keeps
+	 * "maximized" for a few frames, is left to the geometry block since it is not a
+	 * become-maximized edge. */
+	if (_win)
+	{
+		const bool maxed = effectivelyMaximized();
+		if (maxed && !_wasMaximized)
+			_appliedInsets = bandInsets();
+		_wasMaximized = maxed;
+	}
+
+	/* _GTK_FRAME_EXTENTS: tell the WM the band ring is frame, not content (snap/tile geometry). */
+	if (_win)
+	{
+		const SDL_Rect ext = bandInsets();
+		if (!SDL_RectsEqual(&ext, &_extentsApplied) &&
+		    sdl_x11_set_frame_extents(_win->window(), ext.x, ext.w, ext.y, ext.h))
+			_extentsApplied = ext;
 	}
 
 	/* Min/max BEFORE geometry: the WM clamps SDL_SetWindowSize to the current min. The server's
@@ -380,9 +474,11 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	 * So clamp the enforced min to the target outer size: server geometry is never blocked, and the
 	 * min re-widens on its own once the server grows the window back. Re-run on a geometry change
 	 * too, since a shrink needs the min re-clamped first. */
-	if (_win && _minMaxDirty)
+	if (_win && (_minMaxDirty || _geometryDirty))
 	{
-		SDL_SetWindowMinimumSize(_win->window(), std::max(0, _minSize.x), std::max(0, _minSize.y));
+		const SDL_Rect vis = targetOuterRect();
+		SDL_SetWindowMinimumSize(_win->window(), std::clamp(_minSize.x, 0, vis.w),
+		                         std::clamp(_minSize.y, 0, vis.h));
 		int maxW = (_maxSize.x > 0) ? std::max(1, _maxSize.x) : 0;
 		int maxH = (_maxSize.y > 0) ? std::max(1, _maxSize.y) : 0;
 		/* Wayland: cap to the usable area - an oversized window cannot be dragged into reach. */
@@ -390,10 +486,14 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		if (!railPlatformCaps().positionsReadable &&
 		    SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &usable))
 		{
-			if ((maxW == 0) || (maxW > usable.w))
-				maxW = usable.w;
-			if ((maxH == 0) || (maxH > usable.h))
-				maxH = usable.h;
+			/* The local window is the outer frame: cap to the usable area plus the insets. */
+			
+			const int capW = usable.w;
+			const int capH = usable.h;
+			if ((maxW == 0) || (maxW > capW))
+				maxW = capW;
+			if ((maxH == 0) || (maxH > capH))
+				maxH = capH;
 		}
 		SDL_SetWindowMaximumSize(_win->window(), maxW, maxH);
 		_minMaxDirty = false;
@@ -402,8 +502,12 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	/* Maximized: WM owns geometry; a server update stays pending until restored. */
 	if (_win && _geometryDirty && !_maxState.rail)
 	{
-		const SDL_Rect vis = _windowRect;
-		if (_isPopup && parent) /* popup coords are relative to the parent's visible origin */
+		const SDL_Rect vis = targetOuterRect();
+		/* The window is (or becomes) vis = _windowRect + fresh insets: record those as the insets
+		 * now baked in, so the round-trip back to server coords strips exactly this. */
+		_appliedInsets = bandInsets();
+		/* Popup coords are relative to the parent's on-screen origin. */
+		if (_isPopup && parent)
 			SDL_SetWindowPosition(_win->window(), vis.x - parentRect.x, vis.y - parentRect.y);
 		else
 			SDL_SetWindowPosition(_win->window(), vis.x, vis.y);
@@ -443,6 +547,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		}
 		_iconDirty = false;
 	}
+
 	/* Defer show until first frame. */
 	if (!_minState.rail && _gfxPresented)
 		SDL_ShowWindow(_win->window());
@@ -602,22 +707,26 @@ bool SdlRailWindow::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 /* Caller holds _gfxLock. Blits the window-mapped GFX surface via the shared SdlWindow path. */
 bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 {
-	/* Surface and window both span exactly the server rect (the invisible resize margins live
-	 * outside it), so it blits 1:1 at (0,0). */
+	/* Blit against the insets actually baked into the window, not a fresh recompute: the content
+	 * would otherwise fill over the band ring the instant the server toggles the resizable style.
+	 */
+	const SDL_Rect bi = _appliedInsets;
 	int ww = 0;
 	int wh = 0;
 	SDL_GetWindowSizeInPixels(_win->window(), &ww, &wh);
+	const int cw = ww - bi.x - bi.w; /* content area inside the insets */
+	const int ch = wh - bi.y - bi.h;
 
 	/* Detect WM snap divergence. */
 	bool localResize = _localMoveActive && _localMoveIsResize;
 	if (_localMoveActive && !localResize)
-		localResize = (ww != static_cast<int>(_gfxW)) || (wh != static_cast<int>(_gfxH));
+		localResize = (cw != static_cast<int>(_gfxW)) || (ch != static_cast<int>(_gfxH));
 
 	/* Force one repaint on server resize. */
 	const bool serverResize = !_localMoveActive && ((ww != _lastWinW) || (wh != _lastWinH));
 
 	/* Skip undamaged frames. */
-	if (!localResize && !serverResize && _gfxDamage.empty())
+	if (!localResize && !serverResize && _gfxDamage.empty() && !(_layeredApp && _visDirty))
 	{
 		WLog_VRB(TAG, "paintGfx skip id=0x%08x no-damage no-resize", static_cast<unsigned>(_id));
 		return true;
@@ -646,17 +755,17 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 		}
 	}
 
-	/* RAIL content is opaque: the server leaves the alpha byte undefined (often 0), so honoring it
-	 * renders whole surfaces invisible. Read as opaque (alpha ignored, like xf). Exception: a popup
-	 * with real alpha (notification/tooltip border) is blended on a compositor. */
+	/* RAIL content is mostly opaque (ignore alpha). Exception: layered app windows. */
 	SDL_PixelFormat contentFormat = format;
 	if (format == SDL_PIXELFORMAT_BGRA32)
 	{
 		const bool blend =
-		    _isPopup && _gfxHasAlpha && railPlatformCaps().supportsTransparentWindows;
+		    honorsAlpha() && _gfxHasAlpha && railPlatformCaps().supportsTransparentWindows;
 		if (!blend)
 			contentFormat = SDL_PIXELFORMAT_BGRX32;
 	}
+
+
 
 	SDL_Surface* s =
 	    SDL_CreateSurfaceFrom(static_cast<int>(_gfxW), static_cast<int>(_gfxH), contentFormat,
@@ -668,20 +777,24 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 		return false;
 	}
 
-	/* Surface and window are both the full rect, so blit 1:1 at the window origin. */
+	/* Content blits at the inset offset; the ring outside it is the transparent resize band. */
 	if (localResize)
 	{
 		/* Anchor the stale frame to the fixed corner. */
-		const SDL_Point off = { _resizeAnchorRight ? (ww - static_cast<int>(_gfxW)) : 0,
-			                    _resizeAnchorBottom ? (wh - static_cast<int>(_gfxH)) : 0 };
-		std::ignore = _win->paintResizeFrame(s, off, !_gfxDamage.empty());
+		const SDL_Point off = { _resizeAnchorRight ? (ww - bi.w - static_cast<int>(_gfxW)) : bi.x,
+			                    _resizeAnchorBottom ? (wh - bi.h - static_cast<int>(_gfxH))
+			                                        : bi.y };
+		/* The "awaiting content" dashes only during a real edge/band resize; a MOVE whose size
+		 * the WM changed (snap, untile restore) just shows the clipped stale frame - dashes there
+		 * would read as a resize the user never started. */
+		std::ignore = _win->paintResizeFrame(s, off, !_gfxDamage.empty(), bi, _localMoveIsResize);
 	}
 	else
 	{
 		/* Render accumulated damage or re-blit full surface on bare resize. */
 		const SDL_Rect full = { 0, 0, static_cast<int>(_gfxW), static_cast<int>(_gfxH) };
 		/* Anchor content to real window position (fixes overhanging maximized borders). */
-		SDL_Point dst = { 0, 0 };
+		SDL_Point dst = { bi.x, bi.y };
 		SDL_Point winPos = { 0, 0 };
 		const bool maxed = effectivelyMaximized();
 		if (maxed)
@@ -747,7 +860,8 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 		else if (_gfxDamage.empty())
 			std::ignore = _win->drawRects(s, dst, { full });
 		else
-			std::ignore = _win->drawRects(s, { 0, 0 }, _gfxDamage);
+			std::ignore = _win->drawRects(s, dst, _gfxDamage);
+
 		_win->updateSurface();
 		_gfxPresented = true; /* real content on screen: paint() may now map the window */
 	}
@@ -764,6 +878,7 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect>& damage)
 {
 	SDL_Rect rect{};
+	SDL_Rect bi{};
 	std::vector<SDL_Rect> vis;
 	bool full = false;
 	{
@@ -781,6 +896,7 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 		}
 
 		rect = _windowRect;
+		bi = bandInsets();
 		vis = _visRects;
 	}
 
@@ -799,7 +915,8 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 
 		if (full)
 		{
-			SDL_Rect dst = { clipped.x - rect.x, clipped.y - rect.y, clipped.w, clipped.h };
+			SDL_Rect dst = { clipped.x - rect.x + bi.x, clipped.y - rect.y + bi.y, clipped.w,
+				             clipped.h };
 			if (_win->blit(primary, clipped, dst))
 				blitted = true;
 			continue;
@@ -809,7 +926,7 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 			SDL_Rect part{};
 			if (!SDL_GetRectIntersection(&clipped, &d, &part))
 				continue;
-			SDL_Rect dst = { part.x - rect.x, part.y - rect.y, part.w, part.h };
+			SDL_Rect dst = { part.x - rect.x + bi.x, part.y - rect.y + bi.y, part.w, part.h };
 			if (_win->blit(primary, part, dst))
 				blitted = true;
 		}

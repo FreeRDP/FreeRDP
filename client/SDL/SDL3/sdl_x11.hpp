@@ -39,3 +39,8 @@ bool sdl_x11_begin_move_size(SDL_Window* window, int netDirection);
  * so reparenting-safe; unlike raising, it does NOT change input focus). No-op off X11 or with fewer
  * than two windows. Returns true if the restack messages were sent. */
 bool sdl_x11_restack_windows(const std::vector<SDL_Window*>& topToBottom);
+
+/* Declare invisible window edges via _GTK_FRAME_EXTENTS (the GTK CSD-shadow convention): the WM
+ * snaps/tiles/maximizes the window minus these extents, so the invisible resize band overlaps
+ * neighbours instead of leaving gaps. Zero extents clear the declaration. */
+bool sdl_x11_set_frame_extents(SDL_Window* window, int left, int right, int top, int bottom);
