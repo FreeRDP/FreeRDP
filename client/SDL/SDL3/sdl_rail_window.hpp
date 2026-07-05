@@ -63,8 +63,8 @@ class SdlRailWindow
 
 	/* Server-driven geometry (from WINDOW_ORDER). */
 	void updateWindowRect(const SDL_Rect& rect);
-	/* The window's server rect: what the GFX surface spans and the local window shows. The
-	 * invisible resize margins live outside it. */
+	/* The window's server rect: what the GFX surface spans. The local SDL window is this rect
+	 * inflated by insets() so the outside resize band is part of it (see outerRect()). */
 	[[nodiscard]] SDL_Rect windowRect() const;
 
 	/* Local (WM) move/resize in progress: server geometry and input are ignored while set.
@@ -101,6 +101,13 @@ class SdlRailWindow
 	[[nodiscard]] SDL_Rect frameMargins() const;
 	/* Popup = caption-less transient (menu/dropdown/tooltip); created as an SDL popup. */
 	[[nodiscard]] bool isPopup() const;
+	/* SDL window insets: local window is inflated by these so the outside resize band takes input.
+	 * Zero for popups / maximized / non-composited X11. */
+	[[nodiscard]] SDL_Rect insets() const;
+	/* Server rect inflated by insets() = the local SDL window's on-screen geometry. */
+	[[nodiscard]] SDL_Rect outerRect() const;
+	/* Inverse of outerRect(): strip insets() off a local outer rect to recover the server rect. */
+	[[nodiscard]] SDL_Rect serverRect(const SDL_Rect& outer) const;
 
 	void setStyle(uint32_t style, uint32_t exStyle);
 	void setTitle(const std::string& title);
@@ -163,6 +170,10 @@ class SdlRailWindow
 	{
 		return _isPopup || _layeredApp;
 	}
+	/* Band eligibility rule: margins for a resizable app window, else zero; caller holds _gfxLock. */
+	[[nodiscard]] SDL_Rect bandMargins() const;
+	[[nodiscard]] SDL_Rect bandInsets() const;      /* insets(); caller holds _gfxLock */
+	[[nodiscard]] SDL_Rect targetOuterRect() const; /* outerRect(); caller holds _gfxLock */
 	bool create(SDL_Window* parent, const SDL_Rect& parentRect);
 	bool paintGfx(SDL_PixelFormat format);
 	bool paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect>& damage);
@@ -171,9 +182,16 @@ class SdlRailWindow
 	std::unique_ptr<SdlWindow> _win; /* local window+renderer (lazy, main thread) */
 	SDL_Rect _windowRect;            /* server offset/size */
 	uint32_t _style = 0;
+	bool _everResizable = false; /* latched: ever seen resizable (styleResizable) */
 	uint64_t _ownerId = 0;
 	SDL_Rect _resizeMargins = { 0, 0, 0, 0 }; /* x=left y=top w=right h=bottom */
-	SDL_Rect _frameMargins = { 0, 0, 0, 0 }; /* raw server margins, for ClientWindowMove */
+	SDL_Rect _frameMargins = { 0, 0, 0, 0 };  /* raw server margins, for ClientWindowMove */
+	/* Band insets actually baked into the current SDL window size (set when reconcile/create sizes
+	 * it). serverRect/outerRect strip THIS, not a freshly recomputed bandInsets(): the two diverge
+	 * for a beat when the server toggles the resizable style, and stripping the live value then
+	 * leaks the band box into the reported server geometry (window grows one band per toggle). */
+	SDL_Rect _appliedInsets = { 0, 0, 0, 0 };
+	bool _wasMaximized = false; /* refresh insets on the maximize rising edge */
 	SDL_Point _minSize = { 0, 0 };
 	SDL_Point _maxSize = { 0, 0 };
 	bool _minMaxDirty = false;
@@ -198,6 +216,7 @@ class SdlRailWindow
 	bool _localMoveIsResize = false;          /* local move is a resize vs a move */
 	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */
 	bool _resizeAnchorBottom = false; /* anchor stale frame to the bottom edge (top-side resize) */
+	SDL_Rect _extentsApplied = { 0, 0, 0, 0 }; /* band insets last mirrored to the WM */
 
 	/* Guards all state shared between the RDP thread (setters) and the main thread
 	 * (reconcile/paint): geometry, title, visibility, flags, vis rects and the gfx snapshot. */

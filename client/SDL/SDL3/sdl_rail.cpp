@@ -221,9 +221,9 @@ bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
 	if (auto* renderer = appWindow->renderer())
 		(void)SDL_RenderCoordinatesFromWindow(renderer, x, y, &rpos.x, &rpos.y);
 
-	const SDL_Rect rect = appWindow->windowRect();
-	x = rpos.x + static_cast<float>(rect.x);
-	y = rpos.y + static_cast<float>(rect.y);
+	const SDL_Rect outer = appWindow->outerRect();
+	x = rpos.x + static_cast<float>(outer.x);
+	y = rpos.y + static_cast<float>(outer.y);
 	return true;
 }
 
@@ -291,7 +291,7 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 		if (owner && (owner != &win))
 		{
 			parent = owner->window();
-			parentRect = owner->windowRect();
+			parentRect = owner->outerRect(); /* the SDL window's on-screen geometry */
 		}
 		win.paint(primary, fallbackFormat, damage, parent, parentRect);
 	}
@@ -362,7 +362,7 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 		if (chosen)
 		{
 			parent = chosen->window();
-			parentRect = chosen->windowRect();
+			parentRect = chosen->outerRect(); /* the SDL window's on-screen geometry */
 		}
 		else
 			WLog_WARN(TAG, "popup id=0x%08" PRIx32 " has no parent app window",
@@ -687,6 +687,7 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, SDL_Point pos, uint16_
 		{
 			_localMoveId = windowId;
 			_localMoveWayland = true;
+			_localMoveHitTest = false;
 			_localMoveType = moveType;
 			/* Reset resize guard for new drag. */
 			_localMoveSawResize = false;
@@ -700,9 +701,10 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, SDL_Point pos, uint16_
 		{
 			_localMoveId = windowId;
 			_localMoveWayland = false;
+			_localMoveHitTest = false;
 			_localMoveType = moveType;
-			const SDL_Rect rect = appWindow->windowRect();
-			_localMoveGrabPos = { rect.x + pos.x, rect.y + pos.y };
+			const SDL_Rect outer = appWindow->outerRect();
+			_localMoveGrabPos = { outer.x + pos.x, outer.y + pos.y };
 		}
 	}
 	/* Drive local frame during X11/Wayland drag. */
@@ -720,13 +722,56 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, SDL_Point pos, uint16_
 		WLog_WARN(TAG, "WM move failed for RAIL window 0x%08" PRIx32, windowId);
 }
 
-/* Caller holds _windowsLock. Report the final rect to the server and adopt it locally. */
+/* Find eligible app window for client resize. */
+SdlRailWindow* SdlRail::edgeResizeTarget(SDL_WindowID id)
+{
+	if (_localMoveId != 0)
+		return nullptr;
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || !appWindow->window() || appWindow->isPopup())
+		return nullptr;
+	const Uint32 flags = SDL_GetWindowFlags(appWindow->window());
+	if (!(flags & SDL_WINDOW_RESIZABLE) || (flags & SDL_WINDOW_MAXIMIZED))
+		return nullptr;
+	return appWindow;
+}
+
+
+
+/* Start compositor-driven resize. */
+bool SdlRail::beginClientEdgeResize(SdlRailWindow* appWindow, uint16_t edge, SDL_Point grabPos)
+{
+	const bool started = sdl_wayland_begin_resize(appWindow->window(), railToXdgEdge(edge));
+	if (!started)
+	{
+		WLog_WARN(TAG, "edge resize failed id=0x%08" PRIx32, static_cast<UINT32>(appWindow->id()));
+		return false;
+	}
+	/* Mirror server resize state for local completion. */
+	_localMoveId = static_cast<uint32_t>(appWindow->id());
+	_localMoveWayland = true;
+	_localMoveHitTest = true;
+	_localMoveType = edge;
+	_localMoveSawResize = false;
+	_localMoveGrabPos = grabPos;
+	appWindow->setLocalMoveActive(true);
+	const RailEdges e = railEdges(edge);
+	appWindow->setResizeAnchor(e.left, e.top);
+	WLog_DBG(TAG, "edge resize start id=0x%08" PRIx32 " edge=%" PRIu16, _localMoveId, edge);
+	return true;
+}
+
+
+/* Report final geometry and adopt locally. */
 void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int h)
 {
+	/* Local geometry -> server rect: strip the client-side band insets. */
+	const SDL_Rect i = appWindow->insets();
+	const SDL_Rect rect = { x + i.x, y + i.y, w - i.x - i.w, h - i.y - i.h };
 	/* Report outer frame to server (inflate by margins). */
 	const bool maximized = appWindow->effectivelyMaximized();
 	const SDL_Rect m = appWindow->resizeMargins();
-	const SDL_Rect full = { x - m.x, y - m.y, w + m.x + m.w, h + m.y + m.h };
+	const SDL_Rect full = { rect.x - m.x, rect.y - m.y, rect.w + m.x + m.w, rect.h + m.y + m.h };
 	RAIL_WINDOW_MOVE_ORDER move = {};
 	move.windowId = static_cast<UINT32>(appWindow->id());
 	move.left = WINPR_ASSERTING_INT_CAST(INT16, full.x);
@@ -734,7 +779,7 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 	move.right = WINPR_ASSERTING_INT_CAST(INT16, full.x + full.w);
 	move.bottom = WINPR_ASSERTING_INT_CAST(INT16, full.y + full.h);
 	WLog_DBG(TAG, "move complete id=0x%08" PRIx32 " rect=%d,%d %dx%d maximized=%d", move.windowId,
-	         x, y, w, h, maximized ? 1 : 0);
+	         rect.x, rect.y, rect.w, rect.h, maximized ? 1 : 0);
 	if (!maximized && _rail && _rail->ClientWindowMove &&
 	    (_rail->ClientWindowMove(_rail, &move) != CHANNEL_RC_OK))
 		WLog_WARN(TAG, "ClientWindowMove failed for RAIL window 0x%08" PRIx32, move.windowId);
@@ -743,7 +788,7 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 	if (maximized)
 		appWindow->setLocalMoveActive(false); /* geometry is WM/server-owned while maximized */
 	else
-		appWindow->adoptLocalGeometry({ x, y, w, h });
+		appWindow->adoptLocalGeometry(rect);
 	/* Repaint now: the last presented frame may still be the resize placeholder. */
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
@@ -787,7 +832,8 @@ void SdlRail::handleWaylandResize(SDL_WindowID id)
 		return;
 	}
 
-	const SDL_Rect vis = appWindow->windowRect();
+	/* Local window size is the OUTER frame (rect + insets; identical off the inset paths). */
+	const SDL_Rect vis = appWindow->outerRect();
 	if ((w == vis.w) && (h == vis.h))
 		return; /* echo of a size we already reported/applied - nothing new */
 
@@ -809,6 +855,7 @@ void SdlRail::completeWaylandResize()
 
 	auto appWindow = getWindow(_localMoveId);
 	_localMoveId = 0;
+	_localMoveHitTest = false;
 	if (!appWindow || !appWindow->window())
 		return;
 
@@ -851,14 +898,20 @@ void SdlRail::completeLocalMoveIfPending()
 	int w = 0;
 	int h = 0;
 	SDL_GetWindowSize(appWindow->window(), &w, &h);
+	const bool hitTest = _localMoveHitTest;
 	_localMoveId = 0;
+	_localMoveHitTest = false;
 
 	SDL_GetWindowPosition(appWindow->window(), &x, &y);
 	/* Synthetic button-up at final dragged corner. */
-	const RailEdges e = railEdges(_localMoveType);
-	const int px = e.left ? x : (e.right ? (x + w) : _localMoveGrabPos.x);
-	const int py = e.top ? y : (e.bottom ? (y + h) : _localMoveGrabPos.y);
-	(void)freerdp_client_send_button_event(_context->common(), FALSE, PTR_FLAGS_BUTTON1, px, py);
+	if (!hitTest)
+	{
+		const RailEdges e = railEdges(_localMoveType);
+		const int px = e.left ? x : (e.right ? (x + w) : _localMoveGrabPos.x);
+		const int py = e.top ? y : (e.bottom ? (y + h) : _localMoveGrabPos.y);
+		(void)freerdp_client_send_button_event(_context->common(), FALSE, PTR_FLAGS_BUTTON1, px,
+		                                       py);
+	}
 
 	reportAndAdopt(appWindow, x, y, w, h);
 }
@@ -888,6 +941,12 @@ UINT SdlRail::server_min_max_info(RailClientContext* context,
 
 /* --- window order callbacks --- */
 
+/* Non-zero edge means margins exist; all-zero means "no band". */
+static bool marginsSet(const SDL_Rect& m)
+{
+	return m.x || m.y || m.w || m.h;
+}
+
 BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                             const WINDOW_STATE_ORDER* windowState)
 {
@@ -916,6 +975,10 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 		         " ex=0x%08" PRIx32 " owner=0x%08" PRIx32,
 		         orderInfo->windowId, rect.w, rect.h, rect.x, rect.y, windowState->style,
 		         windowState->extendedStyle, windowState->ownerWindowId);
+		/* Seed session margins from initial sync. */
+		const SDL_Rect& sm = rail->_sessionMargins;
+		if (marginsSet(sm))
+			appWindow->setResizeMargins(sm.x, sm.y, sm.w, sm.h);
 		/* The SDL window is created lazily on the main thread (reconcile), as SDL requires. */
 	}
 
@@ -954,7 +1017,20 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 			m.y = static_cast<int>(windowState->resizeMarginTop);
 			m.h = static_cast<int>(windowState->resizeMarginBottom);
 		}
+		/* Reconcile per-window zero margins against session margin. */
+		SDL_Rect& sm = rail->_sessionMargins;
+		if (!marginsSet(m) && marginsSet(sm))
+			m = sm;
+		else if (marginsSet(m) && !marginsSet(sm))
+		{
+			sm = m;
+			for (auto& [id, w] : rail->_windows)
+				if (!marginsSet(w.resizeMargins()))
+					w.setResizeMargins(m.x, m.y, m.w, m.h);
+		}
 		appWindow->setResizeMargins(m.x, m.y, m.w, m.h);
+		WLog_INFO(TAG, "margins id=0x%08" PRIx32 " L%d T%d R%d B%d", orderInfo->windowId,
+		          m.x, m.y, m.w, m.h);
 	}
 	if (fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 		appWindow->setStyle(windowState->style, windowState->extendedStyle);

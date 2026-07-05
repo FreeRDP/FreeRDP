@@ -584,7 +584,8 @@ void SdlWindow::updateSurface()
 		return;
 }
 
-bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged)
+bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged,
+                                 const SDL_Rect& inset, bool dashedBorder)
 {
 	if (!_renderer || !surface)
 		return false;
@@ -604,34 +605,52 @@ bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool conte
 	int ww = 0;
 	int wh = 0;
 	SDL_GetWindowSizeInPixels(_window, &ww, &wh);
+	/* The visible frame; the ring outside it (the resize band) stays fully transparent. */
+	const SDL_FRect frame = { static_cast<float>(inset.x), static_cast<float>(inset.y),
+		                      static_cast<float>(ww - inset.x - inset.w),
+		                      static_cast<float>(wh - inset.y - inset.h) };
 
-	/* Translucent "waiting for the server" fill so the desktop shows through the revealed area. */
+	/* Translucent "waiting for the server" fill so the desktop shows through the revealed area.
+	 * Verbatim writes: blending 0x80 over the transparent target would halve it again. */
 	constexpr Uint8 kFillAlpha = 0x80; /* ~50% */
-	std::ignore = SDL_SetRenderDrawColor(_renderer, 0x2B, 0x2B, 0x2B, kFillAlpha);
+	std::ignore = SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_NONE);
+	std::ignore = SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 0);
 	std::ignore = SDL_RenderClear(_renderer);
+	std::ignore = SDL_SetRenderDrawColor(_renderer, 0x2B, 0x2B, 0x2B, kFillAlpha);
+	std::ignore = SDL_RenderFillRect(_renderer, &frame);
 	SDL_FRect fdst = { static_cast<float>(off.x), static_cast<float>(off.y),
 		               static_cast<float>(surface->w), static_cast<float>(surface->h) };
-	/* Anchored old frame stays opaque over the translucent fill. */
+	/* Anchored old frame stays opaque over the translucent fill; clipped so it can't overflow
+	 * into the band ring when shrinking (the dashed border must read as the window edge). */
+	const SDL_Rect clip = { inset.x, inset.y, ww - inset.x - inset.w, wh - inset.y - inset.h };
+	std::ignore = SDL_SetRenderClipRect(_renderer, &clip);
 	std::ignore = SDL_RenderTexture(_renderer, _gdiTexture, nullptr, &fdst);
+	std::ignore = SDL_SetRenderClipRect(_renderer, nullptr);
 
-	/* Dashed border on the inner edges: "you dragged the window to here, awaiting content". */
-	std::ignore = SDL_SetRenderDrawColor(_renderer, 0xC8, 0xC8, 0xC8, 0xFF);
-	const float dash = 8.0F;
-	const float gap = 5.0F;
-	const float lo = 0.5F;
-	const float rx = static_cast<float>(ww) - 0.5F;
-	const float by = static_cast<float>(wh) - 0.5F;
-	for (float x = 0.0F; x < ww; x += dash + gap)
+	/* Dashed border on the visible frame: "you dragged the window to here, awaiting content". */
+	if (dashedBorder)
 	{
-		const float x2 = (x + dash < ww) ? (x + dash) : rx;
-		std::ignore = SDL_RenderLine(_renderer, x, lo, x2, lo);
-		std::ignore = SDL_RenderLine(_renderer, x, by, x2, by);
-	}
-	for (float y = 0.0F; y < wh; y += dash + gap)
-	{
-		const float y2 = (y + dash < wh) ? (y + dash) : by;
-		std::ignore = SDL_RenderLine(_renderer, lo, y, lo, y2);
-		std::ignore = SDL_RenderLine(_renderer, rx, y, rx, y2);
+		std::ignore = SDL_SetRenderDrawColor(_renderer, 0xC8, 0xC8, 0xC8, 0xFF);
+		const float dash = 8.0F;
+		const float gap = 5.0F;
+		const float fx2 = frame.x + frame.w;
+		const float fy2 = frame.y + frame.h;
+		const float lo = frame.y + 0.5F;
+		const float by = fy2 - 0.5F;
+		const float lx = frame.x + 0.5F;
+		const float rx = fx2 - 0.5F;
+		for (float x = frame.x; x < fx2; x += dash + gap)
+		{
+			const float x2 = (x + dash < fx2) ? (x + dash) : rx;
+			std::ignore = SDL_RenderLine(_renderer, x, lo, x2, lo);
+			std::ignore = SDL_RenderLine(_renderer, x, by, x2, by);
+		}
+		for (float y = frame.y; y < fy2; y += dash + gap)
+		{
+			const float y2 = (y + dash < fy2) ? (y + dash) : by;
+			std::ignore = SDL_RenderLine(_renderer, lx, y, lx, y2);
+			std::ignore = SDL_RenderLine(_renderer, rx, y, rx, y2);
+		}
 	}
 
 	if (!SDL_SetRenderTarget(_renderer, nullptr))
