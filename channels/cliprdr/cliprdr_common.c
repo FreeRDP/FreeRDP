@@ -268,8 +268,15 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 
 		const char* szFormatName = format->formatName;
 		size_t formatNameLength = 0;
+		size_t formatNameStrLength = 0;
 		if (szFormatName)
-			formatNameLength = strlen(szFormatName);
+		{
+			formatNameStrLength = strlen(szFormatName);
+			const SSIZE_T wlen = ConvertUtf8ToWChar(szFormatName, nullptr, 0);
+			if (wlen < 0)
+				goto fail;
+			formatNameLength = WINPR_ASSERTING_INT_CAST(size_t, wlen);
+		}
 
 		size_t formatNameMaxLength = formatNameLength + 1; /* Ensure '\0' termination in output */
 		if (!Stream_EnsureRemainingCapacity(s,
@@ -294,7 +301,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			else
 			{
 				if (Stream_Write_UTF16_String_From_UTF8(s, formatNameMaxLength, szFormatName,
-				                                        formatNameLength, TRUE) < 0)
+				                                        formatNameStrLength, TRUE) < 0)
 					goto fail;
 			}
 		}

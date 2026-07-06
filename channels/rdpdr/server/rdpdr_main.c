@@ -2489,7 +2489,16 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 	           " createDisposition=0x%" PRIx32 "",
 	           deviceId, path, desiredAccess, createOptions, createDisposition);
 	/* Compute the required Unicode size. */
-	size_t pathLength = (strlen(path) + 1U) * sizeof(WCHAR);
+	size_t pathStrLength = 0;
+	size_t pathLength = 0;
+	if (path)
+	{
+		pathStrLength = strlen(path);
+		const SSIZE_T wlen = ConvertUtf8ToWChar(path, nullptr, 0);
+		if (wlen < 0)
+			return ERROR_INTERNAL_ERROR;
+		pathLength = (WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1) * sizeof(WCHAR);
+	}
 	wStream* s = Stream_New(nullptr, 256U + pathLength);
 
 	if (!s)
@@ -2509,8 +2518,8 @@ static UINT rdpdr_server_send_device_create_request(RdpdrServerContext* context,
 	WINPR_ASSERT(pathLength <= UINT32_MAX);
 	Stream_Write_UINT32(s, (UINT32)pathLength); /* PathLength (4 bytes) */
 	                                            /* Convert the path to Unicode. */
-	if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path,
-	                                        pathLength / sizeof(WCHAR), TRUE) < 0)
+	if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path, pathStrLength,
+	                                        TRUE) < 0)
 	{
 		Stream_Release(s);
 		return ERROR_INTERNAL_ERROR;
@@ -2635,7 +2644,16 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 	           ", path=%s",
 	           deviceId, fileId, path);
 	/* Compute the required Unicode size. */
-	size_t pathLength = path ? (strlen(path) + 1) * sizeof(WCHAR) : 0;
+	size_t pathStrLength = 0;
+	size_t pathLength = 0;
+	if (path)
+	{
+		pathStrLength = strlen(path);
+		const SSIZE_T wlen = ConvertUtf8ToWChar(path, nullptr, 0);
+		if (wlen < 0)
+			return ERROR_INTERNAL_ERROR;
+		pathLength = (WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1) * sizeof(WCHAR);
+	}
 	wStream* s = Stream_New(nullptr, 64 + pathLength);
 
 	if (!s)
@@ -2655,8 +2673,8 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 	/* Convert the path to Unicode. */
 	if (pathLength > 0)
 	{
-		if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path,
-		                                        pathLength / sizeof(WCHAR), TRUE) < 0)
+		if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path, pathStrLength,
+		                                        TRUE) < 0)
 		{
 			Stream_Release(s);
 			return ERROR_INTERNAL_ERROR;
@@ -2685,7 +2703,17 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 	           ", path=%s",
 	           deviceId, fileId, path);
 	/* Compute the required Unicode size. */
-	size_t pathLength = path ? (strlen(path) + 1) * sizeof(WCHAR) : 0;
+	size_t pathStrLength = 0;
+	size_t pathLength = 0;
+	if (path)
+	{
+		pathStrLength = strlen(path);
+		const SSIZE_T wlen = ConvertUtf8ToWChar(path, nullptr, 0);
+		if (wlen < 0)
+			return ERROR_INTERNAL_ERROR;
+		pathLength = (WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1) * sizeof(WCHAR);
+	}
+
 	wStream* s = Stream_New(nullptr, 64 + pathLength);
 
 	if (!s)
@@ -2708,8 +2736,8 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 	/* Convert the path to Unicode. */
 	if (pathLength > 0)
 	{
-		if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path,
-		                                        pathLength / sizeof(WCHAR), TRUE) < 0)
+		if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path, pathStrLength,
+		                                        TRUE) < 0)
 		{
 			Stream_Release(s);
 			return ERROR_INTERNAL_ERROR;
