@@ -407,11 +407,16 @@ size_t ber_write_char_to_unicode_octet_string(wStream* s, const char* str)
 {
 	WINPR_ASSERT(str);
 	size_t size = 0;
-	size_t length = strlen(str) + 1;
+
+	const SSIZE_T devNameWLen = ConvertUtf8ToWChar(str, nullptr, 0);
+	if (devNameWLen < 0)
+		return 0;
+	const size_t length = WINPR_ASSERTING_INT_CAST(size_t, devNameWLen) + 1;
+	const size_t slen = strlen(str);
 	size += ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
 	size += ber_write_length(s, length * sizeof(WCHAR));
 
-	if (Stream_Write_UTF16_String_From_UTF8(s, length, str, length, TRUE) < 0)
+	if (Stream_Write_UTF16_String_From_UTF8(s, length, str, slen, TRUE) < 0)
 		return 0;
 	return size + length * sizeof(WCHAR);
 }
@@ -430,8 +435,12 @@ size_t ber_write_contextual_unicode_octet_string(wStream* s, BYTE tag, LPWSTR st
 size_t ber_write_contextual_char_to_unicode_octet_string(wStream* s, BYTE tag, const char* str)
 {
 	size_t ret = 0;
-	size_t len = strlen(str);
-	size_t inner_len = ber_sizeof_octet_string(len * 2);
+	const SSIZE_T devNameWLen = ConvertUtf8ToWChar(str, nullptr, 0);
+	if (devNameWLen < 0)
+		return 0;
+	const size_t len = WINPR_ASSERTING_INT_CAST(size_t, devNameWLen);
+	const size_t slen = strlen(str);
+	const size_t inner_len = ber_sizeof_octet_string(len * sizeof(WCHAR));
 
 	WINPR_ASSERT(Stream_GetRemainingCapacity(s) < ber_sizeof_contextual_tag(inner_len) + inner_len);
 
@@ -439,7 +448,7 @@ size_t ber_write_contextual_char_to_unicode_octet_string(wStream* s, BYTE tag, c
 	ret += ber_write_universal_tag(s, BER_TAG_OCTET_STRING, FALSE);
 	ret += ber_write_length(s, len * sizeof(WCHAR));
 
-	if (Stream_Write_UTF16_String_From_UTF8(s, len, str, len, TRUE) < 0)
+	if (Stream_Write_UTF16_String_From_UTF8(s, len, str, slen, TRUE) < 0)
 		return 0;
 
 	return ret + len;

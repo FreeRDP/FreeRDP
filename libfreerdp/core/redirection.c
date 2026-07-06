@@ -943,13 +943,17 @@ void redirection_free(rdpRedirection* redirection)
 
 static SSIZE_T redir_write_string(WINPR_ATTR_UNUSED UINT32 flag, wStream* s, const char* str)
 {
-	const size_t length = (strlen(str) + 1);
+	const SSIZE_T devNameWLen = ConvertUtf8ToWChar(str, nullptr, 0);
+	if (devNameWLen < 0)
+		return -1;
+	const size_t length = WINPR_ASSERTING_INT_CAST(size_t, devNameWLen) + 1;
+	const size_t slen = strlen(str);
 	if (!Stream_EnsureRemainingCapacity(s, 4ull + length * sizeof(WCHAR)))
 		return -1;
 
 	const size_t pos = Stream_GetPosition(s);
 	Stream_Write_UINT32(s, (UINT32)length * sizeof(WCHAR));
-	if (Stream_Write_UTF16_String_From_UTF8(s, length, str, length, TRUE) < 0)
+	if (Stream_Write_UTF16_String_From_UTF8(s, length, str, slen, TRUE) < 0)
 		return -1;
 	return (SSIZE_T)(Stream_GetPosition(s) - pos);
 }

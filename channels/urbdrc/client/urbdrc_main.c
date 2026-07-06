@@ -242,7 +242,10 @@ static BOOL write_string_block(wStream* s, size_t count, const char** strings, c
 	size_t len = 0;
 	for (size_t x = 0; x < count; x++)
 	{
-		len += length[x] + 1ULL;
+		const SSIZE_T wlen = ConvertUtf8NToWChar(strings[x], length[x], nullptr, 0);
+		if (wlen < 0)
+			return FALSE;
+		len += wlen + 1ULL;
 	}
 
 	if (isMultiSZ)
@@ -252,16 +255,20 @@ static BOOL write_string_block(wStream* s, size_t count, const char** strings, c
 		return FALSE;
 
 	/* Write number of characters (including '\0') of all strings */
-	Stream_Write_UINT32(s, (UINT32)len); /* cchHwIds */
-	                                     /* HardwareIds 1 */
+	Stream_Write_UINT32(s, WINPR_ASSERTING_INT_CAST(UINT32, len)); /* cchHwIds */
+	                                                               /* HardwareIds 1 */
 
 	for (size_t x = 0; x < count; x++)
 	{
 		size_t clength = length[x];
 		const char* str = strings[x];
+		const SSIZE_T wlen = ConvertUtf8NToWChar(str, clength, nullptr, 0);
+		if (wlen < 0)
+			return FALSE;
+		const size_t wlength = WINPR_ASSERTING_INT_CAST(size_t, wlen);
 
-		const SSIZE_T w = Stream_Write_UTF16_String_From_UTF8(s, clength, str, clength, TRUE);
-		if ((w < 0) || ((size_t)w != clength))
+		const SSIZE_T w = Stream_Write_UTF16_String_From_UTF8(s, wlength, str, clength, TRUE);
+		if ((w < 0) || ((size_t)w != wlength))
 			return FALSE;
 		Stream_Write_UINT16(s, 0);
 	}

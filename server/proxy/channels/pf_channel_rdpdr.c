@@ -1112,7 +1112,12 @@ static BOOL pf_channel_rdpdr_rewrite_device_list_to(wStream* s, UINT32 fromVersi
 					Stream_Write_UINT32(s, 0); /* No unicode name */
 				else
 				{
-					const size_t datalen = charCount * sizeof(WCHAR);
+					const SSIZE_T devNameWLen = ConvertUtf8NToWChar(
+					    device.PreferredDosName, ARRAYSIZE(device.PreferredDosName), nullptr, 0);
+					if (devNameWLen < 0)
+						goto fail;
+					const size_t datalen =
+					    WINPR_ASSERTING_INT_CAST(size_t, devNameWLen) * sizeof(WCHAR);
 					if (!Stream_EnsureRemainingCapacity(s, datalen + sizeof(UINT32)))
 						goto fail;
 					Stream_Write_UINT32(s, WINPR_ASSERTING_INT_CAST(uint32_t, datalen));

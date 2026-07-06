@@ -248,14 +248,18 @@ static SSIZE_T rdstls_write_string(wStream* s, const char* str)
 		return (SSIZE_T)(Stream_GetPosition(s) - pos);
 	}
 
-	const size_t length = (strlen(str) + 1);
+	const SSIZE_T devNameWLen = ConvertUtf8ToWChar(str, nullptr, 0);
+	if (devNameWLen < 0)
+		return -1;
+	const size_t length = WINPR_ASSERTING_INT_CAST(size_t, devNameWLen) + 1;
+	const size_t slen = strlen(str);
 
 	Stream_Write_UINT16(s, (UINT16)length * sizeof(WCHAR));
 
 	if (!Stream_EnsureRemainingCapacity(s, length * sizeof(WCHAR)))
 		return -1;
 
-	if (Stream_Write_UTF16_String_From_UTF8(s, length, str, length, TRUE) < 0)
+	if (Stream_Write_UTF16_String_From_UTF8(s, length, str, slen, TRUE) < 0)
 		return -1;
 
 	return (SSIZE_T)(Stream_GetPosition(s) - pos);
