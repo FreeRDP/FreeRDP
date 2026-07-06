@@ -1327,13 +1327,15 @@ UINT cliprdr_send_request_filecontents(wfClipboard* clipboard, const void* strea
 	else if (!ResetEvent(clipboard->req_fevent))
 		rc = ERROR_INTERNAL_ERROR;
 
+	if (nreq != clipboard->req_fsize)
+		rc = ERROR_INVALID_DATA;
 	return rc;
 }
 
 static UINT cliprdr_send_response_filecontents(wfClipboard* clipboard, UINT32 streamId, UINT32 size,
                                                BYTE* data)
 {
-	CLIPRDR_FILE_CONTENTS_RESPONSE fileContentsResponse;
+	CLIPRDR_FILE_CONTENTS_RESPONSE fileContentsResponse = WINPR_C_ARRAY_INIT;
 
 	if (!clipboard || !clipboard->context || !clipboard->context->ClientFileContentsResponse)
 		return ERROR_INTERNAL_ERROR;
@@ -2433,15 +2435,13 @@ static UINT
 wf_cliprdr_server_file_contents_response(CliprdrClientContext* context,
                                          const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
-	wfClipboard* clipboard;
-
 	if (!context || !fileContentsResponse)
 		return ERROR_INTERNAL_ERROR;
 
 	if (fileContentsResponse->common.msgFlags != CB_RESPONSE_OK)
 		return E_FAIL;
 
-	clipboard = (wfClipboard*)context->custom;
+	wfClipboard* clipboard = (wfClipboard*)context->custom;
 
 	if (!clipboard)
 		return ERROR_INTERNAL_ERROR;
