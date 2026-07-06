@@ -668,7 +668,16 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 				}
 			}
 			else
-				return data;
+			{
+				const char* formatName = ClipboardGetFormatName(clipboard->_system, formatId);
+				if (formatName && SDL_HasClipboardData(formatName))
+				{
+					localFormatId = ClipboardGetFormatId(clipboard->_system, formatName);
+					mime = formatName;
+				}
+				else
+					return data;
+			}
 	}
 
 	{
