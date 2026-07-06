@@ -246,6 +246,20 @@ static inline UINT8 clamp(INT16 val)
 	return (UINT8)val;
 }
 
+static inline bool check_source_available(const BYTE* buffer, size_t length, const BYTE* cur,
+                                          size_t required)
+{
+	WINPR_ASSERT(cur >= buffer);
+	const size_t len = WINPR_ASSERTING_INT_CAST(size_t, (cur - buffer));
+
+	if ((SIZE_MAX - len < required) || (len + required > length))
+	{
+		WLog_ERR(TAG, "error reading input buffer");
+		return false;
+	}
+	return true;
+}
+
 static inline INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT pSrcData,
                                                      UINT32 SrcSize, BYTE* WINPR_RESTRICT pDstData,
                                                      UINT32 nWidth, UINT32 nHeight)
@@ -264,15 +278,10 @@ static inline INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 
 		for (UINT32 x = 0; x < nWidth;)
 		{
-			const size_t cur = WINPR_ASSERTING_INT_CAST(size_t, (srcp - pSrcData));
-			if (cur + 1 > SrcSize * 1ll)
-			{
-				WLog_ERR(TAG, "error reading input buffer");
+			if (!check_source_available(pSrcData, SrcSize, srcp, 1))
 				return -1;
-			}
 
-			BYTE controlByte = *srcp;
-			srcp++;
+			const BYTE controlByte = *srcp++;
 
 			UINT32 nRunLength = PLANAR_CONTROL_BYTE_RUN_LENGTH(controlByte);
 			UINT32 cRawBytes = PLANAR_CONTROL_BYTE_RAW_BYTES(controlByte);
@@ -296,11 +305,12 @@ static inline INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 
 			if (!previousScanline)
 			{
+				if (!check_source_available(pSrcData, SrcSize, srcp, cRawBytes))
+					return -1;
 				/* first scanline, absolute values */
 				while (cRawBytes > 0)
 				{
-					pixel = *srcp;
-					srcp++;
+					pixel = *srcp++;
 					*dstp = clamp(pixel);
 					dstp++;
 					x++;
@@ -317,11 +327,13 @@ static inline INT32 planar_decompress_plane_rle_only(const BYTE* WINPR_RESTRICT 
 			}
 			else
 			{
+				if (!check_source_available(pSrcData, SrcSize, srcp, cRawBytes))
+					return -1;
+
 				/* delta values relative to previous scanline */
 				while (cRawBytes > 0)
 				{
-					UINT8 deltaValue = *srcp;
-					srcp++;
+					UINT8 deltaValue = *srcp++;
 
 					if (deltaValue & 1)
 					{
@@ -398,15 +410,10 @@ static inline INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcD
 
 		for (INT32 x = 0; x < (INT32)nWidth;)
 		{
-			const size_t cur = WINPR_ASSERTING_INT_CAST(size_t, (srcp - pSrcData));
-			if (cur + 1 > SrcSize * 1ll)
-			{
-				WLog_ERR(TAG, "error reading input buffer");
+			if (!check_source_available(pSrcData, SrcSize, srcp, 1))
 				return -1;
-			}
 
-			const BYTE controlByte = *srcp;
-			srcp++;
+			const BYTE controlByte = *srcp++;
 
 			UINT32 nRunLength = PLANAR_CONTROL_BYTE_RUN_LENGTH(controlByte);
 			UINT32 cRawBytes = PLANAR_CONTROL_BYTE_RAW_BYTES(controlByte);
@@ -430,11 +437,14 @@ static inline INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcD
 
 			if (!previousScanline)
 			{
+				if (!check_source_available(pSrcData, SrcSize, srcp, cRawBytes))
+					return -1;
+
 				/* first scanline, absolute values */
 				while (cRawBytes > 0)
 				{
-					pixel = *srcp;
-					srcp++;
+					pixel = *srcp++;
+
 					*dstp = WINPR_ASSERTING_INT_CAST(BYTE, pixel);
 					dstp += 4;
 					x++;
@@ -451,11 +461,13 @@ static inline INT32 planar_decompress_plane_rle(const BYTE* WINPR_RESTRICT pSrcD
 			}
 			else
 			{
+				if (!check_source_available(pSrcData, SrcSize, srcp, cRawBytes))
+					return -1;
+
 				/* delta values relative to previous scanline */
 				while (cRawBytes > 0)
 				{
-					BYTE deltaValue = *srcp;
-					srcp++;
+					BYTE deltaValue = *srcp++;
 
 					if (deltaValue & 1)
 					{
