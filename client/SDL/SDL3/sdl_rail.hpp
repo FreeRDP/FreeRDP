@@ -85,6 +85,9 @@ class SdlRail
 	void handleClose(SDL_WindowID id);
 	/* Local focus change: send ClientActivate, like xf FocusIn/FocusOut. */
 	void handleFocus(SDL_WindowID id, bool gained);
+	/* activate the window on the server if it isn't already the active one (dedup via
+	 * _clientActiveId). Called on click so input routes to the clicked window, not a stale one. */
+	void ensureActive(SDL_WindowID id);
 	/* Rewrite window-local (x,y) to server-absolute; false if id is not a RAIL window. */
 	bool translateToServer(SDL_WindowID id, float& x, float& y);
 	/* True while a WM move/resize is in progress for this window: the caller must NOT forward the
@@ -114,6 +117,8 @@ class SdlRail
 	bool beginClientEdgeResize(SdlRailWindow* appWindow, uint16_t edge, SDL_Point grabPos);
 	/* The app window eligible for a client edge-resize, or null; caller holds _windowsLock. */
 	[[nodiscard]] SdlRailWindow* edgeResizeTarget(SDL_WindowID id);
+	/* Send RAIL_ACTIVATE_ORDER and track _clientActiveId; caller holds _windowsLock. */
+	void sendClientActivate(uint32_t wid, bool enabled);
 	SdlRailWindow* addWindow(uint64_t id, const SDL_Rect& rect);
 	/* The window `ownerId` names, if it is a live non-popup app window (a valid popup/dialog
 	 * parent); else nullptr. Caller holds _windowsLock. */
@@ -201,7 +206,7 @@ class SdlRail
 	 * _windowsLock; main thread realizes it, records _appliedZOrder to skip identical resends. */
 	std::vector<uint32_t> _zOrder;
 	std::vector<uint32_t> _appliedZOrder;
-	uint32_t _activeWindowId = 0;
+	uint32_t _clientActiveId = 0; /* last window we told the server to activate (ClientActivate) */
 	bool _zOrderDirty = false;
 	/* Icon cache (RDP thread): index = cacheId * entries + cacheEntry, sized from settings. */
 	std::vector<SdlRailIcon> _iconCache;
