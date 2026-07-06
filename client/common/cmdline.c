@@ -965,17 +965,24 @@ fail:
 	return FALSE;
 }
 
-static BOOL read_pem_file(rdpSettings* settings, FreeRDP_Settings_Keys_String id, const char* file)
+static BOOL read_pem_file(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
+                          const char* b64OrFile)
 {
-	size_t length = 0;
-	char* pem = crypto_read_pem(file, &length);
-	if (!pem || (length == 0))
+	const size_t blen = strlen(b64OrFile);
+	char* pem = nullptr;
+	size_t plen = 0;
+	crypto_base64url_decode(b64OrFile, blen, (BYTE**)&pem, &plen);
+	if (!pem)
 	{
-		free(pem);
-		return FALSE;
+		pem = crypto_read_pem(b64OrFile, &plen);
+		if (!pem || (plen == 0))
+		{
+			free(pem);
+			return FALSE;
+		}
 	}
 
-	BOOL rc = freerdp_settings_set_string_len(settings, id, pem, length);
+	BOOL rc = freerdp_settings_set_string_len(settings, id, pem, plen);
 	free(pem);
 	return rc;
 }

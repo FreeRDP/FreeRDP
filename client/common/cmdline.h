@@ -465,8 +465,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, "<str>[,<str>...]", nullptr, nullptr, -1, nullptr,
 	  "Redirect the smartcard devices containing any of the <str> in their names." },
 	{ "smartcard-logon", COMMAND_LINE_VALUE_OPTIONAL,
-	  "[cert:<path>,key:<key>,pin:<pin>,csp:<csp name>,reader:<reader>,card:<card>]", nullptr,
-	  nullptr, -1, nullptr, "Activates Smartcard (optional certificate) Logon authentication." },
+	  "[[cert:<path>|cert:<base64(PEM)>],[key:<path>|key:<base64(PEM)>],pin:<pin>,csp:<csp "
+	  "name>,reader:<reader>,card:<card>]",
+	  nullptr, nullptr, -1, nullptr,
+	  "Activates Smartcard (optional certificate) Logon authentication." },
 	{ "sound", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>,][latency:<"
 	  "latency>,][quality:<quality>]",
