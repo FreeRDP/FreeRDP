@@ -306,8 +306,8 @@ static BOOL xf_shm_create_surface_image(xfContext* xfc, xfGfxSurface* surface)
 
 	XImage* image = XShmCreateImage(xfc->display, xfc->visual,
 	                                WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth), ZPixmap,
-	                                NULL, shminfo, surface->gdi.mappedWidth,
-	                                surface->gdi.mappedHeight);
+	                                NULL, shminfo, surface->gdi.width,
+	                                surface->gdi.height);
 	if (!image)
 	{
 		free(shminfo);
@@ -375,8 +375,8 @@ static BOOL xf_shm_create_surface_image(xfContext* xfc, xfGfxSurface* surface)
 		WLog_INFO(TAG,
 		          "XShm runtime: enabled version=%d.%d sharedPixmaps=%s image=%ux%u bpl=%d size=%zu",
 		          g_xf_shm_runtime_major, g_xf_shm_runtime_minor,
-		          g_xf_shm_runtime_pixmaps ? "yes" : "no", surface->gdi.mappedWidth,
-		          surface->gdi.mappedHeight, image->bytes_per_line, size);
+		          g_xf_shm_runtime_pixmaps ? "yes" : "no", surface->gdi.width,
+		          surface->gdi.height, image->bytes_per_line, size);
 		g_xf_shm_runtime_ok_logged = TRUE;
 	}
 
