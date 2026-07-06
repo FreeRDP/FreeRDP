@@ -1321,10 +1321,11 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 
 	for (int i = 0; i < nrects; i++)
 	{
-		xrects[i].x = WINPR_ASSERTING_INT_CAST(short, rects[i].left);
-		xrects[i].y = WINPR_ASSERTING_INT_CAST(short, rects[i].top);
-		xrects[i].width = WINPR_ASSERTING_INT_CAST(unsigned short, rects[i].right - rects[i].left);
-		xrects[i].height = WINPR_ASSERTING_INT_CAST(unsigned short, rects[i].bottom - rects[i].top);
+		/* Coords may be negative (INT16 in UINT16 fields); cast modularly, no assert. */
+		xrects[i].x = WINPR_CXX_COMPAT_CAST(short, rects[i].left);
+		xrects[i].y = WINPR_CXX_COMPAT_CAST(short, rects[i].top);
+		xrects[i].width = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].right - rects[i].left);
+		xrects[i].height = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].bottom - rects[i].top);
 	}
 
 	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects, nrects,
@@ -1346,16 +1347,27 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 
 	for (int i = 0; i < nrects; i++)
 	{
-		xrects[i].x = WINPR_ASSERTING_INT_CAST(short, rects[i].left);
-		xrects[i].y = WINPR_ASSERTING_INT_CAST(short, rects[i].top);
-		xrects[i].width = WINPR_ASSERTING_INT_CAST(unsigned short, rects[i].right - rects[i].left);
-		xrects[i].height = WINPR_ASSERTING_INT_CAST(unsigned short, rects[i].bottom - rects[i].top);
+		/* Coords may be negative (INT16 in UINT16 fields); cast modularly, no assert. */
+		xrects[i].x = WINPR_CXX_COMPAT_CAST(short, rects[i].left);
+		xrects[i].y = WINPR_CXX_COMPAT_CAST(short, rects[i].top);
+		xrects[i].width = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].right - rects[i].left);
+		xrects[i].height = WINPR_CXX_COMPAT_CAST(unsigned short, rects[i].bottom - rects[i].top);
 	}
 
 	XShapeCombineRectangles(
 	    xfc->display, appWindow->handle, ShapeBounding, WINPR_ASSERTING_INT_CAST(int, rectsOffsetX),
 	    WINPR_ASSERTING_INT_CAST(int, rectsOffsetY), xrects, nrects, ShapeSet, 0);
 	free(xrects);
+#endif
+}
+
+void xf_ClearWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(appWindow);
+#ifdef WITH_XEXT
+	/* Drop the bounding shape so the whole window is visible. */
+	XShapeCombineMask(xfc->display, appWindow->handle, ShapeBounding, 0, 0, None, ShapeSet);
 #endif
 }
 
@@ -1523,20 +1535,34 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 		return CHANNEL_RC_OK;
 	}
 
+	const BOOL surfaceChanged = (appWindow->surfaceId != surface->surfaceId);
+	if (surfaceChanged)
+		appWindow->surfaceId = surface->surfaceId;
+
+	const BOOL maximized = (appWindow->dwStyle & WS_MAXIMIZE) != 0;
+	const UINT32 winW = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width);
+	const UINT32 winH = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->height);
+
 	const BOOL swGdi = freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_SoftwareGdi);
 	UINT32 nrects = 0;
 	const RECTANGLE_16* rects = region16_rects(&surface->invalidRegion, &nrects);
 
+	RECTANGLE_16 fullRect = WINPR_C_ARRAY_INIT;
+	if (surfaceChanged)
+	{
+		fullRect.right = WINPR_ASSERTING_INT_CAST(UINT16, MIN(winW, surface->width));
+		fullRect.bottom = WINPR_ASSERTING_INT_CAST(UINT16, MIN(winH, surface->height));
+		if ((fullRect.right > 0) && (fullRect.bottom > 0))
+		{
+			rects = &fullRect;
+			nrects = 1;
+		}
+	}
+
 	if (swGdi)
 	{
-		if (appWindow->surfaceId != surface->surfaceId)
-		{
-			xf_AppWindowDestroyImage(appWindow);
-			appWindow->surfaceId = surface->surfaceId;
-		}
-		if (appWindow->width != (INT64)surface->width)
-			xf_AppWindowDestroyImage(appWindow);
-		if (appWindow->height != (INT64)surface->height)
+		if (surfaceChanged || (appWindow->width != (INT64)surface->width) ||
+		    (appWindow->height != (INT64)surface->height))
 			xf_AppWindowDestroyImage(appWindow);
 
 		if (!appWindow->image)
@@ -1567,18 +1593,45 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 		image = xfSurface->image;
 	}
 
+	/* Skip the off-screen resize-margin frame a maximized surface carries: shift the blit by the
+	 * real left/top margin so content fills from (0,0). */
+	const int insetX =
+	    (maximized && (surface->mappedWidth > winW)) ? (int)appWindow->resizeMarginLeft : 0;
+	const int insetY =
+	    (maximized && (surface->mappedHeight > winH)) ? (int)appWindow->resizeMarginTop : 0;
+
 	for (UINT32 x = 0; x < nrects; x++)
 	{
 		const RECTANGLE_16* rect = &rects[x];
-		const UINT32 width = rect->right - rect->left;
-		const UINT32 height = rect->bottom - rect->top;
+		int srcX = rect->left;
+		int srcY = rect->top;
+		int dstX = (int)rect->left - insetX;
+		int dstY = (int)rect->top - insetY;
+		int w = (int)(rect->right - rect->left);
+		int h = (int)(rect->bottom - rect->top);
 
-		LogDynAndXPutImage(xfc->log, xfc->display, appWindow->pixmap, appWindow->gc, image,
-		                   rect->left, rect->top, rect->left, rect->top, width, height);
+		if (dstX < 0)
+		{
+			srcX -= dstX;
+			w += dstX;
+			dstX = 0;
+		}
+		if (dstY < 0)
+		{
+			srcY -= dstY;
+			h += dstY;
+			dstY = 0;
+		}
+		if ((w <= 0) || (h <= 0))
+			continue;
+
+		LogDynAndXPutImage(xfc->log, xfc->display, appWindow->pixmap, appWindow->gc, image, srcX,
+		                   srcY, dstX, dstY, WINPR_ASSERTING_INT_CAST(uint32_t, w),
+		                   WINPR_ASSERTING_INT_CAST(uint32_t, h));
 
 		LogDynAndXCopyArea(xfc->log, xfc->display, appWindow->pixmap, appWindow->handle,
-		                   appWindow->gc, rect->left, rect->top, width, height, rect->left,
-		                   rect->top);
+		                   appWindow->gc, dstX, dstY, WINPR_ASSERTING_INT_CAST(uint32_t, w),
+		                   WINPR_ASSERTING_INT_CAST(uint32_t, h), dstX, dstY);
 	}
 
 	rc = CHANNEL_RC_OK;

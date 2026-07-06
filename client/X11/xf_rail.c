@@ -146,6 +146,29 @@ BOOL xf_rail_disable_remoteapp_mode(xfContext* xfc)
 	return TRUE;
 }
 
+/* Report the real work area so the server maximizes RemoteApp windows within the panel. */
+static UINT xf_rail_send_workarea(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(xfc->rail);
+
+	/* xf_GetWorkArea overwrites xfc->workArea; restore it (RAIL keeps it full). */
+	const xfWorkArea saved = xfc->workArea;
+	if (!xf_GetWorkArea(xfc))
+		return CHANNEL_RC_OK;
+	const INT64 right = (INT64)xfc->workArea.x + xfc->workArea.width;
+	const INT64 bottom = (INT64)xfc->workArea.y + xfc->workArea.height;
+	const RAIL_SYSPARAM_ORDER sysparam = {
+		.params = SPI_MASK_SET_WORK_AREA,
+		.workArea.left = WINPR_CXX_COMPAT_CAST(UINT16, xfc->workArea.x),
+		.workArea.top = WINPR_CXX_COMPAT_CAST(UINT16, xfc->workArea.y),
+		.workArea.right = WINPR_CXX_COMPAT_CAST(UINT16, right),
+		.workArea.bottom = WINPR_CXX_COMPAT_CAST(UINT16, bottom)
+	};
+	xfc->workArea = saved;
+	return xfc->rail->ClientSystemParam(xfc->rail, &sysparam);
+}
+
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 {
 	RAIL_ACTIVATE_ORDER activate = WINPR_C_ARRAY_INIT;
@@ -641,11 +664,12 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		 */
 		if (appWindow->rail_state != WINDOW_SHOW_MINIMIZED)
 		{
-			/* Redraw window area if already in the correct position */
-			if (appWindow->x == (INT64)appWindow->windowOffsetX &&
-			    appWindow->y == (INT64)appWindow->windowOffsetY &&
-			    appWindow->width == (INT64)appWindow->windowWidth &&
-			    appWindow->height == (INT64)appWindow->windowHeight)
+			const BOOL maximized = (appWindow->dwStyle & WS_MAXIMIZE) != 0;
+			/* Leave maximized windows to the WM, which honors the work area. */
+			if (maximized || (appWindow->x == (INT64)appWindow->windowOffsetX &&
+			                  appWindow->y == (INT64)appWindow->windowOffsetY &&
+			                  appWindow->width == (INT64)appWindow->windowWidth &&
+			                  appWindow->height == (INT64)appWindow->windowHeight))
 			{
 				xf_UpdateWindowArea(xfc, appWindow, 0, 0,
 				                    WINPR_ASSERTING_INT_CAST(int, appWindow->windowWidth),
@@ -658,11 +682,15 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 				              WINPR_ASSERTING_INT_CAST(int, appWindow->windowHeight));
 			}
 
-			xf_SetWindowVisibilityRects(
-			    xfc, appWindow, WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetX),
-			    WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetY),
-			    appWindow->visibilityRects,
-			    WINPR_ASSERTING_INT_CAST(int, appWindow->numVisibilityRects));
+			/* Show a maximized window fully; its frame-inset visibility rects would clip it. */
+			if (maximized)
+				xf_ClearWindowVisibilityRects(xfc, appWindow);
+			else
+				xf_SetWindowVisibilityRects(
+				    xfc, appWindow, WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetX),
+				    WINPR_ASSERTING_INT_CAST(uint32_t, visibilityRectsOffsetY),
+				    appWindow->visibilityRects,
+				    WINPR_ASSERTING_INT_CAST(int, appWindow->numVisibilityRects));
 		}
 
 		if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
@@ -993,6 +1021,8 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
 		if ((app != nullptr) && (strnlen(app, 1) > 0))
 		{
 			if (client_rail_server_start_cmd(xfc->rail) != CHANNEL_RC_OK)
+				return FALSE;
+			if (xf_rail_send_workarea(xfc) != CHANNEL_RC_OK)
 				return FALSE;
 		}
 	}
