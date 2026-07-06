@@ -199,14 +199,34 @@ void SdlRail::handleFocus(SDL_WindowID id, bool gained)
 		_focusedAppId = appWindow->id();
 
 	/* ClientActivate only. Do NOT SDL_RaiseWindow to avoid WM focus loops. */
+	const uint32_t wid = static_cast<uint32_t>(appWindow->id());
+	sendClientActivate(wid, gained);
+}
+
+/* Send RAIL_ACTIVATE_ORDER and track the active window id. Caller holds _windowsLock. */
+void SdlRail::sendClientActivate(uint32_t wid, bool enabled)
+{
 	if (!_rail || !_rail->ClientActivate)
 		return;
-	WLog_VRB(TAG, "activate id=0x%08" PRIx32 " gained=%d", static_cast<UINT32>(appWindow->id()),
-	         gained ? 1 : 0);
+	if (enabled)
+		_clientActiveId = wid;
 	RAIL_ACTIVATE_ORDER activate = {};
-	activate.windowId = static_cast<UINT32>(appWindow->id());
-	activate.enabled = gained;
+	activate.windowId = wid;
+	activate.enabled = enabled;
 	std::ignore = _rail->ClientActivate(_rail, &activate);
+}
+
+/* Activate clicked window on server to route input correctly. */
+void SdlRail::ensureActive(SDL_WindowID id)
+{
+	std::unique_lock lock(_windowsLock);
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || appWindow->isPopup() || !appWindow->window())
+		return;
+	const uint32_t wid = static_cast<uint32_t>(appWindow->id());
+	if (wid == _clientActiveId)
+		return;
+	sendClientActivate(wid, true);
 }
 
 bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
@@ -215,12 +235,10 @@ bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
 	auto* appWindow = getWindowBySdlId(id);
 	if (!appWindow)
 		return false;
-
-	/* Window-local -> server-absolute (add the window's visible on-screen origin). */
 	SDL_FPoint rpos = { x, y };
 	if (auto* renderer = appWindow->renderer())
 		(void)SDL_RenderCoordinatesFromWindow(renderer, x, y, &rpos.x, &rpos.y);
-
+	/* Convert window-local coords to server-absolute. */
 	const SDL_Rect outer = appWindow->outerRect();
 	x = rpos.x + static_cast<float>(outer.x);
 	y = rpos.y + static_cast<float>(outer.y);
@@ -410,7 +428,6 @@ void SdlRail::applyZOrder()
 	}
 	if (stack.size() >= 2)
 	{
-		WLog_VRB(TAG, "zorder apply: restacking %zu of %zu windows", stack.size(), _zOrder.size());
 		std::ignore = sdl_x11_restack_windows(stack);
 	}
 
@@ -1229,7 +1246,11 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 	{
 		std::unique_lock lock(rail->_windowsLock);
 		if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
-			rail->_activeWindowId = monitoredDesktop->activeWindowId;
+		{
+			/* Server changed active window: sync our ClientActivate dedup to avoid skipping
+			 * re-clicks. */
+			rail->_clientActiveId = monitoredDesktop->activeWindowId;
+		}
 		if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 		{
 			if (monitoredDesktop->windowIds && (monitoredDesktop->numWindowIds > 0))
@@ -1238,8 +1259,6 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 			else
 				rail->_zOrder.clear();
 			rail->_zOrderDirty = true;
-			WLog_VRB(TAG, "server zorder n=%zu active=0x%08" PRIx32, rail->_zOrder.size(),
-			         rail->_activeWindowId);
 			lock.unlock();
 			(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE); /* wake the main thread to restack */
 		}
