@@ -289,6 +289,61 @@ error:
 	return (INT16)formatIndex;
 }
 
+static bool cam_v4l_formats_supported(int fd, const struct v4l2_capability* cap, const char* device)
+{
+	WINPR_ASSERT(cap);
+	WINPR_ASSERT(device);
+	if (fd < 0)
+		return false;
+
+	struct v4l2_fmtdesc fmtdesc = WINPR_C_ARRAY_INIT;
+	fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+	size_t flen = 0;
+	char* formats = nullptr;
+	bool supported = false;
+	for (fmtdesc.index = 0; ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0; fmtdesc.index++)
+	{
+		char fmt[32] = WINPR_C_ARRAY_INIT;
+		memcpy(fmt, &fmtdesc.pixelformat, sizeof(fmtdesc.pixelformat));
+		if (formats)
+		{
+			char* tmp = nullptr;
+			size_t tlen = 0;
+			winpr_asprintf(&tmp, &tlen, "%s, %s [%s]", formats, fmtdesc.description, fmt);
+			free(formats);
+			formats = tmp;
+			flen = tlen;
+		}
+		else
+			winpr_asprintf(&formats, &flen, "%s [%s]", fmtdesc.description, fmt);
+
+		switch (fmtdesc.pixelformat)
+		{
+			case V4L2_PIX_FMT_H264:
+			case V4L2_PIX_FMT_MJPEG:
+			case V4L2_PIX_FMT_YUYV:
+			case V4L2_PIX_FMT_NV12:
+			case V4L2_PIX_FMT_YUV420:
+			case V4L2_PIX_FMT_RGB24:
+			case V4L2_PIX_FMT_RGB32:
+				supported = true;
+				break;
+			default:
+				break;
+		}
+	}
+
+	if (supported)
+		WLog_DBG(TAG, "Device %s (%s) selected, formats supported: {%s}", cap->card, device,
+		         formats);
+	else
+		WLog_DBG(TAG, "Device %s (%s) filtered, no formats supported: {%s}", cap->card, device,
+		         formats);
+	free(formats);
+	return supported;
+}
+
 /**
  * Function description
  *
@@ -309,7 +364,8 @@ static UINT cam_v4l_enumerate(WINPR_ATTR_UNUSED ICamHal* ihal, ICamHalEnumCallba
 			continue;
 
 		/* query device capabilities and make sure this is a video capture device */
-		if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0 || !(cap.device_caps & V4L2_CAP_VIDEO_CAPTURE))
+		if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0 || !(cap.device_caps & V4L2_CAP_VIDEO_CAPTURE) ||
+		    !cam_v4l_formats_supported(fd, &cap, device))
 		{
 			close(fd);
 			continue;
