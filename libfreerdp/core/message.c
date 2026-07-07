@@ -1229,24 +1229,61 @@ update_message_DrawGdiPlusCacheEnd(rdpContext* context,
 }
 
 /* Window Update */
+static RAIL_UNICODE_STRING rail_unicode_string_clone(const RAIL_UNICODE_STRING* str)
+{
+	WINPR_ASSERT(str);
+	RAIL_UNICODE_STRING clone = { .string = (BYTE*)strndup((const char*)str->string, str->length),
+		                          .length = str->length };
+	return clone;
+}
+
+static void window_state_order_free(WINDOW_STATE_ORDER* order)
+{
+	if (!order)
+		return;
+	free(order->windowRects);
+	free(order->visibilityRects);
+	rail_unicode_string_free(&order->titleInfo);
+	rail_unicode_string_free(&order->OverlayDescription);
+
+	free(order);
+}
+
+static WINDOW_STATE_ORDER* window_state_order_clone(const WINDOW_STATE_ORDER* order)
+{
+	WINDOW_STATE_ORDER* clone = calloc(1, sizeof(WINDOW_STATE_ORDER));
+	if (!clone)
+		return nullptr;
+	*clone = *order;
+
+	clone->titleInfo = rail_unicode_string_clone(&order->titleInfo);
+	clone->OverlayDescription = rail_unicode_string_clone(&order->OverlayDescription);
+	clone->windowRects = rectangles_clone(order->windowRects, order->numWindowRects);
+	clone->visibilityRects = rectangles_clone(order->visibilityRects, order->numVisibilityRects);
+	if (!clone->windowRects || !clone->visibilityRects ||
+	    (!clone->titleInfo.string && (clone->titleInfo.length > 0)) ||
+	    (!clone->OverlayDescription.string && (clone->OverlayDescription.length > 0)))
+	{
+		window_state_order_free(clone);
+		return nullptr;
+	}
+	return clone;
+}
 
 static BOOL update_message_WindowCreate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                         const WINDOW_STATE_ORDER* windowState)
 {
-	WINDOW_ORDER_INFO* wParam = nullptr;
-	WINDOW_STATE_ORDER* lParam = nullptr;
-	rdp_update_internal* up = nullptr;
-
 	if (!context || !context->update || !orderInfo || !windowState)
 		return FALSE;
 
-	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
+	WINDOW_ORDER_INFO* wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
 		return FALSE;
 
-	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
-	lParam = (WINDOW_STATE_ORDER*)malloc(sizeof(WINDOW_STATE_ORDER));
+	*wParam = *orderInfo;
+
+	WINDOW_STATE_ORDER* lParam = window_state_order_clone(windowState);
 
 	if (!lParam)
 	{
@@ -1254,9 +1291,7 @@ static BOOL update_message_WindowCreate(rdpContext* context, const WINDOW_ORDER_
 		return FALSE;
 	}
 
-	CopyMemory(lParam, windowState, sizeof(WINDOW_STATE_ORDER));
-
-	up = update_cast(context->update);
+	rdp_update_internal* up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(WindowUpdate, WindowCreate),
 	                         (void*)wParam, (void*)lParam);
 }
@@ -1264,20 +1299,17 @@ static BOOL update_message_WindowCreate(rdpContext* context, const WINDOW_ORDER_
 static BOOL update_message_WindowUpdate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                         const WINDOW_STATE_ORDER* windowState)
 {
-	WINDOW_ORDER_INFO* wParam = nullptr;
-	WINDOW_STATE_ORDER* lParam = nullptr;
-	rdp_update_internal* up = nullptr;
-
 	if (!context || !context->update || !orderInfo || !windowState)
 		return FALSE;
 
-	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
+	WINDOW_ORDER_INFO* wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
 		return FALSE;
 
-	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
-	lParam = (WINDOW_STATE_ORDER*)malloc(sizeof(WINDOW_STATE_ORDER));
+	*wParam = *orderInfo;
+
+	WINDOW_STATE_ORDER* lParam = window_state_order_clone(windowState);
 
 	if (!lParam)
 	{
@@ -1285,9 +1317,7 @@ static BOOL update_message_WindowUpdate(rdpContext* context, const WINDOW_ORDER_
 		return FALSE;
 	}
 
-	CopyMemory(lParam, windowState, sizeof(WINDOW_STATE_ORDER));
-
-	up = update_cast(context->update);
+	rdp_update_internal* up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(WindowUpdate, WindowUpdate),
 	                         (void*)wParam, (void*)lParam);
 }
@@ -2315,12 +2345,12 @@ static BOOL update_message_free_window_update_class(wMessage* msg, int type)
 	{
 		case WindowUpdate_WindowCreate:
 			free(msg->wParam);
-			free(msg->lParam);
+			window_state_order_free(msg->lParam);
 			break;
 
 		case WindowUpdate_WindowUpdate:
 			free(msg->wParam);
-			free(msg->lParam);
+			window_state_order_free(msg->lParam);
 			break;
 
 		case WindowUpdate_WindowIcon:

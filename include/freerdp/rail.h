@@ -606,6 +606,13 @@ typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 WINPR_ATTR_NODISCARD
 FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
 
+/** @brief free a \ref RAIL_UNICODE_STRING
+ *
+ *  @param unicode_string A pointer to the string to free
+ *  @since version 3.28.1
+ */
+FREERDP_API void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string);
+
 WINPR_ATTR_NODISCARD
 FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
 	                                        RAIL_UNICODE_STRING* unicode_string);

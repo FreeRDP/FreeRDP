@@ -194,6 +194,24 @@ const char* rectangle_to_string(const RECTANGLE_16* rect, char* buffer, size_t l
 		                rect->left, rect->top, rect->right, rect->bottom);
 	return buffer;
 }
+
+RECTANGLE_16* rectangles_clone(const RECTANGLE_16* rects, size_t count)
+{
+	if (count == 0)
+		return nullptr;
+	if (count > SIZE_MAX / sizeof(RECTANGLE_16))
+		return nullptr;
+
+	WINPR_ASSERT(rects);
+
+	RECTANGLE_16* clone = calloc(count, sizeof(RECTANGLE_16));
+	if (!clone)
+		return nullptr;
+
+	memcpy(clone, rects, sizeof(RECTANGLE_16) * count);
+	return clone;
+}
+
 static void freeRegion(REGION16_DATA* data)
 {
 	if (data)

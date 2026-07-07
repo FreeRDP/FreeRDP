@@ -77,6 +77,16 @@ extern "C"
 	FREERDP_API const char* rectangle_to_string(const RECTANGLE_16* rect, char* buffer,
 	                                            size_t length);
 
+	/** @brief Clone a rectangle array
+	 *
+	 *  @param rects A pointer to the array to clone
+	 *  @param count The number of rectangles found in \ref rects
+	 *  @return An allocated copy of \ref rects or nullptr in case of failure
+	 *  @since version 3.28.1
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_API RECTANGLE_16* rectangles_clone(const RECTANGLE_16* rects, size_t count);
+
 	/** initialize a region16
 	 * @param region the region to initialise
 	 */
