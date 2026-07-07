@@ -370,7 +370,7 @@ char* region16_to_string(const REGION16* region)
 	const RECTANGLE_16* rects = region16_rects(region, &nbRects);
 
 	char* str = nullptr;
-	size_t slen;
+	size_t slen = 0;
 	winpr_asprintf(&str, &slen, "REGION16{nrects=%" PRIu32 " [", nbRects);
 
 	UINT16 currentBandY = 0;

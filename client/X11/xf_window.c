@@ -1607,8 +1607,8 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 		int srcY = rect->top;
 		int dstX = (int)rect->left - insetX;
 		int dstY = (int)rect->top - insetY;
-		int w = (int)(rect->right - rect->left);
-		int h = (int)(rect->bottom - rect->top);
+		int w = (int)rect->right - rect->left;
+		int h = (int)rect->bottom - rect->top;
 
 		if (dstX < 0)
 		{
