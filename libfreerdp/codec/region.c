@@ -183,6 +183,17 @@ BOOL rectangles_intersection(const RECTANGLE_16* r1, const RECTANGLE_16* r2, REC
 	return (dst->left < dst->right) && (dst->top < dst->bottom);
 }
 
+const char* rectangle_to_string(const RECTANGLE_16* rect, char* buffer, size_t length)
+{
+	if (!buffer || (length < 2))
+		return nullptr;
+	if (!rect)
+		(void)_snprintf(buffer, length - 1, "{ nullptr }");
+	else
+		(void)_snprintf(buffer, length - 1, "{%" PRIu16 "x%" PRIu16 "-%" PRIu16 "x%" PRIu16 "}",
+		                rect->left, rect->top, rect->right, rect->bottom);
+	return buffer;
+}
 static void freeRegion(REGION16_DATA* data)
 {
 	if (data)
