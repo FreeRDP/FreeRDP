@@ -33,14 +33,6 @@
 
 static void update_free_window_icon_info(ICON_INFO* iconInfo);
 
-static void free_unicode_string(RAIL_UNICODE_STRING* unicode_string)
-{
-	WINPR_ASSERT(unicode_string);
-	free(unicode_string->string);
-	unicode_string->string = nullptr;
-	unicode_string->length = 0;
-}
-
 BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	WINPR_ASSERT(unicode_string);
@@ -55,14 +47,14 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 
 	if (new_len == 0)
 	{
-		free_unicode_string(unicode_string);
+		rail_unicode_string_free(unicode_string);
 		return TRUE;
 	}
 
 	BYTE* new_str = (BYTE*)realloc(unicode_string->string, new_len);
 	if (!new_str)
 	{
-		free_unicode_string(unicode_string);
+		rail_unicode_string_free(unicode_string);
 		return FALSE;
 	}
 
@@ -70,6 +62,14 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 	unicode_string->length = new_len;
 	Stream_Read(s, unicode_string->string, unicode_string->length);
 	return TRUE;
+}
+
+void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
+{
+	WINPR_ASSERT(unicode_string);
+	free(unicode_string->string);
+	unicode_string->string = nullptr;
+	unicode_string->length = 0;
 }
 
 BOOL utf8_string_to_rail_string(const char* string, RAIL_UNICODE_STRING* unicode_string)
