@@ -715,79 +715,77 @@ static BOOL update_message_FastGlyph(rdpContext* context, const FAST_GLYPH_ORDER
 
 static BOOL update_message_PolygonSC(rdpContext* context, const POLYGON_SC_ORDER* polygonSC)
 {
-	POLYGON_SC_ORDER* wParam = nullptr;
-	rdp_update_internal* up = nullptr;
-
 	if (!context || !context->update || !polygonSC)
 		return FALSE;
 
-	wParam = (POLYGON_SC_ORDER*)malloc(sizeof(POLYGON_SC_ORDER));
+	POLYGON_SC_ORDER* wParam = (POLYGON_SC_ORDER*)malloc(sizeof(POLYGON_SC_ORDER));
 
 	if (!wParam)
 		return FALSE;
 
-	CopyMemory(wParam, polygonSC, sizeof(POLYGON_SC_ORDER));
-	wParam->points = (DELTA_POINT*)calloc(wParam->numPoints, sizeof(DELTA_POINT));
-
-	if (!wParam->points)
+	*wParam = *polygonSC;
+	if (polygonSC->numPoints > 0)
 	{
-		free(wParam);
-		return FALSE;
+		wParam->points = (DELTA_POINT*)calloc(polygonSC->numPoints, sizeof(DELTA_POINT));
+
+		if (!wParam->points)
+		{
+			free(wParam);
+			return FALSE;
+		}
+
+		CopyMemory(wParam->points, polygonSC->points, sizeof(DELTA_POINT) * wParam->numPoints);
 	}
 
-	CopyMemory(wParam->points, polygonSC, sizeof(DELTA_POINT) * wParam->numPoints);
-
-	up = update_cast(context->update);
+	rdp_update_internal* up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(PrimaryUpdate, PolygonSC),
 	                         (void*)wParam, nullptr);
 }
 
 static BOOL update_message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* polygonCB)
 {
-	POLYGON_CB_ORDER* wParam = nullptr;
-	rdp_update_internal* up = nullptr;
-
 	if (!context || !context->update || !polygonCB)
 		return FALSE;
 
-	wParam = (POLYGON_CB_ORDER*)malloc(sizeof(POLYGON_CB_ORDER));
+	POLYGON_CB_ORDER* wParam = (POLYGON_CB_ORDER*)malloc(sizeof(POLYGON_CB_ORDER));
 
 	if (!wParam)
 		return FALSE;
 
-	CopyMemory(wParam, polygonCB, sizeof(POLYGON_CB_ORDER));
-	wParam->points = (DELTA_POINT*)calloc(wParam->numPoints, sizeof(DELTA_POINT));
-
-	if (!wParam->points)
+	*wParam = *polygonCB;
+	if (polygonCB->numPoints > 0)
 	{
-		free(wParam);
-		return FALSE;
+		wParam->points = (DELTA_POINT*)calloc(polygonCB->numPoints, sizeof(DELTA_POINT));
+
+		if (!wParam->points)
+		{
+			free(wParam);
+			return FALSE;
+		}
+
+		CopyMemory(wParam->points, polygonCB->points, sizeof(DELTA_POINT) * wParam->numPoints);
 	}
 
-	CopyMemory(wParam->points, polygonCB, sizeof(DELTA_POINT) * wParam->numPoints);
 	wParam->brush.data = (BYTE*)wParam->brush.p8x8;
 
-	up = update_cast(context->update);
+	rdp_update_internal* up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(PrimaryUpdate, PolygonCB),
 	                         (void*)wParam, nullptr);
 }
 
 static BOOL update_message_EllipseSC(rdpContext* context, const ELLIPSE_SC_ORDER* ellipseSC)
 {
-	ELLIPSE_SC_ORDER* wParam = nullptr;
-	rdp_update_internal* up = nullptr;
-
 	if (!context || !context->update || !ellipseSC)
 		return FALSE;
 
-	wParam = (ELLIPSE_SC_ORDER*)malloc(sizeof(ELLIPSE_SC_ORDER));
+	ELLIPSE_SC_ORDER* wParam = (ELLIPSE_SC_ORDER*)malloc(sizeof(ELLIPSE_SC_ORDER));
 
 	if (!wParam)
 		return FALSE;
 
 	CopyMemory(wParam, ellipseSC, sizeof(ELLIPSE_SC_ORDER));
 
-	up = update_cast(context->update);
+	rdp_update_internal* up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(PrimaryUpdate, EllipseSC),
 	                         (void*)wParam, nullptr);
 }
