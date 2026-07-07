@@ -70,7 +70,7 @@ extern "C"
 	 *
 	 *  @param rect A pointer to a rectangle to stringify
 	 *  @param buffer A pointer to a string buffer to hold the result
-	 *  @param length The length in bytes of \re buffer
+	 *  @param length The length in bytes of \ref buffer
 	 *  @return A pointer to \ref buffer
 	 *  @since version 3.29.0
 	 */

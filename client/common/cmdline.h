@@ -167,6 +167,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Encryption (experimental)" },
 	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "[40,][56,][128,][FIPS]", nullptr, nullptr,
 	  -1, nullptr, "RDP standard security encryption methods" },
+	{ "endpointfedauth", COMMAND_LINE_VALUE_REQUIRED, "<token>", nullptr, nullptr, -1, nullptr,
+	  "Endpoint FedAuth token for Hyper-V VM console-connect scenarios" },
 	{ "f", COMMAND_LINE_VALUE_FLAG, nullptr, nullptr, nullptr, -1, nullptr,
 	  "Fullscreen mode (<Ctrl>+<Alt>+<Enter> toggles fullscreen)" },
 	{ "fipsmode", COMMAND_LINE_VALUE_BOOL, nullptr, nullptr, nullptr, -1, nullptr, "FIPS mode" },

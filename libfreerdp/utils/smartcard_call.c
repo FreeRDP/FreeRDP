@@ -984,7 +984,7 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 
 	if (call->cReaders > 0)
 	{
-		rgReaderStates = calloc(ret.cReaders, sizeof(SCARD_READERSTATEA));
+		rgReaderStates = calloc(call->cReaders, sizeof(SCARD_READERSTATEA));
 		ret.rgReaderStates =
 		    (ReaderState_Return*)calloc(call->cReaders, sizeof(ReaderState_Return));
 		if (!rgReaderStates || !ret.rgReaderStates)
@@ -1047,7 +1047,7 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 
 	if (call->cReaders > 0)
 	{
-		rgReaderStates = calloc(ret.cReaders, sizeof(SCARD_READERSTATEW));
+		rgReaderStates = calloc(call->cReaders, sizeof(SCARD_READERSTATEW));
 		ret.rgReaderStates =
 		    (ReaderState_Return*)calloc(call->cReaders, sizeof(ReaderState_Return));
 		if (!rgReaderStates || !ret.rgReaderStates)

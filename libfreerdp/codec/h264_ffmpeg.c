@@ -385,8 +385,8 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		iStride[1] = (UINT32)MAX(0, sys->videoFrame->linesize[1]);
 		iStride[2] = (UINT32)MAX(0, sys->videoFrame->linesize[2]);
 
-		h264->YUVWidth = sys->videoFrame->width;
-		h264->YUVHeight = sys->videoFrame->height;
+		h264->YUVWidth = WINPR_ASSERTING_INT_CAST(UINT32, sys->videoFrame->width);
+		h264->YUVHeight = WINPR_ASSERTING_INT_CAST(UINT32, sys->videoFrame->height);
 		rc = 1;
 	}
 	else

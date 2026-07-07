@@ -311,7 +311,10 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 PreconnectionId);    /* 1154 */
 	SETTINGS_DEPRECATED(ALIGN64 char* PreconnectionBlob);   /* 1155 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SendPreconnectionPdu); /* 1156 */
-	UINT64 padding1216[1216 - 1157];                        /* 1157 */
+	SETTINGS_DEPRECATED(ALIGN64 char* EndpointFedAuthToken); /** 1157
+		                                                      * @since version 3.28.0
+		                                                      */
+	UINT64 padding1216[1216 - 1158];                         /* 1158 */
 
 	/* Server Redirection */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 RedirectionFlags);                      /* 1216 */

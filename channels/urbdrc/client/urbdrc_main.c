@@ -245,7 +245,7 @@ static BOOL write_string_block(wStream* s, size_t count, const char** strings, c
 		const SSIZE_T wlen = ConvertUtf8NToWChar(strings[x], length[x], nullptr, 0);
 		if (wlen < 0)
 			return FALSE;
-		len += wlen + 1ULL;
+		len += WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1ULL;
 	}
 
 	if (isMultiSZ)
