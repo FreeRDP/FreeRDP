@@ -1226,6 +1226,8 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 				Stream_Seek(response->data, (size_t)status);
 				full_len += status;
 			}
+			if (Stream_GetPosition(response->data) > RESPONSE_SIZE_LIMIT)
+				goto out_error;
 		} while (ctx.state != ChunkStateEnd);
 		response->BodyLength = WINPR_ASSERTING_INT_CAST(uint32_t, full_len);
 		if (response->BodyLength > 0)
