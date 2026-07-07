@@ -1295,30 +1295,29 @@ static BOOL update_message_WindowUpdate(rdpContext* context, const WINDOW_ORDER_
 static BOOL update_message_WindowIcon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                       const WINDOW_ICON_ORDER* windowIcon)
 {
-	WINDOW_ORDER_INFO* wParam = nullptr;
-	WINDOW_ICON_ORDER* lParam = nullptr;
-	rdp_update_internal* up = nullptr;
-
 	if (!context || !context->update || !orderInfo || !windowIcon)
 		return FALSE;
 
-	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
+	WINDOW_ORDER_INFO* wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
 		return FALSE;
 
-	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
-	lParam = (WINDOW_ICON_ORDER*)calloc(1, sizeof(WINDOW_ICON_ORDER));
+	*wParam = *orderInfo;
+
+	WINDOW_ICON_ORDER* lParam = (WINDOW_ICON_ORDER*)calloc(1, sizeof(WINDOW_ICON_ORDER));
 
 	if (!lParam)
 		goto out_fail;
 
+	*lParam = *windowIcon;
 	lParam->iconInfo = calloc(1, sizeof(ICON_INFO));
 
 	if (!lParam->iconInfo)
 		goto out_fail;
 
-	CopyMemory(lParam, windowIcon, sizeof(WINDOW_ICON_ORDER));
+	*lParam->iconInfo = *windowIcon->iconInfo;
+
 	WLog_VRB(TAG, "update_message_WindowIcon");
 
 	if (windowIcon->iconInfo->cbBitsColor > 0)
@@ -1354,7 +1353,7 @@ static BOOL update_message_WindowIcon(rdpContext* context, const WINDOW_ORDER_IN
 		           windowIcon->iconInfo->cbColorTable);
 	}
 
-	up = update_cast(context->update);
+	rdp_update_internal* up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(WindowUpdate, WindowIcon),
 	                         (void*)wParam, (void*)lParam);
 out_fail:
