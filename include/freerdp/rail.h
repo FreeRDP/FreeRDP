@@ -609,7 +609,7 @@ FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unico
 /** @brief free a \ref RAIL_UNICODE_STRING
  *
  *  @param unicode_string A pointer to the string to free
- *  @since version 3.28.1
+ *  @since version 3.29.0
  */
 FREERDP_API void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string);
 

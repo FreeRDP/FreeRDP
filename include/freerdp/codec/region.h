@@ -72,7 +72,7 @@ extern "C"
 	 *  @param buffer A pointer to a string buffer to hold the result
 	 *  @param length The length in bytes of \re buffer
 	 *  @return A pointer to \ref buffer
-	 *  @since version 3.28.1
+	 *  @since version 3.29.0
 	 */
 	FREERDP_API const char* rectangle_to_string(const RECTANGLE_16* rect, char* buffer,
 	                                            size_t length);
@@ -82,7 +82,7 @@ extern "C"
 	 *  @param rects A pointer to the array to clone
 	 *  @param count The number of rectangles found in \ref rects
 	 *  @return An allocated copy of \ref rects or nullptr in case of failure
-	 *  @since version 3.28.1
+	 *  @since version 3.29.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API RECTANGLE_16* rectangles_clone(const RECTANGLE_16* rects, size_t count);
@@ -136,7 +136,7 @@ extern "C"
 	/** @brief return a string representation of a region
 	 *
 	 *  @param region A pointer to the region to stringify.
-	 *  @since version 3.28.1
+	 *  @since version 3.29.0
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* region16_to_string(const REGION16* region);
