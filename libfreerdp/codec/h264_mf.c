@@ -175,7 +175,6 @@ error:
 static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RESTRICT pSrcData,
                          UINT32 SrcSize)
 {
-	HRESULT hr;
 	BYTE* pbBuffer = nullptr;
 	DWORD cbMaxLength = 0;
 	DWORD cbCurrentLength = 0;
@@ -183,11 +182,14 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 	IMFSample* inputSample = nullptr;
 	IMFMediaBuffer* inputBuffer = nullptr;
 	IMFMediaBuffer* outputBuffer = nullptr;
-	MFT_OUTPUT_DATA_BUFFER outputDataBuffer;
+	MFT_OUTPUT_DATA_BUFFER outputDataBuffer = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(h264);
+
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*)h264->pSystemData;
 	UINT32* iStride = h264->iStride;
 	BYTE** pYUVData = h264->pYUVData;
-	hr = sys->MFCreateMemoryBuffer(SrcSize, &inputBuffer);
+	HRESULT hr = sys->MFCreateMemoryBuffer(SrcSize, &inputBuffer);
 
 	if (FAILED(hr))
 	{
@@ -373,10 +375,8 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		}
 
 		outputBuffer->lpVtbl->Release(outputBuffer);
-		if (sys->frameWidth < h264->width)
-			goto error;
-		if (sys->frameHeigth < h264->height)
-			goto error;
+		h264->YUVWidth = sys->frameWidth;
+		h264->YUVHeigth = sys->frameHeigth;
 	}
 
 	inputSample->lpVtbl->Release(inputSample);

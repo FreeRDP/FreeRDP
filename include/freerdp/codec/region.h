@@ -66,6 +66,17 @@ extern "C"
 	FREERDP_API BOOL rectangles_intersection(const RECTANGLE_16* r1, const RECTANGLE_16* r2,
 	                                         RECTANGLE_16* dst);
 
+	/** @brief returns a string representation of the rectangle
+	 *
+	 *  @param rect A pointer to a rectangle to stringify
+	 *  @param buffer A pointer to a string buffer to hold the result
+	 *  @param length The length in bytes of \re buffer
+	 *  @return A pointer to \ref buffer
+	 *  @since version 3.28.1
+	 */
+	FREERDP_API const char* rectangle_to_string(const RECTANGLE_16* rect, char* buffer,
+	                                            size_t length);
+
 	/** initialize a region16
 	 * @param region the region to initialise
 	 */
@@ -111,6 +122,14 @@ extern "C"
 	 * @param region the region to dump
 	 */
 	FREERDP_API void region16_print(const REGION16* region);
+
+	/** @brief return a string representation of a region
+	 *
+	 *  @param region A pointer to the region to stringify.
+	 *  @since version 3.28.1
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_API char* region16_to_string(const REGION16* region);
 
 	/** copies the region to another region
 	 * @param dst destination region

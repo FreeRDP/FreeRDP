@@ -85,6 +85,9 @@ extern "C"
 
 		void* lumaData;
 		wLog* log;
+
+		UINT32 YUVWidth;
+		UINT32 YUVHeight;
 	};
 
 	WINPR_ATTR_NODISCARD

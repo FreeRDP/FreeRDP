@@ -308,3 +308,9 @@ rdpPointer* sdl_Pointer_Copy(const rdpPointer* pointer)
 	}
 	return &copy->pointer;
 }
+
+void sdl_PointerFreeCopyAll(rdpPointer* pointer)
+{
+	sdl_Pointer_FreeCopy(pointer);
+	free(pointer);
+}

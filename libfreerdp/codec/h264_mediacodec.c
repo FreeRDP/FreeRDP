@@ -226,24 +226,16 @@ static int mediacodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 
 static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize)
 {
-	ssize_t inputBufferId = -1;
-	size_t inputBufferSize, outputBufferSize;
-	uint8_t* inputBuffer;
-	media_status_t status;
-	BYTE** pYUVData;
-	UINT32* iStride;
-	H264_CONTEXT_MEDIACODEC* sys;
-
 	WINPR_ASSERT(h264);
 	WINPR_ASSERT(pSrcData);
 
-	sys = (H264_CONTEXT_MEDIACODEC*)h264->pSystemData;
+	H264_CONTEXT_MEDIACODEC* sys = (H264_CONTEXT_MEDIACODEC*)h264->pSystemData;
 	WINPR_ASSERT(sys);
 
-	pYUVData = h264->pYUVData;
+	BYTE** pYUVData = h264->pYUVData;
 	WINPR_ASSERT(pYUVData);
 
-	iStride = h264->iStride;
+	UINT32* iStride = h264->iStride;
 	WINPR_ASSERT(iStride);
 
 	release_current_outputbuffer(h264);
@@ -267,7 +259,7 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 #if __ANDROID__ >= 26
 		AMediaFormat_setInt32(sys->inputFormat, AMEDIAFORMAT_KEY_WIDTH, sys->width);
 		AMediaFormat_setInt32(sys->inputFormat, AMEDIAFORMAT_KEY_HEIGHT, sys->height);
-		status = AMediaCodec_setParameters(sys->decoder, sys->inputFormat);
+		const media_status_t status = AMediaCodec_setParameters(sys->decoder, sys->inputFormat);
 		if (status != AMEDIA_OK)
 		{
 			WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_setParameters failed: %d", status);
@@ -292,7 +284,7 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 		while (inputBufferCurrnetOffset < SrcSize)
 		{
 			UINT32 numberOfBytesToCopy = SrcSize - inputBufferCurrnetOffset;
-			inputBufferId = AMediaCodec_dequeueInputBuffer(sys->decoder, -1);
+			const ssize_t inputBufferId = AMediaCodec_dequeueInputBuffer(sys->decoder, -1);
 			if (inputBufferId < 0)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_dequeueInputBuffer failed [%d]",
@@ -301,7 +293,9 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 				continue;
 			}
 
-			inputBuffer = AMediaCodec_getInputBuffer(sys->decoder, inputBufferId, &inputBufferSize);
+			size_t inputBufferSize = 0;
+			uint8_t* inputBuffer =
+			    AMediaCodec_getInputBuffer(sys->decoder, inputBufferId, &inputBufferSize);
 			if (inputBuffer == nullptr)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getInputBuffer failed");
@@ -316,11 +310,11 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 				numberOfBytesToCopy = inputBufferSize;
 			}
 
-			memcpy(inputBuffer, pSrcData + inputBufferCurrnetOffset, numberOfBytesToCopy);
+			memcpy(inputBuffer, &pSrcData[inputBufferCurrnetOffset], numberOfBytesToCopy);
 			inputBufferCurrnetOffset += numberOfBytesToCopy;
 
-			status = AMediaCodec_queueInputBuffer(sys->decoder, inputBufferId, 0,
-			                                      numberOfBytesToCopy, 0, 0);
+			const media_status_t status = AMediaCodec_queueInputBuffer(
+			    sys->decoder, inputBufferId, 0, numberOfBytesToCopy, 0, 0);
 			if (status != AMEDIA_OK)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "Error AMediaCodec_queueInputBuffer %d", status);
@@ -330,13 +324,14 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 
 		while (true)
 		{
-			AMediaCodecBufferInfo bufferInfo;
+			AMediaCodecBufferInfo bufferInfo = WINPR_C_ARRAY_INIT;
 			ssize_t outputBufferId = AMediaCodec_dequeueOutputBuffer(sys->decoder, &bufferInfo, -1);
 			if (outputBufferId >= 0)
 			{
 				sys->currentOutputBufferIndex = outputBufferId;
 
-				uint8_t* outputBuffer;
+				size_t outputBufferSize = 0;
+				uint8_t* outputBuffer = nullptr;
 				outputBuffer =
 				    AMediaCodec_getOutputBuffer(sys->decoder, outputBufferId, &outputBufferSize);
 				sys->currentOutputBufferIndex = outputBufferId;
@@ -361,10 +356,8 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 				pYUVData[2] = outputBuffer + iStride[0] * sys->outputHeight +
 				              iStride[1] * ((sys->outputHeight + 1) / 2);
 
-				if (sys->outputWidth < h264->width)
-					goto fail;
-				if (sys->outputHeigth < h264->height)
-					goto fail;
+				h264->YUVWidth = sys->outputWidth;
+				h264->YUVHeigth = sys->outputHeigth;
 				break;
 			}
 			else if (outputBufferId == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED)
