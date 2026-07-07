@@ -35,6 +35,7 @@
 
 #include "pf_channel_smartcard.h"
 #include "pf_channel_rdpdr.h"
+#include "../pf_client.h"
 
 #define TAG PROXY_TAG("channel.scard")
 
@@ -355,7 +356,7 @@ BOOL pf_channel_smartcard_client_new(pClientContext* pc)
 	if (!scard)
 		return FALSE;
 	scard->base.free = pf_channel_scard_client_context_free;
-	scard->callctx = smartcard_call_context_new_with_context(&pc->context);
+	scard->callctx = smartcard_call_context_new_with_context(&pc->cctx.context);
 	if (!scard->callctx)
 		goto fail;
 

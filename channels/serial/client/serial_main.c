@@ -365,11 +365,6 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
  */
 static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 {
-	UINT32 IoControlCode = 0;
-	UINT32 InputBufferLength = 0;
-	BYTE* InputBuffer = nullptr;
-	UINT32 OutputBufferLength = 0;
-	BYTE* OutputBuffer = nullptr;
 	DWORD BytesReturned = 0;
 
 	WINPR_ASSERT(serial);
@@ -378,25 +373,24 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	if (!Stream_CheckAndLogRequiredLengthWLog(serial->log, irp->input, 32))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT32(irp->input, OutputBufferLength); /* OutputBufferLength (4 bytes) */
-	Stream_Read_UINT32(irp->input, InputBufferLength);  /* InputBufferLength (4 bytes) */
-	Stream_Read_UINT32(irp->input, IoControlCode);      /* IoControlCode (4 bytes) */
+	const UINT32 OutputBufferLength =
+	    Stream_Get_UINT32(irp->input); /* OutputBufferLength (4 bytes) */
+	const UINT32 InputBufferLength =
+	    Stream_Get_UINT32(irp->input);                          /* InputBufferLength (4 bytes) */
+	const UINT32 IoControlCode = Stream_Get_UINT32(irp->input); /* IoControlCode (4 bytes) */
 	Stream_Seek(irp->input, 20);                        /* Padding (20 bytes) */
+
+	if (OutputBufferLength == 0)
+		return ERROR_INVALID_DATA;
+	if (InputBufferLength == 0)
+		return ERROR_INVALID_DATA;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(serial->log, irp->input, InputBufferLength))
 		return ERROR_INVALID_DATA;
 
-	OutputBuffer = (BYTE*)calloc(OutputBufferLength, sizeof(BYTE));
-
-	if (OutputBuffer == nullptr)
-	{
-		irp->IoStatus = STATUS_NO_MEMORY;
-		goto error_handle;
-	}
-
-	InputBuffer = (BYTE*)calloc(InputBufferLength, sizeof(BYTE));
-
-	if (InputBuffer == nullptr)
+	BYTE* OutputBuffer = (BYTE*)calloc(OutputBufferLength, sizeof(BYTE));
+	BYTE* InputBuffer = (BYTE*)calloc(InputBufferLength, sizeof(BYTE));
+	if (!OutputBuffer || !InputBuffer)
 	{
 		irp->IoStatus = STATUS_NO_MEMORY;
 		goto error_handle;
@@ -426,10 +420,6 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
 error_handle:
-	/* FIXME: find out whether it's required or not to get
-	 * BytesReturned == OutputBufferLength when
-	 * CommDeviceIoControl returns FALSE */
-	WINPR_ASSERT(OutputBufferLength == BytesReturned);
 	Stream_Write_UINT32(irp->output, BytesReturned); /* OutputBufferLength (4 bytes) */
 
 	if (BytesReturned > 0)

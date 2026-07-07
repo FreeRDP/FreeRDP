@@ -2064,7 +2064,7 @@ static PfChannelResult pf_rdpdr_back_data(proxyData* pdata,
 		return PF_CHANNEL_RESULT_ERROR;
 
 #if defined(WITH_PROXY_EMULATE_SMARTCARD)
-	if (pf_channel_smartcard_client_emulate(pdata->pc))
+	if (pf_channel_smartcard_client_emulate((pClientContext*)pdata->pc))
 		return PF_CHANNEL_RESULT_DROP;
 #endif
 	return PF_CHANNEL_RESULT_DROP;
@@ -2086,7 +2086,7 @@ static PfChannelResult pf_rdpdr_front_data(proxyData* pdata,
 		return PF_CHANNEL_RESULT_ERROR;
 
 #if defined(WITH_PROXY_EMULATE_SMARTCARD)
-	if (pf_channel_smartcard_client_emulate(pdata->pc))
+	if (pf_channel_smartcard_client_emulate((pClientContext*)pdata->pc))
 		return PF_CHANNEL_RESULT_DROP;
 #endif
 	return PF_CHANNEL_RESULT_DROP;
