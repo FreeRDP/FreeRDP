@@ -30,11 +30,12 @@
 [[nodiscard]] bool sdl_Pointer_Set_Process(SdlContext* sdl);
 
 void sdl_Pointer_FreeCopy(rdpPointer* pointer);
+void sdl_PointerFreeCopyAll(rdpPointer* pointer);
 
 /** @brief creates a copy when the \ref rdpPointer was already created in \ref PointerNew.
  *
  *  The copy only contains the relevant data (coordinates, bitmap data) required for the SDL client
  * to display the cursor. Callbacks and xor/and mask data are not copied.
  */
-WINPR_ATTR_MALLOC(sdl_Pointer_FreeCopy, 1)
+WINPR_ATTR_MALLOC(sdl_PointerFreeCopyAll, 1)
 rdpPointer* sdl_Pointer_Copy(const rdpPointer* pointer);

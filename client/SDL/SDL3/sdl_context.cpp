@@ -38,12 +38,6 @@
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
 
-static void sdl_PointerFreeCopyAll(rdpPointer* pointer)
-{
-	sdl_Pointer_FreeCopy(pointer);
-	free(pointer);
-}
-
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _cursor(nullptr, sdl_Pointer_FreeCopy),
       _rdpThreadRunning(false), _primary(nullptr, SDL_DestroySurface), _disp(this), _input(this),
