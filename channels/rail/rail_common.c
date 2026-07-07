@@ -110,6 +110,23 @@ UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
 
 	Stream_Read_UINT16(s, *orderType);   /* orderType (2 bytes) */
 	Stream_Read_UINT16(s, *orderLength); /* orderLength (2 bytes) */
+	if (*orderLength < RAIL_PDU_HEADER_LENGTH)
+	{
+		WLog_ERR(TAG, "invalid order length %" PRIu16 " < RAIL_PDU_HEADER_LENGTH(%u)", *orderLength,
+		         RAIL_PDU_HEADER_LENGTH);
+		return ERROR_INVALID_DATA;
+	}
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, *orderLength - RAIL_PDU_HEADER_LENGTH))
+		return ERROR_INVALID_DATA;
+
+	if (*orderLength > RAIL_PDU_MAX_LENGTH)
+	{
+		WLog_ERR(TAG, "invalid order length %" PRIu16 " < RAIL_PDU_MAX_LENGTH(%llu)", *orderLength,
+		         RAIL_PDU_MAX_LENGTH);
+		return ERROR_INVALID_DATA;
+	}
+
 	return CHANNEL_RC_OK;
 }
 

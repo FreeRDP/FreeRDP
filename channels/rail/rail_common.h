@@ -26,7 +26,10 @@
 
 #include <freerdp/rail.h>
 
-#define RAIL_PDU_HEADER_LENGTH 4
+#define RAIL_PDU_HEADER_LENGTH 4u
+
+/**< Maximum expected length of any rail PDU */
+#define RAIL_PDU_MAX_LENGTH 65535ull
 
 /* Fixed length of PDUs, excluding variable lengths */
 #define RAIL_HANDSHAKE_ORDER_LENGTH 4             /* fixed */

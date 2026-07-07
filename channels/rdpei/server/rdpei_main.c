@@ -578,7 +578,13 @@ static UINT read_pen_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_PEN
 static UINT read_touch_event(RdpeiServerContext* context, wStream* s)
 {
 	UINT16 frameCount = 0;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+
 	RDPINPUT_TOUCH_EVENT* event = &context->priv->touchEvent;
+	WINPR_ASSERT(event);
+
 	RDPINPUT_TOUCH_FRAME* frame = nullptr;
 	UINT error = CHANNEL_RC_OK;
 
@@ -689,7 +695,12 @@ static UINT read_dismiss_hovering_contact(RdpeiServerContext* context, wStream* 
 UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 {
 	DWORD bytesReturned = 0;
+
+	WINPR_ASSERT(context);
+
 	RdpeiServerPrivate* priv = context->priv;
+	WINPR_ASSERT(priv);
+
 	wStream* s = priv->inputStream;
 	UINT error = CHANNEL_RC_OK;
 
@@ -713,17 +724,23 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 
 	if (priv->waitingHeaders)
 	{
-		UINT32 pduLen = 0;
-
 		/* header case */
-		Stream_Read_UINT16(s, priv->currentMsgType);
-		Stream_Read_UINT32(s, pduLen);
+		priv->currentMsgType = Stream_Get_UINT16(s);
+		const UINT32 pduLen = Stream_Get_UINT32(s);
 
 		if (pduLen < RDPINPUT_HEADER_LENGTH)
 		{
 			WLog_ERR(TAG, "invalid pduLength %" PRIu32 "", pduLen);
 			return ERROR_INVALID_DATA;
 		}
+
+		if (pduLen > RDPINPUT_MAX_PDU_LENGTH)
+		{
+			WLog_ERR(TAG, "invalid pduLength %" PRIu32 " > RDPINPUT_MAX_PDU_LENGTH(%llu)", pduLen,
+			         RDPINPUT_MAX_PDU_LENGTH);
+			return ERROR_INVALID_DATA;
+		}
+
 		priv->expectedBytes = pduLen - RDPINPUT_HEADER_LENGTH;
 		priv->waitingHeaders = FALSE;
 		Stream_ResetPosition(s);
