@@ -31,6 +31,10 @@ extern "C"
 
 #define RDPINPUT_HEADER_LENGTH 6
 
+/**< Upper bound for RDPEI PDU. Limits preallocation to roughly the largest possible
+ * PDU that a client can send. */
+#define RDPINPUT_MAX_PDU_LENGTH (UINT16_MAX * 40ull)
+
 /** The command line name of the channel
  *
  *  \since version 3.0.0
