@@ -81,7 +81,7 @@ void freerdp_warn_deprecated(wLog* log, const char* what, const char* replacemen
 	char* str = nullptr;
 	size_t slen = 0;
 	va_list ap;
-	va_start(ap, what);
+	va_start(ap, replacement);
 	winpr_vasprintf(&str, &slen, what, ap);
 	va_end(ap);
 
