@@ -883,7 +883,7 @@ static UINT rail_read_get_application_id_extended_response_order(wStream* s,
 	if (!Stream_Read_UTF16_String(s, id->processImageName, ARRAYSIZE(id->processImageName)))
 		return ERROR_INVALID_DATA;
 
-	if (_wcsnlen(id->applicationID, ARRAYSIZE(id->processImageName)) >=
+	if (_wcsnlen(id->processImageName, ARRAYSIZE(id->processImageName)) >=
 	    ARRAYSIZE(id->processImageName))
 		return ERROR_INVALID_DATA;
 
