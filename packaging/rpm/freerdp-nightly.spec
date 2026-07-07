@@ -142,6 +142,8 @@ cp %{_sourcedir}/source_version freerdp-nightly-%{version}/.source_version
     -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
     -DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON \
     -DWITH_PULSE=ON \
+    -DWITHOUT_WINPR_3x_DEPRECATED=ON \
+    -DWITHOUT_FREERDP_3x_DEPRECATED=ON \
     -DWITH_CHANNELS=ON \
     -DWITH_CUPS=ON \
     -DWITH_PCSC=ON \
