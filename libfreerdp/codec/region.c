@@ -343,6 +343,46 @@ void region16_print(const REGION16* region)
 	}
 }
 
+char* region16_to_string(const REGION16* region)
+{
+	if (!region)
+		return _strdup("REGION16{nullptr}");
+
+	UINT32 nbRects = 0;
+	const RECTANGLE_16* rects = region16_rects(region, &nbRects);
+
+	char* str = nullptr;
+	size_t slen;
+	winpr_asprintf(&str, &slen, "REGION16{nrects=%" PRIu32 " [", nbRects);
+
+	UINT16 currentBandY = 0;
+	for (UINT32 i = 0; i < nbRects; i++)
+	{
+		const RECTANGLE_16* rect = &rects[i];
+
+		if (rect->top != currentBandY)
+		{
+			currentBandY = rect->top;
+			char* tmp = nullptr;
+			winpr_asprintf(&tmp, &slen, "%sband %" PRIu16 ":", str, currentBandY);
+			free(str);
+			str = tmp;
+		}
+
+		char buffer[64] = WINPR_C_ARRAY_INIT;
+		char* tmp = nullptr;
+		winpr_asprintf(&tmp, &slen, "%s, %s", str,
+		               rectangle_to_string(rect, buffer, sizeof(buffer)));
+		free(str);
+		str = tmp;
+	}
+
+	char* tmp = nullptr;
+	winpr_asprintf(&tmp, &slen, "%s]}", str);
+	free(str);
+	return tmp;
+}
+
 static BOOL region16_copy_band_with_union(REGION16_DATA* region, const RECTANGLE_16* src,
                                           const RECTANGLE_16* end, UINT16 newTop, UINT16 newBottom,
                                           const RECTANGLE_16* unionRect, UINT32* dstCounter,

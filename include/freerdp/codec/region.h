@@ -123,6 +123,14 @@ extern "C"
 	 */
 	FREERDP_API void region16_print(const REGION16* region);
 
+	/** @brief return a string representation of a region
+	 *
+	 *  @param region A pointer to the region to stringify.
+	 *  @since version 3.28.1
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_API char* region16_to_string(const REGION16* region);
+
 	/** copies the region to another region
 	 * @param dst destination region
 	 * @param src source region
