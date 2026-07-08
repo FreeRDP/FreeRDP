@@ -920,43 +920,22 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 
 char PathGetSeparatorA(unsigned long dwFlags)
 {
-	char separator = PATH_SEPARATOR_CHR;
-
-	if (!dwFlags)
-		dwFlags = PATH_STYLE_NATIVE;
-
 	if (dwFlags == PATH_STYLE_WINDOWS)
-		separator = PATH_SEPARATOR_CHR;
-	else if (dwFlags == PATH_STYLE_UNIX)
-		separator = PATH_SEPARATOR_CHR;
-	else if (dwFlags == PATH_STYLE_NATIVE)
-		separator = PATH_SEPARATOR_CHR;
+		return PATH_BACKSLASH_CHR;
+	if (dwFlags == PATH_STYLE_UNIX)
+		return PATH_SLASH_CHR;
 
-	return separator;
+	return PATH_SEPARATOR_CHR;
 }
 
 WCHAR PathGetSeparatorW(unsigned long dwFlags)
 {
-	union
-	{
-		WCHAR w;
-		char c[2];
-	} cnv;
-
-	cnv.c[0] = PATH_SEPARATOR_CHR;
-	cnv.c[1] = '\0';
-
-	if (!dwFlags)
-		dwFlags = PATH_STYLE_NATIVE;
-
 	if (dwFlags == PATH_STYLE_WINDOWS)
-		cnv.c[0] = PATH_SEPARATOR_CHR;
-	else if (dwFlags == PATH_STYLE_UNIX)
-		cnv.c[0] = PATH_SEPARATOR_CHR;
-	else if (dwFlags == PATH_STYLE_NATIVE)
-		cnv.c[0] = PATH_SEPARATOR_CHR;
+		return PATH_BACKSLASH_CHR_W;
+	if (dwFlags == PATH_STYLE_UNIX)
+		return PATH_SLASH_CHR_W;
 
-	return cnv.w;
+	return PATH_SEPARATOR_CHR;
 }
 
 /**
