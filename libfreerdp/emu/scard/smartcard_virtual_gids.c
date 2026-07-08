@@ -751,9 +751,9 @@ static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
 		{
 			/* read FID from APDU */
 			UINT16 fid = 0;
-			if (lc > 2)
+			if (lc != 2)
 			{
-				WLog_ERR(TAG, "The LC byte for the file ID is greater than 2");
+				WLog_ERR(TAG, "The LC byte for the file ID must be 2");
 				status = ISO_STATUS_INVALIDLC;
 				break;
 			}
