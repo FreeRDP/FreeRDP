@@ -47,13 +47,11 @@ set(CMAKE_C_EXTENSIONS ON CACHE BOOL "project default")
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
-set(CMAKE_IGNORE_PREFIX_PATH "/opt/local;/usr/local;/opt/homebrew;/Library;~/Library")
+set(CMAKE_IGNORE_PATH "/opt/local;/usr/local;/opt/homebrew;/Library;~/Library")
 
 include(GNUInstallDirs)
 set(CMAKE_INSTALL_LIBDIR Frameworks)
 set(CMAKE_INSTALL_BINDIR MacOS)
-
-set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "project default")
 
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_C_LANGUAGE_STANDARD "gnu2x" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++" CACHE STRING "project default")
@@ -65,8 +63,10 @@ set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES CACHE BOOL "project
 set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.freerdp.ifreerdp" CACHE STRING "project default")
 
-message("sysroot:    ${CMAKE_SYSROOT}")
+message("system:     ${CMAKE_SYSTEM_NAME}")
+message("arch:       ${CMAKE_OSX_ARCHITECTURES}")
 message("target:     ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+message("sysroot:    ${CMAKE_SYSROOT}")
 message("C standard: ${CMAKE_C_STANDARD}")
 
 set(IOS_CLIENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
