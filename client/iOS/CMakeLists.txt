@@ -52,6 +52,7 @@ set(CMAKE_IGNORE_PATH "/opt/local;/usr/local;/opt/homebrew;/Library;~/Library")
 include(GNUInstallDirs)
 set(CMAKE_INSTALL_LIBDIR Frameworks)
 set(CMAKE_INSTALL_BINDIR MacOS)
+set(CMAKE_INSTALL_DATADIR Resources)
 
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_C_LANGUAGE_STANDARD "gnu2x" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++" CACHE STRING "project default")
@@ -60,7 +61,6 @@ set(CMAKE_XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES "NO" CACHE STRING "project defaul
 set(CMAKE_XCODE_ATTRIBUTE_SKIP_INSTALL NO CACHE BOOL "project default")
 set(CMAKE_INSTALL_PATH "/Applications" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES CACHE BOOL "project default")
-set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.freerdp.ifreerdp" CACHE STRING "project default")
 
 message("system:     ${CMAKE_SYSTEM_NAME}")
@@ -273,7 +273,7 @@ source_group(Misc FILES ${IOS_CLIENT_MISC_SRCS} ${IOS_CLIENT_MISC_HDRS})
 source_group(Models FILES ${IOS_CLIENT_MODELS_SRCS} ${IOS_CLIENT_MODELS_HDRS})
 source_group(Views FILES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_VIEWS_SRCS} ${IOS_CLIENT_VIEWS_HDRS})
 source_group(
-  Resources FILES ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_RESOURCES_DIR}/about_page
+  Resources FILES ${IOS_CLIENT_RESOURCES_PNGS}
                   ${IOS_CLIENT_RESOURCES_DIR}/en.lproj
 )
 
@@ -300,8 +300,8 @@ set(EXTRA_LIBS
     ${GAMECONTROLLER_FRAMEWORK}
 )
 
-set(RESOURCES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_RESOURCES_DIR}/about_page
-              ${IOS_CLIENT_RESOURCES_DIR}/en.lproj ${IOS_CLIENT_DIR}/Defaults.plist
+set(RESOURCES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_RESOURCES_PNGS}
+              ${IOS_CLIENT_DIR}/Defaults.plist
 )
 
 add_executable(
@@ -328,33 +328,22 @@ set_target_properties(
   ${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${IOS_CLIENT_DIR}/iFreeRDP.plist FOLDER "Client/iOS"
                              RESOURCE "${RESOURCES}"
 )
+target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
 
 target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS} freerdp3-lib freerdp-client3-lib winpr3-lib)
 
-target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
+install(TARGETS ${PROJECT_NAME}
+	BUNDLE DESTINATION . COMPONENT Runtime
+        RUNTIME DESTINATION  ${PROJECT_NAME}.app/Contents/${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION  ${PROJECT_NAME}.app/Contents/${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        LIBRARY DESTINATION  ${PROJECT_NAME}.app/Contents/${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        FRAMEWORK DESTINATION  ${PROJECT_NAME}.app/Contents/${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+	RESOURCE DESTINATION ${PROJECT_NAME}.app/Contents/${CMAKE_INSTALL_DATADIR} COMPONENT Runtime
+)
 
-set(_ios_embed_frameworks "")
-if(TARGET freerdp3-lib)
-  get_target_property(_ios_freerdp_runtime_location freerdp3-lib IMPORTED_LOCATION)
-  list(APPEND _ios_embed_frameworks "${_ios_freerdp_runtime_location}")
-endif()
-if(TARGET freerdp-client3-lib)
-  get_target_property(_ios_freerdp_client_runtime_location freerdp-client3-lib IMPORTED_LOCATION)
-  list(APPEND _ios_embed_frameworks "${_ios_freerdp_client_runtime_location}")
-endif()
-if(TARGET winpr3-lib)
-  get_target_property(_ios_winpr_runtime_location winpr3-lib IMPORTED_LOCATION)
-  list(APPEND _ios_embed_frameworks "${_ios_winpr_runtime_location}")
-endif()
+set(APPS "\${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/${PROJECT_NAME}")
 
-if(AVCODEC_LIBRARIES MATCHES "\\.framework/")
-  get_filename_component(_ios_ffmpeg_framework "${AVCODEC_LIBRARIES}" DIRECTORY)
-  list(APPEND _ios_embed_frameworks "${_ios_ffmpeg_framework}")
-endif()
-
-if(_ios_embed_frameworks)
-  set_target_properties(
-    ${PROJECT_NAME} PROPERTIES XCODE_EMBED_FRAMEWORKS "${_ios_embed_frameworks}"
-                               XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON
-  )
-endif()
+# Use the specified certificate
+install(CODE "include(BundleUtilities)
+fixup_bundle(\"${APPS}\" \"\" \"${CMAKE_PREFIX_PATH}\")
+")
