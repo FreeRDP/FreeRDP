@@ -132,14 +132,27 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 		goto fail;
 
 	{
-		const size_t base_path_length = _wcsnlen(base_path, MAX_PATH);
-		const size_t length = base_path_length + PathWCharLength + 1;
+		size_t base_path_length = _wcsnlen(base_path, MAX_PATH);
+		if (base_path_length < 1)
+			goto fail;
+
+		const size_t length = base_path_length + PathWCharLength + 2;
 		fullpath = (WCHAR*)calloc(length, sizeof(WCHAR));
 
 		if (!fullpath)
 			goto fail;
 
 		CopyMemory(fullpath, base_path, base_path_length * sizeof(WCHAR));
+
+		const WCHAR last = base_path[base_path_length - 1];
+		const WCHAR sepu = PathGetSeparatorW(PATH_STYLE_UNIX);
+		const WCHAR sepw = PathGetSeparatorW(PATH_STYLE_WINDOWS);
+		if ((last != sepu) && (last != sepw))
+		{
+			if (path && (PathWCharLength > 0) && (path[0] != sepu) && (path[0] != sepw))
+				fullpath[base_path_length++] = sepu;
+		}
+
 		if (path)
 			CopyMemory(&fullpath[base_path_length], path, PathWCharLength * sizeof(WCHAR));
 
