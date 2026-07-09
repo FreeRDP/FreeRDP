@@ -52,6 +52,7 @@ BOOL winpr_str_is_valid_urlN(const char* str, size_t len)
 	const char* errorPos = nullptr;
 	UriUriA uri = WINPR_C_ARRAY_INIT;
 	const int rc = uriParseSingleUriExA(&uri, str, &str[len - 1], &errorPos);
+	uriFreeUriMembersA(&uri);
 	return rc == URI_SUCCESS;
 }
 
@@ -63,6 +64,7 @@ BOOL winpr_str_is_valid_url(const char* str)
 	const char* errorPos = nullptr;
 	UriUriA uri = WINPR_C_ARRAY_INIT;
 	const int rc = uriParseSingleUriA(&uri, str, &errorPos);
+	uriFreeUriMembersA(&uri);
 	return rc == URI_SUCCESS;
 }
 

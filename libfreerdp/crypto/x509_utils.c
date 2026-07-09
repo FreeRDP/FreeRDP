@@ -846,7 +846,7 @@ static int verify_cb(int ok, X509_STORE_CTX* csc)
 
 BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certificate_store_path)
 {
-	const int purposes[3] = { X509_PURPOSE_SSL_SERVER, X509_PURPOSE_SSL_CLIENT, X509_PURPOSE_ANY };
+	const int purposes[] = { X509_PURPOSE_SSL_SERVER };
 	X509_STORE_CTX* csc = nullptr;
 	BOOL status = FALSE;
 	X509_LOOKUP* lookup = nullptr;
