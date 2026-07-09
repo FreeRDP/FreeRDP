@@ -1327,21 +1327,31 @@ int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description)
 static BOOL tls_match_hostname(const char* pattern, const size_t pattern_length,
                                const char* hostname)
 {
-	if (strlen(hostname) == pattern_length)
+	WINPR_ASSERT(hostname);
+	WINPR_ASSERT(pattern || (pattern_length == 0));
+
+	const size_t hlen = strlen(hostname);
+	if (hlen == pattern_length)
 	{
 		if (_strnicmp(hostname, pattern, pattern_length) == 0)
 			return TRUE;
 	}
 
 	if ((pattern_length > 2) && (pattern[0] == '*') && (pattern[1] == '.') &&
-	    ((strlen(hostname)) >= pattern_length))
+	    (hlen >= pattern_length))
 	{
-		const char* check_hostname = &hostname[strlen(hostname) - pattern_length + 1];
-
-		if (_strnicmp(check_hostname, &pattern[1], pattern_length - 1) == 0)
+		/* Ensure wildcard only matches foo.example.com and not foo.bar.example.com */
+		const size_t prefixlen = hlen - pattern_length;
+		for (size_t x = 0; x < prefixlen; x++)
 		{
-			return TRUE;
+			char cur = hostname[x];
+			if (cur == '.')
+				return FALSE;
 		}
+
+		/* Check the hostname ends with the domain */
+		const char* check_hostname = &hostname[prefixlen + 1];
+		return _strnicmp(check_hostname, &pattern[1], pattern_length - 1) == 0;
 	}
 
 	return FALSE;
