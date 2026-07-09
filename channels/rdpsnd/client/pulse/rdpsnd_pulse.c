@@ -24,6 +24,7 @@
 
 #include <errno.h>
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,7 +58,45 @@ typedef struct
 	UINT32 volume;
 	time_t reconnect_delay_seconds;
 	time_t reconnect_time;
+	UINT64 underflow_count;
+	UINT64 overflow_count;
+	time_t last_underflow_log;
+	time_t last_overflow_log;
+	size_t drop_bytes;
 } rdpsndPulsePlugin;
+
+#define RDPSND_PULSE_DEFAULT_LATENCY_MS 100U
+#define RDPSND_PULSE_PREBUFFER_MS 40U
+#define RDPSND_PULSE_TARGET_RECOVERY_LATENCY_US 400000ULL
+#define RDPSND_PULSE_MAX_UNDERRUN_DROP_US 0ULL
+#define RDPSND_PULSE_MAX_RECOVERY_DROP_US 320000ULL
+
+static UINT32 rdpsnd_pulse_effective_latency_ms(const rdpsndPulsePlugin* pulse)
+{
+	WINPR_ASSERT(pulse);
+
+	if (pulse->latency > RDPSND_PULSE_DEFAULT_LATENCY_MS)
+		return pulse->latency;
+
+	return RDPSND_PULSE_DEFAULT_LATENCY_MS;
+}
+
+static size_t rdpsnd_pulse_usec_to_bytes_limited(pa_usec_t usec, const pa_sample_spec* sample_spec)
+{
+	return pa_usec_to_bytes(usec, sample_spec);
+}
+
+static BOOL rdpsnd_pulse_log_throttled(time_t* lastLog)
+{
+	WINPR_ASSERT(lastLog);
+
+	const time_t now = time(nullptr);
+	if (*lastLog == now)
+		return TRUE;
+
+	*lastLog = now;
+	return FALSE;
+}
 
 static BOOL rdpsnd_check_pulse(rdpsndPulsePlugin* pulse, BOOL haveStream)
 {
@@ -278,6 +317,70 @@ static void rdpsnd_pulse_stream_request_callback(pa_stream* stream, WINPR_ATTR_U
 	pa_threaded_mainloop_signal(pulse->mainloop, 0);
 }
 
+static void rdpsnd_pulse_stream_underflow_callback(pa_stream* stream, void* userdata)
+{
+	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
+	pa_usec_t latency = 0;
+	int negative = 0;
+
+	if (!pulse || !stream)
+		return;
+
+	pulse->underflow_count++;
+	if (pa_stream_get_latency(stream, &latency, &negative) != 0)
+		latency = 0;
+
+	pa_usec_t dropUsec = 0;
+	if (!negative && (latency > RDPSND_PULSE_TARGET_RECOVERY_LATENCY_US))
+		dropUsec = latency - RDPSND_PULSE_TARGET_RECOVERY_LATENCY_US;
+	if (dropUsec > RDPSND_PULSE_MAX_UNDERRUN_DROP_US)
+		dropUsec = RDPSND_PULSE_MAX_UNDERRUN_DROP_US;
+
+	if (dropUsec > 0)
+	{
+		const size_t drop = rdpsnd_pulse_usec_to_bytes_limited(dropUsec,
+		                                                       &pulse->sample_spec);
+		const size_t maxDrop =
+		    rdpsnd_pulse_usec_to_bytes_limited(RDPSND_PULSE_MAX_RECOVERY_DROP_US,
+		                                       &pulse->sample_spec);
+		if (pulse->drop_bytes < maxDrop)
+		{
+			const size_t remaining = maxDrop - pulse->drop_bytes;
+			pulse->drop_bytes += (drop < remaining) ? drop : remaining;
+		}
+	}
+
+	if (rdpsnd_pulse_log_throttled(&pulse->last_underflow_log))
+		return;
+
+	WLog_WARN(TAG,
+	          "Pulse audio underflow count=%" PRIu64 " index=%" PRId64
+	          " latency=%" PRIu64 "us negative=%d recoveryDrop=%" PRIuz
+	          " recoveryDropUsec=%" PRIu64,
+	          pulse->underflow_count, pa_stream_get_underflow_index(stream), (UINT64)latency,
+	          negative, pulse->drop_bytes, (UINT64)dropUsec);
+}
+
+static void rdpsnd_pulse_stream_overflow_callback(pa_stream* stream, void* userdata)
+{
+	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
+	pa_usec_t latency = 0;
+	int negative = 0;
+
+	if (!pulse || !stream)
+		return;
+
+	pulse->overflow_count++;
+	if (rdpsnd_pulse_log_throttled(&pulse->last_overflow_log))
+		return;
+
+	if (pa_stream_get_latency(stream, &latency, &negative) != 0)
+		latency = 0;
+
+	WLog_WARN(TAG, "Pulse audio overflow count=%" PRIu64 " latency=%" PRIu64 "us negative=%d",
+	          pulse->overflow_count, (UINT64)latency, negative);
+}
+
 static void rdpsnd_pulse_close(rdpsndDevicePlugin* device)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
@@ -290,6 +393,10 @@ static void rdpsnd_pulse_close(rdpsndDevicePlugin* device)
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	if (pulse->stream)
 	{
+		pulse->drop_bytes = 0;
+		pa_stream_set_write_callback(pulse->stream, nullptr, nullptr);
+		pa_stream_set_underflow_callback(pulse->stream, nullptr, nullptr);
+		pa_stream_set_overflow_callback(pulse->stream, nullptr, nullptr);
 		rdpsnd_pulse_wait_for_operation(
 		    pulse, pa_stream_drain(pulse->stream, rdpsnd_pulse_stream_success_callback, pulse));
 		pa_stream_disconnect(pulse->stream);
@@ -364,6 +471,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 	pa_buffer_attr buffer_attr = WINPR_C_ARRAY_INIT;
 	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX] = WINPR_C_ARRAY_INIT;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
+	UINT32 effectiveLatency = 0;
 	WINPR_ASSERT(pulse);
 
 	if (pa_sample_spec_valid(&pulse->sample_spec) == 0)
@@ -387,6 +495,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 		return FALSE;
 	}
 
+	pulse->drop_bytes = 0;
 	pulse->stream = pa_stream_new(pulse->context, pulse->stream_name, &pulse->sample_spec, nullptr);
 
 	if (!pulse->stream)
@@ -398,14 +507,19 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 	/* register essential callbacks */
 	pa_stream_set_state_callback(pulse->stream, rdpsnd_pulse_stream_state_callback, pulse);
 	pa_stream_set_write_callback(pulse->stream, rdpsnd_pulse_stream_request_callback, pulse);
+	pa_stream_set_underflow_callback(pulse->stream, rdpsnd_pulse_stream_underflow_callback, pulse);
+	pa_stream_set_overflow_callback(pulse->stream, rdpsnd_pulse_stream_overflow_callback, pulse);
 	flags = PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE;
 
-	if (pulse->latency > 0)
+	effectiveLatency = rdpsnd_pulse_effective_latency_ms(pulse);
+	if (effectiveLatency > 0)
 	{
-		const size_t val = pa_usec_to_bytes(1000ULL * pulse->latency, &pulse->sample_spec);
+		const size_t val = pa_usec_to_bytes(1000ULL * effectiveLatency, &pulse->sample_spec);
+		const size_t prebuf =
+		    pa_usec_to_bytes(1000ULL * RDPSND_PULSE_PREBUFFER_MS, &pulse->sample_spec);
 		buffer_attr.maxlength = UINT32_MAX;
 		buffer_attr.tlength = (val > UINT32_MAX) ? UINT32_MAX : (UINT32)val;
-		buffer_attr.prebuf = UINT32_MAX;
+		buffer_attr.prebuf = (prebuf > buffer_attr.tlength) ? buffer_attr.tlength : (UINT32)prebuf;
 		buffer_attr.minreq = UINT32_MAX;
 		buffer_attr.fragsize = UINT32_MAX;
 		flags |= PA_STREAM_ADJUST_LATENCY;
@@ -414,7 +528,7 @@ static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 	// NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
 	pa_stream_flags_t eflags = (pa_stream_flags_t)flags;
 	if (pa_stream_connect_playback(pulse->stream, pulse->device_name,
-	                               pulse->latency > 0 ? &buffer_attr : nullptr, eflags, nullptr,
+	                               effectiveLatency > 0 ? &buffer_attr : nullptr, eflags, nullptr,
 	                               nullptr) < 0)
 	{
 		WLog_ERR(TAG, "error connecting playback stream");
@@ -624,6 +738,16 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 		WLog_DBG(TAG, "reconnecting playback stream");
 		rdpsnd_pulse_open_stream(device);
 		return 0;
+	}
+
+	if (pulse->drop_bytes > 0)
+	{
+		const size_t dropped = (size < pulse->drop_bytes) ? size : pulse->drop_bytes;
+		data += dropped;
+		size -= dropped;
+		pulse->drop_bytes -= dropped;
+		WLog_DBG(TAG, "dropped %" PRIuz " bytes after Pulse audio underflow, remaining=%" PRIuz,
+		         dropped, pulse->drop_bytes);
 	}
 
 	while (size > 0)

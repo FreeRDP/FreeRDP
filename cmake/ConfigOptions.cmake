@@ -147,6 +147,10 @@ cmake_dependent_option(WITH_DSP_FFMPEG "Use FFMPEG for audio encoding/decoding" 
 cmake_dependent_option(WITH_VIDEO_FFMPEG "Use FFMPEG for video encoding/decoding" ON "WITH_FFMPEG" OFF)
 cmake_dependent_option(WITH_VAAPI "[experimental] Use FFMPEG VAAPI" OFF "WITH_VIDEO_FFMPEG" OFF)
 cmake_dependent_option(
+  WITH_LIBVA_AV1_DECODE "[experimental] Use FFmpeg VAAPI hardware AV1 decoding with libaom fallback" ON
+  "WITH_VIDEO_FFMPEG;WITH_VAAPI;WITH_GFX_AV1" OFF
+)
+cmake_dependent_option(
   WITH_VAAPI_H264_ENCODING "[experimental] Use FFMPEG VAAPI hardware H264 encoding" ON "WITH_VIDEO_FFMPEG" OFF
 )
 cmake_dependent_option(
@@ -157,6 +161,11 @@ if(WITH_VAAPI_H264_ENCODING)
   warn_experimental("VAAPI H264 encoding" "-DWITH_VAAPI_H264_ENCODING=OFF")
 
   add_definitions("-DWITH_VAAPI_H264_ENCODING")
+endif()
+
+if(WITH_LIBVA_AV1_DECODE)
+  include(WarnExperimental)
+  warn_experimental("LibVA AV1 decoding" "-DWITH_LIBVA_AV1_DECODE=OFF")
 endif()
 
 option(WITH_CAIRO "Use CAIRO image library for screen resizing" OFF)

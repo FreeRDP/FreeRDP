@@ -326,6 +326,7 @@ struct xf_context
 	bool exposeRequested;
 	GDI_RGN exposedArea;
 	Window exposedWindow;
+	pcRdpgfxSurfaceCommand gfxSurfaceCommand;
 };
 
 BOOL xf_create_window(xfContext* xfc);
