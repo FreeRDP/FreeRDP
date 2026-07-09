@@ -46,8 +46,8 @@ static size_t g_ReaderNameWLen = 0;
 
 static char* card_id_and_name_a(const UUID* CardIdentifier, LPCSTR LookupName)
 {
-	WINPR_ASSERT(CardIdentifier);
-	WINPR_ASSERT(LookupName);
+	if (!CardIdentifier || !LookupName)
+		return nullptr;
 
 	size_t len = strlen(LookupName) + 34;
 	char* id = malloc(len);
@@ -2269,7 +2269,8 @@ LONG WINAPI Emulate_SCardReadCacheA(SmartcardEmulationContext* smartcard, SCARDC
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
 		char* id = card_id_and_name_a(CardIdentifier, LookupName);
-		data = HashTable_GetItemValue(value->cache, id);
+		if (id)
+			data = HashTable_GetItemValue(value->cache, id);
 		free(id);
 
 		if (!data)

@@ -2951,8 +2951,8 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardDlgExtendedError(void)
 WINPR_ATTR_NODISCARD
 static char* card_id_and_name_a(const UUID* CardIdentifier, LPCSTR LookupName)
 {
-	WINPR_ASSERT(CardIdentifier);
-	WINPR_ASSERT(LookupName);
+	if (!CardIdentifier || !LookupName)
+		return nullptr;
 
 	size_t len = strlen(LookupName) + 34;
 	char* id = malloc(len);
@@ -2991,9 +2991,10 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardReadCacheA(SCARDCONTEXT hConte
 		return SCARD_E_INVALID_HANDLE;
 
 	char* id = card_id_and_name_a(CardIdentifier, LookupName);
-
-	data = HashTable_GetItemValue(ctx->cache, id);
+	if (id)
+		data = HashTable_GetItemValue(ctx->cache, id);
 	free(id);
+
 	if (!data)
 	{
 		*DataLen = 0;
