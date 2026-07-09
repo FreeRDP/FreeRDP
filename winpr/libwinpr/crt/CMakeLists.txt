@@ -25,6 +25,14 @@ set(CRT_FILES
     assert.c
 )
 
+include(CheckSymbolExists)
+check_symbol_exists(regcomp regex.h WINPR_HAVE_REGCOMP)
+check_symbol_exists(regexec regex.h WINPR_HAVE_REGEXEC)
+check_symbol_exists(regfree regex.h WINPR_HAVE_REGFREE)
+if(WINPR_HAVE_REGCOMP AND WINPR_HAVE_REGEXEC AND WINPR_HAVE_REGFREE)
+  winpr_definition_add(WINPR_HAVE_REGCOMP)
+endif()
+
 if(WITH_UNICODE_BUILTIN)
   list(APPEND CRT_FILES unicode_builtin.c)
 else()

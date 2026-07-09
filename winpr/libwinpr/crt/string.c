@@ -34,12 +34,38 @@
 #include <uriparser/Uri.h>
 #endif
 
+#if defined(WINPR_HAVE_REGCOMP)
+#include <regex.h>
+#endif
+
 /* String Manipulation (CRT): http://msdn.microsoft.com/en-us/library/f0151s4x.aspx */
 
 #include "../log.h"
 #define TAG WINPR_TAG("crt")
 
 #if defined(WITH_URIPARSER)
+BOOL winpr_str_is_valid_urlN(const char* str, size_t len)
+{
+	if (!str || (len == 0))
+		return FALSE;
+
+	const char* errorPos = nullptr;
+	UriUriA uri = WINPR_C_ARRAY_INIT;
+	const int rc = uriParseSingleUriExA(&uri, str, &str[len - 1], &errorPos);
+	return rc == URI_SUCCESS;
+}
+
+BOOL winpr_str_is_valid_url(const char* str)
+{
+	if (!str)
+		return FALSE;
+
+	const char* errorPos = nullptr;
+	UriUriA uri = WINPR_C_ARRAY_INIT;
+	const int rc = uriParseSingleUriA(&uri, str, &errorPos);
+	return rc == URI_SUCCESS;
+}
+
 char* winpr_str_url_decode(const char* str, size_t len)
 {
 	char* dst = strndup(str, len);
@@ -152,6 +178,59 @@ char* winpr_str_url_encode(const char* str, size_t len)
 	}
 	return dst;
 }
+
+BOOL winpr_str_is_valid_urlN(const char* str, size_t len)
+{
+	if (!str || (len == 0))
+		return FALSE;
+
+	char* url = strndup(str, len);
+	if (!url)
+		return FALSE;
+
+	const BOOL rc = winpr_str_is_valid_url(url);
+	free(url);
+	return rc;
+}
+
+#if defined(_WIN32)
+#include <shlwapi.h>
+
+BOOL winpr_str_is_valid_url(const char* str)
+{
+	if (!str)
+		return FALSE;
+	return PathIsURLA(str);
+}
+
+#elif defined(WINPR_HAVE_REGCOMP)
+BOOL winpr_str_is_valid_url(const char* str)
+{
+	if (!str)
+		return FALSE;
+	regex_t regex = WINPR_C_ARRAY_INIT;
+	const char pattern[] = "^([a-z]+://)?([a-zA-Z0-9.-]+)(:[0-9]+)?(/[a-zA-Z0-9./?=&%-]*)?$";
+
+	int ret = regcomp(&regex, pattern, REG_EXTENDED);
+	if (ret)
+	{
+		printf("Could not compile regex\n");
+		return FALSE;
+	}
+
+	ret = regexec(&regex, str, 0, nullptr, 0);
+	regfree(&regex);
+	return ret == 0;
+}
+
+#else
+BOOL winpr_str_is_valid_url(WINPR_ATTR_UNUSED const char* str)
+{
+	WLog_WARN(TAG, "URL validation not supported by your build, not performing check. Build with "
+	               "-DWITH_URIPARSER=ON to fix.");
+	return TRUE;
+}
+#endif
 #endif
 
 BOOL winpr_str_append(const char* what, char* buffer, size_t size, const char* separator)
@@ -865,4 +944,40 @@ char* winpr_strnstr(char* haystack, const char* needle, size_t hlen)
 	}
 	return nullptr;
 #endif
+}
+
+BOOL winpr_str_has_newlines(const char* str)
+{
+	if (!str)
+		return FALSE;
+	do
+	{
+		char c = *str++;
+		switch (c)
+		{
+			case '\r':
+			case '\n':
+			case 0x0b:       /* VT vertical tab */
+			case 0x0c:       /* FF form feed */
+			case (char)0x85: /* NEL next line */
+				return TRUE;
+			case 0x20:
+			{
+				switch (*str)
+				{
+					case 0x28: /* LS line separator */
+					case 0x29: /* PS paragraph separator */
+						return TRUE;
+					default:
+						break;
+				}
+			}
+			break;
+
+			case '\0':
+				return FALSE;
+			default:
+				break;
+		}
+	} while (1);
 }
