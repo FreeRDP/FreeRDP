@@ -278,6 +278,8 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 
 					id = data[index++];
 					size = data[index++];
+					if (size > length - index)
+						goto fail;
 					glyph_cache_fragment_put(glyph_cache, id, size, data);
 					break;
 
