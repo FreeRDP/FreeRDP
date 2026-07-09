@@ -685,6 +685,9 @@ static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAdd
 			return FALSE;
 		}
 
+		if (!winpr_str_is_valid_url(addr))
+			return FALSE;
+
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 		                                        (*pAddressIdx)++, addr))
 			return FALSE;
@@ -722,6 +725,10 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 					WLog_ERR(TAG, "Exceeded TargetNetAddresses, parsing failed");
 					return FALSE;
 				}
+
+				if (!utils_is_valid_ip(publicIp))
+					return FALSE;
+
 				if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 				                                        (*pAddressIdx)++, publicIp))
 					return FALSE;
@@ -740,6 +747,9 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 					WLog_ERR(TAG, "Exceeded TargetNetAddresses, parsing failed");
 					return FALSE;
 				}
+				if (!utils_is_valid_ip(privateIp))
+					return FALSE;
+
 				if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 				                                        (*pAddressIdx)++, privateIp))
 					return FALSE;

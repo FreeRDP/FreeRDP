@@ -597,3 +597,22 @@ const char* guid2str(const GUID* guid, char* buffer, size_t len)
 	RpcStringFreeA(&strguid);
 	return buffer;
 }
+
+static BOOL isValidIPv4(const char* ipAddress)
+{
+	struct sockaddr_in sa = WINPR_C_ARRAY_INIT;
+	int result = inet_pton(AF_INET, ipAddress, &(sa.sin_addr));
+	return result != 0;
+}
+
+static BOOL isValidIPv6(const char* ipAddress)
+{
+	struct sockaddr_in6 sa = WINPR_C_ARRAY_INIT;
+	int result = inet_pton(AF_INET6, ipAddress, &(sa.sin6_addr));
+	return result != 0;
+}
+
+BOOL utils_is_valid_ip(const char* ipAddress)
+{
+	return isValidIPv4(ipAddress) || isValidIPv6(ipAddress);
+}
