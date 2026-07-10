@@ -202,6 +202,9 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 
 	if (media_type->ExtraData)
 	{
+		if (media_type->ExtraDataSize < 12)
+			return FALSE;
+
 		/* Add a padding to avoid invalid memory read in some codec */
 		mdecoder->codec_context->extradata_size =
 		    WINPR_ASSERTING_INT_CAST(int, media_type->ExtraDataSize + 8);
@@ -222,6 +225,9 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 			if ((mdecoder->codec_context->extradata_size < 0) ||
 			    ((size_t)mdecoder->codec_context->extradata_size < required))
 				return FALSE;
+			if (media_type->ExtraDataSize < 21)
+				return FALSE;
+
 			*p++ = 1;                         /* Reserved? */
 			*p++ = media_type->ExtraData[8];  /* Profile */
 			*p++ = 0;                         /* Profile */
@@ -234,6 +240,11 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 			if ((mdecoder->codec_context->extradata_size < 0) ||
 			    ((size_t)mdecoder->codec_context->extradata_size < required))
 				return FALSE;
+
+			size_t offset = 12ull + size + 2ull;
+			if (media_type->ExtraDataSize < offset)
+				return FALSE;
+
 			memcpy(p, s, size + 2);
 			s += size + 2;
 			p += size + 2;
@@ -242,15 +253,26 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 			    ((size_t)mdecoder->codec_context->extradata_size < required))
 				return FALSE;
 			*p++ = 1; /* #pps */
+
+			offset += 5;
+			if (media_type->ExtraDataSize < offset)
+				return FALSE;
 			size = ((UINT32)(*s)) * 256 + ((UINT32)(*(s + 1)));
 			required += size + 2;
 			if ((mdecoder->codec_context->extradata_size < 0) ||
 			    ((size_t)mdecoder->codec_context->extradata_size < required))
 				return FALSE;
+
+			offset += size + 2ull;
+			if (media_type->ExtraDataSize < offset)
+				return FALSE;
 			memcpy(p, s, size + 2);
 		}
 		else
 		{
+			if (media_type->ExtraDataSize > mdecoder->codec_context->extradata_size)
+				return FALSE;
+
 			memcpy(mdecoder->codec_context->extradata, media_type->ExtraData,
 			       media_type->ExtraDataSize);
 			if ((mdecoder->codec_context->extradata_size < 0) ||

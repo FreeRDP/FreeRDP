@@ -163,6 +163,79 @@ static BOOL test_winpr_strnstr(void)
 	return TRUE;
 }
 
+static BOOL test_valid_url(void)
+{
+	struct test_t
+	{
+		char* string;
+		size_t len;
+		BOOL isUrl;
+	};
+
+	static const struct test_t tests[] = { { "foo.bar.blabla", 15, TRUE },
+		                                   { "somehostname", 12, TRUE },
+		                                   { "somehostname:1234", 17, TRUE },
+		                                   { "tsv://somehostname", 18, TRUE },
+		                                   { "tsv://somehostname/path/foo/gaga", 32, TRUE },
+		                                   { "tsv://somehostname:1234", 23, TRUE },
+		                                   { "tsv://somehostname:1234/path/foo", 33, TRUE },
+		                                   { "lala\rgaga\n", 12, FALSE },
+		                                   { "192.168.0.1", 11, TRUE },
+		                                   //{ "192.168.0.1:1234", 16, FALSE },
+		                                   //{ "192.168.0.1:1234/foo/", 21, FALSE },
+		                                   { "192.168.0.1/bar/foo/", 20, TRUE },
+		                                   { "[::1]", 5, FALSE },
+		                                   { "[::1]:1234", 8, FALSE },
+		                                   { "[2001:db8:3333:4444:5555:6666:7777:8888]", 40,
+		                                     FALSE },
+		                                   { "[2001:db8::1]", 13, FALSE } };
+	BOOL rc = TRUE;
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const struct test_t* cur = &tests[x];
+
+		const BOOL rc1 = winpr_str_is_valid_url(cur->string);
+		const BOOL rc2 = winpr_str_is_valid_urlN(cur->string, cur->len);
+
+#if defined(WINPR_HAVE_REGCOMP) || defined(WITH_URIPARSER)
+		if (rc1 != rc2)
+			rc = FALSE;
+		if (rc1 != cur->isUrl)
+			rc = FALSE;
+#else
+		fprintf(stderr, "[%s] TODO: !defined(WINPR_HAVE_REGCOMP) && !defined(WITH_URIPARSER)\n",
+		        __func__);
+#endif
+	}
+
+	return rc;
+}
+
+static BOOL test_newline(void)
+{
+	struct test_t
+	{
+		char* string;
+		size_t len;
+		BOOL hasNewlines;
+	};
+
+	const struct test_t tests[] = { { "foo.bar.blabla", 15, FALSE },
+		                            { "somehostname", 12, FALSE },
+		                            { "lala\rgaga\n", 13, TRUE } };
+
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const struct test_t* cur = &tests[x];
+
+		const BOOL rc1 = winpr_str_has_newlines(cur->string);
+		if (rc1 != cur->hasNewlines)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 int TestString(int argc, char* argv[])
 {
 	const WCHAR* p = nullptr;
@@ -172,6 +245,12 @@ int TestString(int argc, char* argv[])
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
+	if (!test_valid_url())
+		return -1;
+
+	if (!test_newline())
+		return -1;
 
 	if (!test_winpr_asprintf())
 		return -1;

@@ -129,6 +129,7 @@ BOOL websocket_context_write_wstream(websocket_context* context, BIO* bio, wStre
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(sPacket);
 
+	Stream_SealLength(sPacket);
 	const size_t len = Stream_Length(sPacket);
 	uint32_t maskingKey = 0;
 	wStream* sWS = websocket_context_packet_new(len, opcode, &maskingKey);
