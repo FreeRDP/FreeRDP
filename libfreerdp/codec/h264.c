@@ -154,7 +154,15 @@ static int log_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSi
 		WLog_Print(h264->log, WLOG_WARN, "H264 decompress failed with %d", status);
 		return status;
 	}
-	if ((h264->YUVHeight > h264->height) || (h264->YUVWidth > h264->width))
+
+	/* Do not check for width.
+	 * The width might be aligned to multiples of 16.
+	 * Some decoders add the alignment only if width %16 != 0 others unconditionally
+	 *
+	 * We already checked the areas that will be copied against context dimensions
+	 * and after this check we also check against the decoded H264 surface dimensions.
+	 */
+	if (h264->YUVHeight > h264->height)
 	{
 		WLog_Print(h264->log, WLOG_WARN,
 		           "H264 decompress: frame %" PRIu32 "x%" PRIu32 " exceeds buffer size %" PRIu32
