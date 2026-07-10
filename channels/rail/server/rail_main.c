@@ -1556,6 +1556,11 @@ UINT rail_server_handle_messages(RailServerContext* context)
 	RailServerPrivate* priv = context->priv;
 	wStream* s = priv->input_stream;
 
+	/* The input stream is reused between PDUs and its length still holds the
+	 * previous PDU's size, so restore it to the full buffer before reading. */
+	if (!Stream_SetLength(s, Stream_Capacity(s)))
+		return ERROR_INTERNAL_ERROR;
+
 	/* Read header */
 	if (!Stream_EnsureRemainingCapacity(s, RAIL_PDU_HEADER_LENGTH))
 	{
@@ -1597,6 +1602,18 @@ UINT rail_server_handle_messages(RailServerContext* context)
 		WLog_ERR(TAG, "channel connection closed");
 		return ERROR_INTERNAL_ERROR;
 	}
+
+	if (bytesReturned != (DWORD)(orderLength - RAIL_PDU_HEADER_LENGTH))
+	{
+		WLog_ERR(TAG, "received %" PRIu32 " body bytes, expected %" PRIu16, bytesReturned,
+		         (UINT16)(orderLength - RAIL_PDU_HEADER_LENGTH));
+		return ERROR_INVALID_DATA;
+	}
+
+	/* Bound the reused stream to the bytes actually received so the order
+	 * handlers cannot read past this PDU into stale buffer contents. */
+	if (!Stream_SetLength(s, Stream_GetPosition(s) + bytesReturned))
+		return ERROR_INTERNAL_ERROR;
 
 	WLog_DBG(TAG, "Received %s PDU, length:%" PRIu16 "",
 	         rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)), orderLength);
