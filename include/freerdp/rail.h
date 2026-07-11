@@ -641,7 +641,7 @@ WINPR_ATTR_NODISCARD
 FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
 	                                        RAIL_UNICODE_STRING* unicode_string);
 
-/** @Brief Duplicate a \ref RAIL_UNICODE_STRING as a \b UTF-8 string. Empty strings will return an
+/** @brief Duplicate a \ref RAIL_UNICODE_STRING as a \b UTF-8 string. Empty strings will return an
  * allocated empty \\0
  *
  *  @param unicode_string A pointer to the \ref RAIL_UNICODE_STRING to clone
