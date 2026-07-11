@@ -516,7 +516,7 @@ static UINT rail_recv_exec_result_order(railPlugin* rail, wStream* s)
 	}
 
 fail:
-	free(execResult.exeOrFile.string);
+	rail_unicode_string_free(&execResult.exeOrFile);
 	return error;
 }
 
@@ -549,7 +549,7 @@ static UINT rail_recv_server_sysparam_order(railPlugin* rail, wStream* s)
 			WLog_ERR(TAG, "context.ServerSystemParam failed with error %" PRIu32 "", error);
 	}
 fail:
-	free(sysparam.highContrast.colorScheme.string);
+	rail_unicode_string_free(&sysparam.highContrast.colorScheme);
 
 	return error;
 }

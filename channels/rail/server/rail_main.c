@@ -154,10 +154,7 @@ static UINT rail_write_exec_result_order(wStream* s, const RAIL_EXEC_RESULT_ORDE
 	Stream_Write_UINT16(s, execResult->execResult);       /* ExecResult (2 bytes) */
 	Stream_Write_UINT32(s, execResult->rawResult);        /* RawResult (4 bytes) */
 	Stream_Write_UINT16(s, 0);                            /* Padding (2 bytes) */
-	Stream_Write_UINT16(s, execResult->exeOrFile.length); /* ExeOrFileLength (2 bytes) */
-	Stream_Write(s, execResult->exeOrFile.string,
-	             execResult->exeOrFile.length); /* ExeOrFile (variable) */
-	return ERROR_SUCCESS;
+	return rail_write_unicode_string(s, &execResult->exeOrFile);
 }
 
 static void rail_write_z_order_sync_order(wStream* s, const RAIL_ZORDER_SYNC* zOrderSync)
@@ -942,13 +939,13 @@ static UINT rail_recv_client_sysparam_order(RailServerContext* context, wStream*
 	UINT error = rail_read_sysparam_order(s, &sysparam, extendedSpiSupported);
 	if (error != CHANNEL_RC_OK)
 	{
-		free(sysparam.highContrast.colorScheme.string);
+		rail_unicode_string_free(&sysparam.highContrast.colorScheme);
 		WLog_ERR(TAG, "rail_read_sysparam_order failed with error %" PRIu32 "!", error);
 		return error;
 	}
 
 	IFCALLRET(context->ClientSysparam, error, context, &sysparam);
-	free(sysparam.highContrast.colorScheme.string);
+	rail_unicode_string_free(&sysparam.highContrast.colorScheme);
 
 	if (error)
 		WLog_ERR(TAG, "context.ClientSysparam failed with error %" PRIu32 "", error);

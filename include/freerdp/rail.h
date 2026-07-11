@@ -338,7 +338,7 @@ typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 typedef struct
 {
 	UINT16 length;
-	BYTE* string;
+	WCHAR* string;
 } RAIL_UNICODE_STRING;
 
 typedef struct
@@ -606,6 +606,30 @@ typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 WINPR_ATTR_NODISCARD
 FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
 
+/** @brief write a \ref FAIL_UNICODE_STRING to a stream
+ *
+ *  @param s The stream to write to
+ *  @param unicode_string A pointer to a string to write
+ *
+ *  @return CHANNEL_RC_OK for success, an error code otherwise
+ *  @since version 3.29.0
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_API UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_string);
+
+/** @brief write a \ref FAIL_UNICODE_STRING (excluding the length) to a stream
+ *
+ *  @param s The stream to write to
+ *  @param unicode_string A pointer to a string to write
+ *
+ *  @return CHANNEL_RC_OK for success, an error code otherwise
+ *  @since version 3.29.0
+ */
+
+WINPR_ATTR_NODISCARD
+FREERDP_API UINT rail_write_unicode_string_value(wStream* s,
+	                                             const RAIL_UNICODE_STRING* unicode_string);
+
 /** @brief free a \ref RAIL_UNICODE_STRING
  *
  *  @param unicode_string A pointer to the string to free
@@ -616,6 +640,16 @@ FREERDP_API void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string);
 WINPR_ATTR_NODISCARD
 FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
 	                                        RAIL_UNICODE_STRING* unicode_string);
+
+/** @Brief Duplicate a \ref RAIL_UNICODE_STRING as a \b UTF-8 string. Empty strings will return an
+ * allocated empty \\0
+ *
+ *  @param unicode_string A pointer to the \ref RAIL_UNICODE_STRING to clone
+ *  @return An allocated UTF-8 encoded string, or \b nullptr in case of any failure.
+ *  @since version 3.29.0
+ */
+WINPR_ATTR_MALLOC(free, 1)
+FREERDP_API char* rail_string_to_utf8_string(const RAIL_UNICODE_STRING* unicode_string);
 
 /** @brief convert rails handshake flags to a string representation
  *

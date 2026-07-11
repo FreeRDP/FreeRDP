@@ -1232,7 +1232,9 @@ update_message_DrawGdiPlusCacheEnd(rdpContext* context,
 static RAIL_UNICODE_STRING rail_unicode_string_clone(const RAIL_UNICODE_STRING* str)
 {
 	WINPR_ASSERT(str);
-	RAIL_UNICODE_STRING clone = { .string = (BYTE*)strndup((const char*)str->string, str->length),
+	WINPR_ASSERT(((str->length == 0) && (str->string == nullptr)) ||
+	             (str->length == _wcsnlen(str->string, str->length)));
+	RAIL_UNICODE_STRING clone = { .string = wcsndup(str->string, str->length),
 		                          .length = str->length };
 	return clone;
 }

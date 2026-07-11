@@ -130,9 +130,9 @@ static UINT rail_client_execute(RailClientContext* context, const RAIL_EXEC_ORDE
 	else
 		error = rail_send_client_exec_order(rail, flags, &ruExeOrFile, &ruWorkingDir, &ruArguments);
 
-	free(ruExeOrFile.string);
-	free(ruWorkingDir.string);
-	free(ruArguments.string);
+	rail_unicode_string_free(&ruExeOrFile);
+	rail_unicode_string_free(&ruWorkingDir);
+	rail_unicode_string_free(&ruArguments);
 	return error;
 }
 
