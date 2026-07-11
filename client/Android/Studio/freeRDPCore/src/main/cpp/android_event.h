@@ -60,6 +60,7 @@ FREERDP_LOCAL BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event);
 
 FREERDP_LOCAL HANDLE android_get_handle(freerdp* inst);
 FREERDP_LOCAL BOOL android_check_handle(freerdp* inst);
+FREERDP_LOCAL BOOL android_check_reconnect_handle(freerdp* inst);
 
 FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode);
 FREERDP_LOCAL ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 flags, UINT16 key);

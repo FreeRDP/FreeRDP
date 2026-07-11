@@ -35,6 +35,7 @@
 #include <freerdp/codec/h264.h>
 #include <freerdp/codec/video.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/client.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/constants.h>
@@ -223,27 +224,34 @@ static BOOL android_pre_connect(freerdp* instance)
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
 
+	androidContext* ctx = (androidContext*)instance->context;
 	rdpSettings* settings = instance->context->settings;
 
 	if (!settings)
 		return FALSE;
 
-	int rc = PubSub_SubscribeChannelConnected(instance->context->pubSub,
-	                                          android_OnChannelConnectedEventHandler);
-
-	if (rc != CHANNEL_RC_OK)
+	if (!ctx->channel_connected_subscribed)
 	{
-		WLog_ERR(TAG, "Could not subscribe to connect event handler [%08X]", rc);
-		return FALSE;
+		const int rc = PubSub_SubscribeChannelConnected(instance->context->pubSub,
+		                                                android_OnChannelConnectedEventHandler);
+		if (rc != CHANNEL_RC_OK)
+		{
+			WLog_ERR(TAG, "Could not subscribe to connect event handler [%08X]", rc);
+			return FALSE;
+		}
+		ctx->channel_connected_subscribed = TRUE;
 	}
 
-	rc = PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-	                                         android_OnChannelDisconnectedEventHandler);
-
-	if (rc != CHANNEL_RC_OK)
+	if (!ctx->channel_disconnected_subscribed)
 	{
-		WLog_ERR(TAG, "Could not subscribe to disconnect event handler [%08X]", rc);
-		return FALSE;
+		const int rc = PubSub_SubscribeChannelDisconnected(
+		    instance->context->pubSub, android_OnChannelDisconnectedEventHandler);
+		if (rc != CHANNEL_RC_OK)
+		{
+			WLog_ERR(TAG, "Could not subscribe to disconnect event handler [%08X]", rc);
+			return FALSE;
+		}
+		ctx->channel_disconnected_subscribed = TRUE;
 	}
 
 	freerdp_callback("OnPreConnect", "(J)V", (jlong)instance);
@@ -587,6 +595,18 @@ static DWORD android_verify_changed_certificate_ex(freerdp* instance, const char
 	return res;
 }
 
+static BOOL android_reconnect_events(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	if (freerdp_shall_disconnect_context(instance->context))
+		return FALSE;
+	if (!android_check_reconnect_handle(instance))
+		return FALSE;
+	return !freerdp_shall_disconnect_context(instance->context);
+}
+
 static int android_freerdp_run(freerdp* instance)
 {
 	DWORD count;
@@ -625,10 +645,8 @@ static int android_freerdp_run(freerdp* instance)
 
 		if (!freerdp_check_event_handles(context))
 		{
-			/* TODO: Auto reconnect
-			if (xf_auto_reconnect(instance))
-			    continue;
-			    */
+			if (client_auto_reconnect_ex(instance, android_reconnect_events))
+				continue;
 			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			status = GetLastError();
 			break;
@@ -716,6 +734,13 @@ static void android_client_free(freerdp* instance, rdpContext* context)
 {
 	if (!context)
 		return;
+	androidContext* ctx = (androidContext*)context;
+	if (ctx->channel_connected_subscribed)
+		PubSub_UnsubscribeChannelConnected(context->pubSub,
+		                                  android_OnChannelConnectedEventHandler);
+	if (ctx->channel_disconnected_subscribed)
+		PubSub_UnsubscribeChannelDisconnected(context->pubSub,
+		                                     android_OnChannelDisconnectedEventHandler);
 
 	android_event_queue_uninit(instance);
 }

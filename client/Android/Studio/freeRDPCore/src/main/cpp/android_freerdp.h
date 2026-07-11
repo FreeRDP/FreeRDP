@@ -31,6 +31,8 @@ typedef struct
 	HANDLE thread;
 
 	BOOL is_connected;
+	BOOL channel_connected_subscribed;
+	BOOL channel_disconnected_subscribed;
 
 	BOOL clipboardSync;
 	wClipboard* clipboard;

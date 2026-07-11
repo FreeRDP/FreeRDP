@@ -195,6 +195,36 @@ BOOL android_check_handle(freerdp* inst)
 	return TRUE;
 }
 
+BOOL android_check_reconnect_handle(freerdp* inst)
+{
+	androidContext* aCtx;
+
+	if (!inst || !inst->context)
+		return FALSE;
+
+	aCtx = (androidContext*)inst->context;
+	if (!aCtx->event_queue || !aCtx->event_queue->isSet)
+		return FALSE;
+
+	if (WaitForSingleObject(aCtx->event_queue->isSet, 0) != WAIT_OBJECT_0)
+		return TRUE;
+	if (!ResetEvent(aCtx->event_queue->isSet))
+		return FALSE;
+
+	/* Input queued before reconnect belongs to the failed transport. Do not replay it after the
+	 * session is reclaimed, but keep an explicit disconnect responsive during retry delays. */
+	while (android_peek_event(aCtx->event_queue))
+	{
+		ANDROID_EVENT* event = android_pop_event(aCtx->event_queue);
+		const BOOL disconnect = event && event->type == EVENT_TYPE_DISCONNECT;
+		android_event_free(event);
+		if (disconnect)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode)
 {
 	ANDROID_EVENT_KEY* event = (ANDROID_EVENT_KEY*)calloc(1, sizeof(ANDROID_EVENT_KEY));
