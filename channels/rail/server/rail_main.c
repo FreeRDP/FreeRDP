@@ -23,6 +23,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/utils/channel_pdu_tracker.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -1474,11 +1475,34 @@ static BOOL rail_server_stop(RailServerContext* context)
 	return TRUE;
 }
 
+static void rail_server_context_priv_free(RailServerPrivate* priv)
+{
+	if (!priv)
+		return;
+
+	ChannelPduTracker_free(priv->channelPduTracker);
+	free(priv);
+}
+
+WINPR_ATTR_MALLOC(rail_server_context_priv_free, 1)
+static RailServerPrivate* rail_server_context_priv_new(HANDLE vc)
+{
+	RailServerPrivate* priv = calloc(1, sizeof(RailServerPrivate));
+	if (!priv)
+		return nullptr;
+
+	priv->channelPduTracker = ChannelPduTracker_new(vc);
+	if (!priv->channelPduTracker)
+		goto fail;
+	return priv;
+fail:
+	rail_server_context_priv_free(priv);
+	return nullptr;
+}
+
 RailServerContext* rail_server_context_new(HANDLE vcm)
 {
-	RailServerContext* context = nullptr;
-	RailServerPrivate* priv = nullptr;
-	context = (RailServerContext*)calloc(1, sizeof(RailServerContext));
+	RailServerContext* context = (RailServerContext*)calloc(1, sizeof(RailServerContext));
 
 	if (!context)
 	{
@@ -1502,20 +1526,11 @@ RailServerContext* rail_server_context_new(HANDLE vcm)
 	context->ServerCloak = rail_send_server_cloak;
 	context->ServerPowerDisplayRequest = rail_send_server_power_display_request;
 	context->ServerGetAppidRespEx = rail_send_server_get_appid_resp_ex;
-	context->priv = priv = (RailServerPrivate*)calloc(1, sizeof(RailServerPrivate));
+	context->priv = rail_server_context_priv_new(vcm);
 
-	if (!priv)
+	if (!context->priv)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		goto fail;
-	}
-
-	/* Create shared input stream */
-	priv->input_stream = Stream_New(nullptr, 4096);
-
-	if (!priv->input_stream)
-	{
-		WLog_ERR(TAG, "Stream_New failed!");
 		goto fail;
 	}
 
@@ -1527,10 +1542,9 @@ fail:
 
 void rail_server_context_free(RailServerContext* context)
 {
-	if (context->priv)
-		Stream_Free(context->priv->input_stream, TRUE);
-
-	free(context->priv);
+	if (!context)
+		return;
+	rail_server_context_priv_free(context->priv);
 	free(context);
 }
 
@@ -1543,60 +1557,36 @@ void rail_server_set_handshake_ex_flags(RailServerContext* context, DWORD flags)
 	priv->channelFlags = flags;
 }
 
-UINT rail_server_handle_messages(RailServerContext* context)
+static UINT rail_server_read_pdu_header(wStream* s, UINT16* pOrderType, UINT16* pOrderLength)
 {
-	char buffer[128] = WINPR_C_ARRAY_INIT;
-	UINT status = CHANNEL_RC_OK;
-	DWORD bytesReturned = 0;
-	UINT16 orderType = 0;
-	UINT16 orderLength = 0;
-	RailServerPrivate* priv = context->priv;
-	wStream* s = priv->input_stream;
-
-	/* Read header */
-	if (!Stream_EnsureRemainingCapacity(s, RAIL_PDU_HEADER_LENGTH))
-	{
-		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed, RAIL_PDU_HEADER_LENGTH");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	if (!WTSVirtualChannelRead(priv->rail_channel, 0, Stream_Pointer(s), RAIL_PDU_HEADER_LENGTH,
-	                           &bytesReturned))
-	{
-		if (GetLastError() == ERROR_NO_DATA)
-			return ERROR_NO_DATA;
-
-		WLog_ERR(TAG, "channel connection closed");
-		return ERROR_INTERNAL_ERROR;
-	}
+	WINPR_ASSERT(pOrderType);
+	WINPR_ASSERT(pOrderLength);
 
 	/* Parse header */
-	if ((status = rail_read_pdu_header(s, &orderType, &orderLength)) != CHANNEL_RC_OK)
+	const UINT status = rail_read_pdu_header(s, pOrderType, pOrderLength);
+	if (status != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "rail_read_pdu_header failed with error %" PRIu32 "!", status);
 		return status;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(s, orderLength - RAIL_PDU_HEADER_LENGTH))
+	if (!Stream_EnsureRemainingCapacity(s, *pOrderLength - RAIL_PDU_HEADER_LENGTH))
 	{
 		WLog_ERR(TAG,
 		         "Stream_EnsureRemainingCapacity failed, orderLength - RAIL_PDU_HEADER_LENGTH");
 		return CHANNEL_RC_NO_MEMORY;
 	}
+	return CHANNEL_RC_OK;
+}
 
-	/* Read body */
-	if (!WTSVirtualChannelRead(priv->rail_channel, 0, Stream_Pointer(s),
-	                           orderLength - RAIL_PDU_HEADER_LENGTH, &bytesReturned))
+static UINT rail_server_handle_message_completed(RailServerContext* context, wStream* s,
+                                                 UINT16 orderType, UINT16 orderLength)
+{
 	{
-		if (GetLastError() == ERROR_NO_DATA)
-			return ERROR_NO_DATA;
-
-		WLog_ERR(TAG, "channel connection closed");
-		return ERROR_INTERNAL_ERROR;
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_DBG(TAG, "Received %s PDU, length:%" PRIu16 "",
+		         rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)), orderLength);
 	}
-
-	WLog_DBG(TAG, "Received %s PDU, length:%" PRIu16 "",
-	         rail_get_order_type_string_full(orderType, buffer, sizeof(buffer)), orderLength);
 
 	switch (orderType)
 	{
@@ -1655,4 +1645,29 @@ UINT rail_server_handle_messages(RailServerContext* context)
 			WLog_ERR(TAG, "Unknown RAIL PDU order received.");
 			return ERROR_INVALID_DATA;
 	}
+}
+
+UINT rail_server_handle_messages(RailServerContext* context)
+{
+	WINPR_ASSERT(context);
+
+	RailServerPrivate* priv = context->priv;
+	WINPR_ASSERT(priv);
+
+	BOOL ok = FALSE;
+	wStream* s = ChannelPduTracker_poll(priv->channelPduTracker, &ok);
+
+	if (!ok)
+		return ERROR_INVALID_DATA;
+
+	if (!s)
+		return CHANNEL_RC_OK;
+
+	UINT16 orderType = 0;
+	UINT16 orderLength = 0;
+	UINT rc = rail_server_read_pdu_header(s, &orderType, &orderLength);
+	if (rc == CHANNEL_RC_OK)
+		rc = rail_server_handle_message_completed(context, s, orderType, orderLength);
+	Stream_Release(s);
+	return rc;
 }

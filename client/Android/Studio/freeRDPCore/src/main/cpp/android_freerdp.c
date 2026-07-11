@@ -430,16 +430,13 @@ static BOOL android_register_pointer(rdpGraphics* graphics)
 
 static BOOL android_post_connect(freerdp* instance)
 {
-	rdpSettings* settings;
-	rdpUpdate* update;
-
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
 
-	update = instance->context->update;
+	rdpUpdate* update = instance->context->update;
 	WINPR_ASSERT(update);
 
-	settings = instance->context->settings;
+	rdpSettings* settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode) &&
@@ -473,6 +470,17 @@ static void android_post_disconnect(freerdp* instance)
 {
 	freerdp_callback("OnDisconnecting", "(J)V", (jlong)instance);
 	gdi_free(instance);
+}
+
+static void android_post_final_disconnect(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
+	                                   android_OnChannelConnectedEventHandler);
+	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
+	                                      android_OnChannelDisconnectedEventHandler);
 }
 
 static BOOL android_authenticate_int(freerdp* instance, char** username, char** password,
@@ -589,23 +597,25 @@ static DWORD android_verify_changed_certificate_ex(freerdp* instance, const char
 
 static int android_freerdp_run(freerdp* instance)
 {
-	DWORD count;
+	WINPR_ASSERT(instance);
+
 	DWORD status = WAIT_FAILED;
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS];
 	HANDLE inputEvent = nullptr;
-	const rdpSettings* settings = instance->context->settings;
 	rdpContext* context = instance->context;
+	WINPR_ASSERT(context);
+
+	const rdpSettings* settings = context->settings;
 
 	inputEvent = android_get_handle(instance);
 
-	while (!freerdp_shall_disconnect_context(instance->context))
+	while (!freerdp_shall_disconnect_context(context))
 	{
-		DWORD tmp;
-		count = 0;
+		DWORD count = 0;
 
 		handles[count++] = inputEvent;
 
-		tmp = freerdp_get_event_handles(context, &handles[count], 64 - count);
+		DWORD tmp = freerdp_get_event_handles(context, &handles[count], 64 - count);
 
 		if (tmp == 0)
 		{
@@ -625,13 +635,12 @@ static int android_freerdp_run(freerdp* instance)
 
 		if (!freerdp_check_event_handles(context))
 		{
-			/* TODO: Auto reconnect
-			if (xf_auto_reconnect(instance))
-			    continue;
-			    */
-			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
-			status = GetLastError();
-			break;
+			if (!client_auto_reconnect(instance))
+			{
+				WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
+				status = GetLastError();
+				break;
+			}
 		}
 
 		if (freerdp_shall_disconnect_context(instance->context))
@@ -705,6 +714,7 @@ static BOOL android_client_new(freerdp* instance, rdpContext* context)
 	instance->PreConnect = android_pre_connect;
 	instance->PostConnect = android_post_connect;
 	instance->PostDisconnect = android_post_disconnect;
+	instance->PostFinalDisconnect = android_post_final_disconnect;
 	instance->AuthenticateEx = android_authenticate_ex;
 	instance->VerifyCertificateEx = android_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = android_verify_changed_certificate_ex;
