@@ -45,13 +45,13 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, new_len))
 		return FALSE;
 
-	if (new_len == 0)
+	if ((new_len == 0) || ((new_len % sizeof(WCHAR)) != 0))
 	{
 		rail_unicode_string_free(unicode_string);
 		return TRUE;
 	}
 
-	BYTE* new_str = (BYTE*)realloc(unicode_string->string, new_len);
+	WCHAR* new_str = realloc(unicode_string->string, new_len);
 	if (!new_str)
 	{
 		rail_unicode_string_free(unicode_string);
@@ -61,7 +61,48 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 	unicode_string->string = new_str;
 	unicode_string->length = new_len;
 	Stream_Read(s, unicode_string->string, unicode_string->length);
+	if (_wcsnlen(unicode_string->string, unicode_string->length) != unicode_string->length)
+	{
+		WLog_ERR(TAG, "Failed to read UNICODE_STRING, data contains \\0 characters!");
+		return FALSE;
+	}
 	return TRUE;
+}
+
+UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unicode_string)
+{
+	if (!s || !unicode_string)
+		return ERROR_INVALID_PARAMETER;
+
+	const size_t length = unicode_string->length;
+	WINPR_ASSERT((length % sizeof(WCHAR)) == 0);
+	if (length > 0)
+	{
+		if (!Stream_EnsureRemainingCapacity(s, length))
+		{
+			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+			return CHANNEL_RC_NO_MEMORY;
+		}
+
+		Stream_Write(s, unicode_string->string, length); /* string */
+	}
+
+	return CHANNEL_RC_OK;
+}
+
+UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_string)
+{
+	if (!s || !unicode_string)
+		return ERROR_INVALID_PARAMETER;
+
+	if (!Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length))
+	{
+		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	Stream_Write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+	return rail_write_unicode_string_value(s, unicode_string);
 }
 
 void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
@@ -74,35 +115,38 @@ void rail_unicode_string_free(RAIL_UNICODE_STRING* unicode_string)
 
 BOOL utf8_string_to_rail_string(const char* string, RAIL_UNICODE_STRING* unicode_string)
 {
-	WCHAR* buffer = nullptr;
-	size_t len = 0;
-	free(unicode_string->string);
-	unicode_string->string = nullptr;
-	unicode_string->length = 0;
+	WINPR_ASSERT(unicode_string);
+
+	rail_unicode_string_free(unicode_string);
 
 	if (!string || strlen(string) < 1)
 		return TRUE;
 
-	buffer = ConvertUtf8ToWCharAlloc(string, &len);
+	size_t len = 0;
+	WCHAR* buffer = ConvertUtf8ToWCharAlloc(string, &len);
 
-	if (!buffer || (len * sizeof(WCHAR) > UINT16_MAX))
+	const size_t wlen = len * sizeof(WCHAR);
+	if (!buffer || (wlen > UINT16_MAX))
 	{
 		free(buffer);
 		return FALSE;
 	}
 
-	unicode_string->string = (BYTE*)buffer;
-	unicode_string->length = (UINT16)len * sizeof(WCHAR);
+	unicode_string->string = buffer;
+	unicode_string->length = WINPR_ASSERTING_INT_CAST(UINT16, len * sizeof(WCHAR));
 	return TRUE;
 }
 
-static char* rail_string_to_utf8_string(const RAIL_UNICODE_STRING* unicode_string)
+char* rail_string_to_utf8_string(const RAIL_UNICODE_STRING* unicode_string)
 {
 	WINPR_ASSERT(unicode_string);
+	WINPR_ASSERT((unicode_string->length % sizeof(WCHAR)) == 0);
+	WINPR_ASSERT(((unicode_string->length > 0) && (unicode_string->string)) ||
+	             (unicode_string->length == 0));
 
 	size_t outLen = 0;
 	size_t inLen = unicode_string->length / sizeof(WCHAR);
-	return ConvertWCharNToUtf8Alloc((const WCHAR*)unicode_string->string, inLen, &outLen);
+	return ConvertWCharNToUtf8Alloc(unicode_string->string, inLen, &outLen);
 }
 
 /* See [MS-RDPERP] 2.2.1.2.3 Icon Info (TS_ICON_INFO) */
@@ -887,9 +931,10 @@ static BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s,
 
 static void update_notify_icon_state_order_free(NOTIFY_ICON_STATE_ORDER* notify)
 {
-	free(notify->toolTip.string);
-	free(notify->infoTip.text.string);
-	free(notify->infoTip.title.string);
+	WINPR_ASSERT(notify);
+	rail_unicode_string_free(&notify->toolTip);
+	rail_unicode_string_free(&notify->infoTip.text);
+	rail_unicode_string_free(&notify->infoTip.title);
 	update_free_window_icon_info(&notify->icon);
 	memset(notify, 0, sizeof(NOTIFY_ICON_STATE_ORDER));
 }
@@ -897,6 +942,7 @@ static void update_notify_icon_state_order_free(NOTIFY_ICON_STATE_ORDER* notify)
 static BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
                                                       NOTIFY_ICON_STATE_ORDER* notify_icon_state)
 {
+	WINPR_ASSERT(orderInfo);
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))

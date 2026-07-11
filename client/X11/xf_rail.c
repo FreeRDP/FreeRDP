@@ -437,26 +437,10 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 		/* Ensure window always gets a window title */
 		if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 		{
-			union
+			char* title = rail_string_to_utf8_string(&windowState->titleInfo);
+			if (!title)
 			{
-				WCHAR* wc;
-				BYTE* b;
-			} cnv;
-			char* title = nullptr;
-
-			cnv.b = windowState->titleInfo.string;
-			if (windowState->titleInfo.length == 0)
-			{
-				if (!(title = _strdup("")))
-				{
-					WLog_ERR(TAG, "failed to duplicate empty window title string");
-					/* error handled below */
-				}
-			}
-			else if (!(title = ConvertWCharNToUtf8Alloc(
-			               cnv.wc, windowState->titleInfo.length / sizeof(WCHAR), nullptr)))
-			{
-				WLog_ERR(TAG, "failed to convert window title");
+				WLog_ERR(TAG, "failed to duplicate window title string");
 				/* error handled below */
 			}
 
@@ -534,26 +518,10 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
-		char* title = nullptr;
-		union
+		char* title = rail_string_to_utf8_string(&windowState->titleInfo);
+		if (!title)
 		{
-			WCHAR* wc;
-			BYTE* b;
-		} cnv;
-
-		cnv.b = windowState->titleInfo.string;
-		if (windowState->titleInfo.length == 0)
-		{
-			if (!(title = _strdup("")))
-			{
-				WLog_ERR(TAG, "failed to duplicate empty window title string");
-				goto fail;
-			}
-		}
-		else if (!(title = ConvertWCharNToUtf8Alloc(
-		               cnv.wc, windowState->titleInfo.length / sizeof(WCHAR), nullptr)))
-		{
-			WLog_ERR(TAG, "failed to convert window title");
+			WLog_ERR(TAG, "failed to duplicate window title string");
 			goto fail;
 		}
 
