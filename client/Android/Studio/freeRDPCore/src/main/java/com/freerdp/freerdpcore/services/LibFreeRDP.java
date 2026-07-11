@@ -155,6 +155,8 @@ public class LibFreeRDP
 
 	private static native boolean freerdp_disconnect(long inst);
 
+	private static native void freerdp_set_foreground(long inst, boolean foreground);
+
 	private static native boolean freerdp_update_graphics(long inst, Bitmap bitmap, int x, int y,
 	                                                      int width, int height);
 
@@ -236,6 +238,11 @@ public class LibFreeRDP
 	public static boolean cancelConnection(long inst)
 	{
 		return freerdp_disconnect(inst);
+	}
+
+	public static void setForeground(long inst, boolean foreground)
+	{
+		freerdp_set_foreground(inst, foreground);
 	}
 
 	private static String addFlag(String name, boolean enabled)

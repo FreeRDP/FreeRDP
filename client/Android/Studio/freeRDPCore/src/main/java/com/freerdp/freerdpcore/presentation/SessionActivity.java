@@ -329,6 +329,8 @@ public class SessionActivity extends AppCompatActivity
 	{
 		super.onStart();
 		Log.v(TAG, "Session.onStart");
+		if (session != null)
+			LibFreeRDP.setForeground(session.getInstance(), true);
 	}
 
 	@Override protected void onRestart()
@@ -358,6 +360,8 @@ public class SessionActivity extends AppCompatActivity
 	{
 		super.onStop();
 		Log.v(TAG, "Session.onStop");
+		if (session != null)
+			LibFreeRDP.setForeground(session.getInstance(), false);
 	}
 
 	@Override protected void onDestroy()
