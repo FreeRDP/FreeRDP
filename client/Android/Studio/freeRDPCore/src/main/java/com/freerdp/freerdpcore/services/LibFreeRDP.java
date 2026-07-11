@@ -474,6 +474,11 @@ public class LibFreeRDP
 			args.add("/dvc:rdpecam");
 		}
 
+		if (ApplicationSettingsActivity.getAutoReconnect(context))
+		{
+			args.add("/auto-reconnect");
+		}
+
 		args.add("/kbd:unicode:on");
 		args.add("/cert:ignore");
 		args.add("/log-level:" + debug.getDebugLevel());
@@ -771,6 +776,16 @@ public class LibFreeRDP
 			uiEventListener.OnPointerSetNull();
 	}
 
+	private static void OnReconnecting(long inst)
+	{
+		SessionState s = GlobalApp.getSession(inst);
+		if (s == null)
+			return;
+		UIEventListener uiEventListener = s.getUIEventListener();
+		if (uiEventListener != null)
+			uiEventListener.OnReconnecting();
+	}
+
 	private static void OnPointerSetDefault(long inst)
 	{
 		SessionState s = GlobalApp.getSession(inst);
@@ -863,6 +878,8 @@ public class LibFreeRDP
 	public interface UIEventListener
 	{
 		void OnSettingsChanged(int width, int height, int bpp);
+
+		void OnReconnecting();
 
 		boolean OnAuthenticate(StringBuilder username, StringBuilder domain,
 		                       StringBuilder password);

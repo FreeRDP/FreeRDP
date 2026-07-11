@@ -37,6 +37,7 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client.h>
 #include <freerdp/constants.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/primitives.h>
@@ -61,6 +62,8 @@
 
 /* Defines the JNI version supported by this library. */
 #define FREERDP_JNI_VERSION FREERDP_VERSION_FULL
+
+#define ANDROID_RECONNECT_MAX_DELAY_MS 3000
 
 static jclass gJavaActivityClass;
 static jmethodID gOnPointerSetMethod;
@@ -603,6 +606,24 @@ static DWORD android_verify_changed_certificate_ex(freerdp* instance, const char
 	return res;
 }
 
+WINPR_ATTR_NODISCARD
+static SSIZE_T android_retry_dialog(freerdp* instance, const char* what, size_t current,
+                                    void* userarg)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(what);
+
+	SSIZE_T delay = client_common_retry_dialog(instance, what, current, userarg);
+	if ((delay < 0) || (strcmp(what, "connection") != 0))
+		return delay;
+
+	if (delay > ANDROID_RECONNECT_MAX_DELAY_MS)
+		delay = ANDROID_RECONNECT_MAX_DELAY_MS;
+
+	freerdp_callback("OnReconnecting", "(J)V", (jlong)instance);
+	return delay;
+}
+
 static int android_freerdp_run(freerdp* instance)
 {
 	WINPR_ASSERT(instance);
@@ -721,6 +742,7 @@ static BOOL android_client_new(freerdp* instance, rdpContext* context)
 
 	instance->PreConnect = android_pre_connect;
 	instance->PostConnect = android_post_connect;
+	instance->RetryDialog = android_retry_dialog;
 	instance->PostDisconnect = android_post_disconnect;
 	instance->PostFinalDisconnect = android_post_final_disconnect;
 	instance->AuthenticateEx = android_authenticate_ex;

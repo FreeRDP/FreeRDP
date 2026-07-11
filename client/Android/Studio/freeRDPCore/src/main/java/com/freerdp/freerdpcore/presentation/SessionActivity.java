@@ -775,6 +775,13 @@ public class SessionActivity extends AppCompatActivity
 		uiHandler.sendEmptyMessage(REFRESH_SESSIONVIEW);
 	}
 
+	@Override public void OnReconnecting()
+	{
+		railManager.onSessionEnd();
+		uiHandler.sendMessage(Message.obtain(null, DISPLAY_TOAST,
+		                                     getResources().getText(R.string.info_reconnecting)));
+	}
+
 	@Override public void OnGraphicsResize(int width, int height, int bpp)
 	{
 		// replace bitmap
