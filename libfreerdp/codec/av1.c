@@ -331,7 +331,12 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 	aom_codec_iter_t iter = nullptr;
 	while ((img = aom_codec_get_frame(&av1->ctx, &iter)) != nullptr)
 	{
-		const prim_size_t roi = { .width = nDstWidth, .height = nDstHeight };
+		/* The decoded frame may be smaller than the destination surface, so
+		 * bound the converted region to it. Otherwise the colour conversion
+		 * reads past the decoded image planes. */
+		const UINT32 nWidth = (img->d_w < nDstWidth) ? img->d_w : nDstWidth;
+		const UINT32 nHeight = (img->d_h < nDstHeight) ? img->d_h : nDstHeight;
+		const prim_size_t roi = { .width = nWidth, .height = nHeight };
 
 #if defined(WITH_LIBYUV)
 		int rec = -1;
@@ -339,14 +344,14 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 		switch (img->fmt)
 		{
 			case AOM_IMG_FMT_I420:
-				rec = J420ToARGB(img->planes[0], img->stride[0], img->planes[1], img->stride[1],
-				                 img->planes[2], img->stride[2], pDstData, nDstStep, nDstWidth,
-				                 nDstHeight);
+				rec =
+				    J420ToARGB(img->planes[0], img->stride[0], img->planes[1], img->stride[1],
+				               img->planes[2], img->stride[2], pDstData, nDstStep, nWidth, nHeight);
 				break;
 			case AOM_IMG_FMT_I444:
-				rec = J444ToARGB(img->planes[0], img->stride[0], img->planes[1], img->stride[1],
-				                 img->planes[2], img->stride[2], pDstData, nDstStep, nDstWidth,
-				                 nDstHeight);
+				rec =
+				    J444ToARGB(img->planes[0], img->stride[0], img->planes[1], img->stride[1],
+				               img->planes[2], img->stride[2], pDstData, nDstStep, nWidth, nHeight);
 				break;
 			default:
 				WLog_Print(av1->log, WLOG_ERROR, "img->fmt %d not supported", img->fmt);
