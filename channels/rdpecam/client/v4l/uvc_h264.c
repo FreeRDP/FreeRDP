@@ -23,6 +23,8 @@
  * limitations under the License.
  */
 
+#include <winpr/wtypes.h>
+
 #include <sys/ioctl.h>
 
 #include <linux/uvcvideo.h>
@@ -347,26 +349,41 @@ static uint8_t get_guid_unit_id_from_config_descriptor(struct libusb_config_desc
 			if (interface->bInterfaceClass != LIBUSB_CLASS_VIDEO ||
 			    interface->bInterfaceSubClass != USB_VIDEO_CONTROL)
 				continue;
+			if (interface->extra_length < 0)
+				continue;
 
-			const uint8_t* ptr = interface->extra;
-			while (ptr < interface->extra + interface->extra_length)
+			size_t offset = 0;
+			const size_t extraLen = WINPR_ASSERTING_INT_CAST(size_t, interface->extra_length);
+			while (offset < extraLen)
 			{
-				const xu_descriptor* desc = (const xu_descriptor*)ptr;
-				if (desc->bDescriptorType == USB_VIDEO_CONTROL_INTERFACE &&
-				    desc->bDescriptorSubType == USB_VIDEO_CONTROL_XU_TYPE &&
-				    memcmp(desc->guidExtensionCode, guid, 16) == 0)
-				{
-					int8_t unit_id = desc->bUnitID;
+				const size_t remaining = extraLen - offset;
+				if (remaining < 3)
+					break;
+				const xu_descriptor* desc = (const xu_descriptor*)&interface->extra[offset];
 
-					WLog_DBG(TAG,
-					         "For camera %04" PRIx16 ":%04" PRIx16
-					         " found UVCX H264 UnitID %" PRId8,
-					         ddesc->idVendor, ddesc->idProduct, unit_id);
-					if (unit_id < 0)
-						return 0;
-					return WINPR_CXX_COMPAT_CAST(uint8_t, unit_id);
+				WINPR_STATIC_ASSERT(sizeof(xu_descriptor) == 16 + 4);
+				const size_t bLength = WINPR_ASSERTING_INT_CAST(size_t, desc->bLength);
+				if ((desc->bLength <= 0) || (bLength > remaining))
+					break;
+
+				if ((desc->bDescriptorType == USB_VIDEO_CONTROL_INTERFACE) &&
+				    (desc->bDescriptorSubType == USB_VIDEO_CONTROL_XU_TYPE) &&
+				    (bLength >= sizeof(xu_descriptor)))
+				{
+					if (memcmp(desc->guidExtensionCode, guid, 16) == 0)
+					{
+						int8_t unit_id = desc->bUnitID;
+
+						WLog_DBG(TAG,
+						         "For camera %04" PRIx16 ":%04" PRIx16
+						         " found UVCX H264 UnitID %" PRId8,
+						         ddesc->idVendor, ddesc->idProduct, unit_id);
+						if (unit_id < 0)
+							return 0;
+						return WINPR_CXX_COMPAT_CAST(uint8_t, unit_id);
+					}
 				}
-				ptr += desc->bLength;
+				offset += bLength;
 			}
 		}
 	}
