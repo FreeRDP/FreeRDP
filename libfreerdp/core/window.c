@@ -61,7 +61,9 @@ BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 	unicode_string->string = new_str;
 	unicode_string->length = new_len;
 	Stream_Read(s, unicode_string->string, unicode_string->length);
-	if (_wcsnlen(unicode_string->string, unicode_string->length) != unicode_string->length)
+
+	const size_t charlen = unicode_string->length / sizeof(WCHAR);
+	if (_wcsnlen(unicode_string->string, charlen) != charlen)
 	{
 		WLog_ERR(TAG, "Failed to read UNICODE_STRING, data contains \\0 characters!");
 		return FALSE;
