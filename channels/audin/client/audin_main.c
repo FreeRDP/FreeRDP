@@ -487,7 +487,6 @@ static UINT audin_process_open(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* call
 	Stream_Read_UINT32(s, initialFormat);
 	WLog_Print(audin->log, WLOG_DEBUG, "FramesPerPacket=%" PRIu32 " initialFormat=%" PRIu32 "",
 	           FramesPerPacket, initialFormat);
-	audin->FramesPerPacket = FramesPerPacket;
 
 	if (initialFormat >= callback->formats_count)
 	{
@@ -496,6 +495,15 @@ static UINT audin_process_open(AUDIN_PLUGIN* audin, AUDIN_CHANNEL_CALLBACK* call
 		return ERROR_INVALID_DATA;
 	}
 
+	/* The RDP protocol field allows UINT32_MAX, but most backend API use INT32 as input parameter
+	 * or do some math with it, so ensure that the value does not exceed reasonable limits */
+	if (FramesPerPacket >= INT32_MAX)
+	{
+		WLog_Print(audin->log, WLOG_ERROR, "invalid frames per packet %" PRIu32, FramesPerPacket);
+		return ERROR_INVALID_DATA;
+	}
+
+	audin->FramesPerPacket = FramesPerPacket;
 	audin->format = &callback->formats[initialFormat];
 
 	if (!audin_open_device(audin, callback))
