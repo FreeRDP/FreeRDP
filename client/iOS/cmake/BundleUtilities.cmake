@@ -505,6 +505,7 @@ installation phase:
     )
   ")
 #]=======================================================================]
+cmake_policy(SET CMP0057 NEW)
 
 function(_warn_cmp0080)
   cmake_policy(GET_WARNING CMP0080 _cmp0080_warning)
