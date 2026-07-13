@@ -10,11 +10,21 @@ ExternalProject_Add(
   CMAKE_ARGS ${ANDROID_CMAKE_ARGS}
              -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
              -DCMAKE_INSTALL_LIBDIR:STRING=${CMAKE_INSTALL_LIBDIR}
+             -DWEBP_HAVE_TIFF:BOOL=OFF
              -DWEBP_BUILD_CWEBP:BOOL=OFF
              -DWEBP_BUILD_DWEBP:BOOL=OFF
              -DWEBP_BUILD_GIF2WEBP:BOOL=OFF
              -DWEBP_BUILD_IMG2WEBP:BOOL=OFF
              -DWEBP_BUILD_VWEBP:BOOL=OFF
+             -DWEBP_BUILD_ANIM_UTILS:BOOL=OFF
              -DWEBP_BUILD_WEBPINFO:BOOL=OFF
              -DWEBP_BUILD_WEBPMUX:BOOL=OFF
+             -DWEBP_BUILD_EXTRAS:BOOL=OFF
 )
+
+if(WITH_JPEG)
+  add_dependencies(webp jpeg)
+endif()
+if(WITH_PNG)
+  add_dependencies(webp libpng)
+endif()

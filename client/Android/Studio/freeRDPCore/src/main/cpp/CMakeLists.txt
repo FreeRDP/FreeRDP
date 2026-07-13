@@ -19,6 +19,9 @@
 
 cmake_minimum_required(VERSION 3.13)
 
+if(POLICY CMP0177)
+  cmake_policy(SET CMP0177 NEW)
+endif()
 if(NOT FREERDP_DEFAULT_PROJECT_VERSION)
   set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
 endif()
