@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.30.0)
 
 if(POLICY CMP0114)
   cmake_policy(SET CMP0114 NEW)
@@ -47,26 +47,23 @@ set(CMAKE_C_EXTENSIONS ON CACHE BOOL "project default")
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
-set(CMAKE_IGNORE_PREFIX_PATH "/opt/local;/usr/local;/opt/homebrew;/Library;~/Library")
+set(CMAKE_IGNORE_PATH "/opt/local;/usr/local;/opt/homebrew;/Library;~/Library")
 
 include(GNUInstallDirs)
 set(CMAKE_INSTALL_LIBDIR Frameworks)
 set(CMAKE_INSTALL_BINDIR MacOS)
-
-set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "project default")
+set(CMAKE_INSTALL_DATADIR Resources)
 
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_C_LANGUAGE_STANDARD "gnu2x" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES "NO" CACHE STRING "project default")
-set(CMAKE_XCODE_ATTRIBUTE_SKIP_INSTALL NO CACHE BOOL "project default")
-set(CMAKE_INSTALL_PATH "/Applications" CACHE STRING "project default")
 set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES CACHE BOOL "project default")
-set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/Frameworks" CACHE STRING "project default")
-set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.freerdp.ifreerdp" CACHE STRING "project default")
 
-message("sysroot:    ${CMAKE_SYSROOT}")
+message("system:     ${CMAKE_SYSTEM_NAME}")
+message("arch:       ${CMAKE_OSX_ARCHITECTURES}")
 message("target:     ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+message("sysroot:    ${CMAKE_SYSROOT}")
 message("C standard: ${CMAKE_C_STANDARD}")
 
 set(IOS_CLIENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -272,10 +269,7 @@ source_group(FreeRDP FILES ${IOS_CLIENT_FREERDP_SRCS} ${IOS_CLIENT_FREERDP_HDRS}
 source_group(Misc FILES ${IOS_CLIENT_MISC_SRCS} ${IOS_CLIENT_MISC_HDRS})
 source_group(Models FILES ${IOS_CLIENT_MODELS_SRCS} ${IOS_CLIENT_MODELS_HDRS})
 source_group(Views FILES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_VIEWS_SRCS} ${IOS_CLIENT_VIEWS_HDRS})
-source_group(
-  Resources FILES ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_RESOURCES_DIR}/about_page
-                  ${IOS_CLIENT_RESOURCES_DIR}/en.lproj
-)
+source_group(Resources FILES ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_RESOURCES_DIR}/en.lproj)
 
 # import libraries
 find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
@@ -300,9 +294,9 @@ set(EXTRA_LIBS
     ${GAMECONTROLLER_FRAMEWORK}
 )
 
-set(RESOURCES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_RESOURCES_DIR}/about_page
-              ${IOS_CLIENT_RESOURCES_DIR}/en.lproj ${IOS_CLIENT_DIR}/Defaults.plist
-)
+set(APP_ICON "${FREERDP_SOURCE_DIR}/resources/FreeRDP_OSX.icns")
+set(RESOURCES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_DIR}/Defaults.plist ${APP_ICON})
+set_source_files_properties(${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
 add_executable(
   ${PROJECT_NAME} MACOSX_BUNDLE
@@ -319,42 +313,35 @@ add_executable(
   ${IOS_CLIENT_MODELS_HDRS}
   ${IOS_CLIENT_VIEWS_SRCS}
   ${IOS_CLIENT_VIEWS_HDRS}
-  ${RESOURCES}
 )
 
 add_dependencies(${PROJECT_NAME} freerdp)
 
 set_target_properties(
-  ${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${IOS_CLIENT_DIR}/iFreeRDP.plist FOLDER "Client/iOS"
-                             RESOURCE "${RESOURCES}"
+  ${PROJECT_NAME}
+  PROPERTIES # FOLDER "Client/iOS"
+             RESOURCE "${RESOURCES}" MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME} MACOSX_BUNDLE_BUNDLE_VERSION
+                                                                               ${PROJECT_VERSION}
+             MACOSX_BUNDLE_COPYRIGHT "Copyright 2013-${VERSION_YEAR}. All Rights Reserved." MACOSX_BUNDLE_GUI_IDENTIFIER
+                                                                                            "com.freerdp.ifreerdp"
+             MACOSX_BUNDLE_ICON_FILE "FreeRDP_OSX.icns" MACOSX_BUNDLE_INFO_STRING "info string TODO"
+             MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION} MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
 )
+target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
 
 target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS} freerdp3-lib freerdp-client3-lib winpr3-lib)
 
-target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
+install(TARGETS ${PROJECT_NAME} BUNDLE DESTINATION . COMPONENT Runtime
+        RUNTIME DESTINATION ${PROJECT_NAME}.app/${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+        ARCHIVE DESTINATION ${PROJECT_NAME}.app/${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        LIBRARY DESTINATION ${PROJECT_NAME}.app/${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        FRAMEWORK DESTINATION ${PROJECT_NAME}.app/${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+        RESOURCE DESTINATION ${PROJECT_NAME}.app/${CMAKE_INSTALL_DATADIR} COMPONENT Runtime
+)
 
-set(_ios_embed_frameworks "")
-if(TARGET freerdp3-lib)
-  get_target_property(_ios_freerdp_runtime_location freerdp3-lib IMPORTED_LOCATION)
-  list(APPEND _ios_embed_frameworks "${_ios_freerdp_runtime_location}")
-endif()
-if(TARGET freerdp-client3-lib)
-  get_target_property(_ios_freerdp_client_runtime_location freerdp-client3-lib IMPORTED_LOCATION)
-  list(APPEND _ios_embed_frameworks "${_ios_freerdp_client_runtime_location}")
-endif()
-if(TARGET winpr3-lib)
-  get_target_property(_ios_winpr_runtime_location winpr3-lib IMPORTED_LOCATION)
-  list(APPEND _ios_embed_frameworks "${_ios_winpr_runtime_location}")
-endif()
-
-if(AVCODEC_LIBRARIES MATCHES "\\.framework/")
-  get_filename_component(_ios_ffmpeg_framework "${AVCODEC_LIBRARIES}" DIRECTORY)
-  list(APPEND _ios_embed_frameworks "${_ios_ffmpeg_framework}")
-endif()
-
-if(_ios_embed_frameworks)
-  set_target_properties(
-    ${PROJECT_NAME} PROPERTIES XCODE_EMBED_FRAMEWORKS "${_ios_embed_frameworks}"
-                               XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON
-  )
-endif()
+set(APPS "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app")
+# Use the specified certificate
+install(CODE "include(${CMAKE_SOURCE_DIR}/cmake/BundleUtilities.cmake)
+fixup_bundle(\"${APPS}\" \"\" \"${CMAKE_PREFIX_PATH}\")
+"
+)
