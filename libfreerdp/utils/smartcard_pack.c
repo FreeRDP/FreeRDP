@@ -205,10 +205,9 @@ static LONG smartcard_ndr_read_ex(wLog* log, wStream* s, BYTE** data, const size
 		free(r);
 		return STATUS_INVALID_PARAMETER;
 	}
-	len += (size_t)pad;
 	*data = r;
 	if (plen)
-		*plen = len;
+		*plen = len; /* payload bytes only, excluding the NDR alignment padding */
 	return STATUS_SUCCESS;
 }
 
