@@ -858,7 +858,7 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 
 char* x509_utils_get_common_name(const X509* xcert, size_t* plength)
 {
-	X509_NAME* subject_name = X509_get_subject_name(xcert);
+	const X509_NAME* subject_name = X509_get_subject_name(xcert);
 	if (subject_name == nullptr)
 		return nullptr;
 

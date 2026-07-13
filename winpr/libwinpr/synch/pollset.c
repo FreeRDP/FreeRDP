@@ -144,7 +144,7 @@ int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds)
 		else
 			timeout = (int)(dueTime - now);
 
-		ret = poll(set->pollset, set->fillIndex, timeout);
+		ret = poll(set->pollset, WINPR_ASSERTING_INT_CAST(nfds_t, set->fillIndex), timeout);
 		if (ret >= 0)
 		{
 #if defined(__EMSCRIPTEN__)

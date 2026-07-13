@@ -80,10 +80,10 @@ static const char* strrstr(const char* haystack, size_t len, const char* needle)
 	if (*needle == '\0')
 		return haystack;
 
-	char* result = nullptr;
+	const char* result = nullptr;
 	for (;;)
 	{
-		char* p = strstr(haystack, needle);
+		const char* p = strstr(haystack, needle);
 		if (p == nullptr)
 			break;
 		if (p > haystack + len)
@@ -437,12 +437,12 @@ static BOOL freerdp_assistance_parse_attr(const char** opt, size_t* plength, con
 	if ((rc <= 0) || ((size_t)rc >= sizeof(bkey)))
 		return FALSE;
 
-	char* p = strstr(tag, bkey);
+	const char* p = strstr(tag, bkey);
 	if (!p)
 		return TRUE;
 
 	p += strlen(bkey);
-	char* q = strchr(p, '"');
+	const char* q = strchr(p, '"');
 
 	if (!q)
 	{
