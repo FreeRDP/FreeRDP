@@ -460,10 +460,10 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 	}
 
 	/* Ensure we have enough source data bytes for image copy. */
-	if (cbBitsColor / nHeight < FreeRDPGetBytesPerPixel(format) * nWidth)
+	if ((1ul * cbBitsColor) / nHeight < (1ul * FreeRDPGetBytesPerPixel(format) * nWidth))
 	{
 		WLog_ERR(TAG,
-		         "cbBitsColor{%" PRIu32 "} < nWidth{%" PRIu32 "} * nHeight{%" PRIu32
+		         "cbBitsColor{%" PRIu16 "} < nWidth{%" PRIu16 "} * nHeight{%" PRIu16
 		         "} * bpp{%" PRIu32 "}",
 		         cbBitsColor, nWidth, nHeight, FreeRDPGetBytesPerPixel(format));
 		return FALSE;
