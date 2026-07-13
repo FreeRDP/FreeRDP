@@ -35,7 +35,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.txt'
             externalNativeBuild {
                 cmake {
                     arguments rootProject.ext.cmakeArguments
@@ -83,15 +83,15 @@ android {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'androidx.core:core:1.18.0'
+    implementation 'androidx.core:core:1.19.0'
     implementation 'androidx.preference:preference:1.2.1'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.10.0'
-    implementation 'androidx.lifecycle:lifecycle-livedata:2.10.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.11.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.11.0'
 
     implementation "androidx.room:room-runtime:2.8.4"
     annotationProcessor "androidx.room:room-compiler:2.8.4"
 
-    implementation 'net.zetetic:sqlcipher-android:4.16.0@aar'
-    implementation 'androidx.sqlite:sqlite:2.6.2'
+    implementation 'net.zetetic:sqlcipher-android:4.17.0@aar'
+    implementation 'androidx.sqlite:sqlite:2.7.0'
 }
