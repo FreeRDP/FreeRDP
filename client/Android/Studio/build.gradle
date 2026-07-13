@@ -41,10 +41,10 @@ ext {
         RELEASE_STORE_PASSWORD=releaseProperties.get('RELEASE_STORE_PASSWORD', 'android')
     }
 
-    compileApi = releaseProperties.get('COMPILE_API', 36).toInteger()
-    targetApi = releaseProperties.get('TARGET_API', 36).toInteger()
+    compileApi = releaseProperties.get('COMPILE_API', 37).toInteger()
+    targetApi = releaseProperties.get('TARGET_API', 37).toInteger()
     minApi = releaseProperties.get('MIN_API', 29).toInteger()
-    toolsVersion = releaseProperties.get('TOOLS_VERSION', '36.0.0')
+    toolsVersion = releaseProperties.get('TOOLS_VERSION', '37.0.0')
     universal = releaseProperties.get('BUILD_UNIVERSAL', true).toBoolean()
     splitArchs = releaseProperties.get('SPLIT_ARCHITECTURES', 'x86;x86_64;riscv64;armeabi-v7a;arm64-v8a').split(';')
     splitEnabled = releaseProperties.get('SPLIT_ENABLED', true).toBoolean()
