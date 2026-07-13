@@ -333,3 +333,8 @@ parameter = '2 LPCWSTR
 change_kind = function-subtype-change
 name = NTOWFv2W
 parameter = '4 LPCWSTR
+
+[suppress_function]
+change_kind = function-subtype-change
+name = CommDeviceIoControl
+parameter = '3 LPCVOID

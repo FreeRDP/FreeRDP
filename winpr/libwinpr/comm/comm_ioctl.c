@@ -50,7 +50,7 @@ static const char* comm_ioctl_modem_status_string(ULONG status, char* buffer, si
  * found in [MSFT-W2KDDK] Volume 2, Part 2—Serial and Parallel
  * Drivers, and in [MSDN-PORTS].
  */
-static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
+static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPCVOID lpInBuffer,
                                   DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
                                   LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
@@ -124,7 +124,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 		{
 			if (pServerSerialDriver->set_baud_rate)
 			{
-				SERIAL_BAUD_RATE* pBaudRate = (SERIAL_BAUD_RATE*)lpInBuffer;
+				const SERIAL_BAUD_RATE* pBaudRate = (const SERIAL_BAUD_RATE*)lpInBuffer;
 
 				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_BAUD_RATE));
 				if (nInBufferSize < sizeof(SERIAL_BAUD_RATE))
@@ -183,7 +183,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 		{
 			if (pServerSerialDriver->set_serial_chars)
 			{
-				SERIAL_CHARS* pSerialChars = (SERIAL_CHARS*)lpInBuffer;
+				const SERIAL_CHARS* pSerialChars = (const SERIAL_CHARS*)lpInBuffer;
 
 				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_CHARS));
 				if (nInBufferSize < sizeof(SERIAL_CHARS))
@@ -221,7 +221,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 		{
 			if (pServerSerialDriver->set_line_control)
 			{
-				SERIAL_LINE_CONTROL* pLineControl = (SERIAL_LINE_CONTROL*)lpInBuffer;
+				const SERIAL_LINE_CONTROL* pLineControl = (const SERIAL_LINE_CONTROL*)lpInBuffer;
 
 				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_LINE_CONTROL));
 				if (nInBufferSize < sizeof(SERIAL_LINE_CONTROL))
@@ -259,7 +259,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 		{
 			if (pServerSerialDriver->set_handflow)
 			{
-				SERIAL_HANDFLOW* pHandflow = (SERIAL_HANDFLOW*)lpInBuffer;
+				const SERIAL_HANDFLOW* pHandflow = (const SERIAL_HANDFLOW*)lpInBuffer;
 
 				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_HANDFLOW));
 				if (nInBufferSize < sizeof(SERIAL_HANDFLOW))
@@ -297,7 +297,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 		{
 			if (pServerSerialDriver->set_timeouts)
 			{
-				SERIAL_TIMEOUTS* pHandflow = (SERIAL_TIMEOUTS*)lpInBuffer;
+				const SERIAL_TIMEOUTS* pHandflow = (const SERIAL_TIMEOUTS*)lpInBuffer;
 
 				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_TIMEOUTS));
 				if (nInBufferSize < sizeof(SERIAL_TIMEOUTS))
@@ -390,7 +390,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 		{
 			if (pServerSerialDriver->set_wait_mask)
 			{
-				ULONG* pWaitMask = (ULONG*)lpInBuffer;
+				const ULONG* pWaitMask = (const ULONG*)lpInBuffer;
 
 				WINPR_ASSERT(nInBufferSize >= sizeof(ULONG));
 				if (nInBufferSize < sizeof(ULONG))
@@ -455,7 +455,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 		{
 			if (pServerSerialDriver->set_queue_size)
 			{
-				SERIAL_QUEUE_SIZE* pQueueSize = (SERIAL_QUEUE_SIZE*)lpInBuffer;
+				const SERIAL_QUEUE_SIZE* pQueueSize = (const SERIAL_QUEUE_SIZE*)lpInBuffer;
 
 				WINPR_ASSERT(nInBufferSize >= sizeof(SERIAL_QUEUE_SIZE));
 				if (nInBufferSize < sizeof(SERIAL_QUEUE_SIZE))
@@ -472,7 +472,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 		{
 			if (pServerSerialDriver->purge)
 			{
-				ULONG* pPurgeMask = (ULONG*)lpInBuffer;
+				const ULONG* pPurgeMask = (const ULONG*)lpInBuffer;
 
 				WINPR_ASSERT(nInBufferSize >= sizeof(ULONG));
 				if (nInBufferSize < sizeof(ULONG))
@@ -584,7 +584,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 		{
 			if (pServerSerialDriver->immediate_char)
 			{
-				UCHAR* pChar = (UCHAR*)lpInBuffer;
+				const UCHAR* pChar = (const UCHAR*)lpInBuffer;
 
 				WINPR_ASSERT(nInBufferSize >= sizeof(UCHAR));
 				if (nInBufferSize < sizeof(UCHAR))
@@ -628,7 +628,7 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
  *   ERROR_INSUFFICIENT_BUFFER
  *   ERROR_CALL_NOT_IMPLEMENTED unimplemented ioctl
  */
-BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
+BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPCVOID lpInBuffer,
                          DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
                          LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {

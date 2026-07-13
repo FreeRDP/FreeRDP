@@ -438,7 +438,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 
 	/* error_handle */
 	lpLocalDcb->DCBlength = lpDCB->DCBlength;
-	SERIAL_BAUD_RATE baudRate;
+	SERIAL_BAUD_RATE baudRate = WINPR_C_ARRAY_INIT;
 
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_BAUD_RATE, nullptr, 0, &baudRate,
 	                         sizeof(SERIAL_BAUD_RATE), &bytesReturned, nullptr))
@@ -579,7 +579,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	/* NB: did the choice to call ioctls first when available and
 	   then to setup upcomingTermios. Don't mix both stages. */
 	/** ioctl calls stage **/
-	SERIAL_BAUD_RATE baudRate;
+	SERIAL_BAUD_RATE baudRate = WINPR_C_ARRAY_INIT;
 	baudRate.BaudRate = lpDCB->BaudRate;
 
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_BAUD_RATE, &baudRate, sizeof(SERIAL_BAUD_RATE),
