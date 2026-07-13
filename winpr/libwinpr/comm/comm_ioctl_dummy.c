@@ -24,7 +24,7 @@
 
 #define TAG WINPR_TAG("comm")
 
-BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
+BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPCVOID lpInBuffer,
                          DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
                          LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {

@@ -519,7 +519,7 @@ extern "C"
 	 * FIXME: to be moved in comm_ioctl.h
 	 */
 	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer,
+	WINPR_API BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPCVOID lpInBuffer,
 	                                   DWORD nInBufferSize, LPVOID lpOutBuffer,
 	                                   DWORD nOutBufferSize, LPDWORD lpBytesReturned,
 	                                   LPOVERLAPPED lpOverlapped);
