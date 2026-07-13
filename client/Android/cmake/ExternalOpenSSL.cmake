@@ -25,6 +25,7 @@ ExternalProject_Add(
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/openssl
   URL https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz
   URL_HASH ${OPENSSL_HASH}
+  LIST_SEPARATOR |
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH} ANDROID_NDK=${NDK_ROOT} ANDROID_NDK_ROOT=${NDK_ROOT}
     ANDROID_NDK_HOME=${NDK_ROOT} CC=clang perl <SOURCE_DIR>/Configure ${OSSL_ARCH} shared no-tests no-apps no-docs

@@ -66,6 +66,7 @@ ExternalProject_Add(
   BINARY_DIR ${CMAKE_BINARY_DIR}/external/ffmpeg
   URL https://github.com/FFmpeg/FFmpeg/archive/refs/tags/${FFMPEG_VERSION}.tar.gz
   URL_HASH ${FFMPEG_HASH}
+  LIST_SEPARATOR |
   DEPENDS ${ANDROID_NATIVE_DEPS}
   CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -E env "PATH=${NDK_TOOLCHAIN_BIN}:$ENV{PATH}"

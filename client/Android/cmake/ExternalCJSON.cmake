@@ -7,6 +7,7 @@ ExternalProject_Add(
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/cjson
   URL https://github.com/DaveGamble/cJSON/archive/refs/tags/${CJSON_VERSION}.tar.gz
   URL_HASH ${CJSON_HASH}
+  LIST_SEPARATOR |
   CMAKE_ARGS ${ANDROID_CMAKE_ARGS}
              -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
              -DCMAKE_INSTALL_LIBDIR:STRING=${CMAKE_INSTALL_LIBDIR}
