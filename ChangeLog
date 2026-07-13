@@ -1,3 +1,78 @@
+# 2026-07-14 Version 3.29.0
+
+Security, bugfix and maintenance release.
+We've received a very rigorous review since our last release by a couple of
+security researchers, so this release contains quite a number of advisories.
+An update is highly recommended.
+
+## CVE and advisories
+* Bin Luo, University of Electronic Science and Technology of China (UESTC).
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-43hh-p3vw-hfx3
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-ph3q-f9w8-7jf3
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-mwwh-mhp9-q7vm
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-whq8-c3v3-p8v8
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-hgj8-g595-wfc6
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-8v6m-2cmc-chx9
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-5wr6-8m8j-3h7f
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-89c6-jjrw-96h4
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-8xqm-wp3f-rfp9
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-jm8r-22j6-4m4v
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-2c6r-4pr4-9x8m
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-qmvw-52ph-q5pv
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-34hq-hwjw-q8v3
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-33gg-h66j-3697
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-vxp3-7g6q-rq2w
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-v89x-pc32-hqr7
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-pfxq-3qmw-8vjx
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-78jj-45vh-jpm5
+* @canomer
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-69xf-pqrw-596x
+* Reported by Team Atlanta
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-8jj2-67pg-j6mg
+* @HEXER365
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-qrxx-7g3c-j6w3
+* cbcs — found by Tencent Yunding Security Lab using agents
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-cj9v-h4hq-29jr
+
+## What's Changed
+* [client,sdl] Handle requested clipboard MIME formats (#13007)
+* [client,x11] Fix RAIL HiDef window maximize (#13010)
+* [channels,rdpecam] filter devices without supported formats (#13015)
+* [codec,planar] fix input checks (#13016)
+* [client] do not build wayland and windows (#13017)
+* [client,windows] add server response size check (#13018)
+* fix processImageName length check in rail get appid resp ex (#13020)
+* [channels,rdpecam] add data validity checks (#13021)
+* Scard alloc update reorder (#13022)
+* H264 decoder surface dimension mismatch (#13024)
+* [core,security] reject short server random in security_establish_keys (#13023)
+* Async update (#13025)
+* [core,rdstls] add endpoint FedAuth token authentication (#13026)
+* Resource limits (#13027)
+* Path checks (#13028)
+* [emu,scard] require Lc of 2 for select-by-FID in vgids_ins_select (#13030)
+* runtime hardening (#13032)
+* H264 fix (#13036)
+* [crypto,x509] improve hardening against embedded \0 (#13035)
+* [core,rail] unify RAIL_UNICODE_STRING handling (#13039)
+* [channels,rail] rail_server_handle_messages (#13037)
+* [channels,rdpecam] fix reading of config descriptor (#13042)
+* [codec,av1] bound decode output to decoded frame size (#13044)
+* Bounds check fixes (#13043)
+* [codec,av1] add region rects checks like with AVC modes (#13045)
+* Ios fixes (#13029)
+* Ios warn fixes (#13047)
+* [utils,smartcard] exclude ndr padding from returned buffer length (#13046)
+* Serial alloc checks (#13049)
+* Android build fixes (#13050)
+* [client,android] update build (#13051)
+
+## New Contributors
+* @kogekiplay made their first contribution in (#13007)
+
+For a complete and detailed change log since the last release run:
+git log 3.29.0...3.28.0
+
 # 2026-07-06 Version 3.28.0
 
 Feature and bugfix release.
