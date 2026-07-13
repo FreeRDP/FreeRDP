@@ -15,10 +15,7 @@ android {
         }
         externalNativeBuild {
             cmake {
-                arguments "-DWITH_FFMPEG=ON", "-DWITH_OPENH264=ON",
-                        "-DWITH_OPUS=ON",   "-DWITH_WEBP=ON",
-                        "-DWITH_JPEG=ON",   "-DWITH_PNG=ON",
-                        "-DWITH_CJSON=ON",  "-DWITH_OPENSSL=ON"
+                arguments rootProject.ext.cmakeArguments
             }
         }
     }
@@ -36,22 +33,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.txt'
-            externalNativeBuild {
-                cmake {
-                    arguments rootProject.ext.cmakeArguments
-                }
-            }
         }
         debug {
             jniDebuggable true
-            externalNativeBuild {
-                cmake {
-                    arguments "-DWITH_FFMPEG=OFF", "-DWITH_OPENH264=ON",
-                            "-DWITH_OPUS=OFF",   "-DWITH_WEBP=OFF",
-                            "-DWITH_JPEG=OFF",   "-DWITH_PNG=OFF",
-                            "-DWITH_CJSON=OFF",  "-DWITH_OPENSSL=ON"
-                }
-            }
         }
         qa {
             jniDebuggable false

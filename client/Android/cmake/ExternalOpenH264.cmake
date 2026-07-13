@@ -23,6 +23,7 @@ ExternalProject_Add(
   GIT_REPOSITORY https://github.com/cisco/openh264.git
   GIT_TAG ${OPENH264_TAG}
   GIT_SHALLOW TRUE
+  LIST_SEPARATOR |
   PATCH_COMMAND git apply --3way ${CMAKE_CURRENT_LIST_DIR}/0001-riscv64-support.patch
                 ${CMAKE_CURRENT_LIST_DIR}/0002-openh264-pkgconfig-patch.patch
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different <SOURCE_DIR> <BINARY_DIR>
