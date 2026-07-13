@@ -42,9 +42,12 @@
 
 LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags)
 {
-	LPSTR lpWildcard = nullptr;
+	WINPR_ASSERT(lpPattern);
+	WINPR_ASSERT(pFlags);
+
 	*pFlags = 0;
-	lpWildcard = strpbrk(lpPattern, "*?~");
+
+	char* lpWildcard = strpbrk(lpPattern, "*?~");
 
 	if (lpWildcard)
 	{

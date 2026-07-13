@@ -953,7 +953,6 @@ static BOOL is_valid_file_search_handle(HANDLE handle)
 
 static DWORD FileAttributesFromStat(const char* path, const struct stat* fileStat)
 {
-	char* lastSep = nullptr;
 	DWORD dwFileAttributes = 0;
 
 	if (S_ISDIR(fileStat->st_mode))
@@ -962,7 +961,7 @@ static DWORD FileAttributesFromStat(const char* path, const struct stat* fileSta
 	if (dwFileAttributes == 0)
 		dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
 
-	lastSep = strrchr(path, '/');
+	const char* lastSep = strrchr(path, '/');
 	if (lastSep)
 	{
 		const char* name = lastSep + 1;
