@@ -505,6 +505,7 @@ installation phase:
     )
   ")
 #]=======================================================================]
+cmake_policy(SET CMP0011 NEW)
 cmake_policy(SET CMP0057 NEW)
 
 function(_warn_cmp0080)
@@ -527,20 +528,26 @@ endif()
 #
 include("${CMAKE_CURRENT_LIST_DIR}/GetPrerequisites.cmake")
 
-
 function(get_bundle_main_executable bundle result_var)
   set(result "error: '${bundle}/Contents/Info.plist' file does not exist")
 
   if(EXISTS "${bundle}/Info.plist")
     message("iOS bundle detected")
-    set(CACHE{IOS} TYPE BOOL HELP "internal" FORCE VALUE ON) 
+    set(CACHE{IOS}
+        TYPE
+        BOOL
+        HELP
+        "internal"
+        FORCE
+        VALUE
+        ON
+    )
+    set(IOS ON PARENT_SCOPE)
     set(result "error: no CFBundleExecutable in '${bundle}/Info.plist' file")
     set(line_is_main_executable 0)
     set(bundle_executable "")
 
-    execute_process(COMMAND defaults read "${bundle}/Info.plist"
-OUTPUT_VARIABLE DEFAULTS_OUT
-)
+    execute_process(COMMAND defaults read "${bundle}/Info.plist" OUTPUT_VARIABLE DEFAULTS_OUT)
     # Read Info.plist as a list of lines:
     #
     set(eol_char "E")
@@ -577,7 +584,15 @@ OUTPUT_VARIABLE DEFAULTS_OUT
     endif()
   elseif(EXISTS "${bundle}/Contents/Info.plist")
     message("OSX bundle detected")
-    set(CACHE{IOS} TYPE BOOL HELP "internal" FORCE VALUE OFF) 
+    set(CACHE{IOS}
+        TYPE
+        BOOL
+        HELP
+        "internal"
+        FORCE
+        VALUE
+        OFF
+    )
     set(result "error: no CFBundleExecutable in '${bundle}/Contents/Info.plist' file")
     set(line_is_main_executable 0)
     set(bundle_executable "")
@@ -635,7 +650,6 @@ OUTPUT_VARIABLE DEFAULTS_OUT
   set(${result_var} "${result}" PARENT_SCOPE)
 endfunction()
 
-
 function(get_dotapp_dir exe dotapp_dir_var)
   set(s "${exe}")
 
@@ -668,10 +682,8 @@ function(get_dotapp_dir exe dotapp_dir_var)
     endif()
   endif()
 
-
   set(${dotapp_dir_var} "${dotapp_dir}" PARENT_SCOPE)
 endfunction()
-
 
 function(get_bundle_and_executable app bundle_var executable_var valid_var)
   set(valid 0)
@@ -681,6 +693,7 @@ function(get_bundle_and_executable app bundle_var executable_var valid_var)
     if(IS_DIRECTORY "${app}")
       if(app MATCHES "\\.app$")
         get_bundle_main_executable("${app}" executable)
+        set(IOS "${IOS}" PARENT_SCOPE)
         if(EXISTS "${app}" AND EXISTS "${executable}")
           set(${bundle_var} "${app}" PARENT_SCOPE)
           set(${executable_var} "${executable}" PARENT_SCOPE)
@@ -725,7 +738,6 @@ function(get_bundle_and_executable app bundle_var executable_var valid_var)
   set(${valid_var} ${valid} PARENT_SCOPE)
 endfunction()
 
-
 function(get_bundle_all_executables bundle exes_var)
   set(exes "")
 
@@ -738,11 +750,19 @@ function(get_bundle_all_executables bundle exes_var)
   # which can take long time for large bundles, and since anyway we expect
   # executable to have execute flag set we can narrow the list much quicker.
   if(find_cmd)
-    execute_process(COMMAND "${find_cmd}" "${bundle}"
-      -type f \( -perm -0100 -o -perm -0010 -o -perm -0001 \)
+    execute_process(
+      COMMAND
+        "${find_cmd}" "${bundle}" -type f (-perm
+                                           -0100
+                                           -o
+                                           -perm
+                                           -0010
+                                           -o
+                                           -perm
+                                           -0001)
       OUTPUT_VARIABLE file_list
       OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
+    )
     string(REPLACE "\n" ";" file_list "${file_list}")
   else()
     file(GLOB_RECURSE file_list "${bundle}/*")
@@ -758,7 +778,6 @@ function(get_bundle_all_executables bundle exes_var)
   set(${exes_var} "${exes}" PARENT_SCOPE)
 endfunction()
 
-
 function(get_item_rpaths item rpaths_var)
   if(APPLE)
     find_program(otool_cmd "otool")
@@ -767,15 +786,14 @@ function(get_item_rpaths item rpaths_var)
 
   if(otool_cmd)
     execute_process(
-      COMMAND "${otool_cmd}" -l "${item}"
-      OUTPUT_VARIABLE load_cmds_ov
-      RESULT_VARIABLE otool_rv
-      ERROR_VARIABLE otool_ev
-      )
+      COMMAND "${otool_cmd}" -l "${item}" OUTPUT_VARIABLE load_cmds_ov RESULT_VARIABLE otool_rv ERROR_VARIABLE otool_ev
+    )
     if(NOT otool_rv STREQUAL "0")
       message(FATAL_ERROR "otool -l failed: ${otool_rv}\n${otool_ev}")
     endif()
-    string(REGEX REPLACE "[^\n]+cmd LC_RPATH\n[^\n]+\n[^\n]+path ([^\n]+) \\(offset[^\n]+\n" "rpath \\1\n" load_cmds_ov "${load_cmds_ov}")
+    string(REGEX REPLACE "[^\n]+cmd LC_RPATH\n[^\n]+\n[^\n]+path ([^\n]+) \\(offset[^\n]+\n" "rpath \\1\n" load_cmds_ov
+                         "${load_cmds_ov}"
+    )
     string(REGEX MATCHALL "rpath [^\n]+" load_cmds_ov "${load_cmds_ov}")
     string(REGEX REPLACE "rpath " "" load_cmds_ov "${load_cmds_ov}")
     if(load_cmds_ov)
@@ -788,7 +806,16 @@ function(get_item_rpaths item rpaths_var)
   endif()
 
   if(UNIX AND NOT APPLE)
-    file(READ_ELF ${item} RPATH rpath_var RUNPATH runpath_var CAPTURE_ERROR error_var)
+    file(
+      READ_ELF
+      ${item}
+      RPATH
+      rpath_var
+      RUNPATH
+      runpath_var
+      CAPTURE_ERROR
+      error_var
+    )
     get_filename_component(item_dir ${item} DIRECTORY)
     foreach(rpath ${rpath_var} ${runpath_var})
       # Substitute $ORIGIN with the exepath and add to the found rpaths
@@ -802,7 +829,6 @@ function(get_item_rpaths item rpaths_var)
   set(${rpaths_var} ${${rpaths_var}} PARENT_SCOPE)
 endfunction()
 
-
 function(get_item_key item key_var)
   get_filename_component(item_name "${item}" NAME)
   if(WIN32)
@@ -811,7 +837,6 @@ function(get_item_key item key_var)
   string(REPLACE "." "_" ${key_var} "${item_name}")
   set(${key_var} ${${key_var}} PARENT_SCOPE)
 endfunction()
-
 
 function(clear_bundle_keys keys_var)
   foreach(key ${${keys_var}})
@@ -826,8 +851,15 @@ function(clear_bundle_keys keys_var)
   set(${keys_var} PARENT_SCOPE)
 endfunction()
 
-
-function(set_bundle_key_values keys_var context item exepath dirs copyflag)
+function(
+  set_bundle_key_values
+  keys_var
+  context
+  item
+  exepath
+  dirs
+  copyflag
+)
   if(ARGC GREATER 6)
     set(rpaths "${ARGV6}")
   else()
@@ -854,7 +886,9 @@ function(set_bundle_key_values keys_var context item exepath dirs copyflag)
       # For frameworks, construct the name under the embedded path from the
       # opening "${item_name}.framework/" to the closing "/${item_name}":
       #
-      string(REGEX REPLACE "^.*(${item_name}.framework/.*/?${item_name}).*$" "${default_embedded_path}/\\1" embedded_item "${item}")
+      string(REGEX REPLACE "^.*(${item_name}.framework/.*/?${item_name}).*$" "${default_embedded_path}/\\1"
+                           embedded_item "${item}"
+      )
     else()
       # For other items, just use the same name as the original, but in the
       # embedded path:
@@ -892,16 +926,16 @@ function(set_bundle_key_values keys_var context item exepath dirs copyflag)
   endif()
 endfunction()
 
-
 function(get_bundle_keys app libs dirs keys_var)
   set(${keys_var} PARENT_SCOPE)
 
   set(options)
   set(oneValueArgs)
   set(multiValueArgs IGNORE_ITEM)
-  cmake_parse_arguments(CFG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(CFG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   get_bundle_and_executable("${app}" bundle executable valid)
+  set(IOS "${IOS}" PARENT_SCOPE)
   if(valid)
     # Always use the exepath of the main bundle executable for @executable_path
     # replacements:
@@ -927,15 +961,39 @@ function(get_bundle_keys app libs dirs keys_var)
     # but that do not show up in otool -L output...)
     #
     foreach(lib ${libs})
-      set_bundle_key_values(${keys_var} "${lib}" "${lib}" "${exepath}" "${dirs}" 0 "${main_rpaths}")
+      set_bundle_key_values(
+        ${keys_var}
+        "${lib}"
+        "${lib}"
+        "${exepath}"
+        "${dirs}"
+        0
+        "${main_rpaths}"
+      )
 
       set(prereqs "")
       get_filename_component(prereq_filename ${lib} NAME)
 
       if(NOT prereq_filename IN_LIST CFG_IGNORE_ITEM)
-        get_prerequisites("${lib}" prereqs 1 1 "${exepath}" "${dirs}" "${main_rpaths}")
+        get_prerequisites(
+          "${lib}"
+          prereqs
+          1
+          1
+          "${exepath}"
+          "${dirs}"
+          "${main_rpaths}"
+        )
         foreach(pr ${prereqs})
-          set_bundle_key_values(${keys_var} "${lib}" "${pr}" "${exepath}" "${dirs}" 1 "${main_rpaths}")
+          set_bundle_key_values(
+            ${keys_var}
+            "${lib}"
+            "${pr}"
+            "${exepath}"
+            "${dirs}"
+            1
+            "${main_rpaths}"
+          )
         endforeach()
       else()
         message(STATUS "Ignoring file: ${prereq_filename}")
@@ -952,7 +1010,15 @@ function(get_bundle_keys app libs dirs keys_var)
       if(NOT exe STREQUAL executable)
         # Add the exe itself to the keys:
         #
-        set_bundle_key_values(${keys_var} "${exe}" "${exe}" "${exepath}" "${dirs}" 0 "${main_rpaths}")
+        set_bundle_key_values(
+          ${keys_var}
+          "${exe}"
+          "${exe}"
+          "${exepath}"
+          "${dirs}"
+          0
+          "${main_rpaths}"
+        )
 
         # Get rpaths specified by executable:
         #
@@ -968,9 +1034,25 @@ function(get_bundle_keys app libs dirs keys_var)
       get_filename_component(prereq_filename ${exe} NAME)
 
       if(NOT prereq_filename IN_LIST CFG_IGNORE_ITEM)
-        get_prerequisites("${exe}" prereqs 1 1 "${exepath}" "${dirs}" "${exe_rpaths}")
+        get_prerequisites(
+          "${exe}"
+          prereqs
+          1
+          1
+          "${exepath}"
+          "${dirs}"
+          "${exe_rpaths}"
+        )
         foreach(pr ${prereqs})
-          set_bundle_key_values(${keys_var} "${exe}" "${pr}" "${exepath}" "${dirs}" 1 "${exe_rpaths}")
+          set_bundle_key_values(
+            ${keys_var}
+            "${exe}"
+            "${pr}"
+            "${exepath}"
+            "${dirs}"
+            1
+            "${exe_rpaths}"
+          )
         endforeach()
       else()
         message(STATUS "Ignoring file: ${prereq_filename}")
@@ -982,7 +1064,15 @@ function(get_bundle_keys app libs dirs keys_var)
       if("${${key}_COPYFLAG}" STREQUAL "1")
         if(IS_SYMLINK "${${key}_RESOLVED_ITEM}")
           get_filename_component(target "${${key}_RESOLVED_ITEM}" REALPATH)
-          set_bundle_key_values(${keys_var} "${exe}" "${target}" "${exepath}" "${dirs}" 1 "${exe_rpaths}")
+          set_bundle_key_values(
+            ${keys_var}
+            "${exe}"
+            "${target}"
+            "${exepath}"
+            "${dirs}"
+            1
+            "${exe_rpaths}"
+          )
           get_item_key("${target}" targetkey)
 
           if(WIN32)
@@ -1035,7 +1125,7 @@ function(link_resolved_item_into_bundle resolved_item resolved_embedded_item)
   else()
     get_filename_component(target_dir "${resolved_embedded_item}" DIRECTORY)
     file(RELATIVE_PATH symlink_target "${target_dir}" "${resolved_item}")
-    if (NOT EXISTS "${target_dir}")
+    if(NOT EXISTS "${target_dir}")
       file(MAKE_DIRECTORY "${target_dir}")
     endif()
     execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${symlink_target}" "${resolved_embedded_item}")
@@ -1063,7 +1153,6 @@ function(copy_resolved_item_into_bundle resolved_item resolved_embedded_item)
   endif()
 
 endfunction()
-
 
 function(copy_resolved_framework_into_bundle resolved_item resolved_embedded_item)
   if(WIN32)
@@ -1096,15 +1185,21 @@ function(copy_resolved_framework_into_bundle resolved_item resolved_embedded_ite
       string(REGEX REPLACE "^(.*)/[^/]+$" "\\1/Resources" resolved_embedded_resources "${resolved_embedded_item}")
       if(EXISTS "${resolved_resources}")
         #message(STATUS "copying COMMAND ${CMAKE_COMMAND} -E copy_directory '${resolved_resources}' '${resolved_embedded_resources}'")
-        execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory "${resolved_resources}" "${resolved_embedded_resources}")
+        execute_process(
+          COMMAND ${CMAKE_COMMAND} -E copy_directory "${resolved_resources}" "${resolved_embedded_resources}"
+        )
       endif()
 
       # Some frameworks e.g. Qt put Info.plist in wrong place, so when it is
       # missing in resources, copy it from other well known incorrect locations:
       if(NOT EXISTS "${resolved_resources}/Info.plist")
         # Check for Contents/Info.plist in framework root (older Qt SDK):
-        string(REGEX REPLACE "^(.*)/[^/]+/[^/]+/[^/]+$" "\\1/Contents/Info.plist" resolved_info_plist "${resolved_item}")
-        string(REGEX REPLACE "^(.*)/[^/]+$" "\\1/Resources/Info.plist" resolved_embedded_info_plist "${resolved_embedded_item}")
+        string(REGEX REPLACE "^(.*)/[^/]+/[^/]+/[^/]+$" "\\1/Contents/Info.plist" resolved_info_plist
+                             "${resolved_item}"
+        )
+        string(REGEX REPLACE "^(.*)/[^/]+$" "\\1/Resources/Info.plist" resolved_embedded_info_plist
+                             "${resolved_embedded_item}"
+        )
         if(EXISTS "${resolved_info_plist}")
           #message(STATUS "copying COMMAND ${CMAKE_COMMAND} -E copy_directory '${resolved_info_plist}' '${resolved_embedded_info_plist}'")
           execute_process(COMMAND ${CMAKE_COMMAND} -E copy "${resolved_info_plist}" "${resolved_embedded_info_plist}")
@@ -1114,21 +1209,32 @@ function(copy_resolved_framework_into_bundle resolved_item resolved_embedded_ite
       # Check if framework is versioned and fix it layout
       string(REGEX REPLACE "^.*/([^/]+)/[^/]+$" "\\1" resolved_embedded_version "${resolved_embedded_item}")
       string(REGEX REPLACE "^(.*)/[^/]+/[^/]+$" "\\1" resolved_embedded_versions "${resolved_embedded_item}")
-      string(REGEX REPLACE "^.*/([^/]+)/[^/]+/[^/]+$" "\\1" resolved_embedded_versions_basename "${resolved_embedded_item}")
+      string(REGEX REPLACE "^.*/([^/]+)/[^/]+/[^/]+$" "\\1" resolved_embedded_versions_basename
+                           "${resolved_embedded_item}"
+      )
       if(resolved_embedded_versions_basename STREQUAL "Versions")
         # Ensure Current symlink points to the framework version
         if(NOT EXISTS "${resolved_embedded_versions}/Current")
-          execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${resolved_embedded_version}" "${resolved_embedded_versions}/Current")
+          execute_process(
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "${resolved_embedded_version}"
+                    "${resolved_embedded_versions}/Current"
+          )
         endif()
         # Restore symlinks in framework root pointing to current framework
         # binary and resources:
         string(REGEX REPLACE "^(.*)/[^/]+/[^/]+/[^/]+$" "\\1" resolved_embedded_root "${resolved_embedded_item}")
         string(REGEX REPLACE "^.*/([^/]+)$" "\\1" resolved_embedded_item_basename "${resolved_embedded_item}")
         if(NOT EXISTS "${resolved_embedded_root}/${resolved_embedded_item_basename}")
-          execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "Versions/Current/${resolved_embedded_item_basename}" "${resolved_embedded_root}/${resolved_embedded_item_basename}")
+          execute_process(
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "Versions/Current/${resolved_embedded_item_basename}"
+                    "${resolved_embedded_root}/${resolved_embedded_item_basename}"
+          )
         endif()
         if(NOT EXISTS "${resolved_embedded_root}/Resources")
-          execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "Versions/Current/Resources" "${resolved_embedded_root}/Resources")
+          execute_process(
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "Versions/Current/Resources"
+                    "${resolved_embedded_root}/Resources"
+          )
         endif()
       endif()
     endif()
@@ -1138,7 +1244,6 @@ function(copy_resolved_framework_into_bundle resolved_item resolved_embedded_ite
   endif()
 
 endfunction()
-
 
 function(fixup_bundle_item resolved_embedded_item exepath dirs)
   # This item's key is "ikey":
@@ -1178,7 +1283,15 @@ function(fixup_bundle_item resolved_embedded_item exepath dirs)
   set(rpaths "${${ikey}_RPATHS}" "${${ikey}_RDEP_RPATHS}")
 
   set(prereqs "")
-  get_prerequisites("${resolved_embedded_item}" prereqs 1 0 "${exepath}" "${dirs}" "${rpaths}")
+  get_prerequisites(
+    "${resolved_embedded_item}"
+    prereqs
+    1
+    0
+    "${exepath}"
+    "${dirs}"
+    "${rpaths}"
+  )
 
   set(changes "")
 
@@ -1200,10 +1313,9 @@ function(fixup_bundle_item resolved_embedded_item exepath dirs)
 
   # Only if install_name_tool supports -delete_rpath:
   #
-  execute_process(COMMAND ${CMAKE_INSTALL_NAME_TOOL}
-    OUTPUT_VARIABLE install_name_tool_usage
-    ERROR_VARIABLE  install_name_tool_usage
-    )
+  execute_process(
+    COMMAND ${CMAKE_INSTALL_NAME_TOOL} OUTPUT_VARIABLE install_name_tool_usage ERROR_VARIABLE install_name_tool_usage
+  )
   if(install_name_tool_usage MATCHES ".*-delete_rpath.*")
     foreach(rpath ${${ikey}_RPATHS})
       set(changes ${changes} -delete_rpath "${rpath}")
@@ -1220,8 +1332,7 @@ function(fixup_bundle_item resolved_embedded_item exepath dirs)
   if(changes)
     # Check for a script by extension (.bat,.sh,...) or if the file starts with "#!" (shebang)
     file(READ ${resolved_embedded_item} file_contents LIMIT 5)
-    if(NOT "${resolved_embedded_item}" MATCHES "\\.(bat|c?sh|bash|ksh|cmd)$" AND
-       NOT file_contents MATCHES "^#!")
+    if(NOT "${resolved_embedded_item}" MATCHES "\\.(bat|c?sh|bash|ksh|cmd)$" AND NOT file_contents MATCHES "^#!")
       set(cmd ${CMAKE_INSTALL_NAME_TOOL} ${changes} "${resolved_embedded_item}")
       if(BU_CHMOD_BUNDLE_ITEMS)
         execute_process(COMMAND chmod u+w "${resolved_embedded_item}")
@@ -1235,7 +1346,6 @@ function(fixup_bundle_item resolved_embedded_item exepath dirs)
   endif()
 endfunction()
 
-
 function(fixup_bundle app libs dirs)
   message(STATUS "fixup_bundle")
   message(STATUS "  app='${app}'")
@@ -1245,11 +1355,14 @@ function(fixup_bundle app libs dirs)
   set(options)
   set(oneValueArgs)
   set(multiValueArgs IGNORE_ITEM)
-  cmake_parse_arguments(CFG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(CFG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   message(STATUS "  ignoreItems='${CFG_IGNORE_ITEM}'")
 
   get_bundle_and_executable("${app}" bundle executable valid)
+  if(IOS)
+    set(IOS ON PARENT_SCOPE)
+  endif()
   if(valid)
     get_filename_component(exepath "${executable}" PATH)
 
@@ -1284,16 +1397,13 @@ function(fixup_bundle app libs dirs)
       endif()
 
       if("${${key}_COPYFLAG}" STREQUAL "2")
-        link_resolved_item_into_bundle("${${key}_RESOLVED_ITEM}"
-          "${${key}_RESOLVED_EMBEDDED_ITEM}")
+        link_resolved_item_into_bundle("${${key}_RESOLVED_ITEM}" "${${key}_RESOLVED_EMBEDDED_ITEM}")
       elseif(${${key}_COPYFLAG})
         set(item "${${key}_ITEM}")
         if(item MATCHES "[^/]+\\.framework/")
-          copy_resolved_framework_into_bundle("${${key}_RESOLVED_ITEM}"
-            "${${key}_RESOLVED_EMBEDDED_ITEM}")
+          copy_resolved_framework_into_bundle("${${key}_RESOLVED_ITEM}" "${${key}_RESOLVED_EMBEDDED_ITEM}")
         else()
-          copy_resolved_item_into_bundle("${${key}_RESOLVED_ITEM}"
-            "${${key}_RESOLVED_EMBEDDED_ITEM}")
+          copy_resolved_item_into_bundle("${${key}_RESOLVED_ITEM}" "${${key}_RESOLVED_EMBEDDED_ITEM}")
         endif()
       endif()
     endforeach()
@@ -1323,12 +1433,10 @@ function(fixup_bundle app libs dirs)
   message(STATUS "fixup_bundle: done")
 endfunction()
 
-
 function(copy_and_fixup_bundle src dst libs dirs)
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory "${src}" "${dst}")
   fixup_bundle("${dst}" "${libs}" "${dirs}")
 endfunction()
-
 
 function(verify_bundle_prerequisites bundle result_var info_var)
   set(result 1)
@@ -1338,58 +1446,58 @@ function(verify_bundle_prerequisites bundle result_var info_var)
   set(options)
   set(oneValueArgs)
   set(multiValueArgs IGNORE_ITEM)
-  cmake_parse_arguments(CFG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(CFG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   get_bundle_main_executable("${bundle}" main_bundle_exe)
 
   get_bundle_all_executables("${bundle}" file_list)
   foreach(f ${file_list})
-      get_filename_component(exepath "${f}" PATH)
-      math(EXPR count "${count} + 1")
+    get_filename_component(exepath "${f}" PATH)
+    math(EXPR count "${count} + 1")
 
-      message(STATUS "executable file ${count}: ${f}")
+    message(STATUS "executable file ${count}: ${f}")
 
-      set(prereqs "")
-      get_filename_component(prereq_filename ${f} NAME)
+    set(prereqs "")
+    get_filename_component(prereq_filename ${f} NAME)
 
-      if(NOT prereq_filename IN_LIST CFG_IGNORE_ITEM)
-        get_item_rpaths(${f} _main_exe_rpaths)
-        get_prerequisites("${f}" prereqs 1 1 "${exepath}" "${_main_exe_rpaths}")
+    if(NOT prereq_filename IN_LIST CFG_IGNORE_ITEM)
+      get_item_rpaths(${f} _main_exe_rpaths)
+      get_prerequisites("${f}" prereqs 1 1 "${exepath}" "${_main_exe_rpaths}")
 
-        # On the Mac,
-        # "embedded" and "system" prerequisites are fine... anything else means
-        # the bundle's prerequisites are not verified (i.e., the bundle is not
-        # really "standalone")
-        #
-        # On Windows (and others? Linux/Unix/...?)
-        # "local" and "system" prereqs are fine...
-        #
+      # On the Mac,
+      # "embedded" and "system" prerequisites are fine... anything else means
+      # the bundle's prerequisites are not verified (i.e., the bundle is not
+      # really "standalone")
+      #
+      # On Windows (and others? Linux/Unix/...?)
+      # "local" and "system" prereqs are fine...
+      #
 
-        set(external_prereqs "")
+      set(external_prereqs "")
 
-        foreach(p ${prereqs})
-          set(p_type "")
-          gp_file_type("${f}" "${p}" p_type)
+      foreach(p ${prereqs})
+        set(p_type "")
+        gp_file_type("${f}" "${p}" p_type)
 
-          if(APPLE)
-            if(NOT p_type STREQUAL "embedded" AND NOT p_type STREQUAL "system")
-              set(external_prereqs ${external_prereqs} "${p}")
-            endif()
-          else()
-            if(NOT p_type STREQUAL "local" AND NOT p_type STREQUAL "system")
-              set(external_prereqs ${external_prereqs} "${p}")
-            endif()
+        if(APPLE)
+          if(NOT p_type STREQUAL "embedded" AND NOT p_type STREQUAL "system")
+            set(external_prereqs ${external_prereqs} "${p}")
           endif()
-        endforeach()
-
-        if(external_prereqs)
-          # Found non-system/somehow-unacceptable prerequisites:
-          set(result 0)
-          set(info ${info} "external prerequisites found:\nf='${f}'\nexternal_prereqs='${external_prereqs}'\n")
+        else()
+          if(NOT p_type STREQUAL "local" AND NOT p_type STREQUAL "system")
+            set(external_prereqs ${external_prereqs} "${p}")
+          endif()
         endif()
-      else()
-        message(STATUS "Ignoring file: ${prereq_filename}")
+      endforeach()
+
+      if(external_prereqs)
+        # Found non-system/somehow-unacceptable prerequisites:
+        set(result 0)
+        set(info ${info} "external prerequisites found:\nf='${f}'\nexternal_prereqs='${external_prereqs}'\n")
       endif()
+    else()
+      message(STATUS "Ignoring file: ${prereq_filename}")
+    endif()
   endforeach()
 
   if(result)
@@ -1399,7 +1507,6 @@ function(verify_bundle_prerequisites bundle result_var info_var)
   set(${result_var} "${result}" PARENT_SCOPE)
   set(${info_var} "${info}" PARENT_SCOPE)
 endfunction()
-
 
 function(verify_bundle_symlinks bundle result_var info_var)
   set(result 1)
@@ -1413,7 +1520,6 @@ function(verify_bundle_symlinks bundle result_var info_var)
   set(${info_var} "${info}" PARENT_SCOPE)
 endfunction()
 
-
 function(verify_app app)
   set(verified 0)
   set(info "")
@@ -1421,9 +1527,10 @@ function(verify_app app)
   set(options)
   set(oneValueArgs)
   set(multiValueArgs IGNORE_ITEM)
-  cmake_parse_arguments(CFG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(CFG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
   get_bundle_and_executable("${app}" bundle executable valid)
+  set(IOS "${IOS}" PARENT_SCOPE)
 
   message(STATUS "===========================================================================")
   message(STATUS "Analyzing app='${app}'")

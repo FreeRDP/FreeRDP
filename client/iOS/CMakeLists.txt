@@ -296,10 +296,7 @@ set(EXTRA_LIBS
 
 set(APP_ICON "${FREERDP_SOURCE_DIR}/resources/FreeRDP_OSX.icns")
 set(RESOURCES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_DIR}/Defaults.plist ${APP_ICON})
-set_source_files_properties(${RESOURCES} PROPERTIES
-    MACOSX_PACKAGE_LOCATION "Resources"
-)
-
+set_source_files_properties(${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
 add_executable(
   ${PROJECT_NAME} MACOSX_BUNDLE
@@ -321,23 +318,20 @@ add_executable(
 add_dependencies(${PROJECT_NAME} freerdp)
 
 set_target_properties(
-  ${PROJECT_NAME} PROPERTIES
-# FOLDER "Client/iOS"
-                           RESOURCE "${RESOURCES}"
-MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
-MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-MACOSX_BUNDLE_COPYRIGHT "Copyright 2013-${VERSION_YEAR}. All Rights Reserved."
-MACOSX_BUNDLE_GUI_IDENTIFIER "com.freerdp.ifreerdp"
-MACOSX_BUNDLE_ICON_FILE "FreeRDP_OSX.icns"
-MACOSX_BUNDLE_INFO_STRING "info string TODO"
-MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION}
-MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+  ${PROJECT_NAME}
+  PROPERTIES # FOLDER "Client/iOS"
+             RESOURCE "${RESOURCES}" MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME} MACOSX_BUNDLE_BUNDLE_VERSION
+                                                                               ${PROJECT_VERSION}
+             MACOSX_BUNDLE_COPYRIGHT "Copyright 2013-${VERSION_YEAR}. All Rights Reserved." MACOSX_BUNDLE_GUI_IDENTIFIER
+                                                                                            "com.freerdp.ifreerdp"
+             MACOSX_BUNDLE_ICON_FILE "FreeRDP_OSX.icns" MACOSX_BUNDLE_INFO_STRING "info string TODO"
+             MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION} MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
 )
 target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
 
 target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS} freerdp3-lib freerdp-client3-lib winpr3-lib)
 
-install(TARGETS ${PROJECT_NAME} BUNDLE DESTINATION . COMPONENT Runtime 
+install(TARGETS ${PROJECT_NAME} BUNDLE DESTINATION . COMPONENT Runtime
         RUNTIME DESTINATION ${PROJECT_NAME}.app/${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         ARCHIVE DESTINATION ${PROJECT_NAME}.app/${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${PROJECT_NAME}.app/${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime

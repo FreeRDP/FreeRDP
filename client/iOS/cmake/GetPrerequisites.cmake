@@ -183,7 +183,6 @@ function(gp_append_unique list_var value)
   endif()
 endfunction()
 
-
 function(is_file_executable file result_var)
   #
   # A file is not executable until proven otherwise:
@@ -221,12 +220,10 @@ function(is_file_executable file result_var)
     endif()
 
     if(file_cmd)
-      execute_process(COMMAND "${file_cmd}" "${file_full}"
-        RESULT_VARIABLE file_rv
-        OUTPUT_VARIABLE file_ov
-        ERROR_VARIABLE file_ev
+      execute_process(
+        COMMAND "${file_cmd}" "${file_full}" RESULT_VARIABLE file_rv OUTPUT_VARIABLE file_ov ERROR_VARIABLE file_ev
         OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
+      )
       if(NOT file_rv STREQUAL "0")
         message(FATAL_ERROR "${file_cmd} failed: ${file_rv}\n${file_ev}")
       endif()
@@ -271,7 +268,6 @@ function(is_file_executable file result_var)
   endif()
 endfunction()
 
-
 function(gp_item_default_embedded_path item default_embedded_path_var)
 
   # On Windows and Linux, "embed" prerequisites in the same directory
@@ -292,22 +288,22 @@ function(gp_item_default_embedded_path item default_embedded_path_var)
     # such same-level-directories inside the bundle.
     #
 
-    if (IOS)
-	    set(path "@executable_path")
-	    if(item MATCHES "[^/]+\\.framework/" OR item MATCHES "\\.dylib$")
-	      set(path "@executable_path/Frameworks")
-	    endif()
+    if(IOS)
+      set(path "@executable_path")
+      if(item MATCHES "[^/]+\\.framework/" OR item MATCHES "\\.dylib$")
+        set(path "@executable_path/Frameworks")
+      endif()
     else()
-	    # By default, embed things right next to the main bundle executable:
-	    #
-	    set(path "@executable_path/../../Contents/MacOS")
+      # By default, embed things right next to the main bundle executable:
+      #
+      set(path "@executable_path/../../Contents/MacOS")
 
-	    # Embed frameworks and .dylibs in the embedded "Frameworks" directory
-	    # (sibling of MacOS):
-	    #
-	    if(item MATCHES "[^/]+\\.framework/" OR item MATCHES "\\.dylib$")
-	      set(path "@executable_path/../Frameworks")
-	    endif()
+      # Embed frameworks and .dylibs in the embedded "Frameworks" directory
+      # (sibling of MacOS):
+      #
+      if(item MATCHES "[^/]+\\.framework/" OR item MATCHES "\\.dylib$")
+        set(path "@executable_path/../Frameworks")
+      endif()
     endif()
   endif()
 
@@ -320,7 +316,6 @@ function(gp_item_default_embedded_path item default_embedded_path_var)
 
   set(${default_embedded_path_var} "${path}" PARENT_SCOPE)
 endfunction()
-
 
 function(gp_resolve_item context item exepath dirs resolved_item_var)
   set(resolved 0)
@@ -415,11 +410,7 @@ function(gp_resolve_item context item exepath dirs resolved_item_var)
   if(NOT resolved)
     if(item MATCHES "[^/]+\\.framework/")
       set(fw "fw-NOTFOUND")
-      find_file(fw "${item}"
-        "~/Library/Frameworks"
-        "/Library/Frameworks"
-        "/System/Library/Frameworks"
-      )
+      find_file(fw "${item}" "~/Library/Frameworks" "/Library/Frameworks" "/System/Library/Frameworks")
       if(fw)
         #message(STATUS "info: 'find_file' found framework (${fw})")
         set(resolved 1)
@@ -433,17 +424,17 @@ function(gp_resolve_item context item exepath dirs resolved_item_var)
   # (Converting simple file names into full path names if found.)
   #
   if(WIN32 AND NOT UNIX)
-  if(NOT resolved)
-    set(ri "ri-NOTFOUND")
-    find_program(ri "${item}" PATHS ${exepath} ${dirs} NO_DEFAULT_PATH)
-    find_program(ri "${item}" PATHS ${exepath} ${dirs})
-    if(ri)
-      #message(STATUS "info: 'find_program' in exepath/dirs (${ri})")
-      set(resolved 1)
-      set(resolved_item "${ri}")
+    if(NOT resolved)
       set(ri "ri-NOTFOUND")
+      find_program(ri "${item}" PATHS ${exepath} ${dirs} NO_DEFAULT_PATH)
+      find_program(ri "${item}" PATHS ${exepath} ${dirs})
+      if(ri)
+        #message(STATUS "info: 'find_program' in exepath/dirs (${ri})")
+        set(resolved 1)
+        set(resolved_item "${ri}")
+        set(ri "ri-NOTFOUND")
+      endif()
     endif()
-  endif()
   endif()
 
   # Provide a hook so that projects can override item resolution
@@ -454,35 +445,37 @@ function(gp_resolve_item context item exepath dirs resolved_item_var)
   endif()
 
   if(NOT resolved)
-    message(STATUS "
+    message(
+      STATUS
+        "
 warning: cannot resolve item '${item}'
 
   possible problems:
     need more directories?
     need to use InstallRequiredSystemLibraries?
     run in install tree instead of build tree?
-")
-#    message(STATUS "
-#******************************************************************************
-#warning: cannot resolve item '${item}'
-#
-#  possible problems:
-#    need more directories?
-#    need to use InstallRequiredSystemLibraries?
-#    run in install tree instead of build tree?
-#
-#    context='${context}'
-#    item='${item}'
-#    exepath='${exepath}'
-#    dirs='${dirs}'
-#    resolved_item_var='${resolved_item_var}'
-#******************************************************************************
-#")
+"
+    )
+    #    message(STATUS "
+    #******************************************************************************
+    #warning: cannot resolve item '${item}'
+    #
+    #  possible problems:
+    #    need more directories?
+    #    need to use InstallRequiredSystemLibraries?
+    #    run in install tree instead of build tree?
+    #
+    #    context='${context}'
+    #    item='${item}'
+    #    exepath='${exepath}'
+    #    dirs='${dirs}'
+    #    resolved_item_var='${resolved_item_var}'
+    #******************************************************************************
+    #")
   endif()
 
   set(${resolved_item_var} "${resolved_item}" PARENT_SCOPE)
 endfunction()
-
 
 function(gp_resolved_file_type original_file file exepath dirs type_var)
   if(ARGC GREATER 5)
@@ -521,7 +514,9 @@ function(gp_resolved_file_type original_file file exepath dirs type_var)
     string(TOLOWER "${resolved_file}" lower)
 
     if(UNIX)
-      if(resolved_file MATCHES "^/*(/lib/|/lib32/|/libx32/|/lib64/|/usr/lib/|/usr/lib32/|/usr/libx32/|/usr/lib64/|/usr/X11R6/|/usr/bin/)")
+      if(resolved_file MATCHES
+         "^/*(/lib/|/lib32/|/libx32/|/lib64/|/usr/lib/|/usr/lib32/|/usr/libx32/|/usr/lib64/|/usr/X11R6/|/usr/bin/)"
+      )
         set(is_system 1)
       endif()
     endif()
@@ -548,26 +543,26 @@ function(gp_resolved_file_type original_file file exepath dirs type_var)
         find_program(CYGPATH_EXECUTABLE cygpath)
 
         if(CYGPATH_EXECUTABLE)
-          execute_process(COMMAND ${CYGPATH_EXECUTABLE} -W
-                          RESULT_VARIABLE env_rv
-                          OUTPUT_VARIABLE env_windir
-                          ERROR_VARIABLE env_ev
-                          OUTPUT_STRIP_TRAILING_WHITESPACE)
+          execute_process(
+            COMMAND ${CYGPATH_EXECUTABLE} -W RESULT_VARIABLE env_rv OUTPUT_VARIABLE env_windir ERROR_VARIABLE env_ev
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+          )
           if(NOT env_rv STREQUAL "0")
             message(FATAL_ERROR "${CYGPATH_EXECUTABLE} -W failed: ${env_rv}\n${env_ev}")
           endif()
-          execute_process(COMMAND ${CYGPATH_EXECUTABLE} -S
-                          RESULT_VARIABLE env_rv
-                          OUTPUT_VARIABLE env_sysdir
-                          ERROR_VARIABLE env_ev
-                          OUTPUT_STRIP_TRAILING_WHITESPACE)
+          execute_process(
+            COMMAND ${CYGPATH_EXECUTABLE} -S RESULT_VARIABLE env_rv OUTPUT_VARIABLE env_sysdir ERROR_VARIABLE env_ev
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+          )
           if(NOT env_rv STREQUAL "0")
             message(FATAL_ERROR "${CYGPATH_EXECUTABLE} -S failed: ${env_rv}\n${env_ev}")
           endif()
           string(TOLOWER "${env_windir}" windir)
           string(TOLOWER "${env_sysdir}" sysroot)
 
-          if(lower MATCHES "^(${sysroot}/sys(tem|wow)|${windir}/sys(tem|wow)|(.*/)*(msvc|api-ms-win-|vcruntime)[^/]+dll)")
+          if(lower MATCHES
+             "^(${sysroot}/sys(tem|wow)|${windir}/sys(tem|wow)|(.*/)*(msvc|api-ms-win-|vcruntime)[^/]+dll)"
+          )
             set(is_system 1)
           endif()
         endif()
@@ -612,7 +607,10 @@ function(gp_resolved_file_type original_file file exepath dirs type_var)
       if(lower MATCHES "^(msvc|api-ms-win-|vcruntime)[^/]+dll" AND is_system)
         message(STATUS "info: non-absolute msvc file '${file}' returning type '${type}'")
       else()
-        message(STATUS "warning: gp_resolved_file_type non-absolute file '${file}' returning type '${type}' -- possibly incorrect")
+        message(
+          STATUS
+            "warning: gp_resolved_file_type non-absolute file '${file}' returning type '${type}' -- possibly incorrect"
+        )
       endif()
     endif()
   endif()
@@ -629,7 +627,6 @@ function(gp_resolved_file_type original_file file exepath dirs type_var)
   #message(STATUS "**")
 endfunction()
 
-
 function(gp_file_type original_file file type_var)
   if(NOT IS_ABSOLUTE "${original_file}")
     message(STATUS "warning: gp_file_type expects absolute full path for first arg original_file")
@@ -643,8 +640,15 @@ function(gp_file_type original_file file type_var)
   set(${type_var} "${type}" PARENT_SCOPE)
 endfunction()
 
-
-function(get_prerequisites target prerequisites_var exclude_system recurse exepath dirs)
+function(
+  get_prerequisites
+  target
+  prerequisites_var
+  exclude_system
+  recurse
+  exepath
+  dirs
+)
   set(verbose 0)
   set(eol_char "E")
   if(ARGC GREATER 6)
@@ -675,32 +679,33 @@ function(get_prerequisites target prerequisites_var exclude_system recurse exepa
     return()
   endif()
 
-  set(gp_cmd_paths ${gp_cmd_paths}
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\14.0;InstallDir]/../../VC/bin"
-    "$ENV{VS140COMNTOOLS}/../../VC/bin"
-    "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\12.0;InstallDir]/../../VC/bin"
-    "$ENV{VS120COMNTOOLS}/../../VC/bin"
-    "C:/Program Files (x86)/Microsoft Visual Studio 12.0/VC/bin"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\11.0;InstallDir]/../../VC/bin"
-    "$ENV{VS110COMNTOOLS}/../../VC/bin"
-    "C:/Program Files (x86)/Microsoft Visual Studio 11.0/VC/bin"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\10.0;InstallDir]/../../VC/bin"
-    "$ENV{VS100COMNTOOLS}/../../VC/bin"
-    "C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\9.0;InstallDir]/../../VC/bin"
-    "$ENV{VS90COMNTOOLS}/../../VC/bin"
-    "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin"
-    "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\8.0;InstallDir]/../../VC/bin"
-    "$ENV{VS80COMNTOOLS}/../../VC/bin"
-    "C:/Program Files/Microsoft Visual Studio 8/VC/BIN"
-    "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/BIN"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\7.1;InstallDir]/../../VC7/bin"
-    "$ENV{VS71COMNTOOLS}/../../VC7/bin"
-    "C:/Program Files/Microsoft Visual Studio .NET 2003/VC7/BIN"
-    "C:/Program Files (x86)/Microsoft Visual Studio .NET 2003/VC7/BIN"
-    )
+  set(gp_cmd_paths
+      ${gp_cmd_paths}
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\14.0;InstallDir]/../../VC/bin"
+      "$ENV{VS140COMNTOOLS}/../../VC/bin"
+      "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin"
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\12.0;InstallDir]/../../VC/bin"
+      "$ENV{VS120COMNTOOLS}/../../VC/bin"
+      "C:/Program Files (x86)/Microsoft Visual Studio 12.0/VC/bin"
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\11.0;InstallDir]/../../VC/bin"
+      "$ENV{VS110COMNTOOLS}/../../VC/bin"
+      "C:/Program Files (x86)/Microsoft Visual Studio 11.0/VC/bin"
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\10.0;InstallDir]/../../VC/bin"
+      "$ENV{VS100COMNTOOLS}/../../VC/bin"
+      "C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin"
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\9.0;InstallDir]/../../VC/bin"
+      "$ENV{VS90COMNTOOLS}/../../VC/bin"
+      "C:/Program Files/Microsoft Visual Studio 9.0/VC/bin"
+      "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/bin"
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\8.0;InstallDir]/../../VC/bin"
+      "$ENV{VS80COMNTOOLS}/../../VC/bin"
+      "C:/Program Files/Microsoft Visual Studio 8/VC/BIN"
+      "C:/Program Files (x86)/Microsoft Visual Studio 8/VC/BIN"
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\7.1;InstallDir]/../../VC7/bin"
+      "$ENV{VS71COMNTOOLS}/../../VC7/bin"
+      "C:/Program Files/Microsoft Visual Studio .NET 2003/VC7/BIN"
+      "C:/Program Files (x86)/Microsoft Visual Studio .NET 2003/VC7/BIN"
+  )
 
   # <setup-gp_tool-vars>
   #
@@ -733,7 +738,7 @@ function(get_prerequisites target prerequisites_var exclude_system recurse exepa
     return()
   endif()
 
-  set(gp_cmd_maybe_filter)      # optional command to pre-filter gp_tool results
+  set(gp_cmd_maybe_filter) # optional command to pre-filter gp_tool results
 
   if(gp_tool MATCHES "ldd$")
     set(gp_cmd_args "")
@@ -743,7 +748,9 @@ function(get_prerequisites target prerequisites_var exclude_system recurse exepa
     set(gp_regex_cmp_count 1)
   elseif(gp_tool MATCHES "otool$")
     set(gp_cmd_args "-L")
-    set(gp_regex "^\t([^\t]+) \\(compatibility version ([0-9]+.[0-9]+.[0-9]+), current version ([0-9]+.[0-9]+.[0-9]+)(, weak)?\\)${eol_char}$")
+    set(gp_regex
+        "^\t([^\t]+) \\(compatibility version ([0-9]+.[0-9]+.[0-9]+), current version ([0-9]+.[0-9]+.[0-9]+)(, weak)?\\)${eol_char}$"
+    )
     set(gp_regex_error "")
     set(gp_regex_fallback "")
     set(gp_regex_cmp_count 3)
@@ -776,7 +783,6 @@ function(get_prerequisites target prerequisites_var exclude_system recurse exepa
     message(STATUS "Valid gp_tool values are dumpbin, ldd, objdump and otool.")
     return()
   endif()
-
 
   if(gp_tool MATCHES "dumpbin$")
     # When running dumpbin, it also needs the "Common7/IDE" directory in the
@@ -816,7 +822,6 @@ function(get_prerequisites target prerequisites_var exclude_system recurse exepa
     set(ENV{LD_LIBRARY_PATH} "${new_ld_env}:$ENV{LD_LIBRARY_PATH}")
   endif()
 
-
   # Track new prerequisites at each new level of recursion. Start with an
   # empty list at each level:
   #
@@ -825,21 +830,21 @@ function(get_prerequisites target prerequisites_var exclude_system recurse exepa
   # Run gp_cmd on the target:
   #
   execute_process(
-    COMMAND ${gp_cmd} ${gp_cmd_args} ${target}
-    ${gp_cmd_maybe_filter}
-    RESULT_VARIABLE gp_rv
-    OUTPUT_VARIABLE gp_cmd_ov
+    COMMAND ${gp_cmd} ${gp_cmd_args} ${target} ${gp_cmd_maybe_filter} RESULT_VARIABLE gp_rv OUTPUT_VARIABLE gp_cmd_ov
     ERROR_VARIABLE gp_ev
-    )
+  )
 
   if(gp_tool MATCHES "dumpbin$")
     # Exclude delay load dependencies under windows (they are listed in dumpbin output after the message below)
     string(FIND "${gp_cmd_ov}" "Image has the following delay load dependencies" gp_delayload_pos)
-    if (${gp_delayload_pos} GREATER -1)
+    if(${gp_delayload_pos} GREATER -1)
       string(SUBSTRING "${gp_cmd_ov}" 0 ${gp_delayload_pos} gp_cmd_ov_no_delayload_deps)
       string(SUBSTRING "${gp_cmd_ov}" ${gp_delayload_pos} -1 gp_cmd_ov_delayload_deps)
-      if (verbose)
-        message(STATUS "GetPrequisites(${target}) : ignoring the following delay load dependencies :\n ${gp_cmd_ov_delayload_deps}")
+      if(verbose)
+        message(
+          STATUS
+            "GetPrequisites(${target}) : ignoring the following delay load dependencies :\n ${gp_cmd_ov_delayload_deps}"
+        )
       endif()
       set(gp_cmd_ov ${gp_cmd_ov_no_delayload_deps})
     endif()
@@ -876,11 +881,8 @@ function(get_prerequisites target prerequisites_var exclude_system recurse exepa
   set(gp_install_id)
   if(gp_tool MATCHES "otool$")
     execute_process(
-      COMMAND ${gp_cmd} -D ${target}
-      RESULT_VARIABLE otool_rv
-      OUTPUT_VARIABLE gp_install_id_ov
-      ERROR_VARIABLE otool_ev
-      )
+      COMMAND ${gp_cmd} -D ${target} RESULT_VARIABLE otool_rv OUTPUT_VARIABLE gp_install_id_ov ERROR_VARIABLE otool_ev
+    )
     if(NOT otool_rv STREQUAL "0")
       message(FATAL_ERROR "otool -D failed: ${otool_rv}\n${otool_ev}")
     endif()
@@ -896,80 +898,80 @@ function(get_prerequisites target prerequisites_var exclude_system recurse exepa
   # Analyze each line for file names that match the regular expression:
   #
   foreach(candidate ${candidates})
-  if("${candidate}" MATCHES "${gp_regex}")
+    if("${candidate}" MATCHES "${gp_regex}")
 
-    # Extract information from each candidate:
-    if(gp_regex_error AND "${candidate}" MATCHES "${gp_regex_error}")
-      string(REGEX REPLACE "${gp_regex_fallback}" "\\1" raw_item "${candidate}")
-    else()
-      string(REGEX REPLACE "${gp_regex}" "\\1" raw_item "${candidate}")
-    endif()
+      # Extract information from each candidate:
+      if(gp_regex_error AND "${candidate}" MATCHES "${gp_regex_error}")
+        string(REGEX REPLACE "${gp_regex_fallback}" "\\1" raw_item "${candidate}")
+      else()
+        string(REGEX REPLACE "${gp_regex}" "\\1" raw_item "${candidate}")
+      endif()
 
-    if(gp_regex_cmp_count GREATER 1)
-      string(REGEX REPLACE "${gp_regex}" "\\2" raw_compat_version "${candidate}")
-      string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\1" compat_major_version "${raw_compat_version}")
-      string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\2" compat_minor_version "${raw_compat_version}")
-      string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\3" compat_patch_version "${raw_compat_version}")
-    endif()
+      if(gp_regex_cmp_count GREATER 1)
+        string(REGEX REPLACE "${gp_regex}" "\\2" raw_compat_version "${candidate}")
+        string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\1" compat_major_version "${raw_compat_version}")
+        string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\2" compat_minor_version "${raw_compat_version}")
+        string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\3" compat_patch_version "${raw_compat_version}")
+      endif()
 
-    if(gp_regex_cmp_count GREATER 2)
-      string(REGEX REPLACE "${gp_regex}" "\\3" raw_current_version "${candidate}")
-      string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\1" current_major_version "${raw_current_version}")
-      string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\2" current_minor_version "${raw_current_version}")
-      string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\3" current_patch_version "${raw_current_version}")
-    endif()
+      if(gp_regex_cmp_count GREATER 2)
+        string(REGEX REPLACE "${gp_regex}" "\\3" raw_current_version "${candidate}")
+        string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\1" current_major_version "${raw_current_version}")
+        string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\2" current_minor_version "${raw_current_version}")
+        string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\3" current_patch_version "${raw_current_version}")
+      endif()
 
-    # Use the raw_item as the list entries returned by this function. Use the
-    # gp_resolve_item function to resolve it to an actual full path file if
-    # necessary.
-    #
-    set(item "${raw_item}")
+      # Use the raw_item as the list entries returned by this function. Use the
+      # gp_resolve_item function to resolve it to an actual full path file if
+      # necessary.
+      #
+      set(item "${raw_item}")
 
-    # Add each item unless it is excluded:
-    #
-    set(add_item 1)
+      # Add each item unless it is excluded:
+      #
+      set(add_item 1)
 
-    if(item STREQUAL gp_install_id)
-      set(add_item 0)
-    endif()
-
-    if(add_item AND ${exclude_system})
-      set(type "")
-      gp_resolved_file_type("${target}" "${item}" "${exepath}" "${dirs}" type "${rpaths}")
-
-      if(type STREQUAL "system")
+      if(item STREQUAL gp_install_id)
         set(add_item 0)
       endif()
-    endif()
 
-    if(add_item)
-      list(LENGTH ${prerequisites_var} list_length_before_append)
-      gp_append_unique(${prerequisites_var} "${item}")
-      list(LENGTH ${prerequisites_var} list_length_after_append)
+      if(add_item AND ${exclude_system})
+        set(type "")
+        gp_resolved_file_type("${target}" "${item}" "${exepath}" "${dirs}" type "${rpaths}")
 
-      if(${recurse})
-        # If item was really added, this is the first time we have seen it.
-        # Add it to unseen_prereqs so that we can recursively add *its*
-        # prerequisites...
-        #
-        # But first: resolve its name to an absolute full path name such
-        # that the analysis tools can simply accept it as input.
-        #
-        if(NOT list_length_before_append EQUAL list_length_after_append)
-          gp_resolve_item("${target}" "${item}" "${exepath}" "${dirs}" resolved_item "${rpaths}")
-          if(EXISTS "${resolved_item}")
-            # Recurse only if we could resolve the item.
-            # Otherwise the prerequisites_var list will be cleared
-            set(unseen_prereqs ${unseen_prereqs} "${resolved_item}")
+        if(type STREQUAL "system")
+          set(add_item 0)
+        endif()
+      endif()
+
+      if(add_item)
+        list(LENGTH ${prerequisites_var} list_length_before_append)
+        gp_append_unique(${prerequisites_var} "${item}")
+        list(LENGTH ${prerequisites_var} list_length_after_append)
+
+        if(${recurse})
+          # If item was really added, this is the first time we have seen it.
+          # Add it to unseen_prereqs so that we can recursively add *its*
+          # prerequisites...
+          #
+          # But first: resolve its name to an absolute full path name such
+          # that the analysis tools can simply accept it as input.
+          #
+          if(NOT list_length_before_append EQUAL list_length_after_append)
+            gp_resolve_item("${target}" "${item}" "${exepath}" "${dirs}" resolved_item "${rpaths}")
+            if(EXISTS "${resolved_item}")
+              # Recurse only if we could resolve the item.
+              # Otherwise the prerequisites_var list will be cleared
+              set(unseen_prereqs ${unseen_prereqs} "${resolved_item}")
+            endif()
           endif()
         endif()
       endif()
+    else()
+      if(verbose)
+        message(STATUS "ignoring non-matching line: '${candidate}'")
+      endif()
     endif()
-  else()
-    if(verbose)
-      message(STATUS "ignoring non-matching line: '${candidate}'")
-    endif()
-  endif()
   endforeach()
 
   list(LENGTH ${prerequisites_var} prerequisites_var_length)
@@ -979,13 +981,20 @@ function(get_prerequisites target prerequisites_var exclude_system recurse exepa
   if(${recurse})
     set(more_inputs ${unseen_prereqs})
     foreach(input ${more_inputs})
-      get_prerequisites("${input}" ${prerequisites_var} ${exclude_system} ${recurse} "${exepath}" "${dirs}" "${rpaths}")
+      get_prerequisites(
+        "${input}"
+        ${prerequisites_var}
+        ${exclude_system}
+        ${recurse}
+        "${exepath}"
+        "${dirs}"
+        "${rpaths}"
+      )
     endforeach()
   endif()
 
   set(${prerequisites_var} ${${prerequisites_var}} PARENT_SCOPE)
 endfunction()
-
 
 function(list_prerequisites target)
   if(ARGC GREATER 1 AND NOT "${ARGV1}" STREQUAL "")
@@ -1037,7 +1046,6 @@ function(list_prerequisites target)
     message(STATUS "${count_str}${d}${type_str}")
   endforeach()
 endfunction()
-
 
 function(list_prerequisites_by_glob glob_arg glob_exp)
   message(STATUS "=============================================================================")
