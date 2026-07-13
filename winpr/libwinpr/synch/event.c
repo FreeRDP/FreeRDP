@@ -125,7 +125,7 @@ void winpr_event_init_from_fd(WINPR_EVENT_IMPL* event, int fd)
 
 BOOL winpr_event_set(WINPR_EVENT_IMPL* event)
 {
-	int ret = 0;
+	SSIZE_T ret = 0;
 	do
 	{
 #ifdef WINPR_HAVE_SYS_EVENTFD_H
@@ -141,7 +141,7 @@ BOOL winpr_event_set(WINPR_EVENT_IMPL* event)
 
 BOOL winpr_event_reset(WINPR_EVENT_IMPL* event)
 {
-	int ret = 0;
+	SSIZE_T ret = 0;
 	do
 	{
 		do
