@@ -3293,7 +3293,7 @@ static BOOL rdp_read_codec_ts_rfx_capset(wLog* log, wStream* s, rdpSettings* set
 	if (blockLen < 6ull)
 	{
 		WLog_Print(log, WLOG_ERROR,
-		           "[MS_RDPRFX] 2.2.1.1.1.1 TS_RFX_CAPSET::blockLen[%" PRIu16 "] < 6", blockLen);
+		           "[MS_RDPRFX] 2.2.1.1.1.1 TS_RFX_CAPSET::blockLen[%" PRIu32 "] < 6", blockLen);
 		return FALSE;
 	}
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, blockLen - 6ull))
