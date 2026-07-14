@@ -495,16 +495,20 @@ bool SdlRail::init(RailClientContext* rail)
 
 	rail->custom = this;
 	rail->ServerExecuteResult = SdlRail::server_execute_result;
-	/* ServerSystemParam: TODO apply the workarea (SPI_SET_WORK_AREA) to maximize bounds. */
+	/* ServerSystemParam not implemented: the server only sends screensaver state here. */
 	rail->ServerLocalMoveSize = SdlRail::server_local_move_size;
 	rail->ServerMinMaxInfo = SdlRail::server_min_max_info;
 	/* Keep default ServerHandshake. */
 
+	WLog_WARN(TAG, "RemoteApp/RAIL support in the SDL client is experimental");
 	const RailPlatformCaps& caps = railPlatformCaps();
-	WLog_INFO(TAG, "RAIL channel initialized: driver=%s positionsReadable=%d transparentWindows=%d",
-	          sdl::utils::isWaylandDriver() ? "wayland"
-	                                        : (sdl::utils::isX11Driver() ? "x11" : "other"),
-	          caps.positionsReadable ? 1 : 0, caps.supportsTransparentWindows ? 1 : 0);
+	WLog_DBG(TAG, "RAIL channel initialized: driver=%s positionsReadable=%d transparentWindows=%d",
+	         sdl::utils::isWaylandDriver() ? "wayland"
+	                                       : (sdl::utils::isX11Driver() ? "x11" : "other"),
+	         caps.positionsReadable ? 1 : 0, caps.supportsTransparentWindows ? 1 : 0);
+	/* Arm _NET_WM_SYNC_REQUEST on X11 for lockstep opaque resizes. */
+	if (caps.positionsReadable)
+		SDL_SetHint(SDL_HINT_VIDEO_X11_ENABLE_XSYNC_EXT, "1");
 	return true;
 }
 
@@ -753,8 +757,6 @@ SdlRailWindow* SdlRail::edgeResizeTarget(SDL_WindowID id)
 	return appWindow;
 }
 
-
-
 /* Start compositor-driven resize. */
 bool SdlRail::beginClientEdgeResize(SdlRailWindow* appWindow, uint16_t edge, SDL_Point grabPos)
 {
@@ -787,16 +789,15 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 	const SDL_Rect rect = { x + i.x, y + i.y, w - i.x - i.w, h - i.y - i.h };
 	/* Report outer frame to server (inflate by margins). */
 	const bool maximized = appWindow->effectivelyMaximized();
-	const SDL_Rect m = appWindow->resizeMargins();
-	const SDL_Rect full = { rect.x - m.x, rect.y - m.y, rect.w + m.x + m.w, rect.h + m.y + m.h };
+	/* ClientWindowMove expects the INNER (visible) rect.
+	 * The server will use this as the new inner geometry and reply with a matching srvgeom. */
+	const SDL_Rect full = rect;
 	RAIL_WINDOW_MOVE_ORDER move = {};
 	move.windowId = static_cast<UINT32>(appWindow->id());
 	move.left = WINPR_ASSERTING_INT_CAST(INT16, full.x);
 	move.top = WINPR_ASSERTING_INT_CAST(INT16, full.y);
 	move.right = WINPR_ASSERTING_INT_CAST(INT16, full.x + full.w);
 	move.bottom = WINPR_ASSERTING_INT_CAST(INT16, full.y + full.h);
-	WLog_DBG(TAG, "move complete id=0x%08" PRIx32 " rect=%d,%d %dx%d maximized=%d", move.windowId,
-	         rect.x, rect.y, rect.w, rect.h, maximized ? 1 : 0);
 	if (!maximized && _rail && _rail->ClientWindowMove &&
 	    (_rail->ClientWindowMove(_rail, &move) != CHANNEL_RC_OK))
 		WLog_WARN(TAG, "ClientWindowMove failed for RAIL window 0x%08" PRIx32, move.windowId);
@@ -930,6 +931,7 @@ void SdlRail::completeLocalMoveIfPending()
 		                                       py);
 	}
 
+	(void)sdl_x11_set_bit_gravity(appWindow->window(), 0 /* forget: back to the default */);
 	reportAndAdopt(appWindow, x, y, w, h);
 }
 

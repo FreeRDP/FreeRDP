@@ -110,6 +110,22 @@ bool sdl_x11_set_frame_extents(SDL_Window* window, int left, int right, int top,
 	return true;
 }
 
+bool sdl_x11_set_bit_gravity(SDL_Window* window, int gravity)
+{
+	const auto [dpy, xwin] = sdl_x11_handles(window);
+	if (!dpy || (xwin == 0))
+		return false;
+
+	/* Which corner the server pins the old contents to while the WM resizes the window; matching
+	 * it to the resize anchor stops the contents flicker-jumping between the server's default
+	 * (top-left) and our repaint during an opaque drag. */
+	XSetWindowAttributes attrs{};
+	attrs.bit_gravity = gravity;
+	XChangeWindowAttributes(dpy, xwin, CWBitGravity, &attrs);
+	XFlush(dpy);
+	return true;
+}
+
 static Window sdl_x11_xwindow(SDL_Window* window)
 {
 	return sdl_x11_handles(window).second;
@@ -169,6 +185,11 @@ bool sdl_x11_begin_move_size(SDL_Window* /*window*/, int /*netDirection*/)
 
 bool sdl_x11_set_frame_extents(SDL_Window* /*window*/, int /*left*/, int /*right*/, int /*top*/,
                                int /*bottom*/)
+{
+	return false;
+}
+
+bool sdl_x11_set_bit_gravity(SDL_Window* /*window*/, int /*gravity*/)
 {
 	return false;
 }
