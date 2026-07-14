@@ -36,6 +36,13 @@ struct s_websocket_context
 	wStream* responseStreamBuffer;
 };
 
+WINPR_ATTR_NODISCARD
+static BOOL Stream_Reset(wStream* s)
+{
+	Stream_ResetPosition(s);
+	return Stream_SetLength(s, Stream_Capacity(s));
+}
+
 static int websocket_write_all(BIO* bio, const BYTE* data, size_t length);
 
 BOOL websocket_context_mask_and_send(BIO* bio, wStream* sPacket, wStream* sDataPacket,
@@ -129,7 +136,6 @@ BOOL websocket_context_write_wstream(websocket_context* context, BIO* bio, wStre
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(sPacket);
 
-	Stream_SealLength(sPacket);
 	const size_t len = Stream_Length(sPacket);
 	uint32_t maskingKey = 0;
 	wStream* sWS = websocket_context_packet_new(len, opcode, &maskingKey);
@@ -188,6 +194,8 @@ int websocket_context_write(websocket_context* context, BIO* bio, const BYTE* bu
 
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, buf, (size_t)isize);
+	if (!Stream_SetLength(s, Stream_Capacity(s)))
+		return -3;
 	if (!websocket_context_write_wstream(context, bio, s, opcode))
 		return -2;
 	return isize;
@@ -309,7 +317,8 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 			if (encodingContext->payloadLength == 0)
 			{
 				websocket_reply_pong(bio, encodingContext, encodingContext->responseStreamBuffer);
-				Stream_ResetPosition(encodingContext->responseStreamBuffer);
+				if (!Stream_Reset(encodingContext->responseStreamBuffer))
+					return -1;
 			}
 		}
 		break;
@@ -319,7 +328,8 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 			if (status < 0)
 				return status;
 			/* We don´t care about pong response data, discard. */
-			Stream_ResetPosition(encodingContext->responseStreamBuffer);
+			if (!Stream_Reset(encodingContext->responseStreamBuffer))
+				return -1;
 		}
 		break;
 		case WebsocketCloseOpcode:
@@ -332,7 +342,8 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 			{
 				websocket_reply_close(bio, encodingContext, encodingContext->responseStreamBuffer);
 				encodingContext->closeSent = TRUE;
-				Stream_ResetPosition(encodingContext->responseStreamBuffer);
+				if (!Stream_Reset(encodingContext->responseStreamBuffer))
+					return -1;
 			}
 		}
 		break;
@@ -342,7 +353,8 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 			status = websocket_read_wstream(bio, encodingContext);
 			if (status < 0)
 				return status;
-			Stream_ResetPosition(encodingContext->responseStreamBuffer);
+			if (!Stream_Reset(encodingContext->responseStreamBuffer))
+				return -1;
 			break;
 	}
 	/* return how many bytes have been written to pBuffer.
@@ -492,5 +504,5 @@ BOOL websocket_context_reset(websocket_context* context)
 	WINPR_ASSERT(context);
 
 	context->state = WebsocketStateOpcodeAndFin;
-	return Stream_SetPosition(context->responseStreamBuffer, 0);
+	return Stream_Reset(context->responseStreamBuffer);
 }
