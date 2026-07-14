@@ -36,7 +36,6 @@ set(MODULE_PREFIX "FREERDP_CLIENT_ANDROID")
 get_filename_component(FREERDP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../.." ABSOLUTE)
 
 include(GNUInstallDirs)
-set(CMAKE_INSTALL_LIBDIR ".")
 
 # Module path for our cmake helpers
 list(APPEND CMAKE_MODULE_PATH "${FREERDP_SOURCE_DIR}/client/Android/cmake")
@@ -67,7 +66,7 @@ set(${MODULE_PREFIX}_SRCS
 
 add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
 
-add_dependencies(${MODULE_NAME} freerdp)
+add_dependencies(${MODULE_NAME} copyLibs)
 
 find_library(log-lib log)
 find_library(dl-lib dl)
