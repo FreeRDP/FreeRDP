@@ -495,7 +495,6 @@ static BOOL ntlm_write_message_integrity_check(wStream* s, size_t offset, const 
 SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
-	size_t length = 0;
 	const NTLM_NEGOTIATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
@@ -505,20 +504,21 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	WINPR_ASSERT(message);
 
 	*message = empty;
+	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 
 	wStream* s = Stream_StaticConstInit(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
 
 	if (!s)
-		return SEC_E_INTERNAL_ERROR;
+		goto fail;
 
 	if (!ntlm_read_message_header(s, &message->header, MESSAGE_TYPE_NEGOTIATE))
-		return SEC_E_INVALID_TOKEN;
+		goto fail;
 
 	if (!ntlm_read_negotiate_flags(s, &message->NegotiateFlags,
 	                               NTLMSSP_REQUEST_TARGET | NTLMSSP_NEGOTIATE_NTLM |
 	                                   NTLMSSP_NEGOTIATE_UNICODE,
 	                               "NTLM_NEGOTIATE_MESSAGE"))
-		return SEC_E_INVALID_TOKEN;
+		goto fail;
 
 	context->NegotiateFlags = message->NegotiateFlags;
 
@@ -526,34 +526,35 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	// if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED)
 	{
 		if (!ntlm_read_message_fields(s, &(message->DomainName))) /* DomainNameFields (8 bytes) */
-			return SEC_E_INVALID_TOKEN;
+			goto fail;
 	}
 
 	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
 	// if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED)
 	{
 		if (!ntlm_read_message_fields(s, &(message->Workstation))) /* WorkstationFields (8 bytes) */
-			return SEC_E_INVALID_TOKEN;
+			goto fail;
 	}
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{
 		if (!ntlm_read_version_info(s, &(message->Version))) /* Version (8 bytes) */
-			return SEC_E_INVALID_TOKEN;
+			goto fail;
 	}
 
 	if (!ntlm_read_message_fields_buffer(s, &message->DomainName))
-		return SEC_E_INVALID_TOKEN;
+		goto fail;
 
 	if (!ntlm_read_message_fields_buffer(s, &message->Workstation))
-		return SEC_E_INVALID_TOKEN;
+		goto fail;
 
-	length = Stream_GetPosition(s);
+	const size_t length = Stream_GetPosition(s);
 	WINPR_ASSERT(length <= UINT32_MAX);
 	buffer->cbBuffer = (ULONG)length;
 
+	status = SEC_E_INTERNAL_ERROR;
 	if (!sspi_SecBufferAlloc(&context->NegotiateMessage, (ULONG)length))
-		return SEC_E_INTERNAL_ERROR;
+		goto fail;
 
 	CopyMemory(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
 	context->NegotiateMessage.BufferType = buffer->BufferType;
@@ -562,6 +563,12 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 #endif
 	ntlm_change_state(context, NTLM_STATE_CHALLENGE);
 	return SEC_I_CONTINUE_NEEDED;
+
+fail:
+	ntlm_free_message_fields_buffer(&message->DomainName);
+	ntlm_free_message_fields_buffer(&message->Workstation);
+	*message = empty;
+	return status;
 }
 
 SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* buffer)
