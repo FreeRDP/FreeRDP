@@ -3,7 +3,7 @@ include(DepVersions)
 
 ExternalProject_Add(
   opus SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/opus
-  URL https://github.com/xiph/opus/archive/refs/tags/${OPUS_VERSION}.tar.gz URL_HASH ${OPUS_HASH}
+  URL https://github.com/xiph/opus/releases/download/v${OPUS_VERSION}/opus-${OPUS_VERSION}.tar.gz URL_HASH ${OPUS_HASH}
   DOWNLOAD_EXTRACT_TIMESTAMP OFF LIST_SEPARATOR |
   CMAKE_ARGS ${ANDROID_CMAKE_ARGS} -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
              -DCMAKE_INSTALL_LIBDIR:STRING=${CMAKE_INSTALL_LIBDIR} -DOPUS_BUILD_PROGRAMS:BOOL=OFF
