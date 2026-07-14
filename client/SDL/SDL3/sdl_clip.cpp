@@ -595,6 +595,29 @@ UINT sdlClip::ReceiveFormatListResponse(WINPR_ATTR_UNUSED CliprdrClientContext* 
 	return CHANNEL_RC_OK;
 }
 
+[[nodiscard]]
+static const char* getCurrentTextMime()
+{
+
+	for (auto m : s_mime_text())
+	{
+		if (SDL_HasClipboardData(m))
+			return m;
+	}
+	return nullptr;
+}
+
+[[nodiscard]]
+static const char* getCurrentImageMime()
+{
+	for (auto m : s_mime_image())
+	{
+		if (SDL_HasClipboardData(m))
+			return m;
+	}
+	return nullptr;
+}
+
 std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
     sdlClip* clipboard, const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest, uint32_t& len)
 {
@@ -626,8 +649,10 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 		case CF_TEXT:
 		case CF_OEMTEXT:
 		case CF_UNICODETEXT:
-			localFormatId = ClipboardGetFormatId(clipboard->_system, mime_text_plain);
-			mime = mime_text_utf8;
+			mime = getCurrentTextMime();
+			if (!mime)
+				return {};
+			localFormatId = ClipboardGetFormatId(clipboard->_system, mime);
 			break;
 
 		case CF_DIB:
@@ -651,15 +676,9 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 				/* In case HTML format was requested but we only have images in local clipboard */
 				if (!SDL_HasClipboardData(s_mime_html))
 				{
-					for (const auto& cmime : s_mime_image())
-					{
-						if (SDL_HasClipboardData(cmime))
-						{
-							localFormatId = ClipboardGetFormatId(clipboard->_system, cmime);
-							mime = cmime;
-							break;
-						}
-					}
+					mime = getCurrentImageMime();
+					if (mime)
+						localFormatId = ClipboardGetFormatId(clipboard->_system, mime);
 				}
 				else
 				{
@@ -678,6 +697,7 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 				else
 					return data;
 			}
+			break;
 	}
 
 	{
