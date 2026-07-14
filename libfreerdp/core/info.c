@@ -19,6 +19,7 @@
  * limitations under the License.
  */
 
+#include <winpr/wtypes.h>
 #include <freerdp/config.h>
 
 #include "settings.h"
@@ -41,8 +42,22 @@
 #define logonInfoV2ReservedSize 558u
 #define logonInfoV2TotalSize (logonInfoV2Size + logonInfoV2ReservedSize)
 
-static const char* INFO_TYPE_LOGON_STRINGS[4] = { "Logon Info V1", "Logon Info V2",
-	                                              "Logon Plain Notify", "Logon Extended Info" };
+const char* freerdp_session_logon_type_str(uint32_t type)
+{
+	switch (type)
+	{
+		case INFO_TYPE_LOGON:
+			return "Logon Info V1";
+		case INFO_TYPE_LOGON_LONG:
+			return "Logon Info V2";
+		case INFO_TYPE_LOGON_PLAIN_NOTIFY:
+			return "Logon Plain Notify";
+		case INFO_TYPE_LOGON_EXTENDED_INF:
+			return "Logon Extended Info";
+		default:
+			return "INFO_TYPE_UNKNOWN";
+	}
+}
 
 /* This define limits the length of the strings in the label field. */
 #define MAX_LABEL_LENGTH 40
@@ -1406,8 +1421,8 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 
 	if (!status)
 	{
-		WLog_DBG(TAG, "SaveSessionInfo error: infoType: %s (%" PRIu32 ")",
-		         infoType < 4 ? INFO_TYPE_LOGON_STRINGS[infoType % 4] : "Unknown", infoType);
+		WLog_WARN(TAG, "SaveSessionInfo error: infoType: %s (%" PRIu32 ")",
+		          freerdp_session_logon_type_str(infoType), infoType);
 	}
 
 	return status;
