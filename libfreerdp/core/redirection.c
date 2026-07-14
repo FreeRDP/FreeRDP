@@ -722,9 +722,6 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		if (!rdp_redirection_read_data(LB_LOAD_BALANCE_INFO, s, &redirection->LoadBalanceInfoLength,
 		                               &redirection->LoadBalanceInfo))
 			return STATE_RUN_FAILED;
-		if (!winpr_str_is_valid_urlN((const char*)redirection->LoadBalanceInfo,
-		                             redirection->LoadBalanceInfoLength))
-			return STATE_RUN_FAILED;
 	}
 
 	if (redirection->flags & LB_USERNAME)
@@ -817,8 +814,6 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_redirection_read_data(LB_CLIENT_TSV_URL, s, &redirection->TsvUrlLength,
 		                               &redirection->TsvUrl))
-			return STATE_RUN_FAILED;
-		if (!winpr_str_is_valid_urlN((const char*)redirection->TsvUrl, redirection->TsvUrlLength))
 			return STATE_RUN_FAILED;
 	}
 
