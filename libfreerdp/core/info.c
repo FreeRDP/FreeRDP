@@ -19,6 +19,7 @@
  * limitations under the License.
  */
 
+#include <winpr/wtypes.h>
 #include <freerdp/config.h>
 
 #include "settings.h"
@@ -41,8 +42,22 @@
 #define logonInfoV2ReservedSize 558u
 #define logonInfoV2TotalSize (logonInfoV2Size + logonInfoV2ReservedSize)
 
-static const char* INFO_TYPE_LOGON_STRINGS[4] = { "Logon Info V1", "Logon Info V2",
-	                                              "Logon Plain Notify", "Logon Extended Info" };
+const char* freerdp_session_logon_type_str(uint32_t type)
+{
+	switch (type)
+	{
+		case INFO_TYPE_LOGON:
+			return "Logon Info V1";
+		case INFO_TYPE_LOGON_LONG:
+			return "Logon Info V2";
+		case INFO_TYPE_LOGON_PLAIN_NOTIFY:
+			return "Logon Plain Notify";
+		case INFO_TYPE_LOGON_EXTENDED_INF:
+			return "Logon Extended Info";
+		default:
+			return "INFO_TYPE_UNKNOWN";
+	}
+}
 
 /* This define limits the length of the strings in the label field. */
 #define MAX_LABEL_LENGTH 40
@@ -1351,9 +1366,8 @@ static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex*
 BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 {
 	UINT32 infoType = 0;
-	BOOL status = 0;
-	logon_info logonInfo = WINPR_C_ARRAY_INIT;
-	logon_info_ex logonInfoEx = WINPR_C_ARRAY_INIT;
+	BOOL status = FALSE;
+
 	rdpContext* context = rdp->context;
 	rdpUpdate* update = rdp->context->update;
 
@@ -1365,22 +1379,28 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 	switch (infoType)
 	{
 		case INFO_TYPE_LOGON:
+		{
+			logon_info logonInfo = WINPR_C_ARRAY_INIT;
 			status = rdp_recv_logon_info_v1(rdp, s, &logonInfo);
 
 			if (status && update->SaveSessionInfo)
 				status = update->SaveSessionInfo(context, infoType, &logonInfo);
 
 			rdp_free_logon_info(&logonInfo);
-			break;
+		}
+		break;
 
 		case INFO_TYPE_LOGON_LONG:
+		{
+			logon_info logonInfo = WINPR_C_ARRAY_INIT;
 			status = rdp_recv_logon_info_v2(rdp, s, &logonInfo);
 
 			if (status && update->SaveSessionInfo)
 				status = update->SaveSessionInfo(context, infoType, &logonInfo);
 
 			rdp_free_logon_info(&logonInfo);
-			break;
+		}
+		break;
 
 		case INFO_TYPE_LOGON_PLAIN_NOTIFY:
 			status = rdp_recv_logon_plain_notify(rdp, s);
@@ -1391,23 +1411,25 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 			break;
 
 		case INFO_TYPE_LOGON_EXTENDED_INF:
+		{
+			logon_info_ex logonInfoEx = WINPR_C_ARRAY_INIT;
 			status = rdp_recv_logon_info_extended(rdp, s, &logonInfoEx);
 
 			if (status && update->SaveSessionInfo)
 				status = update->SaveSessionInfo(context, infoType, &logonInfoEx);
-
-			break;
+		}
+		break;
 
 		default:
-			WLog_ERR(TAG, "Unhandled saveSessionInfo type 0x%" PRIx32 "", infoType);
+			WLog_WARN(TAG, "Unhandled saveSessionInfo type 0x%" PRIx32 "", infoType);
 			status = TRUE;
 			break;
 	}
 
 	if (!status)
 	{
-		WLog_DBG(TAG, "SaveSessionInfo error: infoType: %s (%" PRIu32 ")",
-		         infoType < 4 ? INFO_TYPE_LOGON_STRINGS[infoType % 4] : "Unknown", infoType);
+		WLog_WARN(TAG, "SaveSessionInfo error: infoType: %s (%" PRIu32 ")",
+		          freerdp_session_logon_type_str(infoType), infoType);
 	}
 
 	return status;
