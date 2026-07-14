@@ -214,6 +214,9 @@ class SdlRailWindow
 	bool _mapped = false;          /* shown at least once (one-shot show+raise) */
 	bool _localMoveActive = false; /* WM move/resize in progress: ignore server geometry + input */
 	bool _localMoveIsResize = false;          /* local move is a resize vs a move */
+	/* Set when a local move is adopted: ignore the server's self-echo (same origin, often inflated
+	 * by its resize margin) until a genuine, differently-positioned server move arrives. */
+	bool _awaitingMoveEcho = false;
 	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */
 	bool _resizeAnchorBottom = false; /* anchor stale frame to the bottom edge (top-side resize) */
 	SDL_Rect _extentsApplied = { 0, 0, 0, 0 }; /* band insets last mirrored to the WM */

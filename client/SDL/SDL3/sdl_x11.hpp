@@ -44,3 +44,7 @@ bool sdl_x11_restack_windows(const std::vector<SDL_Window*>& topToBottom);
  * snaps/tiles/maximizes the window minus these extents, so the invisible resize band overlaps
  * neighbours instead of leaving gaps. Zero extents clear the declaration. */
 bool sdl_x11_set_frame_extents(SDL_Window* window, int left, int right, int top, int bottom);
+
+/* Pin the old window contents to an X gravity corner (NorthWestGravity=1 ... SouthEastGravity=9,
+ * 0 = forget) while the WM resizes; keeps the anchored edge steady during opaque drags. */
+bool sdl_x11_set_bit_gravity(SDL_Window* window, int gravity);

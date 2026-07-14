@@ -82,9 +82,23 @@ SDL_Renderer* SdlRailWindow::renderer() const
 void SdlRailWindow::updateWindowRect(const SDL_Rect& rect)
 {
 	std::unique_lock lock(_gfxLock);
-	/* Ignore server updates during local WM move. */
 	if (_localMoveActive)
+	{
 		return;
+	}
+	if (_awaitingMoveEcho)
+	{
+		if (SDL_RectsEqual(&rect, &_windowRect))
+			_awaitingMoveEcho = false; /* server converged to the geometry we adopted: resume */
+		else
+		{
+			/* The server has not converged to the geometry we adopted from the WM. It re-echoes the
+			 * window inflated by its resize margin (would grow it each move) or, where WM positions
+			 * are unreliable (Xwayland), at a stale origin (would snap it back). Keep the adopted
+			 * geometry until the server agrees; the next local move resets this. */
+			return;
+		}
+	}
 	/* A resize recreates the render target, so the content needs a full re-copy. */
 	if ((rect.w != _windowRect.w) || (rect.h != _windowRect.h))
 		_painted = false;
@@ -99,7 +113,10 @@ void SdlRailWindow::setLocalMoveActive(bool active)
 	std::unique_lock lock(_gfxLock);
 	_localMoveActive = active;
 	if (active)
+	{
 		_localMoveIsResize = false; /* default to move; setResizeAnchor marks a resize */
+		_awaitingMoveEcho = false;  /* a fresh drag supersedes any pending echo suppression */
+	}
 }
 
 void SdlRailWindow::setResizeAnchor(bool right, bool bottom)
@@ -120,9 +137,20 @@ void SdlRailWindow::adoptLocalGeometry(const SDL_Rect& rect)
 {
 	/* Adopt local geometry so the server's echoing WINDOW_ORDER is a no-op (not a size snap). */
 	std::unique_lock lock(_gfxLock);
+	/* Translate the (frozen) visible offset by the move delta so the layered clip's
+	 * (_visOffset - _windowRect) is preserved across the move - a rigid translation keeps it. */
+	if (_visOffsetSet)
+	{
+		_visOffset.x += rect.x - _windowRect.x;
+		_visOffset.y += rect.y - _windowRect.y;
+	}
 	_windowRect = rect;
 	_geometryDirty = false;
 	_localMoveActive = false;
+	/* The echo-suppression gate is an X11-only fix for the move position desync (server echoes a
+	 * drifted origin). On Wayland it must NOT arm: server geometry there is authoritative (resize,
+	 * maximize/restore) and suppressing it freezes the window at the adopted size. */
+	_awaitingMoveEcho = railPlatformCaps().positionsReadable;
 	/* Repaint real content (clear placeholder). */
 	if (_hasGfx)
 		_gfxDamage.assign(1, SDL_Rect{ 0, 0, static_cast<int>(_gfxW), static_cast<int>(_gfxH) });
@@ -156,6 +184,12 @@ void SdlRailWindow::setVisibilityRects(std::vector<SDL_Rect> rects)
 void SdlRailWindow::setVisibleOffset(SDL_Point offset)
 {
 	std::unique_lock lock(_gfxLock);
+	/* While _windowRect is frozen - during a local (WM) move and while awaiting the server to
+	 * converge to the adopted geometry - the visible offset must freeze with it. Otherwise the
+	 * layered clip's (_visOffset - _windowRect) shift drifts and the content renders offset from
+	 * where input lands. adoptLocalGeometry keeps the two in step across the move. */
+	if (_localMoveActive || _awaitingMoveEcho)
+		return;
 	if (_visOffsetSet && (offset.x == _visOffset.x) && (offset.y == _visOffset.y))
 		return;
 	_visOffset = offset;
@@ -366,6 +400,9 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 		Uint32 flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_HIDDEN;
 		if (caps.supportsTransparentWindows)
 			flags |= SDL_WINDOW_TRANSPARENT;
+		/* Use OpenGL for _NET_WM_SYNC_REQUEST X11 resize sync. */
+		if (caps.positionsReadable)
+			flags |= SDL_WINDOW_OPENGL;
 		_win = std::make_unique<SdlWindow>(
 		    SdlWindow::create(SDL_GetPrimaryDisplay(), _title, flags, vis));
 	}
@@ -781,9 +818,10 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 	if (localResize)
 	{
 		/* Anchor the stale frame to the fixed corner. */
-		const SDL_Point off = { _resizeAnchorRight ? (ww - bi.w - static_cast<int>(_gfxW)) : bi.x,
-			                    _resizeAnchorBottom ? (wh - bi.h - static_cast<int>(_gfxH))
-			                                        : bi.y };
+		const SDL_Point off = {
+			_resizeAnchorRight ? (ww - bi.w - static_cast<int>(_gfxW)) : bi.x,
+			_resizeAnchorBottom ? (wh - bi.h - static_cast<int>(_gfxH)) : bi.y
+		};
 		/* The "awaiting content" dashes only during a real edge/band resize; a MOVE whose size
 		 * the WM changed (snap, untile restore) just shows the clipped stale frame - dashes there
 		 * would read as a resize the user never started. */
