@@ -49,9 +49,7 @@ ExternalProject_Add(
   DOWNLOAD_EXTRACT_TIMESTAMP OFF
   SOURCE_DIR ${FREERDP_SOURCE_DIR}
   LIST_SEPARATOR |
-  CMAKE_ARGS ${ANDROID_CMAKE_ARGS} -DCMAKE_INSTALL_PREFIX:PATH=${DEPS_INSTALL_DIR}
-             -DCMAKE_INSTALL_LIBDIR:STRING=${CMAKE_INSTALL_LIBDIR} -DCMAKE_PREFIX_PATH:PATH=${FREERDP_PREFIX_PATH}
-             ${FREERDP_EXTRA_CMAKE_ARGS}
+  CMAKE_ARGS ${ANDROID_CMAKE_ARGS} -DCMAKE_PREFIX_PATH:PATH=${FREERDP_PREFIX_PATH} ${FREERDP_EXTRA_CMAKE_ARGS}
   DEPENDS ${ANDROID_NATIVE_DEPS}
   # Tell Ninja these files are produced by this ExternalProject so it
   # doesn't complain about missing inputs when linking freerdp-android.so
@@ -61,25 +59,28 @@ ExternalProject_Add(
     ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libwinpr3.so
 )
 
-file(MAKE_DIRECTORY ${DEPS_INSTALL_DIR}/include ${DEPS_INSTALL_DIR}/include/freerdp3 ${DEPS_INSTALL_DIR}/include/winpr3)
+file(MAKE_DIRECTORY ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}
+     ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/freerdp3 ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/winpr3
+)
 
 add_library(freerdp3-lib SHARED IMPORTED GLOBAL)
 set_target_properties(
   freerdp3-lib PROPERTIES IMPORTED_LOCATION "${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libfreerdp3.so"
-                          INTERFACE_INCLUDE_DIRECTORIES "${DEPS_INSTALL_DIR}/include/freerdp3"
+                          INTERFACE_INCLUDE_DIRECTORIES "${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/freerdp3"
 )
 add_dependencies(freerdp3-lib freerdp)
 
 add_library(freerdp-client3-lib SHARED IMPORTED GLOBAL)
 set_target_properties(
-  freerdp-client3-lib PROPERTIES IMPORTED_LOCATION "${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libfreerdp-client3.so"
-                                 INTERFACE_INCLUDE_DIRECTORIES "${DEPS_INSTALL_DIR}/include/freerdp3"
+  freerdp-client3-lib
+  PROPERTIES IMPORTED_LOCATION "${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libfreerdp-client3.so"
+             INTERFACE_INCLUDE_DIRECTORIES "${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/freerdp3"
 )
 add_dependencies(freerdp-client3-lib freerdp)
 
 add_library(winpr3-lib SHARED IMPORTED GLOBAL)
 set_target_properties(
   winpr3-lib PROPERTIES IMPORTED_LOCATION "${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libwinpr3.so"
-                        INTERFACE_INCLUDE_DIRECTORIES "${DEPS_INSTALL_DIR}/include/winpr3"
+                        INTERFACE_INCLUDE_DIRECTORIES "${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/winpr3"
 )
 add_dependencies(winpr3-lib freerdp)
