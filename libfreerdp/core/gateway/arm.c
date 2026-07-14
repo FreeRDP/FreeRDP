@@ -686,7 +686,10 @@ static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAdd
 		}
 
 		if (!winpr_str_is_valid_url(addr))
+		{
+			WLog_ERR(TAG, "TargetNetAddress[%" PRIuz "]: %s not an URL or IP", j, addr);
 			return FALSE;
+		}
 
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 		                                        (*pAddressIdx)++, addr))
@@ -727,7 +730,10 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 				}
 
 				if (!utils_is_valid_ip(publicIp))
+				{
+					WLog_ERR(TAG, "publicIpAddress value %s: not a valid IP", publicIp);
 					return FALSE;
+				}
 
 				if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 				                                        (*pAddressIdx)++, publicIp))
@@ -748,7 +754,10 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 					return FALSE;
 				}
 				if (!utils_is_valid_ip(privateIp))
+				{
+					WLog_ERR(TAG, "privateIpAddress value %s: not a valid IP", privateIp);
 					return FALSE;
+				}
 
 				if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 				                                        (*pAddressIdx)++, privateIp))
