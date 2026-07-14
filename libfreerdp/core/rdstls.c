@@ -33,8 +33,8 @@
 #include "transport.h"
 #include "utils.h"
 
-#define RDSTLS_VERSION_1 0x01
-#define RDSTLS_VERSION_2 0x02
+#define RDSTLS_VERSION_1 0x01u
+#define RDSTLS_VERSION_2 0x02u
 
 #define RDSTLS_TYPE_CAPABILITIES 0x01
 #define RDSTLS_TYPE_AUTHREQ 0x02
@@ -77,8 +77,10 @@ struct rdp_rdstls
 
 	RDSTLS_RESULT_CODE resultCode;
 	wLog* log;
+	uint16_t supportedVersions;
 };
 
+WINPR_ATTR_NODISCARD
 static const char* rdstls_result_code_str(UINT32 resultCode)
 {
 	switch (resultCode)
@@ -103,6 +105,27 @@ static const char* rdstls_result_code_str(UINT32 resultCode)
 			return "RDSTLS_RESULT_UNKNOWN";
 	}
 }
+
+#define rdstls_required_role_is_server(rdstls, isServer) \
+	rdstls_required_role_is_server_((rdstls), (isServer), __FILE__, __func__, __LINE__)
+
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_required_role_is_server_(const rdpRdstls* rdstls, BOOL isServer,
+                                            const char* file, const char* fkt, size_t line)
+{
+	WINPR_ASSERT(rdstls);
+	const BOOL rc = rdstls->server == isServer;
+	if (!rc)
+	{
+		const DWORD level = WLOG_ERROR;
+		if (WLog_IsLevelActive(rdstls->log, level))
+			WLog_PrintTextMessage(rdstls->log, level, line, file, fkt,
+			                      "Message not allowed in current role '%s'",
+			                      rdstls->server ? "server" : "client");
+	}
+	return rc;
+}
+
 /**
  * Create new RDSTLS state machine.
  *
@@ -128,6 +151,7 @@ rdpRdstls* rdstls_new(rdpContext* context, rdpTransport* transport)
 	rdstls->transport = transport;
 	rdstls->server = settings->ServerMode;
 
+	rdstls->resultCode = RDSTLS_RESULT_ACCESS_DENIED;
 	rdstls->state = RDSTLS_STATE_INITIAL;
 
 	return rdstls;
@@ -143,6 +167,7 @@ void rdstls_free(rdpRdstls* rdstls)
 	free(rdstls);
 }
 
+WINPR_ATTR_NODISCARD
 static const char* rdstls_get_state_str(RDSTLS_STATE state)
 {
 	switch (state)
@@ -162,12 +187,14 @@ static const char* rdstls_get_state_str(RDSTLS_STATE state)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static RDSTLS_STATE rdstls_get_state(rdpRdstls* rdstls)
 {
 	WINPR_ASSERT(rdstls);
 	return rdstls->state;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL check_transition(wLog* log, RDSTLS_STATE current, RDSTLS_STATE expected,
                              RDSTLS_STATE requested)
 {
@@ -182,6 +209,7 @@ static BOOL check_transition(wLog* log, RDSTLS_STATE current, RDSTLS_STATE expec
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_set_state(rdpRdstls* rdstls, RDSTLS_STATE state)
 {
 	BOOL rc = FALSE;
@@ -220,18 +248,44 @@ static BOOL rdstls_set_state(rdpRdstls* rdstls, RDSTLS_STATE state)
 	return rc;
 }
 
+#define rdstls_check_state_requirements(rdstls, expected) \
+	rdstls_check_state_requirements_((rdstls), (expected), __FILE__, __func__, __LINE__)
+
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_check_state_requirements_(rdpRdstls* rdstls, RDSTLS_STATE expected,
+                                             const char* file, const char* fkt, size_t line)
+{
+	const RDSTLS_STATE current = rdstls_get_state(rdstls);
+	if (current == expected)
+		return TRUE;
+
+	WINPR_ASSERT(rdstls);
+
+	const DWORD log_level = WLOG_ERROR;
+	if (WLog_IsLevelActive(rdstls->log, log_level))
+		WLog_PrintTextMessage(rdstls->log, log_level, line, file, fkt,
+		                      "Unexpected rdstls state %s [%u], expected %s [%u]",
+		                      rdstls_get_state_str(current), current,
+		                      rdstls_get_state_str(expected), expected);
+
+	return FALSE;
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_write_capabilities(WINPR_ATTR_UNUSED rdpRdstls* rdstls, wStream* s)
 {
-	if (!Stream_EnsureRemainingCapacity(s, 6))
+	if (!Stream_EnsureRemainingCapacity(s, 8))
 		return FALSE;
 
+	Stream_Write_UINT16(s, rdstls->supportedVersions);
 	Stream_Write_UINT16(s, RDSTLS_TYPE_CAPABILITIES);
 	Stream_Write_UINT16(s, RDSTLS_DATA_CAPABILITIES);
-	Stream_Write_UINT16(s, RDSTLS_VERSION_1);
+	Stream_Write_UINT16(s, rdstls->supportedVersions);
 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static SSIZE_T rdstls_write_string(wStream* s, const char* str)
 {
 	const size_t pos = Stream_GetPosition(s);
@@ -267,6 +321,7 @@ static SSIZE_T rdstls_write_string(wStream* s, const char* str)
 	return (SSIZE_T)(Stream_GetPosition(s) - pos);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_write_data(wStream* s, UINT32 length, const BYTE* data)
 {
 	WINPR_ASSERT(data || (length == 0));
@@ -284,10 +339,12 @@ static BOOL rdstls_write_data(wStream* s, UINT32 length, const BYTE* data)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_write_cookie(wStream* s, const ARC_SC_PRIVATE_PACKET* cookie)
 {
 	WINPR_ASSERT(cookie);
-	const uint16_t length = 28;
+	const uint16_t length = sizeof(ARC_SC_PRIVATE_PACKET);
+	WINPR_STATIC_ASSERT(sizeof(ARC_SC_PRIVATE_PACKET) == 28);
 
 	if (!Stream_EnsureRemainingCapacity(s, 2))
 		return FALSE;
@@ -304,10 +361,41 @@ static BOOL rdstls_write_cookie(wStream* s, const ARC_SC_PRIVATE_PACKET* cookie)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_read_cookie(wLog* log, wStream* s, ARC_SC_PRIVATE_PACKET* cookie)
+{
+	WINPR_ASSERT(cookie);
+	const uint16_t length = sizeof(ARC_SC_PRIVATE_PACKET);
+	WINPR_STATIC_ASSERT(sizeof(ARC_SC_PRIVATE_PACKET) == 28);
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, length + 2ull))
+		return FALSE;
+
+	const uint16_t len = Stream_Get_UINT16(s);
+	if (len != length)
+	{
+		WLog_Print(log, WLOG_ERROR,
+		           "RDSTLS Cookie: Unexpected length %" PRIu16 ",  expected %" PRIu16, len, length);
+		return FALSE;
+	}
+
+	cookie->cbLen = Stream_Get_UINT32(s);
+	cookie->version = Stream_Get_UINT32(s);
+	cookie->logonId = Stream_Get_UINT32(s);
+	Stream_Read(s, cookie->arcRandomBits, sizeof(cookie->arcRandomBits));
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_write_authentication_request_with_password(rdpRdstls* rdstls, wStream* s)
 {
 	WINPR_ASSERT(rdstls);
 	WINPR_ASSERT(rdstls->context);
+
+	if (!rdstls_required_role_is_server(rdstls, FALSE))
+		return FALSE;
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
+		return FALSE;
 
 	WLog_Print(rdstls->log, WLOG_DEBUG, "Writing RDSTLS password authentication message");
 
@@ -335,6 +423,7 @@ static BOOL rdstls_write_authentication_request_with_password(rdpRdstls* rdstls,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_write_authentication_request_with_cookie(WINPR_ATTR_UNUSED rdpRdstls* rdstls,
                                                             WINPR_ATTR_UNUSED wStream* s)
 {
@@ -342,6 +431,11 @@ static BOOL rdstls_write_authentication_request_with_cookie(WINPR_ATTR_UNUSED rd
 	WINPR_ASSERT(rdstls->context);
 
 	WLog_Print(rdstls->log, WLOG_DEBUG, "Writing RDSTLS cookie authentication message");
+
+	if (!rdstls_required_role_is_server(rdstls, FALSE))
+		return FALSE;
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
+		return FALSE;
 
 	rdpSettings* settings = rdstls->context->settings;
 	WINPR_ASSERT(settings);
@@ -395,6 +489,11 @@ static BOOL rdstls_write_authentication_request_with_fedauth_token(rdpRdstls* rd
 
 	WLog_Print(rdstls->log, WLOG_DEBUG, "Writing RDSTLS FedAuth token authentication message");
 
+	if (!rdstls_required_role_is_server(rdstls, FALSE))
+		return FALSE;
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
+		return FALSE;
+
 	const rdpSettings* settings = rdstls->context->settings;
 	WINPR_ASSERT(settings);
 
@@ -431,9 +530,15 @@ static BOOL rdstls_write_authentication_request_with_fedauth_token(rdpRdstls* rd
 	return Stream_Write_UTF16_String_From_UTF8(s, wideLength, token, utf8Length, TRUE) >= 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_write_authentication_response(rdpRdstls* rdstls, wStream* s)
 {
 	WINPR_ASSERT(rdstls);
+
+	if (!rdstls_required_role_is_server(rdstls, TRUE))
+		return FALSE;
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_RSP))
+		return FALSE;
 	if (!Stream_EnsureRemainingCapacity(s, 8))
 		return FALSE;
 
@@ -444,9 +549,41 @@ static BOOL rdstls_write_authentication_response(rdpRdstls* rdstls, wStream* s)
 	return TRUE;
 }
 
+#define rdstls_is_version_supported(log, version) \
+	rdstls_is_version_supported_((log), (version), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_is_version_supported_(wLog* log, uint16_t version, const char* file,
+                                         const char* fkt, size_t line)
+{
+	switch (version)
+	{
+		case RDSTLS_VERSION_1:
+		case RDSTLS_VERSION_2:
+			return TRUE;
+		default:
+		{
+			const DWORD level = WLOG_ERROR;
+			if (WLog_IsLevelActive(log, level))
+			{
+				WLog_PrintTextMessage(log, WLOG_ERROR, line, file, fkt,
+				                      "received invalid supportedVersions=0x%04" PRIX16
+				                      ", expected { 0x%04" PRIx32 ", 0x%04" PRIx32 "}",
+				                      version, RDSTLS_VERSION_1, RDSTLS_VERSION_2);
+			}
+			return FALSE;
+		}
+	}
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_process_capabilities(rdpRdstls* rdstls, wStream* s)
 {
 	WINPR_ASSERT(rdstls);
+	if (!rdstls_required_role_is_server(rdstls, FALSE))
+		return FALSE;
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_CAPABILITIES))
+		return FALSE;
+
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
 		return FALSE;
 
@@ -460,17 +597,14 @@ static BOOL rdstls_process_capabilities(rdpRdstls* rdstls, wStream* s)
 	}
 
 	const UINT16 supportedVersions = Stream_Get_UINT16(s);
-	if ((supportedVersions & RDSTLS_VERSION_1) == 0)
-	{
-		WLog_Print(rdstls->log, WLOG_ERROR,
-		           "received invalid supportedVersions=0x%04" PRIX16 ", expected 0x%04" PRIX32,
-		           supportedVersions, WINPR_CXX_COMPAT_CAST(UINT32, RDSTLS_VERSION_1));
+	if (!rdstls_is_version_supported(rdstls->log, supportedVersions))
 		return FALSE;
-	}
+	rdstls->supportedVersions = supportedVersions;
 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_read_unicode_string(WINPR_ATTR_UNUSED wLog* log, wStream* s, char** str)
 {
 	WINPR_ASSERT(str);
@@ -485,6 +619,7 @@ static BOOL rdstls_read_unicode_string(WINPR_ATTR_UNUSED wLog* log, wStream* s, 
 
 	if (length <= 2)
 	{
+		*str = nullptr;
 		Stream_Seek(s, length);
 		return TRUE;
 	}
@@ -493,6 +628,7 @@ static BOOL rdstls_read_unicode_string(WINPR_ATTR_UNUSED wLog* log, wStream* s, 
 	return (*str) != nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_read_data(WINPR_ATTR_UNUSED wLog* log, wStream* s, UINT16* pLength,
                              const BYTE** pData)
 {
@@ -521,6 +657,7 @@ static BOOL rdstls_read_data(WINPR_ATTR_UNUSED wLog* log, wStream* s, UINT16* pL
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_cmp_data(wLog* log, const char* field, const BYTE* serverData,
                             const UINT32 serverDataLength, const BYTE* clientData,
                             const UINT16 clientDataLength)
@@ -544,6 +681,7 @@ static BOOL rdstls_cmp_data(wLog* log, const char* field, const BYTE* serverData
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_cmp_str(wLog* log, const char* field, const char* serverStr,
                            const char* clientStr)
 {
@@ -567,10 +705,16 @@ static BOOL rdstls_cmp_str(wLog* log, const char* field, const char* serverStr,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstls, wStream* s)
 {
 	WINPR_ASSERT(rdstls);
 	WINPR_ASSERT(rdstls->context);
+
+	if (!rdstls_required_role_is_server(rdstls, TRUE))
+		return FALSE;
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
+		return FALSE;
 
 	BOOL rc = FALSE;
 
@@ -604,40 +748,150 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 		const char* serverDomain = freerdp_settings_get_string(settings, FreeRDP_Domain);
 		const char* serverPassword = freerdp_settings_get_string(settings, FreeRDP_Password);
 
-		rdstls->resultCode = RDSTLS_RESULT_SUCCESS;
-
 		if (!rdstls_cmp_data(rdstls->log, "RedirectionGuid", serverRedirectionGuid,
 		                     serverRedirectionGuidLength, clientRedirectionGuid,
 		                     clientRedirectionGuidLength))
 			rdstls->resultCode = RDSTLS_RESULT_ACCESS_DENIED;
-
-		if (!rdstls_cmp_str(rdstls->log, "UserName", serverUsername, clientUsername))
+		else if (!rdstls_cmp_str(rdstls->log, "UserName", serverUsername, clientUsername))
 			rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
-
-		if (!rdstls_cmp_str(rdstls->log, "Domain", serverDomain, clientDomain))
+		else if (!rdstls_cmp_str(rdstls->log, "Domain", serverDomain, clientDomain))
 			rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
-
-		if (!rdstls_cmp_str(rdstls->log, "Password", serverPassword, clientPassword))
+		else if (!rdstls_cmp_str(rdstls->log, "Password", serverPassword, clientPassword))
 			rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
+		else
+			rdstls->resultCode = RDSTLS_RESULT_SUCCESS;
 	}
 	rc = TRUE;
 fail:
 	return rc;
 }
 
-static BOOL rdstls_process_authentication_request_with_cookie(WINPR_ATTR_UNUSED rdpRdstls* rdstls,
-                                                              WINPR_ATTR_UNUSED wStream* s)
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_process_authentication_request_with_cookie(rdpRdstls* rdstls, wStream* s)
 {
-	// TODO
-	WLog_Print(rdstls->log, WLOG_ERROR, "TODO: RDSTLS Cookie authentication not implemented");
-	return FALSE;
-}
+	if (!rdstls_required_role_is_server(rdstls, TRUE))
+		return FALSE;
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
+		return FALSE;
 
-static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s)
-{
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 2))
 		return FALSE;
 
+	const rdpSettings* settings = rdstls->context->settings;
+	WINPR_ASSERT(settings);
+
+	const uint32_t id = Stream_Get_UINT32(s);
+	const uint32_t expected = freerdp_settings_get_uint32(settings, FreeRDP_RedirectedSessionId);
+	if (id != expected)
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR,
+		           "RDSTLS Cookie SessionId does not match RedirectedSessionId. Deny access.");
+		return FALSE;
+	}
+
+	ARC_SC_PRIVATE_PACKET cookie = WINPR_C_ARRAY_INIT;
+	if (!rdstls_read_cookie(rdstls->log, s, &cookie))
+		return FALSE;
+
+	const ARC_SC_PRIVATE_PACKET* expect =
+	    freerdp_settings_get_pointer(settings, FreeRDP_ServerAutoReconnectCookie);
+	if (!expect)
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR, "No RDSTLS Cookie provided by server. Deny access.");
+		return FALSE;
+	}
+
+	if (memcmp(expect, &cookie, sizeof(ARC_SC_PRIVATE_PACKET)) != 0)
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR, "RDSTLS Cookie does not match. Deny access.");
+		return FALSE;
+	}
+
+	WLog_Print(rdstls->log, WLOG_DEBUG, "RDSTLS Cookie matches. Grant access.");
+	return FALSE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL
+rdstls_process_authentication_request_with_fedauth_token(WINPR_ATTR_UNUSED rdpRdstls* rdstls,
+                                                         WINPR_ATTR_UNUSED wStream* s)
+{
+	if (!rdstls_required_role_is_server(rdstls, TRUE))
+		return FALSE;
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
+		return FALSE;
+	if ((rdstls->supportedVersions & RDSTLS_VERSION_2) == 0)
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR, "FedAuth token only supported with RDSTLS_VERSION_2");
+		return FALSE;
+	}
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 2))
+		return FALSE;
+	const uint16_t wbytes = Stream_Get_UINT16(s);
+	if (wbytes == 0)
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR, "Empty FedAuth token given by client. Deny access");
+		return FALSE;
+	}
+	if ((wbytes % sizeof(WCHAR)) != 0)
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR,
+		           "Invalid FedAuth token length %" PRIu16 "given by client. Must be even", wbytes);
+		return FALSE;
+	}
+	const size_t wcharlen = wbytes / sizeof(WCHAR);
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, wbytes))
+		return FALSE;
+
+	const rdpSettings* settings = rdstls->context->settings;
+	WINPR_ASSERT(settings);
+
+	size_t len = 0;
+	WCHAR* token =
+	    freerdp_settings_get_string_as_utf16(settings, FreeRDP_EndpointFedAuthToken, &len);
+	if (!token || (len == 0))
+	{
+		free(token);
+		WLog_Print(rdstls->log, WLOG_ERROR,
+		           "No FedAuth token provided by server to compare. Deny access");
+		return FALSE;
+	}
+
+	if (len != wcharlen)
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR, "FedAuth token length does not match. Deny access");
+		free(token);
+		return FALSE;
+	}
+
+	const int rc = memcmp(token, Stream_Pointer(s), len * sizeof(WCHAR));
+	free(token);
+	if (rc != 0)
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR, "FedAuth token does not match. Deny access");
+		return FALSE;
+	}
+
+	WLog_Print(rdstls->log, WLOG_INFO, "FedAuth token does match. Grant access");
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s, uint16_t* pVersion)
+{
+	WINPR_ASSERT(pVersion);
+
+	if (!rdstls_required_role_is_server(rdstls, TRUE))
+		return FALSE;
+
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
+		return FALSE;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 2))
+		return FALSE;
+
+	*pVersion = RDSTLS_VERSION_1;
 	const UINT16 dataType = Stream_Get_UINT16(s);
 	switch (dataType)
 	{
@@ -647,6 +901,10 @@ static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s)
 			break;
 		case RDSTLS_DATA_AUTORECONNECT_COOKIE:
 			if (!rdstls_process_authentication_request_with_cookie(rdstls, s))
+				return FALSE;
+			break;
+		case RDSTLS_DATA_FEDAUTH_TOKEN:
+			if (!rdstls_process_authentication_request_with_fedauth_token(rdstls, s))
 				return FALSE;
 			break;
 		default:
@@ -661,8 +919,14 @@ static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s)
 {
+	if (!rdstls_required_role_is_server(rdstls, FALSE))
+		return FALSE;
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_RSP))
+		return FALSE;
+
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 6))
 		return FALSE;
 
@@ -721,230 +985,154 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 	return TRUE;
 }
 
-static BOOL rdstls_send(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra)
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_send_capabilities(rdpRdstls* rdstls)
 {
-	rdpRdstls* rdstls = (rdpRdstls*)extra;
-	rdpSettings* settings = nullptr;
+	BOOL rc = FALSE;
 
-	WINPR_ASSERT(transport);
-	WINPR_ASSERT(s);
-	WINPR_ASSERT(rdstls);
-
-	settings = rdstls->context->settings;
-	WINPR_ASSERT(settings);
-
-	if (!Stream_EnsureRemainingCapacity(s, 2))
+	if (!rdstls_required_role_is_server(rdstls, TRUE))
 		return FALSE;
 
-	const RDSTLS_STATE state = rdstls_get_state(rdstls);
-	const char* fedAuthToken = freerdp_settings_get_string(settings, FreeRDP_EndpointFedAuthToken);
-	const BOOL useFedAuth = (state == RDSTLS_STATE_AUTH_REQ) && !utils_str_is_empty(fedAuthToken);
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_CAPABILITIES))
+		return FALSE;
 
-	Stream_Write_UINT16(s, useFedAuth ? RDSTLS_VERSION_2 : RDSTLS_VERSION_1);
+	wStream* s = Stream_New(nullptr, 512);
+	if (!s)
+		goto fail;
 
-	switch (state)
-	{
-		case RDSTLS_STATE_CAPABILITIES:
-			if (!rdstls_write_capabilities(rdstls, s))
-				return FALSE;
-			break;
-		case RDSTLS_STATE_AUTH_REQ:
-			if (useFedAuth)
-			{
-				if (!rdstls_write_authentication_request_with_fedauth_token(rdstls, s))
-					return FALSE;
-			}
-			else if (settings->RedirectionFlags & LB_PASSWORD_IS_PK_ENCRYPTED)
-			{
-				if (!rdstls_write_authentication_request_with_password(rdstls, s))
-					return FALSE;
-			}
-			else if (settings->ServerAutoReconnectCookie != nullptr)
-			{
-				if (!rdstls_write_authentication_request_with_cookie(rdstls, s))
-					return FALSE;
-			}
-			else
-			{
-				WLog_Print(rdstls->log, WLOG_ERROR,
-				           "cannot authenticate with FedAuth token, password or "
-				           "auto-reconnect cookie");
-				return FALSE;
-			}
-			break;
-		case RDSTLS_STATE_AUTH_RSP:
-			if (!rdstls_write_authentication_response(rdstls, s))
-				return FALSE;
-			break;
-		default:
-			WLog_Print(rdstls->log, WLOG_ERROR, "Invalid rdstls state %s [%" PRIu32 "]",
-			           rdstls_get_state_str(state), state);
-			return FALSE;
-	}
+	rdstls->supportedVersions = RDSTLS_VERSION_1;
+	if (!rdstls_write_capabilities(rdstls, s))
+		goto fail;
+	if (transport_write(rdstls->transport, s) < 0)
+		goto fail;
 
-	return (transport_write(rdstls->transport, s) >= 0);
+	rc = rdstls_set_state(rdstls, RDSTLS_STATE_AUTH_REQ);
+fail:
+	Stream_Free(s, TRUE);
+	return rc;
 }
 
-static int rdstls_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra)
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_recv_authentication_request(rdpRdstls* rdstls, uint16_t* pVersion)
 {
-	rdpRdstls* rdstls = (rdpRdstls*)extra;
+	BOOL rc = FALSE;
+	WINPR_ASSERT(pVersion);
 
-	WINPR_ASSERT(transport);
-	WINPR_ASSERT(s);
+	if (!rdstls_required_role_is_server(rdstls, TRUE))
+		return FALSE;
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
+		return FALSE;
+
+	wStream* s = Stream_New(nullptr, 4096);
+	if (!s)
+		goto fail;
+
 	WINPR_ASSERT(rdstls);
 
+	{
+		const int res = transport_read_pdu(rdstls->transport, s);
+		if (res < 0)
+			goto fail;
+	}
+
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
-		return -1;
+		goto fail;
 
 	const UINT16 version = Stream_Get_UINT16(s);
-	if (version != RDSTLS_VERSION_1)
+	if (!rdstls_is_version_supported(rdstls->log, version))
+		goto fail;
+
+	const UINT16 pduType = Stream_Get_UINT16(s);
+	switch (pduType)
 	{
-		WLog_Print(rdstls->log, WLOG_ERROR,
-		           "received invalid RDSTLS Version=0x%04" PRIX16 ", expected 0x%04" PRIX16,
-		           version, WINPR_CXX_COMPAT_CAST(UINT32, RDSTLS_VERSION_1));
-		return -1;
+		case RDSTLS_TYPE_AUTHREQ:
+			if (!rdstls_process_authentication_request(rdstls, s, pVersion))
+				goto fail;
+			break;
+		default:
+			WLog_Print(rdstls->log, WLOG_ERROR,
+			           "Invalid RDSTLS PDU type [0x%04" PRIx16 "] while reading AUTHREQ", pduType);
+			goto fail;
 	}
+
+	rc = rdstls_set_state(rdstls, RDSTLS_STATE_AUTH_RSP);
+fail:
+	Stream_Free(s, TRUE);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_send_authentication_response(rdpRdstls* rdstls, uint16_t version)
+{
+	BOOL rc = FALSE;
+
+	if (!rdstls_required_role_is_server(rdstls, TRUE))
+		return FALSE;
+
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_RSP))
+		return FALSE;
+
+	wStream* s = Stream_New(nullptr, 512);
+	if (!s)
+		goto fail;
+
+	if (!Stream_EnsureRemainingCapacity(s, 2))
+		goto fail;
+
+	Stream_Write_UINT16(s, version);
+
+	if (!rdstls_write_authentication_response(rdstls, s))
+		goto fail;
+
+	if (transport_write(rdstls->transport, s) < 0)
+		goto fail;
+
+	rc = rdstls_set_state(rdstls, RDSTLS_STATE_FINAL);
+fail:
+	Stream_Free(s, TRUE);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_recv_capabilities(rdpRdstls* rdstls)
+{
+	BOOL rc = FALSE;
+
+	if (!rdstls_required_role_is_server(rdstls, FALSE))
+		return FALSE;
+
+	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_CAPABILITIES))
+		return FALSE;
+
+	wStream* s = Stream_New(nullptr, 512);
+	if (!s)
+		goto fail;
+
+	WINPR_ASSERT(rdstls);
+
+	{
+		const int res = transport_read_pdu(rdstls->transport, s);
+		if (res < 0)
+			goto fail;
+	}
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
+		goto fail;
+
+	const UINT16 version = Stream_Get_UINT16(s);
+	if (!rdstls_is_version_supported(rdstls->log, version))
+		goto fail;
 
 	const UINT16 pduType = Stream_Get_UINT16(s);
 	switch (pduType)
 	{
 		case RDSTLS_TYPE_CAPABILITIES:
 			if (!rdstls_process_capabilities(rdstls, s))
-				return -1;
-			break;
-		case RDSTLS_TYPE_AUTHREQ:
-			if (!rdstls_process_authentication_request(rdstls, s))
-				return -1;
-			break;
-		case RDSTLS_TYPE_AUTHRSP:
-			if (!rdstls_process_authentication_response(rdstls, s))
-				return -1;
+				goto fail;
 			break;
 		default:
-			WLog_Print(rdstls->log, WLOG_ERROR, "unknown RDSTLS PDU type [0x%04" PRIx16 "]",
-			           pduType);
-			return -1;
-	}
-
-	return 1;
-}
-
-#define rdstls_check_state_requirements(rdstls, expected) \
-	rdstls_check_state_requirements_((rdstls), (expected), __FILE__, __func__, __LINE__)
-static BOOL rdstls_check_state_requirements_(rdpRdstls* rdstls, RDSTLS_STATE expected,
-                                             const char* file, const char* fkt, size_t line)
-{
-	const RDSTLS_STATE current = rdstls_get_state(rdstls);
-	if (current == expected)
-		return TRUE;
-
-	WINPR_ASSERT(rdstls);
-
-	const DWORD log_level = WLOG_ERROR;
-	if (WLog_IsLevelActive(rdstls->log, log_level))
-		WLog_PrintTextMessage(rdstls->log, log_level, line, file, fkt,
-		                      "Unexpected rdstls state %s [%u], expected %s [%u]",
-		                      rdstls_get_state_str(current), current,
-		                      rdstls_get_state_str(expected), expected);
-
-	return FALSE;
-}
-
-static BOOL rdstls_send_capabilities(rdpRdstls* rdstls)
-{
-	BOOL rc = FALSE;
-
-	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_CAPABILITIES))
-		return FALSE;
-
-	wStream* s = Stream_New(nullptr, 512);
-	if (!s)
-		goto fail;
-
-	WINPR_ASSERT(rdstls);
-	if (!rdstls_send(rdstls->transport, s, rdstls))
-		goto fail;
-
-	rc = rdstls_set_state(rdstls, RDSTLS_STATE_AUTH_REQ);
-fail:
-	Stream_Free(s, TRUE);
-	return rc;
-}
-
-static BOOL rdstls_recv_authentication_request(rdpRdstls* rdstls)
-{
-	BOOL rc = FALSE;
-
-	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
-		return FALSE;
-
-	wStream* s = Stream_New(nullptr, 4096);
-	if (!s)
-		goto fail;
-
-	WINPR_ASSERT(rdstls);
-
-	{
-		const int res = transport_read_pdu(rdstls->transport, s);
-		if (res < 0)
-			goto fail;
-	}
-
-	{
-		const int status = rdstls_recv(rdstls->transport, s, rdstls);
-		if (status < 0)
-			goto fail;
-	}
-
-	rc = rdstls_set_state(rdstls, RDSTLS_STATE_AUTH_RSP);
-fail:
-	Stream_Free(s, TRUE);
-	return rc;
-}
-
-static BOOL rdstls_send_authentication_response(rdpRdstls* rdstls)
-{
-	BOOL rc = FALSE;
-
-	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_RSP))
-		return FALSE;
-
-	wStream* s = Stream_New(nullptr, 512);
-	if (!s)
-		goto fail;
-
-	WINPR_ASSERT(rdstls);
-	if (!rdstls_send(rdstls->transport, s, rdstls))
-		goto fail;
-
-	rc = rdstls_set_state(rdstls, RDSTLS_STATE_FINAL);
-fail:
-	Stream_Free(s, TRUE);
-	return rc;
-}
-
-static BOOL rdstls_recv_capabilities(rdpRdstls* rdstls)
-{
-	BOOL rc = FALSE;
-
-	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_CAPABILITIES))
-		return FALSE;
-
-	wStream* s = Stream_New(nullptr, 512);
-	if (!s)
-		goto fail;
-
-	WINPR_ASSERT(rdstls);
-
-	{
-		const int res = transport_read_pdu(rdstls->transport, s);
-		if (res < 0)
-			goto fail;
-	}
-
-	{
-		const int status = rdstls_recv(rdstls->transport, s, rdstls);
-		if (status < 0)
+			WLog_Print(rdstls->log, WLOG_ERROR,
+			           "Invalid pduType 0x%04" PRIx16 " while reading capability", pduType);
 			goto fail;
 	}
 
@@ -954,9 +1142,15 @@ fail:
 	return rc;
 }
 
-static BOOL rdstls_send_authentication_request(rdpRdstls* rdstls)
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_send_authentication_request(rdpRdstls* rdstls, uint16_t* pVersion)
 {
+	WINPR_ASSERT(pVersion);
+
 	BOOL rc = FALSE;
+
+	if (!rdstls_required_role_is_server(rdstls, FALSE))
+		return FALSE;
 
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
 		return FALSE;
@@ -965,8 +1159,52 @@ static BOOL rdstls_send_authentication_request(rdpRdstls* rdstls)
 	if (!s)
 		goto fail;
 
+	WINPR_ASSERT(rdstls->context);
+
+	const rdpSettings* settings = rdstls->context->settings;
+	WINPR_ASSERT(settings);
+
+	if (!Stream_EnsureRemainingCapacity(s, 2))
+		goto fail;
+
+	const RDSTLS_STATE state = rdstls_get_state(rdstls);
+	const char* fedAuthToken = freerdp_settings_get_string(settings, FreeRDP_EndpointFedAuthToken);
+	BOOL useFedAuth = (state == RDSTLS_STATE_AUTH_REQ) && !utils_str_is_empty(fedAuthToken);
+	if ((rdstls->supportedVersions & RDSTLS_VERSION_2) == 0)
+	{
+		useFedAuth = FALSE;
+		WLog_Print(rdstls->log, WLOG_WARN,
+		           "Client has FedAuthToken ready, but server did not announce RDSTLS_VERSION_2.");
+	}
+
+	*pVersion = useFedAuth ? RDSTLS_VERSION_2 : RDSTLS_VERSION_1;
+	Stream_Write_UINT16(s, *pVersion);
+
+	if (useFedAuth)
+	{
+		if (!rdstls_write_authentication_request_with_fedauth_token(rdstls, s))
+			goto fail;
+	}
+	else if (settings->RedirectionFlags & LB_PASSWORD_IS_PK_ENCRYPTED)
+	{
+		if (!rdstls_write_authentication_request_with_password(rdstls, s))
+			goto fail;
+	}
+	else if (settings->ServerAutoReconnectCookie != nullptr)
+	{
+		if (!rdstls_write_authentication_request_with_cookie(rdstls, s))
+			goto fail;
+	}
+	else
+	{
+		WLog_Print(rdstls->log, WLOG_ERROR,
+		           "cannot authenticate with FedAuth token, password or "
+		           "auto-reconnect cookie");
+		goto fail;
+	}
+
 	WINPR_ASSERT(rdstls);
-	if (!rdstls_send(rdstls->transport, s, rdstls))
+	if (transport_write(rdstls->transport, s) < 0)
 		goto fail;
 
 	rc = rdstls_set_state(rdstls, RDSTLS_STATE_AUTH_RSP);
@@ -975,11 +1213,15 @@ fail:
 	return rc;
 }
 
-static BOOL rdstls_recv_authentication_response(rdpRdstls* rdstls)
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_recv_authentication_response(rdpRdstls* rdstls, uint16_t expected)
 {
 	BOOL rc = FALSE;
 
 	WINPR_ASSERT(rdstls);
+
+	if (!rdstls_required_role_is_server(rdstls, FALSE))
+		return FALSE;
 
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_RSP))
 		return FALSE;
@@ -994,9 +1236,25 @@ static BOOL rdstls_recv_authentication_response(rdpRdstls* rdstls)
 			goto fail;
 	}
 
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
+		goto fail;
+
+	const UINT16 version = Stream_Get_UINT16(s);
+	if (!rdstls_is_version_supported(rdstls->log, version))
+		goto fail;
+	if (version != expected)
+		goto fail;
+
+	const UINT16 pduType = Stream_Get_UINT16(s);
+	switch (pduType)
 	{
-		const int status = rdstls_recv(rdstls->transport, s, rdstls);
-		if (status < 0)
+		case RDSTLS_TYPE_AUTHRSP:
+			if (!rdstls_process_authentication_response(rdstls, s))
+				goto fail;
+			break;
+		default:
+			WLog_Print(rdstls->log, WLOG_ERROR,
+			           "Invalid RDSTLS PDU type [0x%04" PRIx16 "] while reading AUTHRSP", pduType);
 			goto fail;
 	}
 
@@ -1006,9 +1264,11 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static int rdstls_server_authenticate(rdpRdstls* rdstls)
 {
 	WINPR_ASSERT(rdstls);
+	uint16_t version = 0;
 
 	if (!rdstls_set_state(rdstls, RDSTLS_STATE_CAPABILITIES))
 		return -1;
@@ -1016,10 +1276,10 @@ static int rdstls_server_authenticate(rdpRdstls* rdstls)
 	if (!rdstls_send_capabilities(rdstls))
 		return -1;
 
-	if (!rdstls_recv_authentication_request(rdstls))
+	if (!rdstls_recv_authentication_request(rdstls, &version))
 		return -1;
 
-	if (!rdstls_send_authentication_response(rdstls))
+	if (!rdstls_send_authentication_response(rdstls, version))
 		return -1;
 
 	if (rdstls->resultCode != RDSTLS_RESULT_SUCCESS)
@@ -1028,6 +1288,7 @@ static int rdstls_server_authenticate(rdpRdstls* rdstls)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int rdstls_client_authenticate(rdpRdstls* rdstls)
 {
 	if (!rdstls_set_state(rdstls, RDSTLS_STATE_CAPABILITIES))
@@ -1036,10 +1297,11 @@ static int rdstls_client_authenticate(rdpRdstls* rdstls)
 	if (!rdstls_recv_capabilities(rdstls))
 		return -1;
 
-	if (!rdstls_send_authentication_request(rdstls))
+	uint16_t version = 0;
+	if (!rdstls_send_authentication_request(rdstls, &version))
 		return -1;
 
-	if (!rdstls_recv_authentication_response(rdstls))
+	if (!rdstls_recv_authentication_response(rdstls, version))
 		return -1;
 
 	return 1;
@@ -1062,6 +1324,7 @@ int rdstls_authenticate(rdpRdstls* rdstls)
 		return rdstls_client_authenticate(rdstls);
 }
 
+WINPR_ATTR_NODISCARD
 static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s)
 {
 	size_t pduLength = 0;
@@ -1100,20 +1363,46 @@ static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s
 				return 0;
 			const UINT16 passwordLength = Stream_Get_UINT16(s);
 
+			if (passwordLength == 0)
+			{
+				WLog_Print(log, WLOG_ERROR, "invalid RDSLTS PASSWORD_CREDS: empty password");
+				return -1;
+			}
+			else if ((redirGuidLength == 0) && (usernameLength == 0) && (domainLength == 0) &&
+			         (passwordLength == 0))
+			{
+				WLog_Print(log, WLOG_ERROR, "invalid RDSLTS PASSWORD_CREDS: lengths 0");
+				return -1;
+			}
 			pduLength = Stream_GetPosition(s) + passwordLength;
 		}
 		break;
 		case RDSTLS_DATA_AUTORECONNECT_COOKIE:
 		{
-			if (Stream_GetRemainingLength(s) < 4)
+			if (Stream_GetRemainingLength(s) < 6)
 				return 0;
 			Stream_Seek(s, 4);
-
-			if (Stream_GetRemainingLength(s) < 2)
-				return 0;
 			const UINT16 cookieLength = Stream_Get_UINT16(s);
-
+			if (cookieLength == 0)
+			{
+				WLog_Print(log, WLOG_ERROR, "invalid RDSLTS COOKIE::length");
+				return -1;
+			}
 			pduLength = Stream_GetPosition(s) + cookieLength;
+		}
+		break;
+		case RDSTLS_DATA_FEDAUTH_TOKEN:
+		{
+			if (Stream_GetRemainingLength(s) < 6)
+				return 0;
+			Stream_Seek(s, 4);
+			const UINT16 tokenLength = Stream_Get_UINT16(s);
+			if (tokenLength == 0)
+			{
+				WLog_Print(log, WLOG_ERROR, "invalid RDSLTS FEDAUTH_TOKEN::length");
+				return -1;
+			}
+			pduLength = Stream_GetPosition(s) + tokenLength;
 		}
 		break;
 		default:
@@ -1136,11 +1425,8 @@ SSIZE_T rdstls_parse_pdu(wLog* log, wStream* stream)
 		return 0;
 
 	const UINT16 version = Stream_Get_UINT16(s);
-	if (version != RDSTLS_VERSION_1)
-	{
-		WLog_Print(log, WLOG_ERROR, "invalid RDSTLS version");
+	if (!rdstls_is_version_supported(log, version))
 		return -1;
-	}
 
 	if (Stream_GetRemainingLength(s) < 2)
 		return 0;
