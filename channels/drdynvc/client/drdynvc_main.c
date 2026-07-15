@@ -871,6 +871,7 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 		           "OnNewChannelConnection failed with error %" PRIu32 "!", *res);
 		*res = ERROR_INTERNAL_ERROR;
 		dvcman_channel_unref(channel);
+		channel = nullptr;
 		goto out;
 	}
 
@@ -1432,7 +1433,8 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, UINT8 Sp, UIN
 	{
 		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08" PRIX32 "]",
 		           WTSErrorToString(status), status);
-		dvcman_channel_unref(channel);
+		if (channel_status == CHANNEL_RC_OK)
+			dvcman_channel_unref(channel);
 		return status;
 	}
 
