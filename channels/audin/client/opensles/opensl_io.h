@@ -56,10 +56,9 @@ extern "C"
 	size in frames. Returns a handle to the OpenSL stream
 	*/
 	WINPR_ATTR_MALLOC(android_CloseRecDevice, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL OPENSL_STREAM* android_OpenRecDevice(void* context, opensl_receive_t receive,
-	                                                   int sr, int inchannels, int bufferframes,
-	                                                   int bits_per_sample);
+	                                                   size_t sr, size_t inchannels,
+	                                                   size_t bufferframes, size_t bits_per_sample);
 #ifdef __cplusplus
 };
 #endif

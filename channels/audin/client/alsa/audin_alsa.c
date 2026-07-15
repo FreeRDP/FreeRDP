@@ -139,8 +139,8 @@ static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 		goto out;
 	}
 
-	buffer =
-	    (BYTE*)calloc(alsa->frames_per_packet + alsa->aformat.nBlockAlign, alsa->bytes_per_frame);
+	buffer = (BYTE*)calloc(1ull * alsa->frames_per_packet + alsa->aformat.nBlockAlign,
+	                       alsa->bytes_per_frame);
 
 	if (!buffer)
 	{

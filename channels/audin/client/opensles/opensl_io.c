@@ -54,10 +54,10 @@ struct opensl_stream
 	SLRecordItf recorderRecord;
 	SLAndroidSimpleBufferQueueItf recorderBufferQueue;
 
-	unsigned int inchannels;
-	unsigned int sr;
-	unsigned int buffersize;
-	unsigned int bits_per_sample;
+	size_t inchannels;
+	size_t sr;
+	size_t buffersize;
+	size_t bits_per_sample;
 
 	queue_element* prep;
 	queue_element* next;
@@ -108,8 +108,8 @@ engine_end:
 static SLresult openSLRecOpen(OPENSL_STREAM* p)
 {
 	SLresult result;
-	SLuint32 sr = p->sr;
-	SLuint32 channels = p->inchannels;
+	SLuint32 sr = WINPR_ASSERTING_INT_CAST(SLuint32, p->sr);
+	SLuint32 channels = WINPR_ASSERTING_INT_CAST(SLuint32, p->inchannels);
 	WINPR_ASSERT(!p->recorderObject);
 
 	if (channels)
@@ -202,7 +202,7 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 		}
 		else
 		{
-			WLog_ERR(TAG, "bits_per_sample=%" PRIu32, p->bits_per_sample);
+			WLog_ERR(TAG, "bits_per_sample=%" PRIuz, p->bits_per_sample);
 			return -1;
 		}
 
@@ -314,24 +314,31 @@ static void opensles_queue_element_free(void* obj)
 }
 
 // open the android audio device for input
-OPENSL_STREAM* android_OpenRecDevice(void* context, opensl_receive_t receive, int sr,
-                                     int inchannels, int bufferframes, int bits_per_sample)
+OPENSL_STREAM* android_OpenRecDevice(void* context, opensl_receive_t receive, size_t sr,
+                                     size_t inchannels, size_t bufferframes, size_t bits_per_sample)
 {
-	OPENSL_STREAM* p;
-
 	if (!context || !receive)
 		return nullptr;
 
-	p = (OPENSL_STREAM*)calloc(1, sizeof(OPENSL_STREAM));
+	OPENSL_STREAM* p = (OPENSL_STREAM*)calloc(1, sizeof(OPENSL_STREAM));
 
 	if (!p)
 		return nullptr;
 
 	p->context = context;
 	p->receive = receive;
+	if (inchannels > INT32_MAX)
+		goto fail;
 	p->inchannels = inchannels;
+
+	if (sr > INT32_MAX)
+		goto fail;
 	p->sr = sr;
+
+	if (bufferframes > SIZE_MAX / 2)
+		goto fail;
 	p->buffersize = bufferframes;
+
 	p->bits_per_sample = bits_per_sample;
 
 	if ((p->bits_per_sample != 8) && (p->bits_per_sample != 16))
@@ -343,9 +350,14 @@ OPENSL_STREAM* android_OpenRecDevice(void* context, opensl_receive_t receive, in
 	if (openSLRecOpen(p) != SL_RESULT_SUCCESS)
 		goto fail;
 
+	const size_t bytesPerSample = p->bits_per_sample / 8ull;
+	if (p->buffersize >= SIZE_MAX / bytesPerSample)
+		goto fail;
+
+	const size_t queuesize = p->buffersize * bytesPerSample;
 	/* Create receive buffers, prepare them and start recording */
-	p->prep = opensles_queue_element_new(p->buffersize * p->bits_per_sample / 8);
-	p->next = opensles_queue_element_new(p->buffersize * p->bits_per_sample / 8);
+	p->prep = opensles_queue_element_new(queuesize);
+	p->next = opensles_queue_element_new(queuesize);
 
 	if (!p->prep || !p->next)
 		goto fail;
