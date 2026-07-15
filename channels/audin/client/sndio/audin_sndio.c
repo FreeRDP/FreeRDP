@@ -82,7 +82,7 @@ static void* audin_sndio_thread_func(void* arg)
 	struct sio_hdl* hdl;
 	struct sio_par par;
 	BYTE* buffer = nullptr;
-	size_t n, nbytes;
+	size_t n;
 	AudinSndioDevice* sndio = (AudinSndioDevice*)arg;
 	UINT error = 0;
 	DWORD status;
@@ -125,8 +125,11 @@ static void* audin_sndio_thread_func(void* arg)
 		goto err_out;
 	}
 
-	nbytes =
-	    (sndio->FramesPerPacket * sndio->format.nChannels * (sndio->format.wBitsPerSample / 8));
+	const size_t nbytes = (1ull * sndio->FramesPerPacket * sndio->format.nChannels *
+	                       (sndio->format.wBitsPerSample / 8));
+	if (nbytes > INT32_MAX)
+		goto err_out;
+
 	buffer = (BYTE*)calloc((nbytes + sizeof(void*)), sizeof(BYTE));
 
 	if (buffer == nullptr)

@@ -190,6 +190,9 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 
 	buffer_size =
 	    (1ull * oss->FramesPerPacket * oss->format.nChannels * (oss->format.wBitsPerSample / 8ull));
+	if (buffer_size > INT32_MAX)
+		goto err_out;
+
 	buffer = (BYTE*)calloc((buffer_size + sizeof(void*)), sizeof(BYTE));
 
 	if (nullptr == buffer)
