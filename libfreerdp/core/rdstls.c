@@ -80,6 +80,8 @@ struct rdp_rdstls
 	uint16_t supportedVersions;
 };
 
+static const uint16_t RDSTLS_VERSION_MASK = RDSTLS_VERSION_1 | RDSTLS_VERSION_2;
+
 WINPR_ATTR_NODISCARD
 static const char* rdstls_result_code_str(UINT32 resultCode)
 {
@@ -147,6 +149,7 @@ rdpRdstls* rdstls_new(rdpContext* context, rdpTransport* transport)
 	if (!rdstls)
 		return nullptr;
 	rdstls->log = WLog_Get(FREERDP_TAG("core.rdstls"));
+	rdstls->supportedVersions = RDSTLS_VERSION_MASK;
 	rdstls->context = context;
 	rdstls->transport = transport;
 	rdstls->server = settings->ServerMode;
@@ -277,7 +280,7 @@ static BOOL rdstls_write_capabilities(WINPR_ATTR_UNUSED rdpRdstls* rdstls, wStre
 	if (!Stream_EnsureRemainingCapacity(s, 8))
 		return FALSE;
 
-	Stream_Write_UINT16(s, rdstls->supportedVersions);
+	Stream_Write_UINT16(s, RDSTLS_VERSION_1);
 	Stream_Write_UINT16(s, RDSTLS_TYPE_CAPABILITIES);
 	Stream_Write_UINT16(s, RDSTLS_DATA_CAPABILITIES);
 	Stream_Write_UINT16(s, rdstls->supportedVersions);
@@ -549,30 +552,87 @@ static BOOL rdstls_write_authentication_response(rdpRdstls* rdstls, wStream* s)
 	return TRUE;
 }
 
-#define rdstls_is_version_supported(log, version) \
-	rdstls_is_version_supported_((log), (version), __FILE__, __func__, __LINE__)
+#define rdstls_version_required(log, expected, actual) \
+	rdstls_version_required_((log), (expected), (actual), __FILE__, __func__, __LINE__)
 WINPR_ATTR_NODISCARD
-static BOOL rdstls_is_version_supported_(wLog* log, uint16_t version, const char* file,
-                                         const char* fkt, size_t line)
+static BOOL rdstls_version_required_(wLog* log, uint16_t expected, uint16_t actual,
+                                     const char* file, const char* fkt, size_t line)
 {
-	switch (version)
+	if (actual < expected)
 	{
-		case RDSTLS_VERSION_1:
-		case RDSTLS_VERSION_2:
-			return TRUE;
-		default:
+		const DWORD level = WLOG_ERROR;
+		if (WLog_IsLevelActive(log, level))
 		{
-			const DWORD level = WLOG_ERROR;
-			if (WLog_IsLevelActive(log, level))
-			{
-				WLog_PrintTextMessage(log, WLOG_ERROR, line, file, fkt,
-				                      "received invalid supportedVersions=0x%04" PRIX16
-				                      ", expected { 0x%04" PRIx32 ", 0x%04" PRIx32 "}",
-				                      version, RDSTLS_VERSION_1, RDSTLS_VERSION_2);
-			}
+			WLog_PrintTextMessage(log, WLOG_ERROR, line, file, fkt,
+			                      "version=0x%04" PRIx16 ", expected at least 0x%04" PRIx16, actual,
+			                      expected);
+		}
+		return FALSE;
+	}
+	return TRUE;
+}
+
+#define rdstls_are_some_versions_supported(log, version, mask) \
+	rdstls_are_some_versions_supported_((log), (version), (mask), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_are_some_versions_supported_(wLog* log, uint16_t version, BOOL isMask,
+                                                const char* file, const char* fkt, size_t line)
+{
+	if (!isMask)
+	{
+		size_t cnt = 0;
+		for (size_t x = 0; x < 16; x++)
+		{
+			const unsigned val = 1 << x;
+			if ((version & val) != 0)
+				cnt++;
+		}
+		if (cnt != 1)
+		{
+			WLog_PrintTextMessage(log, WLOG_ERROR, line, file, fkt,
+			                      "received invalid version mask=0x%04" PRIx16
+			                      ", expected { 0x%04" PRIx32 ", 0x%04" PRIx32 "}",
+			                      version, RDSTLS_VERSION_1, RDSTLS_VERSION_2);
 			return FALSE;
 		}
 	}
+
+	if ((version & RDSTLS_VERSION_MASK) == 0)
+	{
+		const DWORD level = WLOG_ERROR;
+		if (WLog_IsLevelActive(log, level))
+		{
+			WLog_PrintTextMessage(log, WLOG_ERROR, line, file, fkt,
+			                      "received invalid version mask=0x%04" PRIx16
+			                      ", expected { 0x%04" PRIx32 ", 0x%04" PRIx32 "}",
+			                      version, RDSTLS_VERSION_1, RDSTLS_VERSION_2);
+		}
+		return FALSE;
+	}
+	return TRUE;
+}
+
+#define rdstls_is_version_supported(rdstls, versions) \
+	rdstls_is_version_supported_((rdstls), (version), __FILE__, __func__, __LINE__)
+WINPR_ATTR_NODISCARD
+static BOOL rdstls_is_version_supported_(rdpRdstls* rdstls, uint16_t version, const char* file,
+                                         const char* fkt, size_t line)
+{
+	WINPR_ASSERT(rdstls);
+
+	if ((rdstls->supportedVersions & version) == 0)
+	{
+		const DWORD level = WLOG_ERROR;
+		if (WLog_IsLevelActive(rdstls->log, level))
+		{
+			WLog_PrintTextMessage(rdstls->log, WLOG_ERROR, line, file, fkt,
+			                      "received invalid version=0x%04" PRIx16
+			                      ", expected { 0x%04" PRIx32 ", 0x%04" PRIx32 "}",
+			                      version, RDSTLS_VERSION_1, RDSTLS_VERSION_2);
+		}
+		return FALSE;
+	}
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD
@@ -597,9 +657,9 @@ static BOOL rdstls_process_capabilities(rdpRdstls* rdstls, wStream* s)
 	}
 
 	const UINT16 supportedVersions = Stream_Get_UINT16(s);
-	if (!rdstls_is_version_supported(rdstls->log, supportedVersions))
+	if (!rdstls_are_some_versions_supported(rdstls->log, supportedVersions, TRUE))
 		return FALSE;
-	rdstls->supportedVersions = supportedVersions;
+	rdstls->supportedVersions = supportedVersions & RDSTLS_VERSION_MASK;
 
 	return TRUE;
 }
@@ -706,11 +766,14 @@ static BOOL rdstls_cmp_str(wLog* log, const char* field, const char* serverStr,
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstls, wStream* s)
+static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstls, wStream* s,
+                                                                uint16_t version)
 {
 	WINPR_ASSERT(rdstls);
 	WINPR_ASSERT(rdstls->context);
 
+	if (!rdstls_version_required(rdstls->log, RDSTLS_VERSION_1, version))
+		return FALSE;
 	if (!rdstls_required_role_is_server(rdstls, TRUE))
 		return FALSE;
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
@@ -767,8 +830,12 @@ fail:
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL rdstls_process_authentication_request_with_cookie(rdpRdstls* rdstls, wStream* s)
+static BOOL rdstls_process_authentication_request_with_cookie(rdpRdstls* rdstls, wStream* s,
+                                                              uint16_t version)
 {
+	if (!rdstls_version_required(rdstls->log, RDSTLS_VERSION_1, version))
+		return FALSE;
+
 	if (!rdstls_required_role_is_server(rdstls, TRUE))
 		return FALSE;
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
@@ -812,10 +879,13 @@ static BOOL rdstls_process_authentication_request_with_cookie(rdpRdstls* rdstls,
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL
-rdstls_process_authentication_request_with_fedauth_token(WINPR_ATTR_UNUSED rdpRdstls* rdstls,
-                                                         WINPR_ATTR_UNUSED wStream* s)
+static BOOL rdstls_process_authentication_request_with_fedauth_token(rdpRdstls* rdstls, wStream* s,
+                                                                     uint16_t version)
 {
+	WINPR_ASSERT(rdstls);
+
+	if (!rdstls_version_required(rdstls->log, RDSTLS_VERSION_2, version))
+		return FALSE;
 	if (!rdstls_required_role_is_server(rdstls, TRUE))
 		return FALSE;
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
@@ -878,10 +948,8 @@ rdstls_process_authentication_request_with_fedauth_token(WINPR_ATTR_UNUSED rdpRd
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s, uint16_t* pVersion)
+static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s, uint16_t version)
 {
-	WINPR_ASSERT(pVersion);
-
 	if (!rdstls_required_role_is_server(rdstls, TRUE))
 		return FALSE;
 
@@ -891,20 +959,19 @@ static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s,
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 2))
 		return FALSE;
 
-	*pVersion = RDSTLS_VERSION_1;
 	const UINT16 dataType = Stream_Get_UINT16(s);
 	switch (dataType)
 	{
 		case RDSTLS_DATA_PASSWORD_CREDS:
-			if (!rdstls_process_authentication_request_with_password(rdstls, s))
+			if (!rdstls_process_authentication_request_with_password(rdstls, s, version))
 				return FALSE;
 			break;
 		case RDSTLS_DATA_AUTORECONNECT_COOKIE:
-			if (!rdstls_process_authentication_request_with_cookie(rdstls, s))
+			if (!rdstls_process_authentication_request_with_cookie(rdstls, s, version))
 				return FALSE;
 			break;
 		case RDSTLS_DATA_FEDAUTH_TOKEN:
-			if (!rdstls_process_authentication_request_with_fedauth_token(rdstls, s))
+			if (!rdstls_process_authentication_request_with_fedauth_token(rdstls, s, version))
 				return FALSE;
 			break;
 		default:
@@ -1000,7 +1067,6 @@ static BOOL rdstls_send_capabilities(rdpRdstls* rdstls)
 	if (!s)
 		goto fail;
 
-	rdstls->supportedVersions = RDSTLS_VERSION_1;
 	if (!rdstls_write_capabilities(rdstls, s))
 		goto fail;
 	if (transport_write(rdstls->transport, s) < 0)
@@ -1039,14 +1105,15 @@ static BOOL rdstls_recv_authentication_request(rdpRdstls* rdstls, uint16_t* pVer
 		goto fail;
 
 	const UINT16 version = Stream_Get_UINT16(s);
-	if (!rdstls_is_version_supported(rdstls->log, version))
+	if (!rdstls_is_version_supported(rdstls, version))
 		goto fail;
+	*pVersion = version;
 
 	const UINT16 pduType = Stream_Get_UINT16(s);
 	switch (pduType)
 	{
 		case RDSTLS_TYPE_AUTHREQ:
-			if (!rdstls_process_authentication_request(rdstls, s, pVersion))
+			if (!rdstls_process_authentication_request(rdstls, s, version))
 				goto fail;
 			break;
 		default:
@@ -1120,7 +1187,7 @@ static BOOL rdstls_recv_capabilities(rdpRdstls* rdstls)
 		goto fail;
 
 	const UINT16 version = Stream_Get_UINT16(s);
-	if (!rdstls_is_version_supported(rdstls->log, version))
+	if (!rdstls_is_version_supported(rdstls, version))
 		goto fail;
 
 	const UINT16 pduType = Stream_Get_UINT16(s);
@@ -1240,7 +1307,7 @@ static BOOL rdstls_recv_authentication_response(rdpRdstls* rdstls, uint16_t expe
 		goto fail;
 
 	const UINT16 version = Stream_Get_UINT16(s);
-	if (!rdstls_is_version_supported(rdstls->log, version))
+	if (!rdstls_is_version_supported(rdstls, version))
 		goto fail;
 	if (version != expected)
 		goto fail;
@@ -1425,7 +1492,7 @@ SSIZE_T rdstls_parse_pdu(wLog* log, wStream* stream)
 		return 0;
 
 	const UINT16 version = Stream_Get_UINT16(s);
-	if (!rdstls_is_version_supported(log, version))
+	if (!rdstls_are_some_versions_supported(log, version, FALSE))
 		return -1;
 
 	if (Stream_GetRemainingLength(s) < 2)
