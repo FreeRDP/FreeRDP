@@ -55,6 +55,8 @@ set(SRCS
     sdl_rail_window.cpp
     sdl_wayland.hpp
     sdl_wayland.cpp
+    sdl_wayland_band.hpp
+    sdl_wayland_band.cpp
     sdl_x11.hpp
     sdl_x11.cpp
 )
@@ -130,6 +132,17 @@ if(SDL_WAYLAND_NATIVE)
   target_compile_definitions(${MODULE_NAME} PRIVATE WITH_SDL_WAYLAND_NATIVE)
   target_include_directories(${MODULE_NAME} PRIVATE ${WAYLAND_CLIENT_INCLUDE_DIRS})
   list(APPEND LIBS ${WAYLAND_CLIENT_LIBRARIES})
+  # Themed resize cursor over the band (its pointer is ours, SDL can't set one). Optional: the band
+  # is a no-op cursor-wise without it.
+  find_package(PkgConfig QUIET)
+  if(PKG_CONFIG_FOUND)
+    pkg_check_modules(WAYLAND_CURSOR QUIET wayland-cursor)
+    if(WAYLAND_CURSOR_FOUND)
+      target_compile_definitions(${MODULE_NAME} PRIVATE WITH_WAYLAND_CURSOR)
+      target_include_directories(${MODULE_NAME} PRIVATE ${WAYLAND_CURSOR_INCLUDE_DIRS})
+      list(APPEND LIBS ${WAYLAND_CURSOR_LIBRARIES})
+    endif()
+  endif()
 endif()
 
 if(SDL_X11_NATIVE)

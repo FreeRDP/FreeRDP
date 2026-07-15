@@ -71,6 +71,10 @@ class SdlRailWindow
 	 * adoptLocalGeometry() takes the WM's final geometry and clears the flag. */
 	void setLocalMoveActive(bool active);
 	[[nodiscard]] bool localMoveActive() const;
+	/* True if the server resized the window during the current/last local move (drag-restore). */
+	[[nodiscard]] bool localMoveSizeChanged() const;
+	/* Where the server re-anchored its window mid-move (valid when localMoveSizeChanged()). */
+	[[nodiscard]] SDL_Point localMoveServerPos() const;
 	void adoptLocalGeometry(const SDL_Rect& rect);
 	/* Which corner the stale frame anchors to during a local resize, so old content stays
 	 * pinned to the fixed (opposite) edge instead of sliding with the moving one. */
@@ -79,6 +83,13 @@ class SdlRailWindow
 	/* Deferred destroy: mark here (RDP thread), erased on the main thread in SdlRail::paint. */
 	void markDeleted();
 	[[nodiscard]] bool isDeleted() const;
+
+	/* Local state apply in flight: ignores window move/resize echoes (possibly mangled by WM)
+	 * until convergence (clearGeomApplyPending) so they aren't wrongly reported as WM intent. */
+	[[nodiscard]] bool geomApplyPending() const;
+	void clearGeomApplyPending();
+	/* Force a re-apply of the current _windowRect on the next reconcile. */
+	void markGeometryDirty();
 
 	/* Visible sub-rects (window-relative); only these are painted so windows on top don't bleed. */
 	void setVisibilityRects(std::vector<SDL_Rect> rects);
@@ -93,12 +104,14 @@ class SdlRailWindow
 	 * ClientWindowMove reports the outer rect to prevent shrinking. */
 	void setResizeMargins(int left, int top, int right, int bottom);
 	[[nodiscard]] SDL_Rect resizeMargins() const; /* x=left y=top w=right h=bottom */
+	/* RAW server margins: ClientWindowMove uses the outer rect including these, since the server
+	 * expects the full frame and deflates it (reporting the visible rect shrinks the window). */
+	void setFrameMargins(const SDL_Rect& m);
+	[[nodiscard]] SDL_Rect frameMargins() const;
 
 	/* Owning window id (WINDOW_ORDER_FIELD_OWNER); popups position relative to it. */
 	void setOwner(uint64_t ownerId);
 	[[nodiscard]] uint64_t owner() const;
-	void setFrameMargins(const SDL_Rect& m);
-	[[nodiscard]] SDL_Rect frameMargins() const;
 	/* Popup = caption-less transient (menu/dropdown/tooltip); created as an SDL popup. */
 	[[nodiscard]] bool isPopup() const;
 	/* SDL window insets: local window is inflated by these so the outside resize band takes input.
@@ -131,6 +144,7 @@ class SdlRailWindow
 	}
 	void setRailMaximized(bool m)
 	{
+		std::unique_lock lock(_gfxLock);
 		_maxState.rail = m;
 	}
 	void setServerMaximized(bool m);
@@ -146,6 +160,14 @@ class SdlRailWindow
 	void setServerMinimized(bool m);
 	/* Local or live-WM maximized (railMaximized may lag the SDL flag during a snap). */
 	[[nodiscard]] bool effectivelyMaximized() const;
+	/* Transition in flight (local intent vs server state). WM resizes only trusted outside. */
+	[[nodiscard]] bool stateTransitionPending() const
+	{
+		/* _maxState/_minState are written under _gfxLock on the RDP thread. */
+		std::unique_lock lock(_gfxLock);
+		return _maxState.dirty || _minState.dirty || (_maxState.rail != _maxState.server) ||
+		       (_minState.rail != _minState.server);
+	}
 
 	/* Create/move/show the local SDL window to match pending state; popups use parent+rect. */
 	bool reconcile(SDL_Window* parent, const SDL_Rect& parentRect);
@@ -174,6 +196,9 @@ class SdlRailWindow
 	[[nodiscard]] SDL_Rect bandMargins() const;
 	[[nodiscard]] SDL_Rect bandInsets() const;      /* insets(); caller holds _gfxLock */
 	[[nodiscard]] SDL_Rect targetOuterRect() const; /* outerRect(); caller holds _gfxLock */
+	/* Wayland: keep the outside resize band (sdl_wayland_band) at the current band margins. Called
+	 * from reconcile WITHOUT _gfxLock held (it self-locks). No-op on X11. */
+	void syncWaylandBand();
 	bool create(SDL_Window* parent, const SDL_Rect& parentRect);
 	bool paintGfx(SDL_PixelFormat format);
 	bool paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect>& damage);
@@ -208,15 +233,15 @@ class SdlRailWindow
 	bool _visible = false;
 	bool _geometryDirty = true;
 	bool _titleDirty = false;
-	bool _styleDirty = false; /* resizability needs re-applying (style change) */
-	bool _painted = false;    /* full copy done; afterwards only damage regions are re-copied */
-	bool _gfxPresented = false;    /* presented own GFX content once: gate the first map on it */
-	bool _mapped = false;          /* shown at least once (one-shot show+raise) */
+	bool _styleDirty = false;   /* resizability needs re-applying (style change) */
+	bool _painted = false;      /* full copy done; afterwards only damage regions are re-copied */
+	bool _gfxPresented = false; /* presented own GFX content once: gate the first map on it */
+	bool _mapped = false;       /* shown at least once (one-shot show+raise) */
 	bool _localMoveActive = false; /* WM move/resize in progress: ignore server geometry + input */
 	bool _localMoveIsResize = false;          /* local move is a resize vs a move */
-	/* Set when a local move is adopted: ignore the server's self-echo (same origin, often inflated
-	 * by its resize margin) until a genuine, differently-positioned server move arrives. */
-	bool _awaitingMoveEcho = false;
+	bool _localMoveSizeChanged = false;       /* server resized mid-move (drag-restore) */
+	SDL_Point _localMoveServerPos = { 0, 0 }; /* the re-anchored server origin (see above) */
+	bool _geomApplyPending = false;  /* a client-issued geometry/state apply is still settling */
 	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */
 	bool _resizeAnchorBottom = false; /* anchor stale frame to the bottom edge (top-side resize) */
 	SDL_Rect _extentsApplied = { 0, 0, 0, 0 }; /* band insets last mirrored to the WM */
