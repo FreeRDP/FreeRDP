@@ -825,7 +825,13 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
 
 	tls->bio = BIO_new_rdp_tls(tls->ctx, clientMode);
 
-	if (BIO_get_ssl(tls->bio, &tls->ssl) < 0)
+	if (!tls->bio)
+	{
+		WLog_ERR(TAG, "unable to create TLS BIO");
+		return FALSE;
+	}
+
+	if (BIO_get_ssl(tls->bio, &tls->ssl) < 0 || !tls->ssl)
 	{
 		WLog_ERR(TAG, "unable to retrieve the SSL of the connection");
 		return FALSE;
