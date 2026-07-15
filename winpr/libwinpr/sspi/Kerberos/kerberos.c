@@ -2242,21 +2242,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer = nullptr;
-	PSecBuffer data_buffer = nullptr;
-	krb5glue_key key = nullptr;
-	krb5_keyusage usage = 0;
-	uint16_t tok_id = 0;
-	BYTE flags = 0;
-	uint16_t ec = 0;
-	uint16_t rrc = 0;
-	uint64_t seq_no = 0;
-	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_HEADER, WINPR_C_ARRAY_INIT },
-		                      { KRB5_CRYPTO_TYPE_DATA, WINPR_C_ARRAY_INIT },
-		                      { KRB5_CRYPTO_TYPE_DATA, WINPR_C_ARRAY_INIT },
-		                      { KRB5_CRYPTO_TYPE_PADDING, WINPR_C_ARRAY_INIT },
-		                      { KRB5_CRYPTO_TYPE_TRAILER, WINPR_C_ARRAY_INIT } };
-
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
@@ -2265,19 +2250,19 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 
 	KRB_CREDENTIALS* creds = context->credentials;
 
-	sig_buffer = sspi_FindSecBuffer(pMessage, SECBUFFER_TOKEN);
-	data_buffer = sspi_FindSecBuffer(pMessage, SECBUFFER_DATA);
+	const PSecBuffer sig_buffer = sspi_FindSecBuffer(pMessage, SECBUFFER_TOKEN);
+	PSecBuffer data_buffer = sspi_FindSecBuffer(pMessage, SECBUFFER_DATA);
 
 	if (!sig_buffer || !data_buffer || sig_buffer->cbBuffer < 16)
 		return SEC_E_INVALID_TOKEN;
 
 	/* Read in header information */
-	BYTE* header = sig_buffer->pvBuffer;
-	tok_id = winpr_Data_Get_UINT16_BE(header);
-	flags = header[2];
-	ec = winpr_Data_Get_UINT16_BE(&header[4]);
-	rrc = winpr_Data_Get_UINT16_BE(&header[6]);
-	seq_no = winpr_Data_Get_UINT64_BE(&header[8]);
+	const BYTE* header = sig_buffer->pvBuffer;
+	const uint16_t tok_id = winpr_Data_Get_UINT16_BE(header);
+	const BYTE flags = header[2];
+	const uint16_t ec = winpr_Data_Get_UINT16_BE(&header[4]);
+	const uint16_t rrc = winpr_Data_Get_UINT16_BE(&header[6]);
+	const uint64_t seq_no = winpr_Data_Get_UINT64_BE(&header[8]);
 
 	/* Check that the header is valid */
 	if ((tok_id != TOK_ID_WRAP) || (header[3] != 0xFF))
@@ -2298,12 +2283,17 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 		return SEC_E_INVALID_TOKEN;
 
 	/* Find the proper key and key usage */
-	key = get_key(&context->keyset);
+	krb5glue_key key = get_key(&context->keyset);
 	if (!key || ((flags & FLAG_ACCEPTOR_SUBKEY) && (context->keyset.acceptor_key != key)))
 		return SEC_E_INTERNAL_ERROR;
-	usage = context->acceptor ? KG_USAGE_INITIATOR_SEAL : KG_USAGE_ACCEPTOR_SEAL;
+	krb5_keyusage usage = context->acceptor ? KG_USAGE_INITIATOR_SEAL : KG_USAGE_ACCEPTOR_SEAL;
 
 	/* Fill in the lengths of the iov array */
+	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_HEADER, WINPR_C_ARRAY_INIT },
+		                      { KRB5_CRYPTO_TYPE_DATA, WINPR_C_ARRAY_INIT },
+		                      { KRB5_CRYPTO_TYPE_DATA, WINPR_C_ARRAY_INIT },
+		                      { KRB5_CRYPTO_TYPE_PADDING, WINPR_C_ARRAY_INIT },
+		                      { KRB5_CRYPTO_TYPE_TRAILER, WINPR_C_ARRAY_INIT } };
 	iov[1].data.length = data_buffer->cbBuffer;
 	iov[2].data.length = 16;
 	if (krb_log_exec(krb5glue_crypto_length_iov, creds->ctx, key, iov, ARRAYSIZE(iov)))
@@ -2316,9 +2306,17 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 		return SEC_E_INVALID_TOKEN;
 
 	/* Locate the parts of the message */
-	iov[0].data.data = (char*)&header[16 + rrc + ec];
+	const size_t iov0Offset = 16ull + rrc + ec;
+	if (iov0Offset + iov[0].data.length > sig_buffer->cbBuffer)
+		return SEC_E_INVALID_TOKEN;
+
+	const size_t iov2Offset = 16ull + ec;
+	if (iov2Offset + iov[2].data.length > sig_buffer->cbBuffer)
+		return SEC_E_INVALID_TOKEN;
+
+	iov[0].data.data = &header[iov0Offset];
 	iov[1].data.data = data_buffer->pvBuffer;
-	iov[2].data.data = (char*)&header[16 + ec];
+	iov[2].data.data = &header[iov2Offset];
 	char* data2 = iov[2].data.data;
 	iov[3].data.data = &data2[iov[2].data.length];
 

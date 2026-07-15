@@ -225,23 +225,25 @@ static ULONG STDMETHODCALLTYPE CliprdrStream_Release(IStream* This)
 static HRESULT STDMETHODCALLTYPE CliprdrStream_Read(IStream* This, void* pv, ULONG cb,
                                                     ULONG* pcbRead)
 {
-	int ret;
 	CliprdrStream* instance = (CliprdrStream*)This;
-	wfClipboard* clipboard;
 
 	if (!pv || !pcbRead || !instance)
 		return E_INVALIDARG;
 
-	clipboard = (wfClipboard*)instance->m_pData;
+	wfClipboard* clipboard = (wfClipboard*)instance->m_pData;
 	*pcbRead = 0;
 
 	if (instance->m_lOffset.QuadPart >= instance->m_lSize.QuadPart)
 		return S_FALSE;
 
-	ret = cliprdr_send_request_filecontents(clipboard, (void*)This, instance->m_lIndex,
-	                                        FILECONTENTS_RANGE, instance->m_lOffset.QuadPart, cb);
+	const int ret =
+	    cliprdr_send_request_filecontents(clipboard, (void*)This, instance->m_lIndex,
+	                                      FILECONTENTS_RANGE, instance->m_lOffset.QuadPart, cb);
 
 	if (ret < 0)
+		return E_FAIL;
+
+	if (clipboard->req_fsize > cb)
 		return E_FAIL;
 
 	if (clipboard->req_fdata)
