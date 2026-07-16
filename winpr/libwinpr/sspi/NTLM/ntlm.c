@@ -316,6 +316,45 @@ static BOOL ntlm_ContextFillDefaultNames(NTLM_CONTEXT* context)
 	return TRUE;
 }
 
+static BOOL ntlm_try_set_from_registry(HKEY hKey, const char* key, UNICODE_STRING* ustr)
+{
+	WINPR_ASSERT(hKey);
+	WINPR_ASSERT(key);
+
+	UNICODE_STRING str = WINPR_C_ARRAY_INIT;
+
+	WCHAR wkey[64] = WINPR_C_ARRAY_INIT;
+	const SSIZE_T res = ConvertUtf8ToWChar(key, wkey, ARRAYSIZE(wkey));
+	if (res < 0)
+		goto fail;
+	WINPR_ASSERT((size_t)res < ARRAYSIZE(wkey));
+
+	DWORD dwSize = 0;
+	DWORD dwType = 0;
+	if (RegQueryValueExW(hKey, wkey, nullptr, &dwType, nullptr, &dwSize) != ERROR_SUCCESS)
+		goto fail;
+
+	if ((dwSize > UINT16_MAX) || ((dwSize % 2) != 0))
+		goto fail;
+
+	str.Buffer = calloc(dwSize / sizeof(WCHAR) + 1, sizeof(WCHAR));
+	if (!str.Buffer)
+		goto fail;
+	str.Length = WINPR_ASSERTING_INT_CAST(UINT16, dwSize);
+	str.MaximumLength = WINPR_ASSERTING_INT_CAST(UINT16, dwSize);
+
+	const LONG rc = RegQueryValueExW(hKey, wkey, nullptr, &dwType, (BYTE*)str.Buffer, &dwSize);
+	if (rc != ERROR_SUCCESS)
+		goto fail;
+	ntlm_free_unicode_string(ustr);
+	*ustr = str;
+	return TRUE;
+
+fail:
+	ntlm_free_unicode_string(&str);
+	return FALSE;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
 {
@@ -357,28 +396,12 @@ static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
 				                    (BYTE*)&dwValue, &dwSize) == ERROR_SUCCESS)
 					context->SendWorkstationName = dwValue ? 1 : 0;
 
-				if (RegQueryValueEx(hKey, _T("WorkstationName"), nullptr, &dwType, nullptr,
-				                    &dwSize) == ERROR_SUCCESS)
-				{
-					char* workstation = (char*)malloc(dwSize + 1);
-
-					if (!workstation)
-						return FALSE;
-
-					const LONG rc = RegQueryValueExA(hKey, "WorkstationName", nullptr, &dwType,
-					                                 (BYTE*)workstation, &dwSize);
-					if (rc != ERROR_SUCCESS)
-						WLog_WARN(TAG, "Key ''WorkstationName' not found");
-					workstation[dwSize] = '\0';
-
-					if (ntlm_SetContextWorkstation(context, workstation) < 0)
-					{
-						free(workstation);
-						return FALSE;
-					}
-
-					free(workstation);
-				}
+				(void)ntlm_try_set_from_registry(hKey, "WorkstationName", &context->Workstation);
+				(void)ntlm_try_set_from_registry(hKey, "NbDomainName", &context->NbDomainName);
+				(void)ntlm_try_set_from_registry(hKey, "NbComputerName", &context->NbComputerName);
+				(void)ntlm_try_set_from_registry(hKey, "DnsDomainName", &context->DnsDomainName);
+				(void)ntlm_try_set_from_registry(hKey, "DnsComputerName",
+				                                 &context->DnsComputerName);
 
 				RegCloseKey(hKey);
 			}
