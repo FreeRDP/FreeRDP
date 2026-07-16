@@ -33,12 +33,12 @@
 #define nullptr NULL
 #endif
 
-#define WLOG_TRACE 0
+// #define WLOG_TRACE 0
 #define WLOG_DEBUG 1
-#define WLOG_INFO 2
+// #define WLOG_INFO 2
 #define WLOG_WARN 3
 #define WLOG_ERROR 4
-#define WLOG_FATAL 5
+// #define WLOG_FATAL 5
 
 static const char* enc_err_str(AACENC_ERROR err)
 {
@@ -166,12 +166,13 @@ static const char* dec_err_str(AAC_DECODER_ERROR err)
 	}
 }
 
-static void log_dec_info(const CStreamInfo* info, void (*log)(const char* fmt, ...))
+static void log_dec_info(const CStreamInfo* info, fdk_log_fkt_t log)
 {
 	assert(info);
 	assert(log);
 
-	log("info:"
+	log(WLOG_DEBUG,
+	    "info:"
 	    "aacSampleRate: %d, "
 	    "frameSize: %d, "
 	    "numChannels: %d, "
@@ -430,7 +431,8 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		                                   { AACENC_CHANNELORDER, 0 },
 		                                   { AACENC_BITRATE, bytes_per_second * 8 },
 		                                   { AACENC_TRANSMUX, 0 },
-		                                   { AACENC_AFTERBURNER, 1 } };
+		                                   { AACENC_AFTERBURNER, 1 },
+		                                   { AACENC_GRANULE_LENGTH, frames_per_packet } };
 	HANDLE_AACENCODER self = nullptr;
 	if (encoder)
 		self = (HANDLE_AACENCODER)handle;
@@ -558,6 +560,7 @@ ssize_t fdk_aac_dsp_impl_stream_info(void* handle, int encoder, fdk_log_fkt_t lo
 			log(WLOG_ERROR, "aacDecoder_GetStreamInfo failed");
 			return -1;
 		}
+		log_dec_info(info, log);
 		if (info->numChannels <= 0)
 			return -1;
 		if (info->frameSize <= 0)
