@@ -64,8 +64,10 @@ typedef struct
 	wPcapRecord* record;
 } wPcap;
 
-wPcap* Pcap_Open(char* name, BOOL write);
 void Pcap_Close(wPcap* pcap);
+
+WINPR_ATTR_MALLOC(Pcap_Close, 1)
+wPcap* Pcap_Open(char* name, BOOL write);
 
 void Pcap_Flush(wPcap* pcap);
 

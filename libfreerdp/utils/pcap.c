@@ -196,6 +196,9 @@ rdpPcap* pcap_open(const char* name, BOOL write)
 		goto fail;
 
 	pcap->name = _strdup(name);
+	if (!pcap->name)
+		goto fail;
+
 	pcap->write = write;
 	pcap->record_count = 0;
 	pcap->fp = winpr_fopen(name, write ? "w+b" : "rb");

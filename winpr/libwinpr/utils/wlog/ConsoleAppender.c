@@ -144,11 +144,8 @@ static BOOL WLog_ConsoleAppender_WriteDataMessage(WINPR_ATTR_UNUSED wLog* log,
 #if defined(ANDROID)
 	return FALSE;
 #else
-	int DataId = 0;
-	char* FullFileName = nullptr;
-
-	DataId = g_DataId++;
-	FullFileName = WLog_Message_GetOutputFileName(DataId, "dat");
+	const int DataId = g_DataId++;
+	char* FullFileName = WLog_Message_GetOutputFileName(DataId, "dat");
 
 	WLog_DataMessage_Write(FullFileName, message->Data, message->Length);
 
@@ -167,11 +164,8 @@ static BOOL WLog_ConsoleAppender_WriteImageMessage(WINPR_ATTR_UNUSED wLog* log,
 #if defined(ANDROID)
 	return FALSE;
 #else
-	int ImageId = 0;
-	char* FullFileName = nullptr;
-
-	ImageId = g_ImageId++;
-	FullFileName = WLog_Message_GetOutputFileName(ImageId, "bmp");
+	const int ImageId = g_ImageId++;
+	char* FullFileName = WLog_Message_GetOutputFileName(ImageId, "bmp");
 
 	WLog_ImageMessage_Write(FullFileName, message->ImageData, message->ImageWidth,
 	                        message->ImageHeight, message->ImageBpp);
@@ -191,13 +185,11 @@ static BOOL WLog_ConsoleAppender_WritePacketMessage(WINPR_ATTR_UNUSED wLog* log,
 #if defined(ANDROID)
 	return FALSE;
 #else
-	char* FullFileName = nullptr;
-
 	g_PacketId++;
 
 	if (!appender->PacketMessageContext)
 	{
-		FullFileName = WLog_Message_GetOutputFileName(-1, "pcap");
+		char* FullFileName = WLog_Message_GetOutputFileName(-1, "pcap");
 		appender->PacketMessageContext = (void*)Pcap_Open(FullFileName, TRUE);
 		free(FullFileName);
 	}
