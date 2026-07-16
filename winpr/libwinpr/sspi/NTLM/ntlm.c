@@ -273,116 +273,6 @@ static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 	return 1;
 }
 
-static NTLM_CONTEXT* ntlm_ContextNew(void)
-{
-	HKEY hKey = nullptr;
-	DWORD dwType = 0;
-	DWORD dwSize = 0;
-	DWORD dwValue = 0;
-	NTLM_CONTEXT* context = (NTLM_CONTEXT*)calloc(1, sizeof(NTLM_CONTEXT));
-
-	if (!context)
-		return nullptr;
-
-	context->NTLMv2 = TRUE;
-	context->UseMIC = FALSE;
-	context->SendVersionInfo = TRUE;
-	context->SendSingleHostData = FALSE;
-	context->SendWorkstationName = TRUE;
-	context->NegotiateKeyExchange = TRUE;
-	context->UseSamFileDatabase = TRUE;
-
-	{
-		char* key = winpr_getApplicatonDetailsRegKey(WINPR_KEY);
-		if (key)
-		{
-			const LONG status =
-			    RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
-			free(key);
-
-			if (status == ERROR_SUCCESS)
-			{
-				if (RegQueryValueEx(hKey, _T("NTLMv2"), nullptr, &dwType, (BYTE*)&dwValue,
-				                    &dwSize) == ERROR_SUCCESS)
-					context->NTLMv2 = dwValue ? 1 : 0;
-
-				if (RegQueryValueEx(hKey, _T("UseMIC"), nullptr, &dwType, (BYTE*)&dwValue,
-				                    &dwSize) == ERROR_SUCCESS)
-					context->UseMIC = dwValue ? 1 : 0;
-
-				if (RegQueryValueEx(hKey, _T("SendVersionInfo"), nullptr, &dwType, (BYTE*)&dwValue,
-				                    &dwSize) == ERROR_SUCCESS)
-					context->SendVersionInfo = dwValue ? 1 : 0;
-
-				if (RegQueryValueEx(hKey, _T("SendSingleHostData"), nullptr, &dwType,
-				                    (BYTE*)&dwValue, &dwSize) == ERROR_SUCCESS)
-					context->SendSingleHostData = dwValue ? 1 : 0;
-
-				if (RegQueryValueEx(hKey, _T("SendWorkstationName"), nullptr, &dwType,
-				                    (BYTE*)&dwValue, &dwSize) == ERROR_SUCCESS)
-					context->SendWorkstationName = dwValue ? 1 : 0;
-
-				if (RegQueryValueEx(hKey, _T("WorkstationName"), nullptr, &dwType, nullptr,
-				                    &dwSize) == ERROR_SUCCESS)
-				{
-					char* workstation = (char*)malloc(dwSize + 1);
-
-					if (!workstation)
-					{
-						free(context);
-						return nullptr;
-					}
-
-					const LONG rc = RegQueryValueExA(hKey, "WorkstationName", nullptr, &dwType,
-					                                 (BYTE*)workstation, &dwSize);
-					if (rc != ERROR_SUCCESS)
-						WLog_WARN(TAG, "Key ''WorkstationName' not found");
-					workstation[dwSize] = '\0';
-
-					if (ntlm_SetContextWorkstation(context, workstation) < 0)
-					{
-						free(workstation);
-						free(context);
-						return nullptr;
-					}
-
-					free(workstation);
-				}
-
-				RegCloseKey(hKey);
-			}
-		}
-	}
-
-	/*
-	 * Extended Protection is enabled by default in Windows 7,
-	 * but enabling it in WinPR breaks TS Gateway at this point
-	 */
-	context->SuppressExtendedProtection = FALSE;
-	const LONG status =
-	    RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("System\\CurrentControlSet\\Control\\LSA"), 0,
-	                 KEY_READ | KEY_WOW64_64KEY, &hKey);
-
-	if (status == ERROR_SUCCESS)
-	{
-		if (RegQueryValueEx(hKey, _T("SuppressExtendedProtection"), nullptr, &dwType,
-		                    (BYTE*)&dwValue, &dwSize) == ERROR_SUCCESS)
-			context->SuppressExtendedProtection = dwValue ? 1 : 0;
-
-		RegCloseKey(hKey);
-	}
-
-	context->NegotiateFlags = 0;
-	context->LmCompatibilityLevel = 3;
-	ntlm_change_state(context, NTLM_STATE_INITIAL);
-	FillMemory(context->MachineID, sizeof(context->MachineID), 0xAA);
-
-	if (context->NTLMv2)
-		context->UseMIC = TRUE;
-
-	return context;
-}
-
 static void ntlm_ContextFree(NTLM_CONTEXT* context)
 {
 	if (!context)
@@ -410,6 +300,134 @@ static void ntlm_ContextFree(NTLM_CONTEXT* context)
 	memset(context->EncryptedRandomSessionKey, 0, sizeof(context->EncryptedRandomSessionKey));
 	memset(context->NtProofString, 0, sizeof(context->NtProofString));
 	free(context);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
+{
+	{
+		WINPR_ASSERT(context);
+
+		char* key = winpr_getApplicatonDetailsRegKey(WINPR_KEY);
+		if (key)
+		{
+			HKEY hKey = nullptr;
+
+			const LONG status =
+			    RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+			free(key);
+
+			if (status == ERROR_SUCCESS)
+			{
+				DWORD dwValue = 0;
+				DWORD dwSize = 0;
+				DWORD dwType = 0;
+
+				if (RegQueryValueEx(hKey, _T("NTLMv2"), nullptr, &dwType, (BYTE*)&dwValue,
+				                    &dwSize) == ERROR_SUCCESS)
+					context->NTLMv2 = dwValue ? 1 : 0;
+
+				if (RegQueryValueEx(hKey, _T("UseMIC"), nullptr, &dwType, (BYTE*)&dwValue,
+				                    &dwSize) == ERROR_SUCCESS)
+					context->UseMIC = dwValue ? 1 : 0;
+
+				if (RegQueryValueEx(hKey, _T("SendVersionInfo"), nullptr, &dwType, (BYTE*)&dwValue,
+				                    &dwSize) == ERROR_SUCCESS)
+					context->SendVersionInfo = dwValue ? 1 : 0;
+
+				if (RegQueryValueEx(hKey, _T("SendSingleHostData"), nullptr, &dwType,
+				                    (BYTE*)&dwValue, &dwSize) == ERROR_SUCCESS)
+					context->SendSingleHostData = dwValue ? 1 : 0;
+
+				if (RegQueryValueEx(hKey, _T("SendWorkstationName"), nullptr, &dwType,
+				                    (BYTE*)&dwValue, &dwSize) == ERROR_SUCCESS)
+					context->SendWorkstationName = dwValue ? 1 : 0;
+
+				if (RegQueryValueEx(hKey, _T("WorkstationName"), nullptr, &dwType, nullptr,
+				                    &dwSize) == ERROR_SUCCESS)
+				{
+					char* workstation = (char*)malloc(dwSize + 1);
+
+					if (!workstation)
+						return FALSE;
+
+					const LONG rc = RegQueryValueExA(hKey, "WorkstationName", nullptr, &dwType,
+					                                 (BYTE*)workstation, &dwSize);
+					if (rc != ERROR_SUCCESS)
+						WLog_WARN(TAG, "Key ''WorkstationName' not found");
+					workstation[dwSize] = '\0';
+
+					if (ntlm_SetContextWorkstation(context, workstation) < 0)
+					{
+						free(workstation);
+						return FALSE;
+					}
+
+					free(workstation);
+				}
+
+				RegCloseKey(hKey);
+			}
+		}
+	}
+
+	HKEY hKey = nullptr;
+	const LONG status =
+	    RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("System\\CurrentControlSet\\Control\\LSA"), 0,
+	                 KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+	if (status == ERROR_SUCCESS)
+	{
+		DWORD dwType = 0;
+		DWORD dwSize = 0;
+		DWORD dwValue = 0;
+		if (RegQueryValueEx(hKey, _T("SuppressExtendedProtection"), nullptr, &dwType,
+		                    (BYTE*)&dwValue, &dwSize) == ERROR_SUCCESS)
+			context->SuppressExtendedProtection = dwValue ? 1 : 0;
+
+		RegCloseKey(hKey);
+	}
+
+	/*
+	 * Extended Protection is enabled by default in Windows 7,
+	 * but enabling it in WinPR breaks TS Gateway at this point
+	 */
+	context->SuppressExtendedProtection = FALSE;
+	return TRUE;
+}
+
+WINPR_ATTR_MALLOC(ntlm_ContextFree, 1)
+static NTLM_CONTEXT* ntlm_ContextNew(void)
+{
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)calloc(1, sizeof(NTLM_CONTEXT));
+
+	if (!context)
+		return nullptr;
+
+	context->NTLMv2 = TRUE;
+	context->UseMIC = FALSE;
+	context->SendVersionInfo = TRUE;
+	context->SendSingleHostData = FALSE;
+	context->SendWorkstationName = TRUE;
+	context->NegotiateKeyExchange = TRUE;
+	context->UseSamFileDatabase = TRUE;
+
+	context->NegotiateFlags = 0;
+	context->LmCompatibilityLevel = 3;
+	ntlm_change_state(context, NTLM_STATE_INITIAL);
+	FillMemory(context->MachineID, sizeof(context->MachineID), 0xAA);
+
+	if (context->NTLMv2)
+		context->UseMIC = TRUE;
+
+	if (!ntlm_ContextFromConfig(context))
+		goto fail;
+
+	return context;
+
+fail:
+	ntlm_ContextFree(context);
+	return nullptr;
 }
 
 static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
