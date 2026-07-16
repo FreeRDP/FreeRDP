@@ -66,7 +66,6 @@ extern "C"
 	FREERDP_API void pcap_close(rdpPcap* pcap);
 
 	WINPR_ATTR_MALLOC(pcap_close, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_API rdpPcap* pcap_open(const char* name, BOOL write);
 
 	WINPR_ATTR_NODISCARD
@@ -83,6 +82,7 @@ extern "C"
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record);
+
 	FREERDP_API void pcap_flush(rdpPcap* pcap);
 
 #ifdef __cplusplus
