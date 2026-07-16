@@ -2314,9 +2314,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(WINPR_ATTR_UNUSED PCtxt
 	if (iov2Offset + iov[2].data.length > sig_buffer->cbBuffer)
 		return SEC_E_INVALID_TOKEN;
 
-	iov[0].data.data = &header[iov0Offset];
+	iov[0].data.data = WINPR_CAST_CONST_PTR_AWAY(&header[iov0Offset], char*);
 	iov[1].data.data = data_buffer->pvBuffer;
-	iov[2].data.data = &header[iov2Offset];
+	iov[2].data.data = WINPR_CAST_CONST_PTR_AWAY(&header[iov2Offset], char*);
 	char* data2 = iov[2].data.data;
 	iov[3].data.data = &data2[iov[2].data.length];
 

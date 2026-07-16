@@ -29,10 +29,6 @@
 
 #include "../utils.h"
 
-#if defined(WITH_RESOURCE_VERSIONING)
-#define STR(x) #x
-#endif
-
 static const char PATH_SLASH_CHR = '/';
 static const char PATH_SLASH_STR[] = "/";
 

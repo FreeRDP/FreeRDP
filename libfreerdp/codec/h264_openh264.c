@@ -177,8 +177,11 @@ static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	if (!pYUVData[0] || !pYUVData[1] || !pYUVData[2])
 		return -2005;
 
-	h264->YUVWidth = pSystemBuffer->iWidth;
-	h264->YUVHeight = pSystemBuffer->iHeight;
+	if ((pSystemBuffer->iWidth <= 0) || (pSystemBuffer->iHeight <= 0))
+		return -2006;
+
+	h264->YUVWidth = WINPR_ASSERTING_INT_CAST(UINT32, pSystemBuffer->iWidth);
+	h264->YUVHeight = WINPR_ASSERTING_INT_CAST(UINT32, pSystemBuffer->iHeight);
 
 	return 1;
 }
