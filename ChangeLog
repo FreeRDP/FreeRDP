@@ -1,3 +1,27 @@
+# 2026-07-16 Version 3.30.0
+
+Security and bugfix release.
+Addresses a severe server side issue, update highly recommended.
+
+## CVE
+* Claude and Ada Logics
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-m37j-jcr2-8gcc
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-vv64-95pc-vj9v
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-rqgv-grx4-xm6x
+
+## What's Changed
+* Logon info update (#13060)
+* Websocket regression fix (#13064)
+* Sdl clipbaord and bounds checks (#13065)
+* [core,rdstls] improve version handling (#13066)
+* [channels,drdynvc] fix channel unref on create request send failure (#13067)
+* Audin checks (#13068)
+* [channels,rdpsnd] tighten bounds checks (#13070)
+* Pcap cleanup (#13071)
+
+For a complete and detailed change log since the last release run:
+git log 3.30.0...3.29.0
+
 # 2026-07-14 Version 3.29.0
 
 Security, bugfix and maintenance release.
