@@ -48,6 +48,10 @@
 #endif
 #endif
 
+#if defined(WITH_VAAPI) || defined(WITH_VIDEOTOOLBOX)
+#include <libswscale/swscale.h>
+#endif
+
 /* Fallback support for older libavcodec versions */
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 59, 100)
 #define AV_CODEC_ID_H264 CODEC_ID_H264
@@ -114,6 +118,15 @@ typedef struct
 	AVBufferRef* hw_frames_ctx;
 #endif
 
+#endif
+#if defined(WITH_VAAPI) || defined(WITH_VIDEOTOOLBOX)
+	/* Hardware decode surfaces never come back in plain YUV420P: VAAPI always
+	 * produces NV12 (or P010 for 10bpc), a GPU decode hardware constraint. This
+	 * intermediate frame is the transfer target for the raw hw surface, and
+	 * `sws` converts it down to the planar YUV420P the rest of this codec's
+	 * pipeline (avc420/avc444_decompress, yuv.c) assumes unconditionally. */
+	AVFrame* swVideoFrame;
+	struct SwsContext* sws;
 #endif
 } H264_CONTEXT_LIBAVCODEC;
 
@@ -354,9 +367,68 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	{
 		if (sys->hwVideoFrame->format == sys->hw_pix_fmt)
 		{
-			sys->videoFrame->width = sys->hwVideoFrame->width;
-			sys->videoFrame->height = sys->hwVideoFrame->height;
-			status = av_hwframe_transfer_data(sys->videoFrame, sys->hwVideoFrame, 0);
+#ifdef WITH_VAAPI
+			if (sys->hw_pix_fmt == AV_PIX_FMT_VAAPI)
+			{
+				/* VAAPI decode surfaces are never plain YUV420P: the hwframes
+				 * context negotiated NV12 (or P010 for 10bpc) as its sw_format
+				 * in libavcodec_get_format(), because that is what the decode
+				 * hardware actually produces. Forcing videoFrame->format to
+				 * YUV420P (above) before the transfer makes
+				 * av_hwframe_transfer_data() fail with AVERROR(ENOSYS) on every
+				 * single frame, since YUV420P is never one of the surface's
+				 * supported sw formats. Transfer into an intermediate frame
+				 * with the format left for FFmpeg to negotiate, then convert
+				 * that down to YUV420P for the rest of this codec's pipeline
+				 * (avc420/avc444_decompress, yuv.c), which assumes 3-plane
+				 * I420 unconditionally. */
+				av_frame_unref(sys->swVideoFrame);
+				status = av_hwframe_transfer_data(sys->swVideoFrame, sys->hwVideoFrame, 0);
+
+				if (status >= 0)
+				{
+					const enum AVPixelFormat target = (sys->swVideoFrame->format == AV_PIX_FMT_P010)
+					                                      ? AV_PIX_FMT_YUV420P10LE
+					                                      : AV_PIX_FMT_YUV420P;
+
+					sys->sws =
+					    sws_getCachedContext(sys->sws, sys->swVideoFrame->width,
+					                         sys->swVideoFrame->height, sys->swVideoFrame->format,
+					                         sys->swVideoFrame->width, sys->swVideoFrame->height,
+					                         target, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
+
+					if (!sys->sws)
+					{
+						WLog_Print(h264->log, WLOG_ERROR,
+						           "Failed to create NV12/P010 to YUV420P sws context");
+						status = -1;
+					}
+					else
+					{
+						av_frame_unref(sys->videoFrame);
+						sys->videoFrame->format = target;
+						sys->videoFrame->width = sys->swVideoFrame->width;
+						sys->videoFrame->height = sys->swVideoFrame->height;
+						status = av_frame_get_buffer(sys->videoFrame, 32);
+
+						if (status >= 0)
+						{
+							status =
+							    sws_scale(sys->sws, (const uint8_t* const*)sys->swVideoFrame->data,
+							              sys->swVideoFrame->linesize, 0, sys->swVideoFrame->height,
+							              sys->videoFrame->data, sys->videoFrame->linesize);
+							status = (status > 0) ? 0 : -1;
+						}
+					}
+				}
+			}
+			else
+#endif
+			{
+				sys->videoFrame->width = sys->hwVideoFrame->width;
+				sys->videoFrame->height = sys->hwVideoFrame->height;
+				status = av_hwframe_transfer_data(sys->videoFrame, sys->hwVideoFrame, 0);
+			}
 		}
 		else
 		{
@@ -608,6 +680,16 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 		av_buffer_unref(&sys->hw_frames_ctx);
 
 #endif
+#endif
+
+#if defined(WITH_VAAPI) || defined(WITH_VIDEOTOOLBOX)
+	if (sys->swVideoFrame)
+	{
+		av_frame_free(&sys->swVideoFrame);
+	}
+
+	if (sys->sws)
+		sws_freeContext(sys->sws);
 
 #endif
 
@@ -842,6 +924,9 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 #if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING) || defined(WITH_VIDEOTOOLBOX)
 	sys->hwVideoFrame = av_frame_alloc();
 #endif
+#if defined(WITH_VAAPI) || defined(WITH_VIDEOTOOLBOX)
+	sys->swVideoFrame = av_frame_alloc();
+#endif
 #else
 	sys->videoFrame = avcodec_alloc_frame();
 #endif
@@ -856,6 +941,14 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 	if (!sys->hwVideoFrame)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "Failed to allocate libav hw frame");
+		goto EXCEPTION;
+	}
+
+#endif
+#if defined(WITH_VAAPI) || defined(WITH_VIDEOTOOLBOX)
+	if (!sys->swVideoFrame)
+	{
+		WLog_Print(h264->log, WLOG_ERROR, "Failed to allocate libav sw frame");
 		goto EXCEPTION;
 	}
 
