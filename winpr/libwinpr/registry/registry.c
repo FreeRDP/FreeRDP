@@ -44,7 +44,7 @@
 
 static Reg* instance = nullptr;
 
-static size_t regsz_length(const char* key, const void* value, bool unicode)
+static size_t regsz_length(const char* key, const void* value)
 {
 	/* https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-element-size-limits
 	 *
@@ -52,11 +52,7 @@ static size_t regsz_length(const char* key, const void* value, bool unicode)
 	 * file.
 	 */
 	const size_t limit = 16383;
-	size_t length = 0;
-	if (unicode)
-		length = _wcsnlen((const WCHAR*)value, limit);
-	else
-		length = strnlen((const char*)value, limit);
+	size_t length = strnlen((const char*)value, limit);
 	if (length >= limit)
 		WLog_WARN(TAG, "REG_SZ[%s] truncated to size %" PRIuz, key, length);
 	return length;
@@ -456,7 +452,7 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWOR
 				case REG_SZ:
 				{
 					const size_t length =
-					    regsz_length(pValue->name, pValue->data.string, TRUE) * sizeof(WCHAR);
+					    regsz_length(pValue->name, pValue->data.string) * sizeof(WCHAR);
 
 					status = ERROR_SUCCESS;
 					if (lpData != nullptr)
@@ -528,7 +524,7 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD
 					return reg_read_int(pValue, lpData, lpcbData);
 				case REG_SZ:
 				{
-					const size_t length = regsz_length(pValue->name, pValue->data.string, FALSE);
+					const size_t length = regsz_length(pValue->name, pValue->data.string);
 
 					char* pData = (char*)lpData;
 
