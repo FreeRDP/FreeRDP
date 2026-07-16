@@ -280,6 +280,10 @@ typedef struct
 	BYTE ServerSealingKey[16];
 	psSspiNtlmHashCallback HashCallback;
 	void* HashCallbackArg;
+	UNICODE_STRING NbDomainName;
+	UNICODE_STRING NbComputerName;
+	UNICODE_STRING DnsDomainName;
+	UNICODE_STRING DnsComputerName;
 } NTLM_CONTEXT;
 
 char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags);
@@ -305,5 +309,19 @@ BOOL NTLM_init(void);
 
 WINPR_ATTR_MALLOC(free, 1)
 char* get_computer_name(COMPUTER_NAME_FORMAT type, size_t* pSize);
+
+void ntlm_free_unicode_string(UNICODE_STRING* string);
+
+WINPR_ATTR_NODISCARD
+UNICODE_STRING ntlm_clone_unicode_string(const UNICODE_STRING* other);
+
+WINPR_ATTR_NODISCARD
+UNICODE_STRING ntlm_from_unicode_string_w(const WCHAR* str, size_t wcharlen);
+
+WINPR_ATTR_NODISCARD
+UNICODE_STRING ntlm_from_unicode_string_utf8(const char* str, size_t wcharlen);
+
+WINPR_ATTR_NODISCARD
+BOOL ntlm_is_unicode_string_empty(const UNICODE_STRING* str);
 
 #endif /* WINPR_SSPI_NTLM_PRIVATE_H */

@@ -335,47 +335,80 @@ static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList
 	                        ntlm_av_pair_get_value_pointer(pAvPair, cbAvPair), (UINT16)avLen);
 }
 
-static int ntlm_get_target_computer_name(PUNICODE_STRING pName,
-                                         WINPR_ATTR_UNUSED COMPUTER_NAME_FORMAT type)
+void ntlm_free_unicode_string(UNICODE_STRING* string)
 {
-	int status = -1;
+	if (!string)
+		return;
 
-	WINPR_ASSERT(pName);
-
-	char* name = get_computer_name(ComputerNameNetBIOS, nullptr);
-	if (!name)
-		return -1;
-
-	CharUpperA(name);
-
-	size_t len = 0;
-	pName->Buffer = ConvertUtf8ToWCharAlloc(name, &len);
-	free(name);
-
-	if (!pName->Buffer || (len == 0) || (len > UINT16_MAX / sizeof(WCHAR)))
-	{
-		free(pName->Buffer);
-		pName->Buffer = nullptr;
-		return status;
-	}
-
-	pName->Length = (USHORT)((len) * sizeof(WCHAR));
-	pName->MaximumLength = pName->Length;
-	return 1;
+	if (string->Length != 0)
+		free(string->Buffer);
+	string->Buffer = nullptr;
+	string->Length = 0;
+	string->MaximumLength = 0;
 }
 
-static void ntlm_free_unicode_string(PUNICODE_STRING string)
+UNICODE_STRING ntlm_clone_unicode_string(const UNICODE_STRING* other)
 {
-	if (string)
+	UNICODE_STRING clone = WINPR_C_ARRAY_INIT;
+	if (!other || (other->Length == 0) || (other->MaximumLength == 0))
+		return clone;
+	if (other->Length > other->MaximumLength)
+		return clone;
+
+	/* Ensure copy is always \0 terminated. */
+	clone.Buffer = calloc(other->MaximumLength / sizeof(WCHAR) + 1ull, sizeof(WCHAR));
+	if (!clone.Buffer)
+		return clone;
+	clone.Length = other->Length;
+	clone.MaximumLength = other->MaximumLength;
+	memcpy(clone.Buffer, other->Buffer, clone.Length);
+	return clone;
+}
+
+UNICODE_STRING ntlm_from_unicode_string_w(const WCHAR* str, size_t wcharlen)
+{
+	UNICODE_STRING clone = WINPR_C_ARRAY_INIT;
+	if (!str || (wcharlen == 0))
+		return clone;
+	if (wcharlen > USHRT_MAX / sizeof(WCHAR))
+		return clone;
+	clone.Buffer = wcsndup(str, wcharlen);
+	if (!clone.Buffer)
+		return clone;
+	clone.Length = WINPR_ASSERTING_INT_CAST(UINT16, wcharlen * sizeof(WCHAR));
+	clone.MaximumLength = WINPR_ASSERTING_INT_CAST(UINT16, wcharlen * sizeof(WCHAR));
+	return clone;
+}
+
+UNICODE_STRING ntlm_from_unicode_string_utf8(const char* str, size_t charlen)
+{
+	UNICODE_STRING clone = WINPR_C_ARRAY_INIT;
+	if (!str || (charlen == 0))
+		return clone;
+
+	size_t wlen = 0;
+	clone.Buffer = ConvertUtf8NToWCharAlloc(str, charlen, &wlen);
+	if (!clone.Buffer)
+		return clone;
+	if (wlen > USHRT_MAX / sizeof(WCHAR))
 	{
-		if (string->Length > 0)
-		{
-			free(string->Buffer);
-			string->Buffer = nullptr;
-			string->Length = 0;
-			string->MaximumLength = 0;
-		}
+		free(clone.Buffer);
+		clone.Buffer = nullptr;
+		return clone;
 	}
+	clone.Length = WINPR_ASSERTING_INT_CAST(UINT16, wlen * sizeof(WCHAR));
+	clone.MaximumLength = WINPR_ASSERTING_INT_CAST(UINT16, wlen * sizeof(WCHAR));
+	return clone;
+}
+
+BOOL ntlm_is_unicode_string_empty(const UNICODE_STRING* str)
+{
+	WINPR_ASSERT(str);
+	if (str->Length == 0)
+		return TRUE;
+	if (str->MaximumLength == 0)
+		return TRUE;
+	return str->Buffer == nullptr;
 }
 
 /**
@@ -486,38 +519,12 @@ static void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
 BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 {
 	BOOL rc = FALSE;
-	ULONG AvPairsCount = 0;
-	ULONG AvPairsLength = 0;
-	NTLM_AV_PAIR* pAvPairList = nullptr;
-	size_t cbAvPairList = 0;
-	UNICODE_STRING NbDomainName = WINPR_C_ARRAY_INIT;
-	UNICODE_STRING NbComputerName = WINPR_C_ARRAY_INIT;
-	UNICODE_STRING DnsDomainName = WINPR_C_ARRAY_INIT;
-	UNICODE_STRING DnsComputerName = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 
-	if (ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS) < 0)
-		goto fail;
-
-	NbComputerName.Buffer = nullptr;
-
-	if (ntlm_get_target_computer_name(&NbComputerName, ComputerNameNetBIOS) < 0)
-		goto fail;
-
-	DnsDomainName.Buffer = nullptr;
-
-	if (ntlm_get_target_computer_name(&DnsDomainName, ComputerNameDnsDomain) < 0)
-		goto fail;
-
-	DnsComputerName.Buffer = nullptr;
-
-	if (ntlm_get_target_computer_name(&DnsComputerName, ComputerNameDnsHostname) < 0)
-		goto fail;
-
-	AvPairsCount = 5;
-	AvPairsLength = NbDomainName.Length + NbComputerName.Length + DnsDomainName.Length +
-	                DnsComputerName.Length + 8;
+	const ULONG AvPairsCount = 5;
+	const ULONG AvPairsLength = context->NbDomainName.Length + context->NbComputerName.Length +
+	                            context->DnsDomainName.Length + context->DnsComputerName.Length + 8;
 	{
 		const size_t length = ntlm_av_pair_list_size(AvPairsCount, AvPairsLength);
 		if (!sspi_SecBufferAlloc(&context->ChallengeTargetInfo,
@@ -525,26 +532,26 @@ BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 			goto fail;
 	}
 
-	pAvPairList = (NTLM_AV_PAIR*)context->ChallengeTargetInfo.pvBuffer;
-	cbAvPairList = context->ChallengeTargetInfo.cbBuffer;
+	NTLM_AV_PAIR* pAvPairList = (NTLM_AV_PAIR*)context->ChallengeTargetInfo.pvBuffer;
+	const size_t cbAvPairList = context->ChallengeTargetInfo.cbBuffer;
 
 	if (!ntlm_av_pair_list_init(pAvPairList, cbAvPairList))
 		goto fail;
 
-	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvNbDomainName, (PBYTE)NbDomainName.Buffer,
-	                      NbDomainName.Length))
+	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvNbDomainName,
+	                      (PBYTE)context->NbDomainName.Buffer, context->NbDomainName.Length))
 		goto fail;
 
 	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvNbComputerName,
-	                      (PBYTE)NbComputerName.Buffer, NbComputerName.Length))
+	                      (PBYTE)context->NbComputerName.Buffer, context->NbComputerName.Length))
 		goto fail;
 
 	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvDnsDomainName,
-	                      (PBYTE)DnsDomainName.Buffer, DnsDomainName.Length))
+	                      (PBYTE)context->DnsDomainName.Buffer, context->DnsDomainName.Length))
 		goto fail;
 
 	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvDnsComputerName,
-	                      (PBYTE)DnsComputerName.Buffer, DnsComputerName.Length))
+	                      (PBYTE)context->DnsComputerName.Buffer, context->DnsComputerName.Length))
 		goto fail;
 
 	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvTimestamp, context->Timestamp,
@@ -553,10 +560,6 @@ BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 
 	rc = TRUE;
 fail:
-	ntlm_free_unicode_string(&NbDomainName);
-	ntlm_free_unicode_string(&NbComputerName);
-	ntlm_free_unicode_string(&DnsDomainName);
-	ntlm_free_unicode_string(&DnsComputerName);
 	return rc;
 }
 
@@ -675,7 +678,7 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		AvPairsValueLength += 16;
 		ntlm_compute_channel_bindings(context);
 
-		if (context->ServicePrincipalName.Length > 0)
+		if (!ntlm_is_unicode_string_empty(&context->ServicePrincipalName))
 		{
 			AvPairsCount++; /* MsvAvTargetName */
 			AvPairsValueLength += context->ServicePrincipalName.Length;
@@ -765,7 +768,7 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		                      MsvAvChannelBindings, context->ChannelBindingsHash, 16))
 			goto fail;
 
-		if (context->ServicePrincipalName.Length > 0)
+		if (!ntlm_is_unicode_string_empty(&context->ServicePrincipalName))
 		{
 			if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvAvTargetName,
 			                      (PBYTE)context->ServicePrincipalName.Buffer,
