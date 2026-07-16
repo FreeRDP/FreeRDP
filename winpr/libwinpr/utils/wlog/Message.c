@@ -22,6 +22,7 @@
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/string.h>
 
 #include "wlog.h"
 
@@ -29,36 +30,29 @@
 
 char* WLog_Message_GetOutputFileName(int id, const char* ext)
 {
-	DWORD ProcessId = 0;
-	char* FilePath = nullptr;
-	char* FileName = nullptr;
-	char* FullFileName = nullptr;
-
-	if (!(FileName = (char*)malloc(256)))
+	char* FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
+	if (!FilePath)
 		return nullptr;
 
-	FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
-
+	char* FileName = nullptr;
+	size_t FileNameLen = 0;
+	char* FullFileName = nullptr;
 	if (!winpr_PathFileExists(FilePath))
 	{
 		if (!winpr_PathMakePath(FilePath, nullptr))
-		{
-			free(FileName);
-			free(FilePath);
-			return nullptr;
-		}
+			goto fail;
 	}
 
-	ProcessId = GetCurrentProcessId();
+	const DWORD ProcessId = GetCurrentProcessId();
 	if (id >= 0)
-		(void)sprintf_s(FileName, 256, "%" PRIu32 "-%d.%s", ProcessId, id, ext);
+		winpr_asprintf(&FileName, &FileNameLen, "%" PRIu32 "-%d.%s", ProcessId, id, ext);
 	else
-		(void)sprintf_s(FileName, 256, "%" PRIu32 ".%s", ProcessId, ext);
+		winpr_asprintf(&FileName, &FileNameLen, "%" PRIu32 ".%s", ProcessId, ext);
 
 	FullFileName = GetCombinedPath(FilePath, FileName);
 
-	free(FileName);
+fail:
 	free(FilePath);
-
+	free(FileName);
 	return FullFileName;
 }

@@ -144,14 +144,11 @@ static int g_DataId = 0;
 static BOOL WLog_FileAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
                                                const wLogMessage* message)
 {
-	int DataId = 0;
-	char* FullFileName = nullptr;
-
 	if (!log || !appender || !message)
 		return FALSE;
 
-	DataId = g_DataId++;
-	FullFileName = WLog_Message_GetOutputFileName(DataId, "dat");
+	const int DataId = g_DataId++;
+	char* FullFileName = WLog_Message_GetOutputFileName(DataId, "dat");
 	WLog_DataMessage_Write(FullFileName, message->Data, message->Length);
 	free(FullFileName);
 	return TRUE;
@@ -162,14 +159,11 @@ static int g_ImageId = 0;
 static BOOL WLog_FileAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
                                                 const wLogMessage* message)
 {
-	int ImageId = 0;
-	char* FullFileName = nullptr;
-
 	if (!log || !appender || !message)
 		return FALSE;
 
-	ImageId = g_ImageId++;
-	FullFileName = WLog_Message_GetOutputFileName(ImageId, "bmp");
+	const int ImageId = g_ImageId++;
+	char* FullFileName = WLog_Message_GetOutputFileName(ImageId, "bmp");
 	WLog_ImageMessage_Write(FullFileName, message->ImageData, message->ImageWidth,
 	                        message->ImageHeight, message->ImageBpp);
 	free(FullFileName);
