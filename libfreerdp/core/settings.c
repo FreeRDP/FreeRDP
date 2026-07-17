@@ -253,8 +253,10 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 					(void)_sntprintf(numentries, ARRAYSIZE(numentries), _T("Cell%uNumEntries"), x);
 					(void)_sntprintf(persist, ARRAYSIZE(persist), _T("Cell%uPersistent"), x);
 					if (!settings_reg_query_dword_val(hKey, numentries, &val) ||
-					    !settings_reg_query_bool_val(hKey, persist, &cache.persistent) ||
-					    !freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo,
+					    !settings_reg_query_bool_val(hKey, persist, &cache.persistent))
+						continue;
+
+					if (!freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo,
 					                                        x, &cache))
 						WLog_WARN(TAG, "Failed to load registry keys to settings!");
 					cache.numEntries = val;
