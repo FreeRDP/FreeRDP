@@ -317,15 +317,63 @@ add_executable(
 
 add_dependencies(${PROJECT_NAME} freerdp)
 
+set(_ios_embed_frameworks
+    ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libfreerdp3.3.dylib
+    ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libfreerdp-client3.3.dylib
+    ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libwinpr3.3.dylib
+)
+if(WITH_OPENSSL)
+  list(APPEND _ios_embed_frameworks ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libssl.4.dylib
+       ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libcrypto.4.dylib
+  )
+endif()
+if(WITH_FFMPEG)
+  list(APPEND _ios_embed_frameworks ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libavcodec.62.dylib
+       ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libavutil.60.dylib
+       ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libswresample.6.dylib
+       ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libswscale.9.dylib
+  )
+endif()
+if(WITH_OPENH264)
+  list(APPEND _ios_embed_frameworks ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libopenh264.8.dylib)
+endif()
+if(WITH_OPUS)
+  list(APPEND _ios_embed_frameworks ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libopus.0.dylib)
+endif()
+if(WITH_PNG)
+  list(APPEND _ios_embed_frameworks ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/png.framework)
+endif()
+if(WITH_JPEG)
+  list(APPEND _ios_embed_frameworks ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libjpeg.62.dylib)
+endif()
+if(WITH_WEBP)
+  list(APPEND _ios_embed_frameworks ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libwebp.7.dylib
+       ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libsharpyuv.0.dylib
+  )
+endif()
+if(WITH_CJSON)
+  list(APPEND _ios_embed_frameworks ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libcjson.1.dylib)
+endif()
+if(WITH_URIPARSER)
+  list(APPEND _ios_embed_frameworks ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/liburiparser.1.dylib)
+endif()
+
 set_target_properties(
   ${PROJECT_NAME}
   PROPERTIES # FOLDER "Client/iOS"
-             RESOURCE "${RESOURCES}" MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME} MACOSX_BUNDLE_BUNDLE_VERSION
-                                                                               ${PROJECT_VERSION}
-             MACOSX_BUNDLE_COPYRIGHT "Copyright 2013-${VERSION_YEAR}. All Rights Reserved." MACOSX_BUNDLE_GUI_IDENTIFIER
-                                                                                            "com.freerdp.ifreerdp"
-             MACOSX_BUNDLE_ICON_FILE "FreeRDP_OSX.icns" MACOSX_BUNDLE_INFO_STRING "info string TODO"
-             MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION} MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+             RESOURCE "${RESOURCES}"
+             MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
+             MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+             MACOSX_BUNDLE_COPYRIGHT "Copyright 2013-${VERSION_YEAR}. All Rights Reserved."
+             MACOSX_BUNDLE_GUI_IDENTIFIER "com.freerdp.ifreerdp"
+             MACOSX_BUNDLE_ICON_FILE "FreeRDP_OSX.icns"
+             MACOSX_BUNDLE_INFO_STRING "info string TODO"
+             MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION}
+             MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+             BUILD_RPATH "@executable_path/Frameworks"
+             INSTALL_RPATH "@executable_path/Frameworks"
+             XCODE_EMBED_FRAMEWORKS "${_ios_embed_frameworks}"
+             XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON
 )
 target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
 
