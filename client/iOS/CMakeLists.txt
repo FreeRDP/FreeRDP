@@ -208,8 +208,6 @@ set(IOS_CLIENT_RESOURCES_XIBS
 )
 
 set(IOS_CLIENT_RESOURCES_PNGS
-    Resources/about_page/background_transparent.png
-    Resources/about_page/FreeRDP_Logo.png
     Resources/alert-black-button@2x.png
     Resources/alert-black-button.png
     Resources/alert-gray-button@2x.png
@@ -298,6 +296,8 @@ set(APP_ICON "${FREERDP_SOURCE_DIR}/resources/FreeRDP_OSX.icns")
 set(RESOURCES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_DIR}/Defaults.plist ${APP_ICON})
 set_source_files_properties(${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/iFreeRDP.plist.in ${CMAKE_CURRENT_BINARY_DIR}/iFreeRDP.plist @ONLY)
+
 add_executable(
   ${PROJECT_NAME} MACOSX_BUNDLE
   ${SRCS}
@@ -313,9 +313,18 @@ add_executable(
   ${IOS_CLIENT_MODELS_HDRS}
   ${IOS_CLIENT_VIEWS_SRCS}
   ${IOS_CLIENT_VIEWS_HDRS}
+  ${RESOURCES}
 )
 
 add_dependencies(${PROJECT_NAME} freerdp)
+
+add_custom_command(
+  TARGET ${PROJECT_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${IOS_CLIENT_RESOURCES_DIR}/about_page
+          $<TARGET_BUNDLE_DIR:${PROJECT_NAME}>/about_page
+  COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${IOS_CLIENT_RESOURCES_DIR}/en.lproj
+          $<TARGET_BUNDLE_DIR:${PROJECT_NAME}>/en.lproj
+)
 
 set(_ios_embed_frameworks
     ${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/libfreerdp3.3.dylib
@@ -367,6 +376,7 @@ set_target_properties(
              MACOSX_BUNDLE_COPYRIGHT "Copyright 2013-${VERSION_YEAR}. All Rights Reserved."
              MACOSX_BUNDLE_GUI_IDENTIFIER "com.freerdp.ifreerdp"
              MACOSX_BUNDLE_ICON_FILE "FreeRDP_OSX.icns"
+             MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/iFreeRDP.plist
              MACOSX_BUNDLE_INFO_STRING "info string TODO"
              MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION}
              MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
