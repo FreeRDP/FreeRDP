@@ -286,15 +286,27 @@ typedef struct
 	UNICODE_STRING DnsComputerName;
 } NTLM_CONTEXT;
 
+WINPR_ATTR_NODISCARD
 char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags);
+
+WINPR_ATTR_NODISCARD
 const char* ntlm_message_type_string(UINT32 messageType);
 
+WINPR_ATTR_NODISCARD
 const char* ntlm_state_string(NTLM_STATE state);
+
 void ntlm_change_state(NTLM_CONTEXT* ntlm, NTLM_STATE state);
+
+WINPR_ATTR_NODISCARD
 NTLM_STATE ntlm_get_state(NTLM_CONTEXT* ntlm);
+
+WINPR_ATTR_NODISCARD
 BOOL ntlm_reset_cipher_state(PSecHandle phContext);
 
+WINPR_ATTR_NODISCARD
 SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT* ntlm, SecBuffer* ntproof);
+
+WINPR_ATTR_NODISCARD
 SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue);
 
 WINPR_ATTR_NODISCARD
@@ -306,9 +318,6 @@ SECURITY_STATUS ntlm_SetContextWorkstationX(NTLM_CONTEXT* context, BOOL unicode,
 #endif
 
 BOOL NTLM_init(void);
-
-WINPR_ATTR_MALLOC(free, 1)
-char* get_computer_name(COMPUTER_NAME_FORMAT type, size_t* pSize);
 
 void ntlm_free_unicode_string(UNICODE_STRING* string);
 
