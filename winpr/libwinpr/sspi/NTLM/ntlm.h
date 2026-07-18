@@ -333,4 +333,7 @@ UNICODE_STRING ntlm_from_unicode_string_utf8(const char* str, size_t wcharlen);
 WINPR_ATTR_NODISCARD
 BOOL ntlm_is_unicode_string_empty(const UNICODE_STRING* str);
 
+WINPR_ATTR_NODISCARD
+BOOL ntlm_SecBufferRealloc(SecBuffer* buffer, ULONG len);
+
 #endif /* WINPR_SSPI_NTLM_PRIVATE_H */

@@ -43,6 +43,71 @@ static const char NTLM_SIGNATURE[8] = { 'N', 'T', 'L', 'M', 'S', 'S', 'P', '\0' 
 
 static void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields);
 
+static void ntlm_free_negotiate_message(NTLM_NEGOTIATE_MESSAGE* nego)
+{
+	if (!nego)
+		return;
+
+	ntlm_free_message_fields_buffer(&nego->Workstation);
+	ntlm_free_message_fields_buffer(&nego->DomainName);
+}
+
+static void ntlm_free_challenge_message(NTLM_CHALLENGE_MESSAGE* challenge)
+{
+	if (!challenge)
+		return;
+	ntlm_free_message_fields_buffer(&challenge->TargetName);
+	ntlm_free_message_fields_buffer(&challenge->TargetInfo);
+}
+
+static void ntlm_free_authenticate_message(NTLM_AUTHENTICATE_MESSAGE* auth)
+{
+	if (!auth)
+		return;
+	ntlm_free_message_fields_buffer(&auth->DomainName);
+	ntlm_free_message_fields_buffer(&auth->UserName);
+	ntlm_free_message_fields_buffer(&auth->Workstation);
+	ntlm_free_message_fields_buffer(&auth->LmChallengeResponse);
+	ntlm_free_message_fields_buffer(&auth->EncryptedRandomSessionKey);
+	ntlm_free_message_fields_buffer(&(auth->NtChallengeResponse));
+}
+
+void ntlm_free_messages(NTLM_CONTEXT* context)
+{
+	if (!context)
+		return;
+	ntlm_free_negotiate_message(&context->NEGOTIATE_MESSAGE);
+	ntlm_free_challenge_message(&context->CHALLENGE_MESSAGE);
+	ntlm_free_authenticate_message(&context->AUTHENTICATE_MESSAGE);
+}
+
+static SecBuffer ntlm_move_buffer(NTLM_MESSAGE_FIELDS* field)
+{
+
+	WINPR_ASSERT(field);
+	SecBuffer buffer = { .cbBuffer = field->Len,
+		                 .pvBuffer = field->Buffer,
+		                 .BufferType = SECBUFFER_TOKEN };
+
+	field->Buffer = nullptr;
+	field->BufferOffset = 0;
+	field->Len = 0;
+	field->MaxLen = 0;
+
+	return buffer;
+}
+
+static SecBuffer ntlm_secbuffer_move(SecBuffer* in)
+{
+	WINPR_ASSERT(in);
+	SecBuffer target = { .BufferType = in->BufferType,
+		                 .cbBuffer = in->cbBuffer,
+		                 .pvBuffer = in->pvBuffer };
+	in->cbBuffer = 0;
+	in->pvBuffer = nullptr;
+	return target;
+}
+
 const char* ntlm_get_negotiate_string(UINT32 flag)
 {
 	if (flag & NTLMSSP_NEGOTIATE_56)
@@ -495,7 +560,6 @@ static BOOL ntlm_write_message_integrity_check(wStream* s, size_t offset, const 
 SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
 {
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
-	const NTLM_NEGOTIATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -503,7 +567,8 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	NTLM_NEGOTIATE_MESSAGE* message = &context->NEGOTIATE_MESSAGE;
 	WINPR_ASSERT(message);
 
-	*message = empty;
+	ntlm_free_negotiate_message(message);
+
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 
 	wStream* s = Stream_StaticConstInit(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
@@ -550,10 +615,11 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	const size_t length = Stream_GetPosition(s);
 	WINPR_ASSERT(length <= UINT32_MAX);
-	buffer->cbBuffer = (ULONG)length;
+	if (buffer->cbBuffer < length)
+		return SEC_E_INVALID_PARAMETER;
 
 	status = SEC_E_INTERNAL_ERROR;
-	if (!sspi_SecBufferAlloc(&context->NegotiateMessage, (ULONG)length))
+	if (!ntlm_SecBufferRealloc(&context->NegotiateMessage, (ULONG)length))
 		goto fail;
 
 	CopyMemory(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
@@ -565,9 +631,6 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	return SEC_I_CONTINUE_NEEDED;
 
 fail:
-	ntlm_free_message_fields_buffer(&message->DomainName);
-	ntlm_free_message_fields_buffer(&message->Workstation);
-	*message = empty;
 	return status;
 }
 
@@ -575,15 +638,12 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* bu
 {
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	size_t length = 0;
-	const NTLM_NEGOTIATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
+	NTLM_NEGOTIATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
 
-	NTLM_NEGOTIATE_MESSAGE* message = &context->NEGOTIATE_MESSAGE;
-	WINPR_ASSERT(message);
-
-	*message = empty;
+	NTLM_NEGOTIATE_MESSAGE* message = &empty;
 
 	wStream* s = Stream_StaticInit(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
 
@@ -650,7 +710,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, SecBuffer* bu
 	WINPR_ASSERT(length <= UINT32_MAX);
 	buffer->cbBuffer = (ULONG)length;
 
-	if (!sspi_SecBufferAlloc(&context->NegotiateMessage, (ULONG)length))
+	if (!ntlm_SecBufferRealloc(&context->NegotiateMessage, (ULONG)length))
 		return SEC_E_INTERNAL_ERROR;
 
 	CopyMemory(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
@@ -669,7 +729,6 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	size_t length = 0;
 	size_t StartOffset = 0;
 	size_t PayloadOffset = 0;
-	const NTLM_CHALLENGE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 
 	if (!context || !buffer)
 		return SEC_E_INTERNAL_ERROR;
@@ -680,7 +739,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	NTLM_CHALLENGE_MESSAGE* message = &context->CHALLENGE_MESSAGE;
 	WINPR_ASSERT(message);
 
-	*message = empty;
+	ntlm_free_challenge_message(message);
 
 	wStream* s = Stream_StaticConstInit(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
 
@@ -733,11 +792,12 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 		if (!ntlm_read_message_fields_buffer(s, &(message->TargetInfo)))
 			goto fail;
 
-		context->ChallengeTargetInfo.pvBuffer = message->TargetInfo.Buffer;
-		context->ChallengeTargetInfo.cbBuffer = message->TargetInfo.Len;
+		sspi_SecBufferFree(&context->ChallengeTargetInfo);
+		context->ChallengeTargetInfo = ntlm_move_buffer(&message->TargetInfo);
+
 		NTLM_AV_PAIR* AvTimestamp =
-		    ntlm_av_pair_get((NTLM_AV_PAIR*)message->TargetInfo.Buffer, message->TargetInfo.Len,
-		                     MsvAvTimestamp, &cbAvTimestamp);
+		    ntlm_av_pair_get((NTLM_AV_PAIR*)context->ChallengeTargetInfo.pvBuffer,
+		                     context->ChallengeTargetInfo.cbBuffer, MsvAvTimestamp, &cbAvTimestamp);
 
 		if (AvTimestamp)
 		{
@@ -753,11 +813,12 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 		}
 	}
 
-	length = (PayloadOffset - StartOffset) + message->TargetName.Len + message->TargetInfo.Len;
+	length = (PayloadOffset - StartOffset) + message->TargetName.Len +
+	         context->ChallengeTargetInfo.cbBuffer;
 	if (length > buffer->cbBuffer)
 		goto fail;
 
-	if (!sspi_SecBufferAlloc(&context->ChallengeMessage, (ULONG)length))
+	if (!ntlm_SecBufferRealloc(&context->ChallengeMessage, (ULONG)length))
 		goto fail;
 
 	if (context->ChallengeMessage.pvBuffer)
@@ -773,8 +834,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 			goto fail;
 
 		sspi_SecBufferFree(&context->ChallengeTargetInfo);
-		context->ChallengeTargetInfo.pvBuffer = context->AuthenticateTargetInfo.pvBuffer;
-		context->ChallengeTargetInfo.cbBuffer = context->AuthenticateTargetInfo.cbBuffer;
+		context->ChallengeTargetInfo = ntlm_secbuffer_move(&context->AuthenticateTargetInfo);
 	}
 
 	ntlm_generate_timestamp(context); /* Timestamp */
@@ -827,7 +887,6 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ntlm_change_state(context, NTLM_STATE_AUTHENTICATE);
 	status = SEC_I_CONTINUE_NEEDED;
 fail:
-	ntlm_free_message_fields_buffer(&(message->TargetName));
 	return status;
 }
 
@@ -836,15 +895,12 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* bu
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	size_t length = 0;
 	UINT32 PayloadOffset = 0;
-	const NTLM_CHALLENGE_MESSAGE empty = WINPR_C_ARRAY_INIT;
+	NTLM_CHALLENGE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
 
-	NTLM_CHALLENGE_MESSAGE* message = &context->CHALLENGE_MESSAGE;
-	WINPR_ASSERT(message);
-
-	*message = empty;
+	NTLM_CHALLENGE_MESSAGE* message = &empty;
 
 	wStream* s = Stream_StaticInit(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
 
@@ -930,7 +986,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, SecBuffer* bu
 	WINPR_ASSERT(length <= UINT32_MAX);
 	buffer->cbBuffer = (ULONG)length;
 
-	if (!sspi_SecBufferAlloc(&context->ChallengeMessage, (ULONG)length))
+	if (!ntlm_SecBufferRealloc(&context->ChallengeMessage, (ULONG)length))
 		return SEC_E_INTERNAL_ERROR;
 
 	CopyMemory(context->ChallengeMessage.pvBuffer, Stream_Buffer(s), length);
@@ -950,7 +1006,6 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	UINT32 flags = 0;
 	NTLM_AV_PAIR* AvFlags = nullptr;
 	size_t PayloadBufferOffset = 0;
-	const NTLM_AUTHENTICATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -961,7 +1016,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	NTLM_AUTHENTICATE_MESSAGE* message = &context->AUTHENTICATE_MESSAGE;
 	WINPR_ASSERT(message);
 
-	*message = empty;
+	ntlm_free_authenticate_message(message);
 
 	wStream* s = Stream_StaticConstInit(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
 
@@ -1047,11 +1102,12 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 			goto fail;
 		status = SEC_E_INTERNAL_ERROR;
 
-		context->NtChallengeResponse.pvBuffer = message->NtChallengeResponse.Buffer;
-		context->NtChallengeResponse.cbBuffer = message->NtChallengeResponse.Len;
+		sspi_SecBufferFree(&context->NtChallengeResponse);
+		context->NtChallengeResponse = ntlm_move_buffer(&message->NtChallengeResponse);
+
 		sspi_SecBufferFree(&(context->ChallengeTargetInfo));
 		context->ChallengeTargetInfo.pvBuffer = (void*)context->NTLMv2Response.Challenge.AvPairs;
-		context->ChallengeTargetInfo.cbBuffer = message->NtChallengeResponse.Len - (28 + 16);
+		context->ChallengeTargetInfo.cbBuffer = context->NtChallengeResponse.cbBuffer - (28 + 16);
 		CopyMemory(context->ClientChallenge, context->NTLMv2Response.Challenge.ClientChallenge, 8);
 		AvFlags =
 		    ntlm_av_pair_get(context->NTLMv2Response.Challenge.AvPairs,
@@ -1082,7 +1138,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	length = Stream_GetPosition(s);
 	WINPR_ASSERT(length <= UINT32_MAX);
 
-	if (!sspi_SecBufferAlloc(&context->AuthenticateMessage, (ULONG)length))
+	if (!ntlm_SecBufferRealloc(&context->AuthenticateMessage, (ULONG)length))
 		goto fail;
 
 	CopyMemory(context->AuthenticateMessage.pvBuffer, Stream_Buffer(s), length);
@@ -1234,17 +1290,6 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	status = SEC_E_OK;
 
 fail:
-	ntlm_free_message_fields_buffer(&(message->DomainName));
-	ntlm_free_message_fields_buffer(&(message->UserName));
-	ntlm_free_message_fields_buffer(&(message->Workstation));
-	ntlm_free_message_fields_buffer(&(message->LmChallengeResponse));
-	/* NtChallengeResponse.Buffer is aliased to context->NtChallengeResponse.pvBuffer at
-	 * L1048 until ntlm_compute_ntlm_v2_response() reallocates the context buffer. Only
-	 * free message->NtChallengeResponse when the alias does not hold, otherwise
-	 * ntlm_ContextFree() frees the same pointer via context->NtChallengeResponse. */
-	if (context->NtChallengeResponse.pvBuffer != message->NtChallengeResponse.Buffer)
-		ntlm_free_message_fields_buffer(&(message->NtChallengeResponse));
-	ntlm_free_message_fields_buffer(&(message->EncryptedRandomSessionKey));
 	return status;
 }
 
@@ -1260,7 +1305,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer*
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	size_t length = 0;
 	UINT32 PayloadBufferOffset = 0;
-	const NTLM_AUTHENTICATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
+	NTLM_AUTHENTICATE_MESSAGE empty = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(buffer);
@@ -1268,10 +1313,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer*
 	SSPI_CREDENTIALS* credentials = context->credentials;
 	WINPR_ASSERT(credentials);
 
-	NTLM_AUTHENTICATE_MESSAGE* message = &context->AUTHENTICATE_MESSAGE;
-	WINPR_ASSERT(message);
-
-	*message = empty;
+	NTLM_AUTHENTICATE_MESSAGE* message = &empty;
 
 	wStream* s = Stream_StaticInit(&sbuffer, buffer->pvBuffer, buffer->cbBuffer);
 
@@ -1429,7 +1471,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, SecBuffer*
 	length = Stream_GetPosition(s);
 	WINPR_ASSERT(length <= UINT32_MAX);
 
-	if (!sspi_SecBufferAlloc(&context->AuthenticateMessage, (ULONG)length))
+	if (!ntlm_SecBufferRealloc(&context->AuthenticateMessage, (ULONG)length))
 		return SEC_E_INTERNAL_ERROR;
 
 	CopyMemory(context->AuthenticateMessage.pvBuffer, Stream_Buffer(s), length);

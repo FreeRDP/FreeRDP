@@ -489,6 +489,7 @@ static int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 	if (ntlm->haveInputBuffer)
 	{
 		free(ntlm->inputBuffer[0].pvBuffer);
+		ntlm->inputBuffer[0].pvBuffer = nullptr;
 	}
 
 	ntlm->haveInputBuffer = TRUE;
@@ -677,7 +678,6 @@ WINPR_ATTR_NODISCARD
 static BOOL test_default(const struct test_input_t* arg, psSspiNtlmHashCallback fkt)
 {
 	BOOL rc = FALSE;
-	PSecBuffer pSecBuffer = nullptr;
 
 	WINPR_ASSERT(arg);
 
@@ -764,7 +764,7 @@ static BOOL test_default(const struct test_input_t* arg, psSspiNtlmHashCallback 
 		WINPR_ASSERT((rc == SEC_E_OK) || (rc == SEC_E_SECPKG_NOT_FOUND));
 	}
 
-	pSecBuffer = &(client->outputBuffer[0]);
+	PSecBuffer pSecBuffer = &(client->outputBuffer[0]);
 
 	if (!arg->dynamic)
 	{
