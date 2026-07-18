@@ -548,7 +548,7 @@ SECURITY_STATUS ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 	CopyMemory(value, context->ServerChallenge, 8);
 	CopyMemory(&value[8], context->ClientChallenge, 8);
 
-	if (!sspi_SecBufferAlloc(&context->LmChallengeResponse, 24))
+	if (!ntlm_SecBufferRealloc(&context->LmChallengeResponse, 24))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
 	response = (BYTE*)context->LmChallengeResponse.pvBuffer;
@@ -625,8 +625,7 @@ SECURITY_STATUS ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	}
 
 	/* NtChallengeResponse, Concatenate NTProofStr with temp */
-
-	if (!sspi_SecBufferAlloc(&context->NtChallengeResponse, ntlm_v2_temp.cbBuffer + 16))
+	if (!ntlm_SecBufferRealloc(&context->NtChallengeResponse, ntlm_v2_temp.cbBuffer + 16))
 		goto exit;
 
 	{

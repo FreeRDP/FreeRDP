@@ -226,6 +226,7 @@ static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 	}
 
 	size_t len = 0;
+	sspi_SecBufferFree(&context->TargetName);
 	context->TargetName.pvBuffer = ConvertUtf8ToWCharAlloc(name, &len);
 
 	if (!context->TargetName.pvBuffer || (len > UINT16_MAX / sizeof(WCHAR)))
@@ -258,6 +259,7 @@ static void ntlm_ContextFree(NTLM_CONTEXT* context)
 	sspi_SecBufferFree(&context->ChallengeMessage);
 	sspi_SecBufferFree(&context->AuthenticateMessage);
 	sspi_SecBufferFree(&context->ChallengeTargetInfo);
+	sspi_SecBufferFree(&context->AuthenticateTargetInfo);
 	sspi_SecBufferFree(&context->TargetName);
 	sspi_SecBufferFree(&context->NtChallengeResponse);
 	sspi_SecBufferFree(&context->LmChallengeResponse);
@@ -267,7 +269,8 @@ static void ntlm_ContextFree(NTLM_CONTEXT* context)
 	ntlm_free_unicode_string(&context->NbDomainName);
 	ntlm_free_unicode_string(&context->DnsComputerName);
 	ntlm_free_unicode_string(&context->DnsDomainName);
-	ntlm_free_unicode_string(&context->Workstation);
+
+	ntlm_free_messages(context);
 
 	/* Zero sensitive key material before freeing the context */
 	memset(context->NtlmHash, 0, sizeof(context->NtlmHash));
@@ -1277,9 +1280,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesCommon(PCtxtHandle phC
 
 			if (AuthNtlmMessage->type == 1)
 			{
-				sspi_SecBufferFree(&context->NegotiateMessage);
-
-				if (!sspi_SecBufferAlloc(&context->NegotiateMessage, AuthNtlmMessage->length))
+				if (!ntlm_SecBufferRealloc(&context->NegotiateMessage, AuthNtlmMessage->length))
 					return SEC_E_INSUFFICIENT_MEMORY;
 
 				CopyMemory(context->NegotiateMessage.pvBuffer, AuthNtlmMessage->buffer,
@@ -1287,9 +1288,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesCommon(PCtxtHandle phC
 			}
 			else if (AuthNtlmMessage->type == 2)
 			{
-				sspi_SecBufferFree(&context->ChallengeMessage);
-
-				if (!sspi_SecBufferAlloc(&context->ChallengeMessage, AuthNtlmMessage->length))
+				if (!ntlm_SecBufferRealloc(&context->ChallengeMessage, AuthNtlmMessage->length))
 					return SEC_E_INSUFFICIENT_MEMORY;
 
 				CopyMemory(context->ChallengeMessage.pvBuffer, AuthNtlmMessage->buffer,
@@ -1297,9 +1296,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesCommon(PCtxtHandle phC
 			}
 			else if (AuthNtlmMessage->type == 3)
 			{
-				sspi_SecBufferFree(&context->AuthenticateMessage);
-
-				if (!sspi_SecBufferAlloc(&context->AuthenticateMessage, AuthNtlmMessage->length))
+				if (!ntlm_SecBufferRealloc(&context->AuthenticateMessage, AuthNtlmMessage->length))
 					return SEC_E_INSUFFICIENT_MEMORY;
 
 				CopyMemory(context->AuthenticateMessage.pvBuffer, AuthNtlmMessage->buffer,
@@ -2026,4 +2023,10 @@ BOOL NTLM_init(void)
 	                             ARRAYSIZE(NTLM_SecPkgInfoW_CommentBuffer));
 
 	return TRUE;
+}
+
+BOOL ntlm_SecBufferRealloc(SecBuffer* buffer, ULONG len)
+{
+	sspi_SecBufferFree(buffer);
+	return sspi_SecBufferAlloc(buffer, len) != nullptr;
 }

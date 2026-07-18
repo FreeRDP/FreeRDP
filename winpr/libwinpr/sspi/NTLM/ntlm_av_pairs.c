@@ -527,8 +527,8 @@ BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	                            context->DnsDomainName.Length + context->DnsComputerName.Length + 8;
 	{
 		const size_t length = ntlm_av_pair_list_size(AvPairsCount, AvPairsLength);
-		if (!sspi_SecBufferAlloc(&context->ChallengeTargetInfo,
-		                         WINPR_ASSERTING_INT_CAST(uint32_t, length)))
+		if (!ntlm_SecBufferRealloc(&context->ChallengeTargetInfo,
+		                           WINPR_ASSERTING_INT_CAST(uint32_t, length)))
 			goto fail;
 	}
 
@@ -690,8 +690,8 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		if (context->NTLMv2)
 			size += 8; /* unknown 8-byte padding */
 
-		if (!sspi_SecBufferAlloc(&context->AuthenticateTargetInfo,
-		                         WINPR_ASSERTING_INT_CAST(uint32_t, size)))
+		if (!ntlm_SecBufferRealloc(&context->AuthenticateTargetInfo,
+		                           WINPR_ASSERTING_INT_CAST(uint32_t, size)))
 			goto fail;
 	}
 
