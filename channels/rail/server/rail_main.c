@@ -1373,32 +1373,69 @@ static DWORD WINAPI rail_server_thread(LPVOID arg)
 	return error;
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-WINPR_ATTR_NODISCARD
-static UINT rail_server_start(RailServerContext* context)
+static void rail_server_context_priv_free(RailServerPrivate* priv)
 {
-	void* buffer = nullptr;
-	DWORD bytesReturned = 0;
-	UINT error = ERROR_INTERNAL_ERROR;
+	if (!priv)
+		return;
 
-	WINPR_ASSERT(context);
+	if (priv->thread)
+	{
+		(void)SetEvent(priv->stopEvent);
 
-	RailServerPrivate* priv = context->priv;
-	WINPR_ASSERT(priv);
+		if (WaitForSingleObject(priv->thread, INFINITE) != WAIT_OBJECT_0)
+			WLog_FATAL(TAG, "WaitForSingleObject failed with error %" PRIu32 "", GetLastError());
+
+		(void)CloseHandle(priv->thread);
+	}
+	if (priv->stopEvent)
+		(void)CloseHandle(priv->stopEvent);
+
+	if (priv->rail_channel)
+		(void)WTSVirtualChannelClose(priv->rail_channel);
+
+	ChannelPduTracker_free(priv->channelPduTracker);
+	free(priv);
+}
+
+WINPR_ATTR_NODISCARD
+static DWORD get_session_id(HANDLE vcm)
+{
+	ULONG BytesReturned = 0;
+	PULONG pSessionId = nullptr;
+	if (WTSQuerySessionInformationA(vcm, WTS_CURRENT_SESSION, WTSSessionId, (LPSTR*)&pSessionId,
+	                                &BytesReturned) == FALSE)
+	{
+		WLog_ERR(TAG, "WTSQuerySessionInformationA failed!");
+		return 0;
+	}
+
+	const DWORD SessionId = (DWORD)*pSessionId;
+	WTSFreeMemory(pSessionId);
+	return SessionId;
+}
+
+WINPR_ATTR_MALLOC(rail_server_context_priv_free, 1)
+static RailServerPrivate* rail_server_context_priv_new(RailServerContext* context)
+{
+	RailServerPrivate* priv = calloc(1, sizeof(RailServerPrivate));
+	if (!priv)
+		return nullptr;
+
+	const DWORD SessionId = get_session_id(context->vcm);
+	if (SessionId == 0)
+		goto fail;
 
 	priv->rail_channel =
-	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, RAIL_SVC_CHANNEL_NAME);
+	    WTSVirtualChannelOpenEx(SessionId, RAIL_SVC_CHANNEL_NAME, CHANNEL_OPTION_SHOW_PROTOCOL);
 
 	if (!priv->rail_channel)
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelOpen failed!");
-		return error;
+		goto fail;
 	}
 
+	void* buffer = nullptr;
+	DWORD bytesReturned = 0;
 	if (!WTSVirtualChannelQuery(priv->rail_channel, WTSVirtualEventHandle, &buffer,
 	                            &bytesReturned) ||
 	    (bytesReturned != sizeof(HANDLE)))
@@ -1411,93 +1448,57 @@ static UINT rail_server_start(RailServerContext* context)
 		if (buffer)
 			WTSFreeMemory(buffer);
 
-		goto out_close;
+		goto fail;
 	}
 
 	priv->channelEvent = *(HANDLE*)buffer;
 	WTSFreeMemory(buffer);
-	context->priv->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	priv->stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
-	if (!context->priv->stopEvent)
+	if (!priv->stopEvent)
 	{
 		WLog_ERR(TAG, "CreateEvent failed!");
-		goto out_close;
+		goto fail;
 	}
+	priv->channelPduTracker = ChannelPduTracker_new(priv->rail_channel);
+	if (!priv->channelPduTracker)
+		goto fail;
+	priv->thread = CreateThread(nullptr, 0, rail_server_thread, context, 0, nullptr);
 
-	context->priv->thread =
-	    CreateThread(nullptr, 0, rail_server_thread, (void*)context, 0, nullptr);
-
-	if (!context->priv->thread)
+	if (!priv->thread)
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
-		goto out_stop_event;
+		goto fail;
 	}
+	return priv;
+fail:
+	rail_server_context_priv_free(priv);
+	return nullptr;
+}
 
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+WINPR_ATTR_NODISCARD
+static UINT rail_server_start(RailServerContext* context)
+{
+	WINPR_ASSERT(context);
+
+	context->priv = rail_server_context_priv_new(context);
+	if (!context->priv)
+		return ERROR_INTERNAL_ERROR;
 	return CHANNEL_RC_OK;
-out_stop_event:
-	(void)CloseHandle(context->priv->stopEvent);
-	context->priv->stopEvent = nullptr;
-out_close:
-	(void)WTSVirtualChannelClose(context->priv->rail_channel);
-	context->priv->rail_channel = nullptr;
-	return error;
 }
 
 WINPR_ATTR_NODISCARD
 static BOOL rail_server_stop(RailServerContext* context)
 {
 	WINPR_ASSERT(context);
-	RailServerPrivate* priv = context->priv;
-
-	if (priv->thread)
-	{
-		(void)SetEvent(priv->stopEvent);
-
-		if (WaitForSingleObject(priv->thread, INFINITE) == WAIT_FAILED)
-		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", GetLastError());
-			return FALSE;
-		}
-
-		(void)CloseHandle(priv->thread);
-		(void)CloseHandle(priv->stopEvent);
-		priv->thread = nullptr;
-		priv->stopEvent = nullptr;
-	}
-
-	if (priv->rail_channel)
-	{
-		(void)WTSVirtualChannelClose(priv->rail_channel);
-		priv->rail_channel = nullptr;
-	}
-
-	priv->channelEvent = nullptr;
+	rail_server_context_priv_free(context->priv);
+	context->priv = nullptr;
 	return TRUE;
-}
-
-static void rail_server_context_priv_free(RailServerPrivate* priv)
-{
-	if (!priv)
-		return;
-
-	ChannelPduTracker_free(priv->channelPduTracker);
-	free(priv);
-}
-
-WINPR_ATTR_MALLOC(rail_server_context_priv_free, 1)
-static RailServerPrivate* rail_server_context_priv_new(HANDLE vc)
-{
-	RailServerPrivate* priv = calloc(1, sizeof(RailServerPrivate));
-	if (!priv)
-		return nullptr;
-
-	priv->channelPduTracker = ChannelPduTracker_new(vc);
-	if (!priv->channelPduTracker)
-		goto fail;
-	return priv;
-fail:
-	rail_server_context_priv_free(priv);
-	return nullptr;
 }
 
 RailServerContext* rail_server_context_new(HANDLE vcm)
@@ -1526,25 +1527,14 @@ RailServerContext* rail_server_context_new(HANDLE vcm)
 	context->ServerCloak = rail_send_server_cloak;
 	context->ServerPowerDisplayRequest = rail_send_server_power_display_request;
 	context->ServerGetAppidRespEx = rail_send_server_get_appid_resp_ex;
-	context->priv = rail_server_context_priv_new(vcm);
-
-	if (!context->priv)
-	{
-		WLog_ERR(TAG, "calloc failed!");
-		goto fail;
-	}
 
 	return context;
-fail:
-	rail_server_context_free(context);
-	return nullptr;
 }
 
 void rail_server_context_free(RailServerContext* context)
 {
 	if (!context)
 		return;
-	rail_server_context_priv_free(context->priv);
 	free(context);
 }
 
