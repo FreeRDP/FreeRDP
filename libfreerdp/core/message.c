@@ -1455,6 +1455,76 @@ static BOOL update_message_WindowDelete(rdpContext* context, const WINDOW_ORDER_
 	                         (void*)wParam, nullptr);
 }
 
+static void notify_icon_state_order_free(NOTIFY_ICON_STATE_ORDER* notify)
+{
+	if (!notify)
+		return;
+
+	rail_unicode_string_free(&notify->toolTip);
+	rail_unicode_string_free(&notify->infoTip.text);
+	rail_unicode_string_free(&notify->infoTip.title);
+	free(notify->icon.bitsColor);
+	free(notify->icon.bitsMask);
+	free(notify->icon.colorTable);
+	free(notify);
+}
+
+static BOOL icon_info_clone(ICON_INFO* dst, const ICON_INFO* src)
+{
+	dst->bitsColor = nullptr;
+	dst->bitsMask = nullptr;
+	dst->colorTable = nullptr;
+
+	if (src->cbBitsColor > 0)
+	{
+		dst->bitsColor = (BYTE*)malloc(src->cbBitsColor);
+		if (!dst->bitsColor)
+			return FALSE;
+		CopyMemory(dst->bitsColor, src->bitsColor, src->cbBitsColor);
+	}
+
+	if (src->cbBitsMask > 0)
+	{
+		dst->bitsMask = (BYTE*)malloc(src->cbBitsMask);
+		if (!dst->bitsMask)
+			return FALSE;
+		CopyMemory(dst->bitsMask, src->bitsMask, src->cbBitsMask);
+	}
+
+	if (src->cbColorTable > 0)
+	{
+		dst->colorTable = (BYTE*)malloc(src->cbColorTable);
+		if (!dst->colorTable)
+			return FALSE;
+		CopyMemory(dst->colorTable, src->colorTable, src->cbColorTable);
+	}
+
+	return TRUE;
+}
+
+static NOTIFY_ICON_STATE_ORDER* notify_icon_state_order_clone(const NOTIFY_ICON_STATE_ORDER* order)
+{
+	NOTIFY_ICON_STATE_ORDER* clone = calloc(1, sizeof(NOTIFY_ICON_STATE_ORDER));
+	if (!clone)
+		return nullptr;
+
+	*clone = *order;
+	clone->toolTip = rail_unicode_string_clone(&order->toolTip);
+	clone->infoTip.text = rail_unicode_string_clone(&order->infoTip.text);
+	clone->infoTip.title = rail_unicode_string_clone(&order->infoTip.title);
+
+	if (!icon_info_clone(&clone->icon, &order->icon) ||
+	    (!clone->toolTip.string && (order->toolTip.length > 0)) ||
+	    (!clone->infoTip.text.string && (order->infoTip.text.length > 0)) ||
+	    (!clone->infoTip.title.string && (order->infoTip.title.length > 0)))
+	{
+		notify_icon_state_order_free(clone);
+		return nullptr;
+	}
+
+	return clone;
+}
+
 static BOOL update_message_NotifyIconCreate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                             const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
@@ -1471,15 +1541,13 @@ static BOOL update_message_NotifyIconCreate(rdpContext* context, const WINDOW_OR
 		return FALSE;
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
-	lParam = (NOTIFY_ICON_STATE_ORDER*)malloc(sizeof(NOTIFY_ICON_STATE_ORDER));
+	lParam = notify_icon_state_order_clone(notifyIconState);
 
 	if (!lParam)
 	{
 		free(wParam);
 		return FALSE;
 	}
-
-	CopyMemory(lParam, notifyIconState, sizeof(NOTIFY_ICON_STATE_ORDER));
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context,
@@ -1503,15 +1571,13 @@ static BOOL update_message_NotifyIconUpdate(rdpContext* context, const WINDOW_OR
 		return FALSE;
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
-	lParam = (NOTIFY_ICON_STATE_ORDER*)malloc(sizeof(NOTIFY_ICON_STATE_ORDER));
+	lParam = notify_icon_state_order_clone(notifyIconState);
 
 	if (!lParam)
 	{
 		free(wParam);
 		return FALSE;
 	}
-
-	CopyMemory(lParam, notifyIconState, sizeof(NOTIFY_ICON_STATE_ORDER));
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context,
@@ -2392,12 +2458,12 @@ static BOOL update_message_free_window_update_class(wMessage* msg, int type)
 
 		case WindowUpdate_NotifyIconCreate:
 			free(msg->wParam);
-			free(msg->lParam);
+			notify_icon_state_order_free(msg->lParam);
 			break;
 
 		case WindowUpdate_NotifyIconUpdate:
 			free(msg->wParam);
-			free(msg->lParam);
+			notify_icon_state_order_free(msg->lParam);
 			break;
 
 		case WindowUpdate_NotifyIconDelete:
