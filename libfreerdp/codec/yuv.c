@@ -474,7 +474,12 @@ static void CALLBACK yuv444_combine_work_callback(PTP_CALLBACK_INSTANCE instance
 	const RECTANGLE_16* rect = &param->rect;
 	WINPR_ASSERT(rect);
 
-	const UINT32 alignedWidth = yuv->width + ((yuv->width % 32 != 0) ? 32 - yuv->width % 32 : 0);
+	/* For AVC444v2 the combine reads the V (and second half U) samples from the
+	 * decoded auxiliary plane at a fixed nTotalWidth offset. A server may send a
+	 * frame smaller than the surface, so cap the aligned width at the Y plane
+	 * stride to keep that offset inside the decoded plane. */
+	const UINT32 alignedWidth =
+	    MIN(yuv->width + ((yuv->width % 32 != 0) ? 32 - yuv->width % 32 : 0), param->iStride[0]);
 	const UINT32 alignedHeight =
 	    yuv->height + ((yuv->height % 16 != 0) ? 16 - yuv->height % 16 : 0);
 
