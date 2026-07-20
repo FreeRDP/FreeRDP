@@ -1040,7 +1040,7 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 	if (!run_mutex_fkt(pthread_mutex_lock, &thread->mutex))
 		return FALSE;
 
-#ifndef ANDROID
+#if !defined(ANDROID) && !defined(__OHOS__)
 	pthread_cancel(thread->thread);
 #else
 	WLog_ERR(TAG, "Function not supported on this platform!");

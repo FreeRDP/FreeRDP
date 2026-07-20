@@ -3,3 +3,27 @@
 build
 checker
 abi-checker
+.hvigor/outputs/build-logs/
+client/Android/Studio/freeRDPCore/.cxx/
+client/Harmony/entry/src/main/resources/rawfile/bihu-privacy-policy.md
+.gitignore
+
+# Harmony OHOS Client Build
+client/Harmony/local.properties
+client/Harmony/.build-signing-mode
+client/Harmony/entry/src/main/ets/utils/BuildInfo.ets
+client/Harmony/entry/src/main/resources/rawfile/bihu-user-agreement.md
+client/Harmony/build/
+client/Harmony/entry/build/
+client/Harmony/entry/.cxx/
+client/Harmony/entry/.preview/
+client/Harmony/.hvigor/
+client/Harmony/.appanalyzer/
+client/Harmony/oh_modules/
+client/Harmony/entry/oh_modules/
+
+# Harmony OpenSSL
+client/Harmony/native/third_party/ohos-openssl/
+client/Harmony/native/third_party/openssl-prebuilt/
+/build-harmony-openssl/
+/cache/

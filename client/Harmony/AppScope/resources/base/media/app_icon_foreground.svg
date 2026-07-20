@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64B5F6" />
+      <stop offset="100%" stop-color="#1565C0" />
+    </linearGradient>
+    <linearGradient id="screen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.10" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.04" />
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(128, 176) scale(5.333)">
+    <g transform="translate(20, 22)">
+      <rect x="0" y="0" width="104" height="70" rx="8" ry="8" fill="url(#screen)" stroke="#ffffff" stroke-opacity="0.85" stroke-width="3.5" />
+      <rect x="5" y="5" width="94" height="60" rx="4" ry="4" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1" />
+      <line x1="28" y1="19" x2="76" y2="51" stroke="#ffffff" stroke-opacity="0.7" stroke-width="2" stroke-linecap="round" />
+      <line x1="76" y1="19" x2="28" y2="51" stroke="#ffffff" stroke-opacity="0.7" stroke-width="2" stroke-linecap="round" />
+      <circle cx="52" cy="35" r="7" fill="url(#accent)" />
+      <circle cx="52" cy="35" r="4" fill="#ffffff" fill-opacity="0.5" />
+      <circle cx="28" cy="19" r="3.5" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="76" cy="19" r="3.5" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="28" cy="51" r="3.5" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="76" cy="51" r="3.5" fill="#ffffff" fill-opacity="0.9" />
+      <line x1="52" y1="70" x2="52" y2="82" stroke="#ffffff" stroke-opacity="0.4" stroke-width="4" stroke-linecap="round" />
+      <line x1="36" y1="82" x2="68" y2="82" stroke="#ffffff" stroke-opacity="0.4" stroke-width="4" stroke-linecap="round" />
+    </g>
+  </g>
+</svg>
