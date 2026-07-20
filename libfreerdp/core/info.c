@@ -1475,7 +1475,7 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 	return status;
 }
 
-static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
+static BOOL rdp_write_logon_info_v1(wStream* s, const logon_info* info)
 {
 	const size_t charLen = 52 / sizeof(WCHAR);
 	const size_t userCharLen = 512 / sizeof(WCHAR);
@@ -1582,7 +1582,7 @@ static BOOL rdp_write_logon_info_plain(wStream* s)
 	return TRUE;
 }
 
-static BOOL rdp_write_logon_info_ex(wStream* s, logon_info_ex* info)
+static BOOL rdp_write_logon_info_ex(wStream* s, const logon_info_ex* info)
 {
 	UINT32 FieldsPresent = 0;
 	UINT16 Size = 2 + 4 + 570;
@@ -1625,7 +1625,7 @@ static BOOL rdp_write_logon_info_ex(wStream* s, logon_info_ex* info)
 	return TRUE;
 }
 
-BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
+BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, const void* data)
 {
 	UINT16 sec_flags = 0;
 	BOOL status = 0;
@@ -1642,11 +1642,11 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 	switch (type)
 	{
 		case INFO_TYPE_LOGON:
-			status = rdp_write_logon_info_v1(s, (logon_info*)data);
+			status = rdp_write_logon_info_v1(s, (const logon_info*)data);
 			break;
 
 		case INFO_TYPE_LOGON_LONG:
-			status = rdp_write_logon_info_v2(s, (logon_info*)data);
+			status = rdp_write_logon_info_v2(s, (const logon_info*)data);
 			break;
 
 		case INFO_TYPE_LOGON_PLAIN_NOTIFY:
@@ -1654,7 +1654,7 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 			break;
 
 		case INFO_TYPE_LOGON_EXTENDED_INF:
-			status = rdp_write_logon_info_ex(s, (logon_info_ex*)data);
+			status = rdp_write_logon_info_ex(s, (const logon_info_ex*)data);
 			break;
 
 		default:

@@ -192,7 +192,7 @@ extern "C"
 	                                  BOOL first, BOOL last, UINT32 frameId);
 	typedef BOOL (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
 
-	typedef BOOL (*pSaveSessionInfo)(rdpContext* context, UINT32 type, void* data);
+	typedef BOOL (*pSaveSessionInfo)(rdpContext* context, UINT32 type, const void* data);
 	typedef BOOL (*pSetKeyboardImeStatus)(rdpContext* context, UINT16 imeId, UINT32 imeState,
 	                                      UINT32 imeConvMode);
 	typedef BOOL (*pServerStatusInfo)(rdpContext* context, UINT32 status);
