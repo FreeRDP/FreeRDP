@@ -59,6 +59,46 @@ const char* freerdp_session_logon_type_str(uint32_t type)
 	}
 }
 
+const char* freerdp_session_logon_type_data_str(uint32_t type, const void* data, char* buffer,
+                                                size_t length)
+{
+	switch (type)
+	{
+		case INFO_TYPE_LOGON:
+		case INFO_TYPE_LOGON_LONG:
+		{
+			const logon_info* logonInfo = data;
+			if (!logonInfo)
+				(void)_snprintf(buffer, length, "<INVALID DATA>");
+			else
+				(void)_snprintf(buffer, length, "%s\\%s [%" PRIu32 "]", logonInfo->domain,
+				                logonInfo->username, logonInfo->sessionId);
+		}
+		break;
+		case INFO_TYPE_LOGON_PLAIN_NOTIFY:
+			(void)_snprintf(buffer, length, "");
+			break;
+		case INFO_TYPE_LOGON_EXTENDED_INF:
+		{
+			const logon_info_ex* logonInfo = data;
+			if (!logonInfo)
+				(void)_snprintf(buffer, length, "<INVALID DATA>");
+			else
+				(void)_snprintf(buffer, length,
+				                "cookie: %s, LogonId: %" PRIu32
+				                ", errorInfo: %s, notifyType: %" PRIu32 ", notifyData: %" PRIu32,
+				                logonInfo->haveCookie ? "TRUE" : "FALSE", logonInfo->LogonId,
+				                logonInfo->haveErrorInfo ? "TRUE" : "FALSE",
+				                logonInfo->ErrorNotificationType, logonInfo->ErrorNotificationData);
+		}
+		break;
+		default:
+			(void)_snprintf(buffer, length, "<INVALID TYPE>");
+			break;
+	}
+	return buffer;
+}
+
 /* This define limits the length of the strings in the label field. */
 #define MAX_LABEL_LENGTH 40
 struct info_flags_t
