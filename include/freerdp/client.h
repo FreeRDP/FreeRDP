@@ -231,6 +231,19 @@ extern "C"
 	FREERDP_API SSIZE_T client_common_retry_dialog(freerdp* instance, const char* what,
 	                                               size_t current, void* userarg);
 
+	/** @brief Handle SaveSessionInfo data
+	 *
+	 *  @param context The RDP context to operate on
+	 *  @param type The type of session info received, see \ref RDP_LOGON_INFO_TYPE
+	 *  @param data Additional type specific data. See \ref logon_info and \ref logon_info_ex
+	 *
+	 *  @return TRUE for success, FALSE otherwise
+	 *  @since version 3.31.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL client_common_save_session_info(rdpContext* context, UINT32 type,
+	                                                 const void* data);
+
 	FREERDP_API void
 	freerdp_client_OnChannelConnectedEventHandler(void* context,
 	                                              const ChannelConnectedEventArgs* e);
