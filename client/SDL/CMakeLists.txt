@@ -31,6 +31,7 @@ message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/)
 include(ProjectCXXStandard)
 include(CommonConfigOptions)
+include(DetectCXXFilesystem)
 
 include(ConfigureFreeRDP)
 include(CXXCompilerFlags)

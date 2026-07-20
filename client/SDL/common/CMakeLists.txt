@@ -25,7 +25,7 @@ if(WIN32)
 endif()
 
 add_library(sdl-common-prefs STATIC ${SRCS})
-target_link_libraries(sdl-common-prefs winpr freerdp)
+target_link_libraries(sdl-common-prefs winpr freerdp freerdp-cxx-filesystem)
 set_property(TARGET sdl-common-prefs PROPERTY FOLDER "Client/Common")
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
