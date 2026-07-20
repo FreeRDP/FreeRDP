@@ -6,6 +6,7 @@
 #include <sso-mib/sso-mib.h>
 #include <freerdp/crypto/crypto.h>
 #include <winpr/json.h>
+#include <winpr/string.h>
 
 #include "sso_mib_tokens.h"
 
@@ -144,8 +145,31 @@ static BOOL sso_mib_get_access_token(rdpContext* context, AccessTokenType tokenT
 	{
 		const char* client_id =
 		    freerdp_settings_get_string(context->settings, FreeRDP_GatewayAvdClientID);
-		client_context->mibClientWrapper->app =
-		    mib_public_client_app_new(client_id, MIB_AUTHORITY_COMMON, nullptr, nullptr);
+
+		/* Build the authority from the configured AAD host and tenant (see
+		 * freerdp_utils_aad_get_wellknown) so broker SSO works against sovereign clouds
+		 * (e.g. login.microsoftonline.us). Defaults resolve to MIB_AUTHORITY_COMMON. */
+		const char* base =
+		    freerdp_settings_get_string(context->settings, FreeRDP_GatewayAzureActiveDirectory);
+		const BOOL useTenant =
+		    freerdp_settings_get_bool(context->settings, FreeRDP_GatewayAvdUseTenantid);
+		const char* tenantid = "common";
+		if (useTenant)
+			tenantid =
+			    freerdp_settings_get_string(context->settings, FreeRDP_GatewayAvdAadtenantid);
+
+		char* authority = nullptr;
+		if (base && tenantid)
+		{
+			size_t len = 0;
+			winpr_asprintf(&authority, &len, "https://%s/%s", base, tenantid);
+			if (!authority)
+				return FALSE;
+		}
+
+		client_context->mibClientWrapper->app = mib_public_client_app_new(
+		    client_id, authority ? authority : MIB_AUTHORITY_COMMON, nullptr, nullptr);
+		free(authority);
 	}
 
 	if (!client_context->mibClientWrapper->app)
