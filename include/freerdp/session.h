@@ -65,6 +65,20 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_session_logon_type_str(uint32_t type);
 
+	/** @brief return a string representation of \ref RDP_LOGON_INFO_TYPE details
+	 *
+	 *  @param type The type of \ref RDP_LOGON_INFO_TYPE extra data to decode
+	 *  @param data The extra data of \ref type
+	 *  @param buffer A string buffer that can hold the result
+	 *  @param length The length of the string buffer in bytes
+	 *
+	 *  @return A string representation of \ref data
+	 *  @since version 3.31.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_session_logon_type_data_str(uint32_t type, const void* data,
+	                                                            char* buffer, size_t length);
+
 #ifdef __cplusplus
 }
 #endif

@@ -39,6 +39,7 @@
 #include <freerdp/client/channels.h>
 #include <freerdp/event.h>
 #include <freerdp/utils/smartcardlogon.h>
+#include <freerdp/session.h>
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 #include <freerdp/client/ainput.h>
@@ -90,6 +91,10 @@ static void set_default_callbacks(freerdp* instance)
 	instance->LogonErrorInfo = client_cli_logon_error_info;
 	instance->GetAccessToken = client_cli_get_access_token;
 	instance->RetryDialog = client_common_retry_dialog;
+
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(instance->context->update);
+	instance->context->update->SaveSessionInfo = client_common_save_session_info;
 }
 
 static void client_cli_user_notification(void* context, const UserNotificationEventArgs* e)
@@ -2658,4 +2663,13 @@ char* freerdp_client_get_aad_url(rdpClientContext* cctx, freerdp_client_aad_type
 	}
 	va_end(ap);
 	return str;
+}
+
+BOOL client_common_save_session_info(WINPR_ATTR_UNUSED rdpContext* context, UINT32 type,
+                                     const void* data)
+{
+	char buffer[128] = WINPR_C_ARRAY_INIT;
+	WLog_INFO(TAG, "%s [%s]", freerdp_session_logon_type_str(type),
+	          freerdp_session_logon_type_data_str(type, data, buffer, sizeof(buffer)));
+	return TRUE;
 }

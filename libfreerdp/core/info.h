@@ -68,7 +68,7 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data);
+FREERDP_LOCAL BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, const void* data);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_send_server_status_info(rdpContext* context, UINT32 status);

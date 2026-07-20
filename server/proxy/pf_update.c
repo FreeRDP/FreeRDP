@@ -298,9 +298,9 @@ static BOOL pf_client_send_pointer_cached(rdpContext* context,
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* data)
+static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, const void* data)
 {
-	logon_info* logonInfo = nullptr;
+	const logon_info* logonInfo = nullptr;
 	pClientContext* pc = (pClientContext*)context;
 	WINPR_ASSERT(pc);
 
@@ -319,7 +319,7 @@ static BOOL pf_client_save_session_info(rdpContext* context, UINT32 type, void* 
 		case INFO_TYPE_LOGON:
 		case INFO_TYPE_LOGON_LONG:
 		{
-			logonInfo = (logon_info*)data;
+			logonInfo = (const logon_info*)data;
 			PROXY_LOG_INFO(TAG, pc, "client logon info: Username: %s, Domain: %s",
 			               logonInfo->username, logonInfo->domain);
 			break;
