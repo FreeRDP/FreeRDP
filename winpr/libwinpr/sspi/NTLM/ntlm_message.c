@@ -622,7 +622,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (!ntlm_SecBufferRealloc(&context->NegotiateMessage, (ULONG)length))
 		goto fail;
 
-	CopyMemory(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
+	CopyMemory(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, length);
 	context->NegotiateMessage.BufferType = buffer->BufferType;
 #if defined(WITH_DEBUG_NTLM)
 	ntlm_print_negotiate_message(&context->NegotiateMessage, message);
