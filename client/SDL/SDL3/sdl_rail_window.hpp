@@ -114,6 +114,12 @@ class SdlRailWindow
 	[[nodiscard]] uint64_t owner() const;
 	/* Popup = caption-less transient (menu/dropdown/tooltip); created as an SDL popup. */
 	[[nodiscard]] bool isPopup() const;
+	/* Layered decoration (drop shadow); realized only while anchored to a visible popup. */
+	[[nodiscard]] bool isLayered() const;
+	/* Set per paint pass: a visible popup adjoins this shadow (its anchor). Without one the shadow
+	 * stays unrealized - app-window edge shadows would lag local moves and cover the resize
+	 * margins (misrouted clicks); menu/tooltip shadows are the ones worth drawing. */
+	void setShadowAnchored(bool anchored);
 	/* SDL window insets: local window is inflated by these so the outside resize band takes input.
 	 * Zero for popups / maximized / non-composited X11. */
 	[[nodiscard]] SDL_Rect insets() const;
@@ -190,9 +196,10 @@ class SdlRailWindow
 	/* Window classes whose GFX surface carries meaningful per-pixel alpha. */
 	[[nodiscard]] bool honorsAlpha() const
 	{
-		return _isPopup || _layeredApp;
+		return _isPopup || _layeredApp || _layered;
 	}
-	/* Band eligibility rule: margins for a resizable app window, else zero; caller holds _gfxLock. */
+	/* Band eligibility rule: margins for a resizable app window, else zero; caller holds _gfxLock.
+	 */
 	[[nodiscard]] SDL_Rect bandMargins() const;
 	[[nodiscard]] SDL_Rect bandInsets() const;      /* insets(); caller holds _gfxLock */
 	[[nodiscard]] SDL_Rect targetOuterRect() const; /* outerRect(); caller holds _gfxLock */
@@ -218,9 +225,10 @@ class SdlRailWindow
 	SDL_Point _maxSize = { 0, 0 };
 	bool _minMaxDirty = false;
 	bool _isPopup = false;
-	bool _layered = false;         /* caption-less WS_EX_LAYERED decoration: never rendered */
+	bool _layered = false;         /* caption-less WS_EX_LAYERED decoration (drop shadow) */
 	bool _layeredApp = false;      /* captioned WS_EX_LAYERED app window: honor per-pixel alpha */
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */
+	bool _shadowAnchored = false;  /* a visible popup adjoins this shadow (see setShadowAnchored) */
 	bool _parentApplied = false;   /* transient-for owner set once (owned non-popup dialogs) */
 	StateSync _maxState;           /* maximize sync */
 	StateSync _minState;           /* minimize sync */

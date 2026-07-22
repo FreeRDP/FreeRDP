@@ -357,6 +357,45 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 		if (!popup.isPopup())
 			continue;
 
+		/* A drop shadow (layered popup) is only worth drawing when it decorates a MENU/tooltip: it
+		 * then adjoins that visible popup. A shadow that adjoins only a top-level app window is its
+		 * frame shadow - it overlaps our resize band (hover shows a resize cursor, clicks resize
+		 * the app), lags the window on every move, and fragments (one edge left behind) because the
+		 * four edge bars are independent windows. Gate those out by anchoring the shadow to a real
+		 * popup; server-coord rects are reliable on both backends. */
+		if (popup.isLayered())
+		{
+			constexpr int reach = 48; /* shadow offset+blur spread from its popup, server px */
+			const SDL_Rect sr = popup.windowRect();
+			bool anchored = false;
+			for (auto& other : _windows)
+			{
+				auto& cand = other.second;
+				if ((&cand == &popup) || !cand.isPopup() || cand.isLayered() || !cand.window() ||
+				    ((SDL_GetWindowFlags(cand.window()) & SDL_WINDOW_HIDDEN) != 0))
+					continue;
+				SDL_Rect zone = cand.windowRect();
+				zone.x -= reach;
+				zone.y -= reach;
+				zone.w += 2 * reach;
+				zone.h += 2 * reach;
+				/* Containment, not intersection: a menu shadow hugs its popup and fits inside this
+				 * zone. An app-window frame-edge shadow is a full-height/width bar that only
+				 * crosses the popup's column/row; it extends far beyond the zone, so it is not a
+				 * shadow of this popup and must not be adopted (else it paints a bar overflowing
+				 * the menu). */
+				const bool inside = (sr.x >= zone.x) && (sr.y >= zone.y) &&
+				                    (sr.x + sr.w <= zone.x + zone.w) &&
+				                    (sr.y + sr.h <= zone.y + zone.h);
+				if (inside)
+				{
+					anchored = true;
+					break;
+				}
+			}
+			popup.setShadowAnchored(anchored);
+		}
+
 		/* Pick popup parent: ownerWindowId -> geometric match -> focused -> any app. */
 		SdlRailWindow* chosen = resolveParent(popup.owner());
 		if (!chosen && railPlatformCaps().positionsReadable)
