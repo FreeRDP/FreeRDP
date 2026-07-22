@@ -299,6 +299,18 @@ bool SdlRailWindow::isPopup() const
 	return _isPopup;
 }
 
+bool SdlRailWindow::isLayered() const
+{
+	std::unique_lock lock(_gfxLock);
+	return _layered;
+}
+
+void SdlRailWindow::setShadowAnchored(bool anchored)
+{
+	std::unique_lock lock(_gfxLock);
+	_shadowAnchored = anchored;
+}
+
 bool SdlRailWindow::styleResizable() const
 {
 	/* Sizing border or maximize box: WMs refuse to maximize non-resizable windows. Latched: apps
@@ -485,8 +497,13 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 {
 	std::unique_lock lock(_gfxLock);
 
-	/* Hidden and layered (shadow/overlay) windows get no local SDL window. */
-	const bool drawable = _visible && !_layered && (_windowRect.w > 0) && (_windowRect.h > 0);
+	/* Hidden windows get no local SDL window. Layered decorations (drop shadows) are realized only
+	 * in GFX mode, only while the server declares visible regions for them (an idle overlay with
+	 * no vis rects would just cover the app window and ghost its stale alpha), and only anchored
+	 * to a visible popup (menu/tooltip shadows; app-window edge shadows lag local moves and cover
+	 * the resize margins). */
+	const bool drawable = _visible && (_windowRect.w > 0) && (_windowRect.h > 0) &&
+	                      (!_layered || (_hasGfx && !_visRects.empty() && _shadowAnchored));
 
 	if (!drawable)
 	{
@@ -882,7 +899,8 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 	const bool serverResize = !_localMoveActive && ((ww != _lastWinW) || (wh != _lastWinH));
 
 	/* Skip undamaged frames. */
-	if (!localResize && !serverResize && _gfxDamage.empty() && !(_layeredApp && _visDirty))
+	if (!localResize && !serverResize && _gfxDamage.empty() &&
+	    !((_layeredApp || _layered) && _visDirty))
 	{
 		WLog_VRB(TAG, "paintGfx skip id=0x%08x no-damage no-resize", static_cast<unsigned>(_id));
 		return true;
@@ -971,7 +989,7 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 			if (static_cast<int>(_gfxH) > _windowRect.h)
 				dst.y -= _frameMargins.y;
 		}
-		if (_layeredApp && !_visRects.empty() && !maxed)
+		if ((_layeredApp || _layered) && !_visRects.empty() && !maxed)
 		{
 			/* The layered surface is only defined inside the visibility rects (xf shapes the X
 			 * window to them); outside is garbage that would paint a black ring, so clip the blit
