@@ -376,7 +376,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 
 		outputBuffer->lpVtbl->Release(outputBuffer);
 		h264->YUVWidth = sys->frameWidth;
-		h264->YUVHeigth = sys->frameHeigth;
+		h264->YUVHeight = sys->frameHeight;
 	}
 
 	inputSample->lpVtbl->Release(inputSample);
