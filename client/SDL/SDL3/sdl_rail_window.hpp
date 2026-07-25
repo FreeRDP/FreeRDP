@@ -106,6 +106,12 @@ class SdlRailWindow
 	};
 	[[nodiscard]] LoopEndActions takeLoopEnd(); /* END order: drain queued actions and reset */
 
+	/* Reconcile could not resize the window to the server rect - the WM kept its own size (it
+	 * restored an un-maximized window to its remembered floating size and refuses to shrink). The
+	 * apply will never converge, so the WM geometry is adopted as authoritative instead: this
+	 * returns that outer rect (once) so SdlRail::paint reports it and re-syncs the server. */
+	[[nodiscard]] bool takeWmOverride(SDL_Rect& outer);
+
 	/* Visible sub-rects (window-relative); only these are painted so windows on top don't bleed. */
 	void setVisibilityRects(std::vector<SDL_Rect> rects);
 	/* Server-absolute visible-region origin (WINDOW_ORDER_FIELD_VIS_OFFSET); the visibility rects
@@ -283,7 +289,9 @@ class SdlRailWindow
 		bool snap = false;
 		SDL_Rect snapRect = { 0, 0, 0, 0 };
 	} _loopEnd;
-	bool _geomApplyPending = false;  /* a client-issued geometry/state apply is still settling */
+	bool _geomApplyPending = false; /* a client-issued geometry/state apply is still settling */
+	bool _wmRefused = false;        /* WM refused resize; adopt its geometry (takeWmOverride) */
+	SDL_Rect _wmRefusedOuter = { 0, 0, 0, 0 };
 	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */
 	bool _resizeAnchorBottom = false; /* anchor stale frame to the bottom edge (top-side resize) */
 	SDL_Rect _extentsApplied = { 0, 0, 0, 0 }; /* band insets last mirrored to the WM */
