@@ -328,6 +328,24 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			parentRect = owner->outerRect(); /* the SDL window's on-screen geometry */
 		}
 		win.paint(primary, fallbackFormat, damage, parent, parentRect);
+		/* reconcile could not shrink the window to the server rect (the WM restored an un-maximized
+		 * window to its own remembered size): adopt that geometry as authoritative and re-sync the
+		 * server here (we hold _windowsLock; syncGeometry would re-lock it), so the window and the
+		 * server rect stop disagreeing by a band+. */
+		SDL_Rect refusedOuter{};
+		if (win.takeWmOverride(refusedOuter))
+		{
+			const SDL_Rect rect = win.serverRect(refusedOuter);
+			const SDL_Rect cur = win.windowRect();
+			WLog_DBG(TAG,
+			         "wm-refused adopt id=0x%08" PRIx32
+			         " outer=%dx%d -> srv=%d,%d %dx%d (was %dx%d)",
+			         static_cast<uint32_t>(win.id()), refusedOuter.w, refusedOuter.h, rect.x,
+			         rect.y, rect.w, rect.h, cur.w, cur.h);
+			if (!SDL_RectsEqual(&rect, &cur))
+				sendClientWindowMove(&win, rect);
+			win.adoptLocalGeometry(rect);
+		}
 	}
 
 	/* Request full repaint after first window is realized (fixes reconnect blank windows). */

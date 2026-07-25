@@ -246,6 +246,16 @@ SdlRailWindow::LoopEndActions SdlRailWindow::takeLoopEnd()
 	return actions;
 }
 
+bool SdlRailWindow::takeWmOverride(SDL_Rect& outer)
+{
+	std::unique_lock lock(_gfxLock);
+	if (!_wmRefused)
+		return false;
+	outer = _wmRefusedOuter;
+	_wmRefused = false;
+	return true;
+}
+
 void SdlRailWindow::setVisibilityRects(std::vector<SDL_Rect> rects)
 {
 	std::unique_lock lock(_gfxLock);
@@ -681,6 +691,26 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		{
 			SDL_SetWindowSize(_win->window(), vis.w, vis.h);
 			applied = true;
+			int aw = 0;
+			int ah = 0;
+			SDL_GetWindowSize(_win->window(), &aw, &ah);
+			/* The WM ignored the resize and left the window at its own size (it restored an
+			 * un-maximized window to its remembered floating size and won't shrink to the smaller
+			 * server rect): the apply will never converge, so arming the bracket would deadlock the
+			 * reporter and strand the window a band+ wider than the server rect. Adopt the WM
+			 * geometry as authoritative - paint reports it and re-syncs the server. Only when the
+			 * WM left the size untouched (a lagging apply still moves toward the target); X11 only;
+			 * and only once the window is fully settled - never mid-drag or while a completion is
+			 * unwinding, or the WM's live drag jitter would ping-pong the server every frame. */
+			if (railPlatformCaps().positionsReadable && !_localMoveActive && !_loopEnd.pending &&
+			    (aw == cw) && (ah == ch) && ((aw != vis.w) || (ah != vis.h)))
+			{
+				/* Keep the server-target origin (vis), adopt only the WM's size: the mismatch is
+				 * the size, and the live window position is unreliable to read back here. */
+				_wmRefusedOuter = { vis.x, vis.y, aw, ah };
+				_wmRefused = true;
+				applied = false; /* no convergence echo is coming; do not arm the bracket */
+			}
 		}
 		_geometryDirty = false;
 		/* The WM echoes a real apply back as MOVED/PIXEL events (possibly mangled during a
