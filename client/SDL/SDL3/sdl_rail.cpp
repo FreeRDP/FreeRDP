@@ -141,9 +141,9 @@ void SdlRail::handleMaximized(SDL_WindowID id)
 	/* A maximize completing a local drag (WM snap-to-top): the server's modal move loop is still
 	 * unwinding and would swallow or drag-restore an immediate SC_MAXIMIZE; defer it until the
 	 * server's move/size END order confirms the loop closed (server_local_move_size). */
-	if (_loopEnd.windowId == static_cast<uint32_t>(appWindow->id()))
+	if (appWindow->loopEndPending())
 	{
-		_loopEnd.maximizeDeferred = true;
+		appWindow->deferMaximize();
 		WLog_DBG(TAG, "local maximize deferred id=0x%08" PRIx32 " (modal loop open)",
 		         static_cast<UINT32>(appWindow->id()));
 	}
@@ -581,7 +581,6 @@ bool SdlRail::uninit(RailClientContext* /*rail*/)
 	/* Reset all move/completion state: a reconnect reuses this instance, and Windows reuses
 	 * window ids, so leftovers would gate a next-session window. */
 	_localMove = {};
-	_loopEnd = {};
 	/* uninit runs on the RDP/channel disconnect thread; SDL_DestroyWindow must run on the main
 	 * thread. Do NOT clear the maps here - mark every window dead so paint() reaps them on the main
 	 * thread (reconnect reuses this instance), and let ~SdlRail drain them there on final teardown.
@@ -684,7 +683,7 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 					{
 						/* END while our drag is still pending = the app closed its own loop early
 						 * (window destroyed, app-side cancel): the eventual release must not send
-						 * the synthetic button-up (a phantom click) nor latch _loopEnd.windowId
+						 * the synthetic button-up (a phantom click) nor arm this window's loop-end
 						 * (never cleared - this END already passed). */
 						rail->_localMove.serverEnded = true;
 					}
@@ -692,32 +691,23 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 			}
 			/* The modal loop is now confirmed closed - the END order cannot pre-date our release
 			 * (a geometry echo can): a deferred SC_MAXIMIZE is safe to send. */
-			if (rail->_loopEnd.windowId == localMoveSize->windowId)
+			auto* appWindow = rail->getWindow(localMoveSize->windowId);
+			if (appWindow && appWindow->loopEndPending())
 			{
-				rail->_loopEnd.windowId = 0;
-				if (rail->_loopEnd.maximizeDeferred)
+				const auto actions = appWindow->takeLoopEnd();
+				if (actions.maximize && appWindow->railMaximized())
 				{
-					rail->_loopEnd.maximizeDeferred = false;
-					auto* appWindow = rail->getWindow(localMoveSize->windowId);
-					if (appWindow && appWindow->railMaximized())
-					{
-						WLog_DBG(TAG, "deferred SC_MAXIMIZE id=0x%08" PRIx32,
-						         localMoveSize->windowId);
-						rail->sendSystemCommand(appWindow, SC_MAXIMIZE);
-					}
+					WLog_DBG(TAG, "deferred SC_MAXIMIZE id=0x%08" PRIx32, localMoveSize->windowId);
+					rail->sendSystemCommand(appWindow, SC_MAXIMIZE);
 				}
-				if (rail->_loopEnd.snapPending)
+				if (actions.snap)
 				{
 					/* WM snap/tile sized the window during the move: the loop is closed now, so a
 					 * ClientWindowMove carrying the WM rect is no longer swallowed by it. */
-					rail->_loopEnd.snapPending = false;
-					const SDL_Rect sr = rail->_loopEnd.snapRect;
-					if (auto* appWindow = rail->getWindow(localMoveSize->windowId))
-					{
-						WLog_DBG(TAG, "deferred snap resize id=0x%08" PRIx32 " rect=%d,%d %dx%d",
-						         localMoveSize->windowId, sr.x, sr.y, sr.w, sr.h);
-						rail->sendClientWindowMove(appWindow, sr);
-					}
+					WLog_DBG(TAG, "deferred snap resize id=0x%08" PRIx32 " rect=%d,%d %dx%d",
+					         localMoveSize->windowId, actions.snapRect.x, actions.snapRect.y,
+					         actions.snapRect.w, actions.snapRect.h);
+					rail->sendClientWindowMove(appWindow, actions.snapRect);
 				}
 			}
 		}
@@ -862,15 +852,10 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 			_localMove.pointer = _lastPointerServer;
 			_localMove.wmSized = false;
 			_localMove.serverEnded = false;
-			/* A fresh drag of the SAME window supersedes its unsent snap rect and un-sticks a
-			 * completion gate whose END order never arrived (another window's pending END - and
-			 * its snap rect - must survive this drag). */
-			if (_loopEnd.windowId == windowId)
-			{
-				_loopEnd.windowId = 0;
-				_loopEnd.maximizeDeferred = false;
-				_loopEnd.snapPending = false;
-			}
+			/* A fresh drag supersedes this window's own unsent snap rect / un-sticks a completion
+			 * gate whose END order never arrived. Per-window, so another window's pending close
+			 * survives automatically. */
+			appWindow->clearLoopEnd();
 			/* Pin the stale contents to the fixed corner while the WM drags: X anchors them
 			 * top-left by default on every resize step, which flicker-fights the re-anchored
 			 * repaints on left/top drags. */
@@ -1037,7 +1022,7 @@ void SdlRail::syncGeometry(SDL_WindowID id)
 		return;
 
 	const auto wid = static_cast<uint32_t>(w->id());
-	if (w->localMoveActive() || (_localMove.id == wid) || (_loopEnd.windowId == wid) ||
+	if (w->localMoveActive() || (_localMove.id == wid) || w->loopEndPending() ||
 	    w->stateTransitionPending())
 		return;
 
@@ -1255,8 +1240,7 @@ void SdlRail::completeLocalMoveIfPending()
 			 * filtered the restore's own reconcile echo): restore-then-tile keeps the tile. */
 			w = _localMove.wmSize.x;
 			h = _localMove.wmSize.y;
-			_loopEnd.snapRect = appWindow->serverRect({ x, y, w, h });
-			_loopEnd.snapPending = true;
+			appWindow->deferSnap(appWindow->serverRect({ x, y, w, h }));
 		}
 		else
 		{
@@ -1303,9 +1287,8 @@ void SdlRail::completeLocalMoveIfPending()
 		(void)freerdp_client_send_button_event(_context->common(), FALSE, PTR_FLAGS_BUTTON1, px,
 		                                       py);
 		/* Server loop unwinding: wait for explicit END order to gate deferred SC_MAXIMIZE. */
-		_loopEnd.windowId = static_cast<uint32_t>(appWindow->id());
+		appWindow->armLoopEnd();
 	}
-
 
 	(void)sdl_x11_set_bit_gravity(appWindow->window(), 0 /* forget: back to the default */);
 	reportAndAdopt(appWindow, x, y, w, h);
@@ -1594,9 +1577,8 @@ BOOL SdlRail::window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 	/* Windows reuses window ids, so any state keyed by this id would be inherited by a future
 	 * window: a stale _clientActiveId makes ensureActive skip its ClientActivate (new window
 	 * unresponsive); a stale _localMove.id runs completeLocalMoveIfPending on the wrong window; a
-	 * stale gate never sees its END order. Clear all of them for the deleted id. */
-	if (rail->_loopEnd.windowId == orderInfo->windowId)
-		rail->_loopEnd = {};
+	 * stale gate never sees its END order. Clear all of them for the deleted id. (The per-window
+	 * loop-end state lives on the window object, so it dies with it - no stale-id inheritance.) */
 	if (rail->_localMove.id == orderInfo->windowId)
 		rail->_localMove = {};
 	if (rail->_clientActiveId == orderInfo->windowId)

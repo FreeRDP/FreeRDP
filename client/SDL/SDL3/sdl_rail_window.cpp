@@ -212,6 +212,45 @@ void SdlRailWindow::clearGeomApplyPending()
 	_geomApplyPending = false;
 }
 
+void SdlRailWindow::armLoopEnd()
+{
+	std::unique_lock lock(_gfxLock);
+	_loopEnd.pending = true;
+}
+
+bool SdlRailWindow::loopEndPending() const
+{
+	std::unique_lock lock(_gfxLock);
+	return _loopEnd.pending;
+}
+
+void SdlRailWindow::deferMaximize()
+{
+	std::unique_lock lock(_gfxLock);
+	_loopEnd.maximize = true;
+}
+
+void SdlRailWindow::deferSnap(const SDL_Rect& serverRect)
+{
+	std::unique_lock lock(_gfxLock);
+	_loopEnd.snap = true;
+	_loopEnd.snapRect = serverRect;
+}
+
+void SdlRailWindow::clearLoopEnd()
+{
+	std::unique_lock lock(_gfxLock);
+	_loopEnd = {};
+}
+
+SdlRailWindow::LoopEndActions SdlRailWindow::takeLoopEnd()
+{
+	std::unique_lock lock(_gfxLock);
+	const LoopEndActions actions{ _loopEnd.maximize, _loopEnd.snap, _loopEnd.snapRect };
+	_loopEnd = {};
+	return actions;
+}
+
 void SdlRailWindow::setVisibilityRects(std::vector<SDL_Rect> rects)
 {
 	std::unique_lock lock(_gfxLock);
