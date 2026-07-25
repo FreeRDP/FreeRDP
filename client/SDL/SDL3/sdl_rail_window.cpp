@@ -384,13 +384,24 @@ SDL_Rect SdlRailWindow::bandInsets() const
 	return bandMargins();
 }
 
+/* Add edge insets (x=L y=T w=R h=B) to a server rect to get its outer (band-inclusive) rect. */
+static SDL_Rect addInsets(const SDL_Rect& r, const SDL_Rect& i)
+{
+	return { r.x - i.x, r.y - i.y, r.w + i.x + i.w, r.h + i.y + i.h };
+}
+
+/* Inverse of addInsets: strip the insets back off an outer rect to recover the server rect.
+ */
+static SDL_Rect stripInsets(const SDL_Rect& r, const SDL_Rect& i)
+{
+	return { r.x + i.x, r.y + i.y, r.w - i.x - i.w, r.h - i.y - i.h };
+}
+
 /* Server rect inflated by the FRESH band insets (the target the window should become); caller
  * holds _gfxLock. Used by reconcile/create to size the window. */
 SDL_Rect SdlRailWindow::targetOuterRect() const
 {
-	const SDL_Rect i = bandInsets();
-	return { _windowRect.x - i.x, _windowRect.y - i.y, _windowRect.w + i.x + i.w,
-		     _windowRect.h + i.y + i.h };
+	return addInsets(_windowRect, bandInsets());
 }
 
 /* The insets baked into the window ON SCREEN (not the freshly recomputed target). */
@@ -404,15 +415,12 @@ SDL_Rect SdlRailWindow::insets() const
 SDL_Rect SdlRailWindow::outerRect() const
 {
 	std::unique_lock lock(_gfxLock);
-	const SDL_Rect& i = _appliedInsets;
-	return { _windowRect.x - i.x, _windowRect.y - i.y, _windowRect.w + i.x + i.w,
-		     _windowRect.h + i.y + i.h };
+	return addInsets(_windowRect, _appliedInsets);
 }
 
 SDL_Rect SdlRailWindow::serverRect(const SDL_Rect& outer) const
 {
-	const SDL_Rect i = insets();
-	return { outer.x + i.x, outer.y + i.y, outer.w - i.x - i.w, outer.h - i.y - i.h };
+	return stripInsets(outer, insets());
 }
 
 void SdlRailWindow::setStyle(uint32_t style, uint32_t exStyle)
@@ -563,8 +571,10 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		/* Shown + raised in paint() after the first frame (created hidden). */
 	}
 
+	/* create() returned false on failure, so _win is non-null from here down. */
+
 	/* Resizability first: SDL refuses to maximize a non-resizable window. */
-	if (_win && _styleDirty)
+	if (_styleDirty)
 	{
 		_win->resizeable(styleResizable());
 		_styleDirty = false;
@@ -576,11 +586,8 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	}
 
 	/* State first: maximized/minimized gates the geometry apply below. */
-	if (_win)
-	{
-		applyServerState(_maxState, "maximize", SDL_MaximizeWindow);
-		applyServerState(_minState, "minimize", SDL_MinimizeWindow);
-	}
+	applyServerState(_maxState, "maximize", SDL_MaximizeWindow);
+	applyServerState(_minState, "minimize", SDL_MinimizeWindow);
 
 	/* Maximizing (server- OR WM-driven) drops the band ring, but the geometry apply below - the
 	 * only place that refreshes the baked insets - is gated off while maximized, so refresh them on
@@ -589,22 +596,16 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	 * a WM maximize that never touches _maxState); restore, which the lagging SDL flag keeps
 	 * "maximized" for a few frames, is left to the geometry block since it is not a
 	 * become-maximized edge. */
-	if (_win)
-	{
-		const bool maxed = effectivelyMaximized();
-		if (maxed && !_wasMaximized)
-			_appliedInsets = bandInsets();
-		_wasMaximized = maxed;
-	}
+	const bool maxed = effectivelyMaximized();
+	if (maxed && !_wasMaximized)
+		_appliedInsets = bandInsets();
+	_wasMaximized = maxed;
 
 	/* _GTK_FRAME_EXTENTS: tell the WM the band ring is frame, not content (snap/tile geometry). */
-	if (_win)
-	{
-		const SDL_Rect ext = bandInsets();
-		if (!SDL_RectsEqual(&ext, &_extentsApplied) &&
-		    sdl_x11_set_frame_extents(_win->window(), ext.x, ext.w, ext.y, ext.h))
-			_extentsApplied = ext;
-	}
+	const SDL_Rect ext = bandInsets();
+	if (!SDL_RectsEqual(&ext, &_extentsApplied) &&
+	    sdl_x11_set_frame_extents(_win->window(), ext.x, ext.w, ext.y, ext.h))
+		_extentsApplied = ext;
 
 	/* Min/max BEFORE geometry: the WM clamps SDL_SetWindowSize to the current min. The server's
 	 * min-track-size only constrains USER resizing - the app itself drives its window below it
@@ -618,7 +619,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	 * So clamp the enforced min to the target outer size: server geometry is never blocked, and the
 	 * min re-widens on its own once the server grows the window back. Re-run on a geometry change
 	 * too, since a shrink needs the min re-clamped first. */
-	if (_win && (_minMaxDirty || _geometryDirty))
+	if (_minMaxDirty || _geometryDirty)
 	{
 		const SDL_Rect vis = targetOuterRect();
 		SDL_SetWindowMinimumSize(_win->window(), std::clamp(_minSize.x, 0, vis.w),
@@ -643,20 +644,11 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		_minMaxDirty = false;
 	}
 
-	/* _GTK_FRAME_EXTENTS: tell the WM the band ring is frame, not content (snap/tile geometry). */
-	if (_win)
-	{
-		const SDL_Rect ext = bandInsets();
-		if (!SDL_RectsEqual(&ext, &_extentsApplied) &&
-		    sdl_x11_set_frame_extents(_win->window(), ext.x, ext.w, ext.y, ext.h))
-			_extentsApplied = ext;
-	}
-
 	/* Maximized (applied OR already declared by the server - the geometry order can precede the
 	 * SHOW order): WM owns geometry; a server update stays pending until restored. Minimized is
 	 * skipped too: the server sends a placeholder geometry on minimize; applying it would poison
 	 * the WM's restore bounds (xf guards the same on WINDOW_SHOW_MINIMIZED). */
-	if (_win && _geometryDirty && !geometryFrozen())
+	if (_geometryDirty && !geometryFrozen())
 	{
 		const SDL_Rect vis = targetOuterRect();
 		/* The window is (or becomes) vis = _windowRect + fresh insets: record those as the insets
@@ -923,11 +915,14 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 	SDL_GetWindowSizeInPixels(_win->window(), &ww, &wh);
 	const int cw = ww - bi.x - bi.w; /* content area inside the insets */
 	const int ch = wh - bi.y - bi.h;
+	const int gw =
+	    static_cast<int>(_gfxW); /* GFX surface size as int (used across the blit paths) */
+	const int gh = static_cast<int>(_gfxH);
 
 	/* A size mismatch during a plain move = the WM snapped/tiled mid-drag; treat as a resize. */
 	bool localResize = _localMoveActive && _localMoveIsResize;
 	if (_localMoveActive && !localResize)
-		localResize = (cw != static_cast<int>(_gfxW)) || (ch != static_cast<int>(_gfxH));
+		localResize = (cw != gw) || (ch != gh);
 
 	/* Window size changed outside a drag: repaint once even without damage. */
 	const bool serverResize = !_localMoveActive && ((ww != _lastWinW) || (wh != _lastWinH));
@@ -973,11 +968,8 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 			contentFormat = SDL_PIXELFORMAT_BGRX32;
 	}
 
-
-
-	SDL_Surface* s =
-	    SDL_CreateSurfaceFrom(static_cast<int>(_gfxW), static_cast<int>(_gfxH), contentFormat,
-	                          _gfxBuffer.data(), static_cast<int>(_gfxStride));
+	SDL_Surface* s = SDL_CreateSurfaceFrom(gw, gh, contentFormat, _gfxBuffer.data(),
+	                                       static_cast<int>(_gfxStride));
 	if (!s)
 	{
 		WLog_WARN(TAG, "paintGfx id=0x%08x SDL_CreateSurfaceFrom failed: %s",
@@ -989,10 +981,8 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 	if (localResize)
 	{
 		/* Anchor the stale frame to the fixed corner. */
-		const SDL_Point off = {
-			_resizeAnchorRight ? (ww - bi.w - static_cast<int>(_gfxW)) : bi.x,
-			_resizeAnchorBottom ? (wh - bi.h - static_cast<int>(_gfxH)) : bi.y
-		};
+		const SDL_Point off = { _resizeAnchorRight ? (ww - bi.w - gw) : bi.x,
+			                    _resizeAnchorBottom ? (wh - bi.h - gh) : bi.y };
 		/* The "awaiting content" dashes only during a real edge/band resize; a MOVE whose size
 		 * the WM changed (snap, untile restore) just shows the clipped stale frame - dashes there
 		 * would read as a resize the user never started. */
@@ -1001,7 +991,7 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 	else
 	{
 		/* Render accumulated damage or re-blit full surface on bare resize. */
-		const SDL_Rect full = { 0, 0, static_cast<int>(_gfxW), static_cast<int>(_gfxH) };
+		const SDL_Rect full = { 0, 0, gw, gh };
 		/* Anchor content to real window position (fixes overhanging maximized borders). */
 		SDL_Point dst = { bi.x, bi.y };
 		SDL_Point winPos = { 0, 0 };
@@ -1018,9 +1008,9 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 			 * Windows parks the frame off-screen at rect - margin). The WM may clamp that overhang
 			 * away (and Wayland can't overhang at all), so crop the border out of the blit instead
 			 * of relying on the window position. */
-			if (static_cast<int>(_gfxW) > _windowRect.w)
+			if (gw > _windowRect.w)
 				dst.x -= _frameMargins.x;
-			if (static_cast<int>(_gfxH) > _windowRect.h)
+			if (gh > _windowRect.h)
 				dst.y -= _frameMargins.y;
 		}
 		if ((_layeredApp || _layered) && !_visRects.empty() && !maxed)
