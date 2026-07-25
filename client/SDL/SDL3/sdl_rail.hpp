@@ -166,20 +166,6 @@ class SdlRail
 	 * windows announced without margin fields (initial sync of pre-existing windows only sends
 	 * them on activation). Guarded by _windowsLock. */
 	SDL_Rect _sessionMargins = { 0, 0, 0, 0 };
-	/* Deferred completion of a server modal move/size loop (guarded by _windowsLock). An SC_MAXIMIZE
-	 * or a snap ClientWindowMove issued while the loop is still unwinding is swallowed (or
-	 * drag-restored) by it, so it waits here until the server's move/size END order confirms
-	 * closure (server_local_move_size). */
-	struct PendingLoopEnd
-	{
-		uint32_t windowId = 0;         /* window whose END order is awaited (0 = nothing pending) */
-		bool maximizeDeferred = false; /* send SC_MAXIMIZE on closure */
-		/* WM snap/tile sized the window during a plain move (no RDP command for it): resend the WM
-		 * rect via ClientWindowMove on closure. */
-		bool snapPending = false;
-		SDL_Rect snapRect = { 0, 0, 0, 0 };
-	};
-	PendingLoopEnd _loopEnd;
 	SDL_Point _lastPressServer = { 0, 0 };   /* last forwarded left press; main thread */
 	SDL_Point _lastPointerServer = { 0, 0 }; /* last forwarded pointer position; main thread */
 
@@ -239,8 +225,8 @@ class SdlRail
 	std::multimap<uint64_t, SdlRailWindow> _deadWindows;
 	/* State of the one interactive WM move/resize active at a time (a user drags one window);
 	 * report the final rect when it ends. Reset as a unit with `= {}` so teardown can't miss a
-	 * field. _loopEnd is separate: it deliberately outlives the drag until the server's move/size
-	 * END. */
+	 * field. The per-window loop-end (SdlRailWindow::armLoopEnd) is separate: it deliberately
+	 * outlives the drag until the server's move/size END. */
 	struct LocalMove
 	{
 		uint32_t id = 0;      /* windowId of the active move, 0 = none (RAIL ids are non-zero) */

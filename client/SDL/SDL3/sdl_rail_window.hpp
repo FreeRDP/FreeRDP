@@ -89,6 +89,23 @@ class SdlRailWindow
 	[[nodiscard]] bool geomApplyPending() const;
 	void clearGeomApplyPending();
 
+	/* Per-window deferred completion of the server's modal move/size loop. An SC_MAXIMIZE or snap
+	 * ClientWindowMove issued while the loop unwinds is swallowed by it, so it waits until the
+	 * server's move/size END order confirms closure. Per-window so a pending close survives a drag
+	 * of a different window (state guarded by _gfxLock; callers hold _windowsLock). */
+	void armLoopEnd(); /* completion: now awaiting the END order */
+	[[nodiscard]] bool loopEndPending() const;
+	void deferMaximize();                       /* WM snap-to-top mid-drag: SC_MAXIMIZE on close */
+	void deferSnap(const SDL_Rect& serverRect); /* WM snap/tile: resend rect on close */
+	void clearLoopEnd(); /* a fresh drag of this window supersedes the pending close */
+	struct LoopEndActions
+	{
+		bool maximize = false;
+		bool snap = false;
+		SDL_Rect snapRect = { 0, 0, 0, 0 };
+	};
+	[[nodiscard]] LoopEndActions takeLoopEnd(); /* END order: drain queued actions and reset */
+
 	/* Visible sub-rects (window-relative); only these are painted so windows on top don't bleed. */
 	void setVisibilityRects(std::vector<SDL_Rect> rects);
 	/* Server-absolute visible-region origin (WINDOW_ORDER_FIELD_VIS_OFFSET); the visibility rects
@@ -255,6 +272,14 @@ class SdlRailWindow
 	bool _localMoveIsResize = false;          /* local move is a resize vs a move */
 	bool _localMoveSizeChanged = false;       /* server resized mid-move (drag-restore) */
 	SDL_Point _localMoveServerPos = { 0, 0 }; /* the re-anchored server origin (see above) */
+	/* Deferred server-modal-loop close for THIS window (see armLoopEnd()). */
+	struct
+	{
+		bool pending = false;
+		bool maximize = false;
+		bool snap = false;
+		SDL_Rect snapRect = { 0, 0, 0, 0 };
+	} _loopEnd;
 	bool _geomApplyPending = false;  /* a client-issued geometry/state apply is still settling */
 	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */
 	bool _resizeAnchorBottom = false; /* anchor stale frame to the bottom edge (top-side resize) */
