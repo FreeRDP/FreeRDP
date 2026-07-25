@@ -115,7 +115,7 @@ void SdlRailWindow::updateWindowRect(const SDL_Rect& rect)
 	 * it pending would re-apply it as NORMAL geometry the moment a restore clears the gate -
 	 * reported back, it poisons the server's restore rect to near-fullscreen. The server resends
 	 * the real geometry after a restore, so nothing is lost. */
-	if (!_maxState.rail && !_maxState.server)
+	if (!maxDeclared())
 		_geometryDirty = true;
 }
 
@@ -207,12 +207,6 @@ void SdlRailWindow::clearGeomApplyPending()
 	_geomApplyPending = false;
 }
 
-void SdlRailWindow::markGeometryDirty()
-{
-	std::unique_lock lock(_gfxLock);
-	_geometryDirty = true;
-}
-
 void SdlRailWindow::setVisibilityRects(std::vector<SDL_Rect> rects)
 {
 	std::unique_lock lock(_gfxLock);
@@ -254,7 +248,7 @@ void SdlRailWindow::setResizeMargins(int left, int top, int right, int bottom)
 		return;
 	_resizeMargins = m;
 	/* Margins usually arrive after the first frame; the window must regrow to cover them. */
-	if (!_maxState.rail)
+	if (!railMaximized())
 		_geometryDirty = true;
 }
 
@@ -613,8 +607,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	 * SHOW order): WM owns geometry; a server update stays pending until restored. Minimized is
 	 * skipped too: the server sends a placeholder geometry on minimize; applying it would poison
 	 * the WM's restore bounds (xf guards the same on WINDOW_SHOW_MINIMIZED). */
-	if (_win && _geometryDirty && !_maxState.rail && !_maxState.server && !_minState.rail &&
-	    !_minState.server)
+	if (_win && _geometryDirty && !geometryFrozen())
 	{
 		const SDL_Rect vis = targetOuterRect();
 		/* The window is (or becomes) vis = _windowRect + fresh insets: record those as the insets
