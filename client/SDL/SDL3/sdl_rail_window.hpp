@@ -88,8 +88,6 @@ class SdlRailWindow
 	 * until convergence (clearGeomApplyPending) so they aren't wrongly reported as WM intent. */
 	[[nodiscard]] bool geomApplyPending() const;
 	void clearGeomApplyPending();
-	/* Force a re-apply of the current _windowRect on the next reconcile. */
-	void markGeometryDirty();
 
 	/* Visible sub-rects (window-relative); only these are painted so windows on top don't bleed. */
 	void setVisibilityRects(std::vector<SDL_Rect> rects);
@@ -164,6 +162,17 @@ class SdlRailWindow
 		_minState.rail = m;
 	}
 	void setServerMinimized(bool m);
+	/* Max state applied locally OR declared by the server: geometry stays server/WM-owned either
+	 * way (the geometry order can precede the SHOW order). Lock-free like railMaximized(). */
+	[[nodiscard]] bool maxDeclared() const
+	{
+		return _maxState.rail || _maxState.server;
+	}
+	/* Max or min pins the geometry (server/WM owns it): the client geometry apply is skipped. */
+	[[nodiscard]] bool geometryFrozen() const
+	{
+		return maxDeclared() || _minState.rail || _minState.server;
+	}
 	/* Local or live-WM maximized (railMaximized may lag the SDL flag during a snap). */
 	[[nodiscard]] bool effectivelyMaximized() const;
 	/* Transition in flight (local intent vs server state). WM resizes only trusted outside. */
