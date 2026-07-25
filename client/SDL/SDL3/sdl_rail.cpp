@@ -76,6 +76,45 @@ SdlRailWindow* SdlRail::resolveParent(uint64_t ownerId)
 	return nullptr;
 }
 
+/* Pick a popup's parent app window: ownerWindowId -> geometric containment -> focused -> any app.
+ */
+SdlRailWindow* SdlRail::resolvePopupParent(const SdlRailWindow& popup)
+{
+	SdlRailWindow* chosen = resolveParent(popup.owner());
+	if (!chosen && railPlatformCaps().positionsReadable)
+	{
+		const SDL_Rect pr = popup.windowRect();
+		const SDL_Point origin = { pr.x, pr.y };
+		for (auto& other : _windows)
+		{
+			auto& w = other.second;
+			if (w.isPopup() || !w.window())
+				continue;
+			const SDL_Rect wr = w.windowRect();
+			if (SDL_PointInRect(&origin, &wr))
+			{
+				chosen = &w;
+				break;
+			}
+		}
+	}
+	if (!chosen)
+		chosen = resolveParent(_focusedAppId);
+	if (!chosen)
+	{
+		for (auto& other : _windows)
+		{
+			auto& w = other.second;
+			if (!w.isPopup() && w.window())
+			{
+				chosen = &w;
+				break;
+			}
+		}
+	}
+	return chosen;
+}
+
 bool SdlRail::ownsWindow(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
@@ -414,39 +453,7 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			popup.setShadowAnchored(anchored);
 		}
 
-		/* Pick popup parent: ownerWindowId -> geometric match -> focused -> any app. */
-		SdlRailWindow* chosen = resolveParent(popup.owner());
-		if (!chosen && railPlatformCaps().positionsReadable)
-		{
-			const SDL_Rect pr = popup.windowRect();
-			const SDL_Point origin = { pr.x, pr.y };
-			for (auto& other : _windows)
-			{
-				auto& w = other.second;
-				if (w.isPopup() || !w.window())
-					continue;
-				const SDL_Rect wr = w.windowRect();
-				if (SDL_PointInRect(&origin, &wr))
-				{
-					chosen = &w;
-					break;
-				}
-			}
-		}
-		if (!chosen)
-			chosen = resolveParent(_focusedAppId);
-		if (!chosen)
-		{
-			for (auto& other : _windows)
-			{
-				auto& w = other.second;
-				if (!w.isPopup() && w.window())
-				{
-					chosen = &w;
-					break;
-				}
-			}
-		}
+		SdlRailWindow* chosen = resolvePopupParent(popup);
 
 		SDL_Window* parent = nullptr;
 		SDL_Rect parentRect{};
@@ -847,11 +854,10 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 			started = sdl_wayland_begin_resize(appWindow->window(), railToXdgEdge(moveType));
 		if (started && !isMove)
 		{
+			_localMove = {}; /* clear all per-drag state as a unit before latching this drag */
 			_localMove.id = windowId;
 			_localMove.wayland = true;
 			_localMove.type = moveType;
-			/* Reset resize guard for new drag. */
-			_localMove.sawResize = false;
 		}
 	}
 	else
@@ -860,16 +866,14 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 		started = sdl_x11_begin_move_size(appWindow->window(), railToNetDirection(moveType));
 		if (started)
 		{
+			_localMove = {}; /* clear all per-drag state as a unit before latching this drag */
 			_localMove.id = windowId;
-			_localMove.wayland = false;
 			_localMove.type = moveType;
 			/* Latch the anchor of the server's modal loop (the forwarded press that started it)
 			 * and the server's frozen cursor as per-drag state; the completion releases
 			 * relative to them. */
 			_localMove.anchor = _lastPressServer;
 			_localMove.pointer = _lastPointerServer;
-			_localMove.wmSized = false;
-			_localMove.serverEnded = false;
 			/* A fresh drag supersedes this window's own unsent snap rect / un-sticks a completion
 			 * gate whose END order never arrived. Per-window, so another window's pending close
 			 * survives automatically. */
@@ -982,7 +986,6 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 	 * disagrees with RDP window position, send update"). */
 	const SDL_Rect cur = appWindow->windowRect();
 	const bool unchanged = SDL_RectsEqual(&rect, &cur);
-	const SDL_Rect fm = appWindow->frameMargins();
 	if (!maximized && !unchanged)
 		sendClientWindowMove(appWindow, rect);
 
@@ -1343,6 +1346,85 @@ static bool marginsSet(const SDL_Rect& m)
 	return m.x || m.y || m.w || m.h;
 }
 
+/* RESIZE_MARGIN fields: set this window's frame margins and seed/backfill the session BAND. */
+void SdlRail::updateMargins(SdlRailWindow* appWindow, const WINDOW_ORDER_INFO* orderInfo,
+                            const WINDOW_STATE_ORDER* state)
+{
+	const UINT32 fieldFlags = orderInfo->fieldFlags;
+	SDL_Rect m = appWindow->frameMargins(); /* raw server margins as the base */
+	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
+	{
+		m.x = static_cast<int>(state->resizeMarginLeft);
+		m.w = static_cast<int>(state->resizeMarginRight);
+	}
+	if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
+	{
+		m.y = static_cast<int>(state->resizeMarginTop);
+		m.h = static_cast<int>(state->resizeMarginBottom);
+	}
+	/* Trust window's OWN frame margins verbatim. Session margin is only a BAND fallback:
+	 * inflating a zero-announcing window by borrowed margins would grow it on every move. */
+	appWindow->setFrameMargins(m);
+	SDL_Rect& sm = _sessionMargins;
+	if (marginsSet(m) && !marginsSet(sm))
+	{
+		sm = m;
+		/* Backfill the BAND of earlier zero-announce windows (frame margins stay their own).
+		 * bandMargins() floors + gates on resizability at read time. */
+		for (auto& [id, w] : _windows)
+			if (!marginsSet(w.resizeMargins()))
+				w.setResizeMargins(m.x, m.y, m.w, m.h);
+	}
+	const SDL_Rect bandSrc = marginsSet(m) ? m : sm;
+	appWindow->setResizeMargins(bandSrc.x, bandSrc.y, bandSrc.w, bandSrc.h);
+	WLog_DBG(TAG, "margins id=0x%08" PRIx32 " raw L%d T%d R%d B%d", orderInfo->windowId, m.x, m.y,
+	         m.w, m.h);
+}
+
+/* SHOW field: mirror the server's show-state (visibility + maximize/minimize) locally. */
+void SdlRail::updateShowState(SdlRailWindow* appWindow, const WINDOW_ORDER_INFO* orderInfo,
+                              const WINDOW_STATE_ORDER* state)
+{
+	WLog_DBG(TAG, "server showState id=0x%08" PRIx32 " state=0x%02" PRIx32, orderInfo->windowId,
+	         state->showState);
+	appWindow->setVisible(state->showState != WINDOW_HIDE);
+	switch (state->showState)
+	{
+		case WINDOW_SHOW_MAXIMIZED:
+			appWindow->setServerMaximized(true);
+			appWindow->setServerMinimized(false);
+			break;
+		case WINDOW_SHOW_MINIMIZED:
+			appWindow->setServerMinimized(true);
+			break;
+		case WINDOW_SHOW:
+			appWindow->setServerMaximized(false);
+			appWindow->setServerMinimized(false);
+			break;
+		default:
+			break;
+	}
+}
+
+/* VISIBILITY field: convert the server's visibility rects (window-relative) and store them. */
+void SdlRail::updateVisRects(SdlRailWindow* appWindow, const WINDOW_ORDER_INFO* orderInfo,
+                             const WINDOW_STATE_ORDER* state)
+{
+	std::vector<SDL_Rect> rects;
+	rects.reserve(state->numVisibilityRects);
+	for (UINT32 i = 0; i < state->numVisibilityRects; i++)
+	{
+		const RECTANGLE_16& r = state->visibilityRects[i];
+		rects.push_back({ r.left, r.top, r.right - r.left, r.bottom - r.top });
+	}
+	if (rects.empty())
+		WLog_DBG(TAG, "visrects id=0x%08" PRIx32 " n=0", orderInfo->windowId);
+	else
+		WLog_DBG(TAG, "visrects id=0x%08" PRIx32 " n=%zu first=%dx%d+%d+%d", orderInfo->windowId,
+		         rects.size(), rects[0].w, rects[0].h, rects[0].x, rects[0].y);
+	appWindow->setVisibilityRects(std::move(rects));
+}
+
 BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                             const WINDOW_STATE_ORDER* windowState)
 {
@@ -1402,36 +1484,7 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 	if (fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 		appWindow->setOwner(windowState->ownerWindowId);
 	if (fieldFlags & (WINDOW_ORDER_FIELD_RESIZE_MARGIN_X | WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y))
-	{
-		SDL_Rect m = appWindow->frameMargins(); /* raw server margins as the base */
-		if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
-		{
-			m.x = static_cast<int>(windowState->resizeMarginLeft);
-			m.w = static_cast<int>(windowState->resizeMarginRight);
-		}
-		if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
-		{
-			m.y = static_cast<int>(windowState->resizeMarginTop);
-			m.h = static_cast<int>(windowState->resizeMarginBottom);
-		}
-		/* Trust window's OWN frame margins verbatim. Session margin is only a BAND fallback:
-		 * inflating a zero-announcing window by borrowed margins would grow it on every move. */
-		appWindow->setFrameMargins(m);
-		SDL_Rect& sm = rail->_sessionMargins;
-		if (marginsSet(m) && !marginsSet(sm))
-		{
-			sm = m;
-			/* Backfill the BAND of earlier zero-announce windows (frame margins stay their own).
-			 * bandMargins() floors + gates on resizability at read time. */
-			for (auto& [id, w] : rail->_windows)
-				if (!marginsSet(w.resizeMargins()))
-					w.setResizeMargins(m.x, m.y, m.w, m.h);
-		}
-		const SDL_Rect bandSrc = marginsSet(m) ? m : sm;
-		appWindow->setResizeMargins(bandSrc.x, bandSrc.y, bandSrc.w, bandSrc.h);
-		WLog_INFO(TAG, "margins id=0x%08" PRIx32 " raw L%d T%d R%d B%d", orderInfo->windowId, m.x,
-		          m.y, m.w, m.h);
-	}
+		rail->updateMargins(appWindow, orderInfo, windowState);
 	if (fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 		appWindow->setStyle(windowState->style, windowState->extendedStyle);
 	if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
@@ -1439,28 +1492,7 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 		                    windowState->titleInfo.length);
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
-	{
-		WLog_DBG(TAG, "server showState id=0x%08" PRIx32 " state=0x%02" PRIx32, orderInfo->windowId,
-		         windowState->showState);
-		appWindow->setVisible(windowState->showState != WINDOW_HIDE);
-		/* Mirror server show-state locally. */
-		switch (windowState->showState)
-		{
-			case WINDOW_SHOW_MAXIMIZED:
-				appWindow->setServerMaximized(true);
-				appWindow->setServerMinimized(false);
-				break;
-			case WINDOW_SHOW_MINIMIZED:
-				appWindow->setServerMinimized(true);
-				break;
-			case WINDOW_SHOW:
-				appWindow->setServerMaximized(false);
-				appWindow->setServerMinimized(false);
-				break;
-			default:
-				break;
-		}
-	}
+		updateShowState(appWindow, orderInfo, windowState);
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
 	{
@@ -1470,22 +1502,7 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 		                              static_cast<int>(windowState->visibleOffsetY) });
 	}
 	if (fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
-	{
-		std::vector<SDL_Rect> rects;
-		rects.reserve(windowState->numVisibilityRects);
-		for (UINT32 i = 0; i < windowState->numVisibilityRects; i++)
-		{
-			const RECTANGLE_16& r = windowState->visibilityRects[i];
-			rects.push_back({ r.left, r.top, r.right - r.left, r.bottom - r.top });
-		}
-		if (rects.empty())
-			WLog_INFO(TAG, "visrects id=0x%08" PRIx32 " n=0", orderInfo->windowId);
-		else
-			WLog_INFO(TAG, "visrects id=0x%08" PRIx32 " n=%zu first=%dx%d+%d+%d",
-			          orderInfo->windowId, rects.size(), rects[0].w, rects[0].h, rects[0].x,
-			          rects[0].y);
-		appWindow->setVisibilityRects(std::move(rects));
-	}
+		updateVisRects(appWindow, orderInfo, windowState);
 
 	/* Wake the main thread to create/move/show/paint the SDL window(s). */
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);

@@ -158,6 +158,7 @@ class SdlRail
 	/* The window `ownerId` names, if it is a live non-popup app window (a valid popup/dialog
 	 * parent); else nullptr. Caller holds _windowsLock. */
 	[[nodiscard]] SdlRailWindow* resolveParent(uint64_t ownerId);
+	[[nodiscard]] SdlRailWindow* resolvePopupParent(const SdlRailWindow& popup);
 
 	void enableRemoteAppMode(bool enable);
 	/* Report a work area to the server (SPI_SET_WORK_AREA, server coords). Main thread. No-op if it
@@ -189,6 +190,13 @@ class SdlRail
 	void registerUpdateCallbacks(rdpUpdate* update);
 	static BOOL window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
 	                          const WINDOW_STATE_ORDER* windowState);
+	/* window_common field handlers (split out for readability). */
+	void updateMargins(SdlRailWindow* appWindow, const WINDOW_ORDER_INFO* orderInfo,
+	                   const WINDOW_STATE_ORDER* state);
+	static void updateShowState(SdlRailWindow* appWindow, const WINDOW_ORDER_INFO* orderInfo,
+	                            const WINDOW_STATE_ORDER* state);
+	static void updateVisRects(SdlRailWindow* appWindow, const WINDOW_ORDER_INFO* orderInfo,
+	                           const WINDOW_STATE_ORDER* state);
 	static BOOL window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
 	                        const WINDOW_ICON_ORDER* windowIcon);
 	static BOOL window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
