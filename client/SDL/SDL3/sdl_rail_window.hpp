@@ -135,6 +135,9 @@ class SdlRailWindow
 	[[nodiscard]] uint64_t owner() const;
 	/* Popup = caption-less transient (menu/dropdown/tooltip); created as an SDL popup. */
 	[[nodiscard]] bool isPopup() const;
+	/* A full-display WS_POPUP realized as a fullscreen toplevel (Wayland slideshow): unlike a menu
+	 * popup it takes keyboard focus and server activation. */
+	[[nodiscard]] bool isFullscreen() const;
 	/* Layered decoration (drop shadow); realized only while anchored to a visible popup. */
 	[[nodiscard]] bool isLayered() const;
 	/* Set per paint pass: a visible popup adjoins this shadow (its anchor). Without one the shadow
@@ -260,6 +263,7 @@ class SdlRailWindow
 	SDL_Point _maxSize = { 0, 0 };
 	bool _minMaxDirty = false;
 	bool _isPopup = false;
+	bool _fullscreen = false;      /* full-display popup as fullscreen toplevel (Wayland) */
 	bool _layered = false;         /* caption-less WS_EX_LAYERED decoration (drop shadow) */
 	bool _layeredApp = false;      /* captioned WS_EX_LAYERED app window: honor per-pixel alpha */
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */

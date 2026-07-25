@@ -246,7 +246,7 @@ void SdlRail::handleFocus(SDL_WindowID id, bool gained)
 {
 	std::unique_lock lock(_windowsLock);
 	auto appWindow = getWindowBySdlId(id);
-	if (!appWindow || appWindow->isPopup() || !appWindow->window())
+	if (!appWindow || (appWindow->isPopup() && !appWindow->isFullscreen()) || !appWindow->window())
 		return;
 
 	/* Fallback parent for orphaned popups. */
@@ -276,7 +276,7 @@ void SdlRail::ensureActive(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
 	auto* appWindow = getWindowBySdlId(id);
-	if (!appWindow || appWindow->isPopup() || !appWindow->window())
+	if (!appWindow || (appWindow->isPopup() && !appWindow->isFullscreen()) || !appWindow->window())
 		return;
 	const uint32_t wid = static_cast<uint32_t>(appWindow->id());
 	if (wid == _clientActiveId)

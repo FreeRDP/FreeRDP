@@ -342,6 +342,12 @@ bool SdlRailWindow::isPopup() const
 	return _isPopup;
 }
 
+bool SdlRailWindow::isFullscreen() const
+{
+	std::unique_lock lock(_gfxLock);
+	return _fullscreen;
+}
+
 bool SdlRailWindow::isLayered() const
 {
 	std::unique_lock lock(_gfxLock);
@@ -496,14 +502,22 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	/* Local window = server rect + band insets (the outside resize band is part of our window). */
 	const SDL_Rect vis = targetOuterRect();
 	_appliedInsets = bandInsets(); /* the insets baked into the window we are about to create */
-	if (_isPopup && parent)
+	/* A WS_POPUP spanning the whole monitor (e.g. a PowerPoint slideshow) is a fullscreen window,
+	 * not a menu. On Wayland an xdg_popup is parent-anchored and strut-constrained: it cannot reach
+	 * 0,0 or cover the panel, so realize it as a fullscreen toplevel instead. X11 override-redirect
+	 * popups already cover the screen, so this is Wayland-only. */
+	SDL_Rect disp{};
+	const bool fullscreen = _isPopup && !caps.positionsReadable &&
+	                        SDL_GetDisplayBounds(SDL_GetPrimaryDisplay(), &disp) &&
+	                        (_windowRect.w >= disp.w) && (_windowRect.h >= disp.h);
+	if (_isPopup && parent && !fullscreen)
 	{
 		/* SDL popups position parent-relative (works on Wayland too, via xdg_popup). */
 		const SDL_Rect rel = { vis.x - parentRect.x, vis.y - parentRect.y, vis.w, vis.h };
 		_win = std::make_unique<SdlWindow>(
 		    SdlWindow::createPopup(parent, rel, caps.supportsTransparentWindows));
 	}
-	else if (_isPopup && !caps.positionsReadable)
+	else if (_isPopup && !caps.positionsReadable && !fullscreen)
 	{
 		/* No owner yet: a Wayland popup needs a parent; retry once an app window exists. */
 		WLog_VRB(TAG, "popup create deferred id=0x%08x: no parent yet", static_cast<unsigned>(_id));
@@ -529,6 +543,14 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 		return false;
 	}
 	_win->resizeable(styleResizable());
+	if (fullscreen)
+	{
+		/* Cover the whole output (panel included) - the Wayland-correct way to reach 0,0. */
+		_fullscreen = true;
+		SDL_SetWindowFullscreen(_win->window(), true);
+		WLog_DBG(TAG, "fullscreen id=0x%08x %dx%d (WS_POPUP spans display)",
+		         static_cast<unsigned>(_id), _windowRect.w, _windowRect.h);
+	}
 
 	/* Bind seat/pointer on Wayland. */
 	if (!_isPopup && !caps.positionsReadable)
@@ -653,7 +675,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	 * SHOW order): WM owns geometry; a server update stays pending until restored. Minimized is
 	 * skipped too: the server sends a placeholder geometry on minimize; applying it would poison
 	 * the WM's restore bounds (xf guards the same on WINDOW_SHOW_MINIMIZED). */
-	if (_geometryDirty && !geometryFrozen())
+	if (_geometryDirty && !geometryFrozen() && !_fullscreen)
 	{
 		const SDL_Rect vis = targetOuterRect();
 		/* The window is (or becomes) vis = _windowRect + fresh insets: record those as the insets
@@ -925,8 +947,10 @@ bool SdlRailWindow::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 		_mapped = true;
 		WLog_DBG(TAG, "map id=0x%08x %s", static_cast<unsigned>(_id), railRole(_isPopup, _layered));
 		SDL_ShowWindow(_win->window());
-		if (!_isPopup && !_layered)
-			_win->raise(); /* new app windows come to the front; popups are above by design */
+		if ((!_isPopup && !_layered) || _fullscreen)
+			_win->raise(); /* app + fullscreen windows come to the front (fullscreen needs the
+			                * keyboard focus a menu popup would not); menu popups are above by
+			                * design */
 	}
 	return ok;
 }
