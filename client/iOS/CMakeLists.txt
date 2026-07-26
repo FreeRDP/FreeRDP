@@ -309,7 +309,7 @@ set_source_files_properties(
 )
 set_source_files_properties(${IOS_CLIENT_RESOURCES_LOCALE} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/en.lproj")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/iFreeRDP.plist.in ${CMAKE_CURRENT_BINARY_DIR}/iFreeRDP.plist @ONLY)
+string(TIMESTAMP VERSION_YEAR "%Y")
 
 add_executable(
   ${PROJECT_NAME} MACOSX_BUNDLE
@@ -333,12 +333,21 @@ add_executable(
 
 add_dependencies(${PROJECT_NAME} freerdp)
 
+# Embedded frameworks must advertise the platform they were built for
+if(PLATFORM MATCHES "SIMULATOR")
+  set(FW_SUPPORTED_PLATFORM "iPhoneSimulator")
+else()
+  set(FW_SUPPORTED_PLATFORM "iPhoneOS")
+endif()
+
 add_custom_command(
   TARGET ${PROJECT_NAME}
   POST_BUILD
   COMMAND
     ${CMAKE_COMMAND} -DBUNDLE_PATH=$<TARGET_BUNDLE_DIR:${PROJECT_NAME}>
-    -DBUNDLE_SEARCH_PATHS=${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR} -P
+    -DBUNDLE_SEARCH_PATHS=${DEPS_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR} -DFW_MIN_OS=${CMAKE_OSX_DEPLOYMENT_TARGET}
+    -DFW_SUPPORTED_PLATFORM=${FW_SUPPORTED_PLATFORM}
+    -DFW_BUNDLE_ID_PREFIX=$<TARGET_PROPERTY:${PROJECT_NAME},MACOSX_BUNDLE_GUI_IDENTIFIER> -P
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FixupBundle.cmake
 )
 
@@ -351,7 +360,7 @@ set_target_properties(
              MACOSX_BUNDLE_COPYRIGHT "Copyright 2013-${VERSION_YEAR}. All Rights Reserved."
              MACOSX_BUNDLE_GUI_IDENTIFIER "com.freerdp.ifreerdp"
              MACOSX_BUNDLE_ICON_FILE "FreeRDP_OSX.icns"
-             MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/iFreeRDP.plist
+             MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/iFreeRDP.plist.in
              MACOSX_BUNDLE_INFO_STRING "info string TODO"
              MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION}
              MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}

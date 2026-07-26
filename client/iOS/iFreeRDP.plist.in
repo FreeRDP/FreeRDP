@@ -10,27 +10,31 @@
 	<string>@PROJECT_NAME@</string>
 	<key>CFBundleIconFiles</key>
 	<array>
-		<string>Icon.png</string>
+		<string>@MACOSX_BUNDLE_ICON_FILE@</string>
 		<string>Icon-72.png</string>
 		<string>Icon@2x.png</string>
 		<string>Icon-72@2x.png</string>
 	</array>
+	<key>CFBundleGetInfoString</key>
+	<string>@MACOSX_BUNDLE_INFO_STRING@</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.freerdp.ifreerdp</string>
+	<string>@MACOSX_BUNDLE_GUI_IDENTIFIER@</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>@PROJECT_NAME@</string>
+	<string>@MACOSX_BUNDLE_BUNDLE_NAME@</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>@PROJECT_VERSION@</string>
+	<string>@MACOSX_BUNDLE_SHORT_VERSION_STRING@</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>@PROJECT_VERSION@</string>
+	<string>@MACOSX_BUNDLE_BUNDLE_VERSION@</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>@MACOSX_BUNDLE_COPYRIGHT@</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
