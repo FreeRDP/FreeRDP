@@ -452,7 +452,7 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
                                   size_t s, UINT32 flags, size_t t)
 {
 	BOOL ret = TRUE;
-	const size_t size = s;
+	size_t size = s;
 	const size_t totalSize = t;
 
 	WINPR_ASSERT(channel);
@@ -461,13 +461,41 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 
 	if (channel->channelFlags & CHANNEL_OPTION_SHOW_PROTOCOL)
 	{
-		const CHANNEL_PDU_HEADER header = {
-			.length = WINPR_ASSERTING_INT_CAST(UINT32, size),
-			.flags = flags,
-		};
+		BOOL firstPass = TRUE;
 
-		return wts_queue_receive_data(channel, (const BYTE*)&header, sizeof(header), data,
-		                              header.length);
+		while (size)
+		{
+			const UINT32 payloadLen = (size > CHANNEL_CHUNK_LENGTH)
+			                              ? CHANNEL_CHUNK_LENGTH
+			                              : WINPR_ASSERTING_INT_CAST(UINT32, size);
+			size -= payloadLen;
+
+			/* here we skip other flags than CHANNEL_FLAG_FIRST and CHANNEL_FLAG_LAST
+			 * as it's the only ones treated by ChannelPduTracker.
+			 */
+			UINT32 newFlags = 0;
+			if (firstPass)
+			{
+				firstPass = FALSE;
+				if (flags & CHANNEL_FLAG_FIRST)
+					newFlags = CHANNEL_FLAG_FIRST;
+			}
+
+			if (!size && (flags & CHANNEL_FLAG_LAST))
+				newFlags |= CHANNEL_FLAG_LAST;
+
+			const CHANNEL_PDU_HEADER header = {
+				.length = payloadLen,
+				.flags = newFlags,
+			};
+
+			if (!wts_queue_receive_data(channel, (const BYTE*)&header, sizeof(header), data,
+			                            payloadLen))
+				return FALSE;
+
+			data += payloadLen;
+		}
+		return TRUE;
 	}
 
 	if ((flags & CHANNEL_FLAG_FIRST) != 0)
