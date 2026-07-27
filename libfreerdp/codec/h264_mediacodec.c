@@ -357,7 +357,7 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 				              iStride[1] * ((sys->outputHeight + 1) / 2);
 
 				h264->YUVWidth = sys->outputWidth;
-				h264->YUVHeigth = sys->outputHeigth;
+				h264->YUVHeight = sys->outputHeight;
 				break;
 			}
 			else if (outputBufferId == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED)
