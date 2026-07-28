@@ -623,8 +623,13 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 		case GDI_BS_HATCHED:
 		{
-			const BYTE* hatched = nullptr;
-			hatched = GDI_BS_HATCHED_PATTERNS + (8ULL * brush->hatch);
+			if (brush->hatch >= ARRAYSIZE(GDI_BS_HATCHED_PATTERNS) / 8)
+			{
+				WLog_ERR(TAG, "invalid brush hatch:%" PRIu32 "", brush->hatch);
+				goto out_error;
+			}
+
+			const BYTE* hatched = &GDI_BS_HATCHED_PATTERNS[8ULL * brush->hatch];
 
 			if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0, 0, 8, 8,
 			                                        hatched, backColor, foreColor, &gdi->palette))
