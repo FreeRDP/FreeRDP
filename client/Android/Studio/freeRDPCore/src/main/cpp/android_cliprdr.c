@@ -33,6 +33,17 @@
 #include "android_jni_utils.h"
 #include "android_jni_callback.h"
 
+static void android_cliprdr_free_formats(CLIPRDR_FORMAT* formats, UINT32 numFormats)
+{
+	if (!formats)
+		return;
+
+	for (UINT32 index = 0; index < numFormats; index++)
+		free(formats[index].formatName);
+
+	free(formats);
+}
+
 UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
@@ -85,7 +96,7 @@ UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 	rc = afc->cliprdr->ClientFormatList(afc->cliprdr, &formatList);
 fail:
 	free(pFormatIds);
-	free(formats);
+	android_cliprdr_free_formats(formats, numFormats);
 	return rc;
 }
 
@@ -196,6 +207,21 @@ static UINT android_cliprdr_server_capabilities(CliprdrClientContext* cliprdr,
 	return CHANNEL_RC_OK;
 }
 
+static UINT android_cliprdr_send_client_format_list_response(CliprdrClientContext* cliprdr,
+                                                             BOOL status)
+{
+	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse = WINPR_C_ARRAY_INIT;
+
+	formatListResponse.common.msgType = CB_FORMAT_LIST_RESPONSE;
+	formatListResponse.common.msgFlags = status ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
+	formatListResponse.common.dataLen = 0;
+
+	if (!cliprdr || !cliprdr->ClientFormatListResponse)
+		return ERROR_INVALID_PARAMETER;
+
+	return cliprdr->ClientFormatListResponse(cliprdr, &formatListResponse);
+}
+
 /**
  * Function description
  *
@@ -216,18 +242,12 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
 	if (!afc)
 		return ERROR_INVALID_PARAMETER;
 
-	if (afc->serverFormats)
-	{
-		for (UINT32 index = 0; index < afc->numServerFormats; index++)
-			free(afc->serverFormats[index].formatName);
-
-		free(afc->serverFormats);
-		afc->serverFormats = nullptr;
-		afc->numServerFormats = 0;
-	}
+	android_cliprdr_free_formats(afc->serverFormats, afc->numServerFormats);
+	afc->serverFormats = nullptr;
+	afc->numServerFormats = 0;
 
 	if (formatList->numFormats < 1)
-		return CHANNEL_RC_OK;
+		return android_cliprdr_send_client_format_list_response(cliprdr, TRUE);
 
 	afc->numServerFormats = formatList->numFormats;
 	afc->serverFormats = (CLIPRDR_FORMAT*)calloc(afc->numServerFormats, sizeof(CLIPRDR_FORMAT));
@@ -248,6 +268,9 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
 				return CHANNEL_RC_NO_MEMORY;
 		}
 	}
+
+	if ((rc = android_cliprdr_send_client_format_list_response(cliprdr, TRUE)) != CHANNEL_RC_OK)
+		return rc;
 
 	/* Text formats take priority over image formats. Request the best available text format
 	 * first; if none is found, fall back to image. */
