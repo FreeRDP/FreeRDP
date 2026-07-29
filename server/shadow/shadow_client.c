@@ -20,6 +20,10 @@
 
 #include <freerdp/config.h>
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 #include <winpr/cast.h>
@@ -520,6 +524,35 @@ static BOOL shadow_send_desktop_resize(rdpShadowClient* client)
 	return rc;
 }
 
+/**
+ * Turn off the physical displays of the current interactive desktop after a Windows Shadow session
+ * is established.
+ *
+ * On Windows this sends the system display-power command with a timeout, so an unresponsive window
+ * cannot block remote connection setup. Local keyboard or mouse input can still wake the display by
+ * normal Windows behavior. Delivery failures are logged but do not interrupt an authenticated session.
+ */
+static void shadow_client_turn_off_local_display(void)
+{
+#if defined(_WIN32)
+	DWORD_PTR messageResult = 0;
+	const LRESULT delivered = SendMessageTimeout(
+	    HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 2, SMTO_ABORTIFHUNG, 1000,
+	    &messageResult);
+
+	if (delivered == 0)
+		WLog_WARN(TAG, "Failed to turn off local display: %lu", GetLastError());
+#endif
+}
+
+/**
+ * Complete post-connect processing for a Shadow client.
+ *
+ * This callback runs after the remote peer has completed protocol and authentication negotiation;
+ * peer supplies the authenticated client context. Turn off the local display only after the subsystem
+ * confirms the connection. Channel and authentication failures retain their existing return semantics,
+ * while display-power delivery failures are logged by the helper.
+ */
 WINPR_ATTR_NODISCARD
 static BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
@@ -595,10 +628,10 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 		}
 	}
 
-	if (subsystem->ClientConnect)
-	{
-		return subsystem->ClientConnect(subsystem, client);
-	}
+	if (subsystem->ClientConnect && !subsystem->ClientConnect(subsystem, client))
+		return FALSE;
+
+	shadow_client_turn_off_local_display();
 
 	return TRUE;
 }
