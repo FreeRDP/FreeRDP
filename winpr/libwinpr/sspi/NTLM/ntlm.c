@@ -1513,6 +1513,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 	if (!signature_buffer)
 		return SEC_E_INVALID_TOKEN;
 
+	if (signature_buffer->cbBuffer < 16)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
 	/* Copy original data buffer */
 	ULONG length = data_buffer->cbBuffer;
 	void* data = malloc(length);
@@ -1621,6 +1624,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 		return SEC_E_INVALID_TOKEN;
 
 	if (!signature_buffer)
+		return SEC_E_INVALID_TOKEN;
+
+	if (signature_buffer->cbBuffer < 16)
 		return SEC_E_INVALID_TOKEN;
 
 	/* Copy original data buffer */
@@ -1735,6 +1741,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext,
 	if (!data_buffer || !sig_buffer)
 		return SEC_E_INVALID_TOKEN;
 
+	if (sig_buffer->cbBuffer < 16)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
 	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
 
 	if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH))
@@ -1789,7 +1798,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 			sig_buffer = &pMessage->pBuffers[i];
 	}
 
-	if (!data_buffer || !sig_buffer)
+	if (!data_buffer || !sig_buffer || (sig_buffer->cbBuffer < 16))
 		return SEC_E_INVALID_TOKEN;
 
 	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
