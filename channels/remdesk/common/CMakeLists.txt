@@ -19,6 +19,9 @@
 set(SRCS remdesk_common.h remdesk_common.c)
 
 add_library(remdesk-common STATIC ${SRCS})
+# The remdesk common implementation uses WinPR stream APIs. Propagate the dependency to preserve
+# static-library link order.
+target_link_libraries(remdesk-common PUBLIC winpr)
 set_property(TARGET remdesk-common PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Common")
 
 freerdp_client_pc_add_library_private(remdesk-common)
