@@ -545,12 +545,16 @@ FREERDP_API const char* ShadowSubsystemName(void)
 	return "Win";
 }
 
+/**
+ * Initialize the Windows Shadow subsystem callback entry point.
+ *
+ * Runs when the Shadow CLI loads this subsystem; pEntryPoints is the framework-owned callback
+ * table. Returning 1 indicates that registration completed. Upstream maintenance status is project
+ * governance metadata rather than a runtime prerequisite, so this local build suppresses the fixed
+ * startup banner without affecting error logging, authentication, or runtime security checks.
+ */
 FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
-	const char name[] = "windows shadow subsystem";
-	const char* arg[] = { name };
-
-	freerdp_server_warn_unmaintained(ARRAYSIZE(arg), arg);
 	pEntryPoints->New = win_shadow_subsystem_new;
 	pEntryPoints->Free = win_shadow_subsystem_free;
 	pEntryPoints->Init = win_shadow_subsystem_init;
