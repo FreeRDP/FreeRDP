@@ -47,8 +47,11 @@ if(NOT FREERDP_UNIFIED_BUILD)
     set(DEFAULT_DEBUG_OPTION "OFF" CACHE INTERNAL "debug default")
   endif()
 
-  # MSVC compatibility with system headers
-  add_compile_definitions(NONAMELESSUNION)
+  # This macro is only required for MSVC system header compatibility. Defining it on MinGW breaks
+  # access to COM anonymous-union members.
+  if(MSVC)
+    add_compile_definitions(NONAMELESSUNION)
+  endif()
 
   set(OPENSSL_FEATURE_TYPE "RECOMMENDED")
   set(OPENSSL_FEATURE_PURPOSE "cryptography")
