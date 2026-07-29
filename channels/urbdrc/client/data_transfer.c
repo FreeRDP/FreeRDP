@@ -97,15 +97,25 @@ fail:
 	return status;
 }
 
+/* [MS-RDPEUSB] 2.2.7.2 and 2.2.7.3:
+ * Only a TRANSFER_IN_REQUEST that returns data carries an OutputBuffer.
+ * TRANSFER_OUT_REQUEST reports the transferred byte count in OutputBufferSize,
+ * but always uses URB_COMPLETION_NO_DATA. */
+static UINT32 urb_completion_payload_size(int transferDir, UINT32 outputBufferSize)
+{
+	return (transferDir == USBD_TRANSFER_DIRECTION_IN) ? outputBufferSize : 0;
+}
+
 static UINT urb_write_completion(WINPR_ATTR_UNUSED IUDEVICE* pdev,
                                  GENERIC_CHANNEL_CALLBACK* callback, BOOL noAck, wStream* out,
                                  UINT32 InterfaceId, UINT32 MessageId, UINT32 RequestId,
-                                 UINT32 usbd_status, UINT32 OutputBufferSize)
+                                 UINT32 usbd_status, UINT32 OutputBufferSize, int transferDir)
 {
 	if (!out)
 		return ERROR_INVALID_PARAMETER;
 
-	if (Stream_Capacity(out) < OutputBufferSize + 36)
+	const UINT32 payloadSize = urb_completion_payload_size(transferDir, OutputBufferSize);
+	if (Stream_Capacity(out) < payloadSize + 36ULL)
 	{
 		Stream_Free(out, TRUE);
 		return ERROR_INVALID_PARAMETER;
@@ -113,7 +123,7 @@ static UINT urb_write_completion(WINPR_ATTR_UNUSED IUDEVICE* pdev,
 
 	Stream_ResetPosition(out);
 
-	const UINT32 FunctionId = (OutputBufferSize != 0) ? URB_COMPLETION : URB_COMPLETION_NO_DATA;
+	const UINT32 FunctionId = (payloadSize != 0) ? URB_COMPLETION : URB_COMPLETION_NO_DATA;
 	if (!write_shared_message_header_with_functionid(out, InterfaceId, MessageId, FunctionId))
 	{
 		Stream_Free(out, TRUE);
@@ -131,7 +141,7 @@ static UINT urb_write_completion(WINPR_ATTR_UNUSED IUDEVICE* pdev,
 
 	Stream_Write_UINT32(out, 0);                /** HResult */
 	Stream_Write_UINT32(out, OutputBufferSize); /** OutputBufferSize */
-	Stream_Seek(out, OutputBufferSize);
+	Stream_Seek(out, payloadSize);
 
 	if (!noAck)
 		return stream_write_and_free(callback->plugin, callback->channel, out);
@@ -790,18 +800,19 @@ static UINT urb_control_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 	}
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId,
-	                            usbd_status, OutputBufferSize);
+	                            usbd_status, OutputBufferSize, transferDir);
 }
 
 static void urb_bulk_transfer_cb(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
                                  UINT32 InterfaceId, BOOL noAck, UINT32 MessageId, UINT32 RequestId,
                                  WINPR_ATTR_UNUSED UINT32 NumberOfPackets, UINT32 status,
                                  WINPR_ATTR_UNUSED UINT32 StartFrame,
-                                 WINPR_ATTR_UNUSED UINT32 ErrorCount, UINT32 OutputBufferSize)
+                                 WINPR_ATTR_UNUSED UINT32 ErrorCount, UINT32 OutputBufferSize,
+                                 int transferDir)
 {
 	if (!pdev->isChannelClosed(pdev))
 		urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId, status,
-		                     OutputBufferSize);
+		                     OutputBufferSize, transferDir);
 	else
 		Stream_Free(out, TRUE);
 }
@@ -841,7 +852,7 @@ static UINT urb_bulk_or_interrupt_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLB
 	    pdev, callback, MessageId, RequestId, EndpointAddress, TransferFlags, noAck,
 	    OutputBufferSize,
 	    (transferDir == USBD_TRANSFER_DIRECTION_OUT) ? Stream_Pointer(s) : nullptr,
-	    urb_bulk_transfer_cb, 10000);
+	    transferDir, urb_bulk_transfer_cb, 10000);
 
 	return (uint32_t)rc;
 }
@@ -850,14 +861,17 @@ static void urb_isoch_transfer_cb(WINPR_ATTR_UNUSED IUDEVICE* pdev,
                                   GENERIC_CHANNEL_CALLBACK* callback, wStream* out,
                                   UINT32 InterfaceId, BOOL noAck, UINT32 MessageId,
                                   UINT32 RequestId, UINT32 NumberOfPackets, UINT32 status,
-                                  UINT32 StartFrame, UINT32 ErrorCount, UINT32 OutputBufferSize)
+                                  UINT32 StartFrame, UINT32 ErrorCount, UINT32 OutputBufferSize,
+                                  int transferDir)
 {
 	if (!noAck)
 	{
 		UINT32 packetSize = (status == 0) ? NumberOfPackets * 12 : 0;
+		const UINT32 payloadSize = urb_completion_payload_size(transferDir, OutputBufferSize);
 		Stream_ResetPosition(out);
 
-		const UINT32 FunctionId = (OutputBufferSize == 0) ? URB_COMPLETION_NO_DATA : URB_COMPLETION;
+		const UINT32 FunctionId =
+		    (payloadSize != 0) ? URB_COMPLETION : URB_COMPLETION_NO_DATA;
 		if (!write_shared_message_header_with_functionid(out, InterfaceId, MessageId, FunctionId))
 		{
 			Stream_Free(out, TRUE);
@@ -890,7 +904,7 @@ static void urb_isoch_transfer_cb(WINPR_ATTR_UNUSED IUDEVICE* pdev,
 
 		Stream_Write_UINT32(out, 0);                /** HResult */
 		Stream_Write_UINT32(out, OutputBufferSize); /** OutputBufferSize */
-		Stream_Seek(out, OutputBufferSize);
+		Stream_Seek(out, payloadSize);
 
 		const UINT rc = stream_write_and_free(callback->plugin, callback->channel, out);
 		if (rc != CHANNEL_RC_OK)
@@ -947,7 +961,7 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callbac
 	    pdev, callback, MessageId, RequestId, EndpointAddress, TransferFlags, StartFrame,
 	    ErrorCount, noAck, packetDescriptorData, NumberOfPackets, OutputBufferSize,
 	    (transferDir == USBD_TRANSFER_DIRECTION_OUT) ? Stream_Pointer(s) : nullptr,
-	    urb_isoch_transfer_cb, 2000);
+	    transferDir, urb_isoch_transfer_cb, 2000);
 
 	if (rc < 0)
 		return ERROR_INTERNAL_ERROR;
@@ -1035,7 +1049,7 @@ static UINT urb_control_descriptor_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLB
 	}
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId,
-	                            usbd_status, OutputBufferSize);
+	                            usbd_status, OutputBufferSize, transferDir);
 }
 
 static UINT urb_control_get_status_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
@@ -1096,7 +1110,7 @@ static UINT urb_control_get_status_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLB
 	}
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId,
-	                            usbd_status, OutputBufferSize);
+	                            usbd_status, OutputBufferSize, transferDir);
 }
 
 static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
@@ -1185,7 +1199,7 @@ static UINT urb_control_vendor_or_class_request(IUDEVICE* pdev, GENERIC_CHANNEL_
 	}
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId,
-	                            usbd_status, OutputBufferSize);
+	                            usbd_status, OutputBufferSize, transferDir);
 }
 
 static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
@@ -1276,7 +1290,7 @@ static UINT urb_os_feature_descriptor_request(IUDEVICE* pdev, GENERIC_CHANNEL_CA
 		WLog_Print(urbdrc->log, WLOG_DEBUG, "os_feature_descriptor_request: error num %d", ret);
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId,
-	                            usbd_status, OutputBufferSize);
+	                            usbd_status, OutputBufferSize, transferDir);
 }
 
 static UINT urb_pipe_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
@@ -1360,7 +1374,7 @@ static UINT urb_pipe_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
 		return ERROR_OUTOFMEMORY;
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId, ret,
-	                            0);
+	                            0, transferDir);
 }
 /* [MS-RDPEUSB] 2.2.10.4 TS_URB_GET_CURRENT_FRAME_NUMBER_RESULT */
 static UINT urb_send_current_frame_number_result(GENERIC_CHANNEL_CALLBACK* callback,
@@ -1485,7 +1499,7 @@ static UINT urb_control_get_configuration_request(IUDEVICE* pdev,
 	}
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId,
-	                            usbd_status, OutputBufferSize);
+	                            usbd_status, OutputBufferSize, transferDir);
 }
 
 /* Unused function for current server */
@@ -1545,7 +1559,7 @@ static UINT urb_control_get_interface_request(IUDEVICE* pdev, GENERIC_CHANNEL_CA
 	}
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId,
-	                            usbd_status, OutputBufferSize);
+	                            usbd_status, OutputBufferSize, transferDir);
 }
 
 static UINT urb_control_feature_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
@@ -1645,7 +1659,7 @@ static UINT urb_control_feature_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK
 	}
 
 	return urb_write_completion(pdev, callback, noAck, out, InterfaceId, MessageId, RequestId,
-	                            usbd_status, OutputBufferSize);
+	                            usbd_status, OutputBufferSize, transferDir);
 }
 
 static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
