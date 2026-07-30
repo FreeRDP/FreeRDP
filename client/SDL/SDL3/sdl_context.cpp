@@ -1508,6 +1508,9 @@ bool SdlContext::useLocalScale() const
 
 bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)
 {
+	if (rects.empty())
+		return true;
+
 	for (auto& window : _windows)
 	{
 		if (!drawToWindow(window.second, rects))
