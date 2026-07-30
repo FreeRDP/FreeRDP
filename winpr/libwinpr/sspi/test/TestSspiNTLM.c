@@ -260,6 +260,46 @@ static BOOL test_attributes(WINPR_ATTR_UNUSED SecurityFunctionTable* table,
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL test_short_signature(SecurityFunctionTable* table, CtxtHandle* context)
+{
+	BYTE data[16] = WINPR_C_ARRAY_INIT;
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(table);
+	WINPR_ASSERT(context);
+
+	/* An NTLM signature is 16 bytes. A peer may announce a shorter one, so both
+	 * MakeSignature and VerifySignature must reject the buffer instead of
+	 * accessing the missing bytes. Allocate exactly one byte so that any access
+	 * past it is detectable. */
+	BYTE* signature = malloc(1);
+	if (!signature)
+		return FALSE;
+
+	SecBuffer buffers[2] = WINPR_C_ARRAY_INIT;
+	buffers[0].BufferType = SECBUFFER_DATA;
+	buffers[0].pvBuffer = data;
+	buffers[0].cbBuffer = sizeof(data);
+	buffers[1].BufferType = SECBUFFER_TOKEN;
+	buffers[1].pvBuffer = signature;
+	buffers[1].cbBuffer = 1;
+
+	SecBufferDesc desc = { SECBUFFER_VERSION, ARRAYSIZE(buffers), buffers };
+
+	if (table->MakeSignature(context, 0, &desc, 0) == SEC_E_OK)
+		goto fail;
+
+	ULONG qop = 0;
+	if (table->VerifySignature(context, &desc, 0, &qop) == SEC_E_OK)
+		goto fail;
+
+	rc = TRUE;
+fail:
+	free(signature);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
 static void* getServerAuthData(TEST_NTLM_SERVER* ntlm, const struct test_input_t* arg,
                                psSspiNtlmHashCallback fkt)
 {
@@ -911,6 +951,12 @@ static BOOL test_default(const struct test_input_t* arg, psSspiNtlmHashCallback 
 	if (status < 0)
 	{
 		printf("test_ntlm_server_authenticate failure\n");
+		goto fail;
+	}
+
+	if (!test_short_signature(server->table, &server->context))
+	{
+		printf("test_short_signature failure\n");
 		goto fail;
 	}
 
