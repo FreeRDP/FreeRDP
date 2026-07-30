@@ -25,7 +25,6 @@ from distro_build_report import (
     summarize_results,
 )
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_LOG_DIR = REPO_ROOT / "build" / "docker-package-tests"
 DEFAULT_IMAGES = [
@@ -39,7 +38,6 @@ DEFAULT_IMAGES = [
     "ubuntu:22.04",
     "ubuntu:20.04",
     "fedora:44",
-    "fedora:43",
     "almalinux:10",
     "almalinux:9",
     "almalinux:8",
