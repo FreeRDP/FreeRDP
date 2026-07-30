@@ -1812,8 +1812,37 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 		monitor.attributes.orientation = orientation;
 		monitor.attributes.desktopScaleFactor = desktopScaleFactor;
 		monitor.attributes.deviceScaleFactor = deviceScaleFactor;
-		if (!freerdp_settings_set_monitor_def_array_sorted(settings, &monitor, 1))
-			return FALSE;
+
+		/*
+		 * If the MonitorDefArray already has room for at least 1 entry,
+		 * write directly instead of calling set_monitor_def_array_sorted().
+		 * The latter reallocates the array (free + calloc), which invalidates
+		 * any pointer previously obtained via freerdp_settings_get_pointer().
+		 * See https://github.com/FreeRDP/FreeRDP/issues/13122
+		 */
+		const UINT32 arraySize =
+		    freerdp_settings_get_uint32(settings, FreeRDP_MonitorDefArraySize);
+		if (arraySize >= 1)
+		{
+			rdpMonitor* arr =
+			    freerdp_settings_get_pointer_writable(settings, FreeRDP_MonitorDefArray);
+			WINPR_ASSERT(arr);
+			arr[0] = monitor;
+			arr[0].x = 0;
+			arr[0].y = 0;
+			arr[0].is_primary = TRUE;
+			if (!freerdp_settings_set_int32(settings, FreeRDP_MonitorLocalShiftX,
+			                                 monitor.x))
+				return FALSE;
+			if (!freerdp_settings_set_int32(settings, FreeRDP_MonitorLocalShiftY,
+			                                 monitor.y))
+				return FALSE;
+		}
+		else
+		{
+			if (!freerdp_settings_set_monitor_def_array_sorted(settings, &monitor, 1))
+				return FALSE;
+		}
 	}
 
 	return TRUE;
