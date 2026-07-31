@@ -1770,6 +1770,18 @@ BOOL freerdp_target_net_adresses_reset(rdpSettings* settings, size_t size)
 	return freerdp_target_net_addresses_resize(settings, size);
 }
 
+/**
+ * Ensures that at least one monitor is configured in the settings.
+ *
+ * If no monitors are configured (MonitorCount == 0) or multimon/fullscreen
+ * is not enabled, a single primary monitor is created from the current
+ * desktop dimensions.
+ *
+ * @warning This function may reallocate MonitorDefArray. Pointers obtained
+ * via freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray)
+ * before this call are invalidated. Only rdpContext is guaranteed stable
+ * for the connection lifetime.
+ */
 BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 {
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
