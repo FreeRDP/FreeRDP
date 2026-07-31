@@ -38,6 +38,22 @@
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_settings_enforce_consistency(rdpSettings* settings);
 
+/**
+ * Ensures that at least one monitor is configured in the settings.
+ *
+ * If no monitors are configured (MonitorCount == 0) or multimon/fullscreen
+ * is not enabled, a single primary monitor is created from the current
+ * desktop dimensions.
+ *
+ * @warning This function may reallocate the MonitorDefArray via
+ * freerdp_settings_set_monitor_def_array_sorted(). Any pointer obtained
+ * via freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray)
+ * before this call is invalidated afterwards. Only rdpContext is
+ * guaranteed to remain valid for the lifetime of the connection.
+ *
+ * @param settings The settings to operate on.
+ * @return TRUE on success, FALSE on failure.
+ */
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings);
 
