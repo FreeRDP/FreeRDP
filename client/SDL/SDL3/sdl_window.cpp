@@ -288,6 +288,13 @@ void SdlWindow::ensureRenderTarget()
 	if (!_renderTarget)
 		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_CreateTexture (render target): %s",
 		             SDL_GetError());
+	else
+	{
+		/* The fourth byte of the GDI buffer is padding, not opacity. SDL3 defaults
+		 * textures that have an alpha channel to SDL_BLENDMODE_BLEND, which would
+		 * blend that padding against the backbuffer. */
+		SDL_SetTextureBlendMode(_renderTarget, SDL_BLENDMODE_NONE);
+	}
 }
 
 bool SdlWindow::drawRect(SDL_Surface* surface, SDL_Point offset, const SDL_Rect& srcRect)
@@ -506,6 +513,11 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 			SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_CreateTexture: %s", SDL_GetError());
 			return false;
 		}
+
+		/* Same reasoning as in ensureRenderTarget(): copy the remote framebuffer,
+		 * do not blend it. */
+		SDL_SetTextureBlendMode(_gdiTexture, SDL_BLENDMODE_NONE);
+
 		_gdiTextureW = surface->w;
 		_gdiTextureH = surface->h;
 	}
