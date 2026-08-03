@@ -24,8 +24,7 @@ public class FloatingToolbar
 	public interface Listener
 	{
 		void onToggleTouchPointer();
-		void onToggleSysKeyboard();
-		void onToggleExtKeyboard();
+		void onToggleKeyboard();
 	}
 
 	private enum Edge
@@ -74,8 +73,7 @@ public class FloatingToolbar
 			buttons.getChildAt(i).setOnTouchListener(dragListener);
 
 		bindButton(activity, R.id.floating_toolbar_touch_pointer, listener::onToggleTouchPointer);
-		bindButton(activity, R.id.floating_toolbar_sys_keyboard, listener::onToggleSysKeyboard);
-		bindButton(activity, R.id.floating_toolbar_ext_keyboard, listener::onToggleExtKeyboard);
+		bindButton(activity, R.id.floating_toolbar_sys_keyboard, listener::onToggleKeyboard);
 
 		ViewTreeObserver vto = container.getViewTreeObserver();
 		vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {

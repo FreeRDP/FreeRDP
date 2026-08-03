@@ -20,7 +20,6 @@ public class KeyboardMapper
 {
 	public static final int KEYBOARD_TYPE_FUNCTIONKEYS = 1;
 	public static final int KEYBOARD_TYPE_NUMPAD = 2;
-	public static final int KEYBOARD_TYPE_CURSOR = 3;
 
 	// defines key states for modifier keys - locked means on and no auto-release if an other key is
 	// pressed
@@ -207,7 +206,6 @@ public class KeyboardMapper
 	// key codes to switch between custom keyboard
 	private final static int EXTKEY_KBFUNCTIONKEYS = 0x1100;
 	private final static int EXTKEY_KBNUMPAD = 0x1101;
-	private final static int EXTKEY_KBCURSOR = 0x1102;
 	// this flag indicates if we got a VK or a unicode character in our translation map
 	private static final int KEY_FLAG_UNICODE = 0x80000000;
 	// this flag indicates if the key is a toggle key (remains down when pressed and goes up if
@@ -221,8 +219,6 @@ public class KeyboardMapper
 	private boolean ctrlPressed = false;
 	private boolean altPressed = false;
 	private boolean winPressed = false;
-	private long lastModifierTime;
-	private int lastModifierKeyCode = -1;
 	private boolean isShiftLocked = false;
 	private boolean isCtrlLocked = false;
 	private boolean isAltLocked = false;
@@ -386,6 +382,7 @@ public class KeyboardMapper
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_numlock)] = VK_NUMLOCK;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_add)] = VK_ADD;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_comma)] = VK_DECIMAL;
+		keymapExt[context.getResources().getInteger(R.integer.keycode_comma)] = VK_OEM_COMMA;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_divide)] =
 		    VK_DIVIDE | VK_EXT_KEY;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_enter)] =
@@ -427,8 +424,6 @@ public class KeyboardMapper
 		    EXTKEY_KBFUNCTIONKEYS;
 		keymapExt[context.getResources().getInteger(R.integer.keycode_numpad_keyboard)] =
 		    EXTKEY_KBNUMPAD;
-		keymapExt[context.getResources().getInteger(R.integer.keycode_cursor_keyboard)] =
-		    EXTKEY_KBCURSOR;
 
 		keymapExt[context.getResources().getInteger(R.integer.keycode_toggle_shift)] =
 		    (KEY_FLAG_TOGGLE | VK_LSHIFT);
@@ -570,13 +565,12 @@ public class KeyboardMapper
 		// toggle button pressed?
 		if ((extCode & KEY_FLAG_TOGGLE) != 0)
 		{
-			processToggleButton(extCode & (~KEY_FLAG_TOGGLE));
+			processToggleButton(extCode & (~KEY_FLAG_TOGGLE), false);
 			return;
 		}
 
 		// keyboard switch button pressed?
-		if (extCode == EXTKEY_KBFUNCTIONKEYS || extCode == EXTKEY_KBNUMPAD ||
-		    extCode == EXTKEY_KBCURSOR)
+		if (extCode == EXTKEY_KBFUNCTIONKEYS || extCode == EXTKEY_KBNUMPAD)
 		{
 			switchKeyboard(extCode);
 			return;
@@ -592,6 +586,17 @@ public class KeyboardMapper
 		}
 
 		resetModifierKeysAfterInput(false);
+	}
+
+	// Locks a sticky modifier down. Returns false if the keycode is not a modifier.
+	public boolean processCustomKeyLock(int keycode)
+	{
+		int extCode = getExtendedKeyCode(keycode);
+		if ((extCode & KEY_FLAG_TOGGLE) == 0)
+			return false;
+
+		processToggleButton(extCode & (~KEY_FLAG_TOGGLE), true);
+		return true;
 	}
 
 	public void processUnicodeFallback(int unicodeKey)
@@ -687,60 +692,47 @@ public class KeyboardMapper
 		return 0;
 	}
 
-	private void processToggleButton(int keycode)
+	// A tap arms the modifier for the next key only; a long press latches it until pressed again.
+	private void processToggleButton(int keycode, boolean lock)
 	{
 		switch (keycode)
 		{
 			case VK_LSHIFT:
 			{
-				if (!checkToggleModifierLock(VK_LSHIFT))
-				{
-					isShiftLocked = false;
-					shiftPressed = !shiftPressed;
-					listener.processVirtualKey(VK_LSHIFT, shiftPressed);
-				}
-				else
-					isShiftLocked = true;
+				isShiftLocked = lock && !isShiftLocked;
+				shiftPressed = applyModifier(VK_LSHIFT, shiftPressed, isShiftLocked, lock);
 				break;
 			}
 			case VK_LCONTROL:
 			{
-				if (!checkToggleModifierLock(VK_LCONTROL))
-				{
-					isCtrlLocked = false;
-					ctrlPressed = !ctrlPressed;
-					listener.processVirtualKey(VK_LCONTROL, ctrlPressed);
-				}
-				else
-					isCtrlLocked = true;
+				isCtrlLocked = lock && !isCtrlLocked;
+				ctrlPressed = applyModifier(VK_LCONTROL, ctrlPressed, isCtrlLocked, lock);
 				break;
 			}
 			case VK_LMENU:
 			{
-				if (!checkToggleModifierLock(VK_LMENU))
-				{
-					isAltLocked = false;
-					altPressed = !altPressed;
-					listener.processVirtualKey(VK_LMENU, altPressed);
-				}
-				else
-					isAltLocked = true;
+				isAltLocked = lock && !isAltLocked;
+				altPressed = applyModifier(VK_LMENU, altPressed, isAltLocked, lock);
 				break;
 			}
 			case VK_LWIN:
 			{
-				if (!checkToggleModifierLock(VK_LWIN))
-				{
-					isWinLocked = false;
-					winPressed = !winPressed;
-					listener.processVirtualKey(VK_LWIN | VK_EXT_KEY, winPressed);
-				}
-				else
-					isWinLocked = true;
+				isWinLocked = lock && !isWinLocked;
+				winPressed = applyModifier(VK_LWIN | VK_EXT_KEY, winPressed, isWinLocked, lock);
 				break;
 			}
 		}
 		listener.modifiersChanged();
+	}
+
+	// Reports the new pressed state only on a real change, so long pressing an already armed
+	// modifier does not send a second key down.
+	private boolean applyModifier(int vk, boolean pressed, boolean locked, boolean lock)
+	{
+		boolean target = lock ? locked : !pressed;
+		if (target != pressed)
+			listener.processVirtualKey(vk, target);
+		return target;
 	}
 
 	public void clearlAllModifiers()
@@ -771,6 +763,10 @@ public class KeyboardMapper
 			winPressed = false;
 		}
 
+		// drop the locks too, a stale lock flag would swallow the next long press
+		if (force)
+			isShiftLocked = isCtrlLocked = isAltLocked = isWinLocked = false;
+
 		if (listener != null)
 			listener.modifiersChanged();
 	}
@@ -791,39 +787,8 @@ public class KeyboardMapper
 				break;
 			}
 
-			case EXTKEY_KBCURSOR:
-			{
-				listener.switchKeyboard(KEYBOARD_TYPE_CURSOR);
-				break;
-			}
-
 			default:
 				break;
-		}
-	}
-
-	private boolean checkToggleModifierLock(int keycode)
-	{
-		long now = System.currentTimeMillis();
-
-		// was the same modifier hit?
-		if (lastModifierKeyCode != keycode)
-		{
-			lastModifierKeyCode = keycode;
-			lastModifierTime = now;
-			return false;
-		}
-
-		// within a certain time interval?
-		if (lastModifierTime + 800 > now)
-		{
-			lastModifierTime = 0;
-			return true;
-		}
-		else
-		{
-			lastModifierTime = now;
-			return false;
 		}
 	}
 

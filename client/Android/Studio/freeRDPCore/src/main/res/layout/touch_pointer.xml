@@ -73,20 +73,6 @@
         android:tint="@color/tp_icon" />
 
     <ImageButton
-        android:id="@+id/tp_ext_keyboard"
-        android:layout_width="@dimen/tp_button_size"
-        android:layout_height="@dimen/tp_button_size"
-        android:layout_marginStart="120dp"
-        android:layout_marginTop="120dp"
-        android:background="@drawable/bg_tp_circle"
-        android:contentDescription="@string/menu_ext_keyboard"
-        android:elevation="@dimen/tp_elevation"
-        android:padding="@dimen/tp_button_icon_padding"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_fn_keyboard"
-        android:tint="@color/tp_icon" />
-
-    <ImageButton
         android:id="@+id/tp_puck"
         android:layout_width="@dimen/tp_puck_size"
         android:layout_height="@dimen/tp_puck_size"

@@ -23,6 +23,7 @@
     <string name="menu_sys_keyboard">Keyboard</string>
     <string name="menu_ext_keyboard">Function Keys</string>
     <string name="menu_touch_pointer">Touch Pointer</string>
+    <string name="kbd_win_key">Windows key</string>
     <!-- List section headers -->
     <!-- Search strings -->
     <string name="quick_connect_to">Connect to: %s</string>

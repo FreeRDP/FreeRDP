@@ -20,7 +20,6 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
-import android.inputmethodservice.KeyboardView;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -44,6 +43,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.RoundedCorner;
 import android.view.WindowInsets;
@@ -143,10 +143,16 @@ public class SessionActivity extends AppCompatActivity
 
 	private FloatingToolbar floatingToolbar;
 
-	private void hideSystemBars()
+	void hideSystemBars()
 	{
 		boolean hideStatusBar = ApplicationSettingsActivity.getHideStatusBar(this);
 		boolean hideNavBar = ApplicationSettingsActivity.getHideNavigationBar(this);
+
+		if (inputManager != null && inputManager.isSoftInputActive())
+		{
+			// out of immersive mode while the IME is up, so the back gesture works right away
+			hideNavBar = false;
+		}
 
 		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
@@ -165,20 +171,29 @@ public class SessionActivity extends AppCompatActivity
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
 		{
 			int toHide = 0;
+			int toShow = 0;
 			if (hideStatusBar)
 				toHide |= WindowInsetsCompat.Type.statusBars();
+			else
+				toShow |= WindowInsetsCompat.Type.statusBars();
+
 			if (hideNavBar)
 				toHide |= WindowInsetsCompat.Type.navigationBars();
+			else
+				toShow |= WindowInsetsCompat.Type.navigationBars();
 
 			if (toHide != 0)
 			{
-				controller.hide(toHide);
+				// whatever stays hidden keeps immersive behaviour; BEHAVIOR_DEFAULT would let any
+				// tap on the session pull the bar back in
 				controller.setSystemBarsBehavior(
 				    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+				controller.hide(toHide);
 			}
-			else
+
+			if (toShow != 0)
 			{
-				controller.show(WindowInsetsCompat.Type.systemBars());
+				controller.show(toShow);
 			}
 		}
 		else
@@ -257,20 +272,14 @@ public class SessionActivity extends AppCompatActivity
 				if (inputManager != null)
 					inputManager.toggleTouchPointer();
 			}
-			@Override public void onToggleSysKeyboard()
+			@Override public void onToggleKeyboard()
 			{
 				if (inputManager != null)
-					inputManager.toggleSystemKeyboard();
-			}
-			@Override public void onToggleExtKeyboard()
-			{
-				if (inputManager != null)
-					inputManager.toggleExtendedKeyboard();
+					inputManager.toggleKeyboard();
 			}
 		});
 
-		KeyboardView keyboardView = findViewById(R.id.extended_keyboard);
-		KeyboardView modifiersKeyboardView = findViewById(R.id.extended_keyboard_header);
+		ExtendedKeyboardView keyboard = findViewById(R.id.extended_keyboard);
 
 		scrollView = findViewById(R.id.sessionScrollView);
 		scrollView.setScrollViewListener(null);
@@ -286,8 +295,8 @@ public class SessionActivity extends AppCompatActivity
 		});
 
 		// Wire up the input manager (instance is attached later in bindSession()).
-		inputManager = new SessionInputManager(this, scrollView, sessionView, touchPointerView,
-		                                       keyboardView, modifiersKeyboardView);
+		inputManager =
+		    new SessionInputManager(this, scrollView, sessionView, touchPointerView, keyboard);
 		sessionView.setSessionViewListener(inputManager);
 		touchPointerView.setTouchPointerListener(inputManager);
 		sessionView.setScaleGestureDetector(
@@ -383,9 +392,6 @@ public class SessionActivity extends AppCompatActivity
 	{
 		super.onConfigurationChanged(newConfig);
 
-		// reload keyboard resources (changed from landscape)
-		inputManager.reloadKeyboards();
-
 		hideSystemBars();
 
 		// screen_width/screen_height will be updated by the next onGlobalLayout callback;
@@ -445,11 +451,41 @@ public class SessionActivity extends AppCompatActivity
 			}
 		}
 
-		scrollView.setPadding(Math.max(safeLeft, navInsets.left), safeTop,
-		                      Math.max(safeRight, navInsets.right),
-		                      Math.max(safeBottom, navInsets.bottom));
+		int imeBottom = windowInsets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+
+		// the only reliable account of whether the IME is really on screen: it lets the input
+		// manager tell an external dismissal from a show request that has not animated in yet
 		if (inputManager != null)
-			inputManager.setSafeInsets(safeLeft, safeTop);
+			inputManager.onImeVisibilityChanged(imeBottom > 0);
+
+		View extKeyboard = findViewById(R.id.extended_keyboard);
+		if (extKeyboard instanceof ExtendedKeyboardView)
+		{
+			// imeBottom already covers the nav bar, so don't pad for it twice
+			int kbdBottom = imeBottom > 0 ? 0 : navInsets.bottom;
+			((ExtendedKeyboardView)extKeyboard)
+			    .setInsets(Math.max(navInsets.left, safeLeft), Math.max(navInsets.right, safeRight),
+			               kbdBottom);
+		}
+
+		// the keyboard reserves the bottom inset through its own margin, so the scroll view
+		// above it must not pad for the nav bar again
+		boolean kbdVisible = extKeyboard != null && extKeyboard.getVisibility() == View.VISIBLE;
+		int scrollBottom = kbdVisible ? 0 : Math.max(safeBottom, navInsets.bottom);
+		scrollView.setPadding(Math.max(safeLeft, navInsets.left), safeTop,
+		                      Math.max(safeRight, navInsets.right), scrollBottom);
+
+		// insets are consumed here, so lift the extended keyboard above the IME
+		if (extKeyboard != null)
+		{
+			ViewGroup.MarginLayoutParams lp =
+			    (ViewGroup.MarginLayoutParams)extKeyboard.getLayoutParams();
+			if (lp.bottomMargin != imeBottom)
+			{
+				lp.bottomMargin = imeBottom;
+				extKeyboard.setLayoutParams(lp);
+			}
+		}
 
 		return WindowInsetsCompat.CONSUMED;
 	}
@@ -632,14 +668,12 @@ public class SessionActivity extends AppCompatActivity
 	public void handleBackPressed()
 	{
 		// hide keyboards (if any visible) or send alt+f4 to the session
-		if (inputManager.isAnyKeyboardVisible())
+		if (inputManager != null)
 		{
-			inputManager.hideKeyboards();
-			return;
-		}
-		if (inputManager.handleBackAsAltF4())
-		{
-			return;
+			if (inputManager.handleKeyboardBack())
+				return;
+			if (inputManager.handleBackAsAltF4())
+				return;
 		}
 		if (System.currentTimeMillis() - backPressedTime < 2000)
 		{
