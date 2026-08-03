@@ -55,6 +55,26 @@ void* sspi_SecureHandleGetUpperPointer(SecHandle* handle);
 void sspi_SecureHandleSetUpperPointer(SecHandle* handle, void* pointer);
 void sspi_SecureHandleFree(SecHandle* handle);
 
+/* Package identity of a SecHandle (1-based; 0 == unset). The order MUST match
+ * SecPkgInfo{A,W}_LIST and SecurityFunctionTable{A,W}_NAME_LIST in sspi_winpr.c;
+ * that is asserted at compile time there. */
+typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
+{
+	SSPI_PACKAGE_NONE = 0,
+	SSPI_PACKAGE_NTLM = 1,
+	SSPI_PACKAGE_KERBEROS = 2,
+	SSPI_PACKAGE_NEGOTIATE = 3,
+	SSPI_PACKAGE_CREDSSP = 4,
+	SSPI_PACKAGE_SCHANNEL = 5,
+	SSPI_PACKAGE_COUNT /* number of identifiers, SSPI_PACKAGE_NONE included; keep last */
+} SSPI_PACKAGE_ID;
+
+/* Typed access to the package identity. Shares the upper-pointer slot and its encoding
+ * with sspi_SecureHandleGet/SetUpperPointer, but never forms a pointer from the
+ * identifier, so no integer-to-pointer conversion appears at any call site. */
+WINPR_ATTR_NODISCARD SSPI_PACKAGE_ID sspi_SecureHandleGetPackageId(SecHandle* handle);
+void sspi_SecureHandleSetPackageId(SecHandle* handle, SSPI_PACKAGE_ID id);
+
 enum SecurityFunctionTableIndex
 {
 	EnumerateSecurityPackagesIndex = 1,
