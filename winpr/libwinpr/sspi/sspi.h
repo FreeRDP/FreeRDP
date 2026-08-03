@@ -55,6 +55,20 @@ void* sspi_SecureHandleGetUpperPointer(SecHandle* handle);
 void sspi_SecureHandleSetUpperPointer(SecHandle* handle, void* pointer);
 void sspi_SecureHandleFree(SecHandle* handle);
 
+/* Package identity stored (1-based; 0 == unset) in a SecHandle upper-pointer.
+ * Replaces the former mixed-width _T() name-string scheme so dispatch never
+ * depends on TCHAR/char width. Order MUST match SecPkgInfo{A,W}_LIST /
+ * SecurityFunctionTable{A,W}_NAME_LIST in sspi_winpr.c. */
+typedef enum
+{
+	SSPI_PACKAGE_NONE = 0,
+	SSPI_PACKAGE_NTLM = 1,
+	SSPI_PACKAGE_KERBEROS = 2,
+	SSPI_PACKAGE_NEGOTIATE = 3,
+	SSPI_PACKAGE_CREDSSP = 4,
+	SSPI_PACKAGE_SCHANNEL = 5
+} SSPI_PACKAGE_ID;
+
 enum SecurityFunctionTableIndex
 {
 	EnumerateSecurityPackagesIndex = 1,

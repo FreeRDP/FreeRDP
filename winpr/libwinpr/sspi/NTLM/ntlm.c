@@ -535,7 +535,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 	}
 
 	sspi_SecureHandleSetLowerPointer(phCredential, (void*)credentials);
-	sspi_SecureHandleSetUpperPointer(phCredential, (void*)NTLM_PACKAGE_NAME);
+	sspi_SecureHandleSetUpperPointer(phCredential, (void*)SSPI_PACKAGE_NTLM);
 	return SEC_E_OK;
 }
 
@@ -651,7 +651,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
 		if (!ntlm_SetContextTargetName(context, nullptr))
 			return SEC_E_INVALID_HANDLE;
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
-		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)NTLM_PACKAGE_NAME);
+		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)SSPI_PACKAGE_NTLM);
 	}
 
 	switch (ntlm_get_state(context))
@@ -785,7 +785,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 		}
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
-		sspi_SecureHandleSetUpperPointer(phNewContext, NTLM_SSP_NAME);
+		sspi_SecureHandleSetUpperPointer(phNewContext, (void*)SSPI_PACKAGE_NTLM);
 	}
 
 	if ((!input_buffer) || (ntlm_get_state(context) == NTLM_STATE_AUTHENTICATE))
