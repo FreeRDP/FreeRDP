@@ -1,0 +1,6 @@
+{
+  "name": "libfreerdp_harmony_bridge.so",
+  "types": "./index.d.ts",
+  "version": "",
+  "description": "FreeRDP Harmony native bridge type declarations"
+}
