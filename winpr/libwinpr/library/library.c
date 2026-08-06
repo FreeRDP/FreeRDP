@@ -62,7 +62,7 @@
  * SizeofResource
  */
 
-#if !defined(_WIN32) || defined(_UWP)
+#if (!defined(_WIN32) && !defined(__CYGWIN__)) || defined(_UWP)
 
 #ifndef _WIN32
 
