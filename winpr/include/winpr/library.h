@@ -88,7 +88,7 @@ extern "C"
 extern "C"
 {
 #endif
-#if !defined(_WIN32) && !defined(__CYGWIN__)
+#if !defined(_WIN32)
 	WINPR_API BOOL FreeLibrary(HMODULE hLibModule);
 #endif
 
@@ -112,7 +112,7 @@ extern "C"
  */
 #define GetProcAddressAs(module, name, type) WINPR_FUNC_PTR_CAST(GetProcAddress(module, name), type)
 
-#if !defined(_WIN32) && !defined(__CYGWIN__)
+#if !defined(_WIN32)
 
 #ifdef __cplusplus
 extern "C"
