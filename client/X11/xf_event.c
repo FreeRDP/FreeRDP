@@ -985,6 +985,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 		BOOL status = FALSE;
 		BOOL minimized = FALSE;
 		BOOL minimizedChanged = FALSE;
+		BOOL fullscreen = FALSE;
 		unsigned long nitems = 0;
 		unsigned long bytes = 0;
 		unsigned char* prop = nullptr;
@@ -1012,6 +1013,8 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				}
 				for (unsigned long i = 0; i < nitems; i++)
 				{
+					if ((Atom)((UINT16**)prop)[i] == xfc->NET_WM_STATE_FULLSCREEN)
+						fullscreen = TRUE;
 					if ((Atom)((UINT16**)prop)[i] ==
 					    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT",
 					                        False))
@@ -1030,6 +1033,50 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				}
 
 				XFree(prop);
+
+				if (appWindow && appWindow->rail_fullscreen_normalizing)
+				{
+					if (!fullscreen && appWindow->maxVert && appWindow->maxHorz)
+					{
+						/* Normal maximized state has been restored. */
+						appWindow->rail_fullscreen_normalizing = FALSE;
+					}
+					else
+					{
+						/* Ignore all transient WM states produced while Cinnamon
+						 * transitions from legacy fullscreen back to maximized. */
+						if (fullscreen)
+							xf_SendClientEvent(xfc, appWindow->handle, xfc->NET_WM_STATE, 4,
+							                   NET_WM_STATE_REMOVE, xfc->NET_WM_STATE_FULLSCREEN, 0,
+							                   0);
+
+						if (!appWindow->maxVert || !appWindow->maxHorz)
+							xf_SendClientEvent(xfc, appWindow->handle, xfc->NET_WM_STATE, 4,
+							                   NET_WM_STATE_ADD, xfc->NET_WM_STATE_MAXIMIZED_VERT,
+							                   xfc->NET_WM_STATE_MAXIMIZED_HORZ, 0);
+
+						goto fail;
+					}
+				}
+				else if (appWindow && fullscreen &&
+				         (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED))
+				{
+					/* Cinnamon/Muffin incorrectly turns the server-driven RAIL
+					 * maximize resize into fullscreen. Normalize this over the
+					 * following PropertyNotify events without feeding transient
+					 * states back to the RAIL server. */
+					appWindow->rail_fullscreen_normalizing = TRUE;
+
+					xf_SendClientEvent(xfc, appWindow->handle, xfc->NET_WM_STATE, 4,
+					                   NET_WM_STATE_REMOVE, xfc->NET_WM_STATE_FULLSCREEN, 0, 0);
+
+					if (!appWindow->maxVert || !appWindow->maxHorz)
+						xf_SendClientEvent(xfc, appWindow->handle, xfc->NET_WM_STATE, 4,
+						                   NET_WM_STATE_ADD, xfc->NET_WM_STATE_MAXIMIZED_VERT,
+						                   xfc->NET_WM_STATE_MAXIMIZED_HORZ, 0);
+
+					goto fail;
+				}
 			}
 		}
 
