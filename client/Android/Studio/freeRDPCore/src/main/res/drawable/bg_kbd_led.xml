@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- indicator lamp on the sticky modifier keys; the colour follows the key's drawable state -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/kbd_led_tint" />
+</shape>

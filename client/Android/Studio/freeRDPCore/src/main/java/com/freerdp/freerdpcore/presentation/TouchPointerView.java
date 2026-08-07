@@ -122,10 +122,6 @@ public class TouchPointerView extends FrameLayout
 			if (listener != null)
 				listener.onTouchPointerToggleKeyboard();
 		});
-		findViewById(R.id.tp_ext_keyboard).setOnClickListener(v -> {
-			if (listener != null)
-				listener.onTouchPointerToggleExtKeyboard();
-		});
 	}
 
 	public void setTouchPointerListener(TouchPointerListener listener)
@@ -371,8 +367,6 @@ public class TouchPointerView extends FrameLayout
 		void onTouchPointerScroll(boolean down);
 
 		void onTouchPointerToggleKeyboard();
-
-		void onTouchPointerToggleExtKeyboard();
 
 		void onTouchPointerResetScrollZoom();
 	}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="kbd_key_height">34dp</dimen>
+    <dimen name="kbd_key_gap">2dp</dimen>
+    <dimen name="kbd_key_text">12sp</dimen>
+    <dimen name="kbd_bar_pad">2dp</dimen>
+    <dimen name="kbd_led_size">6dp</dimen>
+    <dimen name="kbd_led_inset">4dp</dimen>
+</resources>
