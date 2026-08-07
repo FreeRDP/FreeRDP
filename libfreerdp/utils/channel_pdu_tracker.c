@@ -28,7 +28,7 @@ struct ChannelPduTracker
 {
 	HANDLE vc;
 	wStream* currentPacket;
-	char buffer[CHANNEL_PDU_LENGTH];
+	char buffer[CHANNEL_CHUNK_MAX_LENGTH + sizeof(CHANNEL_PDU_HEADER)];
 	size_t offset;
 	wLog* log;
 };
@@ -41,14 +41,14 @@ wStream* ChannelPduTracker_poll(ChannelPduTracker* tracker, BOOL* ok)
 	ULONG sz = 0;
 	*ok = FALSE;
 
-	WINPR_ASSERT(tracker->offset <= CHANNEL_PDU_LENGTH);
-	const ULONG readSz = WINPR_ASSERTING_INT_CAST(ULONG, CHANNEL_PDU_LENGTH - tracker->offset);
+	WINPR_ASSERT(tracker->offset <= sizeof(tracker->buffer));
+	const ULONG readSz = WINPR_ASSERTING_INT_CAST(ULONG, sizeof(tracker->buffer) - tracker->offset);
 	if (!WTSVirtualChannelRead(tracker->vc, INFINITE, &tracker->buffer[tracker->offset], readSz,
 	                           &sz))
 		return nullptr;
 
 	tracker->offset += sz;
-	WINPR_ASSERT(tracker->offset <= CHANNEL_PDU_LENGTH);
+	WINPR_ASSERT(tracker->offset <= sizeof(tracker->buffer));
 
 	const size_t recvSz = tracker->offset;
 	if (recvSz < sizeof(CHANNEL_PDU_HEADER))
@@ -58,7 +58,7 @@ wStream* ChannelPduTracker_poll(ChannelPduTracker* tracker, BOOL* ok)
 	}
 
 	const CHANNEL_PDU_HEADER* header = (const CHANNEL_PDU_HEADER*)tracker->buffer;
-	if (header->length > CHANNEL_CHUNK_LENGTH)
+	if (header->length > CHANNEL_CHUNK_MAX_LENGTH)
 	{
 		WLog_Print(tracker->log, WLOG_ERROR, "chunk size %" PRIu32 " is too big", header->length);
 		return nullptr;
