@@ -7,4 +7,9 @@
         <item name="android:statusBarColor">#FFFFFF</item> <!--Temporary workaround for status bar color in light mode-->
     </style>
 
+    <style name="Theme.Main.Session" parent="@style/Theme.Main">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
 </resources>
