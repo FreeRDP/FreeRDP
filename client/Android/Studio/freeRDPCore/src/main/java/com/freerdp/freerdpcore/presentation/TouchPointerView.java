@@ -232,12 +232,12 @@ public class TouchPointerView extends FrameLayout
 				listener.onTouchPointerClose();
 		});
 		findViewById(R.id.tp_rclick).setOnClickListener(v -> {
-			int[] h = hotspot();
-			if (listener != null)
-			{
-				listener.onTouchPointerRightClick(h[0], h[1], true);
-				listener.onTouchPointerRightClick(h[0], h[1], false);
-			}
+			sendRight(true);
+			sendRight(false);
+		});
+		findViewById(R.id.tp_mclick).setOnClickListener(v -> {
+			sendMiddle(true);
+			sendMiddle(false);
 		});
 		findViewById(R.id.tp_reset).setOnClickListener(v -> {
 			if (listener != null)
@@ -284,6 +284,20 @@ public class TouchPointerView extends FrameLayout
 		int[] h = hotspot();
 		if (listener != null)
 			listener.onTouchPointerLeftClick(h[0], h[1], down);
+	}
+
+	private void sendRight(boolean down)
+	{
+		int[] h = hotspot();
+		if (listener != null)
+			listener.onTouchPointerRightClick(h[0], h[1], down);
+	}
+
+	private void sendMiddle(boolean down)
+	{
+		int[] h = hotspot();
+		if (listener != null)
+			listener.onTouchPointerMiddleClick(h[0], h[1], down);
 	}
 
 	private void sendMove()
@@ -452,6 +466,8 @@ public class TouchPointerView extends FrameLayout
 		void onTouchPointerLeftClick(int x, int y, boolean down);
 
 		void onTouchPointerRightClick(int x, int y, boolean down);
+
+		void onTouchPointerMiddleClick(int x, int y, boolean down);
 
 		void onTouchPointerMove(int x, int y);
 

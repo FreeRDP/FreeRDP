@@ -402,6 +402,14 @@ public class SessionInputManager
 		LibFreeRDP.sendCursorEvent(instance, p.x, p.y, Mouse.getRightButtonEvent(context, down));
 	}
 
+	@Override public void onTouchPointerMiddleClick(int x, int y, boolean down)
+	{
+		if (instance == 0)
+			return;
+		Point p = mapScreenCoordToSessionCoord(x, y);
+		LibFreeRDP.sendCursorEvent(instance, p.x, p.y, Mouse.getMiddleButtonEvent(down));
+	}
+
 	@Override public void onTouchPointerMove(int x, int y)
 	{
 		if (instance == 0)

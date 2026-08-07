@@ -25,6 +25,7 @@
     <string name="menu_touch_pointer">Touch Pointer</string>
     <string name="kbd_win_key">Windows key</string>
     <string name="tp_hscroll">Horizontal scroll</string>
+    <string name="tp_middle_click">Middle click</string>
     <!-- List section headers -->
     <!-- Search strings -->
     <string name="quick_connect_to">Connect to: %s</string>
