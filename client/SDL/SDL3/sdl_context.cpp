@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include <winpr/sysinfo.h>
+
 #include "sdl_context.hpp"
 #include "sdl_config.hpp"
 #include "sdl_channels.hpp"
@@ -37,6 +39,7 @@
 #endif
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
+static constexpr auto sdl_vmonitors = "vmonitors";
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _cursor(nullptr, sdl_Pointer_FreeCopy),
@@ -70,6 +73,12 @@ SdlContext::SdlContext(rdpContext* context)
 
 	_args.push_back({ sdl_allow_screensaver, COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse,
 	                  nullptr, -1, nullptr, "Allow local screensaver to activate" });
+
+	_args.push_back({ sdl_vmonitors, COMMAND_LINE_VALUE_REQUIRED,
+	                  "<w>x<h>@<x>x<y>[,<w>x<h>@<x>x<y>...]", nullptr, nullptr, -1, nullptr,
+	                  "Simulate a virtual monitor layout (one window per monitor) instead of "
+	                  "detecting real displays. Not compatible with /f, /multimon, /span or "
+	                  "/monitors" });
 
 	/* Push a null element used as abort when iterating the array */
 	_args.push_back({ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr });
@@ -302,10 +311,16 @@ BOOL SdlContext::postConnect(freerdp* instance)
 
 	if (!sdl->setResizeable(false))
 		return FALSE;
-	if (!sdl->setFullscreen(freerdp_settings_get_bool(context->settings, FreeRDP_Fullscreen) ||
-	                            freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon),
-	                        true))
-		return FALSE;
+	if (!sdl->hasVirtualMonitors())
+	{
+		/* Virtual monitor windows are anchored to a single real display; forcing them
+		 * fullscreen here would stack them all on top of each other on that display. */
+		if (!sdl->setFullscreen(
+		        freerdp_settings_get_bool(context->settings, FreeRDP_Fullscreen) ||
+		            freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon),
+		        true))
+			return FALSE;
+	}
 	sdl->setConnected(true);
 	return TRUE;
 }
@@ -421,7 +436,10 @@ bool SdlContext::createWindows()
 			flags |= SDL_WINDOW_FULLSCREEN;
 		}
 
-		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+		/* Real multimonitor windows are borderless (they tile edge-to-edge across real
+		 * displays). Virtual monitor windows all share one real display and need a title bar
+		 * so the user can drag them apart to arrange the simulated layout. */
+		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) && !hasVirtualMonitors())
 		{
 			flags |= SDL_WINDOW_BORDERLESS;
 		}
@@ -436,6 +454,14 @@ bool SdlContext::createWindows()
 		{
 			window.setOffsetX(originX - monitor->x);
 			window.setOffsetY(originY - monitor->y);
+		}
+
+		if (hasVirtualMonitors())
+		{
+			/* _vmonitors was sorted (sdl_parse_vmonitors) to match the exact order
+			 * freerdp_settings_set_monitor_def_array_sorted() produces, so loop index x here
+			 * equals the corresponding index into _vmonitors. */
+			window.setMonitorIndex(static_cast<int>(x));
 		}
 
 		_windows.insert({ window.id(), std::move(window) });
@@ -477,6 +503,115 @@ bool SdlContext::updateWindow(SDL_WindowID id)
 	m.attributes.physicalHeight = static_cast<UINT32>(r.h);
 	w.setMonitor(m);
 	return true;
+}
+
+bool SdlContext::resizeVirtualMonitor(SDL_WindowID id)
+{
+	auto window = getWindowForId(id);
+	if (!window)
+		return true;
+
+	const int windowIndex = window->monitorIndex();
+	if (windowIndex < 0)
+		return true;
+
+	const size_t index = static_cast<size_t>(windowIndex);
+	if (index >= _vmonitors.size())
+		return true;
+
+	const auto r = window->rect();
+	if ((r.w <= 0) || (r.h <= 0))
+		return true;
+
+	auto& resized = _vmonitors[index];
+
+	/* SdlWindow's constructor unconditionally calls resizeToScale(), which can issue a real
+	 * SDL_SetWindowSize shortly after creation on any HiDPI/fractionally-scaled real display,
+	 * generating genuine resize events before the user ever touches the window. Absorb any such
+	 * startup events as a baseline correction only: update this monitor's size but don't push/pull
+	 * neighbours or notify the server. */
+	static constexpr UINT64 vmonitorSettleGraceMs = 1500;
+	const bool settling = (GetTickCount64() - window->createdAt()) < vmonitorSettleGraceMs;
+
+	if (settling)
+	{
+		resized.width = r.w;
+		resized.height = r.h;
+		resized.attributes.physicalWidth = static_cast<UINT32>(r.w);
+		resized.attributes.physicalHeight = static_cast<UINT32>(r.h);
+		return freerdp_settings_set_monitor_def_array_sorted(context()->settings, _vmonitors.data(),
+		                                                     _vmonitors.size());
+	}
+
+	const INT32 dw = r.w - resized.width;
+	const INT32 dh = r.h - resized.height;
+	if ((dw == 0) && (dh == 0))
+		return true;
+
+	const INT32 oldRight = resized.x + resized.width;
+	const INT32 oldBottom = resized.y + resized.height;
+
+	resized.width = r.w;
+	resized.height = r.h;
+	resized.attributes.physicalWidth = static_cast<UINT32>(r.w);
+	resized.attributes.physicalHeight = static_cast<UINT32>(r.h);
+
+	/* Push/pull: monitors at or beyond the resized monitor's old right/bottom edge shift by the
+	 * same delta, so they stay attached to its new edge. Monitors to the left/above are untouched.
+	 * This is a simple 1-D heuristic (correct for rows/columns/uniform grids); irregular 2D
+	 * arrangements can end up non-contiguous or overlapping after a resize - see the warning
+	 * below, which we still send rather than silently diverge from what the WM already applied. */
+	for (size_t k = 0; k < _vmonitors.size(); k++)
+	{
+		if (k == index)
+			continue;
+		auto& other = _vmonitors[k];
+		if ((dw != 0) && (other.x >= oldRight))
+			other.x += dw;
+		if ((dh != 0) && (other.y >= oldBottom))
+			other.y += dh;
+	}
+
+	size_t a = 0;
+	size_t b = 0;
+	if (!monitorsAreContiguous(_vmonitors) || monitorsHaveOverlap(_vmonitors, a, b))
+	{
+		WLog_Print(getWLog(), WLOG_WARN,
+		          "resizing virtual monitor %" PRIuz " produced a non-contiguous or overlapping "
+		          "layout; sending it to the server as-is",
+		          index);
+	}
+
+	/* Pushed/pulled neighbours have new x/y: every window's blit offset into the shared GDI
+	 * backbuffer (SdlWindow::offsetX/Y, only ever set once in createWindows()) must be
+	 * recomputed now, or windows keep drawing the region that corresponds to their old position. */
+	updateVirtualMonitorOffsets();
+
+	return freerdp_settings_set_monitor_def_array_sorted(context()->settings, _vmonitors.data(),
+	                                                     _vmonitors.size());
+}
+
+void SdlContext::updateVirtualMonitorOffsets()
+{
+	Sint32 originX = 0;
+	Sint32 originY = 0;
+	for (const auto& m : _vmonitors)
+	{
+		originX = std::min<Sint32>(m.x, originX);
+		originY = std::min<Sint32>(m.y, originY);
+	}
+
+	for (auto& entry : _windows)
+	{
+		auto& win = entry.second;
+		const int index = win.monitorIndex();
+		if (index < 0)
+			continue;
+
+		const auto& m = _vmonitors.at(static_cast<size_t>(index));
+		win.setOffsetX(originX - m.x);
+		win.setOffsetY(originY - m.y);
+	}
 }
 
 std::string SdlContext::windowTitle() const
@@ -988,6 +1123,16 @@ rdpMonitor SdlContext::getDisplay(SDL_DisplayID id) const
 	return _displays.at(id);
 }
 
+bool SdlContext::hasVirtualMonitors() const
+{
+	return !_vmonitors.empty();
+}
+
+const std::vector<rdpMonitor>& SdlContext::virtualMonitors() const
+{
+	return _vmonitors;
+}
+
 std::vector<SDL_DisplayID> SdlContext::getDisplayIds() const
 {
 	std::vector<SDL_DisplayID> keys;
@@ -1448,6 +1593,11 @@ int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom
 					return -2;
 				}
 			}
+		}
+		else if (strcmp(arg->Name, sdl_vmonitors) == 0)
+		{
+			if (!sdl_parse_vmonitors(arg->Value, sdl->_vmonitors))
+				return -2;
 		}
 	}
 	return 0;

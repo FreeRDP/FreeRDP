@@ -109,6 +109,7 @@ class SdlContext
 	[[nodiscard]] bool createWindows();
 	[[nodiscard]] bool updateWindowList();
 	[[nodiscard]] bool updateWindow(SDL_WindowID id);
+	[[nodiscard]] bool resizeVirtualMonitor(SDL_WindowID id);
 
 	[[nodiscard]] bool drawToWindows(const std::vector<SDL_Rect>& rects = {});
 	[[nodiscard]] bool drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& rects = {});
@@ -125,6 +126,9 @@ class SdlContext
 	[[nodiscard]] bool detectDisplays();
 	[[nodiscard]] rdpMonitor getDisplay(SDL_DisplayID id) const;
 	[[nodiscard]] std::vector<SDL_DisplayID> getDisplayIds() const;
+
+	[[nodiscard]] bool hasVirtualMonitors() const;
+	[[nodiscard]] const std::vector<rdpMonitor>& virtualMonitors() const;
 
 	[[nodiscard]] sdlDispContext& getDisplayChannelContext();
 	[[nodiscard]] sdlInput& getInputChannelContext();
@@ -202,6 +206,7 @@ class SdlContext
 	updateDisplayOffsetsForNeighbours(SDL_DisplayID id,
 	                                  const std::vector<SDL_DisplayID>& ignore = {});
 	void updateMonitorDataFromOffsets();
+	void updateVirtualMonitorOffsets();
 
 	rdpContext* _context = nullptr;
 	wLog* _log = nullptr;
@@ -238,6 +243,7 @@ class SdlContext
 	std::map<SDL_DisplayID, rdpMonitor> _displays;
 	std::map<SDL_WindowID, SdlWindow> _windows;
 	std::map<SDL_DisplayID, std::pair<SDL_Rect, SDL_Rect>> _offsets;
+	std::vector<rdpMonitor> _vmonitors;
 
 	uint32_t _windowWidth = 0;
 	uint32_t _windowHeigth = 0;

@@ -21,6 +21,8 @@
 #include <sstream>
 #include <cmath>
 
+#include <winpr/sysinfo.h>
+
 #include "sdl_window.hpp"
 #include "sdl_utils.hpp"
 
@@ -28,7 +30,7 @@
 
 SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect& rect,
                      [[maybe_unused]] Uint32 flags)
-    : _initialW(rect.w), _initialH(rect.h), _displayID(id)
+    : _initialW(rect.w), _initialH(rect.h), _displayID(id), _createdAt(GetTickCount64())
 {
 	auto props = SDL_CreateProperties();
 	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title.c_str());
@@ -64,7 +66,7 @@ SdlWindow::SdlWindow(SdlWindow&& other) noexcept
       _gdiTexture(other._gdiTexture), _gdiTextureW(other._gdiTextureW),
       _gdiTextureH(other._gdiTextureH), _initialW(other._initialW), _initialH(other._initialH),
       _displayID(other._displayID), _offset_x(other._offset_x), _offset_y(other._offset_y),
-      _monitor(other._monitor)
+      _monitor(other._monitor), _monitorIndex(other._monitorIndex), _createdAt(other._createdAt)
 {
 	other._window = nullptr;
 	other._renderer = nullptr;
@@ -160,6 +162,21 @@ rdpMonitor SdlWindow::monitor(bool isPrimary) const
 void SdlWindow::setMonitor(rdpMonitor monitor)
 {
 	_monitor = monitor;
+}
+
+int SdlWindow::monitorIndex() const
+{
+	return _monitorIndex;
+}
+
+void SdlWindow::setMonitorIndex(int index)
+{
+	_monitorIndex = index;
+}
+
+UINT64 SdlWindow::createdAt() const
+{
+	return _createdAt;
 }
 
 float SdlWindow::scale() const
