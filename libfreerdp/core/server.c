@@ -297,7 +297,7 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 	/* receiveData is allocated with a fixed chunk size and never sealed, so its stream length
 	 * is the allocation and not the number of bytes received. Parse through a substream
 	 * limited to the received data so the stream bounds checks apply to the PDU. */
-	wStream sbuffer = { 0 };
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, Stream_Buffer(channel->receiveData), length);
 
 	const UINT8 value = Stream_Get_UINT8(s);
