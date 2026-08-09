@@ -68,15 +68,22 @@ public class TouchPointerView extends FrameLayout
 		}
 	};
 
-	private final RateScroller scroller = new RateScroller();
+	private final RateScroller vScroller = new RateScroller(false);
+	private final RateScroller hScroller = new RateScroller(true);
 
-	// The scroll button held down: the displacement from the press point sets the scroll rate.
+	// A scroll button held down: the displacement from the press point sets the scroll rate.
 	private final class RateScroller implements Runnable
 	{
+		private final boolean horizontal;
 		private View button;
 		private float anchor, current, accum, baseDim;
 		private boolean active;
 		private ValueAnimator animator;
+
+		RateScroller(boolean horizontal)
+		{
+			this.horizontal = horizontal;
+		}
 
 		void attach(View v)
 		{
@@ -84,12 +91,28 @@ public class TouchPointerView extends FrameLayout
 			v.setOnTouchListener((view, e) -> onTouch(e));
 		}
 
+		// negated on Y so that a positive displacement always means a positive scroll
+		private float pos(MotionEvent e)
+		{
+			return horizontal ? e.getRawX() : -e.getRawY();
+		}
+
+		private void send(int notch)
+		{
+			if (listener == null)
+				return;
+			if (horizontal)
+				listener.onTouchPointerHScroll(notch);
+			else
+				listener.onTouchPointerScroll(notch);
+		}
+
 		private boolean onTouch(MotionEvent e)
 		{
 			switch (e.getActionMasked())
 			{
 				case MotionEvent.ACTION_DOWN:
-					anchor = current = e.getRawY();
+					anchor = current = pos(e);
 					accum = 1.0f;
 					active = true;
 					uiHandler.post(this);
@@ -98,7 +121,7 @@ public class TouchPointerView extends FrameLayout
 					morph(true);
 					return true;
 				case MotionEvent.ACTION_MOVE:
-					current = e.getRawY();
+					current = pos(e);
 					return true;
 				case MotionEvent.ACTION_UP:
 				case MotionEvent.ACTION_CANCEL:
@@ -132,22 +155,20 @@ public class TouchPointerView extends FrameLayout
 				float nps =
 				    Math.min((adisp - SCROLL_DEADZONE_DP) * SCROLL_NPS_PER_DP, SCROLL_MAX_NPS);
 				accum += nps * SCROLL_TICK_MS / 1000f;
-				// finger up -> scroll up
-				int notch = dispDp < 0 ? Mouse.WHEEL_DELTA : -Mouse.WHEEL_DELTA;
+				int notch = dispDp > 0 ? Mouse.WHEEL_DELTA : -Mouse.WHEEL_DELTA;
 				while (accum >= 1.0f)
 				{
 					accum -= 1.0f;
-					if (listener != null)
-						listener.onTouchPointerScroll(notch);
+					send(notch);
 				}
 			}
 			uiHandler.postDelayed(this, SCROLL_TICK_MS);
 		}
 
-		// grow the button into a tall pill (covering its neighbours) and back
+		// grow the button into a pill along the scroll axis (covering its neighbours) and back
 		private void morph(boolean expand)
 		{
-			float from = button.getHeight();
+			float from = horizontal ? button.getWidth() : button.getHeight();
 			if (baseDim == 0)
 				baseDim = from;
 			float target =
@@ -159,8 +180,16 @@ public class TouchPointerView extends FrameLayout
 			animator.addUpdateListener(a -> {
 				float val = (float)a.getAnimatedValue();
 				ViewGroup.LayoutParams lp = button.getLayoutParams();
-				lp.height = Math.round(val);
-				button.setTranslationY(-(val - baseDim) / 2.0f);
+				if (horizontal)
+				{
+					lp.width = Math.round(val);
+					button.setTranslationX(-(val - baseDim) / 2.0f);
+				}
+				else
+				{
+					lp.height = Math.round(val);
+					button.setTranslationY(-(val - baseDim) / 2.0f);
+				}
 				button.setLayoutParams(lp);
 			});
 			animator.start();
@@ -193,7 +222,8 @@ public class TouchPointerView extends FrameLayout
 		LayoutInflater.from(context).inflate(R.layout.touch_pointer, this, true);
 		cluster = findViewById(R.id.tp_cluster);
 		cursor = findViewById(R.id.tp_cursor);
-		scroller.attach(findViewById(R.id.tp_scroll));
+		vScroller.attach(findViewById(R.id.tp_scroll));
+		hScroller.attach(findViewById(R.id.tp_hscroll));
 
 		findViewById(R.id.tp_puck).setOnTouchListener((v, e) -> onPuckTouch(e));
 
@@ -362,7 +392,8 @@ public class TouchPointerView extends FrameLayout
 		if (uiHandler == null)
 			return;
 		uiHandler.removeCallbacks(longPress);
-		scroller.stop();
+		vScroller.stop();
+		hScroller.stop();
 	}
 
 	@Override protected void onDetachedFromWindow()
@@ -427,6 +458,8 @@ public class TouchPointerView extends FrameLayout
 		void onTouchPointerMoveEnd();
 
 		void onTouchPointerScroll(int amount);
+
+		void onTouchPointerHScroll(int amount);
 
 		void onTouchPointerToggleKeyboard();
 

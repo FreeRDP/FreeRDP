@@ -428,6 +428,13 @@ public class SessionInputManager
 		LibFreeRDP.sendCursorEvent(instance, 0, 0, Mouse.getScrollEvent(context, amount));
 	}
 
+	@Override public void onTouchPointerHScroll(int amount)
+	{
+		if (instance == 0)
+			return;
+		LibFreeRDP.sendCursorEvent(instance, 0, 0, Mouse.getHScrollEvent(context, amount));
+	}
+
 	@Override public void onTouchPointerToggleKeyboard()
 	{
 		toggleKeyboard();

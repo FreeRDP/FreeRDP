@@ -70,7 +70,11 @@ public class Mouse
 
 	public static int getHScrollEvent(Context context, boolean right)
 	{
-		int amount = right ? WHEEL_DELTA : -WHEEL_DELTA;
+		return getHScrollEvent(context, right ? WHEEL_DELTA : -WHEEL_DELTA);
+	}
+
+	public static int getHScrollEvent(Context context, int amount)
+	{
 		if (ApplicationSettingsActivity.getInvertScrolling(context))
 			amount = -amount;
 		return wheelEvent(PTRFLAGS_HWHEEL, amount);

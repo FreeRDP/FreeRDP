@@ -59,10 +59,24 @@
         android:tint="@color/tp_icon" />
 
     <ImageButton
-        android:id="@+id/tp_keyboard"
+        android:id="@+id/tp_hscroll"
         android:layout_width="@dimen/tp_button_size"
         android:layout_height="@dimen/tp_button_size"
         android:layout_marginStart="60dp"
+        android:layout_marginTop="120dp"
+        android:background="@drawable/bg_tp_scroll"
+        android:contentDescription="@string/tp_hscroll"
+        android:elevation="@dimen/tp_elevation"
+        android:padding="@dimen/tp_button_icon_padding"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_unfold_more_h"
+        android:tint="@color/tp_icon" />
+
+    <ImageButton
+        android:id="@+id/tp_keyboard"
+        android:layout_width="@dimen/tp_button_size"
+        android:layout_height="@dimen/tp_button_size"
+        android:layout_marginStart="120dp"
         android:layout_marginTop="120dp"
         android:background="@drawable/bg_tp_circle"
         android:contentDescription="@string/menu_sys_keyboard"
