@@ -32,12 +32,18 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
                      [[maybe_unused]] Uint32 flags)
     : _initialW(rect.w), _initialH(rect.h), _displayID(id), _createdAt(GetTickCount64())
 {
+	float pd = SDL_GetDisplayContentScale(id);
+	if (pd <= 0.0f)
+		pd = 1.0f;
+	const int createW = static_cast<int>(std::ceil(static_cast<float>(rect.w) / pd));
+	const int createH = static_cast<int>(std::ceil(static_cast<float>(rect.h) / pd));
+
 	auto props = SDL_CreateProperties();
 	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title.c_str());
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, rect.x);
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, rect.y);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, rect.w);
-	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, rect.h);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, createW);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, createH);
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true);
 
 	if (flags & SDL_WINDOW_HIGH_PIXEL_DENSITY)
