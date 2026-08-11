@@ -30,7 +30,7 @@
  * TlsSetValue
  */
 
-#if !defined(_WIN32) && !defined(__CYGWIN__)
+#ifndef _WIN32
 
 #include <pthread.h>
 
