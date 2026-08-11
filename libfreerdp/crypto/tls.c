@@ -85,7 +85,22 @@ typedef struct
 {
 	SSL* ssl;
 	CRITICAL_SECTION lock;
+#ifdef WITH_TLS_DATA_LIMIT
+	UINT64 rxBytes;      /* plaintext bytes read since the last rekey */
+	UINT64 txBytes;      /* plaintext bytes written since the last rekey */
+	BOOL rekeyAvailable; /* FALSE once we learn the connection is not TLS 1.3 */
+	BOOL cutPending;     /* TRUE once a TLS 1.3 rekey failed; tear the connection down */
+#endif
 } BIO_RDP_TLS;
+
+#ifdef WITH_TLS_DATA_LIMIT
+/* Per-direction plaintext byte threshold before refreshing the TLS traffic keys,
+ * to stay within AEAD cryptographic limits. RFC 8446 (TLS 1.3) §5.5 bounds
+ * AES-GCM at 2^24.5 records (2^14 B) (~362 GiB). OpenSSL does not enforce this itself
+ * (https://github.com/openssl/openssl/issues/23566). On TLS 1.3 the keys are
+ * rekeyed in place (SSL_key_update); on other protocols a rekey is not possible. */
+#define TLS_DATA_LIMIT_BYTES 388736063996ULL
+#endif
 
 static int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* hostname,
                                   UINT16 port);
@@ -116,6 +131,54 @@ static void free_tls_bindings(rdpTls* tls)
 	tls->Bindings = nullptr;
 }
 
+#ifdef WITH_TLS_DATA_LIMIT
+/* Must be called with tls->lock held, after a successful SSL_read/SSL_write of
+ * `count` bytes in the given direction. Once a per-direction byte threshold is
+ * crossed, refreshes the TLS 1.3 traffic keys in place; on a non-TLS-1.3
+ * connection a rekey is not possible so it is disabled (the connection is kept).
+ * If a TLS 1.3 rekey fails, flags the connection to be cut. */
+static void bio_rdp_tls_account(BIO_RDP_TLS* tls, BOOL read, int count)
+{
+	UINT64* counter = read ? &tls->rxBytes : &tls->txBytes;
+
+	if (!tls->rekeyAvailable || tls->cutPending)
+		return;
+
+	*counter += (UINT64)count;
+	if (*counter < TLS_DATA_LIMIT_BYTES)
+		return;
+
+	if (SSL_version(tls->ssl) != TLS1_3_VERSION)
+	{
+		WLog_DBG(TAG, "TLS data limit reached but connection is not TLS 1.3; "
+		              "rekey unavailable, keeping connection");
+		tls->rekeyAvailable = FALSE;
+		return;
+	}
+
+	if (SSL_key_update(tls->ssl, SSL_KEY_UPDATE_REQUESTED) != 1)
+	{
+		WLog_ERR(TAG, "SSL_key_update failed at TLS data limit; cutting connection");
+		tls->cutPending = TRUE;
+		return;
+	}
+
+	WLog_INFO(TAG, "TLS 1.3 key update requested at data limit (%" PRIu64 " bytes %s)", *counter,
+	          read ? "read" : "written");
+	*counter = 0;
+}
+
+static void bio_rdp_tls_read_account(BIO_RDP_TLS* tls, int count)
+{
+	bio_rdp_tls_account(tls, TRUE, count);
+}
+
+static void bio_rdp_tls_write_account(BIO_RDP_TLS* tls, int count)
+{
+	bio_rdp_tls_account(tls, FALSE, count);
+}
+#endif
+
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
 	int error = 0;
@@ -125,10 +188,22 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 	if (!buf || !tls)
 		return 0;
 
+#ifdef WITH_TLS_DATA_LIMIT
+	if (tls->cutPending)
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		return -1;
+	}
+#endif
+
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
 	EnterCriticalSection(&tls->lock);
 	status = SSL_write(tls->ssl, buf, size);
 	error = SSL_get_error(tls->ssl, status);
+#ifdef WITH_TLS_DATA_LIMIT
+	if (status > 0)
+		bio_rdp_tls_write_account(tls, status);
+#endif
 	LeaveCriticalSection(&tls->lock);
 
 	if (status <= 0)
@@ -181,10 +256,22 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 	if (!buf || !tls)
 		return 0;
 
+#ifdef WITH_TLS_DATA_LIMIT
+	if (tls->cutPending)
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		return -1;
+	}
+#endif
+
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
 	EnterCriticalSection(&tls->lock);
 	status = SSL_read(tls->ssl, buf, size);
 	error = SSL_get_error(tls->ssl, status);
+#ifdef WITH_TLS_DATA_LIMIT
+	if (status > 0)
+		bio_rdp_tls_read_account(tls, status);
+#endif
 	LeaveCriticalSection(&tls->lock);
 
 	if (status <= 0)
@@ -500,6 +587,12 @@ static int bio_rdp_tls_new(BIO* bio)
 		free(tls);
 		return -1;
 	}
+
+#ifdef WITH_TLS_DATA_LIMIT
+	/* counters/cutPending zeroed by calloc; rekey is assumed possible until we
+	 * observe a non-TLS-1.3 connection at the data limit. */
+	tls->rekeyAvailable = TRUE;
+#endif
 
 	BIO_set_data(bio, (void*)tls);
 	return 1;
