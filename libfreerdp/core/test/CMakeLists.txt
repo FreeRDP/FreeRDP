@@ -45,6 +45,20 @@ target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client)
 include(AddFuzzerTest)
 add_fuzzer_test("${FUZZERS}" "freerdp-client freerdp winpr")
 
+# Seed corpus generator for the test TestFuzzServer, used to
+# (re)generate the seed corpus. Requires the client library and
+# POSIX sockets.
+if(NOT WIN32 AND (WITH_CLIENT_COMMON OR WITH_CLIENT))
+  add_executable(TestFuzzServerSeedGen TestFuzzServerSeedGen.c)
+  target_link_libraries(TestFuzzServerSeedGen freerdp-client freerdp winpr)
+  set_target_properties(TestFuzzServerSeedGen PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}"
+  )
+  set_property(TARGET TestFuzzServerSeedGen PROPERTY
+    FOLDER "FreeRDP/Core/Test"
+  )
+endif()
+
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
 foreach(test ${TESTS})
