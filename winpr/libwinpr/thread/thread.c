@@ -907,6 +907,8 @@ DWORD GetCurrentThreadId(VOID)
 {
 #if defined(__FreeBSD__)
 	return WINPR_CXX_COMPAT_CAST(DWORD, pthread_getthreadid_np());
+#elif defined(__OpenBSD__)
+	return WINPR_CXX_COMPAT_CAST(DWORD, getthrid());
 #elif defined(__linux__)
 	return WINPR_CXX_COMPAT_CAST(DWORD, syscall(SYS_gettid));
 #else
