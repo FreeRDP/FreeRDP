@@ -60,6 +60,9 @@ typedef struct
 	RdpgfxClientContextStats stats;
 } RdpgfxClientContextInt;
 
+static const UINT32 MAX_SURFACE_SIZE = 32766;
+static const UINT32 MAX_MONITOR_COUNT = 16;
+
 size_t rdpgfx_stats_max_index(void)
 {
 	return sizeof(RdpgfxClientContextStats) / sizeof(uint64_t);
@@ -718,6 +721,10 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 	Stream_Read_UINT32(s, pdu.height);       /* height (4 bytes) */
 	Stream_Read_UINT32(s, pdu.monitorCount); /* monitorCount (4 bytes) */
 
+	if ((pdu.width > MAX_SURFACE_SIZE) || (pdu.height > MAX_SURFACE_SIZE) ||
+	    (pdu.monitorCount > MAX_MONITOR_COUNT))
+		return ERROR_INVALID_DATA;
+
 	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(gfx->base.log, s, pdu.monitorCount, 20ull))
 		return ERROR_INVALID_DATA;
 
@@ -1196,6 +1203,10 @@ static UINT rdpgfx_recv_create_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 	Stream_Read_UINT16(s, pdu.width);      /* width (2 bytes) */
 	Stream_Read_UINT16(s, pdu.height);     /* height (2 bytes) */
 	Stream_Read_UINT8(s, pdu.pixelFormat); /* RDPGFX_PIXELFORMAT (1 byte) */
+
+	if ((pdu.width > MAX_SURFACE_SIZE) || (pdu.height > MAX_SURFACE_SIZE))
+		return ERROR_INVALID_DATA;
+
 	WLog_Print(gfx->base.log, WLOG_DEBUG,
 	           "RecvCreateSurfacePdu: surfaceId: %" PRIu16 " width: %" PRIu16 " height: %" PRIu16
 	           " pixelFormat: 0x%02" PRIX8 "",
