@@ -73,6 +73,8 @@ static const UINT32 rfx_default_quantization_values[] = { 6, 6, 6, 6, 7, 7, 8, 8
 static inline BOOL rfx_write_progressive_tile_simple(RFX_CONTEXT* WINPR_RESTRICT rfx,
                                                      wStream* WINPR_RESTRICT s,
                                                      const RFX_TILE* WINPR_RESTRICT tile);
+static BOOL rfx_message_clear(RFX_CONTEXT* WINPR_RESTRICT context,
+                              RFX_MESSAGE* WINPR_RESTRICT message);
 
 static inline void rfx_profiler_create(RFX_CONTEXT* WINPR_RESTRICT context)
 {
@@ -336,7 +338,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 	WINPR_ASSERT(nullptr != priv->BufferPool);
 
 	/* coverity[address_free] */
-	rfx_message_free(context, &context->currentMessage);
+	rfx_message_clear(context, &context->currentMessage);
 	winpr_aligned_free(context->quants);
 	rfx_profiler_print(context);
 	rfx_profiler_free(context);
@@ -1369,7 +1371,7 @@ BOOL rfx_process_message(RFX_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_
 	}
 	else
 	{
-		rfx_message_free(context, message);
+		rfx_message_clear(context, message);
 		context->currentMessage.freeArray = TRUE;
 	}
 
@@ -1423,10 +1425,11 @@ UINT16 rfx_message_get_rect_count(const RFX_MESSAGE* WINPR_RESTRICT message)
 	return message->numRects;
 }
 
-void rfx_message_free(RFX_CONTEXT* WINPR_RESTRICT context, RFX_MESSAGE* WINPR_RESTRICT message)
+static BOOL rfx_message_clear(RFX_CONTEXT* WINPR_RESTRICT context,
+                              RFX_MESSAGE* WINPR_RESTRICT message)
 {
 	if (!message)
-		return;
+		return FALSE;
 
 	winpr_aligned_free(message->rects);
 
@@ -1453,8 +1456,12 @@ void rfx_message_free(RFX_CONTEXT* WINPR_RESTRICT context, RFX_MESSAGE* WINPR_RE
 	const BOOL freeArray = message->freeArray;
 	const RFX_MESSAGE empty = WINPR_C_ARRAY_INIT;
 	*message = empty;
+	return freeArray;
+}
 
-	if (!freeArray)
+void rfx_message_free(RFX_CONTEXT* WINPR_RESTRICT context, RFX_MESSAGE* WINPR_RESTRICT message)
+{
+	if (!rfx_message_clear(context, message))
 		winpr_aligned_free(message);
 }
 
@@ -2025,7 +2032,7 @@ void rfx_message_list_free(RFX_MESSAGE_LIST* messages)
 	if (!messages)
 		return;
 	for (size_t x = 0; x < messages->count; x++)
-		rfx_message_free(messages->context, &messages->list[x]);
+		rfx_message_clear(messages->context, &messages->list[x]);
 	free(messages);
 }
 
