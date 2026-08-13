@@ -1075,9 +1075,7 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 			case 'y':
 			case 'Y':
 				printf("\n");
-				if (confirm == EOF)
-					return FALSE;
-				return TRUE;
+				return confirm != EOF;
 
 			case 'n':
 			case 'N':
