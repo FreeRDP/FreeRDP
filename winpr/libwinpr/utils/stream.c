@@ -104,7 +104,7 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 	if (buffer)
 		s->buffer = buffer;
 	else
-		s->buffer = (BYTE*)malloc(size);
+		s->buffer = (BYTE*)calloc(size, sizeof(BYTE));
 
 	if (!s->buffer)
 	{
