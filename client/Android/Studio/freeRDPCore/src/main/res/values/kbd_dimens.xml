@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="kbd_key_height">44dp</dimen>
+    <dimen name="kbd_key_gap">3dp</dimen>
+    <dimen name="kbd_key_radius">6dp</dimen>
+    <dimen name="kbd_key_text">15sp</dimen>
+    <dimen name="kbd_bar_pad">4dp</dimen>
+    <dimen name="kbd_led_size">8dp</dimen>
+    <dimen name="kbd_led_inset">5dp</dimen>
+</resources>

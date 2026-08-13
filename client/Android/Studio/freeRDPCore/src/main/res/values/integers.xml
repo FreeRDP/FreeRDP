@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- key codes to switch between keyboards -->
-    <integer name="keycode_cursor_keyboard">0xF1</integer>
     <integer name="keycode_numpad_keyboard">0xF2</integer>
     <integer name="keycode_specialkeys_keyboard">0xF3</integer>
 
@@ -32,6 +31,7 @@
     <integer name="keycode_numpad_9">0x13</integer>
     <integer name="keycode_numpad_add">0x14</integer>
     <integer name="keycode_numpad_comma">0x15</integer>
+    <integer name="keycode_comma">0x46</integer>
     <integer name="keycode_numpad_divide">0x16</integer>
     <integer name="keycode_numpad_enter">0x17</integer>
     <integer name="keycode_numpad_multiply">0x18</integer>

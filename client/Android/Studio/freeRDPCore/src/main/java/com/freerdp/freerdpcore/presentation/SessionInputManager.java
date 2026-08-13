@@ -13,8 +13,6 @@ package com.freerdp.freerdpcore.presentation;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.KeyboardView;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -25,16 +23,13 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
-import com.freerdp.freerdpcore.R;
 import com.freerdp.freerdpcore.services.LibFreeRDP;
 import com.freerdp.freerdpcore.utils.KeyboardMapper;
 import com.freerdp.freerdpcore.utils.Mouse;
 
-import java.util.List;
-
 public class SessionInputManager
     implements SessionView.SessionViewListener, TouchPointerView.TouchPointerListener,
-               KeyboardMapper.KeyProcessingListener, KeyboardView.OnKeyboardActionListener
+               KeyboardMapper.KeyProcessingListener, ExtendedKeyboardView.Listener
 {
 	private static final String TAG = "FreeRDP.SessionInputManager";
 
@@ -52,23 +47,8 @@ public class SessionInputManager
 	private final ScrollView2D scrollView;
 	private final SessionView sessionView;
 	private final TouchPointerView touchPointerView;
-	private final KeyboardView keyboardView;
-	private final KeyboardView modifiersKeyboardView;
+	private final ExtendedKeyboardView keyboard;
 	private final PinchZoomListener pinchZoomListener = new PinchZoomListener();
-
-	private Keyboard modifiersKeyboard;
-	private Keyboard specialkeysKeyboard;
-	private Keyboard numpadKeyboard;
-	private Keyboard cursorKeyboard;
-
-	private int safeInsetLeft = 0;
-	private int safeInsetTop = 0;
-
-	public void setSafeInsets(int left, int top)
-	{
-		safeInsetLeft = left;
-		safeInsetTop = top;
-	}
 
 	// Native FreeRDP instance handle. 0 until attachSession() is called (i.e. before connect).
 	private long instance = 0;
@@ -76,43 +56,27 @@ public class SessionInputManager
 	private int screenWidth;
 	private int screenHeight;
 	private int discardedMoveEvents = 0;
-
-	// keyboard visibility flags
-	private boolean sysKeyboardVisible = false;
-	private boolean extKeyboardVisible = false;
+	// we asked the IME to show; the window has not necessarily animated it in yet
+	private boolean softInputRequested = false;
+	// the IME reported a non-zero inset, i.e. it really is on screen
+	private boolean softInputVisible = false;
 
 	private final Handler handler;
 
 	public SessionInputManager(Context context, ScrollView2D scrollView, SessionView sessionView,
-	                           TouchPointerView touchPointerView, KeyboardView keyboardView,
-	                           KeyboardView modifiersKeyboardView)
+	                           TouchPointerView touchPointerView, ExtendedKeyboardView keyboard)
 	{
 		this.context = context;
 		this.scrollView = scrollView;
 		this.sessionView = sessionView;
 		this.touchPointerView = touchPointerView;
-		this.keyboardView = keyboardView;
-		this.modifiersKeyboardView = modifiersKeyboardView;
+		this.keyboard = keyboard;
 		this.handler = new InputHandler();
 
 		this.keyboardMapper = new KeyboardMapper();
 		this.keyboardMapper.init(context);
 
-		loadKeyboards();
-		keyboardView.setKeyboard(specialkeysKeyboard);
-		modifiersKeyboardView.setKeyboard(modifiersKeyboard);
-
-		keyboardView.setOnKeyboardActionListener(this);
-		modifiersKeyboardView.setOnKeyboardActionListener(this);
-	}
-
-	private void loadKeyboards()
-	{
-		Context app = context.getApplicationContext();
-		modifiersKeyboard = new Keyboard(app, R.xml.modifiers_keyboard);
-		specialkeysKeyboard = new Keyboard(app, R.xml.specialkeys_keyboard);
-		numpadKeyboard = new Keyboard(app, R.xml.numpad_keyboard);
-		cursorKeyboard = new Keyboard(app, R.xml.cursor_keyboard);
+		keyboard.setListener(this);
 	}
 
 	// Binds this manager to a live FreeRDP session. Until called, all input events are dropped.
@@ -142,79 +106,80 @@ public class SessionInputManager
 		this.screenHeight = height;
 	}
 
-	// Called from onConfigurationChanged when keyboard resources need to be reloaded
-	// (e.g. after orientation change).
-	public void reloadKeyboards()
+	// Shows or hides the key bar together with the system IME.
+	public void toggleKeyboard()
 	{
-		loadKeyboards();
-		keyboardView.setKeyboard(specialkeysKeyboard);
-		modifiersKeyboardView.setKeyboard(modifiersKeyboard);
-	}
-
-	// Toggles the system soft-keyboard (and accompanying modifiers row).
-	public void toggleSystemKeyboard()
-	{
-		showKeyboard(!sysKeyboardVisible, false);
-	}
-
-	// Toggles the extended (special keys / function / numpad / cursor) keyboard.
-	public void toggleExtendedKeyboard()
-	{
-		showKeyboard(false, !extKeyboardVisible);
-	}
-
-	// Hides any visible keyboards (called from onPause and back-press handling).
-	public void hideKeyboards()
-	{
-		showKeyboard(false, false);
-	}
-
-	// True if either the system or extended keyboard is currently shown.
-	public boolean isAnyKeyboardVisible()
-	{
-		return sysKeyboardVisible || extKeyboardVisible;
-	}
-
-	// displays either the system or the extended keyboard or none of them
-	private void showKeyboard(boolean showSystemKeyboard, boolean showExtendedKeyboard)
-	{
-		if (showSystemKeyboard)
+		if (keyboard.getVisibility() == View.VISIBLE)
 		{
-			// hide extended keyboard
-			keyboardView.setVisibility(View.GONE);
-			// show system keyboard
-			setSoftInputState(true);
-
-			// show modifiers keyboard
-			modifiersKeyboardView.setVisibility(View.VISIBLE);
-		}
-		else if (showExtendedKeyboard)
-		{
-			// hide system keyboard
-			setSoftInputState(false);
-
-			// show extended keyboard
-			keyboardView.setKeyboard(specialkeysKeyboard);
-			keyboardView.setVisibility(View.VISIBLE);
-			modifiersKeyboardView.setVisibility(View.VISIBLE);
+			hideKeyboards();
 		}
 		else
 		{
-			// hide both
-			setSoftInputState(false);
-			keyboardView.setVisibility(View.GONE);
-			modifiersKeyboardView.setVisibility(View.GONE);
+			keyboard.setExpanded(false, false);
+			keyboard.setVisibility(View.VISIBLE);
+			setSoftInputState(true);
+		}
+	}
 
-			// clear any active key modifiers
-			keyboardMapper.clearlAllModifiers();
+	// Called from onPause and back-press handling.
+	public void hideKeyboards()
+	{
+		keyboard.setExpanded(false, false);
+		keyboard.setVisibility(View.GONE);
+		setSoftInputState(false);
+		keyboardMapper.clearlAllModifiers();
+		// the IME dismiss animation may re-show the nav bar after the refresh above
+		scrollView.post(this::refreshSystemBars);
+	}
+
+	// Returns true if the back press was consumed by the keyboard.
+	public boolean handleKeyboardBack()
+	{
+		if (keyboard.getVisibility() != View.VISIBLE)
+			return false;
+
+		if (keyboard.isExpanded())
+		{
+			keyboard.setExpanded(false, false);
+			// deliberately no IME here, so the next back press hides the bar as well
+			refreshSystemBars();
+			scrollView.requestApplyInsets();
+			return true;
 		}
 
-		sysKeyboardVisible = showSystemKeyboard;
-		extKeyboardVisible = showExtendedKeyboard;
+		hideKeyboards();
+		return true;
+	}
+
+	// True if the system soft keyboard (IME) is up or on its way up.
+	public boolean isSoftInputActive()
+	{
+		return keyboard.getVisibility() == View.VISIBLE && (softInputRequested || softInputVisible);
+	}
+
+	// Fed from the window insets listener. The IME only counts as gone once it has been seen on
+	// screen: the insets pass right after showSoftInput() still reports a zero inset.
+	public void onImeVisibilityChanged(boolean visible)
+	{
+		if (visible == softInputVisible)
+			return;
+		softInputVisible = visible;
+		if (!visible)
+			softInputRequested = false;
+		refreshSystemBars();
+	}
+
+	private void refreshSystemBars()
+	{
+		if (context instanceof SessionActivity)
+			((SessionActivity)context).hideSystemBars();
 	}
 
 	private void setSoftInputState(boolean state)
 	{
+		softInputRequested = state;
+		if (!state)
+			softInputVisible = false;
 		InputMethodManager mgr =
 		    (InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE);
 
@@ -227,6 +192,8 @@ public class SessionInputManager
 		{
 			mgr.hideSoftInputFromWindow(sessionView.getWindowToken(), 0);
 		}
+		refreshSystemBars();
+		scrollView.requestApplyInsets();
 	}
 
 	// Cancels any pending delayed-move events; called on connection failure / disconnect.
@@ -327,17 +294,10 @@ public class SessionInputManager
 
 	private Point mapScreenCoordToSessionCoord(int x, int y)
 	{
-		int usableW =
-		    scrollView.getWidth() - scrollView.getPaddingLeft() - scrollView.getPaddingRight();
-		int usableH =
-		    scrollView.getHeight() - scrollView.getPaddingTop() - scrollView.getPaddingBottom();
-		int contentW = sessionView.getWidth() - sessionView.getTouchPointerPaddingWidth();
-		int contentH = sessionView.getHeight() - sessionView.getTouchPointerPaddingHeight();
-		int centerOffsetX = Math.max(0, (usableW - contentW) / 2);
-		int centerOffsetY = Math.max(0, (usableH - contentH) / 2);
-		int mappedX = (int)((float)(x - safeInsetLeft - centerOffsetX + scrollView.getScrollX()) /
+		View container = scrollView.getChildCount() > 0 ? scrollView.getChildAt(0) : sessionView;
+		int mappedX = (int)((float)(x - container.getLeft() + scrollView.getScrollX()) /
 		                    sessionView.getZoom());
-		int mappedY = (int)((float)(y - safeInsetTop - centerOffsetY + scrollView.getScrollY()) /
+		int mappedY = (int)((float)(y - container.getTop() + scrollView.getScrollY()) /
 		                    sessionView.getZoom());
 		if (bitmap != null)
 		{
@@ -351,35 +311,6 @@ public class SessionInputManager
 				mappedY = bitmap.getHeight();
 		}
 		return new Point(mappedX, mappedY);
-	}
-
-	private void updateModifierKeyStates()
-	{
-		List<Keyboard.Key> keys = modifiersKeyboard.getKeys();
-		for (Keyboard.Key curKey : keys)
-		{
-			if (curKey.sticky)
-			{
-				switch (keyboardMapper.getModifierState(curKey.codes[0]))
-				{
-					case KeyboardMapper.KEYSTATE_ON:
-						curKey.on = true;
-						curKey.pressed = false;
-						break;
-
-					case KeyboardMapper.KEYSTATE_OFF:
-						curKey.on = false;
-						curKey.pressed = false;
-						break;
-
-					case KeyboardMapper.KEYSTATE_LOCKED:
-						curKey.on = true;
-						curKey.pressed = true;
-						break;
-				}
-			}
-		}
-		modifiersKeyboardView.invalidateAllKeys();
 	}
 
 	// ****************************************************************************
@@ -499,12 +430,7 @@ public class SessionInputManager
 
 	@Override public void onTouchPointerToggleKeyboard()
 	{
-		toggleSystemKeyboard();
-	}
-
-	@Override public void onTouchPointerToggleExtKeyboard()
-	{
-		toggleExtendedKeyboard();
+		toggleKeyboard();
 	}
 
 	@Override public void onTouchPointerResetScrollZoom()
@@ -541,15 +467,11 @@ public class SessionInputManager
 		switch (keyboardType)
 		{
 			case KeyboardMapper.KEYBOARD_TYPE_FUNCTIONKEYS:
-				keyboardView.setKeyboard(specialkeysKeyboard);
+				keyboard.selectPage(ExtendedKeyboardView.PAGE_SPECIAL);
 				break;
 
 			case KeyboardMapper.KEYBOARD_TYPE_NUMPAD:
-				keyboardView.setKeyboard(numpadKeyboard);
-				break;
-
-			case KeyboardMapper.KEYBOARD_TYPE_CURSOR:
-				keyboardView.setKeyboard(cursorKeyboard);
+				keyboard.selectPage(ExtendedKeyboardView.PAGE_NUM);
 				break;
 
 			default:
@@ -559,43 +481,31 @@ public class SessionInputManager
 
 	@Override public void modifiersChanged()
 	{
-		updateModifierKeyStates();
+		keyboard.refreshModifiers();
 	}
 
 	// ****************************************************************************
-	// KeyboardView.OnKeyboardActionListener (extended/modifiers keyboards)
+	// ExtendedKeyboardView.Listener
 
-	@Override public void onKey(int primaryCode, int[] keyCodes)
+	@Override public void onKey(int keycode)
 	{
-		keyboardMapper.processCustomKeyEvent(primaryCode);
+		keyboardMapper.processCustomKeyEvent(keycode);
 	}
 
-	@Override public void onText(CharSequence text)
+	@Override public void onKeyLock(int keycode)
 	{
+		keyboardMapper.processCustomKeyLock(keycode);
 	}
 
-	@Override public void swipeRight()
+	@Override public int getModifierState(int keycode)
 	{
+		return keyboardMapper.getModifierState(keycode);
 	}
 
-	@Override public void swipeLeft()
+	@Override public void onExpandedChanged(boolean expanded)
 	{
-	}
-
-	@Override public void swipeDown()
-	{
-	}
-
-	@Override public void swipeUp()
-	{
-	}
-
-	@Override public void onPress(int primaryCode)
-	{
-	}
-
-	@Override public void onRelease(int primaryCode)
-	{
+		// the expanded panel replaces the system IME; collapsing brings it back
+		setSoftInputState(!expanded);
 	}
 
 	// ****************************************************************************

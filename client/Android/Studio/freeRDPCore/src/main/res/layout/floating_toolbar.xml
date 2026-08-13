@@ -43,15 +43,6 @@
             app:tint="#FFFFFF"
             android:src="@drawable/ic_keyboard" />
 
-        <ImageButton
-            android:id="@+id/floating_toolbar_ext_keyboard"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="?android:attr/selectableItemBackground"
-            android:contentDescription="@string/menu_ext_keyboard"
-            app:tint="#FFFFFF"
-            android:src="@drawable/ic_fn_keyboard" />
-
     </LinearLayout>
 
 </LinearLayout>

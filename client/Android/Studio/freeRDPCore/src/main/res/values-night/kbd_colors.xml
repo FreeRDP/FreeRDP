@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="kbd_bar_bg">#FF202124</color>
+    <color name="kbd_panel_bg">#FF17181A</color>
+    <color name="kbd_key_bg">#FF3C4043</color>
+    <color name="kbd_key_chrome">#FF8AB4F8</color>
+    <color name="kbd_key_chrome_text">#FF202124</color>
+    <color name="kbd_key_on">#FF6E7377</color>
+    <color name="kbd_text">#FFE8EAED</color>
+    <color name="kbd_ripple">#33FFFFFF</color>
+    <color name="kbd_led_off">#FF5F6368</color>
+    <color name="kbd_led_on">#FFE8F0FE</color>
+    <color name="kbd_led_locked">#FFFDD663</color>
+</resources>

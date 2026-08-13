@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true" android:color="@color/kbd_led_locked" />
+    <item android:state_activated="true" android:color="@color/kbd_led_on" />
+    <item android:color="@color/kbd_led_off" />
+</selector>
