@@ -211,7 +211,7 @@ BOOL SdlContext::preConnect(freerdp* instance)
 			else
 			{
 				sdl->_windowWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
-				sdl->_windowHeigth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+				sdl->_windowHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, sw))
 					return FALSE;
@@ -407,8 +407,8 @@ bool SdlContext::createWindows()
 			else
 				w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 
-			if (_windowHeigth > 0)
-				h = _windowHeigth;
+			if (_windowHeight > 0)
+				h = _windowHeight;
 			else
 				h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 		}

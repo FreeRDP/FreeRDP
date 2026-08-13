@@ -3470,7 +3470,7 @@ static BOOL update_read_stream_bitmap_first_order(wStream* s,
 
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapType);   /* bitmapType (2 bytes) */
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapWidth);  /* bitmapWidth (2 bytes) */
-	Stream_Read_UINT16(s, stream_bitmap_first->bitmapHeight); /* bitmapHeigth (2 bytes) */
+	Stream_Read_UINT16(s, stream_bitmap_first->bitmapHeight); /* bitmapHeight (2 bytes) */
 
 	if (stream_bitmap_first->bitmapFlags & STREAM_BITMAP_V2)
 	{

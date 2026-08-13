@@ -240,7 +240,7 @@ class SdlContext
 	std::map<SDL_DisplayID, std::pair<SDL_Rect, SDL_Rect>> _offsets;
 
 	uint32_t _windowWidth = 0;
-	uint32_t _windowHeigth = 0;
+	uint32_t _windowHeight = 0;
 	WinPREvent _windowsCreatedEvent;
 	std::thread _thread;
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
