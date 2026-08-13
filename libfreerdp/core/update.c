@@ -3683,6 +3683,9 @@ void update_dump_stats(rdpUpdate* update)
 	{
 		const char* name = rdp_stats_name_for_index(x);
 		const uint64_t val = rdp_stats_value_for_index(update, x);
+		if (val == 0)
+			continue;
+
 		WINPR_ASSERT(name && strnlen(name, 2) > 0);
 		const bool unknown = strstr(name, " UNKNOWN") != nullptr;
 		const bool unused = strstr(name, "UNUSED") != nullptr;
