@@ -793,12 +793,12 @@ out_free_peer:
 		ArrayList_Lock(server->peer_list);
 		ArrayList_Remove(server->peer_list, args->thread);
 		count = ArrayList_Count(server->peer_list);
+		PROXY_LOG_DBG(TAG, ps, "Removed peer, %" PRIuz " connected", count);
+		freerdp_peer_context_free(client);
+		freerdp_peer_free(client);
+		proxy_data_free(pdata);
 		ArrayList_Unlock(server->peer_list);
 	}
-	PROXY_LOG_DBG(TAG, ps, "Removed peer, %" PRIuz " connected", count);
-	freerdp_peer_context_free(client);
-	freerdp_peer_free(client);
-	proxy_data_free(pdata);
 
 #if defined(WITH_DEBUG_EVENTS)
 	DumpEventHandles();
