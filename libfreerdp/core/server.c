@@ -150,17 +150,18 @@ static unsigned wts_read_variable_uint(wStream* s, int cbLen, UINT32* val)
 	}
 }
 
-static BOOL wts_read_drdynvc_capabilities_response(rdpPeerChannel* channel, UINT32 length)
+static BOOL wts_read_drdynvc_capabilities_response(rdpPeerChannel* channel, wStream* s)
 {
 	UINT16 Version = 0;
 
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(channel->vcm);
+	const size_t length = Stream_GetRemainingLength(s);
 	if (length < 3)
 		return FALSE;
 
-	Stream_Seek_UINT8(channel->receiveData); /* Pad (1 byte) */
-	Stream_Read_UINT16(channel->receiveData, Version);
+	Stream_Seek_UINT8(s); /* Pad (1 byte) */
+	Stream_Read_UINT16(s, Version);
 	DEBUG_DVC("Version: %" PRIu16 "", Version);
 
 	if (Version < 1)
@@ -178,14 +179,15 @@ static BOOL wts_read_drdynvc_capabilities_response(rdpPeerChannel* channel, UINT
 	return SetEvent(MessageQueue_Event(vcm->queue));
 }
 
-static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s, UINT32 length)
+static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s)
 {
 	UINT32 CreationStatus = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(s);
-	if (length < 4)
+	const size_t length = Stream_GetRemainingLength(s);
+	if ((length < 4) || (length > UINT32_MAX))
 		return FALSE;
 
 	Stream_Read_UINT32(s, CreationStatus);
@@ -211,20 +213,17 @@ static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s
 	return status;
 }
 
-static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int cbLen,
-                                        UINT32 length)
+static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int cbLen)
 {
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(s);
+
 	const UINT32 value = wts_read_variable_uint(s, cbLen, &channel->dvc_total_length);
 
 	if (value == 0)
 		return FALSE;
-	if (value > length)
-		length = 0;
-	else
-		length -= value;
 
+	const size_t length = Stream_GetRemainingLength(s);
 	if (length > channel->dvc_total_length)
 		return FALSE;
 
@@ -237,15 +236,21 @@ static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int
 	return TRUE;
 }
 
-static BOOL wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s, UINT32 length)
+static BOOL wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s)
 {
 	BOOL ret = FALSE;
 
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(s);
+
+	const size_t length = Stream_GetRemainingLength(s);
 	if (channel->dvc_total_length > 0)
 	{
-		if (Stream_GetPosition(channel->receiveData) + length > channel->dvc_total_length)
+		const size_t pos = Stream_GetPosition(channel->receiveData);
+		if (pos > SIZE_MAX - length)
+			return FALSE;
+
+		if (pos + length > channel->dvc_total_length)
 		{
 			channel->dvc_total_length = 0;
 			WLog_ERR(TAG, "incorrect fragment data, discarded.");
@@ -290,20 +295,20 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(channel->vcm);
 
-	size_t length = Stream_GetPosition(channel->receiveData);
-
-	if ((length < 1) || (length > UINT32_MAX))
+	const size_t slength = Stream_GetPosition(channel->receiveData);
+	if ((slength < 1) || (slength > UINT32_MAX))
 		return FALSE;
 
 	Stream_ResetPosition(channel->receiveData);
-	const UINT8 value = Stream_Get_UINT8(channel->receiveData);
-	length--;
+	wStream buffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&buffer, Stream_Buffer(channel->receiveData), slength);
+	const UINT8 value = Stream_Get_UINT8(s);
 	Cmd = (value & 0xf0) >> 4;
 	Sp = (value & 0x0c) >> 2;
 	cbChId = (value & 0x03) >> 0;
 
 	if (Cmd == CAPABILITY_REQUEST_PDU)
-		return wts_read_drdynvc_capabilities_response(channel, (UINT32)length);
+		return wts_read_drdynvc_capabilities_response(channel, s);
 
 	if (channel->vcm->drdynvc_state == DRDYNVC_STATE_READY)
 	{
@@ -321,11 +326,9 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 
 		if (haveChannelId)
 		{
-			const unsigned val = wts_read_variable_uint(channel->receiveData, cbChId, &ChannelId);
+			const unsigned val = wts_read_variable_uint(s, cbChId, &ChannelId);
 			if (val == 0)
 				return FALSE;
-
-			length -= val;
 
 			DEBUG_DVC("Cmd %s ChannelId %" PRIu32 " length %" PRIuz "",
 			          drdynvc_get_packet_type(Cmd), ChannelId, length);
@@ -340,7 +343,7 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 		switch (Cmd)
 		{
 			case CREATE_REQUEST_PDU:
-				return wts_read_drdynvc_create_response(dvc, channel->receiveData, (UINT32)length);
+				return wts_read_drdynvc_create_response(dvc, s);
 
 			case DATA_FIRST_PDU:
 				if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED)
@@ -352,7 +355,7 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 					return TRUE;
 				}
 
-				return wts_read_drdynvc_data_first(dvc, channel->receiveData, Sp, (UINT32)length);
+				return wts_read_drdynvc_data_first(dvc, s, Sp);
 
 			case DATA_PDU:
 				if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED)
@@ -364,7 +367,7 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 					return TRUE;
 				}
 
-				return wts_read_drdynvc_data(dvc, channel->receiveData, (UINT32)length);
+				return wts_read_drdynvc_data(dvc, s);
 
 			case CLOSE_REQUEST_PDU:
 				wts_read_drdynvc_close_response(dvc);
