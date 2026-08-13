@@ -1126,6 +1126,12 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			if (!init_context.spnego)
 				return status;
 
+			/* Clean up any partially created sub context before falling back to
+			 * another mechanism (mirrors the mech change handling in
+			 * negotiate_InitializeSecurityContextW) */
+			if (init_context.mech)
+				init_context.mech->pkg->table->DeleteSecurityContext(&init_context.sub_context);
+
 			init_context.mic = TRUE;
 			first_mech = init_context.mech;
 			init_context.mech = nullptr;
@@ -1213,8 +1219,15 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 			if (output_buffer)
 				CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
+			/* If the client's optimistic mechanism was not accepted the sub
+			 * context was never created (or was cleaned up); pass NULL so the
+			 * selected mechanism creates a fresh context instead of rejecting
+			 * the empty handle with SEC_E_INVALID_HANDLE */
+			PCtxtHandle sub_context = sspi_SecureHandleGetLowerPointer(&context->sub_context)
+			                              ? &context->sub_context
+			                              : nullptr;
 			status = context->mech->pkg->table->AcceptSecurityContext(
-			    sub_cred, &context->sub_context, &mech_input, fContextReq | context->mech->flags,
+			    sub_cred, sub_context, &mech_input, fContextReq | context->mech->flags,
 			    TargetDataRep, &context->sub_context, &mech_output, pfContextAttr, ptsTimeStamp);
 
 			if (IsSecurityStatusError(status))
