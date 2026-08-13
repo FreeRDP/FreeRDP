@@ -1534,7 +1534,8 @@ static pstatus_t sse41_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 			pX = pDst[2] + 1ULL * dstStep[2] * pos;
 		}
 
-		memcpy(pX, Ya, nWidth);
+		if (y < nHeight)
+			memcpy(pX, Ya, nWidth);
 	}
 
 	/* B6 and B7 */

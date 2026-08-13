@@ -146,7 +146,8 @@ static inline pstatus_t general_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrc
 			pX = pDst[2] + dstStep[2] * pos;
 		}
 
-		memcpy(pX, Ya, nWidth);
+		if (y < nHeight)
+			memcpy(pX, Ya, nWidth);
 	}
 
 	/* B6 and B7 */
