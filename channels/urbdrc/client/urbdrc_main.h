@@ -92,7 +92,8 @@ typedef struct
 typedef void (*t_isoch_transfer_cb)(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback,
                                     wStream* out, UINT32 InterfaceId, BOOL noAck, UINT32 MessageId,
                                     UINT32 RequestId, UINT32 NumberOfPackets, UINT32 status,
-                                    UINT32 StartFrame, UINT32 ErrorCount, UINT32 OutputBufferSize);
+                                    UINT32 StartFrame, UINT32 ErrorCount, UINT32 OutputBufferSize,
+                                    int transferDir);
 
 struct S_IUDEVICE
 {
@@ -101,7 +102,7 @@ struct S_IUDEVICE
 	    IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback, UINT32 MessageId, UINT32 RequestId,
 	    UINT32 EndpointAddress, UINT32 TransferFlags, UINT32 StartFrame, UINT32 ErrorCount,
 	    BOOL NoAck, const BYTE* packetDescriptorData, UINT32 NumberOfPackets, UINT32 BufferSize,
-	    const BYTE* Buffer, t_isoch_transfer_cb cb, UINT32 Timeout);
+	    const BYTE* Buffer, int transferDir, t_isoch_transfer_cb cb, UINT32 Timeout);
 
 	WINPR_ATTR_NODISCARD BOOL (*control_transfer)(IUDEVICE* idev, UINT32 RequestId,
 	                                              UINT32 EndpointAddress, UINT32 TransferFlags,
@@ -112,7 +113,7 @@ struct S_IUDEVICE
 	WINPR_ATTR_NODISCARD int (*bulk_or_interrupt_transfer)(
 	    IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback, UINT32 MessageId, UINT32 RequestId,
 	    UINT32 EndpointAddress, UINT32 TransferFlags, BOOL NoAck, UINT32 BufferSize,
-	    const BYTE* data, t_isoch_transfer_cb cb, UINT32 Timeout);
+	    const BYTE* data, int transferDir, t_isoch_transfer_cb cb, UINT32 Timeout);
 
 	WINPR_ATTR_NODISCARD int (*select_configuration)(IUDEVICE* idev, UINT32 bConfigurationValue);
 
