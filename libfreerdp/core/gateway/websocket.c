@@ -441,7 +441,7 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 					encodingContext->lengthAndMaskPosition +=
 					    WINPR_ASSERTING_INT_CAST(BYTE, status);
 				}
-				if (encodingContext->payloadLength > XXX)
+				if (encodingContext->payloadLength > RESPONSE_SIZE_LIMIT)
 				{
 					WLog_ERR(TAG, "received excessive payload size %" PRIuz ", aborting",
 					         encodingContext->payloadLength);
