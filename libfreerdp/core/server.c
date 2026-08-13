@@ -76,19 +76,24 @@ static rdpPeerChannel* wts_get_dvc_channel_by_id(WTSVirtualChannelManager* vcm, 
 	return HashTable_GetItemValue(vcm->dynamicVirtualChannels, &ChannelId);
 }
 
-static BOOL wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* Buffer1, UINT32 Length1,
-                                   const BYTE* Buffer2, UINT32 Length2)
+static BOOL wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* Buffer1, size_t Length1,
+                                   const BYTE* Buffer2, size_t Length2)
 {
 	WINPR_ASSERT(channel);
 
-	wtsChannelMessage* messageCtx =
-	    (wtsChannelMessage*)malloc(sizeof(wtsChannelMessage) + Length1 + Length2);
+	if (Length1 > UINT32_MAX - sizeof(wtsChannelMessage))
+		return FALSE;
+	if (Length2 > UINT32_MAX - sizeof(wtsChannelMessage) - Length1)
+		return FALSE;
+	const size_t len = Length1 + Length2;
+	const size_t tlen = sizeof(wtsChannelMessage) + len;
+	wtsChannelMessage* messageCtx = (wtsChannelMessage*)malloc(tlen);
 	if (!messageCtx)
 		return FALSE;
 
 	WINPR_ASSERT(channel->channelId <= UINT16_MAX);
 	messageCtx->channelId = WINPR_ASSERTING_INT_CAST(UINT16, channel->channelId);
-	messageCtx->length = Length1 + Length2;
+	messageCtx->length = WINPR_ASSERTING_INT_CAST(UINT32, len);
 	messageCtx->offset = 0;
 	BYTE* buffer = (BYTE*)(&messageCtx[1]);
 	CopyMemory(buffer, Buffer1, Length1);
@@ -528,8 +533,8 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 			if (pos > UINT32_MAX)
 				ret = FALSE;
 			else
-				ret = wts_queue_receive_data(channel, Stream_Buffer(channel->receiveData),
-				                             WINPR_ASSERTING_INT_CAST(UINT32, pos), nullptr, 0);
+				ret = wts_queue_receive_data(channel, Stream_Buffer(channel->receiveData), pos,
+				                             nullptr, 0);
 		}
 
 		Stream_ResetPosition(channel->receiveData);

@@ -705,12 +705,8 @@ static UINT urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 			}
 
 			// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append owns idpair
-			if (!add_device(&udevman->iface, DEVICE_ADD_FLAG_VENDOR | DEVICE_ADD_FLAG_PRODUCT, 0, 0,
-			                id1, id2))
-			{
-				// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append owns idpair
-				return CHANNEL_RC_INITIALIZATION_ERROR;
-			}
+			(void)add_device(&udevman->iface, DEVICE_ADD_FLAG_VENDOR | DEVICE_ADD_FLAG_PRODUCT, 0,
+			                 0, id1, id2);
 		}
 	}
 
