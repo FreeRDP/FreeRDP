@@ -1514,10 +1514,10 @@ bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)
 	for (auto& window : _windows)
 	{
 		if (!drawToWindow(window.second, rects))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 BOOL SdlContext::desktopResize(rdpContext* context)
