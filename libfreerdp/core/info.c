@@ -1578,7 +1578,7 @@ static BOOL rdp_write_logon_info_plain(wStream* s)
 	if (!Stream_EnsureRemainingCapacity(s, 576))
 		return FALSE;
 
-	Stream_Seek(s, 576);
+	Stream_Zero(s, 576);
 	return TRUE;
 }
 
