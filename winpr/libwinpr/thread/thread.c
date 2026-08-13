@@ -85,6 +85,7 @@
 
 #ifndef _WIN32
 
+#include <pthread.h>
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 
@@ -429,7 +430,7 @@ static BOOL thread_compare(const void* a, const void* b)
 
 static INIT_ONCE threads_InitOnce = INIT_ONCE_STATIC_INIT;
 static pthread_t mainThreadId;
-static DWORD currentThreadTlsIndex = TLS_OUT_OF_INDEXES;
+static pthread_key_t currentThreadTlsIndex = 0;
 
 static BOOL initializeThreads(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
                               WINPR_ATTR_UNUSED PVOID Parameter, WINPR_ATTR_UNUSED PVOID* Context)
@@ -443,10 +444,11 @@ static BOOL initializeThreads(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
 	mainThread.common.Type = HANDLE_TYPE_THREAD;
 	mainThreadId = pthread_self();
 
-	currentThreadTlsIndex = TlsAlloc();
-	if (currentThreadTlsIndex == TLS_OUT_OF_INDEXES)
+	const int res = pthread_key_create(&currentThreadTlsIndex, nullptr);
+	if (res != 0)
 	{
 		WLog_ERR(TAG, "Major bug, unable to allocate a TLS value for currentThread");
+		return FALSE;
 	}
 
 #if defined(WITH_THREAD_LIST)
@@ -512,7 +514,8 @@ static void* thread_launcher(void* arg)
 		goto exit;
 	}
 
-	if (!TlsSetValue(currentThreadTlsIndex, thread))
+	const int res = pthread_setspecific(currentThreadTlsIndex, thread);
+	if (res != 0)
 	{
 		WLog_ERR(TAG, "thread %" PRIu64 ", unable to set current thread value",
 		         WINPR_CXX_COMPAT_CAST(uint64_t, pthread_self()));
@@ -894,7 +897,7 @@ WINPR_THREAD* winpr_GetCurrentThread(VOID)
 	if (mainThreadId == pthread_self())
 		return (HANDLE)&mainThread;
 
-	ret = TlsGetValue(currentThreadTlsIndex);
+	ret = pthread_getspecific(currentThreadTlsIndex);
 	return ret;
 }
 

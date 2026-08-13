@@ -759,6 +759,9 @@ static BOOL rts_read_result(wStream* s, p_result_t* result, BOOL silent)
 	}
 	result->result = (p_cont_def_result_t)res;
 
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 2, silent))
+		return FALSE;
+
 	const UINT16 reason = Stream_Get_UINT16(s);
 	switch (reason)
 	{
