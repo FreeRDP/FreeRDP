@@ -195,6 +195,7 @@ static void ffmpeg_close_context(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 
 		if (context->buffered)
 			av_frame_free(&context->buffered);
+		context->bufferedSamples = 0;
 
 		if (context->packet)
 			av_packet_free(&context->packet);
