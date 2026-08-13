@@ -633,7 +633,7 @@ static pstatus_t neon_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 	const UINT32 oddX = 1;
 	/* The auxiliary frame is aligned to multiples of 16x16.
 	 * We need the padded height for B4 and B5 conversion. */
-	const UINT32 padHeigth = nHeight + 16 - nHeight % 16;
+	const UINT32 padHeight = nHeight + 16 - nHeight % 16;
 	const UINT32 halfPad = halfWidth % 16;
 	const BYTE* pSrc[3] = { pSrcRaw[0] + roi->top * srcStep[0] + roi->left,
 		                    pSrcRaw[1] + roi->top / 2 * srcStep[1] + roi->left / 2,
@@ -644,7 +644,7 @@ static pstatus_t neon_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 
 	/* The second half of U and V is a bit more tricky... */
 	/* B4 and B5 */
-	for (UINT32 y = 0; y < padHeigth; y++)
+	for (UINT32 y = 0; y < padHeight; y++)
 	{
 		const BYTE* Ya = pSrc[0] + srcStep[0] * y;
 		BYTE* pX;
@@ -668,7 +668,8 @@ static pstatus_t neon_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 			pX = pDst[2] + dstStep[2] * pos;
 		}
 
-		memcpy(pX, Ya, nWidth);
+		if (y < nHeight)
+			memcpy(pX, Ya, nWidth);
 	}
 
 	/* B6 and B7 */

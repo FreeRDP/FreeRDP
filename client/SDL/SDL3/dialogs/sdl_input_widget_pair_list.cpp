@@ -39,11 +39,11 @@ SdlInputWidgetPairList::SdlInputWidgetPairList(const std::string& title,
 	const std::vector<std::string> buttonlabels = { "accept", "cancel" };
 
 	const size_t widget_width = 300;
-	const size_t widget_heigth = 50;
+	const size_t widget_height = 50;
 
 	const size_t total_width = widget_width + widget_width;
-	const size_t input_height = labels.size() * (widget_heigth + vpadding) + vpadding;
-	const size_t total_height = input_height + widget_heigth;
+	const size_t input_height = labels.size() * (widget_height + vpadding) + vpadding;
+	const size_t total_height = input_height + widget_height;
 	assert(total_width <= INT32_MAX);
 	assert(total_height <= INT32_MAX);
 
@@ -53,13 +53,13 @@ SdlInputWidgetPairList::SdlInputWidgetPairList(const std::string& title,
 		{
 			auto widget =
 			    std::make_shared<SdlInputWidgetPair>(_renderer, labels.at(x), initial.at(x),
-			                                         flags.at(x), x, widget_width, widget_heigth);
+			                                         flags.at(x), x, widget_width, widget_height);
 			m_list.emplace_back(widget);
 		}
 
 		std::ignore = _buttons.populate(
 		    _renderer, buttonlabels, buttonids, total_width, static_cast<Sint32>(input_height),
-		    static_cast<Sint32>(widget_width), static_cast<Sint32>(widget_heigth));
+		    static_cast<Sint32>(widget_width), static_cast<Sint32>(widget_height));
 		_buttons.set_highlight(0);
 		m_currentActiveTextInput = selected;
 	}
