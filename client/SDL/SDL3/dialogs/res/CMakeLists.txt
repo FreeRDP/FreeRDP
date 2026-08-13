@@ -26,6 +26,6 @@ else()
   target_link_libraries(sdl3_client_res ${SDL3_LIBRARIES})
 endif()
 
-target_link_libraries(sdl3_client_res sdl-common-client-res)
+target_link_libraries(sdl3_client_res sdl-common-client-res freerdp-cxx-filesystem)
 
 set_target_properties(sdl3_client_res PROPERTIES POSITION_INDEPENDENT_CODE ON INTERPROCEDURAL_OPTIMIZATION OFF)
