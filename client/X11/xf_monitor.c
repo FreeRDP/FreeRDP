@@ -616,7 +616,16 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 					    WINPR_ASSERTING_INT_CAST(uint32_t, XScreenNumberOfScreen(screen));
 				}
 
+				const UINT32 mcount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 				UINT32 j = monitor_index;
+				if (j >= mcount)
+				{
+					WLog_ERR(TAG,
+					         "Invalid monitor ID %" PRIu32 ", out of range. Must be < %" PRIu32, j,
+					         mcount);
+					goto fail;
+				}
+
 				rdpMonitor* pmonitor = &rdpmonitors[j];
 
 				/* If the "default" monitor is not 0,0 use it */
@@ -628,8 +637,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 				{
 					/* Lets try to see if there is a monitor with a 0,0 coordinate and use it as a
 					 * fallback*/
-					for (UINT32 i = 0;
-					     i < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); i++)
+					for (UINT32 i = 0; i < mcount; i++)
 					{
 						rdpMonitor* monitor = &rdpmonitors[i];
 						if (!primaryMonitorFound && monitor->x == 0 && monitor->y == 0)
