@@ -2188,12 +2188,28 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 	if (nla_get_state(nla) == NLA_STATE_EARLY_USER_AUTH)
 	{
-		UINT32 code = 0;
-		Stream_Read_UINT32(s, code);
-		if (code != AUTHZ_SUCCESS)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+			return -1;
+
+		const UINT32 authzResult = Stream_Get_UINT32(s);
+		if (authzResult != AUTHZ_SUCCESS)
 		{
-			WLog_DBG(TAG, "Early User Auth active: FAILURE code 0x%08" PRIX32 "", code);
-			code = FREERDP_ERROR_AUTHENTICATION_FAILED;
+			UINT32 code = FREERDP_ERROR_AUTHENTICATION_FAILED;
+
+			switch (authzResult)
+			{
+				case AUTHZ_ACCESS_DENIED:
+					/* The user authenticated successfully but is not authorized to open a
+					 * session on this host, e.g. it lacks the 'Allow log on through Remote
+					 * Desktop Services' right. */
+					code = FREERDP_ERROR_CONNECT_ACCESS_DENIED;
+					break;
+				default:
+					break;
+			}
+
+			WLog_ERR(TAG, "Early User Auth active: FAILURE authorization result 0x%08" PRIX32 "",
+			         authzResult);
 			freerdp_set_last_error_log(nla->rdpcontext, code);
 			return -1;
 		}
