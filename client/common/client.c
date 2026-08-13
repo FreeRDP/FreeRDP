@@ -762,6 +762,7 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 			case 'y':
 			case 'Y':
 				answer = freerdp_interruptible_getc(instance->context, stdin);
+				printf("\n");
 				if (answer == EOF)
 					return 0;
 				return 1;
@@ -769,6 +770,7 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 			case 't':
 			case 'T':
 				answer = freerdp_interruptible_getc(instance->context, stdin);
+				printf("\n");
 				if (answer == EOF)
 					return 0;
 				return 2;
@@ -776,6 +778,7 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 			case 'n':
 			case 'N':
 				answer = freerdp_interruptible_getc(instance->context, stdin);
+				printf("\n");
 				if (answer == EOF)
 					return 0;
 				return 0;
@@ -783,8 +786,6 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 			default:
 				break;
 		}
-
-		printf("\n");
 	}
 }
 
@@ -1073,19 +1074,19 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 		{
 			case 'y':
 			case 'Y':
+				printf("\n");
 				if (confirm == EOF)
 					return FALSE;
 				return TRUE;
 
 			case 'n':
 			case 'N':
+				printf("\n");
 				return FALSE;
 
 			default:
 				break;
 		}
-
-		printf("\n");
 	}
 
 	return TRUE;
