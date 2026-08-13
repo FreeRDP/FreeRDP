@@ -23,6 +23,8 @@
 
 #define TAG FREERDP_TAG("core.gateway.websocket")
 
+#define RESPONSE_SIZE_LIMIT (64ULL * 1024ULL * 1024ULL)
+
 struct s_websocket_context
 {
 	size_t payloadLength;
@@ -438,6 +440,12 @@ int websocket_context_read(websocket_context* encodingContext, BIO* bio, BYTE* p
 					    (encodingContext->payloadLength) << 8 | buffer[0];
 					encodingContext->lengthAndMaskPosition +=
 					    WINPR_ASSERTING_INT_CAST(BYTE, status);
+				}
+				if (encodingContext->payloadLength > XXX)
+				{
+					WLog_ERR(TAG, "received excessive payload size %" PRIuz ", aborting",
+					         encodingContext->payloadLength);
+					return -1;
 				}
 				encodingContext->state =
 				    (encodingContext->masking ? WebSocketStateMaskingKey : WebSocketStatePayload);
