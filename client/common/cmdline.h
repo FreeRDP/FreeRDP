@@ -63,7 +63,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Asynchronous channels (experimental)" },
 	{ "async-update", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 	  "Asynchronous update" },
-	{ "audio-mode", COMMAND_LINE_VALUE_REQUIRED, "[[none|0]|[redirect|1]|[server|2]]", nullptr,
+	{ "audio-mode", COMMAND_LINE_VALUE_REQUIRED, "[[none|2]|[server|1]|[redirect|0]]", nullptr,
 	  nullptr, -1, nullptr, "Audio output mode" },
 	{ "auth-only", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
 	  "Authenticate only" },
