@@ -34,6 +34,8 @@
 
 #include <pthread.h>
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
+
 DWORD TlsAlloc(void)
 {
 	pthread_key_t key = 0;
@@ -64,5 +66,7 @@ BOOL TlsFree(DWORD dwTlsIndex)
 	pthread_key_delete(key);
 	return TRUE;
 }
+
+#endif
 
 #endif
