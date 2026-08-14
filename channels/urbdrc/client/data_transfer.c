@@ -173,6 +173,41 @@ static wStream* urb_create_iocompletion(UINT32 InterfaceField, UINT32 MessageId,
 	return out;
 }
 
+/* [MS-RDPEUSB] 2.2.7.1 IO Control Completion (IOCONTROL_COMPLETION)
+ *
+ * The Information and OutputBufferSize fields describe the OutputBuffer that
+ * follows them, but urb_create_iocompletion() has to write both before the IO
+ * control handler has produced any output. Rewrite them once the payload is
+ * complete so that a handler which returns nothing does not announce a buffer
+ * it never sends.
+ */
+static BOOL urb_finalize_iocompletion(wStream* out)
+{
+	WINPR_ASSERT(out);
+
+	const size_t header = 12ULL /* SHARED_MSG_HEADER */ + 4ULL /* RequestId */;
+	const size_t offset = header + 4ULL /* HResult */;
+	const size_t fixed = offset + 4ULL /* Information */ + 4ULL /* OutputBufferSize */;
+	const size_t end = Stream_GetPosition(out);
+
+	if (end < fixed)
+		return FALSE;
+
+	const size_t OutputBufferSize = end - fixed;
+
+	if (OutputBufferSize > UINT32_MAX)
+		return FALSE;
+
+	const UINT32 size = WINPR_ASSERTING_INT_CAST(UINT32, OutputBufferSize);
+
+	if (!Stream_SetPosition(out, offset))
+		return FALSE;
+
+	Stream_Write_UINT32(out, size); /** Information */
+	Stream_Write_UINT32(out, size); /** OutputBufferSize */
+	return Stream_SetPosition(out, end);
+}
+
 static UINT urbdrc_process_register_request_callback(IUDEVICE* pdev,
                                                      GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                                      IUDEVMAN* udevman)
@@ -361,6 +396,12 @@ static UINT urbdrc_process_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* 
 			           IoControlCode);
 			Stream_Free(out, TRUE);
 			return ERROR_INVALID_OPERATION;
+	}
+
+	if (!urb_finalize_iocompletion(out))
+	{
+		Stream_Free(out, TRUE);
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	return stream_write_and_free(callback->plugin, callback->channel, out);
