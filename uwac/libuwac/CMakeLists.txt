@@ -49,7 +49,7 @@ generate_protocol_file(ivi-application)
 generate_protocol_file(fullscreen-shell-unstable-v1)
 generate_protocol_file(keyboard-shortcuts-inhibit-unstable-v1)
 
-if(FREEBSD)
+if(EPOLLSHIM)
   include_directories(SYSTEM ${EPOLLSHIM_INCLUDE_DIR})
 endif()
 include_directories(SYSTEM ${WAYLAND_INCLUDE_DIR})
