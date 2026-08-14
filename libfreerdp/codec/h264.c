@@ -301,9 +301,9 @@ static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE
 	}
 	else
 	{
-		for (size_t y = regionRect->top; y < regionRect->bottom; y += 64)
+		for (size_t y = 0; y < regionRect->bottom - regionRect->top; y += 64)
 		{
-			for (size_t x = regionRect->left; x < regionRect->right; x += 64)
+			for (size_t x = 0; x < regionRect->right - regionRect->left; x += 64)
 			{
 				RECTANGLE_16 rect;
 				rect.left = (UINT16)MIN(UINT16_MAX, regionRect->left + x);

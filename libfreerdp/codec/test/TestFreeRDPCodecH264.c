@@ -143,6 +143,57 @@ fail:
 	return rc;
 }
 
+static BOOL testEncodeOffsetRegion(void)
+{
+	BOOL rc = FALSE;
+	const UINT32 width = 192;
+	const UINT32 height = 128;
+	const UINT32 format = PIXEL_FORMAT_BGRA32;
+	const RECTANGLE_16 full = { .left = 0, .top = 0, .right = width, .bottom = height };
+	const RECTANGLE_16 region = { .left = 32, .top = 16, .right = 160, .bottom = 112 };
+	RDPGFX_H264_METABLOCK meta = WINPR_C_ARRAY_INIT;
+	H264_CONTEXT* h264 = h264_context_new(TRUE);
+	UINT32 stride = 0;
+	BYTE* src = allocRGB(format, width, height, &stride);
+	BYTE* dst = nullptr;
+	UINT32 dstSize = 0;
+
+	if (!h264 || !src || !h264_context_reset(h264, width, height))
+		goto fail;
+
+	memset(src, 0, (size_t)stride * height);
+	if (avc420_compress(h264, src, format, stride, width, height, &full, &dst, &dstSize, &meta) < 0)
+		goto fail;
+	free_h264_metablock(&meta);
+
+	for (UINT32 y = region.top; y < region.bottom; y++)
+	{
+		BYTE* row = &src[(size_t)y * stride + (size_t)region.left * 4];
+		memset(row, 0xFF, (size_t)(region.right - region.left) * 4);
+	}
+
+	dst = nullptr;
+	dstSize = 0;
+	if (avc420_compress(h264, src, format, stride, width, height, &region, &dst, &dstSize, &meta) <
+	    0)
+		goto fail;
+	if ((meta.numRegionRects == 0) || (meta.regionRects[0].left != region.left) ||
+	    (meta.regionRects[0].top != region.top))
+	{
+		(void)fprintf(
+		    stderr, "%s failed: first changed tile does not start at (%" PRIu16 ", %" PRIu16 ")\n",
+		    __func__, region.left, region.top);
+		goto fail;
+	}
+
+	rc = TRUE;
+fail:
+	h264_context_free(h264);
+	free_h264_metablock(&meta);
+	free(src);
+	return rc;
+}
+
 int TestFreeRDPCodecH264(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -180,6 +231,8 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 	if (!testContextOptions(FALSE, width, height))
 		return -1;
 	if (!testContextOptions(TRUE, width, height))
+		return -1;
+	if (!testEncodeOffsetRegion())
 		return -1;
 
 	for (size_t x = 0; x < ARRAYSIZE(formats); x++)
