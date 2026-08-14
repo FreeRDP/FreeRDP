@@ -226,11 +226,11 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 		WINPR_ASSERT((*sys->pEncoder)->GetDefaultParams);
 		status = (*sys->pEncoder)->GetDefaultParams(sys->pEncoder, &sys->EncParamExt);
 
-		if (status < 0)
+		if (status != cmResultSuccess)
 		{
 			WLog_Print(h264->log, WLOG_ERROR,
 			           "Failed to get OpenH264 default parameters (status=%d)", status);
-			return status;
+			return status > 0 ? -status : status;
 		}
 
 		EUsageType usageType = SCREEN_CONTENT_REAL_TIME;
@@ -298,11 +298,11 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 		WINPR_ASSERT((*sys->pEncoder)->InitializeExt);
 		status = (*sys->pEncoder)->InitializeExt(sys->pEncoder, &sys->EncParamExt);
 
-		if (status < 0)
+		if (status != cmResultSuccess)
 		{
 			WLog_Print(h264->log, WLOG_ERROR, "Failed to initialize OpenH264 encoder (status=%d)",
 			           status);
-			return status;
+			return status > 0 ? -status : status;
 		}
 
 		WINPR_ASSERT((*sys->pEncoder)->GetOption);
@@ -310,11 +310,11 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 		    (*sys->pEncoder)
 		        ->GetOption(sys->pEncoder, ENCODER_OPTION_SVC_ENCODE_PARAM_EXT, &sys->EncParamExt);
 
-		if (status < 0)
+		if (status != cmResultSuccess)
 		{
 			WLog_Print(h264->log, WLOG_ERROR,
 			           "Failed to get initial OpenH264 encoder parameters (status=%d)", status);
-			return status;
+			return status > 0 ? -status : status;
 		}
 	}
 	else
@@ -334,11 +334,11 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 					status = (*sys->pEncoder)
 					             ->SetOption(sys->pEncoder, ENCODER_OPTION_BITRATE, &bitrate);
 
-					if (status < 0)
+					if (status != cmResultSuccess)
 					{
 						WLog_Print(h264->log, WLOG_ERROR,
 						           "Failed to set encoder bitrate (status=%d)", status);
-						return status;
+						return status > 0 ? -status : status;
 					}
 				}
 
@@ -352,11 +352,11 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 					             ->SetOption(sys->pEncoder, ENCODER_OPTION_FRAME_RATE,
 					                         &sys->EncParamExt.fMaxFrameRate);
 
-					if (status < 0)
+					if (status != cmResultSuccess)
 					{
 						WLog_Print(h264->log, WLOG_ERROR,
 						           "Failed to set encoder framerate (status=%d)", status);
-						return status;
+						return status > 0 ? -status : status;
 					}
 				}
 
@@ -372,11 +372,11 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 					             ->SetOption(sys->pEncoder, ENCODER_OPTION_SVC_ENCODE_PARAM_EXT,
 					                         &sys->EncParamExt);
 
-					if (status < 0)
+					if (status != cmResultSuccess)
 					{
 						WLog_Print(h264->log, WLOG_ERROR,
 						           "Failed to set encoder parameters (status=%d)", status);
-						return status;
+						return status > 0 ? -status : status;
 					}
 				}
 
@@ -399,10 +399,10 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 	WINPR_ASSERT((*sys->pEncoder)->EncodeFrame);
 	status = (*sys->pEncoder)->EncodeFrame(sys->pEncoder, &pic, &info);
 
-	if (status < 0)
+	if (status != cmResultSuccess)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "Failed to encode frame (status=%d)", status);
-		return status;
+		return status > 0 ? -status : status;
 	}
 
 	*ppDstData = info.sLayerInfo[0].pBsBuf;
