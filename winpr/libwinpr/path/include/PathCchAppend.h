@@ -20,7 +20,7 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 		return E_INVALIDARG;
 
 	if (!pszMore)
-		return E_INVALIDARG;
+		return S_OK;
 
 	if ((cchPath == 0) || (cchPath > PATHCCH_MAX_CCH))
 		return E_INVALIDARG;
@@ -84,7 +84,7 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 		return E_INVALIDARG;
 
 	if (!pszMore)
-		return E_INVALIDARG;
+		return S_OK;
 
 	if ((cchPath == 0) || (cchPath > PATHCCH_MAX_CCH))
 		return E_INVALIDARG;

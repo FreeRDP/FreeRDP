@@ -101,10 +101,12 @@ int TestPathCchAppend(int argc, char* argv[])
 		return -1;
 	}
 
-	/* According to msdn a nullptr pszMore is an invalid argument (although optional !?) */
+	/* According to msdn a nullptr pszMore is an invalid argument (although optional !?)
+	 * Testing the real thing on windows reveals that it returns S_OK...
+	 */
 	_tcsncpy(Path, testBasePathNoBackslash, ARRAYSIZE(Path));
 	status = PathCchAppend(Path, PATHCCH_MAX_CCH, nullptr);
-	if (status != E_INVALIDARG)
+	if (status != S_OK)
 	{
 		_tprintf(_T("PathCchAppend with nullptr pszMore unexpectedly returned status: 0x%08") _T(
 		             PRIX32) _T("\n"),
