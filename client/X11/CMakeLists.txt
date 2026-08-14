@@ -183,7 +183,7 @@ endif()
 list(APPEND PUB_LIBS freerdp-client)
 
 list(APPEND PRIV_LIBS m)
-if(NOT APPLE)
+if(NOT APPLE AND NOT OPENBSD)
   list(APPEND PRIV_LIBS rt)
 endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PUB_LIBS})
