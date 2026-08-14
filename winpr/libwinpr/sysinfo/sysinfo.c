@@ -137,6 +137,29 @@ static WORD GetProcessorArchitecture(void)
 		default:
 			return PROCESSOR_ARCHITECTURE_UNKNOWN;
 	}
+#elif defined(__MACOSX__) || defined(__IOS__)
+	int32_t val = 0;
+	size_t len = sizeof(val);
+
+	const int rc = sysctlbyname("hw.cputype", &val, &len, nullptr, 0);
+	if (rc != 0)
+		return PROCESSOR_ARCHITECTURE_UNKNOWN;
+
+	switch (val)
+	{
+		case CPU_TYPE_X86:
+			return PROCESSOR_ARCHITECTURE_INTEL;
+		case CPU_TYPE_X86_64:
+			return PROCESSOR_ARCHITECTURE_AMD64;
+		case CPU_TYPE_ARM:
+			return PROCESSOR_ARCHITECTURE_ARM;
+		case CPU_TYPE_ARM64:
+			return PROCESSOR_ARCHITECTURE_ARM64;
+		case CPU_TYPE_ARM64_32:
+			return PROCESSOR_ARCHITECTURE_ARM;
+		default:
+			return PROCESSOR_ARCHITECTURE_UNKNOWN;
+	}
 
 #elif defined(_M_ARM)
 	cpuArch = PROCESSOR_ARCHITECTURE_ARM;
@@ -166,11 +189,15 @@ static DWORD GetNumberOfProcessors(void)
 	DWORD numCPUs = 1;
 #if defined(ANDROID)
 	return android_getCpuCount();
-	/* TODO: iOS */
+#elif defined(__MACOSX__) || defined(__IOS__)
+	int32_t val = 0;
+	size_t len = sizeof(val);
+	const int rc = sysctlbyname("hw.logicalcpu", &val, &len, nullptr, 0);
+	if (rc == 0)
+		numCPUs = WINPR_ASSERTING_INT_CAST(DWORD, val);
 #elif defined(__linux__) || defined(__sun) || defined(_AIX)
 	numCPUs = (DWORD)sysconf(_SC_NPROCESSORS_ONLN);
-#elif defined(__MACOSX__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
-    defined(__OpenBSD__) || defined(__DragonFly__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
 	{
 		int mib[4];
 		size_t length = sizeof(numCPUs);
