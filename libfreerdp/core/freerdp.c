@@ -36,6 +36,7 @@
 #include "message.h"
 #include <freerdp/buildflags.h>
 #include "gateway/rpc_fault.h"
+#include "../cache/cache.h"
 
 #include <winpr/assert.h>
 
@@ -640,6 +641,8 @@ BOOL freerdp_disconnect(freerdp* instance)
 	}
 
 	IFCALL(instance->PostDisconnect, instance);
+	cache_free(instance->context->cache);
+	instance->context->cache = nullptr;
 
 	if (up)
 	{

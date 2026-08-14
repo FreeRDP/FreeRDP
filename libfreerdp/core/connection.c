@@ -41,6 +41,7 @@
 #include <freerdp/error.h>
 #include <freerdp/listener.h>
 
+#include "../cache/cache.h"
 #include "../cache/pointer.h"
 #include "../crypto/crypto.h"
 #include "../crypto/privatekey.h"
@@ -574,6 +575,11 @@ static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 			return TRUE;
 
 		pointer_cache_register_callbacks(context->update);
+
+		WINPR_ASSERT(!context->cache);
+		context->cache = cache_new(context);
+		if (!context->cache)
+			return FALSE;
 
 		if (!IFCALLRESULT(FALSE, context->instance->PostConnect, context->instance))
 			return FALSE;
