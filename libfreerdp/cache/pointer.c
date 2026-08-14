@@ -32,8 +32,18 @@
 
 #define TAG FREERDP_TAG("cache.pointer")
 
+WINPR_ATTR_NODISCARD
+static const char* pointerType(bool colorCache)
+{
+
+	return colorCache ? "ColorPointerCache" : "PointerCache";
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer,
                               BOOL colorCache);
+
+WINPR_ATTR_NODISCARD
 static rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index);
 
 static void pointer_clear(rdpPointer* pointer)
@@ -60,6 +70,7 @@ static void pointer_free(rdpContext* context, rdpPointer* pointer)
 	free(pointer);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL update_pointer_position(rdpContext* context,
                                     const POINTER_POSITION_UPDATE* pointer_position)
 {
@@ -78,14 +89,13 @@ static BOOL update_pointer_position(rdpContext* context,
 	                    pointer_position->yPos);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL update_pointer_system(rdpContext* context, const POINTER_SYSTEM_UPDATE* pointer_system)
 {
-	rdpPointer* pointer = nullptr;
-
 	if (!context || !context->graphics || !context->graphics->Pointer_Prototype || !pointer_system)
 		return FALSE;
 
-	pointer = context->graphics->Pointer_Prototype;
+	rdpPointer* pointer = context->graphics->Pointer_Prototype;
 
 	switch (pointer_system->type)
 	{
@@ -101,6 +111,7 @@ static BOOL update_pointer_system(rdpContext* context, const POINTER_SYSTEM_UPDA
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL update_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskData,
                                        size_t lengthAndMask, const BYTE* xorMaskData,
                                        size_t lengthXorMask)
@@ -135,18 +146,16 @@ static BOOL update_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskD
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL update_pointer_color(rdpContext* context, const POINTER_COLOR_UPDATE* pointer_color)
 {
-	rdpPointer* pointer = nullptr;
-	rdpCache* cache = nullptr;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(pointer_color);
 
-	cache = context->cache;
+	rdpCache* cache = context->cache;
 	WINPR_ASSERT(cache);
 
-	pointer = Pointer_Alloc(context);
+	rdpPointer* pointer = Pointer_Alloc(context);
 
 	if (pointer == nullptr)
 		return FALSE;
@@ -174,18 +183,16 @@ out_fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL update_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE* pointer_large)
 {
-	rdpPointer* pointer = nullptr;
-	rdpCache* cache = nullptr;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(pointer_large);
 
-	cache = context->cache;
+	rdpCache* cache = context->cache;
 	WINPR_ASSERT(cache);
 
-	pointer = Pointer_Alloc(context);
+	rdpPointer* pointer = Pointer_Alloc(context);
 	if (pointer == nullptr)
 		return FALSE;
 	pointer->xorBpp = pointer_large->xorBpp;
@@ -212,6 +219,7 @@ out_fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL update_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new)
 {
 	if (!context || !pointer_new)
@@ -246,18 +254,16 @@ out_fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL update_pointer_cached(rdpContext* context, const POINTER_CACHED_UPDATE* pointer_cached)
 {
-	rdpPointer* pointer = nullptr;
-	rdpCache* cache = nullptr;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(pointer_cached);
 
-	cache = context->cache;
+	rdpCache* cache = context->cache;
 	WINPR_ASSERT(cache);
 
-	pointer = pointer_cache_get(cache->pointer, pointer_cached->cacheIndex);
+	rdpPointer* pointer = pointer_cache_get(cache->pointer, pointer_cached->cacheIndex);
 
 	if (pointer != nullptr)
 		return IFCALLRESULT(TRUE, pointer->Set, context, pointer);
@@ -267,8 +273,6 @@ static BOOL update_pointer_cached(rdpContext* context, const POINTER_CACHED_UPDA
 
 rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 {
-	rdpPointer* pointer = nullptr;
-
 	WINPR_ASSERT(pointer_cache);
 
 	if (index >= pointer_cache->cacheSize)
@@ -279,14 +283,12 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 	}
 
 	WINPR_ASSERT(pointer_cache->entries);
-	pointer = pointer_cache->entries[index];
-	return pointer;
+	return pointer_cache->entries[index];
 }
 
 BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer,
                        BOOL colorCache)
 {
-	rdpPointer* prevPointer = nullptr;
 	const FreeRDP_Settings_Keys_UInt32 id =
 	    colorCache ? FreeRDP_ColorPointerCacheSize : FreeRDP_PointerCacheSize;
 
@@ -294,25 +296,25 @@ BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer*
 	WINPR_ASSERT(pointer_cache->context);
 
 	const UINT32 size = freerdp_settings_get_uint32(pointer_cache->context->settings, id);
+	WLog_DBG(TAG, "[%s] pointer index:%" PRIu32 " [allocated %" PRIu32 ", size %" PRIu32 "]",
+	         pointerType(colorCache), index, pointer_cache->cacheSize, size);
 	if (index >= pointer_cache->cacheSize)
 	{
 		WLog_ERR(TAG,
-		         "invalid pointer index:%" PRIu32 " [allocated %" PRIu32 ", %s size %" PRIu32 "]",
-		         index, pointer_cache->cacheSize,
-		         colorCache ? "color-pointer-cache" : "pointer-cache", size);
+		         "[%s] invalid pointer index:%" PRIu32 " [allocated %" PRIu32 ", size %" PRIu32 "]",
+		         pointerType(colorCache), index, pointer_cache->cacheSize, size);
 		return FALSE;
 	}
 	if (index >= size)
 	{
 		WLog_WARN(TAG,
-		          "suspicious pointer index:%" PRIu32 " [allocated %" PRIu32 ", %s size %" PRIu32
+		          "[%s] suspicious pointer index:%" PRIu32 " [allocated %" PRIu32 ", size %" PRIu32
 		          "]",
-		          index, pointer_cache->cacheSize,
-		          colorCache ? "color-pointer-cache" : "pointer-cache", size);
+		          pointerType(colorCache), index, pointer_cache->cacheSize, size);
 	}
 
 	WINPR_ASSERT(pointer_cache->entries);
-	prevPointer = pointer_cache->entries[index];
+	rdpPointer* prevPointer = pointer_cache->entries[index];
 	pointer_free(pointer_cache->context, prevPointer);
 	pointer_cache->entries[index] = pointer;
 	return TRUE;
@@ -341,15 +343,12 @@ void pointer_cache_register_callbacks(rdpUpdate* update)
 
 rdpPointerCache* pointer_cache_new(rdpContext* context)
 {
-	rdpPointerCache* pointer_cache = nullptr;
-	rdpSettings* settings = nullptr;
-
 	WINPR_ASSERT(context);
 
-	settings = context->settings;
+	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	pointer_cache = (rdpPointerCache*)calloc(1, sizeof(rdpPointerCache));
+	rdpPointerCache* pointer_cache = (rdpPointerCache*)calloc(1, sizeof(rdpPointerCache));
 
 	if (!pointer_cache)
 		return nullptr;
@@ -362,6 +361,10 @@ rdpPointerCache* pointer_cache_new(rdpContext* context)
 	const UINT32 colorSize = freerdp_settings_get_uint32(settings, FreeRDP_ColorPointerCacheSize);
 	pointer_cache->cacheSize = MAX(size, colorSize) + 1;
 
+	WLog_DBG(TAG,
+	         "setting cacheSize=%" PRIu32 "[ColorPointerCache=%" PRIu32 ", PointerCache=%" PRIu32
+	         "]",
+	         pointer_cache->cacheSize, colorSize, size);
 	pointer_cache->entries = (rdpPointer**)calloc(pointer_cache->cacheSize, sizeof(rdpPointer*));
 
 	if (!pointer_cache->entries)

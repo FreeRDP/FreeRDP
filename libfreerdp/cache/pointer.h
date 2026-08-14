@@ -45,14 +45,12 @@ extern "C"
 	FREERDP_LOCAL void pointer_cache_free(rdpPointerCache* pointer_cache);
 
 	WINPR_ATTR_MALLOC(pointer_cache_free, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL rdpPointerCache* pointer_cache_new(rdpContext* context);
 
 	FREERDP_LOCAL void free_pointer_color_update(rdpContext* context,
 	                                             POINTER_COLOR_UPDATE* pointer);
 
 	WINPR_ATTR_MALLOC(free_pointer_color_update, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL POINTER_COLOR_UPDATE*
 	copy_pointer_color_update(rdpContext* context, const POINTER_COLOR_UPDATE* pointer);
 
@@ -60,14 +58,12 @@ extern "C"
 	                                             POINTER_LARGE_UPDATE* pointer);
 
 	WINPR_ATTR_MALLOC(free_pointer_large_update, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL POINTER_LARGE_UPDATE*
 	copy_pointer_large_update(rdpContext* context, const POINTER_LARGE_UPDATE* pointer);
 
 	FREERDP_LOCAL void free_pointer_new_update(rdpContext* context, POINTER_NEW_UPDATE* pointer);
 
 	WINPR_ATTR_MALLOC(free_pointer_new_update, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL POINTER_NEW_UPDATE* copy_pointer_new_update(rdpContext* context,
 	                                                          const POINTER_NEW_UPDATE* pointer);
 
@@ -75,7 +71,6 @@ extern "C"
 	                                              POINTER_CACHED_UPDATE* pointer);
 
 	WINPR_ATTR_MALLOC(free_pointer_cached_update, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL POINTER_CACHED_UPDATE*
 	copy_pointer_cached_update(rdpContext* context, const POINTER_CACHED_UPDATE* pointer);
 
@@ -83,7 +78,6 @@ extern "C"
 	                                                POINTER_POSITION_UPDATE* pointer);
 
 	WINPR_ATTR_MALLOC(free_pointer_position_update, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL POINTER_POSITION_UPDATE*
 	copy_pointer_position_update(rdpContext* context, const POINTER_POSITION_UPDATE* pointer);
 
@@ -91,7 +85,6 @@ extern "C"
 	                                              POINTER_SYSTEM_UPDATE* pointer);
 
 	WINPR_ATTR_MALLOC(free_pointer_system_update, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL POINTER_SYSTEM_UPDATE*
 	copy_pointer_system_update(rdpContext* context, const POINTER_SYSTEM_UPDATE* pointer);
 
