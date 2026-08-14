@@ -1879,7 +1879,7 @@ static BOOL tsg_ndr_read_packet_response_data(rdpTsg* tsg, wStream* s,
 {
 	WINPR_ASSERT(tsg);
 
-	if (!Stream_CheckAndLogRequiredCapacityOfSizeWLog(tsg->log, s, 1, 4))
+	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(tsg->log, s, 1, 4))
 		return FALSE;
 
 	const uint32_t arrayMaxLen = Stream_Get_UINT32(s);
@@ -1893,7 +1893,7 @@ static BOOL tsg_ndr_read_packet_response_data(rdpTsg* tsg, wStream* s,
 	}
 	if (response->responseDataLen > 0)
 	{
-		if (!Stream_CheckAndLogRequiredCapacityOfSizeWLog(tsg->log, s, 1, 4))
+		if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(tsg->log, s, 1, 4))
 			return FALSE;
 
 		if (tsg->CapsResponse.versionCaps.tsgCaps.capabilityType != TSG_CAPABILITY_TYPE_NAP)
@@ -2025,6 +2025,9 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, const RPC_PDU* pdu)
 
 	packet.tsgPacket.packetResponse.responseData = nullptr;
 	if (!tsg_ndr_pointer_read(log, pdu->s, &index, &PacketResponseDataPtr, FALSE))
+		goto fail;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, pdu->s, 4))
 		goto fail;
 
 	packet.tsgPacket.packetResponse.responseDataLen = Stream_Get_UINT32(pdu->s);
