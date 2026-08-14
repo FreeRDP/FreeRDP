@@ -1,6 +1,9 @@
 # codec
 
 option(WITH_CURSOR_DUMP "Dump mouse cursor data to binary directory" OFF)
+set(YUV_TILE_SIZE "512" CACHE STRING "YUV decoder per thread tile width/height")
+add_compile_definitions(YUV_TILE_SIZE=${YUV_TILE_SIZE})
+
 if(WITH_CURSOR_DUMP)
   add_compile_definitions(WITH_CURSOR_DUMP)
   add_compile_definitions(CURSOR_DUMP_DIR="${CMAKE_CURRENT_BINARY_DIR}")

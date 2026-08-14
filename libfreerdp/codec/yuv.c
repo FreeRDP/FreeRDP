@@ -11,7 +11,9 @@
 
 #define TAG FREERDP_TAG("codec")
 
-#define TILE_SIZE 64
+#if !defined(YUV_TILE_SIZE)
+#error "YUV_TILE_SIZE must be defined to the size of a single YUV decoder block"
+#endif
 
 typedef struct
 {
@@ -168,8 +170,8 @@ BOOL yuv_context_reset(YUV_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32
 		 *
 		 * ~2MB total for a 4k resolution, so negligible.
 		 */
-		const size_t pw = (width + TILE_SIZE - width % TILE_SIZE) / 16;
-		const size_t ph = (height + TILE_SIZE - height % TILE_SIZE) / 16;
+		const size_t pw = (width + YUV_TILE_SIZE - width % YUV_TILE_SIZE) / 16;
+		const size_t ph = (height + YUV_TILE_SIZE - height % YUV_TILE_SIZE) / 16;
 
 		const size_t count = pw * ph;
 
@@ -405,7 +407,7 @@ static BOOL pool_decode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 		while (r.left < r.right)
 		{
 			RECTANGLE_16 y = r;
-			y.right = MIN(r.right, r.left + TILE_SIZE);
+			y.right = MIN(r.right, r.left + YUV_TILE_SIZE);
 
 			while (y.top < y.bottom)
 			{
@@ -418,17 +420,17 @@ static BOOL pool_decode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 				}
 
 				YUV_PROCESS_WORK_PARAM* cur = &context->work_dec_params[waitCount];
-				z.bottom = MIN(z.bottom, z.top + TILE_SIZE);
+				z.bottom = MIN(z.bottom, z.top + YUV_TILE_SIZE);
 				if (rectangle_is_empty(&z))
 					continue;
 				*cur = pool_decode_param(&z, context, pYUVData, iStride, DstFormat, dest, nDstStep);
 				if (!submit_object(&context->work_objects[waitCount], cb, cur, context))
 					goto fail;
 				waitCount++;
-				y.top += TILE_SIZE;
+				y.top += YUV_TILE_SIZE;
 			}
 
-			r.left += TILE_SIZE;
+			r.left += YUV_TILE_SIZE;
 		}
 	}
 	rc = TRUE;
