@@ -2275,8 +2275,8 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
 		return FALSE;
 	}
 
-	if (!Stream_CheckAndLogRequiredCapacityOfSizeWLog(mcs->log, s, monitorCount,
-	                                                  monitorAttributeSize))
+	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(mcs->log, s, monitorCount,
+	                                                monitorAttributeSize))
 		return FALSE;
 
 	if (settings->MonitorCount != monitorCount)
