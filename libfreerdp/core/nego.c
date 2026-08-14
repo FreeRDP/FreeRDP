@@ -110,6 +110,11 @@ static UINT32 nego_failure_to_error(uint32_t failureCode)
 			/* The server has no certificate, so neither TLS nor NLA can be used. */
 			return FREERDP_ERROR_TLS_CONNECT_FAILED;
 
+		case HYBRID_REQUIRED_BY_SERVER:
+			/* The server insists on NLA, but it is not enabled in the client settings.
+			 * Reaching this point means the fallback found no other usable protocol. */
+			return FREERDP_ERROR_CONNECT_HYBRID_REQUIRED_BY_SERVER;
+
 		default:
 			/* The server rejected every security protocol we were permitted to offer. */
 			return FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED;
