@@ -327,8 +327,10 @@ BOOL GetSystemTimeAdjustment(WINPR_ATTR_UNUSED PDWORD lpTimeAdjustment,
 	return FALSE;
 }
 
-#ifndef CLOCK_MONOTONIC_RAW
-#define CLOCK_MONOTONIC_RAW 4
+#ifdef CLOCK_MONOTONIC_RAW
+#define CLOCK_ID CLOCK_MONOTONIC_RAW
+#else
+#define CLOCK_ID CLOCK_MONOTONIC
 #endif
 
 DWORD GetTickCount(void)
@@ -586,7 +588,7 @@ UINT64 winpr_GetTickCount64NS(void)
 #if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
 	struct timespec ts = WINPR_C_ARRAY_INIT;
 
-	if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) == 0)
+	if (clock_gettime(CLOCK_ID, &ts) == 0)
 		ticks = (WINPR_ASSERTING_INT_CAST(uint64_t, ts.tv_sec) * 1000000000ull) +
 		        WINPR_ASSERTING_INT_CAST(uint64_t, ts.tv_nsec);
 #elif defined(__MACH__) && defined(__APPLE__)
