@@ -2318,22 +2318,28 @@ static BOOL cliprdr_local_stream_update(CliprdrLocalStream* stream, const char* 
 	if (!copy)
 		return FALSE;
 
+	char* dname = nullptr;
 	char* saveptr = nullptr;
 	char* ptr = strtok_s(copy, "\r\n", &saveptr);
 	while (ptr)
 	{
-		const char* name = ptr;
+		const char* cname = ptr;
 		if (strncmp("file:///", ptr, 8) == 0)
-			name = &ptr[7];
+			cname = &ptr[7];
 		else if (strncmp("file:/", ptr, 6) == 0)
-			name = &ptr[5];
+			cname = &ptr[5];
 
-		if (!append_entry(stream, name))
+		const size_t nlen = strnlen(cname, size);
+		free(dname);
+		dname = winpr_str_url_decode(cname, nlen);
+		if (!dname)
+			goto fail;
+		if (!append_entry(stream, dname))
 			goto fail;
 
-		if (is_directory(name))
+		if (is_directory(dname))
 		{
-			const BOOL res = add_directory(stream, name);
+			const BOOL res = add_directory(stream, dname);
 			if (!res)
 				goto fail;
 		}
@@ -2342,6 +2348,7 @@ static BOOL cliprdr_local_stream_update(CliprdrLocalStream* stream, const char* 
 
 	rc = TRUE;
 fail:
+	free(dname);
 	free(copy);
 	return rc;
 }
