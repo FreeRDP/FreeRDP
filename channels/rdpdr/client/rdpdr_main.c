@@ -842,7 +842,6 @@ static UINT handle_platform_mounts_bsd(wLog* log, hotplug_dev* dev_array, size_t
 	{
 		handle_mountpoint(dev_array, size, mntbuf[idx].f_mntonname);
 	}
-	free(mntbuf);
 	return ERROR_SUCCESS;
 }
 #endif
