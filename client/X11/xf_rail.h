@@ -105,6 +105,7 @@ struct xf_app_window
 	BOOL maxHorz;
 	BOOL minimized;
 	BOOL rail_ignore_configure;
+	BOOL rail_fullscreen_normalizing;
 
 	Pixmap pixmap;
 	XImage* image;

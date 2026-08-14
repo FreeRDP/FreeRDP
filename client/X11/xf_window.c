@@ -1071,6 +1071,7 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->maxHorz = FALSE;
 	appWindow->minimized = FALSE;
 	appWindow->rail_ignore_configure = FALSE;
+	appWindow->rail_fullscreen_normalizing = FALSE;
 
 	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->handle = LogDynAndXCreateWindow(
