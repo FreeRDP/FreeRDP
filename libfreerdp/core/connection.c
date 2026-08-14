@@ -2233,6 +2233,9 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wSt
 	if (freerdp_shall_disconnect_context(rdp->context))
 		return STATE_RUN_SUCCESS;
 
+	if (!cache_resize(rdp->context))
+		return STATE_RUN_FAILED;
+
 	state_run_t status = STATE_RUN_SUCCESS;
 	if (!rdp->settings->SupportMonitorLayoutPdu)
 		status = rdp_client_connect_finalize(rdp);

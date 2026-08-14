@@ -151,3 +151,11 @@ void free_surface_bits_command(WINPR_ATTR_UNUSED rdpContext* context, SURFACE_BI
 		free(order->bmp.bitmapData);
 	free(order);
 }
+
+BOOL cache_resize(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+	cache_free(context->cache);
+	context->cache = cache_new(context);
+	return context->cache != nullptr;
+}
