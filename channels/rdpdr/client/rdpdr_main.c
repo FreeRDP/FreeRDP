@@ -1996,8 +1996,6 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
                                                       UINT32 dataLength, UINT32 totalLength,
                                                       UINT32 dataFlags)
 {
-	wStream* data_in = nullptr;
-
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(pData || (dataLength == 0));
 
@@ -2026,8 +2024,14 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 		}
 	}
 
-	data_in = rdpdr->data_in;
+	if (!rdpdr->data_in)
+	{
+		WLog_Print(rdpdr->log, WLOG_ERROR,
+		           "Invalid state, no CHANNEL_FLAG_FIRST received, aborting.");
+		return ERROR_INVALID_DATA;
+	}
 
+	wStream* data_in = rdpdr->data_in;
 	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
 	{
 		WLog_Print(rdpdr->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
