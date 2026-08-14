@@ -21,6 +21,7 @@
 #ifndef WINPR_CRT_STRING_H
 #define WINPR_CRT_STRING_H
 
+#include <stdarg.h>
 #include <wchar.h>
 #include <stdio.h>
 #include <string.h>
