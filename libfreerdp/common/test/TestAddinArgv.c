@@ -8,10 +8,12 @@ static BOOL test_alloc(void)
 	BOOL rc = FALSE;
 	int rng = 0;
 	const char* param[] = { "foo:", "bar", "bla", "rdp", nullptr };
+	const char* paramInvalid[] = { nullptr, "foo:", "bar", "bla", "rdp", nullptr };
 	ADDIN_ARGV* arg1 = nullptr;
 	ADDIN_ARGV* arg2 = nullptr;
 	ADDIN_ARGV* arg3 = nullptr;
 	ADDIN_ARGV* arg4 = nullptr;
+	ADDIN_ARGV* arg5 = nullptr;
 
 	/* Test empty allocation */
 	arg1 = freerdp_addin_argv_new(0, nullptr);
@@ -43,9 +45,14 @@ static BOOL test_alloc(void)
 			goto fail;
 	}
 
-	/* Input lists with nullptr elements are not allowed */
+	/* Input lists with nullptr elements are allowed */
 	arg4 = freerdp_addin_argv_new(ARRAYSIZE(param), param);
-	if (arg4)
+	if (!arg4)
+		goto fail;
+
+	/* Input lists with nullptr elements as name are not allowed */
+	arg5 = freerdp_addin_argv_new(ARRAYSIZE(paramInvalid), paramInvalid);
+	if (arg5)
 		goto fail;
 	rc = TRUE;
 fail:
@@ -53,6 +60,7 @@ fail:
 	freerdp_addin_argv_free(arg2);
 	freerdp_addin_argv_free(arg3);
 	freerdp_addin_argv_free(arg4);
+	freerdp_addin_argv_free(arg5);
 	printf("%s: %d\n", __func__, rc);
 	return rc;
 }
