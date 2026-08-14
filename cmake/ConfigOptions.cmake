@@ -174,16 +174,11 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
   find_package(ALSA)
   find_package(PulseAudio)
   find_package(OSS)
-  option(WITH_ALSA "use alsa for sound" ${ALSA_FOUND})
-  option(WITH_PULSE "use alsa for sound" ${PULSE_FOUND})
-  option(WITH_OSS "use alsa for sound" ${OSS_FOUND})
-endif()
-
-if(OPENBSD)
   find_package(SNDIO)
-  option(WITH_SNDIO "use SNDIO for sound" ${SNDIO_FOUND # OpenBSD
-         endif () }
-  )
+  option(WITH_ALSA "use ALSA for sound" ${ALSA_FOUND})
+  option(WITH_PULSE "use Pulse for sound" ${PULSE_FOUND})
+  option(WITH_OSS "use OSS for sound" ${OSS_FOUND})
+  option(WITH_SNDIO "use Sndio for sound" ${SNDIO_FOUND})
 endif()
 
 option(BUILD_FUZZERS "Use BUILD_FUZZERS to build fuzzing tests" OFF)
