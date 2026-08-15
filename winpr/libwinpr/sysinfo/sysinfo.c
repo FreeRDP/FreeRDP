@@ -103,8 +103,7 @@ static UINT64 mac_get_time_ns(void)
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 
-#if defined(__MACOSX__) || defined(__IOS__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
-    defined(__OpenBSD__) || defined(__DragonFly__)
+#if defined(__MACOSX__) || defined(__IOS__)
 #include <sys/sysctl.h>
 #endif
 
@@ -195,33 +194,12 @@ static DWORD GetNumberOfProcessors(void)
 	const int rc = sysctlbyname("hw.logicalcpu", &val, &len, nullptr, 0);
 	if (rc == 0)
 		numCPUs = WINPR_ASSERTING_INT_CAST(DWORD, val);
-#elif defined(__linux__) || defined(__sun) || defined(_AIX)
-	numCPUs = (DWORD)sysconf(_SC_NPROCESSORS_ONLN);
-#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
-	{
-		int mib[4];
-		size_t length = sizeof(numCPUs);
-		mib[0] = CTL_HW;
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-		mib[1] = HW_NCPU;
-#else
-		mib[1] = HW_AVAILCPU;
-#endif
-		sysctl(mib, 2, &numCPUs, &length, nullptr, 0);
-
-		if (numCPUs < 1)
-		{
-			mib[1] = HW_NCPU;
-			sysctl(mib, 2, &numCPUs, &length, nullptr, 0);
-
-			if (numCPUs < 1)
-				numCPUs = 1;
-		}
-	}
 #elif defined(__hpux)
 	numCPUs = (DWORD)mpctl(MPC_GETNUMSPUS, nullptr, nullptr);
 #elif defined(__sgi)
 	numCPUs = (DWORD)sysconf(_SC_NPROC_ONLN);
+#elif defined(_SC_NPROCESSORS_ONLN)
+	numCPUs = (DWORD)sysconf(_SC_NPROCESSORS_ONLN);
 #endif
 	return numCPUs;
 }
