@@ -40,6 +40,7 @@ option(UWAC_HAVE_PIXMAN_REGION "Use PIXMAN or FreeRDP for region calculations" "
 include(CommonConfigOptions)
 
 include(CheckFunctionExists)
+check_function_exists(mkostemp UWAC_HAVE_MKOSTEMP)
 check_function_exists(strerror_r UWAC_HAVE_STRERROR_R)
 
 # Check for cmake compatibility (enable/disable features)
