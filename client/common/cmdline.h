@@ -174,9 +174,11 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Fullscreen mode (<Ctrl>+<Alt>+<Enter> toggles fullscreen)" },
 	{ "fipsmode", COMMAND_LINE_VALUE_BOOL, nullptr, nullptr, nullptr, -1, nullptr, "FIPS mode" },
 	{ "floatbar", COMMAND_LINE_VALUE_OPTIONAL,
-	  "sticky:[on|off],default:[visible|hidden],show:[always|fullscreen|window]", nullptr, nullptr,
-	  -1, nullptr,
-	  "floatbar is disabled by default (when enabled defaults to sticky in fullscreen mode)" },
+	  "sticky:[on|off],default:[visible|hidden],show:[always|fullscreen|window],position:[left|"
+	  "center|right]",
+	  nullptr, nullptr, -1, nullptr,
+	  "floatbar is disabled by default (when enabled defaults to sticky, centered, in fullscreen "
+	  "mode)" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 	  "smooth fonts (ClearType)" },
 	{ "force-console-callbacks", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1,
