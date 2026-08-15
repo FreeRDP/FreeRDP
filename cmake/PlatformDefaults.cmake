@@ -109,7 +109,12 @@ if(USE_PLATFORM_DEFAULT)
   add_compile_definitions("WINPR_TIMEZONE_FILE=\"${WINPR_TIMEZONE_FILE}\"")
 
   if(EPOLLSHIM)
-    find_path(EPOLLSHIM_INCLUDE_DIR NAMES sys/epoll.h sys/timerfd.h HINTS /usr/local/include/libepoll-shim)
-    find_library(EPOLLSHIM_LIBS NAMES epoll-shim libepoll-shim HINTS /usr/local/lib)
+    find_package(PkgConfig QUIET REQUIRED)
+    pkg_check_modules(PC_EPOLLSHIM epoll-shim REQUIRED)
+
+    find_path(EPOLLSHIM_INCLUDE_DIR NAMES sys/epoll.h sys/timerfd.h
+              HINTS ${PC_EPOLLSHIM_INCLUDE_DIRS})
+    find_library(EPOLLSHIM_LIBS NAMES epoll-shim libepoll-shim
+                 HINTS ${PC_EPOLLSHIM_LIBRARY_DIRS})
   endif()
 endif()
