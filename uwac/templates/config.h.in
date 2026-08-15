@@ -3,6 +3,7 @@
 
 /* Include files */
 #cmakedefine UWAC_HAVE_TM_GMTOFF
+#cmakedefine UWAC_HAVE_MKOSTEMP
 #cmakedefine UWAC_HAVE_POLL_H
 #cmakedefine UWAC_HAVE_SYSLOG_H
 #cmakedefine UWAC_HAVE_JOURNALD_H
