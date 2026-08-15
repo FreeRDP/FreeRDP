@@ -57,6 +57,7 @@ struct rdp_nego
 	BOOL sendNegoData;
 	UINT32 SelectedProtocol;
 	UINT32 RequestedProtocols;
+	UINT32 failureCode; /* last RDP_NEG_FAILURE::failureCode received, 0 if none */
 	BOOL NegotiateSecurityLayer;
 	BOOL EnabledProtocols[32];
 	BOOL RestrictedAdminModeRequired;  /* Client-side */
@@ -94,6 +95,31 @@ static void nego_send(rdpNego* nego);
 static BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s);
 static BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s);
 static BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s);
+static const char* nego_rdp_neg_fail_str(uint32_t what);
+
+/* Map a RDP_NEG_FAILURE::failureCode to a connection error.
+ *
+ * Only meaningful once the negotiation has terminally failed: a failure code on its own
+ * is usually recoverable by falling back to another security protocol.
+ */
+static UINT32 nego_failure_to_error(uint32_t failureCode)
+{
+	switch (failureCode)
+	{
+		case SSL_CERT_NOT_ON_SERVER:
+			/* The server has no certificate, so neither TLS nor NLA can be used. */
+			return FREERDP_ERROR_TLS_CONNECT_FAILED;
+
+		case HYBRID_REQUIRED_BY_SERVER:
+			/* The server insists on NLA, but it is not enabled in the client settings.
+			 * Reaching this point means the fallback found no other usable protocol. */
+			return FREERDP_ERROR_CONNECT_HYBRID_REQUIRED_BY_SERVER;
+
+		default:
+			/* The server rejected every security protocol we were permitted to offer. */
+			return FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED;
+	}
+}
 
 BOOL nego_update_settings_from_state(rdpNego* nego, rdpSettings* settings)
 {
@@ -236,9 +262,19 @@ BOOL nego_connect(rdpNego* nego)
 
 			if (nego_get_state(nego) == NEGO_STATE_FAIL)
 			{
-				if (freerdp_get_last_error(transport_get_context(nego->transport)) ==
-				    FREERDP_ERROR_SUCCESS)
-					WLog_Print(nego->log, WLOG_ERROR, "Protocol Security Negotiation Failure");
+				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
+				{
+					if (nego->failureCode != 0)
+						WLog_Print(nego->log, WLOG_ERROR,
+						           "Protocol Security Negotiation Failure: %s [0x%08" PRIx32 "]",
+						           nego_rdp_neg_fail_str(nego->failureCode), nego->failureCode);
+					else
+						WLog_Print(nego->log, WLOG_ERROR, "Protocol Security Negotiation Failure");
+				}
+
+				if (nego->failureCode != 0)
+					freerdp_set_last_error_if_not(context,
+					                              nego_failure_to_error(nego->failureCode));
 
 				nego_set_state(nego, NEGO_STATE_FINAL);
 				return FALSE;
@@ -1451,6 +1487,11 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 	const uint32_t failureCode = Stream_Get_UINT32(s);
 	const char* failureStr = nego_rdp_neg_fail_str(failureCode);
 	DWORD level = WLOG_WARN;
+
+	/* Remember why the server refused. The cases below fall back to another protocol, so
+	 * this is only turned into an error once the negotiation has terminally failed. */
+	nego->failureCode = failureCode;
+
 	switch (failureCode)
 	{
 		case SSL_REQUIRED_BY_SERVER:
@@ -1691,6 +1732,7 @@ void nego_init(rdpNego* nego)
 	nego->CookieMaxLength = DEFAULT_COOKIE_MAX_LENGTH;
 	nego->sendNegoData = FALSE;
 	nego->flags = 0;
+	nego->failureCode = 0;
 }
 
 /**
