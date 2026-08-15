@@ -49,9 +49,6 @@ generate_protocol_file(ivi-application)
 generate_protocol_file(fullscreen-shell-unstable-v1)
 generate_protocol_file(keyboard-shortcuts-inhibit-unstable-v1)
 
-if(EPOLLSHIM)
-  include_directories(SYSTEM ${EPOLLSHIM_INCLUDE_DIR})
-endif()
 include_directories(SYSTEM ${WAYLAND_INCLUDE_DIR})
 include_directories(SYSTEM ${XKBCOMMON_INCLUDE_DIR})
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../include")
@@ -82,9 +79,11 @@ if(WITH_LIBRARY_VERSIONING)
   set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${UWAC_VERSION} SOVERSION ${UWAC_API_VERSION})
 endif()
 
-target_link_libraries(
-  ${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} PRIVATE ${WAYLAND_LIBS} ${XKBCOMMON_LIBS} ${EPOLLSHIM_LIBS}
-)
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} PRIVATE ${WAYLAND_LIBS} ${XKBCOMMON_LIBS})
+if(EPOLLSHIM)
+  target_link_libraries(${MODULE_NAME} PRIVATE PkgConfig::EPOLLSHIM)
+endif()
+
 if(UWAC_HAVE_PIXMAN_REGION)
   target_link_libraries(${MODULE_NAME} PRIVATE ${pixman_LINK_LIBRARIES})
 else()
