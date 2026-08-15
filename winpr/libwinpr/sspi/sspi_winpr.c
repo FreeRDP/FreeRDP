@@ -1052,21 +1052,6 @@ static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const
 	return nullptr;
 }
 
-static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameA(const SEC_CHAR* Name)
-{
-	if (!Name)
-		return nullptr;
-
-	WCHAR* NameW = ConvertUtf8ToWCharAlloc(Name, nullptr);
-
-	if (!NameW)
-		return nullptr;
-
-	const SecurityFunctionTableW* table = sspi_GetSecurityFunctionTableWByNameW(NameW);
-	free(NameW);
-	return table;
-}
-
 /* Table lookup for the context/credential dispatch wrappers, which identify their package
  * by the handle itself. Takes the handle rather than an index so the identifier is read in
  * one place instead of at every call site. */

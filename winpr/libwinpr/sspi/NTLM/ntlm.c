@@ -47,8 +47,6 @@
 
 #define WINPR_KEY "Software\\%s\\WinPR\\NTLM"
 
-static char* NTLM_PACKAGE_NAME = "NTLM";
-
 #define check_context(ctx) check_context_((ctx), __FILE__, __func__, __LINE__)
 
 WINPR_ATTR_NODISCARD
