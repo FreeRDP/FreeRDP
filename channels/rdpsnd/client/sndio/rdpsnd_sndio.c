@@ -42,7 +42,8 @@ typedef struct
 	struct sio_par par;
 } rdpsndSndioPlugin;
 
-static BOOL rdpsnd_sndio_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_sndio_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
+                              WINPR_ATTR_UNUSED UINT32 latency)
 {
 	rdpsndSndioPlugin* sndio = (rdpsndSndioPlugin*)device;
 
@@ -123,7 +124,8 @@ static void rdpsnd_sndio_free(rdpsndDevicePlugin* device)
 	free(sndio);
 }
 
-static BOOL rdpsnd_sndio_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMAT* format)
+static BOOL rdpsnd_sndio_format_supported(WINPR_ATTR_UNUSED rdpsndDevicePlugin* device,
+                                          const AUDIO_FORMAT* format)
 {
 	if (format == nullptr)
 		return FALSE;
@@ -131,14 +133,17 @@ static BOOL rdpsnd_sndio_format_supported(rdpsndDevicePlugin* device, AUDIO_FORM
 	return (format->wFormatTag == WAVE_FORMAT_PCM);
 }
 
-static void rdpsnd_sndio_play(rdpsndDevicePlugin* device, BYTE* data, int size)
+static UINT rdpsnd_sndio_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {
 	rdpsndSndioPlugin* sndio = (rdpsndSndioPlugin*)device;
 
 	if (device == nullptr || sndio->hdl == nullptr)
-		return;
+		return ERROR_INVALID_PARAMETER;
 
-	sio_write(sndio->hdl, data, size);
+	const size_t rc = sio_write(sndio->hdl, data, size);
+	if (rc != size)
+		return CHANNEL_RC_OK;
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -146,23 +151,22 @@ static void rdpsnd_sndio_play(rdpsndDevicePlugin* device, BYTE* data, int size)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpsnd_sndio_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+static UINT rdpsnd_sndio_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
-	int status;
-	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndSndioPlugin* sndio = (rdpsndSndioPlugin*)device;
+	WINPR_ASSERT(sndio);
+
 	COMMAND_LINE_ARGUMENT_A rdpsnd_sndio_args[] = { { nullptr, 0, nullptr, nullptr, nullptr, -1,
 		                                              nullptr, nullptr } };
-	flags =
+	const DWORD flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	status = CommandLineParseArgumentsA(args->argc, (const char**)args->argv, rdpsnd_sndio_args,
-	                                    flags, sndio, nullptr, nullptr);
+	const int status = CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_sndio_args, flags,
+	                                              sndio, nullptr, nullptr);
 
 	if (status < 0)
 		return ERROR_INVALID_DATA;
 
-	arg = rdpsnd_sndio_args;
+	const COMMAND_LINE_ARGUMENT_A* arg = rdpsnd_sndio_args;
 
 	do
 	{
@@ -183,10 +187,8 @@ static UINT rdpsnd_sndio_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 FREERDP_ENTRY_POINT(UINT VCAPITYPE sndio_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	ADDIN_ARGV* args;
-	rdpsndSndioPlugin* sndio;
 	UINT ret = CHANNEL_RC_OK;
-	sndio = (rdpsndSndioPlugin*)calloc(1, sizeof(rdpsndSndioPlugin));
+	rdpsndSndioPlugin* sndio = (rdpsndSndioPlugin*)calloc(1, sizeof(rdpsndSndioPlugin));
 
 	if (sndio == nullptr)
 		return CHANNEL_RC_NO_MEMORY;
@@ -197,11 +199,11 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE sndio_freerdp_rdpsnd_client_subsystem_entry(
 	sndio->device.Play = rdpsnd_sndio_play;
 	sndio->device.Close = rdpsnd_sndio_close;
 	sndio->device.Free = rdpsnd_sndio_free;
-	args = pEntryPoints->args;
+	const ADDIN_ARGV* args = pEntryPoints->args;
 
 	if (args->argc > 1)
 	{
-		ret = rdpsnd_sndio_parse_addin_args((rdpsndDevicePlugin*)sndio, args);
+		ret = rdpsnd_sndio_parse_addin_args(&sndio->device, args);
 
 		if (ret != CHANNEL_RC_OK)
 		{
