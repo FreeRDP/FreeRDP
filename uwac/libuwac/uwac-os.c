@@ -38,7 +38,7 @@
 #pragma clang diagnostic pop
 #endif
 
-#if defined(__FreeBSD__) || defined(__DragonFly__)
+#ifdef __FreeBSD__
 #define USE_SHM
 #endif
 
