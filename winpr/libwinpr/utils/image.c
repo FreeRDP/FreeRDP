@@ -105,8 +105,8 @@ BOOL readBitmapFileHeader(wStream* s, WINPR_BITMAP_FILE_HEADER* bf)
 		           bf->bfType[1]);
 		return FALSE;
 	}
-	return Stream_CheckAndLogRequiredCapacityWLog(log, s,
-	                                              bf->bfSize - sizeof(WINPR_BITMAP_FILE_HEADER));
+	return Stream_CheckAndLogRequiredLengthWLog(log, s,
+	                                            bf->bfSize - sizeof(WINPR_BITMAP_FILE_HEADER));
 }
 
 BOOL writeBitmapInfoHeader(wStream* s, const WINPR_BITMAP_INFO_HEADER* bi)
@@ -467,7 +467,7 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 		}
 	}
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, bi.biSizeImage))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, bi.biSizeImage))
 		goto fail;
 
 	if (bi.biWidth <= 0)

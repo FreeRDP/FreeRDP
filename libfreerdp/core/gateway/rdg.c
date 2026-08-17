@@ -965,7 +965,7 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	if (fieldsPresent & HTTP_TUNNEL_AUTH_RESPONSE_FIELD_REDIR_FLAGS)
 	{
 		UINT32 redirFlags = 0;
-		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, 4))
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, 4))
 			return FALSE;
 		Stream_Read_UINT32(s, redirFlags);
 
@@ -977,7 +977,7 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	if (fieldsPresent & HTTP_TUNNEL_AUTH_RESPONSE_FIELD_IDLE_TIMEOUT)
 	{
 		UINT32 idleTimeout = 0;
-		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, 4))
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, 4))
 			return FALSE;
 		Stream_Read_UINT32(s, idleTimeout);
 		WLog_Print(rdg->log, WLOG_DEBUG, "[IDLE_TIMEOUT] idleTimeout=%" PRIu32 ": TODO: unused",
@@ -987,7 +987,7 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	if (fieldsPresent & HTTP_TUNNEL_AUTH_RESPONSE_FIELD_SOH_RESPONSE)
 	{
 		UINT16 cbLen = 0;
-		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, 2))
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, 2))
 			return FALSE;
 		Stream_Read_UINT16(s, cbLen);
 
@@ -1059,24 +1059,24 @@ static BOOL rdg_process_channel_response_optional(rdpRdg* rdg, wStream* s, UINT1
 {
 	if ((fieldsPresent & HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID) != 0)
 	{
-		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, 4))
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, 4))
 			return FALSE;
 		const UINT32 channelId = Stream_Get_UINT32(s);
 		WLog_Print(rdg->log, WLOG_DEBUG, "TODO: Got channelId=%" PRIu32, channelId);
 	}
 	if ((fieldsPresent & HTTP_CHANNEL_RESPONSE_FIELD_UDPPORT) != 0)
 	{
-		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, 2))
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, 2))
 			return FALSE;
 		const UINT16 udpPort = Stream_Get_UINT16(s);
 		WLog_Print(rdg->log, WLOG_DEBUG, "TODO: Got udpPort=%" PRIu32, udpPort);
 	}
 	if ((fieldsPresent & HTTP_CHANNEL_RESPONSE_FIELD_AUTHNCOOKIE) != 0)
 	{
-		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, 2))
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, 2))
 			return FALSE;
 		const UINT16 blobLen = Stream_Get_UINT16(s);
-		if (!Stream_CheckAndLogRequiredCapacityWLog(rdg->log, s, blobLen))
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, blobLen))
 			return FALSE;
 		WLog_Print(rdg->log, WLOG_DEBUG, "TODO: Got UDP auth blob=%" PRIu32, blobLen);
 		if (!Stream_SafeSeek(s, blobLen))

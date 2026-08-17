@@ -1476,9 +1476,6 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree, FALSE))
 		goto fail;
 
-	if (!(context->cache = cache_new(context)))
-		goto fail;
-
 	gdi_register_update_callbacks(context->update);
 	brush_cache_register_callbacks(context->update);
 	glyph_cache_register_callbacks(context->update);
@@ -1498,13 +1495,10 @@ fail:
 
 void gdi_free(freerdp* instance)
 {
-	rdpGdi* gdi = nullptr;
-	rdpContext* context = nullptr;
-
 	if (!instance || !instance->context)
 		return;
 
-	gdi = instance->context->gdi;
+	rdpGdi* gdi = instance->context->gdi;
 
 	if (gdi)
 	{
@@ -1513,9 +1507,6 @@ void gdi_free(freerdp* instance)
 		free(gdi);
 	}
 
-	context = instance->context;
-	cache_free(context->cache);
-	context->cache = nullptr;
 	instance->context->gdi = (rdpGdi*)nullptr;
 }
 
