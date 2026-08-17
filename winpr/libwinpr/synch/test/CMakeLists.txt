@@ -22,13 +22,12 @@ set(${MODULE_PREFIX}_TESTS
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODULE_PREFIX}_TESTS})
 
-if(EPOLLSHIM)
-  include_directories(SYSTEM ${EPOLLSHIM_INCLUDE_DIR})
-endif()
-
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 target_link_libraries(${MODULE_NAME} winpr)
+if(EPOLLSHIM)
+  target_link_libraries(${MODULE_NAME} PRIVATE PkgConfig::EPOLLSHIM)
+endif()
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
