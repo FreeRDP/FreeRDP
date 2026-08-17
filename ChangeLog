@@ -1,3 +1,185 @@
+# 2026-08-26 Version 3.31.0
+
+Huge bugfix and security release.
+
+We've received quite a number of smaller and bigger bugfixes and security reports
+that have been addressed with this release.
+Most important user facing change is a optimization of the YUV decoder which
+will result in faster client graphics for AVC/H264 sessions
+
+IMPORTANT: Distributors, please update ASAP, there are severe issues being
+           addressed with this release
+
+# CVE
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-c5gr-hmqp-pwj4
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-h5w2-q35j-443h
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-m85m-3qxv-63h5
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-r9pv-ffph-6gg6
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-ffjr-p229-hpch
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-4464-r7qj-pgrx
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-2vf2-grvj-6g8x
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-hg4r-vv53-vwf8
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-57h7-vw2f-2f9x
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-v649-94v2-p72q
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-j5mq-3349-gwmm
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-23pf-q83q-x45r
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-pj8w-fh79-f438
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-vccg-35r5-8jrf
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-w9qg-g24r-77f6
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-f5p6-88mh-59vg
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-hw7p-5h2r-83gq
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-r7jx-j9h7-j4xj
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-6mpx-c8rj-whj5
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-x7v6-xfx3-52j6
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-9jcm-x588-gh26
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-q65v-4w7q-hx3r
+
+## What's Changed
+* Warnings removed (#13076)
+* [codec,h264] support more hardware decoders (#13078)
+* [crypto] gracefully handle failed BIO/SSL creation error (#13080)
+* Ntlm custom (#13079)
+* Sspi tests (#13082)
+* [winpr,sspi] unify NTLM memory handling (#13085)
+* [codec,yuv] bound avc444v2 chroma combine to decoded frame width (#13084)
+* [client,common] use configured AAD authority for sso-mib (#13088)
+* [channels,rail] fix server side channel tracker (#13087)
+* Session info (#13089)
+* [winpr,ntlm] limit data copy to smaller entity (#13090)
+* [core,message] clone notify icon state order for async update (#13092)
+* [mf, mediacodec] fix h264 typo (#13101)
+* Fix for #13102 (#13108)
+* [client,android] send clipboard format list response (#13104)
+* [gdi] bound hatched brush pattern index in gdi_patblt (#13111)
+* [winpr,ntlm] require 16 byte signature buffer before access (#13119)
+* [client,sdl] stop drawing when update queue is empty, fixes high CPU (#13121)
+* cmake: add C++ filesystem detection module (#13124)
+* [winpr] add OpenBSD support for thread ID (#13154)
+* winpr: fix missing FreeLibrary/GetProcAddress declarations on Cygwin (#13138)
+* winpr: fix Cygwin GetModuleHandleW/TlsAlloc collisions under static linking (#13140)
+* collected bug fixes (#13160)
+* [core,server] parse drdynvc PDU through a substream (#13162)
+* [client,common] fix audio-mode documentation (#13161)
+* [client,android] replace deprecated KeyboardView (#13145)
+* [urbdrc] Fix TRANSFER_OUT completion framing (#13129)
+* [client,x11] abort if invalid monitor index was supplied. (#13163)
+* [codec,dsp] reset buffered samples on close (#13165)
+* Avc444 chroma (#13164)
+* [core,nla] report early user auth denial as ACCESS_DENIED (#13166)
+* [server,proxy] free peer while peer_list locked (#13159)
+* Hotplug (#13167)
+* uwac: don't try to use O_TMPFILE on OpenBSD (#13172)
+* [winpr,string] fix building on OpenBSD (#13171)
+* [channels,urbdrc] report the real IOCONTROL_COMPLETION output size (#13170)
+* [codec,openh264] handle nonzero result codes (#13177)
+* [codec,h264] fix offset region change detection (#13176)
+* [winpr,sspi] fix server-side SPNEGO mechanism fallback (#13169)
+* [cmake] build fixes for OpenBSD (#13173)
+* [winpr,sysinfo] use CLOCK_MONOTONIC as a fallback (#13178)
+* [channels,rdpdr] fix missing NULL check (#13180)
+* [libfreerdp,crypto] add compilation opt-in TLS AEAD data limit with RFC 8446 threshold (#13152)
+* [winpr,sysinfo] use sysctlbyname for OSX and iOS (#13179)
+* [settings] allow null arg in freerdp_addin_argv_new (#13117)
+* [client,common] url decode file paths (#13182)
+* [codec,yuv] make tile size compile time configurable (#13181)
+* [cache,pointer] cleanup and more logging (#13183)
+* [winpr,sspi] dispatch by package index instead of a mixed-width name (#13136)
+* Fix RAIL maximize normalization on Cinnamon (#13147)
+* [core,gateway] bound tsg authorize tunnel response to received length (#13186)
+* [channels,rdpdr] don't free() mntbuf in handle_platform_mounts_bsd() (#13187)
+* [winpr,sysinfo] use sysconf _SC_NPROCESSORS_ONLN on *BSD (#13174)
+* [core,nego] report why security negotiation failed (#13185)
+* uwac: only use O_TMPFILE if it exists (#13191)
+* [cmake] fix Sndio bits and not limit support to just OpenBSD (#13188)
+* [winpr,cmake] fixes for epollshim headers / function detection (#13190)
+* [channels,rdpsnd] fix sndio compile warnings (#13193)
+* [warnings] remove unused functions and variables (#13184)
+* [cache,glyph] clean up code, relax order checks (#13194)
+* uwac: disable the SHM_ANON support on DragonFlyBSD (#13195)
+* [libfreerdp] fix detection of FFmpeg (#13197)
+* Cache recreate on deacviate/reactivate, stream checks (#13196)
+* [channels,smartcard] prevent duplicate cleanup (#13198)
+* [channel,urbdrc] check func_get_ep_desc for validity (#13199)
+* [cache,pointer] reset pointer before cache free (#13200)
+* [cmake,epollshim] use PkgConfig::EPOLLSHIM target (#13203)
+* [client,sdl] fix scaled drawing (#13205)
+* [cmake] link explicitly PUBLIC/PRIVATE/INTERFACE (#13206)
+* [client,core] add gcc validity checks (#13207)
+* [crypto,x509] relax object_string checks (#13209)
+* More Checks... (#13212)
+* [codec,av1] use dav1d for AV1 decoding (#13211)
+* [scard,pack] fix NDR pointer validation for empty card handles (#13208)
+* Pkg config imported (#13213)
+* [utils,test] fix generated test data (#13214)
+* [channels,rail] fix NULL deref race on server channel start (#13216)
+* [channels,cliprdr] fix long format list parse (#13217)
+* [scard,pack] remove incorrect stream length checks in unpack functions (#13215)
+* [client,x11] clear errno before keyboard pipe read (#13220)
+* Fix use-after-free of the printer driver singleton (#13221)
+* [codec,yuv] fix pool_decode_rect loop variable reuse (#13223)
+* [channels,cliprdr] fix server-side format-list negotiation bugs (#13225)
+* fix use-after-free when winpr_aligned_recalloc fails (#13224)
+* [channel,urbdrc] add missing check (#13228)
+* [utils,rdpdr] force 64bit arithmetic in rdpdr_dump_packet (#13229)
+* Sdl image clipboard (#13230)
+* [codec,fdk] revert AACENC_GRANULE_LENGTH, (#13231)
+* [winpr,sspi] add custom extensions (#13222)
+* Sspi cleanup (#13233)
+* Canonicalize paths (#13175)
+* Timeout (#13234)
+* Rail workarea updates (#13238)
+* OSS-Fuzz: Disable SNDIO manually for oss-fuzz build (#13240)
+* Dos xattr (#13239)
+* Test fuzz server (#13241)
+* [winpr,cmake] guard CheckSourceCompiles (#13242)
+* [core] fix memory leak in TestFuzzServerSeedGen (#13245)
+* [core,connection] abort after PROTOCOL_FAILED_NEGO (#13250)
+* Safe zero (#13248)
+* [gdi] document cache requirement for gdi_init (#13249)
+* [core,server] lock dynamic channel list while parsing (#13251)
+* [cmake,yuv] fix detection without pkg-config (#13252)
+* [client,x11] fix /gdi:hw surface creation (#13255)
+* winpr/sspi/negotiate: NULL check sub credentials accepting context (#13254)
+* [utils,scard] validate ReaderState_Return on use (#13256)
+* Fuzzer improvements (#13257)
+* [winpr] implement inheritable handles in CreateProcess (#13246)
+* Warning fixes (#13258)
+* [doxygen] add missing @since version tags (#13259)
+* Cross fixes (#13260)
+* [winpr,path] fix mingw builds, link lowercase names (#13261)
+* Relax check in window_state_order_clone (#13263)
+* [core,test] ignore SIGPIPE in TestFuzzServerSeedGen (#13265)
+* Fix utf-8 encoding of LS and PS in winpr_str_has_newlines (#13262)
+* Cross mingw fixes (#13264)
+* [build,mingw] fix missing includes (#13268)
+* [build,mingw] replace C++11 constructs (#13269)
+* [client,x11] fix cliprdr infinite request loop (#13266)
+* [winpr] fix TestThreadCreateProcess (#13273)
+* Release cleanups (#13270, #13272, #13274, #13277)
+
+## New Contributors
+* @cordlandwehr made their first contribution in (#13080)
+* @berylraven made their first contribution in (#13088)
+* @tearfulDalvik made their first contribution in (#13101)
+* @cizra made their first contribution in (#13121)
+* @a5ehren made their first contribution in (#13124)
+* @brad0 made their first contribution in (#13154)
+* @robertschulze made their first contribution in (#13138)
+* @uchouT made their first contribution in (#13129)
+* @zx1991 made their first contribution in (#13177)
+* @mjpowersjr made their first contribution in (#13169)
+* @jclairembault made their first contribution in (#13152)
+* @hamed7ir made their first contribution in (#13136)
+* @Eneratos made their first contribution in (#13147)
+* @ElCruncharino made their first contribution in (#13211)
+* @maordadush made their first contribution in (#13216)
+* @gornkv made their first contribution in (#13220)
+* @eunho87 made their first contribution in (#13221)
+* @jasonmli8 made their first contribution in (#13263)
+
+For a complete and detailed change log since the last release run:
+git log 3.31.0...3.30.0
+
 # 2026-07-16 Version 3.30.0
 
 Security and bugfix release.
