@@ -380,6 +380,15 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 {
 	if (pointer_cache != nullptr)
 	{
+		/* Reset pointer to default before deleting the cache.
+		 */
+		if (pointer_cache->context && pointer_cache->context->graphics)
+		{
+			rdpPointer* pointer = pointer_cache->context->graphics->Pointer_Prototype;
+			if (pointer)
+				IFCALL(pointer->SetDefault, pointer_cache->context);
+		}
+
 		if (pointer_cache->entries)
 		{
 			for (UINT32 i = 0; i < pointer_cache->cacheSize; i++)
