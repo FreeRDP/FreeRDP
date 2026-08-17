@@ -952,11 +952,19 @@ static int libusb_udev_os_feature_descriptor_request(IUDEVICE* idev,
 	BYTE ms_string_desc[0x13] = WINPR_C_ARRAY_INIT;
 	int error = 0;
 
-	WINPR_ASSERT(idev);
+	WINPR_ASSERT(pdev);
+	WINPR_ASSERT(pdev->urbdrc);
 	WINPR_ASSERT(UsbdStatus);
 	WINPR_ASSERT(BufferSize);
-	WINPR_ASSERT(*BufferSize <= UINT16_MAX);
-	const UINT16 requestedSize = (UINT16)*BufferSize;
+
+	if (*BufferSize > UINT16_MAX)
+	{
+		WLog_Print(pdev->urbdrc->log, WLOG_ERROR, "BufferSize %" PRIu32 " > %d", *BufferSize,
+		           UINT16_MAX);
+		return -1;
+	}
+
+	const UINT16 requestedSize = WINPR_ASSERTING_INT_CAST(UINT16, *BufferSize);
 	*BufferSize = 0;
 
 	/*
@@ -1216,6 +1224,8 @@ static int libusb_udev_query_device_port_status(IUDEVICE* idev, UINT32* UsbdStat
 	int ret = 0;
 	URBDRC_PLUGIN* urbdrc = nullptr;
 
+	WINPR_ASSERT(BufferSize);
+
 	if (!pdev || !pdev->urbdrc)
 		return -1;
 
@@ -1325,13 +1335,20 @@ static BOOL libusb_udev_control_transfer(IUDEVICE* idev, WINPR_ATTR_UNUSED UINT3
 	UDEVICE* pdev = (UDEVICE*)idev;
 
 	WINPR_ASSERT(BufferSize);
-	WINPR_ASSERT(*BufferSize <= UINT16_MAX);
 
 	if (!pdev || !pdev->urbdrc)
 		return FALSE;
 
-	status = libusb_control_transfer(pdev->libusb_handle, bmRequestType, Request, Value, Index,
-	                                 Buffer, (UINT16)*BufferSize, Timeout);
+	if (*BufferSize > UINT16_MAX)
+	{
+		WLog_Print(pdev->urbdrc->log, WLOG_ERROR, "BufferSize %" PRIu32 " > %d", *BufferSize,
+		           UINT16_MAX);
+		return FALSE;
+	}
+
+	status =
+	    libusb_control_transfer(pdev->libusb_handle, bmRequestType, Request, Value, Index, Buffer,
+	                            WINPR_ASSERTING_INT_CAST(UINT16, *BufferSize), Timeout);
 
 	if (status >= 0)
 		*BufferSize = (UINT32)status;
