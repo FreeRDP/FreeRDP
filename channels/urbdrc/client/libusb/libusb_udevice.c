@@ -337,11 +337,22 @@ static const LIBUSB_ENDPOINT_DESCEIPTOR* func_get_ep_desc(LIBUSB_CONFIG_DESCRIPT
 
 	for (UINT32 inum = 0; inum < MsConfig->NumInterfaces; inum++)
 	{
+		if (inum >= LibusbConfig->bNumInterfaces)
+			continue;
+
+		const LIBUSB_INTERFACE* ifc = &interface[inum];
 		BYTE alt = MsInterfaces[inum]->AlternateSetting;
-		const LIBUSB_ENDPOINT_DESCEIPTOR* endpoint = interface[inum].altsetting[alt].endpoint;
+		if (alt >= ifc->num_altsetting)
+			continue;
+
+		const struct libusb_interface_descriptor* altifc = &ifc->altsetting[alt];
+		const LIBUSB_ENDPOINT_DESCEIPTOR* endpoint = altifc->endpoint;
 
 		for (UINT32 pnum = 0; pnum < MsInterfaces[inum]->NumberOfPipes; pnum++)
 		{
+			if (pnum >= altifc->bNumEndpoints)
+				continue;
+
 			if (endpoint[pnum].bEndpointAddress == EndpointAddress)
 			{
 				return &endpoint[pnum];
