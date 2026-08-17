@@ -632,6 +632,7 @@ static void smartcard_free_irp(void* obj)
  */
 FREERDP_ENTRY_POINT(UINT VCAPITYPE DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
+	BOOL registered = FALSE;
 	UINT error = CHANNEL_RC_NO_MEMORY;
 
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*)calloc(1, sizeof(SMARTCARD_DEVICE));
@@ -676,12 +677,14 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POIN
 	                                 smartcard_context_free))
 		goto fail;
 
-	if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &smartcard->device)))
+	error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &smartcard->device);
+	if (error)
 	{
 		WLog_ERR(TAG, "RegisterDevice failed!");
 		goto fail;
 	}
 
+	registered = TRUE;
 	smartcard->thread =
 	    CreateThread(nullptr, 0, smartcard_thread_func, smartcard, CREATE_SUSPENDED, nullptr);
 
@@ -702,6 +705,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POIN
 
 	return CHANNEL_RC_OK;
 fail:
-	smartcard_free_(smartcard);
+	if (!registered)
+		smartcard_free_(smartcard);
 	return error;
 }
