@@ -244,65 +244,67 @@ INT32 freerdp_av1_compress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, DWORD
 	aom_image_t buffer = WINPR_C_ARRAY_INIT;
 
 	aom_image_t* img = &buffer;
-#if defined(WITH_LIBYUV)
-	int rec = -1;
-	switch (av1->ecfg.g_profile)
-	{
-		case 0:
-			img->fmt = AOM_IMG_FMT_I420;
-			img->x_chroma_shift = 1;
-			img->y_chroma_shift = 1;
-			rec = ARGBToI420(pSrcData, nSrcStep, av1->yuvdata[0], av1->yuvStride[0],
-			                 av1->yuvdata[1], av1->yuvStride[1], av1->yuvdata[2],
-			                 WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[2]),
-			                 WINPR_ASSERTING_INT_CAST(int, roi.width),
-			                 WINPR_ASSERTING_INT_CAST(int, roi.height));
-			break;
-		case 1:
-			img->fmt = AOM_IMG_FMT_I444;
-			rec = ARGBToI444(pSrcData, nSrcStep, av1->yuvdata[0], av1->yuvStride[0],
-			                 av1->yuvdata[1], av1->yuvStride[1], av1->yuvdata[2],
-			                 WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[2]),
-			                 WINPR_ASSERTING_INT_CAST(int, roi.width),
-			                 WINPR_ASSERTING_INT_CAST(int, roi.height));
-			break;
-		default:
-			WLog_Print(av1->log, WLOG_ERROR, "Unsupoorted AV1 profile %" PRIu32,
-			           av1->ecfg.g_profile);
-			return -1;
-	}
-	if (rec != 0)
-	{
-		WLog_Print(av1->log, WLOG_ERROR, "ARGBToI444(): %d", rec);
-		return -1;
-	}
-#else
 	pstatus_t rec = -1;
-	switch (av1->ecfg.g_profile)
+#if defined(WITH_LIBYUV)
+	/* ARGBToI420()/ARGBToI444() always read pSrcData as packed BGRA8888 regardless of
+	 * SrcFormat, so the fast path only applies for that layout; anything else must go
+	 * through the format-aware primitives conversion below. */
+	if ((SrcFormat == PIXEL_FORMAT_BGRA32) || (SrcFormat == PIXEL_FORMAT_BGRX32))
 	{
-		case 0:
-			img->fmt = AOM_IMG_FMT_I420;
-			img->x_chroma_shift = 1;
-			img->y_chroma_shift = 1;
-			rec = primitives->RGBToYUV420_8u_P3AC4R(pSrcData, SrcFormat, nSrcStep, av1->yuvdata,
-			                                        av1->yuvStride, &roi);
-			break;
-		case 1:
-			img->fmt = AOM_IMG_FMT_I444;
-			rec = primitives->RGBToI444_8u(pSrcData, SrcFormat, nSrcStep, av1->yuvdata,
-			                               av1->yuvStride, &roi);
-			break;
-		default:
-			WLog_Print(av1->log, WLOG_ERROR, "Unsupoorted AV1 profile %" PRIu32,
-			           av1->ecfg.g_profile);
-			return -1;
+		switch (av1->ecfg.g_profile)
+		{
+			case 0:
+				img->fmt = AOM_IMG_FMT_I420;
+				img->x_chroma_shift = 1;
+				img->y_chroma_shift = 1;
+				rec = ARGBToI420(pSrcData, nSrcStep, av1->yuvdata[0], av1->yuvStride[0],
+				                 av1->yuvdata[1], av1->yuvStride[1], av1->yuvdata[2],
+				                 WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[2]),
+				                 WINPR_ASSERTING_INT_CAST(int, roi.width),
+				                 WINPR_ASSERTING_INT_CAST(int, roi.height));
+				break;
+			case 1:
+				img->fmt = AOM_IMG_FMT_I444;
+				rec = ARGBToI444(pSrcData, nSrcStep, av1->yuvdata[0], av1->yuvStride[0],
+				                 av1->yuvdata[1], av1->yuvStride[1], av1->yuvdata[2],
+				                 WINPR_ASSERTING_INT_CAST(int, av1->yuvStride[2]),
+				                 WINPR_ASSERTING_INT_CAST(int, roi.width),
+				                 WINPR_ASSERTING_INT_CAST(int, roi.height));
+				break;
+			default:
+				WLog_Print(av1->log, WLOG_ERROR, "Unsupoorted AV1 profile %" PRIu32,
+				           av1->ecfg.g_profile);
+				return -1;
+		}
+	}
+	else
+#endif
+	{
+		switch (av1->ecfg.g_profile)
+		{
+			case 0:
+				img->fmt = AOM_IMG_FMT_I420;
+				img->x_chroma_shift = 1;
+				img->y_chroma_shift = 1;
+				rec = primitives->RGBToYUV420_8u_P3AC4R(pSrcData, SrcFormat, nSrcStep, av1->yuvdata,
+				                                        av1->yuvStride, &roi);
+				break;
+			case 1:
+				img->fmt = AOM_IMG_FMT_I444;
+				rec = primitives->RGBToI444_8u(pSrcData, SrcFormat, nSrcStep, av1->yuvdata,
+				                               av1->yuvStride, &roi);
+				break;
+			default:
+				WLog_Print(av1->log, WLOG_ERROR, "Unsupoorted AV1 profile %" PRIu32,
+				           av1->ecfg.g_profile);
+				return -1;
+		}
 	}
 	if (rec != 0)
 	{
-		WLog_Print(av1->log, WLOG_ERROR, "primitives->RGBToI444_8u(): %d", rec);
+		WLog_Print(av1->log, WLOG_ERROR, "RGB to YUV conversion failed: %d", rec);
 		return -1;
 	}
-#endif
 	img->bit_depth = 8;
 	img->d_w = img->r_w = img->w = roi.width;
 	img->d_h = img->r_h = img->h = roi.height;
@@ -425,71 +427,72 @@ static INT32 av1_dav1d_convert(FREERDP_AV1_CONTEXT* av1, const Dav1dPicture* pic
 	const UINT32 strides[] = { (UINT32)pic->stride[0], (UINT32)pic->stride[1],
 		                       (UINT32)pic->stride[1] };
 
-#if defined(WITH_LIBYUV)
-	const uint8_t* y = pic->data[0];
-	const uint8_t* u = pic->data[1];
-	const uint8_t* v = pic->data[2];
-
-	const int stride0 = WINPR_ASSERTING_INT_CAST(int, strides[0]);
-	const int stride1 = WINPR_ASSERTING_INT_CAST(int, strides[1]);
-	const int stride2 = WINPR_ASSERTING_INT_CAST(int, strides[2]);
-	const int iWidth = WINPR_ASSERTING_INT_CAST(int, nWidth);
-	const int iHeight = WINPR_ASSERTING_INT_CAST(int, nHeight);
-	const int iDstStep = WINPR_ASSERTING_INT_CAST(int, nDstStep);
-
-	int rec = -1;
-	switch (pic->p.layout)
-	{
-		case DAV1D_PIXEL_LAYOUT_I420:
-			rec =
-			    J420ToARGB(y, stride0, u, stride1, v, stride2, pDstData, iDstStep, iWidth, iHeight);
-			break;
-		case DAV1D_PIXEL_LAYOUT_I444:
-			rec =
-			    J444ToARGB(y, stride0, u, stride1, v, stride2, pDstData, iDstStep, iWidth, iHeight);
-			break;
-		default:
-			WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
-			           pic->p.layout);
-			return -1;
-	}
-	if (rec != 0)
-	{
-		WLog_Print(av1->log, WLOG_ERROR, "J444ToARGB(): %d", rec);
-		return -1;
-	}
-#else
-	primitives_t* primitives = primitives_get();
-	if (!primitives)
-	{
-		WLog_Print(av1->log, WLOG_ERROR, "primitives_get(): nullptr");
-		return -1;
-	}
-
-	const BYTE* pSrc[] = { pic->data[0], pic->data[1], pic->data[2] };
-
 	pstatus_t rec = -1;
-	switch (pic->p.layout)
+#if defined(WITH_LIBYUV)
+	/* J420ToARGB()/J444ToARGB() always write pDstData as packed BGRA8888 regardless of
+	 * DstFormat, so the fast path only applies for that layout; anything else must go
+	 * through the format-aware primitives conversion below. */
+	if ((DstFormat == PIXEL_FORMAT_BGRA32) || (DstFormat == PIXEL_FORMAT_BGRX32))
 	{
-		case DAV1D_PIXEL_LAYOUT_I420:
-			rec = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep, DstFormat,
-			                                        &roi);
-			break;
-		case DAV1D_PIXEL_LAYOUT_I444:
-			rec = primitives->YUV444ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep, DstFormat,
-			                                        &roi);
-			break;
-		default:
-			WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
-			           pic->p.layout);
+		const uint8_t* y = pic->data[0];
+		const uint8_t* u = pic->data[1];
+		const uint8_t* v = pic->data[2];
+
+		const int stride0 = WINPR_ASSERTING_INT_CAST(int, strides[0]);
+		const int stride1 = WINPR_ASSERTING_INT_CAST(int, strides[1]);
+		const int stride2 = WINPR_ASSERTING_INT_CAST(int, strides[2]);
+		const int iWidth = WINPR_ASSERTING_INT_CAST(int, nWidth);
+		const int iHeight = WINPR_ASSERTING_INT_CAST(int, nHeight);
+		const int iDstStep = WINPR_ASSERTING_INT_CAST(int, nDstStep);
+
+		switch (pic->p.layout)
+		{
+			case DAV1D_PIXEL_LAYOUT_I420:
+				rec = J420ToARGB(y, stride0, u, stride1, v, stride2, pDstData, iDstStep, iWidth,
+				                 iHeight);
+				break;
+			case DAV1D_PIXEL_LAYOUT_I444:
+				rec = J444ToARGB(y, stride0, u, stride1, v, stride2, pDstData, iDstStep, iWidth,
+				                 iHeight);
+				break;
+			default:
+				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
+				           pic->p.layout);
+				return -1;
+		}
+	}
+	else
+#endif
+	{
+		primitives_t* primitives = primitives_get();
+		if (!primitives)
+		{
+			WLog_Print(av1->log, WLOG_ERROR, "primitives_get(): nullptr");
 			return -1;
+		}
+
+		const BYTE* pSrc[] = { pic->data[0], pic->data[1], pic->data[2] };
+		switch (pic->p.layout)
+		{
+			case DAV1D_PIXEL_LAYOUT_I420:
+				rec = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
+				                                        DstFormat, &roi);
+				break;
+			case DAV1D_PIXEL_LAYOUT_I444:
+				rec = primitives->YUV444ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
+				                                        DstFormat, &roi);
+				break;
+			default:
+				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
+				           pic->p.layout);
+				return -1;
+		}
 	}
 	if (rec != 0)
 	{
-		WLog_Print(av1->log, WLOG_ERROR, "YUV444ToRGB_8u_P3AC4R(): %d", rec);
+		WLog_Print(av1->log, WLOG_ERROR, "RGB to YUV conversion failed: %d", rec);
 		return -1;
 	}
-#endif
 	return TRUE;
 }
 
@@ -592,62 +595,63 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 		if (!areRectsValid(av1->log, roi.width, roi.height, regionRects, numRegionRect))
 			return -2;
 
-#if defined(WITH_LIBYUV)
-		int rec = -1;
-
-		switch (img->fmt)
-		{
-			case AOM_IMG_FMT_I420:
-				rec =
-				    J420ToARGB(img->planes[0], img->stride[0], img->planes[1], img->stride[1],
-				               img->planes[2], img->stride[2], pDstData, nDstStep, nWidth, nHeight);
-				break;
-			case AOM_IMG_FMT_I444:
-				rec =
-				    J444ToARGB(img->planes[0], img->stride[0], img->planes[1], img->stride[1],
-				               img->planes[2], img->stride[2], pDstData, nDstStep, nWidth, nHeight);
-				break;
-			default:
-				WLog_Print(av1->log, WLOG_ERROR, "img->fmt %d not supported", img->fmt);
-				return -1;
-		}
-		if (rec != 0)
-		{
-			WLog_Print(av1->log, WLOG_ERROR, "I444ToABGR() %d", rec);
-			return -1;
-		}
-#else
-		const BYTE* pSrc[] = { img->planes[0], img->planes[1], img->planes[2] };
-		const UINT32 strides[] = { img->stride[0], img->stride[1], img->stride[2] };
-
-		primitives_t* primitives = primitives_get();
-		if (!primitives)
-		{
-			WLog_Print(av1->log, WLOG_ERROR, "primitives_get(): nullptr");
-			return FALSE;
-		}
-
 		pstatus_t rec = -1;
-		switch (img->fmt)
+#if defined(WITH_LIBYUV)
+		/* J420ToARGB()/J444ToARGB() always write pDstData as packed BGRA8888 regardless of
+		 * DstFormat, so the fast path only applies for that layout; anything else must go
+		 * through the format-aware primitives conversion below. */
+		if ((DstFormat == PIXEL_FORMAT_BGRA32) || (DstFormat == PIXEL_FORMAT_BGRX32))
 		{
-			case AOM_IMG_FMT_I420:
-				rec = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
-				                                        DstFormat, &roi);
-				break;
-			case AOM_IMG_FMT_I444:
-				rec = primitives->YUV444ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
-				                                        DstFormat, &roi);
-				break;
-			default:
-				WLog_Print(av1->log, WLOG_ERROR, "img->fmt %d not supported", img->fmt);
-				return -1;
+			switch (img->fmt)
+			{
+				case AOM_IMG_FMT_I420:
+					rec = J420ToARGB(img->planes[0], img->stride[0], img->planes[1], img->stride[1],
+					                 img->planes[2], img->stride[2], pDstData, nDstStep, nWidth,
+					                 nHeight);
+					break;
+				case AOM_IMG_FMT_I444:
+					rec = J444ToARGB(img->planes[0], img->stride[0], img->planes[1], img->stride[1],
+					                 img->planes[2], img->stride[2], pDstData, nDstStep, nWidth,
+					                 nHeight);
+					break;
+				default:
+					WLog_Print(av1->log, WLOG_ERROR, "img->fmt %d not supported", img->fmt);
+					return -1;
+			}
+		}
+		else
+#endif
+		{
+			const BYTE* pSrc[] = { img->planes[0], img->planes[1], img->planes[2] };
+			const UINT32 strides[] = { img->stride[0], img->stride[1], img->stride[2] };
+
+			primitives_t* primitives = primitives_get();
+			if (!primitives)
+			{
+				WLog_Print(av1->log, WLOG_ERROR, "primitives_get(): nullptr");
+				return FALSE;
+			}
+
+			switch (img->fmt)
+			{
+				case AOM_IMG_FMT_I420:
+					rec = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
+					                                        DstFormat, &roi);
+					break;
+				case AOM_IMG_FMT_I444:
+					rec = primitives->YUV444ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
+					                                        DstFormat, &roi);
+					break;
+				default:
+					WLog_Print(av1->log, WLOG_ERROR, "img->fmt %d not supported", img->fmt);
+					return -1;
+			}
 		}
 		if (rec != 0)
 		{
-			WLog_Print(av1->log, WLOG_ERROR, "I444ToABGR() %d", rec);
+			WLog_Print(av1->log, WLOG_ERROR, "RGB to YUV conversion failed: %d", rec);
 			return -1;
 		}
-#endif
 	}
 
 	return TRUE;
