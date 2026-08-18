@@ -18,6 +18,6 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
   add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 endforeach()
 
-target_link_libraries(${MODULE_NAME} winpr ${OPENSSL_LIBRARIES})
+target_link_libraries(${MODULE_NAME} PRIVATE winpr ${OPENSSL_LIBRARIES})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")

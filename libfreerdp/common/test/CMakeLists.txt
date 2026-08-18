@@ -15,7 +15,7 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODU
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-target_link_libraries(${MODULE_NAME} freerdp winpr)
+target_link_libraries(${MODULE_NAME} PRIVATE freerdp)
 
 include(AddFuzzerTest)
 add_fuzzer_test("${FUZZERS}" "freerdp winpr")

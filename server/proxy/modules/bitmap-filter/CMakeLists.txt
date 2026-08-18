@@ -41,7 +41,7 @@ set(SRCS bitmap-filter.cpp)
 addtargetwithresourcefile(${PROJECT_NAME} FALSE "${PROJECT_VERSION}" SRCS FALSE)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<BOOL:${BUILD_SHARED_LIBS}>:BUILD_SHARED_LIBS>)
-target_link_libraries(${PROJECT_NAME} winpr freerdp)
+target_link_libraries(${PROJECT_NAME} PRIVATE freerdp)
 
 installwithrpath(TARGETS ${PROJECT_NAME} DESTINATION ${FREERDP_PROXY_PLUGINDIR})
 

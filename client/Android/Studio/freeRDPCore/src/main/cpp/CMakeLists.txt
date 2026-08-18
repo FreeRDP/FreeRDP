@@ -77,11 +77,5 @@ find_library(jnigraphics-lib jnigraphics)
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries(
-  ${MODULE_NAME}
-  freerdp3-lib
-  freerdp-client3-lib
-  winpr3-lib
-  ${log-lib}
-  ${dl-lib}
-  ${jnigraphics-lib}
+  ${MODULE_NAME} PRIVATE freerdp3-lib freerdp-client3-lib winpr3-lib ${log-lib} ${dl-lib} ${jnigraphics-lib}
 )

@@ -23,9 +23,7 @@ set(${MODULE_PREFIX}_SRCS main.c)
 
 addtargetwithresourcefile(${MODULE_NAME} TRUE "${WINPR_VERSION}" ${MODULE_PREFIX}_SRCS)
 
-set(${MODULE_PREFIX}_LIBS winpr-tools)
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} winpr)
+target_link_libraries(${MODULE_NAME} PRIVATE winpr-tools)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
 

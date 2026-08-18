@@ -385,8 +385,8 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 		if (pointer_cache->context && pointer_cache->context->graphics)
 		{
 			rdpPointer* pointer = pointer_cache->context->graphics->Pointer_Prototype;
-			if (pointer)
-				IFCALL(pointer->SetDefault, pointer_cache->context);
+			if (pointer && pointer->SetDefault)
+				(void)pointer->SetDefault(pointer_cache->context);
 		}
 
 		if (pointer_cache->entries)

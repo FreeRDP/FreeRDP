@@ -47,11 +47,11 @@ else()
   include_directories(SYSTEM ${UWAC_INCLUDE_DIR})
 endif()
 
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp-client freerdp uwac)
+list(APPEND ${MODULE_PREFIX}_LIBS freerdp-client uwac)
 
 addtargetwithresourcefile(${MODULE_NAME} TRUE ${FREERDP_VERSION} ${MODULE_PREFIX}_SRCS)
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 

@@ -68,7 +68,7 @@ add_compile_definitions(CMAKE_CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_compile_definitions(CMAKE_CURRENT_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 add_executable(${MODULE_NAME} ${SRCS} ${CURSOR_TESTCASES_H} ${CURSOR_TESTCASES_C} ${TESTCASE_HEADER} ${TEST_COMMON})
 
-target_link_libraries(${MODULE_NAME} freerdp winpr)
+target_link_libraries(${MODULE_NAME} PRIVATE freerdp)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
@@ -80,7 +80,7 @@ endforeach()
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Test")
 
 add_executable(img2bgra img2bgra.c)
-target_link_libraries(img2bgra winpr)
+target_link_libraries(img2bgra PRIVATE winpr)
 
 set(FUZZERS TestFuzzCodecs.c TestFuzzNSCodec.c)
 

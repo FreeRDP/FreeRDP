@@ -21,10 +21,10 @@ set(SRCS sdl2_resource_manager.cpp sdl2_resource_manager.hpp)
 add_library(sdl2_client_res STATIC ${SRCS})
 
 if(NOT WITH_SDL_LINK_SHARED)
-  target_link_libraries(sdl2_client_res ${SDL2_STATIC_LIBRARIES})
+  target_link_libraries(sdl2_client_res PRIVATE ${SDL2_STATIC_LIBRARIES})
 else()
-  target_link_libraries(sdl2_client_res ${SDL2_LIBRARIES})
+  target_link_libraries(sdl2_client_res PRIVATE ${SDL2_LIBRARIES})
 endif()
 
 set_target_properties(sdl2_client_res PROPERTIES POSITION_INDEPENDENT_CODE ON INTERPROCEDURAL_OPTIMIZATION OFF)
-target_link_libraries(sdl2_client_res sdl-common-client-res)
+target_link_libraries(sdl2_client_res PRIVATE sdl-common-client-res)

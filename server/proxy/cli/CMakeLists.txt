@@ -21,7 +21,7 @@ set(PROXY_APP_SRCS freerdp_proxy.c)
 set(APP_NAME "freerdp-proxy")
 addtargetwithresourcefile(${APP_NAME} TRUE "${FREERDP_VERSION}" PROXY_APP_SRCS)
 
-target_link_libraries(${APP_NAME} ${MODULE_NAME})
+target_link_libraries(${APP_NAME} PRIVATE ${MODULE_NAME})
 installwithrpath(TARGETS ${APP_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
 
 set_property(TARGET ${APP_NAME} PROPERTY FOLDER "Server/proxy")

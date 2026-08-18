@@ -29,7 +29,7 @@ if(WIN32)
   set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} secur32 crypt32)
 endif()
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} winpr)
+target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS} winpr)
 
 include(AddFuzzerTest)
 add_fuzzer_test("${FUZZERS}" "winpr")

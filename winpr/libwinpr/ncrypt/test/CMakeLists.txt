@@ -18,9 +18,9 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
   add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 endforeach()
 
-target_link_libraries(${MODULE_NAME} winpr ${OPENSSL_LIBRARIES})
+target_link_libraries(${MODULE_NAME} PRIVATE winpr ${OPENSSL_LIBRARIES})
 if(WIN32)
-  target_link_libraries(${MODULE_NAME} ncrypt)
+  target_link_libraries(${MODULE_NAME} PRIVATE ncrypt)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")

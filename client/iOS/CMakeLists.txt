@@ -329,7 +329,7 @@ set_target_properties(
 )
 target_compile_options(${PROJECT_NAME} PRIVATE -fno-objc-arc)
 
-target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS} freerdp3-lib freerdp-client3-lib winpr3-lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${EXTRA_LIBS} freerdp3-lib freerdp-client3-lib winpr3-lib)
 
 install(TARGETS ${PROJECT_NAME} BUNDLE DESTINATION . COMPONENT Runtime
         RUNTIME DESTINATION ${PROJECT_NAME}.app/${CMAKE_INSTALL_BINDIR} COMPONENT Runtime

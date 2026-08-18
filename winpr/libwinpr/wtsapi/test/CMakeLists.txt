@@ -19,7 +19,7 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODU
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-target_link_libraries(${MODULE_NAME} winpr)
+target_link_libraries(${MODULE_NAME} PRIVATE winpr)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
@@ -46,7 +46,7 @@ if(TESTS_WTSAPI_EXTRA)
 
   add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-  target_link_libraries(${MODULE_NAME} winpr)
+  target_link_libraries(${MODULE_NAME} PRIVATE winpr)
 
   set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
