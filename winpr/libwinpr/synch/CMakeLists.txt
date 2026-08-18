@@ -32,8 +32,8 @@ winpr_module_add(
 )
 
 if(EPOLLSHIM)
-  winpr_system_include_directory_add(${EPOLLSHIM_INCLUDE_DIR})
-  winpr_library_add_private(${EPOLLSHIM_LIBS})
+  winpr_system_include_directory_add(${EPOLLSHIM_INCLUDE_DIRS})
+  winpr_library_add_private(PkgConfig::EPOLLSHIM)
 endif()
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
