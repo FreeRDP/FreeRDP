@@ -1,0 +1,25 @@
+# HarmonyOS SDK directory
+# hwsdk.dir=/Applications/DevEco-Studio.app/Contents/sdk
+
+# Default signing mode: debug | release
+sign.active=debug
+
+# --- Debug Signing Configuration ---
+# Copy the auto-generated debug certificate paths from DevEco Studio or
+# use 'hvigorw assembleApp' once to populate them.
+sign.debug.storeFile=/Users/YOU/.ohos/config/default_Harmony_XXXXX.p12
+sign.debug.storePassword=0000001XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+sign.debug.keyAlias=debugKey
+sign.debug.keyPassword=0000001XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+sign.debug.certpath=/Users/YOU/.ohos/config/default_Harmony_XXXXX.cer
+sign.debug.profile=/Users/YOU/.ohos/config/default_Harmony_XXXXX.p7b
+
+# --- Release Signing Configuration ---
+# Fill in your release signing credentials when building for distribution.
+# sign.active=release
+# sign.release.storeFile=/path/to/release.p12
+# sign.release.storePassword=your_store_password
+# sign.release.keyAlias=your_key_alias
+# sign.release.keyPassword=your_key_password
+# sign.release.certpath=/path/to/release.cer
+# sign.release.profile=/path/to/release.p7b
