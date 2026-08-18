@@ -38,10 +38,8 @@ set(${MODULE_PREFIX}_SRCS
 
 addtargetwithresourcefile(${MODULE_NAME} FALSE "${RDTK_VERSION}" ${MODULE_PREFIX}_SRCS)
 
-list(APPEND ${MODULE_PREFIX}_LIBS winpr)
-
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/rdtk${RDTK_VERSION_MAJOR}>)
-target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} PUBLIC winpr)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "RdTk")
 

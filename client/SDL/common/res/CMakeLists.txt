@@ -104,6 +104,6 @@ else()
 endif()
 
 add_library(sdl-common-client-res STATIC ${RES_FILES} ${SRCS} ${FACTORY_HDR} ${FACTORY_SRCS})
-target_link_libraries(sdl-common-client-res freerdp-cxx-filesystem)
+target_link_libraries(sdl-common-client-res PRIVATE freerdp-cxx-filesystem)
 set_property(TARGET sdl-common-client-res PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET sdl-common-client-res PROPERTY FOLDER "Client/Common")

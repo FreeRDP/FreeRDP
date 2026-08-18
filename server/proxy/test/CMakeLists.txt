@@ -20,7 +20,7 @@ add_compile_definitions(CMAKE_CURRENT_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_compile_definitions(CMAKE_CURRENT_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 add_executable(${MODULE_NAME} ${SRCS} ${CURSOR_TESTCASES_H} ${CURSOR_TESTCASES_C} ${TESTCASE_HEADER} ${TEST_COMMON})
 
-target_link_libraries(${MODULE_NAME} freerdp-server-proxy)
+target_link_libraries(${MODULE_NAME} PRIVATE freerdp-server-proxy)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 

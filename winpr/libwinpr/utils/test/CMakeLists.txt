@@ -45,7 +45,7 @@ add_compile_definitions(TEST_BINARY_PATH="${CMAKE_CURRENT_BINARY_DIR}")
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-target_link_libraries(${MODULE_NAME} winpr)
+target_link_libraries(${MODULE_NAME} PRIVATE winpr)
 
 include(AddFuzzerTest)
 add_fuzzer_test("${FUZZERS}" "winpr")
@@ -61,4 +61,4 @@ endforeach()
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
 
 add_executable(img-cnv img-cnv.c)
-target_link_libraries(img-cnv winpr)
+target_link_libraries(img-cnv PRIVATE winpr)

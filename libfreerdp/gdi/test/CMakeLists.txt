@@ -22,11 +22,11 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODU
 include_directories(..)
 
 add_library(helpers STATIC helpers.c)
-target_link_libraries(helpers freerdp)
+target_link_libraries(helpers PRIVATE freerdp)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-target_link_libraries(${MODULE_NAME} winpr freerdp helpers)
+target_link_libraries(${MODULE_NAME} PRIVATE freerdp helpers)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 

@@ -55,9 +55,8 @@ addtargetwithresourcefile(${MODULE_NAME} TRUE "${FREERDP_VERSION}" SRCS)
 
 target_compile_definitions(${MODULE_NAME} PRIVATE SAMPLE_RESOURCE_ROOT="${SAMPLE_RESOURCE_ROOT}")
 list(APPEND LIBS freerdp-server)
-list(APPEND LIBS winpr freerdp)
 
-target_link_libraries(${MODULE_NAME} ${LIBS})
+target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 installwithrpath(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Sample")

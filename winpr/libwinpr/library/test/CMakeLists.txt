@@ -16,7 +16,7 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 add_dependencies(${MODULE_NAME} TestLibraryA TestLibraryB)
 
-target_link_libraries(${MODULE_NAME} winpr)
+target_link_libraries(${MODULE_NAME} PRIVATE winpr)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
