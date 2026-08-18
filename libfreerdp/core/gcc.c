@@ -1165,13 +1165,10 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 {
 	char buffer[2048] = WINPR_C_ARRAY_INIT;
 	char strbuffer[130] = WINPR_C_ARRAY_INIT;
-	UINT32 version = 0;
 	BYTE connectionType = 0;
 	UINT32 clientColorDepth = 0;
-	UINT16 colorDepth = 0;
 	UINT16 postBeta2ColorDepth = 0;
 	UINT16 highColorDepth = 0;
-	UINT32 serverSelectedProtocol = 0;
 	rdpSettings* settings = mcs_get_settings(mcs);
 
 	WINPR_ASSERT(s);
@@ -1181,11 +1178,21 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 	if (!Stream_CheckAndLogRequiredLengthWLog(mcs->log, s, 128))
 		return FALSE;
 
-	Stream_Read_UINT32(s, version); /* version (4 bytes) */
+	const UINT32 version = Stream_Get_UINT32(s); /* version (4 bytes) */
 	settings->RdpVersion = rdp_version_common(mcs->log, version, settings->RdpVersion);
 	Stream_Read_UINT16(s, settings->DesktopWidth);  /* DesktopWidth (2 bytes) */
+	if (settings->DesktopWidth == 0)
+	{
+		WLog_Print(mcs->log, WLOG_ERROR, "Invalid DesktopWidth=0");
+		return FALSE;
+	}
 	Stream_Read_UINT16(s, settings->DesktopHeight); /* DesktopHeight (2 bytes) */
-	Stream_Read_UINT16(s, colorDepth);              /* ColorDepth (2 bytes) */
+	if (settings->DesktopHeight == 0)
+	{
+		WLog_Print(mcs->log, WLOG_ERROR, "Invalid DesktopHeight=0");
+		return FALSE;
+	}
+	const UINT16 colorDepth = Stream_Get_UINT16(s); /* ColorDepth (2 bytes) */
 	Stream_Seek_UINT16(s); /* SASSequence (Secure Access Sequence) (2 bytes) */
 	Stream_Read_UINT32(s, settings->KeyboardLayout); /* KeyboardLayout (4 bytes) */
 	Stream_Read_UINT32(s, settings->ClientBuild);    /* ClientBuild (4 bytes) */
@@ -1218,7 +1225,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 		if (!Stream_CheckAndLogRequiredLengthWLog(mcs->log, s, 2))
 			break;
 
-		Stream_Read_UINT16(s, postBeta2ColorDepth); /* postBeta2ColorDepth (2 bytes) */
+		postBeta2ColorDepth = Stream_Get_UINT16(s); /* postBeta2ColorDepth (2 bytes) */
 
 		if (!Stream_CheckAndLogRequiredLengthWLog(mcs->log, s, 2))
 			break;
@@ -1255,7 +1262,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 		if (!Stream_CheckAndLogRequiredLengthWLog(mcs->log, s, 2))
 			break;
 
-		Stream_Read_UINT16(s, highColorDepth); /* highColorDepth (2 bytes) */
+		highColorDepth = Stream_Get_UINT16(s); /* highColorDepth (2 bytes) */
 
 		if (!Stream_CheckAndLogRequiredLengthWLog(mcs->log, s, 2))
 			break;
@@ -1284,7 +1291,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 		if (!Stream_CheckAndLogRequiredLengthWLog(mcs->log, s, 1))
 			break;
 
-		Stream_Read_UINT8(s, connectionType); /* connectionType (1 byte) */
+		connectionType = Stream_Get_UINT8(s); /* connectionType (1 byte) */
 
 		if (!Stream_CheckAndLogRequiredLengthWLog(mcs->log, s, 1))
 			break;
@@ -1294,7 +1301,8 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 		if (!Stream_CheckAndLogRequiredLengthWLog(mcs->log, s, 4))
 			break;
 
-		Stream_Read_UINT32(s, serverSelectedProtocol); /* serverSelectedProtocol (4 bytes) */
+		const UINT32 serverSelectedProtocol =
+		    Stream_Get_UINT32(s); /* serverSelectedProtocol (4 bytes) */
 
 		if (!Stream_CheckAndLogRequiredLengthWLog(mcs->log, s, 4))
 			break;
