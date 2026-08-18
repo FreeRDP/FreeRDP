@@ -126,8 +126,11 @@ message("FREERDP_VERSION=${FREERDP_VERSION_FULL}")
 
 message(STATUS "Git Revision ${GIT_REVISION}")
 
-# MSVC compatibility with system headers
-add_compile_definitions(NONAMELESSUNION)
+# This macro is only required for MSVC system header compatibility. Defining it on MinGW breaks
+# access to COM anonymous-union members.
+if(MSVC)
+  add_compile_definitions(NONAMELESSUNION)
+endif()
 
 # Make the detected version available as default version for all subprojects
 set(FREERDP_DEFAULT_PROJECT_VERSION ${FREERDP_VERSION} CACHE STRING INTERNAL)
