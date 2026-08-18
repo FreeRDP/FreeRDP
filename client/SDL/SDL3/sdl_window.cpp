@@ -315,11 +315,17 @@ bool SdlWindow::drawRects(SDL_Surface* surface, SDL_Point offset,
 bool SdlWindow::drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
                                const SDL_Rect& srcRect)
 {
-	SDL_Rect dstRect = srcRect;
-	dstRect.x = static_cast<Sint32>(static_cast<float>(dstRect.x) * scale.x);
-	dstRect.w = static_cast<Sint32>(static_cast<float>(dstRect.w) * scale.x);
-	dstRect.y = static_cast<Sint32>(static_cast<float>(dstRect.y) * scale.y);
-	dstRect.h = static_cast<Sint32>(static_cast<float>(dstRect.h) * scale.y);
+	SDL_Rect dstRect = {};
+	float ix = 0.0f;
+	float iy = 0.0f;
+	const auto modx = std::modff(static_cast<float>(srcRect.x) * scale.x, &ix);
+	const auto mody = std::modff(static_cast<float>(srcRect.y) * scale.y, &iy);
+	auto sw = std::ceil(static_cast<float>(srcRect.w) * scale.x) + std::ceil(modx);
+	auto sh = std::ceil(static_cast<float>(srcRect.h) * scale.y) + std::ceil(mody);
+	dstRect.x = static_cast<Sint32>(ix);
+	dstRect.w = static_cast<Sint32>(sw);
+	dstRect.y = static_cast<Sint32>(iy);
+	dstRect.h = static_cast<Sint32>(sh);
 	return blit(surface, srcRect, dstRect);
 }
 
