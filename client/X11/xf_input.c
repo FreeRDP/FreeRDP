@@ -739,15 +739,6 @@ static int xf_input_pens_unhover(xfContext* xfc)
 	return 0;
 }
 
-bool xf_use_rel_mouse(xfContext* xfc)
-{
-	if (!freerdp_client_use_relative_mouse_events(&xfc->common))
-		return false;
-	if (!xfc->isCursorHidden)
-		return false;
-	return true;
-}
-
 int xf_input_event(xfContext* xfc, WINPR_ATTR_UNUSED const XEvent* xevent, XIDeviceEvent* event,
                    int evtype)
 {
@@ -935,4 +926,13 @@ int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 #else
 	return 0;
 #endif
+}
+
+bool xf_use_rel_mouse(xfContext* xfc)
+{
+	if (!freerdp_client_use_relative_mouse_events(&xfc->common))
+		return false;
+	if (!xfc->isCursorHidden)
+		return false;
+	return true;
 }
