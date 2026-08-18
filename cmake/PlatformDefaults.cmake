@@ -110,6 +110,6 @@ if(USE_PLATFORM_DEFAULT)
 
   if(EPOLLSHIM)
     find_package(PkgConfig QUIET REQUIRED)
-    pkg_check_modules(EPOLLSHIM REQUIRED IMPORTED_TARGET epoll-shim)
+    pkg_check_modules(EPOLLSHIM REQUIRED IMPORTED_TARGET GLOBAL epoll-shim)
   endif()
 endif()
