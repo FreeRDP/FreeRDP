@@ -69,6 +69,16 @@ extern "C"
 	 * is especially important for the proxy where you have a RDP client and RDP server in the same
 	 * application context)
 	 *
+	 * \warning Pointers obtained from settings getters (e.g.
+	 * freerdp_settings_get_pointer(), freerdp_settings_get_string(), ...) are not
+	 * guaranteed to remain valid after any operation that modifies the settings.
+	 * Internal functions such as freerdp_settings_set_pointer_len() and
+	 * freerdp_settings_enforce_monitor_exists() may reallocate the underlying
+	 * buffers, and rdp_reset_runtime_settings() may even replace the entire
+	 * rdpSettings object. Callers must re-fetch pointers after such operations
+	 * rather than caching them. Only the rdpContext pointer is guaranteed stable
+	 * for the connection lifetime.
+	 *
 	 * @{
 	 */
 
@@ -620,6 +630,11 @@ extern "C"
 	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
 	 *
+	 *  \warning The returned pointer may be invalidated by any subsequent
+	 *  settings modification (e.g. freerdp_settings_set_pointer_len(),
+	 *  freerdp_settings_enforce_monitor_exists(), ...). Do not cache it
+	 *  across such calls; re-fetch instead.
+	 *
 	 *  \return the immutable pointer value
 	 */
 	WINPR_ATTR_NODISCARD
@@ -630,6 +645,11 @@ extern "C"
 	 *
 	 *  \param settings A pointer to the settings to query, must not be nullptr.
 	 *  \param id The key to query
+	 *
+	 *  \warning The returned pointer may be invalidated by any subsequent
+	 *  settings modification (e.g. freerdp_settings_set_pointer_len(),
+	 *  freerdp_settings_enforce_monitor_exists(), ...). Do not cache it
+	 *  across such calls; re-fetch instead.
 	 *
 	 *  \return the mutable pointer value
 	 */
