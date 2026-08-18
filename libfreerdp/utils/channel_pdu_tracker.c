@@ -65,6 +65,13 @@ wStream* ChannelPduTracker_poll(ChannelPduTracker* tracker, BOOL* ok)
 	}
 
 	const size_t actual = recvSz - sizeof(CHANNEL_PDU_HEADER);
+	if (actual < header->length)
+	{
+		/* Rest of this chunk hasn't arrived over the wire yet, keep polling. */
+		*ok = TRUE;
+		return nullptr;
+	}
+
 	if (actual != header->length)
 	{
 		WLog_Print(tracker->log, WLOG_ERROR,
