@@ -1982,6 +1982,8 @@ LONG smartcard_unpack_redir_scard_handle_(wLog* log, wStream* s, REDIR_SCARDHAND
                                           UINT32* index, const char* file, const char* function,
                                           size_t line)
 {
+	UINT32 pbHandleNdrPtr = 0;
+
 	WINPR_ASSERT(handle);
 	ZeroMemory(handle, sizeof(REDIR_SCARDHANDLE));
 
@@ -1990,11 +1992,22 @@ LONG smartcard_unpack_redir_scard_handle_(wLog* log, wStream* s, REDIR_SCARDHAND
 
 	Stream_Read_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, handle->cbHandle))
-		return STATUS_BUFFER_TOO_SMALL;
-
-	if (!smartcard_ndr_pointer_read_(log, s, index, nullptr, file, function, line))
+	if (!smartcard_ndr_pointer_read_(log, s, index, &pbHandleNdrPtr, file, function, line))
 		return ERROR_INVALID_DATA;
+
+	if (((handle->cbHandle == 0) && pbHandleNdrPtr) ||
+	    ((handle->cbHandle != 0) && !pbHandleNdrPtr))
+	{
+		WLog_Print(log, WLOG_WARN,
+		           "REDIR_SCARDHANDLE cbHandle (%" PRIu32 ") pbHandleNdrPtr (%" PRIu32
+		           ") inconsistency",
+		           handle->cbHandle, pbHandleNdrPtr);
+		return STATUS_INVALID_PARAMETER;
+	}
+
+	if (!Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, handle->cbHandle, 1,
+	                                            "%s(%s:%" PRIuz ")", file, function, line))
+		return STATUS_INVALID_PARAMETER;
 
 	return SCARD_S_SUCCESS;
 }
