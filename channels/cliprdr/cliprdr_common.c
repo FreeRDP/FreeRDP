@@ -500,7 +500,9 @@ UINT cliprdr_read_format_list(wLog* log, wStream* s, CLIPRDR_FORMAT_LIST* format
 		wStream sub2buffer = sub1buffer;
 		wStream* sub2 = &sub2buffer;
 
-		while (Stream_GetRemainingLength(sub1) > 0)
+		/* Bound must match the read pass below: some clients pad the format list with
+		 * trailing bytes that do not start another entry. */
+		while (Stream_GetRemainingLength(sub1) >= 4)
 		{
 			size_t rest = 0;
 			if (!Stream_SafeSeek(sub1, 4)) /* formatId (4 bytes) */
