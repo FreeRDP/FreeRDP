@@ -338,8 +338,8 @@ static UINT cliprdr_server_format_data_request(CliprdrServerContext* context,
 		WLog_Print(cliprdr->log, WLOG_WARN, "called with invalid type %08" PRIx32,
 		           formatDataRequest->common.msgType);
 
-	wStream* s = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST, formatDataRequest->common.msgFlags,
-	                                formatDataRequest->common.dataLen);
+	/* payload is always one UINT32, hardcode size like the client-side sender */
+	wStream* s = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST, 0, 4);
 
 	if (!s)
 	{
