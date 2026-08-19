@@ -56,8 +56,8 @@ struct rdp_credssp_auth
 	SecurityFunctionTable* table;
 	SecPkgInfo* info;
 	SEC_WINNT_AUTH_IDENTITY identity;
-	SEC_WINPR_NTLM_SETTINGS ntlmSettings;
-	SEC_WINPR_KERBEROS_SETTINGS kerberosSettings;
+	SEC_WINPR_NTLM_SETTINGS_V2* ntlmSettingsV2;
+	SEC_WINPR_KERBEROS_SETTINGS_V2* kerberosSettingsV2;
 	CredHandle credentials;
 	BOOL server;
 	SecPkgContext_Bindings* bindings;
@@ -139,11 +139,24 @@ rdpCredsspAuth* credssp_auth_new(const rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	rdpCredsspAuth* auth = calloc(1, sizeof(rdpCredsspAuth));
+	if (!auth)
+		return nullptr;
 
-	if (auth)
-		auth->rdp_ctx = context;
+	auth->ntlmSettingsV2 = sspi_AllocSecNtlmSettings();
+	if (!auth->ntlmSettingsV2)
+		goto fail;
+
+	auth->kerberosSettingsV2 = sspi_AllocSecKerberosSettings();
+	if (!auth->kerberosSettingsV2)
+		goto fail;
+
+	auth->rdp_ctx = context;
 
 	return auth;
+
+fail:
+	credssp_auth_free(auth);
+	return nullptr;
 }
 
 BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bindings* bindings)
@@ -188,10 +201,10 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bind
 
 static BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth,
                                          const SEC_WINNT_AUTH_IDENTITY* identity,
-                                         SEC_WINNT_AUTH_IDENTITY_WINPR* pAuthData)
+                                         SEC_WINNT_AUTH_IDENTITY_WINPR_V2* pAuthData)
 {
 	WINPR_ASSERT(pAuthData);
-	ZeroMemory(pAuthData, sizeof(SEC_WINNT_AUTH_IDENTITY_WINPR));
+	ZeroMemory(pAuthData, sizeof(SEC_WINNT_AUTH_IDENTITY_WINPR_V2));
 
 	SEC_WINNT_AUTH_IDENTITY_EXW* identityEx = &pAuthData->identity;
 	identityEx->Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
@@ -204,7 +217,7 @@ static BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth,
 	identityEx->PasswordLength = identity->PasswordLength;
 	identityEx->Flags = identity->Flags;
 	identityEx->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
-	identityEx->Flags |= SEC_WINNT_AUTH_IDENTITY_EXTENDED;
+	identityEx->Flags |= SEC_WINNT_AUTH_IDENTITY_EXTENDED_v2;
 
 	if (auth->package_list)
 	{
@@ -216,8 +229,12 @@ static BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth,
 		identityEx->PackageListLength = (UINT32)len;
 	}
 
-	pAuthData->ntlmSettings = &auth->ntlmSettings;
-	pAuthData->kerberosSettings = &auth->kerberosSettings;
+	pAuthData->version = SEC_WINNT_AUTH_IDENTITY_WINPR_V2_REVISION_1;
+	pAuthData->ntlmSettingsV2 = auth->ntlmSettingsV2;
+	WINPR_ASSERT(pAuthData->ntlmSettingsV2);
+
+	pAuthData->kerberosSettingsV2 = auth->kerberosSettingsV2;
+	WINPR_ASSERT(pAuthData->kerberosSettingsV2);
 
 	return TRUE;
 }
@@ -226,12 +243,12 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth);
 
-	if (!utils_str_is_empty(auth->kerberosSettings.kdcUrl))
+	if (!utils_str_is_empty(auth->kerberosSettingsV2->kdcUrl))
 	{
 		SECURITY_STATUS status = ERROR_INTERNAL_ERROR;
 		SSIZE_T str_size = 0;
 
-		str_size = ConvertUtf8ToWChar(auth->kerberosSettings.kdcUrl, nullptr, 0);
+		str_size = ConvertUtf8ToWChar(auth->kerberosSettingsV2->kdcUrl, nullptr, 0);
 		if ((str_size <= 0) || (str_size >= UINT16_MAX / 2))
 			return FALSE;
 		str_size++;
@@ -248,7 +265,7 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 		secAttr->ProxyServerLength = (UINT16)((size_t)str_size * sizeof(WCHAR));
 		secAttr->ProxyServerOffset = sizeof(SecPkgCredentials_KdcProxySettingsW);
 
-		if (ConvertUtf8ToWChar(auth->kerberosSettings.kdcUrl, (WCHAR*)(secAttr + 1),
+		if (ConvertUtf8ToWChar(auth->kerberosSettingsV2->kdcUrl, (WCHAR*)(secAttr + 1),
 		                       (size_t)str_size) <= 0)
 		{
 			free(secAttr);
@@ -274,7 +291,7 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 		if (status != SEC_E_OK)
 		{
 			WLog_WARN(TAG, "Explicit Kerberos KDC URL (%s) injection is not supported",
-			          auth->kerberosSettings.kdcUrl);
+			          auth->kerberosSettingsV2->kdcUrl);
 		}
 
 		free(secAttr);
@@ -288,7 +305,7 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
                                const char* pkinit)
 {
 	void* pAuthData = nullptr;
-	SEC_WINNT_AUTH_IDENTITY_WINPR winprAuthData = WINPR_C_ARRAY_INIT;
+	SEC_WINNT_AUTH_IDENTITY_WINPR_V2 winprAuthData = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
@@ -306,8 +323,7 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 
 		if (pkinit)
 		{
-			auth->kerberosSettings.pkinitX509Identity = _strdup(pkinit);
-			if (!auth->kerberosSettings.pkinitX509Identity)
+			if (!sspi_CloneSecSettingsString(&auth->kerberosSettingsV2->pkinitX509Identity, pkinit))
 			{
 				WLog_ERR(TAG, "unable to copy pkinitArgs");
 				return FALSE;
@@ -340,15 +356,15 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 BOOL credssp_auth_setup_server(rdpCredsspAuth* auth)
 {
 	void* pAuthData = nullptr;
-	SEC_WINNT_AUTH_IDENTITY_WINPR winprAuthData = WINPR_C_ARRAY_INIT;
+	SEC_WINNT_AUTH_IDENTITY_WINPR_V2 winprAuthData = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
 
 	WINPR_ASSERT(auth->state == AUTH_STATE_INITIAL);
 
-	if (auth->ntlmSettings.samFile || auth->ntlmSettings.hashCallback ||
-	    auth->kerberosSettings.keytab)
+	if (auth->ntlmSettingsV2->samFile || auth->ntlmSettingsV2->hashCallback ||
+	    auth->kerberosSettingsV2->keytab)
 	{
 		credssp_auth_setup_auth_data(auth, &auth->identity, &winprAuthData);
 		pAuthData = &winprAuthData;
@@ -791,9 +807,6 @@ void credssp_auth_tableAndContext(rdpCredsspAuth* auth, SecurityFunctionTable** 
 
 void credssp_auth_free(rdpCredsspAuth* auth)
 {
-	SEC_WINPR_KERBEROS_SETTINGS* krb_settings = nullptr;
-	SEC_WINPR_NTLM_SETTINGS* ntlm_settings = nullptr;
-
 	if (!auth)
 		return;
 
@@ -824,17 +837,8 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 	}
 
 	sspi_FreeAuthIdentity(&auth->identity);
-
-	krb_settings = &auth->kerberosSettings;
-	ntlm_settings = &auth->ntlmSettings;
-
-	free(krb_settings->kdcUrl);
-	free(krb_settings->cache);
-	free(krb_settings->keytab);
-	free(krb_settings->armorCache);
-	free(krb_settings->pkinitX509Anchors);
-	free(krb_settings->pkinitX509Identity);
-	free(ntlm_settings->samFile);
+	sspi_FreeSecKerberosSettings(auth->kerberosSettingsV2);
+	sspi_FreeSecNtlmSettings(auth->ntlmSettingsV2);
 
 	free(auth->package_list);
 	free(auth->spn);
@@ -934,20 +938,18 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 
 static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 {
-	const rdpSettings* settings = nullptr;
-	SEC_WINPR_KERBEROS_SETTINGS* krb_settings = nullptr;
-	SEC_WINPR_NTLM_SETTINGS* ntlm_settings = nullptr;
-	freerdp_peer* peer = nullptr;
-
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->rdp_ctx);
 
-	peer = auth->rdp_ctx->peer;
-	settings = auth->rdp_ctx->settings;
+	freerdp_peer* peer = auth->rdp_ctx->peer;
+	const rdpSettings* settings = auth->rdp_ctx->settings;
 	WINPR_ASSERT(settings);
 
-	krb_settings = &auth->kerberosSettings;
-	ntlm_settings = &auth->ntlmSettings;
+	SEC_WINPR_KERBEROS_SETTINGS_V2* krb_settings = auth->kerberosSettingsV2;
+	WINPR_ASSERT(krb_settings);
+
+	SEC_WINPR_NTLM_SETTINGS_V2* ntlm_settings = auth->ntlmSettingsV2;
+	WINPR_ASSERT(ntlm_settings);
 
 	if (settings->KerberosLifeTime)
 		parseKerberosDeltat(settings->KerberosLifeTime, &krb_settings->lifeTime, "lifetime");
@@ -959,8 +961,7 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 
 	if (settings->KerberosKdcUrl)
 	{
-		krb_settings->kdcUrl = _strdup(settings->KerberosKdcUrl);
-		if (!krb_settings->kdcUrl)
+		if (!sspi_CloneSecSettingsString(&krb_settings->kdcUrl, settings->KerberosKdcUrl))
 		{
 			WLog_ERR(TAG, "unable to copy kdcUrl");
 			return FALSE;
@@ -969,8 +970,7 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 
 	if (settings->KerberosCache)
 	{
-		krb_settings->cache = _strdup(settings->KerberosCache);
-		if (!krb_settings->cache)
+		if (!sspi_CloneSecSettingsString(&krb_settings->cache, settings->KerberosCache))
 		{
 			WLog_ERR(TAG, "unable to copy cache name");
 			return FALSE;
@@ -979,18 +979,17 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 
 	if (settings->KerberosKeytab)
 	{
-		krb_settings->keytab = _strdup(settings->KerberosKeytab);
-		if (!krb_settings->keytab)
-		{
-			WLog_ERR(TAG, "unable to copy keytab name");
-			return FALSE;
-		}
+		if (!sspi_CloneSecSettingsString(&krb_settings->keytab, settings->KerberosKeytab))
+			if (!krb_settings->keytab)
+			{
+				WLog_ERR(TAG, "unable to copy keytab name");
+				return FALSE;
+			}
 	}
 
 	if (settings->KerberosArmor)
 	{
-		krb_settings->armorCache = _strdup(settings->KerberosArmor);
-		if (!krb_settings->armorCache)
+		if (!sspi_CloneSecSettingsString(&krb_settings->armorCache, settings->KerberosArmor))
 		{
 			WLog_ERR(TAG, "unable to copy armorCache");
 			return FALSE;
@@ -999,8 +998,7 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 
 	if (settings->PkinitAnchors)
 	{
-		krb_settings->pkinitX509Anchors = _strdup(settings->PkinitAnchors);
-		if (!krb_settings->pkinitX509Anchors)
+		if (!sspi_CloneSecSettingsString(&krb_settings->pkinitX509Anchors, settings->PkinitAnchors))
 		{
 			WLog_ERR(TAG, "unable to copy pkinitX509Anchors");
 			return FALSE;
@@ -1009,8 +1007,7 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 
 	if (settings->NtlmSamFile)
 	{
-		ntlm_settings->samFile = _strdup(settings->NtlmSamFile);
-		if (!ntlm_settings->samFile)
+		if (!sspi_CloneSecSettingsString(&ntlm_settings->samFile, settings->NtlmSamFile))
 		{
 			WLog_ERR(TAG, "unable to copy samFile");
 			return FALSE;
@@ -1031,7 +1028,7 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 	}
 
 	auth->identity.Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
-	auth->identity.Flags |= SEC_WINNT_AUTH_IDENTITY_EXTENDED;
+	auth->identity.Flags |= SEC_WINNT_AUTH_IDENTITY_EXTENDED_v2;
 
 	return TRUE;
 }

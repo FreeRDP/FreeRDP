@@ -38,22 +38,33 @@ typedef struct
 	SEC_GET_KEY_FN pGetKeyFn;
 	void* pvGetKeyArgument;
 	SEC_WINNT_AUTH_IDENTITY identity;
-	SEC_WINPR_NTLM_SETTINGS ntlmSettings;
-	SEC_WINPR_KERBEROS_SETTINGS kerbSettings;
+	SEC_WINPR_NTLM_SETTINGS_V2 ntlmSettingsV2;
+	SEC_WINPR_KERBEROS_SETTINGS_V2 kerbSettingsV2;
 } SSPI_CREDENTIALS;
 
-SSPI_CREDENTIALS* sspi_CredentialsNew(void);
 void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials);
+
+WINPR_ATTR_MALLOC(sspi_CredentialsFree, 1)
+SSPI_CREDENTIALS* sspi_CredentialsNew(void);
 
 PSecBuffer sspi_FindSecBuffer(PSecBufferDesc pMessage, ULONG BufferType);
 
-SecHandle* sspi_SecureHandleAlloc(void);
-void sspi_SecureHandleInvalidate(SecHandle* handle);
-void* sspi_SecureHandleGetLowerPointer(SecHandle* handle);
-void sspi_SecureHandleSetLowerPointer(SecHandle* handle, void* pointer);
-void* sspi_SecureHandleGetUpperPointer(SecHandle* handle);
-void sspi_SecureHandleSetUpperPointer(SecHandle* handle, void* pointer);
 void sspi_SecureHandleFree(SecHandle* handle);
+
+WINPR_ATTR_MALLOC(sspi_SecureHandleFree, 1)
+SecHandle* sspi_SecureHandleAlloc(void);
+
+void sspi_SecureHandleInvalidate(SecHandle* handle);
+
+WINPR_ATTR_NODISCARD
+void* sspi_SecureHandleGetLowerPointer(SecHandle* handle);
+
+void sspi_SecureHandleSetLowerPointer(SecHandle* handle, void* pointer);
+
+WINPR_ATTR_NODISCARD
+void* sspi_SecureHandleGetUpperPointer(SecHandle* handle);
+
+void sspi_SecureHandleSetUpperPointer(SecHandle* handle, void* pointer);
 
 /* Package identity of a SecHandle (1-based; 0 == unset). The order MUST match
  * SecPkgInfo{A,W}_LIST and SecurityFunctionTable{A,W}_NAME_LIST in sspi_winpr.c;
@@ -108,6 +119,7 @@ enum SecurityFunctionTableIndex
 	SetCredentialsAttributesIndex = 29
 };
 
+WINPR_ATTR_NODISCARD
 BOOL IsSecurityStatusError(SECURITY_STATUS status);
 
 #include "sspi_gss.h"

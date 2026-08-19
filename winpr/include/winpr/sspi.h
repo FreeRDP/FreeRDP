@@ -687,7 +687,15 @@ typedef struct
 #define SEC_WINNT_AUTH_IDENTITY_UNICODE 0x2
 #define SEC_WINNT_AUTH_IDENTITY_MARSHALLED 0x4
 #define SEC_WINNT_AUTH_IDENTITY_ONLY 0x8
+
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
+/**< @deprecated use SEC_WINNT_AUTH_IDENTITY_EXTENDED_v2
+ * @since [version 3.31.0]
+ */
 #define SEC_WINNT_AUTH_IDENTITY_EXTENDED 0x100
+#endif
+
+#define SEC_WINNT_AUTH_IDENTITY_EXTENDED_v2 0x200 /**< @since 3.31.0 */
 
 #define SEC_WINPR_AUTH_IDENTITY_PASSWORD_HASH 0x00800000
 
@@ -903,35 +911,84 @@ typedef SECURITY_STATUS (*psSspiNtlmHashCallback)(void* client,
                                                   const BYTE* randkey, const BYTE* mic,
                                                   const SecBuffer* micvalue, BYTE* ntlmhash);
 
-typedef struct
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
+
+WINPR_DEPRECATED_VAR(
+    "[since 3.31.0] use SEC_WINPR_NTLM_SETTINGS_V2", typedef struct {
+	    char* samFile; /**< File name (with path) of a SAM file */
+	    WINPR_ATTR_NODISCARD psSspiNtlmHashCallback
+	        hashCallback;      /**< Callback to be called to generate a NTLM hash. */
+	    void* hashCallbackArg; /**< A pointer passed to \ref hashCallback */
+    } SEC_WINPR_NTLM_SETTINGS);
+
+WINPR_DEPRECATED_VAR(
+    "[since 3.31.0] use SEC_WINPR_KERBEROS_SETTINGS_V2", typedef struct {
+	    char* kdcUrl;
+	    char* keytab;
+	    char* cache;
+	    char* armorCache;
+	    char* pkinitX509Anchors;
+	    char* pkinitX509Identity;
+	    BOOL withPac;
+	    INT32 startTime;
+	    INT32 renewLifeTime;
+	    INT32 lifeTime;
+	    BYTE certSha1[20];
+    } SEC_WINPR_KERBEROS_SETTINGS);
+
+WINPR_DEPRECATED_VAR(
+    "[since 3.31.0] use SEC_WINNT_AUTH_IDENTITY_WINPR_V2", typedef struct {
+	    SEC_WINNT_AUTH_IDENTITY_EXW identity;
+	    SEC_WINPR_NTLM_SETTINGS* ntlmSettings;
+	    SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
+    } SEC_WINNT_AUTH_IDENTITY_WINPR);
+
+#endif
+
+typedef struct DECLSPEC_ALIGN(8) /**< @since version 3.31.0 */
 {
-	char* samFile; /**< File name (with path) of a SAM file */
+	DECLSPEC_ALIGN(8)
+	UINT32 size;                     /**< size of this struct. */
+	DECLSPEC_ALIGN(8) char* samFile; /**< File name (with path) of a SAM file */
+	DECLSPEC_ALIGN(8)
 	WINPR_ATTR_NODISCARD psSspiNtlmHashCallback
-	    hashCallback;      /**< Callback to be called to generate a NTLM hash. */
-	void* hashCallbackArg; /**< A pointer passed to \ref hashCallback */
-} SEC_WINPR_NTLM_SETTINGS;
+	    hashCallback;                        /**< Callback to be called to generate a NTLM hash. */
+	DECLSPEC_ALIGN(8) void* hashCallbackArg; /**< A pointer passed to \ref hashCallback */
+	DECLSPEC_ALIGN(8) char* targetName;      /**< @since version 3.31.0 */
+	DECLSPEC_ALIGN(8) char* netBiosComputerName; /**< @since version 3.31.0 */
+	DECLSPEC_ALIGN(8) char* netBiosDomainName;   /**< @since version 3.31.0 */
+	DECLSPEC_ALIGN(8) char* dnsComputerName;     /**< @since version 3.31.0 */
+	DECLSPEC_ALIGN(8) char* dnsDomainName;       /**< @since version 3.31.0 */
+} SEC_WINPR_NTLM_SETTINGS_V2;
 
-typedef struct
+typedef struct DECLSPEC_ALIGN(8) /**< @since version 3.31.0 */
 {
-	char* kdcUrl;
-	char* keytab;
-	char* cache;
-	char* armorCache;
-	char* pkinitX509Anchors;
-	char* pkinitX509Identity;
-	BOOL withPac;
-	INT32 startTime;
-	INT32 renewLifeTime;
-	INT32 lifeTime;
-	BYTE certSha1[20];
-} SEC_WINPR_KERBEROS_SETTINGS;
+	DECLSPEC_ALIGN(8) UINT32 size;
+	DECLSPEC_ALIGN(8) char* kdcUrl;
+	DECLSPEC_ALIGN(8) char* keytab;
+	DECLSPEC_ALIGN(8) char* cache;
+	DECLSPEC_ALIGN(8) char* armorCache;
+	DECLSPEC_ALIGN(8) char* pkinitX509Anchors;
+	DECLSPEC_ALIGN(8) char* pkinitX509Identity;
+	DECLSPEC_ALIGN(8) BOOL withPac;
+	DECLSPEC_ALIGN(8) INT32 startTime;
+	DECLSPEC_ALIGN(8) INT32 renewLifeTime;
+	DECLSPEC_ALIGN(8) INT32 lifeTime;
+	DECLSPEC_ALIGN(8) BYTE certSha1[20];
+} SEC_WINPR_KERBEROS_SETTINGS_V2;
 
-typedef struct
+typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
 {
-	SEC_WINNT_AUTH_IDENTITY_EXW identity;
-	SEC_WINPR_NTLM_SETTINGS* ntlmSettings;
-	SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
-} SEC_WINNT_AUTH_IDENTITY_WINPR;
+	SEC_WINNT_AUTH_IDENTITY_WINPR_V2_REVISION_1 = 1 /**< @since version 3.31.0 */
+} SEC_WINNT_AUTH_IDENTITY_WINPR_V2_VERSION;         /**< @since version 3.31.0 */
+
+typedef struct DECLSPEC_ALIGN(8) /**< @since version 3.31.0 */
+{
+	DECLSPEC_ALIGN(8) SEC_WINNT_AUTH_IDENTITY_EXW identity;
+	DECLSPEC_ALIGN(8) UINT32 version;
+	DECLSPEC_ALIGN(8) SEC_WINPR_NTLM_SETTINGS_V2* ntlmSettingsV2;
+	DECLSPEC_ALIGN(8) SEC_WINPR_KERBEROS_SETTINGS_V2* kerberosSettingsV2;
+} SEC_WINNT_AUTH_IDENTITY_WINPR_V2;
 
 #define SECBUFFER_VERSION 0
 
@@ -1562,6 +1619,46 @@ extern "C"
 
 	WINPR_ATTR_NODISCARD
 	WINPR_API SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceExA(DWORD flags);
+
+	/** @brief free an allocated \ref SEC_WINPR_NTLM_SETTINGS_V2
+	 *  @param settings A pointer to the settings to free
+	 *  @since version 3.31.0
+	 */
+	WINPR_API void sspi_FreeSecNtlmSettings(SEC_WINPR_NTLM_SETTINGS_V2* settings);
+
+	/** @brief allocate a \ref SEC_WINPR_NTLM_SETTINGS_V2
+	 *  @return An allocated settings struct or nullptr.
+	 *  @since version 3.31.0
+	 */
+	WINPR_ATTR_MALLOC(sspi_FreeSecNtlmSettings, 1)
+	WINPR_API SEC_WINPR_NTLM_SETTINGS_V2* sspi_AllocSecNtlmSettings(void);
+
+	/** @brief free an allocated \ref SEC_WINPR_KERBEROS_SETTINGS_V2
+	 *  @param settings A pointer to the settings to free
+	 *  @since version 3.31.0
+	 */
+	WINPR_API void sspi_FreeSecKerberosSettings(SEC_WINPR_KERBEROS_SETTINGS_V2* settings);
+
+	/** @brief allocate a \ref SEC_WINPR_KERBEROS_SETTINGS_V2
+	 *  @return An allocated settings struct or nullptr.
+	 *  @since version 3.31.0
+	 */
+	WINPR_ATTR_MALLOC(sspi_FreeSecKerberosSettings, 1)
+	WINPR_API SEC_WINPR_KERBEROS_SETTINGS_V2* sspi_AllocSecKerberosSettings(void);
+
+	/** @brief create a copy of a string. Frees up any previously allocated string at \ref dest
+	 *  This function was introduced to have an easy way to clone a string and keep clear of
+	 * allocator mismatches.
+	 *
+	 *  @param dest A pointer to a char* which will hold the allocated string result. Must not be
+	 * NULL
+	 *  @param src A pointer to the string to clone
+	 *
+	 *  @return TRUE for success, FALSE otherwise.
+	 *  @since version 3.31.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL sspi_CloneSecSettingsString(char** dest, const char* src);
 
 #ifdef UNICODE
 #define InitSecurityInterfaceEx InitSecurityInterfaceExW

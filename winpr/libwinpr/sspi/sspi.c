@@ -980,3 +980,61 @@ void sspi_FreeAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity)
 	const SEC_WINNT_AUTH_IDENTITY empty = WINPR_C_ARRAY_INIT;
 	*identity = empty;
 }
+
+void sspi_FreeSecNtlmSettings(SEC_WINPR_NTLM_SETTINGS_V2* settings)
+{
+	if (!settings)
+		return;
+	free(settings->samFile);
+	free(settings->targetName);
+	free(settings->netBiosComputerName);
+	free(settings->netBiosDomainName);
+	free(settings->dnsComputerName);
+	free(settings->dnsDomainName);
+	free(settings);
+}
+
+SEC_WINPR_NTLM_SETTINGS_V2* sspi_AllocSecNtlmSettings(void)
+{
+	SEC_WINPR_NTLM_SETTINGS_V2* settings = calloc(1, sizeof(SEC_WINPR_NTLM_SETTINGS_V2));
+	if (!settings)
+		return nullptr;
+	settings->size = sizeof(SEC_WINPR_NTLM_SETTINGS_V2);
+	return settings;
+}
+
+void sspi_FreeSecKerberosSettings(SEC_WINPR_KERBEROS_SETTINGS_V2* settings)
+{
+	if (!settings)
+		return;
+	free(settings->kdcUrl);
+	free(settings->cache);
+	free(settings->keytab);
+	free(settings->armorCache);
+	free(settings->pkinitX509Anchors);
+	free(settings->pkinitX509Identity);
+	free(settings);
+}
+
+SEC_WINPR_KERBEROS_SETTINGS_V2* sspi_AllocSecKerberosSettings(void)
+{
+	SEC_WINPR_KERBEROS_SETTINGS_V2* settings = calloc(1, sizeof(SEC_WINPR_KERBEROS_SETTINGS_V2));
+	if (!settings)
+		return nullptr;
+	settings->size = sizeof(SEC_WINPR_KERBEROS_SETTINGS_V2);
+	return settings;
+}
+
+BOOL sspi_CloneSecSettingsString(char** dest, const char* src)
+{
+	WINPR_ASSERT(dest);
+	free(*dest);
+	*dest = nullptr;
+	if (src)
+	{
+		*dest = _strdup(src);
+		if (!*dest)
+			return FALSE;
+	}
+	return TRUE;
+}

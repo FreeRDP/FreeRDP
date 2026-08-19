@@ -338,7 +338,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
     WINPR_ATTR_UNUSED PTimeStamp ptsExpiry)
 {
 #ifdef WITH_KRB5
-	SEC_WINPR_KERBEROS_SETTINGS* krb_settings = nullptr;
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
+	SEC_WINPR_KERBEROS_SETTINGS_V2 krb_settings_v1_buffer = WINPR_C_ARRAY_INIT;
+#endif
+
+	SEC_WINPR_KERBEROS_SETTINGS_V2* krb_settings = nullptr;
 	KRB_CREDENTIALS* credentials = nullptr;
 	krb5_context ctx = nullptr;
 	krb5_ccache ccache = nullptr;
@@ -354,8 +358,38 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	{
 		UINT32 identityFlags = sspi_GetAuthIdentityFlags(pAuthData);
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 		if (identityFlags & SEC_WINNT_AUTH_IDENTITY_EXTENDED)
-			krb_settings = (((SEC_WINNT_AUTH_IDENTITY_WINPR*)pAuthData)->kerberosSettings);
+		{
+			SEC_WINPR_KERBEROS_SETTINGS* krb_settingsV1 =
+			    (((SEC_WINNT_AUTH_IDENTITY_WINPR*)pAuthData)->kerberosSettings);
+			if (krb_settingsV1)
+			{
+				krb_settings_v1_buffer.kdcUrl = krb_settingsV1->kdcUrl;
+				krb_settings_v1_buffer.keytab = krb_settingsV1->keytab;
+				krb_settings_v1_buffer.cache = krb_settingsV1->cache;
+				krb_settings_v1_buffer.armorCache = krb_settingsV1->armorCache;
+				krb_settings_v1_buffer.pkinitX509Anchors = krb_settingsV1->pkinitX509Anchors;
+				krb_settings_v1_buffer.pkinitX509Identity = krb_settingsV1->pkinitX509Identity;
+				krb_settings_v1_buffer.withPac = krb_settingsV1->withPac;
+				krb_settings_v1_buffer.startTime = krb_settingsV1->startTime;
+				krb_settings_v1_buffer.renewLifeTime = krb_settingsV1->renewLifeTime;
+				krb_settings_v1_buffer.lifeTime = krb_settingsV1->lifeTime;
+				memcpy(krb_settings_v1_buffer.certSha1, krb_settingsV1->certSha1,
+				       sizeof(krb_settings_v1_buffer.certSha1));
+				krb_settings = &krb_settings_v1_buffer;
+			}
+		}
+#endif
+		if (identityFlags & SEC_WINNT_AUTH_IDENTITY_EXTENDED_v2)
+		{
+			const SEC_WINNT_AUTH_IDENTITY_WINPR_V2* auth =
+			    (const SEC_WINNT_AUTH_IDENTITY_WINPR_V2*)pAuthData;
+			WINPR_ASSERT(auth);
+			if (auth->version < SEC_WINNT_AUTH_IDENTITY_WINPR_V2_REVISION_1)
+				goto cleanup;
+			krb_settings = auth->kerberosSettingsV2;
+		}
 
 		if (!sspi_CopyAuthIdentityFieldsA((const SEC_WINNT_AUTH_IDENTITY_INFO*)pAuthData, &username,
 		                                  &domain, &password))

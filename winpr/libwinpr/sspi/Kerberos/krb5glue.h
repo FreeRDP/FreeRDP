@@ -103,7 +103,7 @@ BOOL krb5glue_authenticator_validate_chksum(krb5glue_authenticator authenticator
                                             uint32_t* flags);
 krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, krb5_ccache ccache,
                                         krb5_prompter_fct prompter, char* password,
-                                        SEC_WINPR_KERBEROS_SETTINGS* krb_settings);
+                                        SEC_WINPR_KERBEROS_SETTINGS_V2* krb_settings);
 
 void krb_log_context_encryption(krb5_context ctx, krb5_principal princ);
 
