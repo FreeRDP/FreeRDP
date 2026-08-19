@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdint.h>
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 
@@ -81,6 +82,43 @@ int TestAlignment(int argc, char* argv[])
 
 	/* _aligned_free works for both _aligned_malloc and _aligned_offset_malloc. free() should not be
 	 * used. */
+	winpr_aligned_free(ptr);
+
+	/* _aligned_recalloc must leave the original block untouched when the reallocation fails,
+	 * matching the _aligned_recalloc contract. */
+
+	ptr = winpr_aligned_malloc(128, alignment);
+
+	if (ptr == nullptr)
+	{
+		printf("Error allocating aligned memory.\n");
+		return -1;
+	}
+
+	memset(ptr, 0xAB, 128);
+
+	{
+		/* A request this large cannot be satisfied, so the allocation fails. */
+		void* failed = winpr_aligned_recalloc(ptr, 1, SIZE_MAX / 2, alignment);
+
+		if (failed != nullptr)
+		{
+			printf("Expected winpr_aligned_recalloc to fail for an oversized request.\n");
+			winpr_aligned_free(failed);
+			return -1;
+		}
+
+		/* On failure the original block is still valid and must retain its contents. */
+		for (size_t i = 0; i < 128; i++)
+		{
+			if (((const BYTE*)ptr)[i] != 0xAB)
+			{
+				printf("Original block was corrupted after a failed winpr_aligned_recalloc.\n");
+				return -1;
+			}
+		}
+	}
+
 	winpr_aligned_free(ptr);
 
 	return 0;
