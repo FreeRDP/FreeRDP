@@ -817,15 +817,6 @@ static BOOL pool_encode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 		const UINT32 height = rect->bottom - rect->top;
 		const UINT32 steps = getSteps(height, context->heightStep);
 
-		waitCount += steps;
-	}
-
-	for (UINT32 x = 0; x < numRegionRects; x++)
-	{
-		const RECTANGLE_16* rect = &regionRects[x];
-		const UINT32 height = rect->bottom - rect->top;
-		const UINT32 steps = getSteps(height, context->heightStep);
-
 		for (UINT32 y = 0; y < steps; y++)
 		{
 			RECTANGLE_16 r = *rect;
