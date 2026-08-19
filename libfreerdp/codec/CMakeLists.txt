@@ -118,15 +118,13 @@ endif()
 
 if(WITH_AOM AND AOM_FOUND)
   add_compile_definitions(WITH_LIBAOM)
-  list(APPEND CODEC_LIBS ${AOM_LIBRARIES})
-  include_directories(SYSTEM ${AOM_INCLUDE_DIRS})
+  list(APPEND CODEC_LIBS aom)
   freerdp_pc_add_requires_private("aom")
 endif()
 
 if(WITH_DAV1D AND DAV1D_FOUND)
   add_compile_definitions(WITH_DAV1D)
-  list(APPEND CODEC_LIBS ${DAV1D_LIBRARIES})
-  include_directories(SYSTEM ${DAV1D_INCLUDE_DIRS})
+  list(APPEND CODEC_LIBS dav1d)
   freerdp_pc_add_requires_private("dav1d")
 endif()
 
@@ -142,8 +140,7 @@ endif()
 
 if(WITH_YUV AND YUV_FOUND)
   add_compile_definitions(WITH_LIBYUV)
-  list(APPEND CODEC_LIBS ${YUV_LIBRARIES})
-  include_directories(SYSTEM ${YUV_INCLUDE_DIRS})
+  list(APPEND CODEC_LIBS yuv)
   freerdp_pc_add_requires_private("yuv")
 endif()
 
