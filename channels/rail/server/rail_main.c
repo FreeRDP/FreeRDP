@@ -1463,13 +1463,9 @@ static RailServerPrivate* rail_server_context_priv_new(RailServerContext* contex
 	priv->channelPduTracker = ChannelPduTracker_new(priv->rail_channel);
 	if (!priv->channelPduTracker)
 		goto fail;
-	priv->thread = CreateThread(nullptr, 0, rail_server_thread, context, 0, nullptr);
 
-	if (!priv->thread)
-	{
-		WLog_ERR(TAG, "CreateThread failed!");
-		goto fail;
-	}
+	/* The thread is started by rail_server_start after context->priv was assigned:
+	 * rail_server_thread dereferences context->priv right away. */
 	return priv;
 fail:
 	rail_server_context_priv_free(priv);
@@ -1486,9 +1482,22 @@ static UINT rail_server_start(RailServerContext* context)
 {
 	WINPR_ASSERT(context);
 
-	context->priv = rail_server_context_priv_new(context);
-	if (!context->priv)
+	RailServerPrivate* priv = rail_server_context_priv_new(context);
+	if (!priv)
 		return ERROR_INTERNAL_ERROR;
+
+	/* Publish priv before starting the thread, rail_server_thread reads context->priv
+	 * without any synchronization. */
+	context->priv = priv;
+
+	priv->thread = CreateThread(nullptr, 0, rail_server_thread, context, 0, nullptr);
+	if (!priv->thread)
+	{
+		WLog_ERR(TAG, "CreateThread failed!");
+		context->priv = nullptr;
+		rail_server_context_priv_free(priv);
+		return ERROR_INTERNAL_ERROR;
+	}
 	return CHANNEL_RC_OK;
 }
 
