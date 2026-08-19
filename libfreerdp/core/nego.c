@@ -1110,13 +1110,7 @@ void nego_send(rdpNego* nego)
 BOOL nego_send_negotiation_request(rdpNego* nego)
 {
 	BOOL rc = FALSE;
-	wStream* s = nullptr;
-	size_t length = 0;
-	size_t bm = 0;
-	size_t em = 0;
-	BYTE flags = 0;
-	size_t cookie_length = 0;
-	s = Stream_New(nullptr, 512);
+	wStream* s = Stream_New(nullptr, 512);
 
 	WINPR_ASSERT(nego);
 	if (!s)
@@ -1125,12 +1119,14 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		return FALSE;
 	}
 
-	length = TPDU_CONNECTION_REQUEST_LENGTH;
-	bm = Stream_GetPosition(s);
-	Stream_Seek(s, length);
+	const size_t bm = Stream_GetPosition(s);
+	if (!Stream_SafeSeek(s, TPDU_CONNECTION_REQUEST_LENGTH))
+		return FALSE;
 
 	if (nego->RoutingToken)
 	{
+		if (!Stream_EnsureRemainingCapacity(s, nego->RoutingTokenLength))
+			return FALSE;
 		Stream_Write(s, nego->RoutingToken, nego->RoutingTokenLength);
 
 		/* Ensure Routing Token is correctly terminated - may already be present in string */
@@ -1141,28 +1137,33 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		{
 			WLog_Print(nego->log, WLOG_DEBUG,
 			           "Routing token looks correctly terminated - use verbatim");
-			length += nego->RoutingTokenLength;
 		}
 		else
 		{
 			WLog_Print(nego->log, WLOG_DEBUG, "Adding terminating CRLF to routing token");
+			if (!Stream_EnsureRemainingCapacity(s, 2))
+				return FALSE;
 			Stream_Write_UINT8(s, 0x0D); /* CR */
 			Stream_Write_UINT8(s, 0x0A); /* LF */
-			length += nego->RoutingTokenLength + 2;
 		}
 	}
 	else if (nego->cookie)
 	{
-		cookie_length = strlen(nego->cookie);
+		size_t cookie_length = strlen(nego->cookie);
 
 		if (cookie_length > nego->CookieMaxLength)
 			cookie_length = nego->CookieMaxLength;
 
+		if (!Stream_EnsureRemainingCapacity(s, 17))
+			return FALSE;
 		Stream_Write(s, "Cookie: mstshash=", 17);
+		if (!Stream_EnsureRemainingCapacity(s, cookie_length))
+			return FALSE;
 		Stream_Write(s, (BYTE*)nego->cookie, cookie_length);
+		if (!Stream_EnsureRemainingCapacity(s, 2))
+			return FALSE;
 		Stream_Write_UINT8(s, 0x0D); /* CR */
 		Stream_Write_UINT8(s, 0x0A); /* LF */
-		length += cookie_length + 19;
 	}
 
 	{
@@ -1173,6 +1174,8 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 
 	if ((nego->RequestedProtocols > PROTOCOL_RDP) || (nego->sendNegoData))
 	{
+		UINT8 flags = 0;
+
 		/* RDP_NEG_DATA must be present for TLS and NLA */
 		if (nego->RestrictedAdminModeRequired)
 			flags |= RESTRICTED_ADMIN_MODE_REQUIRED;
@@ -1180,22 +1183,23 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		if (nego->RemoteCredsGuardRequired)
 			flags |= REDIRECTED_AUTHENTICATION_MODE_REQUIRED;
 
+		if (!Stream_EnsureRemainingCapacity(s, 8))
+			return FALSE;
+
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_REQ);
 		Stream_Write_UINT8(s, flags);
 		Stream_Write_UINT16(s, 8);                        /* RDP_NEG_DATA length (8) */
 		Stream_Write_UINT32(s, nego->RequestedProtocols); /* requestedProtocols */
-		length += 8;
 	}
 
-	if (length > UINT16_MAX)
+	const size_t em = Stream_GetPosition(s);
+	if ((em < 5) || (em > UINT16_MAX))
 		goto fail;
-
-	em = Stream_GetPosition(s);
 	if (!Stream_SetPosition(s, bm))
 		goto fail;
-	if (!tpkt_write_header(s, (UINT16)length))
+	if (!tpkt_write_header(s, (UINT16)em))
 		goto fail;
-	if (!tpdu_write_connection_request(s, (UINT16)length - 5))
+	if (!tpdu_write_connection_request(s, (UINT16)em - 5))
 		goto fail;
 	if (!Stream_SetPosition(s, em))
 		goto fail;
