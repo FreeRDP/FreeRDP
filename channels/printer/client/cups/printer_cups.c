@@ -313,6 +313,8 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 		return nullptr;
 
 	cups_printer->printer.backend = &cups_driver->driver;
+	WINPR_ASSERT(cups_printer->printer.backend->AddRef);
+	cups_printer->printer.backend->AddRef(cups_printer->printer.backend);
 
 	cups_printer->printer.id = cups_driver->id_sequence++;
 	cups_printer->printer.name = _strdup(name);
@@ -342,9 +344,6 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 
 	WINPR_ASSERT(cups_printer->printer.AddRef);
 	cups_printer->printer.AddRef(&cups_printer->printer);
-
-	WINPR_ASSERT(cups_printer->printer.backend->AddRef);
-	cups_printer->printer.backend->AddRef(cups_printer->printer.backend);
 
 	return &cups_printer->printer;
 

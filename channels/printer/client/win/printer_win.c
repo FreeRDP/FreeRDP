@@ -264,11 +264,9 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 		return nullptr;
 
 	win_printer->printer.backend = &win_driver->driver;
+	win_printer->printer.backend->AddRef(win_printer->printer.backend);
 	win_printer->printer.id = win_driver->id_sequence++;
 	win_printer->printer.name = ConvertWCharToUtf8Alloc(name, nullptr);
-	if (!win_printer->printer.name)
-		goto fail;
-
 	if (!win_printer->printer.name)
 		goto fail;
 	win_printer->printer.is_default = is_default;
@@ -305,7 +303,6 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 		goto fail;
 
 	win_printer->printer.AddRef(&win_printer->printer);
-	win_printer->printer.backend->AddRef(win_printer->printer.backend);
 	return &win_printer->printer;
 
 fail:
@@ -392,7 +389,7 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 		printers[num_printers++] = current;
 	}
 
-	if (!haveDefault && (returned > 0))
+	if (printers && !haveDefault && (returned > 0))
 		printers[0]->is_default = TRUE;
 
 	GlobalFree(prninfo);
