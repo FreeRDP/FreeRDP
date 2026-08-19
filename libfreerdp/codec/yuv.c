@@ -558,7 +558,7 @@ static BOOL pool_decode_rect(YUV_CONTEXT* WINPR_RESTRICT context, BYTE type,
 	}
 
 	/* case where we use threads */
-	for (waitCount = 0; waitCount < numRegionRects; waitCount++)
+	for (UINT32 x = 0; x < numRegionRects; x++)
 	{
 		YUV_COMBINE_WORK_PARAM* current = nullptr;
 
@@ -568,11 +568,12 @@ static BOOL pool_decode_rect(YUV_CONTEXT* WINPR_RESTRICT context, BYTE type,
 			waitCount = 0;
 		}
 		current = &context->work_combined_params[waitCount];
-		*current = pool_decode_rect_param(&regionRects[waitCount], context, type, pYUVData, iStride,
+		*current = pool_decode_rect_param(&regionRects[x], context, type, pYUVData, iStride,
 		                                  pYUVDstData, iDstStride);
 
 		if (!submit_object(&context->work_objects[waitCount], cb, current, context))
 			goto fail;
+		waitCount++;
 	}
 
 	rc = TRUE;
