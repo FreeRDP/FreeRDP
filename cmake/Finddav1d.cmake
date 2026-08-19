@@ -1,0 +1,41 @@
+# - Try to find the dav1d library
+# Once done this will define
+#
+#  DAV1D_ROOT - A list of search hints
+#
+#  DAV1D_FOUND - system has dav1d
+#  DAV1D_INCLUDE_DIRS - the dav1d include directory
+#  DAV1D_LIBRARIES - dav1d library
+
+if(UNIX AND NOT ANDROID)
+  find_package(PkgConfig QUIET)
+  pkg_check_modules(PC_DAV1D QUIET dav1d)
+endif(UNIX AND NOT ANDROID)
+
+if(DAV1D_INCLUDE_DIR AND DAV1D_LIBRARY)
+  set(DAV1D_FIND_QUIETLY TRUE)
+endif(DAV1D_INCLUDE_DIR AND DAV1D_LIBRARY)
+
+find_path(DAV1D_INCLUDE_DIR NAMES dav1d/dav1d.h PATH_SUFFIXES include HINTS ${DAV1D_ROOT} ${PC_DAV1D_INCLUDE_DIRS})
+find_library(DAV1D_LIBRARY NAMES dav1d PATH_SUFFIXES lib HINTS ${DAV1D_ROOT} ${PC_DAV1D_LIBRARY_DIRS})
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(DAV1D DEFAULT_MSG DAV1D_LIBRARY DAV1D_INCLUDE_DIR)
+
+if(DAV1D_INCLUDE_DIR AND DAV1D_LIBRARY)
+  set(DAV1D_FOUND ON CACHE BOOL "DAV1D")
+  set(DAV1D_LIBRARIES ${DAV1D_LIBRARY} CACHE STRING "DAV1D")
+  set(DAV1D_INCLUDE_DIRS ${DAV1D_INCLUDE_DIR} CACHE STRING "DAV1D")
+endif(DAV1D_INCLUDE_DIR AND DAV1D_LIBRARY)
+
+if(DAV1D_FOUND)
+  if(NOT DAV1D_FIND_QUIETLY)
+    message(STATUS "Found DAV1D: ${DAV1D_LIBRARIES}")
+  endif(NOT DAV1D_FIND_QUIETLY)
+else(DAV1D_FOUND)
+  if(DAV1D_FIND_REQUIRED)
+    message(FATAL_ERROR "DAV1D was not found")
+  endif(DAV1D_FIND_REQUIRED)
+endif(DAV1D_FOUND)
+
+mark_as_advanced(DAV1D_INCLUDE_DIRS DAV1D_LIBRARIES DAV1D_FOUND)
