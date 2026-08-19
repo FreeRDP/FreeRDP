@@ -77,17 +77,19 @@ static BOOL run_case(UINT32 cbAtr, BOOL expectAccept)
 static wStream* build_set_attrib(UINT32 cbAttr, UINT32 cbAttrLen)
 {
 	const UINT32 pad = (4 - (cbAttr % 4)) % 4;
-	wStream* s = Stream_New(nullptr, 28 + 4 + cbAttr + pad);
+	wStream* s = Stream_New(nullptr, 28 + 4 + cbAttr + pad + 12);
 	if (!s)
 		return nullptr;
 
 	Stream_Write_UINT32(s, 0);          /* cbContext = 0 */
 	Stream_Write_UINT32(s, 0);          /* pbContextNdrPtr = 0 */
-	Stream_Write_UINT32(s, 0);          /* cbHandle = 0 */
+	Stream_Write_UINT32(s, 8);          /* cbHandle = 8 */
 	Stream_Write_UINT32(s, 0x00020000); /* pbHandleNdrPtr */
 	Stream_Write_UINT32(s, 0);          /* dwAttrId */
 	Stream_Write_UINT32(s, cbAttrLen);  /* cbAttrLen */
 	Stream_Write_UINT32(s, 0x00020004); /* pbAttrNdrPtr */
+	Stream_Write_UINT32(s, 8);          /* conformant cbHandle = 8 */
+	Stream_Write_UINT64(s, 0x123456789abcdef);
 	Stream_Write_UINT32(s, cbAttr);     /* conformant count */
 	Stream_Zero(s, cbAttr);             /* pbAttr payload */
 	if (pad)
