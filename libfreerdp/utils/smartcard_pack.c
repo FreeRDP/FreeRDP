@@ -1899,10 +1899,6 @@ LONG smartcard_unpack_redir_scard_context_(wLog* log, wStream* s, REDIR_SCARDCON
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, context->cbContext, 1,
-	                                            "%s(%s:%" PRIuz ")", file, function, line))
-		return STATUS_INVALID_PARAMETER;
-
 	*ppbContextNdrPtr = pbContextNdrPtr;
 	return SCARD_S_SUCCESS;
 }
@@ -2004,10 +2000,6 @@ LONG smartcard_unpack_redir_scard_handle_(wLog* log, wStream* s, REDIR_SCARDHAND
 		           handle->cbHandle, pbHandleNdrPtr);
 		return STATUS_INVALID_PARAMETER;
 	}
-
-	if (!Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, handle->cbHandle, 1,
-	                                            "%s(%s:%" PRIuz ")", file, function, line))
-		return STATUS_INVALID_PARAMETER;
 
 	return SCARD_S_SUCCESS;
 }
