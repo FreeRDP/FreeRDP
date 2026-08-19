@@ -209,7 +209,7 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 
 	WINPR_ALIGNED_MEM* pMem = get_aligned_mem_block(memblock);
 	if (!pMem)
-		goto fail;
+		return nullptr;
 
 	if ((num == 0) || (size == 0))
 		goto fail;
@@ -220,7 +220,7 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 	newMemblock = winpr_aligned_offset_malloc(size * num, alignment, offset);
 
 	if (!newMemblock)
-		goto fail;
+		return nullptr;
 
 	pNewMem = WINPR_ALIGNED_MEM_STRUCT_FROM_PTR(newMemblock);
 	{
