@@ -1314,6 +1314,7 @@ static BOOL xf_process_pipe(rdpContext* context, const char* pipe)
 	while (!freerdp_shall_disconnect_context(context))
 	{
 		char buffer[64] = WINPR_C_ARRAY_INIT;
+		errno = 0;
 		ssize_t rd = read(fd, buffer, sizeof(buffer) - 1);
 		if (rd == 0)
 		{
