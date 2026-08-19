@@ -1476,9 +1476,6 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 	cliprdr->log = WLog_Get(TAG);
 	cliprdr->vcm = vcm;
 
-	/* negotiation below only narrows this, never turns it on */
-	context->useLongFormatNames = TRUE;
-
 	return context;
 
 fail:
