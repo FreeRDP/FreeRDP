@@ -389,7 +389,7 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 		printers[num_printers++] = current;
 	}
 
-	if (!haveDefault && (returned > 0))
+	if (printers && !haveDefault && (returned > 0))
 		printers[0]->is_default = TRUE;
 
 	GlobalFree(prninfo);
