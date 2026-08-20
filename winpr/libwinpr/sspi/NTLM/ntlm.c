@@ -324,7 +324,6 @@ static BOOL ntlm_ContextFillDefaultNames(NTLM_CONTEXT* context)
 	return TRUE;
 }
 
-WINPR_ATTR_NODISCARD
 static BOOL ntlm_try_set_from_registry(HKEY hKey, const char* key, UNICODE_STRING* ustr)
 {
 	WINPR_ASSERT(hKey);
