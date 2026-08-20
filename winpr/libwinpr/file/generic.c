@@ -48,10 +48,17 @@
 #include <libgen.h>
 #include <errno.h>
 
+#include <arpa/inet.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-
+#if defined(WINPR_HAVE_SYS_XATTR_H)
+#include <sys/xattr.h>
+#endif
+#if defined(WINPR_HAVE_LINUX_MSDOS_FS_H)
+#include <linux/msdos_fs.h>
+#include <sys/ioctl.h>
+#endif
 #ifdef WINPR_HAVE_AIO_H
 #undef WINPR_HAVE_AIO_H /* disable for now, incomplete */
 #endif
@@ -185,6 +192,7 @@ static pthread_once_t HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 static DWORD FileAttributesFromStat(const char* path, const struct stat* fileStat);
 static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
                              LPWIN32_FIND_DATAA lpFindFileData);
+static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes);
 
 static void HandleCreatorsInit(void)
 {
@@ -618,13 +626,16 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 {
 	BOOL rc = FALSE;
 #ifdef WINPR_HAVE_FCNTL_H
-	const uint32_t mask = ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_NORMAL);
+	const uint32_t mask = ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_NORMAL |
+	                        FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM);
 	if (dwFileAttributes & mask)
 	{
 		char buffer[8192] = WINPR_C_ARRAY_INIT;
 		const char* flags = flagsToStr(buffer, sizeof(buffer), dwFileAttributes & mask);
 		WLog_WARN(TAG, "Unsupported flags %s, ignoring!", flags);
 	}
+
+	SetDosAttributesToXAttr(lpFileName, dwFileAttributes);
 
 	int fd = open(lpFileName, O_RDONLY);
 	if (fd < 0)
@@ -951,9 +962,146 @@ static BOOL is_valid_file_search_handle(HANDLE handle)
 	return TRUE;
 }
 
+static DWORD GetDosAttributesFromXAttr(const char* path)
+{
+#if defined(WINPR_HAVE_SYS_XATTR_H) || defined(WINPR_HAVE_LINUX_MSDOS_FS_H)
+	DWORD dwFileAttributes = 0;
+	uint32_t intAttr = 0;
+	ssize_t length = -1;
+	const DWORD supportedMask = FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN |
+	                            FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY |
+	                            FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_NORMAL;
+
+#if defined(WINPR_HAVE_SYS_XATTR_H)
+	length = getxattr(path, "system.ntfs_attrib_be", &intAttr, sizeof(intAttr));
+	if (length >= 0)
+	{
+		intAttr = ntohl(intAttr);
+		dwFileAttributes = intAttr;
+	}
+#endif
+
+#if defined(WINPR_HAVE_SYS_XATTR_H)
+	if ((dwFileAttributes & supportedMask) == 0)
+	{
+		length = getxattr(path, "user.cifs.dosattrib", &intAttr, sizeof(intAttr));
+		if (length >= 0)
+			dwFileAttributes = intAttr;
+	}
+#endif
+
+	if ((dwFileAttributes & supportedMask) == 0)
+	{
+#if defined(WINPR_HAVE_LINUX_MSDOS_FS_H)
+		int fd = open(path, O_RDONLY | O_CLOEXEC);
+		if (fd != -1)
+		{
+			ioctl(fd, FAT_IOCTL_GET_ATTRIBUTES, &intAttr);
+			close(fd);
+			dwFileAttributes = intAttr;
+		}
+#endif
+	}
+
+#if defined(WINPR_HAVE_SYS_XATTR_H)
+	if ((dwFileAttributes & supportedMask) == 0)
+	{
+		char attrValue[11] = WINPR_C_ARRAY_INIT;
+		length = getxattr(path, "user.DOSATTRIB", attrValue, sizeof(attrValue) - 1);
+		if (length >= 0)
+		{
+			attrValue[length] = '\0';
+			if (sscanf(attrValue, "0x%08x", &intAttr) == 1)
+				dwFileAttributes = intAttr;
+		}
+		else
+		{
+			// if no xattr is set, default to archive attribute
+			dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+		}
+	}
+#else
+	if ((dwFileAttributes & supportedMask) == 0)
+	{
+		/* fallback default when no xattr available */
+		dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+	}
+#endif
+
+	return dwFileAttributes;
+#else
+	return 0;
+#endif
+}
+
+static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes)
+{
+#if defined(WINPR_HAVE_SYS_XATTR_H) || defined(WINPR_HAVE_LINUX_MSDOS_FS_H)
+	uint32_t intAttr =
+	    dwFileAttributes & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN |
+	                        FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_NORMAL);
+	uint32_t intAttrBE = htonl(intAttr);
+
+#if defined(WINPR_HAVE_SYS_XATTR_H)
+	if (setxattr(path, "system.ntfs_attrib_be", &intAttrBE, sizeof(intAttrBE), 0) >= 0)
+	{
+		WLog_INFO(TAG, "Set NTFS attribute xattr for %s", path);
+		return;
+	}
+
+	/* set cifs.dosattrib xattr if it exists, otherwise set user.DOSATTRIB xattr */
+	ssize_t length = getxattr(path, "user.cifs.dosattrib", NULL, 0);
+	if (length >= 0)
+	{
+		if (setxattr(path, "user.cifs.dosattrib", &intAttrBE, sizeof(intAttrBE), 0) >= 0)
+		{
+			WLog_INFO(TAG, "Set CIFS DOS attribute xattr for %s", path);
+			return;
+		}
+	}
+#endif
+
+	/* set FAT attributes if other methods fail */
+#if defined(WINPR_HAVE_LINUX_MSDOS_FS_H)
+	int fd = open(path, O_RDONLY | O_CLOEXEC);
+	if (fd != -1)
+	{
+		if (ioctl(fd, FAT_IOCTL_SET_ATTRIBUTES, &intAttr) != -1)
+		{
+			close(fd);
+			WLog_INFO(TAG, "Set FAT attribute for %s", path);
+			return;
+		}
+		close(fd);
+	}
+#endif
+
+#if defined(WINPR_HAVE_SYS_XATTR_H)
+	/* set user.DOSATTRIB xattr */
+
+	/* if only ARCHIVE remove attribute */
+	if (intAttr == FILE_ATTRIBUTE_ARCHIVE)
+	{
+		removexattr(path, "user.DOSATTRIB");
+		return;
+	}
+
+	char attrValue[11] = WINPR_C_ARRAY_INIT;
+	const int written = snprintf(attrValue, sizeof(attrValue), "0x%x", intAttr);
+	if (written < 0)
+		return;
+
+	if (setxattr(path, "user.DOSATTRIB", attrValue, strlen(attrValue), 0) < 0)
+		WLog_WARN(TAG, "Failed to set DOS attribute xattr for %s", path);
+
+	WLog_INFO(TAG, "Set DOS attribute xattr for %s", path);
+#endif
+#endif
+}
+
 static DWORD FileAttributesFromStat(const char* path, const struct stat* fileStat)
 {
-	DWORD dwFileAttributes = 0;
+	DWORD dwFileAttributes = GetDosAttributesFromXAttr(path);
 
 	if (S_ISDIR(fileStat->st_mode))
 		dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
