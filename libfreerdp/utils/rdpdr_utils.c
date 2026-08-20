@@ -299,9 +299,9 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 
 	Stream_ResetPosition(s);
 
-	if (pos >= 2)
+	if (pos >= 2ull)
 		Stream_Read_UINT16(s, component);
-	if (pos >= 4)
+	if (pos >= 4ull)
 		Stream_Read_UINT16(s, packetid);
 
 	switch (packetid)
@@ -313,11 +313,11 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 			UINT16 versionMinor = 0;
 			UINT32 clientID = 0;
 
-			if (pos >= 6)
+			if (pos >= 6ull)
 				Stream_Read_UINT16(s, versionMajor);
-			if (pos >= 8)
+			if (pos >= 8ull)
 				Stream_Read_UINT16(s, versionMinor);
-			if (pos >= 12)
+			if (pos >= 12ull)
 				Stream_Read_UINT32(s, clientID);
 			WLog_Print(log, lvl,
 			           "%s [%s | %s] [version:%" PRIu16 ".%" PRIu16 "][id:0x%08" PRIx32
@@ -332,13 +332,13 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 			UINT32 unicodeFlag = 0;
 			UINT32 codePage = 0;
 			UINT32 computerNameLen = 0;
-			if (pos >= 8)
+			if (pos >= 8ull)
 				Stream_Read_UINT32(s, unicodeFlag);
-			if (pos >= 12)
+			if (pos >= 12ull)
 				Stream_Read_UINT32(s, codePage);
-			if (pos >= 16)
+			if (pos >= 16ull)
 				Stream_Read_UINT32(s, computerNameLen);
-			if (pos >= 16 + computerNameLen)
+			if (pos >= 16ull + computerNameLen)
 			{
 				if (unicodeFlag == 0)
 					Stream_Read(s, name, MIN(sizeof(name), computerNameLen));
@@ -362,15 +362,15 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 			UINT32 MajorFunction = 0;
 			UINT32 MinorFunction = 0;
 
-			if (pos >= 8)
+			if (pos >= 8ull)
 				Stream_Read_UINT32(s, deviceID);
-			if (pos >= 12)
+			if (pos >= 12ull)
 				Stream_Read_UINT32(s, FileId);
-			if (pos >= 16)
+			if (pos >= 16ull)
 				Stream_Read_UINT32(s, CompletionId);
-			if (pos >= 20)
+			if (pos >= 20ull)
 				Stream_Read_UINT32(s, MajorFunction);
-			if (pos >= 24)
+			if (pos >= 24ull)
 				Stream_Read_UINT32(s, MinorFunction);
 			WLog_Print(log, lvl,
 			           "%s [%s | %s] [0x%08" PRIx32 "] FileId=0x%08" PRIx32
@@ -385,11 +385,11 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 			UINT32 completionID = 0;
 			UINT32 ioStatus = 0;
 			UINT32 deviceID = 0;
-			if (pos >= 8)
+			if (pos >= 8ull)
 				Stream_Read_UINT32(s, deviceID);
-			if (pos >= 12)
+			if (pos >= 12ull)
 				Stream_Read_UINT32(s, completionID);
-			if (pos >= 16)
+			if (pos >= 16ull)
 				Stream_Read_UINT32(s, ioStatus);
 
 			WLog_Print(log, lvl,
@@ -404,9 +404,9 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 			UINT32 deviceID = 0;
 			UINT32 status = 0;
 
-			if (pos >= 8)
+			if (pos >= 8ull)
 				Stream_Read_UINT32(s, deviceID);
-			if (pos >= 12)
+			if (pos >= 12ull)
 				Stream_Read_UINT32(s, status);
 			WLog_Print(log, lvl,
 			           "%s [%s | %s] [id:0x%08" PRIx32 ",status=0x%08" PRIx32 "] -> %" PRIuz,
@@ -418,9 +418,9 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 		case PAKID_CORE_SERVER_CAPABILITY:
 		{
 			UINT16 numCapabilities = 0;
-			if (pos >= 6)
+			if (pos >= 6ull)
 				Stream_Read_UINT16(s, numCapabilities);
-			if (pos >= 8)
+			if (pos >= 8ull)
 				Stream_Seek_UINT16(s); /* padding */
 			WLog_Print(log, lvl, "%s [%s | %s] [caps:%" PRIu16 "] -> %" PRIuz, custom,
 			           rdpdr_component_string(component), rdpdr_packetid_string(packetid),
@@ -450,7 +450,7 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 			{
 				RdpdrDevice device = WINPR_C_ARRAY_INIT;
 
-				offset += 20;
+				offset += 20ull;
 				if (pos >= offset)
 				{
 					Stream_Read_UINT32(s, device.DeviceType);       /* DeviceType (4 bytes) */
@@ -488,7 +488,7 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 			{
 				UINT32 id = 0;
 
-				offset += 4;
+				offset += 4ull;
 				if (pos >= offset)
 					Stream_Read_UINT32(s, id);
 
