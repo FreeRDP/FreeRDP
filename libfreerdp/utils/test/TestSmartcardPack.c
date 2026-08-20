@@ -55,7 +55,7 @@ static BOOL run_case(UINT32 cbAtr, BOOL expectAccept)
 	if (!s)
 		return FALSE;
 
-	LocateCardsByATRA_Call call = { 0 };
+	LocateCardsByATRA_Call call = WINPR_C_ARRAY_INIT;
 	const LONG status = smartcard_unpack_locate_cards_by_atr_a_call(s, &call);
 	Stream_Free(s, TRUE);
 
@@ -112,7 +112,7 @@ static BOOL run_set_attrib_case(UINT32 cbAttr, UINT32 cbAttrLen)
 	if (!s)
 		return FALSE;
 
-	SetAttrib_Call call = { 0 };
+	SetAttrib_Call call = WINPR_C_ARRAY_INIT;
 	const LONG status = smartcard_unpack_set_attrib_call(s, &call);
 	Stream_Free(s, TRUE);
 

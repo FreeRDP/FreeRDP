@@ -218,7 +218,7 @@ static void rdpsnd_oss_pcm_device_name(const rdpsndOssPlugin* oss, char* dev_nam
 
 static BOOL rdpsnd_oss_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format, UINT32 latency)
 {
-	char dev_name[PATH_MAX] = { 0 };
+	char dev_name[PATH_MAX] = WINPR_C_ARRAY_INIT;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == nullptr || oss->pcm_handle != -1)
@@ -454,7 +454,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE oss_freerdp_rdpsnd_client_subsystem_entry(
 	 * Otherwise oss gets selected and the first audio the server streams fails
 	 * to open the device, which aborts the whole RDP connection. */
 	{
-		char dev_name[PATH_MAX] = { 0 };
+		char dev_name[PATH_MAX] = WINPR_C_ARRAY_INIT;
 		rdpsnd_oss_pcm_device_name(oss, dev_name, sizeof(dev_name));
 
 		if (access(dev_name, W_OK) != 0)

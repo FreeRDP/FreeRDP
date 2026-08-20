@@ -808,8 +808,13 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 	std::scoped_lock lock(clipboard->_lock);
 	if (clipboard->_request_queue.empty())
 	{
-		WLog_Print(clipboard->_log, WLOG_ERROR, "no pending format request");
-		return ERROR_INTERNAL_ERROR;
+		/* The matching request already timed out (see the wait below) and was
+		 * popped, so this is a late reply on a slow/high-latency link. Dropping it
+		 * is harmless; returning an error here would kill the cliprdr channel thread
+		 * and tear down the whole session. Warn and continue instead. */
+		WLog_Print(clipboard->_log, WLOG_WARN,
+		           "format data response with no pending request (late reply?), ignoring");
+		return CHANNEL_RC_OK;
 	}
 
 	do
@@ -940,7 +945,9 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 	{
 		HANDLE hdl[2] = { freerdp_abort_event(clip->_sdl->context()), clip->_event };
 
-		DWORD status = WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, 10 * 1000);
+		const UINT32 timeout =
+		    freerdp_settings_get_uint32(clip->_sdl->context()->settings, FreeRDP_TcpAckTimeout);
+		DWORD status = WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, timeout);
 
 		if (status != WAIT_OBJECT_0 + 1)
 		{

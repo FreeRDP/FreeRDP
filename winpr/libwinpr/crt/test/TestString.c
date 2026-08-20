@@ -137,7 +137,7 @@ static BOOL test_winpr_strnstr(void)
 	for (size_t i = 0; i < ARRAYSIZE(tests); i++)
 	{
 		const struct strnstr_test* t = &tests[i];
-		char haystack[32] = { 0 };
+		char haystack[32] = WINPR_C_ARRAY_INIT;
 		strncpy(haystack, t->haystack, sizeof(haystack) - 1);
 
 		char* res = winpr_strnstr(haystack, t->needle, t->hlen);
