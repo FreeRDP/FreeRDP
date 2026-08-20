@@ -9,12 +9,11 @@
 
 HRESULT PATH_CCH_ADD_SEPARATOR(PWSTR pszPath, size_t cchPath)
 {
-	size_t pszPathLength;
-
+	WINPR_ASSERT(pszPath || (cchPath == 0));
 	if (!pszPath)
-		return E_INVALIDARG;
+		return S_OK;
 
-	pszPathLength = _wcslen(pszPath);
+	const size_t pszPathLength = _wcsnlen(pszPath, cchPath);
 
 	if (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR)
 		return S_FALSE;
@@ -34,12 +33,11 @@ HRESULT PATH_CCH_ADD_SEPARATOR(PWSTR pszPath, size_t cchPath)
 
 HRESULT PATH_CCH_ADD_SEPARATOR(PSTR pszPath, size_t cchPath)
 {
-	size_t pszPathLength;
-
+	WINPR_ASSERT(pszPath || (cchPath == 0));
 	if (!pszPath)
-		return E_INVALIDARG;
+		return S_OK;
 
-	pszPathLength = strlen(pszPath);
+	const size_t pszPathLength = strnlen(pszPath, cchPath);
 
 	if (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR)
 		return S_FALSE;

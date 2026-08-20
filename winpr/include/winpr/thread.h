@@ -294,17 +294,17 @@ extern "C"
 #if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 #define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
 
-	WINPR_DEPRECATED_VAR("[since 3.31.0]", WINPR_ATTR_NODISCARD WINPR_API DWORD TlsAlloc(void);)
+	WINPR_DEPRECATED_VAR("[since 3.31.0]", WINPR_ATTR_NODISCARD WINPR_API DWORD TlsAlloc(void));
 
 	WINPR_DEPRECATED_VAR("[since 3.31.0]",
-	                     WINPR_ATTR_NODISCARD WINPR_API LPVOID TlsGetValue(DWORD dwTlsIndex);)
+	                     WINPR_ATTR_NODISCARD WINPR_API LPVOID TlsGetValue(DWORD dwTlsIndex));
 
 	WINPR_DEPRECATED_VAR("[since 3.31.0]",
 	                     WINPR_ATTR_NODISCARD WINPR_API BOOL TlsSetValue(DWORD dwTlsIndex,
-	                                                                     LPVOID lpTlsValue);)
+	                                                                     LPVOID lpTlsValue));
 
 	WINPR_DEPRECATED_VAR("[since 3.31.0]",
-	                     WINPR_ATTR_NODISCARD WINPR_API BOOL TlsFree(DWORD dwTlsIndex);)
+	                     WINPR_ATTR_NODISCARD WINPR_API BOOL TlsFree(DWORD dwTlsIndex));
 #endif
 
 #else

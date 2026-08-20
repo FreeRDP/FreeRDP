@@ -19,16 +19,7 @@
 
 #include <iostream>
 #include <fstream>
-#if __has_include(<filesystem>)
-#include <filesystem>
-#include <utility>
-namespace fs = std::filesystem;
-#elif __has_include(<experimental/filesystem>)
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#else
-#error Could not find system header "<filesystem>" or "<experimental/filesystem>"
-#endif
+#include "filesystem.hpp"
 
 #include "sdl_prefs.hpp"
 #include "sdl_common_utils.hpp"

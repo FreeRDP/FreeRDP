@@ -58,19 +58,6 @@ int TestPathCchAddBackslash(int argc, char* argv[])
 		return -1;
 	}
 
-	/* Use nullptr PSTR, expect FAILED(status) */
-
-	status = PathCchAddBackslash(nullptr, PATHCCH_MAX_CCH);
-
-	if (SUCCEEDED(status))
-	{
-		_tprintf(
-		    _T("PathCchAddBackslash unexpectedly succeeded with null buffer. Status: 0x%08") _T(
-		        PRIX32) _T("\n"),
-		    status);
-		return -1;
-	}
-
 	/* Use insufficient size value, expect FAILED(status)  */
 
 	_tcsncpy(Path, _T("C:\\tmp"), ARRAYSIZE(Path));

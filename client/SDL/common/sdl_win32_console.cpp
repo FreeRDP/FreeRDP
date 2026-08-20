@@ -38,7 +38,7 @@ namespace sdl
 #if defined(_WIN32) && defined(WITH_WIN_CONSOLE)
 			const int file = _fileno(stdin);
 			const int tty = _isatty(file);
-			DWORD processes[2] = { 0 };
+			DWORD processes[2] = {};
 			const DWORD count = GetConsoleProcessList(processes, ARRAYSIZE(processes));
 
 			return (tty != 0) && (count > 1);
