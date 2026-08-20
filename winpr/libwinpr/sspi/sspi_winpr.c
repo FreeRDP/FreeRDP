@@ -179,26 +179,25 @@ void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
 
 SSPI_CREDENTIALS* sspi_CredentialsNew(void)
 {
-	SSPI_CREDENTIALS* credentials = nullptr;
-	credentials = (SSPI_CREDENTIALS*)calloc(1, sizeof(SSPI_CREDENTIALS));
+	SSPI_CREDENTIALS* credentials = (SSPI_CREDENTIALS*)calloc(1, sizeof(SSPI_CREDENTIALS));
+	if (!credentials)
+		return nullptr;
+	credentials->kerbSettingsV2.size = sizeof(SEC_WINPR_KERBEROS_SETTINGS_V2);
+	credentials->ntlmSettingsV2.size = sizeof(SEC_WINPR_NTLM_SETTINGS_V2);
 	return credentials;
 }
 
 void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 {
-	size_t userLength = 0;
-	size_t domainLength = 0;
-	size_t passwordLength = 0;
-
 	if (!credentials)
 		return;
 
-	if (credentials->ntlmSettings.samFile)
-		free(credentials->ntlmSettings.samFile);
+	if (credentials->ntlmSettingsV2.samFile)
+		free(credentials->ntlmSettingsV2.samFile);
 
-	userLength = credentials->identity.UserLength;
-	domainLength = credentials->identity.DomainLength;
-	passwordLength = credentials->identity.PasswordLength;
+	size_t userLength = credentials->identity.UserLength;
+	size_t domainLength = credentials->identity.DomainLength;
+	size_t passwordLength = credentials->identity.PasswordLength;
 
 	if (credentials->identity.Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE)
 	{
@@ -216,6 +215,12 @@ void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 	free(credentials->identity.User);
 	free(credentials->identity.Domain);
 	free(credentials->identity.Password);
+	free(credentials->ntlmSettingsV2.targetName);
+	free(credentials->ntlmSettingsV2.dnsComputerName);
+	free(credentials->ntlmSettingsV2.dnsDomainName);
+	free(credentials->ntlmSettingsV2.netBiosComputerName);
+	free(credentials->ntlmSettingsV2.netBiosDomainName);
+
 	free(credentials);
 }
 

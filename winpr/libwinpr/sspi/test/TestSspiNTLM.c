@@ -39,8 +39,8 @@ typedef struct
 	BOOL confidentiality;
 	SecPkgInfo* pPackageInfo;
 	SecurityFunctionTable* table;
-	SEC_WINNT_AUTH_IDENTITY_WINPR authData;
-	SEC_WINPR_NTLM_SETTINGS settings;
+	SEC_WINNT_AUTH_IDENTITY_WINPR_V2 authDataV2;
+	SEC_WINPR_NTLM_SETTINGS_V2* settingsV2;
 } TEST_NTLM_SERVER;
 
 static BYTE TEST_NTLM_TIMESTAMP[8] = { 0x33, 0x57, 0xbd, 0xb1, 0x07, 0x8b, 0xcf, 0x01 };
@@ -306,15 +306,16 @@ static void* getServerAuthData(TEST_NTLM_SERVER* ntlm, const struct test_input_t
 
 	if (fkt)
 	{
-		ntlm->authData.identity.Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
-		ntlm->authData.identity.Length = sizeof(SEC_WINNT_AUTH_IDENTITY_EX);
-		ntlm->authData.identity.Flags |=
-		    SEC_WINNT_AUTH_IDENTITY_EXTENDED | SEC_WINNT_AUTH_IDENTITY_UNICODE;
-		ntlm->settings.hashCallback = fkt;
-		ntlm->settings.hashCallbackArg = arg;
-		ntlm->authData.ntlmSettings = &ntlm->settings;
+		ntlm->authDataV2.version = SEC_WINNT_AUTH_IDENTITY_WINPR_V2_REVISION_1;
+		ntlm->authDataV2.identity.Version = SEC_WINNT_AUTH_IDENTITY_VERSION;
+		ntlm->authDataV2.identity.Length = sizeof(SEC_WINNT_AUTH_IDENTITY_EX);
+		ntlm->authDataV2.identity.Flags |=
+		    SEC_WINNT_AUTH_IDENTITY_EXTENDED_v2 | SEC_WINNT_AUTH_IDENTITY_UNICODE;
+		ntlm->settingsV2->hashCallback = fkt;
+		ntlm->settingsV2->hashCallbackArg = arg;
+		ntlm->authDataV2.ntlmSettingsV2 = ntlm->settingsV2;
 		ntlm->UseCallback = TRUE;
-		return &ntlm->authData;
+		return &ntlm->authDataV2;
 	}
 	ntlm->UseCallback = FALSE;
 	return nullptr;
@@ -606,6 +607,7 @@ static int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm, const struct test_input
 	ntlm->fContextReq |= ASC_REQ_REPLAY_DETECT;
 	ntlm->fContextReq |= ASC_REQ_SEQUENCE_DETECT;
 	ntlm->fContextReq |= ASC_REQ_EXTENDED_ERROR;
+
 	return 1;
 }
 
@@ -700,6 +702,7 @@ static void test_ntlm_server_free(TEST_NTLM_SERVER* ntlm)
 		return;
 
 	test_ntlm_server_uninit(ntlm);
+	sspi_FreeSecNtlmSettings(ntlm->settingsV2);
 	free(ntlm);
 }
 
@@ -710,7 +713,12 @@ static TEST_NTLM_SERVER* test_ntlm_server_new(void)
 
 	if (!ntlm)
 		return nullptr;
-
+	ntlm->settingsV2 = sspi_AllocSecNtlmSettings();
+	if (!ntlm->settingsV2)
+	{
+		free(ntlm);
+		return nullptr;
+	}
 	return ntlm;
 }
 

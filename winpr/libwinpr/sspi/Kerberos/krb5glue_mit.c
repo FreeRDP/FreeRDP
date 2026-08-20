@@ -121,7 +121,7 @@ BOOL krb5glue_authenticator_validate_chksum(krb5glue_authenticator authenticator
 
 krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, krb5_ccache ccache,
                                         krb5_prompter_fct prompter, char* password,
-                                        SEC_WINPR_KERBEROS_SETTINGS* krb_settings)
+                                        SEC_WINPR_KERBEROS_SETTINGS_V2* krb_settings)
 {
 	krb5_error_code rv = 0;
 	krb5_deltat start_time = 0;
