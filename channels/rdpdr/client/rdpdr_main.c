@@ -1860,11 +1860,15 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 				case PAKID_CORE_USER_LOGGEDON:
 					if (!rdpdr->haveServerCaps)
 					{
-						WLog_Print(rdpdr->log, WLOG_ERROR,
-						           "Wrong state %s for %s. [serverCaps=%d, clientId=%d]",
-						           rdpdr_state_str(rdpdr->state), rdpdr_packetid_string(packetId),
+						/* Windows re-announces the channel after logon and may send
+						 * USER_LOGGEDON before the new SERVER_CAPABILITY arrives.
+						 * Not fatal: skip the device announce here, tryAdvance()
+						 * sends it once the capability exchange completes. */
+						WLog_Print(rdpdr->log, WLOG_WARN,
+						           "%s in state %s, ignoring. [serverCaps=%d, clientId=%d]",
+						           rdpdr_packetid_string(packetId), rdpdr_state_str(rdpdr->state),
 						           rdpdr->haveServerCaps, rdpdr->haveClientId);
-						error = ERROR_INTERNAL_ERROR;
+						error = CHANNEL_RC_OK;
 					}
 					else if ((error = rdpdr_send_device_list_announce_request(rdpdr, TRUE)))
 					{
