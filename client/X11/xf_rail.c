@@ -29,6 +29,7 @@
 #include <winpr/print.h>
 
 #include <freerdp/client/rail.h>
+#include <freerdp/timer.h>
 
 #include "xf_window.h"
 #include "xf_rail.h"
@@ -36,6 +37,14 @@
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
+/*
+ * The settle interval is also the minimum spacing between sends, because the timer disarms on fire
+ * and needs a fresh event plus a full interval to fire again. That spacing is what prevents a stale
+ * server geometry reply from overtaking the next send. 300 ms leaves roughly 60% headroom over the
+ * ~185 ms reply latency measured here, so a loaded host or server has room before replies can
+ * invert; one slower than the interval still can.
+ */
+#define WORKAREA_SETTLE_INTERVAL_NS 300000000UL
 
 static const char* error_code2str(UINT32 code)
 {
@@ -146,27 +155,120 @@ BOOL xf_rail_disable_remoteapp_mode(xfContext* xfc)
 	return TRUE;
 }
 
+static BOOL xf_rail_select_workarea_events(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+
+	XWindowAttributes attributes = WINPR_C_ARRAY_INIT;
+	const Window root = DefaultRootWindow(xfc->display);
+	if (!XGetWindowAttributes(xfc->display, root, &attributes))
+		return FALSE;
+
+	XSelectInput(xfc->display, root, attributes.your_event_mask | PropertyChangeMask);
+	return TRUE;
+}
+
+static BOOL xf_rail_get_workarea(xfContext* xfc, xfWorkArea* workArea)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(workArea);
+
+	/* xf_GetWorkArea overwrites xfc->workArea; restore it (RAIL keeps it full). */
+	const xfWorkArea saved = xfc->workArea;
+	const BOOL rc = xf_GetWorkArea(xfc);
+	*workArea = xfc->workArea;
+	xfc->workArea = saved;
+	return rc;
+}
+
 /* Report the real work area so the server maximizes RemoteApp windows within the panel. */
 static UINT xf_rail_send_workarea(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
-	WINPR_ASSERT(xfc->rail);
 
-	/* xf_GetWorkArea overwrites xfc->workArea; restore it (RAIL keeps it full). */
-	const xfWorkArea saved = xfc->workArea;
-	if (!xf_GetWorkArea(xfc))
+	if (!xfc->remote_app || !xfc->rail)
 		return CHANNEL_RC_OK;
-	const INT64 right = (INT64)xfc->workArea.x + xfc->workArea.width;
-	const INT64 bottom = (INT64)xfc->workArea.y + xfc->workArea.height;
-	const RAIL_SYSPARAM_ORDER sysparam = {
-		.params = SPI_MASK_SET_WORK_AREA,
-		.workArea.left = WINPR_CXX_COMPAT_CAST(UINT16, xfc->workArea.x),
-		.workArea.top = WINPR_CXX_COMPAT_CAST(UINT16, xfc->workArea.y),
-		.workArea.right = WINPR_CXX_COMPAT_CAST(UINT16, right),
-		.workArea.bottom = WINPR_CXX_COMPAT_CAST(UINT16, bottom)
-	};
-	xfc->workArea = saved;
-	return xfc->rail->ClientSystemParam(xfc->rail, &sysparam);
+
+	xfWorkArea current = WINPR_C_ARRAY_INIT;
+	if (!xf_rail_get_workarea(xfc, &current))
+		return CHANNEL_RC_OK;
+
+	if (xfc->railWorkAreaValid && (current.x == xfc->railWorkArea.x) &&
+	    (current.y == xfc->railWorkArea.y) && (current.width == xfc->railWorkArea.width) &&
+	    (current.height == xfc->railWorkArea.height))
+	{
+		WLog_DBG(TAG,
+		         "Suppressing work area %" PRId32 ",%" PRId32 " %" PRIu32 "x%" PRIu32 ": unchanged",
+		         current.x, current.y, current.width, current.height);
+		return CHANNEL_RC_OK;
+	}
+
+	const INT64 right = (INT64)current.x + current.width;
+	const INT64 bottom = (INT64)current.y + current.height;
+	const RAIL_SYSPARAM_ORDER sysparam = { .params = SPI_MASK_SET_WORK_AREA,
+		                                   .workArea.left =
+		                                       WINPR_CXX_COMPAT_CAST(UINT16, current.x),
+		                                   .workArea.top = WINPR_CXX_COMPAT_CAST(UINT16, current.y),
+		                                   .workArea.right = WINPR_CXX_COMPAT_CAST(UINT16, right),
+		                                   .workArea.bottom =
+		                                       WINPR_CXX_COMPAT_CAST(UINT16, bottom) };
+
+	WLog_DBG(TAG, "Sending work area %" PRId32 ",%" PRId32 " %" PRIu32 "x%" PRIu32, current.x,
+	         current.y, current.width, current.height);
+	const UINT rc = xfc->rail->ClientSystemParam(xfc->rail, &sysparam);
+	if (rc == CHANNEL_RC_OK)
+	{
+		xfc->railWorkArea = current;
+		xfc->railWorkAreaValid = TRUE;
+	}
+	return rc;
+}
+
+static uint64_t xf_rail_workarea_timer(rdpContext* context, WINPR_ATTR_UNUSED void* userdata,
+                                       FreeRDP_TimerID timerID,
+                                       WINPR_ATTR_UNUSED uint64_t timestamp,
+                                       WINPR_ATTR_UNUSED uint64_t interval)
+{
+	xfContext* xfc = (xfContext*)context;
+	WINPR_ASSERT(xfc);
+
+	if (xfc->railWorkAreaTimerId != timerID)
+		return 0;
+
+	xfc->railWorkAreaTimerId = 0;
+	const UINT rc = xf_rail_send_workarea(xfc);
+	if (rc != CHANNEL_RC_OK)
+		WLog_ERR(TAG, "Failed to send settled work area: %" PRIu32, rc);
+	return 0;
+}
+
+BOOL xf_rail_schedule_workarea(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+
+	xfWorkArea current = WINPR_C_ARRAY_INIT;
+	if (!xf_rail_get_workarea(xfc, &current))
+	{
+		WLog_DBG(TAG, "Suppressing work area update: current value unavailable");
+		return TRUE;
+	}
+
+	WLog_DBG(TAG,
+	         "Deferring work area %" PRId32 ",%" PRId32 " %" PRIu32 "x%" PRIu32 ": still settling",
+	         current.x, current.y, current.width, current.height);
+
+	rdpContext* context = (rdpContext*)xfc;
+	if (xfc->railWorkAreaTimerId != 0)
+	{
+		freerdp_timer_remove(context, xfc->railWorkAreaTimerId);
+		xfc->railWorkAreaTimerId = 0;
+	}
+
+	xfc->railWorkAreaTimerId = freerdp_timer_add(context, WORKAREA_SETTLE_INTERVAL_NS,
+	                                             xf_rail_workarea_timer, nullptr, true);
+	if (xfc->railWorkAreaTimerId == 0)
+		WLog_ERR(TAG, "Failed to arm work area settle timer");
+	return xfc->railWorkAreaTimerId != 0;
 }
 
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
@@ -983,6 +1085,9 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
 		WLog_DBG(TAG, "WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED -> switch to RAILS mode");
 		if (!xf_rail_enable_remoteapp_mode(xfc))
 			return FALSE;
+		xfc->railWorkAreaValid = FALSE;
+		if (!xf_rail_select_workarea_events(xfc))
+			WLog_WARN(TAG, "Failed to subscribe to root-window work-area changes");
 
 		const char* app =
 		    freerdp_settings_get_string(context->settings, FreeRDP_RemoteApplicationProgram);
@@ -1286,6 +1391,8 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 		return 0;
 
 	xfc->rail = rail;
+	xfc->railWorkAreaValid = FALSE;
+	xfc->railWorkAreaTimerId = 0;
 	xf_rail_register_update_callbacks(context->update);
 	rail->custom = (void*)xfc;
 	rail->ServerExecuteResult = xf_rail_server_execute_result;
@@ -1324,6 +1431,13 @@ fail:
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 {
 	WINPR_UNUSED(rail);
+	rdpContext* context = (rdpContext*)xfc;
+
+	if (xfc->railWorkAreaTimerId != 0)
+	{
+		freerdp_timer_remove(context, xfc->railWorkAreaTimerId);
+		xfc->railWorkAreaTimerId = 0;
+	}
 
 	if (xfc->rail)
 	{
