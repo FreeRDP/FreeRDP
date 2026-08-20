@@ -5212,6 +5212,10 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 			    parse_command_line_option_uint32(settings, arg, FreeRDP_TcpAckTimeout, 0, 600000);
 			if (rc != 0)
 				return fail_at(arg, rc);
+			const int rc2 = parse_command_line_option_uint32(settings, arg,
+			                                                 FreeRDP_TcpConnectTimeout, 0, 600000);
+			if (rc2 != 0)
+				return fail_at(arg, rc2);
 		}
 		CommandLineSwitchCase(arg, "timezone")
 		{
