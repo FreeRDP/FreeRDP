@@ -1430,15 +1430,17 @@ static UINT urb_send_current_frame_number_result(GENERIC_CHANNEL_CALLBACK* callb
 	if (!out)
 		return ERROR_OUTOFMEMORY;
 
+	if (!Stream_EnsureRemainingCapacity(out, 4))
+		goto fail;
 	Stream_Write_UINT32(out, 12); /** CbTsUrbResult */
 	if (!write_urb_result_header(out, 12, USBD_STATUS_SUCCESS))
-	{
-		Stream_Free(out, TRUE);
-		return ERROR_OUTOFMEMORY;
-	}
-
+		goto fail;
 	Stream_Write_UINT32(out, FrameNumber); /** FrameNumber */
 	return send_urb_completion_message(callback, out, 0, 0, nullptr);
+
+fail:
+	Stream_Free(out, TRUE);
+	return ERROR_OUTOFMEMORY;
 }
 
 static UINT urb_get_current_frame_number(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callback,
