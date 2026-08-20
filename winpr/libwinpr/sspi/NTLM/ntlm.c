@@ -535,70 +535,26 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 	{
 		if (settingsV1->samFile)
 		{
-			credentials->ntlmSettingsV2.samFile = _strdup(settingsV1->samFile);
-			if (!credentials->ntlmSettingsV2.samFile)
+			if (!sspi_CloneSecSettingsString(&credentials->ntlmSettingsV2->samFile,
+			                                 settingsV1->samFile))
 			{
 				sspi_CredentialsFree(credentials);
 				return SEC_E_INSUFFICIENT_MEMORY;
 			}
 		}
-		credentials->ntlmSettingsV2.hashCallback = settingsV1->hashCallback;
-		credentials->ntlmSettingsV2.hashCallbackArg = settingsV1->hashCallbackArg;
+		credentials->ntlmSettingsV2->hashCallback = settingsV1->hashCallback;
+		credentials->ntlmSettingsV2->hashCallbackArg = settingsV1->hashCallbackArg;
 	}
 #endif
 
 	if (settingsV2)
 	{
-		const size_t size = sizeof(SEC_WINPR_NTLM_SETTINGS_V2);
-		if (settingsV2->size < size)
+		sspi_FreeSecNtlmSettings(credentials->ntlmSettingsV2);
+		credentials->ntlmSettingsV2 = sspi_CloneSecNtlmSettings(settingsV2);
+		if (!credentials->ntlmSettingsV2)
 		{
-			WLog_ERR(TAG,
-			         "Invalid SEC_WINPR_NTLM_SETTINGS_V2 parameter passed, must be of size >= "
-			         "%" PRIuz,
-			         size);
+			sspi_CredentialsFree(credentials);
 			return SEC_E_INVALID_PARAMETER;
-		}
-
-		if (settingsV2->samFile)
-		{
-			credentials->ntlmSettingsV2.samFile = _strdup(settingsV2->samFile);
-			if (!credentials->ntlmSettingsV2.samFile)
-			{
-				sspi_CredentialsFree(credentials);
-				return SEC_E_INSUFFICIENT_MEMORY;
-			}
-		}
-		credentials->ntlmSettingsV2.hashCallback = settingsV2->hashCallback;
-		credentials->ntlmSettingsV2.hashCallbackArg = settingsV2->hashCallbackArg;
-		if (settingsV2->targetName)
-		{
-			if (!sspi_CloneSecSettingsString(&credentials->ntlmSettingsV2.targetName,
-			                                 settingsV2->targetName))
-				return SEC_E_INSUFFICIENT_MEMORY;
-		}
-		if (settingsV2->netBiosComputerName)
-		{
-			if (!sspi_CloneSecSettingsString(&credentials->ntlmSettingsV2.netBiosComputerName,
-			                                 settingsV2->netBiosComputerName))
-				return SEC_E_INSUFFICIENT_MEMORY;
-		}
-		if (settingsV2->netBiosDomainName)
-		{
-			if (!sspi_CloneSecSettingsString(&credentials->ntlmSettingsV2.netBiosDomainName,
-			                                 settingsV2->netBiosDomainName))
-				return SEC_E_INSUFFICIENT_MEMORY;
-		}
-		if (settingsV2->dnsComputerName)
-		{
-			if (!sspi_CloneSecSettingsString(&credentials->ntlmSettingsV2.dnsComputerName,
-			                                 settingsV2->dnsComputerName))
-				return SEC_E_INSUFFICIENT_MEMORY;
-		}
-		if (settingsV2->dnsDomainName)
-		{
-			if (!sspi_CloneSecSettingsString(&credentials->ntlmSettingsV2.dnsDomainName,
-			                                 settingsV2->dnsDomainName))
-				return SEC_E_INSUFFICIENT_MEMORY;
 		}
 	}
 
@@ -715,47 +671,47 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
 
 		credentials = (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
 		context->credentials = credentials;
-		context->SamFile = credentials->ntlmSettingsV2.samFile;
-		context->HashCallback = credentials->ntlmSettingsV2.hashCallback;
-		context->HashCallbackArg = credentials->ntlmSettingsV2.hashCallbackArg;
+		context->SamFile = credentials->ntlmSettingsV2->samFile;
+		context->HashCallback = credentials->ntlmSettingsV2->hashCallback;
+		context->HashCallbackArg = credentials->ntlmSettingsV2->hashCallbackArg;
 
-		if (credentials->ntlmSettingsV2.dnsComputerName)
+		if (credentials->ntlmSettingsV2->dnsComputerName)
 		{
 			const SECURITY_STATUS rc = ntml_setUnicodeStringA(
-			    &context->DnsComputerName, credentials->ntlmSettingsV2.dnsComputerName,
-			    strlen(credentials->ntlmSettingsV2.dnsComputerName));
+			    &context->DnsComputerName, credentials->ntlmSettingsV2->dnsComputerName,
+			    strlen(credentials->ntlmSettingsV2->dnsComputerName));
 			if (SEC_E_OK != rc)
 				return rc;
 		}
 
-		if (credentials->ntlmSettingsV2.dnsDomainName)
+		if (credentials->ntlmSettingsV2->dnsDomainName)
 		{
 			const SECURITY_STATUS rc = ntml_setUnicodeStringA(
-			    &context->DnsDomainName, credentials->ntlmSettingsV2.dnsDomainName,
-			    strlen(credentials->ntlmSettingsV2.dnsDomainName));
+			    &context->DnsDomainName, credentials->ntlmSettingsV2->dnsDomainName,
+			    strlen(credentials->ntlmSettingsV2->dnsDomainName));
 			if (SEC_E_OK != rc)
 				return rc;
 		}
 
-		if (credentials->ntlmSettingsV2.netBiosComputerName)
+		if (credentials->ntlmSettingsV2->netBiosComputerName)
 		{
 			const SECURITY_STATUS rc = ntml_setUnicodeStringA(
-			    &context->NbComputerName, credentials->ntlmSettingsV2.netBiosComputerName,
-			    strlen(credentials->ntlmSettingsV2.netBiosComputerName));
+			    &context->NbComputerName, credentials->ntlmSettingsV2->netBiosComputerName,
+			    strlen(credentials->ntlmSettingsV2->netBiosComputerName));
 			if (SEC_E_OK != rc)
 				return rc;
 		}
 
-		if (credentials->ntlmSettingsV2.netBiosDomainName)
+		if (credentials->ntlmSettingsV2->netBiosDomainName)
 		{
 			const SECURITY_STATUS rc = ntml_setUnicodeStringA(
-			    &context->NbDomainName, credentials->ntlmSettingsV2.netBiosDomainName,
-			    strlen(credentials->ntlmSettingsV2.netBiosDomainName));
+			    &context->NbDomainName, credentials->ntlmSettingsV2->netBiosDomainName,
+			    strlen(credentials->ntlmSettingsV2->netBiosDomainName));
 			if (SEC_E_OK != rc)
 				return rc;
 		}
 
-		if (!ntlm_SetContextTargetName(context, credentials->ntlmSettingsV2.targetName))
+		if (!ntlm_SetContextTargetName(context, credentials->ntlmSettingsV2->targetName))
 			return SEC_E_INVALID_HANDLE;
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetPackageId(phNewContext, SSPI_PACKAGE_NTLM);
