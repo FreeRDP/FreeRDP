@@ -436,7 +436,6 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		// The value supplied via RDP of 441 packets is not compatible, so skip this here.
 		//,	{ AACENC_GRANULE_LENGTH, frames_per_packet }
 	};
-	WINPR_UNUSED(frames_per_packet);
 
 	HANDLE_AACENCODER self = nullptr;
 	if (encoder)

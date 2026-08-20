@@ -25,7 +25,12 @@
 SecurityFunctionTableW* SEC_ENTRY winpr_InitSecurityInterfaceW(void);
 SecurityFunctionTableA* SEC_ENTRY winpr_InitSecurityInterfaceA(void);
 
-void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size);
 void sspi_ContextBufferFree(void* contextBuffer);
+
+WINPR_ATTR_MALLOC(sspi_ContextBufferFree, 1)
+void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size);
+
+WINPR_ATTR_MALLOC(sspi_FreeSecNtlmSettings, 1)
+SEC_WINPR_NTLM_SETTINGS_V2* sspi_CloneSecNtlmSettings(const SEC_WINPR_NTLM_SETTINGS_V2* other);
 
 #endif /* WINPR_SSPI_WINPR_H */

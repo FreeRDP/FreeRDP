@@ -182,8 +182,14 @@ SSPI_CREDENTIALS* sspi_CredentialsNew(void)
 	SSPI_CREDENTIALS* credentials = (SSPI_CREDENTIALS*)calloc(1, sizeof(SSPI_CREDENTIALS));
 	if (!credentials)
 		return nullptr;
-	credentials->kerbSettingsV2.size = sizeof(SEC_WINPR_KERBEROS_SETTINGS_V2);
-	credentials->ntlmSettingsV2.size = sizeof(SEC_WINPR_NTLM_SETTINGS_V2);
+
+	credentials->ntlmSettingsV2 = sspi_AllocSecNtlmSettings();
+	if (!credentials->ntlmSettingsV2)
+	{
+		sspi_CredentialsFree(credentials);
+		return nullptr;
+	}
+
 	return credentials;
 }
 
@@ -191,9 +197,6 @@ void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 {
 	if (!credentials)
 		return;
-
-	if (credentials->ntlmSettingsV2.samFile)
-		free(credentials->ntlmSettingsV2.samFile);
 
 	size_t userLength = credentials->identity.UserLength;
 	size_t domainLength = credentials->identity.DomainLength;
@@ -215,11 +218,7 @@ void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 	free(credentials->identity.User);
 	free(credentials->identity.Domain);
 	free(credentials->identity.Password);
-	free(credentials->ntlmSettingsV2.targetName);
-	free(credentials->ntlmSettingsV2.dnsComputerName);
-	free(credentials->ntlmSettingsV2.dnsDomainName);
-	free(credentials->ntlmSettingsV2.netBiosComputerName);
-	free(credentials->ntlmSettingsV2.netBiosDomainName);
+	sspi_FreeSecNtlmSettings(credentials->ntlmSettingsV2);
 
 	free(credentials);
 }
@@ -1911,4 +1910,63 @@ SecurityFunctionTableW* SEC_ENTRY winpr_InitSecurityInterfaceW(void)
 SecurityFunctionTableA* SEC_ENTRY winpr_InitSecurityInterfaceA(void)
 {
 	return &winpr_SecurityFunctionTableA;
+}
+
+SEC_WINPR_NTLM_SETTINGS_V2* sspi_CloneSecNtlmSettings(const SEC_WINPR_NTLM_SETTINGS_V2* other)
+{
+	if (!other)
+		return nullptr;
+
+	const size_t size = sizeof(SEC_WINPR_NTLM_SETTINGS_V2);
+	if (other->size < size)
+	{
+		WLog_ERR(TAG,
+		         "Invalid SEC_WINPR_NTLM_SETTINGS_V2 parameter passed, must be of size >= "
+		         "%" PRIuz,
+		         size);
+		return nullptr;
+	}
+
+	SEC_WINPR_NTLM_SETTINGS_V2* clone = sspi_AllocSecNtlmSettings();
+	if (!clone)
+		return nullptr;
+
+	if (other->samFile)
+	{
+		if (!sspi_CloneSecSettingsString(&clone->samFile, other->samFile))
+			goto fail;
+	}
+	clone->hashCallback = other->hashCallback;
+	clone->hashCallbackArg = other->hashCallbackArg;
+	if (other->targetName)
+	{
+		if (!sspi_CloneSecSettingsString(&clone->targetName, other->targetName))
+			goto fail;
+	}
+	if (other->netBiosComputerName)
+	{
+		if (!sspi_CloneSecSettingsString(&clone->netBiosComputerName, other->netBiosComputerName))
+			goto fail;
+	}
+	if (other->netBiosDomainName)
+	{
+		if (!sspi_CloneSecSettingsString(&clone->netBiosDomainName, other->netBiosDomainName))
+			goto fail;
+	}
+	if (other->dnsComputerName)
+	{
+		if (!sspi_CloneSecSettingsString(&clone->dnsComputerName, other->dnsComputerName))
+			goto fail;
+	}
+	if (other->dnsDomainName)
+	{
+		if (!sspi_CloneSecSettingsString(&clone->dnsDomainName, other->dnsDomainName))
+			goto fail;
+	}
+
+	return clone;
+
+fail:
+	sspi_FreeSecNtlmSettings(clone);
+	return nullptr;
 }

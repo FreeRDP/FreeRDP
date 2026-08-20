@@ -38,8 +38,7 @@ typedef struct
 	SEC_GET_KEY_FN pGetKeyFn;
 	void* pvGetKeyArgument;
 	SEC_WINNT_AUTH_IDENTITY identity;
-	SEC_WINPR_NTLM_SETTINGS_V2 ntlmSettingsV2;
-	SEC_WINPR_KERBEROS_SETTINGS_V2 kerbSettingsV2;
+	SEC_WINPR_NTLM_SETTINGS_V2* ntlmSettingsV2;
 } SSPI_CREDENTIALS;
 
 void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials);
