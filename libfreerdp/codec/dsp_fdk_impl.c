@@ -425,14 +425,19 @@ int fdk_aac_dsp_impl_config(void* handle, size_t* pbuffersize, int encoder, unsi
 		UINT value;
 	};
 
-	const struct t_param_pair params[] = { { AACENC_AOT, 2 },
-		                                   { AACENC_SAMPLERATE, samplerate },
-		                                   { AACENC_CHANNELMODE, get_channelmode(channels) },
-		                                   { AACENC_CHANNELORDER, 0 },
-		                                   { AACENC_BITRATE, bytes_per_second * 8 },
-		                                   { AACENC_TRANSMUX, 0 },
-		                                   { AACENC_AFTERBURNER, 1 },
-		                                   { AACENC_GRANULE_LENGTH, frames_per_packet } };
+	const struct t_param_pair params[] = {
+		{ AACENC_AOT, 2 },
+		{ AACENC_SAMPLERATE, samplerate },
+		{ AACENC_CHANNELMODE, get_channelmode(channels) },
+		{ AACENC_CHANNELORDER, 0 },
+		{ AACENC_BITRATE, bytes_per_second * 8 },
+		{ AACENC_TRANSMUX, 0 },
+		{ AACENC_AFTERBURNER, 1 }
+		// The value supplied via RDP of 441 packets is not compatible, so skip this here.
+		//,	{ AACENC_GRANULE_LENGTH, frames_per_packet }
+	};
+	WINPR_UNUSED(frames_per_packet);
+
 	HANDLE_AACENCODER self = nullptr;
 	if (encoder)
 		self = (HANDLE_AACENCODER)handle;
