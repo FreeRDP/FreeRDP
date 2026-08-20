@@ -1164,10 +1164,20 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			memcpy(fullpath + pathlen, pDirent->d_name, namelen);
 			fullpath[pathlen + namelen] = 0;
 
-			struct stat fileStat = WINPR_C_ARRAY_INIT;
-			if (stat(fullpath, &fileStat) != 0)
+			char* canonical = nullptr;
+			const HRESULT hr = PathAllocCanonicalizeA(fullpath, 0, &canonical);
+			free(fullpath);
+
+			if (S_OK != hr)
 			{
-				free(fullpath);
+				free(canonical);
+				continue;
+			}
+
+			struct stat fileStat = WINPR_C_ARRAY_INIT;
+			if (stat(canonical, &fileStat) != 0)
+			{
+				free(canonical);
 				SetLastError(map_posix_err(errno));
 				errno = 0;
 				continue;
@@ -1176,12 +1186,12 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			/* Skip FIFO entries. */
 			if (S_ISFIFO(fileStat.st_mode))
 			{
-				free(fullpath);
+				free(canonical);
 				continue;
 			}
 
-			success = FindDataFromStat(fullpath, &fileStat, lpFindFileData);
-			free(fullpath);
+			success = FindDataFromStat(canonical, &fileStat, lpFindFileData);
+			free(canonical);
 			return success;
 		}
 	}

@@ -42,9 +42,12 @@ int TestFileFindNextFile(int argc, char* argv[])
 	/* Simple filter matching all files inside current directory */
 	CopyMemory(FilePath, BasePath, length * sizeof(TCHAR));
 	FilePath[length] = 0;
-	PathCchConvertStyle(BasePath, length, PATH_STYLE_WINDOWS);
-	NativePathCchAppend(FilePath, PATHCCH_MAX_CCH, _T("TestDirectory2"));
-	NativePathCchAppend(FilePath, PATHCCH_MAX_CCH, _T("TestDirectory2File*"));
+	if (FAILED(PathCchConvertStyle(BasePath, length, PATH_STYLE_WINDOWS)))
+		return -1;
+	if (FAILED(NativePathCchAppend(FilePath, PATHCCH_MAX_CCH, _T("TestDirectory2"))))
+		return -1;
+	if (FAILED(NativePathCchAppend(FilePath, PATHCCH_MAX_CCH, _T("TestDirectory2File*"))))
+		return -1;
 	free(BasePath);
 	_tprintf(_T("Finding file: %s\n"), FilePath);
 	hFind = FindFirstFile(FilePath, &FindData);

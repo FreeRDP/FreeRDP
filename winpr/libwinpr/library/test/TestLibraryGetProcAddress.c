@@ -40,9 +40,11 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 	}
 
 	*p = 0;
-	NativePathCchAppendA(LibraryPath, PATHCCH_MAX_CCH, "TestLibraryA");
+	if (FAILED(NativePathCchAppendA(LibraryPath, PATHCCH_MAX_CCH, "TestLibraryA")))
+		return -1;
 	SharedLibraryExtension = PathGetSharedLibraryExtensionA(PATH_SHARED_LIB_EXT_WITH_DOT);
-	NativePathCchAddExtensionA(LibraryPath, PATHCCH_MAX_CCH, SharedLibraryExtension);
+	if (FAILED(NativePathCchAddExtensionA(LibraryPath, PATHCCH_MAX_CCH, SharedLibraryExtension)))
+		return -1;
 	printf("%s: Loading Library: '%s'\n", __func__, LibraryPath);
 
 	if (!(library = LoadLibraryA(LibraryPath)))

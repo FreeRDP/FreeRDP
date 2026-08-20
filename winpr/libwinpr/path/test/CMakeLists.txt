@@ -13,9 +13,6 @@ set(${MODULE_PREFIX}_TESTS
     TestPathCchAddExtension.c
     TestPathCchAppend.c
     TestPathCchAppendEx.c
-    TestPathCchCanonicalize.c
-    TestPathCchCanonicalizeEx.c
-    TestPathAllocCanonicalize.c
     TestPathCchCombine.c
     TestPathCchCombineEx.c
     TestPathAllocCombine.c
@@ -31,6 +28,10 @@ set(${MODULE_PREFIX}_TESTS
     TestPathShell.c
     TestPathMakePath.c
 )
+
+if(NOT WIN32)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestPathCchCanonicalize.c TestPathCchCanonicalizeEx.c TestPathAllocCanonicalize.c)
+endif()
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODULE_PREFIX}_TESTS})
 

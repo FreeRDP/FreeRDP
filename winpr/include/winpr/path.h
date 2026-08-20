@@ -25,226 +25,11 @@
 #include <winpr/error.h>
 #include <winpr/wtypes.h>
 
-//#define WINPR_HAVE_PATHCCH_H	1
-
-#ifdef WINPR_HAVE_PATHCCH_H
-
-#include <Pathcch.h>
-
-#else
+#include <winpr/Pathcch.h>
 
 #ifdef __cplusplus
 extern "C"
 {
-#endif
-
-#define PATHCCH_ALLOW_LONG_PATHS \
-	0x00000001 /* Allow building of \\?\ paths if longer than MAX_PATH */
-
-#define VOLUME_PREFIX _T("\\\\?\\Volume")
-#define VOLUME_PREFIX_LEN ((sizeof(VOLUME_PREFIX) / sizeof(TCHAR)) - 1)
-
-	/*
-	 * Maximum number of characters we support using the "\\?\" syntax
-	 * (0x7FFF + 1 for nullptr terminator)
-	 */
-
-#define PATHCCH_MAX_CCH 0x8000
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddBackslashA(PSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddBackslashW(PWSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveBackslashA(PSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
-	                                         size_t* pcchRemaining);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
-	                                         size_t* pcchRemaining);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
-	                                            size_t* pcchRemaining);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
-	                                            size_t* pcchRemaining);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAppendA(PSTR pszPath, size_t cchPath, PCSTR pszMore);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAppendW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAppendExA(PSTR pszPath, size_t cchPath, PCSTR pszMore,
-	                                   unsigned long dwFlags);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAppendExW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore,
-	                                   unsigned long dwFlags);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCanonicalizeA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCanonicalizeW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCanonicalizeExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
-	                                         unsigned long dwFlags);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
-	                                         unsigned long dwFlags);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathAllocCanonicalizeA(PCSTR pszPathIn, unsigned long dwFlags,
-	                                         PSTR* ppszPathOut);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathAllocCanonicalizeW(PCWSTR pszPathIn, unsigned long dwFlags,
-	                                         PWSTR* ppszPathOut);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCombineA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
-	                                  PCSTR pszMore);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCombineW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
-	                                  PCWSTR pszMore);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCombineExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
-	                                    PCSTR pszMore, unsigned long dwFlags);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
-	                                    PCWSTR pszMore, unsigned long dwFlags);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags,
-	                                    PSTR* ppszPathOut);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags,
-	                                    PWSTR* ppszPathOut);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchFindExtensionW(PCWSTR pszPath, size_t cchPath, PCWSTR* ppszExt);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRenameExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRenameExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveExtensionA(PSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveExtensionW(PWSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL PathCchIsRootA(PCSTR pszPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL PathCchIsRootW(PCWSTR pszPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL PathIsUNCExA(PCSTR pszPath, PCSTR* ppszServer);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL PathIsUNCExW(PCWSTR pszPath, PCWSTR* ppszServer);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchSkipRootA(PCSTR pszPath, PCSTR* ppszRootEnd);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchSkipRootW(PCWSTR pszPath, PCWSTR* ppszRootEnd);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchStripToRootA(PSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchStripToRootW(PWSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveFileSpecA(PSTR pszPath, size_t cchPath);
-
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath);
-
-#ifdef UNICODE
-#define PathCchAddBackslash PathCchAddBackslashW
-#define PathCchRemoveBackslash PathCchRemoveBackslashW
-#define PathCchAddBackslashEx PathCchAddBackslashExW
-#define PathCchRemoveBackslashEx PathCchRemoveBackslashExW
-#define PathCchAddExtension PathCchAddExtensionW
-#define PathCchAppend PathCchAppendW
-#define PathCchAppendEx PathCchAppendExW
-#define PathCchCanonicalize PathCchCanonicalizeW
-#define PathCchCanonicalizeEx PathCchCanonicalizeExW
-#define PathAllocCanonicalize PathAllocCanonicalizeW
-#define PathCchCombine PathCchCombineW
-#define PathCchCombineEx PathCchCombineExW
-#define PathAllocCombine PathAllocCombineW
-#define PathCchFindExtension PathCchFindExtensionW
-#define PathCchRenameExtension PathCchRenameExtensionW
-#define PathCchRemoveExtension PathCchRemoveExtensionW
-#define PathCchIsRoot PathCchIsRootW
-#define PathIsUNCEx PathIsUNCExW
-#define PathCchSkipRoot PathCchSkipRootW
-#define PathCchStripToRoot PathCchStripToRootW
-#define PathCchStripPrefix PathCchStripPrefixW
-#define PathCchRemoveFileSpec PathCchRemoveFileSpecW
-#else
-#define PathCchAddBackslash PathCchAddBackslashA
-#define PathCchRemoveBackslash PathCchRemoveBackslashA
-#define PathCchAddBackslashEx PathCchAddBackslashExA
-#define PathCchRemoveBackslashEx PathCchRemoveBackslashExA
-#define PathCchAddExtension PathCchAddExtensionA
-#define PathCchAppend PathCchAppendA
-#define PathCchAppendEx PathCchAppendExA
-#define PathCchCanonicalize PathCchCanonicalizeA
-#define PathCchCanonicalizeEx PathCchCanonicalizeExA
-#define PathAllocCanonicalize PathAllocCanonicalizeA
-#define PathCchCombine PathCchCombineA
-#define PathCchCombineEx PathCchCombineExA
-#define PathAllocCombine PathAllocCombineA
-#define PathCchFindExtension PathCchFindExtensionA
-#define PathCchRenameExtension PathCchRenameExtensionA
-#define PathCchRemoveExtension PathCchRemoveExtensionA
-#define PathCchIsRoot PathCchIsRootA
-#define PathIsUNCEx PathIsUNCExA
-#define PathCchSkipRoot PathCchSkipRootA
-#define PathCchStripToRoot PathCchStripToRootA
-#define PathCchStripPrefix PathCchStripPrefixA
-#define PathCchRemoveFileSpec PathCchRemoveFileSpecA
 #endif
 
 	/* Unix-style Paths */
@@ -389,8 +174,6 @@ extern "C"
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 
 /**
@@ -620,10 +403,6 @@ extern "C"
 
 #ifdef __cplusplus
 }
-#endif
-
-#ifdef _WIN32
-#include <shlwapi.h>
 #endif
 
 #endif /* WINPR_PATH_H */

@@ -17,8 +17,16 @@
 
 winpr_module_add(path.c shell.c)
 
+include(FetchContentCWalk)
+
+if(WITH_CWALK)
+  winpr_library_add_compile_options(-DWITH_CWALK)
+  winpr_library_add_private(cwalk)
+endif()
+
 if(MSVC OR MINGW)
   winpr_library_add_public(shlwapi)
+  winpr_library_add_public(Pathcch)
 endif()
 
 if(IOS)

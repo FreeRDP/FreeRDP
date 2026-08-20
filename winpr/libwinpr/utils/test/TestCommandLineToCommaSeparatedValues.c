@@ -228,7 +228,7 @@ static int runJsonTests(void)
 	if (!path)
 		return 0; /* No tests, ignore */
 
-	WIN32_FIND_DATAA FindData = { 0 };
+	WIN32_FIND_DATAA FindData = WINPR_C_ARRAY_INIT;
 	HANDLE hFind = FindFirstFileA(path, &FindData);
 	free(path);
 	path = GetCombinedPath(TEST_SOURCE_DIR, "cmdline-tests");
