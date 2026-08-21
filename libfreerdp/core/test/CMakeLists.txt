@@ -15,8 +15,8 @@ endif()
 
 set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCryptoCertificateDataSetPEM.c)
 
-if (NOT WIN32)
-list(APPEND FUZZERS TestFuzzServer.c)
+if(NOT WIN32)
+  list(APPEND FUZZERS TestFuzzServer.c)
 endif()
 
 # Test not compatible with package tests, disable
@@ -55,12 +55,8 @@ add_fuzzer_test("${FUZZERS}" "freerdp-client winpr-tools")
 if(NOT WIN32 AND (WITH_CLIENT_COMMON OR WITH_CLIENT))
   add_executable(TestFuzzServerSeedGen TestFuzzServerSeedGen.c)
   target_link_libraries(TestFuzzServerSeedGen freerdp-client winpr-tools)
-  set_target_properties(TestFuzzServerSeedGen PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}"
-  )
-  set_property(TARGET TestFuzzServerSeedGen PROPERTY
-    FOLDER "FreeRDP/Core/Test"
-  )
+  set_target_properties(TestFuzzServerSeedGen PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+  set_property(TARGET TestFuzzServerSeedGen PROPERTY FOLDER "FreeRDP/Core/Test")
 endif()
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")

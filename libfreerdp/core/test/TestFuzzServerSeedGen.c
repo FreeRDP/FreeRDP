@@ -104,8 +104,8 @@ static void capture_add(capture_t* c, const void* data, size_t size)
 		BYTE* nd = realloc(c->data, ncap);
 		if (!nd)
 		{
-			fprintf(stderr, "capture realloc failed\n");
-			exit(1);
+			(void)fprintf(stderr, "capture realloc failed\n");
+			return;
 		}
 		c->data = nd;
 		c->cap = ncap;
@@ -121,7 +121,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 	if (context && context->vcm)
 	{
 		WTSCloseServer(context->vcm);
-		context->vcm = NULL;
+		context->vcm = nullptr;
 	}
 }
 
@@ -299,7 +299,7 @@ static void* relay_c2s(void* arg)
 			break;
 	}
 	shutdown(a->peer_sock, SHUT_WR);
-	return NULL;
+	return nullptr;
 }
 
 static void* relay_s2c(void* arg)
@@ -316,7 +316,7 @@ static void* relay_s2c(void* arg)
 			break;
 	}
 	shutdown(a->client_sock, SHUT_WR);
-	return NULL;
+	return nullptr;
 }
 
 typedef struct
@@ -329,8 +329,8 @@ static DWORD WINAPI client_thread(LPVOID arg)
 {
 	client_arg_t* a = (client_arg_t*)arg;
 	char arg1[64] = WINPR_C_ARRAY_INIT;
-	snprintf(arg1, sizeof(arg1), "/v:127.0.0.1:%d", a->port);
-	char* argv[] = { "seedgen", arg1, "/sec:rdp", "/cert:ignore", "/rfx", NULL };
+	(void)snprintf(arg1, sizeof(arg1), "/v:127.0.0.1:%d", a->port);
+	char* argv[] = { "seedgen", arg1, "/sec:rdp", "/cert:ignore", "/rfx", nullptr };
 	int argc = 5;
 
 	RDP_CLIENT_ENTRY_POINTS entry = WINPR_C_ARRAY_INIT;
@@ -361,7 +361,7 @@ static DWORD WINAPI client_thread(LPVOID arg)
 
 	if (!freerdp_connect(context->instance))
 	{
-		fprintf(stderr, "client connect failed\n");
+		(void)fprintf(stderr, "client connect failed\n");
 		return 1;
 	}
 
@@ -391,7 +391,7 @@ fail:
 static int write_seed(const char* dir, const char* name, const capture_t* c)
 {
 	char path[512] = WINPR_C_ARRAY_INIT;
-	snprintf(path, sizeof(path), "%s/%s", dir, name);
+	(void)snprintf(path, sizeof(path), "%s/%s", dir, name);
 	FILE* f = fopen(path, "wb");
 	if (!f)
 		return -1;
@@ -403,8 +403,15 @@ static int write_seed(const char* dir, const char* name, const capture_t* c)
 int main(int argc, char** argv)
 {
 	const char* outdir = argc > 1 ? argv[1] : ".";
-	int do_input = argc > 2 ? atoi(argv[2]) : 1;
-	setbuf(stdout, NULL);
+	int do_input = 1;
+	if (argc > 2)
+	{
+		errno = 0;
+		const unsigned long val = strtoul(argv[2], nullptr, 0);
+		if ((errno != 0) || (val > INT_MAX))
+			return -1;
+		do_input = (int)val;
+	}
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	(void)winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
@@ -428,9 +435,9 @@ int main(int argc, char** argv)
 	printf("listening on 127.0.0.1:%d\n", port);
 
 	client_arg_t carg = { port, do_input };
-	HANDLE hclient = CreateThread(NULL, 0, client_thread, &carg, 0, NULL);
+	HANDLE hclient = CreateThread(nullptr, 0, client_thread, &carg, 0, nullptr);
 
-	int cfd = accept(lfd, NULL, NULL);
+	int cfd = accept(lfd, nullptr, nullptr);
 	if (cfd < 0)
 		return 1;
 	printf("client connected\n");
@@ -443,15 +450,16 @@ int main(int argc, char** argv)
 	if (!client)
 		return 1;
 
-	capture_t capture = { 0 };
+	capture_t capture = WINPR_C_ARRAY_INIT;
 	relay_arg_t ra = { cfd, sv[1], &capture };
 
-	pthread_t t1, t2;
-	pthread_create(&t1, NULL, relay_c2s, &ra);
-	pthread_create(&t2, NULL, relay_s2c, &ra);
+	pthread_t t1 = WINPR_C_ARRAY_INIT;
+	pthread_create(&t1, nullptr, relay_c2s, &ra);
+	pthread_t t2 = WINPR_C_ARRAY_INIT;
+	pthread_create(&t2, nullptr, relay_s2c, &ra);
 
 	peer_arg_t pa = { client };
-	HANDLE hpeer = CreateThread(NULL, 0, peer_thread, &pa, 0, NULL);
+	HANDLE hpeer = CreateThread(nullptr, 0, peer_thread, &pa, 0, nullptr);
 
 	WaitForSingleObject(hclient, 30000);
 	/* give the peer a moment to drain */
@@ -484,7 +492,7 @@ int main(int argc, char** argv)
 			capture_t t = WINPR_C_ARRAY_INIT;
 			t.data = capture.data;
 			t.len = cuts[i];
-			snprintf(name, sizeof(name), "handshake_cut%zu", cuts[i]);
+			(void)snprintf(name, sizeof(name), "handshake_cut%zu", cuts[i]);
 			write_seed(outdir, name, &t);
 		}
 	}
