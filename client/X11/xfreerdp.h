@@ -39,7 +39,6 @@
 #endif
 
 #include <freerdp/api.h>
-#include <freerdp/timer.h>
 
 #include "xf_window.h"
 #include "xf_monitor.h"
@@ -173,8 +172,6 @@ struct xf_context
 	xfPointer* pointer;
 	xfWorkArea workArea;
 	xfWorkArea railWorkArea;
-	BOOL railWorkAreaValid;
-	FreeRDP_TimerID railWorkAreaTimerId;
 	xfFullscreenMonitors fullscreenMonitors;
 	int current_desktop;
 	BOOL remote_app;

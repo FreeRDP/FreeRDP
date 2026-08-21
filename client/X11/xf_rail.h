@@ -113,17 +113,32 @@ struct xf_app_window
 typedef struct xf_app_window xfAppWindow;
 typedef struct xf_rail_icon_cache xfRailIconCache;
 
+WINPR_ATTR_NODISCARD
 BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);
+
+WINPR_ATTR_NODISCARD
 BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect);
 
+WINPR_ATTR_NODISCARD
 BOOL xf_rail_send_client_system_command(xfContext* xfc, UINT64 windowId, UINT16 command);
+
+WINPR_ATTR_NODISCARD
 BOOL xf_rail_schedule_workarea(xfContext* xfc);
+
+WINPR_ATTR_NODISCARD
 BOOL xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
+
 BOOL xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
+
 BOOL xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow);
+
+WINPR_ATTR_NODISCARD
 BOOL xf_rail_enable_remoteapp_mode(xfContext* xfc);
+
+WINPR_ATTR_NODISCARD
 BOOL xf_rail_disable_remoteapp_mode(xfContext* xfc);
 
+WINPR_ATTR_NODISCARD
 xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, INT32 x, INT32 y, UINT32 width,
                                 UINT32 height, UINT32 surfaceId);
 
@@ -139,9 +154,11 @@ WINPR_ATTR_MALLOC(xf_rail_return_windowFrom, 1)
 xfAppWindow* xf_rail_get_windowFrom(xfContext* xfc, UINT64 id, BOOL alreadyLocked, const char* file,
                                     const char* fkt, size_t line);
 
+WINPR_ATTR_NODISCARD
 BOOL xf_rail_del_window(xfContext* xfc, UINT64 id);
 
 int xf_rail_init(xfContext* xfc, RailClientContext* rail);
+
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail);
 
 #endif /* FREERDP_CLIENT_X11_RAIL_H */

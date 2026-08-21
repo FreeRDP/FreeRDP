@@ -103,7 +103,8 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 			                   WINPR_ASSERTING_INT_CAST(int, nYSrc),
 			                   WINPR_ASSERTING_INT_CAST(int, nXDst),
 			                   WINPR_ASSERTING_INT_CAST(int, nYDst), dwidth, dheight);
-			xf_rail_paint_surface(xfc, surface->gdi.windowId, rect);
+			if (!xf_rail_paint_surface(xfc, surface->gdi.windowId, rect))
+				goto fail;
 		}
 		else
 #ifdef WITH_XRENDER

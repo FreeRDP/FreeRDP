@@ -978,9 +978,8 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 	if ((event->window == root) &&
 	    ((event->atom == xfc->NET_WORKAREA) || (event->atom == xfc->NET_CURRENT_DESKTOP)))
 	{
-		if (!xfc->remote_app || !xfc->rail)
-			return TRUE;
-		return xf_rail_schedule_workarea(xfc);
+		if (xfc->remote_app && xfc->rail)
+			return xf_rail_schedule_workarea(xfc);
 	}
 
 	/*

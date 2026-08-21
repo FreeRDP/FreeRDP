@@ -186,12 +186,10 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->display);
 
-	status = XGetWindowAttributes(xfc->display, floatbar->root_window, &attr);
-	if (status == 0)
-	{
-		WLog_WARN(TAG, "XGetWindowAttributes failed");
+	status = LogDynAndXGetWindowAttributes(xfc->log, xfc->display, floatbar->root_window, &attr);
+	if (status != 1)
 		return FALSE;
-	}
+
 	floatbar->x = attr.x + attr.width / 2 - FLOATBAR_DEFAULT_WIDTH / 2;
 	floatbar->y = 0;
 
@@ -208,10 +206,10 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 	floatbar->buttons[1] = xf_floatbar_new_button(floatbar, XF_FLOATBAR_BUTTON_RESTORE);
 	floatbar->buttons[2] = xf_floatbar_new_button(floatbar, XF_FLOATBAR_BUTTON_MINIMIZE);
 	floatbar->buttons[3] = xf_floatbar_new_button(floatbar, XF_FLOATBAR_BUTTON_LOCKED);
-	XSelectInput(xfc->display, floatbar->handle,
-	             ExposureMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask |
-	                 FocusChangeMask | LeaveWindowMask | EnterWindowMask | StructureNotifyMask |
-	                 PropertyChangeMask);
+	LogDynAndXSelectInput(xfc->log, xfc->display, floatbar->handle,
+	                      ExposureMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask |
+	                          FocusChangeMask | LeaveWindowMask | EnterWindowMask |
+	                          StructureNotifyMask | PropertyChangeMask);
 	floatbar->created = TRUE;
 	return TRUE;
 }
@@ -310,9 +308,9 @@ xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type)
 	    LogDynAndXCreateWindow(floatbar->xfc->log, floatbar->xfc->display, floatbar->handle,
 	                           button->x, 0, FLOATBAR_BUTTON_WIDTH, FLOATBAR_BUTTON_WIDTH, 0,
 	                           CopyFromParent, InputOutput, CopyFromParent, 0, nullptr);
-	XSelectInput(floatbar->xfc->display, button->handle,
-	             ExposureMask | ButtonPressMask | ButtonReleaseMask | FocusChangeMask |
-	                 LeaveWindowMask | EnterWindowMask | StructureNotifyMask);
+	LogDynAndXSelectInput(floatbar->xfc->log, floatbar->xfc->display, button->handle,
+	                      ExposureMask | ButtonPressMask | ButtonReleaseMask | FocusChangeMask |
+	                          LeaveWindowMask | EnterWindowMask | StructureNotifyMask);
 	return button;
 }
 

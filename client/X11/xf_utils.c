@@ -770,3 +770,30 @@ int LogDynAndXRestackWindows_ex(wLog* log, const char* file, const char* fkt, si
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XRestackWindows",
 	                                   rc);
 }
+
+int LogDynAndXGetWindowAttributes_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                     Display* display, Window w,
+                                     XWindowAttributes* window_attributes_return)
+{
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		write_log(log, log_level, file, fkt, line, "XGetWindowAttributes(%p, 0x%08lx, %p)",
+		          (void*)display, w, (void*)window_attributes_return);
+	}
+	const int rc = XGetWindowAttributes(display, w, window_attributes_return);
+	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display,
+	                                   "XGetWindowAttributes", rc);
+}
+
+int LogDynAndXSelectInput_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                             Display* display, Window w, long event_mask)
+{
+	if (WLog_IsLevelActive(log, log_level))
+	{
+		write_log(log, log_level, file, fkt, line, "XSelectInput(%p, 0x%08lx, 0x%08lx)",
+		          (void*)display, w, event_mask);
+	}
+	const int rc = XSelectInput(display, w, event_mask);
+	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XSelectInput",
+	                                   rc);
+}

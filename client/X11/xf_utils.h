@@ -293,8 +293,23 @@ extern int LogDynAndXSetFunction_ex(wLog* log, const char* file, const char* fkt
 extern int LogDynAndXRestackWindows_ex(wLog* log, const char* file, const char* fkt, size_t line,
                                        Display* display, Window* windows, int nwindows);
 
+#define LogDynAndXGetWindowAttributes(log, display, window, attr) \
+	LogDynAndXGetWindowAttributes_ex(log, __FILE__, __func__, __LINE__, (display), (window), (attr))
+WINPR_ATTR_NODISCARD
+extern int LogDynAndXGetWindowAttributes_ex(wLog* log, const char* file, const char* fkt,
+                                            size_t line, Display* display, Window w,
+                                            XWindowAttributes* window_attributes_return);
+
+#define LogDynAndXSelectInput(log, display, window, mask) \
+	LogDynAndXSelectInput_ex(log, __FILE__, __func__, __LINE__, (display), (window), (mask))
+extern int LogDynAndXSelectInput_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                    Display* display, Window w, long event_mask);
+
+WINPR_ATTR_NODISCARD
 BOOL IsGnome(void);
 
+WINPR_ATTR_MALLOC(free, 1)
 char* getConfigOption(BOOL system, const char* option);
 
+WINPR_ATTR_NODISCARD
 const char* request_code_2_str(int code);

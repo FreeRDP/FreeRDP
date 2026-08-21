@@ -417,7 +417,7 @@ static BOOL xf_paint(xfContext* xfc, const GDI_RGN* region)
 			                            WINPR_ASSERTING_INT_CAST(UINT16, region->x + region->w),
 			                        .bottom =
 			                            WINPR_ASSERTING_INT_CAST(UINT16, region->y + region->h) };
-		xf_rail_paint(xfc, &rect);
+		return xf_rail_paint(xfc, &rect);
 	}
 	else
 	{
@@ -1555,7 +1555,8 @@ static int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
 	if (type != LOGON_MSG_SESSION_CONTINUE)
 	{
-		xf_rail_disable_remoteapp_mode(xfc);
+		if (!xf_rail_disable_remoteapp_mode(xfc))
+			return -1;
 	}
 	return 1;
 }
