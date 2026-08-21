@@ -41,7 +41,7 @@ static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _cursor(nullptr, sdl_Pointer_FreeCopy),
       _rdpThreadRunning(false), _primary(nullptr, SDL_DestroySurface), _disp(this), _input(this),
-      _clip(this), _dialog(_log)
+      _clip(this), _rail(this), _dialog(_log)
 {
 	WINPR_ASSERT(context);
 	setMetadata();
@@ -1037,6 +1037,11 @@ sdlClip& SdlContext::getClipboardChannelContext()
 	return _clip;
 }
 
+SdlRail& SdlContext::getRailChannelContext()
+{
+	return _rail;
+}
+
 SdlConnectionDialogWrapper& SdlContext::getDialog()
 {
 	return _dialog;
@@ -1061,10 +1066,23 @@ bool SdlContext::moveMouseTo(const SDL_FPoint& pos)
 
 bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 {
-	if (!getWindowForId(ev.windowID))
-		return true; /* Event for an untracked window (e.g. closed dialog) */
 	SDL_Event copy{};
 	copy.motion = ev;
+	/* WM owns the drag (#12447); backstop: button released but button-up swallowed by grab. */
+	if (_rail.enabled() && _rail.suppressServerMotion(ev.windowID))
+	{
+		if (!(SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK))
+			_rail.completeLocalMoveIfPending();
+		return true;
+	}
+	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.motion.x, copy.motion.y))
+	{
+		_rail.noteServerPointer(copy.motion.x, copy.motion.y);
+		return SdlTouch::handleEvent(this, copy.motion);
+	}
+
+	if (!getWindowForId(ev.windowID))
+		return true; /* Event for an untracked window (e.g. closed dialog) */
 	if (!eventToPixelCoordinates(ev.windowID, copy))
 		return true;
 	removeLocalScaling(copy.motion.x, copy.motion.y);
@@ -1076,10 +1094,14 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 
 bool SdlContext::handleEvent(const SDL_MouseWheelEvent& ev)
 {
-	if (!getWindowForId(ev.windowID))
-		return true;
 	SDL_Event copy{};
 	copy.wheel = ev;
+	if (_rail.enabled() &&
+	    _rail.translateToServer(ev.windowID, copy.wheel.mouse_x, copy.wheel.mouse_y))
+		return SdlTouch::handleEvent(this, copy.wheel);
+
+	if (!getWindowForId(ev.windowID))
+		return true;
 	if (!eventToPixelCoordinates(ev.windowID, copy))
 		return true;
 	removeLocalScaling(copy.wheel.mouse_x, copy.wheel.mouse_y);
@@ -1093,7 +1115,70 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 
 	auto window = getWindowForId(ev.windowID);
 	if (!window)
+	{
+		/* RAIL windows aren't in _windows; handle their events here. */
+		if (_rail.enabled() && _rail.ownsWindow(ev.windowID))
+		{
+			switch (ev.type)
+			{
+				case SDL_EVENT_WINDOW_MOUSE_ENTER:
+
+					/* Re-enter fires on move-grab end. */
+					if (!(SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK))
+						_rail.completeLocalMoveIfPending(); /* X11 */
+					_rail.completeWaylandResize();          /* Wayland: compositor grab ended */
+					return restoreCursor();
+				case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+					/* Compositor took the pointer for the pending Wayland resize grab. */
+					_rail.noteResizeGrab(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_EXPOSED:
+					/* Force a repaint: we skip undamaged RAIL windows, so a re-exposed one is
+					 * stale. Not during a local drag: X exposes every resize step and the drag
+					 * path already repaints per configure - a second present per step just feeds
+					 * the compositor stale frames. */
+					if (!_rail.suppressServerInput(ev.windowID))
+						_rail.invalidateWindow(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_MAXIMIZED:
+					/* Maximize must complete move first. */
+					_rail.completeLocalMoveIfPending();
+					_rail.handleMaximized(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_MINIMIZED:
+					_rail.handleMinimized(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_RESTORED:
+					_rail.handleRestored(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+					/* Send SC_CLOSE, don't abort the session. */
+					_rail.handleClose(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_FOCUS_GAINED:
+					_rail.handleFocus(ev.windowID, true);
+					return true;
+				case SDL_EVENT_WINDOW_FOCUS_LOST:
+					_rail.handleFocus(ev.windowID, false);
+					return true;
+				case SDL_EVENT_WINDOW_MOVED:
+					if (!_rail.suppressServerInput(ev.windowID))
+						_rail.syncGeometry(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+					/* No server frame during the drag: repaint synchronously each configure step.
+					 * Also report the new size to catch a compositor snap/tile. */
+					_rail.noteDragResize(ev.windowID, ev.data1, ev.data2);
+					_rail.syncGeometry(ev.windowID);
+					_rail.handleWaylandResize(ev.windowID);
+					std::ignore = drawToWindows({});
+					return true;
+				default:
+					break;
+			}
+		}
 		return true;
+	}
 
 	{
 		const auto& r = window->rect();
@@ -1189,10 +1274,35 @@ bool SdlContext::handleEvent(const SDL_DisplayEvent& ev)
 
 bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 {
-	if (!getWindowForId(ev.windowID))
-		return true;
 	SDL_Event copy = {};
 	copy.button = ev;
+	if (_rail.enabled())
+	{
+		/* Suppress X11 raw button during WM op. */
+		const bool suppress = _rail.suppressServerInput(ev.windowID);
+		if (ev.type == SDL_EVENT_MOUSE_BUTTON_UP)
+			_rail.completeLocalMoveIfPending();
+		/* Backstop for a Wayland resize whose MOUSE_ENTER completion never arrived; a fresh press
+		 * proves the old grab is over, so a no-op click grab is cancelled here too. */
+		if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+			_rail.completeWaylandResize(true);
+		/* activate the clicked window before forwarding, so the click routes to it. */
+		if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+			_rail.ensureActive(ev.windowID);
+		if (suppress)
+			return true;
+		if (_rail.translateToServer(ev.windowID, copy.button.x, copy.button.y))
+		{
+			/* Record the forwarded left press: it is the anchor of any server modal move/size
+			 * loop this press starts (the loop moves the window by release - anchor). */
+			if ((ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) && (ev.button == SDL_BUTTON_LEFT))
+				_rail.noteLeftPress(copy.button.x, copy.button.y);
+			return SdlTouch::handleEvent(this, copy.button);
+		}
+	}
+
+	if (!getWindowForId(ev.windowID))
+		return true;
 	if (!eventToPixelCoordinates(ev.windowID, copy))
 		return true;
 	removeLocalScaling(copy.button.x, copy.button.y);
@@ -1303,7 +1413,12 @@ SDL_FPoint SdlContext::screenToPixel(SDL_WindowID id, const SDL_FPoint& pos)
 {
 	auto w = getWindowForId(id);
 	if (!w)
+	{
+		/* RAIL windows are server-authoritative 1:1 (no local scaling) and not in _windows. */
+		if (_rail.enabled() && _rail.ownsWindow(id))
+			return pos;
 		return {};
+	}
 
 	/* Ignore errors here, sometimes SDL has no renderer */
 	auto renderer = w->renderer();
@@ -1321,7 +1436,11 @@ SDL_FPoint SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos)
 {
 	auto w = getWindowForId(id);
 	if (!w)
+	{
+		if (_rail.enabled() && _rail.ownsWindow(id))
+			return pos;
 		return {};
+	}
 
 	/* Ignore errors here, sometimes SDL has no renderer */
 	auto renderer = w->renderer();
@@ -1508,6 +1627,17 @@ bool SdlContext::useLocalScale() const
 
 bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)
 {
+	/* RAIL damage is per-window (_gfxDamage), not in the rects queue: repaint every tick. */
+	if (_rail.enabled())
+	{
+		for (auto& window : _windows)
+			SDL_HideWindow(window.second.window());
+
+		std::unique_lock lock(_critical);
+		_rail.paint(_primary.get(), pixelFormat(), rects);
+		return TRUE;
+	}
+
 	if (rects.empty())
 		return true;
 
@@ -1573,6 +1703,10 @@ BOOL SdlContext::beginPaint(rdpContext* context)
 bool SdlContext::redraw(bool suppress) const
 {
 	if (!_connected)
+		return true;
+
+	/* In RAIL mode, hiding the desktop window must not suppress server output. */
+	if (suppress && _rail.enabled())
 		return true;
 
 	auto gdi = context()->gdi;

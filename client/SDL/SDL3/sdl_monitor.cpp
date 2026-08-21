@@ -132,7 +132,20 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 		auto monitor = static_cast<const rdpMonitor*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
 
-		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
+		if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
+		{
+			/* RAIL maps server coordinates 1:1 to the local screen, so the session must cover
+			 * the full display. Sizing it to the usable bounds (/app implies /workarea) drops
+			 * the workarea origin: every window shifts by it and the server lays out windows
+			 * past its own screen bottom. Panels are reported via SPI_SET_WORK_AREA instead. */
+			SDL_Rect rect = {};
+			if (SDL_GetDisplayBounds(monitor->orig_screen, &rect))
+			{
+				*pMaxWidth = WINPR_ASSERTING_INT_CAST(uint32_t, rect.w);
+				*pMaxHeight = WINPR_ASSERTING_INT_CAST(uint32_t, rect.h);
+			}
+		}
+		else if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		{
 			*pMaxWidth = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->width);
 			*pMaxHeight = WINPR_ASSERTING_INT_CAST(uint32_t, monitor->height);
