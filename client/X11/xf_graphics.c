@@ -458,12 +458,9 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 
 	xf_lock_x11(xfc);
 
-	rc = XGetWindowAttributes(xfc->display, handle, &current);
-	if (rc == 0)
-	{
-		WLog_WARN(TAG, "XGetWindowAttributes==%d", rc);
+	rc = LogDynAndXGetWindowAttributes(xfc->log, xfc->display, handle, &current);
+	if (rc != 1)
 		goto out;
-	}
 
 	tmp.event_mask = (current.your_event_mask & ~(PointerMotionMask));
 

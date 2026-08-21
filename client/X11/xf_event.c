@@ -974,6 +974,14 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 
+	const Window root = DefaultRootWindow(xfc->display);
+	if ((event->window == root) &&
+	    ((event->atom == xfc->NET_WORKAREA) || (event->atom == xfc->NET_CURRENT_DESKTOP)))
+	{
+		if (xfc->remote_app && xfc->rail)
+			return xf_rail_schedule_workarea(xfc);
+	}
+
 	/*
 	 * This section handles sending the appropriate commands to the rail server
 	 * when the window has been minimized, maximized, restored locally

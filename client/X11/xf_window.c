@@ -1689,7 +1689,8 @@ void xfAppWindowsLockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 #endif
 
 	xf_lock_x11(xfc);
-	HashTable_Lock(xfc->railWindows);
+	if (xfc->railWindows)
+		HashTable_Lock(xfc->railWindows);
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT)
 	WINPR_ASSERT(!xfc->isRailWindowsLocked);
@@ -1711,6 +1712,7 @@ void xfAppWindowsUnlockFrom(xfContext* xfc, WINPR_ATTR_UNUSED const char* file,
 	xfc->isRailWindowsLocked = FALSE;
 #endif
 
-	HashTable_Unlock(xfc->railWindows);
+	if (xfc->railWindows)
+		HashTable_Unlock(xfc->railWindows);
 	xf_unlock_x11(xfc);
 }

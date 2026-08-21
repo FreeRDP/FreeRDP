@@ -171,6 +171,7 @@ struct xf_context
 	xfAppWindow* appWindow;
 	xfPointer* pointer;
 	xfWorkArea workArea;
+	xfWorkArea railWorkArea;
 	xfFullscreenMonitors fullscreenMonitors;
 	int current_desktop;
 	BOOL remote_app;
