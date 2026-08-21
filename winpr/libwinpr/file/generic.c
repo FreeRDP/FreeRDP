@@ -1016,7 +1016,7 @@ static DWORD GetDosAttributesFromXAttr(const char* path)
 			errno = 0;
 			const unsigned long val = strtoul(attrValue, nullptr, 0);
 			if (errno == 0)
-				dwFileAttributes = val;
+				dwFileAttributes = WINPR_ASSERTING_INT_CAST(DWORD, val);
 		}
 	}
 #else
