@@ -5,6 +5,7 @@
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2016 Armin Novak <armin.novak@thincast.com>
  * Copyright 2016 Thincast Technologies GmbH
+ * Copyright 2026 David Fort <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +39,15 @@
 #define CLEARCODEC_VBAR_SIZE 32768
 #define CLEARCODEC_VBAR_SHORT_SIZE 16384
 
+/* Encoder-only: open-addressed hash index mapping V-Bar column content to its slot in
+ * clear->VBarStorage, so clear_compress_bands_data() can find VBAR_CACHE_HIT candidates in
+ * O(1) instead of scanning the whole cache. Must be a power of two, comfortably larger than
+ * CLEARCODEC_VBAR_SIZE so insert() always finds a free/tombstoned slot. */
+#define CLEAR_VBAR_HASH_SIZE 65536u
+#define CLEAR_VBAR_HASH_EMPTY 0u
+#define CLEAR_VBAR_HASH_DELETED 0xFFFFFFFFu
+#define CLEAR_BAND_MAX_HEIGHT 52u
+
 typedef struct
 {
 	UINT32 size;
@@ -67,6 +77,8 @@ struct S_CLEAR_CONTEXT
 	UINT32 ShortVBarStorageCursor;
 	CLEAR_VBAR_ENTRY ShortVBarStorage[CLEARCODEC_VBAR_SHORT_SIZE];
 	wLog* log;
+	wStream* bs;           /* clear_compress() output, owned by this context, Compressor only */
+	UINT32* VBarHashSlots; /* clear_compress() V-Bar lookup index, Compressor only, see above */
 };
 
 static const UINT32 CLEAR_LOG2_FLOOR[256] = {
@@ -90,6 +102,9 @@ static void clear_reset_vbar_storage(CLEAR_CONTEXT* WINPR_RESTRICT clear, BOOL z
 			winpr_aligned_free(clear->VBarStorage[i].pixels);
 
 		ZeroMemory(clear->VBarStorage, sizeof(clear->VBarStorage));
+
+		if (clear->VBarHashSlots)
+			ZeroMemory(clear->VBarHashSlots, CLEAR_VBAR_HASH_SIZE * sizeof(UINT32));
 	}
 
 	clear->VBarStorageCursor = 0;
@@ -568,11 +583,10 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 }
 
 static BOOL resize_vbar_entry(CLEAR_CONTEXT* WINPR_RESTRICT clear,
-                              CLEAR_VBAR_ENTRY* WINPR_RESTRICT vBarEntry)
+                              CLEAR_VBAR_ENTRY* WINPR_RESTRICT vBarEntry, UINT32 bpp)
 {
 	if (vBarEntry->count > vBarEntry->size)
 	{
-		const UINT32 bpp = FreeRDPGetBytesPerPixel(clear->format);
 		const UINT32 oldPos = vBarEntry->size * bpp;
 		const UINT32 diffSize = (vBarEntry->count - vBarEntry->size) * bpp;
 
@@ -739,7 +753,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 				vBarShortEntry = &(clear->ShortVBarStorage[clear->ShortVBarStorageCursor]);
 				vBarShortEntry->count = vBarShortPixelCount;
 
-				if (!resize_vbar_entry(clear, vBarShortEntry))
+				if (!resize_vbar_entry(clear, vBarShortEntry,
+				                       FreeRDPGetBytesPerPixel(clear->format)))
 					return FALSE;
 
 				for (size_t y = 0; y < vBarShortPixelCount; y++)
@@ -776,7 +791,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 					           "Empty cache index %" PRIu16 ", filling dummy data", vBarIndex);
 					vBarEntry->count = vBarHeight;
 
-					if (!resize_vbar_entry(clear, vBarEntry))
+					if (!resize_vbar_entry(clear, vBarEntry,
+					                       FreeRDPGetBytesPerPixel(clear->format)))
 						return FALSE;
 				}
 			}
@@ -805,7 +821,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 				vBarPixelCount = vBarHeight;
 				vBarEntry->count = vBarPixelCount;
 
-				if (!resize_vbar_entry(clear, vBarEntry))
+				if (!resize_vbar_entry(clear, vBarEntry, FreeRDPGetBytesPerPixel(clear->format)))
 					return FALSE;
 
 				dstBuffer = vBarEntry->pixels;
@@ -885,7 +901,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 				           vBarEntry->count, vBarHeight);
 				vBarEntry->count = vBarHeight;
 
-				if (!resize_vbar_entry(clear, vBarEntry))
+				if (!resize_vbar_entry(clear, vBarEntry, FreeRDPGetBytesPerPixel(clear->format)))
 					return FALSE;
 			}
 
@@ -1269,17 +1285,368 @@ fail:
 	return rc;
 }
 
-#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
-int clear_compress(WINPR_ATTR_UNUSED CLEAR_CONTEXT* WINPR_RESTRICT clear,
-                   WINPR_ATTR_UNUSED const BYTE* WINPR_RESTRICT pSrcData,
-                   WINPR_ATTR_UNUSED UINT32 SrcSize,
-                   WINPR_ATTR_UNUSED BYTE** WINPR_RESTRICT ppDstData,
-                   WINPR_ATTR_UNUSED UINT32* WINPR_RESTRICT pDstSize)
+/* Write one CLEARCODEC_RGB_RUN_SEGMENT: BGR triplet + a 1/2/4 byte run length using the
+ * 0xFF / 0xFFFF escape scheme mirrored from clear_decompress_residual_data(). */
+static void clear_write_run_segment(wStream* WINPR_RESTRICT s, BYTE r, BYTE g, BYTE b,
+                                    UINT32 runLength)
 {
-	WLog_Print(clear->log, WLOG_ERROR, "TODO: not implemented!");
-	return 1;
+	Stream_Write_UINT8(s, b);
+	Stream_Write_UINT8(s, g);
+	Stream_Write_UINT8(s, r);
+
+	if (runLength < 0xFF)
+		Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, runLength));
+	else if (runLength < 0xFFFF)
+	{
+		Stream_Write_UINT8(s, 0xFF);
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(UINT16, runLength));
+	}
+	else
+	{
+		Stream_Write_UINT8(s, 0xFF);
+		Stream_Write_UINT16(s, 0xFFFF);
+		Stream_Write_UINT32(s, runLength);
+	}
 }
-#endif
+
+/* Encode the whole rectangle as a single CLEARCODEC_RESIDUAL_DATA layer: a row-major run-length
+ * encoding of BGR pixel runs. This is always spec-valid on its own (bands/subcodec layers are
+ * optional) */
+static BOOL clear_compress_residual_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                         wStream* WINPR_RESTRICT s,
+                                         const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcFormat,
+                                         UINT32 nSrcStep, UINT32 nWidth, UINT32 nHeight)
+{
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
+	const UINT64 pixelCount = 1ull * nWidth * nHeight;
+	/* Worst case: every pixel differs from its predecessor, i.e. one 4-byte segment per pixel. */
+	const UINT64 requiredBytes = pixelCount * 4ull;
+	BOOL havePending = FALSE;
+	BYTE pr = 0;
+	BYTE pg = 0;
+	BYTE pb = 0;
+	UINT32 runLength = 0;
+
+	if (!Stream_EnsureRemainingCapacity(s, WINPR_ASSERTING_INT_CAST(size_t, requiredBytes)))
+	{
+		WLog_Print(clear->log, WLOG_ERROR,
+		           "Stream_EnsureRemainingCapacity failed for %" PRIu64 " bytes", requiredBytes);
+		return FALSE;
+	}
+
+	for (UINT32 y = 0; y < nHeight; y++)
+	{
+		const BYTE* pSrcPixel = &pSrcData[1ull * y * nSrcStep];
+
+		for (UINT32 x = 0; x < nWidth; x++)
+		{
+			BYTE r = 0;
+			BYTE g = 0;
+			BYTE b = 0;
+			BYTE a = 0;
+			const UINT32 color = FreeRDPReadColor(pSrcPixel, SrcFormat);
+			pSrcPixel += bpp;
+			FreeRDPSplitColor(color, SrcFormat, &r, &g, &b, &a, nullptr);
+
+			if (havePending && (r == pr) && (g == pg) && (b == pb))
+			{
+				runLength++;
+				continue;
+			}
+
+			if (havePending)
+				clear_write_run_segment(s, pr, pg, pb, runLength);
+
+			pr = r;
+			pg = g;
+			pb = b;
+			runLength = 1;
+			havePending = TRUE;
+		}
+	}
+
+	if (havePending)
+		clear_write_run_segment(s, pr, pg, pb, runLength);
+
+	return TRUE;
+}
+
+/* FNV-1a 64 bit, used only to pick a starting probe bucket for the encoder's V-Bar lookup
+ * index; every candidate is still verified with a full memcmp, so collisions only cost an
+ * extra probe, never a wrong answer. */
+static UINT64 clear_vbar_content_hash(const BYTE* WINPR_RESTRICT data, size_t len)
+{
+	UINT64 hash = 0xcbf29ce484222325ull;
+
+	for (size_t i = 0; i < len; i++)
+	{
+		hash ^= data[i];
+		hash *= 0x100000001b3ull;
+	}
+
+	return hash;
+}
+
+/* Find an existing clear->VBarStorage slot whose content exactly matches [data, data+count*3).
+ * Read-only: never mutates clear->VBarStorage or the hash index. Returns the slot index, or
+ * UINT32_MAX if no such content is currently cached. */
+static UINT32 clear_vbar_hash_lookup(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                     const BYTE* WINPR_RESTRICT data, UINT32 count)
+{
+	const size_t len = 1ull * count * 3;
+	const UINT64 hash = clear_vbar_content_hash(data, len);
+	UINT32 i = WINPR_ASSERTING_INT_CAST(UINT32, hash & (CLEAR_VBAR_HASH_SIZE - 1));
+
+	for (UINT32 probe = 0; probe < CLEAR_VBAR_HASH_SIZE; probe++)
+	{
+		const UINT32 slot = clear->VBarHashSlots[i];
+
+		if (slot == CLEAR_VBAR_HASH_EMPTY)
+			return UINT32_MAX;
+
+		if (slot != CLEAR_VBAR_HASH_DELETED)
+		{
+			const UINT32 index = slot - 1;
+			const CLEAR_VBAR_ENTRY* entry = &clear->VBarStorage[index];
+
+			if ((entry->count == count) && (memcmp(entry->pixels, data, len) == 0))
+				return index;
+		}
+
+		i = (i + 1) & (CLEAR_VBAR_HASH_SIZE - 1);
+	}
+
+	return UINT32_MAX;
+}
+
+/* Remove whatever entry currently maps to clear->VBarStorage[index] from the hash index, based
+ * on its CURRENT content. Must be called before that slot's content is overwritten, otherwise
+ * the index would keep pointing a stale lookup at content that is no longer there. */
+static void clear_vbar_hash_remove(CLEAR_CONTEXT* WINPR_RESTRICT clear, UINT32 index)
+{
+	const CLEAR_VBAR_ENTRY* entry = &clear->VBarStorage[index];
+
+	if ((entry->count == 0) || !entry->pixels)
+		return;
+
+	const size_t len = 1ull * entry->count * 3;
+	const UINT64 hash = clear_vbar_content_hash(entry->pixels, len);
+	UINT32 i = WINPR_ASSERTING_INT_CAST(UINT32, hash & (CLEAR_VBAR_HASH_SIZE - 1));
+
+	for (UINT32 probe = 0; probe < CLEAR_VBAR_HASH_SIZE; probe++)
+	{
+		if (clear->VBarHashSlots[i] == (index + 1))
+		{
+			clear->VBarHashSlots[i] = CLEAR_VBAR_HASH_DELETED;
+			return;
+		}
+
+		if (clear->VBarHashSlots[i] == CLEAR_VBAR_HASH_EMPTY)
+			return;
+
+		i = (i + 1) & (CLEAR_VBAR_HASH_SIZE - 1);
+	}
+}
+
+/* Index clear->VBarStorage[index] (using its current content) so future lookups can find it. */
+static void clear_vbar_hash_insert(CLEAR_CONTEXT* WINPR_RESTRICT clear, UINT32 index)
+{
+	const CLEAR_VBAR_ENTRY* entry = &clear->VBarStorage[index];
+	const size_t len = 1ull * entry->count * 3;
+	const UINT64 hash = clear_vbar_content_hash(entry->pixels, len);
+	UINT32 i = WINPR_ASSERTING_INT_CAST(UINT32, hash & (CLEAR_VBAR_HASH_SIZE - 1));
+
+	for (UINT32 probe = 0; probe < CLEAR_VBAR_HASH_SIZE; probe++)
+	{
+		const UINT32 slot = clear->VBarHashSlots[i];
+
+		if ((slot == CLEAR_VBAR_HASH_EMPTY) || (slot == CLEAR_VBAR_HASH_DELETED))
+		{
+			clear->VBarHashSlots[i] = index + 1;
+			return;
+		}
+
+		i = (i + 1) & (CLEAR_VBAR_HASH_SIZE - 1);
+	}
+}
+
+/* Emit a VBAR_CACHE_HIT: the decoder already has this column at clear->VBarStorage[index]. */
+static BOOL clear_compress_write_vbar_hit(wStream* WINPR_RESTRICT s, UINT32 index)
+{
+	if (!Stream_EnsureRemainingCapacity(s, 2))
+		return FALSE;
+
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(UINT16, 0x8000u | index));
+	return TRUE;
+}
+
+/* Emit a SHORT_VBAR_CACHE_MISS (header + raw BGR pixels): a column never seen before. Also
+ * mirrors clear_decompress_bands_data()'s cache update so the decoder's and encoder's V-Bar
+ * caches stay in lockstep, keeping future VBAR_CACHE_HIT indices valid. shortVBarYOn is always
+ * 0 here since this encoder never trims a column against the band's background color. */
+static BOOL clear_compress_write_vbar_miss(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                           wStream* WINPR_RESTRICT s,
+                                           const BYTE* WINPR_RESTRICT columnBgr, UINT32 count)
+{
+	if (!Stream_EnsureRemainingCapacity(s, 2ull + 1ull * count * 3))
+		return FALSE;
+
+	Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(UINT16, count << 8)); /* yOn=0, yOff=count */
+	Stream_Write(s, columnBgr, 1ull * count * 3);
+
+	const UINT32 index = clear->VBarStorageCursor;
+	CLEAR_VBAR_ENTRY* entry = &clear->VBarStorage[index];
+
+	clear_vbar_hash_remove(clear, index);
+	entry->count = count;
+
+	if (!resize_vbar_entry(clear, entry, 3))
+		return FALSE;
+
+	CopyMemory(entry->pixels, columnBgr, 1ull * count * 3);
+	clear_vbar_hash_insert(clear, index);
+
+	clear->VBarStorageCursor = (clear->VBarStorageCursor + 1) % CLEARCODEC_VBAR_SIZE;
+	return TRUE;
+}
+
+/* Encode CLEARCODEC_BANDS_DATA: fixed-height (<=52 row), full-width bands, one V-Bar per
+ * column. Every column is cache-checked against clear->VBarStorage; unseen columns are sent
+ * raw and added to the cache for later frames to reference. Mutates clear's V-Bar cache state,
+ * so unlike the residual layer this cannot be spuriously discarded once written: whatever this
+ * writes to the wire must reach the decoder, or the two caches fall out of sync. */
+static BOOL clear_compress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                      wStream* WINPR_RESTRICT s,
+                                      const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcFormat,
+                                      UINT32 nSrcStep, UINT32 nWidth, UINT32 nHeight)
+{
+	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
+	BYTE columnBgr[1ull * CLEAR_BAND_MAX_HEIGHT * 3];
+
+	for (UINT32 yStart = 0; yStart < nHeight; yStart += CLEAR_BAND_MAX_HEIGHT)
+	{
+		const UINT32 bandHeight = MIN(CLEAR_BAND_MAX_HEIGHT, nHeight - yStart);
+		const UINT32 yEnd = yStart + bandHeight - 1;
+
+		if (!Stream_EnsureRemainingCapacity(s, 11))
+			return FALSE;
+
+		Stream_Write_UINT16(s, 0);                                            /* xStart */
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(UINT16, nWidth - 1)); /* xEnd */
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(UINT16, yStart));
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(UINT16, yEnd));
+		Stream_Write_UINT8(s, 0); /* blueBkg: unused, columns are never background-trimmed */
+		Stream_Write_UINT8(s, 0); /* greenBkg */
+		Stream_Write_UINT8(s, 0); /* redBkg */
+
+		for (UINT32 x = 0; x < nWidth; x++)
+		{
+			for (UINT32 y = 0; y < bandHeight; y++)
+			{
+				BYTE r = 0;
+				BYTE g = 0;
+				BYTE b = 0;
+				BYTE a = 0;
+				const BYTE* pPixel = &pSrcData[(1ull * (yStart + y)) * nSrcStep + 1ull * x * bpp];
+				const UINT32 color = FreeRDPReadColor(pPixel, SrcFormat);
+				FreeRDPSplitColor(color, SrcFormat, &r, &g, &b, &a, nullptr);
+				columnBgr[y * 3 + 0] = b;
+				columnBgr[y * 3 + 1] = g;
+				columnBgr[y * 3 + 2] = r;
+			}
+
+			const UINT32 hit = clear_vbar_hash_lookup(clear, columnBgr, bandHeight);
+
+			if (hit != UINT32_MAX)
+			{
+				if (!clear_compress_write_vbar_hit(s, hit))
+					return FALSE;
+			}
+			else if (!clear_compress_write_vbar_miss(clear, s, columnBgr, bandHeight))
+				return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+BOOL clear_compress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RESTRICT pSrcData,
+                    UINT32 SrcFormat, UINT32 nSrcStep, UINT32 nWidth, UINT32 nHeight,
+                    BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize)
+{
+	if (!clear || !clear->Compressor || !clear->bs)
+		return FALSE;
+
+	if (!pSrcData || !ppDstData || !pDstSize)
+		return FALSE;
+
+	if ((nWidth == 0) || (nHeight == 0) || (nWidth > 0xFFFF) || (nHeight > 0xFFFF))
+		return FALSE;
+
+	if (nSrcStep == 0)
+		nSrcStep = nWidth * FreeRDPGetBytesPerPixel(SrcFormat);
+
+	wStream* s = clear->bs;
+	if (!Stream_SetPosition(s, 0))
+		return FALSE;
+
+	if (!Stream_EnsureRemainingCapacity(s, 14))
+		return FALSE;
+
+	Stream_Write_UINT8(s, 0); /* glyphFlags: no glyph cache use */
+	Stream_Write_UINT8(s, WINPR_ASSERTING_INT_CAST(UINT8, clear->seqNumber));
+
+	const size_t residualByteCountPos = Stream_GetPosition(s);
+	Stream_Write_UINT32(s, 0); /* residualByteCount, backpatched below */
+	const size_t bandsByteCountPos = Stream_GetPosition(s);
+	Stream_Write_UINT32(s, 0); /* bandsByteCount, backpatched below */
+	Stream_Write_UINT32(s, 0); /* subcodecByteCount: subcodec layer not implemented yet */
+
+	const size_t residualStart = Stream_GetPosition(s);
+
+	if (!clear_compress_residual_data(clear, s, pSrcData, SrcFormat, nSrcStep, nWidth, nHeight))
+		return FALSE;
+
+	UINT32 residualByteCount =
+	    WINPR_ASSERTING_INT_CAST(UINT32, Stream_GetPosition(s) - residualStart);
+
+	/* Bands and residual both cover 100% of the rectangle on their own (this encoder never
+	 * trims a band down to a partial region), so there is no benefit to sending both - it would
+	 * just mean the decoder redundantly redraws every pixel twice. Pick one.
+	 *
+	 * The band layer costs at least 11 header bytes per band plus 2 bytes per column (the
+	 * cheapest possible outcome, a VBAR_CACHE_HIT for every single column). If the residual
+	 * layer already beats that floor, bands cannot possibly shrink the output further, so skip
+	 * them entirely. Once that gate passes we commit to bands unconditionally rather than
+	 * comparing actual sizes afterwards: clear_compress_bands_data() mutates the V-Bar cache as
+	 * it goes (new columns are inserted so later frames can reference them), and undoing that
+	 * after the fact to fall back to residual would desync the encoder's cache from the
+	 * decoder's, which never rolls back what it has already decoded. */
+	UINT32 bandsByteCount = 0;
+	const UINT32 numBands = (nHeight + CLEAR_BAND_MAX_HEIGHT - 1) / CLEAR_BAND_MAX_HEIGHT;
+	const UINT64 minBandsCost = (1ull * numBands * 11ull) + (2ull * numBands * nWidth);
+
+	if (clear->VBarHashSlots && (residualByteCount > minBandsCost))
+	{
+		if (!Stream_SetPosition(s, residualStart))
+			return FALSE;
+
+		if (!clear_compress_bands_data(clear, s, pSrcData, SrcFormat, nSrcStep, nWidth, nHeight))
+			return FALSE;
+
+		bandsByteCount = WINPR_ASSERTING_INT_CAST(UINT32, Stream_GetPosition(s) - residualStart);
+		residualByteCount = 0;
+	}
+
+	winpr_Data_Write_UINT32(Stream_Buffer(s) + residualByteCountPos, residualByteCount);
+	winpr_Data_Write_UINT32(Stream_Buffer(s) + bandsByteCountPos, bandsByteCount);
+
+	clear->seqNumber = (clear->seqNumber + 1) % 256;
+
+	*ppDstData = Stream_Buffer(s);
+	*pDstSize = WINPR_ASSERTING_INT_CAST(UINT32, Stream_GetPosition(s));
+	return TRUE;
+}
 
 BOOL clear_context_reset(CLEAR_CONTEXT* WINPR_RESTRICT clear)
 {
@@ -1316,6 +1683,18 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 	if (!clear->TempBuffer)
 		goto error_nsc;
 
+	if (Compressor)
+	{
+		clear->bs = Stream_New(nullptr, 1024);
+		if (!clear->bs)
+			goto error_nsc;
+
+		clear->VBarHashSlots =
+		    (UINT32*)winpr_aligned_calloc(CLEAR_VBAR_HASH_SIZE, sizeof(UINT32), 32);
+		if (!clear->VBarHashSlots)
+			goto error_nsc;
+	}
+
 	if (!clear_context_reset(clear))
 		goto error_nsc;
 
@@ -1335,9 +1714,11 @@ void clear_context_free(CLEAR_CONTEXT* WINPR_RESTRICT clear)
 
 	nsc_context_free(clear->nsc);
 	winpr_aligned_free(clear->TempBuffer);
+	Stream_Free(clear->bs, TRUE);
 
 	clear_reset_vbar_storage(clear, TRUE);
 	clear_reset_glyph_cache(clear);
+	winpr_aligned_free(clear->VBarHashSlots);
 
 	winpr_aligned_free(clear);
 }

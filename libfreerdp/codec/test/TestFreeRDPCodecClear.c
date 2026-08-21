@@ -4,6 +4,10 @@
 
 #include <freerdp/codec/clear.h>
 
+/* Mirrors the internal CLEAR_BAND_MAX_HEIGHT used by clear_compress()'s band encoder
+ * (libfreerdp/codec/clear.c), so tests can size images to span multiple bands. */
+#define CLEAR_TEST_BAND_HEIGHT 52
+
 WINPR_PRAGMA_DIAG_PUSH
 WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR
 /* [MS-RDPEGFX] 4.1.1.1 Example 1 */
@@ -68,6 +72,165 @@ fail:
 	return rc;
 }
 
+static BOOL test_ClearCompressDecompressRoundtrip(UINT32 width, UINT32 height)
+{
+	BOOL rc = FALSE;
+	BYTE* pDstData = nullptr;
+	BYTE* pCompressed = nullptr;
+	UINT32 compressedSize = 0;
+	const UINT32 DstFormat = PIXEL_FORMAT_BGRX32;
+	const UINT32 srcStep = width * FreeRDPGetBytesPerPixel(DstFormat);
+	BYTE* pSrcData = calloc(1ULL * srcStep, height);
+	CLEAR_CONTEXT* clearEnc = clear_context_new(TRUE);
+	CLEAR_CONTEXT* clearDec = clear_context_new(FALSE);
+
+	pDstData = calloc(1ULL * srcStep, height);
+	if (!pSrcData || !pDstData || !clearEnc || !clearDec)
+		goto fail;
+
+	/* Mix of flat runs (compresses well) and a varying pattern (forces many short runs). */
+	for (UINT32 y = 0; y < height; y++)
+	{
+		BYTE* pLine = &pSrcData[1ULL * y * srcStep];
+		for (UINT32 x = 0; x < width; x++)
+		{
+			BYTE r = 0;
+			BYTE g = 0;
+			BYTE b = 0;
+
+			if (x < width / 2)
+			{
+				r = 0x10;
+				g = 0x80;
+				b = 0xF0;
+			}
+			else
+			{
+				r = WINPR_ASSERTING_INT_CAST(BYTE, (x * 7 + y * 13) & 0xFF);
+				g = WINPR_ASSERTING_INT_CAST(BYTE, (x * 3 + y * 5) & 0xFF);
+				b = WINPR_ASSERTING_INT_CAST(BYTE, (x + y) & 0xFF);
+			}
+
+			const UINT32 color = FreeRDPGetColor(DstFormat, r, g, b, 0xFF);
+			FreeRDPWriteColor(&pLine[1ULL * x * FreeRDPGetBytesPerPixel(DstFormat)], DstFormat,
+			                  color);
+		}
+	}
+
+	if (!clear_compress(clearEnc, pSrcData, DstFormat, srcStep, width, height, &pCompressed,
+	                    &compressedSize))
+	{
+		(void)fprintf(stderr, "clear_compress failed for %" PRIu32 "x%" PRIu32 "\n", width, height);
+		goto fail;
+	}
+
+	if (clear_decompress(clearDec, pCompressed, compressedSize, width, height, pDstData, DstFormat,
+	                     srcStep, 0, 0, width, height, nullptr) != 0)
+	{
+		(void)fprintf(stderr, "clear_decompress failed for %" PRIu32 "x%" PRIu32 "\n", width,
+		              height);
+		goto fail;
+	}
+
+	if (memcmp(pSrcData, pDstData, 1ULL * srcStep * height) != 0)
+	{
+		(void)fprintf(stderr, "clear roundtrip mismatch for %" PRIu32 "x%" PRIu32 "\n", width,
+		              height);
+		goto fail;
+	}
+
+	rc = TRUE;
+fail:
+	clear_context_free(clearEnc);
+	clear_context_free(clearDec);
+	free(pSrcData);
+	free(pDstData);
+	return rc;
+}
+
+/* Content that varies unpredictably along each row (defeats row-major residual RLE) but is
+ * constant down every column (every band's V-Bar for a given x is byte-identical), across
+ * enough rows for several 52-row bands. This exercises clear_compress_bands_data()'s
+ * VBAR_CACHE_HIT/SHORT_VBAR_CACHE_MISS path and should compress far better than residual-only
+ * encoding of the same image would. */
+static BOOL test_ClearCompressBandsRoundtrip(void)
+{
+	BOOL rc = FALSE;
+	const UINT32 width = 37;
+	const UINT32 height = 3 * CLEAR_TEST_BAND_HEIGHT + 5;
+	BYTE* pDstData = nullptr;
+	BYTE* pCompressed = nullptr;
+	UINT32 compressedSize = 0;
+	const UINT32 DstFormat = PIXEL_FORMAT_BGRX32;
+	const UINT32 srcStep = width * FreeRDPGetBytesPerPixel(DstFormat);
+	BYTE* pSrcData = calloc(1ULL * srcStep, height);
+	CLEAR_CONTEXT* clearEnc = clear_context_new(TRUE);
+	CLEAR_CONTEXT* clearDec = clear_context_new(FALSE);
+
+	pDstData = calloc(1ULL * srcStep, height);
+	if (!pSrcData || !pDstData || !clearEnc || !clearDec)
+		goto fail;
+
+	for (UINT32 y = 0; y < height; y++)
+	{
+		BYTE* pLine = &pSrcData[1ULL * y * srcStep];
+		for (UINT32 x = 0; x < width; x++)
+		{
+			const BYTE r = WINPR_ASSERTING_INT_CAST(BYTE, (x * 97 + x * x * 13) & 0xFF);
+			const BYTE g = WINPR_ASSERTING_INT_CAST(BYTE, (x * 53 + x * x * 7) & 0xFF);
+			const BYTE b = WINPR_ASSERTING_INT_CAST(BYTE, (x * 31) & 0xFF);
+			const UINT32 color = FreeRDPGetColor(DstFormat, r, g, b, 0xFF);
+			FreeRDPWriteColor(&pLine[1ULL * x * FreeRDPGetBytesPerPixel(DstFormat)], DstFormat,
+			                  color);
+		}
+	}
+
+	if (!clear_compress(clearEnc, pSrcData, DstFormat, srcStep, width, height, &pCompressed,
+	                    &compressedSize))
+	{
+		(void)fprintf(stderr, "clear_compress (bands) failed for %" PRIu32 "x%" PRIu32 "\n", width,
+		              height);
+		goto fail;
+	}
+
+	if (clear_decompress(clearDec, pCompressed, compressedSize, width, height, pDstData, DstFormat,
+	                     srcStep, 0, 0, width, height, nullptr) != 0)
+	{
+		(void)fprintf(stderr, "clear_decompress (bands) failed for %" PRIu32 "x%" PRIu32 "\n",
+		              width, height);
+		goto fail;
+	}
+
+	if (memcmp(pSrcData, pDstData, 1ULL * srcStep * height) != 0)
+	{
+		(void)fprintf(stderr, "clear bands roundtrip mismatch for %" PRIu32 "x%" PRIu32 "\n", width,
+		              height);
+		goto fail;
+	}
+
+	/* Column content repeats identically in every band, so from the second band onward every
+	 * column should be a 2-byte VBAR_CACHE_HIT: only the first (52-row) and last (5-row, a
+	 * different height so it can't match the cache) bands pay the full raw per-column cost. A
+	 * residual-only encoding of this per-row-varying content would cost close to the raw BGRX32
+	 * size (4 bytes/pixel); confirm the V-Bar cache brought the total well under half of that. */
+	if (compressedSize >= (1ULL * srcStep * height) / 2)
+	{
+		(void)fprintf(stderr,
+		              "clear bands compressedSize %" PRIu32 " did not benefit from caching (raw "
+		              "size %" PRIu32 "x%" PRIu32 " * 4)\n",
+		              compressedSize, width, height);
+		goto fail;
+	}
+
+	rc = TRUE;
+fail:
+	clear_context_free(clearEnc);
+	clear_context_free(clearDec);
+	free(pSrcData);
+	free(pDstData);
+	return rc;
+}
+
 int TestFreeRDPCodecClear(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -85,6 +248,18 @@ int TestFreeRDPCodecClear(int argc, char* argv[])
 		return -1;
 
 	if (!test_ClearDecompressExample(4, 7, 15, TEST_CLEAR_EXAMPLE_4, sizeof(TEST_CLEAR_EXAMPLE_4)))
+		return -1;
+
+	if (!test_ClearCompressDecompressRoundtrip(64, 48))
+		return -1;
+
+	if (!test_ClearCompressDecompressRoundtrip(1, 1))
+		return -1;
+
+	if (!test_ClearCompressDecompressRoundtrip(3, 200))
+		return -1;
+
+	if (!test_ClearCompressBandsRoundtrip())
 		return -1;
 
 	return 0;

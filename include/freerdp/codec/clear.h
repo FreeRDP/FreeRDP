@@ -34,18 +34,30 @@ extern "C"
 
 	typedef struct S_CLEAR_CONTEXT CLEAR_CONTEXT;
 
-	/** @brief compress an image to clear codec data
-	 *  @warning not implemented
-	 *  @bug The API does not allow to properly pass an image
-	 *  @deprecated should not be used
+	/** @brief compress an image rectangle to CLEAR codec data (CLEARCODEC_BITMAP_STREAM)
+	 *
+	 *  @param clear The context to use for compression, must not be \b nullptr, must have been
+	 *  created with \ref Compressor = TRUE
+	 *  @param pSrcData A pointer to the source image data, must not be \b nullptr
+	 *  @param SrcFormat The pixel format of the source image data
+	 *  @param nSrcStep The size in bytes of a source image line, or \b 0 to derive it from
+	 *  nWidth and SrcFormat
+	 *  @param nWidth The width in pixels of the rectangle to compress
+	 *  @param nHeight The height in lines of the rectangle to compress
+	 *  @param ppDstData A pointer that receives the compressed data. The returned buffer is
+	 *  owned by \b clear and is only valid until the next call to \ref clear_compress or to
+	 *  \ref clear_context_free; the caller must not free it.
+	 *  @param pDstSize A pointer that receives the size in bytes of the compressed data
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise
+	 *  @since version 3.34.0
 	 */
-#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
-	WINPR_DEPRECATED_VAR("Broken API definition, compression was never implemented",
-	                     WINPR_ATTR_NODISCARD FREERDP_API int clear_compress(
-	                         CLEAR_CONTEXT* WINPR_RESTRICT clear,
-	                         const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
-	                         BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize));
-#endif
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL clear_compress(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+	                                const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcFormat,
+	                                UINT32 nSrcStep, UINT32 nWidth, UINT32 nHeight,
+	                                BYTE** WINPR_RESTRICT ppDstData,
+	                                UINT32* WINPR_RESTRICT pDstSize);
 
 	/** @brief decompress clear codec data
 	 *
