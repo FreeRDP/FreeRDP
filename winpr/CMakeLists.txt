@@ -251,6 +251,7 @@ if(NOT IOS)
   check_include_files(sys/sockio.h WINPR_HAVE_SYS_SOCKIO_H)
   check_include_files(syslog.h WINPR_HAVE_SYSLOG_H)
   check_include_files(sys/select.h WINPR_HAVE_SYS_SELECT_H)
+  check_include_files(linux/msdos_fs.h WINPR_HAVE_LINUX_MSDOS_FS_H)
   check_include_files(unwind.h WINPR_HAVE_UNWIND_H)
   if(EPOLLSHIM)
     list(APPEND CMAKE_REQUIRED_LIBRARIES PkgConfig::EPOLLSHIM)
@@ -269,6 +270,21 @@ if(NOT IOS)
   check_function_exists(getlogin_r WINPR_HAVE_GETLOGIN_R)
   check_function_exists(getpwuid_r WINPR_HAVE_GETPWUID_R)
   check_struct_has_member("struct tm" tm_gmtoff time.h WINPR_HAVE_TM_GMTOFF)
+
+  set(CMAKE_REQUIRED_INCLUDES W)
+  include(CheckSourceCompiles)
+  check_source_compiles(
+    C
+    [[
+  #include <sys/xattr.h>
+  int main(void) {
+    int intAttr = 42;
+    const int rc = setxattr("/tmp/foobar", "somename", &intAttr, sizeof(intAttr), 0);
+    return 0;
+  }
+  ]]
+    WINPR_HAVE_SYS_XATTR_H
+  )
 else()
   set(WINPR_HAVE_FCNTL_H 1)
   set(WINPR_HAVE_UNISTD_H 1)
