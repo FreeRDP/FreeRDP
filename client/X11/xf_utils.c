@@ -791,7 +791,7 @@ int LogDynAndXSelectInput_ex(wLog* log, const char* file, const char* fkt, size_
 	if (WLog_IsLevelActive(log, log_level))
 	{
 		write_log(log, log_level, file, fkt, line, "XSelectInput(%p, 0x%08lx, 0x%08lx)",
-		          (void*)display, w, event_mask);
+		          (void*)display, w, (unsigned long)event_mask);
 	}
 	const int rc = XSelectInput(display, w, event_mask);
 	return write_result_log_expect_one(log, WLOG_WARN, file, fkt, line, display, "XSelectInput",

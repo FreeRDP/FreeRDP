@@ -396,7 +396,7 @@ static int write_seed(const char* dir, const char* name, const capture_t* c)
 	if (!f)
 		return -1;
 	size_t w = fwrite(c->data, 1, c->len, f);
-	fclose(f);
+	(void)fclose(f);
 	return (w == c->len) ? 0 : -1;
 }
 
