@@ -271,11 +271,11 @@ if(NOT IOS)
   check_function_exists(getpwuid_r WINPR_HAVE_GETPWUID_R)
   check_struct_has_member("struct tm" tm_gmtoff time.h WINPR_HAVE_TM_GMTOFF)
 
-  set(CMAKE_REQUIRED_INCLUDES W)
-  include(CheckSourceCompiles)
-  check_source_compiles(
-    C
-    [[
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.19")
+    include(CheckSourceCompiles)
+    check_source_compiles(
+      C
+      [[
   #include <sys/xattr.h>
   int main(void) {
     int intAttr = 42;
@@ -283,8 +283,9 @@ if(NOT IOS)
     return 0;
   }
   ]]
-    WINPR_HAVE_SYS_XATTR_H
-  )
+      WINPR_HAVE_SYS_XATTR_H
+    )
+  endif()
 else()
   set(WINPR_HAVE_FCNTL_H 1)
   set(WINPR_HAVE_UNISTD_H 1)
