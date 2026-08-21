@@ -13,7 +13,11 @@ if(BUILD_TESTING_INTERNAL)
   list(APPEND TESTS TestStreamDump.c TestRdstls.c TestServerChannels.c)
 endif()
 
-set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCryptoCertificateDataSetPEM.c TestFuzzServer.c)
+set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCryptoCertificateDataSetPEM.c)
+
+if (NOT WIN32)
+list(APPEND FUZZERS TestFuzzServer.c)
+endif()
 
 # Test not compatible with package tests, disable
 if(WITH_SAMPLE AND WITH_SERVER AND NOT WIN32 AND BUILD_TESTING_INTERNAL)
@@ -40,17 +44,17 @@ endif()
 add_compile_definitions(TESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
 add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 
-target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client)
+target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client winpr-tools)
 
 include(AddFuzzerTest)
-add_fuzzer_test("${FUZZERS}" "freerdp-client freerdp winpr")
+add_fuzzer_test("${FUZZERS}" "freerdp-client winpr-tools")
 
 # Seed corpus generator for the test TestFuzzServer, used to
 # (re)generate the seed corpus. Requires the client library and
 # POSIX sockets.
 if(NOT WIN32 AND (WITH_CLIENT_COMMON OR WITH_CLIENT))
   add_executable(TestFuzzServerSeedGen TestFuzzServerSeedGen.c)
-  target_link_libraries(TestFuzzServerSeedGen freerdp-client freerdp winpr)
+  target_link_libraries(TestFuzzServerSeedGen freerdp-client winpr-tools)
   set_target_properties(TestFuzzServerSeedGen PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}"
   )

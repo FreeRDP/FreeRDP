@@ -18,8 +18,6 @@
  * TestFuzzServer.c. A build with WITH_CHANNELS=ON is required so
  * the client channel addins (e.g. rdpdr) are available.
  *
- * Copyright 2026 Thincast Technologies GmbH
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -44,6 +42,7 @@
 #include <freerdp/client.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/input.h>
+#include <winpr/tools/makecert.h>
 
 #include "../multitransport.h"
 
@@ -53,6 +52,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/crt.h>
+#include <winpr/path.h>
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -93,6 +93,9 @@ typedef struct
 
 static void capture_add(capture_t* c, const void* data, size_t size)
 {
+	WINPR_ASSERT(c);
+	WINPR_ASSERT(data || (size == 0));
+
 	if (c->len + size > c->cap)
 	{
 		size_t ncap = c->cap ? c->cap * 2 : 65536;
@@ -165,28 +168,35 @@ static int test_peer_virtual_channel_read(freerdp_peer* peer, HANDLE hChannel, B
 static BOOL configure_server(freerdp_peer* client)
 {
 	WINPR_ASSERT(client);
+	BOOL rc = FALSE;
+
+	char* path = getTestCredentialsFilePath();
+	char* fcert = getTestCredentialsFileNameFor("crt");
+	char* fkey = getTestCredentialsFileNameFor("key");
+	if (!path || !fcert || !fkey)
+		goto fail;
 
 	client->ContextSize = sizeof(testPeerContext);
 	client->ContextNew = test_peer_context_new;
 	client->ContextFree = test_peer_context_free;
 	if (!freerdp_peer_context_new(client))
-		return FALSE;
+		goto fail;
 
 	WINPR_ASSERT(client->context);
 	rdpSettings* settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	rdpCertificate* cert = freerdp_certificate_new_from_pem(test_server_cert_pem);
+	rdpCertificate* cert = freerdp_certificate_new_from_file(fcert);
 	if (!cert)
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
-		return FALSE;
+		goto fail;
 
-	rdpPrivateKey* key = freerdp_key_new_from_pem(test_server_key_pem);
+	rdpPrivateKey* key = freerdp_key_new_from_file(fkey);
 	if (!key)
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
-		return FALSE;
+		goto fail;
 
 	/*
 	 * Plain RDP security. Together with the local peer flag below this
@@ -195,29 +205,29 @@ static BOOL configure_server(freerdp_peer* client)
 	 * activation parsing code.
 	 */
 	if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel, ENCRYPTION_LEVEL_NONE))
-		return FALSE;
+		goto fail;
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE))
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE))
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransport, TRUE))
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags,
 	                                 INITIATE_REQUEST_PROTOCOL_UDPFECR))
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportSkipChannelJoin, FALSE))
-		return FALSE;
+		goto fail;
 
 	client->PostConnect = test_peer_post_connect;
 	client->Activate = test_peer_activate;
@@ -226,8 +236,13 @@ static BOOL configure_server(freerdp_peer* client)
 	/* local connection => the server uses the plaintext local peer path */
 	client->local = TRUE;
 	if (!client->Initialize(client))
-		return FALSE;
-	return TRUE;
+		goto fail;
+
+	rc = TRUE;
+fail:
+
+	free(path);
+	return rc;
 }
 
 static DWORD WINAPI peer_thread(LPVOID arg)
@@ -247,7 +262,7 @@ static DWORD WINAPI peer_thread(LPVOID arg)
 
 	while (error == CHANNEL_RC_OK)
 	{
-		HANDLE handles[32] = { 0 };
+		HANDLE handles[32] = WINPR_C_ARRAY_INIT;
 		DWORD count = 0;
 		DWORD tmp = client->GetEventHandles(client, &handles[count], ARRAYSIZE(handles) - count);
 		if (tmp == 0)
@@ -272,7 +287,7 @@ static DWORD WINAPI peer_thread(LPVOID arg)
 static void* relay_c2s(void* arg)
 {
 	relay_arg_t* a = (relay_arg_t*)arg;
-	BYTE buf[65536];
+	BYTE buf[65536] = WINPR_C_ARRAY_INIT;
 	for (;;)
 	{
 		ssize_t rc = read(a->client_sock, buf, sizeof(buf));
@@ -290,7 +305,7 @@ static void* relay_c2s(void* arg)
 static void* relay_s2c(void* arg)
 {
 	relay_arg_t* a = (relay_arg_t*)arg;
-	BYTE buf[65536];
+	BYTE buf[65536] = WINPR_C_ARRAY_INIT;
 	for (;;)
 	{
 		ssize_t rc = read(a->peer_sock, buf, sizeof(buf));
@@ -313,7 +328,7 @@ typedef struct
 static DWORD WINAPI client_thread(LPVOID arg)
 {
 	client_arg_t* a = (client_arg_t*)arg;
-	char arg1[64] = { 0 };
+	char arg1[64] = WINPR_C_ARRAY_INIT;
 	snprintf(arg1, sizeof(arg1), "/v:127.0.0.1:%d", a->port);
 	char* argv[] = { "seedgen", arg1, "/sec:rdp", "/cert:ignore", "/rfx", NULL };
 	int argc = 5;
@@ -375,7 +390,7 @@ fail:
 
 static int write_seed(const char* dir, const char* name, const capture_t* c)
 {
-	char path[512];
+	char path[512] = WINPR_C_ARRAY_INIT;
 	snprintf(path, sizeof(path), "%s/%s", dir, name);
 	FILE* f = fopen(path, "wb");
 	if (!f)
@@ -465,8 +480,8 @@ int main(int argc, char** argv)
 	{
 		if (capture.len > cuts[i])
 		{
-			char name[64];
-			capture_t t = { 0 };
+			char name[64] = WINPR_C_ARRAY_INIT;
+			capture_t t = WINPR_C_ARRAY_INIT;
 			t.data = capture.data;
 			t.len = cuts[i];
 			snprintf(name, sizeof(name), "handshake_cut%zu", cuts[i]);

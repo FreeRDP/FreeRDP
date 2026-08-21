@@ -9,8 +9,6 @@
  * parsing) exactly like a server would for a real client
  * connection.
  *
- * Copyright 2026 Thincast Technologies GmbH
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -41,7 +39,9 @@
 #include <winpr/ssl.h>
 #include <winpr/wlog.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#error "WIN32 not supported, remove this file from compile!"
+#endif
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -112,9 +112,9 @@ fail:
 	return FALSE;
 }
 
-static BOOL test_server_one(const uint8_t* Data, size_t Size)
+static BOOL test_server_one(const char* fkey, const char* fcert, const uint8_t* Data, size_t Size)
 {
-	int sv[2];
+	int sv[2] = WINPR_C_ARRAY_INIT;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) != 0)
 		return FALSE;
@@ -137,13 +137,13 @@ static BOOL test_server_one(const uint8_t* Data, size_t Size)
 	rdpSettings* settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	rdpCertificate* cert = freerdp_certificate_new_from_pem(test_server_cert_pem);
+	rdpCertificate* cert = freerdp_certificate_new_from_file(fcert);
 	if (!cert)
 		goto fail;
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
 		goto fail;
 
-	rdpPrivateKey* key = freerdp_key_new_from_pem(test_server_key_pem);
+	rdpPrivateKey* key = freerdp_key_new_from_file(fkey);
 	if (!key)
 		goto fail;
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
@@ -236,8 +236,8 @@ static BOOL test_server_one(const uint8_t* Data, size_t Size)
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
 			break;
 
-		char buffer[256];
-		ssize_t rc;
+		char buffer[256] = WINPR_C_ARRAY_INIT;
+		ssize_t rc = 0;
 		do
 		{
 			rc = read(sv[1], buffer, sizeof(buffer));
@@ -251,23 +251,22 @@ fail:
 	return TRUE;
 }
 
-#endif /* _WIN32 */
-
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
-	static BOOL init = FALSE;
-	if (!init)
+	const char* key = getTestCredentialsFileNameFor("crt");
+	const char* cert = getTestCredentialsFileNameFor("key");
+
+	if (key && cert)
 	{
-		(void)WLog_SetLogLevel(WLog_GetRoot(), WLOG_OFF);
-		WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
-		(void)winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
-		init = TRUE;
+		if (WLog_SetLogLevel(WLog_GetRoot(), WLOG_OFF) &&
+		    WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi()) &&
+		    winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT))
+		{
+			test_server_one(key, cert, Data, Size);
+		}
 	}
-#ifndef _WIN32
-	test_server_one(Data, Size);
-#else
-	WINPR_UNUSED(Data);
-	WINPR_UNUSED(Size);
-#endif
+	free(key);
+	free(cert);
+
 	return 0;
 }
