@@ -1006,18 +1006,17 @@ static DWORD GetDosAttributesFromXAttr(const char* path)
 #if defined(WINPR_HAVE_SYS_XATTR_H)
 	if ((dwFileAttributes & supportedMask) == 0)
 	{
+		// if no xattr is set, default to archive attribute
+		dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+
 		char attrValue[11] = WINPR_C_ARRAY_INIT;
 		length = getxattr(path, "user.DOSATTRIB", attrValue, sizeof(attrValue) - 1);
 		if (length >= 0)
 		{
-			attrValue[length] = '\0';
-			if (sscanf(attrValue, "0x%08x", &intAttr) == 1)
-				dwFileAttributes = intAttr;
-		}
-		else
-		{
-			// if no xattr is set, default to archive attribute
-			dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+			errno = 0;
+			const unsigned long val = strtoul(attrValue, nullptr, 0);
+			if (errno == 0)
+				dwFileAttributes = val;
 		}
 	}
 #else
@@ -1082,7 +1081,13 @@ static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes)
 	/* if only ARCHIVE remove attribute */
 	if (intAttr == FILE_ATTRIBUTE_ARCHIVE)
 	{
-		removexattr(path, "user.DOSATTRIB");
+		const int rc = removexattr(path, "user.DOSATTRIB");
+		if (rc != 0)
+		{
+			char buffer[128] = WINPR_C_ARRAY_INIT;
+			WLog_WARN(TAG, "removexattr(%s) failed with %s", path,
+			          winpr_strerror(errno, buffer, sizeof(buffer)));
+		}
 		return;
 	}
 
