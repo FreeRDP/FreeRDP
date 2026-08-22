@@ -242,6 +242,8 @@ static BOOL configure_server(freerdp_peer* client)
 fail:
 
 	free(path);
+	free(fcert);
+	free(fkey);
 	return rc;
 }
 
