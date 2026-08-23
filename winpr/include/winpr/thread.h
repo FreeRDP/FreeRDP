@@ -85,6 +85,59 @@ extern "C"
 	typedef LPSTARTUPINFOA LPSTARTUPINFO;
 #endif
 
+	/** @brief opaque attribute list built by InitializeProcThreadAttributeList() /
+	 *  UpdateProcThreadAttribute(), consumed by CreateProcess* when passed via a STARTUPINFOEX
+	 *  and EXTENDED_STARTUPINFO_PRESENT.
+	 *  @since version 3.31.0
+	 */
+	typedef struct WINPR_PROC_THREAD_ATTRIBUTE_LIST* LPPROC_THREAD_ATTRIBUTE_LIST;
+
+	/** @brief Attribute for UpdateProcThreadAttribute() restricting handle inheritance to
+	 *  exactly the HANDLE array passed as lpValue (each of which must itself be marked
+	 *  inheritable), overriding any other handle's own inheritable state.
+	 *  @since version 3.31.0
+	 */
+#define PROC_THREAD_ATTRIBUTE_HANDLE_LIST 0x00020002
+
+	typedef struct
+	{
+		STARTUPINFOA StartupInfo;
+		LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList;
+	} STARTUPINFOEXA, *LPSTARTUPINFOEXA;
+
+	typedef struct
+	{
+		STARTUPINFOW StartupInfo;
+		LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList;
+	} STARTUPINFOEXW, *LPSTARTUPINFOEXW;
+
+#ifdef UNICODE
+	typedef STARTUPINFOEXW STARTUPINFOEX;
+	typedef LPSTARTUPINFOEXW LPSTARTUPINFOEX;
+#else
+	typedef STARTUPINFOEXA STARTUPINFOEX;
+	typedef LPSTARTUPINFOEXA LPSTARTUPINFOEX;
+#endif
+
+	/** @brief First call: pass lpAttributeList=NULL to have lpSize receive the required buffer
+	 *  size; this call always returns FALSE (matches real Windows behavior). Second call: pass
+	 *  a caller-allocated buffer of at least that size as lpAttributeList.
+	 *  @since version 3.31.0 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL InitializeProcThreadAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList,
+	                                                 DWORD dwAttributeCount, DWORD dwFlags,
+	                                                 PSIZE_T lpSize);
+
+	/** @since version 3.31.0 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL UpdateProcThreadAttribute(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList,
+	                                         DWORD dwFlags, DWORD_PTR Attribute, PVOID lpValue,
+	                                         SIZE_T cbSize, PVOID lpPreviousValue,
+	                                         PSIZE_T lpReturnSize);
+
+	/** @since version 3.31.0 */
+	WINPR_API VOID DeleteProcThreadAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList);
+
 #define STARTF_USESHOWWINDOW 0x00000001
 #define STARTF_USESIZE 0x00000002
 #define STARTF_USEPOSITION 0x00000004
@@ -104,6 +157,10 @@ extern "C"
 #define LOGON_WITH_PROFILE 0x00000001
 #define LOGON_NETCREDENTIALS_ONLY 0x00000002
 #define LOGON_ZERO_PASSWORD_BUFFER 0x80000000
+
+	/** @brief dwCreationFlags bit telling CreateProcess* that lpStartupInfo actually points to a
+	 *  STARTUPINFOEX (its lpAttributeList is consulted). @since version 3.31.0 */
+#define EXTENDED_STARTUPINFO_PRESENT 0x00080000
 
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine,

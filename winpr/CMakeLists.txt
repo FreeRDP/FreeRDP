@@ -211,6 +211,15 @@ set(WINPR_HAVE_WIN_SSIZE_T ${HAVE_WIN_SSIZE_T})
 
 check_symbol_exists(strnstr string.h WINPR_HAVE_STRNSTR)
 check_symbol_exists(strndup string.h WINPR_HAVE_STRNDUP)
+
+# pipe2()/accept4() are GNU/BSD extensions; glibc only declares them when _GNU_SOURCE is visible,
+# which this project does not set globally (see cmake/PlatformDefaults.cmake) - request it just
+# for these checks, matching the _GNU_SOURCE the actual call sites (pipe.c) define for themselves.
+set(CMAKE_REQUIRED_DEFINITIONS_SAVE ${CMAKE_REQUIRED_DEFINITIONS})
+set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
+check_symbol_exists(pipe2 unistd.h WINPR_HAVE_PIPE2)
+check_symbol_exists(accept4 sys/socket.h WINPR_HAVE_ACCEPT4)
+set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS_SAVE})
 check_include_files(unistd.h WINPR_HAVE_UNISTD_H)
 check_include_files(execinfo.h WINPR_HAVE_EXECINFO_HEADER)
 if(WINPR_HAVE_EXECINFO_HEADER)

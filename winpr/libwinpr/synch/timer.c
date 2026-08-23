@@ -255,7 +255,7 @@ static int InitializeWaitableTimer(WINPR_TIMER* timer)
 	int result = 0;
 
 #ifdef TIMER_IMPL_TIMERFD
-	timer->fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+	timer->fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
 	if (timer->fd <= 0)
 		return -1;
 #elif defined(TIMER_IMPL_POSIX)

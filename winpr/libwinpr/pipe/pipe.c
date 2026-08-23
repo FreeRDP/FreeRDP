@@ -5,6 +5,7 @@
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2017 Armin Novak <armin.novak@thincast.com>
  * Copyright 2017 Thincast Technologies GmbH
+ * Copyright 2026 David Fort <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -465,26 +466,30 @@ static BOOL InitWinPRPipeModule(void)
 /*
  * Unnamed pipe
  */
-
 BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes,
                 DWORD nSize)
 {
 	int pipe_fd[] = { -1, -1 };
 	WINPR_PIPE* pReadPipe = nullptr;
 	WINPR_PIPE* pWritePipe = nullptr;
+	const BOOL inherit = lpPipeAttributes && lpPipeAttributes->bInheritHandle;
 
-	WINPR_UNUSED(lpPipeAttributes);
 	WINPR_UNUSED(nSize);
 
-	if (pipe(pipe_fd) < 0)
+	/* match Windows semantics: handles are not inherited by a child process unless the creator
+	 * asks for it via bInheritHandle. Prefer the atomic pipe2(O_CLOEXEC) where available so
+	 * there's no window between pipe creation and marking it close-on-exec during which a
+	 * concurrent fork() elsewhere in the process could leak the fd into an unrelated child. */
+#ifdef WINPR_HAVE_PIPE2
+	const int pipe2flags = inherit ? 0 : O_CLOEXEC;
+	if (pipe2(pipe_fd, pipe2flags) < 0)
+#else
+	if (pipe(pipe_fd) < 0 || !winpr_set_cloexec(pipe_fd[0], !inherit) ||
+	    !winpr_set_cloexec(pipe_fd[1], !inherit))
+#endif
 	{
-		if (pipe_fd[0] >= 0)
-			close(pipe_fd[0]);
-		if (pipe_fd[1] >= 0)
-			close(pipe_fd[1]);
-
-		WLog_ERR(TAG, "failed to create pipe");
-		return FALSE;
+		WLog_ERR(TAG, "failed to create and set cloexec pipe");
+		goto fail_close_fd;
 	}
 
 	pReadPipe = (WINPR_PIPE*)calloc(1, sizeof(WINPR_PIPE));
@@ -492,13 +497,8 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 
 	if (!pReadPipe || !pWritePipe)
 	{
-		if (pipe_fd[0] >= 0)
-			close(pipe_fd[0]);
-		if (pipe_fd[1] >= 0)
-			close(pipe_fd[1]);
-		free(pReadPipe);
-		free(pWritePipe);
-		return FALSE;
+		WLog_ERR(TAG, "error allocating pipes");
+		goto fail_free_pipes;
 	}
 
 	pReadPipe->fd = pipe_fd[0];
@@ -510,6 +510,16 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	pWritePipe->common.ops = &ops;
 	*((ULONG_PTR*)hWritePipe) = (ULONG_PTR)pWritePipe;
 	return TRUE;
+
+fail_free_pipes:
+	free(pReadPipe);
+	free(pWritePipe);
+fail_close_fd:
+	if (pipe_fd[0] >= 0)
+		close(pipe_fd[0]);
+	if (pipe_fd[1] >= 0)
+		close(pipe_fd[1]);
+	return FALSE;
 }
 
 /**
@@ -656,6 +666,15 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 			goto out;
 		}
 
+		/* this is the shared listening socket kept in g_NamedPipeServerSockets, never handed out
+		 * as a HANDLE itself (each CreateNamedPipeA call gets its own close-on-exec duplicate
+		 * below) - still, it's a real fd in this process, so keep it from leaking into children */
+		if (!winpr_set_cloexec(serverfd, TRUE))
+		{
+			WLog_ERR(TAG, "CreateNamedPipeA: failed to set close-on-exec on listening socket");
+			goto out;
+		}
+
 		s.sun_family = AF_UNIX;
 		(void)sprintf_s(s.sun_path, ARRAYSIZE(s.sun_path), "%s", pNamedPipe->lpFilePath);
 
@@ -700,7 +719,10 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 		// (void*) pNamedPipe, lpName, serverfd);
 	}
 
-	pNamedPipe->serverfd = dup(baseSocket->serverfd);
+	/* F_DUPFD_CLOEXEC rather than plain dup(): dup() always clears close-on-exec on the new fd
+	 * regardless of the source's own flags, so a plain dup() here would silently undo the
+	 * close-on-exec set on the shared listening socket above. */
+	pNamedPipe->serverfd = fcntl(baseSocket->serverfd, F_DUPFD_CLOEXEC, 0);
 	// WLog_DBG(TAG, "using serverfd %d (duplicated from %d)", pNamedPipe->serverfd,
 	// baseSocket->serverfd);
 	pNamedPipe->pfnUnrefNamedPipe = winpr_unref_named_pipe;
@@ -759,13 +781,26 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 	{
 		struct sockaddr_un s = WINPR_C_ARRAY_INIT;
 		length = sizeof(struct sockaddr_un);
+#ifdef WINPR_HAVE_ACCEPT4
+		status = accept4(pNamedPipe->serverfd, (struct sockaddr*)&s, &length, SOCK_CLOEXEC);
+#else
 		status = accept(pNamedPipe->serverfd, (struct sockaddr*)&s, &length);
+#endif
 
 		if (status < 0)
 		{
 			WLog_ERR(TAG, "ConnectNamedPipe: accept error");
 			return FALSE;
 		}
+
+#ifndef WINPR_HAVE_ACCEPT4
+		if (!winpr_set_cloexec(status, TRUE))
+		{
+			WLog_ERR(TAG, "ConnectNamedPipe: failed to set close-on-exec on accepted socket");
+			close(status);
+			return FALSE;
+		}
+#endif
 
 		pNamedPipe->clientfd = status;
 		pNamedPipe->ServerMode = FALSE;

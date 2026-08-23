@@ -44,6 +44,7 @@
 
 #include "comm_ioctl.h"
 
+#include "../handle/handle.h"
 #include "../log.h"
 #define TAG WINPR_TAG("comm")
 
@@ -1226,6 +1227,31 @@ static HANDLE_OPS ops = { CommIsHandled, CommCloseHandle, CommGetFd, nullptr, /*
 	                      nullptr,       nullptr,         nullptr,   nullptr, nullptr, nullptr,
 	                      nullptr,       nullptr,         nullptr,   nullptr, nullptr };
 
+#if defined(WINPR_HAVE_SYS_EVENTFD_H)
+/* eventfd() with EFD_NONBLOCK|EFD_CLOEXEC, falling back to the flag-less call plus separate
+ * fcntl()s on kernels older than 2.6.27 (which reject unknown flags with EINVAL) */
+WINPR_ATTR_NODISCARD
+static int comm_eventfd_cloexec(void)
+{
+	int fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+	if ((fd < 0) && (errno == EINVAL))
+	{
+		/* old kernels reject any nonzero flags argument outright, so both flags have to be
+		 * applied separately afterward - O_NONBLOCK (F_SETFL) and FD_CLOEXEC (F_SETFD) live in
+		 * different fcntl() namespaces and can't be folded into one call. No need to read the
+		 * previous flags first: this fd is brand new, so both start unset. */
+		fd = eventfd(0, 0);
+		if ((fd >= 0) &&
+		    ((fcntl(fd, F_SETFL, O_NONBLOCK) < 0) || (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)))
+		{
+			close(fd);
+			fd = -1;
+		}
+	}
+	return fd;
+}
+#endif
+
 /**
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363198%28v=vs.85%29.aspx
  *
@@ -1333,7 +1359,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	WINPR_HANDLE_SET_TYPE_AND_MODE(pComm, HANDLE_TYPE_COMM, WINPR_FD_READ);
 	pComm->common.ops = &ops;
 	/* error_handle */
-	pComm->fd = open(devicePath, O_RDWR | O_NOCTTY | O_NONBLOCK);
+	pComm->fd = open(devicePath, O_RDWR | O_NOCTTY | O_NONBLOCK | O_CLOEXEC);
 
 	if (pComm->fd < 0)
 	{
@@ -1342,7 +1368,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
-	pComm->fd_read = open(devicePath, O_RDONLY | O_NOCTTY | O_NONBLOCK);
+	pComm->fd_read = open(devicePath, O_RDONLY | O_NOCTTY | O_NONBLOCK | O_CLOEXEC);
 
 	if (pComm->fd_read < 0)
 	{
@@ -1352,8 +1378,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 #if defined(WINPR_HAVE_SYS_EVENTFD_H)
-	pComm->fd_read_event = eventfd(
-	    0, EFD_NONBLOCK); /* EFD_NONBLOCK required because a read() is not always expected */
+	pComm->fd_read_event = comm_eventfd_cloexec();
 #endif
 
 	if (pComm->fd_read_event < 0)
@@ -1364,7 +1389,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	InitializeCriticalSection(&pComm->ReadLock);
-	pComm->fd_write = open(devicePath, O_WRONLY | O_NOCTTY | O_NONBLOCK);
+	pComm->fd_write = open(devicePath, O_WRONLY | O_NOCTTY | O_NONBLOCK | O_CLOEXEC);
 
 	if (pComm->fd_write < 0)
 	{
@@ -1374,8 +1399,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 #if defined(WINPR_HAVE_SYS_EVENTFD_H)
-	pComm->fd_write_event = eventfd(
-	    0, EFD_NONBLOCK); /* EFD_NONBLOCK required because a read() is not always expected */
+	pComm->fd_write_event = comm_eventfd_cloexec();
 #endif
 
 	if (pComm->fd_write_event < 0)

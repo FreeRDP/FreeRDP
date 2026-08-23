@@ -59,18 +59,19 @@
 
 #include <grp.h>
 
+#include <fcntl.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
 #ifdef __linux__
 #include <sys/syscall.h>
-#include <fcntl.h>
 #include <errno.h>
 #endif /* __linux__ */
 
 #include "thread.h"
 
+#include "../handle/handle.h"
 #include "../security/security.h"
 
 #ifndef NSIG
@@ -155,8 +156,7 @@ static BOOL CreateProcessExA(HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags
                              LPCSTR lpApplicationName, WINPR_ATTR_UNUSED LPSTR lpCommandLine,
                              WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpProcessAttributes,
                              WINPR_ATTR_UNUSED LPSECURITY_ATTRIBUTES lpThreadAttributes,
-                             WINPR_ATTR_UNUSED BOOL bInheritHandles,
-                             WINPR_ATTR_UNUSED DWORD dwCreationFlags, LPVOID lpEnvironment,
+                             BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
                              LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
                              LPPROCESS_INFORMATION lpProcessInformation)
 {
@@ -240,6 +240,46 @@ static BOOL CreateProcessExA(HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags
 #endif
 		sigset_t set = WINPR_C_ARRAY_INIT;
 		struct sigaction act = WINPR_C_ARRAY_INIT;
+
+		/* resolve an explicit PROC_THREAD_ATTRIBUTE_HANDLE_LIST, if the caller opted into one
+		 * via a STARTUPINFOEX + EXTENDED_STARTUPINFO_PRESENT. Per documented Windows behavior:
+		 *  - bInheritHandles == FALSE: nothing is inherited, full stop - a handle list (if any)
+		 *    is ignored too, it can only narrow inheritance, never expand it.
+		 *  - bInheritHandles == TRUE and a handle list is present: it becomes the *exclusive*
+		 *    source of truth for which extra fds survive into this child - only the listed
+		 *    handles are inherited, even other handles independently marked inheritable are not.
+		 *  - bInheritHandles == TRUE and no handle list: every fd not marked close-on-exec is
+		 *    inherited, exactly like real Windows inheriting every handle marked inheritable -
+		 *    including ones WinPR doesn't know about (e.g. opened by a linked library), since
+		 *    Windows itself has no concept of "handles the runtime knows about" either. */
+#define WINPR_MAX_INHERITED_HANDLES 64
+		int keepFds[WINPR_MAX_INHERITED_HANDLES] = { -1 };
+		size_t nKeepFds = 0;
+		BOOL haveHandleList = FALSE;
+
+		if (bInheritHandles && lpStartupInfo && (dwCreationFlags & EXTENDED_STARTUPINFO_PRESENT))
+		{
+			const STARTUPINFOEXA* exInfo = (const STARTUPINFOEXA*)lpStartupInfo;
+			const struct WINPR_PROC_THREAD_ATTRIBUTE_LIST* list = exInfo->lpAttributeList;
+
+			for (DWORD i = 0; list && (i < list->count); i++)
+			{
+				const WINPR_PROC_THREAD_ATTRIBUTE_ENTRY* entry = &list->entries[i];
+				if (entry->Attribute != PROC_THREAD_ATTRIBUTE_HANDLE_LIST)
+					continue;
+
+				haveHandleList = TRUE;
+				const HANDLE* handles = (const HANDLE*)entry->lpValue;
+				const size_t count = entry->cbSize / sizeof(HANDLE);
+				for (size_t h = 0; (h < count) && (nKeepFds < WINPR_MAX_INHERITED_HANDLES); h++)
+				{
+					const int fd = winpr_Handle_getFd(handles[h]);
+					if (fd >= 0)
+						keepFds[nKeepFds++] = fd;
+				}
+			}
+		}
+
 		/* set default signal handlers */
 		act.sa_handler = SIG_DFL;
 		act.sa_flags = 0;
@@ -272,7 +312,11 @@ static BOOL CreateProcessExA(HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags
 		}
 
 #ifdef __sun
-		closefrom(3);
+		if (!bInheritHandles || !haveHandleList)
+			closefrom(3);
+		/* else: Solaris has no per-fd enumeration primitive as cheap as the loop below, and a
+		 * handle list is a narrow/rare case there - fall through without closing anything
+		 * rather than silently ignoring the caller's explicit allowlist. */
 #else
 #ifdef F_MAXFD // on some BSD derivates
 		maxfd = fcntl(0, F_MAXFD);
@@ -285,8 +329,36 @@ static BOOL CreateProcessExA(HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags
 		}
 #endif
 
+		/* - bInheritHandles == FALSE: keep stays FALSE for every fd, close everything.
+		 * - bInheritHandles == TRUE, handle list present: exclusive allowlist (see above).
+		 * - bInheritHandles == TRUE, no handle list: inherit everything not close-on-exec. */
 		for (int fd = 3; fd < maxfd; fd++)
-			close(fd);
+		{
+			BOOL keep = FALSE;
+
+			if (bInheritHandles)
+			{
+				if (haveHandleList)
+				{
+					for (size_t k = 0; k < nKeepFds; k++)
+					{
+						if (keepFds[k] == fd)
+						{
+							keep = TRUE;
+							break;
+						}
+					}
+				}
+				else
+				{
+					const int flags = fcntl(fd, F_GETFD);
+					keep = (flags >= 0) && !(flags & FD_CLOEXEC);
+				}
+			}
+
+			if (!keep)
+				close(fd);
+		}
 
 #endif // __sun
 

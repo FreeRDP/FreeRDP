@@ -199,4 +199,7 @@ static inline DWORD winpr_Handle_cleanup(HANDLE handle)
 	return hdl->ops->CleanupHandle(handle);
 }
 
+WINPR_ATTR_NODISCARD
+BOOL winpr_set_cloexec(int fd, BOOL cloexec);
+
 #endif /* WINPR_HANDLE_PRIVATE_H */
