@@ -1274,6 +1274,9 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 		/* Backstop for a Wayland resize whose MOUSE_ENTER completion never arrived. */
 		if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
 			_rail.completeWaylandResize();
+		/* activate the clicked window before forwarding, so the click routes to it. */
+		if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+			_rail.ensureActive(ev.windowID);
 		if (suppress)
 			return true;
 		if (_rail.translateToServer(ev.windowID, copy.button.x, copy.button.y))

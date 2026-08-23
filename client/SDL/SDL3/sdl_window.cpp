@@ -50,6 +50,11 @@ SdlWindow::SdlWindow(SDL_DisplayID id, const std::string& title, const SDL_Rect&
 	if (flags & SDL_WINDOW_TRANSPARENT)
 		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_TRANSPARENT_BOOLEAN, true);
 
+	/* RAIL passes SDL_WINDOW_HIDDEN so it can map the window only after the first paint (no black
+	 * flash); a plain session window has no such flag and is shown immediately. */
+	if (flags & SDL_WINDOW_HIDDEN)
+		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true);
+
 	_window = SDL_CreateWindowWithProperties(props);
 	SDL_DestroyProperties(props);
 	SDL_SetHint(SDL_HINT_APP_NAME, "");
@@ -294,6 +299,8 @@ void SdlWindow::ensureRenderTarget()
 		             SDL_GetError());
 		return;
 	}
+	/* Verbatim, never blended: a transparent window's alpha<0xFF regions would render black. */
+	std::ignore = SDL_SetTextureBlendMode(_renderTarget, SDL_BLENDMODE_NONE);
 
 	/* Clear once: transparent so windows never flash black before painting. */
 	if (SDL_SetRenderTarget(_renderer, _renderTarget))
@@ -522,6 +529,7 @@ bool SdlWindow::ensureGdiTexture(SDL_Surface* surface)
 		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_CreateTexture: %s", SDL_GetError());
 		return false;
 	}
+	std::ignore = SDL_SetTextureBlendMode(_gdiTexture, SDL_BLENDMODE_NONE);
 	_gdiTextureW = surface->w;
 	_gdiTextureH = surface->h;
 	return true;
@@ -580,7 +588,8 @@ void SdlWindow::updateSurface()
 		return;
 }
 
-bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged)
+bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged,
+                                 const SDL_Rect& inset, bool dashedBorder)
 {
 	if (!_renderer || !surface)
 		return false;
@@ -597,45 +606,56 @@ bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool conte
 	int ww = 0;
 	int wh = 0;
 	SDL_GetWindowSizeInPixels(_window, &ww, &wh);
+	/* The visible frame; the ring outside it (the resize band) stays fully transparent. */
+	const SDL_FRect frame = { static_cast<float>(inset.x), static_cast<float>(inset.y),
+		                      static_cast<float>(ww - inset.x - inset.w),
+		                      static_cast<float>(wh - inset.y - inset.h) };
 
-	/* Translucent "waiting for the server" fill so the desktop shows through the revealed area
-	 * (transparent window + compositor). RenderClear writes the alpha verbatim into the render
-	 * target. */
+	/* Translucent "waiting for the server" fill so the desktop shows through the revealed area.
+	 * Verbatim writes: blending 0x80 over the transparent target would halve it again. */
 	constexpr Uint8 kFillAlpha = 0x80; /* ~50% */
-	std::ignore = SDL_SetRenderDrawColor(_renderer, 0x2B, 0x2B, 0x2B, kFillAlpha);
+	std::ignore = SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_NONE);
+	std::ignore = SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 0);
 	std::ignore = SDL_RenderClear(_renderer);
+	std::ignore = SDL_SetRenderDrawColor(_renderer, 0x2B, 0x2B, 0x2B, kFillAlpha);
+	std::ignore = SDL_RenderFillRect(_renderer, &frame);
 	SDL_FRect fdst = { static_cast<float>(off.x), static_cast<float>(off.y),
 		               static_cast<float>(surface->w), static_cast<float>(surface->h) };
-	/* The anchored old frame stays fully opaque (copy its 0xFF alpha over the translucent fill). */
-	std::ignore = SDL_SetTextureBlendMode(_gdiTexture, SDL_BLENDMODE_NONE);
+	/* Anchored old frame stays opaque over the translucent fill; clipped so it can't overflow
+	 * into the band ring when shrinking (the dashed border must read as the window edge). */
+	const SDL_Rect clip = { inset.x, inset.y, ww - inset.x - inset.w, wh - inset.y - inset.h };
+	std::ignore = SDL_SetRenderClipRect(_renderer, &clip);
 	std::ignore = SDL_RenderTexture(_renderer, _gdiTexture, nullptr, &fdst);
-	std::ignore = SDL_SetTextureBlendMode(_gdiTexture, SDL_BLENDMODE_BLEND);
+	std::ignore = SDL_SetRenderClipRect(_renderer, nullptr);
 
-	/* Dashed border on the inner edges: "you dragged the window to here, awaiting content". */
-	std::ignore = SDL_SetRenderDrawColor(_renderer, 0xC8, 0xC8, 0xC8, 0xFF);
-	const float dash = 8.0F;
-	const float gap = 5.0F;
-	const float lo = 0.5F;
-	const float rx = static_cast<float>(ww) - 0.5F;
-	const float by = static_cast<float>(wh) - 0.5F;
-	for (float x = 0.0F; x < ww; x += dash + gap)
+	/* Dashed border on the visible frame: "you dragged the window to here, awaiting content". */
+	if (dashedBorder)
 	{
-		const float x2 = (x + dash < ww) ? (x + dash) : rx;
-		std::ignore = SDL_RenderLine(_renderer, x, lo, x2, lo);
-		std::ignore = SDL_RenderLine(_renderer, x, by, x2, by);
-	}
-	for (float y = 0.0F; y < wh; y += dash + gap)
-	{
-		const float y2 = (y + dash < wh) ? (y + dash) : by;
-		std::ignore = SDL_RenderLine(_renderer, lo, y, lo, y2);
-		std::ignore = SDL_RenderLine(_renderer, rx, y, rx, y2);
+		std::ignore = SDL_SetRenderDrawColor(_renderer, 0xC8, 0xC8, 0xC8, 0xFF);
+		const float dash = 8.0F;
+		const float gap = 5.0F;
+		const float fx2 = frame.x + frame.w;
+		const float fy2 = frame.y + frame.h;
+		const float lo = frame.y + 0.5F;
+		const float by = fy2 - 0.5F;
+		const float lx = frame.x + 0.5F;
+		const float rx = fx2 - 0.5F;
+		for (float x = frame.x; x < fx2; x += dash + gap)
+		{
+			const float x2 = (x + dash < fx2) ? (x + dash) : rx;
+			std::ignore = SDL_RenderLine(_renderer, x, lo, x2, lo);
+			std::ignore = SDL_RenderLine(_renderer, x, by, x2, by);
+		}
+		for (float y = frame.y; y < fy2; y += dash + gap)
+		{
+			const float y2 = (y + dash < fy2) ? (y + dash) : by;
+			std::ignore = SDL_RenderLine(_renderer, lx, y, lx, y2);
+			std::ignore = SDL_RenderLine(_renderer, rx, y, rx, y2);
+		}
 	}
 
 	if (!SDL_SetRenderTarget(_renderer, nullptr))
 		return false;
-	/* Copy the render target (with its per-pixel alpha) verbatim onto the transparent window so the
-	 * compositor blends the revealed area with the desktop. */
-	std::ignore = SDL_SetTextureBlendMode(_renderTarget, SDL_BLENDMODE_NONE);
 	std::ignore = SDL_RenderTexture(_renderer, _renderTarget, nullptr, nullptr);
 	std::ignore = SDL_RenderPresent(_renderer);
 	return true;
@@ -673,7 +693,7 @@ SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 f
 }
 
 /* Popup constructor: positioned relative to the parent origin. */
-SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect)
+SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect, bool transparent)
     : _initialW(rect.w), _initialH(rect.h)
 {
 	auto props = SDL_CreateProperties();
@@ -681,10 +701,15 @@ SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect)
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_MENU_BOOLEAN, true);
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN, false);
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
+	/* Transparent so menus' genuine per-pixel alpha (corners/shadow) isn't rendered black. */
+	if (transparent)
+		SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_TRANSPARENT_BOOLEAN, true);
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, rect.x);
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, rect.y);
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, rect.w);
 	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, rect.h);
+	/* Hidden until first paint, like the app constructor. */
+	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true);
 
 	_window = SDL_CreateWindowWithProperties(props);
 	SDL_DestroyProperties(props);
@@ -696,9 +721,9 @@ SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect)
 	}
 }
 
-SdlWindow SdlWindow::createPopup(SDL_Window* parent, const SDL_Rect& rect)
+SdlWindow SdlWindow::createPopup(SDL_Window* parent, const SDL_Rect& rect, bool transparent)
 {
-	return SdlWindow{ parent, rect };
+	return SdlWindow{ parent, rect, transparent };
 }
 
 static SDL_Window* createDummy(SDL_DisplayID id)

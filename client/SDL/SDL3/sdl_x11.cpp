@@ -17,12 +17,15 @@
  * limitations under the License.
  */
 #include "sdl_x11.hpp"
+
+#include <utility>
 #include "sdl_utils.hpp"
 
 #include <cstdio>
 
 #if defined(WITH_SDL_X11_NATIVE)
 
+#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 
 bool sdl_x11_has_compositor()
@@ -41,16 +44,22 @@ bool sdl_x11_has_compositor()
 	return composited;
 }
 
-bool sdl_x11_begin_move_size(SDL_Window* window, int netDirection)
+/* The window's X11 Display + Window, or {nullptr, 0} off the X11 driver. */
+static std::pair<Display*, Window> sdl_x11_handles(SDL_Window* window)
 {
 	if (!window || !sdl::utils::isX11Driver())
-		return false;
-
+		return { nullptr, 0 };
 	auto props = SDL_GetWindowProperties(window);
 	auto dpy = static_cast<Display*>(
 	    SDL_GetPointerProperty(props, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, nullptr));
 	const auto xwin =
 	    static_cast<Window>(SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0));
+	return { dpy, xwin };
+}
+
+bool sdl_x11_begin_move_size(SDL_Window* window, int netDirection)
+{
+	const auto [dpy, xwin] = sdl_x11_handles(window);
 	if (!dpy || (xwin == 0))
 		return false;
 
@@ -82,12 +91,27 @@ bool sdl_x11_begin_move_size(SDL_Window* window, int netDirection)
 	return true;
 }
 
+bool sdl_x11_set_frame_extents(SDL_Window* window, int left, int right, int top, int bottom)
+{
+	const auto [dpy, xwin] = sdl_x11_handles(window);
+	if (!dpy || (xwin == 0))
+		return false;
+
+	static Atom s_extents = None;
+	if (s_extents == None)
+		s_extents = XInternAtom(dpy, "_GTK_FRAME_EXTENTS", False);
+
+	/* Set _GTK_FRAME_EXTENTS for invisible resize bands. */
+	const long data[4] = { left, right, top, bottom };
+	XChangeProperty(dpy, xwin, s_extents, XA_CARDINAL, 32, PropModeReplace,
+	                reinterpret_cast<const unsigned char*>(data), 4);
+	XFlush(dpy);
+	return true;
+}
+
 static Window sdl_x11_xwindow(SDL_Window* window)
 {
-	if (!window)
-		return 0;
-	auto props = SDL_GetWindowProperties(window);
-	return static_cast<Window>(SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0));
+	return sdl_x11_handles(window).second;
 }
 
 bool sdl_x11_restack_windows(const std::vector<SDL_Window*>& topToBottom)
@@ -137,6 +161,12 @@ bool sdl_x11_has_compositor()
 }
 
 bool sdl_x11_begin_move_size(SDL_Window* /*window*/, int /*netDirection*/)
+{
+	return false;
+}
+
+bool sdl_x11_set_frame_extents(SDL_Window* /*window*/, int /*left*/, int /*right*/, int /*top*/,
+                               int /*bottom*/)
 {
 	return false;
 }

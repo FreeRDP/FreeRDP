@@ -199,14 +199,34 @@ void SdlRail::handleFocus(SDL_WindowID id, bool gained)
 		_focusedAppId = appWindow->id();
 
 	/* ClientActivate only. Do NOT SDL_RaiseWindow to avoid WM focus loops. */
+	const uint32_t wid = static_cast<uint32_t>(appWindow->id());
+	sendClientActivate(wid, gained);
+}
+
+/* Send RAIL_ACTIVATE_ORDER and track the active window id. Caller holds _windowsLock. */
+void SdlRail::sendClientActivate(uint32_t wid, bool enabled)
+{
 	if (!_rail || !_rail->ClientActivate)
 		return;
-	WLog_VRB(TAG, "activate id=0x%08" PRIx32 " gained=%d", static_cast<UINT32>(appWindow->id()),
-	         gained ? 1 : 0);
+	if (enabled)
+		_clientActiveId = wid;
 	RAIL_ACTIVATE_ORDER activate = {};
-	activate.windowId = static_cast<UINT32>(appWindow->id());
-	activate.enabled = gained;
+	activate.windowId = wid;
+	activate.enabled = enabled;
 	std::ignore = _rail->ClientActivate(_rail, &activate);
+}
+
+/* Activate clicked window on server to route input correctly. */
+void SdlRail::ensureActive(SDL_WindowID id)
+{
+	std::unique_lock lock(_windowsLock);
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || appWindow->isPopup() || !appWindow->window())
+		return;
+	const uint32_t wid = static_cast<uint32_t>(appWindow->id());
+	if (wid == _clientActiveId)
+		return;
+	sendClientActivate(wid, true);
 }
 
 bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
@@ -215,15 +235,14 @@ bool SdlRail::translateToServer(SDL_WindowID id, float& x, float& y)
 	auto* appWindow = getWindowBySdlId(id);
 	if (!appWindow)
 		return false;
-
-	/* Window-local -> server-absolute (add the window's visible on-screen origin). */
 	SDL_FPoint rpos = { x, y };
 	if (auto* renderer = appWindow->renderer())
 		(void)SDL_RenderCoordinatesFromWindow(renderer, x, y, &rpos.x, &rpos.y);
-
-	const SDL_Rect rect = appWindow->windowRect();
-	x = rpos.x + static_cast<float>(rect.x);
-	y = rpos.y + static_cast<float>(rect.y);
+	/* Convert window-local coords to server-absolute. */
+	/* Window-local to server-absolute, aligned with surface blit anchor. */
+	const SDL_Point origin = appWindow->serverOrigin();
+	x = rpos.x + static_cast<float>(origin.x);
+	y = rpos.y + static_cast<float>(origin.y);
 	return true;
 }
 
@@ -288,7 +307,7 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 		if (owner && (owner != &win))
 		{
 			parent = owner->window();
-			parentRect = owner->windowRect();
+			parentRect = owner->outerRect(); /* the SDL window's on-screen geometry */
 		}
 		win.paint(primary, fallbackFormat, damage, parent, parentRect);
 	}
@@ -359,7 +378,7 @@ bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 		if (chosen)
 		{
 			parent = chosen->window();
-			parentRect = chosen->windowRect();
+			parentRect = chosen->outerRect(); /* the SDL window's on-screen geometry */
 		}
 		else
 			WLog_WARN(TAG, "popup id=0x%08" PRIx32 " has no parent app window",
@@ -409,7 +428,6 @@ void SdlRail::applyZOrder()
 	}
 	if (stack.size() >= 2)
 	{
-		WLog_VRB(TAG, "zorder apply: restacking %zu of %zu windows", stack.size(), _zOrder.size());
 		std::ignore = sdl_x11_restack_windows(stack);
 	}
 
@@ -437,7 +455,8 @@ UINT SdlRail::updateWindowFromSurface(gdiGfxSurface* surface)
 	/* Consume per-frame damage. */
 	UINT32 nbRects = 0;
 	const RECTANGLE_16* rects = region16_rects(&surface->invalidRegion, &nbRects);
-	appWindow->updateGfxSurface(surface->data, surface->scanline, w, h, rects, nbRects);
+	appWindow->updateGfxSurface(surface->data, surface->scanline, w, h, rects, nbRects,
+	                            surface->format);
 	region16_clear(&surface->invalidRegion);
 
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
@@ -686,6 +705,7 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, SDL_Point pos, uint16_
 		{
 			_localMoveId = windowId;
 			_localMoveWayland = true;
+			_localMoveHitTest = false;
 			_localMoveType = moveType;
 			/* Reset resize guard for new drag. */
 			_localMoveSawResize = false;
@@ -699,9 +719,10 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, SDL_Point pos, uint16_
 		{
 			_localMoveId = windowId;
 			_localMoveWayland = false;
+			_localMoveHitTest = false;
 			_localMoveType = moveType;
-			const SDL_Rect rect = appWindow->windowRect();
-			_localMoveGrabPos = { rect.x + pos.x, rect.y + pos.y };
+			const SDL_Rect outer = appWindow->outerRect();
+			_localMoveGrabPos = { outer.x + pos.x, outer.y + pos.y };
 		}
 	}
 	/* Drive local frame during X11/Wayland drag. */
@@ -719,13 +740,53 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, SDL_Point pos, uint16_
 		WLog_WARN(TAG, "WM move failed for RAIL window 0x%08" PRIx32, windowId);
 }
 
-/* Caller holds _windowsLock. Report the final rect to the server and adopt it locally. */
+/* Find eligible app window for client resize. */
+SdlRailWindow* SdlRail::edgeResizeTarget(SDL_WindowID id)
+{
+	if (_localMoveId != 0)
+		return nullptr;
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow || !appWindow->window() || appWindow->isPopup())
+		return nullptr;
+	const Uint32 flags = SDL_GetWindowFlags(appWindow->window());
+	if (!(flags & SDL_WINDOW_RESIZABLE) || (flags & SDL_WINDOW_MAXIMIZED))
+		return nullptr;
+	return appWindow;
+}
+
+/* Start compositor-driven resize. */
+bool SdlRail::beginClientEdgeResize(SdlRailWindow* appWindow, uint16_t edge, SDL_Point grabPos)
+{
+	const bool started = sdl_wayland_begin_resize(appWindow->window(), railToXdgEdge(edge));
+	if (!started)
+	{
+		WLog_WARN(TAG, "edge resize failed id=0x%08" PRIx32, static_cast<UINT32>(appWindow->id()));
+		return false;
+	}
+	/* Mirror server resize state for local completion. */
+	_localMoveId = static_cast<uint32_t>(appWindow->id());
+	_localMoveWayland = true;
+	_localMoveHitTest = true;
+	_localMoveType = edge;
+	_localMoveSawResize = false;
+	_localMoveGrabPos = grabPos;
+	appWindow->setLocalMoveActive(true);
+	const RailEdges e = railEdges(edge);
+	appWindow->setResizeAnchor(e.left, e.top);
+	WLog_DBG(TAG, "edge resize start id=0x%08" PRIx32 " edge=%" PRIu16, _localMoveId, edge);
+	return true;
+}
+
+/* Report final geometry and adopt locally. */
 void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int h)
 {
+	/* Local geometry -> server rect: strip the client-side band insets. */
+	const SDL_Rect i = appWindow->insets();
+	const SDL_Rect rect = { x + i.x, y + i.y, w - i.x - i.w, h - i.y - i.h };
 	/* Report outer frame to server (inflate by margins). */
 	const bool maximized = appWindow->effectivelyMaximized();
 	const SDL_Rect m = appWindow->resizeMargins();
-	const SDL_Rect full = { x - m.x, y - m.y, w + m.x + m.w, h + m.y + m.h };
+	const SDL_Rect full = { rect.x - m.x, rect.y - m.y, rect.w + m.x + m.w, rect.h + m.y + m.h };
 	RAIL_WINDOW_MOVE_ORDER move = {};
 	move.windowId = static_cast<UINT32>(appWindow->id());
 	move.left = WINPR_ASSERTING_INT_CAST(INT16, full.x);
@@ -733,7 +794,7 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 	move.right = WINPR_ASSERTING_INT_CAST(INT16, full.x + full.w);
 	move.bottom = WINPR_ASSERTING_INT_CAST(INT16, full.y + full.h);
 	WLog_DBG(TAG, "move complete id=0x%08" PRIx32 " rect=%d,%d %dx%d maximized=%d", move.windowId,
-	         x, y, w, h, maximized ? 1 : 0);
+	         rect.x, rect.y, rect.w, rect.h, maximized ? 1 : 0);
 	if (!maximized && _rail && _rail->ClientWindowMove &&
 	    (_rail->ClientWindowMove(_rail, &move) != CHANNEL_RC_OK))
 		WLog_WARN(TAG, "ClientWindowMove failed for RAIL window 0x%08" PRIx32, move.windowId);
@@ -742,7 +803,7 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 	if (maximized)
 		appWindow->setLocalMoveActive(false); /* geometry is WM/server-owned while maximized */
 	else
-		appWindow->adoptLocalGeometry({ x, y, w, h });
+		appWindow->adoptLocalGeometry(rect);
 	/* Repaint now: the last presented frame may still be the resize placeholder. */
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
@@ -786,7 +847,8 @@ void SdlRail::handleWaylandResize(SDL_WindowID id)
 		return;
 	}
 
-	const SDL_Rect vis = appWindow->windowRect();
+	/* Local window size is the OUTER frame (rect + insets; identical off the inset paths). */
+	const SDL_Rect vis = appWindow->outerRect();
 	if ((w == vis.w) && (h == vis.h))
 		return; /* echo of a size we already reported/applied - nothing new */
 
@@ -808,6 +870,7 @@ void SdlRail::completeWaylandResize()
 
 	auto appWindow = getWindow(_localMoveId);
 	_localMoveId = 0;
+	_localMoveHitTest = false;
 	if (!appWindow || !appWindow->window())
 		return;
 
@@ -850,14 +913,20 @@ void SdlRail::completeLocalMoveIfPending()
 	int w = 0;
 	int h = 0;
 	SDL_GetWindowSize(appWindow->window(), &w, &h);
+	const bool hitTest = _localMoveHitTest;
 	_localMoveId = 0;
+	_localMoveHitTest = false;
 
 	SDL_GetWindowPosition(appWindow->window(), &x, &y);
 	/* Synthetic button-up at final dragged corner. */
-	const RailEdges e = railEdges(_localMoveType);
-	const int px = e.left ? x : (e.right ? (x + w) : _localMoveGrabPos.x);
-	const int py = e.top ? y : (e.bottom ? (y + h) : _localMoveGrabPos.y);
-	(void)freerdp_client_send_button_event(_context->common(), FALSE, PTR_FLAGS_BUTTON1, px, py);
+	if (!hitTest)
+	{
+		const RailEdges e = railEdges(_localMoveType);
+		const int px = e.left ? x : (e.right ? (x + w) : _localMoveGrabPos.x);
+		const int py = e.top ? y : (e.bottom ? (y + h) : _localMoveGrabPos.y);
+		(void)freerdp_client_send_button_event(_context->common(), FALSE, PTR_FLAGS_BUTTON1, px,
+		                                       py);
+	}
 
 	reportAndAdopt(appWindow, x, y, w, h);
 }
@@ -887,6 +956,12 @@ UINT SdlRail::server_min_max_info(RailClientContext* context,
 
 /* --- window order callbacks --- */
 
+/* Non-zero edge means margins exist; all-zero means "no band". */
+static bool marginsSet(const SDL_Rect& m)
+{
+	return m.x || m.y || m.w || m.h;
+}
+
 BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                             const WINDOW_STATE_ORDER* windowState)
 {
@@ -915,6 +990,10 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 		         " ex=0x%08" PRIx32 " owner=0x%08" PRIx32,
 		         orderInfo->windowId, rect.w, rect.h, rect.x, rect.y, windowState->style,
 		         windowState->extendedStyle, windowState->ownerWindowId);
+		/* Seed session margins from initial sync. */
+		const SDL_Rect& sm = rail->_sessionMargins;
+		if (marginsSet(sm))
+			appWindow->setResizeMargins(sm.x, sm.y, sm.w, sm.h);
 		/* The SDL window is created lazily on the main thread (reconcile), as SDL requires. */
 	}
 
@@ -953,7 +1032,20 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 			m.y = static_cast<int>(windowState->resizeMarginTop);
 			m.h = static_cast<int>(windowState->resizeMarginBottom);
 		}
+		/* Reconcile per-window zero margins against session margin. */
+		SDL_Rect& sm = rail->_sessionMargins;
+		if (!marginsSet(m) && marginsSet(sm))
+			m = sm;
+		else if (marginsSet(m) && !marginsSet(sm))
+		{
+			sm = m;
+			for (auto& [id, w] : rail->_windows)
+				if (!marginsSet(w.resizeMargins()))
+					w.setResizeMargins(m.x, m.y, m.w, m.h);
+		}
 		appWindow->setResizeMargins(m.x, m.y, m.w, m.h);
+		WLog_INFO(TAG, "margins id=0x%08" PRIx32 " L%d T%d R%d B%d", orderInfo->windowId, m.x, m.y,
+		          m.w, m.h);
 	}
 	if (fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 		appWindow->setStyle(windowState->style, windowState->extendedStyle);
@@ -985,6 +1077,13 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 		}
 	}
 
+	if (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
+	{
+		WLog_DBG(TAG, "visoff id=0x%08" PRIx32 " %d,%d", orderInfo->windowId,
+		         windowState->visibleOffsetX, windowState->visibleOffsetY);
+		appWindow->setVisibleOffset({ static_cast<int>(windowState->visibleOffsetX),
+		                              static_cast<int>(windowState->visibleOffsetY) });
+	}
 	if (fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
 		std::vector<SDL_Rect> rects;
@@ -994,6 +1093,12 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 			const RECTANGLE_16& r = windowState->visibilityRects[i];
 			rects.push_back({ r.left, r.top, r.right - r.left, r.bottom - r.top });
 		}
+		if (rects.empty())
+			WLog_INFO(TAG, "visrects id=0x%08" PRIx32 " n=0", orderInfo->windowId);
+		else
+			WLog_INFO(TAG, "visrects id=0x%08" PRIx32 " n=%zu first=%dx%d+%d+%d",
+			          orderInfo->windowId, rects.size(), rects[0].w, rects[0].h, rects[0].x,
+			          rects[0].y);
 		appWindow->setVisibilityRects(std::move(rects));
 	}
 
@@ -1139,7 +1244,11 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 	{
 		std::unique_lock lock(rail->_windowsLock);
 		if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
-			rail->_activeWindowId = monitoredDesktop->activeWindowId;
+		{
+			/* Server changed active window: sync our ClientActivate dedup to avoid skipping
+			 * re-clicks. */
+			rail->_clientActiveId = monitoredDesktop->activeWindowId;
+		}
 		if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 		{
 			if (monitoredDesktop->windowIds && (monitoredDesktop->numWindowIds > 0))
@@ -1148,8 +1257,6 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 			else
 				rail->_zOrder.clear();
 			rail->_zOrderDirty = true;
-			WLog_VRB(TAG, "server zorder n=%zu active=0x%08" PRIx32, rail->_zOrder.size(),
-			         rail->_activeWindowId);
 			lock.unlock();
 			(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE); /* wake the main thread to restack */
 		}

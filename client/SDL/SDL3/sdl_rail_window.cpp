@@ -29,13 +29,27 @@
 #include "sdl_rail_window.hpp"
 #include "sdl_wayland.hpp"
 #include "sdl_window.hpp"
+#include "sdl_x11.hpp"
 
 #define TAG CLIENT_TAG("sdl.rail.window")
 
 /* Short role tag so a window's whole lifecycle greps by id in the log. */
 static const char* railRole(bool popup, bool layered)
 {
-	return popup ? "popup" : (layered ? "layered" : "app");
+	return layered ? "layered" : (popup ? "popup" : "app");
+}
+
+/* Check for real per-pixel alpha in region. */
+static bool regionHasAlpha(const uint8_t* base, uint32_t stride, const SDL_Rect& r)
+{
+	for (int y = r.y; y < r.y + r.h; y++)
+	{
+		const uint8_t* row = base + static_cast<size_t>(y) * stride;
+		for (int x = r.x; x < r.x + r.w; x++)
+			if (row[static_cast<size_t>(x) * 4 + 3] != 0)
+				return true;
+	}
+	return false;
 }
 
 SdlRailWindow::SdlRailWindow(uint64_t id, const SDL_Rect& rect) : _id(id), _windowRect(rect)
@@ -136,6 +150,17 @@ void SdlRailWindow::setVisibilityRects(std::vector<SDL_Rect> rects)
 {
 	std::unique_lock lock(_gfxLock);
 	_visRects = std::move(rects);
+	_visDirty = true;
+}
+
+void SdlRailWindow::setVisibleOffset(SDL_Point offset)
+{
+	std::unique_lock lock(_gfxLock);
+	if (_visOffsetSet && (offset.x == _visOffset.x) && (offset.y == _visOffset.y))
+		return;
+	_visOffset = offset;
+	_visOffsetSet = true;
+	_visDirty = true;
 }
 
 void SdlRailWindow::setMinMaxSize(SDL_Point minSize, SDL_Point maxSize)
@@ -151,13 +176,31 @@ void SdlRailWindow::setMinMaxSize(SDL_Point minSize, SDL_Point maxSize)
 void SdlRailWindow::setResizeMargins(int left, int top, int right, int bottom)
 {
 	std::unique_lock lock(_gfxLock);
-	_resizeMargins = { left, top, right, bottom };
+	const SDL_Rect m = { left, top, right, bottom };
+	if (SDL_RectsEqual(&m, &_resizeMargins))
+		return;
+	_resizeMargins = m;
+	/* Margins usually arrive after the first frame; the window must regrow to cover them. */
+	if (!_maxState.rail)
+		_geometryDirty = true;
 }
 
 SDL_Rect SdlRailWindow::resizeMargins() const
 {
 	std::unique_lock lock(_gfxLock);
 	return _resizeMargins;
+}
+
+void SdlRailWindow::setFrameMargins(const SDL_Rect& m)
+{
+	std::unique_lock lock(_gfxLock);
+	_frameMargins = m;
+}
+
+SDL_Rect SdlRailWindow::frameMargins() const
+{
+	std::unique_lock lock(_gfxLock);
+	return _frameMargins;
 }
 
 void SdlRailWindow::setOwner(uint64_t ownerId)
@@ -180,17 +223,88 @@ bool SdlRailWindow::isPopup() const
 
 bool SdlRailWindow::styleResizable() const
 {
-	/* Sizing border or maximize box: WMs refuse to maximize non-resizable windows. */
-	return (_style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0;
+	/* Once resizable, keep band eligibility to avoid oscillation. */
+	return _everResizable || ((_style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0);
+}
+
+/* Inflate window by resize margins for hit-testing. */
+/* Minimum grabbable width for each outside-band resize edge. */
+SDL_Rect SdlRailWindow::bandMargins() const
+{
+	if (!_visible || _isPopup || _layered || !styleResizable() || effectivelyMaximized())
+		return { 0, 0, 0, 0 };
+	return _resizeMargins;
+}
+
+SDL_Rect SdlRailWindow::bandInsets() const
+{
+	/* X11-only transparent resize ring. */
+	const auto& caps = railPlatformCaps();
+	if (!caps.positionsReadable || !caps.supportsTransparentWindows)
+		return { 0, 0, 0, 0 };
+	return bandMargins();
+}
+
+/* Add edge insets (x=L y=T w=R h=B) to a server rect to get its outer (band-inclusive) rect. */
+SDL_Rect SdlRailWindow::targetOuterRect() const
+{
+	const SDL_Rect i = bandInsets();
+	return { _windowRect.x - i.x, _windowRect.y - i.y, _windowRect.w + i.x + i.w,
+		     _windowRect.h + i.y + i.h };
+}
+
+/* The insets baked into the window ON SCREEN (not the freshly recomputed target). */
+SDL_Rect SdlRailWindow::insets() const
+{
+	std::unique_lock lock(_gfxLock);
+	return _appliedInsets;
+}
+
+/* On-screen outer geometry: _windowRect inflated by the applied insets. */
+SDL_Rect SdlRailWindow::outerRect() const
+{
+	std::unique_lock lock(_gfxLock);
+	const SDL_Rect& i = _appliedInsets;
+	return { _windowRect.x - i.x, _windowRect.y - i.y, _windowRect.w + i.x + i.w,
+		     _windowRect.h + i.y + i.h };
+}
+
+SDL_Rect SdlRailWindow::serverRect(const SDL_Rect& outer) const
+{
+	const SDL_Rect i = insets();
+	return { outer.x + i.x, outer.y + i.y, outer.w - i.x - i.w, outer.h - i.y - i.h };
+}
+
+/* Surface blit offset within the local window (content anchor when maximized). */
+SDL_Point SdlRailWindow::blitOffset() const
+{
+	if (!effectivelyMaximized())
+		return { _appliedInsets.x, _appliedInsets.y };
+	SDL_Point content = { _frameMargins.x, _frameMargins.y };
+	if (_visOffsetSet)
+		content = { _visOffset.x - _windowRect.x, _visOffset.y - _windowRect.y };
+	return { -std::clamp(content.x, 0, static_cast<int>(_gfxW)),
+		     -std::clamp(content.y, 0, static_cast<int>(_gfxH)) };
+}
+
+SDL_Point SdlRailWindow::serverOrigin() const
+{
+	std::unique_lock lock(_gfxLock);
+	/* Derive server coordinate from blit offset to match on-screen pixels. */
+	const SDL_Point dst = blitOffset();
+	return { _windowRect.x - dst.x, _windowRect.y - dst.y };
 }
 
 void SdlRailWindow::setStyle(uint32_t style, uint32_t exStyle)
 {
 	std::unique_lock lock(_gfxLock);
-	/* Track resizability changes. */
-	if ((style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != (_style & (WS_THICKFRAME | WS_MAXIMIZEBOX)))
-		_styleDirty = true;
+	const bool wasResizable = styleResizable();
 	_style = style;
+	if ((style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0)
+		_everResizable = true;
+	/* Update resizability on style change. */
+	if (styleResizable() != wasResizable)
+		_styleDirty = true;
 	/* Classify popup and layered window types once on creation. */
 	if (!_popupClassified)
 	{
@@ -250,13 +364,15 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 
 	const RailPlatformCaps& caps = railPlatformCaps();
 
-	const SDL_Rect vis = _windowRect;
+	/* Local window = server rect + band insets (the outside resize band is part of our window). */
+	const SDL_Rect vis = targetOuterRect();
+	_appliedInsets = bandInsets(); /* the insets baked into the window we are about to create */
 	if (_isPopup && parent)
 	{
-		/* SDL popup relative to the owner: no taskbar entry, no focus steal, Wayland-positionable.
-		 * `parentRect` is the owner's visible rect, so both sides are in on-screen coordinates. */
+		/* SDL popups position parent-relative (works on Wayland too, via xdg_positioner). */
 		const SDL_Rect rel = { vis.x - parentRect.x, vis.y - parentRect.y, vis.w, vis.h };
-		_win = std::make_unique<SdlWindow>(SdlWindow::createPopup(parent, rel));
+		_win = std::make_unique<SdlWindow>(
+		    SdlWindow::createPopup(parent, rel, caps.supportsTransparentWindows));
 	}
 	else if (_isPopup && !caps.positionsReadable)
 	{
@@ -267,11 +383,8 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	}
 	else
 	{
-		/* Borderless: the RemoteApp window carries its own server-drawn frame as content. Add
-		 * TRANSPARENT (where the compositor can blend it) so the resize placeholder's revealed area
-		 * shows the desktop through. Normal frames stay opaque - the server GFX is opaque and
-		 * covers the whole window. */
-		Uint32 flags = SDL_WINDOW_BORDERLESS;
+		/* Transparent so the band ring outside the content stays invisible. */
+		Uint32 flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_HIDDEN;
 		if (caps.supportsTransparentWindows)
 			flags |= SDL_WINDOW_TRANSPARENT;
 		_win = std::make_unique<SdlWindow>(
@@ -290,9 +403,12 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	if (!_isPopup && !caps.positionsReadable)
 		sdl_wayland_move_prepare(_win->window());
 
-	WLog_DBG(TAG, "create id=0x%08" PRIx32 " sdl=%" PRIu32 " %s vis=%dx%d+%d+%d transparent=%d",
+	WLog_DBG(TAG,
+	         "create id=0x%08" PRIx32 " sdl=%" PRIu32 " %s vis=%dx%d+%d+%d margins=L%d,T%d,R%d,B%d "
+	         "transparent=%d",
 	         static_cast<uint32_t>(_id), static_cast<uint32_t>(_win->id()),
-	         railRole(_isPopup, _layered), vis.w, vis.h, vis.x, vis.y,
+	         railRole(_isPopup, _layered), vis.w, vis.h, vis.x, vis.y, _resizeMargins.x,
+	         _resizeMargins.y, _resizeMargins.w, _resizeMargins.h,
 	         caps.supportsTransparentWindows ? 1 : 0);
 	return true;
 }
@@ -320,17 +436,16 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	{
 		if (!create(parent, parentRect))
 			return false;
-		_geometryDirty = false; /* created at the current rect already */
-		if (!_isPopup && !_layered)
-			_win->raise(); /* new app windows come to the front; popups are above by design */
+		_geometryDirty = false;
+		/* Shown + raised in paint() after the first frame (created hidden). */
 	}
 
-	/* Re-apply resizability on style changes, BEFORE the maximize below: the WM refuses to
-	 * maximize a non-resizable window. */
+	/* Apply resizability before maximize. */
 	if (_win && _styleDirty)
 	{
 		_win->resizeable(styleResizable());
 		_styleDirty = false;
+		/* Insets refresh on geometry updates to avoid flicker. */
 	}
 
 	/* Apply state before geometry. */
@@ -338,6 +453,24 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	{
 		applyServerState(_maxState, "maximize", SDL_MaximizeWindow);
 		applyServerState(_minState, "minimize", SDL_MinimizeWindow);
+	}
+
+	/* Refresh insets on maximize transition. */
+	if (_win)
+	{
+		const bool maxed = effectivelyMaximized();
+		if (maxed && !_wasMaximized)
+			_appliedInsets = bandInsets();
+		_wasMaximized = maxed;
+	}
+
+	/* _GTK_FRAME_EXTENTS: tell the WM the band ring is frame, not content (snap/tile geometry). */
+	if (_win)
+	{
+		const SDL_Rect ext = bandInsets();
+		if (!SDL_RectsEqual(&ext, &_extentsApplied) &&
+		    sdl_x11_set_frame_extents(_win->window(), ext.x, ext.w, ext.y, ext.h))
+			_extentsApplied = ext;
 	}
 
 	/* Min/max BEFORE geometry: the WM clamps SDL_SetWindowSize to the current min. The server's
@@ -352,9 +485,11 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	 * So clamp the enforced min to the target outer size: server geometry is never blocked, and the
 	 * min re-widens on its own once the server grows the window back. Re-run on a geometry change
 	 * too, since a shrink needs the min re-clamped first. */
-	if (_win && _minMaxDirty)
+	if (_win && (_minMaxDirty || _geometryDirty))
 	{
-		SDL_SetWindowMinimumSize(_win->window(), std::max(0, _minSize.x), std::max(0, _minSize.y));
+		const SDL_Rect vis = targetOuterRect();
+		SDL_SetWindowMinimumSize(_win->window(), std::clamp(_minSize.x, 0, vis.w),
+		                         std::clamp(_minSize.y, 0, vis.h));
 		int maxW = (_maxSize.x > 0) ? std::max(1, _maxSize.x) : 0;
 		int maxH = (_maxSize.y > 0) ? std::max(1, _maxSize.y) : 0;
 		/* Wayland: cap to the usable area - an oversized window cannot be dragged into reach. */
@@ -362,10 +497,14 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		if (!railPlatformCaps().positionsReadable &&
 		    SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &usable))
 		{
-			if ((maxW == 0) || (maxW > usable.w))
-				maxW = usable.w;
-			if ((maxH == 0) || (maxH > usable.h))
-				maxH = usable.h;
+			/* The local window is the outer frame: cap to the usable area plus the insets. */
+
+			const int capW = usable.w;
+			const int capH = usable.h;
+			if ((maxW == 0) || (maxW > capW))
+				maxW = capW;
+			if ((maxH == 0) || (maxH > capH))
+				maxH = capH;
 		}
 		SDL_SetWindowMaximumSize(_win->window(), maxW, maxH);
 		_minMaxDirty = false;
@@ -374,8 +513,12 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	/* Maximized: WM owns geometry; a server update stays pending until restored. */
 	if (_win && _geometryDirty && !_maxState.rail)
 	{
-		const SDL_Rect vis = _windowRect;
-		if (_isPopup && parent) /* popup coords are relative to the parent's visible origin */
+		const SDL_Rect vis = targetOuterRect();
+		/* The window is (or becomes) vis = _windowRect + fresh insets: record those as the insets
+		 * now baked in, so the round-trip back to server coords strips exactly this. */
+		_appliedInsets = bandInsets();
+		/* Popup coords are relative to the parent's on-screen origin. */
+		if (_isPopup && parent)
 			SDL_SetWindowPosition(_win->window(), vis.x - parentRect.x, vis.y - parentRect.y);
 		else
 			SDL_SetWindowPosition(_win->window(), vis.x, vis.y);
@@ -416,14 +559,15 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		_iconDirty = false;
 	}
 
-	/* Not while minimized: on X11 SDL_ShowWindow maps the window, which de-iconifies it. */
-	if (!_minState.rail)
+	/* Defer show until first frame. */
+	if (!_minState.rail && _gfxPresented)
 		SDL_ShowWindow(_win->window());
 	return true;
 }
 
 void SdlRailWindow::updateGfxSurface(const void* data, uint32_t stride, uint32_t width,
-                                     uint32_t height, const RECTANGLE_16* damage, uint32_t nbDamage)
+                                     uint32_t height, const RECTANGLE_16* damage, uint32_t nbDamage,
+                                     uint32_t format)
 {
 	std::unique_lock lock(_gfxLock);
 	/* Deep-copy GDI pixels to prevent UAF. */
@@ -450,6 +594,10 @@ void SdlRailWindow::updateGfxSurface(const void* data, uint32_t stride, uint32_t
 	{
 		_gfxBuffer.assign(src, src + bytes);
 		_gfxDamage.assign(1, SDL_Rect{ 0, 0, static_cast<int>(width), static_cast<int>(height) });
+		/* Blend real alpha, force opaque otherwise. */
+		_gfxHasAlpha = honorsAlpha() &&
+		               regionHasAlpha(_gfxBuffer.data(), stride,
+		                              { 0, 0, static_cast<int>(width), static_cast<int>(height) });
 	}
 	else
 	{
@@ -468,6 +616,9 @@ void SdlRailWindow::updateGfxSurface(const void* data, uint32_t stride, uint32_t
 			    static_cast<UINT32>(clip.x), static_cast<UINT32>(clip.y), nullptr,
 			    FREERDP_FLIP_NONE);
 			_gfxDamage.push_back(clip);
+			/* Handle late alpha discovery. */
+			if (honorsAlpha() && !_gfxHasAlpha && regionHasAlpha(_gfxBuffer.data(), stride, clip))
+				_gfxHasAlpha = true;
 		}
 		/* A hidden window accumulates rects without ever painting; collapse to one full repaint. */
 		if (_gfxDamage.size() > 32)
@@ -550,67 +701,203 @@ bool SdlRailWindow::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 	if (!reconcile(parent, parentRect))
 		return false;
 
-	std::unique_lock lock(_gfxLock);
-	if (_hasGfx)
-		return paintGfx(fallbackFormat);
-	lock.unlock();
-	return paintLegacy(primary, damage);
+	bool ok = false;
+	{
+		std::unique_lock lock(_gfxLock);
+		if (_hasGfx)
+			ok = paintGfx(fallbackFormat);
+		else
+		{
+			lock.unlock();
+			ok = paintLegacy(primary, damage);
+		}
+	}
+
+	/* Map in the same pass as the first frame, else the window defers a frame (menu lag). */
+	if (_gfxPresented && !_mapped && !_minState.rail)
+	{
+		_mapped = true;
+		WLog_DBG(TAG, "map id=0x%08" PRIx32 " %s", static_cast<uint32_t>(_id),
+		         railRole(_isPopup, _layered));
+		SDL_ShowWindow(_win->window());
+		if (!_isPopup && !_layered)
+			_win->raise(); /* new app windows come to the front; popups are above by design */
+	}
+	return ok;
 }
 
 /* Caller holds _gfxLock. Blits the window-mapped GFX surface via the shared SdlWindow path. */
 bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 {
-	/* Surface and window both span exactly the server rect (the invisible resize margins live
-	 * outside it), so it blits 1:1 at (0,0) and size comparisons use its own dimensions. */
+	/* Blit against the insets actually baked into the window, not a fresh recompute: the content
+	 * would otherwise fill over the band ring the instant the server toggles the resizable style.
+	 */
+	const SDL_Rect bi = _appliedInsets;
 	int ww = 0;
 	int wh = 0;
 	SDL_GetWindowSizeInPixels(_win->window(), &ww, &wh);
+	const int cw = ww - bi.x - bi.w; /* content area inside the insets */
+	const int ch = wh - bi.y - bi.h;
 
-	/* The dashed placeholder is only for a local (WM) RESIZE: the revealed area awaits the server
-	 * frame at the new size. A plain local MOVE also sets _localMoveActive but never changes the
-	 * size; a WM snap resizes mid-move, so detect it by the window diverging from the surface. */
+	/* Detect WM snap divergence. */
 	bool localResize = _localMoveActive && _localMoveIsResize;
 	if (_localMoveActive && !localResize)
-		localResize = (ww != static_cast<int>(_gfxW)) || (wh != static_cast<int>(_gfxH));
+		localResize = (cw != static_cast<int>(_gfxW)) || (ch != static_cast<int>(_gfxH));
 
-	/* A server-driven resize (maximize/restore) changed the window size since our last present with
-	 * no local drag; the frame at the new size has not arrived yet. Force one repaint so the
-	 * uncovered area shows the (cleared) render target, not the window's raw white backbuffer.
-	 * Tracked by window size, not surface size, so it fires once per size change - no per-frame
-	 * churn while maximized. */
+	/* Force one repaint on server resize. */
 	const bool serverResize = !_localMoveActive && ((ww != _lastWinW) || (wh != _lastWinH));
 
-	/* Nothing changed since the last paint and we're not resizing: keep the last presented frame.
-	 * This is what makes a single window's update repaint only that window instead of every RAIL
-	 * window on every USER_UPDATE. */
-	if (!localResize && !serverResize && _gfxDamage.empty())
+	/* Skip undamaged frames. */
+	if (!localResize && !serverResize && _gfxDamage.empty() && !(_layeredApp && _visDirty))
+	{
+		WLog_VRB(TAG, "paintGfx skip id=0x%08" PRIx32 " no-damage no-resize",
+		         static_cast<uint32_t>(_id));
 		return true;
+	}
 
-	SDL_Surface* s = SDL_CreateSurfaceFrom(static_cast<int>(_gfxW), static_cast<int>(_gfxH), format,
-	                                       _gfxBuffer.data(), static_cast<int>(_gfxStride));
+	/* Defer mapping until content arrives. */
+	if (_isPopup && !_gfxPresented)
+	{
+		bool allZero = true;
+		for (uint32_t y = 0; allZero && (y < _gfxH); y++)
+		{
+			const uint8_t* row = _gfxBuffer.data() + static_cast<size_t>(y) * _gfxStride;
+			for (uint32_t x = 0; x < _gfxW * 4U; x++)
+			{
+				if (row[x] != 0)
+				{
+					allZero = false;
+					break;
+				}
+			}
+		}
+		if (allZero)
+		{
+			_gfxDamage.clear();
+			return true;
+		}
+	}
+
+	/* RAIL content is mostly opaque (ignore alpha). Exception: layered app windows. */
+	SDL_PixelFormat contentFormat = format;
+	if (format == SDL_PIXELFORMAT_BGRA32)
+	{
+		const bool blend = railPlatformCaps().supportsTransparentWindows;
+		if (!blend)
+			contentFormat = SDL_PIXELFORMAT_BGRX32;
+		else if (_isPopup && !_layered && !_gfxHasAlpha)
+		{
+			/* Force opaque alpha for legacy GDI popups with zeroed alpha channel. */
+			for (uint32_t y = 0; y < _gfxH; y++)
+			{
+				uint32_t* row = reinterpret_cast<uint32_t*>(_gfxBuffer.data() +
+				                                            static_cast<size_t>(y) * _gfxStride);
+				for (uint32_t x = 0; x < _gfxW; x++)
+					row[x] |= 0xFF000000;
+			}
+		}
+	}
+
+	SDL_Surface* s =
+	    SDL_CreateSurfaceFrom(static_cast<int>(_gfxW), static_cast<int>(_gfxH), contentFormat,
+	                          _gfxBuffer.data(), static_cast<int>(_gfxStride));
 	if (!s)
+	{
+		WLog_WARN(TAG, "paintGfx id=0x%08" PRIx32 " SDL_CreateSurfaceFrom failed: %s",
+		          static_cast<uint32_t>(_id), SDL_GetError());
 		return false;
+	}
 
+	/* Content blits at the inset offset; the ring outside it is the transparent resize band. */
 	if (localResize)
 	{
 		/* Anchor the stale frame to the fixed corner. */
-		const SDL_Point off = { _resizeAnchorRight ? (ww - static_cast<int>(_gfxW)) : 0,
-			                    _resizeAnchorBottom ? (wh - static_cast<int>(_gfxH)) : 0 };
-		std::ignore = _win->paintResizeFrame(s, off, !_gfxDamage.empty());
+		const SDL_Point off = { _resizeAnchorRight ? (ww - bi.w - static_cast<int>(_gfxW)) : bi.x,
+			                    _resizeAnchorBottom ? (wh - bi.h - static_cast<int>(_gfxH))
+			                                        : bi.y };
+		/* The "awaiting content" dashes only during a real edge/band resize; a MOVE whose size
+		 * the WM changed (snap, untile restore) just shows the clipped stale frame - dashes there
+		 * would read as a resize the user never started. */
+		std::ignore = _win->paintResizeFrame(s, off, !_gfxDamage.empty(), bi, _localMoveIsResize);
 	}
 	else
 	{
 		/* Render accumulated damage or re-blit full surface on bare resize. */
-		if (_gfxDamage.empty())
+		const SDL_Rect full = { 0, 0, static_cast<int>(_gfxW), static_cast<int>(_gfxH) };
+		/* Anchor content to real window position (fixes overhanging maximized borders). */
+		SDL_Point dst = { bi.x, bi.y };
+		SDL_Point winPos = { 0, 0 };
+		const bool maxed = effectivelyMaximized();
+		if (maxed)
 		{
-			const SDL_Rect full = { 0, 0, static_cast<int>(_gfxW), static_cast<int>(_gfxH) };
-			std::ignore = _win->drawRects(s, { 0, 0 }, { full });
+			dst = { 0, 0 };
+			if (railPlatformCaps().positionsReadable)
+			{
+				SDL_GetWindowPosition(_win->window(), &winPos.x, &winPos.y);
+				dst = { _windowRect.x - winPos.x, _windowRect.y - winPos.y };
+			}
+			/* Inset maximized blit destination for frame margins. */
+			if (static_cast<int>(_gfxW) > _windowRect.w)
+				dst.x -= _frameMargins.x;
+			if (static_cast<int>(_gfxH) > _windowRect.h)
+				dst.y -= _frameMargins.y;
 		}
+		if (_layeredApp && !_visRects.empty() && !maxed)
+		{
+			/* The layered surface is only defined inside the visibility rects (xf shapes the X
+			 * window to them, MS-RDPERP); outside is garbage that would paint a black ring. Clip
+			 * the blit to them and leave the ring transparent. A maximized window has no shadow
+			 * ring and its visibility rect is inset by the (now-dropped) resize margin, so clipping
+			 * to it would cut the top-left edge; draw the full surface instead (handled below). */
+			const bool logClip = _visDirty;
+			if (_visDirty)
+			{
+				/* Wipe so newly-excluded regions don't keep stale pixels. */
+				std::ignore = _win->fill(static_cast<Uint8>(0), 0, 0, 0);
+				_gfxDamage.assign(1, full);
+				_visDirty = false;
+			}
+			const SDL_Point off = { _visOffsetSet ? (_visOffset.x - _windowRect.x) : 0,
+				                    _visOffsetSet ? (_visOffset.y - _windowRect.y) : 0 };
+			if (logClip)
+				WLog_VRB(TAG,
+				         "clip id=0x%08" PRIx32 " off=%d,%d nVis=%zu vis0=%dx%d+%d+%d win=%dx%d "
+				         "gfx=%ux%u",
+				         static_cast<uint32_t>(_id), off.x, off.y, _visRects.size(), _visRects[0].w,
+				         _visRects[0].h, _visRects[0].x, _visRects[0].y, ww, wh, _gfxW, _gfxH);
+			std::vector<SDL_Rect> fullVec;
+			if (_gfxDamage.empty())
+				fullVec.push_back(full);
+			const std::vector<SDL_Rect>& damageRects = _gfxDamage.empty() ? fullVec : _gfxDamage;
+			std::vector<SDL_Rect> draw;
+			draw.reserve(damageRects.size() * _visRects.size());
+			for (const auto& d : damageRects)
+			{
+				for (auto v : _visRects)
+				{
+					v.x += off.x;
+					v.y += off.y;
+					SDL_Rect part{};
+					if (SDL_GetRectIntersection(&d, &v, &part))
+						draw.push_back(part);
+				}
+			}
+			if (!draw.empty()) /* empty vector would mean "draw everything" to drawRects */
+				std::ignore = _win->drawRects(s, dst, draw);
+		}
+		else if (_gfxDamage.empty())
+			std::ignore = _win->drawRects(s, dst, { full });
 		else
-			std::ignore = _win->drawRects(s, { 0, 0 }, _gfxDamage);
+			std::ignore = _win->drawRects(s, dst, _gfxDamage);
+
 		_win->updateSurface();
+		_gfxPresented = true; /* real content on screen: paint() may now map the window */
 	}
 	SDL_DestroySurface(s);
+	WLog_VRB(TAG, "paintGfx id=0x%08" PRIx32 " mode=%s win=%dx%d dmg=%zu",
+	         static_cast<uint32_t>(_id),
+	         localResize ? "resize" : (serverResize ? "server-resize" : "gfx"), ww, wh,
+	         _gfxDamage.size());
 	_gfxDamage.clear();
 	_lastWinW = ww;
 	_lastWinH = wh;
@@ -620,6 +907,7 @@ bool SdlRailWindow::paintGfx(SDL_PixelFormat format)
 bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect>& damage)
 {
 	SDL_Rect rect{};
+	SDL_Rect bi{};
 	std::vector<SDL_Rect> vis;
 	bool full = false;
 	{
@@ -638,6 +926,7 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 		}
 
 		rect = _windowRect;
+		bi = bandInsets();
 		vis = _visRects;
 	}
 
@@ -656,7 +945,8 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 
 		if (full)
 		{
-			SDL_Rect dst = { clipped.x - rect.x, clipped.y - rect.y, clipped.w, clipped.h };
+			SDL_Rect dst = { clipped.x - rect.x + bi.x, clipped.y - rect.y + bi.y, clipped.w,
+				             clipped.h };
 			if (_win->blit(primary, clipped, dst))
 				blitted = true;
 			continue;
@@ -666,7 +956,7 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 			SDL_Rect part{};
 			if (!SDL_GetRectIntersection(&clipped, &d, &part))
 				continue;
-			SDL_Rect dst = { part.x - rect.x, part.y - rect.y, part.w, part.h };
+			SDL_Rect dst = { part.x - rect.x + bi.x, part.y - rect.y + bi.y, part.w, part.h };
 			if (_win->blit(primary, part, dst))
 				blitted = true;
 		}
@@ -680,6 +970,7 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 		_win->updateSurface();
 		WLog_VRB(TAG, "paintLegacy id=0x%08" PRIx32 " full=%d visRects=%zu",
 		         static_cast<uint32_t>(_id), full ? 1 : 0, vis.size());
+		/* Defer mapping until GFX frame arrives to avoid desktop flash. */
 	}
 	return true;
 }
