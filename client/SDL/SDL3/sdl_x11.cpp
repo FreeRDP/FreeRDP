@@ -113,6 +113,41 @@ bool sdl_x11_set_frame_extents(SDL_Window* window, int left, int right, int top,
 	return true;
 }
 
+bool sdl_x11_set_bit_gravity(SDL_Window* window, int gravity)
+{
+	const auto [dpy, xwin] = sdl_x11_handles(window);
+	if (!dpy || (xwin == 0))
+		return false;
+
+	/* Set bit gravity to prevent frame jumping during async window resize. */
+	XSetWindowAttributes attrs{};
+	attrs.bit_gravity = gravity;
+	XChangeWindowAttributes(dpy, xwin, CWBitGravity, &attrs);
+	XFlush(dpy);
+	return true;
+}
+
+bool sdl_x11_send_left_button_release(SDL_Window* window)
+{
+	const auto [dpy, xwin] = sdl_x11_handles(window);
+	if (!dpy || (xwin == 0))
+		return false;
+
+	/* Empty mask: delivered to this client only, never to the WM. */
+	XButtonEvent ev = {};
+	ev.type = ButtonRelease;
+	ev.display = dpy;
+	ev.window = xwin;
+	ev.root = DefaultRootWindow(dpy);
+	ev.time = CurrentTime; /* SDL ignores X event time. */
+	ev.button = Button1;
+	ev.same_screen = True;
+	if (!XSendEvent(dpy, xwin, False, NoEventMask, reinterpret_cast<XEvent*>(&ev)))
+		return false;
+	XFlush(dpy);
+	return true;
+}
+
 static Window sdl_x11_xwindow(SDL_Window* window)
 {
 	return sdl_x11_handles(window).second;
@@ -179,7 +214,17 @@ bool sdl_x11_set_frame_extents(WINPR_ATTR_UNUSED SDL_Window* window, WINPR_ATTR_
 	return false;
 }
 
+bool sdl_x11_set_bit_gravity(WINPR_ATTR_UNUSED SDL_Window* window, WINPR_ATTR_UNUSED int gravity)
+{
+	return false;
+}
+
 bool sdl_x11_restack_windows(WINPR_ATTR_UNUSED const std::vector<SDL_Window*>& topToBottom)
+{
+	return false;
+}
+
+bool sdl_x11_send_left_button_release(WINPR_ATTR_UNUSED SDL_Window* window)
 {
 	return false;
 }

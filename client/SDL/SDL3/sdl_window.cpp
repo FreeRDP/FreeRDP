@@ -594,7 +594,7 @@ void SdlWindow::updateSurface()
 }
 
 bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged,
-                                 const SDL_Rect& inset, bool dashedBorder)
+                                 const SDL_Rect& inset, bool fillRevealed, bool dashedBorder)
 {
 	if (!_renderer || !surface)
 		return false;
@@ -626,8 +626,11 @@ bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool conte
 	std::ignore = SDL_SetRenderDrawBlendMode(_renderer, SDL_BLENDMODE_NONE);
 	std::ignore = SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 0);
 	std::ignore = SDL_RenderClear(_renderer);
-	std::ignore = SDL_SetRenderDrawColor(_renderer, 0x2B, 0x2B, 0x2B, kFillAlpha);
-	std::ignore = SDL_RenderFillRect(_renderer, &frame);
+	if (fillRevealed)
+	{
+		std::ignore = SDL_SetRenderDrawColor(_renderer, 0x2B, 0x2B, 0x2B, kFillAlpha);
+		std::ignore = SDL_RenderFillRect(_renderer, &frame);
+	}
 	SDL_FRect fdst = { static_cast<float>(off.x), static_cast<float>(off.y),
 		               static_cast<float>(surface->w), static_cast<float>(surface->h) };
 	/* Anchored frame clipped to visible bounds. */
@@ -706,12 +709,15 @@ SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 f
 }
 
 /* Popup constructor: positioned relative to the parent origin. */
-SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect, bool transparent)
+SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect, bool transparent, bool tooltip)
     : _initialW(rect.w), _initialH(rect.h)
 {
 	auto props = SDL_CreateProperties();
 	SDL_SetPointerProperty(props, SDL_PROP_WINDOW_CREATE_PARENT_POINTER, parent);
-	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_MENU_BOOLEAN, true);
+	SDL_SetBooleanProperty(props,
+	                       tooltip ? SDL_PROP_WINDOW_CREATE_TOOLTIP_BOOLEAN
+	                               : SDL_PROP_WINDOW_CREATE_MENU_BOOLEAN,
+	                       true);
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN, false);
 	SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, true);
 	/* Transparent so menus' genuine per-pixel alpha (corners/shadow) isn't rendered black. */
@@ -734,9 +740,10 @@ SdlWindow::SdlWindow(SDL_Window* parent, const SDL_Rect& rect, bool transparent)
 	}
 }
 
-SdlWindow SdlWindow::createPopup(SDL_Window* parent, const SDL_Rect& rect, bool transparent)
+SdlWindow SdlWindow::createPopup(SDL_Window* parent, const SDL_Rect& rect, bool transparent,
+                                 bool tooltip)
 {
-	return SdlWindow{ parent, rect, transparent };
+	return SdlWindow{ parent, rect, transparent, tooltip };
 }
 
 static SDL_Window* createDummy(SDL_DisplayID id)

@@ -138,7 +138,6 @@ bool sdl_push_user_event(Uint32 type, ...)
 			break;
 		case SDL_EVENT_USER_RAIL_MOVE:
 			event->data1 = reinterpret_cast<void*>(static_cast<uintptr_t>(va_arg(ap, UINT32)));
-			event->data2 = reinterpret_cast<void*>(static_cast<uintptr_t>(va_arg(ap, UINT32)));
 			event->code = va_arg(ap, int); /* RAIL_WMSZ_* move/resize type */
 			break;
 		case SDL_EVENT_USER_WINDOW_MINIMIZE:

@@ -19,7 +19,6 @@
 #pragma once
 
 #include <atomic>
-
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -71,6 +70,10 @@ class SdlRailWindow
 	/* Local move/resize state. */
 	void setLocalMoveActive(bool active);
 	[[nodiscard]] bool localMoveActive() const;
+	/* True if the server resized the window during the current/last local move (drag-restore). */
+	[[nodiscard]] bool localMoveSizeChanged() const;
+	/* Where the server re-anchored its window mid-move (valid when localMoveSizeChanged()). */
+	[[nodiscard]] SDL_Point localMoveServerPos() const;
 	void adoptLocalGeometry(const SDL_Rect& rect);
 	/* Resize anchor corner during local resize. */
 	void setResizeAnchor(bool right, bool bottom);
@@ -78,6 +81,27 @@ class SdlRailWindow
 	/* Deferred destroy: mark here (RDP thread), erased on the main thread in SdlRail::paint. */
 	void markDeleted();
 	[[nodiscard]] bool isDeleted() const;
+
+	/* In-flight local state application flag. */
+	[[nodiscard]] bool geomApplyPending() const;
+	void clearGeomApplyPending();
+
+	/* Deferred completion of server modal move/size loop. */
+	void armLoopEnd(); /* completion: now awaiting the END order */
+	[[nodiscard]] bool loopEndPending() const;
+	void deferMaximize();                       /* WM snap-to-top mid-drag: SC_MAXIMIZE on close */
+	void deferSnap(const SDL_Rect& serverRect); /* WM snap/tile: resend rect on close */
+	void clearLoopEnd(); /* a fresh drag of this window supersedes the pending close */
+	struct LoopEndActions
+	{
+		bool maximize = false;
+		bool snap = false;
+		SDL_Rect snapRect = { 0, 0, 0, 0 };
+	};
+	[[nodiscard]] LoopEndActions takeLoopEnd(); /* END order: drain queued actions and reset */
+
+	/* Adopt WM-refused geometry. */
+	[[nodiscard]] bool takeWmOverride(SDL_Rect& outer);
 
 	/* Visible sub-rects (window-relative); only these are painted so windows on top don't bleed. */
 	void setVisibilityRects(std::vector<SDL_Rect> rects);
@@ -90,14 +114,23 @@ class SdlRailWindow
 	/* Server outside resize margins. */
 	void setResizeMargins(int left, int top, int right, int bottom);
 	[[nodiscard]] SDL_Rect resizeMargins() const; /* x=left y=top w=right h=bottom */
+	/* Raw server frame margins. */
+	void setFrameMargins(const SDL_Rect& m);
+	[[nodiscard]] SDL_Rect frameMargins() const;
 
 	/* Owning window id (WINDOW_ORDER_FIELD_OWNER); popups position relative to it. */
 	void setOwner(uint64_t ownerId);
 	[[nodiscard]] uint64_t owner() const;
-	void setFrameMargins(const SDL_Rect& m);
-	[[nodiscard]] SDL_Rect frameMargins() const;
 	/* Popup = caption-less transient (menu/dropdown/tooltip); created as an SDL popup. */
 	[[nodiscard]] bool isPopup() const;
+	/* Full-screen popup treated as a top-level window. */
+	[[nodiscard]] bool isFullscreen() const;
+	/* Layered decoration (drop shadow); realized only while anchored to a visible popup. */
+	[[nodiscard]] bool isLayered() const;
+	/* Mark shadow anchored to an active popup. */
+	void setShadowAnchored(bool anchored);
+	void setFrame(bool frame);
+	[[nodiscard]] bool isFrame() const;
 	/* Local window insets for resize bands. */
 	[[nodiscard]] SDL_Rect insets() const;
 	/* Server rect inflated by insets() = the local SDL window's on-screen geometry. */
@@ -129,6 +162,7 @@ class SdlRailWindow
 	}
 	void setRailMaximized(bool m)
 	{
+		std::unique_lock lock(_gfxLock);
 		_maxState.rail = m;
 	}
 	void setServerMaximized(bool m);
@@ -142,39 +176,74 @@ class SdlRailWindow
 		_minState.rail = m;
 	}
 	void setServerMinimized(bool m);
+	/* Max or min pins the geometry (server/WM owns it): the client geometry apply is skipped. */
+	/* Re-arm geometry apply after server drag-restore. */
+	void markGeometryDirty()
+	{
+		std::unique_lock lock(_gfxLock);
+		_geometryDirty = true;
+	}
+
+	[[nodiscard]] bool geometryFrozen() const
+	{
+		return _maxState.rail || _maxState.server || _minState.rail || _minState.server;
+	}
+	/* A server restore has been applied but its rect has not arrived: geometry is unknown. */
+	[[nodiscard]] bool awaitingRestoreRect() const
+	{
+		std::unique_lock lock(_gfxLock);
+		return restoreRectPending();
+	}
 	/* Local or live-WM maximized (railMaximized may lag the SDL flag during a snap). */
 	[[nodiscard]] bool effectivelyMaximized() const;
+	/* Transition in flight (local intent vs server state). WM resizes only trusted outside. */
+	[[nodiscard]] bool stateTransitionPending() const
+	{
+		/* _maxState/_minState are written under _gfxLock on the RDP thread. */
+		std::unique_lock lock(_gfxLock);
+		return _maxState.dirty || _minState.dirty || (_maxState.rail != _maxState.server) ||
+		       (_minState.rail != _minState.server);
+	}
 
 	/* Create/move/show the local SDL window to match pending state; popups use parent+rect. */
 	bool reconcile(SDL_Window* parent, const SDL_Rect& parentRect);
 	/* Render: GFX surface if mapped, else the shared desktop region. `damage` = updated rects. */
 	bool paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 	           const std::vector<SDL_Rect>& damage, SDL_Window* parent, const SDL_Rect& parentRect);
-	/* Bring window to front */
-	void raise();
 
   private:
 	/* One maximize/minimize state pair: local (sent to server), server-reported, pending apply. */
 	struct StateSync
 	{
+		/* Atomic flags accessed lock-free by railMaximized()/geometryFrozen(). */
 		std::atomic<bool> rail{ false };
 		std::atomic<bool> server{ false };
 		bool dirty = false;
 	};
 	void setServerState(StateSync& s, bool m);
-	/* Caller holds _gfxLock and checked _win. */
-	void applyServerState(StateSync& s, const char* what, bool (*enter)(SDL_Window*));
+	/* Caller holds _gfxLock and checked _win. True when it left the state (restore branch). */
+	bool applyServerState(StateSync& s, const char* what, bool (*enter)(SDL_Window*));
+	/* Caller holds _gfxLock. */
+	[[nodiscard]] bool restoreRectPending() const;
 	[[nodiscard]] bool styleResizable() const; /* caller holds _gfxLock */
-	/* Window classes whose GFX surface carries meaningful per-pixel alpha. */
+	/* Popups whose GFX surface may carry per-pixel alpha (paintGfx). */
 	[[nodiscard]] bool honorsAlpha() const
 	{
-		return _isPopup || _layeredApp;
+		return _isPopup && !_layered;
 	}
+	/* Window role for logging. */
+	[[nodiscard]] const char* role() const
+	{
+		if (_overlay)
+			return _layered ? "overlay-layered" : "overlay";
+		return _layered ? "layered" : (_isPopup ? "popup" : "app");
+	}
+	[[nodiscard]] bool isFullDisplaySize() const; /* caller holds _gfxLock */
 	/* Band eligibility margins. */
 	[[nodiscard]] SDL_Rect bandMargins() const;
-	[[nodiscard]] SDL_Rect bandInsets() const;      /* insets(); caller holds _gfxLock */
+	[[nodiscard]] SDL_Rect bandInsets() const;      /* caller holds _gfxLock */
 	[[nodiscard]] SDL_Point blitOffset() const;     /* caller holds _gfxLock */
-	[[nodiscard]] SDL_Rect targetOuterRect() const; /* outerRect(); caller holds _gfxLock */
+	[[nodiscard]] SDL_Rect targetOuterRect() const; /* caller holds _gfxLock */
 	bool create(SDL_Window* parent, const SDL_Rect& parentRect);
 	bool paintGfx(SDL_PixelFormat format);
 	bool paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect>& damage);
@@ -183,6 +252,9 @@ class SdlRailWindow
 	std::unique_ptr<SdlWindow> _win; /* local window+renderer (lazy, main thread) */
 	SDL_Rect _windowRect;            /* server offset/size */
 	uint32_t _style = 0;
+	uint32_t _exStyle = 0;
+	/* The shadow-rule suppression report in reconcile is once per window. */
+	bool _shadowSuppressLogged = false;
 	bool _everResizable = false; /* latched: ever seen resizable (styleResizable) */
 	uint64_t _ownerId = 0;
 	SDL_Rect _resizeMargins = { 0, 0, 0, 0 }; /* x=left y=top w=right h=bottom */
@@ -194,9 +266,13 @@ class SdlRailWindow
 	SDL_Point _maxSize = { 0, 0 };
 	bool _minMaxDirty = false;
 	bool _isPopup = false;
-	bool _layered = false;
-	bool _layeredApp = false;      /* WS_EX_LAYERED shadow/glass decoration: never rendered */
+	bool _fullscreen = false;      /* full-display popup as fullscreen toplevel (Wayland) */
+	bool _layered = false;         /* caption-less WS_EX_LAYERED decoration (drop shadow) */
+	bool _clickThrough = false;    /* WS_EX_TRANSPARENT decoration */
+	bool _overlay = false;         /* layered tool window: drag image / drag feedback */
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */
+	bool _shadowAnchored = false;  /* a visible popup adjoins this shadow (see setShadowAnchored) */
+	bool _frame = false;           /* companion shadow frame */
 	bool _parentApplied = false;   /* transient-for owner set once (owned non-popup dialogs) */
 	StateSync _maxState;           /* maximize sync */
 	StateSync _minState;           /* minimize sync */
@@ -206,14 +282,35 @@ class SdlRailWindow
 	bool _visible = false;
 	bool _geometryDirty = true;
 	bool _titleDirty = false;
+	bool _topmost = false;
+	bool _topmostDirty = false;
 	bool _styleDirty = false;   /* resizability needs re-applying (style change) */
 	bool _painted = false;      /* full copy done; afterwards only damage regions are re-copied */
 	bool _gfxPresented = false; /* presented own GFX content once: gate the first map on it */
 	bool _mapped = false;       /* shown at least once (one-shot show+raise) */
 	bool _localMoveActive = false; /* WM move/resize in progress: ignore server geometry + input */
-	bool _localMoveIsResize = false;  /* local move is a resize vs a move */
+	bool _localMoveIsResize = false;          /* local move is a resize vs a move */
+	bool _localMoveSizeChanged = false;       /* server resized mid-move (drag-restore) */
+	SDL_Point _localMoveServerPos = { 0, 0 }; /* the re-anchored server origin (see above) */
+	/* Deferred server-modal-loop close for THIS window (see armLoopEnd()). */
+	struct
+	{
+		bool pending = false;
+		bool maximize = false;
+		bool snap = false;
+		SDL_Rect snapRect = { 0, 0, 0, 0 };
+	} _loopEnd;
+	bool _geomApplyPending = false; /* a client-issued geometry/state apply is still settling */
+	bool _wmRefused = false;        /* WM refused resize; adopt its geometry (takeWmOverride) */
+	SDL_Rect _wmRefusedOuter = { 0, 0, 0, 0 };
 	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */
 	bool _resizeAnchorBottom = false; /* anchor stale frame to the bottom edge (top-side resize) */
+	/* Timeout deadline for anchored frames during resize completion. */
+	uint64_t _awaitingFrameUntil = 0;
+	/* Deadline for the server's post-restore rect; 0 when none is awaited. */
+	uint64_t _awaitRestoreUntil = 0;
+	/* Content origin offset inside current GFX surface. */
+	SDL_Point _gfxVisOrigin = { 0, 0 };
 	SDL_Rect _extentsApplied = { 0, 0, 0, 0 }; /* band insets last mirrored to the WM */
 
 	/* Guard for state shared between RDP and main threads. */
@@ -236,4 +333,7 @@ class SdlRailWindow
 	/* Pixel dimensions at last presentation. */
 	int _lastWinW = 0;
 	int _lastWinH = 0;
+	int _lastGfxW = 0;
+	int _lastGfxH = 0;
+	bool _needsFullBlit = true;
 };
