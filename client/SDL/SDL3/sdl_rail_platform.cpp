@@ -28,12 +28,14 @@ static RailPlatformCaps detectRailPlatformCaps()
 		/* Wayland: toplevels can't be positioned or queried; its compositor always composites. */
 		caps.positionsReadable = false;
 		caps.supportsTransparentWindows = true;
+		caps.supportsRestack = false;
 	}
 	else
 	{
 		/* Check position readability and transparency support for non-Wayland backends. */
 		caps.positionsReadable = true;
 		caps.supportsTransparentWindows = sdl_x11_has_compositor();
+		caps.supportsRestack = sdl::utils::isX11Driver();
 	}
 	return caps;
 }
