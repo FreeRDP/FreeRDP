@@ -1133,6 +1133,21 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					if (!_rail.suppressServerInput(ev.windowID))
 						_rail.invalidateWindow(ev.windowID);
 					return true;
+				case SDL_EVENT_WINDOW_MAXIMIZED:
+					/* Maximize must complete move first. */
+					_rail.completeLocalMoveIfPending();
+					_rail.handleMaximized(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_MINIMIZED:
+					_rail.handleMinimized(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_RESTORED:
+					_rail.handleRestored(ev.windowID);
+					return true;
+				case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+					/* Send SC_CLOSE, don't abort the session. */
+					_rail.handleClose(ev.windowID);
+					return true;
 				case SDL_EVENT_WINDOW_FOCUS_GAINED:
 					_rail.handleFocus(ev.windowID, true);
 					return true;
@@ -1142,12 +1157,9 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 				case SDL_EVENT_WINDOW_MOVED:
 					return true;
 				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-					/* WM resize in progress: the server sends no frame during the drag, so repaint
-					 * synchronously (not a coalesced USER_UPDATE) on every configure step -
-					 * paintGfx re-anchors the stale frame and draws the placeholder over the
-					 * revealed area. PIXEL_SIZE_CHANGED only; RESIZED duplicates it for every size
-					 * change. */
-					_rail.noteWaylandResize();
+					/* No server frame during the drag: repaint synchronously each configure step;
+					 * also report the new size to catch a compositor snap/tile. */
+					_rail.handleWaylandResize(ev.windowID);
 					std::ignore = drawToWindows({});
 					return true;
 				default:

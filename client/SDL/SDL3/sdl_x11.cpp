@@ -82,6 +82,53 @@ bool sdl_x11_begin_move_size(SDL_Window* window, int netDirection)
 	return true;
 }
 
+static Window sdl_x11_xwindow(SDL_Window* window)
+{
+	if (!window)
+		return 0;
+	auto props = SDL_GetWindowProperties(window);
+	return static_cast<Window>(SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0));
+}
+
+bool sdl_x11_restack_windows(const std::vector<SDL_Window*>& topToBottom)
+{
+	if (!sdl::utils::isX11Driver() || (topToBottom.size() < 2))
+		return false;
+
+	auto props = SDL_GetWindowProperties(topToBottom.front());
+	auto dpy = static_cast<Display*>(
+	    SDL_GetPointerProperty(props, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, nullptr));
+	if (!dpy)
+		return false;
+
+	static Atom s_restack = None;
+	if (s_restack == None)
+		s_restack = XInternAtom(dpy, "_NET_RESTACK_WINDOW", False);
+
+	const Window root = DefaultRootWindow(dpy);
+	/* Restack each window below its predecessor to realize the server z-order. */
+	for (size_t i = 1; i < topToBottom.size(); i++)
+	{
+		const Window win = sdl_x11_xwindow(topToBottom[i]);
+		const Window sibling = sdl_x11_xwindow(topToBottom[i - 1]);
+		if ((win == 0) || (sibling == 0))
+			continue;
+
+		XClientMessageEvent xev = {};
+		xev.type = ClientMessage;
+		xev.window = win;
+		xev.message_type = s_restack;
+		xev.format = 32;
+		xev.data.l[0] = 2; /* source indication: pager/direct (authoritative) */
+		xev.data.l[1] = static_cast<long>(sibling);
+		xev.data.l[2] = Below;
+		XSendEvent(dpy, root, False, SubstructureRedirectMask | SubstructureNotifyMask,
+		           reinterpret_cast<XEvent*>(&xev));
+	}
+	XFlush(dpy);
+	return true;
+}
+
 #else /* !WITH_SDL_X11_NATIVE */
 
 bool sdl_x11_has_compositor()
@@ -90,6 +137,11 @@ bool sdl_x11_has_compositor()
 }
 
 bool sdl_x11_begin_move_size(SDL_Window* /*window*/, int /*netDirection*/)
+{
+	return false;
+}
+
+bool sdl_x11_restack_windows(const std::vector<SDL_Window*>& /*topToBottom*/)
 {
 	return false;
 }

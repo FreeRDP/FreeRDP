@@ -23,6 +23,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
 
 #include <SDL3/SDL.h>
 
@@ -76,6 +77,11 @@ class SdlRail
 	[[nodiscard]] bool ownsWindow(SDL_WindowID id);
 	/* Mark a RAIL window fully dirty and request a repaint (e.g. on expose). */
 	void invalidateWindow(SDL_WindowID id);
+	/* Local maximize/minimize/restore state handlers. */
+	void handleMaximized(SDL_WindowID id);
+	void handleMinimized(SDL_WindowID id);
+	void handleRestored(SDL_WindowID id);
+	void handleClose(SDL_WindowID id);
 	/* Local focus change: send ClientActivate, like xf FocusIn/FocusOut. */
 	void handleFocus(SDL_WindowID id, bool gained);
 	/* Rewrite window-local (x,y) to server-absolute; false if id is not a RAIL window. */
@@ -88,21 +94,31 @@ class SdlRail
 	/* Finalize pending local move/resize. */
 	void completeLocalMoveIfPending();
 
-	/* Wayland: a size-change event arrived for the active resize (main thread); marks that the drag
-	 * actually resized, so a bare pointer re-enter can't finalize a no-op click. */
-	void noteWaylandResize();
-	/* Wayland (main thread): finalize the resize. Called when the compositor grab ends (pointer
-	 * re-enters, SDL_EVENT_WINDOW_MOUSE_ENTER) or as a backstop on the next button-down. No-op
-	 * unless a Wayland resize that actually resized is pending. */
+	/* Finalize Wayland resize. */
 	void completeWaylandResize();
+	/* Handle Wayland resize event. */
+	void handleWaylandResize(SDL_WindowID id);
 
   private:
 	/* _windows helpers: callers must hold _windowsLock. */
 	[[nodiscard]] SdlRailWindow* getWindow(uint64_t id);
 	[[nodiscard]] SdlRailWindow* getWindowBySdlId(SDL_WindowID id);
 	SdlRailWindow* addWindow(uint64_t id, const SDL_Rect& rect);
+	/* The window `ownerId` names, if it is a live non-popup app window (a valid popup/dialog
+	 * parent); else nullptr. Caller holds _windowsLock. */
+	[[nodiscard]] SdlRailWindow* resolveParent(uint64_t ownerId);
 
 	void enableRemoteAppMode(bool enable);
+	/* Report a work area to the server (SPI_SET_WORK_AREA, server coords). Main thread. No-op if it
+	 * matches the last one sent. */
+	void sendWorkArea(const SDL_Rect& area);
+	/* Clamp a window origin (x,y) so a w x h window stays inside the server desktop. */
+	void clampIntoDesktop(int& x, int& y, int w, int h) const;
+	/* Send a RAIL_SYSCOMMAND_ORDER for the window. Caller holds _windowsLock. */
+	void sendSystemCommand(SdlRailWindow* appWindow, uint16_t command);
+	/* Realize the server's top-level z-order (X11 only, focus-neutral). Caller holds _windowsLock.
+	 */
+	void applyZOrder();
 
 	/* --- RAIL server callbacks (static, dispatched to the instance) --- */
 	static UINT server_execute_result(RailClientContext* context,
@@ -116,6 +132,10 @@ class SdlRail
 	void registerUpdateCallbacks(rdpUpdate* update);
 	static BOOL window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
 	                          const WINDOW_STATE_ORDER* windowState);
+	static BOOL window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                        const WINDOW_ICON_ORDER* windowIcon);
+	static BOOL window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                               const WINDOW_CACHED_ICON_ORDER* windowCachedIcon);
 	static BOOL window_delete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
 	static BOOL monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
 	                              const MONITORED_DESKTOP_ORDER* monitoredDesktop);
@@ -127,15 +147,23 @@ class SdlRail
 	 * adopt it locally. Both the X11 and Wayland completion paths funnel here. */
 	void reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int h);
 
+	/* MS-RDPERP icon cache slot for cacheId:cacheEntry; nullptr if out of range. cacheId 0xFF =
+	 * "do not cache" scratch slot (the spec says 0xFFFF but the field is one byte). */
+	[[nodiscard]] SdlRailIcon* iconCacheLookup(uint32_t cacheId, uint32_t cacheEntry);
+
   private:
 	SdlContext* _context;
 	RailClientContext* _rail = nullptr;
 	bool _enabled = false;
 	bool _refreshSent = false; /* one full RefreshRect per connection, at first window realize */
+	/* Last work area reported to the server (server coordinates). */
+	SDL_Rect _sentWorkArea = { 0, 0, 0, 0 };
 	/* Guards _windows (RDP thread mutates, main thread paints/iterates, GFX thread looks up).
 	 * Erased on the main thread only, so SDL windows are destroyed there. */
 	mutable std::mutex _windowsLock;
 	std::map<uint64_t, SdlRailWindow> _windows;
+	/* Windows awaiting destruction on the main thread. */
+	std::multimap<uint64_t, SdlRailWindow> _deadWindows;
 	/* WM move/resize in progress; report the final rect when it ends. Wayland tracks size only. */
 	uint32_t _localMoveId = 0;
 	bool _localMoveWayland = false;
@@ -144,4 +172,15 @@ class SdlRail
 	/* Wayland: a WINDOW_RESIZED has arrived since the grab started, so the pending op really
 	 * resized (guards against a bare pointer re-enter finalizing a no-op click). Main thread. */
 	bool _localMoveSawResize = false;
+	/* Last focused app window ID. */
+	uint64_t _focusedAppId = 0;
+	/* Server-driven z-order list. */
+	std::vector<uint32_t> _zOrder;
+	std::vector<uint32_t> _appliedZOrder;
+	uint32_t _activeWindowId = 0;
+	bool _zOrderDirty = false;
+	/* Icon cache (RDP thread): index = cacheId * entries + cacheEntry, sized from settings. */
+	std::vector<SdlRailIcon> _iconCache;
+	SdlRailIcon _iconScratch;
+	uint32_t _iconCacheEntries = 0;
 };

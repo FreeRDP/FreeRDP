@@ -18,6 +18,8 @@
  */
 #pragma once
 
+#include <atomic>
+
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -29,6 +31,14 @@
 #include <freerdp/types.h>
 
 class SdlWindow;
+
+/* A decoded RAIL window icon (BGRA32 pixels). */
+struct SdlRailIcon
+{
+	uint32_t w = 0;
+	uint32_t h = 0;
+	std::vector<uint8_t> bgra;
+};
 
 /**
  * A single RemoteApp window, backed by a borderless SDL window.
@@ -89,6 +99,8 @@ class SdlRailWindow
 	void setTitle(const std::string& title);
 	void setTitle(const char16_t* str, size_t lenBytes);
 	void setVisible(bool visible);
+	/* Window icon (WindowIcon/WindowCachedIcon orders); applied in reconcile. */
+	void setIcon(const SdlRailIcon& icon);
 
 	/* --- main thread only (SDL window ops) --- */
 
@@ -98,14 +110,48 @@ class SdlRailWindow
 	/* Mark the whole window dirty for re-blit (e.g. on expose). */
 	void invalidateAll();
 
+	/* Maximize/minimize sync: local state (rail) vs server-reported state (RDP thread). */
+	[[nodiscard]] bool railMaximized() const
+	{
+		return _maxState.rail;
+	}
+	void setRailMaximized(bool m)
+	{
+		_maxState.rail = m;
+	}
+	void setServerMaximized(bool m);
+	[[nodiscard]] bool railMinimized() const
+	{
+		return _minState.rail;
+	}
+	void setRailMinimized(bool m)
+	{
+		std::unique_lock lock(_gfxLock);
+		_minState.rail = m;
+	}
+	void setServerMinimized(bool m);
+	/* Local or live-WM maximized (railMaximized may lag the SDL flag during a snap). */
+	[[nodiscard]] bool effectivelyMaximized() const;
+
 	/* Create/move/show the local SDL window to match pending state; popups use parent+rect. */
 	bool reconcile(SDL_Window* parent, const SDL_Rect& parentRect);
 	/* Render: GFX surface if mapped, else the shared desktop region. `damage` = updated rects. */
 	bool paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
-	           const std::vector<SDL_Rect>& damage, SDL_Window* parent = nullptr,
-	           const SDL_Rect& parentRect = {});
+	           const std::vector<SDL_Rect>& damage, SDL_Window* parent, const SDL_Rect& parentRect);
+	/* Bring window to front */
+	void raise();
 
   private:
+	/* One maximize/minimize state pair: local (sent to server), server-reported, pending apply. */
+	struct StateSync
+	{
+		std::atomic<bool> rail{ false };
+		std::atomic<bool> server{ false };
+		bool dirty = false;
+	};
+	void setServerState(StateSync& s, bool m);
+	/* Caller holds _gfxLock and checked _win. */
+	void applyServerState(StateSync& s, const char* what, bool (*enter)(SDL_Window*));
 	[[nodiscard]] bool styleResizable() const; /* caller holds _gfxLock */
 	bool create(SDL_Window* parent, const SDL_Rect& parentRect);
 	bool paintGfx(SDL_PixelFormat format);
@@ -121,13 +167,20 @@ class SdlRailWindow
 	SDL_Point _maxSize = { 0, 0 };
 	bool _minMaxDirty = false;
 	bool _isPopup = false;
-	bool _layered = false;         /* WS_EX_LAYERED shadow/glass decoration: never rendered */
+	bool _layered = false;
+	bool _layeredApp = false;      /* WS_EX_LAYERED shadow/glass decoration: never rendered */
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */
+	bool _parentApplied = false;   /* transient-for owner set once (owned non-popup dialogs) */
+	StateSync _maxState;           /* maximize sync */
+	StateSync _minState;           /* minimize sync */
 	std::string _title = "RdpRailWindow";
+	SdlRailIcon _icon;
+	bool _iconDirty = false;
 	bool _visible = false;
 	bool _geometryDirty = true;
 	bool _titleDirty = false;
-	bool _painted = false; /* full copy done; afterwards only damage regions are re-copied */
+	bool _styleDirty = false; /* resizability needs re-applying (style change) */
+	bool _painted = false;    /* full copy done; afterwards only damage regions are re-copied */
 	bool _localMoveActive = false; /* WM move/resize in progress: ignore server geometry + input */
 	bool _localMoveIsResize = false;  /* local move is a resize vs a move */
 	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */
@@ -144,4 +197,7 @@ class SdlRailWindow
 	bool _hasGfx = false;
 	/* Regions changed since last paint. Guarded by _gfxLock. */
 	std::vector<SDL_Rect> _gfxDamage;
+	/* Pixel dimensions at last presentation. */
+	int _lastWinW = 0;
+	int _lastWinH = 0;
 };

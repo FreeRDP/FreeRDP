@@ -20,6 +20,8 @@
 
 #include <SDL3/SDL.h>
 
+#include <vector>
+
 /* Native X11 helpers for RAIL client. */
 
 /* Check if an X11 compositing manager is active. */
@@ -27,3 +29,6 @@
 
 /* Start native interactive window move/resize via _NET_WM_MOVERESIZE. */
 bool sdl_x11_begin_move_size(SDL_Window* window, int netDirection);
+
+/* Restack windows to top-to-bottom order via _NET_RESTACK_WINDOW. */
+bool sdl_x11_restack_windows(const std::vector<SDL_Window*>& topToBottom);

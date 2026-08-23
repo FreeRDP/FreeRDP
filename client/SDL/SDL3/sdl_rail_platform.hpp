@@ -25,6 +25,7 @@ struct RailPlatformCaps
 {
 	bool positionsReadable = true;
 	bool supportsTransparentWindows = true;
+	bool supportsRestack = false;
 };
 
 /* Detected capabilities of the running SDL video backend (cached). */
