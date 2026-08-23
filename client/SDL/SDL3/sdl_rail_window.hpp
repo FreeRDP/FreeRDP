@@ -55,7 +55,15 @@ class SdlRailWindow
 
 	/* Server-driven geometry (from WINDOW_ORDER). */
 	void updateWindowRect(const SDL_Rect& rect);
+	/* Server-reported window rect. */
 	[[nodiscard]] SDL_Rect windowRect() const;
+
+	/* Local move/resize state. */
+	void setLocalMoveActive(bool active);
+	[[nodiscard]] bool localMoveActive() const;
+	void adoptLocalGeometry(const SDL_Rect& rect);
+	/* Resize anchor corner during local resize. */
+	void setResizeAnchor(bool right, bool bottom);
 
 	/* Deferred destroy: mark here (RDP thread), erased on the main thread in SdlRail::paint. */
 	void markDeleted();
@@ -63,6 +71,13 @@ class SdlRailWindow
 
 	/* Visible sub-rects (window-relative); only these are painted so windows on top don't bleed. */
 	void setVisibilityRects(std::vector<SDL_Rect> rects);
+
+	/* Server min/max tracking size (RAIL MinMaxInfo); applied in reconcile. */
+	void setMinMaxSize(SDL_Point minSize, SDL_Point maxSize);
+
+	/* Server outside resize margins. */
+	void setResizeMargins(int left, int top, int right, int bottom);
+	[[nodiscard]] SDL_Rect resizeMargins() const; /* x=left y=top w=right h=bottom */
 
 	/* Owning window id (WINDOW_ORDER_FIELD_OWNER); popups position relative to it. */
 	void setOwner(uint64_t ownerId);
@@ -77,9 +92,11 @@ class SdlRailWindow
 
 	/* --- main thread only (SDL window ops) --- */
 
-	/* Window-mapped GFX surface (RDP thread): references the gdi pixels, rendered in paint(). */
-	void updateGfxSurface(const void* data, uint32_t stride, uint32_t width, uint32_t height);
-	[[nodiscard]] bool hasGfx();
+	/* Window-mapped GFX surface (RDP thread): deep-copies the damaged gdi pixels for paint(). */
+	void updateGfxSurface(const void* data, uint32_t stride, uint32_t width, uint32_t height,
+	                      const RECTANGLE_16* damage, uint32_t nbDamage);
+	/* Mark the whole window dirty for re-blit (e.g. on expose). */
+	void invalidateAll();
 
 	/* Create/move/show the local SDL window to match pending state; popups use parent+rect. */
 	bool reconcile(SDL_Window* parent, const SDL_Rect& parentRect);
@@ -89,6 +106,7 @@ class SdlRailWindow
 	           const SDL_Rect& parentRect = {});
 
   private:
+	[[nodiscard]] bool styleResizable() const; /* caller holds _gfxLock */
 	bool create(SDL_Window* parent, const SDL_Rect& parentRect);
 	bool paintGfx(SDL_PixelFormat format);
 	bool paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect>& damage);
@@ -98,6 +116,10 @@ class SdlRailWindow
 	SDL_Rect _windowRect;            /* server offset/size */
 	uint32_t _style = 0;
 	uint64_t _ownerId = 0;
+	SDL_Rect _resizeMargins = { 0, 0, 0, 0 }; /* x=left y=top w=right h=bottom */
+	SDL_Point _minSize = { 0, 0 };
+	SDL_Point _maxSize = { 0, 0 };
+	bool _minMaxDirty = false;
 	bool _isPopup = false;
 	bool _layered = false;         /* WS_EX_LAYERED shadow/glass decoration: never rendered */
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */
@@ -106,14 +128,20 @@ class SdlRailWindow
 	bool _geometryDirty = true;
 	bool _titleDirty = false;
 	bool _painted = false; /* full copy done; afterwards only damage regions are re-copied */
+	bool _localMoveActive = false; /* WM move/resize in progress: ignore server geometry + input */
+	bool _localMoveIsResize = false;  /* local move is a resize vs a move */
+	bool _resizeAnchorRight = false;  /* anchor stale frame to the right edge (left-side resize) */
+	bool _resizeAnchorBottom = false; /* anchor stale frame to the bottom edge (top-side resize) */
 
 	/* Guard for state shared between RDP and main threads. */
 	mutable std::mutex _gfxLock;
 	std::vector<SDL_Rect> _visRects;
 	bool _deleted = false;
-	const void* _gfxData = nullptr;
+	std::vector<uint8_t> _gfxBuffer; /* owned deep-copy of the gdi surface (avoids UAF) */
 	uint32_t _gfxStride = 0;
 	uint32_t _gfxW = 0;
 	uint32_t _gfxH = 0;
 	bool _hasGfx = false;
+	/* Regions changed since last paint. Guarded by _gfxLock. */
+	std::vector<SDL_Rect> _gfxDamage;
 };

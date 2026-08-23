@@ -39,7 +39,8 @@ class SdlContext;
  * RAIL channel handler for the SDL3 client.
  *
  * Server-authoritative: the server drives window geometry via WINDOW_ORDER and the local
- * borderless windows follow (the RemoteApp frame is server-drawn content).
+ * borderless windows follow (the RemoteApp frame is server-drawn content). Interactive
+ * move/resize is handed to the local WM only on a server request (ServerLocalMoveSize).
  */
 class SdlRail
 {
@@ -73,10 +74,27 @@ class SdlRail
 
 	/* Input routing (main thread): true if the SDL window id is one of our RAIL windows. */
 	[[nodiscard]] bool ownsWindow(SDL_WindowID id);
+	/* Mark a RAIL window fully dirty and request a repaint (e.g. on expose). */
+	void invalidateWindow(SDL_WindowID id);
 	/* Local focus change: send ClientActivate, like xf FocusIn/FocusOut. */
 	void handleFocus(SDL_WindowID id, bool gained);
 	/* Rewrite window-local (x,y) to server-absolute; false if id is not a RAIL window. */
 	bool translateToServer(SDL_WindowID id, float& x, float& y);
+	/* Suppress button-up to server during active local move/resize. */
+	bool suppressServerInput(SDL_WindowID id);
+
+	/* Start native interactive window move/resize. */
+	void handleLocalMoveRequested(uint32_t windowId, SDL_Point pos, uint16_t moveType);
+	/* Finalize pending local move/resize. */
+	void completeLocalMoveIfPending();
+
+	/* Wayland: a size-change event arrived for the active resize (main thread); marks that the drag
+	 * actually resized, so a bare pointer re-enter can't finalize a no-op click. */
+	void noteWaylandResize();
+	/* Wayland (main thread): finalize the resize. Called when the compositor grab ends (pointer
+	 * re-enters, SDL_EVENT_WINDOW_MOUSE_ENTER) or as a backstop on the next button-down. No-op
+	 * unless a Wayland resize that actually resized is pending. */
+	void completeWaylandResize();
 
   private:
 	/* _windows helpers: callers must hold _windowsLock. */
@@ -89,6 +107,10 @@ class SdlRail
 	/* --- RAIL server callbacks (static, dispatched to the instance) --- */
 	static UINT server_execute_result(RailClientContext* context,
 	                                  const RAIL_EXEC_RESULT_ORDER* execResult);
+	static UINT server_local_move_size(RailClientContext* context,
+	                                   const RAIL_LOCALMOVESIZE_ORDER* localMoveSize);
+	static UINT server_min_max_info(RailClientContext* context,
+	                                const RAIL_MINMAXINFO_ORDER* minMaxInfo);
 
 	/* --- window order callbacks (registered on rdpUpdate::window) --- */
 	void registerUpdateCallbacks(rdpUpdate* update);
@@ -101,6 +123,10 @@ class SdlRail
 
 	static SdlRail* get(rdpContext* context);
 
+	/* Shared finalize tail (caller holds _windowsLock): report the final rect to the server and
+	 * adopt it locally. Both the X11 and Wayland completion paths funnel here. */
+	void reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int h);
+
   private:
 	SdlContext* _context;
 	RailClientContext* _rail = nullptr;
@@ -110,4 +136,12 @@ class SdlRail
 	 * Erased on the main thread only, so SDL windows are destroyed there. */
 	mutable std::mutex _windowsLock;
 	std::map<uint64_t, SdlRailWindow> _windows;
+	/* WM move/resize in progress; report the final rect when it ends. Wayland tracks size only. */
+	uint32_t _localMoveId = 0;
+	bool _localMoveWayland = false;
+	SDL_Point _localMoveGrabPos = { 0, 0 }; /* server-absolute grab point; close the loop here */
+	uint16_t _localMoveType = 0;            /* RAIL_WMSZ_* of the active local move */
+	/* Wayland: a WINDOW_RESIZED has arrived since the grab started, so the pending op really
+	 * resized (guards against a bare pointer re-enter finalizing a no-op click). Main thread. */
+	bool _localMoveSawResize = false;
 };

@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
 #include <tuple>
 
 #include <winpr/assert.h>
@@ -23,12 +24,15 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/log.h>
+#include <freerdp/codec/region.h>
 #include <freerdp/client/rail.h>
 
 #include "sdl_rail.hpp"
 #include "sdl_context.hpp"
 #include "sdl_types.hpp"
 #include "sdl_utils.hpp"
+#include "sdl_wayland.hpp"
+#include "sdl_x11.hpp"
 
 #define TAG CLIENT_TAG("sdl.rail")
 
@@ -66,6 +70,17 @@ bool SdlRail::ownsWindow(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
 	return getWindowBySdlId(id) != nullptr;
+}
+
+void SdlRail::invalidateWindow(SDL_WindowID id)
+{
+	std::unique_lock lock(_windowsLock);
+	auto* appWindow = getWindowBySdlId(id);
+	if (!appWindow)
+		return;
+	appWindow->invalidateAll();
+	lock.unlock();
+	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
 
 void SdlRail::handleFocus(SDL_WindowID id, bool gained)
@@ -213,7 +228,12 @@ UINT SdlRail::updateWindowFromSurface(gdiGfxSurface* surface)
 
 	const uint32_t w = surface->mappedWidth ? surface->mappedWidth : surface->width;
 	const uint32_t h = surface->mappedHeight ? surface->mappedHeight : surface->height;
-	appWindow->updateGfxSurface(surface->data, surface->scanline, w, h);
+
+	/* Consume per-frame damage. */
+	UINT32 nbRects = 0;
+	const RECTANGLE_16* rects = region16_rects(&surface->invalidRegion, &nbRects);
+	appWindow->updateGfxSurface(surface->data, surface->scanline, w, h, rects, nbRects);
+	region16_clear(&surface->invalidRegion);
 
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	return CHANNEL_RC_OK;
@@ -247,6 +267,8 @@ bool SdlRail::init(RailClientContext* rail)
 	rail->custom = this;
 	rail->ServerExecuteResult = SdlRail::server_execute_result;
 	/* ServerSystemParam: TODO apply the workarea (SPI_SET_WORK_AREA) to maximize bounds. */
+	rail->ServerLocalMoveSize = SdlRail::server_local_move_size;
+	rail->ServerMinMaxInfo = SdlRail::server_min_max_info;
 	/* Keep default ServerHandshake. */
 
 	WLog_INFO(TAG, "RAIL channel initialized");
@@ -256,6 +278,7 @@ bool SdlRail::init(RailClientContext* rail)
 bool SdlRail::uninit(RailClientContext* /*rail*/)
 {
 	_refreshSent = false;
+	_localMoveId = 0;
 	std::unique_lock lock(_windowsLock);
 	WLog_DBG(TAG, "RAIL channel uninit, destroying %zu windows", _windows.size());
 	_windows.clear();
@@ -296,6 +319,306 @@ UINT SdlRail::server_execute_result(RailClientContext* context,
 	{
 		WLog_DBG(TAG, "RemoteApp exec OK, enabling RAIL mode");
 		rail->enableRemoteAppMode(true);
+	}
+	return CHANNEL_RC_OK;
+}
+
+UINT SdlRail::server_local_move_size(RailClientContext* context,
+                                     const RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(localMoveSize);
+
+	/* Start native move/resize to avoid dual-authority geometry races. */
+	if (localMoveSize->isMoveSizeStart && (localMoveSize->moveSizeType >= RAIL_WMSZ_LEFT) &&
+	    (localMoveSize->moveSizeType <= RAIL_WMSZ_MOVE))
+	{
+		/* Carry the target in the payload so back-to-back requests can't clobber it. */
+		const UINT32 packedPos =
+		    (static_cast<UINT32>(static_cast<UINT16>(localMoveSize->posX)) << 16) |
+		    static_cast<UINT16>(localMoveSize->posY);
+		WLog_DBG(TAG, "server move/size start id=0x%08" PRIx32 " type=%" PRIu16 " pos=%d,%d",
+		         localMoveSize->windowId, localMoveSize->moveSizeType, localMoveSize->posX,
+		         localMoveSize->posY);
+		(void)sdl_push_user_event(SDL_EVENT_USER_RAIL_MOVE, localMoveSize->windowId, packedPos,
+		                          static_cast<int>(localMoveSize->moveSizeType));
+	}
+	else if (!localMoveSize->isMoveSizeStart)
+	{
+		WLog_DBG(TAG, "server move/size end id=0x%08" PRIx32, localMoveSize->windowId);
+		/* Server ended the move/size: resume applying geometry + input (covers Wayland move). */
+		auto rail = static_cast<SdlRail*>(context->custom);
+		if (rail)
+		{
+			std::unique_lock lock(rail->_windowsLock);
+			/* Ignore server end order during Wayland resize. */
+			const bool ownedByWaylandResize =
+			    rail->_localMoveWayland && (rail->_localMoveId == localMoveSize->windowId);
+			if (!ownedByWaylandResize)
+			{
+				if (auto* appWindow = rail->getWindow(localMoveSize->windowId))
+					appWindow->setLocalMoveActive(false);
+			}
+		}
+	}
+	return CHANNEL_RC_OK;
+}
+
+/* X11 only: suppress button-up during modal loop. */
+bool SdlRail::suppressServerInput(SDL_WindowID id)
+{
+	if (_localMoveId == 0)
+		return false; /* fast path: no move pending, skip the lock on every motion event */
+	std::unique_lock lock(_windowsLock);
+	auto* appWindow = getWindowBySdlId(id);
+	return appWindow && appWindow->localMoveActive() && !_localMoveWayland;
+}
+
+/* RAIL_WMSZ_* -> _NET_WM_MOVERESIZE direction (0..7 = resize edges, 8 = move). */
+static int railToNetDirection(uint16_t moveType)
+{
+	switch (moveType)
+	{
+		case RAIL_WMSZ_TOPLEFT:
+			return 0;
+		case RAIL_WMSZ_TOP:
+			return 1;
+		case RAIL_WMSZ_TOPRIGHT:
+			return 2;
+		case RAIL_WMSZ_RIGHT:
+			return 3;
+		case RAIL_WMSZ_BOTTOMRIGHT:
+			return 4;
+		case RAIL_WMSZ_BOTTOM:
+			return 5;
+		case RAIL_WMSZ_BOTTOMLEFT:
+			return 6;
+		case RAIL_WMSZ_LEFT:
+			return 7;
+		case RAIL_WMSZ_MOVE:
+		default:
+			return 8;
+	}
+}
+
+/* RAIL_WMSZ_* -> XDG_TOPLEVEL_RESIZE_EDGE_*. */
+static uint32_t railToXdgEdge(uint16_t moveType)
+{
+	switch (moveType)
+	{
+		case RAIL_WMSZ_TOP:
+			return 1;
+		case RAIL_WMSZ_BOTTOM:
+			return 2;
+		case RAIL_WMSZ_LEFT:
+			return 4;
+		case RAIL_WMSZ_TOPLEFT:
+			return 5;
+		case RAIL_WMSZ_BOTTOMLEFT:
+			return 6;
+		case RAIL_WMSZ_RIGHT:
+			return 8;
+		case RAIL_WMSZ_TOPRIGHT:
+			return 9;
+		case RAIL_WMSZ_BOTTOMRIGHT:
+			return 10;
+		default:
+			return 0; /* none */
+	}
+}
+
+/* Which window edges a RAIL_WMSZ_* drag moves; the opposite edges stay anchored. */
+struct RailEdges
+{
+	bool left, right, top, bottom;
+};
+static RailEdges railEdges(uint16_t t)
+{
+	return { (t == RAIL_WMSZ_TOPLEFT) || (t == RAIL_WMSZ_LEFT) || (t == RAIL_WMSZ_BOTTOMLEFT),
+		     (t == RAIL_WMSZ_TOPRIGHT) || (t == RAIL_WMSZ_RIGHT) || (t == RAIL_WMSZ_BOTTOMRIGHT),
+		     (t == RAIL_WMSZ_TOPLEFT) || (t == RAIL_WMSZ_TOP) || (t == RAIL_WMSZ_TOPRIGHT),
+		     (t == RAIL_WMSZ_BOTTOMLEFT) || (t == RAIL_WMSZ_BOTTOM) ||
+		         (t == RAIL_WMSZ_BOTTOMRIGHT) };
+}
+
+void SdlRail::handleLocalMoveRequested(uint32_t windowId, SDL_Point pos, uint16_t moveType)
+{
+	const bool wayland = sdl::utils::isWaylandDriver();
+	const bool x11 = sdl::utils::isX11Driver();
+	if (!wayland && !x11)
+		return;
+
+	std::unique_lock lock(_windowsLock);
+	auto appWindow = getWindow(windowId);
+	if (!appWindow || !appWindow->window() || appWindow->isPopup())
+		return;
+
+	const bool isMove = (moveType == RAIL_WMSZ_MOVE);
+	WLog_DBG(TAG, "local move start id=0x%08" PRIx32 " driver=%s type=%" PRIu16 " %s", windowId,
+	         wayland ? "wayland" : "x11", moveType, isMove ? "move" : "resize");
+	bool started = false;
+	if (wayland)
+	{
+		/* Wayland: positions unreadable, sizes readable. */
+		if (isMove)
+			started = sdl_wayland_begin_move(appWindow->window());
+		else
+			started = sdl_wayland_begin_resize(appWindow->window(), railToXdgEdge(moveType));
+		if (started && !isMove)
+		{
+			_localMoveId = windowId;
+			_localMoveWayland = true;
+			_localMoveType = moveType;
+			/* Reset resize guard for new drag. */
+			_localMoveSawResize = false;
+		}
+	}
+	else
+	{
+		/* X11: hand resize to WM, suppress input. */
+		started = sdl_x11_begin_move_size(appWindow->window(), railToNetDirection(moveType));
+		if (started)
+		{
+			_localMoveId = windowId;
+			_localMoveWayland = false;
+			_localMoveType = moveType;
+			const SDL_Rect rect = appWindow->windowRect();
+			_localMoveGrabPos = { rect.x + pos.x, rect.y + pos.y };
+		}
+	}
+	/* Drive local frame during X11/Wayland drag. */
+	if (started && (!wayland || !isMove))
+	{
+		appWindow->setLocalMoveActive(true);
+		if (!isMove)
+		{
+			/* Anchor the stale frame to the fixed edge (opposite the dragged one). */
+			const RailEdges e = railEdges(moveType);
+			appWindow->setResizeAnchor(e.left, e.top);
+		}
+	}
+	else if (!started)
+		WLog_WARN(TAG, "WM move failed for RAIL window 0x%08" PRIx32, windowId);
+}
+
+/* Caller holds _windowsLock. Report the final rect to the server and adopt it locally. */
+void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int h)
+{
+	/* Always report, even if barely changed: the server may have diverged before input suppression
+	 * engaged, and a no-op report is harmless. Add back the invisible resize margins (matches
+	 * xf_rail_end_local_move). */
+	const SDL_Rect m = appWindow->resizeMargins();
+	RAIL_WINDOW_MOVE_ORDER move = {};
+	move.windowId = static_cast<UINT32>(appWindow->id());
+	move.left = WINPR_ASSERTING_INT_CAST(INT16, x - m.x);
+	move.top = WINPR_ASSERTING_INT_CAST(INT16, y - m.y);
+	move.right = WINPR_ASSERTING_INT_CAST(INT16, x + w + m.w);
+	move.bottom = WINPR_ASSERTING_INT_CAST(INT16, y + h + m.h);
+	if (_rail && _rail->ClientWindowMove &&
+	    (_rail->ClientWindowMove(_rail, &move) != CHANNEL_RC_OK))
+		WLog_WARN(TAG, "ClientWindowMove failed for RAIL window 0x%08" PRIx32, move.windowId);
+
+	/* Adopt WM final geometry and resume input routing. */
+	appWindow->adoptLocalGeometry({ x, y, w, h });
+	/* Repaint now: the last presented frame may still be the resize placeholder. */
+	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
+}
+
+void SdlRail::noteWaylandResize()
+{
+	std::unique_lock lock(_windowsLock);
+	if (_localMoveId && _localMoveWayland)
+		_localMoveSawResize = true;
+}
+
+void SdlRail::completeWaylandResize()
+{
+	std::unique_lock lock(_windowsLock);
+	if ((_localMoveId == 0) || !_localMoveWayland)
+		return;
+	/* Only a drag that actually resized ends here; a bare re-enter is the spurious/idle enter. */
+	if (!_localMoveSawResize)
+		return;
+
+	auto appWindow = getWindow(_localMoveId);
+	_localMoveId = 0;
+	if (!appWindow || !appWindow->window())
+		return;
+
+	(void)SDL_SyncWindow(appWindow->window());
+	int w = 0;
+	int h = 0;
+	SDL_GetWindowSize(appWindow->window(), &w, &h);
+
+	/* Derive Wayland origin from anchor edge. */
+	const SDL_Rect start = appWindow->windowRect();
+	const RailEdges e = railEdges(_localMoveType);
+	auto* settings = _context->context()->settings;
+	const int dw = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
+	const int dh = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
+	int x = e.left ? (start.x + start.w - w) : start.x;
+	int y = e.top ? (start.y + start.h - h) : start.y;
+	x = std::clamp(x, 0, std::max(0, dw - w));
+	y = std::clamp(y, 0, std::max(0, dh - h));
+	reportAndAdopt(appWindow, x, y, w, h);
+}
+
+void SdlRail::completeLocalMoveIfPending()
+{
+	if (_localMoveId == 0)
+		return;
+
+	std::unique_lock lock(_windowsLock);
+	/* Skip Wayland button-up finalize. */
+	if (_localMoveWayland)
+		return;
+
+	auto appWindow = getWindow(_localMoveId);
+	if (!appWindow || !appWindow->window())
+	{
+		_localMoveId = 0;
+		return;
+	}
+
+	/* Finalize WM resize before reading final size. */
+	(void)SDL_SyncWindow(appWindow->window());
+
+	int x = 0;
+	int y = 0;
+	int w = 0;
+	int h = 0;
+	SDL_GetWindowSize(appWindow->window(), &w, &h);
+	_localMoveId = 0;
+
+	SDL_GetWindowPosition(appWindow->window(), &x, &y);
+	/* Synthetic button-up at final dragged corner. */
+	const RailEdges e = railEdges(_localMoveType);
+	const int px = e.left ? x : (e.right ? (x + w) : _localMoveGrabPos.x);
+	const int py = e.top ? y : (e.bottom ? (y + h) : _localMoveGrabPos.y);
+	(void)freerdp_client_send_button_event(_context->common(), FALSE, PTR_FLAGS_BUTTON1, px, py);
+
+	reportAndAdopt(appWindow, x, y, w, h);
+}
+
+UINT SdlRail::server_min_max_info(RailClientContext* context,
+                                  const RAIL_MINMAXINFO_ORDER* minMaxInfo)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(minMaxInfo);
+	auto rail = static_cast<SdlRail*>(context->custom);
+	WINPR_ASSERT(rail);
+
+	std::unique_lock lock(rail->_windowsLock);
+	auto appWindow = rail->getWindow(minMaxInfo->windowId);
+	if (appWindow)
+	{
+		WLog_VRB(TAG, "server minmax id=0x%08" PRIx32 " min=%dx%d max=%dx%d", minMaxInfo->windowId,
+		         minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight, minMaxInfo->maxTrackWidth,
+		         minMaxInfo->maxTrackHeight);
+		appWindow->setMinMaxSize({ minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight },
+		                         { minMaxInfo->maxTrackWidth, minMaxInfo->maxTrackHeight });
+		lock.unlock();
+		(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	}
 	return CHANNEL_RC_OK;
 }
@@ -355,6 +678,21 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 	}
 	if (fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 		appWindow->setOwner(windowState->ownerWindowId);
+	if (fieldFlags & (WINDOW_ORDER_FIELD_RESIZE_MARGIN_X | WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y))
+	{
+		SDL_Rect m = appWindow->resizeMargins();
+		if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X)
+		{
+			m.x = static_cast<int>(windowState->resizeMarginLeft);
+			m.w = static_cast<int>(windowState->resizeMarginRight);
+		}
+		if (fieldFlags & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y)
+		{
+			m.y = static_cast<int>(windowState->resizeMarginTop);
+			m.h = static_cast<int>(windowState->resizeMarginBottom);
+		}
+		appWindow->setResizeMargins(m.x, m.y, m.w, m.h);
+	}
 	if (fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 		appWindow->setStyle(windowState->style, windowState->extendedStyle);
 	if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
