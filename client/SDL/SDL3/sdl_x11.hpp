@@ -32,3 +32,6 @@ bool sdl_x11_begin_move_size(SDL_Window* window, int netDirection);
 
 /* Restack windows to top-to-bottom order via _NET_RESTACK_WINDOW. */
 bool sdl_x11_restack_windows(const std::vector<SDL_Window*>& topToBottom);
+
+/* Set _GTK_FRAME_EXTENTS on window. */
+bool sdl_x11_set_frame_extents(SDL_Window* window, int left, int right, int top, int bottom);
