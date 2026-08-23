@@ -1069,14 +1069,17 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 	SDL_Event copy{};
 	copy.motion = ev;
 	/* WM owns the drag (#12447); backstop: button released but button-up swallowed by grab. */
-	if (_rail.enabled() && _rail.suppressServerInput(ev.windowID))
+	if (_rail.enabled() && _rail.suppressServerMotion(ev.windowID))
 	{
-		if (!(SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK))
+		if (!(SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK))
 			_rail.completeLocalMoveIfPending();
 		return true;
 	}
 	if (_rail.enabled() && _rail.translateToServer(ev.windowID, copy.motion.x, copy.motion.y))
+	{
+		_rail.noteServerPointer(copy.motion.x, copy.motion.y);
 		return SdlTouch::handleEvent(this, copy.motion);
+	}
 
 	if (!getWindowForId(ev.windowID))
 		return true; /* Event for an untracked window (e.g. closed dialog) */
@@ -1125,6 +1128,10 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					_rail.completeWaylandResize();          /* Wayland: compositor grab ended */
 					/* Restore the cursor or the pointer stays hidden over RemoteApp windows. */
 					return restoreCursor();
+				case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+					/* Compositor took the pointer for the pending Wayland resize grab. */
+					_rail.noteResizeGrab(ev.windowID);
+					return true;
 				case SDL_EVENT_WINDOW_EXPOSED:
 					/* Force a repaint: we skip undamaged RAIL windows, so a re-exposed one is
 					 * stale. Not during a local drag: X exposes every resize step and the drag
@@ -1155,10 +1162,14 @@ bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 					_rail.handleFocus(ev.windowID, false);
 					return true;
 				case SDL_EVENT_WINDOW_MOVED:
+					if (!_rail.suppressServerInput(ev.windowID))
+						_rail.syncGeometry(ev.windowID);
 					return true;
 				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 					/* No server frame during the drag: repaint synchronously each configure step;
 					 * also report the new size to catch a compositor snap/tile. */
+					_rail.noteDragResize(ev.windowID, ev.data1, ev.data2);
+					_rail.syncGeometry(ev.windowID);
 					_rail.handleWaylandResize(ev.windowID);
 					std::ignore = drawToWindows({});
 					return true;
@@ -1271,16 +1282,23 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 		const bool suppress = _rail.suppressServerInput(ev.windowID);
 		if (ev.type == SDL_EVENT_MOUSE_BUTTON_UP)
 			_rail.completeLocalMoveIfPending();
-		/* Backstop for a Wayland resize whose MOUSE_ENTER completion never arrived. */
+		/* Backstop for a Wayland resize whose MOUSE_ENTER completion never arrived; a fresh press
+		 * proves the old grab is over, so a no-op click grab is cancelled here too. */
 		if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
-			_rail.completeWaylandResize();
+			_rail.completeWaylandResize(true);
 		/* activate the clicked window before forwarding, so the click routes to it. */
 		if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
 			_rail.ensureActive(ev.windowID);
 		if (suppress)
 			return true;
 		if (_rail.translateToServer(ev.windowID, copy.button.x, copy.button.y))
+		{
+			/* Record the forwarded left press: it is the anchor of any server modal move/size
+			 * loop this press starts (the loop moves the window by release - anchor). */
+			if ((ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) && (ev.button == SDL_BUTTON_LEFT))
+				_rail.noteLeftPress(copy.button.x, copy.button.y);
 			return SdlTouch::handleEvent(this, copy.button);
+		}
 	}
 
 	if (!getWindowForId(ev.windowID))

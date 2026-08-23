@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <atomic>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -88,16 +89,35 @@ class SdlRail
 	void ensureActive(SDL_WindowID id);
 	/* Rewrite window-local (x,y) to server-absolute; false if id is not a RAIL window. */
 	bool translateToServer(SDL_WindowID id, float& x, float& y);
+	/* Record position of last left button-down. */
+	void noteLeftPress(float x, float y)
+	{
+		_lastPressServer = { static_cast<int>(x), static_cast<int>(y) };
+		_lastPointerServer = _lastPressServer;
+	}
+	/* Record pointer position on server. */
+	void noteServerPointer(float x, float y)
+	{
+		_lastPointerServer = { static_cast<int>(x), static_cast<int>(y) };
+	}
 	/* Suppress button-up to server during active local move/resize. */
 	bool suppressServerInput(SDL_WindowID id);
+	/* Suppress motion events during active local move/resize. */
+	bool suppressServerMotion(SDL_WindowID id);
 
 	/* Start native interactive window move/resize. */
-	void handleLocalMoveRequested(uint32_t windowId, SDL_Point pos, uint16_t moveType);
+	void handleLocalMoveRequested(uint32_t windowId, uint16_t moveType);
+	/* Track size change during local move. */
+	void noteDragResize(SDL_WindowID id, int w, int h);
+	/* Sync window geometry to server. */
+	void syncGeometry(SDL_WindowID id);
 	/* Finalize pending local move/resize. */
 	void completeLocalMoveIfPending();
 
 	/* Finalize Wayland resize. */
-	void completeWaylandResize();
+	void completeWaylandResize(bool definitive = false);
+	/* Wayland: confirm compositor pointer grab on mouse leave during interactive resize. */
+	void noteResizeGrab(SDL_WindowID id);
 	/* Handle Wayland resize event. */
 	void handleWaylandResize(SDL_WindowID id);
 
@@ -105,21 +125,20 @@ class SdlRail
 	/* _windows helpers: callers must hold _windowsLock. */
 	[[nodiscard]] SdlRailWindow* getWindow(uint64_t id);
 	[[nodiscard]] SdlRailWindow* getWindowBySdlId(SDL_WindowID id);
-	/* Start a client-driven compositor resize (grip or band press); caller holds _windowsLock. */
-	bool beginClientEdgeResize(SdlRailWindow* appWindow, uint16_t edge, SDL_Point grabPos);
-	/* The app window eligible for a client edge-resize, or null; caller holds _windowsLock. */
-	[[nodiscard]] SdlRailWindow* edgeResizeTarget(SDL_WindowID id);
 	/* Send RAIL_ACTIVATE_ORDER and track _clientActiveId; caller holds _windowsLock. */
 	void sendClientActivate(uint32_t wid, bool enabled);
 	SdlRailWindow* addWindow(uint64_t id, const SDL_Rect& rect);
 	/* The window `ownerId` names, if it is a live non-popup app window (a valid popup/dialog
 	 * parent); else nullptr. Caller holds _windowsLock. */
 	[[nodiscard]] SdlRailWindow* resolveParent(uint64_t ownerId);
+	[[nodiscard]] SdlRailWindow* resolvePopupParent(const SdlRailWindow& popup);
 
 	void enableRemoteAppMode(bool enable);
 	/* Report a work area to the server (SPI_SET_WORK_AREA, server coords). Main thread. No-op if it
 	 * matches the last one sent. */
 	void sendWorkArea(const SDL_Rect& area);
+	/* Report a maximized window's WM-given geometry as the work area. Caller holds _windowsLock. */
+	void reportMaximizedWorkArea(SdlRailWindow* appWindow);
 	/* Clamp a window origin (x,y) so a w x h window stays inside the server desktop. */
 	void clampIntoDesktop(int& x, int& y, int w, int h) const;
 	/* Send a RAIL_SYSCOMMAND_ORDER for the window. Caller holds _windowsLock. */
@@ -129,6 +148,8 @@ class SdlRail
 	void applyZOrder();
 	/* Session-wide resize margins (guarded by _windowsLock). */
 	SDL_Rect _sessionMargins = { 0, 0, 0, 0 };
+	SDL_Point _lastPressServer = { 0, 0 };   /* last forwarded left press; main thread */
+	SDL_Point _lastPointerServer = { 0, 0 }; /* last forwarded pointer position; main thread */
 
 	/* --- RAIL server callbacks (static, dispatched to the instance) --- */
 	static UINT server_execute_result(RailClientContext* context,
@@ -142,6 +163,13 @@ class SdlRail
 	void registerUpdateCallbacks(rdpUpdate* update);
 	static BOOL window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
 	                          const WINDOW_STATE_ORDER* windowState);
+	/* window_common field handlers (split out for readability). */
+	void updateMargins(SdlRailWindow* appWindow, const WINDOW_ORDER_INFO* orderInfo,
+	                   const WINDOW_STATE_ORDER* state);
+	static void updateShowState(SdlRailWindow* appWindow, const WINDOW_ORDER_INFO* orderInfo,
+	                            const WINDOW_STATE_ORDER* state);
+	static void updateVisRects(SdlRailWindow* appWindow, const WINDOW_ORDER_INFO* orderInfo,
+	                           const WINDOW_STATE_ORDER* state);
 	static BOOL window_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
 	                        const WINDOW_ICON_ORDER* windowIcon);
 	static BOOL window_cached_icon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
@@ -156,6 +184,8 @@ class SdlRail
 	/* Shared finalize tail (caller holds _windowsLock): report the final rect to the server and
 	 * adopt it locally. Both the X11 and Wayland completion paths funnel here. */
 	void reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int h);
+	/* Send ClientWindowMove to server. */
+	void sendClientWindowMove(SdlRailWindow* appWindow, const SDL_Rect& serverRect);
 
 	/* MS-RDPERP icon cache slot for cacheId:cacheEntry; nullptr if out of range. cacheId 0xFF =
 	 * "do not cache" scratch slot (the spec says 0xFFFF but the field is one byte). */
@@ -164,7 +194,8 @@ class SdlRail
   private:
 	SdlContext* _context;
 	RailClientContext* _rail = nullptr;
-	bool _enabled = false;
+	/* Written on the RDP thread (RemoteApp mode toggles), read lock-free on the main thread. */
+	std::atomic<bool> _enabled = false;
 	bool _refreshSent = false; /* one full RefreshRect per connection, at first window realize */
 	/* Last work area reported to the server (server coordinates). */
 	SDL_Rect _sentWorkArea = { 0, 0, 0, 0 };
@@ -174,17 +205,26 @@ class SdlRail
 	std::map<uint64_t, SdlRailWindow> _windows;
 	/* Windows awaiting destruction on the main thread. */
 	std::multimap<uint64_t, SdlRailWindow> _deadWindows;
-	/* WM move/resize in progress; report the final rect when it ends. Wayland tracks size only. */
-	uint32_t _localMoveId = 0;
-	bool _localMoveWayland = false;
-	/* Resize started by the client grip, not a server ServerLocalMoveSize: no modal loop to close,
-	 * so completion skips the synthetic button-up. */
-	bool _localMoveHitTest = false;
-	SDL_Point _localMoveGrabPos = { 0, 0 }; /* server-absolute grab point; close the loop here */
-	uint16_t _localMoveType = 0;            /* RAIL_WMSZ_* of the active local move */
-	/* Wayland: a WINDOW_RESIZED has arrived since the grab started, so the pending op really
-	 * resized (guards against a bare pointer re-enter finalizing a no-op click). Main thread. */
-	bool _localMoveSawResize = false;
+	/* State of active interactive WM move/resize. */
+	struct LocalMove
+	{
+		uint32_t id = 0;      /* windowId of the active move, 0 = none (RAIL ids are non-zero) */
+		bool wayland = false; /* Wayland tracks size only */
+		uint16_t type = 0;    /* RAIL_WMSZ_* of the active local move */
+		SDL_Point anchor = { 0, 0 };  /* modal-loop anchor (forwarded press) of this drag */
+		SDL_Point pointer = { 0, 0 }; /* server's frozen cursor (last forward) of this drag */
+		/* Wayland: a WINDOW_RESIZED arrived since the grab started, so the op really resized
+		 * (guards against a bare pointer re-enter finalizing a no-op click). Main thread. */
+		bool sawResize = false;
+		/* Server END order arrived while the drag was still pending (app closed its loop early):
+		 * the completion must not send the synthetic button-up. Guarded by _windowsLock. */
+		bool serverEnded = false;
+		/* Last WM-imposed size while a plain X11 move was active (noteDragResize; self-echoes of
+		 * our own reconcile filtered out). Consumed by the completion. */
+		bool wmSized = false;
+		SDL_Point wmSize = { 0, 0 };
+	};
+	LocalMove _localMove;
 	/* Last focused app window ID. */
 	uint64_t _focusedAppId = 0;
 	/* Server-driven z-order list. */

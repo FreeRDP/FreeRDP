@@ -35,3 +35,6 @@ bool sdl_x11_restack_windows(const std::vector<SDL_Window*>& topToBottom);
 
 /* Set _GTK_FRAME_EXTENTS on window. */
 bool sdl_x11_set_frame_extents(SDL_Window* window, int left, int right, int top, int bottom);
+
+/* Set X11 bit gravity on window. */
+bool sdl_x11_set_bit_gravity(SDL_Window* window, int gravity);
