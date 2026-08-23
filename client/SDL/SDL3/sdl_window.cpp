@@ -514,6 +514,25 @@ SdlWindow::HighDPIMode SdlWindow::isHighDPIWindowsMode(SDL_Window* window)
 	return MODE_WINDOWS;
 }
 
+/* Lazily create or recreate the persistent streaming GDI texture to match `surface`. */
+bool SdlWindow::ensureGdiTexture(SDL_Surface* surface)
+{
+	if (_gdiTexture && (_gdiTextureW == surface->w) && (_gdiTextureH == surface->h))
+		return true;
+	if (_gdiTexture)
+		SDL_DestroyTexture(_gdiTexture);
+	_gdiTexture = SDL_CreateTexture(_renderer, surface->format, SDL_TEXTUREACCESS_STREAMING,
+	                                surface->w, surface->h);
+	if (!_gdiTexture)
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_CreateTexture: %s", SDL_GetError());
+		return false;
+	}
+	_gdiTextureW = surface->w;
+	_gdiTextureH = surface->h;
+	return true;
+}
+
 bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& dstRect)
 {
 	if (!_renderer || !surface)
@@ -521,21 +540,8 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 
 	ensureRenderTarget();
 
-	/* Lazily create or recreate the persistent GDI texture */
-	if (!_gdiTexture || _gdiTextureW != surface->w || _gdiTextureH != surface->h)
-	{
-		if (_gdiTexture)
-			SDL_DestroyTexture(_gdiTexture);
-		_gdiTexture = SDL_CreateTexture(_renderer, surface->format, SDL_TEXTUREACCESS_STREAMING,
-		                                surface->w, surface->h);
-		if (!_gdiTexture)
-		{
-			SDL_LogError(SDL_LOG_CATEGORY_RENDER, "SDL_CreateTexture: %s", SDL_GetError());
-			return false;
-		}
-		_gdiTextureW = surface->w;
-		_gdiTextureH = surface->h;
-	}
+	if (!ensureGdiTexture(surface))
+		return false;
 
 	/* Upload only the dirty region */
 	const auto* details = SDL_GetPixelFormatDetails(surface->format);
@@ -578,6 +584,77 @@ void SdlWindow::updateSurface()
 		return;
 	if (!SDL_RenderPresent(_renderer))
 		return;
+}
+
+bool SdlWindow::paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged)
+{
+	if (!_renderer || !surface)
+		return false;
+	ensureRenderTarget();
+
+	const int prevW = _gdiTextureW;
+	const int prevH = _gdiTextureH;
+	if (!ensureGdiTexture(surface))
+		return false;
+	/* A recreated texture is empty, so upload even when the content did not change. */
+	const bool recreated = (_gdiTextureW != prevW) || (_gdiTextureH != prevH);
+	if ((contentChanged || recreated) &&
+	    !SDL_UpdateTexture(_gdiTexture, nullptr, surface->pixels, surface->pitch))
+		return false;
+
+	if (!SDL_SetRenderTarget(_renderer, _renderTarget))
+		return false;
+
+	int ww = 0;
+	int wh = 0;
+	SDL_GetWindowSizeInPixels(_window, &ww, &wh);
+
+	/* Translucent "waiting for the server" fill so the desktop shows through the revealed area
+	 * (transparent window + compositor). RenderClear writes the alpha verbatim into the render
+	 * target. */
+	constexpr Uint8 kFillAlpha = 0x80; /* ~50% */
+	std::ignore = SDL_SetRenderDrawColor(_renderer, 0x2B, 0x2B, 0x2B, kFillAlpha);
+	std::ignore = SDL_RenderClear(_renderer);
+	SDL_FRect fdst = { static_cast<float>(off.x), static_cast<float>(off.y),
+		               static_cast<float>(surface->w), static_cast<float>(surface->h) };
+	/* The anchored old frame stays fully opaque (copy its 0xFF alpha over the translucent fill). */
+	std::ignore = SDL_SetTextureBlendMode(_gdiTexture, SDL_BLENDMODE_NONE);
+	std::ignore = SDL_RenderTexture(_renderer, _gdiTexture, nullptr, &fdst);
+	std::ignore = SDL_SetTextureBlendMode(_gdiTexture, SDL_BLENDMODE_BLEND);
+
+	/* Dashed border on the inner edges: "you dragged the window to here, awaiting content". */
+	std::ignore = SDL_SetRenderDrawColor(_renderer, 0xC8, 0xC8, 0xC8, 0xFF);
+	const float dash = 8.0F;
+	const float gap = 5.0F;
+	const float lo = 0.5F;
+	const float rx = static_cast<float>(ww) - 0.5F;
+	const float by = static_cast<float>(wh) - 0.5F;
+	const float step = dash + gap;
+	const auto steps = [step](float len)
+	{ return (len <= 0.0F) ? 0 : static_cast<int>(std::ceil(len / step)); };
+	for (int i = 0; i < steps(static_cast<float>(ww)); i++)
+	{
+		const float x = static_cast<float>(i) * step;
+		const float x2 = (x + dash < ww) ? (x + dash) : rx;
+		std::ignore = SDL_RenderLine(_renderer, x, lo, x2, lo);
+		std::ignore = SDL_RenderLine(_renderer, x, by, x2, by);
+	}
+	for (int i = 0; i < steps(static_cast<float>(wh)); i++)
+	{
+		const float y = static_cast<float>(i) * step;
+		const float y2 = (y + dash < wh) ? (y + dash) : by;
+		std::ignore = SDL_RenderLine(_renderer, lo, y, lo, y2);
+		std::ignore = SDL_RenderLine(_renderer, rx, y, rx, y2);
+	}
+
+	if (!SDL_SetRenderTarget(_renderer, nullptr))
+		return false;
+	/* Copy the render target (with its per-pixel alpha) verbatim onto the transparent window so the
+	 * compositor blends the revealed area with the desktop. */
+	std::ignore = SDL_SetTextureBlendMode(_renderTarget, SDL_BLENDMODE_NONE);
+	std::ignore = SDL_RenderTexture(_renderer, _renderTarget, nullptr, nullptr);
+	std::ignore = SDL_RenderPresent(_renderer);
+	return true;
 }
 
 SdlWindow SdlWindow::create(SDL_DisplayID id, const std::string& title, Uint32 flags, Uint32 width,

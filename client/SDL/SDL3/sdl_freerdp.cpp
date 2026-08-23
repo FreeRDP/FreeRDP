@@ -294,6 +294,18 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 						if (!sdl->setCursor(static_cast<rdpPointer*>(windowEvent.user.data1)))
 							throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };
 						break;
+					case SDL_EVENT_USER_RAIL_MOVE:
+					{
+						const auto id = static_cast<uint32_t>(
+						    reinterpret_cast<uintptr_t>(windowEvent.user.data1));
+						const auto packed = static_cast<uint32_t>(
+						    reinterpret_cast<uintptr_t>(windowEvent.user.data2));
+						const SDL_Point pos = { static_cast<Sint16>(packed >> 16),
+							                    static_cast<Sint16>(packed & 0xffff) };
+						const auto moveType = static_cast<uint16_t>(windowEvent.user.code);
+						sdl->getRailChannelContext().handleLocalMoveRequested(id, pos, moveType);
+					}
+					break;
 					case SDL_EVENT_USER_QUIT:
 					default:
 						break;

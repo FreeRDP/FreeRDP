@@ -86,6 +86,8 @@ class SdlWindow
 
 	[[nodiscard]] bool fill(Uint8 r = 0x00, Uint8 g = 0x00, Uint8 b = 0x00, Uint8 a = 0xff);
 	[[nodiscard]] bool blit(SDL_Surface* surface, const SDL_Rect& src, SDL_Rect& dst);
+	/* Render interactive resize feedback overlay. */
+	bool paintResizeFrame(SDL_Surface* surface, SDL_Point off, bool contentChanged);
 	void updateSurface();
 
   protected:
@@ -113,6 +115,7 @@ class SdlWindow
 
   private:
 	void ensureRenderTarget();
+	bool ensureGdiTexture(SDL_Surface* surface);
 
 	SDL_Window* _window = nullptr;
 	SDL_Renderer* _renderer = nullptr;
