@@ -1254,7 +1254,7 @@ extern "C"
 	 *  @param line The file line number this is called from
 	 *  @param fkt The function this is called from
 	 *
-	 *  @return \b TRUE if writing was successful, \g FALSE if there was an error with the stream
+	 *  @return \b TRUE if writing was successful, \b FALSE if there was an error with the stream
 	 * reallocation
 	 *
 	 *  @since version 3.31.0

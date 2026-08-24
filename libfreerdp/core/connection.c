@@ -1562,6 +1562,12 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	if (!nego_send_negotiation_response(nego))
 		return FALSE;
 
+	if ((SelectedProtocol & PROTOCOL_FAILED_NEGO) != 0)
+	{
+		WLog_ERR(TAG, "Protocol security negotiation failed, disconnecting.");
+		return FALSE;
+	}
+
 	SelectedProtocol = nego_get_selected_protocol(nego);
 	status = FALSE;
 
