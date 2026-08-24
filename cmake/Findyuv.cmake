@@ -26,7 +26,7 @@ else()
   find_library(YUV_LIBRARY NAMES yuv PATH_SUFFIXES lib HINTS ${YUV_ROOT} ${PC_YUV_LIBRARY_DIRS})
 
   include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(YUV DEFAULT_MSG YUV_LIBRARY YUV_INCLUDE_DIR)
+  find_package_handle_standard_args(yuv DEFAULT_MSG YUV_LIBRARY YUV_INCLUDE_DIR)
 
   if(YUV_INCLUDE_DIR AND YUV_LIBRARY)
     set(YUV_FOUND ON CACHE BOOL "YUV")
@@ -40,7 +40,7 @@ else()
     endif(NOT YUV_FIND_QUIETLY)
     add_library(yuv INTERFACE IMPORTED GLOBAL)
     set_target_properties(
-      aom PROPERTIES IMPORTED_LOCATION "${YUV_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${YUV_INCLUDE_DIR}"
+      yuv PROPERTIES IMPORTED_LOCATION "${YUV_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES "${YUV_INCLUDE_DIR}"
     )
   else(YUV_FOUND)
     if(YUV_FIND_REQUIRED)
