@@ -1679,7 +1679,8 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 			return FALSE;
 	}
 
-	if (settings->UseRdpSecurityLayer && !(settings->EncryptionMethods & EncryptionMethod))
+	if (settings->UseRdpSecurityLayer && (EncryptionMethod != ENCRYPTION_METHOD_NONE) &&
+	    !(settings->EncryptionMethods & EncryptionMethod))
 	{
 		WLog_Print(mcs->log, WLOG_WARN,
 		           "Server uses non-advertised encryption method 0x%08" PRIX32 "",
