@@ -468,11 +468,15 @@ int main(int argc, char** argv)
 	Sleep(200);
 	close(cfd);
 	close(sv[1]);
+
+	/* wait for the relay threads to finish before touching the capture */
+	pthread_join(t1, nullptr);
+	pthread_join(t2, nullptr);
+
 	WaitForSingleObject(hpeer, 10000);
 
 	CloseHandle(hclient);
 	CloseHandle(hpeer);
-	close(sv[0]);
 	close(lfd);
 
 	printf("captured %zu bytes\n", capture.len);
