@@ -1413,6 +1413,10 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
  * @param instance A pointer to the instance to use
  * @param format The color format for the local framebuffer
  * @return \b TRUE for success, \b FALSE for failure
+ *
+ * @note Must be called after the connect sequence has completed, e.g. from the
+ * \b PostConnect callback: GDI requires the \b rdpCache created by the
+ * core during connection, after capability negotiation.
  */
 BOOL gdi_init(freerdp* instance, UINT32 format)
 {
@@ -1429,6 +1433,10 @@ BOOL gdi_init(freerdp* instance, UINT32 format)
  * @param pfree A custom function pointer to use to free the framebuffer
  *
  * @return \b TRUE for success, \b FALSE for failure
+ *
+ * @note Must be called after the connect sequence has completed, e.g. from the
+ * \b PostConnect callback: GDI requires the \b rdpCache created by the
+ * core during connection, after capability negotiation.
  */
 BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
                  void (*pfree)(void*))
