@@ -1013,6 +1013,13 @@ BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd)
 	const BOOL keepalive = (freerdp_settings_get_bool(settings, FreeRDP_TcpKeepAlive));
 	UINT32 optval = 0;
 	socklen_t optlen = 0;
+	BOOL isTcp = FALSE;
+	struct sockaddr_storage addr = WINPR_C_ARRAY_INIT;
+	socklen_t addrlen = sizeof(addr);
+
+	if (getsockname(sockfd, (struct sockaddr*)&addr, &addrlen) == 0)
+		isTcp = (addr.ss_family == AF_INET) || (addr.ss_family == AF_INET6);
+
 	optval = keepalive ? 1 : 0;
 	optlen = sizeof(optval);
 
@@ -1020,6 +1027,9 @@ BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd)
 	{
 		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_KEEPALIVE");
 	}
+
+	if (!isTcp)
+		return TRUE;
 
 #ifndef _WIN32
 #ifdef TCP_KEEPIDLE
