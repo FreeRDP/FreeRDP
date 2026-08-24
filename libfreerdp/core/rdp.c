@@ -398,12 +398,12 @@ static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header, U
 
 	if (rdp->do_crypt)
 	{
-		if (!Stream_SafeSeek(s, 12))
+		if (!Stream_SafeZero(s, 12))
 			return FALSE;
 
 		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 		{
-			if (!Stream_SafeSeek(s, 4))
+			if (!Stream_SafeZero(s, 4))
 				return FALSE;
 		}
 
@@ -414,7 +414,7 @@ static BOOL rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header, U
 	}
 	else if (*sec_flags != 0 || sec_header)
 	{
-		if (!Stream_SafeSeek(s, 4))
+		if (!Stream_SafeZero(s, 4))
 			return FALSE;
 	}
 
@@ -433,7 +433,7 @@ wStream* rdp_send_stream_init(rdpRdp* rdp, UINT16* sec_flags)
 	if (!s)
 		return nullptr;
 
-	if (!Stream_SafeSeek(s, RDP_PACKET_HEADER_MAX_LENGTH))
+	if (!Stream_SafeZero(s, RDP_PACKET_HEADER_MAX_LENGTH))
 		goto fail;
 
 	if (!rdp_security_stream_init(rdp, s, FALSE, sec_flags))
@@ -452,7 +452,7 @@ wStream* rdp_send_stream_pdu_init(rdpRdp* rdp, UINT16* sec_flags)
 	if (!s)
 		return nullptr;
 
-	if (!Stream_SafeSeek(s, RDP_SHARE_CONTROL_HEADER_LENGTH))
+	if (!Stream_SafeZero(s, RDP_SHARE_CONTROL_HEADER_LENGTH))
 		goto fail;
 
 	return s;
@@ -468,7 +468,7 @@ wStream* rdp_data_pdu_init(rdpRdp* rdp, UINT16* sec_flags)
 	if (!s)
 		return nullptr;
 
-	if (!Stream_SafeSeek(s, RDP_SHARE_DATA_HEADER_LENGTH))
+	if (!Stream_SafeZero(s, RDP_SHARE_DATA_HEADER_LENGTH))
 		goto fail;
 
 	return s;
@@ -525,7 +525,7 @@ wStream* rdp_message_channel_pdu_init(rdpRdp* rdp, UINT16* sec_flags)
 	if (!s)
 		return nullptr;
 
-	if (!Stream_SafeSeek(s, RDP_PACKET_HEADER_MAX_LENGTH))
+	if (!Stream_SafeZero(s, RDP_PACKET_HEADER_MAX_LENGTH))
 		goto fail;
 
 	if (!rdp_security_stream_init(rdp, s, TRUE, sec_flags))

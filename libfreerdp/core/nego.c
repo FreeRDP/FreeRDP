@@ -1120,7 +1120,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	}
 
 	const size_t bm = Stream_GetPosition(s);
-	if (!Stream_SafeSeek(s, TPDU_CONNECTION_REQUEST_LENGTH))
+	if (!Stream_SafeZero(s, TPDU_CONNECTION_REQUEST_LENGTH))
 		return FALSE;
 
 	if (nego->RoutingToken)
@@ -1559,7 +1559,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 	UINT16 length = TPDU_CONNECTION_CONFIRM_LENGTH;
 	const size_t bm = Stream_GetPosition(s);
-	if (!Stream_SafeSeek(s, length))
+	if (!Stream_SafeZero(s, length))
 		goto fail;
 
 	if (nego->SelectedProtocol & PROTOCOL_FAILED_NEGO)
