@@ -1115,10 +1115,13 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 		{
 			sub_cred = negotiate_FindCredential(creds, init_context.mech);
 
-			status = init_context.mech->pkg->table->AcceptSecurityContext(
-			    sub_cred, nullptr, init_context.spnego ? &mech_input : pInput, fContextReq,
-			    TargetDataRep, &init_context.sub_context,
-			    init_context.spnego ? &mech_output : pOutput, pfContextAttr, ptsTimeStamp);
+			if (sub_cred)
+			{
+				status = init_context.mech->pkg->table->AcceptSecurityContext(
+				    sub_cred, nullptr, init_context.spnego ? &mech_input : pInput, fContextReq,
+				    TargetDataRep, &init_context.sub_context,
+				    init_context.spnego ? &mech_output : pOutput, pfContextAttr, ptsTimeStamp);
+			}
 		}
 
 		if (IsSecurityStatusError(status))
