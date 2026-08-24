@@ -289,6 +289,29 @@ static UINT32 x11_pad_scanline(UINT32 scanline, UINT32 inPad)
 	return scanline;
 }
 
+static void DestroySurface(xfGfxSurface* surface)
+{
+	if (!surface)
+		return;
+
+#ifdef WITH_GFX_H264
+	h264_context_free(surface->gdi.h264);
+#endif
+#if defined(WITH_GFX_AV1)
+	freerdp_av1_context_free(surface->gdi.av1);
+#endif
+	if (surface->image)
+	{
+		surface->image->data = nullptr;
+		XDestroyImage(surface->image);
+	}
+
+	winpr_aligned_free(surface->gdi.data);
+	winpr_aligned_free(surface->stage);
+	region16_uninit(&surface->gdi.invalidRegion);
+	free(surface);
+}
+
 /**
  * Function description
  *
@@ -299,10 +322,13 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 {
 	UINT ret = CHANNEL_RC_NO_MEMORY;
 	size_t size = 0;
-	xfGfxSurface* surface = nullptr;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(createSurface);
+
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 	xfContext* xfc = (xfContext*)gdi->context;
-	surface = (xfGfxSurface*)calloc(1, sizeof(xfGfxSurface));
+
+	xfGfxSurface* surface = (xfGfxSurface*)calloc(1, sizeof(xfGfxSurface));
 
 	if (!surface)
 		return CHANNEL_RC_NO_MEMORY;
@@ -312,7 +338,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	if (!surface->gdi.codecs)
 	{
 		WLog_ERR(TAG, "global GDI codecs aren't set");
-		goto out_free;
+		goto fail;
 	}
 
 	surface->gdi.surfaceId = createSurface->surfaceId;
@@ -336,7 +362,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		default:
 			WLog_ERR(TAG, "unknown pixelFormat 0x%" PRIx32 "", createSurface->pixelFormat);
 			ret = ERROR_INTERNAL_ERROR;
-			goto out_free;
+			goto fail;
 	}
 
 	surface->gdi.scanline = surface->gdi.width * FreeRDPGetBytesPerPixel(surface->gdi.format);
@@ -348,10 +374,10 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	if (!surface->gdi.data)
 	{
 		WLog_ERR(TAG, "unable to allocate GDI data");
-		goto out_free;
+		goto fail;
 	}
 
-	ZeroMemory(surface->gdi.data, size);
+	memset(surface->gdi.data, 0xff, size);
 
 	if (FreeRDPAreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
 	{
@@ -375,10 +401,10 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		if (!surface->stage)
 		{
 			WLog_ERR(TAG, "unable to allocate stage buffer");
-			goto out_free_gdidata;
+			goto fail;
 		}
 
-		ZeroMemory(surface->stage, size);
+		memset(surface->stage, 0xff, size);
 		WINPR_ASSERT(xfc->depth != 0);
 		surface->image = LogDynAndXCreateImage(
 		    xfc->log, xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth),
@@ -389,7 +415,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	if (!surface->image)
 	{
 		WLog_ERR(TAG, "an error occurred when creating the XImage");
-		goto error_surface_image;
+		goto fail;
 	}
 
 	surface->image->byte_order = LSBFirst;
@@ -400,19 +426,12 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	if (context->SetSurfaceData(context, surface->gdi.surfaceId, (void*)surface) != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "an error occurred during SetSurfaceData");
-		goto error_set_surface_data;
+		goto fail;
 	}
 
 	return CHANNEL_RC_OK;
-error_set_surface_data:
-	surface->image->data = nullptr;
-	XDestroyImage(surface->image);
-error_surface_image:
-	winpr_aligned_free(surface->stage);
-out_free_gdidata:
-	winpr_aligned_free(surface->gdi.data);
-out_free:
-	free(surface);
+fail:
+	DestroySurface(surface);
 	return ret;
 }
 
@@ -441,19 +460,8 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 				goto fail;
 		}
 
-#ifdef WITH_GFX_H264
-		h264_context_free(surface->gdi.h264);
-#endif
-#if defined(WITH_GFX_AV1)
-		freerdp_av1_context_free(surface->gdi.av1);
-#endif
-		surface->image->data = nullptr;
-		XDestroyImage(surface->image);
-		winpr_aligned_free(surface->gdi.data);
-		winpr_aligned_free(surface->stage);
-		region16_uninit(&surface->gdi.invalidRegion);
 		codecs = surface->gdi.codecs;
-		free(surface);
+		DestroySurface(surface);
 	}
 
 	status = context->SetSurfaceData(context, deleteSurface->surfaceId, nullptr);
