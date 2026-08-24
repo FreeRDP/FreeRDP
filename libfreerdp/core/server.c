@@ -289,14 +289,115 @@ static void wts_read_drdynvc_close_response(rdpPeerChannel* channel)
 	MessageQueue_PostQuit(channel->queue, 0);
 }
 
-static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
+WINPR_ATTR_NODISCARD
+static BOOL wts_read_drdynvc_pdu_ready_guarded(wStream* s, UINT8 Cmd, UINT8 Sp, UINT32 ChannelId,
+                                               rdpPeerChannel* dvc)
 {
-	UINT8 Cmd = 0;
-	UINT8 Sp = 0;
-	UINT8 cbChId = 0;
+	switch (Cmd)
+	{
+		case CREATE_REQUEST_PDU:
+			return wts_read_drdynvc_create_response(dvc, s);
+
+		case DATA_FIRST_PDU:
+			if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED)
+			{
+				WLog_ERR(TAG,
+				         "ChannelId %" PRIu32 " did not open successfully. "
+				         "Ignoring DYNVC_DATA_FIRST PDU",
+				         ChannelId);
+				return TRUE;
+			}
+
+			return wts_read_drdynvc_data_first(dvc, s, Sp);
+
+		case DATA_PDU:
+			if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED)
+			{
+				WLog_ERR(TAG,
+				         "ChannelId %" PRIu32 " did not open successfully. "
+				         "Ignoring DYNVC_DATA PDU",
+				         ChannelId);
+				return TRUE;
+			}
+
+			return wts_read_drdynvc_data(dvc, s);
+
+		case CLOSE_REQUEST_PDU:
+			wts_read_drdynvc_close_response(dvc);
+			break;
+
+		case DATA_FIRST_COMPRESSED_PDU:
+		case DATA_COMPRESSED_PDU:
+			WLog_ERR(TAG, "Compressed data not handled");
+			break;
+
+		case SOFT_SYNC_RESPONSE_PDU:
+			WLog_ERR(TAG, "SoftSync response not handled yet(and rather strange to receive "
+			              "that packet as our code doesn't send SoftSync requests");
+			break;
+
+		case SOFT_SYNC_REQUEST_PDU:
+			WLog_ERR(TAG, "Not expecting a SoftSyncRequest on the server");
+			return FALSE;
+
+		default:
+			WLog_ERR(TAG, "Cmd %d not recognized.", Cmd);
+			break;
+	}
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL wts_read_drdynvc_pdu_ready(rdpPeerChannel* channel, wStream* s, UINT8 Cmd, UINT8 Sp,
+                                       UINT8 cbChId)
+{
+	WINPR_ASSERT(channel);
+
+	BOOL haveChannelId = 0;
+	switch (Cmd)
+	{
+		case SOFT_SYNC_REQUEST_PDU:
+		case SOFT_SYNC_RESPONSE_PDU:
+			haveChannelId = FALSE;
+			break;
+		default:
+			haveChannelId = TRUE;
+			break;
+	}
+
 	UINT32 ChannelId = 0;
 	rdpPeerChannel* dvc = nullptr;
+	wHashTable* table = nullptr;
+	if (haveChannelId)
+	{
+		const unsigned val = wts_read_variable_uint(s, cbChId, &ChannelId);
+		if (val == 0)
+			return FALSE;
 
+		DEBUG_DVC("Cmd %s ChannelId %" PRIu32 " length %" PRIuz "", drdynvc_get_packet_type(Cmd),
+		          ChannelId, length);
+		table = channel->vcm->dynamicVirtualChannels;
+		if (!table)
+			return FALSE;
+		HashTable_Lock(table);
+		dvc = wts_get_dvc_channel_by_id(channel->vcm, ChannelId);
+		if (!dvc)
+		{
+			DEBUG_DVC("ChannelId %" PRIu32 " does not exist.", ChannelId);
+			HashTable_Unlock(table);
+			return TRUE;
+		}
+	}
+
+	const BOOL rc = wts_read_drdynvc_pdu_ready_guarded(s, Cmd, Sp, ChannelId, dvc);
+	if (table)
+		HashTable_Unlock(table);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
+{
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(channel->vcm);
 
@@ -308,99 +409,17 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 	wStream buffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&buffer, Stream_Buffer(channel->receiveData), slength);
 	const UINT8 value = Stream_Get_UINT8(s);
-	Cmd = (value & 0xf0) >> 4;
-	Sp = (value & 0x0c) >> 2;
-	cbChId = (value & 0x03) >> 0;
+	const UINT8 Cmd = (value & 0xf0) >> 4;
+	const UINT8 Sp = (value & 0x0c) >> 2;
+	const UINT8 cbChId = (value & 0x03) >> 0;
 
 	if (Cmd == CAPABILITY_REQUEST_PDU)
 		return wts_read_drdynvc_capabilities_response(channel, s);
 
 	if (channel->vcm->drdynvc_state == DRDYNVC_STATE_READY)
-	{
-		BOOL haveChannelId = 0;
-		switch (Cmd)
-		{
-			case SOFT_SYNC_REQUEST_PDU:
-			case SOFT_SYNC_RESPONSE_PDU:
-				haveChannelId = FALSE;
-				break;
-			default:
-				haveChannelId = TRUE;
-				break;
-		}
-
-		if (haveChannelId)
-		{
-			const unsigned val = wts_read_variable_uint(s, cbChId, &ChannelId);
-			if (val == 0)
-				return FALSE;
-
-			DEBUG_DVC("Cmd %s ChannelId %" PRIu32 " length %" PRIuz "",
-			          drdynvc_get_packet_type(Cmd), ChannelId, length);
-			dvc = wts_get_dvc_channel_by_id(channel->vcm, ChannelId);
-			if (!dvc)
-			{
-				DEBUG_DVC("ChannelId %" PRIu32 " does not exist.", ChannelId);
-				return TRUE;
-			}
-		}
-
-		switch (Cmd)
-		{
-			case CREATE_REQUEST_PDU:
-				return wts_read_drdynvc_create_response(dvc, s);
-
-			case DATA_FIRST_PDU:
-				if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED)
-				{
-					WLog_ERR(TAG,
-					         "ChannelId %" PRIu32 " did not open successfully. "
-					         "Ignoring DYNVC_DATA_FIRST PDU",
-					         ChannelId);
-					return TRUE;
-				}
-
-				return wts_read_drdynvc_data_first(dvc, s, Sp);
-
-			case DATA_PDU:
-				if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED)
-				{
-					WLog_ERR(TAG,
-					         "ChannelId %" PRIu32 " did not open successfully. "
-					         "Ignoring DYNVC_DATA PDU",
-					         ChannelId);
-					return TRUE;
-				}
-
-				return wts_read_drdynvc_data(dvc, s);
-
-			case CLOSE_REQUEST_PDU:
-				wts_read_drdynvc_close_response(dvc);
-				break;
-
-			case DATA_FIRST_COMPRESSED_PDU:
-			case DATA_COMPRESSED_PDU:
-				WLog_ERR(TAG, "Compressed data not handled");
-				break;
-
-			case SOFT_SYNC_RESPONSE_PDU:
-				WLog_ERR(TAG, "SoftSync response not handled yet(and rather strange to receive "
-				              "that packet as our code doesn't send SoftSync requests");
-				break;
-
-			case SOFT_SYNC_REQUEST_PDU:
-				WLog_ERR(TAG, "Not expecting a SoftSyncRequest on the server");
-				return FALSE;
-
-			default:
-				WLog_ERR(TAG, "Cmd %d not recognized.", Cmd);
-				break;
-		}
-	}
+		return wts_read_drdynvc_pdu_ready(channel, s, Cmd, Sp, cbChId);
 	else
-	{
 		WLog_ERR(TAG, "received Cmd %d but channel is not ready.", Cmd);
-	}
 
 	return TRUE;
 }
