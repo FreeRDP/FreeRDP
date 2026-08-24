@@ -865,6 +865,12 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 
 		if (status <= 0)
 		{
+			if (status == 0)
+			{
+				transport->layer = TRANSPORT_LAYER_CLOSED;
+				return -1;
+			}
+
 			if (!transport->frontBio || !BIO_should_retry(transport->frontBio))
 			{
 				/* something unexpected happened, let's close */
