@@ -166,7 +166,7 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 			default:
 				WLog_Print(cliprdr->log, WLOG_WARN, "Unknown capability set type %08" PRIx16,
 				           cap->capabilitySetType);
-				if (!Stream_SafeSeek(s, cap->capabilitySetLength))
+				if (!Stream_SafeZero(s, cap->capabilitySetLength))
 				{
 					WLog_Print(cliprdr->log, WLOG_ERROR, "short stream");
 					Stream_Free(s, TRUE);

@@ -1242,6 +1242,27 @@ extern "C"
 		Stream_Fill(_s, '\0', _n);
 	}
 
+#define Stream_SafeZero(s, size) Stream_SafeZeroEx(s, size, __FILE__, __LINE__, __func__)
+
+	/** @brief Writes '\0' to the stream but aborts if there is not enough capacity available.
+	 *
+	 *  Prefer to use the macro \ref Stream_SafeZero which already fills out the caller location.
+	 *
+	 *  @param s The stream to write to.
+	 *  @param size The number of bytes to write to the stream
+	 *  @param file The name of the file this is called from
+	 *  @param line The file line number this is called from
+	 *  @param fkt The function this is called from
+	 *
+	 *  @return \b TRUE if writing was successful, \b FALSE if there was an error with the stream
+	 * reallocation
+	 *
+	 *  @since version 3.31.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL Stream_SafeZeroEx(wStream* s, size_t size, const char* file, size_t line,
+	                                 const char* fkt);
+
 	static inline void Stream_Copy(wStream* _src, wStream* _dst, size_t _n)
 	{
 		WINPR_ASSERT(_src);

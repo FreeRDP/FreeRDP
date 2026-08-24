@@ -823,7 +823,7 @@ wStream* license_send_stream_init(rdpLicense* license, UINT16* sec_flags)
 
 	license->rdp->do_crypt = do_crypt;
 	license->PacketHeaderLength = (UINT16)Stream_GetPosition(s);
-	if (!Stream_SafeSeek(s, LICENSE_PREAMBLE_LENGTH))
+	if (!Stream_SafeZero(s, LICENSE_PREAMBLE_LENGTH))
 		goto fail;
 	return s;
 

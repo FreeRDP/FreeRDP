@@ -329,7 +329,7 @@ rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context, const RDPGFX_RESET_
 		Stream_Free(s, TRUE);
 		return ERROR_INVALID_DATA;
 	}
-	if (!Stream_SafeSeek(s, RDPGFX_RESET_GRAPHICS_PDU_SIZE - pos))
+	if (!Stream_SafeZero(s, RDPGFX_RESET_GRAPHICS_PDU_SIZE - pos))
 	{
 		Stream_Free(s, TRUE);
 		return ERROR_INVALID_DATA;

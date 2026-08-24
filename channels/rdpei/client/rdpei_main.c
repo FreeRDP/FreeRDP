@@ -731,7 +731,7 @@ static UINT rdpei_send_touch_event_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if (!Stream_SafeSeek(s, RDPINPUT_HEADER_LENGTH))
+	if (!Stream_SafeZero(s, RDPINPUT_HEADER_LENGTH))
 		goto fail;
 	/**
 	 * the time that has elapsed (in milliseconds) from when the oldest touch frame
