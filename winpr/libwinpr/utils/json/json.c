@@ -26,7 +26,7 @@
 
 WINPR_JSON* WINPR_JSON_ParseFromFile(const char* filename)
 {
-	FILE* fp = winpr_fopen(filename, "r");
+	FILE* fp = winpr_fopen(filename, "rb");
 	if (!fp)
 		return nullptr;
 	WINPR_JSON* json = WINPR_JSON_ParseFromFileFP(fp);
