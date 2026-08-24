@@ -520,3 +520,13 @@ BOOL Stream_SafeSeekEx(wStream* s, size_t size, const char* file, size_t line, c
 	Stream_Seek(s, size);
 	return TRUE;
 }
+
+BOOL Stream_SafeZeroEx(wStream* s, size_t size, const char* file, size_t line, const char* fkt)
+{
+	if (!Stream_CheckAndLogRequiredCapacityEx(STREAM_TAG, WLOG_WARN, s, size, 1,
+	                                          "%s(%s:%" PRIuz ")", fkt, file, line))
+		return FALSE;
+
+	Stream_Zero(s, size);
+	return TRUE;
+}
