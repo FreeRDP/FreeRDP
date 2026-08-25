@@ -58,6 +58,7 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -404,6 +405,8 @@ static int write_seed(const char* dir, const char* name, const capture_t* c)
 
 int main(int argc, char** argv)
 {
+	(void)signal(SIGPIPE, SIG_IGN);
+
 	const char* outdir = argc > 1 ? argv[1] : ".";
 	int do_input = 1;
 	if (argc > 2)
