@@ -40,6 +40,7 @@
 #include <winpr/string.h>
 
 #include "file.h"
+#include "../handle/handle.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/file.h>
@@ -958,6 +959,19 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		free(pFile->lpFileName);
 		free(pFile);
 		return INVALID_HANDLE_VALUE;
+	}
+
+	{
+		/* winpr_fopen()/freopen() give no way to request O_CLOEXEC atomically; match Windows
+		 * semantics (not inherited unless asked) by default here too. */
+		const BOOL inherit =
+		    pFile->lpSecurityAttributes && pFile->lpSecurityAttributes->bInheritHandle;
+		if (!winpr_set_cloexec(fileno(fp), !inherit))
+		{
+			SetLastError(map_posix_err(errno));
+			FileCloseHandle(pFile);
+			return INVALID_HANDLE_VALUE;
+		}
 	}
 
 	(void)setvbuf(fp, nullptr, _IONBF, 0);

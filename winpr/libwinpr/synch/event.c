@@ -81,7 +81,6 @@ static int eventfd_write(int fd, eventfd_t value)
 #endif
 #endif
 
-#ifndef WINPR_HAVE_SYS_EVENTFD_H
 static BOOL set_non_blocking_fd(int fd)
 {
 	int flags;
@@ -91,18 +90,40 @@ static BOOL set_non_blocking_fd(int fd)
 
 	return fcntl(fd, F_SETFL, flags | O_NONBLOCK) >= 0;
 }
-#endif /* !WINPR_HAVE_SYS_EVENTFD_H */
 
 BOOL winpr_event_init(WINPR_EVENT_IMPL* event)
 {
 #ifdef WINPR_HAVE_SYS_EVENTFD_H
 	event->fds[1] = -1;
-	event->fds[0] = eventfd(0, EFD_NONBLOCK);
+	event->fds[0] = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+
+	if ((event->fds[0] < 0) && (errno == EINVAL))
+	{
+		/* kernels older than 2.6.27 only support the flag-less eventfd() call; fall back to
+		 * that and apply non-blocking/close-on-exec separately afterward */
+		event->fds[0] = eventfd(0, 0);
+		if (event->fds[0] >= 0)
+		{
+			if (!set_non_blocking_fd(event->fds[0]) || !winpr_set_cloexec(event->fds[0], TRUE))
+			{
+				close(event->fds[0]);
+				event->fds[0] = -1;
+			}
+		}
+	}
 
 	return event->fds[0] >= 0;
 #else
+#ifdef WINPR_HAVE_PIPE2
+	if (pipe2(event->fds, O_CLOEXEC) < 0)
+		return FALSE;
+#else
 	if (pipe(event->fds) < 0)
 		return FALSE;
+
+	if (!winpr_set_cloexec(event->fds[0], TRUE) || !winpr_set_cloexec(event->fds[1], TRUE))
+		goto out_error;
+#endif
 
 	if (!set_non_blocking_fd(event->fds[0]) || !set_non_blocking_fd(event->fds[1]))
 		goto out_error;

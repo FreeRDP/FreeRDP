@@ -220,6 +220,17 @@ list(REMOVE_DUPLICATES WINPR_SYSTEM_INCLUDES)
 
 addtargetwithresourcefile(${MODULE_NAME} FALSE "${WINPR_VERSION}" WINPR_SRCS)
 
+# pipe2()/accept4() are only declared by glibc under _GNU_SOURCE (see the WINPR_HAVE_PIPE2/
+# WINPR_HAVE_ACCEPT4 detection in the top-level winpr/CMakeLists.txt, which probes for them with
+# _GNU_SOURCE forced on). Scope the define to exactly the files that call them instead of
+# enabling GNU extension visibility for the whole winpr target.
+if(WINPR_HAVE_PIPE2 OR WINPR_HAVE_ACCEPT4)
+  set_source_files_properties(pipe/pipe.c PROPERTIES COMPILE_DEFINITIONS _GNU_SOURCE)
+endif()
+if(WINPR_HAVE_PIPE2)
+  set_source_files_properties(synch/semaphore.c PROPERTIES COMPILE_DEFINITIONS _GNU_SOURCE)
+endif()
+
 if(WITH_RESOURCE_VERSIONING)
   target_compile_definitions(${MODULE_NAME} PRIVATE WITH_RESOURCE_VERSIONING)
 endif()

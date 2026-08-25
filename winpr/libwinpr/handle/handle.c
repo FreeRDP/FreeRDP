@@ -24,7 +24,10 @@
 
 #ifndef _WIN32
 
+#include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "../synch/synch.h"
 #include "../thread/thread.h"
@@ -39,6 +42,8 @@
 #include <winpr/assert.h>
 
 #include "../handle/handle.h"
+#include "../log.h"
+#define TAG WINPR_TAG("handle")
 
 BOOL CloseHandle(HANDLE hObject)
 {
@@ -71,17 +76,69 @@ BOOL DuplicateHandle(WINPR_ATTR_UNUSED HANDLE hSourceProcessHandle,
 	return TRUE;
 }
 
-BOOL GetHandleInformation(WINPR_ATTR_UNUSED HANDLE hObject, WINPR_ATTR_UNUSED LPDWORD lpdwFlags)
+BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags)
 {
-	WLog_ERR("TODO", "TODO: Implement");
+	if (!lpdwFlags)
+		return FALSE;
+
+	const int fd = winpr_Handle_getFd(hObject);
+	if (fd < 0)
+	{
+		WLog_ERR(TAG, "unable to resolve a file descriptor for this handle type");
+		return FALSE;
+	}
+
+	const int flags = fcntl(fd, F_GETFD);
+	if (flags < 0)
+	{
+		WLog_ERR(TAG, "fcntl(F_GETFD) failed: %s", strerror(errno));
+		return FALSE;
+	}
+
+	*lpdwFlags = (flags & FD_CLOEXEC) ? 0 : HANDLE_FLAG_INHERIT;
 	return TRUE;
 }
 
-BOOL SetHandleInformation(WINPR_ATTR_UNUSED HANDLE hObject, WINPR_ATTR_UNUSED DWORD dwMask,
-                          WINPR_ATTR_UNUSED DWORD dwFlags)
+BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags)
 {
-	WLog_ERR("TODO", "TODO: Implement");
+	const int fd = winpr_Handle_getFd(hObject);
+	if (fd < 0)
+	{
+		WLog_ERR(TAG, "unable to resolve a file descriptor for this handle type");
+		return FALSE;
+	}
+
+	/* only HANDLE_FLAG_INHERIT is meaningful on POSIX; ignore any other bit in the mask rather
+	 * than failing, matching how Windows treats masks it doesn't recognize on other handle
+	 * types */
+	if (!(dwMask & HANDLE_FLAG_INHERIT))
+		return TRUE;
+
+	int flags = fcntl(fd, F_GETFD);
+	if (flags < 0)
+	{
+		WLog_ERR(TAG, "fcntl(F_GETFD) failed: %s", strerror(errno));
+		return FALSE;
+	}
+
+	flags = (dwFlags & HANDLE_FLAG_INHERIT) ? (flags & ~FD_CLOEXEC) : (flags | FD_CLOEXEC);
+	if (fcntl(fd, F_SETFD, flags) < 0)
+	{
+		WLog_ERR(TAG, "fcntl(F_SETFD) failed: %s", strerror(errno));
+		return FALSE;
+	}
+
 	return TRUE;
+}
+
+BOOL winpr_set_cloexec(int fd, BOOL cloexec)
+{
+	const int flags = fcntl(fd, F_GETFD);
+	if (flags < 0)
+		return FALSE;
+
+	const int newFlags = cloexec ? (flags | FD_CLOEXEC) : (flags & ~FD_CLOEXEC);
+	return fcntl(fd, F_SETFD, newFlags) >= 0;
 }
 
 #endif

@@ -21,6 +21,7 @@ winpr_module_add(
   argv.c
   process.c
   processor.c
+  procthreadattr.c
   thread.c
   thread.h
 )

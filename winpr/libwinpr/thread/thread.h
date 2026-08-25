@@ -80,6 +80,23 @@ typedef struct
 	int fd;
 } WINPR_PROCESS;
 
+/* backing store for the opaque LPPROC_THREAD_ATTRIBUTE_LIST (winpr/thread.h). Shared between
+ * procthreadattr.c (which builds it) and process.c (which reads it back at CreateProcess time
+ * to resolve PROC_THREAD_ATTRIBUTE_HANDLE_LIST into fds to keep open in the child). */
+typedef struct
+{
+	DWORD_PTR Attribute;
+	PVOID lpValue;
+	SIZE_T cbSize;
+} WINPR_PROC_THREAD_ATTRIBUTE_ENTRY;
+
+struct WINPR_PROC_THREAD_ATTRIBUTE_LIST
+{
+	DWORD capacity;
+	DWORD count;
+	WINPR_PROC_THREAD_ATTRIBUTE_ENTRY entries[];
+};
+
 #endif
 
 #endif /* WINPR_THREAD_PRIVATE_H */
