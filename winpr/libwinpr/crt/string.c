@@ -963,16 +963,10 @@ BOOL winpr_str_has_newlines(const char* str)
 			case 0x0c:       /* FF form feed */
 			case (char)0x85: /* NEL next line */
 				return TRUE;
-			case 0x20:
+			case (char)0xE2:
 			{
-				switch (*str)
-				{
-					case 0x28: /* LS line separator */
-					case 0x29: /* PS paragraph separator */
-						return TRUE;
-					default:
-						break;
-				}
+				if ((str[0] == (char)0x80) && ((str[1] == (char)0xA8) || (str[1] == (char)0xA9)))
+					return TRUE;
 			}
 			break;
 
