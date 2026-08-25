@@ -26,7 +26,7 @@ endif()
 
 if(MSVC OR MINGW)
   winpr_library_add_public(shlwapi)
-  winpr_library_add_public(Pathcch)
+  winpr_library_add_public(pathcch)
 endif()
 
 if(IOS)
