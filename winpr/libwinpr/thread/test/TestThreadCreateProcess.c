@@ -55,12 +55,13 @@ static int probe_handle_and_report(const char* valueStr)
 	DWORD written = 0;
 	ok = WriteFile(h, "PING", 4, &written, nullptr) && (written == 4);
 #else
-	int fd = atoi(valueStr);
-	ok = (write(fd, "PING", 4) == 4);
+	const long fd = strtol(valueStr, nullptr, 0);
+	if ((fd >= INT32_MIN) || (fd <= INT32_MAX))
+		ok = (write(WINPR_ASSERTING_INT_CAST(int, fd), "PING", 4) == 4);
 #endif
 
 	printf(ok ? "OPEN\n" : "CLOSED\n");
-	fflush(stdout);
+	(void)fflush(stdout);
 	return 0;
 }
 
@@ -129,8 +130,9 @@ static int run_inherit_case(const char* exePath, const char* label, HANDLE probe
 		 * handle's presence is what actually varies between the two list-based cases. */
 		HANDLE handles[2] = { outWrite, probeHandle };
 		const size_t handleCount = (mode == MODE_HANDLE_LIST_WITH_PROBE) ? 2 : 1;
-		if (!UpdateProcThreadAttribute(attrList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, handles,
-		                               handleCount * sizeof(HANDLE), nullptr, nullptr))
+		if (!UpdateProcThreadAttribute(attrList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
+		                               (void*)handles, handleCount * sizeof(HANDLE), nullptr,
+		                               nullptr))
 		{
 			printf("[%s] UpdateProcThreadAttribute failed\n", label);
 			DeleteProcThreadAttributeList(attrList);
