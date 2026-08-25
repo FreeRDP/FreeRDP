@@ -318,8 +318,8 @@ bool SdlWindow::drawScaledRect(SDL_Surface* surface, const SDL_FPoint& scale,
 	SDL_Rect dstRect = {};
 	float ix = 0.0f;
 	float iy = 0.0f;
-	const auto modx = std::modff(static_cast<float>(srcRect.x) * scale.x, &ix);
-	const auto mody = std::modff(static_cast<float>(srcRect.y) * scale.y, &iy);
+	const auto modx = std::modf(static_cast<float>(srcRect.x) * scale.x, &ix);
+	const auto mody = std::modf(static_cast<float>(srcRect.y) * scale.y, &iy);
 	auto sw = std::ceil(static_cast<float>(srcRect.w) * scale.x) + std::ceil(modx);
 	auto sh = std::ceil(static_cast<float>(srcRect.h) * scale.y) + std::ceil(mody);
 	dstRect.x = static_cast<Sint32>(ix);
