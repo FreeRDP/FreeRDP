@@ -1262,7 +1262,8 @@ static WINDOW_STATE_ORDER* window_state_order_clone(const WINDOW_STATE_ORDER* or
 	clone->OverlayDescription = rail_unicode_string_clone(&order->OverlayDescription);
 	clone->windowRects = rectangles_clone(order->windowRects, order->numWindowRects);
 	clone->visibilityRects = rectangles_clone(order->visibilityRects, order->numVisibilityRects);
-	if (!clone->windowRects || !clone->visibilityRects ||
+	if ((!clone->windowRects && (clone->windowRects > 0)) ||
+	    (!clone->visibilityRects && (clone->visibilityRects > 0)) ||
 	    (!clone->titleInfo.string && (clone->titleInfo.length > 0)) ||
 	    (!clone->OverlayDescription.string && (clone->OverlayDescription.length > 0)))
 	{
