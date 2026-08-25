@@ -1021,12 +1021,11 @@ static BOOL test_get_status_change_decode_response_impl(UINT32 ioControlCode)
 	SMARTCARD_OPERATION opIn = WINPR_C_ARRAY_INIT;
 	opIn.ioControlCode = ioControlCode;
 	opIn.returnCode = SCARD_S_SUCCESS;
-	ReaderState_Return state = WINPR_C_ARRAY_INIT;
-	state.dwCurrentState = SCARD_STATE_PRESENT;
-	state.dwEventState = SCARD_STATE_CHANGED;
-	state.cbAtr = 2;
-	state.rgbAtr[0] = 0x3B;
-	state.rgbAtr[1] = 0x00;
+	ReaderState_Return state = { .dwCurrentState = SCARD_STATE_PRESENT,
+		                         .dwEventState = SCARD_STATE_CHANGED,
+		                         .cbAtr = 2,
+		                         .rgbAtr[0] = 0x3B,
+		                         .rgbAtr[1] = 0x00 };
 	opIn.ret.getStatusChange.cReaders = 1;
 	opIn.ret.getStatusChange.rgReaderStates = &state;
 

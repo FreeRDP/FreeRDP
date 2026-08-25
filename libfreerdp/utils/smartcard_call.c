@@ -664,11 +664,17 @@ static LONG smartcard_LocateCardsA_Call(scard_call_context* smartcard, wStream* 
 
 	for (UINT32 x = 0; x < ret.cReaders; x++)
 	{
-		ret.rgReaderStates[x].dwCurrentState = call->rgReaderStates[x].dwCurrentState;
-		ret.rgReaderStates[x].dwEventState = call->rgReaderStates[x].dwEventState;
-		ret.rgReaderStates[x].cbAtr = call->rgReaderStates[x].cbAtr;
-		CopyMemory(&(ret.rgReaderStates[x].rgbAtr), &(call->rgReaderStates[x].rgbAtr),
-		           sizeof(ret.rgReaderStates[x].rgbAtr));
+		ReaderState_Return* cur = &ret.rgReaderStates[x];
+
+		cur->dwCurrentState = call->rgReaderStates[x].dwCurrentState;
+		cur->dwEventState = call->rgReaderStates[x].dwEventState;
+		cur->cbAtr = call->rgReaderStates[x].cbAtr;
+		CopyMemory(&(cur->rgbAtr), &(call->rgReaderStates[x].rgbAtr), sizeof(cur->rgbAtr));
+		if (!smartcard_reader_state_return_is_valid(x, cur))
+		{
+			free(ret.rgReaderStates);
+			return SCARD_E_INVALID_ATR;
+		}
 	}
 
 	status = smartcard_pack_locate_cards_return(out, &ret);
@@ -708,11 +714,17 @@ static LONG smartcard_LocateCardsW_Call(scard_call_context* smartcard, wStream* 
 
 	for (UINT32 x = 0; x < ret.cReaders; x++)
 	{
-		ret.rgReaderStates[x].dwCurrentState = call->rgReaderStates[x].dwCurrentState;
-		ret.rgReaderStates[x].dwEventState = call->rgReaderStates[x].dwEventState;
-		ret.rgReaderStates[x].cbAtr = call->rgReaderStates[x].cbAtr;
-		CopyMemory(&(ret.rgReaderStates[x].rgbAtr), &(call->rgReaderStates[x].rgbAtr),
-		           sizeof(ret.rgReaderStates[x].rgbAtr));
+		ReaderState_Return* cur = &ret.rgReaderStates[x];
+
+		cur->dwCurrentState = call->rgReaderStates[x].dwCurrentState;
+		cur->dwEventState = call->rgReaderStates[x].dwEventState;
+		cur->cbAtr = call->rgReaderStates[x].cbAtr;
+		CopyMemory(&(cur->rgbAtr), &(call->rgReaderStates[x].rgbAtr), sizeof(cur->rgbAtr));
+		if (!smartcard_reader_state_return_is_valid(x, cur))
+		{
+			free(ret.rgReaderStates);
+			return SCARD_E_INVALID_ATR;
+		}
 	}
 
 	status = smartcard_pack_locate_cards_return(out, &ret);
@@ -1018,6 +1030,8 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 		rout->dwEventState = cur->dwEventState;
 		rout->cbAtr = cur->cbAtr;
 		CopyMemory(&(rout->rgbAtr), cur->rgbAtr, sizeof(rout->rgbAtr));
+		if (!smartcard_reader_state_return_is_valid(index, rout))
+			goto fail;
 	}
 
 	status = smartcard_pack_get_status_change_return(out, &ret, FALSE);
@@ -1083,6 +1097,8 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 		rout->dwEventState = cur->dwEventState;
 		rout->cbAtr = cur->cbAtr;
 		CopyMemory(&(rout->rgbAtr), cur->rgbAtr, sizeof(rout->rgbAtr));
+		if (!smartcard_reader_state_return_is_valid(index, rout))
+			goto fail;
 	}
 
 	status = smartcard_pack_get_status_change_return(out, &ret, TRUE);
@@ -1620,11 +1636,18 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 	for (UINT32 i = 0; i < ret.cReaders; i++)
 	{
 		LPSCARD_READERSTATEA state = &states[i];
-		ret.rgReaderStates[i].dwCurrentState = state->dwCurrentState;
-		ret.rgReaderStates[i].dwEventState = state->dwEventState;
-		ret.rgReaderStates[i].cbAtr = state->cbAtr;
-		CopyMemory(&(ret.rgReaderStates[i].rgbAtr), &(state->rgbAtr),
-		           sizeof(ret.rgReaderStates[i].rgbAtr));
+		ReaderState_Return* cur = &ret.rgReaderStates[i];
+
+		cur->dwCurrentState = state->dwCurrentState;
+		cur->dwEventState = state->dwEventState;
+		cur->cbAtr = state->cbAtr;
+		CopyMemory(&(cur->rgbAtr), &(state->rgbAtr), sizeof(cur->rgbAtr));
+
+		if (!smartcard_reader_state_return_is_valid(i, cur))
+		{
+			free(states);
+			return SCARD_E_INVALID_ATR;
+		}
 	}
 
 	free(states);

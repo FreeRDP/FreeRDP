@@ -26,3 +26,10 @@
 
 FREERDP_LOCAL void smartcard_trace_long_return_int(wLog* log, const Long_Return* ret,
                                                    const char* name);
+
+#define smartcard_reader_state_return_is_valid(x, val) \
+	smartcard_reader_state_return_is_valid_ex((x), (val), __FILE__, __LINE__, __func__)
+FREERDP_LOCAL BOOL smartcard_reader_state_return_is_valid_ex(size_t pos,
+                                                             const ReaderState_Return* val,
+                                                             const char* file, size_t line,
+                                                             const char* fkt);

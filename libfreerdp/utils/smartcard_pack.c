@@ -299,6 +299,13 @@ static LONG smartcard_ndr_write_state(wStream* s, const ReaderState_Return* data
 
 	WINPR_ASSERT(data || (size == 0));
 	cnv.reader = data;
+
+	for (size_t x = 0; x < size; x++)
+	{
+		const ReaderState_Return* cur = &data[x];
+		if (!smartcard_reader_state_return_is_valid(x, cur))
+			return SCARD_E_INVALID_ATR;
+	}
 	return smartcard_ndr_write(s, cnv.data, size, sizeof(ReaderState_Return), type);
 }
 
@@ -311,7 +318,17 @@ static LONG smartcard_ndr_read_state(wLog* log, wStream* s, ReaderState_Return**
 		BYTE** ppv;
 	} u;
 	u.ppc = data;
-	return smartcard_ndr_read(log, s, u.ppv, min, sizeof(ReaderState_Return), type);
+	const LONG status = smartcard_ndr_read(log, s, u.ppv, min, sizeof(ReaderState_Return), type);
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
+	for (size_t x = 0; x < min; x++)
+	{
+		const ReaderState_Return* cur = data[x];
+		if (!smartcard_reader_state_return_is_valid(x, cur))
+			return SCARD_E_INVALID_ATR;
+	}
+	return status;
 }
 
 static LONG smartcard_ndr_read_atrmask(wLog* log, wStream* s, LocateCards_ATRMask** data,
@@ -3079,6 +3096,13 @@ LONG smartcard_unpack_status_return(wStream* s, Status_Return* ret, BOOL unicode
 	Stream_Read(s, ret->pbAtr, sizeof(ret->pbAtr));
 	Stream_Read_UINT32(s, ret->cbAtrLen);
 
+	if (ret->cbAtrLen > ARRAYSIZE(ret->pbAtr))
+	{
+		WLog_Print(log, WLOG_ERROR, "Status_Return::cbAtrLen %" PRIu32 " exceeds %" PRIuz,
+		           ret->cbAtrLen, ARRAYSIZE(ret->pbAtr));
+		return SCARD_E_INVALID_ATR;
+	}
+
 	if (mszNdrPtr)
 	{
 		LONG status = smartcard_ndr_read(log, s, &ret->mszReaderNames, cBytes, 1, NDR_PTR_SIMPLE);
@@ -5015,4 +5039,24 @@ LONG smartcard_unpack_get_attrib_return(wStream* s, GetAttrib_Return* ret)
 
 	smartcard_trace_get_attrib_return(log, ret, 0);
 	return SCARD_S_SUCCESS;
+}
+
+BOOL smartcard_reader_state_return_is_valid_ex(size_t pos, const ReaderState_Return* val,
+                                               const char* file, size_t line, const char* fkt)
+{
+	if (!val)
+	{
+		WLog_Print_dbg_tag(SCARD_TAG, WLOG_WARN, line, file, fkt, "[%" PRIuz "] val = nullptr",
+		                   pos);
+		return FALSE;
+	}
+	if (val->cbAtr > sizeof(val->rgbAtr))
+	{
+		WLog_Print_dbg_tag(SCARD_TAG, WLOG_WARN, line, file, fkt,
+		                   "[%" PRIuz "] val->cbAtr=%" PRIu32 ", max=%" PRIuz, pos, val->cbAtr,
+		                   sizeof(val->rgbAtr));
+		return FALSE;
+	}
+
+	return TRUE;
 }
