@@ -12,8 +12,8 @@
 #cmakedefine WINPR_HAVE_SYS_SOCKIO_H
 #cmakedefine WINPR_HAVE_SYS_EVENTFD_H
 #cmakedefine WINPR_HAVE_SYS_TIMERFD_H
-#cmakedefine WINPR_HAVE_SYS_XATTR_H
-#cmakedefine WINPR_HAVE_LINUX_MSDOS_FS_H
+#cmakedefine WINPR_HAVE_SYS_XATTR_H /**< @since version 3.31.0 */
+#cmakedefine WINPR_HAVE_LINUX_MSDOS_FS_H /**< @since version 3.31.0 */
 #cmakedefine WINPR_HAVE_TM_GMTOFF
 #cmakedefine WINPR_HAVE_AIO_H
 #cmakedefine WINPR_HAVE_POLL_H
