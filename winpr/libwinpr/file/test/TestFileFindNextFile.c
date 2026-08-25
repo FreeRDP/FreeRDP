@@ -6,6 +6,8 @@
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
 
+#define TEST_MAX_PATH 4096
+
 static TCHAR testDirectory2File1[] = _T("TestDirectory2File1");
 static TCHAR testDirectory2File2[] = _T("TestDirectory2File2");
 
@@ -17,7 +19,7 @@ int TestFileFindNextFile(int argc, char* argv[])
 	HANDLE hFind = nullptr;
 	LPTSTR BasePath = nullptr;
 	WIN32_FIND_DATA FindData;
-	TCHAR FilePath[PATHCCH_MAX_CCH] = WINPR_C_ARRAY_INIT;
+	TCHAR FilePath[TEST_MAX_PATH] = WINPR_C_ARRAY_INIT;
 	WINPR_UNUSED(argc);
 	str = argv[1];
 #ifdef UNICODE
@@ -44,9 +46,9 @@ int TestFileFindNextFile(int argc, char* argv[])
 	FilePath[length] = 0;
 	if (FAILED(PathCchConvertStyle(BasePath, length, PATH_STYLE_WINDOWS)))
 		return -1;
-	if (FAILED(NativePathCchAppend(FilePath, PATHCCH_MAX_CCH, _T("TestDirectory2"))))
+	if (FAILED(NativePathCchAppend(FilePath, ARRAYSIZE(FilePath), _T("TestDirectory2"))))
 		return -1;
-	if (FAILED(NativePathCchAppend(FilePath, PATHCCH_MAX_CCH, _T("TestDirectory2File*"))))
+	if (FAILED(NativePathCchAppend(FilePath, ARRAYSIZE(FilePath), _T("TestDirectory2File*"))))
 		return -1;
 	free(BasePath);
 	_tprintf(_T("Finding file: %s\n"), FilePath);
