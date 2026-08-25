@@ -53,8 +53,9 @@ add_fuzzer_test("${FUZZERS}" "freerdp-client winpr-tools")
 # (re)generate the seed corpus. Requires the client library and
 # POSIX sockets.
 if(NOT WIN32 AND (WITH_CLIENT_COMMON OR WITH_CLIENT))
+  find_package(Threads REQUIRED)
   add_executable(TestFuzzServerSeedGen TestFuzzServerSeedGen.c)
-  target_link_libraries(TestFuzzServerSeedGen freerdp-client winpr-tools)
+  target_link_libraries(TestFuzzServerSeedGen freerdp-client winpr-tools Threads::Threads)
   set_target_properties(TestFuzzServerSeedGen PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
   set_property(TARGET TestFuzzServerSeedGen PROPERTY FOLDER "FreeRDP/Core/Test")
 endif()

@@ -20,8 +20,8 @@
 #pragma once
 
 #if defined(_WIN32)
-#include <Pathcch.h>
-#include <Shlwapi.h>
+#include <pathcch.h>
+#include <shlwapi.h>
 #else
 
 #include <winpr/wtypes.h>
