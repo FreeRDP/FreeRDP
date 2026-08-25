@@ -423,7 +423,7 @@ int main(int argc, char** argv)
 		return 1;
 	int one = 1;
 	setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
-	struct sockaddr_in sa = { 0 };
+	struct sockaddr_in sa = WINPR_C_ARRAY_INIT;
 	sa.sin_family = AF_INET;
 	sa.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	sa.sin_port = 0;
@@ -444,7 +444,7 @@ int main(int argc, char** argv)
 		return 1;
 	printf("client connected\n");
 
-	int sv[2];
+	int sv[2] = WINPR_C_ARRAY_INIT;
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) != 0)
 		return 1;
 
