@@ -1646,6 +1646,7 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 		if (!smartcard_reader_state_return_is_valid(i, cur))
 		{
 			free(states);
+			free(ret.rgReaderStates);
 			return SCARD_E_INVALID_ATR;
 		}
 	}

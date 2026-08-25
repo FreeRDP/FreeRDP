@@ -317,14 +317,22 @@ static LONG smartcard_ndr_read_state(wLog* log, wStream* s, ReaderState_Return**
 		ReaderState_Return** ppc;
 		BYTE** ppv;
 	} u;
+
+	WINPR_ASSERT(data);
 	u.ppc = data;
-	const LONG status = smartcard_ndr_read(log, s, u.ppv, min, sizeof(ReaderState_Return), type);
+
+	size_t len = 0;
+	const LONG status =
+	    smartcard_ndr_read_ex(log, s, u.ppv, min, sizeof(ReaderState_Return), type, &len);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
+	if (len / sizeof(ReaderState_Return) < min)
+		return SCARD_E_INVALID_VALUE;
+
 	for (size_t x = 0; x < min; x++)
 	{
-		const ReaderState_Return* cur = data[x];
+		const ReaderState_Return* cur = &(*data)[x];
 		if (!smartcard_reader_state_return_is_valid(x, cur))
 			return SCARD_E_INVALID_ATR;
 	}
