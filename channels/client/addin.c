@@ -164,24 +164,13 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
                                                             WINPR_ATTR_UNUSED DWORD dwFlags)
 {
 	int nDashes = 0;
-	HANDLE hFind = nullptr;
-	DWORD nAddins = 0;
-	LPSTR pszPattern = nullptr;
-	size_t cchPattern = 0;
 	LPCSTR pszAddinPath = FREERDP_ADDIN_PATH;
 	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
-	LPCSTR pszExtension = nullptr;
-	LPSTR pszSearchPath = nullptr;
-	size_t cchSearchPath = 0;
-	size_t cchAddinPath = 0;
-	size_t cchInstallPrefix = 0;
-	FREERDP_ADDIN** ppAddins = nullptr;
-	WIN32_FIND_DATAW FindData = WINPR_C_ARRAY_INIT;
-	cchAddinPath = strnlen(pszAddinPath, sizeof(FREERDP_ADDIN_PATH));
-	cchInstallPrefix = strnlen(pszInstallPrefix, sizeof(FREERDP_INSTALL_PREFIX));
-	pszExtension = PathGetSharedLibraryExtensionA(0);
-	cchPattern = 128 + strnlen(pszExtension, MAX_PATH) + 2;
-	pszPattern = (LPSTR)malloc(cchPattern + 1);
+	const size_t cchAddinPath = strnlen(pszAddinPath, sizeof(FREERDP_ADDIN_PATH));
+	const size_t cchInstallPrefix = strnlen(pszInstallPrefix, sizeof(FREERDP_INSTALL_PREFIX));
+	const char* pszExtension = PathGetSharedLibraryExtensionA(0);
+	const size_t cchPattern = 128 + strnlen(pszExtension, MAX_PATH) + 2;
+	char* pszPattern = calloc(cchPattern + 1, sizeof(char));
 
 	if (!pszPattern)
 	{
@@ -210,9 +199,9 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		                pszExtension);
 	}
 
-	cchPattern = strnlen(pszPattern, cchPattern);
-	cchSearchPath = cchInstallPrefix + cchAddinPath + cchPattern + 3;
-	pszSearchPath = (LPSTR)calloc(cchSearchPath + 1, sizeof(char));
+	const size_t cchPattern2 = strnlen(pszPattern, cchPattern);
+	const size_t cchSearchPath = cchInstallPrefix + cchAddinPath + cchPattern2 + 3;
+	char* pszSearchPath = calloc(cchSearchPath + 1, sizeof(char));
 
 	if (!pszSearchPath)
 	{
@@ -223,21 +212,21 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 
 	CopyMemory(pszSearchPath, pszInstallPrefix, cchInstallPrefix);
 	pszSearchPath[cchInstallPrefix] = '\0';
-	const HRESULT hr1 = NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszAddinPath);
-	const HRESULT hr2 = NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszPattern);
+
+	char* result = GetCombinedPathV(pszSearchPath, "%s%c%s", pszAddinPath,
+	                                PathGetSeparatorA(PATH_STYLE_NATIVE), pszPattern);
 	free(pszPattern);
-
-	if (FAILED(hr1) || FAILED(hr2))
-	{
-		free(pszSearchPath);
-		return nullptr;
-	}
-
-	hFind = FindFirstFileUTF8(pszSearchPath, &FindData);
-
 	free(pszSearchPath);
-	nAddins = 0;
-	ppAddins = (FREERDP_ADDIN**)calloc(128, sizeof(FREERDP_ADDIN*));
+
+	if (!result)
+		return nullptr;
+
+	WIN32_FIND_DATAW FindData = WINPR_C_ARRAY_INIT;
+	HANDLE hFind = FindFirstFileUTF8(result, &FindData);
+	free(result);
+
+	DWORD nAddins = 0;
+	FREERDP_ADDIN** ppAddins = (FREERDP_ADDIN**)calloc(128, sizeof(FREERDP_ADDIN*));
 
 	if (!ppAddins)
 	{
