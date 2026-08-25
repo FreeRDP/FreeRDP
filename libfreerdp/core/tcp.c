@@ -877,7 +877,7 @@ fail:
 {
 	INT32 optval = 0;
 	socklen_t optlen = sizeof(optval);
-	if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) >= 0)
+	if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)&optval, &optlen) >= 0)
 	{
 		if (optval != 0)
 		{
@@ -1017,7 +1017,7 @@ BOOL freerdp_tcp_set_keep_alive_mode(const rdpSettings* settings, int sockfd)
 
 	int xoptval = 0;
 	socklen_t xoptlen = sizeof(xoptval);
-	const int rc = getsockopt(sockfd, SOL_SOCKET, SO_TYPE, &xoptval, &xoptlen);
+	const int rc = getsockopt(sockfd, SOL_SOCKET, SO_TYPE, (void*)&xoptval, &xoptlen);
 
 	if (rc == 0)
 		isTcp = xoptval == SOCK_STREAM;

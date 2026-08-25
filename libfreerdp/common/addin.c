@@ -47,41 +47,30 @@ static inline BOOL is_path_required(LPCSTR path, size_t len)
 
 LPSTR freerdp_get_library_install_path(void)
 {
-	LPSTR pszPath = nullptr;
-	size_t cchPath = 0;
-	size_t cchLibraryPath = 0;
-	size_t cchInstallPrefix = 0;
-	BOOL needLibPath = 0;
-	BOOL needInstallPath = 0;
 	LPCSTR pszLibraryPath = FREERDP_LIBRARY_PATH;
 	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
-	cchLibraryPath = strlen(pszLibraryPath) + 1;
-	cchInstallPrefix = strlen(pszInstallPrefix) + 1;
-	cchPath = cchInstallPrefix + cchLibraryPath;
-	needInstallPath = is_path_required(pszInstallPrefix, cchInstallPrefix);
-	needLibPath = is_path_required(pszLibraryPath, cchLibraryPath);
+	const size_t cchLibraryPath = strlen(pszLibraryPath) + 1;
+	const size_t cchInstallPrefix = strlen(pszInstallPrefix) + 1;
+	const size_t cchPath = cchInstallPrefix + cchLibraryPath;
+	const BOOL needInstallPath = is_path_required(pszInstallPrefix, cchInstallPrefix);
+	const BOOL needLibPath = is_path_required(pszLibraryPath, cchLibraryPath);
 
 	if (!needInstallPath && !needLibPath)
 		return nullptr;
 
-	pszPath = (LPSTR)malloc(cchPath + 1);
+	char* pszPath = (LPSTR)calloc(cchPath + 1, sizeof(char));
 
 	if (!pszPath)
 		return nullptr;
 
 	if (needInstallPath)
-	{
 		CopyMemory(pszPath, pszInstallPrefix, cchInstallPrefix);
-		pszPath[cchInstallPrefix] = '\0';
-	}
 
 	if (needLibPath)
 	{
-		if (FAILED(NativePathCchAppendA(pszPath, cchPath + 1, pszLibraryPath)))
-		{
-			free(pszPath);
-			return nullptr;
-		}
+		char* result = GetCombinedPath(pszPath, pszLibraryPath);
+		free(pszPath);
+		pszPath = result;
 	}
 
 	return pszPath;
@@ -92,19 +81,13 @@ LPSTR freerdp_get_dynamic_addin_install_path(void)
 #if defined(WITH_ADD_PLUGIN_TO_RPATH)
 	return nullptr;
 #else
-	LPSTR pszPath = nullptr;
-	size_t cchPath = 0;
-	size_t cchAddinPath = 0;
-	size_t cchInstallPrefix = 0;
-	BOOL needLibPath = 0;
-	BOOL needInstallPath = 0;
 	LPCSTR pszAddinPath = FREERDP_ADDIN_PATH;
 	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
-	cchAddinPath = strlen(pszAddinPath) + 1;
-	cchInstallPrefix = strlen(pszInstallPrefix) + 1;
-	cchPath = cchInstallPrefix + cchAddinPath;
-	needInstallPath = is_path_required(pszInstallPrefix, cchInstallPrefix);
-	needLibPath = is_path_required(pszAddinPath, cchAddinPath);
+	const size_t cchAddinPath = strlen(pszAddinPath) + 1;
+	const size_t cchInstallPrefix = strlen(pszInstallPrefix) + 1;
+	const size_t cchPath = cchInstallPrefix + cchAddinPath;
+	const BOOL needInstallPath = is_path_required(pszInstallPrefix, cchInstallPrefix);
+	const BOOL needLibPath = is_path_required(pszAddinPath, cchAddinPath);
 
 	WLog_DBG(TAG,
 	         "freerdp_get_dynamic_addin_install_path <- pszInstallPrefix: %s, pszAddinPath: %s",
@@ -113,24 +96,21 @@ LPSTR freerdp_get_dynamic_addin_install_path(void)
 	if (!needInstallPath && !needLibPath)
 		return nullptr;
 
-	pszPath = (LPSTR)calloc(cchPath + 1, sizeof(CHAR));
+	char* pszPath = calloc(cchPath + 1, sizeof(CHAR));
 
 	if (!pszPath)
 		return nullptr;
 
 	if (needInstallPath)
-	{
 		CopyMemory(pszPath, pszInstallPrefix, cchInstallPrefix);
-		pszPath[cchInstallPrefix] = '\0';
-	}
 
 	if (needLibPath)
 	{
-		if (FAILED(NativePathCchAppendA(pszPath, cchPath + 1, pszAddinPath)))
-		{
-			free(pszPath);
+		char* result = GetCombinedPath(pszPath, pszAddinPath);
+		free(pszPath);
+		pszPath = result;
+		if (!pszPath)
 			return nullptr;
-		}
 	}
 
 	WLog_DBG(TAG, "freerdp_get_dynamic_addin_install_path -> pszPath: %s", pszPath);
@@ -165,7 +145,8 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 	cchFileName = strlen(pszFileName);
 
 	/* Get file name with prefix and extension */
-	if (FAILED(PathCchFindExtensionA(pszFileName, cchFileName + 1, &pszExt)))
+	pszExt = strrchr(pszFileName, '.');
+	if (!pszExt)
 	{
 		pszExt = PathGetSharedLibraryExtensionA(PATH_SHARED_LIB_EXT_WITH_DOT);
 		cchExt = strlen(pszExt);
@@ -203,8 +184,10 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 			goto fail;
 
 		(void)sprintf_s(pszRelativeFilePath, relPathLen, "%s", pszPath);
-		const HRESULT hr = NativePathCchAppendA(pszRelativeFilePath, relPathLen, pszAddinFile);
-		if (FAILED(hr))
+		char* result = GetCombinedPath(pszRelativeFilePath, pszAddinFile);
+		free(pszRelativeFilePath);
+		pszRelativeFilePath = result;
+		if (!pszRelativeFilePath)
 			goto fail;
 	}
 	else
@@ -225,8 +208,11 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 
 		CopyMemory(pszFilePath, pszAddinInstallPath, cchAddinInstallPath);
 		pszFilePath[cchAddinInstallPath] = '\0';
-		const HRESULT hr = NativePathCchAppendA(pszFilePath, cchFilePath + 1, pszRelativeFilePath);
-		if (FAILED(hr))
+
+		char* result = GetCombinedPath(pszFilePath, pszRelativeFilePath);
+		free(pszFilePath);
+		pszFilePath = result;
+		if (!pszFilePath)
 			goto fail;
 	}
 	else

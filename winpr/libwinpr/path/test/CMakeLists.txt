@@ -5,7 +5,14 @@ disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
-set(${MODULE_PREFIX}_TESTS
+set(${MODULE_PREFIX}_TESTS TestPathShell.c TestPathMakePath.c)
+
+if(NOT WITHOUT_WINPR_3x_DEPRECATED)
+  list(
+    APPEND
+    ${MODULE_PREFIX}_TESTS
+    TestPathIsUNCEx.c
+    TestPathAllocCombine.c
     TestPathCchAddBackslash.c
     TestPathCchRemoveBackslash.c
     TestPathCchAddBackslashEx.c
@@ -15,22 +22,21 @@ set(${MODULE_PREFIX}_TESTS
     TestPathCchAppendEx.c
     TestPathCchCombine.c
     TestPathCchCombineEx.c
-    TestPathAllocCombine.c
     TestPathCchFindExtension.c
     TestPathCchRenameExtension.c
     TestPathCchRemoveExtension.c
     TestPathCchIsRoot.c
-    TestPathIsUNCEx.c
     TestPathCchSkipRoot.c
     TestPathCchStripToRoot.c
     TestPathCchStripPrefix.c
     TestPathCchRemoveFileSpec.c
-    TestPathShell.c
-    TestPathMakePath.c
-)
+  )
 
-if(NOT WIN32)
-  list(APPEND ${MODULE_PREFIX}_TESTS TestPathCchCanonicalize.c TestPathCchCanonicalizeEx.c TestPathAllocCanonicalize.c)
+  if(NOT WIN32)
+    list(APPEND ${MODULE_PREFIX}_TESTS TestPathCchCanonicalize.c TestPathCchCanonicalizeEx.c
+         TestPathAllocCanonicalize.c
+    )
+  endif()
 endif()
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODULE_PREFIX}_TESTS})
