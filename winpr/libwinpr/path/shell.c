@@ -47,6 +47,7 @@
 #if defined(WIN32)
 #include <windows.h>
 #include <shlobj.h>
+#include <shlwapi.h>
 #else
 #include <errno.h>
 #include <dirent.h>

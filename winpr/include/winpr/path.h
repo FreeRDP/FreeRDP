@@ -27,6 +27,10 @@
 
 #include <winpr/Pathcch.h>
 
+#if defined(_WIN32)
+#include <shlwapi.h>
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
