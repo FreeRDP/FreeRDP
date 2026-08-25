@@ -34,11 +34,18 @@
 #include <cwalk.h>
 #endif
 
+#ifndef PATHCCH_MAX_CCH
+#define PATHCCH_MAX_CCH 0x8000
+#endif
+
 static const char PATH_SLASH_CHR = '/';
 static const char PATH_SLASH_STR[] = "/";
 
 static const char PATH_BACKSLASH_CHR = '\\';
+
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 static const char PATH_BACKSLASH_STR[] = "\\";
+#endif
 
 #ifdef _WIN32
 static const WCHAR PATH_SLASH_CHR_W = L'/';
@@ -55,7 +62,11 @@ static const WCHAR PATH_BACKSLASH_STR_W[] = { 0x5c00, '\0' };
 static const WCHAR PATH_SLASH_CHR_W = '/';
 static const WCHAR PATH_BACKSLASH_CHR_W = '\\';
 static const WCHAR PATH_SLASH_STR_W[] = { '/', '\0' };
+
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 static const WCHAR PATH_BACKSLASH_STR_W[] = { '\\', '\0' };
+#endif
+
 #endif
 #endif
 
@@ -71,9 +82,12 @@ static const WCHAR PATH_BACKSLASH_STR_W[] = { '\\', '\0' };
 #define PATH_SEPARATOR_STR_W PATH_SLASH_STR_W
 #endif
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 #include "../log.h"
 #define TAG WINPR_TAG("path")
+#endif
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 /*
  * PathCchAddBackslash
  */
@@ -244,6 +258,8 @@ HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UN
 #undef CUR_PATH_SEPARATOR_CHR
 #undef PATH_CCH_ADD_EXTENSION
 
+#endif
+
 /* Unix-style Paths */
 
 #define DEFINE_UNICODE FALSE
@@ -285,7 +301,7 @@ HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UN
  */
 
 /* Windows-style Paths */
-
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 #define DEFINE_UNICODE FALSE
 #define CUR_PATH_SEPARATOR_CHR PATH_BACKSLASH_CHR
 #define CUR_PATH_SEPARATOR_STR PATH_BACKSLASH_STR
@@ -328,6 +344,7 @@ HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UN
 #undef CUR_PATH_SEPARATOR_STR
 #undef PATH_CCH_APPEND
 
+#endif
 /* Native-style Paths */
 
 #define DEFINE_UNICODE FALSE
@@ -350,6 +367,7 @@ HRESULT PathCchRemoveBackslashExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UN
 #undef CUR_PATH_SEPARATOR_STR
 #undef PATH_CCH_APPEND
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 /*
  * PathCchAppendEx
  */
@@ -367,6 +385,8 @@ HRESULT PathCchAppendExW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUSED size
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
+
+#endif
 
 #if !defined(_WIN32)
 
@@ -477,6 +497,7 @@ char* winpr_PathCanonicalize(const char* path)
 #endif
 }
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 /*
  * PathCchCanonicalize
  */
@@ -581,7 +602,9 @@ HRESULT PathAllocCanonicalizeW(PCWSTR pszPathIn, unsigned long dwFlags, PWSTR* p
 }
 
 #endif
+#endif
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 /*
  * PathCchCombine
  */
@@ -646,6 +669,8 @@ HRESULT PathCchCombineExW(WINPR_ATTR_UNUSED PWSTR pszPathOut, WINPR_ATTR_UNUSED 
 #undef CUR_PATH_SEPARATOR_STR
 #undef PATH_ALLOC_COMBINE
 
+#endif
+
 /* Unix-style Paths */
 
 #define DEFINE_UNICODE FALSE
@@ -689,6 +714,8 @@ HRESULT PathCchCombineExW(WINPR_ATTR_UNUSED PWSTR pszPathOut, WINPR_ATTR_UNUSED 
 #undef CUR_PATH_SEPARATOR_CHR
 #undef CUR_PATH_SEPARATOR_STR
 #undef PATH_ALLOC_COMBINE
+
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 
 /**
  * PathCchFindExtension
@@ -949,6 +976,7 @@ HRESULT PathCchRemoveFileSpecW(WINPR_ATTR_UNUSED PWSTR pszPath, WINPR_ATTR_UNUSE
 	WLog_ERR(TAG, "not implemented");
 	return E_NOTIMPL;
 }
+#endif
 
 /*
  * Path Portability Functions

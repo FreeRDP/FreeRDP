@@ -4,7 +4,7 @@
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License"));
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -18,6 +18,8 @@
  */
 
 #pragma once
+
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 
 #if defined(_WIN32)
 #include <pathcch.h>
@@ -44,153 +46,190 @@ extern "C"
 
 #define PATHCCH_MAX_CCH 0x8000
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddBackslashA(PSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchAddBackslashA(PSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddBackslashW(PWSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchAddBackslashW(PWSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveBackslashA(PSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchRemoveBackslashA(PSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
-	                                         size_t* pcchRemaining);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchAddBackslashExA(
+	                         PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
-	                                         size_t* pcchRemaining);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchAddBackslashExW(
+	                         PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
-	                                            size_t* pcchRemaining);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchRemoveBackslashExA(
+	                         PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
-	                                            size_t* pcchRemaining);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchRemoveBackslashExW(
+	                         PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchAddExtensionA(PSTR pszPath,
+	                                                                                 size_t cchPath,
+	                                                                                 PCSTR pszExt));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchAddExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAppendA(PSTR pszPath, size_t cchPath, PCSTR pszMore);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchAppendA(PSTR pszPath,
+	                                                                           size_t cchPath,
+	                                                                           PCSTR pszMore));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAppendW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchAppendW(PWSTR pszPath,
+	                                                                           size_t cchPath,
+	                                                                           PCWSTR pszMore));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAppendExA(PSTR pszPath, size_t cchPath, PCSTR pszMore,
-	                                   unsigned long dwFlags);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchAppendExA(
+	                         PSTR pszPath, size_t cchPath, PCSTR pszMore, unsigned long dwFlags));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchAppendExW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore,
-	                                   unsigned long dwFlags);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchAppendExW(
+	                         PWSTR pszPath, size_t cchPath, PCWSTR pszMore, unsigned long dwFlags));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCanonicalizeA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchCanonicalizeA(
+	                         PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCanonicalizeW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchCanonicalizeW(
+	                         PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCanonicalizeExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
-	                                         unsigned long dwFlags);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchCanonicalizeExA(PSTR pszPathOut, size_t cchPathOut,
+	                                                PCSTR pszPathIn, unsigned long dwFlags));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
-	                                         unsigned long dwFlags);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut,
+	                                                PCWSTR pszPathIn, unsigned long dwFlags));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathAllocCanonicalizeA(PCSTR pszPathIn, unsigned long dwFlags,
-	                                         PSTR* ppszPathOut);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathAllocCanonicalizeA(
+	                         PCSTR pszPathIn, unsigned long dwFlags, PSTR* ppszPathOut));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathAllocCanonicalizeW(PCWSTR pszPathIn, unsigned long dwFlags,
-	                                         PWSTR* ppszPathOut);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathAllocCanonicalizeW(
+	                         PCWSTR pszPathIn, unsigned long dwFlags, PWSTR* ppszPathOut));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCombineA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
-	                                  PCSTR pszMore);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchCombineA(
+	                         PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, PCSTR pszMore));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCombineW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
-	                                  PCWSTR pszMore);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchCombineW(PWSTR pszPathOut,
+	                                                                            size_t cchPathOut,
+	                                                                            PCWSTR pszPathIn,
+	                                                                            PCWSTR pszMore));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCombineExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
-	                                    PCSTR pszMore, unsigned long dwFlags);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchCombineExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn,
+	                                           PCSTR pszMore, unsigned long dwFlags));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn,
-	                                    PCWSTR pszMore, unsigned long dwFlags);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchCombineExW(
+	                         PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, PCWSTR pszMore,
+	                         unsigned long dwFlags));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags,
-	                                    PSTR* ppszPathOut);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathAllocCombineA(PCSTR pszPathIn, PCSTR pszMore,
+	                                           unsigned long dwFlags, PSTR* ppszPathOut));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags,
-	                                    PWSTR* ppszPathOut);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathAllocCombineW(PCWSTR pszPathIn, PCWSTR pszMore,
+	                                           unsigned long dwFlags, PWSTR* ppszPathOut));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchFindExtensionW(PCWSTR pszPath, size_t cchPath, PCWSTR* ppszExt);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT PathCchFindExtensionW(
+	                         PCWSTR pszPath, size_t cchPath, PCWSTR* ppszExt));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRenameExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchRenameExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRenameExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchRenameExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveExtensionA(PSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchRemoveExtensionA(PSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveExtensionW(PWSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchRemoveExtensionW(PWSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL PathCchIsRootA(PCSTR pszPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API BOOL PathCchIsRootA(PCSTR pszPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL PathCchIsRootW(PCWSTR pszPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API BOOL PathCchIsRootW(PCWSTR pszPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL PathIsUNCExA(PCSTR pszPath, PCSTR* ppszServer);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API BOOL PathIsUNCExA(PCSTR pszPath,
+	                                                                      PCSTR* ppszServer));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API BOOL PathIsUNCExW(PCWSTR pszPath, PCWSTR* ppszServer);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API BOOL PathIsUNCExW(PCWSTR pszPath,
+	                                                                      PCWSTR* ppszServer));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchSkipRootA(PCSTR pszPath, PCSTR* ppszRootEnd);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchSkipRootA(PCSTR pszPath, PCSTR* ppszRootEnd));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchSkipRootW(PCWSTR pszPath, PCWSTR* ppszRootEnd);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchSkipRootW(PCWSTR pszPath, PCWSTR* ppszRootEnd));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchStripToRootA(PSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchStripToRootA(PSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchStripToRootW(PWSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchStripToRootW(PWSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchStripPrefixA(PSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchStripPrefixW(PWSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveFileSpecA(PSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchRemoveFileSpecA(PSTR pszPath, size_t cchPath));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath);
+	WINPR_DEPRECATED_VAR("[since 3.31.0] dropped",
+	                     WINPR_ATTR_NODISCARD WINPR_API HRESULT
+	                         PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath));
 
 #ifdef UNICODE
 #define PathCchAddBackslash PathCchAddBackslashW
@@ -244,4 +283,5 @@ extern "C"
 }
 #endif
 
+#endif
 #endif
