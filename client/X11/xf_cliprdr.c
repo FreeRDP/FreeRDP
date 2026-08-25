@@ -2456,7 +2456,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		const xfCliprdrFormat* cformat =
 		    xf_cliprdr_get_client_format_by_atom(clipboard, next->expectedResponse->target);
 
-		size_t index = 1;
+		size_t index = 0;
 		while ((next = ArrayList_GetItem(clipboard->queued_responses, index)) != nullptr)
 		{
 			if (next->requestedFormat->formatToRequest == nextFormatId)
