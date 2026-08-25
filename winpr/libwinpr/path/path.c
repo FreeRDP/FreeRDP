@@ -43,9 +43,7 @@ static const char PATH_SLASH_STR[] = "/";
 
 static const char PATH_BACKSLASH_CHR = '\\';
 
-#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 static const char PATH_BACKSLASH_STR[] = "\\";
-#endif
 
 #ifdef _WIN32
 static const WCHAR PATH_SLASH_CHR_W = L'/';
