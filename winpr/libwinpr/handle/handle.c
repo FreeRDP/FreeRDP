@@ -91,7 +91,8 @@ BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags)
 	const int flags = fcntl(fd, F_GETFD);
 	if (flags < 0)
 	{
-		WLog_ERR(TAG, "fcntl(F_GETFD) failed: %s", strerror(errno));
+		char buffer[64] = WINPR_C_ARRAY_INIT;
+		WLog_ERR(TAG, "fcntl(F_GETFD) failed: %s", winpr_strerror(errno, buffer, sizeof(buffer)));
 		return FALSE;
 	}
 
@@ -117,14 +118,16 @@ BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags)
 	int flags = fcntl(fd, F_GETFD);
 	if (flags < 0)
 	{
-		WLog_ERR(TAG, "fcntl(F_GETFD) failed: %s", strerror(errno));
+		char buffer[64] = WINPR_C_ARRAY_INIT;
+		WLog_ERR(TAG, "fcntl(F_GETFD) failed: %s", winpr_strerror(errno, buffer, sizeof(buffer)));
 		return FALSE;
 	}
 
 	flags = (dwFlags & HANDLE_FLAG_INHERIT) ? (flags & ~FD_CLOEXEC) : (flags | FD_CLOEXEC);
 	if (fcntl(fd, F_SETFD, flags) < 0)
 	{
-		WLog_ERR(TAG, "fcntl(F_SETFD) failed: %s", strerror(errno));
+		char buffer[64] = WINPR_C_ARRAY_INIT;
+		WLog_ERR(TAG, "fcntl(F_SETFD) failed: %s", winpr_strerror(errno, buffer, sizeof(buffer)));
 		return FALSE;
 	}
 
