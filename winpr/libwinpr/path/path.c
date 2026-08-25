@@ -28,6 +28,7 @@
 #include <winpr/file.h>
 
 #include "../utils.h"
+#include "path.h"
 
 #if defined(WITH_CWALK)
 #include <cwalk.h>
@@ -440,7 +441,7 @@ static BOOL replace_trailing_dotdot(char* str, size_t slen)
 #endif
 
 WINPR_ATTR_NODISCARD
-static char* canonicalize(const char* path)
+char* winpr_PathCanonicalize(const char* path)
 {
 	WINPR_ASSERT(path);
 
@@ -482,7 +483,7 @@ static char* canonicalize(const char* path)
 
 HRESULT PathCchCanonicalizeA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn)
 {
-	char* out = canonicalize(pszPathIn);
+	char* out = winpr_PathCanonicalize(pszPathIn);
 	if (!out)
 		return E_OUTOFMEMORY;
 	const size_t len = strnlen(out, cchPathOut);
@@ -554,7 +555,7 @@ HRESULT PathAllocCanonicalizeA(PCSTR pszPathIn, unsigned long dwFlags, PSTR* pps
 		return E_OUTOFMEMORY;
 	if (dwFlags != 0)
 		WLog_WARN(TAG, "flags 0x%08lx not implemented", dwFlags);
-	*ppszPathOut = canonicalize(pszPathIn);
+	*ppszPathOut = winpr_PathCanonicalize(pszPathIn);
 	if (!*ppszPathOut)
 		return E_OUTOFMEMORY;
 	return S_OK;

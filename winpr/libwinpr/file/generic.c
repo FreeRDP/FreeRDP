@@ -76,6 +76,7 @@
 #include "../handle/handle.h"
 
 #include "../pipe/pipe.h"
+#include "../path/path.h"
 
 #include "file.h"
 
@@ -1317,15 +1318,11 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			memcpy(fullpath + pathlen, pDirent->d_name, namelen);
 			fullpath[pathlen + namelen] = 0;
 
-			char* canonical = nullptr;
-			const HRESULT hr = PathAllocCanonicalizeA(fullpath, 0, &canonical);
+			char* canonical = winpr_PathCanonicalize(fullpath);
 			free(fullpath);
 
-			if (S_OK != hr)
-			{
-				free(canonical);
+			if (!canonical)
 				continue;
-			}
 
 			struct stat fileStat = WINPR_C_ARRAY_INIT;
 			if (stat(canonical, &fileStat) != 0)
