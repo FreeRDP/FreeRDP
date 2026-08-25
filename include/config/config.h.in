@@ -253,6 +253,7 @@
  *  threshold is reached; if the rekey fails the connection is cut. On non-TLS-1.3
  *  connections a rekey is not possible and the connection is left as is. When
  *  undefined the whole feature is compiled out.
+ * @since version 3.31.0
  */
 #cmakedefine WITH_TLS_DATA_LIMIT
 
