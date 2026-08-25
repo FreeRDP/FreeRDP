@@ -69,11 +69,13 @@ static void dump_event(WINPR_EVENT* event, size_t index)
 
 #ifdef WINPR_HAVE_SYS_EVENTFD_H
 #if !defined(WITH_EVENTFD_READ_WRITE)
+WINPR_ATTR_NODISCARD
 static int eventfd_read(int fd, eventfd_t* value)
 {
 	return (read(fd, value, sizeof(*value)) == sizeof(*value)) ? 0 : -1;
 }
 
+WINPR_ATTR_NODISCARD
 static int eventfd_write(int fd, eventfd_t value)
 {
 	return (write(fd, &value, sizeof(value)) == sizeof(value)) ? 0 : -1;
@@ -81,10 +83,10 @@ static int eventfd_write(int fd, eventfd_t value)
 #endif
 #endif
 
+WINPR_ATTR_NODISCARD
 static BOOL set_non_blocking_fd(int fd)
 {
-	int flags;
-	flags = fcntl(fd, F_GETFL);
+	int flags = fcntl(fd, F_GETFL);
 	if (flags < 0)
 		return FALSE;
 
@@ -197,11 +199,13 @@ void winpr_event_uninit(WINPR_EVENT_IMPL* event)
 
 static BOOL EventCloseHandle(HANDLE handle);
 
+WINPR_ATTR_NODISCARD
 static BOOL EventIsHandled(HANDLE handle)
 {
 	return WINPR_HANDLE_IS_HANDLED(handle, HANDLE_TYPE_EVENT, FALSE);
 }
 
+WINPR_ATTR_NODISCARD
 static int EventGetFd(HANDLE handle)
 {
 	WINPR_EVENT* event = (WINPR_EVENT*)handle;
