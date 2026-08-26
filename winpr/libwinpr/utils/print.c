@@ -209,7 +209,7 @@ size_t winpr_HexStringToBinBuffer(const char* str, size_t strLength, BYTE* data,
 	return y;
 }
 
-size_t winpr_BinToHexStringBuffer(const BYTE* data, size_t length, char* dstStr, size_t dstSize,
+size_t winpr_BinToHexStringBuffer(const void* data, size_t length, char* dstStr, size_t dstSize,
                                   BOOL space)
 {
 	const size_t n = space ? 3 : 2;
@@ -219,10 +219,11 @@ size_t winpr_BinToHexStringBuffer(const BYTE* data, size_t length, char* dstStr,
 	if (!data || !dstStr || (length == 0) || (dstSize == 0))
 		return 0;
 
+	const BYTE* bdata = data;
 	for (size_t i = 0; i < maxLength; i++)
 	{
-		const int ln = data[i] & 0xF;
-		const int hn = (data[i] >> 4) & 0xF;
+		const int ln = bdata[i] & 0xF;
+		const int hn = (bdata[i] >> 4) & 0xF;
 		char* dst = &dstStr[i * n];
 
 		dst[0] = bin2hex[hn];
@@ -241,7 +242,7 @@ size_t winpr_BinToHexStringBuffer(const BYTE* data, size_t length, char* dstStr,
 	return maxLength * n;
 }
 
-char* winpr_BinToHexString(const BYTE* data, size_t length, BOOL space)
+char* winpr_BinToHexString(const void* data, size_t length, BOOL space)
 {
 	size_t rc = 0;
 	const size_t n = space ? 3 : 2;
