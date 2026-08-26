@@ -109,6 +109,7 @@ static int run_inherit_case(const char* exePath, const char* label, HANDLE probe
 
 	STARTUPINFOA* siPtr = &si;
 	DWORD createFlags = 0;
+	HANDLE handles[2] = { outWrite, probeHandle };
 
 	if (useExtended)
 	{
@@ -128,7 +129,6 @@ static int run_inherit_case(const char* exePath, const char* label, HANDLE probe
 		 * outWrite isn't in it too, the child wouldn't get a usable stdout handle at all, and
 		 * this test's own OPEN/CLOSED result-capture mechanism would break. Only the probe
 		 * handle's presence is what actually varies between the two list-based cases. */
-		HANDLE handles[2] = { outWrite, probeHandle };
 		const size_t handleCount = (mode == MODE_HANDLE_LIST_WITH_PROBE) ? 2 : 1;
 		if (!UpdateProcThreadAttribute(attrList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
 		                               (void*)handles, handleCount * sizeof(HANDLE), nullptr,
