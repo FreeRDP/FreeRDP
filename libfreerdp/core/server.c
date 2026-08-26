@@ -375,7 +375,7 @@ static BOOL wts_read_drdynvc_pdu_ready(rdpPeerChannel* channel, wStream* s, UINT
 			return FALSE;
 
 		DEBUG_DVC("Cmd %s ChannelId %" PRIu32 " length %" PRIuz "", drdynvc_get_packet_type(Cmd),
-		          ChannelId, length);
+		          ChannelId, Stream_GetRemainingLength(s));
 		table = channel->vcm->dynamicVirtualChannels;
 		if (!table)
 			return FALSE;

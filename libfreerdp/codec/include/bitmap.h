@@ -153,7 +153,8 @@ static inline BOOL RLEDECOMPRESS(const BYTE* WINPR_RESTRICT pbSrcBuffer, UINT32 
 		code = ExtractCodeId(*pbSrc);
 
 #if defined(WITH_DEBUG_CODECS)
-		WLog_VRB(TAG, "pbSrc=%p code=%s, rem=%" PRIuz, pbSrc, rle_code_str(code), pbEnd - pbSrc);
+		WLog_VRB(TAG, "pbSrc=%p code=%s, rem=%ld", (const void*)pbSrc, rle_code_str(code),
+		         pbEnd - pbSrc);
 #endif
 
 		/* Handle Background Run Orders. */
