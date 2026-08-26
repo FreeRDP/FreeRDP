@@ -342,9 +342,9 @@ parameter = '3 LPCVOID
 [suppress_function]
 change_kind = function-subtype-change
 name = winpr_BinToHexString
-parameter = '0 const void*
+parameter = '0 /^const.*/
 
 [suppress_function]
 change_kind = function-subtype-change
 name = winpr_BinToHexStringBuffer
-parameter = '0 const void*
+parameter = '0 /^const.*/
