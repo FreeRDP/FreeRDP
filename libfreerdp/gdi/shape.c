@@ -163,6 +163,8 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 			}
 
 			const BYTE* srcp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest);
+			if (!srcp)
+				return FALSE;
 			const UINT32 formatSize = FreeRDPGetBytesPerPixel(hdc->format);
 			if (formatSize == 0)
 				return FALSE;
@@ -183,6 +185,8 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 			const BOOL monochrome = (hbr->pattern->format == PIXEL_FORMAT_MONO);
 			const UINT32 formatSize = FreeRDPGetBytesPerPixel(hbr->pattern->format);
 			if (formatSize == 0)
+				return FALSE;
+			if (hbr->pattern->height <= 0)
 				return FALSE;
 
 			for (INT32 y = 0; y < nHeight; y++)
