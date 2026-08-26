@@ -338,3 +338,13 @@ parameter = '4 LPCWSTR
 change_kind = function-subtype-change
 name = CommDeviceIoControl
 parameter = '3 LPCVOID
+
+[suppress_function]
+change_kind = function-subtype-change
+name = winpr_BinToHexString
+parameter = '0 const void*
+
+[suppress_function]
+change_kind = function-subtype-change
+name = winpr_BinToHexStringBuffer
+parameter = '0 const void*
