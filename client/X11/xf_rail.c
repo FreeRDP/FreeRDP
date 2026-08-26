@@ -1049,6 +1049,10 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
 		WLog_Print(xfc->log, WLOG_WARN, "WINDOW_ORDER_TYPE_DESKTOP flag missing!");
 		return FALSE;
 	}
+	if ((orderInfo->fieldFlags &
+	     (WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN | WINDOW_ORDER_FIELD_DESKTOP_HOOKED)) &&
+	    !freerdp_client_rail_ipc_set_ready(xfc->railIpc, FALSE))
+		WLog_Print(xfc->log, WLOG_ERROR, "RAIL IPC failed to revoke launch readiness");
 
 	if ((orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ARC_BEGAN) &&
 	    (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_HOOKED))
@@ -1072,15 +1076,13 @@ xf_rail_monitored_desktop(WINPR_ATTR_UNUSED rdpContext* context,
 		if (!xf_rail_select_workarea_events(xfc))
 			return FALSE;
 
-		const char* app =
-		    freerdp_settings_get_string(context->settings, FreeRDP_RemoteApplicationProgram);
-		if ((app != nullptr) && (strnlen(app, 1) > 0))
-		{
-			if (client_rail_server_start_cmd(xfc->rail) != CHANNEL_RC_OK)
-				return FALSE;
-			if (xf_rail_send_workarea(xfc) != CHANNEL_RC_OK)
-				return FALSE;
-		}
+		if (client_rail_server_start_cmd(xfc->rail) != CHANNEL_RC_OK)
+			return FALSE;
+		if (xf_rail_send_workarea(xfc) != CHANNEL_RC_OK)
+			return FALSE;
+
+		if (!freerdp_client_rail_ipc_set_ready(xfc->railIpc, TRUE))
+			WLog_Print(xfc->log, WLOG_ERROR, "RAIL IPC failed to grant launch readiness");
 	}
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
 	{
@@ -1112,6 +1114,8 @@ static BOOL xf_rail_non_monitored_desktop(rdpContext* context,
 		WLog_Print(xfc->log, WLOG_WARN, "TODO: implement WINDOW_ORDER_TYPE_DESKTOP");
 		return FALSE;
 	}
+	if (!freerdp_client_rail_ipc_set_ready(xfc->railIpc, FALSE))
+		WLog_Print(xfc->log, WLOG_ERROR, "RAIL IPC failed to revoke launch readiness");
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_NONE)
 	{
 		WLog_Print(xfc->log, WLOG_WARN, "TODO: implement WINDOW_ORDER_FIELD_DESKTOP_NONE");
@@ -1401,6 +1405,13 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	xfc->rail = rail;
 	xf_rail_register_update_callbacks(context->update);
 	rail->custom = (void*)xfc;
+	if (!freerdp_client_rail_ipc_attach(xfc->railIpc, rail))
+	{
+		WLog_Print(xfc->log, WLOG_ERROR, "RAIL IPC failed to attach the RAIL channel");
+		rail->custom = nullptr;
+		xfc->rail = nullptr;
+		return 0;
+	}
 	rail->ServerExecuteResult = xf_rail_server_execute_result;
 	rail->ServerSystemParam = xf_rail_server_system_param;
 	rail->ServerLocalMoveSize = xf_rail_server_local_move_size;
@@ -1436,10 +1447,10 @@ fail:
 
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 {
-	WINPR_UNUSED(rail);
-
 	if (xfc->rail)
 	{
+		if (!freerdp_client_rail_ipc_detach(xfc->railIpc, rail))
+			WLog_Print(xfc->log, WLOG_ERROR, "RAIL IPC failed to detach the RAIL channel");
 		xfc->rail->custom = nullptr;
 		xfc->rail = nullptr;
 	}

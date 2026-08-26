@@ -1,0 +1,24 @@
+.PP
+\fB+rail\-multi\-exec\fR, \fB\-rail\-multi\-exec\fR
+.RS 4
+Enable or disable a primary-side FIFO for launching additional RemoteApps on this connection. Disabled by default and available only in RemoteApp mode.
+.PP
+With \fB+rail\-multi\-exec\fR, the initial command-line application is optional. The first application may instead be submitted through the FIFO.
+.PP
+The FIFO is created with mode 0600 below \fBXDG_RUNTIME_DIR\fR. Its exact path is written to the client log. If another opted-in primary already owns the same session key, this client exits before opening a competing RDP connection.
+.PP
+Write a labelled UTF-8 record terminated by an empty line. Only \fBprogram\fR is required; \fBworking-directory\fR and \fBarguments\fR default to empty, and \fBflags\fR defaults to zero. Flags are an integer in decimal or 0x hexadecimal form.
+.nf
+program=||notepad
+working-directory=
+arguments=
+flags=0
+
+.fi
+.PP
+Submit each complete record, including its empty-line terminator, in one write no larger than the FIFO's \fB_PC_PIPE_BUF\fR value. This prevents conforming concurrent writers from interleaving.
+.PP
+This interface is primary-only and fire-and-forget. A successful write does not report whether the server launched the application.
+.PP
+If the server rejects a launch, the failure is logged and the multi-exec connection remains open for later records.
+.RE
