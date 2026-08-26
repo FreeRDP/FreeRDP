@@ -576,9 +576,7 @@ static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 
 		pointer_cache_register_callbacks(context->update);
 
-		WINPR_ASSERT(!context->cache);
-		context->cache = cache_new(context);
-		if (!context->cache)
+		if (!cache_resize(context))
 			return FALSE;
 
 		if (!IFCALLRESULT(FALSE, context->instance->PostConnect, context->instance))
