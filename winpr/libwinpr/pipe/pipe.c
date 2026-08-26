@@ -106,7 +106,6 @@ static BOOL PipeCloseHandle(HANDLE handle)
 		pipe->fd = -1;
 	}
 
-	free(handle);
 	return TRUE;
 }
 
@@ -235,16 +234,24 @@ static BOOL NamedPipeCloseHandle(HANDLE handle)
 		pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
 
 	free(pNamedPipe->name);
+	pNamedPipe->name = nullptr;
 	free(pNamedPipe->lpFileName);
+	pNamedPipe->lpFileName = nullptr;
 	free(pNamedPipe->lpFilePath);
+	pNamedPipe->lpFilePath = nullptr;
 
 	if (pNamedPipe->serverfd != -1)
+	{
 		close(pNamedPipe->serverfd);
+		pNamedPipe->serverfd = -1;
+	}
 
 	if (pNamedPipe->clientfd != -1)
+	{
 		close(pNamedPipe->clientfd);
+		pNamedPipe->clientfd = -1;
+	}
 
-	free(pNamedPipe);
 	return TRUE;
 }
 
@@ -739,6 +746,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	return pNamedPipe;
 out:
 	NamedPipeCloseHandle(pNamedPipe);
+	free(pNamedPipe);
 
 	if (serverfd != -1)
 		close(serverfd);

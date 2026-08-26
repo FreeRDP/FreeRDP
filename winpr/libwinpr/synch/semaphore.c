@@ -101,7 +101,6 @@ BOOL SemaphoreCloseHandle(HANDLE handle)
 	sem_destroy((winpr_sem_t*)semaphore->sem);
 #endif
 #endif
-	free(semaphore);
 	return TRUE;
 }
 

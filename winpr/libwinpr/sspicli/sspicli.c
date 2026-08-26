@@ -99,8 +99,9 @@ BOOL LogonUserCloseHandle(HANDLE handle)
 		return FALSE;
 
 	free(token->Username);
+	token->Username = nullptr;
 	free(token->Domain);
-	free(token);
+	token->Domain = nullptr;
 	return TRUE;
 }
 

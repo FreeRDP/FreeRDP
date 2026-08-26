@@ -93,7 +93,7 @@ BOOL MutexCloseHandle(HANDLE handle)
 	}
 
 	free(mutex->name);
-	free(handle);
+	mutex->name = nullptr;
 	return TRUE;
 }
 

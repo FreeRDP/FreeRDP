@@ -102,7 +102,7 @@ static BOOL FileCloseHandleInt(HANDLE handle, BOOL force)
 	}
 
 	free(file->lpFileName);
-	free(file);
+	file->lpFileName = nullptr;
 	return TRUE;
 }
 
@@ -970,6 +970,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		{
 			SetLastError(map_posix_err(errno));
 			FileCloseHandle(pFile);
+			free(pFile);
 			return INVALID_HANDLE_VALUE;
 		}
 	}
@@ -1008,6 +1009,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 			SetLastError(map_posix_err(errno));
 			FileCloseHandle(pFile);
+			free(pFile);
 			return INVALID_HANDLE_VALUE;
 		}
 
@@ -1021,6 +1023,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		{
 			SetLastError(map_posix_err(errno));
 			FileCloseHandle(pFile);
+			free(pFile);
 			return INVALID_HANDLE_VALUE;
 		}
 	}
@@ -1064,6 +1067,7 @@ static WINPR_FILE* FileHandle_New(FILE* fp)
 void GetStdHandle_Uninit(void)
 {
 	FileCloseHandleInt(pStdHandleFile, TRUE);
+	free(pStdHandleFile);
 }
 
 HANDLE GetStdHandle(DWORD nStdHandle)

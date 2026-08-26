@@ -199,6 +199,116 @@ static int run_inherit_case(const char* exePath, const char* label, HANDLE probe
 	return result;
 }
 
+/* Regression test for a TOCTOU: PROC_THREAD_ATTRIBUTE_HANDLE_LIST only stores the raw HANDLE
+ * values handed to UpdateProcThreadAttribute() (matching real Windows' documented contract - the
+ * caller's buffer, not its individual HANDLEs' underlying objects, is what must survive). Nothing
+ * used to stop a caller from closing one of the *listed* HANDLEs before CreateProcess() actually
+ * reads the list, and the WINPR_HANDLE struct it points to could then be freed and reused before
+ * CreateProcessExA() got around to reading it via the (now stale) pointer stored in the list.
+ *
+ * CloseHandle() now always runs the handle's real close op (releasing its OS resource, e.g. the
+ * fd) immediately, but only frees the WINPR_HANDLE struct once every reference to it (including
+ * UpdateProcThreadAttribute()'s own, released by DeleteProcThreadAttributeList()) has been
+ * released - until then it's converted to a harmless placeholder (see winpr_Handle_ConvertToNone
+ * in nonehandle.c). So this must not crash or read freed memory - and, matching confirmed real
+ * Windows behavior, CreateProcess() must fail outright with ERROR_INVALID_PARAMETER rather than
+ * silently proceeding without the already-closed handle (see the pre-fork validation loop in
+ * process.c). */
+WINPR_ATTR_NODISCARD
+static int TestHandleListEarlyCloseIsSafe(const char* exePath)
+{
+	SECURITY_ATTRIBUTES saAttr = { sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
+	HANDLE probeRead = nullptr;
+	HANDLE probeWrite = nullptr;
+	HANDLE outRead = nullptr;
+	HANDLE outWrite = nullptr;
+	int result = 1;
+
+	if (!CreatePipe(&probeRead, &probeWrite, &saAttr, 0))
+	{
+		printf("[early-close] CreatePipe(probe) failed\n");
+		return 1;
+	}
+	if (!CreatePipe(&outRead, &outWrite, &saAttr, 0))
+	{
+		printf("[early-close] CreatePipe(out) failed\n");
+		CloseHandle(probeRead);
+		CloseHandle(probeWrite);
+		return 1;
+	}
+
+	char cmdline[1024] = WINPR_C_ARRAY_INIT;
+	(void)snprintf(cmdline, sizeof(cmdline), "\"%s\" TestThreadCreateProcess --probe-handle %llu",
+	               exePath, handle_to_probe_value(probeWrite));
+
+	SIZE_T size = 0;
+	(void)InitializeProcThreadAttributeList(nullptr, 1, 0, &size);
+	LPPROC_THREAD_ATTRIBUTE_LIST attrList = (LPPROC_THREAD_ATTRIBUTE_LIST)malloc(size);
+	if (!attrList || !InitializeProcThreadAttributeList(attrList, 1, 0, &size))
+	{
+		printf("[early-close] InitializeProcThreadAttributeList failed\n");
+		free(attrList);
+		CloseHandle(probeRead);
+		CloseHandle(probeWrite);
+		CloseHandle(outRead);
+		CloseHandle(outWrite);
+		return 1;
+	}
+
+	HANDLE handles[2] = { outWrite, probeWrite };
+	if (!UpdateProcThreadAttribute(attrList, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, (void*)handles,
+	                               sizeof(handles), nullptr, nullptr))
+	{
+		printf("[early-close] UpdateProcThreadAttribute failed\n");
+		DeleteProcThreadAttributeList(attrList);
+		free(attrList);
+		CloseHandle(probeRead);
+		CloseHandle(probeWrite);
+		CloseHandle(outRead);
+		CloseHandle(outWrite);
+		return 1;
+	}
+
+	/* the TOCTOU: close our own reference to probeWrite *before* CreateProcess() reads the
+	 * attribute list. The list's own reference (taken by UpdateProcThreadAttribute() above) must
+	 * be what keeps the underlying object alive from here on. */
+	CloseHandle(probeWrite);
+
+	STARTUPINFOEXA siEx = WINPR_C_ARRAY_INIT;
+	siEx.StartupInfo.cb = sizeof(siEx);
+	siEx.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+	siEx.StartupInfo.hStdOutput = outWrite;
+	siEx.StartupInfo.hStdError = outWrite;
+	siEx.lpAttributeList = attrList;
+
+	PROCESS_INFORMATION pi = WINPR_C_ARRAY_INIT;
+	const BOOL created =
+	    CreateProcessA(nullptr, cmdline, nullptr, nullptr, TRUE, EXTENDED_STARTUPINFO_PRESENT,
+	                   nullptr, nullptr, (LPSTARTUPINFOA)&siEx, &pi);
+	const DWORD lastError = GetLastError();
+
+	DeleteProcThreadAttributeList(attrList);
+	free(attrList);
+	CloseHandle(outWrite);
+	CloseHandle(probeRead);
+	CloseHandle(outRead);
+
+	if (created)
+	{
+		printf("[early-close] expected CreateProcessA to fail (a listed handle was already "
+		       "closed), but it succeeded -> FAIL\n");
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		return 1;
+	}
+
+	result = (lastError != ERROR_INVALID_PARAMETER);
+	printf("[early-close] expected CreateProcessA to fail with ERROR_INVALID_PARAMETER, got "
+	       "error=%" PRIu32 " -> %s\n",
+	       lastError, result ? "FAIL" : "OK");
+	return result;
+}
+
 /* Covers the bInheritHandles / PROC_THREAD_ATTRIBUTE_HANDLE_LIST matrix documented for
  * CreateProcess() on real Windows, which winpr/libwinpr/thread/process.c replicates on
  * Linux/macOS:
@@ -236,6 +346,8 @@ static int TestHandleInheritance(void)
 
 	CloseHandle(probeRead);
 	CloseHandle(probeWrite);
+
+	rc |= TestHandleListEarlyCloseIsSafe(exePath);
 	return rc;
 }
 

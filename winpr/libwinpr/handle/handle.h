@@ -20,8 +20,11 @@
 #ifndef WINPR_HANDLE_PRIVATE_H
 #define WINPR_HANDLE_PRIVATE_H
 
+#include <stdlib.h>
+
 #include <winpr/handle.h>
 #include <winpr/file.h>
+#include <winpr/interlocked.h>
 #include <winpr/synch.h>
 #include <winpr/winsock.h>
 
@@ -111,6 +114,7 @@ typedef struct
 	ULONG Type;
 	ULONG Mode;
 	HANDLE_OPS* ops;
+	volatile LONG refCount;
 } WINPR_HANDLE;
 
 WINPR_ATTR_NODISCARD
@@ -140,6 +144,7 @@ static inline void WINPR_HANDLE_SET_TYPE_AND_MODE(void* _handle, ULONG _type, UL
 
 	hdl->Type = _type;
 	hdl->Mode = _mode;
+	hdl->refCount = 1;
 }
 
 WINPR_ATTR_NODISCARD
@@ -162,6 +167,39 @@ static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, WINPR_HANDL
 	*pType = wHandle->Type;
 	*pObject = wHandle;
 
+	return TRUE;
+}
+
+static inline void winpr_Handle_AddRef(HANDLE handle)
+{
+	ULONG type = 0;
+	WINPR_HANDLE* hdl = nullptr;
+
+	if (!winpr_Handle_GetInfo(handle, &type, &hdl) || !hdl)
+		return;
+
+	InterlockedIncrement(&hdl->refCount);
+}
+
+/* implemented in nonehandle.c: turns an already-released handle (see CloseHandle() in handle.c)
+ * into a harmless placeholder, for as long as other references to the same struct remain. */
+void winpr_Handle_ConvertToNone(HANDLE handle);
+
+/* decrements refCount and frees the struct once it reaches zero - does not touch the underlying
+ * OS resource, that's the type's real CloseHandle op's job (see CloseHandle() in handle.c).
+ * Returns TRUE if this was the last reference (the handle has been freed). */
+static inline BOOL winpr_Handle_Release(HANDLE handle)
+{
+	ULONG type = 0;
+	WINPR_HANDLE* hdl = nullptr;
+
+	if (!winpr_Handle_GetInfo(handle, &type, &hdl) || !hdl)
+		return FALSE;
+
+	if (InterlockedDecrement(&hdl->refCount) > 0)
+		return FALSE;
+
+	free(hdl);
 	return TRUE;
 }
 

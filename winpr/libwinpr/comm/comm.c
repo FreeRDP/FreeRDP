@@ -1502,7 +1502,6 @@ BOOL CommCloseHandle(HANDLE handle)
 	if (pComm->fd_read_event > 0)
 		close(pComm->fd_read_event);
 
-	free(pComm);
 	return TRUE;
 }
 

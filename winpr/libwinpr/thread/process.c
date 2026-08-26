@@ -220,6 +220,34 @@ static BOOL CreateProcessExA(HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags
 	if (nullptr == filename)
 		goto finish;
 
+	/* Windows validates a PROC_THREAD_ATTRIBUTE_HANDLE_LIST's handles are still open before
+	 * creating the process at all, failing the whole call with ERROR_INVALID_PARAMETER if one
+	 * isn't (confirmed empirically: a handle CloseHandle()'d before this call, still listed here,
+	 * makes real CreateProcess fail this way rather than silently omitting it) */
+	if (bInheritHandles && lpStartupInfo && (dwCreationFlags & EXTENDED_STARTUPINFO_PRESENT))
+	{
+		const STARTUPINFOEXA* exInfo = (const STARTUPINFOEXA*)lpStartupInfo;
+		const struct WINPR_PROC_THREAD_ATTRIBUTE_LIST* list = exInfo->lpAttributeList;
+
+		for (DWORD i = 0; list && (i < list->count); i++)
+		{
+			const WINPR_PROC_THREAD_ATTRIBUTE_ENTRY* entry = &list->entries[i];
+			if (entry->Attribute != PROC_THREAD_ATTRIBUTE_HANDLE_LIST)
+				continue;
+
+			const HANDLE* handles = (const HANDLE*)entry->lpValue;
+			const size_t count = entry->cbSize / sizeof(HANDLE);
+			for (size_t h = 0; h < count; h++)
+			{
+				if (winpr_Handle_getFd(handles[h]) < 0)
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					goto finish;
+				}
+			}
+		}
+	}
+
 	/* block all signals so that the child can safely reset the caller's handlers */
 	sigfillset(&newSigMask);
 	restoreSigMask = !pthread_sigmask(SIG_SETMASK, &newSigMask, &oldSigMask);
@@ -416,6 +444,7 @@ static BOOL CreateProcessExA(HANDLE hToken, WINPR_ATTR_UNUSED DWORD dwLogonFlags
 	if (!thread)
 	{
 		ProcessHandleCloseHandle(process);
+		free(process);
 		goto finish;
 	}
 
@@ -679,7 +708,6 @@ static BOOL ProcessHandleCloseHandle(HANDLE handle)
 		close(process->fd);
 		process->fd = -1;
 	}
-	free(process);
 	return TRUE;
 }
 
@@ -787,6 +815,7 @@ HANDLE CreateProcessHandle(pid_t pid)
 	process->pid = pid;
 	process->common.Type = HANDLE_TYPE_PROCESS;
 	process->common.ops = &ops;
+	process->common.refCount = 1;
 	process->fd = pidfd_open(pid);
 	if (process->fd >= 0)
 		process->common.Mode = WINPR_FD_READ;

@@ -243,7 +243,7 @@ static BOOL EventCloseHandle_(WINPR_EVENT* event)
 	winpr_backtrace_free(event->create_stack);
 #endif
 	free(event->name);
-	free(event);
+	event->name = nullptr;
 	return TRUE;
 }
 
@@ -324,6 +324,7 @@ HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	return (HANDLE)event;
 fail:
 	EventCloseHandle_(event);
+	free(event);
 	return nullptr;
 }
 
