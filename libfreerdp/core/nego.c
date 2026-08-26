@@ -1121,12 +1121,12 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 
 	const size_t bm = Stream_GetPosition(s);
 	if (!Stream_SafeZero(s, TPDU_CONNECTION_REQUEST_LENGTH))
-		return FALSE;
+		goto fail;
 
 	if (nego->RoutingToken)
 	{
 		if (!Stream_EnsureRemainingCapacity(s, nego->RoutingTokenLength))
-			return FALSE;
+			goto fail;
 		Stream_Write(s, nego->RoutingToken, nego->RoutingTokenLength);
 
 		/* Ensure Routing Token is correctly terminated - may already be present in string */
@@ -1155,13 +1155,13 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 			cookie_length = nego->CookieMaxLength;
 
 		if (!Stream_EnsureRemainingCapacity(s, 17))
-			return FALSE;
+			goto fail;
 		Stream_Write(s, "Cookie: mstshash=", 17);
 		if (!Stream_EnsureRemainingCapacity(s, cookie_length))
-			return FALSE;
+			goto fail;
 		Stream_Write(s, (BYTE*)nego->cookie, cookie_length);
 		if (!Stream_EnsureRemainingCapacity(s, 2))
-			return FALSE;
+			goto fail;
 		Stream_Write_UINT8(s, 0x0D); /* CR */
 		Stream_Write_UINT8(s, 0x0A); /* LF */
 	}
@@ -1184,7 +1184,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 			flags |= REDIRECTED_AUTHENTICATION_MODE_REQUIRED;
 
 		if (!Stream_EnsureRemainingCapacity(s, 8))
-			return FALSE;
+			goto fail;
 
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_REQ);
 		Stream_Write_UINT8(s, flags);
