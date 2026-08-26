@@ -91,7 +91,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 	if (context && context->vcm)
 	{
 		WTSCloseServer(context->vcm);
-		context->vcm = NULL;
+		context->vcm = nullptr;
 	}
 }
 

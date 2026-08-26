@@ -1050,7 +1050,7 @@ static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes)
 	}
 
 	/* set cifs.dosattrib xattr if it exists, otherwise set user.DOSATTRIB xattr */
-	ssize_t length = getxattr(path, "user.cifs.dosattrib", NULL, 0);
+	ssize_t length = getxattr(path, "user.cifs.dosattrib", nullptr, 0);
 	if (length >= 0)
 	{
 		if (setxattr(path, "user.cifs.dosattrib", &intAttrBE, sizeof(intAttrBE), 0) >= 0)
