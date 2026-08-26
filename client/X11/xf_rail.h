@@ -116,7 +116,6 @@ typedef struct xf_rail_icon_cache xfRailIconCache;
 WINPR_ATTR_NODISCARD
 BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);
 
-WINPR_ATTR_NODISCARD
 BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect);
 
 WINPR_ATTR_NODISCARD
