@@ -355,7 +355,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 			break;
 
 		case GFX_PIXEL_FORMAT_XRGB_8888:
-			surface->gdi.format = PIXEL_FORMAT_BGRX32;
+			surface->gdi.format = PIXEL_FORMAT_BGRA32;
 			break;
 
 		default:
