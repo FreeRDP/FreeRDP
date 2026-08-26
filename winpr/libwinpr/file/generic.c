@@ -963,7 +963,7 @@ static BOOL is_valid_file_search_handle(HANDLE handle)
 	return TRUE;
 }
 
-static DWORD GetDosAttributesFromXAttr(const char* path)
+static DWORD GetDosAttributesFromXAttr(WINPR_ATTR_UNUSED const char* path)
 {
 #if defined(WINPR_HAVE_SYS_XATTR_H) || defined(WINPR_HAVE_LINUX_MSDOS_FS_H)
 	DWORD dwFileAttributes = 0;
@@ -997,9 +997,23 @@ static DWORD GetDosAttributesFromXAttr(const char* path)
 		int fd = open(path, O_RDONLY | O_CLOEXEC);
 		if (fd != -1)
 		{
-			ioctl(fd, FAT_IOCTL_GET_ATTRIBUTES, &intAttr);
-			close(fd);
-			dwFileAttributes = intAttr;
+			const int rc = ioctl(fd, FAT_IOCTL_GET_ATTRIBUTES, &intAttr);
+			if (rc < 0)
+			{
+				char buffer[64] = WINPR_C_ARRAY_INIT;
+				WLog_WARN(TAG, "ioctl(%d, FAT_IOCTL_GET_ATTRIBUTES) failed with %s", fd,
+				          winpr_strerror(errno, buffer, sizeof(buffer)));
+			}
+			else
+				dwFileAttributes = intAttr;
+
+			const int crc = close(fd);
+			if (crc < 0)
+			{
+				char buffer[64] = WINPR_C_ARRAY_INIT;
+				WLog_WARN(TAG, "close(%d) failed with %s", fd,
+				          winpr_strerror(errno, buffer, sizeof(buffer)));
+			}
 		}
 #endif
 	}

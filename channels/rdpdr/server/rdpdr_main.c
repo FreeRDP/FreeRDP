@@ -3828,10 +3828,8 @@ static UINT rdpdr_server_smartcard_establish_context(RdpdrServerContext* context
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
 	switch (dwScope)
 	{
@@ -3844,12 +3842,13 @@ static UINT rdpdr_server_smartcard_establish_context(RdpdrServerContext* context
 			return ERROR_INVALID_PARAMETER;
 	}
 
-	result = prepare_smartcard_irp(context, SCARD_IOCTL_ESTABLISHCONTEXT,
-	                               rdpdr_server_smartcard_establish_context_callback, callbackData,
-	                               &irp);
+	UINT result = prepare_smartcard_irp(context, SCARD_IOCTL_ESTABLISHCONTEXT,
+	                                    rdpdr_server_smartcard_establish_context_callback,
+	                                    callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = {
@@ -3857,7 +3856,7 @@ static UINT rdpdr_server_smartcard_establish_context(RdpdrServerContext* context
 		.call.establishContext.dwScope = dwScope,
 	};
 
-	s = Stream_New(nullptr, 64);
+	wStream* s = Stream_New(nullptr, 64);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -3878,7 +3877,7 @@ static UINT rdpdr_server_smartcard_establish_context(RdpdrServerContext* context
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -3939,17 +3938,15 @@ static UINT rdpdr_server_smartcard_release_context(RdpdrServerContext* context, 
 	WINPR_ASSERT(hContext);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result =
+	UINT result =
 	    prepare_smartcard_irp(context, SCARD_IOCTL_RELEASECONTEXT,
 	                          rdpdr_server_smartcard_release_context_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
-
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = {
@@ -3957,7 +3954,7 @@ static UINT rdpdr_server_smartcard_release_context(RdpdrServerContext* context, 
 		.call.context.handles.hContext = *hContext,
 	};
 
-	s = Stream_New(nullptr, 64);
+	wStream* s = Stream_New(nullptr, 64);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -3978,7 +3975,7 @@ static UINT rdpdr_server_smartcard_release_context(RdpdrServerContext* context, 
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -4040,17 +4037,16 @@ static UINT rdpdr_server_smartcard_is_valid_context(RdpdrServerContext* context,
 	WINPR_ASSERT(hContext);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result =
+	UINT result =
 	    prepare_smartcard_irp(context, SCARD_IOCTL_ISVALIDCONTEXT,
 	                          rdpdr_server_smartcard_is_valid_context_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = {
@@ -4058,7 +4054,7 @@ static UINT rdpdr_server_smartcard_is_valid_context(RdpdrServerContext* context,
 		.call.context.handles.hContext = *hContext,
 	};
 
-	s = Stream_New(nullptr, 64);
+	wStream* s = Stream_New(nullptr, 64);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -4079,7 +4075,7 @@ static UINT rdpdr_server_smartcard_is_valid_context(RdpdrServerContext* context,
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -4142,17 +4138,16 @@ static UINT rdpdr_server_smartcard_list_reader_groups(RdpdrServerContext* contex
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(context, ioControlCode,
-	                               rdpdr_server_smartcard_list_reader_groups_callback, callbackData,
-	                               &irp);
+	UINT result = prepare_smartcard_irp(context, ioControlCode,
+	                                    rdpdr_server_smartcard_list_reader_groups_callback,
+	                                    callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = ioControlCode,
@@ -4162,7 +4157,7 @@ static UINT rdpdr_server_smartcard_list_reader_groups(RdpdrServerContext* contex
 		                                 .cchGroups = call->cchGroups,
 		                             } };
 
-	s = Stream_New(nullptr, 32);
+	wStream* s = Stream_New(nullptr, 32);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -4183,7 +4178,7 @@ static UINT rdpdr_server_smartcard_list_reader_groups(RdpdrServerContext* contex
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -4262,16 +4257,15 @@ static UINT rdpdr_server_smartcard_list_readers(RdpdrServerContext* context, voi
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(
+	UINT result = prepare_smartcard_irp(
 	    context, ioControlCode, rdpdr_server_smartcard_list_readers_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = ioControlCode,
@@ -4283,7 +4277,7 @@ static UINT rdpdr_server_smartcard_list_readers(RdpdrServerContext* context, voi
 		                                 .cchReaders = call->cchReaders,
 		                             } };
 
-	s = Stream_New(nullptr, 256);
+	wStream* s = Stream_New(nullptr, 256);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -4304,7 +4298,7 @@ static UINT rdpdr_server_smartcard_list_readers(RdpdrServerContext* context, voi
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -4381,17 +4375,16 @@ static UINT rdpdr_server_smartcard_get_status_change(RdpdrServerContext* context
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(context, ioControlCode,
-	                               rdpdr_server_smartcard_get_status_change_callback, callbackData,
-	                               &irp);
+	UINT result = prepare_smartcard_irp(context, ioControlCode,
+	                                    rdpdr_server_smartcard_get_status_change_callback,
+	                                    callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	SMARTCARD_OPERATION op = WINPR_C_ARRAY_INIT;
@@ -4410,7 +4403,7 @@ static UINT rdpdr_server_smartcard_get_status_change(RdpdrServerContext* context
 			return ERROR_INVALID_PARAMETER;
 	}
 
-	s = Stream_New(nullptr, 256 + cReaders * 256);
+	wStream* s = Stream_New(nullptr, 256 + cReaders * 256);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -4431,7 +4424,7 @@ static UINT rdpdr_server_smartcard_get_status_change(RdpdrServerContext* context
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -4508,16 +4501,15 @@ static UINT rdpdr_server_smartcard_cancel(RdpdrServerContext* context, void* cal
 	WINPR_ASSERT(hContext);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(context, SCARD_IOCTL_CANCEL,
-	                               rdpdr_server_smartcard_cancel_callback, callbackData, &irp);
+	UINT result = prepare_smartcard_irp(context, SCARD_IOCTL_CANCEL,
+	                                    rdpdr_server_smartcard_cancel_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = {
@@ -4525,7 +4517,7 @@ static UINT rdpdr_server_smartcard_cancel(RdpdrServerContext* context, void* cal
 		.call.context.handles.hContext = *hContext,
 	};
 
-	s = Stream_New(nullptr, 64);
+	wStream* s = Stream_New(nullptr, 64);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -4546,7 +4538,7 @@ static UINT rdpdr_server_smartcard_cancel(RdpdrServerContext* context, void* cal
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -4607,16 +4599,15 @@ static UINT rdpdr_server_smartcard_connect(RdpdrServerContext* context, void* ca
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(context, ioControlCode, rdpdr_server_smartcard_connect_callback,
-	                               callbackData, &irp);
+	UINT result = prepare_smartcard_irp(
+	    context, ioControlCode, rdpdr_server_smartcard_connect_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	SMARTCARD_OPERATION op = WINPR_C_ARRAY_INIT;
@@ -4635,7 +4626,7 @@ static UINT rdpdr_server_smartcard_connect(RdpdrServerContext* context, void* ca
 			return ERROR_INVALID_PARAMETER;
 	}
 
-	s = Stream_New(nullptr, 512);
+	wStream* s = Stream_New(nullptr, 512);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -4656,7 +4647,7 @@ static UINT rdpdr_server_smartcard_connect(RdpdrServerContext* context, void* ca
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -4730,16 +4721,16 @@ static UINT rdpdr_server_smartcard_reconnect(RdpdrServerContext* context, void* 
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(context, SCARD_IOCTL_RECONNECT,
-	                               rdpdr_server_smartcard_reconnect_callback, callbackData, &irp);
+	UINT result =
+	    prepare_smartcard_irp(context, SCARD_IOCTL_RECONNECT,
+	                          rdpdr_server_smartcard_reconnect_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_RECONNECT,
@@ -4751,7 +4742,7 @@ static UINT rdpdr_server_smartcard_reconnect(RdpdrServerContext* context, void* 
 		                                 .dwInitialization = call->dwInitialization,
 		                             } };
 
-	s = Stream_New(nullptr, 128);
+	wStream* s = Stream_New(nullptr, 128);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -4772,7 +4763,7 @@ static UINT rdpdr_server_smartcard_reconnect(RdpdrServerContext* context, void* 
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -4832,16 +4823,16 @@ static UINT rdpdr_server_smartcard_disconnect(RdpdrServerContext* context, void*
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(context, SCARD_IOCTL_DISCONNECT,
-	                               rdpdr_server_smartcard_disconnect_callback, callbackData, &irp);
+	UINT result =
+	    prepare_smartcard_irp(context, SCARD_IOCTL_DISCONNECT,
+	                          rdpdr_server_smartcard_disconnect_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_DISCONNECT,
@@ -4851,7 +4842,7 @@ static UINT rdpdr_server_smartcard_disconnect(RdpdrServerContext* context, void*
 		                                 .dwDisposition = call->dwDisposition,
 		                             } };
 
-	s = Stream_New(nullptr, 128);
+	wStream* s = Stream_New(nullptr, 128);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -4872,7 +4863,7 @@ static UINT rdpdr_server_smartcard_disconnect(RdpdrServerContext* context, void*
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -4935,17 +4926,16 @@ static UINT rdpdr_server_smartcard_begin_transaction(RdpdrServerContext* context
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(context, SCARD_IOCTL_BEGINTRANSACTION,
-	                               rdpdr_server_smartcard_begin_transaction_callback, callbackData,
-	                               &irp);
+	UINT result = prepare_smartcard_irp(context, SCARD_IOCTL_BEGINTRANSACTION,
+	                                    rdpdr_server_smartcard_begin_transaction_callback,
+	                                    callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_BEGINTRANSACTION,
@@ -4955,7 +4945,7 @@ static UINT rdpdr_server_smartcard_begin_transaction(RdpdrServerContext* context
 		                                 .dwDisposition = SCARD_LEAVE_CARD,
 		                             } };
 
-	s = Stream_New(nullptr, 128);
+	wStream* s = Stream_New(nullptr, 128);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -4976,7 +4966,7 @@ static UINT rdpdr_server_smartcard_begin_transaction(RdpdrServerContext* context
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -5037,17 +5027,16 @@ static UINT rdpdr_server_smartcard_end_transaction(RdpdrServerContext* context, 
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result =
+	UINT result =
 	    prepare_smartcard_irp(context, SCARD_IOCTL_ENDTRANSACTION,
 	                          rdpdr_server_smartcard_end_transaction_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_ENDTRANSACTION,
@@ -5057,7 +5046,7 @@ static UINT rdpdr_server_smartcard_end_transaction(RdpdrServerContext* context, 
 		                                 .dwDisposition = call->dwDisposition,
 		                             } };
 
-	s = Stream_New(nullptr, 128);
+	wStream* s = Stream_New(nullptr, 128);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -5078,7 +5067,7 @@ static UINT rdpdr_server_smartcard_end_transaction(RdpdrServerContext* context, 
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -5139,16 +5128,15 @@ static UINT rdpdr_server_smartcard_status(RdpdrServerContext* context, void* cal
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(context, ioControlCode, rdpdr_server_smartcard_status_callback,
-	                               callbackData, &irp);
+	UINT result = prepare_smartcard_irp(context, ioControlCode,
+	                                    rdpdr_server_smartcard_status_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = ioControlCode,
@@ -5160,7 +5148,7 @@ static UINT rdpdr_server_smartcard_status(RdpdrServerContext* context, void* cal
 		                                 .cbAtrLen = call->cbAtrLen,
 		                             } };
 
-	s = Stream_New(nullptr, 128);
+	wStream* s = Stream_New(nullptr, 128);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -5181,7 +5169,7 @@ static UINT rdpdr_server_smartcard_status(RdpdrServerContext* context, void* cal
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -5255,22 +5243,22 @@ static UINT rdpdr_server_smartcard_transmit(RdpdrServerContext* context, void* c
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(context, SCARD_IOCTL_TRANSMIT,
-	                               rdpdr_server_smartcard_transmit_callback, callbackData, &irp);
+	UINT result =
+	    prepare_smartcard_irp(context, SCARD_IOCTL_TRANSMIT,
+	                          rdpdr_server_smartcard_transmit_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_TRANSMIT,
 		                             .call.transmit = *call };
 
-	s = Stream_New(nullptr, 512 + call->cbSendLength);
+	wStream* s = Stream_New(nullptr, 512 + call->cbSendLength);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -5291,7 +5279,7 @@ static UINT rdpdr_server_smartcard_transmit(RdpdrServerContext* context, void* c
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -5351,16 +5339,15 @@ static UINT rdpdr_server_smartcard_control(RdpdrServerContext* context, void* ca
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
-	wStream* s = nullptr;
 
-	result = prepare_smartcard_irp(context, SCARD_IOCTL_CONTROL,
-	                               rdpdr_server_smartcard_control_callback, callbackData, &irp);
+	UINT result = prepare_smartcard_irp(
+	    context, SCARD_IOCTL_CONTROL, rdpdr_server_smartcard_control_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_CONTROL,
@@ -5374,7 +5361,7 @@ static UINT rdpdr_server_smartcard_control(RdpdrServerContext* context, void* ca
 		                                 .cbOutBufferSize = call->cbOutBufferSize,
 		                             } };
 
-	s = Stream_New(nullptr, 512 + call->cbOutBufferSize);
+	wStream* s = Stream_New(nullptr, 512 + call->cbOutBufferSize);
 	if (!s)
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "Stream_New failed!");
@@ -5395,7 +5382,7 @@ static UINT rdpdr_server_smartcard_control(RdpdrServerContext* context, void* ca
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)
@@ -5464,6 +5451,7 @@ static UINT rdpdr_server_smartcard_get_attrib(RdpdrServerContext* context, void*
 	if (ret != CHANNEL_RC_OK)
 		return ret;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_GETATTRIB,
@@ -5549,15 +5537,16 @@ static UINT rdpdr_server_smartcard_set_attrib(RdpdrServerContext* context, void*
 	WINPR_ASSERT(call);
 	WINPR_ASSERT(completionId);
 
-	UINT result = CHANNEL_RC_OK;
 	RdpdrServerPrivate* priv = context->priv;
 	RDPDR_IRP* irp = nullptr;
 
-	result = prepare_smartcard_irp(context, SCARD_IOCTL_SETATTRIB,
-	                               rdpdr_server_smartcard_set_attrib_callback, callbackData, &irp);
+	UINT result =
+	    prepare_smartcard_irp(context, SCARD_IOCTL_SETATTRIB,
+	                          rdpdr_server_smartcard_set_attrib_callback, callbackData, &irp);
 	if (result != CHANNEL_RC_OK)
 		return result;
 
+	WINPR_ASSERT(irp);
 	*completionId = irp->CompletionId;
 
 	const SMARTCARD_OPERATION op = { .ioControlCode = SCARD_IOCTL_SETATTRIB,
@@ -5590,7 +5579,7 @@ static UINT rdpdr_server_smartcard_set_attrib(RdpdrServerContext* context, void*
 
 out:
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
-	if (result != CHANNEL_RC_OK && irp)
+	if (result != CHANNEL_RC_OK)
 		rdpdr_server_discard_request(context, irp->CompletionId);
 	// NOLINTEND(clang-analyzer-unix.Malloc): IRP is removed from context and freed there
 	if (s)

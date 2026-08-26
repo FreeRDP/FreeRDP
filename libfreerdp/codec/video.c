@@ -533,6 +533,7 @@ static BOOL freerdp_video_convert_to_yuv(FREERDP_VIDEO_CONTEXT* context, const B
                                          FREERDP_VIDEO_FORMAT dstFormat, UINT32 width,
                                          UINT32 height)
 {
+	WINPR_ASSERT(context);
 	WINPR_ASSERT(srcData);
 	WINPR_ASSERT(srcLineSize);
 	WINPR_ASSERT(dstData);

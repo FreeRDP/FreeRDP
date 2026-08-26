@@ -14,6 +14,8 @@ HRESULT PATH_CCH_ADD_SEPARATOR(PWSTR pszPath, size_t cchPath)
 		return S_OK;
 
 	const size_t pszPathLength = _wcsnlen(pszPath, cchPath);
+	if (pszPathLength < 1)
+		return S_OK;
 
 	if (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR)
 		return S_FALSE;
@@ -38,6 +40,8 @@ HRESULT PATH_CCH_ADD_SEPARATOR(PSTR pszPath, size_t cchPath)
 		return S_OK;
 
 	const size_t pszPathLength = strnlen(pszPath, cchPath);
+	if (pszPathLength < 1)
+		return S_OK;
 
 	if (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR)
 		return S_FALSE;

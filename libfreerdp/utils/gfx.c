@@ -191,7 +191,7 @@ const char* rdpgfx_caps_flags_str(UINT32 flags, char* buffer, size_t length)
 	buffer[0] = '{';
 	for (uint32_t x = 0; x < 32; x++)
 	{
-		uint32_t val = 1 << x;
+		uint32_t val = 1u << x;
 		if ((flags & val) != 0)
 		{
 			const char* flag = rdpgfx_caps_flag_str(val);
