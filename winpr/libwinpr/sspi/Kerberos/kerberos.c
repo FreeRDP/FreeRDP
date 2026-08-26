@@ -173,12 +173,14 @@ void krb_log_context_encryption(krb5_context ctx, krb5_principal princ)
 		krb5_enctype_to_string(enctype, buffer, sizeof(buffer));
 		const char* msg = krb5_get_error_message(ctx, rv);
 
+		char* saltdata = winpr_BinToHexString(salt.data, salt.length, TRUE);
 		WLog_DBG(TAG, "[%s] enctype=%s, salt[%u]=%s, s2kparam[%u]=%s", msg, buffer, salt.length,
-		         salt.data, s2kparam.length, s2kparam.data);
+		         saltdata, s2kparam.length, s2kparam.data);
 
 		krb5_free_data_contents(ctx, &salt);
 		krb5_free_data_contents(ctx, &s2kparam);
 		krb5_free_error_message(ctx, msg);
+		free(saltdata);
 	}
 	else
 #endif

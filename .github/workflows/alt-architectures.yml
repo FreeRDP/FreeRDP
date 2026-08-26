@@ -24,7 +24,7 @@ jobs:
           - arch: riscv64
             distro: ubuntu24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: uraimo/run-on-arch-action@v3.0.1
         name: "Run tests"
         id: build
