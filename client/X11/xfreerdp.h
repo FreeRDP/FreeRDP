@@ -288,6 +288,7 @@ struct xf_context
 	xfDispContext* xfDisp;
 
 	RailClientContext* rail;
+	BOOL railMultiExec;
 	wHashTable* railWindows;
 	xfRailIconCache* railIconCache;
 
