@@ -301,7 +301,9 @@ static const char* av_format_str(int32_t format)
 		EVCASE(AV_PIX_FMT_P412LE);
 		EVCASE(AV_PIX_FMT_GBRAP14BE);
 		EVCASE(AV_PIX_FMT_GBRAP14LE);
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(59,16,100)
 		EVCASE(AV_PIX_FMT_D3D12);
+#endif
 		EVCASE(AV_PIX_FMT_NB);
 		default:
 			return "AV_PIX_FMT_UNKNOWN";
