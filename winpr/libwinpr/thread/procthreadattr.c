@@ -27,6 +27,7 @@
 
 #include "thread.h"
 
+#include "../handle/handle.h"
 #include "../log.h"
 #define TAG WINPR_TAG("thread")
 
@@ -80,15 +81,38 @@ BOOL UpdateProcThreadAttribute(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList,
 	entry->Attribute = Attribute;
 	entry->lpValue = lpValue;
 	entry->cbSize = cbSize;
+
+	if (Attribute == PROC_THREAD_ATTRIBUTE_HANDLE_LIST)
+	{
+		const HANDLE* handles = (const HANDLE*)lpValue;
+		const size_t count = cbSize / sizeof(HANDLE);
+		for (size_t i = 0; i < count; i++)
+			winpr_Handle_AddRef(handles[i]);
+	}
+
 	return TRUE;
 }
 
-VOID DeleteProcThreadAttributeList(WINPR_ATTR_UNUSED LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList)
+VOID DeleteProcThreadAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList)
 {
-	/* nothing to release: the caller owns the buffer it allocated to back lpAttributeList (from
-	 * the size InitializeProcThreadAttributeList reported), and none of the lpValue pointers
-	 * handed to UpdateProcThreadAttribute are ever copied or owned by us - matches real Windows,
-	 * where DeleteProcThreadAttributeList doesn't free the caller's buffer either. */
+	if (!lpAttributeList)
+		return;
+
+	/* the lpAttributeList buffer itself is still the caller's own, allocated from the size
+	 * InitializeProcThreadAttributeList() reported - matches real Windows, where
+	 * DeleteProcThreadAttributeList() doesn't free that buffer either. Only release the
+	 * references UpdateProcThreadAttribute() took on listed handles. */
+	for (DWORD i = 0; i < lpAttributeList->count; i++)
+	{
+		const WINPR_PROC_THREAD_ATTRIBUTE_ENTRY* entry = &lpAttributeList->entries[i];
+		if (entry->Attribute != PROC_THREAD_ATTRIBUTE_HANDLE_LIST)
+			continue;
+
+		const HANDLE* handles = (const HANDLE*)entry->lpValue;
+		const size_t count = entry->cbSize / sizeof(HANDLE);
+		for (size_t h = 0; h < count; h++)
+			(void)winpr_Handle_Release(handles[h]);
+	}
 }
 
 #endif

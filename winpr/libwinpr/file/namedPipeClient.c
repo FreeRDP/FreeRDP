@@ -61,21 +61,25 @@ static BOOL NamedPipeClientCloseHandle(HANDLE handle)
 	{
 		// WLOG_DBG(TAG, "closing clientfd %d", pNamedPipe->clientfd);
 		close(pNamedPipe->clientfd);
+		pNamedPipe->clientfd = -1;
 	}
 
 	if (pNamedPipe->serverfd != -1)
 	{
 		// WLOG_DBG(TAG, "closing serverfd %d", pNamedPipe->serverfd);
 		close(pNamedPipe->serverfd);
+		pNamedPipe->serverfd = -1;
 	}
 
 	if (pNamedPipe->pfnUnrefNamedPipe)
 		pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
 
 	free(pNamedPipe->lpFileName);
+	pNamedPipe->lpFileName = nullptr;
 	free(pNamedPipe->lpFilePath);
+	pNamedPipe->lpFilePath = nullptr;
 	free(pNamedPipe->name);
-	free(pNamedPipe);
+	pNamedPipe->name = nullptr;
 	return TRUE;
 }
 

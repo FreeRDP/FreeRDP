@@ -26,10 +26,8 @@
 
 #include <pthread.h>
 
-static BOOL NoneHandleCloseHandle(HANDLE handle)
+static BOOL NoneHandleCloseHandle(WINPR_ATTR_UNUSED HANDLE handle)
 {
-	WINPR_NONE_HANDLE* none = (WINPR_NONE_HANDLE*)handle;
-	free(none);
 	return TRUE;
 }
 
@@ -76,7 +74,20 @@ HANDLE CreateNoneHandle(void)
 		return nullptr;
 
 	none->common.ops = &ops;
+	none->common.refCount = 1;
 	return (HANDLE)none;
+}
+
+void winpr_Handle_ConvertToNone(HANDLE handle)
+{
+	WINPR_HANDLE* hdl = (WINPR_HANDLE*)handle;
+
+	if (!hdl)
+		return;
+
+	hdl->Type = HANDLE_TYPE_NONE;
+	hdl->Mode = 0;
+	hdl->ops = &ops;
 }
 
 #endif

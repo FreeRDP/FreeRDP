@@ -47,22 +47,34 @@
 
 BOOL CloseHandle(HANDLE hObject)
 {
-	ULONG Type = 0;
-	WINPR_HANDLE* Object = nullptr;
+	ULONG type = 0;
+	WINPR_HANDLE* hdl = nullptr;
 
-	if (!winpr_Handle_GetInfo(hObject, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hObject, &type, &hdl) || !hdl || !hdl->ops)
 		return FALSE;
 
-	if (!Object)
+	BOOL ok = TRUE;
+	if (hdl->ops->CloseHandle)
+		ok = hdl->ops->CloseHandle(hObject);
+
+	/* a type's CloseHandle op can legitimately refuse (e.g. file.c won't close the pStdHandleFile
+	 * singleton unless forced) - if it did, this handle wasn't actually closed, so leave its
+	 * refcount/memory alone entirely. */
+	if (!ok)
 		return FALSE;
 
-	if (!Object->ops)
-		return FALSE;
+	/* WINPR_THREAD manages its own close/free lifecycle: closing the handle of a still-running
+	 * thread detaches it instead of freeing it, and the free only happens later, from the
+	 * thread's own pthread routine once it actually returns (see ThreadCloseHandle() /
+	 * cleanup_handle() in thread.c). Applying the generic release-then-maybe-free sequence below
+	 * on top of that would free the struct while the thread may still be running against it. */
+	if (type == HANDLE_TYPE_THREAD)
+		return TRUE;
 
-	if (Object->ops->CloseHandle)
-		return Object->ops->CloseHandle(hObject);
+	if (!winpr_Handle_Release(hObject))
+		winpr_Handle_ConvertToNone(hObject);
 
-	return FALSE;
+	return TRUE;
 }
 
 BOOL DuplicateHandle(WINPR_ATTR_UNUSED HANDLE hSourceProcessHandle,
@@ -72,8 +84,9 @@ BOOL DuplicateHandle(WINPR_ATTR_UNUSED HANDLE hSourceProcessHandle,
                      WINPR_ATTR_UNUSED DWORD dwDesiredAccess, WINPR_ATTR_UNUSED BOOL bInheritHandle,
                      WINPR_ATTR_UNUSED DWORD dwOptions)
 {
-	*((ULONG_PTR*)lpTargetHandle) = (ULONG_PTR)hSourceHandle;
-	return TRUE;
+	WLog_ERR(TAG, "DuplicateHandle not implemented");
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags)

@@ -126,7 +126,9 @@ static void TimerPostDelete_APC(LPVOID arg)
 {
 	TimerDeleter* deleter = (TimerDeleter*)arg;
 	WINPR_ASSERT(deleter);
-	free(deleter->timer);
+	/* releases the extra reference TimerCloseHandle() took to keep the struct alive until here
+	 * (see APC_REMOVE_DELAY_FREE below) - only actually frees once nothing else still holds it */
+	winpr_Handle_Release((HANDLE)deleter->timer);
 	deleter->apcItem.markedForFree = TRUE;
 	deleter->apcItem.markedForRemove = TRUE;
 }
@@ -158,6 +160,7 @@ BOOL TimerCloseHandle(HANDLE handle)
 #endif
 
 	free(timer->name);
+	timer->name = nullptr;
 	if (timer->apcItem.linked)
 	{
 		TimerDeleter* deleter = nullptr;
@@ -180,6 +183,11 @@ BOOL TimerCloseHandle(HANDLE handle)
 					return TRUE;
 				}
 
+				/* keeps the struct alive until TimerPostDelete_APC() runs and releases it -
+				 * without this, the winpr_Handle_Release() the generic CloseHandle() wrapper
+				 * makes right after this function returns would free it immediately, while the
+				 * APC list may still be walking it. */
+				winpr_Handle_AddRef(handle);
 				deleter->timer = timer;
 				apcItem = &deleter->apcItem;
 				apcItem->type = APC_TYPE_HANDLE_FREE;
@@ -196,7 +204,6 @@ BOOL TimerCloseHandle(HANDLE handle)
 		}
 	}
 
-	free(timer);
 	return TRUE;
 }
 
@@ -358,6 +365,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 #if defined(TIMER_IMPL_DISPATCH) || defined(TIMER_IMPL_POSIX)
 fail:
 	TimerCloseHandle(handle);
+	free(timer);
 	return nullptr;
 #endif
 }
