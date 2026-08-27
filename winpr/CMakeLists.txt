@@ -379,7 +379,17 @@ add_subdirectory(libwinpr)
 list(REMOVE_DUPLICATES WINPR_PC_REQUIRES_PRIVATE)
 list(JOIN WINPR_PC_REQUIRES_PRIVATE " " WINPR_PC_REQUIRES_PRIVATE)
 
-set(WINPR_PC_LIBRARY_PRIVATE "-ldl -lrt -lm -lpthread")
+set(WINPR_PC_LIBRARY_PRIVATE "")
+
+if(CMAKE_DL_LIBS)
+  string(APPEND WINPR_PC_LIBRARY_PRIVATE "-ldl ")
+endif()
+
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+  string(APPEND WINPR_PC_LIBRARY_PRIVATE "-lrt ")
+endif()
+
+string(APPEND WINPR_PC_LIBRARY_PRIVATE "-lm -lpthread")
 
 # Do not set Requires.Private if not a static build
 if(BUILD_SHARED_LIBS)
