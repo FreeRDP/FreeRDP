@@ -49,11 +49,8 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 	if (stride == 0)
 		stride = width;
 
-	if (stride % 16 != 0)
-		stride += 16 - stride % 16;
-
-	if (pheight % 16 != 0)
-		pheight += 16 - pheight % 16;
+	stride += 16 - stride % 16;
+	pheight += 16 - pheight % 16;
 
 	const size_t nPlanes = h264->hwAccel ? 2 : 3;
 
@@ -148,6 +145,10 @@ static BOOL areRectsValid(wLog* log, UINT32 width, UINT32 height, const RECTANGL
 static int log_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
                           const RECTANGLE_16* rects, UINT32 nrRects)
 {
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(h264->subsystem);
+	WINPR_ASSERT(h264->subsystem->Decompress);
+
 	const int status = h264->subsystem->Decompress(h264, pSrcData, SrcSize);
 	if (status < 0)
 	{
@@ -155,25 +156,12 @@ static int log_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSi
 		return status;
 	}
 
-	/* Do not check for width.
-	 * The width might be aligned to multiples of 16.
-	 * Some decoders add the alignment only if width %16 != 0 others unconditionally
-	 *
-	 * We already checked the areas that will be copied against context dimensions
-	 * and after this check we also check against the decoded H264 surface dimensions.
-	 */
-	if (h264->YUVHeight > h264->height)
-	{
-		WLog_Print(h264->log, WLOG_WARN,
-		           "H264 decompress: frame %" PRIu32 "x%" PRIu32 " exceeds buffer size %" PRIu32
-		           "x%" PRIu32,
-		           h264->YUVWidth, h264->YUVHeight, h264->width, h264->height);
-		return -1014;
-	}
 	/* some server implementations (krdc) use H264 frames smaller than the surface sizes,
 	 * validate the regions against this size as well */
 	if (!areRectsValid(h264->log, h264->YUVWidth, h264->YUVHeight, rects, nrRects))
 		return -1015;
+	if (!areRectsValid(h264->log, h264->width, h264->height, rects, nrRects))
+		return -1016;
 	return status;
 }
 
