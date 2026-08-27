@@ -379,7 +379,9 @@ add_subdirectory(libwinpr)
 list(REMOVE_DUPLICATES WINPR_PC_REQUIRES_PRIVATE)
 list(JOIN WINPR_PC_REQUIRES_PRIVATE " " WINPR_PC_REQUIRES_PRIVATE)
 
-set(WINPR_PC_LIBRARY_PRIVATE "-ldl -lrt -lm -lpthread")
+set(WINPR_PC_LIBRARY_PRIVATE "")
+include(PkgConfigAddThreads)
+pkg_config_add_threads(WINPR_PC_LIBRARY_PRIVATE ${CMAKE_DL_LIBS} rt m)
 
 # Do not set Requires.Private if not a static build
 if(BUILD_SHARED_LIBS)
