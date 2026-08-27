@@ -24,6 +24,8 @@
 #include <IOKit/IOKitLib.h>
 #include <IOKit/hid/IOHIDManager.h>
 
+#include <winpr/platform.h>
+
 typedef struct
 {
 	uint32_t ProductId;
