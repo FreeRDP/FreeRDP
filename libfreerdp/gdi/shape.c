@@ -186,6 +186,8 @@ BOOL gdi_FillRect(HGDI_DC hdc, const GDI_RECT* rect, HGDI_BRUSH hbr)
 			const UINT32 formatSize = FreeRDPGetBytesPerPixel(hbr->pattern->format);
 			if (formatSize == 0)
 				return FALSE;
+			if (hbr->pattern->width <= 0)
+				return FALSE;
 			if (hbr->pattern->height <= 0)
 				return FALSE;
 

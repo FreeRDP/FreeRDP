@@ -1142,7 +1142,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		{
 			WLog_Print(nego->log, WLOG_DEBUG, "Adding terminating CRLF to routing token");
 			if (!Stream_EnsureRemainingCapacity(s, 2))
-				return FALSE;
+				goto fail;
 			Stream_Write_UINT8(s, 0x0D); /* CR */
 			Stream_Write_UINT8(s, 0x0A); /* LF */
 		}
