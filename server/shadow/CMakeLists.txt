@@ -160,7 +160,9 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 # Do not set Requires.Private if not a static build
 if(NOT BUILD_SHARED_LIBS)
   set(FREERDP_SHADOW_PC_REQUIRES_PRIVATE "freerdp${FREERDP_API_VERSION}")
-  set(FREERDP_SHADOW_PC_LIBRARY_PRIVATE "-ldl -lpthread")
+
+  include(PkgConfigAddThreads)
+  pkg_config_add_threads(FREERDP_SHADOW_PC_LIBRARY_PRIVATE)
 endif()
 set(FREERDP_SHADOW_PC_REQUIRES freerdp-server${FREERDP_API_VERSION})
 
