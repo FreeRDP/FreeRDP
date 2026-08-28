@@ -369,7 +369,7 @@ static void dump_thread(WINPR_THREAD* thread)
 	msg = winpr_backtrace_symbols(stack, &used);
 
 	for (size_t i = 0; i < used; i++)
-		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
+		WLog_DBG(TAG, "[%" PRIuz "]: %s", i, msg[i]);
 
 	free(msg);
 	winpr_backtrace_free(stack);
@@ -377,7 +377,7 @@ static void dump_thread(WINPR_THREAD* thread)
 	msg = winpr_backtrace_symbols(thread->create_stack, &used);
 
 	for (size_t i = 0; i < used; i++)
-		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
+		WLog_DBG(TAG, "[%" PRIuz "]: %s", i, msg[i]);
 
 	free(msg);
 
@@ -395,7 +395,7 @@ static void dump_thread(WINPR_THREAD* thread)
 		msg = winpr_backtrace_symbols(thread->exit_stack, &used);
 
 		for (size_t i = 0; i < used; i++)
-			WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
+			WLog_DBG(TAG, "[%" PRIuz "]: %s", i, msg[i]);
 
 		free(msg);
 	}
@@ -1069,7 +1069,7 @@ VOID DumpThreadHandles(void)
 
 	for (size_t i = 0; i < used; i++)
 	{
-		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
+		WLog_DBG(TAG, "[%" PRIuz "]: %s", i, msg[i]);
 	}
 
 	free(msg);
