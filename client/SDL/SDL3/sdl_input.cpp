@@ -550,7 +550,14 @@ bool sdlInput::extract(const std::string& token, uint32_t& key, uint32_t& value)
 
 bool sdlInput::handleEvent(const SDL_KeyboardEvent& ev)
 {
-	const UINT32 rdp_scancode = scancode_to_rdp(ev.scancode);
+	UINT32 rdp_scancode = scancode_to_rdp(ev.scancode);
+#if defined(_WIN32)
+	/* CJK IMEs on Windows may set the extended bit for Right Shift, producing
+	 * the invalid scan code E0 36. SDL maps that event to SDL_SCANCODE_UNKNOWN,
+	 * so normalize it in the same way as the native Windows client. */
+	if ((rdp_scancode == RDP_SCANCODE_UNKNOWN) && (ev.raw == 0xE036))
+		rdp_scancode = RDP_SCANCODE_RSHIFT;
+#endif
 	const SDL_Keymod mods = SDL_GetModState();
 
 	if (_hotkeysEnabled && (mods & _hotkeyModmask) == _hotkeyModmask)
