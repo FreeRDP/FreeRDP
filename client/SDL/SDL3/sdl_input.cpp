@@ -491,17 +491,6 @@ uint32_t sdlInput::prefToMask()
 
 	return "RDP_SCANCODE_UNKNOWN";
 }
-
-[[nodiscard]] static UINT32 sdl_rdp_scancode_val(const char* scancodeName)
-{
-	for (const auto& cur : map)
-	{
-		if (strcmp(cur.rdp_name, scancodeName) == 0)
-			return cur.rdp;
-	}
-
-	return RDP_SCANCODE_UNKNOWN;
-}
 #endif
 
 UINT32 sdlInput::scancode_to_rdp(Uint32 scancode)
