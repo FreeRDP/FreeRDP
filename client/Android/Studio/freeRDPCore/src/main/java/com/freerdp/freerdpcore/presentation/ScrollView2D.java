@@ -280,6 +280,13 @@ public class ScrollView2D extends FrameLayout
 		 * state and he is moving his finger.  We want to intercept this
 		 * motion.
 		 */
+		// Let child handle touchpad scroll gestures.
+		if (ev.getClassification() == MotionEvent.CLASSIFICATION_TWO_FINGER_SWIPE)
+		{
+			mIsBeingDragged = false;
+			return false;
+		}
+
 		final int action = ev.getAction();
 		if ((action == MotionEvent.ACTION_MOVE) && (mIsBeingDragged))
 		{
