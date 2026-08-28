@@ -29,8 +29,11 @@ set(${MODULE_PREFIX}_TESTS
     TestStreamPool.c
     TestMessageQueue.c
     TestMessagePipe.c
-    TestCommandLineToCommaSeparatedValues.c
 )
+
+if(WITH_WINPR_JSON)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestCommandLineToCommaSeparatedValues.c)
+endif()
 
 if(WITH_LODEPNG)
   list(APPEND ${MODULES_PREFIX}_TESTS TestImage.c)
