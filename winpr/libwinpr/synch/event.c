@@ -579,7 +579,7 @@ void DumpEventHandles_(const char* fkt, const char* file, size_t line)
 	if (global_event_list)
 	{
 		ArrayList_Lock(global_event_list);
-		ArrayList_ForEach(global_event_list, dump_handle_list);
+		(void)ArrayList_ForEach(global_event_list, dump_handle_list);
 		ArrayList_Unlock(global_event_list);
 	}
 	WLog_DBG(TAG, "--------- End dump   [%s %s:%" PRIuz "]", fkt, file, line);
