@@ -567,7 +567,8 @@ void DumpEventHandles_(const char* fkt, const char* file, size_t line)
 		size_t count = 0;
 		for (rlim_t x = 0; x < r.rlim_cur; x++)
 		{
-			int flags = fcntl(x, F_GETFD);
+			const int fd = WINPR_ASSERTING_INT_CAST(int, x);
+			int flags = fcntl(fd, F_GETFD);
 			if (flags >= 0)
 				count++;
 		}
