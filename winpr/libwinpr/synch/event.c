@@ -61,7 +61,7 @@ static void dump_event(WINPR_EVENT* event, size_t index)
 	msg = winpr_backtrace_symbols(event->create_stack, &used);
 
 	for (size_t i = 2; i < used; i++)
-		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
+		WLog_DBG(TAG, "[%" PRIuz "]: %s", i, msg[i]);
 
 	free(msg);
 }
@@ -551,7 +551,7 @@ void* GetEventWaitObject(HANDLE hEvent)
 #include <sys/time.h>
 #include <sys/resource.h>
 
-static BOOL dump_handle_list(void* data, size_t index, va_list ap)
+static BOOL dump_handle_list(void* data, size_t index, WINPR_ATTR_UNUSED va_list ap)
 {
 	WINPR_EVENT* event = data;
 	dump_event(event, index);
@@ -567,7 +567,8 @@ void DumpEventHandles_(const char* fkt, const char* file, size_t line)
 		size_t count = 0;
 		for (rlim_t x = 0; x < r.rlim_cur; x++)
 		{
-			int flags = fcntl(x, F_GETFD);
+			const int fd = WINPR_ASSERTING_INT_CAST(int, x);
+			int flags = fcntl(fd, F_GETFD);
 			if (flags >= 0)
 				count++;
 		}
@@ -578,7 +579,7 @@ void DumpEventHandles_(const char* fkt, const char* file, size_t line)
 	if (global_event_list)
 	{
 		ArrayList_Lock(global_event_list);
-		ArrayList_ForEach(global_event_list, dump_handle_list);
+		(void)ArrayList_ForEach(global_event_list, dump_handle_list);
 		ArrayList_Unlock(global_event_list);
 	}
 	WLog_DBG(TAG, "--------- End dump   [%s %s:%" PRIuz "]", fkt, file, line);

@@ -43,29 +43,32 @@ static const char PATH_SLASH_STR[] = "/";
 
 static const char PATH_BACKSLASH_CHR = '\\';
 
-static const char PATH_BACKSLASH_STR[] = "\\";
-
 #ifdef _WIN32
+static const char PATH_BACKSLASH_STR[] = "\\";
+static const WCHAR PATH_BACKSLASH_STR_W[] = L"\\";
 static const WCHAR PATH_SLASH_CHR_W = L'/';
 static const WCHAR PATH_BACKSLASH_CHR_W = L'\\';
 static const WCHAR PATH_SLASH_STR_W[] = L"/";
-static const WCHAR PATH_BACKSLASH_STR_W[] = L"\\";
 #else
 #if defined(__BIG_ENDIAN__)
 static const WCHAR PATH_SLASH_CHR_W = 0x2f00;
 static const WCHAR PATH_BACKSLASH_CHR_W = 0x5c00;
 static const WCHAR PATH_SLASH_STR_W[] = { 0x2f00, '\0' };
-static const WCHAR PATH_BACKSLASH_STR_W[] = { 0x5c00, '\0' };
 #else
 static const WCHAR PATH_SLASH_CHR_W = '/';
 static const WCHAR PATH_BACKSLASH_CHR_W = '\\';
 static const WCHAR PATH_SLASH_STR_W[] = { '/', '\0' };
+#endif
 
 #if !defined(WITHOUT_WINPR_3x_DEPRECATED)
+#if defined(__BIG_ENDIAN__)
+static const WCHAR PATH_BACKSLASH_STR_W[] = { 0x5c00, '\0' };
+#else
 static const WCHAR PATH_BACKSLASH_STR_W[] = { '\\', '\0' };
 #endif
-
+static const char PATH_BACKSLASH_STR[] = "\\";
 #endif
+
 #endif
 
 #ifdef _WIN32

@@ -79,7 +79,7 @@ static BOOL ringbuffer_realloc(RingBuffer* ringbuffer, size_t targetSize)
 {
 	WINPR_ASSERT(ringbuffer);
 	BYTE* newData = nullptr;
-	DEBUG_RINGBUFFER("ringbuffer_realloc(%p): targetSize: %" PRIdz "", (void*)ringbuffer,
+	DEBUG_RINGBUFFER("ringbuffer_realloc(%p): targetSize: %" PRIuz "", (void*)ringbuffer,
 	                 targetSize);
 
 	if (ringbuffer->writePtr == ringbuffer->readPtr)
@@ -173,7 +173,7 @@ BOOL ringbuffer_write(RingBuffer* ringbuffer, const BYTE* ptr, size_t sz)
 	size_t remaining = 0;
 
 	WINPR_ASSERT(ringbuffer);
-	DEBUG_RINGBUFFER("ringbuffer_write(%p): sz: %" PRIdz "", (void*)ringbuffer, sz);
+	DEBUG_RINGBUFFER("ringbuffer_write(%p): sz: %" PRIuz "", (void*)ringbuffer, sz);
 
 	if ((ringbuffer->freeSize <= sz) && !ringbuffer_realloc(ringbuffer, ringbuffer->size + sz))
 		return FALSE;
@@ -207,7 +207,7 @@ BOOL ringbuffer_write(RingBuffer* ringbuffer, const BYTE* ptr, size_t sz)
 
 BYTE* ringbuffer_ensure_linear_write(RingBuffer* ringbuffer, size_t sz)
 {
-	DEBUG_RINGBUFFER("ringbuffer_ensure_linear_write(%p): sz: %" PRIdz "", (void*)ringbuffer, sz);
+	DEBUG_RINGBUFFER("ringbuffer_ensure_linear_write(%p): sz: %" PRIuz "", (void*)ringbuffer, sz);
 
 	WINPR_ASSERT(ringbuffer);
 	if (ringbuffer->freeSize < sz)
@@ -240,7 +240,7 @@ BYTE* ringbuffer_ensure_linear_write(RingBuffer* ringbuffer, size_t sz)
 
 BOOL ringbuffer_commit_written_bytes(RingBuffer* ringbuffer, size_t sz)
 {
-	DEBUG_RINGBUFFER("ringbuffer_commit_written_bytes(%p): sz: %" PRIdz "", (void*)ringbuffer, sz);
+	DEBUG_RINGBUFFER("ringbuffer_commit_written_bytes(%p): sz: %" PRIuz "", (void*)ringbuffer, sz);
 
 	WINPR_ASSERT(ringbuffer);
 	if (sz < 1)
@@ -260,7 +260,7 @@ int ringbuffer_peek(const RingBuffer* ringbuffer, DataChunk chunks[2], size_t sz
 	size_t toRead = 0;
 	int chunkIndex = 0;
 	int status = 0;
-	DEBUG_RINGBUFFER("ringbuffer_peek(%p): sz: %" PRIdz "", (const void*)ringbuffer, sz);
+	DEBUG_RINGBUFFER("ringbuffer_peek(%p): sz: %" PRIuz "", (const void*)ringbuffer, sz);
 
 	WINPR_ASSERT(ringbuffer);
 	if (sz < 1)
@@ -295,7 +295,7 @@ int ringbuffer_peek(const RingBuffer* ringbuffer, DataChunk chunks[2], size_t sz
 
 void ringbuffer_commit_read_bytes(RingBuffer* ringbuffer, size_t sz)
 {
-	DEBUG_RINGBUFFER("ringbuffer_commit_read_bytes(%p): sz: %" PRIdz "", (void*)ringbuffer, sz);
+	DEBUG_RINGBUFFER("ringbuffer_commit_read_bytes(%p): sz: %" PRIuz "", (void*)ringbuffer, sz);
 
 	WINPR_ASSERT(ringbuffer);
 	if (sz < 1)

@@ -79,7 +79,7 @@ BOOL MutexCloseHandle(HANDLE handle)
 			if (msg)
 			{
 				for (size_t i = 0; i < used; i++)
-					WLog_ERR(TAG, "%2" PRIdz ": %s", i, msg[i]);
+					WLog_ERR(TAG, "%2" PRIuz ": %s", i, msg[i]);
 			}
 
 			free(msg);

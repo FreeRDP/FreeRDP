@@ -175,7 +175,8 @@ void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 	while (pAvPair && ntlm_av_pair_get_id(pAvPair, cbAvPair, &pair) && (pair != MsvAvEOL))
 	{
 		size_t cbLen = 0;
-		ntlm_av_pair_get_len(pAvPair, cbAvPair, &cbLen);
+		if (!ntlm_av_pair_get_len(pAvPair, cbAvPair, &cbLen))
+			WLog_WARN(TAG, "ntlm_av_pair_get_len failed");
 
 		WLog_VRB(TAG, "\t%s AvId: %" PRIu16 " AvLen: %" PRIuz "", get_av_pair_string(pair), pair,
 		         cbLen);
