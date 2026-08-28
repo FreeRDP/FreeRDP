@@ -551,7 +551,7 @@ void* GetEventWaitObject(HANDLE hEvent)
 #include <sys/time.h>
 #include <sys/resource.h>
 
-static BOOL dump_handle_list(void* data, size_t index, va_list ap)
+static BOOL dump_handle_list(void* data, size_t index, WINPR_ATTR_UNUSED va_list ap)
 {
 	WINPR_EVENT* event = data;
 	dump_event(event, index);
