@@ -1209,11 +1209,33 @@ static SECURITY_STATUS utf8len(const UNICODE_STRING* str, void* pBuffer)
 	WINPR_ASSERT(str);
 	WINPR_ASSERT(pBuffer);
 	ULONG* val = (ULONG*)pBuffer;
-	const SSIZE_T rc = ConvertWCharNToUtf8(str->Buffer, str->Length, nullptr, 0);
+	const size_t wlen = str->Length / sizeof(WCHAR);
+	const SSIZE_T rc = ConvertWCharNToUtf8(str->Buffer, wlen, nullptr, 0);
 	if (rc < 0)
 		return SEC_E_INVALID_PARAMETER;
 	*val = WINPR_ASSERTING_INT_CAST(ULONG, rc);
 	return SEC_E_OK;
+}
+
+WINPR_ATTR_NODISCARD
+static SECURITY_STATUS utf8str(const UNICODE_STRING* str, void* pBuffer)
+{
+	WINPR_ASSERT(str);
+	WINPR_ASSERT(pBuffer);
+	ULONG len = 0;
+
+	const SECURITY_STATUS status = utf8len(str, &len);
+	if (status != SEC_E_OK)
+		return status;
+	if (len == 0)
+	{
+		((char*)pBuffer)[0] = '\0';
+		return SEC_E_OK;
+	}
+
+	const size_t wlen = str->Length / sizeof(WCHAR);
+	const SSIZE_T rc = ConvertWCharNToUtf8(str->Buffer, wlen, pBuffer, (size_t)len);
+	return rc < 0 ? SEC_E_INVALID_PARAMETER : SEC_E_OK;
 }
 
 WINPR_ATTR_NODISCARD
@@ -1241,35 +1263,15 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phCont
 		case SECPKG_ATTR_AUTH_NTLM_DNS_COMPUTER_NAME_LEN:
 			return utf8len(&context->DnsComputerName, pBuffer);
 		case SECPKG_ATTR_AUTH_NTLM_HOSTNAME:
-		{
-			ConvertWCharNToUtf8(context->Workstation.Buffer, context->Workstation.Length, pBuffer,
-			                    context->Workstation.Length);
-			return SEC_E_OK;
-		}
+			return utf8str(&context->Workstation, pBuffer);
 		case SECPKG_ATTR_AUTH_NTLM_NB_DOMAIN_NAME:
-		{
-			ConvertWCharNToUtf8(context->NbDomainName.Buffer, context->NbDomainName.Length, pBuffer,
-			                    context->NbDomainName.Length);
-			return SEC_E_OK;
-		}
+			return utf8str(&context->NbDomainName, pBuffer);
 		case SECPKG_ATTR_AUTH_NTLM_NB_COMPUTER_NAME:
-		{
-			ConvertWCharNToUtf8(context->NbComputerName.Buffer, context->NbComputerName.Length,
-			                    pBuffer, context->NbComputerName.Length);
-			return SEC_E_OK;
-		}
+			return utf8str(&context->NbComputerName, pBuffer);
 		case SECPKG_ATTR_AUTH_NTLM_DNS_DOMAIN_NAME:
-		{
-			ConvertWCharNToUtf8(context->DnsDomainName.Buffer, context->DnsDomainName.Length,
-			                    pBuffer, context->DnsDomainName.Length);
-			return SEC_E_OK;
-		}
+			return utf8str(&context->DnsDomainName, pBuffer);
 		case SECPKG_ATTR_AUTH_NTLM_DNS_COMPUTER_NAME:
-		{
-			ConvertWCharNToUtf8(context->DnsComputerName.Buffer, context->DnsComputerName.Length,
-			                    pBuffer, context->DnsComputerName.Length);
-			return SEC_E_OK;
-		}
+			return utf8str(&context->DnsComputerName, pBuffer);
 		case SECPKG_ATTR_PACKAGE_INFO:
 		{
 			SecPkgContext_PackageInfoA* PackageInfo = (SecPkgContext_PackageInfoA*)pBuffer;
