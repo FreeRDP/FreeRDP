@@ -3,6 +3,106 @@
 #include <winpr/print.h>
 #include <winpr/image.h>
 #include <winpr/clipboard.h>
+#include <winpr/stream.h>
+#include <winpr/user.h>
+
+static BOOL test_dib_to_bmp(const BYTE* dib, size_t dibSize, size_t expectedOffset)
+{
+	BOOL rc = FALSE;
+
+	wClipboard* clipboard = ClipboardCreate();
+	if (!clipboard)
+		return FALSE;
+
+	const UINT32 bmpId = ClipboardRegisterFormat(clipboard, "image/bmp");
+	if ((bmpId == 0) || (dibSize > UINT32_MAX) ||
+	    !ClipboardSetData(clipboard, CF_DIB, dib, (UINT32)dibSize))
+		goto fail;
+
+	UINT32 bmpSize = 0;
+	BYTE* bmp = ClipboardGetData(clipboard, bmpId, &bmpSize);
+	if (!bmp)
+		goto fail;
+
+	wStream bmpBuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&bmpBuffer, bmp, bmpSize);
+	if (!s || (bmpSize < sizeof(WINPR_BITMAP_FILE_HEADER)))
+		goto fail_bmp;
+
+	Stream_Seek(s, 10);
+	UINT32 bitmapOffset = 0;
+	Stream_Read_UINT32(s, bitmapOffset);
+	if ((bitmapOffset != expectedOffset) ||
+	    (bmpSize != sizeof(WINPR_BITMAP_FILE_HEADER) + dibSize) ||
+	    (memcmp(&bmp[sizeof(WINPR_BITMAP_FILE_HEADER)], dib, dibSize) != 0))
+		goto fail_bmp;
+
+	rc = TRUE;
+
+fail_bmp:
+	free(bmp);
+fail:
+	ClipboardDestroy(clipboard);
+	return rc;
+}
+
+static void write_dib_info_header(wStream* s, UINT32 size, UINT16 bpp, UINT32 compression)
+{
+	WINPR_ASSERT(s);
+
+	Stream_Write_UINT32(s, size);
+	Stream_Write_INT32(s, 1);  /* width */
+	Stream_Write_INT32(s, 1);  /* height */
+	Stream_Write_UINT16(s, 1); /* planes */
+	Stream_Write_UINT16(s, bpp);
+	Stream_Write_UINT32(s, compression);
+	Stream_Write_UINT32(s, 4); /* image size */
+	Stream_Zero(s, 16);        /* resolution and palette metadata */
+}
+
+static BOOL test_dib_offsets(void)
+{
+	BYTE v4[sizeof(BITMAPV4HEADER) + 4] = WINPR_C_ARRAY_INIT;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, v4, sizeof(v4));
+	if (!s)
+		return FALSE;
+	write_dib_info_header(s, sizeof(BITMAPV4HEADER), 32, BI_BITFIELDS);
+
+	Stream_Write_UINT32(s, 0x00FF0000); /* red mask */
+	Stream_Write_UINT32(s, 0x0000FF00); /* green mask */
+	Stream_Write_UINT32(s, 0x000000FF); /* blue mask */
+	Stream_Write_UINT32(s, 0xFF000000); /* alpha mask */
+	Stream_Zero(s, sizeof(BITMAPV4HEADER) - Stream_GetPosition(s));
+	Stream_Write_UINT32(s, 0xFF123456); /* pixel */
+	if (!test_dib_to_bmp(v4, sizeof(v4), sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(BITMAPV4HEADER)))
+		return FALSE;
+
+	BYTE bitfields[sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD) + 4] = WINPR_C_ARRAY_INIT;
+	s = Stream_StaticInit(&sbuffer, bitfields, sizeof(bitfields));
+	if (!s)
+		return FALSE;
+	write_dib_info_header(s, sizeof(BITMAPINFOHEADER), 32, BI_BITFIELDS);
+	Stream_Write_UINT32(s, 0x00FF0000); /* red mask */
+	Stream_Write_UINT32(s, 0x0000FF00); /* green mask */
+	Stream_Write_UINT32(s, 0x000000FF); /* blue mask */
+	Stream_Write_UINT32(s, 0xFF123456); /* pixel */
+	if (!test_dib_to_bmp(bitfields, sizeof(bitfields),
+	                     sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(BITMAPINFOHEADER) +
+	                         3 * sizeof(DWORD)))
+		return FALSE;
+
+	BYTE paletted[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD) + 4] = WINPR_C_ARRAY_INIT;
+	s = Stream_StaticInit(&sbuffer, paletted, sizeof(paletted));
+	if (!s)
+		return FALSE;
+	write_dib_info_header(s, sizeof(BITMAPINFOHEADER), 8, BI_RGB);
+	Stream_Zero(s, 256 * sizeof(RGBQUAD));
+	Stream_Write_UINT32(s, 0); /* pixel row */
+	return test_dib_to_bmp(paletted, sizeof(paletted),
+	                       sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(BITMAPINFOHEADER) +
+	                           256 * sizeof(RGBQUAD));
+}
 
 int TestClipboardFormats(int argc, char* argv[])
 {
@@ -19,6 +119,8 @@ int TestClipboardFormats(int argc, char* argv[])
 	clipboard = ClipboardCreate();
 	if (!clipboard)
 		return -1;
+	if (!test_dib_offsets())
+		goto fail;
 
 	const char* mime_types[] = { "text/html", "text/html",  "image/bmp",
 		                         "image/png", "image/webp", "image/jpeg" };

@@ -392,7 +392,8 @@ static void* clipboard_synthesize_cf_dibv5(wClipboard* clipboard, UINT32 formatI
 #endif
 
 static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoHeader,
-                                          const void* data, size_t size, UINT32* pSize)
+                                          size_t offset, const void* data, size_t size,
+                                          UINT32* pSize)
 {
 	WINPR_ASSERT(pInfoHeader);
 	WINPR_ASSERT(pSize);
@@ -401,8 +402,14 @@ static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoH
 	if ((pInfoHeader->biBitCount < 1) || (pInfoHeader->biBitCount > 32))
 		return nullptr;
 
+	if (size > (UINT32_MAX - sizeof(WINPR_BITMAP_FILE_HEADER)))
+		return nullptr;
 	const size_t DstSize = sizeof(WINPR_BITMAP_FILE_HEADER) + size;
-	if (DstSize > UINT32_MAX)
+	if ((pInfoHeader->biSize > size) || (offset > (size - pInfoHeader->biSize)))
+		return nullptr;
+
+	const size_t bitmapOffset = sizeof(WINPR_BITMAP_FILE_HEADER) + pInfoHeader->biSize + offset;
+	if (bitmapOffset > DstSize)
 		return nullptr;
 
 	wStream* s = Stream_New(nullptr, DstSize);
@@ -413,7 +420,7 @@ static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoH
 	fileHeader.bfType[0] = 'B';
 	fileHeader.bfType[1] = 'M';
 	fileHeader.bfSize = (UINT32)DstSize;
-	fileHeader.bfOffBits = sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(WINPR_BITMAP_INFO_HEADER);
+	fileHeader.bfOffBits = (UINT32)bitmapOffset;
 	if (!writeBitmapFileHeader(s, &fileHeader))
 		goto fail;
 
@@ -463,7 +470,7 @@ static void* clipboard_synthesize_image_bmp(WINPR_ATTR_UNUSED wClipboard* clipbo
 		if (!readBitmapInfoHeader(s, &header, &offset))
 			return nullptr;
 
-		return clipboard_prepend_bmp_header(&header, data, SrcSize, pSize);
+		return clipboard_prepend_bmp_header(&header, offset, data, SrcSize, pSize);
 	}
 #if defined(WINPR_UTILS_IMAGE_DIBv5)
 	else if (formatId == CF_DIBV5)
