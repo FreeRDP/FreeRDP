@@ -32,7 +32,7 @@ set(${MODULE_PREFIX}_TESTS
 )
 
 if(WITH_WINPR_JSON)
-  list(APPEND ${MODULE_PREFIX}_TESTS TestCommandLineToCommaSeparatedValues.c)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestCommandLineToCommaSeparatedValues.c TestJson.c)
 endif()
 
 if(WITH_LODEPNG)
