@@ -15,7 +15,8 @@ endif()
 
 set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCryptoCertificateDataSetPEM.c)
 
-if(NOT WIN32)
+# TestFuzzServer generates a live cert via winpr-tools (makecert).
+if(NOT WIN32 AND WITH_WINPR_TOOLS)
   list(APPEND FUZZERS TestFuzzServer.c)
 endif()
 
@@ -44,15 +45,22 @@ endif()
 add_compile_definitions(TESTING_OUTPUT_DIRECTORY="${PROJECT_BINARY_DIR}")
 add_compile_definitions(TESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 
-target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client winpr-tools)
+# TestCore does not call winpr-tools APIs. The link was added with
+# TestFuzzServer's on-the-fly cert generation and broke -DWITH_WINPR_TOOLS=OFF.
+target_link_libraries(${MODULE_NAME} PRIVATE freerdp-client)
+if(WITH_WINPR_TOOLS)
+  set(CORE_FUZZER_LIBS "freerdp-client winpr-tools")
+else()
+  set(CORE_FUZZER_LIBS "freerdp-client")
+endif()
 
 include(AddFuzzerTest)
-add_fuzzer_test("${FUZZERS}" "freerdp-client winpr-tools")
+add_fuzzer_test("${FUZZERS}" "${CORE_FUZZER_LIBS}")
 
 # Seed corpus generator for the test TestFuzzServer, used to
-# (re)generate the seed corpus. Requires the client library and
-# POSIX sockets.
-if(NOT WIN32 AND (WITH_CLIENT_COMMON OR WITH_CLIENT))
+# (re)generate the seed corpus. Requires the client library,
+# POSIX sockets, and winpr-tools (makecert).
+if(NOT WIN32 AND WITH_WINPR_TOOLS AND (WITH_CLIENT_COMMON OR WITH_CLIENT))
   find_package(Threads REQUIRED)
   add_executable(TestFuzzServerSeedGen TestFuzzServerSeedGen.c)
   target_link_libraries(TestFuzzServerSeedGen freerdp-client winpr-tools Threads::Threads)
