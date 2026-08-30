@@ -41,16 +41,28 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight);
 static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
 {
 	BOOL isNull = FALSE;
-	UINT32 pheight = height;
+	UINT32 logicalStride = 0;
+	UINT32 allocationStride = 0;
+	UINT32 allocationHeight = 0;
+	UINT32 allocationStrideUV = 0;
 
 	if (!h264)
 		return FALSE;
 
 	if (stride == 0)
 		stride = width;
+	if ((stride == 0) || (height == 0) || (stride < width))
+		return FALSE;
 
-	stride += 16 - stride % 16;
-	pheight += 16 - pheight % 16;
+	const UINT32 stridePadding = 16 - stride % 16;
+	const UINT32 heightPadding = 16 - height % 16;
+	if ((stride > UINT32_MAX - stridePadding) || (height > UINT32_MAX - heightPadding))
+		return FALSE;
+
+	allocationStride = stride + stridePadding;
+	allocationHeight = height + heightPadding;
+	logicalStride = (stride % 16 == 0) ? stride : allocationStride;
+	allocationStrideUV = (allocationStride + 1) / 2;
 
 	const size_t nPlanes = h264->hwAccel ? 2 : 3;
 
@@ -60,32 +72,33 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 			isNull = TRUE;
 	}
 
-	if (pheight == 0)
-		return FALSE;
-	if (stride == 0)
-		return FALSE;
-
 	if (isNull || (width != h264->width) || (height != h264->height) ||
-	    (stride != h264->iStride[0]))
+	    (logicalStride != h264->iStride[0]))
 	{
 		if (h264->hwAccel) /* NV12 */
 		{
-			h264->iStride[0] = stride;
-			h264->iStride[1] = stride;
+			h264->iStride[0] = logicalStride;
+			h264->iStride[1] = logicalStride;
 			h264->iStride[2] = 0;
 		}
 		else /* I420 */
 		{
-			h264->iStride[0] = stride;
-			h264->iStride[1] = (stride + 1) / 2;
-			h264->iStride[2] = (stride + 1) / 2;
+			h264->iStride[0] = logicalStride;
+			h264->iStride[1] = (logicalStride + 1) / 2;
+			h264->iStride[2] = (logicalStride + 1) / 2;
 		}
 
 		for (size_t x = 0; x < nPlanes; x++)
 		{
-			BYTE* tmp1 = winpr_aligned_recalloc(h264->pYUVData[x], h264->iStride[x], pheight, 16);
+			const size_t allocStride =
+			    (x == 0 || h264->hwAccel) ? allocationStride : allocationStrideUV;
+			if (allocationHeight > SIZE_MAX / allocStride)
+				return FALSE;
+
+			BYTE* tmp1 =
+			    winpr_aligned_recalloc(h264->pYUVData[x], allocStride, allocationHeight, 16);
 			BYTE* tmp2 =
-			    winpr_aligned_recalloc(h264->pOldYUVData[x], h264->iStride[x], pheight, 16);
+			    winpr_aligned_recalloc(h264->pOldYUVData[x], allocStride, allocationHeight, 16);
 			if (tmp1)
 				h264->pYUVData[x] = tmp1;
 			if (tmp2)
@@ -103,6 +116,55 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
 {
 	return yuv_ensure_buffer(h264, stride, width, height);
+}
+
+BOOL h264_copy_yuv420p(BYTE* const pDstData[3], const UINT32 dstStride[3], const BYTE* pSrcData,
+                       size_t srcSize, UINT32 srcStride, UINT32 width, UINT32 height,
+                       size_t* pRequiredSize)
+{
+	if (!pDstData || !dstStride || !pSrcData || (srcStride == 0) || (width == 0) || (height == 0))
+		return FALSE;
+	if (!pDstData[0] || !pDstData[1] || !pDstData[2])
+		return FALSE;
+
+	const UINT32 chromaWidth = width / 2 + width % 2;
+	const UINT32 chromaHeight = height / 2 + height % 2;
+	const UINT32 srcChromaStride = srcStride / 2 + srcStride % 2;
+	if ((srcStride < width) || (srcChromaStride < chromaWidth))
+		return FALSE;
+	if ((dstStride[0] < srcStride) || (dstStride[1] < srcChromaStride) ||
+	    (dstStride[2] < srcChromaStride))
+		return FALSE;
+
+	if (height > SIZE_MAX / srcStride)
+		return FALSE;
+	const size_t lumaSize = (size_t)srcStride * height;
+	if (chromaHeight > SIZE_MAX / srcChromaStride)
+		return FALSE;
+	const size_t chromaSize = (size_t)srcChromaStride * chromaHeight;
+	if ((lumaSize > SIZE_MAX - chromaSize) || (lumaSize + chromaSize > SIZE_MAX - chromaSize))
+		return FALSE;
+
+	const size_t requiredSize = lumaSize + 2 * chromaSize;
+	if (pRequiredSize)
+		*pRequiredSize = requiredSize;
+	if (srcSize < requiredSize)
+		return FALSE;
+
+	const BYTE* pSrcPlanes[3] = { pSrcData, pSrcData + lumaSize, pSrcData + lumaSize + chromaSize };
+	const UINT32 srcStrides[3] = { srcStride, srcChromaStride, srcChromaStride };
+	const UINT32 rows[3] = { height, chromaHeight, chromaHeight };
+
+	for (size_t plane = 0; plane < 3; plane++)
+	{
+		for (UINT32 row = 0; row < rows[plane]; row++)
+		{
+			memcpy(pDstData[plane] + (size_t)row * dstStride[plane],
+			       pSrcPlanes[plane] + (size_t)row * srcStrides[plane], srcStrides[plane]);
+		}
+	}
+
+	return TRUE;
 }
 
 static BOOL isRectValid(UINT32 width, UINT32 height, const RECTANGLE_16* rect)

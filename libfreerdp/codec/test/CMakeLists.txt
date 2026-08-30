@@ -16,6 +16,7 @@ set(TESTS
     TestFreeRDPCodecCursor.c
     TestFreeRDPCodecClear.c
     TestFreeRDPCodecInterleaved.c
+    TestFreeRDPCodecH264Buffer.c
     TestFreeRDPCodecProgressive.c
     TestFreeRDPCodecRemoteFX.c
 )

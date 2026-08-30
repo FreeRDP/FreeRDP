@@ -94,6 +94,11 @@ extern "C"
 	FREERDP_LOCAL BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width,
 	                                        UINT32 height);
 
+	WINPR_ATTR_NODISCARD
+	FREERDP_LOCAL BOOL h264_copy_yuv420p(BYTE* const pDstData[3], const UINT32 dstStride[3],
+	                                     const BYTE* pSrcData, size_t srcSize, UINT32 srcStride,
+	                                     UINT32 width, UINT32 height, size_t* pRequiredSize);
+
 #ifdef WITH_MEDIACODEC
 	extern const H264_CONTEXT_SUBSYSTEM g_Subsystem_mediacodec;
 #endif

@@ -84,6 +84,7 @@ typedef struct
 	IMFSample* sample;
 	UINT32 frameWidth;
 	UINT32 frameHeight;
+	UINT32 frameStride;
 	IMFSample* outputSample;
 	IMFMediaBuffer* outputBuffer;
 	HMODULE mfplat;
@@ -176,6 +177,8 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
                          UINT32 SrcSize)
 {
 	BYTE* pbBuffer = nullptr;
+	BOOL inputBufferLocked = FALSE;
+	BOOL outputBufferLocked = FALSE;
 	DWORD cbMaxLength = 0;
 	DWORD cbCurrentLength = 0;
 	DWORD outputStatus = 0;
@@ -204,6 +207,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		WLog_Print(h264->log, WLOG_ERROR, "Lock failure: 0x%08" PRIX32 "", hr);
 		goto error;
 	}
+	inputBufferLocked = TRUE;
 
 	CopyMemory(pbBuffer, pSrcData, SrcSize);
 	hr = inputBuffer->lpVtbl->SetCurrentLength(inputBuffer, SrcSize);
@@ -215,6 +219,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 	}
 
 	hr = inputBuffer->lpVtbl->Unlock(inputBuffer);
+	inputBufferLocked = FALSE;
 
 	if (FAILED(hr))
 	{
@@ -230,7 +235,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		goto error;
 	}
 
-	inputSample->lpVtbl->AddBuffer(inputSample, inputBuffer);
+	hr = inputSample->lpVtbl->AddBuffer(inputSample, inputBuffer);
 
 	if (FAILED(hr))
 	{
@@ -239,6 +244,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 	}
 
 	inputBuffer->lpVtbl->Release(inputBuffer);
+	inputBuffer = nullptr;
 	hr = sys->transform->lpVtbl->ProcessInput(sys->transform, 0, inputSample, 0);
 
 	if (FAILED(hr))
@@ -318,8 +324,24 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 			goto error;
 		}
 
-		if (!avc420_ensure_buffer(h264, stride, sys->frameWidth, sys->frameHeight))
+		const INT32 signedStride = (INT32)stride;
+		if (signedStride <= 0)
+		{
+			WLog_Print(h264->log, WLOG_ERROR, "Unsupported Media Foundation IYUV stride: %" PRId32,
+			           signedStride);
 			goto error;
+		}
+
+		sys->frameStride = (UINT32)signedStride;
+		if (!avc420_ensure_buffer(h264, sys->frameStride, sys->frameWidth, sys->frameHeight))
+			goto error;
+
+		WLog_Print(h264->log, WLOG_INFO,
+		           "Media Foundation IYUV output: frame=%" PRIu32 "x%" PRIu32
+		           " source-stride=%" PRIu32 " destination-strides=%" PRIu32 ",%" PRIu32
+		           ",%" PRIu32,
+		           sys->frameWidth, sys->frameHeight, sys->frameStride, iStride[0], iStride[1],
+		           iStride[2]);
 	}
 	else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
 	{
@@ -331,7 +353,6 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 	}
 	else
 	{
-		int offset = 0;
 		BYTE* buffer = nullptr;
 		DWORD bufferCount = 0;
 		DWORD cbMaxLength = 0;
@@ -343,6 +364,12 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 			WLog_Print(h264->log, WLOG_ERROR, "GetBufferCount failure: 0x%08" PRIX32 "", hr);
 			goto error;
 		}
+		if (bufferCount != 1)
+		{
+			WLog_Print(h264->log, WLOG_ERROR,
+			           "Unexpected Media Foundation output buffer count: %" PRIu32, bufferCount);
+			goto error;
+		}
 
 		hr = sys->outputSample->lpVtbl->GetBufferByIndex(sys->outputSample, 0, &outputBuffer);
 
@@ -351,7 +378,6 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 			WLog_Print(h264->log, WLOG_ERROR, "GetBufferByIndex failure: 0x%08" PRIX32 "", hr);
 			goto error;
 		}
-
 		hr = outputBuffer->lpVtbl->Lock(outputBuffer, &buffer, &cbMaxLength, &cbCurrentLength);
 
 		if (FAILED(hr))
@@ -359,14 +385,40 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 			WLog_Print(h264->log, WLOG_ERROR, "Lock failure: 0x%08" PRIX32 "", hr);
 			goto error;
 		}
+		outputBufferLocked = TRUE;
 
-		CopyMemory(pYUVData[0], &buffer[offset], iStride[0] * sys->frameHeight);
-		offset += iStride[0] * sys->frameHeight;
-		CopyMemory(pYUVData[1], &buffer[offset], iStride[1] * (sys->frameHeight / 2));
-		offset += iStride[1] * (sys->frameHeight / 2);
-		CopyMemory(pYUVData[2], &buffer[offset], iStride[2] * (sys->frameHeight / 2));
-		offset += iStride[2] * (sys->frameHeight / 2);
+		if (cbCurrentLength > cbMaxLength)
+		{
+			WLog_Print(h264->log, WLOG_ERROR,
+			           "Media Foundation output length exceeds capacity: current=%" PRIu32
+			           " maximum=%" PRIu32,
+			           cbCurrentLength, cbMaxLength);
+			goto error;
+		}
+
+		size_t requiredSize = 0;
+		if (!h264_copy_yuv420p(pYUVData, iStride, buffer, cbCurrentLength, sys->frameStride,
+		                       sys->frameWidth, sys->frameHeight, &requiredSize))
+		{
+			WLog_Print(h264->log, WLOG_ERROR,
+			           "Invalid Media Foundation IYUV buffer: frame=%" PRIu32 "x%" PRIu32
+			           " source-stride=%" PRIu32 " current=%" PRIu32 " maximum=%" PRIu32
+			           " required=%" PRIuz,
+			           sys->frameWidth, sys->frameHeight, sys->frameStride, cbCurrentLength,
+			           cbMaxLength, requiredSize);
+			goto error;
+		}
+
+		const size_t lumaSize = (size_t)sys->frameStride * sys->frameHeight;
+		const size_t chromaStride = sys->frameStride / 2 + sys->frameStride % 2;
+		const size_t chromaHeight = sys->frameHeight / 2 + sys->frameHeight % 2;
+		const size_t chromaSize = chromaStride * chromaHeight;
+		WLog_Print(h264->log, WLOG_DEBUG,
+		           "Media Foundation IYUV buffer: current=%" PRIu32 " maximum=%" PRIu32
+		           " offsets=0,%" PRIuz ",%" PRIuz " required=%" PRIuz,
+		           cbCurrentLength, cbMaxLength, lumaSize, lumaSize + chromaSize, requiredSize);
 		hr = outputBuffer->lpVtbl->Unlock(outputBuffer);
+		outputBufferLocked = FALSE;
 
 		if (FAILED(hr))
 		{
@@ -375,6 +427,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		}
 
 		outputBuffer->lpVtbl->Release(outputBuffer);
+		outputBuffer = nullptr;
 		h264->YUVWidth = sys->frameWidth;
 		h264->YUVHeight = sys->frameHeight;
 	}
@@ -382,7 +435,17 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 	inputSample->lpVtbl->Release(inputSample);
 	return 1;
 error:
-	(void)fprintf(stderr, "mf_decompress error\n");
+	if (outputBufferLocked && outputBuffer)
+		(void)outputBuffer->lpVtbl->Unlock(outputBuffer);
+	if (inputBufferLocked && inputBuffer)
+		(void)inputBuffer->lpVtbl->Unlock(inputBuffer);
+	if (outputBuffer)
+		outputBuffer->lpVtbl->Release(outputBuffer);
+	if (inputSample)
+		inputSample->lpVtbl->Release(inputSample);
+	if (inputBuffer)
+		inputBuffer->lpVtbl->Release(inputBuffer);
+	WLog_Print(h264->log, WLOG_ERROR, "mf_decompress error");
 	return -1;
 }
 
