@@ -1572,11 +1572,10 @@ LONG WINAPI Emulate_SCardCancel(SmartcardEmulationContext* smartcard, SCARDCONTE
 SCardHandle* find_reader(SmartcardEmulationContext* smartcard, const void* szReader, BOOL unicode)
 {
 	SCardHandle* hdl = nullptr;
-	UINT_PTR* keys = nullptr;
-	size_t count = 0;
+	ULONG_PTR* keys = nullptr;
 
 	WINPR_ASSERT(smartcard);
-	count = HashTable_GetKeys(smartcard->handles, &keys);
+	const size_t count = HashTable_GetKeys(smartcard->handles, &keys);
 	for (size_t x = 0; x < count; x++)
 	{
 		SCardHandle* cur = HashTable_GetItemValue(smartcard->handles, (const void*)keys[x]);
