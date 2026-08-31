@@ -529,6 +529,28 @@ fail_close_fd:
 	return FALSE;
 }
 
+/* wraps an already-open fd (typically inherited across exec() from a parent process, e.g. via
+ * winpr_importHandleFromString()) into a WINPR HANDLE with the same blocking read()/write()
+ * behavior CreatePipe() hands out - the fd does not actually have to be a pipe, anything
+ * read()/write()-able works (pipe, regular file, socket). */
+HANDLE winpr_Pipe_FromFd(int fd)
+{
+	if (fd < 0)
+		return INVALID_HANDLE_VALUE;
+
+	WINPR_PIPE* pPipe = (WINPR_PIPE*)calloc(1, sizeof(WINPR_PIPE));
+	if (!pPipe)
+	{
+		WLog_ERR(TAG, "error allocating pipe");
+		return INVALID_HANDLE_VALUE;
+	}
+
+	pPipe->fd = fd;
+	WINPR_HANDLE_SET_TYPE_AND_MODE(pPipe, HANDLE_TYPE_ANONYMOUS_PIPE, WINPR_FD_READ);
+	pPipe->common.ops = &ops;
+	return &pPipe->common;
+}
+
 /**
  * Named pipe
  */

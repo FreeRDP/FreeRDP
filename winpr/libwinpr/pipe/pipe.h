@@ -70,6 +70,9 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                     LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 
+WINPR_ATTR_NODISCARD
+HANDLE winpr_Pipe_FromFd(int fd);
+
 #endif
 
 #endif /* WINPR_PIPE_PRIVATE_H */
