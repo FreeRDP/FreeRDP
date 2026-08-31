@@ -307,11 +307,13 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheV3Enabled, FALSE))
 		return FALSE;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_OffscreenSupportLevel, FALSE))
+	/* These capability level fields are UINT32. Using the boolean setter makes Shadow initialization
+	 * fail before the client can connect. */
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OffscreenSupportLevel, 0))
 		return FALSE;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_GlyphSupportLevel, GLYPH_SUPPORT_NONE))
 		return FALSE;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_BrushSupportLevel, FALSE))
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_BrushSupportLevel, 0))
 		return FALSE;
 	ZeroMemory(freerdp_settings_get_pointer_writable(settings, FreeRDP_OrderSupport), 32);
 	if (!freerdp_settings_set_bool(settings, FreeRDP_FrameMarkerCommandEnabled, TRUE))
@@ -330,7 +332,8 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_FastPathOutput, TRUE))
 		return FALSE;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_LargePointerFlag, TRUE))
+	/* The large-pointer flag is also UINT32; keep the setter consistent with its settings metadata. */
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_LargePointerFlag, 1))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_CompressionEnabled, FALSE))
 		return FALSE;
