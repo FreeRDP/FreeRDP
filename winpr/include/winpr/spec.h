@@ -108,11 +108,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER
 #endif
 
 #ifndef DECLSPEC_NORETURN
-#if (defined(__GNUC__) || defined(_MSC_VER) || defined(__clang__))
-#define DECLSPEC_NORETURN __declspec(noreturn)
-#else
-#define DECLSPEC_NORETURN
-#endif
+#define DECLSPEC_NORETURN WINPR_DECLSPEC_NORETURN
 #endif /* DECLSPEC_NORETURN */
 
 /**

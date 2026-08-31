@@ -90,9 +90,17 @@
 
 #if defined(WINPR_DEFINE_ATTR_NODISCARD)
 #if defined(__cplusplus) && (__cplusplus >= 201703L)
+#if defined(__GNUC__) && !defined(__clang__)
+#define WINPR_ATTR_NODISCARD [[gnu::warn_unused_result]]
+#else
 #define WINPR_ATTR_NODISCARD [[nodiscard]]
+#endif
 #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#if defined(__GNUC__) && !defined(__clang__)
+#define WINPR_ATTR_NODISCARD [[gnu::warn_unused_result]]
+#else
 #define WINPR_ATTR_NODISCARD [[nodiscard]]
+#endif
 #elif defined(__clang__)
 #define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
 #elif defined(__GNUC__) && (__GNUC__ >= 7)
@@ -100,15 +108,6 @@
 #else
 #define WINPR_ATTR_NODISCARD
 #endif
-
-/* GCC does not like [[nodiscard]] on function pointers.
- * it does not complain when using attribute syntax thoug...
- */
-#if defined(__GNUC__) && !defined(__clang__)
-#undef WINPR_ATTR_NODISCARD
-#define WINPR_ATTR_NODISCARD __attribute__((warn_unused_result))
-#endif
-
 #else
 #define WINPR_ATTR_NODISCARD
 #endif
@@ -572,16 +571,18 @@ WINPR_PRAGMA_DIAG_POP
 #endif
 
 #if defined(__cplusplus) && (__cplusplus >= 201703L)
-#define WINPR_NORETURN(obj) [[noreturn]] obj
+#define WINPR_DECLSPEC_NORETURN [[noreturn]]
 #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
-#define WINPR_NORETURN(obj) [[noreturn]] obj
+#define WINPR_DECLSPEC_NORETURN [[noreturn]]
 #elif defined(WIN32) && !defined(__CYGWIN__)
-#define WINPR_NORETURN(obj) __declspec(noreturn) obj
+#define WINPR_DECLSPEC_NORETURN __declspec(noreturn)
 #elif defined(__GNUC__)
-#define WINPR_NORETURN(obj) __attribute__((__noreturn__)) obj
+#define WINPR_DECLSPEC_NORETURN __attribute__((__noreturn__))
 #else
-#define WINPR_NORETURN(obj) obj
+#define WINPR_DECLSPEC_NORETURN
 #endif
+
+#define WINPR_NORETURN(obj) WINPR_DECLSPEC_NORETURN obj
 
 #define INLINE inline
 
@@ -666,16 +667,18 @@ WINPR_PRAGMA_DIAG_POP
 
 #if defined(EXPORT_ALL_SYMBOLS)
 #define WINPR_LOCAL WINPR_API
-#else
-#if defined _WIN32 || defined __CYGWIN__
+#elif defined _WIN32 || defined __CYGWIN__
 #define WINPR_LOCAL
+#elif defined(__GNUC__) && (__GNUC__ >= 4)
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+#define WINPR_LOCAL [[gnu::visibility("hidden")]]
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define WINPR_LOCAL [[gnu::visibility("hidden")]]
 #else
-#if defined(__GNUC__) && (__GNUC__ >= 4)
 #define WINPR_LOCAL __attribute__((visibility("hidden")))
+#endif
 #else
 #define WINPR_LOCAL
-#endif
-#endif
 #endif
 
 // WARNING: *do not* use thread-local storage for new code because it is not portable
