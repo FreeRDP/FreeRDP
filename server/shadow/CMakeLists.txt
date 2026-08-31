@@ -71,7 +71,11 @@ if(WITH_RDTK)
   list(APPEND LIBS rdtk)
 endif()
 
-list(APPEND LIBS freerdp freerdp-server winpr winpr-tools)
+list(APPEND LIBS freerdp-server)
+if(WITH_WINPR_TOOLS)
+  target_compile_definitions(${MODULE_NAME} PRIVATE WITH_WINPR_TOOLS)
+  list(APPEND LIBS winpr-tools)
+endif()
 
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/freerdp${FREERDP_VERSION_MAJOR}>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
