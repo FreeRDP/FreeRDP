@@ -911,6 +911,7 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 	return 1;
 }
 
+#if defined(WITH_WINPR_TOOLS)
 WINPR_ATTR_NODISCARD
 static BOOL shadow_server_create_certificate(rdpShadowServer* server, const char* filepath)
 {
@@ -949,6 +950,7 @@ out_fail:
 	makecert_context_free(makecert);
 	return rc;
 }
+#endif
 
 WINPR_ATTR_NODISCARD
 static BOOL shadow_server_init_certificate(rdpShadowServer* server)
@@ -986,7 +988,9 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	if ((!winpr_PathFileExists(server->CertificateFile)) ||
 	    (!winpr_PathFileExists(server->PrivateKeyFile)))
 	{
+#if defined(WITH_WINPR_TOOLS)
 		if (!shadow_server_create_certificate(server, filepath))
+#endif
 			goto out_fail;
 	}
 
