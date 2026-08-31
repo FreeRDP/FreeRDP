@@ -159,7 +159,7 @@ static HRESULT mf_create_output_sample(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 		goto error;
 	}
 
-	sys->outputSample->lpVtbl->AddBuffer(sys->outputSample, sys->outputBuffer);
+	hr = sys->outputSample->lpVtbl->AddBuffer(sys->outputSample, sys->outputBuffer);
 
 	if (FAILED(hr))
 	{
@@ -230,7 +230,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		goto error;
 	}
 
-	inputSample->lpVtbl->AddBuffer(inputSample, inputBuffer);
+	hr = inputSample->lpVtbl->AddBuffer(inputSample, inputBuffer);
 
 	if (FAILED(hr))
 	{
