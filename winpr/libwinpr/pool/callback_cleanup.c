@@ -44,7 +44,7 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID* context)
 	if (kernel32)
 	{
 		pSetEventWhenCallbackReturns =
-		    GetProcAddressAs(kernel32, "SetEventWhenCallbackReturns"), void*);
+		    GetProcAddressAs(kernel32, "SetEventWhenCallbackReturns", void*);
 		pReleaseSemaphoreWhenCallbackReturns =
 		    GetProcAddressAs(kernel32, "ReleaseSemaphoreWhenCallbackReturns", void*);
 		pReleaseMutexWhenCallbackReturns =
