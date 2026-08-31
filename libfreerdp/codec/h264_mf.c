@@ -92,6 +92,8 @@ typedef struct
 	pfnMFCreateSample MFCreateSample;
 	pfnMFCreateMemoryBuffer MFCreateMemoryBuffer;
 	pfnMFCreateMediaType MFCreateMediaType;
+	UINT32 stride;
+	BOOL bottomUp;
 } H264_CONTEXT_MF;
 
 static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid,
@@ -159,7 +161,7 @@ static HRESULT mf_create_output_sample(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 		goto error;
 	}
 
-	sys->outputSample->lpVtbl->AddBuffer(sys->outputSample, sys->outputBuffer);
+	hr = sys->outputSample->lpVtbl->AddBuffer(sys->outputSample, sys->outputBuffer);
 
 	if (FAILED(hr))
 	{
@@ -170,6 +172,27 @@ static HRESULT mf_create_output_sample(H264_CONTEXT* h264, H264_CONTEXT_MF* sys)
 	sys->outputBuffer->lpVtbl->Release(sys->outputBuffer);
 error:
 	return hr;
+}
+
+WINPR_ATTR_NODISCARD
+static UINT32 getSrcOffset(H264_CONTEXT_MF* sys, UINT32 line, BOOL isUV)
+{
+	WINPR_ASSERT(sys);
+
+	if (sys->frameHeight < 1)
+		return 0;
+	if (line >= sys->frameHeight)
+		return 0;
+
+	UINT64 offset = (sys->frameHeight - line - 1u);
+	if (!sys->bottomUp)
+		offset = line;
+
+	offset *= sys->stride;
+	if (isUV)
+		offset /= 2u;
+	return WINPR_ASSERTING_INT_CAST(UINT32, line);
+}
 }
 
 static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RESTRICT pSrcData,
@@ -230,7 +253,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		goto error;
 	}
 
-	inputSample->lpVtbl->AddBuffer(inputSample, inputBuffer);
+	hr = inputSample->lpVtbl->AddBuffer(inputSample, inputBuffer);
 
 	if (FAILED(hr))
 	{
@@ -264,7 +287,6 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 
 	if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
 	{
-		UINT32 stride = 0;
 		UINT64 frameSize = 0;
 
 		if (sys->outputType)
@@ -309,7 +331,8 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 
 		sys->frameWidth = (UINT32)(frameSize >> 32);
 		sys->frameHeight = (UINT32)frameSize;
-		hr = sys->outputType->lpVtbl->GetUINT32(sys->outputType, &sMF_MT_DEFAULT_STRIDE, &stride);
+		hr = sys->outputType->lpVtbl->GetUINT32(sys->outputType, &sMF_MT_DEFAULT_STRIDE,
+		                                        &sys->stride);
 
 		if (FAILED(hr))
 		{
@@ -318,7 +341,14 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 			goto error;
 		}
 
-		if (!avc420_ensure_buffer(h264, stride, sys->frameWidth, sys->frameHeight))
+		const INT32 istride = (INT32)sys->stride;
+		if (istride < 0)
+		{
+			sys->bottomUp = TRUE;
+			sys->stride = istride * -1;
+		}
+
+		if (!avc420_ensure_buffer(h264, sys->stride, sys->frameWidth, sys->frameHeight))
 			goto error;
 	}
 	else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
@@ -360,12 +390,25 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 			goto error;
 		}
 
-		CopyMemory(pYUVData[0], &buffer[offset], iStride[0] * sys->frameHeight);
-		offset += iStride[0] * sys->frameHeight;
-		CopyMemory(pYUVData[1], &buffer[offset], iStride[1] * (sys->frameHeight / 2));
-		offset += iStride[1] * (sys->frameHeight / 2);
-		CopyMemory(pYUVData[2], &buffer[offset], iStride[2] * (sys->frameHeight / 2));
-		offset += iStride[2] * (sys->frameHeight / 2);
+		/* Copy data from decoder buffer to our YUV buffer.
+		 * strides differ (the YUV buffer is always larger) so copy only data available from the
+		 * decoder buffer but increment the YUV buffer with the YUV buffer strides.
+		 */
+		for (UINT32 x = 0; x < sys->frameHeight; x++)
+		{
+			const srcOffset = getSrcOffset(sys, x, FALSE);
+			const dstOffset = iStride[0] * x;
+			CopyMemory(&pYUVData[0][dstOffset], &buffer[srcOffset], sys->stride);
+		}
+		for (UINT32 x = 0; x < sys->frameHeight / 2; x++)
+		{
+			const srcOffset = getSrcOffset(sys, x, TRUE);
+			const dstUOffset = iStride[1] * x;
+			const dstVOffset = iStride[2] * x;
+			CopyMemory(&pYUVData[1][dstUOffset], &buffer[srcOffset], sys->stride / 2u);
+			CopyMemory(&pYUVData[2][dstVOffset], &buffer[srcOffset], sys->stride / 2u);
+		}
+
 		hr = outputBuffer->lpVtbl->Unlock(outputBuffer);
 
 		if (FAILED(hr))

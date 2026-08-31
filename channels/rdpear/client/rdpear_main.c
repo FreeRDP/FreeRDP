@@ -115,6 +115,9 @@ static krb5_error_code kerb_do_encrypt(krb5_context ctx, const KERB_RPC_ENCRYPTI
 	WINPR_ASSERT(plain);
 	WINPR_ASSERT(out);
 
+	out->data = nullptr;
+	out->length = 0;
+
 	krb5_keyblock* keyblock = nullptr;
 	krb5_data data = WINPR_C_ARRAY_INIT;
 	krb5_enc_data enc = WINPR_C_ARRAY_INIT;
@@ -166,6 +169,9 @@ static krb5_error_code kerb_do_decrypt(krb5_context ctx, const KERB_RPC_ENCRYPTI
 	WINPR_ASSERT(cipher);
 	WINPR_ASSERT(cipher->length);
 	WINPR_ASSERT(plain);
+
+	plain->Asn1Buffer = nullptr;
+	plain->Asn1BufferHints.count = 0;
 
 	krb5_keyblock* keyblock = nullptr;
 	krb5_data data = WINPR_C_ARRAY_INIT;
