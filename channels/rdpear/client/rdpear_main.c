@@ -144,6 +144,11 @@ static krb5_error_code kerb_do_encrypt(krb5_context ctx, const KERB_RPC_ENCRYPTI
 	}
 
 	rv = krb5_c_encrypt(ctx, keyblock, kusage, nullptr, &data, &enc);
+	if (rv)
+	{
+		free(enc.ciphertext.data);
+		goto out;
+	}
 
 	out->data = enc.ciphertext.data;
 	out->length = enc.ciphertext.length;
@@ -184,6 +189,11 @@ static krb5_error_code kerb_do_decrypt(krb5_context ctx, const KERB_RPC_ENCRYPTI
 	}
 
 	rv = krb5_c_decrypt(ctx, keyblock, kusage, nullptr, &enc, &data);
+	if (rv)
+	{
+		free(data.data);
+		goto out;
+	}
 
 	plain->Asn1Buffer = (BYTE*)data.data;
 	plain->Asn1BufferHints.count = data.length;
