@@ -344,6 +344,49 @@ extern "C"
 #define GetComputerNameEx GetComputerNameExA
 #endif
 
+/** @brief mirrors the real Win32 ACLineStatus values */
+#define AC_LINE_OFFLINE 0x00
+#define AC_LINE_ONLINE 0x01
+#define AC_LINE_BACKUP_POWER 0x02
+#define AC_LINE_UNKNOWN 0xFF
+
+/** @brief mirrors the real Win32 BatteryFlag bit values (combinable, except UNKNOWN/NO_BATTERY) */
+#define BATTERY_FLAG_HIGH 0x01
+#define BATTERY_FLAG_LOW 0x02
+#define BATTERY_FLAG_CRITICAL 0x04
+#define BATTERY_FLAG_CHARGING 0x08
+#define BATTERY_FLAG_NO_BATTERY 0x80
+#define BATTERY_FLAG_UNKNOWN 0xFF
+
+#define BATTERY_PERCENTAGE_UNKNOWN 0xFF
+#define BATTERY_LIFE_UNKNOWN 0xFFFFFFFF
+
+	/** @brief mirrors the real Win32 SYSTEM_POWER_STATUS struct.
+	 *  @since version 3.32.0
+	 */
+	typedef struct
+	{
+		BYTE ACLineStatus;
+		BYTE BatteryFlag;
+		BYTE BatteryLifePercent;
+		BYTE SystemStatusFlag;
+		DWORD BatteryLifeTime;
+		DWORD BatteryFullLifeTime;
+	} SYSTEM_POWER_STATUS, *LPSYSTEM_POWER_STATUS;
+
+	/** @brief queries the local machine's AC/battery power state. Supported on Linux, Android,
+	 *  macOS and FreeBSD; on other non-Windows platforms this always reports "no battery,
+	 *  unknown state" rather than failing, matching the real API's behavior on desktop systems
+	 *  with no battery present.
+	 *
+	 *  @param lpSystemPowerStatus receives the current power status
+	 *  @return TRUE on success, FALSE (with GetLastError() set) if the status could not be
+	 *  determined at all
+	 *  @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API BOOL GetSystemPowerStatus(LPSYSTEM_POWER_STATUS lpSystemPowerStatus);
+
 #endif
 
 #if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
