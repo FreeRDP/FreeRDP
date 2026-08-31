@@ -167,7 +167,7 @@ BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poff
 			{
 				DWORD used = bi->biClrUsed;
 				if (used == 0)
-					used = (1u << bi->biBitCount) / 8;
+					used = 1u << bi->biBitCount;
 				offset += sizeof(RGBQUAD) * used;
 			}
 			if (bi->biSizeImage == 0)
@@ -192,7 +192,9 @@ BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poff
 			}
 			break;
 		case BI_BITFIELDS:
-			offset += sizeof(DWORD) * 3; // 3 DWORD color masks
+			/* BITMAPV4HEADER and BITMAPV5HEADER include the color masks in biSize. */
+			if (bi->biSize == sizeof(WINPR_BITMAP_INFO_HEADER))
+				offset += sizeof(DWORD) * 3; // 3 DWORD color masks
 			break;
 		default:
 			WLog_ERR(TAG, "unsupported biCompression %" PRIu32, bi->biCompression);
