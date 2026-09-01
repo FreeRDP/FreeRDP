@@ -21,7 +21,7 @@ function(warn_unmaintained_print)
     string(
       APPEND
       MESSAGE
-      "\n[unmaintained] If problems occur please check https://github.com/FreeRDP/FreeRDP/issues for known issues, but be prepared to fix them on your own!"
+      "\n[unmaintained] If problems occur please check ${PROJECT_ISSUE_URL} for known issues, but be prepared to fix them on your own!"
     )
     string(APPEND MESSAGE
            "\n[unmaintained] Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org"

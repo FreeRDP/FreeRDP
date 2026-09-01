@@ -60,8 +60,7 @@
 #cmakedefine WITH_MEDIACODEC
 #cmakedefine WITH_GFX_AV1
 
-#cmakedefine WITH_VAAPI
-#cmakedefine WITH_VIDEOTOOLBOX
+#cmakedefine WITH_FFMPEG_HWACCEL
 
 #cmakedefine WITH_CHANNELS
 #cmakedefine WITH_CLIENT_CHANNELS
