@@ -953,6 +953,57 @@ out_fail:
 #endif
 
 WINPR_ATTR_NODISCARD
+static BOOL shadow_server_read_pem(rdpShadowServer* server)
+{
+	BOOL rc = FALSE;
+	WINPR_ASSERT(server);
+
+	rdpSettings* settings = server->settings;
+	WINPR_ASSERT(settings);
+
+	{
+		rdpPrivateKey* key = freerdp_key_new_from_file_enc(server->PrivateKeyFile, nullptr);
+		if (!key)
+		{
+			WLog_ERR(TAG, "Private Key PEM %s invalid, aborting", server->PrivateKeyFile);
+			return FALSE;
+		}
+
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+		{
+			WLog_ERR(TAG, "Private Key PEM %s valid, but some properties failed to be extracted",
+			         server->PrivateKeyFile);
+			return FALSE;
+		}
+	}
+	{
+		rdpCertificate* cert = freerdp_certificate_new_from_file(server->CertificateFile);
+		if (!cert)
+		{
+			WLog_ERR(TAG, "Certificate PEM %s invalid, aborting", server->CertificateFile);
+			return FALSE;
+		}
+
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+			goto out_fail;
+
+		if (!freerdp_certificate_is_rdp_security_compatible(cert))
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+				goto out_fail;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				goto out_fail;
+		}
+	}
+	rc = TRUE;
+
+out_fail:
+	WLog_ERR(TAG, "Certificate PEM %s valid, but some properties failed to be extracted",
+	         server->CertificateFile);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 {
 	char* filepath = nullptr;
@@ -990,40 +1041,17 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	{
 #if defined(WITH_WINPR_TOOLS)
 		if (!shadow_server_create_certificate(server, filepath))
+#else
+		const char* cexist = winpr_PathFileExists(server->CertificateFile) ? "exists" : "not found";
+		const char* pexist = winpr_PathFileExists(server->PrivateKeyFile) ? "exists" : "not found";
+		WLog_ERR(TAG, "PEM files do not exist: cert: %s (%s), key: %s (%s)",
+		         server->CertificateFile, cexist, server->PrivateKeyFile, pexist);
 #endif
 			goto out_fail;
 	}
 
-	{
-		rdpSettings* settings = server->settings;
-		WINPR_ASSERT(settings);
+	ret = shadow_server_read_pem(server);
 
-		{
-			rdpPrivateKey* key = freerdp_key_new_from_file_enc(server->PrivateKeyFile, nullptr);
-			if (!key)
-				goto out_fail;
-			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
-				goto out_fail;
-		}
-		{
-			rdpCertificate* cert = freerdp_certificate_new_from_file(server->CertificateFile);
-			if (!cert)
-				goto out_fail;
-
-			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
-				goto out_fail;
-
-			if (!freerdp_certificate_is_rdp_security_compatible(cert))
-			{
-				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
-					goto out_fail;
-				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
-					goto out_fail;
-			}
-		}
-	}
-
-	ret = TRUE;
 out_fail:
 	free(filepath);
 	return ret;
