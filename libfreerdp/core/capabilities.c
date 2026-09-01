@@ -1420,7 +1420,7 @@ static BOOL rdp_apply_input_capability_set(rdpSettings* settings, const rdpSetti
 		if (settings->HasRelativeMouseEvent)
 			settings->HasRelativeMouseEvent = src->HasRelativeMouseEvent;
 		if (freerdp_settings_get_bool(settings, FreeRDP_HasQoeEvent))
-			settings->HasQoeEvent = freerdp_settings_get_bool(settings, FreeRDP_HasQoeEvent);
+			settings->HasQoeEvent = freerdp_settings_get_bool(src, FreeRDP_HasQoeEvent);
 	}
 	return TRUE;
 }
