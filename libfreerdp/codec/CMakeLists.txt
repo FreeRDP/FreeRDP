@@ -161,6 +161,11 @@ if(WITH_SWSCALE)
   endif(WITH_SWSCALE_LOADING)
 endif()
 
+if(WITH_VAAPI OR WITH_VAAPI_H264_ENCODING)
+  list(APPEND CODEC_LIBS va)
+  freerdp_pc_add_requires_private("va")
+endif()
+
 if(WITH_DSP_EXPERIMENTAL)
   include(WarnExperimental)
   warn_experimental("Experimental encoders/decoders for audio channels" "-DWITH_DSP_EXPERIMENTAL=OFF")
