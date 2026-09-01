@@ -47,6 +47,9 @@ extern "C"
 	WINPR_ATTR_MALLOC(pointer_cache_free, 1)
 	FREERDP_LOCAL rdpPointerCache* pointer_cache_new(rdpContext* context);
 
+	WINPR_ATTR_NODISCARD
+	FREERDP_LOCAL BOOL pointer_cache_resize(rdpPointerCache* pointerCache);
+
 	FREERDP_LOCAL void free_pointer_color_update(rdpContext* context,
 	                                             POINTER_COLOR_UPDATE* pointer);
 

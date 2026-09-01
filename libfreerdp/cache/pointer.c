@@ -341,6 +341,60 @@ void pointer_cache_register_callbacks(rdpUpdate* update)
 	}
 }
 
+BOOL pointer_cache_resize(rdpPointerCache* pointerCache)
+{
+	WINPR_ASSERT(pointerCache);
+
+	rdpContext* context = pointerCache->context;
+	WINPR_ASSERT(context);
+
+	rdpSettings* settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	/* seen invalid pointer cache requests by mstsc (off by 1) so we ensure the cache entry size
+	 * matches */
+	const UINT32 size = freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize);
+	const UINT32 colorSize = freerdp_settings_get_uint32(settings, FreeRDP_ColorPointerCacheSize);
+
+	const UINT32 cacheSize = MAX(size, colorSize) + 1;
+	if (cacheSize > SIZE_MAX / sizeof(rdpPointer*))
+		return FALSE;
+
+	WLog_DBG(TAG,
+	         "setting cacheSize=%" PRIu32 "[ColorPointerCache=%" PRIu32 ", PointerCache=%" PRIu32
+	         "]",
+	         cacheSize, colorSize, size);
+
+	/* Reset pointer to default before deleting the cache.
+	 */
+	if (pointerCache->context && pointerCache->context->graphics)
+	{
+		rdpPointer* pointer = pointerCache->context->graphics->Pointer_Prototype;
+		if (pointer && pointer->SetDefault)
+			(void)pointer->SetDefault(pointerCache->context);
+	}
+
+	for (size_t i = cacheSize; i < pointerCache->cacheSize; i++)
+	{
+		rdpPointer* pointer = pointerCache->entries[i];
+		pointer_free(pointerCache->context, pointer);
+	}
+
+	void* tmp = realloc(pointerCache->entries, cacheSize * sizeof(rdpPointer*));
+	if (!tmp)
+		return FALSE;
+
+	pointerCache->entries = (rdpPointer**)tmp;
+	if (cacheSize > pointerCache->cacheSize)
+	{
+		const size_t rsize = (cacheSize - pointerCache->cacheSize) * sizeof(rdpPointer*);
+		memset(&pointerCache->entries[pointerCache->cacheSize], 0, rsize);
+	}
+	pointerCache->cacheSize = cacheSize;
+
+	return TRUE;
+}
+
 rdpPointerCache* pointer_cache_new(rdpContext* context)
 {
 	WINPR_ASSERT(context);
@@ -355,19 +409,7 @@ rdpPointerCache* pointer_cache_new(rdpContext* context)
 
 	pointer_cache->context = context;
 
-	/* seen invalid pointer cache requests by mstsc (off by 1) so we ensure the cache entry size
-	 * matches */
-	const UINT32 size = freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize);
-	const UINT32 colorSize = freerdp_settings_get_uint32(settings, FreeRDP_ColorPointerCacheSize);
-	pointer_cache->cacheSize = MAX(size, colorSize) + 1;
-
-	WLog_DBG(TAG,
-	         "setting cacheSize=%" PRIu32 "[ColorPointerCache=%" PRIu32 ", PointerCache=%" PRIu32
-	         "]",
-	         pointer_cache->cacheSize, colorSize, size);
-	pointer_cache->entries = (rdpPointer**)calloc(pointer_cache->cacheSize, sizeof(rdpPointer*));
-
-	if (!pointer_cache->entries)
+	if (!pointer_cache_resize(pointer_cache))
 	{
 		free(pointer_cache);
 		return nullptr;
