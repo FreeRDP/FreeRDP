@@ -54,6 +54,7 @@ BuildRequires: libpng-devel
 BuildRequires: libwebp-devel
 BuildRequires: fuse3-devel
 BuildRequires: pam-devel
+BuildRequires: libva-devel
 BuildRequires: libicu-devel
 BuildRequires: libv4l-devel
 BuildRequires: libcbor-devel

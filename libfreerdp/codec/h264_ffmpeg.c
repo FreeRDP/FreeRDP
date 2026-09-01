@@ -39,7 +39,7 @@
 #endif
 #endif
 
-#ifdef WITH_VAAPI
+#if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING)
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 9, 0)
 #include <libavutil/hwcontext.h>
 #else
@@ -47,6 +47,7 @@
     but your version of libavutil is too old !Disabling.
 #undef WITH_VAAPI
 #endif
+#include <libavutil/hwcontext_vaapi.h>
 #endif
 
 /* Fallback support for older libavcodec versions */
@@ -336,6 +337,7 @@ static inline char* error_string(char* errbuf, size_t errbuf_size, int errnum)
 #endif
 
 #if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING)
+WINPR_ATTR_NODISCARD
 static const char* get_vaapi_device(void)
 {
 	static char device[MAX_PATH] = WINPR_C_ARRAY_INIT;
@@ -932,6 +934,7 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 		av_frame_free(&sys->hwVideoFrame);
 #else
 		av_free(sys->hwVideoFrame);
+		sys->hwVideoFrame = nullptr;
 #endif
 	}
 
@@ -975,7 +978,30 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 	h264->pSystemData = nullptr;
 }
 
+#if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING)
+WINPR_ATTR_NODISCARD
+static const char* vaapi_vendor(AVBufferRef* hwctx)
+{
+	const char* vendor = "UNKNOWN";
+	if (!hwctx)
+		return vendor;
+
+	const AVHWDeviceContext* devctx = (const AVHWDeviceContext*)hwctx->data;
+	if (!devctx)
+		return vendor;
+
+	const AVVAAPIDeviceContext* ctx = devctx->hwctx;
+	if (!ctx)
+		return vendor;
+
+	const char* vavendor = vaQueryVendorString(ctx->display);
+	if (!vavendor)
+		return vendor;
+	return vavendor;
+}
+#endif
 #if defined(WITH_VAAPI) || defined(WITH_VIDEOTOOLBOX)
+WINPR_ATTR_NODISCARD
 static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
                                                 const enum AVPixelFormat* fmts)
 {
@@ -1089,14 +1115,16 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 			if (ret < 0)
 			{
-				WLog_Print(h264->log, WLOG_ERROR,
-				           "Could not initialize hardware decoder, falling back to software: %s",
-				           av_err2str(ret));
+				WLog_Print(
+				    h264->log, WLOG_ERROR,
+				    "Could not initialize hardware decoder for %s, falling back to software: %s",
+				    get_vaapi_device(), av_err2str(ret));
 				sys->hwctx = nullptr;
 				goto fail_hwdevice_create;
 			}
 		}
-		WLog_Print(h264->log, WLOG_INFO, "Using VAAPI for accelerated H264 decoding");
+		WLog_Print(h264->log, WLOG_INFO, "Using VAAPI [%s|%s] for accelerated H264 decoding",
+		           get_vaapi_device(), vaapi_vendor(sys->hwctx));
 
 		sys->codecDecoderContext->get_format = libavcodec_get_format;
 		sys->hw_pix_fmt = AV_PIX_FMT_VAAPI;
@@ -1161,13 +1189,15 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			else if (av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, get_vaapi_device(),
 			                                nullptr, 0) < 0)
 			{
-				WLog_Print(h264->log, WLOG_ERROR, "av_hwdevice_ctx_create failed");
+				WLog_Print(h264->log, WLOG_ERROR, "av_hwdevice_ctx_create(%s) failed",
+				           get_vaapi_device());
 				sys->codecEncoder = nullptr;
 				sys->hwctx = nullptr;
 			}
 			else
 			{
-				WLog_Print(h264->log, WLOG_INFO, "Using VAAPI for accelerated H264 encoding");
+				WLog_Print(h264->log, WLOG_INFO, "Using VAAPI[%s|%s] for accelerated H264 encoding",
+				           get_vaapi_device(), vaapi_vendor(sys->hwctx));
 			}
 		}
 #endif
