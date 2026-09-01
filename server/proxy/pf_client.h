@@ -32,8 +32,15 @@
 
 struct p_client_context
 {
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
+	union
+	{
+		rdpContext context;
+		rdpClientContext cctx;
+	};
+#else
 	rdpClientContext cctx;
-
+#endif
 	proxyData* pdata;
 
 	/*

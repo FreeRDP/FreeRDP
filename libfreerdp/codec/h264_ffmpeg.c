@@ -47,7 +47,9 @@
     but your version of libavutil is too old !Disabling.
 #undef WITH_VAAPI
 #endif
+#if defined(HAVE_LIBVA)
 #include <libavutil/hwcontext_vaapi.h>
+#endif
 #endif
 
 /* Fallback support for older libavcodec versions */
@@ -986,6 +988,7 @@ static const char* vaapi_vendor(AVBufferRef* hwctx)
 	if (!hwctx)
 		return vendor;
 
+#if defined(HAVE_LIBVA)
 	const AVHWDeviceContext* devctx = (const AVHWDeviceContext*)hwctx->data;
 	if (!devctx)
 		return vendor;
@@ -995,9 +998,12 @@ static const char* vaapi_vendor(AVBufferRef* hwctx)
 		return vendor;
 
 	const char* vavendor = vaQueryVendorString(ctx->display);
-	if (!vavendor)
-		return vendor;
-	return vavendor;
+	if (vavendor)
+		return vavendor;
+#else
+	vendor = "";
+#endif
+	return vendor;
 }
 #endif
 #if defined(WITH_VAAPI) || defined(WITH_VIDEOTOOLBOX)
