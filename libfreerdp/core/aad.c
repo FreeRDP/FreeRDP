@@ -33,8 +33,106 @@
 
 #include "transport.h"
 #include "rdp.h"
+#include "settings.h"
 
 #include "aad.h"
+
+#include <freerdp/log.h>
+#define TAG FREERDP_TAG("core.aad")
+
+struct freerdp_aad_cloud
+{
+	const char* name;
+	const char* gateway_suffix;
+	const char* authority;
+	const char* avd_scope;
+	const char* avd_redirect_format;
+};
+
+static const FreeRDP_AadCloud aad_clouds[] = {
+	{ "commercial", nullptr, "login.microsoftonline.com",
+	  "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default%20openid%20profile%20offline_access",
+	  "https%%3A%%2F%%2F%s%%2F%s%%2Foauth2%%2Fnativeclient" },
+	{ "usgov", ".wvd.azure.us", "login.microsoftonline.us",
+	  "https%3A%2F%2Fwww.wvd.azure.us%2F.default%20openid%20profile%20offline_access",
+	  /* the registered redirect of the AVD public client (#11032), the .us form is rejected
+	   * with AADSTS50011 */
+	  "https%%3A%%2F%%2Flogin.microsoftonline.com%%2Fcommon%%2Foauth2%%2Fnativeclient" }
+};
+
+#define AAD_CLOUD_GETTER(_name, _field)                                            \
+	const char* freerdp_utils_aad_cloud_get_##_name(const FreeRDP_AadCloud* cloud) \
+	{                                                                              \
+		return cloud ? cloud->_field : nullptr;                                    \
+	}
+
+AAD_CLOUD_GETTER(name, name)
+AAD_CLOUD_GETTER(gateway_suffix, gateway_suffix)
+AAD_CLOUD_GETTER(authority, authority)
+AAD_CLOUD_GETTER(avd_scope, avd_scope)
+AAD_CLOUD_GETTER(avd_redirect_format, avd_redirect_format)
+
+const FreeRDP_AadCloud* freerdp_utils_aad_cloud_by_name(const char* name)
+{
+	if (!name)
+		return nullptr;
+
+	for (size_t x = 0; x < ARRAYSIZE(aad_clouds); x++)
+	{
+		if (_stricmp(name, aad_clouds[x].name) == 0)
+			return &aad_clouds[x];
+	}
+	return nullptr;
+}
+
+const FreeRDP_AadCloud* freerdp_utils_aad_cloud_for_gateway(const char* hostname)
+{
+	if (!hostname)
+		return nullptr;
+
+	size_t hostlen = strlen(hostname);
+	if ((hostlen > 0) && (hostname[hostlen - 1] == '.'))
+		hostlen--;
+	for (size_t x = 0; x < ARRAYSIZE(aad_clouds); x++)
+	{
+		const char* suffix = aad_clouds[x].gateway_suffix;
+		if (!suffix)
+			continue;
+
+		const size_t suffixlen = strlen(suffix);
+		if ((hostlen >= suffixlen) &&
+		    (_strnicmp(&hostname[hostlen - suffixlen], suffix, suffixlen) == 0))
+			return &aad_clouds[x];
+	}
+	return nullptr;
+}
+
+BOOL freerdp_utils_aad_apply_cloud(rdpSettings* settings, const FreeRDP_AadCloud* cloud)
+{
+	if (!settings || !cloud)
+		return FALSE;
+
+	char* authority = _strdup(cloud->authority);
+	char* scope = _strdup(cloud->avd_scope);
+	char* redirect = _strdup(cloud->avd_redirect_format);
+	if (!authority || !scope || !redirect)
+	{
+		free(authority);
+		free(scope);
+		free(redirect);
+		return FALSE;
+	}
+
+	BOOL rc = freerdp_settings_set_string_(settings, FreeRDP_GatewayAzureActiveDirectory, authority,
+	                                       strlen(authority));
+	WINPR_ASSERT(rc);
+	rc = freerdp_settings_set_string_(settings, FreeRDP_GatewayAvdScope, scope, strlen(scope));
+	WINPR_ASSERT(rc);
+	rc = freerdp_settings_set_string_(settings, FreeRDP_GatewayAvdAccessAadFormat, redirect,
+	                                  strlen(redirect));
+	WINPR_ASSERT(rc);
+	return TRUE;
+}
 
 struct rdp_aad
 {
