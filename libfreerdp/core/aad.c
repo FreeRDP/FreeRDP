@@ -915,6 +915,26 @@ BOOL aad_fetch_wellknown(wLog* log, rdpContext* context)
 	return rdp->wellknown != nullptr;
 }
 
+BOOL freerdp_utils_aad_set_wellknown(rdpContext* context, const char* json)
+{
+	WINPR_ASSERT(context);
+
+	rdpRdp* rdp = context->rdp;
+	WINPR_ASSERT(rdp);
+
+	WINPR_JSON* parsed = nullptr;
+	if (json)
+	{
+		parsed = WINPR_JSON_Parse(json);
+		if (!parsed)
+			return FALSE;
+	}
+
+	WINPR_JSON_Delete(rdp->wellknown);
+	rdp->wellknown = parsed;
+	return TRUE;
+}
+
 const char* freerdp_utils_aad_get_wellknown_string(rdpContext* context, AAD_WELLKNOWN_VALUES which)
 {
 	return freerdp_utils_aad_get_wellknown_custom_string(
