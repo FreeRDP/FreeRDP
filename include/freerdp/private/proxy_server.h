@@ -5,6 +5,8 @@
  * Copyright 2019 Mati Shabtay <matishabtay@gmail.com>
  * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
  * Copyright 2019 Idan Freiberg <speidy@gmail.com>
+ * Copyright 2021 Armin Novak <anovak@thincast.com>
+ * Copyright 2021 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +21,27 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SERVER_PROXY_PFCLIENT_H
-#define FREERDP_SERVER_PROXY_PFCLIENT_H
+/* WARNING: API unstable region, pin your programs to a specific version, the
+ * structs defined herein might change between minor versions!
+ */
+#pragma once
 
-#include <freerdp/freerdp.h>
+#include <winpr/collections.h>
+#include <freerdp/listener.h>
+
+#include <freerdp/server/proxy/proxy_config.h>
 #include <freerdp/server/proxy/proxy_context.h>
-#include <winpr/wtypes.h>
 
-#include <freerdp/private/proxy_client.h>
+struct p_server_context
+{
+	rdpContext context;
 
-int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
-WINPR_ATTR_NODISCARD DWORD WINAPI pf_client_start(LPVOID arg);
+	proxyData* pdata;
 
-#endif /* FREERDP_SERVER_PROXY_PFCLIENT_H */
+	HANDLE vcm;
+	HANDLE dynvcReady;
+
+	wHashTable* interceptContextMap;
+	wHashTable* channelsByFrontId;
+	wHashTable* channelsByBackId;
+};

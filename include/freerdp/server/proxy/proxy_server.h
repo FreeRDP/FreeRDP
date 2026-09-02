@@ -46,7 +46,6 @@ extern "C"
 	 * @return A new proxy server instance or nullptr on failure.
 	 */
 	WINPR_ATTR_MALLOC(pf_server_free, 1)
-	WINPR_ATTR_NODISCARD
 	FREERDP_API proxyServer* pf_server_new(const proxyConfig* config);
 
 	/**

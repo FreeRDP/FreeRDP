@@ -1,3 +1,56 @@
+# 2026-09-02 Version 3.31.1
+
+After the last huge CVE and security fix releases finally a simple papercut fix release.
+
+## Most notable user visible changes:
+* xfreerdp image clipboard now better handles conversion of host images to bitmap
+  (CF_DIB the default windows exchange format)
+* improved keyboard mapping for sdl-freerdp (some more exotic keys are properly mapped now)
+* xfreerdp RAILS: better transparency support with windows 11
+* Fix C23 macro definitions for GCC
+
+## What's Changed
+* create alpha capable GFX surfaces for XRGB_8888 (#13280)
+* Cleanups (#13282)
+* [client,sdl3] fix flickering on screens with DPI != 1.0 (#13278)
+* [debug,logs] fix warnings and errors WITH_DEBUG_ALL (#13283)
+* Fix the settings of FreeRDP_UnicodeInput bug (#13287)
+* only use AV_PIX_FMT_D3D12 in ffmpeg >=7 (#13286)
+* [winpr,handles] allow to Close a HANDLE listed in PROC_THREAD_ATTRIBUTE_HANDLE_LIST (#13284)
+* [cmake] proper Threads::Threads detection (#13288)
+* X11 image clip (#13289)
+* [client, mac] fix: build error undeclared 'nullptr' in Keyboard.m (#13290)
+* [codec,h264] overallocate YUV buffer (#13291)
+* build(test): only build JSON-dependent test when JSON is available (#13293)
+* [codec,h264] fix missing version guards (#13294)
+* [ci,qa] enable all debug options for static build (#13295)
+* feat: [client, mac, sdl3] support jp YEN/RO/EISUU/KANA keys (#13299)
+* [winpr,json] read JSON files in binary mode (#13298)
+* [client,sdl] map media pause scancodes (#13297)
+* [core,test] do not link winpr-tools when WITH_WINPR_TOOLS=OFF (#13303)
+* [channels,rdpear] return krb5 output buffer only after the call succeeds (#13307)
+* Media foundation fixes (#13308)
+* Winpr tools optional (#13309)
+* [c23] fix gcc compatibility issues (#13310)
+* [winpr,clipboard] honor DIB header size in BMP offsets (#13304)
+* [core,capabilities] apply HasQoeEvent from src, not settings (#13313)
+* [server,shadow] better logging for cert/key related problems (#13314)
+* [codec,h264] log vaapi driver vendor (#13315)
+* [server,shadow] better logging for cert/key related problems (#13314)
+* [codec,h264] log vaapi driver vendor (#13315)
+* Proxy compat (#13319)
+
+## New Contributors
+* @fundawang made their first contribution in (#13286)
+* @cawcaw2023 made their first contribution in (#13290)
+* @MeGaurav4 made their first contribution in (#13293)
+* @SebastienGllmt made their first contribution in (#13298)
+* @Lishkinfeld made their first contribution in (#13303)
+* @4sh0u0 made their first contribution in (#13313)
+
+For a complete and detailed change log since the last release run:
+git log 3.31.1...3.31.0
+
 # 2026-08-26 Version 3.31.0
 
 Huge bugfix and security release.
