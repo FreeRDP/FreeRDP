@@ -114,6 +114,14 @@ extern "C"
 		ALIGN64 INT32 last_y;
 	} FreeRDP_PenDevice;
 
+	/** @brief The state of the OAuth transaction of a client context
+	 *
+	 *  Created by an authorization request built with \ref freerdp_client_get_aad_url and
+	 *  released by \ref freerdp_client_aad_reset. The layout is private to the library.
+	 *  @since version 3.32.0
+	 */
+	typedef struct client_aad_oauth rdpClientAadOAuth;
+
 	struct rdp_client_context
 	{
 		rdpContext context;
@@ -145,7 +153,11 @@ extern "C"
 
 		ALIGN64 MIBClientWrapper* mibClientWrapper; /**< (offset 10) @since version 3.16.0 */
 		ALIGN64 BOOL pressed_buttons[5];            /**< (offset 11) @since version 3.17.0 */
-		UINT64 reserved[129 - 16];                  /**< (offset 16) */
+		/** Opaque state of the OAuth transaction started by \ref freerdp_client_get_aad_url,
+		 *  released by \ref freerdp_client_aad_reset.
+		 *  (offset 16) @since version 3.32.0 */
+		ALIGN64 rdpClientAadOAuth* aad_oauth;
+		UINT64 reserved[129 - 17]; /**< (offset 17) */
 	};
 
 	/* Common client functions */
@@ -367,19 +379,52 @@ extern "C"
 #endif
 
 	/** @brief type of AAD request
-	 * @since version 3.16.0
+	 *
+	 *  Each type names the arguments \ref freerdp_client_get_aad_url expects after \b type.
+	 *  Every one of them is a \b const \b char* and none of them may be \b nullptr.
+	 *  @since version 3.16.0
 	 */
 	typedef enum
 	{
+		/** Authorization request for an AAD scope, arguments: \c scope */
 		FREERDP_CLIENT_AAD_AUTH_REQUEST,
+		/** Token request redeeming a \ref FREERDP_CLIENT_AAD_AUTH_REQUEST,
+		 *  arguments: \c scope, \c code, \c req_cnf */
 		FREERDP_CLIENT_AAD_TOKEN_REQUEST,
+		/** Authorization request for Azure Virtual Desktop, no arguments */
 		FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST,
+		/** Token request redeeming a \ref FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST,
+		 *  arguments: \c code */
 		FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST,
 	} freerdp_client_aad_type;
 
 	/** @brief helper function to construct a connection URL for AAD authentication
 	 *
+	 *  \ref FREERDP_CLIENT_AAD_AUTH_REQUEST and \ref FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST
+	 *  start a new OAuth transaction on \b cctx: a fresh \c state value and a PKCE code
+	 *  verifier are generated, \c state, \c code_challenge and \c code_challenge_method are
+	 *  appended to the authorization URL and the redirect URI the response has to arrive at is
+	 *  remembered. The matching \ref FREERDP_CLIENT_AAD_TOKEN_REQUEST or
+	 *  \ref FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST appends the \c code_verifier of that
+	 *  transaction and releases it once the request was built, so a verifier is sent with
+	 *  exactly one token request and a request that could not be built can be retried. A
+	 *  token request built without a preceding authorization request carries no
+	 *  \c code_verifier and logs a warning, so callers that construct the authorization URL
+	 *  themselves keep working unchanged.
+	 *
+	 *  Only one OAuth transaction can be in flight per client context: a new authorization
+	 *  request discards the state of the previous one, and no locking is done, so a context
+	 *  must not run transactions from multiple threads at the same time.
+	 *
+	 *  The \c code argument of the token requests is the percent \b decoded authorization
+	 *  code, as \ref freerdp_client_aad_parse_callback returns it: it is percent encoded again
+	 *  when it goes into the request body. Before version 3.32.0 it was copied verbatim, so
+	 *  a caller that keeps passing the value as it appears in the callback query now sends it
+	 *  encoded twice.
+	 *
 	 *  @param cctx The client context to use
+	 *  @param type The kind of request to build
+	 *  @param ... The arguments of \b type, see \ref freerdp_client_aad_type
 	 *  @return An allocated string that can be used to connect
 	 *  @since version 3.16.0
 	 */
@@ -387,6 +432,19 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API char* freerdp_client_get_aad_url(rdpClientContext* cctx,
 	                                             freerdp_client_aad_type type, ...);
+
+	/** @brief Discard the OAuth transaction of a client context
+	 *
+	 *  Releases the \c state value, the PKCE code verifier and the expected redirect URI the
+	 *  last authorization request generated. A token request built afterwards carries no
+	 *  \c code_verifier. Called automatically when a new authorization request is built,
+	 *  when the matching token request has been built and when the client context is
+	 *  freed.
+	 *
+	 *  @param cctx The client context to reset, may be \b nullptr
+	 *  @since version 3.32.0
+	 */
+	FREERDP_API void freerdp_client_aad_reset(rdpClientContext* cctx);
 
 #ifdef __cplusplus
 }

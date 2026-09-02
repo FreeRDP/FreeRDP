@@ -70,6 +70,9 @@
 #include <freerdp/channels/rdpewa.h>
 
 #ifdef WITH_AAD
+#include <winpr/custom-crypto.h>
+
+#include <freerdp/crypto/crypto.h>
 #include <freerdp/utils/http.h>
 #include <freerdp/utils/aad.h>
 #endif
@@ -80,6 +83,51 @@
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
+
+/** @brief State of one interactive OAuth transaction
+ *
+ *  Created by an authorization request built with \ref freerdp_client_get_aad_url and kept in
+ *  \b rdpClientContext::aad_oauth until it is replaced by the next authorization request or
+ *  released by \ref freerdp_client_aad_reset. Only one transaction exists per client context
+ *  and access to it is not synchronized.
+ */
+typedef struct client_aad_oauth
+{
+	char* state;        /**< the 'state' value sent with the authorization request */
+	char* verifier;     /**< the PKCE code verifier sent with the token request */
+	char* redirect_uri; /**< percent decoded URI the authorization response must arrive at */
+} client_aad_oauth;
+
+/** @brief Release a string that held credential material
+ *
+ *  @param str The string to scrub and release, may be \b nullptr
+ */
+static void client_free_secret(char* str)
+{
+	if (str)
+		SecureZeroMemory(str, strlen(str));
+	free(str);
+}
+
+static void client_aad_oauth_free(client_aad_oauth* oauth)
+{
+	if (!oauth)
+		return;
+
+	free(oauth->state);
+	client_free_secret(oauth->verifier);
+	free(oauth->redirect_uri);
+	free(oauth);
+}
+
+void freerdp_client_aad_reset(rdpClientContext* cctx)
+{
+	if (!cctx)
+		return;
+
+	client_aad_oauth_free(cctx->aad_oauth);
+	cctx->aad_oauth = nullptr;
+}
 
 static void set_default_callbacks(freerdp* instance)
 {
@@ -137,6 +185,8 @@ static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 	pEntryPoints = instance->pClientEntryPoints;
 	WINPR_ASSERT(pEntryPoints);
 	IFCALL(pEntryPoints->ClientFree, instance, context);
+
+	freerdp_client_aad_reset((rdpClientContext*)context);
 }
 
 /* Common API */
@@ -1155,7 +1205,7 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	rc = client_common_get_access_token(instance, token_request, token);
 
 cleanup:
-	free(token_request);
+	client_free_secret(token_request);
 	free(url);
 	return rc && (*token != nullptr);
 }
@@ -1200,7 +1250,7 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	rc = client_common_get_access_token(instance, token_request, token);
 
 cleanup:
-	free(token_request);
+	client_free_secret(token_request);
 	free(url);
 	return rc && (*token != nullptr);
 }
@@ -2660,6 +2710,158 @@ static char* get_redirect_uri(const rdpSettings* settings)
 	return redirect_uri;
 }
 
+/** The number of random bytes behind the 'state' value and the PKCE code verifier.
+ *
+ *  32 bytes base64url encode to 43 characters, the shortest code verifier RFC 7636 allows.
+ */
+#define CLIENT_AAD_OAUTH_RANDOM_LEN 32
+
+/** @brief Fill a buffer with unpredictable bytes
+ *
+ *  A build without a crypto backend has winpr_RAND() succeed without touching the buffer, which
+ *  would make the 'state' value and the code verifier the same for every session. Reject a
+ *  result that is all zero: a real draw of this size is that only with probability 2^-256.
+ *  \b buffer is cleared first, so the check does not pass on what a previous draw left in a
+ *  buffer that is used more than once.
+ *
+ *  @param buffer The buffer to fill
+ *  @param len The size of \b buffer in bytes
+ *  @return \b TRUE if \b buffer holds \b len random bytes
+ */
+static BOOL client_aad_oauth_random(BYTE* buffer, size_t len)
+{
+	memset(buffer, 0, len);
+
+	if (winpr_RAND(buffer, len) < 0)
+		return FALSE;
+
+	BYTE acc = 0;
+	for (size_t x = 0; x < len; x++)
+		acc |= buffer[x];
+
+	if (acc == 0)
+	{
+		WLog_ERR(TAG, "the random number generator returned zeros, no crypto backend?");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/** @brief Generate the 'state' value and the PKCE code verifier of a transaction
+ *
+ *  @param oauth The transaction to fill in
+ *  @param pchallenge Receives the base64url encoded SHA-256 of the code verifier
+ *  @return \b TRUE on success
+ */
+static BOOL client_aad_oauth_generate(client_aad_oauth* oauth, char** pchallenge)
+{
+	BYTE random[CLIENT_AAD_OAUTH_RANDOM_LEN] = WINPR_C_ARRAY_INIT;
+	BYTE hash[WINPR_SHA256_DIGEST_LENGTH] = WINPR_C_ARRAY_INIT;
+
+	if (!client_aad_oauth_random(random, sizeof(random)))
+		return FALSE;
+	oauth->state = crypto_base64url_encode(random, sizeof(random));
+
+	if (!client_aad_oauth_random(random, sizeof(random)))
+		return FALSE;
+	oauth->verifier = crypto_base64url_encode(random, sizeof(random));
+
+	if (!oauth->state || !oauth->verifier)
+		return FALSE;
+
+	if (!winpr_Digest(WINPR_MD_SHA256, oauth->verifier, strlen(oauth->verifier), hash,
+	                  sizeof(hash)))
+		return FALSE;
+
+	*pchallenge = crypto_base64url_encode(hash, sizeof(hash));
+	return *pchallenge != nullptr;
+}
+
+/** @brief Start a new OAuth transaction on a client context
+ *
+ *  Replaces any transaction still attached to \b cctx.
+ *
+ *  @param cctx The client context to attach the transaction to
+ *  @param redirect_uri The percent encoded redirect URI of the authorization request
+ *  @return The query parameters to append to the authorization request or \b nullptr
+ */
+WINPR_ATTR_MALLOC(free, 1)
+static char* client_aad_oauth_start(rdpClientContext* cctx, const char* redirect_uri)
+{
+	char* challenge = nullptr;
+	char* params = nullptr;
+	size_t paramslen = 0;
+
+	freerdp_client_aad_reset(cctx);
+
+	client_aad_oauth* oauth = calloc(1, sizeof(client_aad_oauth));
+	if (!oauth)
+		return nullptr;
+
+	oauth->redirect_uri = winpr_str_url_decode(redirect_uri, strlen(redirect_uri));
+	if (!oauth->redirect_uri)
+		goto fail;
+
+	if (!client_aad_oauth_generate(oauth, &challenge))
+		goto fail;
+
+	/* The state value and the challenge are base64url, so they need no escaping. */
+	winpr_asprintf(&params, &paramslen, "&state=%s&code_challenge=%s&code_challenge_method=S256",
+	               oauth->state, challenge);
+	if (!params)
+		goto fail;
+
+	cctx->aad_oauth = oauth;
+	free(challenge);
+	return params;
+
+fail:
+	free(challenge);
+	client_aad_oauth_free(oauth);
+	return nullptr;
+}
+
+/** @brief The query parameters a token request has to carry for the running transaction
+ *
+ *  Leaves the transaction in place: it is released by \ref client_aad_oauth_token_done once the
+ *  request body was built, so a build that fails does not lose the verifier.
+ *
+ *  @param cctx The client context the authorization request was built with
+ *  @return An allocated string, empty if no transaction is in flight, or \b nullptr on error
+ */
+WINPR_ATTR_MALLOC(free, 1)
+static char* client_aad_oauth_token_params(rdpClientContext* cctx)
+{
+	const client_aad_oauth* oauth = cctx->aad_oauth;
+	if (!oauth || !oauth->verifier)
+	{
+		WLog_WARN(TAG, "no AAD authorization request was built with this client context, the "
+		               "token request carries no PKCE code verifier");
+		return _strdup("");
+	}
+
+	char* params = nullptr;
+	size_t paramslen = 0;
+	winpr_asprintf(&params, &paramslen, "&code_verifier=%s", oauth->verifier);
+	return params;
+}
+
+/** @brief Release the transaction a token request was just built for
+ *
+ *  A code verifier belongs to exactly one token request, and the authorization code it was
+ *  requested with is redeemed by that one request. Only a request that was built completely
+ *  consumes them: a build that failed sent nothing, so its transaction stays usable.
+ *
+ *  @param cctx The client context the authorization request was built with
+ *  @param request The request body that was built, or \b nullptr if the build failed
+ */
+static void client_aad_oauth_token_done(rdpClientContext* cctx, const char* request)
+{
+	if (request)
+		freerdp_client_aad_reset(cctx);
+}
+
 static char* avd_auth_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list ap)
 {
 	const rdpSettings* settings = cctx->context.settings;
@@ -2677,8 +2879,14 @@ static char* avd_auth_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list 
 
 	char* url = nullptr;
 	size_t urllen = 0;
-	winpr_asprintf(&url, &urllen, "%s?client_id=%s&response_type=code&scope=%s&redirect_uri=%s", ep,
-	               client_id, scope, redirect_uri);
+	char* oauth = client_aad_oauth_start(cctx, redirect_uri);
+	if (oauth)
+	{
+		winpr_asprintf(&url, &urllen,
+		               "%s?client_id=%s&response_type=code&scope=%s&redirect_uri=%s%s", ep,
+		               client_id, scope, redirect_uri, oauth);
+	}
+	free(oauth);
 	free(redirect_uri);
 	return url;
 }
@@ -2702,9 +2910,18 @@ static char* avd_token_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list
 	size_t urllen = 0;
 
 	const char* code = va_arg(ap, const char*);
-	winpr_asprintf(&url, &urllen,
-	               "grant_type=authorization_code&code=%s&client_id=%s&scope=%s&redirect_uri=%s",
-	               code, client_id, scope, redirect_uri);
+	char* oauth = client_aad_oauth_token_params(cctx);
+	char* enccode = code ? winpr_str_url_encode(code, strlen(code)) : nullptr;
+	if (oauth && enccode)
+	{
+		winpr_asprintf(
+		    &url, &urllen,
+		    "grant_type=authorization_code&code=%s&client_id=%s&scope=%s&redirect_uri=%s%s",
+		    enccode, client_id, scope, redirect_uri, oauth);
+	}
+	client_aad_oauth_token_done(cctx, url);
+	client_free_secret(enccode);
+	client_free_secret(oauth);
 	free(redirect_uri);
 	return url;
 }
@@ -2728,9 +2945,17 @@ static char* aad_auth_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list 
 		{
 			const char* ep = freerdp_utils_aad_get_wellknown_string(
 			    &cctx->context, AAD_WELLKNOWN_authorization_endpoint);
-			winpr_asprintf(&url, &urllen,
-			               "%s?client_id=%s&response_type=code&scope=%s&redirect_uri=%s", ep,
-			               client_id, scope, redirect_uri);
+			if (!ep)
+				goto cleanup;
+
+			char* oauth = client_aad_oauth_start(cctx, redirect_uri);
+			if (oauth)
+			{
+				winpr_asprintf(&url, &urllen,
+				               "%s?client_id=%s&response_type=code&scope=%s&redirect_uri=%s%s", ep,
+				               client_id, scope, redirect_uri, oauth);
+			}
+			free(oauth);
 		}
 	}
 
@@ -2759,10 +2984,18 @@ static char* aad_token_request(rdpClientContext* cctx, WINPR_ATTR_UNUSED va_list
 	char* url = nullptr;
 	size_t urllen = 0;
 
-	winpr_asprintf(
-	    &url, &urllen,
-	    "grant_type=authorization_code&code=%s&client_id=%s&scope=%s&redirect_uri=%s&req_cnf=%s",
-	    code, client_id, scope, redirect_uri, req_cnf);
+	char* oauth = client_aad_oauth_token_params(cctx);
+	char* enccode = winpr_str_url_encode(code, strlen(code));
+	if (oauth && enccode)
+	{
+		winpr_asprintf(&url, &urllen,
+		               "grant_type=authorization_code&code=%s&client_id=%s&scope=%s&redirect_uri=%"
+		               "s&req_cnf=%s%s",
+		               enccode, client_id, scope, redirect_uri, req_cnf, oauth);
+	}
+	client_aad_oauth_token_done(cctx, url);
+	client_free_secret(enccode);
+	client_free_secret(oauth);
 	free(redirect_uri);
 	return url;
 }
