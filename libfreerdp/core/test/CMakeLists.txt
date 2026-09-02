@@ -16,6 +16,9 @@ if(BUILD_TESTING_INTERNAL)
   endif()
 endif()
 
+# The AVD cloud table is part of libfreerdp in every configuration, WITH_AAD or not.
+list(APPEND TESTS TestAadCloud.c)
+
 set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCoreGateway.c TestFuzzCryptoCertificateDataSetPEM.c)
 
 # TestFuzzServer generates a live cert via winpr-tools (makecert).
