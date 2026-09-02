@@ -2162,6 +2162,23 @@ static PARSE_ON_OFF_RESULT parse_on_off_option(const char* value)
 	return PARSE_FAIL;
 }
 
+static PARSE_ON_OFF_RESULT parse_on_off_argument(const COMMAND_LINE_ARGUMENT_A* arg)
+{
+	WINPR_ASSERT(arg);
+
+	if (arg->Value == BoolValueTrue)
+		return PARSE_ON;
+	if (arg->Value == BoolValueFalse)
+		return PARSE_OFF;
+	if (strnlen(arg->Value, 1) == 0)
+		return PARSE_FAIL;
+	if (option_equals("on", arg->Value))
+		return PARSE_ON;
+	if (option_equals("off", arg->Value))
+		return PARSE_OFF;
+	return PARSE_NONE;
+}
+
 typedef enum
 {
 	CLIP_DIR_PARSE_ALL,
@@ -2908,7 +2925,20 @@ static int parse_dynamic_resolution_options(rdpSettings* settings,
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	const BOOL val = arg->Value != nullptr;
+	BOOL val = TRUE;
+
+	switch (parse_on_off_argument(arg))
+	{
+		case PARSE_ON:
+			break;
+		case PARSE_OFF:
+			val = FALSE;
+			break;
+		case PARSE_NONE:
+		case PARSE_FAIL:
+		default:
+			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+	}
 
 	if (val && freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 	{
@@ -2929,21 +2959,39 @@ static int parse_smart_sizing_options(rdpSettings* settings, const COMMAND_LINE_
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
+	BOOL val = TRUE;
+	const char* size = nullptr;
+
+	switch (parse_on_off_argument(arg))
+	{
+		case PARSE_ON:
+			break;
+		case PARSE_OFF:
+			val = FALSE;
+			break;
+		case PARSE_NONE:
+			size = arg->Value;
+			break;
+		case PARSE_FAIL:
+		default:
+			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+	}
+
+	if (val && freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 	{
 		WLog_ERR(TAG, "Smart sizing and dynamic resolution are mutually exclusive options");
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	}
 
-	if (!freerdp_settings_set_bool(settings, FreeRDP_SmartSizing, TRUE))
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SmartSizing, val))
 		return COMMAND_LINE_ERROR;
 
-	if (arg->Value)
+	if (size)
 	{
 		unsigned long w = 0;
 		unsigned long h = 0;
 
-		if (!parseSizeValue(arg->Value, &w, &h) || (w > UINT16_MAX) || (h > UINT16_MAX))
+		if (!parseSizeValue(size, &w, &h) || (w > UINT16_MAX) || (h > UINT16_MAX))
 			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingWidth, (UINT32)w))
@@ -4925,16 +4973,31 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "multimon")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE))
-				return fail_at(arg, COMMAND_LINE_ERROR);
-
-			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			switch (parse_on_off_argument(arg))
 			{
-				if (option_equals(arg->Value, str_force))
-				{
+				case PARSE_ON:
+					if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE))
+						return fail_at(arg, COMMAND_LINE_ERROR);
+					break;
+				case PARSE_OFF:
+					if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, FALSE))
+						return fail_at(arg, COMMAND_LINE_ERROR);
+					if (!freerdp_settings_set_bool(settings, FreeRDP_ForceMultimon, FALSE))
+						return fail_at(arg, COMMAND_LINE_ERROR);
+					if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr, 0))
+						return fail_at(arg, COMMAND_LINE_ERROR);
+					break;
+				case PARSE_NONE:
+					if (!option_equals(arg->Value, str_force))
+						return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
+					if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE))
+						return fail_at(arg, COMMAND_LINE_ERROR);
 					if (!freerdp_settings_set_bool(settings, FreeRDP_ForceMultimon, TRUE))
 						return fail_at(arg, COMMAND_LINE_ERROR);
-				}
+					break;
+				case PARSE_FAIL:
+				default:
+					return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
 			}
 		}
 		CommandLineSwitchCase(arg, "span")
