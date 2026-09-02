@@ -155,7 +155,14 @@ void free_surface_bits_command(WINPR_ATTR_UNUSED rdpContext* context, SURFACE_BI
 BOOL cache_resize(rdpContext* context)
 {
 	WINPR_ASSERT(context);
-	cache_free(context->cache);
-	context->cache = cache_new(context);
-	return context->cache != nullptr;
+
+	if (!context->cache)
+		context->cache = cache_new(context);
+	if (!context->cache)
+		return FALSE;
+	if (!bitmap_cache_resize(context->cache->bitmap))
+		return FALSE;
+	if (!pointer_cache_resize(context->cache->pointer))
+		return FALSE;
+	return TRUE;
 }
