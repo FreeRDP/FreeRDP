@@ -1808,8 +1808,12 @@ BOOL client_common_get_access_token(freerdp* instance, const char* request, char
 		WLog_Print(log, WLOG_ERROR,
 		           "Server unwilling to provide access token; returned status code %s",
 		           freerdp_http_status_string_format(resp_code, buffer, sizeof(buffer)));
+
+		/* The body is the OAuth error document. It names the account the request was made
+		 * with and carries correlation identifiers, so keep it out of the log a user is
+		 * asked to attach to a bug report. */
 		if (response_length > 0)
-			WLog_Print(log, WLOG_ERROR, "[status message] %s", response);
+			WLog_Print(log, WLOG_DEBUG, "[status message] %s", response);
 		goto cleanup;
 	}
 
