@@ -7,6 +7,7 @@
 #include <winpr/collections.h>
 
 typedef BOOL (*validate_settings_pr)(rdpSettings* settings);
+typedef void (*setup_settings_pr)(rdpSettings* settings);
 
 #define printref() printf("%s:%d: in function %-40s:", __FILE__, __LINE__, __func__)
 
@@ -41,7 +42,8 @@ static void print_test_title(int argc, char** argv)
 }
 
 static inline BOOL testcase(const char* name, char** argv, size_t argc, int expected_return,
-                            validate_settings_pr validate_settings)
+                            validate_settings_pr validate_settings,
+                            setup_settings_pr setup_settings)
 {
 	int status = 0;
 	BOOL valid_settings = TRUE;
@@ -56,6 +58,9 @@ static inline BOOL testcase(const char* name, char** argv, size_t argc, int expe
 		TEST_ERROR("Test %s could not allocate settings!\n", name);
 		return FALSE;
 	}
+
+	if (setup_settings)
+		setup_settings(settings);
 
 	status = freerdp_client_settings_parse_command_line(settings, (int)argc, argv, FALSE);
 
@@ -131,6 +136,126 @@ static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 	return result;
 }
 
+#ifndef TEST_SOURCE_DIR
+#error "TEST_SOURCE_DIR must be defined to the test source directory"
+#endif
+#define DISABLED_DISPLAY_OPTIONS_RDP TEST_SOURCE_DIR "/rdp-cmdline/disabled-display-options.rdp"
+
+static BOOL check_settings_multimon_disabled(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+	{
+		TEST_FAILURE("Expected UseMultimon = FALSE, but UseMultimon = TRUE!\n");
+		result = FALSE;
+	}
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_ForceMultimon))
+	{
+		TEST_FAILURE("Expected ForceMultimon = FALSE, but ForceMultimon = TRUE!\n");
+		result = FALSE;
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
+	{
+		TEST_FAILURE("Expected SmartSizing = TRUE, but SmartSizing = FALSE!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+
+static BOOL check_settings_smart_sizing_disabled(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
+	{
+		TEST_FAILURE("Expected SmartSizing = FALSE, but SmartSizing = TRUE!\n");
+		result = FALSE;
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
+	{
+		TEST_FAILURE(
+		    "Expected DynamicResolutionUpdate = TRUE, but DynamicResolutionUpdate = FALSE!\n");
+		result = FALSE;
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+	{
+		TEST_FAILURE("Expected UseMultimon = TRUE, but UseMultimon = FALSE!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+
+static BOOL check_settings_multimon_enabled(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+	{
+		TEST_FAILURE("Expected UseMultimon = TRUE, but UseMultimon = FALSE!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+
+static void setup_settings_multimon_force(rdpSettings* settings)
+{
+	(void)freerdp_settings_set_bool(settings, FreeRDP_ForceMultimon, TRUE);
+}
+
+static BOOL check_settings_multimon_force(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+	{
+		TEST_FAILURE("Expected UseMultimon = TRUE, but UseMultimon = FALSE!\n");
+		result = FALSE;
+	}
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_ForceMultimon))
+	{
+		TEST_FAILURE("Expected ForceMultimon = TRUE, but ForceMultimon = FALSE!\n");
+		result = FALSE;
+	}
+
+	return result;
+}
+
+static BOOL check_settings_smart_sizing_size(rdpSettings* settings)
+{
+	BOOL result = TRUE;
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
+	{
+		TEST_FAILURE("Expected SmartSizing = TRUE, but SmartSizing = FALSE!\n");
+		result = FALSE;
+	}
+
+	if (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth) != 1024)
+	{
+		TEST_FAILURE("Expected SmartSizingWidth = 1024, but SmartSizingWidth = %u!\n",
+		             (unsigned)freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth));
+		result = FALSE;
+	}
+
+	if (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight) != 768)
+	{
+		TEST_FAILURE("Expected SmartSizingHeight = 768, but SmartSizingHeight = %u!\n",
+		             (unsigned)freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight));
+		result = FALSE;
+	}
+
+	return result;
+}
+
 typedef struct
 {
 	int expected_status;
@@ -141,6 +266,7 @@ typedef struct
 		int index;
 		const char* expected_value;
 	} modified_arguments[8];
+	setup_settings_pr setup_settings;
 } test;
 
 // NOLINTBEGIN(bugprone-suspicious-missing-comma)
@@ -253,6 +379,52 @@ static const test tests[] = {
 	  { "testfreerdp", "/gateway:type:arm,g:gw.contoso.com,timeout:abc", "/v:test.freerdp.com",
 	    nullptr },
 	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_multimon_disabled,
+	  { "testfreerdp", DISABLED_DISPLAY_OPTIONS_RDP, "/multimon:off", nullptr },
+	  { WINPR_C_ARRAY_INIT },
+	  setup_settings_multimon_force },
+	{ 0,
+	  check_settings_multimon_disabled,
+	  { "testfreerdp", DISABLED_DISPLAY_OPTIONS_RDP, "-multimon", nullptr },
+	  { WINPR_C_ARRAY_INIT },
+	  setup_settings_multimon_force },
+	{ 0,
+	  check_settings_smart_sizing_disabled,
+	  { "testfreerdp", DISABLED_DISPLAY_OPTIONS_RDP, "-smart-sizing", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_smart_sizing_disabled,
+	  { "testfreerdp", DISABLED_DISPLAY_OPTIONS_RDP, "/smart-sizing:off", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_multimon_force,
+	  { "testfreerdp", "--multimon", "force", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_smart_sizing_size,
+	  { "testfreerdp", "--smart-sizing", "1024x768", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/multimon:garbage", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/smart-sizing:garbage", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/multimon:", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  check_settings_smartcard_no_redirection,
+	  { "testfreerdp", "/smart-sizing:", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_multimon_enabled,
+	  { "testfreerdp", "+multimon", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
 };
 // NOLINTEND(bugprone-suspicious-missing-comma)
 
@@ -290,7 +462,8 @@ int TestClientCmdLine(int argc, char* argv[])
 
 		const int len = string_list_length((const char* const*)command_line);
 		if (!testcase(__func__, command_line, WINPR_ASSERTING_INT_CAST(size_t, len),
-		              current->expected_status, current->validate_settings))
+		              current->expected_status, current->validate_settings,
+		              current->setup_settings))
 		{
 			TEST_FAILURE("parsing arguments.\n");
 			failure = 1;
