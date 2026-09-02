@@ -34,6 +34,7 @@
 
 #include "../core/settings.h"
 #include "../core/capabilities.h"
+#include "../core/aad_cloud.h"
 
 #include <freerdp/crypto/certificate.h>
 #include <freerdp/settings.h>
@@ -4699,4 +4700,20 @@ const ADDIN_ARGV* freerdp_device_get_args(const RDPDR_DEVICE* device)
 
 	cnv.dev = device;
 	return cnv.ex->args;
+}
+
+BOOL freerdp_utils_aad_apply_known_configuration(rdpSettings* settings, const char* name)
+{
+	const FreeRDP_AadCloud* cloud = freerdp_utils_aad_cloud_by_name(name);
+	if (!cloud)
+		return FALSE;
+	return freerdp_utils_aad_apply_cloud(settings, cloud);
+}
+
+BOOL freerdp_utils_aad_apply_known_configuration_by_url(rdpSettings* settings, const char* url)
+{
+	const FreeRDP_AadCloud* cloud = freerdp_utils_aad_cloud_for_gateway(url);
+	if (!cloud)
+		return FALSE;
+	return freerdp_utils_aad_apply_cloud(settings, cloud);
 }

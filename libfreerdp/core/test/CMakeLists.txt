@@ -42,7 +42,8 @@ else()
   message("Skipping connection tests, requires BUILD_TESTING_INTERNAL, WITH_SAMPLE and WITH_SERVER set!")
 endif()
 
-# the interfaces of freerdp/wts_services.h between C and C++, when there is a C++ compiler
+# the interfaces of freerdp/wts_services.h between C and C++, when there is a
+# C++ compiler
 include(CheckLanguage)
 check_language(CXX)
 if(CMAKE_CXX_COMPILER)
@@ -79,9 +80,9 @@ endif()
 include(AddFuzzerTest)
 add_fuzzer_test("${FUZZERS}" "${CORE_FUZZER_LIBS}")
 
-# Seed corpus generator for the test TestFuzzServer, used to
-# (re)generate the seed corpus. Requires the client library,
-# POSIX sockets, and winpr-tools (makecert).
+# Seed corpus generator for the test TestFuzzServer, used to (re)generate the
+# seed corpus. Requires the client library, POSIX sockets, and winpr-tools
+# (makecert).
 if(NOT WIN32 AND WITH_WINPR_TOOLS AND (WITH_CLIENT_COMMON OR WITH_CLIENT))
   find_package(Threads REQUIRED)
   add_executable(TestFuzzServerSeedGen TestFuzzServerSeedGen.c)

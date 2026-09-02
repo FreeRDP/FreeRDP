@@ -46,6 +46,7 @@
 #include "../core/utils.h"
 #include "../crypto/certificate.h"
 #include "../crypto/privatekey.h"
+#include "../core/aad_cloud.h"
 #include "capabilities.h"
 
 #define TAG FREERDP_TAG("settings")
@@ -933,19 +934,12 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAccessTokenFormat,
 		                                 "ms-appx-web%%3a%%2f%%2fMicrosoft.AAD.BrokerPlugin%%2f%s"))
 			goto out_fail;
-		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAccessAadFormat,
-		                                 "https%%3A%%2F%%2F%s%%2F%s%%2Foauth2%%2Fnativeclient"))
-			goto out_fail;
-		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdScope,
-		                                 "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default%20openid%"
-		                                 "20profile%20offline_access"))
 
+		if (!freerdp_utils_aad_apply_known_configuration(settings, "commercial"))
 			goto out_fail;
+
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdClientID,
 		                                 "a85cf173-4192-42f8-81fa-777a763e6e2c"))
-			goto out_fail;
-		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAzureActiveDirectory,
-		                                 "login.microsoftonline.com"))
 			goto out_fail;
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAadtenantid, "common"))
 			goto out_fail;

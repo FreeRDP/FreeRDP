@@ -4209,53 +4209,67 @@ static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		};
 		for (size_t x = 0; x < count; x++)
 		{
-			BOOL handled = FALSE;
 			const char* val = ptr[x];
-
-			if (option_starts_with("use-tenantid", val))
+			if (option_starts_with("cloud:", val))
 			{
-				PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
-				if (bval == PARSE_FAIL)
-				{
+				const char* name = &val[6];
+				if (!freerdp_utils_aad_apply_known_configuration(settings, name))
 					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					break;
-				}
-				else
+				break;
+			}
+		}
+		if (rc == CHANNEL_RC_OK)
+		{
+			for (size_t x = 0; x < count; x++)
+			{
+				BOOL handled = FALSE;
+				const char* val = ptr[x];
+
+				if (option_starts_with("use-tenantid", val))
 				{
-					if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid,
-					                               bval != PARSE_OFF))
+					PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
 					{
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 						break;
 					}
-				}
-				continue;
-			}
-			for (size_t y = 0; y < ARRAYSIZE(amap); y++)
-			{
-				const struct app_map* cur = &amap[y];
-				if (option_starts_with(cur->name, val))
-				{
-					const char* xval = &val[strlen(cur->name)];
-					if (cur->fkt)
-						rc = cur->fkt(settings, xval);
 					else
 					{
-						const char* name = freerdp_settings_get_name_for_key(cur->id);
-						if (!freerdp_settings_set_value_for_name(settings, name, xval))
-							rc = COMMAND_LINE_ERROR_MEMORY;
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid,
+						                               bval != PARSE_OFF))
+						{
+							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+							break;
+						}
 					}
-
-					handled = TRUE;
-					break;
+					continue;
 				}
+				for (size_t y = 0; y < ARRAYSIZE(amap); y++)
+				{
+					const struct app_map* cur = &amap[y];
+					if (option_starts_with(cur->name, val))
+					{
+						const char* xval = &val[strlen(cur->name)];
+						if (cur->fkt)
+							rc = cur->fkt(settings, xval);
+						else
+						{
+							const char* name = freerdp_settings_get_name_for_key(cur->id);
+							if (!freerdp_settings_set_value_for_name(settings, name, xval))
+								rc = COMMAND_LINE_ERROR_MEMORY;
+						}
+
+						handled = TRUE;
+						break;
+					}
+				}
+
+				if (!handled)
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+				if (rc != 0)
+					break;
 			}
-
-			if (!handled)
-				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-			if (rc != 0)
-				break;
 		}
 	}
 

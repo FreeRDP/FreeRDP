@@ -2700,6 +2700,11 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			return FALSE;
 	}
 
+	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayArmTransport))
+	{
+		const char* url = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+		return freerdp_utils_aad_apply_known_configuration_by_url(settings, url);
+	}
 	return TRUE;
 }
 
