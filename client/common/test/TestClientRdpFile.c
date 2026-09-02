@@ -7,9 +7,15 @@
 #include <winpr/windows.h>
 #include <winpr/path.h>
 #include <winpr/crypto.h>
+#include <winpr/environment.h>
 
 #include <freerdp/client/file.h>
 #include <freerdp/channels/rdpecam.h>
+
+#if !defined(_WIN32)
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
 
 static const BYTE testRdpFileUTF16[] = {
 	0xff, 0xfe, 0x73, 0x00, 0x63, 0x00, 0x72, 0x00, 0x65, 0x00, 0x65, 0x00, 0x6e, 0x00, 0x20, 0x00,
@@ -545,6 +551,99 @@ fail:
 	return rc;
 }
 
+/* Write 'settings' out to a fresh RDP file below the known temporary
+ * directory. 'file' is local to this function so a failure while creating
+ * the temporary directory (e.g. TMPDIR pointing to a nonexistent path)
+ * cannot leave a stale pointer behind for the caller to free again. */
+static bool test_write_files(const rdpSettings* settings, UINT64 id)
+{
+	bool rc = false;
+	char* utfname = nullptr;
+	char* uniname = nullptr;
+	char* base = nullptr;
+	char* tmp = GetKnownPath(KNOWN_PATH_TEMP);
+	rdpFile* file = nullptr;
+
+	if (!tmp)
+	{
+		WLog_ERR(__func__, "GetKnownPath(KNOWN_PATH_TEMP) failed, check TMPDIR/HOME");
+		goto fail;
+	}
+
+	base = append("%s/rdp-file-test-%" PRIx64, tmp, id);
+	if (!base)
+		goto fail;
+	if (!CreateDirectoryA(base, nullptr))
+	{
+		WLog_ERR(__func__, "CreateDirectoryA('%s') failed, temporary directory not usable", base);
+		goto fail;
+	}
+	utfname = append("%s/utfname", base);
+	uniname = append("%s/uniname", base);
+	file = freerdp_client_rdp_file_new();
+	if (!file || !utfname || !uniname)
+		goto fail;
+
+	if (!freerdp_client_populate_rdp_file_from_settings(file, settings))
+		goto fail;
+
+	if (!freerdp_client_write_rdp_file(file, utfname, FALSE))
+		goto fail;
+
+	if (!freerdp_client_write_rdp_file(file, uniname, TRUE))
+		goto fail;
+
+	rc = true;
+fail:
+	if (utfname)
+		winpr_DeleteFile(utfname);
+	if (uniname)
+		winpr_DeleteFile(uniname);
+	if (base)
+		winpr_RemoveDirectory(base);
+	free(utfname);
+	free(uniname);
+	free(base);
+	free(tmp);
+	freerdp_client_rdp_file_free(file);
+	return rc;
+}
+
+#if !defined(_WIN32)
+/* Regression test: force TMPDIR to a nonexistent directory in a child
+ * process and check that test_write_files() reports a clean failure
+ * instead of crashing (see the double-free this was fixed for). */
+static bool test_write_files_invalid_tmpdir(const rdpSettings* settings, UINT64 id)
+{
+	const pid_t pid = fork();
+	if (pid < 0)
+		return false;
+
+	if (pid == 0)
+	{
+		if (!SetEnvironmentVariableA("TMPDIR", "/nonexistent-freerdp-test-tmpdir"))
+			_exit(2);
+		_exit(test_write_files(settings, id) ? 0 : 1);
+	}
+
+	int status = 0;
+	if (waitpid(pid, &status, 0) != pid)
+		return false;
+
+	if (!WIFEXITED(status))
+	{
+		WLog_ERR(__func__, "child for invalid TMPDIR test did not exit cleanly (status=0x%x)",
+		         status);
+		return false;
+	}
+
+	/* A missing/unusable temporary directory must be a clean failure (exit
+	 * code 1 from test_write_files() returning false), not success and not
+	 * a crash. */
+	return WEXITSTATUS(status) == 1;
+}
+#endif
+
 int TestClientRdpFile(int argc, char* argv[])
 {
 	int rc = -1;
@@ -552,10 +651,6 @@ int TestClientRdpFile(int argc, char* argv[])
 	UINT32 uValue = 0;
 	const UINT32* puValue = nullptr;
 	const char* sValue = nullptr;
-	char* utfname = nullptr;
-	char* uniname = nullptr;
-	char* base = nullptr;
-	char* tmp = nullptr;
 	UINT64 id = 0;
 	rdpFile* file = nullptr;
 	rdpSettings* settings = nullptr;
@@ -803,43 +898,21 @@ int TestClientRdpFile(int argc, char* argv[])
 	}
 
 	freerdp_client_rdp_file_free(file);
+	file = nullptr;
 
-	tmp = GetKnownPath(KNOWN_PATH_TEMP);
-	if (!tmp)
-		goto fail;
-
-	base = append("%s/rdp-file-test-%" PRIx64, tmp, id);
-	if (!base)
-		goto fail;
-	if (!CreateDirectoryA(base, nullptr))
-		goto fail;
-	utfname = append("%s/utfname", base);
-	uniname = append("%s/uniname", base);
-	file = freerdp_client_rdp_file_new();
-	if (!file || !utfname || !uniname)
+	if (!test_write_files(settings, id))
 		goto fail;
 
-	if (!freerdp_client_populate_rdp_file_from_settings(file, settings))
+#if !defined(_WIN32)
+	if (!test_write_files_invalid_tmpdir(settings, id))
+	{
+		printf("test_write_files_invalid_tmpdir failed\n");
 		goto fail;
-
-	if (!freerdp_client_write_rdp_file(file, utfname, FALSE))
-		goto fail;
-
-	if (!freerdp_client_write_rdp_file(file, uniname, TRUE))
-		goto fail;
+	}
+#endif
 
 	rc = 0;
 fail:
-	if (utfname)
-		winpr_DeleteFile(utfname);
-	if (uniname)
-		winpr_DeleteFile(uniname);
-	if (base)
-		winpr_RemoveDirectory(base);
-	free(utfname);
-	free(uniname);
-	free(base);
-	free(tmp);
 	freerdp_client_rdp_file_free(file);
 	freerdp_settings_free(settings);
 	return rc;
