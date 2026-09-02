@@ -49,7 +49,8 @@ static const char wellknown[] =
     "{\"authorization_endpoint\":\"https://login.contoso.example/common/oauth2/v2.0/"
     "authorize\",\"token_endpoint\":\"https://login.contoso.example/common/oauth2/v2.0/token\"}";
 
-/* The redirect URI the tests configure, percent encoded as the settings hold it. */
+/* The redirect URI the tests configure, percent encoded as the settings hold it and decoded as
+ * it arrives in a callback. */
 static const char redirect_fmt[] = "https%%3A%%2F%%2Fcontoso.example%%2Fcallback";
 
 static rdpContext* test_context_new(void)
@@ -471,6 +472,262 @@ fail:
 	return rc;
 }
 
+/** Returns a copy of @p str with every @p placeholder replaced by @p value. */
+static char* replace_all(const char* str, char placeholder, const char* value)
+{
+	const size_t vallen = strlen(value);
+	size_t count = 0;
+	for (const char* pos = str; *pos; pos++)
+	{
+		if (*pos == placeholder)
+			count++;
+	}
+
+	char* out = calloc(strlen(str) + count * vallen + 1, sizeof(char));
+	if (!out)
+		return nullptr;
+
+	char* dst = out;
+	for (const char* pos = str; *pos; pos++)
+	{
+		if (*pos != placeholder)
+			*dst++ = *pos;
+		else
+		{
+			memcpy(dst, value, vallen);
+			dst += vallen;
+		}
+	}
+
+	return out;
+}
+
+/* Item 3: the callback parser accepts exactly the response of the running transaction. */
+static BOOL test_parse_callback(void)
+{
+	static const struct
+	{
+		const char* uri; /* '$' is replaced by the state of the transaction */
+		freerdp_client_aad_callback_result expected;
+		const char* code;
+	} tests[] = {
+		{ "https://contoso.example/callback?code=abc&state=$", FREERDP_CLIENT_AAD_CALLBACK_CODE,
+		  "abc" },
+		/* the code is returned percent decoded */
+		{ "https://contoso.example/callback?state=$&code=a%2Bb%20c",
+		  FREERDP_CLIENT_AAD_CALLBACK_CODE, "a+b c" },
+		/* scheme, host and the default port are compared without regard to case */
+		{ "HTTPS://CONTOSO.EXAMPLE/callback?code=abc&state=$", FREERDP_CLIENT_AAD_CALLBACK_CODE,
+		  "abc" },
+		{ "https://contoso.example:443/callback?code=abc&state=$", FREERDP_CLIENT_AAD_CALLBACK_CODE,
+		  "abc" },
+		/* well formed escapes are decoded, exactly once */
+		{ "https://contoso.exampl%65/call%62ack?code=abc&state=$", FREERDP_CLIENT_AAD_CALLBACK_CODE,
+		  "abc" },
+		{ "https://contoso.example/callback?code=%2541&state=$", FREERDP_CLIENT_AAD_CALLBACK_CODE,
+		  "%41" },
+		/* an error response of the transaction */
+		{ "https://contoso.example/callback?error=access_denied&state=$",
+		  FREERDP_CLIENT_AAD_CALLBACK_ERROR, nullptr },
+		{ "https://contoso.example/callback?error=access_denied&error_description=nope&state=$",
+		  FREERDP_CLIENT_AAD_CALLBACK_ERROR, nullptr },
+		/* somewhere else, the front end has to keep navigating */
+		{ "https://login.contoso.example/common/oauth2/v2.0/authorize?client_id=x",
+		  FREERDP_CLIENT_AAD_CALLBACK_UNRELATED, nullptr },
+		{ "https://evil.example/callback?code=abc&state=$", FREERDP_CLIENT_AAD_CALLBACK_UNRELATED,
+		  nullptr },
+		{ "https://contoso.example/other?code=abc&state=$", FREERDP_CLIENT_AAD_CALLBACK_UNRELATED,
+		  nullptr },
+		{ "https://contoso.example:8443/callback?code=abc&state=$",
+		  FREERDP_CLIENT_AAD_CALLBACK_UNRELATED, nullptr },
+		{ "http://contoso.example/callback?code=abc&state=$", FREERDP_CLIENT_AAD_CALLBACK_UNRELATED,
+		  nullptr },
+		{ "about:blank", FREERDP_CLIENT_AAD_CALLBACK_UNRELATED, nullptr },
+		/* the redirect URI was reached but the response can not be used */
+		{ "https://contoso.example/callback?code=abc&state=other",
+		  FREERDP_CLIENT_AAD_CALLBACK_INVALID, nullptr },
+		{ "https://contoso.example/callback?code=abc", FREERDP_CLIENT_AAD_CALLBACK_INVALID,
+		  nullptr },
+		{ "https://contoso.example/callback?code=abc&state=$&state=$",
+		  FREERDP_CLIENT_AAD_CALLBACK_INVALID, nullptr },
+		{ "https://contoso.example/callback?code=abc&code=def&state=$",
+		  FREERDP_CLIENT_AAD_CALLBACK_INVALID, nullptr },
+		{ "https://contoso.example/callback?code=abc&error=access_denied&state=$",
+		  FREERDP_CLIENT_AAD_CALLBACK_INVALID, nullptr },
+		{ "https://contoso.example/callback?state=$", FREERDP_CLIENT_AAD_CALLBACK_INVALID,
+		  nullptr },
+		{ "https://contoso.example/callback?code=&state=$", FREERDP_CLIENT_AAD_CALLBACK_INVALID,
+		  nullptr },
+		{ "https://contoso.example/callback?code=abc&state=$#fragment",
+		  FREERDP_CLIENT_AAD_CALLBACK_INVALID, nullptr },
+		{ "https://user:pass@contoso.example/callback?code=abc&state=$",
+		  FREERDP_CLIENT_AAD_CALLBACK_INVALID, nullptr },
+		/* a valueless key is an occurrence, not a parameter to skip over */
+		{ "https://contoso.example/callback?code=abc&state=$&code",
+		  FREERDP_CLIENT_AAD_CALLBACK_INVALID, nullptr },
+		{ "https://contoso.example/callback?code=abc&state", FREERDP_CLIENT_AAD_CALLBACK_INVALID,
+		  nullptr },
+		/* a percent decoded NUL would truncate the comparison of host and path */
+		{ "https://contoso.example%00.evil.example/callback?code=abc&state=$",
+		  FREERDP_CLIENT_AAD_CALLBACK_UNRELATED, nullptr },
+		{ "https://contoso.example/callback%00/evil?code=abc&state=$",
+		  FREERDP_CLIENT_AAD_CALLBACK_UNRELATED, nullptr },
+		{ "https://contoso.example/callback?code=abc&state=$%00",
+		  FREERDP_CLIENT_AAD_CALLBACK_INVALID, nullptr },
+		/* malformed escapes are rejected instead of being taken literally */
+		{ "https://contoso.example%ZZ/callback?code=abc&state=$",
+		  FREERDP_CLIENT_AAD_CALLBACK_UNRELATED, nullptr },
+		{ "https://contoso.example/callback?code=%&state=$", FREERDP_CLIENT_AAD_CALLBACK_INVALID,
+		  nullptr },
+		{ "https://contoso.example/callback?code=%ZZ&state=$", FREERDP_CLIENT_AAD_CALLBACK_INVALID,
+		  nullptr },
+		{ "https://contoso.example/callback?code=%0&state=$", FREERDP_CLIENT_AAD_CALLBACK_INVALID,
+		  nullptr }
+	};
+
+	BOOL rc = FALSE;
+	char* url = nullptr;
+	char* state = nullptr;
+
+	rdpContext* context = test_context_new();
+	if (!context)
+		return FALSE;
+
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		char* code = nullptr;
+
+		/* A terminal result ends the transaction, so every case gets its own. */
+		free(url);
+		free(state);
+		state = nullptr;
+		url = freerdp_client_get_aad_url((rdpClientContext*)context,
+		                                 FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST);
+		if (!url)
+			goto fail;
+
+		state = query_value(url, "state");
+		if (!state)
+			goto fail;
+
+		/* Splice the state of the transaction into the test URI. */
+		char* uri = replace_all(tests[x].uri, '$', state);
+		if (!uri)
+			goto fail;
+
+		const freerdp_client_aad_callback_result got =
+		    freerdp_client_aad_parse_callback((rdpClientContext*)context, uri, &code);
+
+		BOOL ok = got == tests[x].expected;
+		if (ok && tests[x].code)
+			ok = code && (strcmp(code, tests[x].code) == 0);
+		else if (ok)
+			ok = code == nullptr;
+
+		if (!ok)
+			(void)fprintf(stderr, "callback [%" PRIuz "] '%s': expected %d, got %d\n", x,
+			              tests[x].uri, tests[x].expected, got);
+
+		free(uri);
+		free(code);
+		if (!ok)
+			goto fail;
+	}
+
+	/* A response is answered once: the second one is a replay, whatever it carries. */
+	free(url);
+	free(state);
+	state = nullptr;
+	url =
+	    freerdp_client_get_aad_url((rdpClientContext*)context, FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST);
+	if (!url)
+		goto fail;
+
+	state = query_value(url, "state");
+	if (!state)
+		goto fail;
+
+	{
+		char* uri = replace_all("https://contoso.example/callback?code=abc&state=$", '$', state);
+		if (!uri)
+			goto fail;
+
+		char* code = nullptr;
+		freerdp_client_aad_callback_result got =
+		    freerdp_client_aad_parse_callback((rdpClientContext*)context, uri, &code);
+		free(code);
+		code = nullptr;
+
+		if (got != FREERDP_CLIENT_AAD_CALLBACK_CODE)
+		{
+			(void)fprintf(stderr, "the authorization response was not accepted\n");
+			free(uri);
+			goto fail;
+		}
+
+		got = freerdp_client_aad_parse_callback((rdpClientContext*)context, uri, &code);
+		free(uri);
+		free(code);
+
+		if (got != FREERDP_CLIENT_AAD_CALLBACK_INVALID)
+		{
+			(void)fprintf(stderr, "an authorization response was accepted twice\n");
+			goto fail;
+		}
+	}
+
+	/* A new authorization request starts a transaction that answers again. */
+	free(url);
+	free(state);
+	state = nullptr;
+	url =
+	    freerdp_client_get_aad_url((rdpClientContext*)context, FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST);
+	if (!url)
+		goto fail;
+
+	state = query_value(url, "state");
+	if (!state)
+		goto fail;
+
+	{
+		char* uri =
+		    replace_all("https://contoso.example/callback?error=access_denied&state=$", '$', state);
+		if (!uri)
+			goto fail;
+
+		const freerdp_client_aad_callback_result got =
+		    freerdp_client_aad_parse_callback((rdpClientContext*)context, uri, nullptr);
+		free(uri);
+
+		if (got != FREERDP_CLIENT_AAD_CALLBACK_ERROR)
+		{
+			(void)fprintf(stderr, "a new authorization request did not start a transaction\n");
+			goto fail;
+		}
+	}
+
+	/* Without a transaction nothing is accepted any more. */
+	freerdp_client_aad_reset((rdpClientContext*)context);
+	if (freerdp_client_aad_parse_callback((rdpClientContext*)context,
+	                                      "https://contoso.example/callback?code=abc",
+	                                      nullptr) != FREERDP_CLIENT_AAD_CALLBACK_INVALID)
+	{
+		(void)fprintf(stderr, "a callback was accepted without a transaction\n");
+		goto fail;
+	}
+
+	if (freerdp_client_aad_parse_callback((rdpClientContext*)context, nullptr, nullptr) !=
+	    FREERDP_CLIENT_AAD_CALLBACK_INVALID)
+		goto fail;
+
+	rc = TRUE;
+fail:
+	free(url);
+	free(state);
+	freerdp_client_context_free(context);
+	return rc;
+}
+
 #endif /* WITH_AAD && BUILD_TESTING_INTERNAL */
 
 int TestClientAad(int argc, char* argv[])
@@ -494,6 +751,8 @@ int TestClientAad(int argc, char* argv[])
 	if (!test_transaction_lifetime())
 		return -1;
 	if (!test_token_build_failure())
+		return -1;
+	if (!test_parse_callback())
 		return -1;
 	return 0;
 #endif

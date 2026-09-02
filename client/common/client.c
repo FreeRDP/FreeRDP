@@ -19,6 +19,7 @@
  */
 
 #include <winpr/cast.h>
+#include <winpr/string.h>
 
 #include <freerdp/config.h>
 
@@ -96,6 +97,7 @@ typedef struct client_aad_oauth
 	char* state;        /**< the 'state' value sent with the authorization request */
 	char* verifier;     /**< the PKCE code verifier sent with the token request */
 	char* redirect_uri; /**< percent decoded URI the authorization response must arrive at */
+	BOOL consumed;      /**< whether the authorization response was already seen */
 } client_aad_oauth;
 
 /** @brief Release a string that held credential material
@@ -127,6 +129,408 @@ void freerdp_client_aad_reset(rdpClientContext* cctx)
 
 	client_aad_oauth_free(cctx->aad_oauth);
 	cctx->aad_oauth = nullptr;
+}
+
+/** @brief The parts of a URI the OAuth callback check compares
+ *
+ *  \b scheme, \b host and \b path are percent decoded, \b query points into the URI that was
+ *  parsed and keeps its escapes.
+ */
+typedef struct
+{
+	char* scheme;
+	char* host;
+	char* path;
+	const char* query;
+	UINT32 port;
+	BOOL userinfo;
+	BOOL fragment;
+} client_uri;
+
+/** @brief Percent decode a URI component the callback check compares
+ *
+ *  \b winpr_str_url_decode leaves an escape that is not \c '%' HEXDIG HEXDIG in place and
+ *  decodes \c %00 to an embedded NUL, so a component could carry more than the C string it
+ *  decodes to shows: every following comparison stops at the NUL and a different host or path
+ *  would pass as the expected one. Accept only well formed escapes, reject \c %00 and verify
+ *  that the result is as long as the escapes consumed say it must be.
+ *
+ *  @param str The component to decode
+ *  @param len The number of octets of \b str that belong to the component
+ *  @return The decoded component, to be released with \b free, or \b nullptr if \b str is not
+ *          a valid percent encoding of a string without NUL
+ */
+WINPR_ATTR_MALLOC(free, 1)
+static char* client_uri_decode(const char* str, size_t len)
+{
+	size_t declen = 0;
+
+	for (size_t x = 0; x < len; x++, declen++)
+	{
+		if (str[x] != '%')
+			continue;
+
+		if (x + 2 >= len)
+			return nullptr; /* an incomplete escape */
+		if (!isxdigit((unsigned char)str[x + 1]) || !isxdigit((unsigned char)str[x + 2]))
+			return nullptr;
+		if ((str[x + 1] == '0') && (str[x + 2] == '0'))
+			return nullptr; /* a NUL would truncate every comparison */
+		x += 2;
+	}
+
+	char* decoded = winpr_str_url_decode(str, len);
+	if (!decoded)
+		return nullptr;
+
+	/* Whatever the decoder did, the result has to be the string the escapes describe. */
+	if (strlen(decoded) != declen)
+	{
+		free(decoded);
+		return nullptr;
+	}
+
+	return decoded;
+}
+
+static void client_uri_free(client_uri* uri)
+{
+	free(uri->scheme);
+	free(uri->host);
+	free(uri->path);
+	const client_uri empty = WINPR_C_ARRAY_INIT;
+	*uri = empty;
+}
+
+/** The port a scheme uses when the authority does not name one. */
+static UINT32 client_uri_default_port(const char* scheme)
+{
+	if (_stricmp(scheme, "https") == 0)
+		return 443;
+	if (_stricmp(scheme, "http") == 0)
+		return 80;
+	return 0;
+}
+
+/** @brief Split a URI into the parts the callback check compares
+ *
+ *  Only absolute \c scheme://authority[/path][?query][#fragment] URIs are accepted, which is
+ *  what an OAuth redirect URI is. Nothing here is logged: the URI can hold an authorization
+ *  code.
+ *
+ *  @param str The URI to split
+ *  @param uri Receives the parts, to be released with \b client_uri_free
+ *  @return \b TRUE if \b str is such a URI
+ */
+static BOOL client_uri_parse(const char* str, client_uri* uri)
+{
+	const client_uri empty = WINPR_C_ARRAY_INIT;
+	*uri = empty;
+
+	const char* sep = strstr(str, "://");
+	if (!sep || (sep == str))
+		return FALSE;
+
+	/* scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) */
+	if (!isalpha((unsigned char)str[0]))
+		return FALSE;
+	for (const char* pos = str; pos < sep; pos++)
+	{
+		const char cur = *pos;
+		if (!isalnum((unsigned char)cur) && (cur != '+') && (cur != '-') && (cur != '.'))
+			return FALSE;
+	}
+
+	uri->scheme = strndup(str, WINPR_ASSERTING_INT_CAST(size_t, sep - str));
+	if (!uri->scheme)
+		goto fail;
+
+	const char* authority = sep + 3;
+	const char* rest = authority + strcspn(authority, "/?#");
+
+	/* An authority may be preceded by userinfo, which a redirect URI never uses. */
+	for (const char* pos = authority; pos < rest; pos++)
+	{
+		if (*pos != '@')
+			continue;
+		uri->userinfo = TRUE;
+		authority = pos + 1;
+	}
+
+	const char* hostend = authority;
+	if (*authority == '[') /* IP-literal */
+	{
+		while ((hostend < rest) && (*hostend != ']'))
+			hostend++;
+		if (hostend == rest)
+			goto fail;
+		hostend++;
+	}
+	else
+	{
+		while ((hostend < rest) && (*hostend != ':'))
+			hostend++;
+	}
+
+	if (hostend == authority)
+		goto fail;
+
+	uri->host = client_uri_decode(authority, WINPR_ASSERTING_INT_CAST(size_t, hostend - authority));
+	if (!uri->host)
+		goto fail;
+
+	if (hostend < rest)
+	{
+		if (*hostend != ':')
+			goto fail;
+
+		uri->port = 0;
+		for (const char* pos = hostend + 1; pos < rest; pos++)
+		{
+			if (!isdigit((unsigned char)*pos) || (uri->port > UINT16_MAX))
+				goto fail;
+			uri->port = uri->port * 10 + (UINT32)(*pos - '0');
+		}
+		if (uri->port > UINT16_MAX)
+			goto fail;
+		if (hostend + 1 == rest) /* an empty port means the default port */
+			uri->port = client_uri_default_port(uri->scheme);
+	}
+	else
+		uri->port = client_uri_default_port(uri->scheme);
+
+	const char* pathend = rest + strcspn(rest, "?#");
+	uri->path = client_uri_decode(rest, WINPR_ASSERTING_INT_CAST(size_t, pathend - rest));
+	if (!uri->path)
+		goto fail;
+
+	if (*pathend == '?')
+	{
+		uri->query = pathend + 1;
+		uri->fragment = strchr(uri->query, '#') != nullptr;
+	}
+	else if (*pathend == '#')
+		uri->fragment = TRUE;
+
+	return TRUE;
+
+fail:
+	client_uri_free(uri);
+	return FALSE;
+}
+
+/** @brief Whether two URIs address the same resource
+ *
+ *  The query is deliberately not compared: the authorization response adds parameters to the
+ *  redirect URI the request was made with.
+ */
+static BOOL client_uri_same_destination(const client_uri* lhs, const client_uri* rhs)
+{
+	/* An empty path and "/" address the same resource. */
+	const char* lpath = (lhs->path[0] == '\0') ? "/" : lhs->path;
+	const char* rpath = (rhs->path[0] == '\0') ? "/" : rhs->path;
+
+	return (_stricmp(lhs->scheme, rhs->scheme) == 0) && (_stricmp(lhs->host, rhs->host) == 0) &&
+	       (lhs->port == rhs->port) && (strcmp(lpath, rpath) == 0);
+}
+
+/** @brief Result of looking a parameter up in a URI query */
+typedef enum
+{
+	CLIENT_QUERY_MISSING,
+	CLIENT_QUERY_FOUND,
+	CLIENT_QUERY_DUPLICATE
+} client_query_result;
+
+/** @brief Look one parameter up in a percent encoded URI query
+ *
+ *  A parameter given without a value counts as an occurrence, so a query can not smuggle a
+ *  second \c code or \c state past the duplicate check by leaving the value out.
+ *
+ *  @param query The query to search, may be \b nullptr
+ *  @param name The name of the parameter
+ *  @param value Receives the percent decoded value, may be \b nullptr
+ *
+ *  @return whether \b name occurs exactly once in \b query with a value that decodes
+ */
+static client_query_result client_uri_query_value(const char* query, const char* name, char** value)
+{
+	client_query_result rc = CLIENT_QUERY_MISSING;
+
+	if (value)
+		*value = nullptr;
+
+	if (!query)
+		return CLIENT_QUERY_MISSING;
+
+	for (const char* pos = query; pos; pos = strchr(pos, '&'))
+	{
+		if (*pos == '&')
+			pos++;
+
+		const size_t pairlen = strcspn(pos, "&#");
+		const size_t keylen = strcspn(pos, "=&#");
+
+		char* key = client_uri_decode(pos, keylen);
+		if (!key)
+			return CLIENT_QUERY_DUPLICATE; /* a key that does not decode makes the query unusable */
+
+		const BOOL match = strcmp(key, name) == 0;
+		free(key);
+
+		if (!match)
+			continue;
+
+		if (rc != CLIENT_QUERY_MISSING)
+		{
+			if (value)
+			{
+				free(*value);
+				*value = nullptr;
+			}
+			return CLIENT_QUERY_DUPLICATE;
+		}
+
+		rc = CLIENT_QUERY_FOUND;
+		if (keylen == pairlen) /* the parameter was given without a value */
+			continue;
+
+		if (value)
+		{
+			*value = client_uri_decode(&pos[keylen + 1], pairlen - keylen - 1);
+			if (!*value)
+				return CLIENT_QUERY_DUPLICATE; /* a value that does not decode is unusable */
+		}
+	}
+
+	return rc;
+}
+
+/** @brief Compare two strings in a time that does not depend on their contents
+ *
+ *  The 'state' value is the secret an authorization response has to know. A response that does
+ *  not carry it neither ends the transaction nor closes the web view, so a page that can drive
+ *  top level navigations may try again as often as it likes.
+ *
+ *  @param a The first string
+ *  @param b The second string
+ *  @return \b TRUE if both strings are equal
+ */
+static BOOL client_const_time_equal(const char* a, const char* b)
+{
+	const size_t alen = strlen(a);
+	const size_t blen = strlen(b);
+
+	if (alen != blen)
+		return FALSE;
+
+	BYTE acc = 0;
+	for (size_t x = 0; x < alen; x++)
+		acc |= (BYTE)a[x] ^ (BYTE)b[x];
+
+	return acc == 0;
+}
+
+static const char* client_aad_callback_result_str(freerdp_client_aad_callback_result result)
+{
+	switch (result)
+	{
+		case FREERDP_CLIENT_AAD_CALLBACK_UNRELATED:
+			return "UNRELATED";
+		case FREERDP_CLIENT_AAD_CALLBACK_CODE:
+			return "CODE";
+		case FREERDP_CLIENT_AAD_CALLBACK_ERROR:
+			return "ERROR";
+		case FREERDP_CLIENT_AAD_CALLBACK_INVALID:
+		default:
+			return "INVALID";
+	}
+}
+
+freerdp_client_aad_callback_result freerdp_client_aad_parse_callback(rdpClientContext* cctx,
+                                                                     const char* uri, char** code)
+{
+	freerdp_client_aad_callback_result result = FREERDP_CLIENT_AAD_CALLBACK_INVALID;
+	client_uri actual = WINPR_C_ARRAY_INIT;
+	client_uri expected = WINPR_C_ARRAY_INIT;
+	char* state = nullptr;
+	char* value = nullptr;
+
+	if (code)
+		*code = nullptr;
+
+	if (!cctx || !uri)
+		return FREERDP_CLIENT_AAD_CALLBACK_INVALID;
+
+	client_aad_oauth* oauth = cctx->aad_oauth;
+	if (!oauth || !oauth->state || !oauth->redirect_uri)
+	{
+		WLog_ERR(TAG, "no AAD authorization request is in flight");
+		return FREERDP_CLIENT_AAD_CALLBACK_INVALID;
+	}
+
+	/* An authorization response is answered once. A second one, whatever it carries, is a
+	 * replay of the first or a response to a request this client did not make. */
+	if (oauth->consumed)
+	{
+		WLog_ERR(TAG, "the AAD authorization request was already answered");
+		return FREERDP_CLIENT_AAD_CALLBACK_INVALID;
+	}
+
+	if (!client_uri_parse(oauth->redirect_uri, &expected))
+	{
+		WLog_ERR(TAG, "the redirect URI of the authorization request is not an absolute URI");
+		goto cleanup;
+	}
+
+	/* A web view navigates to all kinds of URIs, only the redirect URI is ours. */
+	if (!client_uri_parse(uri, &actual) || !client_uri_same_destination(&actual, &expected))
+	{
+		result = FREERDP_CLIENT_AAD_CALLBACK_UNRELATED;
+		goto cleanup;
+	}
+
+	if (actual.userinfo || actual.fragment)
+		goto cleanup;
+
+	if ((client_uri_query_value(actual.query, "state", &state) != CLIENT_QUERY_FOUND) || !state ||
+	    !client_const_time_equal(state, oauth->state))
+		goto cleanup;
+
+	const client_query_result hasCode = client_uri_query_value(actual.query, "code", &value);
+	const client_query_result hasError = client_uri_query_value(actual.query, "error", nullptr);
+
+	if ((hasCode == CLIENT_QUERY_FOUND) && (hasError == CLIENT_QUERY_MISSING))
+	{
+		if (!value || (value[0] == '\0'))
+			goto cleanup;
+
+		result = FREERDP_CLIENT_AAD_CALLBACK_CODE;
+		if (code)
+		{
+			*code = value;
+			value = nullptr;
+		}
+	}
+	else if ((hasError == CLIENT_QUERY_FOUND) && (hasCode == CLIENT_QUERY_MISSING))
+		result = FREERDP_CLIENT_AAD_CALLBACK_ERROR;
+
+cleanup:
+	/* The transaction has reached its end, only the code verifier is still needed. */
+	if ((result == FREERDP_CLIENT_AAD_CALLBACK_CODE) ||
+	    (result == FREERDP_CLIENT_AAD_CALLBACK_ERROR))
+		oauth->consumed = TRUE;
+
+	/* Never log the URI or anything parsed out of it: it can hold an authorization code and
+	 * the error description can name the account that was used. */
+	WLog_Print(WLog_Get(TAG),
+	           (result == FREERDP_CLIENT_AAD_CALLBACK_UNRELATED) ? WLOG_DEBUG : WLOG_INFO,
+	           "AAD authorization callback: %s", client_aad_callback_result_str(result));
+	free(state);
+	free(value);
+	client_uri_free(&actual);
+	client_uri_free(&expected);
+	return result;
 }
 
 static void set_default_callbacks(freerdp* instance)
@@ -1141,38 +1545,103 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 	return TRUE;
 }
 
-static const char* extract_authorization_code(char* url)
+#if defined(WITH_AAD)
+/** @brief Strip what a terminal or a mail client wrapped around a pasted URI
+ *
+ *  A pasted line arrives with the line ending, often with leading white space and sometimes
+ *  inside the angle brackets or quotes that clients put around a URI. None of that belongs to
+ *  the URI, and one stray character is enough to fail the single attempt this flow has.
+ *
+ *  @param url The line to trim in place
+ *  @return The first character of the URI in \b url
+ */
+static char* client_trim_pasted_uri(char* url)
 {
-	WINPR_ASSERT(url);
+	char* start = url;
+	size_t len = strlen(start);
 
-	for (char* p = strchr(url, '?'); p++ != nullptr; p = strchr(p, '&'))
+	for (BOOL done = FALSE; !done;)
 	{
-		if (strncmp(p, "code=", 5) != 0)
-			continue;
+		done = TRUE;
 
-		char* end = nullptr;
-		p += 5;
+		while ((len > 0) && isspace((unsigned char)start[0]))
+		{
+			start++;
+			len--;
+			done = FALSE;
+		}
 
-		end = strchr(p, '&');
-		if (end)
-			*end = '\0';
+		while ((len > 0) && isspace((unsigned char)start[len - 1]))
+		{
+			start[--len] = '\0';
+			done = FALSE;
+		}
 
-		return p;
+		/* <https://...>, "https://..." and 'https://...' all show up in pasted lines. */
+		const char first = (len >= 2) ? start[0] : '\0';
+		const char last = (len >= 2) ? start[len - 1] : '\0';
+		if (((first == '<') && (last == '>')) ||
+		    (((first == '"') || (first == '\'')) && (last == first)))
+		{
+			start[len - 1] = '\0';
+			start++;
+			len -= 2;
+			done = FALSE;
+		}
 	}
 
-	return nullptr;
+	return start;
 }
 
-#if defined(WITH_AAD)
+/** @brief Read the redirect URI the user pasted and return the authorization code
+ *
+ *  @param instance The RDP instance to read for
+ *  @param cctx The client context the authorization request was built with
+ *  @return The percent decoded authorization code or \b nullptr
+ */
+WINPR_ATTR_MALLOC(free, 1)
+static char* client_cli_read_authorization_code(freerdp* instance, rdpClientContext* cctx)
+{
+	size_t size = 0;
+	char* url = nullptr;
+	char* code = nullptr;
+
+	printf("Paste redirect URL here: \n");
+
+	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
+	{
+		free(url);
+		return nullptr;
+	}
+
+	switch (freerdp_client_aad_parse_callback(cctx, client_trim_pasted_uri(url), &code))
+	{
+		case FREERDP_CLIENT_AAD_CALLBACK_CODE:
+			break;
+		case FREERDP_CLIENT_AAD_CALLBACK_ERROR:
+			WLog_ERR(TAG, "the authorization server declined the request");
+			break;
+		case FREERDP_CLIENT_AAD_CALLBACK_UNRELATED:
+			WLog_ERR(TAG, "this is not the redirect URI the request was made with");
+			break;
+		default:
+			WLog_ERR(TAG, "the authorization response was rejected");
+			break;
+	}
+
+	/* The pasted line holds the authorization code. */
+	client_free_secret(url);
+	return code;
+}
+
 static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* scope,
                                                const char* req_cnf, char** token)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
 
-	size_t size = 0;
-	char* url = nullptr;
 	char* token_request = nullptr;
+	char* code = nullptr;
 
 	WINPR_ASSERT(scope);
 	WINPR_ASSERT(req_cnf);
@@ -1181,24 +1650,20 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	BOOL rc = FALSE;
 	*token = nullptr;
 
-	char* request = freerdp_client_get_aad_url((rdpClientContext*)instance->context,
-	                                           FREERDP_CLIENT_AAD_AUTH_REQUEST, scope);
+	rdpClientContext* cctx = (rdpClientContext*)instance->context;
+	char* request = freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AUTH_REQUEST, scope);
+	if (!request)
+		return FALSE;
 
 	printf("Browse to: %s\n", request);
 	free(request);
-	printf("Paste redirect URL here: \n");
 
-	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
+	code = client_cli_read_authorization_code(instance, cctx);
+	if (!code)
 		goto cleanup;
 
-	{
-		const char* code = extract_authorization_code(url);
-		if (!code)
-			goto cleanup;
-		token_request =
-		    freerdp_client_get_aad_url((rdpClientContext*)instance->context,
-		                               FREERDP_CLIENT_AAD_TOKEN_REQUEST, scope, code, req_cnf);
-	}
+	token_request =
+	    freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_TOKEN_REQUEST, scope, code, req_cnf);
 	if (!token_request)
 		goto cleanup;
 
@@ -1206,7 +1671,7 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 
 cleanup:
 	client_free_secret(token_request);
-	free(url);
+	client_free_secret(code);
 	return rc && (*token != nullptr);
 }
 
@@ -1215,9 +1680,8 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
 
-	size_t size = 0;
-	char* url = nullptr;
 	char* token_request = nullptr;
+	char* code = nullptr;
 
 	WINPR_ASSERT(token);
 
@@ -1225,25 +1689,19 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 
 	*token = nullptr;
 
-	char* request = freerdp_client_get_aad_url((rdpClientContext*)instance->context,
-	                                           FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST);
+	rdpClientContext* cctx = (rdpClientContext*)instance->context;
+	char* request = freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST);
 	if (!request)
 		return FALSE;
+
 	printf("Browse to: %s\n", request);
 	free(request);
-	printf("Paste redirect URL here: \n");
 
-	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
+	code = client_cli_read_authorization_code(instance, cctx);
+	if (!code)
 		goto cleanup;
 
-	{
-		const char* code = extract_authorization_code(url);
-		if (!code)
-			goto cleanup;
-		token_request = freerdp_client_get_aad_url((rdpClientContext*)instance->context,
-		                                           FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST, code);
-	}
-
+	token_request = freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST, code);
 	if (!token_request)
 		goto cleanup;
 
@@ -1251,7 +1709,7 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 
 cleanup:
 	client_free_secret(token_request);
-	free(url);
+	client_free_secret(code);
 	return rc && (*token != nullptr);
 }
 #endif

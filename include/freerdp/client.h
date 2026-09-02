@@ -433,13 +433,67 @@ extern "C"
 	FREERDP_API char* freerdp_client_get_aad_url(rdpClientContext* cctx,
 	                                             freerdp_client_aad_type type, ...);
 
+	/** @brief result of \ref freerdp_client_aad_parse_callback
+	 *  @since version 3.32.0
+	 */
+	typedef enum
+	{
+		/** Not the redirect URI of the transaction, keep navigating. */
+		FREERDP_CLIENT_AAD_CALLBACK_UNRELATED,
+		/** The redirect URI was reached with a usable response, \b code was allocated. */
+		FREERDP_CLIENT_AAD_CALLBACK_CODE,
+		/** The redirect URI was reached with an \c error response, e.g. the user declined. */
+		FREERDP_CLIENT_AAD_CALLBACK_ERROR,
+		/** The redirect URI was reached but the response can not be used: no transaction is in
+		 *  flight or it was already answered, the \c state does not match, a component is not
+		 *  a valid percent encoding, the URI carries userinfo or a fragment, or the query holds
+		 *  neither or both of \c code and \c error. */
+		FREERDP_CLIENT_AAD_CALLBACK_INVALID
+	} freerdp_client_aad_callback_result;
+
+	/** @brief Check a URI observed by a front end against the running OAuth transaction
+	 *
+	 *  Front ends that show an authorization request built by
+	 *  \ref freerdp_client_get_aad_url in a web view call this for every URI the view
+	 *  navigates to, front ends that let the user paste the redirect call it once. The URI is
+	 *  accepted only if its scheme, host, port and path are the ones of the redirect URI the
+	 *  authorization request was built with (compared after percent decoding, scheme and host
+	 *  without regard to case, a missing port equal to the default port of the scheme), it
+	 *  carries neither userinfo nor a fragment, and its query holds the \c state value of the
+	 *  transaction and exactly one of \c code or \c error. A parameter given without a value
+	 *  counts as an occurrence, and a component that is not a valid percent encoding of a string
+	 *  without NUL is rejected instead of being compared as it stands.
+	 *
+	 *  The first \ref FREERDP_CLIENT_AAD_CALLBACK_CODE or \ref FREERDP_CLIENT_AAD_CALLBACK_ERROR
+	 *  ends the transaction: every later call answers \ref FREERDP_CLIENT_AAD_CALLBACK_INVALID
+	 *  until a new authorization request is built. The code verifier stays available for the
+	 *  matching token request.
+	 *
+	 *  Neither the URI nor any value parsed from it is ever logged.
+	 *
+	 *  @param cctx The client context the authorization request was built with
+	 *  @param uri The URI to check
+	 *  @param code Receives the percent decoded authorization code on
+	 *              \ref FREERDP_CLIENT_AAD_CALLBACK_CODE, to be released with \b free. Set to
+	 *              \b nullptr for every other result. May be \b nullptr to only classify the
+	 *              URI.
+	 *
+	 *  @return The classification of \b uri,
+	 *          \ref FREERDP_CLIENT_AAD_CALLBACK_INVALID if \b cctx or \b uri is \b nullptr
+	 *  @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API freerdp_client_aad_callback_result
+	freerdp_client_aad_parse_callback(rdpClientContext* cctx, const char* uri, char** code);
+
 	/** @brief Discard the OAuth transaction of a client context
 	 *
 	 *  Releases the \c state value, the PKCE code verifier and the expected redirect URI the
 	 *  last authorization request generated. A token request built afterwards carries no
-	 *  \c code_verifier. Called automatically when a new authorization request is built,
-	 *  when the matching token request has been built and when the client context is
-	 *  freed.
+	 *  \c code_verifier and \ref freerdp_client_aad_parse_callback answers
+	 *  \ref FREERDP_CLIENT_AAD_CALLBACK_INVALID until a new authorization request is built.
+	 *  Called automatically when a new authorization request is built, when the matching token
+	 *  request has been built and when the client context is freed.
 	 *
 	 *  @param cctx The client context to reset, may be \b nullptr
 	 *  @since version 3.32.0
