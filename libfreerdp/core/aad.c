@@ -1012,8 +1012,42 @@ WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
 WINPR_ATTR_NODISCARD
 WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const char* tenantid)
 {
-	WINPR_ASSERT(base);
-	WINPR_ASSERT(tenantid);
+	if (!base)
+	{
+		WLog_Print(log, WLOG_ERROR, "FreeRDP_GatewayAzureActiveDirectory must not be empty");
+		return nullptr;
+	}
+	if (!tenantid)
+	{
+		WLog_Print(log, WLOG_ERROR, "FreeRDP_GatewayAvdAadtenantid must not be empty");
+		return nullptr;
+	}
+
+	const size_t tenantlen = strlen(tenantid);
+	if ((tenantlen == 0) || (tenantlen > 128))
+	{
+		WLog_Print(log, WLOG_ERROR, "FreeRDP_GatewayAvdAadtenantid must contain 1..128 characters");
+		return nullptr;
+	}
+	BOOL hasNonDot = FALSE;
+	for (size_t x = 0; x < tenantlen; x++)
+	{
+		const unsigned char c = (unsigned char)tenantid[x];
+		const BOOL asciiAlphaNumeric =
+		    ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9'));
+		if (!asciiAlphaNumeric && (c != '-') && (c != '.'))
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "FreeRDP_GatewayAvdAadtenantid contains an invalid character");
+			return nullptr;
+		}
+		hasNonDot |= c != '.';
+	}
+	if (!hasNonDot)
+	{
+		WLog_Print(log, WLOG_ERROR, "FreeRDP_GatewayAvdAadtenantid must not consist only of dots");
+		return nullptr;
+	}
 
 	char* str = nullptr;
 	size_t len = 0;
