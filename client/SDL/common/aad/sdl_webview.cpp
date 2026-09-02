@@ -20,8 +20,10 @@
 #include <string>
 #include <sstream>
 #include <cstdlib>
+#include <cstring>
 #include <memory>
 
+#include <winpr/crt.h>
 #include <winpr/string.h>
 #include <freerdp/log.h>
 #include <freerdp/utils/aad.h>
@@ -30,6 +32,20 @@
 #include "webview_impl.hpp"
 
 #define TAG CLIENT_TAG("SDL.webview")
+
+/** @brief Release a string that held credential material
+ *
+ *  A token request body carries the authorization code and the PKCE code verifier, so it is
+ *  scrubbed before it is released, like the bodies client/common builds for the paste flow.
+ *
+ *  @param str The string to scrub and release, may be \b nullptr
+ */
+static void free_secret(char* str)
+{
+	if (str)
+		SecureZeroMemory(str, strlen(str));
+	free(str);
+}
 
 static std::string from_settings(const rdpSettings* settings, FreeRDP_Settings_Keys_String id)
 {
@@ -71,20 +87,28 @@ static BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* s
 	auto settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	std::shared_ptr<char> request(freerdp_client_get_aad_url((rdpClientContext*)instance->context,
-	                                                         FREERDP_CLIENT_AAD_AUTH_REQUEST,
-	                                                         scope),
-	                              free);
+	auto cctx = reinterpret_cast<rdpClientContext*>(instance->context);
+	std::shared_ptr<char> request(
+	    freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AUTH_REQUEST, scope), free);
+	if (!request)
+	{
+		WLog_ERR(TAG, "failed to build the AAD authorization request");
+		return FALSE;
+	}
+
 	const std::string title = "FreeRDP WebView - AAD access token";
 	std::string code;
-	auto rc = webview_impl_run(title, request.get(), code);
+	auto rc = webview_impl_run(title, request.get(), cctx, code);
 	if (!rc || code.empty())
 		return FALSE;
 
-	std::shared_ptr<char> token_request(
-	    freerdp_client_get_aad_url((rdpClientContext*)instance->context,
-	                               FREERDP_CLIENT_AAD_TOKEN_REQUEST, scope, code.c_str(), req_cnf),
-	    free);
+	std::shared_ptr<char> token_request(freerdp_client_get_aad_url(cctx,
+	                                                               FREERDP_CLIENT_AAD_TOKEN_REQUEST,
+	                                                               scope, code.c_str(), req_cnf),
+	                                    free_secret);
+	if (!token_request)
+		return FALSE;
+
 	return client_common_get_access_token(instance, token_request.get(), token);
 }
 
@@ -94,20 +118,27 @@ static BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
 
-	std::shared_ptr<char> request(freerdp_client_get_aad_url((rdpClientContext*)instance->context,
-	                                                         FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST),
-	                              free);
+	auto cctx = reinterpret_cast<rdpClientContext*>(instance->context);
+	std::shared_ptr<char> request(
+	    freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST), free);
+	if (!request)
+	{
+		WLog_ERR(TAG, "failed to build the AVD authorization request");
+		return FALSE;
+	}
 
 	const std::string title = "FreeRDP WebView - AVD access token";
 	std::string code;
-	auto rc = webview_impl_run(title, request.get(), code);
+	auto rc = webview_impl_run(title, request.get(), cctx, code);
 	if (!rc || code.empty())
 		return FALSE;
 
 	std::shared_ptr<char> token_request(
-	    freerdp_client_get_aad_url((rdpClientContext*)instance->context,
-	                               FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST, code.c_str()),
-	    free);
+	    freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST, code.c_str()),
+	    free_secret);
+	if (!token_request)
+		return FALSE;
+
 	return client_common_get_access_token(instance, token_request.get(), token);
 }
 
