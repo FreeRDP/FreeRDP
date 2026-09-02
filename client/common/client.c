@@ -23,6 +23,7 @@
 #include <freerdp/config.h>
 
 #include <string.h>
+#include <ctype.h>
 #include <errno.h>
 #include <math.h>
 #include <limits.h>
@@ -2491,10 +2492,126 @@ BOOL freerdp_client_use_relative_mouse_events(rdpClientContext* cctx)
 }
 
 #if defined(WITH_AAD)
+
+/** The longest tenant identifier accepted in a redirect URI.
+ *
+ *  Entra tenant identifiers are GUIDs or verified domain names; 128 characters is well beyond
+ *  both and keeps the value from dominating the URL.
+ */
+#define CLIENT_AAD_TENANTID_MAXLEN 128
+
+/** @brief Check a redirect URI format string taken from the settings
+ *
+ *  \b FreeRDP_GatewayAvdAccessAadFormat and \b FreeRDP_GatewayAvdAccessTokenFormat are
+ *  passed to \b winpr_asprintf as the format string, so a value that does not describe the
+ *  arguments the caller pushes reads past the end of the argument list. Accept literal text,
+ *  \c %% and at most \b conversions \c %s; reject every other conversion, including length
+ *  modifiers, positional arguments and \c %n.
+ *
+ *  Fewer conversions than expected are allowed: a cloud that publishes a fixed redirect URI
+ *  configures a format string without any conversion.
+ *
+ *  @param fmt The format string to check
+ *  @param conversions The number of \c %s conversions the caller supplies arguments for
+ *  @param key The setting \b fmt was read from, for the error message
+ *
+ *  @return \b TRUE if \b fmt is safe to expand with \b conversions string arguments
+ */
+static BOOL client_aad_check_redirect_format(const char* fmt, size_t conversions,
+                                             FreeRDP_Settings_Keys_String key)
+{
+	const char* name = freerdp_settings_get_name_for_key(key);
+
+	if (!fmt)
+	{
+		WLog_ERR(TAG, "setting %s is not set", name);
+		return FALSE;
+	}
+
+	size_t count = 0;
+	for (const char* pos = strchr(fmt, '%'); pos; pos = strchr(pos, '%'))
+	{
+		switch (pos[1])
+		{
+			case '%':
+				break;
+			case 's':
+				count++;
+				break;
+			default:
+				WLog_ERR(TAG,
+				         "setting %s uses an unsupported conversion, only '%%s' and '%%%%' "
+				         "are allowed",
+				         name);
+				return FALSE;
+		}
+		pos += 2;
+	}
+
+	if (count > conversions)
+	{
+		WLog_ERR(TAG, "setting %s has %" PRIuz " '%%s' conversions, at most %" PRIuz " are allowed",
+		         name, count, conversions);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/** @brief Check a tenant identifier before it is expanded into a URL
+ *
+ *  \b isalnum() is locale dependent and a client that called \b setlocale() can have bytes
+ *  >= 0x80 pass it, so the character class is spelled out. A label of dots only would walk the
+ *  path of the URL the tenant is expanded into.
+ *
+ *  @param tenantid The value of \b FreeRDP_GatewayAvdAadtenantid or the default tenant
+ *  @return \b TRUE if \b tenantid consists of ASCII alphanumerics, \c - and \c ., is not
+ *          only dots and is not longer than \ref CLIENT_AAD_TENANTID_MAXLEN
+ */
+static BOOL client_aad_check_tenantid(const char* tenantid)
+{
+	const char* name = freerdp_settings_get_name_for_key(FreeRDP_GatewayAvdAadtenantid);
+
+	if (!tenantid)
+	{
+		WLog_ERR(TAG, "setting %s is not set", name);
+		return FALSE;
+	}
+
+	const size_t len = strnlen(tenantid, CLIENT_AAD_TENANTID_MAXLEN + 1);
+	if ((len == 0) || (len > CLIENT_AAD_TENANTID_MAXLEN))
+	{
+		WLog_ERR(TAG, "setting %s must be 1 to %d characters long", name,
+		         CLIENT_AAD_TENANTID_MAXLEN);
+		return FALSE;
+	}
+
+	for (size_t x = 0; x < len; x++)
+	{
+		const char cur = tenantid[x];
+		const BOOL alnum = ((cur >= '0') && (cur <= '9')) || ((cur >= 'a') && (cur <= 'z')) ||
+		                   ((cur >= 'A') && (cur <= 'Z'));
+		if (alnum || (cur == '-') || (cur == '.'))
+			continue;
+
+		WLog_ERR(TAG, "setting %s must only contain ASCII alphanumerics, '-' and '.'", name);
+		return FALSE;
+	}
+
+	if (strspn(tenantid, ".") == len)
+	{
+		WLog_ERR(TAG, "setting %s must not consist of '.' only", name);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 WINPR_ATTR_MALLOC(free, 1)
 static char* get_redirect_uri(const rdpSettings* settings)
 {
 	char* redirect_uri = nullptr;
+	size_t redirect_len = 0;
 	const bool cli = freerdp_settings_get_bool(settings, FreeRDP_UseCommonStdioCallbacks);
 	if (cli)
 	{
@@ -2505,14 +2622,22 @@ static char* get_redirect_uri(const rdpSettings* settings)
 		if (useTenant)
 			tenantid = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAadtenantid);
 
-		if (tenantid && redirect_fmt)
+		const char* url =
+		    freerdp_settings_get_string(settings, FreeRDP_GatewayAzureActiveDirectory);
+		if (!url)
 		{
-			const char* url =
-			    freerdp_settings_get_string(settings, FreeRDP_GatewayAzureActiveDirectory);
-
-			size_t redirect_len = 0;
-			winpr_asprintf(&redirect_uri, &redirect_len, redirect_fmt, url, tenantid);
+			WLog_ERR(TAG, "setting %s is not set",
+			         freerdp_settings_get_name_for_key(FreeRDP_GatewayAzureActiveDirectory));
+			return nullptr;
 		}
+
+		if (!client_aad_check_tenantid(tenantid))
+			return nullptr;
+
+		if (!client_aad_check_redirect_format(redirect_fmt, 2, FreeRDP_GatewayAvdAccessAadFormat))
+			return nullptr;
+
+		winpr_asprintf(&redirect_uri, &redirect_len, redirect_fmt, url, tenantid);
 	}
 	else
 	{
@@ -2520,7 +2645,16 @@ static char* get_redirect_uri(const rdpSettings* settings)
 		const char* redirect_fmt =
 		    freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAccessTokenFormat);
 
-		size_t redirect_len = 0;
+		if (!client_id)
+		{
+			WLog_ERR(TAG, "setting %s is not set",
+			         freerdp_settings_get_name_for_key(FreeRDP_GatewayAvdClientID));
+			return nullptr;
+		}
+
+		if (!client_aad_check_redirect_format(redirect_fmt, 1, FreeRDP_GatewayAvdAccessTokenFormat))
+			return nullptr;
+
 		winpr_asprintf(&redirect_uri, &redirect_len, redirect_fmt, client_id);
 	}
 	return redirect_uri;
