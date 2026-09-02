@@ -37,6 +37,8 @@ set(SRCS
     sdl_disp.hpp
     sdl_monitor.cpp
     sdl_monitor.hpp
+    sdl_monitor_scale.cpp
+    sdl_monitor_scale.hpp
     sdl_freerdp.hpp
     sdl_freerdp.cpp
     sdl_channels.hpp
@@ -169,5 +171,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/sdl_config.hpp.in ${CMAKE_CURRENT_BIN
 
 installwithrpath(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 install_freerdp_desktop("${MODULE_NAME}" "${SDL_CLIENT_UUID}")
+
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+  add_executable(TestSDLMonitorScale test/TestSDLMonitorScale.cpp sdl_monitor_scale.cpp)
+  target_link_libraries(TestSDLMonitorScale PRIVATE SDL3::Headers)
+  set_target_properties(TestSDLMonitorScale PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+  add_test(NAME TestSDLMonitorScale COMMAND ${TESTING_OUTPUT_DIRECTORY}/TestSDLMonitorScale)
+  set_property(TARGET TestSDLMonitorScale PROPERTY FOLDER "FreeRDP/Client/Test")
+endif()
 
 add_subdirectory(man)
