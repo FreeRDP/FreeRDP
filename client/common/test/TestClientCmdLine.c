@@ -171,6 +171,12 @@ static BOOL check_settings_avd_usgov_custom_scope(rdpSettings* settings)
 	                       FALSE);
 }
 
+static BOOL check_settings_avd_custom_authority(rdpSettings* settings)
+{
+	return check_avd_cloud(settings, "login.contoso.invalid", avd_commercial_scope,
+	                       avd_commercial_redirect, FALSE);
+}
+
 typedef struct
 {
 	int expected_status;
@@ -305,6 +311,27 @@ static const test tests[] = {
 	  check_settings_avd_usgov,
 	  { "testfreerdp", "/azure:avd-scope:custom-scope",
 	    "/gateway:g:gw.contoso.com,type:arm,cloud:usgov", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	/* A .rdp file is loaded without selecting a cloud, so the cloud is selected once, from the
+	 * settings the options left behind. */
+	{ 0,
+	  check_settings_avd_usgov_tenantid,
+	  { "testfreerdp", TEST_SOURCE_DIR "/rdp-avd/avd-usgov.rdp", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_commercial,
+	  { "testfreerdp", TEST_SOURCE_DIR "/rdp-avd/avd-usgov.rdp",
+	    "/gateway:g:gw.wvd.microsoft.com,type:arm", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_custom_authority,
+	  { "testfreerdp", TEST_SOURCE_DIR "/rdp-avd/avd-usgov.rdp", "/azure:ad:login.contoso.invalid",
+	    nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_usgov,
+	  { "testfreerdp", TEST_SOURCE_DIR "/rdp-avd/avd-usgov.rdp", "/azure:tenantid:common",
+	    nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 #if defined(WITH_FREERDP_DEPRECATED_CMDLINE)
 	{ COMMAND_LINE_STATUS_PRINT,
