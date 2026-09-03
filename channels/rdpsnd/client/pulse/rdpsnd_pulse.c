@@ -178,7 +178,9 @@ static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 		return FALSE;
 	}
 
-	for (;;)
+	/* the context state callback releases pulse->context on PA_CONTEXT_FAILED,
+	 * so it must be re-checked after every wait */
+	while (pulse->context)
 	{
 		state = pa_context_get_state(pulse->context);
 
@@ -193,18 +195,22 @@ static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 		pa_threaded_mainloop_wait(pulse->mainloop);
 	}
 
-	o = pa_context_get_sink_info_by_index(pulse->context, 0, rdpsnd_pulse_get_sink_info, pulse);
+	if (pulse->context)
+	{
+		o = pa_context_get_sink_info_by_index(pulse->context, 0, rdpsnd_pulse_get_sink_info, pulse);
 
-	if (o)
-		pa_operation_unref(o);
+		if (o)
+			pa_operation_unref(o);
+	}
 
-	if (state == PA_CONTEXT_READY)
+	if (pulse->context && (state == PA_CONTEXT_READY))
 	{
 		rc = TRUE;
 	}
 	else
 	{
-		pa_context_disconnect(pulse->context);
+		if (pulse->context)
+			pa_context_disconnect(pulse->context);
 		rc = FALSE;
 	}
 
@@ -257,7 +263,10 @@ static void rdpsnd_pulse_stream_state_callback(pa_stream* stream, void* userdata
 
 		case PA_STREAM_FAILED:
 		case PA_STREAM_TERMINATED:
-			// Stream object is about to be destroyed, clean up our pointer
+			/* The stream is dead (e.g. its device vanished). Drop our
+			 * reference; pa_stream dispatches state callbacks under its own
+			 * ref/unref guard, so unref here is safe. */
+			pa_stream_unref(pulse->stream);
 			pulse->stream = nullptr;
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
@@ -293,9 +302,14 @@ static void rdpsnd_pulse_close(rdpsndDevicePlugin* device)
 	{
 		rdpsnd_pulse_wait_for_operation(
 		    pulse, pa_stream_drain(pulse->stream, rdpsnd_pulse_stream_success_callback, pulse));
-		pa_stream_disconnect(pulse->stream);
-		pa_stream_unref(pulse->stream);
-		pulse->stream = nullptr;
+		/* The stream may have died while draining; the state callback then
+		 * released it and cleared pulse->stream. */
+		if (pulse->stream)
+		{
+			pa_stream_disconnect(pulse->stream);
+			pa_stream_unref(pulse->stream);
+			pulse->stream = nullptr;
+		}
 	}
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
@@ -551,13 +565,17 @@ static UINT32 rdpsnd_pulse_get_volume(rdpsndDevicePlugin* device)
 	pa_operation* o = nullptr;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
-	if (!rdpsnd_check_pulse(pulse, FALSE))
+	if (!pulse || !pulse->mainloop)
 		return 0;
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
-	o = pa_context_get_sink_info_by_index(pulse->context, 0, rdpsnd_pulse_get_sink_info, pulse);
-	if (o)
-		pa_operation_unref(o);
+	/* re-check under the lock, the context is released if the connection dies */
+	if (rdpsnd_check_pulse(pulse, FALSE))
+	{
+		o = pa_context_get_sink_info_by_index(pulse->context, 0, rdpsnd_pulse_get_sink_info, pulse);
+		if (o)
+			pa_operation_unref(o);
+	}
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 	return pulse->volume;
 }
@@ -582,7 +600,7 @@ static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	pa_operation* operation = nullptr;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
-	if (!rdpsnd_check_pulse(pulse, TRUE))
+	if (!pulse || !pulse->mainloop)
 	{
 		WLog_WARN(TAG, "called before pulse backend was initialized");
 		return FALSE;
@@ -595,6 +613,16 @@ static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	cv.values[0] = PA_VOLUME_MUTED + (left * (PA_VOLUME_NORM - PA_VOLUME_MUTED)) / PA_VOLUME_NORM;
 	cv.values[1] = PA_VOLUME_MUTED + (right * (PA_VOLUME_NORM - PA_VOLUME_MUTED)) / PA_VOLUME_NORM;
 	pa_threaded_mainloop_lock(pulse->mainloop);
+
+	/* the stream state must be inspected under the mainloop lock - it may be
+	 * cleared by the state callback when the stream dies */
+	if (!rdpsnd_check_pulse(pulse, TRUE))
+	{
+		pa_threaded_mainloop_unlock(pulse->mainloop);
+		WLog_WARN(TAG, "no pulse stream, not setting volume");
+		return FALSE;
+	}
+
 	operation = pa_context_set_sink_input_volume(pulse->context, pa_stream_get_index(pulse->stream),
 	                                             &cv, rdpsnd_set_volume_success_cb, pulse);
 
