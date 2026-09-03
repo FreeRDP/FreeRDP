@@ -112,11 +112,12 @@ char** winpr_win_backtrace_symbols(void* buffer, size_t* used)
 
 			if (SymGetLineFromAddr64(process, address, &displacement, line))
 			{
-				sprintf_s(vlines[i], line_len, "%016" PRIx64 ": %s in %s:%" PRIu32, symbol->Address,
-				          symbol->Name, line->FileName, line->LineNumber);
+				(void)sprintf_s(vlines[i], line_len, "%016" PRIx64 ": %s in %s:%" PRIu32,
+				                symbol->Address, symbol->Name, line->FileName, line->LineNumber);
 			}
 			else
-				sprintf_s(vlines[i], line_len, "%016" PRIx64 ": %s", symbol->Address, symbol->Name);
+				(void)sprintf_s(vlines[i], line_len, "%016" PRIx64 ": %s", symbol->Address,
+				                symbol->Name);
 		}
 
 		if (used)
@@ -162,7 +163,7 @@ char* winpr_win_strerror(DWORD dw, char* dmsg, size_t size)
 	}
 	else
 	{
-		_snprintf(dmsg, size, "FAILURE: 0x%08" PRIX32 "", GetLastError());
+		(void)_snprintf(dmsg, size, "FAILURE: 0x%08" PRIX32 "", GetLastError());
 	}
 
 	return dmsg;

@@ -651,7 +651,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 
 			if (ConvertWCharToUtf8(szProvName, providerNameStr, ARRAYSIZE(providerNameStr)) < 0)
 			{
-				_snprintf(providerNameStr, sizeof(providerNameStr), "<unknown>");
+				(void)_snprintf(providerNameStr, sizeof(providerNameStr), "<unknown>");
 				WLog_ERR(TAG, "unable to convert provider name to char*, will show it as '%s'",
 				         providerNameStr);
 			}

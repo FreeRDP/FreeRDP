@@ -51,7 +51,7 @@ static inline const char* ainput_flags_to_string(UINT64 flags, char* buffer, siz
 	if (flags & AINPUT_XFLAGS_BUTTON2)
 		winpr_str_append("AINPUT_XFLAGS_BUTTON2", buffer, size, "|");
 
-	_snprintf(number, sizeof(number), "[0x%08" PRIx64 "]", flags);
+	(void)_snprintf(number, sizeof(number), "[0x%08" PRIx64 "]", flags);
 	winpr_str_append(number, buffer, size, " ");
 
 	return buffer;

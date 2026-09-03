@@ -534,11 +534,17 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 	 *       The only fixed elements necessary are appsrc and the volume element for audio streams.
 	 *       The rest could easily be provided in gstreamer pipeline notation from command line. */
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		sprintf_s(pipeline, sizeof(pipeline), "%s %s name=videosink", video,
-		          tsmf_platform_get_video_sink());
+	{
+		if (sprintf_s(pipeline, sizeof(pipeline), "%s %s name=videosink", video,
+		              tsmf_platform_get_video_sink()) < 0)
+			return FALSE;
+	}
 	else
-		sprintf_s(pipeline, sizeof(pipeline), "%s %s name=audiosink", audio,
-		          tsmf_platform_get_audio_sink());
+	{
+		if (sprintf_s(pipeline, sizeof(pipeline), "%s %s name=audiosink", audio,
+		              tsmf_platform_get_audio_sink()) < 0)
+			return FALSE;
+	}
 
 	DEBUG_TSMF("pipeline=%s", pipeline);
 	mdecoder->pipe = gst_parse_launch(pipeline, nullptr);

@@ -77,10 +77,13 @@ struct X11Handle
 	int subwinY;
 };
 
+WINPR_ATTR_NODISCARD
 static const char* get_shm_id()
 {
-	static char shm_id[128];
-	sprintf_s(shm_id, sizeof(shm_id), "/com.freerdp.xfreerdp.tsmf_%016X", GetCurrentProcessId());
+	static char shm_id[128] = WINPR_C_ARRAY_INIT;
+	if (sprintf_s(shm_id, sizeof(shm_id), "/com.freerdp.xfreerdp.tsmf_%016X",
+	              GetCurrentProcessId()) < 0)
+		return nullptr;
 	return shm_id;
 }
 

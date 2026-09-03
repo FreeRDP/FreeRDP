@@ -53,12 +53,12 @@
 
 #ifdef GOOGLE_PROFILER
 #include <gperftools/profiler.h>
-#define PROFILER_START(_prefix_)                                  \
-	do                                                            \
-	{                                                             \
-		char _path[PATH_MAX];                                     \
-		sprintf_s(_path, sizeof(_path), "./%s.prof", (_prefix_)); \
-		ProfilerStart(_path);                                     \
+#define PROFILER_START(_prefix_)                                        \
+	do                                                                  \
+	{                                                                   \
+		char _path[PATH_MAX] = WINPR_C_ARRAY_INIT;                      \
+		(void)sprintf_s(_path, sizeof(_path), "./%s.prof", (_prefix_)); \
+		ProfilerStart(_path);                                           \
 	} while (0);
 #define PROFILER_STOP   \
 	do                  \

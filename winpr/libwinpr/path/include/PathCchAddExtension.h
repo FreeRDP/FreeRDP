@@ -54,24 +54,18 @@ HRESULT PATH_CCH_ADD_EXTENSION(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 
 HRESULT PATH_CCH_ADD_EXTENSION(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 {
-	CHAR* pDot;
-	BOOL bExtDot;
-	CHAR* pBackslash;
-	size_t pszExtLength;
-	size_t pszPathLength;
-
 	if (!pszPath)
 		return E_INVALIDARG;
 
 	if (!pszExt)
 		return E_INVALIDARG;
 
-	pszExtLength = strlen(pszExt);
-	pszPathLength = strlen(pszPath);
-	bExtDot = (pszExt[0] == '.') ? TRUE : FALSE;
+	const size_t pszExtLength = strlen(pszExt);
+	const size_t pszPathLength = strlen(pszPath);
+	const BOOL bExtDot = (pszExt[0] == '.') ? TRUE : FALSE;
 
-	pDot = strrchr(pszPath, '.');
-	pBackslash = strrchr(pszPath, CUR_PATH_SEPARATOR_CHR);
+	const char* pDot = strrchr(pszPath, '.');
+	const char* pBackslash = strrchr(pszPath, CUR_PATH_SEPARATOR_CHR);
 
 	if (pDot && pBackslash)
 	{
@@ -82,9 +76,15 @@ HRESULT PATH_CCH_ADD_EXTENSION(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 	if (cchPath > pszPathLength + pszExtLength + ((bExtDot) ? 0 : 1))
 	{
 		if (bExtDot)
-			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, "%s", pszExt);
+		{
+			if (sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, "%s", pszExt) < 0)
+				return S_FALSE;
+		}
 		else
-			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, ".%s", pszExt);
+		{
+			if (sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, ".%s", pszExt) < 0)
+				return S_FALSE;
+		}
 
 		return S_OK;
 	}

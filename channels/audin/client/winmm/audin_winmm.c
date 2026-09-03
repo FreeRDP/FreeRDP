@@ -124,8 +124,9 @@ static BOOL log_mmresult(AudinWinmmDevice* winmm, const char* what, MMRESULT res
 		CHAR cmsg[8192] = WINPR_C_ARRAY_INIT;
 		waveInGetErrorTextA(result, buffer, sizeof(buffer));
 
-		_snprintf(msg, sizeof(msg) - 1, "%s failed. %" PRIu32 " [%s]", what, result, buffer);
-		_snprintf(cmsg, sizeof(cmsg) - 1, "audin_winmm_thread_func reported an error '%s'", msg);
+		(void)_snprintf(msg, sizeof(msg) - 1, "%s failed. %" PRIu32 " [%s]", what, result, buffer);
+		(void)_snprintf(cmsg, sizeof(cmsg) - 1, "audin_winmm_thread_func reported an error '%s'",
+		                msg);
 		WLog_Print(winmm->log, WLOG_DEBUG, "%s", msg);
 		if (winmm->rdpcontext)
 			setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, cmsg);

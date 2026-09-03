@@ -170,9 +170,10 @@ HANDLE winpr_importHandleFromString(const char* str, const char* format)
 		return INVALID_HANDLE_VALUE;
 	}
 
+	char value[32] = WINPR_C_ARRAY_INIT;
 	size_t valueLen = strLen - prefixLen - suffixLen;
 	const char* valueStart = str + prefixLen;
-	if ((valueLen == 0) || (valueLen >= 32))
+	if ((valueLen == 0) || (valueLen >= sizeof(value)))
 	{
 		WLog_ERR(TAG, "input string '%s' has no usable handle value", str);
 		return INVALID_HANDLE_VALUE;
@@ -199,7 +200,6 @@ HANDLE winpr_importHandleFromString(const char* str, const char* format)
 	}
 #endif
 
-	char value[32] = { 0 };
 	memcpy(value, valueStart, valueLen);
 	value[valueLen] = '\0';
 

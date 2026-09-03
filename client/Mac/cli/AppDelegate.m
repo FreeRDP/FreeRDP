@@ -124,14 +124,12 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 
 - (int)ParseCommandLineArguments
 {
-	int i;
-	int length;
-	int status;
-	char *cptr;
+	int i = 0;
 	NSArray *args = [[NSProcessInfo processInfo] arguments];
-	context->argc = (int)[args count];
-	context->argv = malloc(sizeof(char *) * context->argc);
-	i = 0;
+	WINPR_ASSERT(args);
+
+	context->argc = WINPR_ASSERTING_INT_CAST(int, [args count]);
+	context->argv = calloc(sizeof(char *), context->argc);
 
 	for (NSString *str in args)
 	{
@@ -142,15 +140,19 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 		if ([str isEqualToString:@"-NSDocumentRevisionsDebugMode"])
 			continue;
 
-		length = (int)([str lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1);
-		cptr = (char *)malloc(length);
-		sprintf_s(cptr, length, "%s", [str UTF8String]);
+		const size_t length = ([str lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1);
+		if (length == 0)
+			continue;
+		char *cptr = (char *)malloc(length);
+		if (!cptr)
+			continue;
+		(void)sprintf_s(cptr, length, "%s", [str UTF8String]);
 		context->argv[i++] = cptr;
 	}
 
 	context->argc = i;
-	status = freerdp_client_settings_parse_command_line(context->settings, context->argc,
-	                                                    context->argv, FALSE);
+	const int status = freerdp_client_settings_parse_command_line(context->settings, context->argc,
+	                                                              context->argv, FALSE);
 	freerdp_client_settings_command_line_status_print(context->settings, status, context->argc,
 	                                                  context->argv);
 	return status;

@@ -57,10 +57,10 @@ static BOOL addArgument(int *argc, char ***argv, const char *fmt, ...)
 	*argv = tmp;
 	*argc = *argc + 1;
 	va_start(ap, fmt);
-	vasprintf(&arg, fmt, ap);
+	const BOOL rc = vasprintf(&arg, fmt, ap) >= 0;
 	va_end(ap);
 	(*argv)[*argc - 1] = arg;
-	return TRUE;
+	return rc;
 }
 
 static BOOL addFlag(int *argc, char ***argv, const char *str, BOOL flag)
