@@ -238,15 +238,15 @@ static BOOL aad_get_nonce(rdpAad* aad)
 		WLog_Print(aad->log, WLOG_ERROR,
 		           "Server unwilling to provide nonce; returned status code %li", resp_code);
 		if (response_length > 0)
-			WLog_Print(aad->log, WLOG_ERROR, "[status message] %s", response);
+			WLog_Print(aad->log, WLOG_DEBUG, "[status message] %s", response);
 		goto fail;
 	}
 
 	json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
 	if (!json)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "Failed to parse nonce response: %s",
-		           WINPR_JSON_GetErrorPtr());
+		WLog_Print(aad->log, WLOG_ERROR, "Failed to parse nonce response");
+		WLog_Print(aad->log, WLOG_DEBUG, "JSON parser error: %s", WINPR_JSON_GetErrorPtr());
 		goto fail;
 	}
 
