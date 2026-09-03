@@ -2194,6 +2194,17 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			return FALSE;
 	}
 
+	if (~file->GatewayCredentialsSource)
+	{
+		if (file->GatewayCredentialsSource > 5)
+		{
+			WLog_WARN(TAG, "ignoring gatewaycredentialssource value outside range 0..5");
+		}
+		else if (!freerdp_settings_set_uint32(settings, FreeRDP_GatewayCredentialsSource,
+		                                      file->GatewayCredentialsSource))
+			return FALSE;
+	}
+
 	if (~file->PromptCredentialOnce)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayUseSameCredentials,
