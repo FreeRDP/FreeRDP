@@ -156,6 +156,7 @@ static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 #error "TEST_SOURCE_DIR must be defined to the test source directory"
 #endif
 #define DISABLED_DISPLAY_OPTIONS_RDP TEST_SOURCE_DIR "/rdp-cmdline/disabled-display-options.rdp"
+#define AVD_USGOV_RDP TEST_SOURCE_DIR "/rdp-cmdline/avd-usgov.rdp"
 
 static BOOL check_settings_multimon_disabled(rdpSettings* settings)
 {
@@ -342,6 +343,118 @@ static BOOL check_settings_modem_with_fonts(rdpSettings* settings)
 	return result;
 }
 
+static const char avd_commercial_scope[] =
+    "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default%20openid%20profile%20offline_access";
+static const char avd_commercial_redirect[] = "https%%3A%%2F%%2F%s%%2F%s%%2Foauth2%%2Fnativeclient";
+static const char avd_usgov_scope[] =
+    "https%3A%2F%2Fwww.wvd.azure.us%2F.default%20openid%20profile%20offline_access";
+static const char avd_usgov_redirect[] =
+    "https%%3A%%2F%%2Flogin.microsoftonline.com%%2Fcommon%%2Foauth2%%2Fnativeclient";
+
+static BOOL check_avd_cloud(rdpSettings* settings, const char* authority, const char* scope,
+                            const char* redirect, BOOL useTenantid)
+{
+	const struct
+	{
+		FreeRDP_Settings_Keys_String key;
+		const char* expected;
+	} strings[] = { { FreeRDP_GatewayAzureActiveDirectory, authority },
+		            { FreeRDP_GatewayAvdScope, scope },
+		            { FreeRDP_GatewayAvdAccessAadFormat, redirect } };
+
+	for (size_t x = 0; x < ARRAYSIZE(strings); x++)
+	{
+		const char* val = freerdp_settings_get_string(settings, strings[x].key);
+		if (!val || (strcmp(val, strings[x].expected) != 0))
+		{
+			TEST_FAILURE("Expected %s = %s, but got %s!\n",
+			             freerdp_settings_get_name_for_key(strings[x].key), strings[x].expected,
+			             val ? val : "(null)");
+			return FALSE;
+		}
+	}
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayAvdUseTenantid) != useTenantid)
+	{
+		TEST_FAILURE("Expected GatewayAvdUseTenantid = %d!\n", useTenantid);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL check_settings_avd_commercial(rdpSettings* settings)
+{
+	return check_avd_cloud(settings, "login.microsoftonline.com", avd_commercial_scope,
+	                       avd_commercial_redirect, FALSE);
+}
+
+static BOOL check_settings_avd_usgov(rdpSettings* settings)
+{
+	return check_avd_cloud(settings, "login.microsoftonline.us", avd_usgov_scope,
+	                       avd_usgov_redirect, FALSE);
+}
+
+static BOOL check_settings_avd_usgov_tenantid(rdpSettings* settings)
+{
+	return check_avd_cloud(settings, "login.microsoftonline.us", avd_usgov_scope,
+	                       avd_usgov_redirect, TRUE);
+}
+
+static BOOL check_settings_avd_usgov_custom_scope(rdpSettings* settings)
+{
+	return check_avd_cloud(settings, "login.microsoftonline.us", "custom-scope", avd_usgov_redirect,
+	                       FALSE);
+}
+
+static BOOL check_settings_avd_custom_authority(rdpSettings* settings)
+{
+	return check_avd_cloud(settings, "login.contoso.invalid", avd_commercial_scope,
+	                       avd_commercial_redirect, FALSE);
+}
+
+static BOOL check_settings_avd_commercial_custom_scope(rdpSettings* settings)
+{
+	return check_avd_cloud(settings, "login.microsoftonline.com", "custom-scope",
+	                       avd_commercial_redirect, FALSE);
+}
+
+/* the parser leaves the automatic selection to PreConnect */
+static BOOL check_avd_auto(rdpSettings* settings, validate_settings_pr parsed,
+                           validate_settings_pr connected)
+{
+	return parsed(settings) && freerdp_client_settings_apply_avd_cloud(settings) &&
+	       connected(settings);
+}
+
+static BOOL check_settings_avd_auto_usgov(rdpSettings* settings)
+{
+	return check_avd_auto(settings, check_settings_avd_commercial, check_settings_avd_usgov);
+}
+
+static BOOL check_settings_avd_auto_usgov_tenantid(rdpSettings* settings)
+{
+	return check_avd_auto(settings, check_settings_avd_commercial,
+	                      check_settings_avd_usgov_tenantid);
+}
+
+static BOOL check_settings_avd_auto_usgov_custom_scope(rdpSettings* settings)
+{
+	return check_avd_auto(settings, check_settings_avd_commercial_custom_scope,
+	                      check_settings_avd_usgov_custom_scope);
+}
+
+static BOOL check_settings_avd_auto_commercial(rdpSettings* settings)
+{
+	return check_avd_auto(settings, check_settings_avd_commercial, check_settings_avd_commercial);
+}
+
+static BOOL check_settings_avd_auto_custom_authority(rdpSettings* settings)
+{
+	return check_avd_auto(settings, check_settings_avd_custom_authority,
+	                      check_settings_avd_custom_authority);
+}
+
 typedef struct
 {
 	int expected_status;
@@ -413,6 +526,84 @@ static const test tests[] = {
 	{ COMMAND_LINE_ERROR_NO_KEYWORD,
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "--invalid", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_auto_usgov,
+	  { "testfreerdp", "/gateway:g:gw.wvd.azure.us,type:arm", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_auto_usgov_tenantid,
+	  { "testfreerdp", "/gateway:g:gw.WVD.AZURE.US,type:arm",
+	    "/azure:tenantid:00000000-0000-0000-0000-000000000000", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	/* an explicit use-tenantid:off is not visible at connect time, cloud: honours it */
+	{ 0,
+	  check_settings_avd_auto_usgov_tenantid,
+	  { "testfreerdp", "/gateway:g:gw.wvd.azure.us,type:arm",
+	    "/azure:tenantid:00000000-0000-0000-0000-000000000000,use-tenantid:off",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_auto_usgov_custom_scope,
+	  { "testfreerdp", "/gateway:g:gw.wvd.azure.us,type:arm", "/azure:avd-scope:custom-scope",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_auto_commercial,
+	  { "testfreerdp", "/gateway:g:gw.wvd.azure.us", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_usgov,
+	  { "testfreerdp", "/gateway:g:gw.contoso.com,type:arm,cloud:usgov", "/v:test.freerdp.com",
+	    nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	/* cloud:commercial is the default and leaves nothing for connect time to tell apart */
+	{ 0,
+	  check_settings_avd_auto_usgov,
+	  { "testfreerdp", "/gateway:g:gw.wvd.azure.us,type:arm,cloud:commercial",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR,
+	  nullptr,
+	  { "testfreerdp", "/gateway:g:gw.contoso.com,type:arm,cloud:unknown", "/v:test.freerdp.com",
+	    nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_usgov_tenantid,
+	  { "testfreerdp", "/gateway:g:gw.contoso.com,type:arm,cloud:usgov",
+	    "/azure:tenantid:00000000-0000-0000-0000-000000000000", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_usgov,
+	  { "testfreerdp", "/gateway:g:gw.contoso.com,type:arm,cloud:usgov",
+	    "/azure:tenantid:00000000-0000-0000-0000-000000000000,use-tenantid:off",
+	    "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_usgov_custom_scope,
+	  { "testfreerdp", "/gateway:g:gw.contoso.com,type:arm,cloud:usgov",
+	    "/azure:avd-scope:custom-scope", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_usgov,
+	  { "testfreerdp", "/azure:avd-scope:custom-scope",
+	    "/gateway:g:gw.contoso.com,type:arm,cloud:usgov", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_auto_usgov_tenantid,
+	  { "testfreerdp", AVD_USGOV_RDP, nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_auto_commercial,
+	  { "testfreerdp", AVD_USGOV_RDP, "/gateway:g:gw.wvd.microsoft.com,type:arm", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_auto_custom_authority,
+	  { "testfreerdp", AVD_USGOV_RDP, "/azure:ad:login.contoso.invalid", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_avd_auto_usgov,
+	  { "testfreerdp", AVD_USGOV_RDP, "/azure:tenantid:common", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 #if defined(WITH_FREERDP_DEPRECATED_CMDLINE)
 	{ COMMAND_LINE_STATUS_PRINT,
