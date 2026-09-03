@@ -684,8 +684,9 @@ int TestGdiLine(int argc, char* argv[])
 		for (UINT32 x = 0; x < map_size; x++)
 		{
 			char name[1024] = WINPR_C_ARRAY_INIT;
-			_snprintf(name, sizeof(name), "%s [%s]", gdi_rop_to_string(rop_map[x].rop),
-			          FreeRDPGetColorFormatName(hdc->format));
+			if (_snprintf(name, sizeof(name), "%s [%s]", gdi_rop_to_string(rop_map[x].rop),
+			              FreeRDPGetColorFormatName(hdc->format)) < 0)
+				goto fail;
 
 			/* Test Case 13: (0,0) -> (16,16), R2_NOTMERGEPEN */
 			if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS, hPalette))

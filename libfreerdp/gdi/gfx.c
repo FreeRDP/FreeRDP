@@ -1041,7 +1041,9 @@ static void dump_cmd(const RDPGFX_SURFACE_COMMAND* cmd, UINT32 frameId)
 	WINPR_ASSERT(cmd);
 	char fname[1024] = WINPR_C_ARRAY_INIT;
 
-	snprintf(fname, sizeof(fname), "%s/%08" PRIx64 ".raw", path, xxx++);
+	if (_snprintf(fname, sizeof(fname), "%s/%08" PRIx64 ".raw", path, xxx++) < 0)
+		return;
+
 	FILE* fp = fopen(fname, "w");
 	if (!fp)
 		return;

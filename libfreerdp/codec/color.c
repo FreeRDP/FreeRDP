@@ -52,10 +52,13 @@ static BOOL freerdp_image_copy_from_pointer_data_int(
 #if defined(WITH_CURSOR_DUMP)
 #include <winpr/path.h>
 #include <winpr/image.h>
+
+WINPR_ATTR_MALLOC(free, 1)
 static char* get_dump_name(char* prefix, size_t len)
 {
 	static uint64_t count = 0;
-	_snprintf(prefix, len, "cursor_dump_%08" PRIx64, count++);
+	if (_snprintf(prefix, len, "cursor_dump_%08" PRIx64, count++) < 0)
+		return nullptr;
 
 	return GetCombinedPath(CURSOR_DUMP_DIR, prefix);
 }

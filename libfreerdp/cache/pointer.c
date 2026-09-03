@@ -356,12 +356,12 @@ BOOL pointer_cache_resize(rdpPointerCache* pointerCache)
 	const UINT32 size = freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize);
 	const UINT32 colorSize = freerdp_settings_get_uint32(settings, FreeRDP_ColorPointerCacheSize);
 
-	const UINT32 cacheSize = MAX(size, colorSize) + 1;
+	const size_t cacheSize = MAX(size, colorSize) + 1;
 	if (cacheSize > SIZE_MAX / sizeof(rdpPointer*))
 		return FALSE;
 
 	WLog_DBG(TAG,
-	         "setting cacheSize=%" PRIu32 "[ColorPointerCache=%" PRIu32 ", PointerCache=%" PRIu32
+	         "setting cacheSize=%" PRIuz "[ColorPointerCache=%" PRIu32 ", PointerCache=%" PRIu32
 	         "]",
 	         cacheSize, colorSize, size);
 
@@ -390,7 +390,7 @@ BOOL pointer_cache_resize(rdpPointerCache* pointerCache)
 		const size_t rsize = (cacheSize - pointerCache->cacheSize) * sizeof(rdpPointer*);
 		memset(&pointerCache->entries[pointerCache->cacheSize], 0, rsize);
 	}
-	pointerCache->cacheSize = cacheSize;
+	pointerCache->cacheSize = WINPR_ASSERTING_INT_CAST(UINT32, cacheSize);
 
 	return TRUE;
 }

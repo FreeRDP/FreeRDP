@@ -70,7 +70,9 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 	if (!TargetName)
 		goto fail;
 
-	_snprintf(TargetName, len, TERMSRV, ServerHostname);
+	const int rlen = _snprintf(TargetName, len, TERMSRV, ServerHostname);
+	if (rlen < 0)
+		goto fail;
 
 	TargetName[len - 1] = 0;
 

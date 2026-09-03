@@ -103,8 +103,8 @@ static rdpPrintJob* printer_android_create_printjob(rdpPrinter* printer, UINT32 
 	aj->printjob.Close = printer_android_close_printjob;
 
 	time_t t = time(nullptr);
-	snprintf(aj->path, sizeof(aj->path), PRINT_OUTPUT_DIR PRINT_OUTPUT_PREFIX "%lld.pdf",
-	         (long long)t);
+	(void)_snprintf(aj->path, sizeof(aj->path), PRINT_OUTPUT_DIR PRINT_OUTPUT_PREFIX "%lld.pdf",
+	                (long long)t);
 
 	aj->file = fopen(aj->path, "wb");
 	if (!aj->file)

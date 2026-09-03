@@ -101,7 +101,8 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 	{
 		if ((pszPathLength + pszMoreLength - 1) < cchPath)
 		{
-			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, "%s", &pszMore[1]);
+			if (sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, "%s", &pszMore[1]) < 0)
+				return E_FAIL;
 			return S_OK;
 		}
 	}
@@ -109,7 +110,8 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 	{
 		if ((pszPathLength + pszMoreLength) < cchPath)
 		{
-			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, "%s", pszMore);
+			if (sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, "%s", pszMore) < 0)
+				return E_FAIL;
 			return S_OK;
 		}
 	}
@@ -117,8 +119,9 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 	{
 		if ((pszPathLength + pszMoreLength + 1) < cchPath)
 		{
-			sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, "%s%s",
-			          CUR_PATH_SEPARATOR_STR, pszMore);
+			if (sprintf_s(&pszPath[pszPathLength], cchPath - pszPathLength, "%s%s",
+			              CUR_PATH_SEPARATOR_STR, pszMore) < 0)
+				return E_FAIL;
 			return S_OK;
 		}
 	}

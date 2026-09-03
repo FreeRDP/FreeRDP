@@ -154,6 +154,7 @@ char* winpr_str_url_decode(const char* str, size_t len)
 	return dst;
 }
 
+WINPR_ATTR_NODISCARD
 static char* escape(char* dst, char what)
 {
 	if (rfc3986[what & 0xff])
@@ -162,7 +163,8 @@ static char* escape(char* dst, char what)
 		return dst + 1;
 	}
 
-	sprintf(dst, "%%%02" PRIX8, (BYTE)(what & 0xff));
+	if (sprintf(dst, "%%%02" PRIX8, (BYTE)(what & 0xff)) < 0)
+		return nullptr;
 	return dst + 3;
 }
 
