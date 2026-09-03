@@ -665,6 +665,19 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 		if (status < 0)
 			break;
 
+		/* A suspended or migrating stream (e.g. the default device just
+		 * changed) can hand out an empty buffer; treating it as progress
+		 * busy-loops forever with the mainloop lock held, which also stalls
+		 * the channel thread calling Play. Drop the rest of the sample
+		 * instead. */
+		if (!pa_data || (length == 0))
+		{
+			if (pa_data)
+				pa_stream_cancel_write(pulse->stream);
+			WLog_DBG(TAG, "dropping %" PRIuz " bytes, no buffer space", size);
+			break;
+		}
+
 		memcpy(pa_data, data, length);
 
 		status = pa_stream_write(pulse->stream, pa_data, length, nullptr, 0LL, PA_SEEK_RELATIVE);
