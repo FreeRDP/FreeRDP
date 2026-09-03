@@ -374,8 +374,9 @@ ssize_t fdk_aac_dsp_impl_decode_read(void* handle, void* dst, size_t dstSize, fd
 		case AAC_DEC_NOT_ENOUGH_BITS:
 			return 0;
 		default:
-			log(WLOG_ERROR, "aacDecoder_DecodeFrame failed with %s", dec_err_str(err));
-			return -1;
+			log(WLOG_WARN, "aacDecoder_DecodeFrame failed with %s, discarding...",
+			    dec_err_str(err));
+			return 0;
 	}
 }
 
