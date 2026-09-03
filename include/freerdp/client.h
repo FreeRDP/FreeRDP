@@ -217,6 +217,21 @@ extern "C"
 	FREERDP_API int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int argc,
 	                                                              char* argv[]);
 
+	/** @brief Select the AVD cloud of the configured ARM gateway
+	 *
+	 *  Does nothing unless \b FreeRDP_GatewayArmTransport is set and \b FreeRDP_GatewayHostname
+	 *  matches a cloud of the table. Only settings still holding their commercial default are
+	 *  replaced. \b FreeRDP_GatewayAvdUseTenantid is derived from the tenant id while unset.
+	 *  Called once by the .rdp entry points and by the command line parser; a front end that
+	 *  assembles the settings itself calls it once before connecting.
+	 *
+	 *  @param settings The settings to inspect and update
+	 *  @return \b TRUE on success, \b FALSE on invalid input or allocation failure
+	 *  @since version 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_client_settings_apply_avd_cloud(rdpSettings* settings);
+
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password,
 	                                            char** domain, rdp_auth_reason reason);

@@ -8,6 +8,7 @@
 #include <winpr/path.h>
 #include <winpr/crypto.h>
 
+#include <freerdp/client.h>
 #include <freerdp/client/file.h>
 #include <freerdp/channels/rdpecam.h>
 
@@ -545,6 +546,29 @@ fail:
 	return rc;
 }
 
+static bool test_avd_cloud(void)
+{
+	bool rc = false;
+	char* path = GetCombinedPath(TEST_SOURCE_DIR, "rdp-cmdline/avd-usgov.rdp");
+	rdpSettings* settings = freerdp_settings_new(0);
+	if (!path || !settings)
+		goto fail;
+	if (freerdp_client_settings_parse_connection_file(settings, path) != 0)
+		goto fail;
+
+	const char* authority =
+	    freerdp_settings_get_string(settings, FreeRDP_GatewayAzureActiveDirectory);
+	const char* scope = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdScope);
+	rc = authority && (strcmp(authority, "login.microsoftonline.us") == 0) && scope &&
+	     (strcmp(scope, "https%3A%2F%2Fwww.wvd.azure.us%2F.default%20openid%20profile%20offline_"
+	                    "access") == 0) &&
+	     freerdp_settings_get_bool(settings, FreeRDP_GatewayAvdUseTenantid);
+fail:
+	freerdp_settings_free(settings);
+	free(path);
+	return rc;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL test_ascii(rdpSettings* settings)
 {
@@ -868,6 +892,9 @@ int TestClientRdpFile(int argc, char* argv[])
 	if (!test_rdp_files(argc > 1))
 		return -1;
 #endif
+
+	if (!test_avd_cloud())
+		return -1;
 
 	rdpSettings* settings = freerdp_settings_new(0);
 	if (!settings)
