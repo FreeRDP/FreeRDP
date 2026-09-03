@@ -36,8 +36,10 @@
 
 #define TAG FREERDP_TAG("codec")
 
+WINPR_ATTR_NODISCARD
 static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight);
 
+WINPR_ATTR_NODISCARD
 static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
 {
 	BOOL isNull = FALSE;
@@ -49,8 +51,9 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 	if (stride == 0)
 		stride = width;
 
-	stride += 16 - stride % 16;
-	pheight += 16 - pheight % 16;
+	/* Add padding lines. Allows relaxing bounds checks in decoder functions */
+	stride += 32 - stride % 16;
+	pheight += 32 - pheight % 16;
 
 	const size_t nPlanes = h264->hwAccel ? 2 : 3;
 
@@ -506,7 +509,7 @@ fail:
 	return rc;
 }
 
-static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
+BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
 {
 	WINPR_ASSERT(h264);
 
@@ -522,6 +525,9 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
 
 	if (pad != 0)
 		padDstHeight += 16 - pad;
+
+	/* Add padding lines. Allows relaxing bounds checks in decoder functions */
+	padDstHeight += 16;
 
 	if ((piMainStride[0] == 0) || (padDstHeight == 0))
 		return FALSE;
