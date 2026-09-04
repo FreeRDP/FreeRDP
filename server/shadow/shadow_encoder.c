@@ -267,6 +267,9 @@ static int shadow_encoder_init_h264(rdpShadowEncoder* encoder)
 		goto fail;
 	if (!h264_context_set_option(encoder->h264, H264_CONTEXT_OPTION_QP, encoder->server->h264QP))
 		goto fail;
+	if (!h264_context_set_option(encoder->h264, H264_CONTEXT_OPTION_HW_ACCEL,
+	                             (UINT32)encoder->server->h264HwAccel))
+		goto fail;
 
 	encoder->codecs |= FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444;
 	return 1;

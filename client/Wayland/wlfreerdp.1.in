@@ -32,7 +32,7 @@ Successful program execution.
 On failure.
 
 .SH SEE ALSO
-xfreerdp(1) wlog(7)
+xfreerdp(1) freerdp(7) wlog(7)
 
 .SH AUTHOR
 FreeRDP <team@freerdp.com>
