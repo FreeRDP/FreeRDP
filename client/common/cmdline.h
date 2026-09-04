@@ -191,7 +191,11 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Read credentials from stdin. With <force> the prompt is done before connection, otherwise "
 	  "on server request." },
 	{ "gateway", COMMAND_LINE_VALUE_REQUIRED,
-	  "g:<gateway>[:<port>],u:<user>,d:<domain>,p:<password>,usage-method:["
+	  "g:<gateway>[:<port>],u:<user>,d:<domain>,p:<password>,"
+	  "cloud:[commercial|usgov|<name from aad-clouds.json>](AAD authority, AVD scope and "
+	  "redirect URI of an Azure cloud, the last of /gateway:cloud: and /azure: wins; without it "
+	  "an ARM gateway hostname selects the cloud),"
+	  "usage-method:["
 	  "direct|detect],access-token:<"
 	  "token>,type:[rpc|http[,no-websockets][,extauth-sspi-ntlm]|auto[,no-websockets][,extauth-"
 	  "sspi-ntlm]]|arm,url:<wss://url>,bearer:<oauth2-bearer-token>",

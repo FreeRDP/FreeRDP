@@ -208,6 +208,37 @@ extern "C"
 	FREERDP_API int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int argc,
 	                                                              char* argv[]);
 
+	/** @brief Select the AVD sovereign cloud of the configured ARM gateway
+	 *
+	 *  Azure Virtual Desktop is reachable in more than one Azure cloud and each cloud has its
+	 *  own AAD authority, AVD scope and redirect URI. The settings holding them default to the
+	 *  commercial cloud, see \ref freerdp_utils_aad_cloud_by_name.
+	 *
+	 *  Does nothing unless \b FreeRDP_GatewayArmTransport is set and
+	 *  \b FreeRDP_GatewayHostname names a gateway of a known cloud. Only values that still hold
+	 *  their commercial default are replaced, so an authority configured by hand keeps every
+	 *  related setting, and an individually customized AVD scope or redirect format survives.
+	 *  \b FreeRDP_GatewayAvdUseTenantid is derived from \b FreeRDP_GatewayAvdAadtenantid when it
+	 *  is not already set.
+	 *
+	 *  Called exactly once per configuration: by
+	 *  \ref freerdp_client_settings_parse_connection_file and
+	 *  \ref freerdp_client_settings_parse_connection_file_buffer after the file was mapped, and
+	 *  by \ref freerdp_client_settings_parse_command_line_arguments after every option was
+	 *  parsed. The command line parser therefore loads a .rdp file of its own without this step,
+	 *  so that an option can still override what the file selected. It skips the automatic
+	 *  selection entirely when \b /gateway:cloud: named a cloud, which is applied where the
+	 *  option is parsed. A front end that assembles the settings itself calls this once before
+	 *  connecting.
+	 *
+	 *  @param settings The settings to inspect and update
+	 *  @return \b TRUE if nothing had to change or the cloud was applied, \b FALSE on invalid
+	 *          input or allocation failure.
+	 *  @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_client_settings_apply_avd_cloud(rdpSettings* settings);
+
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password,
 	                                            char** domain, rdp_auth_reason reason);
