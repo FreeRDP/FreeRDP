@@ -341,6 +341,21 @@ void pointer_cache_register_callbacks(rdpUpdate* update)
 	}
 }
 
+static void resetPointer(rdpPointerCache* pointerCache)
+{
+	WINPR_ASSERT(pointerCache);
+
+	if (!pointerCache->context || !pointerCache->context->graphics)
+		return;
+
+	rdpPointer* pointer = pointerCache->context->graphics->Pointer_Prototype;
+	if (!pointer || !pointer->SetDefault)
+		return;
+
+	if (!pointer->SetDefault(pointerCache->context))
+		WLog_WARN(TAG, "rdpPointer::SetDefault failed");
+}
+
 BOOL pointer_cache_resize(rdpPointerCache* pointerCache)
 {
 	WINPR_ASSERT(pointerCache);
@@ -367,12 +382,7 @@ BOOL pointer_cache_resize(rdpPointerCache* pointerCache)
 
 	/* Reset pointer to default before deleting the cache.
 	 */
-	if (pointerCache->context && pointerCache->context->graphics)
-	{
-		rdpPointer* pointer = pointerCache->context->graphics->Pointer_Prototype;
-		if (pointer && pointer->SetDefault)
-			(void)pointer->SetDefault(pointerCache->context);
-	}
+	resetPointer(pointerCache);
 
 	for (size_t i = cacheSize; i < pointerCache->cacheSize; i++)
 	{
@@ -424,12 +434,7 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 	{
 		/* Reset pointer to default before deleting the cache.
 		 */
-		if (pointer_cache->context && pointer_cache->context->graphics)
-		{
-			rdpPointer* pointer = pointer_cache->context->graphics->Pointer_Prototype;
-			if (pointer && pointer->SetDefault)
-				(void)pointer->SetDefault(pointer_cache->context);
-		}
+		resetPointer(pointer_cache);
 
 		if (pointer_cache->entries)
 		{

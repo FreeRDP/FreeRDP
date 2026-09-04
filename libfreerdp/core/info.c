@@ -76,7 +76,7 @@ const char* freerdp_session_logon_type_data_str(uint32_t type, const void* data,
 		}
 		break;
 		case INFO_TYPE_LOGON_PLAIN_NOTIFY:
-			(void)_snprintf(buffer, length, "");
+			memset(buffer, 0, length);
 			break;
 		case INFO_TYPE_LOGON_EXTENDED_INF:
 		{
