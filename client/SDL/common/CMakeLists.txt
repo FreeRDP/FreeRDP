@@ -16,7 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(aad)
 add_subdirectory(res)
 
 set(SRCS sdl_prefs.hpp sdl_prefs.cpp scoped_guard.hpp sdl_common_utils.hpp sdl_common_utils.cpp)
@@ -27,6 +26,10 @@ endif()
 add_library(sdl-common-prefs STATIC ${SRCS})
 target_link_libraries(sdl-common-prefs PRIVATE freerdp freerdp-cxx-filesystem)
 set_property(TARGET sdl-common-prefs PROPERTY FOLDER "Client/Common")
+
+add_library(sdl-common-aad-helper STATIC sdl_aad_helper.cpp sdl_aad_helper.hpp)
+target_link_libraries(sdl-common-aad-helper PRIVATE winpr freerdp-client)
+set_property(TARGET sdl-common-aad-helper PROPERTY FOLDER "Client/Common")
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
   add_subdirectory(test)

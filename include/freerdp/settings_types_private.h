@@ -536,7 +536,15 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayHttpMsUserAgent);      /** 2026
 		                                                             * @since version 3.18.0
 		                                                             */
-	UINT64 padding2112[2112 - 2027];                                /* 2027 */
+	SETTINGS_DEPRECATED(ALIGN64 char* AadAuthHelper);               /** 2027
+		                                                             * out-of-process AAD auth helper
+		                                                             * override: a path to a helper
+		                                                             * binary, or "autodetect" to
+		                                                             * probe the built-in ones (also
+		                                                             * the default when unset).
+		                                                             * @since version 3.19.0
+		                                                             */
+	UINT64 padding2112[2112 - 2028];                                /* 2028 */
 
 	/**
 	 * RemoteApp

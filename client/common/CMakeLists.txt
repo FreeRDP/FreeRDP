@@ -30,6 +30,7 @@ set(SRCS
     client_cliprdr_file.c
     geometry.c
     smartcard_cli.c
+    aad_helper.c
 )
 
 foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
@@ -118,6 +119,18 @@ installwithrpath(
 )
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Common")
+
+option(WITH_WEBVIEW_AAD_AUTH_HELPER
+       "Build the out-of-process webview-based AAD auth helper (used for AAD login popups)" OFF
+)
+if(WITH_WEBVIEW_AAD_AUTH_HELPER)
+  add_subdirectory(webview-aad-helper)
+endif()
+
+option(WITH_QT_AAD_AUTH_HELPER "Build the out-of-process Qt-based AAD auth helper (used for AAD login popups)" OFF)
+if(WITH_QT_AAD_AUTH_HELPER)
+  add_subdirectory(qt-aad-helper)
+endif()
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
   add_subdirectory(test)
