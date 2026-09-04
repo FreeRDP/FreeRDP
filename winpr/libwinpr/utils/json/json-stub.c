@@ -233,6 +233,13 @@ WINPR_JSON* WINPR_JSON_AddNumberToObject(WINPR_JSON* object, const char* name, d
 	return nullptr;
 }
 
+WINPR_JSON* WINPR_JSON_AddIntegerToObject(WINPR_JSON* object, const char* name, int64_t number)
+{
+	WINPR_UNUSED(object);
+	WINPR_UNUSED(name);
+	WINPR_UNUSED(number);
+	return nullptr;
+}
 WINPR_JSON* WINPR_JSON_AddStringToObject(WINPR_JSON* object, const char* name, const char* string)
 {
 	WINPR_UNUSED(object);

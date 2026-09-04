@@ -749,7 +749,7 @@ static UINT rail_recv_zorder_sync_order(railPlugin* rail, wStream* s)
 		return ERROR_INVALID_PARAMETER;
 
 	if ((rail->clientStatus.flags & TS_RAIL_CLIENTSTATUS_ZORDER_SYNC) == 0)
-		return ERROR_INVALID_DATA;
+		return ERROR_BAD_CONFIGURATION;
 
 	if ((error = rail_read_zorder_sync_order(s, &zorder)))
 	{
@@ -839,7 +839,7 @@ static UINT rail_recv_power_display_request_order(railPlugin* rail, wStream* s)
 	/* 2.2.2.13.1 Power Display Request PDU(TS_RAIL_ORDER_POWER_DISPLAY_REQUEST)
 	 */
 	if ((rail->clientStatus.flags & TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED) == 0)
-		return ERROR_INVALID_DATA;
+		return ERROR_BAD_CONFIGURATION;
 
 	if ((error = rail_read_power_display_request_order(s, &power)))
 	{
@@ -1088,6 +1088,17 @@ UINT rail_order_recv(LPVOID userdata, wStream* s)
 			return ERROR_INVALID_DATA;
 	}
 
+	if (error == ERROR_BAD_CONFIGURATION)
+	{
+		char ebuffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_Print(rail->log, WLOG_WARN,
+		           "%s - SERVER BUG: The support for this feature was not announced!",
+		           rail_get_order_type_string_full(orderType, ebuffer, sizeof(ebuffer)));
+
+		if (freerdp_settings_get_bool(rail->rdpcontext->settings,
+		                              FreeRDP_AllowUnanouncedOrdersFromServer))
+			error = CHANNEL_RC_OK;
+	}
 	if (error != CHANNEL_RC_OK)
 	{
 		char ebuffer[128] = WINPR_C_ARRAY_INIT;
