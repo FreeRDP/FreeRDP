@@ -2758,6 +2758,9 @@ const char* freerdp_settings_get_string(WINPR_ATTR_UNUSED const rdpSettings* set
 
 	switch (id)
 	{
+		case FreeRDP_AadAuthHelper:
+			return settings->AadAuthHelper;
+
 		case FreeRDP_AadServerHostname:
 			return settings->AadServerHostname;
 
@@ -3099,6 +3102,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 
 	switch (id)
 	{
+		case FreeRDP_AadAuthHelper:
+			return settings->AadAuthHelper;
+
 		case FreeRDP_AadServerHostname:
 			return settings->AadServerHostname;
 
@@ -3452,6 +3458,9 @@ BOOL freerdp_settings_set_string_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 	switch (id)
 	{
+		case FreeRDP_AadAuthHelper:
+			return update_string_(&settings->AadAuthHelper, cnv.c, len);
+
 		case FreeRDP_AadServerHostname:
 			return update_string_(&settings->AadServerHostname, cnv.c, len);
 
@@ -3819,6 +3828,9 @@ BOOL freerdp_settings_set_string_copy_(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 	switch (id)
 	{
+		case FreeRDP_AadAuthHelper:
+			return update_string_copy_(&settings->AadAuthHelper, cnv.cc, len, cleanup);
+
 		case FreeRDP_AadServerHostname:
 			return update_string_copy_(&settings->AadServerHostname, cnv.cc, len, cleanup);
 

@@ -32,9 +32,7 @@
 
 #include "dialogs/sdl_dialogs.hpp"
 
-#if defined(WITH_WEBVIEW)
-#include <aad/sdl_webview.hpp>
-#endif
+#include <sdl_aad_helper.hpp>
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
 
@@ -61,11 +59,7 @@ SdlContext::SdlContext(rdpContext* context)
 	instance->ChooseSmartcard = sdl_choose_smartcard;
 	instance->RetryDialog = sdl_retry_dialog;
 
-#ifdef WITH_WEBVIEW
-	instance->GetAccessToken = sdl_webview_get_access_token;
-#else
-	instance->GetAccessToken = client_cli_get_access_token;
-#endif
+	instance->GetAccessToken = sdl_aad_helper_get_access_token;
 	/* TODO: Client display set up */
 
 	_args.push_back({ sdl_allow_screensaver, COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse,
@@ -323,6 +317,8 @@ void SdlContext::postDisconnect(freerdp* instance)
 
 	auto sdl = get_context(instance->context);
 	sdl->setConnected(false);
+
+	sdl_aad_helper_stop();
 
 	gdi_free(instance);
 }

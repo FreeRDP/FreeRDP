@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Popup browser for AAD authentication
+ * Out-of-process AAD auth helper integration
  *
  * Copyright 2023 Isaac Klein <fifthdegree@protonmail.com>
  *
@@ -26,8 +26,13 @@ extern "C"
 {
 #endif
 
-	[[nodiscard]] BOOL sdl_webview_get_access_token(freerdp* instance, AccessTokenType tokenType,
-	                                                char** token, size_t count, ...);
+	[[nodiscard]] BOOL sdl_aad_helper_get_access_token(freerdp* instance, AccessTokenType tokenType,
+	                                                   char** token, size_t count, ...);
+
+	/** @brief stop the out-of-process AAD auth helper for this connection, if one was
+	 *  started. Call this on disconnect (e.g. from PostDisconnect) so the helper doesn't outlive
+	 *  the connection it was serving; a following reconnect will lazily start a fresh one. */
+	void sdl_aad_helper_stop(void);
 
 #ifdef __cplusplus
 }
