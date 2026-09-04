@@ -282,6 +282,7 @@
 		"FreeRDP_GatewayCredentialsSource": 0.0,
 		"FreeRDP_GatewayAcceptedCertLength": 0.0,
 		"FreeRDP_ProxyType": 0.0,
+		"FreeRDP_GatewayResponseTimeout": 15000.0,
 		"FreeRDP_RemoteApplicationExpandCmdLine": 0.0,
 		"FreeRDP_RemoteApplicationExpandWorkingDir": 0.0,
 		"FreeRDP_RemoteAppNumIconCaches": 3.0,
