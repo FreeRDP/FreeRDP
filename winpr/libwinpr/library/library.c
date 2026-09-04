@@ -292,6 +292,78 @@ static DWORD module_from_proc(const char* proc, LPSTR lpFilename, DWORD nSize)
 }
 #endif
 
+#if defined(__MACOSX__)
+WINPR_ATTR_NODISCARD
+static uint32_t get_required_size(void)
+{
+	char buffer[1] = WINPR_C_ARRAY_INIT;
+	uint32_t size = sizeof(buffer);
+	if (_NSGetExecutablePath(buffer, &size) == 0)
+		return sizeof(buffer);
+	return size;
+}
+
+WINPR_ATTR_NODISCARD
+static DWORD mac_get_module_file_name(char* lpFilename, uint32_t nSize)
+{
+	const uint32_t required = get_required_size();
+	if (required == 0)
+		return 0;
+
+	if (required < nSize)
+	{
+		uint32_t size = nSize;
+		if (_NSGetExecutablePath(lpFilename, &size) == 0)
+			return (DWORD)strnlen(lpFilename, nSize);
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		return nSize;
+	}
+
+	char* buffer = calloc(1ull + required, sizeof(char));
+	if (!buffer)
+	{
+		SetLastError(ERROR_OUTOFMEMORY);
+		return 0;
+	}
+
+	uint32_t size = required;
+	const int status = _NSGetExecutablePath(buffer, &size);
+
+	if (status != 0)
+	{
+		/* path too small */
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		free(buffer);
+		return size;
+	}
+
+	/*
+	 * _NSGetExecutablePath may not return the canonical path,
+	 * so use realpath to find the absolute, canonical path.
+	 */
+	char* real = realpath(buffer, nullptr);
+	free(buffer);
+	if (!real)
+	{
+		SetLastError(ERROR_OUTOFMEMORY);
+		return 0;
+	}
+	const size_t length = strlen(real);
+	if (length < nSize)
+	{
+		strncpy(lpFilename, real, length + 1);
+		free(real);
+		return (DWORD)strnlen(lpFilename, nSize);
+	}
+
+	strncpy(lpFilename, real, nSize - 1);
+	free(real);
+	lpFilename[nSize - 1] = '\0';
+	SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	return nSize;
+}
+#endif
+
 DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
 	if (hModule)
@@ -350,36 +422,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 #elif defined(__DragonFly__)
 	return module_from_proc("/proc/curproc/file", lpFilename, nSize);
 #elif defined(__MACOSX__)
-	char path[4096] = WINPR_C_ARRAY_INIT;
-	char buffer[4096] = WINPR_C_ARRAY_INIT;
-	uint32_t size = sizeof(path);
-	const int status = _NSGetExecutablePath(path, &size);
-
-	if (status != 0)
-	{
-		/* path too small */
-		SetLastError(ERROR_INTERNAL_ERROR);
-		return 0;
-	}
-
-	/*
-	 * _NSGetExecutablePath may not return the canonical path,
-	 * so use realpath to find the absolute, canonical path.
-	 */
-	realpath(path, buffer);
-	const size_t length = strnlen(buffer, sizeof(buffer));
-
-	if (length < nSize)
-	{
-		CopyMemory(lpFilename, buffer, length);
-		lpFilename[length] = '\0';
-		return (DWORD)length;
-	}
-
-	CopyMemory(lpFilename, buffer, nSize - 1);
-	lpFilename[nSize - 1] = '\0';
-	SetLastError(ERROR_INSUFFICIENT_BUFFER);
-	return nSize;
+	return mac_get_module_file_name(lpFilename, nSize);
 #else
 	WLog_ERR(TAG, "is not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

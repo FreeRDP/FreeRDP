@@ -8,7 +8,7 @@
 
 int TestLibraryGetModuleFileName(int argc, char* argv[])
 {
-	char ModuleFileName[4096];
+	char ModuleFileName[4096] = WINPR_C_ARRAY_INIT;
 	DWORD len = 0;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -40,7 +40,7 @@ int TestLibraryGetModuleFileName(int argc, char* argv[])
 	}
 	if (len == sizeof(ModuleFileName))
 	{
-		printf("%s: GetModuleFileNameA unexpectedly returned nSize\n", __func__);
+		printf("%s: GetModuleFileNameA unexpectedly returned nSize %" PRIu32 "\n", __func__, len);
 		return -1;
 	}
 	if (GetLastError() != ERROR_SUCCESS)
