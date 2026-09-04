@@ -24,3 +24,11 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Client/Test")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(TestClientRailIpc TestClientRailIpc.c ../rail_ipc.c)
+  target_link_libraries(TestClientRailIpc PRIVATE freerdp winpr)
+  set_target_properties(TestClientRailIpc PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+  add_test(TestClientRailIpc ${TESTING_OUTPUT_DIRECTORY}/TestClientRailIpc)
+  set_property(TARGET TestClientRailIpc PROPERTY FOLDER "FreeRDP/Client/Test")
+endif()
