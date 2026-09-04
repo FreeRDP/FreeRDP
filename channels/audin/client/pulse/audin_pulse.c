@@ -327,9 +327,23 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 	const void* data = nullptr;
 	AudinPulseDevice* pulse = (AudinPulseDevice*)userdata;
 	UINT error = CHANNEL_RC_OK;
-	pa_stream_peek(stream, &data, &length);
-	error =
-	    IFCALLRESULT(CHANNEL_RC_OK, pulse->receive, &pulse->format, data, length, pulse->user_data);
+
+	if (pa_stream_peek(stream, &data, &length) < 0)
+	{
+		WLog_Print(pulse->log, WLOG_WARN, "pa_stream_peek failed (%d)",
+		           pa_context_errno(pulse->context));
+		return;
+	}
+
+	/* length == 0: buffer empty, no fragment to drop.
+	 * data == nullptr with length > 0: a hole in the record stream (e.g. the
+	 * capture device vanished); it carries no samples, only drop it. */
+	if (length == 0)
+		return;
+
+	if (data)
+		error = IFCALLRESULT(CHANNEL_RC_OK, pulse->receive, &pulse->format, data, length,
+		                     pulse->user_data);
 	pa_stream_drop(stream);
 
 	if (error && pulse->rdpcontext)
