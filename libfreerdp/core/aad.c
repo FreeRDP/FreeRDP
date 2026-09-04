@@ -28,8 +28,13 @@
 #include <freerdp/utils/http.h>
 #include <freerdp/utils/aad.h>
 
+#include <winpr/cast.h>
 #include <winpr/crypto.h>
 #include <winpr/json.h>
+#include <winpr/path.h>
+#include <winpr/synch.h>
+
+#include <freerdp/utils/helpers.h>
 
 #include "transport.h"
 #include "rdp.h"
@@ -62,6 +67,409 @@ static const FreeRDP_AadCloud aad_clouds[] = {
 	  "https%%3A%%2F%%2Flogin.microsoftonline.com%%2Fcommon%%2Foauth2%%2Fnativeclient" }
 };
 
+/** @brief The optional configuration file overriding or extending the compiled cloud table
+ *
+ * Looked up in the system configuration directory first, then in the user one, so that a
+ * distribution or an administrator can add a cloud without a rebuild and a user can add a
+ * private one on top of that. Entries are merged by name over the compiled table: an entry
+ * naming a compiled cloud replaces it as a whole, any other one is added.
+ */
+#define AAD_CLOUDS_CONFIG_FILE "aad-clouds.json"
+
+/** The number of '%s' conversions the redirect format is expanded with: the AAD authority and
+ * the tenant id, see get_redirect_uri() in client/common/client.c. */
+#define AAD_CLOUD_REDIRECT_CONVERSIONS 2
+
+static INIT_ONCE aad_clouds_once = INIT_ONCE_STATIC_INIT;
+
+/** The compiled table with the configured clouds merged over it, or \b nullptr while no
+ * configuration file contributed an entry. Every entry of it owns all of its strings. */
+static FreeRDP_AadCloud* aad_clouds_configured = nullptr;
+static size_t aad_clouds_configured_count = 0;
+
+/** Frees the strings of a configured entry.
+ *
+ * The fields are const because the lookups hand out immutable descriptions, but a configured
+ * entry owns its strings and nothing else points at them. The compiled entries are never
+ * passed here, they hold string literals.
+ */
+static void aad_cloud_entry_free(FreeRDP_AadCloud* cloud)
+{
+	if (!cloud)
+		return;
+
+	free(WINPR_CAST_CONST_PTR_AWAY(cloud->name, char*));
+	free(WINPR_CAST_CONST_PTR_AWAY(cloud->gateway_suffix, char*));
+	free(WINPR_CAST_CONST_PTR_AWAY(cloud->authority, char*));
+	free(WINPR_CAST_CONST_PTR_AWAY(cloud->avd_scope, char*));
+	free(WINPR_CAST_CONST_PTR_AWAY(cloud->avd_redirect_format, char*));
+
+	const FreeRDP_AadCloud empty = { nullptr, nullptr, nullptr, nullptr, nullptr };
+	*cloud = empty;
+}
+
+static void aad_cloud_table_free(FreeRDP_AadCloud* table, size_t count)
+{
+	for (size_t x = 0; x < count; x++)
+		aad_cloud_entry_free(&table[x]);
+	free(table);
+}
+
+/** Copies a cloud description into an entry owning all of its strings. */
+static BOOL aad_cloud_entry_copy(FreeRDP_AadCloud* dst, const FreeRDP_AadCloud* src)
+{
+	FreeRDP_AadCloud copy = { nullptr, nullptr, nullptr, nullptr, nullptr };
+
+	copy.name = _strdup(src->name);
+	copy.authority = _strdup(src->authority);
+	copy.avd_scope = _strdup(src->avd_scope);
+	copy.avd_redirect_format = _strdup(src->avd_redirect_format);
+	if (src->gateway_suffix)
+		copy.gateway_suffix = _strdup(src->gateway_suffix);
+
+	if (!copy.name || !copy.authority || !copy.avd_scope || !copy.avd_redirect_format ||
+	    (src->gateway_suffix && !copy.gateway_suffix))
+	{
+		aad_cloud_entry_free(&copy);
+		return FALSE;
+	}
+
+	*dst = copy;
+	return TRUE;
+}
+
+/** Fills \b ptable with owned copies of the compiled clouds, unless it already holds them. */
+static BOOL aad_cloud_table_materialize(FreeRDP_AadCloud** ptable, size_t* pcount)
+{
+	if (*ptable)
+		return TRUE;
+
+	FreeRDP_AadCloud* table = calloc(ARRAYSIZE(aad_clouds), sizeof(FreeRDP_AadCloud));
+	if (!table)
+		return FALSE;
+
+	for (size_t x = 0; x < ARRAYSIZE(aad_clouds); x++)
+	{
+		if (!aad_cloud_entry_copy(&table[x], &aad_clouds[x]))
+		{
+			aad_cloud_table_free(table, ARRAYSIZE(aad_clouds));
+			return FALSE;
+		}
+	}
+
+	*ptable = table;
+	*pcount = ARRAYSIZE(aad_clouds);
+	return TRUE;
+}
+
+/** Merges one configured cloud into the table, taking ownership of its strings on success:
+ * an entry of the same name is replaced as a whole, any other one is appended. */
+static BOOL aad_cloud_table_merge(FreeRDP_AadCloud** ptable, size_t* pcount,
+                                  const FreeRDP_AadCloud* entry)
+{
+	if (!aad_cloud_table_materialize(ptable, pcount))
+		return FALSE;
+
+	for (size_t x = 0; x < *pcount; x++)
+	{
+		FreeRDP_AadCloud* cur = &(*ptable)[x];
+		if (_stricmp(cur->name, entry->name) == 0)
+		{
+			aad_cloud_entry_free(cur);
+			*cur = *entry;
+			return TRUE;
+		}
+	}
+
+	FreeRDP_AadCloud* table = realloc(*ptable, (*pcount + 1) * sizeof(FreeRDP_AadCloud));
+	if (!table)
+		return FALSE;
+
+	table[*pcount] = *entry;
+	*ptable = table;
+	*pcount += 1;
+	return TRUE;
+}
+
+/** A cloud name is a /gateway:cloud: value, so it stays a lowercase [a-z0-9-] token. */
+static BOOL aad_cloud_valid_name(const char* value)
+{
+	if (!value || (strlen(value) == 0))
+		return FALSE;
+
+	for (const char* pos = value; *pos != '\0'; pos++)
+	{
+		const char cur = *pos;
+		if (((cur < 'a') || (cur > 'z')) && ((cur < '0') || (cur > '9')) && (cur != '-'))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+/** Host names are expanded into URLs, so only the characters of a DNS name are accepted: a
+ * scheme, a port, a path or a query would end up in the middle of the URL built from it. */
+static BOOL aad_cloud_valid_host_chars(const char* value)
+{
+	if (!value || (strlen(value) == 0))
+		return FALSE;
+
+	for (const char* pos = value; *pos != '\0'; pos++)
+	{
+		const char cur = *pos;
+		if (((cur < 'a') || (cur > 'z')) && ((cur < 'A') || (cur > 'Z')) &&
+		    ((cur < '0') || (cur > '9')) && (cur != '.') && (cur != '-'))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL aad_cloud_valid_authority(const char* value)
+{
+	if (!aad_cloud_valid_host_chars(value))
+		return FALSE;
+
+	const size_t len = strlen(value);
+	return (value[0] != '.') && (value[0] != '-') && (value[len - 1] != '.') &&
+	       (value[len - 1] != '-');
+}
+
+/** The gateway suffix is matched against the end of a hostname, so it starts at a label
+ * boundary: without the leading dot 'xwvd.azure.us' would match '.wvd.azure.us'. */
+static BOOL aad_cloud_valid_gateway_suffix(const char* value)
+{
+	if (!value || (strlen(value) < 2) || (value[0] != '.'))
+		return FALSE;
+
+	return aad_cloud_valid_authority(&value[1]);
+}
+
+/** The scope and the redirect format are expanded into a URL as percent encoded values, so
+ * everything outside of printable ASCII and the characters delimiting a URL is rejected. */
+static BOOL aad_cloud_valid_url_value(const char* value)
+{
+	if (!value || (strlen(value) == 0))
+		return FALSE;
+
+	for (const char* pos = value; *pos != '\0'; pos++)
+	{
+		const char cur = *pos;
+		if ((cur <= 0x20) || (cur >= 0x7f) || strchr("&#?\"'<>\\^`{|}", cur))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+/** The redirect format is passed to winpr_asprintf() as the format string, so accept literal
+ * text, '%%' and at most \ref AAD_CLOUD_REDIRECT_CONVERSIONS '%s'. Every other conversion
+ * reads past the end of the argument list, and '%n' writes through what it finds there. */
+static BOOL aad_cloud_valid_redirect_format(const char* value)
+{
+	if (!aad_cloud_valid_url_value(value))
+		return FALSE;
+
+	size_t conversions = 0;
+	for (const char* pos = strchr(value, '%'); pos; pos = strchr(pos, '%'))
+	{
+		switch (pos[1])
+		{
+			case '%':
+				break;
+			case 's':
+				conversions++;
+				break;
+			default:
+				return FALSE;
+		}
+		pos += 2;
+	}
+
+	return conversions <= AAD_CLOUD_REDIRECT_CONVERSIONS;
+}
+
+static const char* aad_cloud_json_string(const WINPR_JSON* obj, const char* key)
+{
+	WINPR_JSON* item = WINPR_JSON_GetObjectItemCaseSensitive(obj, key);
+	if (!item)
+		return nullptr;
+	return WINPR_JSON_GetStringValue(item);
+}
+
+/** Parses and validates one array element of a configuration file.
+ *
+ * @param path The file the element was read from, for the log messages
+ * @param index The index of the element in the file, for the log messages
+ * @param item The element to parse
+ * @param cloud Receives the parsed cloud, owning all of its strings
+ * @return \b TRUE if the element describes a valid cloud, \b FALSE if it was rejected
+ */
+static BOOL aad_cloud_parse_entry(const char* path, size_t index, WINPR_JSON* item,
+                                  FreeRDP_AadCloud* cloud)
+{
+	if (!WINPR_JSON_IsObject(item))
+	{
+		WLog_WARN(TAG, "[%s] entry %" PRIuz " ignored: not a JSON object", path, index);
+		return FALSE;
+	}
+
+	const char* name = aad_cloud_json_string(item, "name");
+	const char* authority = aad_cloud_json_string(item, "active_directory");
+	const char* scope = aad_cloud_json_string(item, "avd_scope");
+	const char* redirect = aad_cloud_json_string(item, "avd_redirect_format");
+	const char* suffix = aad_cloud_json_string(item, "gateway_suffix");
+
+	if (!aad_cloud_valid_name(name))
+	{
+		WLog_WARN(TAG,
+		          "[%s] entry %" PRIuz
+		          " ignored: 'name' is missing or not a [a-z0-9-] string, got '%s'",
+		          path, index, name ? name : "");
+		return FALSE;
+	}
+	if (!aad_cloud_valid_authority(authority))
+	{
+		WLog_WARN(TAG,
+		          "[%s] entry %" PRIuz " ('%s') ignored: 'active_directory' is missing or not a "
+		          "host name without scheme or path, got '%s'",
+		          path, index, name, authority ? authority : "");
+		return FALSE;
+	}
+	if (!aad_cloud_valid_url_value(scope))
+	{
+		WLog_WARN(TAG,
+		          "[%s] entry %" PRIuz
+		          " ('%s') ignored: 'avd_scope' is missing or not a percent encoded value",
+		          path, index, name);
+		return FALSE;
+	}
+	if (!aad_cloud_valid_redirect_format(redirect))
+	{
+		WLog_WARN(TAG,
+		          "[%s] entry %" PRIuz " ('%s') ignored: 'avd_redirect_format' is missing or not a "
+		          "format string of literal text, '%%%%' and at most %d '%%s'",
+		          path, index, name, AAD_CLOUD_REDIRECT_CONVERSIONS);
+		return FALSE;
+	}
+	if (WINPR_JSON_HasObjectItem(item, "gateway_suffix") && !aad_cloud_valid_gateway_suffix(suffix))
+	{
+		WLog_WARN(TAG,
+		          "[%s] entry %" PRIuz " ('%s') ignored: 'gateway_suffix' is not a host name "
+		          "starting with the '.' of a label boundary, got '%s'",
+		          path, index, name, suffix ? suffix : "");
+		return FALSE;
+	}
+
+	/* Accepted so that a file can carry the ARM endpoint of its cloud the way 'az cloud show'
+	 * spells it, but nothing reads it: no setting of libfreerdp holds an ARM endpoint. */
+	if (WINPR_JSON_HasObjectItem(item, "resource_manager"))
+	{
+		WLog_DBG(TAG,
+		         "[%s] entry %" PRIuz " ('%s'): 'resource_manager' is accepted and ignored, no "
+		         "setting holds an ARM endpoint",
+		         path, index, name);
+	}
+
+	const FreeRDP_AadCloud parsed = { name, suffix, authority, scope, redirect };
+	if (!aad_cloud_entry_copy(cloud, &parsed))
+	{
+		WLog_ERR(TAG, "[%s] entry %" PRIuz " ('%s') ignored: out of memory", path, index, name);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/** Merges the clouds of one configuration file into the table.
+ *
+ * A missing file is the normal case and leaves the table alone, and so does a file that does
+ * not parse or does not hold an array: the compiled defaults are what a broken file falls back
+ * to. A single malformed entry only costs its own cloud, its siblings are still loaded.
+ */
+static void aad_cloud_load_file(BOOL system, FreeRDP_AadCloud** ptable, size_t* pcount)
+{
+	char* path = freerdp_GetConfigFilePath(system, AAD_CLOUDS_CONFIG_FILE);
+	if (!path)
+		return;
+
+	WINPR_JSON* json = freerdp_GetJSONConfigFile(system, AAD_CLOUDS_CONFIG_FILE);
+	if (!json)
+	{
+		if (winpr_PathFileExists(path))
+			WLog_WARN(TAG, "[%s] ignored: the file does not parse as JSON", path);
+		else
+			WLog_DBG(TAG, "[%s] no AVD cloud configuration file", path);
+		goto fail;
+	}
+
+	if (!WINPR_JSON_IsArray(json))
+	{
+		WLog_WARN(TAG, "[%s] ignored: expected a JSON array of cloud objects", path);
+		goto fail;
+	}
+
+	const size_t count = WINPR_JSON_GetArraySize(json);
+	for (size_t x = 0; x < count; x++)
+	{
+		FreeRDP_AadCloud entry = { nullptr, nullptr, nullptr, nullptr, nullptr };
+		if (!aad_cloud_parse_entry(path, x, WINPR_JSON_GetArrayItem(json, x), &entry))
+			continue;
+
+		WLog_DBG(TAG, "[%s] configured AVD cloud '%s'", path, entry.name);
+		if (!aad_cloud_table_merge(ptable, pcount, &entry))
+		{
+			WLog_ERR(TAG, "[%s] entry %" PRIuz " ignored: out of memory", path, x);
+			aad_cloud_entry_free(&entry);
+		}
+	}
+
+fail:
+	WINPR_JSON_Delete(json);
+	free(path);
+}
+
+static BOOL CALLBACK aad_clouds_init(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                     WINPR_ATTR_UNUSED PVOID param,
+                                     WINPR_ATTR_UNUSED PVOID* context)
+{
+	FreeRDP_AadCloud* table = nullptr;
+	size_t count = 0;
+
+	/* The user file is merged last, so that it wins over the system one. */
+	aad_cloud_load_file(TRUE, &table, &count);
+	aad_cloud_load_file(FALSE, &table, &count);
+
+	aad_clouds_configured = table;
+	aad_clouds_configured_count = count;
+	return TRUE;
+}
+
+/** @return The table the lookups run against: the compiled one, or the configured one while a
+ * configuration file contributed an entry. */
+static const FreeRDP_AadCloud* aad_cloud_table(size_t* pcount)
+{
+	WINPR_ASSERT(pcount);
+
+	if (InitOnceExecuteOnce(&aad_clouds_once, aad_clouds_init, nullptr, nullptr) &&
+	    aad_clouds_configured)
+	{
+		*pcount = aad_clouds_configured_count;
+		return aad_clouds_configured;
+	}
+
+	*pcount = ARRAYSIZE(aad_clouds);
+	return aad_clouds;
+}
+
+void freerdp_utils_aad_cloud_table_reset(void)
+{
+	aad_cloud_table_free(aad_clouds_configured, aad_clouds_configured_count);
+	aad_clouds_configured = nullptr;
+	aad_clouds_configured_count = 0;
+
+	/* InitOnceInitialize() is a stub wherever WinPR implements the run-once itself, so the
+	 * value is assigned from a static initializer instead. */
+	const INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+	aad_clouds_once = once;
+}
+
 #define AAD_CLOUD_GETTER(_name, _field)                                            \
 	const char* freerdp_utils_aad_cloud_get_##_name(const FreeRDP_AadCloud* cloud) \
 	{                                                                              \
@@ -79,10 +487,12 @@ const FreeRDP_AadCloud* freerdp_utils_aad_cloud_by_name(const char* name)
 	if (!name)
 		return nullptr;
 
-	for (size_t x = 0; x < ARRAYSIZE(aad_clouds); x++)
+	size_t count = 0;
+	const FreeRDP_AadCloud* clouds = aad_cloud_table(&count);
+	for (size_t x = 0; x < count; x++)
 	{
-		if (_stricmp(name, aad_clouds[x].name) == 0)
-			return &aad_clouds[x];
+		if (_stricmp(name, clouds[x].name) == 0)
+			return &clouds[x];
 	}
 	return nullptr;
 }
@@ -92,16 +502,18 @@ const FreeRDP_AadCloud* freerdp_utils_aad_cloud_for_gateway(const char* hostname
 	if (!hostname)
 		return nullptr;
 
+	size_t count = 0;
+	const FreeRDP_AadCloud* clouds = aad_cloud_table(&count);
 	const size_t hostlen = strlen(hostname);
-	for (size_t x = 0; x < ARRAYSIZE(aad_clouds); x++)
+	for (size_t x = 0; x < count; x++)
 	{
-		const char* suffix = aad_clouds[x].gateway_suffix;
+		const char* suffix = clouds[x].gateway_suffix;
 		if (!suffix)
 			continue;
 
 		const size_t suffixlen = strlen(suffix);
 		if ((hostlen >= suffixlen) && (_stricmp(&hostname[hostlen - suffixlen], suffix) == 0))
-			return &aad_clouds[x];
+			return &clouds[x];
 	}
 	return nullptr;
 }

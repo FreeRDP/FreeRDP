@@ -192,9 +192,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "on server request." },
 	{ "gateway", COMMAND_LINE_VALUE_REQUIRED,
 	  "g:<gateway>[:<port>],u:<user>,d:<domain>,p:<password>,"
-	  "cloud:[commercial|usgov](AAD authority, AVD scope and redirect URI of an Azure cloud, "
-	  "the last of /gateway:cloud: and /azure: wins; without it an ARM gateway hostname "
-	  "selects the cloud),"
+	  "cloud:[commercial|usgov|<name from aad-clouds.json>](AAD authority, AVD scope and "
+	  "redirect URI of an Azure cloud, the last of /gateway:cloud: and /azure: wins; without it "
+	  "an ARM gateway hostname selects the cloud),"
 	  "usage-method:["
 	  "direct|detect],access-token:<"
 	  "token>,type:[rpc|http[,no-websockets][,extauth-sspi-ntlm]|auto[,no-websockets][,extauth-"
