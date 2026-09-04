@@ -104,7 +104,7 @@ typedef int32_t BOOL;
 #include <TargetConditionals.h>
 
 /* ensure compatibility with objc libraries */
-#if OBJC_BOOL_IS_BOOL
+#if defined(OBJC_BOOL_IS_BOOL) && (OBJC_BOOL_IS_CHAR != 0)
 typedef bool BOOL;
 #else
 #define OBJC_BOOL_IS_CHAR 1
