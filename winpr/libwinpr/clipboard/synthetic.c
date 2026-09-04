@@ -149,7 +149,7 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
 		size = *pSize;
 		pDstData = ConvertLineEndingToCRLF(data, &size);
 
-		if (!pDstData || (size > *pSize))
+		if (!pDstData || (size > UINT32_MAX))
 		{
 			free(pDstData);
 			return nullptr;
