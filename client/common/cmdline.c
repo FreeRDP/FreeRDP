@@ -4368,6 +4368,19 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 				allowHttpOpts = FALSE;
 			}
 
+			const char* to = option_starts_with("timeout:", argval);
+			if (to)
+			{
+				LONGLONG val = 0;
+				if (!value_to_int(to, &val, 1, 600000))
+					goto fail;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_GatewayResponseTimeout,
+				                                 (UINT32)val))
+					goto fail;
+				validOption = TRUE;
+				allowHttpOpts = FALSE;
+			}
+
 			if (allowHttpOpts)
 			{
 				if (option_equals(argval, "no-websockets"))

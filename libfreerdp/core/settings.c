@@ -1283,6 +1283,11 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpConnectTimeout, 15000))
 		goto out_fail;
 
+	/* Bound for waiting on a gateway HTTP response (status/header phase and body phase each),
+	 * separate from FreeRDP_TcpConnectTimeout, which only bounds TCP connection establishment. */
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_GatewayResponseTimeout, 15000))
+		goto out_fail;
+
 	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
 		BOOL rc = FALSE;
