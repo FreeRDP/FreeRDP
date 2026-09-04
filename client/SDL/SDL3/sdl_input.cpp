@@ -647,10 +647,10 @@ bool sdlInput::mouse_focus(Uint32 windowID)
 	{
 		_lastWindowID = windowID;
 		auto window = _sdl->getWindowForId(windowID);
-		if (!window)
-			return false;
-
-		window->raise();
+		if (window)
+			window->raise();
+		else
+			return _sdl->getRailChannelContext().ownsWindow(windowID);
 	}
 	return true;
 }
