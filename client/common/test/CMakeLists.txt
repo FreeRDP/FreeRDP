@@ -5,7 +5,9 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
 
-set(${MODULE_PREFIX}_TESTS TestClientRdpFile.c TestClientChannels.c TestClientCmdLine.c)
+set(${MODULE_PREFIX}_TESTS TestClientRdpFile.c TestClientChannels.c TestClientCmdLine.c
+                           TestClientAadAuthHelperProtocol.c
+)
 
 set(FUZZERS TestFuzzClientRdpFile.c)
 
