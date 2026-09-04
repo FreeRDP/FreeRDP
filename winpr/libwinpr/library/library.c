@@ -380,6 +380,38 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 	lpFilename[nSize - 1] = '\0';
 	SetLastError(ERROR_INSUFFICIENT_BUFFER);
 	return nSize;
+#elif defined(__OpenBSD__)
+	char* path = calloc(1, nSize + 1);
+
+	if (path == NULL)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return 0;
+	}
+
+	const int rc = getexecpath(path, nSize + 1);
+
+	if (rc != 0)
+	{
+		free(path);
+		SetLastError(ERROR_INTERNAL_ERROR);
+		return 0;
+	}
+
+	const size_t length = strnlen(path, nSize + 1);
+
+	memset(lpFilename, 0, nSize);
+	memcpy(lpFilename, path, length);
+
+	free(path);
+
+	if (length >= nSize)
+	{
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		return nSize;
+	}
+
+	return (DWORD)length;
 #else
 	WLog_ERR(TAG, "is not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
