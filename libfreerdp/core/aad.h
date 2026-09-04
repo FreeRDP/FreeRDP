@@ -50,4 +50,13 @@ WINPR_ATTR_MALLOC(aad_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpAad* aad_new(rdpContext* context);
 
+/** @brief Drop the AVD cloud table loaded from the configuration files
+ *
+ *  Test seam: the next lookup loads the table again. Not thread safe, invalidates every
+ *  cloud a lookup returned before.
+ *
+ *  @since version 3.33.0
+ */
+FREERDP_LOCAL void freerdp_utils_aad_cloud_table_reset(void);
+
 #endif /* FREERDP_LIB_CORE_AAD_H */
