@@ -125,6 +125,19 @@ enum device_descriptor_table
 	B_NUM_CONFIGURATIONS = 17
 };
 
+/**
+ * Speed a redirected device enumerated at.
+ */
+enum device_speed
+{
+	DEVICE_SPEED_UNKNOWN = 0,
+	DEVICE_SPEED_LOW,
+	DEVICE_SPEED_FULL,
+	DEVICE_SPEED_HIGH,
+	DEVICE_SPEED_SUPER,
+	DEVICE_SPEED_SUPER_PLUS
+};
+
 #define PIPE_CANCEL 0
 #define PIPE_RESET 1
 
