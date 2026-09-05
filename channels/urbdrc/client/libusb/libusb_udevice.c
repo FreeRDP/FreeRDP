@@ -1010,6 +1010,37 @@ static int libusb_udev_os_feature_descriptor_request(IUDEVICE* idev,
 	return ERROR_SUCCESS;
 }
 
+static int libusb_udev_query_device_speed(IUDEVICE* idev)
+{
+	UDEVICE* pdev = (UDEVICE*)idev;
+
+	if (!pdev || !pdev->libusb_dev)
+		return DEVICE_SPEED_UNKNOWN;
+
+	switch (libusb_get_device_speed(pdev->libusb_dev))
+	{
+		case LIBUSB_SPEED_LOW:
+			return DEVICE_SPEED_LOW;
+
+		case LIBUSB_SPEED_FULL:
+			return DEVICE_SPEED_FULL;
+
+		case LIBUSB_SPEED_HIGH:
+			return DEVICE_SPEED_HIGH;
+
+		case LIBUSB_SPEED_SUPER:
+			return DEVICE_SPEED_SUPER;
+
+#if LIBUSB_API_VERSION >= 0x01000106
+		case LIBUSB_SPEED_SUPER_PLUS:
+			return DEVICE_SPEED_SUPER_PLUS;
+#endif
+
+		default:
+			return DEVICE_SPEED_UNKNOWN;
+	}
+}
+
 static int libusb_udev_query_device_descriptor(IUDEVICE* idev, int offset)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
@@ -1639,6 +1670,7 @@ static void udev_load_interface(UDEVICE* pdev)
 	pdev->iface.cancel_all_transfer_request = libusb_udev_cancel_all_transfer_request;
 	pdev->iface.cancel_transfer_request = libusb_udev_cancel_transfer_request;
 	pdev->iface.query_device_descriptor = libusb_udev_query_device_descriptor;
+	pdev->iface.query_device_speed = libusb_udev_query_device_speed;
 	pdev->iface.detach_kernel_driver = libusb_udev_detach_kernel_driver;
 	pdev->iface.attach_kernel_driver = libusb_udev_attach_kernel_driver;
 	pdev->iface.query_device_port_status = libusb_udev_query_device_port_status;

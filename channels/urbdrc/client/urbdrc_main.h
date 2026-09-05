@@ -139,6 +139,9 @@ struct S_IUDEVICE
 
 	WINPR_ATTR_NODISCARD int (*query_device_descriptor)(IUDEVICE* idev, int offset);
 
+	/** Negotiated bus speed, as a \ref device_speed value. */
+	WINPR_ATTR_NODISCARD int (*query_device_speed)(IUDEVICE* idev);
+
 	WINPR_ATTR_NODISCARD BOOL (*detach_kernel_driver)(IUDEVICE* idev);
 
 	WINPR_ATTR_NODISCARD BOOL (*attach_kernel_driver)(IUDEVICE* idev);
