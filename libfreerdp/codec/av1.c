@@ -18,6 +18,8 @@
  * limitations under the License.
  */
 
+#include <freerdp/config.h>
+
 #include <freerdp/codec/av1.h>
 #include <freerdp/primitives.h>
 #include <freerdp/log.h>
@@ -46,11 +48,40 @@
 #include <libyuv.h>
 #endif
 
+#if defined(WITH_LIBVA_AV1_DECODE)
+#include <libavcodec/avcodec.h>
+#include <libavutil/error.h>
+#include <libavutil/hwcontext.h>
+#include <libavutil/hwcontext_vaapi.h>
+#include <libavutil/pixfmt.h>
+#include <va/va.h>
+
+#define VAAPI_DEVICE "/dev/dri/renderD128"
+
+#if !defined(av_err2str)
+static inline char* av1_error_string(char* errbuf, size_t errbuf_size, int errnum)
+{
+	av_strerror(errnum, errbuf, errbuf_size);
+	return errbuf;
+}
+
+#define av_err2str(errnum) av1_error_string((char[64])WINPR_C_ARRAY_INIT, 64, errnum)
+#endif
+#endif
+
+typedef enum
+{
+	AV1_BACKEND_SOFTWARE,
+	AV1_BACKEND_LIBVA,
+	AV1_BACKEND_FAILED_TO_SOFTWARE
+} AV1_BACKEND;
+
 struct S_FREERDP_AV1_CONTEXT
 {
 	wLog* log;
 	bool encoder;
 	bool initialized;
+	AV1_BACKEND backend;
 #if defined(WITH_LIBAOM)
 	aom_codec_ctx_t ctx;
 	aom_codec_enc_cfg_t ecfg;
@@ -69,6 +100,17 @@ struct S_FREERDP_AV1_CONTEXT
 	UINT32 yuvWidth;
 	UINT32 yuvStride[3];
 	UINT32 yuvHeight;
+#if defined(WITH_LIBVA_AV1_DECODE)
+	const AVCodec* codecDecoder;
+	AVCodecContext* codecDecoderContext;
+	AVBufferRef* hwctx;
+	AVFrame* swFrame;
+	AVFrame* hwFrame;
+	AVPacket* packet;
+	enum AVPixelFormat hw_pix_fmt;
+	bool vaapiFormatRejected;
+	bool vaapiProfileChecked;
+#endif
 };
 
 #if defined(WITH_LIBAOM)
@@ -112,6 +154,548 @@ static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
 		cur->qualityVal = 100 - (QP & 0x3F);
 	}
 	return TRUE;
+}
+#endif
+
+#if defined(WITH_LIBAOM) && !defined(WITH_DAV1D)
+static BOOL freerdp_av1_init_aom_decoder(FREERDP_AV1_CONTEXT* av1)
+{
+	WINPR_ASSERT(av1);
+
+	if (av1->iface)
+		return TRUE;
+
+	av1->iface = aom_codec_av1_dx();
+	if (!av1->iface)
+	{
+		WLog_Print(av1->log, WLOG_ERROR, "aom_codec_av1_dx() nullptr");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+#endif
+
+static BOOL freerdp_av1_reset_software_decoder(FREERDP_AV1_CONTEXT* av1,
+                                              WINPR_ATTR_UNUSED UINT32 width,
+                                              WINPR_ATTR_UNUSED UINT32 height)
+{
+#if defined(WITH_DAV1D)
+	if (av1->initialized)
+	{
+		dav1d_close(&av1->dav1d);
+		av1->initialized = false;
+	}
+
+	Dav1dSettings settings = WINPR_C_ARRAY_INIT;
+	dav1d_default_settings(&settings);
+	/* Return pictures synchronously, without frame-parallel buffering. */
+	settings.n_threads = 1;
+	settings.max_frame_delay = 1;
+	const int rc = dav1d_open(&av1->dav1d, &settings);
+	if (rc < 0)
+	{
+		WLog_Print(av1->log, WLOG_WARN, "dav1d_open: %d", rc);
+		return FALSE;
+	}
+#elif defined(WITH_LIBAOM)
+	if (!freerdp_av1_init_aom_decoder(av1))
+		return FALSE;
+	if (av1->initialized)
+	{
+		const aom_codec_err_t rc = aom_codec_destroy(&av1->ctx);
+		av1->initialized = false;
+		if (rc != AOM_CODEC_OK)
+		{
+			WLog_Print(av1->log, WLOG_WARN, "aom_codec_destroy: %s", aom_codec_err_to_string(rc));
+			return FALSE;
+		}
+	}
+	av1->dcfg.w = width;
+	av1->dcfg.h = height;
+	av1->dcfg.allow_lowbitdepth = 1;
+	const aom_codec_err_t rc = aom_codec_dec_init(&av1->ctx, av1->iface, &av1->dcfg, av1->flags);
+	if (rc != AOM_CODEC_OK)
+	{
+		WLog_Print(av1->log, WLOG_WARN, "aom_codec_dec_init: %s", aom_codec_err_to_string(rc));
+		return FALSE;
+	}
+#else
+	return FALSE;
+#endif
+	av1->initialized = true;
+	return TRUE;
+}
+
+#if defined(WITH_LIBVA_AV1_DECODE)
+static void freerdp_av1_vaapi_unref_decode_buffers(FREERDP_AV1_CONTEXT* av1)
+{
+	WINPR_ASSERT(av1);
+
+	if (av1->packet)
+		av_packet_unref(av1->packet);
+
+	if (av1->swFrame)
+		av_frame_unref(av1->swFrame);
+
+	if (av1->hwFrame)
+		av_frame_unref(av1->hwFrame);
+}
+
+static void freerdp_av1_vaapi_release(FREERDP_AV1_CONTEXT* av1)
+{
+	WINPR_ASSERT(av1);
+
+	freerdp_av1_vaapi_unref_decode_buffers(av1);
+
+	if (av1->codecDecoderContext)
+		avcodec_free_context(&av1->codecDecoderContext);
+
+	if (av1->packet)
+		av_packet_free(&av1->packet);
+
+	if (av1->swFrame)
+		av_frame_free(&av1->swFrame);
+
+	if (av1->hwFrame)
+		av_frame_free(&av1->hwFrame);
+
+	if (av1->hwctx)
+		av_buffer_unref(&av1->hwctx);
+
+	av1->codecDecoder = nullptr;
+	av1->hw_pix_fmt = AV_PIX_FMT_NONE;
+	av1->vaapiFormatRejected = false;
+	av1->vaapiProfileChecked = false;
+}
+
+static BOOL freerdp_av1_decoder_supports_vaapi(const AVCodec* decoder)
+{
+	WINPR_ASSERT(decoder);
+
+	for (int x = 0;; x++)
+	{
+		const AVCodecHWConfig* config = avcodec_get_hw_config(decoder, x);
+		if (!config)
+			return FALSE;
+
+		if ((config->pix_fmt == AV_PIX_FMT_VAAPI) &&
+		    ((config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) != 0))
+			return TRUE;
+	}
+}
+
+static enum AVPixelFormat freerdp_av1_vaapi_get_format(AVCodecContext* ctx,
+                                                       const enum AVPixelFormat* fmts)
+{
+	WINPR_ASSERT(ctx);
+
+	FREERDP_AV1_CONTEXT* av1 = (FREERDP_AV1_CONTEXT*)ctx->opaque;
+	WINPR_ASSERT(av1);
+
+	for (const enum AVPixelFormat* cur = fmts; *cur != AV_PIX_FMT_NONE; cur++)
+	{
+		if (*cur == av1->hw_pix_fmt)
+			return *cur;
+	}
+
+	av1->vaapiFormatRejected = true;
+	return AV_PIX_FMT_NONE;
+}
+
+static void freerdp_av1_vaapi_log_fallback(FREERDP_AV1_CONTEXT* av1, const char* reason)
+{
+	WINPR_ASSERT(av1);
+	WINPR_ASSERT(reason);
+
+	WLog_Print(av1->log, WLOG_WARN, "AV1 VAAPI decoder not available, falling back to software: %s",
+	           reason);
+}
+
+static BOOL freerdp_av1_vaapi_probe_profile0(FREERDP_AV1_CONTEXT* av1)
+{
+	WINPR_ASSERT(av1);
+	WINPR_ASSERT(av1->hwctx);
+
+	AVHWDeviceContext* hwDevice = (AVHWDeviceContext*)av1->hwctx->data;
+	WINPR_ASSERT(hwDevice);
+	AVVAAPIDeviceContext* vaapi = (AVVAAPIDeviceContext*)hwDevice->hwctx;
+	WINPR_ASSERT(vaapi);
+	WINPR_ASSERT(vaapi->display);
+
+	VAConfigID config = VA_INVALID_ID;
+	VAStatus status =
+	    vaCreateConfig(vaapi->display, VAProfileAV1Profile0, VAEntrypointVLD, nullptr, 0, &config);
+	if (status != VA_STATUS_SUCCESS)
+	{
+		freerdp_av1_vaapi_log_fallback(av1, vaErrorStr(status));
+		return FALSE;
+	}
+
+	status = vaDestroyConfig(vaapi->display, config);
+	if (status != VA_STATUS_SUCCESS)
+	{
+		freerdp_av1_vaapi_log_fallback(av1, vaErrorStr(status));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL freerdp_av1_vaapi_validate_profile(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData,
+                                               UINT32 SrcSize)
+{
+	WINPR_ASSERT(av1);
+	WINPR_ASSERT(av1->codecDecoder);
+	WINPR_ASSERT(pSrcData);
+
+	AVCodecParserContext* parser = av_parser_init(AV_CODEC_ID_AV1);
+	AVCodecContext* parserContext = avcodec_alloc_context3(av1->codecDecoder);
+	if (!parser || !parserContext)
+	{
+		if (parser)
+			av_parser_close(parser);
+		avcodec_free_context(&parserContext);
+		freerdp_av1_vaapi_log_fallback(av1, "failed to allocate AV1 profile parser");
+		return FALSE;
+	}
+
+	parser->flags |= PARSER_FLAG_COMPLETE_FRAMES;
+	uint8_t* parsedData = nullptr;
+	int parsedSize = 0;
+	const int status =
+	    av_parser_parse2(parser, parserContext, &parsedData, &parsedSize, pSrcData,
+	                     (int)MIN(SrcSize, INT_MAX), AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
+	const int profile = parserContext->profile;
+	av_parser_close(parser);
+	avcodec_free_context(&parserContext);
+
+	if (status < 0)
+	{
+		freerdp_av1_vaapi_log_fallback(av1, av_err2str(status));
+		return FALSE;
+	}
+
+	if (profile != AV_PROFILE_AV1_MAIN)
+	{
+		freerdp_av1_vaapi_log_fallback(av1, "AV1 stream is not profile 0");
+		return FALSE;
+	}
+
+	av1->vaapiProfileChecked = true;
+	return TRUE;
+}
+
+static BOOL freerdp_av1_try_init_vaapi_decoder(FREERDP_AV1_CONTEXT* av1)
+{
+	WINPR_ASSERT(av1);
+
+	av1->codecDecoder = avcodec_find_decoder_by_name("av1");
+	if (!av1->codecDecoder)
+		av1->codecDecoder = avcodec_find_decoder(AV_CODEC_ID_AV1);
+
+	if (!av1->codecDecoder)
+	{
+		freerdp_av1_vaapi_log_fallback(av1, "FFmpeg AV1 decoder not found");
+		return FALSE;
+	}
+
+	if (!freerdp_av1_decoder_supports_vaapi(av1->codecDecoder))
+	{
+		freerdp_av1_vaapi_log_fallback(av1, "FFmpeg AV1 decoder has no VAAPI configuration");
+		return FALSE;
+	}
+
+	const int status =
+	    av_hwdevice_ctx_create(&av1->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE, nullptr, 0);
+	if (status < 0)
+	{
+		freerdp_av1_vaapi_log_fallback(av1, av_err2str(status));
+		av1->hwctx = nullptr;
+		return FALSE;
+	}
+
+	if (!freerdp_av1_vaapi_probe_profile0(av1))
+	{
+		freerdp_av1_vaapi_release(av1);
+		return FALSE;
+	}
+
+	av1->hw_pix_fmt = AV_PIX_FMT_VAAPI;
+	av1->backend = AV1_BACKEND_LIBVA;
+	return TRUE;
+}
+
+static BOOL freerdp_av1_vaapi_reset_decoder(FREERDP_AV1_CONTEXT* av1, UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(av1);
+	WINPR_ASSERT(av1->codecDecoder);
+	WINPR_ASSERT(av1->hwctx);
+
+	if ((width > INT_MAX) || (height > INT_MAX))
+	{
+		freerdp_av1_vaapi_log_fallback(av1, "AV1 frame size exceeds FFmpeg limits");
+		return FALSE;
+	}
+
+	if (av1->codecDecoderContext)
+		avcodec_free_context(&av1->codecDecoderContext);
+	if (av1->packet)
+		av_packet_free(&av1->packet);
+	if (av1->swFrame)
+		av_frame_free(&av1->swFrame);
+	if (av1->hwFrame)
+		av_frame_free(&av1->hwFrame);
+
+	av1->codecDecoderContext = avcodec_alloc_context3(av1->codecDecoder);
+	if (!av1->codecDecoderContext)
+	{
+		freerdp_av1_vaapi_log_fallback(av1, "failed to allocate FFmpeg decoder context");
+		return FALSE;
+	}
+
+	av1->codecDecoderContext->width = (int)width;
+	av1->codecDecoderContext->height = (int)height;
+	av1->codecDecoderContext->get_format = freerdp_av1_vaapi_get_format;
+	av1->codecDecoderContext->opaque = av1;
+	av1->codecDecoderContext->hw_device_ctx = av_buffer_ref(av1->hwctx);
+	if (!av1->codecDecoderContext->hw_device_ctx)
+	{
+		freerdp_av1_vaapi_log_fallback(av1, "failed to reference VAAPI device context");
+		freerdp_av1_vaapi_release(av1);
+		return FALSE;
+	}
+
+	int status = avcodec_open2(av1->codecDecoderContext, av1->codecDecoder, nullptr);
+	if (status < 0)
+	{
+		freerdp_av1_vaapi_log_fallback(av1, av_err2str(status));
+		freerdp_av1_vaapi_release(av1);
+		return FALSE;
+	}
+
+	av1->packet = av_packet_alloc();
+	av1->hwFrame = av_frame_alloc();
+	av1->swFrame = av_frame_alloc();
+	if (!av1->packet || !av1->hwFrame || !av1->swFrame)
+	{
+		freerdp_av1_vaapi_log_fallback(av1, "failed to allocate FFmpeg decode buffers");
+		freerdp_av1_vaapi_release(av1);
+		return FALSE;
+	}
+
+	av1->vaapiFormatRejected = false;
+	av1->vaapiProfileChecked = false;
+	WLog_Print(av1->log, WLOG_INFO, "Using VAAPI for accelerated AV1 decoding");
+	return TRUE;
+}
+
+static BOOL freerdp_av1_copy_nv12_to_yuv420(FREERDP_AV1_CONTEXT* av1, const AVFrame* frame,
+                                            UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(av1);
+	WINPR_ASSERT(frame);
+
+	if (!frame->data[1] || (frame->linesize[1] <= 0))
+		return FALSE;
+
+	const UINT32 chromaWidth = (width + 1U) / 2U;
+	const UINT32 chromaHeight = (height + 1U) / 2U;
+
+	for (UINT32 y = 0; y < chromaHeight; y++)
+	{
+		const BYTE* src = &frame->data[1][1ULL * y * (size_t)frame->linesize[1]];
+		BYTE* dstU = &av1->yuvdata[1][1ULL * y * av1->yuvStride[1]];
+		BYTE* dstV = &av1->yuvdata[2][1ULL * y * av1->yuvStride[2]];
+
+		for (UINT32 x = 0; x < chromaWidth; x++)
+		{
+			dstU[x] = src[2ULL * x];
+			dstV[x] = src[2ULL * x + 1ULL];
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL freerdp_av1_vaapi_convert_frame(FREERDP_AV1_CONTEXT* av1, const AVFrame* frame,
+                                            BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
+                                            UINT32 nDstWidth, UINT32 nDstHeight)
+{
+	WINPR_ASSERT(av1);
+	WINPR_ASSERT(frame);
+	WINPR_ASSERT(pDstData);
+
+	primitives_t* primitives = primitives_get();
+	if (!primitives)
+	{
+		WLog_Print(av1->log, WLOG_WARN,
+		           "AV1 VAAPI output conversion failed, falling back to software: primitives_get() "
+		           "nullptr");
+		return FALSE;
+	}
+
+	/* Frame dimensions are visible pixels; the destination may include storage padding. */
+	const prim_size_t roi = { .width = MIN(nDstWidth, (UINT32)frame->width),
+	                          .height = MIN(nDstHeight, (UINT32)frame->height) };
+	const BYTE* pSrc[3] = { nullptr, nullptr, nullptr };
+	UINT32 strides[3] = { 0 };
+	pstatus_t rc = -1;
+
+	switch (frame->format)
+	{
+		case AV_PIX_FMT_YUV420P:
+		case AV_PIX_FMT_YUVJ420P:
+			pSrc[0] = frame->data[0];
+			pSrc[1] = frame->data[1];
+			pSrc[2] = frame->data[2];
+			strides[0] = (UINT32)MAX(0, frame->linesize[0]);
+			strides[1] = (UINT32)MAX(0, frame->linesize[1]);
+			strides[2] = (UINT32)MAX(0, frame->linesize[2]);
+			rc = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep, DstFormat,
+			                                       &roi);
+			break;
+
+		case AV_PIX_FMT_YUV444P:
+		case AV_PIX_FMT_YUVJ444P:
+			pSrc[0] = frame->data[0];
+			pSrc[1] = frame->data[1];
+			pSrc[2] = frame->data[2];
+			strides[0] = (UINT32)MAX(0, frame->linesize[0]);
+			strides[1] = (UINT32)MAX(0, frame->linesize[1]);
+			strides[2] = (UINT32)MAX(0, frame->linesize[2]);
+			rc = primitives->YUV444ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep, DstFormat,
+			                                       &roi);
+			break;
+
+		case AV_PIX_FMT_NV12:
+			if (!freerdp_av1_copy_nv12_to_yuv420(av1, frame, roi.width, roi.height))
+			{
+				WLog_Print(av1->log, WLOG_WARN,
+				           "AV1 VAAPI NV12 conversion failed, falling back to software");
+				return FALSE;
+			}
+
+			pSrc[0] = frame->data[0];
+			pSrc[1] = av1->yuvdata[1];
+			pSrc[2] = av1->yuvdata[2];
+			strides[0] = (UINT32)MAX(0, frame->linesize[0]);
+			strides[1] = av1->yuvStride[1];
+			strides[2] = av1->yuvStride[2];
+			rc = primitives->YUV420ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep, DstFormat,
+			                                       &roi);
+			break;
+
+		default:
+			WLog_Print(av1->log, WLOG_WARN,
+			           "AV1 VAAPI decoded pixel format %d unsupported, falling back to software",
+			           frame->format);
+			return FALSE;
+	}
+
+	if (rc != PRIMITIVES_SUCCESS)
+	{
+		WLog_Print(av1->log, WLOG_WARN,
+		           "AV1 VAAPI output conversion failed, falling back to software: status=%" PRId32,
+		           rc);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL freerdp_av1_vaapi_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData,
+                                         UINT32 SrcSize, BYTE* pDstData, DWORD DstFormat,
+                                         UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight)
+{
+	WINPR_ASSERT(av1);
+	WINPR_ASSERT(av1->packet);
+	WINPR_ASSERT(av1->codecDecoderContext);
+
+	if (!av1->vaapiProfileChecked && !freerdp_av1_vaapi_validate_profile(av1, pSrcData, SrcSize))
+		return FALSE;
+
+	union
+	{
+		const BYTE* cpv;
+		uint8_t* pv;
+	} cnv;
+
+	av_packet_unref(av1->packet);
+	cnv.cpv = pSrcData;
+	av1->packet->data = cnv.pv;
+	av1->packet->size = (int)MIN(SrcSize, INT32_MAX);
+
+	int status = avcodec_send_packet(av1->codecDecoderContext, av1->packet);
+	if (status < 0)
+	{
+		WLog_Print(av1->log, WLOG_WARN,
+		           "AV1 VAAPI decode failed, falling back to software: send_packet=%s",
+		           av_err2str(status));
+		freerdp_av1_vaapi_unref_decode_buffers(av1);
+		return FALSE;
+	}
+
+	for (;;)
+	{
+		av_frame_unref(av1->hwFrame);
+		status = avcodec_receive_frame(av1->codecDecoderContext, av1->hwFrame);
+		if (status == AVERROR(EAGAIN) || status == AVERROR_EOF)
+			return TRUE;
+
+		if (status < 0)
+		{
+			if (av1->vaapiFormatRejected)
+			{
+				WLog_Print(av1->log, WLOG_WARN,
+				           "AV1 VAAPI decoder did not offer VAAPI output, falling back to software");
+			}
+			else
+			{
+				WLog_Print(av1->log, WLOG_WARN,
+				           "AV1 VAAPI decode failed, falling back to software: receive_frame=%s",
+				           av_err2str(status));
+			}
+			freerdp_av1_vaapi_unref_decode_buffers(av1);
+			return FALSE;
+		}
+
+		const AVFrame* frame = av1->hwFrame;
+		if (av1->hwFrame->format == av1->hw_pix_fmt)
+		{
+			av_frame_unref(av1->swFrame);
+			status = av_hwframe_transfer_data(av1->swFrame, av1->hwFrame, 0);
+			if (status < 0)
+			{
+				WLog_Print(av1->log, WLOG_WARN,
+				           "AV1 VAAPI frame transfer failed, falling back to software: %s",
+				           av_err2str(status));
+				freerdp_av1_vaapi_unref_decode_buffers(av1);
+				return FALSE;
+			}
+
+			frame = av1->swFrame;
+		}
+
+		if (!freerdp_av1_vaapi_convert_frame(av1, frame, pDstData, DstFormat, nDstStep,
+		                                     nDstWidth, nDstHeight))
+		{
+			freerdp_av1_vaapi_unref_decode_buffers(av1);
+			return FALSE;
+		}
+	}
+}
+
+static BOOL freerdp_av1_fallback_to_software(FREERDP_AV1_CONTEXT* av1, UINT32 width, UINT32 height)
+{
+	WINPR_ASSERT(av1);
+
+	freerdp_av1_vaapi_release(av1);
+	av1->backend = AV1_BACKEND_FAILED_TO_SOFTWARE;
+	av1->initialized = false;
+
+	return freerdp_av1_reset_software_decoder(av1, width, height);
 }
 #endif
 
@@ -533,6 +1117,17 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 	if (!areRectsValid(av1->log, nDstWidth, nDstHeight, regionRects, numRegionRect))
 		return -2;
 
+#if defined(WITH_LIBVA_AV1_DECODE)
+	if (av1->backend == AV1_BACKEND_LIBVA)
+	{
+		if (freerdp_av1_vaapi_decompress(av1, pSrcData, SrcSize, pDstData, DstFormat, nDstStep,
+		                                  nDstWidth, nDstHeight))
+			return TRUE;
+		if (!freerdp_av1_fallback_to_software(av1, av1->yuvWidth, av1->yuvHeight))
+			return -1;
+	}
+#endif
+
 #if defined(WITH_DAV1D)
 	Dav1dData data = WINPR_C_ARRAY_INIT;
 	const int wrc = dav1d_data_wrap(&data, pSrcData, SrcSize, av1_dav1d_data_free, nullptr);
@@ -695,47 +1290,19 @@ BOOL freerdp_av1_context_reset(FREERDP_AV1_CONTEXT* av1, UINT32 width, UINT32 he
 		return FALSE;
 #endif
 	}
+#if defined(WITH_LIBVA_AV1_DECODE)
+	else if (av1->backend == AV1_BACKEND_LIBVA)
+	{
+		if (freerdp_av1_vaapi_reset_decoder(av1, width, height))
+			av1->initialized = true;
+		else if (!freerdp_av1_fallback_to_software(av1, width, height))
+			return FALSE;
+	}
+#endif
 	else
 	{
-#if defined(WITH_DAV1D)
-		if (av1->initialized)
-		{
-			dav1d_close(&av1->dav1d);
-			av1->initialized = false;
-		}
-
-		Dav1dSettings settings = WINPR_C_ARRAY_INIT;
-		dav1d_default_settings(&settings);
-		/* Single-threaded: freerdp_av1_decompress() needs its picture back synchronously,
-		 * not held back by frame-parallel decoding. */
-		settings.n_threads = 1;
-		settings.max_frame_delay = 1;
-
-		const int rc = dav1d_open(&av1->dav1d, &settings);
-		if (rc < 0)
-		{
-			WLog_Print(av1->log, WLOG_WARN, "dav1d_open: %d", rc);
+		if (!freerdp_av1_reset_software_decoder(av1, width, height))
 			return FALSE;
-		}
-		av1->initialized = true;
-#elif defined(WITH_LIBAOM)
-		av1->dcfg.w = width;
-		av1->dcfg.h = height;
-		av1->dcfg.allow_lowbitdepth = 1;
-		const aom_codec_err_t rc =
-		    aom_codec_dec_init(&av1->ctx, av1->iface, &av1->dcfg, av1->flags);
-		if (rc != AOM_CODEC_OK)
-		{
-			WLog_Print(av1->log, WLOG_WARN, "aom_codec_dec_init: %s", aom_codec_err_to_string(rc));
-			return FALSE;
-		}
-		av1->initialized = true;
-#else
-		WLog_Print(av1->log, WLOG_WARN,
-		           "This build does not support AV1 decoding. Recompile with '-DWITH_DAV1D=ON' "
-		           "or '-DWITH_AOM=ON'");
-		return FALSE;
-#endif
 	}
 
 	av1->yuvWidth = width;
@@ -763,7 +1330,7 @@ void freerdp_av1_context_free(FREERDP_AV1_CONTEXT* av1)
 	if (!av1)
 		return;
 
-	if (av1->initialized)
+	if (av1->initialized && (av1->backend != AV1_BACKEND_LIBVA))
 	{
 		if (av1->encoder)
 		{
@@ -780,6 +1347,9 @@ void freerdp_av1_context_free(FREERDP_AV1_CONTEXT* av1)
 #endif
 		}
 	}
+#if defined(WITH_LIBVA_AV1_DECODE)
+	freerdp_av1_vaapi_release(av1);
+#endif
 	winpr_aligned_free(av1->yuvdata[0]);
 	winpr_aligned_free(av1->yuvdata[1]);
 	winpr_aligned_free(av1->yuvdata[2]);
@@ -792,6 +1362,7 @@ FREERDP_AV1_CONTEXT* freerdp_av1_context_new(BOOL Compressor)
 	if (!ctx)
 		return nullptr;
 	ctx->encoder = Compressor;
+	ctx->backend = AV1_BACKEND_SOFTWARE;
 	ctx->log = WLog_Get(TAG);
 	if (!ctx->log)
 		goto fail;
@@ -820,17 +1391,17 @@ FREERDP_AV1_CONTEXT* freerdp_av1_context_new(BOOL Compressor)
 		goto fail;
 #endif
 	}
-#if defined(WITH_LIBAOM) && !defined(WITH_DAV1D)
 	else
 	{
-		ctx->iface = aom_codec_av1_dx();
-		if (!ctx->iface)
-		{
-			WLog_Print(ctx->log, WLOG_ERROR, "aom_codec_av1_dx() nullptr");
-			goto fail;
-		}
-	}
+#if defined(WITH_LIBVA_AV1_DECODE)
+		if (freerdp_av1_try_init_vaapi_decoder(ctx))
+			return ctx;
 #endif
+#if defined(WITH_LIBAOM) && !defined(WITH_DAV1D)
+		if (!freerdp_av1_init_aom_decoder(ctx))
+			goto fail;
+#endif
+	}
 
 	return ctx;
 

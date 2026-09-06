@@ -61,6 +61,7 @@
 #cmakedefine WITH_GFX_AV1
 
 #cmakedefine WITH_VAAPI
+#cmakedefine WITH_LIBVA_AV1_DECODE
 #cmakedefine WITH_VIDEOTOOLBOX
 
 #cmakedefine WITH_CHANNELS

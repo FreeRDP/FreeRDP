@@ -645,4 +645,4 @@ error:
 }
 
 const H264_CONTEXT_SUBSYSTEM g_Subsystem_MF = { "MediaFoundation", mf_init, mf_uninit,
-	                                            mf_decompress, mf_compress };
+	                                            mf_decompress, mf_compress, nullptr };

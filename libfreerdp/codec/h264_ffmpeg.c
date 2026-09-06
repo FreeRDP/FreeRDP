@@ -42,6 +42,7 @@
 #if defined(WITH_VAAPI) || defined(WITH_VAAPI_H264_ENCODING)
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 9, 0)
 #include <libavutil/hwcontext.h>
+#include <libavutil/hwcontext_vaapi.h>
 #else
 #pragma warning You have asked for VA - API decoding, \
     but your version of libavutil is too old !Disabling.
@@ -585,7 +586,9 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	WINPR_ASSERT(packet);
 	av_init_packet(packet);
 #else
-	packet = av_packet_alloc();
+	if (!sys->packet)
+		sys->packet = av_packet_alloc();
+	packet = sys->packet;
 #endif
 	if (!packet)
 	{
@@ -593,6 +596,7 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		goto fail;
 	}
 
+	av_packet_unref(packet);
 	cnv.cpv = pSrcData;
 	packet->data = cnv.pv;
 	packet->size = (int)MIN(SrcSize, INT32_MAX);
@@ -643,6 +647,13 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 
 	if (sys->hwctx)
 	{
+		if (gotFrame && h264->skipHwDownload &&
+		    (sys->hwVideoFrame->format == AV_PIX_FMT_VAAPI))
+		{
+			rc = 1;
+			goto fail;
+		}
+
 		AVFrame* target = sys->videoFrame;
 		if (sys->hwFrameSupportsNativeFormat < 0)
 		{
@@ -733,13 +744,48 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		rc = -2;
 
 fail:
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
-	av_packet_unref(packet);
-#else
-	av_packet_free(&packet);
-#endif
+	if (packet)
+		av_packet_unref(packet);
 
 	return rc;
+}
+
+static BOOL libavcodec_get_vaapi_surface(H264_CONTEXT* WINPR_RESTRICT h264,
+                                         H264_VAAPI_SURFACE* surface)
+{
+#ifdef WITH_VAAPI
+	WINPR_ASSERT(h264);
+	WINPR_ASSERT(surface);
+
+	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
+	if (!sys || !sys->hwctx || !sys->hwVideoFrame)
+		return FALSE;
+
+	if (sys->hw_pix_fmt != AV_PIX_FMT_VAAPI)
+		return FALSE;
+
+	if (sys->hwVideoFrame->format != AV_PIX_FMT_VAAPI)
+		return FALSE;
+
+	if (!sys->hwVideoFrame->hw_frames_ctx)
+		return FALSE;
+
+	AVHWFramesContext* frames =
+	    (AVHWFramesContext*)sys->hwVideoFrame->hw_frames_ctx->data;
+	if (!frames || !frames->device_ctx || !frames->device_ctx->hwctx)
+		return FALSE;
+
+	AVVAAPIDeviceContext* vaapi = (AVVAAPIDeviceContext*)frames->device_ctx->hwctx;
+	surface->display = vaapi->display;
+	surface->surface = (UINT32)(uintptr_t)sys->hwVideoFrame->data[3];
+	surface->width = (UINT32)MAX(0, sys->hwVideoFrame->width);
+	surface->height = (UINT32)MAX(0, sys->hwVideoFrame->height);
+	return surface->display && (surface->surface != UINT32_MAX);
+#else
+	WINPR_UNUSED(h264);
+	WINPR_UNUSED(surface);
+	return FALSE;
+#endif
 }
 
 static int libavcodec_compress(H264_CONTEXT* WINPR_RESTRICT h264,
@@ -911,6 +957,9 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 	if (!sys)
 		return;
 
+	h264->skipHwDownload = FALSE;
+	h264->hwOutputAvailable = FALSE;
+
 	if (sys->packet)
 	{
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
@@ -1075,6 +1124,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 	WINPR_ASSERT(h264);
 	H264_CONTEXT_LIBAVCODEC* sys =
 	    (H264_CONTEXT_LIBAVCODEC*)calloc(1, sizeof(H264_CONTEXT_LIBAVCODEC));
+	h264->hwOutputAvailable = FALSE;
 
 	if (!sys)
 	{
@@ -1116,8 +1166,25 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 		sys->hwFrameSupportsNativeFormat = -1;
 		if (!sys->hwctx)
 		{
-			int ret = av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI,
-			                                 get_vaapi_device(), nullptr, 0);
+			int ret = 0;
+			if (h264->vaapiDisplay)
+			{
+				sys->hwctx = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_VAAPI);
+				if (!sys->hwctx)
+					ret = AVERROR(ENOMEM);
+				else
+				{
+					AVHWDeviceContext* device = (AVHWDeviceContext*)sys->hwctx->data;
+					AVVAAPIDeviceContext* vaapi = (AVVAAPIDeviceContext*)device->hwctx;
+					vaapi->display = h264->vaapiDisplay;
+					ret = av_hwdevice_ctx_init(sys->hwctx);
+				}
+			}
+			else
+			{
+				ret = av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI,
+				                             get_vaapi_device(), nullptr, 0);
+			}
 
 			if (ret < 0)
 			{
@@ -1125,7 +1192,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 				    h264->log, WLOG_ERROR,
 				    "Could not initialize hardware decoder for %s, falling back to software: %s",
 				    get_vaapi_device(), av_err2str(ret));
-				sys->hwctx = nullptr;
+				av_buffer_unref(&sys->hwctx);
 				goto fail_hwdevice_create;
 			}
 		}
@@ -1134,6 +1201,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 		sys->codecDecoderContext->get_format = libavcodec_get_format;
 		sys->hw_pix_fmt = AV_PIX_FMT_VAAPI;
+		h264->hwOutputAvailable = TRUE;
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 80, 100)
 		sys->codecDecoderContext->hw_device_ctx = av_buffer_ref(sys->hwctx);
 #endif
@@ -1247,10 +1315,13 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 	sys->videoFrame->pts = 0;
 	return TRUE;
 EXCEPTION:
+	h264->skipHwDownload = FALSE;
+	h264->hwOutputAvailable = FALSE;
 	libavcodec_uninit(h264);
 	return FALSE;
 }
 
 const H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec = { "libavcodec", libavcodec_init,
 	                                                    libavcodec_uninit, libavcodec_decompress,
-	                                                    libavcodec_compress };
+	                                                    libavcodec_compress,
+	                                                    libavcodec_get_vaapi_surface };

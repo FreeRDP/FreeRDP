@@ -35,6 +35,14 @@ extern "C"
 	typedef struct S_H264_CONTEXT H264_CONTEXT;
 	typedef struct S_YUV_CONTEXT YUV_CONTEXT;
 
+	typedef struct
+	{
+		void* display;
+		UINT32 surface;
+		UINT32 width;
+		UINT32 height;
+	} H264_VAAPI_SURFACE;
+
 	typedef enum
 	{
 		H264_RATECONTROL_VBR = 0,
@@ -112,6 +120,20 @@ extern "C"
 	                                    BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
 	                                    UINT32 nDstWidth, UINT32 nDstHeight,
 	                                    const RECTANGLE_16* regionRects, UINT32 numRegionRect);
+
+	WINPR_ATTR_NODISCARD
+	FREERDP_API INT32 avc420_decompress_to_vaapi(H264_CONTEXT* h264, const BYTE* pSrcData,
+	                                             UINT32 SrcSize, UINT32 nDstWidth,
+	                                             UINT32 nDstHeight,
+	                                             const RECTANGLE_16* regionRects,
+	                                             UINT32 numRegionRect);
+
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL h264_context_set_vaapi_display(H264_CONTEXT* h264, void* display);
+
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL h264_context_get_vaapi_surface(H264_CONTEXT* h264,
+	                                                H264_VAAPI_SURFACE* surface);
 
 	WINPR_ATTR_NODISCARD
 	FREERDP_API INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
