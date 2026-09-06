@@ -27,7 +27,7 @@ static void* allocRGB(uint32_t format, uint32_t width, uint32_t height, uint32_t
 	return rgb;
 }
 
-static BOOL testEncodeDecode(uint32_t format, uint32_t width, uint32_t height)
+static BOOL testEncodeDecode(uint32_t format, uint32_t width, uint32_t height, BOOL padded)
 {
 	BOOL rc = FALSE;
 	void* src = nullptr;
@@ -40,14 +40,16 @@ static BOOL testEncodeDecode(uint32_t format, uint32_t width, uint32_t height)
 
 	if (!freerdp_av1_context_reset(enc, width, height))
 		goto fail;
-	if (!freerdp_av1_context_reset(dec, width, height))
+	const uint32_t dstWidth = padded ? (width + 15U) & ~15U : width;
+	const uint32_t dstHeight = padded ? (height + 15U) & ~15U : height;
+	if (!freerdp_av1_context_reset(dec, dstWidth, dstHeight))
 		goto fail;
 
 	uint32_t stride = 0;
 	uint32_t ostride = 0;
 	src = allocRGB(format, width, height, &stride);
-	out = allocRGB(format, width, height, &ostride);
-	if (!src || !out || (stride < width) || (stride != ostride))
+	out = allocRGB(format, dstWidth, dstHeight, &ostride);
+	if (!src || !out || (stride < width))
 		goto fail;
 
 	const RECTANGLE_16 rect = { .left = 0, .top = 0, .right = width, .bottom = height };
@@ -62,8 +64,27 @@ static BOOL testEncodeDecode(uint32_t format, uint32_t width, uint32_t height)
 	/* AV1 is a lossy codec, so this only checks that the bitstream produced by the
 	 * encoder (always libaom) round-trips through whichever decoder backend is active
 	 * (dav1d or libaom) without error. It does not compare decoded pixels. */
-	rc = freerdp_av1_decompress(dec, dst, dstsize, out, format, stride, width, height, &rect, 1) >=
-	     0;
+	/* Reset and decode the same keyframe repeatedly, including a padded destination.
+	 * Padding must stay untouched; ASAN also checks the decoded source plane boundaries. */
+	for (size_t round = 0; round < 4; round++)
+	{
+		if (!freerdp_av1_context_reset(dec, dstWidth, dstHeight))
+			goto fail;
+		memset(out, 0xA5, (size_t)ostride * dstHeight);
+		if (freerdp_av1_decompress(dec, dst, dstsize, out, format, ostride, dstWidth, dstHeight,
+		                           &rect, 1) < 0)
+			goto fail;
+		for (size_t y = 0; y < dstHeight; y++)
+		{
+			const size_t start = y < height ? width * FreeRDPGetBytesPerPixel(format) : 0;
+			for (size_t x = start; x < ostride; x++)
+			{
+				if (((const BYTE*)out)[y * ostride + x] != 0xA5)
+					goto fail;
+			}
+		}
+	}
+	rc = TRUE;
 
 fail:
 	freerdp_av1_context_free(enc);
@@ -89,7 +110,9 @@ int TestFreeRDPCodecAV1(int argc, char* argv[])
 
 	for (size_t x = 0; x < ARRAYSIZE(formats); x++)
 	{
-		if (!testEncodeDecode(formats[x], width, height))
+		if (!testEncodeDecode(formats[x], width, height, FALSE))
+			return -1;
+		if (!testEncodeDecode(formats[x], width, height, TRUE))
 			return -1;
 	}
 
