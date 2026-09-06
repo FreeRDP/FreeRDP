@@ -459,14 +459,19 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	image->type = WINPR_IMAGE_BITMAP;
 
 	{
+		/* bfOffBits may include color masks, a color table or padding after the
+		 * info header. It must leave room for the required color data. */
 		const size_t pos = Stream_GetPosition(s);
 		const size_t expect = bf.bfOffBits;
-		if (pos != expect)
+		if ((pos > expect) || (bmpoffset > expect - pos))
 		{
 			WLog_WARN(TAG, "pos=%" PRIuz ", expected %" PRIuz ", offset=%" PRIuz, pos, expect,
 			          bmpoffset);
 			goto fail;
 		}
+
+		if (!Stream_SafeSeek(s, expect - pos))
+			goto fail;
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, bi.biSizeImage))

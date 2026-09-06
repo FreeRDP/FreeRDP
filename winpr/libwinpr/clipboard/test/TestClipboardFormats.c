@@ -37,7 +37,12 @@ static BOOL test_dib_to_bmp(const BYTE* dib, size_t dibSize, size_t expectedOffs
 	    (memcmp(&bmp[sizeof(WINPR_BITMAP_FILE_HEADER)], dib, dibSize) != 0))
 		goto fail_bmp;
 
-	rc = TRUE;
+	/* The synthesized BMP must also be readable by the image conversion code. */
+	wImage* image = winpr_image_new();
+	if (!image)
+		goto fail_bmp;
+	rc = (winpr_image_read_buffer(image, bmp, bmpSize) > 0);
+	winpr_image_free(image, TRUE);
 
 fail_bmp:
 	free(bmp);
