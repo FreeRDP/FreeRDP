@@ -128,7 +128,7 @@ enum device_descriptor_table
 /**
  * Speed a redirected device enumerated at.
  */
-enum device_speed
+enum device_speed WINPR_C23_ENUM_TYPE(uint32_t)
 {
 	DEVICE_SPEED_UNKNOWN = 0,
 	DEVICE_SPEED_LOW,

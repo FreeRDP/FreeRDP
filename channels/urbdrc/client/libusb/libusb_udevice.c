@@ -1010,7 +1010,7 @@ static int libusb_udev_os_feature_descriptor_request(IUDEVICE* idev,
 	return ERROR_SUCCESS;
 }
 
-static int libusb_udev_query_device_speed(IUDEVICE* idev)
+static enum device_speed libusb_udev_query_device_speed(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
 
