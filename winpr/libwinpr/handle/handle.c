@@ -108,7 +108,7 @@ BOOL winpr_exportHandleToString(HANDLE h, const char* format, char* outStr, size
 		return FALSE;
 	remaining -= suffixLen;
 
-	char value[32] = { 0 };
+	char value[32] = WINPR_C_ARRAY_INIT;
 #ifdef _WIN32
 	const int valueLenInt = snprintf(value, sizeof(value), "%llx", (unsigned long long)(UINT_PTR)h);
 #else

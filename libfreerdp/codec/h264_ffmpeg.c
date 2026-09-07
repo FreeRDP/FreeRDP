@@ -1287,6 +1287,7 @@ static BOOL load_config(H264_CONTEXT_LIBAVCODEC* sys, BOOL enabled, wLog* log)
 #else
 	WINPR_UNUSED(enabled);
 	WINPR_UNUSED(log);
+	WINPR_UNUSED(sys);
 #endif
 	return TRUE;
 }

@@ -390,7 +390,7 @@ BOOL pointer_cache_resize(rdpPointerCache* pointerCache)
 		pointer_free(pointerCache->context, pointer);
 	}
 
-	void* tmp = realloc(pointerCache->entries, cacheSize * sizeof(rdpPointer*));
+	void* tmp = realloc((void*)pointerCache->entries, cacheSize * sizeof(rdpPointer*));
 	if (!tmp)
 		return FALSE;
 
@@ -398,7 +398,8 @@ BOOL pointer_cache_resize(rdpPointerCache* pointerCache)
 	if (cacheSize > pointerCache->cacheSize)
 	{
 		const size_t rsize = (cacheSize - pointerCache->cacheSize) * sizeof(rdpPointer*);
-		memset(&pointerCache->entries[pointerCache->cacheSize], 0, rsize);
+		void* dst = (void*)&pointerCache->entries[pointerCache->cacheSize];
+		memset(dst, 0, rsize);
 	}
 	pointerCache->cacheSize = WINPR_ASSERTING_INT_CAST(UINT32, cacheSize);
 
@@ -408,9 +409,6 @@ BOOL pointer_cache_resize(rdpPointerCache* pointerCache)
 rdpPointerCache* pointer_cache_new(rdpContext* context)
 {
 	WINPR_ASSERT(context);
-
-	rdpSettings* settings = context->settings;
-	WINPR_ASSERT(settings);
 
 	rdpPointerCache* pointer_cache = (rdpPointerCache*)calloc(1, sizeof(rdpPointerCache));
 
