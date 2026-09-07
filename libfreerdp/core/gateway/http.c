@@ -1139,7 +1139,7 @@ static SSIZE_T http_response_recv_line(rdpTls* tls, HttpResponse* response)
 
 	SSIZE_T payloadOffset = -1;
 	const UINT32 timeoutMS =
-	    freerdp_settings_get_uint32(tls->context->settings, FreeRDP_TcpConnectTimeout);
+	    freerdp_settings_get_uint32(tls->context->settings, FreeRDP_GatewayResponseTimeout);
 	const UINT64 startMS = GetTickCount64();
 	while (payloadOffset <= 0)
 	{
@@ -1200,7 +1200,7 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 
 	const UINT64 startMS = GetTickCount64();
 	const UINT32 timeoutMS =
-	    freerdp_settings_get_uint32(tls->context->settings, FreeRDP_TcpConnectTimeout);
+	    freerdp_settings_get_uint32(tls->context->settings, FreeRDP_GatewayResponseTimeout);
 
 	if ((response->TransferEncoding == TransferEncodingChunked) && readContentLength)
 	{

@@ -536,7 +536,10 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayHttpMsUserAgent);      /** 2026
 		                                                             * @since version 3.18.0
 		                                                             */
-	UINT64 padding2112[2112 - 2027];                                /* 2027 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 GatewayResponseTimeout);     /** 2027
+		                                                             * @since version 3.32.0
+		                                                             */
+	UINT64 padding2112[2112 - 2028];                                /* 2028 */
 
 	/**
 	 * RemoteApp

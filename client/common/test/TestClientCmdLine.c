@@ -88,6 +88,30 @@ static inline BOOL testcase(const char* name, char** argv, size_t argc, int expe
 #define DRIVE_REDIRECT_PATH "/tmp"
 #endif
 
+static BOOL check_settings_gateway_response_timeout(rdpSettings* settings, UINT32 expected)
+{
+	const UINT32 val = freerdp_settings_get_uint32(settings, FreeRDP_GatewayResponseTimeout);
+
+	if (val != expected)
+	{
+		TEST_FAILURE("Expected GatewayResponseTimeout = %" PRIu32 ", but got %" PRIu32 "!\n",
+		             expected, val);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL check_settings_gateway_response_timeout_default(rdpSettings* settings)
+{
+	return check_settings_gateway_response_timeout(settings, 15000);
+}
+
+static BOOL check_settings_gateway_response_timeout_custom(rdpSettings* settings)
+{
+	return check_settings_gateway_response_timeout(settings, 120000);
+}
+
 static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 {
 	BOOL result = TRUE;
@@ -204,6 +228,30 @@ static const test tests[] = {
 	{ 0,
 	  check_settings_smartcard_no_redirection,
 	  { "testfreerdp", "/sound", "/drive:media,/foo/bar/blabla", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gateway_response_timeout_default,
+	  { "testfreerdp", "/gateway:type:arm,g:gw.contoso.com", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gateway_response_timeout_custom,
+	  { "testfreerdp", "/gateway:type:arm,g:gw.contoso.com,timeout:120000", "/v:test.freerdp.com",
+	    nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_gateway_response_timeout_custom,
+	  { "testfreerdp", "/gateway:type:http,g:gw.contoso.com,timeout:120000", "/v:test.freerdp.com",
+	    nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR,
+	  check_settings_gateway_response_timeout_default,
+	  { "testfreerdp", "/gateway:type:arm,g:gw.contoso.com,timeout:0", "/v:test.freerdp.com",
+	    nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR,
+	  check_settings_gateway_response_timeout_default,
+	  { "testfreerdp", "/gateway:type:arm,g:gw.contoso.com,timeout:abc", "/v:test.freerdp.com",
+	    nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 };
 // NOLINTEND(bugprone-suspicious-missing-comma)

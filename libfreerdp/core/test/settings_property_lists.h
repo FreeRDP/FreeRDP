@@ -266,6 +266,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_GatewayAcceptedCertLength,
 	FreeRDP_GatewayCredentialsSource,
 	FreeRDP_GatewayPort,
+	FreeRDP_GatewayResponseTimeout,
 	FreeRDP_GatewayUsageMethod,
 	FreeRDP_GfxCapsFilter,
 	FreeRDP_GfxCodecAV1Profile,

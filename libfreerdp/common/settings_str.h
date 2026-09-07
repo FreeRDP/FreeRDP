@@ -347,6 +347,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GatewayCredentialsSource, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_GatewayCredentialsSource" },
 	{ FreeRDP_GatewayPort, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_GatewayPort" },
+	{ FreeRDP_GatewayResponseTimeout, FREERDP_SETTINGS_TYPE_UINT32,
+	  "FreeRDP_GatewayResponseTimeout" },
 	{ FreeRDP_GatewayUsageMethod, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_GatewayUsageMethod" },
 	{ FreeRDP_GfxCapsFilter, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_GfxCapsFilter" },
 	{ FreeRDP_GfxCodecAV1Profile, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_GfxCodecAV1Profile" },

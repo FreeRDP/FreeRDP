@@ -1784,6 +1784,9 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 		case FreeRDP_GatewayPort:
 			return settings->GatewayPort;
 
+		case FreeRDP_GatewayResponseTimeout:
+			return settings->GatewayResponseTimeout;
+
 		case FreeRDP_GatewayUsageMethod:
 			return settings->GatewayUsageMethod;
 
@@ -2239,6 +2242,10 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_GatewayPort:
 			settings->GatewayPort = cnv.c;
+			break;
+
+		case FreeRDP_GatewayResponseTimeout:
+			settings->GatewayResponseTimeout = cnv.c;
 			break;
 
 		case FreeRDP_GatewayUsageMethod:
