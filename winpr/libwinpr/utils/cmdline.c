@@ -532,7 +532,7 @@ WINPR_ATTR_NODISCARD static int is_quoted(char c)
 	}
 }
 
-WINPR_ATTR_NODISCARD static size_t get_element_count(const char* list, BOOL* failed,
+WINPR_ATTR_NODISCARD static size_t get_element_count(const char* list, size_t listLen, BOOL* failed,
                                                      BOOL fullquoted)
 {
 	size_t count = 0;
@@ -544,14 +544,15 @@ WINPR_ATTR_NODISCARD static size_t get_element_count(const char* list, BOOL* fai
 
 	if (!list)
 		return 0;
-	if (strlen(list) == 0)
+	if (listLen <= 1)
 		return 0;
 
-	while (!finished)
+	while (!finished && (listLen > 0))
 	{
 		BOOL nextFirst = FALSE;
 
 		const char cur = *it++;
+		listLen = strnlen(it, listLen - 1) + 1;
 
 		/* Ignore the symbol that was escaped. */
 		if (escaped)
@@ -607,6 +608,11 @@ WINPR_ATTR_NODISCARD static size_t get_element_count(const char* list, BOOL* fai
 		}
 
 		first = nextFirst;
+	}
+	if (!finished)
+	{
+		*failed = TRUE;
+		return 0;
 	}
 	return count + 1;
 }
@@ -757,10 +763,11 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 				len -= 2;
 				fullquoted = TRUE;
 			}
+			len = strnlen(unquoted, len) + 1;
 		}
 	}
 
-	*count = get_element_count(unquoted, &failed, fullquoted);
+	*count = get_element_count(unquoted, len, &failed, fullquoted);
 	if (failed)
 		goto fail;
 
