@@ -11,9 +11,38 @@
 #include <winpr/wlog.h>
 
 #include <freerdp/client/rail.h>
+#include <freerdp/freerdp.h>
 
 #include "../rail_main.h"
 #include "../rail_orders.h"
+
+static void dealloc(railPlugin* plugin)
+{
+	if (!plugin)
+		return;
+	freerdp_settings_free(plugin->rdpcontext->settings);
+	free(plugin->rdpcontext);
+	free(plugin);
+}
+
+WINPR_ATTR_MALLOC(dealloc, 1)
+static railPlugin* alloc(void)
+{
+	railPlugin* rail = (railPlugin*)calloc(1, sizeof(railPlugin));
+	if (!rail)
+		return nullptr;
+	rail->rdpcontext = calloc(1, sizeof(rdpContext));
+	if (!rail->rdpcontext)
+		goto fail;
+
+	rail->rdpcontext->settings = freerdp_settings_new(0);
+	if (rail->rdpcontext->settings)
+		goto fail;
+	return rail;
+fail:
+	dealloc(rail);
+	return nullptr;
+}
 
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
@@ -23,7 +52,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 		return 0;
 
 	int rc = -1;
-	railPlugin* g_rail = (railPlugin*)calloc(1, sizeof(railPlugin));
+	railPlugin* g_rail = alloc();
 	RailClientContext* context = (RailClientContext*)calloc(1, sizeof(RailClientContext));
 	wStream* s = Stream_New(nullptr, size);
 	if (!g_rail || !context || !s)
@@ -51,6 +80,6 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 fail:
 	Stream_Free(s, TRUE);
 	free(context);
-	free(g_rail);
+	dealloc(g_rail);
 	return rc;
 }

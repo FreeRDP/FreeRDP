@@ -342,6 +342,7 @@ static const char key_int_maximizetocurrentdisplays[] = "maximizetocurrentdispla
 static const char key_int_use_multimon[] = "use multimon";
 static const char key_int_redirectwebauthn[] = "redirectwebauthn";
 
+WINPR_ATTR_NODISCARD
 static BOOL utils_str_is_empty(const char* str)
 {
 	if (!str)
@@ -351,11 +352,15 @@ static BOOL utils_str_is_empty(const char* str)
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static SSIZE_T freerdp_client_rdp_file_add_line(rdpFile* file);
+
+WINPR_ATTR_NODISCARD
 static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(const rdpFile* file,
                                                               const char* name);
 static void freerdp_client_file_string_check_free(LPSTR str);
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_client_rdp_file_find_integer_entry(rdpFile* file, const char* name,
                                                        DWORD** outValue, rdpFileLine** outLine)
 {
@@ -525,6 +530,7 @@ static BOOL freerdp_client_rdp_file_find_integer_entry(rdpFile* file, const char
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_client_rdp_file_find_string_entry(rdpFile* file, const char* name,
                                                       LPSTR** outValue, rdpFileLine** outLine)
 {
@@ -622,6 +628,7 @@ static BOOL freerdp_client_rdp_file_find_string_entry(rdpFile* file, const char*
  * @return FALSE if a standard name was set, TRUE for a non-standard name, FALSE on error
  *
  */
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, long value)
 {
 	DWORD* targetValue = nullptr;
@@ -668,6 +675,7 @@ static BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name,
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* name,
                                                   const char* value)
 {
@@ -701,7 +709,7 @@ static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* nam
  * @param value value of the string to set
  * @return 0 on success, 1 if the key wasn't found (not a standard key), -1 on error
  */
-
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, const char* value)
 {
 	LPSTR* targetValue = nullptr;
@@ -754,11 +762,13 @@ static BOOL freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, 
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_client_add_option(rdpFile* file, const char* option)
 {
 	return freerdp_addin_argv_add_argument(file->args, option);
 }
 
+WINPR_ATTR_NODISCARD
 static SSIZE_T freerdp_client_rdp_file_add_line(rdpFile* file)
 {
 	SSIZE_T index = (SSIZE_T)file->lineCount;
@@ -786,6 +796,7 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, siz
 	return freerdp_client_parse_rdp_file_buffer_ex(file, buffer, size, nullptr);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL trim(char** strptr)
 {
 	char* start = nullptr;
@@ -817,6 +828,7 @@ static BOOL trim(char** strptr)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL trim_strings(rdpFile* file)
 {
 	if (!trim(&file->Username))
@@ -881,6 +893,7 @@ static BOOL trim_strings(rdpFile* file)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL parse_line(rdpFile* file, char* line, size_t length, rdp_file_fkt_parse parse)
 {
 	if (length <= 1)
@@ -1068,6 +1081,7 @@ static inline void freerdp_client_file_string_reset(char** target)
 	*target = (char*)UINTPTR_MAX;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL FILE_POPULATE_STRING(char** _target, const rdpSettings* _settings,
                                         FreeRDP_Settings_Keys_String _option)
 {
@@ -1086,6 +1100,7 @@ static inline BOOL FILE_POPULATE_STRING(char** _target, const rdpSettings* _sett
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static char* freerdp_client_channel_args_to_string(const rdpSettings* settings, const char* channel,
                                                    const char* option)
 {
@@ -1098,6 +1113,7 @@ static char* freerdp_client_channel_args_to_string(const rdpSettings* settings, 
 	                                           ARRAYSIZE(filters));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdp_opt_duplicate(const rdpSettings* _settings, FreeRDP_Settings_Keys_String _id,
                               char** _key)
 {
@@ -1492,6 +1508,7 @@ static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* buf
 	return len;
 }
 
+WINPR_ATTR_NODISCARD
 static SSIZE_T write_int_parameters(const rdpFile* file, char* buffer, size_t size)
 {
 	WINPR_ASSERT(file);
@@ -1594,6 +1611,7 @@ static SSIZE_T write_int_parameters(const rdpFile* file, char* buffer, size_t si
 	return totalSize;
 }
 
+WINPR_ATTR_NODISCARD
 static SSIZE_T write_string_parameters(const rdpFile* file, char* buffer, size_t size)
 {
 	WINPR_ASSERT(file);
@@ -1656,6 +1674,7 @@ static SSIZE_T write_string_parameters(const rdpFile* file, char* buffer, size_t
 	return totalSize;
 }
 
+WINPR_ATTR_NODISCARD
 static SSIZE_T write_custom_parameters(const rdpFile* file, char* buffer, size_t size)
 {
 	WINPR_ASSERT(file);
@@ -1716,6 +1735,7 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	return totalSize;
 }
 
+WINPR_ATTR_MALLOC(freerdp_addin_argv_free, 1)
 static ADDIN_ARGV* rdp_file_to_args(const char* channel, const char* values)
 {
 	size_t count = 0;
@@ -2640,6 +2660,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_apply_connection_type_from_file(const rdpFile* file, rdpSettings* settings,
                                                     UINT32 type)
 {
@@ -2701,6 +2722,7 @@ static BOOL freerdp_apply_connection_type_from_file(const rdpFile* file, rdpSett
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL freerdp_set_connection_type_from_file(const rdpFile* file, rdpSettings* settings,
                                                   UINT32 type)
 {
@@ -2756,6 +2778,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	return freerdp_set_connection_type_from_file(file, settings, type);
 }
 
+WINPR_ATTR_NODISCARD
 static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(const rdpFile* file, const char* name)
 {
 	BOOL bFound = FALSE;
@@ -2870,6 +2893,7 @@ fail:
 	WINPR_PRAGMA_DIAG_POP
 	return nullptr;
 }
+
 void freerdp_client_rdp_file_free(rdpFile* file)
 {
 	if (file)

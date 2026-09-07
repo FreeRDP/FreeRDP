@@ -781,6 +781,8 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count,
                                        const char* const* params)
 {
 	WINPR_ASSERT(settings);
+	if (count == 0)
+		return FALSE;
 	WINPR_ASSERT(params);
 	WINPR_ASSERT(count > 0);
 
@@ -913,6 +915,8 @@ BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count,
                                        const char* const* params)
 {
 	ADDIN_ARGV* _args = nullptr;
+	if (count == 0)
+		return FALSE;
 
 	if (!settings || !params || !params[0] || (count > INT_MAX))
 		return FALSE;
@@ -944,6 +948,8 @@ BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count,
 {
 	ADDIN_ARGV* _args = nullptr;
 
+	if (count == 0)
+		return FALSE;
 	if (!settings || !params || !params[0] || (count > INT_MAX))
 		return FALSE;
 

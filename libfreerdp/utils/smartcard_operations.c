@@ -1561,13 +1561,14 @@ void smartcard_operation_free(SMARTCARD_OPERATION* op, BOOL allocated)
 		case SCARD_IOCTL_LOCATECARDSBYATRA:
 		{
 			LocateCardsByATRA_Call* call = &op->call.locateCardsByATRA;
-
+			free(call->rgAtrMasks);
 			free_reader_states_a(call->rgReaderStates, call->cReaders);
 		}
 		break;
 		case SCARD_IOCTL_LOCATECARDSBYATRW:
 		{
 			LocateCardsByATRW_Call* call = &op->call.locateCardsByATRW;
+			free(call->rgAtrMasks);
 			free_reader_states_w(call->rgReaderStates, call->cReaders);
 		}
 		break;
