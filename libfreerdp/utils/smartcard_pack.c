@@ -2658,6 +2658,14 @@ WINPR_ATTR_NODISCARD static LONG smartcard_unpack_reader_state_a(wLog* log, wStr
 	LONG status = SCARD_E_NO_MEMORY;
 
 	WINPR_ASSERT(ppcReaders || (cReaders == 0));
+	if (cReaders > UINT8_MAX)
+	{
+		WLog_Print(log, WLOG_ERROR,
+		           "Too many readers(%" PRIu32 "), rejecting request. Limited to <= %d", cReaders,
+		           UINT8_MAX);
+		return SCARD_E_WRITE_TOO_MANY;
+	}
+
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 4))
 		return status;
 
@@ -2739,6 +2747,15 @@ WINPR_ATTR_NODISCARD static LONG smartcard_unpack_reader_state_w(wLog* log, wStr
 	LONG status = SCARD_E_NO_MEMORY;
 
 	WINPR_ASSERT(ppcReaders || (cReaders == 0));
+
+	if (cReaders > UINT8_MAX)
+	{
+		WLog_Print(log, WLOG_ERROR,
+		           "Too many readers(%" PRIu32 "), rejecting request. Limited to <= %d", cReaders,
+		           UINT8_MAX);
+		return SCARD_E_WRITE_TOO_MANY;
+	}
+
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 4))
 		return status;
 
