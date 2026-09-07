@@ -519,7 +519,7 @@ const COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(const COMMAND_LINE_A
 	return nextArgument;
 }
 
-static int is_quoted(char c)
+WINPR_ATTR_NODISCARD static int is_quoted(char c)
 {
 	switch (c)
 	{
@@ -532,7 +532,8 @@ static int is_quoted(char c)
 	}
 }
 
-static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
+WINPR_ATTR_NODISCARD static size_t get_element_count(const char* list, BOOL* failed,
+                                                     BOOL fullquoted)
 {
 	size_t count = 0;
 	int quoted = 0;
@@ -610,7 +611,7 @@ static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
 	return count + 1;
 }
 
-static char* get_next_comma(char* string, BOOL fullquoted)
+WINPR_ATTR_NODISCARD static char* get_next_comma(char* string, BOOL fullquoted)
 {
 	const char* log = string;
 	int quoted = 0;
@@ -677,7 +678,7 @@ static char* get_next_comma(char* string, BOOL fullquoted)
 	}
 }
 
-static BOOL is_valid_fullquoted(const char* string)
+WINPR_ATTR_NODISCARD static BOOL is_valid_fullquoted(const char* string)
 {
 	char cur = '\0';
 	char last = '\0';
@@ -871,7 +872,8 @@ char* CommandLineToCommaSeparatedValues(int argc, char* argv[])
 	return CommandLineToCommaSeparatedValuesEx(argc, argv, nullptr, 0);
 }
 
-static const char* filtered(const char* arg, const char* filters[], size_t number)
+WINPR_ATTR_NODISCARD static const char* filtered(const char* arg, const char* filters[],
+                                                 size_t number)
 {
 	if (number == 0)
 		return arg;
