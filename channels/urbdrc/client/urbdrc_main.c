@@ -280,10 +280,10 @@ static BOOL write_string_block(wStream* s, size_t count, const char** strings, c
 
 /* [MS-RDPEUSB] 2.2.4.2 Add Device Message (ADD_DEVICE) */
 static UINT urbdrc_send_add_device(GENERIC_CHANNEL_CALLBACK* callback, UINT32 UsbDevice,
-                                   UINT32 bcdUSB, int deviceSpeed, const char* strInstanceId,
-                                   size_t InstanceIdLen, size_t nrHwIds, const char* HardwareIds[],
-                                   const size_t HardwareIdsLen[], size_t nrCompatIds,
-                                   const char* CompatibilityIds[],
+                                   UINT32 bcdUSB, enum device_speed deviceSpeed,
+                                   const char* strInstanceId, size_t InstanceIdLen, size_t nrHwIds,
+                                   const char* HardwareIds[], const size_t HardwareIdsLen[],
+                                   size_t nrCompatIds, const char* CompatibilityIds[],
                                    const size_t CompatibilityIdsLen[], const char* strContainerId,
                                    size_t ContainerIdLen)
 {
@@ -435,7 +435,7 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 	const UINT32 UsbDevice = pdev->get_UsbDevice(pdev);
 	const UINT32 bcdUSB =
 	    WINPR_ASSERTING_INT_CAST(uint32_t, pdev->query_device_descriptor(pdev, BCD_USB));
-	const int deviceSpeed = pdev->query_device_speed(pdev);
+	const enum device_speed deviceSpeed = pdev->query_device_speed(pdev);
 	return urbdrc_send_add_device(callback, UsbDevice, bcdUSB, deviceSpeed, strInstanceId,
 	                              InstanceIdLen, nrHwIds, CHardwareIds, HardwareIdsLen, nrCompatIds,
 	                              CCompatibilityIds, CompatibilityIdLen, strContainerId,
