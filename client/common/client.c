@@ -68,9 +68,11 @@
 
 #include <freerdp/channels/rdpewa.h>
 
+/* The AVD cloud table is part of libfreerdp regardless of WITH_AAD. */
+#include <freerdp/utils/aad.h>
+
 #ifdef WITH_AAD
 #include <freerdp/utils/http.h>
-#include <freerdp/utils/aad.h>
 #endif
 
 #ifdef WITH_SSO_MIB
@@ -390,6 +392,10 @@ int freerdp_client_settings_parse_connection_file(rdpSettings* settings, const c
 	if (!freerdp_client_populate_settings_from_rdp_file(file, settings))
 		goto out;
 
+	/* Every key of the file has been mapped, so the gateway of an AVD file is known now. */
+	if (!freerdp_client_settings_apply_avd_cloud(settings))
+		goto out;
+
 	ret = 0;
 out:
 	freerdp_client_rdp_file_free(file);
@@ -407,7 +413,8 @@ int freerdp_client_settings_parse_connection_file_buffer(rdpSettings* settings, 
 		return -1;
 
 	if (freerdp_client_parse_rdp_file_buffer(file, buffer, size) &&
-	    freerdp_client_populate_settings_from_rdp_file(file, settings))
+	    freerdp_client_populate_settings_from_rdp_file(file, settings) &&
+	    freerdp_client_settings_apply_avd_cloud(settings))
 	{
 		status = 0;
 	}
@@ -482,6 +489,68 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int arg
 out:
 	freerdp_assistance_file_free(file);
 	return ret;
+}
+
+BOOL freerdp_client_settings_apply_avd_cloud(rdpSettings* settings)
+{
+	if (!settings)
+		return FALSE;
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GatewayArmTransport))
+		return TRUE;
+
+	const char* hostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
+	const FreeRDP_AadCloud* cloud = freerdp_utils_aad_cloud_for_gateway(hostname);
+	if (!cloud)
+		return TRUE;
+
+	const FreeRDP_AadCloud* commercial = freerdp_utils_aad_cloud_by_name("commercial");
+	WINPR_ASSERT(commercial);
+
+	/* Only the commercial defaults are replaced. A caller that configured an authority of its
+	 * own has configured the whole cloud, so nothing here is second-guessed. */
+	const char* authority =
+	    freerdp_settings_get_string(settings, FreeRDP_GatewayAzureActiveDirectory);
+	if (!authority || (_stricmp(authority, freerdp_utils_aad_cloud_get_authority(commercial)) != 0))
+	{
+		WLog_DBG(TAG, "skipped AVD cloud '%s': the AAD authority is customized",
+		         freerdp_utils_aad_cloud_get_name(cloud));
+		return TRUE;
+	}
+
+	const char* scope = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdScope);
+	const char* redirect = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAccessAadFormat);
+	const BOOL applyScope =
+	    scope && (_stricmp(scope, freerdp_utils_aad_cloud_get_avd_scope(commercial)) == 0);
+	const BOOL applyRedirect =
+	    redirect &&
+	    (_stricmp(redirect, freerdp_utils_aad_cloud_get_avd_redirect_format(commercial)) == 0);
+
+	if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAzureActiveDirectory,
+	                                 freerdp_utils_aad_cloud_get_authority(cloud)))
+		return FALSE;
+	if (applyScope && !freerdp_settings_set_string(settings, FreeRDP_GatewayAvdScope,
+	                                               freerdp_utils_aad_cloud_get_avd_scope(cloud)))
+		return FALSE;
+	if (applyRedirect &&
+	    !freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAccessAadFormat,
+	                                 freerdp_utils_aad_cloud_get_avd_redirect_format(cloud)))
+		return FALSE;
+
+	/* Tenant-specific discovery is opt-in, so it is only derived while the setting is unset:
+	 * a tenant id that is not the "common" placeholder names the tenant to discover. */
+	if (!freerdp_settings_get_bool(settings, FreeRDP_GatewayAvdUseTenantid))
+	{
+		const char* tenant = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAadtenantid);
+		const BOOL useTenant = tenant && (_stricmp(tenant, "common") != 0);
+		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid, useTenant))
+			return FALSE;
+	}
+
+	WLog_DBG(TAG, "applied AVD cloud '%s'%s%s", freerdp_utils_aad_cloud_get_name(cloud),
+	         applyScope ? "" : ", kept the customized AVD scope",
+	         applyRedirect ? "" : ", kept the customized AVD redirect format");
+	return TRUE;
 }
 
 static int client_cli_read_string(freerdp* instance, const char* what, const char* suggestion,

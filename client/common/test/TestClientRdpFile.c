@@ -8,6 +8,7 @@
 #include <winpr/path.h>
 #include <winpr/crypto.h>
 
+#include <freerdp/client.h>
 #include <freerdp/client/file.h>
 #include <freerdp/channels/rdpecam.h>
 
@@ -407,6 +408,30 @@ static rdpSettings* load_from_file(const char* name, bool unchecked)
 	return settings;
 }
 
+/* The public file API, which maps the file and then selects the AVD cloud. */
+static rdpSettings* load_from_fresh(const void* data, size_t len)
+{
+	rdpSettings* settings = freerdp_settings_new(0);
+	if (!settings ||
+	    (freerdp_client_settings_parse_connection_file_buffer(settings, data, len) != 0))
+	{
+		freerdp_settings_free(settings);
+		return nullptr;
+	}
+	return settings;
+}
+
+static rdpSettings* load_from_file_fresh(const char* name)
+{
+	size_t datalen = 0;
+	void* data = read_rdp_data(name, &datalen);
+	if (!data)
+		return nullptr;
+	rdpSettings* settings = load_from_fresh(data, datalen);
+	free(data);
+	return settings;
+}
+
 static bool test_data(const char* json, const void* data, size_t len, bool unchecked)
 {
 	bool rc = false;
@@ -542,6 +567,120 @@ static bool test_rdp_files(bool allowCreate)
 fail:
 	FindClose(hdl);
 	free(path);
+	return rc;
+}
+
+static bool string_setting_is(const rdpSettings* settings, FreeRDP_Settings_Keys_String key,
+                              const char* expected)
+{
+	const char* actual = freerdp_settings_get_string(settings, key);
+	return actual && (strcmp(actual, expected) == 0);
+}
+
+static bool test_avd_settings(void)
+{
+	static const char nonArm[] = "gatewayhostname:s:gateway.wvd.azure.us\n";
+	static const char commercialScope[] =
+	    "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default%20openid%20profile%20offline_access";
+	static const char commercialRedirect[] = "https%%3A%%2F%%2F%s%%2F%s%%2Foauth2%%2Fnativeclient";
+	static const char usgovScope[] =
+	    "https%3A%2F%2Fwww.wvd.azure.us%2F.default%20openid%20profile%20offline_access";
+	static const char usgovRedirect[] =
+	    "https%%3A%%2F%%2Flogin.microsoftonline.com%%2Fcommon%%2Foauth2%%2Fnativeclient";
+
+	rdpSettings* usgov = load_from_file_fresh("rdp-avd/avd-usgov.rdp");
+	rdpSettings* commercial = load_from_file_fresh("rdp-avd/avd-commercial.rdp");
+	rdpSettings* nonArmSettings = load_from_fresh(nonArm, sizeof(nonArm) - 1);
+	bool rc = false;
+	if (!usgov || !commercial || !nonArmSettings)
+		goto fail;
+
+	if (!string_setting_is(usgov, FreeRDP_ServerHostname, "alternate.contoso.invalid") ||
+	    (freerdp_settings_get_uint32(usgov, FreeRDP_ServerPort) != 3390) ||
+	    (freerdp_get_gateway_usage_method(usgov) != TSC_PROXY_MODE_DIRECT) ||
+	    !freerdp_settings_get_bool(usgov, FreeRDP_GatewayUseSameCredentials) ||
+	    !freerdp_settings_get_bool(usgov, FreeRDP_GatewayArmTransport) ||
+	    !string_setting_is(usgov, FreeRDP_GatewayHostname, "gateway.wvd.azure.us") ||
+	    !string_setting_is(usgov, FreeRDP_GatewayAvdAadtenantid,
+	                       "00000000-0000-0000-0000-000000000000") ||
+	    !string_setting_is(usgov, FreeRDP_GatewayAvdWvdEndpointPool, "pool-contoso") ||
+	    !string_setting_is(usgov, FreeRDP_GatewayAvdGeo, "usgov") ||
+	    !string_setting_is(usgov, FreeRDP_GatewayAvdArmpath,
+	                       "/subscriptions/contoso/resourceGroups/contoso/providers/Microsoft."
+	                       "DesktopVirtualization/workspaces/contoso") ||
+	    !string_setting_is(usgov, FreeRDP_GatewayAvdDiagnosticserviceurl,
+	                       "https://diagnostics.contoso.invalid") ||
+	    !string_setting_is(usgov, FreeRDP_GatewayAvdHubdiscoverygeourl,
+	                       "https://discovery.contoso.invalid") ||
+	    !string_setting_is(usgov, FreeRDP_GatewayAvdActivityhint,
+	                       "00000000-0000-0000-0000-000000000000") ||
+	    !freerdp_settings_get_bool(usgov, FreeRDP_AadSecurity) ||
+	    (freerdp_settings_get_uint32(usgov, FreeRDP_AuthenticationLevel) != 2) ||
+	    !freerdp_settings_get_bool(usgov, FreeRDP_RedirectSmartCards) ||
+	    !freerdp_settings_get_bool(usgov, FreeRDP_RemoteApplicationMode) ||
+	    !string_setting_is(usgov, FreeRDP_RemoteApplicationProgram, "||ContosoApp") ||
+	    !string_setting_is(usgov, FreeRDP_RemoteApplicationName, "Contoso App") ||
+	    !string_setting_is(usgov, FreeRDP_RemoteApplicationGuid,
+	                       "00000000-0000-0000-0000-000000000000"))
+		goto fail;
+
+	/* The ARM gateway of the file is a US Government one, so populating the settings selected
+	 * that cloud, and its tenant id is not the "common" placeholder. */
+	if (!string_setting_is(usgov, FreeRDP_GatewayAzureActiveDirectory,
+	                       "login.microsoftonline.us") ||
+	    !string_setting_is(usgov, FreeRDP_GatewayAvdScope, usgovScope) ||
+	    !string_setting_is(usgov, FreeRDP_GatewayAvdAccessAadFormat, usgovRedirect) ||
+	    !freerdp_settings_get_bool(usgov, FreeRDP_GatewayAvdUseTenantid))
+		goto fail;
+
+	/* A commercial ARM gateway keeps the defaults. */
+	if (!freerdp_settings_get_bool(commercial, FreeRDP_GatewayArmTransport) ||
+	    !string_setting_is(commercial, FreeRDP_GatewayAzureActiveDirectory,
+	                       "login.microsoftonline.com") ||
+	    !string_setting_is(commercial, FreeRDP_GatewayAvdScope, commercialScope) ||
+	    !string_setting_is(commercial, FreeRDP_GatewayAvdAccessAadFormat, commercialRedirect) ||
+	    freerdp_settings_get_bool(commercial, FreeRDP_GatewayAvdUseTenantid))
+		goto fail;
+
+	/* Without the ARM transport the gateway hostname says nothing about the cloud. */
+	if (freerdp_settings_get_bool(nonArmSettings, FreeRDP_GatewayArmTransport) ||
+	    !string_setting_is(nonArmSettings, FreeRDP_GatewayAzureActiveDirectory,
+	                       "login.microsoftonline.com") ||
+	    !string_setting_is(nonArmSettings, FreeRDP_GatewayAvdScope, commercialScope) ||
+	    !string_setting_is(nonArmSettings, FreeRDP_GatewayAvdAccessAadFormat, commercialRedirect) ||
+	    freerdp_settings_get_bool(nonArmSettings, FreeRDP_GatewayAvdUseTenantid))
+		goto fail;
+
+	{
+		rdpFile* output = freerdp_client_rdp_file_new();
+		if (!output || !freerdp_client_populate_rdp_file_from_settings(output, usgov))
+		{
+			freerdp_client_rdp_file_free(output);
+			goto fail;
+		}
+		const char* resource =
+		    freerdp_client_rdp_file_get_string_option(output, "resourceprovider");
+		const char* tenant = freerdp_client_rdp_file_get_string_option(output, "aadtenantid");
+		const char* armpath = freerdp_client_rdp_file_get_string_option(output, "armpath");
+		if ((freerdp_client_rdp_file_get_integer_option(output, "enablerdsaadauth") != 1) ||
+		    (freerdp_client_rdp_file_get_integer_option(output, "redirectsmartcards") != 1) ||
+		    (freerdp_client_rdp_file_get_integer_option(output, "remoteapplicationmode") != 1) ||
+		    !resource || strcmp(resource, "arm") || !tenant ||
+		    strcmp(tenant, "00000000-0000-0000-0000-000000000000") || !armpath ||
+		    strcmp(armpath, "/subscriptions/contoso/resourceGroups/contoso/providers/Microsoft."
+		                    "DesktopVirtualization/workspaces/contoso"))
+		{
+			freerdp_client_rdp_file_free(output);
+			goto fail;
+		}
+		freerdp_client_rdp_file_free(output);
+	}
+
+	rc = true;
+fail:
+	freerdp_settings_free(nonArmSettings);
+	freerdp_settings_free(commercial);
+	freerdp_settings_free(usgov);
 	return rc;
 }
 
@@ -868,6 +1007,9 @@ int TestClientRdpFile(int argc, char* argv[])
 	if (!test_rdp_files(argc > 1))
 		return -1;
 #endif
+
+	if (!test_avd_settings())
+		return -1;
 
 	rdpSettings* settings = freerdp_settings_new(0);
 	if (!settings)

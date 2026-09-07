@@ -30,6 +30,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/config.h>
+#include <freerdp/settings.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -66,6 +67,64 @@ extern "C"
 		AAD_WELLKNOWN_msgraph_host,
 		AAD_WELLKNOWN_rbac_url
 	} AAD_WELLKNOWN_VALUES;
+
+	typedef struct freerdp_aad_cloud FreeRDP_AadCloud;
+
+	/** Look up an AVD cloud by its short name.
+	 *
+	 * @param name Cloud name (currently `commercial` or `usgov`).
+	 * @return The immutable cloud description, or \b nullptr if unknown.
+	 * @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const FreeRDP_AadCloud* freerdp_utils_aad_cloud_by_name(const char* name);
+
+	/** Select an AVD cloud from a gateway hostname.
+	 *
+	 * @param hostname Gateway hostname to inspect.
+	 * @return The matching immutable cloud description, or \b nullptr if unknown.
+	 * @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const FreeRDP_AadCloud* freerdp_utils_aad_cloud_for_gateway(const char* hostname);
+
+	/** @return The cloud's short name. @since version 3.32.0 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_utils_aad_cloud_get_name(const FreeRDP_AadCloud* cloud);
+
+	/** @return The case-insensitive gateway suffix, including its leading dot label boundary,
+	 *          or \b nullptr for a cloud without automatic gateway matching.
+	 * @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char*
+	freerdp_utils_aad_cloud_get_gateway_suffix(const FreeRDP_AadCloud* cloud);
+
+	/** @return The cloud's AAD authority. @since version 3.32.0 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_utils_aad_cloud_get_authority(const FreeRDP_AadCloud* cloud);
+
+	/** @return The cloud's percent-encoded AVD scope. @since version 3.32.0 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* freerdp_utils_aad_cloud_get_avd_scope(const FreeRDP_AadCloud* cloud);
+
+	/** @return The cloud's printf redirect format, containing at most two `%s` conversions.
+	 * @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char*
+	freerdp_utils_aad_cloud_get_avd_redirect_format(const FreeRDP_AadCloud* cloud);
+
+	/** Apply an AVD cloud's authority, scope and redirect settings.
+	 *
+	 * @param settings Settings instance to update.
+	 * @param cloud Cloud description returned by a lookup helper.
+	 * @return \b TRUE on success, \b FALSE on invalid input or allocation failure.
+	 * @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_utils_aad_apply_cloud(rdpSettings* settings,
+	                                               const FreeRDP_AadCloud* cloud);
 
 	/** Helper to retrieve the AAD access token from JSON input
 	 *

@@ -9,6 +9,12 @@ The common certificate settings location is
 \fI@SYSCONF_DIR@/certificates\&.json\fR
 .br
 
+The optional AVD cloud table is read from
+\fI@SYSCONF_DIR@/aad\-clouds\&.json\fR
+and from
+\fI$XDG_CONFIG_HOME/freerdp/aad\-clouds\&.json\fR
+.br
+
 File format is JSON
 .RE
 .PP
@@ -79,4 +85,76 @@ a string of hex integer values representing the certificate hash, e\&.g\&.
 .RE
 .RE
 .RE
+.RE
+.PP
+AVD cloud table:
+.RS 4
+.PP
+The Azure clouds \fI/gateway:cloud:\fR selects from, and the ones an ARM gateway hostname
+selects automatically, are compiled into the library\&. The optional
+\fIaad\-clouds\&.json\fR adds to them without a rebuild: the system file is read first, the
+user file after it, and every entry is merged over the compiled table by \fIname\fR\&. An entry
+naming a compiled cloud replaces it completely, any other one adds a cloud\&. A malformed entry
+is logged and skipped, a file that does not parse is logged and ignored, and without a file the
+compiled table is used unchanged\&.
+.PP
+File format is a JSON array of objects with:
+.PP
+\fIname\fR
+.RS 4
+\fIJSON string\fR
+.br
+
+the name \fI/gateway:cloud:\fR selects the cloud with, of \fI[a\-z0\-9\-]\fR
+.RE
+.PP
+\fIactive_directory\fR
+.RS 4
+\fIJSON string\fR
+.br
+
+the AAD authority host, without scheme or path, e\&.g\&.
+\fIlogin\&.microsoftonline\&.us\fR
+.RE
+.PP
+\fIavd_scope\fR
+.RS 4
+\fIJSON string\fR
+.br
+
+the percent\-encoded AVD scope, exactly as it is passed on the wire, e\&.g\&.
+\fIhttps%3A%2F%2Fwww\&.wvd\&.azure\&.us%2F\&.default%20openid%20profile%20offline_access\fR
+.RE
+.PP
+\fIavd_redirect_format\fR
+.RS 4
+\fIJSON string\fR
+.br
+
+the redirect URI as a printf format expanded with the authority and the tenant id, so a literal
+percent sign is written \fI%%\fR and at most two \fI%s\fR are allowed
+.RE
+.PP
+\fIgateway_suffix\fR
+.RS 4
+\fIJSON string, optional\fR
+.br
+
+the gateway hostname suffix selecting this cloud automatically, starting with the \fI\&.\fR of
+a label boundary, e\&.g\&. \fI\&.wvd\&.azure\&.us\fR\&. Without it the cloud is only
+reachable by name
+.RE
+.PP
+\fIresource_manager\fR
+.RS 4
+\fIJSON string, optional\fR
+.br
+
+the ARM endpoint of the cloud\&. Accepted and ignored, no setting holds it
+.RE
+.PP
+A sample file is in the source tree as \fIdocs/aad\-clouds\&.example\&.json\fR\&.
+Note that overriding \fIcommercial\fR also changes the values the automatic selection treats as
+untouched defaults, so a connection whose settings still hold the built\-in commercial defaults
+is then seen as configured by hand\&.
 .RE

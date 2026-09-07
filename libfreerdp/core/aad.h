@@ -50,4 +50,14 @@ WINPR_ATTR_MALLOC(aad_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpAad* aad_new(rdpContext* context);
 
+/** Drops the AVD cloud table loaded from the configuration files.
+ *
+ * The table is loaded once, the first time a cloud is looked up. This is a test seam: it lets a
+ * test run several configurations in one process. Core-private, so it is only linkable from
+ * tests built with BUILD_TESTING_INTERNAL, which exports all symbols.
+ *
+ * It is not thread safe and it invalidates every cloud description a lookup returned before.
+ */
+FREERDP_LOCAL void freerdp_utils_aad_cloud_table_reset(void);
+
 #endif /* FREERDP_LIB_CORE_AAD_H */
