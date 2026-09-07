@@ -27,6 +27,7 @@ if(POLICY CMP0177)
   cmake_policy(SET CMP0177 NEW)
 endif()
 project(FreeRDP LANGUAGES C)
+set(PROJECT_ISSUE_URL https://github.com/FreeRDP/FreeRDP/issues)
 
 add_custom_target(fuzzers COMMENT "Build fuzzers")
 

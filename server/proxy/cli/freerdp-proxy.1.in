@@ -92,7 +92,7 @@ Successful program execution.
 Otherwise.
 
 .SH SEE ALSO
-wlog(7)
+freerdp(7) wlog(7)
 
 .SH AUTHOR
 FreeRDP <team@freerdp.com>

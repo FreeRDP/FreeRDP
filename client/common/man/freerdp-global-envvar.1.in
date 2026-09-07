@@ -9,6 +9,11 @@ or
 have precedence over the environment variables\&.
 .br
 .RE
+.PP
+freerdp environment variables
+.RS 4
+Various configurations of the core library can be configured with environment variables as well. Consult (freerdp(7)) for more information\&.
+.RE
 
 .PP
 FREERDP_ASKPASS

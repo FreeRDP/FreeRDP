@@ -187,6 +187,7 @@ extern "C"
 #else
 	    UINT32 reservedAV1[2];
 #endif
+		BOOL h264HwAccel; /** @since version 3.32.0 */
 	};
 
 	struct rdp_shadow_surface

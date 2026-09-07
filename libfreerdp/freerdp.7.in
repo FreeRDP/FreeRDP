@@ -1,0 +1,162 @@
+.\" Written by Armin Novak (anovak@thincast.com)
+.\" Process this file with
+.\" groff -man -Tascii freerdp.7
+.\"
+.TH freerdp 7 "September 2026" Version "3.0"
+.SH CODEC BACKENDS
+
+.SH DESCRIPTION
+
+H264 encoding and decoding can be provided by various backends. Not all of them might be available depending
+on operating system in use and compilation options used.
+
+.SH BACKEND NAME
+FFMPEG \- FFMPEG based H264 encoding/decoding support
+
+.SH DESCRIPTION
+
+H264 encoding and decoding can be provided by various backends. One of these utilizes the FFMPEG framework.
+It provides a high level abstraction that is capable of using hardware backed encoding and decoding.
+
+To enable this feature these three requirements must be met:
+
+1. The RDP client or server must enable support for this feature.
+.br
+2. The environment variables or configuration file must not have it disabled
+.br
+3. The hardware must actually support the requested accelerator
+.br
+
+.SH CONFIG FILE
+
+.PP
+ Format and Location:
+
+.RS 4
+The configuration file is stored system wide or per user\&.
+.br
+
+The
+\fIXDG_CONFIG_HOME\fR
+environment variable can be used to override the base directory for per user configurations\&.
+.br
+
+The user configuration defaults to
+\fI~/\&.config\fR
+The location relative to
+\fIXDG_CONFIG_HOME\fR
+is
+\fI$XDG_CONFIG_HOME/@VENDOR_PRODUCT@/ffmpeg\&.json\fR
+.br
+
+For system wide configurations the default is 
+\fI/etc/@VENDOR_PRODUCT@/ffmpeg.json\fR
+
+The configuration is stored in JSON format
+.RE
+.PP
+Supported options:
+.RS 4
+.PP
+\fIallowUserConfig\fR
+.RS 4
+.PP
+.RS 4
+(system config only) Allow the user configuration file to be used\&.
+.br
+
+Default
+\fItrue\fR
+.br
+A JSON bool value
+.RE
+.RE
+.PP
+\fIallowEnvOverrides\fR
+.RS 4
+.PP
+.RS 4
+Allow environment variables to be evaluated\&.
+.br
+
+Default
+\fItrue\fR
+.br
+A JSON bool value
+.RE
+.RE
+.PP
+\fI\useHwDecoderfR
+.RS 4
+.PP
+.RS 4
+Enable hardware accelerated decoding\&.
+.br
+
+Default
+\fItrue\fR
+.br
+A JSON bool value
+.RE
+.RE
+.PP
+\fIuseHwEncoder\fR
+.RS 4
+.PP
+.RS 4
+Enable hardware accelerated encoding\&.
+.br
+
+Default
+\fItrue\fR
+.br
+A JSON bool value
+.RE
+.RE
+.PP
+\fIhwDeviceType\fR
+.RS 4
+.PP
+.RS 4
+Set acceleration API to use\&.
+.br
+
+Default
+\fIplatform dependent default accelerator\fR
+.br
+A JSON string value
+.RE
+.RE
+.PP
+\fIhwDeviceName\fR
+.RS 4
+.PP
+.RS 4
+Set hardware device to utilize\&.
+.br
+
+Default
+\fIDefault device used by accelerator\fR
+.br
+A JSON string value
+.RE
+.RE
+
+.SH ENVIRONMENT
+.IP FREERDP_VAAPI_DEVICE
+legacy option, superseded by FREERDP_HWCTX_DEVICE
+.IP FREERDP_HWCTX_DEVICE
+For accelerators that support to select from different devices the device to us.
+.IP FREERDP_HWCTX_TYPE
+The accelerator type, see enum AVHWDeviceType for possible supported accelerators. Use av_hwdevice_get_type_name to get the actual values that can be put here.
+
+.SH BUGS
+Please report any bugs at @PROJECT_ISSUE_URL@
+
+.SH "SEE ALSO"
+Additional information and the latest version is available at:
+.B @PROJECT_URL@
+
+.SH AUTHOR
+Armin Novak <anovak@thincast.com>
+

@@ -302,6 +302,8 @@ if(BUILD_SHARED_LIBS)
 endif()
 set(FREERDP_PC_REQUIRES winpr${FREERDP_API_VERSION})
 
+generate_and_install_freerdp_man_from_template("freerdp" "7" "${FREERDP_API_VERSION}")
+
 cleaning_configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp${FREERDP_VERSION_MAJOR}.pc @ONLY
 )
