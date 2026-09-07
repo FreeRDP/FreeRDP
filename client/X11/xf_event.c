@@ -1021,9 +1021,10 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 				}
 				for (unsigned long i = 0; i < nitems; i++)
 				{
-					if ((Atom)((UINT16**)prop)[i] == xfc->NET_WM_STATE_FULLSCREEN)
+					if ((Atom)WINPR_PACKED_ALIGN_CAST(UINT16**, prop)[i] ==
+					    xfc->NET_WM_STATE_FULLSCREEN)
 						fullscreen = TRUE;
-					if ((Atom)((UINT16**)prop)[i] ==
+					if ((Atom)(WINPR_PACKED_ALIGN_CAST(UINT16**, prop))[i] ==
 					    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT",
 					                        False))
 					{
@@ -1031,7 +1032,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 							appWindow->maxVert = TRUE;
 					}
 
-					if ((Atom)((UINT16**)prop)[i] ==
+					if ((Atom)(WINPR_PACKED_ALIGN_CAST(UINT16**, prop)[i]) ==
 					    Logging_XInternAtom(xfc->log, xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ",
 					                        False))
 					{

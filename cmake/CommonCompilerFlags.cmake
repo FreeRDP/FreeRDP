@@ -16,7 +16,6 @@ if(ENABLE_WARNING_VERBOSE)
       -Wpedantic
       -Wno-padded
       -Wno-switch-enum
-      -Wno-cast-align
       -Wno-unsafe-buffer-usage
       -Wno-reserved-identifier
       -Wno-covered-switch-default

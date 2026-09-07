@@ -77,7 +77,7 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size);
 
-#define WINPR_STREAM_CAST(t, val) WINPR_CXX_COMPAT_CAST(t, val)
+#define WINPR_STREAM_CAST(t, val) WINPR_PACKED_ALIGN_CAST(t, val)
 
 #define Stream_CheckAndLogRequiredCapacityOfSize(tag, s, nmemb, size)                         \
 	Stream_CheckAndLogRequiredCapacityEx(tag, WLOG_WARN, s, nmemb, size, "%s(%s:%" PRIuz ")", \

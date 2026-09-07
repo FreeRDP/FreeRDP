@@ -1241,8 +1241,8 @@ static void log_connection_address(const char* hostname, struct addrinfo* addr)
 {
 	WINPR_ASSERT(addr);
 
-	char* peerAddress =
-	    freerdp_tcp_address_to_string((const struct sockaddr_storage*)addr->ai_addr, nullptr);
+	char* peerAddress = freerdp_tcp_address_to_string(
+	    WINPR_PACKED_ALIGN_CAST(const struct sockaddr_storage*, addr->ai_addr), nullptr);
 	if (peerAddress)
 		WLog_DBG(TAG, "resolved %s: try to connect to %s", hostname, peerAddress);
 	free(peerAddress);

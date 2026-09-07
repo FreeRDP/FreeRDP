@@ -170,7 +170,7 @@ BOOL NTOWFv2FromHashW(const BYTE* NtHashV1, LPCWSTR User, UINT32 UserLengthInByt
 
 	/* Concatenate(UpperCase(User), Domain) */
 	CopyMemory(buffer, User, UserLengthInBytes);
-	CharUpperBuffW((LPWSTR)buffer, UserLengthInBytes / 2);
+	CharUpperBuffW(WINPR_PACKED_ALIGN_CAST(LPWSTR, buffer), UserLengthInBytes / sizeof(WCHAR));
 
 	if (DomainLengthInBytes > 0)
 	{

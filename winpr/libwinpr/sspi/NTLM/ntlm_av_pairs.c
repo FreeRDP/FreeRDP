@@ -231,7 +231,7 @@ static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPair, size_t* pcbAvPair)
 		return nullptr;
 
 	*pcbAvPair -= offset;
-	NTLM_AV_PAIR* next = (NTLM_AV_PAIR*)((PBYTE)pAvPair + offset);
+	NTLM_AV_PAIR* next = WINPR_PACKED_ALIGN_CAST(NTLM_AV_PAIR*, ((PBYTE)pAvPair + offset));
 	if (!ntlm_av_pair_check(next, *pcbAvPair))
 		return nullptr;
 	return next;

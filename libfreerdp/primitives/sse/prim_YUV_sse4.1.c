@@ -134,7 +134,7 @@ static inline pstatus_t sse41_YUV420ToRGB_BGRX(const BYTE* WINPR_RESTRICT pSrc[]
 
 	for (size_t y = 0; y < nHeight; y++)
 	{
-		__m128i* dst = (__m128i*)(pDst + dstStep * y);
+		__m128i* dst = WINPR_PACKED_ALIGN_CAST(__m128i*, (pDst + dstStep * y));
 		const BYTE* YData = pSrc[0] + y * srcStep[0];
 		const BYTE* UData = pSrc[1] + (y / 2) * srcStep[1];
 		const BYTE* VData = pSrc[2] + (y / 2) * srcStep[2];
@@ -160,7 +160,8 @@ static inline pstatus_t sse41_YUV420ToRGB_BGRX(const BYTE* WINPR_RESTRICT pSrc[]
 			const BYTE Y = *YData++;
 			const BYTE U = *UData;
 			const BYTE V = *VData;
-			dst = (__m128i*)writeYUVPixel((BYTE*)dst, PIXEL_FORMAT_BGRX32, Y, U, V, writePixelBGRX);
+			dst = WINPR_PACKED_ALIGN_CAST(
+			    __m128i*, writeYUVPixel((BYTE*)dst, PIXEL_FORMAT_BGRX32, Y, U, V, writePixelBGRX));
 
 			if (x % 2)
 			{
@@ -324,7 +325,7 @@ static inline void sse41_BGRX_fillRGB_pixel(BYTE* WINPR_RESTRICT pRGB, __m128i Y
 	const __m128i mask = mm_set_epu8(0x00, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0xFF,
 	                                 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF);
 
-	__m128i* rgb = (__m128i*)pRGB;
+	__m128i* rgb = WINPR_PACKED_ALIGN_CAST(__m128i*, pRGB);
 	const __m128i bgrx0 = _mm_unpacklo_epi16(bg[1], rx[1]);
 	_mm_maskmoveu_si128(bgrx0, mask, (char*)&rgb[0]);
 	const __m128i bgrx1 = _mm_unpackhi_epi16(bg[1], rx[1]);
@@ -600,8 +601,8 @@ static inline void sse41_BGRX_TO_YUV(const BYTE* WINPR_RESTRICT pLine1, BYTE* WI
 static inline void sse41_RGBToYUV420_BGRX_Y(const BYTE* WINPR_RESTRICT src, BYTE* dst, UINT32 width)
 {
 	const __m128i y_factors = BGRX_Y_FACTORS;
-	const __m128i* argb = (const __m128i*)src;
-	__m128i* ydst = (__m128i*)dst;
+	const __m128i* argb = WINPR_PACKED_ALIGN_CAST(const __m128i*, src);
+	__m128i* ydst = WINPR_PACKED_ALIGN_CAST(__m128i*, dst);
 
 	UINT32 x = 0;
 
@@ -654,10 +655,10 @@ static inline void sse41_RGBToYUV420_BGRX_UV(const BYTE* WINPR_RESTRICT src1,
 
 	for (; x < width - width % 16; x += 16)
 	{
-		const __m128i* rgb1 = (const __m128i*)&src1[4ULL * x];
-		const __m128i* rgb2 = (const __m128i*)&src2[4ULL * x];
-		__m64* udst = (__m64*)&dst1[x / 2];
-		__m64* vdst = (__m64*)&dst2[x / 2];
+		const __m128i* rgb1 = WINPR_PACKED_ALIGN_CAST(const __m128i*, &src1[4ULL * x]);
+		const __m128i* rgb2 = WINPR_PACKED_ALIGN_CAST(const __m128i*, &src2[4ULL * x]);
+		__m64* udst = WINPR_PACKED_ALIGN_CAST(__m64*, &dst1[x / 2]);
+		__m64* vdst = WINPR_PACKED_ALIGN_CAST(__m64*, &dst2[x / 2]);
 
 		/* subsample 16x2 pixels into 16x1 pixels */
 		__m128i x0 = LOAD_SI128(&rgb1[0]);
@@ -788,8 +789,8 @@ static inline void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
     BYTE* WINPR_RESTRICT b3, BYTE* WINPR_RESTRICT b4, BYTE* WINPR_RESTRICT b5,
     BYTE* WINPR_RESTRICT b6, BYTE* WINPR_RESTRICT b7, UINT32 width)
 {
-	const __m128i* argbEven = (const __m128i*)srcEven;
-	const __m128i* argbOdd = (const __m128i*)srcOdd;
+	const __m128i* argbEven = WINPR_PACKED_ALIGN_CAST(const __m128i*, srcEven);
+	const __m128i* argbOdd = WINPR_PACKED_ALIGN_CAST(const __m128i*, srcOdd);
 	const __m128i y_factors = BGRX_Y_FACTORS;
 	const __m128i u_factors = BGRX_U_FACTORS;
 	const __m128i v_factors = BGRX_V_FACTORS;
@@ -882,7 +883,7 @@ static inline void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 				const __m128i added = _mm_hadd_epi16(lo, hi);
 				const __m128i avg16 = _mm_srai_epi16(added, 2);
 				const __m128i avg = _mm_packus_epi16(avg16, avg16);
-				_mm_storel_epi64((__m128i*)b2, avg);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, b2), avg);
 			}
 			else
 			{
@@ -890,7 +891,7 @@ static inline void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 14, 12, 10, 8, 6, 4, 2, 0);
 				const __m128i ud = _mm_shuffle_epi8(ue, mask);
-				_mm_storel_epi64((__m128i*)b2, ud);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, b2), ud);
 			}
 
 			b2 += 8;
@@ -907,7 +908,7 @@ static inline void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				const __m128i ude = _mm_shuffle_epi8(ue, mask);
-				_mm_storel_epi64((__m128i*)b6, ude);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, b6), ude);
 				b6 += 8;
 			}
 		}
@@ -960,7 +961,7 @@ static inline void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 				const __m128i added = _mm_hadd_epi16(lo, hi);
 				const __m128i avg16 = _mm_srai_epi16(added, 2);
 				const __m128i avg = _mm_packus_epi16(avg16, avg16);
-				_mm_storel_epi64((__m128i*)b3, avg);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, b3), avg);
 			}
 			else
 			{
@@ -968,7 +969,7 @@ static inline void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 14, 12, 10, 8, 6, 4, 2, 0);
 				const __m128i vd = _mm_shuffle_epi8(ve, mask);
-				_mm_storel_epi64((__m128i*)b3, vd);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, b3), vd);
 			}
 
 			b3 += 8;
@@ -985,7 +986,7 @@ static inline void sse41_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				const __m128i vde = _mm_shuffle_epi8(ve, mask);
-				_mm_storel_epi64((__m128i*)b7, vde);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, b7), vde);
 				b7 += 8;
 			}
 		}
@@ -1080,8 +1081,8 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
     BYTE* WINPR_RESTRICT vChromaDst1, BYTE* WINPR_RESTRICT vChromaDst2, UINT32 width)
 {
 	const __m128i vector128 = CONST128_FACTORS;
-	const __m128i* argbEven = (const __m128i*)srcEven;
-	const __m128i* argbOdd = (const __m128i*)srcOdd;
+	const __m128i* argbEven = WINPR_PACKED_ALIGN_CAST(const __m128i*, srcEven);
+	const __m128i* argbOdd = WINPR_PACKED_ALIGN_CAST(const __m128i*, srcOdd);
 
 	UINT32 x = 0;
 	for (; x < width - width % 16; x += 16)
@@ -1178,7 +1179,7 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				const __m128i ude = _mm_shuffle_epi8(ue, mask);
-				_mm_storel_epi64((__m128i*)yEvenChromaDst1, ude);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, yEvenChromaDst1), ude);
 				yEvenChromaDst1 += 8;
 			}
 
@@ -1188,7 +1189,8 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				const __m128i udo /* codespell:ignore udo */ = _mm_shuffle_epi8(uo, mask);
-				_mm_storel_epi64((__m128i*)yOddChromaDst1, udo); // codespell:ignore udo
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, yOddChromaDst1),
+				                 udo); // codespell:ignore udo
 				yOddChromaDst1 += 8;
 			}
 
@@ -1198,8 +1200,8 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 14, 10, 6, 2, 12, 8, 4, 0);
 				const __m128i ud = _mm_shuffle_epi8(uo, mask);
-				int* uDst1 = (int*)uChromaDst1;
-				int* vDst1 = (int*)vChromaDst1;
+				int* uDst1 = WINPR_PACKED_ALIGN_CAST(int*, uChromaDst1);
+				int* vDst1 = WINPR_PACKED_ALIGN_CAST(int*, vChromaDst1);
 				const int* src = (const int*)&ud;
 				_mm_stream_si32(uDst1, src[0]);
 				_mm_stream_si32(vDst1, src[1]);
@@ -1209,7 +1211,7 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 
 			if (yLumaDstOdd)
 			{
-				_mm_storel_epi64((__m128i*)uLumaDst, uavg);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, uLumaDst), uavg);
 				uLumaDst += 8;
 			}
 			else
@@ -1218,7 +1220,7 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 14, 12, 10, 8, 6, 4, 2, 0);
 				const __m128i ud = _mm_shuffle_epi8(ue, mask);
-				_mm_storel_epi64((__m128i*)uLumaDst, ud);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, uLumaDst), ud);
 				uLumaDst += 8;
 			}
 		}
@@ -1269,7 +1271,7 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				__m128i vde = _mm_shuffle_epi8(ve, mask);
-				_mm_storel_epi64((__m128i*)yEvenChromaDst2, vde);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, yEvenChromaDst2), vde);
 				yEvenChromaDst2 += 8;
 			}
 
@@ -1279,7 +1281,7 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				__m128i vdo = _mm_shuffle_epi8(vo, mask);
-				_mm_storel_epi64((__m128i*)yOddChromaDst2, vdo);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, yOddChromaDst2), vdo);
 				yOddChromaDst2 += 8;
 			}
 
@@ -1289,8 +1291,8 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 14, 10, 6, 2, 12, 8, 4, 0);
 				const __m128i vd = _mm_shuffle_epi8(vo, mask);
-				int* uDst2 = (int*)uChromaDst2;
-				int* vDst2 = (int*)vChromaDst2;
+				int* uDst2 = WINPR_PACKED_ALIGN_CAST(int*, uChromaDst2);
+				int* vDst2 = WINPR_PACKED_ALIGN_CAST(int*, vChromaDst2);
 				const int* src = (const int*)&vd;
 				_mm_stream_si32(uDst2, src[0]);
 				_mm_stream_si32(vDst2, src[1]);
@@ -1300,7 +1302,7 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 
 			if (yLumaDstOdd)
 			{
-				_mm_storel_epi64((__m128i*)vLumaDst, vavg);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, vLumaDst), vavg);
 				vLumaDst += 8;
 			}
 			else
@@ -1309,7 +1311,7 @@ static inline void sse41_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
 				                 (char)0x80, (char)0x80, (char)0x80, 14, 12, 10, 8, 6, 4, 2, 0);
 				__m128i vd = _mm_shuffle_epi8(ve, mask);
-				_mm_storel_epi64((__m128i*)vLumaDst, vd);
+				_mm_storel_epi64(WINPR_PACKED_ALIGN_CAST(__m128i*, vLumaDst), vd);
 				vLumaDst += 8;
 			}
 		}

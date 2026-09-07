@@ -593,7 +593,7 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 		subsystem->cursorHeight = ci->height;
 		subsystem->cursorId = ci->cursor_serial;
 		n = ci->width * ci->height;
-		pDstPixel = (UINT32*)subsystem->cursorPixels;
+		pDstPixel = WINPR_PACKED_ALIGN_CAST(UINT32*, subsystem->cursorPixels);
 
 		for (int k = 0; k < n; k++)
 		{

@@ -173,7 +173,7 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 	if (!rdp_redirection_get_data(s, &length, &data))
 		return FALSE;
 
-	const WCHAR* wstr = (const WCHAR*)data;
+	const WCHAR* wstr = WINPR_PACKED_ALIGN_CAST(const WCHAR*, data);
 
 	if ((length % 2) || length < 2 || length > maxLength)
 	{
@@ -244,7 +244,7 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 
 	if (!rdp_redirection_get_data(s, pLength, &ptr))
 		return FALSE;
-	const WCHAR* wchar = (const WCHAR*)ptr;
+	const WCHAR* wchar = WINPR_PACKED_ALIGN_CAST(const WCHAR*, ptr);
 
 	size_t utf8_len = 0;
 	char* utf8 = ConvertWCharNToUtf8Alloc(wchar, *pLength / sizeof(WCHAR), &utf8_len);
@@ -573,7 +573,7 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 			size_t tsvlen = 0;
 
 			char* tsv =
-			    ConvertWCharNToUtf8Alloc((const WCHAR*)redirection->TsvUrl,
+			    ConvertWCharNToUtf8Alloc(WINPR_PACKED_ALIGN_CAST(const WCHAR*, redirection->TsvUrl),
 			                             redirection->TsvUrlLength / sizeof(WCHAR), &tsvlen);
 			if (!tsv || !lb)
 				valid = FALSE;
@@ -784,7 +784,8 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 			}
 
 			/* Ensure the text password is '\0' terminated */
-			if (_wcsnlen((const WCHAR*)redirection->Password, charLen) == charLen)
+			if (_wcsnlen(WINPR_PACKED_ALIGN_CAST(const WCHAR*, redirection->Password), charLen) ==
+			    charLen)
 			{
 				WLog_ERR(TAG, "LB_PASSWORD: missing '\\0' termination");
 				return STATE_RUN_FAILED;

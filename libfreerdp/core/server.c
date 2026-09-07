@@ -1128,7 +1128,7 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 {
 	wObject queueCallbacks = WINPR_C_ARRAY_INIT;
 
-	rdpContext* context = (rdpContext*)pServerName;
+	rdpContext* context = WINPR_PACKED_ALIGN_CAST(rdpContext*, pServerName);
 
 	if (!setup() || !context)
 		return INVALID_HANDLE_VALUE;

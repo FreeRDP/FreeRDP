@@ -996,7 +996,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, WINPR_ATTR_UNUSED LPVOID lpvInBuff
 #else
 		ifreq_len = sizeof(*ifreq);
 #endif
-		ifreq = (struct ifreq*)&((BYTE*)ifreq)[ifreq_len];
+		ifreq = WINPR_PACKED_ALIGN_CAST(struct ifreq*, &((BYTE*)ifreq)[ifreq_len]);
 		offset += ifreq_len;
 		index++;
 	}

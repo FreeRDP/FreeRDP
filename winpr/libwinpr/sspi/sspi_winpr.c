@@ -487,9 +487,9 @@ BOOL sspi_GetAuthIdentityUserDomainW(const void* identity, const WCHAR** pUser, 
 		const SEC_WINNT_AUTH_IDENTITY_EX2* id = (const SEC_WINNT_AUTH_IDENTITY_EX2*)identity;
 		UINT32 UserOffset = id->UserOffset;
 		UINT32 DomainOffset = id->DomainOffset;
-		*pUser = (const WCHAR*)&((const uint8_t*)identity)[UserOffset];
+		*pUser = WINPR_PACKED_ALIGN_CAST(const WCHAR*, &((const uint8_t*)identity)[UserOffset]);
 		*pUserLength = id->UserLength / 2;
-		*pDomain = (const WCHAR*)&((const uint8_t*)identity)[DomainOffset];
+		*pDomain = WINPR_PACKED_ALIGN_CAST(const WCHAR*, &((const uint8_t*)identity)[DomainOffset]);
 		*pDomainLength = id->DomainLength / 2;
 	}
 	else // SEC_WINNT_AUTH_IDENTITY
@@ -838,7 +838,8 @@ BOOL sspi_CopyAuthPackageListA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, cha
 		{
 			const SEC_WINNT_AUTH_IDENTITY_EX2* ad = (const SEC_WINNT_AUTH_IDENTITY_EX2*)pAuthData;
 			PackageListOffset = ad->PackageListOffset;
-			PackageListW = (const WCHAR*)&((const uint8_t*)pAuthData)[PackageListOffset];
+			PackageListW = WINPR_PACKED_ALIGN_CAST(const WCHAR*,
+			                                       &((const uint8_t*)pAuthData)[PackageListOffset]);
 			PackageListLength = ad->PackageListLength / 2;
 		}
 

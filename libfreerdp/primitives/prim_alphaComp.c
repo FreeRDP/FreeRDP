@@ -37,9 +37,9 @@ static pstatus_t general_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32
 {
 	for (size_t y = 0; y < height; y++)
 	{
-		const UINT32* sptr1 = (const UINT32*)(pSrc1 + y * src1Step);
-		const UINT32* sptr2 = (const UINT32*)(pSrc2 + y * src2Step);
-		UINT32* dptr = (UINT32*)(pDst + y * dstStep);
+		const UINT32* sptr1 = WINPR_PACKED_ALIGN_CAST(const UINT32*, (pSrc1 + y * src1Step));
+		const UINT32* sptr2 = WINPR_PACKED_ALIGN_CAST(const UINT32*, (pSrc2 + y * src2Step));
+		UINT32* dptr = WINPR_PACKED_ALIGN_CAST(UINT32*, (pDst + y * dstStep));
 
 		for (size_t x = 0; x < width; x++)
 		{

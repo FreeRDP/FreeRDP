@@ -1,5 +1,3 @@
-set(WARN_EXPERIMENTAL_LIST_PRIVATE "" CACHE INTERNAL "dependencies")
-
 function(warn_experimental name)
   set(CUR_NAMES ${name})
   if(ARGN)

@@ -291,9 +291,12 @@ BOOL rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRIC
 	UINT32* YQuant = context->quants + (NR_QUANT_VALUES * tile->quantIdxY);
 	UINT32* CbQuant = context->quants + (NR_QUANT_VALUES * tile->quantIdxCb);
 	UINT32* CrQuant = context->quants + (NR_QUANT_VALUES * tile->quantIdxCr);
-	pSrcDst[0] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 0ULL) + 16ULL])); /* y_r_buffer */
-	pSrcDst[1] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 1ULL) + 16ULL])); /* cb_g_buffer */
-	pSrcDst[2] = (INT16*)((&pBuffer[((8192ULL + 32ULL) * 2ULL) + 16ULL])); /* cr_b_buffer */
+	pSrcDst[0] = WINPR_PACKED_ALIGN_CAST(
+	    INT16*, ((&pBuffer[((8192ULL + 32ULL) * 0ULL) + 16ULL]))); /* y_r_buffer */
+	pSrcDst[1] = WINPR_PACKED_ALIGN_CAST(
+	    INT16*, ((&pBuffer[((8192ULL + 32ULL) * 1ULL) + 16ULL]))); /* cb_g_buffer */
+	pSrcDst[2] = WINPR_PACKED_ALIGN_CAST(
+	    INT16*, ((&pBuffer[((8192ULL + 32ULL) * 2ULL) + 16ULL]))); /* cr_b_buffer */
 	PROFILER_ENTER(context->priv->prof_rfx_encode_rgb)
 	PROFILER_ENTER(context->priv->prof_rfx_encode_format_rgb)
 	rfx_encode_format_rgb(tile->data, tile->width, tile->height, tile->scanline,

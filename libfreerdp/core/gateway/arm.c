@@ -376,8 +376,8 @@ static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cb
 	char algoName[100] = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(pBlockSize);
-	SSIZE_T algoSz = ConvertWCharNToUtf8((const WCHAR*)pbInput, cbInput / sizeof(WCHAR), algoName,
-	                                     sizeof(algoName) - 1);
+	SSIZE_T algoSz = ConvertWCharNToUtf8(WINPR_PACKED_ALIGN_CAST(const WCHAR*, pbInput),
+	                                     cbInput / sizeof(WCHAR), algoName, sizeof(algoName) - 1);
 	if (algoSz <= 0)
 	{
 		WLog_Print(log, WLOG_ERROR, "invalid algoName");
@@ -601,7 +601,8 @@ static BOOL arm_pick_base64Utf16Field(wLog* log, const WINPR_JSON* json, const c
 	}
 
 	size_t len2 = 0;
-	char* output2 = ConvertWCharNToUtf8Alloc((WCHAR*)output1, len1 / sizeof(WCHAR), &len2);
+	char* output2 = ConvertWCharNToUtf8Alloc(WINPR_PACKED_ALIGN_CAST(WCHAR*, output1),
+	                                         len1 / sizeof(WCHAR), &len2);
 	free(output1);
 	if (!output2 || !len2)
 	{

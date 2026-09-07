@@ -849,7 +849,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 	BYTE device_address = 0;
 	int ret = 0;
 	URBDRC_PLUGIN* urbdrc = nullptr;
-	WCHAR* text = (WCHAR*)Buffer;
+	WCHAR* text = WINPR_PACKED_ALIGN_CAST(WCHAR*, Buffer);
 	BYTE slen = 0;
 	BYTE locale = 0;
 	const UINT8 inSize = *BufferSize;

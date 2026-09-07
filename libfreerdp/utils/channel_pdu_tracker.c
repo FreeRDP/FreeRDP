@@ -57,7 +57,8 @@ wStream* ChannelPduTracker_poll(ChannelPduTracker* tracker, BOOL* ok)
 		return nullptr;
 	}
 
-	const CHANNEL_PDU_HEADER* header = (const CHANNEL_PDU_HEADER*)tracker->buffer;
+	const CHANNEL_PDU_HEADER* header =
+	    WINPR_PACKED_ALIGN_CAST(const CHANNEL_PDU_HEADER*, tracker->buffer);
 	if (header->length > CHANNEL_CHUNK_LENGTH)
 	{
 		WLog_Print(tracker->log, WLOG_ERROR, "chunk size %" PRIu32 " is too big", header->length);

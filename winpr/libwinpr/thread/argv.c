@@ -200,7 +200,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		return nullptr;
 	}
 
-	pArgs = (LPSTR*)buffer;
+	pArgs = WINPR_PACKED_ALIGN_CAST(LPSTR*, buffer);
 	pOutput = &buffer[maxNumArgs * (sizeof(char*))];
 	p = (const char*)lpCmdLine;
 

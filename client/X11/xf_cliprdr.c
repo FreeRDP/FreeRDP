@@ -782,7 +782,7 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 		const uint32_t htmlFormatId = ClipboardRegisterFormat(clipboard->system, type_HtmlFormat);
 		for (unsigned long i = 0; i < proplength; i++)
 		{
-			Atom tatom = ((Atom*)data)[i];
+			Atom tatom = WINPR_PACKED_ALIGN_CAST(Atom*, data)[i];
 			const xfCliprdrFormat* format = xf_cliprdr_get_client_format_by_atom(clipboard, tatom);
 
 			if (xf_cliprdr_should_add_format(formats, *numFormats, format))
@@ -833,7 +833,7 @@ out:
 		XFree(data);
 	else if (atoms && data)
 	{
-		*atoms = (Atom*)data;
+		*atoms = WINPR_PACKED_ALIGN_CAST(Atom*, data);
 		*atomsCount = proplength;
 	}
 
@@ -1074,7 +1074,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	     ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW)))
 	{
 		UINT error = NO_ERROR;
-		FILEDESCRIPTORW* file_array = (FILEDESCRIPTORW*)pDstData;
+		FILEDESCRIPTORW* file_array = WINPR_PACKED_ALIGN_CAST(FILEDESCRIPTORW*, pDstData);
 		UINT32 file_count = DstSize / sizeof(FILEDESCRIPTORW);
 		pDstData = nullptr;
 		DstSize = 0;
@@ -2053,12 +2053,13 @@ static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context,
 
 	for (UINT32 i = 0; i < capabilities->cCapabilitiesSets; i++)
 	{
-		const CLIPRDR_CAPABILITY_SET* caps = (const CLIPRDR_CAPABILITY_SET*)capsPtr;
+		const CLIPRDR_CAPABILITY_SET* caps =
+		    WINPR_PACKED_ALIGN_CAST(const CLIPRDR_CAPABILITY_SET*, capsPtr);
 
 		if (caps->capabilitySetType == CB_CAPSTYPE_GENERAL)
 		{
 			const CLIPRDR_GENERAL_CAPABILITY_SET* generalCaps =
-			    (const CLIPRDR_GENERAL_CAPABILITY_SET*)caps;
+			    WINPR_PACKED_ALIGN_CAST(const CLIPRDR_GENERAL_CAPABILITY_SET*, caps);
 
 			if (!cliprdr_file_context_remote_set_flags(clipboard->file, generalCaps->generalFlags))
 				return ERROR_INTERNAL_ERROR;

@@ -43,103 +43,103 @@ typedef ULONG_PTR NCRYPT_HANDLE;
 typedef ULONG_PTR NCRYPT_PROV_HANDLE;
 typedef ULONG_PTR NCRYPT_KEY_HANDLE;
 
-#define MS_KEY_STORAGE_PROVIDER                   \
-	(const WCHAR*)"M\x00i\x00"                    \
-	              "c\x00r\x00o\x00s\x00o\x00"     \
-	              "f\x00t\x00 "                   \
-	              "\x00S\x00o\x00"                \
-	              "f\x00t\x00w\x00"               \
-	              "a\x00r\x00"                    \
-	              "e\x00 \x00K\x00"               \
-	              "e\x00y\x00 "                   \
-	              "\x00S\x00t\x00o\x00r\x00"      \
-	              "a\x00g\x00"                    \
-	              "e\x00 "                        \
-	              "\x00P\x00r\x00o\x00v\x00i\x00" \
-	              "d\x00"                         \
-	              "e\x00r\x00\x00"
-#define MS_SMART_CARD_KEY_STORAGE_PROVIDER        \
-	(const WCHAR*)"M\x00i\x00"                    \
-	              "c\x00r\x00o\x00s\x00o\x00"     \
-	              "f\x00t\x00 \x00S\x00m\x00"     \
-	              "a\x00r\x00t\x00 "              \
-	              "\x00"                          \
-	              "C\x00"                         \
-	              "a\x00r\x00"                    \
-	              "d\x00 \x00K\x00"               \
-	              "e\x00y\x00 "                   \
-	              "\x00S\x00t\x00o\x00r\x00"      \
-	              "a\x00g\x00"                    \
-	              "e\x00 "                        \
-	              "\x00P\x00r\x00o\x00v\x00i\x00" \
-	              "d\x00"                         \
-	              "e\x00r\x00\x00"
+#define MS_KEY_STORAGE_PROVIDER                                           \
+	WINPR_PACKED_ALIGN_CAST(const WCHAR*, "M\x00i\x00"                    \
+	                                      "c\x00r\x00o\x00s\x00o\x00"     \
+	                                      "f\x00t\x00 "                   \
+	                                      "\x00S\x00o\x00"                \
+	                                      "f\x00t\x00w\x00"               \
+	                                      "a\x00r\x00"                    \
+	                                      "e\x00 \x00K\x00"               \
+	                                      "e\x00y\x00 "                   \
+	                                      "\x00S\x00t\x00o\x00r\x00"      \
+	                                      "a\x00g\x00"                    \
+	                                      "e\x00 "                        \
+	                                      "\x00P\x00r\x00o\x00v\x00i\x00" \
+	                                      "d\x00"                         \
+	                                      "e\x00r\x00\x00")
+#define MS_SMART_CARD_KEY_STORAGE_PROVIDER                                \
+	WINPR_PACKED_ALIGN_CAST(const WCHAR*, "M\x00i\x00"                    \
+	                                      "c\x00r\x00o\x00s\x00o\x00"     \
+	                                      "f\x00t\x00 \x00S\x00m\x00"     \
+	                                      "a\x00r\x00t\x00 "              \
+	                                      "\x00"                          \
+	                                      "C\x00"                         \
+	                                      "a\x00r\x00"                    \
+	                                      "d\x00 \x00K\x00"               \
+	                                      "e\x00y\x00 "                   \
+	                                      "\x00S\x00t\x00o\x00r\x00"      \
+	                                      "a\x00g\x00"                    \
+	                                      "e\x00 "                        \
+	                                      "\x00P\x00r\x00o\x00v\x00i\x00" \
+	                                      "d\x00"                         \
+	                                      "e\x00r\x00\x00")
 
 #define MS_SCARD_PROV_A "Microsoft Base Smart Card Crypto Provider"
-#define MS_SCARD_PROV                                \
-	(const WCHAR*)("M\x00i\x00"                      \
-	               "c\x00r\x00o\x00s\x00o\x00"       \
-	               "f\x00t\x00 \x00"                 \
-	               "B\x00"                           \
-	               "a\x00s\x00"                      \
-	               "e\x00 "                          \
-	               "\x00S\x00m\x00"                  \
-	               "a\x00r\x00t\x00 \x00"            \
-	               "C\x00"                           \
-	               "a\x00r\x00"                      \
-	               "d\x00 "                          \
-	               "\x00"                            \
-	               "C\x00r\x00y\x00p\x00t\x00o\x00 " \
-	               "\x00P\x00r\x00o\x00v\x00i\x00"   \
-	               "d\x00"                           \
-	               "e\x00r\x00\x00")
+#define MS_SCARD_PROV                                                        \
+	WINPR_PACKED_ALIGN_CAST(const WCHAR*, ("M\x00i\x00"                      \
+	                                       "c\x00r\x00o\x00s\x00o\x00"       \
+	                                       "f\x00t\x00 \x00"                 \
+	                                       "B\x00"                           \
+	                                       "a\x00s\x00"                      \
+	                                       "e\x00 "                          \
+	                                       "\x00S\x00m\x00"                  \
+	                                       "a\x00r\x00t\x00 \x00"            \
+	                                       "C\x00"                           \
+	                                       "a\x00r\x00"                      \
+	                                       "d\x00 "                          \
+	                                       "\x00"                            \
+	                                       "C\x00r\x00y\x00p\x00t\x00o\x00 " \
+	                                       "\x00P\x00r\x00o\x00v\x00i\x00"   \
+	                                       "d\x00"                           \
+	                                       "e\x00r\x00\x00"))
 
-#define MS_PLATFORM_KEY_STORAGE_PROVIDER            \
-	(const WCHAR*)"M\x00i\x00"                      \
-	              "c\x00r\x00o\x00s\x00o\x00"       \
-	              "f\x00t\x00 "                     \
-	              "\x00P\x00l\x00"                  \
-	              "a\x00t\x00"                      \
-	              "f\x00o\x00r\x00m\x00 "           \
-	              "\x00"                            \
-	              "C\x00r\x00y\x00p\x00t\x00o\x00 " \
-	              "\x00P\x00r\x00o\x00v\x00i\x00"   \
-	              "d\x00"                           \
-	              "e\x00r\x00\x00"
+#define MS_PLATFORM_KEY_STORAGE_PROVIDER                                    \
+	WINPR_PACKED_ALIGN_CAST(const WCHAR*, "M\x00i\x00"                      \
+	                                      "c\x00r\x00o\x00s\x00o\x00"       \
+	                                      "f\x00t\x00 "                     \
+	                                      "\x00P\x00l\x00"                  \
+	                                      "a\x00t\x00"                      \
+	                                      "f\x00o\x00r\x00m\x00 "           \
+	                                      "\x00"                            \
+	                                      "C\x00r\x00y\x00p\x00t\x00o\x00 " \
+	                                      "\x00P\x00r\x00o\x00v\x00i\x00"   \
+	                                      "d\x00"                           \
+	                                      "e\x00r\x00\x00")
 
-#define NCRYPT_CERTIFICATE_PROPERTY \
-	(const WCHAR*)"S\x00m\x00"      \
-	              "a\x00r\x00t\x00" \
-	              "C\x00"           \
-	              "a\x00r\x00"      \
-	              "d\x00K\x00"      \
-	              "e\x00y\x00"      \
-	              "C\x00"           \
-	              "e\x00r\x00t"     \
-	              "\x00i\x00"       \
-	              "f\x00i\x00"      \
-	              "c\x00"           \
-	              "a\x00t\x00"      \
-	              "e\x00\x00"
-#define NCRYPT_NAME_PROPERTY (const WCHAR*)"N\x00a\x00m\x00e\x00\x00"
-#define NCRYPT_UNIQUE_NAME_PROPERTY           \
-	(const WCHAR*)"U\x00n\x00i\x00q\x00u\x00" \
-	              "e\x00 \x00N\x00"           \
-	              "a\x00m\x00"                \
-	              "e\x00\x00"
-#define NCRYPT_READER_PROPERTY      \
-	(const WCHAR*)"S\x00m\x00"      \
-	              "a\x00r\x00t\x00" \
-	              "C\x00"           \
-	              "a\x00r\x00"      \
-	              "d\x00R\x00"      \
-	              "e\x00"           \
-	              "a\x00"           \
-	              "d\x00"           \
-	              "e\x00r\x00\x00"
+#define NCRYPT_CERTIFICATE_PROPERTY                         \
+	WINPR_PACKED_ALIGN_CAST(const WCHAR*, "S\x00m\x00"      \
+	                                      "a\x00r\x00t\x00" \
+	                                      "C\x00"           \
+	                                      "a\x00r\x00"      \
+	                                      "d\x00K\x00"      \
+	                                      "e\x00y\x00"      \
+	                                      "C\x00"           \
+	                                      "e\x00r\x00t"     \
+	                                      "\x00i\x00"       \
+	                                      "f\x00i\x00"      \
+	                                      "c\x00"           \
+	                                      "a\x00t\x00"      \
+	                                      "e\x00\x00")
+#define NCRYPT_NAME_PROPERTY WINPR_PACKED_ALIGN_CAST(const WCHAR*, "N\x00a\x00m\x00e\x00\x00")
+#define NCRYPT_UNIQUE_NAME_PROPERTY                                   \
+	WINPR_PACKED_ALIGN_CAST(const WCHAR*, "U\x00n\x00i\x00q\x00u\x00" \
+	                                      "e\x00 \x00N\x00"           \
+	                                      "a\x00m\x00"                \
+	                                      "e\x00\x00")
+#define NCRYPT_READER_PROPERTY                              \
+	WINPR_PACKED_ALIGN_CAST(const WCHAR*, "S\x00m\x00"      \
+	                                      "a\x00r\x00t\x00" \
+	                                      "C\x00"           \
+	                                      "a\x00r\x00"      \
+	                                      "d\x00R\x00"      \
+	                                      "e\x00"           \
+	                                      "a\x00"           \
+	                                      "d\x00"           \
+	                                      "e\x00r\x00\x00")
 
 /* winpr specific properties */
-#define NCRYPT_WINPR_SLOTID (const WCHAR*)"S\x00l\x00o\x00t\x00\x00"
+#define NCRYPT_WINPR_SLOTID WINPR_PACKED_ALIGN_CAST(const WCHAR*, "S\x00l\x00o\x00t\x00\x00")
 
 #define NCRYPT_MACHINE_KEY_FLAG 0x20
 #define NCRYPT_SILENT_FLAG 0x40

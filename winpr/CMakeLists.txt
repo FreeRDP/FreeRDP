@@ -149,6 +149,16 @@ if(WITHOUT_WINPR_3x_DEPRECATED)
   add_compile_definitions(WITHOUT_WINPR_3x_DEPRECATED)
 endif()
 
+option(
+  DISABLE_SUPPORTED_ARCH_CHECKS
+  "[experimental,dangerous,unsupported] Build for unknown systems or such missing essential features (unaligned memory access, ...)"
+  OFF
+)
+if(DISABLE_SUPPORTED_ARCH_CHECKS)
+  include(WarnExperimental)
+  warn_experimental("Skip PlatformChecks" "-DDISABLE_SUPPORTED_ARCH_CHECKS=OFF")
+endif()
+
 # Include cmake modules
 include(CheckIncludeFiles)
 include(CheckLibraryExists)

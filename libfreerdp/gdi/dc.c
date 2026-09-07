@@ -153,23 +153,23 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_PEN)
 	{
-		previousSelectedObject = (HGDIOBJECT)hdc->pen;
-		hdc->pen = (HGDI_PEN)hgdiobject;
+		previousSelectedObject = WINPR_PACKED_ALIGN_CAST(HGDIOBJECT, hdc->pen);
+		hdc->pen = WINPR_PACKED_ALIGN_CAST(HGDI_PEN, hgdiobject);
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_BRUSH)
 	{
 		previousSelectedObject = (HGDIOBJECT)hdc->brush;
-		hdc->brush = (HGDI_BRUSH)hgdiobject;
+		hdc->brush = WINPR_PACKED_ALIGN_CAST(HGDI_BRUSH, hgdiobject);
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_REGION)
 	{
 		hdc->selectedObject = hgdiobject;
-		previousSelectedObject = (HGDIOBJECT)COMPLEXREGION;
+		previousSelectedObject = WINPR_PACKED_ALIGN_CAST(HGDIOBJECT, COMPLEXREGION);
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_RECT)
 	{
 		hdc->selectedObject = hgdiobject;
-		previousSelectedObject = (HGDIOBJECT)SIMPLEREGION;
+		previousSelectedObject = WINPR_PACKED_ALIGN_CAST(HGDIOBJECT, SIMPLEREGION);
 	}
 	else
 	{
@@ -194,7 +194,7 @@ BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 
 	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{
-		HGDI_BITMAP hBitmap = (HGDI_BITMAP)hgdiobject;
+		HGDI_BITMAP hBitmap = WINPR_PACKED_ALIGN_CAST(HGDI_BITMAP, hgdiobject);
 
 		if (hBitmap->data && hBitmap->free)
 		{
@@ -206,12 +206,12 @@ BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_PEN)
 	{
-		HGDI_PEN hPen = (HGDI_PEN)hgdiobject;
+		HGDI_PEN hPen = WINPR_PACKED_ALIGN_CAST(HGDI_PEN, hgdiobject);
 		free(hPen);
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_BRUSH)
 	{
-		HGDI_BRUSH hBrush = (HGDI_BRUSH)hgdiobject;
+		HGDI_BRUSH hBrush = WINPR_PACKED_ALIGN_CAST(HGDI_BRUSH, hgdiobject);
 		free(hBrush);
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_REGION)

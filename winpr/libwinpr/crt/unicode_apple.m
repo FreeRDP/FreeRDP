@@ -73,8 +73,8 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		return -1;
 	}
 
-	const WCHAR *utf16 =
-	    (const WCHAR *)[utf cStringUsingEncoding:NSUTF16LittleEndianStringEncoding];
+	const WCHAR *utf16 = WINPR_PACKED_ALIGN_CAST(
+	    const WCHAR *, [utf cStringUsingEncoding:NSUTF16LittleEndianStringEncoding]);
 	const size_t utf16ByteLen = [utf lengthOfBytesUsingEncoding:NSUTF16LittleEndianStringEncoding];
 	const size_t utf16CharLen = utf16ByteLen / sizeof(WCHAR);
 	if (!utf16)

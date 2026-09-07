@@ -472,12 +472,13 @@ static UINT wlf_cliprdr_server_capabilities(CliprdrClientContext* context,
 
 	for (UINT32 i = 0; i < capabilities->cCapabilitiesSets; i++)
 	{
-		const CLIPRDR_CAPABILITY_SET* caps = (const CLIPRDR_CAPABILITY_SET*)capsPtr;
+		const CLIPRDR_CAPABILITY_SET* caps =
+		    WINPR_PACKED_ALIGN_CAST(const CLIPRDR_CAPABILITY_SET*, capsPtr);
 
 		if (caps->capabilitySetType == CB_CAPSTYPE_GENERAL)
 		{
 			const CLIPRDR_GENERAL_CAPABILITY_SET* generalCaps =
-			    (const CLIPRDR_GENERAL_CAPABILITY_SET*)caps;
+			    WINPR_PACKED_ALIGN_CAST(const CLIPRDR_GENERAL_CAPABILITY_SET*, caps);
 
 			if (!cliprdr_file_context_remote_set_flags(clipboard->file, generalCaps->generalFlags))
 				return ERROR_INTERNAL_ERROR;
@@ -806,7 +807,8 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 		{
 			const UINT32 flags = cliprdr_file_context_remote_get_flags(clipboard->file);
 			const UINT32 error = cliprdr_serialize_file_list_ex(
-			    flags, (const FILEDESCRIPTORW*)data, len / sizeof(FILEDESCRIPTORW), &ddata, &dsize);
+			    flags, WINPR_PACKED_ALIGN_CAST(const FILEDESCRIPTORW*, data),
+			    len / sizeof(FILEDESCRIPTORW), &ddata, &dsize);
 			if (error)
 				goto fail;
 		}

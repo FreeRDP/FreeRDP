@@ -191,7 +191,7 @@ WINPR_ATTR_NODISCARD static inline size_t cMIN(size_t a, size_t b)
 void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment,
                                     size_t offset)
 {
-	char* newMemblock = nullptr;
+	void* newMemblock = nullptr;
 	WINPR_ALIGNED_MEM* pNewMem = nullptr;
 
 	if (!memblock)
@@ -226,7 +226,7 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 	{
 		const size_t csize = cMIN(pMem->size, pNewMem->size);
 		memcpy(newMemblock, memblock, csize);
-		ZeroMemory(newMemblock + csize, pNewMem->size - csize);
+		ZeroMemory(((char*)newMemblock) + csize, pNewMem->size - csize);
 	}
 fail:
 	winpr_aligned_free(memblock);

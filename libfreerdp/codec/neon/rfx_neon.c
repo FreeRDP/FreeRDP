@@ -41,8 +41,8 @@ static inline void __attribute__((__gnu_inline__, __always_inline__, __artificia
 rfx_quantization_decode_block_NEON(INT16* buffer, const size_t buffer_size, const UINT32 factor)
 {
 	int16x8_t quantFactors = vdupq_n_s16(factor);
-	int16x8_t* buf = (int16x8_t*)buffer;
-	int16x8_t* buf_end = (int16x8_t*)(buffer + buffer_size);
+	int16x8_t* buf = WINPR_PACKED_ALIGN_CAST(int16x8_t*, buffer);
+	int16x8_t* buf_end = WINPR_PACKED_ALIGN_CAST(int16x8_t*, (buffer + buffer_size));
 
 	do
 	{

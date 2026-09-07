@@ -78,7 +78,7 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 
 	while (count--)
 	{
-		const __m128i* src = (const __m128i*)pSrcDst;
+		const __m128i* src = WINPR_PACKED_ALIGN_CAST(const __m128i*, pSrcDst);
 
 		__m128i xmm0 = LOAD_SI128(src++);
 		__m128i xmm1 = LOAD_SI128(src++);
@@ -98,7 +98,7 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 		xmm6 = _mm_slli_epi16(xmm6, (int16_t)val);
 		xmm7 = _mm_slli_epi16(xmm7, (int16_t)val);
 
-		__m128i* dst = (__m128i*)pSrcDst;
+		__m128i* dst = WINPR_PACKED_ALIGN_CAST(__m128i*, pSrcDst);
 
 		STORE_SI128(dst++, xmm0);
 		STORE_SI128(dst++, xmm1);
@@ -117,12 +117,12 @@ static pstatus_t sse2_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 
 	len -= count << (5 - shifts);
 	while (count--)
 	{
-		const __m128i* src = (const __m128i*)pSrcDst;
+		const __m128i* src = WINPR_PACKED_ALIGN_CAST(const __m128i*, pSrcDst);
 		__m128i xmm0 = LOAD_SI128(src);
 
 		xmm0 = _mm_slli_epi16(xmm0, (int16_t)val);
 
-		__m128i* dst = (__m128i*)pSrcDst;
+		__m128i* dst = WINPR_PACKED_ALIGN_CAST(__m128i*, pSrcDst);
 		STORE_SI128(dst++, xmm0);
 		pSrcDst = (INT16*)dst;
 	}
