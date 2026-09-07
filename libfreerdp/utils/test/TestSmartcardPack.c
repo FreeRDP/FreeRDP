@@ -19,6 +19,7 @@
 
 #include <winpr/stream.h>
 #include <freerdp/channels/scard.h>
+#include <freerdp/utils/smartcard_operations.h>
 #include <freerdp/utils/smartcard_pack.h>
 
 /* Build a LocateCardsByATRA call (cbContext=0, cAtrs=1, cReaders=0) holding a single
@@ -55,8 +56,9 @@ static BOOL run_case(UINT32 cbAtr, BOOL expectAccept)
 	if (!s)
 		return FALSE;
 
-	LocateCardsByATRA_Call call = WINPR_C_ARRAY_INIT;
-	const LONG status = smartcard_unpack_locate_cards_by_atr_a_call(s, &call);
+	SMARTCARD_OPERATION op = WINPR_C_ARRAY_INIT;
+	op.ioControlCode = SCARD_IOCTL_LOCATECARDSBYATRA;
+	const LONG status = smartcard_unpack_locate_cards_by_atr_a_call(s, &op.call.locateCardsByATRA);
 	Stream_Free(s, TRUE);
 
 	const BOOL accepted = status == SCARD_S_SUCCESS;
@@ -64,11 +66,11 @@ static BOOL run_case(UINT32 cbAtr, BOOL expectAccept)
 	{
 		printf("cbAtr=%" PRIu32 ": expected %s, unpack returned 0x%08" PRIX32 "\n", cbAtr,
 		       expectAccept ? "accept" : "reject", (UINT32)status);
-		free(call.rgAtrMasks);
+		smartcard_operation_free(&op, FALSE);
 		return FALSE;
 	}
 
-	free(call.rgAtrMasks);
+	smartcard_operation_free(&op, FALSE);
 	return TRUE;
 }
 
