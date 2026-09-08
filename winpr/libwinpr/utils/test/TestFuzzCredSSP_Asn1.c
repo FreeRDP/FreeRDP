@@ -107,6 +107,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 	if (!loggingInitialized)
 	{
 		(void)WLog_SetLogLevel(WLog_GetRoot(), WLOG_TRACE);
+		(void)WLog_SetLogAppenderType(WLog_GetRoot(), WLOG_APPENDER_CALLBACK);
 		loggingInitialized = TRUE;
 	}
 
