@@ -40,7 +40,9 @@
  */
 #if defined(DISABLE_SUPPORTED_ARCH_CHECKS)
 #elif defined(_M_ARM) || defined(_M_ARM64)
-#if !defined(__ARM_FEATURE_UNALIGNED)
+/* MSVC is not defining the same guards as everyone else, so lets hope they always support it and
+ * not only sometimes. */
+#if !defined(__ARM_FEATURE_UNALIGNED) && !defined(_MSC_VER)
 #warning \
     "-munaligned-access is required on arm. Use -DDISABLE_SUPPORTED_ARCH_CHECKS=ON to ignore, but there will be dragons ahead!"
 #else
