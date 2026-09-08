@@ -744,7 +744,12 @@ BOOL x509_utils_check_eku(const X509* xcert, int nid)
 	if (!oid_stack)
 		return FALSE;
 
+	/* sk_ASN1_OBJECT_set_cmp_func does some function pointer casting that produces a warning. We
+	 * can not fix upstream, so silence it here. */
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_CAST_FUNCTION_TYPE
 	sk_ASN1_OBJECT_set_cmp_func(oid_stack, asn1_object_cmp);
+	WINPR_PRAGMA_DIAG_POP
 	if (sk_ASN1_OBJECT_find(oid_stack, oid) >= 0)
 		ret = TRUE;
 

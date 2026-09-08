@@ -136,6 +136,8 @@
 	                "-Wdeprecated-declarations") /** @since version 3.17.2 */
 #define WINPR_PRAGMA_DIAG_IGNORED_CAST_ALIGN \
 	WINPR_DO_PRAGMA(clang diagnostic ignored "-Wcast-align") /** @since 3.32.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_CAST_FUNCTION_TYPE \
+	WINPR_DO_PRAGMA(clang diagnostic ignored "-Wcast-function-type") /** @since 3.32.0 */
 
 #if __clang_major__ >= 13
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER \
@@ -224,6 +226,8 @@
 	WINPR_DO_PRAGMA(GCC unroll 8) WINPR_DO_PRAGMA(GCC ivdep) /** @since version 3.6.0 */
 #define WINPR_PRAGMA_DIAG_IGNORED_CAST_ALIGN \
 	WINPR_DO_PRAGMA(gcc diagnostic ignored "-Wcast-align") /** @since 3.32.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_CAST_FUNCTION_TYPE \
+	WINPR_DO_PRAGMA(clang diagnostic ignored "-Wcast-function-type") /** @since 3.32.0 */
 #else
 #define WINPR_PRAGMA_DIAG_PUSH
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC
@@ -247,6 +251,7 @@
 #define WINPR_PRAGMA_DIAG_POP
 #define WINPR_PRAGMA_UNROLL_LOOP /** @since version 3.6.0 */
 #define WINPR_PRAGMA_DIAG_IGNORED_CAST_ALIGN /** @since 3.32.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_CAST_FUNCTION_TYPE /** @since 3.32.0 */
 #endif
 
 #if defined(MSVC)
