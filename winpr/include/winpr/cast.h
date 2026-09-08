@@ -40,7 +40,9 @@
  */
 #if defined(DISABLE_SUPPORTED_ARCH_CHECKS)
 #elif defined(_M_ARM) || defined(_M_ARM64)
-#if !defined(__ARM_FEATURE_UNALIGNED)
+/* MSVC is not defining the same guards as everyone else, so lets hope they always support it and
+ * not only sometimes. */
+#if !defined(__ARM_FEATURE_UNALIGNED) && !defined(_MSC_VER)
 #warning \
     "-munaligned-access is required on arm. Use -DDISABLE_SUPPORTED_ARCH_CHECKS=ON to ignore, but there will be dragons ahead!"
 #else
@@ -58,7 +60,11 @@
 #endif
 
 #if !defined(WINPR_ARCH_SUPPORTED)
+#if defined(__GNUC__) || defined(__clang__) ||                       \
+    (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L))) || \
+    (defined(__cplusplus) && (__cplusplus >= 202302L))
 #warning "unaligned pointer access not verified on platform, SIGBUS may happen!"
+#endif
 #endif
 
 /**! @brief Cast to \ref t and silence Wcast-align warnings.
