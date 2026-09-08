@@ -46,6 +46,14 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API char* winpr_strerror(INT32 dw, char* dmsg, size_t size);
 
+	/**! @brief log all build related warnings to the logger \ref log at log level \ref level
+	 *
+	 * @param log The logger to use, must not be nullptr
+	 * @param level A log level to use of type \ref wLogLevel
+	 * @since version 3.32.0
+	 */
+	WINPR_API void winpr_log_build_warn(wLog* log, DWORD level);
+
 #ifdef __cplusplus
 }
 #endif

@@ -3208,6 +3208,7 @@ void rdp_log_build_warnings(rdpRdp* rdp)
 	log_build_warn(rdp, "runtime-check", "might slow down the application",
 	               option_is_runtime_checks);
 	log_build_warn_ssl(rdp);
+	winpr_log_build_warn(rdp->log, WLOG_WARN);
 }
 
 size_t rdp_get_event_handles(rdpRdp* rdp, HANDLE* handles, uint32_t count)

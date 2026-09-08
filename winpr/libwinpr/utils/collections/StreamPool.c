@@ -30,7 +30,7 @@
 
 struct s_StreamPoolEntry
 {
-#if defined(WITH_STREAMPOOL_DEBUG)
+#if defined(WITH_DEBUG_STREAMPOOL)
 	char** msg;
 	size_t lines;
 #endif
@@ -58,7 +58,7 @@ static void discard_entry(struct s_StreamPoolEntry* entry, BOOL discardStream)
 	if (!entry)
 		return;
 
-#if defined(WITH_STREAMPOOL_DEBUG)
+#if defined(WITH_DEBUG_STREAMPOOL)
 	free((void*)entry->msg);
 #endif
 
@@ -73,7 +73,7 @@ static struct s_StreamPoolEntry add_entry(wStream* s)
 {
 	struct s_StreamPoolEntry entry = WINPR_C_ARRAY_INIT;
 
-#if defined(WITH_STREAMPOOL_DEBUG)
+#if defined(WITH_DEBUG_STREAMPOOL)
 	void* stack = winpr_backtrace(20);
 	if (stack)
 		entry.msg = winpr_backtrace_symbols(stack, &entry.lines);
@@ -463,7 +463,7 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 	if ((offset > 0) && ((size_t)offset < size))
 		used += (size_t)offset;
 
-#if defined(WITH_STREAMPOOL_DEBUG)
+#if defined(WITH_DEBUG_STREAMPOOL)
 	StreamPool_Lock(pool);
 
 	offset = _snprintf(&buffer[used], size - 1 - used, "\n-- dump used array take locations --\n");
