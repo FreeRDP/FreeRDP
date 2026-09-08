@@ -60,4 +60,6 @@
 #cmakedefine WITH_WINPR_DEPRECATED /** @since version 3.27.0 */
 #endif
 
+#cmakedefine DISABLE_SUPPORTED_ARCH_CHECKS /** @since version 3.32.0 */
+
 #endif /* WINPR_CONFIG_H */

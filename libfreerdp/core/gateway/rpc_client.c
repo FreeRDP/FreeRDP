@@ -1191,8 +1191,8 @@ static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT1
 		if (!result)
 			return FALSE;
 
-		*host =
-		    freerdp_tcp_address_to_string((const struct sockaddr_storage*)result->ai_addr, nullptr);
+		*host = freerdp_tcp_address_to_string(
+		    WINPR_PACKED_ALIGN_CAST(const struct sockaddr_storage*, result->ai_addr), nullptr);
 		freeaddrinfo(result);
 		return TRUE;
 	}

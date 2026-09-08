@@ -2143,7 +2143,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(
 
 			if (kdc_settings->ProxyServerLength > 0)
 			{
-				WCHAR* proxy = (WCHAR*)((BYTE*)pBuffer + kdc_settings->ProxyServerOffset);
+				WCHAR* proxy = WINPR_PACKED_ALIGN_CAST(
+				    WCHAR*, ((BYTE*)pBuffer + kdc_settings->ProxyServerOffset));
 
 				credentials->kdc_url = ConvertWCharNToUtf8Alloc(
 				    proxy, kdc_settings->ProxyServerLength / sizeof(WCHAR), nullptr);

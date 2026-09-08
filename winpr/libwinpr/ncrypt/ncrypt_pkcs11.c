@@ -1233,7 +1233,7 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
 			*pcbResult = 4;
 			if (pbOutput)
 			{
-				UINT32* ptr = (UINT32*)pbOutput;
+				UINT32* ptr = WINPR_PACKED_ALIGN_CAST(UINT32*, pbOutput);
 
 				if (cbOutput < 4)
 					return NTE_NO_MEMORY;

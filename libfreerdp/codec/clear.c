@@ -1031,7 +1031,7 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
 
 			glyphEntry->count = WINPR_ASSERTING_INT_CAST(UINT32, count);
 			glyphEntry->size = glyphEntry->count;
-			glyphEntry->pixels = (UINT32*)tmp;
+			glyphEntry->pixels = WINPR_PACKED_ALIGN_CAST(UINT32*, tmp);
 		}
 
 		if (!glyphEntry->pixels)

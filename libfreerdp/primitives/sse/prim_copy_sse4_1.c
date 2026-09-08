@@ -61,8 +61,9 @@ static inline pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstDat
 		/* Ensure alignment requirements can be met */
 		for (; x < width; x += 4)
 		{
-			const __m128i* src = (const __m128i*)&srcLine[(x + nXSrc) * srcByte];
-			__m128i* dst = (__m128i*)&dstLine[(x + nXDst) * dstByte];
+			const __m128i* src =
+			    WINPR_PACKED_ALIGN_CAST(const __m128i*, &srcLine[(x + nXSrc) * srcByte]);
+			__m128i* dst = WINPR_PACKED_ALIGN_CAST(__m128i*, &dstLine[(x + nXDst) * dstByte]);
 			const __m128i s0 = LOAD_SI128(src);
 			const __m128i s1 = _mm_shuffle_epi8(s0, smask);
 			const __m128i s2 = LOAD_SI128(dst);
@@ -111,8 +112,9 @@ static inline pstatus_t sse_image_copy_bgrx32_bgrx32(BYTE* WINPR_RESTRICT pDstDa
 		int64_t x = 0;
 		for (; x < width; x += 4)
 		{
-			const __m128i* src = (const __m128i*)&srcLine[(x + nXSrc) * srcByte];
-			__m128i* dst = (__m128i*)&dstLine[(x + nXDst) * dstByte];
+			const __m128i* src =
+			    WINPR_PACKED_ALIGN_CAST(const __m128i*, &srcLine[(x + nXSrc) * srcByte]);
+			__m128i* dst = WINPR_PACKED_ALIGN_CAST(__m128i*, &dstLine[(x + nXDst) * dstByte]);
 			const __m128i s0 = LOAD_SI128(src);
 			const __m128i s1 = LOAD_SI128(dst);
 			__m128i d0 = _mm_blendv_epi8(s1, s0, mask);

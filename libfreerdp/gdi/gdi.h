@@ -39,7 +39,7 @@ FREERDP_LOCAL gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, i
 WINPR_ATTR_NODISCARD
 static inline BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, INT32 x, INT32 y)
 {
-	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdcBmp->selectedObject;
+	HGDI_BITMAP hBmp = WINPR_PACKED_ALIGN_CAST(HGDI_BITMAP, hdcBmp->selectedObject);
 
 	if ((x >= 0) && (y >= 0) && (x < hBmp->width) && (y < hBmp->height))
 	{

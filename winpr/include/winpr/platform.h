@@ -21,6 +21,7 @@
 #define WINPR_PLATFORM_H
 
 #include <stdlib.h>
+#include <winpr/config.h>
 
 /* MSVC only defines _Pragma if you compile with /std:c11 with no extensions
  * see
@@ -133,6 +134,8 @@
 #define WINPR_PRAGMA_DIAG_IGNORED_DEPRECATED_DECL \
 	WINPR_DO_PRAGMA(clang diagnostic ignored      \
 	                "-Wdeprecated-declarations") /** @since version 3.17.2 */
+#define WINPR_PRAGMA_DIAG_IGNORED_CAST_ALIGN \
+	WINPR_DO_PRAGMA(clang diagnostic ignored "-Wcast-align") /** @since 3.32.0 */
 
 #if __clang_major__ >= 13
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_IDENTIFIER \
@@ -219,6 +222,8 @@
 #define WINPR_PRAGMA_DIAG_POP WINPR_DO_PRAGMA(GCC diagnostic pop)
 #define WINPR_PRAGMA_UNROLL_LOOP \
 	WINPR_DO_PRAGMA(GCC unroll 8) WINPR_DO_PRAGMA(GCC ivdep) /** @since version 3.6.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_CAST_ALIGN \
+	WINPR_DO_PRAGMA(gcc diagnostic ignored "-Wcast-align") /** @since 3.32.0 */
 #else
 #define WINPR_PRAGMA_DIAG_PUSH
 #define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC
@@ -241,6 +246,7 @@
 #define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC                 /** @since version 3.3.0 */
 #define WINPR_PRAGMA_DIAG_POP
 #define WINPR_PRAGMA_UNROLL_LOOP /** @since version 3.6.0 */
+#define WINPR_PRAGMA_DIAG_IGNORED_CAST_ALIGN /** @since 3.32.0 */
 #endif
 
 #if defined(MSVC)
@@ -377,6 +383,26 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #ifndef _M_E2K
 // NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _M_E2K 1
+#endif
+#endif
+
+/* RISCV64 (_M_RISCV64) */
+
+#if defined(__riscv)
+#if defined(__riscv_xlen)
+#if __riscv_xlen == 64
+#ifndef _M_RISCV64
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#define _M_RISCV64 1
+#endif
+#elif __riscv_xlen == 32
+#ifndef _M_RISCV32
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#define _M_RISCV32 1
+#endif
+#else
+#error "Unknown/unsupported RISCV xlen value"
+#endif
 #endif
 #endif
 

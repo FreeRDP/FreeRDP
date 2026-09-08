@@ -54,7 +54,7 @@
 static inline void __attribute__((ATTRIBUTES)) mm_prefetch_buffer(char* WINPR_RESTRICT buffer,
                                                                   size_t num_bytes)
 {
-	__m128i* buf = (__m128i*)buffer;
+	__m128i* buf = WINPR_PACKED_ALIGN_CAST(__m128i*, buffer);
 
 	for (size_t i = 0; i < (num_bytes / sizeof(__m128i)); i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 	{
@@ -69,8 +69,8 @@ static inline void __attribute__((ATTRIBUTES))
 rfx_quantization_decode_block_sse2(INT16* WINPR_RESTRICT buffer, const size_t buffer_size,
                                    const UINT32 factor)
 {
-	__m128i* ptr = (__m128i*)buffer;
-	const __m128i* buf_end = (__m128i*)(buffer + buffer_size);
+	__m128i* ptr = WINPR_PACKED_ALIGN_CAST(__m128i*, buffer);
+	const __m128i* buf_end = WINPR_PACKED_ALIGN_CAST(__m128i*, (buffer + buffer_size));
 
 	if (factor == 0)
 		return;
@@ -119,8 +119,8 @@ static inline void __attribute__((ATTRIBUTES))
 rfx_quantization_encode_block_sse2(INT16* WINPR_RESTRICT buffer, const unsigned buffer_size,
                                    const INT16 factor)
 {
-	__m128i* ptr = (__m128i*)buffer;
-	const __m128i* buf_end = (const __m128i*)(buffer + buffer_size);
+	__m128i* ptr = WINPR_PACKED_ALIGN_CAST(__m128i*, buffer);
+	const __m128i* buf_end = WINPR_PACKED_ALIGN_CAST(const __m128i*, (buffer + buffer_size));
 
 	if (factor == 0)
 		return;

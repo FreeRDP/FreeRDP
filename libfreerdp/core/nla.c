@@ -394,7 +394,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 		if (settings->RedirectionPassword && (settings->RedirectionPasswordLength > 0))
 		{
-			const WCHAR* wstr = (const WCHAR*)settings->RedirectionPassword;
+			const WCHAR* wstr =
+			    WINPR_PACKED_ALIGN_CAST(const WCHAR*, settings->RedirectionPassword);
 			const size_t len = _wcsnlen(wstr, settings->RedirectionPasswordLength / sizeof(WCHAR));
 
 			if (!identity_set_from_settings_with_pwd(nla->identity, settings, FreeRDP_Username,
@@ -1134,8 +1135,9 @@ static BOOL set_creds_octetstring_to_settings(WinPrAsn1Decoder* dec, WinPrAsn1_t
 	if (!WinPrAsn1DecReadContextualOctetString(dec, tagId, &error, &value, FALSE))
 		return FALSE;
 
-	return freerdp_settings_set_string_from_utf16N(settings, settingId, (const WCHAR*)value.data,
-	                                               value.len / sizeof(WCHAR));
+	return freerdp_settings_set_string_from_utf16N(
+	    settings, settingId, WINPR_PACKED_ALIGN_CAST(const WCHAR*, value.data),
+	    value.len / sizeof(WCHAR));
 }
 
 static BOOL nla_read_TSCspDataDetail(WinPrAsn1Decoder* dec, rdpSettings* settings)
@@ -1331,8 +1333,8 @@ static BOOL nla_read_TSRemoteGuardPackageCred(WINPR_ATTR_UNUSED rdpNla* nla, Win
 	if (!WinPrAsn1DecReadContextualOctetString(dec, 0, &error, &packageName, FALSE) || error)
 		return FALSE;
 
-	ConvertMszWCharNToUtf8((WCHAR*)packageName.data, packageName.len / sizeof(WCHAR),
-	                       packageNameStr, sizeof(packageNameStr));
+	ConvertMszWCharNToUtf8(WINPR_PACKED_ALIGN_CAST(WCHAR*, packageName.data),
+	                       packageName.len / sizeof(WCHAR), packageNameStr, sizeof(packageNameStr));
 	WLog_DBG(TAG, "TSRemoteGuardPackageCred(%s)", packageNameStr);
 
 	/* credBuffer [1] OCTET STRING, */

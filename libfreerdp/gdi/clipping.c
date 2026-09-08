@@ -88,7 +88,7 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 	if (hdc == nullptr)
 		return FALSE;
 
-	HGDI_BITMAP hBmp = (HGDI_BITMAP)hdc->selectedObject;
+	HGDI_BITMAP hBmp = WINPR_PACKED_ALIGN_CAST(HGDI_BITMAP, hdc->selectedObject);
 
 	if (hBmp != nullptr)
 	{

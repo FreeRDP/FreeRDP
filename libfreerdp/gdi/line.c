@@ -156,7 +156,7 @@ BOOL gdi_LineTo(HGDI_DC hdc, INT32 nXEnd, INT32 nYEnd)
 		by2 = by1 + hdc->clip->h - 1;
 	}
 
-	HGDI_BITMAP bmp = (HGDI_BITMAP)hdc->selectedObject;
+	HGDI_BITMAP bmp = WINPR_PACKED_ALIGN_CAST(HGDI_BITMAP, hdc->selectedObject);
 	WINPR_ASSERT(bmp);
 
 	bx1 = MAX(bx1, 0);

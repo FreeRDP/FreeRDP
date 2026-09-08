@@ -43,8 +43,8 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
                                      BYTE* WINPR_RESTRICT pDst, UINT32 dstStep, UINT32 width,
                                      UINT32 height)
 {
-	const UINT32* sptr1 = (const UINT32*)pSrc1;
-	const UINT32* sptr2 = (const UINT32*)pSrc2;
+	const UINT32* sptr1 = WINPR_PACKED_ALIGN_CAST(const UINT32*, pSrc1);
+	const UINT32* sptr2 = WINPR_PACKED_ALIGN_CAST(const UINT32*, pSrc2);
 
 	if ((width <= 0) || (height <= 0))
 		return PRIMITIVES_SUCCESS;
@@ -55,7 +55,7 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 		                               height);
 	}
 
-	UINT32* dptr = (UINT32*)pDst;
+	UINT32* dptr = WINPR_PACKED_ALIGN_CAST(UINT32*, pDst);
 	const size_t linebytes = width * sizeof(UINT32);
 	const size_t src1Jump = (src1Step - linebytes) / sizeof(UINT32);
 	const size_t src2Jump = (src2Step - linebytes) / sizeof(UINT32);

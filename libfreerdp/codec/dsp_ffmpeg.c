@@ -467,7 +467,7 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* WINPR_RESTRICT context, AVFrame*
 
 		for (int y = 0; y < nr_channels; y++)
 		{
-			float* data = (float*)pp[y];
+			float* data = WINPR_PACKED_ALIGN_CAST(float*, pp[y]);
 			for (int x = 0; x < in->nb_samples; x++)
 			{
 				const float val1 = data[x];

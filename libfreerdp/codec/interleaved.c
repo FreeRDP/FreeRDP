@@ -467,7 +467,8 @@ static inline void write_pixel_16(BYTE* _buf, UINT16 _pix)
 		write_pixel_16(_buf, _pix); \
 		(_buf) += 2;                \
 	} while (0)
-#define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
+#define DESTREADPIXEL(_pix, _buf) \
+	(_pix) = WINPR_ASSERTING_INT_CAST(UINT16, (_buf)[0] | (((_buf)[1] << 8) & 0xFF00))
 #define SRCREADPIXEL(_pix, _buf)                                                            \
 	do                                                                                      \
 	{                                                                                       \

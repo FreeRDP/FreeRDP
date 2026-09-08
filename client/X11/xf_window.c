@@ -407,7 +407,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 				if (xf_GetWindowProperty(xfc, window->handle, xfc->NET_WM_STATE, 255, &nitems,
 				                         &bytes, &prop))
 				{
-					const Atom* aprop = (const Atom*)prop;
+					const Atom* aprop = WINPR_PACKED_ALIGN_CAST(const Atom*, prop);
 					state = 0;
 
 					for (size_t x = 0; x < nitems; x++)
@@ -519,7 +519,7 @@ static BOOL xf_GetNumberOfDesktops(xfContext* xfc, Window root, unsigned* pval)
 	const BOOL rc =
 	    xf_GetWindowProperty(xfc, root, xfc->NET_NUMBER_OF_DESKTOPS, 1, &nitems, &bytes, &bprop);
 
-	long* prop = (long*)bprop;
+	long* prop = WINPR_PACKED_ALIGN_CAST(long*, bprop);
 	*pval = 0;
 
 	BOOL res = FALSE;
@@ -551,7 +551,7 @@ static BOOL xf_GetCurrentDesktop(xfContext* xfc, Window root)
 	const BOOL rc =
 	    xf_GetWindowProperty(xfc, root, xfc->NET_CURRENT_DESKTOP, 1, &nitems, &bytes, &bprop);
 
-	long* prop = (long*)bprop;
+	long* prop = WINPR_PACKED_ALIGN_CAST(long*, bprop);
 	xfc->current_desktop = 0;
 	if (rc)
 		xfc->current_desktop = (int)MIN(max - 1, *prop);
@@ -569,7 +569,7 @@ static BOOL xf_GetWorkArea_NET_WORKAREA(xfContext* xfc, Window root)
 
 	const BOOL status =
 	    xf_GetWindowProperty(xfc, root, xfc->NET_WORKAREA, INT_MAX, &nitems, &bytes, &bprop);
-	long* prop = (long*)bprop;
+	long* prop = WINPR_PACKED_ALIGN_CAST(long*, bprop);
 
 	if (!status)
 		goto fail;

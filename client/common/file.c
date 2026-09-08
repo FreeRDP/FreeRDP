@@ -968,7 +968,7 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 
 	if ((buffer[0] == BOM_UTF16_LE[0]) && (buffer[1] == BOM_UTF16_LE[1]))
 	{
-		LPCWSTR uc = (LPCWSTR)(&buffer[2]);
+		LPCWSTR uc = WINPR_PACKED_ALIGN_CAST(LPCWSTR, (&buffer[2]));
 		const size_t charlen = size / sizeof(WCHAR) - 1;
 		copy = ConvertWCharNToUtf8Alloc(uc, charlen, &size);
 		if (!copy)

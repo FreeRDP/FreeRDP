@@ -187,9 +187,9 @@ neon_RGBToRGB_16s8u_P3AC4R_X(const INT16* WINPR_RESTRICT pSrc[3], /* 16-bit R,G,
 
 	for (UINT32 y = 0; y < roi->height; y++)
 	{
-		const INT16* pr = (const INT16*)(((BYTE*)pSrc[0]) + y * srcStep);
-		const INT16* pg = (const INT16*)(((BYTE*)pSrc[1]) + y * srcStep);
-		const INT16* pb = (const INT16*)(((BYTE*)pSrc[2]) + y * srcStep);
+		const INT16* pr = WINPR_PACKED_ALIGN_CAST(const INT16*, (((BYTE*)pSrc[0]) + y * srcStep));
+		const INT16* pg = WINPR_PACKED_ALIGN_CAST(const INT16*, (((BYTE*)pSrc[1]) + y * srcStep));
+		const INT16* pb = WINPR_PACKED_ALIGN_CAST(const INT16*, (((BYTE*)pSrc[2]) + y * srcStep));
 		BYTE* dst = pDst + y * dstStep;
 
 		for (UINT32 x = 0; x < roi->width - pad; x += 8)

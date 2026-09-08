@@ -476,8 +476,8 @@ static UINT32** alloc_array(size_t count)
 {
 	// NOLINTNEXTLINE(clang-analyzer-unix.MallocSizeof)
 	BYTE* array = calloc(count * sizeof(uintptr_t), count * sizeof(UINT32));
-	UINT32** dst = (UINT32**)array;
-	UINT32* val = (UINT32*)(array + count * sizeof(uintptr_t));
+	UINT32** dst = WINPR_PACKED_ALIGN_CAST(UINT32**, array);
+	UINT32* val = WINPR_PACKED_ALIGN_CAST(UINT32*, (array + count * sizeof(uintptr_t)));
 	for (size_t x = 0; x < count; x++)
 		dst[x] = &val[x];
 

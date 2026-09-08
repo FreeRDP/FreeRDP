@@ -143,8 +143,8 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 	Stream_Write_UINT16(s, 0);                                    /* pad1 (2 bytes) */
 	for (UINT32 x = 0; x < capabilities->cCapabilitiesSets; x++)
 	{
-		const CLIPRDR_CAPABILITY_SET* cap =
-		    (const CLIPRDR_CAPABILITY_SET*)(((const BYTE*)capabilities->capabilitySets) + offset);
+		const CLIPRDR_CAPABILITY_SET* cap = WINPR_PACKED_ALIGN_CAST(
+		    const CLIPRDR_CAPABILITY_SET*, (((const BYTE*)capabilities->capabilitySets) + offset));
 		offset += cap->capabilitySetLength;
 
 		switch (cap->capabilitySetType)
@@ -152,7 +152,7 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 			case CB_CAPSTYPE_GENERAL:
 			{
 				const CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet =
-				    (const CLIPRDR_GENERAL_CAPABILITY_SET*)cap;
+				    WINPR_PACKED_ALIGN_CAST(const CLIPRDR_GENERAL_CAPABILITY_SET*, cap);
 				Stream_Write_UINT16(
 				    s, generalCapabilitySet->capabilitySetType); /* capabilitySetType (2 bytes) */
 				Stream_Write_UINT16(
@@ -503,7 +503,8 @@ static BOOL cliprdr_capabilities_contain_capset(wLog* log, const CLIPRDR_CAPABIL
 	size_t byteOffset = 0;
 	for (UINT32 x = 0; x < capabilities->cCapabilitiesSets; x++)
 	{
-		const CLIPRDR_CAPABILITY_SET* cur = (const CLIPRDR_CAPABILITY_SET*)offset;
+		const CLIPRDR_CAPABILITY_SET* cur =
+		    WINPR_PACKED_ALIGN_CAST(const CLIPRDR_CAPABILITY_SET*, offset);
 		byteOffset += cur->capabilitySetLength;
 		if (byteOffset > capabilitiesSize)
 			return FALSE;
@@ -578,8 +579,8 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 
 		capabilities.capabilitySets = tmp;
 
-		CLIPRDR_CAPABILITY_SET* capSet =
-		    (CLIPRDR_CAPABILITY_SET*)(((BYTE*)capabilities.capabilitySets) + cap_set_offset);
+		CLIPRDR_CAPABILITY_SET* capSet = WINPR_PACKED_ALIGN_CAST(
+		    CLIPRDR_CAPABILITY_SET*, (((BYTE*)capabilities.capabilitySets) + cap_set_offset));
 
 		capSet->capabilitySetType = capabilitySetType;
 		capSet->capabilitySetLength = capabilitySetLength;
@@ -593,7 +594,7 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 		{
 			case CB_CAPSTYPE_GENERAL:
 				error = cliprdr_server_receive_general_capability(
-				    context, s, (CLIPRDR_GENERAL_CAPABILITY_SET*)capSet);
+				    context, s, WINPR_PACKED_ALIGN_CAST(CLIPRDR_GENERAL_CAPABILITY_SET*, capSet));
 				if (error)
 				{
 					WLog_Print(

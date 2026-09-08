@@ -441,10 +441,12 @@ static void license_print_product_info(wLog* log, const LICENSE_PRODUCT_INFO* pr
 	WINPR_ASSERT(productInfo->pbCompanyName);
 	WINPR_ASSERT(productInfo->pbProductId);
 
-	CompanyName = ConvertWCharNToUtf8Alloc((const WCHAR*)productInfo->pbCompanyName,
-	                                       productInfo->cbCompanyName / sizeof(WCHAR), nullptr);
-	ProductId = ConvertWCharNToUtf8Alloc((const WCHAR*)productInfo->pbProductId,
-	                                     productInfo->cbProductId / sizeof(WCHAR), nullptr);
+	CompanyName =
+	    ConvertWCharNToUtf8Alloc(WINPR_PACKED_ALIGN_CAST(const WCHAR*, productInfo->pbCompanyName),
+	                             productInfo->cbCompanyName / sizeof(WCHAR), nullptr);
+	ProductId =
+	    ConvertWCharNToUtf8Alloc(WINPR_PACKED_ALIGN_CAST(const WCHAR*, productInfo->pbProductId),
+	                             productInfo->cbProductId / sizeof(WCHAR), nullptr);
 	WLog_Print(log, WLOG_INFO, "ProductInfo:");
 	WLog_Print(log, WLOG_INFO, "\tdwVersion: 0x%08" PRIX32 "", productInfo->dwVersion);
 	WLog_Print(log, WLOG_INFO, "\tCompanyName: %s", CompanyName);

@@ -470,12 +470,12 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* WINPR_RESTRICT pSrc[3], int srcStep,
                             INT16* WINPR_RESTRICT pDst[3], int dstStep,
                             const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
 {
-	const __m128i* r_buf = (const __m128i*)(pSrc[0]);
-	const __m128i* g_buf = (const __m128i*)(pSrc[1]);
-	const __m128i* b_buf = (const __m128i*)(pSrc[2]);
-	__m128i* y_buf = (__m128i*)(pDst[0]);
-	__m128i* cb_buf = (__m128i*)(pDst[1]);
-	__m128i* cr_buf = (__m128i*)(pDst[2]);
+	const __m128i* r_buf = WINPR_PACKED_ALIGN_CAST(const __m128i*, (pSrc[0]));
+	const __m128i* g_buf = WINPR_PACKED_ALIGN_CAST(const __m128i*, (pSrc[1]));
+	const __m128i* b_buf = WINPR_PACKED_ALIGN_CAST(const __m128i*, (pSrc[2]));
+	__m128i* y_buf = WINPR_PACKED_ALIGN_CAST(__m128i*, (pDst[0]));
+	__m128i* cb_buf = WINPR_PACKED_ALIGN_CAST(__m128i*, (pDst[1]));
+	__m128i* cr_buf = WINPR_PACKED_ALIGN_CAST(__m128i*, (pDst[2]));
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
 	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst[0]) & 0x0f) ||
