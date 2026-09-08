@@ -139,7 +139,6 @@ struct rdp_file
 	LPSTR Username;   /* username */
 	LPSTR Domain;     /* domain */
 	LPSTR Password;   /*password*/
-	PBYTE Password51; /* password 51 */
 
 	LPSTR FullAddress;          /* full address */
 	LPSTR AlternateFullAddress; /* alternate full address */
@@ -341,6 +340,12 @@ static const char key_int_singlemoninwindowedmode[] = "singlemoninwindowedmode";
 static const char key_int_maximizetocurrentdisplays[] = "maximizetocurrentdisplays";
 static const char key_int_use_multimon[] = "use multimon";
 static const char key_int_redirectwebauthn[] = "redirectwebauthn";
+
+WINPR_ATTR_NODISCARD
+static BOOL is_pointer_used(void* ptr)
+{
+	return ~((size_t)ptr) != 0;
+}
 
 WINPR_ATTR_NODISCARD
 static BOOL utils_str_is_empty(const char* str)
@@ -806,7 +811,7 @@ static BOOL trim(char** strptr)
 	start = str = *strptr;
 	if (!str)
 		return TRUE;
-	if (!(~((size_t)str)))
+	if (!(is_pointer_used(str)))
 		return TRUE;
 	end = str + strlen(str) - 1;
 
@@ -1820,13 +1825,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			return FALSE;
 	}
 
-	if (~((size_t)file->Domain))
+	if (is_pointer_used(file->Domain))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, file->Domain))
 			return FALSE;
 	}
 
-	if (~((size_t)file->Username))
+	if (is_pointer_used(file->Username))
 	{
 		char* user = nullptr;
 		char* domain = nullptr;
@@ -1837,7 +1842,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 		if (!freerdp_settings_set_string(settings, FreeRDP_Username, user))
 			return FALSE;
 
-		if (!(~((size_t)file->Domain)) && domain)
+		if (!(is_pointer_used(file->Domain)) && domain)
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_Domain, domain))
 				return FALSE;
@@ -1847,7 +1852,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 		free(domain);
 	}
 
-	if (~((size_t)file->Password))
+	if (is_pointer_used(file->Password))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_Password, file->Password))
 			return FALSE;
@@ -1858,9 +1863,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 
 		/* With MSTSC alternate full address always wins,
 		 * so mimic this. */
-		if (~((size_t)file->AlternateFullAddress))
+		if (is_pointer_used(file->AlternateFullAddress))
 			address = file->AlternateFullAddress;
-		else if (~((size_t)file->FullAddress))
+		else if (is_pointer_used(file->FullAddress))
 			address = file->FullAddress;
 
 		if (address)
@@ -1983,13 +1988,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			return FALSE;
 	}
 
-	if (~((size_t)file->AlternateShell))
+	if (is_pointer_used(file->AlternateShell))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_AlternateShell, file->AlternateShell))
 			return FALSE;
 	}
 
-	if (~((size_t)file->ShellWorkingDirectory))
+	if (is_pointer_used(file->ShellWorkingDirectory))
 	{
 		/* ShellWorkingDir is used for either, shell working dir or remote app working dir */
 		FreeRDP_Settings_Keys_String targetId =
@@ -2044,7 +2049,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 		}
 	}
 
-	if (~((size_t)file->LoadBalanceInfo))
+	if (is_pointer_used(file->LoadBalanceInfo))
 	{
 		const size_t len = strlen(file->LoadBalanceInfo);
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo,
@@ -2118,7 +2123,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			return FALSE;
 	}
 
-	if (~((size_t)file->GatewayHostname))
+	if (is_pointer_used(file->GatewayHostname))
 	{
 		int port = -1;
 		char* host = nullptr;
@@ -2138,7 +2143,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 		}
 	}
 
-	if (~((size_t)file->ResourceProvider))
+	if (is_pointer_used(file->ResourceProvider))
 	{
 		if (_stricmp(file->ResourceProvider, str_resourceprovider_arm) == 0)
 		{
@@ -2147,61 +2152,61 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 		}
 	}
 
-	if (~((size_t)file->WvdEndpointPool))
+	if (is_pointer_used(file->WvdEndpointPool))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdWvdEndpointPool,
 		                                 file->WvdEndpointPool))
 			return FALSE;
 	}
 
-	if (~((size_t)file->geo))
+	if (is_pointer_used(file->geo))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdGeo, file->geo))
 			return FALSE;
 	}
 
-	if (~((size_t)file->armpath))
+	if (is_pointer_used(file->armpath))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdArmpath, file->armpath))
 			return FALSE;
 	}
 
-	if (~((size_t)file->aadtenantid))
+	if (is_pointer_used(file->aadtenantid))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAadtenantid,
 		                                 file->aadtenantid))
 			return FALSE;
 	}
 
-	if (~((size_t)file->diagnosticserviceurl))
+	if (is_pointer_used(file->diagnosticserviceurl))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdDiagnosticserviceurl,
 		                                 file->diagnosticserviceurl))
 			return FALSE;
 	}
 
-	if (~((size_t)file->hubdiscoverygeourl))
+	if (is_pointer_used(file->hubdiscoverygeourl))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdHubdiscoverygeourl,
 		                                 file->hubdiscoverygeourl))
 			return FALSE;
 	}
 
-	if (~((size_t)file->activityhint))
+	if (is_pointer_used(file->activityhint))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdActivityhint,
 		                                 file->activityhint))
 			return FALSE;
 	}
 
-	if (~((size_t)file->GatewayAccessToken))
+	if (is_pointer_used(file->GatewayAccessToken))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAccessToken,
 		                                 file->GatewayAccessToken))
 			return FALSE;
 	}
 
-	if (~((size_t)file->EndpointFedAuthToken))
+	if (is_pointer_used(file->EndpointFedAuthToken))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_EndpointFedAuthToken,
 		                                 file->EndpointFedAuthToken))
@@ -2246,42 +2251,42 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			return FALSE;
 	}
 
-	if (~((size_t)file->RemoteApplicationProgram))
+	if (is_pointer_used(file->RemoteApplicationProgram))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationProgram,
 		                                 file->RemoteApplicationProgram))
 			return FALSE;
 	}
 
-	if (~((size_t)file->RemoteApplicationName))
+	if (is_pointer_used(file->RemoteApplicationName))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationName,
 		                                 file->RemoteApplicationName))
 			return FALSE;
 	}
 
-	if (~((size_t)file->RemoteApplicationIcon))
+	if (is_pointer_used(file->RemoteApplicationIcon))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationIcon,
 		                                 file->RemoteApplicationIcon))
 			return FALSE;
 	}
 
-	if (~((size_t)file->RemoteApplicationFile))
+	if (is_pointer_used(file->RemoteApplicationFile))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationFile,
 		                                 file->RemoteApplicationFile))
 			return FALSE;
 	}
 
-	if (~((size_t)file->RemoteApplicationGuid))
+	if (is_pointer_used(file->RemoteApplicationGuid))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationGuid,
 		                                 file->RemoteApplicationGuid))
 			return FALSE;
 	}
 
-	if (~((size_t)file->RemoteApplicationCmdLine))
+	if (is_pointer_used(file->RemoteApplicationCmdLine))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationCmdLine,
 		                                 file->RemoteApplicationCmdLine))
@@ -2438,7 +2443,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 		/* What is this?! */
 	}
 
-	if ((~((size_t)file->DevicesToRedirect)) && !utils_str_is_empty(file->DevicesToRedirect))
+	if ((is_pointer_used(file->DevicesToRedirect)) && !utils_str_is_empty(file->DevicesToRedirect))
 	{
 		/**
 		 * Devices to redirect:
@@ -2468,14 +2473,14 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			return FALSE;
 	}
 
-	if ((~((size_t)file->DrivesToRedirect)) && !utils_str_is_empty(file->DrivesToRedirect))
+	if ((is_pointer_used(file->DrivesToRedirect)) && !utils_str_is_empty(file->DrivesToRedirect))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_DrivesToRedirect,
 		                                 file->DrivesToRedirect))
 			return FALSE;
 	}
 
-	if ((~((size_t)file->RedirectCameras)) && !utils_str_is_empty(file->RedirectCameras))
+	if ((is_pointer_used(file->RedirectCameras)) && !utils_str_is_empty(file->RedirectCameras))
 	{
 #if defined(CHANNEL_RDPECAM_CLIENT)
 		union
@@ -2520,7 +2525,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 #endif
 	}
 
-	if ((~((size_t)file->UsbDevicesToRedirect)) && !utils_str_is_empty(file->UsbDevicesToRedirect))
+	if ((is_pointer_used(file->UsbDevicesToRedirect)) &&
+	    !utils_str_is_empty(file->UsbDevicesToRedirect))
 	{
 #ifdef CHANNEL_URBDRC_CLIENT
 		union
@@ -2617,7 +2623,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 	// TODO file->EncodeRedirectedVideoCapture;
 	// TODO file->RedirectedVideoCaptureEncodingQuality;
 
-	if (~((size_t)file->PreconnectionBlob))
+	if (is_pointer_used(file->PreconnectionBlob))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_PreconnectionBlob,
 		                                 file->PreconnectionBlob) ||
@@ -2625,7 +2631,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 			return FALSE;
 	}
 
-	if (~((size_t)file->KdcProxyName))
+	if (is_pointer_used(file->KdcProxyName))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_KerberosKdcUrl, file->KdcProxyName))
 			return FALSE;
@@ -2853,7 +2859,7 @@ int freerdp_client_rdp_file_get_integer_option(const rdpFile* file, const char* 
 
 static void freerdp_client_file_string_check_free(LPSTR str)
 {
-	if (~((size_t)str))
+	if (is_pointer_used(str))
 		free(str);
 }
 
@@ -2898,18 +2904,18 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 {
 	if (file)
 	{
-		if (file->lineCount)
+		for (size_t i = 0; i < file->lineCount; i++)
 		{
-			for (size_t i = 0; i < file->lineCount; i++)
-			{
-				free(file->lines[i].name);
-				free(file->lines[i].sValue);
-			}
+			rdpFileLine* cur = &file->lines[i];
+			free(cur->name);
+			free(cur->sValue);
 		}
+
 		free(file->lines);
 
 		freerdp_addin_argv_free(file->args);
 
+		freerdp_client_file_string_check_free(file->SelectedMonitors);
 		freerdp_client_file_string_check_free(file->Username);
 		freerdp_client_file_string_check_free(file->Domain);
 		freerdp_client_file_string_check_free(file->Password);
@@ -2917,7 +2923,6 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 		freerdp_client_file_string_check_free(file->AlternateFullAddress);
 		freerdp_client_file_string_check_free(file->UsbDevicesToRedirect);
 		freerdp_client_file_string_check_free(file->RedirectCameras);
-		freerdp_client_file_string_check_free(file->SelectedMonitors);
 		freerdp_client_file_string_check_free(file->LoadBalanceInfo);
 		freerdp_client_file_string_check_free(file->RemoteApplicationName);
 		freerdp_client_file_string_check_free(file->RemoteApplicationIcon);
@@ -2928,11 +2933,6 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 		freerdp_client_file_string_check_free(file->AlternateShell);
 		freerdp_client_file_string_check_free(file->ShellWorkingDirectory);
 		freerdp_client_file_string_check_free(file->GatewayHostname);
-		freerdp_client_file_string_check_free(file->GatewayAccessToken);
-		freerdp_client_file_string_check_free(file->KdcProxyName);
-		freerdp_client_file_string_check_free(file->DrivesToRedirect);
-		freerdp_client_file_string_check_free(file->DevicesToRedirect);
-		freerdp_client_file_string_check_free(file->WinPosStr);
 		freerdp_client_file_string_check_free(file->ResourceProvider);
 		freerdp_client_file_string_check_free(file->WvdEndpointPool);
 		freerdp_client_file_string_check_free(file->geo);
@@ -2941,6 +2941,14 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 		freerdp_client_file_string_check_free(file->diagnosticserviceurl);
 		freerdp_client_file_string_check_free(file->hubdiscoverygeourl);
 		freerdp_client_file_string_check_free(file->activityhint);
+		freerdp_client_file_string_check_free(file->GatewayAccessToken);
+		freerdp_client_file_string_check_free(file->EndpointFedAuthToken);
+		freerdp_client_file_string_check_free(file->DrivesToRedirect);
+		freerdp_client_file_string_check_free(file->DevicesToRedirect);
+		freerdp_client_file_string_check_free(file->WinPosStr);
+		freerdp_client_file_string_check_free(file->PreconnectionBlob);
+		freerdp_client_file_string_check_free(file->KdcProxyName);
+
 		free(file);
 	}
 }
