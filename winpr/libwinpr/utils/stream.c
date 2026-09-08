@@ -447,15 +447,18 @@ BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s
 
 	if (actual < nmemb)
 	{
-		char prefix[1024] = WINPR_C_ARRAY_INIT;
+		if (WLog_IsLevelActive(log, level))
+		{
+			char prefix[1024] = WINPR_C_ARRAY_INIT;
 
-		(void)vsnprintf(prefix, sizeof(prefix), fmt, args);
+			(void)vsnprintf(prefix, sizeof(prefix), fmt, args);
 
-		WLog_Print(log, level,
-		           "[%s] invalid length, got %" PRIuz ", require at least %" PRIuz
-		           " [element size=%" PRIuz "]",
-		           prefix, actual, nmemb, size);
-		winpr_log_backtrace_ex(log, level, 20);
+			WLog_Print(log, level,
+			           "[%s] invalid length, got %" PRIuz ", require at least %" PRIuz
+			           " [element size=%" PRIuz "]",
+			           prefix, actual, nmemb, size);
+			winpr_log_backtrace_ex(log, level, 20);
+		}
 		return FALSE;
 	}
 	return TRUE;
