@@ -19,6 +19,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/buildflags.h>
 #include <winpr/platform.h>
 
 WINPR_PRAGMA_DIAG_PUSH
@@ -32,6 +33,7 @@ WINPR_PRAGMA_DIAG_POP
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include <winpr/crt.h>
 #include <winpr/string.h>
@@ -208,4 +210,116 @@ char* winpr_strerror(INT32 dw, char* dmsg, size_t size)
 	(void)_snprintf(dmsg, size, "%s", strerror(dw));
 #endif
 	return dmsg;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL starts_with(const char* tok, const char* val)
+{
+	const size_t len = strlen(val);
+	if (strncmp(tok, val, len) != 0)
+		return FALSE;
+
+	if (!strchr(tok, '='))
+		return FALSE;
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL option_equals(const char* what, const char* val)
+{
+	return _stricmp(what, val) == 0;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL parse_on_off_option(const char* value)
+{
+	WINPR_ASSERT(value);
+	const char* sep = strchr(value, '=');
+	if (!sep)
+		return TRUE;
+	if (option_equals("on", &sep[1]))
+		return TRUE;
+	if (option_equals("true", &sep[1]))
+		return TRUE;
+	if (option_equals("off", &sep[1]))
+		return FALSE;
+	if (option_equals("false", &sep[1]))
+		return FALSE;
+
+	errno = 0;
+	long val = strtol(value, nullptr, 0);
+	if (errno == 0)
+		return (val != 0);
+
+	return FALSE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL option_is_debug(wLog* log, DWORD level, const char* tok)
+{
+	WINPR_ASSERT(log);
+	WINPR_UNUSED(log);
+	WINPR_UNUSED(level);
+
+	if (starts_with(tok, "WITH_DEBUG_"))
+		return parse_on_off_option(tok);
+
+	return FALSE;
+}
+
+static void log_build_warn(wLog* log, DWORD level, const char* what, const char* msg,
+                           BOOL (*cmp)(wLog* log, DWORD level, const char* tok))
+{
+	WINPR_ASSERT(log);
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS
+
+	size_t len = sizeof(WINPR_BUILD_CONFIG);
+	char* list = calloc(len, sizeof(char));
+	char* config = _strdup(WINPR_BUILD_CONFIG);
+	WINPR_PRAGMA_DIAG_POP
+
+	if (config && list)
+	{
+		char* saveptr = nullptr;
+		char* tok = strtok_s(config, " ", &saveptr);
+		while (tok)
+		{
+			if (cmp(log, level, tok))
+				winpr_str_append(tok, list, len, " ");
+
+			tok = strtok_s(nullptr, " ", &saveptr);
+		}
+	}
+	free(config);
+
+	if (list)
+	{
+		if (strlen(list) > 0)
+		{
+			WLog_Print(log, level, "*************************************************");
+			WLog_Print(log, level, "This WinPR build is using [%s] build options:", what);
+
+			char* saveptr = nullptr;
+			char* tok = strtok_s(list, " ", &saveptr);
+			while (tok)
+			{
+				WLog_Print(log, level, "* '%s'", tok);
+				tok = strtok_s(nullptr, " ", &saveptr);
+			}
+			WLog_Print(log, level, "*");
+			WLog_Print(log, level, "[%s] build options %s", what, msg);
+			WLog_Print(log, level, "*************************************************");
+		}
+	}
+	free(list);
+}
+
+void winpr_log_build_warn(wLog* log, DWORD level)
+{
+	WINPR_ASSERT(log);
+	log_build_warn(log, level, "debug",
+	               "might leak sensitive information (credentials, ...), slow down runtime, "
+	               "increase memory usage",
+	               option_is_debug);
 }
