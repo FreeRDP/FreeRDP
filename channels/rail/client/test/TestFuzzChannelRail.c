@@ -36,7 +36,7 @@ static railPlugin* alloc(void)
 		goto fail;
 
 	rail->rdpcontext->settings = freerdp_settings_new(0);
-	if (rail->rdpcontext->settings)
+	if (!rail->rdpcontext->settings)
 		goto fail;
 	return rail;
 fail:
@@ -52,6 +52,11 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 		return 0;
 
 	int rc = -1;
+
+	wLog* root = WLog_GetRoot();
+	(void)WLog_SetLogLevel(root, WLOG_TRACE);
+	(void)WLog_SetLogAppenderType(root, WLOG_APPENDER_CALLBACK);
+
 	railPlugin* g_rail = alloc();
 	RailClientContext* context = (RailClientContext*)calloc(1, sizeof(RailClientContext));
 	wStream* s = Stream_New(nullptr, size);
