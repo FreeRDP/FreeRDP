@@ -803,17 +803,12 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count,
 	}
 	else if (option_equals(params[0], "printer"))
 	{
-		RDPDR_DEVICE* printer = nullptr;
-
-		if (count < 1)
-			return FALSE;
-
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectPrinters, TRUE))
 			return FALSE;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
 			return FALSE;
 
-		printer = freerdp_device_new(RDPDR_DTYP_PRINT, count - 1, &params[1]);
+		RDPDR_DEVICE* printer = freerdp_device_new(RDPDR_DTYP_PRINT, count - 1, &params[1]);
 		if (!printer)
 			return FALSE;
 
@@ -827,18 +822,12 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count,
 	}
 	else if (option_equals(params[0], "smartcard"))
 	{
-		RDPDR_DEVICE* smartcard = nullptr;
-
-		if (count < 1)
-			return FALSE;
-
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards, TRUE))
 			return FALSE;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
 			return FALSE;
 
-		smartcard = freerdp_device_new(RDPDR_DTYP_SMARTCARD, count - 1, &params[1]);
-
+		RDPDR_DEVICE* smartcard = freerdp_device_new(RDPDR_DTYP_SMARTCARD, count - 1, &params[1]);
 		if (!smartcard)
 			return FALSE;
 
@@ -853,18 +842,12 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count,
 #if defined(CHANNEL_SERIAL_CLIENT)
 	else if (option_equals(params[0], "serial"))
 	{
-		RDPDR_DEVICE* serial = nullptr;
-
-		if (count < 1)
-			return FALSE;
-
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectSerialPorts, TRUE))
 			return FALSE;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
 			return FALSE;
 
-		serial = freerdp_device_new(RDPDR_DTYP_SERIAL, count - 1, &params[1]);
-
+		RDPDR_DEVICE* serial = freerdp_device_new(RDPDR_DTYP_SERIAL, count - 1, &params[1]);
 		if (!serial)
 			return FALSE;
 
@@ -879,17 +862,12 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count,
 #endif
 	else if (option_equals(params[0], "parallel"))
 	{
-		RDPDR_DEVICE* parallel = nullptr;
-
-		if (count < 1)
-			return FALSE;
-
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectParallelPorts, TRUE))
 			return FALSE;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
 			return FALSE;
 
-		parallel = freerdp_device_new(RDPDR_DTYP_PARALLEL, count - 1, &params[1]);
+		RDPDR_DEVICE* parallel = freerdp_device_new(RDPDR_DTYP_PARALLEL, count - 1, &params[1]);
 
 		if (!parallel)
 			return FALSE;
@@ -914,7 +892,6 @@ BOOL freerdp_client_del_static_channel(rdpSettings* settings, const char* name)
 BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count,
                                        const char* const* params)
 {
-	ADDIN_ARGV* _args = nullptr;
 	if (count == 0)
 		return FALSE;
 
@@ -924,8 +901,7 @@ BOOL freerdp_client_add_static_channel(rdpSettings* settings, size_t count,
 	if (freerdp_static_channel_collection_find(settings, params[0]))
 		return TRUE;
 
-	_args = freerdp_addin_argv_new(count, params);
-
+	ADDIN_ARGV* _args = freerdp_addin_argv_new(count, params);
 	if (!_args)
 		return FALSE;
 
@@ -946,8 +922,6 @@ BOOL freerdp_client_del_dynamic_channel(rdpSettings* settings, const char* name)
 BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count,
                                         const char* const* params)
 {
-	ADDIN_ARGV* _args = nullptr;
-
 	if (count == 0)
 		return FALSE;
 	if (!settings || !params || !params[0] || (count > INT_MAX))
@@ -956,8 +930,7 @@ BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, size_t count,
 	if (freerdp_dynamic_channel_collection_find(settings, params[0]))
 		return TRUE;
 
-	_args = freerdp_addin_argv_new(count, params);
-
+	ADDIN_ARGV* _args = freerdp_addin_argv_new(count, params);
 	if (!_args)
 		return FALSE;
 
