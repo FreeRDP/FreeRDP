@@ -552,7 +552,7 @@ WINPR_ATTR_NODISCARD static size_t get_element_count(const char* list, size_t li
 		BOOL nextFirst = FALSE;
 
 		const char cur = *it++;
-		listLen = strnlen(it, listLen - 1) + 1;
+		listLen--;
 
 		/* Ignore the symbol that was escaped. */
 		if (escaped)
