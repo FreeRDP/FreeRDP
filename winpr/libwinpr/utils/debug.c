@@ -177,6 +177,9 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 
 void winpr_log_backtrace_ex(wLog* log, DWORD level, WINPR_ATTR_UNUSED DWORD size)
 {
+	if (!WLog_IsLevelActive(log, level))
+		return;
+
 	size_t used = 0;
 	char** msg = nullptr;
 	void* stack = winpr_backtrace(20);
@@ -268,16 +271,16 @@ static BOOL option_is_debug(wLog* log, DWORD level, const char* tok)
 }
 
 static void log_build_warn(wLog* log, DWORD level, const char* what, const char* msg,
-                           BOOL (*cmp)(wLog* log, DWORD level, const char* tok))
+                           BOOL (*cmp)(wLog* log, DWORD level, const char* tok), const char* input,
+                           size_t ilen)
 {
 	WINPR_ASSERT(log);
-	WINPR_PRAGMA_DIAG_PUSH
-	WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS
 
-	size_t len = sizeof(WINPR_BUILD_CONFIG);
-	char* list = calloc(len, sizeof(char));
-	char* config = _strdup(WINPR_BUILD_CONFIG);
-	WINPR_PRAGMA_DIAG_POP
+	if (!input || (ilen == 0))
+		return;
+
+	char* list = calloc(ilen, sizeof(char));
+	char* config = _strdup(input);
 
 	if (config && list)
 	{
@@ -285,8 +288,8 @@ static void log_build_warn(wLog* log, DWORD level, const char* what, const char*
 		char* tok = strtok_s(config, " ", &saveptr);
 		while (tok)
 		{
-			if (cmp(log, level, tok))
-				winpr_str_append(tok, list, len, " ");
+			if (!cmp || cmp(log, level, tok))
+				winpr_str_append(tok, list, ilen, " ");
 
 			tok = strtok_s(nullptr, " ", &saveptr);
 		}
@@ -317,9 +320,30 @@ static void log_build_warn(wLog* log, DWORD level, const char* what, const char*
 
 void winpr_log_build_warn(wLog* log, DWORD level)
 {
+#if !defined(WINPR_ARCH_SUPPORTED) || (WINPR_ARCH_SUPPORTED == 0) || \
+    defined(DISABLE_SUPPORTED_ARCH_CHECKS)
+#define STR(x) #x
+#endif
+
+	const char configurations[] = {
+#if !defined(WINPR_ARCH_SUPPORTED) || (WINPR_ARCH_SUPPORTED == 0)
+		STR(WINPR_ARCH_SUPPORTED) "==0 "
+#endif
+#if defined(DISABLE_SUPPORTED_ARCH_CHECKS)
+		STR(DISABLE_SUPPORTED_ARCH_CHECKS) " "
+#endif
+		                                   ""
+	};
 	WINPR_ASSERT(log);
+	log_build_warn(log, level, "experimental",
+	               "might crash, overwrite data or steal your kitten, you have been warned!",
+	               nullptr, configurations, sizeof(configurations));
+
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_OVERLENGTH_STRINGS
 	log_build_warn(log, level, "debug",
 	               "might leak sensitive information (credentials, ...), slow down runtime, "
 	               "increase memory usage",
-	               option_is_debug);
+	               option_is_debug, WINPR_BUILD_CONFIG, sizeof(WINPR_BUILD_CONFIG));
+	WINPR_PRAGMA_DIAG_POP
 }

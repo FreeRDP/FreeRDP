@@ -31,7 +31,7 @@
 #ifdef __cplusplus
 #define WINPR_CXX_COMPAT_CAST(t, val) static_cast<t>(val)
 #else
-#define WINPR_CXX_COMPAT_CAST(t, val) (t)(val)
+#define WINPR_CXX_COMPAT_CAST(t, val) ((t)(val))
 #endif
 
 /**! @brief Checks alignment requirements.
@@ -41,7 +41,8 @@
 #if defined(DISABLE_SUPPORTED_ARCH_CHECKS)
 #elif defined(_M_ARM) || defined(_M_ARM64)
 #if !defined(__ARM_FEATURE_UNALIGNED)
-#warning "-munaligned-access is required on arm"
+#warning \
+    "-munaligned-access is required on arm. Use -DDISABLE_SUPPORTED_ARCH_CHECKS=ON to ignore, but there will be dragons ahead!"
 #else
 #define WINPR_ARCH_SUPPORTED 1
 #endif
@@ -49,11 +50,14 @@
 #define WINPR_ARCH_SUPPORTED 1
 #elif defined(_M_RISCV32) || defined(_M_RISCV64)
 #if !defined(__riscv_misaligned_fast)
-#error "RISCV must support __riscv_misaligned_fast"
+#warning \
+    "RISCV must support __riscv_misaligned_fast. Use -DDISABLE_SUPPORTED_ARCH_CHECKS=ON to ignore, but there will be dragons ahead!"
 #else
 #define WINPR_ARCH_SUPPORTED 1
 #endif
-#else
+#endif
+
+#if !defined(WINPR_ARCH_SUPPORTED)
 #warning "unaligned pointer access not verified on platform, SIGBUS may happen!"
 #endif
 
@@ -81,12 +85,12 @@ WINPR_DO_PRAGMA(clang diagnostic warning "-Wcast-align")
 #elif defined(__GNUC__)
 WINPR_DO_PRAGMA(GCC diagnostic warning "-Wcast-align")
 #endif
+#else
 #if defined(__clang__)
 WINPR_DO_PRAGMA(clang diagnostic error "-Wcast-align")
 #elif defined(__GNUC__)
 WINPR_DO_PRAGMA(GCC diagnostic error "-Wcast-align")
 #endif
-#else
 #endif
 #define WINPR_PACKED_ALIGN_CAST(t, val) WINPR_CXX_COMPAT_CAST(t, val)
 #endif
