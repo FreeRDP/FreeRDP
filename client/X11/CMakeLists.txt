@@ -61,6 +61,8 @@ set(SRCS
     xf_channels.h
     xf_cliprdr.c
     xf_cliprdr.h
+    xf_reconnect.c
+    xf_reconnect.h
     xf_monitor.c
     xf_monitor.h
     xf_disp.c
@@ -196,3 +198,7 @@ add_subdirectory(cli)
 add_subdirectory(man)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/X11")
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
