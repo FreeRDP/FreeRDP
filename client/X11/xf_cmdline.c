@@ -21,7 +21,10 @@
 #include <freerdp/client/cmdline.h>
 
 #include "xf_cmdline.h"
+#include "xf_monitor.h"
 #include "xfreerdp.h"
+
+#define XF_CLIENT_EXTRA_ARGUMENTS 16
 
 static const COMMAND_LINE_ARGUMENT_A xf_args[] = {
 	{ "defer-alt", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
@@ -41,25 +44,41 @@ static int xf_client_handle_option(const COMMAND_LINE_ARGUMENT_A* arg, void* cus
 		xfc->deferAlt = arg->Value != nullptr;
 		return 0;
 	}
-	return 0;
+	return xf_monitor_handle_option(arg, custom);
+}
+
+static size_t xf_client_arguments(COMMAND_LINE_ARGUMENT_A* args, size_t count)
+{
+	size_t monitorCount = 0;
+	COMMAND_LINE_ARGUMENT_A* monitorArgs = xf_monitor_arguments(&monitorCount);
+
+	WINPR_ASSERT(count >= (ARRAYSIZE(xf_args) + monitorCount));
+	memcpy(args, xf_args, sizeof(xf_args) - sizeof(xf_args[0]));
+	memcpy(&args[ARRAYSIZE(xf_args) - 1], monitorArgs, monitorCount * sizeof(*args));
+	args[ARRAYSIZE(xf_args) + monitorCount - 1] = (COMMAND_LINE_ARGUMENT_A)WINPR_C_ARRAY_INIT;
+	return ARRAYSIZE(xf_args) + monitorCount - 1;
 }
 
 int xf_client_settings_parse_command_line(xfContext* xfc, int argc, char** argv)
 {
 	WINPR_ASSERT(xfc);
 
-	COMMAND_LINE_ARGUMENT_A args[ARRAYSIZE(xf_args)] = WINPR_C_ARRAY_INIT;
-	memcpy(args, xf_args, sizeof(args));
+	COMMAND_LINE_ARGUMENT_A args[ARRAYSIZE(xf_args) + XF_CLIENT_EXTRA_ARGUMENTS] =
+	    WINPR_C_ARRAY_INIT;
+	const size_t count = xf_client_arguments(args, ARRAYSIZE(args));
 
 	xfc->deferAlt = FALSE;
 	return freerdp_client_settings_parse_command_line_ex(xfc->common.context.settings, argc, argv,
-	                                                     FALSE, args, ARRAYSIZE(args) - 1,
+	                                                     FALSE, args, count,
 	                                                     xf_client_handle_option, xfc);
 }
 
 int xf_client_settings_command_line_status_print(xfContext* xfc, int status, int argc, char** argv)
 {
 	WINPR_ASSERT(xfc);
+	COMMAND_LINE_ARGUMENT_A args[ARRAYSIZE(xf_args) + XF_CLIENT_EXTRA_ARGUMENTS] =
+	    WINPR_C_ARRAY_INIT;
+	(void)xf_client_arguments(args, ARRAYSIZE(args));
 	return freerdp_client_settings_command_line_status_print_ex(xfc->common.context.settings,
-	                                                            status, argc, argv, xf_args);
+	                                                            status, argc, argv, args);
 }
