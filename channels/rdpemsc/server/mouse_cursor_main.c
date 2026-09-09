@@ -171,6 +171,11 @@ static BOOL read_cap_set(wStream* s, wArrayList* capsSets)
 	}
 	WINPR_ASSERT(capsSet);
 
+	/* Consume the capability set data. The parsed versions carry no body fields, but the
+	 * length is client controlled: without this the trailing bytes are left in the stream and
+	 * the enclosing loop reinterprets them as further capability sets. */
+	Stream_Seek(s, capsDataSize);
+
 	capsSet->signature = signature;
 	capsSet->version = version;
 	capsSet->size = size;
