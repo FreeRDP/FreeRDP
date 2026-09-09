@@ -35,6 +35,9 @@
 #ifdef WITH_FFMPEG_HWACCEL
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(55, 9, 0)
 #include <libavutil/hwcontext.h>
+#if defined(__linux__)
+#include <glob.h>
+#endif
 #else
 #pragma warning You have asked for VA - API decoding, \
     but your version of libavutil is too old !Disabling.
@@ -306,7 +309,7 @@ static const char* av_format_str(int32_t format)
 		EVCASE(AV_PIX_FMT_GBRAP14BE);
 		EVCASE(AV_PIX_FMT_GBRAP14LE);
 #endif
-#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(59,16,100)
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(59, 16, 100)
 		EVCASE(AV_PIX_FMT_D3D12);
 #endif
 		EVCASE(AV_PIX_FMT_NB);
@@ -462,6 +465,41 @@ static const char* get_hwctx_device(H264_CONTEXT_LIBAVCODEC* sys)
 
 	return sys->device;
 }
+
+static int create_hwctx(H264_CONTEXT_LIBAVCODEC* sys)
+{
+#if defined(__linux__)
+	if ((sys->type == AV_HWDEVICE_TYPE_VAAPI) && !sys->device)
+	{
+		glob_t devices = { 0 };
+		int rc = AVERROR(ENODEV);
+		const int status = glob("/dev/dri/renderD*", 0, nullptr, &devices);
+		if (status == GLOB_NOSPACE)
+			rc = AVERROR(ENOMEM);
+		else if (status == 0)
+		{
+			for (size_t i = 0; i < devices.gl_pathc; i++)
+			{
+				const char* device = devices.gl_pathv[i];
+				rc = av_hwdevice_ctx_create(&sys->hwctx, sys->type, device, nullptr, 0);
+				if (rc < 0)
+					continue;
+				sys->device = _strdup(device);
+				if (!sys->device)
+				{
+					av_buffer_unref(&sys->hwctx);
+					rc = AVERROR(ENOMEM);
+				}
+				break;
+			}
+		}
+		globfree(&devices);
+		return rc;
+	}
+#endif
+	return av_hwdevice_ctx_create(&sys->hwctx, sys->type, get_hwctx_device(sys), nullptr, 0);
+}
+
 #endif
 
 #ifdef WITH_FFMPEG_HWACCEL
@@ -1232,9 +1270,6 @@ static BOOL load_config(H264_CONTEXT_LIBAVCODEC* sys, BOOL enabled, wLog* log)
 	sys->type = AV_HWDEVICE_TYPE_DXVA2;
 #elif defined(__linux__)
 	sys->type = AV_HWDEVICE_TYPE_VAAPI;
-	sys->device = _strdup("/dev/dri/renderD128");
-	if (!sys->device)
-		return FALSE;
 #else
 	sys->type = AV_HWDEVICE_TYPE_NONE;
 #endif
@@ -1361,8 +1396,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			enum AVHWDeviceType type = sys->type;
 			if (!sys->hwctx)
 			{
-				int ret =
-				    av_hwdevice_ctx_create(&sys->hwctx, type, get_hwctx_device(sys), nullptr, 0);
+				int ret = create_hwctx(sys);
 
 				if (ret < 0)
 				{
@@ -1424,8 +1458,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "H264 hardware encoder not found");
 			}
-			else if (av_hwdevice_ctx_create(&sys->hwctx, type, get_hwctx_device(sys), nullptr, 0) <
-			         0)
+			else if (create_hwctx(sys) < 0)
 			{
 				WLog_Print(h264->log, WLOG_ERROR, "av_hwdevice_ctx_create(%s) failed",
 				           get_hwctx_device(sys));
