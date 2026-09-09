@@ -82,7 +82,7 @@ BOOL MutexCloseHandle(HANDLE handle)
 					WLog_ERR(TAG, "%2" PRIuz ": %s", i, msg[i]);
 			}
 
-			free(msg);
+			free((void*)msg);
 			winpr_backtrace_free(stack);
 		}
 #endif

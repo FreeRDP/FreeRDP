@@ -371,7 +371,7 @@ static void dump_thread(WINPR_THREAD* thread)
 	for (size_t i = 0; i < used; i++)
 		WLog_DBG(TAG, "[%" PRIuz "]: %s", i, msg[i]);
 
-	free(msg);
+	free((void*)msg);
 	winpr_backtrace_free(stack);
 	WLog_DBG(TAG, "Thread handle created still not closed!");
 	msg = winpr_backtrace_symbols(thread->create_stack, &used);
@@ -379,7 +379,7 @@ static void dump_thread(WINPR_THREAD* thread)
 	for (size_t i = 0; i < used; i++)
 		WLog_DBG(TAG, "[%" PRIuz "]: %s", i, msg[i]);
 
-	free(msg);
+	free((void*)msg);
 
 	if (thread->started)
 	{
@@ -397,7 +397,7 @@ static void dump_thread(WINPR_THREAD* thread)
 		for (size_t i = 0; i < used; i++)
 			WLog_DBG(TAG, "[%" PRIuz "]: %s", i, msg[i]);
 
-		free(msg);
+		free((void*)msg);
 	}
 #else
 	WINPR_UNUSED(thread);
@@ -1072,7 +1072,7 @@ VOID DumpThreadHandles(void)
 		WLog_DBG(TAG, "[%" PRIuz "]: %s", i, msg[i]);
 	}
 
-	free(msg);
+	free((void*)msg);
 	winpr_backtrace_free(stack);
 	WLog_DBG(TAG, "---------------- Start Dumping thread handles -----------");
 
