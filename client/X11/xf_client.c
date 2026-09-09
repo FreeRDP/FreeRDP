@@ -23,6 +23,7 @@
  */
 
 #include <freerdp/config.h>
+#include "xf_reconnect.h"
 
 #include <math.h>
 #include <winpr/cast.h>
@@ -1673,7 +1674,9 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		{
 			if (!freerdp_check_event_handles(context))
 			{
-				if (client_auto_reconnect_ex(instance, handle_window_events))
+				const BOOL reconnected = client_auto_reconnect_ex(instance, handle_window_events);
+				xf_reconnect_close(xfc);
+				if (reconnected)
 					continue;
 				else
 				{
@@ -1858,6 +1861,7 @@ static Atom get_supported_atom(xfContext* xfc, const char* atomName)
 void xf_teardown_x11(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
+	xf_reconnect_close(xfc);
 
 	if (xfc->display)
 	{
@@ -2070,6 +2074,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	WINPR_ASSERT(!xfc->x11event);
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
+	instance->RetryDialog = xf_retry_dialog;
 	instance->PostDisconnect = xf_post_disconnect;
 	instance->PostFinalDisconnect = xf_post_final_disconnect;
 	instance->LogonErrorInfo = xf_logon_error_info;
