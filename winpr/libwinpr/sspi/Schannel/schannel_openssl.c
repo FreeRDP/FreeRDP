@@ -276,10 +276,16 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 	SSL_CTX_set_options(context->ctx, options);
 
 #if defined(WITH_DEBUG_SCHANNEL)
-	if (SSL_CTX_use_RSAPrivateKey_file(context->ctx, "/tmp/localhost.key", SSL_FILETYPE_PEM) <= 0)
 	{
-		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
-		goto fail;
+		const char* key = getenv("FREERDP_SCHANNEL_KEY");
+		if (!key)
+			key = "/tmp/localhost.key";
+
+		if (SSL_CTX_use_PrivateKey_file(context->ctx, key, SSL_FILETYPE_PEM) <= 0)
+		{
+			WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
+			goto fail;
+		}
 	}
 #endif
 
