@@ -159,6 +159,7 @@ static int test_peer_virtual_channel_read(freerdp_peer* peer, HANDLE hChannel, B
 	WINPR_UNUSED(hChannel);
 	WINPR_UNUSED(buffer);
 	WINPR_UNUSED(length);
+	WINPR_ASSERT(buffer || (length == 0));
 	return 0;
 }
 
