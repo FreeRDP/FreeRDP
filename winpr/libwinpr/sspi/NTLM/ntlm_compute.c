@@ -432,13 +432,16 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 
 	if (credentials)
 	{
-		WLog_VRB(TAG, "Password (length = %" PRIu32 ")", credentials->identity.PasswordLength * 2);
+		WLog_VRB(TAG, "Password (length = %" PRIuz ")",
+		         credentials->identity.PasswordLength * sizeof(WCHAR));
 		winpr_HexDump(TAG, WLOG_TRACE, (BYTE*)credentials->identity.Password,
 		              credentials->identity.PasswordLength * 2);
-		WLog_VRB(TAG, "Username (length = %" PRIu32 ")", credentials->identity.UserLength * 2);
+		WLog_VRB(TAG, "Username (length = %" PRIuz ")",
+		         credentials->identity.UserLength * sizeof(WCHAR));
 		winpr_HexDump(TAG, WLOG_TRACE, (BYTE*)credentials->identity.User,
 		              credentials->identity.UserLength * 2);
-		WLog_VRB(TAG, "Domain (length = %" PRIu32 ")", credentials->identity.DomainLength * 2);
+		WLog_VRB(TAG, "Domain (length = %" PRIuz ")",
+		         credentials->identity.DomainLength * sizeof(WCHAR));
 		winpr_HexDump(TAG, WLOG_TRACE, (BYTE*)credentials->identity.Domain,
 		              credentials->identity.DomainLength * 2);
 	}
