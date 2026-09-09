@@ -361,7 +361,7 @@ set_target_properties(
              MACOSX_BUNDLE_GUI_IDENTIFIER "com.freerdp.ifreerdp"
              MACOSX_BUNDLE_ICON_FILE "FreeRDP_OSX.icns"
              MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/iFreeRDP.plist.in
-             MACOSX_BUNDLE_INFO_STRING "info string TODO"
+             MACOSX_BUNDLE_INFO_STRING "iFreeRDP"
              MACOSX_BUNDLE_LONG_VERSION_STRING ${PROJECT_VERSION}
              MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
              BUILD_RPATH "@executable_path/Frameworks"
