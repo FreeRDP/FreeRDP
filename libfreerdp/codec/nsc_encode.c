@@ -61,13 +61,10 @@ static BOOL nsc_write_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINP
 
 static BOOL nsc_context_initialize_encode(NSC_CONTEXT* WINPR_RESTRICT context)
 {
-	UINT32 length = 0;
-	UINT32 tempWidth = 0;
-	UINT32 tempHeight = 0;
-	tempWidth = ROUND_UP_TO(context->width, 8);
-	tempHeight = ROUND_UP_TO(context->height, 2);
+	const UINT32 tempWidth = ROUND_UP_TO(context->width, 8);
+	const UINT32 tempHeight = ROUND_UP_TO(context->height, 2);
 	/* The maximum length a decoded plane can reach in all cases */
-	length = tempWidth * tempHeight + 16;
+	const UINT32 length = tempWidth * tempHeight + 16;
 
 	if (length > context->priv->PlaneBuffersLength)
 	{
@@ -77,7 +74,10 @@ static BOOL nsc_context_initialize_encode(NSC_CONTEXT* WINPR_RESTRICT context)
 			                                          sizeof(BYTE), 32);
 
 			if (!tmp)
-				goto fail;
+			{
+				nsc_context_planebuffers_free(context->priv);
+				return FALSE;
+			}
 
 			context->priv->PlaneBuffers[i] = tmp;
 		}
@@ -101,15 +101,6 @@ static BOOL nsc_context_initialize_encode(NSC_CONTEXT* WINPR_RESTRICT context)
 	}
 
 	return TRUE;
-fail:
-
-	if (length > context->priv->PlaneBuffersLength)
-	{
-		for (int i = 0; i < 5; i++)
-			winpr_aligned_free(context->priv->PlaneBuffers[i]);
-	}
-
-	return FALSE;
 }
 
 static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* WINPR_RESTRICT context,
