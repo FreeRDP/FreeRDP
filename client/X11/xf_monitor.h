@@ -25,9 +25,14 @@
 #include <freerdp/types.h>
 
 #include "xf_types.h"
+#include <winpr/cmdline.h>
 
 FREERDP_API int xf_list_monitors(xfContext* xfc);
 FREERDP_API BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight);
 FREERDP_API void xf_monitors_free(xfContext* xfc);
+
+COMMAND_LINE_ARGUMENT_A* xf_monitor_arguments(size_t* count);
+int xf_monitor_handle_option(const COMMAND_LINE_ARGUMENT_A* arg, void* userData);
+void xf_monitor_apply_scale(xfContext* xfc, rdpMonitor* monitor);
 
 #endif /* FREERDP_CLIENT_X11_MONITOR_H */
