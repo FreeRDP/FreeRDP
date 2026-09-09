@@ -79,7 +79,6 @@ struct rdpsnd_plugin
 	UINT16 NumberOfClientFormats;
 
 	BOOL attached;
-	BOOL connected;
 	BOOL dynamic;
 
 	BOOL expectingWave;
@@ -106,6 +105,7 @@ struct rdpsnd_plugin
 
 	HANDLE thread;
 	wMessageQueue* queue;
+	CRITICAL_SECTION asyncLock;
 	BOOL initialized;
 
 	UINT16 wVersion;
@@ -1296,16 +1296,19 @@ fail:
 static void rdpsnd_terminate_thread(rdpsndPlugin* rdpsnd)
 {
 	WINPR_ASSERT(rdpsnd);
-	if (rdpsnd->queue)
-		MessageQueue_PostQuit(rdpsnd->queue, 0);
-
-	if (rdpsnd->thread)
+	if (rdpsnd->async)
 	{
-		(void)WaitForSingleObject(rdpsnd->thread, INFINITE);
-		(void)CloseHandle(rdpsnd->thread);
-	}
+		if (rdpsnd->queue)
+			MessageQueue_PostQuit(rdpsnd->queue, 0);
 
-	MessageQueue_Free(rdpsnd->queue);
+		if (rdpsnd->thread)
+		{
+			(void)WaitForSingleObject(rdpsnd->thread, INFINITE);
+			(void)CloseHandle(rdpsnd->thread);
+		}
+		DeleteCriticalSection(&rdpsnd->asyncLock);
+		MessageQueue_Free(rdpsnd->queue);
+	}
 	rdpsnd->thread = nullptr;
 	rdpsnd->queue = nullptr;
 }
@@ -1314,6 +1317,9 @@ static void cleanup_internals(rdpsndPlugin* rdpsnd)
 {
 	if (!rdpsnd)
 		return;
+
+	if (rdpsnd->async)
+		EnterCriticalSection(&rdpsnd->asyncLock);
 
 	if (rdpsnd->pool)
 		StreamPool_Return(rdpsnd->pool, rdpsnd->data_in);
@@ -1327,6 +1333,9 @@ static void cleanup_internals(rdpsndPlugin* rdpsnd)
 	rdpsnd->ServerFormats = nullptr;
 
 	rdpsnd->data_in = nullptr;
+
+	if (rdpsnd->async)
+		LeaveCriticalSection(&rdpsnd->asyncLock);
 }
 
 /**
@@ -1425,6 +1434,7 @@ static BOOL allocate_internals(rdpsndPlugin* rdpsnd)
 			rdpsnd->queue = MessageQueue_New(&obj);
 			if (!rdpsnd->queue)
 				return CHANNEL_RC_NO_MEMORY;
+			InitializeCriticalSection(&rdpsnd->asyncLock);
 		}
 
 		if (!rdpsnd->thread)
@@ -1475,8 +1485,14 @@ static DWORD WINAPI play_thread(LPVOID arg)
 		if (message.id == WMQ_QUIT)
 			break;
 
+		if (rdpsnd->async)
+			EnterCriticalSection(&rdpsnd->asyncLock);
+
 		s = message.wParam;
 		error = rdpsnd_recv_pdu(rdpsnd, s);
+
+		if (rdpsnd->async)
+			LeaveCriticalSection(&rdpsnd->asyncLock);
 
 		if (error)
 			return error;
