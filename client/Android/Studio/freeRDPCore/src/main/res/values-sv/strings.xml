@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="yes">Ja</string>
+    <string name="no">Nej</string>
+    <string name="cancel">Avbryt</string>
+    <string name="save">Spara</string>
+    <string name="cont">Fortsätt</string>
+    <string name="login">Logga in</string>
+    <string name="menu_search">Sök</string>
+    <string name="menu_about">Om</string>
+    <string name="menu_help">Hjälp</string>
+    <string name="menu_new_bookmark">Ny anslutning</string>
+    <string name="menu_app_settings">Inställningar</string>
+    <string name="menu_connect">Anslut</string>
+    <string name="menu_edit">Redigera</string>
+    <string name="menu_delete">Ta bort</string>
+    <string name="bookmark_export">Dela</string>
+    <string name="export_failed">Det gick inte att dela bokmärket</string>
+    <string name="menu_sys_keyboard">Tangentbord</string>
+    <string name="menu_ext_keyboard">Funktionstangenter</string>
+    <string name="menu_touch_pointer">Pekare för beröring</string>
+    <string name="kbd_win_key">Windows-tangent</string>
+    <string name="quick_connect_to">Anslut till: %s</string>
+    <string name="settings_cat_host">Värd</string>
+    <string name="settings_label">Etikett</string>
+    <string name="settings_hostname">Värdnamn</string>
+    <string name="settings_port">Port</string>
+    <string name="settings_cat_credentials">Inloggningsuppgifter</string>
+    <string name="settings_credentials">Inloggningsuppgifter</string>
+    <string name="settings_username">Användarnamn</string>
+    <string name="settings_password">Lösenord</string>
+    <string name="settings_domain">Domän</string>
+    <string name="settings_cat_settings">Inställningar</string>
+    <string name="settings_screen">Skärm</string>
+    <string name="settings_cat_screen">Bildskärmsinställningar</string>
+    <string name="settings_cat_scale">Skalningsinställningar</string>
+    <string name="settings_colors">Färger</string>
+    <string-array name="colors_array">
+        <item>Palett (8 bitar)</item>
+        <item>Hög färg (15 bitar)</item>
+        <item>Hög färg (16 bitar)</item>
+        <item>Äkta färg (24 bitar)</item>
+        <item>Högsta kvalitet (32 bitar)</item>
+    </string-array>
+    <string-array name="colors_values_array" translatable="false">
+        <item>8</item><item>15</item><item>16</item><item>24</item><item>32</item>
+    </string-array>
+    <string name="settings_resolution">Upplösning</string>
+    <string name="resolution_automatic">Automatisk</string>
+    <string name="resolution_fit">Anpassa till skärmen</string>
+    <string name="resolution_custom">Anpassad</string>
+    <string-array name="resolutions_array">
+        <item>Automatisk</item><item>Anpassa till skärmen</item><item>Anpassad</item><item>640x480</item><item>720x480</item><item>800x600</item><item>1024x768</item><item>1280x1024</item><item>1440x900</item><item>1920x1080</item><item>1920x1200</item>
+    </string-array>
+    <string-array name="resolutions_values_array" translatable="false">
+        <item>automatic</item><item>fitscreen</item><item>custom</item><item>640x480</item><item>720x480</item><item>800x600</item><item>1024x768</item><item>1280x1024</item><item>1440x900</item><item>1920x1080</item><item>1920x1200</item>
+    </string-array>
+    <string name="settings_width">Bredd</string>
+    <string name="settings_height">Höjd</string>
+    <string name="settings_scale">Skalning</string>
+    <string name="settings_scale_desktop">Skrivbordsskalning</string>
+    <string name="settings_scale_device">Enhetsskalning</string>
+    <string-array name="scale_mode_array"><item>100%</item><item>140%</item><item>180%</item><item>Anpassad</item></string-array>
+    <string-array name="scale_mode_values_array" translatable="false"><item>100</item><item>140</item><item>180</item><item>custom</item></string-array>
+    <string-array name="scale_device_array"><item>100%</item><item>140%</item><item>180%</item></string-array>
+    <string-array name="scale_device_values_array" translatable="false"><item>100</item><item>140</item><item>180</item></string-array>
+    <string name="settings_performance">Prestanda</string>
+    <string name="settings_cat_performance">Prestandainställningar</string>
+    <string name="settings_perf_remotefx">RemoteFX</string>
+    <string name="settings_perf_gfx" translatable="false">GFX</string>
+    <string name="settings_perf_gfx_h264" translatable="false">H264</string>
+    <string name="settings_perf_wallpaper">Skrivbordsbakgrund</string>
+    <string name="settings_perf_font_smoothing">Teckensnittsutjämning</string>
+    <string name="settings_perf_desktop_composition">Skrivbordskomposition</string>
+    <string name="settings_perf_full_window_drag">Fönsterinnehåll vid dragning</string>
+    <string name="settings_perf_menu_animation">Menyanimering</string>
+    <string name="settings_perf_theming">Visuella formatmallar</string>
+    <string name="settings_advanced">Avancerat</string>
+    <string name="settings_tlsSecLevel">TLS-säkerhetsnivå</string>
+    <string name="settings_tlsMinLevel">Krävd TLS-version</string>
+    <string name="settings_cat_gateway">Gateway</string>
+    <string name="settings_enable_gateway_settings">Aktivera gateway</string>
+    <string name="settings_gateway_settings">Gatewayinställningar</string>
+    <string name="settings_redirect_sdcard">Vidarebefordra SD-kort</string>
+    <string name="settings_redirect_sound">Vidarebefordra ljud</string>
+    <string-array name="tlsSecLevel_array"><item>Använd standardvärdet</item><item>allt tillåts</item><item>80 bitar</item><item>112 bitar</item><item>128 bitar</item><item>192 bitar</item><item>256 bitar</item></string-array>
+    <string-array name="tlsSecLevel_values_array" translatable="false"><item>-1</item><item>0</item><item>1</item><item>2</item><item>3</item><item>4</item><item>5</item></string-array>
+    <string-array name="tlsMinLevel_array"><item>Använd standardvärdet</item><item>TLS 1.0</item><item>TLS 1.1</item><item>TLS 1.2</item><item>TLS 1.3</item></string-array>
+    <string-array name="tlsMinLevel_values_array" translatable="false"><item>-1</item><item>0x0301</item><item>0x0302</item><item>0x0303</item><item>0x0304</item></string-array>
+    <string-array name="redirect_sound_array"><item>Spela inte upp</item><item>Spela upp på servern</item><item>Spela upp på enheten</item></string-array>
+    <string-array name="redirect_sound_values_array" translatable="false"><item>2</item><item>1</item><item>0</item></string-array>
+    <string name="settings_redirect_microphone">Vidarebefordra mikrofon</string>
+    <string name="settings_redirect_camera">Vidarebefordra kamera</string>
+    <string name="settings_redirect_printer">Vidarebefordra skrivare</string>
+    <string name="settings_security">Säkerhet</string>
+    <string-array name="security_array"><item>Automatisk</item><item>RDP</item><item>TLS</item><item>NLA</item></string-array>
+    <string-array name="security_values_array" translatable="false"><item>0</item><item>1</item><item>2</item><item>3</item></string-array>
+    <string name="settings_remote_program">Fjärrprogram</string>
+    <string name="settings_alternate_shell">Alternativt skal</string>
+    <string name="settings_work_dir">Arbetskatalog</string>
+    <string name="settings_async_channel">Asynkron kanal</string>
+    <string name="settings_async_update">Asynkron uppdatering</string>
+    <string name="settings_console_mode">Konsolläge</string>
+    <string name="settings_cat_hyperv">Hyper-V</string>
+    <string name="settings_cat_redirection">Vidarebefordring</string>
+    <string name="settings_cat_session">Session</string>
+    <string name="settings_vmconnect_mode">Hyper-V-konsol (vmconnect)</string>
+    <string name="settings_vmconnect_guid">Virtuell dator-ID (GUID)</string>
+    <string name="settings_password_present">*******</string>
+    <string name="settings_password_empty">inte angivet</string>
+    <string name="settings_cat_ui">Användargränssnitt</string>
+    <string name="settings_ui_hide_status_bar">Dölj statusfältet</string>
+    <string name="settings_ui_hide_navigation_bar">Dölj navigeringsfältet</string>
+    <string name="settings_ui_swap_mouse_buttons">Byt musknappar</string>
+    <string name="settings_ui_invert_scrolling">Invertera rullning</string>
+    <string name="settings_ui_auto_scroll_touchpointer">Rulla automatiskt med beröringspekaren</string>
+    <string name="settings_ui_ask_on_exit">Visa dialogruta vid avslutning</string>
+    <string name="settings_ui_use_back_as_altf4">Använd knappen &quot;Tillbaka&quot; som Alt+F4</string>
+    <string name="settings_cat_power">Strömsparläge</string>
+    <string name="settings_cat_client">Klient</string>
+    <string name="settings_power_disconnect_timeout">Stäng inaktiva anslutningar</string>
+    <string name="settings_power_keep_screen_on_when_connected">Håll skärmen på när du är ansluten</string>
+    <string name="settings_cat_security">Säkerhet</string>
+    <string name="settings_security_accept_certificates">Godta alla certifikat</string>
+    <string name="settings_security_clear_certificate_cache">Rensa certifikatcachen</string>
+    <string name="session_double_back_to_exit">Tryck på Tillbaka igen för att koppla från</string>
+    <string name="title_bookmark_settings">Anslutningsinställningar</string>
+    <string name="title_application_settings">Inställningar</string>
+    <string name="title_create_shortcut">RDP-anslutningar</string>
+    <string name="title_help">Hjälp</string>
+    <string name="title_about">Om</string>
+    <string name="error_bookmark_incomplete_title">Avbryt utan att spara?</string>
+    <string name="error_bookmark_incomplete">Tryck på &quot;Avbryt&quot; för att avbryta!\nTryck på &quot;Fortsätt&quot; för att ange de obligatoriska fälten!</string>
+    <string name="error_connection_failure">Det gick inte att ansluta till servern!</string>
+    <string name="info_capabilities_changed">Bildskärmsinställningarna ändrades till inställningar som stöds av servern.</string>
+    <string name="info_reset_success">Certifikatcachen har tagits bort.</string>
+    <string name="info_reset_failed">Det gick inte att ta bort certifikatcachen!</string>
+    <string name="dlg_title_verify_certificate">Verifiera certifikat</string>
+    <string name="dlg_msg_verify_certificate">Den fjärranslutna datorns identitet kan inte verifieras. Vill du ansluta ändå?</string>
+    <string name="dlg_title_credentials">Ange dina inloggningsuppgifter</string>
+    <string name="dlg_title_create_shortcut">Skapa genväg</string>
+    <string name="dlg_msg_create_shortcut">Genvägens namn:</string>
+    <string name="dlg_msg_connecting">Ansluter …</string>
+    <string name="dlg_title_save_bookmark">Spara anslutning?</string>
+    <string name="dlg_save_bookmark">Vill du spara ändringarna du gjorde i anslutningsinställningarna?</string>
+    <string name="dlg_title_exit">Avsluta appen?</string>
+    <string name="dlg_msg_exit">Är du säker på att du vill avsluta appen?</string>
+    <string name="dlg_title_clear_cert_cache">Ta bort certifikat?</string>
+    <string name="dlg_msg_clear_cert_cache">Är du säker på att du vill ta bort alla cachade certifikat?</string>
+    <string name="debug_level">Felsökningsnivå</string>
+    <string name="settings_debug">Felsökningsinställningar</string>
+    <string name="settings_cat_experimental">Experimentellt</string>
+    <string name="settings_experimental_remoteapp">RemoteApp-fönster</string>
+    <string name="settings_experimental_remoteapp_summary">Visa fjärrprogram som separata fönster i stället för ett helt skrivbord. Experimentell funktion som kan vara instabil.</string>
+    <string name="experimental_feature_remoteapp">RemoteApp</string>
+    <string name="settings_experimental_camera">Vidarebefordran av kamera</string>
+    <string name="settings_experimental_camera_summary">Dela en lokal kamera med fjärrsessionen. Experimentell funktion som kan vara instabil.</string>
+    <string name="experimental_feature_camera">Vidarebefordran av kamera</string>
+    <string name="dlg_title_experimental_feature">Experimentell funktion</string>
+    <string name="dlg_msg_experimental_feature">%1$s är experimentell. Aktivera funktionen i de experimentella inställningarna för att använda den.</string>
+    <string name="preference_key_experimental_remoteapp" translatable="false">experimental.remoteapp</string>
+    <string name="preference_key_experimental_camera" translatable="false">experimental.camera</string>
+    <string name="preference_key_client_name" translatable="false">preference_key_client_name</string>
+    <string name="preference_title_client_name">Klientnamn</string>
+    <string name="preference_default_client_name" translatable="false">aFreeRDP</string>
+    <string name="preference_key_accept_certificates" translatable="false">security.accept_certificates</string>
+    <string name="preference_key_security_clear_certificate_cache" translatable="false">security.clear_certificate_cache</string>
+    <string name="preference_key_power_disconnect_timeout" translatable="false">power.disconnect_timeout</string>
+    <string name="preference_key_power_keep_screen_on_when_connected" translatable="false">power.keep_screen_on_when_connected</string>
+    <string name="preference_key_ui_hide_status_bar" translatable="false">ui.hide_status_bar</string>
+    <string name="preference_key_ui_hide_navigation_bar" translatable="false">ui.hide_navigation_bar</string>
+    <string name="preference_key_ui_ask_on_exit" translatable="false">ui.ask_on_exit</string>
+    <string name="preference_key_ui_auto_scroll_touchpointer" translatable="false">ui.auto_scroll_touchpointer</string>
+    <string name="preference_key_ui_invert_scrolling" translatable="false">ui.invert_scrolling</string>
+    <string name="preference_key_ui_swap_mouse_buttons" translatable="false">ui.swap_mouse_buttons</string>
+    <string name="preference_key_ui_use_back_as_altf4" translatable="false">ui.use_back_as_altf4</string>
+    <string name="preference_key_ui_fit_rounded_corners" translatable="false">ui.fit_rounded_corners</string>
+    <string name="settings_ui_fit_rounded_corners">Anpassa till rundade hörn</string>
+    <string name="pref_key_theme" translatable="false">ui.theme</string>
+    <string name="pref_title_theme">Apptema</string>
+    <string-array name="pref_theme_entries"><item>Systemstandard</item><item>Ljust</item><item>Mörkt</item></string-array>
+    <string-array name="pref_theme_values" translatable="false"><item>auto</item><item>light</item><item>dark</item></string-array>
+    <string-array name="debug_array" translatable="false"><item>OFF</item><item>FATAL</item><item>ERROR</item><item>WARN</item><item>INFO</item><item>DEBUG</item><item>TRACE</item></string-array>
+    <string-array name="debug_values_array" translatable="false"><item>OFF</item><item>FATAL</item><item>ERROR</item><item>WARN</item><item>INFO</item><item>DEBUG</item><item>TRACE</item></string-array>
+    <string name="preference_key_h264" translatable="false">bookmark.perf_gfx_h264</string>
+    <string name="settings_loadBalanceInfo">Belastningsutjämningsinformation</string>
+    <string name="select_display_title">Välj bildskärm</string>
+    <string name="display_main_screen">Huvudskärm</string>
+    <string name="print_notif_channel">Utskriftsjobb</string>
+    <string name="print_notif_title">Utskriftsjobb mottaget</string>
+    <string name="print_notif_open">Öppna</string>
+    <string name="print_notif_print">Skriv ut</string>
+    <string name="accessibility_keyboard_label">aFreeRDP-fysiskt tangentbord</string>
+    <string name="accessibility_keyboard_description">Skickar kortkommandon från ett fysiskt tangentbord (t.ex. Windows-tangenten) till fjärrskrivbordet.</string>
+    <string name="pref_title_keyboard_accessibility">Kortkommandon från fysiskt tangentbord</string>
+    <string name="pref_summary_keyboard_accessibility">Skicka Windows-tangenten och systemkortkommandon till fjärrskrivbordet. Kräver tillgänglighetsbehörighet.</string>
+</resources>
