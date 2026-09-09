@@ -1968,8 +1968,8 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{
-		const DWORD flags =
-		    COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_SIGIL_PLUS_MINUS | COMMAND_LINE_SIGIL_SLASH;
+		DWORD flags = 0;
+		freerdp_client_detect_command_line(argc, argv, &flags);
 
 		size_t customcount = 0;
 		{
