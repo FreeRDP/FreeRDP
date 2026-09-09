@@ -20,7 +20,8 @@ static void dealloc(railPlugin* plugin)
 {
 	if (!plugin)
 		return;
-	freerdp_settings_free(plugin->rdpcontext->settings);
+	if (plugin->rdpcontext)
+		freerdp_settings_free(plugin->rdpcontext->settings);
 	free(plugin->rdpcontext);
 	free(plugin);
 }

@@ -63,7 +63,7 @@ static void dump_event(WINPR_EVENT* event, size_t index)
 	for (size_t i = 2; i < used; i++)
 		WLog_DBG(TAG, "[%" PRIuz "]: %s", i, msg[i]);
 
-	free(msg);
+	free((void*)msg);
 }
 #endif /* WITH_DEBUG_EVENTS */
 
