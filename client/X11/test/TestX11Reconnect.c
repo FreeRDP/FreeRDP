@@ -20,6 +20,7 @@
 #include <freerdp/client.h>
 #include "../xf_reconnect.h"
 #include "../xf_client.h"
+#include "../xf_event.h"
 
 int main(void)
 {
@@ -64,7 +65,7 @@ int main(void)
 	event.xclient.format = 32;
 	event.xclient.message_type = XInternAtom(xfc->display, "WM_PROTOCOLS", False);
 	event.xclient.data.l[0] = (long)xfc->WM_DELETE_WINDOW;
-	if (!xf_reconnect_event(xfc, &event) ||
+	if (xf_event_process(context->instance, &event) ||
 	    WaitForSingleObject(freerdp_abort_event(context), 0) != WAIT_OBJECT_0)
 		goto out;
 	xf_reconnect_close(xfc);
