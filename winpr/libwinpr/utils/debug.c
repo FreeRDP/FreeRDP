@@ -332,7 +332,7 @@ void winpr_log_build_warn(wLog* log, DWORD level)
 #if defined(DISABLE_SUPPORTED_ARCH_CHECKS)
 		STR(DISABLE_SUPPORTED_ARCH_CHECKS) " "
 #endif
-		                                   ""
+		                                   "\0"
 	};
 	WINPR_ASSERT(log);
 	log_build_warn(log, level, "experimental",
