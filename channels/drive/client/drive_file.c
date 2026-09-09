@@ -59,6 +59,7 @@
 	} while (0)
 #endif
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_fix_path(WCHAR* path, size_t length)
 {
 	if ((length == 0) || (length > UINT32_MAX))
@@ -90,6 +91,7 @@ static BOOL drive_file_fix_path(WCHAR* path, size_t length)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL contains_dotdot(const WCHAR* path, size_t base_length, size_t path_length)
 {
 	WCHAR dotdotbuffer[6] = WINPR_C_ARRAY_INIT;
@@ -122,6 +124,7 @@ static BOOL contains_dotdot(const WCHAR* path, size_t base_length, size_t path_l
 	return FALSE;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* path,
                                           size_t PathWCharLength)
 {
@@ -180,6 +183,7 @@ fail:
 	return fullpath;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_set_fullpath(DRIVE_FILE* file, const WCHAR* fullpath)
 {
 	if (!file || !fullpath)
@@ -204,6 +208,7 @@ static BOOL drive_file_set_fullpath(DRIVE_FILE* file, const WCHAR* fullpath)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_init(DRIVE_FILE* file)
 {
 	UINT CreateDisposition = 0;
@@ -467,6 +472,7 @@ BOOL drive_file_write(DRIVE_FILE* file, const BYTE* buffer, UINT32 Length)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_query_from_handle_information(const DRIVE_FILE* file,
                                                      const BY_HANDLE_FILE_INFORMATION* info,
                                                      UINT32 FsInformationClass, wStream* output)
@@ -531,6 +537,7 @@ static BOOL drive_file_query_from_handle_information(const DRIVE_FILE* file,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_query_from_attributes(const DRIVE_FILE* file,
                                              const WIN32_FILE_ATTRIBUTE_DATA* attrib,
                                              UINT32 FsInformationClass, wStream* output)
@@ -646,6 +653,7 @@ out_fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_set_basic_information(DRIVE_FILE* file, UINT32 Length, wStream* input)
 {
 	WINPR_ASSERT(file);
@@ -730,6 +738,7 @@ static BOOL drive_file_set_basic_information(DRIVE_FILE* file, UINT32 Length, wS
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_set_alloc_information(DRIVE_FILE* file, UINT32 Length, wStream* input)
 {
 	WINPR_ASSERT(file);
@@ -777,6 +786,7 @@ static BOOL drive_file_set_alloc_information(DRIVE_FILE* file, UINT32 Length, wS
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_set_disposition_information(DRIVE_FILE* file, UINT32 Length, wStream* input)
 {
 	WINPR_ASSERT(file);
@@ -816,6 +826,7 @@ static BOOL drive_file_set_disposition_information(DRIVE_FILE* file, UINT32 Leng
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_set_rename_information(DRIVE_FILE* file, UINT32 Length, wStream* input)
 {
 	WINPR_ASSERT(file);
@@ -910,6 +921,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_query_dir_info(DRIVE_FILE* file, wStream* output, size_t length)
 {
 	WINPR_ASSERT(file);
@@ -945,6 +957,7 @@ static BOOL drive_file_query_dir_info(DRIVE_FILE* file, wStream* output, size_t 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_query_full_dir_info(DRIVE_FILE* file, wStream* output, size_t length)
 {
 	WINPR_ASSERT(file);
@@ -980,6 +993,7 @@ static BOOL drive_file_query_full_dir_info(DRIVE_FILE* file, wStream* output, si
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_query_both_dir_info(DRIVE_FILE* file, wStream* output, size_t length)
 {
 	WINPR_ASSERT(file);
@@ -1018,6 +1032,7 @@ static BOOL drive_file_query_both_dir_info(DRIVE_FILE* file, wStream* output, si
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL drive_file_query_names_info(DRIVE_FILE* file, wStream* output, size_t length)
 {
 	WINPR_ASSERT(file);

@@ -54,31 +54,34 @@ typedef struct
 FREERDP_LOCAL BOOL drive_file_free(DRIVE_FILE* file);
 
 WINPR_ATTR_MALLOC(drive_file_free, 1)
-WINPR_ATTR_NODISCARD FREERDP_LOCAL DRIVE_FILE*
-drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 PathWCharLength, UINT32 id,
-               UINT32 DesiredAccess, UINT32 CreateDisposition, UINT32 CreateOptions,
-               UINT32 FileAttributes, UINT32 SharedAccess);
+FREERDP_LOCAL DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path,
+                                         UINT32 PathWCharLength, UINT32 id, UINT32 DesiredAccess,
+                                         UINT32 CreateDisposition, UINT32 CreateOptions,
+                                         UINT32 FileAttributes, UINT32 SharedAccess);
 
-WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL drive_file_open(DRIVE_FILE* file);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL drive_file_open(DRIVE_FILE* file);
 
-WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset);
 
-WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer,
-                                                        UINT32* Length);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length);
 
-WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL drive_file_write(DRIVE_FILE* file, const BYTE* buffer,
-                                                         UINT32 Length);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL drive_file_write(DRIVE_FILE* file, const BYTE* buffer, UINT32 Length);
 
-WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL drive_file_query_information(DRIVE_FILE* file,
-                                                                     UINT32 FsInformationClass,
-                                                                     wStream* output);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass,
+                                                wStream* output);
 
-WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL drive_file_set_information(DRIVE_FILE* file,
-                                                                   UINT32 FsInformationClass,
-                                                                   UINT32 Length, wStream* input);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass,
+                                              UINT32 Length, wStream* input);
 
-WINPR_ATTR_NODISCARD FREERDP_LOCAL BOOL
-drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
-                           const WCHAR* path, UINT32 PathWCharLength, wStream* output);
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass,
+                                              BYTE InitialQuery, const WCHAR* path,
+                                              UINT32 PathWCharLength, wStream* output);
 
 #endif /* FREERDP_CHANNEL_DRIVE_FILE_H */
