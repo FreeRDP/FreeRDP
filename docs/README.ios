@@ -33,12 +33,15 @@ cmake -S client/iOS -B build/ios.client.build \
   -DPLATFORM=OS64 \
   -DDEPLOYMENT_TARGET=15.0 \
   -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM=XXXXXXXXXX \
+  -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=YES \
+  -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED=YES \
+  -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_STYLE=Automatic \
   -G Xcode
 cmake --build build/ios.client.build
 
 For the simulator (no signing team required):
 
-cmake -S client/iOS-B build/ios-sim.client.build \
+cmake -S client/iOS -B build/ios-sim.client.build \
       -DCMAKE_TOOLCHAIN_FILE="$PWD/cmake/ios.toolchain.cmake" \
       -DPLATFORM=SIMULATORARM64 \
       -DDEPLOYMENT_TARGET=15.0 \
