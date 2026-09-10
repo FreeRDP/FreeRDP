@@ -60,8 +60,8 @@
 #endif
 
 #if !defined(WINPR_ARCH_SUPPORTED)
-#if defined(__GNUC__) || defined(__clang__) ||                       \
-    (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L))) || \
+#if defined(__GNUC__) || defined(__clang__) ||                      \
+    (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)) || \
     (defined(__cplusplus) && (__cplusplus >= 202302L))
 #warning "unaligned pointer access not verified on platform, SIGBUS may happen!"
 #endif
