@@ -382,6 +382,15 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #endif
 #endif
 
+/* s390x (_M_S390X) */
+
+#if defined(__s390x__)
+#ifndef _M_S390X
+// NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#define _M_S390X 1
+#endif
+#endif
+
 /* E2K (_M_E2K) */
 
 #if defined(__e2k__)
