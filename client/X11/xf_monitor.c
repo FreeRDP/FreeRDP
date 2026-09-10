@@ -659,7 +659,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			    freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
 			{
 				*pMaxWidth = MIN(*pMaxWidth, (UINT32)vscreen->area.right - vscreen->area.left + 1);
-				*pMaxHeight = MIN(*pMaxHeight, (UINT32)vscreen->area.bottom - vscreen->area.top + 1);
+				*pMaxHeight =
+				    MIN(*pMaxHeight, (UINT32)vscreen->area.bottom - vscreen->area.top + 1);
 			}
 		}
 
