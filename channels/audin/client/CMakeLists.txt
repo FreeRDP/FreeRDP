@@ -19,7 +19,7 @@ define_channel_client("audin")
 
 set(${MODULE_PREFIX}_SRCS audin_main.c audin_main.h)
 
-set(${MODULE_PREFIX}_LIBS freerdp winpr)
+set(${MODULE_PREFIX}_LIBS freerdp)
 
 include_directories(..)
 
