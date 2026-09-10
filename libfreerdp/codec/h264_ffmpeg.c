@@ -1044,6 +1044,22 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 }
 
 #if defined(WITH_FFMPEG_HWACCEL)
+static BOOL hwctx_supports_dimensions(H264_CONTEXT_LIBAVCODEC* sys, int width, int height)
+{
+	WINPR_ASSERT(sys);
+
+	AVHWFramesConstraints* constraints = av_hwdevice_get_hwframe_constraints(sys->hwctx, nullptr);
+	if (!constraints)
+		return TRUE;
+
+	const BOOL supported = (width >= constraints->min_width) &&
+	                       (height >= constraints->min_height) &&
+	                       ((constraints->max_width == 0) || (width <= constraints->max_width)) &&
+	                       ((constraints->max_height == 0) || (height <= constraints->max_height));
+	av_hwframe_constraints_free(&constraints);
+	return supported;
+}
+
 WINPR_ATTR_NODISCARD
 static const char* vaapi_vendor(H264_CONTEXT_LIBAVCODEC* sys)
 {
@@ -1081,6 +1097,21 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 	WINPR_ASSERT(sys);
+	if ((ctx->coded_width > 0) && (ctx->coded_height > 0) &&
+	    !hwctx_supports_dimensions(sys, ctx->coded_width, ctx->coded_height))
+	{
+		WLog_Print(h264->log, WLOG_WARN,
+		           "Hardware decoder does not support %dx%d, falling back to software",
+		           ctx->coded_width, ctx->coded_height);
+		sys->useHwDecoder = FALSE;
+		av_buffer_unref(&ctx->hw_device_ctx);
+		for (const enum AVPixelFormat* p = fmts; *p != AV_PIX_FMT_NONE; p++)
+		{
+			if (*p != sys->hw_pix_fmt)
+				return *p;
+		}
+		return AV_PIX_FMT_NONE;
+	}
 
 	for (const enum AVPixelFormat* p = fmts; *p != AV_PIX_FMT_NONE; p++)
 	{
