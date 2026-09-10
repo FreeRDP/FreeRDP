@@ -1737,7 +1737,7 @@ bool SdlContext::setFloatbar(bool visible)
 		return true;
 
 	auto* parent = _windows.begin()->second.window();
-	_floatbar = SDL_CreatePopupWindow(parent, 0, 0, 180, 32,
+	_floatbar = SDL_CreatePopupWindow(parent, 0, 0, 240, 32,
 	                                  SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP);
 	if (!_floatbar)
 		return false;
@@ -1752,7 +1752,7 @@ bool SdlContext::setFloatbar(bool visible)
 
 	SDL_SetRenderDrawColor(_floatbarRenderer, 45, 45, 45, 255);
 	SDL_RenderClear(_floatbarRenderer);
-	const SDL_FRect buttons[] = { { 0, 0, 60, 32 }, { 60, 0, 60, 32 }, { 120, 0, 60, 32 } };
+	const SDL_FRect buttons[] = { { 0, 0, 80, 32 }, { 80, 0, 80, 32 }, { 160, 0, 80, 32 } };
 	const SDL_Color colors[] = { { 80, 80, 80, 255 }, { 70, 100, 160, 255 }, { 170, 70, 70, 255 } };
 	for (size_t x = 0; x < ARRAYSIZE(buttons); x++)
 	{
@@ -1760,6 +1760,10 @@ bool SdlContext::setFloatbar(bool visible)
 		                       colors[x].a);
 		SDL_RenderFillRect(_floatbarRenderer, &buttons[x]);
 	}
+	SDL_SetRenderDrawColor(_floatbarRenderer, 255, 255, 255, 255);
+	SDL_RenderDebugText(_floatbarRenderer, 4, 12, "Minimize");
+	SDL_RenderDebugText(_floatbarRenderer, 84, 12, "Window");
+	SDL_RenderDebugText(_floatbarRenderer, 164, 12, "Disconnect");
 	SDL_RenderPresent(_floatbarRenderer);
 	return true;
 }
@@ -1770,9 +1774,9 @@ bool SdlContext::handleFloatbar(const SDL_MouseButtonEvent& ev)
 	    (ev.type != SDL_EVENT_MOUSE_BUTTON_UP) || (ev.button != SDL_BUTTON_LEFT))
 		return false;
 
-	if (ev.x < 60)
+	if (ev.x < 80)
 		return setMinimized();
-	if (ev.x < 120)
+	if (ev.x < 160)
 		return toggleFullscreen();
 	freerdp_abort_connect_context(context());
 	return true;
