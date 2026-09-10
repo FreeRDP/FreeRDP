@@ -22,9 +22,8 @@ freerdp_client_pc_add_requires_private("libpulse")
 
 set(${MODULE_PREFIX}_SRCS tsmf_pulse.c)
 
-set(${MODULE_PREFIX}_LIBS winpr ${PULSEAUDIO_LIBRARY} ${PULSEAUDIO_MAINLOOP_LIBRARY})
+set(${MODULE_PREFIX}_LIBS winpr PulseAudio::PulseAudio)
 
 include_directories(..)
-include_directories(SYSTEM ${PULSEAUDIO_INCLUDE_DIR})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
