@@ -48,7 +48,7 @@
 #else
 #define WINPR_ARCH_SUPPORTED 1
 #endif
-#elif defined(_M_IX86) || defined(_M_AMD64)
+#elif defined(_M_IX86) || defined(_M_AMD64) || defined(_M_PPC) || defined(_M_S390X)
 #define WINPR_ARCH_SUPPORTED 1
 #elif defined(_M_RISCV32) || defined(_M_RISCV64)
 #if !defined(__riscv_misaligned_fast)
