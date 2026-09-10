@@ -136,10 +136,12 @@ bool sdl_push_user_event(Uint32 type, ...)
 			event->data1 = va_arg(ap, void*);
 			event->code = va_arg(ap, int);
 			break;
-		case SDL_EVENT_USER_RAIL_MOVE:
-			event->data1 = reinterpret_cast<void*>(static_cast<uintptr_t>(va_arg(ap, UINT32)));
-			event->code = va_arg(ap, int); /* RAIL_WMSZ_* move/resize type */
-			break;
+	case SDL_EVENT_USER_RAIL_MOVE:
+		event->data1 = reinterpret_cast<void*>(static_cast<uintptr_t>(va_arg(ap, UINT32)));
+		event->code = va_arg(ap, int); /* RAIL_WMSZ_* move/resize type */
+	case SDL_EVENT_USER_FLOATBAR:
+		event->code = va_arg(ap, int);
+		break;
 		case SDL_EVENT_USER_WINDOW_MINIMIZE:
 		case SDL_EVENT_USER_QUIT:
 		case SDL_EVENT_USER_POINTER_NULL:
@@ -380,6 +382,7 @@ namespace sdl::utils
 			EV_CASE_STR(SDL_EVENT_USER_WINDOW_RESIZEABLE);
 			EV_CASE_STR(SDL_EVENT_USER_WINDOW_FULLSCREEN);
 			EV_CASE_STR(SDL_EVENT_USER_WINDOW_MINIMIZE);
+			EV_CASE_STR(SDL_EVENT_USER_FLOATBAR);
 			EV_CASE_STR(SDL_EVENT_USER_POINTER_NULL);
 			EV_CASE_STR(SDL_EVENT_USER_POINTER_DEFAULT);
 			EV_CASE_STR(SDL_EVENT_USER_POINTER_POSITION);
