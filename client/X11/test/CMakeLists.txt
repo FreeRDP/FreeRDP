@@ -1,0 +1,7 @@
+find_program(XVFB_RUN xvfb-run)
+if(XVFB_RUN)
+  add_executable(TestX11Reconnect TestX11Reconnect.c)
+  target_include_directories(TestX11Reconnect PRIVATE ..)
+  target_link_libraries(TestX11Reconnect PRIVATE xfreerdp-client freerdp-client freerdp winpr)
+  add_test(NAME TestX11Reconnect COMMAND ${XVFB_RUN} -a $<TARGET_FILE:TestX11Reconnect>)
+endif()

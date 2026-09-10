@@ -19,6 +19,7 @@
  */
 
 #include <freerdp/config.h>
+#include "xf_reconnect.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -1253,6 +1254,8 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 
 	xfContext* xfc = (xfContext*)instance->context;
 	WINPR_ASSERT(xfc);
+	if (xf_reconnect_event(xfc, event))
+		return !freerdp_shall_disconnect_context(instance->context);
 
 	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
