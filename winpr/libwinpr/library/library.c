@@ -81,6 +81,10 @@
 #include <sys/sysctl.h>
 #endif
 
+#if defined(__OpenBSD__)
+#include <errno.h>
+#endif
+
 #endif
 
 DLL_DIRECTORY_COOKIE AddDllDirectory(WINPR_ATTR_UNUSED PCWSTR NewDirectory)
@@ -364,6 +368,65 @@ static DWORD mac_get_module_file_name(char* lpFilename, uint32_t nSize)
 }
 #endif
 
+#if defined(__OpenBSD__)
+WINPR_ATTR_NODISCARD
+static DWORD openbsd_get_module_file_name(char* lpFilename, uint32_t nSize)
+{
+#ifdef WITH_GETEXECPATH
+	size_t size = nSize + 1ull;
+	char* path = calloc(1, size);
+
+	if (path == nullptr)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return 0;
+	}
+
+	while (getexecpath(path, size) != 0)
+	{
+		if (errno != ERANGE)
+		{
+			free(path);
+			SetLastError(ERROR_INTERNAL_ERROR);
+			return 0;
+		}
+
+		size += PATH_MAX;
+
+		char* tmp = realloc(path, size);
+
+		if (tmp == nullptr)
+		{
+			free(path);
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			return 0;
+		}
+
+		path = tmp;
+	}
+
+	const size_t length = strnlen(path, size);
+
+	memset(lpFilename, 0, nSize);
+	memcpy(lpFilename, path, MIN(length, nSize));
+
+	free(path);
+
+	if (length >= nSize)
+	{
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		return nSize;
+	}
+
+	return WINPR_ASSERTING_INT_CAST(DWORD, length);
+#else
+	WLog_ERR(TAG, "is not implemented");
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return 0;
+#endif
+}
+#endif
+
 DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
 	if (hModule)
@@ -423,6 +486,8 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 	return module_from_proc("/proc/curproc/file", lpFilename, nSize);
 #elif defined(__MACOSX__)
 	return mac_get_module_file_name(lpFilename, nSize);
+#elif defined(__OpenBSD__)
+	return openbsd_get_module_file_name(lpFilename, nSize);
 #else
 	WLog_ERR(TAG, "is not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
