@@ -9,6 +9,10 @@ set(${MODULE_PREFIX}_TESTS TestRingBuffer.c TestPodArrays.c TestEncodedTypes.c T
                            TestSmartcardOperations.c
 )
 
+if(BUILD_TESTING_INTERNAL)
+  list(APPEND ${MODULE_PREFIX}_TESTS TestHttpRedact.c)
+endif()
+
 set(FUZZERS TestFuzzSmartcardOperations.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODULE_PREFIX}_TESTS})

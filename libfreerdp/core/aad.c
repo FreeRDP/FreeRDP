@@ -238,15 +238,15 @@ static BOOL aad_get_nonce(rdpAad* aad)
 		WLog_Print(aad->log, WLOG_ERROR,
 		           "Server unwilling to provide nonce; returned status code %li", resp_code);
 		if (response_length > 0)
-			WLog_Print(aad->log, WLOG_ERROR, "[status message] %s", response);
+			WLog_Print(aad->log, WLOG_DEBUG, "[status message] %s", response);
 		goto fail;
 	}
 
 	json = WINPR_JSON_ParseWithLength((const char*)response, response_length);
 	if (!json)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "Failed to parse nonce response: %s",
-		           WINPR_JSON_GetErrorPtr());
+		WLog_Print(aad->log, WLOG_ERROR, "Failed to parse nonce response");
+		WLog_Print(aad->log, WLOG_DEBUG, "JSON parser error: %s", WINPR_JSON_GetErrorPtr());
 		goto fail;
 	}
 
@@ -915,6 +915,26 @@ BOOL aad_fetch_wellknown(wLog* log, rdpContext* context)
 	return rdp->wellknown != nullptr;
 }
 
+BOOL freerdp_utils_aad_set_wellknown(rdpContext* context, const char* json)
+{
+	WINPR_ASSERT(context);
+
+	rdpRdp* rdp = context->rdp;
+	WINPR_ASSERT(rdp);
+
+	WINPR_JSON* parsed = nullptr;
+	if (json)
+	{
+		parsed = WINPR_JSON_Parse(json);
+		if (!parsed)
+			return FALSE;
+	}
+
+	WINPR_JSON_Delete(rdp->wellknown);
+	rdp->wellknown = parsed;
+	return TRUE;
+}
+
 const char* freerdp_utils_aad_get_wellknown_string(rdpContext* context, AAD_WELLKNOWN_VALUES which)
 {
 	return freerdp_utils_aad_get_wellknown_custom_string(
@@ -1012,8 +1032,42 @@ WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
 WINPR_ATTR_NODISCARD
 WINPR_JSON* freerdp_utils_aad_get_wellknown(wLog* log, const char* base, const char* tenantid)
 {
-	WINPR_ASSERT(base);
-	WINPR_ASSERT(tenantid);
+	if (!base)
+	{
+		WLog_Print(log, WLOG_ERROR, "FreeRDP_GatewayAzureActiveDirectory must not be empty");
+		return nullptr;
+	}
+	if (!tenantid)
+	{
+		WLog_Print(log, WLOG_ERROR, "FreeRDP_GatewayAvdAadtenantid must not be empty");
+		return nullptr;
+	}
+
+	const size_t tenantlen = strlen(tenantid);
+	if ((tenantlen == 0) || (tenantlen > 128))
+	{
+		WLog_Print(log, WLOG_ERROR, "FreeRDP_GatewayAvdAadtenantid must contain 1..128 characters");
+		return nullptr;
+	}
+	BOOL hasNonDot = FALSE;
+	for (size_t x = 0; x < tenantlen; x++)
+	{
+		const unsigned char c = (unsigned char)tenantid[x];
+		const BOOL asciiAlphaNumeric =
+		    ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9'));
+		if (!asciiAlphaNumeric && (c != '-') && (c != '.'))
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "FreeRDP_GatewayAvdAadtenantid contains an invalid character");
+			return nullptr;
+		}
+		hasNonDot |= c != '.';
+	}
+	if (!hasNonDot)
+	{
+		WLog_Print(log, WLOG_ERROR, "FreeRDP_GatewayAvdAadtenantid must not consist only of dots");
+		return nullptr;
+	}
 
 	char* str = nullptr;
 	size_t len = 0;

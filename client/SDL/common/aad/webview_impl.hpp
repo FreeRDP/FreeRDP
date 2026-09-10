@@ -21,5 +21,16 @@
 
 #include <string>
 
+#include <freerdp/client.h>
+
+/** Show @p url in a web view until the OAuth transaction of @p cctx completes.
+ *
+ *  @param title The window title
+ *  @param url The authorization request, built with freerdp_client_get_aad_url()
+ *  @param cctx The client context the authorization request was built with
+ *  @param code Receives the authorization code
+ *
+ *  @return true if an authorization code was received
+ */
 [[nodiscard]] bool webview_impl_run(const std::string& title, const std::string& url,
-                                    std::string& code);
+                                    rdpClientContext* cctx, std::string& code);

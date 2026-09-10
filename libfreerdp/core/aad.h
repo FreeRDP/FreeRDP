@@ -50,4 +50,20 @@ WINPR_ATTR_MALLOC(aad_free, 1)
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpAad* aad_new(rdpContext* context);
 
+/** Seeds or clears the cached OpenID configuration of a context.
+ *
+ * The document is otherwise fetched over HTTPS the first time a freerdp_utils_aad_get_wellknown_*
+ * query is made. This is a test seam: it lets the OAuth helpers of client/common be exercised
+ * without network access. Core-private, so it is only linkable from tests built with
+ * BUILD_TESTING_INTERNAL, which exports all symbols.
+ *
+ * @param context The rdpContext to install the document in
+ * @param json The OpenID configuration as JSON text, or \b nullptr to drop a cached document so
+ *             the next query fetches it again
+ * @return \b TRUE if the document was installed or dropped, \b FALSE if it could not be parsed.
+ *         The previously cached document is kept in that case.
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL freerdp_utils_aad_set_wellknown(rdpContext* context, const char* json);
+
 #endif /* FREERDP_LIB_CORE_AAD_H */

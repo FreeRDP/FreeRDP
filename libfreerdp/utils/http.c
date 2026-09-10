@@ -20,6 +20,8 @@
 #include <freerdp/config.h>
 #include <freerdp/utils/http.h>
 
+#include "http.h"
+
 #include <winpr/assert.h>
 #include <winpr/string.h>
 
@@ -39,6 +41,156 @@ static const char post_header_fmt[] = "POST %s HTTP/1.1\r\n"
                                       "Content-Type: application/x-www-form-urlencoded\r\n"
                                       "Content-Length: %lu\r\n"
                                       "\r\n";
+
+/* Form fields of an OAuth token request and JSON fields of a token response whose value is a
+ * credential. Sorted, but only for reading; the lookup below is linear. */
+static const char* const redact_fields[] = { "access_token",  "assertion", "client_secret", "code",
+	                                         "code_verifier", "id_token",  "refresh_token" };
+
+static BOOL redact_is_space(char c)
+{
+	return (c == ' ') || (c == '\t') || (c == '\r') || (c == '\n');
+}
+
+/* Length of the longest field name matching at [pos], 0 if none of them does. 'code' is a prefix
+ * of 'code_verifier', so the longest match is the name. A match always leaves at least one
+ * character behind the name for the caller to check. */
+static size_t redact_field_len(const char* data, size_t length, size_t pos)
+{
+	size_t match = 0;
+	for (size_t x = 0; x < ARRAYSIZE(redact_fields); x++)
+	{
+		const size_t flen = strlen(redact_fields[x]);
+		if ((flen > match) && (length - pos > flen) &&
+		    (strncmp(&data[pos], redact_fields[x], flen) == 0))
+			match = flen;
+	}
+	return match;
+}
+
+/* name=value of an application/x-www-form-urlencoded body, at its start or behind a '&'. The
+ * value ends at the next '&' or at the end of the body. */
+static BOOL redact_form_value(const char* data, size_t length, size_t pos, size_t* start,
+                              size_t* end)
+{
+	if ((pos > 0) && (data[pos - 1] != '&'))
+		return FALSE;
+
+	const size_t flen = redact_field_len(data, length, pos);
+	if ((flen == 0) || (data[pos + flen] != '='))
+		return FALSE;
+
+	*start = pos + flen + 1;
+	for (*end = *start; (*end < length) && (data[*end] != '&'); (*end)++)
+		;
+	return TRUE;
+}
+
+/* "name": value of a JSON object. A string value keeps its quotes, any other value ends at the
+ * next delimiter. A name that is not followed by a ':' is a value itself, not a field. */
+static BOOL redact_json_value(const char* data, size_t length, size_t pos, size_t* start,
+                              size_t* end)
+{
+	if (data[pos] != '"')
+		return FALSE;
+
+	const size_t flen = redact_field_len(data, length, pos + 1);
+	if ((flen == 0) || (data[pos + 1 + flen] != '"'))
+		return FALSE;
+
+	size_t cur = pos + flen + 2;
+	for (; (cur < length) && redact_is_space(data[cur]); cur++)
+		;
+	if ((cur >= length) || (data[cur] != ':'))
+		return FALSE;
+	for (cur++; (cur < length) && redact_is_space(data[cur]); cur++)
+		;
+	if (cur >= length)
+		return FALSE;
+
+	if (data[cur] == '"')
+	{
+		*start = cur + 1;
+		for (*end = *start; (*end < length) && (data[*end] != '"'); (*end)++)
+		{
+			if (data[*end] == '\\')
+				(*end)++;
+		}
+		if (*end > length)
+			*end = length;
+	}
+	else
+	{
+		*start = cur;
+		for (*end = *start;
+		     (*end < length) && !redact_is_space(data[*end]) && !strchr(",}]", data[*end]);
+		     (*end)++)
+			;
+	}
+	return TRUE;
+}
+
+/* Appends to a buffer that starts out large enough for the whole input, so it only ever grows by
+ * the markers written in place of a value. */
+static BOOL redact_append(char** buffer, size_t* length, size_t* capacity, const char* data,
+                          size_t size)
+{
+	if (*length + size + 1 > *capacity)
+	{
+		const size_t capacity_new = *capacity + size + 1024;
+		char* tmp = realloc(*buffer, capacity_new);
+		if (!tmp)
+			return FALSE;
+		*buffer = tmp;
+		*capacity = capacity_new;
+	}
+	memcpy(&(*buffer)[*length], data, size);
+	*length += size;
+	(*buffer)[*length] = '\0';
+	return TRUE;
+}
+
+char* freerdp_http_redact_for_log(const char* data, size_t length)
+{
+	if (!data && (length > 0))
+		return nullptr;
+
+	size_t capacity = length + 1;
+	size_t used = 0;
+	char* buffer = calloc(1, capacity);
+	if (!buffer)
+		return nullptr;
+
+	for (size_t pos = 0; pos < length;)
+	{
+		size_t start = 0;
+		size_t end = 0;
+		if (redact_form_value(data, length, pos, &start, &end) ||
+		    redact_json_value(data, length, pos, &start, &end))
+		{
+			char marker[64] = WINPR_C_ARRAY_INIT;
+			const int rc =
+			    _snprintf(marker, sizeof(marker), "<redacted, %" PRIuz " bytes>", end - start);
+			if ((rc <= 0) || ((size_t)rc >= sizeof(marker)) ||
+			    !redact_append(&buffer, &used, &capacity, &data[pos], start - pos) ||
+			    !redact_append(&buffer, &used, &capacity, marker, (size_t)rc))
+				goto fail;
+			pos = end;
+		}
+		else
+		{
+			if (!redact_append(&buffer, &used, &capacity, &data[pos], 1))
+				goto fail;
+			pos++;
+		}
+	}
+
+	return buffer;
+
+fail:
+	free(buffer);
+	return nullptr;
+}
 
 #define log_errors(log, msg) log_errors_(log, msg, __FILE__, __func__, __LINE__)
 static void log_errors_(wLog* log, const char* msg, const char* file, const char* fkt, size_t line)
@@ -208,7 +360,13 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 
 			if (body)
 			{
-				WLog_Print(log, WLOG_DEBUG, "body:\n%s", body);
+				if (WLog_IsLevelActive(log, WLOG_DEBUG))
+				{
+					char* redacted = freerdp_http_redact_for_log(body, blen);
+					WLog_Print(log, WLOG_DEBUG, "body:\n%s",
+					           redacted ? redacted : "<could not redact>");
+					free(redacted);
+				}
 
 				if (blen > INT_MAX)
 				{
@@ -305,8 +463,13 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 		}
 	}
 
-	WLog_Print(log, WLOG_DEBUG, "response[%" PRIuz "]:\n%s", *response_length,
-	           (const char*)(*response));
+	if (WLog_IsLevelActive(log, WLOG_DEBUG))
+	{
+		char* redacted = freerdp_http_redact_for_log((const char*)(*response), *response_length);
+		WLog_Print(log, WLOG_DEBUG, "response[%" PRIuz "]:\n%s", *response_length,
+		           redacted ? redacted : "<could not redact>");
+		free(redacted);
+	}
 	ret = TRUE;
 
 out:

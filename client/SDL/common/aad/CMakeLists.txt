@@ -19,7 +19,7 @@
 option(WITH_WEBVIEW "Build with WebView support for AAD login popup browser" OFF)
 if(WITH_WEBVIEW)
   set(SRCS sdl_webview.hpp webview_impl.hpp sdl_webview.cpp)
-  set(LIBS winpr)
+  set(LIBS winpr freerdp-client)
 
   include(FetchContent)
 

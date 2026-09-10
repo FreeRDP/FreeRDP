@@ -39,6 +39,7 @@ set(${MODULE_PREFIX}_SRCS
     smartcard_pack.c
     smartcard_call.c
     stopwatch.c
+    http.h
     http.c
 )
 

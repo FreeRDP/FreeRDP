@@ -30,7 +30,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "azure", COMMAND_LINE_VALUE_REQUIRED,
 	  "[tenantid:<id>],[use-tenantid[:[on|off]],[ad:<url>]"
 	  "[avd-access:<format string>],[avd-token:<format string>],[avd-scope:<format string>]",
-	  nullptr, nullptr, -1, nullptr, "AzureAD options" },
+	  nullptr, nullptr, -1, nullptr,
+	  "AzureAD options. avd-access is a printf format expanded with the authority and the tenant "
+	  "id, so it may hold at most two '%s' conversions and '%%' for a literal percent; avd-token "
+	  "holds at most one '%s', the client id" },
 	{ "action-script", COMMAND_LINE_VALUE_REQUIRED, "<file-name>", "~/.config/freerdp/action.sh",
 	  nullptr, -1, nullptr, "Action script" },
 	{ "admin", COMMAND_LINE_VALUE_FLAG, nullptr, nullptr, nullptr, -1, "console",
