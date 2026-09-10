@@ -114,33 +114,29 @@ static UINT mouse_cursor_server_open_channel(mouse_cursor_server* mouse_cursor)
 	return Error;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL read_cap_set(wStream* s, wArrayList* capsSets)
 {
 	RDP_MOUSE_CURSOR_CAPSET* capsSet = nullptr;
-	UINT32 signature = 0;
-	UINT32 size = 0;
-	size_t capsDataSize = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return FALSE;
 
-	Stream_Read_UINT32(s, signature);
+	const UINT32 signature = Stream_Get_UINT32(s);
 
 	RDP_MOUSE_CURSOR_CAPVERSION version = RDP_MOUSE_CURSOR_CAPVERSION_INVALID;
+	const UINT32 val = Stream_Get_UINT32(s);
+	switch (val)
 	{
-		const UINT32 val = Stream_Get_UINT32(s);
-		switch (val)
-		{
-			case RDP_MOUSE_CURSOR_CAPVERSION_1:
-				version = RDP_MOUSE_CURSOR_CAPVERSION_1;
-				break;
-			default:
-				WLog_WARN(TAG, "Received caps set with unknown version %" PRIu32, val);
-				break;
-		}
+		case RDP_MOUSE_CURSOR_CAPVERSION_1:
+			version = RDP_MOUSE_CURSOR_CAPVERSION_1;
+			break;
+		default:
+			WLog_WARN(TAG, "Received caps set with unknown version %" PRIu32, val);
+			break;
 	}
 
-	Stream_Read_UINT32(s, size);
+	const UINT32 size = Stream_Get_UINT32(s);
 
 	if (size < 12)
 	{
@@ -148,7 +144,7 @@ static BOOL read_cap_set(wStream* s, wArrayList* capsSets)
 		return FALSE;
 	}
 
-	capsDataSize = size - 12;
+	const size_t capsDataSize = size - 12;
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, capsDataSize))
 		return FALSE;
 
@@ -156,13 +152,18 @@ static BOOL read_cap_set(wStream* s, wArrayList* capsSets)
 	{
 		case RDP_MOUSE_CURSOR_CAPVERSION_1:
 		{
-			RDP_MOUSE_CURSOR_CAPSET_VERSION1* capsSetV1 = nullptr;
-
-			capsSetV1 = calloc(1, sizeof(RDP_MOUSE_CURSOR_CAPSET_VERSION1));
+			if (size != 0)
+			{
+				WLog_WARN(TAG, "Unexpected remaining PDU size %" PRIuz ", expected 0! ignoring...",
+				          capsDataSize);
+				Stream_Seek(s, capsDataSize);
+			}
+			RDP_MOUSE_CURSOR_CAPSET_VERSION1* capsSetV1 =
+			    calloc(1, sizeof(RDP_MOUSE_CURSOR_CAPSET_VERSION1));
 			if (!capsSetV1)
 				return FALSE;
 
-			capsSet = (RDP_MOUSE_CURSOR_CAPSET*)capsSetV1;
+			capsSet = &capsSetV1->capsetHeader;
 			break;
 		}
 		default:
