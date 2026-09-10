@@ -42,7 +42,7 @@ else()
 
   list(APPEND SRC tsmf_X11.c)
   list(APPEND LIBS ${X11_LIBRARIES} ${X11_Xext_LIB})
-  if(NOT APPLE)
+  if(NOT APPLE AND NOT OPENBSD)
     list(APPEND LIBS rt)
   endif()
 
