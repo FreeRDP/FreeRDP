@@ -235,16 +235,6 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
                                  const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
                                  const BYTE** WINPR_RESTRICT data, size_t* WINPR_RESTRICT length)
 {
-#if defined(WITH_SOXR)
-	soxr_error_t error;
-	size_t idone, odone;
-	size_t sframes, rframes;
-	size_t rsize;
-	size_t sbytes, rbytes;
-	size_t dstChannels;
-	size_t srcChannels;
-	size_t srcBytesPerFrame, dstBytesPerFrame;
-#endif
 	AUDIO_FORMAT format;
 
 	if (srcFormat->wFormatTag != WAVE_FORMAT_PCM)
@@ -268,23 +258,25 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	}
 
 #if defined(WITH_SOXR)
-	srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
-	dstBytesPerFrame = (context->common.format.wBitsPerSample > 8) ? 2 : 1;
-	srcChannels = srcFormat->nChannels;
-	dstChannels = context->common.format.nChannels;
-	sbytes = srcChannels * srcBytesPerFrame;
-	sframes = size / sbytes;
-	rbytes = dstBytesPerFrame * dstChannels;
+	const size_t srcBytesPerFrame = (srcFormat->wBitsPerSample > 8) ? 2 : 1;
+	const size_t dstBytesPerFrame = (context->common.format.wBitsPerSample > 8) ? 2 : 1;
+	const size_t srcChannels = srcFormat->nChannels;
+	const size_t dstChannels = context->common.format.nChannels;
+	const size_t sbytes = srcChannels * srcBytesPerFrame;
+	const size_t sframes = size / sbytes;
+	const size_t rbytes = dstBytesPerFrame * dstChannels;
 	/* Integer rounding correct division */
-	rframes =
+	const size_t rframes =
 	    (sframes * context->common.format.nSamplesPerSec + (srcFormat->nSamplesPerSec + 1) / 2) /
 	    srcFormat->nSamplesPerSec;
-	rsize = rframes * rbytes;
+	const size_t rsize = rframes * rbytes;
 
 	if (!Stream_EnsureCapacity(context->common.resample, rsize))
 		return FALSE;
 
-	error =
+	size_t idone = 0;
+	size_t odone = 0;
+	sox_error_t error =
 	    soxr_process(context->sox, src, sframes, &idone, Stream_Buffer(context->common.resample),
 	                 Stream_Capacity(context->common.resample) / rbytes, &odone);
 	if (!Stream_SetLength(context->common.resample, odone * rbytes))
