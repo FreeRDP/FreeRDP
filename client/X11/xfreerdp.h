@@ -168,6 +168,7 @@ struct xf_context
 	BOOL debug;
 	HANDLE x11event;
 	xfWindow* window;
+	UINT32 monitorScales[16][2];
 	xfAppWindow* appWindow;
 	xfPointer* pointer;
 	xfWorkArea workArea;

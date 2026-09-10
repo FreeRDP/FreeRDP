@@ -196,3 +196,7 @@ add_subdirectory(cli)
 add_subdirectory(man)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/X11")
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
