@@ -109,6 +109,9 @@ class SdlContext
 	[[nodiscard]] bool createWindows();
 	[[nodiscard]] bool updateWindowList();
 	[[nodiscard]] bool updateWindow(SDL_WindowID id);
+	[[nodiscard]] bool switchVirtualMonitor(bool next);
+	[[nodiscard]] bool hasVirtualMonitors() const;
+	[[nodiscard]] uint32_t virtualMonitorCount() const;
 
 	[[nodiscard]] bool drawToWindows(const std::vector<SDL_Rect>& rects = {});
 	[[nodiscard]] bool drawToWindow(SdlWindow& window, const std::vector<SDL_Rect>& rects = {});
@@ -241,6 +244,8 @@ class SdlContext
 
 	uint32_t _windowWidth = 0;
 	uint32_t _windowHeight = 0;
+	uint32_t _virtualMonitorCount = 0;
+	uint32_t _activeVirtualMonitor = 0;
 	WinPREvent _windowsCreatedEvent;
 	std::thread _thread;
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;

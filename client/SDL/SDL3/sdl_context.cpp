@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 
 #include "sdl_context.hpp"
 #include "sdl_config.hpp"
@@ -37,6 +38,7 @@
 #endif
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
+static constexpr auto sdl_virtual_monitors = "sdl-virtual-monitors";
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _cursor(nullptr, sdl_Pointer_FreeCopy),
@@ -70,6 +72,9 @@ SdlContext::SdlContext(rdpContext* context)
 
 	_args.push_back({ sdl_allow_screensaver, COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse,
 	                  nullptr, -1, nullptr, "Allow local screensaver to activate" });
+	_args.push_back({ sdl_virtual_monitors, COMMAND_LINE_VALUE_REQUIRED, "<count>", nullptr,
+	                  nullptr, -1, nullptr,
+	                  "Create equally sized virtual monitors on one local display" });
 
 	/* Push a null element used as abort when iterating the array */
 	_args.push_back({ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr });
@@ -372,12 +377,14 @@ bool SdlContext::createWindows()
 	ScopeGuard guard1([&]() { _windowsCreatedEvent.set(); });
 
 	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	if (hasVirtualMonitors())
+		windowCount = 1;
 
 	Sint32 originX = 0;
 	Sint32 originY = 0;
 	for (UINT32 x = 0; x < windowCount; x++)
 	{
-		auto id = monitorId(x);
+		auto id = monitorId(hasVirtualMonitors() ? 0 : x);
 		if (id < 0)
 			return false;
 
@@ -390,7 +397,7 @@ bool SdlContext::createWindows()
 
 	for (UINT32 x = 0; x < windowCount; x++)
 	{
-		auto id = monitorId(x);
+		auto id = monitorId(hasVirtualMonitors() ? 0 : x);
 		if (id < 0)
 			return false;
 
@@ -434,8 +441,16 @@ bool SdlContext::createWindows()
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
-			window.setOffsetX(originX - monitor->x);
-			window.setOffsetY(originY - monitor->y);
+			if (hasVirtualMonitors())
+			{
+				window.setOffsetX(-monitor->x);
+				window.setOffsetY(-monitor->y);
+			}
+			else
+			{
+				window.setOffsetX(originX - monitor->x);
+				window.setOffsetY(originY - monitor->y);
+			}
 		}
 
 		_windows.insert({ window.id(), std::move(window) });
@@ -446,6 +461,9 @@ bool SdlContext::createWindows()
 
 bool SdlContext::updateWindowList()
 {
+	if (hasVirtualMonitors())
+		return true;
+
 	std::vector<rdpMonitor> list;
 	list.reserve(_windows.size());
 	for (const auto& win : _windows)
@@ -460,6 +478,41 @@ bool SdlContext::updateWindowList()
 
 	return freerdp_settings_set_monitor_def_array_sorted(context()->settings, list.data(),
 	                                                     list.size());
+}
+
+bool SdlContext::hasVirtualMonitors() const
+{
+	return _virtualMonitorCount > 1;
+}
+
+uint32_t SdlContext::virtualMonitorCount() const
+{
+	return _virtualMonitorCount;
+}
+
+bool SdlContext::switchVirtualMonitor(bool next)
+{
+	if (!hasVirtualMonitors() || _windows.empty())
+		return false;
+
+	if (next)
+		_activeVirtualMonitor = (_activeVirtualMonitor + 1) % _virtualMonitorCount;
+	else
+		_activeVirtualMonitor =
+		    (_activeVirtualMonitor + _virtualMonitorCount - 1) % _virtualMonitorCount;
+
+	auto settings = context()->settings;
+	auto monitor = static_cast<const rdpMonitor*>(freerdp_settings_get_pointer_array(
+	    settings, FreeRDP_MonitorDefArray, _activeVirtualMonitor));
+	if (!monitor)
+		return false;
+
+	auto& window = _windows.begin()->second;
+	window.setOffsetX(-monitor->x);
+	window.setOffsetY(-monitor->y);
+	WLog_Print(_log, WLOG_INFO, "Switched to virtual monitor %" PRIu32 "/%" PRIu32,
+	           _activeVirtualMonitor + 1, _virtualMonitorCount);
+	return drawToWindows();
 }
 
 bool SdlContext::updateWindow(SDL_WindowID id)
@@ -1409,6 +1462,15 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 		case SDL_EVENT_KEY_UP:
 		{
 			const auto& cev = ev.key;
+			const auto mods = SDL_GetModState();
+			if ((cev.type == SDL_EVENT_KEY_DOWN) && hasVirtualMonitors() &&
+			    ((mods & (SDL_KMOD_CTRL | SDL_KMOD_ALT)) == (SDL_KMOD_CTRL | SDL_KMOD_ALT)))
+			{
+				if (cev.scancode == SDL_SCANCODE_PAGEUP)
+					return switchVirtualMonitor(false);
+				if (cev.scancode == SDL_SCANCODE_PAGEDOWN)
+					return switchVirtualMonitor(true);
+			}
 			return getInputChannelContext().handleEvent(cev);
 		}
 		default:
@@ -1448,6 +1510,20 @@ int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom
 					return -2;
 				}
 			}
+		}
+		else if (strcmp(arg->Name, sdl_virtual_monitors) == 0)
+		{
+			if (!arg->Value)
+				return -2;
+			char* end = nullptr;
+			const auto value = strtoul(arg->Value, &end, 10);
+			if ((arg->Value == end) || (*end != '\0') || (value < 2) || (value > 16))
+			{
+				WLog_Print(sdl->getWLog(), WLOG_ERROR, "--%s requires a count between 2 and 16",
+				           sdl_virtual_monitors);
+				return -2;
+			}
+			sdl->_virtualMonitorCount = WINPR_ASSERTING_INT_CAST(uint32_t, value);
 		}
 	}
 	return 0;

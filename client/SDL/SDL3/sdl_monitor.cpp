@@ -180,6 +180,25 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 	WINPR_ASSERT(settings);
 
 	std::vector<rdpMonitor> monitors;
+	if (sdl->hasVirtualMonitors())
+	{
+		if (sdl->monitorIds().empty())
+			return FALSE;
+
+		const auto physical = sdl->getDisplay(sdl->monitorIds().front());
+		for (uint32_t x = 0; x < sdl->virtualMonitorCount(); x++)
+		{
+			auto monitor = physical;
+			monitor.x = WINPR_ASSERTING_INT_CAST(INT32, x * monitor.width);
+			monitor.y = 0;
+			monitor.is_primary = (x == 0);
+			monitors.emplace_back(monitor);
+		}
+		if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE))
+			return FALSE;
+		return freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(),
+		                                                     monitors.size());
+	}
 	if (!freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
 	    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 	{
