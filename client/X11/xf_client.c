@@ -1590,7 +1590,6 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	freerdp* instance = (freerdp*)param;
 	WINPR_ASSERT(instance);
 
-	const BOOL status = freerdp_connect(instance);
 	rdpContext* context = instance->context;
 	WINPR_ASSERT(context);
 	xfContext* xfc = (xfContext*)instance->context;
@@ -1598,6 +1597,22 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 
 	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
+	BOOL status = FALSE;
+
+	if (xfc->railMultiExec && freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+	{
+		/* Execute failures are nonfatal in this mode, so a connected session must always
+		 * retain the FIFO as a working submission path. */
+		xfc->railIpc = freerdp_client_rail_ipc_new(settings, xfc->log);
+		if (!xfc->railIpc)
+		{
+			exit_code = XF_EXIT_PRE_CONNECT_FAILED;
+			goto end;
+		}
+	}
+
+	status = freerdp_connect(instance);
 
 	if (!status)
 	{
@@ -1637,6 +1652,10 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = WINPR_C_ARRAY_INIT;
 		DWORD nCount = 0;
 		handles[nCount++] = inputEvent;
+
+		const HANDLE railIpcEvent = freerdp_client_rail_ipc_get_event(xfc->railIpc);
+		if (railIpcEvent)
+			handles[nCount++] = railIpcEvent;
 
 		/*
 		 * win8 and server 2k12 seem to have some timing issue/race condition
@@ -1694,6 +1713,9 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 			}
 		}
 
+		if (!freerdp_client_rail_ipc_check_event(xfc->railIpc))
+			WLog_Print(xfc->log, WLOG_ERROR, "RAIL IPC failed to process launch input");
+
 		if (!handle_window_events(instance))
 			break;
 	}
@@ -1716,6 +1738,8 @@ disconnect:
 
 	freerdp_disconnect(instance);
 end:
+	freerdp_client_rail_ipc_free(xfc->railIpc);
+	xfc->railIpc = nullptr;
 	ExitThread(exit_code);
 	return exit_code;
 }

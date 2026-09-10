@@ -59,6 +59,7 @@
 #include <freerdp/codec/region.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/client.h>
+#include <freerdp/client/rail_ipc.h>
 
 #if !defined(XcursorUInt)
 typedef unsigned int XcursorUInt;
@@ -288,6 +289,8 @@ struct xf_context
 	xfDispContext* xfDisp;
 
 	RailClientContext* rail;
+	RailClientIpcContext* railIpc;
+	BOOL railMultiExec;
 	wHashTable* railWindows;
 	xfRailIconCache* railIconCache;
 

@@ -1,5 +1,6 @@
 set(DEPS
     ../../common/man/freerdp-global-options.1
+    xfreerdp-rail-options.1
     xfreerdp-shortcuts.1
     ../../common/man/freerdp-global-envvar.1
     ../../common/man/freerdp-global-config.1

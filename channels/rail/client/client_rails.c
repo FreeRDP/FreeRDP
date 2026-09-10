@@ -63,6 +63,11 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	if (status != CHANNEL_RC_OK)
 		return status;
 
+	const char* RemoteApplicationProgram =
+	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
+	if (!RemoteApplicationProgram || (RemoteApplicationProgram[0] == '\0'))
+		return CHANNEL_RC_OK;
+
 	const char* RemoteApplicationFile =
 	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationFile);
 	const char* RemoteApplicationCmdLine =
@@ -80,8 +85,7 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 		exec.RemoteApplicationArguments = RemoteApplicationFile;
 	else
 		exec.RemoteApplicationArguments = RemoteApplicationCmdLine;
-	exec.RemoteApplicationProgram =
-	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
+	exec.RemoteApplicationProgram = RemoteApplicationProgram;
 	exec.RemoteApplicationWorkingDir =
 	    freerdp_settings_get_string(settings, FreeRDP_ShellWorkingDirectory);
 	return context->ClientExecute(context, &exec);

@@ -29,6 +29,7 @@ set(SRCS
     file.c
     client_cliprdr_file.c
     geometry.c
+    rail_ipc.c
     smartcard_cli.c
 )
 

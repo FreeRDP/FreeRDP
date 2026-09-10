@@ -43,6 +43,8 @@ set(SRCS
     xf_types.h
     xf_utils.h
     xf_utils.c
+    xf_cmdline.c
+    xf_cmdline.h
     xf_x11_utils.c
     xf_gfx.c
     xf_gfx.h
@@ -194,5 +196,9 @@ if(WITH_CLIENT_INTERFACE)
 endif()
 add_subdirectory(cli)
 add_subdirectory(man)
+
+if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+  add_subdirectory(test)
+endif()
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/X11")
