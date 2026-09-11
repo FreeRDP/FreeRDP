@@ -536,7 +536,8 @@ static BOOL rdpsnd_pulse_default_format(rdpsndDevicePlugin* device, const AUDIO_
 	return TRUE;
 }
 
-BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format)
+BOOL rdpsnd_pulse_format_supported(WINPR_ATTR_UNUSED rdpsndDevicePlugin* device,
+                                   const AUDIO_FORMAT* format)
 {
 	WINPR_ASSERT(device);
 	WINPR_ASSERT(format);

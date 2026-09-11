@@ -424,7 +424,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 	inputSample->lpVtbl->Release(inputSample);
 	return 1;
 error:
-	(void)fprintf(stderr, "mf_decompress error\n");
+	WLog_Print(h264->log, WLOG_ERROR, "decompression failed");
 	return -1;
 }
 
@@ -433,7 +433,8 @@ static int mf_compress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE** WINPR_RES
                        UINT32* WINPR_RESTRICT pDstSize)
 {
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*)h264->pSystemData;
-	return 1;
+	WLog_Print(h264->log, WLOG_ERROR, "TODO: compression not implemented");
+	return -1;
 }
 
 static BOOL mf_plat_loaded(H264_CONTEXT_MF* sys)

@@ -43,7 +43,7 @@ int TestClientCmdLineStatus(int argc, char* argv[])
 		int status = freerdp_client_settings_parse_command_line(settings, count, args, FALSE);
 		if (status != COMMAND_LINE_STATUS_PRINT)
 		{
-			fprintf(stderr, "Test %zu: expected print status, got %d\n", i, status);
+			(void)fprintf(stderr, "Test %zu: expected print status, got %d\n", i, status);
 			rc = -1;
 		}
 		else
@@ -52,13 +52,13 @@ int TestClientCmdLineStatus(int argc, char* argv[])
 			    freerdp_client_settings_command_line_status_print(settings, status, count, args);
 			if (status != tests[i].expected_status)
 			{
-				fprintf(stderr, "Test %zu: expected status %d, got %d\n", i,
-				        tests[i].expected_status, status);
+				(void)fprintf(stderr, "Test %zu: expected status %d, got %d\n", i,
+				              tests[i].expected_status, status);
 				rc = -1;
 			}
 			if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors) != tests[i].list_monitors)
 			{
-				fprintf(stderr, "Test %zu: unexpected ListMonitors setting\n", i);
+				(void)fprintf(stderr, "Test %zu: unexpected ListMonitors setting\n", i);
 				rc = -1;
 			}
 		}
