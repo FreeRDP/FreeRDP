@@ -1738,7 +1738,8 @@ bool SdlContext::setFloatbar(bool visible)
 
 	auto* parent = _windows.begin()->second.window();
 	_floatbar = SDL_CreatePopupWindow(parent, 0, 0, 240, 32,
-	                                  SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP);
+	                                  SDL_WINDOW_POPUP_MENU | SDL_WINDOW_BORDERLESS |
+	                                      SDL_WINDOW_ALWAYS_ON_TOP);
 	if (!_floatbar)
 		return false;
 
