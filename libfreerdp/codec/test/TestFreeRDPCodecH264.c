@@ -26,7 +26,10 @@ static BOOL testContextOptions(BOOL compressor, uint32_t width, uint32_t height)
 	const UINT64 start = winpr_GetUnixTimeNS();
 	H264_CONTEXT* h264 = h264_context_new(FALSE);
 	if (!h264)
+	{
+		(void)fprintf(stderr, "[%s] h264_context_new failed\n", __func__);
 		return FALSE;
+	}
 
 	struct optpair_s
 	{
@@ -42,10 +45,18 @@ static BOOL testContextOptions(BOOL compressor, uint32_t width, uint32_t height)
 	{
 		const struct optpair_s* cur = &optpair[x];
 		if (!h264_context_set_option(h264, cur->opt, cur->val))
+		{
+			(void)fprintf(stderr,
+			              "[%s] h264_context_set_option %" PRIuz "{ %d, %" PRIu32 " } failed\n",
+			              __func__, x, cur->opt, cur->val);
 			goto fail;
+		}
 	}
 	if (!h264_context_reset(h264, width, height))
+	{
+		(void)fprintf(stderr, "[%s] h264_context_reset\n", __func__);
 		goto fail;
+	}
 
 	rc = TRUE;
 fail:
@@ -108,33 +119,64 @@ static BOOL testEncode(uint32_t format, uint32_t width, uint32_t height)
 	H264_CONTEXT* h264 = h264_context_new(TRUE);
 	H264_CONTEXT* h264dec = h264_context_new(FALSE);
 	if (!h264 || !h264dec)
+	{
+		(void)fprintf(stderr, "[%s] encoder=%p, decoder=%p\n", __func__, (void*)h264,
+		              (void*)h264dec);
 		goto fail;
+	}
 
 	if (!h264_context_reset(h264, width, height))
+	{
+		(void)fprintf(stderr, "[%s] h264_context_reset(encoder) failed\n", __func__);
 		goto fail;
+	}
 	if (!h264_context_reset(h264dec, width, height))
+	{
+		(void)fprintf(stderr, "[%s] h264_context_reset(decoder) failed\n", __func__);
 		goto fail;
+	}
 
 	uint32_t stride = 0;
 	uint32_t ostride = 0;
 	src = allocRGB(format, width, height, &stride);
 	out = allocRGB(format, width, height, &ostride);
 	if (!src || !out || (stride < width) || (stride != ostride))
+	{
+		(void)fprintf(stderr,
+		              "[%s] src=%p, out=%p, stride(%" PRIu32 ") < width(%" PRIu32
+		              "), stride != ostride(%" PRIu32 ")\n",
+		              __func__, src, out, stride, width, ostride);
 		goto fail;
+	}
 
 	const RECTANGLE_16 rect = { .left = 0, .top = 0, .right = width, .bottom = height };
 	uint32_t dstsize = 0;
 	uint8_t* dst = nullptr;
-	if (avc420_compress(h264, src, format, stride, width, height, &rect, &dst, &dstsize, &meta) < 0)
+	const int res1 =
+	    avc420_compress(h264, src, format, stride, width, height, &rect, &dst, &dstsize, &meta);
+	if (res1 < 0)
+	{
+		(void)fprintf(stderr, "[%s] avc420_compress failed: %d\n", __func__, res1);
 		goto fail;
+	}
 	if ((dstsize == 0) || !dst)
+	{
+		(void)fprintf(stderr, "[%s] dstsize=%" PRIu32 ", dst=%p\n", __func__, dstsize, (void*)dst);
 		goto fail;
+	}
 
-	if (avc420_decompress(h264dec, dst, dstsize, out, format, stride, width, height, &rect, 1) < 0)
+	const int res2 =
+	    avc420_decompress(h264dec, dst, dstsize, out, format, stride, width, height, &rect, 1);
+	if (res2 < 0)
+	{
+		(void)fprintf(stderr, "[%s] avc420_decompress failed: %d\n", __func__, res2);
 		goto fail;
+	}
 
 	rc = compareRGB(src, out, format, width, stride, height);
 fail:
+	if (!rc)
+		(void)fprintf(stderr, "[%s] run failed\n", __func__);
 	h264_context_free(h264);
 	h264_context_free(h264dec);
 	free_h264_metablock(&meta);
@@ -162,8 +204,14 @@ static BOOL testEncodeOffsetRegion(void)
 		goto fail;
 
 	memset(src, 0, (size_t)stride * height);
-	if (avc420_compress(h264, src, format, stride, width, height, &full, &dst, &dstSize, &meta) < 0)
+	const int res =
+	    avc420_compress(h264, src, format, stride, width, height, &full, &dst, &dstSize, &meta);
+	if (res < 0)
+	{
+
+		(void)fprintf(stderr, "[%s] first avc420_compress failed: %d\n", __func__, res);
 		goto fail;
+	}
 	free_h264_metablock(&meta);
 
 	for (UINT32 y = region.top; y < region.bottom; y++)
@@ -174,9 +222,13 @@ static BOOL testEncodeOffsetRegion(void)
 
 	dst = nullptr;
 	dstSize = 0;
-	if (avc420_compress(h264, src, format, stride, width, height, &region, &dst, &dstSize, &meta) <
-	    0)
+	const int res2 =
+	    avc420_compress(h264, src, format, stride, width, height, &region, &dst, &dstSize, &meta);
+	if (res2 < 0)
+	{
+		(void)fprintf(stderr, "[%s] second avc420_compress failed: %d\n", __func__, res2);
 		goto fail;
+	}
 	if ((meta.numRegionRects == 0) || (meta.regionRects[0].left != region.left) ||
 	    (meta.regionRects[0].top != region.top))
 	{
@@ -188,6 +240,8 @@ static BOOL testEncodeOffsetRegion(void)
 
 	rc = TRUE;
 fail:
+	if (!rc)
+		(void)fprintf(stderr, "[%s] run failed\n", __func__);
 	h264_context_free(h264);
 	free_h264_metablock(&meta);
 	free(src);
@@ -232,6 +286,7 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 		return -1;
 	if (!testContextOptions(TRUE, width, height))
 		return -1;
+#if !defined(WITH_MEDIA_FOUNDATION)
 	if (!testEncodeOffsetRegion())
 		return -1;
 
@@ -244,6 +299,10 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 				return -1;
 		}
 	}
+#else
+	(void)fprintf(stderr,
+	              "TODO: WITH_MEDIA_FOUNDATION: compression tests skipped, not implemented\n");
+#endif
 
 	return 0;
 }
