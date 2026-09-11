@@ -1061,7 +1061,7 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	xf_FixWindowCoordinates(xfc, &appWindow->x, &appWindow->y, &appWindow->width,
 	                        &appWindow->height);
 	appWindow->shmid = -1;
-	appWindow->decorations = FALSE;
+	appWindow->decorations = xfc->decorations;
 	appWindow->fullscreen = FALSE;
 	appWindow->local_move.state = LMS_NOT_ACTIVE;
 	appWindow->is_mapped = FALSE;
