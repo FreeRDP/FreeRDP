@@ -712,7 +712,12 @@ static BOOL xf_event_FocusOut(xfContext* xfc, const XFocusOutEvent* event, BOOL 
 
 	xf_keyboard_release_all_keypress(xfc);
 	if (app)
+	{
+		/* A pointer grab belongs to the previously focused RemoteApp window.
+		 * Keeping it would route clicks on local foreground windows back to it. */
+		xf_ungrab(xfc);
 		return xf_rail_send_activate(xfc, event->window, FALSE);
+	}
 
 	return TRUE;
 }
