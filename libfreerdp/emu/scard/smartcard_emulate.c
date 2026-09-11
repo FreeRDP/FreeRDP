@@ -1600,49 +1600,51 @@ static SCardHandle* reader2handle(SmartcardEmulationContext* smartcard, SCARDCON
                                   SCARDHANDLE* phCard, DWORD dwPreferredProtocols,
                                   LPDWORD pdwActiveProtocol)
 {
-	SCardHandle* hdl = nullptr;
-
 	WINPR_ASSERT(phCard);
+	SCardHandle* hdl = nullptr;
 
 	*phCard = 0;
 	if (Emulate_SCardIsValidContext(smartcard, hContext) != SCARD_S_SUCCESS)
-		return nullptr;
+		goto fail;
 
 	hdl = scard_handle_new(smartcard, hContext, szReader, unicode);
-	if (hdl)
-	{
-		if (winpr_RAND(&hdl->card, sizeof(hdl->card)) < 0)
-		{
-			scard_handle_free(hdl);
-			return nullptr;
-		}
-		hdl->dwActiveProtocol = SCARD_PROTOCOL_T1;
-		hdl->dwShareMode = dwShareMode;
+	if (!hdl)
+		goto fail;
 
-		if (!HashTable_Insert(smartcard->handles, (const void*)hdl->card, hdl))
+	if (winpr_RAND(&hdl->card, sizeof(hdl->card)) < 0)
+	{
+		scard_handle_free(hdl);
+		hdl = nullptr;
+		goto fail;
+	}
+	hdl->dwActiveProtocol = SCARD_PROTOCOL_T1;
+	hdl->dwShareMode = dwShareMode;
+
+	DWORD activeProtocol = 0;
+	if (pdwActiveProtocol)
+	{
+		if ((hdl->dwActiveProtocol & dwPreferredProtocols) == 0)
 		{
 			scard_handle_free(hdl);
 			hdl = nullptr;
+			goto fail;
 		}
 		else
-		{
-			if (pdwActiveProtocol)
-			{
-				if ((hdl->dwActiveProtocol & dwPreferredProtocols) == 0)
-				{
-					scard_handle_free(hdl);
-					hdl = nullptr;
-				}
-				else
-					*pdwActiveProtocol = hdl->dwActiveProtocol;
-			}
-			if (hdl)
-			{
-				hdl->referencecount++;
-				*phCard = hdl->card;
-			}
-		}
+			activeProtocol = hdl->dwActiveProtocol;
 	}
+
+	if (!HashTable_Insert(smartcard->handles, (const void*)hdl->card, hdl))
+	{
+		scard_handle_free(hdl);
+		hdl = nullptr;
+		goto fail;
+	}
+
+	hdl->referencecount++;
+	*pdwActiveProtocol = activeProtocol;
+	*phCard = hdl->card;
+
+fail:
 	WLog_Print(smartcard->log, smartcard->log_default_level, "{ %p }", (void*)*phCard);
 	return hdl;
 }
