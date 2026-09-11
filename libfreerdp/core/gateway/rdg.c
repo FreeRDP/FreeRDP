@@ -727,13 +727,17 @@ out:
 	return s;
 }
 
-static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* response)
+static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* response,
+                                BOOL* pHaveToken)
 {
 	size_t len = 0;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = nullptr;
 	SecBuffer authToken = WINPR_C_ARRAY_INIT;
 	int rc = 0;
+
+	WINPR_ASSERT(pHaveToken);
+	*pHaveToken = FALSE;
 
 	if (!auth || !response)
 		return FALSE;
@@ -752,7 +756,13 @@ static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* r
 
 	const char* token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
 	if (!token64)
-		return FALSE;
+	{
+		/* Not an error in itself: the server may complete the authentication without returning
+		 * a final token. The caller decides what that means from the HTTP status. */
+		return TRUE;
+	}
+
+	*pHaveToken = TRUE;
 
 	len = strlen(token64);
 
@@ -1451,10 +1461,28 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 
 		while (!credssp_auth_is_complete(rdg->auth))
 		{
-			if (!rdg_recv_auth_token(rdg->log, rdg->auth, response))
+			BOOL haveToken = FALSE;
+
+			if (!rdg_recv_auth_token(rdg->log, rdg->auth, response, &haveToken))
 			{
 				http_response_free(response);
 				return FALSE;
+			}
+
+			if (!haveToken)
+			{
+				/* The server answered without an authentication token, so there is nothing left
+				 * to negotiate. If it still refuses the request the status handling below reports
+				 * that; otherwise the authentication succeeded as far as the transport is
+				 * concerned, and the security context freed just below is not needed any more.
+				 *
+				 * MS RD Gateway takes this path when it answers the last authentication request
+				 * with the WebSocket upgrade: an HTTP 101 response carries no WWW-Authenticate
+				 * header, so a mechanism still waiting for a final token, such as Kerberos waiting
+				 * for the AP_REP, never reports SEC_E_OK. */
+				WLog_Print(rdg->log, WLOG_DEBUG,
+				           "No authentication token in the response, ending the exchange");
+				break;
 			}
 
 			if (credssp_auth_have_output_token(rdg->auth))
@@ -1473,6 +1501,8 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 				}
 				(void)http_response_extract_cookies(response, rdg->http);
 			}
+			else
+				break; /* nothing more to send: do not re-parse the same response */
 		}
 		credssp_auth_free(rdg->auth);
 		rdg->auth = nullptr;
