@@ -20,9 +20,8 @@
 
 #include <freerdp/config.h>
 
-#include <locale.h>
-
 #include <winpr/crt.h>
+#include <winpr/i18n.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
@@ -33,26 +32,14 @@
 #include "../xf_client.h"
 #include "../xfreerdp.h"
 
-#ifdef WITH_XFREERDP_I18N
-#include <libintl.h>
-#define _(String) gettext(String)
-#else
-#define _(String) (String)
-#endif
-
 static void xfreerdp_init_i18n(void)
 {
-#ifdef WITH_XFREERDP_I18N
-	(void)setlocale(LC_ALL, "");
-	(void)bindtextdomain("xfreerdp", FREERDP_I18N_LOCALEDIR);
-	(void)bind_textdomain_codeset("xfreerdp", "UTF-8");
-	(void)textdomain("xfreerdp");
-#endif
+	(void)freerdp_client_enable_translation(nullptr, FREERDP_I18N_LOCALEDIR);
 }
 
 static void xfreerdp_print_help(void)
 {
-	fputs(_("Keyboard Shortcuts:\n"
+	fputs(WINPR_I18N_GETTEXT("freerdp-client", "Keyboard Shortcuts:\n"
 	        "\t<Right CTRL>\n"
 	        "\t\treleases keyboard and mouse grab\n"
 	        "\t<CTRL>+<ALT>+<Return>\n"

@@ -30,6 +30,9 @@ extern "C"
 {
 #endif
 
+	/** Initialize the server-common and dependent FreeRDP translation domains. */
+	FREERDP_API BOOL freerdp_server_enable_translation(const char* locale, const char* searchPath);
+
 	WINPR_ATTR_NODISCARD
 	FREERDP_API size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats);
 

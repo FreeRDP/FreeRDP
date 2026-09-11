@@ -21,25 +21,8 @@ addtargetwithresourcefile(${MODULE_NAME} TRUE "${PROJECT_VERSION}" SRCS)
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "..")
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/X11")
 
-option(WITH_XFREERDP_I18N "Build gettext catalogs for the xfreerdp client help" ON)
-if(WITH_XFREERDP_I18N)
-  include(GNUInstallDirs)
-  find_package(Gettext)
-  find_package(Intl)
-  if(Gettext_FOUND AND Intl_FOUND)
-    gettext_process_po_files(
-      sv
-      ALL
-      INSTALL_DESTINATION "${CMAKE_INSTALL_LOCALEDIR}"
-      PO_FILES po/xfreerdp.po
-    )
-    target_compile_definitions(${MODULE_NAME} PRIVATE WITH_XFREERDP_I18N
-                                                      FREERDP_I18N_LOCALEDIR="${CMAKE_INSTALL_FULL_LOCALEDIR}")
-    target_link_libraries(${MODULE_NAME} PRIVATE Intl::Intl)
-  else()
-    message(STATUS "xfreerdp i18n disabled: gettext tools or libintl were not found")
-  endif()
-endif()
+include(GNUInstallDirs)
+target_compile_definitions(${MODULE_NAME} PRIVATE FREERDP_I18N_LOCALEDIR="${CMAKE_INSTALL_FULL_LOCALEDIR}")
 
 list(APPEND LIBS xfreerdp-client)
 

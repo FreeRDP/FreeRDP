@@ -46,6 +46,7 @@
 #include <winpr/wtsapi.h>
 #include <winpr/ssl.h>
 #include <winpr/debug.h>
+#include <winpr/i18n.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/streamdump.h>
@@ -62,6 +63,12 @@
 #include "utils.h"
 
 #define TAG FREERDP_TAG("core")
+
+BOOL freerdp_enable_translation(const char* locale, const char* searchPath)
+{
+	return winpr_i18n_enable_translation(locale) &&
+	       winpr_i18n_bind_domain("freerdp", searchPath);
+}
 
 static void sig_abort_connect(int signum, const char* signame, void* ctx)
 {
