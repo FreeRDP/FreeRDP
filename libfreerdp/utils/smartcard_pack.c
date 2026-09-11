@@ -311,7 +311,28 @@ static LONG smartcard_ndr_read_state(wLog* log, wStream* s, ReaderState_Return**
 		BYTE** ppv;
 	} u;
 	u.ppc = data;
-	return smartcard_ndr_read(log, s, u.ppv, min, sizeof(ReaderState_Return), type);
+	const LONG status = smartcard_ndr_read(log, s, u.ppv, min, sizeof(ReaderState_Return), type);
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
+	/* [MS-RDPESC] 2.2.3.3: cbAtr is range(0..36), the number of valid bytes in the fixed
+	 * rgbAtr array. A larger value walks past it when dumped or compared byte by byte, so
+	 * reject it here rather than trusting the wire value. */
+	ReaderState_Return* states = *data;
+	for (size_t x = 0; x < min; x++)
+	{
+		const UINT32 val = winpr_Data_Get_UINT32(&states[x].cbAtr);
+		if (val > ARRAYSIZE(states[x].rgbAtr))
+		{
+			WLog_Print(log, WLOG_ERROR,
+			           "ReaderState_Return[%" PRIuz "]::cbAtr %" PRIu32 " exceeds %" PRIuz, x, val,
+			           (size_t)ARRAYSIZE(states[x].rgbAtr));
+			free(*data);
+			*data = nullptr;
+			return STATUS_DATA_ERROR;
+		}
+	}
+	return SCARD_S_SUCCESS;
 }
 
 static LONG smartcard_ndr_read_atrmask(wLog* log, wStream* s, LocateCards_ATRMask** data,
