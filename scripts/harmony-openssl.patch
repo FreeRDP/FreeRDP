@@ -1,0 +1,25 @@
+diff --git a/Configurations/10-main.conf b/Configurations/10-main.conf
+--- a/Configurations/10-main.conf
++++ b/Configurations/10-main.conf
+@@ -907,6 +907,21 @@ my %targets = (
+         perlasm_scheme   => "elf32",
+         multilib         => "x32",
+     },
++    "ohos-aarch64" => {
++        inherit_from     => [ "linux-aarch64" ],
++        shared_extension => ".so"
++    },
++    "ohos-arm" => {
++        inherit_from     => [ "linux-generic32" ],
++        asm_arch         => 'armv4',
++        perlasm_scheme   => "linux32",
++        ex_libs          => add(threads("-lclang_rt.builtins")),
++        shared_extension => ".so"
++    },
++    "ohos-x86_64" => {
++        inherit_from     => [ "linux-x86_64" ],
++        shared_extension => ".so"
++    },
+
+     "linux-ia64" => {
+         inherit_from     => [ "linux-generic64" ],

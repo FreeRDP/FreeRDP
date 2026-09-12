@@ -1,0 +1,80 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "hFreeRDP"
+    },
+    {
+      "name": "module_desc",
+      "value": "hFreeRDP"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "hFreeRDP Remote Desktop"
+    },
+    {
+      "name": "SessionAbility_desc",
+      "value": "远程桌面会话窗口"
+    },
+    {
+      "name": "session_ability_label",
+      "value": "远程桌面"
+    },
+    {
+      "name": "read_pasteboard_reason",
+      "value": "用于将本地剪贴板内容同步到远程桌面"
+    },
+    {
+      "name": "app_brand",
+      "value": "hFreeRDP"
+    },
+    {
+      "name": "app_desktop",
+      "value": "远程桌面"
+    },
+    {
+      "name": "app_subtitle",
+      "value": "便利的远程访问"
+    },
+    {
+      "name": "about",
+      "value": "关于"
+    },
+    {
+      "name": "connection_settings",
+      "value": "连接设置"
+    },
+    {
+      "name": "connect_desktop",
+      "value": "连接桌面"
+    },
+    {
+      "name": "save_config",
+      "value": "保存配置"
+    },
+    {
+      "name": "cancel",
+      "value": "取消"
+    },
+    {
+      "name": "confirm",
+      "value": "确定"
+    },
+    {
+      "name": "delete",
+      "value": "删除"
+    },
+    {
+      "name": "disconnect",
+      "value": "断开"
+    },
+    {
+      "name": "username_placeholder",
+      "value": "用户名"
+    },
+    {
+      "name": "password_placeholder",
+      "value": "密码"
+    }
+  ]
+}

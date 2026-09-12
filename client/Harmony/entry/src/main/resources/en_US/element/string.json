@@ -1,0 +1,80 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "hFreeRDP"
+    },
+    {
+      "name": "module_desc",
+      "value": "hFreeRDP"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "hFreeRDP Remote Desktop"
+    },
+    {
+      "name": "SessionAbility_desc",
+      "value": "RDP Client Session Window"
+    },
+    {
+      "name": "session_ability_label",
+      "value": "RDP Client"
+    },
+    {
+      "name": "read_pasteboard_reason",
+      "value": "Used to sync local clipboard content to RDP client"
+    },
+    {
+      "name": "app_brand",
+      "value": "hFreeRDP"
+    },
+    {
+      "name": "app_desktop",
+      "value": "RDP Client"
+    },
+    {
+      "name": "app_subtitle",
+      "value": "Convenient Remote Access"
+    },
+    {
+      "name": "about",
+      "value": "About"
+    },
+    {
+      "name": "connection_settings",
+      "value": "Connection Settings"
+    },
+    {
+      "name": "connect_desktop",
+      "value": "Connect"
+    },
+    {
+      "name": "save_config",
+      "value": "Save Config"
+    },
+    {
+      "name": "cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "confirm",
+      "value": "Confirm"
+    },
+    {
+      "name": "delete",
+      "value": "Delete"
+    },
+    {
+      "name": "disconnect",
+      "value": "Disconnect"
+    },
+    {
+      "name": "username_placeholder",
+      "value": "Username"
+    },
+    {
+      "name": "password_placeholder",
+      "value": "Password"
+    }
+  ]
+}
