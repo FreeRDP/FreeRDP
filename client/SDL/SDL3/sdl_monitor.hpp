@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
@@ -26,3 +28,16 @@
 
 [[nodiscard]] int sdl_list_monitors(SdlContext* sdl);
 [[nodiscard]] BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* ppMaxHeight);
+
+/** @brief parses a /vmonitors:<w>x<h>@<x>x<y>[,<w>x<h>@<x>x<y>...] value into a list of virtual
+ *         monitor definitions. Returns false and logs an error on any malformed entry. */
+[[nodiscard]] bool sdl_parse_vmonitors(const char* value, std::vector<rdpMonitor>& monitors);
+
+/** @brief true if every monitor is reachable from the others via touching/overlapping edges or
+ *         corners, i.e. the layout forms a single connected region with no isolated islands. */
+[[nodiscard]] bool monitorsAreContiguous(const std::vector<rdpMonitor>& monitors);
+
+/** @brief true if any two monitors' rectangles have a positive-area intersection; on true, `a`
+ *         and `b` are set to the offending pair's indices. */
+[[nodiscard]] bool monitorsHaveOverlap(const std::vector<rdpMonitor>& monitors, size_t& a,
+                                       size_t& b);

@@ -21,15 +21,19 @@
 
 #include <freerdp/config.h>
 
+#include <cerrno>
+#include <climits>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <string>
 
 #include <SDL3/SDL.h>
 
 #include <winpr/assert.h>
+#include <winpr/cmdline.h>
 #include <winpr/crt.h>
 
 #include <freerdp/log.h>
@@ -56,6 +60,208 @@ typedef struct
 
 /* See MSDN Section on Multiple Display Monitors: http://msdn.microsoft.com/en-us/library/dd145071
  */
+
+/* Parses a single "<W>x<H>@<X>x<Y>" token. Uses strtoul/strtol with explicit endptr checks
+ * (rather than sscanf) so trailing garbage after a well-formed prefix is rejected. */
+[[nodiscard]] static bool parseVMonitorToken(const std::string& token, rdpMonitor& monitor)
+{
+	const char* input = token.c_str();
+	char* endPtr = nullptr;
+
+	errno = 0;
+	const unsigned long w = strtoul(input, &endPtr, 10);
+	if (((w == 0) || (w == ULONG_MAX)) && (errno != 0))
+		return false;
+	if ((w == 0) || (w > UINT16_MAX))
+		return false;
+	if (!endPtr || (*endPtr != 'x'))
+		return false;
+
+	errno = 0;
+	const unsigned long h = strtoul(endPtr + 1, &endPtr, 10);
+	if (((h == 0) || (h == ULONG_MAX)) && (errno != 0))
+		return false;
+	if ((h == 0) || (h > UINT16_MAX))
+		return false;
+	if (!endPtr || (*endPtr != '@'))
+		return false;
+
+	errno = 0;
+	const long x = strtol(endPtr + 1, &endPtr, 10);
+	if (((x == LONG_MIN) || (x == LONG_MAX)) && (errno != 0))
+		return false;
+	if (!endPtr || (*endPtr != 'x'))
+		return false;
+
+	errno = 0;
+	const long y = strtol(endPtr + 1, &endPtr, 10);
+	if (((y == LONG_MIN) || (y == LONG_MAX)) && (errno != 0))
+		return false;
+	if (!endPtr || (*endPtr != '\0'))
+		return false;
+
+	monitor = {};
+	monitor.x = static_cast<INT32>(x);
+	monitor.y = static_cast<INT32>(y);
+	monitor.width = static_cast<INT32>(w);
+	monitor.height = static_cast<INT32>(h);
+	monitor.attributes.physicalWidth = static_cast<UINT32>(w);
+	monitor.attributes.physicalHeight = static_cast<UINT32>(h);
+	monitor.attributes.desktopScaleFactor = 100;
+	monitor.attributes.deviceScaleFactor = 100;
+	monitor.attributes.orientation = ORIENTATION_LANDSCAPE;
+	return true;
+}
+
+/* Two monitors are considered adjacent if their rectangles touch or overlap along both axes
+ * (sharing at least a corner point counts as touching). */
+[[nodiscard]] static bool monitorsTouch(const rdpMonitor& a, const rdpMonitor& b)
+{
+	const bool xOverlap = (a.x <= b.x + b.width) && (b.x <= a.x + a.width);
+	const bool yOverlap = (a.y <= b.y + b.height) && (b.y <= a.y + a.height);
+	return xOverlap && yOverlap;
+}
+
+/* Strict rectangle intersection (positive area), as opposed to monitorsTouch() which also
+ * counts zero-area edge/corner contact. */
+[[nodiscard]] static bool monitorsOverlap(const rdpMonitor& a, const rdpMonitor& b)
+{
+	const bool xOverlap = (a.x < b.x + b.width) && (b.x < a.x + a.width);
+	const bool yOverlap = (a.y < b.y + b.height) && (b.y < a.y + a.height);
+	return xOverlap && yOverlap;
+}
+
+[[nodiscard]] bool monitorsHaveOverlap(const std::vector<rdpMonitor>& monitors, size_t& a,
+                                       size_t& b)
+{
+	for (a = 0; a < monitors.size(); a++)
+	{
+		for (b = a + 1; b < monitors.size(); b++)
+		{
+			if (monitorsOverlap(monitors[a], monitors[b]))
+				return true;
+		}
+	}
+	return false;
+}
+
+/* Flood-fill adjacency starting from the first monitor; a layout is contiguous if every
+ * monitor is reachable, i.e. there is a single connected region with no isolated islands. */
+[[nodiscard]] bool monitorsAreContiguous(const std::vector<rdpMonitor>& monitors)
+{
+	if (monitors.size() <= 1)
+		return true;
+
+	std::vector<bool> visited(monitors.size(), false);
+	std::vector<size_t> stack{ 0 };
+	visited[0] = true;
+	size_t visitedCount = 1;
+
+	while (!stack.empty())
+	{
+		const auto current = stack.back();
+		stack.pop_back();
+
+		for (size_t x = 0; x < monitors.size(); x++)
+		{
+			if (visited[x])
+				continue;
+			if (!monitorsTouch(monitors[current], monitors[x]))
+				continue;
+			visited[x] = true;
+			visitedCount++;
+			stack.push_back(x);
+		}
+	}
+
+	return visitedCount == monitors.size();
+}
+
+bool sdl_parse_vmonitors(const char* value, std::vector<rdpMonitor>& monitors)
+{
+	monitors.clear();
+	if (!value)
+	{
+		WLog_ERR(TAG, "/vmonitors requires a value");
+		return false;
+	}
+
+	size_t count = 0;
+	char** ptr = CommandLineParseCommaSeparatedValues(value, &count);
+	if (!ptr)
+	{
+		WLog_ERR(TAG, "/vmonitors: failed to parse '%s'", value);
+		return false;
+	}
+
+	bool rc = true;
+	if ((count == 0) || (count > 16))
+	{
+		WLog_ERR(TAG, "/vmonitors: expected between 1 and 16 monitor definitions, got %" PRIuz,
+		         count);
+		rc = false;
+	}
+
+	for (size_t x = 0; rc && (x < count); x++)
+	{
+		rdpMonitor monitor{};
+		if (!parseVMonitorToken(ptr[x], monitor))
+		{
+			WLog_ERR(TAG,
+			         "/vmonitors: invalid monitor definition '%s', expected <W>x<H>@<X>x<Y>",
+			         ptr[x]);
+			rc = false;
+			break;
+		}
+		monitors.push_back(monitor);
+	}
+
+	CommandLineParserFree(ptr);
+
+	if (rc)
+	{
+		size_t a = 0;
+		size_t b = 0;
+		if (monitorsHaveOverlap(monitors, a, b))
+		{
+			WLog_ERR(TAG, "/vmonitors: monitor %" PRIuz " and %" PRIuz " overlap, monitors must "
+			              "not overlap",
+			         a, b);
+			rc = false;
+		}
+	}
+
+	if (rc && !monitorsAreContiguous(monitors))
+	{
+		WLog_ERR(TAG, "/vmonitors: monitor layout is not contiguous, all monitors must form a "
+		              "single connected region with no gaps");
+		rc = false;
+	}
+
+	if (!rc)
+	{
+		monitors.clear();
+		return false;
+	}
+
+	monitors.front().is_primary = TRUE;
+
+	/* Sort deterministically (primary first, then ascending x/y) to match the order
+	 * freerdp_settings_set_monitor_def_array_sorted() (libfreerdp/common/settings.c) produces in
+	 * FreeRDP_MonitorDefArray. SdlContext relies on this correspondence to map each window back
+	 * to its virtual monitor entry (by array index) for live resize handling. */
+	std::sort(monitors.begin(), monitors.end(),
+	         [](const rdpMonitor& a, const rdpMonitor& b)
+	         {
+		         if (a.is_primary != b.is_primary)
+			         return a.is_primary != FALSE;
+		         if (a.x != b.x)
+			         return a.x < b.x;
+		         return a.y < b.y;
+	         });
+
+	return true;
+}
 
 int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 {
@@ -248,6 +454,48 @@ int sdl_list_monitors([[maybe_unused]] SdlContext* sdl)
 	return sdl_apply_mon_max_size(sdl, pMaxWidth, pMaxHeight);
 }
 
+[[nodiscard]] static BOOL sdl_apply_virtual_monitors(SdlContext* sdl, UINT32* pMaxWidth,
+                                                     UINT32* pMaxHeight)
+{
+	WINPR_ASSERT(sdl);
+	WINPR_ASSERT(pMaxWidth);
+	WINPR_ASSERT(pMaxHeight);
+
+	rdpSettings* settings = sdl->context()->settings;
+	WINPR_ASSERT(settings);
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
+	{
+		WLog_ERR(TAG, "/vmonitors is not compatible with /f");
+		return FALSE;
+	}
+	if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
+	{
+		WLog_ERR(TAG, "/vmonitors is not compatible with /multimon or /span");
+		return FALSE;
+	}
+	if (freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds) > 0)
+	{
+		WLog_ERR(TAG, "/vmonitors is not compatible with /monitors:<id,...>");
+		return FALSE;
+	}
+
+	auto monitors = sdl->virtualMonitors();
+	const auto primaryId = SDL_GetPrimaryDisplay();
+	for (auto& monitor : monitors)
+		monitor.orig_screen = primaryId;
+
+	if (!freerdp_settings_set_monitor_def_array_sorted(settings, monitors.data(), monitors.size()))
+		return FALSE;
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE))
+		return FALSE;
+
+	sdl->setMonitorIds(std::vector<SDL_DisplayID>(monitors.size(), primaryId));
+
+	return sdl_apply_mon_max_size(sdl, pMaxWidth, pMaxHeight);
+}
+
 BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 {
 	WINPR_ASSERT(sdl);
@@ -256,6 +504,9 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 	rdpSettings* settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
+
+	if (sdl->hasVirtualMonitors())
+		return sdl_apply_virtual_monitors(sdl, pMaxWidth, pMaxHeight);
 
 	const auto& ids = sdl->getDisplayIds();
 	auto nr = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);

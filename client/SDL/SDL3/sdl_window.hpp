@@ -56,6 +56,16 @@ class SdlWindow
 	[[nodiscard]] rdpMonitor monitor(bool isPrimary) const;
 	void setMonitor(rdpMonitor monitor);
 
+	/** @brief index of this window's monitor in whichever array the owning SdlContext currently
+	 *         considers canonical (e.g. SdlContext::_vmonitors, kept index-aligned with
+	 *         FreeRDP_MonitorDefArray). -1 if this window isn't tracked against such an array. */
+	[[nodiscard]] int monitorIndex() const;
+	void setMonitorIndex(int index);
+
+	/** @brief tick count (GetTickCount64) at construction time, e.g. used to distinguish
+	 *         startup-settling window events from later genuine user interaction. */
+	[[nodiscard]] UINT64 createdAt() const;
+
 	[[nodiscard]] float scale() const;
 	[[nodiscard]] SDL_DisplayOrientation orientation() const;
 
@@ -120,4 +130,6 @@ class SdlWindow
 	Sint32 _offset_x = 0;
 	Sint32 _offset_y = 0;
 	rdpMonitor _monitor{};
+	int _monitorIndex = -1;
+	UINT64 _createdAt = 0;
 };
