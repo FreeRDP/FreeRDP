@@ -25,23 +25,25 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.core.content.ContextCompat;
 import androidx.core.widget.ImageViewCompat;
 
 import com.freerdp.freerdpcore.R;
+import com.freerdp.freerdpcore.utils.Mouse;
 
 // Full-screen overlay hosting a draggable touch-pointer button cluster.
 public class TouchPointerView extends FrameLayout
 {
-	private static final float SCROLL_DELTA = 10.0f;
+	private static final int SCROLL_TICK_MS = 16;
+	private static final float SCROLL_DEADZONE_DP = 8f;  // no scroll within this of the press point
+	private static final float SCROLL_NPS_PER_DP = 0.6f; // notches/sec added per dp past deadzone
+	private static final float SCROLL_MAX_NPS = 25f;     // max scroll speed (notches/sec)
 	private static final int LONG_PRESS_MS = 500;
 
 	private View cluster;
 	private ImageView cursor;
-	private ImageButton scrollButton;
 
 	private TouchPointerListener listener = null;
 
@@ -54,11 +56,6 @@ public class TouchPointerView extends FrameLayout
 	private boolean dragging = false;
 	private boolean holdDragging = false;
 
-	// scroll state
-	private float scrollLastRawY;
-	private float scrollBaseHeight;
-	private ValueAnimator pillAnimator;
-
 	private int cursorTint;
 
 	private final Handler uiHandler = new Handler(Looper.getMainLooper());
@@ -70,6 +67,134 @@ public class TouchPointerView extends FrameLayout
 			sendLeft(true);
 		}
 	};
+
+	private final RateScroller vScroller = new RateScroller(false);
+	private final RateScroller hScroller = new RateScroller(true);
+
+	// A scroll button held down: the displacement from the press point sets the scroll rate.
+	private final class RateScroller implements Runnable
+	{
+		private final boolean horizontal;
+		private View button;
+		private float anchor, current, accum, baseDim;
+		private boolean active;
+		private ValueAnimator animator;
+
+		RateScroller(boolean horizontal)
+		{
+			this.horizontal = horizontal;
+		}
+
+		void attach(View v)
+		{
+			button = v;
+			v.setOnTouchListener((view, e) -> onTouch(e));
+		}
+
+		// negated on Y so that a positive displacement always means a positive scroll
+		private float pos(MotionEvent e)
+		{
+			return horizontal ? e.getRawX() : -e.getRawY();
+		}
+
+		private void send(int notch)
+		{
+			if (listener == null)
+				return;
+			if (horizontal)
+				listener.onTouchPointerHScroll(notch);
+			else
+				listener.onTouchPointerScroll(notch);
+		}
+
+		private boolean onTouch(MotionEvent e)
+		{
+			switch (e.getActionMasked())
+			{
+				case MotionEvent.ACTION_DOWN:
+					anchor = current = pos(e);
+					accum = 1.0f;
+					active = true;
+					uiHandler.post(this);
+					button.setActivated(true);
+					button.bringToFront();
+					morph(true);
+					return true;
+				case MotionEvent.ACTION_MOVE:
+					current = pos(e);
+					return true;
+				case MotionEvent.ACTION_UP:
+				case MotionEvent.ACTION_CANCEL:
+					stop();
+					return true;
+			}
+			return false;
+		}
+
+		void stop()
+		{
+			uiHandler.removeCallbacks(this);
+			// collapsing a button that never grew would animate it to its unmeasured size of zero
+			if (!active)
+				return;
+			active = false;
+			button.setActivated(false);
+			morph(false);
+		}
+
+		@Override public void run()
+		{
+			float dispDp = (current - anchor) / density;
+			float adisp = Math.abs(dispDp);
+			if (adisp <= SCROLL_DEADZONE_DP)
+			{
+				accum = 1.0f; // primed: fire a notch immediately on leaving the deadzone
+			}
+			else
+			{
+				float nps =
+				    Math.min((adisp - SCROLL_DEADZONE_DP) * SCROLL_NPS_PER_DP, SCROLL_MAX_NPS);
+				accum += nps * SCROLL_TICK_MS / 1000f;
+				int notch = dispDp > 0 ? Mouse.WHEEL_DELTA : -Mouse.WHEEL_DELTA;
+				while (accum >= 1.0f)
+				{
+					accum -= 1.0f;
+					send(notch);
+				}
+			}
+			uiHandler.postDelayed(this, SCROLL_TICK_MS);
+		}
+
+		// grow the button into a pill along the scroll axis (covering its neighbours) and back
+		private void morph(boolean expand)
+		{
+			float from = horizontal ? button.getWidth() : button.getHeight();
+			if (baseDim == 0)
+				baseDim = from;
+			float target =
+			    expand ? getResources().getDimensionPixelSize(R.dimen.tp_cluster_size) : baseDim;
+			if (animator != null)
+				animator.cancel();
+			animator = ValueAnimator.ofFloat(from, target);
+			animator.setDuration(140);
+			animator.addUpdateListener(a -> {
+				float val = (float)a.getAnimatedValue();
+				ViewGroup.LayoutParams lp = button.getLayoutParams();
+				if (horizontal)
+				{
+					lp.width = Math.round(val);
+					button.setTranslationX(-(val - baseDim) / 2.0f);
+				}
+				else
+				{
+					lp.height = Math.round(val);
+					button.setTranslationY(-(val - baseDim) / 2.0f);
+				}
+				button.setLayoutParams(lp);
+			});
+			animator.start();
+		}
+	}
 
 	public TouchPointerView(Context context)
 	{
@@ -97,22 +222,22 @@ public class TouchPointerView extends FrameLayout
 		LayoutInflater.from(context).inflate(R.layout.touch_pointer, this, true);
 		cluster = findViewById(R.id.tp_cluster);
 		cursor = findViewById(R.id.tp_cursor);
-		scrollButton = findViewById(R.id.tp_scroll);
+		vScroller.attach(findViewById(R.id.tp_scroll));
+		hScroller.attach(findViewById(R.id.tp_hscroll));
 
 		findViewById(R.id.tp_puck).setOnTouchListener((v, e) -> onPuckTouch(e));
-		scrollButton.setOnTouchListener((v, e) -> onScrollTouch(e));
 
 		findViewById(R.id.tp_close).setOnClickListener(v -> {
 			if (listener != null)
 				listener.onTouchPointerClose();
 		});
 		findViewById(R.id.tp_rclick).setOnClickListener(v -> {
-			int[] h = hotspot();
-			if (listener != null)
-			{
-				listener.onTouchPointerRightClick(h[0], h[1], true);
-				listener.onTouchPointerRightClick(h[0], h[1], false);
-			}
+			sendRight(true);
+			sendRight(false);
+		});
+		findViewById(R.id.tp_mclick).setOnClickListener(v -> {
+			sendMiddle(true);
+			sendMiddle(false);
 		});
 		findViewById(R.id.tp_reset).setOnClickListener(v -> {
 			if (listener != null)
@@ -159,6 +284,20 @@ public class TouchPointerView extends FrameLayout
 		int[] h = hotspot();
 		if (listener != null)
 			listener.onTouchPointerLeftClick(h[0], h[1], down);
+	}
+
+	private void sendRight(boolean down)
+	{
+		int[] h = hotspot();
+		if (listener != null)
+			listener.onTouchPointerRightClick(h[0], h[1], down);
+	}
+
+	private void sendMiddle(boolean down)
+	{
+		int[] h = hotspot();
+		if (listener != null)
+			listener.onTouchPointerMiddleClick(h[0], h[1], down);
 	}
 
 	private void sendMove()
@@ -259,61 +398,29 @@ public class TouchPointerView extends FrameLayout
 		return false;
 	}
 
-	private boolean onScrollTouch(MotionEvent e)
+	// Nothing delivers an UP once the overlay is gone, so the held-button timers have to be
+	// killed explicitly or they keep re-posting forever.
+	private void cancelHeldGestures()
 	{
-		switch (e.getActionMasked())
-		{
-			case MotionEvent.ACTION_DOWN:
-				scrollLastRawY = e.getRawY();
-				scrollButton.setActivated(true);
-				scrollButton.bringToFront();
-				morphScroll(true);
-				return true;
-			case MotionEvent.ACTION_MOVE:
-			{
-				float dy = e.getRawY() - scrollLastRawY;
-				if (dy > SCROLL_DELTA)
-				{
-					if (listener != null)
-						listener.onTouchPointerScroll(true);
-					scrollLastRawY = e.getRawY();
-				}
-				else if (dy < -SCROLL_DELTA)
-				{
-					if (listener != null)
-						listener.onTouchPointerScroll(false);
-					scrollLastRawY = e.getRawY();
-				}
-				return true;
-			}
-			case MotionEvent.ACTION_UP:
-			case MotionEvent.ACTION_CANCEL:
-				scrollButton.setActivated(false);
-				morphScroll(false);
-				return true;
-		}
-		return false;
+		// reachable from onVisibilityChanged before our field initializers have run
+		if (uiHandler == null)
+			return;
+		uiHandler.removeCallbacks(longPress);
+		vScroller.stop();
+		hScroller.stop();
 	}
 
-	// grow the scroll button into a tall pill (covering its neighbours) and back
-	private void morphScroll(boolean expand)
+	@Override protected void onDetachedFromWindow()
 	{
-		if (scrollBaseHeight == 0)
-			scrollBaseHeight = scrollButton.getHeight();
-		float target = expand ? getResources().getDimensionPixelSize(R.dimen.tp_cluster_size)
-		                      : scrollBaseHeight;
-		if (pillAnimator != null)
-			pillAnimator.cancel();
-		pillAnimator = ValueAnimator.ofFloat(scrollButton.getHeight(), target);
-		pillAnimator.setDuration(140);
-		pillAnimator.addUpdateListener(a -> {
-			float h = (float)a.getAnimatedValue();
-			ViewGroup.LayoutParams lp = scrollButton.getLayoutParams();
-			lp.height = Math.round(h);
-			scrollButton.setLayoutParams(lp);
-			scrollButton.setTranslationY(-(h - scrollBaseHeight) / 2.0f);
-		});
-		pillAnimator.start();
+		cancelHeldGestures();
+		super.onDetachedFromWindow();
+	}
+
+	@Override protected void onVisibilityChanged(View changedView, int visibility)
+	{
+		super.onVisibilityChanged(changedView, visibility);
+		if (visibility != VISIBLE)
+			cancelHeldGestures();
 	}
 
 	// Set the real remote cursor bitmap (null clears to the fallback); never recycled.
@@ -360,11 +467,15 @@ public class TouchPointerView extends FrameLayout
 
 		void onTouchPointerRightClick(int x, int y, boolean down);
 
+		void onTouchPointerMiddleClick(int x, int y, boolean down);
+
 		void onTouchPointerMove(int x, int y);
 
 		void onTouchPointerMoveEnd();
 
-		void onTouchPointerScroll(boolean down);
+		void onTouchPointerScroll(int amount);
+
+		void onTouchPointerHScroll(int amount);
 
 		void onTouchPointerToggleKeyboard();
 
