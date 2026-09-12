@@ -19,6 +19,7 @@
  */
 
 #include <winpr/cast.h>
+#include <winpr/i18n.h>
 
 #include <freerdp/config.h>
 
@@ -78,6 +79,12 @@
 #endif
 
 #include <freerdp/log.h>
+
+BOOL freerdp_client_enable_translation(const char* locale, const char* searchPath)
+{
+	return freerdp_enable_translation(locale, searchPath) &&
+	       winpr_i18n_bind_domain("freerdp-client", searchPath);
+}
 #define TAG CLIENT_TAG("common")
 
 static void set_default_callbacks(freerdp* instance)

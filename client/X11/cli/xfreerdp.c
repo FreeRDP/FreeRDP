@@ -21,6 +21,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/i18n.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
@@ -31,25 +32,31 @@
 #include "../xf_client.h"
 #include "../xfreerdp.h"
 
+static void xfreerdp_init_i18n(void)
+{
+	(void)freerdp_client_enable_translation(nullptr, FREERDP_I18N_LOCALEDIR);
+}
+
 static void xfreerdp_print_help(void)
 {
-	printf("Keyboard Shortcuts:\n");
-	printf("\t<Right CTRL>\n");
-	printf("\t\treleases keyboard and mouse grab\n");
-	printf("\t<CTRL>+<ALT>+<Return>\n");
-	printf("\t\ttoggles fullscreen state of the application\n");
-	printf("\t<CTRL>+<ALT>+c\n");
-	printf("\t\ttoggles remote control in a remote assistance session\n");
-	printf("\t<CTRL>+<ALT>+m\n");
-	printf("\t\tminimizes the application\n");
-	printf("\tAction Script\n");
-	printf("\t\tExecutes a predefined script on key press.\n");
-	printf("\t\tShould the script not exist it is ignored.\n");
-	printf("\t\tScripts can be provided at the default location ~/.config/freerdp/action.sh or as "
-	       "command line argument /action:script:<path>\n");
-	printf("\t\tThe script will receive the current key combination as argument.\n");
-	printf("\t\tThe output of the script is parsed for 'key-local' which tells that the script "
-	       "used the key combination, otherwise the combination is forwarded to the remote.\n");
+	fputs(WINPR_I18N_GETTEXT("freerdp-client", "Keyboard Shortcuts:\n"
+	        "\t<Right CTRL>\n"
+	        "\t\treleases keyboard and mouse grab\n"
+	        "\t<CTRL>+<ALT>+<Return>\n"
+	        "\t\ttoggles fullscreen state of the application\n"
+	        "\t<CTRL>+<ALT>+c\n"
+	        "\t\ttoggles remote control in a remote assistance session\n"
+	        "\t<CTRL>+<ALT>+m\n"
+	        "\t\tminimizes the application\n"
+	        "\tAction Script\n"
+	        "\t\tExecutes a predefined script on key press.\n"
+	        "\t\tShould the script not exist it is ignored.\n"
+	        "\t\tScripts can be provided at the default location ~/.config/freerdp/action.sh or as "
+	        "command line argument /action:script:<path>\n"
+	        "\t\tThe script will receive the current key combination as argument.\n"
+	        "\t\tThe output of the script is parsed for 'key-local' which tells that the script "
+	        "used the key combination, otherwise the combination is forwarded to the remote.\n"),
+	      stdout);
 }
 
 int main(int argc, char* argv[])
@@ -62,6 +69,8 @@ int main(int argc, char* argv[])
 	rdpContext* context = nullptr;
 	rdpSettings* settings = nullptr;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = WINPR_C_ARRAY_INIT;
+
+	xfreerdp_init_i18n();
 
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;

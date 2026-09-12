@@ -21,6 +21,9 @@ addtargetwithresourcefile(${MODULE_NAME} TRUE "${PROJECT_VERSION}" SRCS)
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "..")
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/X11")
 
+include(GNUInstallDirs)
+target_compile_definitions(${MODULE_NAME} PRIVATE FREERDP_I18N_LOCALEDIR="${CMAKE_INSTALL_FULL_LOCALEDIR}")
+
 list(APPEND LIBS xfreerdp-client)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
