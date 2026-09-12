@@ -356,11 +356,9 @@ NdrMessageType ndr_uint8_descr(void)
 	BOOL ndr_read_##LOWERTYPE(NdrContext* context, wStream* s, UPPERTYPE* v)                  \
 	{                                                                                         \
 		WINPR_ASSERT(context);                                                                \
-                                                                                              \
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UPPERTYPE)))                     \
-			return FALSE;                                                                     \
-                                                                                              \
 		if (!ndr_read_align(context, s, sizeof(UPPERTYPE)))                                   \
+			return FALSE;                                                                     \
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UPPERTYPE)))                     \
 			return FALSE;                                                                     \
                                                                                               \
 		if (context->bigEndianDrep)                                                           \
