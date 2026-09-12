@@ -4294,7 +4294,8 @@ BOOL rdp_read_capability_set(wLog* log, wStream* sub, UINT16 type, rdpSettings* 
 		void* tmp = realloc(settings->ReceivedCapabilityData[type], size);
 		if (!tmp && (size > 0))
 			return FALSE;
-		memcpy(tmp, Stream_Buffer(sub), size);
+		if (tmp)
+			memcpy(tmp, Stream_Buffer(sub), size);
 		settings->ReceivedCapabilityData[type] = tmp;
 	}
 	else

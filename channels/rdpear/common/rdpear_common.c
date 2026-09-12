@@ -316,7 +316,6 @@ BOOL ndr_read_KERB_RPC_INTERNAL_NAME(NdrContext* context, wStream* s, const void
 	cnv.ppstr = &res->Names;
 	NdrDeferredEntry names = { NDR_PTR_NULL, "KERB_RPC_INTERNAL_NAME.Names", &res->nameHints,
 		                       cnv.pv, ndr_RPC_UNICODE_STRING_Array_descr() };
-
 	UINT16 nameCount = 0;
 	WINPR_UNUSED(hints);
 
@@ -366,11 +365,15 @@ void ndr_destroy_KERB_RPC_INTERNAL_NAME(NdrContext* context, const void* hints,
 	if (!obj)
 		return;
 
-	for (UINT32 i = 0; i < obj->nameHints.count; i++)
-		ndr_destroy_RPC_UNICODE_STRING(context, nullptr, &obj->Names[i]);
+	if (obj->Names)
+	{
+		for (UINT32 i = 0; i < obj->nameHints.count; i++)
+			ndr_destroy_RPC_UNICODE_STRING(context, nullptr, &obj->Names[i]);
+	}
 
 	free(obj->Names);
 	obj->Names = nullptr;
+	obj->nameHints.count = 0;
 }
 
 static void ndr_descr_destroy_KERB_RPC_INTERNAL_NAME(NdrContext* context, const void* hints,
