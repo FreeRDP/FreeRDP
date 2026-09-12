@@ -66,9 +66,7 @@
 
 #include <sdl_config.hpp>
 
-#if defined(WITH_WEBVIEW)
-#include <aad/sdl_webview.hpp>
-#endif
+#include <sdl_aad_helper.hpp>
 
 #define SDL_TAG CLIENT_TAG("SDL")
 
@@ -1180,6 +1178,9 @@ static void sdl_post_disconnect(freerdp* instance)
 	                                      sdl_OnChannelDisconnectedEventHandler);
 	PubSub_UnsubscribeUserNotification(instance->context->pubSub,
 	                                   sdl_OnUserNotificationEventHandler);
+
+	sdl_aad_helper_stop();
+
 	gdi_free(instance);
 }
 
@@ -1479,11 +1480,7 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	instance->ChooseSmartcard = sdl_choose_smartcard;
 	instance->RetryDialog = sdl_retry_dialog;
 
-#if defined(WITH_WEBVIEW)
-	instance->GetAccessToken = sdl_webview_get_access_token;
-#else
-	instance->GetAccessToken = client_cli_get_access_token;
-#endif
+	instance->GetAccessToken = sdl_aad_helper_get_access_token;
 	/* TODO: Client display set up */
 
 	return TRUE;
