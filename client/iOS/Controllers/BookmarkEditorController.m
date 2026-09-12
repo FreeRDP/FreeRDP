@@ -15,7 +15,6 @@
 #import "PerformanceEditorController.h"
 #import "CredentialsEditorController.h"
 #import "AdvancedBookmarkEditorController.h"
-#import "BlockAlertView.h"
 
 @implementation BookmarkEditorController
 
@@ -376,20 +375,26 @@
 	if ([[_bookmark label] length] == 0 || [[_params StringForKey:@"hostname"] length] == 0 ||
 	    [_params intForKey:@"port"] == 0)
 	{
-		BlockAlertView *alertView = [BlockAlertView
-		    alertWithTitle:NSLocalizedString(@"Cancel without saving?",
-		                                     @"Incomplete bookmark error title")
-		           message:NSLocalizedString(@"Press 'Cancel' to abort!\nPress 'Continue' to "
-		                                     @"specify the required fields!",
-		                                     @"Incomplete bookmark error message")];
+		UIAlertController *alertView = [UIAlertController
+		    alertControllerWithTitle:NSLocalizedString(@"Cancel without saving?",
+		                                               @"Incomplete bookmark error title")
+		                     message:NSLocalizedString(
+		                                 @"Press 'Cancel' to abort!\nPress 'Continue' to "
+		                                 @"specify the required fields!",
+		                                 @"Incomplete bookmark error message")
+		              preferredStyle:UIAlertControllerStyleAlert];
 		[alertView
-		    setCancelButtonWithTitle:NSLocalizedString(@"Cancel", @"Cancel Button")
-		                       block:^{
-			                       // cancel bookmark editing and return to previous view controller
-			                       [[self navigationController] popViewControllerAnimated:YES];
-		                       }];
-		[alertView addButtonWithTitle:NSLocalizedString(@"Continue", @"Continue Button") block:nil];
-		[alertView show];
+		    addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel Button")
+		                                       style:UIAlertActionStyleCancel
+		                                     handler:^(UIAlertAction *action) {
+			                                     [[self navigationController]
+			                                         popViewControllerAnimated:YES];
+		                                     }]];
+		[alertView addAction:[UIAlertAction
+		                         actionWithTitle:NSLocalizedString(@"Continue", @"Continue Button")
+		                                   style:UIAlertActionStyleDefault
+		                                 handler:nil]];
+		[self presentViewController:alertView animated:YES completion:nil];
 		return;
 	}
 

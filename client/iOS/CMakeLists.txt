@@ -160,11 +160,6 @@ set(SRCS
     SceneDelegate.m
     Views/AdvancedKeyboardView.h
     Views/AdvancedKeyboardView.m
-    Views/BlockAlertView.h
-    Views/BlockAlertView.m
-    Views/BlockBackground.h
-    Views/BlockBackground.m
-    Views/BlockUI.h
     Views/BookmarkTableCell.h
     Views/BookmarkTableCell.m
     Views/EditButtonTableViewCell.h

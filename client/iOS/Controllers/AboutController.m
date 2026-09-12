@@ -10,7 +10,6 @@
 
 #import "AboutController.h"
 #import "Utils.h"
-#import "BlockAlertView.h"
 
 @implementation AboutController
 
@@ -101,24 +100,32 @@
 	{
 		[last_link_clicked release];
 		last_link_clicked = [[[request URL] absoluteString] retain];
-		BlockAlertView *alert = [BlockAlertView
-		    alertWithTitle:NSLocalizedString(@"External Link", @"External Link Alert Title")
-		           message:[NSString stringWithFormat:
-		                                 NSLocalizedString(
-		                                     @"Open [%@] in Browser?",
-		                                     @"Open link in browser (with link as parameter)"),
-		                                 last_link_clicked]];
+		UIAlertController *alert = [UIAlertController
+		    alertControllerWithTitle:NSLocalizedString(@"External Link",
+		                                               @"External Link Alert Title")
+		                     message:[NSString
+		                                 stringWithFormat:
+		                                     NSLocalizedString(
+		                                         @"Open [%@] in Browser?",
+		                                         @"Open link in browser (with link as parameter)"),
+		                                     last_link_clicked]
+		              preferredStyle:UIAlertControllerStyleAlert];
 
-		[alert setCancelButtonWithTitle:NSLocalizedString(@"No", @"No Button") block:nil];
-		[alert addButtonWithTitle:NSLocalizedString(@"OK", @"OK Button")
-		                    block:^{
-			                    [[UIApplication sharedApplication]
-			                                  openURL:[NSURL URLWithString:last_link_clicked]
-			                                  options:@{}
-			                        completionHandler:nil];
-		                    }];
+		[alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"No", @"No Button")
+		                                          style:UIAlertActionStyleCancel
+		                                        handler:nil]];
+		[alert
+		    addAction:[UIAlertAction
+		                  actionWithTitle:NSLocalizedString(@"OK", @"OK Button")
+		                            style:UIAlertActionStyleDefault
+		                          handler:^(UIAlertAction *action) {
+			                          [[UIApplication sharedApplication]
+			                                        openURL:[NSURL URLWithString:last_link_clicked]
+			                                        options:@{}
+			                              completionHandler:nil];
+		                          }]];
 
-		[alert show];
+		[self presentViewController:alert animated:YES completion:nil];
 
 		decisionHandler(WKNavigationActionPolicyCancel);
 		return;

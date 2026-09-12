@@ -19,7 +19,6 @@
 #import "ConnectionParams.h"
 #import "CredentialsInputController.h"
 #import "VerifyCertificateController.h"
-#import "BlockAlertView.h"
 
 #define TOOLBAR_HEIGHT 44
 
