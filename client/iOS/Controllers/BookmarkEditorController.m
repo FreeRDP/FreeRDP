@@ -61,7 +61,7 @@
 	                                     action:@selector(handleSave:)] autorelease];
 	UIBarButtonItem *cancelButton =
 	    [[[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel", @"Cancel Button title")
-	                                      style:UIBarButtonItemStyleBordered
+	                                      style:UIBarButtonItemStylePlain
 	                                     target:self
 	                                     action:@selector(handleCancel:)] autorelease];
 	[[self navigationItem] setLeftBarButtonItem:cancelButton];

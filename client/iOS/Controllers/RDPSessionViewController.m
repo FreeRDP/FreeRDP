@@ -334,26 +334,26 @@
 		objectIdx = 2;
 		curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
 		[curItem setStyle:[keyboard shiftPressed] ? UIBarButtonItemStyleDone
-		                                          : UIBarButtonItemStyleBordered];
+		                                          : UIBarButtonItemStylePlain];
 	}
 
 	// ctrl button
 	objectIdx += 2;
 	curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
 	[curItem
-	    setStyle:[keyboard ctrlPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStyleBordered];
+	    setStyle:[keyboard ctrlPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStylePlain];
 
 	// win button
 	objectIdx += 2;
 	curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
 	[curItem
-	    setStyle:[keyboard winPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStyleBordered];
+	    setStyle:[keyboard winPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStylePlain];
 
 	// alt button
 	objectIdx += 2;
 	curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
 	[curItem
-	    setStyle:[keyboard altPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStyleBordered];
+	    setStyle:[keyboard altPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStylePlain];
 }
 
 #pragma mark -
@@ -548,7 +548,7 @@
 	                                                  bundle:nil
 	                                                 session:_session
 	                                                  params:params] autorelease];
-	[self presentModalViewController:view_controller animated:YES];
+	[self presentViewController:view_controller animated:YES completion:nil];
 }
 
 - (void)session:(RDPSession *)session verifyCertificateWithParams:(NSMutableDictionary *)params
@@ -558,7 +558,7 @@
 	                                                   bundle:nil
 	                                                  session:_session
 	                                                   params:params] autorelease];
-	[self presentModalViewController:view_controller animated:YES];
+	[self presentViewController:view_controller animated:YES completion:nil];
 }
 
 - (CGSize)sizeForFitScreenForSession:(RDPSession *)session
@@ -1032,11 +1032,11 @@
 - (UIToolbar *)keyboardToolbar
 {
 	UIToolbar *keyboard_toolbar = [[[UIToolbar alloc] initWithFrame:CGRectNull] autorelease];
-	[keyboard_toolbar setBarStyle:UIBarStyleBlackOpaque];
+	[keyboard_toolbar setBarStyle:UIBarStyleBlack];
 
 	UIBarButtonItem *esc_btn =
 	    [[[UIBarButtonItem alloc] initWithTitle:@"Esc"
-	                                      style:UIBarButtonItemStyleBordered
+	                                      style:UIBarButtonItemStylePlain
 	                                     target:self
 	                                     action:@selector(pressEscKey:)] autorelease];
 	UIImage *win_icon =
@@ -1044,22 +1044,22 @@
 	                                                                     ofType:@"png"]];
 	UIBarButtonItem *win_btn =
 	    [[[UIBarButtonItem alloc] initWithImage:win_icon
-	                                      style:UIBarButtonItemStyleBordered
+	                                      style:UIBarButtonItemStylePlain
 	                                     target:self
 	                                     action:@selector(toggleWinKey:)] autorelease];
 	UIBarButtonItem *ctrl_btn =
 	    [[[UIBarButtonItem alloc] initWithTitle:@"Ctrl"
-	                                      style:UIBarButtonItemStyleBordered
+	                                      style:UIBarButtonItemStylePlain
 	                                     target:self
 	                                     action:@selector(toggleCtrlKey:)] autorelease];
 	UIBarButtonItem *alt_btn =
 	    [[[UIBarButtonItem alloc] initWithTitle:@"Alt"
-	                                      style:UIBarButtonItemStyleBordered
+	                                      style:UIBarButtonItemStylePlain
 	                                     target:self
 	                                     action:@selector(toggleAltKey:)] autorelease];
 	UIBarButtonItem *ext_btn = [[[UIBarButtonItem alloc]
 	    initWithTitle:@"Ext"
-	            style:UIBarButtonItemStyleBordered
+	            style:UIBarButtonItemStylePlain
 	           target:self
 	           action:@selector(toggleKeyboardWhenOtherVisible:)] autorelease];
 	UIBarButtonItem *done_btn = [[[UIBarButtonItem alloc]
@@ -1077,7 +1077,7 @@
 	{
 		UIBarButtonItem *shift_btn =
 		    [[[UIBarButtonItem alloc] initWithTitle:@"Shift"
-		                                      style:UIBarButtonItemStyleBordered
+		                                      style:UIBarButtonItemStylePlain
 		                                     target:self
 		                                     action:@selector(toggleShiftKey:)] autorelease];
 		items = [NSArray arrayWithObjects:esc_btn, flex_spacer, shift_btn, flex_spacer, ctrl_btn,
