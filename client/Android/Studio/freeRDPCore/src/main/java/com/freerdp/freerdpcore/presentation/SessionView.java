@@ -26,6 +26,7 @@ import android.view.MotionEvent;
 import android.view.PointerIcon;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -62,6 +63,12 @@ public class SessionView extends View
 	private GestureDetector gestureDetector;
 	private SessionState currentSession;
 
+	// Pixels of touchpad travel per wheel notch, and leftover between events.
+	private float notchPxX = 1.0f;
+	private float notchPxY = 1.0f;
+	private float touchpadScrollX = 0;
+	private float touchpadScrollY = 0;
+
 	private int[] cursorPixels = null;
 	private int cursorWidth = 0;
 	private int cursorHeight = 0;
@@ -96,6 +103,9 @@ public class SessionView extends View
 
 		invalidRegions = new Stack<>();
 		gestureDetector = new GestureDetector(context, new SessionGestureListener(), null, true);
+		ViewConfiguration vc = ViewConfiguration.get(context);
+		notchPxX = Math.max(1.0f, vc.getScaledHorizontalScrollFactor());
+		notchPxY = Math.max(1.0f, vc.getScaledVerticalScrollFactor());
 		doubleGestureDetector =
 		    new DoubleGestureDetector(context, null, new SessionDoubleGestureListener());
 
@@ -304,6 +314,11 @@ public class SessionView extends View
 		if (event.isFromSource(InputDevice.SOURCE_MOUSE))
 		{
 			int action = event.getActionMasked();
+			if (event.getClassification() == MotionEvent.CLASSIFICATION_TWO_FINGER_SWIPE)
+			{
+				handleTouchpadScroll(event);
+				return true;
+			}
 			if (action == MotionEvent.ACTION_MOVE && event.getButtonState() != 0)
 			{
 				MotionEvent mapped = mapTouchEvent(event);
@@ -317,6 +332,42 @@ public class SessionView extends View
 		boolean res = gestureDetector.onTouchEvent(event);
 		res |= doubleGestureDetector.onTouchEvent(event);
 		return res;
+	}
+
+	// Handle physical touchpad two-finger scroll gesture.
+	private void handleTouchpadScroll(MotionEvent event)
+	{
+		if (event.getActionMasked() != MotionEvent.ACTION_MOVE)
+		{
+			touchpadScrollX = 0;
+			touchpadScrollY = 0;
+			return;
+		}
+
+		touchpadScrollY += gestureDistance(event, MotionEvent.AXIS_GESTURE_SCROLL_Y_DISTANCE);
+		while (Math.abs(touchpadScrollY) >= notchPxY)
+		{
+			final boolean down = touchpadScrollY > 0;
+			touchpadScrollY += down ? -notchPxY : notchPxY;
+			sessionViewListener.onSessionViewScroll(down);
+		}
+
+		touchpadScrollX += gestureDistance(event, MotionEvent.AXIS_GESTURE_SCROLL_X_DISTANCE);
+		while (Math.abs(touchpadScrollX) >= notchPxX)
+		{
+			final boolean right = touchpadScrollX > 0;
+			touchpadScrollX += right ? -notchPxX : notchPxX;
+			sessionViewListener.onSessionViewHScroll(right);
+		}
+	}
+
+	// Sum batched historical and current sample deltas for a gesture axis.
+	private static float gestureDistance(MotionEvent event, int axis)
+	{
+		float distance = 0;
+		for (int i = 0; i < event.getHistorySize(); i++)
+			distance += event.getHistoricalAxisValue(axis, 0, i);
+		return distance + event.getAxisValue(axis);
 	}
 
 	// Handle all physical mouse buttons here; finger taps come via onSingleTapUp.
