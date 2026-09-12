@@ -125,8 +125,8 @@ static DWORD KEYCODE_TO_VKCODE_APPLE[256] = {
 	VK_F20,               /* APPLE_VK_F20 (0x5A) */
 	VK_NUMPAD8,           /* APPLE_VK_ANSI_Keypad8 (0x5B) */
 	VK_NUMPAD9,           /* APPLE_VK_ANSI_Keypad9 (0x5C) */
-	VK_NONE,              /* APPLE_VK_JIS_Yen (0x5D) */
-	VK_NONE,              /* APPLE_VK_JIS_Underscore (0x5E) */
+	VK_OEM_8,             /* APPLE_VK_JIS_Yen (0x5D) */
+	VK_ABNT_C1,           /* APPLE_VK_JIS_Underscore (0x5E) */
 	VK_DECIMAL,           /* APPLE_VK_JIS_KeypadComma (0x5F) */
 	VK_F5,                /* APPLE_VK_F5 (0x60) */
 	VK_F6,                /* APPLE_VK_F6 (0x61) */
@@ -134,9 +134,9 @@ static DWORD KEYCODE_TO_VKCODE_APPLE[256] = {
 	VK_F3,                /* APPLE_VK_F3 (0x63) */
 	VK_F8,                /* APPLE_VK_F8 (0x64) */
 	VK_F9,                /* APPLE_VK_F9 (0x65) */
-	VK_NONE,              /* APPLE_VK_JIS_Eisu (0x66) */
+	VK_HANJA,             /* APPLE_VK_JIS_Eisu (0x66) */
 	VK_F11,               /* APPLE_VK_F11 (0x67) */
-	VK_NONE,              /* APPLE_VK_JIS_Kana (0x68) */
+	VK_HANGUL,            /* APPLE_VK_JIS_Kana (0x68) */
 	VK_SNAPSHOT | KBDEXT, /* APPLE_VK_F13 (0x69) */
 	VK_F16,               /* APPLE_VK_F16 (0x6A) */
 	VK_F14,               /* APPLE_VK_F14 (0x6B) */
