@@ -25,6 +25,8 @@ Sources: https://github.com/FreeRDP/FreeRDP/
 
 Downloads: https://pub.freerdp.com/releases/
 
+User installation guide: [English](docs/user-installation.md), [Russian](docs/user-installation.ru.md)
+
 Wiki: https://github.com/FreeRDP/FreeRDP/wiki
 
 API documentation: https://pub.freerdp.com/api/
