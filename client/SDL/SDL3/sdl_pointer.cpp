@@ -196,10 +196,14 @@ bool sdl_Pointer_Set_Process(SdlContext* sdl)
 
 	const auto w = static_cast<int>(pos.w);
 	const auto h = static_cast<int>(pos.h);
+	if ((w <= 0) || (h <= 0))
+		return true;
+
 	std::unique_ptr<SDL_Surface, void (*)(SDL_Surface*)> normal{
 		SDL_CreateSurface(w, h, ptr->image->format), SDL_DestroySurface
 	};
-	assert(normal);
+	if (!normal)
+		return true;
 	if (!SDL_BlitSurfaceScaled(ptr->image, nullptr, normal.get(), nullptr,
 	                           SDL_ScaleMode::SDL_SCALEMODE_LINEAR))
 	{
@@ -298,7 +302,7 @@ rdpPointer* sdl_Pointer_Copy(const rdpPointer* pointer)
 	if (ptr->size > 0)
 	{
 		copy->data = static_cast<BYTE*>(winpr_aligned_malloc(ptr->size, 32));
-		if (!copy)
+		if (!copy->data)
 		{
 			free(copy);
 			return nullptr;

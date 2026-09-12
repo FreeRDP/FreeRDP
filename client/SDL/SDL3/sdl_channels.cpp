@@ -24,6 +24,8 @@
 #include <freerdp/client/rail.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/disp.h>
+#include <freerdp/client/rdpgfx.h>
+#include <freerdp/channels/rdpgfx.h>
 #include <freerdp/channels/rdpewa.h>
 
 #include "sdl_channels.hpp"
@@ -37,8 +39,15 @@ void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(e);
 
+	WLog_Print(sdl->getWLog(), WLOG_DEBUG, "channel connected: %s", e->name);
+
 	if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
+		auto rail = reinterpret_cast<RailClientContext*>(e->pInterface);
+		WINPR_ASSERT(rail);
+
+		if (!sdl->getRailChannelContext().init(rail))
+			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to initialize RAIL channel");
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -56,6 +65,15 @@ void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 		if (!sdl->getDisplayChannelContext().init(disp))
 			WLog_Print(sdl->getWLog(), WLOG_WARN, "Failed to initialize display channel");
 	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		/* After the common handler wires the GFX pipeline, override UpdateWindowFromSurface
+		 * to route window-mapped surfaces to RAIL. */
+		freerdp_client_OnChannelConnectedEventHandler(context, e);
+		auto gfx = reinterpret_cast<RdpgfxClientContext*>(e->pInterface);
+		if (gfx)
+			gfx->UpdateWindowFromSurface = SdlRail::UpdateWindowFromSurface;
+	}
 	else
 		freerdp_client_OnChannelConnectedEventHandler(context, e);
 }
@@ -70,6 +88,10 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	// TODO: Set resizeable depending on disp channel and /dynamic-resolution
 	if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
+		auto rail = reinterpret_cast<RailClientContext*>(e->pInterface);
+		WINPR_ASSERT(rail);
+		sdl->getRailChannelContext().uninit(rail);
+		rail->custom = nullptr;
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
