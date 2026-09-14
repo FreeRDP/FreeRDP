@@ -803,7 +803,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 		{
 			PBYTE ptr = ntlm_av_pair_get_value_pointer(AvTimestamp, cbAvTimestamp);
 
-			if (!ptr || (AvTimestamp->AvLen < 8))
+			if (!ptr || (ntlm_av_pair_get_length(AvTimestamp) < 8))
 				goto fail;
 
 			if (context->NTLMv2)
@@ -1116,7 +1116,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		if (AvFlags)
 		{
 			const BYTE* ptr = ntlm_av_pair_get_value_pointer(AvFlags, cbAvFlags);
-			if (!ptr || (AvFlags->AvLen < 4))
+			if (!ptr || (ntlm_av_pair_get_length(AvFlags) < 4))
 				goto fail;
 			flags = winpr_Data_Get_UINT32(ptr);
 		}

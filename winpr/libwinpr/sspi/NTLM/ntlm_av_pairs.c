@@ -129,9 +129,8 @@ WINPR_ATTR_NODISCARD static inline BOOL ntlm_av_pair_get_id(const NTLM_AV_PAIR* 
 ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 {
 	size_t cbAvPair = 0;
-	NTLM_AV_PAIR* pAvPair = nullptr;
 
-	pAvPair = ntlm_av_pair_get(pAvPairList, cbAvPairList, MsvAvEOL, &cbAvPair);
+	NTLM_AV_PAIR* pAvPair = ntlm_av_pair_get(pAvPairList, cbAvPairList, MsvAvEOL, &cbAvPair);
 	if (!pAvPair)
 		return 0;
 
@@ -795,4 +794,10 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 fail:
 	sspi_SecBufferFree(&context->AuthenticateTargetInfo);
 	return FALSE;
+}
+
+size_t ntlm_av_pair_get_length(NTLM_AV_PAIR* pAvPair)
+{
+	WINPR_ASSERT(pAvPair);
+	return winpr_Data_Get_UINT16(&pAvPair->AvLen);
 }
