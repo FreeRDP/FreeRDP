@@ -63,13 +63,12 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 {
 	UINT result = NO_ERROR;
 	UINT32 count = 0;
-	wStream sbuffer;
-	wStream* s = nullptr;
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
 
 	if (!format_data || !file_descriptor_array || !file_descriptor_count)
 		return ERROR_BAD_ARGUMENTS;
 
-	s = Stream_StaticConstInit(&sbuffer, format_data, format_data_length);
+	wStream* s = Stream_StaticConstInit(&sbuffer, format_data, format_data_length);
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -111,6 +110,43 @@ out:
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL contains_dotdot(const WCHAR* path, size_t path_length)
+{
+	if (path_length < 2)
+		return FALSE;
+
+	size_t tstlen = path_length;
+	const WCHAR* tst = path;
+	do
+	{
+		tst = winpr_wcsnchr(tst, tstlen, '.');
+		if (!tst)
+			return FALSE;
+		const size_t diff = WINPR_ASSERTING_INT_CAST(size_t, tst - path);
+		tstlen = _wcsnlen(tst, path_length - diff);
+		if (tstlen < 2)
+			return FALSE;
+		if (tst[1] != '.')
+			continue;
+
+		/* Filter .. sequences in file or directory names */
+		if ((tst == path) || (*(tst - 1) == L'/') || (*(tst - 1) == L'\\'))
+		{
+			if (tst + 2 < path + path_length)
+			{
+				if ((tst[2] == '/') || (tst[2] == '\\') || (tst[2] == '\0'))
+					return TRUE;
+			}
+			else
+				return TRUE;
+		}
+		tst += 2;
+	} while (TRUE);
+
+	return FALSE;
+}
+
 BOOL cliprdr_read_filedescriptor(wStream* s, FILEDESCRIPTORW* descriptor)
 {
 	UINT64 tmp = 0;
@@ -137,8 +173,12 @@ BOOL cliprdr_read_filedescriptor(wStream* s, FILEDESCRIPTORW* descriptor)
 	descriptor->ftLastWriteTime = uint64_to_filetime(tmp);
 	Stream_Read_UINT32(s, descriptor->nFileSizeHigh); /* fileSizeHigh (4 bytes) */
 	Stream_Read_UINT32(s, descriptor->nFileSizeLow);  /* fileSizeLow (4 bytes) */
-	return Stream_Read_UTF16_String(s, descriptor->cFileName,
-	                                ARRAYSIZE(descriptor->cFileName)); /* cFileName (520 bytes) */
+	if (!Stream_Read_UTF16_String(s, descriptor->cFileName,
+	                              ARRAYSIZE(descriptor->cFileName))) /* cFileName (520 bytes) */
+		return FALSE;
+	if (contains_dotdot(descriptor->cFileName, ARRAYSIZE(descriptor->cFileName)))
+		return FALSE;
+	return TRUE;
 }
 
 BOOL cliprdr_write_filedescriptor(wStream* s, const FILEDESCRIPTORW* descriptor)
