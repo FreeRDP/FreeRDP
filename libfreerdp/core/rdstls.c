@@ -612,7 +612,7 @@ static BOOL rdstls_are_some_versions_supported_(wLog* log, uint16_t version, BOO
 	return TRUE;
 }
 
-#define rdstls_is_version_supported(rdstls, versions) \
+#define rdstls_is_version_supported(rdstls, version) \
 	rdstls_is_version_supported_((rdstls), (version), __FILE__, __func__, __LINE__)
 WINPR_ATTR_NODISCARD
 static BOOL rdstls_is_version_supported_(rdpRdstls* rdstls, uint16_t version, const char* file,
