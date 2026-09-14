@@ -162,10 +162,9 @@ extern "C"
 
 	static inline void Stream_Rewind(wStream* s, size_t _offset)
 	{
-		size_t cur = 0;
 		WINPR_ASSERT(s);
 		WINPR_ASSERT(s->buffer <= s->pointer);
-		cur = WINPR_STREAM_CAST(size_t, s->pointer - s->buffer);
+		const size_t cur = WINPR_ASSERTING_INT_CAST(size_t, s->pointer - s->buffer);
 		WINPR_ASSERT(cur >= _offset);
 		if (cur >= _offset)
 			s->pointer -= (_offset);
@@ -1363,7 +1362,7 @@ extern "C"
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->buffer <= _s->pointer);
-		return WINPR_STREAM_CAST(size_t, (_s->pointer - _s->buffer));
+		return WINPR_ASSERTING_INT_CAST(size_t, (_s->pointer - _s->buffer));
 	}
 
 	/** @brief helper to reset stream read/write position to beginning of stream.
