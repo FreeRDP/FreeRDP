@@ -453,7 +453,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 
 	WLog_DBG(TAG, "checking %lx slots for valid keys...", state->nslots);
 	state->nKeys = 0;
-	for (CK_ULONG i = 0; i < state->nslots; i++)
+	for (CK_ULONG i = 0; (i < state->nslots) && (state->nKeys < state->nslots); i++)
 	{
 		CK_SESSION_HANDLE session = 0;
 		CK_SLOT_INFO slotInfo = WINPR_C_ARRAY_INIT;
@@ -520,7 +520,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 			}
 
 			WLog_DBG(TAG, "slot has %lu objects", nslotObjects);
-			for (CK_ULONG j = 0; j < nslotObjects; j++)
+			for (CK_ULONG j = 0; (j < nslotObjects) && (state->nKeys < state->nslots); j++)
 			{
 				NCryptKeyEnum* key = &state->keys[state->nKeys];
 				CK_OBJECT_CLASS dataClass = CKO_PUBLIC_KEY;
