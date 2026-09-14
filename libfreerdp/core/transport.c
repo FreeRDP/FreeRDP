@@ -1250,6 +1250,7 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 				if (!BIO_should_retry(transport->frontBio))
 				{
 					WLog_ERR_BIO(transport, "BIO_should_retry", transport->frontBio);
+					status = -1;
 					goto out_cleanup;
 				}
 
