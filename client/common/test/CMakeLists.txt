@@ -7,6 +7,10 @@ disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
 
 set(${MODULE_PREFIX}_TESTS TestClientRdpFile.c TestClientChannels.c TestClientCmdLine.c TestClientCmdLineStatus.c)
 
+if(WITH_FUSE AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  list(APPEND ${MODULE_PREFIX}_TESTS TestClientClipboardTransfer.c)
+endif()
+
 set(FUZZERS TestFuzzClientRdpFile.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_DRIVER} ${${MODULE_PREFIX}_TESTS})
@@ -29,3 +33,7 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Client/Test")
+
+if(WITH_FUSE AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set_tests_properties(TestClientClipboardTransfer PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 30)
+endif()
