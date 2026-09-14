@@ -135,11 +135,13 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API WCHAR* _wcsstr(const WCHAR* str, const WCHAR* strSearch);
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
+	WINPR_DEPRECATED_VAR("[since 3.32.0] use winpr_wcsnchr instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c));
 
-	WINPR_ATTR_NODISCARD
-	WINPR_API WCHAR* _wcsrchr(const WCHAR* str, WCHAR c);
+	WINPR_DEPRECATED_VAR("[since 3.32.0] use winpr_wcsnrchr instead",
+	                     WINPR_ATTR_NODISCARD WINPR_API WCHAR* _wcsrchr(const WCHAR* str, WCHAR c));
+#endif
 
 	WINPR_ATTR_NODISCARD
 	WINPR_API char* strtok_s(char* strToken, const char* strDelimit, char** context);
@@ -161,6 +163,28 @@ extern "C"
 #define _wcsncat wcsncat
 
 #endif /* _WIN32 */
+
+	/**! @brief _wcschr for non '\0' terminated strings
+	 *
+	 * @param str The string to search in
+	 * @param charLen The length of the string in characters
+	 * @param c The character to search for
+	 * @return A pointer to the first location found or NULL
+	 * @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API WCHAR* winpr_wcsnchr(const WCHAR* str, size_t charLen, WCHAR c);
+
+	/**! @brief _wcrschr for non '\0' terminated strings
+	 *
+	 * @param str The string to search in
+	 * @param charLen The length of the string in characters
+	 * @param c The character to search for
+	 * @return A pointer to the first location found or NULL
+	 * @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	WINPR_API WCHAR* winpr_wcsnrchr(const WCHAR* str, size_t charLen, WCHAR c);
 
 #if !defined(_WIN32) || defined(_UWP)
 

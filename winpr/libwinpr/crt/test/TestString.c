@@ -284,6 +284,7 @@ int TestString(int argc, char* argv[])
 	search.c[0] = 'r';
 	search.c[1] = '\0';
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	p = _wcschr(testStringW, search.w);
 	pos = (p - testStringW);
 
@@ -310,6 +311,7 @@ int TestString(int argc, char* argv[])
 		       (const void*)p);
 		return -1;
 	}
+#endif
 
 	/* wcstok_s */
 	WCHAR testDelimiterW[ARRAYSIZE(testDelimiterA)] = WINPR_C_ARRAY_INIT;
