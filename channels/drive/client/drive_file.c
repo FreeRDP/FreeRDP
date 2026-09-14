@@ -196,12 +196,12 @@ static BOOL drive_file_set_fullpath(DRIVE_FILE* file, const WCHAR* fullpath)
 	if (len == 0)
 		return TRUE;
 
-	file->fullpath = _wcsdup(fullpath);
+	file->fullpath = wcsndup(fullpath, len);
 	if (!file->fullpath)
 		return FALSE;
 
 	const WCHAR sep[] = { PathGetSeparatorW(PATH_STYLE_NATIVE), '\0' };
-	WCHAR* filename = _wcsrchr(file->fullpath, *sep);
+	WCHAR* filename = winpr_wcsnrchr(file->fullpath, len, *sep);
 	if (filename && _wcsncmp(filename, sep, ARRAYSIZE(sep)) == 0)
 		*filename = '\0';
 
