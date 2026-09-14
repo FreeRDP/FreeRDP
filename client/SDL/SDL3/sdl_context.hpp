@@ -73,6 +73,8 @@ class SdlContext
 	[[nodiscard]] bool setFullscreen(bool enter, bool forceOriginalDisplay = false);
 
 	[[nodiscard]] bool setMinimized();
+	[[nodiscard]] bool setFloatbar(bool visible);
+	[[nodiscard]] bool handleFloatbar(const SDL_MouseButtonEvent& ev);
 
 	[[nodiscard]] bool grabMouse() const;
 	[[nodiscard]] bool toggleGrabMouse();
@@ -218,6 +220,8 @@ class SdlContext
 	bool _resizeable = false;
 	bool _grabMouse = false;
 	bool _grabKeyboard = false;
+	SDL_Window* _floatbar = nullptr;
+	SDL_Renderer* _floatbarRenderer = nullptr;
 	int _exitCode = -1;
 	std::atomic<bool> _rdpThreadRunning = false;
 	SDL_PixelFormat _sdlPixelFormat = SDL_PIXELFORMAT_UNKNOWN;
