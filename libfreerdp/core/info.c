@@ -129,6 +129,7 @@ static const struct info_flags_t info_flags[] = {
 	{ INFO_HIDEF_RAIL_SUPPORTED, "INFO_HIDEF_RAIL_SUPPORTED" },
 };
 
+WINPR_ATTR_NODISCARD
 static BOOL rdp_read_info_null_string(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
                                       const char* what, UINT32 flags, wStream* s, size_t cbLen,
                                       size_t max)
@@ -151,7 +152,11 @@ static BOOL rdp_read_info_null_string(rdpSettings* settings, FreeRDP_Settings_Ke
 
 		if (unicode)
 		{
-			const WCHAR* domain = Stream_PointerAs(s, WCHAR);
+			WCHAR wstr[513] = WINPR_C_ARRAY_INIT;
+			WINPR_ASSERT(ARRAYSIZE(wstr) > max);
+			memcpy(wstr, Stream_Pointer(s), cbLen);
+
+			const WCHAR* domain = wstr;
 			if (!freerdp_settings_set_string_from_utf16N(settings, id, domain,
 			                                             cbLen / sizeof(WCHAR)))
 			{
@@ -340,7 +345,7 @@ static BOOL rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
  * Get the cbClientAddress size limit
  * see [MS-RDPBCGR] 2.2.1.11.1.1.1 Extended Info Packet (TS_EXTENDED_INFO_PACKET)
  */
-
+WINPR_ATTR_NODISCARD
 static size_t rdp_get_client_address_max_size(const rdpRdp* rdp)
 {
 	UINT32 version = 0;
@@ -652,6 +657,7 @@ fail:
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdp_read_info_string(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
                                  UINT32 flags, wStream* s, size_t cbLenNonNull, size_t max)
 {
@@ -685,7 +691,11 @@ static BOOL rdp_read_info_string(rdpSettings* settings, FreeRDP_Settings_Keys_St
 
 		if (unicode)
 		{
-			const WCHAR* domain = Stream_PointerAs(s, WCHAR);
+			WCHAR wstr[513] = WINPR_C_ARRAY_INIT;
+			WINPR_ASSERT(ARRAYSIZE(wstr) > max);
+
+			memcpy(wstr, Stream_Pointer(s), cbLenNonNull);
+			const WCHAR* domain = wstr;
 			if (!freerdp_settings_set_string_from_utf16N(settings, id, domain,
 			                                             cbLenNonNull / sizeof(WCHAR)))
 				return FALSE;
