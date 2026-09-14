@@ -740,6 +740,14 @@ owned by rdpRdp */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* freerdp_get_build_config(void);
 
+	/**
+	 * Initialize FreeRDP's translation domain and its WinPR dependency.
+	 *
+	 * @param locale Locale name, or NULL/empty to use the environment locale.
+	 * @param searchPath Optional gettext catalog directory for this module.
+	 */
+	FREERDP_API BOOL freerdp_enable_translation(const char* locale, const char* searchPath);
+
 	FREERDP_API void freerdp_free(freerdp* instance);
 
 	WINPR_ATTR_MALLOC(freerdp_free, 1)

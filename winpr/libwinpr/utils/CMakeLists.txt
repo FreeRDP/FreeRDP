@@ -155,6 +155,7 @@ set(ASN1_SRCS asn1/asn1.c)
 
 set(SRCS
     atexit.c
+    i18n.c
     ini.c
     sam.c
     ntlm.c
@@ -168,6 +169,17 @@ set(SRCS
     cmdline.c
     ssl.c
 )
+
+option(WITH_WINPR_I18N "Enable gettext localization support in WinPR" ON)
+if(WITH_WINPR_I18N)
+  find_package(Intl)
+  if(Intl_FOUND)
+    winpr_definition_add(WITH_WINPR_I18N)
+    winpr_library_add_public(Intl::Intl)
+  else()
+    message(STATUS "WinPR i18n disabled: libintl was not found")
+  endif()
+endif()
 
 if(ANDROID)
   list(APPEND SRCS android.h android.c)

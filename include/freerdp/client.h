@@ -161,6 +161,9 @@ extern "C"
 
 	FREERDP_API int freerdp_client_stop(rdpContext* context);
 
+	/** Initialize the client-common and dependent FreeRDP translation domains. */
+	FREERDP_API BOOL freerdp_client_enable_translation(const char* locale, const char* searchPath);
+
 	WINPR_ATTR_NODISCARD
 	FREERDP_API freerdp* freerdp_client_get_instance(rdpContext* context);
 
