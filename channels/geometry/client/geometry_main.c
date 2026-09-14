@@ -97,11 +97,27 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 		const INT32 right = Stream_Get_INT32(s);
 		const INT32 bottom = Stream_Get_INT32(s);
 		if ((abs(x) > INT16_MAX) || (abs(y) > INT16_MAX))
+		{
+			WLog_Print(logger, WLOG_ERROR, "x=%" PRId32 " or y=%" PRId32 " does not fit into INT16",
+			           x, y);
 			return ERROR_INVALID_DATA;
+		}
 		const INT32 w = right - x;
 		const INT32 h = bottom - y;
 		if ((abs(w) > INT16_MAX) || (abs(h) > INT16_MAX))
+		{
+			WLog_Print(logger, WLOG_ERROR, "w=%" PRId32 " or h=%" PRId32 " does not fit into INT16",
+			           w, h);
 			return ERROR_INVALID_DATA;
+		}
+		if ((x > right) || (y > bottom))
+		{
+			WLog_Print(logger, WLOG_ERROR,
+			           "One of x=%" PRId32 " > right=%" PRId32 " or y=%" PRId32
+			           " > bottom=%" PRId32,
+			           x, right, y, bottom);
+			return ERROR_INVALID_DATA;
+		}
 		rgndata->boundingRect.x = (INT16)x;
 		rgndata->boundingRect.y = (INT16)y;
 		rgndata->boundingRect.width = (INT16)w;
@@ -139,13 +155,24 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 			const INT32 right = Stream_Get_INT32(s);
 			const INT32 bottom = Stream_Get_INT32(s);
 			if ((abs(x) > INT16_MAX) || (abs(y) > INT16_MAX))
+			{
+				WLog_Print(logger, WLOG_ERROR, "x=%" PRId32 " or y=%" PRId32 " does not fit INT16",
+				           x, y);
 				return ERROR_INVALID_DATA;
-
+			}
 			const INT32 w = right - x;
 			const INT32 h = bottom - y;
 			if ((abs(w) > INT16_MAX) || (abs(h) > INT16_MAX))
 				return ERROR_INVALID_DATA;
 
+			if ((x > right) || (y > bottom))
+			{
+				WLog_Print(logger, WLOG_ERROR,
+				           "One of x=%" PRId32 " > right=%" PRId32 ", y=%" PRId32
+				           " > bottom=%" PRId32,
+				           x, right, y, bottom);
+				return ERROR_INVALID_DATA;
+			}
 			rect->x = (INT16)x;
 			rect->y = (INT16)y;
 			rect->width = (INT16)w;
@@ -254,15 +281,46 @@ static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 		mappedGeometry->right = Stream_Get_INT32(s);
 		mappedGeometry->bottom = Stream_Get_INT32(s);
 
+		if (mappedGeometry->left > mappedGeometry->right)
+		{
+			WLog_Print(logger, WLOG_ERROR, "invalid left=%" PRId32 " > right=%" PRId32,
+			           mappedGeometry->left, mappedGeometry->right);
+			return ERROR_INVALID_DATA;
+		}
+		if (mappedGeometry->top > mappedGeometry->bottom)
+		{
+			WLog_Print(logger, WLOG_ERROR, "invalid top=%" PRId32 " > bottom=%" PRId32,
+			           mappedGeometry->top, mappedGeometry->bottom);
+			return ERROR_INVALID_DATA;
+		}
+
 		mappedGeometry->topLevelLeft = Stream_Get_INT32(s);
 		mappedGeometry->topLevelTop = Stream_Get_INT32(s);
 		mappedGeometry->topLevelRight = Stream_Get_INT32(s);
 		mappedGeometry->topLevelBottom = Stream_Get_INT32(s);
 
+		if (mappedGeometry->topLevelLeft > mappedGeometry->topLevelRight)
+		{
+			WLog_Print(logger, WLOG_ERROR,
+			           "invalid topLevelLeft=%" PRId32 " > topLevelRight=%" PRId32,
+			           mappedGeometry->topLevelLeft, mappedGeometry->topLevelRight);
+			return ERROR_INVALID_DATA;
+		}
+		if (mappedGeometry->topLevelTop > mappedGeometry->topLevelBottom)
+		{
+			WLog_Print(logger, WLOG_ERROR,
+			           "invalid topLevelTop=%" PRId32 " > topLevelBottom=%" PRId32,
+			           mappedGeometry->topLevelTop, mappedGeometry->topLevelBottom);
+			return ERROR_INVALID_DATA;
+		}
+
 		const UINT32 geometryType = Stream_Get_UINT32(s);
 		if (geometryType != 0x02)
+		{
 			WLog_Print(logger, WLOG_DEBUG, "geometryType should be set to 0x02 and is 0x%" PRIx32,
 			           geometryType);
+			return ERROR_INVALID_DATA;
+		}
 
 		const UINT32 cbGeometryBuffer = Stream_Get_UINT32(s);
 		if (!Stream_CheckAndLogRequiredLengthWLog(logger, s, cbGeometryBuffer))
