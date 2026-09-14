@@ -74,7 +74,9 @@
  *
  * @since version 3.32.0
  */
-#if defined(WINPR_ARCH_SUPPORTED) && !defined(_WIN32)
+#if defined(_WIN32)
+#define WINPR_PACKED_ALIGN_CAST(t, val) WINPR_CXX_COMPAT_CAST(t, val)
+#elif defined(WINPR_ARCH_SUPPORTED)
 #define WINPR_PACKED_ALIGN_CAST(t, val)                     \
 	__extension__({                                         \
 		WINPR_PRAGMA_DIAG_PUSH;                             \
@@ -84,21 +86,17 @@
 		aligntmp;                                           \
 	})
 #else
-// Promote any -Wcast-align warnings to errors on platforms not supporting unaligned access
-#if defined(DISABLE_SUPPORTED_ARCH_CHECKS)
-#if defined(__clang__)
-WINPR_DO_PRAGMA(clang diagnostic warning "-Wcast-align")
-#elif defined(__GNUC__)
-WINPR_DO_PRAGMA(GCC diagnostic warning "-Wcast-align")
-#endif
-#else
-#if defined(__clang__)
-WINPR_DO_PRAGMA(clang diagnostic error "-Wcast-align")
-#elif defined(__GNUC__)
-WINPR_DO_PRAGMA(GCC diagnostic error "-Wcast-align")
-#endif
-#endif
-#define WINPR_PACKED_ALIGN_CAST(t, val) WINPR_CXX_COMPAT_CAST(t, val)
+#define WINPR_PACKED_ALIGN_CAST(t, val)                          \
+	__extension__({                                              \
+		typeof(t) aligntmp = WINPR_CXX_COMPAT_CAST(t, val);      \
+		if (aligntmp)                                            \
+		{                                                        \
+			const size_t fromtype = _Alignof(typeof(*aligntmp)); \
+			const size_t actual = ((uintptr_t)(val)) % fromtype; \
+			WINPR_ASSERT(actual == 0);                           \
+		}                                                        \
+		aligntmp;                                                \
+	})
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
