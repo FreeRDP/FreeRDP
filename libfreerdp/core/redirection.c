@@ -165,6 +165,7 @@ static BOOL rdp_redirection_get_data(wStream* s, UINT32* pLength, const BYTE** p
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t maxLength)
 {
 	UINT32 length = 0;
@@ -173,13 +174,15 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 	if (!rdp_redirection_get_data(s, &length, &data))
 		return FALSE;
 
-	const WCHAR* wstr = WINPR_PACKED_ALIGN_CAST(const WCHAR*, data);
-
-	if ((length % 2) || length < 2 || length > maxLength)
+	if ((length % 2) || (length < 2) || (length > maxLength))
 	{
 		WLog_ERR(TAG, "failure: invalid unicode string length: %" PRIu32 "", length);
 		return FALSE;
 	}
+
+	WCHAR wstr[513] = WINPR_C_ARRAY_INIT;
+	WINPR_ASSERT(ARRAYSIZE(wstr) > maxLength);
+	memcpy(wstr, data, length);
 
 	if (wstr[length / 2 - 1])
 	{
