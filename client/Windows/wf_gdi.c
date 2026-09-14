@@ -780,7 +780,7 @@ static BOOL wf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		case GDI_BS_PATTERN:
 		{
 			HBITMAP bmp = CreateBitmap(8, 8, 1, mem3blt->brush.bpp, mem3blt->brush.data);
-			if(!bmp)
+			if (!bmp)
 				goto fail;
 			brush = CreatePatternBrush(bmp);
 			DeleteObject(bmp);
@@ -791,7 +791,7 @@ static BOOL wf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			goto fail;
 	}
 
-	if(!brush)
+	if (!brush)
 		goto fail;
 
 	orgBrush = SelectObject(hdc, brush);
@@ -811,7 +811,6 @@ fail:
 	{
 		SelectObject(hdc, orgBrush);
 		DeleteObject(brush);
-	
 	}
 
 	SetTextColor(hdc, orgColor);
