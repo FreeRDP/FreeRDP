@@ -557,12 +557,21 @@ static BOOL arm_encodeRedirectPasswd(wLog* log, rdpSettings* settings, const rdp
 		}
 	}
 
-	settings->RdstlsSecurity = TRUE;
-	settings->AadSecurity = FALSE;
-	settings->NlaSecurity = FALSE;
-	settings->RdpSecurity = FALSE;
-	settings->TlsSecurity = FALSE;
-	settings->RedirectionFlags = LB_PASSWORD_IS_PK_ENCRYPTED;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, TRUE))
+		goto out;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_AadSecurity, FALSE))
+		goto out;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+		goto out;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+		goto out;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+		goto out;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
+		goto out;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_RedirectionFlags,
+	                                 LB_PASSWORD_IS_PK_ENCRYPTED))
+		goto out;
 	ret = TRUE;
 out:
 	free(finalOutput);

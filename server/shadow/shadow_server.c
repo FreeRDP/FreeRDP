@@ -654,6 +654,8 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
 			return COMMAND_LINE_ERROR;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+			return COMMAND_LINE_ERROR;
 	}
 	return status;
 }

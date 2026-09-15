@@ -1174,8 +1174,10 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_ConsoleSession));
 	file->NegotiateSecurityLayer = WINPR_ASSERTING_INT_CAST(
 	    UINT32, freerdp_settings_get_bool(settings, FreeRDP_NegotiateSecurityLayer));
-	file->EnableCredSSPSupport =
-	    WINPR_ASSERTING_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity));
+
+	const BOOL nla = freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity) ||
+	                 freerdp_settings_get_bool(settings, FreeRDP_ExtSecurity);
+	file->EnableCredSSPSupport = WINPR_ASSERTING_INT_CAST(UINT32, nla);
 	file->EnableRdsAadAuth =
 	    WINPR_ASSERTING_INT_CAST(UINT32, freerdp_settings_get_bool(settings, FreeRDP_AadSecurity));
 
@@ -1977,6 +1979,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file_unchecked(const rdpFile* fil
 	if (~file->EnableCredSSPSupport)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity,
+		                               file->EnableCredSSPSupport != 0))
+			return FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity,
 		                               file->EnableCredSSPSupport != 0))
 			return FALSE;
 	}
