@@ -44,15 +44,16 @@ UINT32 shadow_encoder_inflight_frames(rdpShadowEncoder* encoder)
 	 * Note: This function is exported so that subsystem could
 	 * implement its own strategy to tune fps.
 	 */
-	return (encoder->queueDepth == SUSPEND_FRAME_ACKNOWLEDGEMENT)
-	           ? 0
-	           : encoder->frameId - encoder->lastAckframeId;
+	if (encoder->queueDepth == SUSPEND_FRAME_ACKNOWLEDGEMENT)
+		return 0;
+	if (encoder->lastAckframeId > encoder->frameId)
+		return 1;
+	return encoder->frameId - encoder->lastAckframeId;
 }
 
 UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 {
-	UINT32 frameId = 0;
-	UINT32 inFlightFrames = shadow_encoder_inflight_frames(encoder);
+	const UINT64 inFlightFrames = shadow_encoder_inflight_frames(encoder);
 
 	/*
 	 * Calculate preferred fps according to how much frames are
@@ -61,7 +62,10 @@ UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 	 */
 	if (inFlightFrames > 1)
 	{
-		encoder->fps = (100 / (inFlightFrames + 1) * encoder->maxFps) / 100;
+		UINT64 fps = (100 / (inFlightFrames + 1) * encoder->maxFps) / 100;
+		if (fps > encoder->maxFps)
+			fps = encoder->maxFps;
+		encoder->fps = WINPR_ASSERTING_INT_CAST(UINT32, fps);
 	}
 	else
 	{
@@ -74,7 +78,7 @@ UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 	if (encoder->fps < 1)
 		encoder->fps = 1;
 
-	frameId = ++encoder->frameId;
+	const UINT32 frameId = ++encoder->frameId;
 	return frameId;
 }
 
