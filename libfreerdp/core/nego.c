@@ -73,6 +73,7 @@ struct rdp_nego
 	wLog* log;
 };
 
+WINPR_ATTR_NODISCARD
 static const char* nego_state_string(NEGO_STATE state)
 {
 	static const char* const NEGO_STATE_STRINGS[] = { "NEGO_STATE_INITIAL", "NEGO_STATE_RDSTLS",
@@ -85,16 +86,35 @@ static const char* nego_state_string(NEGO_STATE state)
 	return NEGO_STATE_STRINGS[state];
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL nego_tcp_connect(rdpNego* nego);
+
+WINPR_ATTR_NODISCARD
 static BOOL nego_transport_connect(rdpNego* nego);
+
 static BOOL nego_transport_disconnect(rdpNego* nego);
+
+WINPR_ATTR_NODISCARD
 static BOOL nego_security_connect(rdpNego* nego);
+
+WINPR_ATTR_NODISCARD
 static BOOL nego_send_preconnection_pdu(rdpNego* nego);
+
+WINPR_ATTR_NODISCARD
 static BOOL nego_recv_response(rdpNego* nego);
+
 static void nego_send(rdpNego* nego);
+
+WINPR_ATTR_NODISCARD
 static BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s);
+
+WINPR_ATTR_NODISCARD
 static BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s);
+
+WINPR_ATTR_NODISCARD
 static BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s);
+
+WINPR_ATTR_NODISCARD
 static const char* nego_rdp_neg_fail_str(uint32_t what);
 
 /* Map a RDP_NEG_FAILURE::failureCode to a connection error.
@@ -102,6 +122,7 @@ static const char* nego_rdp_neg_fail_str(uint32_t what);
  * Only meaningful once the negotiation has terminally failed: a failure code on its own
  * is usually recoverable by falling back to another security protocol.
  */
+WINPR_ATTR_NODISCARD
 static UINT32 nego_failure_to_error(uint32_t failureCode)
 {
 	switch (failureCode)
@@ -329,6 +350,7 @@ BOOL nego_disconnect(rdpNego* nego)
 	return nego_transport_disconnect(nego);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL nego_try_connect(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
@@ -384,6 +406,7 @@ BOOL nego_security_connect(rdpNego* nego)
 	return nego->SecurityConnected;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL nego_tcp_connect(rdpNego* nego)
 {
 	rdpContext* context = nullptr;
@@ -905,7 +928,7 @@ int nego_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra
  * Read optional routing token or cookie of X.224 Connection Request PDU.
  * msdn{cc240470}
  */
-
+WINPR_ATTR_NODISCARD
 static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 {
 	/* routingToken and cookie are optional and mutually exclusive!
@@ -1206,6 +1229,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL nego_process_correlation_info(WINPR_ATTR_UNUSED rdpNego* nego, wStream* s)
 {
 	UINT8 type = 0;
@@ -1355,6 +1379,7 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 {
 	const uint32_t mask =
@@ -1400,6 +1425,26 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 	WLog_Print(nego->log, WLOG_DEBUG, "RDP_NEG_RSP::flags = { %s }",
 	           nego_rdp_neg_rsp_flags_str(nego->flags));
 
+	if ((nego->flags & RESTRICTED_ADMIN_MODE_SUPPORTED) == 0)
+	{
+		if (nego->RestrictedAdminModeRequired)
+		{
+			WLog_Print(nego->log, WLOG_ERROR,
+			           "restricted-admin mode requested but not supported, terminating");
+			return -1;
+		}
+	}
+
+	if ((nego->flags & REDIRECTED_AUTHENTICATION_MODE_SUPPORTED) == 0)
+	{
+		if (nego->RemoteCredsGuardRequired)
+		{
+			WLog_Print(nego->log, WLOG_ERROR,
+			           "remote credential guard requested but not supported, terminating");
+			return -1;
+		}
+	}
+
 	Stream_Read_UINT16(s, length);
 	if (length != 8)
 	{
@@ -1415,6 +1460,7 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 	return nego_set_state(nego, NEGO_STATE_FINAL);
 }
 
+WINPR_ATTR_NODISCARD
 static const char* nego_rdp_neg_fail_str(uint32_t what)
 {
 	switch (what)
