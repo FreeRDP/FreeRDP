@@ -853,22 +853,18 @@ int nego_recv(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s, void* extra
 
 				if (nego->SelectedProtocol)
 				{
-					if ((nego->SelectedProtocol == PROTOCOL_RDSAAD) &&
-					    (!nego->EnabledProtocols[PROTOCOL_RDSAAD]))
-					{
-						nego_set_state(nego, NEGO_STATE_FAIL);
-					}
-					if ((nego->SelectedProtocol == PROTOCOL_HYBRID) &&
-					    (!nego->EnabledProtocols[PROTOCOL_HYBRID]))
-					{
-						nego_set_state(nego, NEGO_STATE_FAIL);
-					}
+					const UINT32 flags[] = { PROTOCOL_RDP,    PROTOCOL_SSL,       PROTOCOL_HYBRID,
+						                     PROTOCOL_RDSTLS, PROTOCOL_HYBRID_EX, PROTOCOL_RDSAAD };
 
-					if ((nego->SelectedProtocol == PROTOCOL_SSL) &&
-					    (!nego->EnabledProtocols[PROTOCOL_SSL]))
+					BOOL enabled = FALSE;
+					for (size_t x = 0; x < ARRAYSIZE(flags); x++)
 					{
-						nego_set_state(nego, NEGO_STATE_FAIL);
+						const UINT32 flag = flags[x];
+						if ((nego->SelectedProtocol == flag) && (nego->EnabledProtocols[flag]))
+							enabled = TRUE;
 					}
+					if (!enabled)
+						nego_set_state(nego, NEGO_STATE_FAIL);
 				}
 				else if (!nego->EnabledProtocols[PROTOCOL_RDP])
 				{
