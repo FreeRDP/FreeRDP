@@ -199,6 +199,7 @@ cp %{_sourcedir}/source_version freerdp-nightly-%{version}/.source_version
     -DCHANNEL_RDPEWA_CLIENT=ON \
     -DCHANNEL_SSHAGENT=ON \
     -DCHANNEL_SSHAGENT_CLIENT=ON \
+    -DWITH_XDG_AAD_AUTH_HELPER=ON \
     -DWITH_SERVER=ON \
     -DWITH_CAIRO=ON \
     -DBUILD_TESTING=ON \
