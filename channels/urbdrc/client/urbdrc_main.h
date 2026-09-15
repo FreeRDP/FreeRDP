@@ -163,7 +163,7 @@ struct S_IUDEVICE
 	void (*setAlreadySend)(IUDEVICE* idev);
 	void (*setChannelClosed)(IUDEVICE* idev);
 	void (*markChannelClosed)(IUDEVICE* idev);
-	WINPR_ATTR_NODISCARD char* (*getPath)(IUDEVICE* idev);
+	WINPR_ATTR_NODISCARD const char* (*getPath)(IUDEVICE* idev);
 
 	void (*free)(IUDEVICE* idev);
 

@@ -66,17 +66,17 @@ static IWTSVirtualChannel* get_channel(IUDEVMAN* idevman)
 
 static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 {
-	char* p = nullptr;
-	char* path = nullptr;
+	const char* p = nullptr;
 	UINT8 containerId[17] = WINPR_C_ARRAY_INIT;
 	UINT16 idVendor = 0;
 	UINT16 idProduct = 0;
 	idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
 	idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
-	path = pdev->getPath(pdev);
+	const char* path = pdev->getPath(pdev);
 
-	if (strlen(path) > 8)
-		p = (path + strlen(path)) - 8;
+	const size_t plen = strlen(path);
+	if (plen > 8)
+		p = &path[plen - 8];
 	else
 		p = path;
 
