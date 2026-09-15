@@ -1431,13 +1431,16 @@ extern "C"
 	/** \brief Writes a UTF-8 string UTF16 encoded to the stream. If the UTF-8
 	 *  string is short, the remaining characters are filled up with '\0'
 	 *
+	 *  \warning This function does not ensure '\0' termination in the resulting WCHAR string.
+	 *
 	 *  \param s The stream to write to
 	 *  \param wcharLength the length (in WCHAR characters) to write
 	 *  \param src The source data buffer with the UTF-8 data
 	 *  \param length The length in bytes of the UTF-8 buffer
 	 *  \param fill If \b TRUE fill the unused parts of the wcharLength with 0
 	 *
-	 *  \b return number of used characters for success, /b -1 for failure
+	 *  \return number of used characters for success, /b -1 for failure
+	 *  \since version 3.0.0
 	 */
 	WINPR_ATTR_NODISCARD
 	WINPR_API SSIZE_T Stream_Write_UTF16_String_From_UTF8(wStream* s, size_t wcharLength,

@@ -3,6 +3,7 @@
 #include <winpr/crypto.h>
 #include <winpr/stream.h>
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Verify(wStream* s, size_t mincap, size_t len, size_t pos)
 {
 	if (Stream_Buffer(s) == nullptr)
@@ -76,6 +77,7 @@ static BOOL TestStream_Verify(wStream* s, size_t mincap, size_t len, size_t pos)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_New(void)
 {
 	/* Test creation of a 0-size stream with no buffer */
@@ -88,6 +90,7 @@ static BOOL TestStream_New(void)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Static(void)
 {
 	BYTE buffer[20] = WINPR_C_ARRAY_INIT;
@@ -135,6 +138,7 @@ static BOOL TestStream_Static(void)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 {
 	size_t len = 0;
@@ -205,6 +209,7 @@ fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Extent(UINT32 maxSize)
 {
 	wStream* s = nullptr;
@@ -320,6 +325,7 @@ fail:
 		/* printf("a: 0x%016llX\n", a); */                            \
 	} while (0)
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_WriteAndRead(UINT64 value)
 {
 	union
@@ -459,6 +465,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Reading(void)
 {
 	BYTE src[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
@@ -483,6 +490,7 @@ static BOOL TestStream_Reading(void)
 	return result;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Write(void)
 {
 	BOOL rc = FALSE;
@@ -577,6 +585,7 @@ out:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Seek(void)
 {
 	BOOL rc = FALSE;
@@ -619,6 +628,7 @@ out:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Rewind(void)
 {
 	BOOL rc = FALSE;
@@ -666,6 +676,7 @@ out:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Zero(void)
 {
 	BOOL rc = FALSE;
@@ -713,6 +724,7 @@ out:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Fill(void)
 {
 	BOOL rc = FALSE;
@@ -755,6 +767,7 @@ out:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL TestStream_Copy(void)
 {
 	BOOL rc = FALSE;
@@ -805,10 +818,66 @@ out:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL TestStream_WriteUTF16(void)
+{
+	const char name[] = "UVC Camera (046d:0825)";
+	const char channel[] = "usb-0000:00:07.0-3";
+	const size_t length = strnlen(name, sizeof(name));
+	BOOL success = FALSE;
+	wStream* s = Stream_New(nullptr, 256);
+	if (!s)
+		return FALSE;
+
+	/* Both an aligned RDPECAM header and an unaligned destination. */
+	for (size_t offset = 1; offset <= 2; offset++)
+	{
+		for (size_t fill = 0; fill <= 1; fill++)
+		{
+			memset(Stream_Buffer(s), 0xAA, Stream_Capacity(s));
+			Stream_SetPosition(s, offset);
+			const SSIZE_T rc =
+			    Stream_Write_UTF16_String_From_UTF8(s, length + 1, name, length, (BOOL)fill);
+			const size_t end = offset + (length + fill) * sizeof(WCHAR);
+			if ((rc != (SSIZE_T)length) || (Stream_GetPosition(s) != end))
+				goto out;
+			Stream_Write(s, channel, strnlen(channel, sizeof(channel)) + 1);
+			for (size_t i = 0; i < length; i++)
+			{
+				const BYTE* ptr = Stream_Buffer(s) + offset + i * sizeof(WCHAR);
+				if ((ptr[0] != (BYTE)name[i]) || (ptr[1] != 0))
+					goto out;
+			}
+			if (fill && ((Stream_Buffer(s)[end - 2] != 0) || (Stream_Buffer(s)[end - 1] != 0)))
+				goto out;
+			if (strncmp((const char*)Stream_Buffer(s) + end, channel, sizeof(channel)) != 0)
+				goto out;
+		}
+	}
+
+	/* Allow truncation. */
+	Stream_ResetPosition(s);
+	if (Stream_Write_UTF16_String_From_UTF8(s, 2, name, length, TRUE) != 2)
+		goto out;
+
+	const size_t pos = Stream_GetPosition(s);
+	if (pos != 2 * sizeof(WCHAR))
+		goto out;
+
+	success = TRUE;
+out:
+	if (!success)
+		printf("UTF-16 stream serialization failed\n");
+	Stream_Free(s, TRUE);
+	return success;
+}
+
 int TestStream(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+	if (!TestStream_WriteUTF16())
+		return 15;
 
 	if (!TestStream_Create(200, FALSE))
 		return 1;
