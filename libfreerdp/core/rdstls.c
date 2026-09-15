@@ -841,7 +841,7 @@ static BOOL rdstls_process_authentication_request_with_cookie(rdpRdstls* rdstls,
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
 		return FALSE;
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
 		return FALSE;
 
 	const rdpSettings* settings = rdstls->context->settings;
@@ -875,7 +875,8 @@ static BOOL rdstls_process_authentication_request_with_cookie(rdpRdstls* rdstls,
 	}
 
 	WLog_Print(rdstls->log, WLOG_DEBUG, "RDSTLS Cookie matches. Grant access.");
-	return FALSE;
+	rdstls->resultCode = RDSTLS_RESULT_SUCCESS;
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD
