@@ -39,8 +39,16 @@
 #define TAG WINPR_TAG("sspi.NTLM")
 #endif
 
+struct NTLM_AV_PAIR_IMPL
+{
+	UINT16 AvId;
+	UINT16 AvLen;
+};
+
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_av_pair_get_next_offset(const NTLM_AV_PAIR* pAvPair, size_t size, size_t* pOffset);
 
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_av_pair_check_data(const NTLM_AV_PAIR* pAvPair, size_t cbAvPair, size_t size)
 {
 	size_t offset = 0;
@@ -52,6 +60,7 @@ static BOOL ntlm_av_pair_check_data(const NTLM_AV_PAIR* pAvPair, size_t cbAvPair
 }
 
 #ifdef WITH_DEBUG_NTLM
+WINPR_ATTR_NODISCARD
 static const char* get_av_pair_string(UINT16 pair)
 {
 	switch (pair)
@@ -84,7 +93,10 @@ static const char* get_av_pair_string(UINT16 pair)
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_av_pair_check(const NTLM_AV_PAIR* pAvPair, size_t cbAvPair);
+
+WINPR_ATTR_NODISCARD
 static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPairList, size_t* pcbAvPairList);
 
 static inline void ntlm_av_pair_set_id(NTLM_AV_PAIR* pAvPair, UINT16 id)
@@ -99,6 +111,7 @@ static inline void ntlm_av_pair_set_len(NTLM_AV_PAIR* pAvPair, UINT16 len)
 	winpr_Data_Write_UINT16(&pAvPair->AvLen, len);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_av_pair_list_init(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 {
 	NTLM_AV_PAIR* pAvPair = pAvPairList;
@@ -186,6 +199,7 @@ void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static size_t ntlm_av_pair_list_size(size_t AvPairsCount, size_t AvPairsValueLength)
 {
 	/* size of headers + value lengths + terminating MsvAvEOL AV_PAIR */
@@ -200,6 +214,7 @@ PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair, size_t cbAvPair)
 	return (PBYTE)pAvPair + sizeof(NTLM_AV_PAIR);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_av_pair_get_next_offset(const NTLM_AV_PAIR* pAvPair, size_t size, size_t* pOffset)
 {
 	size_t avLen = 0;
@@ -212,11 +227,13 @@ static BOOL ntlm_av_pair_get_next_offset(const NTLM_AV_PAIR* pAvPair, size_t siz
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_av_pair_check(const NTLM_AV_PAIR* pAvPair, size_t cbAvPair)
 {
 	return ntlm_av_pair_check_data(pAvPair, cbAvPair, 0);
 }
 
+WINPR_ATTR_NODISCARD
 static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPair, size_t* pcbAvPair)
 {
 	size_t offset = 0;
@@ -230,7 +247,7 @@ static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPair, size_t* pcbAvPair)
 		return nullptr;
 
 	*pcbAvPair -= offset;
-	NTLM_AV_PAIR* next = WINPR_PACKED_ALIGN_CAST(NTLM_AV_PAIR*, ((PBYTE)pAvPair + offset));
+	NTLM_AV_PAIR* next = WINPR_CXX_COMPAT_CAST(NTLM_AV_PAIR*, ((PBYTE)pAvPair + offset));
 	if (!ntlm_av_pair_check(next, *pcbAvPair))
 		return nullptr;
 	return next;
@@ -267,6 +284,7 @@ NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, N
 	return pAvPair;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTLM_AV_ID AvId,
                              PBYTE Value, UINT16 AvLen)
 {
@@ -291,6 +309,7 @@ static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTL
 	return ntlm_av_pair_list_init(pAvPair, cbAvPair);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_av_pair_valid(UINT16 pair)
 {
 	switch (pair)
@@ -312,6 +331,7 @@ static BOOL ntlm_av_pair_valid(UINT16 pair)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList,
                                   NTLM_AV_PAIR* pAvPair, size_t cbAvPair)
 {
@@ -438,7 +458,7 @@ typedef struct gss_channel_bindings_struct {
     gss_buffer_desc application_data;
 } *gss_channel_bindings_t;
  */
-
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_md5_update_uint32_be(WINPR_DIGEST_CTX* md5, UINT32 num)
 {
 	BYTE be32[4];
