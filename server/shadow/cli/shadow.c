@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 		  "tls protocol security" },
 		{ "sec-nla", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "nla protocol security" },
-		{ "sec-ext", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
+		{ "sec-ext", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "nla extended protocol security" },
 		{ "sam-file", COMMAND_LINE_VALUE_REQUIRED, "<file>", nullptr, nullptr, -1, nullptr,
 		  "NTLM SAM file for NLA authentication" },
@@ -136,6 +136,7 @@ int main(int argc, char** argv)
 		WINPR_ASSERT(settings);
 
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, TRUE) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
 			goto fail;

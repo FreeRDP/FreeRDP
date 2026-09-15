@@ -1175,6 +1175,8 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		goto fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
 		goto fail;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+		goto fail;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
 	                                 ENCRYPTION_LEVEL_CLIENT_COMPATIBLE))
 		goto fail;

@@ -822,6 +822,7 @@ static state_run_t peer_recv_callback_internal(WINPR_ATTR_UNUSED rdpTransport* t
 
 				settings->RdstlsSecurity = (SelectedProtocol & PROTOCOL_RDSTLS) != 0;
 				settings->NlaSecurity = (SelectedProtocol & PROTOCOL_HYBRID) != 0;
+				settings->ExtSecurity = (SelectedProtocol & PROTOCOL_HYBRID_EX) != 0;
 				settings->TlsSecurity = (SelectedProtocol & PROTOCOL_SSL) != 0;
 				settings->RdpSecurity = (SelectedProtocol == PROTOCOL_RDP) != 0;
 
