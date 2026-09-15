@@ -25,8 +25,8 @@ HRESULT PATH_CCH_ADD_EXTENSION(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 	pszPathLength = _wcslen(pszPath);
 	bExtDot = (pszExt[0] == '.') ? TRUE : FALSE;
 
-	pDot = _wcsrchr(pszPath, '.');
-	pBackslash = _wcsrchr(pszPath, CUR_PATH_SEPARATOR_CHR);
+	pDot = winpr_wcsnrchr(pszPath, pszPathLength, '.');
+	pBackslash = winpr_wcsnrchr(pszPath, pszPathLength, CUR_PATH_SEPARATOR_CHR);
 
 	if (pDot && pBackslash)
 	{

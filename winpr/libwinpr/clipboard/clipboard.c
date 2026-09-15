@@ -506,7 +506,8 @@ BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, 
 
 	free(clipboard->data);
 
-	clipboard->data = calloc(size + sizeof(WCHAR), sizeof(char));
+	/* append 2 WCHAR zero bytes. Prevent problems with odd input data sizes. */
+	clipboard->data = calloc(size + 2ull * sizeof(WCHAR), sizeof(char));
 
 	if (!clipboard->data)
 		return FALSE;

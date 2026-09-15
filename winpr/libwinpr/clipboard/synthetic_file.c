@@ -651,13 +651,15 @@ static void* convert_mate_copied_files_to_filedescriptors(wClipboard* clipboard,
 	return convert_any_uri_list_to_filedescriptors(clipboard, formatId, pSize);
 }
 
-static size_t count_special_chars(const WCHAR* str)
+WINPR_ATTR_NODISCARD
+static size_t count_special_chars(const WCHAR* str, size_t charLen)
 {
 	size_t count = 0;
 	const WCHAR* start = str;
+	const WCHAR* end = &str[charLen];
 
 	WINPR_ASSERT(str);
-	while (*start)
+	while ((start < end) && (*start))
 	{
 		const WCHAR sharp = '#';
 		const WCHAR questionmark = '?';
@@ -692,6 +694,7 @@ static const char* stop_at_special_chars(const char* str)
 }
 
 /* The universal converter from filedescriptors to different file lists */
+WINPR_ATTR_MALLOC(free, 1)
 static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 formatId,
                                                   const void* data, UINT32* pSize,
                                                   const char* header, const char* lineprefix,
@@ -705,17 +708,11 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	backslash.c[0] = '\\';
 	backslash.c[1] = '\0';
 
-	const FILEDESCRIPTORW* descriptors = nullptr;
 	UINT32 nrDescriptors = 0;
-	size_t count = 0;
-	size_t alloc = 0;
-	size_t pos = 0;
 	size_t baseLength = 0;
-	char* dst = nullptr;
 	size_t header_len = strlen(header);
 	size_t lineprefix_len = strlen(lineprefix);
 	size_t lineending_len = strlen(lineending);
-	size_t decoration_len = 0;
 
 	if (!clipboard || !data || !pSize)
 		return nullptr;
@@ -736,31 +733,31 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 
 	Stream_Read_UINT32(s, nrDescriptors);
 
-	count = (*pSize - 4) / sizeof(FILEDESCRIPTORW);
+	const size_t count = (*pSize - 4) / sizeof(FILEDESCRIPTORW);
 
 	if ((count < 1) || (count != nrDescriptors))
 		return nullptr;
 
-	descriptors = Stream_ConstPointer(s);
+	const FILEDESCRIPTORW* descriptors = Stream_ConstPointer(s);
 
 	if (formatId != ClipboardGetFormatId(clipboard, mime_FileGroupDescriptorW))
 		return nullptr;
 
 	/* Plus 1 for '/' between basepath and filename*/
-	decoration_len = lineprefix_len + lineending_len + baseLength + 1;
-	alloc = header_len;
+	const size_t decoration_len = lineprefix_len + lineending_len + baseLength + 1;
+	size_t alloc = header_len;
 
 	/* Get total size of file/folder names under first level folder only */
 	for (size_t x = 0; x < count; x++)
 	{
 		const FILEDESCRIPTORW* dsc = &descriptors[x];
 
-		if (_wcschr(dsc->cFileName, backslash.w) == nullptr)
+		if (winpr_wcsnchr(dsc->cFileName, ARRAYSIZE(dsc->cFileName), backslash.w) == nullptr)
 		{
 			alloc += ARRAYSIZE(dsc->cFileName) *
 			         8; /* Overallocate, just take the biggest value the result path can have */
 			            /* # (1 char) -> %23 (3 chars) , the first char is replaced inplace */
-			alloc += count_special_chars(dsc->cFileName) * sizeof(WCHAR);
+			alloc += count_special_chars(dsc->cFileName, ARRAYSIZE(dsc->cFileName)) * sizeof(WCHAR);
 			alloc += decoration_len;
 		}
 	}
@@ -768,20 +765,20 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	/* Append a prefix file:// and postfix \n for each file */
 	/* We need to keep last \n since snprintf is null terminated!!  */
 	alloc++;
-	dst = calloc(alloc, sizeof(char));
+	char* dst = calloc(alloc, sizeof(char));
 
 	if (!dst)
 		return nullptr;
 
 	(void)_snprintf(&dst[0], alloc, "%s", header);
 
-	pos = header_len;
+	size_t pos = header_len;
 
 	for (size_t x = 0; x < count; x++)
 	{
 		const FILEDESCRIPTORW* dsc = &descriptors[x];
 		BOOL fail = TRUE;
-		if (_wcschr(dsc->cFileName, backslash.w) != nullptr)
+		if (winpr_wcsnchr(dsc->cFileName, ARRAYSIZE(dsc->cFileName), backslash.w) != nullptr)
 		{
 			continue;
 		}
@@ -870,6 +867,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
  *   uri syntax: https://www.rfc-editor.org/rfc/rfc3986#section-3
  *   uri-lists format: https://www.rfc-editor.org/rfc/rfc2483#section-5
  */
+WINPR_ATTR_MALLOC(free, 1)
 static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 formatId,
                                                  const void* data, UINT32* pSize)
 {
@@ -878,6 +876,7 @@ static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 f
 }
 
 /* Prepend header of common gnome format to file list*/
+WINPR_ATTR_MALLOC(free, 1)
 static void* convert_filedescriptors_to_gnome_copied_files(wClipboard* clipboard, UINT32 formatId,
                                                            const void* data, UINT32* pSize)
 {
@@ -885,6 +884,7 @@ static void* convert_filedescriptors_to_gnome_copied_files(wClipboard* clipboard
 	                                            "file://", "\n", TRUE);
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* convert_filedescriptors_to_mate_copied_files(wClipboard* clipboard, UINT32 formatId,
                                                           const void* data, UINT32* pSize)
 {

@@ -414,7 +414,7 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	backslash.c[0] = '\\';
 	backslash.c[1] = '\0';
 
-	for (WCHAR* wptr = wname; (wptr = _wcschr(wptr, backslash.w));)
+	for (WCHAR* wptr = wname; (wptr = winpr_wcsnchr(wptr, wlen, backslash.w));)
 		*wptr = L'_';
 	Stream_Write(printer_dev->device.data, wname, PrinterNameLen);
 
