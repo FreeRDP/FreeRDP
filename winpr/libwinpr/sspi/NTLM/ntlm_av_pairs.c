@@ -52,7 +52,7 @@ WINPR_ATTR_NODISCARD
 static BOOL ntlm_av_pair_check_data(const NTLM_AV_PAIR* pAvPair, size_t cbAvPair, size_t size)
 {
 	size_t offset = 0;
-	if (!pAvPair || cbAvPair < sizeof(NTLM_AV_PAIR) + size)
+	if (!pAvPair || cbAvPair < sizeof(struct NTLM_AV_PAIR_IMPL) + size)
 		return FALSE;
 	if (!ntlm_av_pair_get_next_offset(pAvPair, cbAvPair, &offset))
 		return FALSE;
@@ -102,13 +102,15 @@ static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPairList, size_t* pcbAvP
 static inline void ntlm_av_pair_set_id(NTLM_AV_PAIR* pAvPair, UINT16 id)
 {
 	WINPR_ASSERT(pAvPair);
-	winpr_Data_Write_UINT16(&pAvPair->AvId, id);
+	struct NTLM_AV_PAIR_IMPL* impl = (struct NTLM_AV_PAIR_IMPL*)pAvPair;
+	winpr_Data_Write_UINT16(&impl->AvId, id);
 }
 
 static inline void ntlm_av_pair_set_len(NTLM_AV_PAIR* pAvPair, UINT16 len)
 {
 	WINPR_ASSERT(pAvPair);
-	winpr_Data_Write_UINT16(&pAvPair->AvLen, len);
+	struct NTLM_AV_PAIR_IMPL* impl = (struct NTLM_AV_PAIR_IMPL*)pAvPair;
+	winpr_Data_Write_UINT16(&impl->AvLen, len);
 }
 
 WINPR_ATTR_NODISCARD
@@ -116,7 +118,7 @@ static BOOL ntlm_av_pair_list_init(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairLis
 {
 	NTLM_AV_PAIR* pAvPair = pAvPairList;
 
-	if (!pAvPair || (cbAvPairList < sizeof(NTLM_AV_PAIR)))
+	if (!pAvPair || (cbAvPairList < sizeof(struct NTLM_AV_PAIR_IMPL)))
 		return FALSE;
 
 	ntlm_av_pair_set_id(pAvPair, MsvAvEOL);
@@ -130,10 +132,11 @@ WINPR_ATTR_NODISCARD static inline BOOL ntlm_av_pair_get_id(const NTLM_AV_PAIR* 
 	if (!pAvPair || !pair)
 		return FALSE;
 
-	if (size < sizeof(NTLM_AV_PAIR))
+	if (size < sizeof(struct NTLM_AV_PAIR_IMPL))
 		return FALSE;
 
-	const UINT16 AvId = winpr_Data_Get_UINT16(&pAvPair->AvId);
+	const struct NTLM_AV_PAIR_IMPL* impl = (const struct NTLM_AV_PAIR_IMPL*)pAvPair;
+	const UINT16 AvId = winpr_Data_Get_UINT16(&impl->AvId);
 
 	*pair = AvId;
 	return TRUE;
@@ -151,7 +154,7 @@ ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 		return 0;
 
 	const size_t size = WINPR_ASSERTING_INT_CAST(size_t, ((PBYTE)pAvPair - (PBYTE)pAvPairList)) +
-	                    sizeof(NTLM_AV_PAIR);
+	                    sizeof(struct NTLM_AV_PAIR_IMPL);
 	WINPR_ASSERT(size <= UINT32_MAX);
 	WINPR_ASSERT(size >= 0);
 	return (ULONG)size;
@@ -163,10 +166,11 @@ WINPR_ATTR_NODISCARD static inline BOOL ntlm_av_pair_get_len(const NTLM_AV_PAIR*
 	if (!pAvPair)
 		return FALSE;
 
-	if (size < sizeof(NTLM_AV_PAIR))
+	if (size < sizeof(struct NTLM_AV_PAIR_IMPL))
 		return FALSE;
 
-	const UINT16 AvLen = winpr_Data_Get_UINT16(&pAvPair->AvLen);
+	const struct NTLM_AV_PAIR_IMPL* impl = (const struct NTLM_AV_PAIR_IMPL*)pAvPair;
+	const UINT16 AvLen = winpr_Data_Get_UINT16(&impl->AvLen);
 
 	*pAvLen = AvLen;
 	return TRUE;
@@ -209,9 +213,9 @@ static size_t ntlm_av_pair_list_size(size_t AvPairsCount, size_t AvPairsValueLen
 PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair, size_t cbAvPair)
 {
 	WINPR_ASSERT(pAvPair);
-	if (cbAvPair < sizeof(NTLM_AV_PAIR))
+	if (cbAvPair < sizeof(struct NTLM_AV_PAIR_IMPL))
 		return nullptr;
-	return (PBYTE)pAvPair + sizeof(NTLM_AV_PAIR);
+	return (PBYTE)pAvPair + sizeof(struct NTLM_AV_PAIR_IMPL);
 }
 
 WINPR_ATTR_NODISCARD
@@ -223,7 +227,7 @@ static BOOL ntlm_av_pair_get_next_offset(const NTLM_AV_PAIR* pAvPair, size_t siz
 
 	if (!ntlm_av_pair_get_len(pAvPair, size, &avLen))
 		return FALSE;
-	*pOffset = avLen + sizeof(NTLM_AV_PAIR);
+	*pOffset = avLen + sizeof(struct NTLM_AV_PAIR_IMPL);
 	return TRUE;
 }
 
@@ -294,7 +298,7 @@ static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTL
 	pAvPair = ntlm_av_pair_get(pAvPairList, cbAvPairList, MsvAvEOL, &cbAvPair);
 
 	/* size of header + value length + terminating MsvAvEOL AV_PAIR */
-	if (!pAvPair || cbAvPair < 2 * sizeof(NTLM_AV_PAIR) + AvLen)
+	if (!pAvPair || cbAvPair < 2 * sizeof(struct NTLM_AV_PAIR_IMPL) + AvLen)
 		return FALSE;
 
 	ntlm_av_pair_set_id(pAvPair, (UINT16)AvId);
@@ -807,7 +811,7 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		if (!ntlm_av_pair_get_len(AvEOL, cbAvEOL, &cbAvEntryLen))
 			goto fail;
 
-		ZeroMemory(AvEOL, sizeof(NTLM_AV_PAIR));
+		ZeroMemory(AvEOL, sizeof(struct NTLM_AV_PAIR_IMPL));
 	}
 
 	return TRUE;
@@ -819,5 +823,10 @@ fail:
 size_t ntlm_av_pair_get_length(NTLM_AV_PAIR* pAvPair)
 {
 	WINPR_ASSERT(pAvPair);
-	return winpr_Data_Get_UINT16(&pAvPair->AvLen);
+
+	const size_t size = sizeof(struct NTLM_AV_PAIR_IMPL);
+	size_t len = 0;
+	if (!ntlm_av_pair_get_len(pAvPair, size, &len))
+		return 0;
+	return len;
 }
