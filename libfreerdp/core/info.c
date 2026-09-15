@@ -807,7 +807,6 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 {
 	BOOL ret = FALSE;
-	UINT32 flags = 0;
 	WCHAR* domainW = nullptr;
 	size_t cbDomain = 0;
 	WCHAR* userNameW = nullptr;
@@ -819,15 +818,14 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	WCHAR* workingDirW = nullptr;
 	size_t cbWorkingDir = 0;
 	BOOL usedPasswordCookie = FALSE;
-	rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(rdp);
-	settings = rdp->settings;
+	const rdpSettings* settings = rdp->settings;
 	WINPR_ASSERT(settings);
 
-	flags = INFO_MOUSE | INFO_UNICODE | INFO_LOGONERRORS | INFO_MAXIMIZESHELL |
-	        INFO_ENABLEWINDOWSKEY | INFO_DISABLECTRLALTDEL | INFO_MOUSE_HAS_WHEEL |
-	        INFO_FORCE_ENCRYPTED_CS_PDU;
+	UINT32 flags = INFO_MOUSE | INFO_UNICODE | INFO_LOGONERRORS | INFO_MAXIMIZESHELL |
+	               INFO_ENABLEWINDOWSKEY | INFO_DISABLECTRLALTDEL | INFO_MOUSE_HAS_WHEEL |
+	               INFO_FORCE_ENCRYPTED_CS_PDU;
 
 	if (settings->SmartcardLogon)
 	{
@@ -883,61 +881,66 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	domainW = freerdp_settings_get_string_as_utf16(settings, FreeRDP_Domain, &cbDomain);
-	if (cbDomain > UINT16_MAX / sizeof(WCHAR))
+	if (!freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_DisableCredentialsDelegation))
 	{
-		WLog_ERR(TAG, "cbDomain > UINT16_MAX");
-		goto fail;
-	}
-	cbDomain *= sizeof(WCHAR);
-
-	/* user name provided by the expert for connecting to the novice computer */
-	userNameW = freerdp_settings_get_string_as_utf16(settings, FreeRDP_Username, &cbUserName);
-	if (cbUserName > UINT16_MAX / sizeof(WCHAR))
-	{
-		WLog_ERR(TAG, "cbUserName > UINT16_MAX");
-		goto fail;
-	}
-	cbUserName *= sizeof(WCHAR);
-
-	{
-		const char* pin = "*";
-		if (!settings->RemoteAssistanceMode)
+		domainW = freerdp_settings_get_string_as_utf16(settings, FreeRDP_Domain, &cbDomain);
+		if (cbDomain > UINT16_MAX / sizeof(WCHAR))
 		{
-			/* Ignore redirection password if we´re using smartcard and have the pin as password */
-			if (((flags & INFO_PASSWORD_IS_SC_PIN) == 0) && settings->RedirectionPassword &&
-			    (settings->RedirectionPasswordLength > 0))
-			{
-				union
-				{
-					BYTE* bp;
-					WCHAR* wp;
-				} ptrconv;
+			WLog_ERR(TAG, "cbDomain > UINT16_MAX");
+			goto fail;
+		}
+		cbDomain *= sizeof(WCHAR);
 
-				if (settings->RedirectionPasswordLength > UINT16_MAX)
+		/* user name provided by the expert for connecting to the novice computer */
+		userNameW = freerdp_settings_get_string_as_utf16(settings, FreeRDP_Username, &cbUserName);
+		if (cbUserName > UINT16_MAX / sizeof(WCHAR))
+		{
+			WLog_ERR(TAG, "cbUserName > UINT16_MAX");
+			goto fail;
+		}
+		cbUserName *= sizeof(WCHAR);
+
+		{
+			const char* pin = "*";
+			if (!settings->RemoteAssistanceMode)
+			{
+				/* Ignore redirection password if we´re using smartcard and have the pin as password
+				 */
+				if (((flags & INFO_PASSWORD_IS_SC_PIN) == 0) && settings->RedirectionPassword &&
+				    (settings->RedirectionPasswordLength > 0))
 				{
-					WLog_ERR(TAG, "RedirectionPasswordLength > UINT16_MAX");
+					union
+					{
+						BYTE* bp;
+						WCHAR* wp;
+					} ptrconv;
+
+					if (settings->RedirectionPasswordLength > UINT16_MAX)
+					{
+						WLog_ERR(TAG, "RedirectionPasswordLength > UINT16_MAX");
+						goto fail;
+					}
+					usedPasswordCookie = TRUE;
+
+					ptrconv.bp = settings->RedirectionPassword;
+					passwordW = ptrconv.wp;
+					cbPassword = (UINT16)settings->RedirectionPasswordLength;
+				}
+				else
+					pin = freerdp_settings_get_string(settings, FreeRDP_Password);
+			}
+
+			if (!usedPasswordCookie && pin)
+			{
+				passwordW = ConvertUtf8ToWCharAlloc(pin, &cbPassword);
+				if (cbPassword > UINT16_MAX / sizeof(WCHAR))
+				{
+					WLog_ERR(TAG, "cbPassword > UINT16_MAX");
 					goto fail;
 				}
-				usedPasswordCookie = TRUE;
-
-				ptrconv.bp = settings->RedirectionPassword;
-				passwordW = ptrconv.wp;
-				cbPassword = (UINT16)settings->RedirectionPasswordLength;
+				cbPassword = (UINT16)cbPassword * sizeof(WCHAR);
 			}
-			else
-				pin = freerdp_settings_get_string(settings, FreeRDP_Password);
-		}
-
-		if (!usedPasswordCookie && pin)
-		{
-			passwordW = ConvertUtf8ToWCharAlloc(pin, &cbPassword);
-			if (cbPassword > UINT16_MAX / sizeof(WCHAR))
-			{
-				WLog_ERR(TAG, "cbPassword > UINT16_MAX");
-				goto fail;
-			}
-			cbPassword = (UINT16)cbPassword * sizeof(WCHAR);
 		}
 	}
 
