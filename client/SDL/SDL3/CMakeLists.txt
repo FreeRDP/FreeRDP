@@ -60,7 +60,7 @@ list(
   Threads::Threads
   sdl3_client_res
   sdl3-dialogs
-  sdl-common-aad-view
+  sdl-common-aad-helper
   sdl-common-prefs
 )
 

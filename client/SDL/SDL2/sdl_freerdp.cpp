@@ -66,9 +66,7 @@
 
 #include <sdl_config.hpp>
 
-#if defined(WITH_WEBVIEW)
-#include <aad/sdl_webview.hpp>
-#endif
+#include <sdl_aad_helper.hpp>
 
 #define SDL_TAG CLIENT_TAG("SDL")
 
@@ -1180,6 +1178,10 @@ static void sdl_post_disconnect(freerdp* instance)
 	                                      sdl_OnChannelDisconnectedEventHandler);
 	PubSub_UnsubscribeUserNotification(instance->context->pubSub,
 	                                   sdl_OnUserNotificationEventHandler);
+
+	if (auto& helper = get_context(instance->context)->getAadAuthHelper())
+		helper->stop();
+
 	gdi_free(instance);
 }
 
@@ -1456,6 +1458,23 @@ static void sdl_client_global_uninit()
 #endif
 }
 
+/* matches pGetAccessToken's fixed signature exactly, so it can be assigned to
+ * instance->GetAccessToken directly; forwards into the shared implementation via va_list
+ * (vprintf-style) along with this connection's own storage slot. */
+static BOOL sdl_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
+                                 size_t count, ...)
+{
+	auto sdl = get_context(instance->context);
+	WINPR_ASSERT(sdl);
+
+	va_list ap = {};
+	va_start(ap, count);
+	const BOOL rc = sdl_aad_helper_get_access_token_v(instance, sdl->getAadAuthHelper(), tokenType,
+	                                                  token, count, ap);
+	va_end(ap);
+	return rc;
+}
+
 static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 {
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(context);
@@ -1479,11 +1498,7 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	instance->ChooseSmartcard = sdl_choose_smartcard;
 	instance->RetryDialog = sdl_retry_dialog;
 
-#if defined(WITH_WEBVIEW)
-	instance->GetAccessToken = sdl_webview_get_access_token;
-#else
-	instance->GetAccessToken = client_cli_get_access_token;
-#endif
+	instance->GetAccessToken = sdl_get_access_token;
 	/* TODO: Client display set up */
 
 	return TRUE;
@@ -1789,4 +1804,9 @@ rdpContext* SdlContext::context() const
 rdpClientContext* SdlContext::common() const
 {
 	return reinterpret_cast<rdpClientContext*>(_context);
+}
+
+std::shared_ptr<SdlAadAuthHelper>& SdlContext::getAadAuthHelper()
+{
+	return _aadAuthHelper;
 }
