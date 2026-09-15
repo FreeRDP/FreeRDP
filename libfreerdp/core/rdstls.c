@@ -875,7 +875,8 @@ static BOOL rdstls_process_authentication_request_with_cookie(rdpRdstls* rdstls,
 	}
 
 	WLog_Print(rdstls->log, WLOG_DEBUG, "RDSTLS Cookie matches. Grant access.");
-	return FALSE;
+	rdstls->resultCode = RDSTLS_RESULT_SUCCESS;
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD
