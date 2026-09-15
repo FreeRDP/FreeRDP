@@ -1156,16 +1156,18 @@ static BOOL set_creds_octetstring_to_settings(WinPrAsn1Decoder* dec, WinPrAsn1_t
 	}
 
 	BOOL error = FALSE;
-	WinPrAsn1_OctetString value;
+	WinPrAsn1_OctetString value = WINPR_C_ARRAY_INIT;
 	/* note: not checking "error" value, as the not present optional item case is handled above
 	 *       if the function fails it's because of a real error not because the item is not present
 	 */
-	if (!WinPrAsn1DecReadContextualOctetString(dec, tagId, &error, &value, FALSE))
+	if (!WinPrAsn1DecReadContextualOctetString(dec, tagId, &error, &value, TRUE))
 		return FALSE;
 
-	return freerdp_settings_set_string_from_utf16N(
+	const BOOL rc = freerdp_settings_set_string_from_utf16N(
 	    settings, settingId, WINPR_PACKED_ALIGN_CAST(const WCHAR*, value.data),
 	    value.len / sizeof(WCHAR));
+	free(value.data);
+	return rc;
 }
 
 WINPR_ATTR_NODISCARD
@@ -1349,7 +1351,6 @@ static BOOL nla_read_TSRemoteGuardPackageCred(WINPR_ATTR_UNUSED rdpNla* nla, Win
                                               RemoteGuardPackageCredType* credsType,
                                               wStream* payload)
 {
-	WinPrAsn1_OctetString packageName = WINPR_C_ARRAY_INIT;
 	WinPrAsn1_OctetString credBuffer = WINPR_C_ARRAY_INIT;
 	BOOL error = FALSE;
 	char packageNameStr[100] = WINPR_C_ARRAY_INIT;
@@ -1362,11 +1363,16 @@ static BOOL nla_read_TSRemoteGuardPackageCred(WINPR_ATTR_UNUSED rdpNla* nla, Win
 	*credsType = RCG_TYPE_NONE;
 
 	/* packageName [0] OCTET STRING */
-	if (!WinPrAsn1DecReadContextualOctetString(dec, 0, &error, &packageName, FALSE) || error)
-		return FALSE;
+	{
+		WinPrAsn1_OctetString packageName = WINPR_C_ARRAY_INIT;
+		if (!WinPrAsn1DecReadContextualOctetString(dec, 0, &error, &packageName, TRUE) || error)
+			return FALSE;
 
-	ConvertMszWCharNToUtf8(WINPR_PACKED_ALIGN_CAST(WCHAR*, packageName.data),
-	                       packageName.len / sizeof(WCHAR), packageNameStr, sizeof(packageNameStr));
+		ConvertMszWCharNToUtf8(WINPR_PACKED_ALIGN_CAST(WCHAR*, packageName.data),
+		                       packageName.len / sizeof(WCHAR), packageNameStr,
+		                       sizeof(packageNameStr));
+		free(packageName.data);
+	}
 	WLog_DBG(TAG, "TSRemoteGuardPackageCred(%s)", packageNameStr);
 
 	/* credBuffer [1] OCTET STRING, */

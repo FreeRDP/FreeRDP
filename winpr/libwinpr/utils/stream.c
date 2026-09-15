@@ -468,18 +468,23 @@ SSIZE_T Stream_Write_UTF16_String_From_UTF8(wStream* s, size_t wcharLength, cons
                                             size_t length, BOOL fill)
 {
 	SSIZE_T rc = 0;
-	WCHAR* str = Stream_PointerAs(s, WCHAR);
 
 	if (length != 0)
 	{
 		if (!Stream_CheckAndLogRequiredCapacityOfSize(STREAM_TAG, s, wcharLength, sizeof(WCHAR)))
 			return -1;
 
-		rc = ConvertUtf8NToWChar(src, length, str, wcharLength);
-		if (rc < 0)
+		size_t wlen = 0;
+		WCHAR* str = ConvertUtf8NToWCharAlloc(src, length, &wlen);
+		if (!str)
 			return -1;
 
-		Stream_Seek(s, (size_t)rc * sizeof(WCHAR));
+		size_t len = wcharLength;
+		if (len > wlen)
+			len = wlen;
+		Stream_Write(s, str, len * sizeof(WCHAR));
+		Stream_Seek(s, wcharLength - len);
+		free(str);
 	}
 
 	if (fill)

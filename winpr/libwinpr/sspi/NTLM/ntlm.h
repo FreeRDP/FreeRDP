@@ -110,11 +110,7 @@ typedef enum
 } NTLM_AV_ID;
 #endif /* __MINGW32__ */
 
-typedef struct
-{
-	UINT16 AvId;
-	UINT16 AvLen;
-} NTLM_AV_PAIR;
+typedef void NTLM_AV_PAIR;
 
 #define MSV_AV_FLAGS_AUTHENTICATION_CONSTRAINED 0x00000001
 #define MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK 0x00000002
