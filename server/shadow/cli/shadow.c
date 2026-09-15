@@ -32,6 +32,26 @@
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("shadow")
 
+WINPR_ATTR_NODISCARD
+static const char* boolstr(BOOL val)
+{
+	return val ? "TRUE" : "FALSE";
+}
+
+static void dump_security_settings(const rdpSettings* settings)
+{
+	WINPR_ASSERT(settings);
+	const BOOL nla = freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity);
+	const BOOL ext = freerdp_settings_get_bool(settings, FreeRDP_ExtSecurity);
+	const BOOL tls = freerdp_settings_get_bool(settings, FreeRDP_TlsSecurity);
+	const BOOL rdp = freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity);
+	const BOOL aad = freerdp_settings_get_bool(settings, FreeRDP_AadSecurity);
+	const BOOL rdstls = freerdp_settings_get_bool(settings, FreeRDP_RdstlsSecurity);
+
+	WLog_INFO(TAG, "security: RDP:%s, TLS:%s, NLA:%s, EXT:%s, AAD:%s, RDSTLS:%s", boolstr(rdp),
+	          boolstr(tls), boolstr(nla), boolstr(ext), boolstr(aad), boolstr(rdstls));
+}
+
 int main(int argc, char** argv)
 {
 	int status = 0;
@@ -79,7 +99,7 @@ int main(int argc, char** argv)
 		  "tls protocol security" },
 		{ "sec-nla", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "nla protocol security" },
-		{ "sec-ext", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
+		{ "sec-ext", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "nla extended protocol security" },
 		{ "sam-file", COMMAND_LINE_VALUE_REQUIRED, "<file>", nullptr, nullptr, -1, nullptr,
 		  "NTLM SAM file for NLA authentication" },
@@ -136,6 +156,7 @@ int main(int argc, char** argv)
 		WINPR_ASSERT(settings);
 
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, TRUE) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
 			goto fail;
@@ -165,6 +186,11 @@ int main(int argc, char** argv)
 		status = shadow_server_command_line_status_print(server, argc, argv, status, shadow_args);
 		goto fail;
 	}
+
+	if (server->authentication)
+		dump_security_settings(server->settings);
+	else
+		WLog_INFO(TAG, "authentication: disabled");
 
 	if ((status = shadow_server_init(server)) < 0)
 	{

@@ -188,7 +188,7 @@ int TestCmdLine(int argc, char* argv[])
 		  "tls protocol security" },
 		{ "sec-nla", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "nla protocol security" },
-		{ "sec-ext", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
+		{ "sec-ext", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 		  "nla extended protocol security" },
 		{ "cert-name", COMMAND_LINE_VALUE_REQUIRED, nullptr, nullptr, nullptr, -1, nullptr,
 		  "certificate name" },

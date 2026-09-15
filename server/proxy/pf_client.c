@@ -639,7 +639,8 @@ static BOOL pf_client_should_retry_without_nla(pClientContext* pc)
 	WINPR_ASSERT(config);
 
 	if (!config->ClientAllowFallbackToTls ||
-	    !freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity))
+	    (!freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity) &&
+	     !freerdp_settings_get_bool(settings, FreeRDP_ExtSecurity)))
 		return FALSE;
 
 	return config->ClientTlsSecurity || config->ClientRdpSecurity;
@@ -660,6 +661,8 @@ static BOOL pf_client_set_security_settings(pClientContext* pc)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, config->ClientTlsSecurity))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, config->ClientNlaSecurity))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, config->ClientExtSecurity))
 		return FALSE;
 
 	if (pf_client_use_proxy_smartcard_auth(settings))
@@ -695,11 +698,14 @@ static BOOL pf_client_connect_without_nla(pClientContext* pc)
 	WINPR_ASSERT(settings);
 
 	/* If already disabled abort early. */
-	if (!freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity))
+	if (!freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_ExtSecurity))
 		return FALSE;
 
 	/* disable NLA */
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
 		return FALSE;
 
 	/* do not allow next connection failure */
@@ -730,10 +736,11 @@ static BOOL pf_client_connect(freerdp* instance)
 	PROXY_LOG_INFO(TAG, pc, "connecting using client info: Username: %s, Domain: %s",
 	               freerdp_settings_get_string(settings, FreeRDP_Username),
 	               freerdp_settings_get_string(settings, FreeRDP_Domain));
-	PROXY_LOG_INFO(TAG, pc, "connecting using security settings: rdp=%d, tls=%d, nla=%d",
+	PROXY_LOG_INFO(TAG, pc, "connecting using security settings: rdp=%d, tls=%d, nla=%d, ext=%d",
 	               freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity),
 	               freerdp_settings_get_bool(settings, FreeRDP_TlsSecurity),
-	               freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity));
+	               freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity),
+	               freerdp_settings_get_bool(settings, FreeRDP_ExtSecurity));
 
 	if (!freerdp_connect(instance))
 	{

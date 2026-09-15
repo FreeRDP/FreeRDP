@@ -581,7 +581,8 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 			return FALSE;
 	}
 
-	if (server->authentication && !freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity))
+	if (server->authentication && !(freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity) ||
+	                                freerdp_settings_get_bool(settings, FreeRDP_ExtSecurity)))
 	{
 		if (subsystem->Authenticate)
 		{

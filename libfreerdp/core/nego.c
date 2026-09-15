@@ -1670,6 +1670,8 @@ fail:
 					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
 					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
 					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
@@ -1714,6 +1716,8 @@ fail:
 					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
 					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE))
 					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
@@ -1730,6 +1734,8 @@ fail:
 					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE))
 					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, TRUE))
+					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE))
 					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
@@ -1745,6 +1751,8 @@ fail:
 				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
 					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
 					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, TRUE))
 					return FALSE;

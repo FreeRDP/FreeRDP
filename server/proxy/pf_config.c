@@ -112,9 +112,11 @@ static const char* key_input_multitouch = "Multitouch";
 
 static const char* section_security = "Security";
 static const char* key_security_server_nla = "ServerNlaSecurity";
+static const char* key_security_server_ext = "ServerExtSecurity";
 static const char* key_security_server_tls = "ServerTlsSecurity";
 static const char* key_security_server_rdp = "ServerRdpSecurity";
 static const char* key_security_client_nla = "ClientNlaSecurity";
+static const char* key_security_client_ext = "ClientExtSecurity";
 static const char* key_security_client_tls = "ClientTlsSecurity";
 static const char* key_security_client_rdp = "ClientRdpSecurity";
 static const char* key_security_client_fallback = "ClientAllowFallbackToTls";
@@ -467,6 +469,8 @@ static BOOL pf_config_load_security(wIniFile* ini, proxyConfig* config)
 	    pf_config_get_bool(ini, section_security, key_security_server_tls, TRUE);
 	config->ServerNlaSecurity =
 	    pf_config_get_bool(ini, section_security, key_security_server_nla, FALSE);
+	config->ServerExtSecurity =
+	    pf_config_get_bool(ini, section_security, key_security_server_ext, FALSE);
 	config->ServerRdpSecurity =
 	    pf_config_get_bool(ini, section_security, key_security_server_rdp, TRUE);
 
@@ -474,6 +478,8 @@ static BOOL pf_config_load_security(wIniFile* ini, proxyConfig* config)
 	    pf_config_get_bool(ini, section_security, key_security_client_tls, TRUE);
 	config->ClientNlaSecurity =
 	    pf_config_get_bool(ini, section_security, key_security_client_nla, TRUE);
+	config->ClientExtSecurity =
+	    pf_config_get_bool(ini, section_security, key_security_client_ext, TRUE);
 	config->ClientRdpSecurity =
 	    pf_config_get_bool(ini, section_security, key_security_client_rdp, TRUE);
 	config->ClientAllowFallbackToTls =
@@ -824,6 +830,9 @@ BOOL pf_server_config_dump(const char* file)
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_server_nla, bool_str_false) <
 	    0)
 		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_security, key_security_server_ext, bool_str_false) <
+	    0)
+		goto fail;
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_server_rdp, bool_str_true) <
 	    0)
 		goto fail;
@@ -832,6 +841,9 @@ BOOL pf_server_config_dump(const char* file)
 	    0)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_client_nla, bool_str_true) <
+	    0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_security, key_security_client_ext, bool_str_true) <
 	    0)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_client_rdp, bool_str_true) <
@@ -977,9 +989,11 @@ void pf_server_config_print(const proxyConfig* config)
 
 	CONFIG_PRINT_SECTION(section_security);
 	CONFIG_PRINT_BOOL(config, ServerNlaSecurity);
+	CONFIG_PRINT_BOOL(config, ServerExtSecurity);
 	CONFIG_PRINT_BOOL(config, ServerTlsSecurity);
 	CONFIG_PRINT_BOOL(config, ServerRdpSecurity);
 	CONFIG_PRINT_BOOL(config, ClientNlaSecurity);
+	CONFIG_PRINT_BOOL(config, ClientExtSecurity);
 	CONFIG_PRINT_BOOL(config, ClientTlsSecurity);
 	CONFIG_PRINT_BOOL(config, ClientRdpSecurity);
 	CONFIG_PRINT_BOOL(config, ClientAllowFallbackToTls);
