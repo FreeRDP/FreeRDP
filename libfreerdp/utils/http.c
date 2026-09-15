@@ -158,6 +158,8 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 			goto out;
 		}
 
+		SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, nullptr);
+
 		SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
 
 		bio = BIO_new_ssl_connect(ssl_ctx);
