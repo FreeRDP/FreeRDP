@@ -520,8 +520,11 @@ static BOOL rdstls_write_authentication_request_with_fedauth_token(rdpRdstls* rd
 		return FALSE;
 	}
 
-	const size_t wideLength = utf8Length + 1;
-	const size_t wideBytes = wideLength * sizeof(WCHAR);
+	const SSIZE_T wideLength = ConvertUtf8NToWChar(token, utf8Length, nullptr, 0);
+	if (wideLength < 0)
+		return FALSE;
+	const size_t wideLengthZero = WINPR_ASSERTING_INT_CAST(size_t, wideLength);
+	const size_t wideBytes = (wideLengthZero + 1ull) * sizeof(WCHAR);
 
 	if (!Stream_EnsureRemainingCapacity(s, 6 + wideBytes))
 		return FALSE;
@@ -530,7 +533,7 @@ static BOOL rdstls_write_authentication_request_with_fedauth_token(rdpRdstls* rd
 	Stream_Write_UINT16(s, RDSTLS_DATA_FEDAUTH_TOKEN);
 	Stream_Write_UINT16(s, (UINT16)wideBytes);
 
-	return Stream_Write_UTF16_String_From_UTF8(s, wideLength, token, utf8Length, TRUE) >= 0;
+	return Stream_Write_UTF16_String_From_UTF8(s, wideLengthZero, token, utf8Length, TRUE) >= 0;
 }
 
 WINPR_ATTR_NODISCARD
