@@ -1173,7 +1173,7 @@ static BOOL libusb_udev_detach_kernel_driver(IUDEVICE* idev)
 				return FALSE;
 			err = libusb_kernel_driver_active(pdev->libusb_handle, number);
 			log_libusb_result(urbdrc->log, WLOG_DEBUG, "libusb_kernel_driver_active", err);
-			// compare to 1 explicitely because 1 means a kernel driver is active
+			// compare to 1 explicitly because 1 means a kernel driver is active
 			if (err == 1)
 			{
 				err = libusb_detach_kernel_driver(pdev->libusb_handle, number);
