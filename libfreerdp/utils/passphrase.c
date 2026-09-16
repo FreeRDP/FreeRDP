@@ -347,7 +347,7 @@ static BOOL set_terminal_nonblock(int ifd, BOOL nonblock);
 
 static void restore_terminal(void)
 {
-	(void)set_termianl_nonblock(-1, FALSE);
+	(void)set_terminal_nonblock(-1, FALSE);
 }
 
 BOOL set_terminal_nonblock(int ifd, BOOL nonblock)
@@ -427,7 +427,7 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* stream)
 	int rc = EOF;
 	const int fd = fileno(stream);
 
-	(void)set_termianl_nonblock(fd, TRUE);
+	(void)set_terminal_nonblock(fd, TRUE);
 
 	do
 	{
@@ -450,7 +450,7 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* stream)
 		}
 	} while (!freerdp_shall_disconnect_context(context));
 
-	(void)set_termianl_nonblock(fd, FALSE);
+	(void)set_terminal_nonblock(fd, FALSE);
 
 	return rc;
 }
