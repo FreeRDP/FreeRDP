@@ -241,8 +241,11 @@ static UINT audin_ios_open(IAudinDevice *device, AudinReceive receive, void *use
 
 	for (size_t index = 0; index < IOS_AUDIO_QUEUE_NUM_BUFFERS; index++)
 	{
-		devStat = AudioQueueAllocateBuffer(ios->audioQueue,
-		                                   ios->FramesPerPacket * 2 * ios->format.nChannels,
+		const UINT64 bytes = 2ull * ios->FramesPerPacket * ios->format.nChannels;
+		if (bytes > UINT32_MAX)
+			goto err_out;
+
+		devStat = AudioQueueAllocateBuffer(ios->audioQueue, WINPR_ASSERTING_INT_CAST(UInt32, bytes),
 		                                   &ios->audioBuffers[index]);
 
 		if (devStat != 0)

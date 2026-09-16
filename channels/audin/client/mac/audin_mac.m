@@ -273,8 +273,11 @@ static UINT audin_mac_open(IAudinDevice *device, AudinReceive receive, void *use
 
 	for (size_t index = 0; index < MAC_AUDIO_QUEUE_NUM_BUFFERS; index++)
 	{
-		devStat = AudioQueueAllocateBuffer(mac->audioQueue,
-		                                   mac->FramesPerPacket * 2 * mac->format.nChannels,
+		const UINT64 bytes = 2ull * mac->FramesPerPacket * mac->format.nChannels;
+		if (bytes > UINT32_MAX)
+			goto err_out;
+
+		devStat = AudioQueueAllocateBuffer(mac->audioQueue, WINPR_ASSERTING_INT_CAST(UInt32, bytes),
 		                                   &mac->audioBuffers[index]);
 
 		if (devStat != 0)
