@@ -37,6 +37,7 @@
 #include "sdl_disp.hpp"
 #include "sdl_clip.hpp"
 #include "sdl_input.hpp"
+#include "sdl_rail.hpp"
 
 #include "dialogs/sdl_connection_dialog_wrapper.hpp"
 
@@ -131,6 +132,7 @@ class SdlContext
 	[[nodiscard]] sdlDispContext& getDisplayChannelContext();
 	[[nodiscard]] sdlInput& getInputChannelContext();
 	[[nodiscard]] sdlClip& getClipboardChannelContext();
+	[[nodiscard]] SdlRail& getRailChannelContext();
 
 	[[nodiscard]] SdlConnectionDialogWrapper& getDialog();
 
@@ -238,6 +240,7 @@ class SdlContext
 	sdlDispContext _disp;
 	sdlInput _input;
 	sdlClip _clip;
+	SdlRail _rail;
 
 	SdlConnectionDialogWrapper _dialog;
 
