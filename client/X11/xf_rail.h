@@ -106,6 +106,8 @@ struct xf_app_window
 	BOOL minimized;
 	BOOL rail_ignore_configure;
 	BOOL rail_fullscreen_normalizing;
+	/* Timestamp of the last accepted WINDOW_ORDER_FIELD_WND_SIZE update. */
+	UINT64 lastWndSizeUpdate;
 
 	Pixmap pixmap;
 	XImage* image;

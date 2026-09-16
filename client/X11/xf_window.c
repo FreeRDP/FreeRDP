@@ -996,13 +996,27 @@ static void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width, 
 
 	if (*x < xfc->vscreen.area.left)
 	{
-		*width += *x;
+		/* Only trim the window when a usable width is left. The original code
+		 * unconditionally did `*width += *x`, which turns the width negative
+		 * (and later clamps it to 1px) when the server reports an x far left of
+		 * the virtual desktop - which happens for RemoteApp dialogs when the
+		 * window manager places them. */
+		const int shift = xfc->vscreen.area.left - *x;
+
+		if (*width - shift >= 64)
+			*width -= shift;
+
 		*x = xfc->vscreen.area.left;
 	}
 
 	if (*y < xfc->vscreen.area.top)
 	{
-		*height += *y;
+		/* See above. */
+		const int shift = xfc->vscreen.area.top - *y;
+
+		if (*height - shift >= 64)
+			*height -= shift;
+
 		*y = xfc->vscreen.area.top;
 	}
 
@@ -1072,6 +1086,7 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->minimized = FALSE;
 	appWindow->rail_ignore_configure = FALSE;
 	appWindow->rail_fullscreen_normalizing = FALSE;
+	appWindow->lastWndSizeUpdate = 0;
 
 	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->handle = LogDynAndXCreateWindow(
