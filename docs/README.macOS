@@ -8,3 +8,5 @@ pointing to the openssl root directory before building.
 For example with brew it would look like this:
 
 export PKG_CONFIG_PATH=$(brew --prefix)/opt/openssl/lib/pkgconfig
+
+For information about maintaining a stable macOS package, see packaging-maintainers.md.
