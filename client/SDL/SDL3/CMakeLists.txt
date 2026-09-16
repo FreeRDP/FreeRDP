@@ -89,19 +89,30 @@ if(NOT WIN32 AND NOT APPLE)
   endif()
   if(WAYLAND_CLIENT_FOUND AND WAYLAND_SCANNER_BIN AND EXISTS ${XDG_SHELL_XML})
     set(SDL_WAYLAND_NATIVE ON)
+    set(WAYLAND_SOURCE_NAME_NO_EXT ${CMAKE_CURRENT_BINARY_DIR}/wayland/xdg-shell-client-protocol)
+
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-client-protocol.h
-      COMMAND ${WAYLAND_SCANNER_BIN} client-header ${XDG_SHELL_XML}
-              ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-client-protocol.h DEPENDS ${XDG_SHELL_XML}
-    )
-    add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-protocol.c
-      COMMAND ${WAYLAND_SCANNER_BIN} private-code ${XDG_SHELL_XML} ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-protocol.c
+      OUTPUT ${WAYLAND_SOURCE_NAME_NO_EXT}.h COMMAND ${CMAKE_COMMAND} -E make_directory
+                                                     ${CMAKE_CURRENT_BINARY_DIR}/wayland
+      COMMAND ${WAYLAND_SCANNER_BIN} client-header ${XDG_SHELL_XML} ${WAYLAND_SOURCE_NAME_NO_EXT}.h
       DEPENDS ${XDG_SHELL_XML}
     )
-    list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-client-protocol.h
-         ${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-protocol.c
+    add_custom_command(
+      OUTPUT ${WAYLAND_SOURCE_NAME_NO_EXT}.c COMMAND ${CMAKE_COMMAND} -E make_directory
+                                                     ${CMAKE_CURRENT_BINARY_DIR}/wayland
+      COMMAND ${WAYLAND_SCANNER_BIN} private-code ${XDG_SHELL_XML} ${WAYLAND_SOURCE_NAME_NO_EXT}.c
+      DEPENDS ${XDG_SHELL_XML}
     )
+
+    set(WAYLAND_SRCS ${WAYLAND_SOURCE_NAME_NO_EXT}.c ${WAYLAND_SOURCE_NAME_NO_EXT}.h)
+
+    # Silence warnings from generated files:
+    # 1. compile without warnings
+    # 2. place files in binary subdirectory not in include path
+    # 3. add the subdirectory as SYSTEM include directory, which silences warnings
+    set_source_files_properties(${WAYLAND_SRCS} PROPERTIES COMPILE_FLAGS "-w")
+    include_directories(SYSTEM ${CMAKE_CURRENT_BINARY_DIR}/wayland)
+    list(APPEND SRCS ${WAYLAND_SRCS})
   endif()
 endif()
 
