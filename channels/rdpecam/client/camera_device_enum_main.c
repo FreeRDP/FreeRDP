@@ -126,8 +126,9 @@ static UINT ecam_send_device_added_notification(CameraPlugin* ecam,
 
 	const size_t devNameLen = strlen(deviceName);
 	const SSIZE_T devNameWLen = ConvertUtf8ToWChar(deviceName, nullptr, 0);
-	if ((devNameWLen < 0) || Stream_Write_UTF16_String_From_UTF8(s, (size_t)devNameWLen + 1,
-	                                                             deviceName, devNameLen, TRUE) < 0)
+	if ((devNameWLen < 0) ||
+	    Stream_Write_UTF16_String_From_UTF8(s, WINPR_ASSERTING_INT_CAST(size_t, devNameWLen) + 1ull,
+	                                        deviceName, devNameLen, TRUE) < 0)
 	{
 		Stream_Free(s, TRUE);
 		return ERROR_INTERNAL_ERROR;
