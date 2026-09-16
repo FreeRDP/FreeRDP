@@ -464,6 +464,7 @@ BOOL xf_generic_RawMotionNotify_(xfContext* xfc, int x, int y, WINPR_ATTR_UNUSED
 
 static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOOL app)
 {
+	xf_local_idle_screensaver_input(xfc);
 	WINPR_ASSERT(xfc);
 
 	if (xfc->window)
