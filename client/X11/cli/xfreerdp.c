@@ -52,6 +52,30 @@ static void xfreerdp_print_help(void)
 	       "used the key combination, otherwise the combination is forwarded to the remote.\n");
 }
 
+static const COMMAND_LINE_ARGUMENT_A x11_cmd_args[] = {
+	{ "local-idle-screensaver", COMMAND_LINE_VALUE_REQUIRED, "<time in sec>", "0", nullptr, -1,
+	  nullptr, "Force the local X11 screensaver after client input is idle" },
+	{ nullptr, 0, nullptr, nullptr, nullptr, 0, nullptr, nullptr }
+};
+
+static int xfreerdp_argument_handler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom)
+{
+	xfContext* xfc = custom;
+	char* end = nullptr;
+	UINT64 seconds = 0;
+
+	if (!arg || !xfc || !arg->Name || (strcmp(arg->Name, "local-idle-screensaver") != 0) ||
+	    !arg->Value)
+		return -1;
+
+	seconds = strtoull(arg->Value, &end, 10);
+	if ((end == arg->Value) || (*end != '\0') || (seconds > (UINT64_MAX / 1000ULL)))
+		return -1;
+
+	xfc->local_idle_screensaver_timeout = seconds * 1000ULL;
+	return 0;
+}
+
 int main(int argc, char* argv[])
 {
 	int rc = 1;
@@ -75,10 +99,13 @@ int main(int argc, char* argv[])
 	settings = context->settings;
 	xfc = (xfContext*)context;
 
-	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
+	status = freerdp_client_settings_parse_command_line_ex(
+	    context->settings, argc, argv, FALSE, (COMMAND_LINE_ARGUMENT_A*)x11_cmd_args,
+	    ARRAYSIZE(x11_cmd_args) - 1, xfreerdp_argument_handler, xfc);
 	if (status)
 	{
-		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+		rc = freerdp_client_settings_command_line_status_print_ex(
+		    settings, status, argc, argv, (COMMAND_LINE_ARGUMENT_A*)x11_cmd_args);
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors))
 			xf_list_monitors(xfc);

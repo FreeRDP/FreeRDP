@@ -28,6 +28,7 @@
 
 #include <winpr/assert.h>
 #include <winpr/path.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/log.h>
 #include <freerdp/locale/keyboard.h>
@@ -567,6 +568,28 @@ static BOOL xf_grab_mouse(xfContext* xfc)
 	return TRUE;
 }
 
+void xf_local_idle_screensaver_input(xfContext* xfc)
+{
+	if (xfc->local_idle_screensaver_timeout == 0)
+		return;
+
+	xfc->local_idle_screensaver_last_input = winpr_GetTickCount64NS() / 1000000ULL;
+	xfc->local_idle_screensaver_active = FALSE;
+}
+
+void xf_local_idle_screensaver_check(xfContext* xfc)
+{
+	const UINT64 now = winpr_GetTickCount64NS() / 1000000ULL;
+
+	if ((xfc->local_idle_screensaver_timeout == 0) || xfc->local_idle_screensaver_active ||
+	    ((now - xfc->local_idle_screensaver_last_input) < xfc->local_idle_screensaver_timeout))
+		return;
+
+	XForceScreenSaver(xfc->display, ScreenSaverActive);
+	XFlush(xfc->display);
+	xfc->local_idle_screensaver_active = TRUE;
+}
+
 static BOOL xf_grab_kbd(xfContext* xfc)
 {
 	WINPR_ASSERT(xfc);
@@ -581,6 +604,7 @@ static BOOL xf_grab_kbd(xfContext* xfc)
 
 static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL app)
 {
+	xf_local_idle_screensaver_input(xfc);
 	xf_grab_mouse(xfc);
 
 	if (xfc->xi_event || xfc->xi_rawevent || (xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc)))
@@ -594,6 +618,7 @@ static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL
 
 static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BOOL app)
 {
+	xf_local_idle_screensaver_input(xfc);
 	xf_grab_mouse(xfc);
 
 	if (xfc->xi_event || xfc->xi_rawevent || (xfc->common.mouse_grabbed && xf_use_rel_mouse(xfc)))
@@ -605,6 +630,7 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BO
 
 static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 {
+	xf_local_idle_screensaver_input(xfc);
 	KeySym keysym = 0;
 	char str[256] = WINPR_C_ARRAY_INIT;
 	union
@@ -621,6 +647,7 @@ static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 
 static BOOL xf_event_KeyRelease(xfContext* xfc, const XKeyEvent* event, BOOL app)
 {
+	xf_local_idle_screensaver_input(xfc);
 	KeySym keysym = 0;
 	char str[256] = WINPR_C_ARRAY_INIT;
 	union

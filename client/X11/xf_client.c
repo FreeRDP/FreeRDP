@@ -1631,6 +1631,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	}
 
 	inputEvent = xfc->x11event;
+	xf_local_idle_screensaver_input(xfc);
 
 	while (!freerdp_shall_disconnect_context(instance->context))
 	{
@@ -1665,10 +1666,16 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 		if (xfc->window)
 			xf_floatbar_hide_and_show(xfc->window->floatbar);
 
-		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE,
+		                                    xfc->local_idle_screensaver_timeout ? 1000 : INFINITE);
 
 		if (waitStatus == WAIT_FAILED)
 			break;
+		if (waitStatus == WAIT_TIMEOUT)
+		{
+			xf_local_idle_screensaver_check(xfc);
+			continue;
+		}
 
 		{
 			if (!freerdp_check_event_handles(context))
