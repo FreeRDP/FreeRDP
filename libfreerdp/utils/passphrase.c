@@ -343,14 +343,14 @@ const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, cha
 	return freerdp_passphrase_read_tty(context, prompt, buf, bufsiz, from_stdin);
 }
 
-static BOOL set_termianl_nonblock(int ifd, BOOL nonblock);
+static BOOL set_terminal_nonblock(int ifd, BOOL nonblock);
 
 static void restore_terminal(void)
 {
 	(void)set_termianl_nonblock(-1, FALSE);
 }
 
-BOOL set_termianl_nonblock(int ifd, BOOL nonblock)
+BOOL set_terminal_nonblock(int ifd, BOOL nonblock)
 {
 	static int fd = -1;
 	static bool registered = false;
