@@ -286,17 +286,33 @@ bool sdlDispContext::updateMonitor(SDL_WindowID id)
 	if (!freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_DynamicResolutionUpdate))
 		return true;
 
-	if (!_sdl->updateWindow(id))
-		return false;
+	if (_sdl->hasVirtualMonitors())
+	{
+		/* Virtual monitor windows all share one real anchor display, so the generic
+		 * updateWindow()/updateWindowList() path (which queries each window's real on-screen
+		 * geometry) does not apply here. Push/pull the /vmonitors layout instead. */
+		if (!_sdl->resizeVirtualMonitor(id))
+			return false;
+	}
+	else
+	{
+		if (!_sdl->updateWindow(id))
+			return false;
 
-	if (!_sdl->updateWindowList())
-		return false;
+		if (!_sdl->updateWindowList())
+			return false;
+	}
 
 	return addTimer();
 }
 
 bool sdlDispContext::updateMonitors(SDL_EventType type, SDL_DisplayID displayID)
 {
+	/* All virtual monitor windows are anchored to one real display; a single real hotplug
+	 * event for that display must not add/remove virtual monitor windows. */
+	if (_sdl->hasVirtualMonitors())
+		return true;
+
 	auto settings = _sdl->context()->settings;
 	if (!freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		return true;
