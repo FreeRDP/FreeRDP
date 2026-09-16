@@ -173,13 +173,16 @@ static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 	return TRUE;
 }
 
-static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
+static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response, BOOL* pHaveToken)
 {
 	size_t len = 0;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = nullptr;
 	SecBuffer authToken = WINPR_C_ARRAY_INIT;
 	int rc = 0;
+
+	WINPR_ASSERT(pHaveToken);
+	*pHaveToken = FALSE;
 
 	if (!auth || !response)
 		return FALSE;
@@ -198,7 +201,12 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 	const char* token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
 
 	if (!token64)
-		return FALSE;
+	{
+		/* See the matching comment in rdg_recv_auth_token(). */
+		return TRUE;
+	}
+
+	*pHaveToken = TRUE;
 
 	len = strlen(token64);
 
@@ -458,8 +466,17 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, UINT16* pS
 
 	while (!credssp_auth_is_complete(wst->auth))
 	{
-		if (!wst_recv_auth_token(wst->auth, *ppresponse))
+		BOOL haveToken = FALSE;
+
+		if (!wst_recv_auth_token(wst->auth, *ppresponse, &haveToken))
 			return FALSE;
+
+		if (!haveToken)
+		{
+			WLog_Print(wst->log, WLOG_DEBUG,
+			           "No authentication token in the response, ending the exchange");
+			break;
+		}
 
 		if (credssp_auth_have_output_token(wst->auth))
 		{
@@ -472,6 +489,8 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, UINT16* pS
 				return FALSE;
 			(void)http_response_extract_cookies(*ppresponse, wst->http);
 		}
+		else
+			break; /* nothing more to send: do not re-parse the same response */
 	}
 	*pStatusCode = http_response_get_status_code(*ppresponse);
 	return TRUE;
