@@ -300,7 +300,8 @@ extern "C"
 	 *
 	 * The function does string conversions of any '\0' terminated input string
 	 *
-	 * Supplying len = 0 will return the required size of the buffer in characters.
+	 * Supplying len = 0 will return the required size of the buffer in characters excluding the
+	 * terminating '\0'.
 	 *
 	 * \warning Supplying a buffer length smaller than required will result in
 	 * platform dependent (=undefined) behaviour!
@@ -318,7 +319,8 @@ extern "C"
 	 * The function does string conversions of any input string of wlen (or less)
 	 * characters until it reaches the first '\0'.
 	 *
-	 * Supplying len = 0 will return the required size of the buffer in characters.
+	 * Supplying len = 0 will return the required size of the buffer in characters excluding the
+	 * terminating '\0'.
 	 *
 	 * \warning Supplying a buffer length smaller than required will result in
 	 * platform dependent (=undefined) behaviour!
@@ -337,7 +339,8 @@ extern "C"
 	 * The function does string conversions of any input string of wlen characters.
 	 * Any character in the buffer (including any '\0') is converted.
 	 *
-	 * Supplying len = 0 will return the required size of the buffer in characters.
+	 * Supplying len = 0 will return the required size of the buffer in characters excluding the
+	 * terminating '\0'.
 	 *
 	 * \warning Supplying a buffer length smaller than required will result in
 	 * platform dependent (=undefined) behaviour!
@@ -356,7 +359,8 @@ extern "C"
 	 *
 	 * The function does string conversions of any '\0' terminated input string
 	 *
-	 * Supplying wlen = 0 will return the required size of the buffer in characters.
+	 * Supplying wlen = 0 will return the required size of the buffer in characters excluding the
+	 * terminating '\0'.
 	 *
 	 * \warning Supplying a buffer length smaller than required will result in
 	 * platform dependent (=undefined) behaviour!
@@ -374,7 +378,8 @@ extern "C"
 	 * The function does string conversions of any input string of len (or less)
 	 * characters until it reaches the first '\0'.
 	 *
-	 * Supplying wlen = 0 will return the required size of the buffer in characters.
+	 * Supplying wlen = 0 will return the required size of the buffer in characters excluding the
+	 * terminating '\0'.
 	 *
 	 * \warning Supplying a buffer length smaller than required will result in
 	 * platform dependent (=undefined) behaviour!
@@ -393,7 +398,8 @@ extern "C"
 	 * The function does string conversions of any input string of len characters.
 	 * Any character in the buffer (including any '\0') is converted.
 	 *
-	 * Supplying wlen = 0 will return the required size of the buffer in characters.
+	 * Supplying wlen = 0 will return the required size of the buffer in characters excluding the
+	 * terminating '\0'.
 	 *
 	 * \warning Supplying a buffer length smaller than required will result in
 	 * platform dependent (=undefined) behaviour!
