@@ -3457,10 +3457,10 @@ static int parse_sec_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 
 	if (singleOptionWithoutOnOff != FreeRDP_BOOL_UNUSED)
 	{
-		const FreeRDP_Settings_Keys_Bool options[] = { FreeRDP_AadSecurity,
-			                                           FreeRDP_UseRdpSecurityLayer,
-			                                           FreeRDP_RdpSecurity, FreeRDP_NlaSecurity,
-			                                           FreeRDP_TlsSecurity };
+		const FreeRDP_Settings_Keys_Bool options[] = {
+			FreeRDP_AadSecurity, FreeRDP_UseRdpSecurityLayer, FreeRDP_RdpSecurity,
+			FreeRDP_NlaSecurity, FreeRDP_ExtSecurity,         FreeRDP_TlsSecurity
+		};
 
 		for (size_t i = 0; i < ARRAYSIZE(options); i++)
 		{

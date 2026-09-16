@@ -442,7 +442,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Force specific protocol security. e.g. /sec:nla enables NLA and disables all others, while "
 	  "/sec:nla:[on|off] just toggles NLA" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
-	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse, nullptr, -1, nullptr,
+	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 	  "[DEPRECATED, use /sec:ext] NLA extended protocol security" },
 	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,
 	  "[DEPRECATED, use /sec:nla] NLA protocol security" },

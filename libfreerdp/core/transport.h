@@ -123,7 +123,7 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL transport_accept_tls(rdpTransport* transport);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL transport_accept_nla(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_accept_nla(rdpTransport* transport, BOOL ext);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL transport_accept_rdstls(rdpTransport* transport);

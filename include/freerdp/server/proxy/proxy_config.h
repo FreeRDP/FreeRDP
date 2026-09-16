@@ -133,6 +133,9 @@ extern "C"
 		size_t TargetSmartcardCertLength; /** @since version 3.25.0 */
 		char* TargetSmartcardKey;  /** @since version 3.25.0 */
 		size_t TargetSmartcardKeyLength; /** @since version 3.25.0 */
+
+		BOOL ServerExtSecurity; /** @since version 3.32.0 */
+		BOOL ClientExtSecurity; /** @since version 3.32.0 */
 	};
 
 	/**
