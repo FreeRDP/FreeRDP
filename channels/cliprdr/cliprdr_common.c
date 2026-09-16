@@ -302,9 +302,10 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			{
 				const size_t formatNameWriteLength =
 				    MIN(formatNameStrLength, formatNameMaxLength - 1);
-				if (Stream_Write_UTF16_String_From_UTF8(s, formatNameMaxLength, szFormatName,
+				if (Stream_Write_UTF16_String_From_UTF8(s, formatNameMaxLength - 1, szFormatName,
 				                                        formatNameWriteLength, TRUE) < 0)
 					goto fail;
+				Stream_Write_UINT16(s, 0);
 			}
 		}
 		else

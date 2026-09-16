@@ -1795,17 +1795,19 @@ fail:
 static UINT gdi_ExportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
                                  PERSISTENT_CACHE_ENTRY* exportCacheEntry)
 {
-	gdiGfxCacheEntry* cacheEntry = nullptr;
-
 	WINPR_ASSERT(context->GetCacheSlotData);
-	cacheEntry = (gdiGfxCacheEntry*)context->GetCacheSlotData(context, cacheSlot);
+	gdiGfxCacheEntry* cacheEntry = (gdiGfxCacheEntry*)context->GetCacheSlotData(context, cacheSlot);
 
 	if (cacheEntry)
 	{
 		exportCacheEntry->key64 = cacheEntry->cacheKey;
 		exportCacheEntry->width = (UINT16)MIN(UINT16_MAX, cacheEntry->width);
 		exportCacheEntry->height = (UINT16)MIN(UINT16_MAX, cacheEntry->height);
-		exportCacheEntry->size = cacheEntry->width * cacheEntry->height * 4;
+		const UINT64 size = 4ull * cacheEntry->width * cacheEntry->height;
+		if (size > UINT32_MAX)
+			return ERROR_NOT_FOUND;
+
+		exportCacheEntry->size = WINPR_ASSERTING_INT_CAST(UINT32, size);
 		exportCacheEntry->flags = 0;
 		exportCacheEntry->data = cacheEntry->data;
 		return CHANNEL_RC_OK;
