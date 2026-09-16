@@ -335,6 +335,41 @@ static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 }
 
 WINPR_ATTR_NODISCARD
+static int func_get_interface_number(const LIBUSB_CONFIG_DESCRIPTOR* config, unsigned index)
+{
+	if (!config || !config->interface || (index >= config->bNumInterfaces))
+		return LIBUSB_ERROR_NOT_FOUND;
+
+	const LIBUSB_INTERFACE* interface = &config->interface[index];
+	if (!interface->altsetting || (interface->num_altsetting <= 0))
+		return LIBUSB_ERROR_NOT_FOUND;
+	return interface->altsetting[0].bInterfaceNumber;
+}
+
+WINPR_ATTR_NODISCARD
+static const LIBUSB_INTERFACE_DESCRIPTOR*
+func_get_interface_descriptor(const LIBUSB_CONFIG_DESCRIPTOR* config, BYTE number, BYTE alternate)
+{
+	if (!config || !config->interface)
+		return nullptr;
+
+	for (int index = 0; index < config->bNumInterfaces; index++)
+	{
+		const LIBUSB_INTERFACE* interface = &config->interface[index];
+		if (!interface->altsetting)
+			continue;
+		for (int alt = 0; alt < interface->num_altsetting; alt++)
+		{
+			const LIBUSB_INTERFACE_DESCRIPTOR* descriptor = &interface->altsetting[alt];
+			if ((descriptor->bInterfaceNumber == number) &&
+			    (descriptor->bAlternateSetting == alternate))
+				return descriptor;
+		}
+	}
+	return nullptr;
+}
+
+WINPR_ATTR_NODISCARD
 static const LIBUSB_ENDPOINT_DESCEIPTOR* func_get_ep_desc(LIBUSB_CONFIG_DESCRIPTOR* LibusbConfig,
                                                           MSUSB_CONFIG_DESCRIPTOR* MsConfig,
                                                           UINT32 EndpointAddress)
@@ -486,18 +521,25 @@ static BOOL func_set_usbd_status(URBDRC_PLUGIN* urbdrc, UDEVICE* pdev, UINT32* s
 
 static int func_config_release_all_interface(URBDRC_PLUGIN* urbdrc,
                                              LIBUSB_DEVICE_HANDLE* libusb_handle,
-                                             UINT32 NumInterfaces)
+                                             const LIBUSB_CONFIG_DESCRIPTOR* config)
 {
-	if (NumInterfaces > INT32_MAX)
-		return -1;
-	for (INT32 i = 0; i < (INT32)NumInterfaces; i++)
+	WINPR_ASSERT(urbdrc);
+	if (!config)
 	{
-		int ret = libusb_release_interface(libusb_handle, i);
-
+		(void)log_libusb_result(urbdrc->log, WLOG_ERROR,
+		                        "func_config_release_all_interface(config=nullptr)",
+		                        LIBUSB_ERROR_INVALID_PARAM);
+		return -1;
+	}
+	for (unsigned index = 0; index < config->bNumInterfaces; index++)
+	{
+		const int number = func_get_interface_number(config, index);
+		if (number < 0)
+			return -1;
+		const int ret = libusb_release_interface(libusb_handle, number);
 		if (log_libusb_result(urbdrc->log, WLOG_WARN, "libusb_release_interface", ret))
 			return -1;
 	}
-
 	return 0;
 }
 
@@ -511,23 +553,15 @@ static int func_claim_all_interface(URBDRC_PLUGIN* urbdrc, LIBUSB_DEVICE_HANDLE*
 		                        LIBUSB_ERROR_INVALID_PARAM);
 		return -1;
 	}
-	const unsigned NumInterfaces = config->bNumInterfaces;
-	WINPR_ASSERT(libusb_handle || (NumInterfaces == 0));
-
-	for (unsigned i = 0; i < NumInterfaces; i++)
+	for (unsigned index = 0; index < config->bNumInterfaces; index++)
 	{
-		WINPR_ASSERT(config->interface);
-		const struct libusb_interface* ifc = &config->interface[i];
-
-		WINPR_ASSERT(ifc->altsetting);
-
-		const int nr = ifc->altsetting[0].bInterfaceNumber;
-		const int ret = libusb_claim_interface(libusb_handle, nr);
-
+		const int number = func_get_interface_number(config, index);
+		if (number < 0)
+			return -1;
+		const int ret = libusb_claim_interface(libusb_handle, number);
 		if (log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_claim_interface", ret))
 			return -1;
 	}
-
 	return 0;
 }
 
@@ -615,26 +649,19 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 	/* replace MsPipes for libusb */
 	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfig->MsInterfaces;
 
+	if (!MsInterfaces)
+		return nullptr;
 	for (UINT32 inum = 0; inum < MsConfig->NumInterfaces; inum++)
 	{
-		MSUSB_INTERFACE_DESCRIPTOR* MsInterface = MsInterfaces[inum];
-		if (MsInterface->InterfaceNumber >= MsConfig->NumInterfaces)
-		{
-			WLog_Print(urbdrc->log, WLOG_ERROR,
-			           "MSUSB_CONFIG_DESCRIPTOR::NumInterfaces (%" PRIu32
-			           " <= MSUSB_INTERFACE_DESCRIPTOR::InterfaceNumber( %" PRIu8 ")",
-			           MsConfig->NumInterfaces, MsInterface->InterfaceNumber);
+		const MSUSB_INTERFACE_DESCRIPTOR* MsInterface = MsInterfaces[inum];
+		if (!MsInterface)
 			return nullptr;
-		}
-
-		const LIBUSB_INTERFACE* LibusbInterface =
-		    &LibusbConfig->interface[MsInterface->InterfaceNumber];
-		if (MsInterface->AlternateSetting >= LibusbInterface->num_altsetting)
+		if (!func_get_interface_descriptor(LibusbConfig, MsInterface->InterfaceNumber,
+		                                   MsInterface->AlternateSetting))
 		{
 			WLog_Print(urbdrc->log, WLOG_ERROR,
-			           "LIBUSB_INTERFACE::num_altsetting (%" PRId32
-			           " <= MSUSB_INTERFACE_DESCRIPTOR::AlternateSetting( %" PRIu8 ")",
-			           LibusbInterface->num_altsetting, MsInterface->AlternateSetting);
+			           "USB interface %" PRIu8 " alternate setting %" PRIu8 " not found",
+			           MsInterface->InterfaceNumber, MsInterface->AlternateSetting);
 			return nullptr;
 		}
 	}
@@ -644,10 +671,9 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 		MSUSB_INTERFACE_DESCRIPTOR* MsInterface = MsInterfaces[inum];
 
 		/* get libusb's number of endpoints */
-		const LIBUSB_INTERFACE* LibusbInterface =
-		    &LibusbConfig->interface[MsInterface->InterfaceNumber];
-		const LIBUSB_INTERFACE_DESCRIPTOR* LibusbAltsetting =
-		    &LibusbInterface->altsetting[MsInterface->AlternateSetting];
+		const LIBUSB_INTERFACE_DESCRIPTOR* LibusbAltsetting = func_get_interface_descriptor(
+		    LibusbConfig, MsInterface->InterfaceNumber, MsInterface->AlternateSetting);
+		WINPR_ASSERT(LibusbAltsetting);
 		const BYTE LibusbNumEndpoint = LibusbAltsetting->bNumEndpoints;
 		MSUSB_PIPE_DESCRIPTOR** t_MsPipes =
 		    (MSUSB_PIPE_DESCRIPTOR**)calloc(LibusbNumEndpoint, sizeof(MSUSB_PIPE_DESCRIPTOR*));
@@ -700,10 +726,9 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 		MsOutSize += 16;
 		MSUSB_INTERFACE_DESCRIPTOR* MsInterface = MsInterfaces[inum];
 		/* get libusb's interface */
-		const LIBUSB_INTERFACE* LibusbInterface =
-		    &LibusbConfig->interface[MsInterface->InterfaceNumber];
-		const LIBUSB_INTERFACE_DESCRIPTOR* LibusbAltsetting =
-		    &LibusbInterface->altsetting[MsInterface->AlternateSetting];
+		const LIBUSB_INTERFACE_DESCRIPTOR* LibusbAltsetting = func_get_interface_descriptor(
+		    LibusbConfig, MsInterface->InterfaceNumber, MsInterface->AlternateSetting);
+		WINPR_ASSERT(LibusbAltsetting);
 		/* InterfaceHandle:  4 bytes
 		 * ---------------------------------------------------------------
 		 * ||<<< 1 byte >>>|<<< 1 byte >>>|<<< 1 byte >>>|<<< 1 byte >>>||
@@ -791,8 +816,7 @@ static int libusb_udev_select_configuration(IUDEVICE* idev, UINT32 bConfiguratio
 
 	if (MsConfig->InitCompleted)
 	{
-		func_config_release_all_interface(pdev->urbdrc, libusb_handle,
-		                                  (*LibusbConfig)->bNumInterfaces);
+		func_config_release_all_interface(pdev->urbdrc, libusb_handle, *LibusbConfig);
 	}
 
 	/* The configuration value -1 is mean to put the device in unconfigured state. */
@@ -813,13 +837,12 @@ static int libusb_udev_select_configuration(IUDEVICE* idev, UINT32 bConfiguratio
 
 		if (log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_set_configuration", ret))
 		{
-			func_claim_all_interface(urbdrc, libusb_handle, (*LibusbConfig));
+			func_claim_all_interface(urbdrc, libusb_handle, *LibusbConfig);
 			return -1;
 		}
 	}
 
-	func_claim_all_interface(urbdrc, libusb_handle, (*LibusbConfig));
-	return 0;
+	return func_claim_all_interface(urbdrc, libusb_handle, *LibusbConfig);
 }
 
 WINPR_ATTR_NODISCARD
@@ -1143,14 +1166,17 @@ static BOOL libusb_udev_detach_kernel_driver(IUDEVICE* idev)
 
 	if ((pdev->status & URBDRC_DEVICE_DETACH_KERNEL) == 0)
 	{
-		for (int i = 0; i < pdev->LibusbConfig->bNumInterfaces; i++)
+		for (unsigned i = 0; i < pdev->LibusbConfig->bNumInterfaces; i++)
 		{
-			err = libusb_kernel_driver_active(pdev->libusb_handle, i);
+			const int number = func_get_interface_number(pdev->LibusbConfig, i);
+			if (number < 0)
+				return FALSE;
+			err = libusb_kernel_driver_active(pdev->libusb_handle, number);
 			log_libusb_result(urbdrc->log, WLOG_DEBUG, "libusb_kernel_driver_active", err);
-
-			if (err)
+			// compare to 1 explicitly because 1 means a kernel driver is active
+			if (err == 1)
 			{
-				err = libusb_detach_kernel_driver(pdev->libusb_handle, i);
+				err = libusb_detach_kernel_driver(pdev->libusb_handle, number);
 				log_libusb_result(urbdrc->log, WLOG_DEBUG, "libusb_detach_kernel_driver", err);
 			}
 		}
@@ -1171,18 +1197,22 @@ static BOOL libusb_udev_attach_kernel_driver(IUDEVICE* idev)
 	if (!pdev || !pdev->LibusbConfig || !pdev->libusb_handle || !pdev->urbdrc)
 		return FALSE;
 
-	for (int i = 0; i < pdev->LibusbConfig->bNumInterfaces && err != LIBUSB_ERROR_NO_DEVICE; i++)
+	for (unsigned i = 0; i < pdev->LibusbConfig->bNumInterfaces && err != LIBUSB_ERROR_NO_DEVICE;
+	     i++)
 	{
-		err = libusb_release_interface(pdev->libusb_handle, i);
+		const int number = func_get_interface_number(pdev->LibusbConfig, i);
+		if (number < 0)
+			return FALSE;
+		err = libusb_release_interface(pdev->libusb_handle, number);
 
 		log_libusb_result(pdev->urbdrc->log, WLOG_DEBUG, "libusb_release_interface", err);
 
 #ifndef _WIN32
 		if (err != LIBUSB_ERROR_NO_DEVICE)
 		{
-			err = libusb_attach_kernel_driver(pdev->libusb_handle, i);
+			err = libusb_attach_kernel_driver(pdev->libusb_handle, number);
 			log_libusb_result(pdev->urbdrc->log, WLOG_DEBUG, "libusb_attach_kernel_driver if=%d",
-			                  err, i);
+			                  err, number);
 		}
 #endif
 	}
