@@ -145,11 +145,11 @@ class SdlContext
 	[[nodiscard]] bool moveMouseTo(const SDL_FPoint& pos);
 
 	[[nodiscard]] SDL_FPoint screenToPixel(SDL_WindowID id, const SDL_FPoint& pos);
-	/* screenToPixel plus the monitor offset: the single mapping from window
-	 * render coordinates to raw RDP desktop coordinates. All RDP input
-	 * paths must use this (never screenToPixel alone), or multimon events
-	 * from different windows disagree by whole monitor offsets. */
-	[[nodiscard]] SDL_FPoint screenToRdp(SDL_WindowID id, const SDL_FPoint& pos);
+	/* Map window-relative logical coordinates to the normalized RDP desktop.
+	 * During capture, resolve the window under the event position first so its
+	 * renderer scale and monitor origin apply. Keep the event's window ID for
+	 * input focus and capture ownership. */
+	[[nodiscard]] bool screenToRdp(SDL_WindowID id, const SDL_FPoint& pos, SDL_FPoint& rpos);
 
 	[[nodiscard]] SDL_FPoint pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos);
 	[[nodiscard]] SDL_FRect pixelToScreen(SDL_WindowID id, const SDL_FRect& pos,

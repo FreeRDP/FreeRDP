@@ -29,6 +29,7 @@ set(SRCS
     sdl_utils.hpp
     sdl_input.cpp
     sdl_input.hpp
+    sdl_input_mapping.hpp
     sdl_touch.cpp
     sdl_touch.hpp
     sdl_pointer.cpp
@@ -173,6 +174,12 @@ installwithrpath(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMP
 install_freerdp_desktop("${MODULE_NAME}" "${SDL_CLIENT_UUID}")
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
+  add_executable(TestSDLInputMapping test/TestSDLInputMapping.cpp)
+  target_link_libraries(TestSDLInputMapping PRIVATE SDL3::Headers)
+  set_target_properties(TestSDLInputMapping PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+  add_test(NAME TestSDLInputMapping COMMAND ${TESTING_OUTPUT_DIRECTORY}/TestSDLInputMapping)
+  set_property(TARGET TestSDLInputMapping PROPERTY FOLDER "FreeRDP/Client/Test")
+
   add_executable(TestSDLMonitorScale test/TestSDLMonitorScale.cpp sdl_monitor_scale.cpp)
   target_link_libraries(TestSDLMonitorScale PRIVATE SDL3::Headers)
   set_target_properties(TestSDLMonitorScale PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
