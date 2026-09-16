@@ -1892,7 +1892,15 @@ bool SdlContext::setFullscreen(bool enter, bool forceOriginalDisplay)
 			return false;
 	}
 	_fullscreen = enter;
-	return sdl_push_user_event(SDL_EVENT_USER_FLOATBAR, enter);
+
+	const auto floatbar = freerdp_settings_get_uint32(context()->settings, FreeRDP_Floatbar);
+	if ((floatbar & 0x01u) == 0)
+		return true;
+
+	const auto mode = floatbar & 0x30u;
+	const bool visible = (mode == 0x30u) || ((mode == 0x10u) && enter) ||
+	                     ((mode == 0x20u) && !enter);
+	return sdl_push_user_event(SDL_EVENT_USER_FLOATBAR, visible);
 }
 
 bool SdlContext::setFloatbar(bool visible)
