@@ -365,6 +365,12 @@ static BOOL handle_uwac_events(freerdp* instance, UwacDisplay* display)
 
 				break;
 
+			case UWAC_EVENT_POINTER_LEAVE:
+				if (!wlf_handle_pointer_leave(instance, &event.mouse_enter_leave))
+					return FALSE;
+
+				break;
+
 			case UWAC_EVENT_POINTER_MOTION:
 				if (!wlf_handle_pointer_motion(instance, &event.mouse_motion))
 					return FALSE;
