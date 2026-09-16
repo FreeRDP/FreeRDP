@@ -644,7 +644,7 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 				goto fail;
 			rlen = WINPR_ASSERTING_INT_CAST(size_t, wlen);
 		}
-		Stream_Write_UINT16(s, (UINT16)rlen * sizeof(WCHAR));
+		Stream_Write_UINT16(s, WINPR_ASSERTING_INT_CAST(UINT16, rlen) * sizeof(WCHAR));
 		if (Stream_Write_UTF16_String_From_UTF8(s, rlen, tz, rstrlen, FALSE) < 0)
 			goto fail;
 		Stream_Write_UINT16(s, settings->DynamicDaylightTimeDisabled ? 0x01 : 0x00);
@@ -1507,12 +1507,16 @@ static BOOL rdp_write_logon_info_v1(wStream* s, const logon_info* info)
 		if (len > charLen)
 			return FALSE;
 
-		const size_t wlen = len * sizeof(WCHAR);
+		const SSIZE_T wclen = ConvertUtf8NToWChar(info->domain, len, nullptr, 0);
+		if (wclen < 0)
+			return FALSE;
+		const size_t wzerolen = WINPR_ASSERTING_INT_CAST(size_t, wclen) + 1ull;
+		const size_t wlen = wzerolen * sizeof(WCHAR);
 		if (wlen > UINT32_MAX)
 			return FALSE;
 
 		Stream_Write_UINT32(s, (UINT32)wlen);
-		if (Stream_Write_UTF16_String_From_UTF8(s, charLen, info->domain, len, TRUE) < 0)
+		if (Stream_Write_UTF16_String_From_UTF8(s, wzerolen, info->domain, len, TRUE) < 0)
 			return FALSE;
 	}
 
@@ -1522,13 +1526,17 @@ static BOOL rdp_write_logon_info_v1(wStream* s, const logon_info* info)
 		if (len > userCharLen)
 			return FALSE;
 
-		const size_t wlen = len * sizeof(WCHAR);
+		const SSIZE_T wclen = ConvertUtf8NToWChar(info->username, len, nullptr, 0);
+		if (wclen < 0)
+			return FALSE;
+		const size_t wzerolen = WINPR_ASSERTING_INT_CAST(size_t, wclen) + 1ull;
+		const size_t wlen = wzerolen * sizeof(WCHAR);
 		if (wlen > UINT32_MAX)
 			return FALSE;
 
 		Stream_Write_UINT32(s, (UINT32)wlen);
 
-		if (Stream_Write_UTF16_String_From_UTF8(s, userCharLen, info->username, len, TRUE) < 0)
+		if (Stream_Write_UTF16_String_From_UTF8(s, wzerolen, info->username, len, TRUE) < 0)
 			return FALSE;
 	}
 
@@ -1562,7 +1570,7 @@ static BOOL rdp_write_logon_info_v2(wStream* s, const logon_info* info)
 			return FALSE;
 		domainLen = WINPR_ASSERTING_INT_CAST(size_t, wlen);
 	}
-	if (domainLen >= UINT32_MAX / sizeof(WCHAR))
+	if (domainLen >= (UINT32_MAX - 1) / sizeof(WCHAR))
 		return FALSE;
 	Stream_Write_UINT32(s, (UINT32)(domainLen + 1) * sizeof(WCHAR));
 
@@ -1574,7 +1582,7 @@ static BOOL rdp_write_logon_info_v2(wStream* s, const logon_info* info)
 			return FALSE;
 		usernameLen = WINPR_ASSERTING_INT_CAST(size_t, wlen);
 	}
-	if (usernameLen >= UINT32_MAX / sizeof(WCHAR))
+	if (usernameLen >= (UINT32_MAX - 1) / sizeof(WCHAR))
 		return FALSE;
 	Stream_Write_UINT32(s, (UINT32)(usernameLen + 1) * sizeof(WCHAR));
 	Stream_Seek(s, logonInfoV2ReservedSize);
