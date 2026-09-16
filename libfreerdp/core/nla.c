@@ -628,6 +628,34 @@ static int nla_client_recv_early_user_auth(rdpNla* nla)
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL nla_send_early_user_auth(rdpNla* nla, BOOL success)
+{
+	WINPR_ASSERT(nla);
+
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(nla);
+
+	WLog_DBG(TAG, "----->> sending %s", success ? "AUTHZ_SUCCESS" : "AUTHZ_ACCESS_DENIED");
+	wStream* s = Stream_New(nullptr, 32);
+	if (!s)
+		goto fail;
+	if (success)
+		Stream_Write_UINT32(s, AUTHZ_SUCCESS);
+	else
+		Stream_Write_UINT32(s, AUTHZ_ACCESS_DENIED);
+	Stream_SealLength(s);
+	WLog_DBG(TAG, "[%" PRIuz " bytes]", Stream_Length(s));
+	if (transport_write(nla->transport, s) < 0)
+		goto fail;
+	rc = TRUE;
+
+fail:
+	Stream_Free(s, TRUE);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
 static int nla_client_recv(rdpNla* nla)
 {
 	WINPR_ASSERT(nla);
@@ -795,7 +823,7 @@ static int nla_server_authenticate(rdpNla* nla)
 	                                      ASC_REQ_CONNECTION | ASC_REQ_USE_SESSION_KEY |
 	                                      ASC_REQ_SEQUENCE_DETECT | ASC_REQ_EXTENDED_ERROR);
 
-	/* Client is starting, here es the state machine:
+	/* Client is starting, here is the state machine:
 	 *
 	 *  -- NLA_STATE_INITIAL	--> NLA_STATE_INITIAL
 	 * ----->> sending...
@@ -910,6 +938,11 @@ static int nla_server_authenticate(rdpNla* nla)
 
 		if (res == 1)
 		{
+			if (nla->earlyUserAuth)
+			{
+				if (!nla_send_early_user_auth(nla, TRUE))
+					goto fail;
+			}
 			ret = 1;
 			break;
 		}

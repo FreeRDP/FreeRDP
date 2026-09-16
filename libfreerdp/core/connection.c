@@ -1583,9 +1583,9 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	else if (SelectedProtocol & PROTOCOL_RDSTLS)
 		status = transport_accept_rdstls(rdp->transport);
 	else if (SelectedProtocol & PROTOCOL_HYBRID)
-		status = transport_accept_nla(rdp->transport);
+		status = transport_accept_nla(rdp->transport, FALSE);
 	else if (SelectedProtocol & PROTOCOL_HYBRID_EX)
-		status = transport_accept_nla(rdp->transport);
+		status = transport_accept_nla(rdp->transport, TRUE);
 	else if (SelectedProtocol & PROTOCOL_SSL)
 		status = transport_accept_tls(rdp->transport);
 	else if (SelectedProtocol == PROTOCOL_RDP) /* 0 */

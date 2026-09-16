@@ -712,7 +712,7 @@ static BOOL transport_default_accept_tls(rdpTransport* transport)
 	return TRUE;
 }
 
-BOOL transport_accept_nla(rdpTransport* transport)
+BOOL transport_accept_nla(rdpTransport* transport, BOOL ext)
 {
 	rdpContext* context = transport_get_context(transport);
 	rdpSettings* settings = nullptr;
@@ -736,6 +736,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 		transport_set_nla_mode(transport, TRUE);
 	}
 
+	nla_set_early_user_auth(transport->nla, ext);
 	if (nla_authenticate(transport->nla) < 0)
 	{
 		WLog_Print(transport->log, WLOG_ERROR, "client authentication failure");
