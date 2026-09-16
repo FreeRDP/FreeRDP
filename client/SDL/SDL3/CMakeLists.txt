@@ -142,6 +142,13 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 addtargetwithresourcefile(${MODULE_NAME} "${WIN32_GUI_FLAG}" "${PROJECT_VERSION}" SRCS)
 
+# sdl_rail.cpp starts RemoteApp programs through the static RAIL client entry point.
+# Keep that implementation in the executable; channel object libraries are otherwise only
+# installed as add-ins and do not satisfy this direct reference.
+if(TARGET rail-client)
+  target_sources(${MODULE_NAME} PRIVATE $<TARGET_OBJECTS:rail-client>)
+endif()
+
 if(SDL_WAYLAND_NATIVE)
   target_compile_definitions(${MODULE_NAME} PRIVATE WITH_SDL_WAYLAND_NATIVE)
   target_include_directories(${MODULE_NAME} PRIVATE ${WAYLAND_CLIENT_INCLUDE_DIRS})
