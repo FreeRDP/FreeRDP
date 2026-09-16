@@ -491,6 +491,7 @@ static DWORD WINAPI cam_v4l_stream_capture_thread(LPVOID param)
 	WINPR_ASSERT(stream);
 
 	int fd = stream->fd;
+	BOOL releaseDevice = FALSE;
 
 	do
 	{
@@ -535,8 +536,16 @@ static DWORD WINAPI cam_v4l_stream_capture_thread(LPVOID param)
 				const UINT error =
 				    stream->sampleCallback(stream->dev, stream->streamIndex,
 				                           stream->buffers[buf.index].start, buf.bytesused);
-				if (error != CHANNEL_RC_OK)
+				if (error == ECAM_SAMPLE_CAPTURE_DRAINED)
+				{
+					stream->streaming = FALSE;
+					releaseDevice = TRUE;
+					break;
+				}
+				else if (error != CHANNEL_RC_OK)
+				{
 					WLog_ERR(TAG, "Failure in sampleCallback: %" PRIu32, error);
+				}
 
 				/* enqueue buffer back */
 				if (ioctl(fd, VIDIOC_QBUF, &buf) == -1)
@@ -550,6 +559,20 @@ static DWORD WINAPI cam_v4l_stream_capture_thread(LPVOID param)
 		LeaveCriticalSection(&stream->lock);
 
 	} while (stream->streaming);
+
+	if (releaseDevice)
+	{
+		enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (ioctl(stream->fd, VIDIOC_STREAMOFF, &type) < 0)
+		{
+			char buffer[64] = WINPR_C_ARRAY_INIT;
+			WLog_ERR(TAG, "Failure in VIDIOC_STREAMOFF, errno %s [%d]",
+			         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
+		}
+
+		cam_v4l_stream_free_buffers(stream);
+		cam_v4l_stream_close_device(stream);
+	}
 
 	return CHANNEL_RC_OK;
 }
@@ -599,7 +622,7 @@ CamV4lStream* cam_v4l_stream_create(const char* deviceId, size_t streamIndex)
  */
 CAM_ERROR_CODE cam_v4l_stream_stop(CamV4lStream* stream)
 {
-	if (!stream || !stream->streaming)
+	if (!stream)
 		return CAM_ERROR_CODE_None;
 
 	stream->streaming = FALSE; /* this will terminate capture thread */
@@ -614,12 +637,15 @@ CAM_ERROR_CODE cam_v4l_stream_stop(CamV4lStream* stream)
 	EnterCriticalSection(&stream->lock);
 
 	/* stop streaming */
-	enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	if (ioctl(stream->fd, VIDIOC_STREAMOFF, &type) < 0)
+	if (stream->fd != -1)
 	{
-		char buffer[64] = WINPR_C_ARRAY_INIT;
-		WLog_ERR(TAG, "Failure in VIDIOC_STREAMOFF, errno %s [%d]",
-		         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
+		enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		if (ioctl(stream->fd, VIDIOC_STREAMOFF, &type) < 0)
+		{
+			char buffer[64] = WINPR_C_ARRAY_INIT;
+			WLog_ERR(TAG, "Failure in VIDIOC_STREAMOFF, errno %s [%d]",
+			         winpr_strerror(errno, buffer, sizeof(buffer)), errno);
+		}
 	}
 
 	cam_v4l_stream_free_buffers(stream);
@@ -646,11 +672,22 @@ static CAM_ERROR_CODE cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, siz
 		return CAM_ERROR_CODE_UnexpectedError;
 	}
 
-	if (stream->streaming)
+	EnterCriticalSection(&stream->lock);
+	const BOOL streaming = stream->streaming;
+	LeaveCriticalSection(&stream->lock);
+
+	if (streaming)
 	{
 		WLog_ERR(TAG, "Streaming already in progress, device %s, streamIndex %" PRIuz,
 		         dev->deviceId, streamIndex);
 		return CAM_ERROR_CODE_UnexpectedError;
+	}
+
+	if (stream->captureThread)
+	{
+		(void)WaitForSingleObject(stream->captureThread, INFINITE);
+		(void)CloseHandle(stream->captureThread);
+		stream->captureThread = nullptr;
 	}
 
 	stream->dev = dev;
@@ -824,6 +861,7 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE v4l_freerdp_rdpecam_client_subsystem_entry(
 		return CHANNEL_RC_NO_MEMORY;
 
 	hal->iHal.Enumerate = cam_v4l_enumerate;
+	hal->iHal.RequestDrivenCapture = TRUE;
 	hal->iHal.GetMediaTypeDescriptions = cam_v4l_get_media_type_descriptions;
 	hal->iHal.Activate = cam_v4l_activate;
 	hal->iHal.Deactivate = cam_v4l_deactivate;
