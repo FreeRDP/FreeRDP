@@ -334,6 +334,7 @@ static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 	ArrayList_Unlock(list);
 }
 
+WINPR_ATTR_NODISCARD
 static int func_get_interface_number(const LIBUSB_CONFIG_DESCRIPTOR* config, unsigned index)
 {
 	if (!config || !config->interface || (index >= config->bNumInterfaces))
@@ -345,6 +346,7 @@ static int func_get_interface_number(const LIBUSB_CONFIG_DESCRIPTOR* config, uns
 	return interface->altsetting[0].bInterfaceNumber;
 }
 
+WINPR_ATTR_NODISCARD
 static const LIBUSB_INTERFACE_DESCRIPTOR*
 func_get_interface_descriptor(const LIBUSB_CONFIG_DESCRIPTOR* config, BYTE number, BYTE alternate)
 {
