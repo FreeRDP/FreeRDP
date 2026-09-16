@@ -350,6 +350,24 @@ BOOL wlf_handle_ungrab_key(freerdp* instance, const UwacKeyEvent* ev)
 	return UwacSeatInhibitShortcuts(context->seat, false) == UWAC_SUCCESS;
 }
 
+BOOL wlf_handle_pointer_leave(freerdp* instance, const UwacPointerEnterLeaveEvent* ev)
+{
+	wlfContext* wlf = nullptr;
+
+	if (!instance || !instance->context || !ev)
+		return FALSE;
+
+	wlf = (wlfContext*)instance->context;
+	WINPR_ASSERT(wlf);
+
+	/* keyboard_handle_leave() reports via UWAC_EVENT_POINTER_LEAVE, release the
+	 * shortcut inhibitor so local shortcuts work again while unfocused */
+	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_GrabKeyboard))
+		return UwacSeatInhibitShortcuts(wlf->seat, false) == UWAC_SUCCESS;
+
+	return TRUE;
+}
+
 BOOL wlf_keyboard_enter(freerdp* instance, const UwacKeyboardEnterLeaveEvent* ev)
 {
 	if (!instance || !ev)

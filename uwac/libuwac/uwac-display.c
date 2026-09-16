@@ -136,7 +136,8 @@ static void UwacRegisterCursor(UwacSeat* seat)
 	if (!seat || !seat->display || !seat->display->compositor)
 		return;
 
-	seat->pointer_surface = wl_compositor_create_surface(seat->display->compositor);
+	if (!seat->pointer_surface)
+		seat->pointer_surface = wl_compositor_create_surface(seat->display->compositor);
 }
 
 static void registry_handle_global(void* data, struct wl_registry* registry, uint32_t id,
@@ -154,6 +155,11 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	{
 		d->compositor = wl_registry_bind(registry, id, &wl_compositor_interface,
 		                                 min(TARGET_COMPOSITOR_INTERFACE, version));
+
+		/* seats announced before the compositor have no cursor surface yet */
+		UwacSeat* seat = nullptr;
+		UwacSeat* tmp = nullptr;
+		wl_list_for_each_safe(seat, tmp, &d->seats, link) UwacRegisterCursor(seat);
 	}
 	else if (strcmp(interface, "wl_shm") == 0)
 	{
