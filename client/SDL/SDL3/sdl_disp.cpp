@@ -343,6 +343,11 @@ bool sdlDispContext::handleEvent(const SDL_DisplayEvent& ev)
 		case SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED:
 			SDL_LogDebug(cat, "The display with id %u changed scale", ev.displayID);
 			return updateMonitors(ev.type, ev.displayID);
+#if SDL_VERSION_ATLEAST(3, 3, 2)
+		case SDL_EVENT_DISPLAY_USABLE_BOUNDS_CHANGED:
+			SDL_LogDebug(cat, "The display with id %u changed usable bounds", ev.displayID);
+			return updateMonitors(ev.type, ev.displayID);
+#endif
 		case SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED:
 			SDL_LogDebug(cat, "The display with id %u changed mode", ev.displayID);
 			return updateMonitors(ev.type, ev.displayID);
