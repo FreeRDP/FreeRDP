@@ -176,7 +176,9 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL HasMonitorAttributes);    /*    397 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 MonitorFlags);          /* 398 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 MonitorAttributeFlags); /* 399 */
-	UINT64 padding0448[448 - 400];                             /* 400 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 NumMonitorScales);      /* 400 */
+	SETTINGS_DEPRECATED(ALIGN64 rdpMonitorScale* MonitorScales); /* 401 */
+	UINT64 padding0448[448 - 402];                               /* 402 */
 
 	/* Client Message Channel Data */
 	UINT64 padding0512[512 - 448]; /* 448 */

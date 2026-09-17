@@ -38,6 +38,7 @@
 #include <freerdp/addin.h>
 #include <freerdp/settings.h>
 #include <freerdp/client.h>
+#include <freerdp/client/monitor.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/channels/cliprdr.h>
@@ -1070,6 +1071,12 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		CommandLineParserFree(ptr);
 		if (status)
 			return fail_at(arg, status);
+	}
+	CommandLineSwitchCase(arg, "monitor-scale")
+	{
+		/* Process each occurrence before the argument table keeps only the last value. */
+		if (!freerdp_client_parse_monitor_scales(settings, arg->Value))
+			return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
 	}
 	CommandLineSwitchCase(arg, "kerberos")
 	{
@@ -5889,6 +5896,9 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		const UINT32 port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
 		WLog_INFO(TAG, "/vmconnect uses custom port %" PRIu32, port);
 	}
+
+	if (!freerdp_client_validate_monitor_scales(settings, nullptr, 0))
+		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 	fill_credential_strings(largs);
 

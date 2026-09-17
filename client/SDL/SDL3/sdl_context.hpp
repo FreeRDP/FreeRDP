@@ -35,7 +35,6 @@
 
 #include "sdl_window.hpp"
 #include "sdl_disp.hpp"
-#include "sdl_monitor_scale.hpp"
 #include "sdl_clip.hpp"
 #include "sdl_input.hpp"
 #include "sdl_rail.hpp"
@@ -129,7 +128,6 @@ class SdlContext
 	[[nodiscard]] bool detectDisplays();
 	[[nodiscard]] rdpMonitor getDisplay(SDL_DisplayID id) const;
 	[[nodiscard]] std::vector<SDL_DisplayID> getDisplayIds() const;
-	[[nodiscard]] bool parseMonitorScaleOverrides(const char* value);
 	[[nodiscard]] bool validateMonitorScaleOverrides() const;
 	void applyMonitorScaleOverride(rdpMonitor& monitor) const;
 
@@ -263,8 +261,6 @@ class SdlContext
 	std::thread _thread;
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
 	std::vector<rdpPointer*> _valid_pointers;
-	SdlMonitorScaleOverrides _monitorScaleOverrides;
-	bool _monitorScaleOverridesConfigured = false;
 	bool _credentialsRead = false;
 	std::shared_ptr<SdlAadAuthHelper> _aadAuthHelper;
 };

@@ -35,9 +35,9 @@
 #include "dialogs/sdl_dialogs.hpp"
 
 #include <sdl_aad_helper.hpp>
+#include <freerdp/client/monitor.h>
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
-static constexpr auto sdl_monitor_scale = "monitor-scale";
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), _log(WLog_Get(CLIENT_TAG("SDL"))), _cursor(nullptr, sdl_Pointer_FreeCopy),
@@ -67,11 +67,6 @@ SdlContext::SdlContext(rdpContext* context)
 
 	_args.push_back({ sdl_allow_screensaver, COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse,
 	                  nullptr, -1, nullptr, "Allow local screensaver to activate" });
-	_args.push_back({ sdl_monitor_scale, COMMAND_LINE_VALUE_REQUIRED,
-	                  "<id>:<desktop>:<device>[,<id>:<desktop>:<device>...]", nullptr, nullptr, -1,
-	                  nullptr,
-	                  "Override RDP scaling for individual SDL monitors. Monitor IDs are "
-	                  "shown by /list:monitor." });
 
 	/* Push a null element used as abort when iterating the array */
 	_args.push_back({ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr });
@@ -173,7 +168,7 @@ BOOL SdlContext::preConnect(freerdp* instance)
 	if (!sdl->validateMonitorScaleOverrides())
 		return FALSE;
 	/* Include the overridden attributes in the initial CS_MONITOR_EX block. */
-	if (!sdl->_monitorScaleOverrides.empty() &&
+	if (freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorScales) > 0 &&
 	    !freerdp_settings_set_bool(settings, FreeRDP_HasMonitorAttributes, TRUE))
 		return FALSE;
 
@@ -1646,80 +1641,22 @@ int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom
 				}
 			}
 		}
-		else if (strcmp(arg->Name, sdl_monitor_scale) == 0)
-		{
-			if (!sdl->parseMonitorScaleOverrides(arg->Value))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-		}
 	}
 	return 0;
 }
 
-bool SdlContext::parseMonitorScaleOverrides(const char* value)
-{
-	if (_monitorScaleOverridesConfigured)
-	{
-		WLog_Print(_log, WLOG_ERROR, "/monitor-scale must not be specified more than once");
-		return false;
-	}
-
-	SdlMonitorScaleOverrides overrides;
-	std::string error;
-	if (!sdl_parse_monitor_scale_overrides(value, overrides, error))
-	{
-		WLog_Print(getWLog(), WLOG_ERROR, "%s", error.c_str());
-		return false;
-	}
-
-	_monitorScaleOverrides = std::move(overrides);
-	_monitorScaleOverridesConfigured = true;
-	return true;
-}
-
 bool SdlContext::validateMonitorScaleOverrides() const
 {
-	if (!_monitorScaleOverridesConfigured)
-		return true;
-
-	const auto settings = context()->settings;
-	WINPR_ASSERT(settings);
-	const auto mask = freerdp_settings_get_uint64(settings, FreeRDP_MonitorOverrideFlags);
-	if ((mask & (FREERDP_MONITOR_OVERRIDE_DESKTOP_SCALE | FREERDP_MONITOR_OVERRIDE_DEVICE_SCALE)) !=
-	    0)
-	{
-		WLog_Print(_log, WLOG_ERROR,
-		           "/monitor-scale cannot be combined with global desktop/device scale "
-		           "overrides");
-		return false;
-	}
-
-	for (const auto& entry : _monitorScaleOverrides)
-	{
-		if (_displays.find(entry.first) == _displays.end())
-		{
-			WLog_Print(_log, WLOG_ERROR,
-			           "Monitor scale override references unknown SDL monitor ID %" PRIu32
-			           ". Use /list:monitor to list available monitor IDs.",
-			           entry.first);
-			return false;
-		}
-	}
-
-	return true;
+	const auto ids = getDisplayIds();
+	// Supply a non-null empty list so configured IDs are rejected when no displays exist.
+	const UINT32 unused = 0;
+	return freerdp_client_validate_monitor_scales(context()->settings,
+	                                              ids.empty() ? &unused : ids.data(), ids.size());
 }
 
 void SdlContext::applyMonitorScaleOverride(rdpMonitor& monitor) const
 {
-	const auto desktopScaleFactor = monitor.attributes.desktopScaleFactor;
-	const auto deviceScaleFactor = monitor.attributes.deviceScaleFactor;
-	if (!sdl_apply_monitor_scale_override(_monitorScaleOverrides, monitor))
-		return;
-
-	WLog_Print(_log, WLOG_DEBUG,
-	           "monitor %" PRIu32 " scale override: desktopScaleFactor %" PRIu32 " -> %" PRIu32
-	           ", deviceScaleFactor %" PRIu32 " -> %" PRIu32,
-	           monitor.orig_screen, desktopScaleFactor, monitor.attributes.desktopScaleFactor,
-	           deviceScaleFactor, monitor.attributes.deviceScaleFactor);
+	freerdp_client_apply_monitor_scale(context()->settings, &monitor);
 }
 
 CriticalSection& SdlContext::lock()
