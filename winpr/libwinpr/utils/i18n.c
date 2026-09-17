@@ -42,7 +42,7 @@ BOOL winpr_i18n_bind_domain(const char* domain, const char* searchPath)
 const char* winpr_i18n_dgettext(const char* domain, const char* msgid)
 {
 	if (!msgid)
-		return nullptr;
+		return NULL;
 
 #ifdef WITH_WINPR_I18N
 	if (domain && (domain[0] != '\0'))
