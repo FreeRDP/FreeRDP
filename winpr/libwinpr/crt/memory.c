@@ -40,3 +40,22 @@ PVOID SecureZeroMemory(PVOID ptr, size_t cnt)
 }
 
 #endif
+
+void winpr_zfree(char* str)
+{
+	if (str)
+	{
+		char* cur = str;
+		while (*cur != '\0')
+			*cur++ = '\0';
+	}
+	free(str);
+}
+
+void winpr_znfree(void* data, size_t len)
+{
+	WINPR_ASSERT(data || (len == 0));
+	if (data)
+		memset(data, 0, len);
+	free(data);
+}
