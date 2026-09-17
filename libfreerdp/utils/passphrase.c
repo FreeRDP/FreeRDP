@@ -254,8 +254,10 @@ const char* freerdp_passphrase_read_tty(rdpContext* context, const char* prompt,
 	if (!fp)
 		goto error;
 
-	(void)fprintf(fout, "%s", prompt);
-	(void)fflush(fout);
+        if (isatty(fileno(fp))) {
+		(void)fprintf(fout, "%s", prompt);
+		(void)fflush(fout);
+	}
 
 	{
 		char* ptr = nullptr;
@@ -362,6 +364,9 @@ BOOL set_terminal_nonblock(int ifd, BOOL nonblock)
 
 	if (fd < 0)
 		return FALSE;
+
+        if (!isatty(fd))
+		return TRUE;
 
 	if (nonblock)
 	{
