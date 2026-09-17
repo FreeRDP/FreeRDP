@@ -223,12 +223,13 @@ static BOOL rdp_redirection_write_base64_wchar(WINPR_ATTR_UNUSED UINT32 flag, wS
 {
 	BOOL rc = FALSE;
 
-	char* base64 = crypto_base64_encode(data, length);
+	size_t olen = 0;
+	char* base64 = crypto_base64_encode_len(data, length, &olen);
 	if (!base64)
 		return FALSE;
 
 	size_t wbase64len = 0;
-	WCHAR* wbase64 = ConvertUtf8ToWCharAlloc(base64, &wbase64len);
+	WCHAR* wbase64 = ConvertUtf8NToWCharAlloc(base64, olen, &wbase64len);
 	free(base64);
 	if (!wbase64)
 		return FALSE;
