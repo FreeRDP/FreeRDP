@@ -469,13 +469,14 @@ static BOOL arm_stringEncodeW(const BYTE* pin, size_t cbIn, BYTE** ppOut, size_t
 	*pcbOut = 0;
 
 	/* encode to base64 with crlf */
-	char* b64encoded = crypto_base64_encode_ex(pin, cbIn, TRUE);
+	size_t b64len = 0;
+	char* b64encoded = crypto_base64_encode_ex_len(pin, cbIn, TRUE, &b64len);
 	if (!b64encoded)
 		return FALSE;
 
 	/* and then convert to Unicode */
 	size_t outSz = 0;
-	*ppOut = (BYTE*)ConvertUtf8NToWCharAlloc(b64encoded, strlen(b64encoded), &outSz);
+	*ppOut = (BYTE*)ConvertUtf8NToWCharAlloc(b64encoded, b64len, &outSz);
 	free(b64encoded);
 
 	if (!*ppOut)
