@@ -115,16 +115,22 @@ static void client_cli_user_notification(void* context, const UserNotificationEv
 WINPR_ATTR_NODISCARD
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
-	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = nullptr;
-
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(context);
 
 	instance->LoadChannels = freerdp_client_load_channels;
 	set_default_callbacks(instance);
 
-	pEntryPoints = instance->pClientEntryPoints;
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
 	WINPR_ASSERT(pEntryPoints);
+
+	/* This function must be called with a context containing rdpClientContext. So if the size is
+	 * not large enough that is a terminal failure. */
+	if (sizeof(rdpClientContext) > instance->ContextSize)
+	{
+		WLog_ERR(TAG, "Function must be called with a context based on rdpClientContext, aborting");
+		return FALSE;
+	}
 
 	rdpClientContext* cctx = (rdpClientContext*)context;
 	cctx->oauth2 = freerdp_oauth2_new();
@@ -136,18 +142,19 @@ static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 
 static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 {
-	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = nullptr;
-
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(context);
 
-	pEntryPoints = instance->pClientEntryPoints;
+	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
 	WINPR_ASSERT(pEntryPoints);
 	IFCALL(pEntryPoints->ClientFree, instance, context);
 
-	rdpClientContext* cctx = (rdpClientContext*)context;
-	freerdp_oauth2_free(cctx->oauth2);
-	cctx->oauth2 = nullptr;
+	if (instance->ContextSize >= sizeof(rdpClientContext))
+	{
+		rdpClientContext* cctx = (rdpClientContext*)context;
+		freerdp_oauth2_free(cctx->oauth2);
+		cctx->oauth2 = nullptr;
+	}
 }
 
 /* Common API */
