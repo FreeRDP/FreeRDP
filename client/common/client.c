@@ -2907,7 +2907,7 @@ BOOL client_common_save_session_info(WINPR_ATTR_UNUSED rdpContext* context, UINT
 char* freerdp_client_extract_aad_code(rdpClientContext* cctx, const char* data, size_t length)
 {
 	WINPR_ASSERT(cctx);
-	WINPR_ASSERT(!requireRdpClientContext(&cctx->context));
+	WINPR_ASSERT(requireRdpClientContext(&cctx->context));
 
 	if (!cctx || !requireRdpClientContext(&cctx->context))
 		return nullptr;
