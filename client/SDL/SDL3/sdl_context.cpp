@@ -19,10 +19,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <freerdp/client/cmdline.h>
 
 #include "sdl_context.hpp"
 #include "sdl_config.hpp"
 #include "sdl_channels.hpp"
+#include "sdl_input_mapping.hpp"
 #include "sdl_monitor.hpp"
 #include "sdl_pointer.hpp"
 #include "sdl_touch.hpp"
@@ -33,6 +35,7 @@
 #include "dialogs/sdl_dialogs.hpp"
 
 #include <sdl_aad_helper.hpp>
+#include <freerdp/client/monitor.h>
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
 
@@ -162,6 +165,12 @@ BOOL SdlContext::preConnect(freerdp* instance)
 
 	auto settings = instance->context->settings;
 	WINPR_ASSERT(settings);
+	if (!sdl->validateMonitorScaleOverrides())
+		return FALSE;
+	/* Include the overridden attributes in the initial CS_MONITOR_EX block. */
+	if (freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorScales) > 0 &&
+	    !freerdp_settings_set_bool(settings, FreeRDP_HasMonitorAttributes, TRUE))
+		return FALSE;
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))
 		return FALSE;
@@ -463,7 +472,11 @@ bool SdlContext::updateWindowList()
 	std::vector<rdpMonitor> list;
 	list.reserve(_windows.size());
 	for (const auto& win : _windows)
-		list.push_back(win.second.monitor(_windows.size() == 1));
+	{
+		auto monitor = win.second.monitor(_windows.size() == 1);
+		applyMonitorScaleOverride(monitor);
+		list.push_back(monitor);
+	}
 
 	// /monitors: subset may exclude the SDL primary. The library requires
 	// the array to mark one monitor as primary, so promote the first when
@@ -484,6 +497,7 @@ bool SdlContext::updateWindow(SDL_WindowID id)
 
 	auto& w = _windows.at(id);
 	auto m = w.monitor(true);
+	applyMonitorScaleOverride(m);
 	auto r = w.rect();
 	m.width = r.w;
 	m.height = r.h;
@@ -824,6 +838,8 @@ void SdlContext::applyMonitorOffset(SDL_WindowID window, float& x, float& y) con
 	if (!freerdp_settings_get_bool(context()->settings, FreeRDP_UseMultimon))
 		return;
 
+	/* The window offsets normalize the negotiated monitor origin into the
+	 * desktop surface's nonnegative coordinate space, also used by input. */
 	auto w = getWindowForId(window);
 	x -= static_cast<float>(w->offsetX());
 	y -= static_cast<float>(w->offsetY());
@@ -1099,9 +1115,14 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 		return true; /* Event for an untracked window (e.g. closed dialog) */
 	if (!eventToPixelCoordinates(ev.windowID, copy))
 		return true;
-	removeLocalScaling(copy.motion.x, copy.motion.y);
+	/* Relative deltas retain the source renderer's scale. Absolute positions
+	 * can belong to a different monitor while SDL captures a held drag. */
 	removeLocalScaling(copy.motion.xrel, copy.motion.yrel);
-	applyMonitorOffset(copy.motion.windowID, copy.motion.x, copy.motion.y);
+	SDL_FPoint pos{};
+	if (!screenToRdp(ev.windowID, { ev.x, ev.y }, pos))
+		return true;
+	copy.motion.x = pos.x;
+	copy.motion.y = pos.y;
 
 	return SdlTouch::handleEvent(this, copy.motion);
 }
@@ -1315,10 +1336,11 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 
 	if (!getWindowForId(ev.windowID))
 		return true;
-	if (!eventToPixelCoordinates(ev.windowID, copy))
+	SDL_FPoint pos{};
+	if (!screenToRdp(ev.windowID, { ev.x, ev.y }, pos))
 		return true;
-	removeLocalScaling(copy.button.x, copy.button.y);
-	applyMonitorOffset(copy.button.windowID, copy.button.x, copy.button.y);
+	copy.button.x = pos.x;
+	copy.button.y = pos.y;
 	return SdlTouch::handleEvent(this, copy.button);
 }
 
@@ -1442,6 +1464,45 @@ SDL_FPoint SdlContext::screenToPixel(SDL_WindowID id, const SDL_FPoint& pos)
 		return {};
 	removeLocalScaling(rpos.x, rpos.y);
 	return rpos;
+}
+
+bool SdlContext::screenToRdp(SDL_WindowID id, const SDL_FPoint& pos, SDL_FPoint& rpos)
+{
+	auto target = getWindowForId(id);
+	if (!target)
+		return false;
+
+	auto local = pos;
+	if (freerdp_settings_get_bool(context()->settings, FreeRDP_UseMultimon))
+	{
+		const auto sourceBounds = target->bounds();
+		if (!sdl_pointer_in_window(pos, sourceBounds, sourceBounds))
+		{
+			/* Use this event's position, not the latest global mouse state: queued
+			 * events must not inherit a newer pointer position. Only map into RDP
+			 * windows; outside them, retain the source mapping and button capture. */
+			for (auto& entry : _windows)
+			{
+				if (const auto point =
+				        sdl_pointer_in_window(pos, sourceBounds, entry.second.bounds()))
+				{
+					target = &entry.second;
+					local = *point;
+					break;
+				}
+			}
+		}
+	}
+
+	rpos = local;
+	if (auto renderer = target->renderer())
+	{
+		if (!SDL_RenderCoordinatesFromWindow(renderer, local.x, local.y, &rpos.x, &rpos.y))
+			return false;
+		removeLocalScaling(rpos.x, rpos.y);
+	}
+	applyMonitorOffset(target->id(), rpos.x, rpos.y);
+	return true;
 }
 
 SDL_FPoint SdlContext::pixelToScreen(SDL_WindowID id, const SDL_FPoint& pos)
@@ -1582,6 +1643,20 @@ int SdlContext::argumentHandler(const COMMAND_LINE_ARGUMENT_A* arg, void* custom
 		}
 	}
 	return 0;
+}
+
+bool SdlContext::validateMonitorScaleOverrides() const
+{
+	const auto ids = getDisplayIds();
+	// Supply a non-null empty list so configured IDs are rejected when no displays exist.
+	const UINT32 unused = 0;
+	return freerdp_client_validate_monitor_scales(context()->settings,
+	                                              ids.empty() ? &unused : ids.data(), ids.size());
+}
+
+void SdlContext::applyMonitorScaleOverride(rdpMonitor& monitor) const
+{
+	freerdp_client_apply_monitor_scale(context()->settings, &monitor);
 }
 
 CriticalSection& SdlContext::lock()

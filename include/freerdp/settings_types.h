@@ -456,6 +456,14 @@ extern "C"
 		MONITOR_ATTRIBUTES attributes;
 	} rdpMonitor;
 
+	/** Per-monitor scale override, keyed by the client monitor ID. */
+	typedef struct
+	{
+		UINT32 id;
+		UINT32 desktopScaleFactor;
+		UINT32 deviceScaleFactor;
+	} rdpMonitorScale;
+
 	/* Device Redirection */
 	typedef enum
 	{

@@ -1859,6 +1859,9 @@ UINT32 freerdp_settings_get_uint32(WINPR_ATTR_UNUSED const rdpSettings* settings
 		case FreeRDP_NegotiationFlags:
 			return settings->NegotiationFlags;
 
+		case FreeRDP_NumMonitorScales:
+			return settings->NumMonitorScales;
+
 		case FreeRDP_NumMonitorIds:
 			return settings->NumMonitorIds;
 
@@ -2342,6 +2345,10 @@ BOOL freerdp_settings_set_uint32(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_NegotiationFlags:
 			settings->NegotiationFlags = cnv.c;
+			break;
+
+		case FreeRDP_NumMonitorScales:
+			settings->NumMonitorScales = cnv.c;
 			break;
 
 		case FreeRDP_NumMonitorIds:
@@ -4212,6 +4219,9 @@ void* freerdp_settings_get_pointer_writable(rdpSettings* settings, FreeRDP_Setti
 		case FreeRDP_MonitorDefArray:
 			return (void*)settings->MonitorDefArray;
 
+		case FreeRDP_MonitorScales:
+			return (void*)settings->MonitorScales;
+
 		case FreeRDP_MonitorIds:
 			return (void*)settings->MonitorIds;
 
@@ -4337,6 +4347,10 @@ BOOL freerdp_settings_set_pointer(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_MonitorDefArray:
 			settings->MonitorDefArray = (rdpMonitor*)cnv.v;
+			break;
+
+		case FreeRDP_MonitorScales:
+			settings->MonitorScales = (rdpMonitorScale*)cnv.v;
 			break;
 
 		case FreeRDP_MonitorIds:

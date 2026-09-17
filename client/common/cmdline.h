@@ -341,6 +341,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, nullptr, nullptr, nullptr, -1,
 	  nullptr, "[DEPRECATED, use /list:monitor] List detected monitors" },
 #endif
+	{ "monitor-scale", COMMAND_LINE_VALUE_REQUIRED,
+	  "<id>:<desktop>:<device>[,<id>:<desktop>:<device>...]", nullptr, nullptr, -1, nullptr,
+	  "Override per-monitor scaling (SDL3). IDs from /list:monitor; desktop 100..500; device "
+	  "100/140/180. Incompatible with global scale overrides." },
 	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<id>[,<id>[,...]]", nullptr, nullptr, -1, nullptr,
 	  "[experimental] Select monitors to use (only effective in fullscreen or multimonitor mode)" },
 	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueTrue, nullptr, -1, nullptr,

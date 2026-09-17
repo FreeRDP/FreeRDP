@@ -321,7 +321,13 @@ bool sdlInput::keyboard_focus_in()
 	SDL_GetMouseState(&fx, &fy);
 
 	auto w = SDL_GetMouseFocus();
-	const auto& pos = _sdl->screenToPixel(SDL_GetWindowID(w), SDL_FPoint{ fx, fy });
+	if (!w)
+		return true;
+	SDL_FPoint pos{};
+	if (_sdl->getRailChannelContext().enabled())
+		pos = _sdl->screenToPixel(SDL_GetWindowID(w), { fx, fy });
+	else if (!_sdl->screenToRdp(SDL_GetWindowID(w), { fx, fy }, pos))
+		return true;
 
 	return freerdp_client_send_button_event(_sdl->common(), FALSE, PTR_FLAGS_MOVE,
 	                                        static_cast<Sint32>(pos.x), static_cast<Sint32>(pos.y));

@@ -1426,6 +1426,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* dst, const rdpSettings
 		{ FreeRDP_ServerCertificateLength, FreeRDP_ServerCertificate },
 		{ FreeRDP_ChannelDefArraySize, FreeRDP_ChannelDefArray },
 		{ FreeRDP_NumMonitorIds, FreeRDP_MonitorIds },
+		{ FreeRDP_NumMonitorScales, FreeRDP_MonitorScales },
 		{ FreeRDP_BitmapCacheV2NumCells, FreeRDP_BitmapCacheV2CellInfo },
 		{ FreeRDP_RedirectionPasswordLength, FreeRDP_RedirectionPassword },
 		{ FreeRDP_RedirectionTsvUrlLength, FreeRDP_RedirectionTsvUrl },
