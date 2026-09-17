@@ -21,24 +21,32 @@
 
 static void xf_reconnect_draw(xfContext* xfc)
 {
+	WINPR_ASSERT(xfc);
 	const int screen = DefaultScreen(xfc->display);
 	GC gc = XCreateGC(xfc->display, xfc->reconnectWindow, 0, nullptr);
 	if (!gc)
 		return;
 	XSetForeground(xfc->display, gc, BlackPixel(xfc->display, screen));
+	XFontStruct* font = XLoadQueryFont(xfc->display, "9x15");
+	if (font)
+		XSetFont(xfc->display, gc, font->fid);
 	XClearWindow(xfc->display, xfc->reconnectWindow);
-	XDrawString(xfc->display, xfc->reconnectWindow, gc, 16, 28, xfc->reconnectMessage,
+	XDrawString(xfc->display, xfc->reconnectWindow, gc, 16, 30, xfc->reconnectMessage,
 	            (int)strlen(xfc->reconnectMessage));
 	const char cancel[] = "Close this window to cancel.";
-	XDrawString(xfc->display, xfc->reconnectWindow, gc, 16, 54, cancel, sizeof(cancel) - 1);
+	XDrawString(xfc->display, xfc->reconnectWindow, gc, 16, 60, cancel, sizeof(cancel) - 1);
+	if (font)
+		XFreeFont(xfc->display, font);
 	XFreeGC(xfc->display, gc);
 	XFlush(xfc->display);
 }
 
 SSIZE_T xf_retry_dialog(freerdp* instance, const char* what, size_t current, void* userarg)
 {
+	WINPR_ASSERT(instance);
 	const SSIZE_T delay = client_common_retry_dialog(instance, what, current, userarg);
 	xfContext* xfc = (xfContext*)instance->context;
+	WINPR_ASSERT(xfc);
 	if ((delay < 0) || !xfc->display || strcmp(what, "connection") != 0)
 		return delay;
 
@@ -47,7 +55,7 @@ SSIZE_T xf_retry_dialog(freerdp* instance, const char* what, size_t current, voi
 	{
 		const int screen = DefaultScreen(xfc->display);
 		xfc->reconnectWindow =
-		    XCreateSimpleWindow(xfc->display, DefaultRootWindow(xfc->display), 0, 0, 360, 80, 1,
+			XCreateSimpleWindow(xfc->display, DefaultRootWindow(xfc->display), 0, 0, 420, 90, 1,
 		                        BlackPixel(xfc->display, screen), WhitePixel(xfc->display, screen));
 		XStoreName(xfc->display, xfc->reconnectWindow, "FreeRDP - Reconnecting");
 		XSelectInput(xfc->display, xfc->reconnectWindow, ExposureMask);
@@ -62,13 +70,14 @@ SSIZE_T xf_retry_dialog(freerdp* instance, const char* what, size_t current, voi
 	else
 		(void)snprintf(xfc->reconnectMessage, sizeof(xfc->reconnectMessage),
 		               "Reconnecting: attempt %zu", current + 1);
-	xf_reconnect_draw(xfc);
 	xf_unlock_x11(xfc);
 	return delay;
 }
 
 BOOL xf_reconnect_event(xfContext* xfc, const XEvent* event)
 {
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
 	if (!xfc->reconnectWindow || event->xany.window != xfc->reconnectWindow)
 		return FALSE;
 	if (event->type == Expose)
@@ -84,6 +93,7 @@ BOOL xf_reconnect_event(xfContext* xfc, const XEvent* event)
 
 void xf_reconnect_close(xfContext* xfc)
 {
+	WINPR_ASSERT(xfc);
 	if (xfc->display && xfc->reconnectWindow)
 	{
 		xf_lock_x11(xfc);
