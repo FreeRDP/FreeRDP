@@ -960,22 +960,16 @@ SECURITY_STATUS SEC_ENTRY sspi_VerifySignature(PCtxtHandle phContext, PSecBuffer
 
 WINPR_PRAGMA_DIAG_POP
 
-static void zfree(WCHAR* str, size_t len, BOOL isWCHAR)
-{
-	if (str)
-		memset(str, 0, len * (isWCHAR ? sizeof(WCHAR) : sizeof(char)));
-	free(str);
-}
-
 void sspi_FreeAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity)
 {
 	if (!identity)
 		return;
 
-	const BOOL wc = (identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE) != 0;
-	zfree(identity->User, identity->UserLength, wc);
-	zfree(identity->Domain, identity->DomainLength, wc);
-	zfree(identity->Password, identity->PasswordLength, wc);
+	const size_t wc =
+	    ((identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE) != 0) ? sizeof(WCHAR) : sizeof(char);
+	winpr_znfree(identity->User, identity->UserLength * wc);
+	winpr_znfree(identity->Domain, identity->DomainLength * wc);
+	winpr_znfree(identity->Password, identity->PasswordLength * wc);
 
 	const SEC_WINNT_AUTH_IDENTITY empty = WINPR_C_ARRAY_INIT;
 	*identity = empty;

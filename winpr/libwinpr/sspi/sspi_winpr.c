@@ -384,13 +384,6 @@ int sspi_SetAuthIdentityWithLengthW(SEC_WINNT_AUTH_IDENTITY* identity, const WCH
 	return 1;
 }
 
-static void zfree(WCHAR* str, size_t len)
-{
-	if (str)
-		memset(str, 0, len * sizeof(WCHAR));
-	free(str);
-}
-
 int sspi_SetAuthIdentityA(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, const char* domain,
                           const char* password)
 {
@@ -414,9 +407,9 @@ int sspi_SetAuthIdentityA(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, c
 	rc = sspi_SetAuthIdentityWithLengthW(identity, unicodeUser, unicodeUserLenW, unicodeDomain,
 	                                     unicodeDomainLenW, unicodePassword, unicodePasswordLenW);
 
-	zfree(unicodeUser, unicodeUserLenW);
-	zfree(unicodeDomain, unicodeDomainLenW);
-	zfree(unicodePassword, unicodePasswordLenW);
+	winpr_znfree(unicodeUser, unicodeUserLenW * sizeof(WCHAR));
+	winpr_znfree(unicodeDomain, unicodeDomainLenW * sizeof(WCHAR));
+	winpr_znfree(unicodePassword, unicodePasswordLenW * sizeof(WCHAR));
 	return rc;
 }
 
