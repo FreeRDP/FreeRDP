@@ -49,7 +49,7 @@ extern "C"
 	 * @since version 3.28.0
 	 */
 	WINPR_ATTR_NODISCARD
-	WINPR_API char* winpr_strnstr(char* haystack, const char* needle, size_t hlen);
+	WINPR_API char* winpr_strnstr(const char* haystack, const char* needle, size_t hlen);
 
 	WINPR_API WINPR_ATTR_MALLOC(free, 1) char* winpr_str_url_encode(const char* str, size_t len);
 	WINPR_API WINPR_ATTR_MALLOC(free, 1) char* winpr_str_url_decode(const char* str, size_t len);
