@@ -170,16 +170,12 @@ set(SRCS
     ssl.c
 )
 
-option(WITH_WINPR_I18N "Enable gettext localization support in WinPR" ON)
+option(WITH_WINPR_I18N "Enable gettext localization support in WinPR" OFF)
 if(WITH_WINPR_I18N)
-  find_package(Intl)
-  if(Intl_FOUND)
-    winpr_definition_add(WITH_WINPR_I18N)
-    winpr_system_include_directory_add(${Intl_INCLUDE_DIRS})
-    winpr_library_add_public(${Intl_LIBRARIES})
-  else()
-    message(STATUS "WinPR i18n disabled: libintl was not found")
-  endif()
+  find_package(Intl REQUIRED)
+  winpr_definition_add(WITH_WINPR_I18N)
+  winpr_system_include_directory_add(${Intl_INCLUDE_DIRS})
+  winpr_library_add_public(${Intl_LIBRARIES})
 endif()
 
 if(ANDROID)

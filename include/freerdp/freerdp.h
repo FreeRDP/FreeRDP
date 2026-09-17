@@ -745,7 +745,10 @@ owned by rdpRdp */
 	 *
 	 * @param locale Locale name, or NULL/empty to use the environment locale.
 	 * @param searchPath Optional gettext catalog directory for this module.
+	 * @return TRUE on success, otherwise FALSE.
+	 * @since version 3.33.0
 	 */
+	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL freerdp_enable_translation(const char* locale, const char* searchPath);
 
 	FREERDP_API void freerdp_free(freerdp* instance);
