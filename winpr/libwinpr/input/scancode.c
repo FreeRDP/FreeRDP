@@ -17,14 +17,36 @@
  * limitations under the License.
  */
 
+#include <float.h>
+#include <math.h>
+
 #include <winpr/config.h>
 #include <winpr/assert.h>
 #include <winpr/crt.h>
+#include <winpr/path.h>
+#include <winpr/json.h>
 
 #include <winpr/input.h>
 
 #include "../log.h"
 #define TAG WINPR_TAG("input.scancode")
+
+#define KBD_ARRAY_SIZE 256
+
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+
+typedef struct
+{
+	DWORD multivk[KBD_ARRAY_SIZE];
+	DWORD kbdext[KBD_ARRAY_SIZE];
+	DWORD normal[KBD_ARRAY_SIZE];
+} ScancodeToVKMap_t;
+
+static const char KEYBOARD_CONFIG_FILE_NAME[] = "KeyboardMapping.json";
+static INIT_ONCE VKmapInitialized = INIT_ONCE_STATIC_INIT;
+static ScancodeToVKMap_t VKmap[8];
 
 /**
  * Virtual Scan Codes
@@ -37,7 +59,7 @@
  * https://kbdlayout.info/KBDUSX/virtualkeys
  */
 
-static const DWORD KBD4T[128] = {
+static const DWORD KBD4T[KBD_ARRAY_SIZE] = {
 	KBD4_T00, KBD4_T01, KBD4_T02, KBD4_T03, KBD4_T04, KBD4_T05, KBD4_T06, KBD4_T07, KBD4_T08,
 	KBD4_T09, KBD4_T0A, KBD4_T0B, KBD4_T0C, KBD4_T0D, KBD4_T0E, KBD4_T0F, KBD4_T10, KBD4_T11,
 	KBD4_T12, KBD4_T13, KBD4_T14, KBD4_T15, KBD4_T16, KBD4_T17, KBD4_T18, KBD4_T19, KBD4_T1A,
@@ -55,7 +77,7 @@ static const DWORD KBD4T[128] = {
 	KBD4_T7E, KBD4_T7F
 };
 
-static const DWORD KBD4X[128] = {
+static const DWORD KBD4X[KBD_ARRAY_SIZE] = {
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  KBD4_X10, VK_NONE,
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  KBD4_X19, VK_NONE,
@@ -73,7 +95,7 @@ static const DWORD KBD4X[128] = {
 	VK_NONE,  VK_NONE,
 };
 
-static const DWORD KBD4X_1[128] = {
+static const DWORD KBD4X_1[KBD_ARRAY_SIZE] = {
 	VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE,
 	VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE,
 	VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_PAUSE,
@@ -96,7 +118,7 @@ static const DWORD KBD4X_1[128] = {
  * https://kbdlayout.info/KBDJAV/virtualkeys
  */
 
-static const DWORD KBD7T[128] = {
+static const DWORD KBD7T[KBD_ARRAY_SIZE] = {
 	KBD7_T00, KBD7_T01, KBD7_T02, KBD7_T03, KBD7_T04, KBD7_T05, KBD7_T06, KBD7_T07, KBD7_T08,
 	KBD7_T09, KBD7_T0A, KBD7_T0B, KBD7_T0C, KBD7_T0D, KBD7_T0E, KBD7_T0F, KBD7_T10, KBD7_T11,
 	KBD7_T12, KBD7_T13, KBD7_T14, KBD7_T15, KBD7_T16, KBD7_T17, KBD7_T18, KBD7_T19, KBD7_T1A,
@@ -114,7 +136,7 @@ static const DWORD KBD7T[128] = {
 	KBD7_T7E, KBD7_T7F
 };
 
-static const DWORD KBD7X[256] = {
+static const DWORD KBD7X[KBD_ARRAY_SIZE] = {
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  KBD7_X10, VK_NONE,
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  KBD7_X19, VK_NONE,
@@ -144,7 +166,7 @@ static const DWORD KBD7X[256] = {
 	VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE,  VK_NONE
 };
 
-static const DWORD KBD7X_1[128] = {
+static const DWORD KBD7X_1[KBD_ARRAY_SIZE] = {
 	VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE,
 	VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE,
 	VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_PAUSE,
@@ -166,7 +188,7 @@ static const DWORD KBD7X_1[128] = {
  *
  * https://kbdlayout.info/kbdkor/virtualkeys
  */
-static const DWORD KBD8T[128] = { // break here
+static const DWORD KBD8T[KBD_ARRAY_SIZE] = { // break here
 	VK_NONE,        VK_ESCAPE,
 	VK_KEY_1,       VK_KEY_2,
 	VK_KEY_3,       VK_KEY_4,
@@ -233,7 +255,7 @@ static const DWORD KBD8T[128] = { // break here
 	VK_ABNT_C2,     VK_OEM_PA2
 };
 
-static const DWORD KBD8X[256] = { // break here
+static const DWORD KBD8X[KBD_ARRAY_SIZE] = { // break here
 	VK_NONE,
 	VK_NONE,
 	VK_NONE,
@@ -477,7 +499,7 @@ static const DWORD KBD8X[256] = { // break here
 	VK_NONE
 };
 
-static const DWORD KBD8X_1[128] = {
+static const DWORD KBD8X_1[KBD_ARRAY_SIZE] = {
 	VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE,
 	VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE,
 	VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_PAUSE,
@@ -493,11 +515,27 @@ static const DWORD KBD8X_1[128] = {
 	VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE, VK_NONE
 };
 
-DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
+WINPR_ATTR_NODISCARD
+static BOOL setup(void);
+
+WINPR_ATTR_NODISCARD
+static DWORD GetVirtualKeyCodeFromVirtualScanCodeMap(DWORD scancode, const ScancodeToVKMap_t* map)
 {
+	WINPR_ASSERT(map);
 	const DWORD codeIndex = scancode & 0xFF;
 
 	if (codeIndex > 127)
+		return VK_NONE;
+	if (scancode & KBDMULTIVK)
+		return map->multivk[codeIndex];
+	if (scancode & KBDEXT)
+		return map->kbdext[codeIndex];
+	return map->normal[codeIndex];
+}
+
+DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
+{
+	if (!setup())
 		return VK_NONE;
 
 	switch (dwKeyboardType)
@@ -507,32 +545,18 @@ DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 		case WINPR_KBD_TYPE_OLIVETTI_ICO:
 		case WINPR_KBD_TYPE_IBM_PC_AT:
 		case WINPR_KBD_TYPE_IBM_ENHANCED:
-			if (scancode & KBDMULTIVK)
-				return KBD4X_1[codeIndex];
-			if (scancode & KBDEXT)
-				return KBD4X[codeIndex];
-			return KBD4T[codeIndex];
-
 		case WINPR_KBD_TYPE_JAPANESE:
-			if (scancode & KBDMULTIVK)
-				return KBD7X_1[codeIndex];
-			if (scancode & KBDEXT)
-				return KBD7X[codeIndex];
-			return KBD7T[codeIndex];
 		case WINPR_KBD_TYPE_KOREAN:
-			if (scancode & KBDMULTIVK)
-				return KBD8X_1[codeIndex];
-			if (scancode & KBDEXT)
-				return KBD8X[codeIndex];
-			return KBD8T[codeIndex];
 		case WINPR_KBD_TYPE_NOKIA_1050:
 		case WINPR_KBD_TYPE_NOKIA_9140:
+			return GetVirtualKeyCodeFromVirtualScanCodeMap(scancode, &VKmap[dwKeyboardType - 1]);
 		default:
 			WLog_ERR(TAG, "dwKeyboardType=0x%08" PRIx32 " not supported", dwKeyboardType);
 			return VK_NONE;
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD get_scancode(size_t offset, DWORD vkcode, const DWORD* array, size_t arraysize,
                           DWORD flag)
 {
@@ -551,6 +575,7 @@ static DWORD get_scancode(size_t offset, DWORD vkcode, const DWORD* array, size_
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD get_scancodes(DWORD vkcode, const DWORD* array, size_t arraysize, DWORD flag,
                            DWORD* pdwScanCodeBuffer, size_t ScanCodeBufferSize)
 {
@@ -588,11 +613,451 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 	return scancodes[0];
 }
 
+WINPR_ATTR_NODISCARD
+static const char* kbdTypeStr(enum WINPR_KBD_TYPE type)
+{
+#define EVCASE(x) \
+	case x:       \
+		return #x
+
+	switch (type)
+	{
+		EVCASE(WINPR_KBD_TYPE_IBM_PC_XT);
+		EVCASE(WINPR_KBD_TYPE_OLIVETTI_ICO);
+		EVCASE(WINPR_KBD_TYPE_IBM_PC_AT);
+		EVCASE(WINPR_KBD_TYPE_IBM_ENHANCED);
+		EVCASE(WINPR_KBD_TYPE_NOKIA_1050);
+		EVCASE(WINPR_KBD_TYPE_NOKIA_9140);
+		EVCASE(WINPR_KBD_TYPE_JAPANESE);
+		EVCASE(WINPR_KBD_TYPE_KOREAN);
+		default:
+			WLog_WARN(TAG, "Unsupported WINPR_KBD_TYPE %08" PRIx32, type);
+			return nullptr;
+	}
+#undef EVCASE
+}
+
+WINPR_ATTR_NODISCARD
+static DWORD VKStrToInteger(WINPR_JSON* val, size_t pos, const char* section)
+{
+	WINPR_ASSERT(section);
+
+	if (!val)
+	{
+		WLog_WARN(TAG, "[%s:%s at %" PRIuz "] invalid array entry, NULL value",
+		          KEYBOARD_CONFIG_FILE_NAME, section, pos);
+		return VK_NONE;
+	}
+
+	if (WINPR_JSON_IsNumber(val))
+	{
+		const double nr = WINPR_JSON_GetNumberValue(val);
+		if (isnan(nr) || isinf(nr))
+		{
+			WLog_WARN(TAG, "[%s:%s at %" PRIuz "] invalid array entry, floating NaN/INF value %lf",
+			          KEYBOARD_CONFIG_FILE_NAME, section, pos, nr);
+			return VK_NONE;
+		}
+		if (nr < 0.0)
+		{
+			WLog_WARN(TAG, "[%s:%s at %" PRIuz "] invalid array entry, negative value %lf",
+			          KEYBOARD_CONFIG_FILE_NAME, section, pos, nr);
+			return VK_NONE;
+		}
+		return (DWORD)nr;
+	}
+
+	if (!WINPR_JSON_IsString(val))
+	{
+		WLog_WARN(TAG, "[%s:%s at %" PRIuz "] invalid array entry, not a string value",
+		          KEYBOARD_CONFIG_FILE_NAME, section, pos);
+		return VK_NONE;
+	}
+
+	const char* strval = WINPR_JSON_GetStringValue(val);
+
+#define EVCASE(str, x)        \
+	if (strcmp(#x, str) == 0) \
+	return x
+
+	EVCASE(strval, VK_LBUTTON);
+	EVCASE(strval, VK_RBUTTON);
+	EVCASE(strval, VK_CANCEL);
+	EVCASE(strval, VK_MBUTTON);
+	EVCASE(strval, VK_XBUTTON1);
+	EVCASE(strval, VK_XBUTTON2);
+	EVCASE(strval, VK_BACK);
+	EVCASE(strval, VK_TAB);
+	EVCASE(strval, VK_CLEAR);
+	EVCASE(strval, VK_RETURN);
+	EVCASE(strval, VK_SHIFT);
+	EVCASE(strval, VK_CONTROL);
+	EVCASE(strval, VK_MENU);
+	EVCASE(strval, VK_PAUSE);
+	EVCASE(strval, VK_CAPITAL);
+	EVCASE(strval, VK_KANA);
+	EVCASE(strval, VK_HANGUEL);
+	EVCASE(strval, VK_HANGUL);
+	EVCASE(strval, VK_IME_ON);
+	EVCASE(strval, VK_JUNJA);
+	EVCASE(strval, VK_FINAL);
+	EVCASE(strval, VK_HANJA);
+	EVCASE(strval, VK_KANJI);
+	EVCASE(strval, VK_HKTG);
+	EVCASE(strval, VK_IME_OFF);
+	EVCASE(strval, VK_ESCAPE);
+	EVCASE(strval, VK_CONVERT);
+	EVCASE(strval, VK_NONCONVERT);
+	EVCASE(strval, VK_ACCEPT);
+	EVCASE(strval, VK_MODECHANGE);
+	EVCASE(strval, VK_SPACE);
+	EVCASE(strval, VK_PRIOR);
+	EVCASE(strval, VK_NEXT);
+	EVCASE(strval, VK_END);
+	EVCASE(strval, VK_HOME);
+	EVCASE(strval, VK_LEFT);
+	EVCASE(strval, VK_UP);
+	EVCASE(strval, VK_RIGHT);
+	EVCASE(strval, VK_DOWN);
+	EVCASE(strval, VK_SELECT);
+	EVCASE(strval, VK_PRINT);
+	EVCASE(strval, VK_EXECUTE);
+	EVCASE(strval, VK_SNAPSHOT);
+	EVCASE(strval, VK_INSERT);
+	EVCASE(strval, VK_DELETE);
+	EVCASE(strval, VK_HELP);
+	EVCASE(strval, VK_KEY_0);
+	EVCASE(strval, VK_KEY_1);
+	EVCASE(strval, VK_KEY_2);
+	EVCASE(strval, VK_KEY_3);
+	EVCASE(strval, VK_KEY_4);
+	EVCASE(strval, VK_KEY_5);
+	EVCASE(strval, VK_KEY_6);
+	EVCASE(strval, VK_KEY_7);
+	EVCASE(strval, VK_KEY_8);
+	EVCASE(strval, VK_KEY_9);
+	EVCASE(strval, VK_KEY_A);
+	EVCASE(strval, VK_KEY_B);
+	EVCASE(strval, VK_KEY_C);
+	EVCASE(strval, VK_KEY_D);
+	EVCASE(strval, VK_KEY_E);
+	EVCASE(strval, VK_KEY_F);
+	EVCASE(strval, VK_KEY_G);
+	EVCASE(strval, VK_KEY_H);
+	EVCASE(strval, VK_KEY_I);
+	EVCASE(strval, VK_KEY_J);
+	EVCASE(strval, VK_KEY_K);
+	EVCASE(strval, VK_KEY_L);
+	EVCASE(strval, VK_KEY_M);
+	EVCASE(strval, VK_KEY_N);
+	EVCASE(strval, VK_KEY_O);
+	EVCASE(strval, VK_KEY_P);
+	EVCASE(strval, VK_KEY_Q);
+	EVCASE(strval, VK_KEY_R);
+	EVCASE(strval, VK_KEY_S);
+	EVCASE(strval, VK_KEY_T);
+	EVCASE(strval, VK_KEY_U);
+	EVCASE(strval, VK_KEY_V);
+	EVCASE(strval, VK_KEY_W);
+	EVCASE(strval, VK_KEY_X);
+	EVCASE(strval, VK_KEY_Y);
+	EVCASE(strval, VK_KEY_Z);
+	EVCASE(strval, VK_LWIN);
+	EVCASE(strval, VK_RWIN);
+	EVCASE(strval, VK_APPS);
+	EVCASE(strval, VK_POWER);
+	EVCASE(strval, VK_SLEEP);
+	EVCASE(strval, VK_NUMPAD0);
+	EVCASE(strval, VK_NUMPAD1);
+	EVCASE(strval, VK_NUMPAD2);
+	EVCASE(strval, VK_NUMPAD3);
+	EVCASE(strval, VK_NUMPAD4);
+	EVCASE(strval, VK_NUMPAD5);
+	EVCASE(strval, VK_NUMPAD6);
+	EVCASE(strval, VK_NUMPAD7);
+	EVCASE(strval, VK_NUMPAD8);
+	EVCASE(strval, VK_NUMPAD9);
+	EVCASE(strval, VK_MULTIPLY);
+	EVCASE(strval, VK_ADD);
+	EVCASE(strval, VK_SEPARATOR);
+	EVCASE(strval, VK_SUBTRACT);
+	EVCASE(strval, VK_DECIMAL);
+	EVCASE(strval, VK_DIVIDE);
+	EVCASE(strval, VK_F1);
+	EVCASE(strval, VK_F2);
+	EVCASE(strval, VK_F3);
+	EVCASE(strval, VK_F4);
+	EVCASE(strval, VK_F5);
+	EVCASE(strval, VK_F6);
+	EVCASE(strval, VK_F7);
+	EVCASE(strval, VK_F8);
+	EVCASE(strval, VK_F9);
+	EVCASE(strval, VK_F10);
+	EVCASE(strval, VK_F11);
+	EVCASE(strval, VK_F12);
+	EVCASE(strval, VK_F13);
+	EVCASE(strval, VK_F14);
+	EVCASE(strval, VK_F15);
+	EVCASE(strval, VK_F16);
+	EVCASE(strval, VK_F17);
+	EVCASE(strval, VK_F18);
+	EVCASE(strval, VK_F19);
+	EVCASE(strval, VK_F20);
+	EVCASE(strval, VK_F21);
+	EVCASE(strval, VK_F22);
+	EVCASE(strval, VK_F23);
+	EVCASE(strval, VK_F24);
+	EVCASE(strval, VK_NUMLOCK);
+	EVCASE(strval, VK_SCROLL);
+	EVCASE(strval, VK_LSHIFT);
+	EVCASE(strval, VK_RSHIFT);
+	EVCASE(strval, VK_LCONTROL);
+	EVCASE(strval, VK_RCONTROL);
+	EVCASE(strval, VK_LMENU);
+	EVCASE(strval, VK_RMENU);
+	EVCASE(strval, VK_BROWSER_BACK);
+	EVCASE(strval, VK_BROWSER_FORWARD);
+	EVCASE(strval, VK_BROWSER_REFRESH);
+	EVCASE(strval, VK_BROWSER_STOP);
+	EVCASE(strval, VK_BROWSER_SEARCH);
+	EVCASE(strval, VK_BROWSER_FAVORITES);
+	EVCASE(strval, VK_BROWSER_HOME);
+	EVCASE(strval, VK_VOLUME_MUTE);
+	EVCASE(strval, VK_VOLUME_DOWN);
+	EVCASE(strval, VK_VOLUME_UP);
+	EVCASE(strval, VK_MEDIA_NEXT_TRACK);
+	EVCASE(strval, VK_MEDIA_PREV_TRACK);
+	EVCASE(strval, VK_MEDIA_STOP);
+	EVCASE(strval, VK_MEDIA_PLAY_PAUSE);
+	EVCASE(strval, VK_LAUNCH_MAIL);
+	EVCASE(strval, VK_MEDIA_SELECT);
+	EVCASE(strval, VK_LAUNCH_MEDIA_SELECT);
+	EVCASE(strval, VK_LAUNCH_APP1);
+	EVCASE(strval, VK_LAUNCH_APP2);
+	EVCASE(strval, VK_OEM_1);
+	EVCASE(strval, VK_OEM_PLUS);
+	EVCASE(strval, VK_OEM_COMMA);
+	EVCASE(strval, VK_OEM_MINUS);
+	EVCASE(strval, VK_OEM_PERIOD);
+	EVCASE(strval, VK_OEM_2);
+	EVCASE(strval, VK_OEM_3);
+	EVCASE(strval, VK_ABNT_C1);
+	EVCASE(strval, VK_ABNT_C2);
+	EVCASE(strval, VK_OEM_4);
+	EVCASE(strval, VK_OEM_5);
+	EVCASE(strval, VK_OEM_6);
+	EVCASE(strval, VK_OEM_7);
+	EVCASE(strval, VK_OEM_8);
+	EVCASE(strval, VK_OEM_AX);
+	EVCASE(strval, VK_OEM_102);
+	EVCASE(strval, VK_PROCESSKEY);
+	EVCASE(strval, VK_PACKET);
+	EVCASE(strval, VK_OEM_RESET);
+	EVCASE(strval, VK_OEM_JUMP);
+	EVCASE(strval, VK_OEM_PA1);
+	EVCASE(strval, VK_OEM_PA2);
+	EVCASE(strval, VK_OEM_PA3);
+	EVCASE(strval, VK_OEM_WSCTRL);
+	EVCASE(strval, VK_OEM_CUSEL);
+	EVCASE(strval, VK_OEM_ATTN);
+	EVCASE(strval, VK_OEM_FINISH);
+	EVCASE(strval, VK_OEM_COPY);
+	EVCASE(strval, VK_OEM_AUTO);
+	EVCASE(strval, VK_OEM_ENLW);
+	EVCASE(strval, VK_OEM_BACKTAB);
+	EVCASE(strval, VK_ATTN);
+	EVCASE(strval, VK_CRSEL);
+	EVCASE(strval, VK_EXSEL);
+	EVCASE(strval, VK_EREOF);
+	EVCASE(strval, VK_PLAY);
+	EVCASE(strval, VK_ZOOM);
+	EVCASE(strval, VK_NONAME);
+	EVCASE(strval, VK_PA1);
+	EVCASE(strval, VK_OEM_CLEAR);
+	EVCASE(strval, VK_NONE);
+	EVCASE(strval, VK_DBE_ALPHANUMERIC);
+	EVCASE(strval, VK_DBE_KATAKANA);
+	EVCASE(strval, VK_DBE_HIRAGANA);
+	EVCASE(strval, VK_DBE_SBCSCHAR);
+	EVCASE(strval, VK_DBE_DBCSCHAR);
+	EVCASE(strval, VK_DBE_ROMAN);
+	EVCASE(strval, VK_DBE_NOROMAN);
+	EVCASE(strval, VK_DBE_ENTERWORDREGISTERMODE);
+	EVCASE(strval, VK_DBE_ENTERIMECONFIGMODE);
+	EVCASE(strval, VK_DBE_FLUSHSTRING);
+	EVCASE(strval, VK_DBE_CODEINPUT);
+	EVCASE(strval, VK_DBE_NOCODEINPUT);
+
+	WLog_WARN(TAG, "[%s:%s at %" PRIuz "] invalid array entry, unknown value '%s'",
+	          KEYBOARD_CONFIG_FILE_NAME, section, pos, strval);
+	return VK_NONE;
+}
+
+static void loadKeyboardTypeArray(WINPR_JSON* json, const char* section, DWORD* array, size_t count)
+{
+	WINPR_ASSERT(section);
+
+	if (!json || !WINPR_JSON_IsArray(json))
+	{
+		WLog_WARN(TAG, "[%s:%s] invalid section entry, NULL or not a JSON array",
+		          KEYBOARD_CONFIG_FILE_NAME, section);
+		return;
+	}
+
+	WINPR_ASSERT(array || (count == 0));
+
+	for (size_t x = 0; x < MIN(WINPR_JSON_GetArraySize(json), count); x++)
+	{
+		WINPR_JSON* vk = WINPR_JSON_GetArrayItem(json, x);
+		const DWORD val = VKStrToInteger(vk, x, section);
+		array[x] = val;
+	}
+}
+
+static void loadKeyboardType(WINPR_JSON* json, enum WINPR_KBD_TYPE type)
+{
+	WINPR_ASSERT(json);
+	WINPR_ASSERT(WINPR_JSON_IsObject(json));
+
+	WINPR_JSON* entry = WINPR_JSON_GetObjectItemCaseSensitive(json, kbdTypeStr(type));
+	if (!entry || !WINPR_JSON_IsObject(entry))
+	{
+		WLog_WARN(
+		    TAG,
+		    "[%s] configuration file, no entry for keyboard type '%s' or element not a JSON Object",
+		    KEYBOARD_CONFIG_FILE_NAME, kbdTypeStr(type));
+		return;
+	}
+
+	ScancodeToVKMap_t* cur = &VKmap[type - 1];
+
+	WINPR_JSON* multivk = WINPR_JSON_GetObjectItemCaseSensitive(entry, "multivk");
+	loadKeyboardTypeArray(multivk, "multivk", cur->multivk, ARRAYSIZE(cur->multivk));
+
+	WINPR_JSON* kbdext = WINPR_JSON_GetObjectItemCaseSensitive(entry, "kbdext");
+	loadKeyboardTypeArray(kbdext, "kbdext", cur->kbdext, ARRAYSIZE(cur->kbdext));
+
+	WINPR_JSON* normal = WINPR_JSON_GetObjectItemCaseSensitive(entry, "normal");
+	loadKeyboardTypeArray(normal, "normal", cur->normal, ARRAYSIZE(cur->normal));
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL CALLBACK loadFromSettings(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
+                                      WINPR_ATTR_UNUSED PVOID Parameter,
+                                      WINPR_ATTR_UNUSED PVOID* Context)
+{
+	WINPR_STATIC_ASSERT(ARRAYSIZE(VKmap) >= WINPR_KBD_TYPE_KOREAN);
+	{
+		ScancodeToVKMap_t* cur = &VKmap[WINPR_KBD_TYPE_IBM_PC_XT - 1];
+
+		WINPR_STATIC_ASSERT(sizeof(KBD4X_1) == sizeof(cur->multivk));
+		WINPR_STATIC_ASSERT(sizeof(KBD4X) == sizeof(cur->kbdext));
+		WINPR_STATIC_ASSERT(sizeof(KBD4T) == sizeof(cur->normal));
+		WINPR_STATIC_ASSERT(sizeof(ScancodeToVKMap_t) == sizeof(VKmap[0]));
+
+		memcpy(cur->multivk, KBD4X_1, sizeof(KBD4X_1));
+		memcpy(cur->kbdext, KBD4X, sizeof(KBD4X));
+		memcpy(cur->normal, KBD4T, sizeof(KBD4T));
+
+		memcpy(&VKmap[WINPR_KBD_TYPE_OLIVETTI_ICO - 1], cur, sizeof(ScancodeToVKMap_t));
+		memcpy(&VKmap[WINPR_KBD_TYPE_IBM_PC_AT - 1], cur, sizeof(ScancodeToVKMap_t));
+		memcpy(&VKmap[WINPR_KBD_TYPE_IBM_ENHANCED - 1], cur, sizeof(ScancodeToVKMap_t));
+	}
+	{
+		ScancodeToVKMap_t* cur = &VKmap[WINPR_KBD_TYPE_NOKIA_1050 - 1];
+		for (size_t x = 0; x < ARRAYSIZE(cur->multivk); x++)
+			cur->multivk[x] = VK_NONE;
+		for (size_t x = 0; x < ARRAYSIZE(cur->kbdext); x++)
+			cur->kbdext[x] = VK_NONE;
+		for (size_t x = 0; x < ARRAYSIZE(cur->normal); x++)
+			cur->normal[x] = VK_NONE;
+
+		memcpy(&VKmap[WINPR_KBD_TYPE_NOKIA_9140 - 1], cur, sizeof(ScancodeToVKMap_t));
+	}
+	{
+		ScancodeToVKMap_t* cur = &VKmap[WINPR_KBD_TYPE_JAPANESE - 1];
+
+		WINPR_STATIC_ASSERT(sizeof(KBD7X_1) == sizeof(cur->multivk));
+		WINPR_STATIC_ASSERT(sizeof(KBD7X) == sizeof(cur->kbdext));
+		WINPR_STATIC_ASSERT(sizeof(KBD7T) == sizeof(cur->normal));
+
+		memcpy(cur->multivk, KBD7X_1, sizeof(KBD7X_1));
+		memcpy(cur->kbdext, KBD7X, sizeof(KBD7X));
+		memcpy(cur->normal, KBD7T, sizeof(KBD7T));
+	}
+	{
+		ScancodeToVKMap_t* cur = &VKmap[WINPR_KBD_TYPE_KOREAN - 1];
+
+		WINPR_STATIC_ASSERT(sizeof(KBD8X_1) == sizeof(cur->multivk));
+		WINPR_STATIC_ASSERT(sizeof(KBD8X) == sizeof(cur->kbdext));
+		WINPR_STATIC_ASSERT(sizeof(KBD8T) == sizeof(cur->normal));
+
+		memcpy(cur->multivk, KBD8X_1, sizeof(KBD8X_1));
+		memcpy(cur->kbdext, KBD8X, sizeof(KBD8X));
+		memcpy(cur->normal, KBD8T, sizeof(KBD8T));
+	}
+
+	char* filename = GetCombinedPath(WINPR_RESOURCE_ROOT, KEYBOARD_CONFIG_FILE_NAME);
+	if (!filename || !winpr_PathFileExists(filename))
+	{
+		WLog_DBG(TAG, "[%s] configuration file does not exist at %s, skipping...",
+		         KEYBOARD_CONFIG_FILE_NAME, filename);
+		free(filename);
+		return TRUE;
+	}
+	WINPR_JSON* json = WINPR_JSON_ParseFromFile(filename);
+	free(filename);
+	if (!json || !WINPR_JSON_IsObject(json))
+	{
+		WLog_WARN(TAG,
+		          "[%s] invalid JSON configuration at top level, element NULL or not a JSON Object",
+		          KEYBOARD_CONFIG_FILE_NAME);
+	}
+	else
+	{
+		loadKeyboardType(json, WINPR_KBD_TYPE_IBM_PC_XT);
+		loadKeyboardType(json, WINPR_KBD_TYPE_OLIVETTI_ICO);
+		loadKeyboardType(json, WINPR_KBD_TYPE_IBM_PC_AT);
+		loadKeyboardType(json, WINPR_KBD_TYPE_IBM_ENHANCED);
+		loadKeyboardType(json, WINPR_KBD_TYPE_NOKIA_1050);
+		loadKeyboardType(json, WINPR_KBD_TYPE_NOKIA_9140);
+		loadKeyboardType(json, WINPR_KBD_TYPE_JAPANESE);
+		loadKeyboardType(json, WINPR_KBD_TYPE_KOREAN);
+	}
+	WINPR_JSON_Delete(json);
+	return TRUE;
+}
+
+BOOL setup(void)
+{
+	return InitOnceExecuteOnce(&VKmapInitialized, loadFromSettings, nullptr, nullptr);
+}
+
+WINPR_ATTR_NODISCARD
+static DWORD GetVirtualScanCodesFromVirtualKeyCodeMap(DWORD vkcode, const ScancodeToVKMap_t* map,
+                                                      DWORD* pdwScanCodeBuffer,
+                                                      size_t ScanCodeBufferSize)
+{
+	WINPR_ASSERT(map);
+	DWORD codeIndex = vkcode & 0xFF;
+	if (codeIndex == VK_NONE)
+		return 0;
+
+	if (vkcode & KBDMULTIVK)
+		return get_scancodes(codeIndex, map->multivk, ARRAYSIZE(map->multivk), KBDMULTIVK,
+		                     pdwScanCodeBuffer, ScanCodeBufferSize);
+	if (vkcode & KBDEXT)
+		return get_scancodes(codeIndex, map->kbdext, ARRAYSIZE(map->kbdext), KBDEXT,
+		                     pdwScanCodeBuffer, ScanCodeBufferSize);
+
+	return get_scancodes(codeIndex, map->normal, ARRAYSIZE(map->normal), 0, pdwScanCodeBuffer,
+	                     ScanCodeBufferSize);
+}
+
 DWORD GetVirtualScanCodesFromVirtualKeyCode(DWORD vkcode, DWORD /* WINPR_KBD_TYPE */ dwKeyboardType,
                                             DWORD* pdwScanCodeBuffer, size_t ScanCodeBufferSize)
 {
-	DWORD codeIndex = vkcode & 0xFF;
-	if (codeIndex == VK_NONE)
+	if (!setup())
 		return 0;
 
 	switch (dwKeyboardType)
@@ -601,38 +1066,12 @@ DWORD GetVirtualScanCodesFromVirtualKeyCode(DWORD vkcode, DWORD /* WINPR_KBD_TYP
 		case WINPR_KBD_TYPE_OLIVETTI_ICO:
 		case WINPR_KBD_TYPE_IBM_PC_AT:
 		case WINPR_KBD_TYPE_IBM_ENHANCED:
-			if (vkcode & KBDMULTIVK)
-				return get_scancodes(codeIndex, KBD4X_1, ARRAYSIZE(KBD4X_1), KBDMULTIVK,
-				                     pdwScanCodeBuffer, ScanCodeBufferSize);
-			if (vkcode & KBDEXT)
-				return get_scancodes(codeIndex, KBD4X, ARRAYSIZE(KBD4X), KBDEXT, pdwScanCodeBuffer,
-				                     ScanCodeBufferSize);
-			else
-				return get_scancodes(codeIndex, KBD4T, ARRAYSIZE(KBD4T), 0, pdwScanCodeBuffer,
-				                     ScanCodeBufferSize);
-
 		case WINPR_KBD_TYPE_JAPANESE:
-			if (vkcode & KBDMULTIVK)
-				return get_scancodes(codeIndex, KBD7X_1, ARRAYSIZE(KBD7X_1), KBDMULTIVK,
-				                     pdwScanCodeBuffer, ScanCodeBufferSize);
-			if (vkcode & KBDEXT)
-				return get_scancodes(codeIndex, KBD7X, ARRAYSIZE(KBD7X), KBDEXT, pdwScanCodeBuffer,
-				                     ScanCodeBufferSize);
-			else
-				return get_scancodes(codeIndex, KBD7T, ARRAYSIZE(KBD7T), 0, pdwScanCodeBuffer,
-				                     ScanCodeBufferSize);
 		case WINPR_KBD_TYPE_KOREAN:
-			if (vkcode & KBDMULTIVK)
-				return get_scancodes(codeIndex, KBD8X_1, ARRAYSIZE(KBD8X_1), KBDMULTIVK,
-				                     pdwScanCodeBuffer, ScanCodeBufferSize);
-			if (vkcode & KBDEXT)
-				return get_scancodes(codeIndex, KBD8X, ARRAYSIZE(KBD8X), KBDEXT, pdwScanCodeBuffer,
-				                     ScanCodeBufferSize);
-			else
-				return get_scancodes(codeIndex, KBD8T, ARRAYSIZE(KBD8T), 0, pdwScanCodeBuffer,
-				                     ScanCodeBufferSize);
 		case WINPR_KBD_TYPE_NOKIA_1050:
 		case WINPR_KBD_TYPE_NOKIA_9140:
+			return GetVirtualScanCodesFromVirtualKeyCodeMap(vkcode, &VKmap[dwKeyboardType - 1],
+			                                                pdwScanCodeBuffer, ScanCodeBufferSize);
 		default:
 			WLog_ERR(TAG, "dwKeyboardType=0x%08" PRIx32 " not supported", dwKeyboardType);
 			return 0;

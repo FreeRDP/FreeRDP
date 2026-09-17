@@ -1,0 +1,49 @@
+# FreeRDP supports configuration files in JSON format for various tasks.
+
+## System level
+
+### TODO
+
+## User level
+
+### TODO
+
+## Resources
+
+### Resource base directory
+
+Quite the compatibility show here (newest to oldest):
+ * <base>/<vendor>/<product><version> (Used when -DWINPR_USE_VENDOR_PRODUCT_CONFIG_DIR=ON -DWITH_RESOURCE_VERSIONING=ON)
+ * <base>/<vendor>/<product> (Used when -DWINPR_USE_VENDOR_PRODUCT_CONFIG_DIR=ON -DWITH_RESOURCE_VERSIONING=OFF)
+ * <base>/<product><version> (Used when -DWINPR_USE_VENDOR_PRODUCT_CONFIG_DIR=OFF -DWITH_RESOURCE_VERSIONING=ON)
+ * <base>/<product> (Used when -DWINPR_USE_VENDOR_PRODUCT_CONFIG_DIR=OFF -DWITH_RESOURCE_VERSIONING=OFF)
+ * <base>/WinPR (used when -DWINPR_USE_LEGACY_RESOURCE_DIR=ON)
+
+### Timezones
+
+When build with -DWITH_TIMEZONE_FROM_FILE=ON the time zone definitions are loaded from TimeZoneMap.json
+usually found in the resources directory WINPR_RESOURCE_ROOT.
+
+### Keyboard VK to Scancode mappings
+
+The file KeyboardMapping.json in the resource directory WINPR_RESOURCE_ROOT overrides build in mappings
+if it exists and is valid.
+
+#### Format
+
+* The whole configuration is embedded in a JSON object
+* In this top level object there is one named object for each WINPR_KBD_TYPE.
+* Each object is of the following format:
+   * A JSON array named "multivk" with 128 entries (string representation of the VK_* code or a number)
+   * A JSON array named "kbdext" with 128 entries (string representation of the VK_* code or a number)
+   * A JSON array named "normal" with 128 entries (string representation of the VK_* code or a number)
+
+```
+{
+    "WINPR_KBD_TYPE_IBM_PC_XT": {
+        "multivk": ["VK_NONE", 12, ...]
+        "kbdext": ["VK_NONE", 24, ...]
+        "normal": ["VK_NONE", 33, ...]
+    }
+}
+```
