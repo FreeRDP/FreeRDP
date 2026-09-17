@@ -241,7 +241,7 @@ extern "C"
 	FREERDP_API BOOL client_helper_get_access_token(freerdp* instance, AccessTokenType tokenType,
 	                                                char** token, size_t count, ...);
 
-	/** @brief AAD GetAccessToken implementation printing the request to CLI and wainting for user
+	/** @brief AAD GetAccessToken implementation printing the request to CLI and waiting for user
 	 * pasting the response back.
 	 *
 	 *   @param instance The instance to query for

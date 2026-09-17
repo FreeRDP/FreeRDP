@@ -117,13 +117,22 @@ extern "C"
 	 *  @param tokenType The token type to request
 	 *  @param token A pointer to a result string, must not be NULL
 	 *  @param count The number of arguments following
-	 *  @return TRUE for successfully aquiring a token, FALSE otherwise
+	 *  @return TRUE for successfully acquiring a token, FALSE otherwise
 	 *  @since version 3.32.0
 	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL aad_auth_helper_get_access_token(AadAuthHelper* helper,
 	                                                  AccessTokenType tokenType, char** token,
 	                                                  size_t count, ...);
+
+	/** @brief try to auto detect the OAuth2 helper to use.
+	 *
+	 *  @return A canonical path of the binary to launch as helper, if successful, NULL otherwise
+	 *  @since version 3.32.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_API char* aad_auth_helper_detect_helper(void);
+
 #ifdef __cplusplus
 }
 #endif

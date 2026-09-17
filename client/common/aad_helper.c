@@ -29,7 +29,10 @@
 #include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/library.h>
+#include <winpr/path.h>
 
+#include <freerdp/utils/helpers.h>
 #include <freerdp/log.h>
 #include <freerdp/client/aad_helper.h>
 
@@ -267,19 +270,100 @@ static WINPR_JSON* wait_for_response(AadAuthHelper* helper, UINT32 expectedId)
 	}
 }
 
+static void updateBoolFromConfig(WINPR_JSON* obj, const char* what, BOOL* pVal)
+{
+	WINPR_ASSERT(obj);
+	WINPR_ASSERT(what);
+	WINPR_ASSERT(pVal);
+	WINPR_JSON* val = WINPR_JSON_GetObjectItemCaseSensitive(obj, what);
+	if (!val)
+		return;
+	if (!WINPR_JSON_IsBool(val))
+		return;
+	*pVal = WINPR_JSON_IsTrue(val);
+}
+
+static void updateStringFromConfig(WINPR_JSON* obj, const char* what, char** pVal)
+{
+	WINPR_ASSERT(obj);
+	WINPR_ASSERT(what);
+	WINPR_ASSERT(pVal);
+	WINPR_JSON* val = WINPR_JSON_GetObjectItemCaseSensitive(obj, what);
+	if (!val)
+		return;
+	if (!WINPR_JSON_IsString(val))
+		return;
+	free(*pVal);
+	*pVal = _strdup(WINPR_JSON_GetStringValue(val));
+}
+
+WINPR_ATTR_MALLOC(free, 1)
+static char* getHelperBinary(const rdpClientContext* context)
+{
+	/* TODO: Detection of helper binary:
+	 *
+	 * 1. TODO system wide config file? (config value/deny user level/deny command line/deny
+	 * auto-detect)
+	 * 2. TODO user level config file? (config value/deny command line/deny auto-detect)
+	 * 3. command line parameter
+	 * 4. auto detection (default)
+	 */
+	char* exe = nullptr;
+
+	BOOL useArg = TRUE;
+	BOOL useDetect = TRUE;
+	BOOL useUserConfig = TRUE;
+
+	const char config[] = "freerdp-client-aad.json";
+	WINPR_JSON* sys = freerdp_GetJSONConfigFile(TRUE, config);
+	if (sys)
+	{
+		updateBoolFromConfig(sys, "allow-commandline", &useArg);
+		updateBoolFromConfig(sys, "allow-autodetect", &useDetect);
+		updateBoolFromConfig(sys, "allow-user-config", &useUserConfig);
+		updateStringFromConfig(sys, "helper-binary", &exe);
+		WINPR_JSON_Delete(sys);
+	}
+	if (useUserConfig)
+	{
+		WINPR_JSON* user = freerdp_GetJSONConfigFile(FALSE, config);
+		if (user)
+		{
+			updateBoolFromConfig(sys, "allow-commandline", &useArg);
+			updateBoolFromConfig(sys, "allow-autodetect", &useDetect);
+			updateStringFromConfig(sys, "helper-binary", &exe);
+		}
+		WINPR_JSON_Delete(user);
+	}
+
+	if (!exe && useArg)
+	{
+		const char* args =
+		    freerdp_settings_get_string(context->context.settings, FreeRDP_AadAuthHelper);
+		if (args && (strcmp("autodetect", args) == 0))
+			exe = aad_auth_helper_detect_helper();
+		else if (args)
+			exe = _strdup(args);
+	}
+
+	if (!exe && useDetect)
+		exe = aad_auth_helper_detect_helper();
+
+	if (!exe)
+	{
+		WLog_ERR(TAG, "aad-auth-helper: no helper application detected, aborting");
+		return nullptr;
+	}
+	return exe;
+}
+
 /* ---- public API ------------------------------------------------------------------------ */
 
 AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 {
 	WINPR_ASSERT(context);
 
-	const char* exe = freerdp_settings_get_string(context->context.settings, FreeRDP_AadAuthHelper);
-	if (!exe)
-	{
-		WLog_ERR(TAG, "aad-auth-helper: no helper application configured, aborting");
-		return nullptr;
-	}
-
+	char* exe = nullptr;
 	AadAuthHelper* helper = calloc(1, sizeof(AadAuthHelper));
 	if (!helper)
 		return nullptr;
@@ -391,7 +475,12 @@ AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 
 	{
 		size_t cmdlineLen = 0;
-		if (winpr_asprintf(&cmdline, &cmdlineLen, "\"%s\" %s %s", exe, cmdInArg, cmdOutArg) < 0)
+		exe = getHelperBinary(context);
+		if (!exe)
+			goto cleanup;
+		const int rc =
+		    winpr_asprintf(&cmdline, &cmdlineLen, "\"%s\" %s %s", exe, cmdInArg, cmdOutArg);
+		if (rc < 0)
 			goto cleanup;
 
 		created =
@@ -403,6 +492,7 @@ AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 		WLog_ERR(TAG, "aad-auth-helper: failed to spawn '%s'", exe);
 
 cleanup:
+	free(exe);
 	free(cmdline);
 	if (attrList)
 	{
@@ -807,4 +897,131 @@ BOOL aad_auth_helper_get_access_token(AadAuthHelper* helper, AccessTokenType tok
 	const BOOL rc = aad_auth_helper_get_access_token_v(helper, tokenType, token, count, ap);
 	va_end(ap);
 	return rc;
+}
+
+/* whether any auto-detectable helper was enabled at build time at all - see
+ * WITH_XDG_AAD_AUTH_HELPER / WITH_WEBVIEW_AAD_AUTH_HELPER / WITH_QT_AAD_AUTH_HELPER in
+ * client/common/CMakeLists.txt, propagated here as compile definitions by
+ * client/SDL/common/CMakeLists.txt. Guards kHelperCandidates below: with none of the three
+ * defined there's nothing to list, and a zero-size array isn't valid standard C++. */
+
+/* auto-pick order for /azure:auth-helper:autodetect (or the option omitted entirely): xdg-open
+ * first (drives the user's actual default browser, so it inherits whatever SSO session/cookies
+ * are already there instead of prompting again), then the embedded webview (lighter, native OS
+ * look), then Qt. */
+static const char* kHelperCandidates[] = { "freerdp-xdg-aad-helper", "freerdp-qt-aad-helper",
+	                                       "freerdp-webview-aad-helper" };
+
+/* directory this client binary itself lives in - where an installed (or freshly built) helper
+ * binary is expected to sit alongside it. */
+WINPR_ATTR_MALLOC(free, 1)
+static char* aad_auth_helper_binary_dir(void)
+{
+	DWORD len = 4096;
+	char* path = nullptr;
+	do
+	{
+		char* tmp = realloc(path, len);
+		if (!tmp)
+		{
+			WLog_ERR(TAG, "[aad-auth] GetModuleFileNameA failed");
+			free(path);
+			return nullptr;
+		}
+		path = tmp;
+
+		const DWORD rc = GetModuleFileNameA(nullptr, path, len);
+		if (rc == 0)
+		{
+			WLog_ERR(TAG, "[aad-auth] GetModuleFileNameA failed");
+			free(path);
+			return nullptr;
+		}
+
+		if (rc == len)
+		{
+			if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+			{
+				len += 4096;
+				continue;
+			}
+			WLog_ERR(TAG, "[aad-auth] GetModuleFileNameA failed");
+			free(path);
+			return nullptr;
+		}
+		else
+			break;
+	} while (TRUE);
+
+	char* sep = strrchr(path, '/');
+#ifdef _WIN32
+	char* sepWin = strrchr(path, '\\');
+	if (!sep || (sepWin && (sepWin > sep)))
+		sep = sepWin;
+#endif
+	if (!sep)
+	{
+		free(path);
+		return nullptr;
+	}
+	*sep = '\0';
+	return path;
+}
+
+WINPR_ATTR_MALLOC(free, 1)
+static char* aad_auth_helper_path_for_binary(const char* dir, const char* binaryName)
+{
+	const char extension[] = CMAKE_EXECUTABLE_SUFFIX;
+
+	char* path = nullptr;
+	size_t plen = 0;
+	winpr_asprintf(&path, &plen, "%s/%s%s", dir, binaryName, extension);
+	return path;
+}
+
+/* /azure:auth-helper:autodetect (or the option omitted entirely): probe the well-known binaries
+ * in kHelperCandidates order and use whichever is actually present. */
+WINPR_ATTR_MALLOC(free, 1)
+static char* aad_auth_helper_auto_locate(void)
+{
+	char* dir = aad_auth_helper_binary_dir();
+	if (!dir)
+		return nullptr;
+
+	for (size_t x = 0; x < ARRAYSIZE(kHelperCandidates); x++)
+	{
+		const char* binaryName = kHelperCandidates[x];
+		char* path = aad_auth_helper_path_for_binary(dir, binaryName);
+		if (winpr_PathFileExists(path))
+		{
+			free(dir);
+			return path;
+		}
+	}
+	free(dir);
+	return nullptr;
+}
+
+/* @p helper is the caller's own per-connection storage slot (e.g. a member of its SdlContext) -
+ * this file never stores anything itself, so it stays usable as one binary shared between the
+ * SDL2 and SDL3 clients regardless of their (different) concrete SdlContext type. */
+char* aad_auth_helper_detect_helper(void)
+{
+	char* path = aad_auth_helper_auto_locate();
+
+	if (!path)
+	{
+		WLog_ERR(TAG, "[aad-auth] could not determine expected helper binary location");
+		return nullptr;
+	}
+
+	if (!winpr_PathFileExists(path))
+	{
+		WLog_ERR(TAG, "[aad-auth] helper binary not found at '%s'", path);
+		free(path);
+		return nullptr;
+	}
+
+	WLog_DBG(TAG, "[aad-auth] auto-detected helper %s", path);
+	return path;
 }

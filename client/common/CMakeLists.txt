@@ -35,6 +35,8 @@ set(SRCS
     oauth2.c
 )
 
+add_compile_definitions(CMAKE_EXECUTABLE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")
+
 foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
   get_filename_component(NINC ${FREERDP_CHANNELS_CLIENT_SRC} PATH)
   include_directories(${NINC})
