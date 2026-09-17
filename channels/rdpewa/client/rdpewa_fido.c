@@ -57,15 +57,6 @@ typedef struct
 	int result;
 } RDPEWA_FIDO_ASYNC;
 
-static void zfree(char* str)
-{
-	char* orig = str;
-	if (str)
-		while (*str != '\0')
-			*str++ = '\0';
-	free(orig);
-}
-
 static bool rdpewa_fido_get_pin(rdpContext* context, char** pin)
 {
 	WINPR_ASSERT(pin);
@@ -81,7 +72,7 @@ static bool rdpewa_fido_get_pin(rdpContext* context, char** pin)
 	free(d);
 	if (!rc)
 	{
-		zfree(p);
+		winpr_zfree(p);
 		return false;
 	}
 
@@ -624,12 +615,12 @@ static wStream* rdpewa_fido_make_credential(rdpContext* context, const BYTE* cta
 		HANDLE ft = CreateThread(nullptr, 0, rdpewa_fido_makecred_thread, &fta, 0, nullptr);
 		if (!notifyWait(context, ft, dev))
 		{
-			zfree(pin);
+			winpr_zfree(pin);
 			goto out;
 		}
 
 		r = fta.result;
-		zfree(pin);
+		winpr_zfree(pin);
 
 		if (useUv && rdpewa_fido_uv_failed(r) && fido_dev_has_pin(dev))
 		{
@@ -644,11 +635,11 @@ static wStream* rdpewa_fido_make_credential(rdpContext* context, const BYTE* cta
 			ft = CreateThread(nullptr, 0, rdpewa_fido_makecred_thread, &fta, 0, nullptr);
 			if (!notifyWait(context, ft, dev))
 			{
-				zfree(pin);
+				winpr_zfree(pin);
 				goto out;
 			}
 			r = fta.result;
-			zfree(pin);
+			winpr_zfree(pin);
 		}
 	}
 
@@ -962,12 +953,12 @@ static wStream* rdpewa_fido_get_assertion(rdpContext* context, const BYTE* ctapD
 		HANDLE ft = CreateThread(nullptr, 0, rdpewa_fido_getassert_thread, &fta, 0, nullptr);
 		if (!notifyWait(context, ft, dev))
 		{
-			zfree(pin);
+			winpr_zfree(pin);
 			goto out;
 		}
 
 		r = fta.result;
-		zfree(pin);
+		winpr_zfree(pin);
 
 		if (useUv && rdpewa_fido_uv_failed(r) && fido_dev_has_pin(dev))
 		{
@@ -982,11 +973,11 @@ static wStream* rdpewa_fido_get_assertion(rdpContext* context, const BYTE* ctapD
 			ft = CreateThread(nullptr, 0, rdpewa_fido_getassert_thread, &fta, 0, nullptr);
 			if (!notifyWait(context, ft, dev))
 			{
-				zfree(pin);
+				winpr_zfree(pin);
 				goto out;
 			}
 			r = fta.result;
-			zfree(pin);
+			winpr_zfree(pin);
 		}
 	}
 
