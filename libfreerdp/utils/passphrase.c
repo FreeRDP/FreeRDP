@@ -343,14 +343,14 @@ const char* freerdp_passphrase_read(rdpContext* context, const char* prompt, cha
 	return freerdp_passphrase_read_tty(context, prompt, buf, bufsiz, from_stdin);
 }
 
-static BOOL set_termianl_nonblock(int ifd, BOOL nonblock);
+static BOOL set_terminal_nonblock(int ifd, BOOL nonblock);
 
 static void restore_terminal(void)
 {
-	(void)set_termianl_nonblock(-1, FALSE);
+	(void)set_terminal_nonblock(-1, FALSE);
 }
 
-BOOL set_termianl_nonblock(int ifd, BOOL nonblock)
+BOOL set_terminal_nonblock(int ifd, BOOL nonblock)
 {
 	static int fd = -1;
 	static bool registered = false;
@@ -427,7 +427,7 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* stream)
 	int rc = EOF;
 	const int fd = fileno(stream);
 
-	(void)set_termianl_nonblock(fd, TRUE);
+	(void)set_terminal_nonblock(fd, TRUE);
 
 	do
 	{
@@ -450,7 +450,7 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* stream)
 		}
 	} while (!freerdp_shall_disconnect_context(context));
 
-	(void)set_termianl_nonblock(fd, FALSE);
+	(void)set_terminal_nonblock(fd, FALSE);
 
 	return rc;
 }
