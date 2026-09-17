@@ -386,7 +386,12 @@ static PfChannelResult DynvcTrackerHandleCreateBack(ChannelStateTracker* tracker
 	if ((len == 0) || (len == nameLen) || (dynChannelId > UINT16_MAX))
 	{
 		char namebuffer[64] = WINPR_C_ARRAY_INIT;
-		(void)_snprintf(namebuffer, sizeof(namebuffer) - 1, "%s", name);
+		if (len <= INT32_MAX)
+			(void)_snprintf(namebuffer, sizeof(namebuffer) - 1, "%.*s",
+			                WINPR_ASSERTING_INT_CAST(int, len), name);
+		else
+			(void)_snprintf(namebuffer, sizeof(namebuffer) - 1, "<LENGTH OUT OF BOUND>[%" PRIuz "]",
+			                len);
 
 		DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd, isBackData,
 		                "channel id %" PRIu64 ", name=%s [%" PRIuz "|%" PRIuz "], status=%s",
