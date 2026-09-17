@@ -23,8 +23,8 @@
 
 #include <freerdp/crypto/crypto.h>
 
-static const BYTE enc_base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-static const BYTE enc_base64url[] =
+static const char enc_base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char enc_base64url[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 static const signed char dec_base64url[] = {
@@ -302,12 +302,12 @@ static const signed char dec_base64[] = {
 	-1, /* 127        177	7F	01111111	DEL	&#127;	 	Delete */
 };
 
-static inline char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
+WINPR_ATTR_MALLOC(free, 1)
+static inline char* base64_encode_ex(const char* WINPR_RESTRICT alphabet,
                                      WINPR_ATTR_UNUSED size_t alphabetCount,
                                      const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad,
-                                     BOOL crLf, size_t lineSize)
+                                     BOOL crLf, size_t lineSize, size_t* plen)
 {
-	size_t blocks = 0;
 	size_t outLen = (length + 3) * 4 / 3;
 	size_t extra = 0;
 	if (crLf)
@@ -318,11 +318,12 @@ static inline char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
 	size_t outCounter = 0;
 
 	const BYTE* q = data;
-	BYTE* p = malloc(outLen + extra + 1ull);
+	const size_t allocsize = outLen + extra + 1ull;
+	char* p = calloc(allocsize, sizeof(char));
 	if (!p)
 		return nullptr;
 
-	char* ret = (char*)p;
+	char* ret = p;
 
 	/* b1, b2, b3 are input bytes
 	 *
@@ -337,7 +338,7 @@ static inline char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
 	 */
 
 	/* first treat complete blocks */
-	blocks = length - (length % 3);
+	const size_t blocks = length - (length % 3);
 	for (size_t i = 0; i < blocks; i += 3, q += 3)
 	{
 		const unsigned c = ((unsigned)q[0] << 16) + ((unsigned)q[1] << 8) + q[2];
@@ -416,15 +417,20 @@ static inline char* base64_encode_ex(const BYTE* WINPR_RESTRICT alphabet,
 	}
 	*p = 0;
 
+	if (plen)
+		*plen = strnlen(ret, allocsize);
 	return ret;
 }
 
-static inline char* base64_encode(const BYTE* WINPR_RESTRICT alphabet, size_t alphabetCount,
-                                  const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad)
+WINPR_ATTR_MALLOC(free, 1)
+static inline char* base64_encode(const char* WINPR_RESTRICT alphabet, size_t alphabetCount,
+                                  const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad,
+                                  size_t* plen)
 {
-	return base64_encode_ex(alphabet, alphabetCount, data, length, pad, FALSE, 64);
+	return base64_encode_ex(alphabet, alphabetCount, data, length, pad, FALSE, 64, plen);
 }
 
+WINPR_ATTR_NODISCARD
 static inline int base64_decode_char(const signed char* WINPR_RESTRICT alphabet,
                                      size_t alphabetCount, char c)
 {
@@ -436,6 +442,7 @@ static inline int base64_decode_char(const signed char* WINPR_RESTRICT alphabet,
 	return alphabet[(size_t)c];
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static inline void* base64_decode(const signed char* WINPR_RESTRICT alphabet, size_t alphabetCount,
                                   const char* WINPR_RESTRICT s, size_t length,
                                   size_t* WINPR_RESTRICT data_len, BOOL pad)
@@ -527,12 +534,24 @@ out_free:
 
 char* crypto_base64_encode_ex(const BYTE* WINPR_RESTRICT data, size_t length, BOOL withCrLf)
 {
-	return base64_encode_ex(enc_base64, ARRAYSIZE(enc_base64), data, length, TRUE, withCrLf, 64);
+	return crypto_base64_encode_ex_len(data, length, withCrLf, nullptr);
+}
+
+FREERDP_API char* crypto_base64_encode_ex_len(const void* WINPR_RESTRICT data, size_t length,
+                                              BOOL withCrLf, size_t* plen)
+{
+	return base64_encode_ex(enc_base64, ARRAYSIZE(enc_base64), data, length, TRUE, withCrLf, 64,
+	                        plen);
 }
 
 char* crypto_base64_encode(const BYTE* WINPR_RESTRICT data, size_t length)
 {
-	return base64_encode(enc_base64, ARRAYSIZE(enc_base64), data, length, TRUE);
+	return crypto_base64_encode_len(data, length, nullptr);
+}
+
+char* crypto_base64_encode_len(const void* WINPR_RESTRICT data, size_t length, size_t* plen)
+{
+	return base64_encode(enc_base64, ARRAYSIZE(enc_base64), data, length, TRUE, plen);
 }
 
 void crypto_base64_decode(const char* WINPR_RESTRICT enc_data, size_t length,
@@ -544,7 +563,12 @@ void crypto_base64_decode(const char* WINPR_RESTRICT enc_data, size_t length,
 
 char* crypto_base64url_encode(const BYTE* WINPR_RESTRICT data, size_t length)
 {
-	return base64_encode(enc_base64url, ARRAYSIZE(enc_base64url), data, length, FALSE);
+	return crypto_base64url_encode_len(data, length, nullptr);
+}
+
+char* crypto_base64url_encode_len(const void* WINPR_RESTRICT data, size_t length, size_t* plen)
+{
+	return base64_encode(enc_base64url, ARRAYSIZE(enc_base64url), data, length, FALSE, plen);
 }
 
 void crypto_base64url_decode(const char* WINPR_RESTRICT enc_data, size_t length,
