@@ -203,6 +203,7 @@ static AadAuthHelper* sdl_aad_helper_get(rdpContext* context, SdlAadAuthHelperPt
 	return raw;
 }
 
+[[nodiscard]]
 static std::string sdl_aad_helper_extract_query_param(const std::string& url,
                                                       const std::string& name)
 {
@@ -278,7 +279,7 @@ static BOOL sdl_aad_helper_get_rdsaad_access_token(freerdp* instance, SdlAadAuth
 	std::shared_ptr<char> request(
 	    freerdp_client_get_aad_url(reinterpret_cast<rdpClientContext*>(instance->context),
 	                               FREERDP_CLIENT_AAD_AUTH_REQUEST, scope),
-	    free);
+	    winpr_zfree);
 
 	std::string redirectUrl;
 	const AadAuthHelperNavigateStatus status = sdl_aad_helper_navigate(
@@ -297,15 +298,19 @@ static BOOL sdl_aad_helper_get_rdsaad_access_token(freerdp* instance, SdlAadAuth
 		return client_cli_get_access_token(instance, ACCESS_TOKEN_TYPE_AAD, token, 2, scope,
 		                                   req_cnf);
 
-	auto code = sdl_aad_helper_extract_query_param(redirectUrl, "code");
-	if (code.empty())
+	std::unique_ptr<char, void (*)(char*)> code(
+	    freerdp_client_extract_aad_code(reinterpret_cast<rdpClientContext*>(instance->context),
+	                                    redirectUrl.c_str(), redirectUrl.size()),
+	    winpr_zfree);
+
+	if (!code)
 		return client_cli_get_access_token(instance, ACCESS_TOKEN_TYPE_AAD, token, 2, scope,
 		                                   req_cnf);
 
 	std::shared_ptr<char> token_request(
 	    freerdp_client_get_aad_url(reinterpret_cast<rdpClientContext*>(instance->context),
-	                               FREERDP_CLIENT_AAD_TOKEN_REQUEST, scope, code.c_str(), req_cnf),
-	    free);
+	                               FREERDP_CLIENT_AAD_TOKEN_REQUEST, scope, code.get(), req_cnf),
+	    winpr_zfree);
 	return client_common_get_access_token(instance, token_request.get(), token);
 }
 
@@ -319,7 +324,7 @@ static BOOL sdl_aad_helper_get_avd_access_token(freerdp* instance, SdlAadAuthHel
 	std::shared_ptr<char> request(
 	    freerdp_client_get_aad_url(reinterpret_cast<rdpClientContext*>(instance->context),
 	                               FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST),
-	    free);
+	    winpr_zfree);
 
 	std::string redirectUrl;
 	const AadAuthHelperNavigateStatus status =
@@ -338,14 +343,17 @@ static BOOL sdl_aad_helper_get_avd_access_token(freerdp* instance, SdlAadAuthHel
 	if (status != AAD_AUTH_HELPER_NAVIGATE_OK)
 		return client_cli_get_access_token(instance, ACCESS_TOKEN_TYPE_AVD, token, 0);
 
-	auto code = sdl_aad_helper_extract_query_param(redirectUrl, "code");
-	if (code.empty())
+	std::unique_ptr<char, void (*)(char*)> code(
+	    freerdp_client_extract_aad_code(reinterpret_cast<rdpClientContext*>(instance->context),
+	                                    redirectUrl.c_str(), redirectUrl.size()),
+	    winpr_zfree);
+	if (!code)
 		return client_cli_get_access_token(instance, ACCESS_TOKEN_TYPE_AVD, token, 0);
 
 	std::shared_ptr<char> token_request(
 	    freerdp_client_get_aad_url(reinterpret_cast<rdpClientContext*>(instance->context),
-	                               FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST, code.c_str()),
-	    free);
+	                               FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST, code.get()),
+	    winpr_zfree);
 	return client_common_get_access_token(instance, token_request.get(), token);
 }
 

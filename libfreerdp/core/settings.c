@@ -1663,13 +1663,6 @@ out_fail:
 #pragma warning(pop)
 #endif
 
-static void zfree(WCHAR* str, size_t len)
-{
-	if (str)
-		memset(str, 0, len * sizeof(WCHAR));
-	free(str);
-}
-
 BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY* identity,
                                          const rdpSettings* settings,
                                          FreeRDP_Settings_Keys_String UserId,
@@ -1687,8 +1680,8 @@ BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY* identity,
 
 	const int rc = sspi_SetAuthIdentityWithLengthW(identity, Username, UserLen, Domain, DomainLen,
 	                                               Password, pwdLen);
-	zfree(Username, UserLen);
-	zfree(Domain, DomainLen);
+	winpr_znfree(Username, UserLen * sizeof(WCHAR));
+	winpr_znfree(Domain, DomainLen * sizeof(WCHAR));
 	return (rc >= 0);
 }
 
@@ -1706,7 +1699,7 @@ BOOL identity_set_from_settings(SEC_WINNT_AUTH_IDENTITY_W* identity, const rdpSe
 
 	const BOOL rc =
 	    identity_set_from_settings_with_pwd(identity, settings, UserId, DomainId, Password, PwdLen);
-	zfree(Password, PwdLen);
+	winpr_znfree(Password, PwdLen * sizeof(WCHAR));
 	return rc;
 }
 
@@ -1735,7 +1728,7 @@ BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* identity,
 	const int rc = sspi_SetAuthIdentityWithLengthW(identity, marshalledCredentials,
 	                                               _wcslen(marshalledCredentials), nullptr, 0,
 	                                               Password, pwdLen);
-	zfree(Password, pwdLen);
+	winpr_znfree(Password, pwdLen * sizeof(WCHAR));
 	CredFree(marshalledCredentials);
 	return (rc >= 0);
 #else

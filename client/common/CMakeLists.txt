@@ -31,6 +31,8 @@ set(SRCS
     geometry.c
     smartcard_cli.c
     aad_helper.c
+    oauth2.h
+    oauth2.c
 )
 
 foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})

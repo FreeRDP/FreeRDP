@@ -38,7 +38,7 @@ extern "C"
 	};
 	typedef struct rdp_CertInfo rdpCertInfo;
 
-	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* crypto_base64_encode(const BYTE* WINPR_RESTRICT data, size_t length);
 
 	/** BASE64 encode data
@@ -51,21 +51,68 @@ extern "C"
 	 *
 	 *  @return The encoded BASE64 string or \b nullptr if failed
 	 */
-	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* crypto_base64_encode_ex(const BYTE* WINPR_RESTRICT data, size_t length,
 	                                          BOOL withCrLf);
+
+	/** @brief Extended base64 encoder function. Same as \ref crypto_base64_encode_ex but returns
+	 * the length of the resulting string as well.
+	 *
+	 *  @param data The data to encode
+	 *  @param length The length of the data in bytes
+	 *  @param withCrLf Add (windows) newlines after 64 characters
+	 *  @param plen A pointer that will be set to the byte size of the resulting string. May be NULL
+	 *
+	 *  @return An allocated '\0' terminatedstring of size \ref plen in case of success, NULL (and
+	 * \ref plen 0) in case of failure.
+	 *  @since version 3.32.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_API char* crypto_base64_encode_ex_len(const void* WINPR_RESTRICT data, size_t length,
+	                                              BOOL withCrLf, size_t* plen);
+
+	/** @brief base64 encoder function. Same as \ref crypto_base64_encode but returns the length of
+	 * the resulting string as well.
+	 *
+	 *  @param data The data to encode
+	 *  @param length The length of the data in bytes
+	 *  @param plen A pointer that will be set to the byte size of the resulting string. May be NULL
+	 *
+	 *  @return An allocated '\0' terminatedstring of size \ref plen in case of success, NULL (and
+	 * \ref plen 0) in case of failure.
+	 *  @since version 3.32.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_API char* crypto_base64_encode_len(const void* WINPR_RESTRICT data, size_t length,
+	                                           size_t* plen);
 
 	FREERDP_API void crypto_base64_decode(const char* WINPR_RESTRICT enc_data, size_t length,
 	                                      BYTE** WINPR_RESTRICT dec_data,
 	                                      size_t* WINPR_RESTRICT res_length);
 
-	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* crypto_base64url_encode(const BYTE* WINPR_RESTRICT data, size_t length);
+
+	/** @brief base64 URL encoder function. Same as \ref crypto_base64url_encode but returns the
+	 * length of the resulting string as well.
+	 *
+	 *  @param data The data to encode
+	 *  @param length The length of the data in bytes
+	 *  @param plen A pointer that will be set to the byte size of the resulting string. May be NULL
+	 *
+	 *  @return An allocated '\0' terminatedstring of size \ref plen in case of success, NULL (and
+	 * \ref plen 0) in case of failure.
+	 *  @since version 3.32.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_API char* crypto_base64url_encode_len(const void* WINPR_RESTRICT data, size_t length,
+	                                              size_t* plen);
+
 	FREERDP_API void crypto_base64url_decode(const char* WINPR_RESTRICT enc_data, size_t length,
 	                                         BYTE** WINPR_RESTRICT dec_data,
 	                                         size_t* WINPR_RESTRICT res_length);
 
-	WINPR_ATTR_NODISCARD
+	WINPR_ATTR_MALLOC(free, 1)
 	FREERDP_API char* crypto_read_pem(const char* WINPR_RESTRICT filename,
 	                                  size_t* WINPR_RESTRICT plength);
 

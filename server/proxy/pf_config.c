@@ -241,23 +241,6 @@ static const char* pf_config_get_str(wIniFile* ini, const char* section, const c
 	return value;
 }
 
-static void zfree(char* str)
-{
-	if (!str)
-		return;
-	const size_t len = strlen(str);
-	memset(str, 0, len);
-	free(str);
-}
-
-static void znfree(char* str, size_t len)
-{
-	if (!str)
-		return;
-	memset(str, 0, len);
-	free(str);
-}
-
 WINPR_ATTR_NODISCARD
 static BOOL pf_config_copy_string(char** dst, const char* src)
 {
@@ -272,7 +255,7 @@ WINPR_ATTR_NODISCARD
 static BOOL pf_config_free_and_copy_string(char** dst, const char* src)
 {
 	WINPR_ASSERT(dst);
-	zfree(*dst);
+	winpr_zfree(*dst);
 	return pf_config_copy_string(dst, src);
 }
 
@@ -357,7 +340,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 		char* pem = crypto_read_pem(target_value, &len);
 		if (!pem)
 			return FALSE;
-		znfree(config->TargetSmartcardCert, config->TargetSmartcardCertLength);
+		winpr_znfree(config->TargetSmartcardCert, config->TargetSmartcardCertLength);
 		config->TargetSmartcardCert = pem;
 		config->TargetSmartcardCertLength = len;
 	}
@@ -371,7 +354,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 				WLog_WARN(TAG, "In section [%s] both, '%s' and '%s' are provided. Ignoring %s",
 				          section_target, key_target_scard_cert, key_target_scard_pem_cert,
 				          key_target_scard_cert);
-			znfree(config->TargetSmartcardCert, config->TargetSmartcardCertLength);
+			winpr_znfree(config->TargetSmartcardCert, config->TargetSmartcardCertLength);
 			size_t len = 0;
 			config->TargetSmartcardCert =
 			    pf_config_decode_base64(pem_value, key_target_scard_pem_cert, &len);
@@ -388,7 +371,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 		char* pem = crypto_read_pem(target_value, &len);
 		if (!pem)
 			return FALSE;
-		znfree(config->TargetSmartcardKey, config->TargetSmartcardKeyLength);
+		winpr_znfree(config->TargetSmartcardKey, config->TargetSmartcardKeyLength);
 		config->TargetSmartcardKey = pem;
 		config->TargetSmartcardKeyLength = len;
 	}
@@ -402,7 +385,7 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 				WLog_WARN(TAG, "In section [%s] both, '%s' and '%s' are provided. Ignoring %s",
 				          section_target, key_target_scard_key, key_target_scard_pem_key,
 				          key_target_scard_key);
-			znfree(config->TargetSmartcardKey, config->TargetSmartcardKeyLength);
+			winpr_znfree(config->TargetSmartcardKey, config->TargetSmartcardKeyLength);
 
 			size_t len = 0;
 			config->TargetSmartcardKey =
@@ -566,7 +549,7 @@ char* pf_config_decode_base64(const char* data, const char* name, size_t* pLengt
 	if (!decoded || decoded_length == 0)
 	{
 		WLog_ERR(TAG, "Failed to decode base64 data of length %" PRIuz " for %s", length, name);
-		zfree(decoded);
+		winpr_zfree(decoded);
 		return nullptr;
 	}
 
@@ -885,7 +868,7 @@ BOOL pf_server_config_dump(const char* file)
 		if (strcmp("stdout", file) == 0)
 			fp = stdout;
 		(void)fprintf(fp, "%s", buffer);
-		zfree(buffer);
+		winpr_zfree(buffer);
 	}
 	else
 	{
@@ -1048,26 +1031,26 @@ void pf_server_config_free(proxyConfig* config)
 	if (config == nullptr)
 		return;
 
-	zfree(config->Host);
-	zfree(config->SamFile);
-	zfree(config->TargetHost);
-	zfree(config->TargetUser);
-	zfree(config->TargetDomain);
-	zfree(config->TargetPassword);
-	znfree(config->TargetSmartcardCert, config->TargetSmartcardCertLength);
-	znfree(config->TargetSmartcardKey, config->TargetSmartcardKeyLength);
+	winpr_zfree(config->Host);
+	winpr_zfree(config->SamFile);
+	winpr_zfree(config->TargetHost);
+	winpr_zfree(config->TargetUser);
+	winpr_zfree(config->TargetDomain);
+	winpr_zfree(config->TargetPassword);
+	winpr_znfree(config->TargetSmartcardCert, config->TargetSmartcardCertLength);
+	winpr_znfree(config->TargetSmartcardKey, config->TargetSmartcardKeyLength);
 
 	CommandLineParserFree(config->Passthrough);
 	CommandLineParserFree(config->Intercept);
 	CommandLineParserFree(config->Modules);
 	CommandLineParserFree(config->RequiredPlugins);
 
-	zfree(config->CertificateFile);
-	zfree(config->CertificateContent);
-	znfree(config->CertificatePEM, config->CertificatePEMLength);
-	zfree(config->PrivateKeyFile);
-	zfree(config->PrivateKeyContent);
-	znfree(config->PrivateKeyPEM, config->PrivateKeyPEMLength);
+	winpr_zfree(config->CertificateFile);
+	winpr_zfree(config->CertificateContent);
+	winpr_znfree(config->CertificatePEM, config->CertificatePEMLength);
+	winpr_zfree(config->PrivateKeyFile);
+	winpr_zfree(config->PrivateKeyContent);
+	winpr_znfree(config->PrivateKeyPEM, config->PrivateKeyPEMLength);
 	IniFile_Free(config->ini);
 	free(config);
 }
@@ -1140,7 +1123,7 @@ static BOOL pf_config_copy_string_list(char*** dst, size_t* size, char** src, si
 	{
 		char* csv = CommandLineToCommaSeparatedValues((INT32)srcSize, src);
 		*dst = CommandLineParseCommaSeparatedValues(csv, size);
-		zfree(csv);
+		winpr_zfree(csv);
 	}
 
 	return TRUE;

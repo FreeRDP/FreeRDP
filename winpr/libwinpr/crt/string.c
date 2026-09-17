@@ -930,7 +930,7 @@ WCHAR* wcsndup(const WCHAR* s, size_t n)
 	return copy;
 }
 
-char* winpr_strnstr(char* haystack, const char* needle, size_t hlen)
+char* winpr_strnstr(const char* haystack, const char* needle, size_t hlen)
 {
 	WINPR_ASSERT(haystack || (hlen == 0));
 	WINPR_ASSERT(needle);
@@ -943,12 +943,12 @@ char* winpr_strnstr(char* haystack, const char* needle, size_t hlen)
 	const size_t needle_len = strlen(needle);
 
 	if (0 == needle_len)
-		return haystack;
+		return WINPR_CAST_CONST_PTR_AWAY(haystack, char*);
 
 	for (; (*haystack != '\0') && (hlen >= needle_len); haystack++, hlen--)
 	{
 		if ((haystack[0] == needle[0]) && (0 == strncmp(haystack, needle, needle_len)))
-			return haystack;
+			return WINPR_CAST_CONST_PTR_AWAY(haystack, char*);
 	}
 	return nullptr;
 #endif

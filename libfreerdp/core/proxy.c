@@ -630,12 +630,14 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 			else
 			{
 				const char basic[] = CRLF "Proxy-Authorization: Basic ";
-				char* base64 = nullptr;
 
 				(void)sprintf_s(creds, size, "%s:%s", proxyUsername, proxyPassword);
-				base64 = crypto_base64_encode((const BYTE*)creds, size - 1);
 
-				if (!base64 || !Stream_EnsureRemainingCapacity(s, strlen(basic) + strlen(base64)))
+				size_t b64len = 0;
+				char* base64 = crypto_base64_encode_len(creds, size - 1, &b64len);
+
+				if (!base64 ||
+				    !Stream_EnsureRemainingCapacity(s, strnlen(basic, sizeof(basic) + b64len)))
 				{
 					free(base64);
 					free(creds);

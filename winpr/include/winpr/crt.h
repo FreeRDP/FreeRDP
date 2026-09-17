@@ -250,4 +250,28 @@ extern "C"
 // NOLINTEND(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 WINPR_PRAGMA_DIAG_POP
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	/** @brief free a \0 terminated string after overwriting it with \0
+	 *
+	 * @param str The string to free, may be NULL
+	 * @since version 3.32.0
+	 */
+	WINPR_API void winpr_zfree(char* str);
+
+	/** @brief free data of \ref len after overwriting it with \0
+	 *
+	 * @param data The data to free, may be NULL
+	 * @param len The length of the string in bytes.
+	 * @since version 3.32.0
+	 */
+	WINPR_API void winpr_znfree(void* data, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* WINPR_CRT_H */

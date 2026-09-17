@@ -469,13 +469,14 @@ static BOOL arm_stringEncodeW(const BYTE* pin, size_t cbIn, BYTE** ppOut, size_t
 	*pcbOut = 0;
 
 	/* encode to base64 with crlf */
-	char* b64encoded = crypto_base64_encode_ex(pin, cbIn, TRUE);
+	size_t b64len = 0;
+	char* b64encoded = crypto_base64_encode_ex_len(pin, cbIn, TRUE, &b64len);
 	if (!b64encoded)
 		return FALSE;
 
 	/* and then convert to Unicode */
 	size_t outSz = 0;
-	*ppOut = (BYTE*)ConvertUtf8NToWCharAlloc(b64encoded, strlen(b64encoded), &outSz);
+	*ppOut = (BYTE*)ConvertUtf8NToWCharAlloc(b64encoded, b64len, &outSz);
 	free(b64encoded);
 
 	if (!*ppOut)
@@ -876,17 +877,6 @@ out:
 	return ret;
 }
 
-static void zfree(char* str)
-{
-	if (str)
-	{
-		char* cur = str;
-		while (*cur != '\0')
-			*cur++ = '\0';
-	}
-	free(str);
-}
-
 static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON* json,
                             const rdpCertificate* redirectedServerCert)
 {
@@ -940,9 +930,9 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 			const BOOL rc1 = freerdp_settings_set_string(settings, FreeRDP_Username, username);
 			const BOOL rc2 = freerdp_settings_set_string(settings, FreeRDP_Password, password);
 			const BOOL rc3 = freerdp_settings_set_string(settings, FreeRDP_Domain, domain);
-			zfree(username);
-			zfree(password);
-			zfree(domain);
+			winpr_zfree(username);
+			winpr_zfree(password);
+			winpr_zfree(domain);
 			if (!rc || !rc1 || !rc2 || !rc3)
 				goto end;
 		}
