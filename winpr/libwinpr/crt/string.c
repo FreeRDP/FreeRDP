@@ -460,10 +460,8 @@ static
 }
 
 /* _wcsrchr -> wcsrchr */
-#if defined(WITHOUT_WINPR_3x_DEPRECATED)
-static
-#endif
-    WCHAR* _wcsrchr(const WCHAR* str, WCHAR c)
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
+WCHAR* _wcsrchr(const WCHAR* str, WCHAR c)
 {
 	union
 	{
@@ -485,6 +483,7 @@ static
 	cnv.cc = p;
 	return cnv.c;
 }
+#endif
 
 char* strtok_s(char* strToken, const char* strDelimit, char** context)
 {
