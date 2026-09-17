@@ -877,17 +877,6 @@ out:
 	return ret;
 }
 
-static void zfree(char* str)
-{
-	if (str)
-	{
-		char* cur = str;
-		while (*cur != '\0')
-			*cur++ = '\0';
-	}
-	free(str);
-}
-
 static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON* json,
                             const rdpCertificate* redirectedServerCert)
 {
@@ -941,9 +930,9 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
 			const BOOL rc1 = freerdp_settings_set_string(settings, FreeRDP_Username, username);
 			const BOOL rc2 = freerdp_settings_set_string(settings, FreeRDP_Password, password);
 			const BOOL rc3 = freerdp_settings_set_string(settings, FreeRDP_Domain, domain);
-			zfree(username);
-			zfree(password);
-			zfree(domain);
+			winpr_zfree(username);
+			winpr_zfree(password);
+			winpr_zfree(domain);
 			if (!rc || !rc1 || !rc2 || !rc3)
 				goto end;
 		}
