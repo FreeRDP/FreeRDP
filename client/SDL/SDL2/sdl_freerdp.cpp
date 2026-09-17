@@ -37,6 +37,7 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/client/aad_helper.h>
 #include <freerdp/channels/channels.h>
 
 #include <winpr/crt.h>
@@ -65,8 +66,6 @@
 #endif
 
 #include <sdl_config.hpp>
-
-#include <sdl_aad_helper.hpp>
 
 #define SDL_TAG CLIENT_TAG("SDL")
 
@@ -1179,9 +1178,6 @@ static void sdl_post_disconnect(freerdp* instance)
 	PubSub_UnsubscribeUserNotification(instance->context->pubSub,
 	                                   sdl_OnUserNotificationEventHandler);
 
-	if (auto& helper = get_context(instance->context)->getAadAuthHelper())
-		helper->stop();
-
 	gdi_free(instance);
 }
 
@@ -1458,23 +1454,6 @@ static void sdl_client_global_uninit()
 #endif
 }
 
-/* matches pGetAccessToken's fixed signature exactly, so it can be assigned to
- * instance->GetAccessToken directly; forwards into the shared implementation via va_list
- * (vprintf-style) along with this connection's own storage slot. */
-static BOOL sdl_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
-                                 size_t count, ...)
-{
-	auto sdl = get_context(instance->context);
-	WINPR_ASSERT(sdl);
-
-	va_list ap = {};
-	va_start(ap, count);
-	const BOOL rc = sdl_aad_helper_get_access_token_v(instance, sdl->getAadAuthHelper(), tokenType,
-	                                                  token, count, ap);
-	va_end(ap);
-	return rc;
-}
-
 static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 {
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(context);
@@ -1497,8 +1476,7 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	instance->PresentGatewayMessage = sdl_present_gateway_message;
 	instance->ChooseSmartcard = sdl_choose_smartcard;
 	instance->RetryDialog = sdl_retry_dialog;
-
-	instance->GetAccessToken = sdl_get_access_token;
+	instance->GetAccessToken = client_helper_get_access_token;
 	/* TODO: Client display set up */
 
 	return TRUE;

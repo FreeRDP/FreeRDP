@@ -71,6 +71,7 @@
 #ifdef WITH_AAD
 #include <freerdp/utils/http.h>
 #include <freerdp/utils/aad.h>
+#include <freerdp/client/aad_helper.h>
 #endif
 
 #ifdef WITH_SSO_MIB
@@ -1268,12 +1269,13 @@ cleanup:
 }
 #endif
 
-BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
-                                 size_t count, ...)
+BOOL client_cli_get_access_token(freerdp* instance, WINPR_ATTR_UNUSED AccessTokenType tokenType,
+                                 char** token, WINPR_ATTR_UNUSED size_t count, ...)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(token);
 
+	*token = nullptr;
 #if !defined(WITH_AAD)
 	WLog_ERR(TAG, "Build does not support AAD authentication");
 	return FALSE;
@@ -1334,12 +1336,15 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 #endif
 }
 
-BOOL client_common_get_access_token(freerdp* instance, const char* request, char** token)
+BOOL client_common_get_access_token(WINPR_ATTR_UNUSED freerdp* instance,
+                                    WINPR_ATTR_UNUSED const char* request,
+                                    WINPR_ATTR_UNUSED char** token)
 {
-#ifdef WITH_AAD
 	WINPR_ASSERT(request);
 	WINPR_ASSERT(token);
 
+	*token = nullptr;
+#ifdef WITH_AAD
 	BOOL ret = FALSE;
 	long resp_code = 0;
 	BYTE* response = nullptr;
@@ -1375,6 +1380,7 @@ cleanup:
 	free(response);
 	return ret;
 #else
+	WLog_ERR(TAG, "Build does not support AAD authentication");
 	return FALSE;
 #endif
 }
@@ -1554,6 +1560,10 @@ int freerdp_client_common_stop(rdpContext* context)
 			(void)CloseHandle(cctx->thread);
 			cctx->thread = nullptr;
 		}
+#if defined(WITH_AAD)
+		aad_auth_helper_stop(cctx->aadHelper);
+		cctx->aadHelper = nullptr;
+#endif
 	}
 
 	return 0;
@@ -2912,4 +2922,38 @@ char* freerdp_client_extract_aad_code(rdpClientContext* cctx, const char* data, 
 	if (!cctx || !requireRdpClientContext(&cctx->context))
 		return nullptr;
 	return freerdp_oauth2_extract_code(cctx->oauth2, data, length);
+}
+
+BOOL client_helper_get_access_token(freerdp* instance, WINPR_ATTR_UNUSED AccessTokenType tokenType,
+                                    WINPR_ATTR_UNUSED char** token, WINPR_ATTR_UNUSED size_t count,
+                                    ...)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(token);
+
+	*token = nullptr;
+
+	WINPR_ASSERT(requireRdpClientContext(instance->context));
+
+#if defined(WITH_AAD)
+	rdpClientContext* cctx = (rdpClientContext*)instance->context;
+	WINPR_ASSERT(cctx);
+
+	aad_auth_helper_stop(cctx->aadHelper);
+	cctx->aadHelper = aad_auth_helper_start(cctx);
+	if (!cctx->aadHelper)
+		return FALSE;
+
+	va_list ap = WINPR_C_ARRAY_INIT;
+	va_start(ap, count);
+	const BOOL rc =
+	    aad_auth_helper_get_access_token_v(cctx->aadHelper, tokenType, token, count, ap);
+	va_end(ap);
+	aad_auth_helper_stop(cctx->aadHelper);
+	cctx->aadHelper = nullptr;
+	return rc;
+#else
+	WLog_ERR(TAG, "Build does not support AAD authentication");
+	return FALSE;
+#endif
 }

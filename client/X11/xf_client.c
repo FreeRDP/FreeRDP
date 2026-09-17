@@ -82,6 +82,7 @@
 
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client/aad_helper.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -2073,7 +2074,8 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostDisconnect = xf_post_disconnect;
 	instance->PostFinalDisconnect = xf_post_final_disconnect;
 	instance->LogonErrorInfo = xf_logon_error_info;
-	instance->GetAccessToken = client_cli_get_access_token;
+	instance->GetAccessToken = client_helper_get_access_token;
+
 	if (PubSub_SubscribeTerminate(context->pubSub, xf_TerminateEventHandler) < 0)
 		return FALSE;
 #ifdef WITH_XRENDER

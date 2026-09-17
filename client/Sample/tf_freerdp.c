@@ -35,6 +35,7 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/client/aad_helper.h>
 #include <freerdp/channels/channels.h>
 
 #include <winpr/crt.h>
@@ -337,6 +338,7 @@ static BOOL tf_client_new(freerdp* instance, rdpContext* context)
 	instance->PostConnect = tf_post_connect;
 	instance->PostDisconnect = tf_post_disconnect;
 	instance->LogonErrorInfo = tf_logon_error_info;
+	instance->GetAccessToken = client_helper_get_access_token;
 	/* TODO: Client display set up */
 	WINPR_UNUSED(tf);
 	return TRUE;

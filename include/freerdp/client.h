@@ -46,6 +46,7 @@
  * @since version 3.16.0
  */
 typedef struct MIBClientWrapper MIBClientWrapper;
+typedef struct AadAuthHelper AadAuthHelper;
 
 #ifdef __cplusplus
 extern "C"
@@ -151,7 +152,8 @@ extern "C"
 		ALIGN64 MIBClientWrapper* mibClientWrapper; /**< (offset 10) @since version 3.16.0 */
 		ALIGN64 BOOL pressed_buttons[5];            /**< (offset 11) @since version 3.17.0 */
 		ALIGN64 rdpClientOAuth2* oauth2;            /**< (offset 16) @since version 3.32.0 */
-		UINT64 reserved[129 - 17];                  /**< (offset 17) */
+		ALIGN64 AadAuthHelper* aadHelper;           /**< (offset 17) @since version 3.32.0 */
+		UINT64 reserved[129 - 18];                  /**< (offset 18) */
 	};
 
 	/* Common client functions */
@@ -224,6 +226,32 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API int client_cli_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
 
+	/** @brief AAD GetAccessToken implementation trying to utilize system specific OAuth2 handling
+	 * with your browser.
+	 *
+	 *   @param instance The instance to query for
+	 *   @param tokenType The type of token to request
+	 *   @param token A pointer to a location that will be set to the token requested
+	 *   @param count The number of arguments following
+	 *
+	 *   @return TRUE in case of successful token acquisition, FALSE otherwise
+	 *   @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL client_helper_get_access_token(freerdp* instance, AccessTokenType tokenType,
+	                                                char** token, size_t count, ...);
+
+	/** @brief AAD GetAccessToken implementation printing the request to CLI and wainting for user
+	 * pasting the response back.
+	 *
+	 *   @param instance The instance to query for
+	 *   @param tokenType The type of token to request
+	 *   @param token A pointer to a location that will be set to the token requested
+	 *   @param count The number of arguments following
+	 *
+	 *   @return TRUE in case of successful token acquisition, FALSE otherwise
+	 *   @since version 3.0.0
+	 */
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType,
 	                                             char** token, size_t count, ...);

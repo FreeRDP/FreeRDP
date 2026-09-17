@@ -207,8 +207,6 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 
 	if (!freerdp_settings_get_string(settings, FreeRDP_GatewayHttpExtAuthBearer))
 	{
-		char* token = nullptr;
-
 		pGetCommonAccessToken GetCommonAccessToken = freerdp_get_common_access_token(arm->context);
 		if (!GetCommonAccessToken)
 		{
@@ -219,18 +217,19 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 		if (!arm_fetch_wellknown(arm))
 			goto out;
 
+		char* token = nullptr;
 		if (!GetCommonAccessToken(arm->context, ACCESS_TOKEN_TYPE_AVD, &token, 0))
 		{
+			winpr_zfree(token);
 			WLog_Print(arm->log, WLOG_ERROR, "Unable to obtain access token");
 			goto out;
 		}
 
-		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpExtAuthBearer, token))
-		{
-			free(token);
+		const BOOL rc =
+		    freerdp_settings_set_string(settings, FreeRDP_GatewayHttpExtAuthBearer, token);
+		winpr_zfree(token);
+		if (!rc)
 			goto out;
-		}
-		free(token);
 	}
 
 	if (!http_request_set_auth_scheme(request, "Bearer") ||

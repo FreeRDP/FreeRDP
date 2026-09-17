@@ -14,7 +14,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/..")
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS freerdp-client sdl-common-prefs sdl-common-aad-helper freerdp-cxx-filesystem)
+set(${MODULE_PREFIX}_LIBS freerdp-client sdl-common-prefs freerdp-cxx-filesystem)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS})
 
