@@ -17,7 +17,7 @@ static int runInstance(int argc, char* argv[], freerdp** inst, DWORD timeout)
 
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
-	clientEntryPoints.ContextSize = sizeof(rdpContext);
+	clientEntryPoints.ContextSize = sizeof(rdpClientContext);
 	context = freerdp_client_context_new(&clientEntryPoints);
 
 	if (!context)
