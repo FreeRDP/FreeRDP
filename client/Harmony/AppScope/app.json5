@@ -1,0 +1,10 @@
+{
+  "app": {
+    "bundleName": "com.freerdp.harmony",
+    "icon": "$media:layered_image",
+    "label": "$string:app_name",
+    "vendor": "The FreeRDP Project",
+    "versionCode": 1,
+    "versionName": "1.0.2"
+  }
+}
