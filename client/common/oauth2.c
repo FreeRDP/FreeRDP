@@ -218,6 +218,10 @@ char* freerdp_oauth2_append_state(rdpClientOAuth2* oauth2, const char* url, size
 
 	if (plen)
 		*plen = 0;
+
+	if (!url || (len == 0))
+		return nullptr;
+
 	if (strnlen(url, len + 1) > len)
 		return nullptr;
 
