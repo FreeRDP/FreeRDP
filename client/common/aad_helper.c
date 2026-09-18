@@ -780,7 +780,11 @@ static BOOL aad_auth_helper_get_rdsaad_access_token(AadAuthHelper* helper,
 		return FALSE;
 	}
 
-	char* token_request = freerdp_client_get_aad_url(cctx, tokenType, scope, code, req_cnf);
+	char* token_request = nullptr;
+	if (tokenType == FREERDP_CLIENT_AAD_TOKEN_REQUEST)
+		token_request = freerdp_client_get_aad_url(cctx, tokenType, scope, code, req_cnf);
+	else
+		token_request = freerdp_client_get_aad_url(cctx, tokenType, code);
 	winpr_zfree(code);
 	if (!token_request)
 	{
