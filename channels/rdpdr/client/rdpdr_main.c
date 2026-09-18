@@ -1240,6 +1240,28 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	return rdpdr_add_devices(rdpdr);
 }
 
+WINPR_ATTR_NODISCARD
+static UINT32 generate(rdpdrPlugin* rdpdr, UINT32 received)
+{
+	UINT32 clientID = received;
+	int rc = -1;
+
+	/* BUGFIX: Mirroring the server supplied version breaks the channel for windows XP.
+	 * Use a randomly generated ID instead. see [MS-RDPEFS] 3.2.5.1.3 Sending a Client Announce
+	 * Reply Message
+	 */
+	if ((rdpdr->serverVersionMajor == RDPDR_VERSION_MAJOR) &&
+	    (rdpdr->serverVersionMinor < RDPDR_VERSION_MINOR_RDP6X))
+	{
+		while ((clientID == 0) || (clientID == UINT32_MAX) || (clientID == received) || (rc < 0))
+		{
+			rc = winpr_RAND(&clientID, sizeof(clientID));
+		}
+	}
+
+	return clientID;
+}
+
 static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s)
 {
 	WINPR_ASSERT(rdpdr);
@@ -1250,7 +1272,10 @@ static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
 
 	Stream_Read_UINT16(s, rdpdr->serverVersionMajor);
 	Stream_Read_UINT16(s, rdpdr->serverVersionMinor);
-	Stream_Read_UINT32(s, rdpdr->clientID);
+
+	const UINT32 clientID = Stream_Get_UINT32(s);
+	rdpdr->clientID = generate(rdpdr, clientID);
+
 	rdpdr->sequenceId++;
 
 	rdpdr->clientVersionMajor = MIN(RDPDR_VERSION_MAJOR, rdpdr->serverVersionMajor);
