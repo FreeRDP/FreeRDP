@@ -302,11 +302,11 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, WINPR_ATTR_UNUSED size_
 	WINPR_ASSERT(data || (size == 0));
 
 	void* result = nullptr;
-	size_t bpp_stride = 1ull * width * (bpp / 8);
+	size_t bpp_stride = 1ull * width * ((bpp + 7ull) / 8ull);
 	if ((bpp_stride % 4) != 0)
 		bpp_stride += 4 - (bpp_stride % 4);
 
-	if (bpp_stride > UINT32_MAX)
+	if ((bpp_stride < 4) || (bpp_stride > UINT32_MAX))
 		return nullptr;
 
 	wStream* s = Stream_New(nullptr, 1024);
@@ -316,6 +316,8 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, WINPR_ATTR_UNUSED size_
 
 	BYTE* bmp_header = winpr_bitmap_construct_header(width, height, bpp);
 	if (!bmp_header)
+		goto fail;
+	if (bpp_stride < stride)
 		goto fail;
 	if (!Stream_EnsureRemainingCapacity(s, WINPR_IMAGE_BMP_HEADER_LEN))
 		goto fail;
