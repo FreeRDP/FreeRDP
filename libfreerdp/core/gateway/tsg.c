@@ -471,11 +471,13 @@ static BOOL tsg_ndr_write_string(WINPR_ATTR_UNUSED wLog* log, wStream* s, const 
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL tsg_ndr_read_string(wLog* log, wStream* s, WCHAR** str, UINT32 lengthInBytes)
+static BOOL tsg_ndr_read_string(wLog* log, wStream* s, WCHAR** str, UINT32* pLengthInBytes)
 {
 	UINT32 MaxCount = 0;
 	UINT32 Offset = 0;
 	UINT32 ActualCount = 0;
+	WINPR_ASSERT(pLengthInBytes);
+	const UINT32 lengthInBytes = *pLengthInBytes;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 12))
 		return FALSE;
@@ -503,13 +505,18 @@ static BOOL tsg_ndr_read_string(wLog* log, wStream* s, WCHAR** str, UINT32 lengt
 		           ActualCount, lengthInBytes);
 		return FALSE;
 	}
+
+	const size_t start = Stream_GetPosition(s);
 	if (str)
 		*str = Stream_PointerAs(s, WCHAR);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, ActualCount * sizeof(WCHAR)))
 		return FALSE;
 	Stream_Seek(s, ActualCount * sizeof(WCHAR));
-
+	const size_t end = Stream_GetPosition(s);
+	if ((start > end) || ((end - start) > UINT32_MAX))
+		return FALSE;
+	*pLengthInBytes = WINPR_ASSERTING_INT_CAST(UINT32, end - start);
 	const size_t pad = (ActualCount % 2);
 	return Stream_SafeSeek(s, pad * sizeof(WCHAR));
 }
@@ -738,9 +745,11 @@ static BOOL tsg_ndr_read_quarenc_data(wLog* log, wStream* s, UINT32* index,
 	if (quarenc->certChainLen > 0)
 	{
 		/* [MS-TSGU] 2.2.9.2.1.6  TSG_PACKET_QUARENC_RESPONSE::certChainLen number of WCHAR */
-		if (!tsg_ndr_read_string(log, s, &quarenc->certChainData,
-		                         quarenc->certChainLen * sizeof(WCHAR)))
+		UINT32 lengthInBytes = quarenc->certChainLen * sizeof(WCHAR);
+		if (!tsg_ndr_read_string(log, s, &quarenc->certChainData, &lengthInBytes))
 			return FALSE;
+		quarenc->certChainLen = lengthInBytes / sizeof(WCHAR);
+
 		/* 4-byte alignment */
 		if (!tsg_stream_align(log, s, 4))
 			return FALSE;
@@ -2194,7 +2203,7 @@ static BOOL TsProxyReadPacketSTringMessage(wLog* log, wStream* s, uint32_t* inde
 		return TRUE;
 	}
 
-	return tsg_ndr_read_string(log, s, &msg->msgBuffer, msg->msgBytes);
+	return tsg_ndr_read_string(log, s, &msg->msgBuffer, &msg->msgBytes);
 }
 
 WINPR_ATTR_NODISCARD
