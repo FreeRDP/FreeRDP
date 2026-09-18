@@ -721,8 +721,11 @@ static AadAuthHelperNavigateStatus aad_helper_navigate(AadAuthHelper* helper, co
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL aad_auth_helper_get_rdsaad_access_token(AadAuthHelper* helper, const char* scope,
-                                                    const char* req_cnf, char** token)
+static BOOL aad_auth_helper_get_rdsaad_access_token(AadAuthHelper* helper,
+                                                    freerdp_client_aad_type requestType,
+                                                    freerdp_client_aad_type tokenType,
+                                                    const char* scope, const char* req_cnf,
+                                                    char** token)
 {
 	WINPR_ASSERT(helper);
 	WINPR_ASSERT(scope);
@@ -732,7 +735,11 @@ static BOOL aad_auth_helper_get_rdsaad_access_token(AadAuthHelper* helper, const
 	rdpClientContext* cctx = helper->context;
 	WINPR_ASSERT(cctx);
 
-	char* request = freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AUTH_REQUEST, scope);
+	const char* title = "FreeRDP WebView - AAD access token";
+	if (requestType == FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST)
+		title = "FreeRDP WebView - AVD access token";
+
+	char* request = freerdp_client_get_aad_url(cctx, requestType, scope);
 	if (!request)
 	{
 		WLog_ERR(TAG, "[aad-auth] authentication failed, could not construct request");
@@ -741,8 +748,8 @@ static BOOL aad_auth_helper_get_rdsaad_access_token(AadAuthHelper* helper, const
 
 	char* redirectUrl = nullptr;
 	size_t redirectUrlLen = 0;
-	const AadAuthHelperNavigateStatus status = aad_helper_navigate(
-	    helper, "FreeRDP WebView - AAD access token", request, &redirectUrl, &redirectUrlLen);
+	const AadAuthHelperNavigateStatus status =
+	    aad_helper_navigate(helper, title, request, &redirectUrl, &redirectUrlLen);
 	winpr_zfree(request);
 
 	if (status == AAD_AUTH_HELPER_NAVIGATE_CANCELLED)
@@ -773,71 +780,7 @@ static BOOL aad_auth_helper_get_rdsaad_access_token(AadAuthHelper* helper, const
 		return FALSE;
 	}
 
-	char* token_request =
-	    freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_TOKEN_REQUEST, scope, code, req_cnf);
-	winpr_zfree(code);
-	if (!token_request)
-	{
-		WLog_ERR(TAG, "[aad-auth] authentication failed, could not get token");
-		return FALSE;
-	}
-
-	const BOOL rc = client_common_get_access_token(cctx->context.instance, token_request, token);
-	winpr_zfree(token_request);
-	return rc;
-}
-
-WINPR_ATTR_NODISCARD
-static BOOL aad_helper_get_avd_access_token(AadAuthHelper* helper, char** token)
-{
-	WINPR_ASSERT(helper);
-	WINPR_ASSERT(token);
-
-	rdpClientContext* cctx = helper->context;
-	WINPR_ASSERT(cctx);
-
-	char* request = freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST);
-	if (!request)
-	{
-		WLog_ERR(TAG, "[aad-auth] authentication failed, could not construct request");
-		return FALSE;
-	}
-
-	char* redirectUrl = nullptr;
-	size_t redirectUrlLen = 0;
-	const AadAuthHelperNavigateStatus status = aad_helper_navigate(
-	    helper, "FreeRDP WebView - AVD access token", request, &redirectUrl, &redirectUrlLen);
-	winpr_zfree(request);
-
-	if (status == AAD_AUTH_HELPER_NAVIGATE_CANCELLED)
-	{
-		winpr_znfree(redirectUrl, redirectUrlLen);
-		WLog_INFO(TAG, "[aad-auth] user cancelled the authentication");
-		return FALSE;
-	}
-	if (status == AAD_AUTH_HELPER_NAVIGATE_TIMEOUT)
-	{
-		winpr_znfree(redirectUrl, redirectUrlLen);
-		WLog_ERR(TAG, "[aad-auth] authentication timed out");
-		return FALSE;
-	}
-	if (status != AAD_AUTH_HELPER_NAVIGATE_OK)
-	{
-		winpr_znfree(redirectUrl, redirectUrlLen);
-		WLog_ERR(TAG, "[aad-auth] authentication failed");
-		return FALSE;
-	}
-
-	char* code = freerdp_client_extract_aad_code(cctx, redirectUrl, redirectUrlLen);
-	winpr_znfree(redirectUrl, redirectUrlLen);
-	if (!code)
-	{
-		WLog_ERR(TAG, "[aad-auth] authentication failed, could not find code parameter");
-		return FALSE;
-	}
-
-	char* token_request =
-	    freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST, code);
+	char* token_request = freerdp_client_get_aad_url(cctx, tokenType, scope, code, req_cnf);
 	winpr_zfree(code);
 	if (!token_request)
 	{
@@ -873,7 +816,9 @@ BOOL aad_auth_helper_get_access_token_v(AadAuthHelper* helper, AccessTokenType t
 				          count);
 			const char* scope = va_arg(args, const char*);
 			const char* req_cnf = va_arg(args, const char*);
-			return aad_auth_helper_get_rdsaad_access_token(helper, scope, req_cnf, token);
+			return aad_auth_helper_get_rdsaad_access_token(helper, FREERDP_CLIENT_AAD_AUTH_REQUEST,
+			                                               FREERDP_CLIENT_AAD_TOKEN_REQUEST, scope,
+			                                               req_cnf, token);
 		}
 		case ACCESS_TOKEN_TYPE_AVD:
 			if (count != 0)
@@ -881,7 +826,9 @@ BOOL aad_auth_helper_get_access_token_v(AadAuthHelper* helper, AccessTokenType t
 				          "ACCESS_TOKEN_TYPE_AVD expected 0 additional arguments, but got %" PRIuz
 				          ", ignoring",
 				          count);
-			return aad_helper_get_avd_access_token(helper, token);
+			return aad_auth_helper_get_rdsaad_access_token(
+			    helper, FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST, FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST,
+			    "", "", token);
 		default:
 			WLog_ERR(TAG, "Unexpected value for AccessTokenType [%" PRIu32 "], aborting",
 			         tokenType);
