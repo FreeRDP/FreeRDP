@@ -50,6 +50,9 @@ struct AadAuthHelper
 	size_t bufLen;
 };
 
+WINPR_ATTR_MALLOC(free, 1)
+static char* aad_auth_helper_detect_helper(void);
+
 /* ---- wire format helpers ------------------------------------------------------------- */
 WINPR_ATTR_MALLOC(free, 1)
 static char* build_hello_request(UINT32 id)
@@ -538,10 +541,11 @@ cleanup:
 	return helper;
 }
 
-AadAuthHelperNavigateStatus aad_auth_helper_navigate(AadAuthHelper* helper, const char* title,
-                                                     const char* url, const char* redirect_uri,
-                                                     UINT32 timeout_ms, char** redirect_url,
-                                                     size_t* redirect_url_len)
+static AadAuthHelperNavigateStatus aad_auth_helper_navigate(AadAuthHelper* helper,
+                                                            const char* title, const char* url,
+                                                            const char* redirect_uri,
+                                                            UINT32 timeout_ms, char** redirect_url,
+                                                            size_t* redirect_url_len)
 {
 	WINPR_ASSERT(helper);
 	WINPR_ASSERT(url);
