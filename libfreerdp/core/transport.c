@@ -957,6 +957,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	return IFCALLRESULT(-1, transport->io.ReadPdu, transport, s);
 }
 
+WINPR_ATTR_NODISCARD
 static SSIZE_T parse_nla_mode_pdu(rdpTransport* transport, wStream* stream)
 {
 	SSIZE_T pduLength = 0;
@@ -972,45 +973,45 @@ static SSIZE_T parse_nla_mode_pdu(rdpTransport* transport, wStream* stream)
 	if (Stream_GetRemainingLength(s) < 1)
 		return 0;
 	Stream_Read_UINT8(s, typeEncoding);
-	if (typeEncoding == 0x30)
+	if (typeEncoding != 0x30)
+		return -1;
+
+	/* TSRequest (NLA) */
+	UINT8 lengthEncoding = 0;
+	if (Stream_GetRemainingLength(s) < 1)
+		return 0;
+	Stream_Read_UINT8(s, lengthEncoding);
+	if (lengthEncoding & 0x80)
 	{
-		/* TSRequest (NLA) */
-		UINT8 lengthEncoding = 0;
-		if (Stream_GetRemainingLength(s) < 1)
-			return 0;
-		Stream_Read_UINT8(s, lengthEncoding);
-		if (lengthEncoding & 0x80)
+		if ((lengthEncoding & ~(0x80)) == 1)
 		{
-			if ((lengthEncoding & ~(0x80)) == 1)
-			{
-				UINT8 length = 0;
-				if (Stream_GetRemainingLength(s) < 1)
-					return 0;
-				Stream_Read_UINT8(s, length);
-				pduLength = length;
-				pduLength += 3;
-			}
-			else if ((lengthEncoding & ~(0x80)) == 2)
-			{
-				/* check for header bytes already read in previous calls */
-				UINT16 length = 0;
-				if (Stream_GetRemainingLength(s) < 2)
-					return 0;
-				Stream_Read_UINT16_BE(s, length);
-				pduLength = length;
-				pduLength += 4;
-			}
-			else
-			{
-				WLog_Print(transport->log, WLOG_ERROR, "Error reading TSRequest!");
-				return -1;
-			}
+			UINT8 length = 0;
+			if (Stream_GetRemainingLength(s) < 1)
+				return 0;
+			Stream_Read_UINT8(s, length);
+			pduLength = length;
+			pduLength += 3;
+		}
+		else if ((lengthEncoding & ~(0x80)) == 2)
+		{
+			/* check for header bytes already read in previous calls */
+			UINT16 length = 0;
+			if (Stream_GetRemainingLength(s) < 2)
+				return 0;
+			Stream_Read_UINT16_BE(s, length);
+			pduLength = length;
+			pduLength += 4;
 		}
 		else
 		{
-			pduLength = lengthEncoding;
-			pduLength += 2;
+			WLog_Print(transport->log, WLOG_ERROR, "Error reading TSRequest!");
+			return -1;
 		}
+	}
+	else
+	{
+		pduLength = lengthEncoding;
+		pduLength += 2;
 	}
 
 	return pduLength;

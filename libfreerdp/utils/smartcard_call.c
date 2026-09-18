@@ -768,7 +768,7 @@ WINPR_ATTR_NODISCARD static LONG smartcard_ReadCacheA_Call(scard_call_context* s
 	{
 		if (!autoalloc)
 		{
-			ret.pbData = malloc(call->Common.cbDataLen);
+			ret.pbData = calloc(1, call->Common.cbDataLen);
 			if (!ret.pbData)
 				return SCARD_F_INTERNAL_ERROR;
 		}
@@ -1460,7 +1460,7 @@ smartcard_Transmit_Call(scard_call_context* smartcard, wStream* out, SMARTCARD_O
 			call->cbRecvLength = 66560;
 
 		const UINT32 cbRecvLength = call->cbRecvLength;
-		ret.pbRecvBuffer = (BYTE*)malloc(cbRecvLength);
+		ret.pbRecvBuffer = (BYTE*)calloc(1, cbRecvLength);
 
 		if (!ret.pbRecvBuffer)
 			return STATUS_NO_MEMORY;
@@ -1494,7 +1494,7 @@ WINPR_ATTR_NODISCARD static LONG smartcard_Control_Call(scard_call_context* smar
 	WINPR_ASSERT(operation);
 
 	call = &operation->call.control;
-	ret.pvOutBuffer = (BYTE*)malloc(call->cbOutBufferSize);
+	ret.pvOutBuffer = (BYTE*)calloc(1, call->cbOutBufferSize);
 
 	if (!ret.pvOutBuffer)
 		return SCARD_E_NO_MEMORY;
@@ -1534,7 +1534,7 @@ WINPR_ATTR_NODISCARD static LONG smartcard_GetAttrib_Call(scard_call_context* sm
 		cbAttrLen = call->cbAttrLen;
 		if (cbAttrLen && !autoAllocate)
 		{
-			ret.pbAttr = (BYTE*)malloc(cbAttrLen);
+			ret.pbAttr = (BYTE*)calloc(1, cbAttrLen);
 
 			if (!ret.pbAttr)
 				return SCARD_E_NO_MEMORY;
