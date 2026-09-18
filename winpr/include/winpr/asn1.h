@@ -90,8 +90,8 @@ typedef char* WinPrAsn1_STRING;
 typedef char* WinPrAsn1_IA5STRING;
 typedef struct
 {
-	WINPR_ALIGN64 size_t len;
-	WINPR_ALIGN64 BYTE* data;
+	size_t len;
+	BYTE* data;
 } WinPrAsn1_MemoryChunk;
 
 typedef WinPrAsn1_MemoryChunk WinPrAsn1_OID;

@@ -65,27 +65,6 @@ extern "C"
 	WINPR_ATTR_MALLOC(aad_auth_helper_stop, 1)
 	FREERDP_API AadAuthHelper* aad_auth_helper_start(rdpClientContext* context);
 
-	/** @brief drive the helper's browser to \b url and wait for it to navigate to a URI prefixed
-	 *  with \b redirect_uri (the OAuth2 authorization-code redirect).
-	 *
-	 * @param helper a helper started with aad_auth_helper_start()
-	 * @param title window title to show
-	 * @param url the initial URL to navigate to (typically an AAD /authorize URL)
-	 * @param redirect_uri the redirect URI prefix to watch for
-	 * @param timeout_ms how long the helper should wait before giving up
-	 * @param redirect_url on AAD_AUTH_HELPER_NAVIGATE_OK, receives the full redirect URL the
-	 *        browser navigated to (caller must free() it). Left untouched otherwise.
-	 * * @param redirect_url_len The length in bytes of the allocated \ref redirect_url
-	 * @return AAD_AUTH_HELPER_NAVIGATE_OK if the browser reached the redirect URI, or a specific
-	 *         failure reason otherwise (see AadAuthHelperNavigateStatus).
-	 *
-	 * @since version 3.32.0
-	 */
-	WINPR_ATTR_NODISCARD
-	FREERDP_API AadAuthHelperNavigateStatus aad_auth_helper_navigate(
-	    AadAuthHelper* helper, const char* title, const char* url, const char* redirect_uri,
-	    UINT32 timeout_ms, char** redirect_url, size_t* redirect_url_len);
-
 	/** @brief va_list-taking implementation, so a caller that's already inside its own variadic
 	 *  function (see the SDL2/SDL3 GetAccessToken trampolines) can forward its va_list here
 	 * directly
@@ -124,14 +103,6 @@ extern "C"
 	FREERDP_API BOOL aad_auth_helper_get_access_token(AadAuthHelper* helper,
 	                                                  AccessTokenType tokenType, char** token,
 	                                                  size_t count, ...);
-
-	/** @brief try to auto detect the OAuth2 helper to use.
-	 *
-	 *  @return A canonical path of the binary to launch as helper, if successful, NULL otherwise
-	 *  @since version 3.32.0
-	 */
-	WINPR_ATTR_MALLOC(free, 1)
-	FREERDP_API char* aad_auth_helper_detect_helper(void);
 
 #ifdef __cplusplus
 }
