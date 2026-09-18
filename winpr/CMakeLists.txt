@@ -209,6 +209,8 @@ else()
   endif()
 endif()
 
+add_compile_definitions(WINPR_RESOURCE_ROOT="${WINPR_RESOURCE_ROOT}")
+
 include(CheckTypeSize)
 set(CMAKE_EXTRA_INCLUDE_FILES "sys/types.h")
 check_type_size(ssize_t SSIZE_T)
