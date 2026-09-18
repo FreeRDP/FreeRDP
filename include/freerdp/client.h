@@ -227,6 +227,21 @@ extern "C"
 	FREERDP_API int client_cli_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
 
 	/** @brief AAD GetAccessToken implementation trying to utilize system specific OAuth2 handling
+	 * with your browser and fall back to CLI should that fail.
+	 *
+	 *   @param instance The instance to query for
+	 *   @param tokenType The type of token to request
+	 *   @param token A pointer to a location that will be set to the token requested
+	 *   @param count The number of arguments following
+	 *
+	 *   @return TRUE in case of successful token acquisition, FALSE otherwise
+	 *   @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL client_failsafe_get_access_token(freerdp* instance, AccessTokenType tokenType,
+	                                                  char** token, size_t count, ...);
+
+	/** @brief AAD GetAccessToken implementation trying to utilize system specific OAuth2 handling
 	 * with your browser.
 	 *
 	 *   @param instance The instance to query for

@@ -623,7 +623,7 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	instance->PostConnect = wl_post_connect;
 	instance->PostDisconnect = wl_post_disconnect;
 	instance->LogonErrorInfo = wlf_logon_error_info;
-	instance->GetAccessToken = client_helper_get_access_token;
+	instance->GetAccessToken = client_failsafe_get_access_token;
 	wfl->log = WLog_Get(TAG);
 	wfl->display = UwacOpenDisplay(nullptr, &status);
 

@@ -1443,7 +1443,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostConnect = wf_post_connect;
 	instance->PostDisconnect = wf_post_disconnect;
 	instance->AuthenticateEx = wf_authenticate_ex;
-	instance->GetAccessToken = client_helper_get_access_token;
+	instance->GetAccessToken = client_failsafe_get_access_token;
 
 #ifdef WITH_WINDOWS_CERT_STORE
 	if (!freerdp_settings_set_bool(context->settings, FreeRDP_CertificateCallbackPreferPEM, TRUE))

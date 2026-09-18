@@ -338,7 +338,7 @@ static BOOL tf_client_new(freerdp* instance, rdpContext* context)
 	instance->PostConnect = tf_post_connect;
 	instance->PostDisconnect = tf_post_disconnect;
 	instance->LogonErrorInfo = tf_logon_error_info;
-	instance->GetAccessToken = client_helper_get_access_token;
+	instance->GetAccessToken = client_failsafe_get_access_token;
 	/* TODO: Client display set up */
 	WINPR_UNUSED(tf);
 	return TRUE;

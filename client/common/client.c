@@ -1269,8 +1269,10 @@ cleanup:
 }
 #endif
 
-BOOL client_cli_get_access_token(freerdp* instance, WINPR_ATTR_UNUSED AccessTokenType tokenType,
-                                 char** token, WINPR_ATTR_UNUSED size_t count, ...)
+WINPR_ATTR_NODISCARD
+static BOOL client_cli_get_access_token_va(freerdp* instance,
+                                           WINPR_ATTR_UNUSED AccessTokenType tokenType,
+                                           char** token, WINPR_ATTR_UNUSED size_t count, va_list ap)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(token);
@@ -1307,12 +1309,9 @@ BOOL client_cli_get_access_token(freerdp* instance, WINPR_ATTR_UNUSED AccessToke
 					    "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
 					    ", ignoring",
 					    count);
-				va_list ap = WINPR_C_ARRAY_INIT;
-				va_start(ap, count);
 				const char* scope = va_arg(ap, const char*);
 				const char* req_cnf = va_arg(ap, const char*);
 				rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
-				va_end(ap);
 			}
 		}
 		break;
@@ -1334,6 +1333,16 @@ BOOL client_cli_get_access_token(freerdp* instance, WINPR_ATTR_UNUSED AccessToke
 		return FALSE;
 	return rc;
 #endif
+}
+
+BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
+                                 size_t count, ...)
+{
+	va_list ap = WINPR_C_ARRAY_INIT;
+	va_start(ap, count);
+	const BOOL rc = client_cli_get_access_token_va(instance, tokenType, token, count, ap);
+	va_end(ap);
+	return rc;
 }
 
 BOOL client_common_get_access_token(WINPR_ATTR_UNUSED freerdp* instance,
@@ -2924,9 +2933,11 @@ char* freerdp_client_extract_aad_code(rdpClientContext* cctx, const char* data, 
 	return freerdp_oauth2_extract_code(cctx->oauth2, data, length);
 }
 
-BOOL client_helper_get_access_token(freerdp* instance, WINPR_ATTR_UNUSED AccessTokenType tokenType,
-                                    WINPR_ATTR_UNUSED char** token, WINPR_ATTR_UNUSED size_t count,
-                                    ...)
+WINPR_ATTR_NODISCARD
+static BOOL client_helper_get_access_token_va(freerdp* instance,
+                                              WINPR_ATTR_UNUSED AccessTokenType tokenType,
+                                              WINPR_ATTR_UNUSED char** token,
+                                              WINPR_ATTR_UNUSED size_t count, va_list ap)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(token);
@@ -2944,11 +2955,8 @@ BOOL client_helper_get_access_token(freerdp* instance, WINPR_ATTR_UNUSED AccessT
 	if (!cctx->aadHelper)
 		return FALSE;
 
-	va_list ap = WINPR_C_ARRAY_INIT;
-	va_start(ap, count);
 	const BOOL rc =
 	    aad_auth_helper_get_access_token_v(cctx->aadHelper, tokenType, token, count, ap);
-	va_end(ap);
 	aad_auth_helper_stop(cctx->aadHelper);
 	cctx->aadHelper = nullptr;
 	return rc;
@@ -2956,4 +2964,34 @@ BOOL client_helper_get_access_token(freerdp* instance, WINPR_ATTR_UNUSED AccessT
 	WLog_ERR(TAG, "Build does not support AAD authentication");
 	return FALSE;
 #endif
+}
+
+BOOL client_failsafe_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
+                                      size_t count, ...)
+{
+	{
+		va_list ap = WINPR_C_ARRAY_INIT;
+		va_start(ap, count);
+		const BOOL rc = client_helper_get_access_token_va(instance, tokenType, token, count, ap);
+		va_end(ap);
+		if (rc)
+			return rc;
+	}
+	{
+		va_list ap = WINPR_C_ARRAY_INIT;
+		va_start(ap, count);
+		const BOOL rc = client_cli_get_access_token_va(instance, tokenType, token, count, ap);
+		va_end(ap);
+		return rc;
+	}
+}
+
+BOOL client_helper_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
+                                    size_t count, ...)
+{
+	va_list ap = WINPR_C_ARRAY_INIT;
+	va_start(ap, count);
+	const BOOL rc = client_helper_get_access_token_va(instance, tokenType, token, count, ap);
+	va_end(ap);
+	return rc;
 }

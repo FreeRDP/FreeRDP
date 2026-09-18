@@ -1476,7 +1476,7 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	instance->PresentGatewayMessage = sdl_present_gateway_message;
 	instance->ChooseSmartcard = sdl_choose_smartcard;
 	instance->RetryDialog = sdl_retry_dialog;
-	instance->GetAccessToken = client_helper_get_access_token;
+	instance->GetAccessToken = client_failsafe_get_access_token;
 	/* TODO: Client display set up */
 
 	return TRUE;
