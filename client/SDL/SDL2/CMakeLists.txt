@@ -60,7 +60,6 @@ list(
   Threads::Threads
   sdl2_client_res
   sdl2-dialogs
-  sdl-common-aad-helper
   sdl-common-prefs
 )
 

@@ -31,8 +31,7 @@
 #include <scoped_guard.hpp>
 
 #include "dialogs/sdl_dialogs.hpp"
-
-#include <sdl_aad_helper.hpp>
+#include <freerdp/client/aad_helper.h>
 
 static constexpr auto sdl_allow_screensaver = "sdl-allow-screensaver";
 
@@ -58,8 +57,8 @@ SdlContext::SdlContext(rdpContext* context)
 	instance->PresentGatewayMessage = sdl_present_gateway_message;
 	instance->ChooseSmartcard = sdl_choose_smartcard;
 	instance->RetryDialog = sdl_retry_dialog;
+	instance->GetAccessToken = client_failsafe_get_access_token;
 
-	instance->GetAccessToken = getAccessToken;
 	/* TODO: Client display set up */
 
 	_args.push_back({ sdl_allow_screensaver, COMMAND_LINE_VALUE_BOOL, nullptr, BoolValueFalse,
@@ -132,23 +131,6 @@ bool SdlContext::shallAbort(bool ignoreDialogs)
 		return !getDialog().isRunning();
 	}
 	return false;
-}
-
-/* matches pGetAccessToken's fixed signature exactly, so it can be assigned to
- * instance->GetAccessToken directly; forwards into the shared implementation via va_list
- * (vprintf-style) along with this connection's own storage slot. */
-BOOL SdlContext::getAccessToken(freerdp* instance, AccessTokenType tokenType, char** token,
-                                size_t count, ...)
-{
-	auto sdl = get_context(instance->context);
-	WINPR_ASSERT(sdl);
-
-	va_list ap = {};
-	va_start(ap, count);
-	const BOOL rc = sdl_aad_helper_get_access_token_v(instance, sdl->getAadAuthHelper(), tokenType,
-	                                                  token, count, ap);
-	va_end(ap);
-	return rc;
 }
 
 /* Called before a connection is established.
@@ -334,9 +316,6 @@ void SdlContext::postDisconnect(freerdp* instance)
 
 	auto sdl = get_context(instance->context);
 	sdl->setConnected(false);
-
-	if (auto& helper = sdl->getAadAuthHelper())
-		helper->stop();
 
 	gdi_free(instance);
 }
@@ -1612,11 +1591,6 @@ bool SdlContext::credentialsRead() const
 void SdlContext::setCredentialsRead()
 {
 	_credentialsRead = true;
-}
-
-std::shared_ptr<SdlAadAuthHelper>& SdlContext::getAadAuthHelper()
-{
-	return _aadAuthHelper;
 }
 
 bool SdlContext::resizeToScale(SdlWindow* window)

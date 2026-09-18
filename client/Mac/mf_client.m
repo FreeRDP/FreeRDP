@@ -26,6 +26,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client/aad_helper.h>
 
 #include "MRDPView.h"
 
@@ -100,6 +101,7 @@ static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 	context->instance->VerifyCertificateEx = mac_verify_certificate_ex;
 	context->instance->VerifyChangedCertificateEx = mac_verify_changed_certificate_ex;
 	context->instance->LogonErrorInfo = mac_logon_error_info;
+	instance->GetAccessToken = client_failsafe_get_access_token;
 	return TRUE;
 }
 

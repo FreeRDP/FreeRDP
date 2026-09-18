@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <winpr/assert.h>
 #include <winpr/file.h>
@@ -28,7 +29,10 @@
 #include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/library.h>
+#include <winpr/path.h>
 
+#include <freerdp/utils/helpers.h>
 #include <freerdp/log.h>
 #include <freerdp/client/aad_helper.h>
 
@@ -36,6 +40,7 @@
 
 struct AadAuthHelper
 {
+	rdpClientContext* context;
 	HANDLE hCmdOutRead; /* parent's read end: helper -> FreeRDP responses/notifications */
 	HANDLE hCmdInWrite; /* parent's write end: FreeRDP -> helper requests */
 	HANDLE hProcess;
@@ -46,7 +51,7 @@ struct AadAuthHelper
 };
 
 /* ---- wire format helpers ------------------------------------------------------------- */
-
+WINPR_ATTR_MALLOC(free, 1)
 static char* build_hello_request(UINT32 id)
 {
 	WINPR_JSON* obj = WINPR_JSON_CreateObject();
@@ -66,6 +71,7 @@ static char* build_hello_request(UINT32 id)
 	return str;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* build_navigate_request(UINT32 id, const char* title, const char* url,
                                     const char* redirect_uri, UINT32 timeout_ms)
 {
@@ -88,6 +94,7 @@ static char* build_navigate_request(UINT32 id, const char* title, const char* ur
 	return str;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* build_shutdown_request(UINT32 id)
 {
 	WINPR_JSON* obj = WINPR_JSON_CreateObject();
@@ -103,6 +110,7 @@ static char* build_shutdown_request(UINT32 id)
 	return str;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* build_exit_notification(void)
 {
 	WINPR_JSON* obj = WINPR_JSON_CreateObject();
@@ -118,7 +126,7 @@ static char* build_exit_notification(void)
 }
 
 /* ---- transport: newline-delimited JSON over the helper's cmdIn/cmdOut pipes ----------- */
-
+WINPR_ATTR_NODISCARD
 static BOOL helper_write_line(AadAuthHelper* helper, const char* json)
 {
 	WINPR_ASSERT(helper);
@@ -155,6 +163,7 @@ static BOOL helper_write_line(AadAuthHelper* helper, const char* json)
 }
 
 /** extracts one '\n'-terminated line already buffered in helper->buf, if any */
+WINPR_ATTR_MALLOC(free, 1)
 static char* linebuf_extract(AadAuthHelper* helper)
 {
 	if (!helper->buf || !helper->bufLen)
@@ -178,6 +187,7 @@ static char* linebuf_extract(AadAuthHelper* helper)
 	return line;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* helper_read_line(AadAuthHelper* helper)
 {
 	WINPR_ASSERT(helper);
@@ -212,6 +222,7 @@ static char* helper_read_line(AadAuthHelper* helper)
 /** reads and discards notifications (forwarding "log" ones to WLog) until the response with
  *  id == expectedId is found. Returns the parsed message (caller frees with WINPR_JSON_Delete),
  *  or nullptr on a transport failure. */
+WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
 static WINPR_JSON* wait_for_response(AadAuthHelper* helper, UINT32 expectedId)
 {
 	while (TRUE)
@@ -259,15 +270,104 @@ static WINPR_JSON* wait_for_response(AadAuthHelper* helper, UINT32 expectedId)
 	}
 }
 
+static void updateBoolFromConfig(WINPR_JSON* obj, const char* what, BOOL* pVal)
+{
+	WINPR_ASSERT(obj);
+	WINPR_ASSERT(what);
+	WINPR_ASSERT(pVal);
+	WINPR_JSON* val = WINPR_JSON_GetObjectItemCaseSensitive(obj, what);
+	if (!val)
+		return;
+	if (!WINPR_JSON_IsBool(val))
+		return;
+	*pVal = WINPR_JSON_IsTrue(val);
+}
+
+static void updateStringFromConfig(WINPR_JSON* obj, const char* what, char** pVal)
+{
+	WINPR_ASSERT(obj);
+	WINPR_ASSERT(what);
+	WINPR_ASSERT(pVal);
+	WINPR_JSON* val = WINPR_JSON_GetObjectItemCaseSensitive(obj, what);
+	if (!val)
+		return;
+	if (!WINPR_JSON_IsString(val))
+		return;
+	free(*pVal);
+	*pVal = _strdup(WINPR_JSON_GetStringValue(val));
+}
+
+WINPR_ATTR_MALLOC(free, 1)
+static char* getHelperBinary(const rdpClientContext* context)
+{
+	/* TODO: Detection of helper binary:
+	 *
+	 * 1. TODO system wide config file? (config value/deny user level/deny command line/deny
+	 * auto-detect)
+	 * 2. TODO user level config file? (config value/deny command line/deny auto-detect)
+	 * 3. command line parameter
+	 * 4. auto detection (default)
+	 */
+	char* exe = nullptr;
+
+	BOOL useArg = TRUE;
+	BOOL useDetect = TRUE;
+	BOOL useUserConfig = TRUE;
+
+	const char config[] = "freerdp-client-aad.json";
+	WINPR_JSON* sys = freerdp_GetJSONConfigFile(TRUE, config);
+	if (sys)
+	{
+		updateBoolFromConfig(sys, "allow-commandline", &useArg);
+		updateBoolFromConfig(sys, "allow-autodetect", &useDetect);
+		updateBoolFromConfig(sys, "allow-user-config", &useUserConfig);
+		updateStringFromConfig(sys, "helper-binary", &exe);
+		WINPR_JSON_Delete(sys);
+	}
+	if (useUserConfig)
+	{
+		WINPR_JSON* user = freerdp_GetJSONConfigFile(FALSE, config);
+		if (user)
+		{
+			updateBoolFromConfig(sys, "allow-commandline", &useArg);
+			updateBoolFromConfig(sys, "allow-autodetect", &useDetect);
+			updateStringFromConfig(sys, "helper-binary", &exe);
+		}
+		WINPR_JSON_Delete(user);
+	}
+
+	if (!exe && useArg)
+	{
+		const char* args =
+		    freerdp_settings_get_string(context->context.settings, FreeRDP_AadAuthHelper);
+		if (args && (strcmp("autodetect", args) == 0))
+			exe = aad_auth_helper_detect_helper();
+		else if (args)
+			exe = _strdup(args);
+	}
+
+	if (!exe && useDetect)
+		exe = aad_auth_helper_detect_helper();
+
+	if (!exe)
+	{
+		WLog_ERR(TAG, "aad-auth-helper: no helper application detected, aborting");
+		return nullptr;
+	}
+	return exe;
+}
+
 /* ---- public API ------------------------------------------------------------------------ */
 
-AadAuthHelper* aad_auth_helper_start(const char* helper_path)
+AadAuthHelper* aad_auth_helper_start(rdpClientContext* context)
 {
-	WINPR_ASSERT(helper_path);
+	WINPR_ASSERT(context);
 
+	char* exe = nullptr;
 	AadAuthHelper* helper = calloc(1, sizeof(AadAuthHelper));
 	if (!helper)
 		return nullptr;
+	helper->context = context;
 
 	PROCESS_INFORMATION procInfo = WINPR_C_ARRAY_INIT;
 	LPPROC_THREAD_ATTRIBUTE_LIST attrList = nullptr;
@@ -375,8 +475,12 @@ AadAuthHelper* aad_auth_helper_start(const char* helper_path)
 
 	{
 		size_t cmdlineLen = 0;
-		if (winpr_asprintf(&cmdline, &cmdlineLen, "\"%s\" %s %s", helper_path, cmdInArg,
-		                   cmdOutArg) < 0)
+		exe = getHelperBinary(context);
+		if (!exe)
+			goto cleanup;
+		const int rc =
+		    winpr_asprintf(&cmdline, &cmdlineLen, "\"%s\" %s %s", exe, cmdInArg, cmdOutArg);
+		if (rc < 0)
 			goto cleanup;
 
 		created =
@@ -385,9 +489,10 @@ AadAuthHelper* aad_auth_helper_start(const char* helper_path)
 	}
 
 	if (!created)
-		WLog_ERR(TAG, "aad-auth-helper: failed to spawn '%s'", helper_path);
+		WLog_ERR(TAG, "aad-auth-helper: failed to spawn '%s'", exe);
 
 cleanup:
+	free(exe);
 	free(cmdline);
 	if (attrList)
 	{
@@ -435,12 +540,17 @@ cleanup:
 
 AadAuthHelperNavigateStatus aad_auth_helper_navigate(AadAuthHelper* helper, const char* title,
                                                      const char* url, const char* redirect_uri,
-                                                     UINT32 timeout_ms, char** redirect_url)
+                                                     UINT32 timeout_ms, char** redirect_url,
+                                                     size_t* redirect_url_len)
 {
 	WINPR_ASSERT(helper);
 	WINPR_ASSERT(url);
 	WINPR_ASSERT(redirect_uri);
 	WINPR_ASSERT(redirect_url);
+	WINPR_ASSERT(redirect_url_len);
+
+	*redirect_url = nullptr;
+	*redirect_url_len = 0;
 
 	const UINT32 id = ++helper->nextId;
 	char* req = build_navigate_request(id, title ? title : "", url, redirect_uri, timeout_ms);
@@ -489,6 +599,8 @@ AadAuthHelperNavigateStatus aad_auth_helper_navigate(AadAuthHelper* helper, cons
 	}
 
 	*redirect_url = _strdup(value);
+	if (*redirect_url)
+		*redirect_url_len = strlen(*redirect_url);
 	WINPR_JSON_Delete(resp);
 	return (*redirect_url != nullptr) ? AAD_AUTH_HELPER_NAVIGATE_OK
 	                                  : AAD_AUTH_HELPER_NAVIGATE_ERROR;
@@ -531,4 +643,385 @@ void aad_auth_helper_stop(AadAuthHelper* helper)
 
 	free(helper->buf);
 	free(helper);
+}
+
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
+static char* aad_auth_helper_extract_query_param(const char* url, const char* name)
+{
+	if (!url || !name)
+		return nullptr;
+
+	const char* start = strchr(url, '?');
+	if (!start)
+		return nullptr;
+
+	const char* param = strstr(start, name);
+	if (!param)
+		return nullptr;
+
+	const size_t len = strlen(name);
+	if (param[len] != '=')
+		return nullptr;
+
+	char* str = _strdup(&param[len + 1]);
+	if (!str)
+		return nullptr;
+
+	char* end = strchr(str, '&');
+	if (end)
+		*end = '\0';
+	const size_t slen = strlen(str);
+	char* decoded = winpr_str_url_decode(str, slen);
+	winpr_zfree(str);
+	return decoded;
+}
+
+/** drives the out-of-process helper to show \b url and waits for the OAuth2 redirect. On
+ * AAD_AUTH_HELPER_NAVIGATE_ERROR (helper unreachable/unusable), callers fall back to the
+ * terminal copy/paste flow rather than hard-failing the connection - but NOT on
+ * AAD_AUTH_HELPER_NAVIGATE_CANCELLED (the user closed the popup) or _TIMEOUT (the user didn't
+ * complete the flow in time): falling back in either of those cases would silently override an
+ * outcome the user already determined, by prompting them to do it all over again via the
+ * terminal instead of respecting that the attempt is over. */
+WINPR_ATTR_NODISCARD
+static AadAuthHelperNavigateStatus aad_helper_navigate(AadAuthHelper* helper, const char* title,
+                                                       const char* url, char** pRedirectUrl,
+                                                       size_t* pRedirectUrlLen)
+{
+	WINPR_ASSERT(helper);
+	WINPR_ASSERT(title);
+	WINPR_ASSERT(url);
+	WINPR_ASSERT(pRedirectUrl);
+	WINPR_ASSERT(pRedirectUrlLen);
+
+	*pRedirectUrl = nullptr;
+	*pRedirectUrlLen = 0;
+
+	char* redirectUri = aad_auth_helper_extract_query_param(url, "redirect_uri");
+	if (!redirectUri)
+	{
+		WLog_ERR(TAG, "[aad-auth] url %s has no redirect_uri parameter", url);
+		return AAD_AUTH_HELPER_NAVIGATE_ERROR;
+	}
+
+	char* out = nullptr;
+	size_t outLen = 0;
+	const AadAuthHelperNavigateStatus status =
+	    aad_auth_helper_navigate(helper, title, url, redirectUri, 180000, &out, &outLen);
+	winpr_zfree(redirectUri);
+	if (status != AAD_AUTH_HELPER_NAVIGATE_OK)
+	{
+		free(out);
+		return status;
+	}
+
+	*pRedirectUrl = out;
+	*pRedirectUrlLen = outLen;
+	return AAD_AUTH_HELPER_NAVIGATE_OK;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL aad_auth_helper_get_rdsaad_access_token(AadAuthHelper* helper, const char* scope,
+                                                    const char* req_cnf, char** token)
+{
+	WINPR_ASSERT(helper);
+	WINPR_ASSERT(scope);
+	WINPR_ASSERT(req_cnf);
+	WINPR_ASSERT(token);
+
+	rdpClientContext* cctx = helper->context;
+	WINPR_ASSERT(cctx);
+
+	char* request = freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AUTH_REQUEST, scope);
+	if (!request)
+	{
+		WLog_ERR(TAG, "[aad-auth] authentication failed, could not construct request");
+		return FALSE;
+	}
+
+	char* redirectUrl = nullptr;
+	size_t redirectUrlLen = 0;
+	const AadAuthHelperNavigateStatus status = aad_helper_navigate(
+	    helper, "FreeRDP WebView - AAD access token", request, &redirectUrl, &redirectUrlLen);
+	winpr_zfree(request);
+
+	if (status == AAD_AUTH_HELPER_NAVIGATE_CANCELLED)
+	{
+		winpr_znfree(redirectUrl, redirectUrlLen);
+		WLog_INFO(TAG, "[aad-auth] user cancelled the authentication");
+		return FALSE;
+	}
+	if (status == AAD_AUTH_HELPER_NAVIGATE_TIMEOUT)
+	{
+		winpr_znfree(redirectUrl, redirectUrlLen);
+		WLog_ERR(TAG, "[aad-auth] authentication timed out");
+		return FALSE;
+	}
+	if (status != AAD_AUTH_HELPER_NAVIGATE_OK)
+	{
+		winpr_znfree(redirectUrl, redirectUrlLen);
+		WLog_ERR(TAG, "[aad-auth] authentication failed");
+		return FALSE;
+	}
+
+	char* code = freerdp_client_extract_aad_code(cctx, redirectUrl, redirectUrlLen);
+	winpr_znfree(redirectUrl, redirectUrlLen);
+
+	if (!code)
+	{
+		WLog_ERR(TAG, "[aad-auth] authentication failed, could not find code parameter");
+		return FALSE;
+	}
+
+	char* token_request =
+	    freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_TOKEN_REQUEST, scope, code, req_cnf);
+	winpr_zfree(code);
+	if (!token_request)
+	{
+		WLog_ERR(TAG, "[aad-auth] authentication failed, could not get token");
+		return FALSE;
+	}
+
+	const BOOL rc = client_common_get_access_token(cctx->context.instance, token_request, token);
+	winpr_zfree(token_request);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL aad_helper_get_avd_access_token(AadAuthHelper* helper, char** token)
+{
+	WINPR_ASSERT(helper);
+	WINPR_ASSERT(token);
+
+	rdpClientContext* cctx = helper->context;
+	WINPR_ASSERT(cctx);
+
+	char* request = freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AVD_AUTH_REQUEST);
+	if (!request)
+	{
+		WLog_ERR(TAG, "[aad-auth] authentication failed, could not construct request");
+		return FALSE;
+	}
+
+	char* redirectUrl = nullptr;
+	size_t redirectUrlLen = 0;
+	const AadAuthHelperNavigateStatus status = aad_helper_navigate(
+	    helper, "FreeRDP WebView - AVD access token", request, &redirectUrl, &redirectUrlLen);
+	winpr_zfree(request);
+
+	if (status == AAD_AUTH_HELPER_NAVIGATE_CANCELLED)
+	{
+		winpr_znfree(redirectUrl, redirectUrlLen);
+		WLog_INFO(TAG, "[aad-auth] user cancelled the authentication");
+		return FALSE;
+	}
+	if (status == AAD_AUTH_HELPER_NAVIGATE_TIMEOUT)
+	{
+		winpr_znfree(redirectUrl, redirectUrlLen);
+		WLog_ERR(TAG, "[aad-auth] authentication timed out");
+		return FALSE;
+	}
+	if (status != AAD_AUTH_HELPER_NAVIGATE_OK)
+	{
+		winpr_znfree(redirectUrl, redirectUrlLen);
+		WLog_ERR(TAG, "[aad-auth] authentication failed");
+		return FALSE;
+	}
+
+	char* code = freerdp_client_extract_aad_code(cctx, redirectUrl, redirectUrlLen);
+	winpr_znfree(redirectUrl, redirectUrlLen);
+	if (!code)
+	{
+		WLog_ERR(TAG, "[aad-auth] authentication failed, could not find code parameter");
+		return FALSE;
+	}
+
+	char* token_request =
+	    freerdp_client_get_aad_url(cctx, FREERDP_CLIENT_AAD_AVD_TOKEN_REQUEST, code);
+	winpr_zfree(code);
+	if (!token_request)
+	{
+		WLog_ERR(TAG, "[aad-auth] authentication failed, could not get token");
+		return FALSE;
+	}
+
+	const BOOL rc = client_common_get_access_token(cctx->context.instance, token_request, token);
+	winpr_zfree(token_request);
+	return rc;
+}
+
+BOOL aad_auth_helper_get_access_token_v(AadAuthHelper* helper, AccessTokenType tokenType,
+                                        char** token, size_t count, va_list args)
+{
+	WINPR_ASSERT(token);
+	switch (tokenType)
+	{
+		case ACCESS_TOKEN_TYPE_AAD:
+		{
+			if (count < 2)
+			{
+				WLog_ERR(TAG,
+				         "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
+				         ", aborting",
+				         count);
+				return FALSE;
+			}
+			else if (count > 2)
+				WLog_WARN(TAG,
+				          "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
+				          ", ignoring",
+				          count);
+			const char* scope = va_arg(args, const char*);
+			const char* req_cnf = va_arg(args, const char*);
+			return aad_auth_helper_get_rdsaad_access_token(helper, scope, req_cnf, token);
+		}
+		case ACCESS_TOKEN_TYPE_AVD:
+			if (count != 0)
+				WLog_WARN(TAG,
+				          "ACCESS_TOKEN_TYPE_AVD expected 0 additional arguments, but got %" PRIuz
+				          ", ignoring",
+				          count);
+			return aad_helper_get_avd_access_token(helper, token);
+		default:
+			WLog_ERR(TAG, "Unexpected value for AccessTokenType [%" PRIu32 "], aborting",
+			         tokenType);
+			return FALSE;
+	}
+}
+
+BOOL aad_auth_helper_get_access_token(AadAuthHelper* helper, AccessTokenType tokenType,
+                                      char** token, size_t count, ...)
+{
+	va_list ap = WINPR_C_ARRAY_INIT;
+	va_start(ap, count);
+	const BOOL rc = aad_auth_helper_get_access_token_v(helper, tokenType, token, count, ap);
+	va_end(ap);
+	return rc;
+}
+
+/* whether any auto-detectable helper was enabled at build time at all - see
+ * WITH_XDG_AAD_AUTH_HELPER / WITH_WEBVIEW_AAD_AUTH_HELPER / WITH_QT_AAD_AUTH_HELPER in
+ * client/common/CMakeLists.txt, propagated here as compile definitions by
+ * client/SDL/common/CMakeLists.txt. Guards kHelperCandidates below: with none of the three
+ * defined there's nothing to list, and a zero-size array isn't valid standard C++. */
+
+/* auto-pick order for /azure:auth-helper:autodetect (or the option omitted entirely): xdg-open
+ * first (drives the user's actual default browser, so it inherits whatever SSO session/cookies
+ * are already there instead of prompting again), then the embedded webview (lighter, native OS
+ * look), then Qt. */
+static const char* kHelperCandidates[] = { "freerdp-xdg-aad-helper", "freerdp-qt-aad-helper",
+	                                       "freerdp-webview-aad-helper" };
+
+/* directory this client binary itself lives in - where an installed (or freshly built) helper
+ * binary is expected to sit alongside it. */
+WINPR_ATTR_MALLOC(free, 1)
+static char* aad_auth_helper_binary_dir(void)
+{
+	DWORD len = 4096;
+	char* path = nullptr;
+	do
+	{
+		char* tmp = realloc(path, len);
+		if (!tmp)
+		{
+			WLog_ERR(TAG, "[aad-auth] GetModuleFileNameA failed");
+			free(path);
+			return nullptr;
+		}
+		path = tmp;
+
+		const DWORD rc = GetModuleFileNameA(nullptr, path, len);
+		if (rc == 0)
+		{
+			WLog_ERR(TAG, "[aad-auth] GetModuleFileNameA failed");
+			free(path);
+			return nullptr;
+		}
+
+		if (rc == len)
+		{
+			if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+			{
+				len += 4096;
+				continue;
+			}
+			WLog_ERR(TAG, "[aad-auth] GetModuleFileNameA failed");
+			free(path);
+			return nullptr;
+		}
+		else
+			break;
+	} while (TRUE);
+
+	char* sep = strrchr(path, '/');
+#ifdef _WIN32
+	char* sepWin = strrchr(path, '\\');
+	if (!sep || (sepWin && (sepWin > sep)))
+		sep = sepWin;
+#endif
+	if (!sep)
+	{
+		free(path);
+		return nullptr;
+	}
+	*sep = '\0';
+	return path;
+}
+
+WINPR_ATTR_MALLOC(free, 1)
+static char* aad_auth_helper_path_for_binary(const char* dir, const char* binaryName)
+{
+	const char extension[] = CMAKE_EXECUTABLE_SUFFIX;
+
+	char* path = nullptr;
+	size_t plen = 0;
+	winpr_asprintf(&path, &plen, "%s/%s%s", dir, binaryName, extension);
+	return path;
+}
+
+/* /azure:auth-helper:autodetect (or the option omitted entirely): probe the well-known binaries
+ * in kHelperCandidates order and use whichever is actually present. */
+WINPR_ATTR_MALLOC(free, 1)
+static char* aad_auth_helper_auto_locate(void)
+{
+	char* dir = aad_auth_helper_binary_dir();
+	if (!dir)
+		return nullptr;
+
+	for (size_t x = 0; x < ARRAYSIZE(kHelperCandidates); x++)
+	{
+		const char* binaryName = kHelperCandidates[x];
+		char* path = aad_auth_helper_path_for_binary(dir, binaryName);
+		if (winpr_PathFileExists(path))
+		{
+			free(dir);
+			return path;
+		}
+	}
+	free(dir);
+	return nullptr;
+}
+
+/* @p helper is the caller's own per-connection storage slot (e.g. a member of its SdlContext) -
+ * this file never stores anything itself, so it stays usable as one binary shared between the
+ * SDL2 and SDL3 clients regardless of their (different) concrete SdlContext type. */
+char* aad_auth_helper_detect_helper(void)
+{
+	char* path = aad_auth_helper_auto_locate();
+
+	if (!path)
+	{
+		WLog_ERR(TAG, "[aad-auth] could not determine expected helper binary location");
+		return nullptr;
+	}
+
+	if (!winpr_PathFileExists(path))
+	{
+		WLog_ERR(TAG, "[aad-auth] helper binary not found at '%s'", path);
+		free(path);
+		return nullptr;
+	}
+
+	WLog_DBG(TAG, "[aad-auth] auto-detected helper %s", path);
+	return path;
 }

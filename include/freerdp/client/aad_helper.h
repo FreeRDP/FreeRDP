@@ -22,6 +22,7 @@
 
 #include <winpr/wtypes.h>
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -31,7 +32,9 @@ extern "C"
 	/** @brief a running instance of the out-of-process AAD auth helper, spawned via
 	 *  aad_auth_helper_start(). Reused across multiple navigate() calls for the lifetime of
 	 *  one RDP connection so that browser cookies/session persist between them (e.g. AVD gateway
-	 *  redirect followed by target host auth), avoiding a second login prompt. */
+	 *  redirect followed by target host auth), avoiding a second login prompt.
+	 *  @since version 3.32.0
+	 */
 	typedef struct AadAuthHelper AadAuthHelper;
 
 	/** @brief outcome of aad_auth_helper_navigate(). */
@@ -49,18 +52,18 @@ extern "C"
 	/** @brief ask the helper to shut down cleanly and release all resources held for it.
 	 *
 	 * @param helper a helper started with aad_auth_helper_start(), may be NULL
+	 * @since version 3.32.0
 	 */
 	FREERDP_API void aad_auth_helper_stop(AadAuthHelper* helper);
 
 	/** @brief spawn the AAD auth helper process and perform the protocol handshake.
 	 *
-	 * @param helper_path path to a helper executable (e.g. freerdp-webview-aad-helper or
-	 *        freerdp-qt-aad-helper)
 	 * @return a handle to the running helper, or NULL if it could not be spawned or the
 	 *         handshake failed. Caller must release it with aad_auth_helper_stop().
+	 * @since version 3.32.0
 	 */
 	WINPR_ATTR_MALLOC(aad_auth_helper_stop, 1)
-	FREERDP_API AadAuthHelper* aad_auth_helper_start(const char* helper_path);
+	FREERDP_API AadAuthHelper* aad_auth_helper_start(rdpClientContext* context);
 
 	/** @brief drive the helper's browser to \b url and wait for it to navigate to a URI prefixed
 	 *  with \b redirect_uri (the OAuth2 authorization-code redirect).
@@ -72,13 +75,63 @@ extern "C"
 	 * @param timeout_ms how long the helper should wait before giving up
 	 * @param redirect_url on AAD_AUTH_HELPER_NAVIGATE_OK, receives the full redirect URL the
 	 *        browser navigated to (caller must free() it). Left untouched otherwise.
+	 * * @param redirect_url_len The length in bytes of the allocated \ref redirect_url
 	 * @return AAD_AUTH_HELPER_NAVIGATE_OK if the browser reached the redirect URI, or a specific
 	 *         failure reason otherwise (see AadAuthHelperNavigateStatus).
+	 *
+	 * @since version 3.32.0
 	 */
 	WINPR_ATTR_NODISCARD
-	FREERDP_API AadAuthHelperNavigateStatus
-	aad_auth_helper_navigate(AadAuthHelper* helper, const char* title, const char* url,
-	                         const char* redirect_uri, UINT32 timeout_ms, char** redirect_url);
+	FREERDP_API AadAuthHelperNavigateStatus aad_auth_helper_navigate(
+	    AadAuthHelper* helper, const char* title, const char* url, const char* redirect_uri,
+	    UINT32 timeout_ms, char** redirect_url, size_t* redirect_url_len);
+
+	/** @brief va_list-taking implementation, so a caller that's already inside its own variadic
+	 *  function (see the SDL2/SDL3 GetAccessToken trampolines) can forward its va_list here
+	 * directly
+	 *  - the standard vprintf-style pattern - instead of needing to re-expose the raw "..." across
+	 * a second function boundary, which C/C++ doesn't allow.
+	 *
+	 *  @param helper the caller's own per-connection storage slot (e.g. a member of its
+	 * SdlContext); lazily filled in on first use and reused after that. This function never stores
+	 * anything itself.
+	 *
+	 *  @param tokenType The token type to request
+	 *  @param token A pointer to a result string, must not be NULL
+	 *  @param count The number of arguments following
+	 *  @param args a \ref va_list containing \ref count arguments
+	 *
+	 *  @return TRUE for successfully acquiring a token, FALSE otherwise
+	 *
+	 * @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL aad_auth_helper_get_access_token_v(AadAuthHelper* helper,
+	                                                    AccessTokenType tokenType, char** token,
+	                                                    size_t count, va_list args);
+
+	/** @brief convenience variadic wrapper around sdl_aad_helper_get_access_token_v(), for callers
+	 *  that aren't themselves forwarding an existing va_list.
+	 *
+	 *  @param helper A pointer to the helper object
+	 *  @param tokenType The token type to request
+	 *  @param token A pointer to a result string, must not be NULL
+	 *  @param count The number of arguments following
+	 *  @return TRUE for successfully acquiring a token, FALSE otherwise
+	 *  @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL aad_auth_helper_get_access_token(AadAuthHelper* helper,
+	                                                  AccessTokenType tokenType, char** token,
+	                                                  size_t count, ...);
+
+	/** @brief try to auto detect the OAuth2 helper to use.
+	 *
+	 *  @return A canonical path of the binary to launch as helper, if successful, NULL otherwise
+	 *  @since version 3.32.0
+	 */
+	WINPR_ATTR_MALLOC(free, 1)
+	FREERDP_API char* aad_auth_helper_detect_helper(void);
 
 #ifdef __cplusplus
 }

@@ -41,8 +41,6 @@
 
 #include "dialogs/sdl_connection_dialog_wrapper.hpp"
 
-class SdlAadAuthHelper;
-
 class SdlContext
 {
   public:
@@ -161,8 +159,6 @@ class SdlContext
 	[[nodiscard]] bool credentialsRead() const;
 	void setCredentialsRead();
 
-	[[nodiscard]] std::shared_ptr<SdlAadAuthHelper>& getAadAuthHelper();
-
   private:
 	[[nodiscard]] bool resizeToScale(SdlWindow* window);
 	[[nodiscard]] bool useLocalScale() const;
@@ -255,5 +251,4 @@ class SdlContext
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
 	std::vector<rdpPointer*> _valid_pointers;
 	bool _credentialsRead = false;
-	std::shared_ptr<SdlAadAuthHelper> _aadAuthHelper;
 };

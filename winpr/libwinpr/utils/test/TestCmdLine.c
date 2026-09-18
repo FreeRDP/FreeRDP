@@ -38,15 +38,15 @@ static const char* testListArgs[] = {
 
 static const char* testListArgs1[] = { testListAppName, "a", "b", "c", "d" };
 static const char* testListArgs2[] = { testListAppName, "a:", "b:xxx, yyy", "c" };
-// static const char* testListArgs3[] = {};
-// static const char* testListArgs4[] = {};
+// static const char* testListArgs3[] = WINPR_C_ARRAY_INIT;
+// static const char* testListArgs4[] = WINPR_C_ARRAY_INIT;
 static const char* testListArgs5[] = { testListAppName, "a", "b", "c", "d d d", "fff" };
 static const char* testListArgs6[] = { testListAppName };
 static const char* testListArgs7[] = { testListAppName };
 static const char* testListArgs8[] = { testListAppName, "a", "b", "\"", "c" };
 static const char* testListArgs9[] = { testListAppName, "a", "b", "'", "c" };
-// static const char* testListArgs10[] = {};
-// static const char* testListArgs11[] = {};
+// static const char* testListArgs10[] = WINPR_C_ARRAY_INIT;
+// static const char* testListArgs11[] = WINPR_C_ARRAY_INIT;
 static const char* testListArgs12[] = { testListAppName,    "g:some.gateway.server",
 	                                    "u:some\\\"user",   "p:some\\\"password",
 	                                    "d:some\\\"domain", "type:auto" };
