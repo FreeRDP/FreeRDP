@@ -26,3 +26,43 @@ BOOL rdpexps_write_response_header(wStream* s, const RDPEXPS_REQUEST_HEADER* req
 	Stream_Write_UINT32(s, request->MessageId);
 	return TRUE;
 }
+
+BOOL rdpexps_write_ticket_response(wStream* s, const RDPEXPS_REQUEST_HEADER* request)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(request);
+	if (!rdpexps_write_response_header(s, request))
+		return FALSE;
+
+	switch (request->FunctionId)
+	{
+		case 0x00000100: /* GET_SUPPORTED_VERSIONS */
+			Stream_Write_UINT32(s, 1);
+			Stream_Write_UINT32(s, 1);
+			break;
+		case 0x00000101: /* BIND_PRINTER */
+			Stream_Write_UINT32(s, 0);
+			Stream_Write_UINT32(s, 0);
+			Stream_Write_UINT32(s, 0);
+			break;
+		case 0x00000102: /* QUERY_DEV_NS */
+			Stream_Write_UINT8(s, 1);
+			break;
+		default:
+			return FALSE;
+	}
+	Stream_Write_UINT32(s, 0); /* S_OK */
+	return TRUE;
+}
+
+BOOL rdpexps_write_driver_response(wStream* s, const RDPEXPS_REQUEST_HEADER* request)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(request);
+	if (!rdpexps_write_response_header(s, request))
+		return FALSE;
+	if (request->FunctionId == 0x00000101) /* GET_ALL_DEV_CAPS */
+		Stream_Write_UINT32(s, 0);
+	Stream_Write_UINT32(s, 0); /* S_OK */
+	return TRUE;
+}

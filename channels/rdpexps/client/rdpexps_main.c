@@ -71,27 +71,9 @@ static UINT rdpexps_send_ticket_response(IWTSVirtualChannel* channel,
 
 	if (!response)
 		return CHANNEL_RC_NO_MEMORY;
-	if (!rdpexps_write_response_header(response, request))
+	WINPR_UNUSED(functionId);
+	if (!rdpexps_write_ticket_response(response, request))
 		goto out;
-
-	switch (functionId)
-	{
-		case 0x00000100: /* GET_SUPPORTED_VERSIONS */
-			Stream_Write_UINT32(response, 1);
-			Stream_Write_UINT32(response, 1);
-			break;
-		case 0x00000101: /* BIND_PRINTER */
-			Stream_Write_UINT32(response, 0);
-			Stream_Write_UINT32(response, 0);
-			Stream_Write_UINT32(response, 0);
-			break;
-		case 0x00000102: /* QUERY_DEV_NS */
-			Stream_Write_UINT8(response, 1);
-			break;
-		default:
-			goto out;
-	}
-	Stream_Write_UINT32(response, 0); /* S_OK */
 	status = channel->Write(channel, (ULONG)Stream_GetPosition(response), Stream_Buffer(response),
 	                        nullptr);
 out:
@@ -107,11 +89,9 @@ static UINT rdpexps_send_driver_response(IWTSVirtualChannel* channel,
 
 	if (!response)
 		return CHANNEL_RC_NO_MEMORY;
-	if (!rdpexps_write_response_header(response, request))
+	WINPR_UNUSED(functionId);
+	if (!rdpexps_write_driver_response(response, request))
 		goto out;
-	if (functionId == 0x00000101) /* GET_ALL_DEV_CAPS */
-		Stream_Write_UINT32(response, 0);
-	Stream_Write_UINT32(response, 0); /* S_OK */
 	status = channel->Write(channel, (ULONG)Stream_GetPosition(response), Stream_Buffer(response),
 	                        nullptr);
 out:

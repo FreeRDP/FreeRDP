@@ -14,7 +14,7 @@ int TestRdpeXps(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 
 	input = Stream_New(nullptr, 12);
-	output = Stream_New(nullptr, 8);
+	output = Stream_New(nullptr, 32);
 	if (!input || !output)
 		goto out;
 
@@ -42,6 +42,25 @@ int TestRdpeXps(int argc, char* argv[])
 	if (!Stream_SetLength(input, 11))
 		goto out;
 	if (rdpexps_read_request_header(input, &actual))
+		goto out;
+	request.FunctionId = 0x00000102;
+	if (!Stream_SetPosition(output, 0) || !rdpexps_write_ticket_response(output, &request))
+		goto out;
+	if ((Stream_GetPosition(output) != 13) || !Stream_SetPosition(output, 8) ||
+	    (Stream_Get_UINT8(output) != 1) || (Stream_Get_UINT32(output) != 0))
+		goto out;
+	request.FunctionId = 0x00000100;
+	if (!Stream_SetPosition(output, 0) || !rdpexps_write_ticket_response(output, &request))
+		goto out;
+	if ((Stream_GetPosition(output) != 20) || !Stream_SetPosition(output, 8) ||
+	    (Stream_Get_UINT32(output) != 1) || (Stream_Get_UINT32(output) != 1) ||
+	    (Stream_Get_UINT32(output) != 0))
+		goto out;
+	request.FunctionId = 0x00000101;
+	if (!Stream_SetPosition(output, 0) || !rdpexps_write_driver_response(output, &request))
+		goto out;
+	if ((Stream_GetPosition(output) != 16) || !Stream_SetPosition(output, 8) ||
+	    (Stream_Get_UINT32(output) != 0) || (Stream_Get_UINT32(output) != 0))
 		goto out;
 
 	rc = 0;
