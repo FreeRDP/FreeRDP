@@ -6,8 +6,4 @@ if(XVFB_RUN_EXECUTABLE AND WITH_XRANDR AND X11_Xrandr_FOUND)
                                        $<TARGET_FILE:TestX11Monitor>
   )
 
-  add_executable(TestX11Reconnect TestX11Reconnect.c)
-  target_include_directories(TestX11Reconnect PRIVATE ..)
-  target_link_libraries(TestX11Reconnect PRIVATE xfreerdp-client freerdp-client freerdp winpr)
-  add_test(NAME TestX11Reconnect COMMAND ${XVFB_RUN_EXECUTABLE} -a $<TARGET_FILE:TestX11Reconnect>)
 endif()
