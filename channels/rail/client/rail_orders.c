@@ -155,6 +155,11 @@ static UINT rail_read_server_get_appid_resp_order(wStream* s,
 	        s, getAppidResp->applicationId,
 	        ARRAYSIZE(getAppidResp->applicationId))) /* applicationId (260 UNICODE chars) */
 		return ERROR_INVALID_DATA;
+
+	if (_wcsnlen(getAppidResp->applicationId, ARRAYSIZE(getAppidResp->applicationId)) >=
+	    ARRAYSIZE(getAppidResp->applicationId))
+		return ERROR_INVALID_DATA;
+
 	return CHANNEL_RC_OK;
 }
 
