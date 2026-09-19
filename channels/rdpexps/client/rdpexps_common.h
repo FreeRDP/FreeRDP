@@ -22,4 +22,6 @@ WINPR_ATTR_NODISCARD BOOL rdpexps_write_driver_response(wStream* s,
 	                                                        const RDPEXPS_REQUEST_HEADER* request);
 WINPR_ATTR_NODISCARD BOOL rdpexps_write_ticket_not_implemented_response(
 	const RDPEXPS_REQUEST_HEADER* request, wStream* s);
+WINPR_ATTR_NODISCARD BOOL rdpexps_write_driver_not_implemented_response(
+	const RDPEXPS_REQUEST_HEADER* request, wStream* s);
 #endif

@@ -92,3 +92,15 @@ BOOL rdpexps_write_ticket_not_implemented_response(const RDPEXPS_REQUEST_HEADER*
 	Stream_Write_UINT32(s, 0x80004001U); /* E_NOTIMPL */
 	return TRUE;
 }
+
+BOOL rdpexps_write_driver_not_implemented_response(const RDPEXPS_REQUEST_HEADER* request,
+	                                                  wStream* s)
+{
+	WINPR_ASSERT(request);
+	WINPR_ASSERT(s);
+	if ((request->FunctionId != 0x00000103) || !rdpexps_write_response_header(s, request))
+		return FALSE;
+	Stream_Write_UINT32(s, 0);           /* cbDevmodeOut */
+	Stream_Write_UINT32(s, 0x80004001U); /* E_NOTIMPL */
+	return TRUE;
+}

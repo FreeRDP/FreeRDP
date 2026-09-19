@@ -120,6 +120,23 @@ out:
 	return status;
 }
 
+static UINT rdpexps_send_driver_not_implemented_response(IWTSVirtualChannel* channel,
+	                                                         const RDPEXPS_REQUEST_HEADER* request)
+{
+	wStream* response = Stream_New(nullptr, 16);
+	UINT status = CHANNEL_RC_NO_MEMORY;
+
+	if (!response)
+		return CHANNEL_RC_NO_MEMORY;
+	if (!rdpexps_write_driver_not_implemented_response(request, response))
+		goto out;
+	status = channel->Write(channel, (ULONG)Stream_GetPosition(response), Stream_Buffer(response),
+	                        nullptr);
+out:
+	Stream_Free(response, TRUE);
+	return status;
+}
+
 static BOOL rdpexps_read_xml_document(wStream* data)
 {
 	UINT32 size = 0;
@@ -223,7 +240,8 @@ static UINT rdpexps_on_data_received(IWTSVirtualChannelCallback* pChannelCallbac
 		return rdpexps_send_ticket_not_implemented_response(callback->base.channel, &request);
 	}
 	if (!callback->ticket && (request.InterfaceId == 0) &&
-	    ((request.FunctionId == 0x00000100) || (request.FunctionId == 0x00000101)))
+	    ((request.FunctionId == 0x00000100) || (request.FunctionId == 0x00000101) ||
+	     (request.FunctionId == 0x00000103)))
 	{
 		if ((request.FunctionId == 0x00000100) && (Stream_GetRemainingLength(data) == 4))
 		{
@@ -232,13 +250,15 @@ static UINT rdpexps_on_data_received(IWTSVirtualChannelCallback* pChannelCallbac
 				return ERROR_INVALID_DATA;
 			callback->printerInitialized = TRUE;
 		}
-		else if ((request.FunctionId == 0x00000101) && callback->printerInitialized &&
-		         (Stream_GetRemainingLength(data) == 0))
+		else if (((request.FunctionId == 0x00000101) || (request.FunctionId == 0x00000103)) &&
+		         callback->printerInitialized && (Stream_GetRemainingLength(data) == 0))
 		{
 			/* no request payload */
 		}
 		else
 			return ERROR_INVALID_DATA;
+		if (request.FunctionId == 0x00000103)
+			return rdpexps_send_driver_not_implemented_response(callback->base.channel, &request);
 		return rdpexps_send_driver_response(callback->base.channel, &request, request.FunctionId);
 	}
 

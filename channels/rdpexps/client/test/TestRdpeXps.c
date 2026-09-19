@@ -76,6 +76,13 @@ int TestRdpeXps(int argc, char* argv[])
 	if ((Stream_GetPosition(output) != 13) || !Stream_SetPosition(output, 8) ||
 	    (Stream_Get_UINT8(output) != 1) || (Stream_Get_UINT32(output) != 0x80004001U))
 		goto out;
+	request.FunctionId = 0x00000103;
+	if (!Stream_SetPosition(output, 0) ||
+	    !rdpexps_write_driver_not_implemented_response(&request, output))
+		goto out;
+	if ((Stream_GetPosition(output) != 16) || !Stream_SetPosition(output, 8) ||
+	    (Stream_Get_UINT32(output) != 0) || (Stream_Get_UINT32(output) != 0x80004001U))
+		goto out;
 
 	rc = 0;
 out:
