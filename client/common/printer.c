@@ -43,6 +43,15 @@ BOOL freerdp_printer_device_register(const rdpContext* context, UINT32 deviceId)
 	entry->context = context;
 	entry->deviceId = deviceId;
 	EnterCriticalSection(&printer_registry_lock);
+	for (const PRINTER_REGISTRY_ENTRY* current = printer_registry; current; current = current->next)
+	{
+		if ((current->context == context) && (current->deviceId == deviceId))
+		{
+			LeaveCriticalSection(&printer_registry_lock);
+			free(entry);
+			return TRUE;
+		}
+	}
 	entry->next = printer_registry;
 	printer_registry = entry;
 	LeaveCriticalSection(&printer_registry_lock);
