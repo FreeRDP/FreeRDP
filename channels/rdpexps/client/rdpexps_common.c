@@ -16,6 +16,23 @@ BOOL rdpexps_read_request_header(wStream* s, RDPEXPS_REQUEST_HEADER* header)
 	return TRUE;
 }
 
+BOOL rdpexps_read_xml_document(wStream* s, RDPEXPS_XML_DOCUMENT* document)
+{
+	UINT32 length = 0;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(document);
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+	Stream_Read_UINT32(s, length);
+	if (Stream_GetRemainingLength(s) < length)
+		return FALSE;
+	document->data = Stream_Pointer(s);
+	document->length = length;
+	Stream_Seek(s, length);
+	return TRUE;
+}
+
 BOOL rdpexps_write_response_header(wStream* s, const RDPEXPS_REQUEST_HEADER* request)
 {
 	WINPR_ASSERT(s);
@@ -102,5 +119,21 @@ BOOL rdpexps_write_driver_not_implemented_response(const RDPEXPS_REQUEST_HEADER*
 		return FALSE;
 	Stream_Write_UINT32(s, 0);           /* cbDevmodeOut */
 	Stream_Write_UINT32(s, 0x80004001U); /* E_NOTIMPL */
+	return TRUE;
+}
+
+BOOL rdpexps_write_xml_response(wStream* s, const RDPEXPS_REQUEST_HEADER* request,
+                                const RDPEXPS_XML_DOCUMENT* document)
+{
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(request);
+	WINPR_ASSERT(document);
+	if (!rdpexps_write_response_header(s, request) ||
+	    !Stream_EnsureRemainingCapacity(s, 1ULL + 4ULL + document->length + 4ULL))
+		return FALSE;
+	Stream_Write_UINT8(s, 0); /* XML document is present */
+	Stream_Write_UINT32(s, document->length);
+	Stream_Write(s, document->data, document->length);
+	Stream_Write_UINT32(s, 0); /* S_OK */
 	return TRUE;
 }

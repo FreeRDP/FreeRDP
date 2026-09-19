@@ -136,7 +136,7 @@ out:
 	return status;
 }
 
-static BOOL rdpexps_read_xml_document(wStream* data)
+static BOOL rdpexps_read_blob(wStream* data)
 {
 	UINT32 size = 0;
 
@@ -149,17 +149,22 @@ static BOOL rdpexps_read_xml_document(wStream* data)
 	return TRUE;
 }
 
-static BOOL rdpexps_read_blob(wStream* data)
+static UINT rdpexps_send_xml_response(IWTSVirtualChannel* channel,
+                                      const RDPEXPS_REQUEST_HEADER* request,
+                                      const RDPEXPS_XML_DOCUMENT* document)
 {
-	UINT32 size = 0;
+	wStream* response = Stream_New(nullptr, 17 + document->length);
+	UINT status = CHANNEL_RC_NO_MEMORY;
 
-	if (Stream_GetRemainingLength(data) < 4)
-		return FALSE;
-	Stream_Read_UINT32(data, size);
-	if (Stream_GetRemainingLength(data) < size)
-		return FALSE;
-	Stream_Seek(data, size);
-	return TRUE;
+	if (!response)
+		return CHANNEL_RC_NO_MEMORY;
+	if (!rdpexps_write_xml_response(response, request, document))
+		goto out;
+	status = channel->Write(channel, (ULONG)Stream_GetPosition(response), Stream_Buffer(response),
+	                        nullptr);
+out:
+	Stream_Free(response, TRUE);
+	return status;
 }
 
 static UINT rdpexps_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
@@ -218,25 +223,37 @@ static UINT rdpexps_on_data_received(IWTSVirtualChannelCallback* pChannelCallbac
 	    ((request.FunctionId >= 0x00000103) && (request.FunctionId <= 0x00000107)))
 	{
 		BOOL valid = FALSE;
+		RDPEXPS_XML_DOCUMENT document = WINPR_C_ARRAY_INIT;
+		static const char capabilities[] =
+		    "<psf:PrintCapabilities xmlns:psf=\"http://schemas.microsoft.com/windows/2003/08/"
+		    "printing/printschemaframework\" xmlns:psk=\"http://schemas.microsoft.com/windows/"
+		    "2003/08/printing/printschemakeywords\" version=\"1\"/>";
+		const RDPEXPS_XML_DOCUMENT capabilitiesDocument = { (const BYTE*)capabilities,
+			                                                ARRAYSIZE(capabilities) - 1 };
 
 		switch (request.FunctionId)
 		{
 			case 0x00000103: /* PRINT_TKT_TO_DEVMODE */
-				valid = rdpexps_read_xml_document(data) && rdpexps_read_blob(data);
+				valid = rdpexps_read_xml_document(data, &document) && rdpexps_read_blob(data);
 				break;
 			case 0x00000104: /* DEVMODE_TO_PRINT_TKT */
-				valid = rdpexps_read_blob(data) && rdpexps_read_xml_document(data);
+				valid = rdpexps_read_blob(data) && rdpexps_read_xml_document(data, &document);
 				break;
 			case 0x00000105: /* PRINT_CAPS */
 				valid = Stream_GetRemainingLength(data) == 0;
 				break;
 			case 0x00000106: /* PRINT_CAPS_FROM_PRINT_TKT */
 			case 0x00000107: /* VALIDATE_PRINT_TKT */
-				valid = rdpexps_read_xml_document(data);
+				valid = rdpexps_read_xml_document(data, &document);
 				break;
 		}
 		if (!valid || (Stream_GetRemainingLength(data) != 0))
 			return ERROR_INVALID_DATA;
+		if ((request.FunctionId == 0x00000105) || (request.FunctionId == 0x00000106))
+			return rdpexps_send_xml_response(callback->base.channel, &request,
+			                                 &capabilitiesDocument);
+		if ((request.FunctionId == 0x00000104) || (request.FunctionId == 0x00000107))
+			return rdpexps_send_xml_response(callback->base.channel, &request, &document);
 		return rdpexps_send_ticket_not_implemented_response(callback->base.channel, &request);
 	}
 	if (!callback->ticket && (request.InterfaceId == 0) &&

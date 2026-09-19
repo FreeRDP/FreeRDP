@@ -8,6 +8,8 @@ int TestRdpeXps(int argc, char* argv[])
 	RDPEXPS_REQUEST_HEADER actual = WINPR_C_ARRAY_INIT;
 	wStream* input = nullptr;
 	wStream* output = nullptr;
+	RDPEXPS_XML_DOCUMENT document = WINPR_C_ARRAY_INIT;
+	static const BYTE xml[] = "<PrintTicket/>";
 	int rc = -1;
 
 	WINPR_UNUSED(argc);
@@ -82,6 +84,22 @@ int TestRdpeXps(int argc, char* argv[])
 		goto out;
 	if ((Stream_GetPosition(output) != 16) || !Stream_SetPosition(output, 8) ||
 	    (Stream_Get_UINT32(output) != 0) || (Stream_Get_UINT32(output) != 0x80004001U))
+		goto out;
+	if (!Stream_SetPosition(input, 0) || !Stream_SetLength(input, 0) ||
+	    !Stream_EnsureRemainingCapacity(input, 4 + ARRAYSIZE(xml) - 1))
+		goto out;
+	Stream_Write_UINT32(input, ARRAYSIZE(xml) - 1);
+	Stream_Write(input, xml, ARRAYSIZE(xml) - 1);
+	if (!Stream_SetPosition(input, 0) || !rdpexps_read_xml_document(input, &document) ||
+	    (document.length != ARRAYSIZE(xml) - 1) ||
+	    (memcmp(document.data, xml, ARRAYSIZE(xml) - 1) != 0))
+		goto out;
+	request.FunctionId = 0x00000107;
+	if (!Stream_SetPosition(output, 0) || !rdpexps_write_xml_response(output, &request, &document))
+		goto out;
+	if ((Stream_GetPosition(output) != 17 + ARRAYSIZE(xml) - 1) || !Stream_SetPosition(output, 8) ||
+	    (Stream_Get_UINT8(output) != 0) || (Stream_Get_UINT32(output) != ARRAYSIZE(xml) - 1) ||
+	    (memcmp(Stream_Pointer(output), xml, ARRAYSIZE(xml) - 1) != 0))
 		goto out;
 
 	rc = 0;
