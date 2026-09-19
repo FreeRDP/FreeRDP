@@ -29,6 +29,7 @@ set(SRCS
     file.c
     client_cliprdr_file.c
     geometry.c
+    printer.c
     smartcard_cli.c
     aad_helper.c
     oauth2.h

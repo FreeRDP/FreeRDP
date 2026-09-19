@@ -33,6 +33,18 @@ extern "C"
 	typedef struct rdp_printer_driver rdpPrinterDriver;
 	typedef struct rdp_printer rdpPrinter;
 	typedef struct rdp_print_job rdpPrintJob;
+	typedef struct rdp_context rdpContext;
+
+	/**
+	 * Check whether an RDPDR printer device is currently registered for a connection.
+	 *
+	 * @since version 3.32.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_printer_device_exists(const rdpContext* context,
+	                                                                    UINT32 deviceId);
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_printer_device_register(const rdpContext* context,
+	                                                                      UINT32 deviceId);
+	FREERDP_API void freerdp_printer_device_unregister(const rdpContext* context, UINT32 deviceId);
 
 	typedef void (*pcSetDeviceForPrinterDriver)(rdpPrinterDriver* driver,
 	                                            const RDPDR_PRINTER* device);

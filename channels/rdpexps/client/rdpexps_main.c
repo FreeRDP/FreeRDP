@@ -12,6 +12,7 @@
 #include <winpr/stream.h>
 
 #include <freerdp/client/channels.h>
+#include <freerdp/client/printer.h>
 #include <freerdp/channels/log.h>
 
 #include "rdpexps_common.h"
@@ -25,6 +26,7 @@ typedef struct
 {
 	GENERIC_CHANNEL_CALLBACK base;
 	BOOL ticket;
+	rdpContext* rdpcontext;
 	UINT32 printerId;
 	BOOL printerBound;
 	BOOL printerInitialized;
@@ -34,11 +36,13 @@ typedef struct
 {
 	GENERIC_LISTENER_CALLBACK base;
 	BOOL ticket;
+	rdpContext* rdpcontext;
 } RDPEXPS_LISTENER_CALLBACK;
 
 typedef struct
 {
 	IWTSPlugin iface;
+	rdpContext* rdpcontext;
 	IWTSListener* ticketListener;
 	IWTSListener* driverListener;
 	GENERIC_LISTENER_CALLBACK* ticketCallback;
@@ -132,7 +136,7 @@ static UINT rdpexps_on_data_received(IWTSVirtualChannelCallback* pChannelCallbac
 		if (request.FunctionId == 0x00000100)
 		{
 			Stream_Read_UINT32(data, callback->printerId);
-			if (callback->printerId == 0)
+			if (!freerdp_printer_device_exists(callback->rdpcontext, callback->printerId))
 				return ERROR_INVALID_DATA;
 			callback->printerBound = FALSE;
 		}
@@ -156,7 +160,7 @@ static UINT rdpexps_on_data_received(IWTSVirtualChannelCallback* pChannelCallbac
 		if ((request.FunctionId == 0x00000100) && (Stream_GetRemainingLength(data) == 4))
 		{
 			Stream_Read_UINT32(data, callback->printerId);
-			if (callback->printerId == 0)
+			if (!freerdp_printer_device_exists(callback->rdpcontext, callback->printerId))
 				return ERROR_INVALID_DATA;
 			callback->printerInitialized = TRUE;
 		}
@@ -203,6 +207,7 @@ static UINT rdpexps_on_new_channel_connection(IWTSListenerCallback* pListenerCal
 	channelCallback->base.channel_mgr = listener->base.channel_mgr;
 	channelCallback->base.channel = channel;
 	channelCallback->ticket = listener->ticket;
+	channelCallback->rdpcontext = listener->rdpcontext;
 	listener->base.channel_callback = &channelCallback->base;
 	*callback = &channelCallback->base.iface;
 	return CHANNEL_RC_OK;
@@ -227,6 +232,7 @@ static UINT rdpexps_create_listener(RDPEXPS_PLUGIN* plugin, IWTSVirtualChannelMa
 	rdpexpsCallback->base.plugin = &plugin->iface;
 	rdpexpsCallback->base.channel_mgr = manager;
 	rdpexpsCallback->ticket = ticket;
+	rdpexpsCallback->rdpcontext = plugin->rdpcontext;
 	status = manager->CreateListener(manager, name, 0, &(*callback)->iface, listener);
 	if (status == CHANNEL_RC_OK)
 		(*listener)->pInterface = plugin->iface.pInterface;
@@ -279,6 +285,12 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE rdpexps_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS*
 	plugin = calloc(1, sizeof(*plugin));
 	if (!plugin)
 		return CHANNEL_RC_NO_MEMORY;
+	plugin->rdpcontext = entryPoints->GetRdpContext(entryPoints);
+	if (!plugin->rdpcontext)
+	{
+		free(plugin);
+		return CHANNEL_RC_INITIALIZATION_ERROR;
+	}
 	plugin->iface.Initialize = rdpexps_initialize;
 	plugin->iface.Terminated = rdpexps_terminated;
 	status = entryPoints->RegisterPlugin(entryPoints, "rdpexps", &plugin->iface);

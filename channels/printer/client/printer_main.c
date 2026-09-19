@@ -936,6 +936,7 @@ static UINT printer_free(DEVICE* device)
 	UINT error = 0;
 
 	WINPR_ASSERT(printer_dev);
+	freerdp_printer_device_unregister(printer_dev->rdpcontext, printer_dev->device.id);
 
 	if (printer_dev->async)
 	{
@@ -1054,6 +1055,8 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 		WLog_ERR(TAG, "RegisterDevice failed with error %" PRIu32 "!", error);
 		goto error_out;
 	}
+	if (!freerdp_printer_device_register(printer_dev->rdpcontext, printer_dev->device.id))
+		WLog_WARN(TAG, "failed to register printer device for RDPEXPS");
 
 	if (printer_dev->async)
 	{
