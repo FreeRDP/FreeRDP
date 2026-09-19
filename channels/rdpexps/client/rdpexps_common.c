@@ -68,7 +68,7 @@ BOOL rdpexps_write_driver_response(wStream* s, const RDPEXPS_REQUEST_HEADER* req
 }
 
 BOOL rdpexps_write_ticket_not_implemented_response(const RDPEXPS_REQUEST_HEADER* request,
-	                                                  wStream* s)
+                                                   wStream* s)
 {
 	WINPR_ASSERT(request);
 	WINPR_ASSERT(s);
@@ -77,13 +77,13 @@ BOOL rdpexps_write_ticket_not_implemented_response(const RDPEXPS_REQUEST_HEADER*
 
 	switch (request->FunctionId)
 	{
-		case 0x00000103: /* PRINT_TKT_TO_DEVMODE */
+		case 0x00000103:               /* PRINT_TKT_TO_DEVMODE */
 			Stream_Write_UINT32(s, 0); /* cbDevmodeOut */
 			break;
-		case 0x00000104: /* DEVMODE_TO_PRINT_TKT */
-		case 0x00000105: /* PRINT_CAPS */
-		case 0x00000106: /* PRINT_CAPS_FROM_PRINT_TKT */
-		case 0x00000107: /* VALIDATE_PRINT_TKT */
+		case 0x00000104:              /* DEVMODE_TO_PRINT_TKT */
+		case 0x00000105:              /* PRINT_CAPS */
+		case 0x00000106:              /* PRINT_CAPS_FROM_PRINT_TKT */
+		case 0x00000107:              /* VALIDATE_PRINT_TKT */
 			Stream_Write_UINT8(s, 1); /* optional XML document is absent */
 			break;
 		default:
@@ -94,7 +94,7 @@ BOOL rdpexps_write_ticket_not_implemented_response(const RDPEXPS_REQUEST_HEADER*
 }
 
 BOOL rdpexps_write_driver_not_implemented_response(const RDPEXPS_REQUEST_HEADER* request,
-	                                                  wStream* s)
+                                                   wStream* s)
 {
 	WINPR_ASSERT(request);
 	WINPR_ASSERT(s);

@@ -49,8 +49,7 @@ typedef struct
 	GENERIC_LISTENER_CALLBACK* driverCallback;
 } RDPEXPS_PLUGIN;
 
-static UINT rdpexps_send_failure(IWTSVirtualChannel* channel,
-	                               const RDPEXPS_REQUEST_HEADER* request)
+static UINT rdpexps_send_failure(IWTSVirtualChannel* channel, const RDPEXPS_REQUEST_HEADER* request)
 {
 	wStream* response = nullptr;
 	UINT status = CHANNEL_RC_NO_MEMORY;
@@ -61,14 +60,14 @@ static UINT rdpexps_send_failure(IWTSVirtualChannel* channel,
 	if (!response)
 		return CHANNEL_RC_NO_MEMORY;
 	if (rdpexps_write_response_header(response, request))
-		status = channel->Write(channel, (ULONG)Stream_GetPosition(response), Stream_Buffer(response),
-		                        nullptr);
+		status = channel->Write(channel, (ULONG)Stream_GetPosition(response),
+		                        Stream_Buffer(response), nullptr);
 	Stream_Free(response, TRUE);
 	return status;
 }
 
 static UINT rdpexps_send_ticket_response(IWTSVirtualChannel* channel,
-	                                        const RDPEXPS_REQUEST_HEADER* request, UINT32 functionId)
+                                         const RDPEXPS_REQUEST_HEADER* request, UINT32 functionId)
 {
 	wStream* response = Stream_New(nullptr, 24);
 	UINT status = CHANNEL_RC_NO_MEMORY;
@@ -86,7 +85,7 @@ out:
 }
 
 static UINT rdpexps_send_driver_response(IWTSVirtualChannel* channel,
-	                                        const RDPEXPS_REQUEST_HEADER* request, UINT32 functionId)
+                                         const RDPEXPS_REQUEST_HEADER* request, UINT32 functionId)
 {
 	wStream* response = Stream_New(nullptr, 16);
 	UINT status = CHANNEL_RC_NO_MEMORY;
@@ -104,7 +103,7 @@ out:
 }
 
 static UINT rdpexps_send_ticket_not_implemented_response(IWTSVirtualChannel* channel,
-	                                                         const RDPEXPS_REQUEST_HEADER* request)
+                                                         const RDPEXPS_REQUEST_HEADER* request)
 {
 	wStream* response = Stream_New(nullptr, 16);
 	UINT status = CHANNEL_RC_NO_MEMORY;
@@ -121,7 +120,7 @@ out:
 }
 
 static UINT rdpexps_send_driver_not_implemented_response(IWTSVirtualChannel* channel,
-	                                                         const RDPEXPS_REQUEST_HEADER* request)
+                                                         const RDPEXPS_REQUEST_HEADER* request)
 {
 	wStream* response = Stream_New(nullptr, 16);
 	UINT status = CHANNEL_RC_NO_MEMORY;
@@ -189,8 +188,9 @@ static UINT rdpexps_on_data_received(IWTSVirtualChannelCallback* pChannelCallbac
 	if (callback->ticket && (request.InterfaceId == 0) &&
 	    ((request.FunctionId >= 0x00000100) && (request.FunctionId <= 0x00000102)))
 	{
-		const size_t expected = (request.FunctionId == 0x00000100) ? 4 :
-		                        (request.FunctionId == 0x00000101) ? 8 : 0;
+		const size_t expected = (request.FunctionId == 0x00000100)   ? 4
+		                        : (request.FunctionId == 0x00000101) ? 8
+		                                                             : 0;
 		if (Stream_GetRemainingLength(data) != expected)
 			return ERROR_INVALID_DATA;
 		if (request.FunctionId == 0x00000100)
@@ -275,10 +275,10 @@ static UINT rdpexps_on_close(IWTSVirtualChannelCallback* callback)
 }
 
 static UINT rdpexps_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-	                                              IWTSVirtualChannel* channel,
-	                                              WINPR_ATTR_UNUSED BYTE* data,
-	                                              WINPR_ATTR_UNUSED BOOL* accept,
-	                                              IWTSVirtualChannelCallback** callback)
+                                              IWTSVirtualChannel* channel,
+                                              WINPR_ATTR_UNUSED BYTE* data,
+                                              WINPR_ATTR_UNUSED BOOL* accept,
+                                              IWTSVirtualChannelCallback** callback)
 {
 	RDPEXPS_LISTENER_CALLBACK* listener = (RDPEXPS_LISTENER_CALLBACK*)pListenerCallback;
 	RDPEXPS_CHANNEL_CALLBACK* channelCallback = nullptr;
@@ -302,8 +302,8 @@ static UINT rdpexps_on_new_channel_connection(IWTSListenerCallback* pListenerCal
 }
 
 static UINT rdpexps_create_listener(RDPEXPS_PLUGIN* plugin, IWTSVirtualChannelManager* manager,
-	                                   const char* name, GENERIC_LISTENER_CALLBACK** callback,
-	                                   IWTSListener** listener, BOOL ticket)
+                                    const char* name, GENERIC_LISTENER_CALLBACK** callback,
+                                    IWTSListener** listener, BOOL ticket)
 {
 	UINT status = CHANNEL_RC_NO_MEMORY;
 

@@ -12,16 +12,15 @@ typedef struct
 	UINT32 FunctionId;
 } RDPEXPS_REQUEST_HEADER;
 
-WINPR_ATTR_NODISCARD BOOL rdpexps_read_request_header(wStream* s,
-	                                                     RDPEXPS_REQUEST_HEADER* header);
+WINPR_ATTR_NODISCARD BOOL rdpexps_read_request_header(wStream* s, RDPEXPS_REQUEST_HEADER* header);
 WINPR_ATTR_NODISCARD BOOL rdpexps_write_response_header(wStream* s,
-	                                                        const RDPEXPS_REQUEST_HEADER* request);
+                                                        const RDPEXPS_REQUEST_HEADER* request);
 WINPR_ATTR_NODISCARD BOOL rdpexps_write_ticket_response(wStream* s,
-	                                                        const RDPEXPS_REQUEST_HEADER* request);
+                                                        const RDPEXPS_REQUEST_HEADER* request);
 WINPR_ATTR_NODISCARD BOOL rdpexps_write_driver_response(wStream* s,
-	                                                        const RDPEXPS_REQUEST_HEADER* request);
-WINPR_ATTR_NODISCARD BOOL rdpexps_write_ticket_not_implemented_response(
-	const RDPEXPS_REQUEST_HEADER* request, wStream* s);
-WINPR_ATTR_NODISCARD BOOL rdpexps_write_driver_not_implemented_response(
-	const RDPEXPS_REQUEST_HEADER* request, wStream* s);
+                                                        const RDPEXPS_REQUEST_HEADER* request);
+WINPR_ATTR_NODISCARD BOOL
+rdpexps_write_ticket_not_implemented_response(const RDPEXPS_REQUEST_HEADER* request, wStream* s);
+WINPR_ATTR_NODISCARD BOOL
+rdpexps_write_driver_not_implemented_response(const RDPEXPS_REQUEST_HEADER* request, wStream* s);
 #endif

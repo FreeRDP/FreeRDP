@@ -913,7 +913,7 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 
 			Stream_Read_UINT32(s, flags);
 			WLog_INFO(TAG, "Using XPS print format [printerID=%08" PRIx32 ", flags=%08" PRIx32 "]",
-			         eventID, flags);
+			          eventID, flags);
 		}
 		break;
 

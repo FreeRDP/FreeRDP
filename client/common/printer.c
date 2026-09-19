@@ -19,8 +19,8 @@ static CRITICAL_SECTION printer_registry_lock;
 static PRINTER_REGISTRY_ENTRY* printer_registry = nullptr;
 
 static BOOL CALLBACK printer_registry_init(WINPR_ATTR_UNUSED PINIT_ONCE once,
-	                                          WINPR_ATTR_UNUSED PVOID parameter,
-	                                          WINPR_ATTR_UNUSED PVOID* context)
+                                           WINPR_ATTR_UNUSED PVOID parameter,
+                                           WINPR_ATTR_UNUSED PVOID* context)
 {
 	InitializeCriticalSection(&printer_registry_lock);
 	return TRUE;
