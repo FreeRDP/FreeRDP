@@ -6234,6 +6234,9 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 #ifdef CHANNEL_RDPEWA_CLIENT
 		{ FreeRDP_RedirectWebAuthN, RDPEWA_CHANNEL_NAME, nullptr },
 #endif
+#ifdef CHANNEL_RDPEXPS_CLIENT
+		{ FreeRDP_RedirectPrinters, "rdpexps", nullptr },
+#endif
 	};
 
 	ChannelToLoad staticChannels[] = {
