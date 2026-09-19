@@ -20,6 +20,8 @@
 #include <freerdp/config.h>
 
 #include <winpr/wtypes.h>
+#include <winpr/i18n.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/codec/audio.h>
 #include <freerdp/codec/dsp.h>
 
@@ -234,4 +236,9 @@ void freerdp_server_warn_deprecated(int argc, char* argv[])
 	    " developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
 	    "- don't hesitate to ask some questions. (replies might take some time depending "
 	    "on your timezone)");
+}
+BOOL freerdp_server_enable_translation(const char* locale, const char* searchPath)
+{
+	return freerdp_enable_translation(locale, searchPath) &&
+	       winpr_i18n_bind_domain("freerdp-server", searchPath);
 }
