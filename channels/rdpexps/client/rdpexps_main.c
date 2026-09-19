@@ -172,7 +172,8 @@ static UINT rdpexps_on_data_received(IWTSVirtualChannelCallback* pChannelCallbac
 
 	WLog_WARN(TAG, "received unsupported request %#" PRIx32 " on interface %#" PRIx32 "",
 	          request.FunctionId, request.InterfaceId);
-	return ERROR_CALL_NOT_IMPLEMENTED;
+	/* An unknown function is a newer protocol version and requires a header-only failure reply. */
+	return rdpexps_send_failure(callback->base.channel, &request);
 }
 
 static UINT rdpexps_on_close(IWTSVirtualChannelCallback* callback)
