@@ -21,6 +21,8 @@
 #ifndef FREERDP_LIB_CODEC_DSP_H
 #define FREERDP_LIB_CODEC_DSP_H
 
+#include <freerdp/config.h>
+
 #include <freerdp/api.h>
 #include <freerdp/codec/audio.h>
 #include <freerdp/codec/dsp.h>
@@ -37,6 +39,9 @@ typedef struct
 	ALIGN64 void* fdkAacInstance;
 	ALIGN64 size_t buffersize;
 	ALIGN64 unsigned frames_per_packet;
+#endif
+#if defined(WITH_MEDIACODEC)
+	ALIGN64 void* mediacodecAacInstance;
 #endif
 } FREERDP_DSP_COMMON_CONTEXT;
 
