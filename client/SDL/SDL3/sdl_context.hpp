@@ -38,6 +38,7 @@
 #include "sdl_clip.hpp"
 #include "sdl_input.hpp"
 #include "sdl_rail.hpp"
+#include "sdl_floatbar.hpp"
 
 #include "dialogs/sdl_connection_dialog_wrapper.hpp"
 
@@ -224,8 +225,7 @@ class SdlContext
 	bool _resizeable = false;
 	bool _grabMouse = false;
 	bool _grabKeyboard = false;
-	SDL_Window* _floatbar = nullptr;
-	SDL_Renderer* _floatbarRenderer = nullptr;
+	SdlFloatbar _floatbar;
 	int _exitCode = -1;
 	std::atomic<bool> _rdpThreadRunning = false;
 	SDL_PixelFormat _sdlPixelFormat = SDL_PIXELFORMAT_UNKNOWN;

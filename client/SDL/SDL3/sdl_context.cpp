@@ -1291,7 +1291,7 @@ bool SdlContext::handleEvent(const SDL_DisplayEvent& ev)
 
 bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 {
-	if (_floatbar && (ev.windowID == SDL_GetWindowID(_floatbar)))
+	if (_floatbar.owns(ev.windowID))
 		return handleFloatbar(ev);
 	if (!getWindowForId(ev.windowID))
 		return true;
@@ -1907,63 +1907,32 @@ bool SdlContext::setFloatbar(bool visible)
 {
 	if (!visible)
 	{
-		if (_floatbarRenderer)
-			SDL_DestroyRenderer(_floatbarRenderer);
-		if (_floatbar)
-			SDL_DestroyWindow(_floatbar);
-		_floatbarRenderer = nullptr;
-		_floatbar = nullptr;
+		_floatbar.hide();
 		return true;
 	}
 
-	if (_floatbar || _windows.empty())
+	if (_windows.empty())
 		return true;
 
 	auto* parent = _windows.begin()->second.window();
-	_floatbar = SDL_CreatePopupWindow(parent, 0, 0, 240, 32,
-	                                  SDL_WINDOW_POPUP_MENU | SDL_WINDOW_BORDERLESS |
-	                                      SDL_WINDOW_ALWAYS_ON_TOP);
-	if (!_floatbar)
-		return false;
-
-	_floatbarRenderer = SDL_CreateRenderer(_floatbar, nullptr);
-	if (!_floatbarRenderer)
-	{
-		SDL_DestroyWindow(_floatbar);
-		_floatbar = nullptr;
-		return false;
-	}
-
-	SDL_SetRenderDrawColor(_floatbarRenderer, 45, 45, 45, 255);
-	SDL_RenderClear(_floatbarRenderer);
-	const SDL_FRect buttons[] = { { 0, 0, 80, 32 }, { 80, 0, 80, 32 }, { 160, 0, 80, 32 } };
-	const SDL_Color colors[] = { { 80, 80, 80, 255 }, { 70, 100, 160, 255 }, { 170, 70, 70, 255 } };
-	for (size_t x = 0; x < ARRAYSIZE(buttons); x++)
-	{
-		SDL_SetRenderDrawColor(_floatbarRenderer, colors[x].r, colors[x].g, colors[x].b,
-		                       colors[x].a);
-		SDL_RenderFillRect(_floatbarRenderer, &buttons[x]);
-	}
-	SDL_SetRenderDrawColor(_floatbarRenderer, 255, 255, 255, 255);
-	SDL_RenderDebugText(_floatbarRenderer, 4, 12, "Minimize");
-	SDL_RenderDebugText(_floatbarRenderer, 84, 12, "Window");
-	SDL_RenderDebugText(_floatbarRenderer, 164, 12, "Disconnect");
-	SDL_RenderPresent(_floatbarRenderer);
-	return true;
+	return _floatbar.show(parent);
 }
 
 bool SdlContext::handleFloatbar(const SDL_MouseButtonEvent& ev)
 {
-	if (!_floatbar || (ev.windowID != SDL_GetWindowID(_floatbar)) ||
-	    (ev.type != SDL_EVENT_MOUSE_BUTTON_UP) || (ev.button != SDL_BUTTON_LEFT))
-		return false;
-
-	if (ev.x < 80)
+	switch (_floatbar.handleEvent(ev))
+	{
+		case SdlFloatbar::Action::Minimize:
 		return setMinimized();
-	if (ev.x < 160)
+		case SdlFloatbar::Action::ToggleFullscreen:
 		return toggleFullscreen();
-	freerdp_abort_connect_context(context());
-	return true;
+		case SdlFloatbar::Action::Disconnect:
+			freerdp_abort_connect_context(context());
+			return true;
+		case SdlFloatbar::Action::None:
+			return false;
+	}
+	return false;
 }
 
 bool SdlContext::setMinimized()
