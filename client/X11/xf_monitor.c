@@ -62,6 +62,7 @@ static COMMAND_LINE_ARGUMENT_A monitor_args[] = {
 
 COMMAND_LINE_ARGUMENT_A* xf_monitor_arguments(size_t* count)
 {
+	WINPR_ASSERT(count);
 	*count = ARRAYSIZE(monitor_args) - 1;
 	return monitor_args;
 }
@@ -70,6 +71,8 @@ int xf_monitor_handle_option(const COMMAND_LINE_ARGUMENT_A* arg, void* userData)
 {
 	xfContext* xfc = userData;
 	UINT32 scales[16][2] = { 0 };
+	WINPR_ASSERT(arg);
+	WINPR_ASSERT(xfc);
 	if (strcmp(arg->Name, "monitor-scale") != 0)
 		return 0;
 	const char* value = arg->Value;
@@ -105,7 +108,10 @@ int xf_monitor_handle_option(const COMMAND_LINE_ARGUMENT_A* arg, void* userData)
 
 void xf_monitor_apply_scale(xfContext* xfc, rdpMonitor* monitor)
 {
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(monitor);
 	const rdpSettings* settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
 	monitor->attributes.desktopScaleFactor =
 	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 	monitor->attributes.deviceScaleFactor =
