@@ -168,6 +168,8 @@ struct xf_context
 	BOOL debug;
 	HANDLE x11event;
 	xfWindow* window;
+	Window reconnectWindow;
+	char reconnectMessage[128];
 	xfAppWindow* appWindow;
 	xfPointer* pointer;
 	xfWorkArea workArea;

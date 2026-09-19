@@ -61,6 +61,8 @@ set(SRCS
     xf_channels.h
     xf_cliprdr.c
     xf_cliprdr.h
+    xf_reconnect.c
+    xf_reconnect.h
     xf_monitor.c
     xf_monitor.h
     xf_disp.c
