@@ -1009,6 +1009,9 @@ FREERDP_ENTRY_POINT(UINT VCAPITYPE audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* p
 #if defined(WITH_ALSA)
 		{ "alsa", "default" },
 #endif
+#if defined(WITH_AAUDIO)
+		{ "aaudio", "default" },
+#endif
 #if defined(WITH_OPENSLES)
 		{ "opensles", "default" },
 #endif
