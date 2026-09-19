@@ -193,6 +193,9 @@ int TestClientClipboardTransfer(int argc, char* argv[])
 		goto out;
 	if (cliprdr_serialize_file_list(descriptors, ARRAYSIZE(descriptors), &list, &list_size))
 		goto out;
+	thread = CreateThread(nullptr, 0, serve_requests, &peer, 0, nullptr);
+	if (!thread)
+		goto out;
 	if (!cliprdr_file_context_update_server_data(file, clipboard, list, list_size))
 		goto out;
 	const wClipboardDelegate* delegate = ClipboardGetDelegate(clipboard);
@@ -216,9 +219,6 @@ int TestClientClipboardTransfer(int argc, char* argv[])
 		rc = 77;
 		goto out;
 	}
-	thread = CreateThread(nullptr, 0, serve_requests, &peer, 0, nullptr);
-	if (!thread)
-		goto out;
 	fd = open(path, O_RDONLY);
 	const BYTE original_id = (BYTE)peer.last_id;
 	if (fd < 0 || !read_data(fd, original_id))
