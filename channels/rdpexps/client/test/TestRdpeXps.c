@@ -101,6 +101,12 @@ int TestRdpeXps(int argc, char* argv[])
 	    (Stream_Get_UINT8(output) != 0) || (Stream_Get_UINT32(output) != ARRAYSIZE(xml) - 1) ||
 	    (memcmp(Stream_Pointer(output), xml, ARRAYSIZE(xml) - 1) != 0))
 		goto out;
+	Stream_Seek(output, ARRAYSIZE(xml) - 1);
+	if (Stream_Get_UINT32(output) != 0)
+		goto out;
+	document.data = nullptr;
+	if (rdpexps_write_xml_response(output, &request, &document))
+		goto out;
 
 	rc = 0;
 out:

@@ -128,6 +128,8 @@ BOOL rdpexps_write_xml_response(wStream* s, const RDPEXPS_REQUEST_HEADER* reques
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(request);
 	WINPR_ASSERT(document);
+	if ((document->length > 0) && !document->data)
+		return FALSE;
 	if (!rdpexps_write_response_header(s, request) ||
 	    !Stream_EnsureRemainingCapacity(s, 1ULL + 4ULL + document->length + 4ULL))
 		return FALSE;
