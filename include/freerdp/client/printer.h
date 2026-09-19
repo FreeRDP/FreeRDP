@@ -43,7 +43,8 @@ extern "C"
 	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_printer_device_exists(const rdpContext* context,
 	                                                                    UINT32 deviceId);
 	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_printer_device_register(const rdpContext* context,
-	                                                                      UINT32 deviceId);
+	                                                                      UINT32 deviceId,
+	                                                                      rdpPrinter* printer);
 	FREERDP_API void freerdp_printer_device_unregister(const rdpContext* context, UINT32 deviceId);
 
 	typedef void (*pcSetDeviceForPrinterDriver)(rdpPrinterDriver* driver,
@@ -55,6 +56,7 @@ extern "C"
 	typedef rdpPrinter* (*pcGetPrinter)(rdpPrinterDriver* driver, const char* name,
 	                                    const char* driverName, BOOL isDefault);
 	typedef void (*pcReferencePrinter)(rdpPrinter* printer);
+	typedef BOOL (*pcGetPrinterCapabilities)(rdpPrinter* printer, char** xml, size_t* length);
 
 	struct rdp_printer_driver
 	{
@@ -89,8 +91,21 @@ extern "C"
 		ALIGN64 WINPR_ATTR_NODISCARD pcFindPrintJob FindPrintJob;
 		ALIGN64 pcReferencePrinter AddRef;
 		ALIGN64 pcReferencePrinter ReleaseRef;
-		UINT64 reserved[54];
+		/** @brief Retrieves a PrintCapabilities XML document for this printer.
+		 * @since version 3.32.0
+		 */
+		ALIGN64 WINPR_ATTR_NODISCARD pcGetPrinterCapabilities GetCapabilities;
+		UINT64 reserved[53];
 	};
+
+	/**
+	 * Retrieves a heap-allocated PrintCapabilities XML document for an announced printer device.
+	 * The caller owns the returned buffer and must release it with free().
+	 *
+	 * @since version 3.32.0
+	 */
+	FREERDP_API WINPR_ATTR_NODISCARD BOOL freerdp_printer_device_get_capabilities(
+	    const rdpContext* context, UINT32 deviceId, char** xml, size_t* length);
 
 	typedef UINT (*pcWritePrintJob)(rdpPrintJob* printjob, const BYTE* data, size_t size);
 	typedef void (*pcClosePrintJob)(rdpPrintJob* printjob);

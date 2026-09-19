@@ -250,8 +250,24 @@ static UINT rdpexps_on_data_received(IWTSVirtualChannelCallback* pChannelCallbac
 		if (!valid || (Stream_GetRemainingLength(data) != 0))
 			return ERROR_INVALID_DATA;
 		if ((request.FunctionId == 0x00000105) || (request.FunctionId == 0x00000106))
-			return rdpexps_send_xml_response(callback->base.channel, &request,
-			                                 &capabilitiesDocument);
+		{
+			char* printerCapabilities = nullptr;
+			size_t printerCapabilitiesLength = 0;
+			RDPEXPS_XML_DOCUMENT responseDocument = capabilitiesDocument;
+			UINT status = CHANNEL_RC_OK;
+
+			if (freerdp_printer_device_get_capabilities(callback->rdpcontext, callback->printerId,
+			                                            &printerCapabilities,
+			                                            &printerCapabilitiesLength) &&
+			    (printerCapabilitiesLength <= UINT32_MAX))
+			{
+				responseDocument.data = (const BYTE*)printerCapabilities;
+				responseDocument.length = (UINT32)printerCapabilitiesLength;
+			}
+			status = rdpexps_send_xml_response(callback->base.channel, &request, &responseDocument);
+			free(printerCapabilities);
+			return status;
+		}
 		if ((request.FunctionId == 0x00000104) || (request.FunctionId == 0x00000107))
 			return rdpexps_send_xml_response(callback->base.channel, &request, &document);
 		return rdpexps_send_ticket_not_implemented_response(callback->base.channel, &request);

@@ -265,6 +265,57 @@ static rdpPrintJob* printer_cups_find_printjob(rdpPrinter* printer, UINT32 id)
 	return &cups_printer->printjob->printjob;
 }
 
+static BOOL printer_cups_get_capabilities(rdpPrinter* printer, char** xml, size_t* length)
+{
+	http_t* http = nullptr;
+	cups_dest_t* dest = nullptr;
+	cups_dinfo_t* info = nullptr;
+	cups_size_t size = WINPR_C_ARRAY_INIT;
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(printer);
+	WINPR_ASSERT(xml);
+	WINPR_ASSERT(length);
+	*xml = nullptr;
+	*length = 0;
+	http = httpConnect2(cupsServer(), ippPort(), nullptr, AF_UNSPEC, HTTP_ENCRYPT_IF_REQUESTED, 1,
+	                    10000, nullptr);
+	if (!http)
+		goto out;
+	dest = cupsGetNamedDest(http, printer->name, nullptr);
+	if (!dest)
+		goto out;
+	info = cupsCopyDestInfo(http, dest);
+	if (!info || !cupsGetDestMediaDefault(http, dest, info, CUPS_MEDIA_FLAGS_DEFAULT, &size))
+		goto out;
+	if (winpr_asprintf(xml, length,
+	                   "<psf:PrintCapabilities xmlns:psf=\"http://schemas.microsoft.com/windows/"
+	                   "2003/08/printing/printschemaframework\" xmlns:psk=\"http://schemas."
+	                   "microsoft.com/windows/2003/08/printing/printschemakeywords\" version=\"1\">"
+	                   "<psf:Feature name=\"psk:PageMediaSize\"><psf:Option name=\"psk:Custom\">"
+	                   "<psf:ScoredProperty name=\"psk:MediaSizeWidth\"><psf:Value>%d</psf:Value>"
+	                   "</psf:ScoredProperty><psf:ScoredProperty name=\"psk:MediaSizeHeight\">"
+	                   "<psf:Value>%d</psf:Value></psf:ScoredProperty></psf:Option></psf:Feature>"
+	                   "</psf:PrintCapabilities>",
+	                   size.width * 10, size.length * 10) <= 0)
+		goto out;
+	rc = TRUE;
+out:
+	if (!rc)
+	{
+		free(*xml);
+		*xml = nullptr;
+		*length = 0;
+	}
+	if (info)
+		cupsFreeDestInfo(info);
+	if (dest)
+		cupsFreeDests(1, dest);
+	if (http)
+		httpClose(http);
+	return rc;
+}
+
 static void printer_cups_free_printer(rdpPrinter* printer)
 {
 	rdpCupsPrinter* cups_printer = (rdpCupsPrinter*)printer;
@@ -341,6 +392,7 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 	cups_printer->printer.FindPrintJob = printer_cups_find_printjob;
 	cups_printer->printer.AddRef = printer_cups_add_ref_printer;
 	cups_printer->printer.ReleaseRef = printer_cups_release_ref_printer;
+	cups_printer->printer.GetCapabilities = printer_cups_get_capabilities;
 
 	WINPR_ASSERT(cups_printer->printer.AddRef);
 	cups_printer->printer.AddRef(&cups_printer->printer);
