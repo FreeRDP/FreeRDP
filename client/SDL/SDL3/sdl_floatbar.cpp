@@ -23,7 +23,10 @@ bool SdlFloatbar::show(SDL_Window* parent)
 	if (_window)
 		return true;
 
-	_window = SDL_CreatePopupWindow(parent, 0, 0, 240, 32,
+	int parentWidth = 0;
+	SDL_GetWindowSize(parent, &parentWidth, nullptr);
+	const int x = (parentWidth > 240) ? (parentWidth - 240) / 2 : 0;
+	_window = SDL_CreatePopupWindow(parent, x, 0, 240, 32,
 	                                SDL_WINDOW_POPUP_MENU | SDL_WINDOW_BORDERLESS |
 	                                    SDL_WINDOW_ALWAYS_ON_TOP);
 	if (!_window)
