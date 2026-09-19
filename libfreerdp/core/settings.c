@@ -33,6 +33,7 @@
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
 #include <winpr/wtsapi.h>
+#include <winpr/input.h>
 
 #include <freerdp/version.h>
 #include <freerdp/settings.h>
@@ -1815,6 +1816,34 @@ BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings)
 	}
 
 	return TRUE;
+}
+
+void freerdp_settings_sanitize_keyboard_type(wLog* log, rdpSettings* settings, const char* source)
+{
+	WINPR_ASSERT(settings);
+
+	switch (settings->KeyboardType)
+	{
+		case WINPR_KBD_TYPE_IBM_PC_XT:
+		case WINPR_KBD_TYPE_OLIVETTI_ICO:
+		case WINPR_KBD_TYPE_IBM_PC_AT:
+		case WINPR_KBD_TYPE_IBM_ENHANCED:
+		case WINPR_KBD_TYPE_NOKIA_1050:
+		case WINPR_KBD_TYPE_NOKIA_9140:
+		case WINPR_KBD_TYPE_JAPANESE:
+		case WINPR_KBD_TYPE_KOREAN:
+			return;
+		default:
+			break;
+	}
+
+	if (!log)
+		log = WLog_Get(TAG);
+	WLog_Print(log, WLOG_WARN,
+	           "%s: KeyboardType=0x%08" PRIx32
+	           " is not a known WINPR_KBD_TYPE, using WINPR_KBD_TYPE_IBM_ENHANCED instead",
+	           source ? source : "settings", settings->KeyboardType);
+	settings->KeyboardType = WINPR_KBD_TYPE_IBM_ENHANCED;
 }
 
 BOOL freerdp_settings_enforce_consistency(rdpSettings* settings)

@@ -1211,6 +1211,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs)
 	Stream_Read_UINT32(s, settings->KeyboardType);        /* KeyboardType (4 bytes) */
 	Stream_Read_UINT32(s, settings->KeyboardSubType);     /* KeyboardSubType (4 bytes) */
 	Stream_Read_UINT32(s, settings->KeyboardFunctionKey); /* KeyboardFunctionKey (4 bytes) */
+	freerdp_settings_sanitize_keyboard_type(mcs->log, settings, "TS_UD_CS_CORE");
 	Stream_Seek(s, 64);                                   /* imeFileName (64 bytes) */
 
 	/**
