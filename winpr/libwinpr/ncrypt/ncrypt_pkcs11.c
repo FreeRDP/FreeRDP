@@ -24,6 +24,7 @@
 #include <winpr/spec.h>
 #include <winpr/smartcard.h>
 #include <winpr/asn1.h>
+#include <winpr/crt.h>
 
 #include "../log.h"
 #include "ncrypt.h"
@@ -655,27 +656,36 @@ static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 	return TRUE;
 }
 
-static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG idLen)
+WINPR_ATTR_NODISCARD
+static BOOL wprintKeyName(LPWSTR str, size_t strByteLen, CK_SLOT_ID slotId, CK_BYTE* id,
+                          CK_ULONG idLen)
 {
-	char asciiName[128] = WINPR_C_ARRAY_INIT;
+	if (strByteLen < sizeof(slotId) + 2ull)
+		return FALSE;
+	if ((strByteLen - (sizeof(slotId) * 2ull) / 2ull) < idLen)
+		return FALSE;
+
+	char* asciiName = calloc(strByteLen, 2);
+	if (!asciiName)
+		return FALSE;
+
 	char* ptr = asciiName;
-	const CK_BYTE* bytePtr = nullptr;
 
-	*ptr = '\\';
-	ptr++;
+	*ptr++ = '\\';
 
-	bytePtr = ((CK_BYTE*)&slotId);
+	const CK_BYTE* bytePtr = ((const CK_BYTE*)&slotId);
 	for (CK_ULONG i = 0; i < sizeof(slotId); i++, bytePtr++, ptr += 2)
 		(void)snprintf(ptr, 3, "%.2x", *bytePtr);
 
-	*ptr = '\\';
-	ptr++;
+	*ptr++ = '\\';
 
 	for (CK_ULONG i = 0; i < idLen; i++, id++, ptr += 2)
 		(void)snprintf(ptr, 3, "%.2x", *id);
 
-	(void)ConvertUtf8NToWChar(asciiName, ARRAYSIZE(asciiName), str,
-	                          strnlen(asciiName, ARRAYSIZE(asciiName)) + 1);
+	const SSIZE_T rc =
+	    ConvertUtf8NToWChar(asciiName, strByteLen, str, strnlen(asciiName, strByteLen) + 1);
+	winpr_zfree(asciiName);
+	return rc > 0;
 }
 
 WINPR_ATTR_NODISCARD
@@ -934,7 +944,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 
 			KEYNAME_SZ += (1ULL + algoSz) * sizeof(WCHAR);
 
-			keyName = calloc(1, sizeof(*keyName) + KEYNAME_SZ);
+			keyName = calloc(1, sizeof(NCryptKeyName) + KEYNAME_SZ);
 			if (!keyName)
 			{
 				WLog_ERR(TAG, "unable to allocate keyName");
@@ -943,7 +953,8 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 			keyName->dwLegacyKeySpec = AT_KEYEXCHANGE | AT_SIGNATURE;
 			keyName->dwFlags = NCRYPT_MACHINE_KEY_FLAG;
 			keyName->pszName = (LPWSTR)(keyName + 1);
-			wprintKeyName(keyName->pszName, key->slotId, key->id, key->idLen);
+			if (!wprintKeyName(keyName->pszName, KEYNAME_SZ, key->slotId, key->id, key->idLen))
+				goto cleanup_FindObjects;
 
 			keyName->pszAlgid = keyName->pszName + _wcslen(keyName->pszName) + 1;
 			if (!convertKeyType(key->keyType, keyName->pszAlgid, algoSz + 1, nullptr))
