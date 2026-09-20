@@ -1933,6 +1933,12 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 	switch (type)
 	{
 		case PKT_TYPE_CLOSE_CHANNEL:
+			if (!s)
+			{
+				WLog_Print(rdg->log, WLOG_ERROR,
+				           "PKT_TYPE_CLOSE_CHANNEL requires payload but none was sent");
+				return FALSE;
+			}
 			EnterCriticalSection(&rdg->writeSection);
 			status = rdg_process_close_packet(rdg, s);
 			LeaveCriticalSection(&rdg->writeSection);
