@@ -70,9 +70,6 @@
 		_long_press_active = NO;
 		_mouse_drag_active = NO;
 		_pointer_is_indirect = NO;
-
-		[UIView setAnimationDelegate:self];
-		[UIView setAnimationDidStopSelector:@selector(animationStopped:finished:context:)];
 	}
 
 	return self;
@@ -606,9 +603,10 @@
 	[[_keyboard_toolbar superview] setAutoresizesSubviews:YES];
 
 	// show view with animation
-	[UIView beginAnimations:nil context:NULL];
-	[_advanced_keyboard_view setFrame:rect];
-	[UIView commitAnimations];
+	[UIView animateWithDuration:0.2
+	                 animations:^{
+		                 [_advanced_keyboard_view setFrame:rect];
+	                 }];
 }
 
 - (IBAction)toggleKeyboardWhenOtherVisible:(id)sender
@@ -620,13 +618,12 @@
 	else
 	{
 		// hide existing view
-		[UIView beginAnimations:@"hide_advanced_keyboard_view" context:NULL];
 		CGRect rect = [_advanced_keyboard_view frame];
 		rect.origin.y = [[_keyboard_toolbar superview] bounds].size.height;
-		[_advanced_keyboard_view setFrame:rect];
-		[UIView commitAnimations];
-
-		// the view is released in the animationDidStop selector registered in init
+		[UIView animateWithDuration:0.2
+		                 animations:^{
+			                 [_advanced_keyboard_view setFrame:rect];
+		                 }];
 	}
 
 	// toggle flag
@@ -1009,21 +1006,26 @@
 
 	if (show)
 	{
-		[UIView beginAnimations:@"showToolbar" context:nil];
-		[UIView setAnimationDuration:.4];
-		[UIView setAnimationCurve:UIViewAnimationCurveLinear];
-		[_session_toolbar setFrame:CGRectMake(safe.left, safe.top, toolbarWidth, TOOLBAR_HEIGHT)];
-		[UIView commitAnimations];
+		[UIView animateWithDuration:0.4
+		                      delay:0.0
+		                    options:UIViewAnimationOptionCurveLinear
+		                 animations:^{
+			                 [_session_toolbar setFrame:CGRectMake(safe.left, safe.top,
+			                                                       toolbarWidth, TOOLBAR_HEIGHT)];
+		                 }
+		                 completion:nil];
 		_session_toolbar_visible = YES;
 	}
 	else
 	{
-		[UIView beginAnimations:@"hideToolbar" context:nil];
-		[UIView setAnimationDuration:.4];
-		[UIView setAnimationCurve:UIViewAnimationCurveLinear];
-		[_session_toolbar
-		    setFrame:CGRectMake(safe.left, -TOOLBAR_HEIGHT, toolbarWidth, TOOLBAR_HEIGHT)];
-		[UIView commitAnimations];
+		[UIView animateWithDuration:0.4
+		                      delay:0.0
+		                    options:UIViewAnimationOptionCurveLinear
+		                 animations:^{
+			                 [_session_toolbar setFrame:CGRectMake(safe.left, -TOOLBAR_HEIGHT,
+			                                                       toolbarWidth, TOOLBAR_HEIGHT)];
+		                 }
+		                 completion:nil];
 		_session_toolbar_visible = NO;
 	}
 }

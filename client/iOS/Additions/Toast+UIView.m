@@ -29,7 +29,6 @@
 
 #import "Toast+UIView.h"
 #import <QuartzCore/QuartzCore.h>
-#import <objc/runtime.h>
 
 #define kMaxWidth 0.8
 #define kMaxHeight 0.8
@@ -49,8 +48,6 @@
 
 #define kImageWidth 80.0
 #define kImageHeight 80.0
-
-static NSString *kDurationKey = @"duration";
 
 @interface UIView (ToastPrivate)
 
@@ -119,51 +116,27 @@ static NSString *kDurationKey = @"duration";
 
 	CGPoint toastPoint = [self getPositionFor:point toast:toast];
 
-	// use an associative reference to associate the toast view with the display interval
-	objc_setAssociatedObject(toast, &kDurationKey, [NSNumber numberWithFloat:interval],
-	                         OBJC_ASSOCIATION_RETAIN);
-
 	[toast setCenter:toastPoint];
 	[toast setAlpha:0.0];
 	[self addSubview:toast];
 
-	[UIView beginAnimations:@"fade_in" context:toast];
-	[UIView setAnimationDuration:kFadeDuration];
-	[UIView setAnimationDelegate:self];
-	[UIView setAnimationDidStopSelector:@selector(animationDidStop:finished:context:)];
-	[UIView setAnimationCurve:UIViewAnimationCurveEaseOut];
-	[toast setAlpha:1.0];
-	[UIView commitAnimations];
-}
-
-#pragma mark -
-#pragma mark Animation Delegate Method
-
-- (void)animationDidStop:(NSString *)animationID finished:(BOOL)finished context:(void *)context
-{
-
-	UIView *toast = (UIView *)context;
-
-	// retrieve the display interval associated with the view
-	float interval = [(NSNumber *)objc_getAssociatedObject(toast, &kDurationKey) floatValue];
-
-	if ([animationID isEqualToString:@"fade_in"])
-	{
-
-		[UIView beginAnimations:@"fade_out" context:toast];
-		[UIView setAnimationDelay:interval];
-		[UIView setAnimationDuration:kFadeDuration];
-		[UIView setAnimationDelegate:self];
-		[UIView setAnimationDidStopSelector:@selector(animationDidStop:finished:context:)];
-		[UIView setAnimationCurve:UIViewAnimationCurveEaseIn];
-		[toast setAlpha:0.0];
-		[UIView commitAnimations];
-	}
-	else if ([animationID isEqualToString:@"fade_out"])
-	{
-
-		[toast removeFromSuperview];
-	}
+	[UIView animateWithDuration:kFadeDuration
+	    delay:0.0
+	    options:UIViewAnimationOptionCurveEaseOut
+	    animations:^{
+		    [toast setAlpha:1.0];
+	    }
+	    completion:^(BOOL finished) {
+		    [UIView animateWithDuration:kFadeDuration
+		        delay:interval
+		        options:UIViewAnimationOptionCurveEaseIn
+		        animations:^{
+			        [toast setAlpha:0.0];
+		        }
+		        completion:^(BOOL finished) {
+			        [toast removeFromSuperview];
+		        }];
+	    }];
 }
 
 #pragma mark -
