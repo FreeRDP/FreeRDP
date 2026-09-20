@@ -96,6 +96,10 @@ struct s_http_response
 };
 
 static wHashTable* HashTable_New_String(void);
+#define sleep_or_timeout(bio, context, startMS, timeoutMS) \
+	sleep_or_timeout_((bio), (context), (startMS), (timeoutMS), __FILE__, __func__, __LINE__)
+static BOOL sleep_or_timeout_(BIO* bio, rdpContext* context, UINT64 startMS, UINT32 timeoutMS,
+                              const char* file, const char* fkt, size_t line);
 
 static BOOL strings_equals_nocase(const void* obj1, const void* obj2)
 {
@@ -987,7 +991,7 @@ static int print_bio_error(const char* str, size_t len, void* bp)
 	return (int)len;
 }
 
-int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
+int http_chuncked_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t size,
                        http_encoding_chunked_context* encodingContext)
 {
 	int status = 0;
@@ -996,6 +1000,11 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 	WINPR_ASSERT(pBuffer);
 	WINPR_ASSERT(encodingContext != nullptr);
 	WINPR_ASSERT(size <= INT32_MAX);
+
+	WINPR_ASSERT(context);
+	const UINT32 timeoutMS =
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_GatewayResponseTimeout);
+	const UINT64 startMS = GetTickCount64();
 	while (TRUE)
 	{
 		switch (encodingContext->state)
@@ -1010,6 +1019,11 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 				ERR_clear_error();
 				status = BIO_read(bio, pBuffer, (int)rd);
 				if (status <= 0)
+				{
+					if (!sleep_or_timeout(bio, context, startMS, timeoutMS))
+						return -1;
+				}
+				else if (status <= 0)
 					return (effectiveDataLen > 0 ? effectiveDataLen : status);
 
 				encodingContext->nextOffset -= WINPR_ASSERTING_INT_CAST(uint32_t, status);
@@ -1034,7 +1048,12 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 				WINPR_ASSERT(encodingContext->headerFooterPos < 2);
 				ERR_clear_error();
 				status = BIO_read(bio, _dummy, (int)(2 - encodingContext->headerFooterPos));
-				if (status >= 0)
+				if (status <= 0)
+				{
+					if (!sleep_or_timeout(bio, context, startMS, timeoutMS))
+						return -1;
+				}
+				else if (status > 0)
 				{
 					encodingContext->headerFooterPos += (size_t)status;
 					if (encodingContext->headerFooterPos == 2)
@@ -1056,7 +1075,12 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 				{
 					ERR_clear_error();
 					status = BIO_read(bio, dst, 1);
-					if (status >= 0)
+					if (status <= 0)
+					{
+						if (!sleep_or_timeout(bio, context, startMS, timeoutMS))
+							return -1;
+					}
+					else if (status > 0)
 					{
 						if (*dst == '\n')
 							_haveNewLine = TRUE;
@@ -1097,12 +1121,11 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 	}
 }
 
-#define sleep_or_timeout(tls, startMS, timeoutMS) \
-	sleep_or_timeout_((tls), (startMS), (timeoutMS), __FILE__, __func__, __LINE__)
-static BOOL sleep_or_timeout_(rdpTls* tls, UINT64 startMS, UINT32 timeoutMS, const char* file,
-                              const char* fkt, size_t line)
+BOOL sleep_or_timeout_(BIO* bio, rdpContext* context, UINT64 startMS, UINT32 timeoutMS,
+                       const char* file, const char* fkt, size_t line)
 {
-	WINPR_ASSERT(tls);
+	WINPR_ASSERT(bio);
+	WINPR_ASSERT(context);
 
 	USleep(100);
 	const UINT64 nowMS = GetTickCount64();
@@ -1115,7 +1138,7 @@ static BOOL sleep_or_timeout_(rdpTls* tls, UINT64 startMS, UINT32 timeoutMS, con
 			                      timeoutMS);
 		return TRUE;
 	}
-	if (!BIO_should_retry(tls->bio))
+	if (!BIO_should_retry(bio))
 	{
 		DWORD level = WLOG_ERROR;
 		wLog* log = WLog_Get(TAG);
@@ -1126,7 +1149,7 @@ static BOOL sleep_or_timeout_(rdpTls* tls, UINT64 startMS, UINT32 timeoutMS, con
 		}
 		return TRUE;
 	}
-	if (freerdp_shall_disconnect_context(tls->context))
+	if (freerdp_shall_disconnect_context(context))
 		return TRUE;
 
 	return FALSE;
@@ -1154,7 +1177,7 @@ static SSIZE_T http_response_recv_line(rdpTls* tls, HttpResponse* response)
 		status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
 		if (status <= 0)
 		{
-			if (sleep_or_timeout(tls, startMS, timeoutMS))
+			if (sleep_or_timeout(tls->bio, tls->context, startMS, timeoutMS))
 				goto out_error;
 			continue;
 		}
@@ -1214,11 +1237,11 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 			if (!Stream_EnsureRemainingCapacity(response->data, 2048))
 				goto out_error;
 
-			int status = http_chuncked_read(tls->bio, Stream_Pointer(response->data),
+			int status = http_chuncked_read(tls->bio, tls->context, Stream_Pointer(response->data),
 			                                Stream_GetRemainingCapacity(response->data), &ctx);
 			if (status <= 0)
 			{
-				if (sleep_or_timeout(tls, startMS, timeoutMS))
+				if (sleep_or_timeout(tls->bio, tls->context, startMS, timeoutMS))
 					goto out_error;
 			}
 			else
@@ -1253,7 +1276,7 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 
 			if (status <= 0)
 			{
-				if (sleep_or_timeout(tls, startMS, timeoutMS))
+				if (sleep_or_timeout(tls->bio, tls->context, startMS, timeoutMS))
 					goto out_error;
 				continue;
 			}

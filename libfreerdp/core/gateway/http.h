@@ -218,7 +218,7 @@ FREERDP_LOCAL void http_response_log_error_status_(wLog* log, DWORD level,
 
 /* chunked read helper */
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
+FREERDP_LOCAL int http_chuncked_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t size,
                                      http_encoding_chunked_context* encodingContext);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_HTTP_H */

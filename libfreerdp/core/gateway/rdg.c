@@ -362,7 +362,7 @@ static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
 	return rdg_write_chunked(rdg->tlsIn->bio, sPacket);
 }
 
-static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
+static int rdg_socket_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t size,
                            rdg_http_encoding_context* encodingContext)
 {
 	WINPR_ASSERT(encodingContext != nullptr);
@@ -378,7 +378,8 @@ static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
 			ERR_clear_error();
 			return BIO_read(bio, pBuffer, (int)size);
 		case TransferEncodingChunked:
-			return http_chuncked_read(bio, pBuffer, size, &encodingContext->context.chunked);
+			return http_chuncked_read(bio, context, pBuffer, size,
+			                          &encodingContext->context.chunked);
 		default:
 			return -1;
 	}
@@ -401,7 +402,8 @@ static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, BYTE* buffer, size_t 
 		if (freerdp_shall_disconnect_context(context))
 			return FALSE;
 
-		int status = rdg_socket_read(tls->bio, pBuffer, size - readCount, transferEncoding);
+		int status =
+		    rdg_socket_read(tls->bio, tls->context, pBuffer, size - readCount, transferEncoding);
 		if (status <= 0)
 		{
 			if (!BIO_should_retry(tls->bio))
@@ -1901,8 +1903,8 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 				Stream_Free(s, TRUE);
 				return FALSE;
 			}
-			status = rdg_socket_read(rdg->tlsOut->bio, Stream_Pointer(s), payloadSize - readCount,
-			                         &rdg->transferEncoding);
+			status = rdg_socket_read(rdg->tlsOut->bio, rdg->context, Stream_Pointer(s),
+			                         payloadSize - readCount, &rdg->transferEncoding);
 
 			if (status <= 0)
 			{
@@ -1979,7 +1981,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 			if (rdg_shall_abort(rdg))
 				return -1;
 
-			status = rdg_socket_read(rdg->tlsOut->bio, (BYTE*)(&header) + readCount,
+			status = rdg_socket_read(rdg->tlsOut->bio, rdg->context, (BYTE*)(&header) + readCount,
 			                         sizeof(RdgPacketHeader) - readCount, &rdg->transferEncoding);
 
 			if (status <= 0)
@@ -2016,11 +2018,11 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 		{
 			if (rdg_shall_abort(rdg))
 				return -1;
-			status =
-			    rdg_socket_read(rdg->tlsOut->bio, (BYTE*)(&rdg->packetRemainingCount) + readCount,
-			                    2 - readCount, &rdg->transferEncoding);
+			status = rdg_socket_read(rdg->tlsOut->bio, rdg->context,
+			                         (BYTE*)(&rdg->packetRemainingCount) + readCount, 2 - readCount,
+			                         &rdg->transferEncoding);
 
-			if (status < 0)
+			if (status <= 0)
 			{
 				if (!BIO_should_retry(rdg->tlsOut->bio))
 					return -1;
@@ -2034,7 +2036,8 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 	}
 
 	readSize = (rdg->packetRemainingCount < size) ? rdg->packetRemainingCount : size;
-	status = rdg_socket_read(rdg->tlsOut->bio, buffer, readSize, &rdg->transferEncoding);
+	status =
+	    rdg_socket_read(rdg->tlsOut->bio, rdg->context, buffer, readSize, &rdg->transferEncoding);
 
 	if (status <= 0)
 	{
