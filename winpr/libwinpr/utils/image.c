@@ -54,8 +54,10 @@
 #include "../log.h"
 #define TAG WINPR_TAG("utils.image")
 
+#if defined(WINPR_UTILS_IMAGE_JPEG)
 #ifndef MAX
 #define MAX(a, b) ((a) > (b)) ? (a) : (b)
+#endif
 #endif
 
 static SSIZE_T winpr_convert_from_jpeg(const BYTE* comp_data, size_t comp_data_bytes, UINT32* width,
@@ -794,7 +796,7 @@ SSIZE_T winpr_convert_from_jpeg(WINPR_ATTR_UNUSED const BYTE* comp_data,
 		goto fail;
 
 	cinfo.out_color_space = cinfo.num_components > 3 ? JCS_EXT_RGBA : JCS_EXT_BGR;
-	const size_t components = MAX(3, cinfo.num_components);
+	const int components = MAX(3, cinfo.num_components);
 
 	*width = WINPR_ASSERTING_INT_CAST(uint32_t, cinfo.image_width);
 	*height = WINPR_ASSERTING_INT_CAST(uint32_t, cinfo.image_height);
@@ -803,7 +805,7 @@ SSIZE_T winpr_convert_from_jpeg(WINPR_ATTR_UNUSED const BYTE* comp_data,
 	if (!jpeg_start_decompress(&cinfo))
 		goto fail;
 
-	size_t stride = 1ULL * cinfo.image_width * components;
+	size_t stride = 1ULL * cinfo.image_width * WINPR_ASSERTING_INT_CAST(size_t, components);
 
 	if ((stride == 0) || (cinfo.image_height == 0))
 		goto fail;
