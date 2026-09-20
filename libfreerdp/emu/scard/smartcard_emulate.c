@@ -40,6 +40,12 @@
 
 #define VGIDS_DEFAULT_RETRY_COUNTER 3
 
+typedef struct
+{
+	SCARDCONTEXT context;
+	wHashTable* table;
+} HandleCleanLoopArg;
+
 static CHAR g_ReaderNameA[] = { 'F', 'r', 'e', 'e', 'R', 'D', 'P', ' ',  'E',
 	                            'm', 'u', 'l', 'a', 't', 'o', 'r', '\0', '\0' };
 static INIT_ONCE g_ReaderNameWGuard = INIT_ONCE_STATIC_INIT;
@@ -442,9 +448,25 @@ LONG WINAPI Emulate_SCardEstablishContext(SmartcardEmulationContext* smartcard, 
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL remove_handles(const void* key, void* value, void* arg)
+{
+	WINPR_ASSERT(arg);
+	WINPR_ASSERT(value);
+
+	const HandleCleanLoopArg* harg = arg;
+	SCardHandle* handle = value;
+	if (handle->hContext == harg->context)
+	{
+		if (!HashTable_Remove(harg->table, key))
+			return FALSE;
+	}
+	return TRUE;
+}
+
 LONG WINAPI Emulate_SCardReleaseContext(SmartcardEmulationContext* smartcard, SCARDCONTEXT hContext)
 {
-	LONG status = 0;
+	LONG status = SCARD_S_SUCCESS;
 	SCardContext* value = nullptr;
 
 	WINPR_ASSERT(smartcard);
@@ -454,10 +476,12 @@ LONG WINAPI Emulate_SCardReleaseContext(SmartcardEmulationContext* smartcard, SC
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardReleaseContext { hContext: %p",
 	           (void*)hContext);
 
+	HandleCleanLoopArg arg = { .context = hContext, .table = smartcard->handles };
+	if (!HashTable_Foreach(smartcard->handles, remove_handles, &arg))
+		status = SCARD_E_INVALID_HANDLE;
+
 	if (value)
 		HashTable_Remove(smartcard->contexts, (const void*)hContext);
-
-	status = SCARD_S_SUCCESS;
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
 	           "SCardReleaseContext } status: %s (0x%08" PRIX32 ")", SCardGetErrorString(status),
