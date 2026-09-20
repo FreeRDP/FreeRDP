@@ -986,19 +986,26 @@ SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT* ntlm, SecBuffer* ntproof)
 
 SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue)
 {
-	BYTE* blob = nullptr;
-	ULONG msgSize = 0;
-
 	WINPR_ASSERT(ntlm);
 	WINPR_ASSERT(micvalue);
 
-	msgSize = ntlm->NegotiateMessage.cbBuffer + ntlm->ChallengeMessage.cbBuffer +
-	          ntlm->AuthenticateMessage.cbBuffer;
-
-	if (!sspi_SecBufferAlloc(micvalue, msgSize))
+	const UINT64 msgSize = 1ull * ntlm->NegotiateMessage.cbBuffer +
+	                       ntlm->ChallengeMessage.cbBuffer + ntlm->AuthenticateMessage.cbBuffer;
+	if (msgSize > UINT32_MAX)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	blob = (BYTE*)micvalue->pvBuffer;
+	if (!sspi_SecBufferAlloc(micvalue, WINPR_ASSERTING_INT_CAST(ULONG, msgSize)))
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	if (micvalue->cbBuffer < msgSize)
+		return SEC_E_INVALID_TOKEN;
+	if (ntlm->AuthenticateMessage.cbBuffer < ntlm->MessageIntegrityCheckOffset + 16ull)
+		return SEC_E_INVALID_TOKEN;
+
+	BYTE* blob = (BYTE*)micvalue->pvBuffer;
+	if (!blob)
+		return SEC_E_INVALID_TOKEN;
+
 	CopyMemory(blob, ntlm->NegotiateMessage.pvBuffer, ntlm->NegotiateMessage.cbBuffer);
 	blob += ntlm->NegotiateMessage.cbBuffer;
 	CopyMemory(blob, ntlm->ChallengeMessage.pvBuffer, ntlm->ChallengeMessage.cbBuffer);

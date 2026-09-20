@@ -276,7 +276,7 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 	size_t idone = 0;
 	size_t odone = 0;
-	sox_error_t error =
+	soxr_error_t error =
 	    soxr_process(context->sox, src, sframes, &idone, Stream_Buffer(context->common.resample),
 	                 Stream_Capacity(context->common.resample) / rbytes, &odone);
 	if (!Stream_SetLength(context->common.resample, odone * rbytes))
@@ -569,13 +569,13 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (!valid_mp3_format(context))
 		return FALSE;
 	const size_t buffer_size =
-	    2 * context->common.format.nChannels * context->common.format.nSamplesPerSec;
+	    2ull * context->common.format.nChannels * context->common.format.nSamplesPerSec;
 
-	if (!Stream_EnsureCapacity(context->common.buffer, 2 * buffer_size))
+	if (!Stream_EnsureCapacity(context->common.buffer, 2ull * buffer_size))
 		return FALSE;
 
 	short* pcm_l = Stream_BufferAs(context->common.buffer, short);
-	short* pcm_r = Stream_BufferAs(context->common.buffer, short) + buffer_size;
+	short* pcm_r = Stream_BufferAs(context->common.buffer, short) + (buffer_size / sizeof(short));
 	const int rc = hip_decode(
 	    context->hip,
 	    WINPR_CAST_CONST_PTR_AWAY(/* API is not modifying content */ src, unsigned char*), size,

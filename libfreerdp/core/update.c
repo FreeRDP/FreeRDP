@@ -467,6 +467,9 @@ BOOL update_recv_play_sound(rdpUpdate* update, wStream* s)
 
 	WINPR_ASSERT(update);
 
+	if (rdp_get_state(update->context->rdp) < CONNECTION_STATE_ACTIVE)
+		return FALSE;
+
 	if (!update_read_play_sound(s, &play_sound))
 		return FALSE;
 
@@ -866,6 +869,9 @@ BOOL update_recv_pointer(rdpUpdate* update, wStream* s)
 	rdpContext* context = update->context;
 	rdpPointerUpdate* pointer = update->pointer;
 
+	if (rdp_get_state(update->context->rdp) < CONNECTION_STATE_ACTIVE)
+		return FALSE;
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2 + 2))
 		return FALSE;
 
@@ -961,6 +967,9 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 	rdpContext* context = update->context;
 
 	WINPR_ASSERT(context);
+
+	if (rdp_get_state(update->context->rdp) < CONNECTION_STATE_ACTIVE)
+		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;

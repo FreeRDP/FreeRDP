@@ -433,22 +433,49 @@ BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset)
 	return SetFilePointerEx(file->file_handle, loffset, nullptr, FILE_BEGIN);
 }
 
-BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length)
+BOOL drive_file_read(DRIVE_FILE* file, wStream* s, UINT64 Offset, UINT32* Length)
 {
 	DWORD read = 0;
 
-	if (!file || !buffer || !Length)
+	if (!file || !s || !Length)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	UINT32 size = *Length;
+	*Length = 0;
+
+	if (!drive_file_seek(file, Offset))
 		return FALSE;
 
 	DEBUG_WSTR("Read file %s", file->fullpath);
 
-	if (ReadFile(file->file_handle, buffer, *Length, &read, nullptr))
+	DWORD sizeHigh = 0;
+	const DWORD sizeLow = GetFileSize(file, &sizeHigh);
+	const UINT64 size64 = 1ull * sizeLow + ((1ull * sizeHigh) << 32);
+	if (Offset > size64)
 	{
-		*Length = read;
-		return TRUE;
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
 	}
 
-	return FALSE;
+	const UINT64 remain = size64 - Offset;
+	if (remain < size)
+		size = WINPR_ASSERTING_INT_CAST(UINT32, remain);
+
+	if (!Stream_EnsureRemainingCapacity(s, size))
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	void* buffer = Stream_Pointer(s);
+	if (!ReadFile(file->file_handle, buffer, size, &read, nullptr))
+		return FALSE;
+
+	*Length = read;
+	return TRUE;
 }
 
 BOOL drive_file_write(DRIVE_FILE* file, const BYTE* buffer, UINT32 Length)

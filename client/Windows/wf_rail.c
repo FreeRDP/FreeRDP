@@ -574,8 +574,9 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
-		const WCHAR* str = (const WCHAR*)windowState->titleInfo.string;
+		const WCHAR* raw = (const WCHAR*)windowState->titleInfo.string;
 		char* title = nullptr;
+		size_t utflen = 0;
 
 		if (windowState->titleInfo.length == 0)
 		{
@@ -586,7 +587,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			}
 		}
 		else if (!(title = ConvertWCharNToUtf8Alloc(
-		               str, windowState->titleInfo.length / sizeof(WCHAR), nullptr)))
+		               raw, windowState->titleInfo.length / sizeof(WCHAR), &utflen)))
 		{
 			WLog_ERR(TAG, "failed to convert window title");
 			return FALSE;
@@ -594,7 +595,11 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 		free(railWindow->title);
 		railWindow->title = title;
-		SetWindowTextW(railWindow->hWnd, str);
+
+		WCHAR* str = ConvertUtf8NToWCharAlloc(title, utflen, nullptr);
+		if (str)
+			SetWindowTextW(railWindow->hWnd, str);
+		free(str);
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)

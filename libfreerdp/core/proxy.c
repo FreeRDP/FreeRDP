@@ -637,7 +637,7 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 				char* base64 = crypto_base64_encode_len(creds, size - 1, &b64len);
 
 				if (!base64 ||
-				    !Stream_EnsureRemainingCapacity(s, strnlen(basic, sizeof(basic) + b64len)))
+				    !Stream_EnsureRemainingCapacity(s, strnlen(basic, sizeof(basic)) + b64len))
 				{
 					free(base64);
 					free(creds);

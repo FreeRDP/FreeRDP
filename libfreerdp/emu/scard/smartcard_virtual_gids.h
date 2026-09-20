@@ -23,9 +23,11 @@
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/collections.h>
 
 #include <freerdp/api.h>
 #include <freerdp/channels/log.h>
+#include "smartcard_emulate.h"
 
 /* Virtual GIDS context */
 typedef struct vgids_context vgidsContext;
@@ -36,8 +38,7 @@ void vgids_free(vgidsContext* context);
 
 /* Creates a new virtual gids context */
 WINPR_ATTR_MALLOC(vgids_free, 1)
-WINPR_ATTR_NODISCARD
-FREERDP_LOCAL vgidsContext* vgids_new(void);
+FREERDP_LOCAL vgidsContext* vgids_new(SmartcardEmulationContext* context);
 
 /*
    Initializes the virtual gids context.

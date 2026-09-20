@@ -537,7 +537,7 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 	{
 		if (used + 2 >= len)
 		{
-			len += step;
+			len = used + step;
 			n = realloc(ptr, len);
 
 			if (!n)

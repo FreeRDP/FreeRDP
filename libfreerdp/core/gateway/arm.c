@@ -1111,6 +1111,11 @@ static BOOL arm_handle_request_ok(rdpArm* arm, const HttpResponse* response)
 {
 	const size_t len = http_response_get_body_length(response);
 	const char* msg = http_response_get_body(response);
+	if ((len == 0) || !msg)
+	{
+		WLog_Print(arm->log, WLOG_ERROR, "Got HTTP Response data with empty body");
+		return FALSE;
+	}
 	const size_t alen = strnlen(msg, len + 1);
 	if (alen > len)
 	{
