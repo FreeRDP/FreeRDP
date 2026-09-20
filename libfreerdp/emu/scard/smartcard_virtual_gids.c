@@ -55,8 +55,6 @@
 #define VGIDS_CARDID_SIZE 16
 #define VGIDS_MAX_PIN_SIZE 127
 
-#define VGIDS_DEFAULT_RETRY_COUNTER 3
-
 #define VGIDS_KEY_TYPE_KEYEXCHANGE 0x9A
 // #define VGIDS_KEY_TYPE_SIGNATURE 0x9C
 
@@ -132,9 +130,7 @@ typedef struct vgids_se vgidsSE;
 struct vgids_context
 {
 	UINT16 currentDF;
-	char* pin;
-	UINT16 curRetryCounter;
-	UINT16 retryCounter;
+	char* name;
 	wStream* commandData;
 	wStream* responseData;
 	BOOL pinVerified;
@@ -144,6 +140,7 @@ struct vgids_context
 	rdpPrivateKey* privateKey;
 
 	wArrayList* files;
+	SmartcardEmulationContext* emuContext; // Reference, lifecycle managed outside
 };
 
 /* PKCS 1.5 DER encoded digest information */
@@ -1403,7 +1400,7 @@ static BOOL vgids_ins_verify(vgidsContext* context, wStream* s, BYTE** response,
 	}
 
 	/* Check if pin is not already blocked */
-	if (context->curRetryCounter == 0)
+	if (Emulate_IsPinBlocked(context->emuContext, context->name))
 	{
 		status = ISO_STATUS_AUTHMETHODBLOCKED;
 		goto create_response;
@@ -1425,17 +1422,17 @@ static BOOL vgids_ins_verify(vgidsContext* context, wStream* s, BYTE** response,
 
 	/* read and verify pin */
 	Stream_Read(s, pin, lc);
-	if (strcmp(context->pin, pin) != 0)
+
+	UINT16 remaining = 0;
+	if (!Emulate_IsPinValid(context->emuContext, context->name, pin, lc, &remaining))
 	{
 		/* retries are encoded in the lowest 4-bit of the status code */
-		--context->curRetryCounter;
 		context->pinVerified = FALSE;
-		status = (ISO_STATUS_VERIFYFAILED | (context->curRetryCounter & 0xFF));
+		status = (ISO_STATUS_VERIFYFAILED | (remaining & 0xFF));
 	}
 	else
 	{
 		/* reset retry counter and mark pin as verified */
-		context->curRetryCounter = context->retryCounter;
 		context->pinVerified = TRUE;
 	}
 
@@ -1443,10 +1440,15 @@ create_response:
 	return vgids_create_response(status, nullptr, 0, response, responseSize);
 }
 
-vgidsContext* vgids_new(void)
+vgidsContext* vgids_new(SmartcardEmulationContext* context)
 {
-	wObject* obj = nullptr;
+	if (!context)
+		return nullptr;
+
 	vgidsContext* ctx = calloc(1, sizeof(vgidsContext));
+	if (!ctx)
+		return nullptr;
+	ctx->emuContext = context;
 
 	ctx->files = ArrayList_New(FALSE);
 	if (!ctx->files)
@@ -1455,7 +1457,7 @@ vgidsContext* vgids_new(void)
 		goto create_failed;
 	}
 
-	obj = ArrayList_Object(ctx->files);
+	wObject* obj = ArrayList_Object(ctx->files);
 	obj->fnObjectFree = vgids_ef_free;
 
 	return ctx;
@@ -1511,6 +1513,10 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 
 	ctx->privateKey = freerdp_key_new_from_pem_enc(privateKey, nullptr);
 	if (!ctx->privateKey)
+		goto init_failed;
+
+	ctx->name = freerdp_certificate_get_fingerprint(ctx->certificate);
+	if (!ctx->name)
 		goto init_failed;
 
 	/* create masterfile */
@@ -1574,9 +1580,7 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 		goto init_failed;
 
 	/* store user pin */
-	ctx->curRetryCounter = ctx->retryCounter = VGIDS_DEFAULT_RETRY_COUNTER;
-	ctx->pin = _strdup(pin);
-	if (!ctx->pin)
+	if (!Emulate_SetupPin(ctx->emuContext, ctx->name, pin))
 		goto init_failed;
 
 	rc = TRUE;
@@ -1644,7 +1648,7 @@ void vgids_free(vgidsContext* context)
 		freerdp_certificate_free(context->certificate);
 		Stream_Free(context->commandData, TRUE);
 		Stream_Free(context->responseData, TRUE);
-		free(context->pin);
+		winpr_zfree(context->name);
 		ArrayList_Free(context->files);
 		free(context);
 	}
