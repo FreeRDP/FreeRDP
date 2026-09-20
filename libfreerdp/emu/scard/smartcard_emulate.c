@@ -44,6 +44,7 @@ static INIT_ONCE g_ReaderNameWGuard = INIT_ONCE_STATIC_INIT;
 static WCHAR g_ReaderNameW[32] = WINPR_C_ARRAY_INIT;
 static size_t g_ReaderNameWLen = 0;
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* card_id_and_name_a(const UUID* CardIdentifier, LPCSTR LookupName)
 {
 	if (!CardIdentifier || !LookupName)
@@ -62,6 +63,7 @@ static char* card_id_and_name_a(const UUID* CardIdentifier, LPCSTR LookupName)
 	return id;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* card_id_and_name_w(const UUID* CardIdentifier, LPCWSTR LookupName)
 {
 	char* res = nullptr;
@@ -73,6 +75,7 @@ static char* card_id_and_name_w(const UUID* CardIdentifier, LPCWSTR LookupName)
 	return res;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL CALLBACK g_ReaderNameWInit(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
 {
 	WINPR_UNUSED(InitOnce);
@@ -140,6 +143,7 @@ static SCardHandle* find_reader(SmartcardEmulationContext* smartcard, const void
 static const BYTE ATR[] = { 0x3b, 0xf7, 0x18, 0x00, 0x00, 0x80, 0x31, 0xfe, 0x45,
 	                        0x73, 0x66, 0x74, 0x65, 0x2d, 0x6e, 0x66, 0xc4 };
 
+WINPR_ATTR_NODISCARD
 static BOOL scard_status_transition(SCardContext* context)
 {
 	WINPR_ASSERT(context);
@@ -171,6 +175,7 @@ static BOOL scard_status_transition(SCardContext* context)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 scard_copy_strings(SCardContext* ctx, void* dst, size_t dstSize, const void* src,
                                  size_t srcSize)
 {
@@ -213,6 +218,7 @@ static void scard_context_free(void* context)
 	free(ctx);
 }
 
+WINPR_ATTR_MALLOC(scard_context_free, 1)
 static SCardContext* scard_context_new(void)
 {
 	SCardContext* ctx = calloc(1, sizeof(SCardContext));
@@ -241,7 +247,8 @@ static SCardContext* scard_context_new(void)
 		val->fnObjectFree = free;
 	}
 
-	scard_status_transition(ctx);
+	if (!scard_status_transition(ctx))
+		goto fail;
 	return ctx;
 fail:
 	scard_context_free(ctx);
@@ -321,6 +328,7 @@ fail:
 	return nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static LONG scard_handle_valid(SmartcardEmulationContext* smartcard, SCARDHANDLE handle)
 {
 	SCardHandle* ctx = nullptr;
@@ -334,6 +342,7 @@ static LONG scard_handle_valid(SmartcardEmulationContext* smartcard, SCARDHANDLE
 	return SCARD_S_SUCCESS;
 }
 
+WINPR_ATTR_NODISCARD
 static LONG scard_reader_name_valid_a(SmartcardEmulationContext* smartcard, SCARDCONTEXT context,
                                       const char* name)
 {
@@ -355,6 +364,7 @@ static LONG scard_reader_name_valid_a(SmartcardEmulationContext* smartcard, SCAR
 	return SCARD_E_UNKNOWN_READER;
 }
 
+WINPR_ATTR_NODISCARD
 static LONG scard_reader_name_valid_w(SmartcardEmulationContext* smartcard, SCARDCONTEXT context,
                                       const WCHAR* name)
 {
@@ -2332,6 +2342,7 @@ LONG WINAPI Emulate_SCardReadCacheW(SmartcardEmulationContext* smartcard, SCARDC
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static LONG insert_data(wHashTable* table, DWORD FreshnessCounter, const char* key,
                         const PBYTE Data, DWORD DataLen)
 {
@@ -2684,6 +2695,7 @@ LONG WINAPI Emulate_SCardAudit(SmartcardEmulationContext* smartcard, SCARDCONTEX
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL context_equals(const void* pva, const void* pvb)
 {
 	const SCARDCONTEXT a = (const SCARDCONTEXT)pva;
@@ -2696,6 +2708,7 @@ static BOOL context_equals(const void* pva, const void* pvb)
 	return a == b;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL handle_equals(const void* pva, const void* pvb)
 {
 	const SCARDHANDLE a = (const SCARDHANDLE)pva;
