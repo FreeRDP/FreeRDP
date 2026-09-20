@@ -137,6 +137,7 @@ static NTSTATUS drive_map_windows_err(DWORD fs_errno)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static DRIVE_FILE* drive_get_file_by_id(DRIVE_DEVICE* drive, UINT32 id)
 {
 	DRIVE_FILE* file = nullptr;
@@ -193,12 +194,6 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	{
 		void* key = (void*)(size_t)file->id;
 
-		if (!ListDictionary_Add(drive->files, key, file))
-		{
-			WLog_ERR(TAG, "ListDictionary_Add failed!");
-			return ERROR_INTERNAL_ERROR;
-		}
-
 		switch (CreateDisposition)
 		{
 			case FILE_SUPERSEDE:
@@ -224,10 +219,18 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 		if (allocationSize > 0)
 		{
 			const BYTE buffer[] = { '\0' };
-			if (!drive_file_seek(file, allocationSize - sizeof(buffer)))
+			if (!drive_file_seek(file, allocationSize - sizeof(buffer)) ||
+			    !drive_file_write(file, buffer, sizeof(buffer)))
+			{
+				drive_file_free(file);
 				return ERROR_INTERNAL_ERROR;
-			if (!drive_file_write(file, buffer, sizeof(buffer)))
-				return ERROR_INTERNAL_ERROR;
+			}
+		}
+
+		if (!ListDictionary_Add(drive->files, key, file))
+		{
+			WLog_ERR(TAG, "ListDictionary_Add failed!");
+			return ERROR_INTERNAL_ERROR;
 		}
 	}
 
