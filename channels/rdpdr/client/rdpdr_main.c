@@ -2040,6 +2040,10 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
+		if (rdpdr->firstFlagReceived)
+			return ERROR_INVALID_DATA;
+		rdpdr->firstFlagReceived = TRUE;
+
 		if (rdpdr->data_in != nullptr)
 			Stream_Release(rdpdr->data_in);
 
@@ -2070,6 +2074,10 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
+		if (!rdpdr->firstFlagReceived)
+			return ERROR_INVALID_DATA;
+		rdpdr->firstFlagReceived = FALSE;
+
 		const size_t pos = Stream_GetPosition(data_in);
 		const size_t cap = Stream_Capacity(data_in);
 		if (cap < pos)

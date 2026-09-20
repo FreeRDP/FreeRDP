@@ -691,6 +691,9 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
+		if (remdesk->firstFlagReceived)
+			return ERROR_INVALID_DATA;
+
 		if (remdesk->data_in)
 			Stream_Free(remdesk->data_in, TRUE);
 
@@ -701,6 +704,7 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 			WLog_ERR(TAG, "Stream_New failed!");
 			return CHANNEL_RC_NO_MEMORY;
 		}
+		remdesk->firstFlagReceived = TRUE;
 	}
 
 	wStream* data_in = remdesk->data_in;
@@ -717,6 +721,10 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
+		if (!remdesk->firstFlagReceived)
+			return ERROR_INVALID_DATA;
+		remdesk->firstFlagReceived = FALSE;
+
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
 			WLog_ERR(TAG, "read error");

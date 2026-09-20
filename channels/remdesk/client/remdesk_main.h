@@ -56,6 +56,7 @@ typedef struct
 	BYTE* EncryptedPassStub;
 	size_t EncryptedPassStubSize;
 	rdpContext* rdpcontext;
+	BOOL firstFlagReceived;
 } remdeskPlugin;
 
 #endif /* FREERDP_CHANNEL_REMDESK_CLIENT_MAIN_H */

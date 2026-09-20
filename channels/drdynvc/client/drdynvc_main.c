@@ -1698,6 +1698,10 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
+		if (drdynvc->firstFlagReceived)
+			return ERROR_INVALID_DATA;
+		drdynvc->firstFlagReceived = TRUE;
+
 		DVCMAN* mgr = (DVCMAN*)drdynvc->channel_mgr;
 		if (drdynvc->data_in)
 			Stream_Release(drdynvc->data_in);
@@ -1723,6 +1727,10 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
+		if (!drdynvc->firstFlagReceived)
+			return ERROR_INVALID_DATA;
+		drdynvc->firstFlagReceived = FALSE;
+
 		const size_t cap = Stream_Capacity(data_in);
 		const size_t pos = Stream_GetPosition(data_in);
 		if (cap < pos)

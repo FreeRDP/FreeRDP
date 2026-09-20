@@ -514,6 +514,7 @@ typedef struct
 	rdpContext* ctx;
 	LPVOID userdata;
 	MsgHandler msg_handler;
+	BOOL firstFlagReceived;
 } msg_proc_internals;
 
 static DWORD WINAPI channel_client_thread_proc(LPVOID userdata)
@@ -657,6 +658,10 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
+		if (internals->firstFlagReceived)
+			return ERROR_INVALID_DATA;
+		internals->firstFlagReceived = TRUE;
+
 		if (internals->data_in)
 		{
 			if (!Stream_EnsureCapacity(internals->data_in, totalLength))
@@ -683,6 +688,10 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
+		if (!internals->firstFlagReceived)
+			return ERROR_INVALID_DATA;
+		internals->firstFlagReceived = FALSE;
+
 		if (!data_in)
 			return ERROR_INVALID_DATA;
 
