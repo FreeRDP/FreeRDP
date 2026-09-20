@@ -2925,10 +2925,12 @@ BOOL Emulate_IsPinValid(SmartcardEmulationContext* context, const char* name, co
 				rc = strncmp(val->pin, pin, min + 1) == 0;
 		}
 		if (!rc)
+		{
 			if (val->curRetryCounter > 0)
 				val->curRetryCounter--;
 			else
 				val->curRetryCounter = val->retryCounter;
+		}
 		*remaining = val->curRetryCounter;
 	}
 

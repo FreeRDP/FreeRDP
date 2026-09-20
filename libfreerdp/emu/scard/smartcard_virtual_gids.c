@@ -976,7 +976,8 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 			}
 
 			/* Return public key value */
-			vgids_get_public_key(context, pubKeyDO);
+			if (!vgids_get_public_key(context, pubKeyDO))
+				return FALSE;
 			break;
 		}
 		default:
@@ -1305,7 +1306,10 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 
 			/* If chaining is over perform op */
 			if (!(cla & 0x10))
-				vgids_perform_digital_signature(context);
+			{
+				if (!vgids_perform_digital_signature(context))
+					return FALSE;
+			}
 			break;
 		}
 		case VGIDS_SE_CRT_CONF:
@@ -1318,7 +1322,10 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 
 			/* If chaining is over perform op */
 			if (!(cla & 0x10))
-				vgids_perform_decrypt(context);
+			{
+				if (!vgids_perform_decrypt(context))
+					return FALSE;
+			}
 			break;
 		}
 		default:
