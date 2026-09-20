@@ -436,8 +436,8 @@ static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY* geometry)
 		WLog_ERR(TAG, "geometry->left=%d < 0", geometry->left);
 		return FALSE;
 	}
-	presentation->surface->x =
-	    WINPR_ASSERTING_INT_CAST(uint32_t, geometry->topLevelLeft + geometry->left);
+	presentation->surface->x = WINPR_ASSERTING_INT_CAST(uint32_t, geometry->topLevelLeft) +
+	                           WINPR_ASSERTING_INT_CAST(uint32_t, geometry->left);
 
 	if (geometry->topLevelTop < 0)
 	{
@@ -449,8 +449,8 @@ static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY* geometry)
 		WLog_ERR(TAG, "geometry->top=%d < 0", geometry->top);
 		return FALSE;
 	}
-	presentation->surface->y =
-	    WINPR_ASSERTING_INT_CAST(uint32_t, geometry->topLevelTop + geometry->top);
+	presentation->surface->y = WINPR_ASSERTING_INT_CAST(uint32_t, geometry->topLevelTop) +
+	                           WINPR_ASSERTING_INT_CAST(uint32_t, geometry->top);
 
 	return TRUE;
 }
