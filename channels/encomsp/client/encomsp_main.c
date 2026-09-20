@@ -961,7 +961,7 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 		if (encomsp->data_in)
 			Stream_Free(encomsp->data_in, TRUE);
 
-		encomsp->data_in = Stream_New(nullptr, totalLength);
+		encomsp->data_in = Stream_New(nullptr, dataLength);
 
 		if (!encomsp->data_in)
 		{

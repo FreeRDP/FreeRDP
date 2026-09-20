@@ -2047,7 +2047,7 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 		if (rdpdr->data_in != nullptr)
 			Stream_Release(rdpdr->data_in);
 
-		rdpdr->data_in = StreamPool_Take(rdpdr->pool, totalLength);
+		rdpdr->data_in = StreamPool_Take(rdpdr->pool, dataLength);
 
 		if (!rdpdr->data_in)
 		{

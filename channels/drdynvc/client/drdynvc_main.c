@@ -1706,7 +1706,7 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 		if (drdynvc->data_in)
 			Stream_Release(drdynvc->data_in);
 
-		drdynvc->data_in = StreamPool_Take(mgr->pool, totalLength);
+		drdynvc->data_in = StreamPool_Take(mgr->pool, dataLength);
 	}
 
 	if (!(data_in = drdynvc->data_in))

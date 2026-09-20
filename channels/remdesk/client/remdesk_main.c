@@ -697,7 +697,7 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 		if (remdesk->data_in)
 			Stream_Free(remdesk->data_in, TRUE);
 
-		remdesk->data_in = Stream_New(nullptr, totalLength);
+		remdesk->data_in = Stream_New(nullptr, dataLength);
 
 		if (!remdesk->data_in)
 		{

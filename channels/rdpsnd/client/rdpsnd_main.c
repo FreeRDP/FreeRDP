@@ -1198,7 +1198,7 @@ static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin, voi
 		plugin->firstFlagReceived = TRUE;
 
 		if (!plugin->data_in)
-			plugin->data_in = StreamPool_Take(plugin->pool, totalLength);
+			plugin->data_in = StreamPool_Take(plugin->pool, dataLength);
 
 		Stream_ResetPosition(plugin->data_in);
 	}

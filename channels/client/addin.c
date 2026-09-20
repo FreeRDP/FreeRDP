@@ -664,11 +664,11 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 
 		if (internals->data_in)
 		{
-			if (!Stream_EnsureCapacity(internals->data_in, totalLength))
+			if (!Stream_EnsureCapacity(internals->data_in, dataLength))
 				return CHANNEL_RC_NO_MEMORY;
 		}
 		else
-			internals->data_in = Stream_New(nullptr, totalLength);
+			internals->data_in = Stream_New(nullptr, dataLength);
 	}
 
 	if (!(data_in = internals->data_in))
