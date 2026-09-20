@@ -682,8 +682,6 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
                                                         UINT32 dataLength, UINT32 totalLength,
                                                         UINT32 dataFlags)
 {
-	wStream* data_in = nullptr;
-
 	WINPR_ASSERT(remdesk);
 
 	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
@@ -705,7 +703,9 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 		}
 	}
 
-	data_in = remdesk->data_in;
+	wStream* data_in = remdesk->data_in;
+	if (!data_in)
+		return ERROR_INVALID_DATA;
 
 	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
 	{

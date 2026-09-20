@@ -967,6 +967,8 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 	}
 
 	wStream* data_in = encomsp->data_in;
+	if (!data_in)
+		return ERROR_INVALID_DATA;
 
 	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
 	{

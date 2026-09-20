@@ -1198,6 +1198,9 @@ static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin, voi
 		Stream_ResetPosition(plugin->data_in);
 	}
 
+	if (!plugin->data_in)
+		return ERROR_INVALID_DATA;
+
 	if (!Stream_EnsureRemainingCapacity(plugin->data_in, dataLength))
 		return CHANNEL_RC_NO_MEMORY;
 

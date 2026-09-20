@@ -683,6 +683,9 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
+		if (!data_in)
+			return ERROR_INVALID_DATA;
+
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
 			WLog_ERR(TAG, "%s_plugin_process_received: read error", internals->channel_name);
