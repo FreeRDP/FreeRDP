@@ -1552,9 +1552,29 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 		return CHANNEL_RC_OK;
 	}
 
-	const BOOL surfaceChanged = (appWindow->surfaceId != surface->surfaceId);
+	BOOL surfaceChanged = (appWindow->surfaceId != surface->surfaceId);
 	if (surfaceChanged)
 		appWindow->surfaceId = surface->surfaceId;
+
+	/* The server keeps sending updates for windows that are not visible on the
+	 * client, e.g. minimized ones or the hidden desktop window ("Program
+	 * Manager") that spans the whole virtual screen. Uploading those pixels into
+	 * an unmapped X window is wasted work (~100 MB per frame on a large
+	 * multi-monitor setup), so skip it and repaint the whole window once it is
+	 * mapped again, see xf_AppWindowRepaintFromSurface(). */
+	if (!appWindow->is_mapped)
+	{
+		appWindow->surfaceStale = TRUE;
+		region16_clear(&surface->invalidRegion);
+		xf_rail_return_window(appWindow, FALSE);
+		return CHANNEL_RC_OK;
+	}
+
+	if (appWindow->surfaceStale)
+	{
+		appWindow->surfaceStale = FALSE;
+		surfaceChanged = TRUE;
+	}
 
 	const BOOL maximized = (appWindow->dwStyle & WS_MAXIMIZE) != 0;
 	const UINT32 winW = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width);
@@ -1661,6 +1681,27 @@ fail:
 	LogDynAndXFlush(xfc->log, xfc->display);
 
 	return rc;
+}
+
+BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surfaceId)
+{
+	WINPR_ASSERT(xfc);
+
+	if (surfaceId >= UINT16_MAX)
+		return TRUE;
+
+	rdpGdi* gdi = xfc->common.context.gdi;
+	if (!gdi || !gdi->gfx)
+		return TRUE;
+
+	RdpgfxClientContext* gfx = gdi->gfx;
+	UINT rc = CHANNEL_RC_OK;
+	EnterCriticalSection(&gfx->mux);
+	gdiGfxSurface* surface = gfx->GetSurfaceData(gfx, (UINT16)surfaceId);
+	if (surface && surface->windowMapped && (surface->windowId == windowId))
+		rc = xf_AppUpdateWindowFromSurface(xfc, surface);
+	LeaveCriticalSection(&gfx->mux);
+	return rc == CHANNEL_RC_OK;
 }
 
 BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
