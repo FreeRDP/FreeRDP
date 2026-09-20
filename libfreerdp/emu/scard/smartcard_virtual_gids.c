@@ -265,6 +265,7 @@ typedef struct vgids_keymap_record vgidsKeymapRecord;
 
 static void vgids_ef_free(void* ptr);
 
+WINPR_ATTR_MALLOC(vgids_ef_free, 1)
 static vgidsEF* vgids_ef_new(vgidsContext* ctx, USHORT id)
 {
 	vgidsEF* ef = calloc(1, sizeof(vgidsEF));
@@ -292,6 +293,7 @@ create_failed:
 	return nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_write_tlv(wStream* s, UINT16 tag, const void* data, size_t dataSize)
 {
 	WINPR_ASSERT(dataSize <= UINT16_MAX);
@@ -328,12 +330,14 @@ static BOOL vgids_write_tlv(wStream* s, UINT16 tag, const void* data, size_t dat
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_ef_write_do(vgidsEF* ef, UINT16 doID, const void* data, DWORD dataSize)
 {
 	/* Write DO to end of file: 2-Byte ID, 1-Byte Len, Data */
 	return vgids_write_tlv(ef->data, doID, data, dataSize);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataSize)
 {
 	/* Read the given DO from the file: 2-Byte ID, 1-Byte Len, Data */
@@ -417,6 +421,7 @@ void vgids_ef_free(void* ptr)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_prepare_fstable(const vgidsFilesysTableEntry* fstable, DWORD numEntries,
                                   BYTE** outData, DWORD* outDataSize)
 {
@@ -442,6 +447,7 @@ static BOOL vgids_prepare_fstable(const vgidsFilesysTableEntry* fstable, DWORD n
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_prepare_certificate(const rdpCertificate* cert, BYTE** kxc, DWORD* kxcSize)
 {
 	/* Key exchange container:
@@ -501,6 +507,7 @@ handle_error:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static size_t get_rsa_key_size(const rdpPrivateKey* privateKey)
 {
 	WINPR_ASSERT(privateKey);
@@ -508,6 +515,7 @@ static size_t get_rsa_key_size(const rdpPrivateKey* privateKey)
 	return freerdp_key_get_bits(privateKey) / 8;
 }
 
+WINPR_ATTR_NODISCARD
 static BYTE vgids_get_algid(vgidsContext* p_Ctx)
 {
 	WINPR_ASSERT(p_Ctx);
@@ -530,6 +538,7 @@ static BYTE vgids_get_algid(vgidsContext* p_Ctx)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_prepare_keymap(vgidsContext* context, BYTE** outData, DWORD* outDataSize)
 {
 	/* Key map record table:
@@ -568,6 +577,7 @@ static BOOL vgids_prepare_keymap(vgidsContext* context, BYTE** outData, DWORD* o
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_parse_apdu_header(wStream* s, BYTE* cla, BYTE* ins, BYTE* p1, BYTE* p2, BYTE* lc,
                                     BYTE* le)
 {
@@ -614,6 +624,7 @@ static BOOL vgids_parse_apdu_header(wStream* s, BYTE* cla, BYTE* ins, BYTE* p1, 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_create_response(UINT16 status, const BYTE* answer, DWORD answerSize,
                                   BYTE** outData, DWORD* outDataSize)
 {
@@ -637,6 +648,7 @@ static BOOL vgids_create_response(UINT16 status, const BYTE* answer, DWORD answe
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_read_do_fkt(void* data, size_t index, va_list ap)
 {
 	BYTE* response = nullptr;
@@ -662,6 +674,7 @@ static BOOL vgids_read_do_fkt(void* data, size_t index, va_list ap)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_read_do(vgidsContext* context, UINT16 efID, UINT16 doID)
 {
 	return ArrayList_ForEach(context->files, vgids_read_do_fkt, context, efID, doID);
@@ -679,6 +692,7 @@ static void vgids_reset_context_command_data(vgidsContext* context)
 	context->commandData = nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
                              DWORD* responseSize)
 {
@@ -774,6 +788,7 @@ static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
 	return vgids_create_response(status, resultData, resultDataSize, response, responseSize);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT16 vgids_handle_chained_response(vgidsContext* context, const BYTE** response,
                                             DWORD* responseSize)
 {
@@ -798,6 +813,7 @@ static UINT16 vgids_handle_chained_response(vgidsContext* context, const BYTE** 
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 {
 	BOOL rc = FALSE;
@@ -855,6 +871,7 @@ handle_error:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response,
                               DWORD* responseSize)
 {
@@ -976,6 +993,7 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 	return vgids_create_response(status, resultData, resultDataSize, response, responseSize);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_ins_manage_security_environment(vgidsContext* context, wStream* s,
                                                   BYTE** response, DWORD* responseSize)
 {
@@ -1040,6 +1058,7 @@ create_response:
 	return vgids_create_response(status, resultData, resultDataSize, response, responseSize);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_perform_digital_signature(vgidsContext* context)
 {
 	size_t sigSize = 0;
@@ -1154,6 +1173,7 @@ sign_failed:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_perform_decrypt(vgidsContext* context)
 {
 	EVP_PKEY_CTX* ctx = nullptr;
@@ -1223,6 +1243,7 @@ decrypt_failed:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream* s, BYTE** response,
                                                  DWORD* responseSize)
 {
@@ -1314,6 +1335,7 @@ create_response:
 	return vgids_create_response(status, resultData, resultDataSize, response, responseSize);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_ins_getresponse(vgidsContext* context, wStream* s, BYTE** response,
                                   DWORD* responseSize)
 {
@@ -1371,6 +1393,7 @@ create_response:
 	return vgids_create_response(status, resultData, resultDataSize, response, responseSize);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL vgids_ins_verify(vgidsContext* context, wStream* s, BYTE** response,
                              DWORD* responseSize)
 {
