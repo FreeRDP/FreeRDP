@@ -66,7 +66,7 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset);
 
 WINPR_ATTR_NODISCARD
-FREERDP_LOCAL BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length);
+FREERDP_LOCAL BOOL drive_file_read(DRIVE_FILE* file, wStream* s, UINT64 Offset, UINT32* Length);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL drive_file_write(DRIVE_FILE* file, const BYTE* buffer, UINT32 Length);

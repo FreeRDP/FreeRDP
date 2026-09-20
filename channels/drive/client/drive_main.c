@@ -293,13 +293,8 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
 	}
-	else if (!drive_file_seek(file, Offset))
-	{
-		irp->IoStatus = drive_map_windows_err(GetLastError());
-		Length = 0;
-	}
 
-	if (!Stream_EnsureRemainingCapacity(irp->output, 4ull + Length))
+	if (!Stream_EnsureRemainingCapacity(irp->output, 4ull))
 	{
 		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 		return ERROR_INTERNAL_ERROR;
@@ -308,9 +303,12 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 		Stream_Write_UINT32(irp->output, 0);
 	else
 	{
-		BYTE* buffer = Stream_PointerAs(irp->output, BYTE) + sizeof(UINT32);
-
-		if (!drive_file_read(file, buffer, &Length))
+		const size_t pos = Stream_GetPosition(irp->output);
+		Stream_Seek_UINT32(irp->output);
+		const BOOL rc = drive_file_read(file, irp->output, Offset, &Length);
+		if (!Stream_SetPosition(irp->output, pos))
+			return ERROR_INTERNAL_ERROR;
+		if (!rc)
 		{
 			irp->IoStatus = drive_map_windows_err(GetLastError());
 			Stream_Write_UINT32(irp->output, 0);
