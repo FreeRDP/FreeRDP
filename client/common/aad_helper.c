@@ -952,6 +952,7 @@ static char* aad_auth_helper_auto_locate(void)
 			free(dir);
 			return path;
 		}
+		free(path);
 	}
 	free(dir);
 	return nullptr;
