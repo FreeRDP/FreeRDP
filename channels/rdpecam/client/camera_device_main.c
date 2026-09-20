@@ -35,6 +35,7 @@
  * @param pCount Output parameter for number of formats
  * @return Pointer to format array
  */
+WINPR_ATTR_NODISCARD
 static const CAM_MEDIA_FORMAT_INFO* getSupportedFormats(size_t* pCount)
 {
 	WINPR_ASSERT(pCount);
@@ -72,7 +73,7 @@ static const CAM_MEDIA_FORMAT_INFO* getSupportedFormats(size_t* pCount)
 	return formats;
 }
 
-static void ecam_dev_write_media_type(wStream* s, CAM_MEDIA_TYPE_DESCRIPTION* mediaType)
+static void ecam_dev_write_media_type(wStream* s, const CAM_MEDIA_TYPE_DESCRIPTION* mediaType)
 {
 	WINPR_ASSERT(mediaType);
 
@@ -347,6 +348,33 @@ static UINT ecam_dev_process_stop_streams_request(CameraDevice* dev,
 	return ecam_channel_send_generic_msg(dev->ecam, hchannel, CAM_MSG_ID_SuccessResponse);
 }
 
+WINPR_ATTR_NODISCARD
+static BOOL media_type_valid(CameraDevice* dev, UINT8 streamIndex,
+                             const CAM_MEDIA_TYPE_DESCRIPTION* type)
+{
+	WINPR_ASSERT(dev);
+	WINPR_ASSERT(type);
+
+	CAM_MEDIA_TYPE_DESCRIPTION supported[ECAM_MAX_MEDIA_TYPE_DESCRIPTORS] = WINPR_C_ARRAY_INIT;
+	size_t nMediaTypes = ARRAYSIZE(supported);
+
+	size_t nSupportedFormats = 0;
+	const CAM_MEDIA_FORMAT_INFO* supportedFormats = getSupportedFormats(&nSupportedFormats);
+	INT16 formatIndex =
+	    dev->ihal->GetMediaTypeDescriptions(dev->ihal, dev->deviceId, streamIndex, supportedFormats,
+	                                        nSupportedFormats, supported, &nMediaTypes);
+	if (formatIndex < 0)
+		return FALSE;
+
+	for (size_t x = 0; x < nMediaTypes; x++)
+	{
+		const CAM_MEDIA_TYPE_DESCRIPTION* cur = &supported[x];
+		if (memcmp(cur, type, sizeof(CAM_MEDIA_TYPE_DESCRIPTION)) == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
 /**
  * Function description
  *
@@ -380,6 +408,12 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
 	}
 
 	ecam_dev_print_media_type(&mediaType);
+	if (!media_type_valid(dev, streamIndex, &mediaType))
+	{
+		WLog_ERR(TAG, "Unannounced MEDIA_TYPE_DESCRIPTION");
+		ecam_channel_send_error_response(dev->ecam, hchannel, CAM_ERROR_CODE_InvalidMessage);
+		return ERROR_INVALID_DATA;
+	}
 
 	CameraDeviceStream* stream = &dev->streams[streamIndex];
 
