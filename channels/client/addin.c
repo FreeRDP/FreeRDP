@@ -686,6 +686,13 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 
 	Stream_Write(data_in, pData, dataLength);
 
+	if (Stream_GetPosition(data_in) > totalLength)
+	{
+		Stream_Free(internals->data_in, TRUE);
+		internals->data_in = nullptr;
+		return ERROR_INVALID_DATA;
+	}
+
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
 		if (!internals->firstFlagReceived)

@@ -538,9 +538,7 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 	if ((flags & CHANNEL_FLAG_LAST) != 0)
 	{
 		if (Stream_GetPosition(channel->receiveData) != totalSize)
-		{
-			WLog_ERR(TAG, "read error");
-		}
+			return FALSE;
 
 		if (channel == channel->vcm->drdynvc_channel)
 		{
@@ -558,6 +556,8 @@ static BOOL WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, con
 
 		Stream_ResetPosition(channel->receiveData);
 	}
+	else if (Stream_GetPosition(channel->receiveData) >= totalSize)
+		return FALSE;
 
 	return ret;
 }

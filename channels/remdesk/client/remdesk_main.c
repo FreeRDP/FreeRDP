@@ -718,6 +718,8 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 	}
 
 	Stream_Write(data_in, pData, dataLength);
+	if (Stream_GetPosition(data_in) > totalLength)
+		return ERROR_INVALID_DATA;
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{

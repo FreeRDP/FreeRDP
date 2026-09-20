@@ -1725,6 +1725,13 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 
 	Stream_Write(data_in, pData, dataLength);
 
+	if (Stream_GetPosition(data_in) > totalLength)
+	{
+		Stream_Free(drdynvc->data_in, TRUE);
+		drdynvc->data_in = nullptr;
+		return ERROR_INVALID_DATA;
+	}
+
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
 		if (!drdynvc->firstFlagReceived)

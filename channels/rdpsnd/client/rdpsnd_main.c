@@ -1211,6 +1211,9 @@ static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin, voi
 
 	Stream_Write(plugin->data_in, pData, dataLength);
 
+	if (Stream_GetPosition(plugin->data_in) > totalLength)
+		return ERROR_INVALID_DATA;
+
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
 		if (!plugin->firstFlagReceived)
