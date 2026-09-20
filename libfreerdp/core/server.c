@@ -234,7 +234,7 @@ static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int
 
 	Stream_ResetPosition(channel->receiveData);
 
-	if (!Stream_EnsureRemainingCapacity(channel->receiveData, channel->dvc_total_length))
+	if (!Stream_EnsureRemainingCapacity(channel->receiveData, length))
 		return FALSE;
 
 	Stream_Write(channel->receiveData, Stream_ConstPointer(s), length);
@@ -261,6 +261,9 @@ static BOOL wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s)
 			WLog_ERR(TAG, "incorrect fragment data, discarded.");
 			return FALSE;
 		}
+
+		if (!Stream_EnsureRemainingCapacity(channel->receiveData, length))
+			return FALSE;
 
 		Stream_Write(channel->receiveData, Stream_ConstPointer(s), length);
 
