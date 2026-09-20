@@ -115,6 +115,7 @@ static NTSTATUS GetLastErrorToIoStatus(SERIAL_DEVICE* serial)
 	return STATUS_UNSUCCESSFUL;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
 	DWORD DesiredAccess = 0;
@@ -165,6 +166,13 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	SharedAccess = 0;
 	CreateDisposition = OPEN_EXISTING;
 #endif
+	if (serial->hComm)
+	{
+		WLog_Print(serial->log, WLOG_ERROR, "Device %s already open, cancel request",
+		           serial->device.name);
+		return ERROR_INVALID_DATA;
+	}
+
 	serial->hComm = winpr_CreateFile(serial->device.name, DesiredAccess, SharedAccess,
 	                                 nullptr,              /* SecurityAttributes */
 	                                 CreateDisposition, 0, /* FlagsAndAttributes */
