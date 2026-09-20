@@ -276,7 +276,7 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 	size_t idone = 0;
 	size_t odone = 0;
-	sox_error_t error =
+	soxr_error_t error =
 	    soxr_process(context->sox, src, sframes, &idone, Stream_Buffer(context->common.resample),
 	                 Stream_Capacity(context->common.resample) / rbytes, &odone);
 	if (!Stream_SetLength(context->common.resample, odone * rbytes))
