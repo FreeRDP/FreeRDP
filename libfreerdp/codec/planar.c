@@ -742,9 +742,17 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 	WINPR_ASSERT(prims);
 
 	if (planar->maxWidth < nSrcWidth)
+	{
+		WLog_ERR(TAG, "planar->maxWidth %" PRIu32 " < nSrcWidth %" PRIu32, planar->maxWidth,
+		         nSrcWidth);
 		return FALSE;
+	}
 	if (planar->maxHeight < nSrcHeight)
+	{
+		WLog_ERR(TAG, "planar->maxHeight %" PRIu32 " < nSrcHeight %" PRIu32, planar->maxHeight,
+		         nSrcHeight);
 		return FALSE;
+	}
 
 	const UINT32 bpp = FreeRDPGetBytesPerPixel(DstFormat);
 	if (nDstStep <= 0)
@@ -1054,14 +1062,20 @@ BOOL freerdp_bitmap_decompress_planar(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT plan
 			TempFormat = PIXEL_FORMAT_BGRX32;
 
 		if (!pTempData)
+		{
+			WLog_ERR(TAG, "pTempData == NULL");
 			return FALSE;
+		}
 
 		if (rle) /* RLE encoded data. Decode and handle it like raw data. */
 		{
 			BYTE* rleBuffer[4] = WINPR_C_ARRAY_INIT;
 
 			if (!planar->rlePlanesBuffer)
+			{
+				WLog_ERR(TAG, "planar->rlePlanesBuffer == NULL");
 				return FALSE;
+			}
 
 			rleBuffer[3] = planar->rlePlanesBuffer;  /* AlphaPlane */
 			rleBuffer[0] = rleBuffer[3] + planeSize; /* LumaOrRedPlane */
