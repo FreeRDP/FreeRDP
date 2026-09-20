@@ -1434,7 +1434,7 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 				for (size_t y = 0; y < MAX_EMULATED_READERS; y++)
 				{
 					const LPSCARD_READERSTATEA in = &value->readerStateA[y];
-					if (strcmp(out->szReader, in->szReader) == 0)
+					if (out->szReader && in->szReader && (strcmp(out->szReader, in->szReader) == 0))
 					{
 						const SCardHandle* hdl = find_reader(smartcard, in->szReader, FALSE);
 						out->dwEventState = in->dwEventState;
@@ -1516,7 +1516,8 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 				for (size_t y = 0; y < MAX_EMULATED_READERS; y++)
 				{
 					const LPSCARD_READERSTATEW in = &value->readerStateW[y];
-					if (_wcscmp(out->szReader, in->szReader) == 0)
+					if (out->szReader && in->szReader &&
+					    (_wcscmp(out->szReader, in->szReader) == 0))
 					{
 						const SCardHandle* hdl = find_reader(smartcard, in->szReader, TRUE);
 						out->dwEventState = in->dwEventState;

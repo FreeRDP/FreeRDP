@@ -2721,6 +2721,8 @@ WINPR_ATTR_NODISCARD static LONG smartcard_unpack_reader_state_a(wLog* log, wStr
 		status = smartcard_ndr_read_a(log, s, &readerState->szReader, NDR_PTR_FULL);
 		if (status != SCARD_S_SUCCESS)
 			goto fail;
+		if (!readerState->szReader)
+			goto fail;
 	}
 
 	*ppcReaders = rgReaderStates;
@@ -2812,6 +2814,8 @@ WINPR_ATTR_NODISCARD static LONG smartcard_unpack_reader_state_w(wLog* log, wStr
 
 		status = smartcard_ndr_read_w(log, s, &readerState->szReader, NDR_PTR_FULL);
 		if (status != SCARD_S_SUCCESS)
+			goto fail;
+		if (!readerState->szReader)
 			goto fail;
 	}
 
