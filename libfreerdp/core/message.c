@@ -736,6 +736,8 @@ static BOOL update_message_PolygonSC(rdpContext* context, const POLYGON_SC_ORDER
 
 		CopyMemory(wParam->points, polygonSC->points, sizeof(DELTA_POINT) * wParam->numPoints);
 	}
+	else
+		wParam->points = nullptr;
 
 	rdp_update_internal* up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(PrimaryUpdate, PolygonSC),
@@ -765,6 +767,8 @@ static BOOL update_message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* poly
 
 		CopyMemory(wParam->points, polygonCB->points, sizeof(DELTA_POINT) * wParam->numPoints);
 	}
+	else
+		wParam->points = nullptr;
 
 	wParam->brush.data = (BYTE*)wParam->brush.p8x8;
 
