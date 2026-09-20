@@ -16,9 +16,7 @@ static void free_string(char** current, BOOL cleanup)
 {
 	if (cleanup)
 	{
-		if (*current)
-			memset(*current, 0, strlen(*current));
-		free(*current);
+		winpr_zfree(*current);
 		(*current) = nullptr;
 	}
 }
