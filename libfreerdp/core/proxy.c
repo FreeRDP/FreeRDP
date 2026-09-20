@@ -102,6 +102,8 @@ BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* l
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) != PROXY_TYPE_NONE)
 	{
 		*lpPeerHostname = freerdp_settings_get_string(settings, FreeRDP_ProxyHostname);
+		if (!*lpPeerHostname || !winpr_str_is_valid_url(*lpPeerHostname))
+			return FALSE;
 		*lpPeerPort = freerdp_settings_get_uint16(settings, FreeRDP_ProxyPort);
 		*lpProxyUsername = freerdp_settings_get_string(settings, FreeRDP_ProxyUsername);
 		*lpProxyPassword = freerdp_settings_get_string(settings, FreeRDP_ProxyPassword);
