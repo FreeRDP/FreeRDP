@@ -1548,6 +1548,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 	if (!appWindow)
 	{
 		WLog_VRB(TAG, "Failed to find a window for id=0x%08" PRIx64, surface->windowId);
+		region16_clear(&surface->invalidRegion);
 		return CHANNEL_RC_OK;
 	}
 
@@ -1652,6 +1653,10 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 
 	rc = CHANNEL_RC_OK;
 fail:
+	/* The invalid region has been painted, reset it like xf_OutputUpdate does for
+	 * output mapped surfaces. Otherwise the damage accumulates across frames until
+	 * the whole window is uploaded again on every single update. */
+	region16_clear(&surface->invalidRegion);
 	xf_rail_return_window(appWindow, FALSE);
 	LogDynAndXFlush(xfc->log, xfc->display);
 
