@@ -1257,8 +1257,10 @@ const char* freerdp_get_logon_error_info_data_ex(UINT32 data, char* buffer, size
  */
 freerdp* freerdp_new(void)
 {
-	freerdp* instance = nullptr;
-	instance = (freerdp*)calloc(1, sizeof(freerdp));
+	if (!utils_set_umask())
+		return nullptr;
+
+	freerdp* instance = (freerdp*)calloc(1, sizeof(freerdp));
 
 	if (!instance)
 		return nullptr;

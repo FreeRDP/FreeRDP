@@ -33,6 +33,10 @@
 
 #include "utils.h"
 
+#if !defined(_WIN32)
+#include <sys/stat.h>
+#endif
+
 #include "../core/rdp.h"
 
 BOOL utils_str_copy(const char* value, char** dst)
@@ -626,4 +630,12 @@ static BOOL isValidIPv6(const char* ipAddress)
 BOOL utils_is_valid_ip(const char* ipAddress)
 {
 	return isValidIPv4(ipAddress) || isValidIPv6(ipAddress);
+}
+
+BOOL utils_set_umask(void)
+{
+#if !defined(_WIN32)
+	(void)umask(S_IRWXG | S_IRWXO);
+#endif
+	return TRUE;
 }

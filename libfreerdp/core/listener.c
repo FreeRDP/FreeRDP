@@ -520,9 +520,10 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 freerdp_listener* freerdp_listener_new(void)
 {
-	freerdp_listener* instance = nullptr;
-	rdpListener* listener = nullptr;
-	instance = (freerdp_listener*)calloc(1, sizeof(freerdp_listener));
+	if (!utils_set_umask())
+		return nullptr;
+
+	freerdp_listener* instance = (freerdp_listener*)calloc(1, sizeof(freerdp_listener));
 
 	if (!instance)
 		return nullptr;
@@ -536,7 +537,7 @@ freerdp_listener* freerdp_listener_new(void)
 	instance->GetEventHandles = freerdp_listener_get_event_handles;
 	instance->CheckFileDescriptor = freerdp_listener_check_fds;
 	instance->Close = freerdp_listener_close;
-	listener = (rdpListener*)calloc(1, sizeof(rdpListener));
+	rdpListener* listener = (rdpListener*)calloc(1, sizeof(rdpListener));
 
 	if (!listener)
 	{
