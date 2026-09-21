@@ -1393,7 +1393,6 @@ static BOOL rdp_apply_input_capability_set(rdpSettings* settings, const rdpSetti
 		settings->KeyboardType = src->KeyboardType;
 		settings->KeyboardSubType = src->KeyboardSubType;
 		settings->KeyboardFunctionKey = src->KeyboardFunctionKey;
-		freerdp_settings_sanitize_keyboard_type(NULL, settings, "TS_INPUT_CAPABILITYSET");
 	}
 
 	if (!freerdp_settings_set_string(settings, FreeRDP_ImeFileName, src->ImeFileName))
