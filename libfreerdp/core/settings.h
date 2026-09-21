@@ -38,6 +38,20 @@
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_settings_enforce_consistency(rdpSettings* settings);
 
+/** @brief Replace a KeyboardType value that is not one of WINPR_KBD_TYPE with
+ *  WINPR_KBD_TYPE_IBM_ENHANCED, logging a warning.
+ *
+ *  Some clients (e.g. mstsc.exe on Windows 11 25H2) advertise out of spec
+ *  keyboard types; the scancode translation in WinPR only knows the types in
+ *  [MS-RDPBCGR] 2.2.1.3.2 and would otherwise map every key to VK_NONE.
+ *
+ *  @param log the logger to use, may be \b NULL
+ *  @param settings the settings to sanitize, must not be \b NULL
+ *  @param source a short description of where the value came from
+ */
+FREERDP_LOCAL void freerdp_settings_sanitize_keyboard_type(wLog* log, rdpSettings* settings,
+                                                           const char* source);
+
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_settings_enforce_monitor_exists(rdpSettings* settings);
 
