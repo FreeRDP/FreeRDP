@@ -26,6 +26,7 @@
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 #include <winpr/crypto.h>
+#include <winpr/print.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/crypto.h>
@@ -431,9 +432,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, const ch
 #ifdef WITH_OPENSSL
 	FILE* fp = nullptr;
 	int status = 0;
-	size_t length = 0;
 	size_t offset = 0;
-	char* filename = nullptr;
 	char* fullpath = nullptr;
 	char* ext = nullptr;
 	int ret = -1;
@@ -454,8 +453,8 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, const ch
 	/*
 	 * Output Certificate File
 	 */
-	length = strlen(context->output_file);
-	filename = malloc(length + 8);
+	size_t length = strlen(context->output_file);
+	char* filename = malloc(length + 8);
 
 	if (!filename)
 		return -1;
@@ -487,12 +486,16 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, const ch
 		{
 			if (!context->password)
 			{
-				context->password = _strdup("password");
+				BYTE random[32] = WINPR_C_ARRAY_INIT;
+				if (winpr_RAND(random, sizeof(random)) < 0)
+					goto out_fail;
+
+				context->password = winpr_BinToHexString(random, sizeof(random), FALSE);
 
 				if (!context->password)
 					goto out_fail;
 
-				printf("Using default export password \"password\"\n");
+				printf("Using random export password \"%s\"\n", context->password);
 			}
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
