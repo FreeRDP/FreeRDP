@@ -114,6 +114,7 @@ void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow);
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
                          int height);
 UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface);
+BOOL xf_AppWindowRepaintFromSurface(xfContext* xfc, UINT64 windowId, UINT32 surfaceId);
 
 void xf_AppWindowDestroyImage(xfAppWindow* appWindow);
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow);

@@ -953,6 +953,13 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 			 */
 			// xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
 			appWindow->is_mapped = TRUE;
+			if (appWindow->surfaceStale)
+			{
+				const UINT64 windowId = appWindow->windowId;
+				const UINT32 surfaceId = appWindow->surfaceId;
+				xf_rail_return_window(appWindow, FALSE);
+				return xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
+			}
 		}
 		xf_rail_return_window(appWindow, FALSE);
 	}
