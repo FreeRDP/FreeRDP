@@ -134,9 +134,35 @@ UINT rdpgfx_read_rect16(wLog* log, wStream* s, RECTANGLE_16* rect16)
 	Stream_Read_UINT16(s, rect16->right);  /* right (2 bytes) */
 	Stream_Read_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
 	if (rect16->left >= rect16->right)
+	{
+		WLog_Print(log, WLOG_ERROR, "Invalid RECTANGLE_16: left(%" PRIu16 ") > right(%" PRIu16 ")",
+		           rect16->left, rect16->right);
 		return ERROR_INVALID_DATA;
+	}
 	if (rect16->top >= rect16->bottom)
+	{
+		WLog_Print(log, WLOG_ERROR, "Invalid RECTANGLE_16: top(%" PRIu16 ") > bottom(%" PRIu16 ")",
+		           rect16->top, rect16->bottom);
 		return ERROR_INVALID_DATA;
+	}
+	const INT32 w = rect16->right - rect16->left;
+	if ((w % 2) != 0)
+	{
+		WLog_Print(log, WLOG_ERROR,
+		           "Invalid RECTANGLE_16: width (%" PRId32 ") is odd. left(%" PRIu16
+		           "), right(%" PRIu16 ")",
+		           w, rect16->left, rect16->right);
+		return ERROR_INVALID_DATA;
+	}
+	const INT32 h = rect16->bottom - rect16->top;
+	if ((h % 2) != 0)
+	{
+		WLog_Print(log, WLOG_ERROR,
+		           "Invalid RECTANGLE_16: height (%" PRId32 ") is odd. top(%" PRIu16
+		           "), bottom(%" PRIu16 ")",
+		           h, rect16->top, rect16->bottom);
+		return ERROR_INVALID_DATA;
+	}
 	return CHANNEL_RC_OK;
 }
 
