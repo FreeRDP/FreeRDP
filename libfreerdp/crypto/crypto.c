@@ -35,6 +35,10 @@
 #include "crypto.h"
 #include "privatekey.h"
 
+#if !defined(_WIN32)
+#include <sys/stat.h>
+#endif
+
 #define TAG FREERDP_TAG("crypto")
 
 static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_length,
@@ -262,12 +266,23 @@ BOOL crypto_write_pem(const char* WINPR_RESTRICT filename, const char* WINPR_RES
 	FILE* fp = winpr_fopen(filename, "w");
 	if (!fp)
 		goto fail;
+#if !defined(_WIN32)
+	const int res = fchmod(fileno(fp), S_IRUSR | S_IWUSR);
+	if (res != 0)
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_WARN(TAG, "Failed to chmod %s: %s", filename,
+		          winpr_strerror(errno, buffer, sizeof(buffer)));
+		fclose(fp);
+		goto fail;
+	}
+#endif
 	rc = fwrite(pem, 1, size, fp);
 	(void)fclose(fp);
 fail:
 	if (rc == 0)
 	{
-		char buffer[8192] = WINPR_C_ARRAY_INIT;
+		char buffer[128] = WINPR_C_ARRAY_INIT;
 		WLog_WARN(TAG, "Failed to write PEM [%" PRIuz "] to file '%s' [%s]", length, filename,
 		          winpr_strerror(errno, buffer, sizeof(buffer)));
 	}
