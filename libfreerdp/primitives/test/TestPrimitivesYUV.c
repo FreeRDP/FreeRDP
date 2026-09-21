@@ -191,7 +191,7 @@ static void* set_padding(size_t size, size_t padding)
 {
 	size_t halfPad = (padding + 1) / 2;
 	BYTE* psrc = nullptr;
-	BYTE* src = winpr_aligned_malloc(size + 2 * halfPad, 16);
+	BYTE* src = winpr_aligned_calloc(1, size + 2 * halfPad, 16);
 
 	if (!src)
 		return nullptr;

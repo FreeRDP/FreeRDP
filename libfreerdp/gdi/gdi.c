@@ -937,8 +937,8 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		{
 			HGDI_BITMAP hBmp = nullptr;
 			UINT32 brushFormat = 0;
-			BYTE* data = (BYTE*)winpr_aligned_malloc(
-			    8ULL * 8ULL * FreeRDPGetBytesPerPixel(gdi->drawing->hdc->format), 16);
+			BYTE* data = (BYTE*)winpr_aligned_calloc(
+			    8ULL * 8ULL, FreeRDPGetBytesPerPixel(gdi->drawing->hdc->format), 16);
 
 			if (!data)
 			{

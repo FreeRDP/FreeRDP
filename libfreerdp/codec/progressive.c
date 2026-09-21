@@ -365,23 +365,23 @@ static inline RFX_PROGRESSIVE_TILE* progressive_tile_new(void)
 
 	{
 		const size_t dataLen = 1ull * tile->stride * tile->height;
-		tile->data = (BYTE*)winpr_aligned_malloc(dataLen, 16);
+		tile->data = (BYTE*)winpr_aligned_calloc(tile->stride, tile->height, 16);
 		if (!tile->data)
 			goto fail;
 		memset(tile->data, 0xFF, dataLen);
 	}
 
 	{
-		const size_t signLen = (8192ULL + 32ULL) * 3ULL;
-		tile->sign = (BYTE*)winpr_aligned_malloc(signLen, 16);
+		const size_t signLen = (8192ULL + 32ULL);
+		tile->sign = (BYTE*)winpr_aligned_calloc(3, signLen, 16);
 	}
 
 	if (!tile->sign)
 		goto fail;
 
 	{
-		const size_t currentLen = (8192ULL + 32ULL) * 3ULL;
-		tile->current = (BYTE*)winpr_aligned_malloc(currentLen, 16);
+		const size_t currentLen = (8192ULL + 32ULL);
+		tile->current = (BYTE*)winpr_aligned_calloc(3, currentLen, 16);
 	}
 	if (!tile->current)
 		goto fail;

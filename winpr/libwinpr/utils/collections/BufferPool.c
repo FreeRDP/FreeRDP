@@ -92,16 +92,9 @@ static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, size_t index, int count
 			SSIZE_T newCapacity = pool->aSize + count;
 			newCapacity += (newCapacity + 2) / 2;
 
-			WINPR_ASSERT(newCapacity > 0);
-			if (pool->alignment > 0)
-				newArray = (wBufferPoolItem*)winpr_aligned_realloc(
-				    pool->aArray,
-				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newCapacity),
-				    pool->alignment);
-			else
-				newArray = (wBufferPoolItem*)realloc(
-				    pool->aArray,
-				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newCapacity));
+			newArray = (wBufferPoolItem*)winpr_aligned_recalloc(
+			    pool->aArray, sizeof(wBufferPoolItem),
+			    WINPR_ASSERTING_INT_CAST(size_t, newCapacity), pool->alignment);
 			if (!newArray)
 				return FALSE;
 			pool->aArray = newArray;
@@ -142,15 +135,11 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 				newUCapacity += 128ll;
 			} while (newUCapacity <= required);
 			wBufferPoolItem* newUArray = nullptr;
-			if (pool->alignment > 0)
-				newUArray = (wBufferPoolItem*)winpr_aligned_realloc(
-				    pool->uArray,
-				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newUCapacity),
-				    pool->alignment);
-			else
-				newUArray = (wBufferPoolItem*)realloc(
-				    pool->uArray,
-				    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newUCapacity));
+			newUArray = (wBufferPoolItem*)winpr_aligned_realloc(
+			    pool->uArray,
+			    sizeof(wBufferPoolItem) * WINPR_ASSERTING_INT_CAST(size_t, newUCapacity),
+			    pool->alignment);
+
 			if (!newUArray)
 				return FALSE;
 			pool->uCapacity = newUCapacity;
@@ -256,11 +245,8 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 
 		if (!buffer)
 		{
-			if (pool->alignment)
-				buffer = winpr_aligned_malloc(WINPR_ASSERTING_INT_CAST(size_t, pool->fixedSize),
-				                              pool->alignment);
-			else
-				buffer = malloc(WINPR_ASSERTING_INT_CAST(size_t, pool->fixedSize));
+			buffer = winpr_aligned_calloc(WINPR_ASSERTING_INT_CAST(size_t, pool->fixedSize), 1,
+			                              pool->alignment);
 		}
 
 		if (!buffer)
@@ -304,11 +290,8 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 				buffer = nullptr;
 			else
 			{
-				if (pool->alignment)
-					buffer = winpr_aligned_malloc(WINPR_ASSERTING_INT_CAST(size_t, size),
-					                              pool->alignment);
-				else
-					buffer = malloc(WINPR_ASSERTING_INT_CAST(size_t, size));
+				buffer = winpr_aligned_calloc(WINPR_ASSERTING_INT_CAST(size_t, size), 1,
+				                              pool->alignment);
 
 				if (!buffer)
 					goto out_error;
@@ -321,11 +304,8 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 			if (maxSize < size)
 			{
 				void* newBuffer = nullptr;
-				if (pool->alignment)
-					newBuffer = winpr_aligned_realloc(
-					    buffer, WINPR_ASSERTING_INT_CAST(size_t, size), pool->alignment);
-				else
-					newBuffer = realloc(buffer, WINPR_ASSERTING_INT_CAST(size_t, size));
+				newBuffer = winpr_aligned_realloc(buffer, WINPR_ASSERTING_INT_CAST(size_t, size),
+				                                  pool->alignment);
 
 				if (!newBuffer)
 					goto out_error_no_free;
@@ -365,10 +345,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 	return buffer;
 
 out_error:
-	if (pool->alignment)
-		winpr_aligned_free(buffer);
-	else
-		free(buffer);
+	winpr_aligned_free(buffer);
 out_error_no_free:
 	BufferPool_Unlock(pool);
 	return nullptr;
@@ -468,10 +445,7 @@ void BufferPool_Clear(wBufferPool* pool)
 		{
 			(pool->size)--;
 
-			if (pool->alignment)
-				winpr_aligned_free(pool->array[pool->size]);
-			else
-				free(pool->array[pool->size]);
+			winpr_aligned_free(pool->array[pool->size]);
 		}
 	}
 	else
@@ -482,20 +456,14 @@ void BufferPool_Clear(wBufferPool* pool)
 		{
 			(pool->aSize)--;
 
-			if (pool->alignment)
-				winpr_aligned_free(pool->aArray[pool->aSize].buffer);
-			else
-				free(pool->aArray[pool->aSize].buffer);
+			winpr_aligned_free(pool->aArray[pool->aSize].buffer);
 		}
 
 		while (pool->uSize > 0)
 		{
 			(pool->uSize)--;
 
-			if (pool->alignment)
-				winpr_aligned_free(pool->uArray[pool->uSize].buffer);
-			else
-				free(pool->uArray[pool->uSize].buffer);
+			winpr_aligned_free(pool->uArray[pool->uSize].buffer);
 		}
 	}
 

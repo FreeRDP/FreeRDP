@@ -51,7 +51,7 @@ struct sdlPointer
 
 		size = 4ull * pointer.width * pointer.height;
 		winpr_aligned_free(data);
-		data = static_cast<BYTE*>(winpr_aligned_malloc(size, 16));
+		data = static_cast<BYTE*>(winpr_aligned_calloc(1, size, 16));
 
 		if (!data)
 			return false;
@@ -301,7 +301,7 @@ rdpPointer* sdl_Pointer_Copy(const rdpPointer* pointer)
 	copy->pointer.xorBpp = pointer->xorBpp;
 	if (ptr->size > 0)
 	{
-		copy->data = static_cast<BYTE*>(winpr_aligned_malloc(ptr->size, 32));
+		copy->data = static_cast<BYTE*>(winpr_aligned_calloc(1, ptr->size, 32));
 		if (!copy->data)
 		{
 			free(copy);

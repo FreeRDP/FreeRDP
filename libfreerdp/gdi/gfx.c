@@ -1317,7 +1317,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->scanline = gfx_align_scanline(surface->width * 4UL, 16);
-	surface->data = (BYTE*)winpr_aligned_malloc(1ull * surface->scanline * surface->height, 16);
+	surface->data = (BYTE*)winpr_aligned_calloc(surface->scanline, surface->height, 16);
 
 	if (!surface->data)
 	{
