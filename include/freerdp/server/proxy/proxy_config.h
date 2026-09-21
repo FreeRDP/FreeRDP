@@ -36,6 +36,17 @@ extern "C"
 {
 #endif
 
+	/**
+	 * @brief An enum representing the allowed proxy target certificate policy settings
+	 * @since version 3.32.0
+	 */
+	typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
+	{
+		FREERDP_PROXY_CERT_POLICY_DENY = 0,
+		FREERDP_PROXY_CERT_POLICY_ALLOW,
+		FREERDP_PROXY_CERT_POLICY_PINNED
+	} FreeRDP_ProxyCertPolicy;
+
 	typedef struct proxy_config proxyConfig;
 
 	struct proxy_config
@@ -136,6 +147,11 @@ extern "C"
 
 		BOOL ServerExtSecurity; /** @since version 3.32.0 */
 		BOOL ClientExtSecurity; /** @since version 3.32.0 */
+
+		FreeRDP_ProxyCertPolicy TargetCertPolicy; /** @since version 3.32.0 */
+		char* TargetCertPEM;                      /** @since version 3.32.0 */
+		size_t TargetCertPEMLength;               /** @since version 3.32.0 */
+		char* TargetCertHash;                     /** @since version 3.32.0 */
 	};
 
 	/**
@@ -263,6 +279,25 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API const char* pf_config_get(const proxyConfig* config, const char* section,
 	                                      const char* key);
+
+	/**
+	 * @brief Convert a \ref FreeRDP_ProxyCertPolicy value to a string
+	 * @param policy The value to convert
+	 * @return A string representation of the enum value
+	 * @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API const char* pf_config_policy_to_str(FreeRDP_ProxyCertPolicy policy);
+
+	/**
+	 * @brief Convert a string to a \ref FreeRDP_ProxyCertPolicy value
+	 * @param val The string to try to convert
+	 * @return A \ref FreeRDP_ProxyCertPolicy value matching \ref val. \ref
+	 * FREERDP_PROXY_CERT_POLICY_DENY if not mappable.
+	 * @since version 3.32.0
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API FreeRDP_ProxyCertPolicy pf_config_policy_from_str(const char* val);
 
 #ifdef __cplusplus
 }
