@@ -82,6 +82,11 @@ static const char* key_target_scard_cert = "SmartcardCert";
 static const char* key_target_scard_key = "SmartcardKey";
 static const char* key_target_scard_pem_cert = "SmartcardCertPEMContent";
 static const char* key_target_scard_pem_key = "SmartcardKeyPEMContent";
+static const char* key_target_cert_policy = "CertificatePolicy"; /** @since version 3.32.0 */
+static const char* key_target_cert_pem = "CertificatePEM";       /** @since version 3.32.0 */
+static const char* key_target_cert_pem_content =
+    "CertificatePEMContent";                                 /** @since version 3.32.0 */
+static const char* key_target_cert_hash = "CertificateHash"; /** @since version 3.32.0 */
 
 static const char* section_plugins = "Plugins";
 static const char* key_plugins_modules = "Modules";
@@ -393,6 +398,81 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 			if (!config->TargetSmartcardKey)
 				return FALSE;
 			config->TargetSmartcardKeyLength = len;
+		}
+	}
+
+	target_value = pf_config_get_str(ini, section_target, key_target_cert_pem, FALSE);
+	if (target_value)
+	{
+		size_t len = 0;
+		char* pem = crypto_read_pem(target_value, &len);
+		if (!pem)
+			return FALSE;
+		winpr_znfree(config->TargetCertPEM, config->TargetCertPEMLength);
+		config->TargetCertPEM = pem;
+		config->TargetCertPEMLength = len;
+	}
+
+	target_value = pf_config_get_str(ini, section_target, key_target_cert_pem_content, FALSE);
+	if (target_value)
+	{
+		size_t len = 0;
+		const char* pem_value = pf_config_get_str(ini, section_target, key_target_cert_pem, FALSE);
+		if (pem_value)
+			WLog_WARN(TAG, "In section [%s] both, '%s' and '%s' are provided. Ignoring %s",
+			          section_target, key_target_cert_pem, key_target_cert_pem_content,
+			          key_target_cert_pem);
+
+		char* pem = crypto_read_pem(target_value, &len);
+		if (!pem)
+			return FALSE;
+		winpr_znfree(config->TargetCertPEM, config->TargetCertPEMLength);
+		config->TargetCertPEM = pf_config_decode_base64(target_value, "TargetCertificateContent",
+		                                                &config->TargetCertPEMLength);
+		if (!config->TargetCertPEM || (config->TargetCertPEMLength == 0))
+			return FALSE;
+	}
+
+	target_value = pf_config_get_str(ini, section_target, key_target_cert_hash, FALSE);
+	if (target_value)
+	{
+		const char* sep = strchr(target_value, ':');
+		char hash[32] = WINPR_C_ARRAY_INIT;
+		if (sep)
+		{
+			const size_t len = WINPR_ASSERTING_INT_CAST(size_t, sep - target_value);
+			if (len < sizeof(hash))
+			{
+				memcpy(hash, target_value, len);
+			}
+		}
+		if (!sep || (winpr_md_type_from_string(hash) == WINPR_MD_NONE))
+		{
+			WLog_WARN(TAG,
+			          "In section [%s] key %s value %s is invalid. Format required is '<hash "
+			          "type>:<hash value>'.",
+			          section_target, key_target_cert_hash, target_value);
+			return FALSE;
+		}
+		winpr_zfree(config->TargetCertHash);
+		config->TargetCertHash = _strdup(target_value);
+		if (!config->TargetCertHash)
+			return FALSE;
+	}
+
+	target_value = pf_config_get_str(ini, section_target, key_target_cert_policy, FALSE);
+	if (target_value)
+	{
+		config->TargetCertPolicy = pf_config_policy_from_str(target_value);
+		if (config->TargetCertPolicy == FREERDP_PROXY_CERT_POLICY_PINNED)
+		{
+			if (!config->TargetCertHash && !config->TargetCertPEM)
+			{
+				WLog_WARN(TAG, "In section [%s] key %s value %s requires one of %s, %s or %s set.",
+				          section_target, key_target_cert_policy, target_value,
+				          key_target_cert_hash, key_target_cert_pem, key_target_cert_pem_content);
+				return FALSE;
+			}
 		}
 	}
 
@@ -765,6 +845,18 @@ BOOL pf_server_config_dump(const char* file)
 	if (IniFile_SetKeyValueString(ini, section_target, key_target_scard_pem_key,
 	                              "<base64 encoded PEM>") < 0)
 		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_target, key_target_cert_policy,
+	                              "[deny|allow|pinned]") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_target, key_target_cert_pem,
+	                              "optional/path/some/file.pem.crt") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_target, key_target_cert_pem_content,
+	                              "<base64 encoded PEM>") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_target, key_target_cert_hash,
+	                              "<hash type>:<hash hex string>") < 0)
+		goto fail;
 	/* Codec configuration */
 	if (IniFile_SetKeyValueString(ini, section_codecs, key_codecs_rfx, bool_str_true) < 0)
 		goto fail;
@@ -963,6 +1055,11 @@ void pf_server_config_print(const proxyConfig* config)
 		CONFIG_PRINT_BOOL(config, TargetSmartcardAuth);
 		CONFIG_PRINT_SECRET_STR(config, TargetSmartcardCert);
 		CONFIG_PRINT_SECRET_STR(config, TargetSmartcardKey);
+
+		WLog_INFO(TAG, "\t\t%s%s: %s", section_target, key_target_cert_policy,
+		          pf_config_policy_to_str(config->TargetCertPolicy));
+		CONFIG_PRINT_SECRET_STR(config, TargetCertPEM);
+		CONFIG_PRINT_SECRET_STR(config, TargetCertHash);
 	}
 
 	CONFIG_PRINT_SECTION(section_input);
@@ -1039,6 +1136,8 @@ void pf_server_config_free(proxyConfig* config)
 	winpr_zfree(config->TargetPassword);
 	winpr_znfree(config->TargetSmartcardCert, config->TargetSmartcardCertLength);
 	winpr_znfree(config->TargetSmartcardKey, config->TargetSmartcardKeyLength);
+	winpr_zfree(config->TargetCertHash);
+	winpr_znfree(config->TargetCertPEM, config->TargetCertPEMLength);
 
 	CommandLineParserFree(config->Passthrough);
 	CommandLineParserFree(config->Intercept);
@@ -1185,7 +1284,10 @@ BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config)
 	if (!pf_config_copy_string_n(&tmp->PrivateKeyPEM, config->PrivateKeyPEM,
 	                             config->PrivateKeyPEMLength))
 		goto fail;
-
+	if (!pf_config_copy_string(&tmp->TargetCertPEM, config->TargetCertPEM))
+		goto fail;
+	if (!pf_config_copy_string(&tmp->TargetCertHash, config->TargetCertHash))
+		goto fail;
 	tmp->ini = IniFile_Clone(config->ini);
 	if (!tmp->ini)
 		goto fail;
@@ -1517,4 +1619,29 @@ const char* pf_config_get(const proxyConfig* config, const char* section, const 
 	WINPR_ASSERT(key);
 
 	return IniFile_GetKeyValueString(config->ini, section, key);
+}
+
+const char* pf_config_policy_to_str(FreeRDP_ProxyCertPolicy policy)
+{
+	switch (policy)
+	{
+		case FREERDP_PROXY_CERT_POLICY_ALLOW:
+			return "allow";
+		case FREERDP_PROXY_CERT_POLICY_PINNED:
+			return "pinned";
+		case FREERDP_PROXY_CERT_POLICY_DENY:
+		default:
+			return "deny";
+	}
+}
+
+FreeRDP_ProxyCertPolicy pf_config_policy_from_str(const char* val)
+{
+	if (!val)
+		return FREERDP_PROXY_CERT_POLICY_DENY;
+	if (_stricmp(val, "allow") == 0)
+		return FREERDP_PROXY_CERT_POLICY_ALLOW;
+	if (_stricmp(val, "pinned") == 0)
+		return FREERDP_PROXY_CERT_POLICY_PINNED;
+	return FREERDP_PROXY_CERT_POLICY_DENY;
 }

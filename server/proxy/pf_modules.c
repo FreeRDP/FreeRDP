@@ -170,8 +170,12 @@ static BOOL pf_modules_proxy_ArrayList_ForEachFkt(void* data, size_t index, va_l
 			ok = IFCALLRESULT(TRUE, plugin->ClientPostDisconnect, plugin, pdata, custom);
 			break;
 
+			/* ClientX509Certificate callback is special. If no callback is set, tell the parent the
+			 * run failed. Only on failure the rest of the certificate policy is checked. If we
+			 * return success it means no more certificate checks are done.
+			 */
 		case HOOK_TYPE_CLIENT_VERIFY_X509:
-			ok = IFCALLRESULT(TRUE, plugin->ClientX509Certificate, plugin, pdata, custom);
+			ok = IFCALLRESULT(FALSE, plugin->ClientX509Certificate, plugin, pdata, custom);
 			break;
 
 		case HOOK_TYPE_CLIENT_LOGIN_FAILURE:
