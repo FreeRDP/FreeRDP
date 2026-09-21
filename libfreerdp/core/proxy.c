@@ -102,6 +102,8 @@ BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* l
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) != PROXY_TYPE_NONE)
 	{
 		*lpPeerHostname = freerdp_settings_get_string(settings, FreeRDP_ProxyHostname);
+		if (!*lpPeerHostname || !winpr_str_is_valid_url(*lpPeerHostname))
+			return FALSE;
 		*lpPeerPort = freerdp_settings_get_uint16(settings, FreeRDP_ProxyPort);
 		*lpProxyUsername = freerdp_settings_get_string(settings, FreeRDP_ProxyUsername);
 		*lpProxyPassword = freerdp_settings_get_string(settings, FreeRDP_ProxyPassword);
@@ -578,14 +580,10 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 {
 	BOOL rc = FALSE;
 	int status = 0;
-	wStream* s = nullptr;
 	char port_str[10] = WINPR_C_ARRAY_INIT;
 	char recv_buf[256] = WINPR_C_ARRAY_INIT;
 	char* eol = nullptr;
 	size_t resultsize = 0;
-	size_t reserveSize = 0;
-	size_t portLen = 0;
-	size_t hostLen = 0;
 	const char connect[] = "CONNECT ";
 	const char httpheader[] = " HTTP/1.1" CRLF "Host: ";
 
@@ -595,16 +593,20 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 	const UINT32 timeout =
 	    freerdp_settings_get_uint32(context->settings, FreeRDP_TcpConnectTimeout);
 
+	if (!winpr_str_is_valid_url(hostname))
+		return FALSE;
+
 	if (_itoa_s(port, port_str, sizeof(port_str), 10) < 0)
 	{
 		WLog_ERR(TAG, "itoa %s failed", port_str);
 		return FALSE;
 	}
 
-	hostLen = strlen(hostname);
-	portLen = strnlen(port_str, sizeof(port_str));
-	reserveSize = strlen(connect) + (hostLen + 1ull + portLen) * 2ull + strlen(httpheader);
-	s = Stream_New(nullptr, reserveSize);
+	const size_t hostLen = strlen(hostname);
+	const size_t portLen = strnlen(port_str, sizeof(port_str));
+	const size_t reserveSize =
+	    strlen(connect) + (hostLen + 1ull + portLen) * 2ull + strlen(httpheader);
+	wStream* s = Stream_New(nullptr, reserveSize);
 	if (!s)
 		goto fail;
 

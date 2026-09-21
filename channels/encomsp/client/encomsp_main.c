@@ -44,6 +44,7 @@ struct encomsp_plugin
 	DWORD OpenHandle;
 	wMessageQueue* queue;
 	rdpContext* rdpcontext;
+	BOOL firstFlagReceived;
 };
 
 /**
@@ -954,10 +955,13 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
+		if (encomsp->firstFlagReceived)
+			return ERROR_INVALID_DATA;
+		encomsp->firstFlagReceived = TRUE;
 		if (encomsp->data_in)
 			Stream_Free(encomsp->data_in, TRUE);
 
-		encomsp->data_in = Stream_New(nullptr, totalLength);
+		encomsp->data_in = Stream_New(nullptr, dataLength);
 
 		if (!encomsp->data_in)
 		{
@@ -967,6 +971,8 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 	}
 
 	wStream* data_in = encomsp->data_in;
+	if (!data_in)
+		return ERROR_INVALID_DATA;
 
 	if (!Stream_EnsureRemainingCapacity(data_in, dataLength))
 	{
@@ -976,8 +982,15 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 
 	Stream_Write(data_in, pData, dataLength);
 
+	if (Stream_GetPosition(data_in) > totalLength)
+		return ERROR_INVALID_DATA;
+
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
+		if (!encomsp->firstFlagReceived)
+			return ERROR_INVALID_DATA;
+		encomsp->firstFlagReceived = FALSE;
+
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
 			WLog_ERR(TAG, "encomsp_plugin_process_received: read error");

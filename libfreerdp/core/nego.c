@@ -1002,6 +1002,10 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 
 		if (strnlen(str, len) == len)
 		{
+			/* the token should not be multiline. */
+			if (winpr_strnstr(str, "\n", len) || winpr_strnstr(str, "\r", len))
+				return FALSE;
+
 			if (isToken)
 				result = nego_set_routing_token(nego, str, (UINT32)len);
 			else

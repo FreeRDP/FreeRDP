@@ -117,6 +117,7 @@ typedef struct
 
 	RdpdrClientContext context;
 	BOOL clearing;
+	BOOL firstFlagReceived;
 } rdpdrPlugin;
 
 WINPR_ATTR_NODISCARD

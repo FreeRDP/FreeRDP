@@ -458,7 +458,10 @@ static CliprdrStream* CliprdrStream_New(ULONG index, void* pData, const FILEDESC
 					success = TRUE;
 				}
 
-				instance->m_lSize.QuadPart = *((LONGLONG*)clipboard->req_fdata);
+				if (clipboard->req_fsize < 8)
+					success = FALSE;
+				else
+					instance->m_lSize.QuadPart = *((LONGLONG*)clipboard->req_fdata);
 				free(clipboard->req_fdata);
 			}
 			else

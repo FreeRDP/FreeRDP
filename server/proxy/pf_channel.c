@@ -116,13 +116,34 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 
 	{
 		const size_t currentPacketSize = channelTracker_getCurrentPacketSize(tracker);
-		if (tracker->currentPacketReceived + xsize > currentPacketSize)
-			WLog_INFO(TAG, "cumulated size is bigger (%" PRIuz ") than total size (%" PRIuz ")",
-			          tracker->currentPacketReceived + xsize, currentPacketSize);
-	}
+		if (xsize > currentPacketSize)
+		{
+			WLog_WARN(TAG,
+			          "current fragment size is bigger (%" PRIuz ") than total size (%" PRIuz ")",
+			          xsize, currentPacketSize);
+			return PF_CHANNEL_RESULT_ERROR;
+		}
 
-	tracker->currentPacketReceived += xsize;
-	tracker->currentPacketFragments++;
+		if (xsize > SIZE_MAX - tracker->currentPacketReceived)
+		{
+			WLog_WARN(TAG,
+			          "current fragment size is overflowing size_t (%" PRIuz
+			          ") when added to (%" PRIuz ")",
+			          xsize, tracker->currentPacketReceived);
+			return PF_CHANNEL_RESULT_ERROR;
+		}
+
+		tracker->currentPacketReceived += xsize;
+		tracker->currentPacketFragments++;
+		if (tracker->currentPacketReceived > currentPacketSize)
+		{
+			WLog_WARN(TAG, "cumulated size is bigger (%" PRIuz ") than total size (%" PRIuz ")",
+			          tracker->currentPacketReceived + xsize, currentPacketSize);
+			return PF_CHANNEL_RESULT_ERROR;
+		}
+		else if ((tracker->currentPacketReceived == currentPacketSize) && !lastPacket)
+			return PF_CHANNEL_RESULT_ERROR;
+	}
 
 	switch (channelTracker_getMode(tracker))
 	{

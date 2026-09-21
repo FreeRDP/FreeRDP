@@ -115,6 +115,7 @@ static NTSTATUS GetLastErrorToIoStatus(SERIAL_DEVICE* serial)
 	return STATUS_UNSUCCESSFUL;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
 	DWORD DesiredAccess = 0;
@@ -165,6 +166,13 @@ static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	SharedAccess = 0;
 	CreateDisposition = OPEN_EXISTING;
 #endif
+	if (serial->hComm)
+	{
+		WLog_Print(serial->log, WLOG_ERROR, "Device %s already open, cancel request",
+		           serial->device.name);
+		return ERROR_INVALID_DATA;
+	}
+
 	serial->hComm = winpr_CreateFile(serial->device.name, DesiredAccess, SharedAccess,
 	                                 nullptr,              /* SecurityAttributes */
 	                                 CreateDisposition, 0, /* FlagsAndAttributes */
@@ -217,6 +225,13 @@ static UINT serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 
 	Stream_Seek(irp->input, 32); /* Padding (32 bytes) */
 
+	if (!serial->hComm)
+	{
+		WLog_Print(serial->log, WLOG_ERROR, "serial device %s is not open, aborting close",
+		           serial->device.name);
+		return ERROR_INVALID_DATA;
+	}
+
 	close_terminated_irp_thread_handles(serial, TRUE);
 
 	if (!CloseHandle(serial->hComm))
@@ -241,11 +256,11 @@ error_handle:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT32 Length = 0;
 	UINT64 Offset = 0;
-	BYTE* buffer = nullptr;
 	DWORD nbRead = 0;
 
 	WINPR_ASSERT(serial);
@@ -259,7 +274,15 @@ static UINT serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	(void)Offset;                /* [MS-RDPESP] 3.2.5.1.4 Processing a Server Read Request Message
 	                              * ignored */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
-	buffer = (BYTE*)calloc(Length, sizeof(BYTE));
+
+	if (!serial->hComm)
+	{
+		WLog_Print(serial->log, WLOG_ERROR, "serial device %s is not open, aborting read",
+		           serial->device.name);
+		return ERROR_INVALID_DATA;
+	}
+
+	BYTE* buffer = (BYTE*)calloc(Length, sizeof(BYTE));
 
 	if (buffer == nullptr)
 	{
@@ -307,6 +330,7 @@ error_handle:
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT32 Length = 0;
@@ -338,6 +362,14 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	const void* ptr = Stream_ConstPointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, Length))
 		return ERROR_INVALID_DATA;
+
+	if (!serial->hComm)
+	{
+		WLog_Print(serial->log, WLOG_ERROR, "serial device %s is not open, aborting write",
+		           serial->device.name);
+		return ERROR_INVALID_DATA;
+	}
+
 	/* FIXME: CommWriteFile to be replaced by WriteFile */
 	if (CommWriteFile(serial->hComm, ptr, Length, &nbWritten, nullptr))
 	{
@@ -363,6 +395,7 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 {
 	DWORD BytesReturned = 0;
@@ -382,6 +415,13 @@ static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(serial->log, irp->input, InputBufferLength))
 		return ERROR_INVALID_DATA;
+
+	if (!serial->hComm)
+	{
+		WLog_Print(serial->log, WLOG_ERROR,
+		           "serial device %s is not open, aborting device IO control", serial->device.name);
+		return ERROR_INVALID_DATA;
+	}
 
 	const BYTE* InputBuffer = Stream_PointerAs(irp->input, BYTE);
 	if (!Stream_SafeSeek(irp->input, InputBufferLength))

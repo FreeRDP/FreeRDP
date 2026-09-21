@@ -696,6 +696,10 @@ static BOOL input_recv_sync_event(rdpInput* input, wStream* s)
 
 	Stream_Seek(s, 2);                  /* pad2Octets (2 bytes) */
 	Stream_Read_UINT32(s, toggleFlags); /* toggleFlags (4 bytes) */
+
+	/* only pass input if we are actually connected */
+	if (rdp_get_state(input->context->rdp) != CONNECTION_STATE_ACTIVE)
+		return TRUE;
 	return IFCALLRESULT(TRUE, input->SynchronizeEvent, input, toggleFlags);
 }
 
@@ -723,6 +727,10 @@ static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 		          "keyCode=0x%04" PRIx16
 		          ", high byte values should be sent in keyboardFlags field, ignoring.",
 		          keyCode);
+
+	/* only pass input if we are actually connected */
+	if (rdp_get_state(input->context->rdp) != CONNECTION_STATE_ACTIVE)
+		return TRUE;
 	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, keyboardFlags, keyCode & 0xFF);
 }
 
@@ -746,6 +754,9 @@ static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
 	if (keyboardFlags & KBD_FLAGS_RELEASE)
 		keyboardFlags &= ~KBD_FLAGS_DOWN;
 
+	/* only pass input if we are actually connected */
+	if (rdp_get_state(input->context->rdp) != CONNECTION_STATE_ACTIVE)
+		return TRUE;
 	return IFCALLRESULT(TRUE, input->UnicodeKeyboardEvent, input, keyboardFlags, unicodeCode);
 }
 
@@ -764,6 +775,10 @@ static BOOL input_recv_mouse_event(rdpInput* input, wStream* s)
 	Stream_Read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
 	Stream_Read_UINT16(s, xPos);         /* xPos (2 bytes) */
 	Stream_Read_UINT16(s, yPos);         /* yPos (2 bytes) */
+
+	/* only pass input if we are actually connected */
+	if (rdp_get_state(input->context->rdp) != CONNECTION_STATE_ACTIVE)
+		return TRUE;
 	return IFCALLRESULT(TRUE, input->MouseEvent, input, pointerFlags, xPos, yPos);
 }
 
@@ -791,6 +806,10 @@ static BOOL input_recv_relmouse_event(rdpInput* input, wStream* s)
 		         pointerFlags, xDelta, yDelta);
 		return FALSE;
 	}
+
+	/* only pass input if we are actually connected */
+	if (rdp_get_state(input->context->rdp) != CONNECTION_STATE_ACTIVE)
+		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->RelMouseEvent, input, pointerFlags, xDelta, yDelta);
 }
@@ -820,6 +839,9 @@ static BOOL input_recv_extended_mouse_event(rdpInput* input, wStream* s)
 		return FALSE;
 	}
 
+	/* only pass input if we are actually connected */
+	if (rdp_get_state(input->context->rdp) != CONNECTION_STATE_ACTIVE)
+		return TRUE;
 	return IFCALLRESULT(TRUE, input->ExtendedMouseEvent, input, pointerFlags, xPos, yPos);
 }
 
