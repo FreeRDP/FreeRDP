@@ -41,6 +41,10 @@
 
 #include <winpr/tools/makecert.h>
 
+#if !defined(_WIN32)
+#include <sys/stat.h>
+#endif
+
 struct S_MAKECERT_CONTEXT
 {
 	int argc;
@@ -69,6 +73,15 @@ struct S_MAKECERT_CONTEXT
 	int duration_years;
 	int duration_months;
 };
+
+WINPR_ATTR_NODISCARD
+static BOOL utils_set_umask(void)
+{
+#if !defined(_WIN32)
+	(void)umask(S_IRWXG | S_IRWXO);
+#endif
+	return TRUE;
+}
 
 WINPR_ATTR_MALLOC(winpr_zfree, 1)
 static char* makecert_read_str(BIO* bio, size_t* pOffset)
@@ -1173,6 +1186,9 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 MAKECERT_CONTEXT* makecert_context_new(void)
 {
+	if (!utils_set_umask())
+		return nullptr;
+
 	MAKECERT_CONTEXT* context = (MAKECERT_CONTEXT*)calloc(1, sizeof(MAKECERT_CONTEXT));
 
 	if (context)
