@@ -162,7 +162,8 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth, UINT32 nHeigh
 	hBitmap->height = (INT32)nHeight;
 
 	size_t size = 1ull * nWidth * nHeight * FreeRDPGetBytesPerPixel(hBitmap->format);
-	hBitmap->data = winpr_aligned_malloc(size, 16);
+	hBitmap->data =
+	    winpr_aligned_calloc(nWidth * FreeRDPGetBytesPerPixel(hBitmap->format), nHeight, 16);
 	hBitmap->free = winpr_aligned_free;
 
 	if (!hBitmap->data)

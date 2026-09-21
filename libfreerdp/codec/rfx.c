@@ -167,7 +167,7 @@ static inline void* rfx_decoder_tile_new(const void* val)
 	if (!(tile = (RFX_TILE*)winpr_aligned_calloc(1, sizeof(RFX_TILE), 32)))
 		return nullptr;
 
-	if (!(tile->data = (BYTE*)winpr_aligned_malloc(size, 16)))
+	if (!(tile->data = (BYTE*)winpr_aligned_calloc(1, size, 16)))
 	{
 		winpr_aligned_free(tile);
 		return nullptr;
@@ -1703,7 +1703,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* WINPR_RESTRICT context,
 		WINPR_ASSERT(context->quants == nullptr);
 		WINPR_ASSERT(NR_QUANT_VALUES == ARRAYSIZE(rfx_default_quantization_values));
 		if (!(context->quants =
-		          (UINT32*)winpr_aligned_malloc(sizeof(rfx_default_quantization_values), 32)))
+		          (UINT32*)winpr_aligned_calloc(1, sizeof(rfx_default_quantization_values), 32)))
 			goto skip_encoding_loop;
 
 		CopyMemory(context->quants, &rfx_default_quantization_values,

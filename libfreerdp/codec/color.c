@@ -272,7 +272,7 @@ BYTE* freerdp_glyph_convert_ex(UINT32 width, UINT32 height, const BYTE* WINPR_RE
 
 	WINPR_ASSERT(data);
 
-	BYTE* dstData = (BYTE*)winpr_aligned_malloc(1ull * width * height, 16);
+	BYTE* dstData = (BYTE*)winpr_aligned_calloc(width, height, 16);
 
 	if (!dstData)
 		return nullptr;

@@ -186,9 +186,9 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 		ci.height = yTargetSize;
 		ci.xhot = (XcursorDim)lround(1.0 * pointer->xPos * xscale);
 		ci.yhot = (XcursorDim)lround(1.0 * pointer->yPos * yscale);
-		const size_t size = 1ull * ci.height * ci.width * FreeRDPGetBytesPerPixel(CursorFormat);
 
-		void* tmp = winpr_aligned_malloc(size, 16);
+		void* tmp =
+		    winpr_aligned_calloc(ci.height, ci.width * FreeRDPGetBytesPerPixel(CursorFormat), 16);
 		if (!tmp)
 		{
 			xf_unlock_x11(xfc);
@@ -303,10 +303,8 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	xpointer->mCursors = 0;
 
 	{
-		const size_t size =
-		    1ull * pointer->height * pointer->width * FreeRDPGetBytesPerPixel(CursorFormat);
-
-		xpointer->cursorPixels = (XcursorPixel*)winpr_aligned_malloc(size, 16);
+		xpointer->cursorPixels = (XcursorPixel*)winpr_aligned_calloc(
+		    pointer->height, pointer->width * FreeRDPGetBytesPerPixel(CursorFormat), 16);
 		if (!xpointer->cursorPixels)
 			goto fail;
 	}

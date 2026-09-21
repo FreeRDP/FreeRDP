@@ -85,10 +85,10 @@ int TestSynchInit(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	pErrors = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
-	pTestThreadFunctionCalls = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
-	pTestOnceFunctionCalls = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
-	pInitOnceExecuteOnceCalls = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
+	pErrors = winpr_aligned_calloc(1, sizeof(LONG), sizeof(LONG));
+	pTestThreadFunctionCalls = winpr_aligned_calloc(1, sizeof(LONG), sizeof(LONG));
+	pTestOnceFunctionCalls = winpr_aligned_calloc(1, sizeof(LONG), sizeof(LONG));
+	pInitOnceExecuteOnceCalls = winpr_aligned_calloc(1, sizeof(LONG), sizeof(LONG));
 
 	if (!pErrors || !pTestThreadFunctionCalls || !pTestOnceFunctionCalls ||
 	    !pInitOnceExecuteOnceCalls)

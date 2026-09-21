@@ -955,7 +955,7 @@ static int test_progressive_ms_sample(char* ms_sample_path)
 
 	count = 4;
 	progressive = progressive_context_new(FALSE);
-	g_DstData = winpr_aligned_malloc(1LL * g_DstStep * g_Height, 16);
+	g_DstData = winpr_aligned_calloc(g_DstStep, g_Height, 16);
 	progressive_create_surface_context(progressive, 0, g_Width, g_Height);
 
 	/* image 1 */

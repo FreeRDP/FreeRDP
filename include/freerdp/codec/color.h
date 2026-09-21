@@ -302,7 +302,7 @@ FREERDP_API DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD first, DWORD second);
 	 * @param height   height to copy in pixels
 	 * @param data      source buffer, must be (nWidth + 7) / 8 bytes long
 	 *
-	 * @return          A buffer allocated with winpr_aligned_malloc(width * height, 16)
+	 * @return          A buffer allocated with winpr_aligned_calloc(width, height, 16)
 	 *                  if successful, nullptr otherwise.
 	 */
 
@@ -319,7 +319,7 @@ FREERDP_API DWORD FreeRDPAreColorFormatsEqualNoAlpha(DWORD first, DWORD second);
 	 * @param data     source buffer, must be (nWidth + 7) / 8 bytes long
 	 * @param len      the length of \ref data in bytes
 	 *
-	 * @return          A buffer allocated with winpr_aligned_malloc(width * height, 16)
+	 * @return          A buffer allocated with winpr_aligned_calloc(width, height, 16)
 	 *                  if successful, nullptr otherwise.
 	 * @since version 3.21.0
 	 */

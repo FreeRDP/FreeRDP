@@ -19,7 +19,7 @@ int TestAlignment(int argc, char* argv[])
 
 	/* _aligned_malloc */
 
-	ptr = winpr_aligned_malloc(100, alignment);
+	ptr = winpr_aligned_calloc(1, 100, alignment);
 
 	if (ptr == nullptr)
 	{

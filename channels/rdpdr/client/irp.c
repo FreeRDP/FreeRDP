@@ -119,7 +119,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 
 	if (!irp)
 	{
-		WLog_Print(log, WLOG_ERROR, "_aligned_malloc failed!");
+		WLog_Print(log, WLOG_ERROR, "winpr_aligned_calloc failed!");
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
 		return nullptr;

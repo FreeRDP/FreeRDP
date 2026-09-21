@@ -97,7 +97,7 @@ int TestErrorSetLastError(int argc, char* argv[])
 		return -1;
 	}
 
-	pLoopCount = winpr_aligned_malloc(sizeof(LONG), sizeof(LONG));
+	pLoopCount = winpr_aligned_calloc(1, sizeof(LONG), sizeof(LONG));
 	if (!pLoopCount)
 	{
 		printf("Unable to allocate memory\n");
