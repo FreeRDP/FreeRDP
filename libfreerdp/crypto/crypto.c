@@ -273,12 +273,24 @@ BOOL crypto_write_pem(const char* WINPR_RESTRICT filename, const char* WINPR_RES
 		char buffer[128] = WINPR_C_ARRAY_INIT;
 		WLog_WARN(TAG, "Failed to chmod %s: %s", filename,
 		          winpr_strerror(errno, buffer, sizeof(buffer)));
-		fclose(fp);
+		const int fres = fclose(fp);
+		if (fres != 0)
+		{
+			char buffer2[128] = WINPR_C_ARRAY_INIT;
+			WLog_WARN(TAG, "Failed to close PEM [%" PRIuz "] to file '%s' [%s]", length, filename,
+			          winpr_strerror(errno, buffer2, sizeof(buffer2)));
+		}
 		goto fail;
 	}
 #endif
 	rc = fwrite(pem, 1, size, fp);
-	(void)fclose(fp);
+	const int fres = fclose(fp);
+	if (fres != 0)
+	{
+		char buffer[128] = WINPR_C_ARRAY_INIT;
+		WLog_WARN(TAG, "Failed to close PEM [%" PRIuz "] to file '%s' [%s]", length, filename,
+		          winpr_strerror(errno, buffer, sizeof(buffer)));
+	}
 fail:
 	if (rc == 0)
 	{
