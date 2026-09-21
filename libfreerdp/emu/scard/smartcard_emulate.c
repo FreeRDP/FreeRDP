@@ -2860,9 +2860,7 @@ SmartcardEmulationContext* Emulate_New(const rdpSettings* settings)
 	{
 		wObject* obj = HashTable_ValueObject(smartcard->handles);
 		WINPR_ASSERT(obj);
-		obj->fnObjectEquals = nullptr;
-		obj->fnObjectNew = entry_clone;
-		obj->fnObjectFree = entry_free;
+		obj->fnObjectFree = scard_handle_free;
 	}
 
 	smartcard->pinCounters = HashTable_New(TRUE);
