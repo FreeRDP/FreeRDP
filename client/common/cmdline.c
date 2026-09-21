@@ -4865,6 +4865,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	WINPR_ASSERT(promptForPassword);
 	WINPR_ASSERT(user);
 
+	BOOL decorationsDefault = TRUE;
 	do
 	{
 		BOOL enable = (arg->Value != nullptr);
@@ -4999,8 +5000,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "decorations")
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_Decorations, enable))
-				return fail_at(arg, COMMAND_LINE_ERROR);
+			decorationsDefault = enable;
 		}
 		CommandLineSwitchCase(arg, "dynamic-resolution")
 		{
@@ -5110,6 +5110,7 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "app")
 		{
+			decorationsDefault = FALSE;
 			int rc = parse_app_options(settings, arg);
 			if (rc != 0)
 				return fail_at(arg, rc);
@@ -5696,6 +5697,10 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != nullptr);
+
+	if (!freerdp_settings_set_bool(settings, FreeRDP_Decorations, decorationsDefault))
+		return fail_at(arg, COMMAND_LINE_ERROR);
+
 	return 0;
 }
 

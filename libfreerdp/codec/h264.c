@@ -108,6 +108,7 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 	return yuv_ensure_buffer(h264, stride, width, height);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL isRectValid(UINT32 width, UINT32 height, const RECTANGLE_16* rect)
 {
 	WINPR_ASSERT(rect);
@@ -123,9 +124,18 @@ static BOOL isRectValid(UINT32 width, UINT32 height, const RECTANGLE_16* rect)
 		return FALSE;
 	if (rect->top >= rect->bottom)
 		return FALSE;
+
+	const UINT32 w = rect->right - rect->left;
+	if ((w % 2) != 0)
+		return FALSE;
+
+	const UINT32 h = rect->bottom - rect->top;
+	if ((h % 2) != 0)
+		return FALSE;
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL areRectsValid(wLog* log, UINT32 width, UINT32 height, const RECTANGLE_16* rects,
                           UINT32 count)
 {
@@ -145,6 +155,7 @@ static BOOL areRectsValid(wLog* log, UINT32 width, UINT32 height, const RECTANGL
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static int log_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
                           const RECTANGLE_16* rects, UINT32 nrRects)
 {
@@ -200,6 +211,7 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
                                     RDPGFX_H264_METABLOCK* meta, size_t count)
 {
@@ -234,6 +246,7 @@ static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
                              BYTE* pOldYUVData[3], UINT32 const iStride[3])
 {
@@ -268,6 +281,7 @@ static inline BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE_16* regionRect,
                            BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
                            RDPGFX_H264_METABLOCK* meta)
@@ -586,6 +600,7 @@ fail:
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
                                  BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
                                  WINPR_ATTR_UNUSED UINT32 nDstWidth, UINT32 nDstHeight,
@@ -720,6 +735,7 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, const RECTANGLE_16* regionR
 static INIT_ONCE subsystems_once = INIT_ONCE_STATIC_INIT;
 static const H264_CONTEXT_SUBSYSTEM* subSystems[MAX_SUBSYSTEMS] = WINPR_C_ARRAY_INIT;
 
+WINPR_ATTR_NODISCARD
 static BOOL CALLBACK h264_register_subsystems(WINPR_ATTR_UNUSED PINIT_ONCE once,
                                               WINPR_ATTR_UNUSED PVOID param,
                                               WINPR_ATTR_UNUSED PVOID* context)
@@ -753,6 +769,7 @@ static BOOL CALLBACK h264_register_subsystems(WINPR_ATTR_UNUSED PINIT_ONCE once,
 	return i > 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL h264_context_init(H264_CONTEXT* h264)
 {
 	if (!h264)
