@@ -66,6 +66,7 @@ struct S_YUV_CONTEXT
 	YUV_COMBINE_WORK_PARAM* work_combined_params;
 };
 
+WINPR_ATTR_NODISCARD
 static inline BOOL avc420_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
                                      const UINT32 iStride[3],
                                      const RECTANGLE_16* WINPR_RESTRICT rect, UINT32 nDstStep,
@@ -96,6 +97,7 @@ static inline BOOL avc420_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
 	                                     &roi) == PRIMITIVES_SUCCESS);
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL avc444_yuv_to_rgb(const BYTE* WINPR_RESTRICT pYUVData[3],
                                      const UINT32 iStride[3],
                                      const RECTANGLE_16* WINPR_RESTRICT rect, UINT32 nDstStep,
@@ -254,6 +256,7 @@ void yuv_context_free(YUV_CONTEXT* context)
 	winpr_aligned_free(context);
 }
 
+WINPR_ATTR_NODISCARD
 static inline YUV_PROCESS_WORK_PARAM pool_decode_param(const RECTANGLE_16* WINPR_RESTRICT rect,
                                                        YUV_CONTEXT* WINPR_RESTRICT context,
                                                        const BYTE* WINPR_RESTRICT pYUVData[3],
@@ -282,6 +285,7 @@ static inline YUV_PROCESS_WORK_PARAM pool_decode_param(const RECTANGLE_16* WINPR
 	return current;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL submit_object(PTP_WORK* WINPR_RESTRICT work_object, PTP_WORK_CALLBACK cb,
                           const void* WINPR_RESTRICT param, YUV_CONTEXT* WINPR_RESTRICT context)
 {
@@ -326,6 +330,7 @@ static void free_objects(PTP_WORK* work_objects, UINT32 waitCount)
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL intersects(UINT32 pos, const RECTANGLE_16* WINPR_RESTRICT regionRects,
                        UINT32 numRegionRects)
 {
@@ -346,6 +351,7 @@ static BOOL intersects(UINT32 pos, const RECTANGLE_16* WINPR_RESTRICT regionRect
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static RECTANGLE_16 clamp(YUV_CONTEXT* WINPR_RESTRICT context,
                           const RECTANGLE_16* WINPR_RESTRICT rect, UINT32 srcHeight)
 {
@@ -361,6 +367,7 @@ static RECTANGLE_16 clamp(YUV_CONTEXT* WINPR_RESTRICT context,
 	return c;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pool_decode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK cb,
                         const BYTE* WINPR_RESTRICT pYUVData[3], const UINT32 iStride[3],
                         UINT32 yuvHeight, UINT32 DstFormat, BYTE* WINPR_RESTRICT dest,
@@ -439,6 +446,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL check_rect(const YUV_CONTEXT* WINPR_RESTRICT yuv,
                               const RECTANGLE_16* WINPR_RESTRICT rect, UINT32 nDstWidth,
                               UINT32 nDstHeight)
@@ -497,6 +505,7 @@ static void CALLBACK yuv444_combine_work_callback(PTP_CALLBACK_INSTANCE instance
 		WLog_WARN(TAG, "YUV420CombineToYUV444 failed");
 }
 
+WINPR_ATTR_NODISCARD
 static inline YUV_COMBINE_WORK_PARAM
 pool_decode_rect_param(const RECTANGLE_16* WINPR_RESTRICT rect, YUV_CONTEXT* WINPR_RESTRICT context,
                        BYTE type, const BYTE* WINPR_RESTRICT pYUVData[3], const UINT32 iStride[3],
@@ -529,6 +538,7 @@ pool_decode_rect_param(const RECTANGLE_16* WINPR_RESTRICT rect, YUV_CONTEXT* WIN
 	return current;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pool_decode_rect(YUV_CONTEXT* WINPR_RESTRICT context, BYTE type,
                              const BYTE* WINPR_RESTRICT pYUVData[3], const UINT32 iStride[3],
                              BYTE* WINPR_RESTRICT pYUVDstData[3], const UINT32 iDstStride[3],
@@ -731,6 +741,7 @@ static void CALLBACK yuv444v2_encode_work_callback(PTP_CALLBACK_INSTANCE instanc
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static inline YUV_ENCODE_WORK_PARAM
 pool_encode_fill(const RECTANGLE_16* WINPR_RESTRICT rect, YUV_CONTEXT* WINPR_RESTRICT context,
                  const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep, UINT32 SrcFormat,
@@ -767,6 +778,7 @@ pool_encode_fill(const RECTANGLE_16* WINPR_RESTRICT rect, YUV_CONTEXT* WINPR_RES
 	return current;
 }
 
+WINPR_ATTR_NODISCARD
 static uint32_t getSteps(uint32_t height, uint32_t step)
 {
 	const uint32_t steps = (height + step / 2 + 1) / step;
@@ -775,6 +787,7 @@ static uint32_t getSteps(uint32_t height, uint32_t step)
 	return steps;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL pool_encode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK cb,
                         const BYTE* WINPR_RESTRICT pSrcData, UINT32 nSrcStep, UINT32 SrcFormat,
                         const UINT32 iStride[], BYTE* WINPR_RESTRICT pYUVLumaData[],
