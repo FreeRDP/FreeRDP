@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * SDL Client keyboard helper
+ * SDL Client clipboard helper
  *
  * Copyright 2024 Armin Novak <armin.novak@thincast.com>
  * Copyright 2024 Thincast Technologies GmbH
