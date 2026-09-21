@@ -510,9 +510,10 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, const ch
 			OpenSSL_add_all_ciphers();
 			OpenSSL_add_all_digests();
 #else
-			OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS |
-			                        OPENSSL_INIT_LOAD_CONFIG,
-			                    nullptr);
+			if (OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS |
+			                            OPENSSL_INIT_LOAD_CONFIG,
+			                        nullptr) != 1)
+				goto out_fail;
 #endif
 			context->pkcs12 = PKCS12_create(context->password, context->default_name, context->pkey,
 			                                context->x509, nullptr, 0, 0, 0, 0, 0);
@@ -912,15 +913,11 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		{ nullptr, 0, nullptr, nullptr, nullptr, -1, nullptr, nullptr }
 	};
 #ifdef WITH_OPENSSL
-	size_t length = 0;
-	char* entry = nullptr;
-	int key_length = 0;
 	long serial = 0;
 	X509_NAME* name = nullptr;
 	const EVP_MD* md = nullptr;
 	const COMMAND_LINE_ARGUMENT_A* arg = nullptr;
-	int ret = 0;
-	ret = makecert_context_parse_arguments(context, args, argc, argv);
+	int ret = makecert_context_parse_arguments(context, args, argc, argv);
 
 	if (ret < 1)
 	{
@@ -962,7 +959,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	if (!context->x509)
 		return -1;
 
-	key_length = 2048;
+	size_t key_length = 2048;
 	arg = CommandLineFindArgumentA(args, "len");
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -971,13 +968,15 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 		if ((errno != 0) || (val > INT_MAX))
 			return -1;
-		key_length = (int)val;
+		key_length = val;
 	}
 
-	if (!makecert_create_rsa(&context->pkey, WINPR_ASSERTING_INT_CAST(size_t, key_length)))
+	if (!makecert_create_rsa(&context->pkey, key_length))
 		return -1;
 
-	X509_set_version(context->x509, 2);
+	if (X509_set_version(context->x509, 2) != 1)
+		return -1;
+
 	arg = CommandLineFindArgumentA(args, "#");
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -990,7 +989,9 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	else
 		serial = (long)GetTickCount64();
 
-	ASN1_INTEGER_set(X509_get_serialNumber(context->x509), serial);
+	if (ASN1_INTEGER_set(X509_get_serialNumber(context->x509), serial) != 1)
+		return -1;
+
 	{
 		ASN1_TIME* before = nullptr;
 		ASN1_TIME* after = nullptr;
@@ -1007,57 +1008,94 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		duration *= 60l * 60l * 24l;
 		X509_gmtime_adj(after, duration);
 	}
-	X509_set_pubkey(context->x509, context->pkey);
+	if (X509_set_pubkey(context->x509, context->pkey) != 1)
+		return -1;
+
 	name = X509_get_subject_name(context->x509);
 	arg = CommandLineFindArgumentA(args, "n");
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
-		entry = x509_name_parse(arg->Value, "C", &length);
+		size_t length = 0;
+		char* entry = x509_name_parse(arg->Value, "C", &length);
 
 		if (entry)
-			X509_NAME_add_entry_by_txt(name, "C", MBSTRING_UTF8, (const unsigned char*)entry,
-			                           (int)length, -1, 0);
+		{
+			if (length > INT32_MAX)
+				return -1;
+			if (X509_NAME_add_entry_by_txt(name, "C", MBSTRING_UTF8, (const unsigned char*)entry,
+			                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
+				return -1;
+		}
 
 		entry = x509_name_parse(arg->Value, "ST", &length);
 
 		if (entry)
-			X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_UTF8, (const unsigned char*)entry,
-			                           (int)length, -1, 0);
+		{
+			if (length > INT32_MAX)
+				return -1;
+			if (X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_UTF8, (const unsigned char*)entry,
+			                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
+				return -1;
+		}
 
 		entry = x509_name_parse(arg->Value, "L", &length);
 
 		if (entry)
-			X509_NAME_add_entry_by_txt(name, "L", MBSTRING_UTF8, (const unsigned char*)entry,
-			                           (int)length, -1, 0);
+		{
+			if (length > INT32_MAX)
+				return -1;
+			if (X509_NAME_add_entry_by_txt(name, "L", MBSTRING_UTF8, (const unsigned char*)entry,
+			                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
+				return -1;
+		}
 
 		entry = x509_name_parse(arg->Value, "O", &length);
 
 		if (entry)
-			X509_NAME_add_entry_by_txt(name, "O", MBSTRING_UTF8, (const unsigned char*)entry,
-			                           (int)length, -1, 0);
+		{
+			if (length > INT32_MAX)
+				return -1;
+			if (X509_NAME_add_entry_by_txt(name, "O", MBSTRING_UTF8, (const unsigned char*)entry,
+			                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
+				return -1;
+		}
 
 		entry = x509_name_parse(arg->Value, "OU", &length);
 
 		if (entry)
-			X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*)entry,
-			                           (int)length, -1, 0);
+		{
+			if (length > INT32_MAX)
+				return -1;
+			if (X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*)entry,
+			                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
+				return -1;
+		}
 
 		entry = context->common_name;
 		length = strlen(entry);
-		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*)entry,
-		                           (int)length, -1, 0);
+		if (length > INT32_MAX)
+			return -1;
+
+		if (X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*)entry,
+		                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
+			return -1;
 	}
 	else
 	{
-		entry = context->common_name;
-		length = strlen(entry);
-		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*)entry,
-		                           (int)length, -1, 0);
+		char* entry = context->common_name;
+		const size_t length = strlen(entry);
+		if (length > INT32_MAX)
+			return -1;
+		if (X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*)entry,
+		                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
+			return -1;
 	}
 
-	X509_set_issuer_name(context->x509, name);
-	if (!x509_add_ext(context->x509, NID_ext_key_usage, "serverAuth"))
+	if (X509_set_issuer_name(context->x509, name) != 1)
+		return -1;
+
+	if (x509_add_ext(context->x509, NID_ext_key_usage, "serverAuth") != 1)
 		return -1;
 
 	arg = CommandLineFindArgumentA(args, "a");
@@ -1079,15 +1117,12 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 	if (!context->silent)
 	{
-		BIO* bio = nullptr;
-		int status = 0;
-		char* x509_str = nullptr;
-		bio = BIO_new(BIO_s_mem());
+		BIO* bio = BIO_new(BIO_s_mem());
 
 		if (!bio)
 			return -1;
 
-		status = X509_print(bio, context->x509);
+		const int status = X509_print(bio, context->x509);
 
 		if (status < 0)
 		{
@@ -1095,7 +1130,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 			return -1;
 		}
 
-		x509_str = makecert_read_str(bio, nullptr);
+		char* x509_str = makecert_read_str(bio, nullptr);
 		if (!x509_str)
 		{
 			BIO_free_all(bio);
