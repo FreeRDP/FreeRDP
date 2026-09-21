@@ -230,6 +230,7 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 		if (!ListDictionary_Add(drive->files, key, file))
 		{
 			WLog_ERR(TAG, "ListDictionary_Add failed!");
+			drive_file_free(file);
 			return ERROR_INTERNAL_ERROR;
 		}
 	}
