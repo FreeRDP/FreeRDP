@@ -57,6 +57,8 @@
 #else
 #define WINPR_ARCH_SUPPORTED 1
 #endif
+#elif defined(__EMSCRIPTEN__)
+#define WINPR_ARCH_SUPPORTED 1
 #endif
 
 #if !defined(WINPR_ARCH_SUPPORTED)
