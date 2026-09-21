@@ -70,6 +70,7 @@ struct S_MAKECERT_CONTEXT
 	int duration_months;
 };
 
+WINPR_ATTR_MALLOC(winpr_zfree, 1)
 static char* makecert_read_str(BIO* bio, size_t* pOffset)
 {
 	int status = -1;
@@ -176,6 +177,7 @@ static int makecert_print_command_line_help(COMMAND_LINE_ARGUMENT_A* args, int a
 }
 
 #ifdef WITH_OPENSSL
+WINPR_ATTR_NODISCARD
 static int x509_add_ext(X509* cert, int nid, char* value)
 {
 	X509V3_CTX ctx;
@@ -196,6 +198,7 @@ static int x509_add_ext(X509* cert, int nid, char* value)
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static char* x509_name_parse(char* name, char* txt, size_t* length)
 {
 	char* p = nullptr;
@@ -220,6 +223,7 @@ static char* x509_name_parse(char* name, char* txt, size_t* length)
 	return entry;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* get_name(COMPUTER_NAME_FORMAT type)
 {
 	DWORD nSize = 0;
@@ -244,6 +248,7 @@ static char* get_name(COMPUTER_NAME_FORMAT type)
 	return computerName;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* x509_get_default_name(void)
 {
 	char* computerName = get_name(ComputerNamePhysicalDnsFullyQualified);
@@ -252,6 +257,7 @@ static char* x509_get_default_name(void)
 	return computerName;
 }
 
+WINPR_ATTR_NODISCARD
 static int command_line_pre_filter(void* pvctx, int index, int argc, LPSTR* argv)
 {
 	MAKECERT_CONTEXT* context = pvctx;
@@ -274,6 +280,7 @@ static int command_line_pre_filter(void* pvctx, int index, int argc, LPSTR* argv
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context,
                                             COMMAND_LINE_ARGUMENT_A* args, int argc, char** argv)
 {
@@ -683,6 +690,7 @@ out_fail:
 }
 
 #ifdef WITH_OPENSSL
+WINPR_ATTR_NODISCARD
 static BOOL makecert_create_rsa(EVP_PKEY** ppkey, size_t key_length)
 {
 	BOOL rc = FALSE;
@@ -1049,7 +1057,9 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	}
 
 	X509_set_issuer_name(context->x509, name);
-	x509_add_ext(context->x509, NID_ext_key_usage, "serverAuth");
+	if (!x509_add_ext(context->x509, NID_ext_key_usage, "serverAuth"))
+		return -1;
+
 	arg = CommandLineFindArgumentA(args, "a");
 	md = EVP_sha256();
 
@@ -1143,7 +1153,7 @@ void makecert_context_free(MAKECERT_CONTEXT* context)
 {
 	if (context)
 	{
-		free(context->password);
+		winpr_zfree(context->password);
 		free(context->default_name);
 		free(context->common_name);
 		free(context->output_file);
