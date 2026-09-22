@@ -873,17 +873,21 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 	VideoClientContextPriv* priv = context->priv;
 	WINPR_ASSERT(priv);
 
+	EnterCriticalSection(&priv->framesLock);
 	PresentationContext* presentation = priv->currentPresentation;
 	if (!presentation)
 	{
 		WLog_ERR(TAG, "no current presentation");
+		LeaveCriticalSection(&priv->framesLock);
 		return CHANNEL_RC_OK;
 	}
 
 	if (!PresentationContext_ref(presentation))
+	{
+		LeaveCriticalSection(&priv->framesLock);
 		return ERROR_INTERNAL_ERROR;
+	}
 
-	EnterCriticalSection(&priv->framesLock);
 	if (presentation->PresentationId != data->PresentationId)
 	{
 		WLog_ERR(TAG, "current presentation id=%" PRIu8 " doesn't match data id=%" PRIu8,
