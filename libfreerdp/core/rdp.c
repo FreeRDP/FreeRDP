@@ -1156,7 +1156,7 @@ static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 	BOOL ret = TRUE;
 
 	WINPR_ASSERT(rdp);
-	if (rdp_get_state(rdp) < CONNECTION_STATE_ACTIVE)
+	if (rdp_get_state(rdp) < CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT)
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 4))
