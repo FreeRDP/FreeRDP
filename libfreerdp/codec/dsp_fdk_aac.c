@@ -71,15 +71,19 @@ BOOL fdk_aac_dsp_encode(FREERDP_DSP_COMMON_CONTEXT* context, const AUDIO_FORMAT*
 	if (!Stream_EnsureRemainingCapacity(out, context->buffersize))
 		return FALSE;
 
+	size_t offset = 0;
+	while (offset < length)
 	{
-		const ssize_t encoded =
-		    fdk_aac_dsp_impl_encode(context->fdkAacInstance, data, length, Stream_Pointer(out),
-		                            Stream_GetRemainingCapacity(out), write_log);
-		if (encoded < 0)
+		size_t consumed = 0;
+		const ssize_t encoded = fdk_aac_dsp_impl_encode(
+		    context->fdkAacInstance, &data[offset], length - offset, Stream_Pointer(out),
+		    Stream_GetRemainingCapacity(out), &consumed, write_log);
+		if ((encoded < 0) || (consumed == 0))
 			return FALSE;
 		Stream_Seek(out, (size_t)encoded);
-		return TRUE;
+		offset += consumed;
 	}
+	return TRUE;
 }
 
 BOOL fdk_aac_dsp_decode(FREERDP_DSP_COMMON_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
