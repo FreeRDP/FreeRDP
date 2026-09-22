@@ -4528,7 +4528,7 @@ BOOL update_recv_order(rdpUpdate* update, wStream* s)
 	BYTE controlFlags = 0;
 	rdp_update_internal* up = update_cast(update);
 
-	if (rdp_get_state(update->context->rdp) < CONNECTION_STATE_ACTIVE)
+	if (!rdp_has_reached_state(update->context->rdp, CONNECTION_STATE_ACTIVE))
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))

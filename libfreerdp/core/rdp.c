@@ -1045,7 +1045,7 @@ static BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->update);
 
-	if (rdp_get_state(rdp) < CONNECTION_STATE_ACTIVE)
+	if (!rdp_has_reached_state(rdp, CONNECTION_STATE_ACTIVE))
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 4))
@@ -1069,7 +1069,7 @@ static BOOL rdp_recv_server_set_keyboard_ime_status_pdu(rdpRdp* rdp, wStream* s)
 	if (!rdp || !rdp->input)
 		return FALSE;
 
-	if (rdp_get_state(rdp) < CONNECTION_STATE_ACTIVE)
+	if (!rdp_has_reached_state(rdp, CONNECTION_STATE_ACTIVE))
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 10))
@@ -1156,7 +1156,8 @@ static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 	BOOL ret = TRUE;
 
 	WINPR_ASSERT(rdp);
-	if (rdp_get_state(rdp) < CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT)
+
+	if (!rdp_has_reached_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT))
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 4))

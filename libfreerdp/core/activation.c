@@ -549,7 +549,7 @@ BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(!freerdp_settings_get_bool(rdp->settings, FreeRDP_ServerMode));
 
-	if (rdp_get_state(rdp) < CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP)
+	if (!rdp_has_reached_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP))
 		return FALSE;
 
 	/* Do not fail here, see https://github.com/FreeRDP/FreeRDP/issues/925 */

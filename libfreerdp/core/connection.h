@@ -83,6 +83,44 @@ FREERDP_LOCAL CONNECTION_STATE rdp_get_state(const rdpRdp* rdp);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL const char* rdp_state_string(CONNECTION_STATE state);
 
+/**
+ * @brief checks if the current state is the requested (or any later) one.
+ * * In case of failure a warning is logged.
+ *
+ * @param rdp The instance to check
+ * @param state The state that is required
+ * @param file The file the call is from
+ * @param line The line in the file the call is from
+ * @param fkt The function the call is from
+ *
+ * @return TRUE for success, FALSE otherwise.
+ * @since version 3.32.0
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdp_has_reached_state_impl(const rdpRdp* rdp, CONNECTION_STATE state,
+                                              const char* file, size_t line, const char* fkt);
+#define rdp_has_reached_state(rdp, state) \
+	rdp_has_reached_state_impl((rdp), (state), __FILE__, __LINE__, __func__)
+
+/**
+ * @brief checks if the current state is equal to the requested one.
+ * In case of failure a warning is logged.
+ *
+ * @param rdp The instance to check
+ * @param state The state that is required
+ * @param file The file the call is from
+ * @param line The line in the file the call is from
+ * @param fkt The function the call is from
+ *
+ * @return TRUE for success, FALSE otherwise.
+ * @since version 3.32.0
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL rdp_is_reached_state_impl(const rdpRdp* rdp, CONNECTION_STATE state,
+                                             const char* file, size_t line, const char* fkt);
+#define rdp_is_reached_state(rdp, state) \
+	rdp_is_reached_state_impl((rdp), (state), __FILE__, __LINE__, __func__)
+
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL rdp_is_active_state(const rdpRdp* rdp);
 
