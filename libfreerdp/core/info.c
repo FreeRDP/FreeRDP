@@ -627,7 +627,7 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_SupportDynamicTimeZone))
 	{
-		if (!Stream_EnsureRemainingCapacity(s, 8 + 254 * sizeof(WCHAR)))
+		if (!Stream_EnsureRemainingCapacity(s, 8ull + 254ull * sizeof(WCHAR)))
 			goto fail;
 
 		Stream_Write_UINT16(s, 0); /* reserved1 (2 bytes) */

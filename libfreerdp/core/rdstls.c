@@ -526,7 +526,7 @@ static BOOL rdstls_write_authentication_request_with_fedauth_token(rdpRdstls* rd
 	const size_t wideLengthZero = WINPR_ASSERTING_INT_CAST(size_t, wideLength);
 	const size_t wideBytes = (wideLengthZero + 1ull) * sizeof(WCHAR);
 
-	if (!Stream_EnsureRemainingCapacity(s, 6 + wideBytes))
+	if (!Stream_EnsureRemainingCapacity(s, 6ull + wideBytes))
 		return FALSE;
 
 	Stream_Write_UINT16(s, RDSTLS_TYPE_AUTHREQ);

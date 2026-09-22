@@ -1431,7 +1431,7 @@ static BOOL device_announce(ULONG_PTR key, void* element, void* data)
 	{
 		size_t data_len = (device->data == nullptr ? 0 : Stream_GetPosition(device->data));
 
-		if (!Stream_EnsureRemainingCapacity(arg->s, 20 + data_len))
+		if (!Stream_EnsureRemainingCapacity(arg->s, 20ull + data_len))
 		{
 			Stream_Release(arg->s);
 			WLog_Print(rdpdr->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");

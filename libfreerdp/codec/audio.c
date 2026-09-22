@@ -184,7 +184,7 @@ BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format)
 	if (!s || !format)
 		return FALSE;
 
-	if (!Stream_EnsureRemainingCapacity(s, 18 + format->cbSize))
+	if (!Stream_EnsureRemainingCapacity(s, 18ull + format->cbSize))
 		return FALSE;
 
 	Stream_Write_UINT16(s, format->wFormatTag);      /* wFormatTag (WAVE_FORMAT_PCM) */

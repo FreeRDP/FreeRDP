@@ -304,7 +304,7 @@ static BOOL update_write_bitmap_data(rdpUpdate* update_pub, wStream* s, BITMAP_D
 
 	WINPR_ASSERT(bitmapData);
 
-	if (!Stream_EnsureRemainingCapacity(s, 64 + bitmapData->bitmapLength))
+	if (!Stream_EnsureRemainingCapacity(s, 64ull + bitmapData->bitmapLength))
 		return FALSE;
 
 	if (update->common.autoCalculateBitmapData)
@@ -2417,7 +2417,7 @@ WINPR_ATTR_NODISCARD static BOOL
 update_write_pointer_color(wStream* s, const POINTER_COLOR_UPDATE* pointer_color)
 {
 	WINPR_ASSERT(pointer_color);
-	if (!Stream_EnsureRemainingCapacity(s, 32 + pointer_color->lengthAndMask +
+	if (!Stream_EnsureRemainingCapacity(s, 32ull + pointer_color->lengthAndMask +
 	                                           pointer_color->lengthXorMask))
 		return FALSE;
 
@@ -2469,7 +2469,7 @@ WINPR_ATTR_NODISCARD static BOOL update_write_pointer_large(wStream* s,
 {
 	WINPR_ASSERT(pointer);
 
-	if (!Stream_EnsureRemainingCapacity(s, 32 + pointer->lengthAndMask + pointer->lengthXorMask))
+	if (!Stream_EnsureRemainingCapacity(s, 32ull + pointer->lengthAndMask + pointer->lengthXorMask))
 		return FALSE;
 
 	Stream_Write_UINT16(s, pointer->xorBpp);

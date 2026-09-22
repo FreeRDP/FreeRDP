@@ -1544,7 +1544,7 @@ static inline BOOL rfx_compose_message_header(RFX_CONTEXT* WINPR_RESTRICT contex
                                               wStream* WINPR_RESTRICT s)
 {
 	WINPR_ASSERT(context);
-	if (!Stream_EnsureRemainingCapacity(s, 12 + 10 + 12 + 13))
+	if (!Stream_EnsureRemainingCapacity(s, 12ull + 10ull + 12ull + 13ull))
 		return FALSE;
 
 	rfx_write_message_sync(context, s);

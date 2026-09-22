@@ -1083,7 +1083,7 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 		{
 			UINT32 length = sizeof(UINT32);
 
-			if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT32)))
+			if (!Stream_EnsureRemainingCapacity(s, 2ull * sizeof(UINT32)))
 				goto fail;
 
 			const size_t lstart = Stream_GetPosition(s);

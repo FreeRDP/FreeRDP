@@ -1614,7 +1614,7 @@ static BOOL nla_write_KERB_TICKET_LOGON(wStream* s, const KERB_TICKET_LOGON* tic
 {
 	WINPR_ASSERT(ticket);
 
-	if (!Stream_EnsureRemainingCapacity(s, (4ULL * 4) + 16ULL + ticket->ServiceTicketLength +
+	if (!Stream_EnsureRemainingCapacity(s, (4ULL * 4ull) + 16ULL + ticket->ServiceTicketLength +
 	                                           ticket->TicketGrantingTicketLength))
 		return FALSE;
 

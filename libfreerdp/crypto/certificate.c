@@ -260,7 +260,7 @@ BOOL cert_blob_write(const rdpCertBlob* blob, wStream* s)
 {
 	WINPR_ASSERT(blob);
 
-	if (!Stream_EnsureRemainingCapacity(s, 4 + blob->length))
+	if (!Stream_EnsureRemainingCapacity(s, 4ull + blob->length))
 		return FALSE;
 
 	Stream_Write_UINT32(s, blob->length);
@@ -918,7 +918,7 @@ static BOOL cert_write_rsa_public_key(wStream* s, const rdpCertificate* cert)
 
 	const size_t wPublicKeyBlobLen = 16 + pubExpLen + keyLen;
 	WINPR_ASSERT(wPublicKeyBlobLen <= UINT16_MAX);
-	if (!Stream_EnsureRemainingCapacity(s, 2 + wPublicKeyBlobLen))
+	if (!Stream_EnsureRemainingCapacity(s, 2ull + wPublicKeyBlobLen))
 		return FALSE;
 	Stream_Write_UINT16(s, (UINT16)wPublicKeyBlobLen);
 	Stream_Write(s, rsa_magic, sizeof(rsa_magic));
@@ -944,7 +944,8 @@ static BOOL cert_write_rsa_signature(wStream* s, const void* sigData, size_t sig
 	                               sizeof(encryptedSignature)) < 0)
 		return FALSE;
 
-	if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT16) + sizeof(encryptedSignature) + 8))
+	if (!Stream_EnsureRemainingCapacity(s,
+	                                    2ull * sizeof(UINT16) + sizeof(encryptedSignature) + 8ull))
 		return FALSE;
 	Stream_Write_UINT16(s, BB_RSA_SIGNATURE_BLOB);
 	Stream_Write_UINT16(s, sizeof(encryptedSignature) + 8); /* wSignatureBlobLen */

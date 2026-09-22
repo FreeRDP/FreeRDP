@@ -66,7 +66,7 @@ static SSIZE_T stream_sprintf(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 	if (rc < 0)
 		return rc;
 
-	if (!Stream_EnsureRemainingCapacity(s, (size_t)rc + 1))
+	if (!Stream_EnsureRemainingCapacity(s, (size_t)rc + 1ull))
 		return -1;
 
 	char* ptr = Stream_PointerAs(s, char);

@@ -187,7 +187,7 @@ BOOL freerdp_write_four_byte_signed_integer(wStream* s, INT32 value)
 		return FALSE;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(s, si.c + 1))
+	if (!Stream_EnsureRemainingCapacity(s, si.c + 1ull))
 		return FALSE;
 
 	const BYTE byte = ((si.c << 6) & 0xC0) | ((si.s << 5) & 0x20) | (si.val1 & 0x1F);
@@ -381,7 +381,7 @@ BOOL freerdp_write_four_byte_float(wStream* s, double value)
 		return FALSE;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(s, si.c + 1))
+	if (!Stream_EnsureRemainingCapacity(s, si.c + 1ull))
 		return FALSE;
 
 	const BYTE byte =

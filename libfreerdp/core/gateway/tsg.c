@@ -550,7 +550,7 @@ static BOOL tsg_ndr_write_packet_header(WINPR_ATTR_UNUSED wLog* log, wStream* s,
                                         const TSG_PACKET_HEADER* header)
 {
 	WINPR_ASSERT(header);
-	if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT16)))
+	if (!Stream_EnsureRemainingCapacity(s, 2ull * sizeof(UINT16)))
 		return FALSE;
 	Stream_Write_UINT16(s, header->ComponentId);
 	Stream_Write_UINT16(s, header->PacketId);
@@ -578,7 +578,7 @@ static BOOL tsg_ndr_write_nap(wLog* log, wStream* s, const TSG_CAPABILITY_NAP* n
 {
 	WINPR_ASSERT(nap);
 
-	if (!Stream_EnsureRemainingCapacity(s, 1 * sizeof(UINT32)))
+	if (!Stream_EnsureRemainingCapacity(s, 1ull * sizeof(UINT32)))
 		return FALSE;
 
 	{
@@ -633,7 +633,7 @@ static BOOL tsg_ndr_write_tsg_caps(wLog* log, wStream* s, const TSG_PACKET_CAPAB
 {
 	WINPR_ASSERT(caps);
 
-	if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT32)))
+	if (!Stream_EnsureRemainingCapacity(s, 2ull * sizeof(UINT32)))
 		return FALSE;
 	Stream_Write_UINT32(s, caps->capabilityType);
 	Stream_Write_UINT32(s, caps->capabilityType);

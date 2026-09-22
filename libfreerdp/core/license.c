@@ -1639,7 +1639,7 @@ BOOL license_write_binary_blob(wStream* s, const LICENSE_BLOB* blob)
 {
 	WINPR_ASSERT(blob);
 
-	if (!Stream_EnsureRemainingCapacity(s, blob->length + 4))
+	if (!Stream_EnsureRemainingCapacity(s, blob->length + 4ull))
 		return FALSE;
 
 	Stream_Write_UINT16(s, blob->type);   /* wBlobType (2 bytes) */
@@ -1666,7 +1666,7 @@ static BOOL license_write_encrypted_premaster_secret_blob(wLog* log, wStream* s,
 		return FALSE;
 	}
 
-	if (!Stream_EnsureRemainingCapacity(s, length + 4))
+	if (!Stream_EnsureRemainingCapacity(s, length + 4ull))
 		return FALSE;
 	Stream_Write_UINT16(s, blob->type);     /* wBlobType (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)length); /* wBlobLen (2 bytes) */

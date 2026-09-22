@@ -509,7 +509,7 @@ static BOOL drive_file_query_from_handle_information(const DRIVE_FILE* file,
 		case FileBasicInformation:
 
 			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
-			if (!Stream_EnsureRemainingCapacity(output, 4 + 36))
+			if (!Stream_EnsureRemainingCapacity(output, 4ull + 36ull))
 				return FALSE;
 
 			Stream_Write_UINT32(output, 36);                                    /* Length */
@@ -528,7 +528,7 @@ static BOOL drive_file_query_from_handle_information(const DRIVE_FILE* file,
 		case FileStandardInformation:
 
 			/*  http://msdn.microsoft.com/en-us/library/cc232088.aspx */
-			if (!Stream_EnsureRemainingCapacity(output, 4 + 22))
+			if (!Stream_EnsureRemainingCapacity(output, 4ull + 22ull))
 				return FALSE;
 
 			Stream_Write_UINT32(output, 22);                          /* Length */
@@ -546,7 +546,7 @@ static BOOL drive_file_query_from_handle_information(const DRIVE_FILE* file,
 		case FileAttributeTagInformation:
 
 			/* http://msdn.microsoft.com/en-us/library/cc232093.aspx */
-			if (!Stream_EnsureRemainingCapacity(output, 4 + 8))
+			if (!Stream_EnsureRemainingCapacity(output, 4ull + 8ull))
 				return FALSE;
 
 			Stream_Write_UINT32(output, 8);                      /* Length */
@@ -574,7 +574,7 @@ static BOOL drive_file_query_from_attributes(const DRIVE_FILE* file,
 		case FileBasicInformation:
 
 			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
-			if (!Stream_EnsureRemainingCapacity(output, 4 + 36))
+			if (!Stream_EnsureRemainingCapacity(output, 4ull + 36ull))
 				return FALSE;
 
 			Stream_Write_UINT32(output, 36);                                    /* Length */
@@ -595,7 +595,7 @@ static BOOL drive_file_query_from_attributes(const DRIVE_FILE* file,
 		case FileStandardInformation:
 
 			/*  http://msdn.microsoft.com/en-us/library/cc232088.aspx */
-			if (!Stream_EnsureRemainingCapacity(output, 4 + 22))
+			if (!Stream_EnsureRemainingCapacity(output, 4ull + 22ull))
 				return FALSE;
 
 			Stream_Write_UINT32(output, 22);                          /* Length */
@@ -613,7 +613,7 @@ static BOOL drive_file_query_from_attributes(const DRIVE_FILE* file,
 		case FileAttributeTagInformation:
 
 			/* http://msdn.microsoft.com/en-us/library/cc232093.aspx */
-			if (!Stream_EnsureRemainingCapacity(output, 4 + 8))
+			if (!Stream_EnsureRemainingCapacity(output, 4ull + 8ull))
 				return FALSE;
 
 			Stream_Write_UINT32(output, 8);                        /* Length */
@@ -955,7 +955,7 @@ static BOOL drive_file_query_dir_info(DRIVE_FILE* file, wStream* output, size_t 
 	WINPR_ASSERT(output);
 
 	/* http://msdn.microsoft.com/en-us/library/cc232097.aspx */
-	if (!Stream_EnsureRemainingCapacity(output, 4 + 64 + length))
+	if (!Stream_EnsureRemainingCapacity(output, 4ull + 64ull + length))
 		return FALSE;
 
 	if (length > UINT32_MAX - 64)
@@ -990,7 +990,7 @@ static BOOL drive_file_query_full_dir_info(DRIVE_FILE* file, wStream* output, si
 	WINPR_ASSERT(file);
 	WINPR_ASSERT(output);
 	/* http://msdn.microsoft.com/en-us/library/cc232068.aspx */
-	if (!Stream_EnsureRemainingCapacity(output, 4 + 68 + length))
+	if (!Stream_EnsureRemainingCapacity(output, 4ull + 68ull + length))
 		return FALSE;
 
 	if (length > UINT32_MAX - 68)
@@ -1026,7 +1026,7 @@ static BOOL drive_file_query_both_dir_info(DRIVE_FILE* file, wStream* output, si
 	WINPR_ASSERT(file);
 	WINPR_ASSERT(output);
 	/* http://msdn.microsoft.com/en-us/library/cc232095.aspx */
-	if (!Stream_EnsureRemainingCapacity(output, 4 + 93 + length))
+	if (!Stream_EnsureRemainingCapacity(output, 4ull + 93ull + length))
 		return FALSE;
 
 	if (length > UINT32_MAX - 93)
@@ -1065,7 +1065,7 @@ static BOOL drive_file_query_names_info(DRIVE_FILE* file, wStream* output, size_
 	WINPR_ASSERT(file);
 	WINPR_ASSERT(output);
 	/* http://msdn.microsoft.com/en-us/library/cc232077.aspx */
-	if (!Stream_EnsureRemainingCapacity(output, 4 + 12 + length))
+	if (!Stream_EnsureRemainingCapacity(output, 4ull + 12ull + length))
 		return FALSE;
 
 	if (length > UINT32_MAX - 12)

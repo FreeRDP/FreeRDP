@@ -22,7 +22,7 @@
 static BOOL display_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount,
                                              const MONITOR_DEF* monitorDefArray)
 {
-	if (!Stream_EnsureRemainingCapacity(s, 4 + (monitorCount * 20)))
+	if (!Stream_EnsureRemainingCapacity(s, 4ull + (monitorCount * 20ull)))
 		return FALSE;
 
 	Stream_Write_UINT32(s, monitorCount); /* monitorCount (4 bytes) */

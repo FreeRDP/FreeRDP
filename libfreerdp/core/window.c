@@ -97,7 +97,7 @@ UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_st
 	if (!s || !unicode_string)
 		return ERROR_INVALID_PARAMETER;
 
-	if (!Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length))
+	if (!Stream_EnsureRemainingCapacity(s, 2ull + unicode_string->length))
 	{
 		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 		return CHANNEL_RC_NO_MEMORY;
