@@ -656,7 +656,7 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_write_h264_metablock(wLog* log, wStream*
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(meta);
-	if (!Stream_EnsureRemainingCapacity(s, 4 + meta->numRegionRects * 10))
+	if (!Stream_EnsureRemainingCapacity(s, 4ull + meta->numRegionRects * 10ull))
 		return ERROR_OUTOFMEMORY;
 
 	Stream_Write_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
@@ -747,7 +747,7 @@ WINPR_ATTR_NODISCARD static UINT rdpgfx_write_surface_command(wLog* log, wStream
 	if (cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE ||
 	    cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE_V2)
 	{
-		if (!Stream_EnsureRemainingCapacity(s, 13 + cmd->length))
+		if (!Stream_EnsureRemainingCapacity(s, 13ull + cmd->length))
 			return ERROR_INTERNAL_ERROR;
 		/* Write RDPGFX_CMDID_WIRETOSURFACE_2 format for CAPROGRESSIVE */
 		Stream_Write_UINT16(

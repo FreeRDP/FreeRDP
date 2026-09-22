@@ -955,7 +955,7 @@ BOOL gcc_write_user_data_header(wStream* s, UINT16 type, UINT16 length)
 {
 
 	WINPR_ASSERT(s);
-	if (!Stream_EnsureRemainingCapacity(s, 4 + length))
+	if (!Stream_EnsureRemainingCapacity(s, 4ull + length))
 		return FALSE;
 	Stream_Write_UINT16(s, type);   /* type */
 	Stream_Write_UINT16(s, length); /* length */

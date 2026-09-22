@@ -187,7 +187,7 @@ BOOL msusb_msinterface_write(const MSUSB_INTERFACE_DESCRIPTOR* MsInterface, wStr
 	if (!MsInterface)
 		return FALSE;
 
-	if (!Stream_EnsureRemainingCapacity(out, 16 + MsInterface->NumberOfPipes * 20))
+	if (!Stream_EnsureRemainingCapacity(out, 16ull + MsInterface->NumberOfPipes * 20ull))
 		return FALSE;
 
 	/* Length */

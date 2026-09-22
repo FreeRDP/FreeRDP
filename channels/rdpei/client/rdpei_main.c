@@ -626,10 +626,10 @@ static UINT rdpei_write_touch_frame(wLog* log, wStream* s, RDPINPUT_TOUCH_FRAME*
 	 * If this is the first frame being transmitted then this field MUST be set to zero.
 	 */
 	if (!rdpei_write_8byte_unsigned(s, frame->frameOffset *
-	                                       1000)) /* frameOffset (EIGHT_BYTE_UNSIGNED_INTEGER) */
+	                                       1000ull)) /* frameOffset (EIGHT_BYTE_UNSIGNED_INTEGER) */
 		return ERROR_OUTOFMEMORY;
 
-	if (!Stream_EnsureRemainingCapacity(s, (size_t)frame->contactCount * 64))
+	if (!Stream_EnsureRemainingCapacity(s, frame->contactCount * 64ull))
 	{
 		WLog_Print(log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
 		return CHANNEL_RC_NO_MEMORY;

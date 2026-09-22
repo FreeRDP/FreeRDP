@@ -299,7 +299,7 @@ static BOOL vgids_write_tlv(wStream* s, UINT16 tag, const void* data, size_t dat
 	WINPR_ASSERT(dataSize <= UINT16_MAX);
 
 	/* A maximum of 5 additional bytes is needed */
-	if (!Stream_EnsureRemainingCapacity(s, dataSize + 5))
+	if (!Stream_EnsureRemainingCapacity(s, dataSize + 5ull))
 	{
 		WLog_ERR(TAG, "Failed to ensure capacity of DO stream");
 		return FALSE;

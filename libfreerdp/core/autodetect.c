@@ -235,7 +235,7 @@ autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
 	/* 4-bytes aligned */
 	payloadLength &= ~3;
 
-	if (!Stream_EnsureRemainingCapacity(s, 8 + payloadLength))
+	if (!Stream_EnsureRemainingCapacity(s, 8ull + payloadLength))
 	{
 		WLog_Print(autodetect->log, WLOG_ERROR, "Failed to ensure %lu bytes in stream",
 		           8ul + payloadLength);

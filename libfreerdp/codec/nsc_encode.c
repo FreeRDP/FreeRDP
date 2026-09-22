@@ -414,7 +414,7 @@ BOOL nsc_write_message(WINPR_ATTR_UNUSED NSC_CONTEXT* WINPR_RESTRICT context,
 	totalPlaneByteCount = message->LumaPlaneByteCount + message->OrangeChromaPlaneByteCount +
 	                      message->GreenChromaPlaneByteCount + message->AlphaPlaneByteCount;
 
-	if (!Stream_EnsureRemainingCapacity(s, 20 + totalPlaneByteCount))
+	if (!Stream_EnsureRemainingCapacity(s, 20ull + totalPlaneByteCount))
 		return FALSE;
 
 	Stream_Write_UINT32(s, message->LumaPlaneByteCount); /* LumaPlaneByteCount (4 bytes) */

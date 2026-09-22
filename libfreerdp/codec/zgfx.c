@@ -493,7 +493,7 @@ static BOOL zgfx_compress_segment(WINPR_ATTR_UNUSED ZGFX_CONTEXT* WINPR_RESTRICT
                                   UINT32 SrcSize, UINT32* WINPR_RESTRICT pFlags)
 {
 	/* FIXME: Currently compression not implemented. Just copy the raw source */
-	if (!Stream_EnsureRemainingCapacity(s, SrcSize + 1))
+	if (!Stream_EnsureRemainingCapacity(s, SrcSize + 1ull))
 	{
 		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 		return FALSE;

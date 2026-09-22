@@ -584,7 +584,7 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	if (rc <= 0)
 		return FALSE;
 
-	if (!Stream_EnsureRemainingCapacity(out, (size_t)rc * context->common.format.nChannels * 2))
+	if (!Stream_EnsureRemainingCapacity(out, (size_t)rc * context->common.format.nChannels * 2ull))
 		return FALSE;
 
 	for (int x = 0; x < rc; x++)
@@ -610,7 +610,7 @@ static BOOL freerdp_dsp_encode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 	    size / context->common.format.nChannels / context->common.format.wBitsPerSample / 8;
 
 	/* Ensure worst case buffer size for mp3 stream taken from LAME header */
-	if (!Stream_EnsureRemainingCapacity(out, 5 / 4 * samples_per_channel + 7200))
+	if (!Stream_EnsureRemainingCapacity(out, 5ull / 4ull * samples_per_channel + 7200ull))
 		return FALSE;
 
 	samples_per_channel = size / 2 /* size of a sample */ / context->common.format.nChannels;
@@ -886,7 +886,7 @@ static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT con
 		return FALSE;
 	if (!Stream_EnsureRemainingCapacity(out, size))
 		return FALSE;
-	if (!Stream_EnsureRemainingCapacity(context->common.buffer, size + 64))
+	if (!Stream_EnsureRemainingCapacity(context->common.buffer, size + 64ull))
 		return FALSE;
 
 	const size_t align = (context->common.format.nChannels > 1) ? 32 : 4;
