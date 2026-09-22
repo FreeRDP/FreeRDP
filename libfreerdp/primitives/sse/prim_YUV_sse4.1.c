@@ -419,7 +419,6 @@ static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_DOUBLE_ROW(
     BYTE* WINPR_RESTRICT pDst[2], const BYTE* WINPR_RESTRICT YData[2],
     const BYTE* WINPR_RESTRICT UData[2], const BYTE* WINPR_RESTRICT VData[2], UINT32 nWidth)
 {
-	WINPR_ASSERT((nWidth % 2) == 0);
 	const UINT32 pad = nWidth % 16;
 
 	size_t x = 0;
@@ -466,8 +465,6 @@ static inline pstatus_t sse41_YUV444ToRGB_8u_P3AC4R_BGRX_SINGLE_ROW(
     BYTE* WINPR_RESTRICT pDst, const BYTE* WINPR_RESTRICT YData, const BYTE* WINPR_RESTRICT UData,
     const BYTE* WINPR_RESTRICT VData, UINT32 nWidth)
 {
-	WINPR_ASSERT((nWidth % 2) == 0);
-
 	for (size_t x = 0; x < nWidth; x += 2)
 	{
 		BGRX_fillRGB_single(x, pDst, YData, UData, VData, TRUE);
