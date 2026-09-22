@@ -54,7 +54,7 @@ typedef PfChannelResult (*dynamic_channel_on_data_fn)(pServerContext* ps,
 /** @brief tracker state for a drdynvc stream */
 struct DynChannelTrackerState
 {
-	UINT32 currentDataLength;
+	UINT32 ExpectedTotalDataLength;
 	UINT32 CurrentDataReceived;
 	UINT32 CurrentDataFragments;
 	wStream* currentPacket;
@@ -328,10 +328,10 @@ static PfChannelResult DynvcTrackerPeekHandleByMode(ChannelStateTracker* tracker
 			break;
 	}
 
-	if (!trackerState->currentDataLength ||
-	    (trackerState->CurrentDataReceived == trackerState->currentDataLength))
+	if ((trackerState->ExpectedTotalDataLength == 0) ||
+	    (trackerState->CurrentDataReceived >= trackerState->ExpectedTotalDataLength))
 	{
-		trackerState->currentDataLength = 0;
+		trackerState->ExpectedTotalDataLength = 0;
 		trackerState->CurrentDataFragments = 0;
 		trackerState->CurrentDataReceived = 0;
 
@@ -551,7 +551,7 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 				                "Length out of bounds: %" PRIu64, Length);
 				return PF_CHANNEL_RESULT_ERROR;
 			}
-			trackerState->currentDataLength = (UINT32)Length;
+			trackerState->ExpectedTotalDataLength = (UINT32)Length;
 			trackerState->CurrentDataReceived = 0;
 			trackerState->CurrentDataFragments = 0;
 
@@ -604,7 +604,7 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 			DynvcTrackerLog(dynChannelContext->log, WLOG_DEBUG, dynChannel, cmd, isBackData,
 			                "frags=%" PRIu32 " received=%" PRIu32 "(%" PRIu32 ")",
 			                trackerState->CurrentDataFragments, trackerState->CurrentDataReceived,
-			                trackerState->currentDataLength);
+			                trackerState->ExpectedTotalDataLength);
 		}
 		break;
 		default:
@@ -615,15 +615,15 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 	{
 		case DATA_PDU:
 		{
-			if (trackerState->currentDataLength)
+			if (trackerState->ExpectedTotalDataLength)
 			{
-				if (trackerState->CurrentDataReceived > trackerState->currentDataLength)
+				if (trackerState->CurrentDataReceived > trackerState->ExpectedTotalDataLength)
 				{
 					DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd, isBackData,
 					                "reassembled packet (%" PRIu32
 					                ") is bigger than announced length (%" PRIu32 ")",
 					                trackerState->CurrentDataReceived,
-					                trackerState->currentDataLength);
+					                trackerState->ExpectedTotalDataLength);
 					return PF_CHANNEL_RESULT_ERROR;
 				}
 			}

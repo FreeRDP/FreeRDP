@@ -49,7 +49,12 @@ static BOOL yuv_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, U
 		return FALSE;
 
 	if (stride == 0)
+	{
+		const UINT32 pad = width % 16;
 		stride = width;
+		if (pad > 0)
+			width += 16 - pad;
+	}
 
 	/* Add padding lines. Allows relaxing bounds checks in decoder functions */
 	stride += 32 - stride % 16;
@@ -109,29 +114,20 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL isRectValid(UINT32 width, UINT32 height, const RECTANGLE_16* rect)
+static BOOL isRectValid(wLog* log, size_t pos, UINT32 width, UINT32 height,
+                        const RECTANGLE_16* rect)
 {
 	WINPR_ASSERT(rect);
-	if (rect->left > width)
+	if ((rect->left > width) || (rect->right > width) || (rect->left >= rect->right) ||
+	    (rect->top > height) || (rect->bottom > height) || (rect->top >= rect->bottom))
+	{
+		char buffer[64] = WINPR_C_ARRAY_INIT;
+		WLog_Print(log, WLOG_WARN,
+		           "Rectangle %" PRIuz " %s outside of bounding frame %" PRIu32 "x%" PRIu32, pos,
+		           rectangle_to_string(rect, buffer, sizeof(buffer)), width, height);
 		return FALSE;
-	if (rect->right > width)
-		return FALSE;
-	if (rect->left >= rect->right)
-		return FALSE;
-	if (rect->top > height)
-		return FALSE;
-	if (rect->bottom > height)
-		return FALSE;
-	if (rect->top >= rect->bottom)
-		return FALSE;
+	}
 
-	const UINT32 w = rect->right - rect->left;
-	if ((w % 2) != 0)
-		return FALSE;
-
-	const UINT32 h = rect->bottom - rect->top;
-	if ((h % 2) != 0)
-		return FALSE;
 	return TRUE;
 }
 
@@ -143,14 +139,8 @@ static BOOL areRectsValid(wLog* log, UINT32 width, UINT32 height, const RECTANGL
 	for (size_t x = 0; x < count; x++)
 	{
 		const RECTANGLE_16* rect = &rects[x];
-		if (!isRectValid(width, height, rect))
-		{
-			char buffer[64] = WINPR_C_ARRAY_INIT;
-			WLog_Print(log, WLOG_WARN,
-			           "Rectangle %" PRIuz " %s outside of bounding frame %" PRIu32 "x%" PRIu32, x,
-			           rectangle_to_string(rect, buffer, sizeof(buffer)), width, height);
+		if (!isRectValid(log, x, width, height, rect))
 			return FALSE;
-		}
 	}
 	return TRUE;
 }

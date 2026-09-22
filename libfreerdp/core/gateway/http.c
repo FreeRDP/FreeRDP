@@ -1022,9 +1022,8 @@ int http_chuncked_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t size
 				{
 					if (!sleep_or_timeout(bio, context, startMS, timeoutMS))
 						return -1;
+					return (effectiveDataLen > 0 ? effectiveDataLen : 0);
 				}
-				else if (status <= 0)
-					return (effectiveDataLen > 0 ? effectiveDataLen : status);
 
 				encodingContext->nextOffset -= WINPR_ASSERTING_INT_CAST(uint32_t, status);
 				if (encodingContext->nextOffset == 0)
@@ -1053,7 +1052,7 @@ int http_chuncked_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t size
 					if (!sleep_or_timeout(bio, context, startMS, timeoutMS))
 						return -1;
 				}
-				else if (status > 0)
+				else
 				{
 					encodingContext->headerFooterPos += (size_t)status;
 					if (encodingContext->headerFooterPos == 2)
@@ -1062,8 +1061,6 @@ int http_chuncked_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t size
 						encodingContext->headerFooterPos = 0;
 					}
 				}
-				else
-					return (effectiveDataLen > 0 ? effectiveDataLen : status);
 			}
 			break;
 			case ChunkStateLenghHeader:
@@ -1079,16 +1076,15 @@ int http_chuncked_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t size
 					{
 						if (!sleep_or_timeout(bio, context, startMS, timeoutMS))
 							return -1;
+						return (effectiveDataLen > 0 ? effectiveDataLen : 0);
 					}
-					else if (status > 0)
+					else
 					{
 						if (*dst == '\n')
 							_haveNewLine = TRUE;
 						encodingContext->headerFooterPos += (size_t)status;
 						dst += status;
 					}
-					else
-						return (effectiveDataLen > 0 ? effectiveDataLen : status);
 				}
 				*dst = '\0';
 				/* strtoul is tricky, error are reported via errno, we also need

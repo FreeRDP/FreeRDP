@@ -375,8 +375,6 @@ static inline pstatus_t neon_YUV444ToX_SINGLE_ROW(const BYTE* WINPR_RESTRICT pY,
                                                   const uint8_t rPos, const uint8_t gPos,
                                                   const uint8_t bPos, const uint8_t aPos)
 {
-	WINPR_ASSERT(width % 2 == 0);
-
 	size_t x = 0;
 
 	for (; x < width - width % 16; x += 16)
@@ -414,8 +412,6 @@ static inline pstatus_t neon_YUV444ToX_DOUBLE_ROW(const BYTE* WINPR_RESTRICT pY[
                                                   const uint8_t rPos, const uint8_t gPos,
                                                   const uint8_t bPos, const uint8_t aPos)
 {
-	WINPR_ASSERT(width % 2 == 0);
-
 	size_t x = 0;
 
 	for (; x < width - width % 16; x += 16)
