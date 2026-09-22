@@ -364,10 +364,10 @@ DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 Pat
 	file->SharedAccess = SharedAccess;
 
 	WCHAR* p = drive_file_combine_fullpath(base_path, path, PathWCharLength);
-	(void)drive_file_set_fullpath(file, p);
+	const BOOL rc = drive_file_set_fullpath(file, p);
 	free(p);
 
-	if (!drive_file_init(file))
+	if (!rc || !drive_file_init(file))
 	{
 		DWORD lastError = GetLastError();
 		drive_file_free(file);
