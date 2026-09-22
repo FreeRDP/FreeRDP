@@ -190,7 +190,10 @@ static pthread_once_t HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 #include "../comm/comm.h"
 #include "namedPipeClient.h"
 
+WINPR_ATTR_NODISCARD
 static DWORD FileAttributesFromStat(const char* path, const struct stat* fileStat);
+
+WINPR_ATTR_NODISCARD
 static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
                              LPWIN32_FIND_DATAA lpFindFileData);
 static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes);
@@ -580,10 +583,11 @@ BOOL GetFileInformationByHandle(HANDLE hFile, LPBY_HANDLE_FILE_INFORMATION lpFil
 
 static char* append(char* buffer, size_t size, const char* append)
 {
-	winpr_str_append(append, buffer, size, "|");
+	(void)winpr_str_append(append, buffer, size, "|");
 	return buffer;
 }
 
+WINPR_ATTR_NODISCARD
 static const char* flagsToStr(char* buffer, size_t size, DWORD flags)
 {
 	char strflags[32] = WINPR_C_ARRAY_INIT;
@@ -951,6 +955,7 @@ fail:
 	return nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL is_valid_file_search_handle(HANDLE handle)
 {
 	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*)handle;
@@ -963,6 +968,7 @@ static BOOL is_valid_file_search_handle(HANDLE handle)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD GetDosAttributesFromXAttr(WINPR_ATTR_UNUSED const char* path)
 {
 #if defined(WINPR_HAVE_SYS_XATTR_H) || defined(WINPR_HAVE_LINUX_MSDOS_FS_H)
@@ -1001,8 +1007,8 @@ static DWORD GetDosAttributesFromXAttr(WINPR_ATTR_UNUSED const char* path)
 			if (rc < 0)
 			{
 				char buffer[64] = WINPR_C_ARRAY_INIT;
-				WLog_WARN(TAG, "ioctl(%d, FAT_IOCTL_GET_ATTRIBUTES) failed with %s", fd,
-				          winpr_strerror(errno, buffer, sizeof(buffer)));
+				WLog_DBG(TAG, "ioctl(%d, FAT_IOCTL_GET_ATTRIBUTES) failed with %s", fd,
+				         winpr_strerror(errno, buffer, sizeof(buffer)));
 			}
 			else
 				dwFileAttributes = intAttr;
@@ -1011,8 +1017,8 @@ static DWORD GetDosAttributesFromXAttr(WINPR_ATTR_UNUSED const char* path)
 			if (crc < 0)
 			{
 				char buffer[64] = WINPR_C_ARRAY_INIT;
-				WLog_WARN(TAG, "close(%d) failed with %s", fd,
-				          winpr_strerror(errno, buffer, sizeof(buffer)));
+				WLog_DBG(TAG, "close(%d) failed with %s", fd,
+				         winpr_strerror(errno, buffer, sizeof(buffer)));
 			}
 		}
 #endif
@@ -1059,7 +1065,7 @@ static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes)
 #if defined(WINPR_HAVE_SYS_XATTR_H)
 	if (setxattr(path, "system.ntfs_attrib_be", &intAttrBE, sizeof(intAttrBE), 0) >= 0)
 	{
-		WLog_INFO(TAG, "Set NTFS attribute xattr for %s", path);
+		WLog_DBG(TAG, "Set NTFS attribute xattr for %s", path);
 		return;
 	}
 
@@ -1069,7 +1075,7 @@ static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes)
 	{
 		if (setxattr(path, "user.cifs.dosattrib", &intAttrBE, sizeof(intAttrBE), 0) >= 0)
 		{
-			WLog_INFO(TAG, "Set CIFS DOS attribute xattr for %s", path);
+			WLog_DBG(TAG, "Set CIFS DOS attribute xattr for %s", path);
 			return;
 		}
 	}
@@ -1083,7 +1089,7 @@ static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes)
 		if (ioctl(fd, FAT_IOCTL_SET_ATTRIBUTES, &intAttr) != -1)
 		{
 			close(fd);
-			WLog_INFO(TAG, "Set FAT attribute for %s", path);
+			WLog_DBG(TAG, "Set FAT attribute for %s", path);
 			return;
 		}
 		close(fd);
@@ -1100,8 +1106,8 @@ static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes)
 		if (rc != 0)
 		{
 			char buffer[128] = WINPR_C_ARRAY_INIT;
-			WLog_WARN(TAG, "removexattr(%s) failed with %s", path,
-			          winpr_strerror(errno, buffer, sizeof(buffer)));
+			WLog_DBG(TAG, "removexattr(%s) failed with %s", path,
+			         winpr_strerror(errno, buffer, sizeof(buffer)));
 		}
 		return;
 	}
@@ -1112,13 +1118,14 @@ static void SetDosAttributesToXAttr(const char* path, DWORD dwFileAttributes)
 		return;
 
 	if (setxattr(path, "user.DOSATTRIB", attrValue, strlen(attrValue), 0) < 0)
-		WLog_WARN(TAG, "Failed to set DOS attribute xattr for %s", path);
+		WLog_DBG(TAG, "Failed to set DOS attribute xattr for %s", path);
 
-	WLog_INFO(TAG, "Set DOS attribute xattr for %s", path);
+	WLog_DBG(TAG, "Set DOS attribute xattr for %s", path);
 #endif
 #endif
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD FileAttributesFromStat(const char* path, const struct stat* fileStat)
 {
 	DWORD dwFileAttributes = GetDosAttributesFromXAttr(path);
@@ -1145,6 +1152,7 @@ static DWORD FileAttributesFromStat(const char* path, const struct stat* fileSta
 	return dwFileAttributes;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL FindDataFromStat(const char* path, const struct stat* fileStat,
                              LPWIN32_FIND_DATAA lpFindFileData)
 {
@@ -1204,6 +1212,7 @@ fail:
 	return INVALID_HANDLE_VALUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL ConvertFindDataAToW(LPWIN32_FIND_DATAA lpFindFileDataA,
                                 LPWIN32_FIND_DATAW lpFindFileDataW)
 {
