@@ -910,6 +910,8 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		H264_CONTEXT* h264 = presentation->h264;
 		const UINT64 startTime = winpr_GetTickCount64NS();
 		MAPPED_GEOMETRY* geom = presentation->geometry;
+		if (!geom)
+			goto out;
 
 		const RECTANGLE_16 rect = { 0, 0, WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedWidth),
 			                        WINPR_ASSERTING_INT_CAST(UINT16, surface->alignedHeight) };
