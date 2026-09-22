@@ -1753,7 +1753,7 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 	rdpMcs* mcs = rdp->mcs;
 	WINPR_ASSERT(mcs);
 
-	WINPR_ASSERT(rdp_get_state(rdp) == CONNECTION_STATE_MCS_CREATE_REQUEST);
+	WINPR_ASSERT(rdp_is_reached_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST));
 	if (!mcs_recv_connect_initial(mcs, s))
 		return FALSE;
 	WINPR_ASSERT(rdp->settings);
@@ -1798,7 +1798,7 @@ BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, wStream* s)
 {
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
-	WINPR_ASSERT(rdp_get_state(rdp) == CONNECTION_STATE_MCS_ERECT_DOMAIN);
+	WINPR_ASSERT(rdp_is_reached_state(rdp, CONNECTION_STATE_MCS_ERECT_DOMAIN));
 
 	if (!mcs_recv_erect_domain_request(rdp->mcs, s))
 		return FALSE;
@@ -1854,7 +1854,7 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 	mcs = rdp->mcs;
 	WINPR_ASSERT(mcs);
 
-	WINPR_ASSERT(rdp_get_state(rdp) == CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST);
+	WINPR_ASSERT(rdp_is_reached_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST));
 
 	if (!mcs_recv_channel_join_request(mcs, rdp->settings, s, &channelId))
 		return FALSE;
@@ -2009,6 +2009,38 @@ static BOOL rdp_is_active_client_state(CONNECTION_STATE state)
 		default:
 			return FALSE;
 	}
+}
+
+BOOL rdp_has_reached_state_impl(const rdpRdp* rdp, CONNECTION_STATE state, const char* file,
+                                size_t line, const char* fkt)
+{
+	WINPR_ASSERT(rdp);
+	const CONNECTION_STATE cur = rdp_get_state(rdp);
+	if (cur < state)
+	{
+		if (WLog_IsLevelActive(rdp->log, WLOG_WARN))
+			WLog_PrintTextMessage(rdp->log, WLOG_WARN, line, file, fkt,
+			                      "State %s (or higher) requested, but %s found. Aborting.",
+			                      rdp_state_string(state), rdp_state_string(cur));
+		return FALSE;
+	}
+	return TRUE;
+}
+
+BOOL rdp_is_reached_state_impl(const rdpRdp* rdp, CONNECTION_STATE state, const char* file,
+                               size_t line, const char* fkt)
+{
+	WINPR_ASSERT(rdp);
+	const CONNECTION_STATE cur = rdp_get_state(rdp);
+	if (cur != state)
+	{
+		if (WLog_IsLevelActive(rdp->log, WLOG_WARN))
+			WLog_PrintTextMessage(rdp->log, WLOG_WARN, line, file, fkt,
+			                      "State %s requested, but %s found. Aborting.",
+			                      rdp_state_string(state), rdp_state_string(cur));
+		return FALSE;
+	}
+	return TRUE;
 }
 
 BOOL rdp_is_active_state(const rdpRdp* rdp)

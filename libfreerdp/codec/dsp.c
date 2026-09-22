@@ -284,7 +284,7 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 	*data = Stream_Buffer(context->common.resample);
 	*length = Stream_Length(context->common.resample);
-	return (error == 0) != 0;
+	return (error == nullptr);
 #else
 	WLog_ERR(TAG, "Missing resample support, recompile -DWITH_SOXR=ON or -DWITH_DSP_FFMPEG=ON");
 	return FALSE;
@@ -1267,9 +1267,8 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder)
 		goto fail;
 
 	{
-		int rc;
 		int val = 1;
-		rc = gsm_option(context->gsm, GSM_OPT_WAV49, &val);
+		int rc = gsm_option(context->gsm, GSM_OPT_WAV49, &val);
 
 		if (rc < 0)
 			goto fail;

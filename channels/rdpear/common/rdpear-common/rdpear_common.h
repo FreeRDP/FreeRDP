@@ -40,7 +40,7 @@ typedef enum
 {
 	// Start Kerberos remote calls
 	RemoteCallKerbMinimum = 0x100,
-	RemoteCallKerbNegotiateVersion = 0x100,
+	RemoteCallKerbNegotiateVersion = RemoteCallKerbMinimum,
 	RemoteCallKerbBuildAsReqAuthenticator,
 	RemoteCallKerbVerifyServiceTicket,
 	RemoteCallKerbCreateApReqAuthenticator,
