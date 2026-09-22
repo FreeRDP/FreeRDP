@@ -576,7 +576,7 @@ ssize_t fdk_aac_dsp_impl_stream_info(void* handle, int encoder, fdk_log_fkt_t lo
 }
 
 ssize_t fdk_aac_dsp_impl_encode(void* handle, const void* data, size_t size, void* dst,
-                                size_t dstSize, fdk_log_fkt_t log)
+                                size_t dstSize, size_t* consumed, fdk_log_fkt_t log)
 {
 	INT inSizes[] = { (INT)size };
 	INT inElSizes[] = { sizeof(INT_PCM) };
@@ -616,6 +616,9 @@ ssize_t fdk_aac_dsp_impl_encode(void* handle, const void* data, size_t size, voi
 
 	assert(handle);
 	assert(log);
+	assert(consumed);
+
+	*consumed = 0;
 
 	AACENC_ERROR err = aacEncEncode(self, &inBufDesc, &outBufDesc, &inArgs, &outArgs);
 	if (err != AACENC_OK)
@@ -623,5 +626,6 @@ ssize_t fdk_aac_dsp_impl_encode(void* handle, const void* data, size_t size, voi
 		log(WLOG_ERROR, "aacEncEncode failed with %s", enc_err_str(err));
 		return -1;
 	}
+	*consumed = (size_t)outArgs.numInSamples * sizeof(INT_PCM);
 	return outArgs.numOutBytes;
 }

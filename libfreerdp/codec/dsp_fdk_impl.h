@@ -38,7 +38,7 @@ ssize_t fdk_aac_dsp_impl_decode_fill(void* handle, const void* data, size_t size
                                      fdk_log_fkt_t log);
 
 ssize_t fdk_aac_dsp_impl_encode(void* handle, const void* data, size_t size, void* dst,
-                                size_t dstSize, fdk_log_fkt_t log);
+                                size_t dstSize, size_t* consumed, fdk_log_fkt_t log);
 
 ssize_t fdk_aac_dsp_impl_decode_read(void* handle, void* dst, size_t dstSize, fdk_log_fkt_t log);
 
