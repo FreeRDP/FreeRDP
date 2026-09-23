@@ -1020,7 +1020,7 @@ int http_chuncked_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t size
 				status = BIO_read(bio, pBuffer, (int)rd);
 				if (status <= 0)
 				{
-					if (!sleep_or_timeout(bio, context, startMS, timeoutMS))
+					if (sleep_or_timeout(bio, context, startMS, timeoutMS))
 						return -1;
 					return (effectiveDataLen > 0 ? effectiveDataLen : 0);
 				}
@@ -1049,8 +1049,9 @@ int http_chuncked_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t size
 				status = BIO_read(bio, _dummy, (int)(2 - encodingContext->headerFooterPos));
 				if (status <= 0)
 				{
-					if (!sleep_or_timeout(bio, context, startMS, timeoutMS))
+					if (sleep_or_timeout(bio, context, startMS, timeoutMS))
 						return -1;
+					return (effectiveDataLen > 0 ? effectiveDataLen : status);
 				}
 				else
 				{
@@ -1074,7 +1075,7 @@ int http_chuncked_read(BIO* bio, rdpContext* context, BYTE* pBuffer, size_t size
 					status = BIO_read(bio, dst, 1);
 					if (status <= 0)
 					{
-						if (!sleep_or_timeout(bio, context, startMS, timeoutMS))
+						if (sleep_or_timeout(bio, context, startMS, timeoutMS))
 							return -1;
 						return (effectiveDataLen > 0 ? effectiveDataLen : 0);
 					}
