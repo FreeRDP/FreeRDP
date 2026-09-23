@@ -37,6 +37,12 @@ static const char* CODEC_NAME = "video/avc";
 static const int COLOR_FormatYUV420Planar = 19;
 static const int COLOR_FormatYUV420Flexible = 0x7f420888;
 
+/* Output crop rectangle; inclusive bounds, no NDK constants exist for these */
+static const char* MEDIACODEC_KEY_CROP_LEFT = "crop-left";
+static const char* MEDIACODEC_KEY_CROP_RIGHT = "crop-right";
+static const char* MEDIACODEC_KEY_CROP_TOP = "crop-top";
+static const char* MEDIACODEC_KEY_CROP_BOTTOM = "crop-bottom";
+
 /* https://developer.android.com/reference/android/media/MediaCodec#qualityFloor */
 static const int MEDIACODEC_MINIMUM_WIDTH = 320;
 static const int MEDIACODEC_MINIMUM_HEIGHT = 240;
@@ -51,7 +57,16 @@ typedef struct
 	int32_t height;
 	int32_t outputWidth;
 	int32_t outputHeight;
+	int32_t outputStride;
+	int32_t outputSliceHeight;
+	int32_t cropLeft;
+	int32_t cropTop;
+	int32_t colorFormat;
 	ssize_t currentOutputBufferIndex;
+
+	/* decoder deinterleave buffer for NV12 / semiplanar output */
+	BYTE* decodeI420Buffer;
+	size_t decodeI420Capacity;
 } H264_CONTEXT_MEDIACODEC;
 
 WINPR_ATTR_NODISCARD
@@ -186,8 +201,73 @@ static int update_mediacodec_outputformat(H264_CONTEXT* h264)
 		return -1;
 	}
 
+	/* Honor codec stride/slice-height padding; fall back to tight packing. */
+	int32_t outputStride = 0;
+	int32_t outputSliceHeight = 0;
+	if (!AMediaFormat_getInt32(sys->outputFormat, AMEDIAFORMAT_KEY_STRIDE, &outputStride) ||
+	    outputStride < outputWidth)
+		outputStride = outputWidth;
+	if (!AMediaFormat_getInt32(sys->outputFormat, AMEDIAFORMAT_KEY_SLICE_HEIGHT,
+	                           &outputSliceHeight) ||
+	    outputSliceHeight < outputHeight)
+		outputSliceHeight = outputHeight;
+	if ((outputWidth <= 0) || (outputHeight <= 0) ||
+	    (outputStride > MEDIACODEC_MAXIMUM_DIMENSION) ||
+	    (outputSliceHeight > MEDIACODEC_MAXIMUM_DIMENSION))
+	{
+		WLog_Print(h264->log, WLOG_ERROR,
+		           "MediaCodec output layout out of range: %dx%d stride %d slice-height %d",
+		           outputWidth, outputHeight, outputStride, outputSliceHeight);
+		return -1;
+	}
+	sys->outputStride = outputStride;
+	sys->outputSliceHeight = outputSliceHeight;
+
+	/* Width and height above describe the padded allocation; the picture inside it is the crop
+	 * rectangle, with inclusive bounds. */
 	sys->outputWidth = outputWidth;
 	sys->outputHeight = outputHeight;
+	sys->cropLeft = 0;
+	sys->cropTop = 0;
+
+	int32_t cropLeft = 0;
+	int32_t cropRight = 0;
+	int32_t cropTop = 0;
+	int32_t cropBottom = 0;
+	/* Only the far edges are always published; a missing near edge means zero. */
+	if (!AMediaFormat_getInt32(sys->outputFormat, MEDIACODEC_KEY_CROP_LEFT, &cropLeft))
+		cropLeft = 0;
+	if (!AMediaFormat_getInt32(sys->outputFormat, MEDIACODEC_KEY_CROP_TOP, &cropTop))
+		cropTop = 0;
+
+	if (AMediaFormat_getInt32(sys->outputFormat, MEDIACODEC_KEY_CROP_RIGHT, &cropRight) &&
+	    AMediaFormat_getInt32(sys->outputFormat, MEDIACODEC_KEY_CROP_BOTTOM, &cropBottom) &&
+	    (cropLeft >= 0) && (cropTop >= 0) && (cropRight >= cropLeft) && (cropBottom >= cropTop) &&
+	    (cropRight < outputWidth) && (cropBottom < outputHeight))
+	{
+		sys->outputWidth = cropRight - cropLeft + 1;
+		sys->outputHeight = cropBottom - cropTop + 1;
+		sys->cropLeft = cropLeft;
+		sys->cropTop = cropTop;
+	}
+
+	/* The requested planar format is a hint; vendors may output NV12 or flexible YUV. */
+	int32_t colorFormat = 0;
+	if (!AMediaFormat_getInt32(sys->outputFormat, AMEDIAFORMAT_KEY_COLOR_FORMAT, &colorFormat))
+		colorFormat = COLOR_FormatYUV420Planar;
+	sys->colorFormat = colorFormat;
+
+	if (colorFormat == COLOR_FormatYUV420Flexible)
+		WLog_Print(h264->log, WLOG_DEBUG, "MediaCodec output is flexible YUV, assuming NV12");
+
+	/* Publish visible dimensions for region rectangle validation. */
+	h264->YUVWidth = (UINT32)sys->outputWidth;
+	h264->YUVHeight = (UINT32)sys->outputHeight;
+
+	WLog_Print(h264->log, WLOG_DEBUG,
+	           "MediaCodec output %dx%d stride %d slice-height %d crop [%d,%d] color 0x%x",
+	           sys->outputWidth, sys->outputHeight, sys->outputStride, sys->outputSliceHeight,
+	           sys->cropLeft, sys->cropTop, colorFormat);
 
 	return 1;
 }
@@ -213,6 +293,56 @@ static void release_current_outputbuffer(H264_CONTEXT* h264)
 	}
 
 	sys->currentOutputBufferIndex = -1;
+}
+
+static void mediacodec_copy_nv12_to_i420(BYTE* dstYuv[3], const UINT32 dstStride[3],
+                                         const uint8_t* src, int32_t width, int32_t height,
+                                         int32_t srcStride, int32_t srcSliceHeight,
+                                         int32_t cropLeft, int32_t cropTop)
+{
+	WINPR_ASSERT(dstYuv);
+	WINPR_ASSERT(dstStride);
+	WINPR_ASSERT(src);
+
+	const int32_t cw = (width + 1) / 2;
+	const int32_t ch = (height + 1) / 2;
+	const size_t srcLumaOffset = (size_t)cropTop * (size_t)srcStride + (size_t)cropLeft;
+	const size_t srcChromaOffset = (size_t)srcStride * (size_t)srcSliceHeight +
+	                               (size_t)(cropTop / 2) * (size_t)srcStride +
+	                               ((size_t)cropLeft & ~1ULL);
+
+	const uint8_t* srcY = src + srcLumaOffset;
+	const uint8_t* srcUV = src + srcChromaOffset;
+
+	/* Clamp chroma pair count to row bounds. */
+	const int32_t chromaLeft = cropLeft & ~1;
+	const int32_t avail = (srcStride > chromaLeft) ? (srcStride - chromaLeft) / 2 : 0;
+	const int32_t pairs = (avail < cw) ? avail : cw;
+
+	for (int32_t row = 0; row < height; row++)
+	{
+		memcpy(dstYuv[0] + (size_t)row * (size_t)dstStride[0],
+		       srcY + (size_t)row * (size_t)srcStride, (size_t)width);
+	}
+
+	for (int32_t row = 0; row < ch; row++)
+	{
+		const uint8_t* uvRow = srcUV + (size_t)row * (size_t)srcStride;
+		BYTE* uRow = dstYuv[1] + (size_t)row * (size_t)dstStride[1];
+		BYTE* vRow = dstYuv[2] + (size_t)row * (size_t)dstStride[2];
+		for (int32_t col = 0; col < pairs; col++)
+		{
+			uRow[col] = uvRow[(size_t)col * 2];
+			vRow[col] = uvRow[(size_t)col * 2 + 1];
+		}
+
+		/* Fill unused chroma with neutral gray (0x80). */
+		for (int32_t col = pairs; col < cw; col++)
+		{
+			uRow[col] = 0x80;
+			vRow[col] = 0x80;
+		}
+	}
 }
 
 WINPR_ATTR_NODISCARD
@@ -350,28 +480,93 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 				    AMediaCodec_getOutputBuffer(sys->decoder, outputBufferId, &outputBufferSize);
 				sys->currentOutputBufferIndex = outputBufferId;
 
-				if (outputBufferSize !=
-				    (sys->outputWidth * sys->outputHeight +
-				     ((sys->outputWidth + 1) / 2) * ((sys->outputHeight + 1) / 2) * 2))
+				/* End of stream and metadata buffers carry no picture. */
+				if (bufferInfo.size <= 0)
+				{
+					release_current_outputbuffer(h264);
+					continue;
+				}
+
+				/* The picture starts at the reported offset, not at the buffer base. */
+				if (!outputBuffer || (bufferInfo.offset < 0) ||
+				    ((size_t)bufferInfo.offset > outputBufferSize))
 				{
 					WLog_Print(h264->log, WLOG_ERROR,
-					           "Error MediaCodec unexpected output buffer size %zu",
+					           "MediaCodec output offset %d out of range %zu", bufferInfo.offset,
 					           outputBufferSize);
 					return -1;
 				}
+				outputBuffer += bufferInfo.offset;
+				outputBufferSize -= (size_t)bufferInfo.offset;
 
-				// TODO: work with AImageReader and get AImage object instead of
-				// COLOR_FormatYUV420Planar buffer.
-				iStride[0] = sys->outputWidth;
-				iStride[1] = (sys->outputWidth + 1) / 2;
-				iStride[2] = (sys->outputWidth + 1) / 2;
-				pYUVData[0] = outputBuffer;
-				pYUVData[1] = outputBuffer + iStride[0] * sys->outputHeight;
-				pYUVData[2] = outputBuffer + iStride[0] * sys->outputHeight +
-				              iStride[1] * ((sys->outputHeight + 1) / 2);
+				const size_t lumaSize = (size_t)sys->outputStride * (size_t)sys->outputSliceHeight;
+				const int32_t chromaStride = sys->outputStride / 2;
+				const int32_t chromaHeight = (sys->outputSliceHeight + 1) / 2;
+				const size_t chromaSize = (size_t)chromaStride * (size_t)chromaHeight;
+				const size_t minRequiredSize =
+				    lumaSize + (size_t)sys->outputStride * (size_t)chromaHeight;
 
-				h264->YUVWidth = sys->outputWidth;
-				h264->YUVHeight = sys->outputHeight;
+				if (outputBufferSize < minRequiredSize)
+				{
+					WLog_Print(h264->log, WLOG_ERROR,
+					           "Error MediaCodec output buffer too small %zu < %zu",
+					           outputBufferSize, minRequiredSize);
+					return -1;
+				}
+
+				if (sys->colorFormat == COLOR_FormatYUV420Planar)
+				{
+					iStride[0] = (UINT32)sys->outputStride;
+					iStride[1] = (UINT32)chromaStride;
+					iStride[2] = (UINT32)chromaStride;
+					pYUVData[0] = outputBuffer +
+					              ((size_t)sys->cropTop * (size_t)sys->outputStride) +
+					              (size_t)sys->cropLeft;
+					pYUVData[1] = outputBuffer + lumaSize +
+					              ((size_t)(sys->cropTop / 2) * (size_t)chromaStride) +
+					              ((size_t)sys->cropLeft / 2);
+					pYUVData[2] = outputBuffer + lumaSize + chromaSize +
+					              ((size_t)(sys->cropTop / 2) * (size_t)chromaStride) +
+					              ((size_t)sys->cropLeft / 2);
+				}
+				else
+				{
+					/* SemiPlanar (NV12) or flexible YUV: deinterleave into staging I420 buffer */
+					const UINT32 dstYStride = (UINT32)sys->outputWidth;
+					const UINT32 dstUVStride = (UINT32)((sys->outputWidth + 1) / 2);
+					const size_t yBytes = (size_t)dstYStride * (size_t)sys->outputHeight;
+					const size_t uvBytes =
+					    (size_t)dstUVStride * (size_t)((sys->outputHeight + 1) / 2);
+					const size_t neededCapacity = yBytes + uvBytes * 2;
+
+					if (sys->decodeI420Capacity < neededCapacity)
+					{
+						BYTE* newBuf = (BYTE*)realloc(sys->decodeI420Buffer, neededCapacity);
+						if (!newBuf)
+						{
+							WLog_Print(h264->log, WLOG_ERROR,
+							           "Failed to allocate I420 deinterleave buffer");
+							return -1;
+						}
+						sys->decodeI420Buffer = newBuf;
+						sys->decodeI420Capacity = neededCapacity;
+					}
+
+					iStride[0] = dstYStride;
+					iStride[1] = dstUVStride;
+					iStride[2] = dstUVStride;
+					pYUVData[0] = sys->decodeI420Buffer;
+					pYUVData[1] = sys->decodeI420Buffer + yBytes;
+					pYUVData[2] = sys->decodeI420Buffer + yBytes + uvBytes;
+
+					mediacodec_copy_nv12_to_i420(
+					    pYUVData, iStride, outputBuffer, sys->outputWidth, sys->outputHeight,
+					    sys->outputStride, sys->outputSliceHeight, sys->cropLeft, sys->cropTop);
+					release_current_outputbuffer(h264);
+				}
+
+				h264->YUVWidth = (UINT32)sys->outputWidth;
+				h264->YUVHeight = (UINT32)sys->outputHeight;
 				break;
 			}
 			else if (outputBufferId == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED)
@@ -441,6 +636,9 @@ static void mediacodec_uninit(H264_CONTEXT* h264)
 
 		sys->decoder = nullptr;
 	}
+
+	free(sys->decodeI420Buffer);
+	sys->decodeI420Buffer = nullptr;
 
 	set_mediacodec_format(h264, &sys->inputFormat, nullptr);
 	set_mediacodec_format(h264, &sys->outputFormat, nullptr);
