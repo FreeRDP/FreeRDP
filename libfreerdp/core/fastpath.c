@@ -506,6 +506,10 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 	{
 		WLog_ERR(TAG, "Fastpath update %s [%" PRIx8 "] failed, status %d",
 		         fastpath_update_to_string(updateCode), updateCode, status);
+		const BOOL ignore =
+		    freerdp_settings_get_bool(context->settings, FreeRDP_AllowUnanouncedOrdersFromServer);
+		if (ignore)
+			return 0;
 		return -1;
 	}
 
