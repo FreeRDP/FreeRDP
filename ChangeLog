@@ -1,3 +1,244 @@
+# 2026-09-23 Version 3.32.0
+
+New release with many user visible goodies for all of you.
+There have also been *lots* of issues addressed to harden against protocol violations/exploits,
+thanks to all the people doing in depth code reviews and security reports.
+
+* [proxy] add configuration options for /sec:ext or PROTOCOL_HYBRID_EX
+* [proxy] add configuration options for target certificate policy.
+  NOTE: This changes default behavior from accept unless denied to deny unless accepted!
+        Requires an update of your proxy configuration file if you rely on this.
+* [SDL,xfreerdp] seamless Entra/Azure integration on linux (with helper binaries)
+* [beta] Basic SDL client RAILS support for X11/wayland (other platforms currently
+  lack some features / platform integration code, as we still need some native hooks)
+* [RDPECAM] stops camera streams now when the remote no longer requests frames.
+  (no more camera LED after closing the windows application accessing it)
+* [RDPEWA] support user verification in addition to / instead of pin
+* [RDPEUSB] properly map interface index to interface numbers
+  (more devices should work now)
+* [android] updated touch pointer
+* [wlfreerdp] shortcut inhibit release on mouse leave window
+* [xfreerdp] rails improvements, hopefully no longer shrinking windows
+* Full support for [MS-RDPBCGR] 2.2.10.2 Early User Authorization Result PDU,
+  so now you get a error message if a user is not allowed to log in instead of
+  a network failed message. (Authentication /sec:ext or PROTOCOL_HYBRID_EX)
+* [shadow] add configuration options for /sec:ext or PROTOCOL_HYBRID_EX
+* [gateway] split HTTP timeout from TCP connect timeout
+* [ffmpeg] support generic hardware accelerated encoding/decoding, replacing the
+  old VAAPI only implementation. (still experimental as there are often driver issues)
+
+## CVE
+
+Note: Advisories will be published days/weeks after the release, so links are 404
+      until then.
+
+* by Opensec Intelligence
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-xq87-9rrm-6wqw
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-3rvr-qvx8-rj23
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-pvgq-84w2-93ph
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-xm53-352c-57jw
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-3mq5-xh88-9v62
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-mqxv-c882-m8w9
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-q6pp-28g8-xqjc
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-jgw9-wqvx-j495
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-5cgr-vmp8-fmvj
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-m7g5-gw57-cwcr
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-pjxv-5j98-cqx4
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-pw4j-ff39-9vjm
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-87v8-2gwr-ww9j
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-h7fx-22wv-4cg8
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-996j-34w6-5hgm
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-52xc-5973-w5vv
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-qjwp-c855-hc69
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-4ww8-3vqm-jgcf
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-96rv-gf42-7wq9
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-9qr4-rgq4-jfp8
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-cq4m-gwc5-w8rc
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-q9p9-j22r-577p
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-2jfv-j3wx-5cg4
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-g8jw-gv54-r94p
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-7vfc-chg9-q5r8
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-f46f-pxh9-w2rh
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-pg3f-chj4-mrw6
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-f526-rq4j-5ch8
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-8rpr-jjjg-5qv6
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-cmgx-558f-vh67
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-m998-cvfm-9444
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-99p4-8j24-wvj4
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-97pf-pwp3-2wrv
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-27m7-gwhh-6hhf
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-qpfh-m9w6-xf2x
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-q56j-jjh6-38jf
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-f554-v4xw-5j39
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-chh2-527f-x255
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-xf45-j844-588v
+* by @DavidKorczynski
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-qq23-mqmv-pc65
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-jhxw-3hj9-9hqh
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-h44v-39x6-9xvg
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-6vjv-4hm3-6698
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-c3rh-2hv6-7hf2
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-jp2r-gm4v-wvq2
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-gvq8-v2fm-ffxv
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-jhv5-m83m-hxhq
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-grvc-qhhp-7h6m
+* by @programmervuln
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-26cc-wjh8-hjw6
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-945c-qq5h-jqwp
+* by @HAN-BAMBO
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-93g7-296p-j77j
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-6rj3-rf6g-3vw5
+* by @kimaiden1984-boop
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/HSA-wf3x-658c-52m5
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/HSA-2hhg-8xx6-v73w
+* by @jimaf
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-g4wg-67xq-8q53
+* by @thawkahant
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-72qv-gcph-rfwf
+* by @smaeljaish771
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-vqxm-9w7c-hvvx
+* by @D7EAD
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-hxw3-57rq-3v4m
+* by @manus-use
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-f4pf-pgp4-f2r3
+* by @router0mail
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-4mpr-hmqx-83q8
+* by mail
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-x7v7-9jp5-wqj2
+  * https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-83g2-gf92-5c4g
+
+## What's Changed
+* Various WinPR addings (#13311)
+* [cache] improve cache_resize (#13317)
+* OSS-Fuzz: Add fuzzer for Smartcard Operations (#13323)
+* [codec,fdk] ignore decoder errors (#13324)
+* [codec,h264] overallocate decoder buffers (#13326)
+* [warnings,s(n)printf] fix missing return value checks (#13325)
+* [client,common] fix TestClientRdpFile (#13333)
+* [winpr,library] fix mac os GetModuleFileNameA (#13337)
+* [channels,pulse] survive hot-removal of the active audio device (#13334)
+* [client,common] map gatewaycredentialssource from rdp files (#13330)
+* Warn fix pointer (#13341)
+* Relax order checks (#13343)
+* OSS-Fuzz: Add new fuzzer targets Client Rdp File processing (#13344)
+* [channels,urbdrc] report the negotiated device speed (#13345)
+* [client,x11] fix clipboard atom evaluation (#13347)
+* [client,x11] use correct count to iterate atoms (#13349)
+* licensing checks & gfx surface format hacks (#13351)
+* [channels,urbdrc] give the device speed a type (#13352)
+* [core,gateway] bound ARM gateway responses by their own timeout, not TcpConnectTimeout (#13327)
+* [codec,h264] configure ffmpeg via env variables (#13316)
+* [winpr,image] honor bfOffBits when parsing bitmaps (#13350)
+* [cache,pointer] explicitly cast to void* (#13353)
+* Ci warning fixes (#13354)
+* [client,cmdline] honor explicitly disabled multimon and smart-sizing (#13331)
+* [client,common] eliminate dead code (#13357)
+* [alignment] add WINPR_PACKED_ALIGN_CAST (#13355)
+* Silence cast function type (#13358)
+* [winpr,info] add warning log for winpr debug options (#13359)
+* [winpr,align] more warnings on unsupported configurations (#13360)
+* [winpr,ncrypt] add idLen checks (#13361)
+* Msvc unaligned (#13362)
+* Fuzzer fixes (#13363)
+* Channels nodiscard (#13366)
+* l10n: add Swedish Android localization (#13365)
+* various cleanups and fixes (#13368)
+* [client,sdl] handle Windows E0 36 as right shift (#13369)
+* [client, ios] iOS client build fix (#13083)
+* Cleanups september (#13370)
+* [winpr,library] implement GetModuleFileNameA on OpenBSD with getexecpath() (#13335)
+* [cmake] fix building on OpenBSD (#13380)
+* [winpr,cast] fix parentheses (#13379)
+* [winpr,library] move FreeBSD GetModuleFileNameA into function (#13382)
+* [winpr,cast] add PPC and s390x to supported (#13383)
+* Pulse detect (#13384)
+* [codec,dsp] fix compiler warnings (#13385)
+* [client,common] fix POSIX command-line status options (#13372)
+* [codec,dsp] fix variable init for soxr (#13386)
+* [codec,h264] fix broken MediaFoundation decoder build (#13389)
+* [ci,windows] enable WITH_MEDIA_FOUNDATION (#13390)
+* Scard checks (#13395)
+* [client,x11] preserve requested size for ordinary windows (#13373)
+* [client,x11] honor decorations for RemoteApp windows (#13393)
+* [client,x11] release pointer grab when RemoteApp loses focus (#13392)
+* Ndr length checks (#13399)
+* [channels,rdpear] fix missing NULL check (#13400)
+* [client,android] horizontal scroll and middle click (#13401)
+* [client,android] add touchpad two-finger scroll (#13402)
+* [core,transport] abort write hard if it fails (#13404)
+* [core,rdstls] Fix version validation macro (#13406)
+* fix GDI handle leaks in wf_gdi_mem3blet (#13403)
+* Geometry checks (#13407)
+* [core,sdl] externalize the AAD credentials in an external process (#13340)
+* Winpr wcschr (#13408)
+* Tighten checks (#13410)
+* [channel,urbdrc] fix func_claim_all_interface, mark [[nodiscard]] (#13411)
+* [utils,http] enable host verification (#13412)
+* Unaligned eliminate (some) (#13405)
+* [packaging,all] enable WITH_XDG_AAD_AUTH_HELPER (#13413)
+* [core,rdstls] accept matching autoreconnect cookies (#13414)
+* [core,gateway] do not require a final auth token (#13418)
+* [rdpecam,v4l] release capture when sample requests drain (#13417)
+* Stream utf16 and persistent cache fixes (#13421)
+* Fix usage of interface index as an interface number (#13419)
+* [core,security] add ExtSecurity to all clients and server (#13415)
+* [uwac,client] fix invisible Wayland cursor and stuck shortcut inhibitor (#13424)
+* [channels,audin] fix mac/ios input validation (#13423)
+* [client,x11] fix RemoteApp drop-down menus and dialog window size feedback loop (#13422)
+* [client,sdl] RemoteApp (RAIL) support for the SDL3 client (#13133)
+* [client,sdl] generate xdg glue code without warnings (#13425)
+* [ci,packaging] fix deb control dependencies (#13426)
+* Proxy drdynvc (#13434)
+* [client,sdl] add new events from SDL 3.3.2 and newer (#13435)
+* set_termianl_nonblock -> set_terminal_nonblock (#13428)
+* Oauth2 state tracking (#13433)
+* [winpr,utils] SAM parser: zero memory before free (#13436)
+* Client common context checks (#13438)
+* no Password: prompt and don't mess with tty if stdin is a pipe (#13437)
+* [client,common] fix inverted assert (#13439)
+* [channels,rdpdr] add a workaround for windows server 2003 and XP (#13445)
+* [client,common] implement common client AAD helper (#13441)
+* Kbd mapping config (#13444)
+* [client,common] unify aad token navigation code (#13446)
+* [client,common] fix arguments order (#13447)
+* Tsg and cleanups (#13448)
+* Harden (#13451)
+* sysinfo.c: fix macOS cpu macros (#13452)
+* reject unterminated applicationId in rail get appid resp (#13453)
+* Harden more (#13456)
+* SDL3: fix typo (#13462)
+* [core,server] sanitize KeyboardType received from clients (#13461)
+* [memory] prefer winpr_aligned_calloc (#13466)
+* [server,proxy] add TargetCertPolicy config option (#13463)
+* OSS-Fuzz: Disable libpulse manually for oss-fuzz build (#13465)
+* Harden again (#13464)
+* [client,x11] fix RAIL window repaint volume (invalid region never reset, updates for unmapped windows) (#13459)
+* Warn cleanup (#13467)
+* Warn cleanup (#13467)
+* Refinements (#13468)
+* Refinements some more (#13469)
+* [codec,dsp] fix fdk-aac encoding (#13470)
+* Cleanups (#13471)
+* [core,gateway] never pass NULL to websocket_reply_close (#13474)
+* [core,fastpath] add fastpath errors to relax-order-checks (#13476)
+
+## New Contributors
+* @shakeelosmani made their first contribution in (#13334)
+* @sjtrotter made their first contribution in (#13330)
+* @huanzhang12 made their first contribution in (#13350)
+* @yeager made their first contribution in (#13365)
+* @Ohyunj made their first contribution in (#13403)
+* @yerbolgmailcom made their first contribution in (#13417)
+* @slavaandrejev made their first contribution in (#13419)
+* @berkeleyinc made their first contribution in (#13424)
+* @unicon221 made their first contribution in (#13422)
+* @barracuda156 made their first contribution in (#13452)
+* @gaardiolor made their first contribution in (#13461)
+* @arthgirard made their first contribution in (#13459)
+
+For a complete and detailed change log since the last release run:
+git log 3.32.0...3.31.1
+
 # 2026-09-02 Version 3.31.1
 
 After the last huge CVE and security fix releases finally a simple papercut fix release.
