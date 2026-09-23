@@ -55,7 +55,7 @@ SSIZE_T xf_retry_dialog(freerdp* instance, const char* what, size_t current, voi
 	{
 		const int screen = DefaultScreen(xfc->display);
 		xfc->reconnectWindow =
-			XCreateSimpleWindow(xfc->display, DefaultRootWindow(xfc->display), 0, 0, 420, 90, 1,
+		    XCreateSimpleWindow(xfc->display, DefaultRootWindow(xfc->display), 0, 0, 420, 90, 1,
 		                        BlackPixel(xfc->display, screen), WhitePixel(xfc->display, screen));
 		XStoreName(xfc->display, xfc->reconnectWindow, "FreeRDP - Reconnecting");
 		XSelectInput(xfc->display, xfc->reconnectWindow, ExposureMask);
@@ -70,6 +70,7 @@ SSIZE_T xf_retry_dialog(freerdp* instance, const char* what, size_t current, voi
 	else
 		(void)snprintf(xfc->reconnectMessage, sizeof(xfc->reconnectMessage),
 		               "Reconnecting: attempt %zu", current + 1);
+	xf_reconnect_draw(xfc);
 	xf_unlock_x11(xfc);
 	return delay;
 }
