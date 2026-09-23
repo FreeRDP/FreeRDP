@@ -34,8 +34,7 @@ static BOOL test_overlaps(void)
 		bytes[i] = (BYTE)i;
 
 	if (!ringbuffer_init(&rb, 5))
-		return FALSE;
-
+		goto error;
 	if (!ringbuffer_write(&rb, bytes, 4)) /* [0123.] */
 		goto error;
 	counter += 4;

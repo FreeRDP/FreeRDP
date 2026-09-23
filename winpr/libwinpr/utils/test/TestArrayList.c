@@ -34,7 +34,8 @@ int TestArrayList(int argc, char* argv[])
 	if (index != 6)
 		goto fail;
 
-	ArrayList_Insert(arrayList, 5, (void*)(size_t)100);
+	if (!ArrayList_Insert(arrayList, 5, (void*)(size_t)100))
+		goto fail;
 
 	index = ArrayList_IndexOf(arrayList, (void*)(size_t)6, -1, -1);
 	printf("ArrayList index: %" PRIdz "\n", index);

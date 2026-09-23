@@ -17,10 +17,10 @@ static BOOL TestFreeRDPImageCopy(UINT32 w, UINT32 h, UINT32 srcFormat, UINT32 ds
 	BOOL rc = FALSE;
 	const size_t sbpp = FreeRDPGetBytesPerPixel(srcFormat);
 	const size_t dbpp = FreeRDPGetBytesPerPixel(dstFormat);
-	const size_t srcStep = w * sbpp;
-	const size_t dstStep = w * dbpp;
-	char* src = calloc(h, srcStep);
-	char* dst = calloc(h, dstStep);
+	const size_t srcStep = 1ull * w * sbpp;
+	const size_t dstStep = 1ull * w * dbpp;
+	BYTE* src = calloc(h, srcStep);
+	BYTE* dst = calloc(h, dstStep);
 	if (!src || !dst)
 		goto fail;
 
@@ -56,10 +56,10 @@ static BOOL TestFreeRDPImageCopy_no_overlap(UINT32 w, UINT32 h, UINT32 srcFormat
 	BOOL rc = FALSE;
 	const size_t sbpp = FreeRDPGetBytesPerPixel(srcFormat);
 	const size_t dbpp = FreeRDPGetBytesPerPixel(dstFormat);
-	const size_t srcStep = w * sbpp;
-	const size_t dstStep = w * dbpp;
-	char* src = calloc(h, srcStep);
-	char* dst = calloc(h, dstStep);
+	const size_t srcStep = 1ull * w * sbpp;
+	const size_t dstStep = 1ull * w * dbpp;
+	BYTE* src = calloc(h, srcStep);
+	BYTE* dst = calloc(h, dstStep);
 	if (!src || !dst)
 		goto fail;
 

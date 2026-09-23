@@ -1377,21 +1377,14 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
 	int rc = 0;
 	UINT32 iso_packet_size = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
-	ASYNC_TRANSFER_USER_DATA* user_data = nullptr;
 	struct libusb_transfer* iso_transfer = nullptr;
-	URBDRC_PLUGIN* urbdrc = nullptr;
 	size_t outSize = (12ULL * NumberOfPackets);
 	uint32_t streamID = 0x40000000 | RequestId;
 
 	if (!pdev || !pdev->urbdrc)
 		return -1;
 
-	urbdrc = pdev->urbdrc;
-	user_data = async_transfer_user_data_new(idev, MessageId, 48, BufferSize, Buffer,
-	                                         outSize + 1024, NoAck, transferDir, cb, callback);
-
-	if (!user_data)
-		return -1;
+	URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
 
 	if ((NumberOfPackets > INT32_MAX) || (BufferSize > INT32_MAX))
 	{
@@ -1401,6 +1394,12 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
 		           NumberOfPackets, BufferSize, INT32_MAX);
 		return -1;
 	}
+
+	ASYNC_TRANSFER_USER_DATA* user_data = async_transfer_user_data_new(
+	    idev, MessageId, 48, BufferSize, Buffer, outSize + 1024, NoAck, transferDir, cb, callback);
+
+	if (!user_data)
+		return -1;
 
 	user_data->ErrorCount = ErrorCount;
 	user_data->StartFrame = StartFrame;

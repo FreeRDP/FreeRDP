@@ -25,8 +25,10 @@ int TestWLog(int argc, char* argv[])
 	}
 
 	root = WLog_GetRoot();
+	WINPR_ASSERT(root);
 
-	WLog_SetLogAppenderType(root, WLOG_APPENDER_BINARY);
+	if (!WLog_SetLogAppenderType(root, WLOG_APPENDER_BINARY))
+		goto out;
 
 	appender = WLog_GetLogAppender(root);
 	if (!WLog_ConfigureAppender(appender, "outputfilename", "test_w.log"))
@@ -35,15 +37,22 @@ int TestWLog(int argc, char* argv[])
 		goto out;
 
 	layout = WLog_GetLogLayout(root);
-	WLog_Layout_SetPrefixFormat(root, layout, "[%lv:%mn] [%fl|%fn|%ln] - ");
+	if (!WLog_Layout_SetPrefixFormat(root, layout, "[%lv:%mn] [%fl|%fn|%ln] - "))
+		goto out;
 
-	WLog_OpenAppender(root);
+	if (!WLog_OpenAppender(root))
+		goto out;
 
 	logA = WLog_Get("com.test.ChannelA");
-	logB = WLog_Get("com.test.ChannelB");
+	WINPR_ASSERT(logA);
 
-	WLog_SetLogLevel(logA, WLOG_INFO);
-	WLog_SetLogLevel(logB, WLOG_ERROR);
+	logB = WLog_Get("com.test.ChannelB");
+	WINPR_ASSERT(logB);
+
+	if (!WLog_SetLogLevel(logA, WLOG_INFO))
+		goto out;
+	if (!WLog_SetLogLevel(logB, WLOG_ERROR))
+		goto out;
 
 	WLog_Print(logA, WLOG_INFO, "this is a test");
 	WLog_Print(logA, WLOG_WARN, "this is a %dnd %s", 2, "test");
@@ -55,7 +64,8 @@ int TestWLog(int argc, char* argv[])
 	WLog_Print(logB, WLOG_ERROR, "we've got an error");
 	WLog_Print(logB, WLOG_TRACE, "leaving a trace behind");
 
-	WLog_CloseAppender(root);
+	if (!WLog_CloseAppender(root))
+		goto out;
 
 	if ((wlog_file = GetCombinedPath(tmp_path, "test_w.log")))
 		winpr_DeleteFile(wlog_file);

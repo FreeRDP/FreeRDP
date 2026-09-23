@@ -90,9 +90,11 @@ int TestWLogCallback(int argc, char* argv[])
 
 	root = WLog_GetRoot();
 
-	WLog_SetLogAppenderType(root, WLOG_APPENDER_CALLBACK);
+	if (!WLog_SetLogAppenderType(root, WLOG_APPENDER_CALLBACK))
+		return -1;
 
 	appender = WLog_GetLogAppender(root);
+	WINPR_ASSERT(appender);
 
 	callbacks.data = CallbackAppenderData;
 	callbacks.image = CallbackAppenderImage;
@@ -103,15 +105,22 @@ int TestWLogCallback(int argc, char* argv[])
 		return -1;
 
 	layout = WLog_GetLogLayout(root);
-	WLog_Layout_SetPrefixFormat(root, layout, "%mn");
+	if (!WLog_Layout_SetPrefixFormat(root, layout, "%mn"))
+		return -1;
 
-	WLog_OpenAppender(root);
+	if (!WLog_OpenAppender(root))
+		return -1;
 
 	logA = WLog_Get(channels[0]);
-	logB = WLog_Get(channels[1]);
+	WINPR_ASSERT(logA);
 
-	WLog_SetLogLevel(logA, WLOG_TRACE);
-	WLog_SetLogLevel(logB, WLOG_TRACE);
+	logB = WLog_Get(channels[1]);
+	WINPR_ASSERT(logB);
+
+	if (!WLog_SetLogLevel(logA, WLOG_TRACE))
+		return -1;
+	if (!WLog_SetLogLevel(logB, WLOG_TRACE))
+		return -1;
 
 	WLog_Print(logA, messages[0].level, messages[0].msg);
 	WLog_Print(logB, messages[1].level, messages[1].msg);
@@ -122,7 +131,8 @@ int TestWLogCallback(int argc, char* argv[])
 	WLog_Print(logA, messages[6].level, messages[6].msg);
 	WLog_Print(logB, messages[7].level, messages[7].msg);
 
-	WLog_CloseAppender(root);
+	if (!WLog_CloseAppender(root))
+		return -1;
 
 	return success ? 0 : -1;
 }

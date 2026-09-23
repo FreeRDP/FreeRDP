@@ -492,7 +492,8 @@ static int test_gdi_MoveToEx(void)
 	}
 
 	gdi_SelectObject(hdc, (HGDIOBJECT)hPen);
-	gdi_MoveToEx(hdc, 128, 256, nullptr);
+	if (!gdi_MoveToEx(hdc, 128, 256, nullptr))
+		goto fail;
 
 	if (hdc->pen->posX != 128)
 		goto fail;
@@ -500,9 +501,11 @@ static int test_gdi_MoveToEx(void)
 	if (hdc->pen->posY != 256)
 		goto fail;
 
-	prevPoint = (HGDI_POINT)malloc(sizeof(GDI_POINT));
-	ZeroMemory(prevPoint, sizeof(GDI_POINT));
-	gdi_MoveToEx(hdc, 64, 128, prevPoint);
+	prevPoint = calloc(1, sizeof(GDI_POINT));
+	if (!prevPoint)
+		goto fail;
+	if (!gdi_MoveToEx(hdc, 64, 128, prevPoint))
+		goto fail;
 
 	if (prevPoint->x != 128)
 		goto fail;

@@ -37,7 +37,7 @@ int TestJson(int argc, char* argv[])
 	if (!json)
 		goto fail;
 
-	const WINPR_JSON* value = WINPR_JSON_GetObjectItem(json, "value");
+	WINPR_JSON* value = WINPR_JSON_GetObjectItem(json, "value");
 	if (!WINPR_JSON_IsString(value))
 		goto fail;
 

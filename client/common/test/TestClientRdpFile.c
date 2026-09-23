@@ -759,7 +759,7 @@ static BOOL test_ascii(rdpSettings* settings)
 
 	{
 		const char microsoft[] = "microsoft";
-		char* sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
+		const char* sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
 		if (strncmp(sValue, microsoft, sizeof(microsoft)) != 0)
 			goto fail;
 	}

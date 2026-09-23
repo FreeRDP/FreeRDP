@@ -37,7 +37,8 @@ int TestFileGetStdHandle(int argc, char* argv[])
 		(void)fprintf(stderr, "GetStdHandle failed ;(\n");
 		return -1;
 	}
-	WriteFile(so, buf, strnlen(buf, sizeof(buf)), &bytesWritten, nullptr);
+	if (!WriteFile(so, buf, strnlen(buf, sizeof(buf)), &bytesWritten, nullptr))
+		return -1;
 	if (bytesWritten != strnlen(buf, sizeof(buf)))
 	{
 		(void)fprintf(stderr, "write failed\n");

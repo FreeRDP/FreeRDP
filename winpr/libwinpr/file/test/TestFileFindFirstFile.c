@@ -355,7 +355,8 @@ static int TestFileFindFirstFileW(const char* str)
 
 	rc = 0;
 fail:
-	DeleteFileW(FilePath);
+	if (!DeleteFileW(FilePath))
+		rc = -1;
 	FindClose(hFind);
 	return rc;
 }

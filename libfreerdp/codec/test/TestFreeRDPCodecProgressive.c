@@ -879,7 +879,8 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 			const RECTANGLE_16 tileRect = { tile->x, tile->y, tile->x + tile->width,
 				                            tile->y + tile->height };
 			RECTANGLE_16 updateRect = WINPR_C_ARRAY_INIT;
-			rectangles_intersection(&tileRect, &clippingRect, &updateRect);
+			if (!rectangles_intersection(&tileRect, &clippingRect, &updateRect))
+				return -1;
 			const UINT16 nXDst = updateRect.left;
 			const UINT16 nYDst = updateRect.top;
 			const UINT16 nWidth = updateRect.right - updateRect.left;
@@ -890,9 +891,10 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 
 			nXSrc = nXDst - WINPR_ASSERTING_INT_CAST(int, tile->x);
 			nYSrc = nYDst - WINPR_ASSERTING_INT_CAST(int, tile->y);
-			freerdp_image_copy(g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, nXDst, nYDst, nWidth,
-			                   nHeight, tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc,
-			                   nullptr, FREERDP_FLIP_NONE);
+			if (!freerdp_image_copy(g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, nXDst, nYDst, nWidth,
+			                        nHeight, tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc,
+			                        nullptr, FREERDP_FLIP_NONE))
+				return -1;
 		}
 
 		const size_t size = bitmaps[pass].size;
@@ -956,7 +958,11 @@ static int test_progressive_ms_sample(char* ms_sample_path)
 	count = 4;
 	progressive = progressive_context_new(FALSE);
 	g_DstData = winpr_aligned_calloc(g_DstStep, g_Height, 16);
-	progressive_create_surface_context(progressive, 0, g_Width, g_Height);
+	WINPR_ASSERT(g_DstData);
+
+	const int rc = progressive_create_surface_context(progressive, 0, g_Width, g_Height);
+	if (rc < 0)
+		return rc;
 
 	/* image 1 */
 
@@ -1083,7 +1089,8 @@ static BOOL test_encode_decode(const char* path)
 	{
 		*dstImage = *image;
 		dstImage->data = resultData;
-		winpr_image_write(dstImage, "/tmp/test.bmp");
+		if (winpr_image_write(dstImage, "/tmp/test.bmp") < 0)
+			goto fail;
 	}
 	for (size_t y = 0; y < image->height; y++)
 	{
@@ -1322,7 +1329,8 @@ static int test_dump(int argc, char* argv[])
 						                         .top = (UINT16)MIN(UINT16_MAX, cmd.top),
 						                         .right = (UINT16)MIN(UINT16_MAX, cmd.right),
 						                         .bottom = (UINT16)MIN(UINT16_MAX, cmd.bottom) };
-					region16_union_rect(&invalid, &invalid, &invalidRect);
+					if (!region16_union_rect(&invalid, &invalid, &invalidRect))
+						success = -1;
 					UNCOMPRESSED_dectime += measure_diff_and_print(cname, frameId, start);
 				}
 				break;
@@ -1348,7 +1356,8 @@ static int test_dump(int argc, char* argv[])
 						                               .right = (UINT16)MIN(UINT16_MAX, cmd.right),
 						                               .bottom =
 						                                   (UINT16)MIN(UINT16_MAX, cmd.bottom) };
-					region16_union_rect(&invalid, &invalid, &invalidRect);
+					if (!region16_union_rect(&invalid, &invalid, &invalidRect))
+						success = -1;
 					CLEARCODEC_dectime += measure_diff_and_print(cname, frameId, start);
 				}
 				break;
@@ -1366,7 +1375,8 @@ static int test_dump(int argc, char* argv[])
 						                               .right = (UINT16)MIN(UINT16_MAX, cmd.right),
 						                               .bottom =
 						                                   (UINT16)MIN(UINT16_MAX, cmd.bottom) };
-					region16_union_rect(&invalid, &invalid, &invalidRect);
+					if (!region16_union_rect(&invalid, &invalid, &invalidRect))
+						success = -1;
 
 					PLANAR_dectime += measure_diff_and_print(cname, frameId, start);
 				}

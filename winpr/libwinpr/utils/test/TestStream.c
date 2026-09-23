@@ -835,7 +835,8 @@ static BOOL TestStream_WriteUTF16(void)
 		for (size_t fill = 0; fill <= 1; fill++)
 		{
 			memset(Stream_Buffer(s), 0xAA, Stream_Capacity(s));
-			Stream_SetPosition(s, offset);
+			if (!Stream_SetPosition(s, offset))
+				goto out;
 			const SSIZE_T rc =
 			    Stream_Write_UTF16_String_From_UTF8(s, length + 1, name, length, (BOOL)fill);
 			const size_t end = offset + (length + fill) * sizeof(WCHAR);

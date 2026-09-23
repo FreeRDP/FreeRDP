@@ -133,7 +133,8 @@ static BOOL test_SetFileAttributesW(void)
 
 	rc = TRUE;
 fail:
-	DeleteFileW(name);
+	if (!DeleteFileW(name))
+		rc = FALSE;
 	free(name);
 	free(base);
 	return rc;

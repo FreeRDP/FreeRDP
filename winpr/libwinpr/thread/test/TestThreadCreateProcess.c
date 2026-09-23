@@ -477,15 +477,18 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	}
 
 	ZeroMemory(buf, sizeof(buf));
-	ReadFile(pipe_read, buf, sizeof(buf) - 1, &read_bytes, nullptr);
-	if (!strstr((const char*)buf, TESTENV_A))
+	if (!ReadFile(pipe_read, buf, sizeof(buf) - 1, &read_bytes, nullptr))
+		ret = -1;
+	else if (!strstr((const char*)buf, TESTENV_A))
 	{
 		printf("No or unexpected data read from pipe\n");
 		ret = 1;
 	}
 
-	(void)CloseHandle(pipe_read);
-	(void)CloseHandle(pipe_write);
+	if (!CloseHandle(pipe_read))
+		ret = -1;
+	if (!CloseHandle(pipe_write))
+		ret = -1;
 
 	exitCode = 0;
 	status = GetExitCodeProcess(ProcessInformation.hProcess, &exitCode);
@@ -493,8 +496,10 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	printf("GetExitCodeProcess status: %" PRId32 "\n", status);
 	printf("Process exited with code: 0x%08" PRIX32 "\n", exitCode);
 
-	(void)CloseHandle(ProcessInformation.hProcess);
-	(void)CloseHandle(ProcessInformation.hThread);
+	if (!CloseHandle(ProcessInformation.hProcess))
+		ret = -1;
+	if (!CloseHandle(ProcessInformation.hThread))
+		ret = -1;
 
 	if (ret == 0)
 		ret = TestHandleInheritance();

@@ -98,7 +98,8 @@ fail:
 
 int TestServerChannels(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])
 {
-	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
+	if (!WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi()))
+		return -1;
 
 	if (!test_truncated_dynvc_pdu())
 		return -1;
