@@ -43,6 +43,8 @@ static wStream* build_device_control_request(UINT32 ioControlCode, const void* i
                                              size_t inputBufferLength)
 {
 	const char* name = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(name);
+
 	const size_t totalLength = RDPDR_DEVICE_IO_CONTROL_REQ_HDR_LENGTH + inputBufferLength;
 
 	wStream* s = Stream_New(nullptr, totalLength);
@@ -79,6 +81,7 @@ static BOOL test_request_roundtrip(const SMARTCARD_OPERATION* opIn, SMARTCARD_OP
 {
 	const UINT32 ioControlCode = opIn->ioControlCode;
 	const char* name = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(name);
 
 	wStream* sEnc = Stream_New(nullptr, 4096);
 	if (!sEnc)
@@ -102,7 +105,8 @@ static BOOL test_request_roundtrip(const SMARTCARD_OPERATION* opIn, SMARTCARD_OP
 	if (!sDec)
 		return FALSE;
 
-	*opOut = (SMARTCARD_OPERATION)WINPR_C_ARRAY_INIT;
+	const SMARTCARD_OPERATION empty = WINPR_C_ARRAY_INIT;
+	*opOut = empty;
 	status = smartcard_irp_device_control_decode_request(sDec, 1, 0, opOut);
 	Stream_Release(sDec);
 	if (status != SCARD_S_SUCCESS)
@@ -234,6 +238,8 @@ static BOOL test_list_reader_groups_encode_decode_request_impl(UINT32 ioControlC
 {
 	BOOL success = FALSE;
 	const char* n = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(n);
+
 	SMARTCARD_OPERATION opOut = WINPR_C_ARRAY_INIT;
 	SMARTCARD_OPERATION opIn = WINPR_C_ARRAY_INIT;
 	opIn.ioControlCode = ioControlCode;
@@ -277,6 +283,8 @@ static BOOL test_list_readers_encode_decode_request_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
 	const char* n = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(n);
+
 	SMARTCARD_OPERATION opOut = WINPR_C_ARRAY_INIT;
 	SMARTCARD_OPERATION opIn = WINPR_C_ARRAY_INIT;
 	opIn.ioControlCode = ioControlCode;
@@ -446,6 +454,8 @@ static BOOL test_hcard_and_disposition_encode_decode_request_impl(UINT32 ioContr
 {
 	BOOL success = FALSE;
 	const char* n = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(n);
+
 	SMARTCARD_OPERATION opOut = WINPR_C_ARRAY_INIT;
 	SMARTCARD_OPERATION opIn = WINPR_C_ARRAY_INIT;
 	opIn.ioControlCode = ioControlCode;
@@ -498,6 +508,8 @@ static BOOL test_status_encode_decode_request_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
 	const char* n = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(n);
+
 	SMARTCARD_OPERATION opOut = WINPR_C_ARRAY_INIT;
 	SMARTCARD_OPERATION opIn = WINPR_C_ARRAY_INIT;
 	opIn.ioControlCode = ioControlCode;
@@ -815,6 +827,7 @@ WINPR_ATTR_MALLOC(Stream_Free, 1)
 static wStream* build_device_control_response(UINT32 ioControlCode, const SMARTCARD_OPERATION* opIn)
 {
 	const char* name = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(name);
 
 	wStream* payload = Stream_New(nullptr, 4096);
 	if (!payload)
@@ -881,6 +894,7 @@ static BOOL test_response_roundtrip(const SMARTCARD_OPERATION* opIn, SMARTCARD_O
 {
 	const UINT32 ioControlCode = opIn->ioControlCode;
 	const char* name = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(name);
 
 	wStream* s = build_device_control_response(ioControlCode, opIn);
 	if (!s)
@@ -975,6 +989,8 @@ static BOOL test_list_reader_groups_decode_response_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
 	const char* n = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(n);
+
 	SMARTCARD_OPERATION opOut = WINPR_C_ARRAY_INIT;
 	SMARTCARD_OPERATION opIn = WINPR_C_ARRAY_INIT;
 	opIn.ioControlCode = ioControlCode;
@@ -1018,6 +1034,8 @@ static BOOL test_list_readers_decode_response_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
 	const char* n = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(n);
+
 	SMARTCARD_OPERATION opOut = WINPR_C_ARRAY_INIT;
 	SMARTCARD_OPERATION opIn = WINPR_C_ARRAY_INIT;
 	opIn.ioControlCode = ioControlCode;
@@ -1061,6 +1079,8 @@ static BOOL test_get_status_change_decode_response_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
 	const char* n = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(n);
+
 	SMARTCARD_OPERATION opOut = WINPR_C_ARRAY_INIT;
 	SMARTCARD_OPERATION opIn = WINPR_C_ARRAY_INIT;
 	opIn.ioControlCode = ioControlCode;
@@ -1138,6 +1158,8 @@ static BOOL test_connect_decode_response_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
 	const char* n = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(n);
+
 	SMARTCARD_OPERATION opOut = WINPR_C_ARRAY_INIT;
 	SMARTCARD_OPERATION opIn = WINPR_C_ARRAY_INIT;
 	opIn.ioControlCode = ioControlCode;
@@ -1272,6 +1294,8 @@ static BOOL test_status_decode_response_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
 	const char* n = scard_get_ioctl_string(ioControlCode, TRUE);
+	WINPR_ASSERT(n);
+
 	SMARTCARD_OPERATION opOut = WINPR_C_ARRAY_INIT;
 	SMARTCARD_OPERATION opIn = WINPR_C_ARRAY_INIT;
 	opIn.ioControlCode = ioControlCode;
