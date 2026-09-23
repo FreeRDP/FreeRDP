@@ -366,10 +366,20 @@ static BOOL media_type_valid(CameraDevice* dev, UINT8 streamIndex,
 	if (formatIndex < 0)
 		return FALSE;
 
+	CameraDeviceStream* stream = &dev->streams[streamIndex];
+
 	for (size_t x = 0; x < nMediaTypes; x++)
 	{
-		const CAM_MEDIA_TYPE_DESCRIPTION* cur = &supported[x];
-		if (memcmp(cur, type, sizeof(CAM_MEDIA_TYPE_DESCRIPTION)) == 0)
+		/* GetMediaTypeDescriptions reports the camera-side (input) format; the
+		 * media type list response advertised to the server replaces it with the
+		 * network-side (output) format and marks it DecodingRequired (see
+		 * ecam_dev_process_media_type_list_request). Apply the same transform
+		 * here, or the descriptor the server echoes back never matches and every
+		 * StartStreamsRequest is rejected as "Unannounced". */
+		CAM_MEDIA_TYPE_DESCRIPTION cur = supported[x];
+		cur.Format = streamOutputFormat(stream);
+		cur.Flags = CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired;
+		if (memcmp(&cur, type, sizeof(cur)) == 0)
 			return TRUE;
 	}
 	return FALSE;
