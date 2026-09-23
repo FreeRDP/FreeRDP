@@ -33,7 +33,9 @@ static BOOL test_overlaps(void)
 	for (size_t i = 0; i < sizeof(bytes); i++)
 		bytes[i] = (BYTE)i;
 
-	ringbuffer_init(&rb, 5);
+	if (!ringbuffer_init(&rb, 5))
+		return FALSE;
+
 	if (!ringbuffer_write(&rb, bytes, 4)) /* [0123.] */
 		goto error;
 	counter += 4;
@@ -201,7 +203,9 @@ int TestRingBuffer(int argc, char* argv[])
 	(void)fprintf(stderr, "%d: free size is correctly computed...", ++testNo);
 	for (int i = 0; i < 1000; i++)
 	{
-		ringbuffer_ensure_linear_write(&ringBuffer, 50);
+		if (!ringbuffer_ensure_linear_write(&ringBuffer, 50))
+			return -1;
+
 		if (!ringbuffer_commit_written_bytes(&ringBuffer, 50))
 		{
 			(void)fprintf(stderr, "ringbuffer_commit_written_bytes() error, i=%d\n", i);
