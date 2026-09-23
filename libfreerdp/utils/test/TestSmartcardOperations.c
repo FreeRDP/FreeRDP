@@ -871,14 +871,24 @@ static wStream* build_device_control_response(UINT32 ioControlCode, const SMARTC
 	const size_t endPos = Stream_GetPosition(s);
 	const size_t outputBufferLength = endPos - headerPos;
 
-	Stream_SetPosition(s, 0);
+	if (!Stream_SetPosition(s, 0))
+	{
+		(void)fprintf(stderr, "%s: Stream_SetPosition failed\n", name);
+		Stream_Release(s);
+		return nullptr;
+	}
 	UINT32 outputLength = WINPR_ASSERTING_INT_CAST(UINT32, outputBufferLength);
 	UINT32 objectLength = WINPR_ASSERTING_INT_CAST(UINT32, objectBufferLength);
 	Stream_Write_UINT32(s, outputLength);
 	smartcard_pack_common_type_header(s);
 	smartcard_pack_private_type_header(s, objectLength);
 
-	Stream_SetPosition(s, endPos);
+	if (!Stream_SetPosition(s, endPos))
+	{
+		(void)fprintf(stderr, "%s: Stream_SetPosition failed\n", name);
+		Stream_Release(s);
+		return nullptr;
+	}
 	Stream_SealLength(s);
 	if (!Stream_SetPosition(s, 0))
 	{
