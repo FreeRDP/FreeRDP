@@ -1898,8 +1898,8 @@ bool SdlContext::setFullscreen(bool enter, bool forceOriginalDisplay)
 		return true;
 
 	const auto mode = floatbar & 0x30u;
-	const bool visible = (mode == 0x30u) || ((mode == 0x10u) && enter) ||
-	                     ((mode == 0x20u) && !enter);
+	const bool visible =
+	    (mode == 0x30u) || ((mode == 0x10u) && enter) || ((mode == 0x20u) && !enter);
 	return sdl_push_user_event(SDL_EVENT_USER_FLOATBAR, visible);
 }
 
@@ -1923,9 +1923,9 @@ bool SdlContext::handleFloatbar(const SDL_MouseButtonEvent& ev)
 	switch (_floatbar.handleEvent(ev))
 	{
 		case SdlFloatbar::Action::Minimize:
-		return setMinimized();
+			return setMinimized();
 		case SdlFloatbar::Action::ToggleFullscreen:
-		return toggleFullscreen();
+			return toggleFullscreen();
 		case SdlFloatbar::Action::Disconnect:
 			freerdp_abort_connect_context(context());
 			return true;
