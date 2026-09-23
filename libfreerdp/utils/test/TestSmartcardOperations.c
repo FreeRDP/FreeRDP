@@ -38,6 +38,7 @@ static inline void fill_redir_handle(REDIR_SCARDHANDLE* handle, SCARDHANDLE val)
 	smartcard_scard_handle_native_to_redir(handle, val);
 }
 
+WINPR_ATTR_MALLOC(Stream_Free, 1)
 static wStream* build_device_control_request(UINT32 ioControlCode, const void* inputBuffer,
                                              size_t inputBufferLength)
 {
@@ -73,6 +74,7 @@ static wStream* build_device_control_request(UINT32 ioControlCode, const void* i
 	return s;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_request_roundtrip(const SMARTCARD_OPERATION* opIn, SMARTCARD_OPERATION* opOut)
 {
 	const UINT32 ioControlCode = opIn->ioControlCode;
@@ -121,6 +123,7 @@ static BOOL test_request_roundtrip(const SMARTCARD_OPERATION* opIn, SMARTCARD_OP
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL check_field(const char* name, const char* field, UINT32 a, UINT32 b)
 {
 	if (a != b)
@@ -132,6 +135,7 @@ static inline BOOL check_field(const char* name, const char* field, UINT32 a, UI
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL check_bytes(const char* name, const char* field, const void* a, const void* b,
                                size_t len)
 {
@@ -143,6 +147,7 @@ static inline BOOL check_bytes(const char* name, const char* field, const void* 
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL check_redir_context(const char* name, const REDIR_SCARDCONTEXT* a,
                                        const REDIR_SCARDCONTEXT* b)
 {
@@ -150,6 +155,7 @@ static inline BOOL check_redir_context(const char* name, const REDIR_SCARDCONTEX
 	       check_bytes(name, "hContext.pbContext", a->pbContext, b->pbContext, a->cbContext);
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL check_redir_handle(const char* name, const REDIR_SCARDHANDLE* a,
                                       const REDIR_SCARDHANDLE* b)
 {
@@ -157,6 +163,7 @@ static inline BOOL check_redir_handle(const char* name, const REDIR_SCARDHANDLE*
 	       check_bytes(name, "hCard.pbHandle", a->pbHandle, b->pbHandle, a->cbHandle);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_establish_context_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -178,6 +185,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_release_context_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -199,6 +207,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_is_valid_context_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -220,6 +229,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_reader_groups_encode_decode_request_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
@@ -250,16 +260,19 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_reader_groups_a_encode_decode_request(void)
 {
 	return test_list_reader_groups_encode_decode_request_impl(SCARD_IOCTL_LISTREADERGROUPSA);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_reader_groups_w_encode_decode_request(void)
 {
 	return test_list_reader_groups_encode_decode_request_impl(SCARD_IOCTL_LISTREADERGROUPSW);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_readers_encode_decode_request_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
@@ -287,16 +300,19 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_readers_a_encode_decode_request(void)
 {
 	return test_list_readers_encode_decode_request_impl(SCARD_IOCTL_LISTREADERSA);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_readers_w_encode_decode_request(void)
 {
 	return test_list_readers_encode_decode_request_impl(SCARD_IOCTL_LISTREADERSW);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_cancel_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -318,6 +334,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_connect_a_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -352,6 +369,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_connect_w_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -383,6 +401,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_reconnect_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -421,6 +440,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_hcard_and_disposition_encode_decode_request_impl(UINT32 ioControlCode,
                                                                   DWORD dwDisposition)
 {
@@ -452,24 +472,28 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_disconnect_encode_decode_request(void)
 {
 	return test_hcard_and_disposition_encode_decode_request_impl(SCARD_IOCTL_DISCONNECT,
 	                                                             SCARD_LEAVE_CARD);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_begin_transaction_encode_decode_request(void)
 {
 	return test_hcard_and_disposition_encode_decode_request_impl(SCARD_IOCTL_BEGINTRANSACTION,
 	                                                             SCARD_LEAVE_CARD);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_end_transaction_encode_decode_request(void)
 {
 	return test_hcard_and_disposition_encode_decode_request_impl(SCARD_IOCTL_ENDTRANSACTION,
 	                                                             SCARD_RESET_CARD);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_status_encode_decode_request_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
@@ -506,16 +530,19 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_status_a_encode_decode_request(void)
 {
 	return test_status_encode_decode_request_impl(SCARD_IOCTL_STATUSA);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_status_w_encode_decode_request(void)
 {
 	return test_status_encode_decode_request_impl(SCARD_IOCTL_STATUSW);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_transmit_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -566,6 +593,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_control_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -610,6 +638,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_get_attrib_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -644,6 +673,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_set_attrib_encode_decode_request(void)
 {
 	BOOL success = FALSE;
@@ -683,6 +713,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_encode_decode_requests(void)
 {
 	BOOL success = TRUE;
@@ -731,6 +762,7 @@ static BOOL test_encode_decode_requests(void)
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static LONG encode_response_payload(wStream* s, UINT32 ioControlCode,
                                     const SMARTCARD_OPERATION* opIn)
 {
@@ -779,6 +811,7 @@ static LONG encode_response_payload(wStream* s, UINT32 ioControlCode,
 	}
 }
 
+WINPR_ATTR_MALLOC(Stream_Free, 1)
 static wStream* build_device_control_response(UINT32 ioControlCode, const SMARTCARD_OPERATION* opIn)
 {
 	const char* name = scard_get_ioctl_string(ioControlCode, TRUE);
@@ -843,6 +876,7 @@ static wStream* build_device_control_response(UINT32 ioControlCode, const SMARTC
 	return s;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_response_roundtrip(const SMARTCARD_OPERATION* opIn, SMARTCARD_OPERATION* opOut)
 {
 	const UINT32 ioControlCode = opIn->ioControlCode;
@@ -866,6 +900,7 @@ static BOOL test_response_roundtrip(const SMARTCARD_OPERATION* opIn, SMARTCARD_O
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_establish_context_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -891,6 +926,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_release_context_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -912,6 +948,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_is_valid_context_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -933,6 +970,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_reader_groups_decode_response_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
@@ -963,16 +1001,19 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_reader_groups_a_decode_response(void)
 {
 	return test_list_reader_groups_decode_response_impl(SCARD_IOCTL_LISTREADERGROUPSA);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_reader_groups_w_decode_response(void)
 {
 	return test_list_reader_groups_decode_response_impl(SCARD_IOCTL_LISTREADERGROUPSW);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_readers_decode_response_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
@@ -1003,16 +1044,19 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_readers_a_decode_response(void)
 {
 	return test_list_readers_decode_response_impl(SCARD_IOCTL_LISTREADERSA);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_list_readers_w_decode_response(void)
 {
 	return test_list_readers_decode_response_impl(SCARD_IOCTL_LISTREADERSW);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_get_status_change_decode_response_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
@@ -1056,16 +1100,19 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_get_status_change_a_decode_response(void)
 {
 	return test_get_status_change_decode_response_impl(SCARD_IOCTL_GETSTATUSCHANGEA);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_get_status_change_w_decode_response(void)
 {
 	return test_get_status_change_decode_response_impl(SCARD_IOCTL_GETSTATUSCHANGEW);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_cancel_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -1086,6 +1133,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_connect_decode_response_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
@@ -1117,16 +1165,19 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_connect_a_decode_response(void)
 {
 	return test_connect_decode_response_impl(SCARD_IOCTL_CONNECTA);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_connect_w_decode_response(void)
 {
 	return test_connect_decode_response_impl(SCARD_IOCTL_CONNECTW);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_reconnect_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -1151,6 +1202,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_disconnect_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -1171,6 +1223,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_begin_transaction_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -1192,6 +1245,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_end_transaction_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -1213,6 +1267,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_status_decode_response_impl(UINT32 ioControlCode)
 {
 	BOOL success = FALSE;
@@ -1256,16 +1311,19 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_status_a_decode_response(void)
 {
 	return test_status_decode_response_impl(SCARD_IOCTL_STATUSA);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_status_w_decode_response(void)
 {
 	return test_status_decode_response_impl(SCARD_IOCTL_STATUSW);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_transmit_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -1297,6 +1355,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_control_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -1327,6 +1386,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_get_attrib_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -1357,6 +1417,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_set_attrib_decode_response(void)
 {
 	BOOL success = FALSE;
@@ -1377,6 +1438,7 @@ out:
 	return success;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL test_decode_responses(void)
 {
 	BOOL success = TRUE;
