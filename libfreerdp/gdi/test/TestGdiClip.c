@@ -113,8 +113,11 @@ static int test_gdi_ClipCoords(void)
 
 	hdc->format = format;
 	bmp = gdi_CreateBitmapEx(1024, 768, PIXEL_FORMAT_XRGB32, 0, nullptr, nullptr);
+	if (!bmp)
+		return -1;
 	gdi_SelectObject(hdc, (HGDIOBJECT)bmp);
-	gdi_SetNullClipRgn(hdc);
+	if (!gdi_SetNullClipRgn(hdc))
+		return -1;
 
 	struct testcase_t
 	{
@@ -199,10 +202,17 @@ static int test_gdi_InvalidateRegion(void)
 
 	hdc->format = format;
 	bmp = gdi_CreateBitmapEx(1024, 768, PIXEL_FORMAT_XRGB32, 0, nullptr, nullptr);
+	if (!bmp)
+		goto fail;
 	gdi_SelectObject(hdc, (HGDIOBJECT)bmp);
-	gdi_SetNullClipRgn(hdc);
+	if (!gdi_SetNullClipRgn(hdc))
+		goto fail;
 	hdc->hwnd = (HGDI_WND)calloc(1, sizeof(GDI_WND));
+	if (!hdc->hwnd)
+		goto fail;
 	hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
+	if (!hdc->hwnd->invalid)
+		goto fail;
 	hdc->hwnd->invalid->null = TRUE;
 	invalid = hdc->hwnd->invalid;
 	hdc->hwnd->count = 16;
@@ -213,126 +223,181 @@ static int test_gdi_InvalidateRegion(void)
 	rgn2->null = TRUE;
 	/* no previous invalid region */
 	invalid->null = TRUE;
-	gdi_SetRgn(rgn1, 300, 300, 100, 100);
-	gdi_SetRgn(rgn2, 300, 300, 100, 100);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(rgn1, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* region same as invalid region */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 300, 300, 100, 100);
-	gdi_SetRgn(rgn2, 300, 300, 100, 100);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* left outside */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 100, 300, 300, 100);
-	gdi_SetRgn(rgn2, 100, 300, 300, 100);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 100, 300, 300, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 100, 300, 300, 100))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* right outside */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 300, 300, 300, 100);
-	gdi_SetRgn(rgn2, 300, 300, 300, 100);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 300, 300, 300, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 300, 300, 300, 100))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* top outside */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 300, 100, 100, 300);
-	gdi_SetRgn(rgn2, 300, 100, 100, 300);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 300, 100, 100, 300))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 300, 100, 100, 300))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* bottom outside */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 300, 300, 100, 300);
-	gdi_SetRgn(rgn2, 300, 300, 100, 300);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 300, 300, 100, 300))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 300, 300, 100, 300))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* left outside, right outside */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 100, 300, 600, 300);
-	gdi_SetRgn(rgn2, 100, 300, 600, 300);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 100, 300, 600, 300))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 100, 300, 600, 300))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* top outside, bottom outside */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 300, 100, 100, 500);
-	gdi_SetRgn(rgn2, 300, 100, 100, 500);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 300, 100, 100, 500))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 300, 100, 100, 500))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* all outside, left */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 100, 300, 100, 100);
-	gdi_SetRgn(rgn2, 100, 300, 300, 100);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 100, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 100, 300, 300, 100))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* all outside, right */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 700, 300, 100, 100);
-	gdi_SetRgn(rgn2, 300, 300, 500, 100);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 700, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 300, 300, 500, 100))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* all outside, top */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 300, 100, 100, 100);
-	gdi_SetRgn(rgn2, 300, 100, 100, 300);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 300, 100, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 300, 100, 100, 300))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* all outside, bottom */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 300, 500, 100, 100);
-	gdi_SetRgn(rgn2, 300, 300, 100, 300);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 300, 500, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 300, 300, 100, 300))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* all outside */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 100, 100, 600, 600);
-	gdi_SetRgn(rgn2, 100, 100, 600, 600);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 100, 100, 600, 600))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 100, 100, 600, 600))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;
 
 	/* everything */
-	gdi_SetRgn(invalid, 300, 300, 100, 100);
-	gdi_SetRgn(rgn1, 0, 0, 1024, 768);
-	gdi_SetRgn(rgn2, 0, 0, 1024, 768);
-	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);
+	if (!gdi_SetRgn(invalid, 300, 300, 100, 100))
+		goto fail;
+	if (!gdi_SetRgn(rgn1, 0, 0, 1024, 768))
+		goto fail;
+	if (!gdi_SetRgn(rgn2, 0, 0, 1024, 768))
+		goto fail;
+	if (!gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h))
+		goto fail;
 
 	if (!gdi_EqualRgn(invalid, rgn2))
 		goto fail;

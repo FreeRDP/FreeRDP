@@ -313,7 +313,8 @@ static BOOL testNTOWFv2FromHash(size_t x, const test_case_from_hash_t* test)
 int TestNTLM(WINPR_ATTR_UNUSED int argc, WINPR_ATTR_UNUSED char* argv[])
 {
 	/* Make sure we load the OpenSSL legacy provider if needed */
-	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
+	if (!winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT))
+		return -1;
 
 	for (size_t x = 0; x < ARRAYSIZE(ntofw1tests); x++)
 	{

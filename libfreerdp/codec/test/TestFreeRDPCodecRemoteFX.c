@@ -838,7 +838,7 @@ static BOOL fuzzyCompareImage(const UINT32* crefImage, const BYTE* img, size_t n
 		totalDelta += delta;
 	}
 
-	WLog_DBG("test", "totalDelta=%d (npixels=%d)", totalDelta, npixels);
+	WLog_DBG("test", "totalDelta=%" PRIuz " (npixels=%" PRIuz ")", totalDelta, npixels);
 	return TRUE;
 }
 

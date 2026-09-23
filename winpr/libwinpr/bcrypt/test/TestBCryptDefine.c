@@ -109,7 +109,7 @@ static BOOL test_wchar_len(void)
 		const size_t len = _wcsnlen(cur->value, cur->bytelen / sizeof(WCHAR));
 		if (len == cur->bytelen / sizeof(WCHAR))
 		{
-			(void)fprintf(stderr, "[%s] missing '\0' termination", cur->name);
+			(void)fprintf(stderr, "[%s] missing '\\0' termination", cur->name);
 			rc = FALSE;
 			continue;
 		}

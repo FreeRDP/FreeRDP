@@ -73,7 +73,11 @@ static int test_basic(void)
 
 	/* clear region */
 	region16_clear(&region);
-	region16_rects(&region, &nbRects);
+	if (!region16_rects(&region, &nbRects))
+	{
+		if (nbRects != 0)
+			goto out;
+	}
 
 	if (nbRects)
 		goto out;

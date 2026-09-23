@@ -1031,6 +1031,7 @@ static BOOL yuv444_to_rgb(BYTE* rgb, size_t stride, const BYTE* yuv[3], const UI
 			writeYUVPixel(&line[x * 4], PIXEL_FORMAT_BGRX32, Y, U, V, writePixelBGRX);
 		}
 	}
+	return TRUE;
 }
 
 /* Check the result of generic matches the optimized routine.
@@ -1308,8 +1309,10 @@ static BOOL similarYUV(const BYTE* line1, const BYTE* line2, size_t len)
 		const int a = line1[x];
 		const int b = line2[x];
 		const int diff = abs(a - b);
-		return (diff < 2);
+		if (diff >= 2)
+			return FALSE;
 	}
+	return TRUE;
 }
 
 /* Due to optimizations the Y value might be off by +/- 1 */
@@ -1451,7 +1454,10 @@ int TestPrimitivesYUV(int argc, char* argv[])
 		}
 	}
 	else
-		get_size(large, &roi.width, &roi.height);
+	{
+		if (!get_size(large, &roi.width, &roi.height))
+			goto end;
+	}
 
 	prim_test_setup(FALSE);
 

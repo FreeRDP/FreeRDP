@@ -50,8 +50,10 @@ static BOOL test_equal(void)
 		goto fail;
 
 	char path[MAX_PATH] = WINPR_C_ARRAY_INIT;
-	(void)_snprintf(path, sizeof(path), "%s.bmp", test_src_filename);
-	PathCchConvertStyleA(path, sizeof(path), PATH_STYLE_NATIVE);
+	if (_snprintf(path, sizeof(path), "%s.bmp", test_src_filename) < 0)
+		goto fail;
+	if (FAILED(PathCchConvertStyleA(path, sizeof(path), PATH_STYLE_NATIVE)))
+		goto fail;
 
 	const int bmpSize = winpr_image_read(bmp, path);
 	if (bmpSize <= 0)
@@ -88,16 +90,24 @@ static BOOL test_read_write_compare(const char* tname, const char* tdst, UINT32 
 	char dpath[MAX_PATH] = WINPR_C_ARRAY_INIT;
 	char bpath1[MAX_PATH] = WINPR_C_ARRAY_INIT;
 	char bpath2[MAX_PATH] = WINPR_C_ARRAY_INIT;
-	(void)_snprintf(spath, sizeof(spath), "%s.%s", tname, winpr_image_format_extension(format));
-	(void)_snprintf(dpath, sizeof(dpath), "%s.%s", tdst, winpr_image_format_extension(format));
-	(void)_snprintf(bpath1, sizeof(bpath1), "%s.src.%s", dpath,
-	                winpr_image_format_extension(WINPR_IMAGE_BITMAP));
-	(void)_snprintf(bpath2, sizeof(bpath2), "%s.bin.%s", dpath,
-	                winpr_image_format_extension(WINPR_IMAGE_BITMAP));
-	PathCchConvertStyleA(spath, sizeof(spath), PATH_STYLE_NATIVE);
-	PathCchConvertStyleA(dpath, sizeof(dpath), PATH_STYLE_NATIVE);
-	PathCchConvertStyleA(bpath1, sizeof(bpath1), PATH_STYLE_NATIVE);
-	PathCchConvertStyleA(bpath2, sizeof(bpath2), PATH_STYLE_NATIVE);
+	if (_snprintf(spath, sizeof(spath), "%s.%s", tname, winpr_image_format_extension(format)) < 0)
+		goto fail;
+	if (_snprintf(dpath, sizeof(dpath), "%s.%s", tdst, winpr_image_format_extension(format)) < 0)
+		goto fail;
+	if (_snprintf(bpath1, sizeof(bpath1), "%s.src.%s", dpath,
+	              winpr_image_format_extension(WINPR_IMAGE_BITMAP)) < 0)
+		goto fail;
+	if (_snprintf(bpath2, sizeof(bpath2), "%s.bin.%s", dpath,
+	              winpr_image_format_extension(WINPR_IMAGE_BITMAP)) < 0)
+		goto fail;
+	if (FAILED(PathCchConvertStyleA(spath, sizeof(spath), PATH_STYLE_NATIVE)))
+		goto fail;
+	if (FAILED(PathCchConvertStyleA(dpath, sizeof(dpath), PATH_STYLE_NATIVE)))
+		goto fail;
+	if (FAILED(PathCchConvertStyleA(bpath1, sizeof(bpath1), PATH_STYLE_NATIVE)))
+		goto fail;
+	if (FAILED(PathCchConvertStyleA(bpath2, sizeof(bpath2), PATH_STYLE_NATIVE)))
+		goto fail;
 
 	const int bmpRSize = winpr_image_read(bmp1, spath);
 	if (bmpRSize <= 0)

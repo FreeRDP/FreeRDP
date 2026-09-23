@@ -84,7 +84,8 @@ int TestErrorSetLastError(int argc, char* argv[])
 	/* We must initialize WLog here. It will check for settings
 	 * in the environment and if the variables are not set, the last
 	 * error state is changed... */
-	WLog_GetRoot();
+	if (!WLog_GetRoot())
+		return -1;
 
 	SetLastError(ERROR_ACCESS_DENIED);
 

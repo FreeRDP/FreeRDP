@@ -370,7 +370,8 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	 * ReadFile/WriteFile must fail on client end
 	 */
 	int i = numPipes - 1;
-	DisconnectNamedPipe(servers[i]);
+	if (!DisconnectNamedPipe(servers[i]))
+		goto out;
 	{
 		char sndbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
 		char rcvbuf[PIPE_BUFFER_SIZE] = WINPR_C_ARRAY_INIT;
@@ -391,8 +392,10 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 			goto out;
 		}
 	}
-	(void)CloseHandle(servers[i]);
-	(void)CloseHandle(clients[i]);
+	if (!CloseHandle(servers[i]))
+		goto out;
+	if (!CloseHandle(clients[i]))
+		goto out;
 	numPipes--;
 	/**
 	 * After CloseHandle (without calling DisconnectNamedPipe first) on server end
@@ -451,16 +454,21 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 		}
 	}
 
-	DisconnectNamedPipe(servers[i]);
-	(void)CloseHandle(servers[i]);
+	if (!DisconnectNamedPipe(servers[i]))
+		goto out;
+	if (!CloseHandle(servers[i]))
+		goto out;
 	numPipes--;
 
 	/* Close all remaining pipes */
 	for (int i = 0; i < numPipes; i++)
 	{
-		DisconnectNamedPipe(servers[i]);
-		(void)CloseHandle(servers[i]);
-		(void)CloseHandle(clients[i]);
+		if (!DisconnectNamedPipe(servers[i]))
+			goto out;
+		if (!CloseHandle(servers[i]))
+			goto out;
+		if (!CloseHandle(clients[i]))
+			goto out;
 	}
 
 	bSuccess = TRUE;

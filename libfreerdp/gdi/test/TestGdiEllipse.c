@@ -113,7 +113,8 @@ int TestGdiEllipse(int argc, char* argv[])
 		}
 
 		hdc->format = format;
-		gdi_SetNullClipRgn(hdc);
+		if (!gdi_SetNullClipRgn(hdc))
+			goto fail;
 
 		if (!(pen = gdi_CreatePen(1, 1, 0, format, hPalette)))
 		{

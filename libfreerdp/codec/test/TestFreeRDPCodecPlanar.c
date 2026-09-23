@@ -390,9 +390,10 @@ static BOOL FuzzPlanar(void)
 		       FreeRDPGetColorFormatName(DstFormat), nXDst, nYDst, nDstWidth, nDstHeight, nDstStep,
 		       sizeof(dstData));
 		freerdp_planar_switch_bgr(planar, ((prand(2) % 2) != 0));
-		freerdp_bitmap_decompress_planar(planar, data, dataSize, prand(4096), prand(4096), dstData,
-		                                 DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
-		                                 ((prand(2) % 2) != 0));
+		const BOOL rc = freerdp_bitmap_decompress_planar(
+		    planar, data, dataSize, prand(4096), prand(4096), dstData, DstFormat, nDstStep, nXDst,
+		    nYDst, nDstWidth, nDstHeight, ((prand(2) % 2) != 0));
+		printf("freerdp_bitmap_decompress_planar: %s\n", rc ? "success" : "fail");
 	}
 
 	rc = TRUE;

@@ -102,11 +102,16 @@ static int test_gdi_FillRect(void)
 	}
 
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
+	if (!hBitmap)
+		goto fail;
 	ZeroMemory(hBitmap->data, 1ULL * width * height * FreeRDPGetBytesPerPixel(hdc->format));
 	gdi_SelectObject(hdc, (HGDIOBJECT)hBitmap);
 	color = FreeRDPGetColor(PIXEL_FORMAT_ARGB32, 0xAA, 0xBB, 0xCC, 0xFF);
 	hBrush = gdi_CreateSolidBrush(color);
-	gdi_FillRect(hdc, hRect, hBrush);
+	if (!hBrush)
+		goto fail;
+	if (!gdi_FillRect(hdc, hRect, hBrush))
+		goto fail;
 	badPixels = 0;
 	goodPixels = 0;
 

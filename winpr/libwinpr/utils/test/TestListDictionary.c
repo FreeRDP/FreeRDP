@@ -105,7 +105,8 @@ int TestListDictionary(int argc, char* argv[])
 		return -1;
 	}
 
-	ListDictionary_SetItemValue(list, key2, "apple");
+	if (!ListDictionary_SetItemValue(list, key2, "apple"))
+		return -1;
 
 	value = (char*)ListDictionary_GetItemValue(list, key2);
 

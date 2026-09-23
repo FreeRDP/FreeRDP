@@ -132,7 +132,8 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 	 */
 
 	dwSpinCount = 100;
-	InitializeCriticalSectionEx(&critical, dwSpinCount, 0);
+	if (!InitializeCriticalSectionEx(&critical, dwSpinCount, 0))
+		goto fail;
 	while (--dwSpinCount)
 	{
 		dwPreviousSpinCount = SetCriticalSectionSpinCount(&critical, dwSpinCount);
@@ -264,7 +265,8 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 				printf("CriticalSection failure: Failed to wait for thread #%d\n", i);
 				goto fail;
 			}
-			GetExitCodeThread(hThreads[i], &dwThreadExitCode);
+			if (!GetExitCodeThread(hThreads[i], &dwThreadExitCode))
+				goto fail;
 			if (dwThreadExitCode != 0)
 			{
 				printf("CriticalSection failure: Thread #%d returned error code %" PRIu32 "\n", i,
@@ -309,7 +311,8 @@ static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 		printf("CriticalSection failure: Failed to wait for thread\n");
 		goto fail;
 	}
-	GetExitCodeThread(hThread, &dwThreadExitCode);
+	if (!GetExitCodeThread(hThread, &dwThreadExitCode))
+		goto fail;
 	if (dwThreadExitCode != 0)
 	{
 		printf("CriticalSection failure: Thread returned error code %" PRIu32 "\n",
@@ -370,8 +373,10 @@ int TestSynchCritical(int argc, char* argv[])
 		return -1;
 	}
 
-	GetExitCodeThread(hThread, &dwThreadExitCode);
-	(void)CloseHandle(hThread);
+	if (!GetExitCodeThread(hThread, &dwThreadExitCode))
+		return -1;
+	if (!CloseHandle(hThread))
+		return -1;
 
 	if (dwThreadExitCode != 0)
 	{

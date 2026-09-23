@@ -178,7 +178,8 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 	rc = TRUE;
 fail:
 	free((void*)threads);
-	DeleteSynchronizationBarrier(&gBarrier);
+	if (!DeleteSynchronizationBarrier(&gBarrier))
+		return FALSE;
 	if (gErrorCount > 0)
 	{
 		printf("%s: Error test failed with %" PRId32 " reported errors\n", __func__, gErrorCount);

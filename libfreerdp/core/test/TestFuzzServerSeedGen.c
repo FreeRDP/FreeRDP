@@ -419,8 +419,10 @@ int main(int argc, char** argv)
 		do_input = (int)val;
 	}
 
-	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
-	(void)winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
+	if (!WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi()))
+		return -1;
+	if (!winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT))
+		return -1;
 
 	int lfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (lfd < 0)
