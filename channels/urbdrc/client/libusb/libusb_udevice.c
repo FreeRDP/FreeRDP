@@ -1393,6 +1393,15 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
 	if (!user_data)
 		return -1;
 
+	if ((NumberOfPackets > INT32_MAX) || (BufferSize > INT32_MAX))
+	{
+		WLog_Print(urbdrc->log, WLOG_ERROR,
+		           "[NumberOfPackets=%" PRIu32 ", BufferSize=%" PRIu32
+		           " ] out of bounds, maximum allowed is %d",
+		           NumberOfPackets, BufferSize, INT32_MAX);
+		return -1;
+	}
+
 	user_data->ErrorCount = ErrorCount;
 	user_data->StartFrame = StartFrame;
 
