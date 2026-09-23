@@ -43,6 +43,13 @@ static const char* MEDIACODEC_KEY_CROP_RIGHT = "crop-right";
 static const char* MEDIACODEC_KEY_CROP_TOP = "crop-top";
 static const char* MEDIACODEC_KEY_CROP_BOTTOM = "crop-bottom";
 
+/* Dequeue timeouts in microseconds; output may lag a frame while the pipeline primes */
+static const int64_t MEDIACODEC_INPUT_DEQUEUE_TIMEOUT = 10000;
+static const int64_t MEDIACODEC_OUTPUT_DEQUEUE_TIMEOUT = 5000;
+
+/* Bound the decode dequeue retries so a stalled codec cannot spin forever. */
+static const int MEDIACODEC_DECODE_MAX_RETRIES = 100;
+
 /* https://developer.android.com/reference/android/media/MediaCodec#qualityFloor */
 static const int MEDIACODEC_MINIMUM_WIDTH = 320;
 static const int MEDIACODEC_MINIMUM_HEIGHT = 240;
@@ -63,6 +70,8 @@ typedef struct
 	int32_t cropTop;
 	int32_t colorFormat;
 	ssize_t currentOutputBufferIndex;
+
+	BOOL decoderStarted;
 
 	/* decoder deinterleave buffer for NV12 / semiplanar output */
 	BYTE* decodeI420Buffer;
@@ -425,17 +434,23 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	while (true)
 	{
 		UINT32 inputBufferCurrnetOffset = 0;
+		int inputRetries = 0;
 		while (inputBufferCurrnetOffset < SrcSize)
 		{
 			UINT32 numberOfBytesToCopy = SrcSize - inputBufferCurrnetOffset;
-			const ssize_t inputBufferId = AMediaCodec_dequeueInputBuffer(sys->decoder, -1);
+			const ssize_t inputBufferId =
+			    AMediaCodec_dequeueInputBuffer(sys->decoder, MEDIACODEC_INPUT_DEQUEUE_TIMEOUT);
 			if (inputBufferId < 0)
 			{
-				WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_dequeueInputBuffer failed [%zd]",
-				           inputBufferId);
-				// TODO: sleep?
+				if (++inputRetries > MEDIACODEC_DECODE_MAX_RETRIES)
+				{
+					WLog_Print(h264->log, WLOG_ERROR,
+					           "AMediaCodec_dequeueInputBuffer gave up [%zd]", inputBufferId);
+					return -1;
+				}
 				continue;
 			}
+			inputRetries = 0;
 
 			size_t inputBufferSize = 0;
 			uint8_t* inputBuffer =
@@ -466,10 +481,12 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 			}
 		}
 
+		int outputRetries = 0;
 		while (true)
 		{
 			AMediaCodecBufferInfo bufferInfo = WINPR_C_ARRAY_INIT;
-			ssize_t outputBufferId = AMediaCodec_dequeueOutputBuffer(sys->decoder, &bufferInfo, -1);
+			ssize_t outputBufferId = AMediaCodec_dequeueOutputBuffer(
+			    sys->decoder, &bufferInfo, MEDIACODEC_OUTPUT_DEQUEUE_TIMEOUT);
 			if (outputBufferId >= 0)
 			{
 				sys->currentOutputBufferIndex = outputBufferId;
@@ -484,6 +501,8 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 				if (bufferInfo.size <= 0)
 				{
 					release_current_outputbuffer(h264);
+					if (++outputRetries > MEDIACODEC_DECODE_MAX_RETRIES)
+						return 0;
 					continue;
 				}
 
@@ -580,9 +599,12 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 			}
 			else if (outputBufferId == AMEDIACODEC_INFO_TRY_AGAIN_LATER)
 			{
-				WLog_Print(h264->log, WLOG_WARN,
-				           "AMediaCodec_dequeueOutputBuffer need to try again later");
-				// TODO: sleep?
+				if (++outputRetries > MEDIACODEC_DECODE_MAX_RETRIES)
+				{
+					WLog_Print(h264->log, WLOG_DEBUG,
+					           "AMediaCodec_dequeueOutputBuffer no buffer ready yet");
+					return 0;
+				}
 			}
 			else if (outputBufferId == AMEDIACODEC_INFO_OUTPUT_BUFFERS_CHANGED)
 			{
@@ -622,10 +644,15 @@ static void mediacodec_uninit(H264_CONTEXT* h264)
 	if (sys->decoder != nullptr)
 	{
 		release_current_outputbuffer(h264);
-		status = AMediaCodec_stop(sys->decoder);
-		if (status != AMEDIA_OK)
+
+		if (sys->decoderStarted)
 		{
-			WLog_Print(h264->log, WLOG_ERROR, "Error AMediaCodec_stop %d", status);
+			status = AMediaCodec_stop(sys->decoder);
+			if (status != AMEDIA_OK)
+			{
+				WLog_Print(h264->log, WLOG_ERROR, "Error AMediaCodec_stop %d", status);
+			}
+			sys->decoderStarted = FALSE;
 		}
 
 		status = AMediaCodec_delete(sys->decoder);
@@ -725,6 +752,7 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 		goto EXCEPTION;
 	}
 
+	sys->decoderStarted = TRUE;
 	return TRUE;
 EXCEPTION:
 	mediacodec_uninit(h264);
