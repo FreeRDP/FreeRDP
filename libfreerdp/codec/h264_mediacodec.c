@@ -17,8 +17,11 @@
  * limitations under the License.
  */
 
+#include <freerdp/config.h>
+
 #include <winpr/wlog.h>
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/library.h>
 
 #include <freerdp/log.h>
@@ -37,6 +40,7 @@ static const int COLOR_FormatYUV420Flexible = 0x7f420888;
 /* https://developer.android.com/reference/android/media/MediaCodec#qualityFloor */
 static const int MEDIACODEC_MINIMUM_WIDTH = 320;
 static const int MEDIACODEC_MINIMUM_HEIGHT = 240;
+static const int32_t MEDIACODEC_MAXIMUM_DIMENSION = 16384;
 
 typedef struct
 {
@@ -50,9 +54,10 @@ typedef struct
 	ssize_t currentOutputBufferIndex;
 } H264_CONTEXT_MEDIACODEC;
 
+WINPR_ATTR_NODISCARD
 static AMediaFormat* mediacodec_format_new(wLog* log, int width, int height)
 {
-	const char* media_format;
+	const char* media_format = nullptr;
 	AMediaFormat* format = AMediaFormat_new();
 	if (format == nullptr)
 	{
@@ -83,7 +88,7 @@ static void set_mediacodec_format(H264_CONTEXT* h264, AMediaFormat** formatVaria
                                   AMediaFormat* newFormat)
 {
 	media_status_t status = AMEDIA_OK;
-	H264_CONTEXT_MEDIACODEC* sys;
+	H264_CONTEXT_MEDIACODEC* sys = nullptr;
 
 	WINPR_ASSERT(h264);
 	WINPR_ASSERT(formatVariable);
@@ -106,27 +111,24 @@ static void set_mediacodec_format(H264_CONTEXT* h264, AMediaFormat** formatVaria
 	*formatVariable = newFormat;
 }
 
+WINPR_ATTR_NODISCARD
 static int update_mediacodec_inputformat(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_MEDIACODEC* sys;
-	AMediaFormat* inputFormat;
-	const char* mediaFormatName;
+	H264_CONTEXT_MEDIACODEC* sys = nullptr;
+	AMediaFormat* inputFormat = nullptr;
+	const char* mediaFormatName = nullptr;
 
 	WINPR_ASSERT(h264);
 
 	sys = (H264_CONTEXT_MEDIACODEC*)h264->pSystemData;
 	WINPR_ASSERT(sys);
 
-#if __ANDROID__ >= 21
 	inputFormat = AMediaCodec_getInputFormat(sys->decoder);
 	if (inputFormat == nullptr)
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_getInputFormat failed");
 		return -1;
 	}
-#else
-	inputFormat = sys->inputFormat;
-#endif
 	set_mediacodec_format(h264, &sys->inputFormat, inputFormat);
 
 	mediaFormatName = AMediaFormat_toString(sys->inputFormat);
@@ -141,12 +143,14 @@ static int update_mediacodec_inputformat(H264_CONTEXT* h264)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int update_mediacodec_outputformat(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_MEDIACODEC* sys;
-	AMediaFormat* outputFormat;
-	const char* mediaFormatName;
-	int32_t outputWidth, outputHeight;
+	H264_CONTEXT_MEDIACODEC* sys = nullptr;
+	AMediaFormat* outputFormat = nullptr;
+	const char* mediaFormatName = nullptr;
+	int32_t outputWidth = 0;
+	int32_t outputHeight = 0;
 
 	WINPR_ASSERT(h264);
 
@@ -191,7 +195,7 @@ static int update_mediacodec_outputformat(H264_CONTEXT* h264)
 static void release_current_outputbuffer(H264_CONTEXT* h264)
 {
 	media_status_t status = AMEDIA_OK;
-	H264_CONTEXT_MEDIACODEC* sys;
+	H264_CONTEXT_MEDIACODEC* sys = nullptr;
 
 	WINPR_ASSERT(h264);
 	sys = (H264_CONTEXT_MEDIACODEC*)h264->pSystemData;
@@ -211,6 +215,7 @@ static void release_current_outputbuffer(H264_CONTEXT* h264)
 	sys->currentOutputBufferIndex = -1;
 }
 
+WINPR_ATTR_NODISCARD
 static int mediacodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const UINT32* pStride,
                                BYTE** ppDstData, UINT32* pDstSize)
 {
@@ -224,6 +229,7 @@ static int mediacodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 	return -1;
 }
 
+WINPR_ATTR_NODISCARD
 static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize)
 {
 	WINPR_ASSERT(h264);
@@ -240,10 +246,20 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 
 	release_current_outputbuffer(h264);
 
-	if (sys->width != h264->width || sys->height != h264->height)
+	if ((h264->width > (UINT32)MEDIACODEC_MAXIMUM_DIMENSION) ||
+	    (h264->height > (UINT32)MEDIACODEC_MAXIMUM_DIMENSION))
 	{
-		sys->width = h264->width;
-		sys->height = h264->height;
+		WLog_Print(h264->log, WLOG_ERROR,
+		           "MediaCodec size [%" PRIu32 ",%" PRIu32 "] exceeds the maximum", h264->width,
+		           h264->height);
+		return -1;
+	}
+
+	if ((sys->width != WINPR_ASSERTING_INT_CAST(int32_t, h264->width)) ||
+	    (sys->height != WINPR_ASSERTING_INT_CAST(int32_t, h264->height)))
+	{
+		sys->width = WINPR_ASSERTING_INT_CAST(int32_t, h264->width);
+		sys->height = WINPR_ASSERTING_INT_CAST(int32_t, h264->height);
 
 		if (sys->width < MEDIACODEC_MINIMUM_WIDTH || sys->height < MEDIACODEC_MINIMUM_HEIGHT)
 		{
@@ -256,21 +272,19 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 		WLog_Print(h264->log, WLOG_DEBUG, "MediaCodec setting new input width and height [%d,%d]",
 		           sys->width, sys->height);
 
-#if __ANDROID__ >= 26
 		AMediaFormat_setInt32(sys->inputFormat, AMEDIAFORMAT_KEY_WIDTH, sys->width);
 		AMediaFormat_setInt32(sys->inputFormat, AMEDIAFORMAT_KEY_HEIGHT, sys->height);
 		const media_status_t status = AMediaCodec_setParameters(sys->decoder, sys->inputFormat);
 		if (status != AMEDIA_OK)
 		{
-			WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_setParameters failed: %d", status);
-			return -1;
+			/* Decoder adapts via in-band SPS/PPS; ignoring failure here. */
+			WLog_Print(h264->log, WLOG_DEBUG,
+			           "AMediaCodec_setParameters returned %d, relying on "
+			           "in-band SPS/PPS for the size change",
+			           status);
 		}
-#else
-		set_mediacodec_format(h264, &sys->inputFormat,
-		                      mediacodec_format_new(h264->log, sys->width, sys->height));
-#endif
 
-		// The codec can change output width and height
+		/* The codec can change output width and height */
 		if (update_mediacodec_outputformat(h264) < 0)
 		{
 			WLog_Print(h264->log, WLOG_ERROR, "MediaCodec failed updating input format");
@@ -287,7 +301,7 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 			const ssize_t inputBufferId = AMediaCodec_dequeueInputBuffer(sys->decoder, -1);
 			if (inputBufferId < 0)
 			{
-				WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_dequeueInputBuffer failed [%d]",
+				WLog_Print(h264->log, WLOG_ERROR, "AMediaCodec_dequeueInputBuffer failed [%zd]",
 				           inputBufferId);
 				// TODO: sleep?
 				continue;
@@ -305,9 +319,9 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 			if (numberOfBytesToCopy > inputBufferSize)
 			{
 				WLog_Print(h264->log, WLOG_WARN,
-				           "MediaCodec inputBufferSize: got [%d] but wanted [%d]", inputBufferSize,
+				           "MediaCodec inputBufferSize: got [%zu] but wanted [%u]", inputBufferSize,
 				           numberOfBytesToCopy);
-				numberOfBytesToCopy = inputBufferSize;
+				numberOfBytesToCopy = WINPR_ASSERTING_INT_CAST(UINT32, inputBufferSize);
 			}
 
 			memcpy(inputBuffer, &pSrcData[inputBufferCurrnetOffset], numberOfBytesToCopy);
@@ -341,7 +355,7 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 				     ((sys->outputWidth + 1) / 2) * ((sys->outputHeight + 1) / 2) * 2))
 				{
 					WLog_Print(h264->log, WLOG_ERROR,
-					           "Error MediaCodec unexpected output buffer size %d",
+					           "Error MediaCodec unexpected output buffer size %zu",
 					           outputBufferSize);
 					return -1;
 				}
@@ -384,7 +398,7 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 			else
 			{
 				WLog_Print(h264->log, WLOG_ERROR,
-				           "AMediaCodec_dequeueOutputBuffer returned unknown value [%d]",
+				           "AMediaCodec_dequeueOutputBuffer returned unknown value [%zd]",
 				           outputBufferId);
 				return -1;
 			}
@@ -399,7 +413,7 @@ static int mediacodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 static void mediacodec_uninit(H264_CONTEXT* h264)
 {
 	media_status_t status = AMEDIA_OK;
-	H264_CONTEXT_MEDIACODEC* sys;
+	H264_CONTEXT_MEDIACODEC* sys = nullptr;
 
 	WINPR_ASSERT(h264);
 
@@ -435,10 +449,11 @@ static void mediacodec_uninit(H264_CONTEXT* h264)
 	h264->pSystemData = nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL mediacodec_init(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_MEDIACODEC* sys;
-	media_status_t status;
+	H264_CONTEXT_MEDIACODEC* sys = nullptr;
+	media_status_t status = AMEDIA_OK;
 
 	WINPR_ASSERT(h264);
 
@@ -461,7 +476,7 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 
 	sys->currentOutputBufferIndex = -1;
 
-	// updated when we're given the height and width for the first time
+	/* Updated when given height and width for the first time */
 	sys->width = sys->outputWidth = MEDIACODEC_MINIMUM_WIDTH;
 	sys->height = sys->outputHeight = MEDIACODEC_MINIMUM_HEIGHT;
 	sys->decoder = AMediaCodec_createDecoderByType(CODEC_NAME);
@@ -471,8 +486,7 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 		goto EXCEPTION;
 	}
 
-#if __ANDROID_API__ >= 28
-	char* codec_name;
+	char* codec_name = nullptr;
 	status = AMediaCodec_getName(sys->decoder, &codec_name);
 	if (status != AMEDIA_OK)
 	{
@@ -482,7 +496,6 @@ static BOOL mediacodec_init(H264_CONTEXT* h264)
 
 	WLog_Print(h264->log, WLOG_DEBUG, "MediaCodec using %s codec [%s]", CODEC_NAME, codec_name);
 	AMediaCodec_releaseName(sys->decoder, codec_name);
-#endif
 
 	set_mediacodec_format(h264, &sys->inputFormat,
 	                      mediacodec_format_new(h264->log, sys->width, sys->height));
