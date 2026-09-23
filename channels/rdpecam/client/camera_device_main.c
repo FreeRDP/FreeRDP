@@ -368,8 +368,10 @@ static BOOL media_type_valid(CameraDevice* dev, UINT8 streamIndex,
 
 	for (size_t x = 0; x < nMediaTypes; x++)
 	{
-		const CAM_MEDIA_TYPE_DESCRIPTION* cur = &supported[x];
-		if (memcmp(cur, type, sizeof(CAM_MEDIA_TYPE_DESCRIPTION)) == 0)
+		CAM_MEDIA_TYPE_DESCRIPTION cur = supported[x];
+		cur.Format = supportedFormats[formatIndex].outputFormat;
+		cur.Flags = CAM_MEDIA_TYPE_DESCRIPTION_FLAG_DecodingRequired;
+		if (memcmp(&cur, type, sizeof(CAM_MEDIA_TYPE_DESCRIPTION)) == 0)
 			return TRUE;
 	}
 	return FALSE;
