@@ -284,7 +284,7 @@ static BOOL websocket_reply_pong(BIO* bio, websocket_context* context, wStream* 
 	if (Stream_GetPosition(s) != 0)
 		return websocket_context_write_wstream(context, bio, s, WebsocketPongOpcode);
 
-	return websocket_reply_close(bio, context, nullptr);
+	return websocket_reply_close(bio, context, s);
 }
 
 static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
