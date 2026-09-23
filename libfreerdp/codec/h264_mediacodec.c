@@ -37,6 +37,9 @@ static const char* CODEC_NAME = "video/avc";
 static const int COLOR_FormatYUV420Planar = 19;
 static const int COLOR_FormatYUV420Flexible = 0x7f420888;
 
+/* AMEDIAFORMAT_KEY_LOW_LATENCY has no NDK constant below API 30; the string works at runtime */
+static const char* MEDIACODEC_KEY_LOW_LATENCY = "low-latency";
+
 /* Output crop rectangle; inclusive bounds, no NDK constants exist for these */
 static const char* MEDIACODEC_KEY_CROP_LEFT = "crop-left";
 static const char* MEDIACODEC_KEY_CROP_RIGHT = "crop-right";
@@ -93,6 +96,9 @@ static AMediaFormat* mediacodec_format_new(wLog* log, int width, int height)
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_WIDTH, width);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_HEIGHT, height);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, COLOR_FormatYUV420Planar);
+	/* Low-latency decode for remote desktop: drop frame reordering, ask for realtime scheduling. */
+	AMediaFormat_setInt32(format, MEDIACODEC_KEY_LOW_LATENCY, 1);
+	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_PRIORITY, 0);
 
 	media_format = AMediaFormat_toString(format);
 	if (media_format == nullptr)
