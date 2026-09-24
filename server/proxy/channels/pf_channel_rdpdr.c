@@ -57,6 +57,7 @@ typedef struct
 	} computerName;
 	UINT32 SpecialDeviceCount;
 	UINT32 capabilityVersions[6];
+	size_t totalLength;
 } pf_channel_common_context;
 
 typedef enum
@@ -1397,7 +1398,11 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 
 	wStream* s = rdpdr->common.buffer;
 	if (flags & CHANNEL_FLAG_FIRST)
+	{
 		Stream_ResetPosition(s);
+		rdpdr->common.totalLength = totalSize;
+	}
+
 	if (!Stream_EnsureRemainingCapacity(s, xsize))
 	{
 		CLIENT_RX_LOG(rdpdr->log, WLOG_ERROR,
@@ -1406,11 +1411,22 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 		return FALSE;
 	}
 	Stream_Write(s, xdata, xsize);
+
+	if ((Stream_GetPosition(s) > totalSize) || (totalSize != rdpdr->common.totalLength))
+	{
+		CLIENT_RX_LOG(rdpdr->log, WLOG_ERROR,
+		              "Channel %s [0x%04" PRIx16 "] total size mismatch [got %" PRIuz
+		              ", expected %" PRIuz "]",
+		              channel_name, channelId, totalSize, rdpdr->common.totalLength);
+		return FALSE;
+	}
+
 	if ((flags & CHANNEL_FLAG_LAST) == 0)
 		return TRUE;
 
 	Stream_SealLength(s);
 	Stream_ResetPosition(s);
+	rdpdr->common.totalLength = 0;
 	if (Stream_Length(s) != totalSize)
 	{
 		CLIENT_RX_LOG(rdpdr->log, WLOG_WARN,
@@ -1948,17 +1964,24 @@ BOOL pf_channel_rdpdr_server_handle(pServerContext* ps, UINT16 channelId, const 
 	wStream* s = rdpdr->common.buffer;
 
 	if (flags & CHANNEL_FLAG_FIRST)
+	{
+		rdpdr->common.totalLength = totalSize;
 		Stream_ResetPosition(s);
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, xsize))
 		return FALSE;
 	Stream_Write(s, xdata, xsize);
+
+	if ((Stream_GetPosition(s) > totalSize) || (totalSize != rdpdr->common.totalLength))
+		return FALSE;
 
 	if ((flags & CHANNEL_FLAG_LAST) == 0)
 		return TRUE;
 
 	Stream_SealLength(s);
 	Stream_ResetPosition(s);
+	rdpdr->common.totalLength = 0;
 
 	if (Stream_Length(s) != totalSize)
 	{

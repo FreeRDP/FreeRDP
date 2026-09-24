@@ -45,6 +45,7 @@ typedef struct
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
 	char buffer[16 * 1024];
 	char* commandline;
+	UINT32 totalLength;
 } Plugin;
 
 static int init_external_addin(Plugin* plugin)
@@ -192,6 +193,7 @@ static void dataReceived(Plugin* plugin, void* pData, UINT32 dataLength, UINT32 
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
+		plugin->totalLength = totalLength;
 		if (!WriteFile(plugin->hStdInputWrite, &totalLength, sizeof(totalLength), &dwWritten,
 		               nullptr))
 			closeChannel(plugin);

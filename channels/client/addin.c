@@ -515,6 +515,7 @@ typedef struct
 	LPVOID userdata;
 	MsgHandler msg_handler;
 	BOOL firstFlagReceived;
+	UINT32 totalLength;
 } msg_proc_internals;
 
 static DWORD WINAPI channel_client_thread_proc(LPVOID userdata)
@@ -669,6 +670,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 		}
 		else
 			internals->data_in = Stream_New(nullptr, dataLength);
+		internals->totalLength = totalLength;
 	}
 
 	if (!(data_in = internals->data_in))
@@ -686,7 +688,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 
 	Stream_Write(data_in, pData, dataLength);
 
-	if (Stream_GetPosition(data_in) > totalLength)
+	if ((Stream_GetPosition(data_in) > totalLength) || (internals->totalLength != totalLength))
 	{
 		Stream_Free(internals->data_in, TRUE);
 		internals->data_in = nullptr;
@@ -702,12 +704,13 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 		if (!data_in)
 			return ERROR_INVALID_DATA;
 
-		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
+		if (internals->totalLength != Stream_GetPosition(data_in))
 		{
 			WLog_ERR(TAG, "%s_plugin_process_received: read error", internals->channel_name);
 			return ERROR_INTERNAL_ERROR;
 		}
 
+		internals->totalLength = 0;
 		internals->data_in = nullptr;
 		Stream_SealLength(data_in);
 		Stream_ResetPosition(data_in);

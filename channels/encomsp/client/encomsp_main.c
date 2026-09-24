@@ -45,6 +45,7 @@ struct encomsp_plugin
 	wMessageQueue* queue;
 	rdpContext* rdpcontext;
 	BOOL firstFlagReceived;
+	UINT32 totalLength;
 };
 
 /**
@@ -968,6 +969,7 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 			WLog_ERR(TAG, "Stream_New failed!");
 			return CHANNEL_RC_NO_MEMORY;
 		}
+		encomsp->totalLength = totalLength;
 	}
 
 	wStream* data_in = encomsp->data_in;
@@ -982,7 +984,7 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 
 	Stream_Write(data_in, pData, dataLength);
 
-	if (Stream_GetPosition(data_in) > totalLength)
+	if ((Stream_GetPosition(data_in) > totalLength) || (encomsp->totalLength != totalLength))
 		return ERROR_INVALID_DATA;
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
@@ -997,6 +999,7 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp, 
 			return ERROR_INVALID_DATA;
 		}
 
+		encomsp->totalLength = 0;
 		encomsp->data_in = nullptr;
 		Stream_SealLength(data_in);
 		Stream_ResetPosition(data_in);
