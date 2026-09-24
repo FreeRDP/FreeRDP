@@ -1707,6 +1707,7 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 			Stream_Release(drdynvc->data_in);
 
 		drdynvc->data_in = StreamPool_Take(mgr->pool, dataLength);
+		drdynvc->totalLength = totalLength;
 	}
 
 	if (!(data_in = drdynvc->data_in))
@@ -1725,7 +1726,7 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 
 	Stream_Write(data_in, pData, dataLength);
 
-	if (Stream_GetPosition(data_in) > totalLength)
+	if ((Stream_GetPosition(data_in) > totalLength) || (drdynvc->totalLength != totalLength))
 	{
 		Stream_Free(drdynvc->data_in, TRUE);
 		drdynvc->data_in = nullptr;
@@ -1738,14 +1739,14 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 			return ERROR_INVALID_DATA;
 		drdynvc->firstFlagReceived = FALSE;
 
-		const size_t cap = Stream_Capacity(data_in);
 		const size_t pos = Stream_GetPosition(data_in);
-		if (cap < pos)
+		if (drdynvc->totalLength != pos)
 		{
 			WLog_Print(drdynvc->log, WLOG_ERROR, "drdynvc_plugin_process_received: read error");
 			return ERROR_INVALID_DATA;
 		}
 
+		drdynvc->totalLength = 0;
 		drdynvc->data_in = nullptr;
 		Stream_SealLength(data_in);
 		Stream_ResetPosition(data_in);

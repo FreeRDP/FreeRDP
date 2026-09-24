@@ -25,6 +25,11 @@ if(WITH_DEBUG_UTILS_CMDLINE_DUMP)
   winpr_definition_add(WITH_DEBUG_UTILS_CMDLINE_DUMP)
 endif()
 
+set(STREAMPOOL_SIZE_LIMIT "0x1000000"
+    CACHE STRING "Size limit in bytes enforced for streams returned to the pool. Larger streams are shrunk"
+)
+winpr_definition_add(-DSTREAMPOOL_SIZE_LIMIT=${STREAMPOOL_SIZE_LIMIT})
+
 option(WITH_DEBUG_STREAMPOOL "build with extensive streampool logging" OFF)
 if(WITH_STREAMPOOL_DEBUG)
   message(WARNING "WITH_STREAMPOOL_DEBUG was renamed to WITH_DEBUG_STREAMPOOL")

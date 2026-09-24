@@ -41,19 +41,11 @@
 		}                                                                              \
 	} while (0)
 
-BOOL Stream_EnsureCapacity(wStream* s, size_t size)
+BOOL Stream_ResizeToCapacity(wStream* s, size_t size)
 {
-	WINPR_ASSERT(s);
-	if (s->capacity >= size)
-		return TRUE;
-
-	const size_t increment = 128ull;
-	if (size > SIZE_MAX - increment)
-		return FALSE;
-
 	const size_t old_capacity = s->capacity;
-	const size_t new_capacity = size + increment - size % increment;
-	const size_t position = Stream_GetPosition(s);
+	const size_t new_capacity = size;
+	size_t position = Stream_GetPosition(s);
 
 	BYTE* new_buf = nullptr;
 	if (!s->isOwner)
@@ -75,9 +67,26 @@ BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 	s->buffer = new_buf;
 	s->capacity = new_capacity;
 	s->length = new_capacity;
-	ZeroMemory(&s->buffer[old_capacity], s->capacity - old_capacity);
+	if (old_capacity < new_capacity)
+		ZeroMemory(&s->buffer[old_capacity], s->capacity - old_capacity);
 
+	if (position > new_capacity)
+		position = new_capacity;
 	return Stream_SetPosition(s, position);
+}
+
+BOOL Stream_EnsureCapacity(wStream* s, size_t size)
+{
+	WINPR_ASSERT(s);
+	if (s->capacity >= size)
+		return TRUE;
+
+	const size_t increment = 128ull;
+	if (size > SIZE_MAX - increment)
+		return FALSE;
+
+	const size_t new_capacity = size + increment - size % increment;
+	return Stream_ResizeToCapacity(s, new_capacity);
 }
 
 BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size)

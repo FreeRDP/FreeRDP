@@ -705,6 +705,7 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 			return CHANNEL_RC_NO_MEMORY;
 		}
 		remdesk->firstFlagReceived = TRUE;
+		remdesk->totalLength = totalLength;
 	}
 
 	wStream* data_in = remdesk->data_in;
@@ -718,7 +719,7 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 	}
 
 	Stream_Write(data_in, pData, dataLength);
-	if (Stream_GetPosition(data_in) > totalLength)
+	if ((Stream_GetPosition(data_in) > totalLength) || (remdesk->totalLength != totalLength))
 		return ERROR_INVALID_DATA;
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
@@ -727,12 +728,13 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
 			return ERROR_INVALID_DATA;
 		remdesk->firstFlagReceived = FALSE;
 
-		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
+		if (remdesk->totalLength != Stream_GetPosition(data_in))
 		{
 			WLog_ERR(TAG, "read error");
 			return ERROR_INTERNAL_ERROR;
 		}
 
+		remdesk->totalLength = 0;
 		remdesk->data_in = nullptr;
 		Stream_SealLength(data_in);
 		Stream_ResetPosition(data_in);

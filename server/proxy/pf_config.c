@@ -416,19 +416,16 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	target_value = pf_config_get_str(ini, section_target, key_target_cert_pem_content, FALSE);
 	if (target_value)
 	{
-		size_t len = 0;
 		const char* pem_value = pf_config_get_str(ini, section_target, key_target_cert_pem, FALSE);
 		if (pem_value)
 			WLog_WARN(TAG, "In section [%s] both, '%s' and '%s' are provided. Ignoring %s",
 			          section_target, key_target_cert_pem, key_target_cert_pem_content,
 			          key_target_cert_pem);
 
-		char* pem = crypto_read_pem(target_value, &len);
-		if (!pem)
-			return FALSE;
 		winpr_znfree(config->TargetCertPEM, config->TargetCertPEMLength);
 		config->TargetCertPEM = pf_config_decode_base64(target_value, "TargetCertificateContent",
 		                                                &config->TargetCertPEMLength);
+
 		if (!config->TargetCertPEM || (config->TargetCertPEMLength == 0))
 			return FALSE;
 	}

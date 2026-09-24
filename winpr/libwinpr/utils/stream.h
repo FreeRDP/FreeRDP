@@ -24,5 +24,6 @@
 #include <winpr/stream.h>
 
 void Stream_EnsureValidity(wStream* s);
+BOOL Stream_ResizeToCapacity(wStream* s, size_t size);
 
 #endif /* LIBWINPR_UTILS_STREAM_H */

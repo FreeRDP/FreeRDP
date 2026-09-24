@@ -48,16 +48,16 @@ struct stream_dump_context
 
 static UINT32 crc32b(const BYTE* data, size_t length)
 {
-	UINT32 crc = 0xFFFFFFFF;
+	UINT32 crc = 0xFFFFFFFFul;
 
 	for (size_t x = 0; x < length; x++)
 	{
-		const UINT32 d = data[x] & 0xFF;
+		const UINT32 d = data[x] & 0xFFul;
 		crc = crc ^ d;
 		for (int j = 7; j >= 0; j--)
 		{
-			UINT32 mask = ~(crc & 1);
-			crc = (crc >> 1) ^ (0xEDB88320 & mask);
+			UINT32 mask = -(crc & 1ul);
+			crc = (crc >> 1ul) ^ (0xEDB88320ul & mask);
 		}
 	}
 	return ~crc;
@@ -447,10 +447,6 @@ static BOOL stream_dump_register_read_handlers(rdpContext* context)
 	    freerdp_settings_get_bool(context->settings, FreeRDP_TransportDumpReplayNodelay);
 	context->dump->io.ReadPdu = dfl->ReadPdu;
 	context->dump->io.WritePdu = dfl->WritePdu;
-
-	/* Set our dump wrappers */
-	dump.WritePdu = stream_dump_transport_write;
-	dump.ReadPdu = stream_dump_transport_read;
 
 	/* Set our dump wrappers */
 	dump.WritePdu = stream_dump_replay_transport_write;

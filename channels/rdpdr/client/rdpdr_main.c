@@ -2054,6 +2054,7 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 			WLog_Print(rdpdr->log, WLOG_ERROR, "Stream_New failed!");
 			return CHANNEL_RC_NO_MEMORY;
 		}
+		rdpdr->totalLength = totalLength;
 	}
 
 	if (!rdpdr->data_in)
@@ -2072,7 +2073,7 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 
 	Stream_Write(data_in, pData, dataLength);
 
-	if (Stream_GetPosition(data_in) > totalLength)
+	if ((Stream_GetPosition(data_in) > totalLength) || (rdpdr->totalLength != totalLength))
 		return ERROR_INVALID_DATA;
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
@@ -2082,8 +2083,7 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 		rdpdr->firstFlagReceived = FALSE;
 
 		const size_t pos = Stream_GetPosition(data_in);
-		const size_t cap = Stream_Capacity(data_in);
-		if (cap < pos)
+		if (pos != totalLength)
 		{
 			WLog_Print(rdpdr->log, WLOG_ERROR,
 			           "rdpdr_virtual_channel_event_data_received: read error");
@@ -2092,6 +2092,7 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 
 		Stream_SealLength(data_in);
 		Stream_ResetPosition(data_in);
+		rdpdr->totalLength = 0;
 
 		if (rdpdr->async)
 		{

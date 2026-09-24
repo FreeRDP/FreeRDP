@@ -116,6 +116,7 @@ struct rdpsnd_plugin
 	BOOL OnOpenCalled;
 	BOOL async;
 	BOOL firstFlagReceived;
+	UINT32 totalLength;
 };
 
 WINPR_ATTR_NODISCARD
@@ -1201,6 +1202,7 @@ static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin, voi
 			plugin->data_in = StreamPool_Take(plugin->pool, dataLength);
 
 		Stream_ResetPosition(plugin->data_in);
+		plugin->totalLength = totalLength;
 	}
 
 	if (!plugin->data_in)
@@ -1211,17 +1213,20 @@ static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin, voi
 
 	Stream_Write(plugin->data_in, pData, dataLength);
 
-	if (Stream_GetPosition(plugin->data_in) > totalLength)
+	if ((Stream_GetPosition(plugin->data_in) > totalLength) || (totalLength != plugin->totalLength))
 		return ERROR_INVALID_DATA;
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
 		if (!plugin->firstFlagReceived)
 			return ERROR_INVALID_DATA;
+		if (Stream_GetPosition(plugin->data_in) != totalLength)
+			return ERROR_INVALID_DATA;
 		plugin->firstFlagReceived = FALSE;
 
 		Stream_SealLength(plugin->data_in);
 		Stream_ResetPosition(plugin->data_in);
+		plugin->totalLength = 0;
 
 		if (plugin->async)
 		{

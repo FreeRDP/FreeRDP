@@ -116,7 +116,7 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 
 	{
 		const size_t currentPacketSize = channelTracker_getCurrentPacketSize(tracker);
-		if (xsize > currentPacketSize)
+		if ((xsize > currentPacketSize) || (currentPacketSize != totalSize))
 		{
 			WLog_WARN(TAG,
 			          "current fragment size is bigger (%" PRIuz ") than total size (%" PRIuz ")",

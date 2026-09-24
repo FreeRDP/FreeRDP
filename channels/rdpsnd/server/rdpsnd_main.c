@@ -406,10 +406,16 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 	{
 		case WAVE_FORMAT_DVI_ADPCM:
 		{
-			WINPR_ASSERT(format->nBlockAlign >= 4);
-			WINPR_ASSERT(format->nChannels > 0);
-			const UINT64 bs = 4ULL * (format->nBlockAlign - 4ULL * format->nChannels);
-			WINPR_ASSERT(bs > 0);
+			if (format->nBlockAlign / 4ull < format->nChannels)
+				goto out;
+			if (format->nChannels == 0)
+				goto out;
+
+			/* maximum:
+			 * 1: nBlockAlign=0xFFFF - 4 * nChannels=1 == 0xFFFB
+			 * 2: 4 * 0xFFFB = 0x3FFEC
+			 */
+			const size_t bs = 4ULL * (format->nBlockAlign - 4ULL * format->nChannels);
 
 			context->priv->out_frames -= context->priv->out_frames % bs;
 
@@ -420,12 +426,19 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 cli
 
 		case WAVE_FORMAT_ADPCM:
 		{
-			WINPR_ASSERT(format->nBlockAlign >= 8);
-			WINPR_ASSERT(format->nChannels > 0);
+			if (format->nBlockAlign / 7 < format->nChannels)
+				goto out;
+			if (format->nChannels == 0)
+				goto out;
 
-			const UINT64 bs =
+			/* maximum:
+			 * 1: nBlockAlign=0xFFFF - 7 * nChannels=1 == 0xFFF8
+			 * 2: 2 * 0xFFF8 = 0x1FFF0
+			 * 3: 0x1FFF0 / nChannels=1 + 2 = 0x1FFF2
+			 */
+			const size_t bs =
 			    (format->nBlockAlign - 7 * format->nChannels) * 2 / format->nChannels + 2;
-			WINPR_ASSERT(bs > 0);
+
 			context->priv->out_frames -= context->priv->out_frames % bs;
 
 			if (context->priv->out_frames < bs)
