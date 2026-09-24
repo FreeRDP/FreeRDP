@@ -212,27 +212,38 @@ static int x509_add_ext(X509* cert, int nid, char* value)
 #endif
 
 WINPR_ATTR_NODISCARD
-static char* x509_name_parse(char* name, char* txt, size_t* length)
+static const char* x509_name_parse(const char* name, const char* txt, size_t* length)
 {
-	char* p = nullptr;
-	char* entry = nullptr;
-
 	if (!name || !txt || !length)
 		return nullptr;
 
-	p = strstr(name, txt);
+	const char* entry = nullptr;
+	char* fmt = nullptr;
+	size_t fmtlen = 0;
+	(void)winpr_asprintf(&fmt, &fmtlen, "%s=", txt);
+	if (!fmt)
+		goto fail;
+
+	const char* p = strstr(name, fmt);
 
 	if (!p)
 		return nullptr;
 
-	entry = p + strlen(txt) + 1;
-	p = strchr(entry, '=');
-
-	if (!p)
+	entry = &p[fmtlen];
+	const char* sep1 = strchr(entry, ';');
+	const char* sep2 = strchr(entry, ',');
+	const char* sep3 = strchr(entry, ' ');
+	if (!sep1 && !sep2 && !sep3)
 		*length = strlen(entry);
+	else if (sep1)
+		*length = WINPR_ASSERTING_INT_CAST(size_t, sep1 - entry);
+	else if (sep2)
+		*length = WINPR_ASSERTING_INT_CAST(size_t, sep2 - entry);
 	else
-		*length = (size_t)(p - entry);
+		*length = WINPR_ASSERTING_INT_CAST(size_t, sep3 - entry);
 
+fail:
+	free(fmt);
 	return entry;
 }
 
@@ -773,6 +784,28 @@ fail:
 }
 #endif
 
+static int add_entry(X509_NAME* name, const char* value, const char* txt)
+{
+	WINPR_ASSERT(name);
+	WINPR_ASSERT(value);
+	WINPR_ASSERT(txt);
+
+	size_t length = 0;
+	const char* entry = x509_name_parse(value, txt, &length);
+	if (entry)
+	{
+		if (length > INT32_MAX)
+			return -1;
+		const int rc =
+		    X509_NAME_add_entry_by_txt(name, txt, MBSTRING_UTF8, (const unsigned char*)entry,
+		                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0);
+		if (rc != 1)
+			return -1;
+		return 1;
+	}
+	return 0;
+}
+
 int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 {
 	COMMAND_LINE_ARGUMENT_A args[] = {
@@ -1029,80 +1062,32 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
-		size_t length = 0;
-		char* entry = x509_name_parse(arg->Value, "C", &length);
+		BOOL haveCN = FALSE;
 
-		if (entry)
+		const char* records[] = { "CN", "ST", "OU", "L", "O", "C" };
+
+		for (size_t x = 0; x < ARRAYSIZE(records); x++)
 		{
-			if (length > INT32_MAX)
-				return -1;
-			if (X509_NAME_add_entry_by_txt(name, "C", MBSTRING_UTF8, (const unsigned char*)entry,
-			                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
-				return -1;
+			const char* record = records[x];
+			const int rc = add_entry(name, arg->Value, record);
+			if (rc < 0)
+				return rc;
+			if (x == 0)
+				haveCN = rc > 0;
 		}
 
-		entry = x509_name_parse(arg->Value, "ST", &length);
-
-		if (entry)
+		if (!haveCN)
 		{
-			if (length > INT32_MAX)
-				return -1;
-			if (X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_UTF8, (const unsigned char*)entry,
-			                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
-				return -1;
+			const int rc = add_entry(name, context->common_name, "CN");
+			if (rc < 0)
+				return rc;
 		}
-
-		entry = x509_name_parse(arg->Value, "L", &length);
-
-		if (entry)
-		{
-			if (length > INT32_MAX)
-				return -1;
-			if (X509_NAME_add_entry_by_txt(name, "L", MBSTRING_UTF8, (const unsigned char*)entry,
-			                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
-				return -1;
-		}
-
-		entry = x509_name_parse(arg->Value, "O", &length);
-
-		if (entry)
-		{
-			if (length > INT32_MAX)
-				return -1;
-			if (X509_NAME_add_entry_by_txt(name, "O", MBSTRING_UTF8, (const unsigned char*)entry,
-			                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
-				return -1;
-		}
-
-		entry = x509_name_parse(arg->Value, "OU", &length);
-
-		if (entry)
-		{
-			if (length > INT32_MAX)
-				return -1;
-			if (X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*)entry,
-			                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
-				return -1;
-		}
-
-		entry = context->common_name;
-		length = strlen(entry);
-		if (length > INT32_MAX)
-			return -1;
-
-		if (X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*)entry,
-		                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
-			return -1;
 	}
 	else
 	{
-		char* entry = context->common_name;
-		const size_t length = strlen(entry);
-		if (length > INT32_MAX)
-			return -1;
-		if (X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*)entry,
-		                               WINPR_ASSERTING_INT_CAST(int, length), -1, 0) != 1)
-			return -1;
+		const int rc = add_entry(name, context->common_name, "CN");
+		if (rc < 0)
+			return rc;
 	}
 
 	if (X509_set_issuer_name(context->x509, name) != 1)
