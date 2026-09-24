@@ -912,7 +912,8 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 			return TRUE;
 		case H264_CONTEXT_OPTION_HW_ACCEL:
 			h264->hwAccel = (value);
-			return TRUE;
+			IFCALL(h264->subsystem->Uninit, h264);
+			return IFCALLRESULT(TRUE, h264->subsystem->Init, h264);
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);

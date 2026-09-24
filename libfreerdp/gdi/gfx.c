@@ -709,9 +709,9 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 			return ERROR_NOT_ENOUGH_MEMORY;
 		}
 
-		if (!h264_context_set_option(
-		        surface->h264, H264_CONTEXT_OPTION_HW_ACCEL,
-		        (UINT32)freerdp_settings_get_bool(gdi->context->settings, FreeRDP_SoftwareGdi)))
+		if (!h264_context_set_option(surface->h264, H264_CONTEXT_OPTION_HW_ACCEL,
+		                             (UINT32)freerdp_settings_get_bool(gdi->context->settings,
+		                                                               FreeRDP_SoftwareGdi) == 0))
 			return ERROR_INTERNAL_ERROR;
 
 		if (!h264_context_reset(surface->h264, surface->width, surface->height))
@@ -803,9 +803,9 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 			return ERROR_NOT_ENOUGH_MEMORY;
 		}
 
-		if (!h264_context_set_option(
-		        surface->h264, H264_CONTEXT_OPTION_HW_ACCEL,
-		        (UINT32)freerdp_settings_get_bool(gdi->context->settings, FreeRDP_SoftwareGdi)))
+		if (!h264_context_set_option(surface->h264, H264_CONTEXT_OPTION_HW_ACCEL,
+		                             (UINT32)freerdp_settings_get_bool(gdi->context->settings,
+		                                                               FreeRDP_SoftwareGdi) == 0))
 			return ERROR_INTERNAL_ERROR;
 		if (!h264_context_reset(surface->h264, surface->width, surface->height))
 			return ERROR_INTERNAL_ERROR;
