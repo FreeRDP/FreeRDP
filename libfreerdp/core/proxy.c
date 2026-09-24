@@ -297,6 +297,15 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL is_ipv6_addr(const char* hostname, size_t len)
+{
+	struct sockaddr_in6 sa6 = WINPR_C_ARRAY_INIT;
+	if (strnlen(hostname, len) >= len)
+		return FALSE;
+	return inet_pton(AF_INET6, hostname, &sa6.sin6_addr) == 1;
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 {
 	const char* delimiter = ", ";
@@ -587,6 +596,31 @@ static const char* get_response_header(char* response)
 	return response;
 }
 
+static BOOL http_proxy_write_hostname(wStream* s, const char* hostname, size_t len)
+{
+	const BOOL isIPv6 = is_ipv6_addr(hostname, len);
+
+	if (isIPv6)
+	{
+		if (!Stream_EnsureRemainingCapacity(s, 1))
+			return FALSE;
+		Stream_Write_UINT8(s, '[');
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, len))
+		return FALSE;
+	Stream_Write(s, hostname, len);
+
+	if (isIPv6)
+	{
+		if (!Stream_EnsureRemainingCapacity(s, 1))
+			return FALSE;
+		Stream_Write_UINT8(s, ']');
+	}
+
+	return TRUE;
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char* proxyUsername,
                                const char* proxyPassword, const char* hostname, UINT16 port)
@@ -626,9 +660,8 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 		goto fail;
 	Stream_Write(s, connect, clen);
 
-	if (!Stream_EnsureRemainingCapacity(s, hostLen))
+	if (!http_proxy_write_hostname(s, hostname, hostLen))
 		goto fail;
-	Stream_Write(s, hostname, hostLen);
 
 	if (!Stream_EnsureRemainingCapacity(s, 1))
 		goto fail;
@@ -643,9 +676,8 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 		goto fail;
 	Stream_Write(s, httpheader, httplen);
 
-	if (!Stream_EnsureRemainingCapacity(s, hostLen))
+	if (!http_proxy_write_hostname(s, hostname, hostLen))
 		goto fail;
-	Stream_Write(s, hostname, hostLen);
 
 	if (!Stream_EnsureRemainingCapacity(s, 1))
 		goto fail;
