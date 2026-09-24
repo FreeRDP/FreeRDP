@@ -242,9 +242,9 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
 	VIDEO_PLUGIN* plugin = (VIDEO_PLUGIN*)video->handle;
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(plugin->rdpcontext);
-	if (!h264_context_set_option(
-	        ret->h264, H264_CONTEXT_OPTION_HW_ACCEL,
-	        (UINT32)freerdp_settings_get_bool(plugin->rdpcontext->settings, FreeRDP_SoftwareGdi)))
+	if (!h264_context_set_option(ret->h264, H264_CONTEXT_OPTION_HW_ACCEL,
+	                             (UINT32)freerdp_settings_get_bool(plugin->rdpcontext->settings,
+	                                                               FreeRDP_SoftwareGdi) == 0))
 		goto fail;
 	if (!h264_context_reset(ret->h264, width, height))
 		goto fail;
