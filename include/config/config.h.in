@@ -39,6 +39,7 @@
 #cmakedefine WITH_PULSE
 #cmakedefine WITH_IOSAUDIO
 #cmakedefine WITH_OPENSLES
+#cmakedefine WITH_AAUDIO
 #cmakedefine WITH_GSM
 #cmakedefine WITH_LAME
 /** If defined Opus codec support is available.

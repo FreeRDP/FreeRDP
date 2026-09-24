@@ -16,6 +16,9 @@
 # limitations under the License.
 
 option(WITH_OPENSLES "Enable sound and microphone redirection using OpenSLES" ON)
+# NDK has libaaudio from API 26
+find_package(AAudio)
+cmake_dependent_option(WITH_AAUDIO "Enable sound and microphone redirection using AAudio" ON "AAudio_FOUND" OFF)
 
 set(ANDROID_APP_TARGET_SDK 21 CACHE STRING "Application target android SDK")
 set(ANDROID_APP_MIN_SDK 14 CACHE STRING "Application minimum android SDK requirement")
