@@ -194,6 +194,8 @@ class SdlRailWindow
 		std::unique_lock lock(_gfxLock);
 		return restoreRectPending();
 	}
+	/* Insets have not yet been updated for the current maximized state. */
+	[[nodiscard]] bool insetsStale() const;
 	/* Local or live-WM maximized (railMaximized may lag the SDL flag during a snap). */
 	[[nodiscard]] bool effectivelyMaximized() const;
 	/* Transition in flight (local intent vs server state). WM resizes only trusted outside. */
@@ -225,6 +227,7 @@ class SdlRailWindow
 	bool applyServerState(StateSync& s, const char* what, bool (*enter)(SDL_Window*));
 	/* Caller holds _gfxLock. */
 	[[nodiscard]] bool restoreRectPending() const;
+	void setAppliedInsets(const SDL_Rect& insets); /* caller holds _gfxLock */
 	[[nodiscard]] bool styleResizable() const; /* caller holds _gfxLock */
 	/* Popups whose GFX surface may carry per-pixel alpha (paintGfx). */
 	[[nodiscard]] bool honorsAlpha() const

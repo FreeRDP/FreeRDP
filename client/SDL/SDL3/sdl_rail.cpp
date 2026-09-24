@@ -218,11 +218,14 @@ void SdlRail::handleMaximized(SDL_WindowID id)
 	auto* appWindow = getWindowBySdlId(id);
 	if (!appWindow || appWindow->isPopup() || !appWindow->window())
 		return;
-	/* Skip the echo of reconcile's own SDL_MaximizeWindow (railMaximized already set). */
+	/* Skip echo of programmatic maximize, but trigger reconcile to update insets. */
 	if (appWindow->railMaximized())
 	{
 		WLog_DBG(TAG, "local maximize skipped id=0x%08" PRIx32 " (already rail-maximized)",
 		         static_cast<UINT32>(appWindow->id()));
+		lock.unlock();
+		if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+			WLog_WARN(TAG, "sdl_push_user_event failed");
 		return;
 	}
 	appWindow->setRailMaximized(true);
@@ -276,13 +279,18 @@ void SdlRail::handleRestored(SDL_WindowID id)
 	auto* appWindow = getWindowBySdlId(id);
 	if (!appWindow || appWindow->isPopup() || !appWindow->window())
 		return;
-	/* Resolve which state a RESTORED event ends; both clear = echo of our own restore, skip. */
+	/* Resolve restored state; trigger reconcile in case WM cleared flags asynchronously. */
 	if (appWindow->railMinimized())
 		appWindow->setRailMinimized(false);
 	else if (appWindow->railMaximized())
 		appWindow->setRailMaximized(false);
 	else
+	{
+		lock.unlock();
+		if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+			WLog_WARN(TAG, "sdl_push_user_event failed");
 		return;
+	}
 	WLog_DBG(TAG, "local restore id=0x%08" PRIx32 " -> SC_RESTORE",
 	         static_cast<UINT32>(appWindow->id()));
 	appWindow->invalidateAll();
@@ -1162,7 +1170,7 @@ void SdlRail::syncGeometry(SDL_WindowID id)
 	const auto wid = static_cast<uint32_t>(w->id());
 	/* Skip geometry sync while awaiting server restored rect. */
 	if (w->localMoveActive() || (_localMove.id == wid) || w->loopEndPending() ||
-	    w->stateTransitionPending() || w->awaitingRestoreRect())
+	    w->stateTransitionPending() || w->awaitingRestoreRect() || w->insetsStale())
 		return;
 
 	int lw = 0;
