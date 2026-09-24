@@ -83,6 +83,13 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
+typedef struct
+{
+	freerdp* instance;
+	window_events_fkt_t window_events;
+	bool running;
+} handle_window_events_t;
+
 WINPR_ATTR_NODISCARD
 static BOOL requireRdpClientContext(const rdpContext* context)
 {
@@ -1444,7 +1451,70 @@ BOOL client_auto_reconnect(freerdp* instance)
 	return client_auto_reconnect_ex(instance, nullptr);
 }
 
-BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* instance))
+WINPR_ATTR_NODISCARD
+static BOOL client_auto_reconnect_do(freerdp* instance, BOOL retry, UINT32 numRetries,
+                                     UINT32 maxRetries)
+{
+	WINPR_ASSERT(instance);
+
+	/* Perform an auto-reconnect. */
+	while (retry)
+	{
+		/* Quit retrying if max retries has been exceeded */
+		if ((maxRetries > 0) && (numRetries >= maxRetries))
+		{
+			WLog_DBG(TAG, "AutoReconnect retries exceeded.");
+			return FALSE;
+		}
+
+		/* Attempt the next reconnect */
+		WLog_INFO(TAG, "Attempting reconnect (%" PRIu32 " of %" PRIu32 ")", numRetries, maxRetries);
+
+		const SSIZE_T delay =
+		    IFCALLRESULT(5000, instance->RetryDialog, instance, "connection", numRetries, nullptr);
+		if (delay < 0)
+			return FALSE;
+		numRetries++;
+
+		if (freerdp_reconnect(instance))
+			return TRUE;
+
+		switch (freerdp_get_last_error(instance->context))
+		{
+			case FREERDP_ERROR_CONNECT_CANCELLED:
+				WLog_WARN(TAG, "Autoreconnect aborted by user");
+				return FALSE;
+			default:
+				break;
+		}
+
+		for (SSIZE_T x = 0; x < delay / 10; x++)
+			Sleep(10);
+	}
+
+	WLog_ERR(TAG, "Maximum reconnect retries exceeded");
+	return FALSE;
+}
+
+WINPR_ATTR_NODISCARD
+static DWORD WINAPI handle_window_events(void* parg)
+{
+	handle_window_events_t* arg = parg;
+	WINPR_ASSERT(arg);
+
+	while (arg->running)
+	{
+		WINPR_ASSERT(arg->window_events);
+		if (!arg->window_events(arg->instance))
+		{
+			WLog_ERR(TAG, "window_events failed!");
+		}
+		Sleep(10);
+	}
+	return 0;
+}
+
+BOOL client_auto_reconnect_ex(freerdp* instance, window_events_fkt_t window_events)
 {
 	BOOL retry = TRUE;
 	UINT32 error = 0;
@@ -1508,50 +1578,20 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 			break;
 	}
 
-	/* Perform an auto-reconnect. */
-	while (retry)
+	handle_window_events_t arg = { .instance = instance,
+		                           .window_events = window_events,
+		                           .running = true };
+	HANDLE thread = nullptr;
+	if (window_events)
+		thread = CreateThread(nullptr, 0, handle_window_events, &arg, 0, nullptr);
+	const BOOL rc = client_auto_reconnect_do(instance, retry, numRetries, maxRetries);
+	if (thread)
 	{
-		/* Quit retrying if max retries has been exceeded */
-		if ((maxRetries > 0) && (numRetries >= maxRetries))
-		{
-			WLog_DBG(TAG, "AutoReconnect retries exceeded.");
-			return FALSE;
-		}
-
-		/* Attempt the next reconnect */
-		WLog_INFO(TAG, "Attempting reconnect (%" PRIu32 " of %" PRIu32 ")", numRetries, maxRetries);
-
-		const SSIZE_T delay =
-		    IFCALLRESULT(5000, instance->RetryDialog, instance, "connection", numRetries, nullptr);
-		if (delay < 0)
-			return FALSE;
-		numRetries++;
-
-		if (freerdp_reconnect(instance))
-			return TRUE;
-
-		switch (freerdp_get_last_error(instance->context))
-		{
-			case FREERDP_ERROR_CONNECT_CANCELLED:
-				WLog_WARN(TAG, "Autoreconnect aborted by user");
-				return FALSE;
-			default:
-				break;
-		}
-		for (SSIZE_T x = 0; x < delay / 10; x++)
-		{
-			if (!IFCALLRESULT(TRUE, window_events, instance))
-			{
-				WLog_ERR(TAG, "window_events failed!");
-				return FALSE;
-			}
-
-			Sleep(10);
-		}
+		arg.running = FALSE;
+		WaitForSingleObject(thread, INFINITE);
+		CloseHandle(thread);
 	}
-
-	WLog_ERR(TAG, "Maximum reconnect retries exceeded");
-	return FALSE;
+	return rc;
 }
 
 int freerdp_client_common_stop(rdpContext* context)

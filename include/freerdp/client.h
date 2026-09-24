@@ -156,6 +156,8 @@ extern "C"
 		UINT64 reserved[129 - 18];                  /**< (offset 18) */
 	};
 
+	typedef BOOL (*window_events_fkt_t)(freerdp* instance);
+
 	/* Common client functions */
 
 	FREERDP_API void freerdp_client_context_free(rdpContext* context);
@@ -343,9 +345,15 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_API BOOL client_auto_reconnect(freerdp* instance);
 
+	/**
+	 * @brief Tries to reconnect a session that lost network
+	 *
+	 * @param instance The client instance to reconnect
+	 * @param window_events A function handling UI events. Will be run on a temporary thread.
+	 * return TRUE if successfully reconnected, FALSE otherwise
+	 */
 	WINPR_ATTR_NODISCARD
-	FREERDP_API BOOL client_auto_reconnect_ex(freerdp* instance,
-	                                          BOOL (*window_events)(freerdp* instance));
+	FREERDP_API BOOL client_auto_reconnect_ex(freerdp* instance, window_events_fkt_t window_events);
 
 	typedef enum
 	{
