@@ -449,10 +449,6 @@ static BOOL stream_dump_register_read_handlers(rdpContext* context)
 	context->dump->io.WritePdu = dfl->WritePdu;
 
 	/* Set our dump wrappers */
-	dump.WritePdu = stream_dump_transport_write;
-	dump.ReadPdu = stream_dump_transport_read;
-
-	/* Set our dump wrappers */
 	dump.WritePdu = stream_dump_replay_transport_write;
 	dump.ReadPdu = stream_dump_replay_transport_read;
 	dump.TCPConnect = stream_dump_replay_transport_tcp_connect;
