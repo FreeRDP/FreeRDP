@@ -46,13 +46,8 @@
 	RDPSession *_session;
 	BOOL _session_initilized;
 
-	// flag that indicates whether the keyboard is visible or not
-	BOOL _keyboard_visible;
-
 	// keyboard extension view
 	AdvancedKeyboardView *_advanced_keyboard_view;
-	BOOL _advanced_keyboard_visible;
-	BOOL _requesting_advanced_keyboard;
 	CGSize _last_session_viewport_size;
 
 	CGPoint _prev_long_press_position;
