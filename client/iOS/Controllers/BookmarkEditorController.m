@@ -425,8 +425,8 @@
 
 - (void)dealloc
 {
-	[super dealloc];
 	[_bookmark autorelease];
+	[super dealloc];
 }
 
 @end

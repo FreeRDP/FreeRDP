@@ -30,5 +30,4 @@
 
 @interface NSData (TSXAdditions)
 - (NSString *)hexadecimalString;
-- (NSString *)base64EncodedString;
 @end

@@ -241,9 +241,17 @@
 		// size the title label according to the length of the text
 		CGSize maxSizeTitle = CGSizeMake((self.bounds.size.width * kMaxWidth) - imageWidth,
 		                                 self.bounds.size.height * kMaxHeight);
-		CGSize expectedSizeTitle = [title sizeWithFont:titleLabel.font
-		                             constrainedToSize:maxSizeTitle
-		                                 lineBreakMode:titleLabel.lineBreakMode];
+		NSMutableParagraphStyle *titleStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+		titleStyle.lineBreakMode = titleLabel.lineBreakMode;
+		CGRect titleRect = [title boundingRectWithSize:maxSizeTitle
+		                                       options:NSStringDrawingUsesLineFragmentOrigin
+		                                    attributes:@{
+			                                    NSFontAttributeName: titleLabel.font,
+			                                    NSParagraphStyleAttributeName: titleStyle
+		                                    }
+		                                       context:nil];
+		CGSize expectedSizeTitle =
+		    CGSizeMake(ceilf(titleRect.size.width), ceilf(titleRect.size.height));
 		[titleLabel setFrame:CGRectMake(0, 0, expectedSizeTitle.width, expectedSizeTitle.height)];
 	}
 
@@ -262,9 +270,18 @@
 		// size the message label according to the length of the text
 		CGSize maxSizeMessage = CGSizeMake((self.bounds.size.width * kMaxWidth) - imageWidth,
 		                                   self.bounds.size.height * kMaxHeight);
-		CGSize expectedSizeMessage = [message sizeWithFont:messageLabel.font
-		                                 constrainedToSize:maxSizeMessage
-		                                     lineBreakMode:messageLabel.lineBreakMode];
+		NSMutableParagraphStyle *messageStyle =
+		    [[[NSMutableParagraphStyle alloc] init] autorelease];
+		messageStyle.lineBreakMode = messageLabel.lineBreakMode;
+		CGRect messageRect = [message boundingRectWithSize:maxSizeMessage
+		                                           options:NSStringDrawingUsesLineFragmentOrigin
+		                                        attributes:@{
+			                                        NSFontAttributeName: messageLabel.font,
+			                                        NSParagraphStyleAttributeName: messageStyle
+		                                        }
+		                                           context:nil];
+		CGSize expectedSizeMessage =
+		    CGSizeMake(ceilf(messageRect.size.width), ceilf(messageRect.size.height));
 		[messageLabel
 		    setFrame:CGRectMake(0, 0, expectedSizeMessage.width, expectedSizeMessage.height)];
 	}

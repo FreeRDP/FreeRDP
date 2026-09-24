@@ -205,15 +205,4 @@
 	return [NSString stringWithString:hexString];
 }
 
-/* Code from http://cocoawithlove.com/2009/06/base64-encoding-options-on-mac-and.html */
-- (NSString *)base64EncodedString
-{
-	const char *data = (const char *)[self bytes];
-
-	NSData *nsData = [data dataUsingEncoding:NSUTF8StringEncoding];
-	NSString *sEnc = [nsData base64EncodedStringWithOptions:0];
-
-	return sEnc;
-}
-
 @end
