@@ -20,6 +20,7 @@
 #include <winpr/assert.h>
 #include <winpr/cast.h>
 #include <winpr/interlocked.h>
+#include <winpr/sysinfo.h>
 
 #include "camera.h"
 #include "rdpecam-utils.h"
@@ -245,10 +246,17 @@ static UINT ecam_dev_sample_captured_callback(CameraDevice* dev, size_t streamIn
 	UINT ret = CHANNEL_RC_NO_MEMORY;
 	if (dev->ihal->RequestDrivenCapture && (stream->samplesRequested <= 0))
 	{
-		WLog_DBG(TAG, "No sample requested, releasing capture device");
-		stream->captureRunning = FALSE;
-		ret = ECAM_SAMPLE_CAPTURE_DRAINED;
-		goto out;
+		/* The server requests samples one at a time, so the count is zero between
+		 * two requests. Keep capturing and only release the device once the server
+		 * went quiet for a while, e.g. because the application closed the camera. */
+		const UINT64 idle = GetTickCount64() - stream->lastSampleRequestTime;
+		if (idle >= ECAM_CAPTURE_IDLE_TIMEOUT_MS)
+		{
+			WLog_DBG(TAG, "No sample requested for %" PRIu64 " ms, releasing capture device", idle);
+			stream->captureRunning = FALSE;
+			ret = ECAM_SAMPLE_CAPTURE_DRAINED;
+			goto out;
+		}
 	}
 
 	/* If we already have a waiting sample, let's see if the input format support dropping
@@ -451,6 +459,7 @@ static UINT ecam_dev_process_start_streams_request(CameraDevice* dev,
 	mediaType.Format = streamInputFormat(stream);
 
 	stream->samplesRequested = 0;
+	stream->lastSampleRequestTime = GetTickCount64();
 	stream->haveSample = FALSE;
 
 	if (!InitializeCriticalSectionEx(&stream->lock, 0, 0))
@@ -564,6 +573,7 @@ static UINT ecam_dev_process_sample_request(CameraDevice* dev, GENERIC_CHANNEL_C
 		stream->hSampleReqChannel = hchannel;
 
 	stream->samplesRequested++;
+	stream->lastSampleRequestTime = GetTickCount64();
 	const UINT ret = ecam_dev_send_pending(dev, streamIndex, stream);
 	if (dev->ihal->RequestDrivenCapture && (ret == CHANNEL_RC_OK) && !stream->captureRunning)
 	{
