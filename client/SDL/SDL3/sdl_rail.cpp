@@ -747,8 +747,7 @@ bool SdlRail::init(RailClientContext* rail)
 bool SdlRail::uninit(WINPR_ATTR_UNUSED RailClientContext* rail)
 {
 	WINPR_ASSERT(rail);
-	/* Leave rail->custom set: the server callbacks only assert it, so clearing it would crash a
-	 * late order in a release build. _enabled gates them instead. */
+	/* The caller clears rail->custom next; server callbacks return early on nullptr. */
 	std::unique_lock lock(_windowsLock);
 	_refreshSent = false;
 	_appStarted = false;
@@ -801,7 +800,8 @@ UINT SdlRail::server_execute_result(RailClientContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(execResult);
 	auto rail = static_cast<SdlRail*>(context->custom);
-	WINPR_ASSERT(rail);
+	if (!rail)
+		return CHANNEL_RC_OK; /* late order after disconnect */
 
 	if (execResult->execResult != RAIL_EXEC_S_OK)
 	{
@@ -1405,7 +1405,8 @@ UINT SdlRail::server_min_max_info(RailClientContext* context,
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(minMaxInfo);
 	auto rail = static_cast<SdlRail*>(context->custom);
-	WINPR_ASSERT(rail);
+	if (!rail)
+		return CHANNEL_RC_OK; /* late order after disconnect */
 
 	std::unique_lock lock(rail->_windowsLock);
 	auto appWindow = rail->getWindow(minMaxInfo->windowId);
