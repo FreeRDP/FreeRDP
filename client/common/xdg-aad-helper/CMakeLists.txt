@@ -24,5 +24,5 @@ set(HANDLER_NAME "freerdp-aad-handler")
 # user's own applications directory at runtime instead, so there's a single source of truth for
 # its Exec= path (the handler actually running) rather than a build-time copy that can drift out
 # of sync with it.
-install(PROGRAMS xdg-aad-helper.py DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME ${MODULE_NAME} COMPONENT client)
-install(PROGRAMS freerdp_aad_handler.py DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME ${HANDLER_NAME} COMPONENT client)
+install(PROGRAMS xdg-aad-helper.py DESTINATION ${CMAKE_INSTALL_LIBEXECDIR} RENAME ${MODULE_NAME} COMPONENT client)
+install(PROGRAMS freerdp_aad_handler.py DESTINATION ${CMAKE_INSTALL_LIBEXECDIR} RENAME ${HANDLER_NAME} COMPONENT client)
