@@ -23,7 +23,7 @@
  */
 struct RailPlatformCaps
 {
-	bool positionsReadable = true;
+	bool supportsWindowPositions = true;
 	bool supportsTransparentWindows = true;
 	bool supportsRestack = false;
 	bool supportsResizeBand = false;

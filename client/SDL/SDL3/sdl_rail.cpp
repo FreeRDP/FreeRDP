@@ -412,7 +412,7 @@ void SdlRail::updateCoordinates()
 	const auto* settings = _context->common()->context.settings;
 	_displayShift = { freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftX),
 		              freerdp_settings_get_int32(settings, FreeRDP_MonitorLocalShiftY) };
-	_localShift = railPlatformCaps().positionsReadable ? _displayShift : SDL_Point{ 0, 0 };
+	_localShift = railPlatformCaps().supportsWindowPositions ? _displayShift : SDL_Point{ 0, 0 };
 	_inputOrigin = { 0, 0 };
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 	for (UINT32 x = 0; x < count; x++)
@@ -777,10 +777,10 @@ bool SdlRail::init(RailClientContext* rail)
 		updateCoordinates();
 	}
 	const RailPlatformCaps& caps = railPlatformCaps();
-	WLog_DBG(TAG, "RAIL channel initialized: driver=%s positionsReadable=%d transparentWindows=%d",
+	WLog_DBG(TAG, "RAIL channel initialized: driver=%s windowPositions=%d transparentWindows=%d",
 	         sdl::utils::isWaylandDriver() ? "wayland"
 	                                       : (sdl::utils::isX11Driver() ? "x11" : "other"),
-	         caps.positionsReadable ? 1 : 0, caps.supportsTransparentWindows ? 1 : 0);
+	         caps.supportsWindowPositions ? 1 : 0, caps.supportsTransparentWindows ? 1 : 0);
 #if SDL_VERSION_ATLEAST(3, 4, 10)
 	/* Synchronize WM-driven X11 resizes via _NET_WM_SYNC_REQUEST to prevent torn frames. */
 	if (sdl::utils::isX11Driver())
@@ -1117,7 +1117,7 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 /* Wayland: keep server window position in sync with the active monitor across displays. */
 void SdlRail::handleDisplayChanged(SDL_WindowID id, SDL_DisplayID display)
 {
-	if (railPlatformCaps().positionsReadable)
+	if (railPlatformCaps().supportsWindowPositions)
 		return;
 	std::unique_lock lock(_windowsLock);
 	auto* appWindow = getWindowBySdlId(id);
@@ -1243,7 +1243,7 @@ void SdlRail::reportMaximizedWorkArea(SdlRailWindow* appWindow)
 	/* Without readable positions a maximized window is taken to be on the primary monitor. */
 	int x = primary.x;
 	int y = primary.y;
-	if (railPlatformCaps().positionsReadable)
+	if (railPlatformCaps().supportsWindowPositions)
 		SDL_GetWindowPosition(appWindow->window(), &x, &y);
 	const SDL_Rect area = { x, y, w, h };
 	SDL_Rect overlap{};
@@ -1290,7 +1290,7 @@ void SdlRail::syncGeometry(SDL_WindowID id)
 	}
 
 	const SDL_Rect vis = w->outerRect();
-	const bool posKnown = railPlatformCaps().positionsReadable;
+	const bool posKnown = railPlatformCaps().supportsWindowPositions;
 	int lx = vis.x;
 	int ly = vis.y;
 	if (posKnown)
