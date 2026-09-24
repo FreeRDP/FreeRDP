@@ -740,10 +740,10 @@ bool SdlRail::init(RailClientContext* rail)
 
 	WLog_WARN(TAG, "RemoteApp/RAIL support in the SDL client is experimental");
 	const RailPlatformCaps& caps = railPlatformCaps();
-	WLog_DBG(TAG, "RAIL channel initialized: driver=%s positionsReadable=%d transparentWindows=%d",
+	WLog_DBG(TAG, "RAIL channel initialized: driver=%s windowPositions=%d transparentWindows=%d",
 	         sdl::utils::isWaylandDriver() ? "wayland"
 	                                       : (sdl::utils::isX11Driver() ? "x11" : "other"),
-	         caps.positionsReadable ? 1 : 0, caps.supportsTransparentWindows ? 1 : 0);
+	         caps.supportsWindowPositions ? 1 : 0, caps.supportsTransparentWindows ? 1 : 0);
 #if SDL_VERSION_ATLEAST(3, 4, 10)
 	/* Synchronize WM-driven X11 resizes via _NET_WM_SYNC_REQUEST to prevent torn frames. */
 	if (sdl::utils::isX11Driver())
@@ -1142,7 +1142,7 @@ void SdlRail::reportMaximizedWorkArea(SdlRailWindow* appWindow)
 		return;
 	int x = 0;
 	int y = 0;
-	if (railPlatformCaps().positionsReadable)
+	if (railPlatformCaps().supportsWindowPositions)
 		SDL_GetWindowPosition(appWindow->window(), &x, &y);
 
 	/* Clip work area within primary display bounds. */
@@ -1194,7 +1194,7 @@ void SdlRail::syncGeometry(SDL_WindowID id)
 	}
 
 	const SDL_Rect vis = w->outerRect();
-	const bool posKnown = railPlatformCaps().positionsReadable;
+	const bool posKnown = railPlatformCaps().supportsWindowPositions;
 	int lx = vis.x;
 	int ly = vis.y;
 	if (posKnown)

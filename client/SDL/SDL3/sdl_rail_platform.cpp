@@ -26,14 +26,14 @@ static RailPlatformCaps detectRailPlatformCaps()
 	if (sdl::utils::isWaylandDriver())
 	{
 		/* Wayland: toplevels can't be positioned or queried; its compositor always composites. */
-		caps.positionsReadable = false;
+		caps.supportsWindowPositions = false;
 		caps.supportsTransparentWindows = true;
 		caps.supportsRestack = false;
 	}
 	else if (sdl::utils::isX11Driver())
 	{
 		/* X11: transparent resize band requires compositing (_GTK_FRAME_EXTENTS). */
-		caps.positionsReadable = true;
+		caps.supportsWindowPositions = true;
 		caps.supportsTransparentWindows = sdl_x11_has_compositor();
 		caps.supportsRestack = true;
 		caps.supportsResizeBand = caps.supportsTransparentWindows;

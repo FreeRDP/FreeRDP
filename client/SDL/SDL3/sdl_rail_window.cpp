@@ -538,7 +538,7 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	const SDL_Rect vis = targetOuterRect();
 	_appliedInsets = bandInsets(); /* the insets baked into the window we are about to create */
 	/* Realize full-display popups as fullscreen toplevels on Wayland. */
-	const bool fullscreen = _isPopup && !caps.positionsReadable && isFullDisplaySize();
+	const bool fullscreen = _isPopup && !caps.supportsWindowPositions && isFullDisplaySize();
 	if (_isPopup && parent && !fullscreen)
 	{
 		/* SDL popups position parent-relative (works on Wayland too, via xdg_popup). */
@@ -546,7 +546,7 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 		_win = std::make_unique<SdlWindow>(
 		    SdlWindow::createPopup(parent, rel, caps.supportsTransparentWindows, _overlay));
 	}
-	else if (_isPopup && !caps.positionsReadable && !fullscreen)
+	else if (_isPopup && !caps.supportsWindowPositions && !fullscreen)
 	{
 		/* No owner yet: a Wayland popup needs a parent; retry once an app window exists. */
 		WLog_VRB(TAG, "popup create deferred id=0x%08" PRIx32 ": no parent yet",
@@ -579,7 +579,7 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	}
 
 	/* Bind seat/pointer on Wayland. */
-	if (!_isPopup && !caps.positionsReadable)
+	if (!_isPopup && !caps.supportsWindowPositions)
 		sdl_wayland_move_prepare(_win->window());
 
 	WLog_DBG(TAG,
@@ -600,7 +600,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	const bool popupReady = !_isPopup || _hasGfx;
 	/* Suppress server shadow frames and unparented full-display overlays. */
 	const bool unplaceable =
-	    _frame || (_overlay && !railPlatformCaps().positionsReadable && isFullDisplaySize());
+	    _frame || (_overlay && !railPlatformCaps().supportsWindowPositions && isFullDisplaySize());
 	/* Layered window is shown only when anchored to an adjoining visible popup or overlay. */
 	const bool drawable =
 	    _visible && (_windowRect.w > 0) && (_windowRect.h > 0) && popupReady && !unplaceable &&
@@ -707,7 +707,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		int maxH = toOuter(_maxSize.y, padH);
 		/* Wayland: cap to the usable area - an oversized window cannot be dragged into reach. */
 		SDL_Rect usable{};
-		if (!railPlatformCaps().positionsReadable &&
+		if (!railPlatformCaps().supportsWindowPositions &&
 		    SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &usable))
 		{
 			const int capW = usable.w + bandW;
@@ -737,11 +737,11 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 			if (!SDL_SetWindowPosition(_win->window(), vis.x - parentRect.x, vis.y - parentRect.y))
 				WLog_VRB(TAG, "popup reposition unsupported id=0x%08" PRIx32 ": %s",
 				         static_cast<uint32_t>(_id), SDL_GetError());
-			else if (!railPlatformCaps().positionsReadable)
+			else if (!railPlatformCaps().supportsWindowPositions)
 				_needsFullBlit = true; /* Wayland applies move on next surface commit */
 			applied = true;
 		}
-		else if (railPlatformCaps().positionsReadable &&
+		else if (railPlatformCaps().supportsWindowPositions &&
 		         !(_isPopup && SDL_GetWindowParent(_win->window())))
 		{
 			int cx = 0;
@@ -759,7 +759,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 			applied = true;
 			/* Settle window resize via SDL_SyncWindow before reading back geometry to avoid
 			 * adopting transient dimensions while configure events are in flight. */
-			if (railPlatformCaps().positionsReadable && !_isPopup && !_localMoveActive &&
+			if (railPlatformCaps().supportsWindowPositions && !_isPopup && !_localMoveActive &&
 			    !_loopEnd.pending)
 			{
 				const bool settled = SDL_SyncWindow(_win->window());
@@ -1049,7 +1049,7 @@ bool SdlRailWindow::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
 			std::unique_lock lock(_gfxLock);
 			const SDL_Rect vis = targetOuterRect();
 			SDL_SetWindowPosition(_win->window(), vis.x - parentRect.x, vis.y - parentRect.y);
-			if (!railPlatformCaps().positionsReadable)
+			if (!railPlatformCaps().supportsWindowPositions)
 				_needsFullBlit = true; /* Wayland applies move on next surface commit */
 		}
 		if ((!_isPopup && !_layered) || _fullscreen)
