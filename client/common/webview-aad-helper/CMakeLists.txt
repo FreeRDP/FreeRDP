@@ -49,4 +49,4 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/Common")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE winpr webview::core)
 
-installwithrpath(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
+installwithrpath(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBEXECDIR} COMPONENT client)

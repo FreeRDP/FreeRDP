@@ -32,6 +32,7 @@
 #include <winpr/library.h>
 #include <winpr/path.h>
 
+#include <freerdp/build-config.h>
 #include <freerdp/utils/helpers.h>
 #include <freerdp/log.h>
 #include <freerdp/client/aad_helper.h>
@@ -867,10 +868,20 @@ BOOL aad_auth_helper_get_access_token(AadAuthHelper* helper, AccessTokenType tok
 static const char* kHelperCandidates[] = { "freerdp-xdg-aad-helper", "freerdp-qt-aad-helper",
 	                                       "freerdp-webview-aad-helper" };
 
-/* directory this client binary itself lives in - where an installed (or freshly built) helper
- * binary is expected to sit alongside it. */
+static void helper_binary_dirs_free(char** dirs, size_t count)
+{
+	if (!dirs)
+		return;
+	for (size_t x = 0; x < count; x++)
+	{
+		char* dir = dirs[x];
+		free(dir);
+	}
+	free((void*)dirs);
+}
+
 WINPR_ATTR_MALLOC(free, 1)
-static char* aad_auth_helper_binary_dir(void)
+static char* aad_auth_helper_get_binary_dir(void)
 {
 	DWORD len = 4096;
 	char* path = nullptr;
@@ -923,6 +934,35 @@ static char* aad_auth_helper_binary_dir(void)
 	return path;
 }
 
+/* directory this client binary itself lives in - where an installed (or freshly built) helper
+ * binary is expected to sit alongside it. */
+WINPR_ATTR_MALLOC(helper_binary_dirs_free, 1)
+static char** aad_auth_helper_binary_dirs(size_t* count)
+{
+	WINPR_ASSERT(count);
+
+	*count = 0;
+	char** dirs = (char**)calloc(32, sizeof(char*));
+	if (!dirs)
+		return nullptr;
+	{
+		char* libexec = GetCombinedPath(FREERDP_INSTALL_PREFIX, FREERDP_LIBEXEC_PATH);
+		if (libexec)
+			dirs[(*count)++] = libexec;
+	}
+
+	char* app = aad_auth_helper_get_binary_dir();
+	if (app)
+	{
+		dirs[(*count)++] = app;
+
+		char* libexec = GetCombinedPath(app, FREERDP_LIBEXEC_REL_PATH);
+		if (libexec)
+			dirs[(*count)++] = libexec;
+	}
+	return dirs;
+}
+
 WINPR_ATTR_MALLOC(free, 1)
 static char* aad_auth_helper_path_for_binary(const char* dir, const char* binaryName)
 {
@@ -939,23 +979,34 @@ static char* aad_auth_helper_path_for_binary(const char* dir, const char* binary
 WINPR_ATTR_MALLOC(free, 1)
 static char* aad_auth_helper_auto_locate(void)
 {
-	char* dir = aad_auth_helper_binary_dir();
-	if (!dir)
+	size_t dirscount = 0;
+	char** dirs = aad_auth_helper_binary_dirs(&dirscount);
+	if (!dirs)
 		return nullptr;
 
-	for (size_t x = 0; x < ARRAYSIZE(kHelperCandidates); x++)
+	char* path = nullptr;
+	for (size_t i = 0; i < dirscount; i++)
 	{
-		const char* binaryName = kHelperCandidates[x];
-		char* path = aad_auth_helper_path_for_binary(dir, binaryName);
-		if (winpr_PathFileExists(path))
+		char* dir = dirs[i];
+		if (!dir)
+			continue;
+		for (size_t x = 0; x < ARRAYSIZE(kHelperCandidates); x++)
 		{
-			free(dir);
-			return path;
+			const char* binaryName = kHelperCandidates[x];
+			char* cpath = aad_auth_helper_path_for_binary(dir, binaryName);
+			if (winpr_PathFileExists(cpath))
+			{
+				path = cpath;
+				break;
+			}
+			free(cpath);
 		}
-		free(path);
+		if (path)
+			break;
 	}
-	free(dir);
-	return nullptr;
+
+	helper_binary_dirs_free(dirs, dirscount);
+	return path;
 }
 
 /* @p helper is the caller's own per-connection storage slot (e.g. a member of its SdlContext) -
