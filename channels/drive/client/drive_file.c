@@ -452,15 +452,12 @@ BOOL drive_file_read(DRIVE_FILE* file, wStream* s, UINT64 Offset, UINT32* Length
 	DEBUG_WSTR("Read file %s", file->fullpath);
 
 	DWORD sizeHigh = 0;
-	const DWORD sizeLow = GetFileSize(file, &sizeHigh);
-	const UINT64 size64 = 1ull * sizeLow + ((1ull * sizeHigh) << 32);
-	if (Offset > size64)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
+	const DWORD sizeLow = GetFileSize(file->file_handle, &sizeHigh);
+	if ((sizeLow == INVALID_FILE_SIZE) && (GetLastError() != ERROR_SUCCESS))
 		return FALSE;
-	}
 
-	const UINT64 remain = size64 - Offset;
+	const UINT64 size64 = 1ull * sizeLow + ((1ull * sizeHigh) << 32);
+	const UINT64 remain = (Offset < size64) ? (size64 - Offset) : 0;
 	if (remain < size)
 		size = WINPR_ASSERTING_INT_CAST(UINT32, remain);
 
