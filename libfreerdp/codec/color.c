@@ -477,8 +477,8 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 	                                   bitsColor, format, 0, 0, 0, &palette, FREERDP_FLIP_VERTICAL))
 		return FALSE;
 
-	/* apply alpha mask */
-	if (FreeRDPColorHasAlpha(DstFormat) && (cbBitsMask > 0))
+	/* apply alpha mask, skip if we already got alpha in the bitmap */
+	if (FreeRDPColorHasAlpha(DstFormat) && !FreeRDPColorHasAlpha(format) && (cbBitsMask > 0))
 	{
 		BYTE* dstBuf = pDstData;
 		UINT32 dstBpp = FreeRDPGetBytesPerPixel(DstFormat);

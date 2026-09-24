@@ -723,7 +723,13 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 
 	if ((pdu.width > MAX_SURFACE_SIZE) || (pdu.height > MAX_SURFACE_SIZE) ||
 	    (pdu.monitorCount > MAX_MONITOR_COUNT))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->ResetGraphics Width[%" PRIu32 "], Height[%" PRIu32 "] > %" PRIu32
+		           " or monitorCount[%" PRIu32 " > %" PRIu32,
+		           pdu.width, pdu.width, MAX_SURFACE_SIZE, pdu.monitorCount, MAX_MONITOR_COUNT);
 		return ERROR_INVALID_DATA;
+	}
 
 	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(gfx->base.log, s, pdu.monitorCount, 20ull))
 		return ERROR_INVALID_DATA;
@@ -1205,7 +1211,13 @@ static UINT rdpgfx_recv_create_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 	Stream_Read_UINT8(s, pdu.pixelFormat); /* RDPGFX_PIXELFORMAT (1 byte) */
 
 	if ((pdu.width > MAX_SURFACE_SIZE) || (pdu.height > MAX_SURFACE_SIZE))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->RecvCreateSurfacePdu Width[%" PRIu32 "], Height[%" PRIu32
+		           "] > %" PRIu32,
+		           pdu.width, pdu.height, MAX_SURFACE_SIZE);
 		return ERROR_INVALID_DATA;
+	}
 
 	WLog_Print(gfx->base.log, WLOG_DEBUG,
 	           "RecvCreateSurfacePdu: surfaceId: %" PRIu16 " width: %" PRIu16 " height: %" PRIu16
@@ -2012,6 +2024,16 @@ static UINT rdpgfx_recv_map_surface_to_window_pdu(GENERIC_CHANNEL_CALLBACK* call
 	Stream_Read_UINT64(s, pdu.windowId);     /* windowId (8 bytes) */
 	Stream_Read_UINT32(s, pdu.mappedWidth);  /* mappedWidth (4 bytes) */
 	Stream_Read_UINT32(s, pdu.mappedHeight); /* mappedHeight (4 bytes) */
+
+	if ((pdu.mappedWidth > MAX_SURFACE_SIZE) || (pdu.mappedHeight > MAX_SURFACE_SIZE))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->MapSurfaceToWindow mappedWidth[%" PRIu32 "], mappedHeight[%" PRIu32
+		           "] > %" PRIu32,
+		           pdu.mappedWidth, pdu.mappedHeight, MAX_SURFACE_SIZE);
+		return ERROR_INVALID_DATA;
+	}
+
 	WLog_Print(gfx->base.log, WLOG_DEBUG,
 	           "RecvMapSurfaceToWindowPdu: surfaceId: %" PRIu16 " windowId: 0x%016" PRIX64
 	           " mappedWidth: %" PRIu32 " mappedHeight: %" PRIu32 "",
@@ -2048,6 +2070,16 @@ static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(GENERIC_CHANNEL_CALLBAC
 	Stream_Read_UINT32(s, pdu.mappedHeight); /* mappedHeight (4 bytes) */
 	Stream_Read_UINT32(s, pdu.targetWidth);  /* targetWidth (4 bytes) */
 	Stream_Read_UINT32(s, pdu.targetHeight); /* targetHeight (4 bytes) */
+
+	if ((pdu.mappedWidth > MAX_SURFACE_SIZE) || (pdu.mappedHeight > MAX_SURFACE_SIZE))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->RecvMapSurfaceToScaledWindowPdu mappedWidth[%" PRIu32
+		           "], mappedHeight[%" PRIu32 "] > %" PRIu32,
+		           pdu.mappedWidth, pdu.mappedHeight, MAX_SURFACE_SIZE);
+		return ERROR_INVALID_DATA;
+	}
+
 	WLog_Print(gfx->base.log, WLOG_DEBUG,
 	           "RecvMapSurfaceToScaledWindowPdu: surfaceId: %" PRIu16 " windowId: 0x%016" PRIX64
 	           " mappedWidth: %" PRIu32 " mappedHeight: %" PRIu32 " targetWidth: %" PRIu32

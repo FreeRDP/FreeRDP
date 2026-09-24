@@ -362,8 +362,14 @@ static UINT android_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfx
 	if (!gdi || !gdi->context)
 		return CHANNEL_RC_OK;
 
-	const UINT32 width = surface->mappedWidth ? surface->mappedWidth : surface->width;
-	const UINT32 height = surface->mappedHeight ? surface->mappedHeight : surface->height;
+	UINT32 width = surface->mappedWidth ? surface->mappedWidth : surface->width;
+	if (width > surface->width)
+		width = surface->width;
+
+	UINT32 height = surface->mappedHeight ? surface->mappedHeight : surface->height;
+	if (height > surface->height)
+		height = surface->height;
+
 	if (width == 0 || height == 0)
 		return CHANNEL_RC_OK;
 
@@ -380,9 +386,9 @@ static UINT android_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfx
 	jint* dst = (*env)->GetIntArrayElements(env, pixels, nullptr);
 	if (dst)
 	{
-		freerdp_image_copy((BYTE*)dst, surface->format, width * 4, 0, 0, width, height,
-		                   surface->data, surface->format, surface->scanline, 0, 0, nullptr,
-		                   FREERDP_FLIP_NONE);
+		const BOOL rc = freerdp_image_copy((BYTE*)dst, surface->format, width * 4ull, 0, 0, width,
+		                                   height, surface->data, surface->format,
+		                                   surface->scanline, 0, 0, nullptr, FREERDP_FLIP_NONE);
 
 		/* Force coloured pixels opaque (ARGB_8888 would otherwise blend the active window's
 		 * frame away), but keep transparent black so menu corners/shadows stay see-through. */
@@ -394,6 +400,8 @@ static UINT android_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfx
 				dst[i] = (jint)(px | 0xFF000000u);
 		}
 		(*env)->ReleaseIntArrayElements(env, pixels, dst, 0);
+		if (!rc)
+			goto done;
 	}
 
 	freerdp* inst = gdi->context->instance;
