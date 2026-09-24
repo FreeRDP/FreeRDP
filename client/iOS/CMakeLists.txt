@@ -203,16 +203,6 @@ set(IOS_CLIENT_RESOURCES_XIBS
 )
 
 set(IOS_CLIENT_RESOURCES_PNGS
-    Resources/alert-black-button@2x.png
-    Resources/alert-black-button.png
-    Resources/alert-gray-button@2x.png
-    Resources/alert-gray-button.png
-    Resources/alert-red-button@2x.png
-    Resources/alert-red-button.png
-    Resources/alert-window@2x.png
-    Resources/alert-window-landscape@2x.png
-    Resources/alert-window-landscape.png
-    Resources/alert-window.png
     Resources/cancel_button_background.png
     Resources/Default@2x.png
     Resources/Default-568h@2x.png
