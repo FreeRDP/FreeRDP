@@ -27,6 +27,7 @@
 #include "sdl_rail_platform.hpp"
 #include "sdl_rail_window.hpp"
 #include "sdl_rail_window_style.hpp"
+#include "sdl_utils.hpp"
 #include "sdl_wayland.hpp"
 #include "sdl_window.hpp"
 #include "sdl_x11.hpp"
@@ -38,6 +39,13 @@ static constexpr uint64_t kAwaitServerFrameMs = 1000;
 
 /* Maximum timeout waiting for server restore geometry order. */
 static constexpr uint64_t kAwaitRestoreRectMs = 500;
+
+static void armDeadline(uint64_t& until, uint64_t ms)
+{
+	until = SDL_GetTicks() + ms;
+	if (!sdl_push_update_after(WINPR_ASSERTING_INT_CAST(Uint32, ms + 1)))
+		WLog_WARN(TAG, "SDL_AddTimer failed: %s", SDL_GetError());
+}
 
 /* Check for real per-pixel alpha in region. */
 static bool regionHasAlpha(const uint8_t* base, uint32_t stride, const SDL_Rect& r)
@@ -657,7 +665,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	/* State first: maximized/minimized gates the geometry apply below. */
 	/* Hold geometry sync until server sends restored rect to prevent re-maximizing. */
 	if (applyServerState(_maxState, "maximize", SDL_MaximizeWindow))
-		_awaitRestoreUntil = SDL_GetTicks() + kAwaitRestoreRectMs;
+		armDeadline(_awaitRestoreUntil, kAwaitRestoreRectMs);
 	std::ignore = applyServerState(_minState, "minimize", SDL_MinimizeWindow);
 	const bool restorePending = restoreRectPending();
 
@@ -665,22 +673,24 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	const bool maxed = effectivelyMaximized();
 	if ((maxed != _wasMaximized) && !_localMoveActive && !restorePending)
 	{
-		_appliedInsets = bandInsets();
+		setAppliedInsets(bandInsets());
 		if (!maxed)
 			_geometryDirty = true;
 		_wasMaximized = maxed;
 	}
 
 	/* _GTK_FRAME_EXTENTS: tell the WM the band ring is frame, not content (snap/tile geometry). */
+	/* Not while a restore is pending: the margins may still be the maximized ones. */
 	const SDL_Rect ext = bandInsets();
-	if (!SDL_RectsEqual(&ext, &_extentsApplied) &&
+	if (!restorePending && !SDL_RectsEqual(&ext, &_extentsApplied) &&
 	    sdl_x11_set_frame_extents(_win->window(), ext.x, ext.w, ext.y, ext.h))
+	{
 		_extentsApplied = ext;
-
-	/* Clamp min size hints to target bounds so stale hints do not block programmatic resize.
-	 * Defer size hints and programmatic resize during active WM move/resize grab. */
+	}
 	const bool wmOwnsGeometry =
 	    _localMoveActive || geometryFrozen() || _fullscreen || restorePending;
+	/* Clamp min size hints to target bounds so stale hints do not block programmatic resize.
+	 * Defer size hints and programmatic resize during active WM move/resize grab. */
 	if ((_minMaxDirty || _geometryDirty) && !wmOwnsGeometry)
 	{
 		const SDL_Rect vis = targetOuterRect();
@@ -712,7 +722,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		const SDL_Rect vis = targetOuterRect();
 		/* The window is (or becomes) vis = _windowRect + fresh insets: record those as the insets
 		 * now baked in, so the round-trip back to server coords strips exactly this. */
-		_appliedInsets = bandInsets();
+		setAppliedInsets(bandInsets());
 		int cw = 0;
 		int ch = 0;
 		SDL_GetWindowSize(_win->window(), &cw, &ch);
@@ -957,6 +967,21 @@ bool SdlRailWindow::applyServerState(StateSync& s, const char* what, bool (*ente
 	(void)SDL_SyncWindow(_win->window());
 	s.dirty = false;
 	return restored;
+}
+
+/* Caller holds _gfxLock. */
+void SdlRailWindow::setAppliedInsets(const SDL_Rect& insets)
+{
+	if (SDL_RectsEqual(&insets, &_appliedInsets))
+		return;
+	_appliedInsets = insets;
+	_needsFullBlit = true;
+}
+
+bool SdlRailWindow::insetsStale() const
+{
+	std::unique_lock lock(_gfxLock);
+	return _wasMaximized != effectivelyMaximized();
 }
 
 /* Caller holds _gfxLock. */
