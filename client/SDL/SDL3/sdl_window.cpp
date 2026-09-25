@@ -478,6 +478,13 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 				rect.x = 0;
 				rect.y = 0;
 			}
+			else
+			{
+				/* The dummy window is centered on the display by the compositor, so its
+				 * position is not the display origin. Use the display bounds as for w/h. */
+				rect.x = displayBounds.x;
+				rect.y = displayBounds.y;
+			}
 			rect.w = displayBounds.w;
 			rect.h = displayBounds.h;
 
