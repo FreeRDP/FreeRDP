@@ -199,9 +199,15 @@ static BOOL test_valid_url(void)
 
 #if defined(WINPR_HAVE_REGCOMP) || defined(WITH_URIPARSER)
 		if (rc1 != rc2)
+		{
+			(void)fprintf(stderr, "[%.*s] %s is not valid\n", __func__, cur->len, cur->string);
 			rc = FALSE;
-		if (rc1 != cur->isUrl)
+		}
+		else if (rc1 != cur->isUrl)
+		{
+			(void)fprintf(stderr, "[%.*s] %s is not valid\n", __func__, cur->len, cur->string);
 			rc = FALSE;
+		}
 #else
 		fprintf(stderr, "[%s] TODO: !defined(WINPR_HAVE_REGCOMP) && !defined(WITH_URIPARSER)\n",
 		        __func__);
