@@ -33,12 +33,21 @@ class SdlFloatbar
 	SdlFloatbar& operator=(const SdlFloatbar&) = delete;
 	SdlFloatbar& operator=(SdlFloatbar&&) = delete;
 
-	[[nodiscard]] bool show(SDL_Window* parent);
+	[[nodiscard]] bool show(SDL_Window* parent, bool sticky, bool defaultVisible);
 	void hide();
 	[[nodiscard]] bool owns(SDL_WindowID windowId) const;
+	[[nodiscard]] bool ownsParent(SDL_WindowID windowId) const;
+	[[nodiscard]] bool handleParentMotion(const SDL_MouseMotionEvent& ev);
+	[[nodiscard]] bool redraw();
 	[[nodiscard]] Action handleEvent(const SDL_MouseButtonEvent& ev) const;
 
   private:
+	[[nodiscard]] bool render();
+	[[nodiscard]] bool setShown(bool shown);
+
+	SDL_Window* _parent = nullptr;
 	SDL_Window* _window = nullptr;
 	SDL_Renderer* _renderer = nullptr;
+	bool _active = false;
+	bool _sticky = false;
 };
