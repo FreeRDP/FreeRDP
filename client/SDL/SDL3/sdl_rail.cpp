@@ -36,8 +36,6 @@
 #include "sdl_rail_platform.hpp"
 #include "sdl_types.hpp"
 #include "sdl_utils.hpp"
-#include "sdl_wayland.hpp"
-#include "sdl_x11.hpp"
 
 #define TAG CLIENT_TAG("sdl.rail")
 
@@ -692,7 +690,7 @@ void SdlRail::applyZOrder()
 	}
 	if (stack.size() >= 2)
 	{
-		std::ignore = sdl_x11_restack_windows(stack);
+		std::ignore = railPlatformRestack(stack);
 	}
 
 	_appliedZOrder = std::move(applied);
@@ -982,70 +980,6 @@ bool SdlRail::suppressServerMotion(SDL_WindowID id)
 	return appWindow && appWindow->localMoveActive();
 }
 
-/* RAIL_WMSZ_* -> _NET_WM_MOVERESIZE direction (0..7 = resize edges, 8 = move). */
-static int railToNetDirection(uint16_t moveType)
-{
-	switch (moveType)
-	{
-		case RAIL_WMSZ_TOPLEFT:
-			return 0;
-		case RAIL_WMSZ_TOP:
-			return 1;
-		case RAIL_WMSZ_TOPRIGHT:
-			return 2;
-		case RAIL_WMSZ_RIGHT:
-			return 3;
-		case RAIL_WMSZ_BOTTOMRIGHT:
-			return 4;
-		case RAIL_WMSZ_BOTTOM:
-			return 5;
-		case RAIL_WMSZ_BOTTOMLEFT:
-			return 6;
-		case RAIL_WMSZ_LEFT:
-			return 7;
-		case RAIL_WMSZ_MOVE:
-		default:
-			return 8;
-	}
-}
-
-/* RAIL_WMSZ_* <-> XDG_TOPLEVEL_RESIZE_EDGE_* edge mappings. */
-static constexpr struct
-{
-	uint16_t rail;
-	uint32_t xdg;
-} kRailXdgEdges[] = {
-	{ RAIL_WMSZ_TOP, 1 },      { RAIL_WMSZ_BOTTOM, 2 },       { RAIL_WMSZ_LEFT, 4 },
-	{ RAIL_WMSZ_TOPLEFT, 5 },  { RAIL_WMSZ_BOTTOMLEFT, 6 },   { RAIL_WMSZ_RIGHT, 8 },
-	{ RAIL_WMSZ_TOPRIGHT, 9 }, { RAIL_WMSZ_BOTTOMRIGHT, 10 },
-};
-
-/* RAIL_WMSZ_* -> XDG_TOPLEVEL_RESIZE_EDGE_* (0 = none, e.g. RAIL_WMSZ_MOVE). */
-static uint32_t railToXdgEdge(uint16_t moveType)
-{
-	for (const auto& e : kRailXdgEdges)
-		if (e.rail == moveType)
-			return e.xdg;
-	return 0;
-}
-
-/* Which window edges a RAIL_WMSZ_* drag moves; the opposite edges stay anchored. */
-struct RailEdges
-{
-	bool left = false;
-	bool right = false;
-	bool top = false;
-	bool bottom = false;
-};
-static RailEdges railEdges(uint16_t t)
-{
-	return { (t == RAIL_WMSZ_TOPLEFT) || (t == RAIL_WMSZ_LEFT) || (t == RAIL_WMSZ_BOTTOMLEFT),
-		     (t == RAIL_WMSZ_TOPRIGHT) || (t == RAIL_WMSZ_RIGHT) || (t == RAIL_WMSZ_BOTTOMRIGHT),
-		     (t == RAIL_WMSZ_TOPLEFT) || (t == RAIL_WMSZ_TOP) || (t == RAIL_WMSZ_TOPRIGHT),
-		     (t == RAIL_WMSZ_BOTTOMLEFT) || (t == RAIL_WMSZ_BOTTOM) ||
-		         (t == RAIL_WMSZ_BOTTOMRIGHT) };
-}
-
 void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 {
 	const RailDragModel model = railPlatformCaps().drag;
@@ -1061,45 +995,21 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 	const bool isMove = (moveType == RAIL_WMSZ_MOVE);
 	WLog_DBG(TAG, "local move start id=0x%08" PRIx32 " driver=%s type=%" PRIu16 " %s", windowId,
 	         SDL_GetCurrentVideoDriver(), moveType, isMove ? "move" : "resize");
-	bool started = false;
-	if (compositor)
+	const bool started = railPlatformBeginDrag(appWindow->window(), moveType);
+	/* Latch and drive the local frame; a Wayland move needs neither (the compositor owns it). */
+	if (started && (!compositor || !isMove))
 	{
-		/* Wayland: positions unreadable, sizes readable. */
-		if (isMove)
-			started = sdl_wayland_begin_move(appWindow->window());
-		else
-			started = sdl_wayland_begin_resize(appWindow->window(), railToXdgEdge(moveType));
-		if (started && !isMove)
+		_localMove = {}; /* clear all per-drag state as a unit before latching this drag */
+		_localMove.id = windowId;
+		_localMove.type = moveType;
+		if (!compositor)
 		{
-			_localMove = {}; /* clear all per-drag state as a unit before latching this drag */
-			_localMove.id = windowId;
-			_localMove.type = moveType;
-		}
-	}
-	else
-	{
-		/* X11: hand resize to WM, suppress input. */
-		started = sdl_x11_begin_move_size(appWindow->window(), railToNetDirection(moveType));
-		if (started)
-		{
-			_localMove = {}; /* clear all per-drag state as a unit before latching this drag */
-			_localMove.id = windowId;
-			_localMove.type = moveType;
 			/* Latch drag anchors for release calculation. */
 			_localMove.anchor = _lastPressServer;
 			_localMove.pointer = _lastPointerServer;
 			/* Clear prior loop-end state on new drag. */
 			appWindow->clearLoopEnd();
-			/* Set bit gravity to fixed edge. */
-			const RailEdges e = railEdges(moveType);
-			const int row = e.top ? 2 : (e.bottom ? 0 : 1);
-			const int col = e.left ? 2 : (e.right ? 0 : 1);
-			(void)sdl_x11_set_bit_gravity(appWindow->window(), row * 3 + col + 1);
 		}
-	}
-	/* Drive local frame during X11/Wayland drag. */
-	if (started && (!compositor || !isMove))
-	{
 		appWindow->setLocalMoveActive(true);
 		if (!isMove)
 		{
@@ -1423,7 +1333,8 @@ void SdlRail::completeLocalMoveIfPending()
 	/* Send synthetic button release if WM grab consumed physical release. */
 	if ((SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK) &&
 	    !(SDL_GetGlobalMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK))
-		(void)sdl_x11_send_left_button_release(appWindow->window());
+		if (!railPlatformReleaseButton(appWindow->window()))
+			WLog_WARN(TAG, "synthetic button release failed");
 
 	/* Finalize WM resize before reading final size. */
 	(void)SDL_SyncWindow(appWindow->window());
@@ -1500,7 +1411,7 @@ void SdlRail::completeLocalMoveIfPending()
 		reportAndAdopt(appWindow, x, y, w, h);
 	}
 
-	(void)sdl_x11_set_bit_gravity(appWindow->window(), 0 /* reset to default */);
+	railPlatformEndDrag(appWindow->window());
 }
 
 UINT SdlRail::server_min_max_info(RailClientContext* context,
