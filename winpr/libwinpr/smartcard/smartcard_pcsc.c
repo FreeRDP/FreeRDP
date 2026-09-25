@@ -216,6 +216,7 @@ typedef struct
 	BOOL isTransactionLocked;
 	SCARDCONTEXT hSharedContext;
 	SCARDHANDLE hCard;
+	char* szReader;
 } PCSC_SCARDHANDLE;
 
 static HMODULE g_PCSCModule = nullptr;
@@ -234,6 +235,8 @@ static unsigned int OSXVersion = 0;
 static wListDictionary* g_CardHandles = nullptr;
 static wListDictionary* g_CardContexts = nullptr;
 static wListDictionary* g_MemoryBlocks = nullptr;
+/* transmits per reader since card insertion */
+static wHashTable* g_TransmitCounts = nullptr;
 static INIT_ONCE g_CardHandleInitializer = INIT_ONCE_STATIC_INIT;
 
 static const char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
@@ -250,10 +253,12 @@ static void clearHandles(void)
 	ListDictionary_Free(g_CardHandles);
 	ListDictionary_Free(g_CardContexts);
 	ListDictionary_Free(g_MemoryBlocks);
+	HashTable_Free(g_TransmitCounts);
 
 	g_CardHandles = nullptr;
 	g_CardContexts = nullptr;
 	g_MemoryBlocks = nullptr;
+	g_TransmitCounts = nullptr;
 }
 
 WINPR_ATTR_NODISCARD
@@ -289,13 +294,32 @@ static void cardContextFreeVoid(void* obj)
 	cardContextFree(pContext);
 }
 
+static void cardHandleFreeVoid(void* obj)
+{
+	PCSC_SCARDHANDLE* pCard = obj;
+	if (!pCard)
+		return;
+
+	free(pCard->szReader);
+	free(pCard);
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL initializeHandles(WINPR_ATTR_UNUSED PINIT_ONCE InitOnce,
                               WINPR_ATTR_UNUSED PVOID Parameter, WINPR_ATTR_UNUSED PVOID* Context)
 {
 	(void)atexit(clearHandles);
-	g_CardHandles = setupWithValueObjectFree(FALSE);
+	g_CardHandles = ListDictionary_New(TRUE);
 	if (!g_CardHandles)
+		return FALSE;
+	{
+		wObject* obj = ListDictionary_ValueObject(g_CardHandles);
+		if (!obj)
+			return FALSE;
+		obj->fnObjectFree = cardHandleFreeVoid;
+	}
+	g_TransmitCounts = HashTable_New(TRUE);
+	if (!g_TransmitCounts || !HashTable_SetupForStringData(g_TransmitCounts, FALSE))
 		return FALSE;
 	g_CardContexts = ListDictionary_New(TRUE);
 	if (!g_CardContexts)
@@ -315,6 +339,40 @@ WINPR_ATTR_NODISCARD
 static BOOL init(void)
 {
 	return InitOnceExecuteOnce(&g_CardHandleInitializer, initializeHandles, nullptr, nullptr);
+}
+
+/* pcsc-lite has no SCardGetTransmitCount, count the transmits here */
+static void PCSC_AddTransmitCount(const char* szReader)
+{
+	if (!szReader || !init())
+		return;
+
+	HashTable_Lock(g_TransmitCounts);
+	const size_t count = (size_t)HashTable_GetItemValue(g_TransmitCounts, szReader) + 1;
+	if (!HashTable_SetItemValue(g_TransmitCounts, szReader, (void*)count))
+	{
+		if (!HashTable_Insert(g_TransmitCounts, szReader, (void*)count))
+			WLog_WARN(TAG, "failed to update transmit count of '%s'", szReader);
+	}
+	HashTable_Unlock(g_TransmitCounts);
+}
+
+WINPR_ATTR_NODISCARD
+static DWORD PCSC_GetTransmitCountOfReader(const char* szReader)
+{
+	if (!szReader || !init())
+		return 0;
+
+	const size_t count = (size_t)HashTable_GetItemValue(g_TransmitCounts, szReader);
+	return (DWORD)MIN(count, UINT32_MAX);
+}
+
+static void PCSC_ResetTransmitCount(const char* szReader)
+{
+	if (!szReader || !init())
+		return;
+
+	(void)HashTable_Remove(g_TransmitCounts, szReader);
 }
 
 static LONG WINAPI PCSC_SCardFreeMemory_Internal(SCARDCONTEXT hContext, LPVOID pvMem);
@@ -711,7 +769,8 @@ static void PCSC_DisconnectCardHandle(PCSC_SCARDHANDLE* pCard)
 }
 
 WINPR_ATTR_MALLOC(PCSC_DisconnectCardHandle, 1)
-static PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDHANDLE hCard)
+static PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDHANDLE hCard,
+                                                LPCSTR szReader)
 {
 	if (!init())
 		return nullptr;
@@ -731,6 +790,12 @@ static PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCA
 
 	pCard->hSharedContext = hSharedContext;
 	pCard->hCard = hCard;
+	if (szReader)
+	{
+		pCard->szReader = _strdup(szReader);
+		if (!pCard->szReader)
+			goto error;
+	}
 
 	if (!ListDictionary_Add(g_CardHandles, (void*)hCard, (void*)pCard))
 		goto error;
@@ -738,7 +803,7 @@ static PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCA
 	pContext->dwCardHandleCount++;
 	return pCard;
 error:
-	free(pCard);
+	cardHandleFreeVoid(pCard);
 	return nullptr;
 }
 
@@ -1738,6 +1803,10 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardGetStatusChange_Internal(
 		rgReaderStates[i].cbAtr = (DWORD)states[k].cbAtr;
 		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[k].rgbAtr), PCSC_MAX_ATR_SIZE);
 		rgReaderStates[i].dwEventState = (DWORD)states[k].dwEventState;
+
+		/* reset on card removal */
+		if ((status == SCARD_S_SUCCESS) && (states[k].dwEventState & SCARD_STATE_EMPTY))
+			PCSC_ResetTransmitCount(rgReaderStates[i].szReader);
 	}
 
 	free(map);
@@ -1865,7 +1934,7 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardConnect_Internal(
 
 	if (status == SCARD_S_SUCCESS)
 	{
-		pCard = PCSC_ConnectCardHandle(hContext, *phCard);
+		pCard = PCSC_ConnectCardHandle(hContext, *phCard, szReader);
 		*pdwActiveProtocol = PCSC_ConvertProtocolsToWinSCard((DWORD)pcsc_dwActiveProtocol);
 		pCard->shared = shared;
 
@@ -2377,6 +2446,9 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardTransmit(
 
 	*pcbRecvLength = (DWORD)pcsc_cbRecvLength;
 
+	if (status == SCARD_S_SUCCESS)
+		PCSC_AddTransmitCount(pCard->szReader);
+
 	if (inSendPci.lpcs)
 		free(sendPci.ps); /* pcsc_pioSendPci is dynamically allocated only when pioSendPci is
 		                          non null */
@@ -2394,10 +2466,13 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardTransmit(
 	return PCSC_MapErrorCodeToWinSCard(status);
 }
 
-WINPR_ATTR_NODISCARD static LONG WINAPI
-PCSC_SCardGetTransmitCount(SCARDHANDLE hCard, WINPR_ATTR_UNUSED LPDWORD pcTransmitCount)
+WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardGetTransmitCount(SCARDHANDLE hCard,
+                                                                   LPDWORD pcTransmitCount)
 {
 	PCSC_SCARDHANDLE* pCard = nullptr;
+
+	if (!pcTransmitCount)
+		return SCARD_E_INVALID_PARAMETER;
 
 	pCard = PCSC_GetCardHandleData(hCard);
 
@@ -2405,6 +2480,7 @@ PCSC_SCardGetTransmitCount(SCARDHANDLE hCard, WINPR_ATTR_UNUSED LPDWORD pcTransm
 		return SCARD_E_INVALID_VALUE;
 
 	PCSC_WaitForCardAccess(0, hCard, pCard->shared);
+	*pcTransmitCount = PCSC_GetTransmitCountOfReader(pCard->szReader);
 	return SCARD_S_SUCCESS;
 }
 
