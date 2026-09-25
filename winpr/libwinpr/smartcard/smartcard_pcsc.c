@@ -207,13 +207,13 @@ typedef struct
 	CRITICAL_SECTION lock;
 	SCARDCONTEXT hContext;
 	DWORD dwCardHandleCount;
-	BOOL isTransactionLocked;
 	wHashTable* cache;
 } PCSC_SCARDCONTEXT;
 
 typedef struct
 {
 	BOOL shared;
+	BOOL isTransactionLocked;
 	SCARDCONTEXT hSharedContext;
 } PCSC_SCARDHANDLE;
 
@@ -1975,12 +1975,14 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardBeginTransaction(SCARDHANDLE h
 	if (!pContext)
 		return SCARD_E_INVALID_HANDLE;
 
-	if (pContext->isTransactionLocked)
+	/* the transaction belongs to the card handle, not the context */
+	if (pCard->isTransactionLocked)
 		return SCARD_S_SUCCESS; /* disable nested transactions */
 
 	status = g_PCSC.pfnSCardBeginTransaction(hCard);
 
-	pContext->isTransactionLocked = TRUE;
+	if (status == SCARD_S_SUCCESS)
+		pCard->isTransactionLocked = TRUE;
 	return PCSC_MapErrorCodeToWinSCard(status);
 }
 
@@ -2007,12 +2009,12 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardEndTransaction(SCARDHANDLE hCa
 
 	PCSC_ReleaseCardAccess(0, hCard);
 
-	if (!pContext->isTransactionLocked)
+	if (!pCard->isTransactionLocked)
 		return SCARD_S_SUCCESS; /* disable nested transactions */
 
 	status = g_PCSC.pfnSCardEndTransaction(hCard, pcsc_dwDisposition);
 
-	pContext->isTransactionLocked = FALSE;
+	pCard->isTransactionLocked = FALSE;
 	return PCSC_MapErrorCodeToWinSCard(status);
 }
 
