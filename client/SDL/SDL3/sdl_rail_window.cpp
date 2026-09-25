@@ -28,9 +28,7 @@
 #include "sdl_rail_window.hpp"
 #include "sdl_rail_window_style.hpp"
 #include "sdl_utils.hpp"
-#include "sdl_wayland.hpp"
 #include "sdl_window.hpp"
-#include "sdl_x11.hpp"
 
 #define TAG CLIENT_TAG("sdl.rail.window")
 
@@ -579,8 +577,8 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	}
 
 	/* Wayland: bind the seat early. */
-	if (!_isPopup && (caps.drag == RailDragModel::CompositorResize))
-		sdl_wayland_move_prepare(_win->window());
+	if (!_isPopup)
+		railPlatformPrepareWindow(_win->window());
 
 	WLog_DBG(TAG,
 	         "create id=0x%08" PRIx32 " sdl=%" PRIu32 " %s vis=%dx%d+%d+%d margins=L%d,T%d,R%d,B%d "
@@ -680,8 +678,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 
 	/* X11: set frame extents before the resize (KWin needs that), not while restoring. */
 	if ((railPlatformCaps().band == RailBandMechanism::FrameExtents) && !restorePending &&
-	    !SDL_RectsEqual(&band, &_extentsApplied) &&
-	    sdl_x11_set_frame_extents(_win->window(), band.x, band.w, band.y, band.h))
+	    !SDL_RectsEqual(&band, &_extentsApplied) && railPlatformSetBand(_win->window(), band))
 	{
 		_extentsApplied = band;
 	}
@@ -789,9 +786,8 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		{
 			_parentApplied = true;
 			/* Reattached after the owner was shown again: the owner was mapped on top. */
-			if (sdl::utils::isX11Driver() &&
-			    ((SDL_GetWindowFlags(_win->window()) & SDL_WINDOW_HIDDEN) == 0) &&
-			    !sdl_x11_raise_window(_win->window()))
+			if (((SDL_GetWindowFlags(_win->window()) & SDL_WINDOW_HIDDEN) == 0) &&
+			    !railPlatformRaiseOwned(_win->window()))
 				WLog_WARN(TAG, "raising dialog id=0x%08" PRIx32 " failed",
 				          static_cast<uint32_t>(_id));
 		}
