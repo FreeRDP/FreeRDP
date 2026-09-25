@@ -94,7 +94,7 @@ NSString *TableCellIdentifierButton = @"cellIdButton";
 	UITextField *textField = [cell textfield];
 
 	// adjust label
-	CGFloat width = [[label text] sizeWithAttributes:@{ NSFontAttributeName : [label font] }].width;
+	CGFloat width = [[label text] sizeWithAttributes:@{ NSFontAttributeName: [label font] }].width;
 	CGRect frame = [label frame];
 	CGFloat delta = width - frame.size.width;
 	frame.size.width = width;

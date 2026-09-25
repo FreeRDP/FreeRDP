@@ -286,6 +286,15 @@ set(EXTRA_LIBS
     ${GAMECONTROLLER_FRAMEWORK}
 )
 
+set(IOS_CLIENT_ICON_FILES "")
+foreach(_icon IN LISTS IOS_CLIENT_RESOURCES_PNGS)
+  get_filename_component(_icon_name "${_icon}" NAME)
+  if(_icon_name MATCHES "^Icon")
+    list(APPEND IOS_CLIENT_ICON_FILES "<string>${_icon_name}</string>")
+  endif()
+endforeach()
+list(JOIN IOS_CLIENT_ICON_FILES "\n\t\t" IOS_CLIENT_ICON_FILES)
+
 set(APP_ICON "${FREERDP_SOURCE_DIR}/resources/FreeRDP_OSX.icns")
 set(RESOURCES ${IOS_CLIENT_RESOURCES_XIBS} ${IOS_CLIENT_RESOURCES_PNGS} ${IOS_CLIENT_DIR}/Defaults.plist ${APP_ICON})
 set_source_files_properties(${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
