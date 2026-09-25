@@ -41,9 +41,10 @@ enum class RailBandMechanism
 /* Drag and resize execution model. */
 enum class RailDragModel
 {
-	None,            /* the server drags the window itself */
-	WmMoveResize,    /* X11 _NET_WM_MOVERESIZE, ends with the button release */
-	CompositorResize /* Wayland xdg_toplevel move/resize, the client only tracks the size */
+	None,             /* the server drags the window itself */
+	WmMoveResize,     /* X11 _NET_WM_MOVERESIZE, ends with the button release */
+	CompositorResize, /* Wayland xdg_toplevel move/resize, the client only tracks the size */
+	ModalLoop         /* Win32 SC_MOVE/SC_SIZE loop, blocks until the drag ends */
 };
 
 /**
@@ -83,6 +84,9 @@ bool railPlatformRestack(const std::vector<SDL_Window*>& topToBottom);
 
 /* Start a local move (RAIL_WMSZ_MOVE) or resize (RAIL_WMSZ_* edge) the way caps.drag says. */
 bool railPlatformBeginDrag(SDL_Window* window, uint16_t moveType);
+
+/* ModalLoop platforms: run the native drag; blocks until it ends, so call it unlocked. */
+void railPlatformRunModalDrag(SDL_Window* window, uint16_t moveType);
 
 /* The WM kept the left button release of the drag; hand one to SDL. */
 bool railPlatformReleaseButton(SDL_Window* window);

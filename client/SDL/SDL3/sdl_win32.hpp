@@ -24,3 +24,12 @@
 
 /* Restack windows without activation. */
 bool sdl_win32_restack_windows(const std::vector<SDL_Window*>& topToBottom);
+
+/* A native move (or size, `wmszEdge` = WMSZ_*) loop can run for this window. */
+[[nodiscard]] bool sdl_win32_can_move_size(SDL_Window* window, bool move, int wmszEdge);
+
+/* Run native move/size loop (blocking). */
+void sdl_win32_run_move_size(SDL_Window* window, bool move, int wmszEdge);
+
+/* Post the left button release the move/size loop consumed. */
+bool sdl_win32_send_left_button_release(SDL_Window* window);

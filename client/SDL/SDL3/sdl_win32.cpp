@@ -20,6 +20,9 @@
 #include "sdl_utils.hpp"
 
 #include <winpr/platform.h>
+#include <freerdp/log.h>
+
+#define TAG CLIENT_TAG("sdl.win32")
 
 #if defined(_WIN32)
 
@@ -72,9 +75,57 @@ bool sdl_win32_restack_windows(const std::vector<SDL_Window*>& topToBottom)
 	return EndDeferWindowPos(dwp) != FALSE;
 }
 
+bool sdl_win32_can_move_size(SDL_Window* window, bool move, int wmszEdge)
+{
+	return sdl_win32_hwnd(window) &&
+	       (move || ((wmszEdge >= WMSZ_LEFT) && (wmszEdge <= WMSZ_BOTTOMRIGHT)));
+}
+
+void sdl_win32_run_move_size(SDL_Window* window, bool move, int wmszEdge)
+{
+	HWND hwnd = sdl_win32_hwnd(window);
+	if (!hwnd)
+		return;
+	/* Released already (a quick click): the loop would wait in keyboard mode instead. */
+	const int button = GetSystemMetrics(SM_SWAPBUTTON) ? VK_RBUTTON : VK_LBUTTON;
+	if (GetAsyncKeyState(button) >= 0)
+		return;
+	/* The press captured the mouse for SDL; the loop needs it. */
+	if (!ReleaseCapture())
+		WLog_DBG(TAG, "ReleaseCapture failed: %" PRIu32, static_cast<uint32_t>(GetLastError()));
+	const WPARAM cmd = move ? (SC_MOVE | HTCAPTION) : (SC_SIZE | static_cast<WPARAM>(wmszEdge));
+	SendMessage(hwnd, WM_SYSCOMMAND, cmd, 0);
+}
+
+bool sdl_win32_send_left_button_release(SDL_Window* window)
+{
+	HWND hwnd = sdl_win32_hwnd(window);
+	POINT pt = {};
+	if (!hwnd || !GetCursorPos(&pt) || !ScreenToClient(hwnd, &pt))
+		return false;
+	const LPARAM pos = MAKELPARAM(static_cast<WORD>(pt.x), static_cast<WORD>(pt.y));
+	return PostMessage(hwnd, WM_LBUTTONUP, 0, pos) != FALSE;
+}
+
 #else /* !_WIN32 */
 
 bool sdl_win32_restack_windows(WINPR_ATTR_UNUSED const std::vector<SDL_Window*>& topToBottom)
+{
+	return false;
+}
+
+bool sdl_win32_can_move_size(WINPR_ATTR_UNUSED SDL_Window* window, WINPR_ATTR_UNUSED bool move,
+                             WINPR_ATTR_UNUSED int wmszEdge)
+{
+	return false;
+}
+
+void sdl_win32_run_move_size(WINPR_ATTR_UNUSED SDL_Window* window, WINPR_ATTR_UNUSED bool move,
+                             WINPR_ATTR_UNUSED int wmszEdge)
+{
+}
+
+bool sdl_win32_send_left_button_release(WINPR_ATTR_UNUSED SDL_Window* window)
 {
 	return false;
 }
