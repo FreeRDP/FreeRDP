@@ -320,7 +320,6 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
                              const RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
 	UINT ret = CHANNEL_RC_NO_MEMORY;
-	size_t size = 0;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(createSurface);
 
@@ -341,8 +340,8 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->gdi.surfaceId = createSurface->surfaceId;
-	surface->gdi.width = x11_pad_scanline(createSurface->width, 0);
-	surface->gdi.height = x11_pad_scanline(createSurface->height, 0);
+	surface->gdi.width = x11_pad_scanline(createSurface->width, 16);
+	surface->gdi.height = x11_pad_scanline(createSurface->height, 16);
 	surface->gdi.mappedWidth = createSurface->width;
 	surface->gdi.mappedHeight = createSurface->height;
 	surface->gdi.outputTargetWidth = createSurface->width;
@@ -366,11 +365,16 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 			goto fail;
 	}
 
+	const UINT32 pad = WINPR_ASSERTING_INT_CAST(uint32_t, xfc->scanline_pad);
+	if (surface->gdi.width > UINT32_MAX / FreeRDPGetBytesPerPixel(surface->gdi.format) - 16 - pad)
+		goto fail;
+
+	/* Align to multiples of 16, but also add additional 16 bytes so SIMD implementations do not
+	 * accidentally read out of bound */
 	surface->gdi.scanline = surface->gdi.width * FreeRDPGetBytesPerPixel(surface->gdi.format);
-	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline,
-	                                         WINPR_ASSERTING_INT_CAST(uint32_t, xfc->scanline_pad));
-	size = 1ull * surface->gdi.scanline * surface->gdi.height;
-	surface->gdi.data = (BYTE*)winpr_aligned_calloc(1, size, 16);
+	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, pad) + 16ul;
+
+	surface->gdi.data = (BYTE*)winpr_aligned_calloc(surface->gdi.scanline, surface->gdi.height, 16);
 
 	if (!surface->gdi.data)
 	{
@@ -378,7 +382,8 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		goto fail;
 	}
 
-	memset(surface->gdi.data, 0xff, size);
+	for (UINT64 y = 0; y < surface->gdi.height; y++)
+		memset(&surface->gdi.data[surface->gdi.scanline * y], 0xff, surface->gdi.scanline);
 
 	if (FreeRDPAreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
 	{
@@ -393,11 +398,16 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	{
 		UINT32 width = surface->gdi.width;
 		UINT32 bytes = FreeRDPGetBytesPerPixel(gdi->dstFormat);
+		if (width > UINT32_MAX / bytes - 16 - pad)
+			goto fail;
+
+		/* Align to multiples of scanline_pad, but also add additional 16 bytes so SIMD
+		 * implementations do not accidentally read out of bound */
 		surface->stageScanline = width * bytes;
-		surface->stageScanline = x11_pad_scanline(
-		    surface->stageScanline, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->scanline_pad));
-		size = 1ull * surface->stageScanline * surface->gdi.height;
-		surface->stage = (BYTE*)winpr_aligned_calloc(1, size, 16);
+		surface->stageScanline = x11_pad_scanline(surface->stageScanline, pad) + 16ul;
+
+		surface->stage =
+		    (BYTE*)winpr_aligned_calloc(surface->stageScanline, surface->gdi.height, 16);
 
 		if (!surface->stage)
 		{
@@ -405,7 +415,9 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 			goto fail;
 		}
 
-		memset(surface->stage, 0xff, size);
+		for (UINT64 y = 0; y < surface->gdi.height; y++)
+			memset(&surface->stage[surface->stageScanline * y], 0xff, surface->stageScanline);
+
 		WINPR_ASSERT(xfc->depth != 0);
 		surface->image = LogDynAndXCreateImage(
 		    xfc->log, xfc->display, xfc->visual, WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth),
