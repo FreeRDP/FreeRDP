@@ -196,6 +196,7 @@ class SdlRail
 	/* Written on the RDP thread (RemoteApp mode toggles), read lock-free on the main thread. */
 	std::atomic<bool> _enabled = false;
 	bool _refreshSent = false; /* one full RefreshRect per connection, at first window realize */
+	std::atomic<bool> _appStarted = false; /* the RemoteApp was started on this connection */
 	/* Last work area reported to the server (server coordinates). */
 	SDL_Rect _sentWorkArea = { 0, 0, 0, 0 };
 	/* Guards _windows (RDP thread mutates, main thread paints/iterates, GFX thread looks up).

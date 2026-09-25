@@ -715,6 +715,7 @@ bool SdlRail::uninit(WINPR_ATTR_UNUSED RailClientContext* rail)
 	 * late order in a release build. _enabled gates them instead. */
 	std::unique_lock lock(_windowsLock);
 	_refreshSent = false;
+	_appStarted = false;
 	/* Reset session and move state on reconnect. */
 	_localMove = {};
 	_sessionMargins = {};
@@ -1685,7 +1686,8 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 		rail->enableRemoteAppMode(true);
 		const char* app =
 		    freerdp_settings_get_string(context->settings, FreeRDP_RemoteApplicationProgram);
-		if (app && (strnlen(app, 1) > 0))
+		/* ARC_COMPLETED also follows every secure desktop (UAC): start the app only once. */
+		if (app && (strnlen(app, 1) > 0) && !rail->_appStarted)
 		{
 			WLog_DBG(TAG, "RAIL mode enabled (monitored desktop); launching '%s'", app);
 			if (client_rail_server_start_cmd(rail->_rail) != CHANNEL_RC_OK)
@@ -1693,6 +1695,7 @@ BOOL SdlRail::monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* or
 				WLog_ERR(TAG, "client_rail_server_start_cmd failed for '%s'", app);
 				return FALSE;
 			}
+			rail->_appStarted = true;
 		}
 	}
 
