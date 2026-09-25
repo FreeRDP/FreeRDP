@@ -297,11 +297,9 @@ static BOOL no_proxy_match_ip(const char* val, const char* hostname)
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL is_ipv6_addr(const char* hostname, size_t len)
+static BOOL is_ipv6_addr(const char* hostname)
 {
 	struct sockaddr_in6 sa6 = WINPR_C_ARRAY_INIT;
-	if (strnlen(hostname, len) >= len)
-		return FALSE;
 	return inet_pton(AF_INET6, hostname, &sa6.sin6_addr) == 1;
 }
 
@@ -598,7 +596,7 @@ static const char* get_response_header(char* response)
 
 static BOOL http_proxy_write_hostname(wStream* s, const char* hostname, size_t len)
 {
-	const BOOL isIPv6 = is_ipv6_addr(hostname, len);
+	const BOOL isIPv6 = is_ipv6_addr(hostname);
 
 	if (isIPv6)
 	{
@@ -640,7 +638,7 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 	const UINT32 timeout =
 	    freerdp_settings_get_uint32(context->settings, FreeRDP_TcpConnectTimeout);
 
-	if (!winpr_str_is_valid_url(hostname))
+	if (!is_ipv6_addr(hostname) && !winpr_str_is_valid_url(hostname))
 		return FALSE;
 
 	if (_itoa_s(port, port_str, sizeof(port_str), 10) < 0)
