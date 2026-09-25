@@ -188,6 +188,7 @@
 		"FreeRDP_RedirectParallelPorts": true,
 		"FreeRDP_PreferIPv6OverIPv4": false,
 		"FreeRDP_RedirectClipboard": true,
+		"FreeRDP_ClipboardRawTransfer": true,
 		"FreeRDP_SynchronousStaticChannels": false,
 		"FreeRDP_SupportDynamicChannels": false,
 		"FreeRDP_SynchronousDynamicChannels": false,

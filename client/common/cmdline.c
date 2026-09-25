@@ -3238,6 +3238,7 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 		for (size_t x = 0; (x < count) && (rc == 0); x++)
 		{
 			const char* usesel = "use-selection:";
+			const char* rawTransfer = "raw-transfer:";
 
 			const char* cur = ptr[x];
 			if (option_starts_with(usesel, cur))
@@ -3247,6 +3248,24 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 					rc = COMMAND_LINE_ERROR_MEMORY;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectClipboard, TRUE))
 					return COMMAND_LINE_ERROR;
+			}
+			else if (option_starts_with(rawTransfer, cur))
+			{
+				const char* val = &cur[strlen(rawTransfer)];
+				if (option_equals("on", val))
+				{
+					if (!freerdp_settings_set_bool(settings, FreeRDP_ClipboardRawTransfer, TRUE))
+						rc = COMMAND_LINE_ERROR;
+				}
+				else if (option_equals("off", val))
+				{
+					if (!freerdp_settings_set_bool(settings, FreeRDP_ClipboardRawTransfer, FALSE))
+						rc = COMMAND_LINE_ERROR;
+				}
+				else
+				{
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
 			}
 			else if (option_starts_with("direction-to", cur))
 			{

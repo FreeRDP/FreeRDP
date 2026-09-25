@@ -907,6 +907,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ClipboardFeatureMask,
 	                                 CLIPRDR_FLAG_DEFAULT_MASK))
 		goto out_fail;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_ClipboardRawTransfer, TRUE))
+		goto out_fail;
 	if (!freerdp_settings_set_string(settings, FreeRDP_ServerLicenseCompanyName,
 	                                 freerdp_getApplicationDetailsVendor()))
 		goto out_fail;

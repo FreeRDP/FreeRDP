@@ -117,6 +117,28 @@ static BOOL check_settings_gateway_response_timeout_custom(rdpSettings* settings
 	return check_settings_gateway_response_timeout(settings, 120000);
 }
 
+static BOOL check_settings_clipboard_raw_transfer_enabled(rdpSettings* settings)
+{
+	if (!freerdp_settings_get_bool(settings, FreeRDP_ClipboardRawTransfer))
+	{
+		TEST_FAILURE("Expected ClipboardRawTransfer = TRUE, but got FALSE!\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL check_settings_clipboard_raw_transfer_disabled(rdpSettings* settings)
+{
+	if (freerdp_settings_get_bool(settings, FreeRDP_ClipboardRawTransfer))
+	{
+		TEST_FAILURE("Expected ClipboardRawTransfer = FALSE, but got TRUE!\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 {
 	BOOL result = TRUE;
@@ -378,6 +400,22 @@ static const test tests[] = {
 	  check_settings_gateway_response_timeout_default,
 	  { "testfreerdp", "/gateway:type:arm,g:gw.contoso.com,timeout:abc", "/v:test.freerdp.com",
 	    nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_clipboard_raw_transfer_enabled,
+	  { "testfreerdp", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_clipboard_raw_transfer_enabled,
+	  { "testfreerdp", "/clipboard:raw-transfer:on", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ 0,
+	  check_settings_clipboard_raw_transfer_disabled,
+	  { "testfreerdp", "/clipboard:raw-transfer:off", "/v:test.freerdp.com", nullptr },
+	  { WINPR_C_ARRAY_INIT } },
+	{ COMMAND_LINE_ERROR_UNEXPECTED_VALUE,
+	  check_settings_clipboard_raw_transfer_enabled,
+	  { "testfreerdp", "/clipboard:raw-transfer:invalid", "/v:test.freerdp.com", nullptr },
 	  { WINPR_C_ARRAY_INIT } },
 	{ 0,
 	  check_settings_multimon_disabled,

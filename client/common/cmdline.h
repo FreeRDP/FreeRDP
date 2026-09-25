@@ -129,14 +129,15 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", nullptr, nullptr, -1, nullptr,
 	  "Client Hostname to send to server" },
 	{ "clipboard", COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_OPTIONAL,
-	  "[[use-selection:<atom>],[direction-to:[all|local|remote|off]],[files-to[:all|local|remote|"
-	  "off]]]",
+	  "[[use-selection:<atom>],[direction-to:[all|local|remote|off]],[files-to:[all|local|remote|"
+	  "off]],[raw-transfer:[on|off]]]",
 	  BoolValueTrue, nullptr, -1, nullptr,
 	  "Redirect clipboard:\n"
 	  " * use-selection:<atom>  ... (X11) Specify which X selection to access. Default is "
 	  "CLIPBOARD. PRIMARY is the X-style middle-click selection.\n"
 	  " * direction-to:[all|local|remote|off] control enabled clipboard direction\n"
-	  " * files-to:[all|local|remote|off] control enabled file clipboard direction" },
+	  " * files-to:[all|local|remote|off] control enabled file clipboard direction\n"
+	  " * raw-transfer:[on|off]  ... (X11) Enable the direct FreeRDP-to-FreeRDP transfer path" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "codec-cache", COMMAND_LINE_VALUE_REQUIRED, "[rfx|nsc|jpeg]", nullptr, nullptr, -1, nullptr,
 	  "[DEPRECATED, use /cache:codec:[rfx|nsc|jpeg]] Bitmap codec cache" },

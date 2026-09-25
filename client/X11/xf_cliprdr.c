@@ -2683,7 +2683,9 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	    Logging_XInternAtom(clipboard->log, xfc->display, "_FREERDP_CLIPRDR_RAW", FALSE);
 	clipboard->raw_format_list_atom =
 	    Logging_XInternAtom(clipboard->log, xfc->display, "_FREERDP_CLIPRDR_FORMATS", FALSE);
-	xf_cliprdr_set_raw_transfer_enabled(clipboard, TRUE);
+	xf_cliprdr_set_raw_transfer_enabled(
+	    clipboard,
+	    freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_ClipboardRawTransfer));
 	LogDynAndXSelectInput(clipboard->log, xfc->display, clipboard->root_window, PropertyChangeMask);
 #ifdef WITH_XFIXES
 
