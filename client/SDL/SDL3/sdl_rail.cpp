@@ -969,6 +969,16 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 	{
 		WLog_WARN(TAG, "WM move failed for RAIL window 0x%08" PRIx32, windowId);
 	}
+
+	/* Native modal loop: runs unlocked until the drag ends. */
+	if (started && (model == RailDragModel::ModalLoop))
+	{
+		SDL_Window* sdlWindow = appWindow->window();
+		lock.unlock();
+		railPlatformRunModalDrag(sdlWindow, moveType);
+		WLog_DBG(TAG, "modal drag end id=0x%08" PRIx32, windowId);
+		completeLocalMoveIfPending();
+	}
 }
 
 /* Send ClientWindowMove with full frame geometry including server margins (caller holds

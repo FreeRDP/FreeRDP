@@ -58,6 +58,7 @@ static RailPlatformCaps detectRailPlatformCaps()
 		caps.supportsWindowPositions = true;
 		caps.supportsTransparentWindows = true;
 		caps.supportsRestack = true;
+		caps.drag = RailDragModel::ModalLoop;
 	}
 	return caps;
 }
@@ -182,9 +183,19 @@ bool railPlatformBeginDrag(SDL_Window* window, uint16_t moveType)
 				WLog_DBG(TAG, "setting the X11 bit gravity failed");
 			return true;
 		}
+		case RailPlatformKind::Win32:
+			/* Only validated here; railPlatformRunModalDrag runs it once the caller is unlocked. */
+			return sdl_win32_can_move_size(window, moveType == RAIL_WMSZ_MOVE, moveType);
 		default:
 			return false;
 	}
+}
+
+void railPlatformRunModalDrag(SDL_Window* window, uint16_t moveType)
+{
+	/* RAIL_WMSZ_* edges have the same values as WMSZ_*. */
+	if (railPlatformCaps().kind == RailPlatformKind::Win32)
+		sdl_win32_run_move_size(window, moveType == RAIL_WMSZ_MOVE, moveType);
 }
 
 bool railPlatformReleaseButton(SDL_Window* window)
@@ -193,6 +204,8 @@ bool railPlatformReleaseButton(SDL_Window* window)
 	{
 		case RailPlatformKind::X11:
 			return sdl_x11_send_left_button_release(window);
+		case RailPlatformKind::Win32:
+			return sdl_win32_send_left_button_release(window);
 		default:
 			return false;
 	}
