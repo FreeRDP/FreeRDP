@@ -655,7 +655,7 @@ void SdlRail::applyZOrder()
 {
 	if (!_zOrderDirty)
 		return;
-	/* X11 only: Wayland/Win/macOS have no reparenting-safe, focus-neutral restack path here. */
+	/* Only backends with a focus-neutral restack (supportsRestack). */
 	if (!railPlatformCaps().supportsRestack)
 	{
 		_zOrderDirty = false;

@@ -19,6 +19,7 @@
 #include "sdl_rail_platform.hpp"
 #include "sdl_utils.hpp"
 #include "sdl_wayland.hpp"
+#include "sdl_win32.hpp"
 #include "sdl_x11.hpp"
 
 #include <freerdp/log.h>
@@ -49,6 +50,14 @@ static RailPlatformCaps detectRailPlatformCaps()
 		caps.band = caps.supportsTransparentWindows ? RailBandMechanism::FrameExtents
 		                                            : RailBandMechanism::None;
 		caps.drag = RailDragModel::WmMoveResize;
+	}
+	else if (sdl::utils::isWindowsDriver())
+	{
+		/* Windows: DWM always composites; no band (a transparent ring would still take clicks). */
+		caps.kind = RailPlatformKind::Win32;
+		caps.supportsWindowPositions = true;
+		caps.supportsTransparentWindows = true;
+		caps.supportsRestack = true;
 	}
 	return caps;
 }
@@ -146,6 +155,8 @@ bool railPlatformRestack(const std::vector<SDL_Window*>& topToBottom)
 	{
 		case RailPlatformKind::X11:
 			return sdl_x11_restack_windows(topToBottom);
+		case RailPlatformKind::Win32:
+			return sdl_win32_restack_windows(topToBottom);
 		default:
 			return false;
 	}

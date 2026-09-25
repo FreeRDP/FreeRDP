@@ -56,6 +56,8 @@ set(SRCS
     sdl_rail_window_style.hpp
     sdl_wayland.hpp
     sdl_wayland.cpp
+    sdl_win32.hpp
+    sdl_win32.cpp
     sdl_x11.hpp
     sdl_x11.cpp
 )

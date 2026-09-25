@@ -110,6 +110,7 @@ namespace sdl::utils
 	[[nodiscard]] bool isWaylandDriver();
 	/* True on the X11 backend. */
 	[[nodiscard]] bool isX11Driver();
+	[[nodiscard]] bool isWindowsDriver();
 
 	[[nodiscard]] std::string windowTitle(const rdpSettings* settings);
 

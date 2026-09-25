@@ -498,6 +498,11 @@ namespace sdl::utils
 		return isVideoDriver("x11");
 	}
 
+	bool isWindowsDriver()
+	{
+		return isVideoDriver("windows");
+	}
+
 	std::string windowTitle(const rdpSettings* settings)
 	{
 		const char* prefix = "FreeRDP:";
