@@ -160,6 +160,10 @@ static int log_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSi
 		return status;
 	}
 
+	/* no picture decoded, nothing to validate */
+	if (status == 0)
+		return 0;
+
 	/* some server implementations (krdc) use H264 frames smaller than the surface sizes,
 	 * validate the regions against this size as well */
 	if (!areRectsValid(h264->log, h264->YUVWidth, h264->YUVHeight, rects, nrRects))
@@ -602,8 +606,11 @@ static BOOL avc444_process_rects(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 	BYTE** ppYUVDstData = h264->pYUV444Data;
 	const UINT32* piStride = h264->iStride;
 
-	if (log_decompress(h264, pSrcData, SrcSize, rects, nrRects) < 0)
+	const int status = log_decompress(h264, pSrcData, SrcSize, rects, nrRects);
+	if (status < 0)
 		return FALSE;
+	if (status == 0)
+		return TRUE;
 
 	pYUVData[0] = h264->pYUVData[0];
 	pYUVData[1] = h264->pYUVData[1];
