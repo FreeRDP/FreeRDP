@@ -215,6 +215,7 @@ typedef struct
 	BOOL shared;
 	BOOL isTransactionLocked;
 	SCARDCONTEXT hSharedContext;
+	SCARDHANDLE hCard;
 } PCSC_SCARDHANDLE;
 
 static HMODULE g_PCSCModule = nullptr;
@@ -510,6 +511,21 @@ static void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
 {
 	if (init())
 	{
+		/* releasing a context invalidates its card handles */
+		ULONG_PTR* keys = nullptr;
+
+		ListDictionary_Lock(g_CardHandles);
+		const size_t count = ListDictionary_GetKeys(g_CardHandles, &keys);
+		for (size_t x = 0; x < count; x++)
+		{
+			const PCSC_SCARDHANDLE* pCard =
+			    ListDictionary_GetItemValue(g_CardHandles, (void*)keys[x]);
+			if (pCard && (pCard->hSharedContext == hContext))
+				ListDictionary_Remove(g_CardHandles, (void*)keys[x]);
+		}
+		ListDictionary_Unlock(g_CardHandles);
+		free(keys);
+
 		PCSC_SCARDCONTEXT* pContext = ListDictionary_Take(g_CardContexts, (void*)hContext);
 		cardContextFree(pContext);
 	}
@@ -683,7 +699,7 @@ static void PCSC_DisconnectCardHandle(PCSC_SCARDHANDLE* pCard)
 
 	PCSC_SCARDCONTEXT* pContext = PCSC_GetCardContextData(pCard->hSharedContext);
 	if (init())
-		ListDictionary_Remove(g_CardHandles, (void*)pCard);
+		ListDictionary_Remove(g_CardHandles, (void*)pCard->hCard);
 
 	if (!pContext)
 	{
@@ -714,6 +730,7 @@ static PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCA
 		return nullptr;
 
 	pCard->hSharedContext = hSharedContext;
+	pCard->hCard = hCard;
 
 	if (!ListDictionary_Add(g_CardHandles, (void*)hCard, (void*)pCard))
 		goto error;
@@ -1946,13 +1963,15 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardDisconnect(SCARDHANDLE hCard, 
 
 	status = g_PCSC.pfnSCardDisconnect(hCard, pcsc_dwDisposition);
 
+	/* before the handle data is freed */
+	PCSC_ReleaseCardAccess(0, hCard);
+
 	if (status == SCARD_S_SUCCESS)
 	{
 		PCSC_SCARDHANDLE* pCard = PCSC_GetCardHandleData(hCard);
 		PCSC_DisconnectCardHandle(pCard);
 	}
 
-	PCSC_ReleaseCardAccess(0, hCard);
 	return PCSC_MapErrorCodeToWinSCard(status);
 }
 
