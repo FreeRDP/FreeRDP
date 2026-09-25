@@ -1255,13 +1255,25 @@ static BOOL smartcard_context_was_aborted(scard_call_context* smartcard)
 	return (rc >= WAIT_OBJECT_0) && (rc <= WAIT_OBJECT_0 + ARRAYSIZE(handles));
 }
 
+/* wait in steps to notice an abort, stopping also cancels the wait */
+#define SCARD_STATUS_CHANGE_STEP_MS 1000
+
+WINPR_ATTR_NODISCARD
+static DWORD smartcard_status_change_step(DWORD dwTimeOut, DWORD waited)
+{
+	if (dwTimeOut == INFINITE)
+		return SCARD_STATUS_CHANGE_STEP_MS;
+	if (waited >= dwTimeOut)
+		return 0;
+	return MIN(dwTimeOut - waited, SCARD_STATUS_CHANGE_STEP_MS);
+}
+
 WINPR_ATTR_NODISCARD static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard,
                                                                  wStream* out,
                                                                  SMARTCARD_OPERATION* operation)
 {
 	LONG status = STATUS_NO_MEMORY;
 	DWORD dwTimeOut = 0;
-	const DWORD dwTimeStep = 100;
 	GetStatusChange_Return ret = WINPR_C_ARRAY_INIT;
 	GetStatusChangeA_Call* call = nullptr;
 	LPSCARD_READERSTATEA rgReaderStates = nullptr;
@@ -1284,19 +1296,25 @@ WINPR_ATTR_NODISCARD static LONG smartcard_GetStatusChangeA_Call(scard_call_cont
 		ret.cReaders = call->cReaders;
 	}
 
-	for (UINT32 x = 0; x < MAX(1, dwTimeOut);)
+	for (DWORD waited = 0;;)
 	{
+		const DWORD step = smartcard_status_change_step(dwTimeOut, waited);
 		if (call->cReaders > 0)
 			memcpy(rgReaderStates, call->rgReaderStates,
 			       call->cReaders * sizeof(SCARD_READERSTATEA));
-		ret.ReturnCode = wrap(smartcard, SCardGetStatusChangeA, operation->hContext,
-		                      MIN(dwTimeOut, dwTimeStep), rgReaderStates, call->cReaders);
+		/* not wrap(), do not log every step */
+		ret.ReturnCode = wrap_raw(smartcard, SCardGetStatusChangeA, operation->hContext, step,
+		                          rgReaderStates, call->cReaders);
 		if (ret.ReturnCode != SCARD_E_TIMEOUT)
 			break;
+		if (dwTimeOut != INFINITE)
+		{
+			waited += step;
+			if (waited >= dwTimeOut)
+				break;
+		}
 		if (smartcard_context_was_aborted(smartcard))
 			break;
-		if (dwTimeOut != INFINITE)
-			x += dwTimeStep;
 	}
 	scard_log_status_error_wlog(smartcard->log, "SCardGetStatusChangeA", ret.ReturnCode);
 
@@ -1329,7 +1347,6 @@ WINPR_ATTR_NODISCARD static LONG smartcard_GetStatusChangeW_Call(scard_call_cont
 {
 	LONG status = STATUS_NO_MEMORY;
 	DWORD dwTimeOut = 0;
-	const DWORD dwTimeStep = 100;
 	GetStatusChange_Return ret = WINPR_C_ARRAY_INIT;
 	LPSCARD_READERSTATEW rgReaderStates = nullptr;
 
@@ -1351,21 +1368,25 @@ WINPR_ATTR_NODISCARD static LONG smartcard_GetStatusChangeW_Call(scard_call_cont
 		ret.cReaders = call->cReaders;
 	}
 
-	for (UINT32 x = 0; x < MAX(1, dwTimeOut);)
+	for (DWORD waited = 0;;)
 	{
+		const DWORD step = smartcard_status_change_step(dwTimeOut, waited);
 		if (call->cReaders > 0)
 			memcpy(rgReaderStates, call->rgReaderStates,
 			       call->cReaders * sizeof(SCARD_READERSTATEW));
-		{
-			ret.ReturnCode = wrap(smartcard, SCardGetStatusChangeW, operation->hContext,
-			                      MIN(dwTimeOut, dwTimeStep), rgReaderStates, call->cReaders);
-		}
+		/* not wrap(), do not log every step */
+		ret.ReturnCode = wrap_raw(smartcard, SCardGetStatusChangeW, operation->hContext, step,
+		                          rgReaderStates, call->cReaders);
 		if (ret.ReturnCode != SCARD_E_TIMEOUT)
 			break;
+		if (dwTimeOut != INFINITE)
+		{
+			waited += step;
+			if (waited >= dwTimeOut)
+				break;
+		}
 		if (smartcard_context_was_aborted(smartcard))
 			break;
-		if (dwTimeOut != INFINITE)
-			x += dwTimeStep;
 	}
 	scard_log_status_error_wlog(smartcard->log, "SCardGetStatusChangeW", ret.ReturnCode);
 
@@ -2603,6 +2624,17 @@ BOOL smartcard_call_is_configured(scard_call_context* ctx)
 	return FALSE;
 }
 
+static BOOL smartcard_cancel_context_wait(const void* key, WINPR_ATTR_UNUSED void* value, void* arg)
+{
+	scard_call_context* ctx = arg;
+	WINPR_ASSERT(ctx);
+
+	const LONG rc = wrap_raw(ctx, SCardCancel, (SCARDCONTEXT)key);
+	if (rc != SCARD_S_SUCCESS)
+		WLog_Print(ctx->log, WLOG_DEBUG, "SCardCancel failed with %s", SCardGetErrorString(rc));
+	return TRUE;
+}
+
 BOOL smartcard_call_context_signal_stop(scard_call_context* ctx, BOOL reset)
 {
 	WINPR_ASSERT(ctx);
@@ -2612,6 +2644,12 @@ BOOL smartcard_call_context_signal_stop(scard_call_context* ctx, BOOL reset)
 
 	if (reset)
 		return ResetEvent(ctx->stopEvent);
-	else
-		return SetEvent(ctx->stopEvent);
+
+	if (!SetEvent(ctx->stopEvent))
+		return FALSE;
+
+	/* end pending SCardGetStatusChange calls */
+	if (ctx->rgSCardContextList && (ctx->useEmulatedCard || ctx->pWinSCardApi))
+		return HashTable_Foreach(ctx->rgSCardContextList, smartcard_cancel_context_wait, ctx);
+	return TRUE;
 }
