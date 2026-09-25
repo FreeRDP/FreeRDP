@@ -27,7 +27,8 @@ enum class RailPlatformKind
 {
 	None,
 	X11,
-	Wayland
+	Wayland,
+	Win32
 };
 
 /* Window resize band integration mechanism. */
