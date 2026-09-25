@@ -924,7 +924,18 @@
 
 - (void)writeArray:(NSArray *)bookmarks toDataStoreURL:(NSURL *)url
 {
-	NSData *archived_data = [NSKeyedArchiver archivedDataWithRootObject:bookmarks];
+	NSError *error = nil;
+	NSData *archived_data = [NSKeyedArchiver archivedDataWithRootObject:bookmarks
+	                                              requiringSecureCoding:YES
+	                                                              error:&error];
+
+	if (!archived_data)
+	{
+		// leave the existing file untouched rather than replacing it with bad data
+		NSLog(@"%s: failed to archive %@: %@", __func__, [url lastPathComponent], error);
+		return;
+	}
+
 	[archived_data writeToURL:url atomically:YES];
 }
 
@@ -955,7 +966,23 @@
 	if (!archived_data)
 		return nil;
 
-	return [[NSKeyedUnarchiver unarchiveObjectWithData:archived_data] retain];
+	// covers both data stores: an array of ComputerBookmark and an array of NSString
+	NSSet *classes = [NSSet setWithObjects:[NSArray class], [ComputerBookmark class],
+	                                       [ConnectionParams class], [NSDictionary class],
+	                                       [NSString class], [NSNumber class], [NSData class], nil];
+	NSError *error = nil;
+	NSArray *decoded = [NSKeyedUnarchiver unarchivedObjectOfClasses:classes
+	                                                       fromData:archived_data
+	                                                          error:&error];
+
+	if (!decoded)
+	{
+		NSLog(@"%s: failed to unarchive %@: %@", __func__, [url lastPathComponent], error);
+		return nil;
+	}
+
+	// the decoded array is immutable, but callers mutate the result
+	return [[NSMutableArray alloc] initWithArray:decoded];
 }
 
 - (NSURL *)manualBookmarksDataStoreURL

@@ -79,10 +79,20 @@
 #pragma mark -
 #pragma mark NSCoder
 
++ (BOOL)supportsSecureCoding
+{
+	return YES;
+}
+
 - (id)initWithCoder:(NSCoder *)decoder
 {
 	if ([decoder containsValueForKey:@"connectionParams"])
-		return [self initWithDictionary:[decoder decodeObjectForKey:@"connectionParams"]];
+	{
+		NSSet *classes = [NSSet setWithObjects:[NSDictionary class], [NSString class],
+		                                       [NSNumber class], [NSData class], nil];
+		return [self initWithDictionary:[decoder decodeObjectOfClasses:classes
+		                                                        forKey:@"connectionParams"]];
+	}
 
 	return [self init];
 }

@@ -10,7 +10,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface ConnectionParams : NSObject
+@interface ConnectionParams : NSObject <NSSecureCoding, NSCopying>
 {
   @private
 	NSMutableDictionary *_connection_params;
