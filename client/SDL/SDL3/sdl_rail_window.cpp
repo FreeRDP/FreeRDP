@@ -426,7 +426,7 @@ SDL_Rect SdlRailWindow::bandMargins() const
 
 SDL_Rect SdlRailWindow::bandInsets() const
 {
-	if (!railPlatformCaps().supportsResizeBand)
+	if (railPlatformCaps().band == RailBandMechanism::None)
 		return { 0, 0, 0, 0 };
 	return bandMargins();
 }
@@ -616,8 +616,8 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 		         static_cast<uint32_t>(_id), _windowRect.w, _windowRect.h);
 	}
 
-	/* Bind seat/pointer on Wayland. */
-	if (!_isPopup && !caps.supportsWindowPositions)
+	/* Wayland: bind the seat early. */
+	if (!_isPopup && (caps.drag == RailDragModel::CompositorResize))
 		sdl_wayland_move_prepare(_win->window());
 
 	WLog_DBG(TAG,
@@ -717,7 +717,8 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	}
 
 	/* X11: set frame extents before the resize (KWin needs that), not while restoring. */
-	if (!restorePending && !SDL_RectsEqual(&band, &_extentsApplied) &&
+	if ((railPlatformCaps().band == RailBandMechanism::FrameExtents) && !restorePending &&
+	    !SDL_RectsEqual(&band, &_extentsApplied) &&
 	    sdl_x11_set_frame_extents(_win->window(), band.x, band.w, band.y, band.h))
 	{
 		_extentsApplied = band;

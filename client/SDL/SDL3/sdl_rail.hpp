@@ -226,7 +226,6 @@ class SdlRail
 	struct LocalMove
 	{
 		uint32_t id = 0;      /* windowId of the active move, 0 = none (RAIL ids are non-zero) */
-		bool wayland = false; /* Wayland tracks size only */
 		uint16_t type = 0;    /* RAIL_WMSZ_* of the active local move */
 		SDL_Point anchor = { 0, 0 };  /* modal-loop anchor (forwarded press) of this drag */
 		SDL_Point pointer = { 0, 0 }; /* server's frozen cursor (last forward) of this drag */

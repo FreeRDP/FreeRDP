@@ -18,6 +18,21 @@
  */
 #pragma once
 
+/* Window resize band integration mechanism. */
+enum class RailBandMechanism
+{
+	None,
+	FrameExtents /* X11 _GTK_FRAME_EXTENTS, published before the resize */
+};
+
+/* Drag and resize execution model. */
+enum class RailDragModel
+{
+	None,            /* the server drags the window itself */
+	WmMoveResize,    /* X11 _NET_WM_MOVERESIZE, ends with the button release */
+	CompositorResize /* Wayland xdg_toplevel move/resize, the client only tracks the size */
+};
+
 /**
  * Windowing system capabilities for RAIL platform abstraction.
  */
@@ -26,7 +41,8 @@ struct RailPlatformCaps
 	bool supportsWindowPositions = true;
 	bool supportsTransparentWindows = true;
 	bool supportsRestack = false;
-	bool supportsResizeBand = false;
+	RailBandMechanism band = RailBandMechanism::None;
+	RailDragModel drag = RailDragModel::None;
 };
 
 /* Detected capabilities of the running SDL video backend (cached). */

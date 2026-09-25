@@ -29,6 +29,8 @@ static RailPlatformCaps detectRailPlatformCaps()
 		caps.supportsWindowPositions = false;
 		caps.supportsTransparentWindows = true;
 		caps.supportsRestack = false;
+		caps.band = RailBandMechanism::None;
+		caps.drag = RailDragModel::CompositorResize;
 	}
 	else if (sdl::utils::isX11Driver())
 	{
@@ -36,7 +38,9 @@ static RailPlatformCaps detectRailPlatformCaps()
 		caps.supportsWindowPositions = true;
 		caps.supportsTransparentWindows = sdl_x11_has_compositor();
 		caps.supportsRestack = true;
-		caps.supportsResizeBand = caps.supportsTransparentWindows;
+		caps.band = caps.supportsTransparentWindows ? RailBandMechanism::FrameExtents
+		                                            : RailBandMechanism::None;
+		caps.drag = RailDragModel::WmMoveResize;
 	}
 	return caps;
 }
