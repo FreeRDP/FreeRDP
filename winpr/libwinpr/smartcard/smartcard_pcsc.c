@@ -215,6 +215,8 @@ typedef struct
 	BOOL shared;
 	BOOL isTransactionLocked;
 	SCARDCONTEXT hSharedContext;
+	/* pcsc context of this handle only */
+	SCARDCONTEXT hPrivateContext;
 	SCARDHANDLE hCard;
 	char* szReader;
 } PCSC_SCARDHANDLE;
@@ -565,24 +567,48 @@ errors:
 	return nullptr;
 }
 
+static void PCSC_ReleasePrivateContext(SCARDCONTEXT hPrivateContext)
+{
+	if (!hPrivateContext || !g_PCSC.pfnSCardReleaseContext)
+		return;
+
+	/* also disconnects the handle */
+	const PCSC_LONG status = g_PCSC.pfnSCardReleaseContext(hPrivateContext);
+	if (status != SCARD_S_SUCCESS)
+		WLog_DBG(TAG, "SCardReleaseContext of card handle context failed with %s",
+		         SCardGetErrorString(PCSC_MapErrorCodeToWinSCard(status)));
+}
+
 static void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
 {
 	if (init())
 	{
 		/* releasing a context invalidates its card handles */
 		ULONG_PTR* keys = nullptr;
+		SCARDCONTEXT* privateContexts = nullptr;
+		size_t privateCount = 0;
 
 		ListDictionary_Lock(g_CardHandles);
 		const size_t count = ListDictionary_GetKeys(g_CardHandles, &keys);
+		if (count > 0)
+			privateContexts = calloc(count, sizeof(SCARDCONTEXT));
 		for (size_t x = 0; x < count; x++)
 		{
 			const PCSC_SCARDHANDLE* pCard =
 			    ListDictionary_GetItemValue(g_CardHandles, (void*)keys[x]);
-			if (pCard && (pCard->hSharedContext == hContext))
-				ListDictionary_Remove(g_CardHandles, (void*)keys[x]);
+			if (!pCard || (pCard->hSharedContext != hContext))
+				continue;
+			if (privateContexts)
+				privateContexts[privateCount++] = pCard->hPrivateContext;
+			ListDictionary_Remove(g_CardHandles, (void*)keys[x]);
 		}
 		ListDictionary_Unlock(g_CardHandles);
 		free(keys);
+
+		/* not locked, the release may block */
+		for (size_t x = 0; x < privateCount; x++)
+			PCSC_ReleasePrivateContext(privateContexts[x]);
+		free(privateContexts);
 
 		PCSC_SCARDCONTEXT* pContext = ListDictionary_Take(g_CardContexts, (void*)hContext);
 		cardContextFree(pContext);
@@ -1912,6 +1938,12 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardConnect_Internal(
 	if (!g_PCSC.pfnSCardConnect)
 		return PCSC_SCard_LogError("g_PCSC.pfnSCardConnect");
 
+	if (!g_PCSC.pfnSCardEstablishContext)
+		return PCSC_SCard_LogError("g_PCSC.pfnSCardEstablishContext");
+
+	if (!PCSC_GetCardContextData(hContext))
+		return SCARD_E_INVALID_HANDLE;
+
 	shared = (dwShareMode == SCARD_SHARE_DIRECT) != 0;
 	PCSC_WaitForCardAccess(hContext, 0, shared);
 	szReaderPCSC = szReader;
@@ -1929,20 +1961,55 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardConnect_Internal(
 		pcsc_dwPreferredProtocols =
 		    (PCSC_DWORD)PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
 
-	status = g_PCSC.pfnSCardConnect(hContext, szReaderPCSC, pcsc_dwShareMode,
+	/* own pcsc context per handle: pcscd lets SCardConnect wait for transactions
+	 * with the context locked, that must not block the transaction holder */
+	SCARDCONTEXT hPrivateContext = 0;
+	status =
+	    g_PCSC.pfnSCardEstablishContext(SCARD_SCOPE_SYSTEM, nullptr, nullptr, &hPrivateContext);
+	if (status != SCARD_S_SUCCESS)
+		return PCSC_MapErrorCodeToWinSCard(status);
+
+	status = g_PCSC.pfnSCardConnect(hPrivateContext, szReaderPCSC, pcsc_dwShareMode,
 	                                pcsc_dwPreferredProtocols, phCard, &pcsc_dwActiveProtocol);
 
-	if (status == SCARD_S_SUCCESS)
+	if (status != SCARD_S_SUCCESS)
 	{
-		pCard = PCSC_ConnectCardHandle(hContext, *phCard, szReader);
+		PCSC_ReleasePrivateContext(hPrivateContext);
+		return PCSC_MapErrorCodeToWinSCard(status);
+	}
+
+	if (!PCSC_LockCardContext(hContext))
+	{
+		/* the context was released while connecting */
+		PCSC_ReleasePrivateContext(hPrivateContext);
+		return SCARD_E_INVALID_HANDLE;
+	}
+
+	pCard = PCSC_ConnectCardHandle(hContext, *phCard, szReader);
+	if (pCard)
+	{
 		*pdwActiveProtocol = PCSC_ConvertProtocolsToWinSCard((DWORD)pcsc_dwActiveProtocol);
 		pCard->shared = shared;
+		pCard->hPrivateContext = hPrivateContext;
 
-		// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ListDictionary_Add takes ownership of pCard
 		PCSC_WaitForCardAccess(hContext, pCard->hSharedContext, shared);
 	}
 
-	return PCSC_MapErrorCodeToWinSCard(status);
+	const BOOL unlocked = PCSC_UnlockCardContext(hContext);
+	if (!pCard)
+	{
+		PCSC_ReleasePrivateContext(hPrivateContext);
+		return SCARD_E_NO_MEMORY;
+	}
+	if (!unlocked)
+	{
+		PCSC_DisconnectCardHandle(pCard);
+		PCSC_ReleasePrivateContext(hPrivateContext);
+		return SCARD_E_INVALID_HANDLE;
+	}
+
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ListDictionary_Add takes ownership of pCard
+	return SCARD_S_SUCCESS;
 }
 
 WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardConnectA(SCARDCONTEXT hContext, LPCSTR szReader,
@@ -1951,18 +2018,8 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardConnectA(SCARDCONTEXT hContext
                                                            LPSCARDHANDLE phCard,
                                                            LPDWORD pdwActiveProtocol)
 {
-	LONG status = SCARD_S_SUCCESS;
-
-	if (!PCSC_LockCardContext(hContext))
-		return SCARD_E_INVALID_HANDLE;
-
-	status = PCSC_SCardConnect_Internal(hContext, szReader, dwShareMode, dwPreferredProtocols,
-	                                    phCard, pdwActiveProtocol);
-
-	if (!PCSC_UnlockCardContext(hContext))
-		return SCARD_E_INVALID_HANDLE;
-
-	return status;
+	return PCSC_SCardConnect_Internal(hContext, szReader, dwShareMode, dwPreferredProtocols, phCard,
+	                                  pdwActiveProtocol);
 }
 
 WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext, LPCWSTR szReader,
@@ -1974,27 +2031,16 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext
 	LPSTR szReaderA = nullptr;
 	LONG status = SCARD_S_SUCCESS;
 
-	if (!PCSC_LockCardContext(hContext))
-		return SCARD_E_INVALID_HANDLE;
-
 	if (szReader)
 	{
 		szReaderA = ConvertWCharToUtf8Alloc(szReader, nullptr);
 		if (!szReaderA)
-		{
-			status = SCARD_E_INSUFFICIENT_BUFFER;
-			goto fail;
-		}
+			return SCARD_E_INSUFFICIENT_BUFFER;
 	}
 
 	status = PCSC_SCardConnect_Internal(hContext, szReaderA, dwShareMode, dwPreferredProtocols,
 	                                    phCard, pdwActiveProtocol);
 	free(szReaderA);
-
-fail:
-	if (!PCSC_UnlockCardContext(hContext))
-		return SCARD_E_INVALID_HANDLE;
-
 	return status;
 }
 
@@ -2038,7 +2084,9 @@ WINPR_ATTR_NODISCARD static LONG WINAPI PCSC_SCardDisconnect(SCARDHANDLE hCard, 
 	if (status == SCARD_S_SUCCESS)
 	{
 		PCSC_SCARDHANDLE* pCard = PCSC_GetCardHandleData(hCard);
+		const SCARDCONTEXT hPrivateContext = pCard ? pCard->hPrivateContext : 0;
 		PCSC_DisconnectCardHandle(pCard);
+		PCSC_ReleasePrivateContext(hPrivateContext);
 	}
 
 	return PCSC_MapErrorCodeToWinSCard(status);

@@ -53,7 +53,7 @@ typedef struct
 	HANDLE thread;
 	SCARDCONTEXT hContext;
 	wMessageQueue* IrpQueue;
-	/* SCardBeginTransaction may block, must not hold up IrpQueue */
+	/* calls that may block, must not hold up IrpQueue */
 	HANDLE txThread;
 	wMessageQueue* TxQueue;
 	SMARTCARD_DEVICE* smartcard;

@@ -539,8 +539,18 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 			{
 				wMessageQueue* queue = pContext->IrpQueue;
 
-				if (element->operation.ioControlCode == SCARD_IOCTL_BEGINTRANSACTION)
-					queue = pContext->TxQueue;
+				switch (element->operation.ioControlCode)
+				{
+					/* may wait for the transaction of another handle */
+					case SCARD_IOCTL_BEGINTRANSACTION:
+					case SCARD_IOCTL_CONNECTA:
+					case SCARD_IOCTL_CONNECTW:
+					case SCARD_IOCTL_RECONNECT:
+						queue = pContext->TxQueue;
+						break;
+					default:
+						break;
+				}
 
 				if (!MessageQueue_Post(queue, nullptr, 0, (void*)element, nullptr))
 				{
