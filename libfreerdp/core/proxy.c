@@ -300,7 +300,7 @@ WINPR_ATTR_NODISCARD
 static BOOL is_ipv6_addr(const char* hostname, size_t len)
 {
 	struct sockaddr_in6 sa6 = WINPR_C_ARRAY_INIT;
-	if (strnlen(hostname, len) >= len)
+	if (strnlen(hostname, len) > INET6_ADDRSTRLEN)
 		return FALSE;
 	return inet_pton(AF_INET6, hostname, &sa6.sin6_addr) == 1;
 }
@@ -640,7 +640,10 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 	const UINT32 timeout =
 	    freerdp_settings_get_uint32(context->settings, FreeRDP_TcpConnectTimeout);
 
-	if (!winpr_str_is_valid_url(hostname))
+	// Check for IPv6 (max 45) or DNS (max 255) name. Bounded length to 256 so too long hostnames do
+	// not silently pass
+	const size_t hostLen = strnlen(hostname, 255 + 1);
+	if (!is_ipv6_addr(hostname, hostLen) || !winpr_str_is_valid_urlN(hostname, hostLen))
 		return FALSE;
 
 	if (_itoa_s(port, port_str, sizeof(port_str), 10) < 0)
@@ -649,7 +652,6 @@ static BOOL http_proxy_connect(rdpContext* context, BIO* bufferedBio, const char
 		return FALSE;
 	}
 
-	const size_t hostLen = strlen(hostname);
 	const size_t portLen = strnlen(port_str, sizeof(port_str));
 	wStream* s = Stream_New(nullptr, 1024);
 	if (!s)
@@ -955,8 +957,14 @@ WINPR_ATTR_NODISCARD
 static BOOL socks_proxy_connect(rdpContext* context, BIO* bufferedBio, const char* proxyUsername,
                                 const char* proxyPassword, const char* hostname, UINT16 port)
 {
+	WINPR_ASSERT(hostname);
+	// Check for IPv6 (max 45) or DNS (max 255) name. Bounded length to 256 so too long hostnames do
+	// not silently pass
+	const size_t hostnlen = strnlen(hostname, 255 + 1);
+	if (!is_ipv6_addr(hostname, hostnlen) || !winpr_str_is_valid_urlN(hostname, hostnlen))
+		return FALSE;
+
 	BYTE nauthMethods = 1;
-	const size_t hostnlen = strnlen(hostname, 255);
 
 	if (proxyUsername || proxyPassword)
 		nauthMethods++;
