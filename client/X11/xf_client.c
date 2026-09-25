@@ -2080,6 +2080,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostFinalDisconnect = xf_post_final_disconnect;
 	instance->LogonErrorInfo = xf_logon_error_info;
 	instance->GetAccessToken = client_failsafe_get_access_token;
+	xfc->clipboardRawTransfer = TRUE;
 
 	if (PubSub_SubscribeTerminate(context->pubSub, xf_TerminateEventHandler) < 0)
 		return FALSE;
