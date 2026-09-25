@@ -35,6 +35,7 @@
 
 #define TAG FREERDP_TAG("gdi")
 
+WINPR_ATTR_NODISCARD
 static BOOL is_rect_valid(const RECTANGLE_16* rect, size_t width, size_t height)
 {
 	if (!rect)
@@ -46,6 +47,7 @@ static BOOL is_rect_valid(const RECTANGLE_16* rect, size_t width, size_t height)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL is_within_surface(const gdiGfxSurface* surface, const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	RECTANGLE_16 rect;
@@ -75,6 +77,7 @@ static BOOL is_within_surface(const gdiGfxSurface* surface, const RDPGFX_SURFACE
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD gfx_align_scanline(DWORD widthInBytes, DWORD alignment)
 {
 	const UINT32 align = alignment;
@@ -92,6 +95,7 @@ static DWORD gfx_align_scanline(DWORD widthInBytes, DWORD alignment)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
                               const RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
@@ -171,6 +175,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
@@ -249,6 +254,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT gdi_WindowUpdate(RdpgfxClientContext* context, gdiGfxSurface* surface)
 {
 	WINPR_ASSERT(context);
@@ -256,6 +262,7 @@ static UINT gdi_WindowUpdate(RdpgfxClientContext* context, gdiGfxSurface* surfac
 	return IFCALLRESULT(CHANNEL_RC_OK, context->UpdateWindowFromSurface, context, surface);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 {
 	UINT16 count = 0;
@@ -309,6 +316,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_StartFrame(RdpgfxClientContext* context, const RDPGFX_START_FRAME_PDU* startFrame)
 {
 	rdpGdi* gdi = nullptr;
@@ -323,6 +331,7 @@ static UINT gdi_StartFrame(RdpgfxClientContext* context, const RDPGFX_START_FRAM
 	return CHANNEL_RC_OK;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT gdi_call_update_surfaces(RdpgfxClientContext* context)
 {
 	WINPR_ASSERT(context);
@@ -334,6 +343,7 @@ static UINT gdi_call_update_surfaces(RdpgfxClientContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_EndFrame(RdpgfxClientContext* context,
                          WINPR_ATTR_UNUSED const RDPGFX_END_FRAME_PDU* endFrame)
 {
@@ -347,6 +357,7 @@ static UINT gdi_EndFrame(RdpgfxClientContext* context,
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT gdi_interFrameUpdate(rdpGdi* gdi, RdpgfxClientContext* context)
 {
 	WINPR_ASSERT(gdi);
@@ -361,6 +372,7 @@ static UINT gdi_interFrameUpdate(rdpGdi* gdi, RdpgfxClientContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* context,
                                             const RDPGFX_SURFACE_COMMAND* cmd)
 {
@@ -418,6 +430,7 @@ fail:
 }
 
 #if defined(WITH_GFX_AV1)
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_AV1(rdpGdi* gdi, RdpgfxClientContext* context,
                                    const RDPGFX_SURFACE_COMMAND* cmd)
 {
@@ -501,6 +514,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* context,
                                         const RDPGFX_SURFACE_COMMAND* cmd)
 {
@@ -563,6 +577,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi, RdpgfxClientContext* context,
                                           const RDPGFX_SURFACE_COMMAND* cmd)
 {
@@ -621,6 +636,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
@@ -676,6 +692,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
@@ -767,6 +784,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
@@ -872,6 +890,7 @@ fail:
 #endif
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL gdi_apply_alpha(BYTE* data, UINT32 format, UINT32 stride, RECTANGLE_16* rect,
                             UINT32 startOffsetX, UINT32 count, BYTE a)
 {
@@ -911,6 +930,7 @@ static BOOL gdi_apply_alpha(BYTE* data, UINT32 format, UINT32 stride, RECTANGLE_
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
                                      const RDPGFX_SURFACE_COMMAND* cmd)
 {
@@ -1081,6 +1101,7 @@ static void dump_cmd(const RDPGFX_SURFACE_COMMAND* cmd, UINT32 frameId)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* context,
                                            const RDPGFX_SURFACE_COMMAND* cmd)
 {
@@ -1161,6 +1182,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceCommand(RdpgfxClientContext* context, const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT status = CHANNEL_RC_OK;
@@ -1246,6 +1268,7 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context, const RDPGFX_SURFAC
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT
 gdi_DeleteEncodingContext(RdpgfxClientContext* context,
                           const RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext)
@@ -1262,6 +1285,7 @@ gdi_DeleteEncodingContext(RdpgfxClientContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_CreateSurface(RdpgfxClientContext* context,
                               const RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
@@ -1316,7 +1340,15 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 			goto fail;
 	}
 
-	surface->scanline = gfx_align_scanline(surface->width * 4UL, 16);
+	if (surface->width > UINT32_MAX / 4 - 2 * 16)
+	{
+		free(surface);
+		goto fail;
+	}
+
+	/* Align to multiples of 16, but also add additional 16 bytes so SIMD implementations do not
+	 * accidentally read out of bound */
+	surface->scanline = gfx_align_scanline(surface->width * 4UL, 16) + 16ul;
 	surface->data = (BYTE*)winpr_aligned_calloc(surface->scanline, surface->height, 16);
 
 	if (!surface->data)
@@ -1325,7 +1357,8 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 		goto fail;
 	}
 
-	memset(surface->data, 0xFF, (size_t)surface->scanline * surface->height);
+	for (UINT64 y = 0; y < surface->height; y++)
+		memset(&surface->data[surface->scanline * y], 0xFF, surface->scanline);
 	region16_init(&surface->invalidRegion);
 
 	WINPR_ASSERT(context->SetSurfaceData);
@@ -1340,6 +1373,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
                               const RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
@@ -1382,6 +1416,7 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL intersect_rect(const RECTANGLE_16* rect, const gdiGfxSurface* surface,
                            RECTANGLE_16* prect)
 {
@@ -1410,6 +1445,7 @@ static BOOL intersect_rect(const RECTANGLE_16* rect, const gdiGfxSurface* surfac
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SolidFill(RdpgfxClientContext* context, const RDPGFX_SOLID_FILL_PDU* solidFill)
 {
 	UINT status = ERROR_INTERNAL_ERROR;
@@ -1475,6 +1511,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
                                  const RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface)
 {
@@ -1553,6 +1590,7 @@ static void gdi_GfxCacheEntryFree(gdiGfxCacheEntry* entry)
 	free(entry);
 }
 
+WINPR_ATTR_MALLOC(gdi_GfxCacheEntryFree, 1)
 static gdiGfxCacheEntry* gdi_GfxCacheEntryNew(UINT64 cacheKey, UINT32 width, UINT32 height,
                                               UINT32 format)
 {
@@ -1586,6 +1624,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
                                const RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
 {
@@ -1641,6 +1680,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
                                const RDPGFX_CACHE_TO_SURFACE_PDU* cacheToSurface)
 {
@@ -1706,6 +1746,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_CacheImportReply(RdpgfxClientContext* context,
                                  const RDPGFX_CACHE_IMPORT_REPLY_PDU* cacheImportReply)
 {
@@ -1750,6 +1791,7 @@ static UINT gdi_CacheImportReply(RdpgfxClientContext* context,
 	return error;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT gdi_ImportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
                                  const PERSISTENT_CACHE_ENTRY* importCacheEntry)
 {
@@ -1792,6 +1834,7 @@ fail:
 	return error;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT gdi_ExportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
                                  PERSISTENT_CACHE_ENTRY* exportCacheEntry)
 {
@@ -1821,6 +1864,7 @@ static UINT gdi_ExportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_EvictCacheEntry(RdpgfxClientContext* context,
                                 const RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry)
 {
@@ -1848,6 +1892,7 @@ static UINT gdi_EvictCacheEntry(RdpgfxClientContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_MapSurfaceToOutput(RdpgfxClientContext* context,
                                    const RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput)
 {
@@ -1879,6 +1924,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT
 gdi_MapSurfaceToScaledOutput(RdpgfxClientContext* context,
                              const RDPGFX_MAP_SURFACE_TO_SCALED_OUTPUT_PDU* surfaceToOutput)
@@ -1916,6 +1962,7 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
                                    const RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow)
 {
@@ -1948,7 +1995,19 @@ static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
 
 	surface->windowId = surfaceToWindow->windowId;
 	surface->mappedWidth = surfaceToWindow->mappedWidth;
+	if (surface->mappedWidth > surface->width)
+	{
+		WLog_WARN(TAG, "surface mappedWidth[%" PRIu32 "] > width[%" PRIu32 "]",
+		          surface->mappedWidth, surface->width);
+		goto fail;
+	}
 	surface->mappedHeight = surfaceToWindow->mappedHeight;
+	if (surface->mappedHeight > surface->height)
+	{
+		WLog_WARN(TAG, "surface mappedHeight[%" PRIu32 "] > height[%" PRIu32 "]",
+		          surface->mappedHeight, surface->height);
+		goto fail;
+	}
 	surface->outputTargetWidth = surfaceToWindow->mappedWidth;
 	surface->outputTargetHeight = surfaceToWindow->mappedHeight;
 	rc = IFCALLRESULT(CHANNEL_RC_OK, context->MapWindowForSurface, context,
@@ -1958,6 +2017,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT
 gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
                              const RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU* surfaceToWindow)
@@ -1991,7 +2051,20 @@ gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
 
 	surface->windowId = surfaceToWindow->windowId;
 	surface->mappedWidth = surfaceToWindow->mappedWidth;
+	if (surface->mappedWidth > surface->width)
+	{
+		WLog_WARN(TAG, "surface mappedWidth[%" PRIu32 "] > width[%" PRIu32 "]",
+		          surface->mappedWidth, surface->width);
+		goto fail;
+	}
+
 	surface->mappedHeight = surfaceToWindow->mappedHeight;
+	if (surface->mappedHeight > surface->height)
+	{
+		WLog_WARN(TAG, "surface mappedHeight[%" PRIu32 "] > height[%" PRIu32 "]",
+		          surface->mappedHeight, surface->height);
+		goto fail;
+	}
 	surface->outputTargetWidth = surfaceToWindow->targetWidth;
 	surface->outputTargetHeight = surfaceToWindow->targetHeight;
 	rc = IFCALLRESULT(CHANNEL_RC_OK, context->MapWindowForSurface, context,
