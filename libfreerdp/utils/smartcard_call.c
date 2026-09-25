@@ -32,6 +32,13 @@
 #include <winpr/stream.h>
 #include <winpr/library.h>
 #include <winpr/smartcard.h>
+#include <winpr/synch.h>
+#include <winpr/sysinfo.h>
+#include <winpr/thread.h>
+#include <winpr/collections.h>
+
+#include <errno.h>
+#include <stdlib.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
@@ -92,6 +99,12 @@ struct s_scard_call_context
 	void (*fn_free)(void*);
 	wLog* log;
 	rdpContext* context;
+
+	/* idle transaction watchdog */
+	wHashTable* handleStates;
+	HANDLE watchdogStopEvent;
+	HANDLE watchdogThread;
+	UINT64 transactionTimeout;
 };
 
 struct s_scard_context_element
@@ -101,6 +114,221 @@ struct s_scard_context_element
 };
 
 static void context_free(void* arg);
+
+/* Windows resets the card when a transaction is idle for 5 s, pcsc-lite does not.
+ * FREERDP_SCARD_TRANSACTION_TIMEOUT_MS overrides the timeout, 0 disables it */
+#define SCARD_TRANSACTION_IDLE_TIMEOUT_MS 5000
+#define SCARD_TRANSACTION_WATCHDOG_INTERVAL_MS 250
+#define SCARD_TRANSACTION_WATCHDOG_MAX_EXPIRED 32
+
+typedef struct
+{
+	BOOL inTransaction;
+	UINT32 activeCalls;
+	UINT64 lastActivity;
+} scard_handle_state;
+
+typedef struct
+{
+	UINT64 now;
+	UINT64 timeout;
+	size_t count;
+	SCARDHANDLE handles[SCARD_TRANSACTION_WATCHDOG_MAX_EXPIRED];
+} scard_expired_transactions;
+
+static void smartcard_handle_activity_begin(scard_call_context* ctx, SCARDHANDLE hCard)
+{
+	WINPR_ASSERT(ctx);
+
+	if (!ctx->handleStates || !hCard)
+		return;
+
+	HashTable_Lock(ctx->handleStates);
+	scard_handle_state* state = HashTable_GetItemValue(ctx->handleStates, (void*)hCard);
+	if (!state)
+	{
+		state = calloc(1, sizeof(scard_handle_state));
+		if (state && !HashTable_Insert(ctx->handleStates, (void*)hCard, state))
+		{
+			free(state);
+			state = nullptr;
+		}
+	}
+	if (state)
+	{
+		state->activeCalls++;
+		state->lastActivity = GetTickCount64();
+	}
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert owns state
+	HashTable_Unlock(ctx->handleStates);
+}
+
+static void smartcard_handle_activity_end(scard_call_context* ctx, UINT32 ioControlCode,
+                                          SCARDHANDLE hCard, LONG result)
+{
+	WINPR_ASSERT(ctx);
+
+	if (!ctx->handleStates || !hCard)
+		return;
+
+	HashTable_Lock(ctx->handleStates);
+	scard_handle_state* state = HashTable_GetItemValue(ctx->handleStates, (void*)hCard);
+	if (state)
+	{
+		if (state->activeCalls > 0)
+			state->activeCalls--;
+		state->lastActivity = GetTickCount64();
+
+		switch (ioControlCode)
+		{
+			case SCARD_IOCTL_BEGINTRANSACTION:
+				if (result == SCARD_S_SUCCESS)
+					state->inTransaction = TRUE;
+				break;
+			case SCARD_IOCTL_ENDTRANSACTION:
+				state->inTransaction = FALSE;
+				break;
+			case SCARD_IOCTL_DISCONNECT:
+				if (result == SCARD_S_SUCCESS)
+				{
+					state->inTransaction = FALSE;
+					if (state->activeCalls == 0)
+						HashTable_Remove(ctx->handleStates, (void*)hCard);
+				}
+				break;
+			default:
+				break;
+		}
+	}
+	HashTable_Unlock(ctx->handleStates);
+}
+
+static BOOL smartcard_collect_expired_transaction(const void* key, void* value, void* arg)
+{
+	scard_handle_state* state = value;
+	scard_expired_transactions* expired = arg;
+
+	WINPR_ASSERT(state);
+	WINPR_ASSERT(expired);
+
+	if (!state->inTransaction || (state->activeCalls > 0))
+		return TRUE;
+	if (expired->now - state->lastActivity < expired->timeout)
+		return TRUE;
+	if (expired->count >= ARRAYSIZE(expired->handles))
+		return FALSE; /* rest on the next round */
+
+	state->inTransaction = FALSE;
+	expired->handles[expired->count++] = (SCARDHANDLE)key;
+	return TRUE;
+}
+
+static DWORD WINAPI smartcard_transaction_watchdog(LPVOID arg)
+{
+	scard_call_context* ctx = arg;
+
+	WINPR_ASSERT(ctx);
+
+	while (WaitForSingleObject(ctx->watchdogStopEvent, SCARD_TRANSACTION_WATCHDOG_INTERVAL_MS) ==
+	       WAIT_TIMEOUT)
+	{
+		scard_expired_transactions expired = WINPR_C_ARRAY_INIT;
+		expired.now = GetTickCount64();
+		expired.timeout = ctx->transactionTimeout;
+
+		if (!HashTable_Foreach(ctx->handleStates, smartcard_collect_expired_transaction, &expired))
+			WLog_Print(ctx->log, WLOG_DEBUG,
+			           "more idle transactions than handled in one round, continuing next round");
+
+		/* not locked, SCardEndTransaction may block */
+		for (size_t x = 0; x < expired.count; x++)
+		{
+			const SCARDHANDLE hCard = expired.handles[x];
+
+			WLog_Print(ctx->log, WLOG_WARN,
+			           "transaction on hCard 0x%08" PRIxz " idle for more than %" PRIu64
+			           " ms, ending it and resetting the card like Windows does",
+			           (size_t)hCard, ctx->transactionTimeout);
+
+			const LONG rc = wrap(ctx, SCardEndTransaction, hCard, SCARD_RESET_CARD);
+			if (rc == SCARD_E_INVALID_HANDLE)
+				HashTable_Remove(ctx->handleStates, (void*)hCard);
+		}
+	}
+
+	ExitThread(0);
+	return 0;
+}
+
+static UINT64 smartcard_transaction_timeout(void)
+{
+	// NOLINTNEXTLINE(concurrency-mt-unsafe)
+	const char* value = getenv("FREERDP_SCARD_TRANSACTION_TIMEOUT_MS");
+	if (!value || !*value)
+		return SCARD_TRANSACTION_IDLE_TIMEOUT_MS;
+
+	char* end = nullptr;
+	errno = 0;
+	const unsigned long long timeout = strtoull(value, &end, 10);
+	if ((errno != 0) || !end || (*end != '\0'))
+		return SCARD_TRANSACTION_IDLE_TIMEOUT_MS;
+	return timeout;
+}
+
+static BOOL smartcard_transaction_watchdog_start(scard_call_context* ctx)
+{
+	WINPR_ASSERT(ctx);
+
+	if (ctx->useEmulatedCard)
+		return TRUE;
+
+	ctx->handleStates = HashTable_New(TRUE);
+	if (!ctx->handleStates)
+		return FALSE;
+
+	{
+		wObject* obj = HashTable_ValueObject(ctx->handleStates);
+		WINPR_ASSERT(obj);
+		obj->fnObjectFree = free;
+	}
+
+	ctx->transactionTimeout = smartcard_transaction_timeout();
+	if (ctx->transactionTimeout == 0)
+	{
+		WLog_Print(ctx->log, WLOG_DEBUG, "idle transaction watchdog disabled");
+		return TRUE;
+	}
+
+	ctx->watchdogStopEvent = CreateEventA(nullptr, TRUE, FALSE, nullptr);
+	if (!ctx->watchdogStopEvent)
+		return FALSE;
+
+	ctx->watchdogThread = CreateThread(nullptr, 0, smartcard_transaction_watchdog, ctx, 0, nullptr);
+	if (!ctx->watchdogThread)
+		return FALSE;
+
+	WLog_Print(ctx->log, WLOG_DEBUG, "idle transaction watchdog started, timeout %" PRIu64 " ms",
+	           ctx->transactionTimeout);
+	return TRUE;
+}
+
+static void smartcard_transaction_watchdog_stop(scard_call_context* ctx)
+{
+	WINPR_ASSERT(ctx);
+
+	if (ctx->watchdogThread)
+	{
+		(void)SetEvent(ctx->watchdogStopEvent);
+		(void)WaitForSingleObject(ctx->watchdogThread, INFINITE);
+		(void)CloseHandle(ctx->watchdogThread);
+		ctx->watchdogThread = nullptr;
+	}
+	if (ctx->watchdogStopEvent)
+	{
+		(void)CloseHandle(ctx->watchdogStopEvent);
+		ctx->watchdogStopEvent = nullptr;
+	}
+}
 
 WINPR_ATTR_NODISCARD WINPR_ATTR_NODISCARD static LONG
 smartcard_EstablishContext_Call(scard_call_context* smartcard, wStream* out,
@@ -1824,6 +2052,8 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 	Stream_Zero(out, SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH); /* PrivateTypeHeader (8 bytes) */
 	Stream_Write_UINT32(out, 0);                            /* Result (4 bytes) */
 
+	smartcard_handle_activity_begin(ctx, operation->hCard);
+
 	/* Call */
 	switch (ioControlCode)
 	{
@@ -2024,6 +2254,8 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 			break;
 	}
 
+	smartcard_handle_activity_end(ctx, ioControlCode, operation->hCard, result);
+
 	/**
 	 * [MS-RPCE] 2.2.6.3 Primitive Type Serialization
 	 * The type MUST be aligned on an 8-byte boundary. If the size of the
@@ -2208,6 +2440,12 @@ scard_call_context* smartcard_call_context_new_with_context(rdpContext* context)
 		obj->fnObjectFree = context_free;
 	}
 
+	if (!smartcard_transaction_watchdog_start(ctx))
+	{
+		WLog_Print(ctx->log, WLOG_ERROR, "Failed to start idle transaction watchdog!");
+		goto fail;
+	}
+
 	return ctx;
 fail:
 	WINPR_PRAGMA_DIAG_PUSH
@@ -2223,6 +2461,9 @@ void smartcard_call_context_free(scard_call_context* ctx)
 		return;
 
 	smartcard_call_context_signal_stop(ctx, FALSE);
+
+	/* uses the WinSCard API */
+	smartcard_transaction_watchdog_stop(ctx);
 
 	LinkedList_Free(ctx->names);
 	if (ctx->StartedEvent)
@@ -2252,6 +2493,7 @@ void smartcard_call_context_free(scard_call_context* ctx)
 	ctx->pWinSCardApi = nullptr;
 
 	HashTable_Free(ctx->rgSCardContextList);
+	HashTable_Free(ctx->handleStates);
 	(void)CloseHandle(ctx->stopEvent);
 	free(ctx);
 }
