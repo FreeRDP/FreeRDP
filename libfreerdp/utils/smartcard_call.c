@@ -124,7 +124,10 @@ static void context_free(void* arg);
 typedef struct
 {
 	BOOL inTransaction;
+	BOOL disconnected;
 	UINT32 activeCalls;
+	UINT32 pendingBegins;
+	UINT32 abandonedBegins;
 	UINT64 lastActivity;
 } scard_handle_state;
 
@@ -136,7 +139,8 @@ typedef struct
 	SCARDHANDLE handles[SCARD_TRANSACTION_WATCHDOG_MAX_EXPIRED];
 } scard_expired_transactions;
 
-static void smartcard_handle_activity_begin(scard_call_context* ctx, SCARDHANDLE hCard)
+static void smartcard_handle_activity_begin(scard_call_context* ctx, UINT32 ioControlCode,
+                                            SCARDHANDLE hCard)
 {
 	WINPR_ASSERT(ctx);
 
@@ -158,18 +162,37 @@ static void smartcard_handle_activity_begin(scard_call_context* ctx, SCARDHANDLE
 	{
 		state->activeCalls++;
 		state->lastActivity = GetTickCount64();
+
+		switch (ioControlCode)
+		{
+			case SCARD_IOCTL_BEGINTRANSACTION:
+				state->pendingBegins++;
+				break;
+			case SCARD_IOCTL_ENDTRANSACTION:
+				/* the server gave up waiting, release it when granted */
+				if (state->inTransaction)
+					state->inTransaction = FALSE;
+				else if (state->pendingBegins > state->abandonedBegins)
+					state->abandonedBegins++;
+				break;
+			default:
+				break;
+		}
 	}
 	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert owns state
 	HashTable_Unlock(ctx->handleStates);
 }
 
-static void smartcard_handle_activity_end(scard_call_context* ctx, UINT32 ioControlCode,
+/* returns TRUE if a transaction the server gave up on was granted */
+static BOOL smartcard_handle_activity_end(scard_call_context* ctx, UINT32 ioControlCode,
                                           SCARDHANDLE hCard, LONG result)
 {
+	BOOL abandoned = FALSE;
+
 	WINPR_ASSERT(ctx);
 
 	if (!ctx->handleStates || !hCard)
-		return;
+		return FALSE;
 
 	HashTable_Lock(ctx->handleStates);
 	scard_handle_state* state = HashTable_GetItemValue(ctx->handleStates, (void*)hCard);
@@ -182,25 +205,32 @@ static void smartcard_handle_activity_end(scard_call_context* ctx, UINT32 ioCont
 		switch (ioControlCode)
 		{
 			case SCARD_IOCTL_BEGINTRANSACTION:
-				if (result == SCARD_S_SUCCESS)
+				if (state->pendingBegins > 0)
+					state->pendingBegins--;
+				if (state->abandonedBegins > 0)
+				{
+					state->abandonedBegins--;
+					abandoned = (result == SCARD_S_SUCCESS);
+				}
+				else if (result == SCARD_S_SUCCESS)
 					state->inTransaction = TRUE;
-				break;
-			case SCARD_IOCTL_ENDTRANSACTION:
-				state->inTransaction = FALSE;
 				break;
 			case SCARD_IOCTL_DISCONNECT:
 				if (result == SCARD_S_SUCCESS)
 				{
 					state->inTransaction = FALSE;
-					if (state->activeCalls == 0)
-						HashTable_Remove(ctx->handleStates, (void*)hCard);
+					state->disconnected = TRUE;
 				}
 				break;
 			default:
 				break;
 		}
+
+		if (state->disconnected && (state->activeCalls == 0))
+			HashTable_Remove(ctx->handleStates, (void*)hCard);
 	}
 	HashTable_Unlock(ctx->handleStates);
+	return abandoned;
 }
 
 static BOOL smartcard_collect_expired_transaction(const void* key, void* value, void* arg)
@@ -2052,7 +2082,7 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 	Stream_Zero(out, SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH); /* PrivateTypeHeader (8 bytes) */
 	Stream_Write_UINT32(out, 0);                            /* Result (4 bytes) */
 
-	smartcard_handle_activity_begin(ctx, operation->hCard);
+	smartcard_handle_activity_begin(ctx, ioControlCode, operation->hCard);
 
 	/* Call */
 	switch (ioControlCode)
@@ -2254,7 +2284,16 @@ LONG smartcard_irp_device_control_call(scard_call_context* ctx, wStream* out, NT
 			break;
 	}
 
-	smartcard_handle_activity_end(ctx, ioControlCode, operation->hCard, result);
+	if (smartcard_handle_activity_end(ctx, ioControlCode, operation->hCard, result))
+	{
+		WLog_Print(ctx->log, WLOG_WARN,
+		           "transaction on hCard 0x%08" PRIxz
+		           " granted after the server ended it, releasing it",
+		           (size_t)operation->hCard);
+		const LONG rc = wrap(ctx, SCardEndTransaction, operation->hCard, SCARD_LEAVE_CARD);
+		scard_log_status_error_wlog(ctx->log, "SCardEndTransaction", rc);
+		result = SCARD_E_CANCELLED;
+	}
 
 	/**
 	 * [MS-RPCE] 2.2.6.3 Primitive Type Serialization
