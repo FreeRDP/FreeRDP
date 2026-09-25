@@ -841,20 +841,45 @@ SdlContext::updateDisplayOffsetsForNeighbours(SDL_DisplayID id,
 			continue;
 
 		bool neighbor = false;
-		if (alignX(entry.second.first, first.first))
+		const bool ax = alignX(entry.second.first, first.first);
+		const bool ay = alignY(entry.second.first, first.first);
+
+		/* Offset along the axis that does not touch, converted from logical to pixel
+		 * units of the reference display. Without this, a monitor that is adjacent on
+		 * one axis but shifted on the other (e.g. a wider monitor above another, or a
+		 * rotated monitor that is not top aligned) keeps offset 0 on that axis, the
+		 * layout sent to the server no longer matches the local one and pointer input
+		 * lands offset by that difference. */
+		auto crossOffset = [](int ePos, int fPos, int fLogical, int fPixel) -> int
+		{
+			if (fLogical <= 0)
+				return ePos - fPos;
+			return static_cast<int>(
+			    std::lround(static_cast<double>(ePos - fPos) * fPixel / fLogical));
+		};
+
+		if (ax)
 		{
 			if (entry.second.first.x < first.first.x)
 				entry.second.second.x = first.second.x - entry.second.second.w;
 			else
 				entry.second.second.x = first.second.x + first.second.w;
+			if (!ay)
+				entry.second.second.y =
+				    first.second.y +
+				    crossOffset(entry.second.first.y, first.first.y, first.first.h, first.second.h);
 			neighbor = true;
 		}
-		if (alignY(entry.second.first, first.first))
+		if (ay)
 		{
 			if (entry.second.first.y < first.first.y)
 				entry.second.second.y = first.second.y - entry.second.second.h;
 			else
 				entry.second.second.y = first.second.y + first.second.h;
+			if (!ax)
+				entry.second.second.x =
+				    first.second.x +
+				    crossOffset(entry.second.first.x, first.first.x, first.first.w, first.second.w);
 			neighbor = true;
 		}
 
