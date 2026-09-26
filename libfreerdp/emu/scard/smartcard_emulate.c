@@ -1626,7 +1626,14 @@ SCardHandle* find_reader(SmartcardEmulationContext* smartcard, const void* szRea
 	for (size_t x = 0; x < count; x++)
 	{
 		SCardHandle* cur = HashTable_GetItemValue(smartcard->handles, (const void*)keys[x]);
-		WINPR_ASSERT(cur);
+
+		/* HashTable_GetKeys returns a snapshot taken under the lock, and each lookup here takes
+		 * the lock again. A handle disconnected in between -- by the smartcard worker or by
+		 * channel teardown -- is simply gone by now, which is not an invariant violation: skip
+		 * it rather than assert, since WINPR_ASSERT aborts the process and the race only fires
+		 * sometimes. */
+		if (!cur)
+			continue;
 
 		if (cur->unicode != unicode)
 			continue;
