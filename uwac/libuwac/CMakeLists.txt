@@ -48,6 +48,7 @@ generate_protocol_file(server-decoration)
 generate_protocol_file(ivi-application)
 generate_protocol_file(fullscreen-shell-unstable-v1)
 generate_protocol_file(keyboard-shortcuts-inhibit-unstable-v1)
+generate_protocol_file(linux-dmabuf-v1)
 
 include_directories(SYSTEM ${WAYLAND_INCLUDE_DIR})
 include_directories(SYSTEM ${XKBCOMMON_INCLUDE_DIR})
