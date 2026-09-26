@@ -163,6 +163,7 @@ endif()
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
+include(CheckSourceCompiles)
 include(CheckStructHasMember)
 include(TestBigEndian)
 
@@ -221,32 +222,78 @@ check_type_size(SSIZE_T WIN_SSIZE_T)
 set(WINPR_HAVE_SSIZE_T ${HAVE_SSIZE_T})
 set(WINPR_HAVE_WIN_SSIZE_T ${HAVE_WIN_SSIZE_T})
 
-check_symbol_exists(strnstr string.h WINPR_HAVE_STRNSTR)
-check_symbol_exists(strndup string.h WINPR_HAVE_STRNDUP)
+check_source_compiles(
+  C
+  [[
+    #include <string.h>
+
+    int main(void) {
+        strnstr("foo", "o", 3);
+        return 0;
+    }
+    ]]
+  WINPR_HAVE_STRNSTR
+)
+check_source_compiles(
+  C
+  [[
+    #include <string.h>
+
+    int main(void) {
+    strndup("foo", 3);
+    return 0;
+    }
+    ]]
+  WINPR_HAVE_STRNDUP
+)
 
 # pipe2()/accept4() are GNU/BSD extensions; glibc only declares them when _GNU_SOURCE is visible,
 # which this project does not set globally (see cmake/PlatformDefaults.cmake) - request it just
 # for these checks, matching the _GNU_SOURCE the actual call sites (pipe.c) define for themselves.
 set(CMAKE_REQUIRED_DEFINITIONS_SAVE ${CMAKE_REQUIRED_DEFINITIONS})
 set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
-check_symbol_exists(pipe2 unistd.h WINPR_HAVE_PIPE2)
-check_symbol_exists(accept4 sys/socket.h WINPR_HAVE_ACCEPT4)
+check_source_compiles(
+  C
+  [[
+#include <unistd.h>
+
+int main(void) {
+int pipes[2] = {0};
+return pipe2(pipes, 0);
+}
+]]
+  WINPR_HAVE_PIPE2
+)
+
+check_source_compiles(
+  C
+  [[
+#include <sys/socket.h>
+
+int main(void) {
+int sockfd = -1;
+struct sockaddr addr = {0};
+socklen_t addrlen = 0;
+       return accept4(sockfd, &addr, &addrlen, 0);
+}
+]]
+  WINPR_HAVE_ACCEPT4
+)
 set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS_SAVE})
 check_include_files(unistd.h WINPR_HAVE_UNISTD_H)
-check_include_files(execinfo.h WINPR_HAVE_EXECINFO_HEADER)
-if(WINPR_HAVE_EXECINFO_HEADER)
-  check_symbol_exists(backtrace execinfo.h WINPR_HAVE_EXECINFO_BACKTRACE)
-  check_symbol_exists(backtrace_symbols execinfo.h WINPR_HAVE_EXECINFO_BACKTRACE_SYMBOLS)
-  check_symbol_exists(backtrace_symbols_fd execinfo.h WINPR_HAVE_EXECINFO_BACKTRACE_SYMBOLS_FD)
+check_source_compiles(
+  C
+  [[
+        #include <execinfo.h>
 
-  # Some implementations (e.g. Android NDK API < 33) provide execinfo.h but do not define
-  # the backtrace functions. Disable detection for these cases
-  if(WINPR_HAVE_EXECINFO_BACKTRACE AND WINPR_HAVE_EXECINFO_BACKTRACE_SYMBOLS
-     AND WINPR_HAVE_EXECINFO_BACKTRACE_SYMBOLS_FD
-  )
-    set(WINPR_HAVE_EXECINFO_H ON)
-  endif()
-endif()
+        int main(void) {
+            int rc = backtrace(NULL, 23);
+            backtrace_symbols(NULL, 23);
+            backtrace_symbols_fd(NULL, 23, 2);
+        }
+        ]]
+  WINPR_HAVE_EXECINFO_H
+)
 
 check_include_files(stdint.h WINPR_HAVE_STDINT_H)
 check_include_files(inttypes.h WINPR_HAVE_INTTYPES_H)
