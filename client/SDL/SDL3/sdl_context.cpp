@@ -114,6 +114,7 @@ int SdlContext::join()
 void SdlContext::cleanup()
 {
 	std::unique_lock lock(_critical);
+	std::ignore = setFloatbar(false);
 	_windows.clear();
 	_dialog.destroy();
 	_primary.reset();
@@ -1086,6 +1087,8 @@ bool SdlContext::handleEvent(const SDL_MouseMotionEvent& ev)
 {
 	SDL_Event copy{};
 	copy.motion = ev;
+	if (_floatbar.ownsParent(ev.windowID) && !_floatbar.handleParentMotion(ev))
+		return false;
 	/* WM owns the drag (#12447); backstop: button released but button-up swallowed by grab. */
 	if (_rail.enabled() && _rail.suppressServerMotion(ev.windowID))
 	{
@@ -1128,6 +1131,13 @@ bool SdlContext::handleEvent(const SDL_MouseWheelEvent& ev)
 
 bool SdlContext::handleEvent(const SDL_WindowEvent& ev)
 {
+	if (_floatbar.owns(ev.windowID))
+	{
+		if (ev.type == SDL_EVENT_WINDOW_EXPOSED)
+			return _floatbar.redraw();
+		return true;
+	}
+
 	if (!getDisplayChannelContext().handleEvent(ev))
 		return false;
 
@@ -1290,6 +1300,10 @@ bool SdlContext::handleEvent(const SDL_DisplayEvent& ev)
 
 bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 {
+	if (_floatbar.owns(ev.windowID))
+		return handleFloatbar(ev);
+	if (!getWindowForId(ev.windowID))
+		return true;
 	SDL_Event copy = {};
 	copy.button = ev;
 	if (_rail.enabled())
@@ -1887,6 +1901,47 @@ bool SdlContext::setFullscreen(bool enter, bool forceOriginalDisplay)
 			return false;
 	}
 	_fullscreen = enter;
+
+	const auto floatbar = freerdp_settings_get_uint32(context()->settings, FreeRDP_Floatbar);
+	if ((floatbar & 0x01u) == 0)
+		return true;
+
+	const auto mode = floatbar & 0x30u;
+	const bool visible =
+	    (mode == 0x30u) || ((mode == 0x10u) && enter) || ((mode == 0x20u) && !enter);
+	return sdl_push_user_event(SDL_EVENT_USER_FLOATBAR, visible);
+}
+
+bool SdlContext::setFloatbar(bool visible)
+{
+	if (!visible)
+	{
+		_floatbar.hide();
+		return true;
+	}
+
+	if (_windows.empty())
+		return true;
+
+	const auto options = freerdp_settings_get_uint32(context()->settings, FreeRDP_Floatbar);
+	auto* parent = _windows.begin()->second.window();
+	return _floatbar.show(parent, (options & 0x02u) != 0, (options & 0x04u) != 0);
+}
+
+bool SdlContext::handleFloatbar(const SDL_MouseButtonEvent& ev)
+{
+	switch (_floatbar.handleEvent(ev))
+	{
+		case SdlFloatbar::Action::Minimize:
+			return setMinimized();
+		case SdlFloatbar::Action::ToggleFullscreen:
+			return toggleFullscreen();
+		case SdlFloatbar::Action::Disconnect:
+			freerdp_abort_connect_context(context());
+			return true;
+		case SdlFloatbar::Action::None:
+			return true;
+	}
 	return true;
 }
 
