@@ -545,7 +545,9 @@
 					[bookmarkEditorController
 					    setTitle:NSLocalizedString(@"Add Connection", @"Add Connection title")];
 					[bookmarkEditorController setDelegate:self];
-					[bookmarkEditorController setHidesBottomBarWhenPushed:YES];
+					// breaks nav bar item updates with the top tab bar (iPad)
+					if ([[UIDevice currentDevice] userInterfaceIdiom] != UIUserInterfaceIdiomPad)
+						[bookmarkEditorController setHidesBottomBarWhenPushed:YES];
 					[[self navigationController] pushViewController:bookmarkEditorController
 					                                       animated:YES];
 				}
@@ -651,7 +653,9 @@
 	{
 		BookmarkEditorController *editBookmarkController =
 		    [[[BookmarkEditorController alloc] initWithBookmark:bookmark] autorelease];
-		[editBookmarkController setHidesBottomBarWhenPushed:YES];
+		// breaks nav bar item updates with the top tab bar (iPad)
+		if ([[UIDevice currentDevice] userInterfaceIdiom] != UIUserInterfaceIdiomPad)
+			[editBookmarkController setHidesBottomBarWhenPushed:YES];
 		[editBookmarkController setTitle:bookmark_editor_title];
 		[editBookmarkController setDelegate:self];
 		[[self navigationController] pushViewController:editBookmarkController animated:YES];
