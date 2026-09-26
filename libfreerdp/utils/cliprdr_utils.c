@@ -128,7 +128,11 @@ static BOOL contains_dotdot(const WCHAR* path, size_t path_length)
 		if (tstlen < 2)
 			return FALSE;
 		if (tst[1] != '.')
+		{
+			tst++;
+			tstlen--;
 			continue;
+		}
 
 		/* Filter .. sequences in file or directory names */
 		if ((tst == path) || (*(tst - 1) == L'/') || (*(tst - 1) == L'\\'))
