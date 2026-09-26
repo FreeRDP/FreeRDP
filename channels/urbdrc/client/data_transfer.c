@@ -139,7 +139,14 @@ static UINT urb_write_completion(WINPR_ATTR_UNUSED IUDEVICE* pdev,
 		return ERROR_OUTOFMEMORY;
 	}
 
-	Stream_Write_UINT32(out, 0);                /** HResult */
+	/* [MS-RDPEUSB] URB_COMPLETION: a failed URB must also fail the IRP, otherwise the server side
+	 * (e.g. usbstor) never runs its stall recovery (SYNC_RESET_PIPE_AND_CLEAR_STALL) */
+	HRESULT hr = S_OK;
+	const UINT32 mask = 0x80000000ul;
+	const UINT32 masked = usbd_status & mask;
+	if (masked == mask)
+		hr = HRESULT_FROM_WIN32(ERROR_GEN_FAILURE);
+	Stream_Write_INT32(out, hr);                /** HResult */
 	Stream_Write_UINT32(out, OutputBufferSize); /** OutputBufferSize */
 	Stream_Seek(out, payloadSize);
 
