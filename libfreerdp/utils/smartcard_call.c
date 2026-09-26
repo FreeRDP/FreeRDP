@@ -49,15 +49,20 @@
 #if defined(WITH_SMARTCARD_EMULATE)
 #include <freerdp/emulate/scard/smartcard_emulate.h>
 
-#define wrap_raw(ctx, fkt, ...)                                         \
-	ctx->useEmulatedCard ? Emulate_##fkt(ctx->emulation, ##__VA_ARGS__) \
-	                     : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
+/* The ternary is fully parenthesized: on _WIN32 wrap() below expands straight to wrap_raw(),
+ * so an unparenthesized ternary would swallow any operator applied to the result. For example
+ * `wrap(ctx, SCardIsValidContext, h) == SCARD_S_SUCCESS` would parse as
+ * `useEmulatedCard ? Emulate_...(h) : (pfn...(h) == SCARD_S_SUCCESS)`, i.e. the comparison only
+ * applies to the non-emulated branch. */
+#define wrap_raw(ctx, fkt, ...)                                              \
+	((ctx)->useEmulatedCard ? Emulate_##fkt((ctx)->emulation, ##__VA_ARGS__) \
+	                        : (ctx)->pWinSCardApi->pfn##fkt(__VA_ARGS__))
 #define wrap_ptr(ctx, fkt, ...) wrap_raw(ctx, fkt, ##__VA_ARGS__)
 #else
 #define wrap_raw(ctx, fkt, ...) \
-	ctx->useEmulatedCard ? SCARD_F_INTERNAL_ERROR : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
+	((ctx)->useEmulatedCard ? SCARD_F_INTERNAL_ERROR : (ctx)->pWinSCardApi->pfn##fkt(__VA_ARGS__))
 #define wrap_ptr(ctx, fkt, ...) \
-	ctx->useEmulatedCard ? nullptr : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
+	((ctx)->useEmulatedCard ? nullptr : (ctx)->pWinSCardApi->pfn##fkt(__VA_ARGS__))
 #endif
 
 #if defined(_WIN32)
