@@ -441,6 +441,9 @@ BOOL freerdp_settings_get_bool(WINPR_ATTR_UNUSED const rdpSettings* settings,
 		case FreeRDP_RedirectClipboard:
 			return settings->RedirectClipboard;
 
+		case FreeRDP_ClipboardRawTransfer:
+			return settings->ClipboardRawTransfer;
+
 		case FreeRDP_RedirectDrives:
 			return settings->RedirectDrives;
 
@@ -1181,6 +1184,10 @@ BOOL freerdp_settings_set_bool(WINPR_ATTR_UNUSED rdpSettings* settings,
 
 		case FreeRDP_RedirectClipboard:
 			settings->RedirectClipboard = cnv.c;
+			break;
+
+		case FreeRDP_ClipboardRawTransfer:
+			settings->ClipboardRawTransfer = cnv.c;
 			break;
 
 		case FreeRDP_RedirectDrives:
