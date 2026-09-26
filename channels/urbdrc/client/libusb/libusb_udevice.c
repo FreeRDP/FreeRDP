@@ -407,17 +407,15 @@ static const LIBUSB_ENDPOINT_DESCEIPTOR* func_get_ep_desc(LIBUSB_CONFIG_DESCRIPT
 
 static void LIBUSB_CALL func_bulk_transfer_cb(struct libusb_transfer* transfer)
 {
-	ASYNC_TRANSFER_USER_DATA* user_data = nullptr;
 	uint32_t streamID = 0;
-	wArrayList* list = nullptr;
 
-	user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
+	ASYNC_TRANSFER_USER_DATA* user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
 	if (!user_data)
 	{
 		WLog_ERR(TAG, "Invalid transfer->user_data!");
 		return;
 	}
-	list = user_data->queue;
+	wArrayList* list = user_data->queue;
 	ArrayList_Lock(list);
 	streamID = stream_id_from_buffer(transfer);
 
@@ -427,10 +425,46 @@ static void LIBUSB_CALL func_bulk_transfer_cb(struct libusb_transfer* transfer)
 		    ((STREAM_ID_PROXY << 30) | user_data->idev->get_ReqCompletion(user_data->idev));
 		const UINT32 RequestID = streamID & INTERFACE_ID_MASK;
 
+		UINT32 status = USBD_STATUS_SUCCESS;
+		switch (transfer->status)
+		{
+			case LIBUSB_TRANSFER_COMPLETED:
+				status = USBD_STATUS_SUCCESS;
+				break;
+
+			case LIBUSB_TRANSFER_ERROR:
+				status = USBD_STATUS_CANCELED;
+				break;
+
+			case LIBUSB_TRANSFER_TIMED_OUT:
+				status = USBD_STATUS_TIMEOUT;
+				break;
+
+			case LIBUSB_TRANSFER_CANCELLED:
+				status = USBD_STATUS_CANCELED;
+				break;
+
+			case LIBUSB_TRANSFER_STALL:
+				status = USBD_STATUS_STALL_PID;
+				break;
+
+			case LIBUSB_TRANSFER_NO_DEVICE:
+				status = USBD_STATUS_DEVICE_GONE;
+				break;
+
+			case LIBUSB_TRANSFER_OVERFLOW:
+				status = USBD_STATUS_BABBLE_DETECTED;
+				break;
+
+			default:
+				status = USBD_STATUS_CANCELED;
+				break;
+		}
+
 		user_data->cb(user_data->idev, user_data->callback, user_data->data, InterfaceId,
 		              user_data->noack, user_data->MessageId, RequestID,
-		              WINPR_ASSERTING_INT_CAST(uint32_t, transfer->num_iso_packets),
-		              transfer->status, user_data->StartFrame, user_data->ErrorCount,
+		              WINPR_ASSERTING_INT_CAST(uint32_t, transfer->num_iso_packets), status,
+		              user_data->StartFrame, user_data->ErrorCount,
 		              WINPR_ASSERTING_INT_CAST(uint32_t, transfer->actual_length),
 		              user_data->transferDir);
 		user_data->data = nullptr;
