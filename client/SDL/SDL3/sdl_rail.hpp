@@ -205,6 +205,10 @@ class SdlRail
 	[[nodiscard]] SdlRailIcon* iconCacheLookup(uint32_t cacheId, uint32_t cacheEntry);
 
   private:
+	/* Win32: redraw while a native size/move loop blocks our loop. */
+	static void redrawDuringSizeMove(void* userdata);
+	/* Win32: a resize on the native frame drives the local resize frame like a server one. */
+	static void nativeResize(void* userdata, SDL_WindowID id, int moveType, bool end);
 	SdlContext* _context;
 	RailClientContext* _rail = nullptr;
 	/* Written on the RDP thread (RemoteApp mode toggles), read lock-free on the main thread. */
@@ -214,6 +218,8 @@ class SdlRail
 	/* The desktop window may show: RAIL started, a logon prompt, or the hold ran out. */
 	std::atomic<bool> _desktopReleased = false;
 	std::atomic<uint64_t> _desktopHoldUntil = 0; /* end of the logon desktop hold (ticks) */
+	uint32_t _sizeMoveRedraws = 0;
+	SDL_WindowID _nativeResizeId = 0; /* window resized on its native frame, 0 = none */
 	/* Last work area reported to the server (server coordinates). */
 	SDL_Rect _sentWorkArea = { 0, 0, 0, 0 };
 	/* Guards _windows (RDP thread mutates, main thread paints/iterates, GFX thread looks up).

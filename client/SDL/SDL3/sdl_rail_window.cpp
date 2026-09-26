@@ -424,7 +424,9 @@ SDL_Rect SdlRailWindow::bandMargins() const
 
 SDL_Rect SdlRailWindow::bandInsets() const
 {
-	if (railPlatformCaps().band == RailBandMechanism::None)
+	/* NativeFrame: the OS adds the band outside the client area, not part of our geometry. */
+	const auto band = railPlatformCaps().band;
+	if ((band == RailBandMechanism::None) || (band == RailBandMechanism::NativeFrame))
 		return { 0, 0, 0, 0 };
 	return bandMargins();
 }
@@ -591,8 +593,10 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 	}
 	else
 	{
-		/* Transparent so the band ring outside the content stays invisible. */
-		Uint32 flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_HIDDEN;
+		/* Transparent hides the band ring; a native frame needs a framed window. */
+		Uint32 flags = SDL_WINDOW_HIDDEN;
+		if (_isPopup || (caps.band != RailBandMechanism::NativeFrame))
+			flags |= SDL_WINDOW_BORDERLESS;
 		if (caps.supportsTransparentWindows)
 			flags |= SDL_WINDOW_TRANSPARENT;
 		_win = std::make_unique<SdlWindow>(
@@ -614,9 +618,13 @@ bool SdlRailWindow::create(SDL_Window* parent, const SDL_Rect& parentRect)
 		         static_cast<uint32_t>(_id), _windowRect.w, _windowRect.h);
 	}
 
-	/* Wayland: bind the seat early. */
+	/* Backend setup (Wayland seat, Win32 frame), then the server geometry again: dropping the
+	 * Win32 caption grew the client area. */
 	if (!_isPopup)
+	{
 		railPlatformPrepareWindow(_win->window());
+		std::ignore = railPlatformSetWindowRect(_win->window(), vis);
+	}
 
 	WLog_DBG(TAG,
 	         "create id=0x%08" PRIx32 " sdl=%" PRIu32 " %s vis=%dx%d+%d+%d margins=L%d,T%d,R%d,B%d "
@@ -767,6 +775,7 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		int ch = 0;
 		SDL_GetWindowSize(_win->window(), &cw, &ch);
 		bool applied = false;
+		bool placed = false; /* railPlatformSetWindowRect set position and size at once */
 		/* Apply position and size if changed. */
 		if (_isPopup && parent)
 		{
@@ -785,13 +794,16 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 			SDL_GetWindowPosition(_win->window(), &cx, &cy);
 			if ((cx != vis.x) || (cy != vis.y))
 			{
-				SDL_SetWindowPosition(_win->window(), vis.x, vis.y);
+				placed = railPlatformSetWindowRect(_win->window(), vis);
+				if (!placed)
+					SDL_SetWindowPosition(_win->window(), vis.x, vis.y);
 				applied = true;
 			}
 		}
 		if ((cw != vis.w) || (ch != vis.h))
 		{
-			std::ignore = _win->resize({ vis.w, vis.h });
+			if (!placed && !railPlatformSetWindowRect(_win->window(), vis))
+				std::ignore = _win->resize({ vis.w, vis.h });
 			applied = true;
 			/* Settle window resize via SDL_SyncWindow before reading back geometry to avoid
 			 * adopting transient dimensions while configure events are in flight. */

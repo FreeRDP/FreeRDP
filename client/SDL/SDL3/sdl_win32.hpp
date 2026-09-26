@@ -31,5 +31,20 @@ bool sdl_win32_restack_windows(const std::vector<SDL_Window*>& topToBottom);
 /* Run native move/size loop (blocking). */
 void sdl_win32_run_move_size(SDL_Window* window, bool move, int wmszEdge);
 
+/* Give a toplevel the native (invisible) sizing frame, without a caption. */
+bool sdl_win32_use_native_frame(SDL_Window* window);
+
+/* Place a native-frame window by its client rect; false for other windows. */
+bool sdl_win32_set_client_rect(SDL_Window* window, const SDL_Rect& rect);
+
+/* Callbacks invoked during native modal loop dispatch. */
+struct SdlWin32SizeMoveHandler
+{
+	void* userdata = nullptr;
+	void (*redraw)(void* userdata) = nullptr;
+	void (*sizing)(void* userdata, SDL_WindowID id, int wmszEdge, bool end) = nullptr;
+};
+void sdl_win32_set_size_move_handler(const SdlWin32SizeMoveHandler& handler);
+
 /* Post the left button release the move/size loop consumed. */
 bool sdl_win32_send_left_button_release(SDL_Window* window);
