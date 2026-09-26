@@ -422,8 +422,8 @@
 		{
 			case SECTION_BOOKMARKS:
 			{
-				int fromIdx = [self bookmarkIndexFromIndexPath:fromIndexPath];
-				int toIdx = [self bookmarkIndexFromIndexPath:toIndexPath];
+				NSInteger fromIdx = [self bookmarkIndexFromIndexPath:fromIndexPath];
+				NSInteger toIdx = [self bookmarkIndexFromIndexPath:toIndexPath];
 				ComputerBookmark *temp_bookmark =
 				    [[_manual_bookmarks objectAtIndex:fromIdx] retain];
 				[_manual_bookmarks removeObjectAtIndex:fromIdx];
@@ -855,13 +855,13 @@
 	}
 }
 
-- (int)bookmarkIndexFromIndexPath:(NSIndexPath *)indexPath
+- (NSInteger)bookmarkIndexFromIndexPath:(NSIndexPath *)indexPath
 {
 	return [indexPath row] -
 	       ((_history_search_result != nil) ? [_history_search_result count] : 0) - 1;
 }
 
-- (int)historyIndexFromIndexPath:(NSIndexPath *)indexPath
+- (NSInteger)historyIndexFromIndexPath:(NSIndexPath *)indexPath
 {
 	return [indexPath row] - 1;
 }

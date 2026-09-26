@@ -13,7 +13,7 @@
 #import "OrderedDictionary.h"
 
 @interface EditorSelectionController (Private)
-- (OrderedDictionary *)selectionForIndex:(int)index;
+- (OrderedDictionary *)selectionForIndex:(NSInteger)index;
 @end
 
 @implementation EditorSelectionController
@@ -38,7 +38,8 @@
 			{
 				NSUInteger idx = [(OrderedDictionary *)[selections objectAtIndex:i]
 				    indexForValue:[NSNumber numberWithInt:[_params intForKeyPath:entry]]];
-				[_cur_selections addObject:[NSNumber numberWithInt:(idx != NSNotFound ? idx : 0)]];
+				[_cur_selections
+				    addObject:[NSNumber numberWithInteger:(idx != NSNotFound ? idx : 0)]];
 			}
 			else
 				[_cur_selections addObject:[NSNumber numberWithInt:0]];
@@ -128,14 +129,14 @@
 
 		// update selection index and params value
 		[_cur_selections replaceObjectAtIndex:[indexPath section]
-		                           withObject:[NSNumber numberWithInt:[indexPath row]]];
+		                           withObject:[NSNumber numberWithInteger:[indexPath row]]];
 		[_params setInt:sel_value forKeyPath:[_entries objectAtIndex:[indexPath section]]];
 	}
 }
 
 #pragma mark - Convenience functions
 
-- (OrderedDictionary *)selectionForIndex:(int)index
+- (OrderedDictionary *)selectionForIndex:(NSInteger)index
 {
 	return (OrderedDictionary *)[_selections objectAtIndex:index];
 }

@@ -15,10 +15,10 @@
 @optional
 // called when a function key was pressed and a virtual keycode is provided
 //  @key: virtual key code
-- (void)advancedKeyPressedVKey:(int)key;
+- (void)advancedKeyPressedVKey:(NSInteger)key;
 // called when a function key was pressed and the keys unicode is provided
 //  @key: unicode character
-- (void)advancedKeyPressedUnicode:(int)key;
+- (void)advancedKeyPressedUnicode:(NSInteger)key;
 @end
 
 @interface AdvancedKeyboardView : UIView

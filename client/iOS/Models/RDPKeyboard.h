@@ -50,13 +50,13 @@
 - (void)reset;
 
 // sends the given unicode character to the server
-- (void)sendUnicode:(int)character;
+- (void)sendUnicode:(NSInteger)character;
 
 // send a key stroke event using the given virtual key code
-- (void)sendVirtualKeyCode:(int)keyCode;
+- (void)sendVirtualKeyCode:(NSInteger)keyCode;
 
 // send a single key down or up event for the given virtual key code
-- (void)sendVirtualKey:(int)vKey up:(BOOL)up;
+- (void)sendVirtualKey:(NSInteger)vKey up:(BOOL)up;
 
 // toggle ctrl key, returns true if pressed, otherwise false
 - (void)toggleCtrlKey;
