@@ -53,11 +53,12 @@ static RailPlatformCaps detectRailPlatformCaps()
 	}
 	else if (sdl::utils::isWindowsDriver())
 	{
-		/* Windows: DWM always composites; no band (a transparent ring would still take clicks). */
+		/* Windows: DWM always composites; the band is the native sizing frame. */
 		caps.kind = RailPlatformKind::Win32;
 		caps.supportsWindowPositions = true;
 		caps.supportsTransparentWindows = true;
 		caps.supportsRestack = true;
+		caps.band = RailBandMechanism::NativeFrame;
 		caps.drag = RailDragModel::ModalLoop;
 	}
 	return caps;
@@ -131,9 +132,27 @@ void railPlatformPrepareWindow(SDL_Window* window)
 		case RailPlatformKind::Wayland:
 			sdl_wayland_move_prepare(window);
 			break;
+		case RailPlatformKind::Win32:
+			if (!sdl_win32_use_native_frame(window))
+				WLog_WARN(TAG, "native window frame not available");
+			break;
 		default:
 			break;
 	}
+}
+
+bool railPlatformSetWindowRect(SDL_Window* window, const SDL_Rect& rect)
+{
+	if (railPlatformCaps().kind == RailPlatformKind::Win32)
+		return sdl_win32_set_client_rect(window, rect);
+	return false;
+}
+
+void railPlatformSetNativeLoopHandler(const RailNativeLoopHandler& handler)
+{
+	/* WMSZ_* equals RAIL_WMSZ_*. */
+	if (railPlatformCaps().kind == RailPlatformKind::Win32)
+		sdl_win32_set_size_move_handler({ handler.userdata, handler.redraw, handler.resize });
 }
 
 bool railPlatformSetBand(SDL_Window* window, const SDL_Rect& insets)
@@ -145,6 +164,7 @@ bool railPlatformSetBand(SDL_Window* window, const SDL_Rect& insets)
 	{
 		case RailPlatformKind::X11:
 			return sdl_x11_set_frame_extents(window, insets.x, insets.w, insets.y, insets.h);
+		case RailPlatformKind::Win32: /* nothing to declare, the OS owns the frame */
 		default:
 			return false;
 	}

@@ -49,7 +49,10 @@ SdlRail::SdlRail(SdlContext* context) : _context(context)
 {
 }
 
-SdlRail::~SdlRail() = default;
+SdlRail::~SdlRail()
+{
+	railPlatformSetNativeLoopHandler({});
+}
 
 SdlRail* SdlRail::get(rdpContext* context)
 {
@@ -634,6 +637,14 @@ void SdlRail::applyZOrder()
 		WLog_VRB(TAG, "zorder apply deferred: local move 0x%08" PRIx32 " active", _localMove.id);
 		return;
 	}
+	/* Nor while Windows resizes one on its native frame. */
+	if (_nativeResizeId != 0)
+	{
+		const auto* resizing = getWindowBySdlId(_nativeResizeId);
+		if (resizing && !resizing->isDeleted())
+			return;
+		_nativeResizeId = 0; /* destroyed mid-resize: no end callback comes */
+	}
 	/* Restack top-level windows (skip popups and hidden windows). */
 	std::vector<SDL_Window*> stack;
 	std::vector<uint32_t> applied;
@@ -744,6 +755,7 @@ bool SdlRail::init(RailClientContext* rail)
 
 	WLog_WARN(TAG, "RemoteApp/RAIL support in the SDL client is experimental");
 	const RailPlatformCaps& caps = railPlatformCaps();
+	railPlatformSetNativeLoopHandler({ this, redrawDuringSizeMove, nativeResize });
 	WLog_DBG(TAG, "RAIL channel initialized: driver=%s windowPositions=%d transparentWindows=%d",
 	         SDL_GetCurrentVideoDriver(), caps.supportsWindowPositions ? 1 : 0,
 	         caps.supportsTransparentWindows ? 1 : 0);
@@ -927,6 +939,51 @@ bool SdlRail::suppressServerMotion(SDL_WindowID id)
 	return appWindow && appWindow->localMoveActive();
 }
 
+void SdlRail::redrawDuringSizeMove(void* userdata)
+{
+	auto* rail = static_cast<SdlRail*>(userdata);
+	WINPR_ASSERT(rail);
+	rail->_sizeMoveRedraws++;
+	if (!rail->_context->drawToWindows())
+		WLog_WARN(TAG, "redraw during the native size/move loop failed");
+}
+
+void SdlRail::nativeResize(void* userdata, SDL_WindowID id, int moveType, bool end)
+{
+	auto* rail = static_cast<SdlRail*>(userdata);
+	WINPR_ASSERT(rail);
+	std::unique_lock lock(rail->_windowsLock);
+	if (!end)
+	{
+		/* A server-started drag runs the same loop and already drives the frame. */
+		if (rail->_localMove.id != 0)
+			return;
+		auto* appWindow = rail->getWindowBySdlId(id);
+		if (!appWindow || appWindow->isPopup() || appWindow->effectivelyMaximized())
+			return;
+		WLog_DBG(TAG, "native resize start id=0x%08" PRIx64 " type=%d", appWindow->id(), moveType);
+		appWindow->setLocalMoveActive(true);
+		const RailEdges e = railEdges(static_cast<uint16_t>(moveType));
+		appWindow->setResizeAnchor(e.left, e.top);
+		rail->_nativeResizeId = id;
+		return;
+	}
+	if (rail->_nativeResizeId != id)
+		return;
+	rail->_nativeResizeId = 0;
+	auto* appWindow = rail->getWindowBySdlId(id);
+	if (!appWindow || !appWindow->window() || appWindow->isDeleted())
+		return;
+	int x = 0;
+	int y = 0;
+	int w = 0;
+	int h = 0;
+	SDL_GetWindowSize(appWindow->window(), &w, &h);
+	SDL_GetWindowPosition(appWindow->window(), &x, &y);
+	WLog_DBG(TAG, "native resize end id=0x%08" PRIx64 " %d,%d %dx%d", appWindow->id(), x, y, w, h);
+	rail->reportAndAdopt(appWindow, x, y, w, h);
+}
+
 void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 {
 	const RailDragModel model = railPlatformCaps().drag;
@@ -975,8 +1032,10 @@ void SdlRail::handleLocalMoveRequested(uint32_t windowId, uint16_t moveType)
 	{
 		SDL_Window* sdlWindow = appWindow->window();
 		lock.unlock();
+		_sizeMoveRedraws = 0;
 		railPlatformRunModalDrag(sdlWindow, moveType);
-		WLog_DBG(TAG, "modal drag end id=0x%08" PRIx32, windowId);
+		WLog_DBG(TAG, "modal drag end id=0x%08" PRIx32 " redraws=%" PRIu32, windowId,
+		         _sizeMoveRedraws);
 		completeLocalMoveIfPending();
 	}
 }

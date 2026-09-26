@@ -35,7 +35,8 @@ enum class RailPlatformKind
 enum class RailBandMechanism
 {
 	None,
-	FrameExtents /* X11 _GTK_FRAME_EXTENTS, published before the resize */
+	FrameExtents, /* X11 _GTK_FRAME_EXTENTS, published before the resize */
+	NativeFrame   /* Win32 sizing frame: the OS adds it outside the client area */
 };
 
 /* Drag and resize execution model. */
@@ -75,6 +76,19 @@ struct RailEdges
 
 /* Per-window setup before the first drag (Wayland: bind the seat for the press serial). */
 void railPlatformPrepareWindow(SDL_Window* window);
+
+/* Place a window by its client rect where SDL cannot (Win32 native frame); false otherwise. */
+bool railPlatformSetWindowRect(SDL_Window* window, const SDL_Rect& rect);
+
+/* ModalLoop: redraw on the native loop's ticks; resize at start (RAIL_WMSZ_* edge) and end
+ * of a native-frame resize. A default handler unregisters. */
+struct RailNativeLoopHandler
+{
+	void* userdata = nullptr;
+	void (*redraw)(void* userdata) = nullptr;
+	void (*resize)(void* userdata, SDL_WindowID id, int moveType, bool end) = nullptr;
+};
+void railPlatformSetNativeLoopHandler(const RailNativeLoopHandler& handler);
 
 /* Declare the band outside the content (x=L y=T w=R h=B) the way caps.band says. */
 bool railPlatformSetBand(SDL_Window* window, const SDL_Rect& insets);
