@@ -203,7 +203,11 @@ char* crypto_read_pem(const char* WINPR_RESTRICT filename, size_t* WINPR_RESTRIC
 	if (plength)
 		*plength = 0;
 
-	fp = winpr_fopen(filename, "r");
+	/* Binary mode: the size is taken from SEEK_END and then demanded in a single fread().
+	 * In text mode on Windows CRLF collapses to LF, fewer than size bytes come back and the
+	 * read fails, which makes every CRLF-terminated PEM unreadable -- and that is what the
+	 * Windows tooling writes. */
+	fp = winpr_fopen(filename, "rb");
 	if (!fp)
 		goto fail;
 
