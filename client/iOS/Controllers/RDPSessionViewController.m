@@ -17,8 +17,6 @@
 #import "Utils.h"
 #import "Toast+UIView.h"
 #import "ConnectionParams.h"
-#import "CredentialsInputController.h"
-#import "VerifyCertificateController.h"
 
 #define TOOLBAR_HEIGHT 44
 #define ADVANCED_KEYBOARD_HEIGHT 200
@@ -527,22 +525,99 @@
 
 - (void)session:(RDPSession *)session requestsAuthenticationWithParams:(NSMutableDictionary *)params
 {
-	CredentialsInputController *view_controller =
-	    [[[CredentialsInputController alloc] initWithNibName:@"CredentialsInputView"
-	                                                  bundle:nil
-	                                                 session:_session
-	                                                  params:params] autorelease];
-	[self presentViewController:view_controller animated:YES completion:nil];
+	// custom view --> stock UIAlertController
+	__block UIAlertController *alert = [UIAlertController
+	    alertControllerWithTitle:NSLocalizedString(@"Credentials", @"Credentials title")
+	                     message:NSLocalizedString(
+	                                 @"Please provide the missing user information.",
+	                                 @"Credentials input view message")
+	              preferredStyle:UIAlertControllerStyleAlert];
+
+	// username input field
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+		[textField
+		    setPlaceholder:NSLocalizedString(@"Username", @"Credentials Input Username hint")];
+		[textField setText:[params valueForKey:@"username"]];
+		[textField setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+		[textField setAutocorrectionType:UITextAutocorrectionTypeNo];
+	}];
+
+	// password input field
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+		[textField
+		    setPlaceholder:NSLocalizedString(@"Password", @"Credentials Input Password hint")];
+		[textField setText:[params valueForKey:@"password"]];
+		[textField setSecureTextEntry:YES];
+	}];
+
+	// domain input field
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+		[textField setPlaceholder:NSLocalizedString(@"Domain", @"Credentials Input Domain hint")];
+		[textField setText:[params valueForKey:@"domain"]];
+		[textField setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+		[textField setAutocorrectionType:UITextAutocorrectionTypeNo];
+	}];
+
+	// cancel btn
+	UIAlertAction *cancelAction =
+	    [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel Button")
+	                             style:UIAlertActionStyleCancel
+	                           handler:^(UIAlertAction *action) {
+		                           [params setValue:[NSNumber numberWithBool:NO] forKey:@"result"];
+		                           [[session uiRequestCompleted] signal];
+	                           }];
+	[alert addAction:cancelAction];
+
+	// login btn
+	UIAlertAction *loginAction = [UIAlertAction
+	    actionWithTitle:NSLocalizedString(@"Login", @"Login Button")
+	              style:UIAlertActionStyleDefault
+	            handler:^(UIAlertAction *action) {
+		            NSArray *fields = [alert textFields];
+		            [params setValue:[[fields objectAtIndex:0] text] forKey:@"username"];
+		            [params setValue:[[fields objectAtIndex:1] text] forKey:@"password"];
+		            [params setValue:[[fields objectAtIndex:2] text] forKey:@"domain"];
+		            [params setValue:[NSNumber numberWithBool:YES] forKey:@"result"];
+		            [[session uiRequestCompleted] signal];
+	            }];
+	[alert addAction:loginAction];
+    
+	[alert setPreferredAction:loginAction];
+
+	[self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)session:(RDPSession *)session verifyCertificateWithParams:(NSMutableDictionary *)params
 {
-	VerifyCertificateController *view_controller =
-	    [[[VerifyCertificateController alloc] initWithNibName:@"VerifyCertificateView"
-	                                                   bundle:nil
-	                                                  session:_session
-	                                                   params:params] autorelease];
-	[self presentViewController:view_controller animated:YES completion:nil];
+	NSString *message = [NSString
+	    stringWithFormat:@"%@\n\n%@ %@",
+	                     NSLocalizedString(@"The identity of the remote computer cannot be "
+	                                       @"verified. Do you want to connect anyway?",
+	                                       @"Verify certificate view message"),
+	                     NSLocalizedString(@"Issuer:", @"Verify certificate view issuer label"),
+	                     [params valueForKey:@"issuer"]];
+	UIAlertController *alert =
+	    [UIAlertController alertControllerWithTitle:nil
+	                                        message:message
+	                                 preferredStyle:UIAlertControllerStyleAlert];
+
+	[alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"No", @"No Button")
+	                                          style:UIAlertActionStyleCancel
+	                                        handler:^(UIAlertAction *action) {
+		                                        [params setValue:[NSNumber numberWithBool:NO]
+		                                                  forKey:@"result"];
+		                                        [[session uiRequestCompleted] signal];
+	                                        }]];
+
+	[alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Yes", @"Yes Button")
+	                                          style:UIAlertActionStyleDefault
+	                                        handler:^(UIAlertAction *action) {
+		                                        [params setValue:[NSNumber numberWithBool:YES]
+		                                                  forKey:@"result"];
+		                                        [[session uiRequestCompleted] signal];
+	                                        }]];
+
+	[self presentViewController:alert animated:YES completion:nil];
 }
 
 - (CGSize)sizeForFitScreenForSession:(RDPSession *)session
