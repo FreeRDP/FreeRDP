@@ -358,6 +358,10 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	if (printer->is_default)
 		flags |= RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER;
 
+#ifdef CHANNEL_RDPEXPS_CLIENT
+	flags |= RDPDR_PRINTER_ANNOUNCE_FLAG_XPSFORMAT;
+#endif
+
 	if (!printer_read_setting(path, PRN_CONF_PNP, &PnPName, &PnPNameLen))
 	{
 	}
@@ -908,10 +912,8 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 				return ERROR_INVALID_DATA;
 
 			Stream_Read_UINT32(s, flags);
-			WLog_ERR(TAG,
-			         "Ignoring unhandled message PAKID_PRN_USING_XPS [printerID=%08" PRIx32
-			         ", flags=%08" PRIx32 "]",
-			         eventID, flags);
+			WLog_INFO(TAG, "Using XPS print format [printerID=%08" PRIx32 ", flags=%08" PRIx32 "]",
+			          eventID, flags);
 		}
 		break;
 
@@ -934,6 +936,7 @@ static UINT printer_free(DEVICE* device)
 	UINT error = 0;
 
 	WINPR_ASSERT(printer_dev);
+	freerdp_printer_device_unregister(printer_dev->rdpcontext, printer_dev->device.id);
 
 	if (printer_dev->async)
 	{
@@ -1052,6 +1055,8 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 		WLog_ERR(TAG, "RegisterDevice failed with error %" PRIu32 "!", error);
 		goto error_out;
 	}
+	if (!freerdp_printer_device_register(printer_dev->rdpcontext, printer_dev->device.id, printer))
+		WLog_WARN(TAG, "failed to register printer device for RDPEXPS");
 
 	if (printer_dev->async)
 	{
