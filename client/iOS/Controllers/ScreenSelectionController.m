@@ -163,7 +163,7 @@
 		return;
 
 	// has selection change?
-	int cur_selection = ([indexPath section] == 0 ? _selection_color : _selection_resolution);
+	NSInteger cur_selection = ([indexPath section] == 0 ? _selection_color : _selection_resolution);
 	if ([indexPath row] != cur_selection)
 	{
 		[tableView deselectRowAtIndexPath:indexPath animated:NO];

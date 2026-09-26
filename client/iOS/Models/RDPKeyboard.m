@@ -12,8 +12,8 @@
 #include <freerdp/locale/keyboard.h>
 
 @interface RDPKeyboard (Private)
-- (void)sendUnicodeKey:(int)character up:(BOOL)up;
-- (void)handleSpecialKey:(int)character;
+- (void)sendUnicodeKey:(NSInteger)character up:(BOOL)up;
+- (void)handleSpecialKey:(NSInteger)character;
 - (void)handleAlphaNumChar:(int)character;
 - (void)notifyDelegateModifiersChanged;
 @end
@@ -156,10 +156,10 @@
 
 // handles button pressed input event from the iOS keyboard
 // performs all conversions etc.
-- (void)sendUnicode:(int)character
+- (void)sendUnicode:(NSInteger)character
 {
 	if ((character >= 0) && (character < 256) && isalnum((unsigned char)character))
-		[self handleAlphaNumChar:character];
+		[self handleAlphaNumChar:(int)character];
 	else
 		[self handleSpecialKey:character];
 
@@ -167,16 +167,17 @@
 }
 
 // send a backspace key press
-- (void)sendVirtualKeyCode:(int)keyCode
+- (void)sendVirtualKeyCode:(NSInteger)keyCode
 {
 	[self sendVirtualKey:keyCode up:NO];
 	[self sendVirtualKey:keyCode up:YES];
 }
 
 // sends the vk code to the session
-- (void)sendVirtualKey:(int)vKey up:(BOOL)up
+- (void)sendVirtualKey:(NSInteger)vKey up:(BOOL)up
 {
-	DWORD scancode = GetVirtualScanCodeFromVirtualKeyCode(vKey, 4);
+	const DWORD dvKey = WINPR_ASSERTING_INT_CAST(DWORD, vKey);
+	DWORD scancode = GetVirtualScanCodeFromVirtualKeyCode(dvKey, 4);
 	int flags = (up ? KBD_FLAGS_RELEASE : KBD_FLAGS_DOWN);
 	flags |= ((scancode & KBDEXT) ? KBD_FLAGS_EXTENDED : 0);
 	[_session
@@ -271,7 +272,7 @@
 		[self sendVirtualKey:VK_LSHIFT up:YES];
 }
 
-- (void)handleSpecialKey:(int)character
+- (void)handleSpecialKey:(NSInteger)character
 {
 	if ((character >= 0) && (character < 256) && (_virtual_key_map[character] != 0))
 	{
@@ -295,14 +296,15 @@
 	[self sendUnicodeKey:character up:YES];
 }
 
-- (void)sendUnicodeKey:(int)character up:(BOOL)up
+- (void)sendUnicodeKey:(NSInteger)character up:(BOOL)up
 {
+	const UINT16 ucharacter = WINPR_ASSERTING_INT_CAST(UINT16, character);
 	[_session
 	    sendInputEvent:[NSDictionary
 	                       dictionaryWithObjectsAndKeys:
 	                           @"keyboard", @"type", @"unicode", @"subtype",
 	                           [NSNumber numberWithUnsignedShort:(up ? KBD_FLAGS_RELEASE : 0)],
-	                           @"flags", [NSNumber numberWithUnsignedShort:character],
+	                           @"flags", [NSNumber numberWithUnsignedShort:ucharacter],
 	                           @"unicode_char", nil]];
 }
 

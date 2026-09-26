@@ -301,12 +301,12 @@
 
 #pragma mark -
 #pragma mark AdvancedKeyboardDelegate functions
-- (void)advancedKeyPressedVKey:(int)key
+- (void)advancedKeyPressedVKey:(NSInteger)key
 {
 	[[RDPKeyboard getSharedRDPKeyboard] sendVirtualKeyCode:key];
 }
 
-- (void)advancedKeyPressedUnicode:(int)key
+- (void)advancedKeyPressedUnicode:(NSInteger)key
 {
 	[[RDPKeyboard getSharedRDPKeyboard] sendUnicode:key];
 }
