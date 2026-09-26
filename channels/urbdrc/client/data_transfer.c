@@ -361,6 +361,7 @@ static UINT urbdrc_process_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* 
 
 		case IOCTL_INTERNAL_USB_RESET_PORT: /** 0x00220007 */
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "ioctl: IOCTL_INTERNAL_USB_RESET_PORT");
+			success = pdev->reset_device(pdev);
 			break;
 
 		case IOCTL_INTERNAL_USB_GET_PORT_STATUS: /** 0x00220013 */

@@ -1400,6 +1400,20 @@ static int libusb_udev_query_device_port_status(IUDEVICE* idev, UINT32* UsbdStat
 }
 
 WINPR_ATTR_NODISCARD
+static int libusb_udev_reset_device(IUDEVICE* idev)
+{
+	UDEVICE* pdev = (UDEVICE*)idev;
+
+	if (!pdev || !pdev->urbdrc)
+		return -1;
+
+	URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
+	const int ret = libusb_reset_device(pdev->libusb_handle);
+	log_libusb_result(urbdrc->log, WLOG_DEBUG, "libusb_reset_device", ret);
+	return ret;
+}
+
+WINPR_ATTR_NODISCARD
 static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* callback,
                                       UINT32 MessageId, UINT32 RequestId, UINT32 EndpointAddress,
                                       WINPR_ATTR_UNUSED UINT32 TransferFlags, UINT32 StartFrame,
@@ -1791,6 +1805,7 @@ static void udev_load_interface(UDEVICE* pdev)
 	pdev->iface.detach_kernel_driver = libusb_udev_detach_kernel_driver;
 	pdev->iface.attach_kernel_driver = libusb_udev_attach_kernel_driver;
 	pdev->iface.query_device_port_status = libusb_udev_query_device_port_status;
+	pdev->iface.reset_device = libusb_udev_reset_device;
 	pdev->iface.free = udev_free;
 }
 
