@@ -248,6 +248,66 @@ fail:
 	return rc;
 }
 
+/* 64x64 solid 0x3366CC, generated with
+ * ffmpeg -f lavfi -i color=c=0x3366CC:s=64x64 -frames:v 1 -c:v libx264 -profile:v baseline
+ *        -bsf:v h264_mp4toannexb,filter_units=remove_types=6 -f h264 */
+static const BYTE solid_idr_64x64[] = {
+	0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0xc0, 0x0a, 0xd9, 0x04, 0x26, 0xc0, 0x44, 0x00,
+	0x00, 0x03, 0x00, 0x04, 0x00, 0x00, 0x03, 0x00, 0xc8, 0x3c, 0x48, 0x99, 0x20, 0x00,
+	0x00, 0x00, 0x01, 0x68, 0xcb, 0x83, 0xcb, 0x20, 0x00, 0x00, 0x01, 0x65, 0x88, 0x84,
+	0x0a, 0xf1, 0x18, 0xa0, 0x00, 0x22, 0x4b, 0x1c, 0x00, 0x04, 0x53, 0xa3, 0x80, 0x00,
+	0x85, 0x8c, 0x9c, 0x9c, 0x9d, 0x75, 0xd7, 0x5d, 0x75, 0xd7, 0x5d, 0x75, 0xd7, 0x5e
+};
+
+static BOOL testDecode(void)
+{
+	BOOL rc = FALSE;
+	const UINT32 width = 64;
+	const UINT32 height = 64;
+	const UINT32 format = PIXEL_FORMAT_BGRX32;
+	const UINT32 stride = width * 4;
+	const RECTANGLE_16 rect = { .left = 0, .top = 0, .right = width, .bottom = height };
+	H264_CONTEXT* h264 = h264_context_new(FALSE);
+	BYTE* dst = calloc(stride, height);
+
+	if (!h264 || !dst || !h264_context_reset(h264, width, height))
+		goto fail;
+
+	/* the IDR must come out of the first call, a decoder lagging one frame leaves dst empty */
+	const INT32 res = avc420_decompress(h264, solid_idr_64x64, sizeof(solid_idr_64x64), dst, format,
+	                                    stride, width, height, &rect, 1);
+	if (res < 0)
+	{
+		(void)fprintf(stderr, "[%s] avc420_decompress failed: %" PRId32 "\n", __func__, res);
+		goto fail;
+	}
+
+	for (UINT32 y = 0; y < height; y++)
+	{
+		for (UINT32 x = 0; x < width; x++)
+		{
+			BYTE r = 0;
+			BYTE g = 0;
+			BYTE b = 0;
+			const UINT32 color = FreeRDPReadColor(&dst[y * stride + x * 4], format);
+			FreeRDPSplitColor(color, format, &r, &g, &b, nullptr, nullptr);
+			if ((abs(r - 0x33) > 16) || (abs(g - 0x66) > 16) || (abs(b - 0xCC) > 16))
+			{
+				(void)fprintf(
+				    stderr, "[%s] pixel %" PRIu32 ",%" PRIu32 " is %02X%02X%02X, expected 3366CC\n",
+				    __func__, x, y, r, g, b);
+				goto fail;
+			}
+		}
+	}
+
+	rc = TRUE;
+fail:
+	h264_context_free(h264);
+	free(dst);
+	return rc;
+}
+
 int TestFreeRDPCodecH264(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -285,6 +345,8 @@ int TestFreeRDPCodecH264(int argc, char* argv[])
 	if (!testContextOptions(FALSE, width, height))
 		return -1;
 	if (!testContextOptions(TRUE, width, height))
+		return -1;
+	if (!testDecode())
 		return -1;
 #if !defined(WITH_MEDIA_FOUNDATION)
 	if (!testEncodeOffsetRegion())

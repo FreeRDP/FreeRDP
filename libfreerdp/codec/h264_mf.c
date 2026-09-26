@@ -174,37 +174,48 @@ error:
 	return hr;
 }
 
+/* IYUV output: full size Y plane followed by the quarter size U and V planes */
 WINPR_ATTR_NODISCARD
-static UINT32 getSrcOffset(H264_CONTEXT_MF* sys, UINT32 line, BOOL isUV)
+static size_t getSrcOffset(const H264_CONTEXT_MF* sys, UINT32 line, size_t plane)
 {
 	WINPR_ASSERT(sys);
 
-	if (sys->frameHeight < 1)
-		return 0;
-	if (line >= sys->frameHeight)
-		return 0;
+	const size_t stride = (plane == 0) ? sys->stride : sys->stride / 2u;
+	const size_t height = (plane == 0) ? sys->frameHeight : sys->frameHeight / 2u;
+	size_t offset = 0;
+	if (plane > 0)
+		offset += (size_t)sys->stride * sys->frameHeight;
+	if (plane > 1)
+		offset += stride * height;
 
-	UINT64 offset = (sys->frameHeight - line - 1u);
-	if (!sys->bottomUp)
-		offset = line;
+	WINPR_ASSERT(line < height);
+	const size_t row = sys->bottomUp ? height - line - 1u : line;
+	return offset + row * stride;
+}
 
-	offset *= sys->stride;
-	if (isUV)
-		offset /= 2u;
-	return WINPR_ASSERTING_INT_CAST(UINT32, offset);
+static HRESULT mf_process_output(H264_CONTEXT_MF* sys)
+{
+	DWORD status = 0;
+	MFT_OUTPUT_DATA_BUFFER buffer = WINPR_C_ARRAY_INIT;
+
+	buffer.pSample = sys->outputSample;
+	const HRESULT hr =
+	    sys->transform->lpVtbl->ProcessOutput(sys->transform, 0, 1, &buffer, &status);
+	if (buffer.pEvents)
+		buffer.pEvents->lpVtbl->Release(buffer.pEvents);
+	return hr;
 }
 
 static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RESTRICT pSrcData,
                          UINT32 SrcSize)
 {
+	int rc = -1;
 	BYTE* pbBuffer = nullptr;
 	DWORD cbMaxLength = 0;
 	DWORD cbCurrentLength = 0;
-	DWORD outputStatus = 0;
 	IMFSample* inputSample = nullptr;
 	IMFMediaBuffer* inputBuffer = nullptr;
 	IMFMediaBuffer* outputBuffer = nullptr;
-	MFT_OUTPUT_DATA_BUFFER outputDataBuffer = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(h264);
 
@@ -260,7 +271,6 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		goto error;
 	}
 
-	inputBuffer->lpVtbl->Release(inputBuffer);
 	hr = sys->transform->lpVtbl->ProcessInput(sys->transform, 0, inputSample, 0);
 
 	if (FAILED(hr))
@@ -277,12 +287,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		goto error;
 	}
 
-	outputDataBuffer.dwStreamID = 0;
-	outputDataBuffer.dwStatus = 0;
-	outputDataBuffer.pEvents = nullptr;
-	outputDataBuffer.pSample = sys->outputSample;
-	hr = sys->transform->lpVtbl->ProcessOutput(sys->transform, 0, 1, &outputDataBuffer,
-	                                           &outputStatus);
+	hr = mf_process_output(sys);
 
 	if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
 	{
@@ -341,18 +346,19 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 		}
 
 		const INT32 istride = (INT32)sys->stride;
-		if (istride < 0)
-		{
-			sys->bottomUp = TRUE;
+		sys->bottomUp = (istride < 0);
+		if (sys->bottomUp)
 			sys->stride = istride * -1;
-		}
 
 		if (!avc420_ensure_buffer(h264, sys->stride, sys->frameWidth, sys->frameHeight))
 			goto error;
+
+		/* the decoder still holds the frame, fetch it with the new output type */
+		hr = mf_process_output(sys);
 	}
-	else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
-	{
-	}
+
+	if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+		rc = 0;
 	else if (FAILED(hr))
 	{
 		WLog_Print(h264->log, WLOG_ERROR, "ProcessOutput failure: 0x%08" PRIX32 "", hr);
@@ -360,7 +366,6 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 	}
 	else
 	{
-		int offset = 0;
 		BYTE* buffer = nullptr;
 		DWORD bufferCount = 0;
 		DWORD cbMaxLength = 0;
@@ -389,23 +394,32 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 			goto error;
 		}
 
+		if (cbCurrentLength < (size_t)sys->stride * sys->frameHeight * 3u / 2u)
+		{
+			WLog_Print(h264->log, WLOG_ERROR, "output buffer too small: %" PRIu32 "",
+			           cbCurrentLength);
+			(void)outputBuffer->lpVtbl->Unlock(outputBuffer);
+			goto error;
+		}
+
 		/* Copy data from decoder buffer to our YUV buffer.
 		 * strides differ (the YUV buffer is always larger) so copy only data available from the
 		 * decoder buffer but increment the YUV buffer with the YUV buffer strides.
 		 */
 		for (UINT32 x = 0; x < sys->frameHeight; x++)
 		{
-			const UINT32 srcOffset = getSrcOffset(sys, x, FALSE);
+			const size_t srcOffset = getSrcOffset(sys, x, 0);
 			const UINT32 dstOffset = (UINT32)iStride[0] * x;
 			CopyMemory(&pYUVData[0][dstOffset], &buffer[srcOffset], sys->stride);
 		}
 		for (UINT32 x = 0; x < sys->frameHeight / 2; x++)
 		{
-			const UINT32 srcOffset = getSrcOffset(sys, x, TRUE);
+			const size_t srcUOffset = getSrcOffset(sys, x, 1);
+			const size_t srcVOffset = getSrcOffset(sys, x, 2);
 			const UINT32 dstUOffset = (UINT32)iStride[1] * x;
 			const UINT32 dstVOffset = (UINT32)iStride[2] * x;
-			CopyMemory(&pYUVData[1][dstUOffset], &buffer[srcOffset], sys->stride / 2u);
-			CopyMemory(&pYUVData[2][dstVOffset], &buffer[srcOffset], sys->stride / 2u);
+			CopyMemory(&pYUVData[1][dstUOffset], &buffer[srcUOffset], sys->stride / 2u);
+			CopyMemory(&pYUVData[2][dstVOffset], &buffer[srcVOffset], sys->stride / 2u);
 		}
 
 		hr = outputBuffer->lpVtbl->Unlock(outputBuffer);
@@ -416,16 +430,21 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 			goto error;
 		}
 
-		outputBuffer->lpVtbl->Release(outputBuffer);
 		h264->YUVWidth = sys->frameWidth;
 		h264->YUVHeight = sys->frameHeight;
+		rc = 1;
 	}
 
-	inputSample->lpVtbl->Release(inputSample);
-	return 1;
 error:
-	WLog_Print(h264->log, WLOG_ERROR, "decompression failed");
-	return -1;
+	if (outputBuffer)
+		outputBuffer->lpVtbl->Release(outputBuffer);
+	if (inputSample)
+		inputSample->lpVtbl->Release(inputSample);
+	if (inputBuffer)
+		inputBuffer->lpVtbl->Release(inputBuffer);
+	if (rc < 0)
+		WLog_Print(h264->log, WLOG_ERROR, "decompression failed");
+	return rc;
 }
 
 static int mf_compress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE** WINPR_RESTRICT ppSrcYuv,
