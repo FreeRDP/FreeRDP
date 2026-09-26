@@ -394,7 +394,7 @@ static int mf_decompress(H264_CONTEXT* WINPR_RESTRICT h264, const BYTE* WINPR_RE
 			goto error;
 		}
 
-		if (cbCurrentLength < (size_t)sys->stride * sys->frameHeight * 3u / 2u)
+		if ((sys->stride == 0) || (cbCurrentLength / 3u / sys->stride < sys->frameHeight / 2u))
 		{
 			WLog_Print(h264->log, WLOG_ERROR, "output buffer too small: %" PRIu32 "",
 			           cbCurrentLength);
