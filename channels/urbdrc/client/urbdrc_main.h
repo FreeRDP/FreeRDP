@@ -151,6 +151,8 @@ struct S_IUDEVICE
 	WINPR_ATTR_NODISCARD int (*query_device_port_status)(IUDEVICE* idev, UINT32* UsbdStatus,
 	                                                     UINT32* BufferSize, BYTE* Buffer);
 
+	WINPR_ATTR_NODISCARD int (*reset_device)(IUDEVICE* idev);
+
 	WINPR_ATTR_NODISCARD MSUSB_CONFIG_DESCRIPTOR* (*complete_msconfig_setup)(
 	    IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsConfig);
 	/* Basic state */

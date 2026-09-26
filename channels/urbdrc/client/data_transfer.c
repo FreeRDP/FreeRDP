@@ -139,7 +139,14 @@ static UINT urb_write_completion(WINPR_ATTR_UNUSED IUDEVICE* pdev,
 		return ERROR_OUTOFMEMORY;
 	}
 
-	Stream_Write_UINT32(out, 0);                /** HResult */
+	/* [MS-RDPEUSB] URB_COMPLETION: a failed URB must also fail the IRP, otherwise the server side
+	 * (e.g. usbstor) never runs its stall recovery (SYNC_RESET_PIPE_AND_CLEAR_STALL) */
+	HRESULT hr = S_OK;
+	const UINT32 mask = 0x80000000ul;
+	const UINT32 masked = usbd_status & mask;
+	if (masked == mask)
+		hr = HRESULT_FROM_WIN32(ERROR_GEN_FAILURE);
+	Stream_Write_INT32(out, hr);                /** HResult */
 	Stream_Write_UINT32(out, OutputBufferSize); /** OutputBufferSize */
 	Stream_Seek(out, payloadSize);
 
@@ -354,6 +361,7 @@ static UINT urbdrc_process_io_control(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* 
 
 		case IOCTL_INTERNAL_USB_RESET_PORT: /** 0x00220007 */
 			WLog_Print(urbdrc->log, WLOG_DEBUG, "ioctl: IOCTL_INTERNAL_USB_RESET_PORT");
+			success = pdev->reset_device(pdev);
 			break;
 
 		case IOCTL_INTERNAL_USB_GET_PORT_STATUS: /** 0x00220013 */

@@ -265,7 +265,7 @@ static BOOL write_string_block(wStream* s, size_t count, const char** strings, c
 		const SSIZE_T wlen = ConvertUtf8NToWChar(str, clength, nullptr, 0);
 		if (wlen < 0)
 			return FALSE;
-		const size_t wlength = WINPR_ASSERTING_INT_CAST(size_t, wlen) + 1;
+		const size_t wlength = WINPR_ASSERTING_INT_CAST(size_t, wlen);
 
 		const SSIZE_T w = Stream_Write_UTF16_String_From_UTF8(s, wlength, str, clength, TRUE);
 		if ((w < 0) || ((size_t)w != wlength))
