@@ -255,7 +255,7 @@ NSString *TSXAppFullVersion()
 BOOL IsPad()
 {
 #ifdef UI_USER_INTERFACE_IDIOM
-	return (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad);
+	return ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad);
 #else
 	return NO;
 #endif
@@ -264,7 +264,7 @@ BOOL IsPad()
 BOOL IsPhone()
 {
 #ifdef UI_USER_INTERFACE_IDIOM
-	return (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone);
+	return ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPhone);
 #else
 	return NO;
 #endif

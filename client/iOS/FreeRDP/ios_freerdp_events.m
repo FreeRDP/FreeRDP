@@ -19,7 +19,17 @@
 // not threadsafe: caller is responsible for synchronization
 BOOL ios_events_send(mfInfo *mfi, NSDictionary *event_description)
 {
-	NSData *encoded_description = [NSKeyedArchiver archivedDataWithRootObject:event_description];
+	NSError *error = nil;
+	NSData *encoded_description = [NSKeyedArchiver archivedDataWithRootObject:event_description
+	                                                    requiringSecureCoding:YES
+	                                                                    error:&error];
+
+	if (!encoded_description)
+	{
+		NSLog(@"%s: Failed to archive event (type: %@): %@", __func__,
+		      [event_description objectForKey:@"type"], error);
+		return FALSE;
+	}
 
 	WINPR_ASSERT(mfi);
 
@@ -135,8 +145,20 @@ BOOL ios_events_check_handle(mfInfo *mfi)
 		return FALSE;
 	}
 
-	id unarchived_object_data = [NSKeyedUnarchiver unarchiveObjectWithData:archived_object_data];
+	NSError *error = nil;
+	NSDictionary *unarchived_object_data = [NSKeyedUnarchiver
+	    unarchivedObjectOfClasses:[NSSet setWithObjects:[NSDictionary class], [NSString class],
+	                                                    [NSNumber class], nil]
+	                     fromData:archived_object_data
+	                        error:&error];
 	[archived_object_data release];
+
+	if (!unarchived_object_data)
+	{
+		// just return TRUE and ignore data. (if return FALSE, sesison can be terminated)
+		NSLog(@"%s: Failed to unarchive input event: %@", __func__, error);
+		return TRUE;
+	}
 
 	return ios_events_handle_event(mfi, unarchived_object_data);
 }

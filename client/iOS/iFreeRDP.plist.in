@@ -11,9 +11,7 @@
 	<key>CFBundleIconFiles</key>
 	<array>
 		<string>@MACOSX_BUNDLE_ICON_FILE@</string>
-		<string>Icon-72.png</string>
-		<string>Icon@2x.png</string>
-		<string>Icon-72@2x.png</string>
+		@IOS_CLIENT_ICON_FILES@
 	</array>
 	<key>CFBundleGetInfoString</key>
 	<string>@MACOSX_BUNDLE_INFO_STRING@</string>

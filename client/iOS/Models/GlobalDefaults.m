@@ -40,7 +40,15 @@
 	    [[NSUserDefaults standardUserDefaults] objectForKey:@"TSXSharedGlobalDefaultBookmark"];
 
 	if (bookmark_data && [bookmark_data length])
-		bookmark = [NSKeyedUnarchiver unarchiveObjectWithData:bookmark_data];
+	{
+		NSError *error = nil;
+		bookmark = [NSKeyedUnarchiver unarchivedObjectOfClass:[ComputerBookmark class]
+		                                             fromData:bookmark_data
+		                                                error:&error];
+
+		if (!bookmark)
+			NSLog(@"%s: failed to unarchive the default bookmark: %@", __func__, error);
+	}
 
 	if (!bookmark)
 		bookmark = [[[ComputerBookmark alloc] initWithBaseDefaultParameters] autorelease];

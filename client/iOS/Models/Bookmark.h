@@ -12,7 +12,7 @@
 #import <UIKit/UIKit.h>
 #import "ConnectionParams.h"
 
-@interface ComputerBookmark : NSObject <NSCoding>
+@interface ComputerBookmark : NSObject <NSSecureCoding>
 {
   @protected
 	ComputerBookmark *_parent;

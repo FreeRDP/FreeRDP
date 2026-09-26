@@ -46,6 +46,11 @@
 	return self;
 }
 
++ (BOOL)supportsSecureCoding
+{
+	return YES;
+}
+
 - (id)initWithCoder:(NSCoder *)decoder
 {
 	if (!(self = [self init]))
@@ -57,16 +62,17 @@
 	if ([decoder containsValueForKey:@"uuid"])
 	{
 		[_uuid release];
-		_uuid = [[decoder decodeObjectForKey:@"uuid"] retain];
+		_uuid = [[decoder decodeObjectOfClass:[NSString class] forKey:@"uuid"] retain];
 	}
 
 	if ([decoder containsValueForKey:@"label"])
-		[self setLabel:[decoder decodeObjectForKey:@"label"]];
+		[self setLabel:[decoder decodeObjectOfClass:[NSString class] forKey:@"label"]];
 
 	if ([decoder containsValueForKey:@"connectionParams"])
 	{
 		[_connection_params release];
-		_connection_params = [[decoder decodeObjectForKey:@"connectionParams"] retain];
+		_connection_params = [[decoder decodeObjectOfClass:[ConnectionParams class]
+		                                            forKey:@"connectionParams"] retain];
 	}
 
 	return self;

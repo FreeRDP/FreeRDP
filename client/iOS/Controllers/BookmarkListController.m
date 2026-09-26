@@ -15,7 +15,6 @@
 #import "Toast+UIView.h"
 #import "Reachability.h"
 #import "GlobalDefaults.h"
-#import "BlockAlertView.h"
 
 #define SECTION_SESSIONS 0
 #define SECTION_BOOKMARKS 1
@@ -728,22 +727,29 @@
 		NSString *message = NSLocalizedString(
 		    @"Your Connection Settings have not been saved. Do you want to save them?",
 		    @"Save connection settings message");
-		BlockAlertView *alert = [BlockAlertView alertWithTitle:title message:message];
-		[alert setCancelButtonWithTitle:NSLocalizedString(@"No", @"No Button") block:nil];
-		[alert addButtonWithTitle:NSLocalizedString(@"Yes", @"Yes Button")
-		                    block:^{
-			                    if (_temporary_bookmark)
-			                    {
-				                    [_manual_bookmarks addObject:_temporary_bookmark];
-				                    [_tableView
-				                          reloadSections:[NSIndexSet
-				                                             indexSetWithIndex:SECTION_BOOKMARKS]
-				                        withRowAnimation:UITableViewRowAnimationNone];
-				                    [_temporary_bookmark autorelease];
-				                    _temporary_bookmark = nil;
-			                    }
-		                    }];
-		[alert show];
+		UIAlertController *alert =
+		    [UIAlertController alertControllerWithTitle:title
+		                                        message:message
+		                                 preferredStyle:UIAlertControllerStyleAlert];
+		[alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"No", @"No Button")
+		                                          style:UIAlertActionStyleCancel
+		                                        handler:nil]];
+		[alert addAction:[UIAlertAction
+		                     actionWithTitle:NSLocalizedString(@"Yes", @"Yes Button")
+		                               style:UIAlertActionStyleDefault
+		                             handler:^(UIAlertAction *action) {
+			                             if (_temporary_bookmark)
+			                             {
+				                             [_manual_bookmarks addObject:_temporary_bookmark];
+				                             [_tableView
+				                                   reloadSections:[NSIndexSet indexSetWithIndex:
+				                                                                  SECTION_BOOKMARKS]
+				                                 withRowAnimation:UITableViewRowAnimationNone];
+				                             [_temporary_bookmark autorelease];
+				                             _temporary_bookmark = nil;
+			                             }
+		                             }]];
+		[self presentViewController:alert animated:YES completion:nil];
 	}
 }
 
@@ -918,7 +924,18 @@
 
 - (void)writeArray:(NSArray *)bookmarks toDataStoreURL:(NSURL *)url
 {
-	NSData *archived_data = [NSKeyedArchiver archivedDataWithRootObject:bookmarks];
+	NSError *error = nil;
+	NSData *archived_data = [NSKeyedArchiver archivedDataWithRootObject:bookmarks
+	                                              requiringSecureCoding:YES
+	                                                              error:&error];
+
+	if (!archived_data)
+	{
+		// leave the existing file untouched rather than replacing it with bad data
+		NSLog(@"%s: failed to archive %@: %@", __func__, [url lastPathComponent], error);
+		return;
+	}
+
 	[archived_data writeToURL:url atomically:YES];
 }
 
@@ -949,7 +966,23 @@
 	if (!archived_data)
 		return nil;
 
-	return [[NSKeyedUnarchiver unarchiveObjectWithData:archived_data] retain];
+	// covers both data stores: an array of ComputerBookmark and an array of NSString
+	NSSet *classes = [NSSet setWithObjects:[NSArray class], [ComputerBookmark class],
+	                                       [ConnectionParams class], [NSDictionary class],
+	                                       [NSString class], [NSNumber class], [NSData class], nil];
+	NSError *error = nil;
+	NSArray *decoded = [NSKeyedUnarchiver unarchivedObjectOfClasses:classes
+	                                                       fromData:archived_data
+	                                                          error:&error];
+
+	if (!decoded)
+	{
+		NSLog(@"%s: failed to unarchive %@: %@", __func__, [url lastPathComponent], error);
+		return nil;
+	}
+
+	// the decoded array is immutable, but callers mutate the result
+	return [[NSMutableArray alloc] initWithArray:decoded];
 }
 
 - (NSURL *)manualBookmarksDataStoreURL

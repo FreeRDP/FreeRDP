@@ -19,9 +19,9 @@
 #import "ConnectionParams.h"
 #import "CredentialsInputController.h"
 #import "VerifyCertificateController.h"
-#import "BlockAlertView.h"
 
 #define TOOLBAR_HEIGHT 44
+#define ADVANCED_KEYBOARD_HEIGHT 200
 
 @interface RDPSessionViewController (Private)
 - (void)showSessionToolbar:(BOOL)show;
@@ -39,6 +39,7 @@
 - (void)moveCursorByViewportDelta:(CGPoint)delta;
 - (void)moveCursorToSessionViewPosition:(CGPoint)position;
 - (void)sendMouseButtonEvent:(int)event;
+- (BOOL)isKeyboardActive;
 @end
 
 @implementation RDPSessionViewController
@@ -57,8 +58,6 @@
 		_session_initilized = NO;
 
 		_advanced_keyboard_view = nil;
-		_advanced_keyboard_visible = NO;
-		_requesting_advanced_keyboard = NO;
 		_last_session_viewport_size = CGSizeZero;
 
 		_session_toolbar_visible = NO;
@@ -71,9 +70,6 @@
 		_long_press_active = NO;
 		_mouse_drag_active = NO;
 		_pointer_is_indirect = NO;
-
-		[UIView setAnimationDelegate:self];
-		[UIView setAnimationDidStopSelector:@selector(animationStopped:finished:context:)];
 	}
 
 	return self;
@@ -88,9 +84,6 @@
 	// let pointer input pass through the session toolbar to the remote session
 	object_setClass(_session_toolbar, [RDPSessionToolbar class]);
 	[(RDPSessionToolbar *)_session_toolbar setPassthroughView:_session_scrollview];
-
-	// init keyboard handling vars
-	_keyboard_visible = NO;
 
 	// init keyboard toolbar
 	_keyboard_toolbar = [[self keyboardToolbar] retain];
@@ -272,15 +265,12 @@
 #pragma mark TextField delegate methods
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField
 {
-	_keyboard_visible = YES;
-	_advanced_keyboard_visible = NO;
 	return YES;
 }
 
 - (BOOL)textFieldShouldEndEditing:(UITextField *)textField
 {
-	_keyboard_visible = NO;
-	_advanced_keyboard_visible = NO;
+	[self destroyAdvancedKeyboard];
 	return YES;
 }
 
@@ -334,26 +324,24 @@
 		objectIdx = 2;
 		curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
 		[curItem setStyle:[keyboard shiftPressed] ? UIBarButtonItemStyleDone
-		                                          : UIBarButtonItemStyleBordered];
+		                                          : UIBarButtonItemStylePlain];
 	}
 
 	// ctrl button
 	objectIdx += 2;
 	curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
 	[curItem
-	    setStyle:[keyboard ctrlPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStyleBordered];
+	    setStyle:[keyboard ctrlPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStylePlain];
 
 	// win button
 	objectIdx += 2;
 	curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
-	[curItem
-	    setStyle:[keyboard winPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStyleBordered];
+	[curItem setStyle:[keyboard winPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStylePlain];
 
 	// alt button
 	objectIdx += 2;
 	curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
-	[curItem
-	    setStyle:[keyboard altPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStyleBordered];
+	[curItem setStyle:[keyboard altPressed] ? UIBarButtonItemStyleDone : UIBarButtonItemStylePlain];
 }
 
 #pragma mark -
@@ -395,10 +383,6 @@
 	[[NSNotificationCenter defaultCenter] addObserver:self
 	                                         selector:@selector(keyboardWillShow:)
 	                                             name:UIKeyboardWillShowNotification
-	                                           object:nil];
-	[[NSNotificationCenter defaultCenter] addObserver:self
-	                                         selector:@selector(keyboardDidShow:)
-	                                             name:UIKeyboardDidShowNotification
 	                                           object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self
 	                                         selector:@selector(keyboardWillHide:)
@@ -548,7 +532,7 @@
 	                                                  bundle:nil
 	                                                 session:_session
 	                                                  params:params] autorelease];
-	[self presentModalViewController:view_controller animated:YES];
+	[self presentViewController:view_controller animated:YES completion:nil];
 }
 
 - (void)session:(RDPSession *)session verifyCertificateWithParams:(NSMutableDictionary *)params
@@ -558,7 +542,7 @@
 	                                                   bundle:nil
 	                                                  session:_session
 	                                                   params:params] autorelease];
-	[self presentModalViewController:view_controller animated:YES];
+	[self presentViewController:view_controller animated:YES completion:nil];
 }
 
 - (CGSize)sizeForFitScreenForSession:(RDPSession *)session
@@ -591,47 +575,42 @@
 
 - (void)showAdvancedKeyboardAnimated
 {
-	// calc initial and final rect of the advanced keyboard view
-	CGRect rect = [[_keyboard_toolbar superview] bounds];
-	rect.origin.y = [_keyboard_toolbar bounds].size.height;
-	rect.size.height -= rect.origin.y;
+	// already advanced keyboard activated
+	if (_advanced_keyboard_view)
+		return;
 
-	// create new view (hidden) and add to host-view of keyboard toolbar
-	_advanced_keyboard_view = [[AdvancedKeyboardView alloc]
-	    initWithFrame:CGRectMake(rect.origin.x, [[_keyboard_toolbar superview] bounds].size.height,
-	                             rect.size.width, rect.size.height)
-	         delegate:self];
-	[[_keyboard_toolbar superview] addSubview:_advanced_keyboard_view];
-	// we set autoresize to YES for the keyboard toolbar's superview so that our adv. keyboard view
-	// gets properly resized
-	[[_keyboard_toolbar superview] setAutoresizesSubviews:YES];
+	CGRect rect = CGRectMake(0, 0, [[self view] bounds].size.width, ADVANCED_KEYBOARD_HEIGHT);
+	_advanced_keyboard_view = [[AdvancedKeyboardView alloc] initWithFrame:rect delegate:self];
 
-	// show view with animation
-	[UIView beginAnimations:nil context:NULL];
-	[_advanced_keyboard_view setFrame:rect];
-	[UIView commitAnimations];
+	[_dummy_textfield setInputView:_advanced_keyboard_view];
+	[_dummy_textfield reloadInputViews];
 }
 
+- (void)destroyAdvancedKeyboard
+{
+	// advanced keyboard not activated
+	if (!_advanced_keyboard_view)
+		return;
+
+	[_dummy_textfield setInputView:nil];
+	[_advanced_keyboard_view autorelease];
+	_advanced_keyboard_view = nil;
+}
+
+// toggle advanced keyboard (not keyboard)
 - (IBAction)toggleKeyboardWhenOtherVisible:(id)sender
 {
-	if (_advanced_keyboard_visible == NO)
+	if (!_advanced_keyboard_view)
 	{
+		// show advanced keyboard
 		[self showAdvancedKeyboardAnimated];
 	}
 	else
 	{
-		// hide existing view
-		[UIView beginAnimations:@"hide_advanced_keyboard_view" context:NULL];
-		CGRect rect = [_advanced_keyboard_view frame];
-		rect.origin.y = [[_keyboard_toolbar superview] bounds].size.height;
-		[_advanced_keyboard_view setFrame:rect];
-		[UIView commitAnimations];
-
-		// the view is released in the animationDidStop selector registered in init
+		// close advanced keyboard
+		[self destroyAdvancedKeyboard];
+		[_dummy_textfield reloadInputViews];
 	}
-
-	// toggle flag
-	_advanced_keyboard_visible = !_advanced_keyboard_visible;
 }
 
 - (IBAction)toggleWinKey:(id)sender
@@ -662,19 +641,6 @@
 #pragma mark -
 #pragma mark event handlers
 
-- (void)animationStopped:(NSString *)animationID
-                finished:(NSNumber *)finished
-                 context:(void *)context
-{
-	if ([animationID isEqualToString:@"hide_advanced_keyboard_view"])
-	{
-		// cleanup advanced keyboard view
-		[_advanced_keyboard_view removeFromSuperview];
-		[_advanced_keyboard_view autorelease];
-		_advanced_keyboard_view = nil;
-	}
-}
-
 - (IBAction)switchSession:(id)sender
 {
 	[self suspendSession];
@@ -682,7 +648,7 @@
 
 - (IBAction)toggleKeyboard:(id)sender
 {
-	if (!_keyboard_visible)
+	if (![self isKeyboardActive])
 		[_dummy_textfield becomeFirstResponder];
 	else
 		[_dummy_textfield resignFirstResponder];
@@ -691,13 +657,12 @@
 - (IBAction)toggleExtKeyboard:(id)sender
 {
 	// if the sys kb is shown but not the advanced kb then toggle the advanced kb
-	if (_keyboard_visible && !_advanced_keyboard_visible)
+	if ([self isKeyboardActive] && !_advanced_keyboard_view)
 		[self toggleKeyboardWhenOtherVisible:nil];
 	else
 	{
-		// if not visible request the advanced keyboard view
-		if (_advanced_keyboard_visible == NO)
-			_requesting_advanced_keyboard = YES;
+		if (![self isKeyboardActive])
+			[self showAdvancedKeyboardAnimated];
 		[self toggleKeyboard:nil];
 	}
 }
@@ -721,16 +686,6 @@
 	[self centerSessionViewInViewport];
 }
 
-- (void)keyboardDidShow:(NSNotification *)notification
-{
-	if (_requesting_advanced_keyboard)
-	{
-		[self showAdvancedKeyboardAnimated];
-		_advanced_keyboard_visible = YES;
-		_requesting_advanced_keyboard = NO;
-	}
-}
-
 - (void)keyboardWillHide:(NSNotification *)notification
 {
 	(void)notification;
@@ -740,16 +695,11 @@
 - (void)keyboardDidHide:(NSNotification *)notification
 {
 	// release adanced keyboard view
-	if (_advanced_keyboard_visible == YES)
-	{
-		_advanced_keyboard_visible = NO;
-		[_advanced_keyboard_view removeFromSuperview];
-		[_advanced_keyboard_view autorelease];
-		_advanced_keyboard_view = nil;
-	}
+	if (![self isKeyboardActive])
+		[self destroyAdvancedKeyboard];
 
 	// resume capturing the hardware keyboard once the on-screen keyboard is gone
-	if ([_session_view hardwareKeyboardActive])
+	if (![self isKeyboardActive] && [_session_view hardwareKeyboardActive])
 		[_session_view becomeFirstResponder];
 }
 
@@ -758,7 +708,7 @@
 	BOOL connected = (GCKeyboard.coalescedKeyboard != nil);
 	[_session_view setHardwareKeyboardActive:connected];
 
-	if (connected && !_keyboard_visible)
+	if (connected && ![self isKeyboardActive])
 		[_session_view becomeFirstResponder];
 	else if (!connected)
 		[_session_view resignFirstResponder];
@@ -1010,21 +960,26 @@
 
 	if (show)
 	{
-		[UIView beginAnimations:@"showToolbar" context:nil];
-		[UIView setAnimationDuration:.4];
-		[UIView setAnimationCurve:UIViewAnimationCurveLinear];
-		[_session_toolbar setFrame:CGRectMake(safe.left, safe.top, toolbarWidth, TOOLBAR_HEIGHT)];
-		[UIView commitAnimations];
+		[UIView animateWithDuration:0.4
+		                      delay:0.0
+		                    options:UIViewAnimationOptionCurveLinear
+		                 animations:^{
+			                 [_session_toolbar setFrame:CGRectMake(safe.left, safe.top,
+			                                                       toolbarWidth, TOOLBAR_HEIGHT)];
+		                 }
+		                 completion:nil];
 		_session_toolbar_visible = YES;
 	}
 	else
 	{
-		[UIView beginAnimations:@"hideToolbar" context:nil];
-		[UIView setAnimationDuration:.4];
-		[UIView setAnimationCurve:UIViewAnimationCurveLinear];
-		[_session_toolbar
-		    setFrame:CGRectMake(safe.left, -TOOLBAR_HEIGHT, toolbarWidth, TOOLBAR_HEIGHT)];
-		[UIView commitAnimations];
+		[UIView animateWithDuration:0.4
+		                      delay:0.0
+		                    options:UIViewAnimationOptionCurveLinear
+		                 animations:^{
+			                 [_session_toolbar setFrame:CGRectMake(safe.left, -TOOLBAR_HEIGHT,
+			                                                       toolbarWidth, TOOLBAR_HEIGHT)];
+		                 }
+		                 completion:nil];
 		_session_toolbar_visible = NO;
 	}
 }
@@ -1032,11 +987,11 @@
 - (UIToolbar *)keyboardToolbar
 {
 	UIToolbar *keyboard_toolbar = [[[UIToolbar alloc] initWithFrame:CGRectNull] autorelease];
-	[keyboard_toolbar setBarStyle:UIBarStyleBlackOpaque];
+	[keyboard_toolbar setBarStyle:UIBarStyleBlack];
 
 	UIBarButtonItem *esc_btn =
 	    [[[UIBarButtonItem alloc] initWithTitle:@"Esc"
-	                                      style:UIBarButtonItemStyleBordered
+	                                      style:UIBarButtonItemStylePlain
 	                                     target:self
 	                                     action:@selector(pressEscKey:)] autorelease];
 	UIImage *win_icon =
@@ -1044,22 +999,22 @@
 	                                                                     ofType:@"png"]];
 	UIBarButtonItem *win_btn =
 	    [[[UIBarButtonItem alloc] initWithImage:win_icon
-	                                      style:UIBarButtonItemStyleBordered
+	                                      style:UIBarButtonItemStylePlain
 	                                     target:self
 	                                     action:@selector(toggleWinKey:)] autorelease];
 	UIBarButtonItem *ctrl_btn =
 	    [[[UIBarButtonItem alloc] initWithTitle:@"Ctrl"
-	                                      style:UIBarButtonItemStyleBordered
+	                                      style:UIBarButtonItemStylePlain
 	                                     target:self
 	                                     action:@selector(toggleCtrlKey:)] autorelease];
 	UIBarButtonItem *alt_btn =
 	    [[[UIBarButtonItem alloc] initWithTitle:@"Alt"
-	                                      style:UIBarButtonItemStyleBordered
+	                                      style:UIBarButtonItemStylePlain
 	                                     target:self
 	                                     action:@selector(toggleAltKey:)] autorelease];
 	UIBarButtonItem *ext_btn = [[[UIBarButtonItem alloc]
 	    initWithTitle:@"Ext"
-	            style:UIBarButtonItemStyleBordered
+	            style:UIBarButtonItemStylePlain
 	           target:self
 	           action:@selector(toggleKeyboardWhenOtherVisible:)] autorelease];
 	UIBarButtonItem *done_btn = [[[UIBarButtonItem alloc]
@@ -1077,7 +1032,7 @@
 	{
 		UIBarButtonItem *shift_btn =
 		    [[[UIBarButtonItem alloc] initWithTitle:@"Shift"
-		                                      style:UIBarButtonItemStyleBordered
+		                                      style:UIBarButtonItemStylePlain
 		                                     target:self
 		                                     action:@selector(toggleShiftKey:)] autorelease];
 		items = [NSArray arrayWithObjects:esc_btn, flex_spacer, shift_btn, flex_spacer, ctrl_btn,
@@ -1306,6 +1261,11 @@
 - (void)handleMouseMoveForPosition:(CGPoint)position
 {
 	[_session sendInputEvent:[self eventDescriptorForMouseEvent:PTR_FLAGS_MOVE position:position]];
+}
+
+- (BOOL)isKeyboardActive
+{
+	return [_dummy_textfield isFirstResponder];
 }
 
 @end

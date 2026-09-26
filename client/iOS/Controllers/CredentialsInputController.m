@@ -183,7 +183,7 @@
 	[_params setValue:[NSNumber numberWithBool:YES] forKey:@"result"];
 
 	// dismiss controller
-	[self dismissModalViewControllerAnimated:YES];
+	[self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (IBAction)cancelPressed:(id)sender
@@ -191,7 +191,7 @@
 	[_params setValue:[NSNumber numberWithBool:NO] forKey:@"result"];
 
 	// dismiss controller
-	[self dismissModalViewControllerAnimated:YES];
+	[self dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end
