@@ -780,6 +780,8 @@ size_t ConvertLineEndingToLF(char* str, size_t size)
 				break;
 		}
 	}
+	if (skip > 0)
+		str[size - skip] = '\0';
 	return size - skip;
 }
 
