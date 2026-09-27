@@ -713,13 +713,12 @@ static BOOL freerdp_dsp_encode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
 
 	const size_t src_frames = size / sizeof(opus_int16) / context->common.format.nChannels;
 	const opus_int16* src_data = WINPR_PACKED_ALIGN_CAST(const opus_int16*, src);
-	const opus_int32 frames = opus_encode(
+	const opus_int32 bytes = opus_encode(
 	    context->opus_encoder, src_data, WINPR_ASSERTING_INT_CAST(opus_int32, src_frames),
 	    Stream_Pointer(out), WINPR_ASSERTING_INT_CAST(opus_int32, max_size));
-	if (frames < 0)
+	if (bytes < 0)
 		return FALSE;
-	return Stream_SafeSeek(out,
-	                       (size_t)frames * context->common.format.nChannels * sizeof(int16_t));
+	return Stream_SafeSeek(out, (size_t)bytes);
 }
 #endif
 
