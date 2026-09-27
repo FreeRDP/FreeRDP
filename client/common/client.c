@@ -1121,9 +1121,6 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 		return TRUE;
 
 	printf("%s:\n", msgType);
-#if defined(WIN32)
-	printf("%.*S\n", (int)length, message);
-#else
 	{
 		LPSTR msg = ConvertWCharNToUtf8Alloc(message, length / sizeof(WCHAR), nullptr);
 		if (!msg)
@@ -1134,7 +1131,6 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 		printf("%s\n", msg);
 		free(msg);
 	}
-#endif
 
 	while (isConsentMandatory)
 	{
