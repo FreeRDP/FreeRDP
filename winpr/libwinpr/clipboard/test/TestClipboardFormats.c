@@ -109,6 +109,41 @@ static BOOL test_dib_offsets(void)
 	                           256 * sizeof(RGBQUAD));
 }
 
+static BOOL test_text_leading_newline(void)
+{
+	const char* tests[][2] = { { "\nfoo", "\r\nfoo" }, { "\n", "\r\n" } };
+	BOOL rc = FALSE;
+
+	wClipboard* clipboard = ClipboardCreate();
+	if (!clipboard)
+		return FALSE;
+
+	const UINT32 textId = ClipboardRegisterFormat(clipboard, "text/plain");
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		/* local text/plain is set without a terminator */
+		if (!ClipboardSetData(clipboard, textId, tests[x][0], (UINT32)strlen(tests[x][0])))
+			goto fail;
+
+		UINT32 size = 0;
+		WCHAR* wstr = ClipboardGetData(clipboard, CF_UNICODETEXT, &size);
+		char* str = ConvertWCharNToUtf8Alloc(wstr, size / sizeof(WCHAR), nullptr);
+		const BOOL match = str && (strcmp(str, tests[x][1]) == 0);
+		free(wstr);
+		free(str);
+		if (!match)
+		{
+			(void)fprintf(stderr, "text/plain to CF_UNICODETEXT failed for case %" PRIuz "\n", x);
+			goto fail;
+		}
+	}
+	rc = TRUE;
+
+fail:
+	ClipboardDestroy(clipboard);
+	return rc;
+}
+
 int TestClipboardFormats(int argc, char* argv[])
 {
 	int rc = -1;
@@ -125,6 +160,8 @@ int TestClipboardFormats(int argc, char* argv[])
 	if (!clipboard)
 		return -1;
 	if (!test_dib_offsets())
+		goto fail;
+	if (!test_text_leading_newline())
 		goto fail;
 
 	const char* mime_types[] = { "text/html", "text/html",  "image/bmp",
