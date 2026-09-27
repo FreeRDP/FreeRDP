@@ -242,6 +242,55 @@ static BOOL test_newline(void)
 	return TRUE;
 }
 
+static BOOL test_crlf(void)
+{
+	struct test_t
+	{
+		const char* string;
+		size_t len;
+		const char* expected;
+		size_t expectedLen;
+	};
+
+	/* input lengths exclude the terminator, like text/plain from the X11 and
+	 * SDL clients; the last case includes it */
+	const struct test_t tests[] = {
+		{ "\nabc", 4, "\r\nabc", 5 }, { "abc\n", 4, "abc\r\n", 5 },
+		{ "\n", 1, "\r\n", 2 },       { "\r", 1, "\r\n", 2 },
+		{ "a\r\nb", 4, "a\r\nb", 4 }, { "a\n\nb", 4, "a\r\n\r\nb", 6 },
+		{ "\r\n", 2, "\r\n", 2 },     { "a\nb", 4, "a\r\nb", 5 },
+	};
+
+	BOOL rc = TRUE;
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const struct test_t* cur = &tests[x];
+
+		size_t size = cur->len;
+		char* cnv = ConvertLineEndingToCRLF(cur->string, &size);
+		if (!cnv || (size != cur->expectedLen) || (memcmp(cnv, cur->expected, size) != 0) ||
+		    (cnv[size] != '\0'))
+		{
+			printf("ConvertLineEndingToCRLF error: case %" PRIuz ": size %" PRIuz
+			       ", expected %" PRIuz "\n",
+			       x, size, cur->expectedLen);
+			rc = FALSE;
+		}
+		free(cnv);
+	}
+
+	size_t size = 0;
+	char* cnv = ConvertLineEndingToCRLF("", &size);
+	if (cnv || (size != 0))
+	{
+		printf("ConvertLineEndingToCRLF error: empty input returned data\n");
+		rc = FALSE;
+	}
+	free(cnv);
+
+	return rc;
+}
+
 int TestString(int argc, char* argv[])
 {
 	const WCHAR* p = nullptr;
@@ -265,6 +314,9 @@ int TestString(int argc, char* argv[])
 		return -1;
 
 	if (!test_winpr_strnstr())
+		return -1;
+
+	if (!test_crlf())
 		return -1;
 
 	/* _wcslen */
