@@ -415,22 +415,45 @@ static state_run_t license_server_recv(rdpLicense* license, wStream* s);
 
 #ifdef WITH_DEBUG_LICENSE
 
-static const char* error_codes[] = { "ERR_UNKNOWN",
-	                                 "ERR_INVALID_SERVER_CERTIFICATE",
-	                                 "ERR_NO_LICENSE",
-	                                 "ERR_INVALID_MAC",
-	                                 "ERR_INVALID_SCOPE",
-	                                 "ERR_UNKNOWN",
-	                                 "ERR_NO_LICENSE_SERVER",
-	                                 "STATUS_VALID_CLIENT",
-	                                 "ERR_INVALID_CLIENT",
-	                                 "ERR_UNKNOWN",
-	                                 "ERR_UNKNOWN",
-	                                 "ERR_INVALID_PRODUCT_ID",
-	                                 "ERR_INVALID_MESSAGE_LENGTH" };
+WINPR_ATTR_NODISCARD
+static const char* error_codes(UINT32 idx)
+{
+#define EVCASE(x) \
+	case x:       \
+		return #x
+	switch (idx)
+	{
+		EVCASE(ERR_INVALID_SERVER_CERTIFICATE);
+		EVCASE(ERR_NO_LICENSE);
+		EVCASE(ERR_INVALID_MAC);
+		EVCASE(ERR_INVALID_SCOPE);
+		EVCASE(ERR_NO_LICENSE_SERVER);
+		EVCASE(STATUS_VALID_CLIENT);
+		EVCASE(ERR_INVALID_CLIENT);
+		EVCASE(ERR_INVALID_PRODUCT_ID);
+		EVCASE(ERR_INVALID_MESSAGE_LENGTH);
+		default:
+			return "ERR_UNKNOWN";
+	}
+}
 
-static const char* state_transitions[] = { "ST_UNKNOWN", "ST_TOTAL_ABORT", "ST_NO_TRANSITION",
-	                                       "ST_RESET_PHASE_TO_START", "ST_RESEND_LAST_MESSAGE" };
+WINPR_ATTR_NODISCARD
+static const char* state_transitions(UINT32 idx)
+{
+#define EVCASE(x) \
+	case x:       \
+		return #x
+
+	switch (idx)
+	{
+		EVCASE(ST_TOTAL_ABORT);
+		EVCASE(ST_NO_TRANSITION);
+		EVCASE(ST_RESET_PHASE_TO_START);
+		EVCASE(ST_RESEND_LAST_MESSAGE);
+		default:
+			return "ST_UNKNOWN";
+	}
+}
 
 static void license_print_product_info(wLog* log, const LICENSE_PRODUCT_INFO* productInfo)
 {
@@ -2397,7 +2420,7 @@ BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s)
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_Print(license->log, WLOG_DEBUG, "dwErrorCode: %s, dwStateTransition: %s",
-	           error_codes[dwErrorCode], state_transitions[dwStateTransition]);
+	           error_codes(dwErrorCode), state_transitions(dwStateTransition));
 #endif
 
 	if (dwErrorCode == STATUS_VALID_CLIENT)
