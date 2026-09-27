@@ -486,13 +486,11 @@ static void license_print_scope_list(wLog* log, const SCOPE_LIST* scopeList)
 
 	for (UINT32 index = 0; index < scopeList->count; index++)
 	{
-		const LICENSE_BLOB* scope = nullptr;
-
 		WINPR_ASSERT(scopeList->array);
-		scope = scopeList->array[index];
+		const LICENSE_BLOB* scope = scopeList->array[index];
 		WINPR_ASSERT(scope);
 
-		WLog_Print(log, WLOG_INFO, "\t%s", (const char*)scope->data);
+		WLog_Print(log, WLOG_INFO, "\t%.*s", (int)scope->length, (const char*)scope->data);
 	}
 }
 #endif
