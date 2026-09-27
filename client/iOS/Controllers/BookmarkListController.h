@@ -33,10 +33,6 @@
 	// bookmark arrays
 	NSMutableArray *_manual_bookmarks;
 
-	// bookmark star images
-	UIImage *_star_on_img;
-	UIImage *_star_off_img;
-
 	// array with active sessions
 	NSMutableArray *_active_sessions;
 

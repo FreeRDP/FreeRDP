@@ -208,8 +208,6 @@ set(IOS_CLIENT_RESOURCES_PNGS
     Resources/Icon@2x.png
     Resources/Icon-72@2x.png
     Resources/Icon-72.png
-    Resources/icon_accessory_star_off.png
-    Resources/icon_accessory_star_on.png
     Resources/icon_key_arrow_down.png
     Resources/icon_key_arrow_left.png
     Resources/icon_key_arrow_right.png

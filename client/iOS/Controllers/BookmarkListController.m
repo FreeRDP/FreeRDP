@@ -16,13 +16,15 @@
 #import "Reachability.h"
 #import "GlobalDefaults.h"
 
+// currently, session section is unused. so hide it
+#define SHOW_SESSIONS_SECTION 0
+
 #define SECTION_SESSIONS 0
 #define SECTION_BOOKMARKS 1
 #define NUM_SECTIONS 2
 
 @interface BookmarkListController (Private)
 #pragma mark misc functions
-- (UIButton *)disclosureButtonWithImage:(UIImage *)image;
 - (void)performSearch:(NSString *)searchText;
 #pragma mark Persisting bookmarks
 - (void)scheduleWriteBookmarksToDataStore;
@@ -72,15 +74,6 @@
 		[self setTabBarItem:[[[UITabBarItem alloc]
 		                        initWithTabBarSystemItem:UITabBarSystemItemBookmarks
 		                                             tag:0] autorelease]];
-
-		// load images
-		_star_on_img = [[UIImage
-		    imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"icon_accessory_star_on"
-		                                                            ofType:@"png"]] retain];
-		_star_off_img =
-		    [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle]
-		                                          pathForResource:@"icon_accessory_star_off"
-		                                                   ofType:@"png"]] retain];
 
 		// init reachability detection
 		[[NSNotificationCenter defaultCenter] addObserver:self
@@ -185,9 +178,6 @@
 	[_manual_search_result release];
 	[_manual_bookmarks release];
 
-	[_star_on_img release];
-	[_star_off_img release];
-
 	[super dealloc];
 }
 
@@ -233,7 +223,7 @@
 		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
 		                              reuseIdentifier:CellIdentifier];
 		[cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-		[cell setAccessoryView:[self disclosureButtonWithImage:_star_off_img]];
+		[cell setAccessoryType:UITableViewCellAccessoryDetailButton];
 	}
 
 	return cell;
@@ -247,7 +237,7 @@
 	if (cell == nil)
 	{
 		[[NSBundle mainBundle] loadNibNamed:@"BookmarkTableViewCell" owner:self options:nil];
-		[_bmTableCell setAccessoryView:[self disclosureButtonWithImage:_star_on_img]];
+		[_bmTableCell setAccessoryType:UITableViewCellAccessoryDetailButton];
 		cell = _bmTableCell;
 		_bmTableCell = nil;
 	}
@@ -300,12 +290,12 @@
 					    setText:[@"  " stringByAppendingString:
 					                       NSLocalizedString(@"Add Connection",
 					                                         @"'Add Connection': button label")]];
-					[((UIButton *)[cell accessoryView]) setHidden:YES];
+					[cell setAccessoryType:UITableViewCellAccessoryNone];
 				}
 				else
 				{
 					[[cell textLabel] setText:[@"  " stringByAppendingString:[_searchBar text]]];
-					[((UIButton *)[cell accessoryView]) setHidden:NO];
+					[cell setAccessoryType:UITableViewCellAccessoryDetailButton];
 				}
 
 				return cell;
@@ -321,7 +311,7 @@
 					                       [_history_search_result
 					                           objectAtIndex:
 					                               [self historyIndexFromIndexPath:indexPath]]]];
-					[((UIButton *)[cell accessoryView]) setHidden:NO];
+					[cell setAccessoryType:UITableViewCellAccessoryDetailButton];
 					return cell;
 				}
 				else
@@ -472,7 +462,7 @@
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-	if (section == SECTION_SESSIONS && [_active_sessions count] > 0)
+	if (SHOW_SESSIONS_SECTION && section == SECTION_SESSIONS && [_active_sessions count] > 0)
 		return NSLocalizedString(@"My Sessions", @"'My Session': section sessions header");
 	if (section == SECTION_BOOKMARKS)
 		return NSLocalizedString(@"Manual Connections",
@@ -483,6 +473,22 @@
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section
 {
 	return nil;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    // remove gap unused session section.
+	if (!SHOW_SESSIONS_SECTION && section == SECTION_SESSIONS)
+		return CGFLOAT_MIN;
+	return UITableViewAutomaticDimension;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+{
+    // remove gap unused session section.
+	if (!SHOW_SESSIONS_SECTION && section == SECTION_SESSIONS)
+		return CGFLOAT_MIN;
+	return [tableView sectionFooterHeight];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -499,19 +505,6 @@
 {
 	[super setEditing:editing animated:animated];
 	[[self tableView] setEditing:editing animated:animated];
-}
-
-- (void)accessoryButtonTapped:(UIControl *)button withEvent:(UIEvent *)event
-{
-	// forward a tap on our custom accessory button to the real accessory button handler
-	NSIndexPath *indexPath =
-	    [[self tableView] indexPathForRowAtPoint:[[[event touchesForView:button] anyObject]
-	                                                 locationInView:[self tableView]]];
-	if (indexPath == nil)
-		return;
-
-	[[[self tableView] delegate] tableView:[self tableView]
-	    accessoryButtonTappedForRowWithIndexPath:indexPath];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -823,20 +816,6 @@
 - (BOOL)hasNoBookmarks
 {
 	return ([_manual_bookmarks count] == 0);
-}
-
-- (UIButton *)disclosureButtonWithImage:(UIImage *)image
-{
-	// we make the button a little bit bigger (image width * 2, height + 10) so that the user
-	// doesn't accidentally connect to the bookmark ...
-	UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-	[button setFrame:CGRectMake(0, 0, [image size].width * 2, [image size].height + 10)];
-	[button setImage:image forState:UIControlStateNormal];
-	[button addTarget:self
-	              action:@selector(accessoryButtonTapped:withEvent:)
-	    forControlEvents:UIControlEventTouchUpInside];
-	[button setUserInteractionEnabled:YES];
-	return button;
 }
 
 - (void)performSearch:(NSString *)searchText

@@ -122,6 +122,11 @@
 		[self fitSessionViewToViewport];
 	else
 		[self centerSessionViewInViewport];
+
+	// set toolbar 'dummy item' width (for margin)
+	const CGFloat margin = [self systemMinimumLayoutMargins].leading;
+	[[[_keyboard_toolbar items] firstObject] setWidth:margin];
+	[[[_keyboard_toolbar items] lastObject] setWidth:margin];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -315,11 +320,11 @@
 {
 	UIBarButtonItem *curItem;
 
-	// shift button (only on iPad)
-	int objectIdx = 0;
+	// index 0 is empty space, index 1 is 'esc' button
+	int objectIdx = 1;
 	if (IsPad())
 	{
-		objectIdx = 2;
+		objectIdx += 2;
 		curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
 		[curItem setStyle:[keyboard shiftPressed] ? UIBarButtonItemStyleDone
 		                                          : UIBarButtonItemStylePlain];
@@ -1031,6 +1036,9 @@
 	// the status bar / notch / Dynamic Island on modern devices (and side notch
 	// in landscape).
 	UIEdgeInsets safe = [[self view] safeAreaInsets];
+	// devices without a notch (e.g. iPad) have no top inset once the status bar is hidden,
+	// so keep at least the system margin to the top edge
+	safe.top = MAX(safe.top, [self systemMinimumLayoutMargins].leading);
 	CGFloat toolbarWidth = [[self view] bounds].size.width - safe.left - safe.right;
 
 	if (show)
@@ -1092,14 +1100,13 @@
 	            style:UIBarButtonItemStylePlain
 	           target:self
 	           action:@selector(toggleKeyboardWhenOtherVisible:)] autorelease];
-	UIBarButtonItem *done_btn = [[[UIBarButtonItem alloc]
-	    initWithBarButtonSystemItem:UIBarButtonSystemItemDone
-	                         target:self
-	                         action:@selector(toggleKeyboard:)] autorelease];
 	UIBarButtonItem *flex_spacer =
 	    [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
 	                                                   target:nil
 	                                                   action:nil] autorelease];
+	// edge spacers, sized to the system margins in viewDidLayoutSubviews
+	UIBarButtonItem *leading_spacer = [UIBarButtonItem fixedSpaceItemOfWidth:0];
+	UIBarButtonItem *trailing_spacer = [UIBarButtonItem fixedSpaceItemOfWidth:0];
 
 	// iPad gets a shift button, iphone doesn't (there's just not enough space ...)
 	NSArray *items;
@@ -1110,15 +1117,15 @@
 		                                      style:UIBarButtonItemStylePlain
 		                                     target:self
 		                                     action:@selector(toggleShiftKey:)] autorelease];
-		items = [NSArray arrayWithObjects:esc_btn, flex_spacer, shift_btn, flex_spacer, ctrl_btn,
-		                                  flex_spacer, win_btn, flex_spacer, alt_btn, flex_spacer,
-		                                  ext_btn, flex_spacer, done_btn, nil];
+		items = [NSArray arrayWithObjects:leading_spacer, esc_btn, flex_spacer, shift_btn,
+		                                  flex_spacer, ctrl_btn, flex_spacer, win_btn, flex_spacer,
+		                                  alt_btn, flex_spacer, ext_btn, trailing_spacer, nil];
 	}
 	else
 	{
-		items = [NSArray arrayWithObjects:esc_btn, flex_spacer, ctrl_btn, flex_spacer, win_btn,
-		                                  flex_spacer, alt_btn, flex_spacer, ext_btn, flex_spacer,
-		                                  done_btn, nil];
+		items = [NSArray arrayWithObjects:leading_spacer, esc_btn, flex_spacer, ctrl_btn,
+		                                  flex_spacer, win_btn, flex_spacer, alt_btn, flex_spacer,
+		                                  ext_btn, trailing_spacer, nil];
 	}
 
 	[keyboard_toolbar setItems:items];
