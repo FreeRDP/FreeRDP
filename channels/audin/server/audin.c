@@ -139,6 +139,14 @@ static UINT audin_server_recv_formats(audin_server_context* context, wStream* s,
 	                                                  sizeof(AUDIO_FORMAT)))
 		return ERROR_INVALID_DATA;
 
+	if (pdu.NumFormats > 512)
+	{
+		WLog_Print(audin->log, WLOG_ERROR,
+		           "Sound Formats PDU contains %" PRIu32 " formats, implausible so discarding",
+		           pdu.NumFormats);
+		return ERROR_INVALID_DATA;
+	}
+
 	pdu.SoundFormats = audio_formats_new(pdu.NumFormats);
 	if (!pdu.SoundFormats)
 	{
