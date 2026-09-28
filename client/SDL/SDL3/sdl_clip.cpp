@@ -559,6 +559,10 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	{
 		ClipboardLockGuard systemlock(clipboard->_system);
 		std::scoped_lock lock(clipboard->_lock);
+		/* A new server format list invalidates whatever the winpr clipboard holds. Otherwise
+		 * ClipDataCb "converts" from it and pastes the last local text that was sent to the
+		 * server instead of requesting the new data. */
+		ClipboardEmpty(clipboard->_system);
 		auto res = cliprdr_file_context_notify_new_server_format_list(filecontext);
 		if (res != CHANNEL_RC_OK)
 			return res;
