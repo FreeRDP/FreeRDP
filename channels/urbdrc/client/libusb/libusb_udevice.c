@@ -1545,14 +1545,16 @@ static int libusb_udev_bulk_or_interrupt_transfer(
 	UDEVICE* pdev = (UDEVICE*)idev;
 	const LIBUSB_ENDPOINT_DESCEIPTOR* ep_desc = nullptr;
 	struct libusb_transfer* transfer = nullptr;
-	URBDRC_PLUGIN* urbdrc = nullptr;
 	ASYNC_TRANSFER_USER_DATA* user_data = nullptr;
 	uint32_t streamID = 0x80000000 | RequestId;
 
 	if (!pdev || !pdev->LibusbConfig || !pdev->urbdrc)
 		return -1;
 
-	urbdrc = pdev->urbdrc;
+	if (BufferSize > INT32_MAX)
+		return -1;
+
+	URBDRC_PLUGIN* urbdrc = pdev->urbdrc;
 	user_data = async_transfer_user_data_new(idev, MessageId, 36, BufferSize, data, 0, NoAck,
 	                                         transferDir, cb, callback);
 
