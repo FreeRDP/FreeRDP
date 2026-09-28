@@ -2340,9 +2340,10 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	int status = zgfx_decompress(gfx->zgfx, Stream_ConstPointer(data),
 	                             (UINT32)Stream_GetRemainingLength(data), &pDstData, &DstSize, 0);
 
-	if (status < 0)
+	if ((status < 0) || (DstSize == 0))
 	{
-		WLog_Print(gfx->base.log, WLOG_ERROR, "zgfx_decompress failure! status: %d", status);
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "zgfx_decompress failure! status: %d, DstSize=%" PRIu32, status, DstSize);
 		free(pDstData);
 		return ERROR_INTERNAL_ERROR;
 	}

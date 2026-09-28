@@ -1500,6 +1500,13 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
 			goto out;
 		}
 
+		if (dataSize == 0)
+		{
+			status = ERROR_INVALID_DATA;
+			WLog_Print(drdynvc->log, WLOG_ERROR, "error de-compressing first packet");
+			goto out;
+		}
+
 		s = Stream_New(data, dataSize);
 		if (!s)
 		{
@@ -1568,6 +1575,13 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wSt
 		if (zgfx_decompress(channel->decompressor, Stream_Pointer(s),
 		                    WINPR_ASSERTING_INT_CAST(UINT32, Stream_GetRemainingLength(s)), &data,
 		                    &dataSize, 0) < 0)
+		{
+			status = ERROR_INVALID_DATA;
+			WLog_Print(drdynvc->log, WLOG_ERROR, "error de-compressing data packet");
+			goto out;
+		}
+
+		if (dataSize == 0)
 		{
 			status = ERROR_INVALID_DATA;
 			WLog_Print(drdynvc->log, WLOG_ERROR, "error de-compressing data packet");
