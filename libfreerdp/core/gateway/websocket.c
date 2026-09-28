@@ -225,7 +225,17 @@ static int websocket_read_data(BIO* bio, BYTE* pBuffer, size_t size,
 
 	ERR_clear_error();
 	status = BIO_read(bio, pBuffer, (int)rlen);
-	if ((status <= 0) || ((size_t)status > encodingContext->payloadLength))
+	if (status <= 0)
+	{
+		if (status == 0)
+		{
+			if (!BIO_should_retry(bio))
+				return -1;
+		}
+		return status;
+	}
+
+	if ((size_t)status > encodingContext->payloadLength)
 		return status;
 
 	encodingContext->payloadLength -= (size_t)status;
