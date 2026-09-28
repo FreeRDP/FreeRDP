@@ -1944,6 +1944,23 @@ rdpTsssp* transport_get_tsssp(rdpTransport* transport)
 	return transport->tsssp;
 }
 
+BOOL freerdp_tsssp_get_context(rdpContext* context, UINT64* pTsPkgContext)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(pTsPkgContext);
+
+	rdpTransport* transport = freerdp_get_transport(context);
+	if (!transport)
+		return FALSE;
+
+	/* Channels call this from their own thread, and transport_disconnect frees
+	 * the context with both locks held. */
+	EnterCriticalSection(&(transport->ReadLock));
+	const BOOL rc = tsssp_get_package_context(transport->tsssp, pTsPkgContext);
+	LeaveCriticalSection(&(transport->ReadLock));
+	return rc;
+}
+
 BOOL transport_set_tsg(rdpTransport* transport, rdpTsg* tsg)
 {
 	WINPR_ASSERT(transport);
