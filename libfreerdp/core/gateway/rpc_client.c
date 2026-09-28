@@ -524,7 +524,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			pdu->CallId = header.common.call_id;
 
 			const size_t len = Stream_Length(fragment);
-			if (!Stream_EnsureCapacity(pdu->s, len))
+			if (!Stream_EnsureRemainingCapacity(pdu->s, len))
 				goto fail;
 
 			Stream_Write(pdu->s, Stream_Buffer(fragment), len);
@@ -551,7 +551,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 		pdu->CallId = header.common.call_id;
 
 		const size_t len = Stream_Length(fragment);
-		if (!Stream_EnsureCapacity(pdu->s, len))
+		if (!Stream_EnsureRemainingCapacity(pdu->s, len))
 			goto fail;
 
 		Stream_Write(pdu->s, Stream_Buffer(fragment), len);
