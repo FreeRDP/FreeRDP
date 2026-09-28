@@ -17,8 +17,13 @@
 
 define_channel_client("rdpear")
 
-set(${MODULE_PREFIX}_SRCS rdpear_main.c)
-
-set(${MODULE_PREFIX}_LIBS winpr freerdp rdpear-common)
+if(WIN32)
+  # Redirected calls are handled by the native TSSSP LSA package, without krb5.
+  set(${MODULE_PREFIX}_SRCS rdpear_sspi.c)
+  set(${MODULE_PREFIX}_LIBS winpr freerdp secur32 advapi32)
+else()
+  set(${MODULE_PREFIX}_SRCS rdpear_main.c)
+  set(${MODULE_PREFIX}_LIBS winpr freerdp rdpear-common)
+endif()
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
