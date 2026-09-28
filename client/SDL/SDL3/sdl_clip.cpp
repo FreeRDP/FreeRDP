@@ -498,6 +498,23 @@ UINT sdlClip::ReceiveServerCapabilities(CliprdrClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
+/* Returns the static image mime type string matching name, or nullptr.
+ * _current_mimetypes stores pointers, so the server supplied name can not be used directly. */
+[[nodiscard]] static const char* staticImageMime(const char* name)
+{
+	for (auto m : s_mime_image())
+	{
+		if (strcmp(m, name) == 0)
+			return m;
+	}
+	for (auto m : s_mime_bitmap())
+	{
+		if (strcmp(m, name) == 0)
+			return m;
+	}
+	return nullptr;
+}
+
 UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
                                       const CLIPRDR_FORMAT_LIST* formatList)
 {
@@ -505,6 +522,7 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	BOOL text = FALSE;
 	BOOL image = FALSE;
 	BOOL file = FALSE;
+	std::vector<const char*> namedImages;
 
 	if (!context || !context->custom)
 		return ERROR_INVALID_PARAMETER;
@@ -532,6 +550,12 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 			{
 				file = TRUE;
 				text = TRUE;
+			}
+			else if (auto m = staticImageMime(format->formatName))
+			{
+				/* e.g. gnome-remote-desktop announces images as a registered format named
+				 * after the mime type (image/png) instead of CF_DIB */
+				namedImages.push_back(m);
 			}
 		}
 		else
@@ -580,6 +604,8 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 		clipboard->_current_mimetypes.insert(clipboard->_current_mimetypes.end(),
 		                                     s_mime_image().begin(), s_mime_image().end());
 	}
+	clipboard->_current_mimetypes.insert(clipboard->_current_mimetypes.end(), namedImages.begin(),
+	                                     namedImages.end());
 	if (html)
 	{
 		clipboard->_current_mimetypes.push_back(s_mime_html);
@@ -873,6 +899,12 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 					else if (name == s_type_HtmlFormat)
 					{
 						srcFormatId = ClipboardGetFormatId(clipboard->_system, s_type_HtmlFormat);
+					}
+					else if (staticImageMime(name.c_str()))
+					{
+						/* image announced by mime name: store it under that name, with
+						 * srcFormatId 0 it ended up as CF_RAW and could not be read back */
+						srcFormatId = ClipboardRegisterFormat(clipboard->_system, name.c_str());
 					}
 				}
 			}
