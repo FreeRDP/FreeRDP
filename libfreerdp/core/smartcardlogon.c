@@ -767,6 +767,24 @@ static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const ch
 			goto fail;
 		}
 
+		/* The hardware path fills sha1Hash in set_info_certificate(); this software path has to
+		 * as well. identity_set_from_smartcard_hash() marshals the hash into a CERT_CREDENTIAL_INFO
+		 * and LSA resolves the certificate by it, so a zeroed hash matches nothing and CredSSP
+		 * fails without pointing at the emulated card. Compute it from the DER. */
+		{
+			size_t derLen = 0;
+			BYTE* der = freerdp_certificate_get_der(cert->certificate, &derLen);
+			const BOOL hashed =
+			    der && (derLen > 0) &&
+			    winpr_Digest(WINPR_MD_SHA1, der, derLen, cert->sha1Hash, sizeof(cert->sha1Hash));
+			free(der);
+			if (!hashed)
+			{
+				WLog_ERR(TAG, "unable to compute sha1 of the emulated smartcard certificate");
+				goto fail;
+			}
+		}
+
 		{
 			char* str = nullptr;
 			size_t len = 0;
