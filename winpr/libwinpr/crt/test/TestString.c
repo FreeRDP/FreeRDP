@@ -419,5 +419,17 @@ int TestString(int argc, char* argv[])
 		return -1;
 	}
 
+	{
+		char test[] = "foo\r\nbar\r\nhaha\r\n";
+		const size_t slen = strnlen(test, sizeof(test));
+
+		const size_t rc = ConvertLineEndingToLF(test, sizeof(test));
+		if (rc != sizeof(test) - 3)
+			return -1;
+
+		const size_t rlen = strnlen(test, sizeof(test));
+		if (rlen != slen - 3)
+			return -1;
+	}
 	return 0;
 }

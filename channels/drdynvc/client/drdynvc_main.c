@@ -1728,7 +1728,7 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 
 	if ((Stream_GetPosition(data_in) > totalLength) || (drdynvc->totalLength != totalLength))
 	{
-		Stream_Free(drdynvc->data_in, TRUE);
+		Stream_Release(drdynvc->data_in);
 		drdynvc->data_in = nullptr;
 		return ERROR_INVALID_DATA;
 	}

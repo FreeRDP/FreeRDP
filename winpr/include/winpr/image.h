@@ -145,7 +145,6 @@ extern "C"
 	 * free as deallocator
 	 */
 	WINPR_ATTR_MALLOC(free, 1)
-	WINPR_ATTR_NODISCARD
 	WINPR_API void* winpr_image_write_buffer(wImage* image, UINT32 format, size_t* size);
 
 	WINPR_ATTR_NODISCARD
