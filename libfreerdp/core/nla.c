@@ -2205,11 +2205,13 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 		return -1;
 	}
 
+	size_t tagcount = 0;
 	while (WinPrAsn1DecReadContextualTag(&dec, &tag, &dec2) != 0)
 	{
 		WinPrAsn1Decoder dec3 = WinPrAsn1Decoder_init();
 		WinPrAsn1_OctetString octet_string = WINPR_C_ARRAY_INIT;
 
+		tagcount++;
 		switch (tag)
 		{
 			case 1:
@@ -2267,7 +2269,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 		}
 	}
 
-	return 1;
+	return tagcount > 0 ? 1 : -1;
 }
 
 int nla_recv_pdu(rdpNla* nla, wStream* s)
