@@ -25,13 +25,26 @@ set(CRT_FILES
     assert.c
 )
 
-include(CheckSourceCompiles)
-if(APPLE)
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror=unguarded-availability-new")
-endif()
-check_source_compiles(
-  C
-  [[
+if(CMAKE_VERSION VERSION_LESS "3.19")
+  include(CheckSymbolExists)
+  check_symbol_exists(regcomp regex.h WINPR_HAVE_REGCOMP)
+  check_symbol_exists(regexec regex.h WINPR_HAVE_REGEXEC)
+  check_symbol_exists(regfree regex.h WINPR_HAVE_REGFREE)
+  if(WINPR_HAVE_REGCOMP AND WINPR_HAVE_REGEXEC AND WINPR_HAVE_REGFREE)
+    set(WINPR_HAVE_REGCOMP ON)
+  else()
+    set(WINPR_HAVE_REGCOMP OFF)
+  endif()
+
+else()
+
+  include(CheckSourceCompiles)
+  if(APPLE)
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror=unguarded-availability-new")
+  endif()
+  check_source_compiles(
+    C
+    [[
     #include <regex.h>
 
     int main(void) {
@@ -43,8 +56,10 @@ check_source_compiles(
         return 0;
     }
     ]]
-  WINPR_HAVE_REGCOMP
-)
+    WINPR_HAVE_REGCOMP
+  )
+endif()
+
 if(WINPR_HAVE_REGCOMP)
   winpr_definition_add(WINPR_HAVE_REGCOMP)
 endif()
