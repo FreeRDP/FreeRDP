@@ -204,7 +204,7 @@ BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poff
 				}
 
 				const UINT32 stride = WINPR_ASSERTING_INT_CAST(uint32_t, ustride);
-				const UINT32 usize = WINPR_ASSERTING_INT_CAST(UINT32, llabs(bi->biHeight)) * stride;
+				const UINT64 usize = WINPR_ASSERTING_INT_CAST(UINT64, llabs(bi->biHeight)) * stride;
 				if (usize > UINT32_MAX)
 				{
 					WLog_ERR(TAG, "abs(bi->biHeight) * stride > UINT32_MAX");
