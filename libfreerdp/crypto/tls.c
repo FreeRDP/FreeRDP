@@ -747,7 +747,7 @@ static BIO* BIO_new_rdp_tls(SSL_CTX* ctx, int client)
 }
 
 WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
-static rdpCertificate* tls_get_certificate(rdpTls* tls, BOOL peer)
+rdpCertificate* freerdp_tls_get_certificate(rdpTls* tls, BOOL peer)
 {
 	X509* remote_cert = nullptr;
 
@@ -1092,11 +1092,11 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 	}
 
 	int verify_status = 0;
-	rdpCertificate* cert = tls_get_certificate(tls, tls->isClientMode);
+	rdpCertificate* cert = freerdp_tls_get_certificate(tls, tls->isClientMode);
 
 	if (!cert)
 	{
-		WLog_ERR(TAG, "tls_get_certificate failed to return the server certificate.");
+		WLog_ERR(TAG, "freerdp_tls_get_certificate failed to return the server certificate.");
 		return TLS_HANDSHAKE_ERROR;
 	}
 
