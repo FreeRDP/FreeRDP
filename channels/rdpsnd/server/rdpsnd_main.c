@@ -1062,7 +1062,7 @@ static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
-	if (!context->priv->StopEvent)
+	if (!context->priv->ChannelHandle)
 		return error;
 
 	if (context->priv->ownThread)
