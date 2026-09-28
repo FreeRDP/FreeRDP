@@ -1633,6 +1633,9 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(GENERIC_CHANNEL_CALLBACK* callback
 	cmd.data = pdu.bitmapData;
 	cmd.extra = nullptr;
 
+	if (cmd.codecId != RDPGFX_CODECID_CAPROGRESSIVE)
+		return ERROR_INVALID_DATA;
+
 	return logSurfaceCommand(gfx, &cmd);
 }
 
