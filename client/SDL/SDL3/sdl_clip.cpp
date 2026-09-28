@@ -42,8 +42,9 @@ const char mime_text_utf8[] = mime_text_plain ";charset=utf-8";
 	static std::vector<const char*> values;
 	if (values.empty())
 	{
+		/* prefer UTF-8: GTK4 serves a bare "text/plain" downgraded to ASCII with \XX escapes */
 		values = std::vector<const char*>(
-		    { mime_text_plain, mime_text_utf8, "UTF8_STRING", "COMPOUND_TEXT", "TEXT", "STRING" });
+		    { mime_text_utf8, "UTF8_STRING", mime_text_plain, "COMPOUND_TEXT", "TEXT", "STRING" });
 	}
 	return values;
 }
@@ -680,7 +681,9 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 			mime = getCurrentTextMime();
 			if (!mime)
 				return {};
-			localFormatId = ClipboardGetFormatId(clipboard->_system, mime);
+			/* always store as "text/plain": it is the only text format name with synthesizers
+			 * registered in winpr (to CF_UNICODETEXT etc.) */
+			localFormatId = ClipboardGetFormatId(clipboard->_system, mime_text_plain);
 			break;
 
 		case CF_DIB:
