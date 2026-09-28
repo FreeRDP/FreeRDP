@@ -334,6 +334,7 @@ UINT rdpei_server_init(RdpeiServerContext* context)
 
 out_close:
 	(void)WTSVirtualChannelClose(priv->channelHandle);
+	priv->channelHandle = INVALID_HANDLE_VALUE;
 	return CHANNEL_RC_INITIALIZATION_ERROR;
 }
 
