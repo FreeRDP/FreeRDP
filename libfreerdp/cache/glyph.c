@@ -172,6 +172,16 @@ static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 c
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL fits_int16(INT32 val)
+{
+	if (val < INT16_MIN)
+		return FALSE;
+	if (val > INT16_MAX)
+		return FALSE;
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data, UINT32 length,
                                            UINT32 cacheId, UINT32 ulCharInc, UINT32 flAccel,
                                            UINT32 bgcolor, UINT32 fgcolor, INT32 x, INT32 y,
@@ -269,6 +279,9 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 				bkWidth = WINPR_ASSERTING_INT_CAST(int, w) - bkX;
 			}
 		}
+
+		if (!fits_int16(bkX) || !fits_int16(bkY) || !fits_int16(bkWidth) || !fits_int16(bkHeight))
+			goto fail;
 
 		bound.x = WINPR_ASSERTING_INT_CAST(INT16, bkX);
 		bound.y = WINPR_ASSERTING_INT_CAST(INT16, bkY);
