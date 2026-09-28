@@ -227,7 +227,7 @@ static const char* x509_name_parse(const char* name, const char* txt, size_t* le
 	const char* p = strstr(name, fmt);
 
 	if (!p)
-		return nullptr;
+		goto fail;
 
 	entry = &p[fmtlen];
 	const char* sep1 = strchr(entry, ';');
