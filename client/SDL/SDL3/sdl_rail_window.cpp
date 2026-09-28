@@ -94,6 +94,9 @@ SDL_Renderer* SdlRailWindow::renderer() const
 void SdlRailWindow::updateWindowRect(const SDL_Rect& rect)
 {
 	std::unique_lock lock(_gfxLock);
+	/* Minimized, Windows parks the window off screen; keep the rect to restore to. */
+	if (_minState.server)
+		return;
 	_awaitRestoreUntil = 0; /* Server geometry received. */
 	if (_localMoveActive)
 	{

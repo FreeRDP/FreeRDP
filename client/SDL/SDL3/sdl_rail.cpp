@@ -1505,6 +1505,10 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 	if (!appWindow)
 		return FALSE;
 
+	/* Show state first: a minimized window's rect is not a placement (updateWindowRect). */
+	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
+		updateShowState(appWindow, orderInfo, windowState);
+
 	if (fieldFlags & (WINDOW_ORDER_FIELD_WND_OFFSET | WINDOW_ORDER_FIELD_WND_SIZE))
 	{
 		SDL_Rect r = appWindow->windowRect();
@@ -1537,9 +1541,6 @@ BOOL SdlRail::window_common(rdpContext* context, const WINDOW_ORDER_INFO* orderI
 			free(title);
 		}
 	}
-
-	if (fieldFlags & WINDOW_ORDER_FIELD_SHOW)
-		updateShowState(appWindow, orderInfo, windowState);
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
 	{
