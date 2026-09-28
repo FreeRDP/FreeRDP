@@ -209,6 +209,15 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 		return true;
 	}
 
+	/* An empty local clipboard is not announced: SDL emits a non-owner update without mime types
+	 * while the client takes ownership after a server copy, and announcing it sent an empty format
+	 * list that cleared the server clipboard. */
+	if (ev.num_mime_types == 0)
+	{
+		WLog_Print(_log, WLOG_DEBUG, "ignoring clipboard update without formats");
+		return true;
+	}
+
 	if (contains(ev.mime_types, ev.num_mime_types))
 	{
 		return true;
