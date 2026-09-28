@@ -938,11 +938,6 @@ static int nla_server_authenticate(rdpNla* nla)
 
 		if (res == 1)
 		{
-			if (nla->earlyUserAuth)
-			{
-				if (!nla_send_early_user_auth(nla, TRUE))
-					goto fail;
-			}
 			ret = 1;
 			break;
 		}
@@ -951,6 +946,11 @@ static int nla_server_authenticate(rdpNla* nla)
 	/* Receive encrypted credentials */
 	if (!nla_server_recv_credentials(nla))
 		ret = -1;
+	else if (nla->earlyUserAuth)
+	{
+		if (!nla_send_early_user_auth(nla, ret == 1))
+			goto fail;
+	}
 
 fail:
 	nla_buffer_free(nla);
