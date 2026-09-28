@@ -31,11 +31,11 @@ endif()
 winpr_tools_module_add(${${MODULE_PREFIX}_SRCS})
 
 if(OPENSSL_FOUND)
-  list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_LIBRARIES})
+  winpr_tools_library_private_add(${OPENSSL_LIBRARIES})
 endif()
 
 if(MBEDTLS_FOUND)
-  list(APPEND ${MODULE_PREFIX}_LIBS ${MBEDTLS_LIBRARIES})
+  winpr_tools_library_private_add(${MBEDTLS_LIBRARIES})
 endif()
 
-winpr_tools_library_add(${${MODULE_PREFIX}_LIBS} winpr)
+winpr_tools_library_public_add(winpr)

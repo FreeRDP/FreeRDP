@@ -28,7 +28,8 @@ set(WINPR_TOOLS_API_VERSION "${WINPR_TOOLS_VERSION_MAJOR}")
 
 set(WINPR_TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(WINPR_TOOLS_SRCS "")
-set(WINPR_TOOLS_LIBS "")
+set(WINPR_TOOLS_PUBLIC_LIBS "")
+set(WINPR_TOOLS_PRIVATE_LIBS "")
 set(WINPR_TOOLS_INCLUDES "")
 set(WINPR_TOOLS_DEFINITIONS "")
 
@@ -64,11 +65,18 @@ macro(winpr_tools_include_directory_add)
   endif()
 endmacro()
 
-macro(winpr_tools_library_add)
+macro(winpr_tools_library_public_add)
   foreach(_lib ${ARGN})
-    list(APPEND WINPR_TOOLS_LIBS "${_lib}")
+    list(APPEND WINPR_TOOLS_PUBLIC_LIBS "${_lib}")
   endforeach()
-  set(WINPR_TOOLS_LIBS ${WINPR_TOOLS_LIBS} PARENT_SCOPE)
+  set(WINPR_TOOLS_PUBLIC_LIBS ${WINPR_TOOLS_PUBLIC_LIBS} PARENT_SCOPE)
+endmacro()
+
+macro(winpr_tools_library_private_add)
+  foreach(_lib ${ARGN})
+    list(APPEND WINPR_TOOLS_PRIVATE_LIBS "${_lib}")
+  endforeach()
+  set(WINPR_TOOLS_PRIVATE_LIBS ${WINPR_TOOLS_PRIVATE_LIBS} PARENT_SCOPE)
 endmacro()
 
 macro(winpr_tools_definition_add)
@@ -89,7 +97,7 @@ addtargetwithresourcefile(${MODULE_NAME} FALSE "${WINPR_VERSION}" WINPR_TOOLS_SR
 
 add_compile_definitions(${WINPR_DEFINITIONS})
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/winpr${WINPR_VERSION_MAJOR}>)
-target_link_libraries(${MODULE_NAME} PUBLIC ${WINPR_TOOLS_LIBS})
+target_link_libraries(${MODULE_NAME} PRIVATE ${WINPR_TOOLS_PRIVATE_LIBS} PUBLIC ${WINPR_TOOLS_PUBLIC_LIBS})
 
 installwithrpath(
   TARGETS
