@@ -989,12 +989,16 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static const Mech* guessMech(PSecBuffer input_buffer, BOOL* spNego, WinPrAsn1_OID* oid)
 {
 	WinPrAsn1Decoder decoder = WinPrAsn1Decoder_init();
 	WinPrAsn1Decoder appDecoder = WinPrAsn1Decoder_init();
 	WinPrAsn1_tagId tag = 0;
 	const char ssp[] = "NTLMSSP";
+
+	if (!input_buffer || !input_buffer->pvBuffer || (input_buffer->cbBuffer == 0))
+		return nullptr;
 
 	*spNego = FALSE;
 
