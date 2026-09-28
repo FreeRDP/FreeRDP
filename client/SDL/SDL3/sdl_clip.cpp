@@ -176,6 +176,30 @@ bool sdlClip::uninit(CliprdrClientContext* clip)
 	return true;
 }
 
+bool sdlClip::isCompositorRestore(const SDL_ClipboardEvent& ev) const
+{
+	/* A non-owner update arriving up to one second after a server copy was put on the local
+	 * clipboard, without our marker, is a compositor restore if it has a single mime type (mutter
+	 * saves and restores one: text or image of the PREVIOUS copy, possibly of another kind) or
+	 * only mime types of the new server copy. */
+	if (_server_reclaimed || _server_mimetypes.empty() || (ev.num_mime_types <= 0))
+		return false;
+	if (SDL_GetTicksNS() - _server_set_ns > SDL_NS_PER_SECOND)
+		return false;
+	bool subset = true;
+	for (Sint32 x = 0; x < ev.num_mime_types; x++)
+	{
+		const char* mime = ev.mime_types[x];
+		if (!mime || (strcmp(mime, _mime_uuid.c_str()) == 0))
+			return false;
+		const bool known =
+		    std::any_of(_server_mimetypes.begin(), _server_mimetypes.end(),
+		                [mime](const char* m) { return m && (strcmp(m, mime) == 0); });
+		subset = subset && known;
+	}
+	return subset || (ev.num_mime_types == 1);
+}
+
 bool sdlClip::contains(const char** mime_types, Sint32 count)
 {
 	for (Sint32 x = 0; x < count; x++)
@@ -198,6 +222,9 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 			auto rc =
 			    SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, this, ev.mime_types,
 			                         WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types));
+			_server_mimetypes = _current_mimetypes;
+			_server_set_ns = SDL_GetTicksNS();
+			_server_reclaimed = false;
 			_current_mimetypes.clear();
 			return rc;
 		}
@@ -207,6 +234,20 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 	if (ev.timestamp == _last_timestamp)
 	{
 		return true;
+	}
+
+	/* While the client takes ownership of the local clipboard for a server copy, the previous
+	 * selection is briefly left without owner and mutter's clipboard persistence restores the last
+	 * clipboard it saved (an older copy). Announcing that as a local copy overwrote the new copy on
+	 * the server, and pasting locally returned the previous content (#13519). Ignore it and take
+	 * the clipboard back with the server formats, once per server copy. */
+	if (isCompositorRestore(ev))
+	{
+		WLog_Print(_log, WLOG_DEBUG, "compositor restored an old clipboard, taking it back");
+		_server_reclaimed = true;
+		_cache_data.clear();
+		return SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, this,
+		                            _server_mimetypes.data(), _server_mimetypes.size());
 	}
 
 	/* An empty local clipboard is not announced: SDL emits a non-owner update without mime types
