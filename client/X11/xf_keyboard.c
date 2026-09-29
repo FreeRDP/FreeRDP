@@ -687,8 +687,11 @@ static int load_map_from_xkbfile(xfContext* xfc)
 #if defined(__APPLE__)
 				const DWORD vkcode =
 				    GetVirtualKeyCodeFromKeycode((UINT32)i - 8u, WINPR_KEYCODE_TYPE_APPLE);
-				xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE[i] =
+				DWORD scancode =
 				    GetVirtualScanCodeFromVirtualKeyCode(vkcode, WINPR_KBD_TYPE_IBM_ENHANCED);
+				if (scancode == 0)
+				    scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, WINPR_KBD_TYPE_JAPANESE);
+				xfc->X11_KEYCODE_TO_VIRTUAL_SCANCODE[i] = scancode;
 				found = TRUE;
 #endif
 			}
