@@ -1,0 +1,34 @@
+# IDE
+.idea/
+.deveco/
+*.iml
+
+# Hvigor & Build
+.hvigor/
+build/
+.preview/
+oh_modules/
+node_modules/
+
+# Native C++ Build
+.cxx/
+native/build-*/
+native/test_cmdline
+compile_commands.json
+.ninja_*
+
+# Local configurations
+local.properties
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Build-time generated files
+entry/src/main/ets/utils/BuildInfo.ets
+.build-signing-mode
+.appanalyzer/
+
+# Harmony OpenSSL prebuilts (cross-compiled by scripts/harmony-build-openssl.sh)
+native/third_party/openssl-prebuilt/
+native/third_party/ohos-openssl/

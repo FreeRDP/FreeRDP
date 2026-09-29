@@ -1,0 +1,13 @@
+{
+  "apiType": "stageMode",
+  "buildOption": {
+    "externalNativeOptions": {
+      "path": "../native/CMakeLists.txt",
+      "arguments": "-DOHOS_STL=c++_shared -DWITH_INTERNAL_RC4=ON -DWITH_INTERNAL_MD4=ON -DWITH_INTERNAL_MD5=ON",
+      "cppFlags": "",
+      "abiFilters": [
+        "arm64-v8a"
+      ]
+    }
+  }
+}
