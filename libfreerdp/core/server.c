@@ -225,7 +225,7 @@ static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int
 
 	const UINT32 value = wts_read_variable_uint(s, cbLen, &channel->dvc_total_length);
 
-	if (value == 0)
+	if ((value == 0) || (channel->dvc_total_length == 0))
 		return FALSE;
 
 	const size_t length = Stream_GetRemainingLength(s);
