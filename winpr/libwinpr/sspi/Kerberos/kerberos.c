@@ -1468,8 +1468,13 @@ static BOOL retrieveSomeTgt(KRB_CREDENTIALS* credentials, const char* target, kr
 		if (rv)
 			goto out;
 
-		target_princ->realm.data = default_realm;
-		target_princ->realm.length = (unsigned int)strlen(default_realm);
+		const size_t len = strnlen(default_realm, MAX_KEYTAB_NAME_LEN + 1);
+		if ((len == 0) || !default_realm)
+			goto out;
+		target_princ->realm.data = strndup(default_realm, len);
+		if (!target_princ->realm.data)
+			goto out;
+		target_princ->realm.length = (unsigned int)len;
 	}
 #endif
 
