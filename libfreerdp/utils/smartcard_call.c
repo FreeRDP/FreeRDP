@@ -1650,7 +1650,7 @@ WINPR_ATTR_NODISCARD static LONG smartcard_LocateCardsByATRA_Call(scard_call_con
 		for (UINT32 j = 0; j < call->cReaders; j++)
 		{
 			const LocateCards_ATRMask* mask = &call->rgAtrMasks[i];
-			for (UINT32 k = 0; k < mask->cbAtr; k++)
+			for (UINT32 k = 0; k < winpr_Data_Get_UINT32(&mask->cbAtr); k++)
 			{
 				if ((mask->rgbAtr[k] & mask->rgbMask[k]) !=
 				    (states[j].rgbAtr[k] & mask->rgbMask[k]))
@@ -1747,7 +1747,7 @@ WINPR_ATTR_NODISCARD static LONG smartcard_LocateCardsByATRW_Call(scard_call_con
 		for (UINT32 j = 0; j < call->cReaders; j++)
 		{
 			const LocateCards_ATRMask* mask = &call->rgAtrMasks[i];
-			for (UINT32 k = 0; k < mask->cbAtr; k++)
+			for (UINT32 k = 0; k < winpr_Data_Get_UINT32(&mask->cbAtr); k++)
 			{
 				if ((mask->rgbAtr[k] & mask->rgbMask[k]) !=
 				    (states[j].rgbAtr[k] & mask->rgbMask[k]))
