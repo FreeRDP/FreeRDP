@@ -133,9 +133,12 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	}
 
 	WINPR_ASSERT(context->GetSurfaceIds);
-	rc = context->GetSurfaceIds(context, &pSurfaceIds, &count);
-	if (rc != CHANNEL_RC_OK)
+	const UINT res = context->GetSurfaceIds(context, &pSurfaceIds, &count);
+	if (res != CHANNEL_RC_OK)
+	{
+		rc = res;
 		goto fail;
+	}
 
 	for (UINT32 index = 0; index < count; index++)
 	{

@@ -1747,20 +1747,24 @@ static void udev_free(IUDEVICE* idev)
 		log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_reset_device", rc);
 	}
 
-	/* HACK: We need to wait until the cancel transfer has been processed by
-	 * poll_libusb_events
-	 */
-	Sleep(100);
+	while (ArrayList_Count(udev->request_queue) > 0)
+	{
+		/* HACK: We need to wait until the cancel transfer has been processed by
+		 * poll_libusb_events
+		 */
+		Sleep(100);
+	}
 
 	/* release all interface and  attach kernel driver */
 	if (!udev->iface.attach_kernel_driver(idev))
 		WLog_Print(udev->urbdrc->log, WLOG_WARN, "attach_kernel_driver failed for device");
-	ArrayList_Free(udev->request_queue);
-	/* free the config descriptor that send from windows */
-	msusb_msconfig_free(udev->MsConfig);
 	libusb_unref_device(udev->libusb_dev);
 	libusb_close(udev->libusb_handle);
 	libusb_close(udev->hub_handle);
+
+	ArrayList_Free(udev->request_queue);
+	/* free the config descriptor that send from windows */
+	msusb_msconfig_free(udev->MsConfig);
 	free(udev->devDescriptor);
 	free(idev);
 }
