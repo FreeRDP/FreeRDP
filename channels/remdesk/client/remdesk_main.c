@@ -39,6 +39,7 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 {
 	UINT32 status = 0;
@@ -68,6 +69,7 @@ static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 {
 	const char* name = nullptr;
@@ -135,9 +137,11 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT remdesk_recv_ctl_server_announce_pdu(WINPR_ATTR_UNUSED remdeskPlugin* remdesk,
-                                                 WINPR_ATTR_UNUSED wStream* s,
-                                                 WINPR_ATTR_UNUSED REMDESK_CHANNEL_HEADER* header)
+WINPR_ATTR_NODISCARD
+static UINT
+remdesk_recv_ctl_server_announce_pdu(WINPR_ATTR_UNUSED remdeskPlugin* remdesk,
+                                     WINPR_ATTR_UNUSED wStream* s,
+                                     WINPR_ATTR_UNUSED const REMDESK_CHANNEL_HEADER* header)
 {
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(s);
@@ -152,12 +156,21 @@ static UINT remdesk_recv_ctl_server_announce_pdu(WINPR_ATTR_UNUSED remdeskPlugin
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s,
-                                              WINPR_ATTR_UNUSED REMDESK_CHANNEL_HEADER* header)
+WINPR_ATTR_NODISCARD
+static UINT
+remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s,
+                                  WINPR_ATTR_UNUSED const REMDESK_CHANNEL_HEADER* header)
 {
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
+
+	if (header->DataLength < 12ull)
+	{
+		WLog_ERR(TAG, "remdesk: HEADER::DataLength=%" PRIu32 ", but expected >= 12",
+		         header->DataLength);
+		return ERROR_INVALID_DATA;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return ERROR_INVALID_DATA;
@@ -180,6 +193,7 @@ static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 {
 	REMDESK_CTL_VERSION_INFO_PDU pdu = WINPR_C_ARRAY_INIT;
@@ -221,8 +235,9 @@ static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_recv_ctl_result_pdu(WINPR_ATTR_UNUSED remdeskPlugin* remdesk, wStream* s,
-                                        WINPR_ATTR_UNUSED REMDESK_CHANNEL_HEADER* header,
+                                        WINPR_ATTR_UNUSED const REMDESK_CHANNEL_HEADER* header,
                                         UINT32* pResult)
 {
 	UINT32 result = 0;
@@ -231,6 +246,13 @@ static UINT remdesk_recv_ctl_result_pdu(WINPR_ATTR_UNUSED remdeskPlugin* remdesk
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 	WINPR_ASSERT(pResult);
+
+	if (header->DataLength < 8ull)
+	{
+		WLog_ERR(TAG, "remdesk: HEADER::DataLength=%" PRIu32 ", but expected >= 8",
+		         header->DataLength);
+		return ERROR_INVALID_DATA;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
@@ -256,6 +278,7 @@ static UINT remdesk_recv_ctl_result_pdu(WINPR_ATTR_UNUSED remdeskPlugin* remdesk
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 {
 	UINT error = ERROR_INTERNAL_ERROR;
@@ -334,6 +357,7 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 {
 	UINT error = 0;
@@ -392,6 +416,7 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 {
 	size_t cbExpertBlobW = 0;
@@ -454,6 +479,7 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 {
 	REMDESK_CTL_EXPERT_ON_VISTA_PDU pdu = WINPR_C_ARRAY_INIT;
@@ -500,7 +526,9 @@ static UINT remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
+WINPR_ATTR_NODISCARD
+static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s,
+                                 const REMDESK_CHANNEL_HEADER* header)
 {
 	UINT error = CHANNEL_RC_OK;
 	UINT32 msgType = 0;
@@ -510,7 +538,14 @@ static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHA
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (header->DataLength < 4)
+	{
+		WLog_ERR(TAG, "remdesk: HEADER::DataLength=%" PRIu32 ", but expected >= 4",
+		         header->DataLength);
+		return ERROR_INVALID_DATA;
+	}
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, header->DataLength))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, msgType); /* msgType (4 bytes) */
@@ -627,15 +662,16 @@ static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHA
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 {
-	UINT status = 0;
-	REMDESK_CHANNEL_HEADER header;
+	REMDESK_CHANNEL_HEADER header = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(s);
 
-	if ((status = remdesk_read_channel_header(s, &header)))
+	UINT status = remdesk_read_channel_header(s, &header);
+	if (status)
 	{
 		WLog_ERR(TAG, "remdesk_read_channel_header failed with error %" PRIu32 "", status);
 		return status;
@@ -678,6 +714,7 @@ static void remdesk_process_connect(WINPR_ATTR_UNUSED remdeskPlugin* remdesk)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, const void* pData,
                                                         UINT32 dataLength, UINT32 totalLength,
                                                         UINT32 dataFlags)
@@ -799,6 +836,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		                "remdesk_virtual_channel_open_event_ex reported an error");
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD WINAPI remdesk_virtual_channel_client_thread(LPVOID arg)
 {
 	wStream* data = nullptr;
@@ -857,6 +895,7 @@ static DWORD WINAPI remdesk_virtual_channel_client_thread(LPVOID arg)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk,
                                                     WINPR_ATTR_UNUSED LPVOID pData,
                                                     WINPR_ATTR_UNUSED UINT32 dataLength)
@@ -898,6 +937,7 @@ error_out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+WINPR_ATTR_NODISCARD
 static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 {
 	UINT rc = CHANNEL_RC_OK;

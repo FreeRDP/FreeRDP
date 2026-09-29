@@ -1139,7 +1139,7 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 	}
 	else if (transport->earlyUserAuth)
 	{
-		if (!Stream_EnsureCapacity(s, 4))
+		if (!Stream_EnsureRemainingCapacity(s, 4))
 			return -1;
 		const SSIZE_T rc = transport_read_layer_bytes(transport, s, 4);
 		if (rc != 1)

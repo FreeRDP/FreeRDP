@@ -162,11 +162,6 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 		{
 			goto fail;
 		}
-		if (!freerdp_client_codecs_reset(
-		        gdi->context->codecs, freerdp_settings_get_codecs_flags(settings), width, height))
-		{
-			goto fail;
-		}
 	}
 
 	rc = CHANNEL_RC_OK;
@@ -937,21 +932,19 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	UINT status = CHANNEL_RC_OK;
 	UINT16 alphaSig = 0;
 	UINT16 compressed = 0;
-	gdiGfxSurface* surface = nullptr;
 	RECTANGLE_16 invalidRect;
-	wStream buffer;
-	wStream* s = nullptr;
+	wStream buffer = WINPR_C_ARRAY_INIT;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cmd);
 
-	s = Stream_StaticConstInit(&buffer, cmd->data, cmd->length);
+	wStream* s = Stream_StaticConstInit(&buffer, cmd->data, cmd->length);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_INVALID_DATA;
 
 	WINPR_ASSERT(context->GetSurfaceData);
-	surface =
+	gdiGfxSurface* surface =
 	    (gdiGfxSurface*)context->GetSurfaceData(context, (UINT16)MIN(UINT16_MAX, cmd->surfaceId));
 
 	if (!surface)

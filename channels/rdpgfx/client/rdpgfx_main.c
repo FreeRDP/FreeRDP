@@ -129,12 +129,13 @@ static void rdpgfx_stats_cmdid_event(RdpgfxClientContext* context, uint32_t inde
 
 static BOOL delete_surface(const void* key, void* value, void* arg)
 {
-	const UINT16 id = (UINT16)(uintptr_t)(key);
-	if (id < 1)
+	const ULONG_PTR id = (ULONG_PTR)(key);
+	if ((id < 1) || (id - 1 > UINT16_MAX))
 		return FALSE;
+	const UINT16 uid = WINPR_ASSERTING_INT_CAST(UINT16, id - 1);
 
 	RdpgfxClientContext* context = arg;
-	const RDPGFX_DELETE_SURFACE_PDU pdu = { .surfaceId = id - 1 };
+	const RDPGFX_DELETE_SURFACE_PDU pdu = { .surfaceId = uid };
 
 	WINPR_UNUSED(value);
 
@@ -721,13 +722,21 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 	Stream_Read_UINT32(s, pdu.height);       /* height (4 bytes) */
 	Stream_Read_UINT32(s, pdu.monitorCount); /* monitorCount (4 bytes) */
 
+	if ((pdu.width == 0) || (pdu.height == 0) || (pdu.monitorCount == 0))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->ResetGraphics Width[%" PRIu32 "], Height[%" PRIu32
+		           "] or monitorCount[%" PRIu32 " is 0",
+		           pdu.width, pdu.height, pdu.monitorCount);
+		return ERROR_INVALID_DATA;
+	}
 	if ((pdu.width > MAX_SURFACE_SIZE) || (pdu.height > MAX_SURFACE_SIZE) ||
 	    (pdu.monitorCount > MAX_MONITOR_COUNT))
 	{
 		WLog_Print(gfx->base.log, WLOG_ERROR,
 		           "context->ResetGraphics Width[%" PRIu32 "], Height[%" PRIu32 "] > %" PRIu32
 		           " or monitorCount[%" PRIu32 " > %" PRIu32,
-		           pdu.width, pdu.width, MAX_SURFACE_SIZE, pdu.monitorCount, MAX_MONITOR_COUNT);
+		           pdu.width, pdu.height, MAX_SURFACE_SIZE, pdu.monitorCount, MAX_MONITOR_COUNT);
 		return ERROR_INVALID_DATA;
 	}
 
@@ -1210,6 +1219,13 @@ static UINT rdpgfx_recv_create_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 	Stream_Read_UINT16(s, pdu.height);     /* height (2 bytes) */
 	Stream_Read_UINT8(s, pdu.pixelFormat); /* RDPGFX_PIXELFORMAT (1 byte) */
 
+	if ((pdu.width == 0) || (pdu.height == 0))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->RecvCreateSurfacePdu Width[%" PRIu32 "], Height[%" PRIu32 "] is 0",
+		           pdu.width, pdu.height);
+		return ERROR_INVALID_DATA;
+	}
 	if ((pdu.width > MAX_SURFACE_SIZE) || (pdu.height > MAX_SURFACE_SIZE))
 	{
 		WLog_Print(gfx->base.log, WLOG_ERROR,
@@ -1633,6 +1649,9 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(GENERIC_CHANNEL_CALLBACK* callback
 	cmd.data = pdu.bitmapData;
 	cmd.extra = nullptr;
 
+	if (cmd.codecId != RDPGFX_CODECID_CAPROGRESSIVE)
+		return ERROR_INVALID_DATA;
+
 	return logSurfaceCommand(gfx, &cmd);
 }
 
@@ -2025,6 +2044,14 @@ static UINT rdpgfx_recv_map_surface_to_window_pdu(GENERIC_CHANNEL_CALLBACK* call
 	Stream_Read_UINT32(s, pdu.mappedWidth);  /* mappedWidth (4 bytes) */
 	Stream_Read_UINT32(s, pdu.mappedHeight); /* mappedHeight (4 bytes) */
 
+	if ((pdu.mappedWidth == 0) || (pdu.mappedHeight == 0))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->MapSurfaceToWindow mappedWidth[%" PRIu32 "], mappedHeight[%" PRIu32
+		           "] is 0",
+		           pdu.mappedWidth, pdu.mappedHeight);
+		return ERROR_INVALID_DATA;
+	}
 	if ((pdu.mappedWidth > MAX_SURFACE_SIZE) || (pdu.mappedHeight > MAX_SURFACE_SIZE))
 	{
 		WLog_Print(gfx->base.log, WLOG_ERROR,
@@ -2070,6 +2097,23 @@ static UINT rdpgfx_recv_map_surface_to_scaled_window_pdu(GENERIC_CHANNEL_CALLBAC
 	Stream_Read_UINT32(s, pdu.mappedHeight); /* mappedHeight (4 bytes) */
 	Stream_Read_UINT32(s, pdu.targetWidth);  /* targetWidth (4 bytes) */
 	Stream_Read_UINT32(s, pdu.targetHeight); /* targetHeight (4 bytes) */
+
+	if ((pdu.mappedWidth == 0) || (pdu.mappedHeight == 0))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->RecvMapSurfaceToScaledWindowPdu mappedWidth[%" PRIu32
+		           "], mappedHeight[%" PRIu32 "] is 0",
+		           pdu.mappedWidth, pdu.mappedHeight);
+		return ERROR_INVALID_DATA;
+	}
+	if ((pdu.targetWidth == 0) || (pdu.targetHeight == 0))
+	{
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "context->RecvMapSurfaceToScaledWindowPdu targetWidth[%" PRIu32
+		           "], targetHeight[%" PRIu32 "] is 0",
+		           pdu.targetWidth, pdu.targetHeight);
+		return ERROR_INVALID_DATA;
+	}
 
 	if ((pdu.mappedWidth > MAX_SURFACE_SIZE) || (pdu.mappedHeight > MAX_SURFACE_SIZE))
 	{
@@ -2337,9 +2381,10 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	int status = zgfx_decompress(gfx->zgfx, Stream_ConstPointer(data),
 	                             (UINT32)Stream_GetRemainingLength(data), &pDstData, &DstSize, 0);
 
-	if (status < 0)
+	if ((status < 0) || (DstSize == 0))
 	{
-		WLog_Print(gfx->base.log, WLOG_ERROR, "zgfx_decompress failure! status: %d", status);
+		WLog_Print(gfx->base.log, WLOG_ERROR,
+		           "zgfx_decompress failure! status: %d, DstSize=%" PRIu32, status, DstSize);
 		free(pDstData);
 		return ERROR_INTERNAL_ERROR;
 	}
