@@ -1768,24 +1768,24 @@ BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT c
 		tmp4 = winpr_aligned_calloc(maxPlaneSize, 4, 32);
 		if (!tmp1 || !tmp2 || !tmp3 || !tmp4)
 		{
-			free(tmp1);
-			free(tmp2);
-			free(tmp3);
-			free(tmp4);
+			winpr_aligned_free(tmp1);
+			winpr_aligned_free(tmp2);
+			winpr_aligned_free(tmp3);
+			winpr_aligned_free(tmp4);
 			return FALSE;
 		}
 	}
 
-	free(context->planesBuffer);
+	winpr_aligned_free(context->planesBuffer);
 	context->planesBuffer = tmp1;
 
-	free(context->pTempData);
+	winpr_aligned_free(context->pTempData);
 	context->pTempData = tmp2;
 
-	free(context->deltaPlanesBuffer);
+	winpr_aligned_free(context->deltaPlanesBuffer);
 	context->deltaPlanesBuffer = tmp3;
 
-	free(context->rlePlanesBuffer);
+	winpr_aligned_free(context->rlePlanesBuffer);
 	context->rlePlanesBuffer = tmp4;
 
 	context->maxWidth = maxWidth;
