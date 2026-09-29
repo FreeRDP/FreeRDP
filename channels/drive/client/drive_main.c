@@ -851,7 +851,10 @@ static DWORD WINAPI drive_thread_func(LPVOID arg)
 
 		IRP* irp = (IRP*)message.wParam;
 		if (!drive_poll_run(drive, irp))
+		{
+			error = ERROR_INVALID_DATA;
 			break;
+		}
 	}
 
 fail:
