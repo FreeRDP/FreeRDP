@@ -162,11 +162,6 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 		{
 			goto fail;
 		}
-		if (!freerdp_client_codecs_reset(
-		        gdi->context->codecs, freerdp_settings_get_codecs_flags(settings), width, height))
-		{
-			goto fail;
-		}
 	}
 
 	rc = CHANNEL_RC_OK;
