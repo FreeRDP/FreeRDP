@@ -129,12 +129,13 @@ static void rdpgfx_stats_cmdid_event(RdpgfxClientContext* context, uint32_t inde
 
 static BOOL delete_surface(const void* key, void* value, void* arg)
 {
-	const UINT16 id = (UINT16)(uintptr_t)(key);
-	if (id < 1)
+	const ULONG_PTR id = (ULONG_PTR)(key);
+	if ((id < 1) || (id - 1 > UINT16_MAX))
 		return FALSE;
+	const UINT16 uid = WINPR_ASSERTING_INT_CAST(UINT16, id - 1);
 
 	RdpgfxClientContext* context = arg;
-	const RDPGFX_DELETE_SURFACE_PDU pdu = { .surfaceId = id - 1 };
+	const RDPGFX_DELETE_SURFACE_PDU pdu = { .surfaceId = uid };
 
 	WINPR_UNUSED(value);
 
