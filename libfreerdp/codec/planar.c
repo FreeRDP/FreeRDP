@@ -1738,45 +1738,63 @@ BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* WINPR_RESTRICT c
 		return FALSE;
 
 	context->bgr = FALSE;
-	context->maxWidth = PLANAR_ALIGN(width, 4);
-	context->maxHeight = PLANAR_ALIGN(height, 4);
+	const UINT32 maxWidth = PLANAR_ALIGN(width, 4);
+	const UINT32 maxHeight = PLANAR_ALIGN(height, 4);
+	UINT32 maxPlaneSize = 0;
 	{
-		const UINT64 tmp = (UINT64)context->maxWidth * context->maxHeight;
+		const UINT64 tmp = 1ull * maxWidth * maxHeight;
 		if (tmp > UINT32_MAX)
 			return FALSE;
-		context->maxPlaneSize = (UINT32)tmp;
+		maxPlaneSize = (UINT32)tmp;
 	}
 
-	if (context->maxWidth > UINT32_MAX / 4)
+	if (maxWidth > UINT32_MAX / 4)
 		return FALSE;
-	context->nTempStep = context->maxWidth * 4;
+	const UINT32 nTempStep = maxWidth * 4ull;
 
 	memset((void*)context->planes, 0, sizeof(context->planes));
 	memset((void*)context->rlePlanes, 0, sizeof(context->rlePlanes));
 	memset((void*)context->deltaPlanes, 0, sizeof(context->deltaPlanes));
 
+	void* tmp1 = nullptr;
+	void* tmp2 = nullptr;
+	void* tmp3 = nullptr;
+	void* tmp4 = nullptr;
+	if (maxPlaneSize > 0)
+	{
+		tmp1 = winpr_aligned_calloc(maxPlaneSize, 4, 32);
+		tmp2 = winpr_aligned_calloc(maxPlaneSize, 6, 32);
+		tmp3 = winpr_aligned_calloc(maxPlaneSize, 4, 32);
+		tmp4 = winpr_aligned_calloc(maxPlaneSize, 4, 32);
+		if (!tmp1 || !tmp2 || !tmp3 || !tmp4)
+		{
+			free(tmp1);
+			free(tmp2);
+			free(tmp3);
+			free(tmp4);
+			return FALSE;
+		}
+	}
+
+	free(context->planesBuffer);
+	context->planesBuffer = tmp1;
+
+	free(context->pTempData);
+	context->pTempData = tmp2;
+
+	free(context->deltaPlanesBuffer);
+	context->deltaPlanesBuffer = tmp3;
+
+	free(context->rlePlanesBuffer);
+	context->rlePlanesBuffer = tmp4;
+
+	context->maxWidth = maxWidth;
+	context->maxHeight = maxHeight;
+	context->maxPlaneSize = maxPlaneSize;
+	context->nTempStep = nTempStep;
+
 	if (context->maxPlaneSize > 0)
 	{
-		void* tmp = winpr_aligned_recalloc(context->planesBuffer, context->maxPlaneSize, 4, 32);
-		if (!tmp)
-			return FALSE;
-		context->planesBuffer = tmp;
-
-		tmp = winpr_aligned_recalloc(context->pTempData, context->maxPlaneSize, 6, 32);
-		if (!tmp)
-			return FALSE;
-		context->pTempData = tmp;
-
-		tmp = winpr_aligned_recalloc(context->deltaPlanesBuffer, context->maxPlaneSize, 4, 32);
-		if (!tmp)
-			return FALSE;
-		context->deltaPlanesBuffer = tmp;
-
-		tmp = winpr_aligned_recalloc(context->rlePlanesBuffer, context->maxPlaneSize, 4, 32);
-		if (!tmp)
-			return FALSE;
-		context->rlePlanesBuffer = tmp;
-
 		context->planes[0] = &context->planesBuffer[0ULL * context->maxPlaneSize];
 		context->planes[1] = &context->planesBuffer[1ULL * context->maxPlaneSize];
 		context->planes[2] = &context->planesBuffer[2ULL * context->maxPlaneSize];
