@@ -1061,6 +1061,12 @@ static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
 
 	WINPR_ASSERT(rdg);
 
+	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
+	{
+		WLog_Print(rdg->log, WLOG_ERROR, "EXTAUTH_SSPI_NTLM but rdpRdg::extAuth=false");
+		return FALSE;
+	}
+
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdg->log, s, 6))
 		return FALSE;
 
