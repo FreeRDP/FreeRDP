@@ -90,6 +90,65 @@ static const char s_mime_html[] = "text/html";
 	return values;
 }
 
+/* Local image types winpr can turn into a CF_DIB, in order of preference: BMP only needs its
+ * file header stripped, the others need the matching winpr image support compiled in. */
+[[nodiscard]] static const std::vector<const char*>& s_mime_dib_sources()
+{
+	static const std::vector<const char*> values = []()
+	{
+		std::vector<const char*> v({ BMP_MIME_LIST });
+		if (winpr_image_format_is_supported(WINPR_IMAGE_PNG))
+			v.push_back(s_mime_png);
+		if (winpr_image_format_is_supported(WINPR_IMAGE_WEBP))
+			v.push_back(s_mime_webp);
+		if (winpr_image_format_is_supported(WINPR_IMAGE_JPEG))
+			v.push_back(s_mime_jpg);
+		return v;
+	}();
+	return values;
+}
+
+/* Local image types an "HTML Format" request may be answered from */
+[[nodiscard]] static const std::vector<const char*>& s_mime_html_image_sources()
+{
+	static const std::vector<const char*> values({ s_mime_jpg, s_mime_png, s_mime_webp, s_mime_avif,
+	                                               s_mime_jxl, s_mime_tiff, BMP_MIME_LIST });
+	return values;
+}
+
+/* The mime types SDL has cached for the current clipboard owner. Unlike SDL_HasClipboardData
+ * this does no clipboard I/O: on X11, SDL_HasClipboardData transfers the data, and calls our
+ * own ClipDataCb when we are the owner. */
+[[nodiscard]] static std::vector<std::string> localMimeTypes()
+{
+	std::vector<std::string> list;
+	size_t count = 0;
+	auto mimes = SDL_GetClipboardMimeTypes(&count);
+	for (size_t x = 0; mimes && (x < count); x++)
+	{
+		if (mimes[x])
+			list.emplace_back(mimes[x]);
+	}
+	SDL_free(static_cast<void*>(mimes));
+	return list;
+}
+
+[[nodiscard]] static bool hasMime(const std::vector<std::string>& list, const char* mime)
+{
+	return std::find(list.begin(), list.end(), mime) != list.end();
+}
+
+[[nodiscard]] static const char* firstOffered(const std::vector<std::string>& offered,
+                                              const std::vector<const char*>& candidates)
+{
+	for (const auto& m : candidates)
+	{
+		if (hasMime(offered, m))
+			return m;
+	}
+	return nullptr;
+}
+
 static const char s_mime_gnome_copied_files[] = "x-special/gnome-copied-files";
 static const char s_mime_mate_copied_files[] = "x-special/mate-copied-files";
 
@@ -189,6 +248,11 @@ bool sdlClip::contains(const char** mime_types, Sint32 count)
 	return false;
 }
 
+bool sdlClip::ownsClipboard() const
+{
+	return hasMime(localMimeTypes(), _mime_uuid.c_str());
+}
+
 bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 {
 	if (!_ctx || !_sync || ev.owner)
@@ -232,7 +296,7 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 	 * focus-in, racing a server format list. Announcing it would replace the fresh server
 	 * clipboard with the stale local one (and the server would then ask us for data we no
 	 * longer own). A genuine local change cancels our data before its update is queued. */
-	if (SDL_HasClipboardData(_mime_uuid.c_str()))
+	if (ownsClipboard())
 	{
 		WLog_Print(_log, WLOG_DEBUG, "ignoring stale local clipboard update");
 		return true;
@@ -652,169 +716,163 @@ UINT sdlClip::ReceiveFormatListResponse(WINPR_ATTR_UNUSED CliprdrClientContext* 
 	return CHANNEL_RC_OK;
 }
 
-[[nodiscard]]
-static const char* getCurrentTextMime()
-{
-
-	for (auto m : s_mime_text())
-	{
-		if (SDL_HasClipboardData(m))
-			return m;
-	}
-	return nullptr;
-}
-
-[[nodiscard]]
-static const char* getCurrentImageMime()
-{
-	/* lossless first; only types winpr can convert to a DIB */
-	const std::vector<const char*> types{ s_mime_png, BMP_MIME_LIST, s_mime_webp, s_mime_jpg,
-		                                  s_mime_tiff };
-	for (const auto& m : types)
-	{
-		if (SDL_HasClipboardData(m))
-			return m;
-	}
-	return nullptr;
-}
-
 std::shared_ptr<BYTE> sdlClip::getLocalData(uint32_t formatId, uint32_t& len)
 {
-	const char* mime = nullptr;
-	auto clipboard = this;
-
-	BOOL res = FALSE;
-
-	std::shared_ptr<BYTE> data;
-
 	len = 0;
+
+	const auto offered = localMimeTypes();
 
 	/* The local clipboard still holds what this session received from the server (the
 	 * server asked before our format list reached it). Reading it through SDL would call
 	 * ClipDataCb and ask the server for its own data, so fail the request instead. */
-	if (SDL_HasClipboardData(_mime_uuid.c_str()))
+	if (hasMime(offered, _mime_uuid.c_str()))
 	{
 		WLog_Print(_log, WLOG_DEBUG, "local clipboard holds server data, not answering request");
-		return data;
+		return {};
 	}
 
-	auto localFormatId = formatId;
-	WLog_Print(clipboard->_log, WLOG_DEBUG, "Requesting format %s [0x%08" PRIx32 "] [%s]",
-	           ClipboardGetFormatIdString(localFormatId), localFormatId,
-	           ClipboardGetFormatName(clipboard->_system, localFormatId));
+	UINT32 fileFormatId = 0;
+	UINT32 htmlFormatId = 0;
+	{
+		ClipboardLockGuard systemlock(_system);
+		std::scoped_lock lock(_lock);
+		WLog_Print(_log, WLOG_DEBUG, "Requesting format %s [0x%08" PRIx32 "] [%s]",
+		           ClipboardGetFormatIdString(formatId), formatId,
+		           ClipboardGetFormatName(_system, formatId));
+		fileFormatId = ClipboardGetFormatId(_system, s_type_FileGroupDescriptorW);
+		htmlFormatId = ClipboardGetFormatId(_system, s_type_HtmlFormat);
+	}
 
-	ClipboardLockGuard systemlock(clipboard->_system);
-	std::scoped_lock lock(clipboard->_lock);
-
-	const UINT32 fileFormatId =
-	    ClipboardGetFormatId(clipboard->_system, s_type_FileGroupDescriptorW);
-	const UINT32 htmlFormatId = ClipboardGetFormatId(clipboard->_system, s_type_HtmlFormat);
+	/* Local mime types to try, in order, and the _system format each is stored as for winpr to
+	 * convert: its registered format, the requested one, or a newly registered one. */
+	enum class Store
+	{
+		Lookup,
+		Requested,
+		Register
+	};
+	struct Candidate
+	{
+		const char* mime;
+		Store store;
+	};
+	std::vector<Candidate> candidates;
 
 	switch (formatId)
 	{
 		case CF_TEXT:
 		case CF_OEMTEXT:
 		case CF_UNICODETEXT:
-			mime = getCurrentTextMime();
-			if (!mime)
-				return {};
-			localFormatId = ClipboardGetFormatId(clipboard->_system, mime);
-			break;
+		{
+			const char* mime = firstOffered(offered, s_mime_text());
+			if (mime)
+				candidates.push_back({ mime, Store::Lookup });
+		}
+		break;
 
 		case CF_DIB:
 		case CF_DIBV5:
-			/* Read whatever image type the local clipboard offers (screenshot tools offer
-			 * image/png only, never image/bmp) and let winpr synthesize the DIB. */
-			mime = getCurrentImageMime();
-			if (!mime)
-				return {};
-			localFormatId = ClipboardRegisterFormat(clipboard->_system, mime);
+			/* Every convertible type on offer (screenshot tools offer image/png only, never
+			 * image/bmp), in case a decoder rejects one of them. */
+			for (const auto& mime : s_mime_dib_sources())
+			{
+				if (hasMime(offered, mime))
+					candidates.push_back({ mime, Store::Register });
+			}
 			break;
 
 		case CF_TIFF:
-			mime = s_mime_tiff;
+			candidates.push_back({ s_mime_tiff, Store::Requested });
 			break;
 
 		default:
 			if (formatId == fileFormatId)
-			{
-				localFormatId = ClipboardGetFormatId(clipboard->_system, s_mime_uri_list);
-				mime = s_mime_uri_list;
-			}
+				candidates.push_back({ s_mime_uri_list, Store::Lookup });
 			else if (formatId == htmlFormatId)
 			{
 				/* In case HTML format was requested but we only have images in local clipboard */
-				if (!SDL_HasClipboardData(s_mime_html))
-				{
-					mime = getCurrentImageMime();
-					if (mime)
-						localFormatId = ClipboardGetFormatId(clipboard->_system, mime);
-				}
-				else
-				{
-					localFormatId = ClipboardGetFormatId(clipboard->_system, s_mime_html);
-					mime = s_mime_html;
-				}
+				const char* mime = hasMime(offered, s_mime_html)
+				                       ? s_mime_html
+				                       : firstOffered(offered, s_mime_html_image_sources());
+				if (mime)
+					candidates.push_back({ mime, Store::Lookup });
 			}
 			else
 			{
-				const char* formatName = ClipboardGetFormatName(clipboard->_system, formatId);
-				if (formatName && SDL_HasClipboardData(formatName))
+				ClipboardLockGuard systemlock(_system);
+				std::scoped_lock lock(_lock);
+				const char* formatName = ClipboardGetFormatName(_system, formatId);
+				if (formatName && hasMime(offered, formatName))
 				{
-					localFormatId = ClipboardGetFormatId(clipboard->_system, formatName);
-					mime = formatName;
+					/* the name is owned by _system and outlives this function */
+					candidates.push_back({ formatName, Store::Lookup });
 				}
-				else
-					return data;
 			}
 			break;
 	}
 
+	std::shared_ptr<BYTE> data;
+	for (const auto& candidate : candidates)
 	{
+		/* Read without holding our locks: on X11 this pumps events and can take a while, and
+		 * the channel thread needs the locks to deliver server data. */
 		size_t size = 0;
-		auto sdldata = std::shared_ptr<void>(SDL_GetClipboardData(mime, &size), SDL_free);
-		if (!sdldata)
-			return data;
+		auto sdldata = std::shared_ptr<void>(SDL_GetClipboardData(candidate.mime, &size), SDL_free);
+		if (!sdldata || (size > UINT32_MAX))
+			continue;
 
-		if (fileFormatId == formatId)
+		ClipboardLockGuard systemlock(_system);
+		std::scoped_lock lock(_lock);
+
+		if (formatId == fileFormatId)
 		{
 			auto bdata = static_cast<const char*>(sdldata.get());
-			if (!cliprdr_file_context_update_client_data(clipboard->_file, bdata, size))
-				return data;
+			if (!cliprdr_file_context_update_client_data(_file, bdata, size))
+				continue;
 		}
 
-		res = ClipboardSetData(clipboard->_system, localFormatId, sdldata.get(),
-		                       static_cast<uint32_t>(size));
-	}
+		UINT32 storeId = formatId;
+		if (candidate.store == Store::Lookup)
+			storeId = ClipboardGetFormatId(_system, candidate.mime);
+		else if (candidate.store == Store::Register)
+			storeId = ClipboardRegisterFormat(_system, candidate.mime);
 
-	if (!res)
-		return data;
+		uint32_t ptrlen = 0;
+		BYTE* ptr = nullptr;
+		if (ClipboardSetData(_system, storeId, sdldata.get(), static_cast<uint32_t>(size)))
+			ptr = static_cast<BYTE*>(ClipboardGetData(_system, formatId, &ptrlen));
 
-	uint32_t ptrlen = 0;
-	auto ptr = static_cast<BYTE*>(ClipboardGetData(clipboard->_system, formatId, &ptrlen));
-	data = std::shared_ptr<BYTE>(ptr, free);
+		/* _system is also where ClipDataCb looks for server data: leave no local data behind,
+		 * or a later local paste would be answered with it. */
+		ClipboardEmpty(_system);
 
-	if (!data)
-		return data;
+		if (!ptr)
+		{
+			WLog_Print(_log, WLOG_DEBUG, "could not convert local %s", candidate.mime);
+			continue;
+		}
 
-	if (fileFormatId == formatId)
-	{
-		BYTE* ddata = nullptr;
-		UINT32 dsize = 0;
-		const UINT32 flags = cliprdr_file_context_remote_get_flags(clipboard->_file);
-		const UINT32 error = cliprdr_serialize_file_list_ex(
-		    flags, reinterpret_cast<const FILEDESCRIPTORW*>(data.get()),
-		    ptrlen / sizeof(FILEDESCRIPTORW), &ddata, &dsize);
-		data.reset();
-		auto tmp = std::shared_ptr<BYTE>(ddata, free);
-		if (error)
-			return data;
-
-		data = tmp;
-		len = dsize;
-	}
-	else
+		data = std::shared_ptr<BYTE>(ptr, free);
 		len = ptrlen;
+
+		if (formatId == fileFormatId)
+		{
+			BYTE* ddata = nullptr;
+			UINT32 dsize = 0;
+			const UINT32 flags = cliprdr_file_context_remote_get_flags(_file);
+			const UINT32 error = cliprdr_serialize_file_list_ex(
+			    flags, reinterpret_cast<const FILEDESCRIPTORW*>(data.get()),
+			    ptrlen / sizeof(FILEDESCRIPTORW), &ddata, &dsize);
+			data = std::shared_ptr<BYTE>(ddata, free);
+			len = dsize;
+			if (error)
+			{
+				data.reset();
+				len = 0;
+			}
+		}
+		break;
+	}
 	return data;
 }
 
@@ -936,8 +994,11 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 
 		if (!ClipboardSetData(clipboard->_system, srcFormatId, data, size))
 		{
+			/* Fail this request only: an error return here would end the clipboard channel
+			 * and, without auto-reconnect, the session. */
 			WLog_Print(clipboard->_log, WLOG_ERROR, "error when setting clipboard data");
-			return ERROR_INTERNAL_ERROR;
+			request.setSuccess(false);
+			break;
 		}
 		WLog_Print(clipboard->_log, WLOG_DEBUG, "updated clipboard data %s [0x%08" PRIx32 "]",
 		           ClipboardGetFormatName(clipboard->_system, srcFormatId), srcFormatId);
