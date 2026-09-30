@@ -93,6 +93,10 @@ class sdlClip
 	 * API is main-thread only, and ReceiveFormatDataRequest only queues the request. */
 	[[nodiscard]] bool handleDataRequest(uint32_t formatId);
 
+	/* Called for input events that give the window a new Wayland input serial (key and
+	 * button presses): see keepCurrentOffer(). */
+	void noteInput();
+
   private:
 	[[nodiscard]] UINT SendClientCapabilities();
 	void clearServerFormats();
@@ -104,6 +108,8 @@ class sdlClip
 	[[nodiscard]] uint32_t serverIdForMime(const std::string& mime);
 
 	[[nodiscard]] bool contains(const char** mime_types, Sint32 count);
+	[[nodiscard]] bool ownsClipboard() const;
+	[[nodiscard]] bool keepCurrentOffer(const std::vector<std::string>& mimes) const;
 
 	[[nodiscard]] static UINT MonitorReady(CliprdrClientContext* context,
 	                                       const CLIPRDR_MONITOR_READY* monitorReady);
@@ -159,6 +165,10 @@ class sdlClip
 	std::map<std::string, cache_entry> _cache_data;
 	/* mime types of the latest server format list, not yet handed to SDL (guarded by _lock) */
 	std::vector<std::string> _current_mimetypes;
+	/* main thread only: the mime types of our last SDL_SetClipboardData, and whether the
+	 * window has seen input (a new input serial) since then */
+	std::vector<std::string> _offered_mimetypes;
+	bool _input_since_offer = false;
 	std::string _uuid;
 	std::string _mime_uuid;
 };
