@@ -144,6 +144,7 @@ struct xf_clipboard
 };
 
 static const char mime_text_plain[] = "text/plain";
+static const char mime_text_utf8[] = "text/plain;charset=utf-8";
 static const char mime_uri_list[] = "text/uri-list";
 static const char mime_html[] = "text/html";
 static const char* mime_bitmap[] = { "image/bmp", "image/x-bmp", "image/x-MS-bmp",
@@ -2722,7 +2723,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	clientFormat = &clipboard->clientFormats[n++];
 	clientFormat->atom = Logging_XInternAtom(clipboard->log, xfc->display, "UTF8_STRING", False);
 	clientFormat->formatToRequest = CF_UNICODETEXT;
-	clientFormat->localFormat = ClipboardGetFormatId(xfc->clipboard->system, mime_text_plain);
+	clientFormat->localFormat = ClipboardGetFormatId(xfc->clipboard->system, mime_text_utf8);
 
 	clientFormat = &clipboard->clientFormats[n++];
 	clientFormat->atom = XA_STRING;
