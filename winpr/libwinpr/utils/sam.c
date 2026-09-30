@@ -104,6 +104,7 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 		filename = allocatedFileName;
 	}
 
+	WLog_DBG(TAG, "Trying to open SAM file '%s'", filename);
 	if (readOnly)
 		fp = winpr_fopen(filename, "r");
 	else
@@ -113,27 +114,24 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 		if (!fp)
 			fp = winpr_fopen(filename, "w+");
 	}
+
+	if (!fp)
+		goto fail;
+
+	sam = (WINPR_SAM*)calloc(1, sizeof(WINPR_SAM));
+	if (!sam)
+		goto fail;
+
+	sam->readOnly = readOnly;
+	sam->fp = fp;
+
+fail:
+	if (!fp || !sam)
+		WLog_DBG(TAG, "Could not open SAM file '%s'", filename);
+
+	if (fp && !sam)
+		(void)fclose(fp);
 	winpr_zfree(allocatedFileName);
-
-	if (fp)
-	{
-		sam = (WINPR_SAM*)calloc(1, sizeof(WINPR_SAM));
-
-		if (!sam)
-		{
-			(void)fclose(fp);
-			return nullptr;
-		}
-
-		sam->readOnly = readOnly;
-		sam->fp = fp;
-	}
-	else
-	{
-		WLog_DBG(TAG, "Could not open SAM file!");
-		return nullptr;
-	}
-
 	return sam;
 }
 
