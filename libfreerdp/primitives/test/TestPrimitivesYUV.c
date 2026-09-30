@@ -1140,6 +1140,62 @@ fail:
 	return rc;
 }
 
+/* Check I444ToRGB_8u converts every pixel on its own (no AVC444 chroma
+ * filter is reversed) and does not write past the end of a line.
+ */
+static BOOL compare_i444_to_rgb(prim_size_t roi, DWORD type)
+{
+	BOOL rc = FALSE;
+	const UINT32 format = PIXEL_FORMAT_BGRX32;
+	BYTE* yuv[3] = WINPR_C_ARRAY_INIT;
+	const UINT32 yuvStep[3] = { roi.width, roi.width, roi.width };
+	const size_t padding = 64;
+	const size_t stride = 4ULL * roi.width + padding;
+
+	primitives_t* prims = primitives_get_by_type(type);
+	if (!prims)
+	{
+		printf("primitives type %" PRIu32 " not supported, skipping\n", type);
+		return TRUE;
+	}
+
+	BYTE* expected = calloc(roi.height, stride);
+	BYTE* rgb = calloc(roi.height, stride);
+	if (!expected || !rgb || !prims->I444ToRGB_8u)
+		goto fail;
+	if (!allocate_yuv(yuv, roi))
+		goto fail;
+
+	memset(expected, PADDING_FILL_VALUE, roi.height * stride);
+	memset(rgb, PADDING_FILL_VALUE, roi.height * stride);
+
+	const BYTE* cyuv[] = { yuv[0], yuv[1], yuv[2] };
+	if (!yuv444_to_rgb(expected, stride, cyuv, yuvStep, roi))
+		goto fail;
+	if (prims->I444ToRGB_8u(cyuv, yuvStep, rgb, stride, format, &roi) != PRIMITIVES_SUCCESS)
+		goto fail;
+
+	for (size_t y = 0; y < roi.height; y++)
+	{
+		if (memcmp(&expected[y * stride], &rgb[y * stride], stride) != 0)
+		{
+			(void)fprintf(stderr, "[%s] [%" PRIu32 "x%" PRIu32 "] mismatch in line %" PRIuz "\n",
+			              __func__, roi.width, roi.height, y);
+			goto fail;
+		}
+	}
+
+	rc = TRUE;
+fail:
+	printf("%s [%" PRIu32 "x%" PRIu32 "] finished with %s\n", __func__, roi.width, roi.height,
+	       rc ? "SUCCESS" : "FAILURE");
+	free_yuv(yuv);
+	free(expected);
+	free(rgb);
+
+	return rc;
+}
+
 /* Check the result of generic matches the optimized routine.
  *
  */
@@ -1465,6 +1521,11 @@ int TestPrimitivesYUV(int argc, char* argv[])
 	{
 		if (!compare_yuv444_to_rgb(roi, type))
 			goto end;
+
+		const prim_size_t oddroi = { roi.width - 1, roi.height };
+		if (!compare_i444_to_rgb(roi, type) || !compare_i444_to_rgb(oddroi, type))
+			goto end;
+
 		if (!compare_rgb_to_yuv444(roi, type))
 			goto end;
 
