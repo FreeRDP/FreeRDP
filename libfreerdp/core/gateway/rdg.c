@@ -1976,6 +1976,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 					return FALSE;
 				}
 
+				BIO_wait_read(rdg->tlsOut->bio, 50);
 				continue;
 			}
 
@@ -2058,9 +2059,6 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 				if (!BIO_should_retry(rdg->tlsOut->bio))
 					return -1;
 
-				if (!readCount)
-					return 0;
-
 				BIO_wait_read(rdg->tlsOut->bio, 50);
 				continue;
 			}
@@ -2111,9 +2109,7 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, size_t size)
 	if (status <= 0)
 	{
 		if (!BIO_should_retry(rdg->tlsOut->bio))
-		{
 			return -1;
-		}
 
 		return 0;
 	}
