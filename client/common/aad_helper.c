@@ -333,9 +333,9 @@ static char* getHelperBinary(const rdpClientContext* context)
 		WINPR_JSON* user = freerdp_GetJSONConfigFile(FALSE, config);
 		if (user)
 		{
-			updateBoolFromConfig(sys, "allow-commandline", &useArg);
-			updateBoolFromConfig(sys, "allow-autodetect", &useDetect);
-			updateStringFromConfig(sys, "helper-binary", &exe);
+			updateBoolFromConfig(user, "allow-commandline", &useArg);
+			updateBoolFromConfig(user, "allow-autodetect", &useDetect);
+			updateStringFromConfig(user, "helper-binary", &exe);
 		}
 		WINPR_JSON_Delete(user);
 	}
