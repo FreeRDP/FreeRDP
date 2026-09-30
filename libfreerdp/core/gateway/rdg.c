@@ -404,12 +404,15 @@ static BOOL rdg_shall_abort(rdpRdg* rdg)
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, BYTE* buffer, size_t size,
+static BOOL rdg_read_all(rdpContext* context, rdpTls* tls, wStream* s, size_t size,
                          rdg_http_encoding_context* transferEncoding)
 {
 	size_t readCount = 0;
-	BYTE* pBuffer = buffer;
 
+	if (!Stream_EnsureRemainingCapacity(s, size))
+		return FALSE;
+
+	BYTE* pBuffer = Stream_Pointer(s);
 	while (readCount < size)
 	{
 		if (freerdp_shall_disconnect_context(context))
@@ -443,19 +446,28 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 	if (!s)
 		return nullptr;
 
-	if (!rdg_read_all(rdg->context, rdg->tlsOut, Stream_Buffer(s), header, &rdg->transferEncoding))
+	if (!rdg_read_all(rdg->context, rdg->tlsOut, s, header, &rdg->transferEncoding))
 		goto fail;
 
 	Stream_Seek(s, 4);
 	Stream_Read_UINT32(s, packetLength);
 
-	if ((packetLength > INT_MAX) || !Stream_EnsureCapacity(s, packetLength) ||
-	    (packetLength < header))
+	if ((packetLength > INT_MAX) || (packetLength < header))
 		goto fail;
 
-	if (!rdg_read_all(rdg->context, rdg->tlsOut, Stream_Buffer(s) + header, packetLength - header,
-	                  &rdg->transferEncoding))
-		goto fail;
+	const size_t requestBlockSize = 4096;
+	for (size_t offset = header; offset < packetLength; offset += requestBlockSize)
+	{
+		size_t block = requestBlockSize;
+		if (offset + block > packetLength)
+			block = packetLength - offset;
+
+		if (!rdg_read_all(rdg->context, rdg->tlsOut, s, block, &rdg->transferEncoding))
+			goto fail;
+
+		if (!Stream_SafeSeek(s, block))
+			goto fail;
+	}
 
 	if (!Stream_SetLength(s, packetLength))
 		goto fail;
@@ -807,18 +819,18 @@ WINPR_ATTR_NODISCARD
 static BOOL rdg_skip_seed_payload(rdpContext* context, rdpTls* tls, size_t lastResponseLength,
                                   rdg_http_encoding_context* transferEncoding)
 {
-	BYTE seed_payload[10] = WINPR_C_ARRAY_INIT;
-	const size_t size = sizeof(seed_payload);
-
 	/* Per [MS-TSGU] 3.3.5.1 step 4, after final OK response RDG server sends
 	 * random "seed" payload of limited size. In practice it's 10 bytes.
 	 */
+	const size_t size = 10;
 	if (lastResponseLength < size)
 	{
-		if (!rdg_read_all(context, tls, seed_payload, size - lastResponseLength, transferEncoding))
-		{
+		wStream* s = Stream_New(nullptr, size);
+		if (!s)
 			return FALSE;
-		}
+		const BOOL rc = rdg_read_all(context, tls, s, size - lastResponseLength, transferEncoding);
+		Stream_Free(s, TRUE);
+		return rc;
 	}
 
 	return TRUE;
@@ -1660,14 +1672,13 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 WINPR_ATTR_NODISCARD
 static BOOL rdg_tunnel_connect(rdpRdg* rdg)
 {
-	BOOL status = 0;
-	wStream* s = nullptr;
-	rdg_send_handshake(rdg);
+	if (!rdg_send_handshake(rdg))
+		return FALSE;
 
 	while (rdg->state < RDG_CLIENT_STATE_OPENED)
 	{
-		status = FALSE;
-		s = rdg_receive_packet(rdg);
+		BOOL status = FALSE;
+		wStream* s = rdg_receive_packet(rdg);
 
 		if (s)
 		{
