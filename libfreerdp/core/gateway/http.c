@@ -1289,9 +1289,6 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 			}
 		}
 
-		if (response->BodyLength > 0)
-			response->BodyContent = &(Stream_BufferAs(response->data, char))[payloadOffset];
-
 		if (bodyLength != response->BodyLength)
 		{
 			WLog_WARN(TAG, "%s unexpected body length: actual: %" PRIuz ", expected: %" PRIuz,
@@ -1305,6 +1302,9 @@ static BOOL http_response_recv_body(rdpTls* tls, HttpResponse* response, BOOL re
 		if (!Stream_EnsureRemainingCapacity(response->data, sizeof(UINT16)))
 			goto out_error;
 		Stream_Write_UINT16(response->data, 0);
+
+		if (response->BodyLength > 0)
+			response->BodyContent = &(Stream_BufferAs(response->data, char))[payloadOffset];
 	}
 
 	rc = TRUE;
