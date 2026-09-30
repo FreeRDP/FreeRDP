@@ -44,8 +44,8 @@ static const char mime_tiff[] = "image/tiff";
 static const BYTE enc_base64url[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-WINPR_ATTR_NODISCARD static inline char* b64_encode(const BYTE* WINPR_RESTRICT data, size_t length,
-                                                    size_t* plen)
+WINPR_ATTR_NODISCARD
+static inline char* b64_encode(const BYTE* WINPR_RESTRICT data, size_t length, size_t* plen)
 {
 	WINPR_ASSERT(plen);
 	const BYTE* WINPR_RESTRICT alphabet = enc_base64url;
@@ -123,6 +123,7 @@ WINPR_ATTR_NODISCARD static inline char* b64_encode(const BYTE* WINPR_RESTRICT d
  * Null-terminated ANSI text with CR/LF line endings.
  */
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId, const void* data,
                                           UINT32* pSize)
 {
@@ -194,7 +195,7 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
  *
  * Null-terminated OEM text with CR/LF line endings.
  */
-
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_cf_oemtext(wClipboard* clipboard, UINT32 formatId,
                                              const void* data, UINT32* pSize)
 {
@@ -206,7 +207,7 @@ static void* clipboard_synthesize_cf_oemtext(wClipboard* clipboard, UINT32 forma
  *
  * System locale identifier associated with CF_TEXT
  */
-
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_cf_locale(WINPR_ATTR_UNUSED wClipboard* clipboard,
                                             WINPR_ATTR_UNUSED UINT32 formatId,
                                             WINPR_ATTR_UNUSED const void* data,
@@ -227,7 +228,7 @@ static void* clipboard_synthesize_cf_locale(WINPR_ATTR_UNUSED wClipboard* clipbo
  *
  * Null-terminated UTF-16 text with CR/LF line endings.
  */
-
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 formatId,
                                                  const void* data, UINT32* pSize)
 {
@@ -295,7 +296,7 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
  *
  * Null-terminated UTF-8 string with LF line endings.
  */
-
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 formatId,
                                               const void* data, UINT32* pSize)
 {
@@ -411,6 +412,7 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL is_format_bitmap(wClipboard* clipboard, UINT32 formatId)
 {
 	for (size_t x = 0; x < ARRAYSIZE(mime_bitmap); x++)
@@ -429,7 +431,7 @@ static BOOL is_format_bitmap(wClipboard* clipboard, UINT32 formatId)
  *
  * BITMAPINFO structure followed by the bitmap bits.
  */
-
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId, const void* data,
                                          UINT32* pSize)
 {
@@ -480,6 +482,7 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
  * BITMAPV5HEADER structure followed by the bitmap color space information and the bitmap bits.
  */
 #if defined(WINPR_UTILS_IMAGE_DIBv5)
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_cf_dibv5(wClipboard* clipboard, UINT32 formatId,
                                            WINPR_ATTR_UNUSED const void* data,
                                            WINPR_ATTR_UNUSED UINT32* pSize)
@@ -524,6 +527,7 @@ static void* clipboard_synthesize_cf_dibv5(wClipboard* clipboard, UINT32 formatI
 }
 #endif
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_prepend_bmp_header(const WINPR_BITMAP_INFO_HEADER* pInfoHeader,
                                           size_t offset, const void* data, size_t size,
                                           UINT32* pSize)
@@ -585,7 +589,7 @@ fail:
  *
  * Bitmap file format.
  */
-
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_image_bmp(WINPR_ATTR_UNUSED wClipboard* clipboard,
                                             UINT32 formatId, const void* data, UINT32* pSize)
 {
@@ -623,6 +627,7 @@ static void* clipboard_synthesize_image_bmp(WINPR_ATTR_UNUSED wClipboard* clipbo
 
 #if defined(WINPR_UTILS_IMAGE_PNG) || defined(WINPR_UTILS_IMAGE_WEBP) || \
     defined(WINPR_UTILS_IMAGE_JPEG)
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_image_bmp_to_format(wClipboard* clipboard, UINT32 formatId,
                                                       UINT32 bmpFormat, const void* data,
                                                       UINT32* pSize)
@@ -665,6 +670,7 @@ fail:
 #endif
 
 #if defined(WINPR_UTILS_IMAGE_PNG)
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_image_bmp_to_png(wClipboard* clipboard, UINT32 formatId,
                                                    const void* data, UINT32* pSize)
 {
@@ -675,6 +681,7 @@ static void* clipboard_synthesize_image_bmp_to_png(wClipboard* clipboard, UINT32
 
 #if defined(WINPR_UTILS_IMAGE_PNG) || defined(WINPR_UTILS_IMAGE_WEBP) || \
     defined(WINPR_UTILS_IMAGE_JPEG)
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_image_format_to_bmp(WINPR_ATTR_UNUSED wClipboard* clipboard,
                                                       WINPR_ATTR_UNUSED UINT32 srcFormatId,
                                                       const void* data, UINT32* pSize)
@@ -714,6 +721,7 @@ fail:
 #endif
 
 #if defined(WINPR_UTILS_IMAGE_PNG)
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_image_png_to_bmp(wClipboard* clipboard, UINT32 formatId,
                                                    const void* data, UINT32* pSize)
 {
@@ -722,6 +730,7 @@ static void* clipboard_synthesize_image_png_to_bmp(wClipboard* clipboard, UINT32
 #endif
 
 #if defined(WINPR_UTILS_IMAGE_WEBP)
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_image_bmp_to_webp(wClipboard* clipboard, UINT32 formatId,
                                                     const void* data, UINT32* pSize)
 {
@@ -729,6 +738,7 @@ static void* clipboard_synthesize_image_bmp_to_webp(wClipboard* clipboard, UINT3
 	                                                pSize);
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_image_webp_to_bmp(wClipboard* clipboard, UINT32 formatId,
                                                     const void* data, UINT32* pSize)
 {
@@ -737,6 +747,7 @@ static void* clipboard_synthesize_image_webp_to_bmp(wClipboard* clipboard, UINT3
 #endif
 
 #if defined(WINPR_UTILS_IMAGE_JPEG)
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_image_bmp_to_jpeg(wClipboard* clipboard, UINT32 formatId,
                                                     const void* data, UINT32* pSize)
 {
@@ -744,6 +755,7 @@ static void* clipboard_synthesize_image_bmp_to_jpeg(wClipboard* clipboard, UINT3
 	                                                pSize);
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_image_jpeg_to_bmp(wClipboard* clipboard, UINT32 formatId,
                                                     const void* data, UINT32* pSize)
 {
@@ -756,7 +768,7 @@ static void* clipboard_synthesize_image_jpeg_to_bmp(wClipboard* clipboard, UINT3
  *
  * HTML clipboard format: msdn.microsoft.com/en-us/library/windows/desktop/ms649015/
  */
-
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 formatId,
                                               const void* pData, UINT32* pSize)
 {
@@ -870,6 +882,7 @@ fail:
 	return pDstData;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static char* html_pre_write(wStream* s, const char* what)
 {
 	const size_t len = strlen(what);
@@ -888,6 +901,7 @@ static void html_fill_number(char* pos, size_t val)
 	memcpy(pos, str, 10);
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_wrap_html(const char* mime, const char* idata, size_t ilength,
                                  uint32_t* plen)
 {
@@ -946,6 +960,7 @@ static void* clipboard_wrap_html(const char* mime, const char* idata, size_t ile
 	return res;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_wrap_format_to_html(uint32_t bmpFormat, const char* idata, size_t ilength,
                                            uint32_t* plen)
 {
@@ -971,6 +986,7 @@ fail:
 	return res;
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_wrap_bmp_to_html(const char* idata, size_t ilength, uint32_t* plen)
 {
 	const uint32_t formats[] = { WINPR_IMAGE_WEBP, WINPR_IMAGE_PNG, WINPR_IMAGE_JPEG };
@@ -987,6 +1003,7 @@ static void* clipboard_wrap_bmp_to_html(const char* idata, size_t ilength, uint3
 	return clipboard_wrap_html(winpr_image_format_mime(bmpFormat), idata, ilength, plen);
 }
 
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_image_html(WINPR_ATTR_UNUSED wClipboard* clipboard,
                                              UINT32 formatId, const void* data, UINT32* pSize)
 {
@@ -1062,7 +1079,7 @@ static void* clipboard_synthesize_image_html(WINPR_ATTR_UNUSED wClipboard* clipb
  *
  * HTML text format.
  */
-
+WINPR_ATTR_MALLOC(free, 1)
 static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 formatId,
                                             const void* data, UINT32* pSize)
 {
