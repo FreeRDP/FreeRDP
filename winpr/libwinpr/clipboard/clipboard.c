@@ -34,6 +34,7 @@
 
 const char* const mime_text_plain = "text/plain";
 const char* const mime_text_utf8 = "text/plain;charset=utf-8";
+const char* const mime_text_UTF8_STRING = "UTF8_STRING";
 
 /**
  * Clipboard (Windows):
@@ -255,44 +256,93 @@ UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name)
 	return format->formatId;
 }
 
-BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId, UINT32 syntheticId,
-                                  CLIPBOARD_SYNTHESIZE_FN pfnSynthesize)
+WINPR_ATTR_NODISCARD
+static wClipboardSynthesizer* registerSynthesizer(wClipboard* clipboard, UINT32 formatId,
+                                                  UINT32 syntheticId)
 {
-	UINT32 index = 0;
-	wClipboardFormat* format = nullptr;
-	wClipboardSynthesizer* synthesizer = nullptr;
-
 	if (!clipboard)
-		return FALSE;
+	{
+		WLog_WARN(TAG,
+		          "Failed to register synthesizer for %s[0x%04" PRIx32 "] to %s [0x%04" PRIx32
+		          "]: clipboard=NULL",
+		          ClipboardGetFormatName(clipboard, formatId), formatId,
+		          ClipboardGetFormatName(clipboard, syntheticId), syntheticId);
+		return nullptr;
+	}
 
-	format = ClipboardFindFormat(clipboard, formatId, nullptr);
+	WLog_DBG(TAG, "Registering synthesizer for %s[0x%04" PRIx32 "] to %s [0x%04" PRIx32 "]",
+	         ClipboardGetFormatName(clipboard, formatId), formatId,
+	         ClipboardGetFormatName(clipboard, syntheticId), syntheticId);
+
+	wClipboardFormat* format = ClipboardFindFormat(clipboard, formatId, nullptr);
 
 	if (!format)
-		return FALSE;
+	{
+		WLog_WARN(TAG,
+		          "Failed to register synthesizer for %s[0x%04" PRIx32 "] to %s [0x%04" PRIx32
+		          "]: format=NULL",
+		          ClipboardGetFormatName(clipboard, formatId), formatId,
+		          ClipboardGetFormatName(clipboard, syntheticId), syntheticId);
+		return nullptr;
+	}
 
 	if (format->formatId == syntheticId)
-		return FALSE;
+	{
+		WLog_WARN(TAG,
+		          "Failed to register synthesizer for %s[0x%04" PRIx32 "] to %s [0x%04" PRIx32
+		          "]: formats equal",
+		          ClipboardGetFormatName(clipboard, formatId), formatId,
+		          ClipboardGetFormatName(clipboard, syntheticId), syntheticId);
+		return nullptr;
+	}
 
-	synthesizer = ClipboardFindSynthesizer(format, formatId);
+	wClipboardSynthesizer* synthesizer = ClipboardFindSynthesizer(format, formatId);
 
 	if (!synthesizer)
 	{
-		wClipboardSynthesizer* tmpSynthesizer = nullptr;
 		UINT32 numSynthesizers = format->numSynthesizers + 1;
-		tmpSynthesizer = (wClipboardSynthesizer*)realloc(
+		wClipboardSynthesizer* tmpSynthesizer = (wClipboardSynthesizer*)realloc(
 		    format->synthesizers, numSynthesizers * sizeof(wClipboardSynthesizer));
 
 		if (!tmpSynthesizer)
-			return FALSE;
+		{
+			WLog_WARN(TAG,
+			          "Failed to register synthesizer for %s[0x%04" PRIx32 "] to %s [0x%04" PRIx32
+			          "]: failed to allocate new synthesizer",
+			          ClipboardGetFormatName(clipboard, formatId), formatId,
+			          ClipboardGetFormatName(clipboard, syntheticId), syntheticId);
+			return nullptr;
+		}
 
 		format->synthesizers = tmpSynthesizer;
 		format->numSynthesizers = numSynthesizers;
-		index = numSynthesizers - 1;
+		const UINT32 index = numSynthesizers - 1;
 		synthesizer = &(format->synthesizers[index]);
 	}
+	return synthesizer;
+}
+
+BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId, UINT32 syntheticId,
+                                  CLIPBOARD_SYNTHESIZE_FN pfnSynthesize)
+{
+	wClipboardSynthesizer* synthesizer = registerSynthesizer(clipboard, formatId, syntheticId);
+	if (!synthesizer)
+		return FALSE;
 
 	synthesizer->syntheticId = syntheticId;
 	synthesizer->pfnSynthesize = pfnSynthesize;
+	return TRUE;
+}
+
+BOOL ClipboardRegisterSynthesizerEx(wClipboard* clipboard, UINT32 formatId, UINT32 syntheticId,
+                                    CLIPBOARD_SYNTHESIZE_FN pfnSynthesize)
+{
+	wClipboardSynthesizer* synthesizer = registerSynthesizer(clipboard, formatId, syntheticId);
+	if (!synthesizer)
+		return FALSE;
+
+	synthesizer->syntheticId = syntheticId;
+	synthesizer->pfnSynthesizeEx = pfnSynthesize;
 	return TRUE;
 }
 
@@ -430,12 +480,7 @@ const char* ClipboardGetFormatName(wClipboard* clipboard, UINT32 formatId)
 
 void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 {
-	UINT32 SrcSize = 0;
-	UINT32 DstSize = 0;
-	void* pSrcData = nullptr;
 	void* pDstData = nullptr;
-	wClipboardFormat* format = nullptr;
-	wClipboardSynthesizer* synthesizer = nullptr;
 
 	if (!clipboard || !pSize)
 	{
@@ -446,7 +491,7 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 	}
 
 	*pSize = 0;
-	format = ClipboardFindFormat(clipboard, clipboard->formatId, nullptr);
+	wClipboardFormat* format = ClipboardFindFormat(clipboard, clipboard->formatId, nullptr);
 
 	if (!format)
 	{
@@ -454,12 +499,12 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 		return nullptr;
 	}
 
-	SrcSize = clipboard->size;
-	pSrcData = clipboard->data;
+	const UINT32 SrcSize = clipboard->size;
+	void* pSrcData = clipboard->data;
 
 	if (formatId == format->formatId)
 	{
-		DstSize = SrcSize;
+		UINT32 DstSize = SrcSize;
 		pDstData = malloc(DstSize);
 
 		if (!pDstData)
@@ -470,9 +515,9 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 	}
 	else
 	{
-		synthesizer = ClipboardFindSynthesizer(format, formatId);
+		wClipboardSynthesizer* synthesizer = ClipboardFindSynthesizer(format, formatId);
 
-		if (!synthesizer || !synthesizer->pfnSynthesize)
+		if (!synthesizer || !(synthesizer->pfnSynthesize || synthesizer->pfnSynthesizeEx))
 		{
 			WLog_ERR(TAG, "No synthesizer for format %s [0x%08" PRIx32 "] --> %s [0x%08" PRIx32 "]",
 			         ClipboardGetFormatName(clipboard, clipboard->formatId), clipboard->formatId,
@@ -480,8 +525,12 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 			return nullptr;
 		}
 
-		DstSize = SrcSize;
-		pDstData = synthesizer->pfnSynthesize(clipboard, format->formatId, pSrcData, &DstSize);
+		UINT32 DstSize = SrcSize;
+		if (synthesizer->pfnSynthesizeEx)
+			pDstData = synthesizer->pfnSynthesizeEx(clipboard, synthesizer->syntheticId, pSrcData,
+			                                        &DstSize);
+		else
+			pDstData = synthesizer->pfnSynthesize(clipboard, format->formatId, pSrcData, &DstSize);
 		if (pDstData)
 			*pSize = DstSize;
 	}
