@@ -1430,7 +1430,8 @@ static BOOL rdp_apply_input_capability_set(rdpSettings* settings, const rdpSetti
  * msdn{cc240563}
  */
 
-static BOOL rdp_read_input_capability_set(wLog* log, wStream* s, rdpSettings* settings)
+static BOOL rdp_read_input_capability_set(wLog* log, wStream* s, rdpSettings* settings,
+                                          BOOL isServer)
 {
 	UINT16 inputFlags = 0;
 
@@ -1445,6 +1446,12 @@ static BOOL rdp_read_input_capability_set(wLog* log, wStream* s, rdpSettings* se
 	Stream_Read_UINT32(s, settings->KeyboardType);        /* keyboardType (4 bytes) */
 	Stream_Read_UINT32(s, settings->KeyboardSubType);     /* keyboardSubType (4 bytes) */
 	Stream_Read_UINT32(s, settings->KeyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
+
+	/* Received after TS_UD_CS_CORE and copied over its (sanitized) value by
+	 * rdp_apply_input_capability_set(), so a client's out-of-spec KeyboardType (e.g. mstsc with
+	 * an MSKLC layout) must be checked here too. Servers send zeroed keyboard fields: skip. */
+	if (isServer)
+		freerdp_settings_sanitize_keyboard_type(log, settings, "TS_INPUT_CAPABILITYSET");
 
 	{
 		WCHAR wstr[32] = WINPR_C_ARRAY_INIT;
@@ -4330,7 +4337,7 @@ BOOL rdp_read_capability_set(wLog* log, wStream* sub, UINT16 type, rdpSettings* 
 			break;
 
 		case CAPSET_TYPE_INPUT:
-			if (!rdp_read_input_capability_set(log, sub, settings))
+			if (!rdp_read_input_capability_set(log, sub, settings, isServer))
 				return FALSE;
 
 			break;
