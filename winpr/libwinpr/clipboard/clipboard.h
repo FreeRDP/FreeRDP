@@ -73,5 +73,6 @@ WINPR_LOCAL WINPR_ATTR_NODISCARD BOOL ClipboardInitSynthesizers(wClipboard* clip
 WINPR_LOCAL WINPR_ATTR_NODISCARD char* parse_uri_to_local_file(const char* uri, size_t uri_len);
 
 extern const char* const mime_text_plain;
+extern const char* const mime_text_utf8;
 
 #endif /* WINPR_CLIPBOARD_PRIVATE_H */

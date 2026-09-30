@@ -26,6 +26,7 @@
 
 #include "../utils/image.h"
 #include "clipboard.h"
+#include "../crt/unicode.h"
 
 #include "../log.h"
 #define TAG WINPR_TAG("clipboard.synthetic")
@@ -130,18 +131,43 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
 
 	if (formatId == CF_UNICODETEXT)
 	{
-		char* str = ConvertWCharNToUtf8Alloc(data, *pSize / sizeof(WCHAR), &size);
+		size_t strsize = 0;
+		char* str = ConvertWCharNToUtf8Alloc(data, *pSize / sizeof(WCHAR), &strsize);
 
-		if (!str || (size > UINT32_MAX))
+		if (!str || (strsize > UINT32_MAX))
 		{
-			free(str);
+			winpr_znfree(str, strsize);
 			return nullptr;
 		}
 
+		size = strsize;
 		pDstData = ConvertLineEndingToCRLF(str, &size);
-		free(str);
+		winpr_znfree(str, strsize);
 		*pSize = (UINT32)size;
 		return pDstData;
+	}
+	else if (formatId == ClipboardGetFormatId(clipboard, mime_text_utf8))
+	{
+		size = *pSize;
+		pDstData = ConvertLineEndingToCRLF(data, &size);
+
+		if (!pDstData || (size == 0) || (size >= UINT32_MAX))
+		{
+			winpr_znfree(pDstData, size);
+			return nullptr;
+		}
+
+		size_t escsize = 0;
+		char* escaped = winpr_utf8ToUtfEscapedString(pDstData, size, &escsize);
+		winpr_znfree(pDstData, size);
+		if (!escaped || (escsize == 0) || (escsize > UINT32_MAX))
+		{
+			winpr_znfree(escaped, escsize);
+			return nullptr;
+		}
+		/* CF_TEXT is null terminated, the size must include the terminator */
+		*pSize = (UINT32)escsize + 1;
+		return escaped;
 	}
 	else if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
 	         (formatId == ClipboardGetFormatId(clipboard, mime_text_plain)))
@@ -151,7 +177,7 @@ static void* clipboard_synthesize_cf_text(wClipboard* clipboard, UINT32 formatId
 
 		if (!pDstData || (size >= UINT32_MAX))
 		{
-			free(pDstData);
+			winpr_znfree(pDstData, size);
 			return nullptr;
 		}
 
@@ -209,12 +235,38 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 	char* crlfStr = nullptr;
 	WCHAR* pDstData = nullptr;
 
+	WINPR_ASSERT(clipboard);
+	if (!pSize || (*pSize > INT32_MAX))
+		return nullptr;
+	if (clipboard->formatId != CF_UNICODETEXT)
+		return nullptr;
+
+	if (formatId == ClipboardGetFormatId(clipboard, mime_text_utf8))
+	{
+		size_t len = 0;
+
+		size = *pSize;
+		crlfStr = ConvertLineEndingToCRLF((const char*)data, &size);
+
+		if (!crlfStr)
+			return nullptr;
+
+		pDstData = ConvertUtf8NToWCharAlloc(crlfStr, size, &len);
+		free(crlfStr);
+
+		if ((len < 1) || ((len + 1) > UINT32_MAX / sizeof(WCHAR)))
+		{
+			free(pDstData);
+			return nullptr;
+		}
+
+		const size_t slen = (len + 1) * sizeof(WCHAR);
+		*pSize = (UINT32)slen;
+	}
 	if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
 	    (formatId == ClipboardGetFormatId(clipboard, mime_text_plain)))
 	{
 		size_t len = 0;
-		if (!pSize || (*pSize > INT32_MAX))
-			return nullptr;
 
 		size = *pSize;
 		crlfStr = ConvertLineEndingToCRLF((const char*)data, &size);
@@ -247,36 +299,116 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 formatId,
                                               const void* data, UINT32* pSize)
 {
+	WINPR_ASSERT(clipboard);
+
+	// Step 1: convert to utf-8
+	char* utf8 = nullptr;
+	size_t utf8len = 0;
 	if (formatId == CF_UNICODETEXT)
 	{
 		size_t size = 0;
-		char* pDstData = ConvertWCharNToUtf8Alloc(data, *pSize / sizeof(WCHAR), &size);
+		utf8 = ConvertWCharNToUtf8Alloc(data, *pSize / sizeof(WCHAR), &size);
 
-		if (!pDstData)
+		if (!utf8)
 			return nullptr;
 
-		const size_t rc = ConvertLineEndingToLF(pDstData, size);
-		WINPR_ASSERT(rc <= UINT32_MAX);
-		*pSize = (UINT32)rc;
-		return pDstData;
+		const size_t rc = ConvertLineEndingToLF(utf8, size);
+		utf8len = rc;
 	}
 	else if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
 	         (formatId == ClipboardGetFormatId(clipboard, mime_text_plain)))
 	{
 		const size_t size = *pSize;
-		char* pDstData = calloc(size + 1, sizeof(char));
+		utf8 = calloc(size + 1, sizeof(char));
 
-		if (!pDstData)
+		if (!utf8)
 			return nullptr;
 
-		CopyMemory(pDstData, data, size);
-		const size_t rc = ConvertLineEndingToLF(pDstData, size);
-		WINPR_ASSERT(rc <= UINT32_MAX);
-		*pSize = (UINT32)rc;
-		return pDstData;
+		CopyMemory(utf8, data, size);
+		const size_t rc = ConvertLineEndingToLF(utf8, size);
+		const SSIZE_T res = winpr_utfEscapedStringToUtf8(utf8, rc);
+		if (res < 0)
+		{
+			winpr_znfree(utf8, size);
+			return nullptr;
+		}
+		utf8len = (size_t)res;
+	}
+	else if (formatId == ClipboardGetFormatId(clipboard, mime_text_utf8))
+	{
+		const size_t size = *pSize;
+		utf8 = strndup(data, size);
+		if (!utf8)
+			return nullptr;
+		utf8len = size;
+	}
+	else
+	{
+		WLog_ERR(TAG, "Unuspported source format %s [0x%04" PRIx32 "]",
+		         ClipboardGetFormatName(clipboard, formatId), formatId);
+		return nullptr;
 	}
 
-	return nullptr;
+	switch (clipboard->formatId)
+	{
+		case CF_UNICODETEXT:
+		{
+			size_t wlen = 0;
+			WCHAR* wstr = ConvertUtf8NToWCharAlloc(utf8, utf8len, &wlen);
+			winpr_znfree(utf8, utf8len);
+			if (!wstr || (wlen == 0) || (wlen > UINT32_MAX / sizeof(WCHAR)))
+			{
+				winpr_znfree(wstr, wlen * sizeof(WCHAR));
+				return nullptr;
+			}
+			*pSize = WINPR_ASSERTING_INT_CAST(UINT32, wlen * sizeof(WCHAR));
+			return wstr;
+		}
+		case CF_OEMTEXT:
+		case CF_TEXT:
+		{
+			size_t esclen = 0;
+			char* escaped = winpr_utf8ToUtfEscapedString(utf8, utf8len, &esclen);
+			winpr_znfree(utf8, utf8len);
+			if (!escaped || (esclen == 0) || (esclen > UINT32_MAX))
+			{
+				winpr_znfree(escaped, esclen);
+				return nullptr;
+			}
+			*pSize = WINPR_ASSERTING_INT_CAST(UINT32, esclen);
+			return escaped;
+		}
+		default:
+			if (clipboard->formatId == ClipboardGetFormatId(clipboard, mime_text_utf8))
+			{
+				if (utf8len > UINT32_MAX)
+				{
+					winpr_znfree(utf8, utf8len);
+					return nullptr;
+				}
+				*pSize = WINPR_ASSERTING_INT_CAST(UINT32, utf8len);
+				return utf8;
+			}
+
+			if (clipboard->formatId == ClipboardGetFormatId(clipboard, mime_text_plain))
+			{
+				size_t esclen = 0;
+				char* escaped = winpr_utf8ToUtfEscapedString(utf8, utf8len, &esclen);
+				winpr_znfree(utf8, utf8len);
+				if (!escaped || (esclen == 0) || (esclen > UINT32_MAX))
+				{
+					winpr_znfree(escaped, esclen);
+					return nullptr;
+				}
+				*pSize = WINPR_ASSERTING_INT_CAST(UINT32, esclen);
+				return escaped;
+			}
+
+			WLog_ERR(TAG, "Unuspported destination format %s [0x%04" PRIx32 "]",
+			         ClipboardGetFormatName(clipboard, clipboard->formatId), clipboard->formatId);
+			winpr_znfree(utf8, utf8len);
+			return nullptr;
+	}
 }
 
 static BOOL is_format_bitmap(wClipboard* clipboard, UINT32 formatId)
@@ -988,11 +1120,18 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 		if (!ClipboardRegisterSynthesizer(clipboard, CF_TEXT, CF_LOCALE,
 		                                  clipboard_synthesize_cf_locale))
 			return FALSE;
-
-		UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_plain);
-		if (!ClipboardRegisterSynthesizer(clipboard, CF_TEXT, altFormatId,
-		                                  clipboard_synthesize_utf8_string))
-			return FALSE;
+		{
+			UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_plain);
+			if (!ClipboardRegisterSynthesizer(clipboard, CF_TEXT, altFormatId,
+			                                  clipboard_synthesize_utf8_string))
+				return FALSE;
+		}
+		{
+			UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_utf8);
+			if (!ClipboardRegisterSynthesizer(clipboard, CF_TEXT, altFormatId,
+			                                  clipboard_synthesize_utf8_string))
+				return FALSE;
+		}
 	}
 	/**
 	 * CF_OEMTEXT
@@ -1007,10 +1146,18 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 		if (!ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, CF_LOCALE,
 		                                  clipboard_synthesize_cf_locale))
 			return FALSE;
-		UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_plain);
-		if (!ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, altFormatId,
-		                                  clipboard_synthesize_utf8_string))
-			return FALSE;
+		{
+			UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_plain);
+			if (!ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, altFormatId,
+			                                  clipboard_synthesize_utf8_string))
+				return FALSE;
+		}
+		{
+			UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_utf8);
+			if (!ClipboardRegisterSynthesizer(clipboard, CF_OEMTEXT, altFormatId,
+			                                  clipboard_synthesize_utf8_string))
+				return FALSE;
+		}
 	}
 	/**
 	 * CF_UNICODETEXT
@@ -1025,16 +1172,25 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 		if (!ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, CF_LOCALE,
 		                                  clipboard_synthesize_cf_locale))
 			return FALSE;
-		UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_plain);
-		if (!ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, altFormatId,
-		                                  clipboard_synthesize_utf8_string))
-			return FALSE;
+		{
+			UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_plain);
+			if (!ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, altFormatId,
+			                                  clipboard_synthesize_utf8_string))
+				return FALSE;
+		}
+		{
+			UINT32 altFormatId = ClipboardRegisterFormat(clipboard, mime_text_utf8);
+			if (!ClipboardRegisterSynthesizer(clipboard, CF_UNICODETEXT, altFormatId,
+			                                  clipboard_synthesize_utf8_string))
+				return FALSE;
+		}
 	}
 	/**
 	 * UTF8_STRING
+	 * text/plain;charset=urf-8
 	 */
 	{
-		UINT32 formatId = ClipboardRegisterFormat(clipboard, mime_text_plain);
+		UINT32 formatId = ClipboardRegisterFormat(clipboard, mime_text_utf8);
 
 		if (formatId)
 		{

@@ -33,6 +33,7 @@
 #define TAG WINPR_TAG("clipboard")
 
 const char* const mime_text_plain = "text/plain";
+const char* const mime_text_utf8 = "text/plain;charset=utf-8";
 
 /**
  * Clipboard (Windows):
