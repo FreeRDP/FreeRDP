@@ -29,6 +29,8 @@
 #include <winpr/registry.h>
 #include <winpr/endian.h>
 #include <winpr/build-config.h>
+#include <winpr/path.h>
+#include <winpr/config-readers.h>
 
 #include "ntlm.h"
 #include "ntlm_export.h"
@@ -364,11 +366,31 @@ fail:
 }
 
 WINPR_ATTR_NODISCARD
+static SECURITY_STATUS ntml_setUnicodeStringA(UNICODE_STRING* str, const char* val, size_t charlen);
+
+static void apply_string(const char* config, WINPR_JSON* json, const char* name,
+                         UNICODE_STRING* dst)
+{
+	WINPR_ASSERT(dst);
+
+	char* str = nullptr;
+	if (!winpr_config_apply_string(config, json, name, &str))
+		return;
+
+	const BOOL rc = ntml_setUnicodeStringA(dst, str, strlen(str));
+	winpr_zfree(str);
+	if (!rc)
+		WLog_WARN(TAG, "[%s] Invalid setting %s: must be of type string", config, name);
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
 {
-	{
-		WINPR_ASSERT(context);
+	const char config[] = "ntlm.json";
 
+	WINPR_ASSERT(context);
+
+	{
 		char* key = winpr_getApplicatonDetailsRegKey(WINPR_KEY);
 		if (key)
 		{
@@ -380,6 +402,11 @@ static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
 
 			if (status == ERROR_SUCCESS)
 			{
+				WLog_WARN(TAG,
+				          "HKLM.reg is deprecated since 3.33.0. ATTENTION: Use "
+				          "%s instead!",
+				          config);
+
 				DWORD dwValue = 0;
 				DWORD dwSize = 0;
 				DWORD dwType = 0;
@@ -415,7 +442,6 @@ static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
 			}
 		}
 	}
-
 	HKEY hKey = nullptr;
 	const LONG status =
 	    RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("System\\CurrentControlSet\\Control\\LSA"), 0,
@@ -423,6 +449,8 @@ static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
 
 	if (status == ERROR_SUCCESS)
 	{
+		WLog_WARN(TAG, "HKLM.reg is deprecated since 3.33.0. ATTENTION: Use %s instead!", config);
+
 		DWORD dwType = 0;
 		DWORD dwSize = 0;
 		DWORD dwValue = 0;
@@ -431,6 +459,29 @@ static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
 			context->SuppressExtendedProtection = dwValue ? 1 : 0;
 
 		RegCloseKey(hKey);
+	}
+	{
+		WINPR_JSON* json = winpr_GetJSONConfigFile(TRUE, config);
+		if (json)
+		{
+			winpr_config_apply_bool(config, json, "NTLMv2", &context->NTLMv2);
+			winpr_config_apply_bool(config, json, "UseMIC", &context->UseMIC);
+			winpr_config_apply_bool(config, json, "SendVersionInfo", &context->SendVersionInfo);
+			winpr_config_apply_bool(config, json, "SendSingleHostData",
+			                        &context->SendSingleHostData);
+			winpr_config_apply_bool(config, json, "SendWorkstationName",
+			                        &context->SendWorkstationName);
+			winpr_config_apply_bool(config, json, "SuppressExtendedProtection",
+			                        &context->SuppressExtendedProtection);
+
+			apply_string(config, json, "WorkstationName", &context->Workstation);
+			apply_string(config, json, "NbDomainName", &context->NbDomainName);
+			apply_string(config, json, "NbComputerName", &context->NbComputerName);
+			apply_string(config, json, "DnsDomainName", &context->DnsDomainName);
+			apply_string(config, json, "DnsComputerName", &context->DnsComputerName);
+
+			WINPR_JSON_Delete(json);
+		}
 	}
 
 	/*
@@ -633,9 +684,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributesA(PCredHandle ph
 {
 	return ntlm_QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
 }
-
-WINPR_ATTR_NODISCARD
-static SECURITY_STATUS ntml_setUnicodeStringA(UNICODE_STRING* str, const char* val, size_t charlen);
 
 /**
  * @see http://msdn.microsoft.com/en-us/library/windows/desktop/aa374707
