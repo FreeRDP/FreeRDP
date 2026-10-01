@@ -178,7 +178,6 @@ set(WINPR_CORE
     security
     environment
     crypto
-    registry
     path
     io
     memory
@@ -193,6 +192,10 @@ set(WINPR_CORE
     handle
     thread
 )
+
+if(NOT WITHOUT_WINPR_3x_DEPRECATED)
+  list(APPEND WINPR_CORE registry)
+endif()
 
 foreach(DIR ${WINPR_CORE})
   add_subdirectory(${DIR})
