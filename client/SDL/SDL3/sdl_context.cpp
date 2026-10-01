@@ -1551,6 +1551,11 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 		{
 			return getClipboardChannelContext().handleDataRequests();
 		}
+		case SDL_EVENT_USER_CLIPBOARD_RESEND_LIST:
+		{
+			return getClipboardChannelContext().resendFormatList(
+			    static_cast<uint32_t>(reinterpret_cast<uintptr_t>(ev.user.data1)));
+		}
 		case SDL_EVENT_KEY_DOWN:
 		case SDL_EVENT_KEY_UP:
 		{

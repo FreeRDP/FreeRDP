@@ -117,6 +117,7 @@ bool sdl_push_user_event(Uint32 type, ...)
 			event->data1 = va_arg(ap, void*);
 			break;
 		case SDL_EVENT_USER_CLIPBOARD_DATA_REQUEST:
+		case SDL_EVENT_USER_CLIPBOARD_RESEND_LIST:
 			event->data1 = reinterpret_cast<void*>(static_cast<uintptr_t>(va_arg(ap, UINT32)));
 			break;
 		case SDL_EVENT_USER_POINTER_POSITION:
@@ -402,6 +403,7 @@ namespace sdl::utils
 			EV_CASE_STR(SDL_EVENT_USER_POINTER_POSITION);
 			EV_CASE_STR(SDL_EVENT_USER_POINTER_SET);
 			EV_CASE_STR(SDL_EVENT_USER_CLIPBOARD_DATA_REQUEST);
+			EV_CASE_STR(SDL_EVENT_USER_CLIPBOARD_RESEND_LIST);
 			EV_CASE_STR(SDL_EVENT_USER_RAIL_MOVE);
 			EV_CASE_STR(SDL_EVENT_USER_QUIT);
 
