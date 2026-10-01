@@ -922,26 +922,55 @@ UINT sdlClip::ReceiveFormatDataRequest(CliprdrClientContext* context,
 	    cliprdr_file_context_get_context(static_cast<CliprdrFileContext*>(context->custom)));
 	WINPR_ASSERT(clipboard);
 
+	{
+		std::scoped_lock lock(clipboard->_lock);
+		/* ClipDataCb is waiting on the main thread for the server: a local application is
+		 * reading our offer of server data, so the local clipboard holds no client data to
+		 * give. Answer now. Queued for the main thread, the request would wait for the end of
+		 * that read while the server may hold its reply until we answer (seen with Windows:
+		 * a 9 s freeze until ClipDataCb timed out). */
+		if (clipboard->_reading_server)
+		{
+			WLog_Print(clipboard->_log, WLOG_DEBUG,
+			           "local read of server data in progress, failing server request");
+			return clipboard->SendDataResponse(nullptr, 0);
+		}
+		clipboard->_server_requests.push_back(formatDataRequest->requestedFormatId);
+	}
+
 	/* This runs on the channel thread, but the SDL clipboard API is main-thread only: on
-	 * Wayland, reading the selection offer here races the main thread replacing it. Answering
-	 * from the main thread also means this thread never blocks, so a ClipDataCb waiting on
-	 * the main thread for a server reply cannot deadlock against it. */
+	 * Wayland, reading the selection offer here races the main thread replacing it. */
 	if (!sdl_push_user_event(SDL_EVENT_USER_CLIPBOARD_DATA_REQUEST,
 	                         formatDataRequest->requestedFormatId))
+	{
+		std::scoped_lock lock(clipboard->_lock);
+		if (!clipboard->_server_requests.empty())
+			clipboard->_server_requests.pop_back();
 		return clipboard->SendDataResponse(nullptr, 0);
+	}
 	return CHANNEL_RC_OK;
 }
 
-bool sdlClip::handleDataRequest(uint32_t formatId)
+bool sdlClip::handleDataRequests()
 {
-	if (!_ctx)
-		return true;
+	for (;;)
+	{
+		uint32_t formatId = 0;
+		{
+			std::scoped_lock lock(_lock);
+			if (_server_requests.empty())
+				return true;
+			formatId = _server_requests.front();
+			_server_requests.pop_front();
+		}
+		if (!_ctx)
+			continue;
 
-	uint32_t len = 0;
-	auto data = getLocalData(formatId, len);
-	if (SendDataResponse(data.get(), len) != CHANNEL_RC_OK)
-		WLog_Print(_log, WLOG_WARN, "failed to send clipboard data response");
-	return true;
+		uint32_t len = 0;
+		auto data = getLocalData(formatId, len);
+		if (SendDataResponse(data.get(), len) != CHANNEL_RC_OK)
+			WLog_Print(_log, WLOG_WARN, "failed to send clipboard data response");
+	}
 }
 
 UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
@@ -1098,8 +1127,24 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 
 		WLog_Print(clip->_log, WLOG_DEBUG, "requesting format %s [%s 0x%08" PRIx32 "]", mime_type,
 		           ClipboardGetFormatName(clip->_system, formatID), formatID);
+
+		/* From here until the reply, server data requests are answered on arrival (see
+		 * ReceiveFormatDataRequest). Those already queued get the same answer now: a local
+		 * application is reading our offer, so there is no client data to give. */
+		clip->_reading_server = true;
+		while (!clip->_server_requests.empty())
+		{
+			clip->_server_requests.pop_front();
+			WLog_Print(clip->_log, WLOG_DEBUG,
+			           "local read of server data in progress, failing queued server request");
+			std::ignore = clip->SendDataResponse(nullptr, 0);
+		}
+
 		if (clip->SendDataRequest(formatID, mime_type))
+		{
+			clip->_reading_server = false;
 			return nullptr;
+		}
 	}
 	{
 		HANDLE hdl[2] = { freerdp_abort_event(clip->_sdl->context()), clip->_event };
@@ -1111,6 +1156,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 		if (status != WAIT_OBJECT_0 + 1)
 		{
 			std::scoped_lock lock(clip->_lock);
+			clip->_reading_server = false;
 			if (!clip->_request_queue.empty())
 				clip->_request_queue.pop();
 
@@ -1125,6 +1171,7 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 	{
 		ClipboardLockGuard systemlock(clip->_system);
 		std::scoped_lock lock(clip->_lock);
+		clip->_reading_server = false;
 		if (clip->_request_queue.empty())
 			return nullptr;
 		auto request = clip->_request_queue.front();
