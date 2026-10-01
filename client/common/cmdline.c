@@ -50,6 +50,7 @@
 #include <freerdp/channels/disp.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/utils/aad.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/utils/proxy_utils.h>
 #include <freerdp/utils/string.h>
@@ -67,6 +68,7 @@
 #include <freerdp/channels/echo.h>
 
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client/file.h>
 #include <freerdp/version.h>
 #include <freerdp/client/utils/smartcard_cli.h>
 
@@ -3866,10 +3868,12 @@ static int parse_app_option_program(rdpSettings* settings, const char* cmd)
 	return CHANNEL_RC_OK;
 }
 
-static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg,
+                             BOOL* useTenantidGiven)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
+	WINPR_ASSERT(useTenantidGiven);
 
 	int rc = CHANNEL_RC_OK;
 	size_t count = 0;
@@ -3913,6 +3917,7 @@ static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 						break;
 					}
+					*useTenantidGiven = TRUE;
 				}
 				continue;
 			}
@@ -4270,13 +4275,15 @@ static char* unescape(const char* str)
 	return copy;
 }
 
-static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
+static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg,
+                                  const FreeRDP_AadCloud** cloud)
 {
 	char* argval = nullptr;
 	BOOL rc = FALSE;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
+	WINPR_ASSERT(cloud);
 
 	size_t count = 0;
 	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
@@ -4340,6 +4347,22 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 					goto fail;
 				validOption = TRUE;
 				allowHttpOpts = freerdp_settings_get_bool(settings, FreeRDP_GatewayHttpTransport);
+			}
+
+			const char* cloudname = option_starts_with("cloud:", argval);
+			if (cloudname)
+			{
+				const FreeRDP_AadCloud* selected = freerdp_utils_aad_cloud_by_name(cloudname);
+				if (!selected)
+				{
+					WLog_ERR(TAG, "unknown AVD cloud '%s'", cloudname);
+					goto fail;
+				}
+				if (!freerdp_utils_aad_apply_cloud(settings, selected))
+					goto fail;
+				*cloud = selected;
+				validOption = TRUE;
+				allowHttpOpts = FALSE;
 			}
 
 			const char* gat = option_starts_with("access-token:", argval);
@@ -4860,10 +4883,15 @@ static int parse_command_line_option_window_pos(rdpSettings* settings,
 
 static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg,
                               freerdp_command_line_handle_option_t handle_option,
-                              void* handle_userdata, BOOL* promptForPassword, char** user)
+                              void* handle_userdata, BOOL* promptForPassword, char** user,
+                              const FreeRDP_AadCloud** avdCloud, BOOL* avdUseTenantidGiven)
 {
 	WINPR_ASSERT(promptForPassword);
 	WINPR_ASSERT(user);
+	WINPR_ASSERT(avdCloud);
+	WINPR_ASSERT(avdUseTenantidGiven);
+
+	const COMMAND_LINE_ARGUMENT_A* azure = nullptr;
 
 	BOOL decorationsDefault = TRUE;
 	do
@@ -5092,8 +5120,16 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		}
 		CommandLineSwitchCase(arg, "gateway")
 		{
-			if (!parse_gateway_options(settings, arg))
+			if (!parse_gateway_options(settings, arg, avdCloud))
 				return fail_at(arg, COMMAND_LINE_ERROR);
+
+			/* /azure is parsed before /gateway, a later /gateway:cloud: must still win */
+			if (*avdCloud && azure && (azure->Index > arg->Index))
+			{
+				const int rc = parse_aad_options(settings, azure, avdUseTenantidGiven);
+				if (rc != 0)
+					return fail_at(azure, rc);
+			}
 		}
 		CommandLineSwitchCase(arg, "proxy")
 		{
@@ -5104,9 +5140,10 @@ static int parse_command_line(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 
 		CommandLineSwitchCase(arg, "azure")
 		{
-			int rc = parse_aad_options(settings, arg);
+			int rc = parse_aad_options(settings, arg, avdUseTenantidGiven);
 			if (rc != 0)
 				return fail_at(arg, rc);
+			azure = arg;
 		}
 		CommandLineSwitchCase(arg, "app")
 		{
@@ -5734,6 +5771,32 @@ static void warn_credential_args(const COMMAND_LINE_ARGUMENT_A* args)
 	}
 }
 
+/* loads a .rdp file without selecting the AVD cloud, the parser does that once at the end */
+static BOOL load_connection_file(rdpSettings* settings, const char* filename)
+{
+	BOOL rc = FALSE;
+	rdpFile* file = freerdp_client_rdp_file_new();
+	if (!file)
+		return FALSE;
+
+	if (freerdp_client_parse_rdp_file(file, filename) &&
+	    freerdp_client_populate_settings_from_rdp_file(file, settings))
+		rc = TRUE;
+
+	freerdp_client_rdp_file_free(file);
+	return rc;
+}
+
+static BOOL derive_avd_use_tenantid(rdpSettings* settings)
+{
+	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayAvdUseTenantid))
+		return TRUE;
+
+	const char* tenant = freerdp_settings_get_string(settings, FreeRDP_GatewayAvdAadtenantid);
+	const BOOL useTenantid = tenant && (_stricmp(tenant, "common") != 0);
+	return freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid, useTenantid);
+}
+
 static int freerdp_client_settings_parse_command_line_arguments_int(
     rdpSettings* settings, int argc, char* argv[], BOOL allowUnknown,
     COMMAND_LINE_ARGUMENT_A* largs, WINPR_ATTR_UNUSED size_t count,
@@ -5746,6 +5809,8 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 	DWORD flags = 0;
 	BOOL promptForPassword = FALSE;
 	BOOL compatibility = FALSE;
+	const FreeRDP_AadCloud* avdCloud = nullptr;
+	BOOL avdUseTenantidGiven = FALSE;
 	const COMMAND_LINE_ARGUMENT_A* arg = nullptr;
 
 	/* Command line detection fails if only a .rdp or .msrcIncident file
@@ -5782,7 +5847,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 
 	if (ext)
 	{
-		if (freerdp_client_settings_parse_connection_file(settings, argv[1]))
+		if (!load_connection_file(settings, argv[1]))
 			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 	}
 
@@ -5812,7 +5877,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		return COMMAND_LINE_ERROR_MEMORY;
 
 	status = parse_command_line(settings, arg, handle_option, handle_userdata, &promptForPassword,
-	                            &user);
+	                            &user, &avdCloud, &avdUseTenantidGiven);
 
 	if (user)
 	{
@@ -5893,6 +5958,21 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 
 		const UINT32 port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
 		WLog_INFO(TAG, "/vmconnect uses custom port %" PRIu32, port);
+	}
+
+	if (avdCloud)
+	{
+		if (!avdUseTenantidGiven && !derive_avd_use_tenantid(settings))
+			return COMMAND_LINE_ERROR;
+	}
+	else
+	{
+		const BOOL useTenantid = freerdp_settings_get_bool(settings, FreeRDP_GatewayAvdUseTenantid);
+		if (!freerdp_client_settings_apply_avd_cloud(settings))
+			return COMMAND_LINE_ERROR;
+		if (avdUseTenantidGiven &&
+		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayAvdUseTenantid, useTenantid))
+			return COMMAND_LINE_ERROR;
 	}
 
 	fill_credential_strings(largs);
