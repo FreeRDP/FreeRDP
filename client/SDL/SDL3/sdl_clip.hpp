@@ -110,7 +110,7 @@ class sdlClip
 
 	[[nodiscard]] bool contains(const char** mime_types, Sint32 count);
 	[[nodiscard]] bool ownsClipboard() const;
-	[[nodiscard]] bool keepCurrentOffer(const std::vector<std::string>& mimes) const;
+	[[nodiscard]] bool keepCurrentOffer() const;
 
 	[[nodiscard]] static UINT MonitorReady(CliprdrClientContext* context,
 	                                       const CLIPRDR_MONITOR_READY* monitorReady);

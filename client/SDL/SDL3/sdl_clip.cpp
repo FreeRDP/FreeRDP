@@ -261,16 +261,19 @@ void sdlClip::noteInput()
 	_input_since_offer = true;
 }
 
-bool sdlClip::keepCurrentOffer(const std::vector<std::string>& mimes) const
+bool sdlClip::keepCurrentOffer() const
 {
 	/* Only Wayland ties clipboard ownership to input serials. mutter ignores a set_selection
 	 * whose serial is not newer than the current selection's, and cancels one from a window
 	 * without keyboard focus; SDL destroys its previous source either way. Replacing an offer
 	 * we still own in those cases leaves the clipboard without an owner, mutter restores its
 	 * saved copy of an older clipboard, and we would announce that to the server. The offer we
-	 * have serves the new server data as it is: ClipDataCb fetches on demand, caches cleared. */
-	if (mimes != _offered_mimetypes)
-		return false;
+	 * have serves the new server data as it is: ClipDataCb fetches on demand, caches cleared.
+	 * This holds even when the formats differ. Windows can send an empty format list between
+	 * two announcements of one copy (list, empty list, list within 250 ms, all without input).
+	 * Replacing the offer for the empty list sent the older local clipboard to the server,
+	 * which then owned "our" data while we waited for its own: a 10 s freeze, and pastes on
+	 * the server failed. A format the server no longer has fails on request. */
 	const char* driver = SDL_GetCurrentVideoDriver();
 	if (!driver || (strcmp(driver, "wayland") != 0))
 		return false;
@@ -298,11 +301,18 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 		if (mimes.empty())
 			return true;
 
-		if (keepCurrentOffer(mimes))
+		if (keepCurrentOffer())
 		{
-			WLog_Print(_log, WLOG_DEBUG, "server formats unchanged, keeping the clipboard offer");
+			WLog_Print(_log, WLOG_DEBUG,
+			           "keeping the clipboard offer (same formats %d): it cannot be replaced now",
+			           mimes == _offered_mimetypes);
 			return true;
 		}
+		WLog_Print(_log, WLOG_DEBUG,
+		           "offering server formats (owned %d, same formats %d, input since offer %d, "
+		           "focused %d)",
+		           ownsClipboard(), mimes == _offered_mimetypes, _input_since_offer,
+		           SDL_GetKeyboardFocus() != nullptr);
 
 		std::vector<const char*> cmimes;
 		cmimes.reserve(mimes.size());
