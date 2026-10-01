@@ -158,8 +158,6 @@ set(SRCS
     Views/AdvancedKeyboardView.m
     Views/BookmarkTableCell.h
     Views/BookmarkTableCell.m
-    Views/EditButtonTableViewCell.h
-    Views/EditButtonTableViewCell.m
     Views/EditFlagTableViewCell.h
     Views/EditFlagTableViewCell.m
     Views/EditSecretTextTableViewCell.h
@@ -183,13 +181,6 @@ set(SRCS
 # add resources
 set(IOS_CLIENT_RESOURCES_XIBS
     Resources/BookmarkListView.xib
-    Resources/BookmarkTableViewCell.xib
-    Resources/EditButtonTableViewCell.xib
-    Resources/EditFlagTableViewCell.xib
-    Resources/EditSecretTextTableViewCell.xib
-    Resources/EditSelectionTableViewCell.xib
-    Resources/EditSubEditTableViewCell.xib
-    Resources/EditTextTableViewCell.xib
     Resources/MainWindow.xib
     Resources/RDPConnectingView.xib
     Resources/RDPSessionView.xib

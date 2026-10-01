@@ -40,8 +40,7 @@
 
 @implementation BookmarkListController
 
-@synthesize searchBar = _searchBar, tableView = _tableView, bmTableCell = _bmTableCell,
-            sessTableCell = _sessTableCell;
+@synthesize searchBar = _searchBar, tableView = _tableView, sessTableCell = _sessTableCell;
 
 // The designated initializer.  Override if you create the controller programmatically and want to
 // perform customization that is not appropriate for viewDidLoad.
@@ -100,6 +99,13 @@
 
 	// set edit button to allow bookmark list editing
 	[[self navigationItem] setRightBarButtonItem:[self editButtonItem]];
+
+	// set margin
+	[_tableView setPreservesSuperviewLayoutMargins:YES];
+	[_searchBar setPreservesSuperviewLayoutMargins:YES];
+
+	// set self-sizing rows
+	[_tableView setEstimatedRowHeight:UITableViewAutomaticDimension];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -220,13 +226,20 @@
 	UITableViewCell *cell = [[self tableView] dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil)
 	{
-		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
-		                              reuseIdentifier:CellIdentifier];
+		cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
+		                               reuseIdentifier:CellIdentifier] autorelease];
 		[cell setSelectionStyle:UITableViewCellSelectionStyleNone];
 		[cell setAccessoryType:UITableViewCellAccessoryDetailButton];
 	}
 
 	return cell;
+}
+
+- (void)setText:(NSString *)text forGenericListEntry:(UITableViewCell *)cell
+{
+	UIListContentConfiguration *content = [cell defaultContentConfiguration];
+	[content setText:text];
+	[cell setContentConfiguration:content];
 }
 
 - (BookmarkTableCell *)cellForBookmark
@@ -236,10 +249,8 @@
 	    dequeueReusableCellWithIdentifier:BookmarkCellIdentifier];
 	if (cell == nil)
 	{
-		[[NSBundle mainBundle] loadNibNamed:@"BookmarkTableViewCell" owner:self options:nil];
-		[_bmTableCell setAccessoryType:UITableViewCellAccessoryDetailButton];
-		cell = _bmTableCell;
-		_bmTableCell = nil;
+		cell = [[[BookmarkTableCell alloc] initWithStyle:UITableViewCellStyleSubtitle
+		                                 reuseIdentifier:BookmarkCellIdentifier] autorelease];
 	}
 
 	return cell;
@@ -286,15 +297,14 @@
 				UITableViewCell *cell = [self cellForGenericListEntry];
 				if ([[_searchBar text] length] == 0)
 				{
-					[[cell textLabel]
-					    setText:[@"  " stringByAppendingString:
-					                       NSLocalizedString(@"Add Connection",
-					                                         @"'Add Connection': button label")]];
+					[self setText:NSLocalizedString(@"Add Connection",
+					                                @"'Add Connection': button label")
+					    forGenericListEntry:cell];
 					[cell setAccessoryType:UITableViewCellAccessoryNone];
 				}
 				else
 				{
-					[[cell textLabel] setText:[@"  " stringByAppendingString:[_searchBar text]]];
+					[self setText:[_searchBar text] forGenericListEntry:cell];
 					[cell setAccessoryType:UITableViewCellAccessoryDetailButton];
 				}
 
@@ -306,11 +316,9 @@
 				if ([self isIndexPathToHistoryItem:indexPath])
 				{
 					UITableViewCell *cell = [self cellForGenericListEntry];
-					[[cell textLabel]
-					    setText:[@"  " stringByAppendingString:
-					                       [_history_search_result
-					                           objectAtIndex:
-					                               [self historyIndexFromIndexPath:indexPath]]]];
+					[self setText:[_history_search_result
+					                  objectAtIndex:[self historyIndexFromIndexPath:indexPath]]
+					    forGenericListEntry:cell];
 					[cell setAccessoryType:UITableViewCellAccessoryDetailButton];
 					return cell;
 				}
@@ -327,8 +335,8 @@
 						    objectAtIndex:[self bookmarkIndexFromIndexPath:indexPath]]
 						    valueForKey:@"bookmark"];
 
-					[[cell title] setText:[entry label]];
-					[[cell subTitle] setText:[[entry params] StringForKey:@"hostname"]];
+					[cell setTitle:[entry label]];
+					[cell setSubTitle:[[entry params] StringForKey:@"hostname"]];
 					return cell;
 				}
 			}
@@ -477,7 +485,7 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    // remove gap unused session section.
+	// remove gap unused session section.
 	if (!SHOW_SESSIONS_SECTION && section == SECTION_SESSIONS)
 		return CGFLOAT_MIN;
 	return UITableViewAutomaticDimension;
@@ -485,7 +493,7 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
 {
-    // remove gap unused session section.
+	// remove gap unused session section.
 	if (!SHOW_SESSIONS_SECTION && section == SECTION_SESSIONS)
 		return CGFLOAT_MIN;
 	return [tableView sectionFooterHeight];
@@ -495,7 +503,8 @@
 {
 	if ([indexPath section] == SECTION_SESSIONS)
 		return 72;
-	return [tableView rowHeight];
+
+	return UITableViewAutomaticDimension;
 }
 
 #pragma mark -

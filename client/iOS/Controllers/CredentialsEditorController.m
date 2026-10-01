@@ -23,7 +23,7 @@
 
 - (id)initWithBookmark:(ComputerBookmark *)bookmark
 {
-	if ((self = [super initWithStyle:UITableViewStyleGrouped]))
+	if ((self = [super initWithStyle:UITableViewStyleInsetGrouped]))
 	{
 		// set additional settings state according to bookmark data
 		_bookmark = [bookmark retain];

@@ -12,48 +12,40 @@
 
 @implementation EditFlagTableViewCell
 
-@synthesize label = _label, toggle = _toggle;
+@synthesize title = _title, toggle = _toggle;
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
 	self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
 	if (self)
 	{
-		// Initialization code
+		[self setSelectionStyle:UITableViewCellSelectionStyleNone];
+
+		_toggle = [[UISwitch alloc] init];
+		[self setAccessoryView:_toggle];
 	}
+
 	return self;
 }
 
-- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+- (void)dealloc
 {
-	[super setSelected:selected animated:animated];
-
-	// Configure the view for the selected state
+	[_title release];
+	[_toggle release];
+	[super dealloc];
 }
 
-// set toggle switch layout margin
-- (void)layoutSubviews
+- (void)setTitle:(NSString *)title
 {
-	[super layoutSubviews];
-
-	if (!_toggle)
-		return;
-
-	CGRect bounds = [[self contentView] bounds];
-	UIEdgeInsets margins = [[self contentView] layoutMargins];
-	CGSize sw = [_toggle frame].size;
-
-	[_toggle setFrame:CGRectMake(CGRectGetMaxX(bounds) - margins.right - sw.width,
-	                             (bounds.size.height - sw.height) / 2.0, sw.width, sw.height)];
-
-	if (_label)
+	if (_title != title)
 	{
-		CGRect lf = [_label frame];
-		lf.origin.x = margins.left;
-		lf.origin.y = (bounds.size.height - lf.size.height) / 2.0;
-		lf.size.width = CGRectGetMinX([_toggle frame]) - margins.left - 8.0;
-		[_label setFrame:lf];
+		[_title release];
+		_title = [title copy];
 	}
+
+	UIListContentConfiguration *content = [self defaultContentConfiguration];
+	[content setText:title];
+	[self setContentConfiguration:content];
 }
 
 @end

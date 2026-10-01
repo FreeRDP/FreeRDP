@@ -12,11 +12,11 @@
 
 @interface EditFlagTableViewCell : UITableViewCell
 {
-	IBOutlet UILabel *_label;
-	IBOutlet UISwitch *_toggle;
+	NSString *_title;
+	UISwitch *_toggle;
 }
 
-@property(retain, nonatomic) UILabel *label;
-@property(retain, nonatomic) UISwitch *toggle;
+@property(copy, nonatomic) NSString *title;
+@property(readonly, nonatomic) UISwitch *toggle;
 
 @end

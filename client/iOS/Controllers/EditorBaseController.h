@@ -14,7 +14,6 @@
 #import "EditSelectionTableViewCell.h"
 #import "EditSubEditTableViewCell.h"
 #import "EditSecretTextTableViewCell.h"
-#import "EditButtonTableViewCell.h"
 
 extern NSString *TableCellIdentifierText;
 extern NSString *TableCellIdentifierSecretText;
@@ -22,23 +21,9 @@ extern NSString *TableCellIdentifierYesNo;
 extern NSString *TableCellIdentifierSelection;
 extern NSString *TableCellIdentifierSubEditor;
 extern NSString *TableCellIdentifierMultiChoice;
-extern NSString *TableCellIdentifierButton;
 
 @interface EditorBaseController : UITableViewController <UITextFieldDelegate>
-{
-  @private
-	IBOutlet EditTextTableViewCell *_textTableViewCell;
-	IBOutlet EditSecretTextTableViewCell *_secretTextTableViewCell;
-	IBOutlet EditFlagTableViewCell *_flagTableViewCell;
-	IBOutlet EditSelectionTableViewCell *_selectionTableViewCell;
-	IBOutlet EditSubEditTableViewCell *_subEditTableViewCell;
-	IBOutlet EditButtonTableViewCell *_buttonTableViewCell;
-}
-
 // returns one of the requested table view cells
 - (UITableViewCell *)tableViewCellFromIdentifier:(NSString *)identifier;
-
-// Adjust text input cells label/textfield width according to the label's text size
-- (void)adjustEditTextTableViewCell:(EditTextTableViewCell *)cell;
 
 @end

@@ -10,30 +10,61 @@
 
 #import "BookmarkTableCell.h"
 
+@interface BookmarkTableCell (Private)
+- (void)updateContent;
+@end
+
 @implementation BookmarkTableCell
 
-@synthesize title = _title, subTitle = _sub_title, connectionStateIcon = _connection_state_icon;
+@synthesize title = _title, subTitle = _sub_title;
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
-	if ((self = [super initWithStyle:style reuseIdentifier:reuseIdentifier]))
+	self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:reuseIdentifier];
+	if (self)
 	{
 		// Initialization code
+		[self setAccessoryType:UITableViewCellAccessoryDetailButton];
 	}
 	return self;
 }
 
-- (void)setSelected:(BOOL)selected animated:(BOOL)animated
-{
-
-	[super setSelected:selected animated:animated];
-
-	// Configure the view for the selected state
-}
-
 - (void)dealloc
 {
+	[_title release];
+	[_sub_title release];
 	[super dealloc];
+}
+
+- (void)setTitle:(NSString *)title
+{
+	if (_title != title)
+	{
+		[_title release];
+		_title = [title copy];
+	}
+
+	[self updateContent];
+}
+
+- (void)setSubTitle:(NSString *)subTitle
+{
+	if (_sub_title != subTitle)
+	{
+		[_sub_title release];
+		_sub_title = [subTitle copy];
+	}
+
+	[self updateContent];
+}
+
+- (void)updateContent
+{
+	UIListContentConfiguration *content = [UIListContentConfiguration subtitleCellConfiguration];
+	[content setText:_title];
+	[content setSecondaryText:_sub_title];
+	[[content secondaryTextProperties] setColor:[UIColor secondaryLabelColor]];
+	[self setContentConfiguration:content];
 }
 
 @end

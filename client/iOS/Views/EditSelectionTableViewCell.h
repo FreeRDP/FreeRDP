@@ -12,11 +12,13 @@
 
 @interface EditSelectionTableViewCell : UITableViewCell
 {
-	IBOutlet UILabel *_label;
-	IBOutlet UILabel *_selection;
+	NSString *_title;
+	NSString *_value;
+	BOOL _enabled;
 }
 
-@property(retain, nonatomic) UILabel *label;
-@property(retain, nonatomic) UILabel *selection;
+@property(copy, nonatomic) NSString *title;
+@property(copy, nonatomic) NSString *value;
+@property(assign, nonatomic) BOOL enabled;
 
 @end

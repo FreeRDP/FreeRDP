@@ -12,9 +12,11 @@
 
 @interface EditSubEditTableViewCell : UITableViewCell
 {
-	IBOutlet UILabel *_label;
+	NSString *_title;
+	BOOL _enabled;
 }
 
-@property(retain, nonatomic) UILabel *label;
+@property(copy, nonatomic) NSString *title;
+@property(assign, nonatomic) BOOL enabled;
 
 @end
