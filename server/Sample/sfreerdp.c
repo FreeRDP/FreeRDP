@@ -47,6 +47,9 @@
 #include <freerdp/constants.h>
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/settings.h>
+#include <freerdp/build-config.h>
+#include <freerdp/version.h>
+#include <freerdp/utils/helpers.h>
 
 #include "sf_ainput.h"
 #include "sf_audin.h"
@@ -1441,6 +1444,20 @@ int main(int argc, char* argv[])
 	const char* app = argv[0];
 
 	info.test_dump_rfx_realtime = TRUE;
+
+	/*
+	 * Set custom application details at first thing in main.
+	 * This will initialize a new namespace within FreeRDP and WinPR.
+	 * As a result all configuration files will be searched in different locations.
+	 *
+	 * The location is <prefix>/<vendor>/<product> or <prefix>/<vendor>/<product><version> for
+	 * config file search directories. An example for a system wide configuration file would be
+	 * /etc/FreeRDP/TFreeRDP3/ or ~/.config//FreeRDP/TFreeRDP3/ for user config files.
+	 *
+	 * Consult \ref GetKnownPath for <prefix> locations on different operating systems
+	 */
+	if (!freerdp_setApplicationDetails(FREERDP_VENDOR_STRING, "TFreeRDP", FREERDP_VERSION_MAJOR))
+		return -1;
 
 	errno = 0;
 
