@@ -248,6 +248,13 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	WINPR_API const char* GetKnownPathIdString(int id);
 
+	/** @brief return a known path
+	 *
+	 *  @param id The known path type requested
+	 *
+	 *  @return NULL in case of an error, a canonical path representing the requested \ref id on the
+	 * current operating system
+	 */
 	WINPR_ATTR_MALLOC(free, 1)
 	WINPR_API char* GetKnownPath(eKnownPathTypes id);
 
