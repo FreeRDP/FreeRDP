@@ -22,8 +22,10 @@
 
 #include <winpr/wtypes.h>
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 WINPR_ATTR_MALLOC(free, 1)
 WINPR_LOCAL WINPR_ATTR_NODISCARD char* winpr_getApplicatonDetailsRegKey(const char* fmt);
+#endif
 
 WINPR_ATTR_MALLOC(free, 1)
 WINPR_LOCAL WINPR_ATTR_NODISCARD char* winpr_getApplicatonDetailsCombined(char separator);

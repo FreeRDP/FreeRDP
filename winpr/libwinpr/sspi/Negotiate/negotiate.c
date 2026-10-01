@@ -25,7 +25,9 @@
 #include <winpr/assert.h>
 #include <winpr/sspi.h>
 #include <winpr/tchar.h>
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 #include <winpr/registry.h>
+#endif
 #include <winpr/build-config.h>
 #include <winpr/asn1.h>
 #include <winpr/path.h>
@@ -241,6 +243,7 @@ static PSecHandle negotiate_FindCredential(MechCred* creds, const Mech* mech)
 	return nullptr;
 }
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 static BOOL negotiate_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
 {
 	DWORD dwValue = 0;
@@ -256,6 +259,7 @@ static BOOL negotiate_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
 	*pdwValue = dwValue;
 	return TRUE;
 }
+#endif
 
 static BOOL negotiate_get_config_from_auth_package_list(void* pAuthData, BOOL* kerberos, BOOL* ntlm,
                                                         BOOL* u2u)
@@ -343,6 +347,8 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BO
 	}
 
 	const char config[] = "negotiate.json";
+
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	{
 		char* key = winpr_getApplicatonDetailsRegKey(NEGO_REG_KEY);
 		if (key)
@@ -373,6 +379,7 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BO
 			}
 		}
 	}
+#endif
 
 	WINPR_JSON* json = winpr_GetJSONConfigFile(TRUE, config);
 	if (json)

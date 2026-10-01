@@ -26,7 +26,9 @@
 #include <winpr/string.h>
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 #include <winpr/registry.h>
+#endif
 #include <winpr/endian.h>
 #include <winpr/build-config.h>
 #include <winpr/path.h>
@@ -326,6 +328,7 @@ static BOOL ntlm_ContextFillDefaultNames(NTLM_CONTEXT* context)
 	return TRUE;
 }
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 static BOOL ntlm_try_set_from_registry(HKEY hKey, const char* key, UNICODE_STRING* ustr)
 {
 	WINPR_ASSERT(hKey);
@@ -364,6 +367,7 @@ fail:
 	ntlm_free_unicode_string(&str);
 	return FALSE;
 }
+#endif
 
 WINPR_ATTR_NODISCARD
 static SECURITY_STATUS ntml_setUnicodeStringA(UNICODE_STRING* str, const char* val, size_t charlen);
@@ -390,6 +394,7 @@ static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
 
 	WINPR_ASSERT(context);
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 	{
 		char* key = winpr_getApplicatonDetailsRegKey(WINPR_KEY);
 		if (key)
@@ -460,6 +465,7 @@ static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
 
 		RegCloseKey(hKey);
 	}
+#endif
 	{
 		WINPR_JSON* json = winpr_GetJSONConfigFile(TRUE, config);
 		if (json)
