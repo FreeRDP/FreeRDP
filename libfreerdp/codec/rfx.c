@@ -30,7 +30,9 @@
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #include <winpr/registry.h>
+#endif
 
 #include <freerdp/log.h>
 #include <freerdp/settings.h>
@@ -269,6 +271,7 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	if (!(ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 		priv->UseThreads = TRUE;
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	{
 		char* key = freerdp_getApplicatonDetailsRegKey(RFX_KEY);
 		if (key)
@@ -294,6 +297,7 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 			}
 		}
 	}
+#endif
 	{
 		WINPR_JSON* json = freerdp_GetJSONConfigFile(TRUE, config);
 		if (json)
