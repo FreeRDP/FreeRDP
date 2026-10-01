@@ -179,12 +179,8 @@ set(SRCS
 )
 
 # add resources
-set(IOS_CLIENT_RESOURCES_XIBS
-    Resources/BookmarkListView.xib
-    Resources/MainWindow.xib
-    Resources/RDPConnectingView.xib
-    Resources/RDPSessionView.xib
-    Resources/SessionTableViewCell.xib
+set(IOS_CLIENT_RESOURCES_XIBS Resources/BookmarkListView.xib Resources/MainWindow.xib Resources/RDPConnectingView.xib
+                              Resources/RDPSessionView.xib Resources/SessionTableViewCell.xib
 )
 
 set(IOS_CLIENT_RESOURCES_PNGS

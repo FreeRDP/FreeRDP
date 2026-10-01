@@ -533,9 +533,8 @@
 	// custom view --> stock UIAlertController
 	__block UIAlertController *alert = [UIAlertController
 	    alertControllerWithTitle:NSLocalizedString(@"Credentials", @"Credentials title")
-	                     message:NSLocalizedString(
-	                                 @"Please provide the missing user information.",
-	                                 @"Credentials input view message")
+	                     message:NSLocalizedString(@"Please provide the missing user information.",
+	                                               @"Credentials input view message")
 	              preferredStyle:UIAlertControllerStyleAlert];
 
 	// username input field
@@ -586,7 +585,7 @@
 		            [[session uiRequestCompleted] signal];
 	            }];
 	[alert addAction:loginAction];
-    
+
 	[alert setPreferredAction:loginAction];
 
 	[self presentViewController:alert animated:YES completion:nil];
