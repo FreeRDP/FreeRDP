@@ -458,10 +458,8 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 	if (!SDL_GetWindowSizeInPixels(window, &rect.w, &rect.h))
 		return {};
 
-	const auto flags = SDL_GetWindowFlags(window);
-	const auto mask = SDL_WINDOW_FULLSCREEN;
-	const auto fs = (flags & mask) == mask;
-	if (tryFallback(fs))
+	const bool placeholder = (rect.w < 200) || (rect.h < 200);
+	if (placeholder && tryFallback(true))
 	{
 		/* On wlroots compositors (Sway, river, etc.), windows that are hidden/unmapped
 		 * don't get their actual display dimensions. The dummy window returns its creation size
@@ -488,13 +486,22 @@ SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
 			rect.w = displayBounds.w;
 			rect.h = displayBounds.h;
 
-			const float contentScale = SDL_GetDisplayContentScale(displayID);
-			if (contentScale > 1.0f)
+			float factor = 1.0f;
+			const auto mode = SDL_GetCurrentDisplayMode(displayID);
+			if (mode && (mode->pixel_density > 1.0f))
+				factor = mode->pixel_density;
+			else
+			{
+				const float contentScale = SDL_GetDisplayContentScale(displayID);
+				if (contentScale > 1.0f)
+					factor = contentScale;
+			}
+			if (factor > 1.0f)
 			{
 				const auto fw = static_cast<float>(rect.w);
 				const auto fh = static_cast<float>(rect.h);
-				rect.w = static_cast<int>(std::roundf(fw * contentScale));
-				rect.h = static_cast<int>(std::roundf(fh * contentScale));
+				rect.w = static_cast<int>(std::roundf(fw * factor));
+				rect.h = static_cast<int>(std::roundf(fh * factor));
 			}
 		}
 	}
