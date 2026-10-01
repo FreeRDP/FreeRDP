@@ -24,6 +24,7 @@
 #include <vector>
 #include <atomic>
 #include <queue>
+#include <deque>
 #include <map>
 
 #include <winpr/wtypes.h>
@@ -89,9 +90,9 @@ class sdlClip
 
 	[[nodiscard]] bool handleEvent(const SDL_ClipboardEvent& ev);
 
-	/* Answers a server CB_FORMAT_DATA_REQUEST. Runs on the SDL main thread: the SDL clipboard
-	 * API is main-thread only, and ReceiveFormatDataRequest only queues the request. */
-	[[nodiscard]] bool handleDataRequest(uint32_t formatId);
+	/* Answers the queued server CB_FORMAT_DATA_REQUESTs. Runs on the SDL main thread: the SDL
+	 * clipboard API is main-thread only, and ReceiveFormatDataRequest only queues them. */
+	[[nodiscard]] bool handleDataRequests();
 
   private:
 	[[nodiscard]] UINT SendClientCapabilities();
@@ -160,6 +161,10 @@ class sdlClip
 	std::map<std::string, cache_entry> _cache_data;
 	/* mime types of the latest server format list, not yet handed to SDL (guarded by _lock) */
 	std::vector<std::string> _current_mimetypes;
+	/* guarded by _lock: server data requests not answered yet, and whether ClipDataCb is
+	 * waiting for the server (a local application is reading our offer of server data) */
+	std::deque<uint32_t> _server_requests;
+	bool _reading_server = false;
 	std::string _uuid;
 	std::string _mime_uuid;
 };

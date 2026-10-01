@@ -1542,8 +1542,7 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 		}
 		case SDL_EVENT_USER_CLIPBOARD_DATA_REQUEST:
 		{
-			const auto formatId = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(ev.user.data1));
-			return getClipboardChannelContext().handleDataRequest(formatId);
+			return getClipboardChannelContext().handleDataRequests();
 		}
 		case SDL_EVENT_KEY_DOWN:
 		case SDL_EVENT_KEY_UP:
