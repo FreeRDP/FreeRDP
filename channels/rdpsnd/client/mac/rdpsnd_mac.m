@@ -134,6 +134,25 @@ static void rdpsnd_mac_release(rdpsndMacPlugin *mac)
 	mac->engine = nullptr;
 }
 
+static BOOL rdpsnd_mac_connect_player(rdpsndMacPlugin *mac)
+{
+	/* AVAudioPlayerNode does not resample scheduled buffers, so the connection
+	 * must use the sample rate of the stream instead of the default format. */
+	AVAudioFormat *format = [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
+	                                                         sampleRate:mac->format.nSamplesPerSec
+	                                                           channels:mac->format.nChannels
+	                                                        interleaved:NO];
+	if (!format)
+	{
+		WLog_ERR(TAG, "AVAudioFormat::init() failed");
+		return FALSE;
+	}
+
+	[mac->engine connect:mac->player to:mac->engine.mainMixerNode format:format];
+	[format release];
+	return TRUE;
+}
+
 static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *format, UINT32 latency)
 {
 	@autoreleasepool
@@ -192,7 +211,11 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin *device, const AUDIO_FORMAT *form
 
 		[mac->engine attachNode:mac->player];
 
-		[mac->engine connect:mac->player to:mac->engine.mainMixerNode format:nil];
+		if (!rdpsnd_mac_connect_player(mac))
+		{
+			rdpsnd_mac_release(mac);
+			return FALSE;
+		}
 
 		[mac->engine prepare];
 
@@ -288,7 +311,11 @@ static void rdpsnd_mac_start(rdpsndDevicePlugin *device)
 		if (!mac->engine.isRunning)
 		{
 			NSError *error;
-			[mac->engine connect:mac->player to:mac->engine.mainMixerNode format:nil];
+			if (!rdpsnd_mac_connect_player(mac))
+			{
+				device->Close(device);
+				return;
+			}
 			[mac->engine prepare];
 			if (![mac->engine startAndReturnError:&error])
 			{
