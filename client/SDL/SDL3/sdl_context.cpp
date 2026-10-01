@@ -1514,7 +1514,7 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 	 * SDL itself and carry no new serial. */
 	if (((ev.type == SDL_EVENT_KEY_DOWN) && !ev.key.repeat) ||
 	    (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) || (ev.type == SDL_EVENT_FINGER_DOWN))
-		getClipboardChannelContext().noteInput();
+		getClipboardChannelContext().noteInput(ev.common.timestamp);
 
 	switch (ev.type)
 	{

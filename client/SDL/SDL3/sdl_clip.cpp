@@ -256,9 +256,14 @@ bool sdlClip::ownsClipboard() const
 	return hasMime(localMimeTypes(), _mime_uuid.c_str());
 }
 
-void sdlClip::noteInput()
+void sdlClip::noteInput(Uint64 timestamp)
 {
-	_input_since_offer = true;
+	/* An event dequeued after our offer may still be older than it, and then SDL already used
+	 * its serial for the offer: counting it let a replacement go to mutter with that same
+	 * serial, which mutter ignores (seen with a key press queued during a server format
+	 * list). */
+	if (timestamp > _offer_timestamp)
+		_input_since_offer = true;
 }
 
 bool sdlClip::keepCurrentOffer() const
@@ -324,6 +329,7 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 			return false;
 		_offered_mimetypes = std::move(mimes);
 		_input_since_offer = false;
+		_offer_timestamp = SDL_GetTicksNS();
 		return true;
 	}
 

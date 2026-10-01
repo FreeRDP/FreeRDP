@@ -96,7 +96,7 @@ class sdlClip
 
 	/* Called for input events that give the window a new Wayland input serial (key and
 	 * button presses): see keepCurrentOffer(). */
-	void noteInput();
+	void noteInput(Uint64 timestamp);
 
   private:
 	[[nodiscard]] UINT SendClientCapabilities();
@@ -170,6 +170,7 @@ class sdlClip
 	 * window has seen input (a new input serial) since then */
 	std::vector<std::string> _offered_mimetypes;
 	bool _input_since_offer = false;
+	Uint64 _offer_timestamp = 0;
 	/* guarded by _lock: server data requests not answered yet, and whether ClipDataCb is
 	 * waiting for the server (a local application is reading our offer of server data) */
 	std::deque<uint32_t> _server_requests;
