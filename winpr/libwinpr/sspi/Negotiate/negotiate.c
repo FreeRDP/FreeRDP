@@ -28,6 +28,8 @@
 #include <winpr/registry.h>
 #include <winpr/build-config.h>
 #include <winpr/asn1.h>
+#include <winpr/path.h>
+#include <winpr/config-readers.h>
 
 #include "negotiate.h"
 
@@ -318,8 +320,6 @@ fail:
 
 static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BOOL* u2u)
 {
-	HKEY hKey = nullptr;
-
 	WINPR_ASSERT(kerberos);
 	WINPR_ASSERT(ntlm);
 	WINPR_ASSERT(u2u);
@@ -342,15 +342,20 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BO
 		return TRUE; // use explicit authentication package list
 	}
 
+	const char config[] = "negotiate.json";
 	{
 		char* key = winpr_getApplicatonDetailsRegKey(NEGO_REG_KEY);
 		if (key)
 		{
+			HKEY hKey = nullptr;
 			const LONG rc =
 			    RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 			free(key);
 			if (rc == ERROR_SUCCESS)
 			{
+				WLog_WARN(TAG, "HKLM.reg is deprecated since 3.33.0. ATTENTION: Use %s instead!",
+				          config);
+
 				DWORD dwValue = 0;
 
 				if (negotiate_get_dword(hKey, PACKAGE_NAME_KERBEROS, &dwValue))
@@ -360,13 +365,24 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm, BO
 					*u2u = (dwValue != 0);
 
 #if !defined(WITH_KRB5_NO_NTLM_FALLBACK)
-		if (negotiate_get_dword(hKey, PACKAGE_NAME_NTLM, &dwValue))
-			*ntlm = (dwValue != 0);
+				if (negotiate_get_dword(hKey, PACKAGE_NAME_NTLM, &dwValue))
+					*ntlm = (dwValue != 0);
 #endif
 
-		RegCloseKey(hKey);
+				RegCloseKey(hKey);
 			}
 		}
+	}
+
+	WINPR_JSON* json = winpr_GetJSONConfigFile(TRUE, config);
+	if (json)
+	{
+		winpr_config_apply_bool(config, json, PACKAGE_NAME_KERBEROS, kerberos);
+		winpr_config_apply_bool(config, json, PACKAGE_NAME_KERBEROS_U2U, u2u);
+#if !defined(WITH_KRB5_NO_NTLM_FALLBACK)
+		winpr_config_apply_bool(config, json, PACKAGE_NAME_NTLM, ntlm);
+#endif
+		WINPR_JSON_Delete(json);
 	}
 
 	return TRUE;
