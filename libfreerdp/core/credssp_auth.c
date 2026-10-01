@@ -32,7 +32,9 @@
 #include <winpr/wtypes.h>
 #include <winpr/assert.h>
 #include <winpr/library.h>
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #include <winpr/registry.h>
+#endif
 #include <winpr/sspi.h>
 
 #include <freerdp/log.h>
@@ -864,6 +866,7 @@ static void auth_get_sspi_module_from_config(char** sspi_module)
 	WINPR_JSON_Delete(json);
 }
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 static void auth_get_sspi_module_from_reg(char** sspi_module)
 {
 	HKEY hKey = nullptr;
@@ -910,6 +913,7 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	free(*sspi_module);
 	*sspi_module = module;
 }
+#endif
 
 static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* settings)
 {
@@ -919,7 +923,9 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 
 	if (settings->ServerMode)
 	{
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		auth_get_sspi_module_from_reg(&sspi_module);
+#endif
 		auth_get_sspi_module_from_config(&sspi_module);
 	}
 

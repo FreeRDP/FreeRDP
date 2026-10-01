@@ -31,7 +31,9 @@
 #include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/sysinfo.h>
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #include <winpr/registry.h>
+#endif
 #include <winpr/wtsapi.h>
 #include <winpr/input.h>
 
@@ -127,6 +129,7 @@ static BOOL align_rects(const struct bounds_t* r1, const struct bounds_t* r2)
 	return (left == right) || (top == bottom);
 }
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 static BOOL settings_reg_query_dword_val(HKEY hKey, const TCHAR* sub, DWORD* value)
 {
 	DWORD dwType = 0;
@@ -186,6 +189,7 @@ static BOOL settings_reg_query_bool(rdpSettings* settings, FreeRDP_Settings_Keys
 
 	return freerdp_settings_set_bool(settings, id, (dwValue != 0));
 }
+#endif
 
 static void settings_load_config(rdpSettings* settings, const char* config)
 {
@@ -203,6 +207,7 @@ static void settings_load_config(rdpSettings* settings, const char* config)
 static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 {
 	const char config[] = "settings-defaults-client.json";
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	{
 		char* key = freerdp_getApplicatonDetailsRegKey(CLIENT_KEY);
 		if (key)
@@ -354,6 +359,7 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 			}
 		}
 	}
+#endif
 	settings_load_config(settings, config);
 }
 
@@ -361,6 +367,7 @@ static void settings_server_load_hkey_local_machine(rdpSettings* settings)
 {
 	const char config[] = "settings-defaults-server.json";
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	{
 		HKEY hKey = nullptr;
 
@@ -385,6 +392,7 @@ static void settings_server_load_hkey_local_machine(rdpSettings* settings)
 
 		RegCloseKey(hKey);
 	}
+#endif
 
 	settings_load_config(settings, config);
 }
