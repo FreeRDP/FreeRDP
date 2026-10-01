@@ -899,7 +899,8 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 		default:
 			WLog_ERR(TAG, "Unknown messageType %" PRIu16 "", messageType);
 			/* Each input event uses 6 bytes. */
-			Stream_Seek(s, 6);
+			if (!Stream_SafeSeek(s, 6))
+				return FALSE;
 			break;
 	}
 
