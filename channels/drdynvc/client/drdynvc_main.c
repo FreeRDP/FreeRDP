@@ -1504,6 +1504,7 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
 		{
 			status = ERROR_INVALID_DATA;
 			WLog_Print(drdynvc->log, WLOG_ERROR, "error de-compressing first packet");
+			free(data);
 			goto out;
 		}
 

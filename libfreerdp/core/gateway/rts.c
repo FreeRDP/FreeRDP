@@ -334,7 +334,6 @@ static BOOL rts_read_auth_verifier(wStream* s, auth_verifier_co_t* auth,
 		return FALSE;
 
 	const size_t expected = header->frag_length - header->auth_length - 8;
-	WINPR_ASSERT(pos + auth->auth_pad_length == expected);
 	return pos + auth->auth_pad_length == expected;
 }
 

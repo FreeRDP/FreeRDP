@@ -350,6 +350,14 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 	WLog_DBG(TAG, "Persistent Key List: TotalKeyCount: %" PRIu16 " MaxKeyFrag: %" PRIu16, keyCount,
 	         keyMaxFrag);
 
+	const UINT32 cellInfoCount =
+	    freerdp_settings_get_uint32(settings, FreeRDP_BitmapCacheV2NumCells);
+	if (cellInfoCount != 5)
+	{
+		WLog_ERR(TAG, "BitmapCacheV2NumCells %" PRIu32 ", but must be 5. Aborting.", cellInfoCount);
+		free(keyList);
+		return FALSE;
+	}
 	// MS-RDPBCGR recommends sending no more than 169 entries at once.
 	// In practice, sending more than 2042 entries at once triggers an error.
 	// It should be possible to advertise the entire client bitmap cache

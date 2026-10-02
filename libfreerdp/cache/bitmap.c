@@ -422,6 +422,9 @@ BOOL bitmap_cache_resize(rdpBitmapCache* bitmapCache)
 	{
 		const BITMAP_CACHE_V2_CELL_INFO* info =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, i);
+		if (!info)
+			return FALSE;
+
 		BITMAP_V2_CELL* cell = &bitmapCache->cells[i];
 		UINT32 nr = info->numEntries;
 		/* allocate an extra entry for BITMAP_CACHE_WAITING_LIST_INDEX */
