@@ -31,6 +31,11 @@
 
 #include <freerdp/log.h>
 
+/* [MS-RDPBCGR] 2.2.7.1.4.2
+Revision 2 (TS_BITMAPCACHE_CAPABILITYSET_REV2)
+*/
+static const size_t bitmapCacheV2CellInfoLimits[] = { 600, 600, 65536, 4096, 2048 };
+
 static const char* const CAPSET_TYPE_STRINGS[] = { "Unknown",
 	                                               "General",
 	                                               "Bitmap",
@@ -2035,7 +2040,7 @@ static BOOL rdp_print_bitmap_cache_host_support_capability_set(wLog* log, wStrea
 
 WINPR_ATTR_NODISCARD
 static BOOL rdp_read_bitmap_cache_cell_info(wLog* log, wStream* s,
-                                            BITMAP_CACHE_V2_CELL_INFO* cellInfo)
+                                            BITMAP_CACHE_V2_CELL_INFO* cellInfo, size_t limit)
 {
 	UINT32 info = 0;
 
@@ -2048,7 +2053,14 @@ static BOOL rdp_read_bitmap_cache_cell_info(wLog* log, wStream* s,
 	 * is used to indicate a persistent bitmap cache.
 	 */
 	Stream_Read_UINT32(s, info);
+
 	cellInfo->numEntries = (info & 0x7FFFFFFF);
+	if (cellInfo->numEntries > limit)
+	{
+		WLog_Print(log, WLOG_ERROR,
+		           "BITMAP_CACHE_V2_CELL_INFO::numEntries (%" PRIu32 ") > limit(%" PRIuz ")",
+		           cellInfo->numEntries, limit);
+	}
 	cellInfo->persistent = (info & 0x80000000) ? 1 : 0;
 	return TRUE;
 }
@@ -2135,7 +2147,7 @@ static BOOL rdp_read_bitmap_cache_v2_capability_set(wLog* log, wStream* s, rdpSe
 	{
 		BITMAP_CACHE_V2_CELL_INFO* info =
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_BitmapCacheV2CellInfo, x);
-		if (!rdp_read_bitmap_cache_cell_info(log, s, info))
+		if (!rdp_read_bitmap_cache_cell_info(log, s, info, bitmapCacheV2CellInfoLimits[x]))
 			return FALSE;
 	}
 
@@ -2211,7 +2223,8 @@ static BOOL rdp_print_bitmap_cache_v2_capability_set(wLog* log, wStream* s)
 	for (size_t x = 0; x < ARRAYSIZE(bitmapCacheV2CellInfo); x++)
 	{
 		if (!rdp_read_bitmap_cache_cell_info(
-		        log, s, &bitmapCacheV2CellInfo[x])) /* bitmapCache0CellInfo (4 bytes) */
+		        log, s, &bitmapCacheV2CellInfo[x],
+		        bitmapCacheV2CellInfoLimits[x])) /* bitmapCache0CellInfo (4 bytes) */
 			return FALSE;
 	}
 
