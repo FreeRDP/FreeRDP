@@ -126,6 +126,7 @@ class sdlClip
 
 	[[nodiscard]] static bool mime_is_file(const std::string& mime);
 	[[nodiscard]] static bool mime_is_text(const std::string& mime);
+	[[nodiscard]] static bool mime_is_utf8(const std::string& mime);
 	[[nodiscard]] static bool mime_is_image(const std::string& mime);
 	[[nodiscard]] static bool mime_is_bmp(const std::string& mime);
 	[[nodiscard]] static bool mime_is_html(const std::string& mime);

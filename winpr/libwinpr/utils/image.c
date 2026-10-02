@@ -240,9 +240,9 @@ BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poff
 	return Stream_SafeSeek(s, bi->biSize - pos);
 }
 
-BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
+WINPR_ATTR_MALLOC(Stream_Free, 1)
+static wStream* winpr_bitmap_construct_header_stream(size_t width, size_t height, size_t bpp)
 {
-	BYTE* result = nullptr;
 	WINPR_BITMAP_FILE_HEADER bf = WINPR_C_ARRAY_INIT;
 	WINPR_BITMAP_INFO_HEADER bi = WINPR_C_ARRAY_INIT;
 
@@ -284,8 +284,28 @@ BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 			{
 				DWORD used = bi.biClrUsed;
 				if (used == 0)
-					used = (1u << bi.biBitCount) / 8;
+					used = 1u << bi.biBitCount;
 				offset += sizeof(RGBQUAD) * used;
+			}
+			if (bi.biSizeImage == 0)
+			{
+				const UINT64 rawustride =
+				    WINPR_ASSERTING_INT_CAST(UINT64, bi.biWidth) * bi.biBitCount;
+				const UINT64 ustride = ((rawustride + 31) & ~31u) >> 3;
+				if (ustride > UINT32_MAX)
+				{
+					WLog_ERR(TAG, "bi->biWidth * bi->biBitCount > UINT32_MAX");
+					goto fail;
+				}
+
+				const UINT32 xstride = WINPR_ASSERTING_INT_CAST(uint32_t, ustride);
+				const UINT64 usize = WINPR_ASSERTING_INT_CAST(UINT64, llabs(bi.biHeight)) * xstride;
+				if (usize > UINT32_MAX)
+				{
+					WLog_ERR(TAG, "abs(bi->biHeight) * stride > UINT32_MAX");
+					goto fail;
+				}
+				bi.biSizeImage = WINPR_ASSERTING_INT_CAST(uint32_t, usize);
 			}
 			break;
 		case BI_BITFIELDS:
@@ -294,6 +314,8 @@ BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 		default:
 			return nullptr;
 	}
+
+	bf.bfOffBits += offset;
 
 	if (!writeBitmapFileHeader(s, &bf))
 		goto fail;
@@ -308,10 +330,20 @@ BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 	const size_t pos = Stream_GetPosition(s);
 	if (pos != bf.bfOffBits)
 		goto fail;
-	result = Stream_Buffer(s);
+	return s;
 fail:
-	Stream_Free(s, result == nullptr);
-	return result;
+	Stream_Free(s, TRUE);
+	return nullptr;
+}
+
+BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
+{
+	wStream* s = winpr_bitmap_construct_header_stream(width, height, bpp);
+	if (!s)
+		return nullptr;
+	void* data = Stream_Buffer(s);
+	Stream_Free(s, FALSE);
+	return data;
 }
 
 /**
@@ -356,13 +388,9 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, size_t size, UINT32 wid
 	if (bpp_stride > stride)
 		return nullptr;
 
-	wStream* s = Stream_New(nullptr, 1024);
-	BYTE* bmp_header = winpr_bitmap_construct_header(width, height, bpp);
-	if (!bmp_header)
+	wStream* s = winpr_bitmap_construct_header_stream(width, height, bpp);
+	if (!s)
 		goto fail;
-	if (!Stream_EnsureRemainingCapacity(s, WINPR_IMAGE_BMP_HEADER_LEN))
-		goto fail;
-	Stream_Write(s, bmp_header, WINPR_IMAGE_BMP_HEADER_LEN);
 
 	for (size_t y = 0; y < height; y++)
 	{
@@ -389,7 +417,6 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, size_t size, UINT32 wid
 	}
 fail:
 	Stream_Free(s, result == nullptr);
-	free(bmp_header);
 	return result;
 }
 

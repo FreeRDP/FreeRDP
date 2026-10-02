@@ -7,6 +7,10 @@
 #include <winpr/print.h>
 #include <winpr/windows.h>
 
+#if defined(BUILD_TESTING_INTERNAL)
+#include "../unicode.h"
+#endif
+
 #define TESTCASE_BUFFER_SIZE 8192
 
 #ifndef MIN
@@ -1157,6 +1161,73 @@ fail:
 }
 #endif
 
+#if defined(BUILD_TESTING_INTERNAL)
+typedef struct
+{
+	char* utf8;
+	size_t utf8len;
+	char* esc;
+	size_t esclen;
+} test_case_t;
+
+WINPR_ATTR_NODISCARD
+static BOOL testEscapeCase(const test_case_t* test)
+{
+	WINPR_ASSERT(test);
+
+	BOOL rc = FALSE;
+	size_t dlen = 0;
+	char* cmp = nullptr;
+	WINPR_ASSERT(test->utf8len == strlen(test->utf8));
+	char* str = winpr_utf8ToUtfEscapedString(test->utf8, test->utf8len, &dlen);
+	if (dlen != test->esclen)
+		goto fail;
+	if (strncmp(test->esc, str, test->esclen + 1) != 0)
+		goto fail;
+
+	cmp = strndup(str, dlen);
+	if (!cmp)
+		goto fail;
+	WINPR_ASSERT(test->esclen == strlen(test->esc));
+	const SSIZE_T res = winpr_utfEscapedStringToUtf8(cmp, dlen);
+	if (res < 0)
+		goto fail;
+
+	if ((size_t)res != test->utf8len)
+		goto fail;
+	if (strncmp(test->utf8, cmp, test->utf8len + 1) != 0)
+		goto fail;
+
+	rc = TRUE;
+fail:
+	free(cmp);
+	free(str);
+	return rc;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL testEscape(void)
+{
+	const test_case_t tests[] = {
+		{ "abc", 3, "abc", 3 },
+		{ "՞", 2, "\\u055e", 6 },
+		{ "⟷", 3, "\\u27f7", 6 },
+		{ "𒀀", 4, "\\ud808\\udc00", 12 },
+		{ "՞a⟷b𒀀c", 12, "\\u055ea\\u27f7b\\ud808\\udc00c", 27 },
+		{ "՞⟷𒀀𒀀⟷⟷՞՞", 23, "\\u055e\\u27f7\\ud808\\udc00\\ud808\\udc00\\u27f7\\u27f7\\u055e\\u055e",
+		  60 }
+	};
+
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		const test_case_t* cur = &tests[x];
+		if (!testEscapeCase(cur))
+			return FALSE;
+	}
+	return TRUE;
+}
+#endif
+
 int TestUnicodeConversion(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -1300,6 +1371,11 @@ int TestUnicodeConversion(int argc, char* argv[])
 
 	    }
 	*/
+
+#if defined(BUILD_TESTING_INTERNAL)
+	if (!testEscape())
+		return -1;
+#endif
 
 	return 0;
 }

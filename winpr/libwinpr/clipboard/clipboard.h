@@ -29,6 +29,7 @@ typedef struct
 {
 	UINT32 syntheticId;
 	CLIPBOARD_SYNTHESIZE_FN pfnSynthesize;
+	CLIPBOARD_SYNTHESIZE_FN pfnSynthesizeEx;
 } wClipboardSynthesizer;
 
 typedef struct
@@ -73,5 +74,25 @@ WINPR_LOCAL WINPR_ATTR_NODISCARD BOOL ClipboardInitSynthesizers(wClipboard* clip
 WINPR_LOCAL WINPR_ATTR_NODISCARD char* parse_uri_to_local_file(const char* uri, size_t uri_len);
 
 extern const char* const mime_text_plain;
+extern const char* const mime_text_utf8;
+extern const char* const mime_text_UTF8_STRING;
+
+/** @brief Same as \ref ClipboardRegisterSynthesizer but with different \ref pfnSynthesize calling
+ * convention. While functions registered with \ref ClipboardRegisterSynthesizer will call \ref
+ * pfnSynthesize with the \ref formatId of the data in the clipboard functions registered with this
+ * will be called with \ref syntheticId instead.
+ *
+ *  @param clipboard The clipboard to use
+ *  @param formatId The format of the data in the clipboard
+ *  @param syntheticId The format of the data to synthesize
+ *  @param pfnSynthesize The function to call to synthesize
+ *  @return TRUE for success, FALSE otherwise
+ *
+ *  @since version 3.32.2
+ */
+WINPR_ATTR_NODISCARD
+WINPR_LOCAL BOOL ClipboardRegisterSynthesizerEx(wClipboard* clipboard, UINT32 formatId,
+                                                UINT32 syntheticId,
+                                                CLIPBOARD_SYNTHESIZE_FN pfnSynthesize);
 
 #endif /* WINPR_CLIPBOARD_PRIVATE_H */

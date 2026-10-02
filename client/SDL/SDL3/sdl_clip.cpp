@@ -34,8 +34,7 @@
 #define TAG CLIENT_TAG("sdl.cliprdr")
 
 #define mime_text_plain "text/plain"
-// NOLINTNEXTLINE(bugprone-suspicious-missing-comma)
-const char mime_text_utf8[] = mime_text_plain ";charset=utf-8";
+const char mime_text_utf8[] = "text/plain;charset=utf-8";
 
 [[nodiscard]] static const std::vector<const char*>& s_mime_text()
 {
@@ -43,7 +42,7 @@ const char mime_text_utf8[] = mime_text_plain ";charset=utf-8";
 	if (values.empty())
 	{
 		values = std::vector<const char*>(
-		    { mime_text_plain, mime_text_utf8, "UTF8_STRING", "COMPOUND_TEXT", "TEXT", "STRING" });
+		    { mime_text_utf8, "UTF8_STRING", mime_text_plain, "COMPOUND_TEXT", "TEXT", "STRING" });
 	}
 	return values;
 }
@@ -904,7 +903,12 @@ const void* sdlClip::ClipDataCb(void* userdata, const char* mime_type, size_t* s
 	uint32_t len = 0;
 
 	if (mime_is_text(mime_type))
-		mime_type = "text/plain";
+	{
+		if (mime_is_utf8(mime_type))
+			mime_type = mime_text_utf8;
+		else
+			mime_type = mime_text_plain;
+	}
 
 	{
 		ClipboardLockGuard systemlock(clip->_system);
@@ -1021,6 +1025,14 @@ bool sdlClip::mime_is_text(const std::string& mime)
 	}
 
 	return false;
+}
+
+bool sdlClip::mime_is_utf8(const std::string& mime)
+{
+	if (mime == std::string(mime_text_utf8))
+		return true;
+
+	return mime == std::string("UTF8_STRING");
 }
 
 bool sdlClip::mime_is_image(const std::string& mime)
