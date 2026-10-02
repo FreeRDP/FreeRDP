@@ -16,13 +16,15 @@
 #import "Reachability.h"
 #import "GlobalDefaults.h"
 
+// currently, session section is unused. so hide it
+#define SHOW_SESSIONS_SECTION 0
+
 #define SECTION_SESSIONS 0
 #define SECTION_BOOKMARKS 1
 #define NUM_SECTIONS 2
 
 @interface BookmarkListController (Private)
 #pragma mark misc functions
-- (UIButton *)disclosureButtonWithImage:(UIImage *)image;
 - (void)performSearch:(NSString *)searchText;
 #pragma mark Persisting bookmarks
 - (void)scheduleWriteBookmarksToDataStore;
@@ -38,8 +40,7 @@
 
 @implementation BookmarkListController
 
-@synthesize searchBar = _searchBar, tableView = _tableView, bmTableCell = _bmTableCell,
-            sessTableCell = _sessTableCell;
+@synthesize searchBar = _searchBar, tableView = _tableView, sessTableCell = _sessTableCell;
 
 // The designated initializer.  Override if you create the controller programmatically and want to
 // perform customization that is not appropriate for viewDidLoad.
@@ -73,15 +74,6 @@
 		                        initWithTabBarSystemItem:UITabBarSystemItemBookmarks
 		                                             tag:0] autorelease]];
 
-		// load images
-		_star_on_img = [[UIImage
-		    imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"icon_accessory_star_on"
-		                                                            ofType:@"png"]] retain];
-		_star_off_img =
-		    [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle]
-		                                          pathForResource:@"icon_accessory_star_off"
-		                                                   ofType:@"png"]] retain];
-
 		// init reachability detection
 		[[NSNotificationCenter defaultCenter] addObserver:self
 		                                         selector:@selector(reachabilityChanged:)
@@ -107,6 +99,13 @@
 
 	// set edit button to allow bookmark list editing
 	[[self navigationItem] setRightBarButtonItem:[self editButtonItem]];
+
+	// set margin
+	[_tableView setPreservesSuperviewLayoutMargins:YES];
+	[_searchBar setPreservesSuperviewLayoutMargins:YES];
+
+	// set self-sizing rows
+	[_tableView setEstimatedRowHeight:UITableViewAutomaticDimension];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -185,9 +184,6 @@
 	[_manual_search_result release];
 	[_manual_bookmarks release];
 
-	[_star_on_img release];
-	[_star_off_img release];
-
 	[super dealloc];
 }
 
@@ -230,13 +226,20 @@
 	UITableViewCell *cell = [[self tableView] dequeueReusableCellWithIdentifier:CellIdentifier];
 	if (cell == nil)
 	{
-		cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
-		                              reuseIdentifier:CellIdentifier];
+		cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
+		                               reuseIdentifier:CellIdentifier] autorelease];
 		[cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-		[cell setAccessoryView:[self disclosureButtonWithImage:_star_off_img]];
+		[cell setAccessoryType:UITableViewCellAccessoryDetailButton];
 	}
 
 	return cell;
+}
+
+- (void)setText:(NSString *)text forGenericListEntry:(UITableViewCell *)cell
+{
+	UIListContentConfiguration *content = [cell defaultContentConfiguration];
+	[content setText:text];
+	[cell setContentConfiguration:content];
 }
 
 - (BookmarkTableCell *)cellForBookmark
@@ -246,10 +249,8 @@
 	    dequeueReusableCellWithIdentifier:BookmarkCellIdentifier];
 	if (cell == nil)
 	{
-		[[NSBundle mainBundle] loadNibNamed:@"BookmarkTableViewCell" owner:self options:nil];
-		[_bmTableCell setAccessoryView:[self disclosureButtonWithImage:_star_on_img]];
-		cell = _bmTableCell;
-		_bmTableCell = nil;
+		cell = [[[BookmarkTableCell alloc] initWithStyle:UITableViewCellStyleSubtitle
+		                                 reuseIdentifier:BookmarkCellIdentifier] autorelease];
 	}
 
 	return cell;
@@ -296,16 +297,15 @@
 				UITableViewCell *cell = [self cellForGenericListEntry];
 				if ([[_searchBar text] length] == 0)
 				{
-					[[cell textLabel]
-					    setText:[@"  " stringByAppendingString:
-					                       NSLocalizedString(@"Add Connection",
-					                                         @"'Add Connection': button label")]];
-					[((UIButton *)[cell accessoryView]) setHidden:YES];
+					[self setText:NSLocalizedString(@"Add Connection",
+					                                @"'Add Connection': button label")
+					    forGenericListEntry:cell];
+					[cell setAccessoryType:UITableViewCellAccessoryNone];
 				}
 				else
 				{
-					[[cell textLabel] setText:[@"  " stringByAppendingString:[_searchBar text]]];
-					[((UIButton *)[cell accessoryView]) setHidden:NO];
+					[self setText:[_searchBar text] forGenericListEntry:cell];
+					[cell setAccessoryType:UITableViewCellAccessoryDetailButton];
 				}
 
 				return cell;
@@ -316,12 +316,10 @@
 				if ([self isIndexPathToHistoryItem:indexPath])
 				{
 					UITableViewCell *cell = [self cellForGenericListEntry];
-					[[cell textLabel]
-					    setText:[@"  " stringByAppendingString:
-					                       [_history_search_result
-					                           objectAtIndex:
-					                               [self historyIndexFromIndexPath:indexPath]]]];
-					[((UIButton *)[cell accessoryView]) setHidden:NO];
+					[self setText:[_history_search_result
+					                  objectAtIndex:[self historyIndexFromIndexPath:indexPath]]
+					    forGenericListEntry:cell];
+					[cell setAccessoryType:UITableViewCellAccessoryDetailButton];
 					return cell;
 				}
 				else
@@ -337,8 +335,8 @@
 						    objectAtIndex:[self bookmarkIndexFromIndexPath:indexPath]]
 						    valueForKey:@"bookmark"];
 
-					[[cell title] setText:[entry label]];
-					[[cell subTitle] setText:[[entry params] StringForKey:@"hostname"]];
+					[cell setTitle:[entry label]];
+					[cell setSubTitle:[[entry params] StringForKey:@"hostname"]];
 					return cell;
 				}
 			}
@@ -472,7 +470,7 @@
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-	if (section == SECTION_SESSIONS && [_active_sessions count] > 0)
+	if (SHOW_SESSIONS_SECTION && section == SECTION_SESSIONS && [_active_sessions count] > 0)
 		return NSLocalizedString(@"My Sessions", @"'My Session': section sessions header");
 	if (section == SECTION_BOOKMARKS)
 		return NSLocalizedString(@"Manual Connections",
@@ -485,11 +483,28 @@
 	return nil;
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+	// remove gap unused session section.
+	if (!SHOW_SESSIONS_SECTION && section == SECTION_SESSIONS)
+		return CGFLOAT_MIN;
+	return UITableViewAutomaticDimension;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+{
+	// remove gap unused session section.
+	if (!SHOW_SESSIONS_SECTION && section == SECTION_SESSIONS)
+		return CGFLOAT_MIN;
+	return [tableView sectionFooterHeight];
+}
+
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if ([indexPath section] == SECTION_SESSIONS)
 		return 72;
-	return [tableView rowHeight];
+
+	return UITableViewAutomaticDimension;
 }
 
 #pragma mark -
@@ -499,19 +514,6 @@
 {
 	[super setEditing:editing animated:animated];
 	[[self tableView] setEditing:editing animated:animated];
-}
-
-- (void)accessoryButtonTapped:(UIControl *)button withEvent:(UIEvent *)event
-{
-	// forward a tap on our custom accessory button to the real accessory button handler
-	NSIndexPath *indexPath =
-	    [[self tableView] indexPathForRowAtPoint:[[[event touchesForView:button] anyObject]
-	                                                 locationInView:[self tableView]]];
-	if (indexPath == nil)
-		return;
-
-	[[[self tableView] delegate] tableView:[self tableView]
-	    accessoryButtonTappedForRowWithIndexPath:indexPath];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -545,7 +547,9 @@
 					[bookmarkEditorController
 					    setTitle:NSLocalizedString(@"Add Connection", @"Add Connection title")];
 					[bookmarkEditorController setDelegate:self];
-					[bookmarkEditorController setHidesBottomBarWhenPushed:YES];
+					// breaks nav bar item updates with the top tab bar (iPad)
+					if ([[UIDevice currentDevice] userInterfaceIdiom] != UIUserInterfaceIdiomPad)
+						[bookmarkEditorController setHidesBottomBarWhenPushed:YES];
 					[[self navigationController] pushViewController:bookmarkEditorController
 					                                       animated:YES];
 				}
@@ -651,7 +655,9 @@
 	{
 		BookmarkEditorController *editBookmarkController =
 		    [[[BookmarkEditorController alloc] initWithBookmark:bookmark] autorelease];
-		[editBookmarkController setHidesBottomBarWhenPushed:YES];
+		// breaks nav bar item updates with the top tab bar (iPad)
+		if ([[UIDevice currentDevice] userInterfaceIdiom] != UIUserInterfaceIdiomPad)
+			[editBookmarkController setHidesBottomBarWhenPushed:YES];
 		[editBookmarkController setTitle:bookmark_editor_title];
 		[editBookmarkController setDelegate:self];
 		[[self navigationController] pushViewController:editBookmarkController animated:YES];
@@ -819,20 +825,6 @@
 - (BOOL)hasNoBookmarks
 {
 	return ([_manual_bookmarks count] == 0);
-}
-
-- (UIButton *)disclosureButtonWithImage:(UIImage *)image
-{
-	// we make the button a little bit bigger (image width * 2, height + 10) so that the user
-	// doesn't accidentally connect to the bookmark ...
-	UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-	[button setFrame:CGRectMake(0, 0, [image size].width * 2, [image size].height + 10)];
-	[button setImage:image forState:UIControlStateNormal];
-	[button addTarget:self
-	              action:@selector(accessoryButtonTapped:withEvent:)
-	    forControlEvents:UIControlEventTouchUpInside];
-	[button setUserInteractionEnabled:YES];
-	return button;
 }
 
 - (void)performSearch:(NSString *)searchText

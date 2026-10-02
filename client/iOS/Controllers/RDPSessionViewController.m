@@ -17,8 +17,6 @@
 #import "Utils.h"
 #import "Toast+UIView.h"
 #import "ConnectionParams.h"
-#import "CredentialsInputController.h"
-#import "VerifyCertificateController.h"
 
 #define TOOLBAR_HEIGHT 44
 #define ADVANCED_KEYBOARD_HEIGHT 200
@@ -124,6 +122,11 @@
 		[self fitSessionViewToViewport];
 	else
 		[self centerSessionViewInViewport];
+
+	// set toolbar 'dummy item' width (for margin)
+	const CGFloat margin = [self systemMinimumLayoutMargins].leading;
+	[[[_keyboard_toolbar items] firstObject] setWidth:margin];
+	[[[_keyboard_toolbar items] lastObject] setWidth:margin];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -317,11 +320,11 @@
 {
 	UIBarButtonItem *curItem;
 
-	// shift button (only on iPad)
-	int objectIdx = 0;
+	// index 0 is empty space, index 1 is 'esc' button
+	int objectIdx = 1;
 	if (IsPad())
 	{
-		objectIdx = 2;
+		objectIdx += 2;
 		curItem = (UIBarButtonItem *)[[_keyboard_toolbar items] objectAtIndex:objectIdx];
 		[curItem setStyle:[keyboard shiftPressed] ? UIBarButtonItemStyleDone
 		                                          : UIBarButtonItemStylePlain];
@@ -527,22 +530,98 @@
 
 - (void)session:(RDPSession *)session requestsAuthenticationWithParams:(NSMutableDictionary *)params
 {
-	CredentialsInputController *view_controller =
-	    [[[CredentialsInputController alloc] initWithNibName:@"CredentialsInputView"
-	                                                  bundle:nil
-	                                                 session:_session
-	                                                  params:params] autorelease];
-	[self presentViewController:view_controller animated:YES completion:nil];
+	// custom view --> stock UIAlertController
+	__block UIAlertController *alert = [UIAlertController
+	    alertControllerWithTitle:NSLocalizedString(@"Credentials", @"Credentials title")
+	                     message:NSLocalizedString(@"Please provide the missing user information.",
+	                                               @"Credentials input view message")
+	              preferredStyle:UIAlertControllerStyleAlert];
+
+	// username input field
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+		[textField
+		    setPlaceholder:NSLocalizedString(@"Username", @"Credentials Input Username hint")];
+		[textField setText:[params valueForKey:@"username"]];
+		[textField setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+		[textField setAutocorrectionType:UITextAutocorrectionTypeNo];
+	}];
+
+	// password input field
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+		[textField
+		    setPlaceholder:NSLocalizedString(@"Password", @"Credentials Input Password hint")];
+		[textField setText:[params valueForKey:@"password"]];
+		[textField setSecureTextEntry:YES];
+	}];
+
+	// domain input field
+	[alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+		[textField setPlaceholder:NSLocalizedString(@"Domain", @"Credentials Input Domain hint")];
+		[textField setText:[params valueForKey:@"domain"]];
+		[textField setAutocapitalizationType:UITextAutocapitalizationTypeNone];
+		[textField setAutocorrectionType:UITextAutocorrectionTypeNo];
+	}];
+
+	// cancel btn
+	UIAlertAction *cancelAction =
+	    [UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", @"Cancel Button")
+	                             style:UIAlertActionStyleCancel
+	                           handler:^(UIAlertAction *action) {
+		                           [params setValue:[NSNumber numberWithBool:NO] forKey:@"result"];
+		                           [[session uiRequestCompleted] signal];
+	                           }];
+	[alert addAction:cancelAction];
+
+	// login btn
+	UIAlertAction *loginAction = [UIAlertAction
+	    actionWithTitle:NSLocalizedString(@"Login", @"Login Button")
+	              style:UIAlertActionStyleDefault
+	            handler:^(UIAlertAction *action) {
+		            NSArray *fields = [alert textFields];
+		            [params setValue:[[fields objectAtIndex:0] text] forKey:@"username"];
+		            [params setValue:[[fields objectAtIndex:1] text] forKey:@"password"];
+		            [params setValue:[[fields objectAtIndex:2] text] forKey:@"domain"];
+		            [params setValue:[NSNumber numberWithBool:YES] forKey:@"result"];
+		            [[session uiRequestCompleted] signal];
+	            }];
+	[alert addAction:loginAction];
+
+	[alert setPreferredAction:loginAction];
+
+	[self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)session:(RDPSession *)session verifyCertificateWithParams:(NSMutableDictionary *)params
 {
-	VerifyCertificateController *view_controller =
-	    [[[VerifyCertificateController alloc] initWithNibName:@"VerifyCertificateView"
-	                                                   bundle:nil
-	                                                  session:_session
-	                                                   params:params] autorelease];
-	[self presentViewController:view_controller animated:YES completion:nil];
+	NSString *message = [NSString
+	    stringWithFormat:@"%@\n\n%@ %@",
+	                     NSLocalizedString(@"The identity of the remote computer cannot be "
+	                                       @"verified. Do you want to connect anyway?",
+	                                       @"Verify certificate view message"),
+	                     NSLocalizedString(@"Issuer:", @"Verify certificate view issuer label"),
+	                     [params valueForKey:@"issuer"]];
+	UIAlertController *alert =
+	    [UIAlertController alertControllerWithTitle:nil
+	                                        message:message
+	                                 preferredStyle:UIAlertControllerStyleAlert];
+
+	[alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"No", @"No Button")
+	                                          style:UIAlertActionStyleCancel
+	                                        handler:^(UIAlertAction *action) {
+		                                        [params setValue:[NSNumber numberWithBool:NO]
+		                                                  forKey:@"result"];
+		                                        [[session uiRequestCompleted] signal];
+	                                        }]];
+
+	[alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Yes", @"Yes Button")
+	                                          style:UIAlertActionStyleDefault
+	                                        handler:^(UIAlertAction *action) {
+		                                        [params setValue:[NSNumber numberWithBool:YES]
+		                                                  forKey:@"result"];
+		                                        [[session uiRequestCompleted] signal];
+	                                        }]];
+
+	[self presentViewController:alert animated:YES completion:nil];
 }
 
 - (CGSize)sizeForFitScreenForSession:(RDPSession *)session
@@ -956,6 +1035,9 @@
 	// the status bar / notch / Dynamic Island on modern devices (and side notch
 	// in landscape).
 	UIEdgeInsets safe = [[self view] safeAreaInsets];
+	// devices without a notch (e.g. iPad) have no top inset once the status bar is hidden,
+	// so keep at least the system margin to the top edge
+	safe.top = MAX(safe.top, [self systemMinimumLayoutMargins].leading);
 	CGFloat toolbarWidth = [[self view] bounds].size.width - safe.left - safe.right;
 
 	if (show)
@@ -1017,14 +1099,13 @@
 	            style:UIBarButtonItemStylePlain
 	           target:self
 	           action:@selector(toggleKeyboardWhenOtherVisible:)] autorelease];
-	UIBarButtonItem *done_btn = [[[UIBarButtonItem alloc]
-	    initWithBarButtonSystemItem:UIBarButtonSystemItemDone
-	                         target:self
-	                         action:@selector(toggleKeyboard:)] autorelease];
 	UIBarButtonItem *flex_spacer =
 	    [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
 	                                                   target:nil
 	                                                   action:nil] autorelease];
+	// edge spacers, sized to the system margins in viewDidLayoutSubviews
+	UIBarButtonItem *leading_spacer = [UIBarButtonItem fixedSpaceItemOfWidth:0];
+	UIBarButtonItem *trailing_spacer = [UIBarButtonItem fixedSpaceItemOfWidth:0];
 
 	// iPad gets a shift button, iphone doesn't (there's just not enough space ...)
 	NSArray *items;
@@ -1035,15 +1116,15 @@
 		                                      style:UIBarButtonItemStylePlain
 		                                     target:self
 		                                     action:@selector(toggleShiftKey:)] autorelease];
-		items = [NSArray arrayWithObjects:esc_btn, flex_spacer, shift_btn, flex_spacer, ctrl_btn,
-		                                  flex_spacer, win_btn, flex_spacer, alt_btn, flex_spacer,
-		                                  ext_btn, flex_spacer, done_btn, nil];
+		items = [NSArray arrayWithObjects:leading_spacer, esc_btn, flex_spacer, shift_btn,
+		                                  flex_spacer, ctrl_btn, flex_spacer, win_btn, flex_spacer,
+		                                  alt_btn, flex_spacer, ext_btn, trailing_spacer, nil];
 	}
 	else
 	{
-		items = [NSArray arrayWithObjects:esc_btn, flex_spacer, ctrl_btn, flex_spacer, win_btn,
-		                                  flex_spacer, alt_btn, flex_spacer, ext_btn, flex_spacer,
-		                                  done_btn, nil];
+		items = [NSArray arrayWithObjects:leading_spacer, esc_btn, flex_spacer, ctrl_btn,
+		                                  flex_spacer, win_btn, flex_spacer, alt_btn, flex_spacer,
+		                                  ext_btn, trailing_spacer, nil];
 	}
 
 	[keyboard_toolbar setItems:items];

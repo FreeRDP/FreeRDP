@@ -254,20 +254,12 @@ NSString *TSXAppFullVersion()
 
 BOOL IsPad()
 {
-#ifdef UI_USER_INTERFACE_IDIOM
 	return ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad);
-#else
-	return NO;
-#endif
 }
 
 BOOL IsPhone()
 {
-#ifdef UI_USER_INTERFACE_IDIOM
 	return ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPhone);
-#else
-	return NO;
-#endif
 }
 
 // set mouse buttons swapped flag
