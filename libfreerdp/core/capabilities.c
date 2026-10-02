@@ -2065,16 +2065,20 @@ static BOOL rdp_read_bitmap_cache_cell_info(wLog* log, wStream* s,
 	return TRUE;
 }
 
-static void rdp_write_bitmap_cache_cell_info(wStream* s, BITMAP_CACHE_V2_CELL_INFO* cellInfo)
+WINPR_ATTR_NODISCARD
+static BOOL rdp_write_bitmap_cache_cell_info(wStream* s, BITMAP_CACHE_V2_CELL_INFO* cellInfo)
 {
-	UINT32 info = 0;
 	/*
 	 * numEntries is in the first 31 bits, while the last bit (k)
 	 * is used to indicate a persistent bitmap cache.
 	 */
 	WINPR_ASSERT(cellInfo);
-	info = (cellInfo->numEntries | (((UINT32)cellInfo->persistent << 31) & 0xFF000000));
+	const UINT32 info =
+	    (cellInfo->numEntries | (((UINT32)cellInfo->persistent << 31) & 0xFF000000));
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		return FALSE;
 	Stream_Write_UINT32(s, info);
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD
@@ -2173,17 +2177,23 @@ static BOOL rdp_write_bitmap_cache_v2_capability_set(wLog* log, wStream* s,
 	if (!Stream_EnsureRemainingCapacity(s, 64))
 		return FALSE;
 
+	const UINT32 BitmapCacheV2NumCells =
+	    freerdp_settings_get_uint32(settings, FreeRDP_BitmapCacheV2NumCells);
+	BITMAP_CACHE_V2_CELL_INFO CellInfo[5] = WINPR_C_ARRAY_INIT;
+
 	const size_t header = rdp_capability_set_start(log, s);
 	UINT16 cacheFlags = ALLOW_CACHE_WAITING_LIST_FLAG;
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
-	{
+	const BOOL persist = freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled);
+	if (persist)
 		cacheFlags |= PERSISTENT_KEYS_EXPECTED_FLAG;
-		settings->BitmapCacheV2CellInfo[0].persistent = 1;
-		settings->BitmapCacheV2CellInfo[1].persistent = 1;
-		settings->BitmapCacheV2CellInfo[2].persistent = 1;
-		settings->BitmapCacheV2CellInfo[3].persistent = 1;
-		settings->BitmapCacheV2CellInfo[4].persistent = 1;
+
+	for (UINT32 x = 0; x < BitmapCacheV2NumCells; x++)
+	{
+		BITMAP_CACHE_V2_CELL_INFO* cur = &settings->BitmapCacheV2CellInfo[x];
+		if (persist)
+			cur->persistent = 1;
+		CellInfo[x] = *cur;
 	}
 
 	Stream_Write_UINT16(s, cacheFlags);                     /* cacheFlags (2 bytes) */
@@ -2191,16 +2201,12 @@ static BOOL rdp_write_bitmap_cache_v2_capability_set(wLog* log, wStream* s,
 	Stream_Write_UINT8(
 	    s, WINPR_ASSERTING_INT_CAST(uint8_t,
 	                                settings->BitmapCacheV2NumCells)); /* numCellCaches (1 byte) */
-	rdp_write_bitmap_cache_cell_info(
-	    s, &settings->BitmapCacheV2CellInfo[0]); /* bitmapCache0CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(
-	    s, &settings->BitmapCacheV2CellInfo[1]); /* bitmapCache1CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(
-	    s, &settings->BitmapCacheV2CellInfo[2]); /* bitmapCache2CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(
-	    s, &settings->BitmapCacheV2CellInfo[3]); /* bitmapCache3CellInfo (4 bytes) */
-	rdp_write_bitmap_cache_cell_info(
-	    s, &settings->BitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
+
+	for (UINT32 x = 0; x < ARRAYSIZE(CellInfo); x++)
+	{
+		if (!rdp_write_bitmap_cache_cell_info(s, &CellInfo[x])) /* bitmapCache0CellInfo (4 bytes) */
+			return FALSE;
+	}
 	Stream_Zero(s, 12);                          /* pad3 (12 bytes) */
 	return rdp_capability_set_finish(s, header, CAPSET_TYPE_BITMAP_CACHE_V2);
 }
