@@ -1120,13 +1120,14 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		                                        &cache) ||
 		    !freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, 1, &cache))
 			goto out_fail;
-		cache.numEntries = 2048;
-		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, 2,
-		                                        &cache) ||
-		    !freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, 4, &cache))
+		cache.numEntries = 65536;
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, 2, &cache))
 			goto out_fail;
 		cache.numEntries = 4096;
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, 3, &cache))
+			goto out_fail;
+		cache.numEntries = 2048;
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, 4, &cache))
 			goto out_fail;
 	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NoBitmapCompressionHeader, TRUE) ||
