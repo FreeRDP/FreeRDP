@@ -158,4 +158,11 @@ class sdlClip
 	std::vector<const char*> _current_mimetypes;
 	std::string _uuid;
 	std::string _mime_uuid;
+
+	/* last server copy put on the local clipboard, to recognize a compositor restoring an older
+	 * clipboard right after it (mutter clipboard persistence) */
+	[[nodiscard]] bool isCompositorRestore(const SDL_ClipboardEvent& ev) const;
+	std::vector<const char*> _server_mimetypes;
+	Uint64 _server_set_ns = 0;
+	bool _server_reclaimed = false;
 };
