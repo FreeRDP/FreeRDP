@@ -24,6 +24,7 @@
 #include <vector>
 #include <atomic>
 #include <queue>
+#include <deque>
 #include <map>
 
 #include <winpr/wtypes.h>
@@ -89,17 +90,33 @@ class sdlClip
 
 	[[nodiscard]] bool handleEvent(const SDL_ClipboardEvent& ev);
 
+	/* Answers the queued server CB_FORMAT_DATA_REQUESTs. Runs on the SDL main thread: the SDL
+	 * clipboard API is main-thread only, and ReceiveFormatDataRequest only queues them. */
+	[[nodiscard]] bool handleDataRequests();
+
+	/* Called for input events that give the window a new Wayland input serial (key and
+	 * button presses): see keepCurrentOffer(). */
+	void noteInput(Uint64 timestamp);
+
+	/* Sends our last format list again after the server refused it (see
+	 * ReceiveFormatListResponse), unless the local clipboard changed since. Main thread. */
+	[[nodiscard]] bool resendFormatList(uint32_t generation);
+
   private:
 	[[nodiscard]] UINT SendClientCapabilities();
 	void clearServerFormats();
 	[[nodiscard]] UINT SendFormatListResponse(BOOL status);
 	[[nodiscard]] UINT SendDataResponse(const BYTE* data, size_t size);
 	[[nodiscard]] UINT SendDataRequest(uint32_t formatID, const std::string& mime);
+	[[nodiscard]] bool sendFormatList(const CLIPRDR_FORMAT_LIST& formatList);
 
 	[[nodiscard]] std::string getServerFormat(uint32_t id);
 	[[nodiscard]] uint32_t serverIdForMime(const std::string& mime);
+	[[nodiscard]] bool hasServerFormat(uint32_t id) const;
 
 	[[nodiscard]] bool contains(const char** mime_types, Sint32 count);
+	[[nodiscard]] bool ownsClipboard() const;
+	[[nodiscard]] bool keepCurrentOffer() const;
 
 	[[nodiscard]] static UINT MonitorReady(CliprdrClientContext* context,
 	                                       const CLIPRDR_MONITOR_READY* monitorReady);
@@ -111,8 +128,7 @@ class sdlClip
 	[[nodiscard]] static UINT
 	ReceiveFormatListResponse(CliprdrClientContext* context,
 	                          const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse);
-	[[nodiscard]] static std::shared_ptr<BYTE> ReceiveFormatDataRequestHandle(
-	    sdlClip* clipboard, const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest, uint32_t& len);
+	[[nodiscard]] std::shared_ptr<BYTE> getLocalData(uint32_t formatId, uint32_t& len);
 	[[nodiscard]] static UINT
 	ReceiveFormatDataRequest(CliprdrClientContext* context,
 	                         const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest);
@@ -154,7 +170,23 @@ class sdlClip
 		std::shared_ptr<void> ptr;
 	};
 	std::map<std::string, cache_entry> _cache_data;
-	std::vector<const char*> _current_mimetypes;
+	/* mime types of the latest server format list, not yet handed to SDL (guarded by _lock) */
+	std::vector<std::string> _current_mimetypes;
+	/* main thread only: the mime types of our last SDL_SetClipboardData, and whether the
+	 * window has seen input (a new input serial) since then */
+	std::vector<std::string> _offered_mimetypes;
+	bool _input_since_offer = false;
+	Uint64 _offer_timestamp = 0;
+	/* guarded by _lock: server data requests not answered yet, and whether ClipDataCb is
+	 * waiting for the server (a local application is reading our offer of server data) */
+	std::deque<uint32_t> _server_requests;
+	bool _reading_server = false;
+	/* guarded by _lock: our last format list (format id, name or empty), which clipboard
+	 * change it announced, how many of our lists await a response, and resends so far */
+	std::vector<std::pair<uint32_t, std::string>> _client_list;
+	uint32_t _client_list_generation = 0;
+	size_t _client_lists_in_flight = 0;
+	size_t _client_list_resends = 0;
 	std::string _uuid;
 	std::string _mime_uuid;
 };
