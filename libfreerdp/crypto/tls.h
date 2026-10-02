@@ -124,6 +124,16 @@ extern "C"
 	WINPR_ATTR_NODISCARD
 	FREERDP_LOCAL int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, size_t length);
 
+	/** @brief Get the certificate of the connection
+	 *
+	 * @param tls the TLS instance
+	 * @param peer \b TRUE for the certificate of the remote end, \b FALSE for the local one
+	 * @return a new rdpCertificate the caller must free, or \b nullptr
+	 */
+	WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+	WINPR_ATTR_NODISCARD
+	FREERDP_LOCAL rdpCertificate* freerdp_tls_get_certificate(rdpTls* tls, BOOL peer);
+
 	FREERDP_LOCAL int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description);
 
 	FREERDP_LOCAL void freerdp_tls_free(rdpTls* tls);

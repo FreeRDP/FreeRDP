@@ -75,6 +75,7 @@ struct rdp_transport
 	rdpTls* tls;
 	rdpContext* context;
 	rdpNla* nla;
+	rdpTsssp* tsssp;
 	void* ReceiveExtra;
 	wStream* ReceiveBuffer;
 	TransportRecv ReceiveCallback;
@@ -520,6 +521,47 @@ BOOL transport_connect_aad(rdpTransport* transport)
 
 	return rdp_client_transition_to_state(rdp, CONNECTION_STATE_AAD);
 }
+
+#if defined(TSSSP_SUPPORTED)
+BOOL transport_connect_tsssp(rdpTransport* transport)
+{
+	WINPR_ASSERT(transport);
+
+	rdpContext* context = transport_get_context(transport);
+	WINPR_ASSERT(context);
+
+	rdpRdp* rdp = context->rdp;
+	WINPR_ASSERT(rdp);
+
+	/* FreeRDP's TLS layer does the handshake and owns TLS for the whole session.
+	 * The TSSSP tokens are sent inside it as TSRequest PDUs, as with NLA. */
+	if (!transport_connect_tls(transport))
+		return FALSE;
+
+	rdpTsssp* tsssp = tsssp_new(context, transport);
+	if (!tsssp)
+		return FALSE;
+
+	/* The transport owns the context; the RDPEAR channel uses it later. */
+	if (!transport_set_tsssp(transport, tsssp))
+		return FALSE;
+
+	transport_set_nla_mode(transport, TRUE);
+
+	if (tsssp_client_begin(tsssp) < 0)
+	{
+		WLog_Print(transport->log, WLOG_ERROR, "TSSSP begin failed");
+
+		freerdp_set_last_error_if_not(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+
+		transport_set_nla_mode(transport, FALSE);
+		(void)transport_set_tsssp(transport, nullptr);
+		return FALSE;
+	}
+
+	return rdp_client_transition_to_state(rdp, CONNECTION_STATE_NLA);
+}
+#endif
 
 static BOOL transport_can_retry(const rdpContext* context, BOOL status)
 {
@@ -1707,6 +1749,9 @@ static BOOL transport_default_disconnect(rdpTransport* transport)
 	transport->frontBio = nullptr;
 	transport->layer = TRANSPORT_LAYER_TCP;
 	transport->earlyUserAuth = FALSE;
+	/* The TSSSP context is bound to the TLS session that just went away. */
+	tsssp_free(transport->tsssp);
+	transport->tsssp = nullptr;
 	LeaveCriticalSection(&(transport->WriteLock));
 	LeaveCriticalSection(&(transport->ReadLock));
 	return status;
@@ -1811,6 +1856,7 @@ void transport_free(rdpTransport* transport)
 		EnterCriticalSection(&(transport->WriteLock));
 
 	nla_free(transport->nla);
+	tsssp_free(transport->tsssp);
 	StreamPool_Free(transport->ReceivePool);
 	(void)CloseHandle(transport->connectedEvent);
 	(void)CloseHandle(transport->rereadEvent);
@@ -1882,6 +1928,37 @@ rdpTls* transport_get_tls(rdpTransport* transport)
 {
 	WINPR_ASSERT(transport);
 	return transport->tls;
+}
+
+BOOL transport_set_tsssp(rdpTransport* transport, rdpTsssp* tsssp)
+{
+	WINPR_ASSERT(transport);
+	tsssp_free(transport->tsssp);
+	transport->tsssp = tsssp;
+	return TRUE;
+}
+
+rdpTsssp* transport_get_tsssp(rdpTransport* transport)
+{
+	WINPR_ASSERT(transport);
+	return transport->tsssp;
+}
+
+BOOL freerdp_tsssp_get_context(rdpContext* context, UINT64* pTsPkgContext)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(pTsPkgContext);
+
+	rdpTransport* transport = freerdp_get_transport(context);
+	if (!transport)
+		return FALSE;
+
+	/* Channels call this from their own thread, and transport_disconnect frees
+	 * the context with both locks held. */
+	EnterCriticalSection(&(transport->ReadLock));
+	const BOOL rc = tsssp_get_package_context(transport->tsssp, pTsPkgContext);
+	LeaveCriticalSection(&(transport->ReadLock));
+	return rc;
 }
 
 BOOL transport_set_tsg(rdpTransport* transport, rdpTsg* tsg)

@@ -234,7 +234,7 @@ static BOOL rdpear_send_payload(RDPEAR_PLUGIN* rdpear, IWTSVirtualChannelCallbac
 	finalStream = Stream_New(nullptr, 200);
 	if (!finalStream)
 		goto out;
-	Stream_Write_UINT32(finalStream, 0x4EACC3C8);             /* ProtocolMagic (4 bytes) */
+	Stream_Write_UINT32(finalStream, RDPEAR_PROTOCOL_MAGIC);  /* ProtocolMagic (4 bytes) */
 	Stream_Write_UINT32(finalStream, cryptedBuffer.cbBuffer); /* Length (4 bytes) */
 	Stream_Write_UINT32(finalStream, 0x00000000);             /* Version (4 bytes) */
 	Stream_Write_UINT32(finalStream, 0x00000000);             /* Reserved (4 bytes) */
@@ -968,7 +968,7 @@ static UINT rdpear_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	UINT32 Length = 0;
 	UINT32 Version = 0;
 	Stream_Read_UINT32(s, protocolMagic);
-	if (protocolMagic != 0x4EACC3C8)
+	if (protocolMagic != RDPEAR_PROTOCOL_MAGIC)
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, Length);
