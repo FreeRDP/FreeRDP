@@ -229,6 +229,13 @@ BOOL SdlContext::preConnect(freerdp* instance)
 		WLog_Print(sdl->getWLog(), WLOG_INFO, "Authentication only. Don't connect SDL.");
 	}
 
+	if (sdl->createWindowsBeforeConnect())
+	{
+		if (!sdl->waitForWindowsCreated())
+			return FALSE;
+		sdl->_windowsCreatedEarly = true;
+	}
+
 	if (!sdl->getInputChannelContext().initialize())
 		return FALSE;
 
@@ -271,7 +278,7 @@ BOOL SdlContext::postConnect(freerdp* instance)
 		return TRUE;
 	}
 
-	if (!sdl->waitForWindowsCreated())
+	if (!sdl->_windowsCreatedEarly && !sdl->waitForWindowsCreated())
 		return FALSE;
 
 	sdl->_sdlPixelFormat = SDL_PIXELFORMAT_BGRA32;
@@ -293,7 +300,7 @@ BOOL SdlContext::postConnect(freerdp* instance)
 	context->update->SetKeyboardIndicators = sdlInput::keyboard_set_indicators;
 	context->update->SetKeyboardImeStatus = sdlInput::keyboard_set_ime_status;
 
-	if (!sdl->setResizeable(false))
+	if (!sdl->_windowsCreatedEarly && !sdl->setResizeable(false))
 		return FALSE;
 	if (!sdl->setFullscreen(freerdp_settings_get_bool(context->settings, FreeRDP_Fullscreen) ||
 	                            freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon),
@@ -365,6 +372,8 @@ bool SdlContext::createWindows()
 	ScopeGuard guard1([&]() { _windowsCreatedEvent.set(); });
 
 	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
+	if ((windowCount == 0) && createWindowsBeforeConnect())
+		windowCount = 1;
 
 	Sint32 originX = 0;
 	Sint32 originY = 0;
@@ -434,7 +443,58 @@ bool SdlContext::createWindows()
 		_windows.insert({ window.id(), std::move(window) });
 	}
 
+	if (createWindowsBeforeConnect() && !adoptWindowSize())
+		return false;
 	return true;
+}
+
+bool SdlContext::createWindowsBeforeConnect() const
+{
+	auto settings = context()->settings;
+	return freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate) &&
+	       !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
+	       !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) &&
+	       !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) &&
+	       !freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly) &&
+	       !freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode);
+}
+
+bool SdlContext::adoptWindowSize()
+{
+	if (_windows.size() != 1)
+		return true;
+
+	auto& window = _windows.begin()->second;
+	auto sdlWindow = window.window();
+	if (!sdlWindow)
+		return true;
+
+	int w = 0;
+	int h = 0;
+	std::ignore = SDL_GetWindowSizeInPixels(sdlWindow, &w, &h);
+
+	/* on wayland the window is only mapped after the first frame, so present one
+	 * and give the compositor a moment to resize it */
+	const int startW = w;
+	const int startH = h;
+	if (window.fill())
+		window.updateSurface();
+	for (int i = 0; (i < 25) && (w == startW) && (h == startH); i++)
+	{
+		SDL_Delay(20);
+		SDL_PumpEvents();
+		std::ignore = SDL_SyncWindow(sdlWindow);
+		std::ignore = SDL_GetWindowSizeInPixels(sdlWindow, &w, &h);
+	}
+	w &= ~1;
+	if ((w < 200) || (h < 200) || (w > 8192) || (h > 8192))
+		return true;
+
+	auto settings = context()->settings;
+	WLog_Print(getWLog(), WLOG_INFO, "Starting the session at the window size %dx%d", w, h);
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, static_cast<UINT32>(w)))
+		return false;
+	return freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, static_cast<UINT32>(h));
 }
 
 bool SdlContext::updateWindowList()
