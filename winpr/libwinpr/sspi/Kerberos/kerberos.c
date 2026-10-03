@@ -415,6 +415,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	if (krb_log_exec_ptr(krb5_init_context, &ctx))
 		goto cleanup;
 
+	BOOL enterprise = FALSE;
 	if (domain)
 	{
 		char* udomain = _strdup(domain);
@@ -422,8 +423,22 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			goto cleanup;
 
 		CharUpperA(udomain);
+
+		/* A DNS-style domain that differs from the configured default realm is a UPN
+		 * suffix, e.g. user@example.com for an account in realm CORP.EXAMPLE.NET, which is
+		 * what /smartcard-logon takes from the certificate. AD rejects that as a realm
+		 * ("Realm not local to KDC") and only accepts it as an enterprise principal in
+		 * the account's realm, as Windows clients send it - so keep the configured realm. */
+		char* default_realm = nullptr;
+		if (strchr(udomain, '.') && (krb5_get_default_realm(ctx, &default_realm) == 0) &&
+		    (strcmp(default_realm, udomain) != 0))
+			enterprise = TRUE;
+		krb5_free_default_realm(ctx, default_realm);
+
+		krb5_error_code rv = 0;
 		/* Will use domain if realm is not specified in username */
-		krb5_error_code rv = krb_log_exec(krb5_set_default_realm, ctx, udomain);
+		if (!enterprise)
+			rv = krb_log_exec(krb5_set_default_realm, ctx, udomain);
 		free(udomain);
 
 		if (rv)
@@ -432,17 +447,34 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 	if (pszPrincipal)
 	{
-		char* cpszPrincipal = _strdup(pszPrincipal);
-		if (!cpszPrincipal)
-			goto cleanup;
+		krb5_error_code rv = 0;
+		if (enterprise && !strchr(pszPrincipal, '@'))
+		{
+			char* upn = nullptr;
+			size_t upnlen = 0;
+			(void)winpr_asprintf(&upn, &upnlen, "%s@%s", pszPrincipal, domain);
+			if (!upn)
+				goto cleanup;
 
-		/* Find realm component if included and convert to uppercase */
-		char* p = strchr(cpszPrincipal, '@');
-		if (p)
-			CharUpperA(p);
+			/* e.g. "user@example.com" becomes "user\@example.com@CORP.EXAMPLE.NET" */
+			rv = krb_log_exec(krb5_parse_name_flags, ctx, upn, KRB5_PRINCIPAL_PARSE_ENTERPRISE,
+			                  &principal);
+			free(upn);
+		}
+		else
+		{
+			char* cpszPrincipal = _strdup(pszPrincipal);
+			if (!cpszPrincipal)
+				goto cleanup;
 
-		krb5_error_code rv = krb_log_exec(krb5_parse_name, ctx, cpszPrincipal, &principal);
-		free(cpszPrincipal);
+			/* Find realm component if included and convert to uppercase */
+			char* p = strchr(cpszPrincipal, '@');
+			if (p)
+				CharUpperA(p);
+
+			rv = krb_log_exec(krb5_parse_name, ctx, cpszPrincipal, &principal);
+			free(cpszPrincipal);
+		}
 
 		if (rv)
 			goto cleanup;
