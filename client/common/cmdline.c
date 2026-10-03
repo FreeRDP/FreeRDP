@@ -735,8 +735,43 @@ static BOOL option_is_incident_file(const char* option)
 	return (option_ends_with(option, ".msrcIncident"));
 }
 
+/* Switches with optional arguments are not toggles: the parser ignores a leading '-' (and a
+ * '--disable-' prefix) and enables them anyway. Warn about users expecting the switch to be off. */
+static void warn_ignored_disable_sigil(const char* arg)
+{
+	static const char* const names[] = { "microphone", "mic", "printer" };
+
+	if (!arg)
+		return;
+
+	const char* name = nullptr;
+	if (strncmp(arg, "--disable-", 10) == 0)
+		name = &arg[10];
+	else if ((arg[0] == '-') && (arg[1] != '-'))
+		name = &arg[1];
+
+	if (!name)
+		return;
+
+	for (size_t x = 0; x < ARRAYSIZE(names); x++)
+	{
+		const size_t len = strlen(names[x]);
+		if ((strncmp(name, names[x], len) == 0) && ((name[len] == '\0') || (name[len] == ':')))
+		{
+			WLog_WARN(TAG,
+			          "'%s' does NOT disable %s, the channel is enabled. Omit the switch to "
+			          "leave it disabled",
+			          arg, names[x]);
+			return;
+		}
+	}
+}
+
 static int freerdp_client_command_line_pre_filter(void* context, int index, int argc, LPSTR* argv)
 {
+	if ((index > 0) && (index < argc))
+		warn_ignored_disable_sigil(argv[index]);
+
 	if (index == 1)
 	{
 		size_t length = 0;
