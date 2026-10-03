@@ -1,0 +1,6 @@
+/** FreeRDP: A Remote Desktop Protocol Implementation */
+#ifndef FREERDP_CHANNEL_RDPEXPS_MAIN_H
+#define FREERDP_CHANNEL_RDPEXPS_MAIN_H
+#define RDPEXPS_TICKET_CHANNEL_NAME "TSVCTKT"
+#define RDPEXPS_DRIVER_CHANNEL_NAME "XPSRD"
+#endif
