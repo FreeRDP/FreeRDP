@@ -17,7 +17,7 @@ extern "C"
 #endif
 
 	/**
-	 * Initialize the process locale used for translations.
+	 * Set the message locale used for translations.
 	 *
 	 * @param locale Locale name, or NULL/empty to use the environment locale.
 	 * @return TRUE on success. Builds without gettext support retain source strings.
