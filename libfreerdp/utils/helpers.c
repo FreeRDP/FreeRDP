@@ -140,6 +140,7 @@ const char* freerdp_getApplicationDetailsProduct(void)
 	return s_freerdp_product_string;
 }
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 char* freerdp_getApplicatonDetailsRegKey(const char* fmt)
 {
 	char* val = freerdp_getApplicatonDetailsCombined('\\');
@@ -152,6 +153,7 @@ char* freerdp_getApplicatonDetailsRegKey(const char* fmt)
 	free(val);
 	return str;
 }
+#endif
 
 char* freerdp_getApplicatonDetailsCombined(char separator)
 {

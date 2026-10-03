@@ -1418,3 +1418,14 @@ char* winpr_GetConfigFilePathV(BOOL system, const char* filename, ...)
 	va_end(ap);
 	return str;
 }
+
+WINPR_JSON* winpr_GetJSONConfigFile(BOOL system, const char* filename)
+{
+	char* path = winpr_GetConfigFilePath(system, filename);
+	if (!path)
+		return nullptr;
+
+	WINPR_JSON* json = WINPR_JSON_ParseFromFile(path);
+	free(path);
+	return json;
+}
