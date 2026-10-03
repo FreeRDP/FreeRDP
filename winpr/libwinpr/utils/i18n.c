@@ -17,7 +17,7 @@ BOOL winpr_i18n_enable_translation(const char* locale)
 {
 #ifdef WITH_WINPR_I18N
 	const char* const requested = (locale && (locale[0] != '\0')) ? locale : "";
-	return setlocale(LC_ALL, requested) ? TRUE : FALSE;
+	return setlocale(LC_MESSAGES, requested) ? TRUE : FALSE;
 #else
 	WINPR_UNUSED(locale);
 	return TRUE;
