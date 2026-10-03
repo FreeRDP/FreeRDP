@@ -237,9 +237,9 @@ BOOL CloseHandle(HANDLE hObject)
 	if (hdl->ops->CloseHandle)
 		ok = hdl->ops->CloseHandle(hObject);
 
-	/* a type's CloseHandle op can legitimately refuse (e.g. file.c won't close the pStdHandleFile
-	 * singleton unless forced) - if it did, this handle wasn't actually closed, so leave its
-	 * refcount/memory alone entirely. */
+	/* a type's CloseHandle op can legitimately refuse (e.g. file.c won't close the handles
+	 * returned by GetStdHandle() unless forced) - if it did, this handle wasn't actually closed, so
+	 * leave its refcount/memory alone entirely. */
 	if (!ok)
 		return FALSE;
 
