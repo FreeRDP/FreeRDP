@@ -689,6 +689,13 @@ int main(int argc, char* argv[])
 	 * which then wins, so the result is ignored. */
 	std::ignore = SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY, "1");
 
+#if defined(_WIN32)
+	/* Without vsync D3D11 drops a frame while one is still queued (DXGI_PRESENT_DO_NOT_WAIT). */
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode) &&
+	    !SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1"))
+		return -1;
+#endif
+
 	/* Basic SDL initialization */
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
 		return -1;
