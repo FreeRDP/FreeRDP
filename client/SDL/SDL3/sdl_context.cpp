@@ -1304,6 +1304,7 @@ bool SdlContext::handleEvent(const SDL_MouseButtonEvent& ev)
 {
 	if (_floatbar.owns(ev.windowID))
 		return handleFloatbar(ev);
+	// Ignore local SDL windows before RAIL routes input to a remote window.
 	if (!getWindowForId(ev.windowID))
 		return true;
 	SDL_Event copy = {};
@@ -1932,6 +1933,7 @@ bool SdlContext::setFloatbar(bool visible)
 
 bool SdlContext::handleFloatbar(const SDL_MouseButtonEvent& ev)
 {
+	// The bar identifies the action; the context performs it on the RDP session.
 	switch (_floatbar.handleEvent(ev))
 	{
 		case SdlFloatbar::Action::Minimize:
