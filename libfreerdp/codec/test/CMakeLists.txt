@@ -90,3 +90,9 @@ set(FUZZERS TestFuzzCodecs.c TestFuzzNSCodec.c)
 
 include(AddFuzzerTest)
 add_fuzzer_test("${FUZZERS}" "freerdp winpr")
+
+if(WITH_VIDEO_FFMPEG AND WITH_FFMPEG_HWACCEL AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_executable(TestFreeRDPCodecHardwareDevice TestFreeRDPCodecHardwareDevice.c)
+  target_link_libraries(TestFreeRDPCodecHardwareDevice PRIVATE freerdp winpr ${FFMPEG_LIBRARIES})
+  add_test(NAME TestFreeRDPCodecHardwareDevice COMMAND TestFreeRDPCodecHardwareDevice)
+endif()
