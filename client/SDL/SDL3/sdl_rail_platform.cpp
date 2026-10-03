@@ -30,12 +30,13 @@ static RailPlatformCaps detectRailPlatformCaps()
 		caps.supportsTransparentWindows = true;
 		caps.supportsRestack = false;
 	}
-	else
+	else if (sdl::utils::isX11Driver())
 	{
-		/* Check position readability and transparency support for non-Wayland backends. */
+		/* X11: transparent resize band requires compositing (_GTK_FRAME_EXTENTS). */
 		caps.positionsReadable = true;
 		caps.supportsTransparentWindows = sdl_x11_has_compositor();
-		caps.supportsRestack = sdl::utils::isX11Driver();
+		caps.supportsRestack = true;
+		caps.supportsResizeBand = caps.supportsTransparentWindows;
 	}
 	return caps;
 }

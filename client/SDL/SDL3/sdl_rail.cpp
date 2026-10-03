@@ -1099,13 +1099,15 @@ void SdlRail::reportAndAdopt(SdlRailWindow* appWindow, int x, int y, int w, int 
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 }
 
-void SdlRail::clampIntoDesktop(int& x, int& y, int w, int h) const
+void SdlRail::clampIntoDesktop(const SdlRailWindow& appWindow, int& x, int& y, int w, int h) const
 {
 	auto* settings = _context->context()->settings;
 	const int dw = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth));
 	const int dh = static_cast<int>(freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
-	x = std::clamp(x, 0, std::max(0, dw - w));
-	y = std::clamp(y, 0, std::max(0, dh - h));
+	/* Clamp content rect within desktop bounds; resize band may extend outside. */
+	const SDL_Rect s = appWindow.serverRect({ x, y, w, h });
+	x += std::clamp(s.x, 0, std::max(0, dw - s.w)) - s.x;
+	y += std::clamp(s.y, 0, std::max(0, dh - s.h)) - s.y;
 }
 
 void SdlRail::noteDragResize(SDL_WindowID id, int w, int h)
@@ -1130,6 +1132,9 @@ void SdlRail::noteDragResize(SDL_WindowID id, int w, int h)
 /* Update server work area from maximized window bounds (caller holds _windowsLock). */
 void SdlRail::reportMaximizedWorkArea(SdlRailWindow* appWindow)
 {
+	/* Ignore unconfirmed maximize states that still include resize insets. */
+	if ((SDL_GetWindowFlags(appWindow->window()) & SDL_WINDOW_MAXIMIZED) == 0)
+		return;
 	int w = 0;
 	int h = 0;
 	SDL_GetWindowSize(appWindow->window(), &w, &h);
@@ -1195,7 +1200,7 @@ void SdlRail::syncGeometry(SDL_WindowID id)
 	if (posKnown)
 		SDL_GetWindowPosition(w->window(), &lx, &ly);
 	else
-		clampIntoDesktop(lx, ly, lw, lh);
+		clampIntoDesktop(*w, lx, ly, lw, lh);
 
 	/* Check if window settled at applied target. */
 	if ((lw == vis.w) && (lh == vis.h) && (!posKnown || ((lx == vis.x) && (ly == vis.y))))
@@ -1267,11 +1272,11 @@ void SdlRail::completeWaylandResize(bool definitive)
 	SDL_GetWindowSize(appWindow->window(), &w, &h);
 
 	/* Derive Wayland origin from anchor edge. */
-	const SDL_Rect start = appWindow->windowRect();
+	const SDL_Rect start = appWindow->outerRect();
 	const RailEdges e = railEdges(drag.type);
 	int x = e.left ? (start.x + start.w - w) : start.x;
 	int y = e.top ? (start.y + start.h - h) : start.y;
-	clampIntoDesktop(x, y, w, h);
+	clampIntoDesktop(*appWindow, x, y, w, h);
 	reportAndAdopt(appWindow, x, y, w, h);
 }
 
@@ -1368,7 +1373,7 @@ void SdlRail::completeLocalMoveIfPending()
 	else if (!isMove)
 	{
 		/* Sync final resize geometry if server closed loop early. */
-		clampIntoDesktop(x, y, w, h);
+		clampIntoDesktop(*appWindow, x, y, w, h);
 		reportAndAdopt(appWindow, x, y, w, h);
 	}
 

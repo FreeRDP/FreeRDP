@@ -142,8 +142,8 @@ class SdlRail
 	void sendWorkArea(const SDL_Rect& area);
 	/* Report a maximized window's WM-given geometry as the work area. Caller holds _windowsLock. */
 	void reportMaximizedWorkArea(SdlRailWindow* appWindow);
-	/* Clamp a window origin (x,y) so a w x h window stays inside the server desktop. */
-	void clampIntoDesktop(int& x, int& y, int w, int h) const;
+	/* Clamp an outer origin so its server rect stays on the desktop. */
+	void clampIntoDesktop(const SdlRailWindow& appWindow, int& x, int& y, int w, int h) const;
 	/* Send a RAIL_SYSCOMMAND_ORDER for the window. Caller holds _windowsLock. */
 	void sendSystemCommand(SdlRailWindow* appWindow, uint16_t command);
 	/* Realize the server's top-level z-order (X11 only, focus-neutral). Caller holds _windowsLock.

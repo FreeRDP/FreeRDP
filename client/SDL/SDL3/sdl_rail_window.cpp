@@ -403,9 +403,7 @@ SDL_Rect SdlRailWindow::bandMargins() const
 
 SDL_Rect SdlRailWindow::bandInsets() const
 {
-	/* X11-only transparent resize ring. */
-	const auto& caps = railPlatformCaps();
-	if (!caps.positionsReadable || !caps.supportsTransparentWindows)
+	if (!railPlatformCaps().supportsResizeBand)
 		return { 0, 0, 0, 0 };
 	return bandMargins();
 }
@@ -671,21 +669,20 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 
 	/* Update insets across maximize transitions outside active drag grab. */
 	const bool maxed = effectivelyMaximized();
+	const SDL_Rect band = bandInsets();
 	if ((maxed != _wasMaximized) && !_localMoveActive && !restorePending)
 	{
-		setAppliedInsets(bandInsets());
+		setAppliedInsets(band);
 		if (!maxed)
 			_geometryDirty = true;
 		_wasMaximized = maxed;
 	}
 
-	/* _GTK_FRAME_EXTENTS: tell the WM the band ring is frame, not content (snap/tile geometry). */
-	/* Not while a restore is pending: the margins may still be the maximized ones. */
-	const SDL_Rect ext = bandInsets();
-	if (!restorePending && !SDL_RectsEqual(&ext, &_extentsApplied) &&
-	    sdl_x11_set_frame_extents(_win->window(), ext.x, ext.w, ext.y, ext.h))
+	/* X11: set frame extents before the resize (KWin needs that), not while restoring. */
+	if (!restorePending && !SDL_RectsEqual(&band, &_extentsApplied) &&
+	    sdl_x11_set_frame_extents(_win->window(), band.x, band.w, band.y, band.h))
 	{
-		_extentsApplied = ext;
+		_extentsApplied = band;
 	}
 	const bool wmOwnsGeometry =
 	    _localMoveActive || geometryFrozen() || _fullscreen || restorePending;
@@ -693,20 +690,28 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	 * Defer size hints and programmatic resize during active WM move/resize grab. */
 	if ((_minMaxDirty || _geometryDirty) && !wmOwnsGeometry)
 	{
-		const SDL_Rect vis = targetOuterRect();
-		SDL_SetWindowMinimumSize(_win->window(), std::clamp(_minSize.x, 0, vis.w),
-		                         std::clamp(_minSize.y, 0, vis.h));
-		int maxW = (_maxSize.x > 0) ? std::max(1, _maxSize.x) : 0;
-		int maxH = (_maxSize.y > 0) ? std::max(1, _maxSize.y) : 0;
+		const SDL_Rect vis = addInsets(_windowRect, band);
+		const int bandW = band.x + band.w;
+		const int bandH = band.y + band.h;
+		/* Convert server track size hints (which include server margins) to outer window bounds. */
+		const SDL_Rect& m = _resizeMargins;
+		const int padW = bandW - m.x - m.w;
+		const int padH = bandH - m.y - m.h;
+		const auto toOuter = [](int track, int pad)
+		{ return (track > 0) ? std::max(1, track + pad) : 0; };
+		const int minW = toOuter(_minSize.x, padW);
+		const int minH = toOuter(_minSize.y, padH);
+		SDL_SetWindowMinimumSize(_win->window(), std::clamp(minW, 0, vis.w),
+		                         std::clamp(minH, 0, vis.h));
+		int maxW = toOuter(_maxSize.x, padW);
+		int maxH = toOuter(_maxSize.y, padH);
 		/* Wayland: cap to the usable area - an oversized window cannot be dragged into reach. */
 		SDL_Rect usable{};
 		if (!railPlatformCaps().positionsReadable &&
 		    SDL_GetDisplayUsableBounds(SDL_GetPrimaryDisplay(), &usable))
 		{
-			/* The local window is the outer frame: cap to the usable area plus the insets. */
-			const SDL_Rect bi = bandInsets();
-			const int capW = usable.w + bi.x + bi.w;
-			const int capH = usable.h + bi.y + bi.h;
+			const int capW = usable.w + bandW;
+			const int capH = usable.h + bandH;
 			if ((maxW == 0) || (maxW > capW))
 				maxW = capW;
 			if ((maxH == 0) || (maxH > capH))
@@ -719,10 +724,9 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 	/* Skip geometry apply when maximized, minimized or WM-dragged. */
 	if (_geometryDirty && !wmOwnsGeometry)
 	{
-		const SDL_Rect vis = targetOuterRect();
-		/* The window is (or becomes) vis = _windowRect + fresh insets: record those as the insets
-		 * now baked in, so the round-trip back to server coords strips exactly this. */
-		setAppliedInsets(bandInsets());
+		const SDL_Rect vis = addInsets(_windowRect, band);
+		/* Record applied insets so server coordinate mapping strips the exact offset. */
+		setAppliedInsets(band);
 		int cw = 0;
 		int ch = 0;
 		SDL_GetWindowSize(_win->window(), &cw, &ch);
@@ -1288,7 +1292,7 @@ bool SdlRailWindow::paintLegacy(SDL_Surface* primary, const std::vector<SDL_Rect
 		}
 
 		rect = _windowRect;
-		bi = bandInsets();
+		bi = _appliedInsets;
 		vis = _visRects;
 	}
 

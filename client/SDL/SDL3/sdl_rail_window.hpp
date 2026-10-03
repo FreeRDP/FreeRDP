@@ -313,7 +313,7 @@ class SdlRailWindow
 	uint64_t _awaitRestoreUntil = 0;
 	/* Content origin offset inside current GFX surface. */
 	SDL_Point _gfxVisOrigin = { 0, 0 };
-	SDL_Rect _extentsApplied = { 0, 0, 0, 0 }; /* band insets last mirrored to the WM */
+	SDL_Rect _extentsApplied = { 0, 0, 0, 0 }; /* X11 extents sent to the WM */
 
 	/* Guard for state shared between RDP and main threads. */
 	mutable std::mutex _gfxLock;
