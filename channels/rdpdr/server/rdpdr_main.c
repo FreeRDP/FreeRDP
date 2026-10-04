@@ -3346,11 +3346,9 @@ static UINT rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, 
 	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
 		return ERROR_INVALID_DATA;
 
+	/* [MS-RDPEFS] 2.2.1.5.4 DR_WRITE_RSP: the number of bytes written, no data */
 	const UINT32 length = Stream_Get_UINT32(s); /* Length (4 bytes) */
 	Stream_Seek(s, 1);                          /* Padding (1 byte) */
-
-	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, length))
-		return ERROR_INVALID_DATA;
 
 	/* Invoke the write file completion routine. */
 	context->OnDriveWriteFileComplete(context, irp->CallbackData, ioStatus, length);
