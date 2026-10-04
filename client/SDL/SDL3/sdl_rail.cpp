@@ -841,13 +841,14 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 		if (rail)
 		{
 			std::unique_lock lock(rail->_windowsLock);
+			auto* appWindow = rail->getWindow(localMoveSize->windowId);
 			/* Ignore server END order during Wayland resize unless unstarted. */
 			const bool ownedByWaylandResize = rail->_localMove.wayland &&
 			                                  (rail->_localMove.id == localMoveSize->windowId) &&
 			                                  rail->_localMove.sawResize;
 			if (!ownedByWaylandResize)
 			{
-				if (auto* appWindow = rail->getWindow(localMoveSize->windowId))
+				if (appWindow)
 					appWindow->setLocalMoveActive(false);
 				if (rail->_localMove.id == localMoveSize->windowId)
 				{
@@ -855,7 +856,7 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 					{
 						/* Wayland drag completed. */
 						rail->_localMove = {};
-						if (auto* appWindow = rail->getWindow(localMoveSize->windowId))
+						if (appWindow)
 							appWindow->invalidateAll();
 						(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 					}
@@ -867,7 +868,6 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 				}
 			}
 			/* Execute deferred actions now that modal loop has closed. */
-			auto* appWindow = rail->getWindow(localMoveSize->windowId);
 			if (appWindow && appWindow->loopEndPending())
 			{
 				const auto actions = appWindow->takeLoopEnd();
@@ -900,8 +900,8 @@ UINT SdlRail::server_local_move_size(RailClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-/* X11 only: suppress button-up during modal loop. */
-bool SdlRail::suppressServerInput(SDL_WindowID id)
+/* A local move/resize runs under the WM grab (not Wayland, the compositor owns that drag). */
+bool SdlRail::dragActive(SDL_WindowID id)
 {
 	std::unique_lock lock(_windowsLock);
 	if (_localMove.id == 0)
@@ -1216,42 +1216,10 @@ void SdlRail::noteResizeGrab(SDL_WindowID id)
 	if (_localMove.id == 0)
 		return;
 	auto* appWindow = getWindowBySdlId(id);
-	/* Confirm compositor pointer grab on mouse leave during active drag resize. */
+	/* Mouse leave or a configure during the drag: the compositor resize is under way. */
 	if (appWindow && (static_cast<uint32_t>(appWindow->id()) == _localMove.id) &&
 	    _localMove.wayland)
 		_localMove.sawResize = true;
-}
-
-void SdlRail::handleWaylandResize(SDL_WindowID id)
-{
-	if (!sdl::utils::isWaylandDriver())
-		return;
-	std::unique_lock lock(_windowsLock);
-	auto* appWindow = getWindowBySdlId(id);
-	if (!appWindow || appWindow->isPopup() || !appWindow->window())
-		return;
-	/* Track resize for active dragged window. */
-	if (static_cast<uint32_t>(appWindow->id()) == _localMove.id)
-	{
-		if (_localMove.wayland)
-			_localMove.sawResize = true;
-		return;
-	}
-
-	int w = 0;
-	int h = 0;
-	SDL_GetWindowSize(appWindow->window(), &w, &h);
-	if ((w <= 0) || (h <= 0))
-		return;
-
-	/* Local window size is the OUTER frame (rect + insets; identical off the inset paths). */
-	const SDL_Rect vis = appWindow->outerRect();
-	if ((w == vis.w) && (h == vis.h))
-		return; /* echo of a size we already reported/applied - nothing new */
-
-	/* Compositor snap/tile: report via the debounced sync (never from transitional state). */
-	lock.unlock();
-	syncGeometry(id);
 }
 
 void SdlRail::completeWaylandResize(bool definitive)

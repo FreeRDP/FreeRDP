@@ -377,7 +377,7 @@ bool SdlRailWindow::isFrame() const
 bool SdlRailWindow::styleResizable() const
 {
 	/* Once resizable, keep band eligibility to avoid oscillation. */
-	return _everResizable || ((_style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0);
+	return _everResizable;
 }
 
 /* Minimum grabbable width for each outside-band resize edge. */
@@ -479,25 +479,23 @@ SDL_Point SdlRailWindow::serverOrigin() const
 void SdlRailWindow::setStyle(uint32_t style, uint32_t exStyle)
 {
 	std::unique_lock lock(_gfxLock);
-	const bool wasResizable = styleResizable();
 	const bool wasTopmost = _topmost;
 	_style = style;
 	_exStyle = exStyle;
 	_topmost = (exStyle & WS_EX_TOPMOST) != 0;
 	if (_topmost != wasTopmost)
 		_topmostDirty = true;
-	if ((style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0)
+	if (!_everResizable && ((style & (WS_THICKFRAME | WS_MAXIMIZEBOX)) != 0))
+	{
 		_everResizable = true;
-	/* Update resizability on style change. */
-	if (styleResizable() != wasResizable)
 		_styleDirty = true;
+	}
 	/* Classify popup and layered window types once on creation. */
 	if (!_popupClassified)
 	{
 		const auto classification = classifySdlRailWindowStyle(style, exStyle, _ownerId != 0);
 		_isPopup = classification.popup;
 		_layered = classification.layered;
-		_clickThrough = classification.clickThrough;
 		_overlay = classification.overlay;
 		_popupClassified = true;
 	}

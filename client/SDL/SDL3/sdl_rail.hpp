@@ -104,8 +104,8 @@ class SdlRail
 	{
 		_lastPointerServer = { static_cast<int>(x), static_cast<int>(y) };
 	}
-	/* Suppress button-up to server during active local move/resize. */
-	bool suppressServerInput(SDL_WindowID id);
+	/* Local move/resize under the WM grab: server input is suppressed meanwhile. */
+	bool dragActive(SDL_WindowID id);
 	/* Suppress motion events during active local move/resize. */
 	bool suppressServerMotion(SDL_WindowID id);
 
@@ -120,10 +120,8 @@ class SdlRail
 
 	/* Finalize Wayland resize. */
 	void completeWaylandResize(bool definitive = false);
-	/* Wayland: confirm compositor pointer grab on mouse leave during interactive resize. */
+	/* Wayland: the compositor runs the interactive resize (mouse leave or configure). */
 	void noteResizeGrab(SDL_WindowID id);
-	/* Handle Wayland resize event. */
-	void handleWaylandResize(SDL_WindowID id);
 
   private:
 	/* _windows helpers: callers must hold _windowsLock. */
