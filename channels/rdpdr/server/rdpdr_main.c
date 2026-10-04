@@ -4067,6 +4067,25 @@ static UINT rdpdr_server_drive_set_information_callback1(RdpdrServerContext* con
 	                                                        irp->InfoBuffer, irp->InfoLength);
 }
 
+/* Windows clients check the access of the handle, and do not map generic rights */
+WINPR_ATTR_NODISCARD
+static UINT32 rdpdr_server_set_information_access(UINT32 fsInformationClass)
+{
+	switch (fsInformationClass)
+	{
+		case FileBasicInformation:
+			return FILE_WRITE_ATTRIBUTES;
+		case FileEndOfFileInformation:
+		case FileAllocationInformation:
+			return FILE_WRITE_DATA;
+		case FileDispositionInformation:
+		case FileRenameInformation:
+			return DELETE;
+		default:
+			return FILE_GENERIC_WRITE;
+	}
+}
+
 WINPR_ATTR_NODISCARD
 static UINT rdpdr_server_drive_set_information(RdpdrServerContext* context, void* callbackData,
                                                UINT32 deviceId, const char* path,
@@ -4091,9 +4110,9 @@ static UINT rdpdr_server_drive_set_information(RdpdrServerContext* context, void
 	memcpy(irp->InfoBuffer, buffer, length);
 
 	/* Send a request to open the file or directory. */
-	return rdpdr_server_send_device_create_request(context, irp,
-	                                               GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE,
-	                                               FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
+	return rdpdr_server_send_device_create_request(
+	    context, irp, rdpdr_server_set_information_access(fsInformationClass) | SYNCHRONIZE,
+	    FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
 WINPR_ATTR_NODISCARD
