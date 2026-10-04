@@ -3146,7 +3146,8 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 	irp->Callback = rdpdr_server_drive_query_directory_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
-	winpr_str_append("\\*.*", irp->PathName, ARRAYSIZE(irp->PathName), nullptr);
+	/* "*.*" only matches names with a dot outside of Windows, e.g. in WinPR */
+	winpr_str_append("\\*", irp->PathName, ARRAYSIZE(irp->PathName), nullptr);
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
