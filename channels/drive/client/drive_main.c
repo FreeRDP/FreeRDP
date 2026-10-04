@@ -261,8 +261,8 @@ static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 	else
 	{
 		/* Free the file here, so that a failing delete on close is reported */
-		(void)ListDictionary_Take(drive->files, key);
-		if (drive_file_free(file))
+		DRIVE_FILE* taken = ListDictionary_Take(drive->files, key);
+		if (drive_file_free(taken))
 			irp->IoStatus = STATUS_SUCCESS;
 		else
 			irp->IoStatus = drive_map_windows_err(GetLastError());

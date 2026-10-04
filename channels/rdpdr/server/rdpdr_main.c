@@ -3368,12 +3368,13 @@ static UINT rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, 
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	/* [MS-RDPEFS] 2.2.1.5.4 DR_WRITE_RSP: the number of bytes written, no data */
 	const UINT32 length = Stream_Get_UINT32(s); /* Length (4 bytes) */
-	Stream_Seek(s, 1);                          /* Padding (1 byte) */
+	/* Padding (1 byte), optional like the padding of other responses */
+	Stream_Seek(s, MIN(Stream_GetRemainingLength(s), 1));
 
 	/* Invoke the write file completion routine. */
 	context->OnDriveWriteFileComplete(context, irp->CallbackData, ioStatus, length);
@@ -3422,7 +3423,6 @@ static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
                                                    RDPDR_IRP* irp, UINT32 deviceId,
                                                    UINT32 completionId, UINT32 ioStatus)
 {
-	WINPR_UNUSED(s);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
@@ -3434,11 +3434,9 @@ static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	// padding 5 bytes
-	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
-		return ERROR_INVALID_DATA;
-
-	Stream_Seek(s, 5);
+	/* [MS-RDPEFS] 2.2.1.5.2 DR_CLOSE_RSP: 5 bytes of padding that MUST be ignored.
+	 * Windows clients send only 4, so do not require them. */
+	Stream_Seek(s, MIN(Stream_GetRemainingLength(s), 5));
 
 	/* Invoke the close file completion routine. */
 	context->OnDriveCloseFileComplete(context, irp->CallbackData, ioStatus);
