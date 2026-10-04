@@ -3038,6 +3038,21 @@ static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, voi
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+static UINT rdpdr_server_drive_query_directory_callback3(RdpdrServerContext* context, wStream* s,
+                                                         RDPDR_IRP* irp, UINT32 deviceId,
+                                                         UINT32 completionId, UINT32 ioStatus)
+{
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(s);
+	WINPR_UNUSED(deviceId);
+	WINPR_UNUSED(completionId);
+	WINPR_UNUSED(ioStatus);
+
+	/* The directory is closed. Destroy the IRP. */
+	rdpdr_server_irp_free(irp);
+	return CHANNEL_RC_OK;
+}
+
 static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* context, wStream* s,
                                                          RDPDR_IRP* irp, UINT32 deviceId,
                                                          UINT32 completionId, UINT32 ioStatus)
@@ -3102,11 +3117,20 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 	{
 		/* Invoke the query directory completion routine. */
 		context->OnDriveQueryDirectoryComplete(context, irp->CallbackData, ioStatus, nullptr);
-		/* Destroy the IRP. */
-		rdpdr_server_irp_free(irp);
-	}
 
-	return CHANNEL_RC_OK;
+		/* Close the directory, so that the client does not leak its handle */
+		irp->CompletionId = priv->NextCompletionId++;
+		irp->Callback = rdpdr_server_drive_query_directory_callback3;
+
+		if (!rdpdr_server_enqueue_irp(context, irp))
+		{
+			rdpdr_server_irp_free(irp);
+			return ERROR_INTERNAL_ERROR;
+		}
+
+		return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
+		                                              irp->CompletionId);
+	}
 }
 
 /**
