@@ -252,6 +252,11 @@ static RDPDR_IRP* rdpdr_server_irp_new(void)
 
 static void rdpdr_server_irp_free(RDPDR_IRP* irp)
 {
+	if (!irp)
+		return;
+
+	free(irp->PathName);
+	free(irp->ExtraBuffer);
 	free(irp);
 }
 
@@ -2419,8 +2424,28 @@ static UINT32 rdpdr_server_next_completion_id(RdpdrServerPrivate* priv)
 	return (UINT32)(InterlockedIncrement(&priv->NextCompletionId) - 1);
 }
 
-static UINT prepare_irp(RdpdrServerContext* context, UINT32 deviceId, RDPDR_IRP_Callback callback,
-                        void* callbackData, RDPDR_IRP** outIrp)
+/* Copies a path for an IRP, with the '\\' separators the client expects */
+WINPR_ATTR_NODISCARD
+static char* rdpdr_server_dup_path(const char* path)
+{
+	WINPR_ASSERT(path);
+
+	char* copy = _strdup(path);
+	if (!copy)
+		return nullptr;
+
+	for (char* c = copy; *c != '\0'; c++)
+	{
+		if (*c == '/')
+			*c = '\\';
+	}
+	return copy;
+}
+
+WINPR_ATTR_NODISCARD
+static UINT prepare_path_irp(RdpdrServerContext* context, UINT32 deviceId,
+                             RDPDR_IRP_Callback callback, void* callbackData, const char* path,
+                             const char* extraPath, RDPDR_IRP** outIrp)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -2441,6 +2466,17 @@ static UINT prepare_irp(RdpdrServerContext* context, UINT32 deviceId, RDPDR_IRP_
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
 
+	if (path)
+		irp->PathName = rdpdr_server_dup_path(path);
+	if (extraPath)
+		irp->ExtraBuffer = rdpdr_server_dup_path(extraPath);
+	if ((path && !irp->PathName) || (extraPath && !irp->ExtraBuffer))
+	{
+		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_dup_path failed!");
+		rdpdr_server_irp_free(irp);
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
 		WLog_Print(priv->log, WLOG_ERROR, "rdpdr_server_enqueue_irp failed!");
@@ -2450,6 +2486,12 @@ static UINT prepare_irp(RdpdrServerContext* context, UINT32 deviceId, RDPDR_IRP_
 
 	*outIrp = irp;
 	return CHANNEL_RC_OK;
+}
+
+static UINT prepare_irp(RdpdrServerContext* context, UINT32 deviceId, RDPDR_IRP_Callback callback,
+                        void* callbackData, RDPDR_IRP** outIrp)
+{
+	return prepare_path_irp(context, deviceId, callback, callbackData, nullptr, nullptr, outIrp);
 }
 
 static UINT prepare_smartcard_irp(RdpdrServerContext* context, UINT32 ioControlCode,
@@ -2807,17 +2849,6 @@ static UINT rdpdr_server_send_device_control_request(RdpdrServerContext* context
 	return rdpdr_seal_send_free_request(context, s);
 }
 
-static void rdpdr_server_convert_slashes(char* path, int size)
-{
-	WINPR_ASSERT(path || (size <= 0));
-
-	for (int i = 0; (i < size) && (path[i] != '\0'); i++)
-	{
-		if (path[i] == '/')
-			path[i] = '\\';
-	}
-}
-
 /*************************************************
  * Drive Create Directory
  ************************************************/
@@ -2917,13 +2948,10 @@ static UINT rdpdr_server_drive_create_directory(RdpdrServerContext* context, voi
 	WINPR_ASSERT(path);
 
 	RDPDR_IRP* irp = nullptr;
-	UINT ret = prepare_irp(context, deviceId, rdpdr_server_drive_create_directory_callback1,
-	                       callbackData, &irp);
+	UINT ret = prepare_path_irp(context, deviceId, rdpdr_server_drive_create_directory_callback1,
+	                            callbackData, path, nullptr, &irp);
 	if (ret != CHANNEL_RC_OK)
 		return ret;
-
-	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
-	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	/* Send a request to open the file. */
 	return rdpdr_server_send_device_create_request(
@@ -3026,13 +3054,10 @@ static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, voi
 	WINPR_ASSERT(context->priv);
 
 	RDPDR_IRP* irp = nullptr;
-	UINT ret = prepare_irp(context, deviceId, rdpdr_server_drive_delete_directory_callback1,
-	                       callbackData, &irp);
+	UINT ret = prepare_path_irp(context, deviceId, rdpdr_server_drive_delete_directory_callback1,
+	                            callbackData, path, nullptr, &irp);
 	if (ret != CHANNEL_RC_OK)
 		return ret;
-
-	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
-	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	/* Send a request to open the file. */
 	return rdpdr_server_send_device_create_request(
@@ -3182,7 +3207,16 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 	/* "*.*" only matches names with a dot outside of Windows, e.g. in WinPR */
-	winpr_str_append("\\*", irp->PathName, ARRAYSIZE(irp->PathName), nullptr);
+	char* pattern = nullptr;
+	size_t patternLength = 0;
+	if (winpr_asprintf(&pattern, &patternLength, "%s\\*", irp->PathName) < 0)
+	{
+		WLog_Print(priv->log, WLOG_ERROR, "winpr_asprintf failed!");
+		rdpdr_server_irp_free(irp);
+		return CHANNEL_RC_NO_MEMORY;
+	}
+	free(irp->PathName);
+	irp->PathName = pattern;
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
@@ -3208,13 +3242,10 @@ static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context, void
 	WINPR_ASSERT(context->priv);
 
 	RDPDR_IRP* irp = nullptr;
-	UINT ret = prepare_irp(context, deviceId, rdpdr_server_drive_query_directory_callback1,
-	                       callbackData, &irp);
+	UINT ret = prepare_path_irp(context, deviceId, rdpdr_server_drive_query_directory_callback1,
+	                            callbackData, path, nullptr, &irp);
 	if (ret != CHANNEL_RC_OK)
 		return ret;
-
-	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
-	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	/* Send a request to open the directory. */
 	return rdpdr_server_send_device_create_request(
@@ -3273,13 +3304,10 @@ static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context, void* call
 	WINPR_ASSERT(context->priv);
 
 	RDPDR_IRP* irp = nullptr;
-	UINT ret =
-	    prepare_irp(context, deviceId, rdpdr_server_drive_open_file_callback, callbackData, &irp);
+	UINT ret = prepare_path_irp(context, deviceId, rdpdr_server_drive_open_file_callback,
+	                            callbackData, path, nullptr, &irp);
 	if (ret != CHANNEL_RC_OK)
 		return ret;
-
-	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
-	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	/* Send a request to open the file. */
 	return rdpdr_server_send_device_create_request(context, irp->DeviceId, irp->CompletionId,
@@ -3581,13 +3609,10 @@ static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* ca
 	WINPR_ASSERT(context->priv);
 
 	RDPDR_IRP* irp = nullptr;
-	UINT ret = prepare_irp(context, deviceId, rdpdr_server_drive_delete_file_callback1,
-	                       callbackData, &irp);
+	UINT ret = prepare_path_irp(context, deviceId, rdpdr_server_drive_delete_file_callback1,
+	                            callbackData, path, nullptr, &irp);
 	if (ret != CHANNEL_RC_OK)
 		return ret;
-
-	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
-	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
 	/* Send a request to open the file. FILE_DELETE_ON_CLOSE needs DELETE access. */
 	return rdpdr_server_send_device_create_request(
@@ -3737,15 +3762,10 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 	WINPR_ASSERT(context->priv);
 
 	RDPDR_IRP* irp = nullptr;
-	UINT ret = prepare_irp(context, deviceId, rdpdr_server_drive_rename_file_callback1,
-	                       callbackData, &irp);
+	UINT ret = prepare_path_irp(context, deviceId, rdpdr_server_drive_rename_file_callback1,
+	                            callbackData, oldPath, newPath, &irp);
 	if (ret != CHANNEL_RC_OK)
 		return ret;
-
-	strncpy(irp->PathName, oldPath, sizeof(irp->PathName) - 1);
-	strncpy(irp->ExtraBuffer, newPath, sizeof(irp->ExtraBuffer) - 1);
-	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
-	rdpdr_server_convert_slashes(irp->ExtraBuffer, sizeof(irp->ExtraBuffer));
 
 	/* Send a request to open the file. Renaming needs DELETE access. */
 	return rdpdr_server_send_device_create_request(
