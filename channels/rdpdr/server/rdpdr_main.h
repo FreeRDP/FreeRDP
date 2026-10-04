@@ -46,6 +46,10 @@ struct S_RDPDR_IRP
 	char ExtraBuffer[256];       /**< Data buffer */
 	void* CallbackData;          /**< User callback data */
 	RDPDR_IRP_Callback Callback; /**< Completion callback function */
+	BOOL ReplaceIfExists;        /**< Rename: replace an existing target */
+	UINT32 InfoClass;            /**< Set information: FsInformationClass */
+	UINT32 InfoLength;           /**< Set information: bytes used in InfoBuffer */
+	BYTE InfoBuffer[64];         /**< Set information: the information to set */
 };
 
 #endif /* FREERDP_CHANNEL_RDPDR_SERVER_MAIN_H */
