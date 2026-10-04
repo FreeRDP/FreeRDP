@@ -391,6 +391,42 @@ SdlRailWindow* SdlRail::addWindow(uint64_t id, const SDL_Rect& rect)
 void SdlRail::enableRemoteAppMode(bool enable)
 {
 	_enabled = enable;
+	if (enable)
+		_desktopReleased = true;
+}
+
+/* Show the desktop anyway after this: not every logon prompt is announced. */
+static constexpr Uint32 kDesktopHoldMs = 10000;
+
+bool SdlRail::desktopMayShow()
+{
+	if (_desktopReleased)
+		return true;
+	const uint64_t now = SDL_GetTicks();
+	if (_desktopHoldUntil == 0)
+	{
+		_desktopHoldUntil = now + kDesktopHoldMs;
+		/* Frames may stop coming while the logon waits; wake up to re-check. */
+		if (!sdl_push_update_after(kDesktopHoldMs + 1))
+			WLog_WARN(TAG, "SDL_AddTimer failed: %s", SDL_GetError());
+		WLog_DBG(TAG, "RemoteApp starting: holding the logon desktop back");
+		return false;
+	}
+	if (now < _desktopHoldUntil)
+		return false;
+	WLog_DBG(TAG, "RemoteApp not started after %" PRIu32 " ms, showing the desktop",
+	         kDesktopHoldMs);
+	_desktopReleased = true;
+	return true;
+}
+
+void SdlRail::noteLogonPrompt()
+{
+	if (_desktopReleased.exchange(true))
+		return;
+	WLog_DBG(TAG, "logon dialog on the server, showing the desktop");
+	if (!sdl_push_user_event(SDL_EVENT_USER_UPDATE))
+		WLog_WARN(TAG, "sdl_push_user_event failed");
 }
 
 bool SdlRail::paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
@@ -734,6 +770,9 @@ bool SdlRail::uninit(WINPR_ATTR_UNUSED RailClientContext* rail)
 		kv.second.markDeleted();
 	_rail = nullptr;
 	_enabled = false;
+	/* The next connection logs on again: hold its logon desktop back too. */
+	_desktopReleased = false;
+	_desktopHoldUntil = 0;
 	lock.unlock();
 	(void)sdl_push_user_event(SDL_EVENT_USER_UPDATE);
 	return true;

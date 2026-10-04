@@ -74,6 +74,9 @@ typedef struct
 
 [[nodiscard]] bool sdl_push_quit();
 
+/* Push SDL_EVENT_USER_UPDATE once after `ms`, so the main loop re-checks a deadline. */
+[[nodiscard]] bool sdl_push_update_after(Uint32 ms);
+
 [[nodiscard]] const char* sdl_error_string(Sint32 res);
 
 #define sdl_log_error(res, log, what) sdl_log_error_ex(res, log, what, __FILE__, __LINE__, __func__)

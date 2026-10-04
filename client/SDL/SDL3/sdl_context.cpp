@@ -440,6 +440,10 @@ bool SdlContext::createWindows()
 		if (!freerdp_settings_get_bool(settings, FreeRDP_Decorations))
 			flags |= SDL_WINDOW_BORDERLESS;
 
+		/* RemoteApp: the desktop only shows when needed (drawToWindows). */
+		if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
+			flags |= SDL_WINDOW_HIDDEN;
+
 		auto did = WINPR_ASSERTING_INT_CAST(SDL_DisplayID, id);
 		auto window = SdlWindow::create(did, title, flags, w, h);
 
@@ -1693,7 +1697,10 @@ bool SdlContext::drawToWindows(const std::vector<SDL_Rect>& rects)
 	}
 
 	/* Non-RAIL mode (e.g. Non-Monitored Desktop during UAC / Consent UI): show the desktop window.
-	 */
+	 * Before the RemoteApp starts, only when the logon needs the user. */
+	if (freerdp_settings_get_bool(context()->settings, FreeRDP_RemoteApplicationMode) &&
+	    !_rail.desktopMayShow())
+		return true;
 	bool firstShow = false;
 	for (auto& window : _windows)
 	{

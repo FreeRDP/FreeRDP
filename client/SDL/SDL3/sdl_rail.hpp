@@ -61,6 +61,12 @@ class SdlRail
 		return _enabled;
 	}
 
+	/* Main thread: whether the desktop window may show; before the RemoteApp starts, only
+	 * for a logon dialog or a slow start. */
+	[[nodiscard]] bool desktopMayShow();
+	/* Any thread: the server shows a logon dialog that needs the user (LogonErrorInfo). */
+	void noteLogonPrompt();
+
 	/* Paint all RAIL windows (window-mapped GFX surface, or legacy desktop region).
 	 * `damage` = server-updated desktop rects for this cycle (empty = nothing new). */
 	bool paint(SDL_Surface* primary, SDL_PixelFormat fallbackFormat,
@@ -196,7 +202,10 @@ class SdlRail
 	/* Written on the RDP thread (RemoteApp mode toggles), read lock-free on the main thread. */
 	std::atomic<bool> _enabled = false;
 	bool _refreshSent = false; /* one full RefreshRect per connection, at first window realize */
-	std::atomic<bool> _appStarted = false; /* the RemoteApp was started on this connection */
+	std::atomic<bool> _appStarted = false;
+	/* The desktop window may show: RAIL started, a logon prompt, or the hold ran out. */
+	std::atomic<bool> _desktopReleased = false;
+	std::atomic<uint64_t> _desktopHoldUntil = 0; /* end of the logon desktop hold (ticks) */
 	/* Last work area reported to the server (server coordinates). */
 	SDL_Rect _sentWorkArea = { 0, 0, 0, 0 };
 	/* Guards _windows (RDP thread mutates, main thread paints/iterates, GFX thread looks up).
