@@ -42,8 +42,8 @@ struct S_RDPDR_IRP
 	UINT32 DeviceId;             /**< Target device identifier */
 	UINT32 FileId;               /**< File handle identifier */
 	UINT32 IoControlCode;        /**< I/O control code */
-	char PathName[256];          /**< File path name */
-	char ExtraBuffer[256];       /**< Data buffer */
+	char* PathName;              /**< File path name */
+	char* ExtraBuffer;           /**< Data buffer */
 	void* CallbackData;          /**< User callback data */
 	RDPDR_IRP_Callback Callback; /**< Completion callback function */
 };
