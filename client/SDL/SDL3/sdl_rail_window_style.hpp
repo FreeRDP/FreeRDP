@@ -26,7 +26,6 @@ struct SdlRailWindowStyle
 {
 	bool popup = false;
 	bool layered = false;
-	bool clickThrough = false;
 	bool overlay = false;
 };
 
@@ -58,6 +57,5 @@ inline SdlRailWindowStyle classifySdlRailWindowStyle(uint32_t style, uint32_t ex
 	                     ((exStyle & (WS_EX_NOACTIVATE | WS_EX_APPWINDOW)) == 0) && !captioned;
 
 	return { noActivate || overlay || unownedPopup || (isToolOrPopup && !isDialogOrApp),
-		     ((exStyle & WS_EX_LAYERED) != 0) && !isDialogOrApp, (exStyle & WS_EX_TRANSPARENT) != 0,
-		     overlay };
+		     ((exStyle & WS_EX_LAYERED) != 0) && !isDialogOrApp, overlay };
 }
