@@ -60,6 +60,10 @@ set(SRCS
 )
 
 # Native X11 helpers for RAIL (_NET_WM_MOVERESIZE, compositor detection); no-op stubs without libX11.
+if(APPLE)
+  list(APPEND SRCS sdl_clip_macos.h sdl_clip_macos.m)
+endif()
+
 set(SDL_X11_NATIVE OFF)
 if(NOT WIN32 AND NOT APPLE)
   find_package(X11 QUIET)
@@ -153,6 +157,10 @@ if(SDL_X11_NATIVE)
   list(APPEND LIBS ${X11_LIBRARIES})
 endif()
 
+if(APPLE)
+  find_library(APPKIT_LIBRARY AppKit REQUIRED)
+  list(APPEND LIBS ${APPKIT_LIBRARY})
+endif()
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/SDL")

@@ -32,6 +32,10 @@
 #include "sdl_clip.hpp"
 #include "sdl_context.hpp"
 
+#if defined(__APPLE__)
+#include "sdl_clip_macos.h"
+#endif
+
 #define TAG CLIENT_TAG("sdl.cliprdr")
 
 #define mime_text_plain "text/plain"
@@ -402,6 +406,11 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 			}
 		}
 	}
+
+#if defined(__APPLE__)
+	if (!filePushed && sdl_clip_macos_has_files())
+		clientFormatNames.emplace_back(s_type_FileGroupDescriptorW);
+#endif
 
 	std::sort(clientFormatNames.begin(), clientFormatNames.end());
 	clientFormatNames.erase(std::unique(clientFormatNames.begin(), clientFormatNames.end()),
@@ -843,7 +852,13 @@ std::shared_ptr<BYTE> sdlClip::getLocalData(uint32_t formatId, uint32_t& len)
 		/* Read without holding our locks: on X11 this pumps events and can take a while, and
 		 * the channel thread needs the locks to deliver server data. */
 		size_t size = 0;
-		auto sdldata = std::shared_ptr<void>(SDL_GetClipboardData(candidate.mime, &size), SDL_free);
+		std::shared_ptr<void> sdldata;
+#if defined(__APPLE__)
+		if (fileFormatId == formatId)
+			sdldata = std::shared_ptr<void>(sdl_clip_macos_get_uri_list(&size), free);
+		else
+#endif
+			sdldata = std::shared_ptr<void>(SDL_GetClipboardData(candidate.mime, &size), SDL_free);
 		if (!sdldata || (size > UINT32_MAX))
 			continue;
 
