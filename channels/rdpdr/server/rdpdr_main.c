@@ -3575,9 +3575,9 @@ static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* ca
 	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	/* Send a request to open the file. */
+	/* Send a request to open the file. FILE_DELETE_ON_CLOSE needs DELETE access. */
 	return rdpdr_server_send_device_create_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
+	    context, irp->DeviceId, irp->CompletionId, irp->PathName, DELETE | SYNCHRONIZE,
 	    FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
@@ -3733,10 +3733,10 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 	rdpdr_server_convert_slashes(irp->ExtraBuffer, sizeof(irp->ExtraBuffer));
 
-	/* Send a request to open the file. */
-	return rdpdr_server_send_device_create_request(context, irp->DeviceId, irp->CompletionId,
-	                                               irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
-	                                               FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
+	/* Send a request to open the file. Renaming needs DELETE access. */
+	return rdpdr_server_send_device_create_request(
+	    context, irp->DeviceId, irp->CompletionId, irp->PathName,
+	    DELETE | FILE_READ_ATTRIBUTES | SYNCHRONIZE, FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
 static void rdpdr_server_private_free(RdpdrServerPrivate* ctx)
