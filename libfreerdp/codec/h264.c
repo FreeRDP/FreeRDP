@@ -918,6 +918,8 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 			h264->UsageType = value;
 			return TRUE;
 		case H264_CONTEXT_OPTION_HW_ACCEL:
+			if (h264->hwAccel == value)
+				return TRUE;
 			h264->hwAccel = (value);
 			IFCALL(h264->subsystem->Uninit, h264);
 			return IFCALLRESULT(TRUE, h264->subsystem->Init, h264);
