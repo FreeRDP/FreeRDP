@@ -624,6 +624,10 @@ UINT sdlClip::ReceiveFormatListResponse(WINPR_ATTR_UNUSED CliprdrClientContext* 
 [[nodiscard]]
 static const char* getCurrentTextMime()
 {
+	/* Ask for UTF-8 explicitly first: a plain text/plain request may return
+	 * any text encoding, e.g. macOS returns UTF-16 with BOM for Finder copies. */
+	if (SDL_HasClipboardData(mime_text_utf8))
+		return mime_text_utf8;
 
 	for (auto m : s_mime_text())
 	{
@@ -680,7 +684,11 @@ std::shared_ptr<BYTE> sdlClip::ReceiveFormatDataRequestHandle(
 			mime = getCurrentTextMime();
 			if (!mime)
 				return {};
-			localFormatId = ClipboardGetFormatId(clipboard->_system, mime);
+			/* WinPR synthesizes text formats from text/plain, which it treats as UTF-8 */
+			if (strcmp(mime, mime_text_utf8) == 0)
+				localFormatId = ClipboardGetFormatId(clipboard->_system, mime_text_plain);
+			else
+				localFormatId = ClipboardGetFormatId(clipboard->_system, mime);
 			break;
 
 		case CF_DIB:
