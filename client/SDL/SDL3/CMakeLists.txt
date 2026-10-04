@@ -62,6 +62,7 @@ set(SRCS
 # Native X11 helpers for RAIL (_NET_WM_MOVERESIZE, compositor detection); no-op stubs without libX11.
 if(APPLE)
   list(APPEND SRCS sdl_clip_macos.h sdl_clip_macos.m)
+  set_source_files_properties(sdl_clip_macos.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 endif()
 
 set(SDL_X11_NATIVE OFF)

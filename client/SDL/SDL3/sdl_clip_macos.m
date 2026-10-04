@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #import <AppKit/AppKit.h>
 
@@ -65,5 +66,126 @@ char *sdl_clip_macos_get_uri_list(size_t *size)
 		if (data && size)
 			*size = strlen(data);
 		return data;
+	}
+}
+
+static sdl_clip_macos_provide_cb s_provide_cb = NULL;
+static void *s_provide_userdata = NULL;
+static NSUInteger s_generation = 0;
+static NSInteger s_change_count = -1;
+static NSMutableArray *s_providers = nil;
+static unsigned s_download_serial = 0;
+
+@interface SdlClipFileProvider : NSObject <NSPasteboardItemDataProvider>
+@property(nonatomic) size_t index;
+@property(nonatomic) NSUInteger generation;
+@end
+
+@implementation SdlClipFileProvider
+
+- (void)pasteboard:(NSPasteboard *)pasteboard
+                  item:(NSPasteboardItem *)item
+    provideDataForType:(NSPasteboardType)type
+{
+	if (![type isEqualToString:NSPasteboardTypeFileURL])
+		return;
+	if (!s_provide_cb || (self.generation != s_generation))
+		return;
+
+	char *path = s_provide_cb(s_provide_userdata, self.index);
+	if (!path)
+		return;
+
+	NSURL *url = [NSURL fileURLWithPath:[NSString stringWithUTF8String:path]];
+	free(path);
+	[item setString:[url absoluteString] forType:NSPasteboardTypeFileURL];
+}
+
+@end
+
+bool sdl_clip_macos_offer_files(size_t count, sdl_clip_macos_provide_cb cb, void *userdata)
+{
+	@autoreleasepool
+	{
+		s_provide_cb = cb;
+		s_provide_userdata = userdata;
+		s_generation++;
+
+		/* NSPasteboardItem does not keep its data provider alive */
+		s_providers = [NSMutableArray array];
+		NSMutableArray *items = [NSMutableArray array];
+		for (size_t i = 0; i < count; i++)
+		{
+			SdlClipFileProvider *provider = [SdlClipFileProvider new];
+			provider.index = i;
+			provider.generation = s_generation;
+			[s_providers addObject:provider];
+
+			NSPasteboardItem *item = [NSPasteboardItem new];
+			if (![item setDataProvider:provider forTypes:@[NSPasteboardTypeFileURL]])
+				return false;
+			[items addObject:item];
+		}
+
+		NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+		/* Universal Clipboard reads new contents right away, which would download
+		 * every copied file. Keep the files on this Mac until they are pasted. */
+		[pasteboard prepareForNewContentsWithOptions:NSPasteboardContentsCurrentHostOnly];
+		const BOOL rc = [pasteboard writeObjects:items];
+		s_change_count = [pasteboard changeCount];
+		return rc;
+	}
+}
+
+bool sdl_clip_macos_is_own_change(void)
+{
+	@autoreleasepool
+	{
+		return (s_change_count >= 0) &&
+		       ([[NSPasteboard generalPasteboard] changeCount] == s_change_count);
+	}
+}
+
+static NSString *download_root(void)
+{
+	NSString *name = [NSString stringWithFormat:@"freerdp-clipboard-%d", getpid()];
+	return [NSTemporaryDirectory() stringByAppendingPathComponent:name];
+}
+
+char *sdl_clip_macos_new_download_dir(void)
+{
+	@autoreleasepool
+	{
+		NSFileManager *fm = [NSFileManager defaultManager];
+		NSString *root = download_root();
+
+		/* Keep the previous offer, Finder might still be copying from it */
+		if (s_download_serial >= 2)
+		{
+			NSString *old = [NSString stringWithFormat:@"%u", s_download_serial - 2];
+			[fm removeItemAtPath:[root stringByAppendingPathComponent:old] error:nil];
+		}
+
+		NSString *name = [NSString stringWithFormat:@"%u", s_download_serial++];
+		NSString *dir = [root stringByAppendingPathComponent:name];
+		NSDictionary *attributes = @{NSFilePosixPermissions: @0700};
+		if (![fm createDirectoryAtPath:dir
+		        withIntermediateDirectories:YES
+		                         attributes:attributes
+		                              error:nil])
+			return NULL;
+		return strdup([dir fileSystemRepresentation]);
+	}
+}
+
+void sdl_clip_macos_detach(void)
+{
+	@autoreleasepool
+	{
+		s_provide_cb = NULL;
+		s_provide_userdata = NULL;
+		s_generation++;
+		s_providers = nil;
+		[[NSFileManager defaultManager] removeItemAtPath:download_root() error:nil];
 	}
 }

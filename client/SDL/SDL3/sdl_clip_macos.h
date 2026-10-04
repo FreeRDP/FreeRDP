@@ -23,7 +23,8 @@
 #include <stddef.h>
 
 /* SDL reports the native pasteboard types on macOS, and a Finder copy has no
- * MIME type for its files (public.file-url has none), so read them directly. */
+ * MIME type for its files (public.file-url has none), so read and write them
+ * directly. */
 
 #ifdef __cplusplus
 extern "C"
@@ -36,6 +37,25 @@ extern "C"
 	/** @return the files on the general pasteboard as a NUL terminated text/uri-list
 	 *  with path based file:// URLs, or NULL. Free with free(). */
 	char* sdl_clip_macos_get_uri_list(size_t* size);
+
+	/** Called on the main thread when an application pastes item @p index.
+	 *  @return the absolute path of the local copy, or NULL. Freed with free(). */
+	typedef char* (*sdl_clip_macos_provide_cb)(void* userdata, size_t index);
+
+	/** Put @p count files on the general pasteboard. Their contents are only
+	 *  requested from @p cb when an application pastes them. */
+	bool sdl_clip_macos_offer_files(size_t count, sdl_clip_macos_provide_cb cb, void* userdata);
+
+	/** @return true if the current pasteboard contents were written by
+	 *  sdl_clip_macos_offer_files() */
+	bool sdl_clip_macos_is_own_change(void);
+
+	/** @return a new, empty directory for the files of one offer, or NULL.
+	 *  Free with free(). */
+	char* sdl_clip_macos_new_download_dir(void);
+
+	/** Stop answering for offered files and remove all downloaded files. */
+	void sdl_clip_macos_detach(void);
 
 #ifdef __cplusplus
 }

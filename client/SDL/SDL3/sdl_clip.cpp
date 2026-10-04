@@ -33,6 +33,13 @@
 #include "sdl_context.hpp"
 
 #if defined(__APPLE__)
+#include <cstdio>
+
+#include <winpr/file.h>
+#include <winpr/path.h>
+#include <winpr/string.h>
+#include <freerdp/utils/cliprdr_utils.h>
+
 #include "sdl_clip_macos.h"
 #endif
 
@@ -209,6 +216,9 @@ sdlClip::sdlClip(SdlContext* sdl)
 	_mime_uuid = ss.str();
 
 	std::ignore = cliprdr_file_context_set_locally_available(_file, TRUE);
+#if defined(__APPLE__)
+	_contentsEvent = CreateEventA(nullptr, TRUE, FALSE, nullptr);
+#endif
 }
 
 sdlClip::~sdlClip()
@@ -216,6 +226,9 @@ sdlClip::~sdlClip()
 	cliprdr_file_context_free(_file);
 	ClipboardDestroy(_system);
 	std::ignore = CloseHandle(_event);
+#if defined(__APPLE__)
+	std::ignore = CloseHandle(_contentsEvent);
+#endif
 }
 
 bool sdlClip::init(CliprdrClientContext* clip)
@@ -230,12 +243,22 @@ bool sdlClip::init(CliprdrClientContext* clip)
 	_ctx->ServerFormatDataRequest = sdlClip::ReceiveFormatDataRequest;
 	_ctx->ServerFormatDataResponse = sdlClip::ReceiveFormatDataResponse;
 
-	return cliprdr_file_context_init(_file, _ctx);
+	if (!cliprdr_file_context_init(_file, _ctx))
+		return false;
+#if defined(__APPLE__)
+	/* Without FUSE the file context does not handle server file contents */
+	if (!cliprdr_file_context_has_local_support(_file))
+		_ctx->ServerFileContentsResponse = sdlClip::ReceiveFileContentsResponse;
+#endif
+	return true;
 }
 
 bool sdlClip::uninit(CliprdrClientContext* clip)
 {
 	WINPR_ASSERT(clip);
+#if defined(__APPLE__)
+	sdl_clip_macos_detach();
+#endif
 	if (!cliprdr_file_context_uninit(_file, _ctx))
 		return false;
 	ClipboardLockGuard systemlock(_system);
@@ -293,6 +316,12 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 		if (mimes.empty())
 			return true;
 
+#if defined(__APPLE__)
+		/* Takes the locks itself and waits for the server file list */
+		if (_ctx && offerServerFiles())
+			return true;
+#endif
+
 		std::vector<const char*> cmimes;
 		cmimes.reserve(mimes.size());
 		for (const auto& m : mimes)
@@ -304,6 +333,12 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 
 	if (ev.timestamp == _last_timestamp)
 		return true;
+
+#if defined(__APPLE__)
+	/* Our own server file offer, not a local copy */
+	if (sdl_clip_macos_is_own_change())
+		return true;
+#endif
 
 	if (contains(mime_types, WINPR_ASSERTING_INT_CAST(Sint32, nformats)))
 		return true;
@@ -1327,3 +1362,280 @@ const char* CliprdrFormat::formatName() const
 		return nullptr;
 	return _formatName.c_str();
 }
+
+#if defined(__APPLE__)
+[[nodiscard]] static std::string descriptor_name(const FILEDESCRIPTORW& descriptor)
+{
+	char* name =
+	    ConvertWCharNToUtf8Alloc(descriptor.cFileName, ARRAYSIZE(descriptor.cFileName), nullptr);
+	if (!name)
+		return {};
+	std::string rc = name;
+	free(name);
+	return rc;
+}
+
+/* Map a server relative path (dir\file) to a local relative path (dir/file) */
+[[nodiscard]] static bool local_relative_path(const std::string& name, std::string& path)
+{
+	path.clear();
+	size_t start = 0;
+	while (start <= name.size())
+	{
+		auto end = name.find('\\', start);
+		if (end == std::string::npos)
+			end = name.size();
+		const auto component = name.substr(start, end - start);
+		if (component.empty() || (component == ".") || (component == "..") ||
+		    (component.find('/') != std::string::npos))
+			return false;
+		if (!path.empty())
+			path += '/';
+		path += component;
+		start = end + 1;
+	}
+	return !path.empty();
+}
+
+bool sdlClip::fetchServerFormat(uint32_t formatID, const std::string& mime)
+{
+	{
+		ClipboardLockGuard systemlock(_system);
+		std::scoped_lock lock(_lock);
+		if (SendDataRequest(formatID, mime) != CHANNEL_RC_OK)
+			return false;
+	}
+
+	HANDLE hdl[2] = { freerdp_abort_event(_sdl->context()), _event };
+	const UINT32 timeout =
+	    freerdp_settings_get_uint32(_sdl->context()->settings, FreeRDP_TcpAckTimeout);
+	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, timeout);
+
+	std::scoped_lock lock(_lock);
+	if (status != WAIT_OBJECT_0 + 1)
+	{
+		_request_queue.pop();
+		return false;
+	}
+
+	auto request = _request_queue.front();
+	_request_queue.pop();
+	if (_request_queue.empty())
+		std::ignore = ResetEvent(_event);
+	return request.success();
+}
+
+bool sdlClip::offerServerFiles()
+{
+	uint32_t formatID = 0;
+	{
+		std::scoped_lock lock(_lock);
+		formatID = serverIdForMime(s_mime_uri_list);
+	}
+	if (formatID == 0)
+		return false;
+
+	/* Only the file list is fetched now, the contents follow on paste */
+	if (!fetchServerFormat(formatID, s_mime_uri_list))
+		return false;
+
+	FILEDESCRIPTORW* descriptors = nullptr;
+	UINT32 count = 0;
+	{
+		ClipboardLockGuard systemlock(_system);
+		std::scoped_lock lock(_lock);
+		const UINT32 id = ClipboardGetFormatId(_system, s_type_FileGroupDescriptorW);
+		UINT32 size = 0;
+		auto data =
+		    std::shared_ptr<BYTE>(static_cast<BYTE*>(ClipboardGetData(_system, id, &size)), free);
+		if (!data || (cliprdr_parse_file_list(data.get(), size, &descriptors, &count) != 0))
+			return false;
+	}
+	auto files = std::shared_ptr<FILEDESCRIPTORW>(descriptors, free);
+
+	_serverFiles.assign(files.get(), files.get() + count);
+	_serverTopLevelFiles.clear();
+	for (size_t i = 0; i < _serverFiles.size(); i++)
+	{
+		const auto name = descriptor_name(_serverFiles[i]);
+		if (!name.empty() && (name.find('\\') == std::string::npos))
+			_serverTopLevelFiles.push_back(i);
+	}
+	if (_serverTopLevelFiles.empty())
+		return false;
+
+	std::shared_ptr<char> dir(sdl_clip_macos_new_download_dir(), free);
+	if (!dir)
+		return false;
+	_downloadDir = dir.get();
+
+	WLog_Print(_log, WLOG_DEBUG, "offering %" PRIuz " server files (%" PRIuz " entries)",
+	           _serverTopLevelFiles.size(), _serverFiles.size());
+	return sdl_clip_macos_offer_files(_serverTopLevelFiles.size(), sdlClip::ProvideFileCb, this);
+}
+
+char* sdlClip::ProvideFileCb(void* userdata, size_t index)
+{
+	auto clip = static_cast<sdlClip*>(userdata);
+	WINPR_ASSERT(clip);
+	return clip->provideFile(index);
+}
+
+char* sdlClip::provideFile(size_t index)
+{
+	if (!_ctx || (index >= _serverTopLevelFiles.size()))
+		return nullptr;
+
+	const auto top = descriptor_name(_serverFiles[_serverTopLevelFiles[index]]);
+	const auto prefix = top + "\\";
+
+	/* Download the file, or the directory with everything below it */
+	for (size_t i = 0; i < _serverFiles.size(); i++)
+	{
+		const auto& descriptor = _serverFiles[i];
+		const auto name = descriptor_name(descriptor);
+		if ((name != top) && (name.compare(0, prefix.size(), prefix) != 0))
+			continue;
+
+		std::string relative;
+		if (!local_relative_path(name, relative))
+		{
+			WLog_Print(_log, WLOG_WARN, "skipping invalid server file name %s", name.c_str());
+			continue;
+		}
+
+		const auto path = _downloadDir + "/" + relative;
+		const bool isDir = (descriptor.dwFlags & FD_ATTRIBUTES) &&
+		                   (descriptor.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+		if (isDir)
+		{
+			if (!winpr_PathMakePath(path.c_str(), nullptr))
+				return nullptr;
+		}
+		else
+		{
+			const auto parent = path.substr(0, path.rfind('/'));
+			if (!winpr_PathMakePath(parent.c_str(), nullptr))
+				return nullptr;
+			if (!downloadFile(WINPR_ASSERTING_INT_CAST(UINT32, i), descriptor, path))
+			{
+				WLog_Print(_log, WLOG_ERROR, "failed to download %s", name.c_str());
+				return nullptr;
+			}
+		}
+	}
+
+	return _strdup((_downloadDir + "/" + top).c_str());
+}
+
+bool sdlClip::downloadFile(UINT32 listIndex, const FILEDESCRIPTORW& descriptor,
+                           const std::string& path)
+{
+	UINT64 size = 0;
+	if (descriptor.dwFlags & FD_FILESIZE)
+		size = (UINT64{ descriptor.nFileSizeHigh } << 32) | descriptor.nFileSizeLow;
+	else
+	{
+		std::vector<BYTE> data;
+		if (!requestFileContents(listIndex, FILECONTENTS_SIZE, 0, sizeof(UINT64), data) ||
+		    (data.size() < sizeof(UINT64)))
+			return false;
+		memcpy(&size, data.data(), sizeof(size));
+	}
+
+	FILE* fp = winpr_fopen(path.c_str(), "wb");
+	if (!fp)
+		return false;
+
+	bool rc = true;
+	const UINT32 chunk = 1024 * 1024;
+	for (UINT64 offset = 0; offset < size;)
+	{
+		const auto requested = static_cast<UINT32>(std::min<UINT64>(chunk, size - offset));
+		std::vector<BYTE> data;
+		if (!requestFileContents(listIndex, FILECONTENTS_RANGE, offset, requested, data) ||
+		    data.empty() || (fwrite(data.data(), 1, data.size(), fp) != data.size()))
+		{
+			rc = false;
+			break;
+		}
+		offset += data.size();
+	}
+
+	if (fclose(fp) != 0)
+		rc = false;
+	if (!rc)
+		std::ignore = winpr_DeleteFile(path.c_str());
+	return rc;
+}
+
+bool sdlClip::requestFileContents(UINT32 listIndex, UINT32 flags, UINT64 offset, UINT32 size,
+                                  std::vector<BYTE>& data)
+{
+	CLIPRDR_FILE_CONTENTS_REQUEST request = {};
+	request.common.msgType = CB_FILECONTENTS_REQUEST;
+	request.listIndex = listIndex;
+	request.dwFlags = flags;
+	request.nPositionLow = static_cast<UINT32>(offset & 0xFFFFFFFF);
+	request.nPositionHigh = static_cast<UINT32>(offset >> 32);
+	request.cbRequested = size;
+	{
+		std::scoped_lock lock(_lock);
+		request.streamId = ++_contentsStreamId;
+		_contentsSuccess = false;
+		_contentsData.clear();
+		std::ignore = ResetEvent(_contentsEvent);
+	}
+
+	WINPR_ASSERT(_ctx);
+	WINPR_ASSERT(_ctx->ClientFileContentsRequest);
+	if (_ctx->ClientFileContentsRequest(_ctx, &request) != CHANNEL_RC_OK)
+		return false;
+
+	HANDLE hdl[2] = { freerdp_abort_event(_sdl->context()), _contentsEvent };
+	const UINT32 timeout =
+	    freerdp_settings_get_uint32(_sdl->context()->settings, FreeRDP_TcpAckTimeout);
+	if (WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, timeout) != WAIT_OBJECT_0 + 1)
+	{
+		WLog_Print(_log, WLOG_ERROR, "no file contents reply for stream %" PRIu32,
+		           request.streamId);
+		return false;
+	}
+
+	std::scoped_lock lock(_lock);
+	if (!_contentsSuccess)
+		return false;
+	data = std::move(_contentsData);
+	return true;
+}
+
+UINT sdlClip::ReceiveFileContentsResponse(
+    CliprdrClientContext* context, const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(fileContentsResponse);
+
+	auto clipboard = static_cast<sdlClip*>(
+	    cliprdr_file_context_get_context(static_cast<CliprdrFileContext*>(context->custom)));
+	WINPR_ASSERT(clipboard);
+
+	std::scoped_lock lock(clipboard->_lock);
+	if (fileContentsResponse->streamId != clipboard->_contentsStreamId)
+	{
+		/* A late reply to a request that already timed out */
+		WLog_Print(clipboard->_log, WLOG_WARN,
+		           "file contents response for stale stream %" PRIu32 ", ignoring",
+		           fileContentsResponse->streamId);
+		return CHANNEL_RC_OK;
+	}
+
+	clipboard->_contentsSuccess = (fileContentsResponse->common.msgFlags & CB_RESPONSE_OK) &&
+	                              !(fileContentsResponse->common.msgFlags & CB_RESPONSE_FAIL);
+	if (clipboard->_contentsSuccess && fileContentsResponse->requestedData)
+		clipboard->_contentsData.assign(fileContentsResponse->requestedData,
+		                                fileContentsResponse->requestedData +
+		                                    fileContentsResponse->cbRequested);
+	std::ignore = SetEvent(clipboard->_contentsEvent);
+	return CHANNEL_RC_OK;
+}
+#endif
