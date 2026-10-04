@@ -3606,11 +3606,13 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	WINPR_ATTR_UNUSED const UINT32 length = Stream_Get_UINT32(s); /* Length (4 bytes) */
-	Stream_Seek(s, 1);                                            /* Padding (1 byte) */
+	/* [MS-RDPEFS] 2.2.3.4.9 DR_DRIVE_SET_INFORMATION_RSP: the padding is optional */
+	if (Stream_GetRemainingLength(s) > 0)
+		Stream_Seek(s, 1); /* Padding (1 byte) */
 
 	/* Invoke the rename file completion routine. */
 	context->OnDriveRenameFileComplete(context, irp->CallbackData, ioStatus);
