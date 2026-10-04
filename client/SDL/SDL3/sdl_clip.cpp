@@ -1471,7 +1471,28 @@ bool sdlClip::offerServerFiles()
 
 	WLog_Print(_log, WLOG_DEBUG, "offering %" PRIuz " server files (%" PRIuz " entries)",
 	           _serverTopLevelFiles.size(), _serverFiles.size());
-	return sdl_clip_macos_offer_files(_serverTopLevelFiles.size(), sdlClip::ProvideFileCb, this);
+	bool serverHasText = false;
+	{
+		std::scoped_lock lock(_lock);
+		for (auto& format : _serverFormats)
+		{
+			if ((format.formatId() == CF_UNICODETEXT) || (format.formatId() == CF_TEXT))
+				serverHasText = true;
+		}
+	}
+
+	return sdl_clip_macos_offer_files(_serverTopLevelFiles.size(), sdlClip::ProvideFileCb,
+	                                  serverHasText ? sdlClip::ProvideTextCb : nullptr, this);
+}
+
+char* sdlClip::ProvideTextCb(void* userdata)
+{
+	/* The text the server offers with the files, e.g. their paths */
+	size_t size = 0;
+	auto data = static_cast<const char*>(ClipDataCb(userdata, mime_text_utf8, &size));
+	if (!data)
+		return nullptr;
+	return strndup(data, size);
 }
 
 char* sdlClip::ProvideFileCb(void* userdata, size_t index)

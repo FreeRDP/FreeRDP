@@ -42,9 +42,15 @@ extern "C"
 	 *  @return the absolute path of the local copy, or NULL. Freed with free(). */
 	typedef char* (*sdl_clip_macos_provide_cb)(void* userdata, size_t index);
 
-	/** Put @p count files on the general pasteboard. Their contents are only
-	 *  requested from @p cb when an application pastes them. */
-	bool sdl_clip_macos_offer_files(size_t count, sdl_clip_macos_provide_cb cb, void* userdata);
+	/** Called on the main thread when an application pastes the offered files
+	 *  as text. @return UTF-8 text, or NULL. Freed with free(). */
+	typedef char* (*sdl_clip_macos_provide_text_cb)(void* userdata);
+
+	/** Put @p count files on the general pasteboard, and their text (e.g. the
+	 *  paths) if @p text_cb is set. The contents are only requested from the
+	 *  callbacks when an application pastes them. */
+	bool sdl_clip_macos_offer_files(size_t count, sdl_clip_macos_provide_cb cb,
+	                                sdl_clip_macos_provide_text_cb text_cb, void* userdata);
 
 	/** @return true if the current pasteboard contents were written by
 	 *  sdl_clip_macos_offer_files() */

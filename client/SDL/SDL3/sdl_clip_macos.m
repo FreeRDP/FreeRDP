@@ -70,6 +70,7 @@ char *sdl_clip_macos_get_uri_list(size_t *size)
 }
 
 static sdl_clip_macos_provide_cb s_provide_cb = NULL;
+static sdl_clip_macos_provide_text_cb s_provide_text_cb = NULL;
 static void *s_provide_userdata = NULL;
 static NSUInteger s_generation = 0;
 static NSInteger s_change_count = -1;
@@ -87,9 +88,21 @@ static unsigned s_download_serial = 0;
                   item:(NSPasteboardItem *)item
     provideDataForType:(NSPasteboardType)type
 {
-	if (![type isEqualToString:NSPasteboardTypeFileURL])
+	if (self.generation != s_generation)
 		return;
-	if (!s_provide_cb || (self.generation != s_generation))
+
+	if ([type isEqualToString:NSPasteboardTypeString])
+	{
+		char *text = s_provide_text_cb ? s_provide_text_cb(s_provide_userdata) : NULL;
+		if (text)
+		{
+			[item setString:[NSString stringWithUTF8String:text] forType:type];
+			free(text);
+		}
+		return;
+	}
+
+	if (![type isEqualToString:NSPasteboardTypeFileURL] || !s_provide_cb)
 		return;
 
 	char *path = s_provide_cb(s_provide_userdata, self.index);
@@ -103,11 +116,13 @@ static unsigned s_download_serial = 0;
 
 @end
 
-bool sdl_clip_macos_offer_files(size_t count, sdl_clip_macos_provide_cb cb, void *userdata)
+bool sdl_clip_macos_offer_files(size_t count, sdl_clip_macos_provide_cb cb,
+                                sdl_clip_macos_provide_text_cb text_cb, void *userdata)
 {
 	@autoreleasepool
 	{
 		s_provide_cb = cb;
+		s_provide_text_cb = text_cb;
 		s_provide_userdata = userdata;
 		s_generation++;
 
@@ -121,8 +136,12 @@ bool sdl_clip_macos_offer_files(size_t count, sdl_clip_macos_provide_cb cb, void
 			provider.generation = s_generation;
 			[s_providers addObject:provider];
 
+			/* Applications that paste text get the text of the copy, e.g. the paths */
+			NSArray *types = (i == 0 && text_cb)
+			                     ? @[NSPasteboardTypeFileURL, NSPasteboardTypeString]
+			                     : @[NSPasteboardTypeFileURL];
 			NSPasteboardItem *item = [NSPasteboardItem new];
-			if (![item setDataProvider:provider forTypes:@[NSPasteboardTypeFileURL]])
+			if (![item setDataProvider:provider forTypes:types])
 				return false;
 			[items addObject:item];
 		}
@@ -183,6 +202,7 @@ void sdl_clip_macos_detach(void)
 	@autoreleasepool
 	{
 		s_provide_cb = NULL;
+		s_provide_text_cb = NULL;
 		s_provide_userdata = NULL;
 		s_generation++;
 		s_providers = nil;

@@ -142,6 +142,7 @@ class sdlClip
 	[[nodiscard]] bool offerServerFiles();
 	[[nodiscard]] bool fetchServerFormat(uint32_t formatID, const std::string& mime);
 	[[nodiscard]] static char* ProvideFileCb(void* userdata, size_t index);
+	[[nodiscard]] static char* ProvideTextCb(void* userdata);
 	[[nodiscard]] char* provideFile(size_t index);
 	[[nodiscard]] bool downloadFile(UINT32 listIndex, const FILEDESCRIPTORW& descriptor,
 	                                const std::string& path);
