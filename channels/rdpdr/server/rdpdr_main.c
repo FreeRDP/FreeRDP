@@ -26,6 +26,7 @@
 #include <freerdp/utils/rdpdr_utils.h>
 
 #include <winpr/crt.h>
+#include <winpr/interlocked.h>
 #include <winpr/assert.h>
 #include <winpr/nt.h>
 #include <winpr/print.h>
@@ -62,7 +63,7 @@ struct s_rdpdr_server_private
 	BOOL UserLoggedOnPdu;
 
 	wListDictionary* IrpList;
-	UINT32 NextCompletionId;
+	LONG NextCompletionId; /* see rdpdr_server_next_completion_id() */
 
 	wHashTable* devicelist;
 	wLog* log;
@@ -2408,6 +2409,16 @@ static UINT rdpdr_server_read_file_directory_information(wLog* log, wStream* s,
 	return CHANNEL_RC_OK;
 }
 
+/* The drive and smartcard APIs are called from the application's threads,
+ * while the completion callbacks that send follow-up requests run on the
+ * channel thread, so the completion IDs must be handed out atomically. */
+WINPR_ATTR_NODISCARD
+static UINT32 rdpdr_server_next_completion_id(RdpdrServerPrivate* priv)
+{
+	WINPR_ASSERT(priv);
+	return (UINT32)(InterlockedIncrement(&priv->NextCompletionId) - 1);
+}
+
 static UINT prepare_irp(RdpdrServerContext* context, UINT32 deviceId, RDPDR_IRP_Callback callback,
                         void* callbackData, RDPDR_IRP** outIrp)
 {
@@ -2425,7 +2436,7 @@ static UINT prepare_irp(RdpdrServerContext* context, UINT32 deviceId, RDPDR_IRP_
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	irp->CompletionId = priv->NextCompletionId++;
+	irp->CompletionId = rdpdr_server_next_completion_id(priv);
 	irp->Callback = callback;
 	irp->CallbackData = callbackData;
 	irp->DeviceId = deviceId;
@@ -2876,7 +2887,7 @@ static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 	           fileInformation2str(information));
 
 	/* Setup the IRP. */
-	irp->CompletionId = priv->NextCompletionId++;
+	irp->CompletionId = rdpdr_server_next_completion_id(priv);
 	irp->Callback = rdpdr_server_drive_create_directory_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
@@ -2987,7 +2998,7 @@ static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 	           fileInformation2str(information));
 
 	/* Setup the IRP. */
-	irp->CompletionId = priv->NextCompletionId++;
+	irp->CompletionId = rdpdr_server_next_completion_id(priv);
 	irp->Callback = rdpdr_server_drive_delete_directory_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
@@ -3099,7 +3110,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 		context->OnDriveQueryDirectoryComplete(context, irp->CallbackData, ioStatus,
 		                                       length > 0 ? &fdi : nullptr);
 		/* Setup the IRP. */
-		irp->CompletionId = priv->NextCompletionId++;
+		irp->CompletionId = rdpdr_server_next_completion_id(priv);
 		irp->Callback = rdpdr_server_drive_query_directory_callback2;
 
 		if (!rdpdr_server_enqueue_irp(context, irp))
@@ -3166,7 +3177,7 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 
 	const uint32_t fileId = Stream_Get_UINT32(s);
 	/* Setup the IRP. */
-	irp->CompletionId = priv->NextCompletionId++;
+	irp->CompletionId = rdpdr_server_next_completion_id(priv);
 	irp->Callback = rdpdr_server_drive_query_directory_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
@@ -3541,7 +3552,7 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 	WLog_Print(priv->log, WLOG_DEBUG, "fileId [0x%08" PRIx32 "], information %s", fileId,
 	           fileInformation2str(information));
 	/* Setup the IRP. */
-	irp->CompletionId = priv->NextCompletionId++;
+	irp->CompletionId = rdpdr_server_next_completion_id(priv);
 	irp->Callback = rdpdr_server_drive_delete_file_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
@@ -3643,7 +3654,7 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	/* Invoke the rename file completion routine. */
 	context->OnDriveRenameFileComplete(context, irp->CallbackData, ioStatus);
 	/* Setup the IRP. */
-	irp->CompletionId = priv->NextCompletionId++;
+	irp->CompletionId = rdpdr_server_next_completion_id(priv);
 	irp->Callback = rdpdr_server_drive_rename_file_callback3;
 	irp->DeviceId = deviceId;
 
@@ -3696,7 +3707,7 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 	           fileInformation2str(information));
 
 	/* Setup the IRP. */
-	irp->CompletionId = priv->NextCompletionId++;
+	irp->CompletionId = rdpdr_server_next_completion_id(priv);
 	irp->Callback = rdpdr_server_drive_rename_file_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
