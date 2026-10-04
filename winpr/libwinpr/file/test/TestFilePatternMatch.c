@@ -15,6 +15,20 @@ int TestFilePatternMatch(int argc, char* argv[])
 		return -1;
 	}
 
+	/* '*.*' expression: every name, as on Windows */
+
+	if (!FilePatternMatchA("document.txt", "*.*"))
+	{
+		printf("FilePatternMatchA error: FileName: %s Pattern: %s\n", "document.txt", "*.*");
+		return -1;
+	}
+
+	if (!FilePatternMatchA("Documents", "*.*"))
+	{
+		printf("FilePatternMatchA error: FileName: %s Pattern: %s\n", "Documents", "*.*");
+		return -1;
+	}
+
 	/* '*X' expression */
 
 	if (!FilePatternMatchA("document.txt", "*.txt"))
