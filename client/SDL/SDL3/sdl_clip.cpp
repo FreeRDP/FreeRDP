@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include <mutex>
@@ -209,7 +210,20 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 		return true;
 	}
 
-	if (contains(ev.mime_types, ev.num_mime_types))
+	/* The update pushed when the channel is ready has no MIME types, so take the
+	 * ones of the current clipboard contents. */
+	const char** mime_types = ev.mime_types;
+	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types);
+	std::unique_ptr<char*, decltype(&SDL_free)> current(nullptr, SDL_free);
+	if (!mime_types)
+	{
+		current.reset(SDL_GetClipboardMimeTypes(&nformats));
+		mime_types = const_cast<const char**>(current.get());
+		if (!mime_types)
+			nformats = 0;
+	}
+
+	if (contains(mime_types, WINPR_ASSERTING_INT_CAST(Sint32, nformats)))
 	{
 		return true;
 	}
@@ -229,8 +243,7 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 	std::vector<std::string> clientFormatNames;
 	std::vector<CLIPRDR_FORMAT> clientFormats;
 
-	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types);
-	const char** clipboard_mime_formats = ev.mime_types;
+	const char** clipboard_mime_formats = mime_types;
 
 	WLog_Print(_log, WLOG_TRACE, "SDL has %" PRIuz " formats", nformats);
 
