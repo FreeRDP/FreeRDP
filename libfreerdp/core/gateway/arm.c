@@ -896,6 +896,12 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON
                             const rdpCertificate* redirectedServerCert)
 {
 	WINPR_ASSERT(arm);
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(json);
+
+	if (!redirectedServerCert)
+		return FALSE;
+
 	BOOL ret = FALSE;
 	BYTE* authBlob = nullptr;
 	WCHAR* wGUID = nullptr;
