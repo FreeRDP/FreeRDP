@@ -876,7 +876,8 @@ progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive
 	CopyMemory(sign, buffer, 4096ULL * 2ULL);
 	if (!extrapolate)
 	{
-		rfx_differential_decode(buffer + 4032, 64);
+		if (!rfx_differential_decode(buffer + 4032, 64))
+			return -1;
 		if (!progressive_rfx_decode_block(prims, &buffer[0], 1024, shift->HL1)) /* HL1 */
 			return -1;
 		if (!progressive_rfx_decode_block(prims, &buffer[1024], 1024, shift->LH1)) /* LH1 */
@@ -918,7 +919,8 @@ progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive
 			return -1;
 		if (!progressive_rfx_decode_block(prims, &buffer[3951], 64, shift->HH3)) /* HH3 */
 			return -1;
-		rfx_differential_decode(&buffer[4015], 81);                           /* LL3 */
+		if (!rfx_differential_decode(&buffer[4015], 81)) /* LL3 */
+			return -1;
 		if (!progressive_rfx_decode_block(prims, &buffer[4015], 81, shift->LL3)) /* LL3 */
 			return -1;
 	}
