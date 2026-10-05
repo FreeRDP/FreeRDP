@@ -155,6 +155,15 @@ set(${MODULE_PREFIX}_SRCS
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
 
+if(WITH_RDPEUDP)
+  if(WITH_LIBRESSL OR NOT OPENSSL_FOUND)
+    message(FATAL_ERROR "-DWITH_RDPEUDP=ON requires OpenSSL, it does not work with LibreSSL")
+  endif()
+  include(WarnExperimental)
+  warn_experimental("UDP multitransport" "-DWITH_RDPEUDP=OFF")
+  list(APPEND ${MODULE_PREFIX}_SRCS rdpudp.c rdpudp.h rdpemt.c rdpemt.h)
+endif()
+
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
 if(WIN32)
