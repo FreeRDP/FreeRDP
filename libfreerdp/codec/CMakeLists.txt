@@ -186,8 +186,8 @@ endif()
 
 if(ANDROID AND WITH_MEDIACODEC)
   include(WarnExperimental)
-  warn_experimental("Experimental encoders/decoders for H264" "-DWITH_MEDIACODEC=OFF")
-  list(APPEND CODEC_SRCS h264_mediacodec.c)
+  warn_experimental("Experimental encoders/decoders for H264 and AAC" "-DWITH_MEDIACODEC=OFF")
+  list(APPEND CODEC_SRCS h264_mediacodec.c dsp_mediacodec.c)
 
   find_library(MEDIACODEC mediandk REQUIRED)
   list(APPEND CODEC_LIBS ${MEDIACODEC})
