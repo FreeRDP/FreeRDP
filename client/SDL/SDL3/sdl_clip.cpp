@@ -175,6 +175,30 @@ bool sdlClip::uninit(CliprdrClientContext* clip)
 	return true;
 }
 
+bool sdlClip::isCompositorRestore(const SDL_ClipboardEvent& ev) const
+{
+	/* A non-owner update arriving up to one second after a server copy was put on the local
+	 * clipboard, without our marker, is a compositor restore if it has a single mime type (mutter
+	 * saves and restores one: text or image of the PREVIOUS copy, possibly of another kind) or
+	 * only mime types of the new server copy. */
+	if (_server_reclaimed || _server_mimetypes.empty() || (ev.num_mime_types <= 0))
+		return false;
+	if (SDL_GetTicksNS() - _server_set_ns > SDL_NS_PER_SECOND)
+		return false;
+	bool subset = true;
+	for (Sint32 x = 0; x < ev.num_mime_types; x++)
+	{
+		const char* mime = ev.mime_types[x];
+		if (!mime || (strcmp(mime, _mime_uuid.c_str()) == 0))
+			return false;
+		const bool known =
+		    std::any_of(_server_mimetypes.begin(), _server_mimetypes.end(),
+		                [mime](const char* m) { return m && (strcmp(m, mime) == 0); });
+		subset = subset && known;
+	}
+	return subset || (ev.num_mime_types == 1);
+}
+
 bool sdlClip::contains(const char** mime_types, Sint32 count)
 {
 	for (Sint32 x = 0; x < count; x++)
@@ -197,6 +221,9 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 			auto rc =
 			    SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, this, ev.mime_types,
 			                         WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types));
+			_server_mimetypes = _current_mimetypes;
+			_server_set_ns = SDL_GetTicksNS();
+			_server_reclaimed = false;
 			_current_mimetypes.clear();
 			return rc;
 		}
@@ -205,6 +232,29 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 
 	if (ev.timestamp == _last_timestamp)
 	{
+		return true;
+	}
+
+	/* While the client takes ownership of the local clipboard for a server copy, the previous
+	 * selection is briefly left without owner and mutter's clipboard persistence restores the last
+	 * clipboard it saved (an older copy). Announcing that as a local copy overwrote the new copy on
+	 * the server, and pasting locally returned the previous content (#13519). Ignore it and take
+	 * the clipboard back with the server formats, once per server copy. */
+	if (isCompositorRestore(ev))
+	{
+		WLog_Print(_log, WLOG_DEBUG, "compositor restored an old clipboard, taking it back");
+		_server_reclaimed = true;
+		_cache_data.clear();
+		return SDL_SetClipboardData(sdlClip::ClipDataCb, sdlClip::ClipCleanCb, this,
+		                            _server_mimetypes.data(), _server_mimetypes.size());
+	}
+
+	/* An empty local clipboard is not announced: SDL emits a non-owner update without mime types
+	 * while the client takes ownership after a server copy, and announcing it sent an empty format
+	 * list that cleared the server clipboard. */
+	if (ev.num_mime_types == 0)
+	{
+		WLog_Print(_log, WLOG_DEBUG, "ignoring clipboard update without formats");
 		return true;
 	}
 
@@ -497,6 +547,23 @@ UINT sdlClip::ReceiveServerCapabilities(CliprdrClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
+/* Returns the static image mime type string matching name, or nullptr.
+ * _current_mimetypes stores pointers, so the server supplied name can not be used directly. */
+[[nodiscard]] static const char* staticImageMime(const char* name)
+{
+	for (auto m : s_mime_image())
+	{
+		if (strcmp(m, name) == 0)
+			return m;
+	}
+	for (auto m : s_mime_bitmap())
+	{
+		if (strcmp(m, name) == 0)
+			return m;
+	}
+	return nullptr;
+}
+
 UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
                                       const CLIPRDR_FORMAT_LIST* formatList)
 {
@@ -504,6 +571,7 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	BOOL text = FALSE;
 	BOOL image = FALSE;
 	BOOL file = FALSE;
+	std::vector<const char*> namedImages;
 
 	if (!context || !context->custom)
 		return ERROR_INVALID_PARAMETER;
@@ -532,6 +600,12 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 				file = TRUE;
 				text = TRUE;
 			}
+			else if (auto m = staticImageMime(format->formatName))
+			{
+				/* e.g. gnome-remote-desktop announces images as a registered format named
+				 * after the mime type (image/png) instead of CF_DIB */
+				namedImages.push_back(m);
+			}
 		}
 		else
 		{
@@ -558,6 +632,10 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	{
 		ClipboardLockGuard systemlock(clipboard->_system);
 		std::scoped_lock lock(clipboard->_lock);
+		/* A new server format list invalidates whatever the winpr clipboard holds. Otherwise
+		 * ClipDataCb "converts" from it and pastes the last local text that was sent to the
+		 * server instead of requesting the new data. */
+		ClipboardEmpty(clipboard->_system);
 		auto res = cliprdr_file_context_notify_new_server_format_list(filecontext);
 		if (res != CHANNEL_RC_OK)
 			return res;
@@ -575,6 +653,8 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 		clipboard->_current_mimetypes.insert(clipboard->_current_mimetypes.end(),
 		                                     s_mime_image().begin(), s_mime_image().end());
 	}
+	clipboard->_current_mimetypes.insert(clipboard->_current_mimetypes.end(), namedImages.begin(),
+	                                     namedImages.end());
 	if (html)
 	{
 		clipboard->_current_mimetypes.push_back(s_mime_html);
@@ -868,6 +948,12 @@ UINT sdlClip::ReceiveFormatDataResponse(CliprdrClientContext* context,
 					else if (name == s_type_HtmlFormat)
 					{
 						srcFormatId = ClipboardGetFormatId(clipboard->_system, s_type_HtmlFormat);
+					}
+					else if (staticImageMime(name.c_str()))
+					{
+						/* image announced by mime name: store it under that name, with
+						 * srcFormatId 0 it ended up as CF_RAW and could not be read back */
+						srcFormatId = ClipboardRegisterFormat(clipboard->_system, name.c_str());
 					}
 				}
 			}
