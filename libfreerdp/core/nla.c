@@ -52,6 +52,11 @@
 #include "credssp_auth.h"
 #include <freerdp/utils/smartcardlogon.h>
 
+/* not defined on Windows builds without <ntstatus.h> */
+#ifndef STATUS_NTLM_BLOCKED
+#define STATUS_NTLM_BLOCKED ((NTSTATUS)0xC0000418L)
+#endif
+
 #define TAG FREERDP_TAG("core.nla")
 
 #define NLA_AUTH_PKG NEGO_SSP_NAME
@@ -2356,6 +2361,13 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 				case STATUS_LOGON_TYPE_NOT_GRANTED:
 					code = FREERDP_ERROR_CONNECT_LOGON_TYPE_NOT_GRANTED;
+					break;
+
+				case STATUS_NTLM_BLOCKED:
+				/* mstsc shows the same ambiguity for this code: NTLM policy block, or a
+				 * CredSSP encryption oracle remediation mismatch. */
+				case SEC_E_UNSUPPORTED_FUNCTION:
+					code = FREERDP_ERROR_CONNECT_NTLM_BLOCKED;
 					break;
 
 				default:

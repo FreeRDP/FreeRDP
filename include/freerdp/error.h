@@ -282,6 +282,8 @@ extern "C"
 #define ERRCONNECT_ACTIVATION_TIMEOUT 0x0000001C
 #define ERRCONNECT_TARGET_BOOTING 0x0000001D
 #define ERRCONNECT_HYBRID_REQUIRED_BY_SERVER 0x0000001E /**< @since version 3.31.0 */
+/* e.g. RestrictReceivingNTLMTraffic */
+#define ERRCONNECT_NTLM_BLOCKED 0x0000001F
 
 #define ERRCONNECT_SUCCESS ERRINFO_SUCCESS
 #define ERRCONNECT_NONE ERRINFO_NONE
@@ -373,6 +375,7 @@ extern "C"
 #define FREERDP_ERROR_CONNECT_HYBRID_REQUIRED_BY_SERVER                                          \
 	MAKE_FREERDP_ERROR(CONNECT, ERRCONNECT_HYBRID_REQUIRED_BY_SERVER) /**< @since version 3.31.0 \
 	                                                                   */
+#define FREERDP_ERROR_CONNECT_NTLM_BLOCKED MAKE_FREERDP_ERROR(CONNECT, ERRCONNECT_NTLM_BLOCKED)
 
 #ifdef __cplusplus
 }
