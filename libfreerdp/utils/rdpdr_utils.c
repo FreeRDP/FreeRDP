@@ -459,6 +459,9 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 					    s, device.PreferredDosName,
 					    ARRAYSIZE(device.PreferredDosName));        /* PreferredDosName (8 bytes) */
 					Stream_Read_UINT32(s, device.DeviceDataLength); /* DeviceDataLength (4 bytes) */
+					if (!Stream_CheckAndLogRequiredLengthWLog(log, s, device.DeviceDataLength))
+						return;
+
 					device.DeviceData = Stream_Pointer(s);
 					Stream_Seek(s, device.DeviceDataLength);
 				}

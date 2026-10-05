@@ -73,6 +73,7 @@ typedef struct rdp_arm rdpArm;
 #define TAG FREERDP_TAG("core.gateway.arm")
 
 #ifdef WITH_AAD
+WINPR_ATTR_NODISCARD
 static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, UINT32 timeout)
 {
 	WINPR_ASSERT(arm);
@@ -158,6 +159,7 @@ static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, UINT32 timeout)
 	return (status >= 1);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_fetch_wellknown(rdpArm* arm)
 {
 	WINPR_ASSERT(arm);
@@ -181,6 +183,7 @@ static BOOL arm_fetch_wellknown(rdpArm* arm)
 	return (rdp->wellknown != nullptr);
 }
 
+WINPR_ATTR_MALLOC(Stream_Free, 1)
 static wStream* arm_build_http_request(rdpArm* arm, const char* method,
                                        TRANSFER_ENCODING transferEncoding, const char* content_type,
                                        size_t content_length)
@@ -252,6 +255,7 @@ out:
 	return s;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_send_http_request(rdpArm* arm, rdpTls* tls, const char* method,
                                   const char* content_type, const char* data, size_t content_length)
 {
@@ -285,6 +289,7 @@ static void arm_free(rdpArm* arm)
 	free(arm);
 }
 
+WINPR_ATTR_MALLOC(arm_free, 1)
 static rdpArm* arm_new(rdpContext* context)
 {
 	WINPR_ASSERT(context);
@@ -311,13 +316,18 @@ fail:
 	return nullptr;
 }
 
-static char* arm_create_request_json(rdpArm* arm)
+WINPR_ATTR_MALLOC(arm_free, 1)
+static char* arm_create_request_json(rdpArm* arm, size_t* pLen)
 {
+	WINPR_ASSERT(pLen);
+
 	char* lbi = nullptr;
+	size_t lbiLen = 0;
 	char* message = nullptr;
 
 	WINPR_ASSERT(arm);
 
+	*pLen = 0;
 	WINPR_JSON* json = WINPR_JSON_CreateObject();
 	if (!json)
 		goto arm_create_cleanup;
@@ -326,18 +336,14 @@ static char* arm_create_request_json(rdpArm* arm)
 	        freerdp_settings_get_string(arm->context->settings, FreeRDP_RemoteApplicationProgram)))
 		goto arm_create_cleanup;
 
-	lbi = calloc(
-	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength) + 1,
-	    sizeof(char));
+	const size_t len =
+	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength) + 1ull;
+	lbi = calloc(len, sizeof(char));
 	if (!lbi)
 		goto arm_create_cleanup;
+	lbiLen = len;
 
-	{
-		const size_t len =
-		    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength);
-		memcpy(lbi, freerdp_settings_get_pointer(arm->context->settings, FreeRDP_LoadBalanceInfo),
-		       len);
-	}
+	memcpy(lbi, freerdp_settings_get_pointer(arm->context->settings, FreeRDP_LoadBalanceInfo), len);
 
 	if (!WINPR_JSON_AddStringToObject(json, "loadBalanceInfo", lbi))
 		goto arm_create_cleanup;
@@ -350,7 +356,9 @@ static char* arm_create_request_json(rdpArm* arm)
 arm_create_cleanup:
 	if (json)
 		WINPR_JSON_Delete(json);
-	free(lbi);
+	winpr_znfree(lbi, lbiLen);
+	if (message)
+		*pLen = strlen(message);
 	return message;
 }
 
@@ -368,6 +376,7 @@ arm_create_cleanup:
  * @param cbInput size of pbInput
  * @return the corresponding WINPR_CIPHER_CTX if success, nullptr otherwise
  */
+WINPR_ATTR_MALLOC(winpr_Cipher_Free, 1)
 static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cbInput,
                                        size_t* pBlockSize)
 {
@@ -462,6 +471,7 @@ static WINPR_CIPHER_CTX* treatAuthBlob(wLog* log, const BYTE* pbInput, size_t cb
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_stringEncodeW(const BYTE* pin, size_t cbIn, BYTE** ppOut, size_t* pcbOut)
 {
 	*ppOut = nullptr;
@@ -485,6 +495,7 @@ static BOOL arm_stringEncodeW(const BYTE* pin, size_t cbIn, BYTE** ppOut, size_t
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_encodeRedirectPasswd(wLog* log, rdpSettings* settings, const rdpCertificate* cert,
                                      WINPR_CIPHER_CTX* cipher, size_t blockSize)
 {
@@ -585,6 +596,7 @@ out:
  *       base64.b64decode( base64.b64decode(input).decode('utf-16') )
  *  in python
  */
+WINPR_ATTR_NODISCARD
 static BOOL arm_pick_base64Utf16Field(wLog* log, const WINPR_JSON* json, const char* name,
                                       BYTE** poutput, size_t* plen)
 {
@@ -653,7 +665,7 @@ static BOOL arm_pick_base64Utf16Field(wLog* log, const WINPR_JSON* json, const c
  *  }
  *
  */
-
+WINPR_ATTR_NODISCARD
 static size_t arm_parse_ipvx_count(WINPR_JSON* ipvX)
 {
 	WINPR_ASSERT(ipvX);
@@ -665,6 +677,7 @@ static size_t arm_parse_ipvx_count(WINPR_JSON* ipvX)
 	return WINPR_JSON_GetArraySize(ipAddress) * 2;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAddressIdx)
 {
 	WINPR_ASSERT(settings);
@@ -708,6 +721,7 @@ static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAdd
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAddressIdx)
 {
 	WINPR_ASSERT(settings);
@@ -778,6 +792,7 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_treat_azureInstanceNetworkMetadata(wLog* log, const char* metadata,
                                                    rdpSettings* settings)
 {
@@ -876,10 +891,17 @@ out:
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const WINPR_JSON* json,
                             const rdpCertificate* redirectedServerCert)
 {
 	WINPR_ASSERT(arm);
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(json);
+
+	if (!redirectedServerCert)
+		return FALSE;
+
 	BOOL ret = FALSE;
 	BYTE* authBlob = nullptr;
 	WCHAR* wGUID = nullptr;
@@ -1004,6 +1026,7 @@ end:
 	return ret;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t len)
 {
 	WINPR_ASSERT(arm);
@@ -1107,6 +1130,7 @@ fail:
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_handle_request_ok(rdpArm* arm, const HttpResponse* response)
 {
 	const size_t len = http_response_get_body_length(response);
@@ -1126,6 +1150,7 @@ static BOOL arm_handle_request_ok(rdpArm* arm, const HttpResponse* response)
 	return arm_fill_gateway_parameters(arm, msg, len);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BOOL* retry)
 {
 	WINPR_ASSERT(response);
@@ -1189,6 +1214,7 @@ fail:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 {
 	WINPR_ASSERT(retry);
@@ -1201,6 +1227,7 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 
 	*retry = FALSE;
 
+	size_t messageLen = 0;
 	char* message = nullptr;
 	BOOL rc = FALSE;
 
@@ -1225,11 +1252,11 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 	if (!arm_tls_connect(arm, arm->tls, timeout))
 		goto arm_error;
 
-	message = arm_create_request_json(arm);
+	message = arm_create_request_json(arm, &messageLen);
 	if (!message)
 		goto arm_error;
 
-	if (!arm_send_http_request(arm, arm->tls, "POST", "application/json", message, strlen(message)))
+	if (!arm_send_http_request(arm, arm->tls, "POST", "application/json", message, messageLen))
 		goto arm_error;
 
 	response = http_response_recv(arm->tls, TRUE);
@@ -1256,7 +1283,7 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 	rc = TRUE;
 arm_error:
 	http_response_free(response);
-	free(message);
+	winpr_znfree(message, messageLen);
 	return rc;
 }
 
