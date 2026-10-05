@@ -317,13 +317,17 @@ fail:
 }
 
 WINPR_ATTR_MALLOC(arm_free, 1)
-static char* arm_create_request_json(rdpArm* arm)
+static char* arm_create_request_json(rdpArm* arm, size_t* pLen)
 {
+	WINPR_ASSERT(pLen);
+
 	char* lbi = nullptr;
+	size_t lbiLen = 0;
 	char* message = nullptr;
 
 	WINPR_ASSERT(arm);
 
+	*pLen = 0;
 	WINPR_JSON* json = WINPR_JSON_CreateObject();
 	if (!json)
 		goto arm_create_cleanup;
@@ -332,18 +336,14 @@ static char* arm_create_request_json(rdpArm* arm)
 	        freerdp_settings_get_string(arm->context->settings, FreeRDP_RemoteApplicationProgram)))
 		goto arm_create_cleanup;
 
-	lbi = calloc(
-	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength) + 1,
-	    sizeof(char));
+	const size_t len =
+	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength) + 1ull;
+	lbi = calloc(len, sizeof(char));
 	if (!lbi)
 		goto arm_create_cleanup;
+	lbiLen = len;
 
-	{
-		const size_t len =
-		    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength);
-		memcpy(lbi, freerdp_settings_get_pointer(arm->context->settings, FreeRDP_LoadBalanceInfo),
-		       len);
-	}
+	memcpy(lbi, freerdp_settings_get_pointer(arm->context->settings, FreeRDP_LoadBalanceInfo), len);
 
 	if (!WINPR_JSON_AddStringToObject(json, "loadBalanceInfo", lbi))
 		goto arm_create_cleanup;
@@ -356,7 +356,9 @@ static char* arm_create_request_json(rdpArm* arm)
 arm_create_cleanup:
 	if (json)
 		WINPR_JSON_Delete(json);
-	free(lbi);
+	winpr_znfree(lbi, lbiLen);
+	if (message)
+		*pLen = strlen(message);
 	return message;
 }
 
@@ -1219,6 +1221,7 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 
 	*retry = FALSE;
 
+	size_t messageLen = 0;
 	char* message = nullptr;
 	BOOL rc = FALSE;
 
@@ -1243,11 +1246,11 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 	if (!arm_tls_connect(arm, arm->tls, timeout))
 		goto arm_error;
 
-	message = arm_create_request_json(arm);
+	message = arm_create_request_json(arm, &messageLen);
 	if (!message)
 		goto arm_error;
 
-	if (!arm_send_http_request(arm, arm->tls, "POST", "application/json", message, strlen(message)))
+	if (!arm_send_http_request(arm, arm->tls, "POST", "application/json", message, messageLen))
 		goto arm_error;
 
 	response = http_response_recv(arm->tls, TRUE);
@@ -1274,7 +1277,7 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 	rc = TRUE;
 arm_error:
 	http_response_free(response);
-	free(message);
+	winpr_znfree(message, messageLen);
 	return rc;
 }
 
