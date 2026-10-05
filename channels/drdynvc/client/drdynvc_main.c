@@ -1579,6 +1579,7 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wSt
 		{
 			status = ERROR_INVALID_DATA;
 			WLog_Print(drdynvc->log, WLOG_ERROR, "error de-compressing data packet");
+			free(data);
 			goto out;
 		}
 
@@ -1586,6 +1587,7 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wSt
 		{
 			status = ERROR_INVALID_DATA;
 			WLog_Print(drdynvc->log, WLOG_ERROR, "error de-compressing data packet");
+			free(data);
 			goto out;
 		}
 
