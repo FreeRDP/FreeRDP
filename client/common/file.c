@@ -1190,6 +1190,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->ConnectionType = freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType);
 
 	file->ScreenModeId = freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) ? 2 : 1;
+	file->SmartSizing = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ? 1 : 0;
 
 	LoadBalanceInfoLength = freerdp_settings_get_uint32(settings, FreeRDP_LoadBalanceInfoLength);
 	if (LoadBalanceInfoLength > 0)
