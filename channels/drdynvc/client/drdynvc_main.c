@@ -983,7 +983,7 @@ static UINT dvcman_receive_channel_data_first(DVCMAN_CHANNEL* channel, UINT32 le
 	if (channel->dvc_data)
 		Stream_Release(channel->dvc_data);
 
-	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, length);
+	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, 1600);
 
 	if (!channel->dvc_data)
 	{
@@ -1020,6 +1020,13 @@ static UINT dvcman_receive_channel_data(DVCMAN_CHANNEL* channel, wStream* data,
 		if (Stream_GetPosition(channel->dvc_data) + dataSize > channel->dvc_data_length)
 		{
 			WLog_Print(drdynvc->log, WLOG_ERROR, "data exceeding declared length!");
+			Stream_Release(channel->dvc_data);
+			channel->dvc_data = nullptr;
+			status = ERROR_INVALID_DATA;
+			goto out;
+		}
+		if (!Stream_EnsureRemainingCapacity(channel->dvc_data, dataSize))
+		{
 			Stream_Release(channel->dvc_data);
 			channel->dvc_data = nullptr;
 			status = ERROR_INVALID_DATA;
