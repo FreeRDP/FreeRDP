@@ -37,7 +37,7 @@
 #include <winpr/intrin.h>
 
 #include "rfx_bitstream.h"
-
+#include "rfx_types.h"
 #include "rfx_rlgr.h"
 
 /* Constants used in RLGR1/RLGR3 algorithm */
@@ -353,10 +353,17 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 
 			/* compute magnitude from code */
 
+			const INT32 code1 = code + 1;
+			if ((code1 > INT16_MAX) || (code1 < INT16_MIN))
+			{
+				WLog_ERR(RFX_TAG, "code1=%d", code1);
+				return -1;
+			}
+
 			if (sign)
-				mag = WINPR_ASSERTING_INT_CAST(int16_t, (code + 1)) * -1;
+				mag = WINPR_ASSERTING_INT_CAST(int16_t, code1) * -1;
 			else
-				mag = WINPR_ASSERTING_INT_CAST(int16_t, code + 1);
+				mag = WINPR_ASSERTING_INT_CAST(int16_t, code1);
 
 			/* write to output stream */
 
@@ -484,11 +491,22 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 					 * code = 2 * mag - sign
 					 * sign + code = 2 * mag
 					 */
-
+					const INT32 codeShift = code >> 1;
+					const INT32 code1shift = (code + 1) >> 1;
+					if ((codeShift > INT16_MAX) || (codeShift < INT16_MIN))
+					{
+						WLog_ERR(RFX_TAG, "codeShift=%d", codeShift);
+						return -1;
+					}
+					if ((code1shift > INT16_MAX) || (code1shift < INT16_MIN))
+					{
+						WLog_ERR(RFX_TAG, "code1shift=%d", code1shift);
+						return -1;
+					}
 					if (code & 1)
-						mag = WINPR_ASSERTING_INT_CAST(INT16, (code + 1) >> 1) * -1;
+						mag = WINPR_ASSERTING_INT_CAST(INT16, code1shift) * -1;
 					else
-						mag = WINPR_ASSERTING_INT_CAST(INT16, code >> 1);
+						mag = WINPR_ASSERTING_INT_CAST(INT16, codeShift);
 				}
 
 				if ((pOutput - pDstData) < DstSize)
@@ -542,10 +560,22 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 					k = kp >> LSGR;
 				}
 
+				const UINT32 val1Shift = val1 >> 1;
+				const UINT32 val11Shift = (val1 + 1) >> 1;
+				if (val1Shift > INT16_MAX)
+				{
+					WLog_ERR(RFX_TAG, "val1Shift=%" PRIu32, val1Shift);
+					return -1;
+				}
+				if (val11Shift > INT16_MAX)
+				{
+					WLog_ERR(RFX_TAG, "val11Shift=%" PRIu32, val11Shift);
+					return -1;
+				}
 				if (val1 & 1)
-					mag = WINPR_ASSERTING_INT_CAST(int16_t, (val1 + 1) >> 1) * -1;
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, val11Shift) * -1;
 				else
-					mag = WINPR_ASSERTING_INT_CAST(int16_t, val1 >> 1);
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, val1Shift);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
@@ -553,10 +583,23 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 
 					pOutput++;
 				}
 
+				const UINT32 val2Shift = val2 / 2;
+				const UINT32 val21Shift = (val2 + 1) / 2;
+				if (val2Shift > INT16_MAX)
+				{
+					WLog_ERR(RFX_TAG, "val2Shift=%" PRIu32, val2Shift);
+					return -1;
+				}
+
+				if (val21Shift > INT16_MAX)
+				{
+					WLog_ERR(RFX_TAG, "val21Shift=%" PRIu32, val21Shift);
+					return -1;
+				}
 				if (val2 & 1)
-					mag = WINPR_ASSERTING_INT_CAST(int16_t, (val2 + 1) >> 1) * -1;
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, val21Shift) * -1;
 				else
-					mag = WINPR_ASSERTING_INT_CAST(int16_t, val2 >> 1);
+					mag = WINPR_ASSERTING_INT_CAST(int16_t, val2Shift);
 
 				if ((pOutput - pDstData) < DstSize)
 				{
