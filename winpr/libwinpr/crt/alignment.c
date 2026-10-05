@@ -214,6 +214,9 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 	if ((num == 0) || (size == 0))
 		goto fail;
 
+	if (num > SIZE_MAX / size - alignment)
+		goto fail;
+
 	if (pMem->size > (1ull * num * size) + alignment)
 		return memblock;
 
