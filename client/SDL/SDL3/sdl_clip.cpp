@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include <mutex>
@@ -35,6 +36,10 @@
 
 #define mime_text_plain "text/plain"
 const char mime_text_utf8[] = "text/plain;charset=utf-8";
+
+static const char* first_announcement[] = {
+	"sdl-clipboard-monitor-ready-4b8c7d9b-6d5c-4dcc-add1-21573ca564b0"
+};
 
 [[nodiscard]] static const std::vector<const char*>& s_mime_text()
 {
@@ -188,7 +193,20 @@ bool sdlClip::contains(const char** mime_types, Sint32 count)
 
 bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 {
-	if (!_ctx || !_sync || ev.owner)
+	std::unique_ptr<char*, decltype(&SDL_free)> current(nullptr, SDL_free);
+	const char** mime_types = ev.mime_types;
+	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types);
+	if (_ctx && _sync && ev.owner && (ev.num_mime_types == 1))
+	{
+		if (strcmp(first_announcement[0], ev.mime_types[0]) == 0)
+		{
+			current.reset(SDL_GetClipboardMimeTypes(&nformats));
+			mime_types = const_cast<const char**>(current.get());
+			if (!mime_types)
+				nformats = 0;
+		}
+	}
+	else if (!_ctx || !_sync || ev.owner)
 	{
 		_last_timestamp = ev.timestamp;
 		if (!_current_mimetypes.empty())
@@ -204,14 +222,10 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 	}
 
 	if (ev.timestamp == _last_timestamp)
-	{
 		return true;
-	}
 
-	if (contains(ev.mime_types, ev.num_mime_types))
-	{
+	if (contains(mime_types, WINPR_ASSERTING_INT_CAST(Sint32, nformats)))
 		return true;
-	}
 
 	clearServerFormats();
 
@@ -228,8 +242,7 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 	std::vector<std::string> clientFormatNames;
 	std::vector<CLIPRDR_FORMAT> clientFormats;
 
-	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types);
-	const char** clipboard_mime_formats = ev.mime_types;
+	const char** clipboard_mime_formats = mime_types;
 
 	WLog_Print(_log, WLOG_TRACE, "SDL has %" PRIuz " formats", nformats);
 
@@ -351,7 +364,14 @@ UINT sdlClip::MonitorReady(CliprdrClientContext* context, const CLIPRDR_MONITOR_
 		return ret;
 
 	clipboard->_sync = true;
-	if (!sdl_push_user_event(SDL_EVENT_CLIPBOARD_UPDATE))
+	SDL_Event ev = { SDL_EVENT_CLIPBOARD_UPDATE };
+	ev.clipboard.owner = true;
+	ev.clipboard.timestamp = SDL_GetTicksNS();
+	ev.clipboard.num_mime_types = ARRAYSIZE(first_announcement);
+	ev.clipboard.mime_types = first_announcement;
+
+	auto rc = SDL_PushEvent(&ev);
+	if (rc != 1)
 		return ERROR_INTERNAL_ERROR;
 
 	return CHANNEL_RC_OK;
