@@ -2348,6 +2348,9 @@ int rdp_check_fds(rdpRdp* rdp)
 	else
 		status = freerdp_timer_poll(rdp->timer);
 
+	if ((status >= 0) && !multitransport_check(rdp->multitransport))
+		status = -1;
+
 	return status;
 }
 
@@ -2576,6 +2579,7 @@ BOOL rdp_reset(rdpRdp* rdp)
 	WINPR_ASSERT(settings);
 
 	bulk_reset(rdp->bulk);
+	multitransport_reset(rdp->multitransport);
 
 	rdp_reset_free(rdp);
 
@@ -2934,7 +2938,8 @@ static BOOL option_is_experimental(WINPR_ATTR_UNUSED wLog* log, WINPR_ATTR_UNUSE
 		                           STR(WITH_GFX_AV1),          STR(WITH_MEDIACODEC),
 		                           STR(WITH_CLIENT_SDL2),      STR(WITH_OPENCL),
 		                           STR(WITH_LIBRESSL),         STR(WITH_MBEDTLS),
-		                           STR(WITH_MEDIA_FOUNDATION), STR(WITH_KRB5_HEIMDAL) };
+		                           STR(WITH_MEDIA_FOUNDATION), STR(WITH_KRB5_HEIMDAL),
+		                           STR(WITH_RDPEUDP) };
 	for (size_t x = 0; x < ARRAYSIZE(experimental); x++)
 	{
 		const char* opt = experimental[x];
@@ -3264,10 +3269,11 @@ size_t rdp_get_event_handles(rdpRdp* rdp, HANDLE* handles, uint32_t count)
 	if (nCount == 0)
 		return 0;
 
-	if (count < nCount + 2UL)
+	if (count < nCount + 3UL)
 		return 0;
 
 	handles[nCount++] = utils_get_abort_event(rdp);
 	handles[nCount++] = freerdp_timer_get_event(rdp->timer);
+	handles[nCount++] = multitransport_get_event_handle(rdp->multitransport);
 	return nCount;
 }

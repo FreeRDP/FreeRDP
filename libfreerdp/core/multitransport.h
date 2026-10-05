@@ -57,6 +57,17 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL multitransport_client_send_response(rdpMultitransport* multi, UINT32 reqId,
                                                        HRESULT hr);
 
+/** Event that is set while tunnel events wait for multitransport_check(). */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL HANDLE multitransport_get_event_handle(rdpMultitransport* multi);
+
+/** Handles tunnel events on the thread running the main loop. */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL multitransport_check(rdpMultitransport* multi);
+
+/** Tears down any tunnel, e.g. when the main connection goes away. */
+FREERDP_LOCAL void multitransport_reset(rdpMultitransport* multi);
+
 FREERDP_LOCAL void multitransport_free(rdpMultitransport* multi);
 
 WINPR_ATTR_MALLOC(multitransport_free, 1)
