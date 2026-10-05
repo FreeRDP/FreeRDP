@@ -100,6 +100,12 @@ static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 	if (!path)
 		return CHANNEL_RC_NO_MEMORY;
 
+	if (parallel->file >= 0)
+	{
+		WLog_ERR(TAG, "Duplicate create request for %s. Aborting.", path);
+		free(path);
+		return ERROR_INVALID_DATA;
+	}
 	parallel->id = irp->devman->id_sequence++;
 	parallel->file = open(parallel->path, O_RDWR);
 
@@ -133,6 +139,7 @@ static UINT parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 	WINPR_ASSERT(irp);
 
 	(void)close(parallel->file);
+	parallel->file = -1;
 
 	Stream_Zero(irp->output, 5); /* Padding(5) */
 	return CHANNEL_RC_OK;
@@ -159,6 +166,13 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	Stream_Read_UINT64(irp->input, Offset);
 	(void)Offset; /* [MS-RDPESP] 3.2.5.1.4 Processing a Server Read Request Message
 	               * ignored */
+
+	if (parallel->file < 0)
+	{
+		WLog_ERR(TAG, "Device not open, aborting");
+		return ERROR_DEVICE_NOT_AVAILABLE;
+	}
+
 	buffer = (BYTE*)calloc(Length, sizeof(BYTE));
 
 	if (!buffer)
@@ -227,6 +241,11 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 		return ERROR_INVALID_DATA;
 	len = Length;
 
+	if (parallel->file < 0)
+	{
+		WLog_ERR(TAG, "Device not open, aborting");
+		return ERROR_DEVICE_NOT_AVAILABLE;
+	}
 	while (len > 0)
 	{
 		const ssize_t status = write(parallel->file, ptr, len);
@@ -484,6 +503,7 @@ FREERDP_ENTRY_POINT(
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
+		parallel->file = -1;
 		parallel->log = log;
 		parallel->device.type = RDPDR_DTYP_PARALLEL;
 		parallel->device.name = name;
