@@ -174,21 +174,25 @@ static BOOL test_text_leading_newline(void)
 	const UINT32 textId = ClipboardRegisterFormat(clipboard, "text/plain");
 	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
 	{
+		const char** cur = tests[x];
 		/* local text/plain is set without a terminator */
-		if (!test_ClipboardSetData(clipboard, textId, tests[x][0], (UINT32)strlen(tests[x][0])))
+		if (!test_ClipboardSetData(clipboard, textId, cur[0], (UINT32)strlen(cur[0])))
 			goto fail;
 
 		UINT32 size = 0;
 		WCHAR* wstr = test_ClipboardGetData(clipboard, CF_UNICODETEXT, &size);
 		char* str = ConvertWCharNToUtf8Alloc(wstr, size / sizeof(WCHAR), nullptr);
-		const BOOL match = str && (strcmp(str, tests[x][1]) == 0);
+		const BOOL match = str && (strcmp(str, cur[1]) == 0);
+		if (!match)
+		{
+			test_log("text/plain to CF_UNICODETEXT failed for case %" PRIuz "[%s (%" PRIu32
+			         ") %p : expect %s (%" PRIuz ") : from %s (" PRIuz ")]",
+			         x, str, size, wstr, cur[1], strlen(cur[1]), cur[0], strlen(cur[0]));
+		}
 		free(wstr);
 		free(str);
 		if (!match)
-		{
-			test_log("text/plain to CF_UNICODETEXT failed for case %" PRIuz "", x);
 			goto fail;
-		}
 	}
 	rc = TRUE;
 
