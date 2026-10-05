@@ -40,7 +40,7 @@
 
 	// create app settings view and navigation controller
 	AppSettingsController *appSettingsController =
-	    [[[AppSettingsController alloc] initWithStyle:UITableViewStyleGrouped] autorelease];
+	    [[[AppSettingsController alloc] initWithStyle:UITableViewStyleInsetGrouped] autorelease];
 	UINavigationController *appSettingsNavigationController = [[[UINavigationController alloc]
 	    initWithRootViewController:appSettingsController] autorelease];
 

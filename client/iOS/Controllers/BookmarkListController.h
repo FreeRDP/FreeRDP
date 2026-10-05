@@ -18,8 +18,7 @@
 @interface BookmarkListController : UIViewController <UISearchBarDelegate, UITableViewDelegate,
                                                       UITableViewDataSource, BookmarkEditorDelegate>
 {
-	// custom bookmark and session table cells
-	BookmarkTableCell *_bmTableCell;
+	// custom session table cell
 	SessionTableCell *_sessTableCell;
 
 	// child views
@@ -32,10 +31,6 @@
 
 	// bookmark arrays
 	NSMutableArray *_manual_bookmarks;
-
-	// bookmark star images
-	UIImage *_star_on_img;
-	UIImage *_star_off_img;
 
 	// array with active sessions
 	NSMutableArray *_active_sessions;
@@ -50,7 +45,6 @@
 
 @property(nonatomic, retain) IBOutlet UISearchBar *searchBar;
 @property(nonatomic, retain) IBOutlet UITableView *tableView;
-@property(nonatomic, retain) IBOutlet BookmarkTableCell *bmTableCell;
 @property(nonatomic, retain) IBOutlet SessionTableCell *sessTableCell;
 
 @end

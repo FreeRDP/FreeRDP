@@ -26,7 +26,7 @@
 
 - (id)initWithConnectionParams:(ConnectionParams *)params keyPath:(NSString *)keyPath
 {
-	self = [super initWithStyle:UITableViewStyleGrouped];
+	self = [super initWithStyle:UITableViewStyleInsetGrouped];
 	if (self)
 	{
 		_params = [params retain];
@@ -128,8 +128,7 @@
 			[[textCell label] setText:NSLocalizedString(@"Width", @"Custom Screen Width")];
 			[[textCell textfield] setText:[NSString stringWithFormat:@"%d", value ? value : 800]];
 			[[textCell textfield] setKeyboardType:UIKeyboardTypeNumberPad];
-			[[textCell label] setEnabled:enabled];
-			[[textCell textfield] setEnabled:enabled];
+			[textCell setEnabled:enabled];
 			[[textCell textfield] setTag:1];
 		}
 		else if ([indexPath row] == ([_resolution_modes count] + 1))
@@ -139,8 +138,7 @@
 			[[textCell label] setText:NSLocalizedString(@"Height", @"Custom Screen Height")];
 			[[textCell textfield] setText:[NSString stringWithFormat:@"%d", value ? value : 600]];
 			[[textCell textfield] setKeyboardType:UIKeyboardTypeNumberPad];
-			[[textCell label] setEnabled:enabled];
-			[[textCell textfield] setEnabled:enabled];
+			[textCell setEnabled:enabled];
 			[[textCell textfield] setTag:2];
 		}
 	}

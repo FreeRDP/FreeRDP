@@ -110,8 +110,6 @@ set(SRCS
     Controllers/BookmarkListController.m
     Controllers/CredentialsEditorController.h
     Controllers/CredentialsEditorController.m
-    Controllers/CredentialsInputController.h
-    Controllers/CredentialsInputController.m
     Controllers/EditorBaseController.h
     Controllers/EditorBaseController.m
     Controllers/EditorSelectionController.h
@@ -126,8 +124,6 @@ set(SRCS
     Controllers/RDPSessionViewController.m
     Controllers/ScreenSelectionController.h
     Controllers/ScreenSelectionController.m
-    Controllers/VerifyCertificateController.h
-    Controllers/VerifyCertificateController.m
     FreeRDP/ios_cliprdr.h
     FreeRDP/ios_cliprdr.m
     FreeRDP/ios_freerdp_events.h
@@ -162,8 +158,6 @@ set(SRCS
     Views/AdvancedKeyboardView.m
     Views/BookmarkTableCell.h
     Views/BookmarkTableCell.m
-    Views/EditButtonTableViewCell.h
-    Views/EditButtonTableViewCell.m
     Views/EditFlagTableViewCell.h
     Views/EditFlagTableViewCell.m
     Views/EditSecretTextTableViewCell.h
@@ -185,21 +179,8 @@ set(SRCS
 )
 
 # add resources
-set(IOS_CLIENT_RESOURCES_XIBS
-    Resources/BookmarkListView.xib
-    Resources/BookmarkTableViewCell.xib
-    Resources/CredentialsInputView.xib
-    Resources/EditButtonTableViewCell.xib
-    Resources/EditFlagTableViewCell.xib
-    Resources/EditSecretTextTableViewCell.xib
-    Resources/EditSelectionTableViewCell.xib
-    Resources/EditSubEditTableViewCell.xib
-    Resources/EditTextTableViewCell.xib
-    Resources/MainWindow.xib
-    Resources/RDPConnectingView.xib
-    Resources/RDPSessionView.xib
-    Resources/SessionTableViewCell.xib
-    Resources/VerifyCertificateView.xib
+set(IOS_CLIENT_RESOURCES_XIBS Resources/BookmarkListView.xib Resources/MainWindow.xib Resources/RDPConnectingView.xib
+                              Resources/RDPSessionView.xib Resources/SessionTableViewCell.xib
 )
 
 set(IOS_CLIENT_RESOURCES_PNGS
@@ -214,8 +195,6 @@ set(IOS_CLIENT_RESOURCES_PNGS
     Resources/Icon@2x.png
     Resources/Icon-72@2x.png
     Resources/Icon-72.png
-    Resources/icon_accessory_star_off.png
-    Resources/icon_accessory_star_on.png
     Resources/icon_key_arrow_down.png
     Resources/icon_key_arrow_left.png
     Resources/icon_key_arrow_right.png

@@ -25,7 +25,7 @@
 
 - (id)initWithConnectionParams:(ConnectionParams *)params keyPath:(NSString *)keyPath;
 {
-	self = [super initWithStyle:UITableViewStyleGrouped];
+	self = [super initWithStyle:UITableViewStyleInsetGrouped];
 
 	if (self)
 	{
@@ -101,29 +101,29 @@
 	{
 		case 0:
 		{
-			[[cell label] setText:NSLocalizedString(@"RemoteFX", @"RemoteFX performance setting")];
+			[cell setTitle:NSLocalizedString(@"RemoteFX", @"RemoteFX performance setting")];
 			[[cell toggle] setOn:[_params boolForKeyPath:[self keyPathForKey:@"perf_remotefx"]]];
 			break;
 		}
 
 		case 1:
 		{
-			[[cell label] setText:NSLocalizedString(@"GFX", @"GFX performance setting")];
+			[cell setTitle:NSLocalizedString(@"GFX", @"GFX performance setting")];
 			[[cell toggle] setOn:[_params boolForKeyPath:[self keyPathForKey:@"perf_gfx"]]];
 			break;
 		}
 
 		case 2:
 		{
-			[[cell label] setText:NSLocalizedString(@"H264", @"H264 performance setting")];
+			[cell setTitle:NSLocalizedString(@"H264", @"H264 performance setting")];
 			[[cell toggle] setOn:[_params boolForKeyPath:[self keyPathForKey:@"perf_h264"]]];
 			break;
 		}
 
 		case 3:
 		{
-			[[cell label] setText:NSLocalizedString(@"Desktop Background",
-			                                        @"Desktop background performance setting")];
+			[cell setTitle:NSLocalizedString(@"Desktop Background",
+			                                 @"Desktop background performance setting")];
 			[[cell toggle]
 			    setOn:[_params boolForKeyPath:[self keyPathForKey:@"perf_show_desktop"]]];
 			break;
@@ -131,8 +131,8 @@
 
 		case 4:
 		{
-			[[cell label] setText:NSLocalizedString(@"Font Smoothing",
-			                                        @"Font smoothing performance setting")];
+			[cell setTitle:NSLocalizedString(@"Font Smoothing",
+			                                 @"Font smoothing performance setting")];
 			[[cell toggle]
 			    setOn:[_params boolForKeyPath:[self keyPathForKey:@"perf_font_smoothing"]]];
 			break;
@@ -140,8 +140,8 @@
 
 		case 5:
 		{
-			[[cell label] setText:NSLocalizedString(@"Desktop Composition",
-			                                        @"Desktop composition performance setting")];
+			[cell setTitle:NSLocalizedString(@"Desktop Composition",
+			                                 @"Desktop composition performance setting")];
 			[[cell toggle]
 			    setOn:[_params boolForKeyPath:[self keyPathForKey:@"perf_desktop_composition"]]];
 			break;
@@ -149,8 +149,8 @@
 
 		case 6:
 		{
-			[[cell label] setText:NSLocalizedString(@"Window contents while dragging",
-			                                        @"Window Dragging performance setting")];
+			[cell setTitle:NSLocalizedString(@"Window contents while dragging",
+			                                 @"Window Dragging performance setting")];
 			[[cell toggle]
 			    setOn:[_params boolForKeyPath:[self keyPathForKey:@"perf_window_dragging"]]];
 			break;
@@ -158,8 +158,8 @@
 
 		case 7:
 		{
-			[[cell label] setText:NSLocalizedString(@"Menu Animation",
-			                                        @"Menu Animations performance setting")];
+			[cell setTitle:NSLocalizedString(@"Menu Animation",
+			                                 @"Menu Animations performance setting")];
 			[[cell toggle]
 			    setOn:[_params boolForKeyPath:[self keyPathForKey:@"perf_menu_animation"]]];
 			break;
@@ -167,8 +167,7 @@
 
 		case 8:
 		{
-			[[cell label]
-			    setText:NSLocalizedString(@"Visual Styles", @"Use Themes performance setting")];
+			[cell setTitle:NSLocalizedString(@"Visual Styles", @"Use Themes performance setting")];
 			[[cell toggle]
 			    setOn:[_params boolForKeyPath:[self keyPathForKey:@"perf_windows_themes"]]];
 			break;
