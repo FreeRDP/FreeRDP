@@ -275,7 +275,7 @@ class SdlRailWindow
 	bool _popupClassified = false; /* isPopup/_layered frozen after the first (creation) style */
 	bool _shadowAnchored = false;  /* a visible popup adjoins this shadow (see setShadowAnchored) */
 	bool _frame = false;           /* companion shadow frame */
-	bool _parentApplied = false;   /* transient-for owner set once (owned non-popup dialogs) */
+	bool _parentApplied = false;   /* transient-for owner applied (owned non-popup dialogs) */
 	StateSync _maxState;           /* maximize sync */
 	StateSync _minState;           /* minimize sync */
 	std::string _title = "RdpRailWindow";

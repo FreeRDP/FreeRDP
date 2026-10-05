@@ -776,10 +776,20 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		_geomApplyPending = applied && !_isPopup;
 	}
 	/* Make dialog transient for owner. */
-	if (!_isPopup && parent && !_parentApplied)
+	/* Attach only to a shown owner: SDL hides child windows with their parent. */
+	if (!_isPopup && parent && !_parentApplied &&
+	    ((SDL_GetWindowFlags(parent) & SDL_WINDOW_HIDDEN) == 0))
 	{
 		if (SDL_SetWindowParent(_win->window(), parent))
+		{
 			_parentApplied = true;
+			/* Reattached after the owner was shown again: the owner was mapped on top. */
+			if (sdl::utils::isX11Driver() &&
+			    ((SDL_GetWindowFlags(_win->window()) & SDL_WINDOW_HIDDEN) == 0) &&
+			    !sdl_x11_raise_window(_win->window()))
+				WLog_WARN(TAG, "raising dialog id=0x%08" PRIx32 " failed",
+				          static_cast<uint32_t>(_id));
+		}
 	}
 	if (_titleDirty)
 	{
@@ -812,7 +822,13 @@ bool SdlRailWindow::reconcile(SDL_Window* parent, const SDL_Rect& parentRect)
 		/* If transient-for owner was closed or hidden, show dialog standalone. */
 		SDL_Window* owner = _isPopup ? nullptr : SDL_GetWindowParent(_win->window());
 		if (owner && ((SDL_GetWindowFlags(owner) & SDL_WINDOW_HIDDEN) != 0))
-			std::ignore = SDL_SetWindowParent(_win->window(), nullptr);
+		{
+			if (SDL_SetWindowParent(_win->window(), nullptr))
+				_parentApplied = false; /* reattach once the owner is shown again */
+			else
+				WLog_WARN(TAG, "detaching dialog id=0x%08" PRIx32 " failed: %s",
+				          static_cast<uint32_t>(_id), SDL_GetError());
+		}
 		SDL_ShowWindow(_win->window());
 	}
 	return true;
