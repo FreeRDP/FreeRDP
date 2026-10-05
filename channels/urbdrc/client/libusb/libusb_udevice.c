@@ -829,6 +829,9 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL libusb_udev_detach_kernel_driver(IUDEVICE* idev);
+
+WINPR_ATTR_NODISCARD
 static int libusb_udev_select_configuration(IUDEVICE* idev, UINT32 bConfigurationValue)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
@@ -852,6 +855,15 @@ static int libusb_udev_select_configuration(IUDEVICE* idev, UINT32 bConfiguratio
 	{
 		func_config_release_all_interface(pdev->urbdrc, libusb_handle, *LibusbConfig);
 	}
+
+	/* A kernel driver may have bound after the one-time detach done when the device was
+	 * announced: with hotplug the device is added on arrival, while usb-storage, uvcvideo or
+	 * snd-usb-audio probe a moment later. The kernel then rejects the configuration change
+	 * with EBUSY ("interface claimed by usb-storage while 'xfreerdp3' sets config") and the
+	 * device stays with the local driver. Detach again before changing the configuration. */
+	pdev->status &= (UINT16)~URBDRC_DEVICE_DETACH_KERNEL;
+	if (!libusb_udev_detach_kernel_driver(idev))
+		return -1;
 
 	/* The configuration value -1 is mean to put the device in unconfigured state. */
 	if (bConfigurationValue == 0)
@@ -1843,6 +1855,9 @@ static int udev_get_device_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UD
 				libusb_unref_device(dev);
 				continue;
 			}
+
+			/* also detach a late-bound kernel driver when an interface is claimed */
+			(void)libusb_set_auto_detach_kernel_driver(pdev->libusb_handle, 1);
 
 			/* get port number */
 			error = libusb_get_port_numbers(dev, port_numbers, sizeof(port_numbers));
