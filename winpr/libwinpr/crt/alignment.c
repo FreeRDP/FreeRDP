@@ -194,6 +194,15 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 	void* newMemblock = nullptr;
 	WINPR_ALIGNED_MEM* pNewMem = nullptr;
 
+	if ((num == 0) || (size == 0))
+	{
+		winpr_aligned_free(memblock);
+		return nullptr;
+	}
+
+	if (num > SIZE_MAX / size - alignment)
+		return nullptr;
+
 	if (!memblock)
 	{
 		newMemblock = winpr_aligned_offset_malloc(size * num, alignment, offset);
@@ -211,12 +220,6 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 	if (!pMem)
 		return nullptr;
 
-	if ((num == 0) || (size == 0))
-		goto fail;
-
-	if (num > SIZE_MAX / size - alignment)
-		goto fail;
-
 	if (pMem->size > (1ull * num * size) + alignment)
 		return memblock;
 
@@ -231,7 +234,7 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 		memcpy(newMemblock, memblock, csize);
 		ZeroMemory(((char*)newMemblock) + csize, pNewMem->size - csize);
 	}
-fail:
+
 	winpr_aligned_free(memblock);
 	return newMemblock;
 }
