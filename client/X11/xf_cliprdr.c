@@ -420,7 +420,7 @@ static const xfCliprdrFormat* xf_cliprdr_get_client_available_format_by_id(xfCli
 	{
 		const xfCliprdrFormat* format = &(clipboard->clientFormats[index]);
 
-		if (!xf_cliprdr_is_atom_available(clipboard, format->atom))
+		if (!xf_cliprdr_is_atom_available(clipboard, format->atom) && (formatId != CF_RAW))
 			continue;
 
 		if (fetchImage && format->isImage)
