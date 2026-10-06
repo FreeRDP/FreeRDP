@@ -592,14 +592,14 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 		if (image->bytesPerPixel == 0)
 			goto fail;
 
-		if ((size_t)bi.biWidth > (SIZE_MAX / image->bytesPerPixel) - 4ull)
+		if (image->width > (UINT32_MAX / image->bytesPerPixel) - 4ull)
 			goto fail;
 
-		image->scanline = WINPR_ASSERTING_INT_CAST(uint32_t, bi.biWidth) * image->bytesPerPixel;
+		image->scanline = image->width * image->bytesPerPixel;
 		if ((image->scanline % 4) != 0)
 			image->scanline += 4 - image->scanline % 4;
 
-		if (image->height > SIZE_MAX / image->scanline)
+		if (image->height > UINT32_MAX / image->scanline)
 			goto fail;
 
 		{
