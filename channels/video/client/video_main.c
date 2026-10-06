@@ -61,6 +61,7 @@ typedef struct
 	VideoClientContext* context;
 	BOOL initialized;
 	rdpContext* rdpcontext;
+	BOOL connected;
 } VIDEO_PLUGIN;
 
 #define XF_VIDEO_UNLIMITED_RATE 31
@@ -1044,6 +1045,8 @@ static UINT video_control_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 		{
 			video->control_callback->channel_callback = nullptr;
 		}
+		if (video)
+			video->connected = FALSE;
 	}
 	free(pChannelCallback);
 	return CHANNEL_RC_OK;
@@ -1080,6 +1083,16 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
 // NOLINTEND(readability-non-const-parameter)
 {
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)listenerCallback;
+	WINPR_ASSERT(listener_callback);
+
+	VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)listener_callback->plugin;
+	WINPR_ASSERT(video);
+
+	if (video->connected)
+	{
+		WLog_ERR(TAG, "Channel already connected, terminating.");
+		return ERROR_DEVICE_ALREADY_ATTACHED;
+	}
 
 	GENERIC_CHANNEL_CALLBACK* callback =
 	    (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
@@ -1097,6 +1110,7 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
 	listener_callback->channel_callback = callback;
 
 	*ppCallback = &callback->iface;
+	video->connected = TRUE;
 
 	return CHANNEL_RC_OK;
 }
