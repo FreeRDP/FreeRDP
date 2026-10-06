@@ -475,8 +475,17 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, const mt_event
 			const UINT32 reqId = rdpemt_get_request_id(emt);
 			rdpemt_free(emt);
 
+			/* Soft-Sync only moves channels from TCP to UDP ([MS-RDPEDYC] 3.1.5.3), there is no
+			 * way back. What was in flight on the tunnel is lost in both directions, so the
+			 * channels on it cannot carry on over TCP: the connection ends like a broken main
+			 * transport, and the client reconnects. */
 			if (wasReady)
-				WLog_WARN(TAG, "the UDP tunnel broke down, dynamic channels fall back to TCP");
+			{
+				WLog_WARN(TAG, "the UDP tunnel broke down, ending the connection");
+				freerdp_set_last_error_if_not(multi->rdp->context,
+				                              FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+				return FALSE;
+			}
 			if (!responseSent)
 			{
 				if (!multitransport_client_send_response(multi, reqId, E_ABORT))
