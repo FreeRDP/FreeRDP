@@ -281,6 +281,10 @@ static UINT ecam_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	WINPR_ASSERT(hchannel);
 
 	WLog_DBG(TAG, "entered");
+	CameraPlugin* ecam = (CameraPlugin*)hchannel->plugin;
+	WINPR_ASSERT(ecam);
+
+	ecam->connected = FALSE;
 
 	free(hchannel);
 	return CHANNEL_RC_OK;
@@ -303,6 +307,16 @@ static UINT ecam_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 		return ERROR_INTERNAL_ERROR;
 
 	WLog_DBG(TAG, "entered");
+
+	CameraPlugin* ecam = (CameraPlugin*)hlistener->plugin;
+	WINPR_ASSERT(ecam);
+
+	if (ecam->connected)
+	{
+		WLog_ERR(TAG, "Channel already connected, terminating.");
+		return ERROR_DEVICE_ALREADY_ATTACHED;
+	}
+
 	GENERIC_CHANNEL_CALLBACK* hchannel =
 	    (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 
@@ -318,7 +332,8 @@ static UINT ecam_on_new_channel_connection(IWTSListenerCallback* pListenerCallba
 	hchannel->plugin = hlistener->plugin;
 	hchannel->channel_mgr = hlistener->channel_mgr;
 	hchannel->channel = pChannel;
-	*ppCallback = (IWTSVirtualChannelCallback*)hchannel;
+	*ppCallback = &hchannel->iface;
+	ecam->connected = TRUE;
 	return CHANNEL_RC_OK;
 }
 
