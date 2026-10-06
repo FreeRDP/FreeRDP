@@ -1226,6 +1226,39 @@ static BOOL testEscape(void)
 	}
 	return TRUE;
 }
+
+WINPR_ATTR_NODISCARD
+static BOOL testUnescapeLiteral(void)
+{
+	/* Text that is not a valid \uXXXX escape must pass through unchanged */
+	const struct
+	{
+		const char* in;
+		const char* out;
+	} tests[] = { { "C:\\users\\test", "C:\\users\\test" },
+		          { "see \\utils here", "see \\utils here" },
+		          { "end \\u12", "end \\u12" },
+		          { "\\uzzzz\\u0041", "\\uzzzzA" },
+		          { "\\u005cu0041", "\\u0041" } };
+
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
+	{
+		char* str = _strdup(tests[x].in);
+		if (!str)
+			return FALSE;
+
+		const SSIZE_T res = winpr_utfEscapedStringToUtf8(str, strlen(str));
+		const BOOL ok =
+		    (res >= 0) && ((size_t)res == strlen(tests[x].out)) && (strcmp(str, tests[x].out) == 0);
+		if (!ok)
+			(void)fprintf(stderr, "unescape '%s': got '%s', expected '%s'\n", tests[x].in, str,
+			              tests[x].out);
+		free(str);
+		if (!ok)
+			return FALSE;
+	}
+	return TRUE;
+}
 #endif
 
 int TestUnicodeConversion(int argc, char* argv[])
@@ -1374,6 +1407,8 @@ int TestUnicodeConversion(int argc, char* argv[])
 
 #if defined(BUILD_TESTING_INTERNAL)
 	if (!testEscape())
+		return -1;
+	if (!testUnescapeLiteral())
 		return -1;
 #endif
 
