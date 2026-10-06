@@ -103,10 +103,20 @@
 
 #define RDPUDP_SYN_TIMEOUT_MS 1000
 #define RDPUDP_SYN_ATTEMPTS 4
-#define RDPUDP_MAX_RETRANSMITS 10
 #define RDPUDP_MAX_RTO_MS 5000
+
+/* [MS-RDPEUDP] 3.1.5.4: a datagram retransmitted three to five times without a response ends
+ * the connection, and so does 65 seconds without any datagram from the peer (3.1.1.9). */
+#define RDPUDP_MAX_RETRANSMITS 5
 #define RDPUDP_KEEPALIVE_MS 5000
 #define RDPUDP_PEER_TIMEOUT_MS 65000
+
+/* [MS-RDPEUDP2] 3.1.1.3: both ends send at least every 16 seconds, Windows every 4, and 16
+ * seconds without a datagram mean the peer is gone. The retransmit limit is left to the sender,
+ * the peer timeout already bounds how long a dead connection goes unnoticed. */
+#define RDPUDP2_MAX_RETRANSMITS 10
+#define RDPUDP2_KEEPALIVE_MS 4000
+#define RDPUDP2_PEER_TIMEOUT_MS 16000
 
 /* A stream chunk that stays missing while later ones pile up behind it for this long will not
  * come back: the peer only resends a lost chunk while it still has it outstanding. */
@@ -1381,9 +1391,11 @@ static BOOL run_timers(rdpUdp* udp)
 	if (udp->state != RDPUDP_STATE_ESTABLISHED)
 		return FALSE;
 
-	if (now - udp->lastReceived > RDPUDP_PEER_TIMEOUT_MS)
+	const BOOL v3 = udp->version == RDPUDP_PROTOCOL_VERSION_3;
+	if (now - udp->lastReceived > (v3 ? RDPUDP2_PEER_TIMEOUT_MS : RDPUDP_PEER_TIMEOUT_MS))
 	{
-		rdpudp_fail(udp, "nothing heard from the server for 65 seconds");
+		rdpudp_fail(udp, v3 ? "nothing heard from the server for 16 seconds"
+		                    : "nothing heard from the server for 65 seconds");
 		return FALSE;
 	}
 
@@ -1406,7 +1418,7 @@ static BOOL run_timers(rdpUdp* udp)
 		rdpudp_pending* p = &udp->pending[x];
 		if (!p->used || (now < p->due))
 			continue;
-		if (p->retransmits >= RDPUDP_MAX_RETRANSMITS)
+		if (p->retransmits >= (v3 ? RDPUDP2_MAX_RETRANSMITS : RDPUDP_MAX_RETRANSMITS))
 		{
 			rdpudp_fail(udp, "a datagram went unacknowledged too many times");
 			return FALSE;
@@ -1432,7 +1444,7 @@ static BOOL run_timers(rdpUdp* udp)
 			return FALSE;
 	}
 
-	if (now - udp->lastSent >= RDPUDP_KEEPALIVE_MS)
+	if (now - udp->lastSent >= (v3 ? RDPUDP2_KEEPALIVE_MS : RDPUDP_KEEPALIVE_MS))
 	{
 		if (!rdpudp_send_ack(udp))
 			return FALSE;
