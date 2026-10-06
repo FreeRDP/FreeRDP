@@ -640,20 +640,19 @@ static struct timeval filetimeToTimeval(const FILETIME* ftime)
 	return tv;
 }
 
-static struct timeval statToTimeval(const struct stat* sval)
+static struct timeval statToTimeval(const struct stat* sval, BOOL modification)
 {
 	WINPR_ASSERT(sval);
 	struct timeval tv = WINPR_C_ARRAY_INIT;
 #if defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
-	tv.tv_sec = sval->st_atime;
 #ifdef _POSIX_SOURCE
-	TIMESPEC_TO_TIMEVAL(&tv, &sval->st_atim);
+	TIMESPEC_TO_TIMEVAL(&tv, modification ? &sval->st_mtim : &sval->st_atim);
 #else
-	TIMESPEC_TO_TIMEVAL(&tv, &sval->st_atimespec);
+	TIMESPEC_TO_TIMEVAL(&tv, modification ? &sval->st_mtimespec : &sval->st_atimespec);
 #endif
 #elif defined(ANDROID)
-	tv.tv_sec = sval->st_atime;
-	tv.tv_usec = sval->st_atimensec / 1000UL;
+	tv.tv_sec = modification ? sval->st_mtime : sval->st_atime;
+	tv.tv_usec = (modification ? sval->st_mtimensec : sval->st_atimensec) / 1000UL;
 #endif
 	return tv;
 }
@@ -678,7 +677,8 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 		return FALSE;
 	}
 
-	struct timeval timevals[2] = { statToTimeval(&buf), statToTimeval(&buf) };
+	/* Keep the times that are not set */
+	struct timeval timevals[2] = { statToTimeval(&buf, FALSE), statToTimeval(&buf, TRUE) };
 	if (lpLastAccessTime)
 		timevals[0] = filetimeToTimeval(lpLastAccessTime);
 

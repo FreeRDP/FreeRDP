@@ -3038,6 +3038,21 @@ static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, voi
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+static UINT rdpdr_server_drive_query_directory_callback3(RdpdrServerContext* context, wStream* s,
+                                                         RDPDR_IRP* irp, UINT32 deviceId,
+                                                         UINT32 completionId, UINT32 ioStatus)
+{
+	WINPR_UNUSED(context);
+	WINPR_UNUSED(s);
+	WINPR_UNUSED(deviceId);
+	WINPR_UNUSED(completionId);
+	WINPR_UNUSED(ioStatus);
+
+	/* The directory is closed. Destroy the IRP. */
+	rdpdr_server_irp_free(irp);
+	return CHANNEL_RC_OK;
+}
+
 static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* context, wStream* s,
                                                          RDPDR_IRP* irp, UINT32 deviceId,
                                                          UINT32 completionId, UINT32 ioStatus)
@@ -3102,11 +3117,20 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 	{
 		/* Invoke the query directory completion routine. */
 		context->OnDriveQueryDirectoryComplete(context, irp->CallbackData, ioStatus, nullptr);
-		/* Destroy the IRP. */
-		rdpdr_server_irp_free(irp);
-	}
 
-	return CHANNEL_RC_OK;
+		/* Close the directory, so that the client does not leak its handle */
+		irp->CompletionId = priv->NextCompletionId++;
+		irp->Callback = rdpdr_server_drive_query_directory_callback3;
+
+		if (!rdpdr_server_enqueue_irp(context, irp))
+		{
+			rdpdr_server_irp_free(irp);
+			return ERROR_INTERNAL_ERROR;
+		}
+
+		return rdpdr_server_send_device_close_request(context, irp->DeviceId, irp->FileId,
+		                                              irp->CompletionId);
+	}
 }
 
 /**
@@ -3146,7 +3170,8 @@ static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 	irp->Callback = rdpdr_server_drive_query_directory_callback2;
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
-	winpr_str_append("\\*.*", irp->PathName, ARRAYSIZE(irp->PathName), nullptr);
+	/* "*.*" only matches names with a dot outside of Windows, e.g. in WinPR */
+	winpr_str_append("\\*", irp->PathName, ARRAYSIZE(irp->PathName), nullptr);
 
 	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
@@ -3343,14 +3368,13 @@ static UINT rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, 
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
+	/* [MS-RDPEFS] 2.2.1.5.4 DR_WRITE_RSP: the number of bytes written, no data */
 	const UINT32 length = Stream_Get_UINT32(s); /* Length (4 bytes) */
-	Stream_Seek(s, 1);                          /* Padding (1 byte) */
-
-	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, length))
-		return ERROR_INVALID_DATA;
+	/* Padding (1 byte), optional like the padding of other responses */
+	Stream_Seek(s, MIN(Stream_GetRemainingLength(s), 1));
 
 	/* Invoke the write file completion routine. */
 	context->OnDriveWriteFileComplete(context, irp->CallbackData, ioStatus, length);
@@ -3399,7 +3423,6 @@ static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
                                                    RDPDR_IRP* irp, UINT32 deviceId,
                                                    UINT32 completionId, UINT32 ioStatus)
 {
-	WINPR_UNUSED(s);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(irp);
@@ -3411,11 +3434,9 @@ static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	// padding 5 bytes
-	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
-		return ERROR_INVALID_DATA;
-
-	Stream_Seek(s, 5);
+	/* [MS-RDPEFS] 2.2.1.5.2 DR_CLOSE_RSP: 5 bytes of padding that MUST be ignored.
+	 * Windows clients send only 4, so do not require them. */
+	Stream_Seek(s, MIN(Stream_GetRemainingLength(s), 5));
 
 	/* Invoke the close file completion routine. */
 	context->OnDriveCloseFileComplete(context, irp->CallbackData, ioStatus);
@@ -3554,9 +3575,9 @@ static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* ca
 	strncpy(irp->PathName, path, sizeof(irp->PathName) - 1);
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	/* Send a request to open the file. */
+	/* Send a request to open the file. FILE_DELETE_ON_CLOSE needs DELETE access. */
 	return rdpdr_server_send_device_create_request(
-	    context, irp->DeviceId, irp->CompletionId, irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
+	    context, irp->DeviceId, irp->CompletionId, irp->PathName, DELETE | SYNCHRONIZE,
 	    FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
@@ -3608,11 +3629,13 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 5))
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	WINPR_ATTR_UNUSED const UINT32 length = Stream_Get_UINT32(s); /* Length (4 bytes) */
-	Stream_Seek(s, 1);                                            /* Padding (1 byte) */
+	/* [MS-RDPEFS] 2.2.3.4.9 DR_DRIVE_SET_INFORMATION_RSP: the padding is optional */
+	if (Stream_GetRemainingLength(s) > 0)
+		Stream_Seek(s, 1); /* Padding (1 byte) */
 
 	/* Invoke the rename file completion routine. */
 	context->OnDriveRenameFileComplete(context, irp->CallbackData, ioStatus);
@@ -3710,10 +3733,10 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 	rdpdr_server_convert_slashes(irp->ExtraBuffer, sizeof(irp->ExtraBuffer));
 
-	/* Send a request to open the file. */
-	return rdpdr_server_send_device_create_request(context, irp->DeviceId, irp->CompletionId,
-	                                               irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
-	                                               FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
+	/* Send a request to open the file. Renaming needs DELETE access. */
+	return rdpdr_server_send_device_create_request(
+	    context, irp->DeviceId, irp->CompletionId, irp->PathName,
+	    DELETE | FILE_READ_ATTRIBUTES | SYNCHRONIZE, FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
 static void rdpdr_server_private_free(RdpdrServerPrivate* ctx)
