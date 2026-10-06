@@ -1156,10 +1156,9 @@ UINT rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 	{
 		if (rdpsnd->dynamic)
 		{
-			IWTSVirtualChannel* channel = nullptr;
-			if (rdpsnd->listener_callback)
+			if (rdpsnd->listener_callback && rdpsnd->connected)
 			{
-				channel = rdpsnd->listener_callback->channel_callback->channel;
+				IWTSVirtualChannel* channel = rdpsnd->listener_callback->channel_callback->channel;
 				status =
 				    channel->Write(channel, (UINT32)Stream_Length(s), Stream_Buffer(s), nullptr);
 			}
