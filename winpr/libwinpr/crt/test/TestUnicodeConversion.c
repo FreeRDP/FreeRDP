@@ -1196,22 +1196,43 @@ static BOOL testEscapeCase(const test_case_t* test)
 	WINPR_ASSERT(test->utf8len == strlen(test->utf8));
 	char* str = winpr_utf8ToUtfEscapedString(test->utf8, test->utf8len, &dlen);
 	if (dlen != test->esclen)
+	{
+		(void)fprintf(stderr, "[%s] length 1 mismatch %" PRIuz " vs %" PRIuz, __func__, dlen,
+		              test->esclen);
 		goto fail;
+	}
 	if (strncmp(test->esc, str, test->esclen + 1) != 0)
+	{
+		(void)fprintf(stderr, "[%s] strcmp 1 mismatch %s vs %s", __func__, str, test->esc);
 		goto fail;
+	}
 
 	cmp = strndup(str, dlen);
 	if (!cmp)
+	{
+		(void)fprintf(stderr, "[%s] strndup(%s, %" PRIuz ") mismatch", __func__, str, dlen);
 		goto fail;
+	}
 	WINPR_ASSERT(test->esclen == strlen(test->esc));
 	const SSIZE_T res = winpr_utfEscapedStringToUtf8(cmp, dlen);
 	if (res < 0)
+	{
+		(void)fprintf(stderr, "[%s] winpr_utfEscapedStringToUtf8(%s, %" PRIuz ") failed", __func__,
+		              cmp, dlen);
 		goto fail;
+	}
 
 	if ((size_t)res != test->utf8len)
+	{
+		(void)fprintf(stderr, "[%s] length 2 mismatch %" PRIdz " vs %" PRIuz, __func__, res,
+		              test->utf8len);
 		goto fail;
+	}
 	if (strncmp(test->utf8, cmp, test->utf8len + 1) != 0)
+	{
+		(void)fprintf(stderr, "[%s] strcmp 2 mismatch %s vs %s", __func__, cmp, test->utf8);
 		goto fail;
+	}
 
 	rc = TRUE;
 fail:
