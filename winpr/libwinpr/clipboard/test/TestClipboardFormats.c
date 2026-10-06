@@ -329,33 +329,35 @@ int TestClipboardFormats(int argc, char* argv[])
 
 	if (1)
 	{
-		UINT32 SrcSize = 0;
-		UINT32 DstSize = 0;
 		const char pSrcData[] = "this is a test string";
 		char* pDstData = nullptr;
 
-		SrcSize = (UINT32)(strnlen(pSrcData, ARRAYSIZE(pSrcData)) + 1);
+		UINT32 SrcSize = (UINT32)(strnlen(pSrcData, ARRAYSIZE(pSrcData)) + 1);
 		const BOOL bSuccess =
 		    test_ClipboardSetData(clipboard, utf8StringFormatId, pSrcData, SrcSize);
 		if (!bSuccess)
 			goto fail;
 
-		DstSize = 0;
-		pDstData = (char*)test_ClipboardGetData(clipboard, utf8StringFormatId, &DstSize);
-		free(pDstData);
-	}
-
-	if (1)
-	{
 		UINT32 DstSize = 0;
-		char* pSrcData = nullptr;
-		WCHAR* pDstData = nullptr;
-		DstSize = 0;
-		pDstData = (WCHAR*)test_ClipboardGetData(clipboard, CF_UNICODETEXT, &DstSize);
-		pSrcData = ConvertWCharNToUtf8Alloc(pDstData, DstSize / sizeof(WCHAR), nullptr);
-
+		pDstData = (char*)test_ClipboardGetData(clipboard, utf8StringFormatId, &DstSize);
+		const BOOL equal = (SrcSize == DstSize) && (strncmp(pSrcData, pDstData, SrcSize) == 0);
 		free(pDstData);
-		free(pSrcData);
+		if (!equal)
+			goto fail;
+		{
+			UINT32 WDstSize = 0;
+			WCHAR* pDstData = (WCHAR*)test_ClipboardGetData(clipboard, CF_UNICODETEXT, &WDstSize);
+
+			size_t cmpSrcSize = 0;
+			char* pCmpData =
+			    ConvertWCharNToUtf8Alloc(pDstData, WDstSize / sizeof(WCHAR), &cmpSrcSize);
+			const BOOL equal2 =
+			    (SrcSize == cmpSrcSize + 1ull) && (strncmp(pCmpData, pSrcData, SrcSize) == 0);
+			free(pDstData);
+			free(pCmpData);
+			if (!equal2)
+				goto fail;
+		}
 	}
 
 	pFormatIds = nullptr;
