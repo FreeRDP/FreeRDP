@@ -328,13 +328,28 @@ static BOOL test_conversion(const testcase_t* testcases, size_t count)
 
 		printf("Running test case %" PRIuz " [%s]\n", x, test->utf8);
 		if (!test_convert_to_utf16(test))
+		{
+			(void)fprintf(stderr, "Test case %" PRIuz " [%s] convert to UTF16 failed\n",
+			              test->utf8);
 			return FALSE;
+		}
 		if (!test_convert_to_utf16_n(test))
+		{
+			(void)fprintf(stderr, "Test case %" PRIuz " [%s] convert to UTF16N failed\n",
+			              test->utf8);
 			return FALSE;
+		}
 		if (!test_convert_to_utf8(test))
+		{
+			(void)fprintf(stderr, "Test case %" PRIuz " [%s] convert to UTF8 failed\n", test->utf8);
 			return FALSE;
+		}
 		if (!test_convert_to_utf8_n(test))
+		{
+			(void)fprintf(stderr, "Test case %" PRIuz " [%s] convert to UTF8N failed\n",
+			              test->utf8);
 			return FALSE;
+		}
 	}
 	return TRUE;
 }
@@ -1222,7 +1237,10 @@ static BOOL testEscape(void)
 	{
 		const test_case_t* cur = &tests[x];
 		if (!testEscapeCase(cur))
+		{
+			(void)fprintf(stderr, "Test case %" PRIuz " %s escaped string failed\n", x, cur->utf8);
 			return FALSE;
+		}
 	}
 	return TRUE;
 }
