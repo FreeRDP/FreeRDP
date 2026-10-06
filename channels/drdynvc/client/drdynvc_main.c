@@ -74,7 +74,7 @@ WINPR_ATTR_NODISCARD
 static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s, DVCMAN_CHANNEL_STATS* stats);
 WINPR_ATTR_NODISCARD
 static UINT drdynvc_send_on(drdynvcPlugin* drdynvc, wStream* s, DVCMAN_CHANNEL_STATS* stats,
-                            UINT32 tunnelType);
+                            UINT32* tunnelType, BOOL continuation);
 
 static void dvcman_wtslistener_free(DVCMAN_LISTENER* listener)
 {
@@ -509,7 +509,8 @@ static UINT dvcchannel_send_close(DVCMAN_CHANNEL* channel)
 
 	Stream_Write_UINT8(s, (CLOSE_REQUEST_PDU << 4) | 0x02);
 	Stream_Write_UINT32(s, channel->channel_id);
-	return drdynvc_send_on(drdynvc, s, &channel->stats, channel->tunnelType);
+	UINT32 tunnelType = channel->tunnelType;
+	return drdynvc_send_on(drdynvc, s, &channel->stats, &tunnelType, FALSE);
 }
 
 static void check_open_close_receive(DVCMAN_CHANNEL* channel)
@@ -1151,25 +1152,51 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s, DVCMAN_CHANNEL_STAT
 }
 
 /**
+ * Ends the session over data of a tunnelled channel that can no longer be sent in order. The
+ * client then reconnects, which is how the main connection handles a broken transport too.
+ */
+static void drdynvc_tunnel_abort(drdynvcPlugin* drdynvc, const char* why)
+{
+	WLog_Print(drdynvc->log, WLOG_ERROR, "%s, ending the session", why);
+	if (!drdynvc->rdpcontext)
+		return;
+	freerdp_set_last_error_if_not(drdynvc->rdpcontext, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+	(void)freerdp_abort_connect_context(drdynvc->rdpcontext);
+}
+
+/**
  * Sends a PDU of a channel the way that channel's data travels: on its multitransport tunnel,
- * or on the drdynvc static channel. A tunnel that is gone falls back to the static channel.
+ * or on the drdynvc static channel.
+ *
+ * A tunnel that is gone falls back to the static channel, and tunnelType is set to 0 so the
+ * rest of the message follows. A continuation, a later fragment of a message whose start went
+ * over the tunnel, cannot: on TCP it could overtake that start or be read without it.
  *
  * @return 0 on success, otherwise a Win32 error code
  */
 WINPR_ATTR_NODISCARD
 static UINT drdynvc_send_on(drdynvcPlugin* drdynvc, wStream* s, DVCMAN_CHANNEL_STATS* stats,
-                            UINT32 tunnelType)
+                            UINT32* tunnelType, BOOL continuation)
 {
-	if (drdynvc && (tunnelType != 0))
+	WINPR_ASSERT(tunnelType);
+	if (drdynvc && (*tunnelType != 0))
 	{
 		const size_t len = Stream_GetPosition(s);
-		if (freerdp_multitransport_send_dvc(drdynvc->rdpcontext, tunnelType, Stream_Buffer(s), len))
+		if (freerdp_multitransport_send_dvc(drdynvc->rdpcontext, *tunnelType, Stream_Buffer(s),
+		                                    len))
 		{
 			if (stats)
 				stats->bytesOut += len;
 			Stream_Release(s);
 			return CHANNEL_RC_OK;
 		}
+		if (continuation)
+		{
+			Stream_Release(s);
+			drdynvc_tunnel_abort(drdynvc, "the tunnel failed in the middle of a message");
+			return ERROR_BROKEN_PIPE;
+		}
+		*tunnelType = 0;
 	}
 	return drdynvc_send(drdynvc, s, stats);
 }
@@ -1238,7 +1265,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, UINT32 
 		}
 		Stream_Write(data_out, data, dataSize);
 		stats->packetsOut++;
-		status = drdynvc_send_on(drdynvc, data_out, stats, tunnelType);
+		status = drdynvc_send_on(drdynvc, data_out, stats, &tunnelType, FALSE);
 	}
 	else
 	{
@@ -1267,7 +1294,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, UINT32 
 		if (dataSize > 0)
 			stats->fragmentsOut++;
 
-		status = drdynvc_send_on(drdynvc, data_out, stats, tunnelType);
+		status = drdynvc_send_on(drdynvc, data_out, stats, &tunnelType, FALSE);
 
 		while (status == CHANNEL_RC_OK && dataSize > 0)
 		{
@@ -1311,7 +1338,7 @@ static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, UINT32 
 			data += chunkLength;
 			dataSize -= chunkLength;
 
-			status = drdynvc_send_on(drdynvc, data_out, stats, tunnelType);
+			status = drdynvc_send_on(drdynvc, data_out, stats, &tunnelType, TRUE);
 		}
 	}
 
@@ -1537,7 +1564,8 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, UINT8 Sp, UIN
 	/* A channel created on a tunnel is read there by the server, so it is answered there. */
 	if (channel && (channel_status == CHANNEL_RC_OK))
 		channel->tunnelType = tunnelType;
-	status = drdynvc_send_on(drdynvc, data_out, nullptr, tunnelType);
+	UINT32 responseTunnel = tunnelType;
+	status = drdynvc_send_on(drdynvc, data_out, nullptr, &responseTunnel, FALSE);
 	if (status != CHANNEL_RC_OK)
 	{
 		WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08" PRIX32 "]",
@@ -1844,23 +1872,22 @@ static UINT drdynvc_receive_tunnel_pdu(drdynvcPlugin* drdynvc, wStream* s, UINT3
 {
 	if (drdynvc_soft_sync_negotiated(drdynvc) && !drdynvc->softSyncDone)
 	{
-		if (drdynvc->tunnelBacklogCount < DRDYNVC_MAX_TUNNEL_BACKLOG)
-		{
-			if (drdynvc_tunnel_backlog_add(drdynvc, s, tunnelType))
-				return CHANNEL_RC_OK;
-		}
-		else
-			WLog_Print(drdynvc->log, WLOG_WARN,
-			           "no Soft-Sync Request after %" PRIuz
-			           " tunnel PDUs, handling tunnel data without it",
-			           drdynvc->tunnelBacklogCount);
-
-		const UINT error = drdynvc_tunnel_backlog_flush(drdynvc);
-		if (error != CHANNEL_RC_OK)
+		/* Reading on without the request would interleave tunnel and TCP data in no defined
+		 * order, so a server that never sends it ends the session. */
+		if (drdynvc->tunnelBacklogCount >= DRDYNVC_MAX_TUNNEL_BACKLOG)
 		{
 			Stream_Release(s);
-			return error;
+			drdynvc_tunnel_backlog_clear(drdynvc);
+			drdynvc_tunnel_abort(drdynvc,
+			                     "no Soft-Sync Request after the tunnel backlog filled up");
+			return ERROR_INVALID_DATA;
 		}
+		if (!drdynvc_tunnel_backlog_add(drdynvc, s, tunnelType))
+		{
+			Stream_Release(s);
+			return CHANNEL_RC_NO_MEMORY;
+		}
+		return CHANNEL_RC_OK;
 	}
 
 	const UINT error = drdynvc_order_recv(drdynvc, s, TRUE, tunnelType);
@@ -1906,13 +1933,37 @@ static UINT drdynvc_process_soft_sync_request(drdynvcPlugin* drdynvc, wStream* s
 	const UINT32 length = Stream_Get_UINT32(s);
 	const UINT16 flags = Stream_Get_UINT16(s);
 	const UINT16 numberOfTunnels = Stream_Get_UINT16(s);
-	WINPR_UNUSED(length);
+
+	/* Windows counts Length from the Length field on, the header byte and Pad are not in it. The
+	 * channel lists must fit in it, nothing after it belongs to them. */
+	const size_t available = Stream_Length(s) - start - 2;
+	if ((length < 8) || (length > available))
+	{
+		WLog_Print(drdynvc->log, WLOG_ERROR,
+		           "Soft-Sync Request Length %" PRIu32 " with %" PRIuz " bytes present", length,
+		           available);
+		return ERROR_INVALID_DATA;
+	}
+	if (!Stream_SetLength(s, start + 2 + length))
+		return ERROR_INVALID_DATA;
 
 	WLog_Print(drdynvc->log, WLOG_DEBUG,
 	           "Soft-Sync Request: flags 0x%04" PRIx16 ", %" PRIu16 " tunnel(s)", flags,
 	           numberOfTunnels);
+
+	/* [MS-RDPEDYC] 2.2.5.1: SOFT_SYNC_TCP_FLUSHED must be set. Without it the server has not
+	 * said its TCP data for these channels is out, so none of them moves: an empty response
+	 * keeps them all on TCP. */
 	if (!(flags & SOFT_SYNC_TCP_FLUSHED))
-		WLog_Print(drdynvc->log, WLOG_WARN, "Soft-Sync Request without SOFT_SYNC_TCP_FLUSHED");
+	{
+		WLog_Print(drdynvc->log, WLOG_WARN,
+		           "Soft-Sync Request without SOFT_SYNC_TCP_FLUSHED, channels stay on TCP");
+		const UINT error = drdynvc_send_soft_sync_response(drdynvc, nullptr, 0);
+		if (error != CHANNEL_RC_OK)
+			return error;
+		drdynvc->softSyncDone = TRUE;
+		return drdynvc_tunnel_backlog_flush(drdynvc);
+	}
 
 	const size_t lists = Stream_GetPosition(s);
 

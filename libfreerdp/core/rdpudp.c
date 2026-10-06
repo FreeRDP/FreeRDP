@@ -112,6 +112,10 @@
  * come back: the peer only resends a lost chunk while it still has it outstanding. */
 #define RDPUDP_STALL_TIMEOUT_MS 10000
 
+/* How long the stream waits at channel sequence 0 for a chunk that may never have been sent,
+ * see v3_skip_channel_zero. */
+#define RDPUDP_CHANNEL_ZERO_GRACE_MS 1000
+
 typedef struct
 {
 	BOOL used;
@@ -191,8 +195,10 @@ struct rdp_udp
 	UINT16 v3Expected;
 	UINT16 v3Highest;
 	BOOL v3Received[RDPUDP_RECEIVE_SLOTS];
-	BOOL v3ChannelKnown;
 	UINT16 v3NextChannel;
+	UINT16 v3LastChannelDataSeq;  /* data sequence that carried channel sequence 0xFFFF */
+	UINT16 v3FirstChannelDataSeq; /* data sequence that carried channel sequence 1 */
+	UINT64 v3ZeroWaitSince;
 };
 
 static BOOL seq16_after(UINT16 a, UINT16 b)
@@ -205,17 +211,11 @@ static BOOL seq32_after(UINT32 a, UINT32 b)
 	return (a != b) && ((a - b) < 0x80000000u);
 }
 
-/* Channel sequence numbers are 1-based: the peer wraps 65535 to 1 and never uses 0. */
+/* Channel sequence numbers start at 1 and Windows wraps 65535 to 1, never using 0. Ours do the
+ * same; on receiving, 0 is accepted as well, see v3_skip_channel_zero. */
 static UINT16 channel_seq_next(UINT16 seq)
 {
 	return (seq == UINT16_MAX) ? 1 : (UINT16)(seq + 1);
-}
-
-static UINT32 channel_seq_distance(UINT16 to, UINT16 from)
-{
-	if (to >= from)
-		return (UINT32)to - from;
-	return (UINT32)(UINT16_MAX - from) + to;
 }
 
 /* [MS-RDPEUDP2] has 24 bit little endian fields, wStream has no helper for those */
@@ -1012,41 +1012,80 @@ static void v3_process_ack(rdpUdp* udp, UINT16 ack)
 	}
 }
 
-static BOOL v3_receive_channel_data(rdpUdp* udp, UINT16 channelSeq, const BYTE* data, size_t length)
+/* Waiting at channel sequence 0 with 1 already here. Windows never sends 0; a peer that does
+ * sent it before 1. When 1 came in the data sequence right after the one that carried 0xFFFF,
+ * nothing was sent in between and there is no 0. Otherwise 0 gets a grace period to turn up as
+ * a resend before the stream moves on without it. */
+static BOOL v3_skip_channel_zero(rdpUdp* udp)
 {
-	if (!udp->v3ChannelKnown)
+	if (udp->v3NextChannel != 0)
+		return FALSE;
+	const rdpudp_slot* zero = &udp->slots[0];
+	const rdpudp_slot* one = &udp->slots[1];
+	if ((zero->present && (zero->seq == 0)) || !one->present || (one->seq != 1))
 	{
-		udp->v3ChannelKnown = TRUE;
-		udp->v3NextChannel = channelSeq;
+		udp->v3ZeroWaitSince = 0;
+		return FALSE;
 	}
 
-	/* A retransmission travels under a new data sequence number with its original channel
-	 * sequence, so the channel sequence alone says where a chunk belongs and whether it has
-	 * been handed up already. */
-	const UINT32 ahead = channel_seq_distance(channelSeq, udp->v3NextChannel);
-	if (ahead >= RDPUDP_RECEIVE_REACH)
-		return TRUE;
-
-	if (!store_slot(udp, channelSeq, data, length))
+	const UINT64 now = now_ms();
+	if (udp->v3ZeroWaitSince == 0)
+		udp->v3ZeroWaitSince = now;
+	const BOOL adjacent = (UINT16)(udp->v3LastChannelDataSeq + 1) == udp->v3FirstChannelDataSeq;
+	if (!adjacent && (now - udp->v3ZeroWaitSince < RDPUDP_CHANNEL_ZERO_GRACE_MS))
 		return FALSE;
 
+	WLog_Print(udp->log, WLOG_DEBUG, "channel sequence wrapped past 0%s",
+	           adjacent ? "" : ", which never arrived");
+	udp->v3ZeroWaitSince = 0;
+	udp->v3NextChannel = 1;
+	return TRUE;
+}
+
+/* Hands up the chunks that are next in the stream, in channel sequence order. */
+static BOOL v3_deliver_ready(rdpUdp* udp)
+{
 	while (TRUE)
 	{
 		rdpudp_slot* slot = &udp->slots[udp->v3NextChannel % RDPUDP_RECEIVE_SLOTS];
 		if (!slot->present || (slot->seq != udp->v3NextChannel))
+		{
+			if (v3_skip_channel_zero(udp))
+				continue;
 			break;
+		}
 		BYTE* chunk = slot->data;
 		const size_t chunkLength = slot->length;
 		slot->data = nullptr;
 		slot->present = FALSE;
 		udp->buffered--;
-		udp->v3NextChannel = channel_seq_next(udp->v3NextChannel);
+		udp->v3NextChannel = (UINT16)(udp->v3NextChannel + 1);
 		const BOOL rc = deliver(udp, chunk, chunkLength);
 		free(chunk);
 		if (!rc)
 			return FALSE;
 	}
 	return TRUE;
+}
+
+static BOOL v3_receive_channel_data(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq,
+                                    const BYTE* data, size_t length)
+{
+	/* A retransmission travels under a new data sequence number with its original channel
+	 * sequence, so the channel sequence alone says where a chunk belongs and whether it has
+	 * been handed up already. */
+	const UINT16 ahead = (UINT16)(channelSeq - udp->v3NextChannel);
+	if (ahead >= RDPUDP_RECEIVE_REACH)
+		return TRUE;
+
+	if (channelSeq == UINT16_MAX)
+		udp->v3LastChannelDataSeq = dataSeq;
+	else if (channelSeq == 1)
+		udp->v3FirstChannelDataSeq = dataSeq;
+
+	if (!store_slot(udp, channelSeq, data, length))
+		return FALSE;
+	return v3_deliver_ready(udp);
 }
 
 static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
@@ -1178,7 +1217,7 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 		return TRUE;
 
 	const UINT16 channelSeq = Stream_Get_UINT16(s); /* ChannelSeqNum */
-	return v3_receive_channel_data(udp, channelSeq, Stream_ConstPointer(s),
+	return v3_receive_channel_data(udp, dataSeq, channelSeq, Stream_ConstPointer(s),
 	                               Stream_GetRemainingLength(s));
 }
 
@@ -1285,6 +1324,9 @@ static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 		 * peer's RDP-UDP2 sequence space is learned from its first DATA packet. */
 		udp->nextCoded = RDPUDP2_INITIAL_SEQUENCE;
 		udp->nextChannelSeq = 1;
+		/* The peer's stream starts at channel sequence 1 too. Taking the start from whichever
+		 * chunk arrives first would throw away an earlier one that it overtook. */
+		udp->v3NextChannel = 1;
 	}
 	else
 	{
@@ -1345,6 +1387,11 @@ static BOOL run_timers(rdpUdp* udp)
 		return FALSE;
 	}
 
+	/* the grace period at channel sequence 0 can end without a packet coming in */
+	if ((udp->version == RDPUDP_PROTOCOL_VERSION_3) && (udp->v3NextChannel == 0) &&
+	    !v3_deliver_ready(udp))
+		return FALSE;
+
 	/* stuck: chunks have been waiting behind a hole, and nothing moved, for the whole timeout */
 	const UINT64 progress =
 	    (udp->bufferingSince > udp->lastDelivery) ? udp->bufferingSince : udp->lastDelivery;
@@ -1367,8 +1414,18 @@ static BOOL run_timers(rdpUdp* udp)
 		p->retransmits++;
 		p->rto = (p->rto * 2 > RDPUDP_MAX_RTO_MS) ? RDPUDP_MAX_RTO_MS : p->rto * 2;
 		p->due = now + p->rto;
-		if (udp->version != RDPUDP_PROTOCOL_VERSION_3)
+		if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
+		{
+			/* [MS-RDPEUDP2] 3.1.5.1.3: a lost packet is resent under a new data sequence
+			 * number, the channel sequence number stays. The AckOfAcks then moves past the
+			 * old one, so the peer stops waiting for it. */
+			p->seq = (UINT16)udp->nextCoded;
+			udp->nextCoded = (UINT16)(udp->nextCoded + 1);
+		}
+		else
+		{
 			udp->cwrPending = TRUE;
+		}
 		WLog_Print(udp->log, WLOG_TRACE, "retransmitting 0x%08" PRIx32 " (#%" PRIu32 ")", p->seq,
 		           p->retransmits);
 		if (!rdpudp_transmit(udp, p))
