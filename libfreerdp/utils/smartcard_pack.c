@@ -2743,10 +2743,10 @@ WINPR_ATTR_NODISCARD static LONG smartcard_unpack_reader_state_a(wLog* log, wStr
 		Stream_Read_UINT32(s, readerState->cbAtr);          /* cbAtr (4 bytes) */
 		if (readerState->cbAtr > ARRAYSIZE(readerState->rgbAtr))
 		{
-			WLog_Print(log, WLOG_ERROR,
+			WLog_Print(log, WLOG_WARN,
 			           "SCARD_READERSTATEA[%" PRIu32 "]::cbAtr %" PRIu32 " exceeds %" PRIuz, index,
 			           readerState->cbAtr, (size_t)ARRAYSIZE(readerState->rgbAtr));
-			goto fail;
+			readerState->cbAtr = ARRAYSIZE(readerState->rgbAtr);
 		}
 		Stream_Read(s, readerState->rgbAtr, 36);            /* rgbAtr [0..36] (36 bytes) */
 	}
@@ -2836,10 +2836,10 @@ WINPR_ATTR_NODISCARD static LONG smartcard_unpack_reader_state_w(wLog* log, wStr
 		Stream_Read_UINT32(s, readerState->cbAtr);          /* cbAtr (4 bytes) */
 		if (readerState->cbAtr > ARRAYSIZE(readerState->rgbAtr))
 		{
-			WLog_Print(log, WLOG_ERROR,
+			WLog_Print(log, WLOG_WARN,
 			           "SCARD_READERSTATEW[%" PRIu32 "]::cbAtr %" PRIu32 " exceeds %" PRIuz, index,
-			           readerState->cbAtr, (size_t)ARRAYSIZE(readerState->rgbAtr));
-			goto fail;
+			           readerState->cbAtr, ARRAYSIZE(readerState->rgbAtr));
+			readerState->cbAtr = ARRAYSIZE(readerState->rgbAtr);
 		}
 		Stream_Read(s, readerState->rgbAtr, 36);            /* rgbAtr [0..36] (36 bytes) */
 	}
