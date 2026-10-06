@@ -25,6 +25,7 @@
 #include <winpr/thread.h>
 #include <winpr/sysinfo.h>
 #include <winpr/winsock.h>
+#include <winpr/stream.h>
 
 #if !defined(_WIN32)
 #include <sys/select.h>
@@ -85,28 +86,20 @@ struct rdp_emt
 	BOOL failed;
 	UINT64 started;
 
-	BYTE* out;
-	size_t outLength;
-	size_t outCapacity;
-
-	BYTE* in;
-	size_t inLength;
-	size_t inCapacity;
+	/* TLS output not yet on the connection, and plaintext not yet parsed into tunnel PDUs;
+	 * the position of each is how much they hold */
+	wStream* out;
+	wStream* in;
 };
 
-static BOOL ensure_capacity(BYTE** buffer, size_t* capacity, size_t needed)
+/* Drops the first count bytes of a stream that is filled up to its position. */
+static BOOL stream_consume(wStream* s, size_t count)
 {
-	if (needed <= *capacity)
-		return TRUE;
-	size_t size = (*capacity == 0) ? 4096 : *capacity;
-	while (size < needed)
-		size *= 2;
-	BYTE* tmp = realloc(*buffer, size);
-	if (!tmp)
-		return FALSE;
-	*buffer = tmp;
-	*capacity = size;
-	return TRUE;
+	const size_t used = Stream_GetPosition(s);
+	WINPR_ASSERT(count <= used);
+	BYTE* buffer = Stream_Buffer(s);
+	memmove(buffer, &buffer[count], used - count);
+	return Stream_SetPosition(s, used - count);
 }
 
 static void emt_fail(rdpEmt* emt, const char* why)
@@ -140,27 +133,37 @@ static BOOL emt_flush_tls(rdpEmt* emt)
 		const size_t pending = BIO_ctrl_pending(emt->wbio);
 		if (pending == 0)
 			break;
-		if (!ensure_capacity(&emt->out, &emt->outCapacity, emt->outLength + pending))
+		if (!Stream_EnsureRemainingCapacity(emt->out, pending))
 			return FALSE;
-		const int rc = BIO_read(emt->wbio, &emt->out[emt->outLength], (int)pending);
+		const int rc = BIO_read(emt->wbio, Stream_Pointer(emt->out), (int)pending);
 		if (rc <= 0)
 			break;
-		emt->outLength += (size_t)rc;
+		Stream_Seek(emt->out, (size_t)rc);
 	}
 
 	const size_t max = rdpudp_get_max_payload(emt->udp);
-	size_t pos = 0;
+	const BYTE* data = Stream_Buffer(emt->out);
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticConstInit(&sbuffer, data, Stream_GetPosition(emt->out));
+
 	size_t chunk = 0;
-	while (pos + TLS_RECORD_HEADER_LENGTH <= emt->outLength)
+	while (Stream_GetRemainingLength(s) >= TLS_RECORD_HEADER_LENGTH)
 	{
-		const size_t record =
-		    TLS_RECORD_HEADER_LENGTH + ((size_t)emt->out[pos + 3] << 8) + emt->out[pos + 4];
-		if (pos + record > emt->outLength)
+		/* TLS record header: ContentType, ProtocolVersion, length */
+		const size_t pos = Stream_GetPosition(s);
+		Stream_Seek(s, 3);
+		const size_t record = TLS_RECORD_HEADER_LENGTH + Stream_Get_UINT16_BE(s);
+		if (Stream_GetRemainingLength(s) < record - TLS_RECORD_HEADER_LENGTH)
+		{
+			if (!Stream_SetPosition(s, pos))
+				return FALSE;
 			break;
+		}
+		Stream_Seek(s, record - TLS_RECORD_HEADER_LENGTH);
 
 		if ((pos > chunk) && (pos + record - chunk > max))
 		{
-			if (!rdpudp_send(emt->udp, &emt->out[chunk], pos - chunk))
+			if (!rdpudp_send(emt->udp, &data[chunk], pos - chunk))
 				return FALSE;
 			chunk = pos;
 		}
@@ -172,26 +175,18 @@ static BOOL emt_flush_tls(rdpEmt* emt)
 			for (size_t offset = 0; offset < record; offset += max)
 			{
 				const size_t length = (record - offset > max) ? max : record - offset;
-				if (!rdpudp_send(emt->udp, &emt->out[pos + offset], length))
+				if (!rdpudp_send(emt->udp, &data[pos + offset], length))
 					return FALSE;
 			}
-			pos += record;
-			chunk = pos;
-			continue;
+			chunk = pos + record;
 		}
-
-		pos += record;
 	}
 
-	if (pos > chunk)
-	{
-		if (!rdpudp_send(emt->udp, &emt->out[chunk], pos - chunk))
-			return FALSE;
-	}
+	const size_t end = Stream_GetPosition(s);
+	if ((end > chunk) && !rdpudp_send(emt->udp, &data[chunk], end - chunk))
+		return FALSE;
 
-	memmove(emt->out, &emt->out[pos], emt->outLength - pos);
-	emt->outLength -= pos;
-	return TRUE;
+	return stream_consume(emt->out, end);
 }
 
 static BOOL emt_write_pdu(rdpEmt* emt, BYTE action, const BYTE* payload, size_t length)
@@ -199,21 +194,19 @@ static BOOL emt_write_pdu(rdpEmt* emt, BYTE action, const BYTE* payload, size_t 
 	if (length > UINT16_MAX)
 		return FALSE;
 
-	BYTE* pdu = malloc(RDPTUNNEL_HEADER_LENGTH + length);
-	if (!pdu)
+	wStream* s = Stream_New(nullptr, RDPTUNNEL_HEADER_LENGTH + length);
+	if (!s)
 		return FALSE;
 
-	/* [MS-RDPEMT] 2.2.1.1: Action (4 bits) and Flags (4 bits), PayloadLength, HeaderLength */
-	pdu[0] = (BYTE)(action & 0x0F);
-	pdu[1] = (BYTE)length;
-	pdu[2] = (BYTE)(length >> 8);
-	pdu[3] = RDPTUNNEL_HEADER_LENGTH;
-	if (length > 0)
-		memcpy(&pdu[RDPTUNNEL_HEADER_LENGTH], payload, length);
+	/* [MS-RDPEMT] 2.2.1.1 RDP_TUNNEL_HEADER */
+	Stream_Write_UINT8(s, (BYTE)(action & 0x0F));   /* Action (4 bits), Flags (4 bits) */
+	Stream_Write_UINT16(s, (UINT16)length);         /* PayloadLength */
+	Stream_Write_UINT8(s, RDPTUNNEL_HEADER_LENGTH); /* HeaderLength */
+	Stream_Write(s, payload, length);
 
-	const int total = (int)(RDPTUNNEL_HEADER_LENGTH + length);
-	const int rc = SSL_write(emt->ssl, pdu, total);
-	free(pdu);
+	const int total = (int)Stream_GetPosition(s);
+	const int rc = SSL_write(emt->ssl, Stream_Buffer(s), total);
+	Stream_Free(s, TRUE);
 	if (rc != total)
 	{
 		log_ssl_errors(emt, "SSL_write");
@@ -224,18 +217,19 @@ static BOOL emt_write_pdu(rdpEmt* emt, BYTE action, const BYTE* payload, size_t 
 
 static BOOL emt_send_create_request(rdpEmt* emt)
 {
-	/* [MS-RDPEMT] 2.2.2.1 RDP_TUNNEL_CREATEREQUEST */
 	BYTE request[24] = WINPR_C_ARRAY_INIT;
-	request[0] = (BYTE)emt->requestId;
-	request[1] = (BYTE)(emt->requestId >> 8);
-	request[2] = (BYTE)(emt->requestId >> 16);
-	request[3] = (BYTE)(emt->requestId >> 24);
-	/* reserved (4 bytes) stays zero */
-	memcpy(&request[8], emt->cookie, sizeof(emt->cookie));
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s = Stream_StaticInit(&sbuffer, request, sizeof(request));
+
+	/* [MS-RDPEMT] 2.2.2.1 RDP_TUNNEL_CREATEREQUEST */
+	Stream_Write_UINT32(s, emt->requestId);            /* RequestID */
+	Stream_Write_UINT32(s, 0);                         /* Reserved */
+	Stream_Write(s, emt->cookie, sizeof(emt->cookie)); /* SecurityCookie */
 
 	WLog_Print(emt->log, WLOG_DEBUG, "sending Tunnel Create Request for request id %" PRIu32,
 	           emt->requestId);
-	return emt_write_pdu(emt, RDPTUNNEL_ACTION_CREATEREQUEST, request, sizeof(request));
+	return emt_write_pdu(emt, RDPTUNNEL_ACTION_CREATEREQUEST, Stream_Buffer(s),
+	                     Stream_GetPosition(s));
 }
 
 /* The TLS session inside the tunnel ends at the same server as the main connection, so it has
@@ -269,13 +263,17 @@ static BOOL emt_verify_peer(rdpEmt* emt)
 
 static BOOL emt_process_pdus(rdpEmt* emt)
 {
-	size_t pos = 0;
-	while (emt->inLength - pos >= RDPTUNNEL_HEADER_LENGTH)
+	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	wStream* s =
+	    Stream_StaticConstInit(&sbuffer, Stream_Buffer(emt->in), Stream_GetPosition(emt->in));
+
+	while (Stream_GetRemainingLength(s) >= RDPTUNNEL_HEADER_LENGTH)
 	{
-		const BYTE* pdu = &emt->in[pos];
-		const BYTE action = pdu[0] & 0x0F;
-		const size_t payloadLength = (size_t)pdu[1] | ((size_t)pdu[2] << 8);
-		const size_t headerLength = pdu[3];
+		/* [MS-RDPEMT] 2.2.1.1 RDP_TUNNEL_HEADER */
+		const size_t start = Stream_GetPosition(s);
+		const BYTE action = Stream_Get_UINT8(s) & 0x0F;
+		const size_t payloadLength = Stream_Get_UINT16(s);
+		const size_t headerLength = Stream_Get_UINT8(s);
 		if (headerLength < RDPTUNNEL_HEADER_LENGTH)
 		{
 			emt_fail(emt, "invalid tunnel PDU header");
@@ -283,22 +281,29 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 		}
 
 		/* HeaderLength includes any subheaders, PayloadLength does not */
-		const size_t total = headerLength + payloadLength;
-		if (emt->inLength - pos < total)
+		const size_t rest = headerLength - RDPTUNNEL_HEADER_LENGTH + payloadLength;
+		if (Stream_GetRemainingLength(s) < rest)
+		{
+			/* not all here yet */
+			if (!Stream_SetPosition(s, start))
+				return FALSE;
 			break;
+		}
+		/* subheaders (auto-detect requests) are skipped */
+		Stream_Seek(s, headerLength - RDPTUNNEL_HEADER_LENGTH);
 
 		switch (action)
 		{
 			case RDPTUNNEL_ACTION_CREATERESPONSE:
 			{
+				/* [MS-RDPEMT] 2.2.2.2 RDP_TUNNEL_CREATERESPONSE */
 				if (payloadLength < 4)
 				{
 					emt_fail(emt, "short Tunnel Create Response");
 					return FALSE;
 				}
-				const BYTE* p = &pdu[headerLength];
-				const UINT32 hr = (UINT32)p[0] | ((UINT32)p[1] << 8) | ((UINT32)p[2] << 16) |
-				                  ((UINT32)p[3] << 24);
+				const UINT32 hr = Stream_Get_UINT32(s); /* HrResponse */
+				Stream_Seek(s, payloadLength - 4);
 				if (FAILED((HRESULT)hr))
 				{
 					WLog_Print(emt->log, WLOG_WARN,
@@ -318,25 +323,24 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 			break;
 
 			case RDPTUNNEL_ACTION_DATA:
-				/* Subheaders (auto-detect requests) are skipped, the payload is a DVC PDU. */
+				/* [MS-RDPEMT] 2.2.2.3 RDP_TUNNEL_DATA, HigherLayerData is a DVC PDU */
 				if (payloadLength > 0)
-					emt->callback(emt->custom, emt, RDPEMT_EVENT_DATA, &pdu[headerLength],
+					emt->callback(emt->custom, emt, RDPEMT_EVENT_DATA, Stream_ConstPointer(s),
 					              payloadLength);
+				Stream_Seek(s, payloadLength);
 				break;
 
 			default:
 				WLog_Print(emt->log, WLOG_DEBUG, "ignoring tunnel PDU with action %" PRIu8, action);
+				Stream_Seek(s, payloadLength);
 				break;
 		}
 
-		pos += total;
 		if (emt->failed)
 			return FALSE;
 	}
 
-	memmove(emt->in, &emt->in[pos], emt->inLength - pos);
-	emt->inLength -= pos;
-	return TRUE;
+	return stream_consume(emt->in, Stream_GetPosition(s));
 }
 
 static BOOL emt_run_tls(rdpEmt* emt)
@@ -374,14 +378,14 @@ static BOOL emt_run_tls(rdpEmt* emt)
 
 	while (TRUE)
 	{
-		if (!ensure_capacity(&emt->in, &emt->inCapacity, emt->inLength + 16384))
+		if (!Stream_EnsureRemainingCapacity(emt->in, 16384))
 			return FALSE;
 
 		ERR_clear_error();
-		const int rc = SSL_read(emt->ssl, &emt->in[emt->inLength], 16384);
+		const int rc = SSL_read(emt->ssl, Stream_Pointer(emt->in), 16384);
 		if (rc > 0)
 		{
-			emt->inLength += (size_t)rc;
+			Stream_Seek(emt->in, (size_t)rc);
 			continue;
 		}
 
@@ -572,13 +576,23 @@ rdpEmt* rdpemt_new(wLog* log, UINT32 requestId, const BYTE* cookie, const char* 
 	if (!winpr_Digest(WINPR_MD_SHA256, emt->cookie, sizeof(emt->cookie), digest, sizeof(digest)))
 		goto fail;
 	BYTE cookieHash[32] = WINPR_C_ARRAY_INIT;
-	for (size_t x = 0; x < sizeof(cookieHash); x += 4)
 	{
-		cookieHash[x] = digest[x + 3];
-		cookieHash[x + 1] = digest[x + 2];
-		cookieHash[x + 2] = digest[x + 1];
-		cookieHash[x + 3] = digest[x];
+		wStream dbuffer = WINPR_C_ARRAY_INIT;
+		wStream hbuffer = WINPR_C_ARRAY_INIT;
+		wStream* ds = Stream_StaticConstInit(&dbuffer, digest, sizeof(digest));
+		wStream* hs = Stream_StaticInit(&hbuffer, cookieHash, sizeof(cookieHash));
+		for (size_t x = 0; x < sizeof(cookieHash) / 4; x++)
+		{
+			/* the Stream_Write macros evaluate their value more than once */
+			const UINT32 word = Stream_Get_UINT32_BE(ds);
+			Stream_Write_UINT32(hs, word);
+		}
 	}
+
+	emt->in = Stream_New(nullptr, 16384);
+	emt->out = Stream_New(nullptr, 4096);
+	if (!emt->in || !emt->out)
+		goto fail;
 
 	emt->udp = rdpudp_new(log, cookieHash, emt_receive, emt);
 	if (!emt->udp)
@@ -622,8 +636,8 @@ void rdpemt_free(rdpEmt* emt)
 	rdpudp_free(emt->udp);
 	free(emt->hostname);
 	free(emt->publicKey);
-	free(emt->in);
-	free(emt->out);
+	Stream_Free(emt->in, TRUE);
+	Stream_Free(emt->out, TRUE);
 	DeleteCriticalSection(&emt->lock);
 	free(emt);
 }
