@@ -225,31 +225,31 @@ struct rdp_udp
 
 /* RDP-UDP sequence numbers are 16 (RDPUDP2) or 32 (RDPUDP) bit counters that wrap around, they
  * are compared and advanced with RFC 1982 serial number arithmetic. The wrap in the helpers
- * below is intentional, unlike an integer cast it must not assert. */
+ * below is intentional, they mask to the counter width before the checked conversion. */
 WINPR_ATTR_NODISCARD
 static inline UINT16 seq16_add(UINT16 a, size_t n)
 {
-	return (UINT16)((a + n) & 0xFFFFu);
+	return WINPR_ASSERTING_INT_CAST(UINT16, (a + n) & 0xFFFFu);
 }
 
 /* a - b modulo 2^16 */
 WINPR_ATTR_NODISCARD
 static inline UINT16 seq16_diff(UINT16 a, UINT16 b)
 {
-	return (UINT16)(((UINT32)a - (UINT32)b) & 0xFFFFu);
+	return WINPR_ASSERTING_INT_CAST(UINT16, ((UINT32)a - (UINT32)b) & 0xFFFFu);
 }
 
 WINPR_ATTR_NODISCARD
 static inline UINT32 seq32_add(UINT32 a, UINT32 n)
 {
-	return (UINT32)(((UINT64)a + n) & 0xFFFFFFFFull);
+	return WINPR_ASSERTING_INT_CAST(UINT32, ((UINT64)a + n) & 0xFFFFFFFFull);
 }
 
 /* a - b modulo 2^32 */
 WINPR_ATTR_NODISCARD
 static inline UINT32 seq32_diff(UINT32 a, UINT32 b)
 {
-	return (UINT32)(((UINT64)a - (UINT64)b) & 0xFFFFFFFFull);
+	return WINPR_ASSERTING_INT_CAST(UINT32, ((UINT64)a - (UINT64)b) & 0xFFFFFFFFull);
 }
 
 WINPR_ATTR_NODISCARD
