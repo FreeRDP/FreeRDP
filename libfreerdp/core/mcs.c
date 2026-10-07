@@ -1447,8 +1447,16 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs, enum Disconnect_Ultimat
 	}
 
 fail:
-	WLog_Print(mcs->log, WLOG_DEBUG, "sending DisconnectProviderUltimatum(%s)",
-	           freerdp_disconnect_reason_string((int)reason));
+	if (status >= 0)
+	{
+		WLog_Print(mcs->log, WLOG_DEBUG, "sent DisconnectProviderUltimatum(%s)",
+		           freerdp_disconnect_reason_string((int)reason));
+	}
+	else
+	{
+		WLog_Print(mcs->log, WLOG_WARN, "failed to send DisconnectProviderUltimatum(%s), status=%d",
+		           freerdp_disconnect_reason_string((int)reason), status);
+	}
 	Stream_Free(s, TRUE);
 	return (status >= 0);
 }
