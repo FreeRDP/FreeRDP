@@ -1725,7 +1725,15 @@ void rdpudp_free(rdpUdp* udp)
 		pending_clear(&udp->pending[x]);
 	for (size_t x = 0; x < RDPUDP_RECEIVE_SLOTS; x++)
 		slot_clear(&udp->slots[x]);
-	Queue_Free(udp->sendQueue);
+	if (udp->sendQueue)
+	{
+		/* Queue_Free() misses the chunks of a queue that is exactly full, so they are taken out
+		 * first */
+		rdpudp_chunk* chunk = nullptr;
+		while ((chunk = Queue_Dequeue(udp->sendQueue)))
+			chunk_free(chunk);
+		Queue_Free(udp->sendQueue);
+	}
 	free(udp);
 }
 

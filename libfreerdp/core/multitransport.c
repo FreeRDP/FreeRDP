@@ -614,10 +614,17 @@ void multitransport_reset(rdpMultitransport* multi)
 	LeaveCriticalSection(&multi->lock);
 
 	rdpemt_free(emt);
-	Queue_Clear(multi->events);
+	if (multi->events)
+	{
+		/* not Queue_Clear(), it misses the events of a queue that is exactly full */
+		mt_event* ev = nullptr;
+		while ((ev = Queue_Dequeue(multi->events)))
+			mt_event_free(ev);
+	}
 	if (InterlockedCompareExchange(&multi->tunnelEventLost, 0, 1) != 0)
 		WLog_DBG(TAG, "a lost UDP tunnel event no longer matters, the tunnel is gone");
-	(void)ResetEvent(multi->event);
+	if (multi->event)
+		(void)ResetEvent(multi->event);
 }
 
 WINPR_ATTR_NODISCARD
