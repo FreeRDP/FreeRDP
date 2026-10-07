@@ -328,6 +328,51 @@ extern "C"
 	                                       BOOL isConsentMandatory, size_t length,
 	                                       const WCHAR* message);
 
+	typedef enum
+	{
+		WEBAUTHN_PROMPT_NO_AUTHENTICATOR =
+		    0, /**< Local authenticator unavailable; retry or cancel */
+		WEBAUTHN_PROMPT_SELECT_CREDENTIAL = 1 /**< Multiple credentials available; select one */
+	} rdp_webauthn_prompt_type;
+
+	typedef struct
+	{
+		const BYTE* credentialId;
+		size_t credentialIdLength;
+		const BYTE* userId;
+		size_t userIdLength;
+	} WebAuthnCredentialInfo;
+
+	typedef struct
+	{
+		rdp_webauthn_prompt_type type;
+		const char* message;
+		const char* rpId;
+		size_t attempt;
+		size_t maxAttempts;
+		const WebAuthnCredentialInfo* credentials;
+		size_t credentialsCount;
+	} WebAuthnPromptRequest;
+
+	typedef struct
+	{
+		BOOL accepted;
+		size_t selectedIndex;
+	} WebAuthnPromptResponse;
+
+	/** @brief Callback for user interaction during WebAuthn operations.
+	 *
+	 *  This callback is used for both retry/cancel decisions and credential selection.
+	 *
+	 *  @param instance  A pointer to the instance to work on
+	 *  @param request   Prompt request data
+	 *  @param response  Prompt response (filled by callback)
+	 *
+	 *  @return \b TRUE if @p response is valid, \b FALSE to abort the operation.
+	 */
+	typedef BOOL (*pWebAuthnPrompt)(freerdp* instance, const WebAuthnPromptRequest* request,
+	                                WebAuthnPromptResponse* response);
+
 	/**
 	 * Defines the context for a given instance of RDP connection.
 	 * It is embedded in the rdp_freerdp structure, and allocated by a call to
@@ -521,7 +566,7 @@ owned by rdpRdp */
 		                     WINPR_ATTR_NODISCARD ALIGN64 pVerifyChangedCertificate
 		                         VerifyChangedCertificate); /**< (offset 52) */
 #else
-	    ALIGN64 UINT64 reserved50[3];
+	ALIGN64 UINT64 reserved50[3];
 #endif
 		WINPR_ATTR_NODISCARD ALIGN64 pVerifyX509Certificate
 		    VerifyX509Certificate; /**< (offset 53)  Callback for X509 certificate verification
@@ -547,7 +592,7 @@ owned by rdpRdp */
   It is used to get the username/password when it was not
   provided at connection time. */
 #else
-	    ALIGN64 UINT64 reserved56[1];
+	ALIGN64 UINT64 reserved56[1];
 #endif
 		WINPR_ATTR_NODISCARD ALIGN64 pPresentGatewayMessage PresentGatewayMessage; /**< (offset 57)
 		                                  Callback for gateway consent messages.
@@ -612,9 +657,11 @@ owned by rdpRdp */
 		                                            Callback for obtaining an access token
 		                                            for \b AccessTokenType authentication */
 		WINPR_ATTR_NODISCARD ALIGN64 pRetryDialog
-		    RetryDialog;                  /* (offset 72) Callback for displaying a dialog in case of
-		                something needs a retry */
-		UINT64 paddingE[80 - 73];         /* 73 */
+		    RetryDialog; /* (offset 72) Callback for displaying a dialog in case of
+	   something needs a retry */
+		WINPR_ATTR_NODISCARD ALIGN64 pWebAuthnPrompt WebAuthnPrompt; /* (offset 73)
+		                         Callback for WebAuthn retry/cancel and credential selection. */
+		UINT64 paddingE[80 - 74];                                    /* 74 */
 	};
 
 	struct rdp_channel_handles

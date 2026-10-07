@@ -46,6 +46,7 @@
 
 /** @brief Maximum number of FIDO devices to enumerate */
 #define RDPEWA_MAX_DEVICES 64
+#define RDPEWA_SELECT_CREDENTIAL_MESSAGE "Select a credential to continue."
 
 /** @brief Args for running a FIDO operation on a background thread */
 typedef struct
@@ -57,28 +58,8 @@ typedef struct
 	int result;
 } RDPEWA_FIDO_ASYNC;
 
-static bool rdpewa_fido_get_pin(rdpContext* context, char** pin)
-{
-	WINPR_ASSERT(pin);
-	*pin = nullptr;
-
-	freerdp* instance = context->instance;
-	char* u = nullptr;
-	char* p = nullptr;
-	char* d = nullptr;
-	const bool rc = instance && instance->AuthenticateEx &&
-	                instance->AuthenticateEx(instance, &u, &p, &d, AUTH_FIDO_PIN) && p;
-	free(u);
-	free(d);
-	if (!rc)
-	{
-		winpr_zfree(p);
-		return false;
-	}
-
-	*pin = p;
-	return true;
-}
+static fido_dev_t* rdpewa_fido_open_device(RDPEWA_DEVICE_INFO* devInfo, int devIndex,
+                                           size_t* ndevsOut);
 
 static bool rdpewa_fido_uv_failed(int result)
 {
@@ -99,21 +80,30 @@ static DWORD WINAPI rdpewa_fido_getassert_thread(LPVOID arg)
 	return 0;
 }
 
-static bool notify(rdpContext* context, UINT64 id, bool cancel)
+static bool notify(rdpContext* context, UINT64 id, bool cancel, const char* message,
+                   UINT32 timeoutMS)
 {
+	if (!context || !context->pubSub)
+		return false;
+
 	/* Fire-and-forget notification to the UI via PubSub */
 	UserNotificationEventArgs e = WINPR_C_ARRAY_INIT;
 	EventArgsInit(&e, RDPEWA_CHANNEL_NAME);
 	if (!cancel)
 	{
-		e.timeoutMS = 30000;
-		e.message = "Touch the security key";
+		e.timeoutMS = timeoutMS;
+		e.message = message;
 	}
 	e.cancelPreviousNotification = cancel;
 
 	e.messageID = id;
 	const int rc = PubSub_OnUserNotification(context->pubSub, context, &e);
 	return (rc >= 0);
+}
+
+static bool notify_touch(rdpContext* context, UINT64 id, bool cancel)
+{
+	return notify(context, id, cancel, "Touch the security key", 30000);
 }
 
 static bool notifyWait(rdpContext* context, HANDLE ft, fido_dev_t* dev)
@@ -123,10 +113,10 @@ static bool notifyWait(rdpContext* context, HANDLE ft, fido_dev_t* dev)
 
 	HANDLE hdl[] = { ft, freerdp_abort_event(context) };
 	const UINT64 id = winpr_GetTickCount64NS();
-	(void)notify(context, id, false);
+	(void)notify_touch(context, id, false);
 	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(hdl), hdl, FALSE, INFINITE);
 	CloseHandle(ft);
-	(void)notify(context, id, true);
+	(void)notify_touch(context, id, true);
 
 	const bool rc = (status == WAIT_OBJECT_0);
 	if (!rc)
@@ -156,7 +146,7 @@ static int rdpewa_fido_select_device(rdpContext* context, fido_dev_t** devs, siz
 	}
 
 	const UINT64 id = winpr_GetTickCount64NS();
-	(void)notify(context, id, false);
+	(void)notify_touch(context, id, false);
 
 	/* Poll for touch with 200ms intervals */
 	int selected = -1;
@@ -179,8 +169,64 @@ static int rdpewa_fido_select_device(rdpContext* context, fido_dev_t** devs, siz
 		}
 	}
 
-	(void)notify(context, id, true);
+	(void)notify_touch(context, id, true);
 	return selected;
+}
+
+static fido_dev_t* rdpewa_fido_open_device_with_prompt(rdpContext* context,
+                                                       RDPEWA_DEVICE_INFO* devInfo, int devIndex,
+                                                       size_t* ndevsOut)
+{
+	WINPR_ASSERT(context);
+	fido_dev_t* dev = rdpewa_fido_open_device(devInfo, devIndex, ndevsOut);
+	if (dev)
+		return dev;
+
+	freerdp* instance = context->instance;
+	if (!instance || !instance->WebAuthnPrompt)
+		return nullptr;
+
+	WebAuthnPromptRequest request = { .type = WEBAUTHN_PROMPT_NO_AUTHENTICATOR,
+		                              .message =
+		                                  "No local authenticator found. Connect or unlock your "
+		                                  "security key and retry.",
+		                              .attempt = 1,
+		                              .maxAttempts = 1,
+		                              .credentials = nullptr,
+		                              .credentialsCount = 0 };
+	WebAuthnPromptResponse response = { .accepted = FALSE, .selectedIndex = 0 };
+	if (!instance->WebAuthnPrompt(instance, &request, &response) || !response.accepted)
+		return nullptr;
+
+	return rdpewa_fido_open_device(devInfo, devIndex, ndevsOut);
+}
+
+static bool rdpewa_fido_get_pin(rdpContext* context, char** pin)
+{
+	WINPR_ASSERT(pin);
+	*pin = nullptr;
+
+	if (!context || !context->instance)
+		return false;
+
+	freerdp* instance = context->instance;
+	if (!instance->AuthenticateEx)
+		return false;
+
+	char* u = nullptr;
+	char* p = nullptr;
+	char* d = nullptr;
+	const BOOL ok = instance->AuthenticateEx(instance, &u, &p, &d, AUTH_FIDO_PIN);
+	free(u);
+	free(d);
+	if (!ok || !p)
+	{
+		winpr_zfree(p);
+		return false;
+	}
+
+	*pin = p;
+	return true;
 }
 
 /**
@@ -545,7 +591,7 @@ static wStream* rdpewa_fido_make_credential(rdpContext* context, const BYTE* cta
 
 	/* Open all devices, let the user select by touch, then do the operation */
 	size_t ndevs = 0;
-	dev = rdpewa_fido_open_device(&devInfo, 0, &ndevs);
+	dev = rdpewa_fido_open_device_with_prompt(context, &devInfo, 0, &ndevs);
 	if (!dev)
 	{
 		ret = rdpewa_cbor_encode_webauthn_response(E_FAIL, 0x01, nullptr, 0, &devInfo);
@@ -768,6 +814,7 @@ static wStream* rdpewa_fido_get_assertion(rdpContext* context, const BYTE* ctapD
 	fido_assert_t* assert = nullptr;
 	wStream* ret = nullptr;
 	bool uv = false;
+	char rpId[256] = { 0 };
 
 	WINPR_ASSERT(ctapData);
 
@@ -799,11 +846,17 @@ static wStream* rdpewa_fido_get_assertion(rdpContext* context, const BYTE* ctapD
 			case CTAP_GETASSERT_RP_ID:
 				if (cbor_isa_string(v))
 				{
-					char* rpId = strndup((const char*)cbor_string_handle(v), cbor_string_length(v));
-					if (rpId)
+					size_t slen = cbor_string_length(v);
+					if (slen >= sizeof(rpId))
+						slen = sizeof(rpId) - 1;
+					memcpy(rpId, cbor_string_handle(v), slen);
+					rpId[slen] = '\0';
+
+					char* rp = strndup((const char*)cbor_string_handle(v), cbor_string_length(v));
+					if (rp)
 					{
-						fido_assert_set_rp(assert, rpId);
-						free(rpId);
+						fido_assert_set_rp(assert, rp);
+						free(rp);
 					}
 				}
 				break;
@@ -885,7 +938,7 @@ static wStream* rdpewa_fido_get_assertion(rdpContext* context, const BYTE* ctapD
 	/* Open all devices, let the user select by touch, then do the operation */
 	size_t ndevs = 0;
 	int r = FIDO_ERR_NO_CREDENTIALS;
-	dev = rdpewa_fido_open_device(&devInfo, 0, &ndevs);
+	dev = rdpewa_fido_open_device_with_prompt(context, &devInfo, 0, &ndevs);
 	if (!dev)
 	{
 		ret = rdpewa_cbor_encode_webauthn_response(E_FAIL, 0x01, nullptr, 0, &devInfo);
@@ -994,22 +1047,62 @@ static wStream* rdpewa_fido_get_assertion(rdpContext* context, const BYTE* ctapD
 		goto out;
 	}
 
+	size_t selectedAssertIdx = 0;
+	if (fido_assert_count(assert) > 1 && context && context->instance &&
+	    context->instance->WebAuthnPrompt)
+	{
+		const size_t nassert = fido_assert_count(assert);
+		WebAuthnCredentialInfo* creds =
+		    (WebAuthnCredentialInfo*)calloc(nassert, sizeof(WebAuthnCredentialInfo));
+		if (!creds)
+		{
+			ret = rdpewa_cbor_encode_webauthn_response(E_FAIL, 0x01, nullptr, 0, &devInfo);
+			goto out;
+		}
+
+		for (size_t i = 0; i < nassert; i++)
+		{
+			creds[i].credentialId = fido_assert_id_ptr(assert, i);
+			creds[i].credentialIdLength = fido_assert_id_len(assert, i);
+			creds[i].userId = fido_assert_user_id_ptr(assert, i);
+			creds[i].userIdLength = fido_assert_user_id_len(assert, i);
+		}
+
+		WebAuthnPromptRequest request = { .type = WEBAUTHN_PROMPT_SELECT_CREDENTIAL,
+			                              .message = RDPEWA_SELECT_CREDENTIAL_MESSAGE,
+			                              .rpId = rpId[0] ? rpId : nullptr,
+			                              .attempt = 1,
+			                              .maxAttempts = 1,
+			                              .credentials = creds,
+			                              .credentialsCount = nassert };
+		WebAuthnPromptResponse response = { .accepted = TRUE, .selectedIndex = 0 };
+		const BOOL ok = context->instance->WebAuthnPrompt(context->instance, &request, &response);
+		if (!ok || !response.accepted || response.selectedIndex >= nassert)
+		{
+			free(creds);
+			ret = rdpewa_cbor_encode_webauthn_response(E_FAIL, 0x01, nullptr, 0, &devInfo);
+			goto out;
+		}
+		selectedAssertIdx = response.selectedIndex;
+		free(creds);
+	}
+
 	/* Encode CTAP assertion response as CBOR map with integer keys per FIDO CTAP section 6.2 */
 	size_t nkeys = 3; /* credential(1) + authData(2) + signature(3) */
-	if (fido_assert_user_id_len(assert, 0) > 0)
+	if (fido_assert_user_id_len(assert, selectedAssertIdx) > 0)
 		nkeys = 4; /* + user(4) */
 	cbor_item_t* respMap = cbor_new_definite_map(nkeys);
 	if (!respMap)
 		goto out;
 
 	/* key 1: credential {id, type} */
-	if (fido_assert_id_len(assert, 0) > 0)
+	if (fido_assert_id_len(assert, selectedAssertIdx) > 0)
 	{
 		cbor_item_t* credKey = cbor_build_uint8(1);
 		cbor_item_t* credMap = cbor_new_definite_map(2);
 		cbor_item_t* cidKey = cbor_build_string("id");
-		cbor_item_t* cidVal =
-		    cbor_build_bytestring(fido_assert_id_ptr(assert, 0), fido_assert_id_len(assert, 0));
+		cbor_item_t* cidVal = cbor_build_bytestring(fido_assert_id_ptr(assert, selectedAssertIdx),
+		                                            fido_assert_id_len(assert, selectedAssertIdx));
 		cbor_item_t* ctypeKey = cbor_build_string("type");
 		cbor_item_t* ctypeVal = cbor_build_string("public-key");
 
@@ -1037,8 +1130,9 @@ static wStream* rdpewa_fido_get_assertion(rdpContext* context, const BYTE* ctapD
 
 	/* key 2: authData (raw) */
 	cbor_item_t* adKey = cbor_build_uint8(2);
-	cbor_item_t* adVal = cbor_build_bytestring(fido_assert_authdata_raw_ptr(assert, 0),
-	                                           fido_assert_authdata_raw_len(assert, 0));
+	cbor_item_t* adVal =
+	    cbor_build_bytestring(fido_assert_authdata_raw_ptr(assert, selectedAssertIdx),
+	                          fido_assert_authdata_raw_len(assert, selectedAssertIdx));
 	if (!cbor_map_add(respMap, (struct cbor_pair){ .key = adKey, .value = adVal }))
 	{
 		cbor_decref(&adKey);
@@ -1051,8 +1145,8 @@ static wStream* rdpewa_fido_get_assertion(rdpContext* context, const BYTE* ctapD
 
 	/* key 3: signature */
 	cbor_item_t* sigKey = cbor_build_uint8(3);
-	cbor_item_t* sigVal =
-	    cbor_build_bytestring(fido_assert_sig_ptr(assert, 0), fido_assert_sig_len(assert, 0));
+	cbor_item_t* sigVal = cbor_build_bytestring(fido_assert_sig_ptr(assert, selectedAssertIdx),
+	                                            fido_assert_sig_len(assert, selectedAssertIdx));
 	if (!cbor_map_add(respMap, (struct cbor_pair){ .key = sigKey, .value = sigVal }))
 	{
 		cbor_decref(&sigKey);
@@ -1064,13 +1158,14 @@ static wStream* rdpewa_fido_get_assertion(rdpContext* context, const BYTE* ctapD
 	cbor_decref(&sigVal);
 
 	/* key 4: user -- id only */
-	if (fido_assert_user_id_len(assert, 0) > 0)
+	if (fido_assert_user_id_len(assert, selectedAssertIdx) > 0)
 	{
 		cbor_item_t* uKey = cbor_build_uint8(4);
 		cbor_item_t* uMap = cbor_new_definite_map(1);
 		cbor_item_t* uidKey = cbor_build_string("id");
-		cbor_item_t* uidVal = cbor_build_bytestring(fido_assert_user_id_ptr(assert, 0),
-		                                            fido_assert_user_id_len(assert, 0));
+		cbor_item_t* uidVal =
+		    cbor_build_bytestring(fido_assert_user_id_ptr(assert, selectedAssertIdx),
+		                          fido_assert_user_id_len(assert, selectedAssertIdx));
 
 		if (!cbor_map_add(uMap, (struct cbor_pair){ .key = uidKey, .value = uidVal }))
 		{
@@ -1149,9 +1244,10 @@ wStream* rdpewa_fido_webauthn(rdpContext* context, const RDPEWA_REQUEST* request
 	}
 }
 
-wStream* rdpewa_fido_is_uvpaa(void)
+wStream* rdpewa_fido_is_uvpaa(rdpContext* context)
 {
 	WLog_DBG(TAG, "IUVPAA: checking for platform authenticators");
+	WINPR_UNUSED(context);
 
 	fido_dev_info_t* devlist = fido_dev_info_new(RDPEWA_MAX_DEVICES);
 	if (!devlist)
@@ -1298,8 +1394,6 @@ wStream* rdpewa_fido_get_authenticator_list(void)
 
 wStream* rdpewa_fido_get_credentials(rdpContext* context, const char* rpId)
 {
-	WINPR_UNUSED(context);
-
 	if (!rpId || !rpId[0])
 	{
 		WLog_WARN(TAG, "GET_CREDENTIALS: no rpId provided");
@@ -1311,7 +1405,7 @@ wStream* rdpewa_fido_get_credentials(rdpContext* context, const char* rpId)
 	/* Iterate all devices and collect credentials from each */
 	size_t ndevs = 0;
 	RDPEWA_DEVICE_INFO devInfo = WINPR_C_ARRAY_INIT;
-	fido_dev_t* dev = rdpewa_fido_open_device(&devInfo, 0, &ndevs);
+	fido_dev_t* dev = rdpewa_fido_open_device_with_prompt(context, &devInfo, 0, &ndevs);
 	if (!dev)
 		return rdpewa_cbor_encode_hresult_response(S_OK);
 
@@ -1342,24 +1436,22 @@ wStream* rdpewa_fido_get_credentials(rdpContext* context, const char* rpId)
 			continue;
 		}
 
-		/* Credential management requires a PIN token. We don't prompt for PIN here
-		 * since the platform handles credential selection differently. The server
-		 * sends allowList in command 5 and the authenticator handles it at touch time.
-		 * Only enumerate credentials from devices that don't require a PIN, to avoid
-		 * spamming the user with PIN prompts. */
-		if (fido_dev_has_pin(dev))
+		char* pin = nullptr;
+		if (fido_dev_has_pin(dev) && !rdpewa_fido_get_pin(context, &pin))
 		{
-			WLog_DBG(TAG, "GET_CREDENTIALS: device %" PRIuz " requires PIN, skipping", devIdx);
+			WLog_DBG(TAG, "GET_CREDENTIALS: device %" PRIuz " PIN unavailable, skipping", devIdx);
 			continue;
 		}
 
-		const char* pin = nullptr;
-
 		fido_credman_rk_t* rk = fido_credman_rk_new();
 		if (!rk)
+		{
+			winpr_zfree(pin);
 			continue;
+		}
 
 		int r = fido_credman_get_dev_rk(dev, rpId, rk, pin);
+		winpr_zfree(pin);
 		if (r != FIDO_OK)
 		{
 			WLog_DBG(TAG, "GET_CREDENTIALS: device %" PRIuz ": %s", devIdx, fido_strerr(r));
