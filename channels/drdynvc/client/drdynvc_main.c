@@ -1848,22 +1848,32 @@ static void drdynvc_tunnel_backlog_clear(drdynvcPlugin* drdynvc)
 	drdynvc->tunnelBacklogCount = 0;
 }
 
-/* Hands up tunnel data that arrived before the Soft-Sync Request, in arrival order. */
+/* Hands up tunnel data that arrived before the Soft-Sync Request, in arrival order. The backlog
+ * is taken out first, so a PDU handed up that leads back here finds it empty instead of entries
+ * this loop has handed up already. */
 WINPR_ATTR_NODISCARD
 static UINT drdynvc_tunnel_backlog_flush(drdynvcPlugin* drdynvc)
 {
 	WINPR_ASSERT(drdynvc);
+
+	wStream** backlog = drdynvc->tunnelBacklog;
+	UINT32* types = drdynvc->tunnelBacklogTypes;
+	const size_t count = drdynvc->tunnelBacklogCount;
+	drdynvc->tunnelBacklog = nullptr;
+	drdynvc->tunnelBacklogTypes = nullptr;
+	drdynvc->tunnelBacklogCount = 0;
+	drdynvc->tunnelBacklogCapacity = 0;
+
 	UINT error = CHANNEL_RC_OK;
-	for (size_t x = 0; x < drdynvc->tunnelBacklogCount; x++)
+	for (size_t x = 0; x < count; x++)
 	{
-		wStream* s = drdynvc->tunnelBacklog[x];
-		drdynvc->tunnelBacklog[x] = nullptr;
-		const UINT rc = drdynvc_order_recv(drdynvc, s, TRUE, drdynvc->tunnelBacklogTypes[x]);
-		Stream_Release(s);
+		const UINT rc = drdynvc_order_recv(drdynvc, backlog[x], TRUE, types[x]);
+		Stream_Release(backlog[x]);
 		if (rc != CHANNEL_RC_OK)
 			error = rc;
 	}
-	drdynvc->tunnelBacklogCount = 0;
+	free((void*)backlog);
+	free(types);
 	return error;
 }
 
@@ -2155,6 +2165,16 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 Thread
 	const UINT8 cbChId = (value & 0x03) >> 0;
 	WLog_Print(drdynvc->log, WLOG_TRACE, "order_recv: Cmd=%s, Sp=%" PRIu8 " cbChId=%" PRIu8,
 	           drdynvc_get_packet_type(Cmd), Sp, cbChId);
+
+	/* Capabilities and Soft-Sync travel on the drdynvc static channel only, a tunnel carries the
+	 * channels themselves. Accepting a Soft-Sync Request from the tunnel would also let it run
+	 * while the tunnel backlog is being handed up. */
+	if ((tunnelType != 0) && ((Cmd == CAPABILITY_REQUEST_PDU) || (Cmd == SOFT_SYNC_REQUEST_PDU)))
+	{
+		WLog_Print(drdynvc->log, WLOG_ERROR, "%s on tunnel 0x%08" PRIx32 ", rejected",
+		           drdynvc_get_packet_type(Cmd), tunnelType);
+		return ERROR_INVALID_DATA;
+	}
 
 	switch (Cmd)
 	{
