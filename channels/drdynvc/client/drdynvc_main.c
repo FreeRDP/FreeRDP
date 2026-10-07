@@ -500,6 +500,25 @@ static void dvcman_channel_unref(DVCMAN_CHANNEL* channel)
 }
 
 WINPR_ATTR_NODISCARD
+static UINT32 dvcman_channel_get_tunnel(DVCMAN_CHANNEL* channel)
+{
+	WINPR_ASSERT(channel);
+	EnterCriticalSection(&channel->lock);
+	const UINT32 tunnelType = channel->tunnelType;
+	LeaveCriticalSection(&channel->lock);
+	return tunnelType;
+}
+
+/* Waits for a message the channel is writing to be out, see DVCMAN_CHANNEL::tunnelType. */
+static void dvcman_channel_set_tunnel(DVCMAN_CHANNEL* channel, UINT32 tunnelType)
+{
+	WINPR_ASSERT(channel);
+	EnterCriticalSection(&channel->lock);
+	channel->tunnelType = tunnelType;
+	LeaveCriticalSection(&channel->lock);
+}
+
+WINPR_ATTR_NODISCARD
 static UINT dvcchannel_send_close(DVCMAN_CHANNEL* channel)
 {
 	WINPR_ASSERT(channel);
@@ -515,7 +534,7 @@ static UINT dvcchannel_send_close(DVCMAN_CHANNEL* channel)
 
 	Stream_Write_UINT8(s, (CLOSE_REQUEST_PDU << 4) | 0x02);
 	Stream_Write_UINT32(s, channel->channel_id);
-	UINT32 tunnelType = channel->tunnelType;
+	UINT32 tunnelType = dvcman_channel_get_tunnel(channel);
 	return drdynvc_send_on(drdynvc, s, &channel->stats, &tunnelType, FALSE);
 }
 
@@ -1573,7 +1592,7 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, UINT8 Sp, UIN
 
 	/* A channel created on a tunnel is read there by the server, so it is answered there. */
 	if (channel && (channel_status == CHANNEL_RC_OK))
-		channel->tunnelType = tunnelType;
+		dvcman_channel_set_tunnel(channel, tunnelType);
 	UINT32 responseTunnel = tunnelType;
 	status = drdynvc_send_on(drdynvc, data_out, nullptr, &responseTunnel, FALSE);
 	if (status != CHANNEL_RC_OK)
@@ -1633,7 +1652,7 @@ static UINT drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChI
 	UINT status = CHANNEL_RC_OK;
 	BOOL shouldFree = FALSE;
 	if (tunnelType != 0)
-		channel->tunnelType = tunnelType;
+		dvcman_channel_set_tunnel(channel, tunnelType);
 	if (channel->state != DVC_CHANNEL_RUNNING)
 		goto out;
 
@@ -1718,7 +1737,7 @@ static UINT drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wSt
 	BOOL shouldFree = FALSE;
 	UINT status = CHANNEL_RC_OK;
 	if (tunnelType != 0)
-		channel->tunnelType = tunnelType;
+		dvcman_channel_set_tunnel(channel, tunnelType);
 	if (channel->state != DVC_CHANNEL_RUNNING)
 		goto out;
 
@@ -1799,7 +1818,7 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	}
 
 	if (tunnelType != 0)
-		channel->tunnelType = tunnelType;
+		dvcman_channel_set_tunnel(channel, tunnelType);
 	dvcman_channel_close(channel, TRUE, FALSE);
 	dvcman_channel_unref(channel);
 	dvcman_return_channel(drdynvc->channel_mgr, channel);
@@ -2059,7 +2078,7 @@ static UINT drdynvc_process_soft_sync_request(drdynvcPlugin* drdynvc, wStream* s
 				    dvcman_get_channel_by_id(drdynvc->channel_mgr, channelId, TRUE);
 				if (!channel)
 					continue;
-				channel->tunnelType = tunnelType;
+				dvcman_channel_set_tunnel(channel, tunnelType);
 				WLog_Print(drdynvc->log, WLOG_DEBUG,
 				           "channel %" PRIu32 " (%s) moves to tunnel 0x%08" PRIx32, channelId,
 				           channel->channel_name, tunnelType);
