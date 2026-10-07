@@ -1945,6 +1945,27 @@ static UINT drdynvc_receive_tunnel_pdu(drdynvcPlugin* drdynvc, wStream* s, UINT3
 	return error;
 }
 
+/* Moves a channel's data to a tunnel, if the channel exists. The lookup and the move happen under
+ * the channel table's lock, so the channel cannot go away in between. */
+static void dvcman_move_channel_to_tunnel(drdynvcPlugin* drdynvc, UINT32 channelId,
+                                          UINT32 tunnelType)
+{
+	WINPR_ASSERT(drdynvc);
+	DVCMAN* dvcman = (DVCMAN*)drdynvc->channel_mgr;
+	WINPR_ASSERT(dvcman);
+
+	HashTable_Lock(dvcman->channelsById);
+	DVCMAN_CHANNEL* channel = HashTable_GetItemValue(dvcman->channelsById, &channelId);
+	if (channel)
+	{
+		dvcman_channel_set_tunnel(channel, tunnelType);
+		WLog_Print(drdynvc->log, WLOG_DEBUG,
+		           "channel %" PRIu32 " (%s) moves to tunnel 0x%08" PRIx32, channelId,
+		           channel->channel_name, tunnelType);
+	}
+	HashTable_Unlock(dvcman->channelsById);
+}
+
 WINPR_ATTR_NODISCARD
 static UINT drdynvc_send_soft_sync_response(drdynvcPlugin* drdynvc, const UINT32* tunnels,
                                             UINT32 count)
@@ -2082,17 +2103,8 @@ static UINT drdynvc_process_soft_sync_request(drdynvcPlugin* drdynvc, wStream* s
 			for (UINT16 y = 0; y < count; y++)
 			{
 				const UINT32 channelId = Stream_Get_UINT32(s);
-				if (!ready)
-					continue;
-				DVCMAN_CHANNEL* channel =
-				    dvcman_get_channel_by_id(drdynvc->channel_mgr, channelId, TRUE);
-				if (!channel)
-					continue;
-				dvcman_channel_set_tunnel(channel, tunnelType);
-				WLog_Print(drdynvc->log, WLOG_DEBUG,
-				           "channel %" PRIu32 " (%s) moves to tunnel 0x%08" PRIx32, channelId,
-				           channel->channel_name, tunnelType);
-				dvcman_channel_unref(channel);
+				if (ready)
+					dvcman_move_channel_to_tunnel(drdynvc, channelId, tunnelType);
 			}
 
 			if (ready && (acceptedCount < ARRAYSIZE(accepted)))
