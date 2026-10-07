@@ -22,6 +22,7 @@
 #include <winpr/assert.h>
 #include <winpr/cast.h>
 #include <winpr/crt.h>
+#include <winpr/interlocked.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/sysinfo.h>
@@ -29,7 +30,11 @@
 #include <winpr/stream.h>
 
 #if !defined(_WIN32)
+#if defined(WINPR_HAVE_POLL_H)
+#include <poll.h>
+#else
 #include <sys/select.h>
+#endif
 #endif
 
 #include <openssl/ssl.h>
@@ -64,7 +69,7 @@ struct rdp_emt
 	wLog* log;
 	CRITICAL_SECTION lock;
 	HANDLE thread;
-	volatile BOOL stop;
+	LONG stop; /* set by rdpemt_free, read by the thread; Interlocked functions only */
 
 	UINT32 requestId;
 	BYTE cookie[16];
@@ -553,26 +558,63 @@ static BOOL emt_poll(rdpEmt* emt)
 	return !emt->failed;
 }
 
+/* Waits until a datagram arrives or the timeout in milliseconds passes. Waking up early, or
+ * from an interrupted wait, only makes the timers run sooner. */
+static void emt_wait_readable(SOCKET sockfd, UINT32 timeout)
+{
+#if !defined(_WIN32) && defined(WINPR_HAVE_POLL_H)
+	/* unlike an fd_set, poll takes any descriptor number */
+	struct pollfd pollset = WINPR_C_ARRAY_INIT;
+	pollset.fd = WINPR_ASSERTING_INT_CAST(int, sockfd);
+	pollset.events = POLLIN;
+	const UINT32 ms = (timeout > INT32_MAX) ? INT32_MAX : timeout;
+	(void)poll(&pollset, 1, WINPR_ASSERTING_INT_CAST(int, ms));
+#else
+#if !defined(_WIN32)
+	/* an fd_set only holds descriptors below FD_SETSIZE */
+	if (sockfd >= FD_SETSIZE)
+	{
+		Sleep(timeout);
+		return;
+	}
+#endif
+	fd_set rset;
+	FD_ZERO(&rset);
+	FD_SET(sockfd, &rset);
+	struct timeval tv = WINPR_C_ARRAY_INIT;
+	tv.tv_sec = WINPR_ASSERTING_INT_CAST(long, timeout / 1000);
+	tv.tv_usec = WINPR_ASSERTING_INT_CAST(long, (timeout % 1000) * 1000);
+#if defined(_WIN32)
+	(void)select(0, &rset, nullptr, nullptr, &tv); /* the first argument is ignored */
+#else
+	(void)select(WINPR_ASSERTING_INT_CAST(int, sockfd) + 1, &rset, nullptr, nullptr, &tv);
+#endif
+#endif
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL emt_stopping(rdpEmt* emt)
+{
+	WINPR_ASSERT(emt);
+	return InterlockedCompareExchange(&emt->stop, 0, 0) != 0;
+}
+
 WINPR_ATTR_NODISCARD
 static DWORD WINAPI emt_thread(LPVOID arg)
 {
 	rdpEmt* emt = arg;
 	WINPR_ASSERT(emt);
 
-	while (!emt->stop)
+	while (!emt_stopping(emt))
 	{
 		EnterCriticalSection(&emt->lock);
 		const UINT32 timeout = rdpudp_get_timeout(emt->udp);
 		const SOCKET sockfd = rdpudp_get_socket(emt->udp);
 		LeaveCriticalSection(&emt->lock);
 
-		fd_set rset;
-		FD_ZERO(&rset);
-		FD_SET(sockfd, &rset);
-		struct timeval tv = { 0, WINPR_ASSERTING_INT_CAST(long, timeout) * 1000 };
-		(void)select((int)sockfd + 1, &rset, nullptr, nullptr, &tv);
+		emt_wait_readable(sockfd, timeout);
 
-		if (emt->stop)
+		if (emt_stopping(emt))
 			break;
 
 		EnterCriticalSection(&emt->lock);
@@ -678,7 +720,8 @@ void rdpemt_free(rdpEmt* emt)
 	if (!emt)
 		return;
 
-	emt->stop = TRUE;
+	/* not InterlockedExchange: WinPR's reads the old value non-atomically */
+	InterlockedIncrement(&emt->stop);
 	if (emt->thread)
 	{
 		(void)WaitForSingleObject(emt->thread, INFINITE);
