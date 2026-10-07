@@ -1765,6 +1765,9 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 	char** dns_names = nullptr;
 	size_t dns_names_count = 0;
 	size_t* dns_names_lengths = nullptr;
+	char** ip_names = nullptr;
+	size_t ip_names_count = 0;
+	size_t* ip_names_lengths = nullptr;
 	int verification_status = -1;
 	BOOL hostname_match = FALSE;
 	rdpCertificateData* certificate_data = nullptr;
@@ -1855,6 +1858,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		/* extra common name and alternative names */
 		common_name = freerdp_certificate_get_common_name(cert, &common_name_length);
 		dns_names = freerdp_certificate_get_dns_names(cert, &dns_names_count, &dns_names_lengths);
+		ip_names = freerdp_certificate_get_ip_names(cert, &ip_names_count, &ip_names_lengths);
 
 		/* compare against alternative names */
 		if (dns_names)
@@ -2112,6 +2116,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 end:
 	freerdp_certificate_data_free(certificate_data);
 	free(common_name);
+	freerdp_certificate_free_ip_names(ip_names_count, ip_names_lengths, ip_names);
 	freerdp_certificate_free_dns_names(dns_names_count, dns_names_lengths, dns_names);
 	free(pemCert);
 	return verification_status;

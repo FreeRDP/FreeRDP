@@ -1682,6 +1682,13 @@ char** freerdp_certificate_get_dns_names(const rdpCertificate* cert, size_t* pco
 	return x509_utils_get_dns_names(cert->x509, pcount, pplengths);
 }
 
+char** freerdp_certificate_get_ip_names(const rdpCertificate* cert, size_t* pcount,
+                                        size_t** pplengths)
+{
+	WINPR_ASSERT(cert);
+	return x509_utils_get_ip_names(cert->x509, pcount, pplengths);
+}
+
 char* freerdp_certificate_get_common_name(const rdpCertificate* cert, size_t* plength)
 {
 	WINPR_ASSERT(cert);
@@ -1697,6 +1704,11 @@ WINPR_MD_TYPE freerdp_certificate_get_signature_alg(const rdpCertificate* cert)
 void freerdp_certificate_free_dns_names(size_t count, size_t* lengths, char** names)
 {
 	x509_utils_dns_names_free(count, lengths, names);
+}
+
+void freerdp_certificate_free_ip_names(size_t count, size_t* lengths, char** names)
+{
+	x509_utils_ip_names_free(count, lengths, names);
 }
 
 char* freerdp_certificate_get_hash(const rdpCertificate* cert, const char* hash, size_t* plength)
