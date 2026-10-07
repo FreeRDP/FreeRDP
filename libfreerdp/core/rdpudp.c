@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
 #include <winpr/sysinfo.h>
@@ -41,39 +42,57 @@
 #if defined(_WIN32)
 #define RDPUDP_FD(s) (s)
 #else
-#define RDPUDP_FD(s) ((int)(s))
+#define RDPUDP_FD(s) WINPR_ASSERTING_INT_CAST(int, s)
 #endif
 
 /* [MS-RDPEUDP] 2.2.2.1 RDPUDP_FEC_HEADER uFlags */
-#define RDPUDP_FLAG_SYN 0x0001
-#define RDPUDP_FLAG_ACK 0x0004
-#define RDPUDP_FLAG_DATA 0x0008
-#define RDPUDP_FLAG_FEC 0x0010
-#define RDPUDP_FLAG_CN 0x0020
-#define RDPUDP_FLAG_CWR 0x0040
-#define RDPUDP_FLAG_ACK_OF_ACKS 0x0100
-#define RDPUDP_FLAG_CORRELATION_ID 0x0800
-#define RDPUDP_FLAG_SYNEX 0x1000
+typedef enum WINPR_C23_ENUM_TYPE(uint16_t)
+{
+	RDPUDP_FLAG_SYN = 0x0001,
+	RDPUDP_FLAG_ACK = 0x0004,
+	RDPUDP_FLAG_DATA = 0x0008,
+	RDPUDP_FLAG_FEC = 0x0010,
+	RDPUDP_FLAG_CN = 0x0020,
+	RDPUDP_FLAG_CWR = 0x0040,
+	RDPUDP_FLAG_ACK_OF_ACKS = 0x0100,
+	RDPUDP_FLAG_CORRELATION_ID = 0x0800,
+	RDPUDP_FLAG_SYNEX = 0x1000
+} RDPUDP_FLAGS;
 
 /* [MS-RDPEUDP] 2.2.2.9 RDPUDP_SYNDATAEX_PAYLOAD uSynExFlags */
-#define RDPUDP_VERSION_INFO_VALID 0x0001
+typedef enum WINPR_C23_ENUM_TYPE(uint16_t)
+{
+	RDPUDP_VERSION_INFO_VALID = 0x0001
+} RDPUDP_SYNEX_FLAGS;
 
 /* [MS-RDPEUDP] 2.2.1.1 VECTOR_ELEMENT_STATE */
-#define DATAGRAM_RECEIVED 0
-#define DATAGRAM_NOT_YET_RECEIVED 3
+typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
+{
+	DATAGRAM_RECEIVED = 0,
+	DATAGRAM_NOT_YET_RECEIVED = 3
+} RDPUDP_VECTOR_ELEMENT_STATE;
 
 /* [MS-RDPEUDP2] 2.2.1.1 RDPUDP2_PACKET_HEADER Flags */
-#define RDPUDP2_ACK 0x001
-#define RDPUDP2_DATA 0x004
-#define RDPUDP2_ACKVEC 0x008
-#define RDPUDP2_AOA 0x010
-#define RDPUDP2_OVERHEADSIZE 0x040
-#define RDPUDP2_DELAYACKINFO 0x100
-#define RDPUDP2_NOACK 0x200
+typedef enum WINPR_C23_ENUM_TYPE(uint16_t)
+{
+	RDPUDP2_ACK = 0x001,
+	RDPUDP2_DATA = 0x004,
+	RDPUDP2_ACKVEC = 0x008,
+	RDPUDP2_AOA = 0x010,
+	RDPUDP2_OVERHEADSIZE = 0x040,
+	RDPUDP2_DELAYACKINFO = 0x100,
+	RDPUDP2_NOACK = 0x200
+} RDPUDP2_FLAGS;
 
 /* [MS-RDPEUDP2] 2.2.1 packet type index of the prefix byte */
-#define RDPUDP2_PACKET_STANDARD 0
-#define RDPUDP2_PACKET_DUMMY 8
+typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
+{
+	RDPUDP2_PACKET_STANDARD = 0,
+	RDPUDP2_PACKET_DUMMY = 8
+} RDPUDP2_PACKET_TYPE;
+
+/* [MS-RDPEUDP] 2.2.2.1: the ACK vector holds at most 2048 elements */
+#define RDPUDP_MAX_ACK_VECTOR 2048
 
 #define RDPUDP_MTU 1232
 #define RDPUDP_MIN_MTU 1132
@@ -209,47 +228,91 @@ struct rdp_udp
 	UINT16 v3LastChannelDataSeq;  /* data sequence that carried channel sequence 0xFFFF */
 	UINT16 v3FirstChannelDataSeq; /* data sequence that carried channel sequence 1 */
 	UINT64 v3ZeroWaitSince;
+
+	/* One received datagram. Kept here rather than on the stack, rdpudp_check is not reentrant. */
+	BYTE recvBuffer[0x10000];
 };
 
-static BOOL seq16_after(UINT16 a, UINT16 b)
+/* RDP-UDP sequence numbers are 16 (RDPUDP2) or 32 (RDPUDP) bit counters that wrap around, they
+ * are compared and advanced with RFC 1982 serial number arithmetic. The wrap in the helpers
+ * below is intentional, unlike an integer cast it must not assert. */
+WINPR_ATTR_NODISCARD
+static inline UINT16 seq16_add(UINT16 a, size_t n)
 {
-	return (a != b) && ((UINT16)(a - b) < 0x8000);
+	return (UINT16)((a + n) & 0xFFFFu);
 }
 
+/* a - b modulo 2^16 */
+WINPR_ATTR_NODISCARD
+static inline UINT16 seq16_diff(UINT16 a, UINT16 b)
+{
+	return (UINT16)(((UINT32)a - (UINT32)b) & 0xFFFFu);
+}
+
+WINPR_ATTR_NODISCARD
+static inline UINT32 seq32_add(UINT32 a, UINT32 n)
+{
+	return (UINT32)(((UINT64)a + n) & 0xFFFFFFFFull);
+}
+
+/* a - b modulo 2^32 */
+WINPR_ATTR_NODISCARD
+static inline UINT32 seq32_diff(UINT32 a, UINT32 b)
+{
+	return (UINT32)(((UINT64)a - (UINT64)b) & 0xFFFFFFFFull);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL seq16_after(UINT16 a, UINT16 b)
+{
+	return (a != b) && (seq16_diff(a, b) < 0x8000);
+}
+
+WINPR_ATTR_NODISCARD
 static BOOL seq32_after(UINT32 a, UINT32 b)
 {
-	return (a != b) && ((a - b) < 0x80000000u);
+	return (a != b) && (seq32_diff(a, b) < 0x80000000u);
 }
 
 /* Channel sequence numbers start at 1 and Windows wraps 65535 to 1, never using 0. Ours do the
  * same; on receiving, 0 is accepted as well, see v3_skip_channel_zero. */
+WINPR_ATTR_NODISCARD
 static UINT16 channel_seq_next(UINT16 seq)
 {
-	return (seq == UINT16_MAX) ? 1 : (UINT16)(seq + 1);
+	return (seq == UINT16_MAX) ? 1 : seq16_add(seq, 1);
 }
 
 /* [MS-RDPEUDP2] has 24 bit little endian fields, wStream has no helper for those */
 static void stream_write_uint24(wStream* s, UINT32 value)
 {
-	Stream_Write_UINT16(s, (UINT16)(value & 0xFFFF));
-	Stream_Write_UINT8(s, (BYTE)((value >> 16) & 0xFF));
+	WINPR_ASSERT(s);
+	const UINT16 low = WINPR_ASSERTING_INT_CAST(UINT16, value & 0xFFFF);
+	const BYTE high = WINPR_ASSERTING_INT_CAST(BYTE, (value >> 16) & 0xFF);
+	Stream_Write_UINT16(s, low);
+	Stream_Write_UINT8(s, high);
 }
 
+WINPR_ATTR_NODISCARD
 static UINT64 now_ms(void)
 {
 	return GetTickCount64();
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 rto_floor(const rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	return (udp->version == RDPUDP_PROTOCOL_VERSION_1) ? 500 : 300;
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 rto_initial(const rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	const UINT32 floor = rto_floor(udp);
-	const UINT32 rtt2 = udp->srtt * 2;
-	return (rtt2 > floor) ? rtt2 : floor;
+	const UINT64 rtt2 = (UINT64)udp->srtt * 2ull;
+	const UINT64 rto = (rtt2 > floor) ? rtt2 : floor;
+	return (rto > RDPUDP_MAX_RTO_MS) ? RDPUDP_MAX_RTO_MS : WINPR_ASSERTING_INT_CAST(UINT32, rto);
 }
 
 static void chunk_free(void* obj)
@@ -263,6 +326,7 @@ static void chunk_free(void* obj)
 
 static void slot_clear(rdpudp_slot* slot)
 {
+	WINPR_ASSERT(slot);
 	free(slot->data);
 	slot->data = nullptr;
 	slot->length = 0;
@@ -271,21 +335,27 @@ static void slot_clear(rdpudp_slot* slot)
 
 static void pending_clear(rdpudp_pending* p)
 {
+	WINPR_ASSERT(p);
 	free(p->payload);
 	memset(p, 0, sizeof(*p));
 }
 
 static void rdpudp_fail(rdpUdp* udp, const char* why)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(why);
 	if (udp->state != RDPUDP_STATE_FAILED)
 		WLog_Print(udp->log, WLOG_WARN, "RDP-UDP connection failed: %s", why);
 	udp->state = RDPUDP_STATE_FAILED;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpudp_send_raw(rdpUdp* udp, const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(udp);
-	const SSIZE_T rc = send(RDPUDP_FD(udp->sockfd), (const char*)data, (int)length, 0);
+	WINPR_ASSERT(data);
+	const SSIZE_T rc =
+	    send(RDPUDP_FD(udp->sockfd), (const char*)data, WINPR_ASSERTING_INT_CAST(int, length), 0);
 	if (rc < 0)
 	{
 #if defined(_WIN32)
@@ -308,30 +378,38 @@ static BOOL rdpudp_send_raw(rdpUdp* udp, const BYTE* data, size_t length)
 /* [MS-RDPEUDP2] encoding                                                                      */
 /* ------------------------------------------------------------------------------------------ */
 
+WINPR_ATTR_NODISCARD
 static UINT32 v3_timestamp(void)
 {
 	/* [MS-RDPEUDP2] 3.1.1.1.4: 24 bits in units of 4 microseconds */
-	return (UINT32)((winpr_GetTickCount64NS() / 4000ULL) & 0x00FFFFFFULL);
+	return WINPR_ASSERTING_INT_CAST(UINT32, (winpr_GetTickCount64NS() / 4000ULL) & 0x00FFFFFFULL);
 }
 
+WINPR_ATTR_NODISCARD
 static BYTE v3_ack_gap(const rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	if (!udp->receivedData)
 		return 0;
 	const UINT64 gap = now_ms() - udp->lastDataArrival;
-	return (gap > 254) ? 254 : (BYTE)gap; /* 255 means invalid */
+	return (gap > 254) ? 254 : WINPR_ASSERTING_INT_CAST(BYTE, gap); /* 255 means invalid */
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL v3_has_gap(const rdpUdp* udp)
 {
-	return udp->v3BaseKnown && seq16_after(udp->v3Highest, (UINT16)(udp->v3Expected - 1));
+	WINPR_ASSERT(udp);
+	return udp->v3BaseKnown && seq16_after(udp->v3Highest, seq16_diff(udp->v3Expected, 1));
 }
 
 /* [MS-RDPEUDP2] 2.2.1.2.1 ACK payload */
 static void v3_write_ack(const rdpUdp* udp, wStream* s)
 {
-	Stream_Write_UINT16(s, (UINT16)(udp->v3Expected - 1)); /* SeqNum */
-	stream_write_uint24(s, v3_timestamp());                /* receivedTS */
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(s);
+	const UINT16 seq = seq16_diff(udp->v3Expected, 1);
+	Stream_Write_UINT16(s, seq);            /* SeqNum */
+	stream_write_uint24(s, v3_timestamp()); /* receivedTS */
 	/* the Stream_Write macros evaluate their value more than once */
 	const BYTE gap = v3_ack_gap(udp);
 	Stream_Write_UINT8(s, gap); /* sendAckTimeGapInMs */
@@ -339,30 +417,43 @@ static void v3_write_ack(const rdpUdp* udp, wStream* s)
 }
 
 /* Starts a packet: one byte is left free for the prefix, then the header. */
+WINPR_ATTR_NODISCARD
 static wStream* v3_packet_init(wStream* buffer, BYTE* data, size_t size, UINT16 flags)
 {
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(data);
 	wStream* s = Stream_StaticInit(buffer, data, size);
+	if (!s)
+		return nullptr;
 	Stream_Seek(s, 1);
-	Stream_Write_UINT16(s, (UINT16)(flags | (RDPUDP2_LOG_WINDOW_SIZE << 12)));
+	const UINT16 header = WINPR_ASSERTING_INT_CAST(UINT16, flags | (RDPUDP2_LOG_WINDOW_SIZE << 12));
+	Stream_Write_UINT16(s, header);
 	return s;
 }
 
 /* Finishes a packet into its on-wire form and sends it ([MS-RDPEUDP2] 2.2.1): the prefix byte
  * goes in front, a short packet is padded, and the first and eighth byte trade places. */
+WINPR_ATTR_NODISCARD
 static BOOL v3_send_packet(rdpUdp* udp, wStream* s, BYTE packetType)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(s);
+	if (Stream_GetPosition(s) < 1)
+		return FALSE;
 	const size_t layout = Stream_GetPosition(s) - 1;
 	BYTE shortLength = 7;
 	if (layout < 7)
 	{
-		shortLength = (BYTE)layout;
+		shortLength = WINPR_ASSERTING_INT_CAST(BYTE, layout);
 		Stream_Zero(s, 7 - layout);
 	}
 	const size_t length = Stream_GetPosition(s);
 
 	if (!Stream_SetPosition(s, 0))
 		return FALSE;
-	Stream_Write_UINT8(s, (BYTE)((shortLength << 5) | ((packetType & 0x0F) << 1)));
+	const BYTE prefix =
+	    WINPR_ASSERTING_INT_CAST(BYTE, (shortLength << 5) | ((packetType & 0x0F) << 1));
+	Stream_Write_UINT8(s, prefix);
 
 	/* the swap scrambles the finished datagram, it is not a field of it */
 	BYTE* wire = Stream_Buffer(s);
@@ -372,11 +463,13 @@ static BOOL v3_send_packet(rdpUdp* udp, wStream* s, BYTE packetType)
 	return rdpudp_send_raw(udp, wire, length);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL v3_send_ack(rdpUdp* udp)
 {
 	BYTE buffer[64 + RDPUDP2_MAX_ACKVEC] = WINPR_C_ARRAY_INIT;
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 
+	WINPR_ASSERT(udp);
 	if (!udp->v3BaseKnown)
 		return TRUE;
 
@@ -387,6 +480,8 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	const BOOL gap = v3_has_gap(udp);
 	wStream* s = v3_packet_init(&sbuffer, buffer, sizeof(buffer),
 	                            RDPUDP2_OVERHEADSIZE | (gap ? RDPUDP2_ACKVEC : RDPUDP2_ACK));
+	if (!s)
+		return FALSE;
 	if (!gap)
 	{
 		v3_write_ack(udp, s);
@@ -397,15 +492,16 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	Stream_Write_UINT8(s, 10); /* OverheadSize */
 
 	const UINT16 base = udp->v3Expected;
-	const size_t span = (size_t)(UINT16)(udp->v3Highest - base) + 1;
+	const size_t span = (size_t)seq16_diff(udp->v3Highest, base) + 1;
 	size_t count = (span + 6) / 7;
 	if (count > RDPUDP2_MAX_ACKVEC)
 		count = RDPUDP2_MAX_ACKVEC;
 
 	/* [MS-RDPEUDP2] 2.2.1.2.6 ACK vector payload */
-	Stream_Write_UINT16(s, base);                /* BaseSeqNum */
-	Stream_Write_UINT8(s, (BYTE)(0x80 | count)); /* TimeStampPresent, codedAckVecSize */
-	stream_write_uint24(s, v3_timestamp());      /* TimeStamp */
+	const BYTE control = WINPR_ASSERTING_INT_CAST(BYTE, 0x80 | count);
+	Stream_Write_UINT16(s, base);           /* BaseSeqNum */
+	Stream_Write_UINT8(s, control);         /* TimeStampPresent, codedAckVecSize */
+	stream_write_uint24(s, v3_timestamp()); /* TimeStamp */
 	const BYTE ackGap = v3_ack_gap(udp);
 	Stream_Write_UINT8(s, ackGap); /* SendAckTimeGapInMs */
 	for (size_t x = 0; x < count; x++)
@@ -413,10 +509,10 @@ static BOOL v3_send_ack(rdpUdp* udp)
 		BYTE bits = 0;
 		for (size_t bit = 0; bit < 7; bit++)
 		{
-			const UINT16 seq = (UINT16)(base + x * 7 + bit);
+			const UINT16 seq = seq16_add(base, x * 7 + bit);
 			if (udp->v3Received[seq % RDPUDP_RECEIVE_SLOTS] &&
-			    (UINT16)(seq - base) < RDPUDP_RECEIVE_REACH)
-				bits |= (BYTE)(1 << bit);
+			    seq16_diff(seq, base) < RDPUDP_RECEIVE_REACH)
+				bits |= WINPR_ASSERTING_INT_CAST(BYTE, 1 << bit);
 		}
 		Stream_Write_UINT8(s, bits); /* state map, bit 0 is the base */
 	}
@@ -425,8 +521,10 @@ static BOOL v3_send_ack(rdpUdp* udp)
 
 /* The lowest data sequence number of ours still awaiting acknowledgement, which is what
  * AckOfAcks tells the peer ([MS-RDPEUDP2] 2.2.1.2.4). */
+WINPR_ATTR_NODISCARD
 static UINT32 sender_base(const rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	UINT32 base = (udp->version == RDPUDP_PROTOCOL_VERSION_3) ? udp->nextCoded : udp->nextSource;
 	BOOL found = FALSE;
 	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
@@ -436,7 +534,8 @@ static UINT32 sender_base(const rdpUdp* udp)
 			continue;
 		if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
 		{
-			if (!found || seq16_after((UINT16)base, (UINT16)p->seq))
+			if (!found || seq16_after(WINPR_ASSERTING_INT_CAST(UINT16, base),
+			                          WINPR_ASSERTING_INT_CAST(UINT16, p->seq)))
 				base = p->seq;
 		}
 		else if (!found || seq32_after(base, p->seq))
@@ -448,13 +547,17 @@ static UINT32 sender_base(const rdpUdp* udp)
 	return base;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 {
 	BYTE buffer[RDPUDP_MTU + 32] = WINPR_C_ARRAY_INIT;
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(p);
+
 	const BOOL withAck = udp->ackPending && udp->v3BaseKnown && !v3_has_gap(udp);
-	const UINT16 base = (UINT16)sender_base(udp);
+	const UINT16 base = WINPR_ASSERTING_INT_CAST(UINT16, sender_base(udp));
 	/* repeated on a resend, the first announcement may have been lost with it */
 	const BOOL withAoA = !udp->aoaAnnounced || (udp->announcedAoA != base) || (p->retransmits > 0);
 
@@ -465,6 +568,8 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 		flags |= RDPUDP2_AOA;
 
 	wStream* s = v3_packet_init(&sbuffer, buffer, sizeof(buffer), flags);
+	if (!s)
+		return FALSE;
 	if (withAck)
 	{
 		v3_write_ack(udp, s);
@@ -482,8 +587,9 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 		udp->aoaAnnounced = TRUE;
 	}
 
-	Stream_Write_UINT16(s, (UINT16)p->seq); /* DataSeqNum */
-	Stream_Write_UINT16(s, p->channelSeq);  /* ChannelSeqNum */
+	const UINT16 dataSeq = WINPR_ASSERTING_INT_CAST(UINT16, p->seq);
+	Stream_Write_UINT16(s, dataSeq);       /* DataSeqNum */
+	Stream_Write_UINT16(s, p->channelSeq); /* ChannelSeqNum */
 	if (!Stream_CheckAndLogRequiredCapacityWLog(udp->log, s, p->length))
 		return FALSE;
 	Stream_Write(s, p->payload, p->length);
@@ -499,14 +605,16 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
  * using at most room bytes. */
 static void v1_write_ack_vector(const rdpUdp* udp, wStream* s, size_t room)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(s);
 	const UINT32 highest = udp->recvHighest;
 	UINT32 low = udp->ackVectorStart;
 	if (!udp->receivedData || seq32_after(low, highest))
 		low = highest;
-	if ((highest - low) >= RDPUDP_RECEIVE_REACH)
-		low = highest - (RDPUDP_RECEIVE_REACH - 1);
+	if (seq32_diff(highest, low) >= RDPUDP_RECEIVE_REACH)
+		low = seq32_diff(highest, RDPUDP_RECEIVE_REACH - 1);
 
-	BYTE elements[2048] = WINPR_C_ARRAY_INIT;
+	BYTE elements[RDPUDP_MAX_ACK_VECTOR] = WINPR_C_ARRAY_INIT;
 	size_t count = 0;
 	BYTE state = 0xFF;
 	BYTE run = 0;
@@ -528,7 +636,7 @@ static void v1_write_ack_vector(const rdpUdp* udp, wStream* s, size_t room)
 			{
 				if (count >= ARRAYSIZE(elements))
 					break;
-				elements[count++] = (BYTE)((state << 6) | run);
+				elements[count++] = WINPR_ASSERTING_INT_CAST(BYTE, (state << 6) | run);
 			}
 			state = current;
 			run = 0;
@@ -540,7 +648,7 @@ static void v1_write_ack_vector(const rdpUdp* udp, wStream* s, size_t room)
 		seq++;
 	}
 	if ((run > 0) && (count < ARRAYSIZE(elements)))
-		elements[count++] = (BYTE)((state << 6) | run);
+		elements[count++] = WINPR_ASSERTING_INT_CAST(BYTE, (state << 6) | run);
 
 	/* Too long to fit: keep the newest part, the older part has been reported before. */
 	size_t skip = 0;
@@ -548,20 +656,27 @@ static void v1_write_ack_vector(const rdpUdp* udp, wStream* s, size_t room)
 		skip++;
 	count -= skip;
 
-	Stream_Write_UINT16_BE(s, (UINT16)count);    /* uAckVectorSize */
+	const UINT16 vectorSize = WINPR_ASSERTING_INT_CAST(UINT16, count);
+	Stream_Write_UINT16_BE(s, vectorSize);       /* uAckVectorSize */
 	Stream_Write(s, &elements[skip], count);     /* AckVector */
 	Stream_Zero(s, (4 - ((2 + count) % 4)) % 4); /* pad to a DWORD boundary */
 }
 
+WINPR_ATTR_NODISCARD
 static UINT32 v1_cumulative_ack(const rdpUdp* udp)
 {
-	return sender_base(udp) - 1;
+	WINPR_ASSERT(udp);
+	return seq32_diff(sender_base(udp), 1);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL v1_send_packet(rdpUdp* udp, const rdpudp_pending* p)
 {
 	BYTE buffer[RDPUDP_MTU + 2048] = WINPR_C_ARRAY_INIT;
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
+
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(udp->mtu >= RDPUDP_MIN_MTU);
 
 	const UINT32 cumulative = v1_cumulative_ack(udp);
 	const BOOL withAoA = !udp->aoaAnnounced || (udp->announcedAoA != cumulative);
@@ -580,6 +695,8 @@ static BOOL v1_send_packet(rdpUdp* udp, const rdpudp_pending* p)
 	}
 
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
+	if (!s)
+		return FALSE;
 
 	/* RDPUDP_FEC_HEADER */
 	Stream_Write_UINT32_BE(s, udp->receivedData ? udp->recvHighest
@@ -612,8 +729,10 @@ static BOOL v1_send_packet(rdpUdp* udp, const rdpudp_pending* p)
 	return rdpudp_send_raw(udp, Stream_Buffer(s), Stream_GetPosition(s));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpudp_send_ack(rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	if (udp->state != RDPUDP_STATE_ESTABLISHED)
 		return TRUE;
 	if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
@@ -621,8 +740,11 @@ static BOOL rdpudp_send_ack(rdpUdp* udp)
 	return v1_send_packet(udp, nullptr);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL rdpudp_transmit(rdpUdp* udp, const rdpudp_pending* p)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(p);
 	if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
 		return v3_send_data(udp, p);
 	return v1_send_packet(udp, p);
@@ -632,8 +754,10 @@ static BOOL rdpudp_transmit(rdpUdp* udp, const rdpudp_pending* p)
 /* Sending                                                                                    */
 /* ------------------------------------------------------------------------------------------ */
 
+WINPR_ATTR_NODISCARD
 static size_t window_limit(const rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	size_t limit = RDPUDP_MAX_IN_FLIGHT;
 	if ((udp->version != RDPUDP_PROTOCOL_VERSION_3) && (udp->peerWindow > 0) &&
 	    (udp->peerWindow < limit))
@@ -641,8 +765,11 @@ static size_t window_limit(const rdpUdp* udp)
 	return limit;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL send_chunk_now(rdpUdp* udp, BYTE* data, size_t length)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(data);
 	rdpudp_pending* p = nullptr;
 	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
 	{
@@ -660,8 +787,9 @@ static BOOL send_chunk_now(rdpUdp* udp, BYTE* data, size_t length)
 	p->length = length;
 	if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
 	{
-		p->seq = (UINT16)udp->nextCoded;
-		udp->nextCoded = (UINT16)(udp->nextCoded + 1);
+		const UINT16 coded = WINPR_ASSERTING_INT_CAST(UINT16, udp->nextCoded);
+		p->seq = coded;
+		udp->nextCoded = seq16_add(coded, 1);
 		p->channelSeq = udp->nextChannelSeq;
 		udp->nextChannelSeq = channel_seq_next(udp->nextChannelSeq);
 	}
@@ -680,8 +808,10 @@ static BOOL send_chunk_now(rdpUdp* udp, BYTE* data, size_t length)
 	return rdpudp_transmit(udp, p);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL flush_send_queue(rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	while ((udp->state == RDPUDP_STATE_ESTABLISHED) && (udp->inFlight < window_limit(udp)) &&
 	       (Queue_Count(udp->sendQueue) > 0))
 	{
@@ -703,6 +833,7 @@ static BOOL flush_send_queue(rdpUdp* udp)
 BOOL rdpudp_send(rdpUdp* udp, const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(udp);
+	WINPR_ASSERT(data);
 
 	if ((length == 0) || (length > rdpudp_get_max_payload(udp)))
 		return FALSE;
@@ -726,21 +857,29 @@ BOOL rdpudp_send(rdpUdp* udp, const BYTE* data, size_t length)
 		chunk_free(chunk);
 		return FALSE;
 	}
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): Queue_Enqueue takes ownership of chunk
 	return flush_send_queue(udp);
 }
 
 static void sample_rtt(rdpUdp* udp, const rdpudp_pending* p)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(p);
 	/* Karn: a retransmitted packet says nothing reliable about the round trip */
 	if (p->retransmits > 0)
 		return;
 	const UINT64 sample64 = now_ms() - p->sent;
-	const UINT32 sample = (sample64 > UINT32_MAX) ? UINT32_MAX : (UINT32)sample64;
-	udp->srtt = (udp->srtt == 0) ? sample : (udp->srtt * 7 + sample) / 8;
+	const UINT32 sample =
+	    (sample64 > UINT32_MAX) ? UINT32_MAX : WINPR_ASSERTING_INT_CAST(UINT32, sample64);
+	udp->srtt = (udp->srtt == 0)
+	                ? sample
+	                : WINPR_ASSERTING_INT_CAST(UINT32, ((UINT64)udp->srtt * 7 + sample) / 8);
 }
 
 static void acknowledge(rdpUdp* udp, rdpudp_pending* p)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(p);
 	sample_rtt(udp, p);
 	pending_clear(p);
 	if (udp->inFlight > 0)
@@ -749,6 +888,7 @@ static void acknowledge(rdpUdp* udp, rdpudp_pending* p)
 
 static void acknowledge_seq(rdpUdp* udp, UINT32 seq)
 {
+	WINPR_ASSERT(udp);
 	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
 	{
 		rdpudp_pending* p = &udp->pending[x];
@@ -761,11 +901,14 @@ static void acknowledge_seq(rdpUdp* udp, UINT32 seq)
 /* Receiving                                                                                  */
 /* ------------------------------------------------------------------------------------------ */
 
+WINPR_ATTR_NODISCARD
 static BOOL deliver(rdpUdp* udp, const BYTE* data, size_t length)
 {
+	WINPR_ASSERT(udp);
 	udp->lastDelivery = now_ms();
 	if (length == 0)
 		return TRUE;
+	WINPR_ASSERT(data);
 	WINPR_ASSERT(udp->receive);
 	if (!udp->receive(udp->custom, data, length))
 	{
@@ -775,8 +918,11 @@ static BOOL deliver(rdpUdp* udp, const BYTE* data, size_t length)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL store_slot(rdpUdp* udp, UINT32 seq, const BYTE* data, size_t length)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(data || (length == 0));
 	rdpudp_slot* slot = &udp->slots[seq % RDPUDP_RECEIVE_SLOTS];
 	if (slot->present)
 	{
@@ -802,8 +948,11 @@ static BOOL store_slot(rdpUdp* udp, UINT32 seq, const BYTE* data, size_t length)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL v1_receive_source(rdpUdp* udp, UINT32 seq, const BYTE* data, size_t length)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(data || (length == 0));
 	if (!udp->receivedData)
 	{
 		/* [MS-RDPEUDP] puts the first source packet at the initial sequence number plus one,
@@ -813,7 +962,7 @@ static BOOL v1_receive_source(rdpUdp* udp, UINT32 seq, const BYTE* data, size_t 
 			udp->recvNext = seq;
 			udp->ackVectorStart = seq;
 		}
-		udp->recvHighest = udp->recvNext - 1;
+		udp->recvHighest = seq32_diff(udp->recvNext, 1);
 	}
 
 	udp->ackPending = TRUE;
@@ -822,7 +971,7 @@ static BOOL v1_receive_source(rdpUdp* udp, UINT32 seq, const BYTE* data, size_t 
 	if (seq32_after(udp->recvNext, seq))
 		return TRUE; /* already delivered, the ACK above tells the peer again */
 
-	const UINT32 ahead = seq - udp->recvNext;
+	const UINT32 ahead = seq32_diff(seq, udp->recvNext);
 	if (ahead >= RDPUDP_RECEIVE_REACH)
 		return TRUE;
 
@@ -855,6 +1004,10 @@ static BOOL v1_receive_source(rdpUdp* udp, UINT32 seq, const BYTE* data, size_t 
 /* Applies the peer's ACK vector, which ends at its snSourceAck, to our own packets. */
 static void v1_process_ack_vector(rdpUdp* udp, UINT32 snSourceAck, wStream* s, size_t count)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(s);
+	/* count comes from the wire, v1_process_datagram bounds it */
+	WINPR_ASSERT(count <= RDPUDP_MAX_ACK_VECTOR);
 	const size_t start = Stream_GetPosition(s);
 	UINT32 total = 0;
 	for (size_t x = 0; x < count; x++)
@@ -862,11 +1015,11 @@ static void v1_process_ack_vector(rdpUdp* udp, UINT32 snSourceAck, wStream* s, s
 	if ((total == 0) || !Stream_SetPosition(s, start))
 		return;
 
-	UINT32 seq = snSourceAck - total + 1;
+	UINT32 seq = seq32_add(seq32_diff(snSourceAck, total), 1);
 	for (size_t x = 0; x < count; x++)
 	{
 		const BYTE element = Stream_Get_UINT8(s);
-		const BYTE state = (BYTE)(element >> 6);
+		const BYTE state = WINPR_ASSERTING_INT_CAST(BYTE, element >> 6);
 		const BYTE run = element & 0x3F;
 		for (BYTE y = 0; y < run; y++)
 		{
@@ -877,9 +1030,12 @@ static void v1_process_ack_vector(rdpUdp* udp, UINT32 snSourceAck, wStream* s, s
 	}
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL v1_process_datagram(rdpUdp* udp, const BYTE* data, size_t length)
 {
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(data);
 	wStream* s = Stream_StaticConstInit(&sbuffer, data, length);
 
 	/* RDPUDP_FEC_HEADER */
@@ -906,6 +1062,8 @@ static BOOL v1_process_datagram(rdpUdp* udp, const BYTE* data, size_t length)
 		if (!Stream_CheckAndLogRequiredLengthWLog(udp->log, s, 2))
 			return TRUE;
 		const size_t size = Stream_Get_UINT16_BE(s);
+		if (size > RDPUDP_MAX_ACK_VECTOR)
+			return TRUE; /* [MS-RDPEUDP] 2.2.2.7: more than 2048 elements is invalid, drop */
 		const size_t padding = (4 - ((2 + size) % 4)) % 4;
 		if (!Stream_CheckAndLogRequiredLengthWLog(udp->log, s, size + padding))
 			return TRUE;
@@ -920,7 +1078,7 @@ static BOOL v1_process_datagram(rdpUdp* udp, const BYTE* data, size_t length)
 			return TRUE;
 		const UINT32 reset = Stream_Get_UINT32_BE(s);
 		/* the peer has seen our acknowledgements up to here, the ACK vector can start later */
-		const UINT32 start = reset + 1;
+		const UINT32 start = seq32_add(reset, 1);
 		if (seq32_after(start, udp->ackVectorStart) && !seq32_after(start, udp->recvNext))
 			udp->ackVectorStart = start;
 	}
@@ -945,6 +1103,7 @@ static BOOL v1_process_datagram(rdpUdp* udp, const BYTE* data, size_t length)
 
 static void v3_advance_window(rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	while (udp->v3Received[udp->v3Expected % RDPUDP_RECEIVE_SLOTS])
 	{
 		udp->v3Received[udp->v3Expected % RDPUDP_RECEIVE_SLOTS] = FALSE;
@@ -954,9 +1113,10 @@ static void v3_advance_window(rdpUdp* udp)
 
 static void v3_advance_base(rdpUdp* udp, UINT16 base)
 {
+	WINPR_ASSERT(udp);
 	if (!udp->v3BaseKnown || !seq16_after(base, udp->v3Expected))
 		return;
-	if ((UINT16)(base - udp->v3Expected) > RDPUDP_RECEIVE_REACH)
+	if (seq16_diff(base, udp->v3Expected) > RDPUDP_RECEIVE_REACH)
 		return;
 
 	/* The peer stopped resending everything below base. This only gives up transport sequence
@@ -967,14 +1127,17 @@ static void v3_advance_base(rdpUdp* udp, UINT16 base)
 		udp->v3Received[udp->v3Expected % RDPUDP_RECEIVE_SLOTS] = FALSE;
 		udp->v3Expected++;
 	}
-	if (seq16_after((UINT16)(base - 1), udp->v3Highest))
-		udp->v3Highest = (UINT16)(base - 1);
+	const UINT16 last = seq16_diff(base, 1);
+	if (seq16_after(last, udp->v3Highest))
+		udp->v3Highest = last;
 	v3_advance_window(udp);
 	udp->ackPending = TRUE;
 }
 
 static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t count)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(s);
 	UINT16 seq = base;
 	for (size_t x = 0; x < count; x++)
 	{
@@ -1007,17 +1170,18 @@ static void v3_process_ack_vector(rdpUdp* udp, UINT16 base, wStream* s, size_t c
 	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
 	{
 		rdpudp_pending* p = &udp->pending[x];
-		if (p->used && seq16_after(base, (UINT16)p->seq))
+		if (p->used && seq16_after(base, WINPR_ASSERTING_INT_CAST(UINT16, p->seq)))
 			acknowledge(udp, p);
 	}
 }
 
 static void v3_process_ack(rdpUdp* udp, UINT16 ack)
 {
+	WINPR_ASSERT(udp);
 	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
 	{
 		rdpudp_pending* p = &udp->pending[x];
-		if (p->used && !seq16_after((UINT16)p->seq, ack))
+		if (p->used && !seq16_after(WINPR_ASSERTING_INT_CAST(UINT16, p->seq), ack))
 			acknowledge(udp, p);
 	}
 }
@@ -1026,8 +1190,10 @@ static void v3_process_ack(rdpUdp* udp, UINT16 ack)
  * sent it before 1. When 1 came in the data sequence right after the one that carried 0xFFFF,
  * nothing was sent in between and there is no 0. Otherwise 0 gets a grace period to turn up as
  * a resend before the stream moves on without it. */
+WINPR_ATTR_NODISCARD
 static BOOL v3_skip_channel_zero(rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	if (udp->v3NextChannel != 0)
 		return FALSE;
 	const rdpudp_slot* zero = &udp->slots[0];
@@ -1041,7 +1207,7 @@ static BOOL v3_skip_channel_zero(rdpUdp* udp)
 	const UINT64 now = now_ms();
 	if (udp->v3ZeroWaitSince == 0)
 		udp->v3ZeroWaitSince = now;
-	const BOOL adjacent = (UINT16)(udp->v3LastChannelDataSeq + 1) == udp->v3FirstChannelDataSeq;
+	const BOOL adjacent = seq16_add(udp->v3LastChannelDataSeq, 1) == udp->v3FirstChannelDataSeq;
 	if (!adjacent && (now - udp->v3ZeroWaitSince < RDPUDP_CHANNEL_ZERO_GRACE_MS))
 		return FALSE;
 
@@ -1053,8 +1219,10 @@ static BOOL v3_skip_channel_zero(rdpUdp* udp)
 }
 
 /* Hands up the chunks that are next in the stream, in channel sequence order. */
+WINPR_ATTR_NODISCARD
 static BOOL v3_deliver_ready(rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	while (TRUE)
 	{
 		rdpudp_slot* slot = &udp->slots[udp->v3NextChannel % RDPUDP_RECEIVE_SLOTS];
@@ -1069,7 +1237,7 @@ static BOOL v3_deliver_ready(rdpUdp* udp)
 		slot->data = nullptr;
 		slot->present = FALSE;
 		udp->buffered--;
-		udp->v3NextChannel = (UINT16)(udp->v3NextChannel + 1);
+		udp->v3NextChannel = seq16_add(udp->v3NextChannel, 1);
 		const BOOL rc = deliver(udp, chunk, chunkLength);
 		free(chunk);
 		if (!rc)
@@ -1078,13 +1246,16 @@ static BOOL v3_deliver_ready(rdpUdp* udp)
 	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL v3_receive_channel_data(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq,
                                     const BYTE* data, size_t length)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(data || (length == 0));
 	/* A retransmission travels under a new data sequence number with its original channel
 	 * sequence, so the channel sequence alone says where a chunk belongs and whether it has
 	 * been handed up already. */
-	const UINT16 ahead = (UINT16)(channelSeq - udp->v3NextChannel);
+	const UINT16 ahead = seq16_diff(channelSeq, udp->v3NextChannel);
 	if (ahead >= RDPUDP_RECEIVE_REACH)
 		return TRUE;
 
@@ -1098,9 +1269,12 @@ static BOOL v3_receive_channel_data(rdpUdp* udp, UINT16 dataSeq, UINT16 channelS
 	return v3_deliver_ready(udp);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 {
 	BYTE buffer[RDPUDP_MTU + 1024] = WINPR_C_ARRAY_INIT;
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(wire);
 	if ((length < 8) || (length > sizeof(buffer)))
 		return TRUE;
 
@@ -1116,8 +1290,8 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 	const BYTE prefix = Stream_Get_UINT8(s);
 	if (prefix & 0x01)
 		return TRUE;
-	const BYTE shortLength = (BYTE)(prefix >> 5);
-	const BYTE packetType = (BYTE)((prefix >> 1) & 0x0F);
+	const BYTE shortLength = WINPR_ASSERTING_INT_CAST(BYTE, prefix >> 5);
+	const BYTE packetType = WINPR_ASSERTING_INT_CAST(BYTE, (prefix >> 1) & 0x0F);
 	if ((packetType != RDPUDP2_PACKET_STANDARD) && (packetType != RDPUDP2_PACKET_DUMMY))
 		return TRUE;
 	/* a packet shorter than 7 bytes was padded, its real length is in the prefix */
@@ -1201,15 +1375,15 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 		 * first, keeps a lost or late first packet from being acknowledged unseen. */
 		UINT16 base = dataSeq;
 		if (haveAoA && !seq16_after(aoa, dataSeq) &&
-		    ((UINT16)(dataSeq - aoa) < RDPUDP_RECEIVE_REACH))
+		    (seq16_diff(dataSeq, aoa) < RDPUDP_RECEIVE_REACH))
 			base = aoa;
 		udp->v3BaseKnown = TRUE;
 		udp->v3Expected = base;
-		udp->v3Highest = (UINT16)(base - 1);
+		udp->v3Highest = seq16_diff(base, 1);
 	}
 
 	udp->ackPending = TRUE;
-	const UINT16 ahead = (UINT16)(dataSeq - udp->v3Expected);
+	const UINT16 ahead = seq16_diff(dataSeq, udp->v3Expected);
 	if (ahead >= 0x8000)
 		return TRUE; /* resent because our ACK got lost, acknowledged again above */
 	if (ahead >= RDPUDP_RECEIVE_REACH)
@@ -1235,12 +1409,16 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 /* Connection setup                                                                           */
 /* ------------------------------------------------------------------------------------------ */
 
+WINPR_ATTR_NODISCARD
 static BOOL send_syn(rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	/* [MS-RDPEUDP] 3.1.5.1.1: zero padded to the MTU, which validates the path MTU */
 	BYTE syn[RDPUDP_MTU] = WINPR_C_ARRAY_INIT;
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, syn, sizeof(syn));
+	if (!s)
+		return FALSE;
 	const UINT16 version = udp->offerV3 ? RDPUDP_PROTOCOL_VERSION_3 : RDPUDP_PROTOCOL_VERSION_2;
 
 	/* RDPUDP_FEC_HEADER */
@@ -1266,9 +1444,12 @@ static BOOL send_syn(rdpUdp* udp)
 	return rdpudp_send_raw(udp, syn, sizeof(syn));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 {
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(data);
 	wStream* s = Stream_StaticConstInit(&sbuffer, data, length);
 
 	/* RDPUDP_FEC_HEADER and RDPUDP_SYNDATA_PAYLOAD */
@@ -1322,9 +1503,9 @@ static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 	udp->version = version;
 	udp->peerWindow = window;
 	udp->peerInitialSequence = peerInitial;
-	udp->recvNext = peerInitial + 1;
+	udp->recvNext = seq32_add(peerInitial, 1);
 	udp->recvHighest = peerInitial;
-	udp->ackVectorStart = peerInitial + 1;
+	udp->ackVectorStart = seq32_add(peerInitial, 1);
 	udp->lastDelivery = now_ms();
 	udp->state = RDPUDP_STATE_ESTABLISHED;
 
@@ -1340,8 +1521,8 @@ static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 	}
 	else
 	{
-		udp->nextSource = udp->initialSequence + 1;
-		udp->nextCoded = udp->initialSequence + 1;
+		udp->nextSource = seq32_add(udp->initialSequence, 1);
+		udp->nextCoded = seq32_add(udp->initialSequence, 1);
 		/* the client completes the three way handshake by acknowledging the SYN+ACK */
 		udp->ackPending = TRUE;
 	}
@@ -1351,8 +1532,11 @@ static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 	return flush_send_queue(udp);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL process_datagram(rdpUdp* udp, const BYTE* data, size_t length)
 {
+	WINPR_ASSERT(udp);
+	WINPR_ASSERT(data);
 	udp->lastReceived = now_ms();
 
 	switch (udp->state)
@@ -1372,8 +1556,10 @@ static BOOL process_datagram(rdpUdp* udp, const BYTE* data, size_t length)
 /* Timers                                                                                     */
 /* ------------------------------------------------------------------------------------------ */
 
+WINPR_ATTR_NODISCARD
 static BOOL run_timers(rdpUdp* udp)
 {
+	WINPR_ASSERT(udp);
 	const UINT64 now = now_ms();
 
 	if (udp->state == RDPUDP_STATE_SYN_SENT)
@@ -1431,8 +1617,9 @@ static BOOL run_timers(rdpUdp* udp)
 			/* [MS-RDPEUDP2] 3.1.5.1.3: a lost packet is resent under a new data sequence
 			 * number, the channel sequence number stays. The AckOfAcks then moves past the
 			 * old one, so the peer stops waiting for it. */
-			p->seq = (UINT16)udp->nextCoded;
-			udp->nextCoded = (UINT16)(udp->nextCoded + 1);
+			const UINT16 coded = WINPR_ASSERTING_INT_CAST(UINT16, udp->nextCoded);
+			p->seq = coded;
+			udp->nextCoded = seq16_add(coded, 1);
 		}
 		else
 		{
@@ -1482,6 +1669,8 @@ rdpUdp* rdpudp_new(wLog* log, const BYTE* cookieHash, rdpUdpReceiveFn receive, v
 	if (!udp->sendQueue)
 		goto fail;
 	wObject* obj = Queue_Object(udp->sendQueue);
+	if (!obj)
+		goto fail;
 	obj->fnObjectFree = chunk_free;
 
 	if (winpr_RAND(&udp->initialSequence, sizeof(udp->initialSequence)) < 0)
@@ -1512,16 +1701,18 @@ void rdpudp_free(rdpUdp* udp)
 	free(udp);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL set_non_blocking(SOCKET sockfd)
 {
 #if defined(_WIN32)
 	u_long arg = 1;
 	return ioctlsocket(sockfd, FIONBIO, &arg) == 0;
 #else
-	const int flags = fcntl((int)sockfd, F_GETFL);
+	const int fd = RDPUDP_FD(sockfd);
+	const int flags = fcntl(fd, F_GETFL);
 	if (flags < 0)
 		return FALSE;
-	return fcntl((int)sockfd, F_SETFL, flags | O_NONBLOCK) == 0;
+	return fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0;
 #endif
 }
 
@@ -1540,7 +1731,7 @@ BOOL rdpudp_connect(rdpUdp* udp, const struct sockaddr* addr, size_t addrlen)
 		return FALSE;
 	}
 
-	if (connect(RDPUDP_FD(udp->sockfd), addr, (int)addrlen) != 0)
+	if (connect(RDPUDP_FD(udp->sockfd), addr, WINPR_ASSERTING_INT_CAST(int, addrlen)) != 0)
 	{
 		WLog_Print(udp->log, WLOG_ERROR, "failed to connect the UDP socket");
 		return FALSE;
@@ -1575,11 +1766,15 @@ UINT16 rdpudp_get_version(const rdpUdp* udp)
 size_t rdpudp_get_max_payload(const rdpUdp* udp)
 {
 	WINPR_ASSERT(udp);
+	/* the MTU is clamped to [RDPUDP_MIN_MTU, RDPUDP_MTU] when the connection is set up */
+	WINPR_ASSERT(udp->mtu >= RDPUDP_MIN_MTU);
 	/* v3: prefix, header, ACK, DelayAckInfo, AckOfAcks, DataHeader and channel sequence.
 	 * v1/v2: header, room for the ACK vector and AckOfAcks, source payload header. */
-	if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
-		return udp->mtu - 24u;
-	return udp->mtu - (8u + RDPUDP_ACK_ROOM + 8u);
+	const size_t overhead =
+	    (udp->version == RDPUDP_PROTOCOL_VERSION_3) ? 24u : (8u + RDPUDP_ACK_ROOM + 8u);
+	if (udp->mtu <= overhead)
+		return 0;
+	return udp->mtu - overhead;
 }
 
 UINT32 rdpudp_get_timeout(const rdpUdp* udp)
@@ -1595,7 +1790,7 @@ UINT32 rdpudp_get_timeout(const rdpUdp* udp)
 			return 0;
 		if (due - now < timeout)
 			timeout = due - now;
-		return (UINT32)timeout;
+		return WINPR_ASSERTING_INT_CAST(UINT32, timeout);
 	}
 
 	for (size_t x = 0; x < RDPUDP_MAX_IN_FLIGHT; x++)
@@ -1608,7 +1803,7 @@ UINT32 rdpudp_get_timeout(const rdpUdp* udp)
 		if (p->due - now < timeout)
 			timeout = p->due - now;
 	}
-	return (UINT32)timeout;
+	return WINPR_ASSERTING_INT_CAST(UINT32, timeout);
 }
 
 BOOL rdpudp_check(rdpUdp* udp)
@@ -1618,10 +1813,11 @@ BOOL rdpudp_check(rdpUdp* udp)
 	if ((udp->state == RDPUDP_STATE_FAILED) || (udp->state == RDPUDP_STATE_CLOSED))
 		return FALSE;
 
-	BYTE buffer[0x10000];
+	BYTE* buffer = udp->recvBuffer;
 	while (TRUE)
 	{
-		const SSIZE_T rc = recv(RDPUDP_FD(udp->sockfd), (char*)buffer, sizeof(buffer), 0);
+		const SSIZE_T rc = recv(RDPUDP_FD(udp->sockfd), (char*)buffer,
+		                        WINPR_ASSERTING_INT_CAST(int, sizeof(udp->recvBuffer)), 0);
 		if (rc < 0)
 		{
 #if defined(_WIN32)
@@ -1637,7 +1833,7 @@ BOOL rdpudp_check(rdpUdp* udp)
 			break;
 		}
 
-		if (!process_datagram(udp, buffer, (size_t)rc))
+		if (!process_datagram(udp, buffer, WINPR_ASSERTING_INT_CAST(size_t, rc)))
 		{
 			rdpudp_fail(udp, "failed to process a datagram");
 			return FALSE;
