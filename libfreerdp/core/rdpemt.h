@@ -77,6 +77,7 @@ FREERDP_LOCAL UINT32 rdpemt_get_request_id(const rdpEmt* emt);
 #else
 
 /* Built without UDP multitransport: requests are declined and no tunnel ever exists. */
+WINPR_ATTR_NODISCARD
 static inline BOOL rdpemt_is_supported(void)
 {
 	return FALSE;
@@ -86,6 +87,8 @@ static inline void rdpemt_free(WINPR_ATTR_UNUSED rdpEmt* emt)
 {
 }
 
+WINPR_ATTR_MALLOC(rdpemt_free, 1)
+WINPR_ATTR_NODISCARD
 static inline rdpEmt*
 rdpemt_new(WINPR_ATTR_UNUSED wLog* log, WINPR_ATTR_UNUSED UINT32 requestId,
            WINPR_ATTR_UNUSED const BYTE* cookie, WINPR_ATTR_UNUSED const char* hostname,
@@ -95,6 +98,7 @@ rdpemt_new(WINPR_ATTR_UNUSED wLog* log, WINPR_ATTR_UNUSED UINT32 requestId,
 	return nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL rdpemt_start(WINPR_ATTR_UNUSED rdpEmt* emt,
                                 WINPR_ATTR_UNUSED const struct sockaddr* addr,
                                 WINPR_ATTR_UNUSED size_t addrlen)
@@ -102,6 +106,7 @@ static inline BOOL rdpemt_start(WINPR_ATTR_UNUSED rdpEmt* emt,
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static inline BOOL rdpemt_send_data(WINPR_ATTR_UNUSED rdpEmt* emt,
                                     WINPR_ATTR_UNUSED const BYTE* data,
                                     WINPR_ATTR_UNUSED size_t length)
@@ -109,6 +114,7 @@ static inline BOOL rdpemt_send_data(WINPR_ATTR_UNUSED rdpEmt* emt,
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static inline UINT32 rdpemt_get_request_id(WINPR_ATTR_UNUSED const rdpEmt* emt)
 {
 	return 0;
