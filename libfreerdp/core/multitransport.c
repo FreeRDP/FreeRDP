@@ -134,10 +134,12 @@ state_run_t multitransport_recv_request(rdpMultitransport* multi, wStream* s)
 	return multi->MtRequest(multi, requestId, requestedProto, cookie);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL multitransport_request_send(rdpMultitransport* multi, UINT32 reqId, UINT16 reqProto,
                                         const BYTE* cookie)
 {
 	WINPR_ASSERT(multi);
+	WINPR_ASSERT(cookie);
 	UINT16 sec_flags = 0;
 	wStream* s = rdp_message_channel_pdu_init(multi->rdp, &sec_flags);
 	if (!s)
@@ -232,15 +234,20 @@ state_run_t multitransport_recv_response(rdpMultitransport* multi, wStream* s)
 	return res;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL multitransport_soft_sync(const rdpMultitransport* multi)
 {
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(multi->rdp);
 	const UINT32 flags =
 	    freerdp_settings_get_uint32(multi->rdp->settings, FreeRDP_MultitransportFlags);
 	return (flags & SOFTSYNC_TCP_TO_UDP) != 0;
 }
 
+WINPR_ATTR_NODISCARD
 static state_run_t multitransport_decline(rdpMultitransport* multi, UINT32 reqId)
 {
+	WINPR_ASSERT(multi);
 	return multitransport_client_send_response(multi, reqId, E_ABORT) ? STATE_RUN_SUCCESS
 	                                                                  : STATE_RUN_FAILED;
 }
@@ -297,9 +304,14 @@ static void multitransport_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT 
 }
 
 /* The UDP listener sits on the same address and port as the TCP one. */
+WINPR_ATTR_NODISCARD
 static BOOL multitransport_resolve_server(const rdpSettings* settings,
                                           struct sockaddr_storage* address, size_t* length)
 {
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(address);
+	WINPR_ASSERT(length);
+
 	const char* hostname = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
 	if (!hostname)
 		return FALSE;
@@ -326,6 +338,7 @@ static BOOL multitransport_resolve_server(const rdpSettings* settings,
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static state_run_t multitransport_client_request(rdpMultitransport* multi, UINT32 reqId,
                                                  UINT16 reqProto, const BYTE* cookie)
 {
@@ -427,12 +440,18 @@ static state_run_t multitransport_client_request(rdpMultitransport* multi, UINT3
 static void multitransport_notify_state(rdpMultitransport* multi,
                                         FreeRDP_MultitransportTunnelState state)
 {
+	WINPR_ASSERT(multi);
+
 	if (multi->haveCallbacks && multi->callbacks.TunnelStateChanged)
 		multi->callbacks.TunnelStateChanged(multi->custom, TUNNELTYPE_UDPFECR, state);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL multitransport_handle_event(rdpMultitransport* multi, const mt_event* ev)
 {
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(ev);
+
 	switch (ev->type)
 	{
 		case MT_EVENT_READY:
@@ -548,10 +567,12 @@ void multitransport_reset(rdpMultitransport* multi)
 	(void)ResetEvent(multi->event);
 }
 
+WINPR_ATTR_NODISCARD
 static state_run_t multitransport_server_handle_response(rdpMultitransport* multi,
                                                          WINPR_ATTR_UNUSED UINT32 reqId,
                                                          WINPR_ATTR_UNUSED UINT32 hrResponse)
 {
+	WINPR_ASSERT(multi);
 	rdpRdp* rdp = multi->rdp;
 
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE))
@@ -618,6 +639,7 @@ void multitransport_free(rdpMultitransport* multitransport)
 	free(multitransport);
 }
 
+WINPR_ATTR_NODISCARD
 static rdpMultitransport* multitransport_from_context(rdpContext* context)
 {
 	if (!context || !context->rdp)
