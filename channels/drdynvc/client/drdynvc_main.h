@@ -106,8 +106,10 @@ typedef struct
 	CRITICAL_SECTION lock;
 	DVCMAN_CHANNEL_STATS stats;
 
-	/* TUNNELTYPE_ the channel's data is written on, 0 for the drdynvc static channel */
-	volatile UINT32 tunnelType;
+	/* TUNNELTYPE_ the channel's data is written on, 0 for the drdynvc static channel. Guarded by
+	 * lock: a writer holds it for a whole message, so Soft-Sync cannot move the channel between
+	 * two fragments, nor while a message is still on its way out over TCP. */
+	UINT32 tunnelType;
 } DVCMAN_CHANNEL;
 
 typedef enum
