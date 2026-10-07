@@ -280,6 +280,15 @@ static DynvcReadResult dynvc_read_varInt(wLog* log, wStream* s, size_t len, UINT
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL Stream_ResetAndResize(DynChannelTrackerState* tracker)
+{
+	WINPR_ASSERT(tracker);
+	Stream_Free(tracker->currentPacket, TRUE);
+	tracker->currentPacket = Stream_New(nullptr, 2400);
+	return tracker->currentPacket != nullptr;
+}
+
+WINPR_ATTR_NODISCARD
 static PfChannelResult DynvcTrackerPeekHandleByMode(ChannelStateTracker* tracker,
                                                     DynChannelTrackerState* trackerState,
                                                     pServerDynamicChannelContext* dynChannel,
@@ -336,7 +345,10 @@ static PfChannelResult DynvcTrackerPeekHandleByMode(ChannelStateTracker* tracker
 		trackerState->CurrentDataReceived = 0;
 
 		if (dynChannel->packetReassembly && trackerState->currentPacket)
-			Stream_ResetPosition(trackerState->currentPacket);
+		{
+			if (!Stream_ResetAndResize(trackerState))
+				return PF_CHANNEL_RESULT_ERROR;
+		}
 	}
 
 	return result;
@@ -558,7 +570,10 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 			if (dynChannel->packetReassembly)
 			{
 				if (trackerState->currentPacket)
-					Stream_ResetPosition(trackerState->currentPacket);
+				{
+					if (!Stream_ResetAndResize(trackerState))
+						return PF_CHANNEL_RESULT_ERROR;
+				}
 			}
 		}
 		break;
@@ -580,8 +595,7 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 			{
 				if (!trackerState->currentPacket)
 				{
-					trackerState->currentPacket = Stream_New(nullptr, 1024);
-					if (!trackerState->currentPacket)
+					if (!Stream_ResetAndResize(trackerState))
 					{
 						DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd,
 						                isBackData, "unable to create current packet",
