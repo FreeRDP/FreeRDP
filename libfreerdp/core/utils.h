@@ -117,6 +117,10 @@ FREERDP_LOCAL const char* guid2str(const GUID* guid, char* buffer, size_t len);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL utils_is_valid_ip(const char* ipAddress);
 
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL utils_compare_ip_strings(const char* ipAddressA, size_t lenA,
+                                            const char* ipAddressB, size_t lenB);
+
 /** @brief sets a file umask so newly created files are only user read/writeable
  *
  *  @since version 3.32.0
