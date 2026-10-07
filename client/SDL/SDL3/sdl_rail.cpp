@@ -307,9 +307,27 @@ void SdlRail::handleFocus(SDL_WindowID id, bool gained)
 	if (gained)
 		_focusedAppId = appWindow->id();
 
+	/* Only report activation, never deactivation (see the X11 client, #13422).
+	 * The server treats a deactivation of the owner as "no active window in
+	 * this application" and closes popups/menus that have just been opened
+	 * when the compositor moves focus to them. The activation that follows
+	 * (or an explicit click, see ensureActive()) is enough to route input. */
+	if (!gained)
+		return;
+
+	/* A window owned by this one is currently active (e.g. a profile card or
+	 * a transient dialog). On a real desktop the owner is only activated by a
+	 * click; focus-follows-mouse compositors hand focus back on hover, which
+	 * would make the server close the owned popup. Leave that to
+	 * ensureActive() (explicit click). */
+	const auto* active = getWindow(_clientActiveId);
+	if (active && (active != appWindow) &&
+	    (active->owner() == static_cast<uint32_t>(appWindow->id())))
+		return;
+
 	/* ClientActivate only. Do NOT SDL_RaiseWindow to avoid WM focus loops. */
 	const auto wid = static_cast<uint32_t>(appWindow->id());
-	sendClientActivate(wid, gained);
+	sendClientActivate(wid, true);
 }
 
 /* Send RAIL_ACTIVATE_ORDER and track the active window id. Caller holds _windowsLock. */
