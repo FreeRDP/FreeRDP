@@ -394,8 +394,15 @@ UINT sdlClip::SendClientCapabilities()
 
 void sdlClip::clearServerFormats()
 {
-	_serverFormats.clear();
-	_cache_data.clear();
+	{
+		ClipboardLockGuard systemlock(_system);
+		std::scoped_lock lock(_lock);
+		_serverFormats.clear();
+		_cache_data.clear();
+		/* The WinPR clipboard may still hold local data converted for an earlier server request.
+		 * ClipDataCb() would hand that out instead of requesting the new server data. */
+		ClipboardEmpty(_system);
+	}
 	cliprdr_file_context_clear(_file);
 }
 
