@@ -919,7 +919,15 @@ DWORD GetCurrentThreadId(VOID)
 	/* Since pthread_t can be 64-bits on some systems, take just the    */
 	/* lower 32-bits of it for the thread ID returned by this function. */
 	uintptr_t ptid = WINPR_REINTERPRET_CAST(tid, pthread_t, uintptr_t);
+#if UINTPTR_MAX > UINT32_MAX
 	return (ptid & UINT32_MAX) ^ (ptid >> 32);
+#else
+	/* A 32-bit pthread_t already fits. Shifting it by 32 is undefined behaviour and
+	 * WebAssembly masks the shift count to 0, so the expression above returned
+	 * ptid ^ ptid == 0 for every thread, and critical sections took any thread for
+	 * the owner. */
+	return WINPR_CXX_COMPAT_CAST(DWORD, ptid);
+#endif
 #endif
 }
 
