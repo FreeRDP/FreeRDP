@@ -1856,16 +1856,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		common_name = freerdp_certificate_get_common_name(cert, &common_name_length);
 		dns_names = freerdp_certificate_get_dns_names(cert, &dns_names_count, &dns_names_lengths);
 
-		/* compare against common name */
-
-		if (common_name)
-		{
-			if (tls_match_hostname(common_name, common_name_length, hostname))
-				hostname_match = TRUE;
-		}
-
 		/* compare against alternative names */
-
 		if (dns_names)
 		{
 			for (size_t index = 0; index < dns_names_count; index++)
@@ -1876,6 +1867,12 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 					break;
 				}
 			}
+		}
+		/* compare against common name */
+		else if (common_name)
+		{
+			if (tls_match_hostname(common_name, common_name_length, hostname))
+				hostname_match = TRUE;
 		}
 
 		/* if the certificate is valid and the certificate name matches, verification succeeds
