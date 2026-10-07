@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include <winpr/assert.h>
+#include <winpr/cast.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
@@ -93,10 +94,14 @@ struct rdp_emt
 };
 
 /* Drops the first count bytes of a stream that is filled up to its position. */
+WINPR_ATTR_NODISCARD
 static BOOL stream_consume(wStream* s, size_t count)
 {
+	WINPR_ASSERT(s);
+
 	const size_t used = Stream_GetPosition(s);
-	WINPR_ASSERT(count <= used);
+	if (count > used)
+		return FALSE;
 	BYTE* buffer = Stream_Buffer(s);
 	memmove(buffer, &buffer[count], used - count);
 	return Stream_SetPosition(s, used - count);
@@ -104,6 +109,9 @@ static BOOL stream_consume(wStream* s, size_t count)
 
 static void emt_fail(rdpEmt* emt, const char* why)
 {
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(why);
+
 	if (emt->failed)
 		return;
 	emt->failed = TRUE;
@@ -114,6 +122,9 @@ static void emt_fail(rdpEmt* emt, const char* why)
 
 static void log_ssl_errors(rdpEmt* emt, const char* what)
 {
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(what);
+
 	unsigned long err = 0;
 	while ((err = ERR_get_error()) != 0)
 	{
@@ -126,22 +137,30 @@ static void log_ssl_errors(rdpEmt* emt, const char* what)
 /* Moves whatever TLS produced onto the RDP-UDP connection. Records are packed whole into
  * datagrams, so a peer that reads one record per datagram works as well as one that reads the
  * connection as a stream. */
+WINPR_ATTR_NODISCARD
 static BOOL emt_flush_tls(rdpEmt* emt)
 {
+	WINPR_ASSERT(emt);
+
 	while (TRUE)
 	{
 		const size_t pending = BIO_ctrl_pending(emt->wbio);
 		if (pending == 0)
 			break;
+		if (pending > INT32_MAX)
+			return FALSE;
 		if (!Stream_EnsureRemainingCapacity(emt->out, pending))
 			return FALSE;
-		const int rc = BIO_read(emt->wbio, Stream_Pointer(emt->out), (int)pending);
+		const int rc =
+		    BIO_read(emt->wbio, Stream_Pointer(emt->out), WINPR_ASSERTING_INT_CAST(int, pending));
 		if (rc <= 0)
 			break;
-		Stream_Seek(emt->out, (size_t)rc);
+		Stream_Seek(emt->out, WINPR_ASSERTING_INT_CAST(size_t, rc));
 	}
 
 	const size_t max = rdpudp_get_max_payload(emt->udp);
+	if (max == 0)
+		return FALSE;
 	const BYTE* data = Stream_Buffer(emt->out);
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticConstInit(&sbuffer, data, Stream_GetPosition(emt->out));
@@ -189,8 +208,12 @@ static BOOL emt_flush_tls(rdpEmt* emt)
 	return stream_consume(emt->out, end);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL emt_write_pdu(rdpEmt* emt, BYTE action, const BYTE* payload, size_t length)
 {
+	WINPR_ASSERT(emt);
+	WINPR_ASSERT(payload || (length == 0));
+
 	if (length > UINT16_MAX)
 		return FALSE;
 
@@ -199,12 +222,14 @@ static BOOL emt_write_pdu(rdpEmt* emt, BYTE action, const BYTE* payload, size_t 
 		return FALSE;
 
 	/* [MS-RDPEMT] 2.2.1.1 RDP_TUNNEL_HEADER */
-	Stream_Write_UINT8(s, (BYTE)(action & 0x0F));   /* Action (4 bits), Flags (4 bits) */
-	Stream_Write_UINT16(s, (UINT16)length);         /* PayloadLength */
+	const UINT8 actionByte = WINPR_ASSERTING_INT_CAST(UINT8, action & 0x0F);
+	const UINT16 payloadLength = WINPR_ASSERTING_INT_CAST(UINT16, length);
+	Stream_Write_UINT8(s, actionByte);              /* Action (4 bits), Flags (4 bits) */
+	Stream_Write_UINT16(s, payloadLength);          /* PayloadLength */
 	Stream_Write_UINT8(s, RDPTUNNEL_HEADER_LENGTH); /* HeaderLength */
 	Stream_Write(s, payload, length);
 
-	const int total = (int)Stream_GetPosition(s);
+	const int total = WINPR_ASSERTING_INT_CAST(int, Stream_GetPosition(s));
 	const int rc = SSL_write(emt->ssl, Stream_Buffer(s), total);
 	Stream_Free(s, TRUE);
 	if (rc != total)
@@ -215,8 +240,11 @@ static BOOL emt_write_pdu(rdpEmt* emt, BYTE action, const BYTE* payload, size_t 
 	return emt_flush_tls(emt);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL emt_send_create_request(rdpEmt* emt)
 {
+	WINPR_ASSERT(emt);
+
 	BYTE request[24] = WINPR_C_ARRAY_INIT;
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s = Stream_StaticInit(&sbuffer, request, sizeof(request));
@@ -234,8 +262,11 @@ static BOOL emt_send_create_request(rdpEmt* emt)
 
 /* The TLS session inside the tunnel ends at the same server as the main connection, so it has
  * to present the certificate that one was accepted with. */
+WINPR_ATTR_NODISCARD
 static BOOL emt_verify_peer(rdpEmt* emt)
 {
+	WINPR_ASSERT(emt);
+
 	X509* x509 = SSL_get_peer_certificate(emt->ssl);
 	if (!x509)
 	{
@@ -261,8 +292,11 @@ static BOOL emt_verify_peer(rdpEmt* emt)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL emt_process_pdus(rdpEmt* emt)
 {
+	WINPR_ASSERT(emt);
+
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 	wStream* s =
 	    Stream_StaticConstInit(&sbuffer, Stream_Buffer(emt->in), Stream_GetPosition(emt->in));
@@ -280,7 +314,10 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 			return FALSE;
 		}
 
-		/* HeaderLength includes any subheaders, PayloadLength does not */
+		/* HeaderLength includes any subheaders, PayloadLength does not. Both are bounded by
+		 * their wire types (UINT8, UINT16), the sum cannot overflow. */
+		WINPR_ASSERT(payloadLength <= UINT16_MAX);
+		WINPR_ASSERT(headerLength <= UINT8_MAX);
 		const size_t rest = headerLength - RDPTUNNEL_HEADER_LENGTH + payloadLength;
 		if (Stream_GetRemainingLength(s) < rest)
 		{
@@ -343,8 +380,11 @@ static BOOL emt_process_pdus(rdpEmt* emt)
 	return stream_consume(emt->in, Stream_GetPosition(s));
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL emt_run_tls(rdpEmt* emt)
 {
+	WINPR_ASSERT(emt);
+
 	if (!emt->handshakeDone)
 	{
 		ERR_clear_error();
@@ -385,7 +425,7 @@ static BOOL emt_run_tls(rdpEmt* emt)
 		const int rc = SSL_read(emt->ssl, Stream_Pointer(emt->in), 16384);
 		if (rc > 0)
 		{
-			Stream_Seek(emt->in, (size_t)rc);
+			Stream_Seek(emt->in, WINPR_ASSERTING_INT_CAST(size_t, rc));
 			continue;
 		}
 
@@ -405,20 +445,28 @@ static BOOL emt_run_tls(rdpEmt* emt)
 	return emt_process_pdus(emt);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL emt_receive(void* custom, const BYTE* data, size_t length)
 {
 	rdpEmt* emt = custom;
 	WINPR_ASSERT(emt);
+	WINPR_ASSERT(data || (length == 0));
 
 	if (!emt->tlsStarted || emt->failed)
 		return TRUE;
-	if (BIO_write(emt->rbio, data, (int)length) != (int)length)
+	if (length > INT32_MAX)
+		return FALSE;
+	const int len = WINPR_ASSERTING_INT_CAST(int, length);
+	if (BIO_write(emt->rbio, data, len) != len)
 		return FALSE;
 	return emt_run_tls(emt);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL emt_start_tls(rdpEmt* emt)
 {
+	WINPR_ASSERT(emt);
+
 	emt->ctx = SSL_CTX_new(TLS_client_method());
 	if (!emt->ctx)
 		return FALSE;
@@ -465,14 +513,18 @@ static BOOL emt_start_tls(rdpEmt* emt)
 	/* every record fits in one datagram */
 	const size_t max = rdpudp_get_max_payload(emt->udp);
 	if (max > TLS_RECORD_OVERHEAD + 512)
-		(void)SSL_set_max_send_fragment(emt->ssl, (long)(max - TLS_RECORD_OVERHEAD));
+		(void)SSL_set_max_send_fragment(emt->ssl,
+		                                WINPR_ASSERTING_INT_CAST(long, max - TLS_RECORD_OVERHEAD));
 
 	emt->tlsStarted = TRUE;
 	return emt_run_tls(emt);
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL emt_poll(rdpEmt* emt)
 {
+	WINPR_ASSERT(emt);
+
 	if (emt->failed)
 		return FALSE;
 
@@ -501,6 +553,7 @@ static BOOL emt_poll(rdpEmt* emt)
 	return !emt->failed;
 }
 
+WINPR_ATTR_NODISCARD
 static DWORD WINAPI emt_thread(LPVOID arg)
 {
 	rdpEmt* emt = arg;
@@ -516,7 +569,7 @@ static DWORD WINAPI emt_thread(LPVOID arg)
 		fd_set rset;
 		FD_ZERO(&rset);
 		FD_SET(sockfd, &rset);
-		struct timeval tv = { 0, (long)timeout * 1000 };
+		struct timeval tv = { 0, WINPR_ASSERTING_INT_CAST(long, timeout) * 1000 };
 		(void)select((int)sockfd + 1, &rset, nullptr, nullptr, &tv);
 
 		if (emt->stop)
@@ -610,6 +663,7 @@ fail:
 BOOL rdpemt_start(rdpEmt* emt, const struct sockaddr* addr, size_t addrlen)
 {
 	WINPR_ASSERT(emt);
+	WINPR_ASSERT(addr);
 
 	emt->started = GetTickCount64();
 	if (!rdpudp_connect(emt->udp, addr, addrlen))
@@ -645,6 +699,7 @@ void rdpemt_free(rdpEmt* emt)
 BOOL rdpemt_send_data(rdpEmt* emt, const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(emt);
+	WINPR_ASSERT(data || (length == 0));
 
 	BOOL rc = FALSE;
 	EnterCriticalSection(&emt->lock);
