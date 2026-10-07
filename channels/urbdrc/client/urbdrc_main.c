@@ -43,20 +43,18 @@
 
 #include <urbdrc_helpers.h>
 
+WINPR_ATTR_NODISCARD
 static IWTSVirtualChannel* get_channel(IUDEVMAN* idevman)
 {
-	IWTSVirtualChannelManager* channel_mgr = nullptr;
-	URBDRC_PLUGIN* urbdrc = nullptr;
-
 	if (!idevman)
 		return nullptr;
 
-	urbdrc = (URBDRC_PLUGIN*)idevman->plugin;
+	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)idevman->plugin;
 
 	if (!urbdrc || !urbdrc->listener_callback)
 		return nullptr;
 
-	channel_mgr = urbdrc->listener_callback->channel_mgr;
+	IWTSVirtualChannelManager* channel_mgr = urbdrc->listener_callback->channel_mgr;
 
 	if (!channel_mgr)
 		return nullptr;
@@ -504,10 +502,15 @@ static BOOL urbdrc_announce_devices(IUDEVMAN* udevman)
 
 		if (!pdev->isAlreadySend(pdev))
 		{
+			UINT cerror = ERROR_SUCCESS;
 			const UINT32 deviceId = pdev->get_UsbDevice(pdev);
-			UINT cerror =
-			    urdbrc_send_virtual_channel_add(udevman->plugin, get_channel(udevman), deviceId);
-
+			udevman->loading_lock(udevman);
+			if (!pdev->isChannelClosed(pdev))
+			{
+				IWTSVirtualChannel* channel = get_channel(udevman);
+				cerror = urdbrc_send_virtual_channel_add(udevman->plugin, channel, deviceId);
+			}
+			udevman->loading_unlock(udevman);
 			if (cerror != ERROR_SUCCESS)
 				break;
 		}
@@ -701,15 +704,24 @@ static UINT urbdrc_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 			IUDEVMAN* udevman = urbdrc->udevman;
 			if (udevman && callback->channel_mgr)
 			{
+				udevman->loading_lock(udevman);
 				UINT32 control = callback->channel_mgr->GetChannelId(callback->channel);
-				if (udevman->controlChannelId == control)
-					udevman->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
-				else
-				{ /* Need to notify the local backend the device is gone */
-					IUDEVICE* pdev = udevman->get_udevice_by_ChannelID(udevman, control);
-					if (pdev)
-						pdev->markChannelClosed(pdev);
+				IUDEVICE* pdev = udevman->get_udevice_by_ChannelID(udevman, control);
+				if (pdev && !pdev->isChannelClosed(pdev))
+				{
+					if (udevman->controlChannelId == control)
+					{
+						udevman->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
+						udevman->controlChannelId = 0;
+					}
+					else
+					{ /* Need to notify the local backend the device is gone */
+
+						if (pdev)
+							pdev->markChannelClosed(pdev);
+					}
 				}
+				udevman->loading_unlock(udevman);
 			}
 		}
 	}

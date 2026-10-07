@@ -1341,18 +1341,26 @@ static void libusb_udev_channel_closed(IUDEVICE* idev)
 		const uint8_t devNr = idev->get_dev_number(idev);
 		IWTSVirtualChannel* channel = nullptr;
 
-		if (pdev->channelManager)
-			channel = IFCALLRESULT(nullptr, pdev->channelManager->FindChannelById,
-			                       pdev->channelManager, pdev->channelID);
+		IUDEVMAN* udevman = pdev->urbdrc->udevman;
+		WINPR_ASSERT(udevman);
 
-		pdev->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
-
-		if (channel)
+		udevman->loading_lock(udevman);
+		if ((pdev->status & URBDRC_DEVICE_CHANNEL_CLOSED) == 0)
 		{
-			const UINT rc = channel->Write(channel, 0, nullptr, nullptr);
-			if (rc != CHANNEL_RC_OK)
-				WLog_Print(urbdrc->log, WLOG_WARN, "channel->Write failed with %" PRIu32, rc);
+			if (pdev->channelManager)
+				channel = IFCALLRESULT(nullptr, pdev->channelManager->FindChannelById,
+				                       pdev->channelManager, pdev->channelID);
+
+			pdev->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
+
+			if (channel)
+			{
+				const UINT rc = channel->Write(channel, 0, nullptr, nullptr);
+				if (rc != CHANNEL_RC_OK)
+					WLog_Print(urbdrc->log, WLOG_WARN, "channel->Write failed with %" PRIu32, rc);
+			}
 		}
+		udevman->loading_unlock(udevman);
 
 		if (!urbdrc->udevman->unregister_udevice(urbdrc->udevman, busNr, devNr))
 			WLog_Print(urbdrc->log, WLOG_WARN, "unregister_udevice failed for %d, %d", busNr,
