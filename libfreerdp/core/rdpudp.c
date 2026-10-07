@@ -1480,9 +1480,17 @@ static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 	const UINT16 flags = Stream_Get_UINT16_BE(s);
 	if ((flags & (RDPUDP_FLAG_SYN | RDPUDP_FLAG_ACK)) != (RDPUDP_FLAG_SYN | RDPUDP_FLAG_ACK))
 		return TRUE;
+	/* The server's answer acknowledges the random snInitialSequenceNumber of our SYN. One that
+	 * does not was not sent in answer to it and is dropped, so a third party that spoofs the
+	 * server's address has to guess that number to set up the connection. */
 	if (snSourceAck != udp->initialSequence)
-		WLog_Print(udp->log, WLOG_DEBUG, "SYN+ACK acknowledges 0x%08" PRIx32 ", sent 0x%08" PRIx32,
+	{
+		WLog_Print(udp->log, WLOG_WARN,
+		           "dropping a SYN+ACK that acknowledges 0x%08" PRIx32
+		           ", the SYN carried 0x%08" PRIx32,
 		           snSourceAck, udp->initialSequence);
+		return TRUE;
+	}
 
 	const UINT32 peerInitial = Stream_Get_UINT32_BE(s); /* snInitialSequenceNumber */
 	UINT16 upMtu = Stream_Get_UINT16_BE(s);             /* uUpStreamMtu */
