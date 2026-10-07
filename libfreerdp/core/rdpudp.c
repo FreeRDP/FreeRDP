@@ -17,7 +17,6 @@
 
 #include <freerdp/config.h>
 
-#include <errno.h>
 #include <string.h>
 
 #include <winpr/assert.h>
@@ -30,20 +29,11 @@
 #include <winpr/winsock.h>
 
 #if !defined(_WIN32)
-#include <fcntl.h>
-#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #endif
 
 #include "rdpudp.h"
-
-/* winpr's SOCKET is wider than the int a POSIX socket call takes */
-#if defined(_WIN32)
-#define RDPUDP_FD(s) (s)
-#else
-#define RDPUDP_FD(s) WINPR_ASSERTING_INT_CAST(int, s)
-#endif
 
 /* [MS-RDPEUDP] 2.2.2.1 RDPUDP_FEC_HEADER uFlags */
 typedef enum WINPR_C23_ENUM_TYPE(uint16_t)
@@ -349,25 +339,53 @@ static void rdpudp_fail(rdpUdp* udp, const char* why)
 	udp->state = RDPUDP_STATE_FAILED;
 }
 
+/* Socket errors are handled as on the TCP transport (transport_bio_simple_read and
+ * transport_bio_simple_write): a wait condition is retried and anything else fails. A datagram
+ * socket adds the conditions of the path, an ICMP error for an earlier datagram, a full buffer,
+ * a network that is down or unreachable for a moment: they cost the one datagram, which the
+ * retransmit timer recovers, and the peer timeout ends a path that stays broken. A firewall rule
+ * that drops the datagram is one of them, send() fails with EPERM then, which WinPR does not map
+ * and reports as 0; TCP never sees an error for that, it retransmits. */
+WINPR_ATTR_NODISCARD
+static BOOL rdpudp_socket_error_is_transient(int error)
+{
+	switch (error)
+	{
+		case 0:
+		case WSAEWOULDBLOCK:
+		case WSAEINTR:
+		case WSAEINPROGRESS:
+		case WSAEALREADY:
+		case WSAENOBUFS:
+		case WSAECONNRESET:
+		case WSAECONNREFUSED:
+		case WSAENETRESET:
+		case WSAENETDOWN:
+		case WSAENETUNREACH:
+		case WSAEHOSTDOWN:
+		case WSAEHOSTUNREACH:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
 WINPR_ATTR_NODISCARD
 static BOOL rdpudp_send_raw(rdpUdp* udp, const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(data);
-	const SSIZE_T rc =
-	    send(RDPUDP_FD(udp->sockfd), (const char*)data, WINPR_ASSERTING_INT_CAST(int, length), 0);
+	const int rc = _send(udp->sockfd, (const char*)data, WINPR_ASSERTING_INT_CAST(int, length), 0);
 	if (rc < 0)
 	{
-#if defined(_WIN32)
-		const int err = WSAGetLastError();
-		if (err == WSAEWOULDBLOCK)
-			return TRUE; /* dropped, the retransmit timer recovers it */
-#else
-		const int err = errno;
-		if ((err == EAGAIN) || (err == EWOULDBLOCK) || (err == ECONNREFUSED))
-			return TRUE;
-#endif
-		WLog_Print(udp->log, WLOG_DEBUG, "send failed with %d", err);
+		const int error = WSAGetLastError();
+		if (!rdpudp_socket_error_is_transient(error))
+		{
+			WLog_Print(udp->log, WLOG_ERROR, "send failed with %d", error);
+			rdpudp_fail(udp, "sending on the socket failed");
+			return FALSE;
+		}
+		WLog_Print(udp->log, WLOG_DEBUG, "send failed with %d, the datagram counts as lost", error);
 		return TRUE;
 	}
 	udp->lastSent = now_ms();
@@ -765,6 +783,7 @@ static size_t window_limit(const rdpUdp* udp)
 	return limit;
 }
 
+/* Takes ownership of data, also when it fails. */
 WINPR_ATTR_NODISCARD
 static BOOL send_chunk_now(rdpUdp* udp, BYTE* data, size_t length)
 {
@@ -780,8 +799,12 @@ static BOOL send_chunk_now(rdpUdp* udp, BYTE* data, size_t length)
 		}
 	}
 	if (!p)
+	{
+		free(data);
 		return FALSE;
+	}
 
+	/* the pending slot owns the payload from here, pending_clear frees it */
 	p->used = TRUE;
 	p->payload = data;
 	p->length = length;
@@ -822,10 +845,7 @@ static BOOL flush_send_queue(rdpUdp* udp)
 		const size_t length = chunk->length;
 		free(chunk);
 		if (!send_chunk_now(udp, data, length))
-		{
-			free(data);
 			return FALSE;
-		}
 	}
 	return TRUE;
 }
@@ -1704,16 +1724,8 @@ void rdpudp_free(rdpUdp* udp)
 WINPR_ATTR_NODISCARD
 static BOOL set_non_blocking(SOCKET sockfd)
 {
-#if defined(_WIN32)
 	u_long arg = 1;
-	return ioctlsocket(sockfd, FIONBIO, &arg) == 0;
-#else
-	const int fd = RDPUDP_FD(sockfd);
-	const int flags = fcntl(fd, F_GETFL);
-	if (flags < 0)
-		return FALSE;
-	return fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0;
-#endif
+	return _ioctlsocket(sockfd, FIONBIO, &arg) == 0;
 }
 
 BOOL rdpudp_connect(rdpUdp* udp, const struct sockaddr* addr, size_t addrlen)
@@ -1724,14 +1736,14 @@ BOOL rdpudp_connect(rdpUdp* udp, const struct sockaddr* addr, size_t addrlen)
 	if (udp->state != RDPUDP_STATE_CLOSED)
 		return FALSE;
 
-	udp->sockfd = socket(addr->sa_family, SOCK_DGRAM, IPPROTO_UDP);
+	udp->sockfd = _socket(addr->sa_family, SOCK_DGRAM, IPPROTO_UDP);
 	if (udp->sockfd == INVALID_SOCKET)
 	{
 		WLog_Print(udp->log, WLOG_ERROR, "failed to create the UDP socket");
 		return FALSE;
 	}
 
-	if (connect(RDPUDP_FD(udp->sockfd), addr, WINPR_ASSERTING_INT_CAST(int, addrlen)) != 0)
+	if (_connect(udp->sockfd, addr, WINPR_ASSERTING_INT_CAST(int, addrlen)) != 0)
 	{
 		WLog_Print(udp->log, WLOG_ERROR, "failed to connect the UDP socket");
 		return FALSE;
@@ -1816,20 +1828,21 @@ BOOL rdpudp_check(rdpUdp* udp)
 	BYTE* buffer = udp->recvBuffer;
 	while (TRUE)
 	{
-		const SSIZE_T rc = recv(RDPUDP_FD(udp->sockfd), (char*)buffer,
-		                        WINPR_ASSERTING_INT_CAST(int, sizeof(udp->recvBuffer)), 0);
+		const int rc = _recv(udp->sockfd, (char*)buffer,
+		                     WINPR_ASSERTING_INT_CAST(int, sizeof(udp->recvBuffer)), 0);
 		if (rc < 0)
 		{
-#if defined(_WIN32)
-			const int err = WSAGetLastError();
-			if ((err == WSAEWOULDBLOCK) || (err == WSAECONNRESET))
-				break;
-#else
-			const int err = errno;
-			if ((err == EAGAIN) || (err == EWOULDBLOCK) || (err == EINTR) || (err == ECONNREFUSED))
-				break;
-#endif
-			WLog_Print(udp->log, WLOG_DEBUG, "recv failed with %d", err);
+			const int error = WSAGetLastError();
+			if (!rdpudp_socket_error_is_transient(error))
+			{
+				WLog_Print(udp->log, WLOG_ERROR, "recv failed with %d", error);
+				rdpudp_fail(udp, "receiving from the socket failed");
+				return FALSE;
+			}
+			/* Nothing left to read, or an ICMP error for an earlier datagram. Anything still
+			 * queued keeps the socket readable and is read on the next round. */
+			if (error != WSAEWOULDBLOCK)
+				WLog_Print(udp->log, WLOG_DEBUG, "recv failed with %d", error);
 			break;
 		}
 
