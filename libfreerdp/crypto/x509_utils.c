@@ -664,10 +664,12 @@ void x509_utils_dns_names_free(size_t count, size_t* lengths, char** dns_names)
 	}
 }
 
-char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** lengths)
+WINPR_ATTR_NODISCARD
+static char** x509_utils_get_names(const X509* xcert, int general_name_type, size_t* count,
+                                   size_t** lengths)
 {
 	string_list list = string_list_initialize();
-	map_subject_alt_name(xcert, GEN_DNS, extract_string, &list);
+	map_subject_alt_name(xcert, general_name_type, extract_string, &list);
 	(*count) = list.count;
 
 	if (list.count <= 0)
@@ -699,6 +701,16 @@ char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** lengt
 
 	string_list_free(&list);
 	return result;
+}
+
+char** x509_utils_get_dns_names(const X509* xcert, size_t* count, size_t** pplengths)
+{
+	return x509_utils_get_names(xcert, GEN_DNS, count, pplengths);
+}
+
+char** x509_utils_get_ip_names(const X509* xcert, size_t* count, size_t** pplengths)
+{
+	return x509_utils_get_names(xcert, GEN_IPADD, count, pplengths);
 }
 
 char* x509_utils_get_issuer(const X509* xcert)
@@ -1116,4 +1128,9 @@ char* x509_utils_bio_read(BIO* bio, size_t* plen)
 fail:
 	free(buffer);
 	return nullptr;
+}
+
+void x509_utils_ip_names_free(size_t count, size_t* lengths, char** dns_names)
+{
+	x509_utils_dns_names_free(count, lengths, dns_names);
 }

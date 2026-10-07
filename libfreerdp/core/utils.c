@@ -639,3 +639,38 @@ BOOL utils_set_umask(void)
 #endif
 	return TRUE;
 }
+
+BOOL utils_compare_ip_strings(const char* ipAddressA, size_t lenA, const char* ipAddressB,
+                              size_t lenB)
+{
+	if (!ipAddressA || (lenA == 0))
+		return FALSE;
+	if (!ipAddressB || (lenB == 0))
+		return FALSE;
+	if (strnlen(ipAddressA, lenA + 1) > lenA)
+		return FALSE;
+	if (strnlen(ipAddressB, lenB + 1) > lenB)
+		return FALSE;
+
+	if (isValidIPv4(ipAddressA) && isValidIPv4(ipAddressB))
+	{
+		struct sockaddr_in sa = WINPR_C_ARRAY_INIT;
+		struct sockaddr_in sb = WINPR_C_ARRAY_INIT;
+		const int resultA = inet_pton(AF_INET, ipAddressA, &(sa.sin_addr));
+		const int resultB = inet_pton(AF_INET, ipAddressB, &(sb.sin_addr));
+		if ((resultA != resultB) || (resultA != 0))
+			return FALSE;
+		return memcmp(&sa, &sb, sizeof(sa)) == 0;
+	}
+	if (isValidIPv6(ipAddressA) && isValidIPv6(ipAddressB))
+	{
+		struct sockaddr_in6 sa = WINPR_C_ARRAY_INIT;
+		struct sockaddr_in6 sb = WINPR_C_ARRAY_INIT;
+		const int resultA = inet_pton(AF_INET6, ipAddressA, &(sa.sin6_addr));
+		const int resultB = inet_pton(AF_INET6, ipAddressB, &(sb.sin6_addr));
+		if ((resultA != resultB) || (resultA != 0))
+			return FALSE;
+		return memcmp(&sa, &sb, sizeof(sa)) == 0;
+	}
+	return FALSE;
+}

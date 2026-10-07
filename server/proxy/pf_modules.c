@@ -361,8 +361,11 @@ static BOOL pf_modules_set_plugin_data(WINPR_ATTR_UNUSED proxyPluginsManager* mg
 	WINPR_ASSERT(plugin_name);
 
 	ccharconv.ccp = plugin_name;
-	if (data == nullptr) /* no need to store anything */
+	if (data == nullptr)
+	{
+		HashTable_Remove(pdata->modules_info, ccharconv.cp);
 		return FALSE;
+	}
 
 	if (!HashTable_Insert(pdata->modules_info, ccharconv.cp, data))
 	{

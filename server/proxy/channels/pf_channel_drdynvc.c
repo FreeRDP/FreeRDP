@@ -280,6 +280,15 @@ static DynvcReadResult dynvc_read_varInt(wLog* log, wStream* s, size_t len, UINT
 }
 
 WINPR_ATTR_NODISCARD
+static BOOL Stream_ResetAndResize(DynChannelTrackerState* tracker)
+{
+	WINPR_ASSERT(tracker);
+	Stream_Free(tracker->currentPacket, TRUE);
+	tracker->currentPacket = Stream_New(nullptr, 2400);
+	return tracker->currentPacket != nullptr;
+}
+
+WINPR_ATTR_NODISCARD
 static PfChannelResult DynvcTrackerPeekHandleByMode(ChannelStateTracker* tracker,
                                                     DynChannelTrackerState* trackerState,
                                                     pServerDynamicChannelContext* dynChannel,
@@ -336,7 +345,10 @@ static PfChannelResult DynvcTrackerPeekHandleByMode(ChannelStateTracker* tracker
 		trackerState->CurrentDataReceived = 0;
 
 		if (dynChannel->packetReassembly && trackerState->currentPacket)
-			Stream_ResetPosition(trackerState->currentPacket);
+		{
+			if (!Stream_ResetAndResize(trackerState))
+				return PF_CHANNEL_RESULT_ERROR;
+		}
 	}
 
 	return result;
@@ -558,7 +570,10 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 			if (dynChannel->packetReassembly)
 			{
 				if (trackerState->currentPacket)
-					Stream_ResetPosition(trackerState->currentPacket);
+				{
+					if (!Stream_ResetAndResize(trackerState))
+						return PF_CHANNEL_RESULT_ERROR;
+				}
 			}
 		}
 		break;
@@ -580,8 +595,7 @@ static PfChannelResult DynvcTrackerHandleCmdDATA(ChannelStateTracker* tracker,
 			{
 				if (!trackerState->currentPacket)
 				{
-					trackerState->currentPacket = Stream_New(nullptr, 1024);
-					if (!trackerState->currentPacket)
+					if (!Stream_ResetAndResize(trackerState))
 					{
 						DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd,
 						                isBackData, "unable to create current packet",
@@ -761,6 +775,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			break;
 	}
 
+	HashTable_Lock(dynChannelContext->channels);
 	if (haveChannelId)
 	{
 		BYTE cbId = byte0 & 0x03;
@@ -775,6 +790,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			default:
 				DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd, isBackData,
 				                "invalid channelId field");
+				HashTable_Unlock(dynChannelContext->channels);
 				return PF_CHANNEL_RESULT_ERROR;
 		}
 
@@ -790,6 +806,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 				/* we've not found the target channel, so we drop this chunk, plus all the rest of
 				 * the packet */
 				channelTracker_setMode(tracker, CHANNEL_TRACKER_DROP);
+				HashTable_Unlock(dynChannelContext->channels);
 				return PF_CHANNEL_RESULT_DROP;
 			}
 		}
@@ -808,12 +825,15 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			default:
 				DynvcTrackerLog(dynChannelContext->log, WLOG_ERROR, dynChannel, cmd, isBackData,
 				                "invalid length field");
+				HashTable_Unlock(dynChannelContext->channels);
 				return PF_CHANNEL_RESULT_ERROR;
 		}
 	}
 
-	return DynvcTrackerHandleCmd(tracker, dynChannel, s, cmd, flags, Length, dynChannelId,
-	                             firstPacket, lastPacket);
+	PfChannelResult rc = DynvcTrackerHandleCmd(tracker, dynChannel, s, cmd, flags, Length,
+	                                           dynChannelId, firstPacket, lastPacket);
+	HashTable_Unlock(dynChannelContext->channels);
+	return rc;
 }
 
 static void DynChannelContext_free(void* context)
