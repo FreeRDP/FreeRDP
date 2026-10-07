@@ -3269,7 +3269,8 @@ size_t rdp_get_event_handles(rdpRdp* rdp, HANDLE* handles, uint32_t count)
 	if (nCount == 0)
 		return 0;
 
-	if (count < nCount + 3UL)
+	/* room for the abort, timer and multitransport events */
+	if ((nCount > count) || (count - nCount < 3))
 		return 0;
 
 	handles[nCount++] = utils_get_abort_event(rdp);
