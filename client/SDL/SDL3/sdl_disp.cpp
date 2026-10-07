@@ -439,6 +439,12 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 	         maxNumMonitors, maxMonitorAreaFactorA, maxMonitorAreaFactorB);
 	_activated = true;
 
+	/* A new display channel means a new server instance, e.g. after a server redirection (GNOME
+	 * Remote Desktop hands the connection over from the login screen to the user session). It
+	 * does not know the layout sent to the previous instance, and the window size did not change,
+	 * so settings_changed() would suppress it: forget it and send the current layout again. */
+	_last_sent_layout.clear();
+
 	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
 		/* Window events have long passed by the time the channel comes up, and a fullscreen
@@ -448,7 +454,10 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 	}
 
 	WLog_DBG(TAG, "DisplayControlCapsPdu: setting the window as resizable");
-	return setWindowResizeable() ? CHANNEL_RC_OK : CHANNEL_RC_NO_MEMORY;
+	if (!setWindowResizeable())
+		return CHANNEL_RC_NO_MEMORY;
+	std::ignore = addTimer();
+	return CHANNEL_RC_OK;
 }
 
 bool sdlDispContext::init(DispClientContext* disp)
