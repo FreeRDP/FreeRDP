@@ -75,9 +75,15 @@ struct rdp_multitransport
 	FreeRDP_MultitransportTunnelState reliableState;
 	BOOL reliableResponseSent;
 
+	/* Not guarded by lock: set and read on the thread that runs the main loop, see
+	 * freerdp_multitransport_set_dvc_callbacks. Receiving tunnel data must not wait for a
+	 * sender, which holds lock while it writes to the tunnel. */
 	FreeRDP_MultitransportDvcCallbacks callbacks;
-	BOOL haveCallbacks;
 	void* custom;
+
+	/* Set by the tunnel thread when it could not queue an event, received data that was
+	 * acknowledged to the server already among them. Accessed with Interlocked functions. */
+	LONG tunnelEventLost;
 };
 
 enum
@@ -271,7 +277,7 @@ static void multitransport_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT 
 
 	mt_event* ev = calloc(1, sizeof(mt_event));
 	if (!ev)
-		return;
+		goto fail;
 
 	switch (event)
 	{
@@ -284,22 +290,29 @@ static void multitransport_tunnel_event(void* custom, rdpEmt* emt, RDPEMT_EVENT 
 		case RDPEMT_EVENT_DATA:
 		default:
 			ev->type = MT_EVENT_DATA;
+			if (length == 0)
+				break; /* nothing to hand up, malloc(0) may return nullptr */
+			WINPR_ASSERT(data);
 			ev->data = malloc(length);
 			if (!ev->data)
-			{
-				free(ev);
-				return;
-			}
+				goto fail;
 			memcpy(ev->data, data, length);
 			ev->length = length;
 			break;
 	}
 
 	if (!Queue_Enqueue(multi->events, ev))
-	{
-		mt_event_free(ev);
-		return;
-	}
+		goto fail;
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): Queue_Enqueue takes ownership of ev
+	(void)SetEvent(multi->event);
+	return;
+
+fail:
+	/* A lost event leaves the tunnel in an unknown state, the main loop ends the connection. */
+	mt_event_free(ev);
+	/* compare-exchange: WinPR's InterlockedExchange reads the old value non-atomically */
+	if (InterlockedCompareExchange(&multi->tunnelEventLost, 1, 0) == 0)
+		WLog_ERR(TAG, "out of memory, a UDP tunnel event was lost");
 	(void)SetEvent(multi->event);
 }
 
@@ -437,13 +450,48 @@ static state_run_t multitransport_client_request(rdpMultitransport* multi, UINT3
 	return STATE_RUN_SUCCESS;
 }
 
-static void multitransport_notify_state(rdpMultitransport* multi,
+/* A failed callback ends the connection like a broken main transport. */
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_callback_failed(rdpMultitransport* multi, const char* what)
+{
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(multi->rdp);
+	WINPR_ASSERT(what);
+
+	WLog_ERR(TAG, "the dynamic channel code failed to handle %s, ending the connection", what);
+	freerdp_set_last_error_if_not(multi->rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+	return FALSE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_notify_state(rdpMultitransport* multi,
                                         FreeRDP_MultitransportTunnelState state)
 {
 	WINPR_ASSERT(multi);
 
-	if (multi->haveCallbacks && multi->callbacks.TunnelStateChanged)
-		multi->callbacks.TunnelStateChanged(multi->custom, TUNNELTYPE_UDPFECR, state);
+	if (!multi->callbacks.TunnelStateChanged)
+		return TRUE;
+	if (!multi->callbacks.TunnelStateChanged(multi->custom, TUNNELTYPE_UDPFECR, state))
+		return multitransport_callback_failed(multi, "a tunnel state change");
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL multitransport_deliver_data(rdpMultitransport* multi, const mt_event* ev)
+{
+	WINPR_ASSERT(multi);
+	WINPR_ASSERT(ev);
+
+	if (!multi->callbacks.TunnelDataReceived)
+	{
+		WLog_DBG(TAG, "dropping %" PRIuz " bytes of tunnel data, no receiver", ev->length);
+		return TRUE;
+	}
+	/* The data was acknowledged to the server, losing it leaves a hole in the channel stream. */
+	if (!multi->callbacks.TunnelDataReceived(multi->custom, TUNNELTYPE_UDPFECR, ev->data,
+	                                         ev->length))
+		return multitransport_callback_failed(multi, "tunnel data");
+	return TRUE;
 }
 
 WINPR_ATTR_NODISCARD
@@ -475,7 +523,8 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, const mt_event
 			multi->reliableResponseSent = TRUE;
 			multi->reliableState = FREERDP_MULTITRANSPORT_TUNNEL_READY;
 			LeaveCriticalSection(&multi->lock);
-			multitransport_notify_state(multi, FREERDP_MULTITRANSPORT_TUNNEL_READY);
+			if (!multitransport_notify_state(multi, FREERDP_MULTITRANSPORT_TUNNEL_READY))
+				return FALSE;
 		}
 		break;
 
@@ -510,18 +559,14 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, const mt_event
 				if (!multitransport_client_send_response(multi, reqId, E_ABORT))
 					return FALSE;
 			}
-			multitransport_notify_state(multi, FREERDP_MULTITRANSPORT_TUNNEL_NONE);
+			if (!multitransport_notify_state(multi, FREERDP_MULTITRANSPORT_TUNNEL_NONE))
+				return FALSE;
 		}
 		break;
 
 		case MT_EVENT_DATA:
 		default:
-			if (multi->haveCallbacks && multi->callbacks.TunnelDataReceived)
-				multi->callbacks.TunnelDataReceived(multi->custom, TUNNELTYPE_UDPFECR, ev->data,
-				                                    ev->length);
-			else
-				WLog_DBG(TAG, "dropping %" PRIuz " bytes of tunnel data, no receiver", ev->length);
-			break;
+			return multitransport_deliver_data(multi, ev);
 	}
 	return TRUE;
 }
@@ -531,6 +576,12 @@ BOOL multitransport_check(rdpMultitransport* multi)
 	WINPR_ASSERT(multi);
 
 	(void)ResetEvent(multi->event);
+	if (InterlockedCompareExchange(&multi->tunnelEventLost, 0, 0) != 0)
+	{
+		WLog_ERR(TAG, "out of memory queueing UDP tunnel events, ending the connection");
+		freerdp_set_last_error_if_not(multi->rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+		return FALSE;
+	}
 	while (Queue_Count(multi->events) > 0)
 	{
 		mt_event* ev = Queue_Dequeue(multi->events);
@@ -564,6 +615,8 @@ void multitransport_reset(rdpMultitransport* multi)
 
 	rdpemt_free(emt);
 	Queue_Clear(multi->events);
+	if (InterlockedCompareExchange(&multi->tunnelEventLost, 0, 1) != 0)
+		WLog_DBG(TAG, "a lost UDP tunnel event no longer matters, the tunnel is gone");
 	(void)ResetEvent(multi->event);
 }
 
@@ -655,14 +708,14 @@ BOOL freerdp_multitransport_set_dvc_callbacks(rdpContext* context,
 	if (!multi)
 		return FALSE;
 
-	EnterCriticalSection(&multi->lock);
+	/* Copied once here and read by multitransport_check() without locking: both run on the
+	 * thread that drives the connection (channel events come from freerdp_connect() and
+	 * freerdp_disconnect(), tunnel events from freerdp_check_event_handles()). */
 	if (callbacks)
 		multi->callbacks = *callbacks;
 	else
 		memset(&multi->callbacks, 0, sizeof(multi->callbacks));
-	multi->haveCallbacks = (callbacks != nullptr);
-	multi->custom = custom;
-	LeaveCriticalSection(&multi->lock);
+	multi->custom = callbacks ? custom : nullptr;
 	return TRUE;
 }
 
