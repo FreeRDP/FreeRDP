@@ -161,11 +161,8 @@ static UINT rdpewa_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 		}
 
 		case CTAPCBOR_RPC_COMMAND_IUVPAA:
-		{
-			RDPEWA_PLUGIN* rdpewa = (RDPEWA_PLUGIN*)callback->plugin;
-			response = rdpewa_fido_is_uvpaa(rdpewa->rdp_context);
+			response = rdpewa_fido_is_uvpaa();
 			break;
-		}
 
 		case CTAPCBOR_RPC_COMMAND_CANCEL_CUR_OP:
 			/* Cancel is best-effort; we don't track in-flight operations yet */

@@ -43,7 +43,7 @@ wStream* rdpewa_fido_webauthn(rdpContext* context, const RDPEWA_REQUEST* request
  *  @return a new wStream on success (caller frees with Stream_Free(s, TRUE)), nullptr on failure
  */
 WINPR_ATTR_MALLOC(Stream_Free, 1)
-wStream* rdpewa_fido_is_uvpaa(rdpContext* context);
+wStream* rdpewa_fido_is_uvpaa(void);
 
 /** @brief Handle CTAPCBOR_RPC_COMMAND_API_VERSION.
  *
