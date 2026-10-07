@@ -633,8 +633,10 @@ static BOOL udevman_initialize(IUDEVMAN* idevman, UINT32 channelId)
 	if (!udevman)
 		return FALSE;
 
+	idevman->loading_lock(idevman);
 	idevman->status &= (uint32_t)~URBDRC_DEVICE_CHANNEL_CLOSED;
 	idevman->controlChannelId = channelId;
+	idevman->loading_unlock(idevman);
 	return TRUE;
 }
 
