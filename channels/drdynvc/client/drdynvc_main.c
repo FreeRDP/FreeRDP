@@ -37,12 +37,18 @@
 #define TAG CHANNELS_TAG("drdynvc.client")
 
 /* drdynvc message queue ids */
-#define DRDYNVC_MSG_DATA 0
-#define DRDYNVC_MSG_TUNNEL_DATA 1
-#define DRDYNVC_MSG_TUNNEL_STATE 2
+typedef enum WINPR_C23_ENUM_TYPE(uint32_t)
+{
+	DRDYNVC_MSG_DATA = 0,
+	DRDYNVC_MSG_TUNNEL_DATA = 1,
+	DRDYNVC_MSG_TUNNEL_STATE = 2
+} DRDYNVC_MSG_ID;
 
 /* Tunnel data held back until the Soft-Sync Request arrives, see drdynvc_receive_tunnel_pdu */
 #define DRDYNVC_MAX_TUNNEL_BACKLOG 4096
+
+/* Distinct tunnel types a Soft-Sync Response can name */
+#define DRDYNVC_MAX_SOFT_SYNC_TUNNELS 8
 
 WINPR_ATTR_NODISCARD
 static const char* channel_state2str(DVC_CHANNEL_STATE state)
@@ -1157,6 +1163,9 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s, DVCMAN_CHANNEL_STAT
  */
 static void drdynvc_tunnel_abort(drdynvcPlugin* drdynvc, const char* why)
 {
+	WINPR_ASSERT(drdynvc);
+	WINPR_ASSERT(why);
+
 	WLog_Print(drdynvc->log, WLOG_ERROR, "%s, ending the session", why);
 	if (!drdynvc->rdpcontext)
 		return;
@@ -1178,6 +1187,7 @@ WINPR_ATTR_NODISCARD
 static UINT drdynvc_send_on(drdynvcPlugin* drdynvc, wStream* s, DVCMAN_CHANNEL_STATS* stats,
                             UINT32* tunnelType, BOOL continuation)
 {
+	WINPR_ASSERT(s);
 	WINPR_ASSERT(tunnelType);
 	if (drdynvc && (*tunnelType != 0))
 	{
@@ -1813,6 +1823,7 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 Thread
 
 static void drdynvc_tunnel_backlog_clear(drdynvcPlugin* drdynvc)
 {
+	WINPR_ASSERT(drdynvc);
 	for (size_t x = 0; x < drdynvc->tunnelBacklogCount; x++)
 		Stream_Release(drdynvc->tunnelBacklog[x]);
 	drdynvc->tunnelBacklogCount = 0;
@@ -1822,6 +1833,7 @@ static void drdynvc_tunnel_backlog_clear(drdynvcPlugin* drdynvc)
 WINPR_ATTR_NODISCARD
 static UINT drdynvc_tunnel_backlog_flush(drdynvcPlugin* drdynvc)
 {
+	WINPR_ASSERT(drdynvc);
 	UINT error = CHANNEL_RC_OK;
 	for (size_t x = 0; x < drdynvc->tunnelBacklogCount; x++)
 	{
@@ -1839,8 +1851,14 @@ static UINT drdynvc_tunnel_backlog_flush(drdynvcPlugin* drdynvc)
 WINPR_ATTR_NODISCARD
 static BOOL drdynvc_tunnel_backlog_add(drdynvcPlugin* drdynvc, wStream* s, UINT32 tunnelType)
 {
+	WINPR_ASSERT(drdynvc);
+	WINPR_ASSERT(s);
+
 	if (drdynvc->tunnelBacklogCount == drdynvc->tunnelBacklogCapacity)
 	{
+		/* bounded by DRDYNVC_MAX_TUNNEL_BACKLOG, checked anyway */
+		if (drdynvc->tunnelBacklogCapacity > SIZE_MAX / 2 / sizeof(wStream*))
+			return FALSE;
 		const size_t capacity =
 		    (drdynvc->tunnelBacklogCapacity == 0) ? 32 : drdynvc->tunnelBacklogCapacity * 2;
 		wStream** streams =
@@ -1870,6 +1888,9 @@ static BOOL drdynvc_tunnel_backlog_add(drdynvcPlugin* drdynvc, wStream* s, UINT3
 WINPR_ATTR_NODISCARD
 static UINT drdynvc_receive_tunnel_pdu(drdynvcPlugin* drdynvc, wStream* s, UINT32 tunnelType)
 {
+	WINPR_ASSERT(drdynvc);
+	WINPR_ASSERT(s);
+
 	if (drdynvc_soft_sync_negotiated(drdynvc) && !drdynvc->softSyncDone)
 	{
 		/* Reading on without the request would interleave tunnel and TCP data in no defined
@@ -1899,10 +1920,15 @@ WINPR_ATTR_NODISCARD
 static UINT drdynvc_send_soft_sync_response(drdynvcPlugin* drdynvc, const UINT32* tunnels,
                                             UINT32 count)
 {
+	WINPR_ASSERT(drdynvc);
+	WINPR_ASSERT(tunnels || (count == 0));
 	DVCMAN* dvcman = (DVCMAN*)drdynvc->channel_mgr;
 	WINPR_ASSERT(dvcman);
 
-	wStream* s = StreamPool_Take(dvcman->pool, 6ull + 4ull * count);
+	/* count is the number of tunnels we accept, never a value from the wire */
+	if (count > DRDYNVC_MAX_SOFT_SYNC_TUNNELS)
+		return ERROR_INVALID_PARAMETER;
+	wStream* s = StreamPool_Take(dvcman->pool, 6 + sizeof(UINT32) * count);
 	if (!s)
 		return CHANNEL_RC_NO_MEMORY;
 
@@ -1924,8 +1950,13 @@ WINPR_ATTR_NODISCARD
 static UINT drdynvc_process_soft_sync_request(drdynvcPlugin* drdynvc, wStream* s)
 {
 	WINPR_ASSERT(drdynvc);
+	WINPR_ASSERT(s);
 
-	const size_t start = Stream_GetPosition(s) - 1;
+	/* the header byte was read already */
+	const size_t position = Stream_GetPosition(s);
+	if (position < 1)
+		return ERROR_INVALID_DATA;
+	const size_t start = position - 1;
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 9))
 		return ERROR_INVALID_DATA;
 
@@ -1936,7 +1967,10 @@ static UINT drdynvc_process_soft_sync_request(drdynvcPlugin* drdynvc, wStream* s
 
 	/* Windows counts Length from the Length field on, the header byte and Pad are not in it. The
 	 * channel lists must fit in it, nothing after it belongs to them. */
-	const size_t available = Stream_Length(s) - start - 2;
+	const size_t total = Stream_Length(s);
+	if ((total < start) || (total - start < 2))
+		return ERROR_INVALID_DATA;
+	const size_t available = total - start - 2;
 	if ((length < 8) || (length > available))
 	{
 		WLog_Print(drdynvc->log, WLOG_ERROR,
@@ -1944,7 +1978,8 @@ static UINT drdynvc_process_soft_sync_request(drdynvcPlugin* drdynvc, wStream* s
 		           available);
 		return ERROR_INVALID_DATA;
 	}
-	if (!Stream_SetLength(s, start + 2 + length))
+	/* length <= available, so the request ends inside the stream */
+	if (!Stream_SetLength(s, total - (available - length)))
 		return ERROR_INVALID_DATA;
 
 	WLog_Print(drdynvc->log, WLOG_DEBUG,
@@ -2000,7 +2035,7 @@ static UINT drdynvc_process_soft_sync_request(drdynvcPlugin* drdynvc, wStream* s
 		}
 	}
 
-	UINT32 accepted[8] = WINPR_C_ARRAY_INIT;
+	UINT32 accepted[DRDYNVC_MAX_SOFT_SYNC_TUNNELS] = WINPR_C_ARRAY_INIT;
 	UINT32 acceptedCount = 0;
 	if (!Stream_SetPosition(s, lists))
 		return ERROR_INVALID_DATA;
@@ -2062,6 +2097,7 @@ static UINT drdynvc_process_soft_sync_request(drdynvcPlugin* drdynvc, wStream* s
 WINPR_ATTR_NODISCARD
 static UINT drdynvc_tunnel_state_changed(drdynvcPlugin* drdynvc)
 {
+	WINPR_ASSERT(drdynvc);
 	if (drdynvc->pendingSoftSync)
 	{
 		wStream* s = drdynvc->pendingSoftSync;
@@ -2212,7 +2248,8 @@ static UINT drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc, 
 
 		if (drdynvc->async)
 		{
-			if (!MessageQueue_Post(drdynvc->queue, nullptr, 0, (void*)data_in, nullptr))
+			if (!MessageQueue_Post(drdynvc->queue, nullptr, DRDYNVC_MSG_DATA, (void*)data_in,
+			                       nullptr))
 			{
 				WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_Post failed!");
 				return ERROR_INTERNAL_ERROR;
@@ -2439,6 +2476,7 @@ static void drdynvc_on_tunnel_state(void* custom, UINT32 tunnelType,
 
 static void drdynvc_soft_sync_reset(drdynvcPlugin* drdynvc)
 {
+	WINPR_ASSERT(drdynvc);
 	drdynvc->softSyncDone = FALSE;
 	Stream_Free(drdynvc->pendingSoftSync, TRUE);
 	drdynvc->pendingSoftSync = nullptr;
