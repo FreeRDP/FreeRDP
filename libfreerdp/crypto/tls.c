@@ -48,6 +48,7 @@
 #include "opensslcompat.h"
 #include "certificate.h"
 #include "privatekey.h"
+#include "../core/utils.h"
 
 #ifdef WINPR_HAVE_POLL_H
 #include <poll.h>
@@ -1423,6 +1424,7 @@ int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tls_match_hostname(const char* pattern, const size_t pattern_length,
                                const char* hostname)
 {
@@ -1456,6 +1458,7 @@ static BOOL tls_match_hostname(const char* pattern, const size_t pattern_length,
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL is_redirected(rdpTls* tls)
 {
 	rdpSettings* settings = tls->context->settings;
@@ -1469,6 +1472,7 @@ static BOOL is_redirected(rdpTls* tls)
 	return settings->RedirectionFlags != 0;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 {
 	WINPR_ASSERT(tls);
@@ -1518,6 +1522,7 @@ static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL compare_fingerprint(const char* fp, const char* hash, const rdpCertificate* cert,
                                 BOOL separator)
 {
@@ -1537,6 +1542,7 @@ static BOOL compare_fingerprint(const char* fp, const char* hash, const rdpCerti
 	return equal;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL compare_fingerprint_all(const char* fp, const char* hash, const rdpCertificate* cert)
 {
 	WINPR_ASSERT(fp);
@@ -1549,6 +1555,7 @@ static BOOL compare_fingerprint_all(const char* fp, const char* hash, const rdpC
 	return FALSE;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL is_accepted_fingerprint(const rdpCertificate* cert,
                                     const char* CertificateAcceptedFingerprints)
 {
@@ -1585,6 +1592,7 @@ static BOOL is_accepted_fingerprint(const rdpCertificate* cert,
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL accept_cert(rdpTls* tls, const rdpCertificate* cert)
 {
 	WINPR_ASSERT(tls);
@@ -1620,6 +1628,7 @@ static BOOL accept_cert(rdpTls* tls, const rdpCertificate* cert)
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL tls_extract_full_pem(const rdpCertificate* cert, BYTE** PublicKey,
                                  size_t* PublicKeyLength)
 {
@@ -1629,6 +1638,7 @@ static BOOL tls_extract_full_pem(const rdpCertificate* cert, BYTE** PublicKey,
 	return *PublicKey != nullptr;
 }
 
+WINPR_ATTR_NODISCARD
 static int tls_config_parse_bool(WINPR_JSON* json, const char* opt)
 {
 	WINPR_JSON* val = WINPR_JSON_GetObjectItemCaseSensitive(json, opt);
@@ -1640,6 +1650,7 @@ static int tls_config_parse_bool(WINPR_JSON* json, const char* opt)
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int tls_config_check_allowed_hashed(const char* configfile, const rdpCertificate* cert,
                                            WINPR_JSON* json)
 {
@@ -1704,6 +1715,7 @@ static int tls_config_check_allowed_hashed(const char* configfile, const rdpCert
 	return 0;
 }
 
+WINPR_ATTR_NODISCARD
 static int tls_config_check_certificate(const rdpCertificate* cert, BOOL* pAllowUserconfig)
 {
 	WINPR_ASSERT(cert);
@@ -1823,7 +1835,10 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 			WLog_ERR(TAG, "No VerifyX509Certificate callback registered!");
 
 		if (verification_status > 0)
-			accept_cert(tls, cert);
+		{
+			if (!accept_cert(tls, cert))
+				goto end;
+		}
 		else if (verification_status < 0)
 		{
 			WLog_ERR(TAG, "VerifyX509Certificate failed: (length = %" PRIuz ") status: [%d] %s",
@@ -1860,8 +1875,25 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		dns_names = freerdp_certificate_get_dns_names(cert, &dns_names_count, &dns_names_lengths);
 		ip_names = freerdp_certificate_get_ip_names(cert, &ip_names_count, &ip_names_lengths);
 
+		if (utils_is_valid_ip(hostname))
+		{
+			const size_t hostlen = strlen(hostname);
+			if ((hostlen != 0) && ip_names && (ip_names_count > 0))
+			{
+
+				for (size_t index = 0; index < ip_names_count; index++)
+				{
+					if (utils_compare_ip_strings(ip_names[index], ip_names_lengths[index], hostname,
+					                             hostlen))
+					{
+						hostname_match = TRUE;
+						break;
+					}
+				}
+			}
+		}
 		/* compare against alternative names */
-		if (dns_names)
+		else if (dns_names)
 		{
 			for (size_t index = 0; index < dns_names_count; index++)
 			{
@@ -2110,7 +2142,10 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 		}
 
 		if (verification_status > 0)
-			accept_cert(tls, cert);
+		{
+			if (!accept_cert(tls, cert))
+				goto end;
+		}
 	}
 
 end:
