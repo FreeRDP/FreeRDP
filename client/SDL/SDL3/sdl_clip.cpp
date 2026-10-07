@@ -121,9 +121,31 @@ static const char s_mime_html[] = "text/html";
 	return values;
 }
 
+/* Asks the system for each known text and image type. Only text and images: backends that do
+ * not know a type may answer by its prefix (Windows treats every text/... type as plain text),
+ * which would announce HTML or a file list that the clipboard does not hold. */
+[[nodiscard]] static std::vector<const char*> probeMimeTypes()
+{
+	std::vector<const char*> candidates = s_mime_text();
+	for (const auto& list : { s_mime_bitmap(), s_mime_image() })
+		candidates.insert(candidates.end(), list.begin(), list.end());
+
+	std::vector<const char*> mimes;
+	for (const auto& mime : candidates)
+	{
+		if (SDL_HasClipboardData(mime))
+			mimes.push_back(mime);
+	}
+	return mimes;
+}
+
 /* The mime types SDL has cached for the current clipboard owner. Unlike SDL_HasClipboardData
  * this does no clipboard I/O: on X11, SDL_HasClipboardData transfers the data, and calls our
- * own ClipDataCb when we are the owner. */
+ * own ClipDataCb when we are the owner.
+ * SDL_GetClipboardMimeTypes() only returns what SDL cached from its last clipboard update,
+ * and the Windows backend only checks the clipboard when a window gains focus, so the cache
+ * can be empty although the clipboard holds data. Only then probe: as owners we always have
+ * our own marker type cached, so the probe never reaches ClipDataCb. */
 [[nodiscard]] static std::vector<std::string> localMimeTypes()
 {
 	std::vector<std::string> list;
@@ -135,6 +157,11 @@ static const char s_mime_html[] = "text/html";
 			list.emplace_back(mimes[x]);
 	}
 	SDL_free(static_cast<void*>(mimes));
+	if (list.empty())
+	{
+		for (const auto& mime : probeMimeTypes())
+			list.emplace_back(mime);
+	}
 	return list;
 }
 
@@ -273,6 +300,7 @@ bool sdlClip::ownsClipboard() const
 bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 {
 	std::unique_ptr<char*, decltype(&SDL_free)> current(nullptr, SDL_free);
+	std::vector<const char*> probed;
 	const char** mime_types = ev.mime_types;
 	size_t nformats = WINPR_ASSERTING_INT_CAST(size_t, ev.num_mime_types);
 	if (_ctx && _sync && ev.owner && (ev.num_mime_types == 1))
@@ -283,6 +311,13 @@ bool sdlClip::handleEvent(const SDL_ClipboardEvent& ev)
 			mime_types = const_cast<const char**>(current.get());
 			if (!mime_types)
 				nformats = 0;
+			if (nformats == 0)
+			{
+				/* nothing cached: ask the system, see localMimeTypes() */
+				probed = probeMimeTypes();
+				mime_types = probed.data();
+				nformats = probed.size();
+			}
 		}
 	}
 	else if (!_ctx || !_sync || ev.owner)
