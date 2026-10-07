@@ -2435,19 +2435,25 @@ static void drdynvc_queue_object_free(void* obj)
 		Stream_Release(s);
 }
 
-/* Multitransport hooks, called on the thread running the main loop. */
-static void drdynvc_on_tunnel_data(void* custom, UINT32 tunnelType, const BYTE* data, size_t length)
+/* Multitransport hooks, called on the thread running the main loop. Like data from the static
+ * channel, a failure here ends the connection. */
+WINPR_ATTR_NODISCARD
+static BOOL drdynvc_on_tunnel_data(void* custom, UINT32 tunnelType, const BYTE* data, size_t length)
 {
 	drdynvcPlugin* drdynvc = custom;
 	WINPR_ASSERT(drdynvc);
+	WINPR_ASSERT(data || (length == 0));
 
 	DVCMAN* mgr = (DVCMAN*)drdynvc->channel_mgr;
 	if (!mgr || (length == 0))
-		return;
+		return TRUE;
 
 	wStream* s = StreamPool_Take(mgr->pool, length);
 	if (!s)
-		return;
+	{
+		WLog_Print(drdynvc->log, WLOG_ERROR, "StreamPool_Take failed!");
+		return FALSE;
+	}
 	Stream_Write(s, data, length);
 	Stream_SealLength(s);
 	Stream_ResetPosition(s);
@@ -2459,18 +2465,23 @@ static void drdynvc_on_tunnel_data(void* custom, UINT32 tunnelType, const BYTE* 
 		{
 			WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_Post failed!");
 			Stream_Release(s);
+			return FALSE;
 		}
+		return TRUE;
 	}
-	else
+
+	const UINT error = drdynvc_receive_tunnel_pdu(drdynvc, s, tunnelType);
+	if (error)
 	{
-		const UINT error = drdynvc_receive_tunnel_pdu(drdynvc, s, tunnelType);
-		if (error)
-			WLog_Print(drdynvc->log, WLOG_WARN,
-			           "drdynvc_receive_tunnel_pdu failed with error %" PRIu32 "!", error);
+		WLog_Print(drdynvc->log, WLOG_WARN,
+		           "drdynvc_receive_tunnel_pdu failed with error %" PRIu32 "!", error);
+		return FALSE;
 	}
+	return TRUE;
 }
 
-static void drdynvc_on_tunnel_state(void* custom, UINT32 tunnelType,
+WINPR_ATTR_NODISCARD
+static BOOL drdynvc_on_tunnel_state(void* custom, UINT32 tunnelType,
                                     FreeRDP_MultitransportTunnelState state)
 {
 	drdynvcPlugin* drdynvc = custom;
@@ -2482,15 +2493,21 @@ static void drdynvc_on_tunnel_state(void* custom, UINT32 tunnelType,
 	if (drdynvc->async)
 	{
 		if (!MessageQueue_Post(drdynvc->queue, nullptr, DRDYNVC_MSG_TUNNEL_STATE, nullptr, nullptr))
+		{
 			WLog_Print(drdynvc->log, WLOG_ERROR, "MessageQueue_Post failed!");
+			return FALSE;
+		}
+		return TRUE;
 	}
-	else
+
+	const UINT error = drdynvc_tunnel_state_changed(drdynvc);
+	if (error)
 	{
-		const UINT error = drdynvc_tunnel_state_changed(drdynvc);
-		if (error)
-			WLog_Print(drdynvc->log, WLOG_WARN,
-			           "drdynvc_tunnel_state_changed failed with error %" PRIu32 "!", error);
+		WLog_Print(drdynvc->log, WLOG_WARN,
+		           "drdynvc_tunnel_state_changed failed with error %" PRIu32 "!", error);
+		return FALSE;
 	}
+	return TRUE;
 }
 
 static void drdynvc_soft_sync_reset(drdynvcPlugin* drdynvc)
@@ -2636,7 +2653,9 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	if (drdynvc->OpenHandle == 0)
 		return CHANNEL_RC_OK;
 
-	(void)freerdp_multitransport_set_dvc_callbacks(drdynvc->rdpcontext, nullptr, nullptr);
+	/* fails only without a multitransport, then nothing was registered */
+	if (!freerdp_multitransport_set_dvc_callbacks(drdynvc->rdpcontext, nullptr, nullptr))
+		WLog_Print(drdynvc->log, WLOG_DEBUG, "no multitransport tunnel hooks to remove");
 
 	if (drdynvc->queue)
 	{
