@@ -23,23 +23,65 @@
 
 #define TAG FREERDP_TAG("genericdynvc")
 
+static BOOL generic_update_connected_state(GENERIC_DYNVC_PLUGIN* plugin, BOOL val)
+{
+	if (!plugin || !plugin->dynvc_name)
+		return FALSE;
+	const size_t len = strlen(plugin->dynvc_name);
+	plugin->dynvc_name[len + 1] = (char)val;
+	return TRUE;
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL generic_get_connected_state(GENERIC_DYNVC_PLUGIN* plugin)
+{
+	if (!plugin || !plugin->dynvc_name)
+		return FALSE;
+	const size_t len = strlen(plugin->dynvc_name);
+	return plugin->dynvc_name[len + 1];
+}
+
+static UINT generic_on_close(IWTSVirtualChannelCallback* pChannelCallback)
+{
+	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
+	WINPR_ASSERT(callback);
+
+	GENERIC_DYNVC_PLUGIN* plugin = (GENERIC_DYNVC_PLUGIN*)callback->plugin;
+	WINPR_ASSERT(plugin);
+
+	/* We're wrapping the originally set callback to update the channel state.
+	 * call the originally intended OnClose from the plugin
+	 */
+	WINPR_ASSERT(plugin->channel_callbacks);
+	const UINT rc =
+	    IFCALLRESULT(CHANNEL_RC_OK, plugin->channel_callbacks->OnClose, pChannelCallback);
+	generic_update_connected_state(plugin, FALSE);
+
+	return rc;
+}
+
 static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
                                               IWTSVirtualChannel* pChannel,
                                               WINPR_ATTR_UNUSED BYTE* Data,
                                               WINPR_ATTR_UNUSED BOOL* pbAccept,
                                               IWTSVirtualChannelCallback** ppCallback)
 {
-	GENERIC_CHANNEL_CALLBACK* callback = nullptr;
-	GENERIC_DYNVC_PLUGIN* plugin = nullptr;
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	if (!listener_callback || !listener_callback->plugin)
 		return ERROR_INTERNAL_ERROR;
 
-	plugin = (GENERIC_DYNVC_PLUGIN*)listener_callback->plugin;
+	GENERIC_DYNVC_PLUGIN* plugin = (GENERIC_DYNVC_PLUGIN*)listener_callback->plugin;
 	WLog_Print(plugin->log, WLOG_TRACE, "...");
 
-	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, plugin->channelCallbackSize);
+	if (generic_get_connected_state(plugin))
+	{
+		WLog_Print(plugin->log, WLOG_ERROR, "Channel already connected, terminating.");
+		return ERROR_DEVICE_ALREADY_ATTACHED;
+	}
+
+	GENERIC_CHANNEL_CALLBACK* callback =
+	    (GENERIC_CHANNEL_CALLBACK*)calloc(1, plugin->channelCallbackSize);
 	if (!callback)
 	{
 		WLog_Print(plugin->log, WLOG_ERROR, "calloc failed!");
@@ -48,6 +90,7 @@ static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCal
 
 	/* implant configured channel callbacks */
 	callback->iface = *plugin->channel_callbacks;
+	callback->iface.OnClose = generic_on_close;
 
 	callback->plugin = listener_callback->plugin;
 	callback->channel_mgr = listener_callback->channel_mgr;
@@ -57,6 +100,7 @@ static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCal
 	listener_callback->channel = pChannel;
 
 	*ppCallback = &callback->iface;
+	generic_update_connected_state(plugin, TRUE);
 	return CHANNEL_RC_OK;
 }
 
@@ -64,7 +108,6 @@ static UINT generic_dynvc_plugin_initialize(IWTSPlugin* pPlugin,
                                             IWTSVirtualChannelManager* pChannelMgr)
 {
 	UINT rc = 0;
-	GENERIC_LISTENER_CALLBACK* listener_callback = nullptr;
 	GENERIC_DYNVC_PLUGIN* plugin = (GENERIC_DYNVC_PLUGIN*)pPlugin;
 
 	if (!plugin)
@@ -80,7 +123,8 @@ static UINT generic_dynvc_plugin_initialize(IWTSPlugin* pPlugin,
 	}
 
 	WLog_Print(plugin->log, WLOG_TRACE, "...");
-	listener_callback = (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
+	GENERIC_LISTENER_CALLBACK* listener_callback =
+	    (GENERIC_LISTENER_CALLBACK*)calloc(1, sizeof(GENERIC_LISTENER_CALLBACK));
 	if (!listener_callback)
 	{
 		WLog_Print(plugin->log, WLOG_ERROR, "calloc failed!");
@@ -201,9 +245,13 @@ UINT freerdp_generic_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const c
 			goto error;
 	}
 
-	plugin->dynvc_name = _strdup(name);
+	/* Since we do not have a private struct append the connected state after the name of the
+	 * channel */
+	const size_t len = strlen(name);
+	plugin->dynvc_name = calloc(len + 2, sizeof(char));
 	if (!plugin->dynvc_name)
 		goto error;
+	strncpy(plugin->dynvc_name, name, len);
 
 	error = pEntryPoints->RegisterPlugin(pEntryPoints, name, &plugin->iface);
 	if (error == CHANNEL_RC_OK)

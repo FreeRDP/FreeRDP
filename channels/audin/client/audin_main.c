@@ -99,6 +99,7 @@ typedef struct
 
 	BOOL initialized;
 	UINT32 version;
+	BOOL connected;
 } AUDIN_PLUGIN;
 
 static BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, const ADDIN_ARGV* args);
@@ -646,6 +647,7 @@ static UINT audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	audin->format = nullptr;
 	audio_formats_free(callback->formats, callback->formats_count);
 	free(callback);
+	audin->connected = FALSE;
 	return error;
 }
 
@@ -667,6 +669,13 @@ static UINT audin_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*)listener_callback->plugin;
 	WLog_Print(audin->log, WLOG_TRACE, "...");
+
+	if (audin->connected)
+	{
+		WLog_Print(audin->log, WLOG_ERROR, "Channel already connected, terminating.");
+		return ERROR_DEVICE_ALREADY_ATTACHED;
+	}
+
 	AUDIN_CHANNEL_CALLBACK* callback =
 	    (AUDIN_CHANNEL_CALLBACK*)calloc(1, sizeof(AUDIN_CHANNEL_CALLBACK));
 
@@ -682,6 +691,7 @@ static UINT audin_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;
 	*ppCallback = &callback->iface;
+	audin->connected = TRUE;
 	return CHANNEL_RC_OK;
 }
 

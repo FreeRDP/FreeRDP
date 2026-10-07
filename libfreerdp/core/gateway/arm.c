@@ -337,8 +337,8 @@ static char* arm_create_request_json(rdpArm* arm, size_t* pLen)
 		goto arm_create_cleanup;
 
 	const size_t len =
-	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength) + 1ull;
-	lbi = calloc(len, sizeof(char));
+	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength);
+	lbi = calloc(len + 1ull, sizeof(char));
 	if (!lbi)
 		goto arm_create_cleanup;
 	lbiLen = len;

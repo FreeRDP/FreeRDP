@@ -117,6 +117,7 @@ struct rdpsnd_plugin
 	BOOL async;
 	BOOL firstFlagReceived;
 	UINT32 totalLength;
+	BOOL connected;
 };
 
 WINPR_ATTR_NODISCARD
@@ -1155,10 +1156,9 @@ UINT rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 	{
 		if (rdpsnd->dynamic)
 		{
-			IWTSVirtualChannel* channel = nullptr;
-			if (rdpsnd->listener_callback)
+			if (rdpsnd->listener_callback && rdpsnd->connected)
 			{
-				channel = rdpsnd->listener_callback->channel_callback->channel;
+				IWTSVirtualChannel* channel = rdpsnd->listener_callback->channel_callback->channel;
 				status =
 				    channel->Write(channel, (UINT32)Stream_Length(s), Stream_Buffer(s), nullptr);
 			}
@@ -1779,11 +1779,10 @@ WINPR_ATTR_NODISCARD
 static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
-	rdpsndPlugin* rdpsnd = nullptr;
 
 	WINPR_ASSERT(callback);
 
-	rdpsnd = (rdpsndPlugin*)callback->plugin;
+	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)callback->plugin;
 	WINPR_ASSERT(rdpsnd);
 
 	rdpsnd->OnOpenCalled = FALSE;
@@ -1800,6 +1799,7 @@ static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	}
 
 	free(pChannelCallback);
+	rdpsnd->connected = FALSE;
 	return CHANNEL_RC_OK;
 }
 
@@ -1811,12 +1811,22 @@ static UINT rdpsnd_on_new_channel_connection(IWTSListenerCallback* pListenerCall
                                              IWTSVirtualChannelCallback** ppCallback)
 // NOLINTEND(readability-non-const-parameter)
 {
-	GENERIC_CHANNEL_CALLBACK* callback = nullptr;
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 	WINPR_ASSERT(listener_callback);
 	WINPR_ASSERT(pChannel);
 	WINPR_ASSERT(ppCallback);
-	callback = (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
+
+	rdpsndPlugin* rdpsnd = (rdpsndPlugin*)listener_callback->plugin;
+	WINPR_ASSERT(rdpsnd);
+
+	if (rdpsnd->connected)
+	{
+		WLog_Print(rdpsnd->log, WLOG_ERROR, "Channel already connected, terminating.");
+		return ERROR_DEVICE_ALREADY_ATTACHED;
+	}
+
+	GENERIC_CHANNEL_CALLBACK* callback =
+	    (GENERIC_CHANNEL_CALLBACK*)calloc(1, sizeof(GENERIC_CHANNEL_CALLBACK));
 
 	WINPR_UNUSED(Data);
 	WINPR_UNUSED(pbAccept);
@@ -1835,6 +1845,7 @@ static UINT rdpsnd_on_new_channel_connection(IWTSListenerCallback* pListenerCall
 	callback->channel = pChannel;
 	listener_callback->channel_callback = callback;
 	*ppCallback = &callback->iface;
+	rdpsnd->connected = TRUE;
 	return CHANNEL_RC_OK;
 }
 

@@ -29,6 +29,7 @@
 #include <winpr/smartcard.h>
 #include <winpr/collections.h>
 #include <winpr/crypto.h>
+#include <winpr/interlocked.h>
 
 #include <freerdp/emulate/scard/smartcard_emulate.h>
 #include "FreeRDP.ico.h"
@@ -125,6 +126,7 @@ typedef struct
 	wArrayList* strings;
 	wHashTable* cache;
 	BOOL canceled;
+	volatile LONG semaphore;
 } SCardContext;
 
 typedef struct
@@ -223,11 +225,27 @@ static UINT32 scard_copy_strings(SCardContext* ctx, void* dst, size_t dstSize, c
 	}
 }
 
+static void waitForCancel(SCardContext* ctx)
+{
+	WINPR_ASSERT(ctx);
+	while (InterlockedCompareExchange(&ctx->semaphore, 0, 0) > 0)
+		Sleep(10);
+}
+
 static void scard_context_free(void* context)
 {
 	SCardContext* ctx = context;
 	if (ctx)
 	{
+		/* HACK: There might be long running calls in background still active.
+		 * Emulation does ~100ms polling loops to check if we're still ok, so do a 2 * 100ms delay
+		 * to ensure such calls are terminated.
+		 *
+		 * See Emulate_SCardGetStatusChangeA and Emulate_SCardGetStatusChangeW
+		 */
+		ctx->canceled = TRUE;
+		waitForCancel(ctx);
+
 		HashTable_Free(ctx->cards);
 		ArrayList_Free(ctx->strings);
 		HashTable_Free(ctx->cache);
@@ -466,11 +484,10 @@ static BOOL remove_handles(const void* key, void* value, void* arg)
 LONG WINAPI Emulate_SCardReleaseContext(SmartcardEmulationContext* smartcard, SCARDCONTEXT hContext)
 {
 	LONG status = SCARD_S_SUCCESS;
-	SCardContext* value = nullptr;
 
 	WINPR_ASSERT(smartcard);
 
-	value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
+	SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardReleaseContext { hContext: %p",
 	           (void*)hContext);
@@ -1444,6 +1461,8 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
+		InterlockedIncrement(&value->semaphore);
+
 		const freerdp* inst = freerdp_settings_get_pointer(smartcard->settings, FreeRDP_instance);
 		WINPR_ASSERT(inst);
 
@@ -1502,6 +1521,7 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 				break;
 			}
 		} while (dwTimeout > 0);
+		InterlockedDecrement(&value->semaphore);
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
@@ -1527,6 +1547,7 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
+		InterlockedIncrement(&value->semaphore);
 		const freerdp* inst = freerdp_settings_get_pointer(smartcard->settings, FreeRDP_instance);
 		WINPR_ASSERT(inst);
 
@@ -1586,6 +1607,7 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 				break;
 			}
 		} while (dwTimeout > 0);
+		InterlockedDecrement(&value->semaphore);
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
@@ -1607,6 +1629,8 @@ LONG WINAPI Emulate_SCardCancel(SmartcardEmulationContext* smartcard, SCARDCONTE
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value);
 		value->canceled = TRUE;
+
+		waitForCancel(value);
 	}
 
 	WLog_Print(smartcard->log, smartcard->log_default_level,
