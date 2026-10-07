@@ -3434,9 +3434,12 @@ static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
 
-	/* [MS-RDPEFS] 2.2.1.5.2 DR_CLOSE_RSP: 5 bytes of padding that MUST be ignored.
-	 * Windows clients send only 4, so do not require them. */
-	Stream_Seek(s, MIN(Stream_GetRemainingLength(s), 5));
+	/* [MS-RDPEFS] 2.2.1.5.2 DR_CLOSE_RSP: Padding (4 bytes) that MUST be ignored.
+	 * FreeRDP clients send 5 bytes, the extra byte is ignored as well. */
+	if (!Stream_CheckAndLogRequiredLengthWLog(priv->log, s, 4))
+		return ERROR_INVALID_DATA;
+
+	Stream_Seek(s, 4); /* Padding (4 bytes) */
 
 	/* Invoke the close file completion routine. */
 	context->OnDriveCloseFileComplete(context, irp->CallbackData, ioStatus);
