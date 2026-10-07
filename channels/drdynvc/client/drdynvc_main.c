@@ -2519,6 +2519,16 @@ static void drdynvc_soft_sync_reset(drdynvcPlugin* drdynvc)
 	drdynvc_tunnel_backlog_clear(drdynvc);
 }
 
+/* After this no tunnel event reaches the plugin. */
+static void drdynvc_tunnel_hooks_remove(drdynvcPlugin* drdynvc)
+{
+	WINPR_ASSERT(drdynvc);
+
+	/* fails only without a multitransport, then nothing was registered */
+	if (!freerdp_multitransport_set_dvc_callbacks(drdynvc->rdpcontext, nullptr, nullptr))
+		WLog_Print(drdynvc->log, WLOG_DEBUG, "no multitransport tunnel hooks to remove");
+}
+
 WINPR_ATTR_NODISCARD
 static UINT drdynvc_virtual_channel_event_initialized(drdynvcPlugin* drdynvc, LPVOID pData,
                                                       UINT32 dataLength)
@@ -2650,12 +2660,11 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
+	/* registered on initialization, whether the channel opened or not */
+	drdynvc_tunnel_hooks_remove(drdynvc);
+
 	if (drdynvc->OpenHandle == 0)
 		return CHANNEL_RC_OK;
-
-	/* fails only without a multitransport, then nothing was registered */
-	if (!freerdp_multitransport_set_dvc_callbacks(drdynvc->rdpcontext, nullptr, nullptr))
-		WLog_Print(drdynvc->log, WLOG_DEBUG, "no multitransport tunnel hooks to remove");
 
 	if (drdynvc->queue)
 	{
@@ -2728,6 +2737,9 @@ static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 {
 	if (!drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	/* the hooks point at this plugin, which is freed below */
+	drdynvc_tunnel_hooks_remove(drdynvc);
 
 	MessageQueue_Free(drdynvc->queue);
 	drdynvc->queue = nullptr;
