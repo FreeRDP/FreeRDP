@@ -40,6 +40,10 @@
 #include <dav1d/dav1d.h>
 #endif
 
+#if defined(WITH_AV1_WEBCODECS)
+#include "av1_webcodecs.h"
+#endif
+
 #if defined(WITH_LIBAOM) || defined(WITH_DAV1D)
 
 #if defined(WITH_LIBYUV)
@@ -64,6 +68,9 @@ struct S_FREERDP_AV1_CONTEXT
 #endif
 #if defined(WITH_DAV1D)
 	Dav1dContext* dav1d;
+#endif
+#if defined(WITH_AV1_WEBCODECS)
+	int webcodecs; /* VideoDecoder handle, 0 if unused */
 #endif
 	BYTE* yuvdata[3];
 	UINT32 yuvWidth;
@@ -532,6 +539,24 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 	if (!areRectsValid(av1->log, nDstWidth, nDstHeight, regionRects, numRegionRect))
 		return -2;
 
+#if defined(WITH_AV1_WEBCODECS)
+	if (av1->webcodecs > 0)
+	{
+		const INT32 wrc = av1_wc_decode(av1->webcodecs, pSrcData, SrcSize, pDstData, DstFormat,
+		                                nDstStep, nDstWidth, nDstHeight);
+		if (wrc >= 0)
+			return TRUE;
+		/* fall back to the software decoder for the rest of the session */
+		if (wrc == AV1_WC_UNSUPPORTED)
+			WLog_Print(av1->log, WLOG_DEBUG, "surface format needs dav1d instead of WebCodecs");
+		else
+			WLog_Print(av1->log, WLOG_WARN,
+			           "WebCodecs AV1 decode failed (%" PRId32 "), using dav1d", wrc);
+		av1_wc_close(av1->webcodecs);
+		av1->webcodecs = 0;
+	}
+#endif
+
 #if defined(WITH_DAV1D)
 	Dav1dData data = WINPR_C_ARRAY_INIT;
 	const int wrc = dav1d_data_wrap(&data, pSrcData, SrcSize, av1_dav1d_data_free, nullptr);
@@ -696,6 +721,14 @@ BOOL freerdp_av1_context_reset(FREERDP_AV1_CONTEXT* av1, UINT32 width, UINT32 he
 	}
 	else
 	{
+#if defined(WITH_AV1_WEBCODECS)
+		if (av1->webcodecs == 0)
+		{
+			av1->webcodecs = av1_wc_open();
+			WLog_Print(av1->log, WLOG_INFO, "AV1 decoder: %s",
+			           av1->webcodecs > 0 ? "WebCodecs (browser), dav1d as fallback" : "dav1d");
+		}
+#endif
 #if defined(WITH_DAV1D)
 		if (av1->initialized)
 		{
@@ -779,6 +812,9 @@ void freerdp_av1_context_free(FREERDP_AV1_CONTEXT* av1)
 #endif
 		}
 	}
+#if defined(WITH_AV1_WEBCODECS)
+	av1_wc_close(av1->webcodecs);
+#endif
 	winpr_aligned_free(av1->yuvdata[0]);
 	winpr_aligned_free(av1->yuvdata[1]);
 	winpr_aligned_free(av1->yuvdata[2]);
