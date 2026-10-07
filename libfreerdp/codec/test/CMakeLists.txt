@@ -13,6 +13,7 @@ set(TESTS
     TestFreeRDPCodecZGfx.c
     TestFreeRDPCodecPlanar.c
     TestFreeRDPCodecCopy.c
+    TestFreeRDPCodecYuv.c
     TestFreeRDPCodecCursor.c
     TestFreeRDPCodecClear.c
     TestFreeRDPCodecInterleaved.c
