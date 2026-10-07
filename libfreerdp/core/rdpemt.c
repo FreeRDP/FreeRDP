@@ -476,24 +476,44 @@ static BOOL emt_start_tls(rdpEmt* emt)
 	if (!emt->ctx)
 		return FALSE;
 
-	(void)SSL_CTX_set_min_proto_version(emt->ctx, TLS1_2_VERSION);
+	if (!SSL_CTX_set_min_proto_version(emt->ctx, TLS1_2_VERSION))
+	{
+		WLog_Print(emt->log, WLOG_ERROR, "SSL_CTX_set_min_proto_version failed");
+		return FALSE;
+	}
 	SSL_CTX_set_options(emt->ctx, SSL_OP_NO_TICKET | SSL_OP_NO_COMPRESSION);
 	/* the certificate is checked against the main connection's in emt_verify_peer */
 	SSL_CTX_set_verify(emt->ctx, SSL_VERIFY_NONE, nullptr);
-	(void)SSL_CTX_set_cipher_list(emt->ctx, "ECDHE-RSA-AES256-GCM-SHA384:"
-	                                        "ECDHE-RSA-AES128-GCM-SHA256:"
-	                                        "ECDHE-ECDSA-AES256-GCM-SHA384:"
-	                                        "ECDHE-ECDSA-AES128-GCM-SHA256:"
-	                                        "AES256-GCM-SHA384:AES128-GCM-SHA256");
+	if (!SSL_CTX_set_cipher_list(emt->ctx, "ECDHE-RSA-AES256-GCM-SHA384:"
+	                                       "ECDHE-RSA-AES128-GCM-SHA256:"
+	                                       "ECDHE-ECDSA-AES256-GCM-SHA384:"
+	                                       "ECDHE-ECDSA-AES128-GCM-SHA256:"
+	                                       "AES256-GCM-SHA384:AES128-GCM-SHA256"))
+	{
+		WLog_Print(emt->log, WLOG_ERROR, "SSL_CTX_set_cipher_list failed");
+		return FALSE;
+	}
 #if OPENSSL_VERSION_NUMBER >= 0x10101000L
-	(void)SSL_CTX_set_ciphersuites(emt->ctx, "TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256");
+	if (!SSL_CTX_set_ciphersuites(emt->ctx, "TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256"))
+	{
+		WLog_Print(emt->log, WLOG_ERROR, "SSL_CTX_set_ciphersuites failed");
+		return FALSE;
+	}
 #endif
 	/* The ClientHello has to fit in one datagram. Default groups with post quantum key shares
 	 * add more than a kilobyte. */
-	(void)SSL_CTX_set1_groups_list(emt->ctx, "X25519:P-256:P-384");
-	(void)SSL_CTX_set1_sigalgs_list(emt->ctx, "rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:"
-	                                          "rsa_pkcs1_sha256:rsa_pkcs1_sha384:"
-	                                          "ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384");
+	if (!SSL_CTX_set1_groups_list(emt->ctx, "X25519:P-256:P-384"))
+	{
+		WLog_Print(emt->log, WLOG_ERROR, "SSL_CTX_set1_groups_list failed");
+		return FALSE;
+	}
+	if (!SSL_CTX_set1_sigalgs_list(emt->ctx, "rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:"
+	                                         "rsa_pkcs1_sha256:rsa_pkcs1_sha384:"
+	                                         "ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384"))
+	{
+		WLog_Print(emt->log, WLOG_ERROR, "SSL_CTX_set1_sigalgs_list failed");
+		return FALSE;
+	}
 	SSL_CTX_set_read_ahead(emt->ctx, 0);
 
 	emt->ssl = SSL_new(emt->ctx);
@@ -518,8 +538,14 @@ static BOOL emt_start_tls(rdpEmt* emt)
 	/* every record fits in one datagram */
 	const size_t max = rdpudp_get_max_payload(emt->udp);
 	if (max > TLS_RECORD_OVERHEAD + 512)
-		(void)SSL_set_max_send_fragment(emt->ssl,
-		                                WINPR_ASSERTING_INT_CAST(long, max - TLS_RECORD_OVERHEAD));
+	{
+		if (!SSL_set_max_send_fragment(emt->ssl,
+		                               WINPR_ASSERTING_INT_CAST(long, max - TLS_RECORD_OVERHEAD)))
+		{
+			WLog_Print(emt->log, WLOG_ERROR, "SSL_set_max_send_fragment failed");
+			return FALSE;
+		}
+	}
 
 	emt->tlsStarted = TRUE;
 	return emt_run_tls(emt);
