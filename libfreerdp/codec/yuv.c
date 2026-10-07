@@ -843,6 +843,13 @@ static BOOL pool_encode(YUV_CONTEXT* WINPR_RESTRICT context, PTP_WORK_CALLBACK c
 
 			current = &context->work_enc_params[waitCount];
 			r.top += y * context->heightStep;
+			/* Limit the slice to its own rows. Without this every slice converts everything from its
+			 * first row down to the bottom of the region, so the same rows are converted over and
+			 * over (about 34 times for a 1080p frame and 16 row slices).
+			 * getSteps rounds to the nearest slice count, so the last slice has to reach the
+			 * bottom of the region whatever its height is. */
+			if ((y + 1) < steps)
+				r.bottom = (UINT16)MIN((UINT32)rect->bottom, (UINT32)r.top + context->heightStep);
 			*current = pool_encode_fill(&r, context, pSrcData, nSrcStep, SrcFormat, iStride,
 			                            pYUVLumaData, pYUVChromaData);
 			if (!submit_object(&context->work_objects[waitCount], cb, current, context))
