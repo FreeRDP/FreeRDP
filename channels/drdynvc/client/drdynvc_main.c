@@ -2418,7 +2418,7 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 		else if (message.id == DRDYNVC_MSG_TUNNEL_DATA)
 		{
 			data = (wStream*)message.wParam;
-			const UINT32 tunnelType = (UINT32)(UINT_PTR)message.lParam;
+			const UINT32 tunnelType = WINPR_ASSERTING_INT_CAST(UINT32, (UINT_PTR)message.lParam);
 
 			if ((error = drdynvc_receive_tunnel_pdu(drdynvc, data, tunnelType)))
 			{
