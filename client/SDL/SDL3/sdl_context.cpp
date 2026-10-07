@@ -1540,10 +1540,6 @@ bool SdlContext::handleEvent(const SDL_Event& ev)
 			const auto& cev = ev.clipboard;
 			return getClipboardChannelContext().handleEvent(cev);
 		}
-		case SDL_EVENT_USER_CLIPBOARD_DATA_REQUEST:
-		{
-			return getClipboardChannelContext().handleDataRequests();
-		}
 		case SDL_EVENT_KEY_DOWN:
 		case SDL_EVENT_KEY_UP:
 		{

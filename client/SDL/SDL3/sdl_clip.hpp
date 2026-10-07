@@ -92,7 +92,7 @@ class sdlClip
 
 	/* Answers the queued server CB_FORMAT_DATA_REQUESTs. Runs on the SDL main thread: the SDL
 	 * clipboard API is main-thread only, and ReceiveFormatDataRequest only queues them. */
-	[[nodiscard]] bool handleDataRequests();
+	void handleDataRequests();
 
   private:
 	[[nodiscard]] UINT SendClientCapabilities();

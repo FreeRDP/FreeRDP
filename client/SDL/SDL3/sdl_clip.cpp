@@ -904,8 +904,9 @@ UINT sdlClip::ReceiveFormatDataRequest(CliprdrClientContext* context,
 
 	/* This runs on the channel thread, but the SDL clipboard API is main-thread only: on
 	 * Wayland, reading the selection offer here races the main thread replacing it. */
-	if (!sdl_push_user_event(SDL_EVENT_USER_CLIPBOARD_DATA_REQUEST,
-	                         formatDataRequest->requestedFormatId))
+	if (!SDL_RunOnMainThread([](void* userdata)
+	                         { static_cast<sdlClip*>(userdata)->handleDataRequests(); }, clipboard,
+	                         false))
 	{
 		std::scoped_lock lock(clipboard->_lock);
 		if (!clipboard->_server_requests.empty())
@@ -915,7 +916,7 @@ UINT sdlClip::ReceiveFormatDataRequest(CliprdrClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-bool sdlClip::handleDataRequests()
+void sdlClip::handleDataRequests()
 {
 	for (;;)
 	{
@@ -923,7 +924,7 @@ bool sdlClip::handleDataRequests()
 		{
 			std::scoped_lock lock(_lock);
 			if (_server_requests.empty())
-				return true;
+				return;
 			formatId = _server_requests.front();
 			_server_requests.pop_front();
 		}
