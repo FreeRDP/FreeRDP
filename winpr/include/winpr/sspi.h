@@ -913,6 +913,11 @@ typedef SECURITY_STATUS (*psSspiNtlmHashCallback)(void* client,
 
 #if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 
+/* These compatibility structs intentionally reference deprecated settings
+ * types. Keep the deprecation warning for consumers of the types, but don't
+ * emit it merely because this public header is included. */
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_DEPRECATED_DECL
 WINPR_DEPRECATED_VAR(
     "[since 3.31.0] use SEC_WINPR_NTLM_SETTINGS_V2", typedef struct {
 	    char* samFile; /**< File name (with path) of a SAM file */
@@ -942,6 +947,7 @@ WINPR_DEPRECATED_VAR(
 	    SEC_WINPR_NTLM_SETTINGS* ntlmSettings;
 	    SEC_WINPR_KERBEROS_SETTINGS* kerberosSettings;
     } SEC_WINNT_AUTH_IDENTITY_WINPR);
+WINPR_PRAGMA_DIAG_POP
 
 #endif
 
