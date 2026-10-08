@@ -1123,12 +1123,12 @@ static BOOL rect_is_valid(const RFX_RECT* rect, UINT32 left, UINT32 top,
 		WLog_ERR(TAG, "rect=NULL");
 		return FALSE;
 	}
-	if (left > UINT16_MAX - rect->x)
+	if (left > UINT16_MAX - 1u * rect->x)
 	{
 		WLog_ERR(TAG, "left(%" PRIu32 ") + rect->x(%d) > %d", left, rect->x, UINT16_MAX);
 		return FALSE;
 	}
-	if (top > UINT16_MAX - rect->y)
+	if (top > UINT16_MAX - 1u * rect->y)
 	{
 		WLog_ERR(TAG, "top(%" PRIu32 ") + rect->y(%d) > %d", top, rect->y, UINT16_MAX);
 		return FALSE;
