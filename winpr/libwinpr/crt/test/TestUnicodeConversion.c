@@ -69,7 +69,7 @@ static BOOL check_short_buffer(const char* prefix, int rc, size_t buffersize,
 
 		(void)fprintf(stderr,
 		              "%s length does not match buffersize: %" PRId32 " != %" PRIuz
-		              ", unexpected GetLastError() 0x08%" PRIx32 "\n",
+		              ", unexpected GetLastError() 0x%08" PRIx32 "\n",
 		              prefix, rc, buffersize, err);
 		return FALSE;
 	}

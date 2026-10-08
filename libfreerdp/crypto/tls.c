@@ -100,16 +100,26 @@ typedef struct
  * AES-GCM at 2^24.5 records (2^14 B) (~362 GiB). OpenSSL does not enforce this itself
  * (https://github.com/openssl/openssl/issues/23566). On TLS 1.3 the keys are
  * rekeyed in place (SSL_key_update); on other protocols a rekey is not possible. */
-#define TLS_DATA_LIMIT_BYTES 388736063996ULL
+static const UINT64 TLS_DATA_LIMIT_BYTES = 388736063996ULL;
 #endif
 
+static INIT_ONCE g_BioMethodsOnce = INIT_ONCE_STATIC_INIT;
+static BIO_METHOD* g_BioMethods = nullptr;
+
+static INIT_ONCE secrets_file_idx_once = INIT_ONCE_STATIC_INIT;
+static int secrets_file_idx = -1;
+
+WINPR_ATTR_NODISCARD
 static int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* hostname,
                                   UINT16 port);
+
 static void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,
                                                       const char* common_name, char** alt_names,
                                                       size_t alt_names_count);
+
 static void tls_print_new_certificate_warn(rdpCertificateStore* store, const char* hostname,
                                            UINT16 port, const char* type, const char* fingerprint);
+
 static void tls_print_certificate_error(rdpCertificateStore* store, rdpCertificateData* stored_data,
                                         const char* hostname, UINT16 port, const char* fingerprint);
 
@@ -121,15 +131,13 @@ static void free_tls_public_key(rdpTls* tls)
 	tls->PublicKeyLength = 0;
 }
 
-static void free_tls_bindings(rdpTls* tls)
+static void free_tls_bindings(SecPkgContext_Bindings* bindings)
 {
-	WINPR_ASSERT(tls);
+	if (!bindings)
+		return;
 
-	if (tls->Bindings)
-		free(tls->Bindings->Bindings);
-
-	free(tls->Bindings);
-	tls->Bindings = nullptr;
+	free(bindings->Bindings);
+	free(bindings);
 }
 
 #ifdef WITH_TLS_DATA_LIMIT
@@ -180,6 +188,7 @@ static void bio_rdp_tls_write_account(BIO_RDP_TLS* tls, int count)
 }
 #endif
 
+WINPR_ATTR_NODISCARD
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
 	int error = 0;
@@ -248,6 +257,7 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 {
 	int error = 0;
@@ -334,6 +344,7 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static int bio_rdp_tls_puts(BIO* bio, const char* str)
 {
 	if (!str)
@@ -347,12 +358,14 @@ static int bio_rdp_tls_puts(BIO* bio, const char* str)
 	return BIO_write(bio, str, (int)size);
 }
 
+WINPR_ATTR_NODISCARD
 static int bio_rdp_tls_gets(WINPR_ATTR_UNUSED BIO* bio, WINPR_ATTR_UNUSED char* str,
                             WINPR_ATTR_UNUSED int size)
 {
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 {
 	BIO* ssl_rbio = nullptr;
@@ -575,6 +588,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 	return status;
 }
 
+WINPR_ATTR_NODISCARD
 static int bio_rdp_tls_new(BIO* bio)
 {
 	BIO_RDP_TLS* tls = nullptr;
@@ -599,6 +613,7 @@ static int bio_rdp_tls_new(BIO* bio)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static int bio_rdp_tls_free(BIO* bio)
 {
 	BIO_RDP_TLS* tls = nullptr;
@@ -630,6 +645,7 @@ static int bio_rdp_tls_free(BIO* bio)
 	return 1;
 }
 
+WINPR_ATTR_NODISCARD
 static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 {
 	long status = 0;
@@ -668,38 +684,52 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 
 #define BIO_TYPE_RDP_TLS 68
 
-static BIO_METHOD* BIO_s_rdp_tls(void)
+WINPR_ATTR_NODISCARD
+static BOOL CALLBACK bio_rdp_tls_init_once(WINPR_ATTR_UNUSED PINIT_ONCE once,
+                                           WINPR_ATTR_UNUSED PVOID param,
+                                           WINPR_ATTR_UNUSED PVOID* context)
 {
-	static BIO_METHOD* bio_methods = nullptr;
+	g_BioMethods = BIO_meth_new(BIO_TYPE_RDP_TLS, "RdpTls");
+	if (!g_BioMethods)
+		return FALSE;
 
-	if (bio_methods == nullptr)
-	{
-		if (!(bio_methods = BIO_meth_new(BIO_TYPE_RDP_TLS, "RdpTls")))
-			return nullptr;
+	if (BIO_meth_set_write(g_BioMethods, bio_rdp_tls_write) != 1)
+		return FALSE;
+	if (BIO_meth_set_read(g_BioMethods, bio_rdp_tls_read) != 1)
+		return FALSE;
+	if (BIO_meth_set_puts(g_BioMethods, bio_rdp_tls_puts) != 1)
+		return FALSE;
+	if (BIO_meth_set_gets(g_BioMethods, bio_rdp_tls_gets) != 1)
+		return FALSE;
+	if (BIO_meth_set_ctrl(g_BioMethods, bio_rdp_tls_ctrl) != 1)
+		return FALSE;
+	if (BIO_meth_set_create(g_BioMethods, bio_rdp_tls_new) != 1)
+		return FALSE;
+	if (BIO_meth_set_destroy(g_BioMethods, bio_rdp_tls_free) != 1)
+		return FALSE;
+	if (BIO_meth_set_callback_ctrl(g_BioMethods, bio_rdp_tls_callback_ctrl) != 1)
+		return FALSE;
 
-		BIO_meth_set_write(bio_methods, bio_rdp_tls_write);
-		BIO_meth_set_read(bio_methods, bio_rdp_tls_read);
-		BIO_meth_set_puts(bio_methods, bio_rdp_tls_puts);
-		BIO_meth_set_gets(bio_methods, bio_rdp_tls_gets);
-		BIO_meth_set_ctrl(bio_methods, bio_rdp_tls_ctrl);
-		BIO_meth_set_create(bio_methods, bio_rdp_tls_new);
-		BIO_meth_set_destroy(bio_methods, bio_rdp_tls_free);
-		BIO_meth_set_callback_ctrl(bio_methods, bio_rdp_tls_callback_ctrl);
-	}
-
-	return bio_methods;
+	return TRUE;
 }
 
+WINPR_ATTR_NODISCARD
+static BIO_METHOD* BIO_s_rdp_tls(void)
+{
+	if (!InitOnceExecuteOnce(&g_BioMethodsOnce, bio_rdp_tls_init_once, nullptr, nullptr))
+		return nullptr;
+	return g_BioMethods;
+}
+
+WINPR_ATTR_MALLOC(BIO_free, 1)
 static BIO* BIO_new_rdp_tls(SSL_CTX* ctx, int client)
 {
-	BIO* bio = nullptr;
-	SSL* ssl = nullptr;
-	bio = BIO_new(BIO_s_rdp_tls());
+	BIO* bio = BIO_new(BIO_s_rdp_tls());
 
 	if (!bio)
 		return nullptr;
 
-	ssl = SSL_new(ctx);
+	SSL* ssl = SSL_new(ctx);
 
 	if (!ssl)
 	{
@@ -716,6 +746,7 @@ static BIO* BIO_new_rdp_tls(SSL_CTX* ctx, int client)
 	return bio;
 }
 
+WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
 static rdpCertificate* tls_get_certificate(rdpTls* tls, BOOL peer)
 {
 	X509* remote_cert = nullptr;
@@ -739,6 +770,7 @@ static rdpCertificate* tls_get_certificate(rdpTls* tls, BOOL peer)
 	return cert;
 }
 
+WINPR_ATTR_NODISCARD
 static const char* tls_get_server_name(rdpTls* tls)
 {
 	return tls->serverName ? tls->serverName : tls->hostname;
@@ -746,6 +778,7 @@ static const char* tls_get_server_name(rdpTls* tls)
 
 #define TLS_SERVER_END_POINT "tls-server-end-point:"
 
+WINPR_ATTR_MALLOC(free_tls_bindings, 1)
 static SecPkgContext_Bindings* tls_get_channel_bindings(const rdpCertificate* cert)
 {
 	size_t CertificateHashLength = 0;
@@ -808,9 +841,7 @@ out_free:
 	return nullptr;
 }
 
-static INIT_ONCE secrets_file_idx_once = INIT_ONCE_STATIC_INIT;
-static int secrets_file_idx = -1;
-
+WINPR_ATTR_NODISCARD
 static BOOL CALLBACK secrets_file_init_cb(WINPR_ATTR_UNUSED PINIT_ONCE once,
                                           WINPR_ATTR_UNUSED PVOID param,
                                           WINPR_ATTR_UNUSED PVOID* context)
@@ -860,13 +891,16 @@ static void tls_reset(rdpTls* tls)
 	tls->underlying = nullptr;
 
 	free_tls_public_key(tls);
-	free_tls_bindings(tls);
+	free_tls_bindings(tls->Bindings);
+	tls->Bindings = nullptr;
 }
 
 #if OPENSSL_VERSION_NUMBER >= 0x010000000L
+WINPR_ATTR_NODISCARD
 static BOOL tls_prepare(rdpTls* tls, BIO* underlying, const SSL_METHOD* method, int options,
                         BOOL clientMode)
 #else
+WINPR_ATTR_NODISCARD
 static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int options,
                         BOOL clientMode)
 #endif
@@ -1068,7 +1102,7 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 
 	do
 	{
-		free_tls_bindings(tls);
+		free_tls_bindings(tls->Bindings);
 		tls->Bindings = tls_get_channel_bindings(cert);
 		if (!tls->Bindings)
 		{
@@ -1284,7 +1318,7 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 
 	status = SSL_use_PrivateKey(tls->ssl, privkey);
 	/* The local reference to the private key will anyway go out of
-	 * scope; so the reference count should be decremented weither
+	 * scope; so the reference count should be decremented whether
 	 * SSL_use_PrivateKey succeeds or fails.
 	 */
 	EVP_PKEY_free(privkey);
@@ -1344,7 +1378,7 @@ BOOL freerdp_tls_send_alert(rdpTls* tls)
 
 	/**
 	 * FIXME: The following code does not work on OpenSSL > 1.1.0 because the
-	 *        SSL struct is opaqe now
+	 *        SSL struct is opaque now
 	 */
 #if (!defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER < 0x10100000L)) || \
     (defined(LIBRESSL_VERSION_NUMBER) && (LIBRESSL_VERSION_NUMBER <= 0x2080300fL))
@@ -1514,7 +1548,7 @@ static BOOL is_accepted(rdpTls* tls, const rdpCertificate* cert)
 	}
 
 	if (!freerdp_settings_set_string(settings, keyAccepted, nullptr))
-		WLog_WARN(TAG, "freerdp_settings_set_string(settings, keyAccepted=%d, nullptr) failde",
+		WLog_WARN(TAG, "freerdp_settings_set_string(settings, keyAccepted=%d, nullptr) failed",
 		          keyAccepted);
 	if (!freerdp_settings_set_uint32(settings, keyLength, 0))
 		WLog_WARN(TAG, "freerdp_settings_set_uint32(settings, keyLength=%d, 0) failed", keyLength);
@@ -2126,7 +2160,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 					break;
 
 				case 2:
-					/* user did accept temporaty, do not add to known hosts file */
+					/* user did accept temporary, do not add to known hosts file */
 					verification_status = 1;
 					break;
 

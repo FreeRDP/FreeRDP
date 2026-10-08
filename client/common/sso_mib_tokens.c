@@ -27,6 +27,7 @@ struct MIBClientWrapper
 	pGetCommonAccessToken GetCommonAccessToken;
 };
 
+WINPR_ATTR_NODISCARD
 static BOOL sso_mib_get_avd_access_token(rdpClientContext* client_context, char** token)
 {
 	WINPR_ASSERT(client_context);
@@ -68,6 +69,7 @@ cleanup:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL sso_mib_get_rdsaad_access_token(rdpClientContext* client_context, const char* scope,
                                             const char* req_cnf, char** token)
 {
@@ -90,7 +92,7 @@ static BOOL sso_mib_get_rdsaad_access_token(rdpClientContext* client_context, co
 	scopes = g_slist_append(scopes, g_strdup(scope));
 
 	// Parse the "kid" element from req_cnf
-	crypto_base64_decode(req_cnf, strlen(req_cnf) + 1, &req_cnf_dec, &req_cnf_dec_len);
+	crypto_base64_decode(req_cnf, strlen(req_cnf), &req_cnf_dec, &req_cnf_dec_len);
 	if (!req_cnf_dec)
 	{
 		goto cleanup;
@@ -119,8 +121,10 @@ static BOOL sso_mib_get_rdsaad_access_token(rdpClientContext* client_context, co
 	                                                       nullptr, nullptr, params);
 	if (prt)
 	{
-		*token = strdup(mib_prt_get_access_token(prt));
-		rc = TRUE;
+		const gchar* str = mib_prt_get_access_token(prt);
+		if (str)
+			*token = strdup(str);
+		rc = *token != nullptr;
 		g_object_unref(prt);
 	}
 
@@ -133,6 +137,7 @@ cleanup:
 	return rc;
 }
 
+WINPR_ATTR_NODISCARD
 static BOOL sso_mib_get_access_token(rdpContext* context, AccessTokenType tokenType, char** token,
                                      size_t count, ...)
 {

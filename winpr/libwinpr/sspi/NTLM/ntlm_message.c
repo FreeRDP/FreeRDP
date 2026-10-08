@@ -490,7 +490,7 @@ static BOOL ntlm_read_negotiate_flags(wStream* s, UINT32* flags, UINT32 required
 
 	if ((NegotiateFlags & required) != required)
 	{
-		WLog_ERR(TAG, "%s::NegotiateFlags invalid flags 0x08%" PRIx32 ", 0x%08" PRIx32 " required",
+		WLog_ERR(TAG, "%s::NegotiateFlags invalid flags 0x%08" PRIx32 ", 0x%08" PRIx32 " required",
 		         name, NegotiateFlags, required);
 		return FALSE;
 	}
@@ -1263,7 +1263,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 			winpr_HexDump(TAG, WLOG_ERROR, context->NtProofString, sizeof(context->NtProofString));
 			WLog_ERR(TAG, "Actual NtProofString:");
 			winpr_HexDump(TAG, WLOG_ERROR, context->NTLMv2Response.Response,
-			              sizeof(context->NTLMv2Response));
+			              sizeof(context->NTLMv2Response.Response));
 #endif
 			status = SEC_E_LOGON_DENIED;
 			goto fail;

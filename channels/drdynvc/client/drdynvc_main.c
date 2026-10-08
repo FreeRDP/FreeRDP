@@ -263,6 +263,8 @@ static DVCMAN_CHANNEL* dvcman_get_channel_by_id(IWTSVirtualChannelManager* pChan
 		if (doRef)
 			InterlockedIncrement(&dvcChannel->refCounter);
 	}
+	else
+		HashTable_Unlock(dvcman->channelsById);
 
 	return dvcChannel;
 }
@@ -882,12 +884,14 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 	}
 	else
 	{
-		if (!(channel = dvcman_channel_new(drdynvc, pChannelMgr, ChannelId, ChannelName)))
+		channel = dvcman_channel_new(drdynvc, pChannelMgr, ChannelId, ChannelName);
+		if (!channel)
 		{
 			WLog_Print(drdynvc->log, WLOG_ERROR, "dvcman_channel_new failed!");
 			*res = CHANNEL_RC_NO_MEMORY;
 			goto out;
 		}
+		HashTable_Lock(dvcman->channelsById);
 	}
 
 	if (!HashTable_Insert(dvcman->channelsById, &channel->channel_id, channel))

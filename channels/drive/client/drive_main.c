@@ -268,7 +268,7 @@ static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 			irp->IoStatus = drive_map_windows_err(GetLastError());
 	}
 
-	Stream_Zero(irp->output, 5); /* Padding(5) */
+	Stream_Zero(irp->output, 4); /* Padding(4) */
 
 	return CHANNEL_RC_OK;
 }
