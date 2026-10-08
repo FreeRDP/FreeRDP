@@ -57,9 +57,20 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
-static WINPR_FILE* pStdHandleFile = nullptr;
+/* one handle per standard stream (stdin, stdout, stderr), created on first use */
+static WINPR_FILE* pStdHandleFiles[3] = WINPR_C_ARRAY_INIT;
 
 static void GetStdHandle_Uninit(void) __attribute__((destructor));
+
+static BOOL FileIsStdHandle(HANDLE handle)
+{
+	for (size_t x = 0; x < ARRAYSIZE(pStdHandleFiles); x++)
+	{
+		if (handle == pStdHandleFiles[x])
+			return TRUE;
+	}
+	return FALSE;
+}
 
 static BOOL FileIsHandled(HANDLE handle)
 {
@@ -85,7 +96,7 @@ static BOOL FileCloseHandleInt(HANDLE handle, BOOL force)
 
 	if (!force)
 	{
-		if (handle == pStdHandleFile)
+		if (FileIsStdHandle(handle))
 		{
 			return FALSE;
 		}
@@ -1066,35 +1077,44 @@ static WINPR_FILE* FileHandle_New(FILE* fp)
 
 void GetStdHandle_Uninit(void)
 {
-	FileCloseHandleInt(pStdHandleFile, TRUE);
-	free(pStdHandleFile);
+	for (size_t x = 0; x < ARRAYSIZE(pStdHandleFiles); x++)
+	{
+		(void)FileCloseHandleInt(pStdHandleFiles[x], TRUE);
+		free(pStdHandleFiles[x]);
+		pStdHandleFiles[x] = nullptr;
+	}
 }
 
 HANDLE GetStdHandle(DWORD nStdHandle)
 {
+	size_t idx = 0;
 	FILE* fp = nullptr;
 
 	switch (nStdHandle)
 	{
 		case STD_INPUT_HANDLE:
+			idx = 0;
 			fp = stdin;
 			break;
 		case STD_OUTPUT_HANDLE:
+			idx = 1;
 			fp = stdout;
 			break;
 		case STD_ERROR_HANDLE:
+			idx = 2;
 			fp = stderr;
 			break;
 		default:
 			return INVALID_HANDLE_VALUE;
 	}
-	if (!pStdHandleFile)
-		pStdHandleFile = FileHandle_New(fp);
 
-	if (!pStdHandleFile)
+	if (!pStdHandleFiles[idx])
+		pStdHandleFiles[idx] = FileHandle_New(fp);
+
+	if (!pStdHandleFiles[idx])
 		return INVALID_HANDLE_VALUE;
 
-	return (HANDLE)pStdHandleFile;
+	return (HANDLE)pStdHandleFiles[idx];
 }
 
 BOOL SetStdHandle(WINPR_ATTR_UNUSED DWORD nStdHandle, WINPR_ATTR_UNUSED HANDLE hHandle)
