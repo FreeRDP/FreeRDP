@@ -315,7 +315,9 @@ static wStream* winpr_bitmap_construct_header_stream(size_t width, size_t height
 			return nullptr;
 	}
 
-	bf.bfOffBits += offset;
+	if (offset > UINT32_MAX - bf.bfOffBits)
+		goto fail;
+	bf.bfOffBits += WINPR_ASSERTING_INT_CAST(UINT32, offset);
 
 	if (!writeBitmapFileHeader(s, &bf))
 		goto fail;
