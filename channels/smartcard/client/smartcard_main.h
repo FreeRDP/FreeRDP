@@ -53,6 +53,9 @@ typedef struct
 	HANDLE thread;
 	SCARDCONTEXT hContext;
 	wMessageQueue* IrpQueue;
+	/* calls that may block, must not hold up IrpQueue */
+	HANDLE txThread;
+	wMessageQueue* TxQueue;
 	SMARTCARD_DEVICE* smartcard;
 } SMARTCARD_CONTEXT;
 
