@@ -43,6 +43,7 @@
 #include <winpr/debug.h>
 #include <winpr/asn1.h>
 #include <winpr/secapi.h>
+#include <winpr/nt.h>
 
 #include "../crypto/tls.h"
 #include "nego.h"
@@ -51,11 +52,6 @@
 #include "utils.h"
 #include "credssp_auth.h"
 #include <freerdp/utils/smartcardlogon.h>
-
-/* not defined on Windows builds without <ntstatus.h> */
-#ifndef STATUS_NTLM_BLOCKED
-#define STATUS_NTLM_BLOCKED ((NTSTATUS)0xC0000418L)
-#endif
 
 #define TAG FREERDP_TAG("core.nla")
 
