@@ -1184,6 +1184,8 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		credentials->identity.DomainLength = message->DomainName.Len / sizeof(WCHAR);
 	}
 
+	credentials->identity.Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
+
 	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_LM_KEY)
 	{
 		const SECURITY_STATUS rc = ntlm_compute_lm_v2_response(context); /* LmChallengeResponse */
