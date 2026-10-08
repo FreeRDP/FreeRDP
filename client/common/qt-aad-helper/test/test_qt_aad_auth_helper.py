@@ -57,6 +57,7 @@ BROKER_TARGET = "ms-appx-web://microsoft.aad.brokerplugin/test-client-id?code=TE
 
 class RedirectHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
+        self.server.last_user_agent = self.headers.get("User-Agent")
         if self.path.startswith("/redirect"):
             self.send_response(302)
             self.send_header("Location", BROKER_TARGET)
@@ -178,6 +179,7 @@ def main():
         fail(f"helper binary not found: {helper_path}")
 
     server = http.server.HTTPServer(("127.0.0.1", 0), RedirectHandler)
+    server.last_user_agent = None
     port = server.server_port
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
@@ -235,6 +237,94 @@ def main():
         if got2 != plain_url:
             fail(f"navigate (plain redirect_uri): expected {plain_url!r}, got {got2!r}")
         print("plain redirect_uri ok")
+
+        # Case 3: no user_agent supplied -> native (QtWebEngine) UA is used. Records the native
+        # UA that Case 5/6 assert is restored after an override.
+        default_nav = helper.request(
+            "navigate",
+            {
+                "title": "test",
+                "url": f"http://127.0.0.1:{port}/redirect",
+                "redirect_uri": "ms-appx-web://microsoft.aad.brokerplugin/test-client-id",
+                "timeout_ms": REQUEST_TIMEOUT * 1000,
+            },
+        )
+        if "error" in default_nav:
+            fail(f"navigate (default UA) failed: {default_nav['error']}")
+        default_ua = server.last_user_agent
+        if not default_ua:
+            fail("server saw no User-Agent for the default case")
+        if "TestAgent/1.0" in default_ua:
+            fail(f"default UA unexpectedly equals the override: {default_ua!r}")
+        print(f"default UA ok: {default_ua}")
+
+        # Case 4: user_agent supplied -> helper presents it verbatim.
+        override_ua = "TestAgent/1.0"
+        ua_nav = helper.request(
+            "navigate",
+            {
+                "title": "test",
+                "url": f"http://127.0.0.1:{port}/redirect",
+                "redirect_uri": "ms-appx-web://microsoft.aad.brokerplugin/test-client-id",
+                "user_agent": override_ua,
+                "timeout_ms": REQUEST_TIMEOUT * 1000,
+            },
+        )
+        if "error" in ua_nav:
+            fail(f"navigate (override UA) failed: {ua_nav['error']}")
+        if server.last_user_agent != override_ua:
+            fail(f"expected UA {override_ua!r}, server saw {server.last_user_agent!r}")
+        print("override UA ok")
+
+        # Case 5: an explicitly empty user_agent must also restore the native UA (contract:
+        # absent OR empty means native, even after a previous override).
+        empty_nav = helper.request(
+            "navigate",
+            {
+                "title": "test",
+                "url": f"http://127.0.0.1:{port}/redirect",
+                "redirect_uri": "ms-appx-web://microsoft.aad.brokerplugin/test-client-id",
+                "user_agent": "",
+                "timeout_ms": REQUEST_TIMEOUT * 1000,
+            },
+        )
+        if "error" in empty_nav:
+            fail(f"navigate (empty UA) failed: {empty_nav['error']}")
+        if server.last_user_agent != default_ua:
+            fail(
+                f"expected native UA after empty override {default_ua!r}, "
+                f"saw {server.last_user_agent!r}"
+            )
+        print("empty UA restore ok")
+
+        # Case 6: override again, then omit -> native UA restored. Covers the omitted path
+        # transitioning from an override, not only from the native state Case 5 left behind.
+        reoverride_nav = helper.request(
+            "navigate",
+            {
+                "title": "test",
+                "url": f"http://127.0.0.1:{port}/redirect",
+                "redirect_uri": "ms-appx-web://microsoft.aad.brokerplugin/test-client-id",
+                "user_agent": override_ua,
+                "timeout_ms": REQUEST_TIMEOUT * 1000,
+            },
+        )
+        if "error" in reoverride_nav:
+            fail(f"navigate (re-override UA) failed: {reoverride_nav['error']}")
+        omitted_nav = helper.request(
+            "navigate",
+            {
+                "title": "test",
+                "url": f"http://127.0.0.1:{port}/redirect",
+                "redirect_uri": "ms-appx-web://microsoft.aad.brokerplugin/test-client-id",
+                "timeout_ms": REQUEST_TIMEOUT * 1000,
+            },
+        )
+        if "error" in omitted_nav:
+            fail(f"navigate (omitted UA) failed: {omitted_nav['error']}")
+        if server.last_user_agent != default_ua:
+            fail(f"expected native UA restored {default_ua!r}, server saw {server.last_user_agent!r}")
+        print("omitted UA restore ok")
 
         shut = helper.request("shutdown")
         if shut.get("result") is not None:
