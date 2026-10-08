@@ -754,7 +754,7 @@ static BOOL releaseFlagStates(rdpInput *input, UINT32 aKbdModFlags)
 
 			const char *data = [formatString cStringUsingEncoding:NSUTF8StringEncoding];
 			const size_t dataLen = [formatString lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-			formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain");
+			formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain;charset=utf-8");
 			ClipboardSetData(mfc->clipboard, formatId, data, dataLen + 1);
 			[formatString release];
 

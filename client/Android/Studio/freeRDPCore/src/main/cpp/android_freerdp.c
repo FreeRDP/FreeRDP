@@ -1148,7 +1148,8 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1data(
 	freerdp* inst = (freerdp*)instance;
 	const char* data = jdata != nullptr ? (*env)->GetStringUTFChars(env, jdata, nullptr) : nullptr;
 	const size_t data_length = data ? (*env)->GetStringUTFLength(env, jdata) : 0;
-	jboolean ret = android_push_clipboard_event(inst, data, data_length, "text/plain");
+	jboolean ret =
+	    android_push_clipboard_event(inst, data, data_length, "text/plain;charset=utf-8");
 	WLog_DBG(TAG, "send_clipboard_data: (%s)", data);
 
 	if (data)

@@ -453,7 +453,8 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 		case CF_UNICODETEXT:
 		{
 			JNIEnv* env = nullptr;
-			UINT32 plainFormatId = ClipboardRegisterFormat(afc->clipboard, "text/plain");
+			UINT32 plainFormatId =
+			    ClipboardRegisterFormat(afc->clipboard, "text/plain;charset=utf-8");
 			char* data = (char*)ClipboardGetData(afc->clipboard, plainFormatId, &size);
 			if (!data)
 				break;
