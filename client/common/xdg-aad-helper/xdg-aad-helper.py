@@ -215,6 +215,12 @@ class Session:
         redirect_uri = params.get("redirect_uri", "")
         timeout_ms = params.get("timeout_ms") or DEFAULT_TIMEOUT_MS
 
+        user_agent = params.get("user_agent", "")
+        if user_agent:
+            print("[xdgopen-aad-helper] warning: user_agent was configured, but this helper "
+                  "opens the system browser and cannot override its User-Agent; ignoring "
+                  "user_agent", file=sys.stderr)
+
         if not redirect_uri.lower().startswith(BROKER_SCHEME):
             with self.lock:
                 self.current = None
