@@ -3890,7 +3890,8 @@ static int parse_aad_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			{ "avd-access:", FreeRDP_GatewayAvdAccessAadFormat, nullptr },
 			{ "avd-token:", FreeRDP_GatewayAvdAccessTokenFormat, nullptr },
 			{ "avd-scope:", FreeRDP_GatewayAvdScope, nullptr },
-			{ "auth-helper:", FreeRDP_AadAuthHelper, nullptr }
+			{ "auth-helper:", FreeRDP_AadAuthHelper, nullptr },
+			{ "user-agent:", FreeRDP_AadAuthUserAgent, nullptr }
 		};
 		for (size_t x = 0; x < count; x++)
 		{
