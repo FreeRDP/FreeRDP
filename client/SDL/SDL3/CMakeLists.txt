@@ -59,6 +59,11 @@ set(SRCS
     sdl_x11.cpp
 )
 
+# Native macOS display helpers (AppKit screen geometry for window-free monitor queries).
+if(APPLE)
+  list(APPEND SRCS sdl_macos.hpp sdl_macos.mm)
+endif()
+
 # Native X11 helpers for RAIL (_NET_WM_MOVERESIZE, compositor detection); no-op stubs without libX11.
 set(SDL_X11_NATIVE OFF)
 if(NOT WIN32 AND NOT APPLE)
@@ -129,6 +134,12 @@ list(
   sdl3-dialogs
   sdl-common-prefs
 )
+
+if(APPLE)
+  find_library(APPKIT_FRAMEWORK AppKit REQUIRED)
+  find_library(COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
+  list(APPEND LIBS ${APPKIT_FRAMEWORK} ${COREGRAPHICS_FRAMEWORK})
+endif()
 
 if(NOT WITH_SDL_LINK_SHARED)
   list(APPEND LIBS SDL3::SDL3-static)
