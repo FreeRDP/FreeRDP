@@ -77,7 +77,8 @@ static char* build_hello_request(UINT32 id)
 
 WINPR_ATTR_MALLOC(free, 1)
 static char* build_navigate_request(UINT32 id, const char* title, const char* url,
-                                    const char* redirect_uri, UINT32 timeout_ms)
+                                    const char* redirect_uri, const char* user_agent,
+                                    UINT32 timeout_ms)
 {
 	WINPR_JSON* obj = WINPR_JSON_CreateObject();
 	if (!obj)
@@ -92,6 +93,8 @@ static char* build_navigate_request(UINT32 id, const char* title, const char* ur
 	     WINPR_JSON_AddStringToObject(params, "url", url) &&
 	     WINPR_JSON_AddStringToObject(params, "redirect_uri", redirect_uri) &&
 	     WINPR_JSON_AddIntegerToObject(params, "timeout_ms", timeout_ms);
+	if (ok && user_agent && (user_agent[0] != '\0'))
+		ok = ok && WINPR_JSON_AddStringToObject(params, "user_agent", user_agent);
 
 	char* str = ok ? WINPR_JSON_PrintUnformatted(obj) : nullptr;
 	WINPR_JSON_Delete(obj);
@@ -545,6 +548,7 @@ cleanup:
 static AadAuthHelperNavigateStatus aad_auth_helper_navigate(AadAuthHelper* helper,
                                                             const char* title, const char* url,
                                                             const char* redirect_uri,
+                                                            const char* user_agent,
                                                             UINT32 timeout_ms, char** redirect_url,
                                                             size_t* redirect_url_len)
 {
@@ -558,7 +562,8 @@ static AadAuthHelperNavigateStatus aad_auth_helper_navigate(AadAuthHelper* helpe
 	*redirect_url_len = 0;
 
 	const UINT32 id = ++helper->nextId;
-	char* req = build_navigate_request(id, title ? title : "", url, redirect_uri, timeout_ms);
+	char* req =
+	    build_navigate_request(id, title ? title : "", url, redirect_uri, user_agent, timeout_ms);
 	if (!req)
 		return AAD_AUTH_HELPER_NAVIGATE_ERROR;
 
@@ -711,8 +716,10 @@ static AadAuthHelperNavigateStatus aad_helper_navigate(AadAuthHelper* helper, co
 
 	char* out = nullptr;
 	size_t outLen = 0;
-	const AadAuthHelperNavigateStatus status =
-	    aad_auth_helper_navigate(helper, title, url, redirectUri, 180000, &out, &outLen);
+	const char* user_agent =
+	    freerdp_settings_get_string(helper->context->context.settings, FreeRDP_AadAuthUserAgent);
+	const AadAuthHelperNavigateStatus status = aad_auth_helper_navigate(
+	    helper, title, url, redirectUri, user_agent, 180000, &out, &outLen);
 	winpr_zfree(redirectUri);
 	if (status != AAD_AUTH_HELPER_NAVIGATE_OK)
 	{
