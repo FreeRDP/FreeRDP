@@ -129,7 +129,7 @@ static BOOL log_error_(const char* name, const WINPR_FILE* pFile, const char* fi
 
 	if (WLog_IsLevelActive(log, level))
 	{
-		WLog_PrintTextMessage(log, level, line, file, fkt, "%s %s failed with %s [0x08%x]", name,
+		WLog_PrintTextMessage(log, level, line, file, fkt, "%s %s failed with %s [0x%08x]", name,
 		                      pFile->lpFileName, winpr_strerror(errno, ebuffer, sizeof(ebuffer)),
 		                      WINPR_CXX_COMPAT_CAST(unsigned, errno));
 	}
