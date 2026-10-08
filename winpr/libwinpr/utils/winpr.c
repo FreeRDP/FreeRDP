@@ -107,6 +107,7 @@ const char* winpr_getApplicationDetailsProduct(void)
 	return s_winpr_product_string;
 }
 
+#if !defined(WITHOUT_WINPR_3x_DEPRECATED)
 char* winpr_getApplicatonDetailsRegKey(const char* fmt)
 {
 	char* val = winpr_getApplicatonDetailsCombined('\\');
@@ -119,6 +120,7 @@ char* winpr_getApplicatonDetailsRegKey(const char* fmt)
 	free(val);
 	return str;
 }
+#endif
 
 char* winpr_getApplicatonDetailsCombined(char separator)
 {

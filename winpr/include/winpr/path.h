@@ -24,6 +24,7 @@
 #include <winpr/tchar.h>
 #include <winpr/error.h>
 #include <winpr/wtypes.h>
+#include <winpr/json.h>
 
 #include <winpr/Pathcch.h>
 
@@ -244,6 +245,18 @@ extern "C"
 	WINPR_ATTR_FORMAT_ARG(2, 0)
 	WINPR_API char* winpr_GetConfigFilePathVA(BOOL system, WINPR_FORMAT_ARG const char* filename,
 	                                          va_list ap);
+
+	/** @brief return a parsed JSON for a given config file name.
+	 *
+	 *  @param system a boolean indicating the configuration base, \b TRUE for system configuration,
+	 * \b FALSE for user configuration
+	 *  @param filename an optional configuration file name to append.
+	 *
+	 *  @return A parsed \b WINPR_JSON object or \b nullptr in case of any failure.
+	 *  @since version 3.33.0
+	 */
+	WINPR_ATTR_MALLOC(WINPR_JSON_Delete, 1)
+	WINPR_API WINPR_JSON* winpr_GetJSONConfigFile(BOOL system, const char* filename);
 
 	WINPR_ATTR_NODISCARD
 	WINPR_API const char* GetKnownPathIdString(int id);

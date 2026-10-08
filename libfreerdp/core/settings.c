@@ -31,7 +31,9 @@
 #include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/sysinfo.h>
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #include <winpr/registry.h>
+#endif
 #include <winpr/wtsapi.h>
 #include <winpr/input.h>
 
@@ -127,6 +129,7 @@ static BOOL align_rects(const struct bounds_t* r1, const struct bounds_t* r2)
 	return (left == right) || (top == bottom);
 }
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 static BOOL settings_reg_query_dword_val(HKEY hKey, const TCHAR* sub, DWORD* value)
 {
 	DWORD dwType = 0;
@@ -186,9 +189,25 @@ static BOOL settings_reg_query_bool(rdpSettings* settings, FreeRDP_Settings_Keys
 
 	return freerdp_settings_set_bool(settings, id, (dwValue != 0));
 }
+#endif
+
+static void settings_load_config(rdpSettings* settings, const char* config)
+{
+	WINPR_JSON* json = freerdp_GetJSONConfigFile(TRUE, config);
+	if (!json)
+		return;
+
+	if (!freerdp_settings_apply_from_json(settings, json))
+	{
+		WLog_DBG(TAG, "%s could not be applied. File does not exist or is not valid", config);
+	}
+	WINPR_JSON_Delete(json);
+}
 
 static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 {
+	const char config[] = "settings-defaults-client.json";
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	{
 		char* key = freerdp_getApplicatonDetailsRegKey(CLIENT_KEY);
 		if (key)
@@ -200,6 +219,9 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 
 			if (status == ERROR_SUCCESS)
 			{
+				WLog_WARN(TAG, "HKLM.reg is deprecated since 3.33.0. ATTENTION Use %s instead",
+				          config);
+
 				settings_reg_query_dword(settings, FreeRDP_DesktopWidth, hKey, _T("DesktopWidth"));
 				settings_reg_query_dword(settings, FreeRDP_DesktopHeight, hKey,
 				                         _T("DesktopHeight"));
@@ -337,38 +359,60 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 			}
 		}
 	}
+#endif
+	settings_load_config(settings, config);
 }
 
 static void settings_server_load_hkey_local_machine(rdpSettings* settings)
 {
-	HKEY hKey = nullptr;
+	const char config[] = "settings-defaults-server.json";
 
-	char* key = freerdp_getApplicatonDetailsRegKey(SERVER_KEY);
-	if (!key)
-		return;
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
+	{
+		HKEY hKey = nullptr;
 
-	const LONG status =
-	    RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
-	free(key);
+		char* key = freerdp_getApplicatonDetailsRegKey(SERVER_KEY);
+		if (!key)
+			return;
 
-	if (status != ERROR_SUCCESS)
-		return;
+		const LONG status =
+		    RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+		free(key);
 
-	settings_reg_query_bool(settings, FreeRDP_ExtSecurity, hKey, _T("ExtSecurity"));
-	settings_reg_query_bool(settings, FreeRDP_NlaSecurity, hKey, _T("NlaSecurity"));
-	settings_reg_query_bool(settings, FreeRDP_TlsSecurity, hKey, _T("TlsSecurity"));
-	settings_reg_query_dword(settings, FreeRDP_TlsSecLevel, hKey, _T("TlsSecLevel"));
-	settings_reg_query_bool(settings, FreeRDP_RdpSecurity, hKey, _T("RdpSecurity"));
+		if (status != ERROR_SUCCESS)
+			return;
 
-	RegCloseKey(hKey);
+		WLog_WARN(TAG, "HKLM.reg is deprecated since 3.33.0. ATTENTION Use %s instead", config);
+
+		settings_reg_query_bool(settings, FreeRDP_ExtSecurity, hKey, _T("ExtSecurity"));
+		settings_reg_query_bool(settings, FreeRDP_NlaSecurity, hKey, _T("NlaSecurity"));
+		settings_reg_query_bool(settings, FreeRDP_TlsSecurity, hKey, _T("TlsSecurity"));
+		settings_reg_query_dword(settings, FreeRDP_TlsSecLevel, hKey, _T("TlsSecLevel"));
+		settings_reg_query_bool(settings, FreeRDP_RdpSecurity, hKey, _T("RdpSecurity"));
+
+		RegCloseKey(hKey);
+	}
+#endif
+
+	settings_load_config(settings, config);
 }
 
-static void settings_load_hkey_local_machine(rdpSettings* settings)
+WINPR_ATTR_NODISCARD
+static BOOL settings_load_hkey_local_machine(rdpSettings* settings)
 {
-	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
+	const BOOL server = freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
+	if (server)
 		settings_server_load_hkey_local_machine(settings);
 	else
 		settings_client_load_hkey_local_machine(settings);
+
+	const BOOL fail = server != freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
+	if (fail)
+	{
+		WLog_ERR(TAG,
+		         "default configuration changed FreeRDP_ServerMode! This is not allowed, aborting");
+	}
+	return !fail;
 }
 
 static BOOL settings_init_computer_name(rdpSettings* settings)
@@ -1302,8 +1346,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 			goto out_fail;
 	}
 
-	settings_load_hkey_local_machine(settings);
-
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SmartcardLogon, FALSE))
 		goto out_fail;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_TlsSecLevel, FREERDP_TLS_SECLEVEL_112BIT))
@@ -1349,6 +1391,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	char buffer[64] = WINPR_C_ARRAY_INIT;
 	if (!freerdp_settings_set_string(settings, FreeRDP_CorrelationId,
 	                                 guid2str(&corrId, buffer, sizeof(buffer))))
+		goto out_fail;
+
+	if (!settings_load_hkey_local_machine(settings))
 		goto out_fail;
 
 	return settings;

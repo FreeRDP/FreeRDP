@@ -38,7 +38,6 @@
 #include <winpr/print.h>
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
-#include <winpr/registry.h>
 #include <winpr/endian.h>
 #include <winpr/crypto.h>
 #include <winpr/path.h>
