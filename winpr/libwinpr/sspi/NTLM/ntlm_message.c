@@ -1263,7 +1263,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 			winpr_HexDump(TAG, WLOG_ERROR, context->NtProofString, sizeof(context->NtProofString));
 			WLog_ERR(TAG, "Actual NtProofString:");
 			winpr_HexDump(TAG, WLOG_ERROR, context->NTLMv2Response.Response,
-			              sizeof(context->NTLMv2Response));
+			              sizeof(context->NTLMv2Response.Response));
 #endif
 			status = SEC_E_LOGON_DENIED;
 			goto fail;
