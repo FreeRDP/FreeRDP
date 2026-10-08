@@ -547,7 +547,15 @@ struct rdp_settings
 		                                                             * the default when unset).
 		                                                             * @since version 3.32.0
 		                                                             */
-	UINT64 padding2112[2112 - 2029];                                /* 2029 */
+	SETTINGS_DEPRECATED(ALIGN64 char* AadAuthUserAgent);            /** 2029
+		                                                             * User-Agent the out-of-process
+		                                                             * AAD auth helper's embedded
+		                                                             * browser presents. NULL (the
+		                                                             * default) keeps the helper's
+		                                                             * native UA.
+		                                                             * @since version 3.32.2
+		                                                             */
+	UINT64 padding2112[2112 - 2030];                                /* 2030 */
 
 	/**
 	 * RemoteApp
