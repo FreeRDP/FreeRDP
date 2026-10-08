@@ -440,8 +440,9 @@ static void LIBUSB_CALL func_bulk_transfer_cb(struct libusb_transfer* transfer)
 				status = USBD_STATUS_TIMEOUT;
 				break;
 
+				/* complete with a non error status */
 			case LIBUSB_TRANSFER_CANCELLED:
-				status = USBD_STATUS_CANCELED;
+				status = USBD_STATUS_SUCCESS;
 				break;
 
 			case LIBUSB_TRANSFER_STALL:
