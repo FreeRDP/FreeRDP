@@ -1034,15 +1034,18 @@ static int pf_client_verify_X509_certificate(freerdp* instance, const BYTE* data
 
 	pClientContext* pc = (pClientContext*)instance->context;
 
-	if (!Stream_EnsureCapacity(pc->remote_pem, length))
-		return 0;
 	Stream_ResetPosition(pc->remote_pem);
+	if (!Stream_EnsureRemainingCapacity(pc->remote_pem, length))
+		return 0;
 
 	free(pc->remote_hostname);
 	pc->remote_hostname = nullptr;
 
 	if (length > 0)
 		Stream_Write(pc->remote_pem, data, length);
+	if (!Stream_EnsureRemainingCapacity(pc->remote_pem, 1))
+		return 0;
+	Stream_Zero(pc->remote_pem, 1);
 
 	if (hostname)
 		pc->remote_hostname = _strdup(hostname);
