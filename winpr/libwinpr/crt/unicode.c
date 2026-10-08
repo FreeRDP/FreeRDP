@@ -717,7 +717,7 @@ SSIZE_T winpr_utfEscapedStringToUtf8(char* str, size_t len)
 		winpr_Data_Write_UINT16(&wc[0], (WCHAR)code);
 
 		// Check for high surrogate
-		if ((wc[0] & 0xd800) == 0xd800)
+		if ((code & 0xd800) == 0xd800)
 		{
 			const INT32 code2 = escapeToNumber(next, &next);
 			if (code2 < 0)
