@@ -497,6 +497,14 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT contex
 
 	while (offset < size)
 	{
+		/* gsm_decode(GSM_OPT_WAV49) requires alternating fixed 33/32 bytes as input.
+		 * abort if the data supplied was inconsistent.
+		 */
+		const BOOL large = (offset % 65) == 0;
+		const size_t toadd = large ? 33 : 32;
+		if (size - offset < toadd)
+			return FALSE;
+
 		gsm_signal gsmBlockBuffer[160] = WINPR_C_ARRAY_INIT;
 		const int rc =
 		    gsm_decode(context->gsm,
@@ -506,10 +514,7 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT contex
 		if (rc < 0)
 			return FALSE;
 
-		if ((offset % 65) == 0)
-			offset += 33;
-		else
-			offset += 32;
+		offset += toadd;
 
 		if (!Stream_EnsureRemainingCapacity(out, sizeof(gsmBlockBuffer)))
 			return FALSE;
