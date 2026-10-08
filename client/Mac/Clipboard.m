@@ -360,7 +360,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 
 	if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) || (formatId == CF_UNICODETEXT))
 	{
-		formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain");
+		formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain;charset=utf-8");
 
 		UINT32 dstSize = 0;
 		char *data = ClipboardGetData(mfc->clipboard, formatId, &dstSize);

@@ -289,7 +289,7 @@ ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(const void* data, size_t da
 
 	if (data && data_length > 0)
 	{
-		const BOOL isText = !mimeType || strcmp(mimeType, "text/plain") == 0;
+		const BOOL isText = !mimeType || strcmp(mimeType, "text/plain;charset=utf-8") == 0;
 		/* Text data needs a null terminator; image data is stored as-is. */
 		event->data = isText ? calloc(data_length + 1, sizeof(char)) : malloc(data_length);
 
