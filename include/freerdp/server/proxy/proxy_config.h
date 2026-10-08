@@ -44,7 +44,9 @@ extern "C"
 	{
 		FREERDP_PROXY_CERT_POLICY_DENY = 0,
 		FREERDP_PROXY_CERT_POLICY_ALLOW,
-		FREERDP_PROXY_CERT_POLICY_PINNED
+		FREERDP_PROXY_CERT_POLICY_PINNED,
+		FREERDP_PROXY_CERT_POLICY_VERIFIED,
+		FREERDP_PROXY_CERT_POLICY_VERIFIED_HOST_MATCH,
 	} FreeRDP_ProxyCertPolicy;
 
 	typedef struct proxy_config proxyConfig;
@@ -152,6 +154,7 @@ extern "C"
 		char* TargetCertPEM;                      /** @since version 3.32.0 */
 		size_t TargetCertPEMLength;               /** @since version 3.32.0 */
 		char* TargetCertHash;                     /** @since version 3.32.0 */
+		char* CertStorePath;                      /** @since version 3.33.0 */
 	};
 
 	/**
