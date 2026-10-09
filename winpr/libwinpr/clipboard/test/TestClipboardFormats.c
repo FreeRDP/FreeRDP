@@ -280,6 +280,110 @@ fail:
 	return rc;
 }
 
+/* image/bmp from the clipboard has a plain BITMAPINFOHEADER and is stored bottom-up */
+WINPR_ATTR_NODISCARD
+static BOOL test_is_plain_bmp(const BYTE* bmp, size_t size)
+{
+	if ((size < 54) || (bmp[0] != 'B') || (bmp[1] != 'M'))
+		return FALSE;
+
+	UINT32 biSize = 0;
+	INT32 biHeight = 0;
+	UINT32 biCompression = 0;
+	memcpy(&biSize, &bmp[14], sizeof(biSize));
+	memcpy(&biHeight, &bmp[22], sizeof(biHeight));
+	memcpy(&biCompression, &bmp[30], sizeof(biCompression));
+	if ((biSize != 40) || (biHeight <= 0) || (biCompression != BI_RGB))
+	{
+		test_log("not a plain bottom-up BMP: biSize=%" PRIu32 " biHeight=%" PRId32
+		         " biCompression=%" PRIu32,
+		         biSize, biHeight, biCompression);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/* convert the clipboard content to dstMime and compare the image with the expected one */
+WINPR_ATTR_NODISCARD
+static BOOL test_convert_image(wClipboard* clipboard, const char* dstMime, const wImage* expected)
+{
+	BOOL rc = FALSE;
+	UINT32 size = 0;
+	wImage* img = winpr_image_new();
+	BYTE* data =
+	    test_ClipboardGetData(clipboard, ClipboardRegisterFormat(clipboard, dstMime), &size);
+	if (!img || !data)
+		goto fail;
+
+	if (winpr_image_read_buffer(img, data, size) <= 0)
+	{
+		test_log("can not read %s", dstMime);
+		goto fail;
+	}
+
+	if (!winpr_image_equal(expected, img,
+	                       WINPR_IMAGE_CMP_IGNORE_DEPTH | WINPR_IMAGE_CMP_IGNORE_ALPHA |
+	                           WINPR_IMAGE_CMP_FUZZY))
+	{
+		test_log("%s differs from the source image", dstMime);
+		goto fail;
+	}
+
+	if ((strcmp(dstMime, "image/bmp") == 0) && !test_is_plain_bmp(data, size))
+		goto fail;
+
+	rc = TRUE;
+fail:
+	free(data);
+	winpr_image_free(img, TRUE);
+	return rc;
+}
+
+/* image formats convert into each other directly, without going through CF_DIB first */
+WINPR_ATTR_NODISCARD
+static BOOL test_image_to_image(void)
+{
+	BOOL rc = FALSE;
+	void* data = nullptr;
+	size_t size = 0;
+	wClipboard* clipboard = ClipboardCreate();
+	wImage* img = winpr_image_new();
+	if (!clipboard || !img)
+		goto fail;
+
+	if (winpr_image_read(img, TEST_CLIP_BMP) <= 0)
+		goto fail;
+
+	data = winpr_image_write_buffer(img, WINPR_IMAGE_BITMAP, &size);
+	if (!data || !test_ClipboardSetData(clipboard, ClipboardRegisterFormat(clipboard, "image/bmp"),
+	                                    data, (UINT32)size))
+		goto fail;
+	free(data);
+	data = nullptr;
+
+	if (!test_convert_image(clipboard, "image/x-bmp", img))
+		goto fail;
+#if defined(WINPR_UTILS_IMAGE_PNG)
+	if (!test_convert_image(clipboard, "image/png", img))
+		goto fail;
+
+	data = winpr_image_write_buffer(img, WINPR_IMAGE_PNG, &size);
+	if (!data || !test_ClipboardSetData(clipboard, ClipboardRegisterFormat(clipboard, "image/png"),
+	                                    data, (UINT32)size))
+		goto fail;
+
+	if (!test_convert_image(clipboard, "image/bmp", img))
+		goto fail;
+#endif
+
+	rc = TRUE;
+fail:
+	free(data);
+	winpr_image_free(img, TRUE);
+	ClipboardDestroy(clipboard);
+	return rc;
+}
+
 int TestClipboardFormats(int argc, char* argv[])
 {
 	int rc = -1;
@@ -509,6 +613,9 @@ int TestClipboardFormats(int argc, char* argv[])
 	}
 
 	if (!test_dib_offsets())
+		goto fail;
+
+	if (!test_image_to_image())
 		goto fail;
 
 	rc = 0;
