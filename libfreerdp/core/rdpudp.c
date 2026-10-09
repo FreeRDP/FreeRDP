@@ -598,13 +598,42 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	Stream_Write_UINT8(s, 10); /* OverheadSize */
 
 	const UINT16 base = udp->v3Expected;
-	const size_t span = (size_t)seq16_diff(udp->v3Highest, base) + 1;
-	size_t count = (span + 6) / 7;
-	if (count > RDPUDP2_MAX_ACKVEC)
-		count = RDPUDP2_MAX_ACKVEC;
+	size_t span = (size_t)seq16_diff(udp->v3Highest, base) + 1;
+	if (span > RDPUDP_RECEIVE_REACH)
+		span = RDPUDP_RECEIVE_REACH;
 
-	/* [MS-RDPEUDP2] 2.2.1.2.6 ACK vector payload. TimeStamp is when the highest sequence number
-	 * received arrived, SendAckTimeGapInMs the time since the latest data packet arrived. */
+	/* [MS-RDPEUDP2] 2.2.1.2.6 ACK vector payload. Runs of seven or more packets in the same
+	 * state go in run-length mode (up to 63 per byte), the rest in 7 bit state maps: with state
+	 * maps only, 127 bytes cover 889 packets, ~70 ms behind a hole at 130 Mbit/s, and everything
+	 * past that would stay unacknowledged until the hole is filled. */
+	BYTE vec[RDPUDP2_MAX_ACKVEC] = WINPR_C_ARRAY_INIT;
+	size_t count = 0;
+	size_t pos = 0;
+	while ((pos < span) && (count < RDPUDP2_MAX_ACKVEC))
+	{
+		const BOOL state = udp->v3Received[seq16_add(base, pos) % RDPUDP_RECEIVE_SLOTS];
+		size_t run = 1;
+		while ((pos + run < span) && (run < 63) &&
+		       (udp->v3Received[seq16_add(base, pos + run) % RDPUDP_RECEIVE_SLOTS] == state))
+			run++;
+		if (run >= 7)
+		{
+			vec[count++] = WINPR_ASSERTING_INT_CAST(BYTE, 0x80 | (state ? 0x40 : 0x00) | run);
+			pos += run;
+			continue;
+		}
+		BYTE bits = 0;
+		for (size_t bit = 0; (bit < 7) && (pos + bit < span); bit++)
+		{
+			if (udp->v3Received[seq16_add(base, pos + bit) % RDPUDP_RECEIVE_SLOTS])
+				bits |= WINPR_ASSERTING_INT_CAST(BYTE, 1 << bit);
+		}
+		vec[count++] = bits; /* state map, bit 0 first */
+		pos += 7;
+	}
+
+	/* TimeStamp is when the highest sequence number received arrived, SendAckTimeGapInMs the
+	 * time since the latest data packet arrived. */
 	const UINT64 now = winpr_GetTickCount64NS();
 	const UINT64 highest = udp->v3Arrival[udp->v3Highest % RDPUDP_RECEIVE_SLOTS];
 	const BYTE control = WINPR_ASSERTING_INT_CAST(BYTE, 0x80 | count);
@@ -613,18 +642,7 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	stream_write_uint24(s, v3_timestamp((highest != 0) ? highest : now)); /* TimeStamp */
 	const BYTE ackGap = v3_ack_gap(udp->v3LatestArrival, now);
 	Stream_Write_UINT8(s, ackGap); /* SendAckTimeGapInMs */
-	for (size_t x = 0; x < count; x++)
-	{
-		BYTE bits = 0;
-		for (size_t bit = 0; bit < 7; bit++)
-		{
-			const UINT16 seq = seq16_add(base, x * 7 + bit);
-			if (udp->v3Received[seq % RDPUDP_RECEIVE_SLOTS] &&
-			    seq16_diff(seq, base) < RDPUDP_RECEIVE_REACH)
-				bits |= WINPR_ASSERTING_INT_CAST(BYTE, 1 << bit);
-		}
-		Stream_Write_UINT8(s, bits); /* state map, bit 0 is the base */
-	}
+	Stream_Write(s, vec, count);   /* codedAckVector */
 	return v3_send_packet(udp, s, RDPUDP2_PACKET_STANDARD);
 }
 
