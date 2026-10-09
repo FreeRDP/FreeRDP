@@ -193,6 +193,8 @@ class SdlContext
 	[[nodiscard]] bool createPrimary();
 	[[nodiscard]] std::string windowTitle() const;
 	[[nodiscard]] bool waitForWindowsCreated();
+	[[nodiscard]] bool createWindowsBeforeConnect() const;
+	[[nodiscard]] bool adoptWindowSize();
 
 	void sdl_client_cleanup(int exit_code, const std::string& error_msg);
 	[[nodiscard]] int sdl_client_thread_connect(std::string& error_msg);
@@ -247,6 +249,7 @@ class SdlContext
 	uint32_t _windowWidth = 0;
 	uint32_t _windowHeight = 0;
 	WinPREvent _windowsCreatedEvent;
+	bool _windowsCreatedEarly = false;
 	std::thread _thread;
 	std::vector<COMMAND_LINE_ARGUMENT_A> _args;
 	std::vector<rdpPointer*> _valid_pointers;
