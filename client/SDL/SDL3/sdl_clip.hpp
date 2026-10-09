@@ -28,6 +28,7 @@
 #include <map>
 
 #include <winpr/wtypes.h>
+#include <winpr/shell.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/client/client_cliprdr_file.h>
 #include <SDL3/SDL.h>
@@ -136,6 +137,22 @@ class sdlClip
 	[[nodiscard]] static bool mime_is_bmp(const std::string& mime);
 	[[nodiscard]] static bool mime_is_html(const std::string& mime);
 
+#if defined(__APPLE__)
+	/* Server to macOS file copy: offer the files lazily, download them on paste */
+	[[nodiscard]] bool offerServerFiles();
+	[[nodiscard]] bool fetchServerFormat(uint32_t formatID, const std::string& mime);
+	[[nodiscard]] static char* ProvideFileCb(void* userdata, size_t index);
+	[[nodiscard]] static char* ProvideTextCb(void* userdata);
+	[[nodiscard]] char* provideFile(size_t index);
+	[[nodiscard]] bool downloadFile(UINT32 listIndex, const FILEDESCRIPTORW& descriptor,
+	                                const std::string& path);
+	[[nodiscard]] bool requestFileContents(UINT32 listIndex, UINT32 flags, UINT64 offset,
+	                                       UINT32 size, std::vector<BYTE>& data);
+	[[nodiscard]] static UINT
+	ReceiveFileContentsResponse(CliprdrClientContext* context,
+	                            const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse);
+#endif
+
 	SdlContext* _sdl = nullptr;
 	CliprdrFileContext* _file = nullptr;
 	CliprdrClientContext* _ctx = nullptr;
@@ -168,4 +185,14 @@ class sdlClip
 	bool _reading_server = false;
 	std::string _uuid;
 	std::string _mime_uuid;
+
+#if defined(__APPLE__)
+	std::vector<FILEDESCRIPTORW> _serverFiles;
+	std::vector<size_t> _serverTopLevelFiles;
+	std::string _downloadDir;
+	HANDLE _contentsEvent = nullptr;
+	UINT32 _contentsStreamId = 0;
+	bool _contentsSuccess = false;
+	std::vector<BYTE> _contentsData;
+#endif
 };
