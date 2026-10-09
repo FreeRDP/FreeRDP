@@ -842,7 +842,6 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
                                              UINT32 ChannelId, const char* ChannelName, UINT* res)
 {
 	BOOL bAccept = 0;
-	DVCMAN_CHANNEL* channel = nullptr;
 	DrdynvcClientContext* context = nullptr;
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	IWTSVirtualChannelCallback* pCallback = nullptr;
@@ -851,15 +850,8 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 	WINPR_ASSERT(res);
 
 	HashTable_Lock(dvcman->listeners);
-	DVCMAN_LISTENER* listener =
-	    (DVCMAN_LISTENER*)HashTable_GetItemValue(dvcman->listeners, ChannelName);
-	if (!listener)
-	{
-		*res = ERROR_NOT_FOUND;
-		goto out;
-	}
-
-	channel = dvcman_get_channel_by_id(pChannelMgr, ChannelId, FALSE);
+	DVCMAN_LISTENER* listener = nullptr;
+	DVCMAN_CHANNEL* channel = dvcman_get_channel_by_id(pChannelMgr, ChannelId, FALSE);
 	if (channel)
 	{
 		switch (channel->state)
@@ -884,6 +876,7 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 	}
 	else
 	{
+		HashTable_Lock(dvcman->channelsById);
 		channel = dvcman_channel_new(drdynvc, pChannelMgr, ChannelId, ChannelName);
 		if (!channel)
 		{
@@ -891,7 +884,6 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 			*res = CHANNEL_RC_NO_MEMORY;
 			goto out;
 		}
-		HashTable_Lock(dvcman->channelsById);
 	}
 
 	if (!HashTable_Insert(dvcman->channelsById, &channel->channel_id, channel))
@@ -900,7 +892,13 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 		*res = ERROR_INTERNAL_ERROR;
 		dvcman_channel_free(channel);
 		channel = nullptr;
-		HashTable_Unlock(dvcman->channelsById);
+		goto out;
+	}
+
+	listener = (DVCMAN_LISTENER*)HashTable_GetItemValue(dvcman->listeners, ChannelName);
+	if (!listener)
+	{
+		*res = ERROR_NOT_FOUND;
 		goto out;
 	}
 
@@ -918,7 +916,6 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 		*res = ERROR_INTERNAL_ERROR;
 		dvcman_channel_unref(channel);
 		channel = nullptr;
-		HashTable_Unlock(dvcman->channelsById);
 		goto out;
 	}
 
@@ -928,7 +925,6 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 		*res = ERROR_INTERNAL_ERROR;
 		dvcman_channel_unref(channel);
 		channel = nullptr;
-		HashTable_Unlock(dvcman->channelsById);
 		goto out;
 	}
 
@@ -948,8 +944,7 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 
 out:
 	HashTable_Unlock(dvcman->listeners);
-	if (channel)
-		dvcman_return_channel(drdynvc->channel_mgr, channel);
+	HashTable_Unlock(dvcman->channelsById);
 
 	return channel;
 }

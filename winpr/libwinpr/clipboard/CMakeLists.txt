@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set(CLIPBOARD_FILE_MAX_RECURSION 512 CACHE STRING "maximum recursive folder depth supported")
+
+winpr_definition_add(-DCLIPBOARD_FILE_MAX_RECURSION=${CLIPBOARD_FILE_MAX_RECURSION})
 winpr_module_add(synthetic.c clipboard.c clipboard.h synthetic_file.h synthetic_file.c)
 
 if(BUILD_TESTING_INTERNAL OR BUILD_TESTING)
