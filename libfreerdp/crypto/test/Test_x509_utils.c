@@ -218,6 +218,55 @@ fail:
 	return success;
 }
 
+/*
+SAN='DNS:*.wildcard.example.com,DNS:*.com,DNS:*..com,DNS:*.com.,DNS:host.example.com'
+openssl req -x509 -newkey rsa:2048 -keyout /dev/null -days 3650 -nodes \
+  -subj "/CN=*.wildcard.example.com" -addext "subjectAltName=$SAN" \
+  -out Test_x509_wildcard_cert.pem
+*/
+static int TestWildcardNames(void)
+{
+	int rc = -1;
+	size_t count = 0;
+	size_t* lengths = nullptr;
+	char** names = nullptr;
+	char* common_name = nullptr;
+	char* path = certificate_path("Test_x509_wildcard_cert.pem");
+	X509* certificate = path ? x509_utils_from_pem(path, strlen(path), TRUE) : nullptr;
+
+	if (!certificate)
+	{
+		printf("%s: failure: cannot read certificate file '%s'\n", __func__,
+		       path ? path : "(null)");
+		goto fail;
+	}
+
+	common_name = x509_utils_get_common_name(certificate, nullptr);
+	if (!common_name || (strcmp(common_name, "*.wildcard.example.com") != 0))
+	{
+		printf("%s: failure: wildcard common name not returned: \"%s\"\n", __func__,
+		       common_name ? common_name : "(null)");
+		goto fail;
+	}
+
+	names = x509_utils_get_dns_names(certificate, &count, &lengths);
+	if (!names || (count != 2) || (strcmp(names[0], "*.wildcard.example.com") != 0) ||
+	    (strcmp(names[1], "host.example.com") != 0))
+	{
+		printf("%s: failure: expected only the valid wildcard and host names, got %" PRIuz "\n",
+		       __func__, count);
+		goto fail;
+	}
+
+	rc = 0;
+fail:
+	x509_utils_dns_names_free(count, lengths, names);
+	free(common_name);
+	X509_free(certificate);
+	free(path);
+	return rc;
+}
+
 int Test_x509_utils(int argc, char* argv[])
 {
 	char* cert_path = certificate_path("Test_x509_cert_info.pem");
@@ -227,6 +276,10 @@ int Test_x509_utils(int argc, char* argv[])
 
 	ret = TestCertificateFile(cert_path, certificate_tests, ARRAYSIZE(certificate_tests));
 	free(cert_path);
+	if (ret != 0)
+		return ret;
+
+	ret = TestWildcardNames();
 	if (ret != 0)
 		return ret;
 
