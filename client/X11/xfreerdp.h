@@ -164,6 +164,7 @@ struct xf_context
 	BOOL fullscreen;
 	BOOL decorations;
 	BOOL grab_keyboard;
+	BOOL clipboardRawTransfer;
 	BOOL unobscured;
 	BOOL debug;
 	HANDLE x11event;
