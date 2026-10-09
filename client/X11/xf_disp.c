@@ -64,6 +64,8 @@ struct s_xfDispContext
 	UINT32 lastSentDeviceScaleFactor;
 	BYTE reserved3[4];
 	FreeRDP_TimerID timerID;
+	UINT32 resentWidth;
+	UINT32 resentHeight;
 };
 
 static BOOL xf_disp_check_context(void* context, xfContext** ppXfc, xfDispContext** ppXfDisp,
@@ -104,6 +106,25 @@ static BOOL xf_disp_settings_changed(xfDispContext* xfDisp)
 		return TRUE;
 
 	return FALSE;
+}
+
+/* The size the display channel puts on the wire for a requested size: even width, both
+ * clamped to [200, 8192] (see disp_send_display_control_monitor_layout_pdu). */
+static UINT32 xf_disp_wire_size(UINT32 size, BOOL even)
+{
+	if (even)
+		size -= size % 2;
+	if (size < 200)
+		return 200;
+	if (size > 8192)
+		return 8192;
+	return size;
+}
+
+static BOOL xf_disp_size_matches(UINT32 sentWidth, UINT32 sentHeight, UINT32 width, UINT32 height)
+{
+	return (xf_disp_wire_size(sentWidth, TRUE) == width) &&
+	       (xf_disp_wire_size(sentHeight, FALSE) == height);
 }
 
 static BOOL xf_update_last_sent(xfDispContext* xfDisp)
@@ -302,13 +323,36 @@ static void xf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs*
 	xfDispContext* xfDisp = nullptr;
 	rdpSettings* settings = nullptr;
 
-	WINPR_UNUSED(e);
+	WINPR_ASSERT(e);
 
 	if (!xf_disp_check_context(context, &xfc, &xfDisp, &settings))
 		return;
 
 	if (xfDisp->activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
+		/* The server may ignore a layout it receives while it is busy (e.g. still at the
+		 * logon screen) and reset to another size later. Forget what was sent last, so the
+		 * window size is sent again. Do that once per window size, so a server that answers
+		 * every layout with a size of its own doesn't cause a resize loop. */
+		if (xf_disp_size_matches(xfDisp->lastSentWidth, xfDisp->lastSentHeight, e->width,
+		                         e->height))
+		{
+			xfDisp->resentWidth = 0;
+			xfDisp->resentHeight = 0;
+		}
+		else if ((xfDisp->resentWidth != xfDisp->targetWidth) ||
+		         (xfDisp->resentHeight != xfDisp->targetHeight))
+		{
+			WLog_DBG(TAG,
+			         "server reset to %" PRIu32 "x%" PRIu32 " instead of %" PRIu32 "x%" PRIu32
+			         ", sending the window size again",
+			         e->width, e->height, xfDisp->lastSentWidth, xfDisp->lastSentHeight);
+			xfDisp->resentWidth = xfDisp->targetWidth;
+			xfDisp->resentHeight = xfDisp->targetHeight;
+			xfDisp->lastSentWidth = 0;
+			xfDisp->lastSentHeight = 0;
+		}
+
 		xf_disp_set_window_resizable(xfDisp);
 		xf_disp_sendResize(xfDisp, FALSE);
 	}
