@@ -76,9 +76,4 @@ WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL freerdp_certificate_publickey_encrypt(const rdpCertificate* cert,
                                                          const BYTE* input, size_t cbInput,
                                                          BYTE** poutput, size_t* pcbOutput);
-WINPR_ATTR_MALLOC(free, 1)
-FREERDP_LOCAL char** freerdp_certificate_get_ip_names(const rdpCertificate* cert, size_t* pcount,
-                                                      size_t** pplengths);
-FREERDP_LOCAL void freerdp_certificate_free_ip_names(size_t count, size_t* lengths, char** names);
-
 #endif /* FREERDP_LIB_CORE_CERTIFICATE_H */

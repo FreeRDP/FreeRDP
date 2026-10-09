@@ -21,6 +21,7 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
 #include <winpr/assert.h>
 #include <winpr/cast.h>
 
@@ -900,8 +901,77 @@ static BOOL pf_client_try_compare_hash(rdpCertificate* cert, const char* hash,
 	return rc;
 }
 
+WINPR_ATTR_MALLOC(freerdp_certificate_free, 1)
+static rdpCertificate* fromPem(const char* policy, pClientContext* pc, const char* hostname,
+                               UINT16 port, const BYTE* data, size_t length)
+{
+	if (!data || (length == 0))
+	{
+		PROXY_LOG_WARN(TAG, pc, "certificate policy %s: empty PEM, deny access to %s:%" PRIu16,
+		               policy, hostname, port);
+		return nullptr;
+	}
+	char* copy = strndup((const char*)data, length);
+	if (!copy)
+	{
+		PROXY_LOG_WARN(TAG, pc,
+		               "certificate policy %s: remote PEM clone failed, deny access to %s:%" PRIu16,
+		               policy, hostname, port);
+		return nullptr;
+	}
+	rdpCertificate* cert = freerdp_certificate_new_from_pem(copy);
+	winpr_znfree(copy, length);
+	if (!cert)
+	{
+		PROXY_LOG_WARN(
+		    TAG, pc, "certificate policy %s: remote PEM parsing failed, deny access to %s:%" PRIu16,
+		    policy, hostname, port);
+	}
+	return cert;
+}
+
 WINPR_ATTR_NODISCARD
-static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t length)
+static int pf_client_verify_strict(pClientContext* pc, const proxyConfig* config,
+                                   const char* hostname, UINT16 port, const BYTE* data,
+                                   size_t length, BOOL hostMustMatch)
+{
+	WINPR_ASSERT(pc);
+	WINPR_ASSERT(config);
+
+	char* policy = _strdup(pf_config_policy_to_str(config->TargetCertPolicy));
+	if (!policy)
+		return 0;
+	const size_t len = strlen(policy);
+	for (size_t x = 0; x < len; x++)
+		policy[x] = WINPR_ASSERTING_INT_CAST(char, toupper(policy[x]));
+
+	rdpCertificate* cert = fromPem(policy, pc, hostname, port, data, length);
+	if (!cert)
+		return 0;
+	BOOL rc = freerdp_certificate_verify(cert, config->CertStorePath);
+	if (rc && hostMustMatch)
+	{
+		size_t hostlen = 0;
+		if (hostname)
+			hostlen = strlen(hostname);
+		rc = freerdp_certificate_matches_hostname(cert, hostname, hostlen);
+		if (!rc)
+			PROXY_LOG_WARN(TAG, pc,
+			               "certificate policy %s: hostname mismatch, deny access to %s:%" PRIu16,
+			               policy, hostname, port);
+	}
+	else
+		PROXY_LOG_WARN(TAG, pc,
+		               "certificate policy %s: certificate not valid, deny access to %s:%" PRIu16,
+		               policy, hostname, port);
+	freerdp_certificate_free(cert);
+	free(policy);
+	return rc ? 1 : 0;
+}
+
+WINPR_ATTR_NODISCARD
+static int pf_client_verify_pinned(pClientContext* pc, const char* hostname, UINT16 port,
+                                   const BYTE* data, size_t length)
 {
 	int rc = 0;
 	WINPR_ASSERT(pc);
@@ -913,20 +983,9 @@ static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t 
 	const proxyConfig* config = ps->pdata->config;
 	WINPR_ASSERT(config);
 
-	char* copy = strndup((const char*)data, length);
-	if (!copy)
-	{
-		PROXY_LOG_WARN(TAG, pc, "certificate policy PINNED: remote PEM clone failed, deny access");
-		return 0;
-	}
-	rdpCertificate* cert = freerdp_certificate_new_from_pem(copy);
-	winpr_znfree(copy, length);
+	rdpCertificate* cert = fromPem("PINNED", pc, hostname, port, data, length);
 	if (!cert)
-	{
-		PROXY_LOG_WARN(TAG, pc,
-		               "certificate policy PINNED: remote PEM parsing failed, deny access");
 		return 0;
-	}
 
 	if (config->TargetCertPEM && (config->TargetCertPEMLength > 0))
 	{
@@ -939,17 +998,23 @@ static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t 
 			{
 				const BOOL match = strcmp(remote, target) == 0;
 				if (!match)
-					PROXY_LOG_WARN(TAG, pc, "certificate policy PINNED: PEM mismatch, deny access");
+					PROXY_LOG_WARN(
+					    TAG, pc,
+					    "certificate policy PINNED: PEM mismatch, deny access to %s:%" PRIu16,
+					    hostname, port);
 				else
-					PROXY_LOG_INFO(TAG, pc, "certificate policy PINNED: PEM matches, allow access");
+					PROXY_LOG_INFO(
+					    TAG, pc,
+					    "certificate policy PINNED: PEM matches, allow access to %s:%" PRIu16,
+					    hostname, port);
 				rc = match ? 1 : 0;
 			}
 			else
 			{
 				PROXY_LOG_WARN(TAG, pc,
 				               "certificate policy PINNED: PEM hashing failed (remote=%p, "
-				               "target=%p), deny access",
-				               (void*)remote, (void*)target);
+				               "target=%p), deny accessto %s:%" PRIu16,
+				               (void*)remote, (void*)target, hostname, port);
 			}
 			winpr_zfree(remote);
 			winpr_zfree(target);
@@ -958,8 +1023,10 @@ static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t 
 		}
 		else
 		{
-			PROXY_LOG_WARN(TAG, pc,
-			               "certificate policy PINNED: config PEM parsing failed, deny access");
+			PROXY_LOG_WARN(
+			    TAG, pc,
+			    "certificate policy PINNED: config PEM parsing failed, deny access to %s:%" PRIu16,
+			    hostname, port);
 		}
 	}
 
@@ -981,16 +1048,21 @@ static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t 
 
 		winpr_zfree(str);
 		if (rc == 1)
-			PROXY_LOG_INFO(TAG, pc, "certificate policy PINNED: hash matches, allow access");
+			PROXY_LOG_INFO(TAG, pc,
+			               "certificate policy PINNED: hash matches, allow access to %s:%" PRIu16,
+			               hostname, port);
 		else
-			PROXY_LOG_WARN(TAG, pc,
-			               "certificate policy PINNED: certificate hash mismatch, deny access");
+			PROXY_LOG_WARN(
+			    TAG, pc,
+			    "certificate policy PINNED: certificate hash mismatch, deny access to %s:%" PRIu16,
+			    hostname, port);
 	}
 	else
 	{
 		PROXY_LOG_WARN(TAG, pc,
 		               "certificate policy PINNED: neigter PEM nor HASH set for "
-		               "comparison, deny access");
+		               "comparison, deny access to %s:%" PRIu16,
+		               hostname, port);
 	}
 
 	freerdp_certificate_free(cert);
@@ -998,7 +1070,8 @@ static int pf_client_verify_pinned(pClientContext* pc, const BYTE* data, size_t 
 }
 
 WINPR_ATTR_NODISCARD
-static int pf_client_verify_by_policy(pClientContext* pc, const BYTE* data, size_t length)
+static int pf_client_verify_by_policy(pClientContext* pc, const char* hostname, UINT16 port,
+                                      const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(pc);
 	WINPR_ASSERT(pc->pdata);
@@ -1011,14 +1084,20 @@ static int pf_client_verify_by_policy(pClientContext* pc, const BYTE* data, size
 
 	switch (config->TargetCertPolicy)
 	{
+		case FREERDP_PROXY_CERT_POLICY_VERIFIED_HOST_MATCH:
+			return pf_client_verify_strict(pc, config, hostname, port, data, length, TRUE);
+		case FREERDP_PROXY_CERT_POLICY_VERIFIED:
+			return pf_client_verify_strict(pc, config, hostname, port, data, length, FALSE);
 		case FREERDP_PROXY_CERT_POLICY_PINNED:
-			return pf_client_verify_pinned(pc, data, length);
+			return pf_client_verify_pinned(pc, hostname, port, data, length);
 		case FREERDP_PROXY_CERT_POLICY_ALLOW:
-			PROXY_LOG_INFO(TAG, pc, "certificate policy ALLOW: allow access");
+			PROXY_LOG_INFO(TAG, pc, "certificate policy ALLOW: allow access to %s:%" PRIu16,
+			               hostname, port);
 			return 1;
 		case FREERDP_PROXY_CERT_POLICY_DENY:
 		default:
-			PROXY_LOG_WARN(TAG, pc, "certificate policy DENY: deny access");
+			PROXY_LOG_WARN(TAG, pc, "certificate policy DENY: deny access to %s:%" PRIu16, hostname,
+			               port);
 			return 0;
 	}
 }
@@ -1061,7 +1140,7 @@ static int pf_client_verify_X509_certificate(freerdp* instance, const BYTE* data
 		return 1;
 	}
 
-	return pf_client_verify_by_policy(pc, data, length);
+	return pf_client_verify_by_policy(pc, hostname, port, data, length);
 }
 
 WINPR_ATTR_NODISCARD
