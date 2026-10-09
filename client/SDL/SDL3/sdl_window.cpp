@@ -394,13 +394,11 @@ bool SdlWindow::fill(SDL_Window* window, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 	return SDL_FillSurfaceRect(surface, &rect, color);
 }
 
-rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPrimary)
+/* r: position in SDL global coordinates, size in pixels. factor: display scale of a window on
+ * that display (see SDL_GetWindowDisplayScale). */
+static rdpMonitor makeMonitor(SDL_DisplayID id, const SDL_Rect& r, float factor,
+                              bool forceAsPrimary)
 {
-	if (!window)
-		return {};
-
-	const auto& r = rect(window, forceAsPrimary);
-	const float factor = SDL_GetWindowDisplayScale(window);
 	const float dpi = std::roundf(factor * 100.0f);
 
 	WINPR_ASSERT(r.w > 0);
@@ -441,6 +439,16 @@ rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPr
 	SDL_LogDebug(cat, "monitor.attributes.physicalHeight     %" PRIu32,
 	             monitor.attributes.physicalHeight);
 	return monitor;
+}
+
+rdpMonitor SdlWindow::query(SDL_Window* window, SDL_DisplayID id, bool forceAsPrimary)
+{
+	if (!window)
+		return {};
+
+	const auto& r = rect(window, forceAsPrimary);
+	const float factor = SDL_GetWindowDisplayScale(window);
+	return makeMonitor(id, r, factor, forceAsPrimary);
 }
 
 SDL_Rect SdlWindow::rect(SDL_Window* window, bool forceAsPrimary)
@@ -753,6 +761,45 @@ SdlWindow SdlWindow::createPopup(SDL_Window* parent, const SDL_Rect& rect, bool 
 	return SdlWindow{ parent, rect, transparent, tooltip };
 }
 
+/* What a fullscreen window on display `id` would report to query()/rect(), read from the
+ * display APIs so no window has to be shown.
+ *
+ * Only on SDL's x11 backend, where the values are fixed before a window exists:
+ * - The window manager frames a fullscreen window to the display origin and current mode,
+ *   which is what SDL_GetDisplayBounds() returns.
+ * - The backend reports no separate pixel size and sets no pixel_density on its modes, so
+ *   the pixel size is the window size.
+ * - It reports no per-window content scale, so SDL_GetWindowDisplayScale() is the pixel
+ *   density times SDL_GetDisplayContentScale() of the display the window is fullscreen on.
+ * Wayland keeps the probe window: the scale there is per surface and only known once the
+ * compositor has placed one. */
+[[nodiscard]] static bool queryWithoutWindow(SDL_DisplayID id, bool forceAsPrimary, SDL_Rect& rect,
+                                             float& factor)
+{
+	const auto driver = SDL_GetCurrentVideoDriver();
+	if ((driver == nullptr) || (strcmp(driver, "x11") != 0))
+		return false;
+
+	SDL_Rect bounds = {};
+	if (!SDL_GetDisplayBounds(id, &bounds))
+		return false;
+
+	const auto mode = SDL_GetDesktopDisplayMode(id);
+	if (!mode || (mode->pixel_density <= 0.0f))
+		return false;
+
+	const auto contentScale = SDL_GetDisplayContentScale(id);
+	if (contentScale <= 0.0f)
+		return false;
+
+	rect.x = forceAsPrimary ? 0 : bounds.x;
+	rect.y = forceAsPrimary ? 0 : bounds.y;
+	rect.w = static_cast<int>(std::ceil(static_cast<float>(bounds.w) * mode->pixel_density));
+	rect.h = static_cast<int>(std::ceil(static_cast<float>(bounds.h) * mode->pixel_density));
+	factor = mode->pixel_density * contentScale;
+	return (rect.w > 0) && (rect.h > 0);
+}
+
 static SDL_Window* createDummy(SDL_DisplayID id)
 {
 	const auto x = SDL_WINDOWPOS_CENTERED_DISPLAY(id);
@@ -792,6 +839,11 @@ static SDL_Window* createDummy(SDL_DisplayID id)
 
 rdpMonitor SdlWindow::query(SDL_DisplayID id, bool forceAsPrimary)
 {
+	SDL_Rect r = {};
+	float factor = 0.0f;
+	if (queryWithoutWindow(id, forceAsPrimary, r, factor))
+		return makeMonitor(id, r, factor, forceAsPrimary);
+
 	std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(createDummy(id), SDL_DestroyWindow);
 	if (!window)
 		return {};
@@ -811,6 +863,11 @@ rdpMonitor SdlWindow::query(SDL_DisplayID id, bool forceAsPrimary)
 
 SDL_Rect SdlWindow::rect(SDL_DisplayID id, bool forceAsPrimary)
 {
+	SDL_Rect r = {};
+	float factor = 0.0f;
+	if (queryWithoutWindow(id, forceAsPrimary, r, factor))
+		return r;
+
 	std::unique_ptr<SDL_Window, void (*)(SDL_Window*)> window(createDummy(id), SDL_DestroyWindow);
 	if (!window)
 		return {};
