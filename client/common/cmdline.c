@@ -1275,8 +1275,7 @@ static int freerdp_client_command_line_post_filter_int(void* context, COMMAND_LI
 		UINT32 flags = 0;
 		if (freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransport))
 		{
-			flags =
-			    (TRANSPORT_TYPE_UDP_FECR | TRANSPORT_TYPE_UDP_FECL | TRANSPORT_TYPE_UDP_PREFERRED);
+			flags = TRANSPORT_TYPE_UDP_FECR;
 #if defined(WITH_RDPEUDP)
 			flags |= SOFTSYNC_TCP_TO_UDP;
 #endif
