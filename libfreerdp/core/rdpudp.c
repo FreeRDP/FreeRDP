@@ -104,6 +104,11 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 /* Both Windows endpoints start the RDP-UDP2 data sequence space at 100. */
 #define RDPUDP2_INITIAL_SEQUENCE 100
 
+/* [MS-RDPEUDP2] 3.1.5.2: a receiver acknowledges at least every 8 data packets until the peer's
+ * DelayAckInfo says otherwise, which allows at most 15. */
+#define RDPUDP2_DEFAULT_DELAYED_ACKS 8
+#define RDPUDP2_MAX_DELAYED_ACKS 15
+
 /* RDPUDP2 ACK vectors hold at most 127 state map bytes of 7 packets each. */
 #define RDPUDP2_MAX_ACKVEC 127
 
@@ -197,7 +202,6 @@ struct rdp_udp
 	/* receiving side */
 	BOOL ackPending;
 	BOOL receivedData;
-	UINT64 lastDataArrival;
 	rdpudp_slot slots[RDPUDP_RECEIVE_SLOTS];
 	size_t buffered;
 	UINT64 lastDelivery;
@@ -214,6 +218,13 @@ struct rdp_udp
 	UINT16 v3Expected;
 	UINT16 v3Highest;
 	BOOL v3Received[RDPUDP_RECEIVE_SLOTS];
+	UINT64 v3Arrival[RDPUDP_RECEIVE_SLOTS]; /* when each data sequence arrived, in ns */
+	UINT64 v3InOrderArrival;                /* when data sequence v3Expected - 1 arrived */
+	BOOL v3InOrderReceived; /* FALSE while v3Expected - 1 is one AckOfAcks gave up on */
+	UINT64 v3LatestArrival; /* when the latest data packet arrived */
+	size_t v3MaxDelayedAcks;
+	size_t v3UnackedPackets; /* data packets received since our last acknowledgement */
+	BOOL v3AckedGap;         /* whether our last acknowledgement reported a missing packet */
 	UINT16 v3NextChannel;
 	UINT16 v3LastChannelDataSeq;  /* data sequence that carried channel sequence 0xFFFF */
 	UINT16 v3FirstChannelDataSeq; /* data sequence that carried channel sequence 1 */
@@ -397,19 +408,19 @@ static BOOL rdpudp_send_raw(rdpUdp* udp, const BYTE* data, size_t length)
 /* ------------------------------------------------------------------------------------------ */
 
 WINPR_ATTR_NODISCARD
-static UINT32 v3_timestamp(void)
+static UINT32 v3_timestamp(UINT64 ns)
 {
 	/* [MS-RDPEUDP2] 3.1.1.1.4: 24 bits in units of 4 microseconds */
-	return WINPR_ASSERTING_INT_CAST(UINT32, (winpr_GetTickCount64NS() / 4000ULL) & 0x00FFFFFFULL);
+	return WINPR_ASSERTING_INT_CAST(UINT32, (ns / 4000ULL) & 0x00FFFFFFULL);
 }
 
+/* Milliseconds an acknowledgement waited after the packet it reports arrived. */
 WINPR_ATTR_NODISCARD
-static BYTE v3_ack_gap(const rdpUdp* udp)
+static BYTE v3_ack_gap(UINT64 arrival, UINT64 now)
 {
-	WINPR_ASSERT(udp);
-	if (!udp->receivedData)
+	if ((arrival == 0) || (now < arrival))
 		return 0;
-	const UINT64 gap = now_ms() - udp->lastDataArrival;
+	const UINT64 gap = (now - arrival) / 1000000ULL;
 	return (gap > 254) ? 254 : WINPR_ASSERTING_INT_CAST(BYTE, gap); /* 255 means invalid */
 }
 
@@ -420,16 +431,22 @@ static BOOL v3_has_gap(const rdpUdp* udp)
 	return udp->v3BaseKnown && seq16_after(udp->v3Highest, seq16_diff(udp->v3Expected, 1));
 }
 
-/* [MS-RDPEUDP2] 2.2.1.2.1 ACK payload */
+/* [MS-RDPEUDP2] 2.2.1.2.1 ACK payload. receivedTS is when the acknowledged packet arrived and
+ * sendAckTimeGap how long the acknowledgement waited after that. The peer measures the path from
+ * both, a send time in receivedTS would make the time spent here look like network delay. */
 static void v3_write_ack(const rdpUdp* udp, wStream* s)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(s);
+	const UINT64 now = winpr_GetTickCount64NS();
+	/* A sequence number the peer gave up on never arrived. An older packet's arrival time would
+	 * place its receipt before it was sent, so it is reported as received now. */
+	const UINT64 arrival = udp->v3InOrderReceived ? udp->v3InOrderArrival : now;
 	const UINT16 seq = seq16_diff(udp->v3Expected, 1);
-	Stream_Write_UINT16(s, seq);            /* SeqNum */
-	stream_write_uint24(s, v3_timestamp()); /* receivedTS */
+	Stream_Write_UINT16(s, seq);                   /* SeqNum */
+	stream_write_uint24(s, v3_timestamp(arrival)); /* receivedTS */
 	/* the Stream_Write macros evaluate their value more than once */
-	const BYTE gap = v3_ack_gap(udp);
+	const BYTE gap = v3_ack_gap(arrival, now);
 	Stream_Write_UINT8(s, gap); /* sendAckTimeGapInMs */
 	Stream_Write_UINT8(s, 0);   /* numDelayedAcks, delayAckTimeScale */
 }
@@ -492,10 +509,12 @@ static BOOL v3_send_ack(rdpUdp* udp)
 		return TRUE;
 
 	udp->ackPending = FALSE;
+	udp->v3UnackedPackets = 0;
 
 	/* A cumulative ACK cannot describe a hole, the ACK vector reports the exact window so only
 	 * what is missing gets resent. ACK and ACKVEC are mutually exclusive. */
 	const BOOL gap = v3_has_gap(udp);
+	udp->v3AckedGap = gap;
 	wStream* s = v3_packet_init(&sbuffer, buffer, sizeof(buffer),
 	                            RDPUDP2_OVERHEADSIZE | (gap ? RDPUDP2_ACKVEC : RDPUDP2_ACK));
 	if (!s)
@@ -515,12 +534,15 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	if (count > RDPUDP2_MAX_ACKVEC)
 		count = RDPUDP2_MAX_ACKVEC;
 
-	/* [MS-RDPEUDP2] 2.2.1.2.6 ACK vector payload */
+	/* [MS-RDPEUDP2] 2.2.1.2.6 ACK vector payload. TimeStamp is when the highest sequence number
+	 * received arrived, SendAckTimeGapInMs the time since the latest data packet arrived. */
+	const UINT64 now = winpr_GetTickCount64NS();
+	const UINT64 highest = udp->v3Arrival[udp->v3Highest % RDPUDP_RECEIVE_SLOTS];
 	const BYTE control = WINPR_ASSERTING_INT_CAST(BYTE, 0x80 | count);
-	Stream_Write_UINT16(s, base);           /* BaseSeqNum */
-	Stream_Write_UINT8(s, control);         /* TimeStampPresent, codedAckVecSize */
-	stream_write_uint24(s, v3_timestamp()); /* TimeStamp */
-	const BYTE ackGap = v3_ack_gap(udp);
+	Stream_Write_UINT16(s, base);   /* BaseSeqNum */
+	Stream_Write_UINT8(s, control); /* TimeStampPresent, codedAckVecSize */
+	stream_write_uint24(s, v3_timestamp((highest != 0) ? highest : now)); /* TimeStamp */
+	const BYTE ackGap = v3_ack_gap(udp->v3LatestArrival, now);
 	Stream_Write_UINT8(s, ackGap); /* SendAckTimeGapInMs */
 	for (size_t x = 0; x < count; x++)
 	{
@@ -592,6 +614,8 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 	{
 		v3_write_ack(udp, s);
 		udp->ackPending = FALSE;
+		udp->v3UnackedPackets = 0;
+		udp->v3AckedGap = FALSE;
 	}
 
 	Stream_Write_UINT8(s, 1);   /* MaxDelayedAcks */
@@ -756,6 +780,21 @@ static BOOL rdpudp_send_ack(rdpUdp* udp)
 	if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
 		return v3_send_ack(udp);
 	return v1_send_packet(udp, nullptr);
+}
+
+/* [MS-RDPEUDP2] 3.1.5.2 and 4.2: a receiver acknowledges at least every MaxDelayedAcks data
+ * packets, and at once when a packet goes missing or a missing one turns up. Checked after every
+ * datagram, so a burst is acknowledged while it is still arriving rather than when it ended. */
+WINPR_ATTR_NODISCARD
+static BOOL v3_ack_if_due(rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	if ((udp->version != RDPUDP_PROTOCOL_VERSION_3) || (udp->state != RDPUDP_STATE_ESTABLISHED) ||
+	    !udp->ackPending)
+		return TRUE;
+	if ((v3_has_gap(udp) == udp->v3AckedGap) && (udp->v3UnackedPackets < udp->v3MaxDelayedAcks))
+		return TRUE;
+	return v3_send_ack(udp);
 }
 
 WINPR_ATTR_NODISCARD
@@ -986,7 +1025,6 @@ static BOOL v1_receive_source(rdpUdp* udp, UINT32 seq, const BYTE* data, size_t 
 	}
 
 	udp->ackPending = TRUE;
-	udp->lastDataArrival = now_ms();
 
 	if (seq32_after(udp->recvNext, seq))
 		return TRUE; /* already delivered, the ACK above tells the peer again */
@@ -1126,7 +1164,10 @@ static void v3_advance_window(rdpUdp* udp)
 	WINPR_ASSERT(udp);
 	while (udp->v3Received[udp->v3Expected % RDPUDP_RECEIVE_SLOTS])
 	{
-		udp->v3Received[udp->v3Expected % RDPUDP_RECEIVE_SLOTS] = FALSE;
+		const size_t slot = udp->v3Expected % RDPUDP_RECEIVE_SLOTS;
+		udp->v3InOrderArrival = udp->v3Arrival[slot];
+		udp->v3InOrderReceived = TRUE;
+		udp->v3Received[slot] = FALSE;
 		udp->v3Expected++;
 	}
 }
@@ -1147,6 +1188,7 @@ static void v3_advance_base(rdpUdp* udp, UINT16 base)
 		udp->v3Received[udp->v3Expected % RDPUDP_RECEIVE_SLOTS] = FALSE;
 		udp->v3Expected++;
 	}
+	udp->v3InOrderReceived = FALSE;
 	const UINT16 last = seq16_diff(base, 1);
 	if (seq16_after(last, udp->v3Highest))
 		udp->v3Highest = last;
@@ -1340,8 +1382,22 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 	if ((flags & RDPUDP2_OVERHEADSIZE) && !Stream_SafeSeek(s, 1))
 		return TRUE;
 
-	if ((flags & RDPUDP2_DELAYACKINFO) && !Stream_SafeSeek(s, 3))
-		return TRUE;
+	if (flags & RDPUDP2_DELAYACKINFO)
+	{
+		/* [MS-RDPEUDP2] 2.2.1.2.3: how many data packets the peer lets us acknowledge at once.
+		 * Acknowledgements never wait past the end of a receive round, well inside its
+		 * DelayedAckTimeoutInMs. */
+		if (!Stream_CheckAndLogRequiredLengthWLog(udp->log, s, 3))
+			return TRUE;
+		const size_t maxDelayed = Stream_Get_UINT8(s); /* MaxDelayedAcks */
+		Stream_Seek_UINT16(s);                         /* DelayedAckTimeoutInMs */
+		if (maxDelayed == 0)
+			udp->v3MaxDelayedAcks = 1;
+		else if (maxDelayed > RDPUDP2_MAX_DELAYED_ACKS)
+			udp->v3MaxDelayedAcks = RDPUDP2_MAX_DELAYED_ACKS;
+		else
+			udp->v3MaxDelayedAcks = maxDelayed;
+	}
 
 	BOOL haveAoA = FALSE;
 	UINT16 aoa = 0;
@@ -1386,7 +1442,8 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 	if (!haveData)
 		return TRUE;
 
-	udp->lastDataArrival = now_ms();
+	udp->v3LatestArrival = winpr_GetTickCount64NS();
+	udp->v3UnackedPackets++;
 	udp->receivedData = TRUE;
 	if (!udp->v3BaseKnown)
 	{
@@ -1412,6 +1469,7 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 	if (seq16_after(dataSeq, udp->v3Highest))
 		udp->v3Highest = dataSeq;
 	udp->v3Received[dataSeq % RDPUDP_RECEIVE_SLOTS] = TRUE;
+	udp->v3Arrival[dataSeq % RDPUDP_RECEIVE_SLOTS] = udp->v3LatestArrival;
 	v3_advance_window(udp);
 
 	/* A dummy packet occupies a sequence number but its body means nothing. */
@@ -1546,6 +1604,7 @@ static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 		/* The peer's stream starts at channel sequence 1 too. Taking the start from whichever
 		 * chunk arrives first would throw away an earlier one that it overtook. */
 		udp->v3NextChannel = 1;
+		udp->v3MaxDelayedAcks = RDPUDP2_DEFAULT_DELAYED_ACKS;
 	}
 	else
 	{
@@ -1868,6 +1927,8 @@ BOOL rdpudp_check(rdpUdp* udp)
 			return FALSE;
 		}
 		if (udp->state == RDPUDP_STATE_FAILED)
+			return FALSE;
+		if (!v3_ack_if_due(udp))
 			return FALSE;
 	}
 
