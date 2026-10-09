@@ -153,7 +153,7 @@ if [ $CLONE -ne 0 ]; then
   do_clone release-3.2.2 https://github.com/libsdl-org/SDL_ttf.git SDL_ttf
   do_clone v2.0.3 https://github.com/mstorsjo/fdk-aac.git fdk-aac
   do_clone v1.6 https://gitlab.xiph.org/xiph/opus.git opus
-  do_download https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/ libressl-4.2.1.tar.gz 6d5c2f58583588ea791f4c8645004071d00dfa554a5bf788a006ca1eb5abd70b libressl
+  do_download https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/ libressl-4.3.3.tar.gz ff97c432457f349e6ba3d416ab903bc7468f1436f0f32efe5fff808de292c7b8 libressl
 fi
 
 if [ $BUILD -eq 0 ]; then
