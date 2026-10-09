@@ -241,7 +241,8 @@ BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi, size_t* poff
 }
 
 WINPR_ATTR_MALLOC(Stream_Free, 1)
-static wStream* winpr_bitmap_construct_header_stream(size_t width, size_t height, size_t bpp)
+static wStream* winpr_bitmap_construct_header_stream(size_t width, size_t height, size_t bpp,
+                                                     BOOL bottomUp)
 {
 	WINPR_BITMAP_FILE_HEADER bf = WINPR_C_ARRAY_INIT;
 	WINPR_BITMAP_INFO_HEADER bi = WINPR_C_ARRAY_INIT;
@@ -267,7 +268,7 @@ static wStream* winpr_bitmap_construct_header_stream(size_t width, size_t height
 	bi.biSizeImage = (UINT32)imgSize;
 	bf.bfSize = bf.bfOffBits + bi.biSizeImage;
 	bi.biWidth = (INT32)width;
-	bi.biHeight = -1 * (INT32)height;
+	bi.biHeight = bottomUp ? (INT32)height : -1 * (INT32)height;
 	bi.biPlanes = 1;
 	bi.biBitCount = (UINT16)bpp;
 	bi.biCompression = BI_RGB;
@@ -340,7 +341,7 @@ fail:
 
 BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 {
-	wStream* s = winpr_bitmap_construct_header_stream(width, height, bpp);
+	wStream* s = winpr_bitmap_construct_header_stream(width, height, bpp, FALSE);
 	if (!s)
 		return nullptr;
 	void* data = Stream_Buffer(s);
@@ -390,16 +391,18 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, size_t size, UINT32 wid
 	if (bpp_stride > stride)
 		return nullptr;
 
-	wStream* s = winpr_bitmap_construct_header_stream(width, height, bpp);
+	/* Store the rows bottom-up: some readers, e.g. Windows when synthesizing CF_BITMAP from a
+	 * CF_DIB, do not handle top-down bitmaps. */
+	wStream* s = winpr_bitmap_construct_header_stream(width, height, bpp, TRUE);
 	if (!s)
 		goto fail;
 
-	for (size_t y = 0; y < height; y++)
+	for (size_t y = height; y > 0; y--)
 	{
 		if (!Stream_EnsureRemainingCapacity(s, stride))
 			goto fail;
 
-		size_t offset = y * stride;
+		size_t offset = (y - 1) * stride;
 		if (offset + stride <= size)
 		{
 			const BYTE* line = &data[offset];

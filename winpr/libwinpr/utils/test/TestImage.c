@@ -394,6 +394,85 @@ fail:
 	return rc;
 }
 
+/* Bitmaps are written bottom-up with a plain BITMAPINFOHEADER, the layout every reader
+ * understands, e.g. Windows when synthesizing CF_BITMAP from a CF_DIB. */
+static BOOL test_write_bottom_up(void)
+{
+	BOOL rc = FALSE;
+	const UINT32 width = 2;
+	const UINT32 height = 2;
+	const UINT32 stride = width * 4;
+	const size_t offBits = 54;
+	const size_t size = offBits + 1ull * stride * height;
+	const BYTE pixels[16] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+		                      0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18 };
+
+	wImage* image = winpr_image_new();
+	BYTE* bmp = (BYTE*)calloc(1, size);
+	BYTE* out = nullptr;
+	size_t outSize = 0;
+	if (!image || !bmp)
+		goto fail;
+
+	bmp[0] = 'B';
+	bmp[1] = 'M';
+	put_u32(&bmp[2], (UINT32)size);                      /* bfSize */
+	put_u32(&bmp[10], (UINT32)offBits);                  /* bfOffBits */
+	put_u32(&bmp[14], 40);                               /* biSize */
+	put_u32(&bmp[18], width);                            /* biWidth */
+	put_u32(&bmp[22], (UINT32)(-(INT32)height));         /* biHeight, top-down */
+	put_u16(&bmp[26], 1);                                /* biPlanes */
+	put_u16(&bmp[28], 32);                               /* biBitCount */
+	put_u32(&bmp[30], BI_RGB);                           /* biCompression */
+	put_u32(&bmp[34], (UINT32)(1ull * stride * height)); /* biSizeImage */
+	memcpy(&bmp[offBits], pixels, sizeof(pixels));
+
+	if (winpr_image_read_buffer(image, bmp, size) <= 0)
+		goto fail;
+
+	out = winpr_image_write_buffer(image, WINPR_IMAGE_BITMAP, &outSize);
+	if (!out || (outSize < offBits + sizeof(pixels)))
+	{
+		(void)fprintf(stderr, "[%s] winpr_image_write_buffer failed\n", __func__);
+		goto fail;
+	}
+
+	{
+		UINT32 biSize = 0;
+		INT32 biHeight = 0;
+		UINT32 biCompression = 0;
+		UINT32 bfOffBits = 0;
+		memcpy(&bfOffBits, &out[10], sizeof(bfOffBits));
+		memcpy(&biSize, &out[14], sizeof(biSize));
+		memcpy(&biHeight, &out[22], sizeof(biHeight));
+		memcpy(&biCompression, &out[30], sizeof(biCompression));
+		if ((biSize != 40) || (biHeight != (INT32)height) || (biCompression != BI_RGB) ||
+		    (bfOffBits + sizeof(pixels) > outSize))
+		{
+			(void)fprintf(stderr,
+			              "[%s] unexpected header biSize=%" PRIu32 " biHeight=%" PRId32
+			              " biCompression=%" PRIu32 "\n",
+			              __func__, biSize, biHeight, biCompression);
+			goto fail;
+		}
+
+		/* the last row in the file is the top row of the image */
+		if ((memcmp(&out[bfOffBits], &pixels[stride], stride) != 0) ||
+		    (memcmp(&out[bfOffBits + stride], &pixels[0], stride) != 0))
+		{
+			(void)fprintf(stderr, "[%s] rows are not stored bottom-up\n", __func__);
+			goto fail;
+		}
+	}
+
+	rc = TRUE;
+fail:
+	free(out);
+	free(bmp);
+	winpr_image_free(image, TRUE);
+	return rc;
+}
+
 int TestImage(int argc, char* argv[])
 {
 	int rc = 0;
@@ -416,6 +495,9 @@ int TestImage(int argc, char* argv[])
 	if (!test_bmp_offbits(BI_BITFIELDS, 0, FALSE) || !test_bmp_offbits(BI_BITFIELDS, 4, TRUE) ||
 	    !test_bmp_offbits(BI_RGB, 0, FALSE) || !test_bmp_offbits(BI_RGB, 12, TRUE))
 		rc -= 16;
+
+	if (!test_write_bottom_up())
+		rc -= 32;
 
 	return rc;
 }
