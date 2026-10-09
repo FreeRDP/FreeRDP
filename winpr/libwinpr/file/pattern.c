@@ -242,6 +242,14 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 		return TRUE;
 
 	/**
+	 * Windows keeps the MS-DOS meaning of "*.*": every name, also the ones
+	 * without a dot. Servers use it to list directories (MS-RDPEFS clients
+	 * receive it in IRP_MN_QUERY_DIRECTORY), so match it the same way.
+	 */
+	if ((cchPattern == 3) && (strcmp(lpPattern, "*.*") == 0))
+		return TRUE;
+
+	/**
 	 * Subsequently evaluation of the “*X” expression is performed. This is a case where
 	 * the expression starts off with a wild card character and contains some non-wild card
 	 * characters towards the tail end of the name. This is evaluated by making sure the
