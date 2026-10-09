@@ -15,7 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(NOT IOS AND NOT WIN32 AND NOT ANDROID)
+if(WIN32 AND NOT UWP AND WITH_NATIVE_SSPI)
+  # On Windows, RDPEAR is handled by the native TSSSP package
+  # (client/rdpear_sspi.c), without krb5 or rdpear-common.
+  define_channel("rdpear")
+
+  if(WITH_CLIENT_CHANNELS)
+    add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
+  endif()
+elseif(NOT WIN32 AND NOT IOS AND NOT ANDROID)
   find_package(KRB5)
 
   if(KRB5_FOUND)

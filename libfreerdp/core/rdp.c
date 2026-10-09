@@ -1958,6 +1958,29 @@ static state_run_t rdp_client_exchange_monitor_layout(rdpRdp* rdp, wStream* s)
 }
 
 WINPR_ATTR_NODISCARD
+static state_run_t rdp_recv_tsssp(rdpRdp* rdp, wStream* s)
+{
+	WINPR_ASSERT(rdp);
+
+	rdpTsssp* tsssp = transport_get_tsssp(rdp->transport);
+	WINPR_ASSERT(tsssp);
+
+	if (tsssp_recv(tsssp, s) < 1)
+	{
+		WLog_Print(rdp->log, WLOG_ERROR, "%s - tsssp_recv() fail", rdp_get_state_string(rdp));
+		return STATE_RUN_FAILED;
+	}
+
+	if (tsssp_get_state(tsssp) != TSSSP_STATE_FINAL)
+		return STATE_RUN_SUCCESS;
+
+	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST))
+		return STATE_RUN_FAILED;
+
+	return STATE_RUN_CONTINUE;
+}
+
+WINPR_ATTR_NODISCARD
 static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transport, wStream* s,
                                          void* extra)
 {
@@ -1977,6 +2000,13 @@ static state_run_t rdp_recv_callback_int(WINPR_ATTR_UNUSED rdpTransport* transpo
 				status = STATE_RUN_CONTINUE;
 			break;
 		case CONNECTION_STATE_NLA:
+			/* Remote Credential Guard over TSSSP on Windows also uses this state,
+			 * but has no rdpNla. */
+			if (transport_get_tsssp(rdp->transport))
+			{
+				status = rdp_recv_tsssp(rdp, s);
+				break;
+			}
 			if (nla_get_state(rdp->nla) < NLA_STATE_AUTH_INFO)
 			{
 				if (nla_recv_pdu(rdp->nla, s) < 1)

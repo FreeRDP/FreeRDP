@@ -371,6 +371,16 @@ static BOOL nego_try_connect(rdpNego* nego)
 			break;
 		case PROTOCOL_HYBRID_EX:
 			WLog_Print(nego->log, WLOG_DEBUG, "nego_security_connect with PROTOCOL_HYBRID_EX");
+#if defined(TSSSP_SUPPORTED)
+			/* Remote Credential Guard through the native TSSSP package over FreeRDP's
+			 * TLS. Without the native SSPI, and on other platforms, it goes through
+			 * NLA with the Kerberos backend. */
+			if (nego->RemoteCredsGuardRequired)
+			{
+				nego->SecurityConnected = transport_connect_tsssp(nego->transport);
+				break;
+			}
+#endif
 			nego->SecurityConnected = transport_connect_nla(nego->transport, TRUE);
 			break;
 		case PROTOCOL_SSL:

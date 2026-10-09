@@ -158,6 +158,21 @@ extern "C"
 	FREERDP_API rdpTransport* freerdp_get_transport(rdpContext* context);
 
 	/**
+	 * @brief Get the TSSSP security context of a Remote Credential Guard connection
+	 *
+	 * On Windows, Remote Credential Guard is authenticated by the native TSSSP
+	 * package. The [MS-RDPEAR] channel passes this context to the TSSSP LSA package
+	 * with every redirected call.
+	 *
+	 * @param context the RDP context
+	 * @param pTsPkgContext receives the context handle value on success
+	 * @return \b TRUE once the TSSSP authentication has completed, \b FALSE otherwise
+	 *         (always on platforms other than Windows)
+	 */
+	WINPR_ATTR_NODISCARD
+	FREERDP_API BOOL freerdp_tsssp_get_context(rdpContext* context, UINT64* pTsPkgContext);
+
+	/**
 	 * @brief Free a transport layer instance
 	 * @param layer A pointer to the layer to free or \b nullptr
 	 * @since version 3.9.0

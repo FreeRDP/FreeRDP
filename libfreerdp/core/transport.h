@@ -32,6 +32,7 @@ typedef enum
 
 #include "tcp.h"
 #include "nla.h"
+#include "tsssp.h"
 #include "rdstls.h"
 
 #include "gateway/tsg.h"
@@ -116,6 +117,16 @@ FREERDP_LOCAL BOOL transport_connect_rdstls(rdpTransport* transport);
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL transport_connect_aad(rdpTransport* transport);
 
+#if defined(TSSSP_SUPPORTED)
+/** @brief Connect with Remote Credential Guard over PROTOCOL_HYBRID_EX.
+ *
+ * Performs FreeRDP's TLS handshake and starts the native TSSSP exchange. The
+ * rest of the exchange runs in CONNECTION_STATE_NLA, as with NLA.
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL transport_connect_tsssp(rdpTransport* transport);
+#endif
+
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL transport_accept_rdp(rdpTransport* transport);
 
@@ -185,6 +196,16 @@ FREERDP_LOCAL BOOL transport_set_tls(rdpTransport* transport, rdpTls* tls);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL rdpTls* transport_get_tls(rdpTransport* transport);
+
+/** @brief Attach the TSSSP context of a Remote Credential Guard connection
+ *
+ * The transport takes ownership of \b tsssp and frees any previous context.
+ */
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL BOOL transport_set_tsssp(rdpTransport* transport, rdpTsssp* tsssp);
+
+WINPR_ATTR_NODISCARD
+FREERDP_LOCAL rdpTsssp* transport_get_tsssp(rdpTransport* transport);
 
 WINPR_ATTR_NODISCARD
 FREERDP_LOCAL BOOL transport_set_tsg(rdpTransport* transport, rdpTsg* tsg);
