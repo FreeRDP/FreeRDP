@@ -454,6 +454,7 @@ static BOOL foreachRemoveAndStop(const void* key, WINPR_ATTR_UNUSED void* value,
 
 static BOOL insertEarlyExitValues(wHashTable* table, size_t count)
 {
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc): HashTable_Insert takes ownership of listener
 	for (size_t i = 1; i <= count; i++)
 	{
 		int* value = calloc(1, sizeof(int));
@@ -465,6 +466,7 @@ static BOOL insertEarlyExitValues(wHashTable* table, size_t count)
 			return FALSE;
 		}
 	}
+	// NOLINTEND(clang-analyzer-unix.Malloc): HashTable_Insert takes ownership of listener
 	return TRUE;
 }
 
