@@ -2278,6 +2278,22 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, WINPR_ATTR_UNUSED wSt
 			WLog_ERR(TAG, "client desktop resize callback failed");
 			return STATE_RUN_FAILED;
 		}
+
+		/* The codecs for bitmap updates and surface bits were sized for the
+		 * old desktop when connecting. The GFX codecs are reset by the GFX
+		 * channel on ResetGraphics instead. */
+		rdpCodecs* codecs = rdp->context->codecs;
+		if (codecs)
+		{
+			const UINT32 flags = FREERDP_CODEC_INTERLEAVED | FREERDP_CODEC_PLANAR |
+			                     FREERDP_CODEC_NSCODEC | FREERDP_CODEC_REMOTEFX;
+			if (!freerdp_client_codecs_reset(codecs, flags, rdp->settings->DesktopWidth,
+			                                 rdp->settings->DesktopHeight))
+			{
+				WLog_ERR(TAG, "failed to reset codecs to the new desktop size");
+				return STATE_RUN_FAILED;
+			}
+		}
 	}
 
 	WINPR_ASSERT(rdp->context);
