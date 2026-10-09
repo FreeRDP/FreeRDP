@@ -528,6 +528,39 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3
 			                                             roi);
 	}
 }
+
+/**
+ * Convert a plain YUV444 picture, as produced by AV1 decoders, to RGB.
+ *
+ * In contrast to YUV444ToRGB_8u_P3AC4R, which expects AVC444 input where the
+ * first chroma sample of each 2x2 block holds the block average, every pixel
+ * is converted on its own.
+ */
+static pstatus_t general_I444ToRGB_8u(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
+                                      BYTE* WINPR_RESTRICT pDst, UINT32 dstStep, UINT32 DstFormat,
+                                      const prim_size_t* WINPR_RESTRICT roi)
+{
+	WINPR_ASSERT(pSrc);
+	WINPR_ASSERT(srcStep);
+	WINPR_ASSERT(pDst);
+	WINPR_ASSERT(roi);
+
+	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
+
+	for (size_t y = 0; y < roi->height; y++)
+	{
+		const BYTE* WINPR_RESTRICT pY = pSrc[0] + y * srcStep[0];
+		const BYTE* WINPR_RESTRICT pU = pSrc[1] + y * srcStep[1];
+		const BYTE* WINPR_RESTRICT pV = pSrc[2] + y * srcStep[2];
+		BYTE* WINPR_RESTRICT pRGB = pDst + y * dstStep;
+
+		for (size_t x = 0; x < roi->width; x++)
+			pRGB = writeYUVPixel(pRGB, DstFormat, pY[x], pU[x], pV[x], writePixel);
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
 /**
  * | R |   ( | 256     0    403 | |    Y    | )
  * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
@@ -2364,6 +2397,7 @@ void primitives_init_YUV(primitives_t* WINPR_RESTRICT prims)
 	prims->RGBToYUV420_8u_P3AC4R = general_RGBToYUV420_8u_P3AC4R;
 	prims->RGBToYUV444_8u_P3AC4R = general_RGBToYUV444_8u_P3AC4R;
 	prims->RGBToI444_8u = general_RGBToI444_8u;
+	prims->I444ToRGB_8u = general_I444ToRGB_8u;
 	prims->YUV420CombineToYUV444 = general_YUV420CombineToYUV444;
 	prims->YUV444SplitToYUV420 = general_YUV444SplitToYUV420;
 	prims->RGBToAVC444YUV = general_RGBToAVC444YUV;
