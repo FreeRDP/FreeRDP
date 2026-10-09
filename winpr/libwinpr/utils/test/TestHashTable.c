@@ -429,6 +429,112 @@ out:
 	return retCode;
 }
 
+static size_t earlyExitFreed = 0;
+
+static void earlyExitValueFree(void* value)
+{
+	/* HashTable_Insert also calls the free function with nullptr, don't count that */
+	if (value)
+		earlyExitFreed++;
+	free(value);
+}
+
+static BOOL foreachStopFirst(WINPR_ATTR_UNUSED const void* key, WINPR_ATTR_UNUSED void* value,
+                             WINPR_ATTR_UNUSED void* arg)
+{
+	return FALSE;
+}
+
+static BOOL foreachRemoveAndStop(const void* key, WINPR_ATTR_UNUSED void* value, void* arg)
+{
+	wHashTable* table = arg;
+	(void)HashTable_Remove(table, key);
+	return FALSE;
+}
+
+static BOOL insertEarlyExitValues(wHashTable* table, size_t count)
+{
+	for (size_t i = 1; i <= count; i++)
+	{
+		int* value = calloc(1, sizeof(int));
+		if (!value)
+			return FALSE;
+		if (!HashTable_Insert(table, (const void*)i, value))
+		{
+			free(value);
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+/** regression: a HashTable_Foreach interrupted by its callback must leave the table usable,
+ *  later removals have to free the values and not only mark them */
+static int test_hash_foreach_early_exit(void)
+{
+	int retCode = 0;
+	wHashTable* table = HashTable_New(FALSE);
+	if (!table)
+		return -1;
+
+	wObject* obj = HashTable_ValueObject(table);
+	obj->fnObjectFree = earlyExitValueFree;
+	earlyExitFreed = 0;
+
+	if (!insertEarlyExitValues(table, 3))
+	{
+		retCode = -2;
+		goto out;
+	}
+
+	/* interrupted foreach, then removals outside of any foreach */
+	if (HashTable_Foreach(table, foreachStopFirst, nullptr))
+	{
+		retCode = -10;
+		goto out;
+	}
+
+	if (!HashTable_Remove(table, (const void*)1))
+	{
+		retCode = -11;
+		goto out;
+	}
+	if ((earlyExitFreed != 1) || (HashTable_Count(table) != 2) ||
+	    HashTable_Contains(table, (const void*)1))
+	{
+		retCode = -12;
+		goto out;
+	}
+
+	HashTable_Clear(table);
+	if ((earlyExitFreed != 3) || (HashTable_Count(table) != 0))
+	{
+		retCode = -13;
+		goto out;
+	}
+
+	/* the callback removes the current item then stops: it is freed when Foreach returns */
+	if (!insertEarlyExitValues(table, 2))
+	{
+		retCode = -20;
+		goto out;
+	}
+	if (HashTable_Foreach(table, foreachRemoveAndStop, table))
+	{
+		retCode = -21;
+		goto out;
+	}
+	if ((earlyExitFreed != 4) || (HashTable_Count(table) != 1))
+	{
+		retCode = -22;
+		goto out;
+	}
+
+out:
+	HashTable_Free(table);
+	return retCode;
+}
+
 int TestHashTable(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
@@ -442,5 +548,8 @@ int TestHashTable(int argc, char* argv[])
 
 	if (test_hash_foreach() < 0)
 		return 3;
+
+	if (test_hash_foreach_early_exit() < 0)
+		return 4;
 	return 0;
 }
