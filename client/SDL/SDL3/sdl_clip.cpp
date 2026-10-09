@@ -833,6 +833,17 @@ std::shared_ptr<BYTE> sdlClip::getLocalData(uint32_t formatId, uint32_t& len)
 					/* the name is owned by _system and outlives this function */
 					candidates.push_back({ formatName, Store::Lookup });
 				}
+				else if (formatName && (mime_is_image(formatName) || mime_is_bmp(formatName)))
+				{
+					/* We announce every image format WinPR can convert to, but the SDL backend
+					 * may only provide some of them (Windows: image/bmp). Take the ones on
+					 * offer and let the WinPR clipboard convert to the requested format. */
+					for (const auto& mime : s_mime_dib_sources())
+					{
+						if (hasMime(offered, mime))
+							candidates.push_back({ mime, Store::Register });
+					}
+				}
 			}
 			break;
 	}
