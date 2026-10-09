@@ -190,6 +190,21 @@ static void* clipboard_synthesize_cf_locale(WINPR_ATTR_UNUSED wClipboard* clipbo
 	return (void*)pDstData;
 }
 
+/* text/plain is platform dependent: UTF-8 on Windows, where e.g. SDL treats it as such, and
+ * ASCII with \u escapes for all other characters elsewhere. */
+WINPR_ATTR_NODISCARD
+static BOOL format_is_utf8(wClipboard* clipboard, UINT32 formatId)
+{
+	if ((formatId == ClipboardGetFormatId(clipboard, mime_text_utf8)) ||
+	    (formatId == ClipboardGetFormatId(clipboard, mime_text_UTF8_STRING)))
+		return TRUE;
+#if defined(_WIN32)
+	if (formatId == ClipboardGetFormatId(clipboard, mime_text_plain))
+		return TRUE;
+#endif
+	return FALSE;
+}
+
 /**
  * mime_utf8_string:
  *
@@ -215,6 +230,14 @@ static void* clipboard_synthesize_string(wClipboard* clipboard, UINT32 dstFormat
 		const size_t rc = ConvertLineEndingToLF(utf8, size);
 		utf8len = rc;
 	}
+	else if (format_is_utf8(clipboard, clipboard->formatId))
+	{
+		const size_t size = *pSize;
+		utf8 = strndup(data, size);
+		if (!utf8)
+			return nullptr;
+		utf8len = size;
+	}
 	else if ((clipboard->formatId == CF_TEXT) || (clipboard->formatId == CF_OEMTEXT) ||
 	         (clipboard->formatId == ClipboardGetFormatId(clipboard, mime_text_plain)))
 	{
@@ -233,15 +256,6 @@ static void* clipboard_synthesize_string(wClipboard* clipboard, UINT32 dstFormat
 			return nullptr;
 		}
 		utf8len = (size_t)res;
-	}
-	else if ((clipboard->formatId == ClipboardGetFormatId(clipboard, mime_text_utf8)) ||
-	         (clipboard->formatId == ClipboardGetFormatId(clipboard, mime_text_UTF8_STRING)))
-	{
-		const size_t size = *pSize;
-		utf8 = strndup(data, size);
-		if (!utf8)
-			return nullptr;
-		utf8len = size;
 	}
 	else
 	{
@@ -291,8 +305,7 @@ static void* clipboard_synthesize_string(wClipboard* clipboard, UINT32 dstFormat
 			return escaped;
 		}
 		default:
-			if ((dstFormatId == ClipboardGetFormatId(clipboard, mime_text_utf8)) ||
-			    (dstFormatId == ClipboardGetFormatId(clipboard, mime_text_UTF8_STRING)))
+			if (format_is_utf8(clipboard, dstFormatId))
 			{
 				if (utf8len > UINT32_MAX)
 				{
