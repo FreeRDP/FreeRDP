@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <cstdlib>
 #include <memory>
 
 #include <freerdp/settings_types.h>
