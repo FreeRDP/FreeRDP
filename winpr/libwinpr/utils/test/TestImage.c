@@ -473,6 +473,62 @@ fail:
 	return rc;
 }
 
+/* Rows that are not padded to 4 bytes, as a 24 bpp PNG decodes to, are padded when writing */
+static BOOL test_write_unpadded_rows(void)
+{
+	BOOL rc = FALSE;
+	const UINT32 width = 3;
+	const UINT32 height = 2;
+	const size_t row = 3ull * width; /* 9 bytes */
+	const size_t padded = 12;        /* rounded up to 4 bytes */
+	const BYTE pixels[18] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+		                      0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19 };
+
+	BYTE* out = nullptr;
+	size_t outSize = 0;
+	wImage* image = winpr_image_new();
+	if (!image)
+		goto fail;
+
+	image->data = (BYTE*)malloc(sizeof(pixels));
+	if (!image->data)
+		goto fail;
+	memcpy(image->data, pixels, sizeof(pixels));
+	image->width = width;
+	image->height = height;
+	image->bitsPerPixel = 24;
+	image->bytesPerPixel = 3;
+	image->scanline = (UINT32)row;
+
+	out = winpr_image_write_buffer(image, WINPR_IMAGE_BITMAP, &outSize);
+	if (!out)
+	{
+		(void)fprintf(stderr, "[%s] winpr_image_write_buffer failed\n", __func__);
+		goto fail;
+	}
+
+	{
+		UINT32 bfOffBits = 0;
+		memcpy(&bfOffBits, &out[10], sizeof(bfOffBits));
+		const BYTE zero[3] = WINPR_C_ARRAY_INIT;
+		if ((outSize != bfOffBits + padded * height) ||
+		    (memcmp(&out[bfOffBits], &pixels[row], row) != 0) ||
+		    (memcmp(&out[bfOffBits + row], zero, padded - row) != 0) ||
+		    (memcmp(&out[bfOffBits + padded], &pixels[0], row) != 0) ||
+		    (memcmp(&out[bfOffBits + padded + row], zero, padded - row) != 0))
+		{
+			(void)fprintf(stderr, "[%s] unexpected pixel data\n", __func__);
+			goto fail;
+		}
+	}
+
+	rc = TRUE;
+fail:
+	free(out);
+	winpr_image_free(image, TRUE);
+	return rc;
+}
+
 int TestImage(int argc, char* argv[])
 {
 	int rc = 0;
@@ -498,6 +554,9 @@ int TestImage(int argc, char* argv[])
 
 	if (!test_write_bottom_up())
 		rc -= 32;
+
+	if (!test_write_unpadded_rows())
+		rc -= 64;
 
 	return rc;
 }

@@ -379,6 +379,9 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, size_t size, UINT32 wid
 	if ((bpp_stride < 4) || (bpp_stride > UINT32_MAX))
 		return nullptr;
 
+	/* the pixels of a row, without the padding to 4 bytes BMP requires */
+	const size_t row = (1ull * width * bpp + 7ull) / 8ull;
+
 	if (stride == 0)
 		stride = (UINT32)bpp_stride;
 
@@ -388,7 +391,7 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, size_t size, UINT32 wid
 	if (stride > size / height)
 		return nullptr;
 
-	if (bpp_stride > stride)
+	if (row > stride)
 		return nullptr;
 
 	/* Store the rows bottom-up: some readers, e.g. Windows when synthesizing CF_BITMAP from a
@@ -397,20 +400,16 @@ static void* winpr_bitmap_write_buffer(const BYTE* data, size_t size, UINT32 wid
 	if (!s)
 		goto fail;
 
+	/* The source rows may be padded differently, e.g. not at all for a 24 bpp PNG: write each
+	 * row with the padding the header announces. */
 	for (size_t y = height; y > 0; y--)
 	{
-		if (!Stream_EnsureRemainingCapacity(s, stride))
+		if (!Stream_EnsureRemainingCapacity(s, bpp_stride))
 			goto fail;
 
-		size_t offset = (y - 1) * stride;
-		if (offset + stride <= size)
-		{
-			const BYTE* line = &data[offset];
-
-			Stream_Write(s, line, stride);
-		}
-		else
-			Stream_Zero(s, stride);
+		const size_t offset = (y - 1) * stride;
+		Stream_Write(s, &data[offset], row);
+		Stream_Zero(s, bpp_stride - row);
 	}
 
 	result = Stream_Buffer(s);
