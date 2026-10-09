@@ -25,3 +25,7 @@ set(${MODULE_PREFIX}_LIBS winpr freerdp)
 include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
+
+if(BUILD_FUZZERS)
+  add_subdirectory(test)
+endif()
