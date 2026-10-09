@@ -109,6 +109,10 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP2_DEFAULT_DELAYED_ACKS 8
 #define RDPUDP2_MAX_DELAYED_ACKS 15
 
+/* Asked for as the socket receive buffer. A redraw arrives as a burst of hundreds of datagrams,
+ * more than the default buffer holds, and a datagram that does not fit waits for a resend. */
+#define RDPUDP_RECEIVE_BUFFER (2 * 1024 * 1024)
+
 /* RDPUDP2 ACK vectors hold at most 127 state map bytes of 7 packets each. */
 #define RDPUDP2_MAX_ACKVEC 127
 
@@ -1817,6 +1821,13 @@ BOOL rdpudp_connect(rdpUdp* udp, const struct sockaddr* addr, size_t addrlen)
 		WLog_Print(udp->log, WLOG_ERROR, "failed to create the UDP socket");
 		return FALSE;
 	}
+
+	/* The system can grant less than asked, Linux caps it at net.core.rmem_max. A smaller buffer
+	 * only costs resends, so a failure is not fatal. */
+	const UINT32 optval = RDPUDP_RECEIVE_BUFFER;
+	if (_setsockopt(udp->sockfd, SOL_SOCKET, SO_RCVBUF, (const char*)&optval,
+	                WINPR_ASSERTING_INT_CAST(int, sizeof(optval))) != 0)
+		WLog_Print(udp->log, WLOG_WARN, "setsockopt() SOL_SOCKET, SO_RCVBUF failed");
 
 	if (_connect(udp->sockfd, addr, WINPR_ASSERTING_INT_CAST(int, addrlen)) != 0)
 	{
