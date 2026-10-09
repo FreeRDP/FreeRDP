@@ -194,11 +194,11 @@ static WCHAR* concat_file_name(const WCHAR* dir, const WCHAR* file)
 	return buffer;
 }
 
-static BOOL add_file_to_list(wClipboard* clipboard, const WCHAR* local_name,
+static BOOL add_file_to_list(wClipboard* clipboard, size_t recursionDepth, const WCHAR* local_name,
                              const WCHAR* remote_name, wArrayList* files);
 
-static BOOL add_directory_entry_to_list(wClipboard* clipboard, const WCHAR* local_dir_name,
-                                        const WCHAR* remote_dir_name,
+static BOOL add_directory_entry_to_list(wClipboard* clipboard, size_t recursionDepth,
+                                        const WCHAR* local_dir_name, const WCHAR* remote_dir_name,
                                         const LPWIN32_FIND_DATAW pFileData, wArrayList* files)
 {
 	BOOL result = FALSE;
@@ -231,7 +231,7 @@ static BOOL add_directory_entry_to_list(wClipboard* clipboard, const WCHAR* loca
 	remote_name = concat_file_name(remote_dir_name, remote_base_name);
 
 	if (local_name && remote_name)
-		result = add_file_to_list(clipboard, local_name, remote_name, files);
+		result = add_file_to_list(clipboard, recursionDepth, local_name, remote_name, files);
 
 	free(remote_base_name);
 	free(remote_name);
@@ -239,9 +239,9 @@ static BOOL add_directory_entry_to_list(wClipboard* clipboard, const WCHAR* loca
 	return result;
 }
 
-static BOOL do_add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* local_name,
-                                              const WCHAR* remote_name, WCHAR* namebuf,
-                                              wArrayList* files)
+static BOOL do_add_directory_contents_to_list(wClipboard* clipboard, size_t recursionDepth,
+                                              const WCHAR* local_name, const WCHAR* remote_name,
+                                              WCHAR* namebuf, wArrayList* files)
 {
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(local_name);
@@ -258,7 +258,8 @@ static BOOL do_add_directory_contents_to_list(wClipboard* clipboard, const WCHAR
 	}
 	while (TRUE)
 	{
-		if (!add_directory_entry_to_list(clipboard, local_name, remote_name, &FindData, files))
+		if (!add_directory_entry_to_list(clipboard, recursionDepth, local_name, remote_name,
+		                                 &FindData, files))
 		{
 			FindClose(hFind);
 			return FALSE;
@@ -278,8 +279,9 @@ static BOOL do_add_directory_contents_to_list(wClipboard* clipboard, const WCHAR
 	return TRUE;
 }
 
-static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* local_name,
-                                           const WCHAR* remote_name, wArrayList* files)
+static BOOL add_directory_contents_to_list(wClipboard* clipboard, size_t recursionDepth,
+                                           const WCHAR* local_name, const WCHAR* remote_name,
+                                           wArrayList* files)
 {
 	BOOL result = FALSE;
 	union
@@ -296,6 +298,16 @@ static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* l
 	WINPR_ASSERT(remote_name);
 	WINPR_ASSERT(files);
 
+	const size_t max = CLIPBOARD_FILE_MAX_RECURSION;
+	if (recursionDepth > max)
+	{
+		WLog_ERR(TAG,
+		         "This build only supports recursionDepth=%" PRIuz
+		         " <= CLIPBOARD_FILE_MAX_RECURSION=%" PRIuz " recursion depth for folders copied.",
+		         recursionDepth, max);
+		return FALSE;
+	}
+
 	size_t len = _wcslen(local_name);
 	WCHAR* namebuf = calloc(len + wildcardLen, sizeof(WCHAR));
 	if (!namebuf)
@@ -304,14 +316,15 @@ static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* l
 	_wcsncat(namebuf, local_name, len);
 	_wcsncat(namebuf, wildcard.w, wildcardLen);
 
-	result = do_add_directory_contents_to_list(clipboard, local_name, remote_name, namebuf, files);
+	result = do_add_directory_contents_to_list(clipboard, recursionDepth, local_name, remote_name,
+	                                           namebuf, files);
 
 	free(namebuf);
 	return result;
 }
 
-static BOOL add_file_to_list(wClipboard* clipboard, const WCHAR* local_name,
-                             const WCHAR* remote_name, wArrayList* files)
+BOOL add_file_to_list(wClipboard* clipboard, size_t recursionDepth, const WCHAR* local_name,
+                      const WCHAR* remote_name, wArrayList* files)
 {
 	struct synthetic_file* file = nullptr;
 
@@ -337,7 +350,8 @@ static BOOL add_file_to_list(wClipboard* clipboard, const WCHAR* local_name,
 		 * This is effectively a recursive call, but we do not track
 		 * recursion depth, thus filesystem loops can cause a crash.
 		 */
-		if (!add_directory_contents_to_list(clipboard, local_name, remote_name, files))
+		if (!add_directory_contents_to_list(clipboard, recursionDepth + 1, local_name, remote_name,
+		                                    files))
 			return FALSE;
 	}
 
@@ -382,7 +396,7 @@ static BOOL process_file_name(wClipboard* clipboard, const WCHAR* local_name, wA
 	if (!remote_name)
 		return FALSE;
 
-	result = add_file_to_list(clipboard, local_name, remote_name, files);
+	result = add_file_to_list(clipboard, 0, local_name, remote_name, files);
 	free(remote_name);
 	return result;
 }
