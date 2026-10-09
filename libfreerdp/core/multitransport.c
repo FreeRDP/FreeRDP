@@ -550,6 +550,17 @@ static BOOL multitransport_handle_event(rdpMultitransport* multi, const mt_event
 			if (wasReady)
 			{
 				WLog_WARN(TAG, "the UDP tunnel broke down, ending the connection");
+				/* Reconnect over TCP only: the path that just dropped UDP is likely to drop it
+				 * again, and probing it on the reconnect costs seconds the activation wait
+				 * (TcpAckTimeout) does not have. A new connection tries UDP again. */
+				if (!freerdp_settings_set_bool(multi->rdp->settings, FreeRDP_SupportMultitransport,
+				                               FALSE))
+					return FALSE;
+				if (multi->rdp->originalSettings &&
+				    !freerdp_settings_set_bool(multi->rdp->originalSettings,
+				                               FreeRDP_SupportMultitransport, FALSE))
+					return FALSE;
+				WLog_WARN(TAG, "the reconnect will use TCP only");
 				freerdp_set_last_error_if_not(multi->rdp->context,
 				                              FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 				return FALSE;
