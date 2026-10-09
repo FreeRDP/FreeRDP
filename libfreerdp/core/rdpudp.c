@@ -1179,9 +1179,11 @@ static void v3_advance_window(rdpUdp* udp)
 static void v3_advance_base(rdpUdp* udp, UINT16 base)
 {
 	WINPR_ASSERT(udp);
+	/* However far ahead: through an outage the peer resends its window again and again, each
+	 * time under new sequence numbers, and Windows moved almost 5000 ahead in a 2 second outage.
+	 * Only its AckOfAcks brings this side along, data that far ahead is out of reach. seq16_after
+	 * limits the jump to half the sequence space. */
 	if (!udp->v3BaseKnown || !seq16_after(base, udp->v3Expected))
-		return;
-	if (seq16_diff(base, udp->v3Expected) > RDPUDP_RECEIVE_REACH)
 		return;
 
 	/* The peer stopped resending everything below base. This only gives up transport sequence
