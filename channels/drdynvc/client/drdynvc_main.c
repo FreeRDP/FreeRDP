@@ -850,7 +850,17 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 	WINPR_ASSERT(res);
 
 	HashTable_Lock(dvcman->listeners);
-	DVCMAN_LISTENER* listener = nullptr;
+	/* Refuse channels without a listener before registering anything, so a refused
+	 * ChannelId leaves no state behind and the server may reuse it. */
+	DVCMAN_LISTENER* listener =
+	    (DVCMAN_LISTENER*)HashTable_GetItemValue(dvcman->listeners, ChannelName);
+	if (!listener)
+	{
+		HashTable_Unlock(dvcman->listeners);
+		*res = ERROR_NOT_FOUND;
+		return nullptr;
+	}
+
 	DVCMAN_CHANNEL* channel = dvcman_get_channel_by_id(pChannelMgr, ChannelId, FALSE);
 	if (channel)
 	{
@@ -892,13 +902,6 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 		*res = ERROR_INTERNAL_ERROR;
 		dvcman_channel_free(channel);
 		channel = nullptr;
-		goto out;
-	}
-
-	listener = (DVCMAN_LISTENER*)HashTable_GetItemValue(dvcman->listeners, ChannelName);
-	if (!listener)
-	{
-		*res = ERROR_NOT_FOUND;
 		goto out;
 	}
 
