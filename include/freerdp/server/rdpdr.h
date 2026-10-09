@@ -112,6 +112,30 @@ extern "C"
 	                                       UINT32 deviceId, const char* oldPath,
 	                                       const char* newPath);
 
+	typedef UINT (*psRdpdrDriveReadFileEx)(RdpdrServerContext* context, void* callbackData,
+	                                       UINT32 deviceId, UINT32 fileId, UINT32 length,
+	                                       UINT64 offset);
+	typedef UINT (*psRdpdrDriveWriteFileEx)(RdpdrServerContext* context, void* callbackData,
+	                                        UINT32 deviceId, UINT32 fileId, const char* buffer,
+	                                        UINT32 length, UINT64 offset);
+	typedef UINT (*psRdpdrDriveRenameFileEx)(RdpdrServerContext* context, void* callbackData,
+	                                         UINT32 deviceId, const char* oldPath,
+	                                         const char* newPath, BOOL replaceIfExists);
+	typedef UINT (*psRdpdrDriveSetFileSize)(RdpdrServerContext* context, void* callbackData,
+	                                        UINT32 deviceId, const char* path, UINT64 size);
+	typedef UINT (*psRdpdrDriveSetFileTimes)(RdpdrServerContext* context, void* callbackData,
+	                                         UINT32 deviceId, const char* path,
+	                                         INT64 lastAccessTime, INT64 lastWriteTime);
+	typedef UINT (*psRdpdrDriveQueryVolumeInformation)(RdpdrServerContext* context,
+	                                                   void* callbackData, UINT32 deviceId);
+
+	typedef void (*psRdpdrOnDriveSetFileInformationComplete)(RdpdrServerContext* context,
+	                                                         void* callbackData, UINT32 ioStatus);
+	typedef void (*psRdpdrOnDriveQueryVolumeInformationComplete)(RdpdrServerContext* context,
+	                                                             void* callbackData,
+	                                                             UINT32 ioStatus, UINT64 totalBytes,
+	                                                             UINT64 availableBytes);
+
 	typedef void (*psRdpdrOnDriveCreateDirectoryComplete)(RdpdrServerContext* context,
 	                                                      void* callbackData, UINT32 ioStatus);
 	typedef void (*psRdpdrOnDriveDeleteDirectoryComplete)(RdpdrServerContext* context,
@@ -532,6 +556,52 @@ extern "C"
 		                                                                   * for SmartcardSetAttrib.
 		                                                                   * @since version 3.28.0
 		                                                                   */
+
+		/*** New Drive APIs called by the server.
+		 * @since version 3.33.0
+		 */
+		WINPR_ATTR_NODISCARD psRdpdrDriveReadFileEx
+		    DriveReadFileEx; /**< Read file with a 64-bit offset, completes with
+			                  * \b OnDriveReadFileComplete.
+			                  * @since version 3.33.0
+			                  */
+		WINPR_ATTR_NODISCARD psRdpdrDriveWriteFileEx
+		    DriveWriteFileEx; /**< Write file with a 64-bit offset, completes with
+			                   * \b OnDriveWriteFileComplete.
+			                   * @since version 3.33.0
+			                   */
+		WINPR_ATTR_NODISCARD psRdpdrDriveRenameFileEx
+		    DriveRenameFileEx; /**< Rename file, optionally replacing the target, completes
+			                    * with \b OnDriveRenameFileComplete.
+			                    * @since version 3.33.0
+			                    */
+		WINPR_ATTR_NODISCARD psRdpdrDriveSetFileSize
+		    DriveSetFileSize; /**< Set the size of a file (FileEndOfFileInformation),
+			                   * completes with \b OnDriveSetFileInformationComplete.
+			                   * @since version 3.33.0
+			                   */
+		WINPR_ATTR_NODISCARD psRdpdrDriveSetFileTimes
+		    DriveSetFileTimes; /**< Set the access and write times of a file or directory
+			                    * (FileBasicInformation, 0 keeps a time), completes with
+			                    * \b OnDriveSetFileInformationComplete.
+			                    * @since version 3.33.0
+			                    */
+		WINPR_ATTR_NODISCARD psRdpdrDriveQueryVolumeInformation
+		    DriveQueryVolumeInformation; /**< Query the size and free space of a drive
+			                              * (FileFsFullSizeInformation), completes with
+			                              * \b OnDriveQueryVolumeInformationComplete.
+			                              * @since version 3.33.0
+			                              */
+		psRdpdrOnDriveSetFileInformationComplete
+		    OnDriveSetFileInformationComplete; /**< Completion callback for DriveSetFileSize
+			                                    * and DriveSetFileTimes.
+			                                    * @since version 3.33.0
+			                                    */
+		psRdpdrOnDriveQueryVolumeInformationComplete
+		    OnDriveQueryVolumeInformationComplete; /**< Completion callback for
+			                                        * DriveQueryVolumeInformation.
+			                                        * @since version 3.33.0
+			                                        */
 	};
 
 	/**
