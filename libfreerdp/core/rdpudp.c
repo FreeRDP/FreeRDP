@@ -234,6 +234,8 @@ struct rdp_udp
 	BOOL v3InOrderReceived; /* FALSE while v3Expected - 1 is one AckOfAcks gave up on */
 	UINT64 v3LatestArrival; /* when the latest data packet arrived */
 	size_t v3MaxDelayedAcks;
+	UINT32 v3DelayedAckTimeout; /* in ms, UINT32_MAX until the peer's DelayAckInfo sets it */
+	UINT64 v3AckDue; /* in ms, when what waits for our acknowledgement must get it; 0: nothing */
 	size_t v3UnackedPackets; /* data packets received since our last acknowledgement */
 	UINT16 v3AckedSeq;       /* the SeqNum of our last ACK payload */
 	BOOL v3AckedGap;         /* whether our last acknowledgement reported a missing packet */
@@ -573,6 +575,7 @@ static BOOL v3_send_ack(rdpUdp* udp)
 
 	udp->ackPending = FALSE;
 	udp->v3UnackedPackets = 0;
+	udp->v3AckDue = 0;
 
 	/* A cumulative ACK cannot describe a hole, the ACK vector reports the exact window so only
 	 * what is missing gets resent. ACK and ACKVEC are mutually exclusive. */
@@ -680,6 +683,7 @@ static BOOL v3_send_data(rdpUdp* udp, const rdpudp_pending* p)
 		v3_write_ack(udp, s, (udp->mtu > used) ? udp->mtu - used : 0);
 		udp->ackPending = FALSE;
 		udp->v3UnackedPackets = 0;
+		udp->v3AckDue = 0;
 		udp->v3AckedGap = FALSE;
 	}
 
@@ -850,7 +854,7 @@ static BOOL rdpudp_send_ack(rdpUdp* udp)
 /* [MS-RDPEUDP2] 3.1.5.2 and 4.2: a receiver acknowledges once MaxDelayedAcks + 1 data packets
  * wait, the most one ACK can describe, and at once when a packet goes missing or a missing one
  * turns up. Checked after every datagram, so a burst is acknowledged while it is still arriving
- * rather than when it ended. */
+ * rather than when it ended. Fewer packets wait for ack_when_due. */
 WINPR_ATTR_NODISCARD
 static BOOL v3_ack_if_due(rdpUdp* udp)
 {
@@ -861,6 +865,37 @@ static BOOL v3_ack_if_due(rdpUdp* udp)
 	if ((v3_has_gap(udp) == udp->v3AckedGap) && (udp->v3UnackedPackets <= udp->v3MaxDelayedAcks))
 		return TRUE;
 	return v3_send_ack(udp);
+}
+
+/* [MS-RDPEUDP2] 3.1.5.2: half the round trip time until the peer's DelayAckInfo says otherwise */
+WINPR_ATTR_NODISCARD
+static UINT32 v3_ack_delay(const rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	return (udp->v3DelayedAckTimeout != UINT32_MAX) ? udp->v3DelayedAckTimeout : udp->srtt / 2;
+}
+
+/* Runs at the end of every receive round. Versions 1 and 2 acknowledge everything that arrived in
+ * one go, unless a data packet carried the ACK already. [MS-RDPEUDP2] 2.2.1.2.3: version 3 lets
+ * an acknowledgement wait DelayedAckTimeoutInMs, so that one ACK covers what arrives meanwhile.
+ * A receive round can be a single datagram, a burst has not ended with it. */
+WINPR_ATTR_NODISCARD
+static BOOL ack_when_due(rdpUdp* udp)
+{
+	WINPR_ASSERT(udp);
+	if (!udp->ackPending)
+		return TRUE;
+	if (udp->version == RDPUDP_PROTOCOL_VERSION_3)
+	{
+		if ((udp->state != RDPUDP_STATE_ESTABLISHED) || !udp->v3BaseKnown)
+			return TRUE;
+		const UINT64 now = now_ms();
+		if (udp->v3AckDue == 0)
+			udp->v3AckDue = now + v3_ack_delay(udp);
+		if (now < udp->v3AckDue)
+			return TRUE;
+	}
+	return rdpudp_send_ack(udp);
 }
 
 WINPR_ATTR_NODISCARD
@@ -1454,13 +1489,12 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 
 	if (flags & RDPUDP2_DELAYACKINFO)
 	{
-		/* [MS-RDPEUDP2] 2.2.1.2.3: how many data packets the peer lets us acknowledge at once.
-		 * Acknowledgements never wait past the end of a receive round, well inside its
-		 * DelayedAckTimeoutInMs. */
+		/* [MS-RDPEUDP2] 2.2.1.2.3: how many data packets the peer lets us acknowledge at once,
+		 * and how long an acknowledgement may wait */
 		if (!Stream_CheckAndLogRequiredLengthWLog(udp->log, s, 3))
 			return TRUE;
-		const size_t maxDelayed = Stream_Get_UINT8(s); /* MaxDelayedAcks */
-		Stream_Seek_UINT16(s);                         /* DelayedAckTimeoutInMs */
+		const size_t maxDelayed = Stream_Get_UINT8(s);   /* MaxDelayedAcks */
+		udp->v3DelayedAckTimeout = Stream_Get_UINT16(s); /* DelayedAckTimeoutInMs */
 		if (maxDelayed == 0)
 			udp->v3MaxDelayedAcks = 1;
 		else if (maxDelayed > RDPUDP2_MAX_DELAYED_ACKS)
@@ -1676,6 +1710,7 @@ static BOOL process_syn_ack(rdpUdp* udp, const BYTE* data, size_t length)
 		 * chunk arrives first would throw away an earlier one that it overtook. */
 		udp->v3NextChannel = 1;
 		udp->v3MaxDelayedAcks = RDPUDP2_DEFAULT_DELAYED_ACKS;
+		udp->v3DelayedAckTimeout = UINT32_MAX;
 	}
 	else
 	{
@@ -1969,6 +2004,15 @@ UINT32 rdpudp_get_timeout(const rdpUdp* udp)
 		if (p->due - now < timeout)
 			timeout = p->due - now;
 	}
+
+	/* an acknowledgement that waits, see ack_when_due */
+	if (udp->ackPending && (udp->v3AckDue != 0))
+	{
+		if (udp->v3AckDue <= now)
+			return 0;
+		if (udp->v3AckDue - now < timeout)
+			timeout = udp->v3AckDue - now;
+	}
 	return WINPR_ASSERTING_INT_CAST(UINT32, timeout);
 }
 
@@ -2011,8 +2055,7 @@ BOOL rdpudp_check(rdpUdp* udp)
 			return FALSE;
 	}
 
-	/* Acknowledge everything that arrived in one go, unless a data packet carried it already. */
-	if (udp->ackPending && !rdpudp_send_ack(udp))
+	if (!ack_when_due(udp))
 		return FALSE;
 
 	if (!flush_send_queue(udp))
