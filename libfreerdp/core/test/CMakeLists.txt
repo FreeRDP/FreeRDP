@@ -13,9 +13,7 @@ if(BUILD_TESTING_INTERNAL)
   list(APPEND TESTS TestStreamDump.c TestRdstls.c TestServerChannels.c)
 endif()
 
-set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCoreGateway.c
-            TestFuzzCryptoCertificateDataSetPEM.c
-)
+set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCoreGateway.c TestFuzzCryptoCertificateDataSetPEM.c)
 
 # TestFuzzServer generates a live cert via winpr-tools (makecert).
 if(NOT WIN32 AND WITH_WINPR_TOOLS)
