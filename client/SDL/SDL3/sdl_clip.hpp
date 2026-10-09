@@ -24,6 +24,7 @@
 #include <vector>
 #include <atomic>
 #include <queue>
+#include <deque>
 #include <map>
 
 #include <winpr/wtypes.h>
@@ -89,6 +90,10 @@ class sdlClip
 
 	[[nodiscard]] bool handleEvent(const SDL_ClipboardEvent& ev);
 
+	/* Answers the queued server CB_FORMAT_DATA_REQUESTs. Runs on the SDL main thread: the SDL
+	 * clipboard API is main-thread only, and ReceiveFormatDataRequest only queues them. */
+	void handleDataRequests();
+
   private:
 	[[nodiscard]] UINT SendClientCapabilities();
 	void clearServerFormats();
@@ -100,6 +105,7 @@ class sdlClip
 	[[nodiscard]] uint32_t serverIdForMime(const std::string& mime);
 
 	[[nodiscard]] bool contains(const char** mime_types, Sint32 count);
+	[[nodiscard]] bool ownsClipboard() const;
 
 	[[nodiscard]] static UINT MonitorReady(CliprdrClientContext* context,
 	                                       const CLIPRDR_MONITOR_READY* monitorReady);
@@ -111,8 +117,7 @@ class sdlClip
 	[[nodiscard]] static UINT
 	ReceiveFormatListResponse(CliprdrClientContext* context,
 	                          const CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse);
-	[[nodiscard]] static std::shared_ptr<BYTE> ReceiveFormatDataRequestHandle(
-	    sdlClip* clipboard, const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest, uint32_t& len);
+	[[nodiscard]] std::shared_ptr<BYTE> getLocalData(uint32_t formatId, uint32_t& len);
 	[[nodiscard]] static UINT
 	ReceiveFormatDataRequest(CliprdrClientContext* context,
 	                         const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest);
@@ -155,7 +160,12 @@ class sdlClip
 		std::shared_ptr<void> ptr;
 	};
 	std::map<std::string, cache_entry> _cache_data;
-	std::vector<const char*> _current_mimetypes;
+	/* mime types of the latest server format list, not yet handed to SDL (guarded by _lock) */
+	std::vector<std::string> _current_mimetypes;
+	/* guarded by _lock: server data requests not answered yet, and whether ClipDataCb is
+	 * waiting for the server (a local application is reading our offer of server data) */
+	std::deque<uint32_t> _server_requests;
+	bool _reading_server = false;
 	std::string _uuid;
 	std::string _mime_uuid;
 };
