@@ -90,9 +90,12 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 /* What this side advertises in uReceiveWindowSize (versions 1 and 2). */
 #define RDPUDP_RECEIVE_WINDOW 64
 
-/* Out of order data held while waiting for a gap to fill. Must stay below the 4096 slots. */
-#define RDPUDP_RECEIVE_SLOTS 4096
-#define RDPUDP_RECEIVE_REACH 4000
+/* Out of order data held while waiting for a gap to fill, a slot per sequence number. RDP-UDP2
+ * numbers are 16 bit, serial arithmetic tells at most 32767 ahead from behind, and the peer may
+ * get that far: Windows ignores the uReceiveWindowSize of versions 1 and 2 there, and had 5751
+ * chunks outstanding after a 2 second outage. */
+#define RDPUDP_RECEIVE_SLOTS 32768
+#define RDPUDP_RECEIVE_REACH 32767
 
 /* Datagrams of ours that may be unacknowledged at once. */
 #define RDPUDP_MAX_IN_FLIGHT 64
@@ -1571,19 +1574,28 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 	if (ahead >= RDPUDP_RECEIVE_REACH)
 		return TRUE;
 
+	/* A dummy packet occupies a sequence number but its body means nothing. */
+	const BOOL withChunk =
+	    (packetType != RDPUDP2_PACKET_DUMMY) && (Stream_GetRemainingLength(s) >= 2);
+	UINT16 channelSeq = 0;
+	if (withChunk)
+	{
+		/* A chunk out of reach cannot be kept. Its packet stays unacknowledged then, so the
+		 * peer sends it again: acknowledged, it would be gone for good. */
+		channelSeq = Stream_Get_UINT16(s); /* ChannelSeqNum */
+		const UINT16 chunkAhead = seq16_diff(channelSeq, udp->v3NextChannel);
+		if ((chunkAhead >= RDPUDP_RECEIVE_REACH) && (chunkAhead < 0x8000))
+			return TRUE;
+	}
+
 	if (seq16_after(dataSeq, udp->v3Highest))
 		udp->v3Highest = dataSeq;
 	udp->v3Received[dataSeq % RDPUDP_RECEIVE_SLOTS] = TRUE;
 	udp->v3Arrival[dataSeq % RDPUDP_RECEIVE_SLOTS] = udp->v3LatestArrival;
 	v3_advance_window(udp);
 
-	/* A dummy packet occupies a sequence number but its body means nothing. */
-	if (packetType == RDPUDP2_PACKET_DUMMY)
+	if (!withChunk)
 		return TRUE;
-	if (Stream_GetRemainingLength(s) < 2)
-		return TRUE;
-
-	const UINT16 channelSeq = Stream_Get_UINT16(s); /* ChannelSeqNum */
 	return v3_receive_channel_data(udp, dataSeq, channelSeq, Stream_ConstPointer(s),
 	                               Stream_GetRemainingLength(s));
 }
