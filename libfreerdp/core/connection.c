@@ -724,6 +724,49 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	return status;
 }
 
+/* A redirection that carried a one-time RDSTLS token (LB_PASSWORD_IS_PK_ENCRYPTED) cannot be
+ * replayed: reconnecting straight to the redirected host is refused with SEC_E_INVALID_TOKEN.
+ * Go back to the server the connection was originally made to (the RD Connection Broker), which
+ * redirects again to the same session with a fresh token. Everything the redirection changed
+ * (host, load balance info, user, redirected session id, auto-reconnect cookie) has to go, so
+ * start again from the settings the connection began with, the way rdp_client_redirect() does:
+ * the channels are closed before the settings they use are freed, and loaded again after. */
+WINPR_ATTR_NODISCARD
+static BOOL rdp_client_reconnect_via_broker(rdpRdp* rdp, BOOL* viaBroker)
+{
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(viaBroker);
+	*viaBroker = FALSE;
+	const rdpSettings* settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	if (!rdp->originalSettings || !freerdp_settings_get_bool(settings, FreeRDP_RdstlsSecurity))
+		return TRUE;
+	if ((freerdp_settings_get_uint32(settings, FreeRDP_RedirectionFlags) &
+	     LB_PASSWORD_IS_PK_ENCRYPTED) == 0)
+		return TRUE;
+
+	WINPR_ASSERT(rdp->context);
+	WINPR_ASSERT(rdp->context->instance);
+	WLog_INFO(TAG, "the redirection used a one-time RDSTLS token, reconnecting through %s",
+	          freerdp_settings_get_string(rdp->originalSettings, FreeRDP_ServerHostname));
+
+	freerdp_channels_disconnect(rdp->context->channels, rdp->context->instance);
+	freerdp_channels_close(rdp->context->channels, rdp->context->instance);
+
+	if (!rdp_reset_runtime_settings(rdp))
+		return FALSE;
+	if (!freerdp_settings_set_bool(rdp->settings, FreeRDP_SessionHasBeenReconnected, TRUE))
+		return FALSE;
+	if (!IFCALLRESULT(TRUE, rdp->context->instance->Redirect, rdp->context->instance))
+		return FALSE;
+	if (!utils_reload_channels(rdp->context))
+		return FALSE;
+
+	*viaBroker = TRUE;
+	return TRUE;
+}
+
 BOOL rdp_client_reconnect(rdpRdp* rdp)
 {
 	if (!rdp_client_disconnect_and_clear(rdp))
@@ -732,10 +775,19 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 	if (!freerdp_settings_set_bool(rdp->settings, FreeRDP_SessionHasBeenReconnected, TRUE))
 		return FALSE;
 
+	BOOL viaBroker = FALSE;
+	if (!rdp_client_reconnect_via_broker(rdp, &viaBroker))
+		return FALSE;
+
 	BOOL status = rdp_client_connect(rdp);
 
-	if (status)
-		status = rdp_client_reconnect_channels(rdp, FALSE);
+	/* When the broker redirected us, rdp_client_redirect() already reloaded and reconnected the
+	 * channels (rdp_check_fds() runs it from inside rdp_client_connect()); doing it a second time
+	 * fails with CHANNEL_RC_ALREADY_OPEN and makes the whole attempt fail. */
+	const BOOL redirected =
+	    viaBroker && (freerdp_settings_get_uint32(rdp->settings, FreeRDP_RedirectionFlags) != 0);
+	if (status && !redirected)
+		status = rdp_client_reconnect_channels(rdp, viaBroker);
 
 	return status;
 }
