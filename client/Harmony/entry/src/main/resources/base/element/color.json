@@ -1,0 +1,48 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#fdfbf7"
+    },
+    {
+      "name": "background",
+      "value": "#fdfbf7"
+    },
+    {
+      "name": "foreground",
+      "value": "#1c1917"
+    },
+    {
+      "name": "primary",
+      "value": "#2c4f54"
+    },
+    {
+      "name": "primary_foreground",
+      "value": "#ffffff"
+    },
+    {
+      "name": "border",
+      "value": "#e7e5e4"
+    },
+    {
+      "name": "card_background",
+      "value": "#ffffff"
+    },
+    {
+      "name": "muted",
+      "value": "#f5f2ed"
+    },
+    {
+      "name": "muted_foreground",
+      "value": "#6b6560"
+    },
+    {
+      "name": "destructive",
+      "value": "#b91c1c"
+    },
+    {
+      "name": "destructive_foreground",
+      "value": "#ffffff"
+    }
+  ]
+}
