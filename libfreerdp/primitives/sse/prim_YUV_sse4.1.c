@@ -1553,15 +1553,18 @@ static pstatus_t sse41_ChromaV1ToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3],
 				const __m128i u = LOAD_SI128(&Ua[x]);
 				const __m128i u2 = _mm_unpackhi_epi8(u, zero);
 				const __m128i u1 = _mm_unpacklo_epi8(u, zero);
-				_mm_maskmoveu_si128(u1, mask, (char*)&pU[2 * x]);
-				_mm_maskmoveu_si128(u2, mask, (char*)&pU[2 * x + 16]);
+				/* the mask selects the even bytes of u1/u2, which carry the
+				 * samples; B6 goes to the odd columns 2x + 1 */
+				_mm_maskmoveu_si128(u1, mask, (char*)&pU[2 * x + 1]);
+				_mm_maskmoveu_si128(u2, mask, (char*)&pU[2 * x + 17]);
 			}
 			{
 				const __m128i u = LOAD_SI128(&Va[x]);
 				const __m128i u2 = _mm_unpackhi_epi8(u, zero);
 				const __m128i u1 = _mm_unpacklo_epi8(u, zero);
-				_mm_maskmoveu_si128(u1, mask, (char*)&pV[2 * x]);
-				_mm_maskmoveu_si128(u2, mask, (char*)&pV[2 * x + 16]);
+				/* B7 likewise to the odd columns */
+				_mm_maskmoveu_si128(u1, mask, (char*)&pV[2 * x + 1]);
+				_mm_maskmoveu_si128(u2, mask, (char*)&pV[2 * x + 17]);
 			}
 		}
 
