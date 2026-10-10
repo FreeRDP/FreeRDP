@@ -1403,7 +1403,22 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 		return;
 
 	if (appWindow->surfaceId < UINT16_MAX)
+	{
+		/* need a full window update */
+		if (appWindow->is_mapped && appWindow->surfaceStale)
+			xf_AppWindowRepaintFromSurface(xfc, appWindow->windowId, appWindow->surfaceId);
+
+		/* The pixmap holds what xf_AppUpdateWindowFromSurface() painted last. */
+		else if (!appWindow->surfaceStale && (appWindow->pixmap != 0) && (x >= 0) && (y >= 0) &&
+		         (width > 0) && (height > 0))
+		{
+			LogDynAndXCopyArea(xfc->log, xfc->display, appWindow->pixmap, appWindow->handle,
+			                   appWindow->gc, x, y, WINPR_ASSERTING_INT_CAST(uint32_t, width),
+			                   WINPR_ASSERTING_INT_CAST(uint32_t, height), x, y);
+			LogDynAndXFlush(xfc->log, xfc->display);
+		}
 		return;
+	}
 
 	ax = x + appWindow->windowOffsetX;
 	ay = y + appWindow->windowOffsetY;
@@ -1709,15 +1724,29 @@ BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(appWindow);
 
+	const UINT32 width = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width);
+	const UINT32 height = WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->height);
+
+	/* Called on every ConfigureNotify, also for plain moves: keep the pixmap and its content
+	 * when the size did not change, it is what an Expose is repainted from. */
+	if ((appWindow->pixmap != 0) && (appWindow->pixmapWidth == width) &&
+	    (appWindow->pixmapHeight == height))
+		return TRUE;
+
 	if (appWindow->pixmap != 0)
 		LogDynAndXFreePixmap(xfc->log, xfc->display, appWindow->pixmap);
 
 	WINPR_ASSERT(xfc->depth != 0);
-	appWindow->pixmap = LogDynAndXCreatePixmap(
-	    xfc->log, xfc->display, xfc->drawable, WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->width),
-	    WINPR_ASSERTING_INT_CAST(uint32_t, appWindow->height),
-	    WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth));
+	appWindow->pixmap = LogDynAndXCreatePixmap(xfc->log, xfc->display, xfc->drawable, width, height,
+	                                           WINPR_ASSERTING_INT_CAST(uint32_t, xfc->depth));
+	appWindow->pixmapWidth = width;
+	appWindow->pixmapHeight = height;
 	xf_AppWindowDestroyImage(appWindow);
+
+	/* The new pixmap has undefined content, the next paint from the surface has to cover the
+	 * whole window. */
+	if (appWindow->surfaceId < UINT16_MAX)
+		appWindow->surfaceStale = TRUE;
 
 	return appWindow->pixmap != 0;
 }
