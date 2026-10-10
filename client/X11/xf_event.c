@@ -1521,6 +1521,16 @@ BOOL xf_event_update_screen(freerdp* instance)
 	else
 	{
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, xfc->exposedWindow);
+		if (appWindow && appWindow->is_mapped && appWindow->surfaceStale &&
+		    (appWindow->surfaceId < UINT16_MAX))
+		{
+			/* The pixmap was recreated (resize) or missed updates while unmapped: repaint the
+			 * whole window from its graphics pipeline surface. */
+			const UINT64 windowId = appWindow->windowId;
+			const UINT32 surfaceId = appWindow->surfaceId;
+			xf_rail_return_window(appWindow, FALSE);
+			return xf_AppWindowRepaintFromSurface(xfc, windowId, surfaceId);
+		}
 		if (appWindow)
 			xf_UpdateWindowArea(xfc, appWindow, xfc->exposedArea.x, xfc->exposedArea.y,
 			                    xfc->exposedArea.w, xfc->exposedArea.h);

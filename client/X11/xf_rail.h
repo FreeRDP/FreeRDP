@@ -113,6 +113,8 @@ struct xf_app_window
 	UINT64 lastWndSizeUpdate;
 
 	Pixmap pixmap;
+	UINT32 pixmapWidth;
+	UINT32 pixmapHeight;
 	XImage* image;
 };
 typedef struct xf_app_window xfAppWindow;
