@@ -27,6 +27,9 @@
 #define RDPEAR_CHANNEL_NAME "rdpear"
 #define RDPEAR_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::AuthRedirection"
 
+/** [MS-RDPEAR] 2.2.1.1 TSRemoteGuardPacket ProtocolMagic */
+#define RDPEAR_PROTOCOL_MAGIC 0x4EACC3C8
+
 #ifdef __cplusplus
 extern "C"
 {
