@@ -2986,15 +2986,22 @@ static BOOL client_helper_get_access_token_va(freerdp* instance,
 	rdpClientContext* cctx = (rdpClientContext*)instance->context;
 	WINPR_ASSERT(cctx);
 
-	aad_auth_helper_stop(cctx->aadHelper);
-	cctx->aadHelper = aad_auth_helper_start(cctx);
+	/* Reuse a single helper for the whole connection: AVD requests a token twice (gateway
+	 * auth, then target-host auth) and the embedded browser must keep its session/cookies
+	 * across both, otherwise the user has to log in twice. The helper is torn down on failure
+	 * (so a retry starts clean) and at session end (freerdp_client_common_stop). */
+	if (!cctx->aadHelper)
+		cctx->aadHelper = aad_auth_helper_start(cctx);
 	if (!cctx->aadHelper)
 		return FALSE;
 
 	const BOOL rc =
 	    aad_auth_helper_get_access_token_v(cctx->aadHelper, tokenType, token, count, ap);
-	aad_auth_helper_stop(cctx->aadHelper);
-	cctx->aadHelper = nullptr;
+	if (!rc)
+	{
+		aad_auth_helper_stop(cctx->aadHelper);
+		cctx->aadHelper = nullptr;
+	}
 	return rc;
 #else
 	WLog_ERR(TAG, "Build does not support AAD authentication");

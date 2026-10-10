@@ -54,6 +54,12 @@
 
 constexpr uint32_t kDefaultTimeoutMs = 180000;
 
+/** QtWebEngine on Wayland may SIGSEGV shortly after startup when the GPU/GBM path is
+ *  unavailable ("GBM is not supported with the current configuration. Fallback to Vulkan
+ *  rendering in Chromium." followed by a crash). That is an environment/Qt issue which also
+ *  reproduces with an unmodified helper, not a protocol problem; work around it by launching
+ *  the client with QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu, which this helper inherits. */
+
 /** AAD's native-broker OAuth2 redirect_uri (FreeRDP's own default, see
  * FreeRDP_GatewayAvdAccessTokenFormat in libfreerdp/core/settings.c) uses the non-standard
  * "ms-appx-web" scheme, e.g. ms-appx-web://Microsoft.AAD.BrokerPlugin/<client_id>. Chromium has no
@@ -115,8 +121,13 @@ class AuthWindow : public QWebEngineView
 class Session
 {
   public:
+	Session() : nativeUserAgent(QWebEngineProfile::defaultProfile()->httpUserAgent().toStdString())
+	{
+	}
+
 	bool navigate(const std::string& title, const std::string& url, const std::string& redirectUri,
-	              uint32_t timeoutMs, std::string& redirectUrl, std::string& error)
+	              uint32_t timeoutMs, const std::string& userAgent, std::string& redirectUrl,
+	              std::string& error)
 	{
 		PendingResult pending;
 		{
@@ -134,7 +145,7 @@ class Session
 		const QUrl qurl(QString::fromStdString(url));
 		QMetaObject::invokeMethod(
 		    qApp,
-		    [this, qtitle, qurl]()
+		    [this, qtitle, qurl, userAgent]()
 		    {
 			    if (!window)
 				    window = new AuthWindow(*this);
@@ -143,6 +154,12 @@ class Session
 			    window->show();
 			    window->raise();
 			    window->activateWindow();
+			    /* QtWebEngine keeps one profile for the process' life, so an override would
+			     * otherwise persist after it is dropped: always set either the override or the
+			     * native UA captured at construction. */
+			    const QString ua =
+			        QString::fromStdString(userAgent.empty() ? nativeUserAgent : userAgent);
+			    QWebEngineProfile::defaultProfile()->setHttpUserAgent(ua);
 			    window->setUrl(qurl);
 		    },
 		    Qt::QueuedConnection);
@@ -263,6 +280,7 @@ class Session
 	PendingResult* current = nullptr;
 	RedirectWatcher watcher{ std::string() };
 	AuthWindow* window = nullptr; /* UI thread only */
+	std::string nativeUserAgent;
 };
 
 AuthWindow::AuthWindow(Session& owner) : session(owner)
@@ -470,11 +488,13 @@ namespace
 				const std::string title = getStringField(params, "title");
 				const std::string url = getStringField(params, "url");
 				const std::string redirectUri = getStringField(params, "redirect_uri");
+				const std::string userAgent = getStringField(params, "user_agent");
 				const uint32_t timeoutMs = getUintField(params, "timeout_ms", kDefaultTimeoutMs);
 
 				std::string redirectUrl;
 				std::string error;
-				if (session.navigate(title, url, redirectUri, timeoutMs, redirectUrl, error))
+				if (session.navigate(title, url, redirectUri, timeoutMs, userAgent, redirectUrl,
+				                     error))
 					sendNavigateResult(id, redirectUrl);
 				else
 					sendError(id, 1, error);

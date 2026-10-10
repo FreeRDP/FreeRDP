@@ -902,6 +902,7 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 		*res = ERROR_INTERNAL_ERROR;
 		dvcman_channel_free(channel);
 		channel = nullptr;
+		HashTable_Unlock(dvcman->channelsById);
 		goto out;
 	}
 
@@ -919,6 +920,7 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 		*res = ERROR_INTERNAL_ERROR;
 		dvcman_channel_unref(channel);
 		channel = nullptr;
+		HashTable_Unlock(dvcman->channelsById);
 		goto out;
 	}
 
@@ -928,6 +930,7 @@ static DVCMAN_CHANNEL* dvcman_create_channel(drdynvcPlugin* drdynvc,
 		*res = ERROR_INTERNAL_ERROR;
 		dvcman_channel_unref(channel);
 		channel = nullptr;
+		HashTable_Unlock(dvcman->channelsById);
 		goto out;
 	}
 

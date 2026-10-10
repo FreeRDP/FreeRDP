@@ -83,14 +83,19 @@ at a time per helper instance.
 {"jsonrpc":"2.0","id":2,"method":"navigate",
  "params":{"title":"Sign in","url":"https://login.microsoftonline.com/...",
            "redirect_uri":"https://login.microsoftonline.com/common/oauth2/nativeclient",
+           "user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) ...",
            "timeout_ms":180000}}
 ```
 
-- `title` — window title for the popup (may be empty).
-- `url` — initial URL to load (typically an AAD `/authorize` URL).
-- `redirect_uri` — prefix match against the URL-decoded navigation target; matching is
+- `title` - window title for the popup (may be empty).
+- `url` - initial URL to load (typically an AAD `/authorize` URL).
+- `redirect_uri` - prefix match against the URL-decoded navigation target; matching is
   case-insensitive (see `RedirectWatcher::matches`).
-- `timeout_ms` — 0 means "use the helper's default" (180000 ms).
+- `user_agent` - optional; User-Agent the helper's embedded browser must present. Omitted or
+  empty means the helper uses its native UA, including restoring it after a previous override
+  within the same helper process (helpers are reused across navigates). The xdg-open-based helper
+  cannot override an external browser's UA and logs a warning when this is set.
+- `timeout_ms` - 0 means "use the helper's default" (180000 ms).
 
 Success response — `result.redirect_url` is the full, verbatim URI the browser navigated to
 (FreeRDP extracts the `code`/`error` query parameters from it):
@@ -174,3 +179,7 @@ helper implementation; reserved for future diagnostic use.
   dropped with a `WLog_WARN` (defensive against stray or out-of-order lines; in practice the
   helper answers strictly in request order).
 - `id` is transported as a JSON number on the wire; FreeRDP treats it as a `UINT32`.
+- Qt helper on Wayland/GBM: if it aborts shortly after startup with a QtWebEngine
+  `GBM is not supported ... Fallback to Vulkan` message, launch the client with
+  `QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu` (the helper inherits the environment). This is an
+  environment/QtWebEngine issue, unrelated to the helper protocol.
