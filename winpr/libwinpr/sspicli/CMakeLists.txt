@@ -15,4 +15,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-winpr_module_add(sspicli.c)
+set(SSPICLI_SRCS sspicli.c)
+
+if(NOT WIN32)
+  # The LSA client API and its wire codec are backed by the lsa4posix daemon on
+  # non-Windows; on Windows the native LSA from <ntsecapi.h> is used instead.
+  list(
+    APPEND
+    SSPICLI_SRCS
+    lsa.c
+    lsa_transport.c
+    lsa_transport.h
+    lsa_proto.c
+    lsa_proto.h
+  )
+endif()
+
+winpr_module_add(${SSPICLI_SRCS})
+
+if(WIN32 AND NOT UWP)
+  # the native LSA client API (LsaConnectUntrusted, LsaCallAuthenticationPackage, ...)
+  winpr_library_add_public(secur32 advapi32)
+endif()
+
+if(NOT WIN32 AND (BUILD_TESTING_INTERNAL OR BUILD_TESTING OR BUILD_FUZZERS))
+  add_subdirectory(test)
+endif()
