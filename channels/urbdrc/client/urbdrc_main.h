@@ -215,6 +215,10 @@ struct S_IUDEVMAN
 
 	IWTSPlugin* plugin;
 	UINT32 controlChannelId;
+	/* The control channel, set when it is established and cleared in its OnClose callback, both
+	 * under loading_lock. Used instead of looking the channel up by id: the lookup takes the
+	 * dynamic channel table lock, and drdynvc calls OnClose with that lock held. */
+	IWTSVirtualChannel* controlChannel;
 	UINT32 status;
 };
 

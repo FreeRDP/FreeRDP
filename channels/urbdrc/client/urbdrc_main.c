@@ -43,23 +43,19 @@
 
 #include <urbdrc_helpers.h>
 
+/* Must be called with loading_lock held.
+ *
+ * Do not look the control channel up with FindChannelById here: that takes the lock of the dynamic
+ * channel table while loading_lock is held, and drdynvc closes channels (urbdrc_on_close, which
+ * takes loading_lock) with the table lock held. A hotplug event during a disconnect then deadlocks
+ * the libusb event thread against the drdynvc thread and the client never exits. */
 WINPR_ATTR_NODISCARD
 static IWTSVirtualChannel* get_channel(IUDEVMAN* idevman)
 {
 	if (!idevman)
 		return nullptr;
 
-	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)idevman->plugin;
-
-	if (!urbdrc || !urbdrc->listener_callback)
-		return nullptr;
-
-	IWTSVirtualChannelManager* channel_mgr = urbdrc->listener_callback->channel_mgr;
-
-	if (!channel_mgr)
-		return nullptr;
-
-	return channel_mgr->FindChannelById(channel_mgr, idevman->controlChannelId);
+	return idevman->controlChannel;
 }
 
 static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
@@ -508,7 +504,8 @@ static BOOL urbdrc_announce_devices(IUDEVMAN* udevman)
 			if (!pdev->isChannelClosed(pdev))
 			{
 				IWTSVirtualChannel* channel = get_channel(udevman);
-				cerror = urdbrc_send_virtual_channel_add(udevman->plugin, channel, deviceId);
+				if (channel)
+					cerror = urdbrc_send_virtual_channel_add(udevman->plugin, channel, deviceId);
 			}
 			udevman->loading_unlock(udevman);
 			if (cerror != ERROR_SUCCESS)
@@ -539,6 +536,10 @@ static UINT urbdrc_device_control_channel(GENERIC_CHANNEL_CALLBACK* callback,
 			error = ERROR_SUCCESS;
 			if (!udevman->initialize(udevman, channelId))
 				goto fail;
+
+			udevman->loading_lock(udevman);
+			udevman->controlChannel = channel;
+			udevman->loading_unlock(udevman);
 
 			if (!urbdrc_announce_devices(udevman))
 				goto fail;
@@ -705,6 +706,12 @@ static UINT urbdrc_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 			if (udevman && callback->channel_mgr)
 			{
 				udevman->loading_lock(udevman);
+				if (udevman->controlChannel == callback->channel)
+				{
+					udevman->controlChannel = nullptr;
+					udevman->status |= URBDRC_DEVICE_CHANNEL_CLOSED;
+					udevman->controlChannelId = 0;
+				}
 				UINT32 control = callback->channel_mgr->GetChannelId(callback->channel);
 				IUDEVICE* pdev = udevman->get_udevice_by_ChannelID(udevman, control);
 				if (pdev && !pdev->isChannelClosed(pdev))
