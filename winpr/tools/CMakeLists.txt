@@ -126,6 +126,16 @@ if(WITH_WINPR_TOOLS_CLI)
   add_subdirectory(hash-cli)
 endif()
 
+# The lsa4posix daemon backs the WinPR LSA client and TSSSP package on non-Windows.
+include(CMakeDependentOption)
+cmake_dependent_option(WITH_LSA4POSIX "Build the per-user lsa4posix daemon" OFF "NOT WIN32;WITH_WINPR_TOOLS_CLI" OFF)
+if(WITH_LSA4POSIX)
+  # The daemon services the [MS-RDPEAR] redirected calls through rdpear-common, so the rdpear
+  # channel must be built. winpr is configured before channels/, so forcing it here takes effect.
+  set(CHANNEL_RDPEAR ON CACHE BOOL "Build the rdpear channel (required by WITH_LSA4POSIX)" FORCE)
+  add_subdirectory(lsa4posix)
+endif()
+
 # Do not set Requires.Private if not a static build
 if(NOT BUILD_SHARED_LIBS)
   set(WINPR_TOOLS_PC_REQUIRES_PRIVATE "winpr${WINPR_API_VERSION} libssl")
