@@ -389,7 +389,6 @@ UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, UIN
 {
 	UINT ret = CHANNEL_RC_OK;
 	xfDispContext* xfDisp = nullptr;
-	rdpSettings* settings = nullptr;
 	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts = nullptr;
 
 	WINPR_ASSERT(disp);
@@ -399,9 +398,6 @@ UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, UIN
 	xfDisp = (xfDispContext*)disp->custom;
 	WINPR_ASSERT(xfDisp);
 	WINPR_ASSERT(xfDisp->xfc);
-
-	settings = xfDisp->xfc->common.context.settings;
-	WINPR_ASSERT(settings);
 
 	layouts = calloc(nmonitors, sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
 
@@ -449,10 +445,8 @@ UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, UIN
 				break;
 		}
 
-		layout->DesktopScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
-		layout->DeviceScaleFactor =
-		    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
+		layout->DesktopScaleFactor = monitor->attributes.desktopScaleFactor;
+		layout->DeviceScaleFactor = monitor->attributes.deviceScaleFactor;
 	}
 
 	ret = IFCALLRESULT(CHANNEL_RC_OK, disp->SendMonitorLayout, disp, nmonitors, layouts);
