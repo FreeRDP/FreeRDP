@@ -1,0 +1,12 @@
+[Unit]
+Description=Socket for the per-user LSA daemon (FreeRDP Remote Credential Guard)
+Documentation=https://github.com/FreeRDP/FreeRDP/blob/master/docs/lsa4posix.md
+
+[Socket]
+ListenStream=%t/lsa4posix/lsa.sock
+SocketMode=0600
+RuntimeDirectory=lsa4posix
+RuntimeDirectoryMode=0700
+
+[Install]
+WantedBy=sockets.target
