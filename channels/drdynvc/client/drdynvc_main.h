@@ -105,6 +105,11 @@ typedef struct
 	ZGFX_CONTEXT* decompressor;
 	CRITICAL_SECTION lock;
 	DVCMAN_CHANNEL_STATS stats;
+
+	/* TUNNELTYPE_ the channel's data is written on, 0 for the drdynvc static channel. Guarded by
+	 * lock: a writer holds it for a whole message, so Soft-Sync cannot move the channel between
+	 * two fragments, nor while a message is still on its way out over TCP. */
+	UINT32 tunnelType;
 } DVCMAN_CHANNEL;
 
 typedef enum
@@ -143,6 +148,14 @@ struct drdynvc_plugin
 	IWTSVirtualChannelManager* channel_mgr;
 	BOOL firstFlagReceived;
 	UINT32 totalLength;
+
+	/* Soft-Sync ([MS-RDPEDYC] 3.1.5.3) */
+	BOOL softSyncDone;
+	wStream* pendingSoftSync;
+	wStream** tunnelBacklog;
+	UINT32* tunnelBacklogTypes;
+	size_t tunnelBacklogCount;
+	size_t tunnelBacklogCapacity;
 };
 
 #endif /* FREERDP_CHANNEL_DRDYNVC_CLIENT_MAIN_H */

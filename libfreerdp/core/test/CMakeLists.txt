@@ -11,6 +11,9 @@ set(TESTS TestVersion.c TestSettings.c TestUtils.c)
 
 if(BUILD_TESTING_INTERNAL)
   list(APPEND TESTS TestStreamDump.c TestRdstls.c TestServerChannels.c)
+  if(WITH_RDPEUDP)
+    list(APPEND TESTS TestRdpUdp.c)
+  endif()
 endif()
 
 set(FUZZERS TestFuzzCoreClient.c TestFuzzCoreServer.c TestFuzzCoreGateway.c TestFuzzCryptoCertificateDataSetPEM.c)
