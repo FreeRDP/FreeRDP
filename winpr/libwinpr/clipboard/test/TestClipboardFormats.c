@@ -218,7 +218,29 @@ static BOOL test_text_conversion(void)
 		size_t expectLen;
 	} test_case_t;
 
+	/* text/plain is UTF-8 on Windows, and ASCII with \u escapes for other characters elsewhere */
 	const test_case_t tests[] = {
+#if defined(_WIN32)
+		{ ClipboardRegisterFormat(clipboard, "text/plain"),
+		  ClipboardRegisterFormat(clipboard, "text/plain;charset=utf-8"), "a\nb\ncሴ՞", 10,
+		  "a\nb\ncሴ՞", 10 },
+		{ ClipboardRegisterFormat(clipboard, "text/plain;charset=utf-8"),
+		  ClipboardRegisterFormat(clipboard, "text/plain"), "a\r\nb\nc՞՞", 10, "a\r\nb\nc՞՞", 10 },
+		{ ClipboardRegisterFormat(clipboard, "text/plain"), CF_UNICODETEXT, "a\nb\ncሴ՞", 10,
+		  "\x61\x00\x0d\x00\x0a\x00\x62\x00\x0d\x0\x0a\x00\x63\x00\x34\x12\x5e\x05\x00\x00\x00",
+		  18 },
+		{ CF_UNICODETEXT, ClipboardRegisterFormat(clipboard, "text/plain"),
+		  "\x61\x00\x0d\x00\x0a\x00\x62\x00\x0d\x0\x0a\x00\x63\x00\x34\x12\x5e\x05\x00\x00\x00", 18,
+		  "a\nb\ncሴ՞", 10 },
+		{ ClipboardRegisterFormat(clipboard, "text/plain"), CF_TEXT, "a\nb\ncሴ՞", 10,
+		  "a\nb\nc\\u1234\\u055e", 17 },
+		{ CF_TEXT, ClipboardRegisterFormat(clipboard, "text/plain"), "a\nb\nc\\u1234\\u055e", 17,
+		  "a\nb\ncሴ՞", 10 },
+		{ ClipboardRegisterFormat(clipboard, "text/plain"), CF_OEMTEXT, "a\nb\ncሴ՞", 10,
+		  "a\nb\nc\\u1234\\u055e", 17 },
+		{ CF_OEMTEXT, ClipboardRegisterFormat(clipboard, "text/plain"), "a\nb\rc\\u1234\\u055e", 17,
+		  "a\nb\ncሴ՞", 10 }
+#else
 		{ ClipboardRegisterFormat(clipboard, "text/plain"),
 		  ClipboardRegisterFormat(clipboard, "text/plain;charset=utf-8"), "a\nb\rc\\u1234\\u055e",
 		  17, "a\nb\ncሴ՞", 10 },
@@ -239,6 +261,7 @@ static BOOL test_text_conversion(void)
 		  "a\nb\nc\\u1234\\u055e", 17 },
 		{ CF_OEMTEXT, ClipboardRegisterFormat(clipboard, "text/plain"), "a\nb\rc\\u1234\\u055e", 17,
 		  "a\nb\nc\\u1234\\u055e", 17 }
+#endif
 	};
 
 	BOOL rc = FALSE;
@@ -276,6 +299,178 @@ static BOOL test_text_conversion(void)
 	rc = TRUE;
 
 fail:
+	ClipboardDestroy(clipboard);
+	return rc;
+}
+
+/* image/bmp from the clipboard has a plain BITMAPINFOHEADER and is stored bottom-up */
+WINPR_ATTR_NODISCARD
+static BOOL test_is_plain_bmp(const BYTE* bmp, size_t size)
+{
+	if ((size < 54) || (bmp[0] != 'B') || (bmp[1] != 'M'))
+		return FALSE;
+
+	UINT32 biSize = 0;
+	INT32 biHeight = 0;
+	UINT32 biCompression = 0;
+	memcpy(&biSize, &bmp[14], sizeof(biSize));
+	memcpy(&biHeight, &bmp[22], sizeof(biHeight));
+	memcpy(&biCompression, &bmp[30], sizeof(biCompression));
+	if ((biSize != 40) || (biHeight <= 0) || (biCompression != BI_RGB))
+	{
+		test_log("not a plain bottom-up BMP: biSize=%" PRIu32 " biHeight=%" PRId32
+		         " biCompression=%" PRIu32,
+		         biSize, biHeight, biCompression);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/* convert the clipboard content to dstMime and compare the image with the expected one */
+WINPR_ATTR_NODISCARD
+static BOOL test_convert_image(wClipboard* clipboard, const char* dstMime, const wImage* expected)
+{
+	BOOL rc = FALSE;
+	UINT32 size = 0;
+	wImage* img = winpr_image_new();
+	BYTE* data =
+	    test_ClipboardGetData(clipboard, ClipboardRegisterFormat(clipboard, dstMime), &size);
+	if (!img || !data)
+		goto fail;
+
+	if (winpr_image_read_buffer(img, data, size) <= 0)
+	{
+		test_log("can not read %s", dstMime);
+		goto fail;
+	}
+
+	if (!winpr_image_equal(expected, img,
+	                       WINPR_IMAGE_CMP_IGNORE_DEPTH | WINPR_IMAGE_CMP_IGNORE_ALPHA |
+	                           WINPR_IMAGE_CMP_FUZZY))
+	{
+		test_log("%s differs from the source image", dstMime);
+		goto fail;
+	}
+
+	if ((strcmp(dstMime, "image/bmp") == 0) && !test_is_plain_bmp(data, size))
+		goto fail;
+
+	rc = TRUE;
+fail:
+	free(data);
+	winpr_image_free(img, TRUE);
+	return rc;
+}
+
+/* image formats convert into each other directly, without going through CF_DIB first */
+WINPR_ATTR_NODISCARD
+static BOOL test_image_to_image(void)
+{
+	BOOL rc = FALSE;
+	void* data = nullptr;
+	size_t size = 0;
+	wClipboard* clipboard = ClipboardCreate();
+	wImage* img = winpr_image_new();
+	if (!clipboard || !img)
+		goto fail;
+
+	if (winpr_image_read(img, TEST_CLIP_BMP) <= 0)
+		goto fail;
+
+	data = winpr_image_write_buffer(img, WINPR_IMAGE_BITMAP, &size);
+	if (!data || !test_ClipboardSetData(clipboard, ClipboardRegisterFormat(clipboard, "image/bmp"),
+	                                    data, (UINT32)size))
+		goto fail;
+	free(data);
+	data = nullptr;
+
+	if (!test_convert_image(clipboard, "image/x-bmp", img))
+		goto fail;
+#if defined(WINPR_UTILS_IMAGE_PNG)
+	if (!test_convert_image(clipboard, "image/png", img))
+		goto fail;
+
+	data = winpr_image_write_buffer(img, WINPR_IMAGE_PNG, &size);
+	if (!data || !test_ClipboardSetData(clipboard, ClipboardRegisterFormat(clipboard, "image/png"),
+	                                    data, (UINT32)size))
+		goto fail;
+
+	if (!test_convert_image(clipboard, "image/bmp", img))
+		goto fail;
+#endif
+
+	rc = TRUE;
+fail:
+	free(data);
+	winpr_image_free(img, TRUE);
+	ClipboardDestroy(clipboard);
+	return rc;
+}
+
+/* text/plain is UTF-8 on Windows and ASCII with \u escapes elsewhere; both convert back */
+WINPR_ATTR_NODISCARD
+static BOOL test_text_plain(void)
+{
+	BOOL rc = FALSE;
+	const char utf8[] = "A\xe4\xb8\xad\xe6\x96\x87\xc3\xa9"; /* A, two CJK characters, e acute */
+	const size_t utf8len = strlen(utf8);
+	char* plain = nullptr;
+	WCHAR* wstr = nullptr;
+	char* back = nullptr;
+	UINT32 size = 0;
+
+	wClipboard* clipboard = ClipboardCreate();
+	if (!clipboard)
+		goto fail;
+
+	const UINT32 idUtf8 = ClipboardRegisterFormat(clipboard, "text/plain;charset=utf-8");
+	const UINT32 idPlain = ClipboardRegisterFormat(clipboard, "text/plain");
+	if (!test_ClipboardSetData(clipboard, idUtf8, utf8, (UINT32)utf8len))
+		goto fail;
+
+	plain = test_ClipboardGetData(clipboard, idPlain, &size);
+	if (!plain)
+		goto fail;
+
+#if defined(_WIN32)
+	if ((size < utf8len) || (memcmp(plain, utf8, utf8len) != 0))
+	{
+		test_log("text/plain is not UTF-8");
+		goto fail;
+	}
+#else
+	for (UINT32 x = 0; x < size; x++)
+	{
+		if ((BYTE)plain[x] > 0x7f)
+		{
+			test_log("text/plain is not ASCII");
+			goto fail;
+		}
+	}
+#endif
+
+	if (!test_ClipboardSetData(clipboard, idPlain, plain, size))
+		goto fail;
+
+	wstr = test_ClipboardGetData(clipboard, CF_UNICODETEXT, &size);
+	if (!wstr)
+		goto fail;
+
+	{
+		size_t backlen = 0;
+		back = ConvertWCharNToUtf8Alloc(wstr, size / sizeof(WCHAR), &backlen);
+		if (!back || (backlen < utf8len) || (memcmp(back, utf8, utf8len) != 0))
+		{
+			test_log("text/plain does not convert back to the original text");
+			goto fail;
+		}
+	}
+
+	rc = TRUE;
+fail:
+	free(back);
+	free(wstr);
+	free(plain);
 	ClipboardDestroy(clipboard);
 	return rc;
 }
@@ -509,6 +704,12 @@ int TestClipboardFormats(int argc, char* argv[])
 	}
 
 	if (!test_dib_offsets())
+		goto fail;
+
+	if (!test_image_to_image())
+		goto fail;
+
+	if (!test_text_plain())
 		goto fail;
 
 	rc = 0;
