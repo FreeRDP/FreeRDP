@@ -29,6 +29,7 @@ set(${MODULE_PREFIX}_TESTS
     TestStreamPool.c
     TestMessageQueue.c
     TestMessagePipe.c
+    TestI18n.c
 )
 
 if(WITH_WINPR_JSON)
