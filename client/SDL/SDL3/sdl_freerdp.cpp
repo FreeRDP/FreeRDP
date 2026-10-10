@@ -271,6 +271,10 @@ static void sdl_term_handler([[maybe_unused]] int signum, [[maybe_unused]] const
 						if (!sdl->minimizeAllWindows())
 							throw ErrorMsg{ -1, windowEvent.type, "sdl->minimizeAllWindows" };
 						break;
+					case SDL_EVENT_USER_FLOATBAR:
+						if (!sdl->setFloatbar(windowEvent.user.code != 0))
+							throw ErrorMsg{ -1, windowEvent.type, "sdl->setFloatbar" };
+						break;
 					case SDL_EVENT_USER_POINTER_NULL:
 						if (!sdl->setCursor(SdlContext::CURSOR_NULL))
 							throw ErrorMsg{ -1, windowEvent.type, "sdl->setCursor" };

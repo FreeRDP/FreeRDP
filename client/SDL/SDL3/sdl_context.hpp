@@ -38,6 +38,7 @@
 #include "sdl_clip.hpp"
 #include "sdl_input.hpp"
 #include "sdl_rail.hpp"
+#include "sdl_floatbar.hpp"
 
 #include "dialogs/sdl_connection_dialog_wrapper.hpp"
 
@@ -74,6 +75,8 @@ class SdlContext
 	[[nodiscard]] bool setFullscreen(bool enter, bool forceOriginalDisplay = false);
 
 	[[nodiscard]] bool setMinimized();
+	[[nodiscard]] bool setFloatbar(bool visible);
+	[[nodiscard]] bool handleFloatbar(const SDL_MouseButtonEvent& ev);
 
 	[[nodiscard]] bool grabMouse() const;
 	[[nodiscard]] bool toggleGrabMouse();
@@ -222,6 +225,7 @@ class SdlContext
 	bool _resizeable = false;
 	bool _grabMouse = false;
 	bool _grabKeyboard = false;
+	SdlFloatbar _floatbar;
 	int _exitCode = -1;
 	std::atomic<bool> _rdpThreadRunning = false;
 	SDL_PixelFormat _sdlPixelFormat = SDL_PIXELFORMAT_UNKNOWN;
