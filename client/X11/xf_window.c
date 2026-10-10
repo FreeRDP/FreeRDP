@@ -1405,6 +1405,17 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	if (appWindow->surfaceId < UINT16_MAX)
 		return;
 
+	/*
+	 * With GFX a RemoteApp window shows its own surface, see xf_AppUpdateWindowFromSurface().
+	 * Until the server maps a surface to the window it has no content. xfc->image contains the
+	 * hidden server desktop (black, wallpaper), painting from it flashes that in a new window,
+	 * e.g. the Snap bar when dragging a window. Leave the window empty until its surface is
+	 * mapped.
+	 */
+	const rdpGdi* gdi = xfc->common.context.gdi;
+	if (gdi && gdi->gfx)
+		return;
+
 	ax = x + appWindow->windowOffsetX;
 	ay = y + appWindow->windowOffsetY;
 
