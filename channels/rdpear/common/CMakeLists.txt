@@ -17,7 +17,8 @@
 
 add_library(rdpear-common INTERFACE)
 add_library(
-  rdpear-common-obj STATIC rdpear_asn1.c rdpear_common.c rdpear-common/rdpear_asn1.h rdpear-common/rdpear_common.h
+  rdpear-common-obj STATIC rdpear_asn1.c rdpear_common.c rdpear_kerb.c rdpear-common/rdpear_asn1.h
+                           rdpear-common/rdpear_common.h rdpear-common/rdpear_kerb.h
 )
 
 target_include_directories(rdpear-common SYSTEM INTERFACE ${KRB5_INCLUDE_DIRS})
@@ -26,9 +27,9 @@ target_link_options(rdpear-common INTERFACE ${KRB5_LDFLAGS})
 
 target_include_directories(rdpear-common-obj PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(rdpear-common-obj SYSTEM PRIVATE ${KRB5_INCLUDE_DIRS})
+
 target_link_directories(rdpear-common INTERFACE ${KRB5_LIBRARY_DIRS})
 target_link_libraries(rdpear-common INTERFACE ${KRB5_LIBRARIES} rdpear-common-obj)
-
 freerdp_client_pc_add_library_private(rdpear-common-obj)
 
 channel_install(rdpear-common ${FREERDP_ADDIN_PATH} "FreeRDPTargets")

@@ -5,7 +5,7 @@ set(TEST_RDPEAR_DRIVER TestRdpear.c)
 
 disable_warnings_for_directory(${CMAKE_CURRENT_BINARY_DIR})
 
-set(TEST_RDPEAR_TESTS TestNdrEar.c TestRdpearMessages.c)
+set(TEST_RDPEAR_TESTS TestNdrEar.c TestRdpearMessages.c TestRdpearKerb.c)
 
 create_test_sourcelist(TEST_RDPEAR_SRCS TestRdpear.c ${TEST_RDPEAR_TESTS})
 
