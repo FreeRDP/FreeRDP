@@ -145,6 +145,8 @@ set(${MODULE_PREFIX}_SRCS
     display.h
     credssp_auth.c
     credssp_auth.h
+    tsssp.c
+    tsssp.h
     rdstls.c
     rdstls.h
     aad.c
