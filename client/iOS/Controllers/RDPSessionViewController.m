@@ -19,6 +19,7 @@
 #import "ConnectionParams.h"
 
 #define TOOLBAR_HEIGHT 44
+#define KEYBOARD_CURSOR_MARGIN 44.0
 
 @interface RDPSessionViewController (Private)
 - (void)showSessionToolbar:(BOOL)show;
@@ -26,6 +27,7 @@
 - (void)suspendSession;
 - (void)fitSessionViewToViewport;
 - (void)centerSessionViewInViewport;
+- (void)setKeyboardOverlap:(CGFloat)overlap;
 - (CGPoint)remotePositionForSessionViewPosition:(CGPoint)position;
 - (CGPoint)sessionViewPositionForRemotePosition:(CGPoint)position;
 - (CGPoint)clampedSessionViewCursorPosition:(CGPoint)position;
@@ -857,12 +859,21 @@
 	}
 
 	[self centerSessionViewInViewport];
+
+	// get covered area (keyboard)
+	CGRect keyboardFrame =
+	    [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
+	keyboardFrame = [[self view] convertRect:keyboardFrame fromView:nil];
+	CGRect coveredArea = CGRectIntersection([[self view] bounds], keyboardFrame);
+
+	[self setKeyboardOverlap:CGRectGetHeight(coveredArea)];
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification
 {
 	(void)notification;
 	[self centerSessionViewInViewport];
+	[self setKeyboardOverlap:0.0];
 }
 
 - (void)keyboardDidHide:(NSNotification *)notification
@@ -1117,6 +1128,33 @@
 	[_session_scrollview
 	    setContentSize:CGSizeMake(MAX(viewportSize.width, sessionFrame.size.width),
 	                              MAX(viewportSize.height, sessionFrame.size.height))];
+}
+
+- (void)setKeyboardOverlap:(CGFloat)overlap
+{
+	// extend the scrollable area to push up using 2 finger
+	UIEdgeInsets inset = [_session_scrollview contentInset];
+	inset.bottom = overlap;
+	[_session_scrollview setContentInset:inset];
+
+	CGPoint offset = [_session_scrollview contentOffset];
+	CGFloat viewportHeight = [_session_scrollview bounds].size.height;
+
+	// cursor is usually located in typing area
+	if (overlap > 0.0 && _has_cursor_view_position)
+	{
+		CGPoint cursor = [_session_scrollview convertPoint:_cursor_view_position
+		                                          fromView:_session_view];
+		CGFloat visibleBottom = offset.y + viewportHeight - overlap;
+		CGFloat hiddenHeight = cursor.y + KEYBOARD_CURSOR_MARGIN - visibleBottom;
+		if (hiddenHeight > 0.0)
+			offset.y += hiddenHeight;
+	}
+
+	// stay within the scrollable range or scrolls back once the keyboard hides
+	CGFloat maxOffsetY = [_session_scrollview contentSize].height + overlap - viewportHeight;
+	offset.y = MAX(MIN(offset.y, maxOffsetY), 0.0);
+	[_session_scrollview setContentOffset:offset animated:YES];
 }
 
 - (void)showSessionToolbar:(BOOL)show
