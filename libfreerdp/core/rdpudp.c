@@ -131,7 +131,12 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 
 #define RDPUDP_SYN_TIMEOUT_MS 1000
 #define RDPUDP_SYN_ATTEMPTS 4
-#define RDPUDP_MAX_RTO_MS 5000
+
+/* [MS-RDPEUDP] 3.1.6.1: the retransmit timeout is twice the round trip, at least the version's
+ * minimum, and doubles with every resend of the same datagram. Windows lets it grow to 120
+ * seconds (note <8>). Below the round trip, every datagram is resent before its acknowledgement
+ * can arrive. */
+#define RDPUDP_MAX_RTO_MS 120000
 
 /* [MS-RDPEUDP] 3.1.5.4: a datagram retransmitted three to five times without a response ends
  * the connection, and so does 65 seconds without any datagram from the peer (3.1.1.9). */
@@ -146,9 +151,12 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP2_KEEPALIVE_MS 4000
 #define RDPUDP2_PEER_TIMEOUT_MS 16000
 
-/* A stream chunk that stays missing while later ones pile up behind it for this long will not
- * come back: the peer only resends a lost chunk while it still has it outstanding. */
-#define RDPUDP_STALL_TIMEOUT_MS 10000
+/* [MS-RDPEUDP2] 3.1.5.1.3: the peer resends a lost chunk under a new data sequence number, and
+ * the receiver has no way to ask for it. A stream stuck behind a missing chunk for as long as the
+ * peer timeout is no better than a peer that is gone: the tunnel fails, ending the connection like
+ * a broken transport, instead of leaving the session frozen while the peer's keepalives keep it
+ * alive. */
+#define RDPUDP_STALL_TIMEOUT_MS RDPUDP2_PEER_TIMEOUT_MS
 
 /* How long the stream waits at channel sequence 0 for a chunk that may never have been sent,
  * see v3_skip_channel_zero. */
