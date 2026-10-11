@@ -1768,12 +1768,30 @@ static void udev_free(IUDEVICE* idev)
 		log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_reset_device", rc);
 	}
 
+	/* The cancelled transfers complete only while libusb events are handled. When the device
+	 * manager is freed, its event thread (poll_libusb_events) has already stopped, so waiting for
+	 * it never ends: the client hangs on disconnect whenever a redirected device still has a
+	 * transfer pending (e.g. a HID interrupt endpoint). Handle the events here, with a time limit.
+	 */
+	const UINT64 deadline = GetTickCount64() + 5000;
 	while (ArrayList_Count(udev->request_queue) > 0)
 	{
-		/* HACK: We need to wait until the cancel transfer has been processed by
-		 * poll_libusb_events
-		 */
-		Sleep(100);
+		if (udev->context)
+		{
+			struct timeval tv = { 0, 100000 };
+			(void)libusb_handle_events_timeout_completed(udev->context, &tv, nullptr);
+		}
+		else
+			Sleep(100);
+
+		if (GetTickCount64() > deadline)
+		{
+			/* freeing transfers libusb still owns would be worse than leaking this device */
+			WLog_Print(urbdrc->log, WLOG_ERROR,
+			           "%" PRIuz " USB transfer(s) still pending after 5 s, device not freed",
+			           ArrayList_Count(udev->request_queue));
+			return;
+		}
 	}
 
 	/* release all interface and  attach kernel driver */
@@ -1965,6 +1983,7 @@ static IUDEVICE* udev_init(URBDRC_PLUGIN* urbdrc, libusb_context* context, LIBUS
 		return nullptr;
 
 	pdev->urbdrc = urbdrc;
+	pdev->context = context;
 	udev_load_interface(pdev);
 
 	if (device)

@@ -63,6 +63,8 @@ typedef struct
 	LIBUSB_CONFIG_DESCRIPTOR* LibusbConfig;
 
 	wArrayList* request_queue;
+	/* to complete the cancelled transfers when the device is freed */
+	libusb_context* context;
 
 	URBDRC_PLUGIN* urbdrc;
 } UDEVICE;
