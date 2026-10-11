@@ -151,6 +151,10 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 #define RDPUDP2_KEEPALIVE_MS 4000
 #define RDPUDP2_PEER_TIMEOUT_MS 16000
 
+/* Silence after which the peer may have moved more than half the sequence space on, see
+ * v3_resync_base. Two keepalive intervals, an idle tunnel never gets there. */
+#define RDPUDP2_RESYNC_MS (2ull * RDPUDP2_KEEPALIVE_MS)
+
 /* [MS-RDPEUDP2] 3.1.5.1.3: the peer resends a lost chunk under a new data sequence number, and
  * the receiver has no way to ask for it. A stream stuck behind a missing chunk for as long as the
  * peer timeout is no better than a peer that is gone: the tunnel fails, ending the connection like
@@ -237,6 +241,7 @@ struct rdp_udp
 
 	/* receiving, version 3 */
 	BOOL v3BaseKnown;
+	BOOL v3Resync; /* silent for RDPUDP2_RESYNC_MS: no ACK until an AckOfAcks sets the base */
 	UINT16 v3Expected;
 	UINT16 v3Highest;
 	BOOL v3Received[RDPUDP_RECEIVE_SLOTS];
@@ -581,7 +586,8 @@ static BOOL v3_send_ack(rdpUdp* udp)
 	wStream sbuffer = WINPR_C_ARRAY_INIT;
 
 	WINPR_ASSERT(udp);
-	if (!udp->v3BaseKnown)
+	/* our position may lie ahead of the peer's numbers after a silence, see v3_resync_base */
+	if (!udp->v3BaseKnown || udp->v3Resync)
 		return TRUE;
 
 	udp->ackPending = FALSE;
@@ -1302,14 +1308,53 @@ static void v3_advance_window(rdpUdp* udp)
 	}
 }
 
+/* After a silence the peer may have moved more than half the 16 bit sequence space on: through
+ * an outage it resends its window again and again under new numbers, Windows used about 45000 in
+ * 25 s. Serial arithmetic then takes its numbers for old ones, and acknowledging our old position
+ * names numbers it has not sent, for which Windows resets the connection. So after a silence the
+ * peer's next AckOfAcks becomes the base, whichever way it moves it. */
+static void v3_resync_base(rdpUdp* udp, UINT16 base)
+{
+	WINPR_ASSERT(udp);
+	udp->v3Resync = FALSE;
+	if (base == udp->v3Expected)
+		return;
+
+	WLog_Print(udp->log, WLOG_DEBUG,
+	           "heard from the peer again, its AckOfAcks 0x%04" PRIx16 " replaces 0x%04" PRIx16,
+	           base, udp->v3Expected);
+	memset(udp->v3Received, 0, sizeof(udp->v3Received));
+	memset(udp->v3Arrival, 0, sizeof(udp->v3Arrival));
+	udp->v3Expected = base;
+	udp->v3Highest = seq16_diff(base, 1);
+	udp->v3InOrderReceived = FALSE;
+	udp->ackPending = TRUE;
+}
+
+/* Marks a silence of RDPUDP2_RESYNC_MS, see v3_resync_base. */
+static void v3_note_silence(rdpUdp* udp, UINT64 now)
+{
+	WINPR_ASSERT(udp);
+	if ((udp->version == RDPUDP_PROTOCOL_VERSION_3) && udp->v3BaseKnown &&
+	    (now - udp->lastReceived >= RDPUDP2_RESYNC_MS))
+		udp->v3Resync = TRUE;
+}
+
 static void v3_advance_base(rdpUdp* udp, UINT16 base)
 {
 	WINPR_ASSERT(udp);
 	/* However far ahead: through an outage the peer resends its window again and again, each
 	 * time under new sequence numbers, and Windows moved almost 5000 ahead in a 2 second outage.
 	 * Only its AckOfAcks brings this side along, data that far ahead is out of reach. seq16_after
-	 * limits the jump to half the sequence space. */
-	if (!udp->v3BaseKnown || !seq16_after(base, udp->v3Expected))
+	 * limits the jump to half the sequence space, v3_resync_base goes further after a silence. */
+	if (!udp->v3BaseKnown)
+		return;
+	if (udp->v3Resync)
+	{
+		v3_resync_base(udp, base);
+		return;
+	}
+	if (!seq16_after(base, udp->v3Expected))
 		return;
 
 	/* The peer stopped resending everything below base. This only gives up transport sequence
@@ -1768,7 +1813,9 @@ static BOOL process_datagram(rdpUdp* udp, const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(data);
-	udp->lastReceived = now_ms();
+	const UINT64 now = now_ms();
+	v3_note_silence(udp, now);
+	udp->lastReceived = now;
 
 	switch (udp->state)
 	{
@@ -1815,6 +1862,7 @@ static BOOL run_timers(rdpUdp* udp)
 		                    : "nothing heard from the server for 65 seconds");
 		return FALSE;
 	}
+	v3_note_silence(udp, now);
 
 	/* the grace period at channel sequence 0 can end without a packet coming in */
 	if ((udp->version == RDPUDP_PROTOCOL_VERSION_3) && (udp->v3NextChannel == 0) &&

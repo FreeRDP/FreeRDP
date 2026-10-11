@@ -890,6 +890,46 @@ fail:
 	return rc;
 }
 
+/* After a silence the peer may come back more than half the sequence space ahead, Windows used
+ * 45000 numbers in a 25 s outage. Its AckOfAcks has to become the base then: taking its numbers
+ * for old ones, the client would acknowledge one the peer never sent. */
+static BOOL ack_of_acks_resyncs_after_a_silence(void)
+{
+	BOOL rc = FALSE;
+	TestCtx ctx = { 0 };
+	CHECK(ctx_connect(&ctx));
+	CHECK(send_data(&ctx, FIRST_SEQUENCE, 1, "a"));
+	CHECK(pump(&ctx));
+	CHECK(drain(&ctx, 20));
+	const V3Packet* ack = last_ack(&ctx);
+	CHECK(ack && (ack->flags & V3_ACK) && (ack->ack == FIRST_SEQUENCE));
+
+	/* two keepalive intervals without a datagram: no acknowledgement of the old position */
+	Sleep(8500);
+	CHECK(pump(&ctx));
+	CHECK(drain(&ctx, 20));
+	CHECK(last_ack(&ctx) == nullptr);
+
+	const UINT16 ahead = (UINT16)(FIRST_SEQUENCE + 45000);
+	const V3Out out = { .hasAoA = TRUE,
+		                .aoa = ahead,
+		                .hasData = TRUE,
+		                .dataSeq = ahead,
+		                .channelSeq = 2,
+		                .payload = (const BYTE*)"b",
+		                .payloadLength = 1 };
+	CHECK(server_send_v3(&ctx, &out));
+	CHECK(pump(&ctx));
+	CHECK(delivered_is(&ctx, "ab"));
+	CHECK(drain(&ctx, 20));
+	ack = last_ack(&ctx);
+	CHECK(ack && (ack->flags & V3_ACK) && (ack->ack == ahead));
+	rc = TRUE;
+fail:
+	ctx_free(&ctx);
+	return rc;
+}
+
 /* ---------------------------------------------------------------------------------------- */
 
 typedef struct
@@ -918,7 +958,9 @@ static const TestCase cases[] = {
 	{ "real_server_ack_with_delayed_acks_and_data", real_server_ack_with_delayed_acks_and_data },
 	{ "ack_of_acks_reports_the_oldest_unacknowledged_packet",
 	  ack_of_acks_reports_the_oldest_unacknowledged_packet },
-	{ "acknowledgements_survive_sequence_wraparound", acknowledgements_survive_sequence_wraparound },
+	{ "acknowledgements_survive_sequence_wraparound",
+	  acknowledgements_survive_sequence_wraparound },
+	{ "ack_of_acks_resyncs_after_a_silence", ack_of_acks_resyncs_after_a_silence },
 };
 
 int TestRdpUdp(int argc, char* argv[])
