@@ -463,14 +463,16 @@ static void udevman_free(UDEVMAN* udevman)
 	if (!udevman)
 		return;
 
+	/* unregister all devices before tearing down the libusb handling.
+	 */
+	udevman_unregister_all_udevices(&udevman->iface);
+
 	udevman->running = FALSE;
 	if (udevman->thread)
 	{
 		(void)WaitForSingleObject(udevman->thread, INFINITE);
 		(void)CloseHandle(udevman->thread);
 	}
-
-	udevman_unregister_all_udevices(&udevman->iface);
 
 	if (udevman->devman_loading)
 		(void)CloseHandle(udevman->devman_loading);
@@ -917,7 +919,12 @@ static DWORD WINAPI poll_thread(LPVOID lpThreadParameter)
 		    LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback, udevman, &handle);
 
 		if (rc != LIBUSB_SUCCESS)
-			udevman->running = FALSE;
+		{
+			WLog_WARN(TAG,
+			          "Failed to register hotplug handler (%s). USB devices plugged in later "
+			          "will not be detected.",
+			          libusb_strerror(rc));
+		}
 	}
 	else
 		WLog_WARN(TAG, "Platform does not support libusb hotplug. USB devices plugged in later "
