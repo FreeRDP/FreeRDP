@@ -166,10 +166,6 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
  * alive. */
 #define RDPUDP_STALL_TIMEOUT_MS RDPUDP2_PEER_TIMEOUT_MS
 
-/* How long the stream waits at channel sequence 0 for a chunk that may never have been sent,
- * see v3_skip_channel_zero. */
-#define RDPUDP_CHANNEL_ZERO_GRACE_MS 1000
-
 typedef struct
 {
 	BOOL used;
@@ -260,9 +256,6 @@ struct rdp_udp
 	UINT16 v3AckedSeq;       /* the SeqNum of our last ACK payload */
 	BOOL v3AckedGap;         /* whether our last acknowledgement reported a missing packet */
 	UINT16 v3NextChannel;
-	UINT16 v3LastChannelDataSeq;  /* data sequence that carried channel sequence 0xFFFF */
-	UINT16 v3FirstChannelDataSeq; /* data sequence that carried channel sequence 1 */
-	UINT64 v3ZeroWaitSince;
 
 	/* One received datagram. Kept here rather than on the stack, rdpudp_check is not reentrant. */
 	BYTE recvBuffer[0x10000];
@@ -310,7 +303,7 @@ static BOOL seq32_after(UINT32 a, UINT32 b)
 }
 
 /* Channel sequence numbers start at 1 and Windows wraps 65535 to 1, never using 0. Ours do the
- * same; on receiving, 0 is accepted as well, see v3_skip_channel_zero. */
+ * same, both sending and receiving. */
 WINPR_ATTR_NODISCARD
 static UINT16 channel_seq_next(UINT16 seq)
 {
@@ -1431,38 +1424,6 @@ static void v3_process_ack(rdpUdp* udp, UINT16 ack)
 	}
 }
 
-/* Waiting at channel sequence 0 with 1 already here. Windows never sends 0; a peer that does
- * sent it before 1. When 1 came in the data sequence right after the one that carried 0xFFFF,
- * nothing was sent in between and there is no 0. Otherwise 0 gets a grace period to turn up as
- * a resend before the stream moves on without it. */
-WINPR_ATTR_NODISCARD
-static BOOL v3_skip_channel_zero(rdpUdp* udp)
-{
-	WINPR_ASSERT(udp);
-	if (udp->v3NextChannel != 0)
-		return FALSE;
-	const rdpudp_slot* zero = &udp->slots[0];
-	const rdpudp_slot* one = &udp->slots[1];
-	if ((zero->present && (zero->seq == 0)) || !one->present || (one->seq != 1))
-	{
-		udp->v3ZeroWaitSince = 0;
-		return FALSE;
-	}
-
-	const UINT64 now = now_ms();
-	if (udp->v3ZeroWaitSince == 0)
-		udp->v3ZeroWaitSince = now;
-	const BOOL adjacent = seq16_add(udp->v3LastChannelDataSeq, 1) == udp->v3FirstChannelDataSeq;
-	if (!adjacent && (now - udp->v3ZeroWaitSince < RDPUDP_CHANNEL_ZERO_GRACE_MS))
-		return FALSE;
-
-	WLog_Print(udp->log, WLOG_DEBUG, "channel sequence wrapped past 0%s",
-	           adjacent ? "" : ", which never arrived");
-	udp->v3ZeroWaitSince = 0;
-	udp->v3NextChannel = 1;
-	return TRUE;
-}
-
 /* Hands up the chunks that are next in the stream, in channel sequence order. */
 WINPR_ATTR_NODISCARD
 static BOOL v3_deliver_ready(rdpUdp* udp)
@@ -1472,17 +1433,13 @@ static BOOL v3_deliver_ready(rdpUdp* udp)
 	{
 		rdpudp_slot* slot = &udp->slots[udp->v3NextChannel % RDPUDP_RECEIVE_SLOTS];
 		if (!slot->present || (slot->seq != udp->v3NextChannel))
-		{
-			if (v3_skip_channel_zero(udp))
-				continue;
 			break;
-		}
 		BYTE* chunk = slot->data;
 		const size_t chunkLength = slot->length;
 		slot->data = nullptr;
 		slot->present = FALSE;
 		udp->buffered--;
-		udp->v3NextChannel = seq16_add(udp->v3NextChannel, 1);
+		udp->v3NextChannel = channel_seq_next(udp->v3NextChannel);
 		const BOOL rc = deliver(udp, chunk, chunkLength);
 		free(chunk);
 		if (!rc)
@@ -1492,8 +1449,7 @@ static BOOL v3_deliver_ready(rdpUdp* udp)
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL v3_receive_channel_data(rdpUdp* udp, UINT16 dataSeq, UINT16 channelSeq,
-                                    const BYTE* data, size_t length)
+static BOOL v3_receive_channel_data(rdpUdp* udp, UINT16 channelSeq, const BYTE* data, size_t length)
 {
 	WINPR_ASSERT(udp);
 	WINPR_ASSERT(data || (length == 0));
@@ -1503,11 +1459,6 @@ static BOOL v3_receive_channel_data(rdpUdp* udp, UINT16 dataSeq, UINT16 channelS
 	const UINT16 ahead = seq16_diff(channelSeq, udp->v3NextChannel);
 	if (ahead >= RDPUDP_RECEIVE_REACH)
 		return TRUE;
-
-	if (channelSeq == UINT16_MAX)
-		udp->v3LastChannelDataSeq = dataSeq;
-	else if (channelSeq == 1)
-		udp->v3FirstChannelDataSeq = dataSeq;
 
 	if (!store_slot(udp, channelSeq, data, length))
 		return FALSE;
@@ -1671,7 +1622,7 @@ static BOOL v3_process_datagram(rdpUdp* udp, const BYTE* wire, size_t length)
 
 	if (!withChunk)
 		return TRUE;
-	return v3_receive_channel_data(udp, dataSeq, channelSeq, Stream_ConstPointer(s),
+	return v3_receive_channel_data(udp, channelSeq, Stream_ConstPointer(s),
 	                               Stream_GetRemainingLength(s));
 }
 
@@ -1867,11 +1818,6 @@ static BOOL run_timers(rdpUdp* udp)
 		return FALSE;
 	}
 	v3_note_silence(udp, now);
-
-	/* the grace period at channel sequence 0 can end without a packet coming in */
-	if ((udp->version == RDPUDP_PROTOCOL_VERSION_3) && (udp->v3NextChannel == 0) &&
-	    !v3_deliver_ready(udp))
-		return FALSE;
 
 	/* stuck: chunks have been waiting behind a hole, and nothing moved, for the whole timeout */
 	const UINT64 progress =
