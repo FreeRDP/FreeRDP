@@ -1,3 +1,154 @@
+# 2026-10-12 Version 3.32.2
+
+Regression, bugfix and security release.
+We've been under close scrutiny by various security researchers.
+Addressing their findings we've hardened the code base considerably against
+malicious client and/or server messages
+
+## CVE
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-4g67-jhpc-q5xp
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-799q-hjgw-g55g
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-cg4f-57hc-v7w7
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-rrp5-666j-g6gp
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-wg7g-gx9g-r96c
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-f53w-3364-jr35
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-66mr-7wc7-23vc
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-hqf8-95c7-6r92
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-8g9g-hqqp-fw69
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-jq25-3374-4262
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-7qw2-8h66-pvpw
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-5j39-x36c-x9pm
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-6p3w-fv52-cf24
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-4qq4-qwxq-49m8
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-x7w3-32ch-x2jq
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-v3q2-qjvf-7rqw
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-4vh4-3pc3-32p7
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-x4x6-2hrm-hvq9
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-8rjm-m7xg-mg6m
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-xc85-4mqc-xgcx
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-v85m-wg84-5ffh
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-6wqx-rv3q-vcxp
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-fg78-v8j5-8697
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-983v-jp34-f3fm
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-2557-79qc-6gfr
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-xjhw-2r55-m95g
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-m59q-wm7v-mp57
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-x26g-fp9v-c2pg
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-c426-ppvf-jpfg
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-5qqp-5ffm-m3p9
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-fqcj-rwww-2498
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-r387-jjq3-87hv
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-2c9x-4gr7-hrwx
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-x8vp-ff7m-294g
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-3pg4-5r42-wxvj
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-qw7w-hhxq-763c
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-w897-ffhv-5j7g
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-3hf9-w6hr-hf9j
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-j536-qc58-pmf8
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-fqw6-jf2h-6fj6
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-cx9c-q4jc-wm6c
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-wffv-rjv2-h2x2
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-jqf4-4p68-4p43
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-q82v-5wjg-6h57
+* https://github.com/FreeRDP/FreeRDP/security/advisories/GHSA-m7xq-5f7v-hjvw
+
+## What's Changed
+* [channels,urbdrc] fix missing input range check (#13541)
+* [channel,urbdrc] revert device reset and cancel (#13618)
+* [channels,urbdrc] redirect USB devices plugged in during the session (configurable hotplug class filter, detach late-bound kernel drivers) (#13606)
+* [channels,rdpei] track the client ready state (#13537)
+* [channels,rdpsnd,mac] connect player with the stream format (#13574)
+* [channels,rdpdr] fix drive redirection with FreeRDP-based servers (#13592)
+* [channels,smartcard] fix transaction deadlocks and lockups with pcsc-lite (#13518)
+* [core,proxy] fix inverted validity check (#13547)
+* [core,mcs] clarify disconnect ultimatum send logging (#13636)
+* [core,capabilities] sanitize KeyboardType from TS_INPUT_CAPABILITYSET (#13562)
+* Bugs fixed (#13548)
+* Bugs fixed (#13552)
+* sspi/kerberos/gfx/usb fixes (#13553)
+* [codec,planar] match allocator for free (#13555)
+* [codec,dsp] add MediaCodec AAC audio backend (#13597)
+* [codec,dsp] check input size is valid for gsm_decode (#13641)
+* [codec,h264] only reinitialize on hardware acceleration change (#13596)
+* [codec,h264] improve MediaCodec decoder and add H.264 encoder (#13598)
+* Rfx fix reachable assertions (#13600)
+* Yuv fixes (#13631)
+* [gateway,http] fix BodyContent use-after-free (#13568)
+* Gateway checks (#13604)
+* [client,common] fix reading the user AAD helper config (#13566)
+* [client,common] Populate smart sizing from settings into rdpFile (#13602)
+* [client,common] copy buffer for alignment. (#13607)
+* [client,ios] Improve UI for modern devices. (#13581)
+* [client,sdl] announce the clipboard contents present at connect (#13603)
+* [client,sdl] rail: do not report deactivation from focus events (#13624)
+* [client,x11] fix raw clipboard transfer (#13599)
+* Appdetails (#13573)
+* Rdg fixes (#13572)
+* Drdynvc increment (#13611)
+* code cleanup/hardening (#13584)
+* Clip text plain (#13569)
+* [ci,workflow] switch to current clang-tidy review (#13585)
+* [utils,smartcard] add cReaders range checks (#13615)
+* Winpr tools linking (#13544)
+* [winpr,sspi] use an enterprise principal (RFC 6806) for UPN suffix domains (#13588)
+* [winpr,utils] log SAM file name (#13570)
+* [winpr,clipboard] make test failure verbose (#13605)
+* [winpr,crt] check all paths for overflow (#13609)
+* [winpr,ncrypt] fix geometry checks to work with multiple keys on one … (#13613)
+* [winpr,crt] fix endless loop in winpr_utfEscapedStringToUtf8 (#13616)
+* [winpr,crt] make test failures verbose (#13619)
+* [winpr,clipboard] improve unit tests (#13621)
+* [winpr,file] fix GetStdHandle returning the same handle for all streams (#13565)
+* [winpr,crt] fix winpr_utfEscapedStringToUtf8 on big-endian (#13642)
+* [cmake] link dav1d, aom and yuv when found without pkg-config (#13625)
+* Hardening what else (#13612)
+* channel lock during reply (#13627)
+* More proxy fixes (#13630)
+* Fix bugs (#13637)
+* [server,ntlm] fix missing UNICODE flag that causes authentication to fail (#13638)
+* Warn fixes mstsc (#13643, #13644)
+* [client] fix clipboard mime type (#13645)
+* [channels,drdynvc] release channelsById lock when channel creation fails (#13646)
+* [winpr,crt] fix big-endian wchar compare (#13649)
+* [server,proxy] ensure PEM is \0 terminated (#13650)
+* [crypto,x509] accept wildcard DNS names in certificates (#13653)
+* [utils,scard] lazy allocate return buffer (#13659)
+* OSS-Fuzz: Improve core client fuzzer, fix bugs detected (#13655, #13660, #13662, #13678)
+* [client,sdl] fix Wayland clipboard: stale data, stale updates, threading (#13560)
+* Fix a bug in HashTable_Foreach (#13661)
+* lint warning fix (#13663)
+* [channels,drdynvc] refuse unknown channels before registering them (#13665)
+* [client,sdl] include cstdlib for std::free (#13666)
+* [primitives,sse] fix AVC444v1 chroma placement in sse41_ChromaV1ToYUV444 (#13670)
+* [scripts,mingw] update LibreSSL to 4.3.3 (#13667)
+* [channels,urbdrc] complete pending transfers when freeing a device (#13679)
+* [channels,urbdrc] fix deadlock between USB hotplug and dynamic channel close (#13674)
+* [core,connection] reset codecs on deactivate-reactivate resize (#13668)
+* Winpr image fuzz (#13680)
+* X11 rail (#13681)
+* [client,sdl] renegotiate the desktop size in fullscreen (#13682)
+
+## New Contributors
+* @kalt2212 made their first contribution in #13568
+* @webskin made their first contribution in #13562
+* @sundbp made their first contribution in #13566
+* @congzhangzh made their first contribution in #13574
+* @SoapGentoo made their first contribution in #13588
+* @Ceschi-ops made their first contribution in #13606
+* @brianIcke made their first contribution in #13613
+* @Ewerton made their first contribution in #13616
+* @jhmk9150-lab made their first contribution in #13624
+* @divinehawk made their first contribution in #13518
+* @cedricroijakkers made their first contribution in #13646
+* @vichong made their first contribution in #13653
+* @nickallevato made their first contribution in #13560
+* @pletch made their first contribution in #13670
+* @ispy4you made their first contribution in #13682
+
+For a complete and detailed change log since the last release run:
+git log 3.32.2...3.32.1
+
+
 # 2026-09-28 Version 3.32.1
 
 Regression and bugfix release. After the latest hardening a few corner cases
