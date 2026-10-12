@@ -20,3 +20,6 @@ UIButton *RDPCreateKeyButton(NSString *title, UIImage *image);
 
 // create a page tab button (AdvancedKeyboard tab button)
 UIButton *RDPCreateTabButton(NSString *title);
+
+// check system support liquid glass (ios 26+)
+BOOL RDPSupportLiquidGlass(void);

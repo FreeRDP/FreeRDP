@@ -11,6 +11,8 @@
 
 void RDPApplyKeyCapColors(UIButtonConfiguration *config, BOOL latched, BOOL pressed);
 
+BOOL RDPSupportLiquidGlass(void);
+
 UIVisualEffectView *RDPCreateGlassCapsuleView(void)
 {
 	UIVisualEffect *effect;
@@ -42,12 +44,10 @@ UIVisualEffectView *RDPCreateGlassCapsuleView(void)
 
 void RDPUpdateGlassCapsuleCorners(UIVisualEffectView *view)
 {
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 260000
-	if (@available(iOS 26.0, *))
+	if (RDPSupportLiquidGlass() == YES)
 	{
 		return;
 	}
-#endif
 
 	CGSize size = [view bounds].size;
 	[[view layer] setCornerRadius:MIN(size.width, size.height) * 0.5];
@@ -132,4 +132,13 @@ void RDPApplyKeyCapColors(UIButtonConfiguration *config, BOOL latched, BOOL pres
 	[[config background] setBackgroundColor:background];
 	[config
 	    setBaseForegroundColor:latched ? [UIColor systemBackgroundColor] : [UIColor labelColor]];
+}
+
+BOOL RDPSupportLiquidGlass(void)
+{
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 260000
+	if (@available(iOS 26.0, *))
+		return YES;
+#endif
+	return NO;
 }

@@ -13,6 +13,7 @@
 #import <objc/runtime.h>
 #import "RDPSessionViewController.h"
 #import "RDPSessionToolbar.h"
+#import "RDPOverlayStyle.h"
 #import "RDPKeyboard.h"
 #import "Utils.h"
 #import "Toast+UIView.h"
@@ -103,6 +104,18 @@
 	// let pointer input pass through the session toolbar to the remote session
 	object_setClass(_session_toolbar, [RDPSessionToolbar class]);
 	[(RDPSessionToolbar *)_session_toolbar setPassthroughView:_session_scrollview];
+	if (RDPSupportLiquidGlass() == NO)
+	{
+		// before ios 26, the gray background has been displayed in toolbar
+		UIToolbarAppearance *appearance = [[[UIToolbarAppearance alloc] init] autorelease];
+
+		// set transparent background
+		[appearance configureWithTransparentBackground];
+		[_session_toolbar setStandardAppearance:appearance];
+		[_session_toolbar setCompactAppearance:appearance];
+		[_session_toolbar setScrollEdgeAppearance:appearance];
+		[_session_toolbar setCompactScrollEdgeAppearance:appearance];
+	}
 
 	// init keyboard toolbar
 	_keyboard_toolbar = [[RDPKeyboardToolbarView alloc] initWithTarget:self];
