@@ -129,8 +129,12 @@ typedef enum WINPR_C23_ENUM_TYPE(uint8_t)
 /* Room left in every version 1/2 data datagram for the ACK vector and AckOfAcks. */
 #define RDPUDP_ACK_ROOM 64
 
+/* SYN and SYN+ACK are padded to the MTU ([MS-RDPEUDP] 3.1.5.1.1), so a line that drops large
+ * datagrams drops them first: with 4 attempts the tunnel was not set up on a line losing 43% of
+ * them. Ten, a second apart, stay well inside the setup time of the tunnel
+ * (RDPEMT_SETUP_TIMEOUT_MS). */
 #define RDPUDP_SYN_TIMEOUT_MS 1000
-#define RDPUDP_SYN_ATTEMPTS 4
+#define RDPUDP_SYN_ATTEMPTS 10
 
 /* [MS-RDPEUDP] 3.1.6.1: the retransmit timeout is twice the round trip, at least the version's
  * minimum, and doubles with every resend of the same datagram. Windows lets it grow to 120
