@@ -1074,9 +1074,12 @@ static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, uint32_t stride, UIN
 	if (!data || (size == 0))
 		return 0;
 
+	if ((width == 0) || (height == 0) || (bpp == 0))
+		return -1;
+
 	WINPR_ASSERT(pDstData);
 
-	if (size < (1ULL * stride * height))
+	if (size / height < stride)
 		goto fail;
 
 	/* Initialize the write struct. */
@@ -1102,15 +1105,38 @@ static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, uint32_t stride, UIN
 	if (bpp > 24)
 		colorType = PNG_COLOR_TYPE_RGBA;
 
+	const UINT32 pngChannels = (bpp > 24) ? 4 : ((bpp > 8) ? 3 : 1);
+	const UINT32 srcBytesPerPixel = (bpp + 7) / 8;
+	/* The row copy below emits exactly srcBytesPerPixel bytes per pixel; reject
+	 * inputs where that does not match the PNG channel count (e.g. 16bpp
+	 * sources), otherwise libpng reads past the (narrower) row buffer. */
+	if ((srcBytesPerPixel != pngChannels) || (width > stride / srcBytesPerPixel))
+	{
+		WLog_ERR(TAG,
+		         "unsupported conversion to PNG: bpp=%" PRIu32 ", stride=%" PRIu32
+		         ", min expected stride=%llu",
+		         bpp, stride, 1ull * width * srcBytesPerPixel);
+		goto fail;
+	}
+
 	png_set_IHDR(png_ptr, info_ptr, width, height, 8, colorType, PNG_INTERLACE_NONE,
 	             PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
 	/* Initialize rows of PNG. */
+#if SIZE_MAX <= UINT32_MAX
+	if (height > SIZE_MAX / sizeof(png_byte*))
+		goto fail;
+#endif
+
 	row_pointers = (png_byte**)png_malloc(png_ptr, height * sizeof(png_byte*));
 	for (size_t y = 0; y < height; ++y)
 	{
 		const uint8_t* line = &data[y * stride];
-		uint8_t* row = png_malloc(png_ptr, sizeof(uint8_t) * stride);
+
+		if (width > SIZE_MAX / sizeof(uint8_t) / pngChannels)
+			goto fail;
+
+		uint8_t* row = png_malloc(png_ptr, sizeof(uint8_t) * width * pngChannels);
 		row_pointers[y] = (png_byte*)row;
 		for (size_t x = 0; x < width; ++x)
 		{
