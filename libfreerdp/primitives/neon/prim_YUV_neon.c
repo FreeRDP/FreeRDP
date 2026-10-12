@@ -530,6 +530,73 @@ static pstatus_t neon_YUV444ToRGB_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc[3],
 	}
 }
 
+static inline void neon_I444ToX_ROW(const BYTE* WINPR_RESTRICT pY, const BYTE* WINPR_RESTRICT pU,
+                                    const BYTE* WINPR_RESTRICT pV, BYTE* WINPR_RESTRICT pRGB,
+                                    size_t width, const uint8_t rPos, const uint8_t gPos,
+                                    const uint8_t bPos, const uint8_t aPos)
+{
+	size_t x = 0;
+
+	for (; x < width - width % 16; x += 16)
+	{
+		const uint8x16_t Yraw = vld1q_u8(&pY[x]);
+		const uint8x8x2_t Y = { { vget_low_u8(Yraw), vget_high_u8(Yraw) } };
+		const int16x8x2_t D = loadUV444(vld1q_u8(&pU[x]));
+		const int16x8x2_t E = loadUV444(vld1q_u8(&pV[x]));
+		neon_YuvToRgbPixel(&pRGB[4ULL * x], Y, D, E, rPos, gPos, bPos, aPos);
+	}
+
+	for (; x < width; x++)
+		neon_write_pixel(&pRGB[4ULL * x], pY[x], pU[x], pV[x], rPos, gPos, bPos, aPos);
+}
+
+static inline pstatus_t neon_I444ToX(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
+                                     BYTE* WINPR_RESTRICT pDst, UINT32 dstStep,
+                                     const prim_size_t* WINPR_RESTRICT roi, const uint8_t rPos,
+                                     const uint8_t gPos, const uint8_t bPos, const uint8_t aPos)
+{
+	WINPR_ASSERT(roi);
+
+	for (size_t y = 0; y < roi->height; y++)
+	{
+		const uint8_t* WINPR_RESTRICT pY = pSrc[0] + y * srcStep[0];
+		const uint8_t* WINPR_RESTRICT pU = pSrc[1] + y * srcStep[1];
+		const uint8_t* WINPR_RESTRICT pV = pSrc[2] + y * srcStep[2];
+		uint8_t* WINPR_RESTRICT pRGB = &pDst[y * dstStep];
+
+		neon_I444ToX_ROW(pY, pU, pV, pRGB, roi->width, rPos, gPos, bPos, aPos);
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t neon_I444ToRGB_8u(const BYTE* WINPR_RESTRICT pSrc[3], const UINT32 srcStep[3],
+                                   BYTE* WINPR_RESTRICT pDst, UINT32 dstStep, UINT32 DstFormat,
+                                   const prim_size_t* WINPR_RESTRICT roi)
+{
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return neon_I444ToX(pSrc, srcStep, pDst, dstStep, roi, 2, 1, 0, 3);
+
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return neon_I444ToX(pSrc, srcStep, pDst, dstStep, roi, 0, 1, 2, 3);
+
+		case PIXEL_FORMAT_ARGB32:
+		case PIXEL_FORMAT_XRGB32:
+			return neon_I444ToX(pSrc, srcStep, pDst, dstStep, roi, 1, 2, 3, 0);
+
+		case PIXEL_FORMAT_ABGR32:
+		case PIXEL_FORMAT_XBGR32:
+			return neon_I444ToX(pSrc, srcStep, pDst, dstStep, roi, 3, 2, 1, 0);
+
+		default:
+			return generic->I444ToRGB_8u(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+	}
+}
+
 static pstatus_t neon_LumaToYUV444(const BYTE* WINPR_RESTRICT pSrcRaw[3], const UINT32 srcStep[3],
                                    BYTE* WINPR_RESTRICT pDstRaw[3], const UINT32 dstStep[3],
                                    const RECTANGLE_16* WINPR_RESTRICT roi)
@@ -826,6 +893,7 @@ void primitives_init_YUV_neon_int(primitives_t* WINPR_RESTRICT prims)
 	WLog_VRB(PRIM_TAG, "NEON optimizations");
 	prims->YUV420ToRGB_8u_P3AC4R = neon_YUV420ToRGB_8u_P3AC4R;
 	prims->YUV444ToRGB_8u_P3AC4R = neon_YUV444ToRGB_8u_P3AC4R;
+	prims->I444ToRGB_8u = neon_I444ToRGB_8u;
 	prims->YUV420CombineToYUV444 = neon_YUV420CombineToYUV444;
 #else
 	WLog_VRB(PRIM_TAG, "undefined WITH_SIMD or neon intrinsics not available");

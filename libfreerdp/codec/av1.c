@@ -479,8 +479,7 @@ static INT32 av1_dav1d_convert(FREERDP_AV1_CONTEXT* av1, const Dav1dPicture* pic
 				                                        DstFormat, &roi);
 				break;
 			case DAV1D_PIXEL_LAYOUT_I444:
-				rec = primitives->YUV444ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
-				                                        DstFormat, &roi);
+				rec = primitives->I444ToRGB_8u(pSrc, strides, pDstData, nDstStep, DstFormat, &roi);
 				break;
 			default:
 				WLog_Print(av1->log, WLOG_ERROR, "dav1d picture layout %d not supported",
@@ -639,8 +638,8 @@ INT32 freerdp_av1_decompress(FREERDP_AV1_CONTEXT* av1, const BYTE* pSrcData, UIN
 					                                        DstFormat, &roi);
 					break;
 				case AOM_IMG_FMT_I444:
-					rec = primitives->YUV444ToRGB_8u_P3AC4R(pSrc, strides, pDstData, nDstStep,
-					                                        DstFormat, &roi);
+					rec = primitives->I444ToRGB_8u(pSrc, strides, pDstData, nDstStep, DstFormat,
+					                               &roi);
 					break;
 				default:
 					WLog_Print(av1->log, WLOG_ERROR, "img->fmt %d not supported", img->fmt);

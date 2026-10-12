@@ -303,6 +303,11 @@ typedef struct
 	WINPR_ATTR_NODISCARD fn_lShiftC_16s_inplace_t lShiftC_16s_inplace; /** @since version 3.6.0 */
 	WINPR_ATTR_NODISCARD fn_copy_no_overlap_t copy_no_overlap;         /** @since version 3.6.0 */
 	WINPR_ATTR_NODISCARD fn_RGBToYUV444_8u_P3AC4R_t RGBToI444_8u;      /** @since version 3.25.0 */
+	/** \brief Convert a plain YUV444 picture (e.g. decoded AV1) to RGB.
+	 *  Unlike YUV444ToRGB_8u_P3AC4R this does not reverse the AVC444 chroma filter.
+	 *  @version since 3.33.0
+	 */
+	WINPR_ATTR_NODISCARD fn_YUV444ToRGB_8u_P3AC4R_t I444ToRGB_8u;
 } primitives_t;
 
 typedef enum
