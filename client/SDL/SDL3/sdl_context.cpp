@@ -457,8 +457,10 @@ bool SdlContext::updateWindowList()
 
 bool SdlContext::updateWindow(SDL_WindowID id)
 {
-	if (freerdp_settings_get_bool(_context->settings, FreeRDP_Fullscreen) ||
-	    freerdp_settings_get_bool(_context->settings, FreeRDP_UseMultimon))
+	/* In fullscreen the monitor kept the size measured with the probe window at startup and was
+	 * never updated, so a session the server started at another size stayed that way. Only the
+	 * window knows its real size, so ask it in fullscreen as well. */
+	if (freerdp_settings_get_bool(_context->settings, FreeRDP_UseMultimon))
 		return true;
 
 	auto& w = _windows.at(id);

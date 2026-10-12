@@ -122,16 +122,23 @@ void sdlDispContext::OnActivated(void* context, const ActivatedEventArgs* e)
 
 	sdlDisp->_waitingResize = false;
 
-	if (sdlDisp->_activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
+	if (!sdlDisp->_activated)
+		return;
+
+	/* The desktop size agreed on at connect time is capped by the protocol (4096x2048,
+	 * MS-RDPBCGR 2.2.1.3.2), so a larger window starts out with a smaller session. Only the
+	 * display control channel can raise it, and in fullscreen nothing else triggers a layout:
+	 * the window is never resized by hand. */
+	if (!freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
 		if (!sdlDisp->setWindowResizeable())
 			return;
 
 		if (e->firstActivation)
 			return;
-
-		std::ignore = sdlDisp->addTimer();
 	}
+
+	std::ignore = sdlDisp->addTimer();
 }
 
 void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs* e)
@@ -146,11 +153,13 @@ void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs
 
 	sdlDisp->_waitingResize = false;
 
-	if (sdlDisp->_activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
-	{
-		if (sdlDisp->setWindowResizeable())
-			std::ignore = sdlDisp->addTimer();
-	}
+	if (!sdlDisp->_activated)
+		return;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
+		std::ignore = sdlDisp->addTimer();
+	else if (sdlDisp->setWindowResizeable())
+		std::ignore = sdlDisp->addTimer();
 }
 
 Uint32 sdlDispContext::OnTimer(void* param, [[maybe_unused]] SDL_TimerID timerID, Uint32 interval)
@@ -431,7 +440,12 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 	_activated = true;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
+	{
+		/* Window events have long passed by the time the channel comes up, and a fullscreen
+		 * window produces no further ones, so send the layout now. */
+		std::ignore = addTimer();
 		return CHANNEL_RC_OK;
+	}
 
 	WLog_DBG(TAG, "DisplayControlCapsPdu: setting the window as resizable");
 	return setWindowResizeable() ? CHANNEL_RC_OK : CHANNEL_RC_NO_MEMORY;
