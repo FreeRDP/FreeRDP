@@ -30,7 +30,9 @@
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #include <winpr/registry.h>
+#endif
 
 #include <freerdp/log.h>
 #include <freerdp/settings.h>
@@ -39,6 +41,8 @@
 #include <freerdp/primitives.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/build-config.h>
+#include <freerdp/utils/helpers.h>
+#include <winpr/config-readers.h>
 
 #include "rfx_constants.h"
 #include "rfx_types.h"
@@ -262,9 +266,12 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 		goto fail;
 
 	priv->UseThreads = FALSE;
+
+	const char config[] = "remotefx.json";
 	if (!(ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 		priv->UseThreads = TRUE;
 
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	{
 		char* key = freerdp_getApplicatonDetailsRegKey(RFX_KEY);
 		if (key)
@@ -276,6 +283,8 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 
 			if (status == ERROR_SUCCESS)
 			{
+				WLog_WARN(TAG, "HKLM.reg is deprecated since 3.33.0. ATTENTION: Use %s instead!",
+				          config);
 				DWORD dwType = 0;
 				DWORD dwValue = 0;
 				DWORD dwSize = sizeof(dwValue);
@@ -286,6 +295,15 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 
 				RegCloseKey(hKey);
 			}
+		}
+	}
+#endif
+	{
+		WINPR_JSON* json = freerdp_GetJSONConfigFile(TRUE, config);
+		if (json)
+		{
+			winpr_config_apply_bool(config, json, "UseThreads", &priv->UseThreads);
+			WINPR_JSON_Delete(json);
 		}
 	}
 

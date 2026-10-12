@@ -172,6 +172,7 @@ set(SRCS
     winpr.c
     cmdline.c
     ssl.c
+    config-readers.c
 )
 
 if(ANDROID)

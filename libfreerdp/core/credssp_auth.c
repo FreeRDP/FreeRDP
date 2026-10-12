@@ -25,12 +25,16 @@
 #include "settings.h"
 #include <freerdp/build-config.h>
 #include <freerdp/peer.h>
+#include <freerdp/utils/helpers.h>
+#include <winpr/config-readers.h>
 
 #include <winpr/crt.h>
 #include <winpr/wtypes.h>
 #include <winpr/assert.h>
 #include <winpr/library.h>
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 #include <winpr/registry.h>
+#endif
 #include <winpr/sspi.h>
 
 #include <freerdp/log.h>
@@ -72,6 +76,8 @@ struct rdp_credssp_auth
 	enum AUTH_STATE state;
 	char* pkgNameA;
 };
+
+static const char credssp_config_file_name[] = "credssp.json";
 
 static const char* credssp_auth_state_string(const rdpCredsspAuth* auth)
 {
@@ -848,6 +854,19 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 	free(auth);
 }
 
+static void auth_get_sspi_module_from_config(char** sspi_module)
+{
+	WINPR_ASSERT(sspi_module);
+
+	WINPR_JSON* json = freerdp_GetJSONConfigFile(TRUE, credssp_config_file_name);
+	if (!json)
+		return;
+
+	winpr_config_apply_string(credssp_config_file_name, json, "SspiModule", sspi_module);
+	WINPR_JSON_Delete(json);
+}
+
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 static void auth_get_sspi_module_from_reg(char** sspi_module)
 {
 	HKEY hKey = nullptr;
@@ -855,7 +874,6 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	DWORD dwSize = 0;
 
 	WINPR_ASSERT(sspi_module);
-	*sspi_module = nullptr;
 
 	char* key = freerdp_getApplicatonDetailsRegKey(SERVER_KEY);
 	if (!key)
@@ -867,6 +885,8 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	if (rc != ERROR_SUCCESS)
 		return;
 
+	WLog_WARN(TAG, "HKLM.reg is deprecated since 3.33.0. ATTENTION: Use %s instead!",
+	          credssp_config_file_name);
 	if (RegQueryValueExA(hKey, "SspiModule", nullptr, &dwType, nullptr, &dwSize) != ERROR_SUCCESS)
 	{
 		RegCloseKey(hKey);
@@ -889,8 +909,11 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	}
 
 	RegCloseKey(hKey);
+
+	free(*sspi_module);
 	*sspi_module = module;
 }
+#endif
 
 static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* settings)
 {
@@ -899,7 +922,12 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 	WINPR_ASSERT(settings);
 
 	if (settings->ServerMode)
+	{
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 		auth_get_sspi_module_from_reg(&sspi_module);
+#endif
+		auth_get_sspi_module_from_config(&sspi_module);
+	}
 
 	if (sspi_module || settings->SspiModule)
 	{
