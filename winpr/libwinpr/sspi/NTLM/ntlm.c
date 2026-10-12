@@ -461,7 +461,7 @@ static BOOL ntlm_ContextFromConfig(NTLM_CONTEXT* context)
 		DWORD dwValue = 0;
 		if (RegQueryValueEx(hKey, _T("SuppressExtendedProtection"), nullptr, &dwType,
 		                    (BYTE*)&dwValue, &dwSize) == ERROR_SUCCESS)
-			context->SuppressExtendedProtection = dwValue ? 1 : 0;
+			context->SuppressExtendedProtection = dwValue != 0;
 
 		RegCloseKey(hKey);
 	}
