@@ -1225,6 +1225,17 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 	if (SelectedProtocol & PROTOCOL_FAILED_NEGO)
 		return TRUE;
 
+	/** The disconnection sequence below (Deactivate All + MCS Disconnect
+	 *  Provider Ultimatum) only applies to sessions where MCS has been
+	 *  established. If the connection never got past negotiation or NLA
+	 *  authentication (e.g. a malformed X.224 request, or wrong
+	 *  credentials), sending these PDUs emits an out-of-order X.224 DATA
+	 *  TPDU that strict clients (e.g. Windows App on macOS) cannot handle,
+	 *  leaving them hanging at "securing the connection" instead of
+	 *  failing fast. Just drop the TCP connection in that case. */
+	if (rdp_get_state(context->rdp) < CONNECTION_STATE_MCS_ATTACH_USER_CONFIRM)
+		return TRUE;
+
 	/**
 	 * [MS-RDPBCGR] 1.3.1.4.2 User-Initiated Disconnection Sequence on Server
 	 * The server first sends the client a Deactivate All PDU followed by an
