@@ -221,24 +221,24 @@ static BOOL test_text_conversion(void)
 	const test_case_t tests[] = {
 		{ ClipboardRegisterFormat(clipboard, "text/plain"),
 		  ClipboardRegisterFormat(clipboard, "text/plain;charset=utf-8"), "a\nb\rc\\u1234\\u055e",
-		  17, "a\nb\ncሴ՞", 10 },
+		  17, "a\nb\ncሴ՞", 11 },
 		{ ClipboardRegisterFormat(clipboard, "text/plain;charset=utf-8"),
 		  ClipboardRegisterFormat(clipboard, "text/plain"), "a\r\nb\nc՞՞", 10,
-		  "a\r\nb\nc\\u055e\\u055e", 18 },
+		  "a\r\nb\nc\\u055e\\u055e", 19 },
 		{ ClipboardRegisterFormat(clipboard, "text/plain"), CF_UNICODETEXT, "a\nb\rc\\u1234\\u055e",
 		  17, "\x61\x00\x0d\x00\x0a\x00\x62\x00\x0d\x0\x0a\x00\x63\x00\x34\x12\x5e\x05\x00\x00\x00",
-		  18 },
+		  20 },
 		{ CF_UNICODETEXT, ClipboardRegisterFormat(clipboard, "text/plain"),
 		  "\x61\x00\x0d\x00\x0a\x00\x62\x00\x0d\x0\x0a\x00\x63\x00\x34\x12\x5e\x05\x00\x00\x00", 18,
-		  "a\nb\nc\\u1234\\u055e", 17 },
+		  "a\nb\nc\\u1234\\u055e", 18 },
 		{ ClipboardRegisterFormat(clipboard, "text/plain"), CF_TEXT, "a\nb\rc\\u1234\\u055e", 17,
-		  "a\nb\nc\\u1234\\u055e", 17 },
+		  "a\nb\nc\\u1234\\u055e", 18 },
 		{ CF_TEXT, ClipboardRegisterFormat(clipboard, "text/plain"), "a\nb\nc\\u1234\\u055e", 17,
-		  "a\nb\nc\\u1234\\u055e", 17 },
+		  "a\nb\nc\\u1234\\u055e", 18 },
 		{ ClipboardRegisterFormat(clipboard, "text/plain"), CF_OEMTEXT, "a\nb\rc\\u1234\\u055e", 17,
-		  "a\nb\nc\\u1234\\u055e", 17 },
+		  "a\nb\nc\\u1234\\u055e", 18 },
 		{ CF_OEMTEXT, ClipboardRegisterFormat(clipboard, "text/plain"), "a\nb\rc\\u1234\\u055e", 17,
-		  "a\nb\nc\\u1234\\u055e", 17 }
+		  "a\nb\nc\\u1234\\u055e", 18 }
 	};
 
 	BOOL rc = FALSE;

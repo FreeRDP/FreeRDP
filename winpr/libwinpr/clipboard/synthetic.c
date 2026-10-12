@@ -267,13 +267,13 @@ static void* clipboard_synthesize_string(wClipboard* clipboard, UINT32 dstFormat
 			size_t wlen = 0;
 			WCHAR* wstr = ConvertUtf8NToWCharAlloc(crlf, crlfLen, &wlen);
 			winpr_znfree(crlf, crlfLen);
-			if (!wstr || (wlen == 0) || (wlen > UINT32_MAX / sizeof(WCHAR)))
+			if (!wstr || (wlen == 0) || (wlen >= UINT32_MAX / sizeof(WCHAR)))
 			{
 				winpr_znfree(wstr, wlen * sizeof(WCHAR));
 				return nullptr;
 			}
 
-			*pSize = WINPR_ASSERTING_INT_CAST(UINT32, wlen * sizeof(WCHAR));
+			*pSize = WINPR_ASSERTING_INT_CAST(UINT32, (wlen + 1) * sizeof(WCHAR));
 			return wstr;
 		}
 		case CF_OEMTEXT:
@@ -282,24 +282,24 @@ static void* clipboard_synthesize_string(wClipboard* clipboard, UINT32 dstFormat
 			size_t esclen = 0;
 			char* escaped = winpr_utf8ToUtfEscapedString(utf8, utf8len, &esclen);
 			winpr_znfree(utf8, utf8len);
-			if (!escaped || (esclen == 0) || (esclen > UINT32_MAX))
+			if (!escaped || (esclen == 0) || (esclen >= UINT32_MAX))
 			{
 				winpr_znfree(escaped, esclen);
 				return nullptr;
 			}
-			*pSize = WINPR_ASSERTING_INT_CAST(UINT32, esclen);
+			*pSize = WINPR_ASSERTING_INT_CAST(UINT32, esclen + 1);
 			return escaped;
 		}
 		default:
 			if ((dstFormatId == ClipboardGetFormatId(clipboard, mime_text_utf8)) ||
 			    (dstFormatId == ClipboardGetFormatId(clipboard, mime_text_UTF8_STRING)))
 			{
-				if (utf8len > UINT32_MAX)
+				if (utf8len >= UINT32_MAX)
 				{
 					winpr_znfree(utf8, utf8len);
 					return nullptr;
 				}
-				*pSize = WINPR_ASSERTING_INT_CAST(UINT32, utf8len);
+				*pSize = WINPR_ASSERTING_INT_CAST(UINT32, utf8len + 1);
 				return utf8;
 			}
 
@@ -308,12 +308,12 @@ static void* clipboard_synthesize_string(wClipboard* clipboard, UINT32 dstFormat
 				size_t esclen = 0;
 				char* escaped = winpr_utf8ToUtfEscapedString(utf8, utf8len, &esclen);
 				winpr_znfree(utf8, utf8len);
-				if (!escaped || (esclen == 0) || (esclen > UINT32_MAX))
+				if (!escaped || (esclen == 0) || (esclen >= UINT32_MAX))
 				{
 					winpr_znfree(escaped, esclen);
 					return nullptr;
 				}
-				*pSize = WINPR_ASSERTING_INT_CAST(UINT32, esclen);
+				*pSize = WINPR_ASSERTING_INT_CAST(UINT32, esclen + 1);
 				return escaped;
 			}
 
