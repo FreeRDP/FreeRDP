@@ -254,6 +254,10 @@ static void freeArguments(int argc, char **argv)
 	if (!addArgument(&argc, &argv, "/kbd:layout:%d", 0x409))
 		goto out_free;
 
+	// send characters without a US scancode (e.g. Korean) as unicode input
+	if (!addArgument(&argc, &argv, "/kbd:unicode:on"))
+		goto out_free;
+
 	status =
 	    freerdp_client_settings_parse_command_line(_freerdp->context->settings, argc, argv, FALSE);
 

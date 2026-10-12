@@ -170,6 +170,10 @@ set(SRCS
     Views/EditTextTableViewCell.m
     Views/RDPCursor.h
     Views/RDPCursor.m
+    Views/RDPKeyboardToolbarView.h
+    Views/RDPKeyboardToolbarView.m
+    Views/RDPOverlayStyle.h
+    Views/RDPOverlayStyle.m
     Views/RDPSessionToolbar.h
     Views/RDPSessionToolbar.m
     Views/RDPSessionView.h

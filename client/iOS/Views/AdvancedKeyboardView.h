@@ -16,25 +16,23 @@
 // called when a function key was pressed and a virtual keycode is provided
 //  @key: virtual key code
 - (void)advancedKeyPressedVKey:(NSInteger)key;
-// called when a function key was pressed and the keys unicode is provided
-//  @key: unicode character
-- (void)advancedKeyPressedUnicode:(NSInteger)key;
 @end
 
-@interface AdvancedKeyboardView : UIView
+@interface AdvancedKeyboardView : UIInputView <UIInputViewAudioFeedback>
 {
   @private
-	// view containing function keys (F-keys) and function block (ins, del, home, end, ...)
-	UIView *_function_keys_view;
+	NSMutableArray *_key_buttons;
+	NSMutableArray *_tab_buttons;
+	NSMutableArray *_separators;
 
-	// view containing numpad keys (0-9, +-/*)
-	UIView *_numpad_keys_view;
+	// selected page and the layout the views were built for
+	NSInteger _page;
+	BOOL _wide_layout;
+	BOOL _has_layout;
 
-	// view containing cursor keys (up, down, left, right)
-	UIView *_cursor_keys_view;
-
-	// currently visible view
-	UIView *_cur_view;
+	// auto repeat of a held key
+	NSTimer *_repeat_timer;
+	NSInteger _repeat_key;
 
 	// delegate
 	NSObject<AdvancedKeyboardDelegate> *_delegate;
