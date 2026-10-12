@@ -189,20 +189,6 @@ static BOOL rts_align_stream(wStream* s, size_t alignment, BOOL silent)
 	return Stream_ConditionalSafeSeek(s, pad, silent);
 }
 
-static char* sdup(const void* src, size_t length)
-{
-	char* dst = nullptr;
-	WINPR_ASSERT(src || (length == 0));
-	if (length == 0)
-		return nullptr;
-
-	dst = calloc(length + 1, sizeof(char));
-	if (!dst)
-		return nullptr;
-	memcpy(dst, src, length);
-	return dst;
-}
-
 static BOOL rts_write_common_pdu_header(wStream* s, const rpcconn_common_hdr_t* header)
 {
 	WINPR_ASSERT(s);
@@ -314,7 +300,7 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 		const void* ptr = Stream_Pointer(s);
 		if (!Stream_ConditionalSafeSeek(s, header->auth_length, silent))
 			return FALSE;
-		auth->auth_value = (BYTE*)sdup(ptr, header->auth_length);
+		auth->auth_value = (BYTE*)strndup(ptr, header->auth_length);
 		if (auth->auth_value == nullptr)
 			return FALSE;
 	}
@@ -390,7 +376,7 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 		*ptr = nullptr;
 		if (size > 0)
 		{
-			*ptr = (BYTE*)sdup(src, size);
+			*ptr = (BYTE*)strndup(src, size);
 			if (!*ptr)
 				return FALSE;
 		}
@@ -516,7 +502,7 @@ static BOOL rts_read_port_any(wStream* s, port_any_t* port, BOOL silent)
 	const void* ptr = Stream_ConstPointer(s);
 	if (!Stream_ConditionalSafeSeek(s, port->length, silent))
 		return FALSE;
-	port->port_spec = sdup(ptr, port->length);
+	port->port_spec = strndup(ptr, port->length);
 	return port->port_spec != nullptr;
 }
 
