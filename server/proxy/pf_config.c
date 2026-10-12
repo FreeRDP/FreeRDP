@@ -87,6 +87,7 @@ static const char* key_target_cert_pem = "CertificatePEM";       /** @since vers
 static const char* key_target_cert_pem_content =
     "CertificatePEMContent";                                 /** @since version 3.32.0 */
 static const char* key_target_cert_hash = "CertificateHash"; /** @since version 3.32.0 */
+static const char* key_target_cert_store_path = "CertificateStorePath"; /** @since version 3.33.0 */
 
 static const char* section_plugins = "Plugins";
 static const char* key_plugins_modules = "Modules";
@@ -457,19 +458,35 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 			return FALSE;
 	}
 
+	target_value = pf_config_get_str(ini, section_target, key_target_cert_store_path, FALSE);
+	if (target_value)
+	{
+		winpr_zfree(config->CertStorePath);
+		config->CertStorePath = _strdup(target_value);
+		if (!config->CertStorePath)
+			return FALSE;
+	}
+
 	target_value = pf_config_get_str(ini, section_target, key_target_cert_policy, FALSE);
 	if (target_value)
 	{
 		config->TargetCertPolicy = pf_config_policy_from_str(target_value);
-		if (config->TargetCertPolicy == FREERDP_PROXY_CERT_POLICY_PINNED)
+		switch (config->TargetCertPolicy)
 		{
-			if (!config->TargetCertHash && !config->TargetCertPEM)
+			case FREERDP_PROXY_CERT_POLICY_PINNED:
 			{
-				WLog_WARN(TAG, "In section [%s] key %s value %s requires one of %s, %s or %s set.",
-				          section_target, key_target_cert_policy, target_value,
-				          key_target_cert_hash, key_target_cert_pem, key_target_cert_pem_content);
-				return FALSE;
+				if (!config->TargetCertHash && !config->TargetCertPEM)
+				{
+					WLog_WARN(
+					    TAG, "In section [%s] key %s value %s requires one of %s, %s or %s set.",
+					    section_target, key_target_cert_policy, target_value, key_target_cert_hash,
+					    key_target_cert_pem, key_target_cert_pem_content);
+					return FALSE;
+				}
 			}
+			break;
+			default:
+				break;
 		}
 	}
 
@@ -853,6 +870,9 @@ BOOL pf_server_config_dump(const char* file)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, section_target, key_target_cert_hash,
 	                              "<hash type>:<hash hex string>") < 0)
+		goto fail;
+	if (IniFile_SetKeyValueString(ini, section_target, key_target_cert_store_path,
+	                              "optional/path/to/cert/store") < 0)
 		goto fail;
 	/* Codec configuration */
 	if (IniFile_SetKeyValueString(ini, section_codecs, key_codecs_rfx, bool_str_true) < 0)
@@ -1626,6 +1646,10 @@ const char* pf_config_policy_to_str(FreeRDP_ProxyCertPolicy policy)
 			return "allow";
 		case FREERDP_PROXY_CERT_POLICY_PINNED:
 			return "pinned";
+		case FREERDP_PROXY_CERT_POLICY_VERIFIED:
+			return "verified";
+		case FREERDP_PROXY_CERT_POLICY_VERIFIED_HOST_MATCH:
+			return "verified-with-host-match";
 		case FREERDP_PROXY_CERT_POLICY_DENY:
 		default:
 			return "deny";
@@ -1640,5 +1664,9 @@ FreeRDP_ProxyCertPolicy pf_config_policy_from_str(const char* val)
 		return FREERDP_PROXY_CERT_POLICY_ALLOW;
 	if (_stricmp(val, "pinned") == 0)
 		return FREERDP_PROXY_CERT_POLICY_PINNED;
+	if (_stricmp(val, "verified-with-host-match") == 0)
+		return FREERDP_PROXY_CERT_POLICY_VERIFIED_HOST_MATCH;
+	if (_stricmp(val, "verified") == 0)
+		return FREERDP_PROXY_CERT_POLICY_VERIFIED;
 	return FREERDP_PROXY_CERT_POLICY_DENY;
 }

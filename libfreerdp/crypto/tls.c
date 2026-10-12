@@ -113,9 +113,8 @@ WINPR_ATTR_NODISCARD
 static int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* hostname,
                                   UINT16 port);
 
-static void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,
-                                                      const char* common_name, char** alt_names,
-                                                      size_t alt_names_count);
+static void tls_print_certificate_name_mismatch_error(const rdpCertificate* cert,
+                                                      const char* hostname, UINT16 port);
 
 static void tls_print_new_certificate_warn(rdpCertificateStore* store, const char* hostname,
                                            UINT16 port, const char* type, const char* fingerprint);
@@ -1459,40 +1458,6 @@ int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description)
 }
 
 WINPR_ATTR_NODISCARD
-static BOOL tls_match_hostname(const char* pattern, const size_t pattern_length,
-                               const char* hostname)
-{
-	WINPR_ASSERT(hostname);
-	WINPR_ASSERT(pattern || (pattern_length == 0));
-
-	const size_t hlen = strlen(hostname);
-	if (hlen == pattern_length)
-	{
-		if (_strnicmp(hostname, pattern, pattern_length) == 0)
-			return TRUE;
-	}
-
-	if ((pattern_length > 2) && (pattern[0] == '*') && (pattern[1] == '.') &&
-	    (hlen >= pattern_length))
-	{
-		/* Ensure wildcard only matches foo.example.com and not foo.bar.example.com */
-		const size_t prefixlen = hlen - pattern_length;
-		for (size_t x = 0; x < prefixlen; x++)
-		{
-			char cur = hostname[x];
-			if (cur == '.')
-				return FALSE;
-		}
-
-		/* Check the hostname ends with the domain */
-		const char* check_hostname = &hostname[prefixlen + 1];
-		return _strnicmp(check_hostname, &pattern[1], pattern_length - 1) == 0;
-	}
-
-	return FALSE;
-}
-
-WINPR_ATTR_NODISCARD
 static BOOL is_redirected(rdpTls* tls)
 {
 	rdpSettings* settings = tls->context->settings;
@@ -1808,12 +1773,6 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 	BOOL certificate_status = 0;
 	char* common_name = nullptr;
 	size_t common_name_length = 0;
-	char** dns_names = nullptr;
-	size_t dns_names_count = 0;
-	size_t* dns_names_lengths = nullptr;
-	char** ip_names = nullptr;
-	size_t ip_names_count = 0;
-	size_t* ip_names_lengths = nullptr;
 	int verification_status = -1;
 	BOOL hostname_match = FALSE;
 	rdpCertificateData* certificate_data = nullptr;
@@ -1906,44 +1865,10 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 			goto end;
 		/* extra common name and alternative names */
 		common_name = freerdp_certificate_get_common_name(cert, &common_name_length);
-		dns_names = freerdp_certificate_get_dns_names(cert, &dns_names_count, &dns_names_lengths);
-		ip_names = freerdp_certificate_get_ip_names(cert, &ip_names_count, &ip_names_lengths);
 
-		if (utils_is_valid_ip(hostname))
-		{
-			const size_t hostlen = strlen(hostname);
-			if ((hostlen != 0) && ip_names && (ip_names_count > 0))
-			{
-
-				for (size_t index = 0; index < ip_names_count; index++)
-				{
-					if (utils_compare_ip_strings(ip_names[index], ip_names_lengths[index], hostname,
-					                             hostlen))
-					{
-						hostname_match = TRUE;
-						break;
-					}
-				}
-			}
-		}
-		/* compare against alternative names */
-		else if (dns_names)
-		{
-			for (size_t index = 0; index < dns_names_count; index++)
-			{
-				if (tls_match_hostname(dns_names[index], dns_names_lengths[index], hostname))
-				{
-					hostname_match = TRUE;
-					break;
-				}
-			}
-		}
-		/* compare against common name */
-		else if (common_name)
-		{
-			if (tls_match_hostname(common_name, common_name_length, hostname))
-				hostname_match = TRUE;
-		}
+		const size_t hostlen = strlen(hostname);
+		if (freerdp_certificate_matches_hostname(cert, hostname, hostlen))
+			hostname_match = TRUE;
 
 		/* if the certificate is valid and the certificate name matches, verification succeeds
 		 */
@@ -1979,8 +1904,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 				/* no entry was found in known_hosts file, prompt user for manual verification
 				 */
 				if (!hostname_match)
-					tls_print_certificate_name_mismatch_error(hostname, port, common_name,
-					                                          dns_names, dns_names_count);
+					tls_print_certificate_name_mismatch_error(cert, hostname, port);
 
 				{
 					const char* type = "";
@@ -2185,8 +2109,6 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 end:
 	freerdp_certificate_data_free(certificate_data);
 	free(common_name);
-	freerdp_certificate_free_ip_names(ip_names_count, ip_names_lengths, ip_names);
-	freerdp_certificate_free_dns_names(dns_names_count, dns_names_lengths, dns_names);
 	free(pemCert);
 	return verification_status;
 }
@@ -2231,33 +2153,58 @@ void tls_print_certificate_error(rdpCertificateStore* store,
 	free(path);
 }
 
-void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,
-                                               const char* common_name, char** alt_names,
-                                               size_t alt_names_count)
+void tls_print_certificate_name_mismatch_error(const rdpCertificate* cert, const char* hostname,
+                                               UINT16 port)
 {
 	WINPR_ASSERT(nullptr != hostname);
+	WINPR_ASSERT(cert);
+
+	size_t common_name_length = 0;
+	char* common_name = freerdp_certificate_get_common_name(cert, &common_name_length);
+
+	size_t dnscount = 0;
+	size_t* dnslengths = nullptr;
+	char** dnsnames = freerdp_certificate_get_dns_names(cert, &dnscount, &dnslengths);
+
+	size_t ipcount = 0;
+	size_t* iplengths = nullptr;
+	char** ipnames = freerdp_certificate_get_ip_names(cert, &ipcount, &iplengths);
+
+	size_t count = dnscount;
+	char** names = dnsnames;
+	const BOOL isIP = utils_is_valid_ip(hostname);
+	if (isIP)
+	{
+		count = ipcount;
+		names = ipnames;
+	}
+
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	WLog_ERR(TAG, "@           WARNING: CERTIFICATE NAME MISMATCH!           @");
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	WLog_ERR(TAG, "The hostname used for this connection (%s:%" PRIu16 ") ", hostname, port);
 	WLog_ERR(TAG, "does not match %s given in the certificate:",
-	         alt_names_count < 1 ? "the name" : "any of the names");
+	         count < 1 ? "the name" : "any of the names");
 	WLog_ERR(TAG, "Common Name (CN):");
 	WLog_ERR(TAG, "\t%s", common_name ? common_name : "no CN found in certificate");
 
-	if (alt_names_count > 0)
+	if (count > 0)
 	{
-		WINPR_ASSERT(nullptr != alt_names);
+		WINPR_ASSERT(nullptr != names);
 		WLog_ERR(TAG, "Alternative names:");
 
-		for (size_t index = 0; index < alt_names_count; index++)
+		for (size_t index = 0; index < count; index++)
 		{
-			WINPR_ASSERT(alt_names[index]);
-			WLog_ERR(TAG, "\t %s", alt_names[index]);
+			WINPR_ASSERT(names[index]);
+			WLog_ERR(TAG, "\t %s", names[index]);
 		}
 	}
 
 	WLog_ERR(TAG, "A valid certificate for the wrong name should NOT be trusted!");
+
+	freerdp_certificate_free_dns_names(dnscount, dnslengths, dnsnames);
+	freerdp_certificate_free_ip_names(ipcount, iplengths, ipnames);
+	winpr_znfree(common_name, common_name_length);
 }
 
 rdpTls* freerdp_tls_new(rdpContext* context)

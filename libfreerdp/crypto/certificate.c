@@ -52,6 +52,7 @@
 #include "certificate.h"
 #include "cert_common.h"
 #include "crypto.h"
+#include "../core/utils.h"
 
 #include "x509_utils.h"
 #include "privatekey.h"
@@ -1899,4 +1900,99 @@ X509* freerdp_certificate_get_chain_at(rdpCertificate* certificate, size_t offse
 	WINPR_ASSERT(freerdp_certificate_get_chain_len(certificate) > offset);
 	const int ioff = WINPR_ASSERTING_INT_CAST(int, offset);
 	return sk_X509_value(certificate->chain, ioff);
+}
+
+WINPR_ATTR_NODISCARD
+static BOOL tls_match_hostname(const char* pattern, const size_t pattern_length,
+                               const char* hostname)
+{
+	WINPR_ASSERT(hostname);
+	WINPR_ASSERT(pattern || (pattern_length == 0));
+
+	const size_t hlen = strlen(hostname);
+	if (hlen == pattern_length)
+	{
+		if (_strnicmp(hostname, pattern, pattern_length) == 0)
+			return TRUE;
+	}
+
+	if ((pattern_length > 2) && (pattern[0] == '*') && (pattern[1] == '.') &&
+	    (hlen >= pattern_length))
+	{
+		/* Ensure wildcard only matches foo.example.com and not foo.bar.example.com */
+		const size_t prefixlen = hlen - pattern_length;
+		for (size_t x = 0; x < prefixlen; x++)
+		{
+			char cur = hostname[x];
+			if (cur == '.')
+				return FALSE;
+		}
+
+		/* Check the hostname ends with the domain */
+		const char* check_hostname = &hostname[prefixlen + 1];
+		return _strnicmp(check_hostname, &pattern[1], pattern_length - 1) == 0;
+	}
+
+	return FALSE;
+}
+
+BOOL freerdp_certificate_matches_hostname(const rdpCertificate* cert, const char* hostname,
+                                          size_t hostlen)
+{
+	/* extra common name and alternative names */
+	size_t common_name_length = 0;
+	size_t dns_names_count = 0;
+	size_t* dns_names_lengths = nullptr;
+	size_t ip_names_count = 0;
+	size_t* ip_names_lengths = nullptr;
+
+	char* common_name = freerdp_certificate_get_common_name(cert, &common_name_length);
+	char** dns_names =
+	    freerdp_certificate_get_dns_names(cert, &dns_names_count, &dns_names_lengths);
+	char** ip_names = freerdp_certificate_get_ip_names(cert, &ip_names_count, &ip_names_lengths);
+
+	BOOL hostname_match = FALSE;
+	BOOL skip = FALSE;
+	if (utils_is_valid_ip(hostname))
+	{
+		if ((hostlen != 0) && ip_names && (ip_names_count > 0))
+		{
+			for (size_t index = 0; index < ip_names_count; index++)
+			{
+				if (utils_compare_ip_strings(ip_names[index], ip_names_lengths[index], hostname,
+				                             hostlen))
+				{
+					hostname_match = TRUE;
+					break;
+				}
+			}
+			skip = TRUE;
+		}
+	}
+
+	/* compare against alternative names */
+	if (!skip && dns_names)
+	{
+		for (size_t index = 0; index < dns_names_count; index++)
+		{
+			if (tls_match_hostname(dns_names[index], dns_names_lengths[index], hostname))
+			{
+				hostname_match = TRUE;
+				break;
+			}
+		}
+		skip = TRUE;
+	}
+
+	/* compare against common name */
+	if (!skip && common_name)
+	{
+		if (tls_match_hostname(common_name, common_name_length, hostname))
+			hostname_match = TRUE;
+	}
+
+	freerdp_certificate_free_dns_names(dns_names_count, dns_names_lengths, dns_names);
+	freerdp_certificate_free_ip_names(ip_names_count, ip_names_lengths, ip_names);
+	free(common_name);
+	return hostname_match;
 }
