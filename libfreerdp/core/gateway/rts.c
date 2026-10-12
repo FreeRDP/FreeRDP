@@ -280,7 +280,8 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(header);
 
-	WINPR_ASSERT(header->frag_length > header->auth_length + 8);
+	if (header->frag_length < header->auth_length + 8ull)
+		return FALSE;
 
 	if (startPos)
 		*startPos = Stream_GetPosition(s);
