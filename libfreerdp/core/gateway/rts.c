@@ -1112,7 +1112,6 @@ static void rts_free_pdu_response(rpcconn_response_hdr_t* ctx)
 {
 	if (!ctx)
 		return;
-	free(ctx->stub_data);
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
