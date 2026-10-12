@@ -336,7 +336,6 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 {
 	size_t pos = 0;
 	size_t alloc_hint = 0;
-	BYTE** ptr = nullptr;
 
 	if (!rts_read_auth_verifier_no_checks(s, auth, header, &pos, silent))
 		return FALSE;
@@ -347,21 +346,18 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 		{
 			rpcconn_fault_hdr_t* hdr = (rpcconn_fault_hdr_t*)header;
 			alloc_hint = hdr->alloc_hint;
-			ptr = &hdr->stub_data;
 		}
 		break;
 		case PTYPE_RESPONSE:
 		{
 			rpcconn_response_hdr_t* hdr = (rpcconn_response_hdr_t*)header;
 			alloc_hint = hdr->alloc_hint;
-			ptr = &hdr->stub_data;
 		}
 		break;
 		case PTYPE_REQUEST:
 		{
 			rpcconn_request_hdr_t* hdr = (rpcconn_request_hdr_t*)header;
 			alloc_hint = hdr->alloc_hint;
-			ptr = &hdr->stub_data;
 		}
 		break;
 		default:
@@ -372,7 +368,6 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 	{
 		const size_t off = header->auth_length + 8 + auth->auth_pad_length + pos;
 		const size_t size = header->frag_length - MIN(header->frag_length, off);
-		const void* src = Stream_Buffer(s) + pos;
 
 		if (off > header->frag_length)
 			WLog_WARN(TAG,
@@ -380,14 +375,6 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 			          ", frag_length %" PRIu16 ", offset %" PRIuz,
 			          alloc_hint, rts_pdu_ptype_to_string(header->ptype), size, header->frag_length,
 			          off);
-
-		*ptr = nullptr;
-		if (size > 0)
-		{
-			*ptr = (BYTE*)strndup(src, size);
-			if (!*ptr)
-				return FALSE;
-		}
 	}
 
 	return TRUE;
