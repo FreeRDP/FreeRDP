@@ -701,15 +701,15 @@ UINT sdlClip::ReceiveServerFormatList(CliprdrClientContext* context,
 	}
 	if (html)
 	{
-		clipboard->_current_mimetypes.push_back(s_mime_html);
+		clipboard->_current_mimetypes.emplace_back(s_mime_html);
 	}
 	if (file)
 	{
-		clipboard->_current_mimetypes.push_back(s_mime_uri_list);
-		clipboard->_current_mimetypes.push_back(s_mime_gnome_copied_files);
-		clipboard->_current_mimetypes.push_back(s_mime_mate_copied_files);
+		clipboard->_current_mimetypes.emplace_back(s_mime_uri_list);
+		clipboard->_current_mimetypes.emplace_back(s_mime_gnome_copied_files);
+		clipboard->_current_mimetypes.emplace_back(s_mime_mate_copied_files);
 	}
-	clipboard->_current_mimetypes.push_back(clipboard->_mime_uuid.c_str());
+	clipboard->_current_mimetypes.emplace_back(clipboard->_mime_uuid.c_str());
 
 	auto& mime = clipboard->_current_mimetypes;
 	std::sort(mime.begin(), mime.end());

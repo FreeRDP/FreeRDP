@@ -481,8 +481,6 @@ typedef struct
 
 	/* align(8) */
 
-	BYTE* stub_data;
-
 	auth_verifier_co_t auth_verifier;
 } rpcconn_fault_hdr_t;
 
@@ -507,7 +505,7 @@ typedef struct
 
 	/* align(8) */
 
-	BYTE* stub_data;
+	const BYTE* stub_data;
 
 	auth_verifier_co_t auth_verifier;
 } rpcconn_request_hdr_t;
@@ -523,8 +521,6 @@ typedef struct
 	BYTE reserved;
 
 	/* align(8) */
-
-	BYTE* stub_data;
 
 	auth_verifier_co_t auth_verifier;
 } rpcconn_response_hdr_t;
