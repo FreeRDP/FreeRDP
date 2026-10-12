@@ -265,6 +265,7 @@ static bool checkFreeRDPResults(bool custom, const char* vendor, const char* pro
 	}
 
 #if defined(BUILD_TESTING_INTERNAL)
+#if !defined(WITHOUT_FREERDP_3x_DEPRECATED)
 	{
 		char* pcmp = create(vendor, product, version, '\\');
 		if (!pcmp)
@@ -296,6 +297,7 @@ static bool checkFreeRDPResults(bool custom, const char* vendor, const char* pro
 		if (!rc)
 			return false;
 	}
+#endif
 	{
 		char* comb = freerdp_getApplicatonDetailsCombined('/');
 		const bool rc = checkCombined(comb, vendor, product, version, '/');
