@@ -99,6 +99,10 @@
 #define ERRCONNECT_HYBRID_REQUIRED_BY_SERVER_STRING \
 	"The server requires Network Level Authentication, but it is not enabled."
 
+#define ERRCONNECT_NTLM_BLOCKED_STRING                                                    \
+	"Authentication failed. This may be due to NTLM authentication being blocked by the " \
+	"server's security policy, or a CredSSP encryption oracle mismatch."
+
 /* Special codes */
 #define ERRCONNECT_SUCCESS_STRING "Success."
 #define ERRCONNECT_NONE_STRING ""
@@ -136,6 +140,7 @@ static const ERRINFO ERRCONNECT_CODES[] = {
 	ERRCONNECT_DEFINE(ACTIVATION_TIMEOUT, CAT_PROTOCOL),
 	ERRCONNECT_DEFINE(TARGET_BOOTING, CAT_ADMIN),
 	ERRCONNECT_DEFINE(HYBRID_REQUIRED_BY_SERVER, CAT_CONFIG),
+	ERRCONNECT_DEFINE(NTLM_BLOCKED, CAT_CONFIG),
 
 	ERRCONNECT_DEFINE(NONE, CAT_NONE)
 };
