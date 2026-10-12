@@ -14,21 +14,25 @@ void RDPApplyKeyCapColors(UIButtonConfiguration *config, BOOL latched, BOOL pres
 UIVisualEffectView *RDPCreateGlassCapsuleView(void)
 {
 	UIVisualEffect *effect;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 260000
 	if (@available(iOS 26.0, *))
 	{
 		effect = [UIGlassEffect effectWithStyle:UIGlassEffectStyleRegular];
 	}
 	else
+#endif
 	{
 		effect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemChromeMaterial];
 	}
 
 	UIVisualEffectView *view = [[[UIVisualEffectView alloc] initWithEffect:effect] autorelease];
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 260000
 	if (@available(iOS 26.0, *))
 	{
 		[view setCornerConfiguration:[UICornerConfiguration capsuleConfiguration]];
 	}
 	else
+#endif
 	{
 		[view setClipsToBounds:YES];
 		[[view layer] setCornerCurve:kCACornerCurveContinuous];
@@ -38,10 +42,12 @@ UIVisualEffectView *RDPCreateGlassCapsuleView(void)
 
 void RDPUpdateGlassCapsuleCorners(UIVisualEffectView *view)
 {
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 260000
 	if (@available(iOS 26.0, *))
 	{
 		return;
 	}
+#endif
 
 	CGSize size = [view bounds].size;
 	[[view layer] setCornerRadius:MIN(size.width, size.height) * 0.5];
