@@ -3236,7 +3236,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 		context->OnDriveQueryDirectoryComplete(context, irp->CallbackData, ioStatus, nullptr);
 
 		/* Close the directory, so that the client does not leak its handle */
-		irp->CompletionId = priv->NextCompletionId++;
+		irp->CompletionId = rdpdr_server_next_completion_id(priv);
 		irp->Callback = rdpdr_server_drive_query_directory_callback3;
 
 		if (!rdpdr_server_enqueue_irp(context, irp))
